@@ -189,7 +189,7 @@ void CMenuBattleEnd::Move() {
     if (CTaskGame::getInstance()->isFlag01Set() ||
         (lbl_eu_80663E28 & 0x200000))
         return;
-    if (!func_8013BE50()) return;
+    if (!IsMenuState621F0()) return;
     if (mState == 1) {
         func_8026F95C(this);
     }
@@ -201,7 +201,7 @@ void CMenuBattleEnd::cbRenderBefore() {
     if (CTaskGame::getInstance()->isFlag01Set() ||
         (lbl_eu_80663E28 & 0x200000))
         return;
-    if (!func_8013BE50()) return;
+    if (!IsMenuState621F0()) return;
     GXSetZMode(GX_FALSE, GX_NEVER, GX_FALSE);
     // Raw-storage DrawInfo built/destroyed via the C-ABI ct/dt calls so the
     // scope-exit destructor is not virtual-dispatched (same scheme as

@@ -118,7 +118,7 @@ void setLodFadeAlpha(s32);
 void resetLodFlags__Q23LOD17UnkClass_804645CCFv(void);
 void scaleLodFadeAlpha(f32);
 void setLodColorFactor(s32);
-void func_8006BEC0(void*);
+void cfCam_nopCtorSlot(void*);
 
 // ---------------------------------------------------------------------------
 // Small record layouts.
@@ -717,8 +717,8 @@ return_zero:
 // us-8046853c  sinit_8046456C  (construct the two 8x0x30 BSS work arrays)
 // ===========================================================================
 extern "C" void sinit_8046456C(void) {
-    __construct_array(lbl_eu_80658048, (ConstructorDestructor)func_8006BEC0, NULL, 0x30, 8);
-    __construct_array(lbl_eu_806581C8, (ConstructorDestructor)func_8006BEC0, NULL, 0x30, 8);
+    __construct_array(lbl_eu_80658048, (ConstructorDestructor)cfCam_nopCtorSlot, NULL, 0x30, 8);
+    __construct_array(lbl_eu_806581C8, (ConstructorDestructor)cfCam_nopCtorSlot, NULL, 0x30, 8);
 }
 
 // Retail .ctors entry for this translation unit.

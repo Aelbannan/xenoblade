@@ -1,28 +1,28 @@
 // Translation unit for kyoshin/plugin/pluginCfs
 // Plugin script functions for the CFS (Common File System / script) subsystem.
 
-// Retail calls func_8015783C/func_80157948 with a full-width character id (no truncation
+// Retail calls CItemBlock_getKindSlot/CItemBlock_getSlotU16 with a full-width character id (no truncation
 // mask at call sites); CfGameManager.hpp declares dataId as u16,
 // which forces a rlwinm mask on every call and trips the illegal-overload
 // rule if redeclared alongside. Rename the header forms out of the way for
 // this TU and declare the retail (int) shapes instead.
-#define func_8015783C func_8015783C_u16hdr
-#define func_80157948 func_80157948_u16hdr
+#define CItemBlock_getKindSlot CItemBlock_getKindSlot_u16hdr
+#define CItemBlock_getSlotU16 CItemBlock_getSlotU16_u16hdr
 #include "kyoshin/cf/CBattleManagerApi.hpp"
 #include "kyoshin/cf/object/CfObjectMoveApi.hpp"
 #include "kyoshin/harness_catalog.hpp"
 #include "kyoshin/plugin/pluginCfs.hpp"
 #include "kyoshin/cf/CfGameManager.hpp"
-#undef func_8015783C
-#undef func_80157948
-extern "C" void* func_8015783C(int mappedIndex, int dataId, int slot);
-extern "C" void* func_80157948(int charId, int slot);
+#undef CItemBlock_getKindSlot
+#undef CItemBlock_getSlotU16
+extern "C" void* CItemBlock_getKindSlot(int mappedIndex, int dataId, int slot);
+extern "C" void* CItemBlock_getSlotU16(int charId, int slot);
 
-// Retail passes the character id to func_8015783C untruncated; the
+// Retail passes the character id to CItemBlock_getKindSlot untruncated; the
 // CfGameManager.hpp declaration takes u16, which would force a rlwinm mask
 // at every call. This int-param extern "C" overload resolves instead for
 // integer arguments (approved reloc-name fix, PLAN.md 17.6).
-extern "C" void* func_8015783C(int mappedIndex, int dataId, int slot);
+extern "C" void* CItemBlock_getKindSlot(int mappedIndex, int dataId, int slot);
 
 struct UnkClass_8009ECB0;
 struct UnkClass_805764CC;
@@ -46,18 +46,18 @@ extern "C" {
     extern float lbl_eu_80665E4C;          // 0.0f
 
     void func_8004302C(int, int);
-    void func_80043628();
+    void CTaskGame_callCGameInit();
     void func_800A3304();
-    void func_801579A4();
+    void CItemBlock_clearSlotCnt();
     void func_8012FAA8();
-    int func_8015796C(int);
-    void func_80157184(int);
+    int CItemBlock_addSlotCount(int);
+    void CItemBlock_setCount(int);
     void func_801571A8(int);
-    // func_8015730C / func_8015783C / func_80157948 / CItem_initItemImplInstances /
+    // CItemBlock_setKindFlag / CItemBlock_getKindSlot / CItemBlock_getSlotU16 / CItem_initItemImplInstances /
     // func_80199678: declared by kyoshin/cf/CfGameManager.hpp above - local
     // re-declarations with different types trip MWCC 10197.
-    void func_80159B40(int, int, void*);
-    void func_80158118(void*, int, int);
+    void CItem_clearCharSubSlot(int, int, void*);
+    void CItemData_initFromFamily(void*, int, int);
     void func_80155A00(void*);
     void func_8016DF34(int);
     void func_8016DF4C(int);
@@ -72,9 +72,9 @@ extern "C" {
     // CItem_initItemImplInstances: CfGameManager.hpp declares it returning
     // CItemImplInstances* - local void* form conflicts (10197).
     void* getInstance__14Class_80296898Fv();
-    void func_800B70FC(int, int);
+    void walkListByItemId(int, int);
     int func_800B8D5C();
-    void func_800BE28C(int, bool);
+    void CfObjectMove_forwardNpcSignal(int, bool);
     bool func_8009CF8C(int);
     // func_8009D018: declared (u32,u32) by CfGameManager.hpp:767 - local
     // (int,int) form conflicts (10197).
@@ -84,7 +84,7 @@ extern "C" {
     int func_8009E284(int*, int);
     int* func_8009D790(int*, int);
     void func_800B6800(UnkClass_805764CC*, void*, int, float);    void* getInstance__Fv();
-    void func_800B1AF4(void*);
+    void resetTboxThenMask(void*);
     void queueBdatTextB__Q22cf13CfGameManagerFv(float, int, int);
     void setupBattleCamera__Q22cf13CfGameManagerFv(int, int);
     void setResourceFlag__Q22cf13CfGameManagerFv(int, int);
@@ -109,18 +109,18 @@ extern "C" {
     void func_80080888__Q22cf13CfGameManagerFv(int, int);
     void loadFieldPartyState__Q22cf13CfGameManagerFv(int, int);
     void func_80085FB8__Q22cf13CfGameManagerFv(int);
-    void func_800B946C();
+    void gmWalkByType();
     void func_800B98C8(int);
     void notifyFieldChange__Q22cf13CfGameManagerFv(const char*);
     bool isAnyFieldFlagSet__Q22cf13CfGameManagerFv();
     bool isVisionPackLoaded__Q22cf13CfGameManagerFv();
-    void func_800B94A0(const char*);
+    void gmWalkByName(const char*);
     bool func_8009E344(void*, int, int*, int*);
     void func_8007C374__Q22cf13CfGameManagerFv(u32, u32, int, float);
     void func_8009E3C0();
-    int  func_801586D4(int, int);
-    void func_80159C04(int, int);
-    int  func_80158068(int);
+    int  CItem_thunkAllocRecord(int, int);
+    void CItem_consumeFamilyCnt(int, int);
+    int  CItem_sumFamilyByte6(int);
     void func_800F4004(void*);
     void activateLOD__8CTaskLODFv(int);
     void deactivateLOD__8CTaskLODFv(int);
@@ -725,7 +725,7 @@ int delEventArea(VMThread* pThread) {
         VMArg* arg = vmArgPtrGet(pThread, 1);
         str = vmArgStringGet(2, arg);
     }
-    func_800B94A0(str);
+    gmWalkByName(str);
     return 0;
 }
 
@@ -926,7 +926,7 @@ int eventEnd(VMThread* pThread) {
 int delAttr(VMThread* pThread) {
     VMArg* arg = vmArgPtrGet(pThread, 1);
     vmArgIntGet(2, arg);
-    func_800B946C();
+    gmWalkByType();
     return 0;
 }
 
@@ -1241,7 +1241,7 @@ int delParty(VMThread* pThread) {
 int addItem(VMThread* pThread) {
     VMArg* arg = vmArgPtrGet(pThread, 1);
     int val = vmArgIntGet(2, arg);
-    int result = func_801586D4(val & 0xFFFF, 1);
+    int result = CItem_thunkAllocRecord(val & 0xFFFF, 1);
     
     int neg = -result;
     int orVal = neg | result;
@@ -1267,7 +1267,7 @@ int delItem(VMThread* pThread) {
         val = vmArgIntGet(3, arg2);
     }
     
-    func_80159C04(v31 & 0xFFFF, val);
+    CItem_consumeFamilyCnt(v31 & 0xFFFF, val);
     return 0;
 }
 
@@ -1275,7 +1275,7 @@ int delItem(VMThread* pThread) {
 int totalItem(VMThread* pThread) {
     VMArg* arg = vmArgPtrGet(pThread, 1);
     int val = vmArgIntGet(2, arg);
-    int count = func_80158068(val & 0xFFFF);
+    int count = CItem_sumFamilyByte6(val & 0xFFFF);
     
     VMArg ret;
     ret.type = 3;
@@ -1384,19 +1384,19 @@ int equipItem(VMThread* vmThread) {
             else if (slot == 5) type = 2;
 
             if (charId >= 1 && charId <= 11) {
-                void* invSlot = func_8015783C(type, charId, 0);
+                void* invSlot = CItemBlock_getKindSlot(type, charId, 0);
                 if (itemId == 0) {
                     // Empty equip: refresh the inventory entry's item view
                     ((CItemImplInstance*)CItem_initItemImplInstances(invSlot))
                         ->getItemId(invSlot);
                 } else {
-                    func_80158118(invSlot, itemId & 0xFFFF, 1);
+                    CItemData_initFromFamily(invSlot, itemId & 0xFFFF, 1);
                 }
 
                 for (int k = 0; k < 8; k++) {
-                    s8* ref = (s8*)func_80157948(charId, k);
+                    s8* ref = (s8*)CItemBlock_getSlotU16(charId, k);
                     if (*ref == slot + 1) {
-                        func_80159B40(charId, k, &scratch);
+                        CItem_clearCharSubSlot(charId, k, &scratch);
                     }
                 }
             }
@@ -1404,7 +1404,7 @@ int equipItem(VMThread* vmThread) {
     }
 
     if (changed) {
-        func_800B70FC(charId, 0);
+        walkListByItemId(charId, 0);
     }
 
     return 0;
@@ -1445,26 +1445,26 @@ int equipWeapon(VMThread* pThread) {
         int unkVal;
         func_80158420(weaponId & 0xFFFF, &slotVal, 1, &unkVal);
         func_8009E0A8(charData, slotVal);
-        func_800B70FC(charId, 0);
+        walkListByItemId(charId, 0);
         lbl_eu_80663E28 |= 0x08000000;
     } else {
         func_8009E0C4(func_8009EC9C(charId & 0xFFFF), 5, weaponId & 0xFFFF);
 
         if (charId >= 1 && charId <= 11) {
             int syncId;
-            void* invSlot = func_8015783C(2, charId, 0);
+            void* invSlot = CItemBlock_getKindSlot(2, charId, 0);
             if (weaponId == 0) {
                 // Empty equip: refresh the inventory entry's item view (discarded)
                 ((CItemImplInstance*)CItem_initItemImplInstances(invSlot))->getItemId(invSlot);
             } else {
-                func_80158118(invSlot, weaponId & 0xFFFF, 1);
+                CItemData_initFromFamily(invSlot, weaponId & 0xFFFF, 1);
                 func_80155A00(invSlot);
             }
 
             for (int k = 0; k < 8; k++) {
-                u8* slotRef = (u8*)func_80157948(charId, k);
+                u8* slotRef = (u8*)CItemBlock_getSlotU16(charId, k);
                 if (*slotRef == 6) {
-                    func_80159B40(charId, k, &syncId);
+                    CItem_clearCharSubSlot(charId, k, &syncId);
                 }
             }
         }
@@ -1497,7 +1497,7 @@ int getWeaponSlot(VMThread* vmThread) {
         do {
             if (1 > charId) break;
             if (charId > 11) break;
-            u32* invSlot = (u32*)func_8015783C(2, charId, 0);
+            u32* invSlot = (u32*)CItemBlock_getKindSlot(2, charId, 0);
             // Item-type nibble sits at bits 16-19; reading it unsigned lets
             // MWCC fold shift+mask into a single rotate and emit cmpli.
             if ((*invSlot >> 16 & 0xF) == 2) {
@@ -1538,7 +1538,7 @@ int setWeaponSlot(VMThread* vmThread) {
         do {
             if (1 > charId) break;
             if (11 < charId) break;
-            int* invSlot = (int*)func_8015783C(2, charId, 0);
+            int* invSlot = (int*)CItemBlock_getKindSlot(2, charId, 0);
             CItemImplInstance* inst = (CItemImplInstance*)CItem_initItemImplInstances(invSlot);
             inst->setWeaponSlot(invSlot, itemId);
         } while (0);
@@ -1665,7 +1665,7 @@ int setScheduleType(VMThread* vmThread) {
     if (obj != NULL) {
         int flags = *(int*)((u8*)obj + 0x64);
         if (flags & 0x08) {
-            func_800BE28C((int)obj, enable);
+            CfObjectMove_forwardNpcSignal((int)obj, enable);
         }
     }
 
@@ -1768,7 +1768,7 @@ int setActMapObj(VMThread* vmThread) {
     if (mapObj != NULL) {
         int* objPtr = (int*)((u8*)mapObj + 0xC4);
         if (*objPtr != 0) {
-            func_800BE12C((u8*)mapObj, state, 0, -1, 1);
+            CfObjectMove_setAnimModeArgs((u8*)mapObj, state, 0, -1, 1);
         }
     }
 
@@ -1865,7 +1865,7 @@ int setMoney(VMThread* vmThread) {
         amount = vmArgIntGet(2, arg);
     }
 
-    func_80157184(amount);
+    CItemBlock_setCount(amount);
     return 0;
 }
 
@@ -1904,16 +1904,16 @@ int delHoldBox(VMThread* vmThread) {
     }
 
     for (int slot = 4; slot <= 8; slot++) {
-        func_8015730C(charId, 0, slot);
+        CItemBlock_setKindFlag(charId, 0, slot);
     }
 
-    func_8015730C(charId, 0, 2);
+    CItemBlock_setKindFlag(charId, 0, 2);
 
     int buf;
     for (int k = 0; k < 8; k++) {
-        void* slotRef = func_80157948(charId, k);
+        void* slotRef = CItemBlock_getSlotU16(charId, k);
         if ((signed char)(*(u8*)slotRef) != 0) {
-            func_80159B40(charId, k, &buf);
+            CItem_clearCharSubSlot(charId, k, &buf);
         }
     }
 
@@ -1947,7 +1947,7 @@ int addItemLimit(VMThread* vmThread) {
         limit = vmArgIntGet(2, arg);
     }
 
-    func_8015796C(limit);
+    CItemBlock_addSlotCount(limit);
     return 0;
 }
 
@@ -1966,7 +1966,7 @@ int setPcCtrl(VMThread* vmThread) {
 
 // --- saveNamedCount (us-8004b4fc) ---
 int saveNamedCount(VMThread* vmThread) {
-    int count = func_80291BF8();
+    int count = countCollepedia();
     int total = count + func_8009CF8C(0x10A);
     func_8009D018(0x10A, total < 0 ? 0 : (total > 0x3E7 ? 0x3E7 : total));
     return 0;
@@ -2027,12 +2027,12 @@ void* CfObject_getCurrentTarget__Q22cf12CfObjectMoveFv(void* self) {
 
 int clearTbox() {
     void* ptr = getInstance__Fv();
-    if (ptr) func_800B1AF4(ptr);
+    if (ptr) resetTboxThenMask(ptr);
     return 0;
 }
 
 int returnTitle() {
-    func_80043628();
+    CTaskGame_callCGameInit();
     return 0;
 }
 
@@ -2042,7 +2042,7 @@ int dispLoading() {
 }
 
 int clearItemLimit() {
-    func_801579A4();
+    CItemBlock_clearSlotCnt();
     return 0;
 }
 

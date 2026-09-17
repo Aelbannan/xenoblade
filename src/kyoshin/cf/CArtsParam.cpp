@@ -27,8 +27,8 @@ public:
 // keeps the call-site relocs at the retail unmangled names.
 extern "C" int func_80154280(void* param, void* actor, int flags);
 extern "C" int func_80148778(void* obj, int id);
-extern "C" void func_80043D90(void* holder);
-extern "C" void* func_80043F18(void* holder);
+extern "C" void CTaskGame_enumListCtor(void* holder);
+extern "C" void* CTaskGame_enumListGet(void* holder);
 extern "C" void __dt__80043E88(void* holder, int tags);
 extern "C" void func_800F4A98(void* list, u32 type, u32 filter);
 extern "C" void* func_800F6EAC(void* list, u32 idx);
@@ -243,14 +243,14 @@ extern int func_801B1CB0();
 extern int func_80260264(void* self, int id, void* out);
 extern void* func_801491A4(void* self, unsigned int id);
 extern void* func_800F6D50(void* list, int index);
-extern int func_8004DAC4(void* obj);
+extern int getAnimEff(void* obj);
 extern int func_8009CF8C(u32 resource);
 extern void func_800FB270(void* list, void* vec, f32 a, f32 b, f32 c, int d);
 extern void func_800FB5AC(void* list, void* vec, f32 a, f32 b, f32 c, f32 d, f32 e, int f);
 extern void* __ct__800FB044(void* list, f32 a, void* vec, int d);
 extern void* __ct__800FAE3C(void* list, void* vec, int d);
 extern void* __ct__800FBA18(void* list, f32 a, f32 b, f32 c, int d);
-extern int func_804B19CC(void* self, void* src, int a, int b);
+extern int ColiQuerySpecDispatch(void* self, void* src, int a, int b);
 
 // ---------------------------------------------------------------------------
 // func_80154280 - arts usability check. Accumulates a flag word describing
@@ -331,7 +331,7 @@ int func_80154280(void* param, void* actor, int flags) {
                         int r28 = p->unk5E;
                         f32 f27 = 0.0f;
                         u8 holder[8];
-                        func_80043D90(holder);
+                        CTaskGame_enumListCtor(holder);
                         f30 = (f32)p->unk64 * lbl_eu_8066A210;
                         int idx = (obj->field_3F00 & 2) ? 0 : 4;
                         int r29 = *(u32*)((u8*)table + 4 + p->unk5C * 8 + idx);
@@ -406,83 +406,83 @@ int func_80154280(void* param, void* actor, int flags) {
                         }
                         switch (r28) {
                         case 1: {
-                            void* list = func_80043F18(holder);
+                            void* list = CTaskGame_enumListGet(holder);
                             func_800F4A98(list, r29, 0x1000);
                             f32 f28 = obj->v364();
-                            list = func_80043F18(holder);
+                            list = CTaskGame_enumListGet(holder);
                             func_800FB270(list, vec70, f31, f30, f28, r27);
-                            list = func_80043F18(holder);
+                            list = CTaskGame_enumListGet(holder);
                             __ct__800FB044(list, f31, vec70, 0);
                             break;
                         }
                         case 2: {
-                            void* list = func_80043F18(holder);
+                            void* list = CTaskGame_enumListGet(holder);
                             func_800F4A98(list, r29, 0x1000);
-                            list = func_80043F18(holder);
+                            list = CTaskGame_enumListGet(holder);
                             __ct__800FB044(list, f31, vec70, 0);
                             f32 f28 = obj->v364() + lbl_eu_8066A1F8;
-                            list = func_80043F18(holder);
+                            list = CTaskGame_enumListGet(holder);
                             func_800FB270(list, vec70, f31, f30, f28, r27);
                             break;
                         }
                         case 3: {
-                            void* list = func_80043F18(holder);
+                            void* list = CTaskGame_enumListGet(holder);
                             func_800F4A98(list, r29, 0x1000);
                             f32 v1 = obj->v364();
                             f32 f28 = v1 + lbl_eu_8066A1F8 * lbl_eu_8066746C;
                             f32 f29 = v1 - lbl_eu_8066A1F8 * lbl_eu_8066746C;
-                            list = func_80043F18(holder);
+                            list = CTaskGame_enumListGet(holder);
                             func_800FB5AC(list, vec70, f31, f30, f28, f30, f29, r27);
-                            list = func_80043F18(holder);
+                            list = CTaskGame_enumListGet(holder);
                             __ct__800FB044(list, f31, vec70, 0);
                             break;
                         }
                         case 4: {
-                            void* list = func_80043F18(holder);
+                            void* list = CTaskGame_enumListGet(holder);
                             func_800F4A98(list, r29, 0x1000);
-                            list = func_80043F18(holder);
+                            list = CTaskGame_enumListGet(holder);
                             __ct__800FB044(list, f31, vec70, r27);
                             break;
                         }
                         case 5: {
-                            void* list = func_80043F18(holder);
+                            void* list = CTaskGame_enumListGet(holder);
                             func_800F4A98(list, r29, 0x1000);
                             f32 f27b = (f32)p->unk64 / lbl_eu_8066747C;
                             f32 f28 = obj->v364();
-                            list = func_80043F18(holder);
+                            list = CTaskGame_enumListGet(holder);
                             __ct__800FBA18(list, f31, f27b, f28, r27);
-                            list = func_80043F18(holder);
+                            list = CTaskGame_enumListGet(holder);
                             __ct__800FB044(list, f31, vec70, 0);
                             break;
                         }
                         case 6: {
                             if (p->unk5C == 3 || p->unk5C == 0xb) {
-                                void* list = func_80043F18(holder);
+                                void* list = CTaskGame_enumListGet(holder);
                                 func_800F4A98(list, r29, 0x1000);
                             } else {
                                 void* r28b = obj->mSub.s17();
-                                void* list = func_80043F18(holder);
+                                void* list = CTaskGame_enumListGet(holder);
                                 func_800F6D50(list, (int)r28b);
                             }
-                            void* list = func_80043F18(holder);
+                            void* list = CTaskGame_enumListGet(holder);
                             __ct__800FB044(list, f31, vec70, r27);
                             break;
                         }
                         case 7: {
-                            void* list = func_80043F18(holder);
+                            void* list = CTaskGame_enumListGet(holder);
                             func_800F4A98(list, r29, 0x1000);
                             break;
                         }
                         default: {
                             if (p->unk5C == 3 || p->unk5C == 0xb) {
-                                void* list = func_80043F18(holder);
+                                void* list = CTaskGame_enumListGet(holder);
                                 func_800F4A98(list, r29, 0x1000);
                             } else {
                                 void* r28b = obj->mSub.s17();
-                                void* list = func_80043F18(holder);
+                                void* list = CTaskGame_enumListGet(holder);
                                 func_800F6D50(list, (int)r28b);
                             }
-                            void* list = func_80043F18(holder);
+                            void* list = CTaskGame_enumListGet(holder);
                             __ct__800FB044(list, f31, vec70, r27);
                             break;
                         }
@@ -498,15 +498,15 @@ int func_80154280(void* param, void* actor, int flags) {
                             sum[0] = off[0] + base[0];
                             sum[1] = off[4] + base[4];
                             sum[2] = off[8] + base[8];
-                            void* list = func_80043F18(holder);
+                            void* list = CTaskGame_enumListGet(holder);
                             __ct__800FAE3C(list, sum, 0);
                         }
                         int r29b = 0;
                         int r23 = 0;
                         int r22 = 0;
-                        void* list = func_80043F18(holder);
+                        void* list = CTaskGame_enumListGet(holder);
                         while (r22 < *(u32*)((u8*)list + 0x620)) {
-                            void* list2 = func_80043F18(holder);
+                            void* list2 = CTaskGame_enumListGet(holder);
                             void* target = func_800F6EAC(list2, r22);
                             if (target != 0 && func_8016FE34(target) != 0) {
                                 if (!(p->unk78 & 2)) {
@@ -517,7 +517,7 @@ int func_80154280(void* param, void* actor, int flags) {
                                     while (lbl_eu_8066A1F8 <= f27b) f27b -= lbl_eu_8066A1FC;
                                     while (f27b < -lbl_eu_8066A1F8) f27b += lbl_eu_8066A1FC;
                                     f32* tpos = (f32*)obj->mSub.s41();
-                                    if (func_804B19CC((u8*)target + 0x44a8, tpos, 0, 1) == 0) {
+                                    if (ColiQuerySpecDispatch((u8*)target + 0x44a8, tpos, 0, 1) == 0) {
                                         f32 lim = obj->v111()[0];
                                         if (-(lim * lbl_eu_8066746C) <= f27b && f27b <= lim * lbl_eu_8066746C) {
                                             // in range
@@ -577,8 +577,8 @@ int func_80154280(void* param, void* actor, int flags) {
         }
     }
     // Battle-object sub-state gate (0x100).
-    if (obj->field_3F60 != 0 && func_8004DAC4(obj->field_3F60) != 0) {
-        int st = func_8004DAC4(obj->field_3F60);
+    if (obj->field_3F60 != 0 && getAnimEff(obj->field_3F60) != 0) {
+        int st = getAnimEff(obj->field_3F60);
         if (p->unk78 & 2) {
             if (st >= 0x10 && st <= 0x1f && st - 0x10 == (int)p->unk76) {
                 result |= 0x100;
@@ -624,10 +624,10 @@ int func_80154280(void* param, void* actor, int flags) {
         if ((obj->field_3F00 & 2) && obj->field_3F28 == 6) {
             if (p->unk48 == 0xf8) {
                 u8 holder2[8];
-                func_80043D90(holder2);
-                void* list = func_80043F18(holder2);
+                CTaskGame_enumListCtor(holder2);
+                void* list = CTaskGame_enumListGet(holder2);
                 func_800F4A98(list, 0x20, 0x800);
-                list = func_80043F18(holder2);
+                list = CTaskGame_enumListGet(holder2);
                 if (*(u32*)((u8*)list + 0x620) <= 1) result |= 0x80;
                 __dt__80043E88(holder2, -1);
             }

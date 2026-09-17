@@ -88,7 +88,7 @@ public:
 extern "C" {
 void func_8022B7F4(void* syswin);
 void func_8022B7C8(void* syswin, nw4r::lyt::DrawInfo* drawInfo);
-int func_8013BE50();
+int IsMenuState621F0();
 void setPresentationFlag__Q22cf13CfGameManagerFv(bool enable);
 void __ct__CSysWin(void* syswin, int arg);
 void __dt__7CSysWinFv(void* syswin, int flags);

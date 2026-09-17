@@ -306,10 +306,10 @@ void __dt__14Class_8045F858Fv(Class_8045F858* self, int dealloc);
 void __ct__Q34nw4r3lyt8DrawInfoFv(nw4r::lyt::DrawInfo* self);
 void __dt__Q34nw4r3lyt8DrawInfoFv(nw4r::lyt::DrawInfo* self, int flags);
 nw4r::lyt::ArcResourceAccessor* func_801355F4();
-int func_8013BFD8();
-int func_8013BE50();
+int GetSysStateFlag24();
+int IsMenuState621F0();
 const char* func_80145AA8(int index);
-char* func_8013639C(const void*, const void*, int);
+char* BdatGetPtrDirect(const void*, const void*, int);
 void func_8013676C(void*, u32);
 // Pre-mangled u8-param name declared with a u32 3rd arg: retail passes the
 // full slot word with no rlwinm truncation at the call site (the callee only
@@ -321,9 +321,9 @@ void* getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(
 CMenuBattleDamagePose* func_80496264(CScn* scene, int index);
 void func_8049B59C(nw4r::math::VEC3* out, CMenuBattleDamagePose* pose,
                    const nw4r::math::VEC3* in);
-char* func_80136190(const void*, const void*, int);
-void func_80136B4C(nw4r::lyt::Layout*, const char*, const char*, u32);
-void func_80137E7C(nw4r::lyt::Layout*, const char*);
+char* BdatTouchStringCell(const void*, const void*, int);
+void LayoutSetTextBoxFmtValue(nw4r::lyt::Layout*, const char*, const char*, u32);
+void PaneSetTexPaletteByName(nw4r::lyt::Layout*, const char*);
 const char* func_eu_802B142C();
 const char* func_eu_802B1444();
 const char* func_eu_802B145C();

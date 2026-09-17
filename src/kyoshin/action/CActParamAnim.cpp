@@ -2,24 +2,24 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 // CActParamData.hpp declares func_80055B88 with its real (self, key, tag)
-// signature, but retail's func_8004B6BC call site passes only the child
+// signature, but retail's releaseAnimObj call site passes only the child
 // pointer (the original retail TU used a stale prototype). Hide the typed
 // declaration in this TU so the byte-exact bare 1-arg bl (locked FULL_MATCH
 // us-8004bd94) still compiles.
 #define func_80055B88 func_80055B88_typed_hidden
-// CActParamData.hpp also declares func_80053960 with an ActParamData388*
-// parameter; retail's func_80053960 lives in this TU and takes the anim
+// CActParamData.hpp also declares getAnimTick with an ActParamData388*
+// parameter; retail's getAnimTick lives in this TU and takes the anim
 // object (CActParamAnim*). Hide that typed declaration so the extern "C"
 // definition below does not collide with it as an illegal overload.
-#define func_80053960 func_80053960_typed_hidden
+#define getAnimTick getAnimTick_typed_hidden
 
 #include "kyoshin/action/CActParamAnim.hpp"
 #include "monolib/scn/CScnTimeApi.hpp"
 #include "monolib/math/FloatUtils.hpp"  // H3 label-owner decl (lbl_eu_8066A208)
 #undef func_80055B88
-#undef func_80053960
+#undef getAnimTick
 
-// Legacy 1-arg prototype kept for the func_8004B6BC call site (see above).
+// Legacy 1-arg prototype kept for the releaseAnimObj call site (see above).
 extern "C" bool func_80055B88(void* data);
 
 #include "kyoshin/action/CActParamData.hpp"
@@ -53,9 +53,9 @@ extern "C" CActParamAnim* __dt__8004B070(CActParamAnim* self, s32 deleteFlag) {
     return self;
 }
 
-extern "C" __declspec(noinline) void func_8004B0B0(void*) {}
+extern "C" __declspec(noinline) void noopAnimVec3(void*) {}
 
-extern "C" __declspec(noinline) void func_8004B0B4(void*) {}
+extern "C" __declspec(noinline) void noopAnimQuat(void*) {}
 
 CActParamAnim::~CActParamAnim() {}
 
@@ -187,7 +187,7 @@ struct CActParamAnimFlagView {
     u32 flags;
 };
 
-bool func_8004B354(CActParamAnim* self, const CActParamAnimData3* value) {
+bool setAnimSubPos(CActParamAnim* self, const CActParamAnimData3* value) {
     CActParamAnimStateView* view = reinterpret_cast<CActParamAnimStateView*>(self);
     CActParamAnimData3* destination;
     if (view->object3A0 == nullptr) goto ret_false;
@@ -196,7 +196,7 @@ bool func_8004B354(CActParamAnim* self, const CActParamAnimData3* value) {
     view->field3A8 = value->x;
     view->field3AC = value->y;
     view->field3B0 = value->z;
-    destination = reinterpret_cast<CActParamAnimData3*>(func_8048315C(view->object3A0));
+    destination = reinterpret_cast<CActParamAnimData3*>(simGetLeafActData(view->object3A0));
     destination->x = value->x;
     destination->y = value->y;
     destination->z = value->z;
@@ -215,7 +215,7 @@ void CActParamAnim_copyTranslation(void* dst, const void* src) {
     *(int*)((char*)dst + 8) = *(int*)((char*)src + 8);
 }
 
-extern "C" __declspec(noinline) void func_8004B3F0(f32* dst, const f32* src) {
+extern "C" __declspec(noinline) void copyVec3Words(f32* dst, const f32* src) {
     u32 a = *(u32*)((char*)src + 0);
     *(u32*)((char*)dst + 0) = a;
     u32 b = *(u32*)((char*)src + 4);
@@ -224,7 +224,7 @@ extern "C" __declspec(noinline) void func_8004B3F0(f32* dst, const f32* src) {
     *(u32*)((char*)dst + 8) = c;
 }
 
-bool func_8004B40C(CActParamAnim* self, const CActParamAnimData3* value) {
+bool setAnimLastPos(CActParamAnim* self, const CActParamAnimData3* value) {
     CActParamAnimStateView* view = reinterpret_cast<CActParamAnimStateView*>(self);
     view->field488 = *reinterpret_cast<const f32*>(&value->y);
     u32 flags = view->field0C | 0x10;
@@ -237,7 +237,7 @@ bool func_8004B40C(CActParamAnim* self, const CActParamAnimData3* value) {
     view->field3A8 = value->x;
     view->field3AC = value->y;
     view->field3B0 = value->z;
-    destination = reinterpret_cast<CActParamAnimData3*>(func_8048315C(view->object3A0));
+    destination = reinterpret_cast<CActParamAnimData3*>(simGetLeafActData(view->object3A0));
     destination->x = value->x;
     destination->y = value->y;
     destination->z = value->z;
@@ -249,7 +249,7 @@ ret_end:
     return result;
 }
 
-extern "C" bool func_8004B4A4(CActParamAnim* self, f32 value) {
+extern "C" bool setTurnAngle(CActParamAnim* self, f32 value) {
     CActParamAnimOwner* owner =
         *reinterpret_cast<CActParamAnimOwner**>(reinterpret_cast<u8*>(self) + 8);
     if (owner != NULL && owner->v3() == 0) {
@@ -268,7 +268,7 @@ void* CActParamAnim::getOwner() {
 
 bool CActParamAnim_isEnabled() { return true; }
 
-bool func_8004B52C(CActParamAnim* self, f32 value) {
+bool setTurnScale(CActParamAnim* self, f32 value) {
     CActParamAnimStateView* view = reinterpret_cast<CActParamAnimStateView*>(self);
     CActParamAnimOwner* owner = view->owner08;
     if (owner == 0 || owner->v3() != 0) {
@@ -285,7 +285,7 @@ bool func_8004B52C(CActParamAnim* self, f32 value) {
             tmp[0] = lbl_eu_80665EA0;
             tmp[2] = lbl_eu_80665EA0;
             CActParamAnimObjVec* dst =
-                reinterpret_cast<CActParamAnimObjVec*>(func_8048315C(obj));
+                reinterpret_cast<CActParamAnimObjVec*>(simGetLeafActData(obj));
             dst->x = *reinterpret_cast<u32*>(&tmp[0]);
             dst->y = *reinterpret_cast<u32*>(&tmp[1]);
             dst->z = *reinterpret_cast<u32*>(&tmp[2]);
@@ -302,11 +302,11 @@ void CActParamAnim_copyRotation(void* dst, const void* src) {
 
 void vec3_set(float *data, float a, float b, float c) { data[0] = a; data[1] = b; data[2] = c; }
 
-extern "C" f32 func_8004B61C(CActParamAnim* self) {
+extern "C" f32 getTurnTarget(CActParamAnim* self) {
     return *(f32*)((char*)self + 0x444);
 }
 
-extern "C" void func_8004B624(CActParamAnim* self, void* object, void* state,
+extern "C" void attachAnimObj(CActParamAnim* self, void* object, void* state,
                               u32 param) {
     CActParamAnimStateView* view = reinterpret_cast<CActParamAnimStateView*>(self);
     view->object3A0 = reinterpret_cast<u8*>(object);
@@ -322,10 +322,10 @@ void bits_clear(uint32_t* ptr, uint32_t mask) {
 }
 
 void CActParamAnim::updateSubAnim() {
-    if (*(int*)((char*)this + 0x3A4) != 0) func_80055AC4((char*)this + 16);
+    if (*(int*)((char*)this + 0x3A4) != 0) pushParamNode((char*)this + 16);
 }
 
-extern "C" void func_8004B6BC(CActParamAnim* self, void* object) {
+extern "C" void releaseAnimObj(CActParamAnim* self, void* object) {
     CActParamAnimObjectView* view = reinterpret_cast<CActParamAnimObjectView*>(self);
     if (view->objectState != 0 && func_80055B88(reinterpret_cast<u8*>(self) + 0x10)) {
         if (view->objectState == reinterpret_cast<u32>(object)) {
@@ -338,12 +338,12 @@ extern "C" void func_8004B6BC(CActParamAnim* self, void* object) {
 
 void CActParamAnim::setOwner(int val) { *(int*)((char*)this + 8) = val; }
 
-extern "C" __declspec(noinline) void func_8004B738(float* destination, const float* source) {
+extern "C" __declspec(noinline) void addVec3f(float* destination, const float* source) {
     *reinterpret_cast<nw4r::math::VEC3*>(destination) +=
         *reinterpret_cast<const nw4r::math::VEC3*>(source);
 }
 
-extern "C" __declspec(noinline) void func_8004B75C(float* destination, const float* source, float scale) {
+extern "C" __declspec(noinline) void scaleVec3f(float* destination, const float* source, float scale) {
     nw4r::math::VEC3 scaled =
         *reinterpret_cast<const nw4r::math::VEC3*>(source) * scale;
     destination[0] = scaled.x;
@@ -361,7 +361,7 @@ float CActParamAnim::getAnimSpeed() const {
     return *(const float*)((const char*)this + 0x390);
 }
 
-extern "C" f32 func_8004B7B8(CActParamAnim* self) {
+extern "C" f32 getAnimPlayRate(CActParamAnim* self) {
     return *(f32*)((char*)self + 0x390);
 }
 
@@ -378,7 +378,7 @@ struct CActParamAnimMotionView {
     f32 vec3Y;
 };
 
-extern "C" void func_8004B7DC(CActParamAnim* self, f32 amount) {
+extern "C" void addAnimHeight(CActParamAnim* self, f32 amount) {
     CActParamAnimMotionView* motion =
         reinterpret_cast<CActParamAnimMotionView*>(self);
     f32 animSpeed = motion->animSpeed;
@@ -395,38 +395,38 @@ int CActParamAnim::checkAnimFlag() {
     return (*(unsigned int *)((char *)this + 12) >> 1) & 1;
 }
 
-extern "C" u32 func_8004B848(const CActParamAnim* self) {
+extern "C" u32 testAnimMoveBit(const CActParamAnim* self) {
     return (*(const u32*)((const u8*)self + 0xC) >> 1) & 1;
 }
 
 float CActParamAnim::getAttachedAnimTime() {
-    extern float func_80484F18(void*);
+    extern float simGetLeafAnimDist(void*);
     void* obj = *(void**)((char*)this + 0x3A0);
-    if (obj) return func_80484F18(obj);
+    if (obj) return simGetLeafAnimDist(obj);
     return lbl_eu_80665EA0;
 }
 
 float CActParamAnim::getAttachedAnimRate() {
-    extern float func_804850A4(void*);
+    extern float simGetLeafAnimDist2(void*);
     void* obj = *(void**)((char*)this + 0x3A0);
-    if (obj != 0) return func_804850A4(obj);
+    if (obj != 0) return simGetLeafAnimDist2(obj);
     return lbl_eu_80665EA0;
 }
 
 void CActParamAnim::callObjUpdate() {
-    extern void func_80484F80(void*);
+    extern void simRefreshFlag8(void*);
     void* obj = *(void**)((char*)this + 0x3A0);
-    if (obj != 0) func_80484F80(obj);
+    if (obj != 0) simRefreshFlag8(obj);
 }
 
 float CActParamAnim::getAttachedAnimScale() {
-    extern float func_80484EB0(void*);
+    extern float simGetLeafDist7B0(void*);
     void* obj = *(void**)((char*)this + 0x3A0);
-    if (obj != 0) return func_80484EB0(obj);
+    if (obj != 0) return simGetLeafDist7B0(obj);
     return lbl_eu_80665EA0;
 }
 
-extern "C" void func_8004B8B0(CActParamAnim* self, u32 param1, u32 param2, f32 value) {
+extern "C" void setSnapFlags(CActParamAnim* self, u32 param1, u32 param2, f32 value) {
     if (param1 != 0) {
         *(f32*)((u8*)self + 0x480) = value;
         u32 flags = *(u32*)((u8*)self + 0xC);
@@ -455,24 +455,24 @@ int func_8004B8F8(CActParamAnim* self, int param) {
     u8* obj = *(u8**)((char*)self + 0x3A0);
     if (!obj) return 0;
     if (param == 0) {
-        return func_80484F18(obj) <= lbl_eu_80665E9C;
+        return simGetLeafAnimDist(obj) <= lbl_eu_80665E9C;
     }
     if (func_8049798C(obj + 0xC) != 0) {
         u8* obj2 = *(u8**)((char*)self + 0x3A0);
-        return func_80485174(obj2) <= lbl_eu_80665E9C;
+        return simGetLeafAnimDist4(obj2) <= lbl_eu_80665E9C;
     }
     return 0;
 }
 
-extern int func_80485464(void*, void*);
-extern int func_80485244(void*);
+extern int simRefreshFadeDist2(void*, void*);
+extern int simRefreshFadeDist(void*);
 int CActParamAnim::callObjFunc(void* param) {
     void* val = *(void**)((char*)this + 0x3A0);
     if (!val) return 0;
     if (!param) {
-        return func_80485244(val);
+        return simRefreshFadeDist(val);
     }
-    return func_80485464(val, param);
+    return simRefreshFadeDist2(val, param);
 }
 
 void* CActParamAnim::getNextChainObj() {
@@ -485,7 +485,7 @@ void* CActParamAnim::getNextChainObj() {
 
 void func_8004B9D4(){}
 
-extern "C" f32 func_8004BC28(f32 value) {
+extern "C" f32 wrapAnglePi(f32 value) {
     // Wrap an angle into [-pi, pi) by adding/subtracting 2*pi.
     while (lbl_eu_8066A1F8 <= value) value -= lbl_eu_8066A1FC;
     while (value < -lbl_eu_8066A1F8) value += lbl_eu_8066A1FC;
@@ -560,7 +560,7 @@ void func_8004BC94(CActParamAnim* self, u32 param) {
                     if ((model & 0x10) == 0 && (model & 0x8) == 0) flag = 1;
                 }
                 u32 local;
-                u32 ret = func_80054170(data, &local, param, b, flag);
+                u32 ret = evalParamBySlot(data, &local, param, b, flag);
                 func_8004BDCC(self, local, ret, view->field2A4, 0);
                 view->field0C &= ~0x200;
             }
@@ -601,9 +601,9 @@ void func_8004BDCC(CActParamAnim* self, u32 param, u32 sel, u32 resId,
         // Rewind the previous anim's playback offset before switching.
         f32 v49c = view->field49C;
         if ((view->field270 & 0x1000) != 0)
-            func_80484E5C(view->object3A0, -v49c);
+            simSetLeafDist7B0(view->object3A0, -v49c);
         else
-            func_80484E5C(view->object3A0, v49c);
+            simSetLeafDist7B0(view->object3A0, v49c);
         view->field0C &= ~1u;
     }
 
@@ -636,7 +636,7 @@ void func_8004BDCC(CActParamAnim* self, u32 param, u32 sel, u32 resId,
                     pos.x = reinterpret_cast<const u32&>(lbl_eu_80665EA0);
                     pos.y = reinterpret_cast<const u32&>(angle);
                     pos.z = reinterpret_cast<const u32&>(lbl_eu_80665EA0);
-                    *reinterpret_cast<CActParamAnimData3*>(func_8048315C(obj)) = pos;
+                    *reinterpret_cast<CActParamAnimData3*>(simGetLeafActData(obj)) = pos;
                 }
             }
         } else if (angle < -pi) {
@@ -653,7 +653,7 @@ void func_8004BDCC(CActParamAnim* self, u32 param, u32 sel, u32 resId,
                     pos.x = reinterpret_cast<const u32&>(lbl_eu_80665EA0);
                     pos.y = reinterpret_cast<const u32&>(angle);
                     pos.z = reinterpret_cast<const u32&>(lbl_eu_80665EA0);
-                    *reinterpret_cast<CActParamAnimData3*>(func_8048315C(obj)) = pos;
+                    *reinterpret_cast<CActParamAnimData3*>(simGetLeafActData(obj)) = pos;
                 }
             }
         } else {
@@ -669,7 +669,7 @@ void func_8004BDCC(CActParamAnim* self, u32 param, u32 sel, u32 resId,
                     pos.x = reinterpret_cast<const u32&>(lbl_eu_80665EA0);
                     pos.y = reinterpret_cast<const u32&>(angle);
                     pos.z = reinterpret_cast<const u32&>(lbl_eu_80665EA0);
-                    *reinterpret_cast<CActParamAnimData3*>(func_8048315C(obj)) = pos;
+                    *reinterpret_cast<CActParamAnimData3*>(simGetLeafActData(obj)) = pos;
                 }
             }
         }
@@ -679,15 +679,15 @@ void func_8004BDCC(CActParamAnim* self, u32 param, u32 sel, u32 resId,
 
     if (sel != 0) {
         s32 frameS = static_cast<s32>(blendFrames);
-        func_80484164(view->object3A0, resId, param, static_cast<u16>(frameS),
+        simBindChrAnimChain(view->object3A0, resId, param, static_cast<u16>(frameS),
                       view->field36C);
     } else {
-        if (func_80055EA0(view->mChildData10) == NULL) view->field4BD = 1;
+        if (getSubObjPlus14(view->mChildData10) == NULL) view->field4BD = 1;
         if (view->field4BD != 0 || (view->field270 & 0x800) == 0) {
-            if (func_80055EBC(view->mChildData10) != 0) {
+            if (hasParamSubObjB(view->mChildData10) != 0) {
                 // Reset the child data blocks before the fresh anim start.
-                func_80054D34(view->mChildData10);
-                func_80055DF0(view->mChildData10);
+                walkParamBlkB(view->mChildData10);
+                resetParamSubB(view->mChildData10);
             }
         }
         s32 frameS = static_cast<s32>(blendFrames);
@@ -714,13 +714,13 @@ void func_8004BDCC(CActParamAnim* self, u32 param, u32 sel, u32 resId,
     }
     f32 speedVal = (speed27 * view->field388) * view->field38C;
     if ((view->field270 & 0x1000) != 0) speedVal = -speedVal;
-    func_80484E5C(view->object3A0, speedVal);
+    simSetLeafDist7B0(view->object3A0, speedVal);
 
     if (((view->field274 & 0x10) != 0 || (view->field274 & 0x8) != 0) &&
         (view->field270 & 0x10) == 0 && (view->field270 & 0x8) == 0 &&
         blendTime > lbl_eu_80665EA0) {
         f32 t = reinterpret_cast<CActParamAnimVt14*>(view)->f03();
-        func_80484F80(view->object3A0, prevBlend * t / blendTime);
+        simRefreshFlag8(view->object3A0, prevBlend * t / blendTime);
     }
 
     if (view->field370 == (s32)param) {
@@ -739,7 +739,7 @@ void func_8004BDCC(CActParamAnim* self, u32 param, u32 sel, u32 resId,
             spd2 = (view->field448 / f2) / spdBase;
         }
         if ((view->field270 & 0x1000) != 0) spd2 = -spd2;
-        func_80484E5C(view->object3A0, (spd2 * view->field388) * view->field38C);
+        simSetLeafDist7B0(view->object3A0, (spd2 * view->field388) * view->field38C);
     }
 
     if ((view->field270 & 0x80) != 0) {
@@ -793,7 +793,7 @@ void func_8004BDCC(CActParamAnim* self, u32 param, u32 sel, u32 resId,
         view->field464 = reinterpret_cast<const f32&>(view->field3AC);
     }
 
-    func_80054980(reinterpret_cast<ActParamWalkHost*>(view->mChildData10));
+    walkParamType9(reinterpret_cast<ActParamWalkHost*>(view->mChildData10));
     view->field4BD = 0;
     view->field4D6 = 0;
     view->field4BE = 0;
@@ -801,10 +801,10 @@ void func_8004BDCC(CActParamAnim* self, u32 param, u32 sel, u32 resId,
     view->field4C0 = 0;
     if (sel == 0) {
         if (func_804978D0(view->object3A0 + 0xC) == 0)
-            func_800554DC(view->mChildData10, 0);
+            flushParamPair(view->mChildData10, 0);
     } else {
         if (func_80497914(view->object3A0 + 0xC) == 0)
-            func_800554DC(view->mChildData10, 1);
+            flushParamPair(view->mChildData10, 1);
     }
     view->field4C4 = 0;
 }
@@ -984,7 +984,7 @@ void func_8004C608(CActParamAnim* self) {
     view->field440 = view->field444;
 }
 
-extern "C" __declspec(noinline) void func_8004CB80(f32* out, const f32* a, const f32* b){
+extern "C" __declspec(noinline) void subVec3f(f32* out, const f32* a, const f32* b){
     nw4r::math::VEC3 result =
         *reinterpret_cast<const nw4r::math::VEC3*>(a) -
         *reinterpret_cast<const nw4r::math::VEC3*>(b);
@@ -993,8 +993,8 @@ extern "C" __declspec(noinline) void func_8004CB80(f32* out, const f32* a, const
     out[2] = result.z;
 }
 
-// extern "C": retail symbol is the unmangled func_8004CBC8.
-extern "C" __declspec(noinline) ml::CVec3* func_8004CBC8(ml::CVec3* vec) {
+// extern "C": retail symbol is the unmangled normVec3.
+extern "C" __declspec(noinline) ml::CVec3* normVec3(ml::CVec3* vec) {
     // Normalize; degenerate (zero-length) vectors are replaced by the zero
     // vector instead (matches the retail lenSq == 0 branch).
     if (vec->x * vec->x + vec->y * vec->y + vec->z * vec->z == lbl_eu_80665EA0) {
@@ -1011,17 +1011,17 @@ float CActParamAnim_atan2Scaled(float y, float x) {
     return lbl_eu_80665ED0 * Atan2FIdx__Q24nw4r4mathFff(y, x);
 }
 
-extern "C" f32 func_8004CC68(f32 angle) {
+extern "C" f32 sinAnimFIdx(f32 angle) {
     extern f32 SinFIdx__Q24nw4r4mathFf(f32);
     return SinFIdx__Q24nw4r4mathFf(lbl_eu_80665ED8 * angle);
 }
 
-extern "C" f32 func_8004CC74(f32 angle) {
+extern "C" f32 cosAnimFIdx(f32 angle) {
     extern f32 CosFIdx__Q24nw4r4mathFf(f32);
     return CosFIdx__Q24nw4r4mathFf(lbl_eu_80665ED8 * angle);
 }
 
-extern "C" int func_8004CC80(CActParamAnim* self) { return ((*(unsigned int*)((unsigned char*)self + 0x260) >> 5) & 1); }
+extern "C" int testAnimBit5(CActParamAnim* self) { return ((*(unsigned int*)((unsigned char*)self + 0x260) >> 5) & 1); }
 
 void func_8004CC8C(CActParamAnim* self) {
     CActParamAnimStateView* view = reinterpret_cast<CActParamAnimStateView*>(self);
@@ -1056,7 +1056,7 @@ void func_8004CC8C(CActParamAnim* self) {
     if (obj != 0) {
         if ((view->field270 & 0x4) != 0) {
             if (view->field390 == lbl_eu_80665EA0) {
-                func_80484E5C(obj, lbl_eu_80665EA0);
+                simSetLeafDist7B0(obj, lbl_eu_80665EA0);
             } else {
                 f32 divisor;
                 if ((view->field0C & 0x10000) != 0) {
@@ -1079,13 +1079,13 @@ void func_8004CC8C(CActParamAnim* self) {
                 if ((view->field270 & 0x1000) != 0) {
                     value = -value;
                 }
-                func_80484E5C(obj, value);
+                simSetLeafDist7B0(obj, value);
             }
         } else {
             if ((view->field270 & 0x1000) != 0) {
-                func_80484E5C(obj, -(view->field388 * view->field38C));
+                simSetLeafDist7B0(obj, -(view->field388 * view->field38C));
             } else {
-                func_80484E5C(obj, view->field388 * view->field38C);
+                simSetLeafDist7B0(obj, view->field388 * view->field38C);
             }
         }
     }
@@ -1095,15 +1095,15 @@ void CActParamAnim::setAnimCounter(int value) {
     *(int*)((char*)this + 0x374) = value;
 }
 
-void func_8004CF00(CActParamAnim* self) {
+extern "C" void tickAnimFrame(CActParamAnim* self) {
     CActParamAnimStateView* view = reinterpret_cast<CActParamAnimStateView*>(self);
     if ((view->field0C & 0x800) != 0) return;
     if (view->object3A0 != 0) {
         // The sub-object's current position is read as ints and re-floated
         // (retail: fctiwz + lbl_eu_80665EE8 magic) before the state sync call.
-        f32 v1 = (f32)(s32)func_80485174(view->object3A0);
-        f32 v2 = (f32)(s32)func_80484F18(view->object3A0);
-        func_80053F7C(reinterpret_cast<CActParamData*>(view->mChildData10), v2, v1);
+        f32 v1 = (f32)(s32)simGetLeafAnimDist4(view->object3A0);
+        f32 v2 = (f32)(s32)simGetLeafAnimDist(view->object3A0);
+        updateParamFloats(reinterpret_cast<CActParamData*>(view->mChildData10), v2, v1);
         f32 rate = view->field388;
         f32 t = func_80496288(*(void**)(view->object3A0 + 4));
         view->field390 = t * rate;
@@ -1113,9 +1113,9 @@ void func_8004CF00(CActParamAnim* self) {
         }
     }
     func_8004C608(self);
-    func_80055EE4(view->mChildData10);
-    func_80054A3C(view->mChildData10);
-    func_80055F08(view->mChildData10);
+    saveParamShadow(view->mChildData10);
+    checkParamBlks(view->mChildData10);
+    clearParamShadow(view->mChildData10);
     func_8004CC8C(self);
     reinterpret_cast<CActParamAnimVtE4*>(self)->dispatchE4();
     if ((view->field0C & 0x80000) != 0 && (view->field270 & 0x20) == 0) {
@@ -1134,13 +1134,13 @@ int calcAnimBlendWeight__13CActParamAnimFv(CActParamAnim* self, u32 param) {
     CActParamAnimStateView* view = reinterpret_cast<CActParamAnimStateView*>(self);
     if (param != 0) {
         int result = 1;
-        if (func_80485464(view->object3A0, param) == 0) {
+        if (simRefreshFadeDist2(view->object3A0, param) == 0) {
             s32 v;
             if (param != 0)
                 v = view->field33C;
             else
                 v = view->field2BC;
-            float progress = func_80485174(view->object3A0);
+            float progress = simGetLeafAnimDist4(view->object3A0);
             // Int threshold widened via the 0x4330 magic cast (retail
             // xoris/lis/fsubs template); the pool cookie it synthesizes maps
             // to lbl_eu_80665EE8 through retail_reloc_map.json.
@@ -1149,13 +1149,13 @@ int calcAnimBlendWeight__13CActParamAnimFv(CActParamAnim* self, u32 param) {
         return result;
     }
     int result = 1;
-    if (func_80485244(view->object3A0) == 0) {
+    if (simRefreshFadeDist(view->object3A0) == 0) {
         s32 v;
         if (param != 0)
             v = view->field33C;
         else
             v = view->field2BC;
-        float progress = func_80484F18(view->object3A0);
+        float progress = simGetLeafAnimDist(view->object3A0);
         if (!(progress >= (f32)v)) result = 0;
     }
     return result;
@@ -1171,7 +1171,7 @@ int func_8004D194__13CActParamAnimFv(CActParamAnim* self, u32 param, u32 arg2) {
     // Dispatch through the vtable slot at +0x80 (retail: lwz r12, 0x80(r12));
     // proceed unless BOTH the virtual call and the child reset return 0.
     if (reinterpret_cast<CActParamAnimVt80*>(self)->dispatch80(arg2) != 0 ||
-        func_80054A24(view->mChildData10, 0) != 0) {
+        getParamByteSel(view->mChildData10, 0) != 0) {
         if (view->field30 >= 0) {
             view->field374 = view->field30;
         }
@@ -1192,7 +1192,7 @@ int func_8004D194__13CActParamAnimFv(CActParamAnim* self, u32 param, u32 arg2) {
                     u32 m = view->field270;
                     if ((m & 0x10) == 0 && (m & 0x8) == 0) flag = 1;
                 }
-                u32 ret = func_80054170(data, &localSmall, param, b, flag);
+                u32 ret = evalParamBySlot(data, &localSmall, param, b, flag);
                 func_8004BDCC(self, localSmall, ret, view->field2A4, 0);
                 view->field0C &= ~0x200;
             }
@@ -1250,7 +1250,7 @@ int func_8004D2F8__13CActParamAnimFv(CActParamAnim* self, u32 param) {
                 u32 m = view->field270;
                 if ((m & 0x10) == 0 && (m & 0x8) == 0) flag = 1;
             }
-            u32 ret = func_80054170(view->mChildData10, &localSmall, param, b, flag);
+            u32 ret = evalParamBySlot(view->mChildData10, &localSmall, param, b, flag);
             func_8004BDCC(self, localSmall, ret, view->field2A4, 0);
             view->field0C &= ~0x200;
         }
@@ -1324,7 +1324,7 @@ int func_8004D4AC__13CActParamAnimFv(CActParamAnim* self, u32 param) {
                 u32 m = view->field270;
                 if ((m & 0x10) == 0 && (m & 0x8) == 0) flag = 1;
             }
-            u32 ret = func_80054170(view->mChildData10, &localSmall, param, b, flag);
+            u32 ret = evalParamBySlot(view->mChildData10, &localSmall, param, b, flag);
             func_8004BDCC(self, localSmall, ret, view->field2A4, 0);
             view->field0C &= ~0x200;
         }
@@ -1378,7 +1378,7 @@ int func_8004D650__13CActParamAnimFv(CActParamAnim* self, u32 param) {
                             u32 m = view->field270;
                             if ((m & 0x10) == 0 && (m & 0x8) == 0) flag = 1;
                         }
-                        u32 ret = func_80054170(view->mChildData10, &localSmall, param, b, flag);
+                        u32 ret = evalParamBySlot(view->mChildData10, &localSmall, param, b, flag);
                         func_8004BDCC(self, localSmall, ret, view->field2A4, 0);
                         view->field0C &= ~0x200;
                     }
@@ -1428,7 +1428,7 @@ int func_8004D7EC__13CActParamAnimFv(CActParamAnim* self, u32 param) {
                         u32 m = view->field270;
                         if ((m & 0x10) == 0 && (m & 0x8) == 0) flag = 1;
                     }
-                    u32 ret = func_80054170(data, &localSmall, param, b, flag);
+                    u32 ret = evalParamBySlot(data, &localSmall, param, b, flag);
                     func_8004BDCC(self, localSmall, ret, view->field2A4, 0);
                     view->field0C &= ~0x200;
                 }
@@ -1496,7 +1496,7 @@ int func_8004D950__13CActParamAnimFv(CActParamAnim* self, u32 param) {
                     u32 m = view->field270;
                     if ((m & 0x10) == 0 && (m & 0x8) == 0) flag = 1;
                 }
-                u32 ret = func_80054170(data, &localSmall, param, b, flag);
+                u32 ret = evalParamBySlot(data, &localSmall, param, b, flag);
                 func_8004BDCC(self, localSmall, ret, view->field2A4, 0);
                 view->field0C &= ~0x200;
             }
@@ -1528,66 +1528,66 @@ void CActParamAnim::clearEffObj() {
 }
 
 
-extern "C" void* func_8004B344(CActParamAnim* self) {
+extern "C" void* getAnimChild(CActParamAnim* self) {
     return reinterpret_cast<u8*>(self) + 16;
 }
 
-extern "C" f32 func_8004B34C(CActParamAnim* self) {
+extern "C" f32 getAnimWalkKmh(CActParamAnim* self) {
     return *(f32*)(reinterpret_cast<u8*>(self) + 0x43C);
 }
 
-extern "C" void* func_8004B51C(CActParamAnim* self) {
+extern "C" void* getAnimOwner(CActParamAnim* self) {
     return *(void**)(reinterpret_cast<u8*>(self) + 8);
 }
 
-extern "C" u32 func_8004B524() {
+extern "C" u32 animAlwaysTrue() {
     return 1;
 }
 
-extern "C" void func_8004B730(CActParamAnim* self, void* val) {
+extern "C" void setAnimOwner(CActParamAnim* self, void* val) {
     *(void**)(reinterpret_cast<u8*>(self) + 8) = val;
 }
 
-extern "C" void func_8004B840(CActParamAnim* self, f32 val) {
+extern "C" void setAnimHeight(CActParamAnim* self, f32 val) {
     *(f32*)(reinterpret_cast<u8*>(self) + 0x3C4) = val;
 }
 
-extern "C" void func_8004B5F0(void* dstObj, const f32* srcVec) {
+extern "C" void storeObjVec3(void* dstObj, const f32* srcVec) {
     u8* base = reinterpret_cast<u8*>(dstObj);
     *(u32*)(base + 12) = *(const u32*)&srcVec[0];
     *(u32*)(base + 16) = *(const u32*)&srcVec[1];
     *(u32*)(base + 20) = *(const u32*)&srcVec[2];
 }
 
-extern "C" void func_8004B60C(void* out, f32 a, f32 b, f32 c) {
+extern "C" void writeVec3f(void* out, f32 a, f32 b, f32 c) {
     *(f32*)(reinterpret_cast<u8*>(out) + 0) = a;
     *(f32*)(reinterpret_cast<u8*>(out) + 4) = b;
     *(f32*)(reinterpret_cast<u8*>(out) + 8) = c;
 }
 
-extern "C" void func_8004B694(u32* flags, u32 mask) {
+extern "C" void clearFlagMask(u32* flags, u32 mask) {
     *flags &= ~mask;
 }
 
-extern "C" void func_8004B79C(f32* out, const f32* src) {
+extern "C" void copyVec3f(f32* out, const f32* src) {
     out[0] = src[0];
     out[1] = src[1];
     out[2] = src[2];
 }
 
-extern "C" void func_8004B7C0(CActParamAnim* self, const u32* srcVec) {
+extern "C" void setAnimPosVec(CActParamAnim* self, const u32* srcVec) {
     u8* base = reinterpret_cast<u8*>(self);
     *(u32*)(base + 0x3C0) = srcVec[0];
     *(u32*)(base + 0x3C4) = srcVec[1];
     *(u32*)(base + 0x3C8) = srcVec[2];
 }
 
-extern "C" int func_8004B3D8(u32* flags, u32 mask) {
+extern "C" int testFlagMask(u32* flags, u32 mask) {
     u32 tmp = *flags & mask;
     return ((-(u32)tmp | tmp) >> 31) & 1;
 }
 
-extern "C" void* func_8004B9B8(CActParamAnim* self) {
+extern "C" void* getAnimChain(CActParamAnim* self) {
     void* ptr = *(void**)(reinterpret_cast<u8*>(self) + 8);
     if (ptr != NULL) {
         return *(void**)(reinterpret_cast<u8*>(ptr) + 24);
@@ -1640,7 +1640,7 @@ int func_8004DDD0__13CActParamAnimFv(CActParamAnim* self, u32 param) {
                         u32 m = view->field270;
                         if ((m & 0x10) == 0 && (m & 0x8) == 0) flag = 1;
                     }
-                    u32 ret = func_80054170(view->mChildData10, &local, param, b, flag);
+                    u32 ret = evalParamBySlot(view->mChildData10, &local, param, b, flag);
                     func_8004BDCC(self, local, ret, view->field2A4, 0);
                     view->field0C &= ~0x200;
                 }
@@ -1705,7 +1705,7 @@ int func_8004DF9C__13CActParamAnimFv(CActParamAnim* self, u32 param) {
                         u32 m = view->field270;
                         if ((m & 0x10) == 0 && (m & 0x8) == 0) flag = 1;
                     }
-                    u32 ret = func_80054170(view->mChildData10, &local, param, b, flag);
+                    u32 ret = evalParamBySlot(view->mChildData10, &local, param, b, flag);
                     func_8004BDCC(self, local, ret, view->field2A4, 0);
                     view->field0C &= ~0x200;
                 }
@@ -1770,7 +1770,7 @@ int func_8004E168__13CActParamAnimFv(CActParamAnim* self, u32 param) {
                         u32 m = view->field270;
                         if ((m & 0x10) == 0 && (m & 0x8) == 0) flag = 1;
                     }
-                    u32 ret = func_80054170(view->mChildData10, &local, param, b, flag);
+                    u32 ret = evalParamBySlot(view->mChildData10, &local, param, b, flag);
                     func_8004BDCC(self, local, ret, view->field2A4, 0);
                     view->field0C &= ~0x200;
                 }
@@ -1835,7 +1835,7 @@ int func_8004E334__13CActParamAnimFv(CActParamAnim* self, u32 param) {
                         u32 m = view->field270;
                         if ((m & 0x10) == 0 && (m & 0x8) == 0) flag = 1;
                     }
-                    u32 ret = func_80054170(view->mChildData10, &local, param, b, flag);
+                    u32 ret = evalParamBySlot(view->mChildData10, &local, param, b, flag);
                     func_8004BDCC(self, local, ret, view->field2A4, 0);
                     view->field0C &= ~0x200;
                 }
@@ -1907,7 +1907,7 @@ int func_8004E500__13CActParamAnimFv(CActParamAnim* self, u32 param) {
                             flag = 1;
                         }
                     }
-                    u32 ret = func_80054170(view->mChildData10, &localSmall, p, b, flag);
+                    u32 ret = evalParamBySlot(view->mChildData10, &localSmall, p, b, flag);
                     func_8004BDCC(self, localSmall, ret, view->field2A4, 0);
                     view->field0C &= ~0x200;
                 }
@@ -1963,7 +1963,7 @@ int func_8004E694__13CActParamAnimFv(CActParamAnim* self, u32 param) {
                         u32 m = view->field270;
                         if ((m & 0x10) == 0 && (m & 0x8) == 0) flag = 1;
                     }
-                    u32 ret = func_80054170(view->mChildData10, &localSmall, param, b, flag);
+                    u32 ret = evalParamBySlot(view->mChildData10, &localSmall, param, b, flag);
                     func_8004BDCC(self, localSmall, ret, view->field2A4, 0);
                     view->field0C &= ~0x200;
                 }
@@ -2015,7 +2015,7 @@ int func_8004E828__13CActParamAnimFv(CActParamAnim* self, u32 param) {
                 u32 m = view->field270;
                 if ((m & 0x10) == 0 && (m & 0x8) == 0) flag = 1;
             }
-            u32 ret = func_80054170(view->mChildData10, &localSmall, param, b, flag);
+            u32 ret = evalParamBySlot(view->mChildData10, &localSmall, param, b, flag);
             func_8004BDCC(self, localSmall, ret, view->field2A4, 0);
             view->field0C &= ~0x200;
         }
@@ -2037,8 +2037,8 @@ void func_8004E9EC__13CActParamAnimFv(CActParamAnim* self) {
 
 // noinline: retail calls this from func_80051CD4; inlined copies would
 // duplicate the FSqrt warning block into the caller.
-// extern "C": retail symbol is the unmangled func_8004EC78.
-extern "C" __declspec(noinline) f32 func_8004EC78(f32 value) {
+// extern "C": retail symbol is the unmangled safeFSqrt.
+extern "C" __declspec(noinline) f32 safeFSqrt(f32 value) {
     // nw4r FSqrt semantics: warn on negative input, then x<=0 ? 0 : x*FrSqrt(x).
     if (!(value >= lbl_eu_80665EA0)) {
         nw4r::db::Warning((const char*)lbl_eu_80526324, 0x273,
@@ -2106,7 +2106,7 @@ int func_8004ECF4__13CActParamAnimFv(CActParamAnim* self, u32 param) {
                     flag2 = 1;
                 }
                 u8 b = sview->field4BD;
-                u32 ret = func_80054170(sview->mChildData10, &localSmall,
+                u32 ret = evalParamBySlot(sview->mChildData10, &localSmall,
                                         param, b, flag2);
                 func_8004BDCC(self, localSmall, ret, sview->field2A4, 0);
                 sview->field0C &= ~0x200;
@@ -2218,7 +2218,7 @@ int func_8004F1E4__13CActParamAnimFv(CActParamAnim* self, u32 param, s32 val) {
                 flag = 1;
             }
         }
-        u32 ret = func_80054170(view->mChildData10, &localSmall, param, b, flag);
+        u32 ret = evalParamBySlot(view->mChildData10, &localSmall, param, b, flag);
         func_8004BDCC(self, localSmall, ret, view->field2A4, 0);
         view->field0C &= ~0x200;
     } else {
@@ -2262,7 +2262,7 @@ int func_8004F334__13CActParamAnimFv(CActParamAnim* self, u32 param, s32 val) {
                         model = view->field270;
                         if ((model & 0x10) == 0 && (model & 0x8) == 0) flag = 1;
                     }
-                    u32 ret = func_80054170(data, &localSmall, param, b, flag);
+                    u32 ret = evalParamBySlot(data, &localSmall, param, b, flag);
                     func_8004BDCC(self, localSmall, ret, view->field2A4, 0);
                     view->field0C &= ~0x200;
                 }
@@ -2308,7 +2308,7 @@ int func_8004F484__13CActParamAnimFv(CActParamAnim* self, u32 param, s32 val) {
                         u32 m = view->field270;
                         if ((m & 0x10) == 0 && (m & 0x8) == 0) flag = 1;
                     }
-                    u32 ret = func_80054170(view->mChildData10, &localSmall, param, view->field4BD, flag);
+                    u32 ret = evalParamBySlot(view->mChildData10, &localSmall, param, view->field4BD, flag);
                     func_8004BDCC(self, localSmall, ret, view->field2A4, 0);
                     view->field0C &= ~0x200;
                 }
@@ -2359,7 +2359,7 @@ extern "C" int func_8004F5FC__13CActParamAnimFv(CActParamAnim* self,
                     if ((model & 0x10) == 0 && (model & 0x8) == 0) flag = 1;
                 }
                 u32 local;
-                u32 ret = func_80054170(data, &local, animId, b, flag);
+                u32 ret = evalParamBySlot(data, &local, animId, b, flag);
                 func_8004BDCC(self, local, ret, view->field2A4, 0);
                 view->field0C &= ~0x200;
             }
@@ -2399,7 +2399,7 @@ extern "C" int func_8004F5FC__13CActParamAnimFv(CActParamAnim* self,
                 if ((model & 0x10) == 0 && (model & 0x8) == 0) flag = 1;
             }
             u32 local;
-            u32 ret = func_80054170(data, &local, animId, b, flag);
+            u32 ret = evalParamBySlot(data, &local, animId, b, flag);
             func_8004BDCC(self, local, ret, view->field2A4, 0);
             view->field0C &= ~0x200;
         }
@@ -2445,7 +2445,7 @@ void func_8004FAB4__13CActParamAnimFv(CActParamAnim* self, u32 param) {
                     u32 m = view->field270;
                     if ((m & 0x10) == 0 && (m & 0x8) == 0) flag = 1;
                 }
-                u32 ret = func_80054170(view->mChildData10, &local, param, b, flag);
+                u32 ret = evalParamBySlot(view->mChildData10, &local, param, b, flag);
                 func_8004BDCC(self, local, ret, view->field2A4, 0);
                 view->field0C &= ~0x200;
             }
@@ -2497,7 +2497,7 @@ void func_8004FAB4__13CActParamAnimFv(CActParamAnim* self, u32 param) {
 // copy-local (coalesces, identical), moving localSmall/localBig into their
 // branches (identical), volatile flag clears (canonicalized, identical),
 // reference view alias instead of pointer (identical), nested-call form
-// (func_80054170 inlined into the BDCC arg list, canonicalized, identical).
+// (evalParamBySlot inlined into the BDCC arg list, canonicalized, identical).
 int func_8004FCE0__13CActParamAnimFv(CActParamAnim* self, u32 param) {
     CActParamAnimStateView* view = reinterpret_cast<CActParamAnimStateView*>(self);
     u32 localSmall;
@@ -2523,7 +2523,7 @@ int func_8004FCE0__13CActParamAnimFv(CActParamAnim* self, u32 param) {
                             if ((m & 0x10) == 0 && (m & 0x8) == 0) flag = 1;
                         }
                         u32 localSmall;
-                        u32 ret = func_80054170(view->mChildData10, &localSmall, param, view->field4BD, flag);
+                        u32 ret = evalParamBySlot(view->mChildData10, &localSmall, param, view->field4BD, flag);
                         func_8004BDCC(self, localSmall, ret, view->field2A4, 0);
                         view->field0C &= ~0x200;
                     }
@@ -2567,7 +2567,7 @@ int func_8004FE58__13CActParamAnimFv(CActParamAnim* self, u32 param) {
                     u32 m = view->field270;
                     if ((m & 0x10) == 0 && (m & 0x8) == 0) flag = 1;
                 }
-                u32 ret = func_80054170(view->mChildData10, &localSmall, param, view->field4BD, flag);
+                u32 ret = evalParamBySlot(view->mChildData10, &localSmall, param, view->field4BD, flag);
                 func_8004BDCC(self, localSmall, ret, view->field2A4, 0);
                 view->field0C &= ~0x200;
             }
@@ -2713,7 +2713,7 @@ void func_8004FFBC__13CActParamAnimFv(CActParamAnim* self) {
                                lbl_eu_80665EC8));
 }
 
-extern "C" __declspec(noinline) f32 func_800504BC(const f32* a, const f32* b){
+extern "C" __declspec(noinline) f32 dotVec3f(const f32* a, const f32* b){
     return nw4r::math::VEC3Dot(
         reinterpret_cast<const nw4r::math::VEC3*>(a),
         reinterpret_cast<const nw4r::math::VEC3*>(b));
@@ -2746,7 +2746,7 @@ int func_80050744__13CActParamAnimFv(CActParamAnim* self, u32 param) {
                         u32 m = view->field270;
                         if ((m & 0x10) == 0 && (m & 0x8) == 0) flag = 1;
                     }
-                    u32 ret = func_80054170(data, &localSmall, param, b, flag);
+                    u32 ret = evalParamBySlot(data, &localSmall, param, b, flag);
                     func_8004BDCC(self, localSmall, ret, view->field2A4, 0);
                     view->field0C &= ~0x200;
                 }
@@ -2769,7 +2769,7 @@ int func_80050744__13CActParamAnimFv(CActParamAnim* self, u32 param) {
 // val against our own eff timer (+0x4C0) when armed, else against the owner
 // object's +0x18 timer (or fallback timer +0x4B4 when no owner). On a match
 // latches val into +0x4C4 (only on the +0x4C0 half), then runs the same
-// small (<0x68, func_80054170) / big (func_80054614) split as func_8004F5FC.
+// small (<0x68, evalParamBySlot) / big (func_80054614) split as func_8004F5FC.
 // Each half shares one pass/fail exit pair placed between halves (as retail
 // emits them), hence the gotos.
 #define ACT_PARAM_ANIM_START_SMALL(outLocal, passLabel)                         \
@@ -2790,7 +2790,7 @@ int func_80050744__13CActParamAnimFv(CActParamAnim* self, u32 param) {
             if ((m & 0x10) == 0 && (m & 0x8) == 0) flag = 1;                    \
         }                                                                       \
         u32 startRet =                                                          \
-            func_80054170(view->mChildData10, &outLocal, param, b, flag);        \
+            evalParamBySlot(view->mChildData10, &outLocal, param, b, flag);        \
         func_8004BDCC(self, outLocal, startRet, view->field2A4, 0);              \
         view->field0C &= ~0x200u;                                               \
     } while (0)
@@ -2908,7 +2908,7 @@ int func_80050C50__13CActParamAnimFv(CActParamAnim* self, u32 param, int rngArg)
                         u32 m = view->field270;
                         if ((m & 0x10) == 0 && (m & 0x8) == 0) flag = 1;
                     }
-                    u32 ret = func_80054170(data, &localSmall, param, b, flag);
+                    u32 ret = evalParamBySlot(data, &localSmall, param, b, flag);
                     func_8004BDCC(self, localSmall, ret, view->field2A4, 0);
                     view->field0C &= ~0x200;
                 }
@@ -2959,7 +2959,7 @@ int func_80050DB0__13CActParamAnimFv(CActParamAnim* self, u32 param) {
                 u32 m = view->field270;
                 if ((m & 0x10) == 0 && (m & 0x8) == 0) flag = 1;
             }
-            u32 ret = func_80054170(view->mChildData10, &localSmall, param, b, flag);
+            u32 ret = evalParamBySlot(view->mChildData10, &localSmall, param, b, flag);
             func_8004BDCC(self, localSmall, ret, view->field2A4, 0);
             view->field0C &= ~0x200;
         }
@@ -2992,7 +2992,7 @@ int func_80050DB0__13CActParamAnimFv(CActParamAnim* self, u32 param) {
 //   makes MWCC emit retail's non-inverted beq/b pair around the field27C
 //   load and restores exact size parity (was -4B with if-statement form).
 // - Ruled out: hoisted `f32 twoPi` local (CSEs back to one load, identical
-//   output); calling func_8004BC28 directly (inlines to identical body);
+//   output); calling wrapAnglePi directly (inlines to identical body);
 //   dropping the v444 temp (flips field440/444 load order, worse); clearing
 //   flags via CActParamAnimFlagView cast aliasing barrier (sees through it,
 //   identical); explicit `u32* out = &localSmall` pointer var (hoists param
@@ -3013,7 +3013,7 @@ int func_80050F5C__13CActParamAnimFv(CActParamAnim* self, u32 param) {
     CActParamAnimStateView* view = reinterpret_cast<CActParamAnimStateView*>(self);
     u32 localSmall;
     u32 localBig;
-    // Wrap the anim angle delta into [-pi, pi) (same wrap as func_8004BC28),
+    // Wrap the anim angle delta into [-pi, pi) (same wrap as wrapAnglePi),
     // then gate: fail when the scaled wrapped angle exceeds the upper bound.
     // Residual known diff: retail hoists the loop1 lbl_eu_8066A1FC load to
     // +0x08 (before the spills); every source shape tried keeps it after the
@@ -3044,7 +3044,7 @@ int func_80050F5C__13CActParamAnimFv(CActParamAnim* self, u32 param) {
                         u32 m = view->field270;
                         if ((m & 0x10) == 0 && (m & 0x8) == 0) flag = 1;
                     }
-                    u32 ret = func_80054170(view->mChildData10, &localSmall, param, b, flag);
+                    u32 ret = evalParamBySlot(view->mChildData10, &localSmall, param, b, flag);
                     func_8004BDCC(self, localSmall, ret, view->field2A4, 0);
                     view->field0C &= ~0x200;
                 }
@@ -3095,7 +3095,7 @@ int func_800510FC__13CActParamAnimFv(CActParamAnim* self, u32 param) {
                 u32 m = view->field270;
                 if ((m & 0x10) == 0 && (m & 0x8) == 0) flag = 1;
             }
-            u32 ret = func_80054170(view->mChildData10, &localSmall, param, b, flag);
+            u32 ret = evalParamBySlot(view->mChildData10, &localSmall, param, b, flag);
             func_8004BDCC(self, localSmall, ret, view->field2A4, 0);
             view->field0C &= ~0x200;
         }
@@ -3117,7 +3117,7 @@ int func_800512A8__13CActParamAnimFv(CActParamAnim* self, u32 param) {
     CActParamAnimStateView* view = reinterpret_cast<CActParamAnimStateView*>(self);
     u32 localSmall;
     u32 localBig;
-    // Wrap the anim angle delta into [-pi, pi) (same wrap as func_8004BC28;
+    // Wrap the anim angle delta into [-pi, pi) (same wrap as wrapAnglePi;
     // for-loop form canonicalizes identically), then gate: fail when the
     // scaled wrapped angle falls below the lower bound.
     f32 v444 = view->field444;
@@ -3145,7 +3145,7 @@ int func_800512A8__13CActParamAnimFv(CActParamAnim* self, u32 param) {
                         u32 m = view->field270;
                         if ((m & 0x10) == 0 && (m & 0x8) == 0) flag = 1;
                     }
-                    u32 ret = func_80054170(data, &localSmall, param, b, flag);
+                    u32 ret = evalParamBySlot(data, &localSmall, param, b, flag);
                     func_8004BDCC(self, localSmall, ret, view->field2A4, 0);
                     view->field0C &= ~0x200;
                 }
@@ -3181,7 +3181,7 @@ int func_800512A8__13CActParamAnimFv(CActParamAnim* self, u32 param) {
 // high-level C++; scheduler tie-break wall family (func_8004BC94 packet).
 // Semantics fully reconstructed; residual is confined to the
 // call-arg materialization region. Retail hoists all four arg setups of the
-// func_80054170 call (`or r5,r4,r4` param copy, `addi r4,sp+8` &out,
+// evalParamBySlot call (`or r5,r4,r4` param copy, `addi r4,sp+8` &out,
 // `li r7,0` flag init, `addi r3,0x10` child-data) ABOVE the conditional
 // field27C fallback / field270 bit tests, which also forces member reloads
 // onto r31. Every MWCC build defers arg setup to the call site, keeping the
@@ -3218,7 +3218,7 @@ int func_80051448__13CActParamAnimFv(CActParamAnim* self, u32 param) {
                     u32 m = view->field270;
                     if ((m & 0x10) == 0 && (m & 0x8) == 0) flag = 1;
                 }
-                u32 ret = func_80054170(data, &local, param, b, flag);
+                u32 ret = evalParamBySlot(data, &local, param, b, flag);
                 func_8004BDCC(self, local, ret, view->field2A4, 0);
                 view->field0C &= ~0x200;
             }
@@ -3259,7 +3259,7 @@ int func_80051584__13CActParamAnimFv(CActParamAnim* self, u32 param) {
                     if ((m & 0x10) == 0 && (m & 0x8) == 0) flag = 1;
                 }
                 u32 local;
-                u32 ret = func_80054170(data, &local, param, b, flag);
+                u32 ret = evalParamBySlot(data, &local, param, b, flag);
                 func_8004BDCC(self, local, ret, view->field2A4, 0);
                 view->field0C &= ~0x200;
             }
@@ -3302,7 +3302,7 @@ int func_800516C0__13CActParamAnimFv(CActParamAnim* self, u32 param) {
                     u32 m = view->field270;
                     if ((m & 0x10) == 0 && (m & 0x8) == 0) flag = 1;
                 }
-                u32 ret = func_80054170(data, &localSmall, param, b, flag);
+                u32 ret = evalParamBySlot(data, &localSmall, param, b, flag);
                 func_8004BDCC(self, localSmall, ret, view->field2A4, 0);
                 view->field0C &= ~0x200;
             }
@@ -3346,7 +3346,7 @@ int func_800517FC__13CActParamAnimFv(CActParamAnim* self, u32 param) {
                         u32 m = view->field270;
                         if ((m & 0x10) == 0 && (m & 0x8) == 0) flag = 1;
                     }
-                    u32 ret = func_80054170(data, &localSmall, param, b, flag);
+                    u32 ret = evalParamBySlot(data, &localSmall, param, b, flag);
                     func_8004BDCC(self, localSmall, ret, view->field2A4, 0);
                     view->field0C &= ~0x200;
                 }
@@ -3392,7 +3392,7 @@ int func_8005194C__13CActParamAnimFv(CActParamAnim* self, u32 param) {
                         u32 m = view->field270;
                         if ((m & 0x10) == 0 && (m & 0x8) == 0) flag = 1;
                     }
-                    u32 ret = func_80054170(data, &localSmall, param, b, flag);
+                    u32 ret = evalParamBySlot(data, &localSmall, param, b, flag);
                     func_8004BDCC(self, localSmall, ret, view->field2A4, 0);
                     view->field0C &= ~0x200;
                 }
@@ -3421,7 +3421,7 @@ void CActParamAnim::setActiveFlag(s32 param) {
     }
 }
 
-extern "C" int func_80051AD0(CActParamAnim* self) {
+extern "C" int isSpeedInRange(CActParamAnim* self) {
     CActParamAnimStateView* view = reinterpret_cast<CActParamAnimStateView*>(self);
     CActParamAnimOwner* owner =
         *reinterpret_cast<CActParamAnimOwner**>(reinterpret_cast<u8*>(self) + 8);
@@ -3436,13 +3436,13 @@ extern "C" int func_80051AD0(CActParamAnim* self) {
     return result;
 }
 
-extern "C" int func_80051B38(CActParamAnim* self) {
+extern "C" int isSpeedAbove(CActParamAnim* self) {
     void* owner = *(void**)((u8*)self + 8);
     if (owner == NULL) return 0;
     f32 animSpeed = *(f32*)((u8*)self + 0x394);
     if (lbl_eu_80665EA0 == animSpeed) return 0;
     f32 val = *(f32*)((u8*)owner + 0x14) * *(f32*)((u8*)self + 0x430);
-    // 1 while val exceeds the upper bound (mirror of func_80051AD0's first condition).
+    // 1 while val exceeds the upper bound (mirror of isSpeedInRange's first condition).
     return val > *(f32*)((u8*)self + 0x434) ? 1 : 0;
 }
 
@@ -3474,17 +3474,17 @@ void CActParamAnim::startAnimC() {
     *(volatile float*)((char*)this + 0x484) = tmp;
 }
 
-extern "C" int func_80051BF4(CActParamAnim* self) {
+extern "C" int isSpeedBelow(CActParamAnim* self) {
     void* owner = *(void**)((u8*)self + 8);
     if (owner == NULL) return 1;
     f32 animSpeed = *(f32*)((u8*)self + 0x394);
     if (lbl_eu_80665EA0 == animSpeed) return 1;
     f32 val = *(f32*)((u8*)owner + 0x14) * *(f32*)((u8*)self + 0x430);
-    // 1 while val is below the lower bound (mirror of func_80051AD0's second condition).
+    // 1 while val is below the lower bound (mirror of isSpeedInRange's second condition).
     return val < lbl_eu_80665ECC ? 1 : 0;
 }
 
-extern "C" void func_80051C40(CActParamAnim* self) {
+extern "C" void shiftAnimPos(CActParamAnim* self) {
     CActParamAnimStateView* view = reinterpret_cast<CActParamAnimStateView*>(self);
     // Copy 0x3A8..0x3B0 to 0x3B4..0x3BC, then flag juggling. The flag word is
     // shared state (retail re-loads it after each store), so access it through
@@ -3524,12 +3524,12 @@ void CActParamAnim::stopAnim() {
 // Open-item packet (best 689 mismatch / 645 structural / 44 reg-swap,
 // decomp 2796B vs retail 2156B, frame 0x1B0 vs retail 0x1A0):
 // - All same-TU helper inlining is now eliminated via __declspec(noinline)
-//   on func_8004CBC8/CC68/CC74/EC78/504BC/B3F0/CB80/B75C/B738/B0B0/B0B4/
+//   on normVec3/CC68/CC74/EC78/504BC/B3F0/CB80/B75C/B738/B0B0/B0B4/
 //   52584/526C0/5274C/52780/527B0; those definitions also needed extern "C"
 //   (unmangled retail symbols). Do NOT revert these - reverting regresses
 //   size by ~1000B and reintroduces mangled reloc names.
 // - Retail call structure reproduced: BC28 wraps on all three clamp
-//   else-branches, dead func_8004B61C tail calls, wrapper trig (func_8004CC74/
+//   else-branches, dead getTurnTarget tail calls, wrapper trig (cosAnimFIdx/
 //   CC68), signed s16 counter (lha/subi/sth).
 // - Ruled out: removing the flagp local (neutral, MWCC CSEs &s->field0C);
 //   direct nw4r::math trig calls (wrong relocs); macro with setCounter param
@@ -3549,25 +3549,25 @@ void CActParamAnim::stopAnim() {
     do {                                                                          \
         if (iv->field408 == lbl_eu_80665EA0 && iv->field40C == lbl_eu_80665EA0 && \
             iv->field410 == lbl_eu_80665EA0) {                                     \
-            func_8004B3F0(&iv->field408,                                           \
+            copyVec3Words(&iv->field408,                                           \
                           reinterpret_cast<const f32*>(&ml::CVec3::unitY));        \
         } else {                                                                  \
-            func_8004CBC8(reinterpret_cast<ml::CVec3*>(&iv->field408));            \
+            normVec3(reinterpret_cast<ml::CVec3*>(&iv->field408));            \
         }                                                                         \
         nw4r::math::VEC3 unitYCopy;                                               \
-        func_8004B79C(&unitYCopy.x,                                               \
+        copyVec3f(&unitYCopy.x,                                               \
                       reinterpret_cast<const f32*>(&ml::CVec3::unitY));            \
         Quaternion qa;                                                            \
         Quaternion qb;                                                            \
-        func_8004B0B4(&qa);                                                       \
-        func_8004B0B4(&qb);                                                       \
+        noopAnimQuat(&qa);                                                       \
+        noopAnimQuat(&qb);                                                       \
         func_80052584(&qa, reinterpret_cast<const Vec*>(&ml::CVec3::unitY),       \
                       reinterpret_cast<const Vec*>(&iv->field408));                \
-        func_800526C0(&qb, reinterpret_cast<const Vec*>(&ml::CVec3::unitY),       \
+        makeAxisAngleQ(&qb, reinterpret_cast<const Vec*>(&ml::CVec3::unitY),       \
                       f31);                                                        \
-        func_8005274C(&qa, &qb);                                                  \
+        mulQuatSelf(&qa, &qb);                                                  \
         if (s->object3A0 != 0) {                                                  \
-            func_80052780(func_8048315C(s->object3A0), &qa);                       \
+            func_80052780(simGetLeafActData(s->object3A0), &qa);                       \
         }                                                                         \
     } while (0)
 
@@ -3575,122 +3575,122 @@ extern "C" void func_80051CD4(CActParamAnim* self) {
     CActParamAnimStateView* s = reinterpret_cast<CActParamAnimStateView*>(self);
     CActParamAnimInitView* iv = reinterpret_cast<CActParamAnimInitView*>(self);
 
-    func_8004B344(self);
-    if (func_8004CC80(self) != 0) return;
-    func_8004B344(self);
+    getAnimChild(self);
+    if (testAnimBit5(self) != 0) return;
+    getAnimChild(self);
 
     f32 f31 = lbl_eu_80665EA0;
-    if (func_80052540(self) == 0) {
+    if (testAnimBit13(self) == 0) {
         // dt-scaled angular step limit.
-        f32 f30 = func_8004B7B8(self);
-        f31 = func_8005254C(self) * f30;
-        void* obj = func_8004B51C(self);
+        f32 f30 = getAnimPlayRate(self);
+        f31 = getSnapScale(self) * f30;
+        void* obj = getAnimOwner(self);
         if (obj != 0) {
-            // Chase the sub-object target (func_80052554) when the object's
+            // Chase the sub-object target (getOwnerFloat) when the object's
             // +0x14 virtual returns 0 and the 0x100 flag is clear; otherwise
             // clamp the anim angle toward the stored heading (+0x440).
             bool chase = false;
             if (reinterpret_cast<CActParamAnimObjVt14*>(obj)->f14() == 0 &&
-                func_8004B3D8((u32*)&s->field0C, 0x100) == 0) {
+                testFlagMask((u32*)&s->field0C, 0x100) == 0) {
                 chase = true;
             }
             if (chase) {
-                if (func_80051BF4(self) == 0) {
-                    f32 cur = func_8004B61C(self);
-                    f32 d = func_8004BC28(func_80052554(func_8004B51C(self)) - cur);
+                if (isSpeedBelow(self) == 0) {
+                    f32 cur = getTurnTarget(self);
+                    f32 d = wrapAnglePi(getOwnerFloat(getAnimOwner(self)) - cur);
                     if (d > f31) {
-                        s->field444 = func_8004BC28(func_8004B61C(self) + f31);
+                        s->field444 = wrapAnglePi(getTurnTarget(self) + f31);
                     } else if (d < -f31) {
-                        s->field444 = func_8004BC28(func_8004B61C(self) - f31);
+                        s->field444 = wrapAnglePi(getTurnTarget(self) - f31);
                     } else {
-                        s->field444 = func_8004BC28(func_80052554(func_8004B51C(self)));
-                        func_8004B694((u32*)&s->field0C, 0x100);
+                        s->field444 = wrapAnglePi(getOwnerFloat(getAnimOwner(self)));
+                        clearFlagMask((u32*)&s->field0C, 0x100);
                     }
-                    s->field440 = func_8004B61C(self);
+                    s->field440 = getTurnTarget(self);
                 }
             } else {
-                f32 d = func_8004BC28(iv->field440 - func_8004B61C(self));
+                f32 d = wrapAnglePi(iv->field440 - getTurnTarget(self));
                 if (d > f31) {
-                    s->field444 = func_8004BC28(func_8004B61C(self) + f31);
+                    s->field444 = wrapAnglePi(getTurnTarget(self) + f31);
                 } else if (d < -f31) {
-                    s->field444 = func_8004BC28(func_8004B61C(self) - f31);
+                    s->field444 = wrapAnglePi(getTurnTarget(self) - f31);
                 } else {
-                    s->field444 = func_8004BC28(iv->field440);
-                    func_8004B694((u32*)&s->field0C, 0x100);
+                    s->field444 = wrapAnglePi(iv->field440);
+                    clearFlagMask((u32*)&s->field0C, 0x100);
                 }
-                func_8004B61C(self);
+                getTurnTarget(self);
             }
         } else {
-            f32 d = func_8004BC28(iv->field440 - func_8004B61C(self));
+            f32 d = wrapAnglePi(iv->field440 - getTurnTarget(self));
             if (d > f31) {
-                s->field444 = func_8004BC28(func_8004B61C(self) + f31);
+                s->field444 = wrapAnglePi(getTurnTarget(self) + f31);
             } else if (d < -f31) {
-                s->field444 = func_8004BC28(func_8004B61C(self) - f31);
+                s->field444 = wrapAnglePi(getTurnTarget(self) - f31);
             } else {
-                s->field444 = func_8004BC28(iv->field440);
-                func_8004B694((u32*)&s->field0C, 0x100);
+                s->field444 = wrapAnglePi(iv->field440);
+                clearFlagMask((u32*)&s->field0C, 0x100);
             }
-            func_8004B61C(self);
+            getTurnTarget(self);
         }
     }
 
     // Current anim angle.
-    f31 = func_8004B61C(self);
+    f31 = getTurnTarget(self);
 
-    bool turnMode = func_8004B3D8((u32*)&s->field0C, 0x2000) != 0;
-    if (!turnMode && func_8005255C(self) != 0) {
+    bool turnMode = testFlagMask((u32*)&s->field0C, 0x2000) != 0;
+    if (!turnMode && testAnimBit16(self) != 0) {
         turnMode = true; // child probe true falls through to the turn section
     }
     if (turnMode) {
         // Turn mode: converge the move direction onto the desired heading.
-        if (func_8004B848(self) != 0) {
+        if (testAnimMoveBit(self) != 0) {
             nw4r::math::VEC3 n;
-            func_8004B79C(&n.x, &iv->field3D8);
+            copyVec3f(&n.x, &iv->field3D8);
             if (iv->field3DC < lbl_eu_8066AF20) {
-                f32 root = func_8004EC78(iv->field3E0 * iv->field3E0 +
+                f32 root = safeFSqrt(iv->field3E0 * iv->field3E0 +
                                          iv->field3D8 * iv->field3D8);
                 if (root != lbl_eu_80665EA0) {
                     f32 k = lbl_eu_80665E9C / root;
-                    f32 t = func_8004EC78(lbl_eu_80665E9C -
+                    f32 t = safeFSqrt(lbl_eu_80665E9C -
                                           lbl_eu_8066AF20 * lbl_eu_8066AF20);
                     n.x = iv->field3D8 * k * t;
                     n.y = lbl_eu_8066AF20;
                     n.z = iv->field3E0 * k * t;
                 }
             }
-            if (func_80052568(reinterpret_cast<u8*>(self) + 0x10) != 0) {
-                func_8004B3F0(&iv->field408, &n.x);
+            if (takeAnimBit18(reinterpret_cast<u8*>(self) + 0x10) != 0) {
+                copyVec3Words(&iv->field408, &n.x);
             } else {
                 nw4r::math::VEC3 d;
-                func_8004CB80(&d.x, &n.x, &iv->field408);
+                subVec3f(&d.x, &n.x, &iv->field408);
                 nw4r::math::VEC3 d2;
-                func_8004B75C(&d2.x, &d.x, lbl_eu_80665ECC);
-                func_8004B738(&iv->field408, &d2.x);
+                scaleVec3f(&d2.x, &d.x, lbl_eu_80665ECC);
+                addVec3f(&iv->field408, &d2.x);
             }
         } else {
             nw4r::math::VEC3 fwd;
-            func_8004B60C(&fwd, lbl_eu_80665EA0, lbl_eu_80665E9C,
+            writeVec3f(&fwd, lbl_eu_80665EA0, lbl_eu_80665E9C,
                           lbl_eu_80665EA0);
             nw4r::math::VEC3 d;
-            func_8004CB80(&d.x, &fwd.x, &iv->field408);
+            subVec3f(&d.x, &fwd.x, &iv->field408);
             nw4r::math::VEC3 d2;
-            func_8004B75C(&d2.x, &d.x, lbl_eu_80665ECC);
-            func_8004B738(&iv->field408, &d2.x);
+            scaleVec3f(&d2.x, &d.x, lbl_eu_80665ECC);
+            addVec3f(&iv->field408, &d2.x);
         }
         COMMIT_QUAT();
         s->field4DC = 0xF;
-    } else if (func_8004B3D8((u32*)&s->field0C, 0x4000) != 0) {
+    } else if (testFlagMask((u32*)&s->field0C, 0x4000) != 0) {
         // Strafe/dash mode: orbit the heading around the radial direction.
-        if (func_8004B848(self) != 0) {
+        if (testAnimMoveBit(self) != 0) {
             nw4r::math::VEC3 n;
-            func_8004B79C(&n.x, &iv->field3D8);
+            copyVec3f(&n.x, &iv->field3D8);
             if (iv->field3DC < lbl_eu_8066AF20) {
-                f32 root = func_8004EC78(iv->field3E0 * iv->field3E0 +
+                f32 root = safeFSqrt(iv->field3E0 * iv->field3E0 +
                                          iv->field3D8 * iv->field3D8);
                 if (root != lbl_eu_80665EA0) {
                     f32 k = lbl_eu_80665E9C / root;
                     n.y = lbl_eu_80665EA0;
-                    f32 t = func_8004EC78(lbl_eu_80665E9C -
+                    f32 t = safeFSqrt(lbl_eu_80665E9C -
                                           lbl_eu_8066AF20 * lbl_eu_8066AF20);
                     n.x = iv->field3D8 * k * t;
                     n.z = iv->field3E0 * k * t;
@@ -3701,32 +3701,32 @@ extern "C" void func_80051CD4(CActParamAnim* self) {
                 mag = lbl_eu_80665E9C;
             }
             nw4r::math::VEC3 radial;
-            func_8004B60C(&radial.x, func_8004CC74(f31), lbl_eu_80665EA0,
-                          func_8004CC68(f31));
+            writeVec3f(&radial.x, cosAnimFIdx(f31), lbl_eu_80665EA0,
+                          sinAnimFIdx(f31));
             // Remove the component along n so the radial stays on the plane.
-            radial.y -= func_800504BC(&radial.x, &n.x) / mag;
-            func_8004CBC8(reinterpret_cast<ml::CVec3*>(&radial));
-            f32 ang2 = lbl_eu_8066A200 + func_8004CC40(radial.x, radial.z);
+            radial.y -= dotVec3f(&radial.x, &n.x) / mag;
+            normVec3(reinterpret_cast<ml::CVec3*>(&radial));
+            f32 ang2 = lbl_eu_8066A200 + atan2AnimFIdx(radial.x, radial.z);
             nw4r::math::VEC3 dir;
-            func_8004B60C(&dir.x, func_8004CC74(ang2), lbl_eu_80665EA0,
-                          func_8004CC68(ang2));
+            writeVec3f(&dir.x, cosAnimFIdx(ang2), lbl_eu_80665EA0,
+                          sinAnimFIdx(ang2));
             nw4r::math::VEC3 axis;
-            func_8004B0B0(&axis);
-            func_800527B0(&radial, &axis, &dir);
+            noopAnimVec3(&axis);
+            crossVec3(&radial, &axis, &dir);
             nw4r::math::VEC3 d;
-            func_8004CB80(&d.x, &axis.x, &iv->field408);
+            subVec3f(&d.x, &axis.x, &iv->field408);
             nw4r::math::VEC3 d2;
-            func_8004B75C(&d2.x, &d.x, lbl_eu_80665ECC);
-            func_8004B738(&iv->field408, &d2.x);
+            scaleVec3f(&d2.x, &d.x, lbl_eu_80665ECC);
+            addVec3f(&iv->field408, &d2.x);
         } else {
             nw4r::math::VEC3 fwd;
-            func_8004B60C(&fwd.x, lbl_eu_80665EA0, lbl_eu_80665E9C,
+            writeVec3f(&fwd.x, lbl_eu_80665EA0, lbl_eu_80665E9C,
                           lbl_eu_80665EA0);
             nw4r::math::VEC3 d;
-            func_8004CB80(&d.x, &fwd.x, &iv->field408);
+            subVec3f(&d.x, &fwd.x, &iv->field408);
             nw4r::math::VEC3 d2;
-            func_8004B75C(&d2.x, &d.x, lbl_eu_80665ECC);
-            func_8004B738(&iv->field408, &d2.x);
+            scaleVec3f(&d2.x, &d.x, lbl_eu_80665ECC);
+            addVec3f(&iv->field408, &d2.x);
         }
         COMMIT_QUAT();
     } else {
@@ -3735,27 +3735,27 @@ extern "C" void func_80051CD4(CActParamAnim* self) {
             // Counter-turn mode: slow drift toward unit Y while the counter
             // runs down (signed halfword, retail lha/subi/sth).
             nw4r::math::VEC3 d;
-            func_8004CB80(&d.x, reinterpret_cast<const f32*>(&ml::CVec3::unitY),
+            subVec3f(&d.x, reinterpret_cast<const f32*>(&ml::CVec3::unitY),
                           &iv->field408);
             nw4r::math::VEC3 d2;
-            func_8004B75C(&d2.x, &d.x, lbl_eu_80665F58);
-            func_8004B738(&iv->field408, &d2.x);
+            scaleVec3f(&d2.x, &d.x, lbl_eu_80665F58);
+            addVec3f(&iv->field408, &d2.x);
             COMMIT_QUAT();
             *counter = *counter - 1;
         } else if (s->object3A0 != 0) {
-            func_8004B344(self);
-            if (func_80052540(self) == 0) {
+            getAnimChild(self);
+            if (testAnimBit13(self) == 0) {
                 nw4r::math::VEC3 v;
-                func_8004B60C(&v.x, lbl_eu_80665EA0, f31, lbl_eu_80665EA0);
-                func_8004B5F0(func_8048315C(s->object3A0), &v.x);
+                writeVec3f(&v.x, lbl_eu_80665EA0, f31, lbl_eu_80665EA0);
+                storeObjVec3(simGetLeafActData(s->object3A0), &v.x);
             }
         }
     }
 
     // Tail: decay the snap timer and swap in the stored snap value.
-    func_8004B344(self);
-    if (func_80052540(self) == 0 && s->field4D0 > lbl_eu_80665EA0) {
-        f32 dec = func_80484EB0(s->object3A0);
+    getAnimChild(self);
+    if (testAnimBit13(self) == 0 && s->field4D0 > lbl_eu_80665EA0) {
+        f32 dec = simGetLeafDist7B0(s->object3A0);
         f32 rem = s->field4D0 - dec;
         s->field4D0 = rem;
         if (rem <= lbl_eu_80665EA0) {
@@ -3819,7 +3819,7 @@ extern "C" __declspec(noinline) void func_80052584(Quaternion* out, const Vec* a
     out->w = lbl_eu_80665F00 * root;
 }
 
-extern "C" __declspec(noinline) void func_800526C0(Quaternion* out, const Vec* axis, f32 angle) {
+extern "C" __declspec(noinline) void makeAxisAngleQ(Quaternion* out, const Vec* axis, f32 angle) {
     // Rotation quaternion from an axis + angle: (axis * sin(half), cos(half)).
     f32 t = lbl_eu_80665F00 * angle;
     f32 s = nw4r::math::SinFIdx(lbl_eu_80665ED8 * t);
@@ -3829,7 +3829,7 @@ extern "C" __declspec(noinline) void func_800526C0(Quaternion* out, const Vec* a
     out->w = nw4r::math::CosFIdx(lbl_eu_80665ED8 * t);
 }
 
-extern "C" __declspec(noinline) Quaternion* func_8005274C(Quaternion* self, const Quaternion* param) {
+extern "C" __declspec(noinline) Quaternion* mulQuatSelf(Quaternion* self, const Quaternion* param) {
     PSQUATMultiply(self, param, self);
     return self;
 }
@@ -3848,7 +3848,7 @@ extern "C" __declspec(noinline) void func_80052780(void* self, void* src){
     *(int*)((char*)self + 224) = f | 4;
 }
 
-extern "C" __declspec(noinline) void* func_800527B0(void* self, const void* a, const void* b) {
+extern "C" __declspec(noinline) void* crossVec3(void* self, const void* a, const void* b) {
     extern void PSVECCrossProduct(const void*, const void*, void*);
     PSVECCrossProduct(self, b, (void*)a);
     return (void*)a;
@@ -3892,36 +3892,36 @@ void func_800527E8(CActParamAnim* self) {
 }
 
 
-extern "C" void func_80051B84(CActParamAnim* self) {
+extern "C" void startAnimModeA(CActParamAnim* self) {
     *(u32*)(reinterpret_cast<u8*>(self) + 0x4A8) = 0x00044A05;
     *(u32*)(reinterpret_cast<u8*>(self) + 0x0C) |= 0x00800000;
 }
 
-extern "C" int func_80052540(CActParamAnim* self) {
+extern "C" int testAnimBit13(CActParamAnim* self) {
     return (*(u32*)(reinterpret_cast<u8*>(self) + 0x260) >> 13) & 1;
 }
 
-extern "C" f32 func_8005254C(CActParamAnim* self) {
+extern "C" f32 getSnapScale(CActParamAnim* self) {
     return *(f32*)(reinterpret_cast<u8*>(self) + 0x4A0);
 }
 
-extern "C" f32 func_80052554(void* obj) {
+extern "C" f32 getOwnerFloat(void* obj) {
     return *(f32*)(reinterpret_cast<u8*>(obj) + 16);
 }
 
 
-extern "C" int func_80052568(void* data) {
+extern "C" int takeAnimBit18(void* data) {
     u8* base = reinterpret_cast<u8*>(data);
     int result = (*(volatile u32*)(base + 0x260) >> 18) & 1;
     *(u32*)(base + 0x260) &= ~0x40000;
     return result;
 }
 
-extern "C" void func_80052924(CActParamAnim* self, f32 param) {
+extern "C" void mulAnimHeight(CActParamAnim* self, f32 param) {
     *(f32*)(reinterpret_cast<u8*>(self) + 0x3C4) *= param;
 }
 
-extern "C" int func_8005255C(CActParamAnim* self) {
+extern "C" int testAnimBit16(CActParamAnim* self) {
     return (*(u32*)(reinterpret_cast<u8*>(self) + 0x260) >> 16) & 1;
 }
 
@@ -4189,7 +4189,7 @@ void CActParamAnim::func_80052934(const ml::CVec3* /*v*/) {
             s->field3A8 = cur.x;
             s->field3AC = cur.y;
             s->field3B0 = cur.z;
-            u32* dst = reinterpret_cast<u32*>(func_8048315C(obj2));
+            u32* dst = reinterpret_cast<u32*>(simGetLeafActData(obj2));
             u32* srcw = reinterpret_cast<u32*>(&cur);
             dst[0] = srcw[0];
             dst[1] = srcw[1];
@@ -4382,14 +4382,14 @@ int CActParamAnim::getChainInt() {
 
 extern u8 lbl_eu_80663D4C;
 
-void func_80051A9C(CActParamAnim* self) {
+void clrAnimHeight(CActParamAnim* self) {
     *(f32*)(reinterpret_cast<u8*>(self) + 0x3C4) = lbl_eu_80665EA0;
 }
 
 
 
 // Null-check guards: early return on null, otherwise dispatch into view pipeline
-extern "C" void func_8004BC64(CActParamAnim* self, s32 param) {
+extern "C" void setBlendGate(CActParamAnim* self, s32 param) {
     u8* B = reinterpret_cast<u8*>(self);
     if (param != 0) {
         u32 flags = *(u32*)(B + 12);
@@ -4400,29 +4400,29 @@ extern "C" void func_8004BC64(CActParamAnim* self, s32 param) {
     *(u32*)(B + 12) &= ~0x04000000u;
 }
 
-extern "C" void* func_8004C5EC(void* self) {
+extern "C" void* getAnimModelId(void* self) {
     void* p = *(void**)(reinterpret_cast<u8*>(self) + 0x2FC);
     if (p != 0)
         return p;
     return *(void**)(reinterpret_cast<u8*>(self) + 0x27C);
 }
 
-extern "C" f32 func_8004CC40(f32 a, f32 b) {
+extern "C" f32 atan2AnimFIdx(f32 a, f32 b) {
     return lbl_eu_80665ED0 * nw4r::math::Atan2FIdx(a, b);
 }
 
-extern "C" void func_8004CEF8(void* self, u32 value) {
+extern "C" void setAnimCount(void* self, u32 value) {
     *(u32*)(reinterpret_cast<u8*>(self) + 0x374) = value;
 }
 
-extern "C" void func_8004DACC(void* self) {
+extern "C" void clrAnimEff(void* self) {
     u8* B = reinterpret_cast<u8*>(self);
     *(u8*)(B + 0x4BE) = 0;
     *(u8*)(B + 0x4BF) = 0;
     *(u32*)(B + 0x4C0) = 0;
 }
 
-extern "C" void func_80051CAC(CActParamAnim* self) {
+extern "C" void stopAnimMove(CActParamAnim* self) {
     u32 flags = *(u32*)(reinterpret_cast<u8*>(self) + 12);
     u32 masked = flags & ~0x10u;
     *(u32*)(reinterpret_cast<u8*>(self) + 12) = masked;
@@ -4433,22 +4433,22 @@ extern "C" void func_80051CAC(CActParamAnim* self) {
     *(u32*)(reinterpret_cast<u8*>(self) + 12) = masked;
 }
 
-extern "C" void func_8004B884(CActParamAnim* self, f32 value) {
+extern "C" void setAttachRate(CActParamAnim* self, f32 value) {
     void* ptr = *(void**)(reinterpret_cast<u8*>(self) + 928);
     if (ptr == 0)
         return;
-    func_80484F80(ptr, value);
+    simRefreshFlag8(ptr, value);
 }
 
-extern "C" int func_8004B990(void* obj, u32 sel) {
+extern "C" int callAttachFn(void* obj, u32 sel) {
     if (*(void**)((u8*)obj + 928) == 0)
         return 0;
     if (sel != 0)
-        return func_80485464(*(u8**)((u8*)obj + 928), sel);
-    return func_80485244(*(u8**)((u8*)obj + 928));
+        return simRefreshFadeDist2(*(u8**)((u8*)obj + 928), sel);
+    return simRefreshFadeDist(*(u8**)((u8*)obj + 928));
 }
 
-extern "C" void func_80051AA8(CActParamAnim* self, u32 param) {
+extern "C" void setActiveBit(CActParamAnim* self, u32 param) {
     if (param != 0) {
         *(u32*)(reinterpret_cast<u8*>(self) + 12) |= 2;
         return;
@@ -4457,11 +4457,11 @@ extern "C" void func_80051AA8(CActParamAnim* self, u32 param) {
 }
 
 
-extern "C" f32 func_80053958() {
+extern "C" f32 getAnimMinSpeed() {
     return lbl_eu_80665ECC;
 }
 
-extern "C" u32 func_80053960(ActParamData388* obj) {
+extern "C" u32 getAnimTick(ActParamData388* obj) {
     u8* base = reinterpret_cast<u8*>(obj);
     if (*(u32*)(base + 0x4C4) != 0)
         return *(u32*)(base + 0x4C4);
@@ -4471,12 +4471,12 @@ extern "C" u32 func_80053960(ActParamData388* obj) {
     return *(u32*)(base + 0x4B4);
 }
 
-extern "C" void func_eu_80053FC8() { lbl_eu_80663D4C = 0; }
+extern "C" void clrAnimGate() { lbl_eu_80663D4C = 0; }
 
-extern "C" u8 func_eu_80053FD4() { return lbl_eu_80663D4C; }
+extern "C" u8 getAnimGate() { return lbl_eu_80663D4C; }
 
 extern u8 lbl_eu_80663D4C;
-extern "C" void func_eu_80053FDC() { lbl_eu_80663D4C = 1; }
+extern "C" void setAnimGate() { lbl_eu_80663D4C = 1; }
 
 bool CActParamAnim::isAnimBlendActive() { return false; }
 
@@ -4505,17 +4505,17 @@ extern "C" void sinit_800539E0() {
     lbl_eu_80663D48 = lbl_eu_8066AF20;
 }
 
-extern "C" void* func_8004DAC4(CActParamAnim* self) {
+extern "C" void* getAnimEff(CActParamAnim* self) {
     return *(void**)((char*)self + 0x4c0);
 }
 
-extern "C" void func_8004B6A4(CActParamAnim* self) {
+extern "C" void pushAnimNode(CActParamAnim* self) {
     if (*(int*)((char*)self + 0x3A4) != 0) {
-        func_80055AC4((char*)self + 0x10);
+        pushParamNode((char*)self + 0x10);
     }
 }
 
-extern "C" void func_80051BA0(CActParamAnim* self) {
+extern "C" void startAnimModeA2(CActParamAnim* self) {
     u32 v = *(u32*)((u8*)self + 0xC);
     float f = lbl_eu_80665F18;
     *(volatile u32*)((u8*)self + 0x4A8) = 0x44A05;
@@ -4523,13 +4523,13 @@ extern "C" void func_80051BA0(CActParamAnim* self) {
     *(u32*)((u8*)self + 0xC) = v | 0x00800000;
 }
 
-extern "C" void func_80051BC4(CActParamAnim* self) {
+extern "C" void startAnimModeB(CActParamAnim* self) {
     float f = lbl_eu_80665F18;
     *(volatile u32*)((u8*)self + 0x4A8) = 0x44A09;
     *(volatile float*)((u8*)self + 0x484) = f;
 }
 
-extern "C" void func_80051BDC(CActParamAnim* self) {
+extern "C" void startAnimModeC(CActParamAnim* self) {
     float f = lbl_eu_80665F18;
     *(volatile u32*)((u8*)self + 0x4A8) = 0x44A11;
     *(volatile float*)((u8*)self + 0x484) = f;

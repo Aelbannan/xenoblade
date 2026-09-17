@@ -17,7 +17,7 @@ class ArcResourceAccessor;
 // vtable at lbl_eu_80535F80
 extern "C" void* lbl_eu_80535F80[];
 
-// Anim-completion sentinel float passed to advanceAnimTransform/func_80137510
+// Anim-completion sentinel float passed to advanceAnimTransform/AnimRewindFrame
 // (retail .sdata2 constants at 0x80668544 / 0x80668548).
 extern const float lbl_eu_80668544;
 extern const float lbl_eu_80668548;
@@ -26,7 +26,7 @@ extern const float lbl_eu_80668548;
 void func_80137924(void* out, void* paneA, void* paneB, void* paneC);
 
 // Pane texture/anim bind helpers used by func_80223004.
-extern "C" void func_8013BCD4(void* pane, void* animRes);
+extern "C" void AnimResetToFirst(void* pane, void* animRes);
 extern "C" void func_80137F88(void* pane, void* tex);
 
 // Crystal-list UI strings (retail .rodata at 0x805092C0, size 0x288).
@@ -52,7 +52,7 @@ public:
 // mangled by MWCC, e.g. func_801355BC__Fv) - C linkage keeps the call relocs
 // bound to the retail names.
 extern "C" u32 func_801355BC();
-extern "C" void func_80136FA0(nw4r::lyt::Layout*, nw4r::lyt::AnimResource**, nw4r::lyt::ArcResourceAccessor*, char*);
+extern "C" void LayoutBindAnimResource(nw4r::lyt::Layout*, nw4r::lyt::AnimResource**, nw4r::lyt::ArcResourceAccessor*, char*);
 
 /* Crystal list for the makecrystal UI. Manages available crystals and their
    display state. Inherits from IWorkEvent for file-load callbacks.

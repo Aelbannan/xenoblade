@@ -28,7 +28,7 @@ u32 advanceAnimTransform(nw4r::lyt::AnimTransform*, float);
 // Animate the attached anim-transform in reverse (returns true when done).
 // Retail symbol is unmangled (C linkage).
 extern "C" {
-u32 func_80137510(nw4r::lyt::AnimTransform*, float);
+u32 AnimRewindFrame(nw4r::lyt::AnimTransform*, float);
 }
 // Draw a nw4r layout with the given draw info.
 void drawLayout(nw4r::lyt::Layout*, nw4r::lyt::DrawInfo*, int, int);

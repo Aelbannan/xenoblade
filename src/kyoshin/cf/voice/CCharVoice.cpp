@@ -28,7 +28,7 @@ extern "C" {
     s32   func_801897A0(const char*, float, s32);            // start archive voice
     void  func_8018986C(const char*, float);                 // stop archive voice
     void  func_80189C40(s32, CVoicePos*, CVoicePoseBlock*, float, float, float); // update archive voice
-    CVoiceBattleSndMgr* func_800BF2CC(CVoiceOwnerIntf*);     // battle sound manager from owner
+    CVoiceBattleSndMgr* CfObjectMove_relaySubB0Slot60(CVoiceOwnerIntf*);     // battle sound manager from owner
     s32   func_801BFAE4(u16);                                // battle sound busy check
     void  func_801BFAE8(u16, CVoicePos*);                    // update battle sound position
     void  func_801BFED0(CVoiceBattleSndMgr*, u16, s32);      // stop battle sound
@@ -179,7 +179,7 @@ void CCharVoice::func_802A0FE8()
     } else if (flags & 4) {
         u16 bh = mBattleSndHandle;
         if (bh != 0xFFFF) {
-            CVoiceBattleSndMgr* obj = func_800BF2CC(mOwner);
+            CVoiceBattleSndMgr* obj = CfObjectMove_relaySubB0Slot60(mOwner);
             func_801BFED0(obj, bh, 0);
             mVoiceId          = -1;
             mBattleSndHandle  = 0xFFFF;
@@ -214,7 +214,7 @@ bool CCharVoice::func_802A109C(float volume,
         } else if (flags & 4) {
             u16 bh = mBattleSndHandle;
             if (bh != 0xFFFF) {
-                CVoiceBattleSndMgr* obj = func_800BF2CC(mOwner);
+                CVoiceBattleSndMgr* obj = CfObjectMove_relaySubB0Slot60(mOwner);
                 func_801BFED0(obj, bh, 0);
                 mVoiceId          = -1;
                 mBattleSndHandle  = 0xFFFF;
@@ -258,7 +258,7 @@ bool CCharVoice::func_802A109C(float volume,
         return false;
     }
     else if (flags2 & 4) {
-        CVoiceBattleSndMgr* man = func_800BF2CC(mOwner);
+        CVoiceBattleSndMgr* man = CfObjectMove_relaySubB0Slot60(mOwner);
         if ((s32)man < 0) return false;
 
         u16 h = playActorSound__Q22cf10CfSoundManFUlUlUlUlf(
@@ -292,7 +292,7 @@ void CCharVoice::func_802A1304()
     } else if (flags & 4) {
         u16 bh = mBattleSndHandle;
         if (bh != 0xFFFF) {
-            CVoiceBattleSndMgr* obj = func_800BF2CC(mOwner);
+            CVoiceBattleSndMgr* obj = CfObjectMove_relaySubB0Slot60(mOwner);
             func_801BFED0(obj, bh, 0);
             mVoiceId          = -1;
             mBattleSndHandle  = 0xFFFF;

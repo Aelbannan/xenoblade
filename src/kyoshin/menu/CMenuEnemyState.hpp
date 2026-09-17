@@ -204,23 +204,23 @@ extern "C" void func_80137B44(nw4r::lyt::Layout* layout, const char* name,
                               u32 value);
 // Apply a loaded texture to a pane (retail symbol is unmangled).
 extern "C" void func_80137F88(void* a, void* palette);
-// Enemy-menu resource helpers (retail symbols unmangled). func_80138F78 is
+// Enemy-menu resource helpers (retail symbols unmangled). MakeTplNameSysFile is
 // declared C++ in code_80135FDC.hpp; the C-linkage-first decl here makes the
 // later plain redeclaration inherit it (same signature).
-extern "C" u16 func_80136254(const void* a, const char* b, int c);
-extern "C" char* func_80138F78(u32 id);
+extern "C" u16 BdatGetU16Direct(const void* a, const char* b, int c);
+extern "C" char* MakeTplNameSysFile(u32 id);
 // Enemy-menu helpers used by the panel/cursor functions (retail unmangled).
 // (func_8009ECB0 is declared in include/functions.hpp as `extern "C" int*`.)
-extern "C" void* func_800B8B94(s32 a);
+extern "C" void* findObjB28ById(s32 a);
 // Unprototyped-style import shared by two callers in this TU.
 extern "C" void* func_800EA444(void* mgr);
 extern "C" int func_800F4648(void* self);
 extern "C" void func_8049B59C(void* out, void* pose, const void* in);
-extern "C" void func_80137DB8(void* a, u32 b, u32 c);
+extern "C" void PaneSetVtxColorPairs(void* a, u32 b, u32 c);
 extern "C" char* func_80138DA4(const char* s);
-extern "C" void* func_801984F0(void* a, u32 idx);
-extern "C" void func_80139AC8(void* a, void* b, void* c);
-extern "C" void* func_800B8A64(void);
+extern "C" void* CPartsChange_GetEnemySlotAt(void* a, u32 idx);
+extern "C" void PaneMatSetTevColors(void* a, void* b, void* c);
+extern "C" void* lookupCA0By45C0(void);
 int sprintf(char*, const char*, ...);
 // Retail linker name is the already-mangled C++ symbol.
 extern "C" void* getEffOwner____FPv(void* obj);

@@ -305,8 +305,8 @@ public:
     virtual int m028(u32 mask);      // index 8 -> vtable 0x28
 };
 
-// 8-byte enum-list holder (func_80043D90 ctor / __dt__80043E88 dtor); the
-// list returned by func_80043F18 has the element count at +0x620.
+// 8-byte enum-list holder (CTaskGame_enumListCtor ctor / __dt__80043E88 dtor); the
+// list returned by CTaskGame_enumListGet has the element count at +0x620.
 struct CtrlEnemyEnumHolder {
     void* list;   // 0x0
     u32 handle;   // 0x4
@@ -466,8 +466,8 @@ int func_800890A8(cf::CCtrlMoveBase* self, ml::CVec3* out, u8* outFlag,
 void* getInstance__Q22cf13CfGameManagerFv(void);
 void* getPlayer__Q22cf13CfGameManagerFi(int idx);
 int isSceneReadyForInput__Q22cf13CfGameManagerFv(void);
-void func_80043D90(cf::CtrlEnemyEnumHolder* holder);
-cf::CtrlEnemyEnumList* func_80043F18(cf::CtrlEnemyEnumHolder* holder);
+void CTaskGame_enumListCtor(cf::CtrlEnemyEnumHolder* holder);
+cf::CtrlEnemyEnumList* CTaskGame_enumListGet(cf::CtrlEnemyEnumHolder* holder);
 void func_800F4A98(cf::CtrlEnemyEnumList* list, u32 a, u32 b);
 void* func_800F6E98(cf::CtrlEnemyEnumList* list, int idx);
 void __dt__80043E88(cf::CtrlEnemyEnumHolder* holder, int flags);

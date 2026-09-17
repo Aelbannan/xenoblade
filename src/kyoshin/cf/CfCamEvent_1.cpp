@@ -69,26 +69,26 @@ extern char lbl_eu_80661B28[];
 // so MWCC emits sda21 li's at use sites); the vtable needs its address.
 void __dt__Q22cf11CfCamFollowFv();
 void __dt__Q22cf5CfCamFv();
-void func_8006CC68(); void func_8006B6B8(); void func_80074D60(); void func_8006CA2C();
-void func_80074D4C(); void func_8006E884(); void func_80071B74(); void func_8006BFDC();
-void func_80073C74(); void func_8006B6A0(); void func_8006B6B0(); void func_8006D7A8();
-void func_8006C1BC(); void func_8006BEF0(); void func_80074D44(); void func_80073DDC();
-void func_800606AC(); void func_80060738(); void func_800607C4(); void func_80074D58();
-void func_8006C16C(); void func_8006B6A8(); void func_800605D0(); void func_80073D8C();
-void func_80060B84(); void func_80074A3C(); void func_80074AA4(); void func_80060A08();
+void func_8006CC68(); void cfCam_getPlus1C(); void cfCam_copyToPlus28(); void cfCam_updFollowPos();
+void cfCam_nestedPlus118(); void func_8006E884(); void cfCam_nopVirt24(); void func_8006BFDC();
+void cfCam_copyToPlus10(); void cfCam_getPlus10(); void cfCam_getPlus40(); void cfCam_initFollowS();
+void cfCam_setFollowD(); void cfCam_storeUnk08(); void cfCam_returnZero(); void cfCam_copyCamState();
+void func_800606AC(); void func_80060738(); void func_800607C4(); void cfCam_get1E0Again();
+void cfCam_setFollowTg(); void cfCam_loadUnk164(); void func_800605D0(); void func_80073D8C();
+void func_80060B84(); void cfCam_getActivePad(); void func_80074AA4(); void func_80060A08();
 }
 __declspec(section ".data") __attribute__((aligned(8))) __attribute__((used)) const void* lbl_eu_80527260[34] = {
     lbl_eu_80661B28, 0,
     (const void*)__dt__Q22cf11CfCamFollowFv,
-    (const void*)func_8006CC68, (const void*)func_8006B6B8, (const void*)func_80074D60,
-    (const void*)func_8006CA2C, (const void*)func_80074D4C, (const void*)func_8006E884,
-    (const void*)func_80071B74, (const void*)func_8006BFDC, (const void*)func_80073C74,
-    (const void*)func_8006B6A0, (const void*)func_8006B6B0, (const void*)func_8006D7A8,
-    (const void*)func_8006C1BC, (const void*)func_8006BEF0, (const void*)func_80074D44,
-    (const void*)func_80073DDC, (const void*)func_800606AC, (const void*)func_80060738,
-    (const void*)func_800607C4, (const void*)func_80074D58, (const void*)func_8006C16C,
-    (const void*)func_8006B6A8, (const void*)func_800605D0, (const void*)func_80073D8C,
-    (const void*)func_80060B84, (const void*)func_80074A3C, (const void*)func_80074AA4,
+    (const void*)func_8006CC68, (const void*)cfCam_getPlus1C, (const void*)cfCam_copyToPlus28,
+    (const void*)cfCam_updFollowPos, (const void*)cfCam_nestedPlus118, (const void*)func_8006E884,
+    (const void*)cfCam_nopVirt24, (const void*)func_8006BFDC, (const void*)cfCam_copyToPlus10,
+    (const void*)cfCam_getPlus10, (const void*)cfCam_getPlus40, (const void*)cfCam_initFollowS,
+    (const void*)cfCam_setFollowD, (const void*)cfCam_storeUnk08, (const void*)cfCam_returnZero,
+    (const void*)cfCam_copyCamState, (const void*)func_800606AC, (const void*)func_80060738,
+    (const void*)func_800607C4, (const void*)cfCam_get1E0Again, (const void*)cfCam_setFollowTg,
+    (const void*)cfCam_loadUnk164, (const void*)func_800605D0, (const void*)func_80073D8C,
+    (const void*)func_80060B84, (const void*)cfCam_getActivePad, (const void*)func_80074AA4,
     &lbl_eu_80661B30, 0, 0, 0
 };
 DECOMP_FORCEACTIVE(kyoshin_cf_CfCamEvent_1_vt1, lbl_eu_80527260);
@@ -96,11 +96,11 @@ __declspec(section ".data") __attribute__((aligned(8))) __attribute__((used)) co
     &lbl_eu_80661B30, 0,
     (const void*)__dt__Q22cf5CfCamFv,
     0, 0, 0, 0,
-    (const void*)func_80074D4C,
+    (const void*)cfCam_nestedPlus118,
     0, 0, 0, 0,
-    (const void*)func_8006B6A0,
+    (const void*)cfCam_getPlus10,
     0, 0, 0,
-    (const void*)func_8006BEF0, (const void*)func_80074D44,
+    (const void*)cfCam_storeUnk08, (const void*)cfCam_returnZero,
     0,
     (const void*)func_800606AC, (const void*)func_80060738, (const void*)func_800607C4,
     0, 0, 0,
@@ -226,9 +226,9 @@ struct CamEventVecSrcRaw {
 // func_800755BC; when the slot at that index does not already hold the
 // current cam state the old slot is deleted and a new one constructed from
 // `second` (with the pose returned by func_80496264 as its second ctor
-// arg). Then every slot is handed off to func_8006BC1C and the freshly
-// seated slot woken via func_8006BBF4.
-// Category 0 forwards the outgoing slot's vectors through func_8006D450;
+// arg). Then every slot is handed off to cfCam_andcUnk04 and the freshly
+// seated slot woken via cfCam_setClear04.
+// Category 0 forwards the outgoing slot's vectors through cfCam_recomputeEyeTarget;
 // category 1 rebuilds a cam table from `sixth` (or falls back to
 // func_800778E4) and runs the shared follow-cam setup func_80076F88.
 // NOTE: the fourth func_80077F20 call passes `first` as its source argument
@@ -328,7 +328,7 @@ CfCamEventObj* func_800784A0(u32 first, CfCamEventObj* second,
             g2->field_0x47 = 0;
             CfCamEventObj* pose = (CfCamEventObj*)func_80496264((void*)CfRes_getD80Flag(), 0);
             if (idx == 0) {
-                g2->slots[idx] = (CfCamEventSlot*)func_80074CEC(second, pose);
+                g2->slots[idx] = (CfCamEventSlot*)cfCam_newFollowCam(second, pose);
             } else if (idx == 2) {
                 g2->slots[idx] = (CfCamEventSlot*)__ct__8006B310(second, pose);
             } else if (idx == 1) {
@@ -343,9 +343,9 @@ CfCamEventObj* func_800784A0(u32 first, CfCamEventObj* second,
     {
         CfCamEventManager* g = (CfCamEventManager*)lbl_eu_80663DF0;
         for (int i = 0; i < 3; i++) {
-            if (g->slots[i] != 0) func_8006BC1C(g->slots[i], 0x8000);
+            if (g->slots[i] != 0) cfCam_andcUnk04(g->slots[i], 0x8000);
         }
-        func_8006BBF4(((CfCamEventManager*)lbl_eu_80663DF0)->slots[idx],
+        cfCam_setClear04(((CfCamEventManager*)lbl_eu_80663DF0)->slots[idx],
                       0x8000, 1);
     }
 
@@ -364,11 +364,11 @@ CfCamEventObj* func_800784A0(u32 first, CfCamEventObj* second,
             ml::CVec3* p34 = cs->getVec34();
             ml::CVec3* p10 = cs->getVec10();
             if (third != 0) {
-                func_8006D450(
+                cfCam_recomputeEyeTarget(
                     ((CfCamEventManager*)lbl_eu_80663DF0)->slots[idx],
                     p10, p34, f, 0, third, seventh);
             } else {
-                func_8006D450(
+                cfCam_recomputeEyeTarget(
                     ((CfCamEventManager*)lbl_eu_80663DF0)->slots[idx],
                     p10, p34, f, fourth, 0, 0);
             }
@@ -458,9 +458,9 @@ CfCamEventObj* func_800784A0(u32 first, CfCamEventObj* second,
                                        first, second, (u32)fifth);
             }
             if (result == 0 && oldState != idx) {
-                func_8006BC1C(
+                cfCam_andcUnk04(
                     ((CfCamEventManager*)lbl_eu_80663DF0)->slots[idx], 0x8000);
-                func_8006BBF4(
+                cfCam_setClear04(
                     ((CfCamEventManager*)lbl_eu_80663DF0)->slots[0], 0x8000, 1);
                 idx = 0;
                 first = 0;
@@ -660,7 +660,7 @@ CfCamEventManager::CfCamEventManager() {
     u8* end;
     u8* mem;
     u8* p;
-    mem = (u8*)mtl::MemManager::allocate(0xc40, func_80061FFC());
+    mem = (u8*)mtl::MemManager::allocate(0xc40, CfRes_getAllocHandle());
     if (mem != 0) {
         end = mem + 0xc40;
         p = mem;
@@ -765,7 +765,7 @@ ret2b:
 
 // True when the global cam state exists and is in a "busy" frame range.
 // NOTE: canonical shape for the [0x10, 0x2b] two-compare range check
-// (cf. code_800B06A4.cpp func_800B67CC). Under the TU default Wii/1.1 MWCC
+// (cf. code_800B06A4.cpp isTypeId1to24). Under the TU default Wii/1.1 MWCC
 // folds the range into (u16)(v-0x10)<=0x1b (subi/rlwinm/cmpli); the two-cmpi
 // retail form only matches under mw_version="GC/3.0a5.2" (configure.py switch
 // pending, read-only this session).
@@ -920,7 +920,7 @@ zero_init:
 //    (or re-queried per-source when the sources differ / match c1/c2 pairs);
 //  - the global cam-table flag word (0x4C) then shapes two working copies of
 //    the v1/v2 vectors (dead-end stack temps in retail);
-//  - finally out1/out2 are produced by func_80074010 blends selected by
+//  - finally out1/out2 are produced by cfCam_applyBasis blends selected by
 //    c1/c2, with demo-mode y-corrections applied at the tail.
 void func_80075934(ml::CVec3* out1, ml::CVec3* out2, CamCamSrc* a, CamCamSrc* b,
                    ml::CVec3* v1, ml::CVec3* v2, u16 c1, u16 c2, u8 s0, u8 s1) {
@@ -1066,7 +1066,7 @@ void func_80075934(ml::CVec3* out1, ml::CVec3* out2, CamCamSrc* a, CamCamSrc* b,
         CinemCamSrc* v = src ? (CinemCamSrc*)&src->voice : (CinemCamSrc*)src;
         if (v != 0) {
             func_800756D0((ml::CVec3*)&in, v);
-            func_80074010(&res, &in, scale, &p1);
+            cfCam_applyBasis(&res, &in, scale, &p1);
         } else {
             res.x = p1.x; res.y = p1.y; res.z = p1.z;
         }
@@ -1079,7 +1079,7 @@ void func_80075934(ml::CVec3* out1, ml::CVec3* out2, CamCamSrc* a, CamCamSrc* b,
         ow->w[2] = rw->w[2];
     } else if (c1 == 3) {
         CamTripletLocals res; // retail 0x140
-        func_80074010(&res, &aimA, scale, &p1);
+        cfCam_applyBasis(&res, &aimA, scale, &p1);
         CamEventVecWords* rw = (CamEventVecWords*)&res;
         CamEventVecWords* ow = (CamEventVecWords*)out1;
         u32 ry = rw->w[1];
@@ -1097,7 +1097,7 @@ void func_80075934(ml::CVec3* out1, ml::CVec3* out2, CamCamSrc* a, CamCamSrc* b,
         CinemCamSrc* v = src ? (CinemCamSrc*)&src->voice : (CinemCamSrc*)src;
         if (v != 0) {
             func_800756D0((ml::CVec3*)&in, v);
-            func_80074010(&res, &in, scale, &p2);
+            cfCam_applyBasis(&res, &in, scale, &p2);
         } else {
             res.x = p2.x; res.y = p2.y; res.z = p2.z;
         }
@@ -1110,7 +1110,7 @@ void func_80075934(ml::CVec3* out1, ml::CVec3* out2, CamCamSrc* a, CamCamSrc* b,
         ow->w[2] = rw->w[2];
     } else if (c2 == 3) {
         CamTripletLocals res; // retail 0x11C
-        func_80074010(&res, &aimA, scale, &p2);
+        cfCam_applyBasis(&res, &aimA, scale, &p2);
         CamEventVecWords* rw = (CamEventVecWords*)&res;
         CamEventVecWords* ow = (CamEventVecWords*)out2;
         u32 ry = rw->w[1];

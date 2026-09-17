@@ -75,7 +75,7 @@ extern void func_804BE3E0(const void* cb, void* mtx, u32 unk, int flag);
 extern bool func_804BE4B4(mlCVec3* v, int flag);
 extern bool func_804BE4E0(mlCVec3* v, int flag);
 extern void* func_804BE50C(int idx);
-extern void* func_8048315C(ShadowCtx* ctx);
+extern void* simGetLeafActData(ShadowCtx* ctx);
 extern void func_8048E2F8(CScnMaruShadowNw4r* shadow, ShadowCtx* ctx, float scale);
 } // extern "C"
 

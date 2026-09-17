@@ -103,15 +103,15 @@ void CCol6CheckBat::Term() {
 // window (lbl_eu_8066235C + 0x100) when a window id is queued; either way the
 // bat ends up flagged done at +0x64.
 void CCol6CheckBat::Move() {
-    if (func_8013BE50() == 0) {
+    if (IsMenuState621F0() == 0) {
         return;
     }
 
     if (lbl_eu_8066235C >= 0) {
         func_80135998(1);
-        char* msg = func_80136190(lbl_eu_80502050, &lbl_eu_80502050[9], 0x7f);
+        char* msg = BdatTouchStringCell(lbl_eu_80502050, &lbl_eu_80502050[9], 0x7f);
         func_8013D55C(msg, 0, 0);
-        msg = func_80136190(lbl_eu_80502050, &lbl_eu_80502050[9], 0x80);
+        msg = BdatTouchStringCell(lbl_eu_80502050, &lbl_eu_80502050[9], 0x80);
         func_8013D55C(msg, 0, 0);
 
         func_8013DA60(lbl_eu_8066235C + 0x100, 0, 0);
@@ -472,7 +472,7 @@ void CCol6Hint::Term() {
 void CCol6Hint::Move() {
     // Three-term short-circuit gate: retail emits beq/beq for the first two
     // conditions and an inverted bne-body / b-over-exit pair for the last.
-    if (func_8013BE50() == 0 || mFlag98 == 0 ||
+    if (IsMenuState621F0() == 0 || mFlag98 == 0 ||
         CScrollBar_isVisible(&mScrollBar) == 0) {
         return;
     }
@@ -526,7 +526,7 @@ void CCol6Hint::Move() {
 
         case 4:
             // Scroll bar sliding out: swap the anims back and wait for done.
-            if (func_80137510(mField94, lbl_eu_80667558) == 0) break;
+            if (AnimRewindFrame(mField94, lbl_eu_80667558) == 0) break;
             if (func_801F3668(&mScrollBar) == 0) break;
             mAnimHost->setAnim(mField94, 0);
             mAnimHost->setAnim(mField90, 1);
@@ -536,12 +536,12 @@ void CCol6Hint::Move() {
         case 5:
             // Out anim done: resolve the hint target for the current player
             // pair (mField120 + mField121) and post the index.
-            if (func_80137510(mField90, lbl_eu_80667558) == 0) break;
+            if (AnimRewindFrame(mField90, lbl_eu_80667558) == 0) break;
             {
                 s32 idx = (s8)mField120 + (s8)mField121;
                 u32 entry = mUnk9C[idx];
                 if (entry != 0) {
-                    mIndex = (u8)func_8013600C(
+                    mIndex = (u8)BdatGetU8ByTableKey(
                         &lbl_eu_80502050[0x26], &lbl_eu_80502050[0x33], entry);
                 } else {
                     mIndex = 0xff;
@@ -630,7 +630,7 @@ body:
     // Splitting running/loaded checks from the visibility check keeps the
     // visibility branch as bne-draw / b-over-return (a flat ||-chain would
     // collapse it to a single beq like the other gates).
-    if (func_8013BE50() != 0 && mFlag98 != 0) {
+    if (IsMenuState621F0() != 0 && mFlag98 != 0) {
         if (CScrollBar_isVisible(&mScrollBar) != 0) {
             goto draw;
         }
@@ -731,11 +731,11 @@ extern "C" void func_8015DD4C(CCol6Hint* self) {
     reinterpret_cast<CCol6Cur18View*>(self->mCur18)->vf02();
 
     // Label the two count panes.
-    char* s1 = func_80136190(lbl_eu_80502050, &lbl_eu_80502050[0x9], 0x1c);
-    func_80136B4C(reinterpret_cast<nw4r::lyt::Layout*>(self->mAnimHost),
+    char* s1 = BdatTouchStringCell(lbl_eu_80502050, &lbl_eu_80502050[0x9], 0x1c);
+    LayoutSetTextBoxFmtValue(reinterpret_cast<nw4r::lyt::Layout*>(self->mAnimHost),
                   &lbl_eu_80502050[0x81], s1, 0);
-    char* s2 = func_80136190(lbl_eu_80502050, &lbl_eu_80502050[0x9], 0xb);
-    func_80136B4C(reinterpret_cast<nw4r::lyt::Layout*>(self->mAnimHost),
+    char* s2 = BdatTouchStringCell(lbl_eu_80502050, &lbl_eu_80502050[0x9], 0xb);
+    LayoutSetTextBoxFmtValue(reinterpret_cast<nw4r::lyt::Layout*>(self->mAnimHost),
                   &lbl_eu_80502050[0x8b], s2, 0);
 
     // Label the item pane and clear its visibility flag.
@@ -772,7 +772,7 @@ extern "C" void func_8015DD4C(CCol6Hint* self) {
         u32 rid = (u8)i + 0x7fc;
         u8 val2 = ((u8*)&tbl2)[(u8)i];
         while (val1 >= val2) {
-            s32 c = func_801361E8(fp, &lbl_eu_80502050[0x9e], val1);
+            s32 c = BdatGetU8Direct(fp, &lbl_eu_80502050[0x9e], val1);
             if ((c & 0xff) <= (s32)func_8009CF8C(rid)) {
                 self->mUnk9C[self->mField11C] = val1;
                 self->mField11C++;
@@ -801,12 +801,12 @@ extern "C" void func_8015DD4C(CCol6Hint* self) {
         u32 idx = i + (s8)self->mField121;
         s32 entry = (s32)self->mUnk9C[idx];
         if (entry != 0) {
-            str = func_80136190(&lbl_eu_80502050[0x26],
+            str = BdatTouchStringCell(&lbl_eu_80502050[0x26],
                                 &lbl_eu_80502050[0xa3], entry);
         } else if (self->mUnk9C[idx - 1] != 0) {
-            str = func_80136190(lbl_eu_80502050, &lbl_eu_80502050[0x9], 5);
+            str = BdatTouchStringCell(lbl_eu_80502050, &lbl_eu_80502050[0x9], 5);
         }
-        func_80136B4C(reinterpret_cast<nw4r::lyt::Layout*>(self->mAnimHost),
+        LayoutSetTextBoxFmtValue(reinterpret_cast<nw4r::lyt::Layout*>(self->mAnimHost),
                       buf, str, 0);
     }
 }
@@ -879,14 +879,14 @@ extern "C" void func_8015E0BC(CCol6Hint* self) {
             // Nested form: retail tests entry==0 on the fall-through path.
             if (entry == 0) {
                 if (self->mUnk9C[idx - 1] != 0) {
-                    str = func_80136190(lbl_eu_80502050,
+                    str = BdatTouchStringCell(lbl_eu_80502050,
                                         &lbl_eu_80502050[0x9], 5);
                 }
             } else {
-                str = func_80136190(&lbl_eu_80502050[0x26],
+                str = BdatTouchStringCell(&lbl_eu_80502050[0x26],
                                     &lbl_eu_80502050[0xa3], entry);
             }
-            func_80136B4C(reinterpret_cast<nw4r::lyt::Layout*>(self->mAnimHost),
+            LayoutSetTextBoxFmtValue(reinterpret_cast<nw4r::lyt::Layout*>(self->mAnimHost),
                           buf, str, 0);
         }
         char buf2[0x20];
@@ -933,14 +933,14 @@ extern "C" void func_8015E0BC(CCol6Hint* self) {
             s32 entry = (s32)self->mUnk9C[idx];
             if (entry == 0) {
                 if (self->mUnk9C[idx - 1] != 0) {
-                    str = func_80136190(lbl_eu_80502050,
+                    str = BdatTouchStringCell(lbl_eu_80502050,
                                         &lbl_eu_80502050[0x9], 5);
                 }
             } else {
-                str = func_80136190(&lbl_eu_80502050[0x26],
+                str = BdatTouchStringCell(&lbl_eu_80502050[0x26],
                                     &lbl_eu_80502050[0xa3], entry);
             }
-            func_80136B4C(reinterpret_cast<nw4r::lyt::Layout*>(self->mAnimHost),
+            LayoutSetTextBoxFmtValue(reinterpret_cast<nw4r::lyt::Layout*>(self->mAnimHost),
                           buf, str, 0);
         }
         char buf2[0x20];
@@ -981,14 +981,14 @@ extern "C" void func_8015E0BC(CCol6Hint* self) {
             s32 entry = (s32)self->mUnk9C[idx];
             if (entry == 0) {
                 if (self->mUnk9C[idx - 1] != 0) {
-                    str = func_80136190(lbl_eu_80502050,
+                    str = BdatTouchStringCell(lbl_eu_80502050,
                                         &lbl_eu_80502050[0x9], 5);
                 }
             } else {
-                str = func_80136190(&lbl_eu_80502050[0x26],
+                str = BdatTouchStringCell(&lbl_eu_80502050[0x26],
                                     &lbl_eu_80502050[0xa3], entry);
             }
-            func_80136B4C(reinterpret_cast<nw4r::lyt::Layout*>(self->mAnimHost),
+            LayoutSetTextBoxFmtValue(reinterpret_cast<nw4r::lyt::Layout*>(self->mAnimHost),
                           buf, str, 0);
         }
         char buf2[0x20];
@@ -1033,14 +1033,14 @@ extern "C" void func_8015E0BC(CCol6Hint* self) {
             s32 entry = (s32)self->mUnk9C[idx];
             if (entry == 0) {
                 if (self->mUnk9C[idx - 1] != 0) {
-                    str = func_80136190(lbl_eu_80502050,
+                    str = BdatTouchStringCell(lbl_eu_80502050,
                                         &lbl_eu_80502050[0x9], 5);
                 }
             } else {
-                str = func_80136190(&lbl_eu_80502050[0x26],
+                str = BdatTouchStringCell(&lbl_eu_80502050[0x26],
                                     &lbl_eu_80502050[0xa3], entry);
             }
-            func_80136B4C(reinterpret_cast<nw4r::lyt::Layout*>(self->mAnimHost),
+            LayoutSetTextBoxFmtValue(reinterpret_cast<nw4r::lyt::Layout*>(self->mAnimHost),
                           buf, str, 0);
         }
         char buf2[0x20];
@@ -1341,7 +1341,7 @@ inline void CCol6System::updateCursorPos() {
 // post the camera moves through the CfGameManager API. All states fall
 // through to the common tail (anim-host tick, cursor/window updates).
 void CCol6System::Move() {
-    if (func_8013BE50() == 0) return;
+    if (IsMenuState621F0() == 0) return;
     if (mFlagA0 == 0) return;
     if (CSysWin_isReady(&mSysWin1) == 0) return;
     // Retail splits gate 4 into a two-instruction bne-body / b-exit pair
@@ -1383,7 +1383,7 @@ body:
 
     case 4:
         // In anim done: swap back and close.
-        if (func_80137510(mAnim94, lbl_eu_80667558) == 0) break;
+        if (AnimRewindFrame(mAnim94, lbl_eu_80667558) == 0) break;
         mFieldA4 = 5;
         reinterpret_cast<CCol6AnimHostView*>(mpLayout)
             ->setAnim(mAnim94, 0);
@@ -1397,7 +1397,7 @@ body:
 
     case 5:
         // Out anim done: resolve the target index from the player slot.
-        if (func_80137510(mAnim90, lbl_eu_80667558) == 0) break;
+        if (AnimRewindFrame(mAnim90, lbl_eu_80667558) == 0) break;
         mIndex = 0xff;
         if ((s8)mPadA5[0] == 2) mIndex = 1;
         else if ((s8)mPadA5[0] == 1) mIndex = 2;
@@ -1434,7 +1434,7 @@ body:
 
     case 9:
         // Close the box: reset the player and position the cursor.
-        if (func_80137510(mAnim98, lbl_eu_80667558) == 0) break;
+        if (AnimRewindFrame(mAnim98, lbl_eu_80667558) == 0) break;
         mFieldA4 = 3;
         mPadA5[0] = 0;
         updateCursorPos();
@@ -1583,9 +1583,9 @@ body:
         mFieldA4 = 0x20;
         {
             u8 cnt = (u8)func_8009CF8C(0x802);
-            char* s1 = func_80136190(lbl_eu_80502050, &lbl_eu_80502050[0x9],
+            char* s1 = BdatTouchStringCell(lbl_eu_80502050, &lbl_eu_80502050[0x9],
                                      cnt + 0x67);
-            char* s2 = func_80136190(lbl_eu_80502050, &lbl_eu_80502050[0x9],
+            char* s2 = BdatTouchStringCell(lbl_eu_80502050, &lbl_eu_80502050[0x9],
                                      cnt + 0x6c);
             ml::FixStr<128> buf;
             buf.format(&lbl_eu_80502050[0xb5], s1, s2);
@@ -1644,9 +1644,9 @@ body:
             }
         } else {
             mFieldA4 = 0x24;
-            char* s = func_80136190(lbl_eu_80502050, &lbl_eu_80502050[0x9],
+            char* s = BdatTouchStringCell(lbl_eu_80502050, &lbl_eu_80502050[0x9],
                                      0x7c);
-            u16 id = func_8013606C(&lbl_eu_80502050[0xbd],
+            u16 id = BdatGetU16ByTableKey(&lbl_eu_80502050[0xbd],
                                    &lbl_eu_80502050[0xc9],
                                    (s8)mPadA5[0] + 1);
             func_8013E2E0(id, 0, 0, 0, 0, 1, 0, 1, 0);
@@ -1671,9 +1671,9 @@ body:
             }
         } else {
             mFieldA4 = 0x26;
-            char* s = func_80136190(lbl_eu_80502050, &lbl_eu_80502050[0x9],
+            char* s = BdatTouchStringCell(lbl_eu_80502050, &lbl_eu_80502050[0x9],
                                      0x7c);
-            u16 id = func_8013606C(&lbl_eu_80502050[0xbd],
+            u16 id = BdatGetU16ByTableKey(&lbl_eu_80502050[0xbd],
                                    &lbl_eu_80502050[0xc9], 5);
             func_8013E2E0(id, 0, 0, 0, 0, 1, 0, 1, 0);
         }
@@ -1756,7 +1756,7 @@ body:
             }
         } else {
             mFieldA4 = 0x28;
-            char* s = func_80136190(lbl_eu_80502050, &lbl_eu_80502050[0x9],
+            char* s = BdatTouchStringCell(lbl_eu_80502050, &lbl_eu_80502050[0x9],
                                      0x80);
             func_8022B9B4(&mSysWin2, s, 0);
             func_8022B8B8(&mSysWin2);
@@ -1846,7 +1846,7 @@ fail:
 // two-instruction bne-body / b-exit pair, so use the goto-body/goto-end
 // split (CCol6Hint::cbRenderBefore precedent).
 void CCol6System::cbRenderBefore() {
-    if (func_8013BE50() == 0) goto end;
+    if (IsMenuState621F0() == 0) goto end;
     if (mFlagA0 == 0) goto end;
     if (CSysWin_isReady(&mSysWin1) == 0) goto end;
     if (CSysWin_isReady(&mSysWin2) != 0) goto draw;
@@ -1980,40 +1980,40 @@ extern "C" void func_80160370(CCol6System* self) {
     reinterpret_cast<CCol6Cur18View*>(self->mCur2)->vf02();
 
     // Label the two count panes.
-    func_80136B4C(self->mpLayout, &lbl_eu_80502050[0x81],
-                  func_80136190(lbl_eu_80502050, &lbl_eu_80502050[0x9], 0x1c),
+    LayoutSetTextBoxFmtValue(self->mpLayout, &lbl_eu_80502050[0x81],
+                  BdatTouchStringCell(lbl_eu_80502050, &lbl_eu_80502050[0x9], 0x1c),
                   0);
-    func_80136B4C(self->mpLayout, &lbl_eu_80502050[0x8b],
-                  func_80136190(lbl_eu_80502050, &lbl_eu_80502050[0x9], 0x1),
+    LayoutSetTextBoxFmtValue(self->mpLayout, &lbl_eu_80502050[0x8b],
+                  BdatTouchStringCell(lbl_eu_80502050, &lbl_eu_80502050[0x9], 0x1),
                   0);
 
     // Three slot labels: formatted pane name, then the per-slot name char.
     for (s32 i = 0; i < 3; i++) {
         char buf[0x20];
         sprintf(buf, &lbl_eu_80502050[0xe], i + 1);
-        func_80136B4C(self->mpLayout, buf,
-                      func_80136190(lbl_eu_80502050, &lbl_eu_80502050[0x9],
+        LayoutSetTextBoxFmtValue(self->mpLayout, buf,
+                      BdatTouchStringCell(lbl_eu_80502050, &lbl_eu_80502050[0x9],
                                     i + 2),
                       0);
     }
 
     // Blank rows and static summary labels.
-    func_80136B4C(self->mpLayout, &lbl_eu_80502050[0x220],
+    LayoutSetTextBoxFmtValue(self->mpLayout, &lbl_eu_80502050[0x220],
                   &lbl_eu_80502050[0x227], 0);
-    func_80136B4C(self->mpLayout, &lbl_eu_80502050[0x228],
+    LayoutSetTextBoxFmtValue(self->mpLayout, &lbl_eu_80502050[0x228],
                   &lbl_eu_80502050[0x227], 0);
-    char* s1e = func_80136190(lbl_eu_80502050, &lbl_eu_80502050[0x9], 0x1e);
-    func_80136B4C(self->mpLayout, &lbl_eu_80502050[0x22f], s1e, 0);
-    func_80136B4C(self->mpLayout, &lbl_eu_80502050[0x237],
-                  func_80136190(lbl_eu_80502050, &lbl_eu_80502050[0x9], 5), 0);
-    func_80136B4C(self->mpLayout, &lbl_eu_80502050[0x241],
-                  func_80136190(lbl_eu_80502050, &lbl_eu_80502050[0x9], 0x43),
+    char* s1e = BdatTouchStringCell(lbl_eu_80502050, &lbl_eu_80502050[0x9], 0x1e);
+    LayoutSetTextBoxFmtValue(self->mpLayout, &lbl_eu_80502050[0x22f], s1e, 0);
+    LayoutSetTextBoxFmtValue(self->mpLayout, &lbl_eu_80502050[0x237],
+                  BdatTouchStringCell(lbl_eu_80502050, &lbl_eu_80502050[0x9], 5), 0);
+    LayoutSetTextBoxFmtValue(self->mpLayout, &lbl_eu_80502050[0x241],
+                  BdatTouchStringCell(lbl_eu_80502050, &lbl_eu_80502050[0x9], 0x43),
                   0);
-    func_80136B4C(self->mpLayout, &lbl_eu_80502050[0x24e],
-                  func_80136190(lbl_eu_80502050, &lbl_eu_80502050[0x9], 0x47),
+    LayoutSetTextBoxFmtValue(self->mpLayout, &lbl_eu_80502050[0x24e],
+                  BdatTouchStringCell(lbl_eu_80502050, &lbl_eu_80502050[0x9], 0x47),
                   0);
 
-    char* s46 = func_80136190(lbl_eu_80502050, &lbl_eu_80502050[0x9], 0x46);
+    char* s46 = BdatTouchStringCell(lbl_eu_80502050, &lbl_eu_80502050[0x9], 0x46);
 
     // Four player-count rows: count pane + two sub-labels per row.
     for (s32 i = 0; i < 4; i++) {
@@ -2023,10 +2023,10 @@ extern "C" void func_80160370(CCol6System* self) {
         sprintf(buf, &lbl_eu_80502050[0x25e], idx);
         setLayoutTextBoxNumber__FPQ34nw4r3lyt6LayoutPcUc(self->mpLayout, buf, c);
         sprintf(buf, &lbl_eu_80502050[0x26a], idx);
-        func_80136B4C(self->mpLayout, buf, s46, 0);
+        LayoutSetTextBoxFmtValue(self->mpLayout, buf, s46, 0);
         sprintf(buf, &lbl_eu_80502050[0x275], idx);
-        func_80136B4C(self->mpLayout, buf,
-                      func_80136190(lbl_eu_80502050, &lbl_eu_80502050[0x9],
+        LayoutSetTextBoxFmtValue(self->mpLayout, buf,
+                      BdatTouchStringCell(lbl_eu_80502050, &lbl_eu_80502050[0x9],
                                     i + 0x3d),
                       0);
     }
@@ -2034,25 +2034,25 @@ extern "C" void func_80160370(CCol6System* self) {
     func_80160A6C(self, (s8)self->mPadA5[0]);
 
     // Remaining summary rows.
-    func_80136B4C(self->mpLayout, &lbl_eu_80502050[0x281],
-                  func_80136190(lbl_eu_80502050, &lbl_eu_80502050[0x9], 0x15),
+    LayoutSetTextBoxFmtValue(self->mpLayout, &lbl_eu_80502050[0x281],
+                  BdatTouchStringCell(lbl_eu_80502050, &lbl_eu_80502050[0x9], 0x15),
                   0);
-    func_80136B4C(self->mpLayout, &lbl_eu_80502050[0x289],
-                  func_80136190(lbl_eu_80502050, &lbl_eu_80502050[0x9], 0x16),
+    LayoutSetTextBoxFmtValue(self->mpLayout, &lbl_eu_80502050[0x289],
+                  BdatTouchStringCell(lbl_eu_80502050, &lbl_eu_80502050[0x9], 0x16),
                   0);
-    func_80136B4C(self->mpLayout, &lbl_eu_80502050[0x105],
-                  func_80136190(&lbl_eu_80502050[0x293],
+    LayoutSetTextBoxFmtValue(self->mpLayout, &lbl_eu_80502050[0x105],
+                  BdatTouchStringCell(&lbl_eu_80502050[0x293],
                                 &lbl_eu_80502050[0x9], 0x16),
                   0);
-    func_80136B4C(self->mpLayout, &lbl_eu_80502050[0x298],
-                  func_80136190(lbl_eu_80502050, &lbl_eu_80502050[0x9], 0x17),
+    LayoutSetTextBoxFmtValue(self->mpLayout, &lbl_eu_80502050[0x298],
+                  BdatTouchStringCell(lbl_eu_80502050, &lbl_eu_80502050[0x9], 0x17),
                   0);
-    func_80136B4C(self->mpLayout, &lbl_eu_80502050[0x2a2],
-                  func_80136190(&lbl_eu_80502050[0x293],
+    LayoutSetTextBoxFmtValue(self->mpLayout, &lbl_eu_80502050[0x2a2],
+                  BdatTouchStringCell(&lbl_eu_80502050[0x293],
                                 &lbl_eu_80502050[0x9], 0x17),
                   0);
-    func_80136B4C(self->mpLayout, &lbl_eu_80502050[0x2ac],
-                  func_80136190(lbl_eu_80502050, &lbl_eu_80502050[0x9], 0x18),
+    LayoutSetTextBoxFmtValue(self->mpLayout, &lbl_eu_80502050[0x2ac],
+                  BdatTouchStringCell(lbl_eu_80502050, &lbl_eu_80502050[0x9], 0x18),
                   0);
 
     // Player counts on the two slots.
@@ -2072,8 +2072,8 @@ extern "C" void func_80160370(CCol6System* self) {
             break;
         }
     }
-    char* s2b6 = func_80136190(lbl_eu_80502050, &lbl_eu_80502050[0x9], cnt);
-    func_80136B4C(self->mpLayout, &lbl_eu_80502050[0x2b6], s2b6, 0);
+    char* s2b6 = BdatTouchStringCell(lbl_eu_80502050, &lbl_eu_80502050[0x9], cnt);
+    LayoutSetTextBoxFmtValue(self->mpLayout, &lbl_eu_80502050[0x2b6], s2b6, 0);
 }
 
 // func_80160A6C - refresh the item-box layout for a player slot: write the
@@ -2091,24 +2091,24 @@ extern "C" void func_80160A6C(CCol6System* self, s32 playerIdx) {
 
     if (playerIdx < 4) {
         s32 f = (s32)func_8009CF8C((u32)(playerIdx + 0x7fe));
-        char* str = func_80136190(lbl_eu_80502050, &lbl_eu_80502050[0x293],
+        char* str = BdatTouchStringCell(lbl_eu_80502050, &lbl_eu_80502050[0x293],
                                   f + playerIdx * 6 + 0x1f);
-        func_80136B4C(self->mpLayout, &lbl_eu_80502050[0x2c0], str, 0);
+        LayoutSetTextBoxFmtValue(self->mpLayout, &lbl_eu_80502050[0x2c0], str, 0);
 
         if (f < 5) {
             u32 n = (u32)(f + playerIdx * 5 + 1);
-            u16 id = func_8013606C(&lbl_eu_80502050[0x2cc],
+            u16 id = BdatGetU16ByTableKey(&lbl_eu_80502050[0x2cc],
                                    &lbl_eu_80502050[0x2dd], n);
             setLayoutTextBoxNumber__FPQ34nw4r3lyt6LayoutPcUc(
                 self->mpLayout, &lbl_eu_80502050[0x1a4], id * 100);
-            char* s3 = func_80136190(&lbl_eu_80502050[0x2e3],
+            char* s3 = BdatTouchStringCell(&lbl_eu_80502050[0x2e3],
                                      &lbl_eu_80502050[0x9], 3);
-            func_80136B4C(self->mpLayout, &lbl_eu_80502050[0x199], s3, 0);
+            LayoutSetTextBoxFmtValue(self->mpLayout, &lbl_eu_80502050[0x199], s3, 0);
             setLayoutTextBoxNumber__FPQ34nw4r3lyt6LayoutPcUc(
-                self->mpLayout, &lbl_eu_80502050[0x212], func_801571FC());
-            char* s4 = func_80136190(&lbl_eu_80502050[0x2e3],
+                self->mpLayout, &lbl_eu_80502050[0x212], CItemBlock_getPtr20E8());
+            char* s4 = BdatTouchStringCell(&lbl_eu_80502050[0x2e3],
                                      &lbl_eu_80502050[0x9], 3);
-            func_80136B4C(self->mpLayout, &lbl_eu_80502050[0x204], s4, 0);
+            LayoutSetTextBoxFmtValue(self->mpLayout, &lbl_eu_80502050[0x204], s4, 0);
 
             // Per-slot rows: 4 format strings + a lookup for the count value.
             for (s32 i = 0; i < 5; i++) {
@@ -2121,38 +2121,38 @@ extern "C" void func_80160A6C(CCol6System* self, s32 playerIdx) {
                 sprintf(buf108, &lbl_eu_80502050[0x30d], idx);
                 char bufE8[0x20];
                 sprintf(bufE8, &lbl_eu_80502050[0x320], idx);
-                u16 id2 = func_8013606C(&lbl_eu_80502050[0x2cc], bufE8, n);
+                u16 id2 = BdatGetU16ByTableKey(&lbl_eu_80502050[0x2cc], bufE8, n);
                 if (id2 != 0) {
-                    func_801392E4(id2);
-                    func_80139358(id2);
+                    BdatGetItemType(id2);
+                    BdatGetItemId(id2);
                     char* name = func_801394D4(id2);
                     char bufC8[0x20];
                     sprintf(bufC8, &lbl_eu_80502050[0x32b], idx);
-                    u8 v = (u8)func_8013600C(&lbl_eu_80502050[0x2cc], bufC8,
+                    u8 v = (u8)BdatGetU8ByTableKey(&lbl_eu_80502050[0x2cc], bufC8,
                                              n);
-                    func_80136B4C(self->mpLayout, buf148, name, 0);
+                    LayoutSetTextBoxFmtValue(self->mpLayout, buf148, name, 0);
                     setLayoutTextBoxNumber__FPQ34nw4r3lyt6LayoutPcUc(self->mpLayout,
                                                             buf128, v);
-                    u32 cnt = func_80158068(id2);
+                    u32 cnt = CItem_sumFamilyByte6(id2);
                     setLayoutTextBoxNumber__FPQ34nw4r3lyt6LayoutPcUc(self->mpLayout,
                                                             buf108, cnt);
                 } else {
-                    func_80136B4C(self->mpLayout, buf148,
+                    LayoutSetTextBoxFmtValue(self->mpLayout, buf148,
                                   &lbl_eu_80502050[0x227], 0);
-                    func_80136B4C(self->mpLayout, buf128,
+                    LayoutSetTextBoxFmtValue(self->mpLayout, buf128,
                                   &lbl_eu_80502050[0x227], 0);
-                    func_80136B4C(self->mpLayout, buf108,
+                    LayoutSetTextBoxFmtValue(self->mpLayout, buf108,
                                   &lbl_eu_80502050[0x227], 0);
                 }
             }
         } else {
-            func_80136B4C(self->mpLayout, &lbl_eu_80502050[0x199],
+            LayoutSetTextBoxFmtValue(self->mpLayout, &lbl_eu_80502050[0x199],
                           &lbl_eu_80502050[0x227], 0);
-            func_80136B4C(self->mpLayout, &lbl_eu_80502050[0x1a4],
+            LayoutSetTextBoxFmtValue(self->mpLayout, &lbl_eu_80502050[0x1a4],
                           &lbl_eu_80502050[0x227], 0);
-            func_80136B4C(self->mpLayout, &lbl_eu_80502050[0x204],
+            LayoutSetTextBoxFmtValue(self->mpLayout, &lbl_eu_80502050[0x204],
                           &lbl_eu_80502050[0x227], 0);
-            func_80136B4C(self->mpLayout, &lbl_eu_80502050[0x212],
+            LayoutSetTextBoxFmtValue(self->mpLayout, &lbl_eu_80502050[0x212],
                           &lbl_eu_80502050[0x227], 0);
             for (s32 i = 0; i < 5; i++) {
                 u8 idx = (u8)(i + 1);
@@ -2162,24 +2162,24 @@ extern "C" void func_80160A6C(CCol6System* self, s32 playerIdx) {
                 sprintf(buf88, &lbl_eu_80502050[0x2fd], idx);
                 char buf68[0x20];
                 sprintf(buf68, &lbl_eu_80502050[0x30d], idx);
-                func_80136B4C(self->mpLayout, bufA8,
+                LayoutSetTextBoxFmtValue(self->mpLayout, bufA8,
                               &lbl_eu_80502050[0x227], 0);
-                func_80136B4C(self->mpLayout, buf88,
+                LayoutSetTextBoxFmtValue(self->mpLayout, buf88,
                               &lbl_eu_80502050[0x227], 0);
-                func_80136B4C(self->mpLayout, buf68,
+                LayoutSetTextBoxFmtValue(self->mpLayout, buf68,
                               &lbl_eu_80502050[0x227], 0);
             }
         }
     } else {
-        func_80136B4C(self->mpLayout, &lbl_eu_80502050[0x2c0],
+        LayoutSetTextBoxFmtValue(self->mpLayout, &lbl_eu_80502050[0x2c0],
                       &lbl_eu_80502050[0x227], 0);
-        func_80136B4C(self->mpLayout, &lbl_eu_80502050[0x199],
+        LayoutSetTextBoxFmtValue(self->mpLayout, &lbl_eu_80502050[0x199],
                       &lbl_eu_80502050[0x227], 0);
-        func_80136B4C(self->mpLayout, &lbl_eu_80502050[0x1a4],
+        LayoutSetTextBoxFmtValue(self->mpLayout, &lbl_eu_80502050[0x1a4],
                       &lbl_eu_80502050[0x227], 0);
-        func_80136B4C(self->mpLayout, &lbl_eu_80502050[0x204],
+        LayoutSetTextBoxFmtValue(self->mpLayout, &lbl_eu_80502050[0x204],
                       &lbl_eu_80502050[0x227], 0);
-        func_80136B4C(self->mpLayout, &lbl_eu_80502050[0x212],
+        LayoutSetTextBoxFmtValue(self->mpLayout, &lbl_eu_80502050[0x212],
                       &lbl_eu_80502050[0x227], 0);
         for (s32 i = 0; i < 5; i++) {
             u8 idx = (u8)(i + 1);
@@ -2189,9 +2189,9 @@ extern "C" void func_80160A6C(CCol6System* self, s32 playerIdx) {
             sprintf(buf28, &lbl_eu_80502050[0x2fd], idx);
             char buf8[0x20];
             sprintf(buf8, &lbl_eu_80502050[0x30d], idx);
-            func_80136B4C(self->mpLayout, buf48, &lbl_eu_80502050[0x227], 0);
-            func_80136B4C(self->mpLayout, buf28, &lbl_eu_80502050[0x227], 0);
-            func_80136B4C(self->mpLayout, buf8, &lbl_eu_80502050[0x227], 0);
+            LayoutSetTextBoxFmtValue(self->mpLayout, buf48, &lbl_eu_80502050[0x227], 0);
+            LayoutSetTextBoxFmtValue(self->mpLayout, buf28, &lbl_eu_80502050[0x227], 0);
+            LayoutSetTextBoxFmtValue(self->mpLayout, buf8, &lbl_eu_80502050[0x227], 0);
         }
     }
 }
@@ -2210,32 +2210,32 @@ void func_80160EE4(u32 unused, s32 arg) {
     s32 tmp = arg * 4;
     tmp += arg;
     s32 n = f + tmp + 1;
-    u16 id = (u16)func_8013606C(
+    u16 id = (u16)BdatGetU16ByTableKey(
         &lbl_eu_80502050[0x2cc], &lbl_eu_80502050[0x2dd],
         (u32)n);
-    func_80157184((s32)func_801571FC() - (s32)id * 100);
+    CItemBlock_setCount((s32)CItemBlock_getPtr20E8() - (s32)id * 100);
 
     char buf1[0x20];
     char buf2[0x20];
     for (s32 i = 0; i < 5; i++) {
         u8 idx = (u8)(i + 1);
         sprintf(buf1, &lbl_eu_80502050[0x320], idx);
-        u16 id2 = (u16)func_8013606C(
+        u16 id2 = (u16)BdatGetU16ByTableKey(
             &lbl_eu_80502050[0x2cc], buf1, (u32)n);
         if (id2 == 0) continue;
         sprintf(buf2, &lbl_eu_80502050[0x32b], idx);
-        u8 v = (u8)func_8013600C(
+        u8 v = (u8)BdatGetU8ByTableKey(
             &lbl_eu_80502050[0x2cc], buf2, (u32)n);
-        void* item = func_801587E8(id2);
+        void* item = CItem_findRecByFamily(id2);
         if (item == 0) continue;
-        s32 count = (s32)func_80158068(id2);
+        s32 count = (s32)CItem_sumFamilyByte6(id2);
         if (count == (s32)v) {
             CCol6ItemInstancesView* inst =
                 reinterpret_cast<CCol6ItemInstancesView*>(
                     CItem_initItemImplInstances(item));
             inst->vf4(item);
         } else {
-            func_80158118(item, id2, (u32)(count - v));
+            CItemData_initFromFamily(item, id2, (u32)(count - v));
         }
     }
 }
@@ -2245,10 +2245,10 @@ void func_80160EE4(u32 unused, s32 arg) {
 // of the five sub-slots must have its item present with a sufficient count.
 extern "C" int func_80161024(CCol6System* self) {
     u8 f = (u8)func_8009CF8C((u32)((s8)self->mPadA5[0] + 0x7fe));
-    u16 id = func_8013606C(
+    u16 id = BdatGetU16ByTableKey(
         &lbl_eu_80502050[0x2cc], &lbl_eu_80502050[0x2dd],
         (u32)((s32)f + (s8)self->mPadA5[0] * 5 + 1));
-    if ((u32)func_801571FC() < (u32)id * 100) {
+    if ((u32)CItemBlock_getPtr20E8() < (u32)id * 100) {
         return 0;
     }
 
@@ -2257,17 +2257,17 @@ extern "C" int func_80161024(CCol6System* self) {
     for (s32 i = 0; i < 5; i++) {
         u8 sub = (u8)(i + 1);
         sprintf(buf1, &lbl_eu_80502050[0x320], sub);
-        u16 id2 = (u16)func_8013606C(
+        u16 id2 = (u16)BdatGetU16ByTableKey(
             &lbl_eu_80502050[0x2cc], buf1,
             (u32)((s32)f + (s8)self->mPadA5[0] * 5 + 1));
         if (id2 == 0) continue;
         sprintf(buf2, &lbl_eu_80502050[0x32b], sub);
-        u8 v = func_8013600C(
+        u8 v = BdatGetU8ByTableKey(
             &lbl_eu_80502050[0x2cc], buf2,
             (u32)((s32)f + (s8)self->mPadA5[0] * 5 + 1));
-        void* item = func_801587E8(id2);
+        void* item = CItem_findRecByFamily(id2);
         if (item == 0) return 0;
-        if ((s32)func_80158068(id2) < (s32)v) return 0;
+        if ((s32)CItem_sumFamilyByte6(id2) < (s32)v) return 0;
     }
     return 1;
 }
@@ -2435,12 +2435,12 @@ void func_8016169C(CCol6System* self) {
         } else if (func_8009CF8C(pid + 0x7fe) < 5) {
             if (func_80161024(self) != 0) {
                 // Fill window 1 with the player's box name and open it.
-                char* str1 = func_80136190(lbl_eu_80502050,
+                char* str1 = BdatTouchStringCell(lbl_eu_80502050,
                                            &lbl_eu_80502050[0x9],
                                            pid + 0x48);
-                char* str2 = func_80136190(lbl_eu_80502050,
+                char* str2 = BdatTouchStringCell(lbl_eu_80502050,
                                            &lbl_eu_80502050[0x9], 7);
-                char* str3 = func_80136190(lbl_eu_80502050,
+                char* str3 = BdatTouchStringCell(lbl_eu_80502050,
                                            &lbl_eu_80502050[0x9], 8);
                 func_8022B9B4(&self->mSysWin1, str1, 0);
                 func_8022BF6C(&self->mSysWin1, str2, str3);
@@ -2454,7 +2454,7 @@ void func_8016169C(CCol6System* self) {
             }
         } else {
             // Box full: show the window-2 message.
-            char* str = func_80136190(lbl_eu_80502050, &lbl_eu_80502050[0x9],
+            char* str = BdatTouchStringCell(lbl_eu_80502050, &lbl_eu_80502050[0x9],
                                       0xc);
             func_8022B9B4(&self->mSysWin2, str, 0);
             func_8022BFC8(&self->mSysWin2, 1);
@@ -2654,9 +2654,9 @@ extern "C" void func_80162000(CCol6System* self) {
     u32 f = func_8009CF8C((u32)((s8)self->mPadA5[0] + 0x7fe));
     func_8009D018((u32)((s8)self->mPadA5[0] + 0x7fe), f + 1);
     u32 n = f + (s8)self->mPadA5[0] * 5 + 1;
-    u8 a = (u8)func_8013600C(&lbl_eu_80502050[0x334], &lbl_eu_80502050[0x33f], n);
+    u8 a = (u8)BdatGetU8ByTableKey(&lbl_eu_80502050[0x334], &lbl_eu_80502050[0x33f], n);
     func_8009D018(0x7fc, func_8009CF8C(0x7fc) + a);
-    u8 b = (u8)func_8013600C(&lbl_eu_80502050[0x334], &lbl_eu_80502050[0x346], n);
+    u8 b = (u8)BdatGetU8ByTableKey(&lbl_eu_80502050[0x334], &lbl_eu_80502050[0x346], n);
     func_8009D018(0x7fd, func_8009CF8C(0x7fd) + b);
 
     // Seed the TaskLOD/audio slots for this player's three id ranges.
@@ -2836,66 +2836,66 @@ extern "C" void func_80162000(CCol6System* self) {
     }
 
     // Remaining audio/quest seeds from the per-player table.
-    u8 c1 = (u8)func_8013600C(&lbl_eu_80502050[0x334], &lbl_eu_80502050[0x351], n);
-    u8 c2 = (u8)func_8013600C(&lbl_eu_80502050[0x334], &lbl_eu_80502050[0x35e], n);
+    u8 c1 = (u8)BdatGetU8ByTableKey(&lbl_eu_80502050[0x334], &lbl_eu_80502050[0x351], n);
+    u8 c2 = (u8)BdatGetU8ByTableKey(&lbl_eu_80502050[0x334], &lbl_eu_80502050[0x35e], n);
     if (c1 != 0) func_8009D018(c1 + 0x278a, 1);
     if (c2 != 0) func_8009D018(c2 + 0x798, 1);
-    u16 d = func_8013606C(&lbl_eu_80502050[0x334], &lbl_eu_80502050[0x36a], n);
+    u16 d = BdatGetU16ByTableKey(&lbl_eu_80502050[0x334], &lbl_eu_80502050[0x36a], n);
     if (d != 0) func_8009D018(d + 0x220, 0xc8);
-    u16 e = func_8013606C(&lbl_eu_80502050[0x334], &lbl_eu_80502050[0x376], n);
+    u16 e = BdatGetU16ByTableKey(&lbl_eu_80502050[0x334], &lbl_eu_80502050[0x376], n);
     self->mFieldA2 = playActorSound__Q22cf10CfSoundManFUlUlUlUlf(
         1, e, 0, 0, lbl_eu_80667558);
 
     // Camera/vector block: every value is the s16 lookup result cast to float
     // (MWCC emits the 2^52 int->double conversion for (f32)(s16)); two slots
-    // are byte-sized lookups via func_8013600C.
-    self->mCamPos.x = (f32)(s16)func_80136130(
+    // are byte-sized lookups via BdatGetU8ByTableKey.
+    self->mCamPos.x = (f32)(s16)BdatGetS16ByTableKey(
         &lbl_eu_80502050[0x334], &lbl_eu_80502050[0x380], n);
-    self->mCamPos.y = (f32)(s16)func_80136130(
+    self->mCamPos.y = (f32)(s16)BdatGetS16ByTableKey(
         &lbl_eu_80502050[0x334], &lbl_eu_80502050[0x38a], n);
-    self->mCamPos.z = (f32)(s16)func_80136130(
+    self->mCamPos.z = (f32)(s16)BdatGetS16ByTableKey(
         &lbl_eu_80502050[0x334], &lbl_eu_80502050[0x394], n);
-    self->mCamLookAt.x = (f32)(s16)func_80136130(
+    self->mCamLookAt.x = (f32)(s16)BdatGetS16ByTableKey(
         &lbl_eu_80502050[0x334], &lbl_eu_80502050[0x39e], n);
-    self->mCamLookAt.y = (f32)(s16)func_80136130(
+    self->mCamLookAt.y = (f32)(s16)BdatGetS16ByTableKey(
         &lbl_eu_80502050[0x334], &lbl_eu_80502050[0x3a9], n);
-    self->mVec168.x = (f32)(s16)func_80136130(
+    self->mVec168.x = (f32)(s16)BdatGetS16ByTableKey(
         &lbl_eu_80502050[0x334], &lbl_eu_80502050[0x3b4], n);
-    self->mVec168.y = (f32)(s16)func_80136130(
+    self->mVec168.y = (f32)(s16)BdatGetS16ByTableKey(
         &lbl_eu_80502050[0x334], &lbl_eu_80502050[0x3be], n);
-    self->mVec168.z = (f32)(s16)func_80136130(
+    self->mVec168.z = (f32)(s16)BdatGetS16ByTableKey(
         &lbl_eu_80502050[0x334], &lbl_eu_80502050[0x3c8], n);
-    self->mVec174.x = (f32)(s16)func_80136130(
+    self->mVec174.x = (f32)(s16)BdatGetS16ByTableKey(
         &lbl_eu_80502050[0x334], &lbl_eu_80502050[0x3d2], n);
-    self->mVec174.y = (f32)(s16)func_80136130(
+    self->mVec174.y = (f32)(s16)BdatGetS16ByTableKey(
         &lbl_eu_80502050[0x334], &lbl_eu_80502050[0x3dd], n);
-    self->mField180 = (f32)(s16)func_80136130(
+    self->mField180 = (f32)(s16)BdatGetS16ByTableKey(
         &lbl_eu_80502050[0x334], &lbl_eu_80502050[0x3e8], n);
-    self->mField184 = (u8)func_8013600C(
+    self->mField184 = (u8)BdatGetU8ByTableKey(
         &lbl_eu_80502050[0x334], &lbl_eu_80502050[0x3f4], n);
-    self->mVec188.x = (f32)(s16)func_80136130(
+    self->mVec188.x = (f32)(s16)BdatGetS16ByTableKey(
         &lbl_eu_80502050[0x334], &lbl_eu_80502050[0x400], n);
-    self->mVec188.y = (f32)(s16)func_80136130(
+    self->mVec188.y = (f32)(s16)BdatGetS16ByTableKey(
         &lbl_eu_80502050[0x334], &lbl_eu_80502050[0x40a], n);
-    self->mVec188.z = (f32)(s16)func_80136130(
+    self->mVec188.z = (f32)(s16)BdatGetS16ByTableKey(
         &lbl_eu_80502050[0x334], &lbl_eu_80502050[0x414], n);
-    self->mVec194.x = (f32)(s16)func_80136130(
+    self->mVec194.x = (f32)(s16)BdatGetS16ByTableKey(
         &lbl_eu_80502050[0x334], &lbl_eu_80502050[0x41e], n);
-    self->mVec194.y = (f32)(s16)func_80136130(
+    self->mVec194.y = (f32)(s16)BdatGetS16ByTableKey(
         &lbl_eu_80502050[0x334], &lbl_eu_80502050[0x429], n);
-    self->mVec1A0.x = (f32)(s16)func_80136130(
+    self->mVec1A0.x = (f32)(s16)BdatGetS16ByTableKey(
         &lbl_eu_80502050[0x334], &lbl_eu_80502050[0x434], n);
-    self->mVec1A0.y = (f32)(s16)func_80136130(
+    self->mVec1A0.y = (f32)(s16)BdatGetS16ByTableKey(
         &lbl_eu_80502050[0x334], &lbl_eu_80502050[0x43e], n);
-    self->mVec1A0.z = (f32)(s16)func_80136130(
+    self->mVec1A0.z = (f32)(s16)BdatGetS16ByTableKey(
         &lbl_eu_80502050[0x334], &lbl_eu_80502050[0x448], n);
-    self->mVec1AC.x = (f32)(s16)func_80136130(
+    self->mVec1AC.x = (f32)(s16)BdatGetS16ByTableKey(
         &lbl_eu_80502050[0x334], &lbl_eu_80502050[0x452], n);
-    self->mVec1AC.y = (f32)(s16)func_80136130(
+    self->mVec1AC.y = (f32)(s16)BdatGetS16ByTableKey(
         &lbl_eu_80502050[0x334], &lbl_eu_80502050[0x45d], n);
-    self->mField1B8 = (f32)(s16)func_80136130(
+    self->mField1B8 = (f32)(s16)BdatGetS16ByTableKey(
         &lbl_eu_80502050[0x334], &lbl_eu_80502050[0x468], n);
-    self->mField1BC = (u8)func_8013600C(
+    self->mField1BC = (u8)BdatGetU8ByTableKey(
         &lbl_eu_80502050[0x334], &lbl_eu_80502050[0x474], n);
 
     // Player counts on the two slots.
@@ -2915,8 +2915,8 @@ extern "C" void func_80162000(CCol6System* self) {
             break;
         }
     }
-    char* s2b6 = func_80136190(lbl_eu_80502050, &lbl_eu_80502050[0x9], cnt);
-    func_80136B4C(self->mpLayout, &lbl_eu_80502050[0x2b6], s2b6, 0);
+    char* s2b6 = BdatTouchStringCell(lbl_eu_80502050, &lbl_eu_80502050[0x9], cnt);
+    LayoutSetTextBoxFmtValue(self->mpLayout, &lbl_eu_80502050[0x2b6], s2b6, 0);
 
     func_80160A6C(self, (s8)self->mPadA5[0]);
     self->mFlagA1 = 1;
@@ -2937,14 +2937,14 @@ void func_80162C40(CCol6System* self) {
     // the count add into the named temp (retail add r28, r0, r3 shape).
     u32 f = func_8009CF8C((u32)((s8)self->mPadA5[0] + 0x7fe));
     u32 n = (s8)self->mPadA5[0] * 5 + f;
-    u8 a = (u8)func_8013600C(&tbl[0x334], &tbl[0x33f], n);
-    u8 b = (u8)func_8013600C(&tbl[0x334], &tbl[0x346], n);
+    u8 a = (u8)BdatGetU8ByTableKey(&tbl[0x334], &tbl[0x33f], n);
+    u8 b = (u8)BdatGetU8ByTableKey(&tbl[0x334], &tbl[0x346], n);
 
-    char* str0 = func_80136190(tbl, &tbl[0x9], (s8)self->mPadA5[0] + 0x4e);
+    char* str0 = BdatTouchStringCell(tbl, &tbl[0x9], (s8)self->mPadA5[0] + 0x4e);
     char* str1 =
-        func_80136190(tbl, &tbl[0x9], (s8)self->mPadA5[0] * 5 + f + 0x53);
-    char* str2 = func_80136190(tbl, &tbl[0x9], 0x78);
-    char* str3 = func_80136190(tbl, &tbl[0x9], 0x79);
+        BdatTouchStringCell(tbl, &tbl[0x9], (s8)self->mPadA5[0] * 5 + f + 0x53);
+    char* str2 = BdatTouchStringCell(tbl, &tbl[0x9], 0x78);
+    char* str3 = BdatTouchStringCell(tbl, &tbl[0x9], 0x79);
 
     ml::FixStr<256> buf;
     func_eu_801651A0(buf.mString, &tbl[0x480], str0, str1, str2, a, str3, b);
@@ -2987,9 +2987,9 @@ void func_80162DB4(CCol6System* self) {
         forwardMpfCallB__17UnkClass_8047BB54Fv(&gm->field_0xF0, v);
     }
 
-    u8 a = func_8013600C(
+    u8 a = BdatGetU8ByTableKey(
         &lbl_eu_80502050[0x334], &lbl_eu_80502050[0x351], (u32)n);
-    u8 b = func_8013600C(
+    u8 b = BdatGetU8ByTableKey(
         &lbl_eu_80502050[0x334], &lbl_eu_80502050[0x35e], (u32)n);
     if (a != 0) {
         func_8009D018((u32)a + 0x278a, 1);
@@ -3042,54 +3042,54 @@ extern "C" void func_80162EF8(CCol6System* self) {
 
             // Camera/vector block: every value is the s16 lookup result cast to
             // float (MWCC emits the 2^52 int->double conversion for (f32)(s16));
-            // two slots are byte-sized lookups via func_8013600C.
-            self->mCamPos.x = (f32)(s16)func_80136130(
+            // two slots are byte-sized lookups via BdatGetU8ByTableKey.
+            self->mCamPos.x = (f32)(s16)BdatGetS16ByTableKey(
                 &base[0x334], &base[0x380], n);
-            self->mCamPos.y = (f32)(s16)func_80136130(
+            self->mCamPos.y = (f32)(s16)BdatGetS16ByTableKey(
                 &base[0x334], &base[0x38a], n);
-            self->mCamPos.z = (f32)(s16)func_80136130(
+            self->mCamPos.z = (f32)(s16)BdatGetS16ByTableKey(
                 &base[0x334], &base[0x394], n);
-            self->mCamLookAt.x = (f32)(s16)func_80136130(
+            self->mCamLookAt.x = (f32)(s16)BdatGetS16ByTableKey(
                 &base[0x334], &base[0x39e], n);
-            self->mCamLookAt.y = (f32)(s16)func_80136130(
+            self->mCamLookAt.y = (f32)(s16)BdatGetS16ByTableKey(
                 &base[0x334], &base[0x3a9], n);
-            self->mVec168.x = (f32)(s16)func_80136130(
+            self->mVec168.x = (f32)(s16)BdatGetS16ByTableKey(
                 &base[0x334], &base[0x3b4], n);
-            self->mVec168.y = (f32)(s16)func_80136130(
+            self->mVec168.y = (f32)(s16)BdatGetS16ByTableKey(
                 &base[0x334], &base[0x3be], n);
-            self->mVec168.z = (f32)(s16)func_80136130(
+            self->mVec168.z = (f32)(s16)BdatGetS16ByTableKey(
                 &base[0x334], &base[0x3c8], n);
-            self->mVec174.x = (f32)(s16)func_80136130(
+            self->mVec174.x = (f32)(s16)BdatGetS16ByTableKey(
                 &base[0x334], &base[0x3d2], n);
-            self->mVec174.y = (f32)(s16)func_80136130(
+            self->mVec174.y = (f32)(s16)BdatGetS16ByTableKey(
                 &base[0x334], &base[0x3dd], n);
-            self->mField180 = (f32)(s16)func_80136130(
+            self->mField180 = (f32)(s16)BdatGetS16ByTableKey(
                 &base[0x334], &base[0x3e8], n);
-            self->mField184 = (u8)func_8013600C(
+            self->mField184 = (u8)BdatGetU8ByTableKey(
                 &base[0x334], &base[0x3f4], n);
-            self->mVec188.x = (f32)(s16)func_80136130(
+            self->mVec188.x = (f32)(s16)BdatGetS16ByTableKey(
                 &base[0x334], &base[0x400], n);
-            self->mVec188.y = (f32)(s16)func_80136130(
+            self->mVec188.y = (f32)(s16)BdatGetS16ByTableKey(
                 &base[0x334], &base[0x40a], n);
-            self->mVec188.z = (f32)(s16)func_80136130(
+            self->mVec188.z = (f32)(s16)BdatGetS16ByTableKey(
                 &base[0x334], &base[0x414], n);
-            self->mVec194.x = (f32)(s16)func_80136130(
+            self->mVec194.x = (f32)(s16)BdatGetS16ByTableKey(
                 &base[0x334], &base[0x41e], n);
-            self->mVec194.y = (f32)(s16)func_80136130(
+            self->mVec194.y = (f32)(s16)BdatGetS16ByTableKey(
                 &base[0x334], &base[0x429], n);
-            self->mVec1A0.x = (f32)(s16)func_80136130(
+            self->mVec1A0.x = (f32)(s16)BdatGetS16ByTableKey(
                 &base[0x334], &base[0x434], n);
-            self->mVec1A0.y = (f32)(s16)func_80136130(
+            self->mVec1A0.y = (f32)(s16)BdatGetS16ByTableKey(
                 &base[0x334], &base[0x43e], n);
-            self->mVec1A0.z = (f32)(s16)func_80136130(
+            self->mVec1A0.z = (f32)(s16)BdatGetS16ByTableKey(
                 &base[0x334], &base[0x448], n);
-            self->mVec1AC.x = (f32)(s16)func_80136130(
+            self->mVec1AC.x = (f32)(s16)BdatGetS16ByTableKey(
                 &base[0x334], &base[0x452], n);
-            self->mVec1AC.y = (f32)(s16)func_80136130(
+            self->mVec1AC.y = (f32)(s16)BdatGetS16ByTableKey(
                 &base[0x334], &base[0x45d], n);
-            self->mField1B8 = (f32)(s16)func_80136130(
+            self->mField1B8 = (f32)(s16)BdatGetS16ByTableKey(
                 &base[0x334], &base[0x468], n);
-            self->mField1BC = (u8)func_8013600C(
+            self->mField1BC = (u8)BdatGetU8ByTableKey(
                 &base[0x334], &base[0x474], n);
         }
 
@@ -3103,9 +3103,9 @@ extern "C" void func_80162EF8(CCol6System* self) {
         } else if (big != 0) {
             // "player N joined" banner in window 2.
             self->mFieldA4 = 0x23;
-            char* s1 = func_80136190(lbl_eu_80502050, &lbl_eu_80502050[0x9],
+            char* s1 = BdatTouchStringCell(lbl_eu_80502050, &lbl_eu_80502050[0x9],
                                      (s8)self->mPadA5[0] + 0x72);
-            char* s2 = func_80136190(lbl_eu_80502050, &lbl_eu_80502050[0x9],
+            char* s2 = BdatTouchStringCell(lbl_eu_80502050, &lbl_eu_80502050[0x9],
                                      0x77);
             ml::FixStr<128> buf;
             buf.format(&lbl_eu_80502050[0xb5], s1, s2);
@@ -3220,8 +3220,8 @@ void func_80163614(CCol6System* self) {
         }
         if (sel != 5) {
             // Banner: "player N joined" (chars 0x76/0x77 are the slot names).
-            char* s76 = func_80136190(lbl_eu_80502050, &lbl_eu_80502050[0x9], 0x76);
-            char* s77 = func_80136190(lbl_eu_80502050, &lbl_eu_80502050[0x9], 0x77);
+            char* s76 = BdatTouchStringCell(lbl_eu_80502050, &lbl_eu_80502050[0x9], 0x76);
+            char* s77 = BdatTouchStringCell(lbl_eu_80502050, &lbl_eu_80502050[0x9], 0x77);
             ml::FixStr<128> buf;
             buf.format(&lbl_eu_80502050[0xb5], s76, s77);
             func_8022B9B4(&self->mSysWin2, buf.mString, 0);
@@ -3272,7 +3272,7 @@ void func_8016378C(CCol6System* self) {
             i--;
         }
         if (sel != 5) {
-            u16 id = func_8013606C(&lbl_eu_80502050[0xbd],
+            u16 id = BdatGetU16ByTableKey(&lbl_eu_80502050[0xbd],
                                    &lbl_eu_80502050[0xc9], sel + 5);
             func_8013E2E0((u32)id, 0, 0, 0, 0, 1, 0, 1, 0);
         }
@@ -3292,9 +3292,9 @@ void func_801638C0(CCol6System* self) {
     if (ge != 0) {
         // Banner: "player N joined" (char 0x72+N is the player name).
         self->mFieldA4 = 0x23;
-        char* s1 = func_80136190(lbl_eu_80502050, &lbl_eu_80502050[0x9],
+        char* s1 = BdatTouchStringCell(lbl_eu_80502050, &lbl_eu_80502050[0x9],
                                  (s8)self->mPadA5[0] + 0x72);
-        char* s2 = func_80136190(lbl_eu_80502050, &lbl_eu_80502050[0x9], 0x77);
+        char* s2 = BdatTouchStringCell(lbl_eu_80502050, &lbl_eu_80502050[0x9], 0x77);
         ml::FixStr<128> buf;
         buf.format(&lbl_eu_80502050[0xb5], s1, s2);
         func_8022B9B4(&self->mSysWin2, buf.mString, 0);
@@ -3380,8 +3380,8 @@ void func_80163AF4(CCol6System* self) {
     if ((s32)func_8009CF8C(0x802) >= 5) {
         // Banner: "player N joined" (chars 0x76/0x77 are the slot names).
         self->mFieldA4 = 0x25;
-        char* s76 = func_80136190(lbl_eu_80502050, &lbl_eu_80502050[0x9], 0x76);
-        char* s77 = func_80136190(lbl_eu_80502050, &lbl_eu_80502050[0x9], 0x77);
+        char* s76 = BdatTouchStringCell(lbl_eu_80502050, &lbl_eu_80502050[0x9], 0x76);
+        char* s77 = BdatTouchStringCell(lbl_eu_80502050, &lbl_eu_80502050[0x9], 0x77);
         ml::FixStr<128> buf;
         buf.format(&lbl_eu_80502050[0xb5], s76, s77);
         func_8022B9B4(&self->mSysWin2, buf.mString, 0);
@@ -3485,7 +3485,7 @@ extern "C" void* __dt__11CCol6InviteFv(CCol6Invite* self, int flags) {
 // strings, bump the two invite counters in the global flag memory by the
 // instance's byte args, then format the banner message and post it.
 void CCol6Invite::Init() {
-    char* str0 = func_8013639C((const void*)lbl_eu_80664098,
+    char* str0 = BdatGetPtrDirect((const void*)lbl_eu_80664098,
                                &lbl_eu_80502050[0x9], mArg2);
 
     // Compound assignment keeps the running value in one register: mask,
@@ -3499,9 +3499,9 @@ void CCol6Invite::Init() {
     val += mArg4;
     func_8009D018(0x7fd, (u8)val);
 
-    char* str1 = func_80136190(lbl_eu_80502050, &lbl_eu_80502050[0x9], 0x7e);
-    char* str2 = func_80136190(lbl_eu_80502050, &lbl_eu_80502050[0x9], 0x78);
-    char* str3 = func_80136190(lbl_eu_80502050, &lbl_eu_80502050[0x9], 0x79);
+    char* str1 = BdatTouchStringCell(lbl_eu_80502050, &lbl_eu_80502050[0x9], 0x7e);
+    char* str2 = BdatTouchStringCell(lbl_eu_80502050, &lbl_eu_80502050[0x9], 0x78);
+    char* str3 = BdatTouchStringCell(lbl_eu_80502050, &lbl_eu_80502050[0x9], 0x79);
 
     ml::FixStr<128> buf;
     buf.format(&lbl_eu_80502050[0x480], str0, str1, str2, mArg3, str3, mArg4);

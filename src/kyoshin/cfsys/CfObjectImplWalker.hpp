@@ -676,13 +676,13 @@ struct CfWalkGlobal {
     u32 field_90E4;                            // 0x90E4
 };
 
-// Stack-allocated enum-list holder (func_80043D90 ctor / __dt__80043E88 dtor).
+// Stack-allocated enum-list holder (CTaskGame_enumListCtor ctor / __dt__80043E88 dtor).
 struct CfWalkEnumHolder {
     void* list;   // 0x0
     u32 handle;   // 0x4
 };
 
-// Enum list returned by func_80043F18: element count at +0x620.
+// Enum list returned by CTaskGame_enumListGet: element count at +0x620.
 struct CfWalkEnumList {
     u8 _pad00[0x620];                          // 0x00-0x61F
     u32 field_620;                             // 0x620
@@ -943,15 +943,15 @@ void func_80109784(u32 a, u32 b, u32 c);
 void func_800E1B5C(void* mgr, void* battleObj);
 cf::CfWalkGlobal* func_800FE68C();
 #include "kyoshin/cf/CBattleManagerApi.hpp"
-void* func_800BF324(void* objParam);
-void func_800BF2B0(void* sub, u32 a, u32 b); // canonical form (CfObjectImplPc.hpp; def CfObjectMove.cpp)
+void* CfObjectMove_getSelfIfActive(void* objParam);
+void CfObjectMove_relaySubB0Slot58(void* sub, u32 a, u32 b); // canonical form (CfObjectImplPc.hpp; def CfObjectMove.cpp)
 // Enum-list helper family: canonical extern "C" void* forms (CVision.hpp).
-void func_80043D90(void* holder);
-void* func_80043F18(void* holder);
+void CTaskGame_enumListCtor(void* holder);
+void* CTaskGame_enumListGet(void* holder);
 void func_800F4A98(void* list, u32 type, u32 filter);
 void* func_800F6E98(void* list, int index); // canonical void* form (CtrlPc.hpp owner)
 void* func_800BBC0C(void* objParam);
-void func_800BC3D8(void* player, float value);
+void CfObjectMove_setMoveSpeed(void* player, float value);
 void __dt__80043E88(void* holder, int flags); // canonical void* form (CVision.hpp owner)
 int func_8013EB90(int v);
 void* getPlayer__Q22cf13CfGameManagerFi(int index);
@@ -967,12 +967,12 @@ void func_800FE738();
 void func_800C819C();
 void func_800C86E8(void* self);
 void func_800D9978(void* mgr, void* obj);
-void func_8006BBF4(void* obj, u32 mask, int flag);
+void cfCam_setClear04(void* obj, u32 mask, int flag);
 u32 func_8009CF8C(u32 resourceId);
 int func_80133F48(int id, float f);
 void* func_800451D8(u32 cls, int param);
-void func_80485774(void* obj, u32 flags);
-void func_8015AFA4(u32 a, u32 b);
+void simSetLeafAnimTag(void* obj, u32 flags);
+void CItem_openAreaEventBox(u32 a, u32 b);
 void func_8013E424(void* str, int flags);
 void* getCameraDataBlock__Q22cf13CfGameManagerFv(void* self);
 u32 getEventValue40__Q22cf13CfGameManagerFv(u32 id);
@@ -996,12 +996,12 @@ void* getFP__FPCc(const char* path);
 u32 func_8003B1EC(void* bdat);
 void func_8013D07C(u32 obj, const char* str, int flag);
 int func_801413DC(u32 a, int b);
-void func_802919A0(void);
-void func_8029194C(void);
+void awardCount91(void);
+void awardCount8F(void);
 int rand(void);
 
 // Battle-manager effect/party helpers.
-void func_802A216C(void* obj);
+void CCharVoiceMan_EnqueueBattleBeginVoice(void* obj);
 void func_800EA9A8(void* mgr, void* item, void* rec, u32 id, u32 flag);
 int func_80260FB0(void* obj, u32 id, u32* outA, u32* outB, f32* outC);
 int func_80260518(void* obj, u32 id, u32* outA, f32* outB);
@@ -1023,12 +1023,12 @@ int func_800967F8(void);
 void* getUnk80664658(void);
 int func_804BE398(void* vec, int a, int b, int c, f32 d, f32 e); // canonical int form (CtrlMoveBase.hpp owner)
 void* func_804BE520(int index);
-void func_800BF29C(void* obj, int a, int b, u32 c, f32 d, f32 e);
-void func_800BC3B0(void* obj, f32 value);
+void CfObjectMove_relaySubB0Slot54(void* obj, int a, int b, u32 c, f32 d, f32 e);
+void CfObjectMove_setMoveSpeedGated(void* obj, f32 value);
 int func_8012CD24(void);
 void func_8013D1E8(void* obj);
 void func_8009D018(u32 destination, u32 value);
-void func_80291A04(void);
+void awardQuestFlags(void);
 void func_8009ECD0(u32 id);
 void* func_80140AFC(u32 id);
 void* func_80140CA4(u32 id);

@@ -44,7 +44,7 @@ Retail asm for each symbol is in this directory (`asm_*.s`).
 
 ### `cf::CfCamFollow::CfCamFollow` (`asm_ct_CfCamFollow.s`)
 - Symbol mangling is **`__ct__cf_CfCamFollow`** (retail); place in new `src/kyoshin/cf/CfCam.cpp`
-- Calls `__ct__cf_CfCam` then sets vt `lbl_eu_80527260`; inits embeds at `+0x1C/+0x28/+0x34` via `func_8004B0B0` / `func_8004B60C` with `lbl_eu_806662DC` SDA floats
+- Calls `__ct__cf_CfCam` then sets vt `lbl_eu_80527260`; inits embeds at `+0x1C/+0x28/+0x34` via `noopAnimVec3` / `writeVec3f` with `lbl_eu_806662DC` SDA floats
 - Budget for whole `CfCam` split is large (`0x97F0`) — implement **only** this ctor; under-budget is OK; do not pull in the rest of the TU
 - Prefer `extern "C"` entry matching retail symbol name if member mangling differs
 

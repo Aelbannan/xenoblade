@@ -17,11 +17,11 @@
 typedef void* (*KizunaAllocFn)(void*, u32, u32);
 
 // PS kernels defined further down in this TU.
-extern "C" void func_80258F5C(float* dst, const float* a, const float* b);
-extern "C" void func_80258F80(float* dst, const float* src, float scale);
+extern "C" void kizAddVec3(float* dst, const float* a, const float* b);
+extern "C" void kizScaleVec3(float* dst, const float* src, float scale);
 
 // --- C-linkage / mangled-symbol callees used by the target functions ---
-// advanceAnimTransform is C++-linkage (mangled retail), func_80137510 / func_80231848 /
+// advanceAnimTransform is C++-linkage (mangled retail), AnimRewindFrame / CMenuArtsSet_setPaneScale /
 // copyVEC2 are unmangled in retail (extern "C"), and buildLayout is referenced
 // by its mangled retail identifier (see CSaveLoad for the same pattern).
 extern const float lbl_eu_80668828;
@@ -43,23 +43,23 @@ extern u32 lbl_eu_8066883C;
 extern char lbl_eu_8050CB20[];
 
 void playUISound(u32 number);
-extern "C" void func_801390E0(CFileHandle**);
+extern "C" void closeFileHandle__FPP11CFileHandle(CFileHandle**);
 
-// Same-TU display-state helper consumed by func_8025AB04 / func_8025AB84
+// Same-TU display-state helper consumed by lineTickSelIn / lineTickSelOut
 // (declaration moved to CKizunagram.hpp C-linkage imports).
 
-// Forward declarations for callees used in func_8025CAB4
+// Forward declarations for callees used in tickKizMove
 // func_8025CE00 is target 5 (takes the display self); the tail calls pass the
-// same self pointer. func_8025CE78 / func_8025CF1C are still-unknown stubs.
-// noinline: -ipa would fold the empty stub into func_8025CAB4's case-1 tail
-// call, turning the retail `b func_8025CE78` into a bare return.
-extern "C" __declspec(noinline) void func_8025CE78(UnkKizunaSelfCE78* self);
-extern "C" void func_80257F9C(UnkKizunaSelf57D90* self, u32 a);
-extern "C" __declspec(noinline) void func_8025CF1C(void* self) {
+// same self pointer. slideKizDown / tickCurByFlag are still-unknown stubs.
+// noinline: -ipa would fold the empty stub into tickKizMove's case-1 tail
+// call, turning the retail `b slideKizDown` into a bare return.
+extern "C" __declspec(noinline) void slideKizDown(UnkKizunaSelfCE78* self);
+extern "C" void setCurPanePhase(UnkKizunaSelf57D90* self, u32 a);
+extern "C" __declspec(noinline) void tickCurByFlag(void* self) {
     if (*(u8*)((char*)self + 0x8C) != 0) {
-        func_80257F9C((UnkKizunaSelf57D90*)((char*)self + 0xAC), 1);
+        setCurPanePhase((UnkKizunaSelf57D90*)((char*)self + 0xAC), 1);
     } else {
-        func_80257F9C((UnkKizunaSelf57D90*)((char*)self + 0xAC), 0);
+        setCurPanePhase((UnkKizunaSelf57D90*)((char*)self + 0xAC), 0);
     }
 }
 
@@ -69,13 +69,13 @@ struct UnkKizunaDisp {
     u8 field_0x3A;
 };
 
-void func_8025C870() {}
+extern "C" void kizOpenWinNop() {}
 
 
 // Toggle both pane entries each frame: walk the +0x08 child to its +0x10
 // sub-object, pull its slot-15 layout pane for each id in a 2-word table, and
 // repaint the pane matching the given phase byte.
-extern "C" __declspec(noinline) void func_80257F9C(UnkKizunaSelf57D90* self, u32 a) {
+extern "C" __declspec(noinline) void setCurPanePhase(UnkKizunaSelf57D90* self, u32 a) {
     u32 paneIds[2] = { lbl_eu_80668838, lbl_eu_8066883C };
     for (u8 i = 0; i < 2; i++) {
         UnkKizunaRes59344* res =
@@ -104,7 +104,7 @@ CKizunaRadar::~CKizunaRadar() {}
 CKizunaCur::~CKizunaCur() {}
 
 // noinline keeps -O4,s IPA from folding this into same-TU callers
-// (func_8025CF40 calls it out-of-line in retail).
+// (rebuildKizLine calls it out-of-line in retail).
 extern "C" __declspec(noinline) void __ct__CKizunaLine(CKizunaLine* self, u32 arg4, u32 arg8, u8 arg3D) {
     f32 idle = lbl_eu_80668828;
     self->mVtable = lbl_eu_805375F0;
@@ -134,8 +134,8 @@ CKizunaLine::~CKizunaLine() {}
 // Release/null a +0x08 child object: if non-null, finalize it (vtable slot 2)
 // with a 1 flag, then clear the pointer.
 // extern "C" + noinline keeps same-TU callers emitting an unmangled `bl
-// func_80257D90` (retail links this symbol unmangled) instead of inlining.
-extern "C" __declspec(noinline) void func_80257D90(UnkKizunaSelf57D90* self) {
+// releaseRadarChild` (retail links this symbol unmangled) instead of inlining.
+extern "C" __declspec(noinline) void releaseRadarChild(UnkKizunaSelf57D90* self) {
     // Retail re-tests field8 inside the guard: the duplicated condition CSEs to
     // one cmpwi with two beq's (dead second branch — the btm_sec pattern).
     if (self->field8 != 0) {
@@ -146,9 +146,9 @@ extern "C" __declspec(noinline) void func_80257D90(UnkKizunaSelf57D90* self) {
     }
 }
 
-// Same shape as func_80257D90 (sibling release/null helper).
-extern "C" __declspec(noinline) void func_80257F44(UnkKizunaSelf57D90* self) {
-    // Same retail shape as func_80257D90: duplicated guard test CSEs to one
+// Same shape as releaseRadarChild (sibling release/null helper).
+extern "C" __declspec(noinline) void releaseCurChild(UnkKizunaSelf57D90* self) {
+    // Same retail shape as releaseRadarChild: duplicated guard test CSEs to one
     // cmpwi with two beq's; zeroing inside the outer if.
     if (self->field8 != 0) {
         if (self->field8 != 0) {
@@ -161,7 +161,7 @@ extern "C" __declspec(noinline) void func_80257F44(UnkKizunaSelf57D90* self) {
 // Build the current-line layout (+0x08) from the shared arc string at +0x27,
 // attach its anim transform at +0x0C, then publish both via the layout's
 // vtable slots 11 / 14.
-extern "C" __declspec(noinline) void func_80257E58(UnkKizunaSelf57E58* self) {
+extern "C" __declspec(noinline) void buildCurLayout(UnkKizunaSelf57E58* self) {
     buildLayout__FPPQ34nw4r3lyt6LayoutPQ34nw4r3lyt19ArcResourceAccessorPCc(
         (nw4r::lyt::Layout**)&self->field8, self->field4, lbl_eu_8050CB20 + 0x27);
     bindLayoutAnimTransform__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(
@@ -209,32 +209,32 @@ extern "C" __declspec(noinline) void func_802580CC(UnkKizunaLineBuild* self) {
     void* lytv = self->layout;
     u8 lang = (u8)lbl_eu_80664184;
     if (lang == 0x19) {
-        func_80139A18(lytv, str + 0x93, &lbl_eu_80664838, &lbl_eu_80664840);
+        PaneMatSetTevColorsByName(lytv, str + 0x93, &lbl_eu_80664838, &lbl_eu_80664840);
         func_80137CD4(lytv, str + 0x93, (int)0xF9FFF2FF, 0x94AA8CFF);
     } else if (lang == 0x1A) {
-        func_80139A18(lytv, str + 0x93, &lbl_eu_80664848, &lbl_eu_80664850);
+        PaneMatSetTevColorsByName(lytv, str + 0x93, &lbl_eu_80664848, &lbl_eu_80664850);
         func_80137CD4(lytv, str + 0x93, -1, 0x8CA0EBFF);
     } else {
-        switch (func_801372B4(lang)) {
+        switch (MapValueToRank6(lang)) {
         case 0:
         case 1:
-            func_80139A18(lytv, str + 0x93, &lbl_eu_806647E8, &lbl_eu_806647F0);
+            PaneMatSetTevColorsByName(lytv, str + 0x93, &lbl_eu_806647E8, &lbl_eu_806647F0);
             func_80137CD4(lytv, str + 0x93, -1, 0xEEB88AFF);
             break;
         case 2:
-            func_80139A18(lytv, str + 0x93, &lbl_eu_806647F8, &lbl_eu_80664800);
+            PaneMatSetTevColorsByName(lytv, str + 0x93, &lbl_eu_806647F8, &lbl_eu_80664800);
             func_80137CD4(lytv, str + 0x93, -1, 0xE0C072FF);
             break;
         case 3:
-            func_80139A18(lytv, str + 0x93, &lbl_eu_80664808, &lbl_eu_80664810);
+            PaneMatSetTevColorsByName(lytv, str + 0x93, &lbl_eu_80664808, &lbl_eu_80664810);
             func_80137CD4(lytv, str + 0x93, -1, 0xE1F8A8FF);
             break;
         case 4:
-            func_80139A18(lytv, str + 0x93, &lbl_eu_80664818, &lbl_eu_80664820);
+            PaneMatSetTevColorsByName(lytv, str + 0x93, &lbl_eu_80664818, &lbl_eu_80664820);
             func_80137CD4(lytv, str + 0x93, -1, 0xB4DEFFFF);
             break;
         case 5:
-            func_80139A18(lytv, str + 0x93, &lbl_eu_80664828, &lbl_eu_80664830);
+            PaneMatSetTevColorsByName(lytv, str + 0x93, &lbl_eu_80664828, &lbl_eu_80664830);
             func_80137CD4(lytv, str + 0x93, -1, 0xBCBAE6FF);
             break;
         }
@@ -274,8 +274,8 @@ extern "C" __declspec(noinline) void func_802580CC(UnkKizunaLineBuild* self) {
         UnkKizunaRes59344* resB = rootP->target((int)(str + 0x9a), 1);
         UnkKizunaVec3 posB = resB->pos;
 
-        s16 vx = (s16)func_80136330(mgr, str + 0xaf, id);
-        s16 vy = (s16)func_80136330(mgr, str + 0xb8, id);
+        s16 vx = (s16)BdatGetS16Direct(mgr, str + 0xaf, id);
+        s16 vy = (s16)BdatGetS16Direct(mgr, str + 0xb8, id);
         UnkKizunaVec3 delta;
         delta.x = (f32)vx;
         delta.y = (f32)vy;
@@ -283,15 +283,15 @@ extern "C" __declspec(noinline) void func_802580CC(UnkKizunaLineBuild* self) {
         nw4r::math::VEC3Sub((nw4r::math::VEC3*)&posB.x,
                             (const nw4r::math::VEC3*)&posB.x,
                             (const nw4r::math::VEC3*)&delta.x);
-        func_80258F5C(&posA.x, &posA.x, &posB.x);
+        kizAddVec3(&posA.x, &posA.x, &posB.x);
 
         resA = rootP->target((int)(str + 0xa4), 1);
         copyVEC3((f32*)&resA->pos, (f32*)&posA);
 
-        char* texRowName = func_8013639C(mgr, str + 0xca, id);
+        char* texRowName = BdatGetPtrDirect(mgr, str + 0xca, id);
         if (strcmp(texRowName, str + 0xd3) != 0) {
             char* tplName =
-                func_80138F78((u32)(u16)func_80136254(mgr, str + 0xd4, id));
+                MakeTplNameSysFile((u32)(u16)BdatGetU16Direct(mgr, str + 0xd4, id));
             TPLPalette* pal =
                 (TPLPalette*)self->texSrc->getTex(0x74696D67, (u32)tplName, 0);
             if (pal != 0) {
@@ -307,8 +307,8 @@ extern "C" __declspec(noinline) void func_802580CC(UnkKizunaLineBuild* self) {
                 pic->SetName(picNameBuf);
 
                 // Position the picture from the same BDAT columns (z fixed).
-                s16 px = (s16)func_80136330(mgr, str + 0xaf, id);
-                s16 py = (s16)func_80136330(mgr, str + 0xb8, id);
+                s16 px = (s16)BdatGetS16Direct(mgr, str + 0xaf, id);
+                s16 py = (s16)BdatGetS16Direct(mgr, str + 0xb8, id);
                 UnkKizunaVec3 picPos;
                 picPos.x = (f32)px;
                 picPos.y = (f32)py;
@@ -336,13 +336,13 @@ extern "C" __declspec(noinline) void func_802580CC(UnkKizunaLineBuild* self) {
         UnkKizunaRes59344* resAdd =
             ((UnkKizunaObj59344*)res)->target((int)(str + 0xe3), 1);
         UnkKizunaVec3 posAdd = resAdd->pos;
-        func_80258F5C(&posBase.x, &posBase.x, &posAdd.x);
+        kizAddVec3(&posBase.x, &posBase.x, &posAdd.x);
         UnkKizunaRes59344* resScale =
             ((UnkKizunaObj59344*)res)->target((int)(str + 0xe3), 1);
         f32 scalePair[2];
         func_80127BC4(scalePair, resScale->scale);
         f32 scaled[3];
-        func_80258F80(scaled, &posBase.x, lbl_eu_80668830);
+        kizScaleVec3(scaled, &posBase.x, lbl_eu_80668830);
         copyVEC3(&self->result18.x, scaled);
         self->field24 = 1;
         UnkKizunaVec3 out = self->result18;
@@ -373,7 +373,7 @@ extern "C" __declspec(noinline) void func_802580CC(UnkKizunaLineBuild* self) {
 
     void* msgTex = self->acc->getTex(0x74696D67, (u32)msg, 0);
     if (msgTex != 0) {
-        func_80137E7C(self->layout, str + 0x16a, msgTex);
+        PaneSetTexPaletteByName(self->layout, str + 0x16a, msgTex);
     }
 
     // Hide the five fixed number/name pane pairs.
@@ -394,43 +394,43 @@ extern "C" __declspec(noinline) void func_802580CC(UnkKizunaLineBuild* self) {
     UnkKizunaMgr* mgr = reinterpret_cast<UnkKizunaMgr*>(lbl_eu_80664098);
     nw4r::lyt::Layout* lytL = (nw4r::lyt::Layout*)self->layout;
     u32 rowCount = func_8003B1EC(mgr);
-    func_80136B4C(lytL, str + 0x189, str + 0xd3, 0);
-    func_80136B4C(lytL, str + 0x197, str + 0xd3, 0);
-    func_80136B4C(lytL, str + 0x1a5, str + 0xd3, 0);
-    func_80136B4C(lytL, str + 0x1b3, str + 0xd3, 0);
-    func_80136B4C(lytL, str + 0x1c1, str + 0xd3, 0);
-    func_80136B4C(lytL, str + 0x1cf, str + 0xd3, 0);
-    func_80136B4C(lytL, str + 0x1de, str + 0xd3, 0);
-    func_80136B4C(lytL, str + 0x1ed, str + 0xd3, 0);
-    func_80136B4C(lytL, str + 0x1fc, str + 0xd3, 0);
-    func_80136B4C(lytL, str + 0x20b, str + 0xd3, 0);
-    func_80136B4C(lytL, str + 0x21a, str + 0xd3, 0);
-    func_80136B4C(lytL, str + 0x229, str + 0xd3, 0);
-    func_80136B4C(lytL, str + 0x238, str + 0xd3, 0);
-    func_80136B4C(lytL, str + 0x247, str + 0xd3, 0);
-    func_80136B4C(lytL, str + 0x256, str + 0xd3, 0);
-    func_80136B4C(lytL, str + 0x265, str + 0xd3, 0);
-    func_80136B4C(lytL, str + 0x274, str + 0xd3, 0);
-    func_80136B4C(lytL, str + 0x283, str + 0xd3, 0);
-    func_80136B4C(lytL, str + 0x292, str + 0xd3, 0);
-    func_80136B4C(lytL, str + 0x2a1, str + 0xd3, 0);
-    func_80136B4C(lytL, str + 0x2b0, str + 0xd3, 0);
-    func_80136B4C(lytL, str + 0x2bf, str + 0xd3, 0);
-    func_80136B4C(lytL, str + 0x2ce, str + 0xd3, 0);
-    func_80136B4C(lytL, str + 0x2dd, str + 0xd3, 0);
-    func_80136B4C(lytL, str + 0x2ec, str + 0xd3, 0);
+    LayoutSetTextBoxFmtValue(lytL, str + 0x189, str + 0xd3, 0);
+    LayoutSetTextBoxFmtValue(lytL, str + 0x197, str + 0xd3, 0);
+    LayoutSetTextBoxFmtValue(lytL, str + 0x1a5, str + 0xd3, 0);
+    LayoutSetTextBoxFmtValue(lytL, str + 0x1b3, str + 0xd3, 0);
+    LayoutSetTextBoxFmtValue(lytL, str + 0x1c1, str + 0xd3, 0);
+    LayoutSetTextBoxFmtValue(lytL, str + 0x1cf, str + 0xd3, 0);
+    LayoutSetTextBoxFmtValue(lytL, str + 0x1de, str + 0xd3, 0);
+    LayoutSetTextBoxFmtValue(lytL, str + 0x1ed, str + 0xd3, 0);
+    LayoutSetTextBoxFmtValue(lytL, str + 0x1fc, str + 0xd3, 0);
+    LayoutSetTextBoxFmtValue(lytL, str + 0x20b, str + 0xd3, 0);
+    LayoutSetTextBoxFmtValue(lytL, str + 0x21a, str + 0xd3, 0);
+    LayoutSetTextBoxFmtValue(lytL, str + 0x229, str + 0xd3, 0);
+    LayoutSetTextBoxFmtValue(lytL, str + 0x238, str + 0xd3, 0);
+    LayoutSetTextBoxFmtValue(lytL, str + 0x247, str + 0xd3, 0);
+    LayoutSetTextBoxFmtValue(lytL, str + 0x256, str + 0xd3, 0);
+    LayoutSetTextBoxFmtValue(lytL, str + 0x265, str + 0xd3, 0);
+    LayoutSetTextBoxFmtValue(lytL, str + 0x274, str + 0xd3, 0);
+    LayoutSetTextBoxFmtValue(lytL, str + 0x283, str + 0xd3, 0);
+    LayoutSetTextBoxFmtValue(lytL, str + 0x292, str + 0xd3, 0);
+    LayoutSetTextBoxFmtValue(lytL, str + 0x2a1, str + 0xd3, 0);
+    LayoutSetTextBoxFmtValue(lytL, str + 0x2b0, str + 0xd3, 0);
+    LayoutSetTextBoxFmtValue(lytL, str + 0x2bf, str + 0xd3, 0);
+    LayoutSetTextBoxFmtValue(lytL, str + 0x2ce, str + 0xd3, 0);
+    LayoutSetTextBoxFmtValue(lytL, str + 0x2dd, str + 0xd3, 0);
+    LayoutSetTextBoxFmtValue(lytL, str + 0x2ec, str + 0xd3, 0);
 
     for (u32 j = 1;; j++) {
         if ((s32)(u16)j > (s32)rowCount) {
             break;
         }
-        u32 rowProg = (u16)func_80136254(mgr, str + 0xc1, (u16)j);
+        u32 rowProg = (u16)BdatGetU16Direct(mgr, str + 0xc1, (u16)j);
         if (rowProg != 0 && func_8009CF8C(rowProg + 0xa20) != 0) {
-            char* nm = func_8013639C(mgr, str + 0xca, (u16)j);
+            char* nm = BdatGetPtrDirect(mgr, str + 0xca, (u16)j);
             if (strcmp(nm, str + 0xd3) != 0) {
-                u32 colv = (u16)func_80136254(mgr, str + 0x2fb, (u16)j);
+                u32 colv = (u16)BdatGetU16Direct(mgr, str + 0x2fb, (u16)j);
                 u32 state =
-                    func_801372B4(func_8013600C(str + 0x303, str + 0x310, colv));
+                    MapValueToRank6(BdatGetU8ByTableKey(str + 0x303, str + 0x310, colv));
                 sprintf(nameBuf, str + 0x171, (u8)state);
                 func_80124270(
                     (nw4r::lyt::Pane*)((UnkKizunaMid59344*)self->layout)
@@ -442,17 +442,17 @@ extern "C" __declspec(noinline) void func_802580CC(UnkKizunaLineBuild* self) {
                         ->field10->target((int)nameBuf, 1),
                     1);
                 char* label =
-                    func_80136190(str + 0x316, str + 0x321, (u8)state + 0x24);
+                    BdatTouchStringCell(str + 0x316, str + 0x321, (u8)state + 0x24);
                 sprintf(nameBuf, str + 0x326, (u8)state);
-                func_80136B4C(lytL, nameBuf, label, 0);
+                LayoutSetTextBoxFmtValue(lytL, nameBuf, label, 0);
                 sprintf(nameBuf, str + 0x336, (u8)state);
-                func_80136B4C(lytL, nameBuf, label, 0);
+                LayoutSetTextBoxFmtValue(lytL, nameBuf, label, 0);
                 sprintf(nameBuf, str + 0x347, (u8)state);
-                func_80136B4C(lytL, nameBuf, label, 0);
+                LayoutSetTextBoxFmtValue(lytL, nameBuf, label, 0);
                 sprintf(nameBuf, str + 0x358, (u8)state);
-                func_80136B4C(lytL, nameBuf, label, 0);
+                LayoutSetTextBoxFmtValue(lytL, nameBuf, label, 0);
                 sprintf(nameBuf, str + 0x369, (u8)state);
-                func_80136B4C(lytL, nameBuf, label, 0);
+                LayoutSetTextBoxFmtValue(lytL, nameBuf, label, 0);
             }
         }
     }
@@ -482,7 +482,7 @@ extern "C" __declspec(noinline) void func_802580CC(UnkKizunaLineBuild* self) {
                 void* tpl = self->acc->getTex(0x74696D67, (u32)texTag, 0);
                 if (tpl != 0) {
                     sprintf(nameBuf, str + 0x171, (u8)k);
-                    func_80137E7C(self->layout, nameBuf, tpl);
+                    PaneSetTexPaletteByName(self->layout, nameBuf, tpl);
                 }
             }
             for (u32 d = 0; d < 5; d++) {
@@ -502,7 +502,7 @@ extern "C" __declspec(noinline) void func_802580CC(UnkKizunaLineBuild* self) {
 // r4=a, r5=b) that MWCC cannot emit from scalar C++ (no ps_add intrinsic; scalar C++
 // yields 9 lfs/fadds/stfs). Isolated Gekko paired-single backend (PLAN.md 17.6).
 #if defined(__MWERKS__) && !defined(NONMATCHING)
-extern "C" asm void func_80258F5C(register float* dst, register const float* a,
+extern "C" asm void kizAddVec3(register float* dst, register const float* a,
                                   register const float* b) {
     nofralloc
     psq_l f0, 0(r4), 0, 0
@@ -516,7 +516,7 @@ extern "C" asm void func_80258F5C(register float* dst, register const float* a,
     blr
 }
 #else
-extern "C" void func_80258F5C(float* dst, const float* a, const float* b) {
+extern "C" void kizAddVec3(float* dst, const float* a, const float* b) {
     dst[0] = a[0] + b[0];
     dst[1] = a[1] + b[1];
     dst[2] = a[2] + b[2];
@@ -528,7 +528,7 @@ extern "C" void func_80258F5C(float* dst, const float* a, const float* b) {
 // r4=src, f1=scale). MWCC has no ps_muls0 intrinsic and scalar C++ yields
 // lfs/fmuls/stfs. Isolated Gekko paired-single backend (PLAN.md 17.6).
 #if defined(__MWERKS__) && !defined(NONMATCHING)
-extern "C" asm void func_80258F80(register float* dst, register const float* src,
+extern "C" asm void kizScaleVec3(register float* dst, register const float* src,
                                   register float scale) {
     nofralloc
     psq_l f0, 0(r4), 0, 0
@@ -540,30 +540,30 @@ extern "C" asm void func_80258F80(register float* dst, register const float* src
     blr
 }
 #else
-extern "C" void func_80258F80(float* dst, const float* src, float scale) {
+extern "C" void kizScaleVec3(float* dst, const float* src, float scale) {
     dst[0] = src[0] * scale;
     dst[1] = src[1] * scale;
     dst[2] = src[2] * scale;
 }
 #endif
 
-extern "C" __declspec(noinline) void func_80258F9C(UnkKizunaSelf58F9C* self) {
+extern "C" __declspec(noinline) void tickLineState(UnkKizunaSelf58F9C* self) {
     if (self->field0C != 0) {
         if (func_80259DE8(reinterpret_cast<UnkKizunaSelf59DE8*>(self))) {
             if (func_8025A11C(reinterpret_cast<UnkKizunaSelfA11C*>(self))) {
                 // mode-specific line-state handler
                 switch (self->field34) {
                 case 0:
-                    func_8025AAE0(self);
+                    lineStartSelect(self);
                     break;
                 case 1:
-                    func_8025AB04(reinterpret_cast<UnkKizunaSelfAB*>(self));
+                    lineTickSelIn(reinterpret_cast<UnkKizunaSelfAB*>(self));
                     break;
                 case 2:
-                    func_8025AB84(reinterpret_cast<UnkKizunaSelfAB*>(self));
+                    lineTickSelOut(reinterpret_cast<UnkKizunaSelfAB*>(self));
                     break;
                 case 3:
-                    func_8025AC04(self);
+                    lineClearSelect(self);
                     break;
                 }
                 if (self->field14 == 0) {
@@ -574,10 +574,10 @@ extern "C" __declspec(noinline) void func_80258F9C(UnkKizunaSelf58F9C* self) {
         // countdown / finish pass, then notify the child (slot 14)
         switch (self->field14) {
         case 1:
-            func_80259C5C(reinterpret_cast<UnkKizunaSelf59C5C*>(self));
+            lineCountUp(reinterpret_cast<UnkKizunaSelf59C5C*>(self));
             break;
         case 3:
-            func_80259D44(reinterpret_cast<UnkKizunaSelf59D44*>(self));
+            lineCountDown(reinterpret_cast<UnkKizunaSelf59D44*>(self));
             break;
         }
         self->field0C->callSlot14(0);
@@ -587,7 +587,7 @@ extern "C" __declspec(noinline) void func_80258F9C(UnkKizunaSelf58F9C* self) {
 // Retail walks a context-string list: separate condition-temp locals (the
 // while-test copies cur/getContextStrPtr into fresh slots each pass) drive
 // func_801276C8; the body splits off the next token and frees its pane.
-extern "C" __declspec(noinline) void func_80259098(UnkKizunaSelf59B18* self) {
+extern "C" __declspec(noinline) void freeLinePanes(UnkKizunaSelf59B18* self) {
     if (self->field0C == 0) return;
     // declare ctx first: MWCC assigns it r31 (retail), res gets r30
     u8* ctx;
@@ -635,15 +635,15 @@ extern "C" __declspec(noinline) void func_80259098(UnkKizunaSelf59B18* self) {
 
 // Set an anim child state flag (1), publish it to the object at +0x0C's
 // vtable slot 8, then write the shared "idle" float constant at +0x40.
-extern "C" __declspec(noinline) void func_80259228(UnkKizunaSelf59228* self) {
+extern "C" __declspec(noinline) void lineEnterMode1(UnkKizunaSelf59228* self) {
     self->field14 = 1;
     self->field15 = 0;
     self->field0C->target8(self->field10);
     self->field40 = lbl_eu_80668828;
 }
 
-// Same shape as func_80259228 but with state flag 3 and a different idle float.
-extern "C" __declspec(noinline) void func_80259280(UnkKizunaSelf59228* self) {
+// Same shape as lineEnterMode1 but with state flag 3 and a different idle float.
+extern "C" __declspec(noinline) void lineEnterMode3(UnkKizunaSelf59228* self) {
     self->field14 = 3;
     self->field15 = 0;
     self->field0C->target8(self->field10);
@@ -651,16 +651,16 @@ extern "C" __declspec(noinline) void func_80259280(UnkKizunaSelf59228* self) {
 }
 
 // True when the anim's current frame has reached (its frame count - 1).
-__declspec(noinline) bool func_802592D8(UnkKizunaSelf592D8* self) {
+__declspec(noinline) bool kizAnimAtEnd(UnkKizunaSelf592D8* self) {
     return self->field10->GetFrame() >= (f32)(self->field10->GetFrameSize() - 1);
 }
 
 // Dispatch: walk +0x0C -> +0x10, call vtable slot 15 with (0x8B, 1), then
 // return a 2-word struct built from the result's +0x44 / +0x48 words.
-// extern "C" + noinline keeps callers (func_8025CAE4/CB50) emitting real
-// unmangled bl branches (retail links func_80259344 unmangled) without
+// extern "C" + noinline keeps callers (kizCursorHoldA/CB50) emitting real
+// unmangled bl branches (retail links getLinePanePair unmangled) without
 // inlining - the CKizunaTalkList pattern for same-TU callees.
-extern "C" __declspec(noinline) UnkKizunaPair func_80259344(UnkKizunaSelf59344* self) {
+extern "C" __declspec(noinline) UnkKizunaPair getLinePanePair(UnkKizunaSelf59344* self) {
     UnkKizunaRes59344* res = self->field0C->field10->target((int)(lbl_eu_8050CB20 + 0x8b), 1);
     UnkKizunaPair out = *(UnkKizunaPair*)((u8*)res + 0x44);
     return out;
@@ -669,7 +669,7 @@ extern "C" __declspec(noinline) UnkKizunaPair func_80259344(UnkKizunaSelf59344* 
 // us-8025b6d8: walk the current kizuna line's tag-context list. For each item
 // compute the doubled offset of its position from the two reference panes;
 // while inside the near radius, snap the marker to the item (optionally
-// selecting it via func_8025AA38 when well inside), play the confirm sound
+// selecting it via findKizByName when well inside), play the confirm sound
 // once, and return. After the list is exhausted, ease toward the registered
 // pane position instead.
 extern "C" __declspec(noinline) int func_8025949C(UnkKizunaSelf5949C* self) {
@@ -700,8 +700,8 @@ extern "C" __declspec(noinline) int func_8025949C(UnkKizunaSelf5949C* self) {
         // delta temp (@0x48), then adds into work in place
         UnkKizunaVec3 itemPos = item->pos;
         UnkKizunaVec3 delta;
-        func_80258F5C(&delta.x, &tagPos.x, &itemPos.x);
-        func_80258F5C(&work.x, &work.x, &delta.x);
+        kizAddVec3(&delta.x, &tagPos.x, &itemPos.x);
+        kizAddVec3(&work.x, &work.x, &delta.x);
         // retail negates y before x
         f32 ny = -work.y;
         f32 nx = -work.x;
@@ -711,9 +711,9 @@ extern "C" __declspec(noinline) int func_8025949C(UnkKizunaSelf5949C* self) {
             f32 snapA[2] = { lbl_eu_80668834, lbl_eu_80668834 };
             const UnkKizunaCtxItem* it2 =
                 reinterpret_cast<const UnkKizunaCtxItem*>(func_80127670(&cur));
-            func_80231848((UnkKizunaFunc31848Obj*)it2,
+            CMenuArtsSet_setPaneScale((UnkKizunaFunc31848Obj*)it2,
                           reinterpret_cast<const UnkKizunaPair*>(&snapA[0]));
-            func_80258F80(&scaled.x, &work.x, lbl_eu_80668830);
+            kizScaleVec3(&scaled.x, &work.x, lbl_eu_80668830);
             copyVEC3(&self->field18.x, &scaled.x);
             // threshold recomputed from the constant at the use site
             // (retail does not cache it across the loop)
@@ -724,7 +724,7 @@ extern "C" __declspec(noinline) int func_8025949C(UnkKizunaSelf5949C* self) {
                     reinterpret_cast<const UnkKizunaCtxItem*>(func_80127670(&cur));
                 // the item's name lives at +0xBC of the context item
                 self->field26 =
-                    func_8025AA38(self, reinterpret_cast<const char*>(it3) + 0xBC);
+                    findKizByName(self, reinterpret_cast<const char*>(it3) + 0xBC);
             }
             if (self->field3C == 0) {
                 self->field3C = 1;
@@ -735,7 +735,7 @@ extern "C" __declspec(noinline) int func_8025949C(UnkKizunaSelf5949C* self) {
             f32 far_[2] = { lbl_eu_8066884C, lbl_eu_8066884C };
             const UnkKizunaCtxItem* it4 =
                 reinterpret_cast<const UnkKizunaCtxItem*>(func_80127670(&cur));
-            func_80231848((UnkKizunaFunc31848Obj*)it4,
+            CMenuArtsSet_setPaneScale((UnkKizunaFunc31848Obj*)it4,
                           reinterpret_cast<const UnkKizunaPair*>(&far_[0]));
             func_801276E0(&cur, 0);
         }
@@ -747,7 +747,7 @@ extern "C" __declspec(noinline) int func_8025949C(UnkKizunaSelf5949C* self) {
     UnkKizunaRes59344* reg1 = ((UnkKizunaObj59344*)linePane)->target(
         (int)(lbl_eu_8050CB20 + 0xe3), 1);
     UnkKizunaVec3 regPos = reg1->pos;
-    func_80258F5C(&eased.x, &eased.x, &regPos.x);
+    kizAddVec3(&eased.x, &eased.x, &regPos.x);
     UnkKizunaRes59344* reg2 = ((UnkKizunaObj59344*)linePane)->target(
         (int)(lbl_eu_8050CB20 + 0xe3), 1);
     f32 sz[2];
@@ -756,7 +756,7 @@ extern "C" __declspec(noinline) int func_8025949C(UnkKizunaSelf5949C* self) {
     f32 distSq2 = -eased.y * -eased.y + -eased.x * -eased.x;
     if (distSq2 <= (rad + rad) * (rad + rad)) {
         UnkKizunaVec3 scaled;
-        func_80258F80(&scaled.x, &eased.x, lbl_eu_80668830);
+        kizScaleVec3(&scaled.x, &eased.x, lbl_eu_80668830);
         copyVEC3(&self->field18.x, &scaled.x);
         u8 played = self->field3C;
         self->field24 = 1;
@@ -776,11 +776,11 @@ extern "C" __declspec(noinline) int func_8025949C(UnkKizunaSelf5949C* self) {
 // with matching anchor position and unlocked progress flag, rewrites the
 // row's five text tags from the per-state formatted strings.
 // Same-TU callee defined below (retail links both unmangled).
-extern "C" void func_80259B18(UnkKizunaSelf59B18* self);
-extern "C" __declspec(noinline) void func_80259AF4(char* dest, const char* src);
+extern "C" void resetKizPaneTags(UnkKizunaSelf59B18* self);
+extern "C" __declspec(noinline) void copyKizName3(char* dest, const char* src);
 
 __declspec(noinline) void func_80259820(UnkKizunaSelf9820* self) {
-    func_80259B18(reinterpret_cast<UnkKizunaSelf59B18*>(self));
+    resetKizPaneTags(reinterpret_cast<UnkKizunaSelf59B18*>(self));
     if (self->field26 == 0) {
         return;
     }
@@ -791,11 +791,11 @@ __declspec(noinline) void func_80259820(UnkKizunaSelf9820* self) {
         1);
 
     UnkKizunaMgr* mgr = reinterpret_cast<UnkKizunaMgr*>(lbl_eu_80664098);
-    char* curName = func_8013639C(mgr, lbl_eu_8050CB20 + 0xca, self->field26);
+    char* curName = BdatGetPtrDirect(mgr, lbl_eu_8050CB20 + 0xca, self->field26);
 
     // 4-byte (3 chars + NUL) name copies compared as words
     char nameCur[4];
-    func_80259AF4(nameCur, curName);
+    copyKizName3(nameCur, curName);
 
     void* fp = getFP__FPCc(lbl_eu_8050CB20 + 0x402);
     u16 count = func_8003B1EC(fp);
@@ -807,9 +807,9 @@ __declspec(noinline) void func_80259820(UnkKizunaSelf9820* self) {
     char nameRowAlt[4];
     char fmtBuf[0x20];
     for (u16 i = 1; (u32)i <= (u32)count; i++) {
-        char* rowName = func_8013639C(fp, str + 0x411, i);
-        func_80259AF4(nameRow, rowName);
-        func_80259AF4(nameRowAlt, rowName + 3);
+        char* rowName = BdatGetPtrDirect(fp, str + 0x411, i);
+        copyKizName3(nameRow, rowName);
+        copyKizName3(nameRowAlt, rowName + 3);
 
         // word compare: current name equals the row name or its offset-3 form
         if (*(s32*)nameCur != *(s32*)nameRow && *(s32*)nameCur != *(s32*)nameRowAlt) {
@@ -834,28 +834,28 @@ __declspec(noinline) void func_80259820(UnkKizunaSelf9820* self) {
         if (samePos) {
             tag = str + 0x417;
         }
-        char* tagName = func_8013639C(fp, tag, i);
+        char* tagName = BdatGetPtrDirect(fp, tag, i);
         sprintf(fmtBuf, str + 0x42b, state);
-        char* newName = func_8013639C(fp, fmtBuf, i);
-        func_80136B4C((nw4r::lyt::Layout*)self->field0C, tagName, newName, 0);
+        char* newName = BdatGetPtrDirect(fp, fmtBuf, i);
+        LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)self->field0C, tagName, newName, 0);
         sprintf(fmtBuf, str + 0x435, tagName);
-        func_80136B4C((nw4r::lyt::Layout*)self->field0C, fmtBuf, newName, 0);
+        LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)self->field0C, fmtBuf, newName, 0);
         sprintf(fmtBuf, str + 0x439, tagName);
-        func_80136B4C((nw4r::lyt::Layout*)self->field0C, fmtBuf, newName, 0);
+        LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)self->field0C, fmtBuf, newName, 0);
         sprintf(fmtBuf, str + 0x43d, tagName);
-        func_80136B4C((nw4r::lyt::Layout*)self->field0C, fmtBuf, newName, 0);
+        LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)self->field0C, fmtBuf, newName, 0);
         sprintf(fmtBuf, str + 0x441, tagName);
-        func_80136B4C((nw4r::lyt::Layout*)self->field0C, fmtBuf, newName, 0);
+        LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)self->field0C, fmtBuf, newName, 0);
     }
 }
 
-extern "C" __declspec(noinline) void func_80259AF4(char* dest, const char* src) { dest[0] = src[0]; dest[1] = src[1]; dest[2] = src[2]; dest[3] = 0; }
+extern "C" __declspec(noinline) void copyKizName3(char* dest, const char* src) { dest[0] = src[0]; dest[1] = src[1]; dest[2] = src[2]; dest[3] = 0; }
 
 // us-8025bd54 (0x8025BD54): if the shared arc layout's named root pane is
 // visible, hide it and re-apply the 5 kizuna pane-name groups for indices
 // 1..0x11 to the layout.
 // noinline: retail callers (func_80259820) branch to it out-of-line.
-extern "C" __declspec(noinline) void func_80259B18(UnkKizunaSelf59B18* self) {
+extern "C" __declspec(noinline) void resetKizPaneTags(UnkKizunaSelf59B18* self) {
     // retail buffer is 0x1c bytes; size drives MWCC frame allocation
     char buf[0x1C];
     nw4r::lyt::Pane* pane = (nw4r::lyt::Pane*)((UnkKizunaLayoutSub57AFC*)self->field0C)
@@ -864,15 +864,15 @@ extern "C" __declspec(noinline) void func_80259B18(UnkKizunaSelf59B18* self) {
         func_80124270(pane, 0);
         for (u8 i = 1; i <= 0x12; i++) {
             sprintf(buf, lbl_eu_8050CB20 + 0x445, i);
-            func_80136B4C(self->field0C, buf, lbl_eu_8050CB20 + 0xd3, 0);
+            LayoutSetTextBoxFmtValue(self->field0C, buf, lbl_eu_8050CB20 + 0xd3, 0);
             sprintf(buf, lbl_eu_8050CB20 + 0x454, i);
-            func_80136B4C(self->field0C, buf, lbl_eu_8050CB20 + 0xd3, 0);
+            LayoutSetTextBoxFmtValue(self->field0C, buf, lbl_eu_8050CB20 + 0xd3, 0);
             sprintf(buf, lbl_eu_8050CB20 + 0x464, i);
-            func_80136B4C(self->field0C, buf, lbl_eu_8050CB20 + 0xd3, 0);
+            LayoutSetTextBoxFmtValue(self->field0C, buf, lbl_eu_8050CB20 + 0xd3, 0);
             sprintf(buf, lbl_eu_8050CB20 + 0x474, i);
-            func_80136B4C(self->field0C, buf, lbl_eu_8050CB20 + 0xd3, 0);
+            LayoutSetTextBoxFmtValue(self->field0C, buf, lbl_eu_8050CB20 + 0xd3, 0);
             sprintf(buf, lbl_eu_8050CB20 + 0x484, i);
-            func_80136B4C(self->field0C, buf, lbl_eu_8050CB20 + 0xd3, 0);
+            LayoutSetTextBoxFmtValue(self->field0C, buf, lbl_eu_8050CB20 + 0xd3, 0);
         }
     }
 }
@@ -880,7 +880,7 @@ extern "C" __declspec(noinline) void func_80259B18(UnkKizunaSelf59B18* self) {
 // Countdown advance: tick the +0x40 timer; when it reaches the limit switch to
 // mode 2 and publish via the mid object's slots 7/11. Then scale the remaining
 // time into the "line" pane result's byte at +0xB8 and mark it visible.
-extern "C" __declspec(noinline) void func_80259C5C(UnkKizunaSelf59C5C* self) {
+extern "C" __declspec(noinline) void lineCountUp(UnkKizunaSelf59C5C* self) {
     self->field40 = self->field40 + lbl_eu_80668834;
     if (self->field40 >= lbl_eu_80668848) {
         self->field14 = 2;
@@ -930,7 +930,7 @@ extern "C" __declspec(noinline) void func_80259394(UnkKizunaSelf59394* self,
 // animated position at +0x4C of the slot-15 result into the +0x14 Vec2.
 // extern "C" + noinline keeps same-TU callers (CKizunagram::OnFileEvent)
 // emitting retail's unmangled `bl` without inlining.
-extern "C" __declspec(noinline) void func_80257AFC(UnkKizunaSelfAFC* self) {
+extern "C" __declspec(noinline) void buildRadarLayout(UnkKizunaSelfAFC* self) {
     buildLayout__FPPQ34nw4r3lyt6LayoutPQ34nw4r3lyt19ArcResourceAccessorPCc(
         &self->field8, self->field4, lbl_eu_8050CB20);
     UnkKizunaLCBRes57AFC* res =
@@ -972,16 +972,16 @@ extern "C" __declspec(noinline) bool func_80259DE8(UnkKizunaSelf59DE8* self) {
             if ((u32)(chk >> 32) != 0 && id == 0x30a) {
                 tinted = func_8009CF8C(0x54b) >= feConst;
             }
-            char* unlockStr = func_80136254(mgr, str + 0xc1, id);
+            char* unlockStr = BdatGetU16Direct(mgr, str + 0xc1, id);
             if (func_8009CF8C((u32)(u16)(u32)unlockStr + 0xa20) == 0) {
                 goto next;
             }
-            char* nameStr = func_8013639C(mgr, str + 0xca, id);
+            char* nameStr = BdatGetPtrDirect(mgr, str + 0xca, id);
             if (strcmp(nameStr, str + 0xd3) == 0) {
                 goto next;
             }
             u32 texName =
-                (u32)func_80138F78((u32)(u16)(u32)func_80136254(mgr, str + 0xd4, id));
+                (u32)MakeTplNameSysFile((u32)(u16)(u32)BdatGetU16Direct(mgr, str + 0xd4, id));
             void* pal = self->field08->getTex(texTag, texName, 0);
             nw4r::lyt::Picture* pic = NULL;
             if (pal != 0) {
@@ -994,13 +994,13 @@ extern "C" __declspec(noinline) bool func_80259DE8(UnkKizunaSelf59DE8* self) {
             }
             {
                 f32 pairA[2] = { scale, scale };
-                func_80231848(reinterpret_cast<UnkKizunaFunc31848Obj*>(pic),
+                CMenuArtsSet_setPaneScale(reinterpret_cast<UnkKizunaFunc31848Obj*>(pic),
                               reinterpret_cast<const UnkKizunaPair*>(&pairA[0]));
                 char name[0x40];
                 sprintf(name, str + 0xe0, nameStr);
                 pic->SetName(name);
-                s16 px = (s16)func_80136330(mgr, str + 0xaf, id);
-                s16 py = (s16)func_80136330(mgr, str + 0xb8, id);
+                s16 px = (s16)BdatGetS16Direct(mgr, str + 0xaf, id);
+                s16 py = (s16)BdatGetS16Direct(mgr, str + 0xb8, id);
                 UnkKizunaVec3 v;
                 v.x = (f32)px;
                 v.y = (f32)py;
@@ -1012,11 +1012,11 @@ extern "C" __declspec(noinline) bool func_80259DE8(UnkKizunaSelf59DE8* self) {
                 parent->AppendChild(reinterpret_cast<nw4r::lyt::Pane*>(pic));
             }
             if (tinted != 0) {
-                func_80137C1C(pic, tintColor);
+                PaneSetVtxColorAll(pic, tintColor);
             } else if (func_8009CF8C(0x20) >= 0x167) {
-                int w = func_80138E1C(id);
+                int w = BdatGetSexFlag(id);
                 if ((u8)(w + 0xfe) <= 1) {
-                    func_80137C1C(pic, tintColor);
+                    PaneSetVtxColorAll(pic, tintColor);
                 }
             }
         }
@@ -1028,7 +1028,7 @@ extern "C" __declspec(noinline) bool func_80259DE8(UnkKizunaSelf59DE8* self) {
 
 // Update pass: while the +0x08 child is live, advance the anim at +0x0C unless
 // the +0x10 byte suppresses it, then notify the child via vtable slot 14.
-__declspec(noinline) void func_80257EE0(UnkKizunaSelf57EE0* self) {
+__declspec(noinline) void tickCurAnim(UnkKizunaSelf57EE0* self) {
     if (self->field8) {
         if (self->field10 == 0) {
             advanceAnimTransform(self->field0C, lbl_eu_80668834);
@@ -1051,14 +1051,14 @@ extern "C" __declspec(noinline) void __ct__CKizunaCur(CKizunaCur* self,
 // Selects the kizuna entry matching the given context-item name (the item's
 // +0xBC string): walk all BDAT rows, compare each row's name against it, and
 // return the first row id whose unlock progress flag (row value + 0xa20) is set.
-extern "C" __declspec(noinline) u16 func_8025AA38(UnkKizunaSelf5949C* self,
+extern "C" __declspec(noinline) u16 findKizByName(UnkKizunaSelf5949C* self,
                                                   const char* name) {
     UnkKizunaMgr* mgr = reinterpret_cast<UnkKizunaMgr*>(lbl_eu_80664098);
     u16 count = (u16)func_8003B1EC(mgr);
     for (u16 id = 1; (u32)id <= count; id++) {
-        if (strcmp(func_8013639C(mgr, lbl_eu_8050CB20 + 0xca, id),
+        if (strcmp(BdatGetPtrDirect(mgr, lbl_eu_8050CB20 + 0xca, id),
                    name) == 0 &&
-            func_8009CF8C((u32)(u16)(u32)func_80136254(mgr, lbl_eu_8050CB20 + 0xc1,
+            func_8009CF8C((u32)(u16)(u32)BdatGetU16Direct(mgr, lbl_eu_8050CB20 + 0xc1,
                                                        id) + 0xa20) != 0) {
             return id;
         }
@@ -1067,7 +1067,7 @@ extern "C" __declspec(noinline) u16 func_8025AA38(UnkKizunaSelf5949C* self,
 }
 
 // retail: if (field26) { field34=1; field36=field26; field38=const }
-extern "C" __declspec(noinline) void func_8025AAE0(void* self) {
+extern "C" __declspec(noinline) void lineStartSelect(void* self) {
     u16 v = *(u16*)((char*)self + 0x26);
     if (v != 0) {
         *(u8*)((char*)self + 0x34) = 1;
@@ -1076,7 +1076,7 @@ extern "C" __declspec(noinline) void func_8025AAE0(void* self) {
     }
 }
 
-extern "C" __declspec(noinline) void func_8025AB04(UnkKizunaSelfAB* self) {
+extern "C" __declspec(noinline) void lineTickSelIn(UnkKizunaSelfAB* self) {
     f32 f = self->field38 + lbl_eu_80668834;
     self->field38 = f;
     if (f >= lbl_eu_80668860) {
@@ -1090,7 +1090,7 @@ extern "C" __declspec(noinline) void func_8025AB04(UnkKizunaSelfAB* self) {
     }
 }
 
-extern "C" __declspec(noinline) void func_8025AB84(UnkKizunaSelfAB* self) {
+extern "C" __declspec(noinline) void lineTickSelOut(UnkKizunaSelfAB* self) {
     f32 f = self->field38 + lbl_eu_80668834;
     self->field38 = f;
     if (f >= lbl_eu_80668864) {
@@ -1124,11 +1124,11 @@ __declspec(noinline) void func_8025AC1C(UnkKizunaSelfAB* self, u32 a) {
     }
 
     UnkKizunaMgr* mgr = reinterpret_cast<UnkKizunaMgr*>(lbl_eu_80664098);
-    char* curName = func_8013639C(mgr, &lbl_eu_8050CB20[0xca], self->field36);
+    char* curName = BdatGetPtrDirect(mgr, &lbl_eu_8050CB20[0xca], self->field36);
 
     // 4-byte (3 chars + NUL) name copies compared as words
     char nameCur[4];
-    func_8025B5D4(nameCur, curName);
+    copyKizTag3(nameCur, curName);
 
     void* fp = getFP__FPCc(&lbl_eu_8050CB20[0x402]);
     u16 count = (u16)func_8003B1EC(fp);
@@ -1143,9 +1143,9 @@ __declspec(noinline) void func_8025AC1C(UnkKizunaSelfAB* self, u32 a) {
     char nameRowAlt[4];
     char fmtBuf[0x20];
     for (u32 i = 1; (u16)i <= count; i++) {
-        char* rowName = func_8013639C(fp, str + 0x411, i);
-        func_8025B5D4(nameRow, rowName);
-        func_8025B5D4(nameRowAlt, rowName + 3);
+        char* rowName = BdatGetPtrDirect(fp, str + 0x411, i);
+        copyKizTag3(nameRow, rowName);
+        copyKizTag3(nameRowAlt, rowName + 3);
 
         // word compare: current name equals the row name or its offset-3 form
         if (*(s32*)nameCur != *(s32*)nameRow && *(s32*)nameCur != *(s32*)nameRowAlt) {
@@ -1165,7 +1165,7 @@ __declspec(noinline) void func_8025AC1C(UnkKizunaSelfAB* self, u32 a) {
             // Per-state label: pick the format string from the row's tag name.
             // (the tag lookup is repeated in every arm, matching retail)
             if (state == 1) {
-                char* label = func_8013639C(fp, str + 0x417, i);
+                char* label = BdatGetPtrDirect(fp, str + 0x417, i);
                 if (strcmp(label, str + 0x494) == 0 || strcmp(label, str + 0x4ba) == 0) {
                     sprintf(fmtBuf, str + 0x7ef, a);
                 } else if (strcmp(label, str + 0x4c7) == 0) {
@@ -1180,7 +1180,7 @@ __declspec(noinline) void func_8025AC1C(UnkKizunaSelfAB* self, u32 a) {
                     sprintf(fmtBuf, str + 0x876, a);
                 }
             } else if (state == 2) {
-                char* label = func_8013639C(fp, str + 0x417, i);
+                char* label = BdatGetPtrDirect(fp, str + 0x417, i);
                 if (strcmp(label, str + 0x494) == 0 || strcmp(label, str + 0x4ba) == 0) {
                     sprintf(fmtBuf, str + 0x891, a);
                 } else if (strcmp(label, str + 0x4c7) == 0) {
@@ -1195,7 +1195,7 @@ __declspec(noinline) void func_8025AC1C(UnkKizunaSelfAB* self, u32 a) {
                     sprintf(fmtBuf, str + 0x918, a);
                 }
             } else if (state == 3) {
-                char* label = func_8013639C(fp, str + 0x417, i);
+                char* label = BdatGetPtrDirect(fp, str + 0x417, i);
                 if (strcmp(label, str + 0x494) == 0 || strcmp(label, str + 0x4ba) == 0) {
                     sprintf(fmtBuf, str + 0x933, a);
                 } else if (strcmp(label, str + 0x4c7) == 0) {
@@ -1210,7 +1210,7 @@ __declspec(noinline) void func_8025AC1C(UnkKizunaSelfAB* self, u32 a) {
                     sprintf(fmtBuf, str + 0x9ba, a);
                 }
             } else if (state == 4) {
-                char* label = func_8013639C(fp, str + 0x417, i);
+                char* label = BdatGetPtrDirect(fp, str + 0x417, i);
                 if (strcmp(label, str + 0x494) == 0 || strcmp(label, str + 0x4ba) == 0) {
                     sprintf(fmtBuf, str + 0x9d5, a);
                 } else if (strcmp(label, str + 0x4c7) == 0) {
@@ -1225,7 +1225,7 @@ __declspec(noinline) void func_8025AC1C(UnkKizunaSelfAB* self, u32 a) {
                     sprintf(fmtBuf, str + 0xa5c, a);
                 }
             } else if (state == 5) {
-                char* label = func_8013639C(fp, str + 0x417, i);
+                char* label = BdatGetPtrDirect(fp, str + 0x417, i);
                 if (strcmp(label, str + 0x494) == 0 || strcmp(label, str + 0x4ba) == 0) {
                     sprintf(fmtBuf, str + 0xa77, a);
                 } else if (strcmp(label, str + 0x4c7) == 0) {
@@ -1250,7 +1250,7 @@ __declspec(noinline) void func_8025AC1C(UnkKizunaSelfAB* self, u32 a) {
     }
 }
 
-void CKizunagram_copyString(unsigned char* dst, const unsigned char* src) {
+void copyKizTag3(unsigned char* dst, const unsigned char* src) {
     dst[0] = src[0];
     dst[1] = src[1];
     dst[2] = src[2];
@@ -1275,8 +1275,8 @@ CKizunaInfo::~CKizunaInfo() {}
 // us-8025d8ac (0x8025B670): build the kizuna line layout + two anim
 // transforms, bind the font to the root pane, publish the 4 font-format
 // values and 6 localized labels, then reset the +0x18 counter.
-// extern "C" + noinline for OnFileEvent's unmangled call shape (see func_80257AFC).
-extern "C" __declspec(noinline) void func_8025B670(UnkKizunaSelfB670* self) {
+// extern "C" + noinline for OnFileEvent's unmangled call shape (see buildRadarLayout).
+extern "C" __declspec(noinline) void buildInfoLayout(UnkKizunaSelfB670* self) {
     buildLayout__FPPQ34nw4r3lyt6LayoutPQ34nw4r3lyt19ArcResourceAccessorPCc(
         &self->field8, self->field4, lbl_eu_8050CB20 + 0xb19);
     bindLayoutAnimTransform__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(
@@ -1293,18 +1293,18 @@ extern "C" __declspec(noinline) void func_8025B670(UnkKizunaSelfB670* self) {
     setLayoutTextBoxFont(self->field8, lbl_eu_8050CB20 + 0xb79, val);
     setLayoutTextBoxFont(self->field8, lbl_eu_8050CB20 + 0xb87, val);
     self->field8->UnbindAllAnimation();
-    func_80136B4C(self->field8, lbl_eu_8050CB20 + 0xb95,
-                  func_80136190(lbl_eu_8050CB20 + 0x316, lbl_eu_8050CB20 + 0x321, 0xb), 0);
-    func_80136B4C(self->field8, lbl_eu_8050CB20 + 0xb9f,
-                  func_80136190(lbl_eu_8050CB20 + 0x316, lbl_eu_8050CB20 + 0x321, 0xc), 0);
-    func_80136B4C(self->field8, lbl_eu_8050CB20 + 0xba9,
-                  func_80136190(lbl_eu_8050CB20 + 0x316, lbl_eu_8050CB20 + 0x321, 0xd), 0);
-    func_80136B4C(self->field8, lbl_eu_8050CB20 + 0xbb3,
-                  func_80136190(lbl_eu_8050CB20 + 0x316, lbl_eu_8050CB20 + 0x321, 0xe), 0);
-    func_80136B4C(self->field8, lbl_eu_8050CB20 + 0xbbd,
-                  func_80136190(lbl_eu_8050CB20 + 0x316, lbl_eu_8050CB20 + 0x321, 0xf), 0);
-    func_80136B4C(self->field8, lbl_eu_8050CB20 + 0xbc7,
-                  func_80136190(lbl_eu_8050CB20 + 0x316, lbl_eu_8050CB20 + 0x321, 0x10), 0);
+    LayoutSetTextBoxFmtValue(self->field8, lbl_eu_8050CB20 + 0xb95,
+                  BdatTouchStringCell(lbl_eu_8050CB20 + 0x316, lbl_eu_8050CB20 + 0x321, 0xb), 0);
+    LayoutSetTextBoxFmtValue(self->field8, lbl_eu_8050CB20 + 0xb9f,
+                  BdatTouchStringCell(lbl_eu_8050CB20 + 0x316, lbl_eu_8050CB20 + 0x321, 0xc), 0);
+    LayoutSetTextBoxFmtValue(self->field8, lbl_eu_8050CB20 + 0xba9,
+                  BdatTouchStringCell(lbl_eu_8050CB20 + 0x316, lbl_eu_8050CB20 + 0x321, 0xd), 0);
+    LayoutSetTextBoxFmtValue(self->field8, lbl_eu_8050CB20 + 0xbb3,
+                  BdatTouchStringCell(lbl_eu_8050CB20 + 0x316, lbl_eu_8050CB20 + 0x321, 0xe), 0);
+    LayoutSetTextBoxFmtValue(self->field8, lbl_eu_8050CB20 + 0xbbd,
+                  BdatTouchStringCell(lbl_eu_8050CB20 + 0x316, lbl_eu_8050CB20 + 0x321, 0xf), 0);
+    LayoutSetTextBoxFmtValue(self->field8, lbl_eu_8050CB20 + 0xbc7,
+                  BdatTouchStringCell(lbl_eu_8050CB20 + 0x316, lbl_eu_8050CB20 + 0x321, 0x10), 0);
     self->field18 = 0xFFFF;
     func_8025BA38((UnkKizunaSelf57D90*)self, 0);
 }
@@ -1312,20 +1312,20 @@ extern "C" __declspec(noinline) void func_8025B670(UnkKizunaSelfB670* self) {
 // Per-frame display dispatch: while the current-line child (+0x08) is live,
 // run the mode-specific handler for the +0x14 mode byte, then notify the
 // child via vtable slot 14 (retail: cmpwi chain over modes 1/2/4/5).
-extern "C" __declspec(noinline) void func_8025B870(UnkKizunaSelfC21C* self) {
+extern "C" __declspec(noinline) void tickInfoMode(UnkKizunaSelfC21C* self) {
     if (self->field8) {
         switch (self->field14) {
         case 1:
-            func_8025C16C(self);
+            infoAnimToMode2(self);
             break;
         case 2:
-            func_8025C21C(self);
+            infoAnimToMode3(self);
             break;
         case 4:
-            func_8025C298(self);
+            infoAnimToMode5(self);
             break;
         case 5:
-            func_8025C348(self);
+            infoAnimToMode0(self);
             break;
         }
         self->field8->target14(0);
@@ -1336,7 +1336,7 @@ extern "C" __declspec(noinline) void func_8025B870(UnkKizunaSelfC21C* self) {
 // slot 2) with a 1 flag, then clear the pointer.
 // The nested identical guards reproduce retail's duplicated test: both beqs
 // share the single loaded pointer (MWCC CSEs the load).
-extern "C" __declspec(noinline) void func_8025B900(UnkKizunaSelf57D90* self) {
+extern "C" __declspec(noinline) void releaseInfoChild(UnkKizunaSelf57D90* self) {
     if (self->field8 != 0) {
         if (self->field8 != 0) {
             self->field8->target2(1);
@@ -1347,7 +1347,7 @@ extern "C" __declspec(noinline) void func_8025B900(UnkKizunaSelf57D90* self) {
 
 // Set display mode 1 for the current-line child: publish the frame value via
 // vtable slots 7/11 of the child at +0x08, and clear the animation flags.
-extern "C" __declspec(noinline) void func_8025B958(UnkKizunaSelfB958* self) {
+extern "C" __declspec(noinline) void infoEnterMode1(UnkKizunaSelfB958* self) {
     self->field14 = 1;
     self->field15 = 0;
     self->field16 = 0;
@@ -1355,8 +1355,8 @@ extern "C" __declspec(noinline) void func_8025B958(UnkKizunaSelfB958* self) {
     self->field8->slot11(self->field0C, 1);
 }
 
-// Same shape as func_8025B958 but display mode 4 and value from +0x10.
-extern "C" __declspec(noinline) void func_8025B9C8(UnkKizunaSelfB958* self) {
+// Same shape as infoEnterMode1 but display mode 4 and value from +0x10.
+extern "C" __declspec(noinline) void infoEnterMode4(UnkKizunaSelfB958* self) {
     self->field14 = 4;
     self->field15 = 0;
     self->field16 = 0;
@@ -1378,16 +1378,16 @@ extern "C" __declspec(noinline) void func_8025BA38(UnkKizunaSelf57D90* selfArg,
     self->field18 = v;
     if (v == 0) {
         // Reset path: blank all ten text panes with the shared empty string.
-        func_80136B4C(self->field8, lbl_eu_8050CB20 + 0xbd1, lbl_eu_8050CB20 + 0xd3, 0);
-        func_80136B4C(self->field8, lbl_eu_8050CB20 + 0xbdc, lbl_eu_8050CB20 + 0xd3, 0);
-        func_80136B4C(self->field8, lbl_eu_8050CB20 + 0xbe7, lbl_eu_8050CB20 + 0xd3, 0);
-        func_80136B4C(self->field8, lbl_eu_8050CB20 + 0xbf2, lbl_eu_8050CB20 + 0xd3, 0);
-        func_80136B4C(self->field8, lbl_eu_8050CB20 + 0xb87, lbl_eu_8050CB20 + 0xd3, 0);
-        func_80136B4C(self->field8, lbl_eu_8050CB20 + 0xbfd, lbl_eu_8050CB20 + 0xd3, 0);
-        func_80136B4C(self->field8, lbl_eu_8050CB20 + 0xc0b, lbl_eu_8050CB20 + 0xd3, 0);
-        func_80136B4C(self->field8, lbl_eu_8050CB20 + 0xb5d, lbl_eu_8050CB20 + 0xd3, 0);
-        func_80136B4C(self->field8, lbl_eu_8050CB20 + 0xb79, lbl_eu_8050CB20 + 0xd3, 0);
-        func_80136B4C(self->field8, lbl_eu_8050CB20 + 0xb6b, lbl_eu_8050CB20 + 0xd3, 0);
+        LayoutSetTextBoxFmtValue(self->field8, lbl_eu_8050CB20 + 0xbd1, lbl_eu_8050CB20 + 0xd3, 0);
+        LayoutSetTextBoxFmtValue(self->field8, lbl_eu_8050CB20 + 0xbdc, lbl_eu_8050CB20 + 0xd3, 0);
+        LayoutSetTextBoxFmtValue(self->field8, lbl_eu_8050CB20 + 0xbe7, lbl_eu_8050CB20 + 0xd3, 0);
+        LayoutSetTextBoxFmtValue(self->field8, lbl_eu_8050CB20 + 0xbf2, lbl_eu_8050CB20 + 0xd3, 0);
+        LayoutSetTextBoxFmtValue(self->field8, lbl_eu_8050CB20 + 0xb87, lbl_eu_8050CB20 + 0xd3, 0);
+        LayoutSetTextBoxFmtValue(self->field8, lbl_eu_8050CB20 + 0xbfd, lbl_eu_8050CB20 + 0xd3, 0);
+        LayoutSetTextBoxFmtValue(self->field8, lbl_eu_8050CB20 + 0xc0b, lbl_eu_8050CB20 + 0xd3, 0);
+        LayoutSetTextBoxFmtValue(self->field8, lbl_eu_8050CB20 + 0xb5d, lbl_eu_8050CB20 + 0xd3, 0);
+        LayoutSetTextBoxFmtValue(self->field8, lbl_eu_8050CB20 + 0xb79, lbl_eu_8050CB20 + 0xd3, 0);
+        LayoutSetTextBoxFmtValue(self->field8, lbl_eu_8050CB20 + 0xb6b, lbl_eu_8050CB20 + 0xd3, 0);
         // Hide the root pane fetched through slot 15 of the layout child.
         func_80124270(reinterpret_cast<nw4r::lyt::Pane*>(
                           reinterpret_cast<UnkKizunaLayoutSub57AFC*>(self->field8)
@@ -1400,11 +1400,11 @@ extern "C" __declspec(noinline) void func_8025BA38(UnkKizunaSelf57D90* selfArg,
 
     // Progress-column color selector: look up the row value then map it to a
     // color index; the low byte picks which timg texture tag to bind.
-    char* progRow = func_80136254(mgr, lbl_eu_8050CB20 + 0x2fb, v);
-    u8 colIdx = func_8013600C(lbl_eu_8050CB20 + 0x303, lbl_eu_8050CB20 + 0x310,
+    char* progRow = BdatGetU16Direct(mgr, lbl_eu_8050CB20 + 0x2fb, v);
+    u8 colIdx = BdatGetU8ByTableKey(lbl_eu_8050CB20 + 0x303, lbl_eu_8050CB20 + 0x310,
                               (u16)(u32)progRow);
     char* texName = NULL;
-    switch (func_801372B4(colIdx)) {
+    switch (MapValueToRank6(colIdx)) {
     case 1:
         texName = ((UnkKizunaAccBA38*)func_801355F4())
                       ->getTex(0x74696d67, lbl_eu_8050CB20 + 0xc22, 0);
@@ -1428,7 +1428,7 @@ extern "C" __declspec(noinline) void func_8025BA38(UnkKizunaSelf57D90* selfArg,
     }
     if (texName != NULL) {
         // Bind the color texture and show the tinted root pane.
-        func_80137E7C(self->field8, lbl_eu_8050CB20 + 0xc16, texName);
+        PaneSetTexPaletteByName(self->field8, lbl_eu_8050CB20 + 0xc16, texName);
         func_80124270(
             reinterpret_cast<nw4r::lyt::Pane*>(
                 reinterpret_cast<UnkKizunaLayoutSub57AFC*>(self->field8)
@@ -1437,53 +1437,53 @@ extern "C" __declspec(noinline) void func_8025BA38(UnkKizunaSelf57D90* selfArg,
     }
 
     // Progress color name for this save column and the kizuna's own color.
-    func_80136B4C(self->field8, lbl_eu_8050CB20 + 0xbd1,
-                  func_8013639C(lbl_eu_806640A8, lbl_eu_8050CB20 + 0x321, colIdx), 0);
-    func_80136B4C(self->field8, lbl_eu_8050CB20 + 0xbdc,
-                  func_8013639C(mgr, lbl_eu_8050CB20 + 0x321, v), 0);
+    LayoutSetTextBoxFmtValue(self->field8, lbl_eu_8050CB20 + 0xbd1,
+                  BdatGetPtrDirect(lbl_eu_806640A8, lbl_eu_8050CB20 + 0x321, colIdx), 0);
+    LayoutSetTextBoxFmtValue(self->field8, lbl_eu_8050CB20 + 0xbdc,
+                  BdatGetPtrDirect(mgr, lbl_eu_8050CB20 + 0x321, v), 0);
 
     // Bond-stage label: stage indexes a per-language label table; stages above
     // 10 clamp to the first label.
     char* stageLabel;
-    switch ((u8)func_80138E1C(v)) {
+    switch ((u8)BdatGetSexFlag(v)) {
     case 0:
-        stageLabel = func_80136190(lbl_eu_8050CB20 + 0x316, lbl_eu_8050CB20 + 0x321, 0x16);
+        stageLabel = BdatTouchStringCell(lbl_eu_8050CB20 + 0x316, lbl_eu_8050CB20 + 0x321, 0x16);
         break;
     case 1:
-        stageLabel = func_80136190(lbl_eu_8050CB20 + 0x316, lbl_eu_8050CB20 + 0x321, 0x17);
+        stageLabel = BdatTouchStringCell(lbl_eu_8050CB20 + 0x316, lbl_eu_8050CB20 + 0x321, 0x17);
         break;
     case 2:
-        stageLabel = func_80136190(lbl_eu_8050CB20 + 0x316, lbl_eu_8050CB20 + 0x321, 0x18);
+        stageLabel = BdatTouchStringCell(lbl_eu_8050CB20 + 0x316, lbl_eu_8050CB20 + 0x321, 0x18);
         break;
     case 3:
-        stageLabel = func_80136190(lbl_eu_8050CB20 + 0x316, lbl_eu_8050CB20 + 0x321, 0x19);
+        stageLabel = BdatTouchStringCell(lbl_eu_8050CB20 + 0x316, lbl_eu_8050CB20 + 0x321, 0x19);
         break;
     case 4:
-        stageLabel = func_80136190(lbl_eu_8050CB20 + 0x316, lbl_eu_8050CB20 + 0x321, 0x1a);
+        stageLabel = BdatTouchStringCell(lbl_eu_8050CB20 + 0x316, lbl_eu_8050CB20 + 0x321, 0x1a);
         break;
     case 5:
-        stageLabel = func_80136190(lbl_eu_8050CB20 + 0x316, lbl_eu_8050CB20 + 0x321, 0x1b);
+        stageLabel = BdatTouchStringCell(lbl_eu_8050CB20 + 0x316, lbl_eu_8050CB20 + 0x321, 0x1b);
         break;
     case 6:
-        stageLabel = func_80136190(lbl_eu_8050CB20 + 0x316, lbl_eu_8050CB20 + 0x321, 0x1c);
+        stageLabel = BdatTouchStringCell(lbl_eu_8050CB20 + 0x316, lbl_eu_8050CB20 + 0x321, 0x1c);
         break;
     case 7:
-        stageLabel = func_80136190(lbl_eu_8050CB20 + 0x316, lbl_eu_8050CB20 + 0x321, 0x1d);
+        stageLabel = BdatTouchStringCell(lbl_eu_8050CB20 + 0x316, lbl_eu_8050CB20 + 0x321, 0x1d);
         break;
     case 8:
-        stageLabel = func_80136190(lbl_eu_8050CB20 + 0x316, lbl_eu_8050CB20 + 0x321, 0x1e);
+        stageLabel = BdatTouchStringCell(lbl_eu_8050CB20 + 0x316, lbl_eu_8050CB20 + 0x321, 0x1e);
         break;
     case 9:
-        stageLabel = func_80136190(lbl_eu_8050CB20 + 0x316, lbl_eu_8050CB20 + 0x321, 0x18);
+        stageLabel = BdatTouchStringCell(lbl_eu_8050CB20 + 0x316, lbl_eu_8050CB20 + 0x321, 0x18);
         break;
     case 10:
-        stageLabel = func_80136190(lbl_eu_8050CB20 + 0x316, lbl_eu_8050CB20 + 0x321, 0x19);
+        stageLabel = BdatTouchStringCell(lbl_eu_8050CB20 + 0x316, lbl_eu_8050CB20 + 0x321, 0x19);
         break;
     default:
-        stageLabel = func_80136190(lbl_eu_8050CB20 + 0x316, lbl_eu_8050CB20 + 0x321, 0x16);
+        stageLabel = BdatTouchStringCell(lbl_eu_8050CB20 + 0x316, lbl_eu_8050CB20 + 0x321, 0x16);
         break;
     }
-    func_80136B4C(self->field8, lbl_eu_8050CB20 + 0xbe7, stageLabel, 0);
+    LayoutSetTextBoxFmtValue(self->field8, lbl_eu_8050CB20 + 0xbe7, stageLabel, 0);
 
     // Heart-level icon name from the heart-state table (0 hides the icon).
     char* heartLabel;
@@ -1492,47 +1492,47 @@ extern "C" __declspec(noinline) void func_8025BA38(UnkKizunaSelf57D90* selfArg,
         heartLabel = NULL;
         break;
     case 1:
-        heartLabel = func_80136190(lbl_eu_8050CB20 + 0x316, lbl_eu_8050CB20 + 0x321, 0x20);
+        heartLabel = BdatTouchStringCell(lbl_eu_8050CB20 + 0x316, lbl_eu_8050CB20 + 0x321, 0x20);
         break;
     case 2:
-        heartLabel = func_80136190(lbl_eu_8050CB20 + 0x316, lbl_eu_8050CB20 + 0x321, 0x21);
+        heartLabel = BdatTouchStringCell(lbl_eu_8050CB20 + 0x316, lbl_eu_8050CB20 + 0x321, 0x21);
         break;
     case 3:
-        heartLabel = func_80136190(lbl_eu_8050CB20 + 0x316, lbl_eu_8050CB20 + 0x321, 0x22);
+        heartLabel = BdatTouchStringCell(lbl_eu_8050CB20 + 0x316, lbl_eu_8050CB20 + 0x321, 0x22);
         break;
     case 4:
-        heartLabel = func_80136190(lbl_eu_8050CB20 + 0x316, lbl_eu_8050CB20 + 0x321, 0x23);
+        heartLabel = BdatTouchStringCell(lbl_eu_8050CB20 + 0x316, lbl_eu_8050CB20 + 0x321, 0x23);
         break;
     case 5:
-        heartLabel = func_80136190(lbl_eu_8050CB20 + 0x316, lbl_eu_8050CB20 + 0x321, 0x24);
+        heartLabel = BdatTouchStringCell(lbl_eu_8050CB20 + 0x316, lbl_eu_8050CB20 + 0x321, 0x24);
         break;
     }
-    func_80136B4C(self->field8, lbl_eu_8050CB20 + 0xbf2, heartLabel, 0);
+    LayoutSetTextBoxFmtValue(self->field8, lbl_eu_8050CB20 + 0xbf2, heartLabel, 0);
 
     // Encounter counter, both names, formatted "current/max" heart counts.
     setLayoutTextBoxNumber__FPQ34nw4r3lyt6LayoutPcUc(
         self->field8, lbl_eu_8050CB20 + 0xb87,
-        (u8)func_80136254(mgr, lbl_eu_8050CB20 + 0xca9, v));
-    func_80136B4C(self->field8, lbl_eu_8050CB20 + 0xbfd,
-                  func_80136190(lbl_eu_8050CB20 + 0x316, lbl_eu_8050CB20 + 0x321, 0x15), 0);
-    func_80136B4C(self->field8, lbl_eu_8050CB20 + 0xc0b,
-                  func_8013639C(mgr, lbl_eu_8050CB20 + 0xcb1, v), 0);
-    u8 heartsCur = func_801361E8((u32)mgr, lbl_eu_8050CB20 + 0xcc9, v);
-    u8 heartsMax = func_801361E8((u32)mgr, lbl_eu_8050CB20 + 0xcc1, v);
+        (u8)BdatGetU16Direct(mgr, lbl_eu_8050CB20 + 0xca9, v));
+    LayoutSetTextBoxFmtValue(self->field8, lbl_eu_8050CB20 + 0xbfd,
+                  BdatTouchStringCell(lbl_eu_8050CB20 + 0x316, lbl_eu_8050CB20 + 0x321, 0x15), 0);
+    LayoutSetTextBoxFmtValue(self->field8, lbl_eu_8050CB20 + 0xc0b,
+                  BdatGetPtrDirect(mgr, lbl_eu_8050CB20 + 0xcb1, v), 0);
+    u8 heartsCur = BdatGetU8Direct((u32)mgr, lbl_eu_8050CB20 + 0xcc9, v);
+    u8 heartsMax = BdatGetU8Direct((u32)mgr, lbl_eu_8050CB20 + 0xcc1, v);
     char buf[0x14];
     sprintf(buf, lbl_eu_8050CB20 + 0xcc9, heartsCur);
     func_80136A1C(self->field8, lbl_eu_8050CB20 + 0xb5d, buf, 0);
     sprintf(buf, lbl_eu_8050CB20 + 0xcc9, heartsMax);
     func_80136A1C(self->field8, lbl_eu_8050CB20 + 0xb79, buf, 0);
-    func_80136B4C(self->field8, lbl_eu_8050CB20 + 0xb6b,
-                  func_80136190(lbl_eu_8050CB20 + 0x316, lbl_eu_8050CB20 + 0x321, 0x14), 0);
+    LayoutSetTextBoxFmtValue(self->field8, lbl_eu_8050CB20 + 0xb6b,
+                  BdatTouchStringCell(lbl_eu_8050CB20 + 0x316, lbl_eu_8050CB20 + 0x321, 0x14), 0);
 }
 
 // Mode-2 update: when the +0x0C anim transform reaches its last frame,
 // switch the mode byte to 2, set the +0x16 flag, and publish state through
 // the child at +0x08 (slots 14/8 with the transform id, slots 7/11 with
 // the +0x10 transform and a 1 flag).
-extern "C" __declspec(noinline) void func_8025C16C(UnkKizunaSelfC21C* self) {
+extern "C" __declspec(noinline) void infoAnimToMode2(UnkKizunaSelfC21C* self) {
     if (advanceAnimTransform((nw4r::lyt::AnimTransform*)self->field0C, lbl_eu_80668834) != 0) {
         self->field14 = 2;
         self->field16 = 1;
@@ -1543,7 +1543,7 @@ extern "C" __declspec(noinline) void func_8025C16C(UnkKizunaSelfC21C* self) {
     }
 }
 
-extern "C" __declspec(noinline) void func_8025C21C(UnkKizunaSelfC21C* self) {
+extern "C" __declspec(noinline) void infoAnimToMode3(UnkKizunaSelfC21C* self) {
     if (advanceAnimTransform(self->field10, lbl_eu_80668834) != 0) {
         // anim reached its last frame: switch to mode 3, publish via the child.
         self->field14 = 3;
@@ -1553,10 +1553,10 @@ extern "C" __declspec(noinline) void func_8025C21C(UnkKizunaSelfC21C* self) {
     }
 }
 
-// Mode-4 update: same shape as func_8025C16C but mode byte 5 and the
+// Mode-4 update: same shape as infoAnimToMode2 but mode byte 5 and the
 // +0x10 transform published through slots 8/7/11.
-extern "C" __declspec(noinline) void func_8025C298(UnkKizunaSelfC21C* self) {
-    if (func_80137510(self->field10, lbl_eu_80668834) != 0) {
+extern "C" __declspec(noinline) void infoAnimToMode5(UnkKizunaSelfC21C* self) {
+    if (AnimRewindFrame(self->field10, lbl_eu_80668834) != 0) {
         // anim reached its last frame: switch to mode 5, publish via the child.
         self->field14 = 5;
         self->field16 = 1;
@@ -1567,14 +1567,14 @@ extern "C" __declspec(noinline) void func_8025C298(UnkKizunaSelfC21C* self) {
     }
 }
 
-// func_8025C348 (us-8025e494): kizuna-line update gate. Retail: reads the
-// global float lbl_eu_80668834 (sdata), calls func_80137510([self+0xC], f1)
+// infoAnimToMode0 (us-8025e494): kizuna-line update gate. Retail: reads the
+// global float lbl_eu_80668834 (sdata), calls AnimRewindFrame([self+0xC], f1)
 // (declared CArtsInfo.hpp, defined code_80135FDC.cpp — the old comment's
 // "no split symbols" blocker is stale); on non-zero return: field14=0,
 // field15=1, then [self+8] virtual slot 56 (target14) twice with arg 0,
 // then slot 32 (target8) with arg [self+0xC].
-extern "C" __declspec(noinline) void func_8025C348(UnkKizunaSelfC21C* self) {
-    if (func_80137510((nw4r::lyt::AnimTransform*)self->field0C, lbl_eu_80668834) != 0) {
+extern "C" __declspec(noinline) void infoAnimToMode0(UnkKizunaSelfC21C* self) {
+    if (AnimRewindFrame((nw4r::lyt::AnimTransform*)self->field0C, lbl_eu_80668834) != 0) {
         self->field14 = 0;
         self->field15 = 1;
         self->field8->target14(0);
@@ -1618,7 +1618,7 @@ CKizunagram::~CKizunagram() {}
 // Load both bind files into the +0x28 / +0x2C file handles (self is the
 // IWorkEvent receiver), flagging each handle after it is read. Locals let MWCC
 // reuse the readFile return register for the flag calls (no reload).
-void func_8025C510(UnkKizunaSelfC510* self) {
+void loadKizBindFiles(UnkKizunaSelfC510* self) {
     CFileHandle* h2 = CDeviceFile::readFile(mtl::MemManager::getHandleMEM2(),
                                             lbl_eu_8050CB20 + 0xcd1,
                                             (IWorkEvent*)self, 0, 0);
@@ -1634,7 +1634,7 @@ void func_8025C510(UnkKizunaSelfC510* self) {
 
 // Draw pass: render the shared layout, then (when enabled and in modes 3/6)
 // the three conditional sub-layouts.
-void func_8025C61C(UnkKizunaSelfC61C* self, nw4r::lyt::DrawInfo* drawInfo) {
+void drawKizLayouts(UnkKizunaSelfC61C* self, nw4r::lyt::DrawInfo* drawInfo) {
     if (self->field74 != 0) {
         drawLayout(self->field74, drawInfo, 0, 1);
     }
@@ -1656,21 +1656,21 @@ void func_8025C61C(UnkKizunaSelfC61C* self, nw4r::lyt::DrawInfo* drawInfo) {
 // Destruction: release both file handles, clear the anim flag byte, then
 // release each child object (0x4C / 0x68 / 0xAC / 0xC0) and the two resource
 // accessors, and tear down the two memory regions at +0x08 / +0x18.
-void func_8025C6F0(UnkKizunaSelfC6F0* self) {
-    func_801390E0(&self->field28);
-    func_801390E0(&self->field2C);
+void teardownKizuna(UnkKizunaSelfC6F0* self) {
+    closeFileHandle__FPP11CFileHandle(&self->field28);
+    closeFileHandle__FPP11CFileHandle(&self->field2C);
     self->field38 = 0;
-    func_8025B900(&self->sub4C);
-    func_80259098((UnkKizunaSelf59B18*)&self->sub68);
-    func_80257F44(&self->subAC);
-    func_80257D90(&self->subC0);
+    releaseInfoChild(&self->sub4C);
+    freeLinePanes((UnkKizunaSelf59B18*)&self->sub68);
+    releaseCurChild(&self->subAC);
+    releaseRadarChild(&self->subC0);
     releaseArcResourceAccessor(self->field30);
     releaseArcResourceAccessor(self->field34);
-    self->mRegA.func_8045F778();
-    self->mRegB.func_8045F778();
+    self->mRegA.deleteRegion();
+    self->mRegB.deleteRegion();
 }
 
-unsigned char CKizunagram_getField7E(u8* this_ptr) {
+extern "C" unsigned char kizChartReady(u8* this_ptr) {
     if (*(unsigned char*)(this_ptr + 0x7e) != 0) {
         return *(unsigned char*)(this_ptr + 0x3b);
     } else {
@@ -1678,7 +1678,7 @@ unsigned char CKizunagram_getField7E(u8* this_ptr) {
     }
 }
 
-unsigned char CKizunagram_checkFields(u8* arg1)
+extern "C" unsigned char kizChartOpen(u8* arg1)
 {
     if (*(unsigned char*)(arg1 + 0x61) == 0)
         return 0;
@@ -1689,22 +1689,22 @@ unsigned char CKizunagram_checkFields(u8* arg1)
     return 0;
 }
 
-extern "C" void func_8025C7D0(UnkKizunaSelfC7FC* self) {
+extern "C" void kizStartChart(UnkKizunaSelfC7FC* self) {
     if (self->field39 != 0) return;
     self->field39 = 1;
     self->field3C = 0;
     ((u8*)self)[0x38] = 1;
-    func_8025B958(&self->sub4C);
+    infoEnterMode1(&self->sub4C);
 }
 
-void func_8025C7FC(UnkKizunaSelfC7FC* self, int arg4) {
+void kizCloseChart(UnkKizunaSelfC7FC* self, int arg4) {
     if (self->field39 == 3) {
         // switch to mode 4, reset the sub-flag, re-publish all children.
         self->field39 = 4;
         self->field3C = 0;
-        func_8025B9C8(&self->sub4C);
-        func_80259280(&self->sub68);
-        func_80257F9C(&self->subAC, 0xff);
+        infoEnterMode4(&self->sub4C);
+        lineEnterMode3(&self->sub68);
+        setCurPanePhase(&self->subAC, 0xff);
         if (arg4 != 0) {
             playUISound(6);
         }
@@ -1716,7 +1716,7 @@ void func_8025C7FC(UnkKizunaSelfC7FC* self, int arg4) {
 // animated position at +0x4C of the slot-15 result into the +0x14 Vec2.
 // Each display reset: place a fixed color into the +0x68 sub-object, clear
 // its state byte, reset the two line panes, and step the sub-anim.
-extern "C" __declspec(noinline) void func_8025C874(UnkKizunaSelfC874* self) {
+extern "C" __declspec(noinline) void kizCursorDir1(UnkKizunaSelfC874* self) {
     // Array member forces a block copy on assignment (retail's interleaved
     // lwz/stw shape); last-declared tmp sits at sp+8, v spans sp+0x14+.
     struct VecA { u32 a[3]; };
@@ -1730,13 +1730,13 @@ extern "C" __declspec(noinline) void func_8025C874(UnkKizunaSelfC874* self) {
                   reinterpret_cast<UnkKizunaVec3*>(&v));
     func_8025949C(reinterpret_cast<UnkKizunaSelf5949C*>(&self->sub68));
     self->field3A = 0;
-    func_80257F9C(&self->subAC, 0);
+    setCurPanePhase(&self->subAC, 0);
     func_8025BA38(&self->sub4C, self->field8E);
     func_80259820(reinterpret_cast<UnkKizunaSelf9820*>(&self->sub68));
 }
 
-// Same display reset as func_8025C874 but with the second color constant.
-extern "C" __declspec(noinline) void func_8025C904(UnkKizunaSelfC874* self) {
+// Same display reset as kizCursorDir1 but with the second color constant.
+extern "C" __declspec(noinline) void kizCursorDir2(UnkKizunaSelfC874* self) {
     // Array member forces a block copy on assignment (retail's interleaved
     // lwz/stw shape); last-declared tmp sits at sp+8, v spans sp+0x14+.
     struct VecA { u32 a[3]; };
@@ -1750,15 +1750,15 @@ extern "C" __declspec(noinline) void func_8025C904(UnkKizunaSelfC874* self) {
                   reinterpret_cast<UnkKizunaVec3*>(&v));
     func_8025949C(reinterpret_cast<UnkKizunaSelf5949C*>(&self->sub68));
     self->field3A = 0;
-    func_80257F9C(&self->subAC, 0);
+    setCurPanePhase(&self->subAC, 0);
     func_8025BA38(&self->sub4C, self->field8E);
     func_80259820(reinterpret_cast<UnkKizunaSelf9820*>(&self->sub68));
 }
 
-// Same display reset as func_8025C874 but with the color constants swapped
+// Same display reset as kizCursorDir1 but with the color constants swapped
 // (retail loads f2 first then fmr f3, so the source order is x/y/z with the
 // shared constant in y/z).
-extern "C" __declspec(noinline) void func_8025C994(UnkKizunaSelfC874* self) {
+extern "C" __declspec(noinline) void kizCursorDir3(UnkKizunaSelfC874* self) {
     // u32-array view forces retail's word-copy shape; declaring v first puts
     // it at sp+0x14 and the setVec3 temp at sp+8, matching retail's layout.
     struct VecW { u32 w[3]; };
@@ -1771,21 +1771,21 @@ extern "C" __declspec(noinline) void func_8025C994(UnkKizunaSelfC874* self) {
                   reinterpret_cast<UnkKizunaVec3*>(&v));
     func_8025949C(reinterpret_cast<UnkKizunaSelf5949C*>(&self->sub68));
     self->field3A = 0;
-    func_80257F9C(&self->subAC, 0);
+    setCurPanePhase(&self->subAC, 0);
     func_8025BA38(&self->sub4C, self->field8E);
     func_80259820(reinterpret_cast<UnkKizunaSelf9820*>(&self->sub68));
 }
 
-void func_8025CA24(){}
+void kizCursorDir4(){}
 
 // Dispatch on display-state byte at +0x3A; each case is a tail call.
-// Same display reset as func_8025C874 but with the color constants swapped
+// Same display reset as kizCursorDir1 but with the color constants swapped
 // (retail loads f2 first then fmr f3, so the source order is x/y/z with the
 // shared constant in y/z).
-extern "C" __declspec(noinline) void func_8025CA24(UnkKizunaSelfC874* self) {
+extern "C" __declspec(noinline) void kizCursorDir4(UnkKizunaSelfC874* self) {
     // u32-array view forces retail's word-copy shape (lwz/stw, not lfs/stfs);
     // declaring v first puts it at sp+0x14 and the setVec3 temp at sp+8
-    // (matches retail's slot assignment; see func_8025C994)
+    // (matches retail's slot assignment; see kizCursorDir3)
     struct VecW { u32 w[3]; };
     VecW v;
     VecW tmp;
@@ -1796,77 +1796,77 @@ extern "C" __declspec(noinline) void func_8025CA24(UnkKizunaSelfC874* self) {
                   reinterpret_cast<UnkKizunaVec3*>(&v));
     func_8025949C(reinterpret_cast<UnkKizunaSelf5949C*>(&self->sub68));
     self->field3A = 0;
-    func_80257F9C(&self->subAC, 0);
+    setCurPanePhase(&self->subAC, 0);
     func_8025BA38(&self->sub4C, self->field8E);
     func_80259820(reinterpret_cast<UnkKizunaSelf9820*>(&self->sub68));
 }
 
-void func_8025CAB4(UnkKizunaDisp* self) {
+void tickKizMove(UnkKizunaDisp* self) {
     switch (self->field_0x3A) {
     case 0:
         return func_8025CE00((UnkKizunaSelfCE00*)self);
     case 1:
-        return func_8025CE78((UnkKizunaSelfCE78*)self);
+        return slideKizDown((UnkKizunaSelfCE78*)self);
     case 2:
-        return func_8025CF1C(self);
+        return tickCurByFlag(self);
     }
 }
 
 // Pulse the anim at +0x78 to frame 1.0, notify the child object (+0x74, via
-// the embedded func_80259344 sub at +0x68) on vtable slot 14, rebuild the
+// the embedded getLinePanePair sub at +0x68) on vtable slot 14, rebuild the
 // two-word pair, and copy it into the +0xB4 object's child.
-void func_8025CAE4(UnkKizunaSelfCAE4* self) {
+void kizCursorHoldA(UnkKizunaSelfCAE4* self) {
     advanceAnimTransform(self->field78, lbl_eu_80668834);
     ((UnkKizunaObjSlot14*)self->sub.field0C)->callSlot14(0);
-    UnkKizunaPair p = func_80259344(&self->sub);
-    func_80231848(self->fieldB4->field10, &p);
+    UnkKizunaPair p = getLinePanePair(&self->sub);
+    CMenuArtsSet_setPaneScale(self->fieldB4->field10, &p);
 }
 
-// Same shape as func_8025CAE4 but the anim step uses func_80137510 instead.
-void func_8025CB50(UnkKizunaSelfCAE4* self) {
-    func_80137510(self->field78, lbl_eu_80668834);
+// Same shape as kizCursorHoldA but the anim step uses AnimRewindFrame instead.
+void kizCursorHoldB(UnkKizunaSelfCAE4* self) {
+    AnimRewindFrame(self->field78, lbl_eu_80668834);
     ((UnkKizunaObjSlot14*)self->sub.field0C)->callSlot14(0);
-    UnkKizunaPair p = func_80259344(&self->sub);
-    func_80231848(self->fieldB4->field10, &p);
+    UnkKizunaPair p = getLinePanePair(&self->sub);
+    CMenuArtsSet_setPaneScale(self->fieldB4->field10, &p);
 }
 
-int CKizunagram_stub(void* self) { return 0; }
+extern "C" int kizChartBusy(void* self) { return 0; }
 
 struct CKizunagramState {
     u8 _00[0x8C];
     u8 field8C;
 };
 
-extern "C" u8 func_8025CBC4(CKizunagramState* self) {
+extern "C" u8 kizHasSelFlag(CKizunagramState* self) {
     return self->field8C;
 }
 
 
 // retail: lfs f0,const; li r0,0; stb 0x34; sth 0x36; stfs 0x38
-extern "C" __declspec(noinline) void func_8025AC04(void* self) {
+extern "C" __declspec(noinline) void lineClearSelect(void* self) {
     *(u8*)((char*)self + 0x34) = 0;
     *(u16*)((char*)self + 0x36) = 0;
     *(float*)((char*)self + 0x38) = lbl_eu_80668828;
 }
 
 // retail: lbz 0xdd; xori; subic; subfe; stb - toggle (x^1)!=0 under -O4,s
-extern "C" void func_8025CC70(void* self) {
+extern "C" void kizToggleHelp(void* self) {
     *(u8*)((char*)self + 0xDD) = (u8)((*(u8*)((char*)self + 0xDD) ^ 1) != 0);
 }
 
-// retail: if (field_62) { field_39 = 2; tail func_80259228(self+0x68) }
+// retail: if (field_62) { field_39 = 2; tail lineEnterMode1(self+0x68) }
 // noinline: retail keeps these dispatch handlers out-of-line; without the
-// attribute MWCC folds their bodies into func_8025C580's switch arms.
-extern "C" __declspec(noinline) void func_8025CC88(void* self) {
+// attribute MWCC folds their bodies into tickKizMain's switch arms.
+extern "C" __declspec(noinline) void tryKizMode2(void* self) {
     if (*(u8*)((char*)self + 0x62) != 0) {
         *(u8*)((char*)self + 0x39) = 2;
-        func_80259228((UnkKizunaSelf59228*)((char*)self + 0x68));
+        lineEnterMode1((UnkKizunaSelf59228*)((char*)self + 0x68));
     }
 }
 
 // Gate: when both the +0x61 and +0x7D bytes are set, raise the +0x39/+0x3C
 // state and tail-call the +0xAC sub-object with the +0x8C flag.
-extern "C" __declspec(noinline) void func_8025CCA8(void* self) {
+extern "C" __declspec(noinline) void tryKizMode3(void* self) {
     if (*(u8*)((u8*)self + 0x61) == 0)
         return;
     if (*(u8*)((u8*)self + 0x7D) == 0)
@@ -1874,18 +1874,18 @@ extern "C" __declspec(noinline) void func_8025CCA8(void* self) {
     *((u8*)self + 0x39) = 3;
     *((u8*)self + 0x3C) = 1;
     if (*(u8*)((u8*)self + 0x8C) != 0)
-        func_80257F9C((UnkKizunaSelf57D90*)((u8*)self + 0xAC), 1);
+        setCurPanePhase((UnkKizunaSelf57D90*)((u8*)self + 0xAC), 1);
     else
-        func_80257F9C((UnkKizunaSelf57D90*)((u8*)self + 0xAC), 0);
+        setCurPanePhase((UnkKizunaSelf57D90*)((u8*)self + 0xAC), 0);
 }
 
-void CKizunagram_setField39(u8* ptr) {
+void tryKizMode5(u8* ptr) {
     if (ptr[0x62] != 0) {
         ptr[0x39] = 5;
     }
 }
 
-void CKizunagram_resetState(u8* b) {
+void tryKizIdle(u8* b) {
     if (!b[0x61]) return;
     if (!b[0x7d]) return;
     b[0x39] = 0;
@@ -1918,9 +1918,9 @@ extern "C" __declspec(noinline) void func_8025CE00(UnkKizunaSelfCE00* self) {
 
 // Move the line target down by the +0x48 step; once it reaches the floor,
 // latch state 2 and refresh the info/line displays.
-extern "C" __declspec(noinline) void func_8025CE78(UnkKizunaSelfCE78* self) {
+extern "C" __declspec(noinline) void slideKizDown(UnkKizunaSelfCE78* self) {
     // u32 words force retail's lwz/stw struct copy of the setVec3 result
-    // (see func_8025CA24); v lands at sp+0x14 and the setVec3 temp at sp+8.
+    // (see kizCursorDir4); v lands at sp+0x14 and the setVec3 temp at sp+8.
     struct VecW { u32 w[3]; };
     VecW v;
     VecW tmp;
@@ -1939,14 +1939,14 @@ extern "C" __declspec(noinline) void func_8025CE78(UnkKizunaSelfCE78* self) {
     }
 }
 
-void func_8025CF1C(){}
+void tickCurByFlag(){}
 
 // us-8025f08c (0x8025CF40): when both +0x30/+0x34 pointers are present, build a
 // fresh CKizunaLine, copy it into the +0x68 line state (field-by-field,
 // including the +0x18..+0x20 pad words the ctor leaves uninitialized), then
 // rebuild the line display and re-fetch the two cur/line panes via slot 15.
-// extern "C" + noinline for OnFileEvent's unmangled call shape (see func_80257AFC).
-extern "C" __declspec(noinline) void func_8025CF40(UnkKizunaSelfCF40* self) {
+// extern "C" + noinline for OnFileEvent's unmangled call shape (see buildRadarLayout).
+extern "C" __declspec(noinline) void rebuildKizLine(UnkKizunaSelfCF40* self) {
 // explicit == 0 early-return reproduces retail's beq / bne-b branch pair
     if (self->field30 == 0 || self->field34 == 0)
         return;
@@ -2039,7 +2039,7 @@ bool CKizunagram::OnFileEvent(CEventFile* pEventFile) {
         mInfo.mField15 = ((CKizunaInfo*)infoBuf)->mField15;
         mInfo.mField16 = ((CKizunaInfo*)infoBuf)->mField16;
         mInfo.mField18 = ((CKizunaInfo*)infoBuf)->mField18;
-        func_8025B670((UnkKizunaSelfB670*)&mInfo);
+        buildInfoLayout((UnkKizunaSelfB670*)&mInfo);
 
         // Current-kizuna cursor: build temp, copy body, then init + publish.
         __ct__CKizunaCur((CKizunaCur*)curBuf,
@@ -2050,8 +2050,8 @@ bool CKizunagram::OnFileEvent(CEventFile* pEventFile) {
         mCur.mField10 = ((CKizunaCur*)curBuf)->mField10;
         mCur.mField11 = ((CKizunaCur*)curBuf)->mField11;
         mCur.mField12 = ((CKizunaCur*)curBuf)->mField12;
-        func_80257E58((UnkKizunaSelf57E58*)&mCur);
-        func_80257F9C((UnkKizunaSelf57D90*)&mCur, 0xFF);
+        buildCurLayout((UnkKizunaSelf57E58*)&mCur);
+        setCurPanePhase((UnkKizunaSelf57D90*)&mCur, 0xFF);
 
         // Radar: both sides aliased as words - retail moves the float fields
         // as integer bits and stores the last two words in reverse order.
@@ -2065,12 +2065,12 @@ bool CKizunagram::OnFileEvent(CEventFile* pEventFile) {
         rw->w10 = rt->w10;
         { u32 t14 = rt->w14; u32 t18 = rt->w18;
         rw->w18 = t18; rw->w14 = t14; }
-        func_80257AFC((UnkKizunaSelfAFC*)&mRadar);
+        buildRadarLayout((UnkKizunaSelfAFC*)&mRadar);
 
         if (func_8009ECE0() == 0 || fieldDE != 0) {
             fieldDC = 4;
         }
-        func_8025CF40((UnkKizunaSelfCF40*)this);
+        rebuildKizLine((UnkKizunaSelfCF40*)this);
         field28 = 0;
         mMemRegionA.func_8045F810();
         return true;
@@ -2086,7 +2086,7 @@ bool CKizunagram::OnFileEvent(CEventFile* pEventFile) {
         field34 = (u32)createArcResourceAccessor__10CLibLayoutFv();
         ((nw4r::lyt::ArcResourceAccessor*)field34)->Attach(fileData,
                                                            lbl_eu_8050CB20 + 0xd13);
-        func_8025CF40((UnkKizunaSelfCF40*)this);
+        rebuildKizLine((UnkKizunaSelfCF40*)this);
         field2C = 0;
         mMemRegionB.func_8045F810();
         return true;
@@ -2183,7 +2183,7 @@ extern "C" __declspec(noinline) bool func_8025A11C(UnkKizunaSelfA11C* self) {
             return true;
         }
         u32 id = ((u16)cnt + 1) & 0xffff;
-        char* rowName = func_8013639C(fp, str + 0x411, id);
+        char* rowName = BdatGetPtrDirect(fp, str + 0x411, id);
         nw4r::lyt::Pane* pane =
             (nw4r::lyt::Pane*)self->field0C->field10->target((int)rowName, 1);
         u32 state = func_8009CF8C(id + 0x608) & 0xff;
@@ -2197,7 +2197,7 @@ extern "C" __declspec(noinline) bool func_8025A11C(UnkKizunaSelfA11C* self) {
         }
 
         // Per-state tag: pick the formatted texture name from this row's tag.
-        char* tag = func_8013639C(fp, str + 0x417, id);
+        char* tag = BdatGetPtrDirect(fp, str + 0x417, id);
         switch (state) {
         case 1:
             if (strcmp(tag, str + 0x494) == 0) {
@@ -2329,33 +2329,33 @@ extern "C" __declspec(noinline) bool func_8025A11C(UnkKizunaSelfA11C* self) {
 
 // Per-frame update: dispatch on the mode byte at +0x39, then step every child
 // (line display, kizuna sub, cur layout, line panes).
-void func_8025C580(UnkKizunaSelfC580* self) {
+void tickKizMain(UnkKizunaSelfC580* self) {
     switch (self->field39) {
     case 1:
-        func_8025CC88(self);
+        tryKizMode2(self);
         break;
     case 2:
-        func_8025CCA8(self);
+        tryKizMode3(self);
         break;
     case 4:
-        func_8025CCF8(self);
+        tryKizMode5(self);
         break;
     case 5:
-        func_8025CD10(self);
+        tryKizIdle(self);
         break;
     case 6:
         func_8025CD40(self);
         break;
     }
-    func_8025B870(&self->sub4C);
-    func_80258F9C(reinterpret_cast<UnkKizunaSelf58F9C*>(&self->sub68));
-    func_80257EE0(&self->subAC);
+    tickInfoMode(&self->sub4C);
+    tickLineState(reinterpret_cast<UnkKizunaSelf58F9C*>(&self->sub68));
+    tickCurAnim(&self->subAC);
     func_80257B6C(&self->subC0);
 }
 
 // Countdown timer at +0x40: decrement; when it hits zero reset the state
 // bytes, then publish the remaining scaled count into the slot-15 pane result.
-extern "C" __declspec(noinline) void func_80259D44(UnkKizunaSelf59D44* self) {
+extern "C" __declspec(noinline) void lineCountDown(UnkKizunaSelf59D44* self) {
     self->field40 = self->field40 - lbl_eu_80668834;
     if (self->field40 <= lbl_eu_80668828) {
         self->field14 = 4;
@@ -2371,7 +2371,7 @@ extern "C" __declspec(noinline) void func_80259D44(UnkKizunaSelf59D44* self) {
 
 // Kizuna-line status query: when the anim at +0x78 sits at frame 0, refine the
 // answer with whether the +0x68 sub-anim has finished.
-int func_8025CBCC(UnkKizunaSelfCBCC* self) {
+int kizChartStatus(UnkKizunaSelfCBCC* self) {
     // Sense: constant status when the anim sits AT frame 0; sub-anim query
     // runs while it is still moving.
     if (self->field8C != 0) {
@@ -2379,14 +2379,14 @@ int func_8025CBCC(UnkKizunaSelfCBCC* self) {
         if (atZero) {
             return 0x54;
         }
-        bool finished = func_802592D8((UnkKizunaSelf592D8*)&self->sub68);
+        bool finished = kizAnimAtEnd((UnkKizunaSelf592D8*)&self->sub68);
         return finished ? 0x55 : 0x53;
     } else {
         bool atZero = (lbl_eu_80668828 == self->field78->GetFrame());
         if (atZero) {
             return 0x57;
         }
-        bool finished = func_802592D8((UnkKizunaSelf592D8*)&self->sub68);
+        bool finished = kizAnimAtEnd((UnkKizunaSelf592D8*)&self->sub68);
         return finished ? 0x58 : 0x56;
     }
 }

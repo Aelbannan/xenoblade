@@ -213,12 +213,12 @@ st4:
 void func_80210AD0(cf::CfGimmickItem* self) {
     for (int i = 0; i < 3; ++i) {
         if (self->field_84[i] != 0 && (self->field_74 & (1 << i))) {
-            func_80159C04(self->field_84[i], 1);
+            CItem_consumeFamilyCnt(self->field_84[i], 1);
         }
     }
 
     if (self->field_8A != 0) {
-        func_801586D4(self->field_8A, 1);
+        CItem_thunkAllocRecord(self->field_8A, 1);
     }
 
     if (self->field_9C == 3) {
@@ -276,7 +276,7 @@ void func_802106F8(cf::CfGimmickItem* self) {
     int ok = 0;
     for (int i = 0; i < 3; ++i) {
         if (self->field_84[i] != 0) {
-            if (func_801587E8(self->field_84[i]) == 0) {
+            if (CItem_findRecByFamily(self->field_84[i]) == 0) {
                 ok = 0;
                 break;
             }

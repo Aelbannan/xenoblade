@@ -232,17 +232,17 @@ void CMenuQstCnt::Init() {
     setLayoutTextBoxFont(mLayout, &lbl_eu_80509A10[0x4d], getPackedFont());
     setLayoutTextBoxFont(mLayout, &lbl_eu_80509A10[0x59], getPackedFont());
 
-    func_80136B4C(mLayout, &lbl_eu_80509A10[0x64], &lbl_eu_80509A10[0x73], 0);
-    func_80136B4C(mLayout, &lbl_eu_80509A10[0x74], &lbl_eu_80509A10[0x73], 0);
+    LayoutSetTextBoxFmtValue(mLayout, &lbl_eu_80509A10[0x64], &lbl_eu_80509A10[0x73], 0);
+    LayoutSetTextBoxFmtValue(mLayout, &lbl_eu_80509A10[0x74], &lbl_eu_80509A10[0x73], 0);
 
     // Helper returns formatted text for the two quest-log fields (the first,
     // 12-entry form, is computed and discarded); the remaining field uses it.
-    func_80136190(&lbl_eu_80509A10[0x7b], &lbl_eu_80509A10[0x85], 12);
-    func_80136B4C(mLayout, &lbl_eu_80509A10[0x8a], &lbl_eu_80509A10[0x73], 0);
+    BdatTouchStringCell(&lbl_eu_80509A10[0x7b], &lbl_eu_80509A10[0x85], 12);
+    LayoutSetTextBoxFmtValue(mLayout, &lbl_eu_80509A10[0x8a], &lbl_eu_80509A10[0x73], 0);
 
     char* text =
-        (char*)func_80136190(&lbl_eu_80509A10[0x7b], &lbl_eu_80509A10[0x85], 11);
-    func_80136B4C(mLayout, &lbl_eu_80509A10[0x59], text, 0);
+        (char*)BdatTouchStringCell(&lbl_eu_80509A10[0x7b], &lbl_eu_80509A10[0x85], 11);
+    LayoutSetTextBoxFmtValue(mLayout, &lbl_eu_80509A10[0x59], text, 0);
 
     // Start the open animation from frame 0 and tick it once.
     mLayout->SetAnimationEnable(mAnim88, true);
@@ -286,7 +286,7 @@ void CMenuQstCnt::Move() {
     // Single short-circuit OR so MWCC emits: func test -> bne exit;
     // bit test -> beq continue / b exit (CSystemWindow::Move shape).
     if (CTaskGame::isFlag01Set() || (lbl_eu_80663E28 & 0x200000)) return;
-    if (!func_8013BE50()) return;
+    if (!IsMenuState621F0()) return;
     // Retail loads the global twice up front (lwz r0; lwz r3) - the rlwinm
     // destroys r0 and the andis needs a second copy. Two adjacent volatile
     // reads stop MWCC CSE-ing them into one load while keeping both loads
@@ -326,7 +326,7 @@ void CMenuQstCnt::cbRenderBefore() {
     if (CTaskGame::getInstance()->isFlag01Set() ||
         (lbl_eu_80663E28 & 0x200000))
         return;
-    if (func_8013BE50() == 0) return;
+    if (IsMenuState621F0() == 0) return;
     // Retail loads the global twice up front (lwz r0; lwz r3) - the rlwinm
     // destroys r0 and the andis needs a second copy. Two adjacent volatile
     // reads stop MWCC CSE-ing them into one load (the missing 4 bytes) while
@@ -453,7 +453,7 @@ void func_80226C5C(QstMenuData* self) {
 #pragma optimize_for_size on
 #pragma dont_inline on
 void func_80226C88(CMenuQstCnt* self) {
-    if (func_80137510(self->mAnim88, lbl_eu_8066856C) == 0) return;
+    if (AnimRewindFrame(self->mAnim88, lbl_eu_8066856C) == 0) return;
     if (self->mEntries[0].f0 == 0) {
         self->mField64 = 1;
         return;
@@ -500,20 +500,20 @@ void func_80226E54(CMenuQstCnt* self) {
         self->mSelEntry.f4 = self->mSelEntry.f5;
     }
     u32 v = func_80138138(self->mSelEntry.f0);
-    char* s = func_8013639C((void*)lbl_eu_80573D18[v], &lbl_eu_80509A10[0x92], self->mSelEntry.f0);
-    func_80136B4C(self->mLayout, &lbl_eu_80509A10[0x64], s, 0);
+    char* s = BdatGetPtrDirect((void*)lbl_eu_80573D18[v], &lbl_eu_80509A10[0x92], self->mSelEntry.f0);
+    LayoutSetTextBoxFmtValue(self->mLayout, &lbl_eu_80509A10[0x64], s, 0);
     if (self->mSelEntry.f6 == 0) {
-        s = func_8013639C(lbl_eu_80664094, &lbl_eu_80509A10[0x85], self->mSelEntry.f2);
+        s = BdatGetPtrDirect(lbl_eu_80664094, &lbl_eu_80509A10[0x85], self->mSelEntry.f2);
     } else {
         s = func_801394D4(self->mSelEntry.f2);
     }
-    func_80136B4C(self->mLayout, &lbl_eu_80509A10[0x74], s, 0);
+    LayoutSetTextBoxFmtValue(self->mLayout, &lbl_eu_80509A10[0x74], s, 0);
     if (self->mSelEntry.f6 == 0) {
-        s = (char*)func_80136190(&lbl_eu_80509A10[0x7b], &lbl_eu_80509A10[0x85], 12);
+        s = (char*)BdatTouchStringCell(&lbl_eu_80509A10[0x7b], &lbl_eu_80509A10[0x85], 12);
     } else {
-        s = (char*)func_80136190(&lbl_eu_80509A10[0x7b], &lbl_eu_80509A10[0x85], 13);
+        s = (char*)BdatTouchStringCell(&lbl_eu_80509A10[0x7b], &lbl_eu_80509A10[0x85], 13);
     }
-    func_80136B4C(self->mLayout, &lbl_eu_80509A10[0x8a], s, 0);
+    LayoutSetTextBoxFmtValue(self->mLayout, &lbl_eu_80509A10[0x8a], s, 0);
     setLayoutTextBoxNumber(self->mLayout, &lbl_eu_80509A10[0x41], self->mSelEntry.f4);
     setLayoutTextBoxNumber(self->mLayout, &lbl_eu_80509A10[0x4d], self->mSelEntry.f5);
 }
@@ -579,11 +579,11 @@ void func_802270CC(QstData* self) {
             }
             u32 v = func_80138138(i);
             u32 tbl = lbl_eu_80573D18[v];
-            u32 res = func_801361E8(tbl, &lbl_eu_80509AB4[0], i);
+            u32 res = BdatGetU8Direct(tbl, &lbl_eu_80509AB4[0], i);
             if ((res & 0xff) == 2) continue;
             u32 r21 = (res & 0xff) == 1;
             if (r22 == 3) r21 = 0;
-            u8 x = (u8)func_801361E8((u32)lbl_eu_806640A8, &lbl_eu_80509AB4[0xa], cat);
+            u8 x = (u8)BdatGetU8Direct((u32)lbl_eu_806640A8, &lbl_eu_80509AB4[0xa], cat);
             u16 idx = self->field_2000;
             self->field_2000 = idx + 1;
             QstInfo src;

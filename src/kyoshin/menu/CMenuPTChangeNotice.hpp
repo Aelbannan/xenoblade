@@ -116,22 +116,22 @@ void __dt__17UnkClass_8045F564Fv(UnkClass_8045F564* self, int flags);
 void __dt__9IUIWindowFv(void* self, int flags);
 void __dl__FPv(void* p);
 // Unmangled in retail (unlike advanceAnimTransform's mangled form).
-u32 func_80137510(nw4r::lyt::AnimTransform* anim, float f1);
+u32 AnimRewindFrame(nw4r::lyt::AnimTransform* anim, float f1);
 // Layout/message/input helpers used by the file-load completion handler.
 int isClassicController__Q22cf13CfGameManagerFv(int arg);
-u16 func_8013606C(const void*, const void*, u32);
-char* func_80136190(const void*, const void*, int);
+u16 BdatGetU16ByTableKey(const void*, const void*, u32);
+char* BdatTouchStringCell(const void*, const void*, int);
 void func_8013676C(void*, u32);
-void func_80137E7C(nw4r::lyt::Layout*, const char*, void*);
-char* func_80138F78(u32);
+void PaneSetTexPaletteByName(nw4r::lyt::Layout*, const char*, void*);
+char* MakeTplNameSysFile(u32);
 nw4r::lyt::ArcResourceAccessor* func_801355F4();
-u16 func_80136254(const void*, const void*, int);
+u16 BdatGetU16Direct(const void*, const void*, int);
 void func_80124270(nw4r::lyt::Pane*, u32);
 void func_80124288(nw4r::lyt::Pane*, float*);
 u32 func_8009CF8C(u32);
 void func_80139198(u32);
-u8 func_801392B4(u32);
-u8 func_801392C8(u32);
+u8 GetCollectedFlagByte(u32);
+u8 GetCollectedFlagWord8(u32);
 u8 code80135FDC_getByte_64077();
 u8 code80135FDC_getByte_6407E();
 void* getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32, nw4r::lyt::Layout*);
@@ -139,7 +139,7 @@ void* getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32, nw4r::lyt::Layout*);
 
 // C++-linkage helpers (retail symbols are their MWCC-mangled forms).
 u32 advanceAnimTransform(nw4r::lyt::AnimTransform* anim, float f1);
-void func_80136B4C(nw4r::lyt::Layout*, char*, char*, u32);
+void LayoutSetTextBoxFmtValue(nw4r::lyt::Layout*, char*, char*, u32);
 void buildLayout(nw4r::lyt::Layout**, nw4r::lyt::ArcResourceAccessor*, const char*);
 void bindLayoutAnimTransform(nw4r::lyt::Layout*, nw4r::lyt::AnimTransform**,
                    nw4r::lyt::ArcResourceAccessor*, char*);

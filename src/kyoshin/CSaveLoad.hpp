@@ -11,7 +11,7 @@ public:
     CSLCur();
     void createLayout();
     void initLayout() { createLayout(); } // compat
-    // Retail defines func_8028EEC0
+    // Retail defines CSLSub_setBusy
 
     // Vtable-like pointer set manually (initialized to lbl_eu_8053884C); kept void*.
     void* mField0;    // 0x00
@@ -35,8 +35,6 @@ public:
     virtual ~CSaveLoad();
     void loadSaveData();
     void initLayout() { loadSaveData(); } // compat
-    u8 func_8028F664();
-    u8 func_8028FEC4();
 
     // +0x00: vtable (implicit)
     char _pad_04[0x14 - 0x04];                         // 0x04-0x13
@@ -174,16 +172,16 @@ public:
 
 // Abstract class for CCur18 cursor object (0x18 bytes, embedded sub-object).
 // vtable layout: 2 MWCC implicit entries (RTTI/dtor) then user virtuals.
-// Slot 3 (offset 0x0C) is the second user virtual, used by func_8028F4AC.
+// Slot 3 (offset 0x0C) is the second user virtual, used by CSaveLoad_reset.
 class CCur18Obj {
 public:
     virtual void vf2(int) = 0;  // slot 2 (0x08) - destructor
     virtual void vf3() = 0;     // slot 3 (0x0C) - cursor update function
-    virtual void vf4(int) = 0;  // slot 4 (0x10) - set button text (used by func_802908A4)
+    virtual void vf4(int) = 0;  // slot 4 (0x10) - set button text (used by CSaveLoad_refresh)
 };
 
 // Struct with ArcResourceAccessor at +0x00, Layout at +0x04, AnimTransform at +0x08.
-// Used by func_8028ED70; compatible with UnkTwoPtr (UnkTwoPtr's _pad_00[4] absorbs the accessor).
+// Used by CSLSub_create; compatible with UnkTwoPtr (UnkTwoPtr's _pad_00[4] absorbs the accessor).
 struct UnkED70_Struct {
     nw4r::lyt::ArcResourceAccessor* mAccessor;  // +0x00
     nw4r::lyt::Layout* mLayout;                  // +0x04
@@ -266,7 +264,7 @@ struct FileHandleView {
 };
 
 // Opaque object whose vtable (after 2 RTTI pad slots) has virtuals at
-// slots 11 (0x2C) and 14 (0x38) - used by func_8028EF74's dispatch.
+// slots 11 (0x2C) and 14 (0x38) - used by CSLSub_bindPane's dispatch.
 // Abstract so MWCC emits no vtable.
 class UnkVtblObj {
 public:
@@ -293,15 +291,15 @@ struct UnkPtrHolder;
 struct UnkTwoPtr;
 
 extern "C" void func_801D216C(void*, u8);
-extern "C" int func_8028E964(CSLCur* cur);
-extern "C" int func_8028E998(CSLCur* cur, u8 index);
-extern "C" void func_80290844(CSaveLoad* p);
-extern "C" void func_802908A4(CSaveLoad* p);
+extern "C" int CSLCur_isReady(CSLCur* cur);
+extern "C" int CSLCur_getSlot(CSLCur* cur, u8 index);
+extern "C" void CSaveLoad_enAnimB(CSaveLoad* p);
+extern "C" void CSaveLoad_refresh(CSaveLoad* p);
 extern "C" void func_80290994(CSaveLoad* p);
-extern "C" void func_802907E4(CSaveLoad* p);
-extern "C" void func_802910D4(CSaveLoad* p);
-extern "C" void func_8028EED8(CSLCur* cur);
-extern "C" void func_8028EF24(CSLCur* self);
+extern "C" void CSaveLoad_enAnimA(CSaveLoad* p);
+extern "C" void CSaveLoad_bestSlot(CSaveLoad* p);
+extern "C" void CSLSub_tickIn(CSLCur* cur);
+extern "C" void CSLSub_tickOut(CSLCur* self);
 extern "C" void* __dt__Q22cf7CfAwardFv(cf::CfAward*, int);
 extern "C" u8 lbl_eu_80538858[];
 extern "C" void func_8009D514(void*);
@@ -320,7 +318,7 @@ extern "C" void func_80142C80();
 extern "C" void func_8014A2D0();
 extern "C" void invalidateQstFlag();
 extern "C" void* getInstance__9CTaskGameFv();
-extern "C" void func_800426A8();
+extern "C" void CTaskGame_offerLoadCap();
 extern "C" void resetBattlePresentation__Q22cf13CfGameManagerFv();
 extern "C" void func_801F34F4(void*);
 extern "C" void func_801F3670(void*, void*);
@@ -337,8 +335,27 @@ extern "C" void func_8022B7C8(void*, void*);
 extern "C" void func_801D20B0(void*, void*);
 extern "C" void func_8022C1B4(void*, void*, u8);
 extern "C" void func_80137924(void*, void*, void*, void*);
-extern "C" void func_8028F3D4(CSaveLoad* self, nw4r::lyt::DrawInfo* drawInfo);
-extern "C" void func_8028FB20(CSaveLoad* self);
+extern "C" void CSaveLoad_draw(CSaveLoad* self, nw4r::lyt::DrawInfo* drawInfo);
+extern "C" void CSaveLoad_pageDown(CSaveLoad* self);
+extern "C" u8 CSaveLoad_getIdle(CSaveLoad* self);
+extern "C" u8 CSaveLoad_getDone(CSaveLoad* self);
+extern "C" void CSLSub_init(CSLCur* data, int r4);
+extern "C" void CSaveLoad_update(CSaveLoad* self);
+extern "C" void CSaveLoad_reset(CSaveLoad* self);
+extern "C" u8 CSaveLoad_isReady(CSaveLoad* p);
+extern "C" u8 CSaveLoad_isBusy(CSaveLoad* p);
+extern "C" void CSaveLoad_open(CSaveLoad* p);
+extern "C" void CSaveLoad_curUp(CSaveLoad* self);
+extern "C" void CSaveLoad_curDown(CSaveLoad* self);
+extern "C" void CSaveLoad_pageUp(CSaveLoad* p);
+extern "C" void CSaveLoad_confirm(CSaveLoad* self);
+extern "C" void CSaveLoad_cancel(CSaveLoad* p);
+extern "C" void CSaveLoad_openDel(CSaveLoad* self);
+extern "C" u32 getSaveLoadOp(void);
+extern "C" void awardCollectCount(int val);
+extern "C" void awardQuestFlags(void);
+extern "C" u32 chkAwardFlags99(void);
+extern "C" u32 chkAwardFlags9B(void);
 extern "C" void func_8022B8E4(void*);
 extern "C" void __ct__CCur18(void* self, void* param);
 extern "C" void __ct__14Class_8045F858FP17UnkClass_8045F564(void* self, void* base);
@@ -346,7 +363,7 @@ extern "C" void __dt__14Class_8045F858Fv(void* self, int dealloc);
 extern "C" u32 func_801355D8();
 extern "C" void* func_801355BC();
 extern "C" void func_80124270(void* obj, u32 value);
-extern "C" u16 func_80136254(const void*, const void*, int);
+extern "C" u16 BdatGetU16Direct(const void*, const void*, int);
 extern "C" u8 func_80141BA0(u16, u8);
 extern "C" bool Attach__Q34nw4r3lyt19ArcResourceAccessorFPvPCc(nw4r::lyt::ArcResourceAccessor* self, void* data, const char* name);
 extern "C" void* getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32 arg, nw4r::lyt::Layout* layout);
@@ -357,21 +374,21 @@ extern "C" void func_8022B9B4(void*, u32, int);
 extern "C" void func_8022BF6C(void*, u32, u32);
 extern "C" void func_8022BFC8(void*, int);
 extern "C" void func_8022B8B8(void*);
-extern "C" int func_80291C60(int v);
+extern "C" int isCollepediaId(int v);
 extern "C" void func_8023FA64(void*, int, void (*)(int, int, u8));
-extern "C" void func_8028E9E0(int, int, u8);
-extern "C" void func_8028EC74(UnkPtrHolder* self);
-extern "C" void func_8028EC28(UnkPtrHolder* self);
+extern "C" void CSLCur_setFlag(int, int, u8);
+extern "C" void CSLCur_bindPane(UnkPtrHolder* self);
+extern "C" void CSLCur_tickAnim(UnkPtrHolder* self);
 extern "C" void __dl__FPv(void*);
 extern "C" void __dt__7CSysWinFv(void*, int);
 extern "C" void __dt__10CScrollBarFv(void*, int);
 extern "C" void __dt__6CCur18Fv(void*, int);
 extern "C" void __dt__17UnkClass_8045F564Fv(void*, int);
-extern "C" void func_8028EF74(UnkTwoPtr*);
+extern "C" void CSLSub_bindPane(UnkTwoPtr*);
 extern "C" void func_eu_804521BC(int);
 extern "C" void func_801F35DC(void*);
 extern "C" void func_8022B7F4(void*);
-extern "C" void func_80291204(int, int, int, u8);
+extern "C" void CSaveLoad_onFile(int, int, int, u8);
 extern "C" void func_8023F860(int, void*);
 extern "C" void func_8023FB28(int, void*);
 extern "C" void func_8023F3C0(int, void*, u8);

@@ -9,7 +9,7 @@
 
 // Forward declarations for external functions not yet in headers.
 extern "C" {
-    char* func_802A34E4(int size);
+    char* CCharVoiceMan_AllocVoiceArena(int size);
     void __ct__cf_CVS_THREAD();
     // Runtime rethrow (NMWException.h): declared noreturn so MWCC elides the
     // __end__catch epilogue of a catch-all handler that ends with `bl __throw`.
@@ -99,7 +99,7 @@ CVS_THREAD_TENSION_UP* __ct__802A8DE8(CVoiceFactory* factory, int index) {
     if (func_802A330C(0x82, 1) == NULL) {
         return NULL;
     }
-    CVS_THREAD_TENSION_UP* self = (CVS_THREAD_TENSION_UP*)func_802A34E4(0x2c);
+    CVS_THREAD_TENSION_UP* self = (CVS_THREAD_TENSION_UP*)CCharVoiceMan_AllocVoiceArena(0x2c);
     if (self == NULL) {
         return NULL;
     }

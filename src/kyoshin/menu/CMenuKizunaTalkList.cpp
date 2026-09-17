@@ -172,7 +172,7 @@ void CMenuKizunaTalkList::Init() {
     func_801C3C14(&mBgTex);
 
     // --- Re-initialise the embedded CTitleAHelp ---
-    char* name = func_80136190(lbl_eu_8050E970, lbl_eu_8050E970 + 0xb, 0x11);
+    char* name = BdatTouchStringCell(lbl_eu_8050E970, lbl_eu_8050E970 + 0xb, 0x11);
 
     u8 tempTitle[0x38];
     __ct__CTitleAHelp(tempTitle, name, 0x0);
@@ -340,7 +340,7 @@ void CMenuKizunaTalkList::cbRenderBefore() {
     CTaskGame::getInstance();
     if (CTaskGame::isFlag01Set() || (lbl_eu_80663E28 & 0x200000))
         return;
-    if (func_8013BE50() == 0) return;
+    if (IsMenuState621F0() == 0) return;
 
     GXSetZMode(GX_FALSE, GX_NEVER, GX_FALSE);
     // Raw-storage DrawInfo built/destroyed via C-ABI pre-mangled ct/dt calls

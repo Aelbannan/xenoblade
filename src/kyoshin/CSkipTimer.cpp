@@ -14,7 +14,7 @@ extern "C" { void func_801390E0(void*); void func_80139124(void*); }
 
 // .sdata2 float constant used as the "animation reached frame" bound.
 extern const float lbl_eu_80668C30;
-// (func_80137510 stays as declared in code_80135FDC.hpp - read-only header)
+// (AnimRewindFrame stays as declared in code_80135FDC.hpp - read-only header)
 // func_8006A234 is declared extern "C" in code_80135FDC.hpp.
 // func_8029F504 / func_8029F5CC / func_802A041C / func_802A05E4 /
 // func_802A055C / func_8029F364 are declared extern "C" in CSkipTimer.hpp.
@@ -182,7 +182,7 @@ void func_8029F504(CSkipTimer2* self) {
 #pragma push
 #pragma auto_inline off
 void func_8029F5CC(CSkipTimer2* self) {
-    if (func_80137510(self->mAnimTransform, lbl_eu_80668C30) != 0) {
+    if (AnimRewindFrame(self->mAnimTransform, lbl_eu_80668C30) != 0) {
         self->mField21 = 0;
         self->mField23 = 1;
         func_80124270(reinterpret_cast<nw4r::lyt::Layout*>(self->mField18)
@@ -309,7 +309,7 @@ extern "C" void func_802A0234(CSkipTimer* self) {
 #pragma push
 #pragma auto_inline off
 extern "C" void func_802A02D4(CSkipTimer* self) {
-    if (func_80137510(self->mAnimTransform20, lbl_eu_80668C30) != 0) {
+    if (AnimRewindFrame(self->mAnimTransform20, lbl_eu_80668C30) != 0) {
         self->mField29 = 0;
         self->mField2B = 1;
     }
@@ -624,7 +624,7 @@ void func_802A0028(CSkipTimer* self) {
 // If the syswin panel is engaged (getUnk34 != 0) and active, commit the skip:
 // state 7 + release button, close the panel, fire the bgm switch from the
 // slot key, then sfx 3. Otherwise (panel not engaged) show the confirmation
-// text built by func_80136190 and advance the window kind, then sfx 3.
+// text built by BdatTouchStringCell and advance the window kind, then sfx 3.
 extern "C" void func_802A005C(CSkipTimer* self) {
     if (self->mField29 != 3) return;
     if (CSysWin_getUnk34(&self->mSysWinData[0]) != 0) {
@@ -641,7 +641,7 @@ extern "C" void func_802A005C(CSkipTimer* self) {
     } else {
         self->mField29 = 6;
         self->mField2B = 0;
-        char* msg = func_80136190(&lbl_eu_80510568[0xaf], &lbl_eu_80510568[0xb8], 0x3a);
+        char* msg = BdatTouchStringCell(&lbl_eu_80510568[0xaf], &lbl_eu_80510568[0xb8], 0x3a);
         func_8022B9B4(&self->mSysWinData[0], msg, 0);
         func_8022BFC8(reinterpret_cast<CSysWin*>(&self->mSysWinData[0]), 1);
         func_8022B8B8(&self->mSysWinData[0]);

@@ -142,7 +142,7 @@ CVS_THREAD_BATTLE_END* __ct__802A4870(int owner) {
         return NULL;
     }
 
-    CVS_THREAD_BATTLE_END* self = (CVS_THREAD_BATTLE_END*)func_802A34E4(0x3c);
+    CVS_THREAD_BATTLE_END* self = (CVS_THREAD_BATTLE_END*)CCharVoiceMan_AllocVoiceArena(0x3c);
     if (self == NULL) {
         return NULL;
     }

@@ -13,7 +13,7 @@ public:
 };
 }
 
-// Local minimal layout for the gimmick list consumed by func_800B6BC8.
+// Local minimal layout for the gimmick list consumed by getReslistB48.
 struct OrderGimmickNode {
     OrderGimmickNode* next; // 0x00
     u8 _04[4];              // 0x04..0x07
@@ -139,9 +139,9 @@ extern "C" {
     int                 func_802A7870(void* arr, int capacity, void* unused);
     void*               func_802A7A54(int arg);
     CVoiceHandle*       func_802A330C(int size, int align);
-    void*               func_802A34E4(int size);
+    void*               CCharVoiceMan_AllocVoiceArena(int size);
     void*               func_8016FE34(void* r3);
-    OrderGimmickList*   func_800B6BC8();
+    OrderGimmickList*   getReslistB48();
     void                __ct__cf_CVS_THREAD();
 
     // Runtime rethrow (NMWException.h): declared noreturn so MWCC elides the

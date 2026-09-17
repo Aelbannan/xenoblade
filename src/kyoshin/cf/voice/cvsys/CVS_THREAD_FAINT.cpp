@@ -144,7 +144,7 @@ CVS_THREAD_FAINT* __ct__802A6AA8(CVoiceHandle* owner1, CVoiceHandle* owner2) {
     if (func_802A330C(0xF0, 1) == NULL) return NULL;
 
     // Allocate the actual CVS_THREAD_FAINT object
-    CVS_THREAD_FAINT* self = (CVS_THREAD_FAINT*)func_802A34E4(0x28);
+    CVS_THREAD_FAINT* self = (CVS_THREAD_FAINT*)CCharVoiceMan_AllocVoiceArena(0x28);
     if (self == NULL) return NULL;
 
     // Retail emits a redundant null re-check here (the `beq` at .L_802A9264)

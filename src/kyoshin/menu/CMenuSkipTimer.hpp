@@ -89,7 +89,7 @@ extern "C" void __ct__CTitleAHelp(void*, char*, int);
 extern "C" void __dt__11CTitleAHelpFv(void*, int);
 extern "C" void __ct__CSkipTimer(void*);
 extern "C" void __dt__10CSkipTimerFv(void*, int);
-extern "C" char* func_80136190(char*, char*, int);
+extern "C" char* BdatTouchStringCell(char*, char*, int);
 extern "C" void func_801C3C14(CBgTex* self);
 extern "C" void CTitleAHelp_load(CTitleAHelp* self);
 // Game-side CProcess dtor wrapper (D2 form; defined in CMainMenu.cpp).
@@ -116,7 +116,7 @@ void func_80137250(nw4r::lyt::DrawInfo* drawInfo);
 // CProcess base ctor (C-ABI, retail C-linkage symbol name).
 extern "C" void __ct__8CProcessFv(CProcess* self);
 // Scene-active gate for HUD draws (retail-unmangled; code_80135FDC.cpp).
-extern "C" int func_8013BE50();
+extern "C" int IsMenuState621F0();
 // Vtable data / null-PTMF constant (defined in .data / .rodata splits).
 extern char lbl_eu_8052BF70[];
 extern char lbl_eu_80539780[];

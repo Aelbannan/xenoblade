@@ -6,6 +6,6 @@ bool CHelp_ArtsSet::isHelpAvailable() {
     if (unkC != 0 && CfGameManager::getQueuedFileEventCount() < unkC) {
         return false;
     }
-    return func_8022F530();
+    return CMenuArtsSet_isCreated();
 }
 } // namespace cf

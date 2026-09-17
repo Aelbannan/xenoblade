@@ -178,15 +178,15 @@ extern "C" void func_80209020(void* self, void* out, void* bdat, void** holder);
 extern "C" void func_80209288(void* self, void* out, void* bdat, void** holder);
 
 // 0x804B0xxx region-object library (not decompiled here).
-extern "C" void func_804B0924(void* region);
+extern "C" void ColiNodeInit(void* region);
 extern "C" void func_804B4BDC(void* manager, void* region);
 extern "C" void func_804B4C7C(void* manager, void* region);
-extern "C" int func_804B192C(void* region, void* target, int arg2, int arg3, f32 dist);
+extern "C" int ColiCheckMoveRadius(void* region, void* target, int arg2, int arg3, f32 dist);
 extern "C" void __dt__804B095C(void* self, int flag);
-extern "C" void func_804B0B0C(void* region, const f32* vec);
-extern "C" void func_804B0AD4(void* region, int flag, f32 a, f32 b);
-extern "C" void func_804B0B54(void* region, const f32* vec);
-extern "C" void func_804B0C0C(void* region, const f32* vec, const CfGimmickVec3* rot);
+extern "C" void ColiSetMoveVecFlagged(void* region, const f32* vec);
+extern "C" void ColiSetMoveVec2(void* region, int flag, f32 a, f32 b);
+extern "C" void ColiSetAxisBlockInverse(void* region, const f32* vec);
+extern "C" void ColiSetAxisBlockRotInverse(void* region, const f32* vec, const CfGimmickVec3* rot);
 
 // CfGameManager object factory / player accessors.
 extern "C" void* createBattleActor__Q22cf13CfGameManagerFv(u32 value, u32 unused);

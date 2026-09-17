@@ -170,13 +170,13 @@ extern "C" void func_80184D90(CREvtEffect* self) {
     // Distinct result locals per anim group: each dies after its Get*
     // trio so model (live across all three) can claim r31 (retail).
     nw4r::g3d::ChrAnmResult* resultEff =
-        func_8048BAD4(model, lbl_eu_80662478, (f32)func_8016A35C());
+        scnImN4AnimFn(model, lbl_eu_80662478, (f32)func_8016A35C());
     resultEff->GetTranslate((nw4r::math::VEC3*)self->mAnm2Translate);
     resultEff->GetRotateDeg((nw4r::math::VEC3*)self->mAnm2Rotate);
     resultEff->GetScale((nw4r::math::VEC3*)self->mAnm2Scale);
 
     nw4r::g3d::ChrAnmResult* resultAtr =
-        func_8048BAD4(model, lbl_eu_80662474, (f32)func_8016A35C());
+        scnImN4AnimFn(model, lbl_eu_80662474, (f32)func_8016A35C());
     resultAtr->GetTranslate((nw4r::math::VEC3*)self->mAnm1Translate);
     resultAtr->GetRotateDeg((nw4r::math::VEC3*)self->mAnm1Rotate);
     resultAtr->GetScale((nw4r::math::VEC3*)self->mAnm1Scale);
@@ -201,7 +201,7 @@ extern "C" void func_80184D90(CREvtEffect* self) {
 
     // "effTgt" animation -> mAnm3Translate
     nw4r::g3d::ChrAnmResult* resultTgt =
-        func_8048BAD4(model, lbl_eu_80662470, (f32)func_8016A35C());
+        scnImN4AnimFn(model, lbl_eu_80662470, (f32)func_8016A35C());
     resultTgt->GetTranslate((nw4r::math::VEC3*)self->mAnm3Translate);
 
     // Refresh the spawned effects when the translate.y threshold is crossed
@@ -429,8 +429,8 @@ extern "C" void func_80185378(CREvtEffect* self, void* src, void* bdatEntry) {
             getStaticFileData__14CLibStaticDataFPCcP16StaticDataHandlePUl(
                 &lbl_eu_80503800[0], &handle, 0);
 
-            self->mModel = func_80489A60(lbl_eu_80663E14, handle, 1, 1, 0, 0x50);
-            func_80484E5C(self->mModel, lbl_eu_8066793C);
+            self->mModel = scnImN4BuildByIdx(lbl_eu_80663E14, handle, 1, 1, 0, 0x50);
+            simSetLeafDist7B0(self->mModel, lbl_eu_8066793C);
             ((CLibLayoutModel*)self->mModel)->mFlags |= 4;
 
             // Bind the three anim nodes by name.
@@ -445,7 +445,7 @@ extern "C" void func_80185378(CREvtEffect* self, void* src, void* bdatEntry) {
             self->mNodeIdC4 = ((s32 (*)(CLibLayoutModel*, const char*))((void**)animModel->vtable)[17])(animModel, lbl_eu_80662474);
             self->mNodeIdC8 = ((s32 (*)(CLibLayoutModel*, const char*))((void**)animModel->vtable)[17])(animModel, lbl_eu_80662470);
 
-            func_804827DC(self->mModel, 1);
+            simSetFlag2000Chain(self->mModel, 1);
         }
 
         // Load the material entry for the source.

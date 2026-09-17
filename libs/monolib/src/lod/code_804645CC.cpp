@@ -99,9 +99,9 @@ extern "C" void func_8046339C__Q23LOD17CLODCacheManagerSFv(s32* outA,
                                                            s32* outB);
 extern "C" void func_80465BC0__Q23LOD17UnkClass_804645CCFv(void* rec);
 
-class CScnEnvLgtCtrl;  // scene env-light controller (func_804C19B8 target)
+class CScnEnvLgtCtrl;  // scene env-light controller (scnLgtEnterMode20 target)
 extern "C" void* func_8048ECD8(void* self);
-extern "C" void func_804C19B8(CScnEnvLgtCtrl* ctrl);
+extern "C" void scnLgtEnterMode20(CScnEnvLgtCtrl* ctrl);
 
 typedef void (*LodCallFn)();  // no-arg dispatch-table entry
 
@@ -232,7 +232,7 @@ extern "C" void func_8046513C__Q23LOD17UnkClass_804645CCFv(LodSceneItem* item,
     cam.GetProjectionTexMtx(
         (nw4r::math::MTX34*)(void*)((u8*)lbl_eu_80658348 + 0x68));
 
-    func_804C19B8((CScnEnvLgtCtrl*)item->field_0x7C);
+    scnLgtEnterMode20((CScnEnvLgtCtrl*)item->field_0x7C);
     lbl_eu_806657FC = 1;
     nw4r::g3d::G3DState::LoadFog(0);
     lbl_eu_80665810 = (u32)obj;

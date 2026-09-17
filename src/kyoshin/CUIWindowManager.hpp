@@ -149,7 +149,7 @@ IUIWindow* func_80142B4C(CProcess* self, CScn* pScene, int r5, int r6, int r7,
                           int r8);
 
 // Quest text lookup: returns a byte value for the entry/text/row.
-u32 func_801361E8(u32 entry, const char* text, u32 row);
+u32 BdatGetU8Direct(u32 entry, const char* text, u32 row);
 
 // Flag-buffer helpers (owning TU: this unit).
 u8* func_80140AFC(u32 target);
@@ -168,7 +168,7 @@ void func_80122460();
 void func_801B29E0();
 void func_8012BDD0();
 u32 func_8009CF8C(u32 resourceId);
-u32 func_80158068(u16 value);
+u32 CItem_sumFamilyByte6(u16 value);
 
 // Flag-memory setter (owning TU outside this unit): writes `val` into the
 // flag-memory slot for page id `idx`.
@@ -176,7 +176,7 @@ void func_8009D018(u32 idx, u32 val); // (u32,u32) form: must match CfGameManage
 
 // Consumable-count absorb helper (owning TU: kyoshin/cf/CItem; retail
 // unmangled symbol).
-void func_80159C04(unsigned int family, int count);
+void CItem_consumeFamilyCnt(unsigned int family, int count);
 
 // CProcess::Regist (C-ABI import).
 void Regist__8CProcessFP8CProcessb(CProcess* self, CProcess* parent,
@@ -201,7 +201,7 @@ void* findObjectById(int id);
 extern "C" {
 void* getPlayer__Q22cf13CfGameManagerFi(int index);
 void func_8009ECD0(u32 id);
-u8 func_8013600C(const void* tbl, const void* key, u32 idx);
+u8 BdatGetU8ByTableKey(const void* tbl, const void* key, u32 idx);
 void func_8013B88C(u8 v);
 }
 
@@ -238,7 +238,7 @@ struct CFlagOffsets {
 };
 
 // Shared rodata string blobs (other splits).
-extern char lbl_eu_8050097C[];  // quest window text (func_801361E8 source)
+extern char lbl_eu_8050097C[];  // quest window text (BdatGetU8Direct source)
 extern char lbl_eu_80500A50[];  // bdat column-name blob (getBdatStringColumnValue)
 
 // bdat pointer used by the flag-buffer column reads (.sdata, other split).

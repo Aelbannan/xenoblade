@@ -790,8 +790,8 @@ void func_804CCF84(EffectScene* self) {
     s32 type = (s32)func_804CC800(self->field_0x0c);
     Vec stackA;
     Vec stackB;
-    func_8004B0B0(&stackA);
-    func_8004B0B0(&stackB);
+    noopAnimVec3(&stackA);
+    noopAnimVec3(&stackB);
     ((SceneFlagBits*)&self->field_0x06)->b9 = 0;
     func_804CE418(self, &stackB);
     func_804CD0CC(self);
@@ -1163,8 +1163,8 @@ extern "C" void __attribute__((never_inline)) func_804CE264(EffectScene* self, V
     u32 type = func_804CE378(self->field_0x0c);
     Mtx stackA;
     Vec stackB;
-    func_8006BEC0((Vec*)&stackA);
-    func_8004B0B0(&stackB);
+    cfCam_nopCtorSlot((Vec*)&stackA);
+    noopAnimVec3(&stackB);
     func_804CE4C0(self, &stackA, type, p3);
     func_804CE79C(self, &stackB, type);
     func_804CF700(self, &self->field_0x1cc, p1);

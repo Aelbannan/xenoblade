@@ -28,8 +28,8 @@ namespace nw4r { namespace lyt { class AnimTransform; } }
 // Most imports live in the C-linkage imports section of CMCGetItemBox.hpp.
 // The six below stay TU-local: func_801D216C / CSysWin_getUnk34 /
 // CSysWin_isActive / func_8022B8E4 conflict with CModelDispMakeCrystal.cpp's
-// own extern "C" decls ((void*, u8) / (void*) forms), and func_80137E7C /
-// func_8013639C conflict with code_80135FDC.hpp's signatures - hoisting them
+// own extern "C" decls ((void*, u8) / (void*) forms), and PaneSetTexPaletteByName /
+// BdatGetPtrDirect conflict with code_80135FDC.hpp's signatures - hoisting them
 // would make that TU ill-formed.
 extern "C" {
 void func_801D216C(void*, int);
@@ -237,7 +237,7 @@ __declspec(noinline) char* func_80296E98(CMCItemBoxSub* sub, u16 index) {
         // Gem slot: rebuild the name as "<kind suffix><saved name>".
         CMCItemImplShim* inst2 = (CMCItemImplShim*)CItem_initItemImplInstances(p);
         u32 kind = (u8)inst2->getKind(p);
-        char* itemName = func_80136190(&strTbl[3], &strTbl[0xc],
+        char* itemName = BdatTouchStringCell(&strTbl[3], &strTbl[0xc],
                                        0x1e - (kind - 1));
         // Refresh the cached length, then splice: format("%s%s", saved, suffix).
         x->shortName.mLength = strlen(x->shortName.mString);
@@ -251,9 +251,9 @@ __declspec(noinline) char* func_80296E98(CMCItemBoxSub* sub, u16 index) {
 
 // Retail 0x802995F8: format the selected entry's item text into the
 // FixStr<128> buffer at sub+0x14C and return it. Entries owned by the bdat
-// manager (func_801C6E90 != 0) use the item-name database; otherwise the
+// manager (IsSkillItem != 0) use the item-name database; otherwise the
 // text is built from the message-string placeholders: '%1' splices the
-// item icon name (switch on func_801361E8's kind), '%2' splices a kind-apped
+// item icon name (switch on BdatGetU8Direct's kind), '%2' splices a kind-apped
 // table string from lbl_eu_8050FF60, and the two-byte shift-JIS ranges are
 // stepped over. The whole formatted buffer is then copied back into the
 // FixStr (its mLength refreshed).
@@ -270,11 +270,11 @@ __declspec(noinline) char* func_80296FC0(CMCItemBoxSub* sub, u16 index) {
     // The s16 table offset sign-extends before the *52 scale.
     CMCItemBoxEntry* p = base + sub->table[idx];
     if (p == 0) return 0;
-    if (func_801C6E90(p) != 0) {
+    if (IsSkillItem(p) != 0) {
         // bdat-managed entry: name comes from the item database.
         void* inst = CItem_initItemImplInstances(p);
         u32 v = (u32)((u32(*)(void*, void*))(*(void***)inst)[0x22])(inst, p);
-        char* s = func_8013639C((void*)lbl_eu_80664100, &lbl_eu_8050FF8C[0x16], (u16)v);
+        char* s = BdatGetPtrDirect((void*)lbl_eu_80664100, &lbl_eu_8050FF8C[0x16], (u16)v);
         ((ml::FixStr<128>*)&sub->name)->format(&lbl_eu_8050FF8C[0], s);
         return (char*)&sub->name;
     }
@@ -282,7 +282,7 @@ __declspec(noinline) char* func_80296FC0(CMCItemBoxSub* sub, u16 index) {
     int special = 0;
     if (type == 9 && (p->bytes[3] & 3) == 3) special = 1;
     if (special) {
-        char* s = func_80136190(&lbl_eu_8050FF8C[3], &lbl_eu_8050FF8C[0xc], 0x9c);
+        char* s = BdatTouchStringCell(&lbl_eu_8050FF8C[3], &lbl_eu_8050FF8C[0xc], 0x9c);
         ((ml::FixStr<128>*)&sub->name)->format(&lbl_eu_8050FF8C[0], s);
         return (char*)&sub->name;
     }
@@ -305,8 +305,8 @@ __declspec(noinline) char* func_80296FC0(CMCItemBoxSub* sub, u16 index) {
         char tail[0x80];
         char copy[0x80];
         sprintf(buf48, &lbl_eu_8050FF8C[0x1e], nm);
-        u8 mkind = (u8)func_801361E8((u32)db, &lbl_eu_8050FF8C[0x21], (u16)icon);
-        char* s2 = func_8013639C((void*)db, &lbl_eu_8050FF8C[0x2a], (u16)icon);
+        u8 mkind = (u8)BdatGetU8Direct((u32)db, &lbl_eu_8050FF8C[0x21], (u16)icon);
+        char* s2 = BdatGetPtrDirect((void*)db, &lbl_eu_8050FF8C[0x2a], (u16)icon);
         ((ml::FixStr<128>*)&sub->name)->format(&lbl_eu_8050FF8C[0], s2);
         u32 len = strlen(sub->name.mString);
         strcpy(copy, sub->name.mString);
@@ -340,7 +340,7 @@ __declspec(noinline) char* func_80296FC0(CMCItemBoxSub* sub, u16 index) {
                 } else if (*p2 == '2') {
                     p2++;
                     tbl = lbl_eu_8050FF60;
-                    u8 s3 = func_801361E8((u32)db, (const char*)tvals[kind], (u16)icon);
+                    u8 s3 = BdatGetU8Direct((u32)db, (const char*)tvals[kind], (u16)icon);
                     if (langB) sprintf(fmtBuf, &lbl_eu_8050FF8C[0x7d], s3);
                     else       sprintf(fmtBuf, &lbl_eu_8050FF8C[0x96], s3);
                 }
@@ -370,8 +370,8 @@ __declspec(noinline) char* func_80296FC0(CMCItemBoxSub* sub, u16 index) {
         u8 v = (u8)(pad102 + 0xFC);
         void* tbl2 = (void*)lbl_eu_80664A1C;
         if (v <= 5 || pad102 == 2) tbl2 = (void*)lbl_eu_80664A18;
-        u32 n = func_80136254((void*)lbl_eu_806640EC, &lbl_eu_8050FF8C[0x16], id);
-        char* s = func_8013639C(tbl2, &lbl_eu_8050FF8C[0x16], (u16)n);
+        u32 n = BdatGetU16Direct((void*)lbl_eu_806640EC, &lbl_eu_8050FF8C[0x16], id);
+        char* s = BdatGetPtrDirect(tbl2, &lbl_eu_8050FF8C[0x16], (u16)n);
         ((ml::FixStr<128>*)&sub->name)->format(&lbl_eu_8050FF8C[0], s);
         return (char*)&sub->name;
     }
@@ -663,7 +663,7 @@ extern "C" void func_80297E90(CMCGetItemBox* self) {
             idx--;
         }
         u8 tmp[12];
-        func_801CB9D8((u32*)tmp, arr,
+        CopyTabSlotVec((u32*)tmp, arr,
                       (u8)((s8)self->field_304 * 4 + self->field_305));
         ((CBaseCur*)&self->subObj_A0)->setRootPaneTranslate((nw4r::math::VEC3*)tmp);
     } else {
@@ -697,7 +697,7 @@ void func_80297FB4(CMCGetItemBox* self) {
             idx++;
         }
         u8 tmp[12];
-        func_801CB9D8((u32*)tmp, arr,
+        CopyTabSlotVec((u32*)tmp, arr,
                       (u8)((s8)self->field_304 * 4 + self->field_305));
         ((CBaseCur*)&self->subObj_A0)->setRootPaneTranslate((nw4r::math::VEC3*)tmp);
     } else {
@@ -731,7 +731,7 @@ void func_802980DC(CMCGetItemBox* self) {
             idx--;
         }
         u8 tmp[12];
-        func_801CB9D8((u32*)tmp, arr,
+        CopyTabSlotVec((u32*)tmp, arr,
                       (u8)((s8)self->field_304 * 4 + self->field_305));
         ((CBaseCur*)&self->subObj_A0)->setRootPaneTranslate((nw4r::math::VEC3*)tmp);
     } else {
@@ -772,7 +772,7 @@ void func_80298228(CMCGetItemBox* self) {
             idx++;
         }
         u8 tmp[12];
-        func_801CB9D8((u32*)tmp, arr,
+        CopyTabSlotVec((u32*)tmp, arr,
                       (u8)((s8)self->field_304 * 4 + self->field_305));
         ((CBaseCur*)&self->subObj_A0)->setRootPaneTranslate((nw4r::math::VEC3*)tmp);
     } else {
@@ -867,7 +867,7 @@ u32 func_80298540(CMCGetItemBox* self) {
     if (self->field_4D == 0) return 0;
     if ((s8)self->field_301 == -1) {
         // Retail lowers the place calc to a subfc/carry/subf chain.
-        u32 v = (u16)func_80157CD0(self->sub_314.pad_102);
+        u32 v = (u16)CItemBlock_countEmpty(self->sub_314.pad_102);
         u32 count = self->sub_314.count;
         if (v >= count) return 1;
         return 2;
@@ -881,7 +881,7 @@ u32 func_80298540(CMCGetItemBox* self) {
 void func_802985B4(CMCGetItemBox* self) {
     CMCItemBoxSub* x = &self->sub_314;
     for (u32 i = 0; (u32)(u16)i < x->count; i++) {
-        func_801599D4(func_80296DB0(x, (u16)i), 0);
+        CItemData_lookupOrAlloc(func_80296DB0(x, (u16)i), 0);
     }
 }
 #pragma optimize_for_size off
@@ -924,7 +924,7 @@ void func_80298614(CMCGetItemBox* self) {
                 if (v == 3) {
                     res = func_801D3C74(arr->table, combined);
                 } else {
-                    res = func_80136190(&lbl_eu_8050FF8C[0x119],
+                    res = BdatTouchStringCell(&lbl_eu_8050FF8C[0x119],
                                         &lbl_eu_8050FF8C[0x123], r);
                 }
                 func_8022B90C((CSysWin*)&self->sysWin_B8, 0);
@@ -962,7 +962,7 @@ void func_80298614(CMCGetItemBox* self) {
             func_801D216C(&self->subObj_58, 0);
             func_801D216C(&self->subObj_A0, 1);
             u8 tmp[12];
-            func_801CB9D8((u32*)tmp, arr->table, v);
+            CopyTabSlotVec((u32*)tmp, arr->table, v);
             (*(void(**)(void*, void*))((void**)&self->subObj_A0)[4])(&self->subObj_A0, (void*)tmp);
             playUISound(2);
         } else {
@@ -1002,10 +1002,10 @@ extern "C" __declspec(noinline) void func_802988BC(CMCGetItemBox* self) {
     }
 }
 
-// Rewind the second layout animation via func_80137510; when finished, enable
+// Rewind the second layout animation via AnimRewindFrame; when finished, enable
 // the two anim transforms on the layout and move to state 5.
 extern "C" __declspec(noinline) void func_802989A4(CMCGetItemBox* self) {
-    if (func_80137510((nw4r::lyt::AnimTransform*)self->animTrans2, lbl_eu_80668BF0) != 0) {
+    if (AnimRewindFrame((nw4r::lyt::AnimTransform*)self->animTrans2, lbl_eu_80668BF0) != 0) {
         self->layout40->SetAnimationEnable((nw4r::lyt::AnimTransform*)self->animTrans2, false);
         self->layout40->SetAnimationEnable((nw4r::lyt::AnimTransform*)self->animTrans1, true);
         self->field_4D = 5;
@@ -1015,7 +1015,7 @@ extern "C" __declspec(noinline) void func_802989A4(CMCGetItemBox* self) {
 // Rewind the first layout animation; when it has finished, rearm the
 // state bytes and reattach the cursor sub-object.
 extern "C" __declspec(noinline) void func_80298A20(CMCGetItemBox* self) {
-    if (func_80137510(self->animTrans1, lbl_eu_80668BF0) != 0) {
+    if (AnimRewindFrame(self->animTrans1, lbl_eu_80668BF0) != 0) {
         self->mField55 = 1;
         self->field_4D = 0;
         func_801D216C(&self->subObj_58, 0);
@@ -1042,7 +1042,7 @@ void func_80298A78(CMCGetItemBox* self) {
 
 // Retail 0x80298AC8: resolve the icon resource for a selected item-box entry
 // and stamp it into a numbered layout pane. Mirrors func_80298FB4 but uses the
-// icon database (func_801361E8) and the 0x144-0x149 icon-name chain for both
+// icon database (BdatGetU8Direct) and the 0x144-0x149 icon-name chain for both
 // the gem (type 3) and item (type 9) paths, plus a %d pane-name format at
 // &lbl[0x14e].
 // noinline: retail keeps the bl to this symbol from func_8029967C.
@@ -1055,14 +1055,14 @@ extern "C" __declspec(noinline) void func_80298AC8(CMCGetItemBox* self, u32 idx,
             h = 0;
             CMCItemImplShim* inst = (CMCItemImplShim*)CItem_initItemImplInstances(e);
             u32 k = inst->getIcon(e);
-            u8 r = (u8)func_801361E8((u32)lbl_eu_806640D8, &lbl_eu_8050FF8C[0x128], (u16)k);
+            u8 r = (u8)BdatGetU8Direct((u32)lbl_eu_806640D8, &lbl_eu_8050FF8C[0x128], (u16)k);
             switch (r) {
-                case 4: h = func_80138F78(0x144); break;
-                case 5: h = func_80138F78(0x145); break;
-                case 6: h = func_80138F78(0x146); break;
-                case 7: h = func_80138F78(0x147); break;
-                case 8: h = func_80138F78(0x148); break;
-                case 9: h = func_80138F78(0x149); break;
+                case 4: h = MakeTplNameSysFile(0x144); break;
+                case 5: h = MakeTplNameSysFile(0x145); break;
+                case 6: h = MakeTplNameSysFile(0x146); break;
+                case 7: h = MakeTplNameSysFile(0x147); break;
+                case 8: h = MakeTplNameSysFile(0x148); break;
+                case 9: h = MakeTplNameSysFile(0x149); break;
             }
             if (h != 0)
                 h = self->arcAcc2->GetResource(0x74696d67u, (const char*)h, 0);
@@ -1074,17 +1074,17 @@ extern "C" __declspec(noinline) void func_80298AC8(CMCGetItemBox* self, u32 idx,
             if ((u16)cnt == 0) {
                 // Empty slot: a bdat-managed entry uses the 0x155 chain,
                 // otherwise the gem-icon chain keyed on byte 7 >> 2.
-                if (func_801C6E90(e) != 0) {
-                    h = self->arcAcc2->GetResource(0x74696d67u, (const char*)func_80138F78(0x155), 0);
+                if (IsSkillItem(e) != 0) {
+                    h = self->arcAcc2->GetResource(0x74696d67u, (const char*)MakeTplNameSysFile(0x155), 0);
                 } else {
                     char* s = 0;
                     switch ((e->bytes[3] >> 2) & 0x3F) {
-                        case 4: s = func_80138F78(0x144); break;
-                        case 5: s = func_80138F78(0x145); break;
-                        case 6: s = func_80138F78(0x146); break;
-                        case 7: s = func_80138F78(0x147); break;
-                        case 8: s = func_80138F78(0x148); break;
-                        case 9: s = func_80138F78(0x149); break;
+                        case 4: s = MakeTplNameSysFile(0x144); break;
+                        case 5: s = MakeTplNameSysFile(0x145); break;
+                        case 6: s = MakeTplNameSysFile(0x146); break;
+                        case 7: s = MakeTplNameSysFile(0x147); break;
+                        case 8: s = MakeTplNameSysFile(0x148); break;
+                        case 9: s = MakeTplNameSysFile(0x149); break;
                     }
                     if (s != 0)
                         h = self->arcAcc2->GetResource(0x74696d67u, s, 0);
@@ -1094,12 +1094,12 @@ extern "C" __declspec(noinline) void func_80298AC8(CMCGetItemBox* self, u32 idx,
             } else {
                 char* s = 0;
                 switch ((e->bytes[3] >> 2) & 0x3F) {
-                    case 4: s = func_80138F78(0x144); break;
-                    case 5: s = func_80138F78(0x145); break;
-                    case 6: s = func_80138F78(0x146); break;
-                    case 7: s = func_80138F78(0x147); break;
-                    case 8: s = func_80138F78(0x148); break;
-                    case 9: s = func_80138F78(0x149); break;
+                    case 4: s = MakeTplNameSysFile(0x144); break;
+                    case 5: s = MakeTplNameSysFile(0x145); break;
+                    case 6: s = MakeTplNameSysFile(0x146); break;
+                    case 7: s = MakeTplNameSysFile(0x147); break;
+                    case 8: s = MakeTplNameSysFile(0x148); break;
+                    case 9: s = MakeTplNameSysFile(0x149); break;
                 }
                 if (s != 0)
                     h = self->arcAcc2->GetResource(0x74696d67u, s, 0);
@@ -1110,7 +1110,7 @@ extern "C" __declspec(noinline) void func_80298AC8(CMCGetItemBox* self, u32 idx,
     }
     if (h == 0) {
         if (idx != 0) {
-            char* name = func_80138F78((u16)func_80136254((void*)lbl_eu_806640EC, &lbl_eu_8050FF8C[0x144], idx));
+            char* name = MakeTplNameSysFile((u16)BdatGetU16Direct((void*)lbl_eu_806640EC, &lbl_eu_8050FF8C[0x144], idx));
             h = self->arcAcc2->GetResource(0x74696d67u, name, 0);
             if (h == 0)
                 h = self->arcAcc1->GetResource(0x74696d67u, &lbl_eu_8050FF8C[0x131], 0);
@@ -1121,7 +1121,7 @@ extern "C" __declspec(noinline) void func_80298AC8(CMCGetItemBox* self, u32 idx,
     if (h != 0) {
         char buf[0x20];
         sprintf(buf, &lbl_eu_8050FF8C[0x14e], (int)(n + 1));
-        func_80137E7C((void*)self->layout40, buf, (void*)h);
+        PaneSetTexPaletteByName((void*)self->layout40, buf, (void*)h);
     }
 }
 
@@ -1140,12 +1140,12 @@ __declspec(noinline) void func_80298FB4(CMCGetItemBox* self, u32 idx, CMCItemBox
             h = 0;
             CMCItemImplShim* inst = (CMCItemImplShim*)CItem_initItemImplInstances(e);
             switch ((u16)inst->getKind(e)) {
-                case 1: h = func_80138F78(0x197); break;
-                case 2: h = func_80138F78(0x196); break;
-                case 3: h = func_80138F78(0x195); break;
-                case 4: h = func_80138F78(0x194); break;
-                case 5: h = func_80138F78(0x193); break;
-                case 6: h = func_80138F78(0x192); break;
+                case 1: h = MakeTplNameSysFile(0x197); break;
+                case 2: h = MakeTplNameSysFile(0x196); break;
+                case 3: h = MakeTplNameSysFile(0x195); break;
+                case 4: h = MakeTplNameSysFile(0x194); break;
+                case 5: h = MakeTplNameSysFile(0x193); break;
+                case 6: h = MakeTplNameSysFile(0x192); break;
             }
             if (h != 0)
                 h = self->arcAcc2->GetResource(0x74696d67u, (const char*)h, 0);
@@ -1157,7 +1157,7 @@ __declspec(noinline) void func_80298FB4(CMCGetItemBox* self, u32 idx, CMCItemBox
                 // Empty slot: only resolve a name when the entry is a valid
                 // type-9 item (bdat-managed or flagged in byte 7).
                 do {
-                    if (func_801C6E90(e) == 0) {
+                    if (IsSkillItem(e) == 0) {
                         u32 ex = (e->field_00 >> 16) & 0xF;
                         int f = 0;
                         if (ex == 9 && ((u32)(e->bytes[3] & 3)) == 1) f = 1;
@@ -1166,11 +1166,11 @@ __declspec(noinline) void func_80298FB4(CMCGetItemBox* self, u32 idx, CMCItemBox
                     h = 0;
                     CMCItemImplShim* inst2 = (CMCItemImplShim*)CItem_initItemImplInstances(e);
                     switch ((u16)inst2->getKind(e)) {
-                        case 1: h = func_80138F78(0x191); break;
-                        case 2: h = func_80138F78(0x190); break;
-                        case 3: h = func_80138F78(0x18f); break;
-                        case 4: h = func_80138F78(0x18e); break;
-                        case 5: h = func_80138F78(0x18d); break;
+                        case 1: h = MakeTplNameSysFile(0x191); break;
+                        case 2: h = MakeTplNameSysFile(0x190); break;
+                        case 3: h = MakeTplNameSysFile(0x18f); break;
+                        case 4: h = MakeTplNameSysFile(0x18e); break;
+                        case 5: h = MakeTplNameSysFile(0x18d); break;
                     }
                     if (h != 0)
                         h = self->arcAcc2->GetResource(0x74696d67u, (const char*)h, 0);
@@ -1182,11 +1182,11 @@ __declspec(noinline) void func_80298FB4(CMCGetItemBox* self, u32 idx, CMCItemBox
                 h = 0;
                 CMCItemImplShim* inst2 = (CMCItemImplShim*)CItem_initItemImplInstances(e);
                 switch ((u16)inst2->getKind(e)) {
-                    case 1: h = func_80138F78(0x19c); break;
-                    case 2: h = func_80138F78(0x19b); break;
-                    case 3: h = func_80138F78(0x19a); break;
-                    case 4: h = func_80138F78(0x199); break;
-                    case 5: h = func_80138F78(0x198); break;
+                    case 1: h = MakeTplNameSysFile(0x19c); break;
+                    case 2: h = MakeTplNameSysFile(0x19b); break;
+                    case 3: h = MakeTplNameSysFile(0x19a); break;
+                    case 4: h = MakeTplNameSysFile(0x199); break;
+                    case 5: h = MakeTplNameSysFile(0x198); break;
                 }
                 if (h != 0)
                     h = self->arcAcc2->GetResource(0x74696d67u, (const char*)h, 0);
@@ -1197,7 +1197,7 @@ __declspec(noinline) void func_80298FB4(CMCGetItemBox* self, u32 idx, CMCItemBox
     }
     if (h == 0) {
         if (idx != 0) {
-            char* name = func_80138F78((u16)func_80136254(lbl_eu_806640EC, &lbl_eu_8050FF8C[0x15c], idx));
+            char* name = MakeTplNameSysFile((u16)BdatGetU16Direct(lbl_eu_806640EC, &lbl_eu_8050FF8C[0x15c], idx));
             h = self->arcAcc2->GetResource(0x74696d67u, name, 0);
             if (h == 0)
                 h = self->arcAcc1->GetResource(0x74696d67u, &lbl_eu_8050FF8C[0x131], 0);
@@ -1208,7 +1208,7 @@ __declspec(noinline) void func_80298FB4(CMCGetItemBox* self, u32 idx, CMCItemBox
     if (h != 0) {
         char buf[0x20];
         sprintf(buf, &lbl_eu_8050FF8C[0x161], (int)(n + 1));
-        func_80137E7C((void*)self->layout40, buf, (void*)h);
+        PaneSetTexPaletteByName((void*)self->layout40, buf, (void*)h);
     }
 }
 #pragma pop
@@ -1224,7 +1224,7 @@ __declspec(noinline) void func_80299490(CMCGetItemBox* self, int r4, u32 r5) {
         sprintf(buf2, &lbl_eu_8050FF8C[0x17a]);
     } else {
         sprintf(buf2, &lbl_eu_8050FF8C[0],
-                func_80136190(&lbl_eu_8050FF8C[0x3], &lbl_eu_8050FF8C[0xc],
+                BdatTouchStringCell(&lbl_eu_8050FF8C[0x3], &lbl_eu_8050FF8C[0xc],
                               0x1e - ((s8)r4 - 1)));
     }
     func_80136A1C(self->layout40, buf1, buf2, 0);
@@ -1348,8 +1348,8 @@ extern "C" __declspec(noinline) void func_802998C8(CMCGetItemBox* self) {
     CMCGetItemBox* self_ = self;
     s8 idx = (s8)(self->field_301 * 10 + self->field_300);
     CMCItemBoxSub* sub = &self_->sub_314;
-    func_80136B4C(self->layout40, &lbl_eu_8050FF8C[0x1c7], func_80296E98(sub, (u16)idx), 0);
-    func_80136B4C(self->layout40, &lbl_eu_8050FF8C[0x1d0], func_80296FC0(sub, (u16)idx), (u32)self->objAt50);
+    LayoutSetTextBoxFmtValue(self->layout40, &lbl_eu_8050FF8C[0x1c7], func_80296E98(sub, (u16)idx), 0);
+    LayoutSetTextBoxFmtValue(self->layout40, &lbl_eu_8050FF8C[0x1d0], func_80296FC0(sub, (u16)idx), (u32)self->objAt50);
     if (getItemBoxState((CItemBoxInfo*)self->itemBox) != 0) {
         CMCItemBoxEntry* entry = func_80296DB0(sub, (u16)idx);
         u32 iconId = func_80296D54(sub, (u16)idx);   // held in a reg temp in retail
@@ -1460,8 +1460,8 @@ bool CMCGetItemBox::OnFileEvent(CEventFile* pEventFile) {
             this->layout40->GetRootPane()->FindPaneByName(&lbl_eu_8050FF8C[0x1d0], true);
         if (tagPane != 0) *(u32*)((u8*)tagPane + 0xF8) = (u32)this->objAt50;
 
-        func_80136B4C(this->layout40, &lbl_eu_8050FF8C[0x274],
-                      (char*)func_80136190(&lbl_eu_8050FF8C[0x269], &lbl_eu_8050FF8C[0xc], 6), 0);
+        LayoutSetTextBoxFmtValue(this->layout40, &lbl_eu_8050FF8C[0x274],
+                      (char*)BdatTouchStringCell(&lbl_eu_8050FF8C[0x269], &lbl_eu_8050FF8C[0xc], 6), 0);
 
         // Remember the cursor pane's position.
         nw4r::lyt::Pane* curPane =

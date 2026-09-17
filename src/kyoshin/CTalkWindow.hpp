@@ -99,7 +99,7 @@ public:
 // Talk-window views of the talk-source objects (func_800BBC0C result). The
 // character voice sub-object at +0x98 carries play at vtable 0x58 (same
 // slot as TagMemberObj::v58 in CTagProcessor.hpp); the message-state object
-// at +0xC4 carries the page flags and is fed to func_8004C5EC / func_8004B9D4.
+// at +0xC4 carries the page flags and is fed to getAnimModelId / func_8004B9D4.
 class CTalkWinVoice {
 public:
     virtual ~CTalkWinVoice();  // 0x00 (dtor at 0x08)
@@ -262,7 +262,7 @@ void __dt__8CProcessFv(CProcess* self, int flags);
 void __ct__17UnkClass_8045F564Fv(UnkClass_8045F564* self);
 void __dt__17UnkClass_8045F564Fv(UnkClass_8045F564* self, int flags);
 void func_80136400(const char* src, u16* dst, u32 destLen);
-int func_8013BE50();
+int IsMenuState621F0();
 void __ct__Q34nw4r3lyt8DrawInfoFv(nw4r::lyt::DrawInfo* drawInfo);
 void __dt__Q34nw4r3lyt8DrawInfoFv(nw4r::lyt::DrawInfo* drawInfo, int flags);
 void func_8012CD38(CTalkWindow* self);
@@ -271,10 +271,10 @@ void func_8012DA6C(CTalkWindow* self);
 void func_8012D3D8(CTalkWindow* self);
 int code80135FDC_getByte_64058();
 int code80135FDC_getByte_64059();
-int func_8013BF78();
+int GetSysStateFlag31();
 int isClassicController__Q22cf13CfGameManagerFv(int arg);
 CTalkWinTalkSrc* func_800BBC0C();
-int func_8004C5EC(CTalkWinTalkC4* talkC4);
+int getAnimModelId(CTalkWinTalkC4* talkC4);
 void func_8004B9D4(CTalkWinTalkC4* talkC4, int a, int b, int c, int d);
 int func_801276F4(nw4r::lyt::AnimTransform* tag, nw4r::lyt::Pane* a,
                   nw4r::lyt::Pane* b, nw4r::lyt::Pane* c);
@@ -289,9 +289,9 @@ void func_8013E204(u16 id);
 void func_801342B0();
 nw4r::lyt::ArcResourceAccessor* func_801355F4();
 char* func_80138DA4(const char* msg);
-void func_80136B4C(nw4r::lyt::Layout* layout, const char* name, const char* text,
+void LayoutSetTextBoxFmtValue(nw4r::lyt::Layout* layout, const char* name, const char* text,
                    u32 flag);
-void func_80137E7C(nw4r::lyt::Layout* layout, const char* name, void* res);
+void PaneSetTexPaletteByName(nw4r::lyt::Layout* layout, const char* name, void* res);
 void func_80127764(void* tagProc, nw4r::lyt::Pane* a, nw4r::lyt::Pane* b,
                     nw4r::lyt::Pane* c, int flag);
 void func_8013676C(nw4r::lyt::Pane* rootPane, u32 fontHandle);

@@ -26,7 +26,7 @@ extern "C" {
     int  func_802A3C44(CVS_THREAD* self, CCharVoice* voicePtr, int voiceId);
     void func_802A3E28(CVS_THREAD* self);
     CVoiceHandle* func_802A330C(int size, int align);
-    u8*  func_802A34E4(int size);
+    u8*  CCharVoiceMan_AllocVoiceArena(int size);
 
     // Base-subobject constructor (implemented in CVS_THREAD.cpp).
     CVS_THREAD* __ct__cf_CVS_THREAD(CVS_THREAD* object);

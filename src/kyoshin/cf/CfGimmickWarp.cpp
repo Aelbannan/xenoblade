@@ -108,14 +108,14 @@ void func_8020A124(f32);
 void func_8020A1DC(u32 flags);
 void func_801BFED0(int, u16, int);
 extern "C" void* createBattleActor__Q22cf13CfGameManagerFv(u32 value, u32 unused);
-void func_8006CC4C();
+void cfCam_syncFollowD();
 void setChildB59__(WarpObject*, int);
 extern "C" int func_804BE398(void* vec, int a, int b, int c, f32 d, f32 e);
 extern "C" void func_804BE4B4(void* out, int a);
 u16 func_80208C48(u16, const WarpVec3*);
 void func_8008566C__Q22cf13CfGameManagerFv(int, WarpVec4*, int);
 void func_80198710(WarpVec3*, const WarpVec3*, f32, int, int, f32, f32);
-int func_8019876C(WarpVec3*, WarpVec3*);
+int CPartsChange_ProcessPartyInfo(WarpVec3*, WarpVec3*);
 void func_80199810(u8*, const WarpVec3*);
 WarpObject* getCameraDataBlock__Q22cf13CfGameManagerFv();
 void __dt__Q22cf9CfGimmickFv(WarpData*, int);
@@ -713,7 +713,7 @@ extern "C" void func_8020E704(WarpData* self) {
             return;
         }
         self->flags &= ~2u;
-        func_8006CC4C();
+        cfCam_syncFollowD();
 
         cf::CfObject* first = playerFromRaw(cf::CfGameManager::getPlayer(0));
         WarpVec3 centre;
@@ -754,7 +754,7 @@ extern "C" void func_8020E704(WarpData* self) {
             func_80198710(&out68, &base, distance, 6, i,
                           lbl_eu_806683DC, lbl_eu_806683C8);
             WarpVec3 out4c;
-            if (func_8019876C(&out68, &out4c) != 0) {
+            if (CPartsChange_ProcessPartyInfo(&out68, &out4c) != 0) {
                 player->CfObject_syncMoveTarget(reinterpret_cast<const ml::CVec3*>(&out4c));
                 player->CfObject_setMoveYaw(distance);
                 WarpObject* object = reinterpret_cast<WarpObject*>(reinterpret_cast<cf::CfObject*>(reinterpret_cast<u8*>(player) + 0x3E9C)->CfObject_getCurrentTarget());

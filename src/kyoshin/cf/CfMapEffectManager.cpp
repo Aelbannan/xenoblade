@@ -7,7 +7,7 @@
 #include "kyoshin/cf/CfMapEffectManager.hpp"
 #include "kyoshin/cf/object/CfObject.hpp"
 #include "kyoshin/cf/object/CfObjectEff.hpp"
-#include "kyoshin/cf/CfMapMineManager.hpp" // extern "C" func_800B8920/800B9404/8003B1EC/8003B41C
+#include "kyoshin/cf/CfMapMineManager.hpp" // extern "C" lookupWorkAtAddr/800B9404/8003B1EC/8003B41C
 #include "monolib/device/CDeviceSC.hpp"   // CDeviceSC::getLanguage
 #include <string.h>
 #include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
@@ -60,9 +60,9 @@ cf::CfMapEffectManager::~CfMapEffectManager() {
     field_0x12E = -1;
     field_0x130 = -1;
     if (obj != 0) {
-        if (func_800B8920(obj) != 0) {
+        if (lookupWorkAtAddr(obj) != 0) {
             field_0x134->field_0xB0 = 0;
-            func_800B9404(field_0x134);
+            gmFileObject(field_0x134);
             field_0x134 = 0;
         }
         field_0x134 = 0;
@@ -78,9 +78,9 @@ extern "C" void func_8016EEB0(CfMapEffectManager* pSelf) {
     pSelf->field_0x12E = -1;
     pSelf->field_0x130 = -1;
     if (obj != 0) {
-        if (func_800B8920(obj) != 0) {
+        if (lookupWorkAtAddr(obj) != 0) {
             pSelf->field_0x134->field_0xB0 = 0;
-            func_800B9404(pSelf->field_0x134);
+            gmFileObject(pSelf->field_0x134);
             pSelf->field_0x134 = 0;
         }
         pSelf->field_0x134 = 0;
@@ -97,9 +97,9 @@ void func_8016EF2C(CfMapEffectManager* pSelf) {
     for (int i = 0; i < 0x24; i++) {
         CfObject* obj = pSelf->field_0x0C[i];
         if (obj != 0) {
-            if (func_800B8920(obj) != 0) {
+            if (lookupWorkAtAddr(obj) != 0) {
                 reinterpret_cast<CfMapEffectObject*>(obj)->field_0xB0 = 0;
-                func_800B9404(pSelf->field_0x0C[i]);
+                gmFileObject(pSelf->field_0x0C[i]);
                 pSelf->field_0x0C[i] = 0;
             }
             pSelf->field_0x0C[i] = 0;
@@ -179,9 +179,9 @@ void func_8016F144(CfMapEffectManager* self) {
             self->field_0x12E = -1;
             self->field_0x130 = -1;
             if (obj != 0) {
-                if (func_800B8920(obj) != 0) {
+                if (lookupWorkAtAddr(obj) != 0) {
                     self->field_0x134->field_0xB0 = 0;
-                    func_800B9404(self->field_0x134);
+                    gmFileObject(self->field_0x134);
                     self->field_0x134 = 0;
                 }
                 self->field_0x134 = 0;
@@ -228,7 +228,7 @@ void func_8016F2A4(CfMapEffectManager* self, int index, u8* bdat) {
     u8 onceCol = (u8)getBdatStringColumnValue(bdat, lbl_eu_80503248 + 0x48, index);
 
     CfObject** slot = &self->field_0x0C[index];
-    if (*slot != 0 && func_800B8920(*slot) == 0) {
+    if (*slot != 0 && lookupWorkAtAddr(*slot) == 0) {
         // Stale handle: drop the object and clear both counter banks.
         *slot = 0;
         self->field_0xE4[index] = 0;

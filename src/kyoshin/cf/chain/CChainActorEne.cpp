@@ -14,10 +14,10 @@
 // plain (unmangled) C-ABI functions and are declared with C linkage.
 extern "C" void* func_802A0804(u32 cls, void* src);
 extern "C" void func_8018C8F4(u8* self, u32 ptg);
-extern "C" void* func_80193670(void);
-extern "C" void* func_80193CD0(void* list, void* obj);
-extern "C" void* func_80193AB0(void* list, u32 id);
-extern "C" void* func_800B6BC8(void);
+extern "C" void* CPartsChange_GetActorTable(void);
+extern "C" void* CPartsChange_FindActorByObj(void* list, void* obj);
+extern "C" void* CPartsChange_FindActorById(void* list, u32 id);
+extern "C" void* getReslistB48(void);
 extern "C" void* func_8016FE34(void* src);
 void* getEffOwner__(void* obj);
 extern void* findObjectById(int);
@@ -33,13 +33,13 @@ struct EneChainObj {
     u16 id;     //0x45c0
 };
 
-// Battle-actor mash returned by func_80193AB0; only the low flag word is read.
+// Battle-actor mash returned by CPartsChange_FindActorById; only the low flag word is read.
 struct BattleActor {
     u8  _pad0[0xa0];
     u16 flagA0;   //0xa0
 };
 
-// Node in the circular gimmick object list returned by func_800B6BC8.
+// Node in the circular gimmick object list returned by getReslistB48.
 struct GlistNode {
     struct GlistNode* next;   //0x00
     u32  field_04;            //0x04
@@ -102,7 +102,7 @@ extern "C" int func_8028146C(const cf::CChainActorEne* self) {
     if (addr != 0) addr += 0x3e9c;
     EneChainObj* obj = (EneChainObj*)getEffOwner__((void*)addr);
     if (obj != 0) {
-        if (obj == (EneChainObj*)func_80193CD0(func_80193670(), (void*)obj)) return 1;
+        if (obj == (EneChainObj*)CPartsChange_FindActorByObj(CPartsChange_GetActorTable(), (void*)obj)) return 1;
         if (obj->type == 0x96b) return 1;
     }
     return 0;
@@ -147,7 +147,7 @@ extern "C" int func_802815B8(cf::CChainActorEne* self) {
         if (t != 0x96b && t != 0x96c) special = 0;
     }
     if (special != 0) {
-        GlistList* list = (GlistList*)func_800B6BC8();
+        GlistList* list = (GlistList*)getReslistB48();
         EneChainObj* found = (EneChainObj*)list;
         GlistNode* node = list->field_04->next;
         while (node != list->field_04) {
@@ -158,7 +158,7 @@ extern "C" int func_802815B8(cf::CChainActorEne* self) {
         found = 0;
     foundB8:;
         if (found != 0) {
-            BattleActor* act = (BattleActor*)func_80193AB0(func_80193670(), found->id);
+            BattleActor* act = (BattleActor*)CPartsChange_FindActorById(CPartsChange_GetActorTable(), found->id);
             if (act != 0) return (act->flagA0 >> 1) & 1;
         }
     }
@@ -166,7 +166,7 @@ extern "C" int func_802815B8(cf::CChainActorEne* self) {
     if (a2 != 0) a2 += 0x3e9c;
     EneChainObj* o2 = (EneChainObj*)getEffOwner__((void*)a2);
     if (o2 != 0) {
-        BattleActor* act = (BattleActor*)func_80193AB0(func_80193670(), o2->id);
+        BattleActor* act = (BattleActor*)CPartsChange_FindActorById(CPartsChange_GetActorTable(), o2->id);
         if (act != 0) return (act->flagA0 >> 1) & 1;
     }
     return 0;
@@ -195,7 +195,7 @@ extern "C" void func_802816FC(cf::CChainActorEne* self) {
         // actor. found aliases the list header during the scan and is only
         // nulled when the scan exhausts without a match (retail reuses one
         // register for both, so the null-store sits on the fall-through path).
-        GlistList* list = (GlistList*)func_800B6BC8();
+        GlistList* list = (GlistList*)getReslistB48();
         EneChainObj* found = (EneChainObj*)list;
         GlistNode* node = list->field_04->next;
         while (node != list->field_04) {
@@ -207,7 +207,7 @@ extern "C" void func_802816FC(cf::CChainActorEne* self) {
     matched:;
         BattleActor* act = 0;
         if (found != 0) {
-            act = (BattleActor*)func_80193AB0(func_80193670(), found->id);
+            act = (BattleActor*)CPartsChange_FindActorById(CPartsChange_GetActorTable(), found->id);
         }
         if (act != 0) act->flagA0 &= ~2;
     }
@@ -217,7 +217,7 @@ extern "C" void func_802816FC(cf::CChainActorEne* self) {
     if (a2 != 0) a2 += 0x3e9c;
     EneChainObj* obj2 = (EneChainObj*)getEffOwner__((void*)a2);
     if (obj2 != 0) {
-        BattleActor* act2 = (BattleActor*)func_80193AB0(func_80193670(), obj2->id);
+        BattleActor* act2 = (BattleActor*)CPartsChange_FindActorById(CPartsChange_GetActorTable(), obj2->id);
         if (act2 != 0) act2->flagA0 &= ~2;
     }
 }

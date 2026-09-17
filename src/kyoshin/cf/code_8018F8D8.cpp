@@ -22,9 +22,9 @@
 // CAIAction.hpp (its line-5 include) still carries a stale 2-arg declaration
 // of getBdatStringColumnValue that collides with the canonical 3-arg decl in
 // plugin/ocBdat.hpp (MWCC 10197 "illegal function overloading"). Instead this
-// TU includes CfObjectMove.hpp directly for the func_800BE12C owner decl and
+// TU includes CfObjectMove.hpp directly for the CfObjectMove_setAnimModeArgs owner decl and
 // the other CfObject* declarations CfObjectActor would have provided.
-#include "kyoshin/cf/object/CfObjectMove.hpp"  // func_800BE12C (owner decl)
+#include "kyoshin/cf/object/CfObjectMove.hpp"  // CfObjectMove_setAnimModeArgs (owner decl)
 #include "kyoshin/cf/object/CActorParam.hpp"  // CActorParam real virtuals (0x158/0x18C/0x190/0x2BC/0x308)
 // CfGameManager.hpp (via code_8018F8D8.hpp) internally mixes a void* and a
 // CBattleManagerView* declaration of this getter; this TU calls none of them,
@@ -58,7 +58,7 @@ extern "C" {
     extern u8  lbl_eu_8066476D;
     int*  func_8009ECB0();
     void* func_8023C1B4();
-    void func_800628C4(u32 a, u32 b);
+    void CfRes_tryRefreshSlot298(u32 a, u32 b);
     void func_8008064C__Q22cf13CfGameManagerFv(void* element0, int idx, float* stk);
     void stubEmptyC__Q22cf13CfGameManagerFv(int flag);
     bool isGlobalCamFlagSet__Fi(int mask);
@@ -81,12 +81,12 @@ extern "C" {
     int  func_8023C1C0();
     int  func_8012FA5C();
     void func_8012FAA8();
-    int  func_80062A84(s32 arg);
+    int  CfRes_lookupLocalIndex(s32 arg);
     int  func_802A3748(u32 value);
     void func_80135550();
     int  func_804962A0(CScn* scn, int flag);
     void func_8009EB2C(int a, int b, u8* c);
-    int  func_eu_80062E58(u16 a, u16 b, int c);
+    int  CfRes_tryResolveSlot1E4(u16 a, u16 b, int c);
     bool func_80061D2C(UnkClass_80085334* obj, u32 mode);
     void func_801C3D9C(u8* obj);
     void func_801FA254(u8* obj);
@@ -100,11 +100,11 @@ extern "C" {
     void recoverFieldState__Q22cf13CfGameManagerFv(bool alternate);
 
     long func_8017FD44();
-    // func_8004C5EC: canonical u32(void*) decl comes from CfObjectMove.hpp.
+    // getAnimModelId: canonical u32(void*) decl comes from CfObjectMove.hpp.
     int func_800EA444();
     long __ptmf_cmpr(u32* slot, u32* pmf1, u32* pmf2);
-    void func_80043E08(CfEnumListHolder90940* holder, int cap, int mode);
-    // func_80043F18: canonical void*(void*) decl comes from CPartyStateWin.hpp
+    void CTaskGame_enumListFill(CfEnumListHolder90940* holder, int cap, int mode);
+    // CTaskGame_enumListGet: canonical void*(void*) decl comes from CPartyStateWin.hpp
     // (included via code_8018F8D8.hpp); call sites cast to CfEnumList90940*.
     u8* func_800F6EAC(CfEnumList90940* list, int idx);
 }
@@ -324,7 +324,7 @@ int func_8018FCA8(CFuncHost* self, u32 a, u32 b, u32 c, u32 d) {
     }
     lbl_eu_80663E24 = (lbl_eu_80663E24 & 0xffefbfff) | 0x80;
     lbl_eu_80663E28 &= ~0x200;
-    func_800628C4(0x35300001, 5);
+    CfRes_tryRefreshSlot298(0x35300001, 5);
     func_80061870((u32)self, 6, 0xf, 0, 0, 0);
     func_80061A80((u32)self, 0xf, 0, 0, 0, 0);
     stubEmptyC__Q22cf13CfGameManagerFv(1);
@@ -392,7 +392,7 @@ int func_801901A4(u32 p0, u32 p1, u32 color) {
     if (!(lbl_eu_80663E28 & 0x1000000)) {
         // Retail leaves arg2 (r4) unconsumed here; forwarding the untouched
         // p1 parameter keeps r4 untouched too.
-        func_800407C8_tmp v = { cr, cg, cb, ca };
+        CTaskGame_setVec4_tmp v = { cr, cg, cb, ca };
         func_8049602C(reinterpret_cast<CScnNw4r*>(lbl_eu_80663E14), (int)p1, &v);
     }
     return 0;
@@ -448,7 +448,7 @@ int func_80190394(u32 p0, u32 p1, u32 p2, u32 p3, u32 p4) {
 int func_80190414(void* p0, void* p1) {
     cf::CfObjectMove* player = cf::CfGameManager::getPlayer(0);
     if (player != 0) {
-        func_800BE12C((u8*)player, (int)p1, 0, 0, 1);
+        CfObjectMove_setAnimModeArgs((u8*)player, (int)p1, 0, 0, 1);
     }
     return 0;
 }
@@ -509,7 +509,7 @@ int func_80190568(u32 self, u32 cmd, u32 a2, u32 a3, u32 a4) {
                 // +0x168 virtual tint setter and the gauge reset helper.
                 player->mFlags68 &= ~0x10000000;
                 player->CfObject_syncModelRate(lbl_eu_80667A8C);
-                func_800BC3B0(player, lbl_eu_80667A88);
+                CfObjectMove_setMoveSpeedGated(player, lbl_eu_80667A88);
             }
         }
         func_80061870(self, 6, 0x1e, 0, 0, 0);
@@ -548,7 +548,7 @@ int func_8019073C() {
 
 int func_8019076C(u32 p0, u32 p1, u32 p2, u32 p3, u32 p4) {
     int r = 0;
-    if (p2 != 0 && func_80062A84(p2) == 0) {
+    if (p2 != 0 && CfRes_lookupLocalIndex(p2) == 0) {
         func_80061A80(p0, 0x1b, p1, p2, p3, p4);
         r = 1;
     }
@@ -575,7 +575,7 @@ int func_eu_80191E88(CFuncHost408* self, u32 arg1, u32 arg2) {
     // retail treats the result as this 4-byte pair.
     UnkR31_8019E88* p = reinterpret_cast<UnkR31_8019E88*>(func_8009D5FC());
     func_8009EB2C((arg2 >> 20) & 0x7f, (arg2 >> 10) & 0x3ff, self->field_0x408 + 0x28);
-    if (func_eu_80062E58(p->field_0x2, p->field_0x0, 3) == 0) {
+    if (CfRes_tryResolveSlot1E4(p->field_0x2, p->field_0x0, 3) == 0) {
         func_80061D2C(reinterpret_cast<UnkClass_80085334*>(self), 0x28);
     }
     return 0;
@@ -605,7 +605,7 @@ int func_80190840(MenuCmdRingView* buf, u32* outFlag) {
     u32 data[0x20];
     while (buf->field_404 != 0) {
         int result;
-        func_80061C5C(buf, &rec[0], data);
+        CfResBuf_popRecord(buf, &rec[0], data);
         u32 cmd = rec[0];
         if (!((cmd >> 19) & 1)) {
             result = 1;
@@ -686,7 +686,7 @@ int func_80190940(FuncResultRef* self, FuncActorRef* actor, int mode,
     if (probeGate90940(actor, 0xa) == 0) return 0;
     if (probeGate90940(actor, 0xb) == 0) return 0;
     if (probeGate90940(actor, 0x1a) == 0) return 0;
-    if (func_8004C5EC(actor->field_3f60) == 0x31) return 0;
+    if (getAnimModelId(actor->field_3f60) == 0x31) return 0;
 
     int r190 = reinterpret_cast<cf::CActorParam*>(actor)->CActorParam_getSecondGaugeMax();
     int r18c = reinterpret_cast<cf::CActorParam*>(actor)->CActorParam_getSecondGauge();
@@ -701,7 +701,7 @@ int func_80190940(FuncResultRef* self, FuncActorRef* actor, int mode,
 
     self->field_0008 = 0;
     CfEnumListHolder90940 holder;
-    func_80043E08(&holder, 0x20, 0);
+    CTaskGame_enumListFill(&holder, 0x20, 0);
 
     float dists[2];       // sp+0x38
     FuncActorRef* cands[2]; // sp+0x40
@@ -711,12 +711,12 @@ int func_80190940(FuncResultRef* self, FuncActorRef* actor, int mode,
     // each candidate's bias float). The two-slot arrays intentionally overlap
     // later stack slots like retail when more than two entries appear.
     int count = 0;
-    for (int i = 0; i < (int)((CfEnumList90940*)func_80043F18(&holder))->count; i++) {
+    for (int i = 0; i < (int)((CfEnumList90940*)CTaskGame_enumListGet(&holder))->count; i++) {
         u8* basePos = actor ? reinterpret_cast<u8*>(&actor->field_3e9c)
                             : reinterpret_cast<u8*>(NULL);
-        u8* data = func_800F6EAC((CfEnumList90940*)func_80043F18(&holder), i);
+        u8* data = func_800F6EAC((CfEnumList90940*)CTaskGame_enumListGet(&holder), i);
         if (data == basePos) continue;
-        data = func_800F6EAC((CfEnumList90940*)func_80043F18(&holder), i);
+        data = func_800F6EAC((CfEnumList90940*)CTaskGame_enumListGet(&holder), i);
         FuncActorRef* cand = (data != NULL)
             ? reinterpret_cast<FuncActorRef*>(data - 0x3e9c)
             : static_cast<FuncActorRef*>(NULL);
@@ -768,7 +768,7 @@ int func_80190940(FuncResultRef* self, FuncActorRef* actor, int mode,
             u8* candPos = reinterpret_cast<u8*>(&cand->field_3e9c);
             if (reinterpret_cast<cf::CfObject*>(candPos)->CfObject_queryTargetState() == 0)
                 continue;
-            if (func_8004C5EC(cand->field_3f60) != 5) continue;
+            if (getAnimModelId(cand->field_3f60) != 5) continue;
             if (probeGate90940(cand, 0x1d) != 0) continue;
             if (bm->field_0x194 < 100) continue;
             if (dists[k] > thr) continue;
@@ -1573,7 +1573,7 @@ void CMenuPTState::cbRenderBefore() {
     if (CTaskGame::isFlag01Set() != 0 || (lbl_eu_80663E28 & (1u << 21)) != 0) {
         return;
     }
-    if (func_8013BE50() == 0) {
+    if (IsMenuState621F0() == 0) {
         return;
     }
     GXSetZMode(GX_FALSE, GX_NEVER, GX_FALSE);

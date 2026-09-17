@@ -85,10 +85,10 @@ extern "C" {
     extern char lbl_eu_8052DC3C[];
 
     void getFontId__11CDeviceFontFv();
-    void* func_eu_804558F4__11CDeviceFontFv(u32 index);
+    void* findFontByDevice__11CDeviceFontFv(u32 index);
     void* getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32 index, nw4r::lyt::Layout* layout);
     void Panic__Q24nw4r2dbFPCciPCce(const char* file, int line, const char* fmt, ...);
-    ml::CCol4* func_800407C8(ml::CCol4* out, f32 r, f32 g, f32 b, f32 a);
+    ml::CCol4* CTaskGame_setVec4(ml::CCol4* out, f32 r, f32 g, f32 b, f32 a);
     void __ct__7CDrawGXFv(CDrawGX* self);
     void __dt__7CDrawGXFv(CDrawGX* self, int shouldDelete);
     void setCol__7CDrawGXFRCQ22ml5CCol4(CDrawGX* self, const ml::CCol4* col);
@@ -329,7 +329,7 @@ void CException::wkRender() {
 
     CDrawGX draw;
     ml::CCol4 color;
-    draw.setCol(*func_800407C8(&color, lbl_eu_8066A480, lbl_eu_8066A480, lbl_eu_8066A480, mAlpha));
+    draw.setCol(*CTaskGame_setVec4(&color, lbl_eu_8066A480, lbl_eu_8066A480, lbl_eu_8066A480, mAlpha));
     ml::CRect16 rect;
     rect.mPos.x = 0;
     rect.mPos.y = 0;
@@ -346,7 +346,7 @@ void CException::wkRender() {
 // Main exception text renderer.
 #pragma dont_inline on
 extern "C" void func_80458084__10CExceptionFv(const void* message) {
-    u8* writer = (u8*)func_eu_804558F4__11CDeviceFontFv(0);
+    u8* writer = (u8*)findFontByDevice__11CDeviceFontFv(0);
     SetupGX__Q34nw4r2ut10CharWriterFv(writer);
     func_80458B78__10CExceptionFv(writer, lbl_eu_8066A480, lbl_eu_8066A480, lbl_eu_8066A480);
     printExceptionMessage__10CExceptionFv(writer, (const wchar_t*)message);
@@ -529,13 +529,13 @@ bool CException::wkStandbyLogin() {
     if (getView__8CDesktopFv() != nullptr) {
         CView* view = pssCreateView__5CProcFPCcP11CWorkThreadi(this, mName.c_str(),
                                                                getView__8CDesktopFv(), 0);
-        // func_800407C8 fills a color plus a template message entry (the
+        // CTaskGame_setVec4 fills a color plus a template message entry (the
         // retail callee writes 0x34 bytes); the entry bytes seed the ring push.
         struct {
             ml::CCol4 color;
             CMsgParamEntry entry;
         } local;
-        func_800407C8(reinterpret_cast<ml::CCol4*>(&local), lbl_eu_8066A480,
+        CTaskGame_setVec4(reinterpret_cast<ml::CCol4*>(&local), lbl_eu_8066A480,
                       lbl_eu_8066A480, lbl_eu_8066A480, lbl_eu_8066A488);
         view->unk444 = *(ml::CVec4*)&local.color;
 
@@ -644,7 +644,7 @@ extern "C" void func_804591DC__10CExceptionFP10IException(CException* self) {
 }
 
 // Store this to global
-void CException::func_8045925C() {
+void CException::setGlobalMessage() {
     if (lbl_eu_806656C0 != nullptr) {
         *(CException**)((u8*)lbl_eu_806656C0 + 0x1F0) = this;
     }

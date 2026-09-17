@@ -38,7 +38,7 @@ cf::CfObjectObj* __ct__cf_CfObjectObj(cf::CfObjectObj* ths) {
         // The ctor returns the object in r3, so assigning it back keeps `res`
         // in volatile r3 for the mSubObjB0 store (no callee-saved slot).
         cf::CfResObjImpl* res =
-            (cf::CfResObjImpl*)mtl::MemManager::allocate(0x1c, func_80061FFC());
+            (cf::CfResObjImpl*)mtl::MemManager::allocate(0x1c, CfRes_getAllocHandle());
         if (res != 0) {
             res = __ct__cf_CfResObjImpl(res, ths);
         }

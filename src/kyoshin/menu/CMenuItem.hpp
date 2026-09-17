@@ -74,17 +74,17 @@ extern "C" int isClassicController__Q22cf13CfGameManagerFv(int arg);
 extern "C" void func_801C414C(CTitleAHelp* self);
 extern "C" void func_801C41E8(CTitleAHelp* self, u8 mode);
 extern "C" void func_801CCAF0(CItemBoxGrid* self);
-extern "C" u32 func_801CB0FC(CItemBoxGrid* self);
-extern "C" void func_801CC7B0(CItemBoxGrid* self, int arg);
-extern "C" void func_801CB38C(CItemBoxGrid* self);
+extern "C" u32 IsItemBoxActive(CItemBoxGrid* self);
+extern "C" void HandleCancelBtn(CItemBoxGrid* self, int arg);
+extern "C" void AdvanceBoxState(CItemBoxGrid* self);
 extern "C" void func_801CB5F0(CItemBoxGrid* self);
 extern "C" void func_801CBA04(CItemBoxGrid* self);
 extern "C" void func_801CBDE8(CItemBoxGrid* self);
 extern "C" void func_801CC0EC(CItemBoxGrid* self);
-extern "C" void func_801CC5DC(CItemBoxGrid* self);
+extern "C" void OpenSortMenu(CItemBoxGrid* self);
 extern "C" void func_801CDC40(CItemBoxGrid* self);
-extern "C" void func_801CDEE8(CItemBoxGrid* self);
-extern "C" u8 func_801CDFB4(CItemBoxGrid* self);
+extern "C" void SelectCatRow(CItemBoxGrid* self);
+extern "C" u8 GetPromptState(CItemBoxGrid* self);
 
 // Temp (CProcess) vtable pre-PMF copy; composite vtable whose IScnRender
 // sub-vtable sits at +0x24.

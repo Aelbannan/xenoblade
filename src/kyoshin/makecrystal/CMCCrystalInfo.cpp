@@ -12,7 +12,7 @@
 namespace nw4r { namespace lyt { class DrawInfo; } }
 
 extern "C" void func_80137924(void*, void*, void*, void*);
-void func_801D1F9C(void*, u32);
+void SplitU32ToS16s(void*, u32);
 void func_801C4B60(void*, u32, u32, u32, u32);
 extern "C" void func_8021AF74(CMCCrystalInfo*);
 extern "C" void func_8021AFC0(CMCCrystalInfo*);
@@ -199,7 +199,7 @@ void func_8021A9A8(CMCCrystalInfo* self, u32 arg4, CMCCItemData* item)
     } else {
         val = arg4;
     }
-    int code = func_801392E4(val & 0xFFFF);
+    int code = BdatGetItemType(val & 0xFFFF);
     if (p != 0 && p->word0 != 0) {
         // Type nibble lives at bits 16-19; crystal type 9 with sub-flag 2/3
         // forces the crystal display path.
@@ -225,32 +225,32 @@ void func_8021AA9C(CMCCrystalInfo* self, u32 idxBase, u32 arg5, u8 arg6, u32 arg
     char* msgName;
 
     // Crystal name for slot idx, then colour it (colour pair depends on arg7).
-    msgName = func_8013639C((char*)lbl_eu_806640D8, &lbl_eu_80508DF8[0x36], msgId);
+    msgName = BdatGetPtrDirect((char*)lbl_eu_806640D8, &lbl_eu_80508DF8[0x36], msgId);
     idx = idxBase + 1;
     sprintf(buf, &lbl_eu_80508DF8[0x3b], idx);
-    func_80136B4C((nw4r::lyt::Layout*)self->mLayout, buf, msgName, 0);
-    func_80139A18((nw4r::lyt::Layout*)self->mLayout, buf,
+    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)self->mLayout, buf, msgName, 0);
+    PaneMatSetTevColorsByName((nw4r::lyt::Layout*)self->mLayout, buf,
         (GXColorS10*)(arg7 ? &lbl_eu_806646E8 : &lbl_eu_806646D8),
         (GXColorS10*)(arg7 ? &lbl_eu_806646F0 : &lbl_eu_806646E0));
 
     // Slot number text + element image index, coloured with the second pair.
     sprintf(buf, &lbl_eu_80508DF8[0x4c], idx);
     setLayoutTextBoxNumber__FPQ34nw4r3lyt6LayoutPcUc((nw4r::lyt::Layout*)self->mLayout, buf, arg6);
-    func_80139A18((nw4r::lyt::Layout*)self->mLayout, buf,
+    PaneMatSetTevColorsByName((nw4r::lyt::Layout*)self->mLayout, buf,
         (GXColorS10*)(arg7 ? &lbl_eu_80664708 : &lbl_eu_806646F8),
         (GXColorS10*)(arg7 ? &lbl_eu_80664710 : &lbl_eu_80664700));
 
     // Description string + colour.
     sprintf(buf, &lbl_eu_80508DF8[0x5e], idx);
-    func_80136B4C((nw4r::lyt::Layout*)self->mLayout, buf,
-        func_80136190(&lbl_eu_80508DF8[0x6f], &lbl_eu_80508DF8[0x36], 0x21), 0);
-    func_80139A18((nw4r::lyt::Layout*)self->mLayout, buf,
+    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)self->mLayout, buf,
+        BdatTouchStringCell(&lbl_eu_80508DF8[0x6f], &lbl_eu_80508DF8[0x36], 0x21), 0);
+    PaneMatSetTevColorsByName((nw4r::lyt::Layout*)self->mLayout, buf,
         (GXColorS10*)(arg7 ? &lbl_eu_80664708 : &lbl_eu_806646F8),
         (GXColorS10*)(arg7 ? &lbl_eu_80664710 : &lbl_eu_80664700));
 
     // Pick the crystal picture to show for this slot based on the item code.
     void* res = 0;
-    u8 code = func_801361E8((u32)lbl_eu_806640D8, &lbl_eu_80508DF8[0x78], msgId);
+    u8 code = BdatGetU8Direct((u32)lbl_eu_806640D8, &lbl_eu_80508DF8[0x78], msgId);
     switch (code) {
     case 0:
         res = ((nw4r::lyt::ArcResourceAccessor*)self->mField30)
@@ -291,7 +291,7 @@ void func_8021AA9C(CMCCrystalInfo* self, u32 idxBase, u32 arg5, u8 arg6, u32 arg
 
     if (res != 0) {
         sprintf(buf, &lbl_eu_80508DF8[0x11b], idx);
-        func_80137E7C((nw4r::lyt::Layout*)self->mLayout, buf, res);
+        PaneSetTexPaletteByName((nw4r::lyt::Layout*)self->mLayout, buf, res);
     }
 }
 
@@ -302,17 +302,17 @@ extern "C" __declspec(noinline) void func_8021ADC4(CMCCrystalInfo* self)
     char buf[0x20];
     for (u8 i = 1; i <= 8; i++) {
         sprintf(buf, &lbl_eu_80508DF8[0x3b], i);
-        func_80136B4C((nw4r::lyt::Layout*)self->mLayout, buf, &lbl_eu_80508DF8[0x12a], 0);
+        LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)self->mLayout, buf, &lbl_eu_80508DF8[0x12a], 0);
         sprintf(buf, &lbl_eu_80508DF8[0x4c], i);
-        func_80136B4C((nw4r::lyt::Layout*)self->mLayout, buf, &lbl_eu_80508DF8[0x12a], 0);
+        LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)self->mLayout, buf, &lbl_eu_80508DF8[0x12a], 0);
         sprintf(buf, &lbl_eu_80508DF8[0x5e], i);
-        func_80136B4C((nw4r::lyt::Layout*)self->mLayout, buf, &lbl_eu_80508DF8[0x12a], 0);
+        LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)self->mLayout, buf, &lbl_eu_80508DF8[0x12a], 0);
         void* res = ((nw4r::lyt::ArcResourceAccessor*)self->mArcResAccessor)
                         ->GetResource(nw4r::lyt::ArcResourceAccessor::RES_TYPE_TEXTURE,
                                       &lbl_eu_80508DF8[0x12b], NULL);
         if (res != 0) {
             sprintf(buf, &lbl_eu_80508DF8[0x11b], i);
-            func_80137E7C((nw4r::lyt::Layout*)self->mLayout, buf, res);
+            PaneSetTexPaletteByName((nw4r::lyt::Layout*)self->mLayout, buf, res);
         }
     }
 }
@@ -351,7 +351,7 @@ __declspec(noinline) void func_8021AFC0(CMCCrystalInfo* self)
 
 __declspec(noinline) void func_8021B00C(CMCCrystalInfo* self)
 {
-    if (func_80137510((nw4r::lyt::AnimTransform*)self->mAnimTransform2, 1.0f)) {
+    if (AnimRewindFrame((nw4r::lyt::AnimTransform*)self->mAnimTransform2, 1.0f)) {
         self->mState = 5;
         return func_8021B52C(self);
     }
@@ -359,7 +359,7 @@ __declspec(noinline) void func_8021B00C(CMCCrystalInfo* self)
 
 __declspec(noinline) void func_8021B058(CMCCrystalInfo* self)
 {
-    if (func_80137510((nw4r::lyt::AnimTransform*)self->mAnimTransform1, 1.0f)) {
+    if (AnimRewindFrame((nw4r::lyt::AnimTransform*)self->mAnimTransform1, 1.0f)) {
         self->mState = 0;
         self->mField51 = 1;
     }
@@ -383,7 +383,7 @@ __declspec(noinline) void func_8021B0F0(CMCCrystalInfo* self)
 
 __declspec(noinline) void func_8021B13C(CMCCrystalInfo* self)
 {
-    if (func_80137510((nw4r::lyt::AnimTransform*)self->mAnimTransform3, lbl_eu_80668498)) {
+    if (AnimRewindFrame((nw4r::lyt::AnimTransform*)self->mAnimTransform3, lbl_eu_80668498)) {
         self->mField51 = 1;
         self->mState = 3;
     }
@@ -402,19 +402,19 @@ __declspec(noinline) void func_8021B188(CrystalItemBuf* out, CMCCrystalInfo* sel
     } else {
         item2 = 0;
     }
-    func_801392E4(data);
-    func_80139358(data);
+    BdatGetItemType(data);
+    BdatGetItemId(data);
     CItemImplInstancesFacade* inst = (CItemImplInstancesFacade*)CItem_initItemImplInstances(item2);
     u8 count = inst->GetCount(item2);
     buf.count = count;
-    buf.str = (char*)func_80136190(&lbl_eu_80508DF8[0x6f], &lbl_eu_80508DF8[0x36],
+    buf.str = (char*)BdatTouchStringCell(&lbl_eu_80508DF8[0x6f], &lbl_eu_80508DF8[0x36],
                                    0x1e - (count - 1));
     buf.field21 = 0;
     for (u32 i = 0; i < 4; i++) {
         CItemImplInstancesFacade* inst2 = (CItemImplInstancesFacade*)CItem_initItemImplInstances(item2);
         u16 n = inst2->GetName(item2, (u8)i);
         if (n > 0) {
-            buf.names[buf.field21] = func_8013639C((char*)lbl_eu_806640D8,
+            buf.names[buf.field21] = BdatGetPtrDirect((char*)lbl_eu_806640D8,
                                                    &lbl_eu_80508DF8[0x36], n);
             CItemImplInstancesFacade* inst3 = (CItemImplInstancesFacade*)CItem_initItemImplInstances(item2);
             buf.flags[buf.field21] = inst3->GetFlag(item2, (u8)i);
@@ -450,17 +450,17 @@ __declspec(noinline) void func_8021B2E0(CMCCrystalInfo* self, u16 arg2, CMCCItem
         *++dst = *++src;
     }
     *++dst = *++src;
-    func_80136B4C((nw4r::lyt::Layout*)self->mLayout, &lbl_eu_80508DF8[0x15a],
+    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)self->mLayout, &lbl_eu_80508DF8[0x15a],
                   slots.str, 0);
     u8 count = slots.field21;
     for (u8 i = 0; i < count; i++) {
         sprintf(buf, &lbl_eu_80508DF8[0x166], (i * 2) + 0x1f);
-        func_80136B4C((nw4r::lyt::Layout*)self->mLayout, buf, slots.names[i], 0);
+        LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)self->mLayout, buf, slots.names[i], 0);
         sprintf(buf, &lbl_eu_80508DF8[0x173], i + 0x1f);
         setLayoutTextBoxNumber((nw4r::lyt::Layout*)self->mLayout, buf, slots.flags[i]);
         sprintf(buf, &lbl_eu_80508DF8[0x166], (i * 2) + 0x20);
-        char* s = func_80136190(&lbl_eu_80508DF8[0x6f], &lbl_eu_80508DF8[0x36], 0x21);
-        func_80136B4C((nw4r::lyt::Layout*)self->mLayout, buf, s, 0);
+        char* s = BdatTouchStringCell(&lbl_eu_80508DF8[0x6f], &lbl_eu_80508DF8[0x36], 0x21);
+        LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)self->mLayout, buf, s, 0);
     }
 }
 
@@ -470,15 +470,15 @@ __declspec(noinline) void func_8021B2E0(CMCCrystalInfo* self, u16 arg2, CMCCItem
 __declspec(noinline) void func_8021B42C(CMCCrystalInfo* self)
 {
     char buf[0x20];
-    func_80136B4C((nw4r::lyt::Layout*)self->mLayout, &lbl_eu_80508DF8[0x15a],
+    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)self->mLayout, &lbl_eu_80508DF8[0x15a],
                   &lbl_eu_80508DF8[0x12a], 0);
     for (u8 i = 0; i < 4; i++) {
         sprintf(buf, &lbl_eu_80508DF8[0x166], (i * 2) + 0x1f);
-        func_80136B4C((nw4r::lyt::Layout*)self->mLayout, buf, &lbl_eu_80508DF8[0x12a], 0);
+        LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)self->mLayout, buf, &lbl_eu_80508DF8[0x12a], 0);
         sprintf(buf, &lbl_eu_80508DF8[0x173], i + 0x1f);
-        func_80136B4C((nw4r::lyt::Layout*)self->mLayout, buf, &lbl_eu_80508DF8[0x12a], 0);
+        LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)self->mLayout, buf, &lbl_eu_80508DF8[0x12a], 0);
         sprintf(buf, &lbl_eu_80508DF8[0x166], (i * 2) + 0x20);
-        func_80136B4C((nw4r::lyt::Layout*)self->mLayout, buf, &lbl_eu_80508DF8[0x12a], 0);
+        LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)self->mLayout, buf, &lbl_eu_80508DF8[0x12a], 0);
     }
 }
 #pragma pop
@@ -607,12 +607,12 @@ bool CMCCrystalInfo::OnFileEvent(CEventFile* pEventFile)
         func_8021B52C(this);
         ((nw4r::lyt::Layout*)mLayout)->Animate(0);
 
-        func_80136B4C((nw4r::lyt::Layout*)mLayout, &lbl_eu_80508DF8[0x276],
-            (char*)func_80136190(&lbl_eu_80508DF8[0x6f], &lbl_eu_80508DF8[0x36], 0x18), 0);
-        func_80136B4C((nw4r::lyt::Layout*)mLayout, &lbl_eu_80508DF8[0x292],
-            (char*)func_80136190(&lbl_eu_80508DF8[0x281], &lbl_eu_80508DF8[0x28d], 0x2c), 0);
-        func_80136B4C((nw4r::lyt::Layout*)mLayout, &lbl_eu_80508DF8[0x2a1],
-            (char*)func_80136190(&lbl_eu_80508DF8[0x281], &lbl_eu_80508DF8[0x28d], 0x2d), 0);
+        LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mLayout, &lbl_eu_80508DF8[0x276],
+            (char*)BdatTouchStringCell(&lbl_eu_80508DF8[0x6f], &lbl_eu_80508DF8[0x36], 0x18), 0);
+        LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mLayout, &lbl_eu_80508DF8[0x292],
+            (char*)BdatTouchStringCell(&lbl_eu_80508DF8[0x281], &lbl_eu_80508DF8[0x28d], 0x2c), 0);
+        LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mLayout, &lbl_eu_80508DF8[0x2a1],
+            (char*)BdatTouchStringCell(&lbl_eu_80508DF8[0x281], &lbl_eu_80508DF8[0x28d], 0x2d), 0);
 
         func_8021ADC4(this);
 
@@ -667,12 +667,12 @@ bool CMCCrystalInfo::OnFileEvent(CEventFile* pEventFile)
 // --- hard-symbol stubs (scaffold_hard_symbols) ---
 void sinit_8021BBC4()
 {
-    func_801D1F9C(lbl_eu_806646D8, 0);
-    func_801D1F9C(lbl_eu_806646E0, 0);
+    SplitU32ToS16s(lbl_eu_806646D8, 0);
+    SplitU32ToS16s(lbl_eu_806646E0, 0);
     func_801C4B60(lbl_eu_806646E8, 0xd2, 0x28, 0x14, 0);
     func_801C4B60(lbl_eu_806646F0, 0xd2, 0x28, 0x14, 0);
-    func_801D1F9C(lbl_eu_806646F8, 0);
-    func_801D1F9C(lbl_eu_80664700, 0);
+    SplitU32ToS16s(lbl_eu_806646F8, 0);
+    SplitU32ToS16s(lbl_eu_80664700, 0);
     func_801C4B60(lbl_eu_80664708, 0xff, 0xff, 0xfa, 0);
     func_801C4B60(lbl_eu_80664710, 0xd2, 0x28, 0x14, 0);
 }

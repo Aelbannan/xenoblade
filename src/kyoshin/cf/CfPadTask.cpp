@@ -112,12 +112,12 @@ void CfPadTask::setInputDisableTime(float f1){
 }
 
 //Check if input is currently disabled
-bool CfPadTask::func_801C1BC0(){
+bool CfPadTask::isInputDisabled(){
         return sInputDisableTimer > lbl_eu_8066A208;
     }
 
 //Set the button disable timer (A/B/+- buttons ignored until timer expires)
-void CfPadTask::func_801C1BD8(float f1) {
+void CfPadTask::setButtonDisableTime(float f1) {
     if (f1 < lbl_eu_8066A208) {
         sButtonDisableTimer = lbl_eu_80667EA8;
     } else if (f1 > sButtonDisableTimer) {

@@ -130,7 +130,7 @@ extern "C" void func_80227BD8(CQstLogList* self);
 extern "C" void func_80229620(CQstLogInfo* self);
 
 // Term tail helpers.
-extern "C" u8 func_8013B980();
+extern "C" u8 DecMenuCounter64080();
 extern "C" void func_80135550();
 extern "C" u8 code80135FDC_getByte_64080();
 

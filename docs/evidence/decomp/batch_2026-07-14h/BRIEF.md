@@ -40,7 +40,7 @@ Retail asm for each symbol is in this directory (`asm_*.s`).
 
 ### `CMenuEnemyState::Move` (`asm_Move_CMenuEnemyState.s`)
 - ~76.8%: retail saves **r22–r30** (frame `-0xe0`); decomp only **r25–r29** (`-0x90`) — widen live ranges / hoist locals so MWCC allocates matching callee-saved GPRs
-- Early gates: `CTaskGame` / bit21 / `func_8013BE50` / mask **`0xAFA40000`** / `CfGameManager::func_8008585C` / `func_80082D54(0)`
+- Early gates: `CTaskGame` / bit21 / `IsMenuState621F0` / mask **`0xAFA40000`** / `CfGameManager::func_8008585C` / `func_80082D54(0)`
 - Leave `cbRenderBefore` untouched
 
 ### `CUICfManager::func_80133324` (`asm_func_80133324_CUICfManager.s`)
@@ -51,7 +51,7 @@ Retail asm for each symbol is in this directory (`asm_*.s`).
 
 ### `CMenuBattlePlayerState::Move` (`asm_Move_CMenuBattlePlayerState.s`) **NEW**
 - Frame `-0xc0` + paired floats f26–f31 + `_savegpr_20`
-- Same gate family as other HUD Moves: `CTaskGame::getInstance` / `isFlag01Set` / `lbl_eu_80663E28` bit / `func_8013BE50` / mask
+- Same gate family as other HUD Moves: `CTaskGame::getInstance` / `isFlag01Set` / `lbl_eu_80663E28` bit / `IsMenuState621F0` / mask
 - Large body: party slot walk, HP/tension/status updates, layout pane sizing — follow full asm
 - Extend hpp with fields `Move` needs; **do not** edit `Term` or `cbRenderBefore`
 - Prefer PTGauge/Enemy gate pattern (§17.6 single-insn `b done` if MWCC collapses `rlwinm.`/`beq`/`b`)

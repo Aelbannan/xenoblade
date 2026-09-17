@@ -44,7 +44,7 @@ extern u32 func_8009CF8C(u32);
 // forward decls: func_801375A0 calls these helpers before their definitions
 // (they are defined later in this TU).
 extern void code80135FDC_setVec3(float* self, float a, float b, float c);
-extern void func_80137738(nw4r::math::VEC3* output, const nw4r::math::VEC3* value);
+extern void Vec3AddInto(nw4r::math::VEC3* output, const nw4r::math::VEC3* value);
 }
 
 // getBdatStringColumnValue's canonical extern "C" declaration is
@@ -184,7 +184,7 @@ extern "C" void func_8009D018(u32 destination, u32 value);
 struct FourShorts { s16 a, b, c, d; };
 
 // ---------- init ----------
-void func_80135FDC() {
+void MenuStateInitFlags() {
     lbl_eu_80664058 = 0;
     lbl_eu_80664059 = 0;
     lbl_eu_8066405A = 0;
@@ -196,39 +196,39 @@ void func_80135FDC() {
     lbl_eu_8066407F = 0;
 }
 
-void func_8013BD9C() {
+void MenuStateSet64058() {
     lbl_eu_80664058 = 1;
 }
 
-void func_8013BE38() {
+void MenuStateClear6405A() {
     lbl_eu_8066405A = 0;
     lbl_eu_8066405B = 0;
     lbl_eu_8066405C = 0;
     lbl_eu_80664060 = 0;
 }
 
-void func_8013BDE4() {
+void MenuStateSet6405A() {
     lbl_eu_8066405B = 0;
     lbl_eu_8066405C = 0;
     lbl_eu_80664060 = 0;
     lbl_eu_8066405A = 1;
 }
 
-u8 func_801392B4(u32 idx) {
+u8 GetCollectedFlagByte(u32 idx) {
     return *(u8*)((u32)(&lbl_eu_80664070) + idx);
 }
 
 // ---------- BDAT helpers ----------
-// func_8013600C: BDAT string -> u8
-// func_8013606C: BDAT string -> u16
-// func_801360CC: BDAT string -> s8
-// func_80136130: BDAT string -> s16
-// func_80136190: BDAT string -> void
+// BdatGetU8ByTableKey: BDAT string -> u8
+// BdatGetU16ByTableKey: BDAT string -> u16
+// BdatGetS8ByTableKey: BDAT string -> s8
+// BdatGetS16ByTableKey: BDAT string -> s16
+// BdatTouchStringCell: BDAT string -> void
 
 // BDAT string column readers. Each validates the table (func_8003AA34),
 // resolves the file pointer, reads the cell, and reinterprets it at the
 // requested width/sign: u8 / u16 / s16 / s8.
-u8 func_8013600C(const void* tableName, const void* column, u32 key) {
+u8 BdatGetU8ByTableKey(const void* tableName, const void* column, u32 key) {
     func_8003AA34((const char*)tableName);
     void* fp = getFP__FPCc((const char*)tableName);
     void* result = getBdatStringColumnValue(fp, (const char*)column,
@@ -236,7 +236,7 @@ u8 func_8013600C(const void* tableName, const void* column, u32 key) {
     return *(u8*)&result;
 }
 
-u16 func_8013606C(const void* tableName, const void* column, u32 key) {
+u16 BdatGetU16ByTableKey(const void* tableName, const void* column, u32 key) {
     func_8003AA34((const char*)tableName);
     void* fp = getFP__FPCc((const char*)tableName);
     void* result = getBdatStringColumnValue(fp, (const char*)column,
@@ -244,7 +244,7 @@ u16 func_8013606C(const void* tableName, const void* column, u32 key) {
     return *(u16*)&result;
 }
 
-s16 func_80136130(const void* tableName, const void* column, u32 key) {
+s16 BdatGetS16ByTableKey(const void* tableName, const void* column, u32 key) {
     func_8003AA34((const char*)tableName);
     void* fp = getFP__FPCc((const char*)tableName);
     void* result = getBdatStringColumnValue(fp, (const char*)column,
@@ -252,7 +252,7 @@ s16 func_80136130(const void* tableName, const void* column, u32 key) {
     return *(s16*)&result;
 }
 
-s8 func_801360CC(const void* tableName, const void* column, u32 key) {
+s8 BdatGetS8ByTableKey(const void* tableName, const void* column, u32 key) {
     func_8003AA34((const char*)tableName);
     void* fp = getFP__FPCc((const char*)tableName);
     void* result = getBdatStringColumnValue(fp, (const char*)column,
@@ -262,41 +262,41 @@ s8 func_801360CC(const void* tableName, const void* column, u32 key) {
     return (s8)byte;
 }
 
-void func_80136190(const char* a, const char* b, const char* c) {
+void BdatTouchStringCell(const char* a, const char* b, const char* c) {
     func_8003AA34(a);
     void* fp = getFP__FPCc(a);
     getBdatStringColumnValue(fp, b, c);
 }
 
-u8 func_801361E8(const char* a, const char* b, const char* c) {
+u8 BdatGetU8Direct(const char* a, const char* b, const char* c) {
     if (a == 0) return 0;
     func_8003AA34(a);
     void* result = getBdatStringColumnValue((void*)a, b, c);
     return *(u8*)&result;
 }
 
-extern "C" u16 func_80136254(const char* a, const char* b, const char* c) {
+extern "C" u16 BdatGetU16Direct(const char* a, const char* b, const char* c) {
     if (a == 0) return 0;
     func_8003AA34(a);
     void* result = getBdatStringColumnValue((void*)a, b, c);
     return *(u16*)&result;
 }
 
-extern "C" int func_801362C0(const char* a, const char* b, const char* c) {
+extern "C" int BdatGetS8Direct(const char* a, const char* b, const char* c) {
     if (a == 0) return 0;
     func_8003AA34(a);
     void* result = getBdatStringColumnValue((void*)a, b, c);
     return (s8)(*(u8*)&result);
 }
 
-extern "C" s16 func_80136330(const char* a, const char* b, const char* c) {
+extern "C" s16 BdatGetS16Direct(const char* a, const char* b, const char* c) {
     if (a == 0) return 0;
     func_8003AA34(a);
     void* result = getBdatStringColumnValue((void*)a, b, c);
     return *(s16*)&result;
 }
 
-extern "C" void* func_8013639C(const char* a, const char* b, const char* c) {
+extern "C" void* BdatGetPtrDirect(const char* a, const char* b, const char* c) {
     if (a == 0) return 0;
     func_8003AA34(a);
     return getBdatStringColumnValue((void*)a, b, c);
@@ -444,7 +444,7 @@ extern "C" int func_801365E4(u16* src, u16 delim, u16** outTokens) {
     return count;
 }
 
-extern "C" void func_801366F4(u16* str) {
+extern "C" void WcsToUpperInPlace(u16* str) {
     int len = wcslen((wchar_t*)str);
     u16* p = str;
     while (len > 0) {
@@ -553,7 +553,7 @@ extern "C" void func_80136A1C(
         reinterpret_cast<const wchar_t*>(buf), 0);
 }
 
-extern "C" void func_80136B4C(
+extern "C" void LayoutSetTextBoxFmtValue(
     nw4r::lyt::Layout* layout, char* name, char* fmt, u32 value) {
     // Retail ignores the fmt param (r5 is never read) and formats with the
     // constant string-table extern lbl_eu_80500664 (lis/@l relocs, offset 0).
@@ -566,7 +566,7 @@ extern "C" void func_80136B4C(
     func_80136A1C(layout, name, buf, value);
 }
 
-extern "C" void func_80136C98(nw4r::lyt::Layout* layout, u32 value) {
+extern "C" void LayoutSetTextBoxInt(nw4r::lyt::Layout* layout, u32 value) {
     char buf[512];
     sprintf(buf, &lbl_eu_80500664[7], (int)value);
     func_80136D74(layout, buf, 0);
@@ -633,7 +633,7 @@ extern "C" void func_80136F08__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformP
     layout->BindAnimation(animTrans);
 }
 
-extern "C" void func_80136FA0(
+extern "C" void LayoutBindAnimResource(
     nw4r::lyt::Layout* layout,
     void** ppAnimRes,
     nw4r::lyt::ArcResourceAccessor* accessor,
@@ -703,7 +703,7 @@ void func_80137250(nw4r::lyt::DrawInfo* drawInfo) {
     drawInfo->SetLocationAdjust(!drawInfo->IsLocationAdjust());
 }
 
-int func_801372B4(int value) {
+int MapValueToRank6(int value) {
     // Range lookup via shared result labels so each value emits exactly one
     // li/blr block, laid out in retail's ascending order.
     if (value < 11) {
@@ -738,7 +738,7 @@ ret0:
 extern "C" int func_8013732C(const char* name) {
     // BDAT lookup: row index from one table keyed by name, then a u8 column
     // from another table keyed by that index; the byte maps through a range
-    // tree identical to func_801372B4's (inlined here in retail).
+    // tree identical to MapValueToRank6's (inlined here in retail).
     // col0x22 is computed before the global test (retail hoists it).
     const char* col0x22 = &lbl_eu_80500664[0x22];
     u16 rowIdx;
@@ -815,7 +815,7 @@ extern "C" u32 func_80137444__FPQ34nw4r3lyt13AnimTransformf(
     return result;
 }
 
-extern "C" u32 func_80137510(nw4r::lyt::AnimTransform* anim, float delta) {
+extern "C" u32 AnimRewindFrame(nw4r::lyt::AnimTransform* anim, float delta) {
     // Single-exit form: result flag stays in a saved register and the frame
     // is stored once at the end (retail has no early return).
     float newFrame = anim->GetFrame() - delta;
@@ -878,7 +878,7 @@ extern "C" void func_801375A0(nw4r::math::VEC3* output, nw4r::lyt::Pane* pane) {
     copyVEC3(&tmp2, &ggp->GetTranslate());
     nw4r::math::VEC3 tmp3;
     func_801375A0(&tmp3, ggp->GetParent());
-    func_80137738(&tmp2, &tmp3);
+    Vec3AddInto(&tmp2, &tmp3);
 
 add_temp:
     nw4r::math::VEC3Add(&temp, &temp, &tmp2);
@@ -898,7 +898,7 @@ extern "C" __declspec(noinline) void code80135FDC_setVec3(float* self, float a, 
     *(float*)((char*)self + 8) = c;
 }
 
-extern "C" __declspec(noinline) void func_80137738(nw4r::math::VEC3* output,
+extern "C" __declspec(noinline) void Vec3AddInto(nw4r::math::VEC3* output,
                               const nw4r::math::VEC3* value) {
     nw4r::math::VEC3Add(output, output, value);
 }
@@ -952,7 +952,7 @@ extern "C" void func_8013775C(nw4r::math::VEC3* output, nw4r::lyt::Pane* node) {
                             if (ggpp->GetParent() != NULL) {
                                 copyVEC3(&recurse, &ggpp->GetTranslate());
                                 func_8013775C(&rec2, ggpp->GetParent());
-                                func_80137738(&recurse, &rec2);
+                                Vec3AddInto(&recurse, &rec2);
                             }
                         }
                         nw4r::math::VEC3Add(&temp, &temp, &recurse);
@@ -1042,7 +1042,7 @@ extern "C" void func_80137B44(void* a, u32 b, u32 c) {
     { u32 v = c; result->SetVtxColor(3, *(nw4r::ut::Color*)&v); }
 }
 
-extern "C" void func_80137C1C(void* obj, u32 value) {
+extern "C" void PaneSetVtxColorAll(void* obj, u32 value) {
     // Retail reloads the vtable for every call and keeps `obj` (r30) and
     // `value` (r31) live; each call gets its own stack slot. Written as a
     // true virtual call so MWCC emits the r12 -> r12 dispatch sequence.
@@ -1070,7 +1070,7 @@ extern "C" void func_80137CD4(void* a, u32 b, u32 c, u32 d) {
     result->SetVtxColor(3, *(nw4r::ut::Color*)&v3);
 }
 
-extern "C" void func_80137DB8(void* a, u32 b, u32 c) {
+extern "C" void PaneSetVtxColorPairs(void* a, u32 b, u32 c) {
     // Retail order: idx0=b, idx2=c, idx1=b, idx3=c. The parameter addresses
     // are passed directly, so MWCC re-stores each value into a fresh stack
     // slot per call (no shared temp).
@@ -1083,7 +1083,7 @@ extern "C" void func_80137DB8(void* a, u32 b, u32 c) {
     { u32 v = c; ((nw4r::lyt::Pane*)a)->SetVtxColor(3, *(nw4r::ut::Color*)&v); }
 }
 
-extern "C" void func_80137E7C(void* a, u32 b, void* palette) {
+extern "C" void PaneSetTexPaletteByName(void* a, u32 b, void* palette) {
     if (a == NULL) return;
     nw4r::lyt::Pane* owner = *(nw4r::lyt::Pane**)((u8*)a + 0x10);
     nw4r::lyt::Pane* res = owner->FindPaneByName((const char*)b, true);
@@ -1517,7 +1517,7 @@ extern "C" void* func_80138DA4(const char* str) {
     return (void*)(getBdatStringColumnValue)(fp, col, v);
 }
 
-extern "C" u8 func_80138E1C(const char* key) {
+extern "C" u8 BdatGetSexFlag(const char* key) {
     const char* col = &lbl_eu_80500664[0x18A];
     u8* src = (u8*)lbl_eu_80664098;
     if (src == 0) {
@@ -1566,7 +1566,7 @@ extern "C" u32 func_80138E90(const char* key) {
     return result;
 }
 
-extern "C" char* func_80138F78(const char* key) {
+extern "C" char* MakeTplNameSysFile(const char* key) {
     if (lbl_eu_80664068 == 0) {
         func_8003AA34(key);
         lbl_eu_80664068 = (u32)getFP__FPCc(&lbl_eu_80500664[0x192]);
@@ -1699,7 +1699,7 @@ void func_80139198(void* arg) {
 extern u8 lbl_eu_80664077;
 extern "C" u8 code80135FDC_getByte_64077() { return lbl_eu_80664077; }
 
-extern "C" u8 func_801392C8(u32 idx) {
+extern "C" u8 GetCollectedFlagWord8(u32 idx) {
     extern u16 lbl_eu_80664078[3];
     return (u8)(((u16*)lbl_eu_80664078)[(u8)idx]);
 }
@@ -1707,7 +1707,7 @@ extern "C" u8 func_801392C8(u32 idx) {
 extern u8 lbl_eu_8066407E;
 extern "C" u8 code80135FDC_getByte_6407E() { return lbl_eu_8066407E; }
 
-extern "C" u16 func_801392E4(const char* name) {
+extern "C" u16 BdatGetItemType(const char* name) {
     const char* col = &lbl_eu_80500664[0x1D2];
     u8* src = (u8*)lbl_eu_806640EC;
     if (src == 0) {
@@ -1718,7 +1718,7 @@ extern "C" u16 func_801392E4(const char* name) {
     return *(u16*)&result;
 }
 
-extern "C" u16 func_80139358(const char* name) {
+extern "C" u16 BdatGetItemId(const char* name) {
     const char* col = &lbl_eu_80500664[0x1DB];
     u8* src = (u8*)lbl_eu_806640EC;
     if (src == 0) {
@@ -1895,7 +1895,7 @@ extern "C" void func_8013996C(nw4r::lyt::Pane* owner, void* src, u32 idx) {
     d[3] = tb;
 }
 
-extern "C" void func_80139A18(void* obj, void* arg2, void* src1, void* src2) {
+extern "C" void PaneMatSetTevColorsByName(void* obj, void* arg2, void* src1, void* src2) {
     nw4r::lyt::Pane* owner = *(nw4r::lyt::Pane**)((u8*)obj + 0x10);
     nw4r::lyt::Pane* res = owner->FindPaneByName((const char*)arg2, true);
     if (res == NULL) return;
@@ -1914,7 +1914,7 @@ extern "C" void func_80139A18(void* obj, void* arg2, void* src1, void* src2) {
     data[15] = s2[3];
 }
 
-extern "C" void func_80139AC8(nw4r::lyt::Pane* owner, void* src1, void* src2) {
+extern "C" void PaneMatSetTevColors(nw4r::lyt::Pane* owner, void* src1, void* src2) {
     if (owner == NULL) return;
     s16* data = (s16*)owner->GetMaterial();
     if (data == NULL) return;
@@ -1930,7 +1930,7 @@ extern "C" void func_80139AC8(nw4r::lyt::Pane* owner, void* src1, void* src2) {
     data[15] = s2[3];
 }
 
-extern "C" void func_80139B5C(void* obj, void* arg2, void* src) {
+extern "C" void PaneSetColorFieldSingle(void* obj, void* arg2, void* src) {
     nw4r::lyt::Pane* owner = *(nw4r::lyt::Pane**)((u8*)obj + 0x10);
     void* result = owner->FindPaneByName((const char*)arg2, true);
     // Retail emits THREE beq's on the same null test (dead-duplicated-test
@@ -1954,7 +1954,7 @@ out:
     return;
 }
 
-extern "C" void func_80139BF4(void* obj, void* arg2, void* a, void* b) {
+extern "C" void PaneSetColorFieldPair(void* obj, void* arg2, void* a, void* b) {
     nw4r::lyt::Pane* owner = *(nw4r::lyt::Pane**)((u8*)obj + 0x10);
     void* result = owner->FindPaneByName((const char*)arg2, true);
     // Retail emits the null test three times (three beq to the epilogue).
@@ -1983,7 +1983,7 @@ extern "C" void func_80139BF4(void* obj, void* arg2, void* a, void* b) {
     }
 }
 
-extern "C" f32 func_80139C98(u32 a, u32 b, u32 c, f32 d) {
+extern "C" f32 BlendFloatAvgScale(u32 a, u32 b, u32 c, f32 d) {
     f32 fa = (f32)a;
     f32 fb = (f32)b;
     f32 fc = (f32)c;
@@ -2605,22 +2605,22 @@ extern "C" void func_8013B1C4(u32 v) {
     }
 }
 
-extern "C" void func_8013B2D4() {
-    func_80157824(2, 2);
-    func_80157824(4, 2);
-    func_80157824(5, 2);
-    func_80157824(6, 2);
-    func_80157824(7, 2);
-    func_80157824(8, 2);
-    func_80157824(9, 2);
-    func_80157824(3, 2);
-    func_80157824(0xD, 2);
-    func_80157824(0xA, 2);
-    func_80157824(0xB, 0);
-    func_80157824(0xC, 0);
+extern "C" void ItemBlockSetDefaultFlags() {
+    CItemBlock_setFlag120EC(2, 2);
+    CItemBlock_setFlag120EC(4, 2);
+    CItemBlock_setFlag120EC(5, 2);
+    CItemBlock_setFlag120EC(6, 2);
+    CItemBlock_setFlag120EC(7, 2);
+    CItemBlock_setFlag120EC(8, 2);
+    CItemBlock_setFlag120EC(9, 2);
+    CItemBlock_setFlag120EC(3, 2);
+    CItemBlock_setFlag120EC(0xD, 2);
+    CItemBlock_setFlag120EC(0xA, 2);
+    CItemBlock_setFlag120EC(0xB, 0);
+    CItemBlock_setFlag120EC(0xC, 0);
 }
 
-extern "C" f32 func_8013B380(u32 idx) {
+extern "C" f32 GetFloatTableEntry(u32 idx) {
     // Retail computes idx - 1 up front, then struct-copies the whole
     // 13-entry table to the stack, then scales the index.
     u32 i = idx - 1;
@@ -2738,7 +2738,7 @@ extern "C" unsigned char code80135FDC_postIncByte_64080() {
     return v;
 }
 
-u8 func_8013B980() {
+u8 DecMenuCounter64080() {
     u8 val = lbl_eu_80664080[0];
     u8 dec = val - 1;
     lbl_eu_80664080[0] = dec;
@@ -2829,13 +2829,13 @@ extern "C" int func_8013BC0C(void* self, void* arg) {
     return 1;
 }
 
-extern "C" void func_8013BCD4(void* self, void* arg) {
+extern "C" void AnimResetToFirst(void* self, void* arg) {
     if (func_8013B9AC(self, arg) != 0) {
         func_8013BAD8(self, arg, lbl_eu_806672F0);
     }
 }
 
-extern "C" void func_8013BD24(void* self, void* arg) {
+extern "C" void AnimJumpToLast(void* self, void* arg) {
     void* t = (void*)func_8013B9AC(self, arg);
     if (t != 0) {
         nw4r::lyt::AnimTransform* anim = *(nw4r::lyt::AnimTransform**)((u8*)t + 8);
@@ -2854,7 +2854,7 @@ extern u8 lbl_eu_80664058;
 extern "C" u8 code80135FDC_getByte_64058() { return lbl_eu_80664058; }
 
 // retail: li r0,1; stb lbl_eu_80664059; li r3,0; li r4,0; b func_8013EC6C
-extern "C" void func_8013BDBC() {
+extern "C" void MenuStateSet64059Notify() {
     extern void func_8013EC6C(u32, u32);
     lbl_eu_80664059 = 1;
     func_8013EC6C(0, 0);
@@ -2895,25 +2895,25 @@ extern "C" u32 code80135FDC_getWord_64060(void) {
 
 
 extern u8 lbl_eu_806621F0;
-extern "C" int func_8013BE50() { return lbl_eu_806621F0; }
+extern "C" int IsMenuState621F0() { return lbl_eu_806621F0; }
 
-int func_8013BE58(){
+int GetSysStateFlag11(){
     unsigned char byte = ((unsigned char*)getInstance__14Class_80296898Fv())[0x11];
     return byte != 0 ? 1 : 0;
 }
 
-bool func_8013BE88(){
+bool GetSysStateFlag10(){
     void* inst = getInstance__14Class_80296898Fv();
     unsigned char b = ((unsigned char*)inst)[0x10];
     return b != 0;
 }
 
-int func_8013BEB8(){
+int GetSysStateFlag21(){
     unsigned char* p = (unsigned char*)getInstance__14Class_80296898Fv();
     return p[0x21] != 0 ? 1 : 0;
 }
 
-int func_8013BEE8() {
+int GetSysStateFlag20() {
     void* inst = getInstance__14Class_80296898Fv();
     u8 b = *(u8*)((u32)inst + 0x20);
     return (b != 0) ? 1 : 0;
@@ -2923,37 +2923,36 @@ extern u8 lbl_eu_80664064;
 extern "C" void code80135FDC_setByte_64064() { lbl_eu_80664064 = 1; }
 
 extern u8 lbl_eu_80664064;
-void func_eu_8013C8E8() { lbl_eu_80664064 = 0; }
+void MenuStateClear64064() { lbl_eu_80664064 = 0; }
 
-extern "C" int func_eu_8013C8F4() {
+extern "C" int MenuStateCheck64064or30() {
     if (lbl_eu_80664064 != 0) return 1;
     return ((u8*)getInstance__14Class_80296898Fv())[0x30] != 0;
 }
 
-extern "C" int func_8013BF48() {
+extern "C" int GetSysStateFlag23() {
     return ((u8*)getInstance__14Class_80296898Fv())[0x23] != 0;
 }
 
-extern "C" int func_8013BF78() {
+extern "C" int GetSysStateFlag31() {
     return ((u8*)getInstance__14Class_80296898Fv())[0x31] != 0;
 }
 
-int func_8013BFA8(){
+int GetSysStateFlag22(){
     void* obj = getInstance__14Class_80296898Fv();
     return (static_cast<unsigned char*>(obj)[0x22] != 0) ? 1 : 0;
 }
 
-extern "C" int func_8013BFD8() {
+extern "C" int GetSysStateFlag24() {
     return ((u8*)getInstance__14Class_80296898Fv())[0x24] != 0;
 }
 
-extern "C" int func_8013C008() {
+extern "C" int GetSysStateFlag25() {
     return ((u8*)getInstance__14Class_80296898Fv())[0x25] != 0;
 }
 
-int func_8013C038(void* obj) {
-    extern int func_8009CF8C(void*);
-    int v = func_8009CF8C((void*)((u32)obj + 0x2CC8));
+int CheckState2CC8Active(void* obj) {
+    int v = (int)func_8009CF8C((u32)obj + 0x2CC8);
     return (v == 1) ? 1 : 0;
 }
 
@@ -3057,7 +3056,7 @@ extern const void* lbl_eu_805005A8[34] = {
     NULL, lbl_eu_80500278, lbl_eu_80500288, lbl_eu_80500298, lbl_eu_805002A8, lbl_eu_805002B8, lbl_eu_805002C8, lbl_eu_805002D8, lbl_eu_805002E8, NULL, lbl_eu_805002F8, lbl_eu_80500308, lbl_eu_80500318, lbl_eu_80500328, lbl_eu_80500338, lbl_eu_80500348, lbl_eu_80500358, lbl_eu_80500368, lbl_eu_80500378, lbl_eu_80500378, lbl_eu_80500388, NULL, lbl_eu_80500398, lbl_eu_805003A8, lbl_eu_805003B8, lbl_eu_805003C8, lbl_eu_805003D8, &lbl_eu_805003E8, NULL, NULL, NULL, NULL, NULL, NULL
 };
 
-// 0x80500630: 13-entry float table (func_8013B380 copies it to the stack).
+// 0x80500630: 13-entry float table (GetFloatTableEntry copies it to the stack).
 __declspec(section ".rodata") __attribute__((used))
 FloatTable13 lbl_eu_80500630 = {{1.5f, 2.0f, 1.7f, 1.7f, 3.7f, 1.5f, 1.9f, 1.7f, 1.7f, 1.6f, 1.5f, 1.7f, 1.7f}};
 

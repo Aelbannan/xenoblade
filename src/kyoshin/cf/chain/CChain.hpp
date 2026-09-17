@@ -277,9 +277,9 @@ extern int lbl_eu_805381C8[3];
 // CChainActorList.cpp; the chain-menu / err-mes helpers in
 // CMenuBattleChain.cpp / CUIErrMesWin.cpp.
 
-// Circular gimmick object list consumed by func_800B6BC8 (layout mirror of
+// Circular gimmick object list consumed by getReslistB48 (layout mirror of
 // the CfGimmick.hpp structs - that header's func_800B3A88 C-import clashes
-// with CChainEffect.hpp's void* variant, so its func_800B6BC8 C-import and
+// with CChainEffect.hpp's void* variant, so its getReslistB48 C-import and
 // the list structs are mirrored here instead).
 struct CChainGimmickListNode {
     CChainGimmickListNode* next; //0x00
@@ -306,7 +306,7 @@ extern "C" {
     u32 func_8009CF8C(u32 resourceId);
     void func_802A35B8(u32 arg);
     int func_802A3748(u32 arg);
-    int func_802A3214();
+    int CCharVoiceMan_AllocChainVoiceId();
     int func_802A3680(int a, CChainBattleObjTail* b, int c);
     void func_8027B164(cf::CChainActorList* self);
     cf::CChainActor* func_8027CA98(cf::CChainList* self, u32 key);

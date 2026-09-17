@@ -36,7 +36,7 @@
 #undef func_802AE894
 
 // Opaque kizuna-chart sub-object at +0x98 (spans 0x98..0x178). Driven by
-// func_8025C78C (CKizunagram unit); detailed layout TBD.
+// kizChartOpen (CKizunagram unit); detailed layout TBD.
 struct UnkKizunaMenuSub98 {
     u8 data[0xE0];
 };
@@ -107,7 +107,7 @@ class CTaskGame;
 // Return types are int (not u8) so callers compare with cmpwi directly
 // (no byte mask), matching retail.
 extern "C" int isIdle__11CTitleAHelpFv(CTitleAHelp* h);
-extern "C" int func_8025C78C(UnkKizunaMenuSub98* self);
+extern "C" int kizChartOpen(UnkKizunaMenuSub98* self);
 extern "C" int func_8025DA48(UnkKizunaMenuPcSub* self);
 extern "C" int func_80244508(CFade* self);
 extern "C" void func_80244518(CFade* self);
@@ -115,22 +115,22 @@ extern "C" void func_80244518(CFade* self);
 // Additional retail-unmangled callee names for the kizuna-gram screen state
 // helpers (same scheme as CMenuMapSelectSC / CMakeCrystalWin). Return types
 // are int where retail compares r3 with cmpwi directly (no byte mask);
-// func_8025CBCC is u8 because retail masks its result with clrlwi.
+// kizChartStatus is u8 because retail masks its result with clrlwi.
 // Retail-unmangled views of the CLoad helpers (see include shield above).
 extern "C" u8 func_802AE6AC(CLoad* self);
 extern "C" void func_802AE6C4(CLoad* self);
 extern "C" void func_802AE758(CLoad* self);
 extern "C" int func_80244510(CFade* self);
 extern "C" void func_80244538(CFade* self);
-extern "C" int func_8025C770(UnkKizunaMenuSub98* self);
-extern "C" u8 func_8025CBCC(UnkKizunaMenuSub98* self);
-extern "C" void func_8025C7D0(UnkKizunaMenuSub98* self);
+extern "C" int kizChartReady(UnkKizunaMenuSub98* self);
+extern "C" u8 kizChartStatus(UnkKizunaMenuSub98* self);
+extern "C" void kizStartChart(UnkKizunaMenuSub98* self);
 extern "C" int func_801C4114(CTitleAHelp* self);
 extern "C" void func_801C412C(CTitleAHelp* self);
 extern "C" void func_801C416C(CTitleAHelp* self);
 extern "C" void func_801C41C0(CTitleAHelp* self, char* name);
 extern "C" void func_801C41E8(CTitleAHelp* self, u8 arg);
-extern "C" char* func_80136190(char* a, char* b, int id);
+extern "C" char* BdatTouchStringCell(char* a, char* b, int id);
 
 // D2-form subobject/base destructor helpers (explicit delete flags), used by
 // the free-function form of ~CMenuKizunagram. __dt__800FED0C is the CProcess
@@ -162,10 +162,10 @@ extern "C" int isFlag01Set__9CTaskGameFv();
 extern "C" void setPresentationFlag__Q22cf13CfGameManagerFv(bool enable);
 
 // code_80135FDC helpers (retail-unmangled).
-extern "C" u8 func_8013B980();
+extern "C" u8 DecMenuCounter64080();
 extern "C" u8 code80135FDC_getByte_64080();
 extern "C" void func_801338C8();
-extern "C" int func_8013BE50();
+extern "C" int IsMenuState621F0();
 
 // CTitleAHelp / CFade helpers used by Term / cbRenderBefore (retail strips
 // the mangling for these member helpers).
@@ -180,20 +180,20 @@ extern "C" void func_802AE62C(CLoad* self);
 extern "C" void func_802AE5F0(CLoad* self, nw4r::lyt::DrawInfo* drawInfo);
 
 // Kizuna-chart sub-object helpers (retail-unmangled; CKizunagram unit).
-extern "C" void func_8025C6F0(UnkKizunaMenuSub98* self);
-extern "C" void func_8025C61C(UnkKizunaMenuSub98* self, nw4r::lyt::DrawInfo* drawInfo);
-extern "C" void func_8025C870(UnkKizunaMenuSub98* self);
-extern "C" int func_8025CBBC(UnkKizunaMenuSub98* self);
-extern "C" int func_8025CBC4(UnkKizunaMenuSub98* self);
-extern "C" void func_8025C7FC(UnkKizunaMenuSub98* self, int arg);
-extern "C" void func_8025CC70(UnkKizunaMenuSub98* self);
-extern "C" void func_8025CAE4(UnkKizunaMenuSub98* self);
-extern "C" void func_8025CB50(UnkKizunaMenuSub98* self);
-extern "C" void func_8025C874(UnkKizunaMenuSub98* self);
-extern "C" void func_8025C904(UnkKizunaMenuSub98* self);
-extern "C" void func_8025C994(UnkKizunaMenuSub98* self);
-extern "C" void func_8025CA24(UnkKizunaMenuSub98* self);
-extern "C" void func_8025CAB4(UnkKizunaMenuSub98* self);
+extern "C" void teardownKizuna(UnkKizunaMenuSub98* self);
+extern "C" void drawKizLayouts(UnkKizunaMenuSub98* self, nw4r::lyt::DrawInfo* drawInfo);
+extern "C" void kizOpenWinNop(UnkKizunaMenuSub98* self);
+extern "C" int kizChartBusy(UnkKizunaMenuSub98* self);
+extern "C" int kizHasSelFlag(UnkKizunaMenuSub98* self);
+extern "C" void kizCloseChart(UnkKizunaMenuSub98* self, int arg);
+extern "C" void kizToggleHelp(UnkKizunaMenuSub98* self);
+extern "C" void kizCursorHoldA(UnkKizunaMenuSub98* self);
+extern "C" void kizCursorHoldB(UnkKizunaMenuSub98* self);
+extern "C" void kizCursorDir1(UnkKizunaMenuSub98* self);
+extern "C" void kizCursorDir2(UnkKizunaMenuSub98* self);
+extern "C" void kizCursorDir3(UnkKizunaMenuSub98* self);
+extern "C" void kizCursorDir4(UnkKizunaMenuSub98* self);
+extern "C" void tickKizMove(UnkKizunaMenuSub98* self);
 extern "C" void func_801C414C(CTitleAHelp* self);
 // CPcKizunagram helpers. Return types are int (not u8) so callers compare
 // with cmpwi directly (no byte mask), matching retail.
@@ -224,7 +224,7 @@ extern "C" void func_80257A2C(CMenuKizunagram* self);
 
 // Move() per-frame sub-object refresh helpers (retail-unmangled).
 extern "C" void func_801C3FF0(CTitleAHelp* self);
-extern "C" void func_8025C580(UnkKizunaMenuSub98* self);
+extern "C" void tickKizMain(UnkKizunaMenuSub98* self);
 extern "C" void func_8025D8C4(UnkKizunaMenuPcSub* self);
 extern "C" void func_802AE560(CLoad* self);
 extern "C" void func_802443E8(CFade* self);
@@ -242,7 +242,7 @@ extern "C" void __ct__CLoad(CLoad* self, u8 arg);
 extern "C" void __ct__CFade(CFade* self);
 
 // Ctor tail helpers (retail-unmangled).
-extern "C" void func_80042874();
+extern "C" void CTaskGame_deleteLoad();
 extern "C" void func_8011C400();
 
 // C++-linkage helper - retail emits the mangled form

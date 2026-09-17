@@ -314,7 +314,7 @@ extern "C" {
     int func_801663A8(cf::CTaskREvent* self, CTaskREventFileEvent* ev);
     // Imports for func_80164DB8
     void func_80168484(int arg);
-    void func_80043BC4();
+    void CTaskGame_resetStream();
     // Imports for cf::CTaskREvent::cbRenderBefore
     CView* getCurrentView__5CViewFv();
     void func_8043EA88__5CViewFRQ22ml5CRectP5CView(ml::CRect& rect, CView* view);
@@ -327,8 +327,8 @@ extern "C" {
     // Play-time seconds getter (same signature as CfMapEffectManager.hpp).
     u16 func_8016DF2C();
     // Frame/timing helpers used by func_801662E8 (global retail names).
-    int func_80043D68();
-    int func_80043B54();
+    int CTaskGame_playTimeGate();
+    int CTaskGame_getStreamPos();
     int func_8016A3A8();
     int func_eu_8016DA48(u8* gate);
     // Event-callback unregister helper (retail global taking the IFlagEvent
@@ -368,7 +368,7 @@ extern "C" {
     UnkClass_800821F8* getCameraDataBlock__Q22cf13CfGameManagerFv();
     void func_8049EB60();
     // Imports for Move (CRI player state / frame timing / object lists)
-    void func_80043B04(float v);
+    void CTaskGame_setStreamVol(float v);
     u32 isMoviePlaying__7CLibCriFv(CLibCri* self);
     void setMoviePause__7CLibCriFv(CLibCri* self, u32 arg);
     REvtMgrView* getGimmickListHead__Q22cf13CfGameManagerFv();
@@ -381,7 +381,7 @@ extern "C" {
     int func_801684F4();
     void func_8016C6EC(int arg);
     int func_8016A35C();
-    int func_80043BA4();
+    int CTaskGame_isStreamPaused();
     void func_804962A8(u8* self, u32 flag);
     u32 func_800EA444(u32 battle);
     extern f32 lbl_eu_80667638;

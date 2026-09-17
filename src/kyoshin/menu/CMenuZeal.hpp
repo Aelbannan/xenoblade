@@ -143,7 +143,7 @@ nw4r::lyt::ArcResourceAccessor* func_801355F4();
 int isClassicController__Q22cf13CfGameManagerFv(int arg);
 }
 // Effect/cue object factory (defined in pluginUi.cpp; declared here because
-// pluginUi.hpp's extern "C" func_80136190 clashes with code_80135FDC.hpp's).
+// pluginUi.hpp's extern "C" BdatTouchStringCell clashes with code_80135FDC.hpp's).
 void* func_800451D8(u32 cls, void* param);
 
 // UI sound effect (mangles to playUISound__FUl).

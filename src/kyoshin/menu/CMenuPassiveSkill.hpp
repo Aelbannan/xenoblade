@@ -23,7 +23,7 @@ extern "C" void func_802639E4(CMenuPassiveSkill* self);
 extern "C" void func_80263A34(CMenuPassiveSkill* self);
 extern "C" void func_801C3D54(CBgTex* self);
 extern "C" void func_801C3FF0(CTitleAHelp* self);
-extern "C" void func_8026D894(u8* self);
+extern "C" void CPassiveSkill_update(u8* self);
 extern "C" void func_80263D3C(CMenuPassiveSkill* self);
 extern "C" void func_80263D8C(CMenuPassiveSkill* self);
 extern "C" void func_80263DE8(CMenuPassiveSkill* self);
@@ -107,7 +107,7 @@ extern f32 lbl_eu_806688F0;
 // Widget-rebuild imports used by Init (retail-unmangled C symbols).
 extern "C" void __ct__UnkClass_8011C974(void* dst, void* src);
 extern char lbl_eu_8050DB4C[];
-extern "C" char* func_80136190(char* base, char* entry, u32 len);
+extern "C" char* BdatTouchStringCell(char* base, char* entry, u32 len);
 extern "C" void func_801C3C14(CBgTex* self);
 extern "C" void CTitleAHelp_load(CTitleAHelp* self);
 extern "C" void addRenderCB__4CScnFP10IScnRenderUlUl(CScn* scn, IScnRender* render,
@@ -268,7 +268,7 @@ extern "C" void UI_CPassiveSkill_thunk28_68C38(u8* self);
 
 // +0x180 state-byte setter / pending-transition poller on the +0xB8 object.
 extern "C" void UI_CPassiveSkill_setByte180(u8* self, u8 value);
-extern "C" int func_8026DCA0(u8* self);
+extern "C" int CPassiveSkill_isSyswinOrLearned(u8* self);
 
 // Shared event-file byte + classic-controller query (retail unmangled).
 extern "C" u8 code80135FDC_getByte_64077();
@@ -296,16 +296,16 @@ extern "C" void func_801C414C(CTitleAHelp* self);
 extern "C" void func_801C4080(CTitleAHelp* self, nw4r::lyt::DrawInfo* drawInfo);
 
 // UI::CPassiveSkill helpers (first arg is the +0xB8 sub-object).
-extern "C" void func_8026D920(u8* self);
-extern "C" int func_8026D9AC(u8* self);
-extern "C" void func_8026DA4C(u8* self);
-extern "C" int func_8026D9F0(u8* self);
-extern "C" u8 func_8026DB74(u8* self);
-extern "C" void func_8026D8FC(u8* self, nw4r::lyt::DrawInfo* drawInfo);
+extern "C" void CPassiveSkill_teardown(u8* self);
+extern "C" int CPassiveSkill_getVisibleIfReady(u8* self);
+extern "C" void CPassiveSkill_open(u8* self);
+extern "C" int CPassiveSkill_getActiveIfBusy(u8* self);
+extern "C" u8 CPassiveSkill_pickOpenState(u8* self);
+extern "C" void CPassiveSkill_draw(u8* self, nw4r::lyt::DrawInfo* drawInfo);
 extern "C" void __dt__Q22UI13CPassiveSkillFv(u8* self, int flags);
-extern "C" int func_8026DA34(u8* self);
-extern "C" void func_8026DAD0(u8* self);
-extern "C" void func_8026DA88(u8* self);
+extern "C" int CPassiveSkill_cellAtLeast8(u8* self);
+extern "C" void CPassiveSkill_confirm(u8* self);
+extern "C" void CPassiveSkill_close(u8* self);
 
 // Destructor retail symbols / game-side CProcess D2 wrapper (CMainMenu.cpp).
 extern "C" void __dt__11CTitleAHelpFv(CTitleAHelp* self, int flags);
@@ -317,7 +317,7 @@ extern "C" void setPresentationFlag__Q22cf13CfGameManagerFv(u8 enable);
 extern "C" void playUISound__FUl(u32 op);
 
 // Scene-active gate + TaskGame queries used by cbRenderBefore.
-extern "C" int func_8013BE50();
+extern "C" int IsMenuState621F0();
 extern "C" void getInstance__9CTaskGameFv();
 extern "C" int isFlag01Set__9CTaskGameFv();
 

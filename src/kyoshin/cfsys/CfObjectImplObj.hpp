@@ -159,6 +159,6 @@ extern "C" {
 void func_800CA948(void* self);
 void func_800CAB00(CfObjectImplMoveObj* self);
 void func_8015BB3C(void* a, void* b, void* c);
-void func_80192E80(cf::CPartsChange* self, u8 r4, PartsChangeIf* obj);
+void CPartsChange_ResolveSlotNames(cf::CPartsChange* self, u8 r4, PartsChangeIf* obj);
 int atoi(const char* str);
 }

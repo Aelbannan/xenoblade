@@ -22,8 +22,8 @@ struct UiFlags {
 // does not mangle global variables).
 // ---------------------------------------------------------------------------
 
-// Opaque enum-list holder (func_80043D90 ctor / __dt__80043E88 dtor /
-// func_80043F18 accessor); the list it yields has an element count at +0x620.
+// Opaque enum-list holder (CTaskGame_enumListCtor ctor / __dt__80043E88 dtor /
+// CTaskGame_enumListGet accessor); the list it yields has an element count at +0x620.
 struct CfEnumListHolder {
     void* list;  // 0x0
     u32 handle;  // 0x4
@@ -71,7 +71,7 @@ extern const void* lbl_eu_80525D68[];
 extern u32 lbl_eu_806619A0;
 
 // Shared BDAT character-name table pointer (.sbss); resolved by
-// func_8013639C against lbl_eu_804FABF0 keys.
+// BdatGetPtrDirect against lbl_eu_804FABF0 keys.
 extern char* lbl_eu_80664090;
 
 // Sub-object hanging off the player at +0x3ED4 (real owner:
@@ -100,8 +100,8 @@ void func_8013E2E0(u32 a1, u32 a2, u32 a3, u32 a4, u32 a5, u32 a6, u32 a7,
 // Talk-window factory (window id, text, mode); used by winTalk.
 void func_8013D07C(u32 obj, const char* str, int mode);
 
-void func_80043D90(CfEnumListHolder* holder);
-CfEnumList* func_80043F18(CfEnumListHolder* holder);
+void CTaskGame_enumListCtor(CfEnumListHolder* holder);
+CfEnumList* CTaskGame_enumListGet(CfEnumListHolder* holder);
 void __dt__80043E88(CfEnumListHolder* holder, int tags);
 void func_800F4A98(void* list, int type, int value);
 void* func_800F6EC0(void* list, int index);
@@ -112,15 +112,15 @@ void func_8013DB6C(u32 first, u32 second, s32 third, s32 fourth);
 int func_8009CF8C(int index);
 void func_8009D018(int index, int value);
 // Copies an entry out of a script string table into the given buffer.
-char* func_80136190(char* buf, const char* table, int index);
+char* BdatTouchStringCell(char* buf, const char* table, int index);
 // BDAT row-name lookup: resolve key row in the character table.
-char* func_8013639C(const void* tbl, const void* key, int id);
+char* BdatGetPtrDirect(const void* tbl, const void* key, int id);
 // Open a party-talk window over an existing message box.
 void func_8013D688(char* msg, char* name, int c, int d);
 // Talk-state probe (window manager): nonzero when a talk is active.
 int func_8013EB90(int v);
 // SE-talk voice busy probe (code80135FDC split unit).
-int func_eu_8013C8F4();
+int MenuStateCheck64064or30();
 // Player accessor on the game manager (retail mangled global).
 void* getPlayer__Q22cf13CfGameManagerFi(int index);
 // Start/queue a party-chat line on the battle sub-object.
@@ -188,7 +188,7 @@ void func_8013DF44(int a, int b, int c);
 void func_8009ECD0(int id);
 // Character-table row count / keyed lookup helpers (setLastTalkNpc).
 int func_8003B1EC(char* tbl);
-u32 func_80136254(char* tbl, const char* key, int idx);
+u32 BdatGetU16Direct(char* tbl, const char* key, int idx);
 // Character-table object used by setLastTalkNpc (.sbss pointer).
 extern char* lbl_eu_80664098;
 

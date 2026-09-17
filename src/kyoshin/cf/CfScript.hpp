@@ -23,9 +23,9 @@ extern "C" {
     void vmExec();
     void vmUnlink(void* ctx);
     void pluginRegist__Fv();
-    void* func_800A82BC();
-    void* func_800A837C();
-    void* func_800A843C();
+    void* KyoshinHeap_GetFieldA0();
+    void* KyoshinHeap_GetFieldA4();
+    void* KyoshinHeap_GetFieldA8();
     void* CfRes_readCommonArchive(void* fileHandle, const char* path, void* callback);
     int getFileSize__11CDeviceFileFPCc(const char* path, int flags);
     void cancel__11CDeviceFileFP11CFileHandle(void* fileHandle);

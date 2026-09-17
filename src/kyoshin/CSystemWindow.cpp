@@ -159,7 +159,7 @@ void CSystemWindow::Move() {
     //  B -> beq continue / b exit)
     if (CTaskGame::getInstance()->isFlag01Set() || (lbl_eu_80663E28 & 0x200000))
         return;
-    if (func_8013BE50() == 0) return;
+    if (IsMenuState621F0() == 0) return;
 
     switch (mState) {
     case 0: {
@@ -210,7 +210,7 @@ void CSystemWindow::cbRenderBefore() {
     CTaskGame::getInstance();
     if (CTaskGame::isFlag01Set() || (lbl_eu_80663E28 & 0x200000))
         return;
-    if (func_8013BE50() == 0)
+    if (IsMenuState621F0() == 0)
         return;
     GXSetZMode(GX_FALSE, GX_NEVER, GX_FALSE);
     // Raw-storage DrawInfo built/destroyed via C-ABI pre-mangled ct/dt calls to

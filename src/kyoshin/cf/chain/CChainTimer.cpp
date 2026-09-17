@@ -96,12 +96,12 @@ void func_8027D20C(cf::CChainState* self) {
     f32 dst[3];
     // False arm yields the same value as the true arm when field_4 is null,
     // so MWCC folds the ternary to the retail conditional-addi form.
-    if (func_800B8920(self->field_4 ? &self->field_4->mSub
+    if (lookupWorkAtAddr(self->field_4 ? &self->field_4->mSub
                                     : (cf::CChainVoiceSub*)self->field_4) == 0) {
         self->field_4 = 0;
         changed = 1;
     }
-    if (func_800B8920(self->field_8 ? &self->field_8->mSub
+    if (lookupWorkAtAddr(self->field_8 ? &self->field_8->mSub
                                     : (cf::CChainVoiceSub*)self->field_8) == 0) {
         self->field_8 = 0;
         changed = 1;
@@ -414,7 +414,7 @@ int func_8027DE44(cf::CChainState* self, cf::CChainBattleObj* p1,
         // NOTE (wall class 13): retail keeps the two standalone cmplwi
         // compares (cmplwi 1/blt + cmplwi 0x18/bgt); every Wii/1.1 spelling
         // tried so far folds to addi/rlwinm/cmpli ((u8)(v-1)<=0x17) - see
-        // func_800B67CC / func_8007560C notes. Needs the configure.py
+        // isTypeId1to24 / func_8007560C notes. Needs the configure.py
         // per-unit version split; switching this TU regresses its 5
         // Wii/1.1 FULL_MATCHes.
         // Retail calls the singleton getter once per gate (reload into r3).
@@ -423,7 +423,7 @@ int func_8027DE44(cf::CChainState* self, cf::CChainBattleObj* p1,
         // Battle-phase gate: phases 1..0x18 block chain starts.
         // NOTE (wall class 13): retail keeps two standalone cmplwi compares;
         // Wii/1.1 folds every spelling tried to addi/rlwinm/cmpli — needs the
-        // configure.py GC-version split (cf. func_800B67CC notes).
+        // configure.py GC-version split (cf. isTypeId1to24 notes).
         int inRange = 0;
         if (v >= 1) {
             if (v <= 0x18)

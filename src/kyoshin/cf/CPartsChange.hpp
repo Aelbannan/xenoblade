@@ -31,11 +31,11 @@ struct CfPartyInfo {
     /* 0x2D */ u8 field_2D;
     /* 0x2E */ u8 field_2E;
 
-    void func_80195AFC(u8 val);
+    void SetField2D(u8 val);
     void func_80198710(void* r4, float f1, int r5, int r6, float f2, float f3);
 };
 
-// Comparator key struct for func_8019641C
+// Comparator key struct for CompareSortKey
 struct CfPartyInfoSortKey {
     /* 0x00 */ u32 field_00;
     /* 0x04 */ f32 sortKey;
@@ -54,13 +54,13 @@ struct CfActorAccessors {
     u8 pad_98[6];
     /* 0x9E */ u16 mField9E;
 
-    void func_80193A88(int enable);
-    u32 func_80193B04();
-    u16 func_80193CC8();
-    u32 func_80195284();
-    u32 func_80195AC0();
-    void func_80195ACC(float val);
-    void* func_80195AEC();
+    void SetFlag400(int enable);
+    u32 GetField94();
+    u16 GetField9E();
+    u32 TestFlag400();
+    u32 TestFlag8();
+    void SetField8C(float val);
+    void* GetField30();
 };
 
 // Wrapper for CfObjectPc fields at 0x45C4+
@@ -70,10 +70,10 @@ struct CfObjectPcExt {
     /* 0x45C6 */ u16 mField45C6;
     /* 0x45C8 */ u16 mField45C8;
 
-    void func_80195AD4(u16 val);
-    void func_80195ADC(u16 val);
-    u16 func_80195AE4();
-    void* func_80195AF4();
+    void SetField45C4(u16 val);
+    void SetField45C8(u16 val);
+    u16 GetField45C6();
+    void* GetField60C();
 };
 
 } // namespace cf

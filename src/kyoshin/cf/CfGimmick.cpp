@@ -548,7 +548,7 @@ int func_802098EC(u32 mask, CfGimmick* gimmick, const CfGimmickVec3* point,
 
     if (mask & 0x00C00000UL) {
         // Fight-list scan, then optionally the player scan.
-        CfGimmickList* list = func_800B6BC8();
+        CfGimmickList* list = getReslistB48();
         CfGimmickListNode* n = list->head->next;
         while (n != list->head) {
             CfGimmickVec3* target = (CfGimmickVec3*)((cf::CfObject*)n->object)->CfObject_getPosVector();
@@ -610,7 +610,7 @@ int func_802098EC(u32 mask, CfGimmick* gimmick, const CfGimmickVec3* point,
 
     // No fight-list flag: enemy list first, then the player scan.
     if (lbl_eu_806646BC & 4) {
-        CfGimmickList* list = func_800B6BEC();
+        CfGimmickList* list = getReslistB68();
         CfGimmickListNode* n = list->head->next;
         while (n != list->head) {
             CfGimmickVec3* target = (CfGimmickVec3*)((cf::CfObject*)n->object)->CfObject_getPosVector();
@@ -725,7 +725,7 @@ void func_8020A124(float value) {
                 // +0x168 = CfObject_syncModelRate (CfObjectMove
                 // implicitly overrides the slot, so no view cast is needed).
                 player->CfObject_syncModelRate(zero);
-                func_800BC3D8(player, value);
+                CfObjectMove_setMoveSpeed(player, value);
             } else {
                 player->CfObject_syncModelRate(lbl_eu_80668358);
             }
@@ -741,7 +741,7 @@ void func_8020A1DC(float value) {
             if (value != zero) {
                 // Same +0x168 slot as func_8020A124 (no view cast needed).
                 player->CfObject_syncModelRate(lbl_eu_80668358);
-                func_800BC3B0(player, value);
+                CfObjectMove_setMoveSpeedGated(player, value);
             } else {
                 player->CfObject_syncModelRate(zero);
             }
@@ -752,7 +752,7 @@ void func_8020A1DC(float value) {
 // Scans the fight list for a player whose (id >> 4) matches playerId and is
 // still alive (vtable +0x128 HP query > 0); returns 0 in that case.
 int func_8020A294(u32 playerId) {
-    CfGimmickList* list = func_800B6BC8();
+    CfGimmickList* list = getReslistB48();
     CfGimmickListNode* node = list->head->next;
     int result = 1;
     float zero = lbl_eu_80668350;

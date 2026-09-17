@@ -118,7 +118,7 @@ void CMenuItemExchange::Init() {
     // copy -> destroy, then load.
     u8 tmpTitleRaw[0x38];
     __ct__CTitleAHelp(reinterpret_cast<CTitleAHelp*>(tmpTitleRaw),
-                      func_80136190(lbl_eu_80505324, lbl_eu_80505324 + 9, 0x1a), 0);
+                      BdatTouchStringCell(lbl_eu_80505324, lbl_eu_80505324 + 9, 0x1a), 0);
     func_801BE16C(&mTitleAHelp, reinterpret_cast<CTitleAHelp*>(tmpTitleRaw));
     __dt__11CTitleAHelpFv(reinterpret_cast<CTitleAHelp*>(tmpTitleRaw), -1);
 
@@ -152,7 +152,7 @@ void CMenuItemExchange::Init() {
     func_801BE590(&mItemBoxGrid, reinterpret_cast<CItemBoxGrid*>(tmpGridRaw));
     __dt__12CItemBoxGridFv(reinterpret_cast<CItemBoxGrid*>(tmpGridRaw), -1);
 
-    func_801CB480(&mItemBoxGrid);
+    ClearListSlots(&mItemBoxGrid);
     PushToList(&mItemBoxGrid, 0xb);
     PushToList(&mItemBoxGrid, 0xa);
 
@@ -293,7 +293,7 @@ extern "C" void waitForDrawDone__9CDeviceVIFv();
 extern "C" void func_801C3D9C(void*);
 extern "C" void func_801C40A0(void*);
 extern "C" void func_801ED618(void*);
-extern "C" void func_801CAE9C(void*);
+extern "C" void UnloadItemBox(void*);
 extern u32 lbl_eu_80664428;
 
 // Detach the render callback, tear down the embedded widgets, clear the
@@ -306,7 +306,7 @@ void CMenuItemExchange::Term() {
     func_801C3D9C(&mBgTex);
     func_801C40A0(&mTitleAHelp);
     func_801ED618(&mItemBoxLine[0]);
-    func_801CAE9C(&mItemBoxGrid);
+    UnloadItemBox(&mItemBoxGrid);
     lbl_eu_80664428 = 0;
     setPresentationFlag__Q22cf13CfGameManagerFv(0);
 }
@@ -354,7 +354,7 @@ body:
     }
     func_801C3D54(&mBgTex);
     func_801ED3E8(reinterpret_cast<CItemBoxLine*>(mItemBoxLine));
-    func_801CABC8(&mItemBoxGrid);
+    UpdateItemBox(&mItemBoxGrid);
     func_801C3FF0(&mTitleAHelp);
 }
 
@@ -374,7 +374,7 @@ void CMenuItemExchange::cbRenderBefore() {
 end:
     return;
 body:
-    if (func_8013BE50() != 0) {
+    if (IsMenuState621F0() != 0) {
         GXSetZMode(GX_FALSE, GX_NEVER, GX_FALSE);
         // Raw-storage DrawInfo built/destroyed via pre-mangled ct/dt calls
         // (a C++ local would virtual-dispatch its scope-exit dtor).
@@ -384,7 +384,7 @@ body:
         func_801C3D7C(&mBgTex, reinterpret_cast<nw4r::lyt::DrawInfo*>(&drawInfo[0]));
         func_801ED4FC(reinterpret_cast<CItemBoxLine*>(mItemBoxLine),
                       reinterpret_cast<nw4r::lyt::DrawInfo*>(&drawInfo[0]));
-        func_801CAD8C(&mItemBoxGrid, reinterpret_cast<nw4r::lyt::DrawInfo*>(&drawInfo[0]));
+        DrawItemBoxGrid(&mItemBoxGrid, reinterpret_cast<nw4r::lyt::DrawInfo*>(&drawInfo[0]));
         func_801C4080(&mTitleAHelp, reinterpret_cast<nw4r::lyt::DrawInfo*>(&drawInfo[0]));
         __dt__Q34nw4r3lyt8DrawInfoFv(reinterpret_cast<nw4r::lyt::DrawInfo*>(&drawInfo[0]), -1);
     }
@@ -425,7 +425,7 @@ __declspec(noinline) void func_801BEE74(CMenuItemExchange* self) {
         func_801ED774(reinterpret_cast<CItemBoxLine*>(self->mItemBoxLine)) != 0) {
         func_801C412C(&self->mTitleAHelp);
         func_801ED864(reinterpret_cast<CItemBoxLine*>(self->mItemBoxLine));
-        func_801CAA6C(&self->mItemBoxGrid);
+        LoadItemBoxFiles(&self->mItemBoxGrid);
         self->field_5118 = 1;
         playUISound__FUl(0x6d);
     }
@@ -458,12 +458,12 @@ __declspec(noinline) void func_801BF2E8(CMenuItemExchange* self) {
 __declspec(noinline) void func_801BF348(CMenuItemExchange* self) {
     if (isIdle__11CTitleAHelpFv(&self->mTitleAHelp) != 0 &&
         func_801ED800(reinterpret_cast<CItemBoxLine*>(self->mItemBoxLine)) != 0 &&
-        func_801CB038(&self->mItemBoxGrid) != 0) {
+        IsItemBoxReady(&self->mItemBoxGrid) != 0) {
         self->mFloat5120 = self->mFloat5120 + lbl_eu_80667E7C;
         if (!(self->mFloat5120 <= lbl_eu_80667E7C)) {
             self->mFloat5120 = lbl_eu_80667E78;
-            func_801C41E8(&self->mTitleAHelp, func_801CDFB4(&self->mItemBoxGrid));
-            func_801CDB94(&self->mItemBoxGrid,
+            func_801C41E8(&self->mTitleAHelp, GetPromptState(&self->mItemBoxGrid));
+            SetInfoMsgId(&self->mItemBoxGrid,
                           func_801EECC8(reinterpret_cast<CItemBoxLine*>(self->mItemBoxLine)));
             func_801C416C(&self->mTitleAHelp);
             func_801CB28C(&self->mItemBoxGrid);
@@ -507,12 +507,12 @@ __declspec(noinline) void func_801BF464(CMenuItemExchange* self) {
     if (up != 0) {
         func_801CCAF0(&self->mItemBoxGrid);
     } else if (down != 0) {
-        if (func_801CB0FC(&self->mItemBoxGrid) != 0) {
-            func_801CC7B0(&self->mItemBoxGrid, 0);
-        } else if (func_801CDBE0(&self->mItemBoxGrid) == 0 &&
-                   func_801CB1E4(&self->mItemBoxGrid) == 0) {
+        if (IsItemBoxActive(&self->mItemBoxGrid) != 0) {
+            HandleCancelBtn(&self->mItemBoxGrid, 0);
+        } else if (GetExchFlag52C(&self->mItemBoxGrid) == 0 &&
+                   IsSubWinActive(&self->mItemBoxGrid) == 0) {
             func_801C4198(&self->mTitleAHelp);
-            func_801CB38C(&self->mItemBoxGrid);
+            AdvanceBoxState(&self->mItemBoxGrid);
             self->field_5118 = 7;
         }
     } else if (turboCancel != 0) {
@@ -524,22 +524,22 @@ __declspec(noinline) void func_801BF464(CMenuItemExchange* self) {
     } else if (decide != 0) {
         func_801CC0EC(&self->mItemBoxGrid);
     } else if (leftTrigger != 0) {
-        func_801CC5DC(&self->mItemBoxGrid);
+        OpenSortMenu(&self->mItemBoxGrid);
     } else if (yHeld != 0) {
-        func_801CDEE8(&self->mItemBoxGrid);
+        SelectCatRow(&self->mItemBoxGrid);
     }
 
     // Help bar follows the grid's current mode.
-    func_801C41E8(&self->mTitleAHelp, func_801CDFB4(&self->mItemBoxGrid));
-    if (func_801CDBE0(&self->mItemBoxGrid) != 0) {
+    func_801C41E8(&self->mTitleAHelp, GetPromptState(&self->mItemBoxGrid));
+    if (GetExchFlag52C(&self->mItemBoxGrid) != 0) {
         lbl_eu_8066442C = GetField52D(&self->mItemBoxGrid);
         func_801C414C(&self->mTitleAHelp);
-        func_801CB38C(&self->mItemBoxGrid);
+        AdvanceBoxState(&self->mItemBoxGrid);
         self->field_5118 = 3;
     }
-    if (func_801CB184(&self->mItemBoxGrid) != 0) {
+    if (GetIdleFlag542(&self->mItemBoxGrid) != 0) {
         func_801C4198(&self->mTitleAHelp);
-        func_801CB38C(&self->mItemBoxGrid);
+        AdvanceBoxState(&self->mItemBoxGrid);
         self->field_5118 = 7;
     }
 }

@@ -39,8 +39,8 @@ extern "C" {
     // to satisfy the no_void_ptr lint rule while keeping C linkage.
     void* func_8009EC9C(u32 index);
     void func_800A18A4(cf::CfObjectActor*, int);
-    cf::CfObjectActor* func_800B8B94(int);
-    cf::CfObjectActor* func_800B8C78(int);
+    cf::CfObjectActor* findObjB28ById(int);
+    cf::CfObjectActor* findObjB48ById(int);
     void func_800F3958(cf::CBattleManager*, cf::CfObjectActor*, int);
     void func_800EC8FC(cf::CBattleManager*, cf::CfObjectActor*,
                       cf::CBattleStateEntry*, int);
@@ -82,12 +82,12 @@ using namespace cf;
 
 /// Script command: return the current HP of a player character (PC) actor,
 /// ceiled and converted to int. The actor is resolved by id (arg 2) via
-/// func_800B8B94 (pc list lookup); the HP value comes from the CActorParam
+/// findObjB28ById (pc list lookup); the HP value comes from the CActorParam
 /// virtual at vtable+0x128 (CActorParam_getHp, float in f1). On
 /// miss, returns -1.
 extern "C" int getPcHp(VMThread* pThread) {
     int id = vmArgIntGet(2, vmArgPtrGet(pThread, 1));
-    cf::CfObjectActor* actor = func_800B8B94(id);
+    cf::CfObjectActor* actor = findObjB28ById(id);
     VMArg result;
     if (actor != nullptr) {
         // Dispatch the CActorParam vtable slot at 0x128
@@ -106,14 +106,14 @@ extern "C" int getPcHp(VMThread* pThread) {
 }
 
 /// Script command: return the current HP rate (%) of a player character (PC)
-/// actor. Resolves the actor by id (arg 2) via func_800B8B94 (pc list
+/// actor. Resolves the actor by id (arg 2) via findObjB28ById (pc list
 /// lookup), then reads the max-HP value (vtable+0x12C,
 /// CActorParam_getDamageScale) and current-HP value (vtable+0x128,
 /// CActorParam_getHp) from the CActorParam vtable, computing
 /// `ceil(100.0f * (cur / max))`. On miss, returns -1.
 int getPcHpRate(VMThread* pThread) {
     int id = vmArgIntGet(2, vmArgPtrGet(pThread, 1));
-    CActorParam* actor = reinterpret_cast<CActorParam*>(func_800B8B94(id));
+    CActorParam* actor = reinterpret_cast<CActorParam*>(findObjB28ById(id));
     VMArg result;
     if (actor != nullptr) {
         result.type = VM_TYPE_INT;
@@ -135,10 +135,10 @@ int getPcHpRate(VMThread* pThread) {
 
 /// Script command: return the current HP of an enemy (ENE) actor, ceiled
 /// and converted to int. Mirrors getPcHp but resolves the actor via
-/// func_800B8C78 (ene list lookup).
+/// findObjB48ById (ene list lookup).
 extern "C" int getEneHp(VMThread* pThread) {
     int id = vmArgIntGet(2, vmArgPtrGet(pThread, 1));
-    cf::CfObjectActor* actor = func_800B8C78(id);
+    cf::CfObjectActor* actor = findObjB48ById(id);
     VMArg result;
     if (actor != nullptr) {
         CActorParam* obj = reinterpret_cast<CActorParam*>(actor);
@@ -155,11 +155,11 @@ extern "C" int getEneHp(VMThread* pThread) {
 }
 
 /// Script command: return the current HP rate (%) of an enemy (ENE) actor.
-/// Mirrors getPcHpRate but resolves the actor via func_800B8C78 (ene list
+/// Mirrors getPcHpRate but resolves the actor via findObjB48ById (ene list
 /// lookup). On miss, returns -1.
 int getEneHpRate(VMThread* pThread) {
     int id = vmArgIntGet(2, vmArgPtrGet(pThread, 1));
-    CActorParam* actor = reinterpret_cast<CActorParam*>(func_800B8C78(id));
+    CActorParam* actor = reinterpret_cast<CActorParam*>(findObjB48ById(id));
     VMArg result;
     if (actor != nullptr) {
         result.type = VM_TYPE_INT;
@@ -185,7 +185,7 @@ int onPcArtsAttack(VMThread* pThread) {
     int id = vmArgIntGet(2, vmArgPtrGet(pThread, 1));
     int artsType = vmArgIntGet(3, vmArgPtrGet(pThread, 2));
 
-    cf::CfObjectActor* actor = func_800B8B94(id);
+    cf::CfObjectActor* actor = findObjB28ById(id);
 
     VMArg result;
     result.type = VM_TYPE_INT;
@@ -240,7 +240,7 @@ int onPcArtsAttack(VMThread* pThread) {
 }
 
 /// Script command: set a battle-state entry on an enemy actor. Resolves the
-/// actor by id (arg 2) via func_800B8C78 (ENE list lookup), then populates a
+/// actor by id (arg 2) via findObjB48ById (ENE list lookup), then populates a
 /// CBattleStateEntry struct from the remaining optional arguments and
 /// dispatches it to CBattleManager::func_800EC8FC.
 int setEneBtlState(VMThread* pThread) {
@@ -269,7 +269,7 @@ int setEneBtlState(VMThread* pThread) {
         nextIdx++;
     }
 
-    cf::CfObjectActor* actor = func_800B8C78(id);
+    cf::CfObjectActor* actor = findObjB48ById(id);
     if (actor == nullptr) {
         return 0;
     }
@@ -291,7 +291,7 @@ int setEneBtlState(VMThread* pThread) {
 
 /// Script command: check whether the enemy actor with the given id is
 /// performing an arts attack matching the given arts type. Mirrors
-/// onPcArtsAttack but resolves the actor via func_800B8C78 (ENE list lookup)
+/// onPcArtsAttack but resolves the actor via findObjB48ById (ENE list lookup)
 /// and includes extra mode-based logic that checks the battle manager's
 /// current target.
 int onEneArtsAttack(VMThread* pThread) {
@@ -304,7 +304,7 @@ int onEneArtsAttack(VMThread* pThread) {
         mode = vmArgIntGet(4, vmArgPtrGet(pThread, 3));
     }
 
-    cf::CfObjectActor* actor = func_800B8C78(id);
+    cf::CfObjectActor* actor = findObjB48ById(id);
 
     VMArg result;
     result.type = VM_TYPE_INT;
@@ -393,7 +393,7 @@ int onEneArtsAttack(VMThread* pThread) {
 }
 
 /// Script command: set a battle-state entry on a player character actor.
-/// Resolves the actor by id (arg 2) via func_800B8B94 (PC list lookup),
+/// Resolves the actor by id (arg 2) via findObjB28ById (PC list lookup),
 /// then populates a CBattleStateEntry struct and dispatches it to
 /// CBattleManager::func_800EC8FC. When state == 0xce, the unk18 field is
 /// forced to 0xa.
@@ -424,7 +424,7 @@ int setPcBtlState(VMThread* pThread) {
         nextIdx++;
     }
 
-    cf::CfObjectActor* actor = func_800B8B94(id);
+    cf::CfObjectActor* actor = findObjB28ById(id);
     if (actor == nullptr) {
         return 0;
     }
@@ -456,12 +456,12 @@ int setPcBtlState(VMThread* pThread) {
 // Script command: clear a battle-state flag on an enemy actor. Resolves the
 // actor by id (arg 2) and, if the actor exists, dispatches the clear to the
 // battle manager's virtual at +0x20 via func_800F3958 with a second id (arg 3).
-// Mirror of clearPcBtlState but uses func_800B8C78 (ene list lookup) instead
-// of func_800B8B94 (pc list lookup).
+// Mirror of clearPcBtlState but uses findObjB48ById (ene list lookup) instead
+// of findObjB28ById (pc list lookup).
 extern "C" int clearEneBtlState(VMThread* pThread) {
     int id1 = vmArgIntGet(2, vmArgPtrGet(pThread, 1));
     int id2 = vmArgIntGet(3, vmArgPtrGet(pThread, 2));
-    cf::CfObjectActor* actor = func_800B8C78(id1);
+    cf::CfObjectActor* actor = findObjB48ById(id1);
     if (actor != nullptr) {
         cf::CBattleManager* bm = cf::CBattleManager::getInstance();
         func_800F3958(bm, actor, id2);
@@ -471,7 +471,7 @@ extern "C" int clearEneBtlState(VMThread* pThread) {
 
 // Script command: synchronize two enemy actors by copying a 4-byte field
 // from one resolved ene to another. The resolved enes are looked up by id
-// (arg 2 = destination, arg 3 = source) via func_800B8C78. The copy
+// (arg 2 = destination, arg 3 = source) via findObjB48ById. The copy
 // `*(u32*)((u8*)dest + 0x45B8) = *(u32*)((u8*)src + 0x3F10)` runs only
 // when both lookups succeed. The (u8*)obj + literal pattern matches the
 // established CBattleState access for deep fields past CfObjectModel /
@@ -479,8 +479,8 @@ extern "C" int clearEneBtlState(VMThread* pThread) {
 extern "C" int synchro(VMThread* pThread) {
     int id1 = vmArgIntGet(2, vmArgPtrGet(pThread, 1));
     int id2 = vmArgIntGet(3, vmArgPtrGet(pThread, 2));
-    cf::CfObjectActor* dest = func_800B8C78(id1);
-    cf::CfObjectActor* src = func_800B8C78(id2);
+    cf::CfObjectActor* dest = findObjB48ById(id1);
+    cf::CfObjectActor* src = findObjB48ById(id2);
     if (dest != nullptr && src != nullptr) {
         u32 val = *reinterpret_cast<const u32*>(
             reinterpret_cast<const u8*>(src) + 0x3F10);
@@ -515,7 +515,7 @@ extern "C" int learnArts(VMThread* pThread) {
 extern "C" int clearPcBtlState(VMThread* pThread) {
     int id1 = vmArgIntGet(2, vmArgPtrGet(pThread, 1));
     int id2 = vmArgIntGet(3, vmArgPtrGet(pThread, 2));
-    cf::CfObjectActor* actor = func_800B8B94(id1);
+    cf::CfObjectActor* actor = findObjB28ById(id1);
     if (actor != nullptr) {
         cf::CBattleManager* bm = cf::CBattleManager::getInstance();
         func_800F3958(bm, actor, id2);

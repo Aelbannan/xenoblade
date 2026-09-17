@@ -23,7 +23,7 @@
 extern "C" u32 func_801380A0(u16);
 extern "C" u8 func_8009CF8C(u32);
 extern "C" u32 func_80138138(u16);
-extern "C" u32 func_801361E8(u32, const char*, u32);
+extern "C" u32 BdatGetU8Direct(u32, const char*, u32);
 extern "C" int func_80138574(void*, u32);
 // Naturally-mangled retail import (findObjectById__Fi).
 void* findObjectById(int id);
@@ -32,14 +32,14 @@ extern u32 lbl_eu_8052CCA8[];
 extern u32 lbl_eu_80573D18[];
 extern "C" void deleteRegion__17UnkClass_8045F564Fv(void* region);
 // Flat retail helper imports for the timer/list walkers and layout glue.
-extern "C" void* func_800B6BEC();
-extern "C" void* func_800B6C58();
+extern "C" void* getReslistB68();
+extern "C" void* getReslistBC8();
 // Scene pose block comes from the typed view in the header
 // (ScnXformBlock, returned by func_80496264).
 extern "C" int func_8013A4B4(void* anchor, void* extent, void* pos);
-extern "C" void func_80136B4C(nw4r::lyt::Layout*, char*, char*, u32);
-extern "C" void func_80137E7C(nw4r::lyt::Layout*, const char*);
-extern "C" char* func_8013639C(void*, const char*, u32);
+extern "C" void LayoutSetTextBoxFmtValue(nw4r::lyt::Layout*, char*, char*, u32);
+extern "C" void PaneSetTexPaletteByName(nw4r::lyt::Layout*, const char*);
+extern "C" char* BdatGetPtrDirect(void*, const char*, u32);
 extern "C" nw4r::lyt::ArcResourceAccessor* func_801355F4();
 extern "C" void* func_801355BC();
 extern "C" void* getPackedFont();
@@ -91,7 +91,7 @@ extern "C" int func_8011D338(u32 regionBase) {
                 check = 1;
             }
             if (check != 0 &&
-                (u8)func_801361E8(tbl[func_80138138((u16)id)],
+                (u8)BdatGetU8Direct(tbl[func_80138138((u16)id)],
                                   str + 0x2f, (u16)id) == 1) {
                 return 1;
             }
@@ -103,7 +103,7 @@ extern "C" int func_8011D338(u32 regionBase) {
 // Render-gate globals/callees (declared locally to avoid header conflicts).
 extern "C" void* getInstance__9CTaskGameFv();
 extern "C" void* isFlag01Set__9CTaskGameFv(void* self);
-extern "C" int func_8013BE50();
+extern "C" int IsMenuState621F0();
 struct CMenuGimmickGlobal { u8 mPad[0x214]; u32 field_214; };
 extern "C" CMenuGimmickGlobal* getUnk80664658();
 extern u32 lbl_eu_80663E28;
@@ -462,7 +462,7 @@ void CMenuSymbolMark::Move() {
     if (mArchiveFP == 0) {
         return;
     }
-    if (func_8013BE50() == 0) {
+    if (IsMenuState621F0() == 0) {
         return;
     }
     // Raw-word scratch copied into the reset entries (uninitialized stack
@@ -512,7 +512,7 @@ void CMenuSymbolMark::Move() {
 
 // ---------- CMenuSymbolMark::cbRenderBefore ----------
 // Render gate chain: task instance check, window flag (bit 0x4000), archive
-// pointer, scene gate (func_8013BE50), view flag (bit 0x800), syswin flag
+// pointer, scene gate (IsMenuState621F0), view flag (bit 0x800), syswin flag
 // (0xAFA4 mask), entry count, then render all visible entries through a
 // DrawInfo.
 void CMenuSymbolMark::cbRenderBefore() {
@@ -525,7 +525,7 @@ void CMenuSymbolMark::cbRenderBefore() {
     return;
 cont:
     if (mArchiveFP == 0) return;
-    if (func_8013BE50() == 0) return;
+    if (IsMenuState621F0() == 0) return;
     if (getUnk80664658()->field_214 & 0x100000) return;
     if (lbl_eu_80663E24 & 0xAFA40000) return;
     if (mEntryCount == 0) return;
@@ -598,7 +598,7 @@ extern "C" void func_8011E540(CMenuSymbolMark* self, u32 id, Vec* pos, void* arg
             // State gate reads a separate global; the tracked layout pointer
             // (item->state70) feeds both tail calls directly.
             if (lbl_eu_80664184 == 0x1a) {
-                func_80136B4C((nw4r::lyt::Layout*)item->state70, (char*)S + 0x14,
+                LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)item->state70, (char*)S + 0x14,
                               (char*)S + 0x1b, 0);
                 return;
             }
@@ -615,13 +615,13 @@ extern "C" void func_8011E540(CMenuSymbolMark* self, u32 id, Vec* pos, void* arg
                   (EntryInputPos*)argC, argE);
     // String pool base materialized again only after the projection helper.
     const char* S = (const char*)&lbl_eu_804FE720[0];
-    char* markerName = func_8013639C(self->mAnotherFP, S + 0x7b, id);
+    char* markerName = BdatGetPtrDirect(self->mAnotherFP, S + 0x7b, id);
     ml::FixStr<32> name;
     name.format(S + 0x86, markerName);
     nw4r::lyt::ArcResourceAccessor* acc = (nw4r::lyt::ArcResourceAccessor*)func_801355F4();
     if (acc->GetResource(0x74696d67 /* "timg" */,
                   (const char*)name.c_str(), 0) != 0) {
-        func_80137E7C((nw4r::lyt::Layout*)entry->layout, S + 0x8d);
+        PaneSetTexPaletteByName((nw4r::lyt::Layout*)entry->layout, S + 0x8d);
     }
     entry->unk00 = id;
     entry->flag0 = 1;
@@ -774,7 +774,7 @@ extern "C" void func_8011EBA8(CMenuSymbolMark* self) {
         if (func_80138574(archive, id) == 0) {
             continue;
         }
-        if ((u8)func_801361E8((u32)archive, names + 0x96, id) == 0) {
+        if ((u8)BdatGetU8Direct((u32)archive, names + 0x96, id) == 0) {
             continue;
         }
         u32 n = self->mField_498;
@@ -790,7 +790,7 @@ extern "C" void func_8011EBA8(CMenuSymbolMark* self) {
 // ---------- func_8011EC94 ----------
 // Timer tick over mField_6A4/mField_6A0; once the threshold passes it resets,
 // zeroes the id array and rebuilds it from the marker list returned by
-// func_800B6BEC.
+// getReslistB68.
 extern "C" void func_8011EC94(CMenuSymbolMark* self) {
     // Global loaded before the object field to match MWCC's operand order.
     f32 t = self->mField_6A4 + lbl_eu_806670E8;
@@ -812,7 +812,7 @@ extern "C" void func_8011EC94(CMenuSymbolMark* self) {
     if (cf::CfGameManager::getPlayer(0) == 0) {
         return;
     }
-    CfObjList* list = (CfObjList*)func_800B6BEC();
+    CfObjList* list = (CfObjList*)getReslistB68();
     for (CfObjListNode* node = list->sentinel->next; node != list->sentinel;
          node = node->next) {
         CfMarkerFields* obj = (CfMarkerFields*)node->object;
@@ -831,7 +831,7 @@ extern "C" void func_8011EC94(CMenuSymbolMark* self) {
 
 // ---------- func_8011EDDC ----------
 // Same timer shape as func_8011EC94 but over the second array pair; rebuilds
-// from the func_800B6C58 list, keeping only objects whose +0x64 flags carry
+// from the getReslistBC8 list, keeping only objects whose +0x64 flags carry
 // bit 0x10000 or 0x20000 and whose measured position lands inside the scene
 // bounds box tested by func_8013A4B4.
 extern "C" void func_8011EDDC(CMenuSymbolMark* self) {
@@ -849,7 +849,7 @@ extern "C" void func_8011EDDC(CMenuSymbolMark* self) {
     if (cf::CfGameManager::getPlayer(0) == 0) {
         return;
     }
-    CfObjList* list = (CfObjList*)func_800B6C58();
+    CfObjList* list = (CfObjList*)getReslistBC8();
     Vec* pos;
     for (CfObjListNode* node = list->sentinel->next; node != list->sentinel;
          node = node->next) {
@@ -939,16 +939,16 @@ extern "C" void func_8011EFB0(CMenuSymbolMark* self) {
     }
     // Only when the current map id matches the archive row for this kind.
     u8 curMap = (u8)lbl_eu_80664184;
-    if ((u8)func_801361E8((u32)self->mSomeFP, S + 0x9B, kind) != curMap) {
+    if ((u8)BdatGetU8Direct((u32)self->mSomeFP, S + 0x9B, kind) != curMap) {
         return;
     }
-    u32 sw = func_801361E8((u32)self->mSomeFP, S + 0x96, kind);
-    u32 meas = func_80136254((const void*)self->mSomeFP, S + 0x9F, kind);
+    u32 sw = BdatGetU8Direct((u32)self->mSomeFP, S + 0x96, kind);
+    u32 meas = BdatGetU16Direct((const void*)self->mSomeFP, S + 0x9F, kind);
     switch ((u8)sw) {
     case 1: {
         // Live-marker list: first actor without an owned slot claims one and
         // adds a kind-7 mark.
-        CfObjList* list = (CfObjList*)func_800B6CF8(sw);
+        CfObjList* list = (CfObjList*)prepareReslistArg(sw);
         for (CfObjListNode* node = list->sentinel->next;
              node != list->sentinel; node = node->next) {
             cf::CfObject* actorV = (cf::CfObject*)node->object;
@@ -980,7 +980,7 @@ extern "C" void func_8011EFB0(CMenuSymbolMark* self) {
         }
         // Scene menu table: scan fixed rows for a matching measured id; the
         // matched row itself feeds the mark position and anchor snapshot.
-        SceneMenuTable* tbl = (SceneMenuTable*)func_80193804();
+        SceneMenuTable* tbl = (SceneMenuTable*)CPartsChange_GetLandmarkTable();
         MenuTableRow* rowEnd =
             (MenuTableRow*)((u8*)tbl + tbl->rowCount9800 * 0x4C);
         MenuTableRow* row = (MenuTableRow*)tbl;
@@ -1012,7 +1012,7 @@ extern "C" void func_8011EFB0(CMenuSymbolMark* self) {
         if ((u16)meas == 0) {
             return;
         }
-        CfObjList* list = (CfObjList*)func_800B6C58();
+        CfObjList* list = (CfObjList*)getReslistBC8();
         for (CfObjListNode* node = list->sentinel->next;
              node != list->sentinel; node = node->next) {
             CfMarkerFields* obj = (CfMarkerFields*)node->object;
@@ -1052,7 +1052,7 @@ extern "C" void func_8011EFB0(CMenuSymbolMark* self) {
         if ((u16)meas == 0) {
             return;
         }
-        CfObjList* list = (CfObjList*)func_800B6BEC();
+        CfObjList* list = (CfObjList*)getReslistB68();
         for (CfObjListNode* node = list->sentinel->next;
              node != list->sentinel; node = node->next) {
             CfActorFields* actor = (CfActorFields*)node->object;
@@ -1085,7 +1085,7 @@ extern "C" void func_8011EFB0(CMenuSymbolMark* self) {
         if ((u16)meas == 0) {
             return;
         }
-        CfObjList* list = (CfObjList*)func_800B6BEC();
+        CfObjList* list = (CfObjList*)getReslistB68();
         for (CfObjListNode* node = list->sentinel->next;
              node != list->sentinel; node = node->next) {
             CfActorFields* actor = (CfActorFields*)node->object;
@@ -1139,7 +1139,7 @@ extern "C" void func_8011F8F8(CMenuSymbolMark* self) {
         CfActorFields* actor = (CfActorFields*)actorV;
         for (u32 j = self->mSomeValue3; j < self->mSomeValue4; j++) {
             u16 id =
-                (u16)func_80136254((const void*)self->mSomeValue,
+                (u16)BdatGetU16Direct((const void*)self->mSomeValue,
                                    (const char*)&lbl_eu_804FE720[0xa6], j);
             if (id != actor->field8C) {
                 continue;
@@ -1202,8 +1202,8 @@ extern "C" void func_8011F8F8(CMenuSymbolMark* self) {
 // the player stands within range.
 // Retail imports used only here.
 extern "C" void func_80141DC4(Vec* out, int id);
-extern "C" s16 func_80136330(const void* fp, const char* str, u32 id);
-extern "C" u32 func_8013C038(u16 id);
+extern "C" s16 BdatGetS16Direct(const void* fp, const char* str, u32 id);
+extern "C" u32 CheckState2CC8Active(u16 id);
 extern "C" void* func_801F4E68(CMenuGimmickGlobal* mgr, u16 id);
 
 // Bounds test: build the anchor/extent pair from the scene pose block and
@@ -1287,18 +1287,18 @@ void func_8011FB68(CMenuSymbolMark* self) {
     for (u32 i = 0; i < self->mField_498; i++) {
         u32 id = self->mBuffer[i];
         // Per-id dispatch keys out of the archive.
-        u32 key = func_801361E8((u32)archive, S + 0x96, id);
-        u32 meas = func_80136254(archive, S + 0x9f, id);
-        u32 measB = func_80136254(archive, S + 0xad, id);
+        u32 key = BdatGetU8Direct((u32)archive, S + 0x96, id);
+        u32 meas = BdatGetU16Direct(archive, S + 0x9f, id);
+        u32 measB = BdatGetU16Direct(archive, S + 0xad, id);
         void* row = (void*)lbl_eu_80573D18[func_80138138((u16)measB)];
-        u32 kind = (u8)func_801361E8((u32)row, S + 0x2f, (u16)measB);
+        u32 kind = (u8)BdatGetU8Direct((u32)row, S + 0x2f, (u16)measB);
         bool kindNonzero = kind != 0;
         bool kindOk = false;
         if (!kindNonzero) {
             // Fallback key: retry the kind lookup through the alternate id.
-            measB = func_80136254(archive, S + 0xb6, id);
+            measB = BdatGetU16Direct(archive, S + 0xb6, id);
             if ((u16)measB != 0) {
-                kind = (u8)func_801361E8((u32)row, S + 0x2f, (u16)measB);
+                kind = (u8)BdatGetU8Direct((u32)row, S + 0x2f, (u16)measB);
                 kindNonzero = kind != 0;
                 if (!kindNonzero && func_8009CF8C((u16)measB + 0x220) == 0) {
                     kindOk = true;
@@ -1367,7 +1367,7 @@ void func_8011FB68(CMenuSymbolMark* self) {
             Vec anchor, extent, delta, distV;
             // Scene menu table rows: match on the row's measured-id halfword,
             // the row itself serving as both position source and entry name.
-            MenuTableRow* tbl = (MenuTableRow*)func_80193804();
+            MenuTableRow* tbl = (MenuTableRow*)CPartsChange_GetLandmarkTable();
             MenuTableRow* rowEnd =
                 (MenuTableRow*)((u8*)tbl + ((SceneMenuTable*)tbl)->rowCount9800 * 0x4C);
             for (; tbl != rowEnd; tbl++) {
@@ -1446,14 +1446,14 @@ void func_8011FB68(CMenuSymbolMark* self) {
                 break;
             }
             void* fp = getFP(S + 0xc0);
-            func_80136254(fp, S + 0xcf, id);
+            BdatGetU16Direct(fp, S + 0xcf, id);
             if (func_8009CF8C(id + 0x2b9c) != 0) {
                 break;
             }
             Vec rawPos;
-            rawPos.x = SymConvS16ToF64(func_80136330(fp, S + 0xd6, id), convBias);
-            rawPos.y = SymConvS16ToF64(func_80136330(fp, S + 0xdb, id), convBias);
-            rawPos.z = SymConvS16ToF64(func_80136330(fp, S + 0xe0, id), convBias);
+            rawPos.x = SymConvS16ToF64(BdatGetS16Direct(fp, S + 0xd6, id), convBias);
+            rawPos.y = SymConvS16ToF64(BdatGetS16Direct(fp, S + 0xdb, id), convBias);
+            rawPos.z = SymConvS16ToF64(BdatGetS16Direct(fp, S + 0xe0, id), convBias);
             if (!SYM_IN_SCENE_BOUNDS(func_80496264(self->mScn, -1), &rawPos)) {
                 break;
             }
@@ -1487,7 +1487,7 @@ void func_8011FB68(CMenuSymbolMark* self) {
             if (SYM_ENTRY_DUP(self, id)) {
                 break;
             }
-            if (func_8013C038((u16)id) != 0) {
+            if (CheckState2CC8Active((u16)id) != 0) {
                 break;
             }
             struct FloatTrio {
@@ -1736,7 +1736,7 @@ CTTask<CArrow3D>::~CTTask() {}
 // model matrix, then replays the resource display lists twice (first with
 // color update off for the light pass, then normally).
 // Render-gate imports.
-extern "C" int func_8013C008();
+extern "C" int GetSysStateFlag25();
 extern "C" void updateViewRoot__9CViewRootFv();
 extern "C" void resetGXStateA__8CGXCacheFv(void* cache);
 extern "C" void func_8044BB20__8CGXCacheFv(void* cache, void* proj, f32 a,
@@ -1785,10 +1785,10 @@ void CArrow3D::cbRenderBefore() {
     if ((u32)(u8)func_8009CF8C(0x20) <= 4) {
         return;
     }
-    if (func_8013BE50() == 0) {
+    if (IsMenuState621F0() == 0) {
         return;
     }
-    if (func_8013C008() == 0) {
+    if (GetSysStateFlag25() == 0) {
         return;
     }
     if (lbl_eu_80663E24 & 0xAFA40200) {
@@ -2189,7 +2189,7 @@ void CArrow3D::Term() {
     CDeviceVI::waitForDrawDone();
     // delete through the Layout type: the retail dispatches vtable slot 2
     // with the deleting flag 1 (polymorphic delete), and the delete's own
-    // null-check is the dead second beq (func_80285ABC pattern).
+    // null-check is the dead second beq (resetEIBCur pattern).
     nw4r::lyt::Layout* layout = (nw4r::lyt::Layout*)mLayout;
     if (layout) {
         delete layout;
@@ -2238,7 +2238,7 @@ void CArrow3D::Init() {
     buildLayout((nw4r::lyt::Layout**)&mLayout, func_801355F4(), S);
     nw4r::lyt::Layout* lay = (nw4r::lyt::Layout*)mLayout;
     func_8013676C(lay->GetRootPane(), (u32)func_801355BC());
-    func_80136B4C(lay, (char*)S + 0x14, (char*)S + 0x1b, 0);
+    LayoutSetTextBoxFmtValue(lay, (char*)S + 0x14, (char*)S + 0x1b, 0);
     lay->GetRootPane()->FindPaneByName(S + 0x14, true)->SetVisible(false);
     lay->GetRootPane()->FindPaneByName(S + 0x26, true)->SetVisible(false);
 }

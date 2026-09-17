@@ -120,11 +120,11 @@ extern "C" void* func_8003AA34();   // matches code_801862C0.hpp's declaration
 extern "C" void* getFP__FPCc(const char* name);
 // Gimmick-row helpers used by func_80116B40 (unmangled retail symbols;
 // same declaration scheme as CFloorMap.hpp).
-extern "C" u32 func_8013C038(u16 id);
+extern "C" u32 CheckState2CC8Active(u16 id);
 struct CMMGimmickPos { f32 x; f32 y; f32 z; };
 extern "C" CMMGimmickPos* func_801F4E68(CMMGlobalGimmick* mgr, u16 id);
 extern "C" unsigned long func_8009ECF0();
-extern "C" int func_8013BE88();
+extern "C" int GetSysStateFlag10();
 extern "C" int func_801AC124();
 // Move() gate/state helpers (unmangled retail symbols - C linkage).
 extern "C" u32 func_80242354();
@@ -132,7 +132,7 @@ extern "C" bool func_80251550();
 bool isGlobalCamFlagSet(int mask);   // isGlobalCamFlagSet__Fi (mangled C++)
 extern "C" u32 func_80134538();
 extern "C" void func_8013ACFC();
-extern "C" int func_8013BE58();
+extern "C" int GetSysStateFlag11();
 // (getCameraDataBlock__Q22cf13CfGameManagerFv: single winning decl on
 // CfGameManagerApi.hpp; this TU uses the CfGameManager.hpp member form.)
 // cf::CfGameManager pad-mode probe with an explicit int arg: the retail symbol
@@ -251,8 +251,8 @@ public:
     u8 field_0x19;                         // 0x19
     u8 mReady;                             // 0x1A - load-complete flag
     u8 mFlag1B;                            // 0x1B
-    u16 field_0x1C;                        // 0x1C - BDAT pane id (func_80136330)
-    u16 field_0x1E;                        // 0x1E - BDAT pane id (func_80136330)
+    u16 field_0x1C;                        // 0x1C - BDAT pane id (BdatGetS16Direct)
+    u16 field_0x1E;                        // 0x1E - BDAT pane id (BdatGetS16Direct)
     f32 mField20;                          // 0x20 - marker grid scale
     char* mField24;                        // 0x24 - getFP-resolved pane name
     u32 mField28;                          // 0x28 - getFP-resolved layout name

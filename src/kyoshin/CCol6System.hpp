@@ -370,12 +370,12 @@ void func_8009D018(u32 destination, u32 value);                      // CfGameMa
 CCol6Pad* getCurrentPad__Q22cf13CfGameManagerFv();                   // cf::CfGameManager
 int isClassicController__Q22cf13CfGameManagerFv(int arg);                  // cf::CfGameManager
 void func_8013E2E0(u32, u32, u32, u32, u32, u32, u32, u32, u32);     // CUICfManager.cpp
-u8 func_8013600C(const void*, const void*, u32);                     // code_80135FDC.cpp
-s32 func_801571FC();                                                 // CItemBoxInfo.cpp
-void func_80157184(s32);                                             // CItemBoxInfo.cpp
-void* func_801587E8(u16);                                            // CItemBoxInfo.cpp
-u32 func_80158068(u16);                                              // CItemBoxInfo.cpp
-void func_80158118(void*, u16, u32);                                 // CItemBoxInfo.cpp
+u8 BdatGetU8ByTableKey(const void*, const void*, u32);                     // code_80135FDC.cpp
+s32 CItemBlock_getPtr20E8();                                                 // CItemBoxInfo.cpp
+void CItemBlock_setCount(s32);                                             // CItemBoxInfo.cpp
+void* CItem_findRecByFamily(u16);                                            // CItemBoxInfo.cpp
+u32 CItem_sumFamilyByte6(u16);                                              // CItemBoxInfo.cpp
+void CItemData_initFromFamily(void*, u16, u32);                                 // CItemBoxInfo.cpp
 // CItem_initItemImplInstances is declared extern "C" by
 // include/kyoshin/cf/CfGameManager.hpp (pulled in via harness_catalog); a
 // local redeclaration here would mangle and trip MWCC 10197.
@@ -384,8 +384,8 @@ CCol6Fade* func_80113E1C();                                           // CMenuFa
 int func_80113E24(CCol6Fade* fade);                                    // CMenuFade.cpp (byte result, tested unmasked)
 void func_80135464(u32 a, u32 b, f32 x, f32 y, f32 z);                // CUICfManager.cpp
 u32 func_801B481C();                                                   // code_80135FDC.cpp (any block condition active)
-u16 func_8013606C(const void*, const void*, u32);                     // code_80135FDC.cpp
-char* func_80136190(const void*, const void*, int);                   // code_80135FDC.cpp
+u16 BdatGetU16ByTableKey(const void*, const void*, u32);                     // code_80135FDC.cpp
+char* BdatTouchStringCell(const void*, const void*, int);                   // code_80135FDC.cpp
 void notifyBattleSystem__Q22cf13CfGameManagerFv(u32, u32, u32, u32, u32);  // CfGameManager.cpp
 void notifyCameraManager__Q22cf13CfGameManagerFv();                         // CfGameManager.cpp
 int isCameraReady__Q22cf13CfGameManagerFv();                          // CfGameManager.cpp
@@ -399,8 +399,8 @@ void func_8022B9B4(void* syswin, const char* msg, int flag);          // CSysWin
 void func_8022BFC8(void* syswin, int flag);                           // CSysWin.cpp
 void func_8022B8B8(void* syswin);                                     // CSysWin.cpp
 void func_8022B748(void* syswin);                                     // CSysWin.cpp (per-frame update)
-char* func_8013639C(const void*, const void*, int);                   // code_80135FDC.cpp
-int func_8013BE50();                                                  // code_80135FDC.cpp
+char* BdatGetPtrDirect(const void*, const void*, int);                   // code_80135FDC.cpp
+int IsMenuState621F0();                                                  // code_80135FDC.cpp
 // CScrollBar / CCur18 helpers (retail-unmangled C-linkage names).
 int CScrollBar_isVisible(void* scrollbar);                             // CScrollBar.cpp
 int func_801F3668(void* scrollbar);                                    // CScrollBar.cpp
@@ -414,13 +414,13 @@ void func_801D216C(void* cursor, int arg);                            // CCur.cp
 void func_801D202C(void* cursor);                                     // CCur.cpp
 void* func_801355F4();                                                // CCur.cpp (vtable source for __ct__CCur18)
 void* getCfPadData__Q22cf13CfGameManagerFv();                        // cf::CfGameManager
-u8 func_801361E8(const void*, const char*, u8);                      // code_80135FDC.cpp
-void func_80136B4C(nw4r::lyt::Layout*, const char*, const char*, u32); // code_80135FDC.cpp
+u8 BdatGetU8Direct(const void*, const char*, u8);                      // code_80135FDC.cpp
+void LayoutSetTextBoxFmtValue(nw4r::lyt::Layout*, const char*, const char*, u32); // code_80135FDC.cpp
 u32 func_801355BC();                                                    // CUICfManager.cpp (font value)
-s16 func_80136130(const void*, const void*, u32);                     // code_80135FDC.cpp (s16-keyed lookup); u32 matches the definition verbatim
+s16 BdatGetS16ByTableKey(const void*, const void*, u32);                     // code_80135FDC.cpp (s16-keyed lookup); u32 matches the definition verbatim
 void func_8013676C(nw4r::lyt::Pane*, u32);                           // code_80135FDC.cpp
-void func_801392E4(u16);                                             // CItemBoxInfo.cpp
-void func_80139358(u16);                                             // CItemBoxInfo.cpp
+void BdatGetItemType(u16);                                             // CItemBoxInfo.cpp
+void BdatGetItemId(u16);                                             // CItemBoxInfo.cpp
 char* func_801394D4(u16);                                            // CItemBoxInfo.cpp
 void* func_8003AA34();                                               // bdat manager
 void* getFP__FPCc(const char*);                                      // bdat file pointer
@@ -466,11 +466,11 @@ void* getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(
 // C++-linkage (mangled retail symbols) anim/layout helpers - MUST stay
 // outside the extern "C" block so MWCC mangles them (retail reloc names
 // advanceAnimTransform__FPQ34nw4r3lyt13AnimTransformf / playUISound__FUl).
-// NOTE: func_80137510 is NOT in this group - retail keeps the bare unmangled
+// NOTE: AnimRewindFrame is NOT in this group - retail keeps the bare unmangled
 // symbol, so it is declared extern "C" below.
 void setLayoutTextBoxFont(nw4r::lyt::Layout* layout, char* paneName, u32 value); // code_80135FDC.cpp (mangled __FPQ34nw4r3lyt6LayoutPcUl)
 int advanceAnimTransform(nw4r::lyt::AnimTransform* anim, float frame);
-extern "C" int func_80137510(nw4r::lyt::AnimTransform* anim, float frame);
+extern "C" int AnimRewindFrame(nw4r::lyt::AnimTransform* anim, float frame);
 void playUISound(u32 soundId);
 
 // Split1 .rodata string pool (arc paths / layout region names / format strings).

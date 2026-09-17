@@ -281,8 +281,8 @@ int checkCol6Bat(VMThread* pThread) {
     return 0;
 }
 int simpleEventStart(VMThread* pThread) {
-    extern void func_8013BD9C();
-    func_8013BD9C();
+    extern void MenuStateSet64058();
+    MenuStateSet64058();
     return 0;
 }
 int simpleEventEnd(VMThread* pThread) {
@@ -352,14 +352,14 @@ int setTrust(VMThread* pThread) {
     CfSlotTable tbl = lbl_eu_804FA9F0;
     int done = 0;
     CfEnumListHolder holder;
-    func_80043D90(&holder);
+    CTaskGame_enumListCtor(&holder);
 
     // Spawn the effect on the arg1 player slot.
-    func_800F4A98(func_80043F18(&holder), tbl.values[arg1], 0);
-    if (func_80043F18(&holder)->count >= 1) {
+    func_800F4A98(CTaskGame_enumListGet(&holder), tbl.values[arg1], 0);
+    if (CTaskGame_enumListGet(&holder)->count >= 1) {
         if (code80135FDC_getByte_64059() == 0) {
             CfEnumListItem* item =
-                (CfEnumListItem*)func_800F6EC0(func_80043F18(&holder), 0);
+                (CfEnumListItem*)func_800F6EC0(CTaskGame_enumListGet(&holder), 0);
             void* cast = __dynamic_cast(item->field_04, 0,
                                         (const void*)&lbl_eu_806618D8,
                                         (const void*)&lbl_eu_806618F0, 0);
@@ -369,11 +369,11 @@ int setTrust(VMThread* pThread) {
     }
 
     // Same for the arg2 slot; both must succeed before notifying.
-    func_800F4A98(func_80043F18(&holder), tbl.values[arg2], 0);
-    if (func_80043F18(&holder)->count >= 1) {
+    func_800F4A98(CTaskGame_enumListGet(&holder), tbl.values[arg2], 0);
+    if (CTaskGame_enumListGet(&holder)->count >= 1) {
         if (code80135FDC_getByte_64059() == 0) {
             CfEnumListItem* item =
-                (CfEnumListItem*)func_800F6EC0(func_80043F18(&holder), 0);
+                (CfEnumListItem*)func_800F6EC0(CTaskGame_enumListGet(&holder), 0);
             void* cast = __dynamic_cast(item->field_04, 0,
                                         (const void*)&lbl_eu_806618D8,
                                         (const void*)&lbl_eu_806618F0, 0);
@@ -471,9 +471,9 @@ int getSelectNum(VMThread* pThread) {
 // from the shared character table, then show it in a party-talk box whose
 // caption comes from the fixed string-table entry at +0xD (index 11/12).
 static void mesPTSet(int id, int captionIdx) {
-    char* name = func_8013639C(lbl_eu_80664090, lbl_eu_804FABF0, id);
+    char* name = BdatGetPtrDirect(lbl_eu_80664090, lbl_eu_804FABF0, id);
     func_8013D688(name,
-                  func_80136190(&lbl_eu_804FABF0[0xd], lbl_eu_804FABF0,
+                  BdatTouchStringCell(&lbl_eu_804FABF0[0xd], lbl_eu_804FABF0,
                                 captionIdx),
                   0, 0);
 }
@@ -491,7 +491,7 @@ int mesSubPT(VMThread* pThread) {
 // (entry at offset 13/14) and open a system window with it.
 static int mesVisionSet(int index) {
     // Retail always reads the entry at +0xD; only the table index differs.
-    func_8013D55C(func_80136190(&lbl_eu_804FABF0[0xd], lbl_eu_804FABF0, index), 0, 0);
+    func_8013D55C(BdatTouchStringCell(&lbl_eu_804FABF0[0xd], lbl_eu_804FABF0, index), 0, 0);
     return 0;
 }
 int mesVisionON() { return mesVisionSet(0xd); }
@@ -499,11 +499,11 @@ int mesVisionOFF() { return mesVisionSet(0xe); }
 // Monado activation/deactivation messages: pull the string table entry into
 // the scratch area at table+0xd, then open it in a system window.
 int mesMonadoON() {
-    func_8013D55C(func_80136190(lbl_eu_804FABF0 + 0xd, lbl_eu_804FABF0, 0xf), 0, 0);
+    func_8013D55C(BdatTouchStringCell(lbl_eu_804FABF0 + 0xd, lbl_eu_804FABF0, 0xf), 0, 0);
     return 0;
 }
 int mesMonadoOFF() {
-    func_8013D55C(func_80136190(lbl_eu_804FABF0 + 0xd, lbl_eu_804FABF0, 0x10), 0, 0);
+    func_8013D55C(BdatTouchStringCell(lbl_eu_804FABF0 + 0xd, lbl_eu_804FABF0, 0x10), 0, 0);
     return 0;
 }
 // mesGetArts: build the arts description message. Args: (id, index). The
@@ -516,10 +516,10 @@ int mesGetArts(VMThread* pThread) {
     arg = vmArgPtrGet(pThread, 2);
     int idx = vmArgIntGet(3, arg);
 
-    char* row = func_8013639C(lbl_eu_80664090, lbl_eu_804FABF0, id);
-    char* sIdx = func_80136190(&lbl_eu_804FABF0[5], lbl_eu_804FABF0, idx);
-    char* sName = func_80136190(&lbl_eu_804FABF0[0xd], lbl_eu_804FABF0, 7);
-    char* sFoot = func_80136190(&lbl_eu_804FABF0[0xd], lbl_eu_804FABF0, 0xa);
+    char* row = BdatGetPtrDirect(lbl_eu_80664090, lbl_eu_804FABF0, id);
+    char* sIdx = BdatTouchStringCell(&lbl_eu_804FABF0[5], lbl_eu_804FABF0, idx);
+    char* sName = BdatTouchStringCell(&lbl_eu_804FABF0[0xd], lbl_eu_804FABF0, 7);
+    char* sFoot = BdatTouchStringCell(&lbl_eu_804FABF0[0xd], lbl_eu_804FABF0, 0xa);
 
     ml::FixStr<64> str;
     str.format(&lbl_eu_804FABF0[0x18], row, sName, sIdx);
@@ -544,10 +544,10 @@ int save() {
     return 0;
 }
 int kizunaTalkStart() {
-    extern void func_8013BDBC();
+    extern void MenuStateSet64059Notify();
     extern u32 lbl_eu_80663E28;
     extern void prepareTextBuffer__Q22cf13CfGameManagerFv();
-    func_8013BDBC();
+    MenuStateSet64059Notify();
     lbl_eu_80663E28 |= 0x1000;
     prepareTextBuffer__Q22cf13CfGameManagerFv();
     return 0;
@@ -589,7 +589,7 @@ int setLastTalkNpc(VMThread* pThread) {
     int count = func_8003B1EC(tbl);
     for (int i = 1; i <= count; i++) {
         // Key compare is on the low 16 bits only.
-        if ((u16)func_80136254(tbl, &lbl_eu_804FABF0[0x1f], i) == id) {
+        if ((u16)BdatGetU16Direct(tbl, &lbl_eu_804FABF0[0x1f], i) == id) {
             func_8009ECD0(i);
             break;
         }
@@ -600,7 +600,7 @@ int setLastTalkNpc(VMThread* pThread) {
 // result type is TRUE(2)/FALSE(1).
 int isSETalkVoiceWait(VMThread* pThread) {
     VMArg arg;
-    arg.type = (func_eu_8013C8F4() == 0) + 1;
+    arg.type = (MenuStateCheck64064or30() == 0) + 1;
     vmRetValSet(pThread, &arg);
     return 1;
 }
@@ -610,7 +610,7 @@ extern "C" int func_eu_80046DA0(VMThread* pThread) {
     return 0;
 }
 extern "C" int func_eu_80046DC4(VMThread* pThread) {
-    extern void func_eu_8013C8E8();
-    func_eu_8013C8E8();
+    extern void MenuStateClear64064();
+    MenuStateClear64064();
     return 0;
 }

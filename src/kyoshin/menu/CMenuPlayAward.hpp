@@ -288,7 +288,7 @@ extern const float lbl_eu_80668998;
 extern "C" int func_800A9D90();
 
 // Scene-active query (retail-unmangled; gates cbRenderBefore draws).
-extern "C" int func_8013BE50();
+extern "C" int IsMenuState621F0();
 
 // DrawInfo layout setup (retail MANGLED name func_80137250__FPQ34nw4r3lyt8DrawInfo;
 // declared with C++ linkage so MWCC re-derives the mangled reloc).
@@ -420,7 +420,7 @@ extern "C" void func_801D216C(u8* cursor, u8 val);
 extern "C" void func_801F369C(u8* scrollBar);
 
 // Layout text-binding helper (retail-unmangled; 3rd arg is the raw text word).
-extern "C" void func_80136B4C(nw4r::lyt::Layout*, char*, char*, u32);
+extern "C" void LayoutSetTextBoxFmtValue(nw4r::lyt::Layout*, char*, char*, u32);
 
 // Pane-position translation helper (retail-unmangled): resolve a position in
 // pane1's space into pane2/root space (cf. CSelShopWin/CSysWin usage).
@@ -459,7 +459,7 @@ extern "C" u32 func_801355BC();
 extern "C" void setBdatEntry__5CBdatFUlPv(u32, void*);
 extern "C" u32 func_8003B1EC(void*);
 extern "C" u32 func_8009CF8C(u32);
-extern "C" u16 func_80136254(const void*, const void*, int);
+extern "C" u16 BdatGetU16Direct(const void*, const void*, int);
 extern "C" u8 code80135FDC_getByte_6407F();
 extern "C" void func_801C3C14(CBgTex* self);
 extern "C" void CTitleAHelp_load(CTitleAHelp* self);

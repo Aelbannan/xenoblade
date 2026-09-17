@@ -73,7 +73,7 @@ struct CScnRootNw4rParam {
 struct CScnRootNw4rVtbl {
     void* mSlots0[0x28 / 4];        // +0x00..+0x24
     u32 (*mVf8)(CScnRootNw4r*);     // +0x28 (func_8048F2F0)
-    u32 (*mVf9)(CScnRootNw4r*);     // +0x2C (func_804871A8)
+    u32 (*mVf9)(CScnRootNw4r*);     // +0x2C (scnImN4GetWord4AC)
 };
 
 // Full flat layout of the retail CScnRootNw4r object (0x4EC bytes). The

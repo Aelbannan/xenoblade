@@ -95,7 +95,7 @@ extern int func_801BFAE4(u16 handle);
 extern void func_801BFAE8(u16 handle, void* position);
 extern void func_801BFED0(int kind, u16 handle, int mode);
 extern u16 func_80208C60(u16 effectId, void* position, f32 distance);
-extern void func_8004B840(void* target, f32 amount);
+extern void setAnimHeight(void* target, f32 amount);
 extern f32 FrSqrt__Q24nw4r4mathFf(f32 value);
 extern void Warning__Q24nw4r2dbFPCciPCce(const char* file, int line,
                                           const char* format, ...);
@@ -541,7 +541,7 @@ extern "C" void func_8020FD2C(CfGimmickJump* self) {
             actor->CfObject_getPosVector())->x;
         position.y = carried;
         (void)actor; // setPosition stubbed
-        func_8004B840(target, 0.0f);
+        setAnimHeight(target, 0.0f);
         target->flags4EC |= 0x4000000;
         if (index == 0) {
             func_80209F5C();

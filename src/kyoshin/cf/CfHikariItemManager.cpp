@@ -176,7 +176,7 @@ CfHikariItemRecord* func_802B2894(cf::CfHikariItemManager* self, const u32* src,
     }
 
     CfHikariItemRecord* rec = (CfHikariItemRecord*)allocate__Q23mtl10MemManagerFUlUl(
-        0x44, func_80061FFC());
+        0x44, CfRes_getAllocHandle());
     if (rec != NULL) {
         func_802B3750(rec, value);
     }

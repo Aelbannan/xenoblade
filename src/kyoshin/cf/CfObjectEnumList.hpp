@@ -282,7 +282,7 @@ extern "C" void func_800F4798(void* self);
 extern "C" int func_804B5088(void* self, void* a, void* b, int filter, int isFirst); // object enum probe
 extern "C" int func_804BE348(void* a, void* b, int c, int d, int e);   // coli probe query
 // cone probe on aux+0x60C (self, spot, range, cone half-angle, angle offset)
-extern "C" int func_804B1C9C(void* self, void* spot, float a, float b, float c);
+extern "C" int ColiCheckMoveScaled(void* self, void* spot, float a, float b, float c);
 // func_804B5088 (object enum probe) is declared above; do not redeclare here.
 extern "C" int func_804B1AD8(void* self, void* spot, float threshold); // distance probe on aux+0x60C block
 // sdata: global coli probe object (accessed via sda21)

@@ -34,11 +34,11 @@ CScnEffectActNw4r::~CScnEffectActNw4r() {}
 // manager's implementation.
 extern "C" void func_8049BEA4(CScnEffectActNw4r* self) { func_80495E60(self->mpMgr); }
 
-extern "C" void func_8049BEAC(CScnEffectActNw4r* self) { func_80484E5C(self->mpMgr); }
+extern "C" void func_8049BEAC(CScnEffectActNw4r* self) { simSetLeafDist7B0(self->mpMgr); }
 
-extern "C" void func_8049BEB4(CScnEffectActNw4r* self) { func_804838DC(self->mpMgr); }
+extern "C" void func_8049BEB4(CScnEffectActNw4r* self) { simSetFlag2OnTree(self->mpMgr); }
 
-extern "C" u8* func_8049BEE4(CScnEffectActNw4r* self) { return func_8048315C(self->mpMgr); }
+extern "C" u8* func_8049BEE4(CScnEffectActNw4r* self) { return simGetLeafActData(self->mpMgr); }
 
 // Copy the position triplet into the manager's scale/pos fields at 0x304.
 // Kept as integer word copies: retail moves the bits without float ops.
@@ -53,22 +53,22 @@ extern "C" void func_8049BEEC(CScnEffectActNw4r* self, const void* other) {
 // const self: MWCC hoists the mpMgr load above the LR-save store (retail
 // prologue order lwz r3,4(r3) BEFORE stw r0,20(sp)); non-const emits stw-first.
 extern "C" u8* func_8049BF0C(const CScnEffectActNw4r* self) {
-    return func_8048315C(self->mpMgr) + 0x48;
+    return simGetLeafActData(self->mpMgr) + 0x48;
 }
 
 // Manager's effect-act getter, act slot at +0x78.
 extern "C" u8* func_8049BF34(const CScnEffectActNw4r* self) {
-    return func_8048315C(self->mpMgr) + 0x78;
+    return simGetLeafActData(self->mpMgr) + 0x78;
 }
 
 // Manager's effect-act getter, act slot at +0xb8.
 extern "C" u8* func_8049BF5C(const CScnEffectActNw4r* self) {
-    return func_8048315C(self->mpMgr) + 0xb8;
+    return simGetLeafActData(self->mpMgr) + 0xb8;
 }
 
 // Manager's effect-act getter, act slot at +0xc4.
 extern "C" u8* func_8049BF84(const CScnEffectActNw4r* self) {
-    return func_8048315C(self->mpMgr) + 0xc4;
+    return simGetLeafActData(self->mpMgr) + 0xc4;
 }
 
 // Effect-act lookup: the local id table first, then the manager's chain.
@@ -176,14 +176,14 @@ void func_8049C060(ml::CVec3* out, const CScnEffectActNw4r* self, u32 idx) {
     out->z = ml::CVec3::zero.z;
 }
 
-extern "C" void func_8049C394(CScnEffectActNw4r* self) { func_80482AB8(self->mpMgr); }
+extern "C" void func_8049C394(CScnEffectActNw4r* self) { simPushWordToBuf(self->mpMgr); }
 
 void func_8049C39C(CScnEffectActNw4r* self) {
-    func_80482AD4(self->mpMgr);
+    simRemoveWordFromBuf(self->mpMgr);
 }
 
 void func_8049C3A4(CScnEffectActNw4r* self) {
-    func_8048856C(self->mpMgr);
+    scnImN4PushXform(self->mpMgr);
 }
 
 // Effect-range gate: the act is usable while the manager's range value sits

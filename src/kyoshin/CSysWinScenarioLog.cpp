@@ -332,7 +332,7 @@ __declspec(noinline) void CSysWinScenarioLog::cbRenderBefore() {
     // Separate single-condition early returns fold to direct branches
     // (an || chain would put a spurious branch-over-branch on the last
     // disjunct).
-    if (func_8013BE50() == 0) {
+    if (IsMenuState621F0() == 0) {
         return;
     }
     if (func_8029A658() != 0) {
@@ -366,7 +366,7 @@ void CSysWinScenarioLog::Move() {
         (lbl_eu_80663E28 & 0x200000) != 0) {
         return;
     }
-    if (func_8013BE50() == 0) {
+    if (IsMenuState621F0() == 0) {
         return;
     }
     if (func_8029A658() != 0) {
@@ -401,7 +401,7 @@ void CSysWinScenarioLog::Move() {
             break;
         }
         case 3:
-            if (func_80137510(mpAnim, lbl_eu_80668AD0) != 0) {
+            if (AnimRewindFrame(mpAnim, lbl_eu_80668AD0) != 0) {
                 mFlag67 = 0;
                 mFlag64 = 1;
             }
@@ -436,31 +436,31 @@ extern "C" void func_8027EA6C(CSysWinScenarioLog* self) {
     u16 count = (u16)func_8003B1EC((void*)lbl_eu_8066490C);
     int i = 1;
     while ((u16)i <= count) {
-        if ((u16)func_80136254((void*)lbl_eu_8066490C, &lbl_eu_8050EE24[0x36],
+        if ((u16)BdatGetU16Direct((void*)lbl_eu_8066490C, &lbl_eu_8050EE24[0x36],
                                (u16)i) >= maxId) {
             chosen = i;
             break;
         }
         i++;
     }
-    char* s = func_80136190(&lbl_eu_8050EE24[0x3b], &lbl_eu_8050EE24[0x44], 0x19);
-    func_80136B4C(self->mpLayout, &lbl_eu_8050EE24[0x49], s, 0);
-    char* t = func_8013639C((void*)lbl_eu_8066490C, &lbl_eu_8050EE24[0x56],
+    char* s = BdatTouchStringCell(&lbl_eu_8050EE24[0x3b], &lbl_eu_8050EE24[0x44], 0x19);
+    LayoutSetTextBoxFmtValue(self->mpLayout, &lbl_eu_8050EE24[0x49], s, 0);
+    char* t = BdatGetPtrDirect((void*)lbl_eu_8066490C, &lbl_eu_8050EE24[0x56],
                             (u16)chosen);
-    func_80136B4C(self->mpLayout, &lbl_eu_8050EE24[0x5b], t, (u32)self->mField94);
-    char* u = func_80136190(&lbl_eu_8050EE24[0x68], &lbl_eu_8050EE24[0x56], 0x2c);
-    func_80136B4C(self->mpLayout, &lbl_eu_8050EE24[0x76], u, 0);
+    LayoutSetTextBoxFmtValue(self->mpLayout, &lbl_eu_8050EE24[0x5b], t, (u32)self->mField94);
+    char* u = BdatTouchStringCell(&lbl_eu_8050EE24[0x68], &lbl_eu_8050EE24[0x56], 0x2c);
+    LayoutSetTextBoxFmtValue(self->mpLayout, &lbl_eu_8050EE24[0x76], u, 0);
     const char* sel = isClassicController__Q22cf13CfGameManagerFv(-1) != 0
                           ? &lbl_eu_8050EE24[0x82]
                           : &lbl_eu_8050EE24[0x8b];
-    u16 msgId = (u16)func_8013606C(&lbl_eu_8050EE24[0x68], sel, 0x2c);
-    void* tex = func_80138F78(msgId);
+    u16 msgId = (u16)BdatGetU16ByTableKey(&lbl_eu_8050EE24[0x68], sel, 0x2c);
+    void* tex = MakeTplNameSysFile(msgId);
     nw4r::lyt::ArcResourceAccessor* mgr = func_801355F4();
     void* mat = mgr->GetResource(0x74696d67, (const char*)tex, 0);
     if (mat == 0) {
         return;
     }
-    func_80137E7C(self->mpLayout, &lbl_eu_8050EE24[0x94], mat);
+    PaneSetTexPaletteByName(self->mpLayout, &lbl_eu_8050EE24[0x94], mat);
     CSysWinTexMeta* meta = (CSysWinTexMeta*)mat;
     u16 w = meta->field_0x8->field_0x2;
     u16 h = meta->field_0x8->field_0x0;
@@ -1646,7 +1646,7 @@ void CSysWinScenarioLog::Term() {
     }
     mScene->removeRenderCB(render);
 
-    func_8013B980();
+    DecMenuCounter64080();
     if (code80135FDC_getByte_64080() == 0) {
         setPresentationFlag__Q22cf13CfGameManagerFv(false);
     }

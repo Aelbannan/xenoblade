@@ -974,7 +974,7 @@ void ChrAnmResult::SetRotateDeg(const math::VEC3* pRotate) {
         //
         // k/fx/fy/fz are declared before assignment so their registers are born
         // f0..f3, but assigned in z, k, y, x order so the loads land
-        // z, const, y, x (pattern from func_804B0C0C in monolib
+        // z, const, y, x (pattern from ColiSetAxisBlockRotInverse in monolib
         // code_804A6C60.cpp). The VEC3 constructor args evaluate right-to-left,
         // loading tz/ty/tx interleaved after the angle muls.
         f32 k;

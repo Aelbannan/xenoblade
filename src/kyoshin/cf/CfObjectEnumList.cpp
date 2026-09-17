@@ -390,28 +390,28 @@ struct CfEnumKind {
 
 extern "C" {
 void* getInstance__Fv();
-CfEnumObject* func_800B7034();
-CfEnumObject* func_800B7058(CfEnumObject*);
-CfEnumObject* func_800B76A4();
-CfEnumObject* func_800B77E4(CfEnumObject*);
-CfEnumObject* func_800B77BC();
-CfEnumObject* func_800B7934(CfEnumObject*);
-CfEnumObject* func_800B76CC();
-CfEnumObject* func_800B781C(CfEnumObject*);
-CfEnumObject* func_800B76F4();
-CfEnumObject* func_800B7854(CfEnumObject*);
-CfEnumObject* func_800B771C();
-CfEnumObject* func_800B788C(CfEnumObject*);
-CfEnumObject* func_800B7744();
-CfEnumObject* func_800B78C4(CfEnumObject*);
-CfEnumObject* func_800B776C();
-CfEnumObject* func_800B78FC(CfEnumObject*);
-CfEnumObject* func_800B7794();
-CfEnumObject* func_800B796C(CfEnumObject*);
+CfEnumObject* resetMgrReslist();
+CfEnumObject* gmInsertObject(CfEnumObject*);
+CfEnumObject* firstReslistB28();
+CfEnumObject* nextReslistB28(CfEnumObject*);
+CfEnumObject* firstReslistBA8();
+CfEnumObject* insertReslistBA8(CfEnumObject*);
+CfEnumObject* firstReslistB48();
+CfEnumObject* nextReslistB48(CfEnumObject*);
+CfEnumObject* firstReslistB68();
+CfEnumObject* insertReslistB68(CfEnumObject*);
+CfEnumObject* firstReslistB88();
+CfEnumObject* insertReslistB88(CfEnumObject*);
+CfEnumObject* firstReslistBE8();
+CfEnumObject* nextReslistBE8(CfEnumObject*);
+CfEnumObject* firstReslistBC8();
+CfEnumObject* insertReslistBC8(CfEnumObject*);
+CfEnumObject* firstReslistC08();
+CfEnumObject* insertReslistC08(CfEnumObject*);
 CfEnumActor* func_8016FE34(CfEnumObject*);
 CfEnumActor* func_800BBC0C(CfEnumObject*);
 int func_80148778(void*, int);
-int func_80051B38(CfEnumActorAux*);
+int isSpeedAbove(CfEnumActorAux*);
 int func_8009CF8C(int);
 CfEnumKind* func_800AB3D0(CfEnumObject*);
 int func_800DA06C(void*, CfEnumActor*);
@@ -497,7 +497,7 @@ int func_804B1BDC(void* self, void* a, void* b); // aux cone probe (two vecs)
             if (func_80148778(&(actor_)->tagState, 0xE6)) {                   \
                 (rejected_) = true;                                           \
             } else if ((actor_)->actorAux == 0 ||                            \
-                       !func_80051B38((actor_)->actorAux)) {                  \
+                       !isSpeedAbove((actor_)->actorAux)) {                  \
                 (rejected_) = true;                                           \
             }                                                                 \
         }                                                                     \
@@ -550,7 +550,7 @@ extern "C" void func_800F4B5C(cf::CfObjEnumList* self, int flags, u32 options) {
 
     if (flags & 1) {
         getInstance__Fv();
-        object = func_800B7034();
+        object = resetMgrReslist();
         float zero = lbl_eu_80666EB8;
         float one = lbl_eu_80666EBC;
         while (object != 0) {
@@ -570,12 +570,12 @@ extern "C" void func_800F4B5C(cf::CfObjEnumList* self, int flags, u32 options) {
             }
             if (rejected) {
                 getInstance__Fv();
-                object = func_800B7058(object);
+                object = gmInsertObject(object);
                 continue;
             }
             ENUM_ADD_OBJECT(info0, object);
             getInstance__Fv();
-            object = func_800B7058(object);
+            object = gmInsertObject(object);
         }
         return;
     } else if (flags & 4) {
@@ -600,7 +600,7 @@ extern "C" void func_800F4B5C(cf::CfObjEnumList* self, int flags, u32 options) {
         flags &= ~0x40000u;
     } else if (flags & 0x20) {
         getInstance__Fv();
-        object = func_800B76A4();
+        object = firstReslistB28();
         float one = lbl_eu_80666EBC;
         float zero = lbl_eu_80666EB8;
         while (object != 0) {
@@ -618,7 +618,7 @@ extern "C" void func_800F4B5C(cf::CfObjEnumList* self, int flags, u32 options) {
                 if (func_80148778(&actor->tagState, 0xE6)) {
                     rejected = true;
                 } else if (actor->actorAux == 0 ||
-                           !func_80051B38(actor->actorAux)) {
+                           !isSpeedAbove(actor->actorAux)) {
                     rejected = true;
                 }
             }
@@ -636,12 +636,12 @@ extern "C" void func_800F4B5C(cf::CfObjEnumList* self, int flags, u32 options) {
             }
             if (rejected) {
                 getInstance__Fv();
-                object = func_800B77E4(object);
+                object = nextReslistB28(object);
                 continue;
             }
             ENUM_ADD_OBJECT_ALT(info3, object);
             getInstance__Fv();
-            object = func_800B77E4(object);
+            object = nextReslistB28(object);
         }
         flags &= ~0x20u;
     } else if (flags & 0x100000) {
@@ -658,7 +658,7 @@ extern "C" void func_800F4B5C(cf::CfObjEnumList* self, int flags, u32 options) {
         flags &= ~0x200000u;
     } else if (flags & 8) {
         getInstance__Fv();
-        object = func_800B77BC();
+        object = firstReslistBA8();
         float zero = lbl_eu_80666EB8;
         while (object != 0) {
             rejected = false;
@@ -668,7 +668,7 @@ extern "C" void func_800F4B5C(cf::CfObjEnumList* self, int flags, u32 options) {
             ENUM_BASIC_FILTERS(rejected, object, options, zero);
             if (rejected) {
                 getInstance__Fv();
-                object = func_800B7934(object);
+                object = insertReslistBA8(object);
                 continue;
             }
             ENUM_ADD_OBJECT_ALT(info6, object);
@@ -677,7 +677,7 @@ extern "C" void func_800F4B5C(cf::CfObjEnumList* self, int flags, u32 options) {
         flags &= ~8u;
     } else if (flags & 0x100) {
         getInstance__Fv();
-        object = func_800B76CC();
+        object = firstReslistB48();
         float one = lbl_eu_80666EBC;
         while (object != 0) {
             rejected = false;
@@ -707,7 +707,7 @@ extern "C" void func_800F4B5C(cf::CfObjEnumList* self, int flags, u32 options) {
                 if (func_80148778(&actor->tagState, 0xE6)) {
                     rejected = true;
                 } else if (actor->actorAux == 0 ||
-                           !func_80051B38(actor->actorAux)) {
+                           !isSpeedAbove(actor->actorAux)) {
                     rejected = true;
                 }
             }
@@ -729,17 +729,17 @@ extern "C" void func_800F4B5C(cf::CfObjEnumList* self, int flags, u32 options) {
             }
             if (rejected) {
                 getInstance__Fv();
-                object = func_800B781C(object);
+                object = nextReslistB48(object);
                 continue;
             }
             ENUM_ADD_OBJECT(info7, object);
             getInstance__Fv();
-            object = func_800B781C(object);
+            object = nextReslistB48(object);
         }
         flags &= ~0x100u;
     } else if (flags & 0x400000) {
         getInstance__Fv();
-        object = func_800B76CC();
+        object = firstReslistB48();
         float one = lbl_eu_80666EBC;
         while (object != 0) {
             rejected = false;
@@ -767,17 +767,17 @@ extern "C" void func_800F4B5C(cf::CfObjEnumList* self, int flags, u32 options) {
             }
             if (rejected) {
                 getInstance__Fv();
-                object = func_800B781C(object);
+                object = nextReslistB48(object);
                 continue;
             }
             ENUM_ADD_OBJECT_ALT(info8, object);
             getInstance__Fv();
-            object = func_800B781C(object);
+            object = nextReslistB48(object);
         }
         flags &= ~0x400000u;
     } else if (flags & 0x200) {
         getInstance__Fv();
-        object = func_800B76F4();
+        object = firstReslistB68();
         float one = lbl_eu_80666EBC;
         float zero = lbl_eu_80666EB8;
         while (object != 0) {
@@ -797,17 +797,17 @@ extern "C" void func_800F4B5C(cf::CfObjEnumList* self, int flags, u32 options) {
             }
             if (rejected) {
                 getInstance__Fv();
-                object = func_800B7854(object);
+                object = insertReslistB68(object);
                 continue;
             }
             ENUM_ADD_OBJECT_ALT(info9, object);
             getInstance__Fv();
-            object = func_800B7854(object);
+            object = insertReslistB68(object);
         }
         flags &= ~0x200u;
     } else if (flags & 0x400) {
         getInstance__Fv();
-        object = func_800B771C();
+        object = firstReslistB88();
         float zero = lbl_eu_80666EB8;
         while (object != 0) {
             rejected = false;
@@ -817,16 +817,16 @@ extern "C" void func_800F4B5C(cf::CfObjEnumList* self, int flags, u32 options) {
             ENUM_BASIC_FILTERS(rejected, object, options, zero);
             if (rejected) {
                 getInstance__Fv();
-                object = func_800B788C(object);
+                object = insertReslistB88(object);
                 continue;
             }
             ENUM_ADD_OBJECT_ALT(info10, object);
             getInstance__Fv();
-            object = func_800B788C(object);
+            object = insertReslistB88(object);
         }
 
         getInstance__Fv();
-        object = func_800B76CC();
+        object = firstReslistB48();
         float one = lbl_eu_80666EBC;
         float secondZero = lbl_eu_80666EB8;
         while (object != 0) {
@@ -848,17 +848,17 @@ extern "C" void func_800F4B5C(cf::CfObjEnumList* self, int flags, u32 options) {
             }
             if (rejected) {
                 getInstance__Fv();
-                object = func_800B781C(object);
+                object = nextReslistB48(object);
                 continue;
             }
             ENUM_ADD_OBJECT_ALT(info11, object);
             getInstance__Fv();
-            object = func_800B781C(object);
+            object = nextReslistB48(object);
         }
         flags &= ~0x400u;
     } else if (flags & 0x80000) {
         getInstance__Fv();
-        object = func_800B7744();
+        object = firstReslistBE8();
         float zero = lbl_eu_80666EB8;
         while (object != 0) {
             rejected = false;
@@ -868,17 +868,17 @@ extern "C" void func_800F4B5C(cf::CfObjEnumList* self, int flags, u32 options) {
             ENUM_BASIC_FILTERS(rejected, object, options, zero);
             if (rejected) {
                 getInstance__Fv();
-                object = func_800B78C4(object);
+                object = nextReslistBE8(object);
                 continue;
             }
             ENUM_ADD_OBJECT_ALT(info12, object);
             getInstance__Fv();
-            object = func_800B78C4(object);
+            object = nextReslistBE8(object);
         }
         flags &= ~0x80000u;
     } else if (flags & 0x800) {
         getInstance__Fv();
-        object = func_800B776C();
+        object = firstReslistBC8();
         float zero = lbl_eu_80666EB8;
         bool rejected = false;
         while (object != 0) {
@@ -903,17 +903,17 @@ extern "C" void func_800F4B5C(cf::CfObjEnumList* self, int flags, u32 options) {
             }
             if (rejected) {
                 getInstance__Fv();
-                object = func_800B78FC(object);
+                object = insertReslistBC8(object);
                 continue;
             }
             ENUM_ADD_OBJECT(info13, object);
             getInstance__Fv();
-            object = func_800B78FC(object);
+            object = insertReslistBC8(object);
         }
         flags &= ~0x800u;
     } else if (flags & 0x1000) {
         getInstance__Fv();
-        object = func_800B7794();
+        object = firstReslistC08();
         float zero = lbl_eu_80666EB8;
         while (object != 0) {
             rejected = false;
@@ -923,12 +923,12 @@ extern "C" void func_800F4B5C(cf::CfObjEnumList* self, int flags, u32 options) {
             ENUM_BASIC_FILTERS(rejected, object, options, zero);
             if (rejected) {
                 getInstance__Fv();
-                object = func_800B796C(object);
+                object = insertReslistC08(object);
                 continue;
             }
             ENUM_ADD_OBJECT_ALT(info14, object);
             getInstance__Fv();
-            object = func_800B796C(object);
+            object = insertReslistC08(object);
         }
         flags &= ~0x1000u;
     } else if (flags & 0x4000) {
@@ -1702,7 +1702,7 @@ void func_800FB270(cf::CfObjEnumList* self, ml::CVec3* spot, u32 flags,
         // nonzero); the FD3FC fallback double-checks coarse acceptances
         // (reject on zero).
         if ((obj->field68 & 4) && rejected && aux != 0) {
-            rejected = func_804B1C9C(
+            rejected = ColiCheckMoveScaled(
                            &reinterpret_cast<CfEnumActorView*>(aux)->field_60C,
                            spot, range, cone, angleOffset) == 0;
         }
@@ -1809,10 +1809,10 @@ void func_800FB5AC(cf::CfObjEnumList* self, ml::CVec3* spot, u32 flags,
         }
         if ((obj->field68 & 4) && hit && aux != 0) {
             // Both cone pairs must fail to clear the hit.
-            hit = func_804B1C9C(
+            hit = ColiCheckMoveScaled(
                       &reinterpret_cast<CfEnumActorView*>(aux)->field_60C,
                       spot, range, cone, angleOffset) == 0 &&
-                  func_804B1C9C(
+                  ColiCheckMoveScaled(
                       &reinterpret_cast<CfEnumActorView*>(aux)->field_60C,
                       spot, range, cone2, angleMax) == 0;
         }

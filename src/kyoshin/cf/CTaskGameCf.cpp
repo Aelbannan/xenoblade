@@ -186,12 +186,12 @@ void CTaskGameCf::func_800444FC(){
         // New-game/continue boot path: build the battle scene, managers and UI
         // tasks. Bit 3 of unk_54 marks a restart (skip the scene-color reset).
         if(!(unk_54 & 8)){
-            func_800407C8_tmp tmp;
+            CTaskGame_setVec4_tmp tmp;
             func_8049602C(pTaskGame->getScene(), 0,
-                          reinterpret_cast<u32*>(func_800407C8(&tmp, lbl_eu_80665D88, lbl_eu_80665D88, lbl_eu_80665D88, lbl_eu_80665D8C)));
+                          reinterpret_cast<u32*>(CTaskGame_setVec4(&tmp, lbl_eu_80665D88, lbl_eu_80665D88, lbl_eu_80665D88, lbl_eu_80665D8C)));
         }
 
-        func_80135FDC();
+        MenuStateInitFlags();
         __ct__800FDB4C();
 
         // No mission ids queued: fresh campaign (extra controller setup path).
@@ -280,8 +280,8 @@ void CTaskGameCf::func_800444FC(){
 
             // Reset scene color while the message system is unloaded (bit 24 of lbl_eu_80663E28).
             if(!(lbl_eu_80663E28 & 0x01000000)){
-                func_800407C8_tmp tmp;
-                func_8049602C(pTaskGame->getScene(), 0, func_800407C8(&tmp, lbl_eu_80665D88, lbl_eu_80665D88, lbl_eu_80665D88, lbl_eu_80665D8C));
+                CTaskGame_setVec4_tmp tmp;
+                func_8049602C(pTaskGame->getScene(), 0, CTaskGame_setVec4(&tmp, lbl_eu_80665D88, lbl_eu_80665D88, lbl_eu_80665D88, lbl_eu_80665D8C));
             }
 
             if(func_8013C54C()){

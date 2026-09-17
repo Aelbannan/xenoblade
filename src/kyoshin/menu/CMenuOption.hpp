@@ -91,7 +91,7 @@ extern "C" void func_8029C4F4(COption* self);
 extern "C" void func_8029C5C8(COption* self, nw4r::lyt::DrawInfo* drawInfo);
 extern "C" void func_801C3D7C(CBgTex* self, nw4r::lyt::DrawInfo* drawInfo);
 extern "C" void func_801C4080(CTitleAHelp* self, nw4r::lyt::DrawInfo* drawInfo);
-extern "C" int func_8013BE50();
+extern "C" int IsMenuState621F0();
 // Raw-storage nw4r DrawInfo build/destroy for cbRenderBefore (pre-mangled names).
 extern "C" void __ct__Q34nw4r3lyt8DrawInfoFv(nw4r::lyt::DrawInfo* drawInfo);
 extern "C" void __dt__Q34nw4r3lyt8DrawInfoFv(nw4r::lyt::DrawInfo* drawInfo, int flags);
@@ -115,7 +115,7 @@ extern "C" void __ct__8CProcessFv(CProcess* self);
 extern "C" void __ct__CBgTex(CBgTex* self, u8 arg);
 extern "C" void __ct__CTitleAHelp(CTitleAHelp* self, char* name, u8 arg);
 extern "C" void __ct__COption(COption* self, u8 arg);
-// __ct__UnkClass_8011C974 is declared by COption.hpp; func_80136190 by CFloorMap.hpp.
+// __ct__UnkClass_8011C974 is declared by COption.hpp; BdatTouchStringCell by CFloorMap.hpp.
 extern "C" void func_801C3C14(CBgTex* self);
 extern "C" void CTitleAHelp_load(CTitleAHelp* self);
 extern "C" void func_8029C35C(COption* self);

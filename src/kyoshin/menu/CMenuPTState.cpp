@@ -192,17 +192,17 @@ extern "C" void func_80192CB0(cf::UnkClass_80192BF4* self) {
     // matching retail; '<' forms emit an extra cror.
     if (self->field_0x04 > lbl_eu_80667A98) {
         CEnumListHolder holder;
-        func_80043D90(&holder);
-        func_800F4A98(func_80043F18(&holder), 0x80000000, 0);
+        CTaskGame_enumListCtor(&holder);
+        func_800F4A98(CTaskGame_enumListGet(&holder), 0x80000000, 0);
 
         int found;
         u32 i = 0;
         // List handle is re-fetched twice per iteration (count check + element
         // fetch); never cached in a register across calls.
-        while (((CEnumList*)func_80043F18(&holder))->count > i) {
+        while (((CEnumList*)CTaskGame_enumListGet(&holder))->count > i) {
             // Test-before-copy shape: retail tests r3 straight from the call,
             // copies it, then subtracts the record offset when non-null.
-            u8* actor = (u8*)func_800F6EAC(func_80043F18(&holder), i);
+            u8* actor = (u8*)func_800F6EAC(CTaskGame_enumListGet(&holder), i);
             if (actor != nullptr) {
                 actor -= 0x3e9c;
             }

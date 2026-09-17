@@ -217,7 +217,7 @@ void __ct__14Class_8045F858FP17UnkClass_8045F564(void* self,
                                                   UnkClass_8045F564* base);
 void __dt__14Class_8045F858Fv(void* self, int flags);
 void func_80135464(u8 a, int b, float c, float d, float e);
-int func_8013BE50();
+int IsMenuState621F0();
 bool isInitialized__10CMenuPauseFv();
 int isClassicController__Q22cf13CfGameManagerFv(int arg);
 void* getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(

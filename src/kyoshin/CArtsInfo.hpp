@@ -183,7 +183,7 @@ union CArtsSlotFlags {
 extern "C" void func_eu_80136F90(char* str);
 extern "C" void func_eu_8023D490(CArtsInfo*, u32, char*);
 extern "C" int getLanguage__9CDeviceSCFv();
-extern "C" s8 func_801360CC(const void*, const char*, u8); // BDAT string -> s8
+extern "C" s8 BdatGetS8ByTableKey(const void*, const char*, u8); // BDAT string -> s8
 extern "C" void* getHandleMEM2__Q23mtl10MemManagerFv();
 extern "C" void* readFile__11CDeviceFileFUlPCcP10IWorkEventii(u32, const char*, void*, int, int);
 extern "C" u32 func_800A9D90();
@@ -198,31 +198,31 @@ extern "C" void __ct__CCur18(void*, void*);
 extern "C" void __dt__6CCur18Fv(void*, int);
 extern "C" void __dl__FPv(void*);
 extern "C" u32 advanceAnimTransform__FPQ34nw4r3lyt13AnimTransformf(nw4r::lyt::AnimTransform*, float);
-extern "C" u32 func_80137510(nw4r::lyt::AnimTransform*, float);
-extern "C" void func_80136B4C(nw4r::lyt::Layout*, char*, char*, u32);
+extern "C" u32 AnimRewindFrame(nw4r::lyt::AnimTransform*, float);
+extern "C" void LayoutSetTextBoxFmtValue(nw4r::lyt::Layout*, char*, char*, u32);
 extern "C" void func_80136A1C(nw4r::lyt::Layout*, char*, char*, u32);
-extern "C" char* func_80136190(const void*, const void*, int); // caller-tuned (see code_80135FDC.hpp)
-extern "C" char* func_8013639C(const void*, const void*, int); // BDAT row string lookup
+extern "C" char* BdatTouchStringCell(const void*, const void*, int); // caller-tuned (see code_80135FDC.hpp)
+extern "C" char* BdatGetPtrDirect(const void*, const void*, int); // BDAT row string lookup
 extern "C" void playUISound__FUl(u32);
-extern "C" u8 func_801361E8(u32, const char*, u32);
-// func_8013606C/8013600C take byte-keyed lookups: retail masks the 3rd arg
+extern "C" u8 BdatGetU8Direct(u32, const char*, u32);
+// BdatGetU16ByTableKey/8013600C take byte-keyed lookups: retail masks the 3rd arg
 // to 8 bits at the call site, so the param is u8.
-extern "C" u16 func_8013606C(const void*, const void*, u8);
-extern "C" u8 func_8013600C(const void*, const void*, u32);
-extern "C" s16 func_80136130(const void*, const void*, u32); // u32: matches defining TU code_80135FDC.cpp verbatim
-extern "C" void func_801D1F9C(void*, u32);
+extern "C" u16 BdatGetU16ByTableKey(const void*, const void*, u8);
+extern "C" u8 BdatGetU8ByTableKey(const void*, const void*, u32);
+extern "C" s16 BdatGetS16ByTableKey(const void*, const void*, u32); // u32: matches defining TU code_80135FDC.cpp verbatim
+extern "C" void SplitU32ToS16s(void*, u32);
 extern "C" void func_801C4B60(void*, s16, s16, s16, s16); // colour init
-extern "C" void func_80139A18(void*, void*, void*, void*);
+extern "C" void PaneMatSetTevColorsByName(void*, void*, void*, void*);
 extern "C" void func_80137924(void*, void*, void*, void*);
 extern "C" void* func_8009EC9C(u32);
 extern "C" u32 func_800A32BC(void*); // character-data category
 // Shared retail declaration (same signature as CItemBoxGrid.hpp - MWCC
 // rejects differing extern "C" redeclarations as illegal overloading).
 extern "C" u32 func_800A082C(void*);
-extern "C" u16 func_80139358(u32);
+extern "C" u16 BdatGetItemId(u32);
 // Full-width return: retail callers keep the raw result in a register and
 // narrow explicitly ((u16) casts); a u16 decl forces an early clrlwi.
-extern "C" u32 func_80136254(const void*, const void*, int);
+extern "C" u32 BdatGetU16Direct(const void*, const void*, int);
 // (func_80157C4C is declared by kyoshin/cf/CItem.hpp: the real 2-arg
 // CItemExt* form. Call sites pass the slot id that retail leaves in r4.)
 extern "C" void func_801D202C(void*);
@@ -244,7 +244,7 @@ extern "C" int func_8025FB10(void*, u32);
 // Float -> s32 conversion helper used by the arts-grid percentage functions
 // (func_8023916C): takes the scaled float in f1 and returns the truncated
 // integer in r3.
-extern "C" s32 func_801C6158(float);
+extern "C" s32 RoundHalfAway0(float);
 
 // Float constant in the small data area (sda21-accessed via lfs, promoted to
 // double for the arts-info sprintf vararg).
@@ -292,7 +292,7 @@ extern u32 lbl_eu_80668688;
 extern u16 lbl_eu_8066868C;
 
 // Arts bdat file pointer used by func_80236E6C's final row lookup
-// (func_80136254, value passed as the first argument).
+// (BdatGetU16Direct, value passed as the first argument).
 // void* (not u32): shared with kyoshin/cf/CItem.hpp (MWCC 10197).
 extern void* lbl_eu_806640D8;
 
@@ -307,9 +307,9 @@ extern "C" void setLayoutTextBoxFont(nw4r::lyt::Layout*, char*, u32);
 extern "C" void buildLayout(nw4r::lyt::Layout**, nw4r::lyt::ArcResourceAccessor*, const char*);
 extern "C" void bindLayoutAnimTransform(nw4r::lyt::Layout*, nw4r::lyt::AnimTransform**, nw4r::lyt::ArcResourceAccessor*, char*);
 extern "C" int isClassicController__Q22cf13CfGameManagerFv(int);
-extern "C" char* func_80138F78(u32);
+extern "C" char* MakeTplNameSysFile(u32);
 extern "C" nw4r::lyt::ArcResourceAccessor* func_801355F4();
-extern "C" void func_80137E7C(nw4r::lyt::Layout*, const char*, u32);
+extern "C" void PaneSetTexPaletteByName(nw4r::lyt::Layout*, const char*, u32);
 extern "C" void func_80124270(void*, u32);
 extern "C" void setBdatEntry__5CBdatFUlPv(u32, void*);
 extern "C" void* func_8003AA34();

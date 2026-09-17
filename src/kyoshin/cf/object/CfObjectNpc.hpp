@@ -7,10 +7,10 @@
 // C-ABI helper imports used by CfObjectNpc (retail-unmangled symbols).
 extern "C" void* func_8003AA34();
 extern "C" void* getFP__FPCc(const char* path);
-extern "C" void func_800BE33C(void* obj, int flag);
-extern "C" void func_800BE824(void* obj, int flag);
-extern "C" void func_804B0AD4(void* obj, int param, float a, float b);
-extern "C" u32 func_80061FFC();
+extern "C" void CfObjectMove_setModelDisplayFlag(void* obj, int flag);
+extern "C" void CfObjectMove_setRegionAttached(void* obj, int flag);
+extern "C" void ColiSetMoveVec2(void* obj, int param, float a, float b);
+extern "C" u32 CfRes_getAllocHandle();
 extern "C" int func_8013EB90(int v);
 
 // Retail data labels referenced by this unit. lbl_eu_80663E24 and
@@ -51,7 +51,7 @@ extern "C" void __ct__Q22cf12CfObjectMoveFv(cf::CfObjectMove* self);
 
 // Resource-impl child ctors (legacy flat retail names; defined in
 // CfResPcImpl.cpp / CfResReloadImpl.cpp). Only forward declarations here -
-// including CfResReloadImpl.hpp would collide its typed func_800BE824
+// including CfResReloadImpl.hpp would collide its typed CfObjectMove_setRegionAttached
 // declaration with the void* form above.
 extern "C" u8* __ct__cf_CfResPcImpl(u8* obj, cf::CfObjectMove* parent);
 extern "C" void* __ct__cf_CfResReloadImpl(void* self, void* parent);

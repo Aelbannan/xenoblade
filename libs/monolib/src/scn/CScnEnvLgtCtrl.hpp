@@ -11,17 +11,17 @@ class CScn;  // full definition in monolib/scn/CScn.hpp (CScnItemModelNw4r.hpp u
 struct CScnEnvLgtCtrlLgtGate;
 
 // Cross-TU light types referenced by the CScnEnvLgtCtrl vtable interface and
-// the func_804C1338 light-env dispatch (full definitions in their headers).
+// the scnLgtDispatchEnv light-env dispatch (full definitions in their headers).
 class CScnVirtualLight;      // CScnVirtualLight.hpp
 class CLightEnv;             // CVirtualLightObj.hpp
 struct CScnVirtualLightSub;  // CScnVirtualLight.hpp
 namespace ml { struct CVec3; struct CVec4; }  // monolib/math
 
 // 0x30-byte light-slot entry in the array at CScnEnvLgtCtrl+0x24.
-// func_804C5F6C / 5FB0 / 6010 poke the u16 word at +0x28 (control flags:
+// scnLgtClearSlotEn / 5FB0 / 6010 poke the u16 word at +0x28 (control flags:
 // bit 0 and bit 2 cleared/set there) and the three u16 params at +0x2A..+0x2E.
 // 12-byte vec3 used by the light-slot entries; copied wholesale by
-// func_804C5E04 (word moves - retail treats the triple as u32 words).
+// scnLgtWriteSlotVecs (word moves - retail treats the triple as u32 words).
 struct CScnEnvLgtCtrlLgtVec3 {
     u32 x;  // +0x00
     u32 y;  // +0x04
@@ -59,7 +59,7 @@ struct CScnEnvLgtCtrlLgtVec4 {
 
 struct CScnEnvLgtCtrlLgtSlot {
     CScnEnvLgtCtrlLgtVec3 field_0x00;   // +0x00
-    // +0x0C (same source triple as field_0x00, func_804C5E9C): word view for
+    // +0x0C (same source triple as field_0x00, scnLgtWriteSlotScale): word view for
     // the bulk copies, float view for func_804C31C8's scaled reads.
     union {
         CScnEnvLgtCtrlLgtVec3 w;
@@ -71,7 +71,7 @@ struct CScnEnvLgtCtrlLgtSlot {
         CScnEnvLgtCtrlLgtVec3 field_0x18;
         CScnEnvLgtCtrlLgtVec3f field_0x18f;
     };
-    f32 field_0x24;                     // +0x24 (float param, func_804C5E9C)
+    f32 field_0x24;                     // +0x24 (float param, scnLgtWriteSlotScale)
     u16 field_0x28;                     // +0x28 control flags
     u16 field_0x2A;                     // +0x2a
     u16 field_0x2C;                     // +0x2c
@@ -79,7 +79,7 @@ struct CScnEnvLgtCtrlLgtSlot {
 };
 
 // Vtable-view of CScnEnvLgtCtrl itself for the slot-0x70 virtual dispatch in
-// func_804C30E8 (self's own vtable). Declared virtual N sits at vtable offset
+// scnLgtFrameStep (self's own vtable). Declared virtual N sits at vtable offset
 // (N+2)*4 (RTTI slots 0-1), so v26 -> 0x70. The two args are the s16 field_0xBC
 // (sign-extended) and a literal 0. Abstract - never instantiated.
 struct CScnEnvLgtCtrlVt {
@@ -115,10 +115,10 @@ struct CScnEnvLgtCtrlVt {
 // Virtual-dispatch view of the light-ring items (the objects linked at
 // CScnEnvLgtCtrl+0x0C). MWCC reserves vtable slots 0-1 for RTTI, so declared
 // virtual N sits at slot N+2 (offset (N+2)*4): the dummies below pin slot 10
-// (0x28, func_804C1600) and slot 28 (0x70, func_804C2014). Abstract on
+// (0x28, scnLgtBindLightArg) and slot 28 (0x70, scnLgtCallLightV26). Abstract on
 // purpose - never instantiated in this TU.
 struct CScnEnvLgtCtrlListItem {
-    virtual void v0(int flag) = 0;             // vtable slot 2 (0x08) - deleting-dtor dispatch (func_804C1D7C)
+    virtual void v0(int flag) = 0;             // vtable slot 2 (0x08) - deleting-dtor dispatch (scnLgtRemoveLgtItem)
     virtual void v1() = 0;
     virtual void v2(void* arg) = 0;            // vtable slot 4 (0x10)
     virtual void v3() = 0;
@@ -127,14 +127,14 @@ struct CScnEnvLgtCtrlListItem {
     virtual void v6() = 0;
     virtual void v7() = 0;
     virtual void v8(void* arg) = 0;            // vtable slot 10 (0x28)
-    virtual void v9(void* arg) = 0;            // vtable slot 11 (0x2C) - env dispatch (func_804C1338)
-    virtual void v10(void* arg, void* data) = 0;  // vtable slot 12 (0x30) - env + camera data (func_804C1338)
+    virtual void v9(void* arg) = 0;            // vtable slot 11 (0x2C) - env dispatch (scnLgtDispatchEnv)
+    virtual void v10(void* arg, void* data) = 0;  // vtable slot 12 (0x30) - env + camera data (scnLgtDispatchEnv)
     virtual void v11(void* arg, u8 byte) = 0;  // vtable slot 13 (0x34)
-    virtual int v12(void* vec) = 0;            // vtable slot 14 (0x38) - vec4 query, nonzero = apply (func_804C1338)
-    virtual int v13(void* vec) = 0;            // vtable slot 15 (0x3C) - vec4 query (func_804C1338)
-    virtual void v14(void* data) = 0;          // vtable slot 16 (0x40) - light-data push (func_804C1500 fwd walk)
+    virtual int v12(void* vec) = 0;            // vtable slot 14 (0x38) - vec4 query, nonzero = apply (scnLgtDispatchEnv)
+    virtual int v13(void* vec) = 0;            // vtable slot 15 (0x3C) - vec4 query (scnLgtDispatchEnv)
+    virtual void v14(void* data) = 0;          // vtable slot 16 (0x40) - light-data push (scnLgtGatherLights fwd walk)
     virtual int v15(float f, void* data, void* arg,
-                    u32 count) = 0;            // vtable slot 17 (0x44) - active-light query (func_804C1500 back walk)
+                    u32 count) = 0;            // vtable slot 17 (0x44) - active-light query (scnLgtGatherLights back walk)
     virtual void v16(void* arg) = 0;           // vtable slot 18 (0x48)
     virtual void v17(void* arg) = 0;           // vtable slot 19 (0x4C)
     virtual void v18(void* arg, float f) = 0;  // vtable slot 20 (0x50)
@@ -142,17 +142,17 @@ struct CScnEnvLgtCtrlListItem {
     virtual int v20(void* base, int flag) = 0;     // vtable slot 22 (0x58)
     virtual void v21() = 0;
     // slot 22 sits at vtable 0x60: light push with (value, mode, submode).
-    // func_804C1F10 calls it as v22(f, 1, flag-1) on the active pass and
+    // scnLgtPushLgtValue calls it as v22(f, 1, flag-1) on the active pass and
     // v22(f, 0, 0) on the idle pass.
     virtual void v22(float f, s32 mode, s32 submode) = 0;
     virtual int v23() = 0;                     // vtable slot 25 (0x64)
     virtual void v24(int flag) = 0;            // vtable slot 26 (0x68) - retail passes r4 (CREvtLight / CTaskREvtSequence)
-    virtual void v25(int flag) = 0;            // vtable slot 27 (0x6C) - teardown pass (func_804C1D7C)
+    virtual void v25(int flag) = 0;            // vtable slot 27 (0x6C) - teardown pass (scnLgtRemoveLgtItem)
     virtual void v26(void* a, void* b) = 0;    // vtable slot 28 (0x70)
     virtual void v27(void* a, void* b, float f) = 0;  // vtable slot 29 (0x74)
     virtual int v28(void* out, int flag) = 0;  // vtable slot 30 (0x78)
     virtual int v29() = 0;                     // vtable slot 31 (0x7C) - "idle" query (func_804C1BA0)
-    virtual int v30() = 0;                     // vtable slot 32 (0x80) - "in use" query (func_804C1D7C / func_804C1BA0)
+    virtual int v30() = 0;                     // vtable slot 32 (0x80) - "in use" query (scnLgtRemoveLgtItem / func_804C1BA0)
     virtual void v31(u32 a, u32 b) = 0;        // vtable slot 33 (0x84)
     virtual void v32(u32 a, u32 b, void* c, void* d) = 0; // vtable slot 34 (0x88)
     virtual void v33(u32 a, u32 b, void* c) = 0; // vtable slot 35 (0x8C)
@@ -223,7 +223,7 @@ struct CScnEnvLgtCtrlResList {
 extern const float lbl_eu_8066AFD0;
 extern const float lbl_eu_8066AFD4;
 
-// Fog-enable gate at CScnEnvLgtCtrl+0x40 (func_804C5380 / func_804C54D4):
+// Fog-enable gate at CScnEnvLgtCtrl+0x40 (scnLgtPushFogView0 / scnLgtPushFogView1):
 // a u16 flags word whose bit 0 permits the fog push. func_804C406C also
 // walks a 0x3C-stride entry array located at field_0x2C + mOffset with
 // mCount entries.
@@ -292,8 +292,8 @@ struct CScnEnvLgtCtrlBits2C {
 
 // Two per-view fog parameter sets at +0xF0 (views 0 and 1), interleaved by
 // attribute: color[2] @ 0xF0/0xF4, type[2] @ 0xF8/0xFC, start[2] @ 0x100/0x104,
-// end[2] @ 0x108/0x10C. func_804C5380 pushes view 0 into the scene root's fog
-// slot 0, func_804C54D4 view 1.
+// end[2] @ 0x108/0x10C. scnLgtPushFogView0 pushes view 0 into the scene root's fog
+// slot 0, scnLgtPushFogView1 view 1.
 struct CScnEnvLgtCtrlFogData {
     u32 mColor[2];  // +0x00
     u32 mType[2];   // +0x08
@@ -357,7 +357,7 @@ struct CScnEnvLgtCtrlLgtSink {
     u32 field_0x5C;   // +0x5C
 };
 
-// Compact header + row block built by func_804C6BA8: 12 u16 words
+// Compact header + row block built by scnLgtBuildHeader: 12 u16 words
 // (0x00..0x16), four u32 pairs (+0x18/+0x20/+0x28/+0x2C) and five 0x20-byte
 // float rows at +0x38.
 struct CScnEnvLgtCtrlLgtHeader {
@@ -384,7 +384,7 @@ struct CScnEnvLgtCtrlLgtHeader {
     f32 field_0x38[5][8];  // +0x38 five 8-float rows
 };
 
-// Source blob consumed by func_804C6BA8: flags word at +0x00 (bits 0..4),
+// Source blob consumed by scnLgtBuildHeader: flags word at +0x00 (bits 0..4),
 // u32 pairs at +0x04/+0x0C, u16 words at +0x14..+0x26, an 8-float row at
 // +0x28 and a +0x58 base offset added to the caller's base pointer.
 struct CScnEnvLgtCtrlLgtSrc {
@@ -406,7 +406,7 @@ struct CScnEnvLgtCtrlLgtSrc {
     u32 field_0x58;    // +0x58
 };
 
-// Minimal CScnBlend view for func_804C1094: vtable pointer at +0x00 with the
+// Minimal CScnBlend view for scnLgtSetBlendBloom: vtable pointer at +0x00 with the
 // deleting-dtor dispatch at slot 2 (0x08) and the filter flags at +0x08.
 // The full class lives in CScnBlend.cpp (NonMatching); only the slots used
 // here are modelled.
@@ -417,7 +417,7 @@ struct CScnEnvLgtBlend {
     u32 mFlags;    // +0x08
 };
 
-// Minimal CScnBloom view for func_804C1094. In retail the object's main
+// Minimal CScnBloom view for scnLgtSetBlendBloom. In retail the object's main
 // vtable pointer sits at +0x80 (the derived class's own vtable, placed after
 // the non-polymorphic CScnBloomBase and the CScnFilter subobject); the
 // deleting-dtor thunk lives at vtable slot 7 (0x1C).
@@ -442,15 +442,15 @@ struct CScnEnvLgtBloom : public CScnEnvLgtBloomBase {
     virtual void release(int flag) = 0;  // vtable slot 7 (0x1C) - deleting-dtor dispatch
 };
 
-// View of the +0x30 light-param control's tail used by func_804C1094's init
+// View of the +0x30 light-param control's tail used by scnLgtSetBlendBloom's init
 // (clears a u8 at +0x64).
 struct CScnEnvLgtCtrlLgtParamCtlTail {
     u8 _00[0x64];
     u8 field_0x64;   // +0x64
 };
 
-// View of the scene owner (field_0x04) for func_804C1094: the +0x70
-// filter-manager slot handed to func_8049D1EC / func_8049D3D8.
+// View of the scene owner (field_0x04) for scnLgtSetBlendBloom: the +0x70
+// filter-manager slot handed to ScnFilterMan_appendFilter / ScnFilterMan_toggleFilter.
 struct CScnEnvLgtOwnerLgt {
     u8 _00[0x70];
     u8* field_0x70;   // +0x70
@@ -462,9 +462,9 @@ struct CScnEnvLgtLightView;
 // Scene environment light controller.
 // vtable pointer at +0x00 (the retail dtor installs it), followed by the
 // light-state arrays: field_0x38/0x58 hold the previous frame and
-// field_0x78/0x98 the current frame (func_804C7530 copies previous -> current).
-// +0x24 points at the light-slot array (func_804C5F6C/5FB0/6010) and +0x28 at
-// a bit array (func_804C123C / func_804C5C08).
+// field_0x78/0x98 the current frame (scnLgtCopyPrevRows copies previous -> current).
+// +0x24 points at the light-slot array (scnLgtClearSlotEn/5FB0/6010) and +0x28 at
+// a bit array (scnLgtSetSinkBit1 / scnLgtSetLightBit).
 struct CScnEnvLgtCtrlLgtTypeEntry;
 struct CScnEnvLgtCtrlLgtCtl;
 struct CScnEnvLgtCtrlLgtParamCtl;
@@ -488,12 +488,12 @@ public:
     ~CScnEnvLgtCtrl();
 
     // +0x00: vtable pointer (dtor installs lbl_eu_8056F9B8); also used as a
-    // flags word by func_804C12A4 / func_804C1A64.
+    // flags word by func_804C12A4 / scnLgtPushFogNone.
     union {
         void* mVtable;                      // +0x00 vtable pointer
         u32 flags;                          // +0x00 flags view
     };
-    // +0x04: control flags (0x800/0x1000 light bits, func_804C5DA0) and the
+    // +0x04: control flags (0x800/0x1000 light bits, scnLgtSetSlotBits) and the
     // scene-view pointer handed to func_80496288 / func_8048ECD8.
     union {
         u32 field_0x04;                     // +0x04 control flags
@@ -516,21 +516,21 @@ public:
         CScnEnvLgtCtrlListNode* field_0x1C_nodes;  // +0x1C 0xc-stride node array (func_804C1BA0)
     };
     union {
-        u32 field_0x20;                        // +0x20 flags word (func_804C42A8 test, func_804C7564 family)
+        u32 field_0x20;                        // +0x20 flags word (scnLgtStepWorkBlob test, scnLgtPtmfSetF18 family)
         int field_0x20_count;                  // +0x20 node-array capacity (func_804C1BA0)
         CScnEnvLgtCtrlLgtEntry40* field_0x20_ptr;  // +0x20 light-command base (func_804C392C)
     };
     CScnEnvLgtCtrlLgtSlot* field_0x24;      // +0x24 light-slot array (0x30-byte entries)
     union {
         u32* field_0x28;                       // +0x28 light bit-array (>= 10 words)
-        CScnEnvLgtBlend* field_0x28_blend;     // +0x28 CScnBlend handle (func_804C1094)
+        CScnEnvLgtBlend* field_0x28_blend;     // +0x28 CScnBlend handle (scnLgtSetBlendBloom)
     };
     union {
-        u8* field_0x2C;                        // +0x2C base of the light-param array (func_804C6054)
-        CScnEnvLgtBloom* field_0x2C_bloom;     // +0x2C CScnBloom handle (func_804C1094)
+        u8* field_0x2C;                        // +0x2C base of the light-param array (scnLgtToggleItemBit)
+        CScnEnvLgtBloom* field_0x2C_bloom;     // +0x2C CScnBloom handle (scnLgtSetBlendBloom)
     };
     union {
-        CScnEnvLgtCtrlLgtParamCtl* field_0x30;  // +0x30 light-param control blob (func_804C6054 / null-check in func_804C3404)
+        CScnEnvLgtCtrlLgtParamCtl* field_0x30;  // +0x30 light-param control blob (scnLgtToggleItemBit / null-check in scnLgtApplyAmbColor)
         void* field_0x30_chk;                   // untyped view (CSE breaker for func_804C406C's null check)
     };
     union {
@@ -539,8 +539,8 @@ public:
         void* field_0x34_ptr;               // +0x34 pointer view (ctor: sub-blob base)
     };
     // +0x38 .. +0xB8: 4 rows of 8 floats at 0x38/0x58/0x78/0x98
-    // (func_804C7530 copies rows 2,3 <- rows 0,1). +0x3C aliases row 0's
-    // second word (func_804C1600 stores a light-data pointer there;
+    // (scnLgtCopyPrevRows copies rows 2,3 <- rows 0,1). +0x3C aliases row 0's
+    // second word (scnLgtBindLightArg stores a light-data pointer there;
     // func_804C2124 reads it as a word).
     union {
         f32 field_0x38[0x20];               // +0x38
@@ -554,16 +554,16 @@ public:
         } alt6;
         struct {
             u8 pad_0x40[0x08];              // +0x38..+0x40
-            CScnEnvLgtCtrlFogGate* field_0x40;  // +0x40 fog-enable gate (func_804C5380 / func_804C54D4)
+            CScnEnvLgtCtrlFogGate* field_0x40;  // +0x40 fog-enable gate (scnLgtPushFogView0 / scnLgtPushFogView1)
             u8 _44[0x04];                   // +0x44
             CScnEnvLgtCtrlLgtCtl* field_0x48;  // +0x48 light-count control
             CScnEnvLgtCtrlLgtLimit* field_0x4C;  // +0x4C light limit object
-            f32* field_0x50;                // +0x50 light-row array (func_804C4D28)
+            f32* field_0x50;                // +0x50 light-row array (scnLgtBlendRow5)
         } alt2;
         struct {
             u8 pad_0xB0[0x78];              // +0x38..+0xB0
-            f32 field_0xB0;                 // +0xB0 (func_804C30E8)
-            f32 field_0xB4;                 // +0xB4 (func_804C30E8)
+            f32 field_0xB0;                 // +0xB0 (scnLgtFrameStep)
+            f32 field_0xB4;                 // +0xB4 (scnLgtFrameStep)
         } alt3;
         struct {
             u8 pad_0x90[0x58];              // +0x38..+0x90
@@ -604,7 +604,7 @@ public:
         } altCnt;
         struct {
             u8 pad_0xAC[0x74];              // +0x38..+0xAC
-            s32 field_0xAC;                 // +0xAC light-count cap (func_804C526C)
+            s32 field_0xAC;                 // +0xAC light-count cap (scnLgtRefreshSlot)
         } alt5;
         struct {
             u8 pad_0xA8[0x70];              // +0x38..+0xA8
@@ -614,26 +614,26 @@ public:
     union {
         u8 field_0xB8_bytes[0x18];          // +0xB8 .. +0xD0
         struct {
-            f32 field_0xB8;                 // +0xB8 (func_804C30E8)
-            s16 field_0xBC;                 // +0xBC (func_804C30E8 stores -1 here)
+            f32 field_0xB8;                 // +0xB8 (scnLgtFrameStep)
+            s16 field_0xBC;                 // +0xBC (scnLgtFrameStep stores -1 here)
             u8 pad_0xBE[0x0A];              // +0xBE .. +0xC8
-            f32 field_0xC8;                 // +0xC8 (func_804C42A8 / func_804C6B88)
-            f32 field_0xCC;                 // +0xCC (func_804C30E8 / func_804C6B98)
+            f32 field_0xC8;                 // +0xC8 (scnLgtStepWorkBlob / scnLgtGetTime)
+            f32 field_0xCC;                 // +0xCC (scnLgtFrameStep / scnLgtGetDelta)
         };
-        // Second view used by func_804C5B00: the s16 slot index at +0xBE and
+        // Second view used by scnLgtSetFlashSlot: the s16 slot index at +0xBE and
         // the f32 color pair at +0xC0/+0xC4 that the earlier struct leaves as
         // padding.
         struct {
             f32 field_0xB8;                 // +0xB8
             s16 field_0xBC;                 // +0xBC
-            s16 field_0xBE;                 // +0xBE (func_804C5B00 stores the clamped slot)
-            f32 field_0xC0;                 // +0xC0 (func_804C5B00)
-            f32 field_0xC4;                 // +0xC4 (func_804C5B00)
+            s16 field_0xBE;                 // +0xBE (scnLgtSetFlashSlot stores the clamped slot)
+            f32 field_0xC0;                 // +0xC0 (scnLgtSetFlashSlot)
+            f32 field_0xC4;                 // +0xC4 (scnLgtSetFlashSlot)
             f32 field_0xC8;                 // +0xC8
             f32 field_0xCC;                 // +0xCC
         } lgt2;
     };
-    // +0xD0 ambient color triple (func_804C3404): word view for the writers,
+    // +0xD0 ambient color triple (scnLgtApplyAmbColor): word view for the writers,
     // float view for func_804C3C9C's paired-single reads.
     union {
         struct {
@@ -659,7 +659,7 @@ public:
         u8 field_0xE8[4];                   // +0xE8
         u32 field_0xE8_count;               // +0xE8 saved count across func_804C678C
     };
-    f32 field_0xEC;                         // +0xEC (light value, func_804C3404)
+    f32 field_0xEC;                         // +0xEC (light value, scnLgtApplyAmbColor)
     CScnEnvLgtCtrlFogData mFog;             // +0xF0 (two per-view fog parameter sets)
     f32 field_0x110[8];                     // +0x110 recorded light weights
     f32 field_0x130[8];                     // +0x130 recorded light priorities
@@ -678,7 +678,7 @@ extern u8 lbl_eu_8056F978[];
 // of __ct__reslist_IScnEnvCtl).
 extern u8 lbl_eu_8056F960[];
 
-// View of the CLightEnv light-bank layout read/written by func_804C3404:
+// View of the CLightEnv light-bank layout read/written by scnLgtApplyAmbColor:
 // per-slot CLight pointers (+0x1140) and the parallel u32 slot fields
 // (+0x1160) refreshed by func_804C64A8. Mirrors CLightEnv in
 // CVirtualLightObj.hpp.
@@ -689,7 +689,7 @@ struct CScnEnvLgtCtrlLightEnvView {
     u32 mSlotFields[4];      // +0x1160
 };
 
-// Camera-item view for func_804C2654: the active light items receive a
+// Camera-item view for scnLgtBindCamera: the active light items receive a
 // pointer to the camera item's +0x10C data block (vtable slot 0x10).
 // Address-of-member form keeps MWCC from hoisting the +0x10C computation
 // out of the ring-walk loop (cf. DecEscSj struct-member-address recompute).
@@ -699,15 +699,15 @@ struct CScnEnvLgtCtrlCamView {
 };
 
 // Camera-work blob at the scene view +0x68 (the CScn mCamWork slot);
-// func_804C2654 resolves the active camera through it: the id at +0x34 is
+// scnLgtBindCamera resolves the active camera through it: the id at +0x34 is
 // passed to func_8049B158 together with the blob.
 struct CScnEnvLgtCtrlCamWork {
     u8 _00[0x34];   // +0x00
     s32 mCamId;     // +0x34
 };
 
-// Owner view for func_804C1338: the +0x5C virtual-light manager handed to
-// func_8049347C / func_804935C0 and the +0x68 camera-work blob.
+// Owner view for scnLgtDispatchEnv: the +0x5C virtual-light manager handed to
+// scnVlApplyDir4C / scnVlApplyDir6C and the +0x68 camera-work blob.
 struct CScnEnvLgtCtrlOwnerLight {
     u8 _00[0x5C];                      // +0x00
     CScnVirtualLight* field_0x5C;      // +0x5C
@@ -732,19 +732,19 @@ extern "C" void func_8048D160(CScnLightMan* self);
 // Count-control blob at CScnEnvLgtCtrl+0x48: entry count at +0x04, consulted
 // by func_804C58D8 / func_804C5990 before walking the +0x14 entry array.
 struct CScnEnvLgtCtrlLgtCtl {
-    u32 field_0x00;   // +0x00 flags (bit 0x10 = dispatch active, func_804C42A8)
+    u32 field_0x00;   // +0x00 flags (bit 0x10 = dispatch active, scnLgtStepWorkBlob)
     u32 mCount;       // +0x04
 };
 
 // +0x4C target object: the light-limit float at +0x08 consulted by
-// func_804C42A8's clamp and func_804C6B6C's getter.
+// scnLgtStepWorkBlob's clamp and scnLgtGetLimit's getter.
 struct CScnEnvLgtCtrlLgtLimit {
     u8 _00[0x08];   // +0x00
     f32 field_0x08; // +0x08 max value
 };
 
-// 0x20-byte work blob built on the stack by func_804C42A8 (via the matched
-// func_804C7774) and handed to func_804C7910 / func_804C8054.
+// 0x20-byte work blob built on the stack by scnLgtStepWorkBlob (via the matched
+// scnLgtInitWorkBlob) and handed to func_804C7910 / func_804C8054.
 struct CScnEnvLgtCtrlWorkBlob {
     u32 field_0x00;   // +0x00
     u32 field_0x04;   // +0x04
@@ -969,7 +969,7 @@ typedef void (CScnEnvLgtCtrlWorkBlob::*CScnEnvLgtCtrlWorkBlobFn)(void*);
 extern CScnEnvLgtCtrlWorkBlobFn lbl_eu_8065FBD0[];
 extern CScnEnvLgtCtrlWorkBlobFn lbl_eu_8065FAF8[];
 
-// Light-param control blob at CScnEnvLgtCtrl+0x30 (func_804C6054): element
+// Light-param control blob at CScnEnvLgtCtrl+0x30 (scnLgtToggleItemBit): element
 // count at +0x0C and the byte offset of the entry array within field_0x2C at
 // +0x10.
 struct CScnEnvLgtCtrlLgtParamCtl {
@@ -978,7 +978,7 @@ struct CScnEnvLgtCtrlLgtParamCtl {
     u32 mOffset;   // +0x10
 };
 
-// 0x3C-byte parameter entries walked by func_804C6054: bit-15 flag at +0x04
+// 0x3C-byte parameter entries walked by scnLgtToggleItemBit: bit-15 flag at +0x04
 // gates the u16 item index at +0x20.
 struct CScnEnvLgtCtrlLgtParamEntry {
     u8 _00[0x04];
@@ -992,7 +992,7 @@ struct CScnEnvLgtCtrlLgtParamEntry {
     u8 _22[0x1A];     // +0x22 .. +0x3C pad to the retail 0x3C row stride
 };
 
-// 0x14-byte item rows indexed from CScnEnvLgtCtrl+0x0C by func_804C6054:
+// 0x14-byte item rows indexed from CScnEnvLgtCtrl+0x0C by scnLgtToggleItemBit:
 // flags word at +0x10 toggled through bit 1.
 struct CScnEnvLgtCtrlLgtItem20 {
     union {
@@ -1067,7 +1067,7 @@ struct CScnEnvLgtCtrlWorkTable {
     u32 offset;  // +0x04
 };
 
-// 0x488-byte env-light container handed to func_804C526C: the +0x484 flags
+// 0x488-byte env-light container handed to scnLgtRefreshSlot: the +0x484 flags
 // word's bit 0 selects the refresh path, and the +0xE4 index selects a
 // 0x40-stride CLight slot.
 struct CScnEnvLgtCtrlLgtEnv484 {
@@ -1242,7 +1242,7 @@ struct CScnEnvLgtCtrlLgtRow50 {
 
 // Cross-TU imports used by func_804C22F0 / func_804C64A8.
 extern "C" void func_8049DE68(u8* fogMan, int flag);
-extern "C" void func_80494208(CScnVirtualLight* mgr, int flag);
+extern "C" void scnVlBlendStep(CScnVirtualLight* mgr, int flag);
 // Retail ABI here passes four GPRs plus one FP arg (f1); f2 is left unset
 // at this call site.
 extern "C" int func_804BE398(ml::CVec3* req, u32 a, u32 b, u32 c, f32 d);
@@ -1270,26 +1270,26 @@ extern "C" void func_804C22F0(CScnEnvLgtCtrl* self);
 
 // Camera-item lookup (defined in CScnCameraMan.cpp under the retail flat
 // name func_8049B158). CScn.hpp only declares a 1-arg stub; the retail call
-// site in func_804C2654 passes the (camera-work blob, id) pair, so the full
+// site in scnLgtBindCamera passes the (camera-work blob, id) pair, so the full
 // signature is declared here. extern "C" keeps the flat retail name
 // (typed-param globals get C++-mangled; cf. CScnVirtualLight.hpp).
 struct CScnCameraItem;  // CScnCameraMan.hpp
 extern "C" CScnCameraItem* func_8049B158(CScnEnvLgtCtrlCamWork* cam, s32 id);
 
-// Cross-TU light-env helpers used by func_804C1338. The full declarations
+// Cross-TU light-env helpers used by scnLgtDispatchEnv. The full declarations
 // live in CScnVirtualLight.hpp, which cannot be included here (its
 // func_804C03A0 signature differs from this header's); these identical
 // redeclarations keep the call relocs flat.
 extern "C" void func_80495644(CLightEnv* self, u32 idx);
 extern "C" void func_804956F8(void* self);
 extern "C" void func_804952C4(CLightEnv* self, const ml::CVec3* v);
-extern "C" void func_8049347C(CScnVirtualLight* self, const ml::CVec4* src, f32 value);
-extern "C" void func_804935C0(CScnVirtualLight* self, const ml::CVec4* src, f32 value);
+extern "C" void scnVlApplyDir4C(CScnVirtualLight* self, const ml::CVec4* src, f32 value);
+extern "C" void scnVlApplyDir6C(CScnVirtualLight* self, const ml::CVec4* src, f32 value);
 
-// func_804C1338 (us-804c5494): per-frame env-light dispatch. The retail
+// scnLgtDispatchEnv (us-804c5494): per-frame env-light dispatch. The retail
 // call site (CScnVirtualLight.cpp) passes the +0x7C pool sub-object (a
 // CScnEnvLgtCtrl) plus the CLightEnv. C linkage keeps the flat retail name.
-extern "C" void func_804C1338(CScnVirtualLightSub* sub, CLightEnv* env);
+extern "C" void scnLgtDispatchEnv(CScnVirtualLightSub* sub, CLightEnv* env);
 
 // Same-TU light-slot refresh called by func_804C392C. extern "C" keeps the
 // flat retail name on the call reloc (the definition below matches).
@@ -1297,7 +1297,7 @@ extern "C" int func_804C3F58(CScnEnvLgtCtrl* self, CScnEnvLgtCtrlLgtVec4* out,
                              CScnEnvLgtCtrlLgtParamEntry* ctl, float f1);
 
 // Light-slot refresh (same-TU function, retail flat name): recomputes one
-// CLightEnv slot field. Signature from the func_804C3404 call site
+// CLightEnv slot field. Signature from the scnLgtApplyAmbColor call site
 // (self, light, slot index, reset flag) -> new slot field value. extern "C"
 // keeps the flat retail name (typed-param globals get C++-mangled); noinline
 // keeps the call out-of-line (the stub body would otherwise be inlined).
@@ -1362,13 +1362,13 @@ extern float lbl_eu_8066B05C;
 // func_804C6F78 entry walkers (retail `lfs f1, lbl_eu_8066B058@sda21`).
 extern float lbl_eu_8066B058;
 
-// Shared .sdata2 float constants used by func_804C5B00 / func_804C3F58
+// Shared .sdata2 float constants used by scnLgtSetFlashSlot / func_804C3F58
 // (the 1.0 color value stored to the +0xC0/+0xC4 pair and the output's
 // +0x0C word).
 extern float lbl_eu_8066B014;
 
 // .sdata2 light-blend constants used by func_804C2124 (ambient/diffuse
-// coefficients and blend bounds) and func_804C1338 (slot color defaults).
+// coefficients and blend bounds) and scnLgtDispatchEnv (slot color defaults).
 extern const float lbl_eu_8066AFD8;
 extern const float lbl_eu_8066AFDC;
 extern const float lbl_eu_8066AFEC;
@@ -1398,11 +1398,11 @@ struct CScnEnvLgtCtrlGrad16Entry {
     f32 c;      // +0x0C
 };
 
-// Panic assert strings referenced by func_804C1A64 (retail .data symbols).
+// Panic assert strings referenced by scnLgtPushFogNone (retail .data symbols).
 extern char lbl_eu_8056EC00[];
 extern char lbl_eu_8056EBE0[];
 
-// Panic strings referenced by func_804C5380 / func_804C54D4 (retail .data).
+// Panic strings referenced by scnLgtPushFogView0 / scnLgtPushFogView1 (retail .data).
 extern char lbl_eu_8056EC60[];
 extern char lbl_eu_8056EC40[];
 extern char lbl_eu_8056EC30[];
@@ -1427,7 +1427,7 @@ extern "C" __declspec(noinline) CScnEnvLgtCtrl* func_804C6A70(u32 handle,
                                                                const u32* data,
                                                                void* arg);
 
-// --- func_804C1094 / func_804C1D7C cross-TU imports (retail flat names) ---
+// --- scnLgtSetBlendBloom / scnLgtRemoveLgtItem cross-TU imports (retail flat names) ---
 
 // Same-TU scene-root helper (stub defined in this TU). extern "C" keeps the
 // flat retail name on the call reloc; noinline prevents the empty stub body
@@ -1435,15 +1435,15 @@ extern "C" __declspec(noinline) CScnEnvLgtCtrl* func_804C6A70(u32 handle,
 extern "C" __declspec(noinline) void func_804C26F0(CScnEnvLgtCtrl* self);
 
 // The blend/bloom ctors are owned by their own TUs (CScnBlend.cpp /
-// CScnBloom.cpp, NonMatching); func_804C1094 only emits the ctor calls with
+// CScnBloom.cpp, NonMatching); scnLgtSetBlendBloom only emits the ctor calls with
 // the retail short-form symbols.
 extern "C" CScnEnvLgtBlend* __ct__CScnBlend(CScnEnvLgtBlend* self);
 extern "C" CScnEnvLgtBloom* __ct__CScnBloom(CScnEnvLgtBloom* self);
 
 // Cross-TU helpers (definitions live in CScn.cpp / CScnFilterMan.cpp).
 extern "C" CScnEnvLgtCtrlLgtParamCtl* func_8049699C(CScnItemModelNw4rOwner* owner);
-extern "C" void func_8049D1EC(u8* man, CScnEnvLgtBlend* filter);
-extern "C" void func_8049D3D8(u8* man, CScnEnvLgtBlend* filter);
+extern "C" void ScnFilterMan_appendFilter(u8* man, CScnEnvLgtBlend* filter);
+extern "C" void ScnFilterMan_toggleFilter(u8* man, CScnEnvLgtBlend* filter);
 
 // Light-render helpers called by func_804C392C / func_804C3778 /
 // func_804C3AC8 (defined in the TU before this one; only the call-site ABI
@@ -1468,7 +1468,7 @@ struct CScnEnvLgtCtrlLgtData {
 };
 
 // Typed view over the CScnEnvLgtCtrl layout used by func_804C5198 (u32 copy
-// of the +0x54 block) and func_804C5210 (float copy of +0x54 or +0x64 into
+// of the +0x54 block) and scnLgtCopyAmbBase (float copy of +0x54 or +0x64 into
 // CScnEnvLgtData::mAmbColorBase, selected by flags bits 0x200 / 0x400).
 struct CScnEnvLgtCtrlLgtView {
     u8 _pad[0x04];                     // +0x00
@@ -1476,11 +1476,11 @@ struct CScnEnvLgtCtrlLgtView {
     u8 _pad2[0x4C];                    // +0x08
     union {
         CScnEnvLgtCtrlLgtData data;    // +0x54 (u32 view, func_804C5198)
-        f32 field_0x54[4];             // +0x54 (float view, func_804C5210)
+        f32 field_0x54[4];             // +0x54 (float view, scnLgtCopyAmbBase)
         CScnEnvLgtPairU field_0x54_pairs[2];  // +0x54 (pair view, func_804C34A0)
     };
     union {
-        f32 field_0x64[4];             // +0x64 (float view, func_804C5210)
+        f32 field_0x64[4];             // +0x64 (float view, scnLgtCopyAmbBase)
         CScnEnvLgtPairU field_0x64_pairs[2];  // +0x64 (pair view, func_804C34A0)
     };
     f32 field_0x68;
@@ -1598,7 +1598,7 @@ struct CScnEnvLgtCtrlCtorElem2 {
 
 // Resource sub-blob referenced by the type-5 element (self+0x48): flags at
 // +0x00, the 0xD8-stride item count at +0x04, and the 0x5C-stride source
-// entries at +0x10 handed to func_804C6BA8.
+// entries at +0x10 handed to scnLgtBuildHeader.
 struct CScnEnvLgtCtrlCtorElem5 {
     u32 mFlags;    // +0x00 (bits 0/1/2 -> self flags 1/2/4)
     u32 mCount14;  // +0x04 (0xD8-stride items at self+0x14)

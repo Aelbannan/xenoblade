@@ -148,11 +148,11 @@ void playUISound(u32);
 u32 advanceAnimTransform(nw4r::lyt::AnimTransform*, float);
 
 // nw4r anim-transform frame checker; retail symbol is unmangled (C linkage).
-extern "C" u32 func_80137510(nw4r::lyt::AnimTransform*, float);
+extern "C" u32 AnimRewindFrame(nw4r::lyt::AnimTransform*, float);
 
 // Layout/accessor release helpers (C++ mangled retail symbols, mirroring the
 // canonical declarations in code_80135FDC.hpp, which conflicts with
-// CEquipItemBox.hpp's func_80136190 in this TU).
+// CEquipItemBox.hpp's BdatTouchStringCell in this TU).
 void func_801390E0(CFileHandle**);
 void releaseArcResourceAccessor(nw4r::lyt::ArcResourceAccessor*);
 
@@ -164,10 +164,10 @@ extern "C" u8 code80135FDC_getByte_64077();
 // Party-select helpers (unmangled retail symbols).
 extern "C" int* func_8009ECB0();
 extern "C" void func_8009E168(int*, u8, u8);
-extern "C" u8 func_801392C8(u32);
+extern "C" u8 GetCollectedFlagWord8(u32);
 extern "C" u32 func_8009CF8C(u32);
-extern "C" u16 func_80136254(const void*, const void*, int);
-extern "C" char* func_80138F78(u32);
+extern "C" u16 BdatGetU16Direct(const void*, const void*, int);
+extern "C" char* MakeTplNameSysFile(u32);
 
 // Party-slot data-table pointers (.sdata).
 extern void* lbl_eu_80664090;
@@ -177,17 +177,17 @@ extern char* lbl_eu_80664098;
 extern "C" char* func_801355BC();
 extern "C" u32 func_801355D8();
 extern "C" nw4r::lyt::ArcResourceAccessor* func_801355F4();
-extern "C" char* func_801571FC();
+extern "C" char* CItemBlock_getPtr20E8();
 
 // BDAT string/value lookups (unmangled retail symbols).
-extern "C" u8 func_8013600C(const void*, const void*, u32);
+extern "C" u8 BdatGetU8ByTableKey(const void*, const void*, u32);
 
 // Layout text/pane binding helpers (unmangled retail symbols; the canonical
 // code_80135FDC.hpp / CItemBoxGrid.hpp declarations conflict with
 // CEquipItemBox.hpp in this TU).
-extern "C" void func_80136B4C(nw4r::lyt::Layout*, const char*, const char*, u32);
+extern "C" void LayoutSetTextBoxFmtValue(nw4r::lyt::Layout*, const char*, const char*, u32);
 extern "C" void func_8013676C(nw4r::lyt::Pane*, void*);
-extern "C" void func_80137E7C(nw4r::lyt::Layout*, const char*, u32);
+extern "C" void PaneSetTexPaletteByName(nw4r::lyt::Layout*, const char*, u32);
 extern "C" void func_80124270(void*, u32);
 
 // Layout + anim builders (retail symbols are the C++ mangled names).

@@ -39,7 +39,7 @@ __declspec(noinline) void func_80244558(CFade* self) {
 }
 
 __declspec(noinline) void func_802445A4(CFade* self) {
-    if (func_80137510(self->mAnimTrans, lbl_eu_80668750) != 0) {
+    if (AnimRewindFrame(self->mAnimTrans, lbl_eu_80668750) != 0) {
         self->mFadeState = 0;
         self->mVisible = 1;
     }

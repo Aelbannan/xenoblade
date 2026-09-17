@@ -53,13 +53,13 @@ void CMenuKizunagram::Term() {
     removeRenderCB__4CScnFP10IScnRender(reinterpret_cast<CScn*>(mParentRef), renderCB);
 
     func_801C40A0(&mTitleAHelp);
-    func_8025C6F0(&mSub98);
+    teardownKizuna(&mSub98);
     func_8025D9C4(&mPcKizunagram);
     func_802AE62C(&mLoad);
     func_8024448C(&mFade);
 
     lbl_eu_806647E0 = 0;
-    func_8013B980();
+    DecMenuCounter64080();
     if (code80135FDC_getByte_64080() == 0) {
         setPresentationFlag__Q22cf13CfGameManagerFv(0);
     }
@@ -115,7 +115,7 @@ body:
     case 10: func_80257A2C(this); break;
     }
     func_801C3FF0(&mTitleAHelp);
-    func_8025C580(&mSub98);
+    tickKizMain(&mSub98);
     func_8025D8C4(&mPcKizunagram);
     func_802AE560(&mLoad);
     func_802443E8(&mFade);
@@ -134,7 +134,7 @@ void CMenuKizunagram::cbRenderBefore() {
     }
     goto body;
 body:
-    if (func_8013BE50() == 0) {
+    if (IsMenuState621F0() == 0) {
         return;
     }
     GXSetZMode(GX_FALSE, GX_NEVER, GX_FALSE);
@@ -144,7 +144,7 @@ body:
     u8 drawInfo[0x54];
     __ct__Q34nw4r3lyt8DrawInfoFv((nw4r::lyt::DrawInfo*)&drawInfo[0]);
     func_80137250((nw4r::lyt::DrawInfo*)&drawInfo[0]);
-    func_8025C61C(&mSub98, (nw4r::lyt::DrawInfo*)&drawInfo[0]);
+    drawKizLayouts(&mSub98, (nw4r::lyt::DrawInfo*)&drawInfo[0]);
     func_8025D954(&mPcKizunagram, (nw4r::lyt::DrawInfo*)&drawInfo[0]);
     // Draw the title/help bar once the per-character window is past the
     // opening phase (state >= 8) or when its visibility flag is set.
@@ -228,7 +228,7 @@ extern "C" CMenuKizunagram* __ct__CMenuKizunagram(CMenuKizunagram* self, int a, 
     self->field_0x21C = 0;
     self->field_0x21D = 1;
     self->field_0x21E = (u8)b;
-    func_80042874();
+    CTaskGame_deleteLoad();
     func_8011C400();
     return self;
 }
@@ -263,10 +263,10 @@ void func_80257360(CMenuKizunagram* self) {
 // confirm sound and advance to state 3.
 // ---------------------------------------------------------------------------
 void func_802573B8(CMenuKizunagram* self) {
-    if (func_801C4114(&self->mTitleAHelp) != 0 && func_8025C770(&self->mSub98) != 0) {
-        func_801C41E8(&self->mTitleAHelp, func_8025CBCC(&self->mSub98));
+    if (func_801C4114(&self->mTitleAHelp) != 0 && kizChartReady(&self->mSub98) != 0) {
+        func_801C41E8(&self->mTitleAHelp, kizChartStatus(&self->mSub98));
         func_801C412C(&self->mTitleAHelp);
-        func_8025C7D0(&self->mSub98);
+        kizStartChart(&self->mSub98);
         func_802AE758(&self->mLoad);
         func_80244538(&self->mFade);
         self->field_0x21C = 3;
@@ -281,7 +281,7 @@ void func_802573B8(CMenuKizunagram* self) {
 // ---------------------------------------------------------------------------
 void func_80257448(CMenuKizunagram* self) {
     if (isIdle__11CTitleAHelpFv(&self->mTitleAHelp) != 0 &&
-        func_8025C78C(&self->mSub98) != 0) {
+        kizChartOpen(&self->mSub98) != 0) {
         self->field_0x21C = 4;
     }
 }
@@ -294,7 +294,7 @@ void func_80257448(CMenuKizunagram* self) {
 // chart refresh when none fired).
 // ---------------------------------------------------------------------------
 void func_80257498(CMenuKizunagram* self) {
-    if (func_8025C78C(&self->mSub98) == 0) {
+    if (kizChartOpen(&self->mSub98) == 0) {
         return;
     }
     // Declaration order drives MWCC's callee-saved allocation.
@@ -332,56 +332,56 @@ merged:
     if (openWin != 0) {
         // Open the per-character window: only when the chart is idle and the
         // follow-up check passes, dismiss the chart and advance to state 6.
-        func_8025C870(&self->mSub98);
-        if (func_8025CBBC(&self->mSub98) == 0 && func_8025CBC4(&self->mSub98) != 0) {
+        kizOpenWinNop(&self->mSub98);
+        if (kizChartBusy(&self->mSub98) == 0 && kizHasSelFlag(&self->mSub98) != 0) {
             func_801C4198(&self->mTitleAHelp);
-            func_8025C7FC(&self->mSub98, 0);
+            kizCloseChart(&self->mSub98, 0);
             self->field_0x21C = 6;
         }
     } else if (dismiss != 0) {
         // Back out of the chart: dismiss the help bar and go to state 5.
         func_801C414C(&self->mTitleAHelp);
-        func_8025C7FC(&self->mSub98, 1);
+        kizCloseChart(&self->mSub98, 1);
         self->field_0x21C = 5;
     } else if (toggle != 0) {
         // Toggle the help-bar visibility flag and play the corresponding SE.
         self->field_0x21D = (self->field_0x21D ^ 1) != 0;
-        func_8025CC70(&self->mSub98);
+        kizToggleHelp(&self->mSub98);
         if (self->field_0x21D != 0) {
             playUISound(0xd);
         } else {
             playUISound(0xe);
         }
     } else if (cursorA != 0) {
-        func_8025CAE4(&self->mSub98);
+        kizCursorHoldA(&self->mSub98);
     } else if (cursorB != 0) {
-        func_8025CB50(&self->mSub98);
+        kizCursorHoldB(&self->mSub98);
     }
     // Mirror the chart selection into the help bar, then run the turbo
     // cursor helpers; refresh the chart only when none of them fired.
-    func_801C41E8(&self->mTitleAHelp, func_8025CBCC(&self->mSub98));
-    if (func_8025CBBC(&self->mSub98) == 0) {
+    func_801C41E8(&self->mTitleAHelp, kizChartStatus(&self->mSub98));
+    if (kizChartBusy(&self->mSub98) == 0) {
         // changed stays 1 only when no turbo helper fired; the default
         // chart refresh then runs.
         int changed = 1;
         if (f1) {
-            func_8025C874(&self->mSub98);
+            kizCursorDir1(&self->mSub98);
             changed = 0;
         }
         if (f2) {
-            func_8025C904(&self->mSub98);
+            kizCursorDir2(&self->mSub98);
             changed = 0;
         }
         if (f3) {
-            func_8025C994(&self->mSub98);
+            kizCursorDir3(&self->mSub98);
             changed = 0;
         }
         if (f4) {
-            func_8025CA24(&self->mSub98);
+            kizCursorDir4(&self->mSub98);
             changed = 0;
         }
         if (changed) {
-            func_8025CAB4(&self->mSub98);
+            tickKizMove(&self->mSub98);
         }
     }
 }
@@ -393,7 +393,7 @@ merged:
 // ---------------------------------------------------------------------------
 void func_80257704(CMenuKizunagram* self) {
     if (isIdle__11CTitleAHelpFv(&self->mTitleAHelp) != 0 &&
-        func_8025C78C(&self->mSub98) != 0) {
+        kizChartOpen(&self->mSub98) != 0) {
         self->field_0x54 = 1;
     }
 }
@@ -403,9 +403,9 @@ void func_80257754(CMenuKizunagram* self) {
     // window are all idle/ready, set the help text from the string pool,
     // animate it, dismiss the chart and advance to state 8.
     if (isIdle__11CTitleAHelpFv(&self->mTitleAHelp) != 0 &&
-        func_8025C78C(&self->mSub98) != 0 &&
+        kizChartOpen(&self->mSub98) != 0 &&
         func_8025DA40(&self->mPcKizunagram) != 0) {
-        char* name = func_80136190(lbl_eu_8050CAB8, lbl_eu_8050CAB8 + 0xb, 2);
+        char* name = BdatTouchStringCell(lbl_eu_8050CAB8, lbl_eu_8050CAB8 + 0xb, 2);
         func_801C41C0(&self->mTitleAHelp, name);
         func_801C41E8(&self->mTitleAHelp, 0x59);
         func_801C416C(&self->mTitleAHelp);
@@ -484,11 +484,11 @@ void func_80257840(CMenuKizunagram* self) {
 void func_80257994(CMenuKizunagram* self) {
     if (isIdle__11CTitleAHelpFv(&self->mTitleAHelp) != 0 &&
         func_8025DA48(&self->mPcKizunagram) != 0) {
-        char* name = func_80136190(lbl_eu_8050CAB8, lbl_eu_8050CAB8 + 0xb, 1);
+        char* name = BdatTouchStringCell(lbl_eu_8050CAB8, lbl_eu_8050CAB8 + 0xb, 1);
         func_801C41C0(&self->mTitleAHelp, name);
-        func_801C41E8(&self->mTitleAHelp, func_8025CBCC(&self->mSub98));
+        func_801C41E8(&self->mTitleAHelp, kizChartStatus(&self->mSub98));
         func_801C416C(&self->mTitleAHelp);
-        func_8025C7D0(&self->mSub98);
+        kizStartChart(&self->mSub98);
         self->field_0x21C = 7;
     }
 }
@@ -500,7 +500,7 @@ void func_80257994(CMenuKizunagram* self) {
 // ---------------------------------------------------------------------------
 void func_80257A2C(CMenuKizunagram* self) {
     if (isIdle__11CTitleAHelpFv(&self->mTitleAHelp) != 0 &&
-        func_8025C78C(&self->mSub98) != 0) {
+        kizChartOpen(&self->mSub98) != 0) {
         self->field_0x21C = 4;
     }
 }

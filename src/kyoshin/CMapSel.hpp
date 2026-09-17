@@ -132,7 +132,7 @@ extern "C" void __dt__17UnkClass_8045F564Fv(UnkClass_8045F564*, int);
 extern "C" void __dl__FPv(void*);
 void func_801390E0(CFileHandle**);
 extern "C" void __ct__CScrollBar(void*, int);
-extern "C" u8 func_801361E8(u32, const char*, u32);
+extern "C" u8 BdatGetU8Direct(u32, const char*, u32);
 extern "C" u32 func_8003B1EC(void*);
 extern "C" u32 func_8009CF8C(u32);
 extern "C" void func_801F35B0(void*, nw4r::lyt::DrawInfo*);
@@ -148,20 +148,20 @@ extern "C" void func_801F367C(u8*);                    // scrollbar show
 // Layout/text C-ABI helpers normally declared by code_80135FDC.hpp. CMapSel.cpp
 // defines CODE_80135FDC_CPP before including that header, so those exports are
 // skipped there and the declarations below apply (retail CMapSel callers pass
-// the texture resource as func_80137E7C's third argument). Same guard as the legacy
-// func_80137510 pseudo-import so code_802405F4.cpp's define stays a no-op.
+// the texture resource as PaneSetTexPaletteByName's third argument). Same guard as the legacy
+// AnimRewindFrame pseudo-import so code_802405F4.cpp's define stays a no-op.
 #ifndef KYOSHIN_SKIP_CMAPSEL_LEGACY_LAYOUT_IMPORTS
-extern "C" char* func_8013639C(const void*, const void*, int);
+extern "C" char* BdatGetPtrDirect(const void*, const void*, int);
 extern "C" void func_8013676C(void*, u32);
-extern "C" void func_80137E7C(void*, const char*, const void*);
-extern "C" char* func_80138F78(u32);
+extern "C" void PaneSetTexPaletteByName(void*, const char*, const void*);
+extern "C" char* MakeTplNameSysFile(u32);
 #endif
 // Cursor position helper: fill output with the point derived from two panes.
 extern "C" void func_80137924(nw4r::math::VEC3*, nw4r::lyt::Pane*,
                                nw4r::lyt::Pane*, nw4r::lyt::Pane*);
 extern "C" void playUISound__FUl(u32);               // UI sound effect
 // Grid-text helpers / cursor construction (C-ABI retail symbols).
-extern "C" u16 func_80136254(const void*, const void*, int);
+extern "C" u16 BdatGetU16Direct(const void*, const void*, int);
 extern "C" void func_80124270(void*, u32);
 extern "C" void __ct__CCur18(void*, nw4r::lyt::ArcResourceAccessor*);
 extern "C" nw4r::lyt::ArcResourceAccessor* func_801355F4();
@@ -181,12 +181,12 @@ extern "C" void* lbl_eu_80536E10[];
 extern "C" float lbl_eu_80668738;
 extern "C" float lbl_eu_80668740;
 extern "C" float lbl_eu_80668744;
-// Canonical func_80137510 (nw4r::lyt::AnimTransform*, float) is declared in
+// Canonical AnimRewindFrame (nw4r::lyt::AnimTransform*, float) is declared in
 // code_80135FDC.hpp. CMapSel.cpp includes that header and passes proper
 // AnimTransform* pointers; the guard below stays for TUs that include both
 // headers (identical redeclarations are harmless, but keep the old macro
 // contract so code_802405F4.cpp's define stays a no-op).
 #ifndef KYOSHIN_SKIP_CMAPSEL_LEGACY_LAYOUT_IMPORTS
-extern "C" u32 func_80137510(nw4r::lyt::AnimTransform*, float);
+extern "C" u32 AnimRewindFrame(nw4r::lyt::AnimTransform*, float);
 #endif
 extern "C" const float lbl_eu_8066873C;

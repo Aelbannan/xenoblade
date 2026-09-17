@@ -17,8 +17,8 @@ extern "C" mtl::ALLOC_HANDLE func_80496004(void* ptr);
 extern "C" void CMenuArtsSelect_clearArtsRef();
 // Layout/BDAT helpers used by the file-event handler.
 extern "C" nw4r::lyt::ArcResourceAccessor* createArcResourceAccessor__10CLibLayoutFv();
-extern "C" u16 func_80136254(const void* table, const void* key, int id);
-extern "C" char* func_80138F78(u32 id);
+extern "C" u16 BdatGetU16Direct(const void* table, const void* key, int id);
+extern "C" char* MakeTplNameSysFile(u32 id);
 
 class CProcess;
 class CUIBattleManager;

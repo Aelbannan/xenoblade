@@ -244,7 +244,7 @@ extern "C" void func_801EDA4C(CItemBoxLine* self, u8 val);
 extern "C" void func_801ED31C(CItemBoxLine* self);
 extern "C" void func_8018B0FC(void* dest, void* src);
 extern "C" void __ct__UnkClass_8011C974(void* dest, void* src);
-extern "C" char* func_80136190(const void* a, const void* b, int id);
+extern "C" char* BdatTouchStringCell(const void* a, const void* b, int id);
 extern "C" void func_801C414C(CTitleAHelp* self);
 extern "C" void func_801C41E8(CTitleAHelp* self, u8 mode);
 extern "C" void CTitleAHelp_load(CTitleAHelp* self);
@@ -308,7 +308,7 @@ extern "C" void* getInstance__9CTaskGameFv();
 extern "C" bool isFlag01Set__9CTaskGameFv(void* taskGame);
 
 // Shared data imports (MWCC does not mangle global-scope data names).
-extern "C" int func_8013BE50();
+extern "C" int IsMenuState621F0();
 extern u32 lbl_eu_80663E28;       // render-gate mode bitfield (.sbss; bit 21 = busy)
 extern u32 lbl_eu_806642F8;       // shop-buy singleton flag (cleared by Term)
 extern u32 __ptmf_null[3];        // null pointer-to-member-function constant

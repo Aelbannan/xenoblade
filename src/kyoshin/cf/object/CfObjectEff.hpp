@@ -24,10 +24,10 @@ extern const float lbl_eu_8066695C;  // default mFloat60 fill (CfObjectEff ctor)
 // reloc. isGlobalCamFlagSet__Fi is declared in kyoshin/cf/code_800F42AC.hpp
 // (extern "C") and included by the cpp.
 extern "C" {
-    void* func_800630C8();
-    void* func_80063038();
-    void* func_80066E7C(void* self, u32 id);
-    void* func_80066CF8(void* self);
+    void* CfRes_getInstPtr224();
+    void* CfRes_getInstPtr170();
+    void* CfRes_findEntryById(void* self, u32 id);
+    void* CfRes_findKypEntryA(void* self);
     void* func_800BB340(void* obj);
     void* func_804E3CFC(void* effect);
     int CfRes_getD80Flag();
@@ -42,7 +42,7 @@ extern "C" void* __dynamic_cast(void* obj, long offset, const void* src_type,
                                 const void* dst_type, void* src2dst);
 // C-linkage validity check used by updateEffect_/teardownEff__ (returns the
 // object when it is still live, 0 when it has been released).
-extern "C" void* func_800B8920(void* obj);
+extern "C" void* lookupWorkAtAddr(void* obj);
 
 namespace cf {
 class CfObjectEff;
@@ -120,7 +120,7 @@ struct CfObjectEffChild {
 // (const char* / const ml::CVec3* / (ml::CVec3*, float) / float), so Owner
 // and Move pads were deleted; call sites use this->method(...).
 
-// Effect sources are ResInfoEntry records (cf. func_80063038's
+// Effect sources are ResInfoEntry records (cf. CfRes_getInstPtr170's
 // ResInfoEntry* cast in CfResObjImpl.cpp): +0x0C is the validity word
 // gating the 0x10/0x11 types, +0x2C is the CResLookup whose vtable slot
 // 0x40 (CResLookup::isInUse) validates the entry.

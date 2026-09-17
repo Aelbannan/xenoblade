@@ -154,7 +154,7 @@ void CMenuLandTelop::Move() {
     // Single short-circuit OR so MWCC emits: func test -> bne exit;
     // bit test -> beq continue / b exit (cbRenderBefore shape).
     if (CTaskGame::isFlag01Set() || (lbl_eu_80663E28 & 0x00200000)) return;
-    if (func_8013BE50() == 0) return;
+    if (IsMenuState621F0() == 0) return;
     if (lbl_eu_80663E24 & 0xBFE40000u) return;
 
     switch (field_8E) {
@@ -185,16 +185,16 @@ void CMenuLandTelop::Move() {
                 if (field_E0 != 0) return;
             }
 
-            u16 msgId = func_8013606C(&lbl_eu_80501720[0],
+            u16 msgId = BdatGetU16ByTableKey(&lbl_eu_80501720[0],
                                       &lbl_eu_80501720[0xd], field_8C);
-            u8 kind = func_8013600C(&lbl_eu_80501720[0],
+            u8 kind = BdatGetU8ByTableKey(&lbl_eu_80501720[0],
                                     &lbl_eu_80501720[0x14], field_8C);
             if (msgId != 0) {
                 if (kind == 1) msgId = msgId * 10;
 
-                u16 col0 = func_8013606C(&lbl_eu_80501720[0],
+                u16 col0 = BdatGetU16ByTableKey(&lbl_eu_80501720[0],
                                          &lbl_eu_80501720[0x1d], field_8C);
-                u16 col1 = func_8013606C(&lbl_eu_80501720[0],
+                u16 col1 = BdatGetU16ByTableKey(&lbl_eu_80501720[0],
                                          &lbl_eu_80501720[0x23], field_8C);
 
                 // Loop-hoisted constants (retail parks these in f29/f30/f31
@@ -291,7 +291,7 @@ void CMenuLandTelop::Move() {
             if (lbl_eu_806673F0 <= field_94) field_90 = 3;
             break;
         case 3:
-            if (func_80137510(field_88, lbl_eu_806673CC)) {
+            if (AnimRewindFrame(field_88, lbl_eu_806673CC)) {
                 if (func_801453B8(this) != 0) return;
                 field_64 = 1;
             }
@@ -309,7 +309,7 @@ void CMenuLandTelop::cbRenderBefore() {
     // Single short-circuit OR so MWCC emits: func test -> bne exit;
     // bit test -> beq continue / b exit (CSystemWindow::Move shape).
     if (CTaskGame::isFlag01Set() || (lbl_eu_80663E28 & 0x200000)) return;
-    if (func_8013BE50() == 0) return;
+    if (IsMenuState621F0() == 0) return;
     if (lbl_eu_80663E24 & 0xBFE40000u) return;
     if (cf::CfGameManager::isSceneLoading()) return;
     if (field_DA != 0) return;
@@ -464,20 +464,20 @@ void func_8014548C(CMenuLandTelop* self) {
             ->SetVisible(false);
 
         switch (
-            func_8013600C(&lbl_eu_80501720[0], &lbl_eu_80501720[0x14],
+            BdatGetU8ByTableKey(&lbl_eu_80501720[0], &lbl_eu_80501720[0x14],
                           self->field_8C)) {
         case 0:
             self->field_54->GetRootPane()
                 ->FindPaneByName(&lbl_eu_80501720[0xa3], true)
                 ->SetVisible(true);
-            func_80136B4C(
+            LayoutSetTextBoxFmtValue(
                 self->field_54, &lbl_eu_80501720[0xd4],
-                func_80136190(&lbl_eu_80501720[0xc4], &lbl_eu_80501720[0xcf],
+                BdatTouchStringCell(&lbl_eu_80501720[0xc4], &lbl_eu_80501720[0xcf],
                               4),
                 0);
-            func_80136B4C(
+            LayoutSetTextBoxFmtValue(
                 self->field_54, &lbl_eu_80501720[0xe4],
-                func_80136190(&lbl_eu_80501720[0], &lbl_eu_80501720[0xdf],
+                BdatTouchStringCell(&lbl_eu_80501720[0], &lbl_eu_80501720[0xdf],
                               self->field_8C),
                 0);
             break;
@@ -485,14 +485,14 @@ void func_8014548C(CMenuLandTelop* self) {
             self->field_54->GetRootPane()
                 ->FindPaneByName(&lbl_eu_80501720[0xae], true)
                 ->SetVisible(true);
-            func_80136B4C(
+            LayoutSetTextBoxFmtValue(
                 self->field_54, &lbl_eu_80501720[0xef],
-                func_80136190(&lbl_eu_80501720[0xc4], &lbl_eu_80501720[0xcf],
+                BdatTouchStringCell(&lbl_eu_80501720[0xc4], &lbl_eu_80501720[0xcf],
                               7),
                 0);
-            func_80136B4C(
+            LayoutSetTextBoxFmtValue(
                 self->field_54, &lbl_eu_80501720[0xfa],
-                func_80136190(&lbl_eu_80501720[0], &lbl_eu_80501720[0xdf],
+                BdatTouchStringCell(&lbl_eu_80501720[0], &lbl_eu_80501720[0xdf],
                               self->field_8C),
                 0);
             break;
@@ -500,14 +500,14 @@ void func_8014548C(CMenuLandTelop* self) {
             self->field_54->GetRootPane()
                 ->FindPaneByName(&lbl_eu_80501720[0xb9], true)
                 ->SetVisible(true);
-            func_80136B4C(
+            LayoutSetTextBoxFmtValue(
                 self->field_54, &lbl_eu_80501720[0x105],
-                func_80136190(&lbl_eu_80501720[0xc4], &lbl_eu_80501720[0xcf],
+                BdatTouchStringCell(&lbl_eu_80501720[0xc4], &lbl_eu_80501720[0xcf],
                               8),
                 0);
-            func_80136B4C(
+            LayoutSetTextBoxFmtValue(
                 self->field_54, &lbl_eu_80501720[0x110],
-                func_80136190(&lbl_eu_80501720[0], &lbl_eu_80501720[0xdf],
+                BdatTouchStringCell(&lbl_eu_80501720[0], &lbl_eu_80501720[0xdf],
                               self->field_8C),
                 0);
             break;
@@ -539,7 +539,7 @@ void func_8014548C(CMenuLandTelop* self) {
             ->SetVisible(false);
 
         switch (
-            func_8013600C(&lbl_eu_80501720[0], &lbl_eu_80501720[0x14],
+            BdatGetU8ByTableKey(&lbl_eu_80501720[0], &lbl_eu_80501720[0x14],
                           self->field_8C)) {
         case 0:
             self->field_54->GetRootPane()
@@ -548,9 +548,9 @@ void func_8014548C(CMenuLandTelop* self) {
             self->field_54->GetRootPane()
                 ->FindPaneByName(&lbl_eu_80501720[0x171], true)
                 ->SetVisible(true);
-            func_80136B4C(
+            LayoutSetTextBoxFmtValue(
                 self->field_54, &lbl_eu_80501720[0x171],
-                func_80136190(&lbl_eu_80501720[0], &lbl_eu_80501720[0xdf],
+                BdatTouchStringCell(&lbl_eu_80501720[0], &lbl_eu_80501720[0xdf],
                               self->field_8C),
                 0);
             break;
@@ -564,9 +564,9 @@ void func_8014548C(CMenuLandTelop* self) {
             self->field_54->GetRootPane()
                 ->FindPaneByName(&lbl_eu_80501720[0xdf], true)
                 ->SetVisible(true);
-            func_80136B4C(
+            LayoutSetTextBoxFmtValue(
                 self->field_54, &lbl_eu_80501720[0x171],
-                func_80136190(&lbl_eu_80501720[0], &lbl_eu_80501720[0xdf],
+                BdatTouchStringCell(&lbl_eu_80501720[0], &lbl_eu_80501720[0xdf],
                               self->field_8C),
                 0);
             break;
@@ -580,9 +580,9 @@ void func_8014548C(CMenuLandTelop* self) {
             self->field_54->GetRootPane()
                 ->FindPaneByName(&lbl_eu_80501720[0xdf], true)
                 ->SetVisible(true);
-            func_80136B4C(
+            LayoutSetTextBoxFmtValue(
                 self->field_54, &lbl_eu_80501720[0x17e],
-                func_80136190(&lbl_eu_80501720[0], &lbl_eu_80501720[0xdf],
+                BdatTouchStringCell(&lbl_eu_80501720[0], &lbl_eu_80501720[0xdf],
                               self->field_8C),
                 0);
             break;

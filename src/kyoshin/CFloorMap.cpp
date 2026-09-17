@@ -27,15 +27,15 @@ extern u32 lbl_eu_80664184;
 extern u16 lbl_eu_8050B798[];
 extern u32 func_8003B1EC(void* bdat);   // matches code_801862C0.hpp canonical decl
 extern u32 lbl_eu_8050BDF8[];
-extern s16 func_80136330(u32, const char*, u32);
+extern s16 BdatGetS16Direct(u32, const char*, u32);
 extern u8 lbl_eu_80664798;
 
 // Wider-view import for the marker-placement lookups: retail masks the raw
 // results (rlwinm 16) at these call sites, which requires the untruncated
 // u32 return view (the canonical header decl is u16 and would drop the mask).
-extern "C" u32 func_8013606C(const void*, const void*, u32);
+extern "C" u32 BdatGetU16ByTableKey(const void*, const void*, u32);
 
-extern "C" void func_80137C1C(void*, void*);
+extern "C" void PaneSetVtxColorAll(void*, void*);
 extern "C" void* createPicture__10CLibLayoutFv();
 extern "C" void SetName__Q34nw4r3lyt4PaneFPCc(void*, const char*);
 
@@ -87,10 +87,10 @@ void func_80246200(void* self) {
         s32 row = (s8)cur->field_0B + (u8)i;
         if (row >= count) {
             // No marker on this visible row: show the default blank label.
-            func_80136B4C(cur->mData, buf, tbl + 0x1C0, 0);
+            LayoutSetTextBoxFmtValue(cur->mData, buf, tbl + 0x1C0, 0);
         } else {
             rec = markers + row * 0x18;
-            func_80136B4C(cur->mData, buf, *(char**)(rec + 0x18), 0);
+            LayoutSetTextBoxFmtValue(cur->mData, buf, *(char**)(rec + 0x18), 0);
             color = -1;
             if (rec[0x1C] != 0 || func_8009CF8C(0x3212) != 0)
                 color = 0xC85050FF;
@@ -307,8 +307,8 @@ void func_80245950(void* self) {
         e = (CFloorMapFloorNameEntry*)((u8*)self + (u32)((s8)fi * 0x30C));
         fi--;
         e->field_10 = i;
-        e->field_12 = func_80136330(lbl_eu_8066479C, &lbl_eu_8050BEA8[0x15A], i);
-        e->field_14 = (u32)func_8013639C((const void*)lbl_eu_8066479C, (const void*)&lbl_eu_8050BEA8[0x161], i);
+        e->field_12 = BdatGetS16Direct(lbl_eu_8066479C, &lbl_eu_8050BEA8[0x15A], i);
+        e->field_14 = (u32)BdatGetPtrDirect((const void*)lbl_eu_8066479C, (const void*)&lbl_eu_8050BEA8[0x161], i);
         e->field_318 = 0;
         i++;
     }
@@ -326,9 +326,9 @@ void func_80245950(void* self) {
         }
         sprintf(buf2, &lbl_eu_8050BEA8[0x12A], k);
         if (found)
-            func_80139A18(cur->mData, buf2, lbl_eu_806647B0, lbl_eu_806647B8);
+            PaneMatSetTevColorsByName(cur->mData, buf2, lbl_eu_806647B0, lbl_eu_806647B8);
         else
-            func_80139A18(cur->mData, buf2, lbl_eu_806647A0, lbl_eu_806647A8);
+            PaneMatSetTevColorsByName(cur->mData, buf2, lbl_eu_806647A0, lbl_eu_806647A8);
     }
 
     // Show the first `count` row panes; each pane's low flag bit is set when
@@ -370,9 +370,9 @@ void func_80245950(void* self) {
 
     CFloorMapFloorNameEntry* eSel =
         (CFloorMapFloorNameEntry*)((u8*)self + cur->field_09 * 0x30C);
-    func_80136B4C(cur->field_30D8, &lbl_eu_8050BEA8[0xF8], *(char**)&eSel->field_14, 0);
-    func_80136B4C((nw4r::lyt::Layout*)lbl_eu_806640A8, &lbl_eu_8050BEA8[0x145],
-                  func_8013639C((const void*)lbl_eu_806640A8, (const void*)&lbl_eu_8050BEA8[0x1F], lbl_eu_80664798), 0);
+    LayoutSetTextBoxFmtValue(cur->field_30D8, &lbl_eu_8050BEA8[0xF8], *(char**)&eSel->field_14, 0);
+    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)lbl_eu_806640A8, &lbl_eu_8050BEA8[0x145],
+                  BdatGetPtrDirect((const void*)lbl_eu_806640A8, (const void*)&lbl_eu_8050BEA8[0x1F], lbl_eu_80664798), 0);
 
     // Second position target (cursor-position pane) when the current floor
     // flag is set.
@@ -431,17 +431,17 @@ void func_80245DF8(void* self) {
     u16 n = 0;
     for (u16 i = 1; i <= count; i++) {
         if (func_8009CF8C(0x20C8 + i) == 0) continue;
-        if (lbl_eu_80664798 != (u8)func_801361E8(fp, &lbl_eu_8050BEA8[0x18C], i)) continue;
-        if ((u8)func_801361E8(fp, &lbl_eu_8050BEA8[0x192], i) == 2) continue;
+        if (lbl_eu_80664798 != (u8)BdatGetU8Direct(fp, &lbl_eu_8050BEA8[0x18C], i)) continue;
+        if ((u8)BdatGetU8Direct(fp, &lbl_eu_8050BEA8[0x192], i) == 2) continue;
 
         CFloorMapMarkerEntry* e = &entries[n];
         e->id = i;
         n++;
-        e->type = func_801361E8(fp, &lbl_eu_8050BEA8[0x192], i);
-        e->x = (f32)func_80136330(fp, &lbl_eu_8050BEA8[0x19B], i);
-        e->y = (f32)func_80136330(fp, &lbl_eu_8050BEA8[0x1A0], i);
-        e->z = (f32)func_80136330(fp, &lbl_eu_8050BEA8[0x1A5], i);
-        e->unk = (u32)func_8013639C((const void*)fp, (const void*)&lbl_eu_8050BEA8[0x1F], i);
+        e->type = BdatGetU8Direct(fp, &lbl_eu_8050BEA8[0x192], i);
+        e->x = (f32)BdatGetS16Direct(fp, &lbl_eu_8050BEA8[0x19B], i);
+        e->y = (f32)BdatGetS16Direct(fp, &lbl_eu_8050BEA8[0x1A0], i);
+        e->z = (f32)BdatGetS16Direct(fp, &lbl_eu_8050BEA8[0x1A5], i);
+        e->unk = (u32)BdatGetPtrDirect((const void*)fp, (const void*)&lbl_eu_8050BEA8[0x1F], i);
 
         // Marker is always shown for entry 0 or when either global gimmick
         // flag is set; otherwise only while the current scroll position lies
@@ -452,8 +452,8 @@ void func_80245DF8(void* self) {
         } else if (getUnk80664658()->field_214 & 0x48000) {
             flag = 1;
         } else {
-            u16 left = func_80136254((const void*)fp, (const void*)&lbl_eu_8050BEA8[0x1AA], i);
-            u16 right = func_80136254((const void*)fp, (const void*)&lbl_eu_8050BEA8[0x1B5], i);
+            u16 left = BdatGetU16Direct((const void*)fp, (const void*)&lbl_eu_8050BEA8[0x1AA], i);
+            u16 right = BdatGetU16Direct((const void*)fp, (const void*)&lbl_eu_8050BEA8[0x1B5], i);
             u16 scrollPos = (u16)func_8009CF8C(0x20);
             flag = (left > scrollPos || scrollPos > right) ? 0 : 1;
         }
@@ -617,9 +617,9 @@ void func_80246330(CFloorMapLayoutBlock* self) {
     for (u32 i = 1; i <= count; i++) {
         if (func_8009CF8C(i + 0x20C8) == 0)
             continue;
-        if (lbl_eu_80664798 != func_801361E8(fp, tbl + 0x18C, i))
+        if (lbl_eu_80664798 != BdatGetU8Direct(fp, tbl + 0x18C, i))
             continue;
-        if (func_801361E8(fp, tbl + 0x192, i) == 2)
+        if (BdatGetU8Direct(fp, tbl + 0x192, i) == 2)
             continue;
 
         u8 n = self->count;
@@ -632,8 +632,8 @@ void func_80246330(CFloorMapLayoutBlock* self) {
         func_80141DC4(&pos.x);
         e->posY = (s32)pos.y;
 
-        char* name = func_8013639C((const void*)fp, tbl + 0x1F, i);
-        func_80136B4C(e->layout, tbl + 0x1D7, name, 0);
+        char* name = BdatGetPtrDirect((const void*)fp, tbl + 0x1F, i);
+        LayoutSetTextBoxFmtValue(e->layout, tbl + 0x1D7, name, 0);
 
         // Dimmed color when the row is not yet visible on the scrollbar but
         // the region gimmick flag is set.
@@ -644,8 +644,8 @@ void func_80246330(CFloorMapLayoutBlock* self) {
         } else if (getUnk80664658()->field_214 & 0x12000) {
             vis = 1;
         } else {
-            u16 left = func_80136254((const void*)fp, tbl + 0x1AA, i);
-            u16 right = func_80136254((const void*)fp, tbl + 0x1B5, i);
+            u16 left = BdatGetU16Direct((const void*)fp, tbl + 0x1AA, i);
+            u16 right = BdatGetU16Direct((const void*)fp, tbl + 0x1B5, i);
             u16 scrollPos = (u16)func_8009CF8C(0x20);
             vis = (left > scrollPos || scrollPos > right) ? 0 : 1;
         }
@@ -655,14 +655,14 @@ void func_80246330(CFloorMapLayoutBlock* self) {
 
         // Project this row's scroll range onto the map plane for the current
         // region.
-        s16 vx = func_80136330(lbl_eu_806640A8, tbl + 0x1E2, lbl_eu_80664798);
-        s16 vy = func_80136330(lbl_eu_806640A8, tbl + 0x1F0, lbl_eu_80664798);
+        s16 vx = BdatGetS16Direct(lbl_eu_806640A8, tbl + 0x1E2, lbl_eu_80664798);
+        s16 vy = BdatGetS16Direct(lbl_eu_806640A8, tbl + 0x1F0, lbl_eu_80664798);
         convA.w[1] = (u32)(s16)vx ^ 0x80000000;
         fvx = (f32)(convA.d - convBias);
         convB.w[1] = (u32)(s16)vy ^ 0x80000000;
         fvy = (f32)(convB.d - convBias);
 
-        u8 region = func_801361E8(lbl_eu_806640A8, tbl + 0x1FE, lbl_eu_80664798);
+        u8 region = BdatGetU8Direct(lbl_eu_806640A8, tbl + 0x1FE, lbl_eu_80664798);
         convA.w[1] = region;
         f32 denom = ((f32)(convA.d - regionBase)) * regionScale;
 
@@ -670,9 +670,9 @@ void func_80246330(CFloorMapLayoutBlock* self) {
         ry = fvy - (pos.z / denom) * projScale;
 
         // Per-row pixel offsets from the map table nudge the projected point.
-        convB.w[1] = (u32)(s8)func_801362C0((const void*)fp, tbl + 0x20B, i) ^ 0x80000000;
+        convB.w[1] = (u32)(s8)BdatGetS8Direct((const void*)fp, tbl + 0x20B, i) ^ 0x80000000;
         ry = ry + (f32)(convB.d - convBias);
-        convA.w[1] = (u32)(s8)func_801362C0((const void*)fp, tbl + 0x213, i) ^ 0x80000000;
+        convA.w[1] = (u32)(s8)BdatGetS8Direct((const void*)fp, tbl + 0x213, i) ^ 0x80000000;
         rx = rx + (f32)(convA.d - convBias);
 
         nw4r::lyt::Pane* mark = e->layout->GetRootPane()->FindPaneByName(tbl + 0x21B, 1);
@@ -1027,7 +1027,7 @@ void func_8024808C(CFloorMapFull* self, u32 idx) {
 
     func_8003AA34();
     u32 fp = (u32)getFP__FPCc(&lbl_eu_8050BEA8[0x17F]);
-    if (lbl_eu_80664798 != (u8)func_801361E8(fp, &lbl_eu_8050BEA8[0x18C], idx)) return;
+    if (lbl_eu_80664798 != (u8)BdatGetU8Direct(fp, &lbl_eu_8050BEA8[0x18C], idx)) return;
     if (func_8009CF8C(idx + 0x20C8) == 0) return;
 
     func_80141DC4(&tmp.x);
@@ -1037,7 +1037,7 @@ void func_8024808C(CFloorMapFull* self, u32 idx) {
     u8 count = (u8)func_8003B1EC((void*)lbl_eu_8066479C);
     u8 found = 0;
     for (u8 i = 1; i <= count; i++) {
-        s16 h = func_80136330(lbl_eu_8066479C, &lbl_eu_8050BEA8[0x15A], i);
+        s16 h = BdatGetS16Direct(lbl_eu_8066479C, &lbl_eu_8050BEA8[0x15A], i);
         convA.w[1] = (u32)(s16)h ^ 0x80000000;
         if ((f32)(convA.d - lbl_eu_80668770) > py) {
             if (i == self->field_0C) found = 1;
@@ -1047,13 +1047,13 @@ void func_8024808C(CFloorMapFull* self, u32 idx) {
     if (!found) return;
 
     // Project onto the map pane coordinate system for the current world.
-    s16 vx = func_80136330(lbl_eu_806640A8, &lbl_eu_8050BEA8[0x1E2], lbl_eu_80664798);
-    s16 vy = func_80136330(lbl_eu_806640A8, &lbl_eu_8050BEA8[0x1F0], lbl_eu_80664798);
+    s16 vx = BdatGetS16Direct(lbl_eu_806640A8, &lbl_eu_8050BEA8[0x1E2], lbl_eu_80664798);
+    s16 vy = BdatGetS16Direct(lbl_eu_806640A8, &lbl_eu_8050BEA8[0x1F0], lbl_eu_80664798);
     convA.w[1] = (u32)(s16)vy ^ 0x80000000;
     fy = (f32)(convA.d - lbl_eu_80668770);
     convB.w[1] = (u32)(s16)vx ^ 0x80000000;
     fx = (f32)(convB.d - lbl_eu_80668770);
-    u8 region = (u8)func_801361E8(lbl_eu_806640A8, &lbl_eu_8050BEA8[0x1FE], lbl_eu_80664798);
+    u8 region = (u8)BdatGetU8Direct(lbl_eu_806640A8, &lbl_eu_8050BEA8[0x1FE], lbl_eu_80664798);
     convB.w[1] = region;
     f32 denom = ((f32)(convB.d - lbl_eu_80668788)) * lbl_eu_80668778;
 
@@ -1102,8 +1102,8 @@ void func_8024830C(void* self, void* arg2) {
         }
     }
 
-    s16 val1 = func_80136330(lbl_eu_806640A8, &lbl_eu_8050BEA8[0x1E2], lbl_eu_80664798);
-    s16 val2 = func_80136330(lbl_eu_806640A8, &lbl_eu_8050BEA8[0x1F0], lbl_eu_80664798);
+    s16 val1 = BdatGetS16Direct(lbl_eu_806640A8, &lbl_eu_8050BEA8[0x1E2], lbl_eu_80664798);
+    s16 val2 = BdatGetS16Direct(lbl_eu_806640A8, &lbl_eu_8050BEA8[0x1F0], lbl_eu_80664798);
 
     // s16 -> f32 conversions via the shared 0x4330 double-magic idiom; the
     // projected values are kept in an array local so they spill to the stack
@@ -1119,7 +1119,7 @@ void func_8024830C(void* self, void* arg2) {
     vals[1] = (f32)(convB.d - lbl_eu_80668770);
     vals[2] = lbl_eu_80668764;
 
-    u8 region = (u8)func_801361E8(lbl_eu_806640A8, &lbl_eu_8050BEA8[0x1FE], lbl_eu_80664798);
+    u8 region = (u8)BdatGetU8Direct(lbl_eu_806640A8, &lbl_eu_8050BEA8[0x1FE], lbl_eu_80664798);
     convA.w[0] = 0x43300000;
     convA.w[1] = region;
     f32 denom = ((f32)(convA.d - lbl_eu_80668788)) * lbl_eu_80668778;
@@ -1263,7 +1263,7 @@ void* func_80248920(void* self, const char* name, f32 x, f32 y, void* arg5, cons
     if (!name) return NULL;
     if (!paneName) return NULL;
 
-    void* result = (char*)func_80136190(&lbl_eu_8050BEA8[0x2f6], &lbl_eu_8050BEA8[0x303], (u32)name);
+    void* result = (char*)BdatTouchStringCell(&lbl_eu_8050BEA8[0x2f6], &lbl_eu_8050BEA8[0x303], (u32)name);
 
     char buf[20];
     sprintf(buf, &lbl_eu_8050BEA8[0x30e], result);
@@ -1282,7 +1282,7 @@ void* func_80248920(void* self, const char* name, f32 x, f32 y, void* arg5, cons
     *(float*)((u8*)pic + 0x30) = y;
     *(float*)((u8*)pic + 0x34) = lbl_eu_80668764;
 
-    func_80137C1C(pic, arg5);
+    PaneSetVtxColorAll(pic, arg5);
 
     u8* byte = (u8*)pic + 0xBB;
     *byte = (*byte & 0x7F) | 0x01;
@@ -1317,31 +1317,31 @@ void func_80248A6C(CFloorMapLayoutSlots* slots) {
     const f32 projScale = lbl_eu_8066877C;
 
     for (u16 i = 1; i <= count; i++) {
-        if (func_801361E8(fp, &lbl_eu_8050BEA8[0x322], i) != lbl_eu_80664798) continue;
+        if (BdatGetU8Direct(fp, &lbl_eu_8050BEA8[0x322], i) != lbl_eu_80664798) continue;
 
         u16 rnd = (u16)func_8009CF8C(0x20);
-        u16 left = (u16)func_80136254((const void*)fp, &lbl_eu_8050BEA8[0x329], (int)i);
+        u16 left = (u16)BdatGetU16Direct((const void*)fp, &lbl_eu_8050BEA8[0x329], (int)i);
         if (rnd < left) continue;
-        u16 right = (u16)func_80136254((const void*)fp, &lbl_eu_8050BEA8[0x32F], (int)i);
+        u16 right = (u16)BdatGetU16Direct((const void*)fp, &lbl_eu_8050BEA8[0x32F], (int)i);
         if (right < rnd) continue;
 
-        u8 c1 = (u8)func_801361E8(fp, &lbl_eu_8050BEA8[0x335], i);
-        u8 c2 = (u8)func_801361E8(fp, &lbl_eu_8050BEA8[0x343], i);
+        u8 c1 = (u8)BdatGetU8Direct(fp, &lbl_eu_8050BEA8[0x335], i);
+        u8 c2 = (u8)BdatGetU8Direct(fp, &lbl_eu_8050BEA8[0x343], i);
         if (func_8009CF8C((u32)c1 + 0x7FC) < c2) continue;
 
-        u8 c3 = (u8)func_801361E8(fp, &lbl_eu_8050BEA8[0x34D], i);
-        u8 c4 = (u8)func_801361E8(fp, &lbl_eu_8050BEA8[0x35B], i);
+        u8 c3 = (u8)BdatGetU8Direct(fp, &lbl_eu_8050BEA8[0x34D], i);
+        u8 c4 = (u8)BdatGetU8Direct(fp, &lbl_eu_8050BEA8[0x35B], i);
         if (func_8009CF8C((u32)c3 + 0x7FC) < c4) continue;
 
-        u8 v365 = (u8)func_801361E8(fp, &lbl_eu_8050BEA8[0x365], i);
+        u8 v365 = (u8)BdatGetU8Direct(fp, &lbl_eu_8050BEA8[0x365], i);
         if (v365 != 0 && func_8009CF8C((u32)v365 + 0x2578) == 0) continue;
 
-        u16 v373 = (u16)func_80136254((const void*)fp, &lbl_eu_8050BEA8[0x373], (int)i);
+        u16 v373 = (u16)BdatGetU16Direct((const void*)fp, &lbl_eu_8050BEA8[0x373], (int)i);
         if (v373 != 0 && func_8009CF8C((u32)v373 + 0x220) != 0xFE) continue;
 
-        s16 x = func_80136330(fp, &lbl_eu_8050BEA8[0x19B], i);
-        s16 y = func_80136330(fp, &lbl_eu_8050BEA8[0x1A0], i);
-        s16 z = func_80136330(fp, &lbl_eu_8050BEA8[0x1A5], i);
+        s16 x = BdatGetS16Direct(fp, &lbl_eu_8050BEA8[0x19B], i);
+        s16 y = BdatGetS16Direct(fp, &lbl_eu_8050BEA8[0x1A0], i);
+        s16 z = BdatGetS16Direct(fp, &lbl_eu_8050BEA8[0x1A5], i);
 
         convA.w[1] = (u32)(s16)x ^ 0x80000000;
         f32 fx = (f32)(convA.d - convBias);
@@ -1356,7 +1356,7 @@ void func_80248A6C(CFloorMapLayoutSlots* slots) {
         u8 found = 0;
         u8 count2 = (u8)func_8003B1EC((void*)lbl_eu_8066479C);
         for (u8 j = 1; j <= count2; j++) {
-            s16 h = func_80136330(lbl_eu_8066479C, &lbl_eu_8050BEA8[0x15A], j);
+            s16 h = BdatGetS16Direct(lbl_eu_8066479C, &lbl_eu_8050BEA8[0x15A], j);
             convB.w[1] = (u32)(s16)h ^ 0x80000000;
             if ((f32)(convB.d - convBias) > fy) {
                 if (j == slots->field_0C) found = 1;
@@ -1365,21 +1365,21 @@ void func_80248A6C(CFloorMapLayoutSlots* slots) {
         }
         if (!found) continue;
 
-        if (func_801361E8(fp, &lbl_eu_8050BEA8[0x37D], i) != 5) continue;
+        if (BdatGetU8Direct(fp, &lbl_eu_8050BEA8[0x37D], i) != 5) continue;
 
         char buf[0x20];
         sprintf(buf, &lbl_eu_8050BEA8[0x382], i);
         if (slots->layout->GetRootPane()->FindPaneByName(buf, 1)) continue;
 
-        s16 vx = func_80136330(lbl_eu_806640A8, &lbl_eu_8050BEA8[0x1E2], lbl_eu_80664798);
-        s16 vy = func_80136330(lbl_eu_806640A8, &lbl_eu_8050BEA8[0x1F0], lbl_eu_80664798);
+        s16 vx = BdatGetS16Direct(lbl_eu_806640A8, &lbl_eu_8050BEA8[0x1E2], lbl_eu_80664798);
+        s16 vy = BdatGetS16Direct(lbl_eu_806640A8, &lbl_eu_8050BEA8[0x1F0], lbl_eu_80664798);
 
         convA.w[1] = (u32)(s16)vx ^ 0x80000000;
         f32 rvx = (f32)(convA.d - convBias);
         convB.w[1] = (u32)(s16)vy ^ 0x80000000;
         f32 rvy = (f32)(convB.d - convBias);
         f32 coords[3] = { rvx, rvy, zero };
-        u8 region = (u8)func_801361E8(lbl_eu_806640A8, &lbl_eu_8050BEA8[0x1FE], lbl_eu_80664798);
+        u8 region = (u8)BdatGetU8Direct(lbl_eu_806640A8, &lbl_eu_8050BEA8[0x1FE], lbl_eu_80664798);
 
         convA.w[1] = (u32)region;
         f32 scale = (f32)(convA.d - regionBase) * regionScale;
@@ -1425,31 +1425,31 @@ void func_80248ED8(CFloorMapLayoutSlots* slots) {
     const f32 projScale = lbl_eu_8066877C;
 
     for (u16 i = 1; i <= count; i++) {
-        if (func_801361E8(fp, &lbl_eu_8050BEA8[0x322], i) != lbl_eu_80664798) continue;
+        if (BdatGetU8Direct(fp, &lbl_eu_8050BEA8[0x322], i) != lbl_eu_80664798) continue;
 
         u16 rnd = (u16)func_8009CF8C(0x20);
-        u16 left = (u16)func_80136254((const void*)fp, &lbl_eu_8050BEA8[0x329], (int)i);
+        u16 left = (u16)BdatGetU16Direct((const void*)fp, &lbl_eu_8050BEA8[0x329], (int)i);
         if (rnd < left) continue;
-        u16 right = (u16)func_80136254((const void*)fp, &lbl_eu_8050BEA8[0x32F], (int)i);
+        u16 right = (u16)BdatGetU16Direct((const void*)fp, &lbl_eu_8050BEA8[0x32F], (int)i);
         if (right < rnd) continue;
 
-        u8 c1 = (u8)func_801361E8(fp, &lbl_eu_8050BEA8[0x335], i);
-        u8 c2 = (u8)func_801361E8(fp, &lbl_eu_8050BEA8[0x343], i);
+        u8 c1 = (u8)BdatGetU8Direct(fp, &lbl_eu_8050BEA8[0x335], i);
+        u8 c2 = (u8)BdatGetU8Direct(fp, &lbl_eu_8050BEA8[0x343], i);
         if (func_8009CF8C((u32)c1 + 0x7FC) < c2) continue;
 
-        u8 c3 = (u8)func_801361E8(fp, &lbl_eu_8050BEA8[0x34D], i);
-        u8 c4 = (u8)func_801361E8(fp, &lbl_eu_8050BEA8[0x35B], i);
+        u8 c3 = (u8)BdatGetU8Direct(fp, &lbl_eu_8050BEA8[0x34D], i);
+        u8 c4 = (u8)BdatGetU8Direct(fp, &lbl_eu_8050BEA8[0x35B], i);
         if (func_8009CF8C((u32)c3 + 0x7FC) < c4) continue;
 
-        u8 v365 = (u8)func_801361E8(fp, &lbl_eu_8050BEA8[0x365], i);
+        u8 v365 = (u8)BdatGetU8Direct(fp, &lbl_eu_8050BEA8[0x365], i);
         if (v365 != 0 && func_8009CF8C((u32)v365 + 0x2578) == 0) continue;
 
-        u16 v373 = (u16)func_80136254((const void*)fp, &lbl_eu_8050BEA8[0x373], (int)i);
+        u16 v373 = (u16)BdatGetU16Direct((const void*)fp, &lbl_eu_8050BEA8[0x373], (int)i);
         if (v373 != 0 && func_8009CF8C((u32)v373 + 0x220) != 0xFE) continue;
 
-        s16 x = func_80136330(fp, &lbl_eu_8050BEA8[0x19B], i);
-        s16 y = func_80136330(fp, &lbl_eu_8050BEA8[0x1A0], i);
-        s16 z = func_80136330(fp, &lbl_eu_8050BEA8[0x1A5], i);
+        s16 x = BdatGetS16Direct(fp, &lbl_eu_8050BEA8[0x19B], i);
+        s16 y = BdatGetS16Direct(fp, &lbl_eu_8050BEA8[0x1A0], i);
+        s16 z = BdatGetS16Direct(fp, &lbl_eu_8050BEA8[0x1A5], i);
 
         // s16 -> f32 via the shared 0x4330 double-magic idiom.
         convA.w[1] = (u32)(s16)x ^ 0x80000000;
@@ -1465,7 +1465,7 @@ void func_80248ED8(CFloorMapLayoutSlots* slots) {
         u8 found = 0;
         u8 count2 = (u8)func_8003B1EC((void*)lbl_eu_8066479C);
         for (u8 j = 1; j <= count2; j++) {
-            s16 h = func_80136330(lbl_eu_8066479C, &lbl_eu_8050BEA8[0x15A], j);
+            s16 h = BdatGetS16Direct(lbl_eu_8066479C, &lbl_eu_8050BEA8[0x15A], j);
             convB.w[1] = (u32)(s16)h ^ 0x80000000;
             if ((f32)(convB.d - convBias) > fy) {
                 if (j == slots->field_0C) found = 1;
@@ -1474,20 +1474,20 @@ void func_80248ED8(CFloorMapLayoutSlots* slots) {
         }
         if (!found) continue;
 
-        if (func_801361E8(fp, &lbl_eu_8050BEA8[0x37D], i) != 3) continue;
+        if (BdatGetU8Direct(fp, &lbl_eu_8050BEA8[0x37D], i) != 3) continue;
 
         sprintf(buf, &lbl_eu_8050BEA8[0x390], i);
         if (slots->layout->GetRootPane()->FindPaneByName(buf, 1)) continue;
 
-        s16 vx = func_80136330(lbl_eu_806640A8, &lbl_eu_8050BEA8[0x1E2], lbl_eu_80664798);
-        s16 vy = func_80136330(lbl_eu_806640A8, &lbl_eu_8050BEA8[0x1F0], lbl_eu_80664798);
+        s16 vx = BdatGetS16Direct(lbl_eu_806640A8, &lbl_eu_8050BEA8[0x1E2], lbl_eu_80664798);
+        s16 vy = BdatGetS16Direct(lbl_eu_806640A8, &lbl_eu_8050BEA8[0x1F0], lbl_eu_80664798);
 
         coords[2] = zero;
         convA.w[1] = (u32)(s16)vx ^ 0x80000000;
         coords[0] = (f32)(convA.d - convBias);
         convB.w[1] = (u32)(s16)vy ^ 0x80000000;
         coords[1] = (f32)(convB.d - convBias);
-        u8 region = (u8)func_801361E8(lbl_eu_806640A8, &lbl_eu_8050BEA8[0x1FE], lbl_eu_80664798);
+        u8 region = (u8)BdatGetU8Direct(lbl_eu_806640A8, &lbl_eu_8050BEA8[0x1FE], lbl_eu_80664798);
 
         convA.w[1] = (u32)region;
         f32 scale = (f32)(convA.d - regionBase) * regionScale;
@@ -1532,34 +1532,34 @@ void func_80249344(CFloorMapLayoutSlots* slots) {
     const f64 convBias = lbl_eu_80668770;
 
     for (u16 i = 1; (s32)i <= count; i++) {
-        if ((u8)func_801361E8(fp, &lbl_eu_8050BEA8[0x322], i) != lbl_eu_80664798) continue;
+        if ((u8)BdatGetU8Direct(fp, &lbl_eu_8050BEA8[0x322], i) != lbl_eu_80664798) continue;
 
         u16 rnd = (u16)func_8009CF8C(0x20);
-        u16 left = (u16)func_80136254((const void*)fp, &lbl_eu_8050BEA8[0x329], (int)i);
+        u16 left = (u16)BdatGetU16Direct((const void*)fp, &lbl_eu_8050BEA8[0x329], (int)i);
         if (rnd < left) continue;
-        u16 right = (u16)func_80136254((const void*)fp, &lbl_eu_8050BEA8[0x32F], (int)i);
+        u16 right = (u16)BdatGetU16Direct((const void*)fp, &lbl_eu_8050BEA8[0x32F], (int)i);
         if (right < rnd) continue;
 
-        u8 c1 = (u8)func_801361E8(fp, &lbl_eu_8050BEA8[0x335], i);
-        u8 c2 = (u8)func_801361E8(fp, &lbl_eu_8050BEA8[0x343], i);
+        u8 c1 = (u8)BdatGetU8Direct(fp, &lbl_eu_8050BEA8[0x335], i);
+        u8 c2 = (u8)BdatGetU8Direct(fp, &lbl_eu_8050BEA8[0x343], i);
         if (func_8009CF8C((u32)c1 + 0x7FC) < c2) continue;
 
-        u8 c3 = (u8)func_801361E8(fp, &lbl_eu_8050BEA8[0x34D], i);
-        u8 c4 = (u8)func_801361E8(fp, &lbl_eu_8050BEA8[0x35B], i);
+        u8 c3 = (u8)BdatGetU8Direct(fp, &lbl_eu_8050BEA8[0x34D], i);
+        u8 c4 = (u8)BdatGetU8Direct(fp, &lbl_eu_8050BEA8[0x35B], i);
         if (func_8009CF8C((u32)c3 + 0x7FC) < c4) continue;
 
-        u8 v365 = (u8)func_801361E8(fp, &lbl_eu_8050BEA8[0x365], i);
+        u8 v365 = (u8)BdatGetU8Direct(fp, &lbl_eu_8050BEA8[0x365], i);
         if (v365 != 0 && func_8009CF8C((u32)v365 + 0x2578) == 0) continue;
 
-        u16 v373 = (u16)func_80136254((const void*)fp, &lbl_eu_8050BEA8[0x373], (int)i);
+        u16 v373 = (u16)BdatGetU16Direct((const void*)fp, &lbl_eu_8050BEA8[0x373], (int)i);
         if (v373 != 0 && func_8009CF8C((u32)v373 + 0x220) != 0xFE) continue;
 
         // s16 -> f32 via the shared 0x4330 double-magic idiom; y is cached in
         // a scalar so MWCC dedicates a callee-saved FPR to it across the row
         // loop (retail f26).
-        s16 x = func_80136330(fp, &lbl_eu_8050BEA8[0x19B], i);
-        s16 y = func_80136330(fp, &lbl_eu_8050BEA8[0x1A0], i);
-        s16 z = func_80136330(fp, &lbl_eu_8050BEA8[0x1A5], i);
+        s16 x = BdatGetS16Direct(fp, &lbl_eu_8050BEA8[0x19B], i);
+        s16 y = BdatGetS16Direct(fp, &lbl_eu_8050BEA8[0x1A0], i);
+        s16 z = BdatGetS16Direct(fp, &lbl_eu_8050BEA8[0x1A5], i);
 
         convA.w[1] = (u32)(s16)x ^ 0x80000000;
         pos.x = (f32)(convA.d - convBias);
@@ -1574,7 +1574,7 @@ void func_80249344(CFloorMapLayoutSlots* slots) {
         u8 found = 0;
         u8 count2 = (u8)func_8003B1EC((void*)lbl_eu_8066479C);
         for (u8 j = 1; j <= count2; j++) {
-            s16 h = func_80136330(lbl_eu_8066479C, &lbl_eu_8050BEA8[0x15A], j);
+            s16 h = BdatGetS16Direct(lbl_eu_8066479C, &lbl_eu_8050BEA8[0x15A], j);
             convB.w[1] = (u32)(s16)h ^ 0x80000000;
             if ((f32)(convB.d - convBias) > fy) {
                 if (j == slots->field_0C) found = 1;
@@ -1583,7 +1583,7 @@ void func_80249344(CFloorMapLayoutSlots* slots) {
         }
         if (!found) continue;
 
-        if ((u8)func_801361E8(fp, &tbl[0x37D], i) != 4) continue;
+        if ((u8)BdatGetU8Direct(fp, &tbl[0x37D], i) != 4) continue;
 
         sprintf(buf, &tbl[0x39B], i);
 
@@ -1593,8 +1593,8 @@ void func_80249344(CFloorMapLayoutSlots* slots) {
                 ->FindPaneByName(buf, 1))
             continue;
 
-        s16 vx = func_80136330(lbl_eu_806640A8, &tbl[0x1E2], lbl_eu_80664798);
-        s16 vy = func_80136330(lbl_eu_806640A8, &tbl[0x1F0], lbl_eu_80664798);
+        s16 vx = BdatGetS16Direct(lbl_eu_806640A8, &tbl[0x1E2], lbl_eu_80664798);
+        s16 vy = BdatGetS16Direct(lbl_eu_806640A8, &tbl[0x1F0], lbl_eu_80664798);
 
         // Region lookup happens between the coordinate conversions and
         // reuses the first conversion slot, as in retail.
@@ -1604,7 +1604,7 @@ void func_80249344(CFloorMapLayoutSlots* slots) {
         coords[2] = zero;
         coords[0] = (f32)(convA.d - convBias);
         coords[1] = (f32)(convB.d - convBias);
-        u8 region = (u8)func_801361E8(lbl_eu_806640A8, &tbl[0x1FE], lbl_eu_80664798);
+        u8 region = (u8)BdatGetU8Direct(lbl_eu_806640A8, &tbl[0x1FE], lbl_eu_80664798);
 
         convA.w[1] = region;
         f32 scale = (f32)(convA.d - regionBase) * regionScale;
@@ -1662,31 +1662,31 @@ void func_802497B0(void* self) {
     const f64 convBias = lbl_eu_80668770;
 
     for (u16 i = 1; i <= count; i++) {
-        if ((u8)func_801361E8(fp, &lbl_eu_8050BEA8[0x322], i) != lbl_eu_80664798) continue;
+        if ((u8)BdatGetU8Direct(fp, &lbl_eu_8050BEA8[0x322], i) != lbl_eu_80664798) continue;
 
         u16 rnd = (u16)func_8009CF8C(0x20);
-        u16 left = (u16)func_80136254((const void*)fp, &lbl_eu_8050BEA8[0x329], (int)i);
+        u16 left = (u16)BdatGetU16Direct((const void*)fp, &lbl_eu_8050BEA8[0x329], (int)i);
         if (rnd < left) continue;
-        u16 right = (u16)func_80136254((const void*)fp, &lbl_eu_8050BEA8[0x32F], (int)i);
+        u16 right = (u16)BdatGetU16Direct((const void*)fp, &lbl_eu_8050BEA8[0x32F], (int)i);
         if (right < rnd) continue;
 
-        u8 c1 = (u8)func_801361E8(fp, &lbl_eu_8050BEA8[0x335], i);
-        u8 c2 = (u8)func_801361E8(fp, &lbl_eu_8050BEA8[0x343], i);
+        u8 c1 = (u8)BdatGetU8Direct(fp, &lbl_eu_8050BEA8[0x335], i);
+        u8 c2 = (u8)BdatGetU8Direct(fp, &lbl_eu_8050BEA8[0x343], i);
         if (func_8009CF8C((u32)c1 + 0x7FC) < c2) continue;
 
-        u8 c3 = (u8)func_801361E8(fp, &lbl_eu_8050BEA8[0x34D], i);
-        u8 c4 = (u8)func_801361E8(fp, &lbl_eu_8050BEA8[0x35B], i);
+        u8 c3 = (u8)BdatGetU8Direct(fp, &lbl_eu_8050BEA8[0x34D], i);
+        u8 c4 = (u8)BdatGetU8Direct(fp, &lbl_eu_8050BEA8[0x35B], i);
         if (func_8009CF8C((u32)c3 + 0x7FC) < c4) continue;
 
-        u8 v365 = (u8)func_801361E8(fp, &lbl_eu_8050BEA8[0x365], i);
+        u8 v365 = (u8)BdatGetU8Direct(fp, &lbl_eu_8050BEA8[0x365], i);
         if (v365 != 0 && func_8009CF8C((u32)v365 + 0x2578) == 0) continue;
 
-        u16 v373 = (u16)func_80136254((const void*)fp, &lbl_eu_8050BEA8[0x373], (int)i);
+        u16 v373 = (u16)BdatGetU16Direct((const void*)fp, &lbl_eu_8050BEA8[0x373], (int)i);
         if (v373 != 0 && func_8009CF8C((u32)v373 + 0x220) != 0xFE) continue;
 
-        s16 x = func_80136330(fp, &lbl_eu_8050BEA8[0x19B], i);
-        s16 y = func_80136330(fp, &lbl_eu_8050BEA8[0x1A0], i);
-        s16 z = func_80136330(fp, &lbl_eu_8050BEA8[0x1A5], i);
+        s16 x = BdatGetS16Direct(fp, &lbl_eu_8050BEA8[0x19B], i);
+        s16 y = BdatGetS16Direct(fp, &lbl_eu_8050BEA8[0x1A0], i);
+        s16 z = BdatGetS16Direct(fp, &lbl_eu_8050BEA8[0x1A5], i);
 
         // s16 -> f32 via the shared 0x4330 double-magic idiom; slot A carries
         // x then z, slot B carries y.
@@ -1703,7 +1703,7 @@ void func_802497B0(void* self) {
         u8 found = 0;
         u8 count2 = (u8)func_8003B1EC((void*)lbl_eu_8066479C);
         for (u8 j = 1; j <= count2; j++) {
-            s16 h = func_80136330(lbl_eu_8066479C, &lbl_eu_8050BEA8[0x15A], j);
+            s16 h = BdatGetS16Direct(lbl_eu_8066479C, &lbl_eu_8050BEA8[0x15A], j);
             convB.w[1] = (u32)(s16)h ^ 0x80000000;
             if ((f32)(convB.d - convBias) > fy) {
                 if (j == slots->field_0C) found = 1;
@@ -1712,13 +1712,13 @@ void func_802497B0(void* self) {
         }
         if (!found) continue;
 
-        if ((u8)func_801361E8(fp, &lbl_eu_8050BEA8[0x37D], i) != 6) continue;
+        if ((u8)BdatGetU8Direct(fp, &lbl_eu_8050BEA8[0x37D], i) != 6) continue;
 
         sprintf(buf, &lbl_eu_8050BEA8[0x3A6], i);
         if (slots->layout->GetRootPane()->FindPaneByName(buf, 1)) continue;
 
-        s16 vx = func_80136330(lbl_eu_806640A8, &lbl_eu_8050BEA8[0x1E2], lbl_eu_80664798);
-        s16 vy = func_80136330(lbl_eu_806640A8, &lbl_eu_8050BEA8[0x1F0], lbl_eu_80664798);
+        s16 vx = BdatGetS16Direct(lbl_eu_806640A8, &lbl_eu_8050BEA8[0x1E2], lbl_eu_80664798);
+        s16 vy = BdatGetS16Direct(lbl_eu_806640A8, &lbl_eu_8050BEA8[0x1F0], lbl_eu_80664798);
 
         // Region lookup happens between the coordinate conversions; slot A is
         // reused unsigned for the region id afterwards.
@@ -1727,7 +1727,7 @@ void func_802497B0(void* self) {
         coords[2] = zero;
         coords[0] = (f32)(convA.d - convBias);
         coords[1] = (f32)(convB.d - convBias);
-        u8 region = (u8)func_801361E8(lbl_eu_806640A8, &lbl_eu_8050BEA8[0x1FE], lbl_eu_80664798);
+        u8 region = (u8)BdatGetU8Direct(lbl_eu_806640A8, &lbl_eu_8050BEA8[0x1FE], lbl_eu_80664798);
 
         convA.w[1] = region;
         f32 scale = (f32)(convA.d - regionBase) * regionScale;
@@ -1784,9 +1784,9 @@ void func_80249C1C(CFloorMapLayoutSlots* slots) {
 
     for (u32 i = 0; i < count; i++) {
         if (!func_80138574((const char*)fp, i + 1)) continue;
-        u8 type = func_801361E8(fp, &tbl[0x37D], i + 1);
+        u8 type = BdatGetU8Direct(fp, &tbl[0x37D], i + 1);
         if (!type) continue;
-        u16 rowId = func_80136254((const void*)fp, &tbl[0x3E6], i + 1);
+        u16 rowId = BdatGetU16Direct((const void*)fp, &tbl[0x3E6], i + 1);
 
         nw4r::math::VEC3 foundPos;
         foundPos.x = zero;
@@ -1797,7 +1797,7 @@ void func_80249C1C(CFloorMapLayoutSlots* slots) {
         switch (type) {
         case 1: {
             // Gimmick-object list: first object whose map-row id matches.
-            CFloorMapObjList* glist = (CFloorMapObjList*)func_800B6BEC();
+            CFloorMapObjList* glist = (CFloorMapObjList*)getReslistB68();
             u8 found = 0;
             for (CFloorMapObjNode* node = glist->head->next; node != glist->head;
                  node = node->next) {
@@ -1814,8 +1814,8 @@ void func_80249C1C(CFloorMapLayoutSlots* slots) {
             // No live object: fall back to the save-point table. The marker
             // shows only when the save point's own visibility checks pass.
             u32 fp2 = (u32)getFP__FPCc(&tbl[0x17F]);
-            u16 id2 = func_8013606C(&tbl[0x3C6], &tbl[0x3D2], rowId);
-            if ((u8)func_801361E8(fp2, &tbl[0x18C], id2) != world) break;
+            u16 id2 = BdatGetU16ByTableKey(&tbl[0x3C6], &tbl[0x3D2], rowId);
+            if ((u8)BdatGetU8Direct(fp2, &tbl[0x18C], id2) != world) break;
             if (func_8009CF8C(id2 + 0x20C8) == 0) break;
 
             u8 hide;
@@ -1824,8 +1824,8 @@ void func_80249C1C(CFloorMapLayoutSlots* slots) {
             } else if (getUnk80664658()->field_214 & 0x48000) {
                 hide = 1;
             } else {
-                u16 left = func_80136254((const void*)fp2, &tbl[0x1AA], id2);
-                u16 right = func_80136254((const void*)fp2, &tbl[0x1B5], id2);
+                u16 left = BdatGetU16Direct((const void*)fp2, &tbl[0x1AA], id2);
+                u16 right = BdatGetU16Direct((const void*)fp2, &tbl[0x1B5], id2);
                 u16 scrollPos = (u16)func_8009CF8C(0x20);
                 hide = (left > scrollPos || scrollPos > right) ? 1 : 0;
             }
@@ -1842,7 +1842,7 @@ void func_80249C1C(CFloorMapLayoutSlots* slots) {
         }
         case 2: {
             // Second gimmick list: only objects flagged 0x4000/0x8000.
-            CFloorMapObjList* glist = (CFloorMapObjList*)func_800B6C58();
+            CFloorMapObjList* glist = (CFloorMapObjList*)getReslistBC8();
             for (CFloorMapObjNode* node = glist->head->next; node != glist->head;
                  node = node->next) {
                 CFloorMapObj* obj = (CFloorMapObj*)node->object;
@@ -1857,7 +1857,7 @@ void func_80249C1C(CFloorMapLayoutSlots* slots) {
         }
         case 3: {
             // Landmark table: scan the 0x4C-byte rows for the row id.
-            CFloorMapCase2Elem* arr = (CFloorMapCase2Elem*)func_80193804();
+            CFloorMapCase2Elem* arr = (CFloorMapCase2Elem*)CPartsChange_GetLandmarkTable();
             s32 cnt = *(s32*)((u8*)arr + 0x9800);
             CFloorMapCase2Elem* end = arr + cnt;
             for (CFloorMapCase2Elem* e = arr; e != end; e++) {
@@ -1886,11 +1886,11 @@ void func_80249C1C(CFloorMapLayoutSlots* slots) {
             // Map-table coordinates: three s16 columns converted via the
             // shared double-magic idiom into a scratch vector.
             u32 fp2 = (u32)getFP__FPCc(&tbl[0x403]);
-            func_80136254((const void*)fp2, &tbl[0x412], rowId);
+            BdatGetU16Direct((const void*)fp2, &tbl[0x412], rowId);
             if (func_8009CF8C(rowId + 0x2B9C) != 0) break;
-            s16 a = func_80136330(fp2, &tbl[0x19B], rowId);
-            s16 b = func_80136330(fp2, &tbl[0x1A0], rowId);
-            s16 c = func_80136330(fp2, &tbl[0x1A5], rowId);
+            s16 a = BdatGetS16Direct(fp2, &tbl[0x19B], rowId);
+            s16 b = BdatGetS16Direct(fp2, &tbl[0x1A0], rowId);
+            s16 c = BdatGetS16Direct(fp2, &tbl[0x1A5], rowId);
             // Reuse the function-level conversion slots (retail: a,c share
             // slot A, b uses slot B).
             nw4r::math::VEC3 work;
@@ -1908,7 +1908,7 @@ void func_80249C1C(CFloorMapLayoutSlots* slots) {
             break;
         }
         case 6: {
-            if (func_8013C038(rowId)) continue;
+            if (CheckState2CC8Active(rowId)) continue;
             foundPos = *(nw4r::math::VEC3*)func_801F4E68(getUnk80664658(), rowId);
             sprintf(buf, &tbl[0x423], i + 1);
             placed = 1;
@@ -1924,7 +1924,7 @@ void func_80249C1C(CFloorMapLayoutSlots* slots) {
         u8 hit = 0;
         u8 cntB = (u8)func_8003B1EC((void*)lbl_eu_8066479C);
         for (u8 k = 1; k <= cntB; k++) {
-            s16 h = func_80136330(lbl_eu_8066479C, &tbl[0x15A], k);
+            s16 h = BdatGetS16Direct(lbl_eu_8066479C, &tbl[0x15A], k);
             convB.w[1] = (u32)(s16)h ^ 0x80000000;
             if ((f32)(convB.d - convBias) > foundY) {
                 if (k == slots->field_0C) hit = 1;
@@ -1939,15 +1939,15 @@ void func_80249C1C(CFloorMapLayoutSlots* slots) {
         // Region projection onto the map plane. The converted coordinates
         // live in a contiguous array so they spill to stack slots across the
         // region lookup, as in retail.
-        s16 vx = func_80136330(lbl_eu_806640A8, &tbl[0x1E2], lbl_eu_80664798);
-        s16 vy = func_80136330(lbl_eu_806640A8, &tbl[0x1F0], lbl_eu_80664798);
+        s16 vx = BdatGetS16Direct(lbl_eu_806640A8, &tbl[0x1E2], lbl_eu_80664798);
+        s16 vy = BdatGetS16Direct(lbl_eu_806640A8, &tbl[0x1F0], lbl_eu_80664798);
         f32 fv[3];
         convA.w[1] = (u32)(s16)vx ^ 0x80000000;
         fv[0] = (f32)(convA.d - convBias);
         convB.w[1] = (u32)(s16)vy ^ 0x80000000;
         fv[1] = (f32)(convB.d - convBias);
         fv[2] = zero;
-        u8 region = func_801361E8(lbl_eu_806640A8, &tbl[0x1FE], lbl_eu_80664798);
+        u8 region = BdatGetU8Direct(lbl_eu_806640A8, &tbl[0x1FE], lbl_eu_80664798);
         convA.w[1] = region;
         f32 denom = ((f32)(convA.d - regionBase)) * regionScale;
 
@@ -1965,12 +1965,12 @@ void func_80249C1C(CFloorMapLayoutSlots* slots) {
 
         // Pick the picture kind from the selected row's BDAT entry: kind 1
         // directly, otherwise re-check when the tbl+0x440 column is nonzero.
-        u16 sel = func_80136254((const void*)fp, &tbl[0x42D], i + 1);
+        u16 sel = BdatGetU16Direct((const void*)fp, &tbl[0x42D], i + 1);
         u32 entry = (u32)lbl_eu_80573D18[func_80138138(sel)];
-        u8 ok = func_801361E8(entry, &tbl[0x436], sel) == 1;
+        u8 ok = BdatGetU8Direct(entry, &tbl[0x436], sel) == 1;
         if (!ok) {
-            u16 v440 = func_80136254((const void*)fp, &tbl[0x440], i + 1);
-            if (v440 != 0) ok = func_801361E8(entry, &tbl[0x436], sel) == 1;
+            u16 v440 = BdatGetU16Direct((const void*)fp, &tbl[0x440], i + 1);
+            if (v440 != 0) ok = BdatGetU8Direct(entry, &tbl[0x436], sel) == 1;
         }
         if (!ok) continue;
 
@@ -2001,7 +2001,7 @@ void func_8024A448(void* self) {
     if (!func_8009CF8C(0x3354)) return;
     if ((lbl_eu_80664184 & 0xFF) != lbl_eu_80664798) return;
 
-    CFloorMapObjList* glist = (CFloorMapObjList*)func_800B6C58();
+    CFloorMapObjList* glist = (CFloorMapObjList*)getReslistBC8();
 
     // Constants hoisted before the walk so MWCC keeps them in f26-f31.
     const f64 convBias = lbl_eu_80668770;
@@ -2025,7 +2025,7 @@ void func_8024A448(void* self) {
         u8 found = 0;
         u8 count = (u8)func_8003B1EC((void*)lbl_eu_8066479C);
         for (u8 j = 1; j <= count; j++) {
-            s16 h = func_80136330(lbl_eu_8066479C, &lbl_eu_8050BEA8[0x15A], j);
+            s16 h = BdatGetS16Direct(lbl_eu_8066479C, &lbl_eu_8050BEA8[0x15A], j);
             convA.w[1] = (u32)(s16)h ^ 0x80000000;
             if ((f32)(convA.d - convBias) > py) {
                 if (j == fm->field_0C) found = 1;
@@ -2037,14 +2037,14 @@ void func_8024A448(void* self) {
         char buf[0x20];
         sprintf(buf, &lbl_eu_8050BEA8[0x3ED], g->m74);
 
-        s16 vx = func_80136330(lbl_eu_806640A8, &lbl_eu_8050BEA8[0x1E2], lbl_eu_80664798);
-        s16 vy = func_80136330(lbl_eu_806640A8, &lbl_eu_8050BEA8[0x1F0], lbl_eu_80664798);
+        s16 vx = BdatGetS16Direct(lbl_eu_806640A8, &lbl_eu_8050BEA8[0x1E2], lbl_eu_80664798);
+        s16 vy = BdatGetS16Direct(lbl_eu_806640A8, &lbl_eu_8050BEA8[0x1F0], lbl_eu_80664798);
 
         convB.w[1] = (u32)(s16)vx ^ 0x80000000;
         convA.w[1] = (u32)(s16)vy ^ 0x80000000;
         f32 fvx = (f32)(convB.d - convBias);
         f32 fvy = (f32)(convA.d - convBias);
-        u8 region = (u8)func_801361E8(lbl_eu_806640A8, &lbl_eu_8050BEA8[0x1FE], lbl_eu_80664798);
+        u8 region = (u8)BdatGetU8Direct(lbl_eu_806640A8, &lbl_eu_8050BEA8[0x1FE], lbl_eu_80664798);
 
         // Word-wise copy of the position into a scratch vector; retail reads
         // x/z back through the copy, zeroes z mid-computation, then stores the
@@ -2087,10 +2087,10 @@ void func_8024A748(void* self) {
 
     u32 rnd = func_8009CF8C(0x20);
     if ((s32)rnd <= 0) return;
-    if ((func_8013600C(tbl + 0x44A, tbl + 0x457, rnd) & 0xFF) != worldId) return;
+    if ((BdatGetU8ByTableKey(tbl + 0x44A, tbl + 0x457, rnd) & 0xFF) != worldId) return;
 
-    u32 id = func_8013600C(tbl + 0x44A, tbl + 0x37D, rnd);
-    u32 type = func_8013606C(tbl + 0x44A, tbl + 0x3E6, rnd);
+    u32 id = BdatGetU8ByTableKey(tbl + 0x44A, tbl + 0x37D, rnd);
+    u32 type = BdatGetU16ByTableKey(tbl + 0x44A, tbl + 0x3E6, rnd);
 
     nw4r::math::VEC3 vec;
     char buf[0x20];
@@ -2103,7 +2103,7 @@ void func_8024A748(void* self) {
         if ((u8)id == 1) {
             // Player-related landmark: walk the enemy list and use the first
             // entry's position.
-            CFloorMapObjList* glist = (CFloorMapObjList*)func_800B6CF8(1);
+            CFloorMapObjList* glist = (CFloorMapObjList*)prepareReslistArg(1);
             for (CFloorMapObjNode* node = glist->head->next; node != glist->head;
                  node = node->next) {
                 CFloorMapObj* g = (CFloorMapObj*)node->object;
@@ -2119,7 +2119,7 @@ void func_8024A748(void* self) {
         switch ((u8)id) {
         case 2: {
             // Landmark-table entry: scan the 0x4C-byte rows for the id.
-            CFloorMapCase2Elem* arr = (CFloorMapCase2Elem*)func_80193804();
+            CFloorMapCase2Elem* arr = (CFloorMapCase2Elem*)CPartsChange_GetLandmarkTable();
             s32 count = *(s32*)((u8*)arr + 0x9800);
             CFloorMapCase2Elem* end = arr + count;
             for (CFloorMapCase2Elem* el = arr; el != end; el++) {
@@ -2134,7 +2134,7 @@ void func_8024A748(void* self) {
         }
         case 3: {
             // Special-object list: keep entries with either flag bit set.
-            CFloorMapObjList* glist = (CFloorMapObjList*)func_800B6C58();
+            CFloorMapObjList* glist = (CFloorMapObjList*)getReslistBC8();
             for (CFloorMapObjNode* node = glist->head->next; node != glist->head;
                  node = node->next) {
                 CFloorMapObj* g = (CFloorMapObj*)node->object;
@@ -2153,7 +2153,7 @@ void func_8024A748(void* self) {
         }
         case 4: {
             u32 found = 0;
-            CFloorMapObjList* glist = (CFloorMapObjList*)func_800B6BEC();
+            CFloorMapObjList* glist = (CFloorMapObjList*)getReslistB68();
             for (CFloorMapObjNode* node = glist->head->next; node != glist->head;
                  node = node->next) {
                 CFloorMapObj* g = (CFloorMapObj*)node->object;
@@ -2171,8 +2171,8 @@ void func_8024A748(void* self) {
                 // Fallback: resolve the landmark file entry and check whether
                 // it is flagged for display on the current world.
                 u32 fp = (u32)getFP__FPCc(tbl + 0x17F);
-                u32 id2 = func_8013606C(tbl + 0x3C6, tbl + 0x3D2, (u16)type);
-                u32 w = func_801361E8(fp, tbl + 0x18C, (u16)id2);
+                u32 id2 = BdatGetU16ByTableKey(tbl + 0x3C6, tbl + 0x3D2, (u16)type);
+                u32 w = BdatGetU8Direct(fp, tbl + 0x18C, (u16)id2);
                 if (w != lbl_eu_80664184) break;
                 if (func_8009CF8C((u16)id2 + 0x20C8) == 0) break;
 
@@ -2182,8 +2182,8 @@ void func_8024A748(void* self) {
                 } else if (getUnk80664658()->field_214 & 0x110000) {
                     ok = 1;
                 } else {
-                    u32 left = func_80136254((const void*)fp, tbl + 0x1AA, (u16)id2);
-                    u32 right = func_80136254((const void*)fp, tbl + 0x1B5, (u16)id2);
+                    u32 left = BdatGetU16Direct((const void*)fp, tbl + 0x1AA, (u16)id2);
+                    u32 right = BdatGetU16Direct((const void*)fp, tbl + 0x1B5, (u16)id2);
                     u32 scroll = (u16)func_8009CF8C(0x20);
                     if (left > scroll || scroll > right)
                         ok = 0;
@@ -2203,7 +2203,7 @@ void func_8024A748(void* self) {
         }
         case 5: {
             u32 found = 0;
-            CFloorMapObjList* glist = (CFloorMapObjList*)func_800B6BEC();
+            CFloorMapObjList* glist = (CFloorMapObjList*)getReslistB68();
             for (CFloorMapObjNode* node = glist->head->next; node != glist->head;
                  node = node->next) {
                 CFloorMapObj* g = (CFloorMapObj*)node->object;
@@ -2219,8 +2219,8 @@ void func_8024A748(void* self) {
             }
             if (!found) {
                 u32 fp = (u32)getFP__FPCc(tbl + 0x17F);
-                u32 id2 = func_8013606C(tbl + 0x3C6, tbl + 0x3D2, (u16)type);
-                u32 w = func_801361E8(fp, tbl + 0x18C, (u16)id2);
+                u32 id2 = BdatGetU16ByTableKey(tbl + 0x3C6, tbl + 0x3D2, (u16)type);
+                u32 w = BdatGetU8Direct(fp, tbl + 0x18C, (u16)id2);
                 if (w != lbl_eu_80664184) break;
                 if (func_8009CF8C((u16)id2 + 0x20C8) == 0) break;
 
@@ -2230,8 +2230,8 @@ void func_8024A748(void* self) {
                 } else if (getUnk80664658()->field_214 & 0x110000) {
                     ok = 1;
                 } else {
-                    u32 left = func_80136254((const void*)fp, tbl + 0x1AA, (u16)id2);
-                    u32 right = func_80136254((const void*)fp, tbl + 0x1B5, (u16)id2);
+                    u32 left = BdatGetU16Direct((const void*)fp, tbl + 0x1AA, (u16)id2);
+                    u32 right = BdatGetU16Direct((const void*)fp, tbl + 0x1B5, (u16)id2);
                     u32 scroll = (u16)func_8009CF8C(0x20);
                     if (left > scroll || scroll > right)
                         ok = 0;
@@ -2260,7 +2260,7 @@ void func_8024A748(void* self) {
         u8 count = (u8)func_8003B1EC((void*)lbl_eu_8066479C);
         u32 found = 0;
         for (u32 j = 1; j <= count; j++) {
-            s16 h = func_80136330(lbl_eu_8066479C, tbl + 0x15A, j);
+            s16 h = BdatGetS16Direct(lbl_eu_8066479C, tbl + 0x15A, j);
             convA.w[1] = (u32)(s16)h ^ 0x80000000;
             if ((f32)(convA.d - bias) > y) {
                 if (j == p->field_0C) found = 1;
@@ -2271,15 +2271,15 @@ void func_8024A748(void* self) {
             // Map the marker position onto the floor-map pane coordinates.
             // Retail divides work.z (the pre-projection z snapshot) here even
             // though a projected-z of 0 is also computed afterwards.
-            s16 vx = func_80136330(lbl_eu_806640A8, tbl + 0x1E2, lbl_eu_80664798);
-            s16 vy = func_80136330(lbl_eu_806640A8, tbl + 0x1F0, lbl_eu_80664798);
+            s16 vx = BdatGetS16Direct(lbl_eu_806640A8, tbl + 0x1E2, lbl_eu_80664798);
+            s16 vy = BdatGetS16Direct(lbl_eu_806640A8, tbl + 0x1F0, lbl_eu_80664798);
             convB.w[1] = (u32)(s16)vx ^ 0x80000000;
             convA.w[1] = (u32)(s16)vy ^ 0x80000000;
             nw4r::math::VEC3 pos;
             pos.z = lbl_eu_80668764;
             pos.x = (f32)(convB.d - lbl_eu_80668770);
             pos.y = (f32)(convA.d - lbl_eu_80668770);
-            u32 region = func_801361E8(lbl_eu_806640A8, tbl + 0x1FE, lbl_eu_80664798);
+            u32 region = BdatGetU8Direct(lbl_eu_806640A8, tbl + 0x1FE, lbl_eu_80664798);
             convB.w[1] = region;
             f32 denom = ((f32)(convB.d - lbl_eu_80668788)) * lbl_eu_80668778;
 
@@ -2328,7 +2328,7 @@ void func_8024AEEC(void* self) {
     u8 count = (u8)func_8003B1EC((void*)lbl_eu_8066479C);
     const f64 bias = lbl_eu_80668770;
     for (u8 i = 1; i <= count; i++) {
-        s16 h = func_80136330(lbl_eu_8066479C, &tbl[0x15A], (u32)i);
+        s16 h = BdatGetS16Direct(lbl_eu_8066479C, &tbl[0x15A], (u32)i);
         convA.w[1] = (u32)(s16)h ^ 0x80000000;
         if ((f32)(convA.d - bias) > py) {
             if (i == p->field_0C) found = 1;
@@ -2338,8 +2338,8 @@ void func_8024AEEC(void* self) {
     if (!found) return;
 
     // Project onto the current world's map pane coordinate system.
-    u16 vx = (u16)func_80136330(lbl_eu_806640A8, &tbl[0x1E2], (u32)lbl_eu_80664798);
-    u16 vy = (u16)func_80136330(lbl_eu_806640A8, &tbl[0x1F0], (u32)lbl_eu_80664798);
+    u16 vx = (u16)BdatGetS16Direct(lbl_eu_806640A8, &tbl[0x1E2], (u32)lbl_eu_80664798);
+    u16 vy = (u16)BdatGetS16Direct(lbl_eu_806640A8, &tbl[0x1F0], (u32)lbl_eu_80664798);
     convB.w[1] = (u32)(s16)vx ^ 0x80000000;
     convA.w[1] = (u32)(s16)vy ^ 0x80000000;
     // Second vector local so MWCC spills the projected bases to frame
@@ -2348,7 +2348,7 @@ void func_8024AEEC(void* self) {
     work.z = lbl_eu_80668764;
     work.x = (f32)(convB.d - lbl_eu_80668788);
     work.y = (f32)(convA.d - lbl_eu_80668788);
-    u8 region = (u8)func_801361E8(lbl_eu_806640A8, &tbl[0x1FE], (u32)lbl_eu_80664798);
+    u8 region = (u8)BdatGetU8Direct(lbl_eu_806640A8, &tbl[0x1FE], (u32)lbl_eu_80664798);
     convB.w[1] = region;
     f32 denom = (f32)(convB.d - lbl_eu_80668788) * lbl_eu_80668778;
 
@@ -2437,7 +2437,7 @@ void func_8024B234(CFloorMapFull* self) {
     u32 count = (u32)(u8)func_8003B1EC((void*)lbl_eu_8066479C);
     u32 found = 0;
     for (u32 i = 1; i <= count; i++) {
-        s16 h = func_80136330(lbl_eu_8066479C, &lbl_eu_8050BEA8[0x15A], (u32)i);
+        s16 h = BdatGetS16Direct(lbl_eu_8066479C, &lbl_eu_8050BEA8[0x15A], (u32)i);
         convA.w[1] = (u32)(s16)h ^ 0x80000000;
         if ((f32)(convA.d - lbl_eu_80668770) > py) {
             if ((u8)i == self->field_0C) found = 1;
@@ -2447,8 +2447,8 @@ void func_8024B234(CFloorMapFull* self) {
     if (!found) return;
 
     // Project the world position onto the floor-map pane coordinates.
-    s16 vx = func_80136330(lbl_eu_806640A8, &lbl_eu_8050BEA8[0x1E2], lbl_eu_80664798);
-    s16 vy = func_80136330(lbl_eu_806640A8, &lbl_eu_8050BEA8[0x1F0], lbl_eu_80664798);
+    s16 vx = BdatGetS16Direct(lbl_eu_806640A8, &lbl_eu_8050BEA8[0x1E2], lbl_eu_80664798);
+    s16 vy = BdatGetS16Direct(lbl_eu_806640A8, &lbl_eu_8050BEA8[0x1F0], lbl_eu_80664798);
     convB.w[1] = (u32)(s16)vx ^ 0x80000000;
     f32 fx = (f32)(convB.d - lbl_eu_80668770);
     convA.w[1] = (u32)(s16)vy ^ 0x80000000;
@@ -2458,7 +2458,7 @@ void func_8024B234(CFloorMapFull* self) {
     work.y = fy;
     work.z = lbl_eu_80668764;
 
-    u8 region = (u8)func_801361E8(lbl_eu_806640A8, &lbl_eu_8050BEA8[0x1FE], lbl_eu_80664798);
+    u8 region = (u8)BdatGetU8Direct(lbl_eu_806640A8, &lbl_eu_8050BEA8[0x1FE], lbl_eu_80664798);
     convB.w[1] = region;
     f32 denom = (f32)(convB.d - lbl_eu_80668788) * lbl_eu_80668778;
 
@@ -2528,7 +2528,7 @@ void func_8024B4CC(nw4r::math::VEC3* output, void* data, nw4r::lyt::Pane* node) 
                 copyVEC3(&tmp2, &ggp->GetTranslate());
                 nw4r::math::VEC3 recurse;
                 func_8024B4CC(&recurse, data, ggp->GetParent());
-                func_80137738(&tmp2, &recurse);
+                Vec3AddInto(&tmp2, &recurse);
             }
             nw4r::math::VEC3Add(&temp, &temp, &tmp2);
         }
@@ -2550,7 +2550,7 @@ void func_8024B6F8(CFloorMapRowList* self, void* arg2, u32 arg3, u32 arg4, u32 a
     if (self->mData == 0)
         return;
 
-    func_80137E7C(self->mData, &lbl_eu_8050BEA8[0x47F], arg2);
+    PaneSetTexPaletteByName(self->mData, &lbl_eu_8050BEA8[0x47F], arg2);
 
     // Tag each row pane: panes within the 8 rows above the current row are
     // shown, the rest are hidden.
@@ -2832,10 +2832,10 @@ void func_8024BE1C(CFloorMap* self) {
         lang = 1;
     }
     tbl = lbl_eu_8050BEA8;
-    v1 = func_80136254((const void*)lbl_eu_8066479C, tbl + 0x4af, lang & 0xFF);
-    v2 = func_80136254((const void*)lbl_eu_8066479C, tbl + 0x4b5, lang & 0xFF);
+    v1 = BdatGetU16Direct((const void*)lbl_eu_8066479C, tbl + 0x4af, lang & 0xFF);
+    v2 = BdatGetU16Direct((const void*)lbl_eu_8066479C, tbl + 0x4b5, lang & 0xFF);
     // Reuses the table-pointer slot for the third lookup, matching retail.
-    tbl = (const char*)(u32)func_801361E8((u32)lbl_eu_8066479C, tbl + 0x4bc, lang & 0xFF);
+    tbl = (const char*)(u32)BdatGetU8Direct((u32)lbl_eu_8066479C, tbl + 0x4bc, lang & 0xFF);
 
     if (v1 != 0 && func_8009CF8C(0x20) >= v1) {
         if (v2 == 0) {
@@ -2867,7 +2867,7 @@ void func_8024BE1C(CFloorMap* self) {
     // Build "<dir>/<file>" path and kick off the async read on this as the
     // IWorkEvent callback target.
     sprintf(path, tbl + 0x4d8,
-            func_80138F78(func_80136254((const void*)lbl_eu_8066479C, msgName, lang & 0xFF)));
+            MakeTplNameSysFile(BdatGetU16Direct((const void*)lbl_eu_8066479C, msgName, lang & 0xFF)));
     self->field_2C = (u32)readFile__11CDeviceFileFUlPCcP10IWorkEventii(
         (u32)getHandleMEM2__Q23mtl10MemManagerFv(), path, self, 0, 0);
 }
@@ -2939,7 +2939,7 @@ void func_8024C1FC(void* self) {
             u8 count = (u8)func_8003B1EC((void*)lbl_eu_8066479C);
             u8 found = 0;
             for (u8 j = 1; j <= count; j++) {
-                s16 hv = func_80136330(lbl_eu_8066479C, &lbl_eu_8050BEA8[0x15A], j);
+                s16 hv = BdatGetS16Direct(lbl_eu_8066479C, &lbl_eu_8050BEA8[0x15A], j);
                 conv.w[0] = 0x43300000;
                 conv.w[1] = (u32)hv ^ 0x80000000;
                 if ((f32)(conv.d - lbl_eu_80668770) > y) {
@@ -3217,8 +3217,8 @@ void func_8024CE68(void* self) {
         CFloorMapSetPanePos(((nw4r::lyt::Layout*)p->mLayout32D4)->GetRootPane(), pos);
     }
 
-    func_80136B4C((nw4r::lyt::Layout*)p->mLayout32D4, &lbl_eu_8050BEA8[0xF8], FM_FLOOR(p)->name_210, 0);
-    func_80136B4C((nw4r::lyt::Layout*)p->mLayout1FC, &lbl_eu_8050BEA8[0x145], func_8013639C((const void*)lbl_eu_806640A8, &lbl_eu_8050BEA8[0x1F], lbl_eu_80664798), 0);
+    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)p->mLayout32D4, &lbl_eu_8050BEA8[0xF8], FM_FLOOR(p)->name_210, 0);
+    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)p->mLayout1FC, &lbl_eu_8050BEA8[0x145], BdatGetPtrDirect((const void*)lbl_eu_806640A8, &lbl_eu_8050BEA8[0x1F], lbl_eu_80664798), 0);
     func_80246200(&p->mLayout1FC);
 
     if (p->field_3330) {
@@ -3239,9 +3239,9 @@ void func_8024CE68(void* self) {
     if (lang == 0) lang = 1;
 
     const char* msgTbl = lbl_eu_8050BEA8;
-    u16 rate1 = func_80136254((const void*)lbl_eu_8066479C, msgTbl + 0x4AF, lang);
-    u16 rate2 = func_80136254((const void*)lbl_eu_8066479C, msgTbl + 0x4B5, lang);
-    u8 rate3 = func_801361E8(lbl_eu_8066479C, msgTbl + 0x4BC, lang);
+    u16 rate1 = BdatGetU16Direct((const void*)lbl_eu_8066479C, msgTbl + 0x4AF, lang);
+    u16 rate2 = BdatGetU16Direct((const void*)lbl_eu_8066479C, msgTbl + 0x4B5, lang);
+    u8 rate3 = BdatGetU8Direct(lbl_eu_8066479C, msgTbl + 0x4BC, lang);
 
     // Pick which map variant to load: weighted by the floor table's three
     // rates (rate1/rate2/rate3) against two random draws.
@@ -3271,7 +3271,7 @@ void func_8024CE68(void* self) {
     case 2: key = msgTbl + 0x4D0; break;
     }
 
-    sprintf(fname, msgTbl + 0x4D8, func_80138F78((u16)func_80136254((const void*)lbl_eu_8066479C, key, lang)));
+    sprintf(fname, msgTbl + 0x4D8, MakeTplNameSysFile((u16)BdatGetU16Direct((const void*)lbl_eu_8066479C, key, lang)));
     p->field_2C = (u32)readFile__11CDeviceFileFUlPCcP10IWorkEventii((u32)getHandleMEM2__Q23mtl10MemManagerFv(), fname, p, 0, 0);
     playUISound(0xC);
 }
@@ -3325,10 +3325,10 @@ void func_8024D23C(void* self) {
 
     // The floor block is never cached; retail recomputes self + fi*0x30C
     // for each field access while keeping only the field_20C byte live.
-    func_80136B4C((nw4r::lyt::Layout*)p->mLayout32D4, &tbl[0xF8],
+    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)p->mLayout32D4, &tbl[0xF8],
                   ((CFloorMapFloorBlock*)((u8*)p + (s8)p->field_205 * 0x30C))->name_210, 0);
-    func_80136B4C((nw4r::lyt::Layout*)p->mLayout1FC, &tbl[0x145],
-                  func_8013639C((const void*)lbl_eu_806640A8, &tbl[0x1F], lbl_eu_80664798), 0);
+    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)p->mLayout1FC, &tbl[0x145],
+                  BdatGetPtrDirect((const void*)lbl_eu_806640A8, &tbl[0x1F], lbl_eu_80664798), 0);
     func_80246200(&p->mLayout1FC);
 
     if (p->field_3330) {
@@ -3347,9 +3347,9 @@ void func_8024D23C(void* self) {
     u8 v26 = ((CFloorMapFloorBlock*)((u8*)p + (s8)p->field_205 * 0x30C))->field_20C;
     if (v26 == 0) v26 = 1;
 
-    u16 v1 = func_80136254((const void*)lbl_eu_8066479C, &lbl_eu_8050BEA8[0x4AF], v26);
-    u16 v2 = func_80136254((const void*)lbl_eu_8066479C, &lbl_eu_8050BEA8[0x4B5], v26);
-    u8 v3 = func_801361E8(lbl_eu_8066479C, &lbl_eu_8050BEA8[0x4BC], v26);
+    u16 v1 = BdatGetU16Direct((const void*)lbl_eu_8066479C, &lbl_eu_8050BEA8[0x4AF], v26);
+    u16 v2 = BdatGetU16Direct((const void*)lbl_eu_8066479C, &lbl_eu_8050BEA8[0x4B5], v26);
+    u8 v3 = BdatGetU8Direct(lbl_eu_8066479C, &lbl_eu_8050BEA8[0x4BC], v26);
 
     int mode;
     if (v1 != 0 && func_8009CF8C(0x20) >= v1) {
@@ -3376,7 +3376,7 @@ void func_8024D23C(void* self) {
     }
 
     char fname[0x20];
-    sprintf(fname, &lbl_eu_8050BEA8[0x4D8], func_80138F78((u16)func_80136254((const void*)lbl_eu_8066479C, key, v26)));
+    sprintf(fname, &lbl_eu_8050BEA8[0x4D8], MakeTplNameSysFile((u16)BdatGetU16Direct((const void*)lbl_eu_8066479C, key, v26)));
     p->field_2C = (u32)readFile__11CDeviceFileFUlPCcP10IWorkEventii((u32)getHandleMEM2__Q23mtl10MemManagerFv(), fname, p, 0, 0);
     playUISound(0xA);
 }
@@ -4118,7 +4118,7 @@ void func_8024EE50(void* self) {
         if ((flags & 0x2000) != 0 || (flags & 0x10000) != 0) nameIdx = 0x15;
 
 
-        char* name = func_80136190(&lbl_eu_8050BEA8[0x519], &lbl_eu_8050BEA8[0x1F], nameIdx);
+        char* name = BdatTouchStringCell(&lbl_eu_8050BEA8[0x519], &lbl_eu_8050BEA8[0x1F], nameIdx);
         func_8022B9B4(&p->mSysWinF4, name, 0);
         func_8022BFC8((CSysWin*)&p->mSysWinF4, 1);
         func_8022B8B8(&p->mSysWinF4);
@@ -4128,7 +4128,7 @@ void func_8024EE50(void* self) {
 
     if (func_8009CF8C(0x3212)) {
         // Unvisited but already-seen marker id: show the "no data" text.
-        char* name = func_80136190(&lbl_eu_8050BEA8[0x519], &lbl_eu_8050BEA8[0x1F], 0x15);
+        char* name = BdatTouchStringCell(&lbl_eu_8050BEA8[0x519], &lbl_eu_8050BEA8[0x1F], 0x15);
         func_8022B9B4(&p->mSysWinF4, name, 0);
         func_8022BFC8((CSysWin*)&p->mSysWinF4, 1);
         func_8022B8B8(&p->mSysWinF4);
@@ -4138,10 +4138,10 @@ void func_8024EE50(void* self) {
 
     // Fresh unvisited row: open the map cursor window with the row/floor
     // captions and place the cursor at the window's anchor point.
-    char* nRow = func_80136190(&lbl_eu_8050BEA8[0x17F], &lbl_eu_8050BEA8[0x1F], rowId);
-    char* nCap1 = func_80136190(&lbl_eu_8050BEA8[0x17], &lbl_eu_8050BEA8[0x1F], 7);
-    char* nCap2 = func_80136190(&lbl_eu_8050BEA8[0x17], &lbl_eu_8050BEA8[0x1F], 8);
-    char* nCap3 = func_80136190(&lbl_eu_8050BEA8[0x17], &lbl_eu_8050BEA8[0x1F], 9);
+    char* nRow = BdatTouchStringCell(&lbl_eu_8050BEA8[0x17F], &lbl_eu_8050BEA8[0x1F], rowId);
+    char* nCap1 = BdatTouchStringCell(&lbl_eu_8050BEA8[0x17], &lbl_eu_8050BEA8[0x1F], 7);
+    char* nCap2 = BdatTouchStringCell(&lbl_eu_8050BEA8[0x17], &lbl_eu_8050BEA8[0x1F], 8);
+    char* nCap3 = BdatTouchStringCell(&lbl_eu_8050BEA8[0x17], &lbl_eu_8050BEA8[0x1F], 9);
     func_8022B9B4(&p->mSysWinB8, nCap1, nRow);
     func_8022BF6C(&p->mSysWinB8, nCap2, nCap3);
     func_8022BFC8((CSysWin*)&p->mSysWinB8, 0);
@@ -4469,7 +4469,7 @@ u32 func_8024FB78(void*) {
                 int count = func_8003B1EC((void*)lbl_eu_8066479C);
                 for (u8 i = 1; i <= count; i++) {
                     // Compare floor height against player y in double precision.
-                    s16 val = func_80136330(lbl_eu_8066479C, &lbl_eu_8050BEA8[0x15A], i);
+                    s16 val = BdatGetS16Direct(lbl_eu_8066479C, &lbl_eu_8050BEA8[0x15A], i);
                     f32 y = ((cf::CfObject*)player)->CfObject_getPosVector()->y;
                     conv.w[1] = (u32)(s16)val ^ 0x80000000;
                     conv.w[0] = 0x43300000;
@@ -4489,7 +4489,7 @@ u32 func_8024FB78(void*) {
                 nw4r::math::VEC3 pos = *(nw4r::math::VEC3*)tmp;
                 int count = func_8003B1EC((void*)lbl_eu_8066479C);
                 for (u8 i = 1; i <= count; i++) {
-                    s16 val = func_80136330(lbl_eu_8066479C, &lbl_eu_8050BEA8[0x15A], i);
+                    s16 val = BdatGetS16Direct(lbl_eu_8066479C, &lbl_eu_8050BEA8[0x15A], i);
                     conv.w[1] = (u32)(s16)val ^ 0x80000000;
                     conv.w[0] = 0x43300000;
                     if (conv.d - lbl_eu_80668770 > pos.y) {
@@ -4979,7 +4979,7 @@ void sinit_80250CB4() {
 
 // Load the floor layout, bind the font to its root pane, then hide the ten
 // row panes: each pane name is formatted from the shared prefix string at
-// 0x17/0x1F and the row index (0xB..0x14), and func_80136B4C updates the
+// 0x17/0x1F and the row index (0xB..0x14), and LayoutSetTextBoxFmtValue updates the
 // pane addressed by the string at 0x24 + 9*(row-0xB).
 void func_80244764(CFloorMapLayoutData0* self) {
     buildLayout(&self->layout, self->accessor, &lbl_eu_8050BEA8[0]);
@@ -4989,26 +4989,26 @@ void func_80244764(CFloorMapLayoutData0* self) {
     u32 fontResult = (u32)((IDeviceFontInfo*)fontObj)->getFont();
     func_8013676C(rootPane, fontResult);
 
-    func_80136B4C(self->layout, &lbl_eu_8050BEA8[0x24],
-                  func_80136190(&lbl_eu_8050BEA8[0x17], &lbl_eu_8050BEA8[0x1F], 0xB), 0);
-    func_80136B4C(self->layout, &lbl_eu_8050BEA8[0x2D],
-                  func_80136190(&lbl_eu_8050BEA8[0x17], &lbl_eu_8050BEA8[0x1F], 0xC), 0);
-    func_80136B4C(self->layout, &lbl_eu_8050BEA8[0x36],
-                  func_80136190(&lbl_eu_8050BEA8[0x17], &lbl_eu_8050BEA8[0x1F], 0xD), 0);
-    func_80136B4C(self->layout, &lbl_eu_8050BEA8[0x3F],
-                  func_80136190(&lbl_eu_8050BEA8[0x17], &lbl_eu_8050BEA8[0x1F], 0xE), 0);
-    func_80136B4C(self->layout, &lbl_eu_8050BEA8[0x48],
-                  func_80136190(&lbl_eu_8050BEA8[0x17], &lbl_eu_8050BEA8[0x1F], 0xF), 0);
-    func_80136B4C(self->layout, &lbl_eu_8050BEA8[0x51],
-                  func_80136190(&lbl_eu_8050BEA8[0x17], &lbl_eu_8050BEA8[0x1F], 0x10), 0);
-    func_80136B4C(self->layout, &lbl_eu_8050BEA8[0x5A],
-                  func_80136190(&lbl_eu_8050BEA8[0x17], &lbl_eu_8050BEA8[0x1F], 0x11), 0);
-    func_80136B4C(self->layout, &lbl_eu_8050BEA8[0x63],
-                  func_80136190(&lbl_eu_8050BEA8[0x17], &lbl_eu_8050BEA8[0x1F], 0x12), 0);
-    func_80136B4C(self->layout, &lbl_eu_8050BEA8[0x6C],
-                  func_80136190(&lbl_eu_8050BEA8[0x17], &lbl_eu_8050BEA8[0x1F], 0x13), 0);
-    func_80136B4C(self->layout, &lbl_eu_8050BEA8[0x75],
-                  func_80136190(&lbl_eu_8050BEA8[0x17], &lbl_eu_8050BEA8[0x1F], 0x14), 0);
+    LayoutSetTextBoxFmtValue(self->layout, &lbl_eu_8050BEA8[0x24],
+                  BdatTouchStringCell(&lbl_eu_8050BEA8[0x17], &lbl_eu_8050BEA8[0x1F], 0xB), 0);
+    LayoutSetTextBoxFmtValue(self->layout, &lbl_eu_8050BEA8[0x2D],
+                  BdatTouchStringCell(&lbl_eu_8050BEA8[0x17], &lbl_eu_8050BEA8[0x1F], 0xC), 0);
+    LayoutSetTextBoxFmtValue(self->layout, &lbl_eu_8050BEA8[0x36],
+                  BdatTouchStringCell(&lbl_eu_8050BEA8[0x17], &lbl_eu_8050BEA8[0x1F], 0xD), 0);
+    LayoutSetTextBoxFmtValue(self->layout, &lbl_eu_8050BEA8[0x3F],
+                  BdatTouchStringCell(&lbl_eu_8050BEA8[0x17], &lbl_eu_8050BEA8[0x1F], 0xE), 0);
+    LayoutSetTextBoxFmtValue(self->layout, &lbl_eu_8050BEA8[0x48],
+                  BdatTouchStringCell(&lbl_eu_8050BEA8[0x17], &lbl_eu_8050BEA8[0x1F], 0xF), 0);
+    LayoutSetTextBoxFmtValue(self->layout, &lbl_eu_8050BEA8[0x51],
+                  BdatTouchStringCell(&lbl_eu_8050BEA8[0x17], &lbl_eu_8050BEA8[0x1F], 0x10), 0);
+    LayoutSetTextBoxFmtValue(self->layout, &lbl_eu_8050BEA8[0x5A],
+                  BdatTouchStringCell(&lbl_eu_8050BEA8[0x17], &lbl_eu_8050BEA8[0x1F], 0x11), 0);
+    LayoutSetTextBoxFmtValue(self->layout, &lbl_eu_8050BEA8[0x63],
+                  BdatTouchStringCell(&lbl_eu_8050BEA8[0x17], &lbl_eu_8050BEA8[0x1F], 0x12), 0);
+    LayoutSetTextBoxFmtValue(self->layout, &lbl_eu_8050BEA8[0x6C],
+                  BdatTouchStringCell(&lbl_eu_8050BEA8[0x17], &lbl_eu_8050BEA8[0x1F], 0x13), 0);
+    LayoutSetTextBoxFmtValue(self->layout, &lbl_eu_8050BEA8[0x75],
+                  BdatTouchStringCell(&lbl_eu_8050BEA8[0x17], &lbl_eu_8050BEA8[0x1F], 0x14), 0);
 }
 
 // Load the map layout + animation transforms, bind the font, hide the four

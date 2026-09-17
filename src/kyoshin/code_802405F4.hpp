@@ -24,8 +24,8 @@
 #define func_801F36BC func_801F36BCFloorMap
 #define func_8003B1EC func_8003B1ECFloorMap
 #define lbl_eu_806640A8 lbl_eu_806640A8FloorMap
-#define func_80136190 func_80136190FloorMap
-#define func_80137E7C func_80137E7CFloorMap
+#define BdatTouchStringCell BdatTouchStringCellFloorMap
+#define PaneSetTexPaletteByName PaneSetTexPaletteByNameFloorMap
 #include "kyoshin/CFloorMap.hpp"
 #undef CCur18View
 #undef CCur18Data
@@ -39,8 +39,8 @@
 #undef func_801F36BC
 #undef func_8003B1EC
 #undef lbl_eu_806640A8
-#undef func_80136190
-#undef func_80137E7C
+#undef BdatTouchStringCell
+#undef PaneSetTexPaletteByName
 
 class CScn;
 
@@ -102,7 +102,7 @@ void func_80244460(class CFade* self, class nw4r::lyt::DrawInfo* drawInfo);
 // Retail emits direct bl to the DrawInfo ctor/dtor symbols.
 void __ct__Q34nw4r3lyt8DrawInfoFv(class nw4r::lyt::DrawInfo* self);
 void __dt__Q34nw4r3lyt8DrawInfoFv(class nw4r::lyt::DrawInfo* self, int flags);
-int func_8013BE50();
+int IsMenuState621F0();
 // Camera/transform position setters (retail keeps unmangled symbols)
 void func_8049F168(void* obj, ml::CVec3* pos);
 void func_8049F204(void* obj, ml::CVec3* pos);

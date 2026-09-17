@@ -67,7 +67,7 @@ extern "C" float func_8006ACB8(u8* self) {
 using namespace cf;
 
 // Refresh the camera vectors: zero the direction/lookat/pos block, adopt the
-// source position and lookat, recompute the direction via func_800749AC, and
+// source position and lookat, recompute the direction via cfCam_vecToAngles, and
 // capture the resulting distance into the speed factor.
 void func_8006A82C(CfCamEvent* self) {
     CfCamBody25C* body = (CfCamBody25C*)&self->unk25C;
@@ -75,7 +75,7 @@ void func_8006A82C(CfCamEvent* self) {
     body->pos = self->unk34;
     body->lookat = self->unk10;
     body->unk24 = self->field_0x1E0;
-    body->unk28 = func_800749AC(&self->unk34, &self->unk10, &body->dir);
+    body->unk28 = cfCam_vecToAngles(&self->unk34, &self->unk10, &body->dir);
     body->dir.z = lbl_eu_80666268;
 }
 
@@ -113,7 +113,7 @@ void func_8006AB40(CfCamEvent* self, f32 value) {
 // vector, then forward it to setDir.
 void func_8006AB94(CfCamEvent* self, ml::CVec3* vec) {
     self->unk288 = lbl_eu_80666268;
-    func_8006BC1C(self, 0x1200);
+    cfCam_andcUnk04(self, 0x1200);
     self->unk25C = *vec;
     CfCamDispatch* intf = CfCamEvent_initCamIntfInstances(self);
     intf->setDir(self, vec);
@@ -123,7 +123,7 @@ void func_8006AB94(CfCamEvent* self, ml::CVec3* vec) {
 // direction vector (used as the camera "get direction" entry).
 ml::CVec3* func_8006A9F8(CfCamEvent* self) {
     ml::CVec3* out = &self->unk25C;
-    func_800749AC((ml::CVec3*)((u8*)out + 0x18), (ml::CVec3*)((u8*)out + 0xC), out);
+    cfCam_vecToAngles((ml::CVec3*)((u8*)out + 0x18), (ml::CVec3*)((u8*)out + 0xC), out);
     return out;
 }
 
@@ -164,7 +164,7 @@ void func_8006AC60(CfCamEvent* self, s32 cond) {
 // block, run the CfCamFollow base constructor on it, install the CfCamEvent
 // vtable, then attach the event object returned by the camera manager.
 extern "C" CfCamEvent* __ct__8006B310(void* self, void* arg2) {
-    u32 heap = func_80061FE8();
+    u32 heap = CfRes_getHeapHandle();
     CfCamEvent* obj = (CfCamEvent*)allocate__Q23mtl10MemManagerFUlUl(0x298, heap);
     if (obj != nullptr) {
         __ct__cf_CfCamFollow(obj, self, arg2);
@@ -207,7 +207,7 @@ void func_8006ACC0(CfCamEvent* self) {
     if ((self->unk4 & 0x04000000) != 0 || getNullPtrC__Q22cf13CfGameManagerFv(8) != 0) {
         if ((self->unk4 & 0x04000000) != 0) {
             self->virt22();
-            func_80071B78(self);
+            cfCam_nopVirtFloat(self);
             return;
         }
     }
@@ -228,7 +228,7 @@ void func_8006ACC0(CfCamEvent* self) {
     }
 
     o164 = self->unk164;
-    if (func_800B8920(o164) == 0) {
+    if (lookupWorkAtAddr(o164) == 0) {
         o164 = 0;
     }
     follow = 0;
@@ -282,7 +282,7 @@ void func_8006ACC0(CfCamEvent* self) {
     // the yaw angle from the direction vector and gate the node flush on
     // the countdown trigger.
     srcBlock = self->unk160->block;
-    func_80071AB0(self, &aim, &pos, 0, self->unk280, self->unk25C.z);
+    cfCam_applyRelPos(self, &aim, &pos, 0, self->unk280, self->unk25C.z);
     self->unk34 = aim;
     self->unk130 = self->unk160->block;
     self->unk58 = pos;
@@ -312,10 +312,10 @@ void func_8006ACC0(CfCamEvent* self) {
             payload = (CfCamNodePayload*)node->field_8;
             if (payload->field_98 != 0) {
                 if ((payload->field_68 & 0x8000) == 0) {
-                    func_804876DC();
+                    scnImN4DynStart();
                 }
-                func_80484E04(payload->field_98, 1);
-                func_804876C0(payload->field_98);
+                simSetValue7E8(payload->field_98, 1);
+                scnImN4SetShadFlg(payload->field_98);
             }
             node = node->next;
         }
@@ -324,10 +324,10 @@ void func_8006ACC0(CfCamEvent* self) {
 
 // fixed absorb for CfCamEvent - typed arrays (rodata strings + data/sdata)
 extern "C" {
-void func_80071B74();
-void func_80073C74();
-void func_80073DDC();
-void func_80074A3C();
+void cfCam_nopVirt24();
+void cfCam_copyToPlus10();
+void cfCam_copyCamState();
+void cfCam_getActivePad();
 void func_80074AA4();
 extern const char lbl_eu_804FB470[];
 extern const char lbl_eu_804FB480[];

@@ -12,8 +12,8 @@
 #include <monolib/util/MemManager.hpp>
 
 // Forward declarations for external C-ABI functions (retail unmangled names).
-extern "C" void* func_80488938(void* owner, u32 size);
-extern "C" void* func_80488954(void* owner, u32 size);
+extern "C" void* scnImN4PoolHasSpc(void* owner, u32 size);
+extern "C" void* scnImN4PoolAlloc(void* owner, u32 size);
 extern "C" u32 func_80496018(u32 handle);
 
 // Node user-data scanner (retail unmangled symbol; declared with C linkage in
@@ -90,7 +90,7 @@ extern const char lbl_eu_80570180[];
 extern f32 lbl_eu_8066B304;
 
 // CScnItemModelNw4r helper (retail unmangled symbol).
-extern "C" void func_80488C20(void* owner, void* arg, s32 subIdx);
+extern "C" void scnImN4MatFn(void* owner, void* arg, s32 subIdx);
 
 // ===========================================================================
 // Local layout views / context structs for the helpers below.
@@ -252,8 +252,8 @@ void CMdlMaterial::func_804E54B8(void* arg) {
         *reinterpret_cast<u32*>(reinterpret_cast<u8*>(arg) + 0x146C)));
 
     // Try to attach to an existing resident buffer first.
-    if (func_80488938(arg, resMdl.GetResMatNumEntries() * 16) != NULL) {
-        buffer = func_80488954(arg, resMdl.GetResMatNumEntries() * 16);
+    if (scnImN4PoolHasSpc(arg, resMdl.GetResMatNumEntries() * 16) != NULL) {
+        buffer = scnImN4PoolAlloc(arg, resMdl.GetResMatNumEntries() * 16);
         flag_0x10 = 1;
     } else {
         // Fallback: allocate via MemManager (buffer owned by this object).
@@ -621,7 +621,7 @@ void func_804E64B0(CMdlMaterial* selfPtr, void* arg, MdlMaterialOwner* owner) {
         s32 subIdx = b % 10;
 
         if ((u32)(b / 10) == owner->material.field_0x14) {
-            func_80488C20(owner, arg, subIdx);
+            scnImN4MatFn(owner, arg, subIdx);
         }
     }
 }

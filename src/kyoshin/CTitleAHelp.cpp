@@ -139,7 +139,7 @@ void CTitleAHelp::func_801C4198() {
 extern char lbl_eu_805054BC[];
 extern "C" void __declspec(noinline) func_801C41C0(CTitleAHelp* self, char* arg) {
     if(self->mLayout == nullptr) return;
-    func_80136B4C(self->mLayout, lbl_eu_805054BC + 0x17, arg, 0);
+    LayoutSetTextBoxFmtValue(self->mLayout, lbl_eu_805054BC + 0x17, arg, 0);
 }
 
 // Lays out the title-A help screen: swaps button textures by bdat key assign
@@ -166,15 +166,15 @@ extern "C" void __declspec(noinline) func_801C41E8(CTitleAHelp* self, u8 arg) {
                 fileID = lbl_eu_805054BC + 0x40;
             }
 
-            u16 keyVal = func_8013606C(lbl_eu_805054BC + 0x49, fileID, tableVal);
-            char* texName = func_80138F78(keyVal);
+            u16 keyVal = BdatGetU16ByTableKey(lbl_eu_805054BC + 0x49, fileID, tableVal);
+            char* texName = MakeTplNameSysFile(keyVal);
 
             nw4r::lyt::ArcResourceAccessor* accessor = ::func_801355F4();
             void* resource = accessor->GetResource(
                 nw4r::lyt::ArcResourceAccessor::RES_TYPE_TEXTURE, texName, NULL);
 
             if (resource != nullptr) {
-                func_80137E7C(self->mLayout, buf1, resource);
+                PaneSetTexPaletteByName(self->mLayout, buf1, resource);
 
                 nw4r::lyt::Pane* pane = self->mLayout->GetRootPane()->FindPaneByName(buf1, true);
                 if (pane != nullptr) {
@@ -186,8 +186,8 @@ extern "C" void __declspec(noinline) func_801C41E8(CTitleAHelp* self, u8 arg) {
                 }
             }
 
-            char* helpText = func_80136190(lbl_eu_805054BC + 0x49, lbl_eu_805054BC + 0x57, tableVal);
-            func_80136B4C(self->mLayout, buf2, helpText, 0);
+            char* helpText = BdatTouchStringCell(lbl_eu_805054BC + 0x49, lbl_eu_805054BC + 0x57, tableVal);
+            LayoutSetTextBoxFmtValue(self->mLayout, buf2, helpText, 0);
         } else {
             func_80124270(self->mLayout->GetRootPane()->FindPaneByName(buf1, true), 0);
             func_80124270(self->mLayout->GetRootPane()->FindPaneByName(buf2, true), 0);
@@ -258,7 +258,7 @@ void CTitleAHelp::func_801C4654(u32 arg) {
 
 extern "C" void func_801C46B4(CTitleAHelp* self, char* arg) {
     if(self->mLayout == nullptr) return;
-    func_80136B4C(self->mLayout, lbl_eu_805054BC + 0x64, arg, 0);
+    LayoutSetTextBoxFmtValue(self->mLayout, lbl_eu_805054BC + 0x64, arg, 0);
 }
 
 void CTitleAHelp::func_801C46DC(u32 arg) {
@@ -278,11 +278,11 @@ extern u32 lbl_eu_80664470;
 extern u32 lbl_eu_80664478;
 extern u32 lbl_eu_80664480;
 extern "C" void func_801C4744(CTitleAHelp* self) {
-    func_80139A18(self->mLayout, lbl_eu_805054BC + 0x17, &lbl_eu_80664468, &lbl_eu_80664470);
+    PaneMatSetTevColorsByName(self->mLayout, lbl_eu_805054BC + 0x17, &lbl_eu_80664468, &lbl_eu_80664470);
 }
 
 extern "C" void func_801C4760(CTitleAHelp* self) {
-    func_80139A18(self->mLayout, lbl_eu_805054BC + 0x17, &lbl_eu_80664478, &lbl_eu_80664480);
+    PaneMatSetTevColorsByName(self->mLayout, lbl_eu_805054BC + 0x17, &lbl_eu_80664478, &lbl_eu_80664480);
 }
 
 extern "C" void __declspec(noinline) func_801C477C(CTitleAHelp* self) {
@@ -302,7 +302,7 @@ extern "C" void __declspec(noinline) func_801C47F8(CTitleAHelp* self) {
 }
 
 extern "C" void __declspec(noinline) func_801C484C(CTitleAHelp* self) {
-    if(func_80137510(self->mAnimTrans24, 1.0f)) {
+    if(AnimRewindFrame(self->mAnimTrans24, 1.0f)) {
         if(self->unk37 == 0) {
             self->mLayout->SetAnimationEnable(self->mAnimTrans24, 0);
             self->mLayout->SetAnimationEnable(self->mAnimTrans20, 1);
@@ -314,7 +314,7 @@ extern "C" void __declspec(noinline) func_801C484C(CTitleAHelp* self) {
 }
 
 extern "C" void __declspec(noinline) func_801C48E0(CTitleAHelp* self) {
-    if(func_80137510(self->mAnimTrans20, 1.0f)) {
+    if(AnimRewindFrame(self->mAnimTrans20, 1.0f)) {
         self->unk2c = 0;
         self->unk36 = 1;
     }

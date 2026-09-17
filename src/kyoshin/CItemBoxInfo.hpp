@@ -133,9 +133,9 @@ union CItemBoxSlotFlagsAny {
 // 0x34-byte per-slot comparison record built by func_801D4E2C / func_801E197C
 // and copied out as one unit. The three flag banks at +0x1D/+0x24/+0x2B hold
 // per-slot {1,2,0} comparison results (candidate vs current item values); the
-// word0 float is the func_80139C98 result and word4 the name ratio.
+// word0 float is the BlendFloatAvgScale result and word4 the name ratio.
 struct CItemBoxCompRecord {
-    f32 f28;       // 0x00 (func_80139C98 result)
+    f32 f28;       // 0x00 (BlendFloatAvgScale result)
     s16 s2C;       // 0x04
     s16 s2E;       // 0x06
     s16 s30;       // 0x08
@@ -226,19 +226,19 @@ struct CItemBoxLabelRec {
 
 extern "C" char lbl_eu_805063BC[];
 extern "C" char lbl_eu_8050634C[];
-extern "C" char lbl_eu_80506380[];extern "C" void func_80136B4C(nw4r::lyt::Layout*, const char*, const char*, u32);
+extern "C" char lbl_eu_80506380[];extern "C" void LayoutSetTextBoxFmtValue(nw4r::lyt::Layout*, const char*, const char*, u32);
 extern "C" int func_8026178C(void*, u32);extern "C" u32 func_8025FB10(void*, u32);
-extern "C" u32 func_80137510(nw4r::lyt::AnimTransform*, float);
+extern "C" u32 AnimRewindFrame(nw4r::lyt::AnimTransform*, float);
 extern "C" void* func_8009EC9C(u32);
 extern "C" void func_80124270(void*, u32);
-extern "C" u32 func_801361E8(u32, const char*, u32);
-extern "C" u16 func_80139358(u32);
-extern "C" u32 func_801392E4(u32);
+extern "C" u32 BdatGetU8Direct(u32, const char*, u32);
+extern "C" u16 BdatGetItemId(u32);
+extern "C" u32 BdatGetItemType(u32);
 extern "C" u32 func_801393CC(void*);
 extern "C" void func_801D8B08(CItemBoxInfo*);
 extern "C" void func_801D85D8(CItemBoxInfo*);
 extern "C" void func_801D59C0(u32*, void*, void*);
-extern "C" void func_801D1F9C(void*, u32);
+extern "C" void SplitU32ToS16s(void*, u32);
 extern "C" void func_801C4B60(void*, u32, u32, u32, u32);
 extern "C" void __as__11_GXColorS10FRC11_GXColorS10(void* dst, const void* src);
 extern "C" void Panic__Q24nw4r2dbFPCciPCce(const char*, int, const char*, ...);
@@ -268,12 +268,12 @@ extern "C" void copyVEC3(void*, const void*);
 extern "C" void func_80137924(void*, void*, void*, void*);
 // More flat retail (unmangled) helpers used by the item-box renderers.
 extern "C" void func_80137B44(nw4r::lyt::Layout*, const char*, u32);
-extern "C" char* func_80136190(char*, char*, u32);
-extern "C" void func_80139A18(nw4r::lyt::Layout*, char*, void*, void*);
-extern "C" void func_80137E7C(nw4r::lyt::Layout*, const char*, u32);
+extern "C" char* BdatTouchStringCell(char*, char*, u32);
+extern "C" void PaneMatSetTevColorsByName(nw4r::lyt::Layout*, char*, void*, void*);
+extern "C" void PaneSetTexPaletteByName(nw4r::lyt::Layout*, const char*, u32);
 extern "C" u32 func_801392C0();
-extern "C" int func_801392B4(u8);
-extern "C" f32 func_80139C98(u32 a, u32 b, u32 c, f32 d);
+extern "C" int GetCollectedFlagByte(u8);
+extern "C" f32 BlendFloatAvgScale(u32 a, u32 b, u32 c, f32 d);
 extern "C" void func_801E40E8(CItemBoxInfo2*);
 extern "C" void func_801E43BC(CItemBoxInfo2*, u16, void*, u16, u32);
 extern "C" void func_801E27D0(u8*, void*, void*, void*);
@@ -292,10 +292,10 @@ extern "C" void func_801D8930(CItemBoxInfo*);
 // retail (callers pass the item-box pointer through it).
 extern "C" void func_801D5AA0(CItemBoxInfo* out, void* unused, void* data);
 extern "C" void func_801E37C4(CItemBoxInfo2*, void*, void*);
-extern "C" u8 func_8013600C(const void*, const void*, u32);
+extern "C" u8 BdatGetU8ByTableKey(const void*, const void*, u32);
 extern "C" u32 func_800A32BC();
 extern "C" void func_801D4A2C(void*);
-extern "C" int func_801C6E90(void*);
+extern "C" int IsSkillItem(void*);
 extern "C" u32 func_801D4AB0(void*);
 extern "C" void func_801D6394(CItemBoxInfo*, u32, void*, u32);
 extern "C" void func_801D5DA4(CItemBoxInfo*, u16, void*, u16);
@@ -424,11 +424,11 @@ extern "C" void func_801E20FC(void*, void*, void*, void*);
 extern "C" void func_80136A1C(nw4r::lyt::Layout*, const char*, const char*, u32);
 extern "C" char* func_801394D4(u32);
 extern "C" void func_801E2638(CItemBoxSlotSelTable*, CItemBoxInfo2*, void*);
-extern "C" void* func_801571FC();
+extern "C" void* CItemBlock_getPtr20E8();
 extern "C" void func_80137F88(void*, u32);
-extern "C" void func_80137C1C(void*, u32);
-extern "C" u16 func_80136254(const void*, const void*, int);
-extern "C" char* func_80138F78(u32);
+extern "C" void PaneSetVtxColorAll(void*, u32);
+extern "C" u16 BdatGetU16Direct(const void*, const void*, int);
+extern "C" char* MakeTplNameSysFile(u32);
 extern "C" nw4r::lyt::ArcResourceAccessor* func_801355F4();
 
 // Layout-build helpers for OnFileEvent (retail mangled C++ symbols; keep

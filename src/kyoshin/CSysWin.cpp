@@ -99,8 +99,8 @@ extern "C" void func_8022B8E4(void* self) {
 #pragma push
 #pragma optimize_for_size on
 extern "C" void func_8022BF6C(CSysWin* self, char* a, char* b) {
-    func_80136B4C(self->mLayout, lbl_eu_8050A478 + 0x77, a, 0);
-    func_80136B4C(self->mLayout, lbl_eu_8050A478 + 0x82, b, 0);
+    LayoutSetTextBoxFmtValue(self->mLayout, lbl_eu_8050A478 + 0x77, a, 0);
+    LayoutSetTextBoxFmtValue(self->mLayout, lbl_eu_8050A478 + 0x82, b, 0);
 }
 #pragma pop
 
@@ -111,7 +111,7 @@ extern "C" void func_8022BF6C(CSysWin* self, char* a, char* b) {
 // us-8022e0ac - format a pane name (idx+1), find two panes in the
 // second window's layout, and compute the second pane's absolute screen
 // position into out (ancestor translate sum via func_80137924). Same shape as
-// func_8022C930 / func_80253970: each GetRootPane() is a fresh load (retail
+// func_8022C930 / clpCalcCurPos: each GetRootPane() is a fresh load (retail
 // reloads window->mLayout per use). optimize_for_size matches the retail
 // stmw/lmw prologue for the 4 callee-saved regs (r28-r31).
 #pragma push
@@ -152,7 +152,7 @@ extern "C" void func_8022C2A4(CSysWin* self) {
 #pragma dont_inline on
 extern "C" void func_8022C2F8(CSysWin* self) {
     const f32 duration = lbl_eu_806685F0;
-    if (func_80137510(self->mAnimTrans, duration) != 0) {
+    if (AnimRewindFrame(self->mAnimTrans, duration) != 0) {
         self->field_35 = 0;
         self->field_36 = 1;
         self->field_34 = 0;
@@ -175,12 +175,12 @@ extern "C" void func_8022C348(CSysWin* self) {
         self->mLayout->GetRootPane()->FindPaneByName(&lbl_eu_8050A478[0xfa], true));
     self->field_30 = reinterpret_cast<u32>(
         self->mLayout->GetRootPane()->FindPaneByName(&lbl_eu_8050A478[0x106], true));
-    func_80136B4C(self->mLayout, &lbl_eu_8050A478[0x1c], &lbl_eu_8050A478[0x39], 0);
-    func_80136B4C(self->mLayout, &lbl_eu_8050A478[0x29], &lbl_eu_8050A478[0x39], 0);
-    func_80136B4C(self->mLayout, &lbl_eu_8050A478[0x3a], &lbl_eu_8050A478[0x39], 0);
-    func_80136B4C(self->mLayout, &lbl_eu_8050A478[0x4a], &lbl_eu_8050A478[0x39], 0);
-    func_80136B4C(self->mLayout, &lbl_eu_8050A478[0x57], &lbl_eu_8050A478[0x39], 0);
-    func_80136B4C(self->mLayout, &lbl_eu_8050A478[0x67], &lbl_eu_8050A478[0x39], 0);
+    LayoutSetTextBoxFmtValue(self->mLayout, &lbl_eu_8050A478[0x1c], &lbl_eu_8050A478[0x39], 0);
+    LayoutSetTextBoxFmtValue(self->mLayout, &lbl_eu_8050A478[0x29], &lbl_eu_8050A478[0x39], 0);
+    LayoutSetTextBoxFmtValue(self->mLayout, &lbl_eu_8050A478[0x3a], &lbl_eu_8050A478[0x39], 0);
+    LayoutSetTextBoxFmtValue(self->mLayout, &lbl_eu_8050A478[0x4a], &lbl_eu_8050A478[0x39], 0);
+    LayoutSetTextBoxFmtValue(self->mLayout, &lbl_eu_8050A478[0x57], &lbl_eu_8050A478[0x39], 0);
+    LayoutSetTextBoxFmtValue(self->mLayout, &lbl_eu_8050A478[0x67], &lbl_eu_8050A478[0x39], 0);
     // TextBox::mpTagProcessor at +0xF8 (MonolithSoft nw4r extension).
     struct TextBoxLayout {
         u8 _[0xF8];
@@ -389,13 +389,13 @@ extern "C" void func_8022B9B4(CSysWin* self, char* textA, char* textB) {
     if (kind == 3) goto case3;
     goto end;
 case0:
-    func_80136B4C(self->mLayout, &lbl_eu_8050A478[0x1c], textA,
+    LayoutSetTextBoxFmtValue(self->mLayout, &lbl_eu_8050A478[0x1c], textA,
                   reinterpret_cast<u32>(self->mTagProcessor));
-    func_80136B4C(self->mLayout, &lbl_eu_8050A478[0x29], &lbl_eu_8050A478[0x39], 0);
-    func_80136B4C(self->mLayout, &lbl_eu_8050A478[0x3a], &lbl_eu_8050A478[0x39], 0);
-    func_80136B4C(self->mLayout, &lbl_eu_8050A478[0x4a], &lbl_eu_8050A478[0x39], 0);
-    func_80136B4C(self->mLayout, &lbl_eu_8050A478[0x57], &lbl_eu_8050A478[0x39], 0);
-    func_80136B4C(self->mLayout, &lbl_eu_8050A478[0x67], &lbl_eu_8050A478[0x39], 0);
+    LayoutSetTextBoxFmtValue(self->mLayout, &lbl_eu_8050A478[0x29], &lbl_eu_8050A478[0x39], 0);
+    LayoutSetTextBoxFmtValue(self->mLayout, &lbl_eu_8050A478[0x3a], &lbl_eu_8050A478[0x39], 0);
+    LayoutSetTextBoxFmtValue(self->mLayout, &lbl_eu_8050A478[0x4a], &lbl_eu_8050A478[0x39], 0);
+    LayoutSetTextBoxFmtValue(self->mLayout, &lbl_eu_8050A478[0x57], &lbl_eu_8050A478[0x39], 0);
+    LayoutSetTextBoxFmtValue(self->mLayout, &lbl_eu_8050A478[0x67], &lbl_eu_8050A478[0x39], 0);
     {
         nw4r::lyt::Pane* pane =
             self->mLayout->GetRootPane()->FindPaneByName(&lbl_eu_8050A478[0x1c], true);
@@ -433,14 +433,14 @@ case0:
     }
     goto end;
 case1:
-    func_80136B4C(self->mLayout, &lbl_eu_8050A478[0x29], textA,
+    LayoutSetTextBoxFmtValue(self->mLayout, &lbl_eu_8050A478[0x29], textA,
                   reinterpret_cast<u32>(self->mTagProcessor));
-    func_80136B4C(self->mLayout, &lbl_eu_8050A478[0x3a], textB,
+    LayoutSetTextBoxFmtValue(self->mLayout, &lbl_eu_8050A478[0x3a], textB,
                   reinterpret_cast<u32>(self->mTagProcessor));
-    func_80136B4C(self->mLayout, &lbl_eu_8050A478[0x1c], &lbl_eu_8050A478[0x39], 0);
-    func_80136B4C(self->mLayout, &lbl_eu_8050A478[0x4a], &lbl_eu_8050A478[0x39], 0);
-    func_80136B4C(self->mLayout, &lbl_eu_8050A478[0x57], &lbl_eu_8050A478[0x39], 0);
-    func_80136B4C(self->mLayout, &lbl_eu_8050A478[0x67], &lbl_eu_8050A478[0x39], 0);
+    LayoutSetTextBoxFmtValue(self->mLayout, &lbl_eu_8050A478[0x1c], &lbl_eu_8050A478[0x39], 0);
+    LayoutSetTextBoxFmtValue(self->mLayout, &lbl_eu_8050A478[0x4a], &lbl_eu_8050A478[0x39], 0);
+    LayoutSetTextBoxFmtValue(self->mLayout, &lbl_eu_8050A478[0x57], &lbl_eu_8050A478[0x39], 0);
+    LayoutSetTextBoxFmtValue(self->mLayout, &lbl_eu_8050A478[0x67], &lbl_eu_8050A478[0x39], 0);
     {
         nw4r::lyt::Pane* paneA =
             self->mLayout->GetRootPane()->FindPaneByName(&lbl_eu_8050A478[0x3a], true);
@@ -464,13 +464,13 @@ case1:
     }
     goto end;
 case2:
-    func_80136B4C(self->mLayout, &lbl_eu_8050A478[0x4a], textA,
+    LayoutSetTextBoxFmtValue(self->mLayout, &lbl_eu_8050A478[0x4a], textA,
                   reinterpret_cast<u32>(self->mTagProcessor));
-    func_80136B4C(self->mLayout, &lbl_eu_8050A478[0x1c], &lbl_eu_8050A478[0x39], 0);
-    func_80136B4C(self->mLayout, &lbl_eu_8050A478[0x29], &lbl_eu_8050A478[0x39], 0);
-    func_80136B4C(self->mLayout, &lbl_eu_8050A478[0x3a], &lbl_eu_8050A478[0x39], 0);
-    func_80136B4C(self->mLayout, &lbl_eu_8050A478[0x57], &lbl_eu_8050A478[0x39], 0);
-    func_80136B4C(self->mLayout, &lbl_eu_8050A478[0x67], &lbl_eu_8050A478[0x39], 0);
+    LayoutSetTextBoxFmtValue(self->mLayout, &lbl_eu_8050A478[0x1c], &lbl_eu_8050A478[0x39], 0);
+    LayoutSetTextBoxFmtValue(self->mLayout, &lbl_eu_8050A478[0x29], &lbl_eu_8050A478[0x39], 0);
+    LayoutSetTextBoxFmtValue(self->mLayout, &lbl_eu_8050A478[0x3a], &lbl_eu_8050A478[0x39], 0);
+    LayoutSetTextBoxFmtValue(self->mLayout, &lbl_eu_8050A478[0x57], &lbl_eu_8050A478[0x39], 0);
+    LayoutSetTextBoxFmtValue(self->mLayout, &lbl_eu_8050A478[0x67], &lbl_eu_8050A478[0x39], 0);
     {
         nw4r::lyt::Pane* pane =
             self->mLayout->GetRootPane()->FindPaneByName(&lbl_eu_8050A478[0x4a], true);
@@ -500,14 +500,14 @@ case2:
     }
     goto end;
 case3:
-    func_80136B4C(self->mLayout, &lbl_eu_8050A478[0x57], textA,
+    LayoutSetTextBoxFmtValue(self->mLayout, &lbl_eu_8050A478[0x57], textA,
                   reinterpret_cast<u32>(self->mTagProcessor));
-    func_80136B4C(self->mLayout, &lbl_eu_8050A478[0x67], textB,
+    LayoutSetTextBoxFmtValue(self->mLayout, &lbl_eu_8050A478[0x67], textB,
                   reinterpret_cast<u32>(self->mTagProcessor));
-    func_80136B4C(self->mLayout, &lbl_eu_8050A478[0x1c], &lbl_eu_8050A478[0x39], 0);
-    func_80136B4C(self->mLayout, &lbl_eu_8050A478[0x29], &lbl_eu_8050A478[0x39], 0);
-    func_80136B4C(self->mLayout, &lbl_eu_8050A478[0x3a], &lbl_eu_8050A478[0x39], 0);
-    func_80136B4C(self->mLayout, &lbl_eu_8050A478[0x4a], &lbl_eu_8050A478[0x39], 0);
+    LayoutSetTextBoxFmtValue(self->mLayout, &lbl_eu_8050A478[0x1c], &lbl_eu_8050A478[0x39], 0);
+    LayoutSetTextBoxFmtValue(self->mLayout, &lbl_eu_8050A478[0x29], &lbl_eu_8050A478[0x39], 0);
+    LayoutSetTextBoxFmtValue(self->mLayout, &lbl_eu_8050A478[0x3a], &lbl_eu_8050A478[0x39], 0);
+    LayoutSetTextBoxFmtValue(self->mLayout, &lbl_eu_8050A478[0x4a], &lbl_eu_8050A478[0x39], 0);
     {
         nw4r::lyt::Pane* paneA =
             self->mLayout->GetRootPane()->FindPaneByName(&lbl_eu_8050A478[0x67], true);
@@ -545,20 +545,20 @@ extern "C" void func_8022BFC8(CSysWin* self, u8 kind) {
     labelIdx[4] = lbl_eu_806685E0;
     u8 idx = labelIdx[kind];
     self->field_38 = kind;
-    char* str = func_80136190(&lbl_eu_8050A478[0x8d], &lbl_eu_8050A478[0x9b], idx);
-    func_80136B4C(self->mLayout, &lbl_eu_8050A478[0xa0], str, 0);
-    func_80136B4C(self->mLayout, &lbl_eu_8050A478[0xac], str, 0);
+    char* str = BdatTouchStringCell(&lbl_eu_8050A478[0x8d], &lbl_eu_8050A478[0x9b], idx);
+    LayoutSetTextBoxFmtValue(self->mLayout, &lbl_eu_8050A478[0xa0], str, 0);
+    LayoutSetTextBoxFmtValue(self->mLayout, &lbl_eu_8050A478[0xac], str, 0);
     u32 gm = isClassicController__Q22cf13CfGameManagerFv(-1);
     self->field_39 = (u8)gm;
-    u16 keyVal = func_8013606C(
+    u16 keyVal = BdatGetU16ByTableKey(
         &lbl_eu_8050A478[0x8d],
         ((u8)gm != 0) ? &lbl_eu_8050A478[0xb8] : &lbl_eu_8050A478[0xc1], idx);
-    char* texName = func_80138F78(keyVal);
+    char* texName = MakeTplNameSysFile(keyVal);
     TPLPalette* pal = (TPLPalette*)self->mArcAccessor->GetResource(
         0x74696d67u, texName, 0);
     if (pal != 0) {
-        func_80137E7C(self->mLayout, &lbl_eu_8050A478[0xca], pal);
-        func_80137E7C(self->mLayout, &lbl_eu_8050A478[0xd4], pal);
+        PaneSetTexPaletteByName(self->mLayout, &lbl_eu_8050A478[0xca], pal);
+        PaneSetTexPaletteByName(self->mLayout, &lbl_eu_8050A478[0xd4], pal);
         TPLHeader* hdr = pal->descriptorArray->textureHeader;
         u16 texW = hdr->width;
         u16 texH = hdr->height;

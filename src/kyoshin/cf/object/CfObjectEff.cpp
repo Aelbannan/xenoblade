@@ -434,9 +434,9 @@ void createEffect_(cf::CfObjectEff* self) {
     u32 type = self->mField70 >> 27;
     u8* source = nullptr;
     if (type == 0xe) {
-        source = static_cast<u8*>(func_800630C8());
+        source = static_cast<u8*>(CfRes_getInstPtr224());
     } else if (type == 0xc) {
-        source = static_cast<u8*>(func_80063038());
+        source = static_cast<u8*>(CfRes_getInstPtr170());
     } else if (type == 0xf) {
         source = self->mFieldA8;
     } else if (type >= 0x10 && type <= 0x11) {
@@ -455,17 +455,17 @@ void createEffect_(cf::CfObjectEff* self) {
         valid = false;
     }
     if (!valid) return;
-    void* bdat = func_80066E7C(source, self->mField70);
-    if (bdat == 0) bdat = func_80066CF8(source);
+    void* bdat = CfRes_findEntryById(source, self->mField70);
+    if (bdat == 0) bdat = CfRes_findKypEntryA(source);
     if (bdat != 0 && lbl_eu_8065FC18 != 0) {
         // Drop dead partner objects before creating the effect.
-        if (self->mField9C != 0 && func_800B8920(self->mField9C) == 0) {
+        if (self->mField9C != 0 && lookupWorkAtAddr(self->mField9C) == 0) {
             self->mField9C = 0;
             self->mFlags68 |= 0x40;
             self->mCount8E++;
             return;
         }
-        if (self->mFieldA0 != 0 && func_800B8920(self->mFieldA0) == 0) {
+        if (self->mFieldA0 != 0 && lookupWorkAtAddr(self->mFieldA0) == 0) {
             self->mFieldA0 = 0;
             self->mFlags68 |= 0x40;
             self->mCount8E++;
@@ -565,7 +565,7 @@ void CfObjectEff::updateEffect_() {
             dst[0] = __rlwimi(dst[0], status, 14, 17, 17);
         }
     }
-    if (mFieldA0 != nullptr && func_800B8920(mFieldA0) == 0) {
+    if (mFieldA0 != nullptr && lookupWorkAtAddr(mFieldA0) == 0) {
         mFieldA0 = nullptr;
         if (mChildEff != nullptr) {
             mChildEff->field_18 = nullptr;
@@ -684,10 +684,10 @@ extern "C" void teardownEff____Q22cf11CfObjectEffFv(cf::CfObjectEff* self, u8* a
     }
     if (self->mField9C != nullptr &&
         *(u32*)(arg + 0x14) != 0 &&
-        func_800B8920(self->mField9C) != 0) {
+        lookupWorkAtAddr(self->mField9C) != 0) {
         reinterpret_cast<cf::CfObjectModel*>(self->mField9C)->CfObjectModel_detachEffectSlot(self);
     }
-    if (self->mFieldA0 != nullptr && func_800B8920(self->mFieldA0) != 0) {
+    if (self->mFieldA0 != nullptr && lookupWorkAtAddr(self->mFieldA0) != 0) {
         reinterpret_cast<cf::CfObjectModel*>(self->mFieldA0)->CfObjectModel_detachEffectSlot(self);
     }
     self->mChildEff = nullptr;

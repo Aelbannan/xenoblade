@@ -16,9 +16,9 @@ void buildLayout__FPPQ34nw4r3lyt6LayoutPQ34nw4r3lyt19ArcResourceAccessorPCc(
 void bindLayoutAnimTransform__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(
     nw4r::lyt::Layout*, nw4r::lyt::AnimTransform**, nw4r::lyt::ArcResourceAccessor*,
     char*);
-u16 func_80136254(const char*, const char*, const char*);
-char* func_80138F78(u16);
-void func_80137E7C(void*, const char*, void*);
+u16 BdatGetU16Direct(const char*, const char*, const char*);
+char* MakeTplNameSysFile(u16);
+void PaneSetTexPaletteByName(void*, const char*, void*);
 u32 advanceAnimTransform__FPQ34nw4r3lyt13AnimTransformf(nw4r::lyt::AnimTransform*,
                                                   float);
 void playUISound__FUl(u32);
@@ -109,12 +109,12 @@ extern "C" void func_8022EA64(CMCCrystalSupport* self) {
 #pragma optimize_for_size on
 extern "C" void func_8022EA88(CMCCrystalSupport* self, u16 index) {
     const char* base = lbl_eu_8050AA3C;
-    u16 key = func_80136254((const char*)lbl_eu_80664090, base + 0x2d,
+    u16 key = BdatGetU16Direct((const char*)lbl_eu_80664090, base + 0x2d,
                             (const char*)index);
-    char* name = func_80138F78(key);
+    char* name = MakeTplNameSysFile(key);
     void* resource = self->mAccessor->GetResource('timg', name, nullptr);
     if (resource != nullptr) {
-        func_80137E7C(self->mLayout, lbl_eu_8050AA3C + 0x38, resource);
+        PaneSetTexPaletteByName(self->mLayout, lbl_eu_8050AA3C + 0x38, resource);
     }
 }
 #pragma pop

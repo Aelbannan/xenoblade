@@ -5,12 +5,12 @@
 
 namespace cf {
 
-// Circular linked-list node returned by func_800B6C7C; mNext is a pointer at +0x0.
+// Circular linked-list node returned by getReslistC08; mNext is a pointer at +0x0.
 struct CHelp_EnemyListNode {
     CHelp_EnemyListNode* mNext; // 0x0
 };
 
-// Container returned by func_800B6C7C; the sentinel head lives at +0x4.
+// Container returned by getReslistC08; the sentinel head lives at +0x4.
 struct CHelp_EnemyList {
     u8* field_0x0;        // 0x0
     CHelp_EnemyListNode* mHead; // 0x4
@@ -27,4 +27,4 @@ public:
 } // namespace cf
 
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
-extern "C" cf::CHelp_EnemyList* func_800B6C7C();
+extern "C" cf::CHelp_EnemyList* getReslistC08();

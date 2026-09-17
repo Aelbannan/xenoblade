@@ -832,7 +832,7 @@ struct CtrlActChainObj {
     u8 _00[0xA0];
     u16 mFieldA0;            // 0xA0 (bit 1 latch)
     u8 _A2[0x45C0 - 0xA2];
-    u16 mField45C0;          // 0x45C0 (probe id fed to func_80193AB0)
+    u16 mField45C0;          // 0x45C0 (probe id fed to CPartsChange_FindActorById)
 };
 
 // ---------------------------------------------------------------------------
@@ -841,14 +841,14 @@ struct CtrlActChainObj {
 extern "C" long func_80174C98(void* actor, void* outVal, unsigned long flags); // matches CfMapItemManager.hpp
 extern "C" void func_80174C24(void* obj, u32 flag);
 extern "C" void* func_8016FE34(void* r3);       // voice/battle-list resolve
-extern "C" int func_8004C5EC(void* battleObj);  // battle-state page id
+extern "C" int getAnimModelId(void* battleObj);  // battle-state page id
 extern "C" int func_80148778(void* obj, int id);
 // func_800D11B0 / func_800D69D8 extra imports (retail C-ABI names).
 extern "C" f32 func_80190938();                    // battle-list fallback height
 // Chain-start gate (chain/CChain.cpp); retail call site uses the plain name.
 extern "C" int func_80279778(void* a, void* b);
 // monolib coli segment probes (retail C-ABI names).
-extern "C" int func_804B19CC(void* self, void* src, int a, int b);
+extern "C" int ColiQuerySpecDispatch(void* self, void* src, int a, int b);
 extern "C" int func_804B4E10(void* a, void* b, void* c, int d, int e, int f);
 extern "C" int func_804B526C(void* a, void* b, void* c, void* d, int e, int f, int g);
 extern "C" int func_804B54D4(void* a, void* b, void* c, int d, int e);
@@ -866,12 +866,12 @@ extern "C" void func_8014B2EC(void* obj, f32 val);
 extern "C" void func_8014B2DC(void* obj);
 extern "C" int func_8014B8BC(void* obj, void* out);
 extern "C" void func_800EC8FC(void* bm, void* player, void* req, int flag);
-extern "C" void func_802A29A4(void* a, void* b);
-extern "C" void func_802A2A0C(void* a, void* b);
-extern "C" void func_802A2ADC(void* a, void* b);
+extern "C" void CCharVoiceMan_EnqueueCtrlActVoiceA(void* a, void* b);
+extern "C" void CCharVoiceMan_EnqueueCtrlActVoiceB(void* a, void* b);
+extern "C" void CCharVoiceMan_EnqueueCtrlActVoiceC(void* a, void* b);
 // func_800AD860 is declared (mangled C++) in CfGameManager.hpp.
-extern "C" void* func_80193670(void* p);
-extern "C" void* func_80193AB0(void* p, u16 arg);
+extern "C" void* CPartsChange_GetActorTable(void* p);
+extern "C" void* CPartsChange_FindActorById(void* p, u16 arg);
 // func_8027936C is declared in CtrlPc.hpp (C-ABI, (void*, int)).
 // In-TU kind setter used by the func_800D1F0C switch arms.
 void func_800D5874(CtrlActView* self, u32 kind, int param);

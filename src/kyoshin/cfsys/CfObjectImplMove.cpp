@@ -3,7 +3,7 @@
 
 #include "kyoshin/harness_catalog.hpp"
 #include "kyoshin/cf/CfMapItemManager.hpp"
-#include "kyoshin/cf/object/CfObjectMove.hpp" // func_800BE12C (owner decl)
+#include "kyoshin/cf/object/CfObjectMove.hpp" // CfObjectMove_setAnimModeArgs (owner decl)
 #include "libs/monolib/src/scn/CScn_8049603C.hpp" // func_8049603C (single owner decl)
 #include "monolib/scn/CScnTimeApi.hpp"
 #include "kyoshin/cfsys/CfObjectImplMove.hpp"
@@ -61,7 +61,7 @@ void func_800CAA44(CfObjectImplMoveObj* self) {
         if (self != 0) {
             src = &self->field_0x0C;
         }
-        func_80482AD4(actor->sub.field_98, src);
+        simRemoveWordFromBuf(actor->sub.field_98, src);
     }
     if (self->vfE4() != 0) {
         func_8015BD94(self->vfE4());
@@ -84,7 +84,7 @@ void func_800CAB00(CfObjectImplMoveObj* self) {
     if (self != 0) {
         src = &self->field_0x0C;
     }
-    func_80482AB8(id, src);
+    simPushWordToBuf(id, src);
 }
 
 void func_800CAB2C(void) {}
@@ -116,7 +116,7 @@ void func_800CAB30(CfObjectImplMoveObj* self, CfMoveEvtParam* param) {
             ((CfMoveHandler8*)self->field_0x18->field_08)->h20(0xf0);
         if (func_80148778(self->field_0x18->field_08, 0xf1) != 0)
             ((CfMoveHandler8*)self->field_0x18->field_08)->h20(0xf1);
-        func_800BE12C((u8*)&self->field_0x18->sub, 0xb, 0, -1, 1);
+        CfObjectMove_setAnimModeArgs((u8*)&self->field_0x18->sub, 0xb, 0, -1, 1);
         break;
     case 6:
         // Retail body for id 6 sits between the case-0xf tail and the exit
@@ -125,7 +125,7 @@ void func_800CAB30(CfObjectImplMoveObj* self, CfMoveEvtParam* param) {
             CfActorObj* a6 = self->field_0x18;
             u32 v6 = a6->field_04->b30()->field_0;
             if (func_80174C98(a6, &v6, 0x805) == 0)
-                func_800BE12C((u8*)&self->field_0x18->sub, 0xb, 0, -1, 1);
+                CfObjectMove_setAnimModeArgs((u8*)&self->field_0x18->sub, 0xb, 0, -1, 1);
         }
         break;
     case 0xf:
@@ -146,9 +146,9 @@ void func_800CAB30(CfObjectImplMoveObj* self, CfMoveEvtParam* param) {
                 // Re-request the base move state unless the c4 object
                 // reports 5.
                 if (((CfMoveC4Obj*)self->field_0x18->sub.field_C4)->field_374 != 5) {
-                    func_800BE12C((u8*)&self->field_0x18->sub, 0xc, 0, -1, 1);
+                    CfObjectMove_setAnimModeArgs((u8*)&self->field_0x18->sub, 0xc, 0, -1, 1);
                     if (((CfMoveC4Obj*)self->field_0x18->sub.field_C4)->field_374 != 5)
-                        func_800BE12C((u8*)&self->field_0x18->sub, 0x31, 0, -1, 1);
+                        CfObjectMove_setAnimModeArgs((u8*)&self->field_0x18->sub, 0x31, 0, -1, 1);
                 }
             } else {
                 func_8014B2DC(self->field_0x18->mst.buf);
@@ -203,17 +203,17 @@ void func_800CAB30(CfObjectImplMoveObj* self, CfMoveEvtParam* param) {
             if ((ac->sub.field_64 & 2) != 0) {
                 u32 vA = ac->field_04->b30()->field_0;
                 if (func_80174C98(ac, &vA, 0xa) == 0)
-                    func_800BE12C((u8*)&self->field_0x18->sub, 0x31, 0, -1, 1);
+                    CfObjectMove_setAnimModeArgs((u8*)&self->field_0x18->sub, 0x31, 0, -1, 1);
             } else {
                 u32 vB = ac->field_04->b30()->field_0;
                 if (func_80174C98(ac, &vB, 0xa) == 0)
-                    func_800BE12C((u8*)&self->field_0x18->sub, 0x31, 0, -1, 1);
+                    CfObjectMove_setAnimModeArgs((u8*)&self->field_0x18->sub, 0x31, 0, -1, 1);
             }
         } else {
             CfActorObj* ae = self->field_0x18;
             u32 v805b = ae->field_04->b30()->field_0;
             if (func_80174C98(ae, &v805b, 0x805) == 0)
-                func_800BE12C((u8*)&self->field_0x18->sub, 0x31, 0, -1, 1);
+                CfObjectMove_setAnimModeArgs((u8*)&self->field_0x18->sub, 0x31, 0, -1, 1);
         }
         // Release handlers 0xee..0xf8.
         if (func_80148778(self->field_0x18->field_08, 0xee) != 0)
@@ -342,9 +342,9 @@ void func_800CB454(CfObjectImplMoveObj* self, CfMoveEvtParam* param) {
             break;
         CfEmbeddedSubObj_3E9C* sub = &self->field_0x18->sub;
         if ((sub->field_64 & 2) == 0) {
-            func_800BE12C((u8*)sub, 0x30, 0, -1, 1);
+            CfObjectMove_setAnimModeArgs((u8*)sub, 0x30, 0, -1, 1);
         } else if ((((CfMoveC4Obj*)sub->field_C4)->field_4EC & 2) == 0) {
-            func_800BE12C((u8*)sub, 0x30, 0, -1, 1);
+            CfObjectMove_setAnimModeArgs((u8*)sub, 0x30, 0, -1, 1);
         }
         break;
     }
@@ -392,7 +392,7 @@ void func_800CB454(CfObjectImplMoveObj* self, CfMoveEvtParam* param) {
             break;
         CfEmbeddedSubObj_3E9C* subF = &self->field_0x18->sub;
         if ((subF->field_64 & 2) != 0)
-            func_800BE12C((u8*)subF, 0x31, 0, -1, 1);
+            CfObjectMove_setAnimModeArgs((u8*)subF, 0x31, 0, -1, 1);
         break;
     }
     case 0x33:
@@ -520,20 +520,20 @@ void func_800CBBD8(CfObjectImplMoveObj* self) {
             return;
     }
     CfMoveEnumHolder holder;
-    func_80043D90(&holder);
-    func_80043F18(&holder);
-    func_800F4A98(func_80043F18(&holder), 0x20, 0x800);
+    CTaskGame_enumListCtor(&holder);
+    CTaskGame_enumListGet(&holder);
+    func_800F4A98(CTaskGame_enumListGet(&holder), 0x20, 0x800);
     int handle = self->vf48();
-    func_800F6ED0(func_80043F18(&holder), (void*)handle);
-    if (((CfMoveEnumList*)func_80043F18(&holder))->field_620 != 0) {
+    func_800F6ED0(CTaskGame_enumListGet(&holder), (void*)handle);
+    if (((CfMoveEnumList*)CTaskGame_enumListGet(&holder))->field_620 != 0) {
         // Effects exist: clear the driver state and re-register the sub-object.
         self->field_0x18->mst.field_214 = 0;
         self->field_0x18->mst.field_210 = 0;
         func_8014B2DC(self->field_0x18->mst.buf);
-        func_800BE12C((u8*)&self->field_0x18->sub, 0x31, 0, -1, 1);
+        CfObjectMove_setAnimModeArgs((u8*)&self->field_0x18->sub, 0x31, 0, -1, 1);
     } else {
-        self->vf70(func_800F6E08(func_80043F18(&holder)));
-        void* entry = func_800F6EAC(func_80043F18(&holder), 0);
+        self->vf70(func_800F6E08(CTaskGame_enumListGet(&holder)));
+        void* entry = func_800F6EAC(CTaskGame_enumListGet(&holder), 0);
         void* arg = entry;
         if (entry != nullptr)
             arg = (u8*)entry - 0x3e9c;
@@ -546,10 +546,10 @@ void func_800CBBD8(CfObjectImplMoveObj* self) {
         } else {
             func_80174B4C(act, 5);
             act->f138();
-            int count = ((CfMoveEnumList*)func_80043F18(&holder))->field_620;
+            int count = ((CfMoveEnumList*)CTaskGame_enumListGet(&holder))->field_620;
             for (int i = 0; i < count; i++) {
                 func_8016FE34(
-                    func_800F6EAC(func_80043F18(&holder), i));
+                    func_800F6EAC(CTaskGame_enumListGet(&holder), i));
             }
         }
     }
@@ -1019,12 +1019,12 @@ void func_800CD460(CfObjectImplMoveObj* self, CfMoveCd460Target* target,
     func_8007B044(&shake, 0);
 }
 
-void func_800BE824(void*, unsigned int);
+void CfObjectMove_setRegionAttached(void*, unsigned int);
 
 void CfObjectImplMoveData::func_800CD5C0(unsigned int a, unsigned int b) {
     CfObjectImplMoveSubObj* inner = (CfObjectImplMoveSubObj*)this->mSubObj;
     if (a == inner->mSomeId) {
-        func_800BE824(inner, b);
+        CfObjectMove_setRegionAttached(inner, b);
     }
 }
 
@@ -1233,7 +1233,7 @@ void func_800CD5DC(CfObjectImplMoveObj* self, u32 id, u32 kind, u32,
         a4->mst.field_210 = 0;
         self->vf70();
         func_800D9CA0(getInstance__Q22cf14CBattleManagerFv(), self->field_0x18);
-        func_802A2D0C(self->field_0x18);
+        CCharVoiceMan_FlushPendingActorVoice(self->field_0x18);
         break;
     }
     case 0x10:
@@ -1260,7 +1260,7 @@ void func_800CD5DC(CfObjectImplMoveObj* self, u32 id, u32 kind, u32,
         CfActorObj* a9 = self->field_0x18;
         CfMoveC4Obj* e9 = (CfMoveC4Obj*)a9->sub.field_C4;
         if ((a9->sub.field_64 & 2) == 0 || (e9->field_4EC & 2) == 0) {
-            func_8004CEF8(e9, 0xb);
+            setAnimCount(e9, 0xb);
             func_80174B4C(self->field_0x18, 0x19);
         }
         ((CfMoveHandler8*)self->field_0x18->field_08)->h20(0x10);
@@ -1274,7 +1274,7 @@ void func_800CD5DC(CfObjectImplMoveObj* self, u32 id, u32 kind, u32,
         CfActorObj* aa = self->field_0x18;
         CfMoveC4Obj* ea = (CfMoveC4Obj*)aa->sub.field_C4;
         if ((aa->sub.field_64 & 2) == 0 || (ea->field_4EC & 2) == 0) {
-            func_8004CEF8(ea, 0xb);
+            setAnimCount(ea, 0xb);
             func_80174B4C(self->field_0x18, 0x1a);
         }
         ((CfMoveHandler8*)self->field_0x18->field_08)->h20(0x10);
@@ -1288,7 +1288,7 @@ void func_800CD5DC(CfObjectImplMoveObj* self, u32 id, u32 kind, u32,
     case 0x31: {
         // Reset body: clear both request words and the embedded handlers,
         // then re-arm the move buffer bookkeeping.
-        func_8004CEF8((CfMoveC4Obj*)((CfActorObj*)self->field_0x18)->sub.field_C4,
+        setAnimCount((CfMoveC4Obj*)((CfActorObj*)self->field_0x18)->sub.field_C4,
             0xb);
         self->field_0x18->sub.vfn204(0, 0, -1, 0, 0);
         self->field_0x18->sub.vfn204(1, 0, -1, 0, 0);
@@ -1401,8 +1401,8 @@ tail:
                 other->vf5c8(xfer);
                 CfMoveC4Obj* oEvt = (CfMoveC4Obj*)other->sub.field_C4;
                 CfMoveC4Obj* sEvt = (CfMoveC4Obj*)aT2->sub.field_C4;
-                func_8004CEF8(oEvt, (sEvt != nullptr) ? sEvt->field_374 : 0);
-                func_800BE12C((u8*)&other->sub, kind, 0, -1, 1);
+                setAnimCount(oEvt, (sEvt != nullptr) ? sEvt->field_374 : 0);
+                CfObjectMove_setAnimModeArgs((u8*)&other->sub, kind, 0, -1, 1);
                 aT2->vf5d0();
             } else {
                 aT2->sub.field_71C = 0;
@@ -1419,21 +1419,21 @@ void func_800CE544(CfObjectImplMoveObj* self) {
     self->field_0x18->field_04->b20(0x400000);
     self->field_0x18->field_04->b20(0x800000);
     CfMoveEnumHolder holder;
-    func_80043D90(&holder);
-    func_800F4A98(func_80043F18(&holder), 0x20, 0);
+    CTaskGame_enumListCtor(&holder);
+    func_800F4A98(CTaskGame_enumListGet(&holder), 0x20, 0);
     u32 handle = self->vf48();
-    func_800F6ED0(func_80043F18(&holder), (void*)handle);
-    // The count is re-read through func_80043F18 on every use (retail makes
+    func_800F6ED0(CTaskGame_enumListGet(&holder), (void*)handle);
+    // The count is re-read through CTaskGame_enumListGet on every use (retail makes
     // a fresh call each time).
-    if (((CfMoveEnumList*)func_80043F18(&holder))->field_620 != 0) {
-        for (u32 i = 0; i < ((CfMoveEnumList*)func_80043F18(&holder))->field_620; i++) {
+    if (((CfMoveEnumList*)CTaskGame_enumListGet(&holder))->field_620 != 0) {
+        for (u32 i = 0; i < ((CfMoveEnumList*)CTaskGame_enumListGet(&holder))->field_620; i++) {
             void* entry =
-                func_8016FE34(func_800F6EAC(func_80043F18(&holder), i));
+                func_8016FE34(func_800F6EAC(CTaskGame_enumListGet(&holder), i));
             self->field_0x18->vf2C4(entry, lbl_eu_80666C60, lbl_eu_80666C60,
                 lbl_eu_80666C60);
         }
     }
-    self->vf70(func_800F6E08(func_80043F18(&holder)));
+    self->vf70(func_800F6E08(CTaskGame_enumListGet(&holder)));
     self->vf80();
     __dt__80043E88(&holder, -1);
 }
@@ -1493,7 +1493,7 @@ void func_800CE8AC(CfObjectImplMoveObj* self) {
 
 // Handler rebind: validate the actor against two registered handlers (ids
 // 0xa/0xb), bail under the game manager presentation mask, then - unless the
-// embedded handler already resolves to param - rebind it via func_802A31AC,
+// embedded handler already resolves to param - rebind it via CCharVoiceMan_EnqueueRebindVoice,
 // refresh the handler slots, and forward the parameter to vf84.
 void func_800CE8E4(CfObjectImplMoveObj* self, void* param) {
     // Retail reloads self->field_0x18 (actor) from memory before every use.
@@ -1514,7 +1514,7 @@ void func_800CE8E4(CfObjectImplMoveObj* self, void* param) {
     if (self->field_0x18->sub.vfn13() == param) {
         return;
     }
-    func_802A31AC(self->field_0x18, self->field_0x18->sub.vfn13(), param);
+    CCharVoiceMan_EnqueueRebindVoice(self->field_0x18, self->field_0x18->sub.vfn13(), param);
     self->field_0x18->sub.vfn14(param);
     if (param != nullptr) {
         self->field_0x18->sub.vfn00(4);
@@ -1743,7 +1743,7 @@ void func_800CF064(CfObjectImplMoveObj* self, CfMoveContact* param) {
     // the shared presentation matrix + 0x48).
     void* mtx;
     if ((s8)param->field_1C == 0) {
-        mtx = (u8*)func_8048315C() + 0x48;
+        mtx = (u8*)simGetLeafActData() + 0x48;
     } else {
         mtx = ((CfDriverSlot120*)self->mSubObj)->vfn120(&param->field_1C);
     }
@@ -1993,7 +1993,7 @@ void func_800CF810(CfObjectImplMoveObj* self, CfMoveContact* param) {
     if ((s8)param->field_1C != 0) {
         mtx = ((CfDriverSlot120*)drv)->vfn120(&param->field_1C);
     } else {
-        mtx = (u8*)func_8048315C() + 0x48;
+        mtx = (u8*)simGetLeafActData() + 0x48;
     }
     if (mtx == nullptr)
         return;

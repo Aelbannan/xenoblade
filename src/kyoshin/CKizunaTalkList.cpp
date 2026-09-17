@@ -289,8 +289,8 @@ __declspec(noinline) u32 func_8027305C(TalkListEntryArray* self, u8 v) {
             return (u32)found;
         return 0;
     }
-    u16 id = func_80136254(lbl_eu_80664090, &lbl_eu_8050E990[0x5e], v);
-    char* name = func_80138F78(id);
+    u16 id = BdatGetU16Direct(lbl_eu_80664090, &lbl_eu_8050E990[0x5e], v);
+    char* name = MakeTplNameSysFile(id);
     void* resAcc = func_801355F4();
     void* found = ((KtlResView*)resAcc)->v01(
         (const char*)0x74696d67 /* "timg" */, name, 0);
@@ -307,8 +307,8 @@ __declspec(noinline) u32 func_8027305C(TalkListEntryArray* self, u8 v) {
 void func_80272810(TalkListEntryArray* arr) {
     void* fp = lbl_eu_806648B8;
     u16 charCount = (u16)func_8003B1EC(fp);
-    char* fmt12 = func_80136190(&lbl_eu_8050E990[0], &lbl_eu_8050E990[0xb], 0x12);
-    func_80136190(&lbl_eu_8050E990[0], &lbl_eu_8050E990[0xb], 0x13); // result unused in retail
+    char* fmt12 = BdatTouchStringCell(&lbl_eu_8050E990[0], &lbl_eu_8050E990[0xb], 0x12);
+    BdatTouchStringCell(&lbl_eu_8050E990[0], &lbl_eu_8050E990[0xb], 0x13); // result unused in retail
 
     arr->mCount = 0;
     u16 collect[0x100];
@@ -328,12 +328,12 @@ void func_80272810(TalkListEntryArray* arr) {
         if (id == 0) continue;
         if (func_8009CF8C((u32)(id + 0x24b0)) != 0) continue;
 
-        u16 a = func_80136254(fp, &lbl_eu_8050E990[0x10], id);
+        u16 a = BdatGetU16Direct(fp, &lbl_eu_8050E990[0x10], id);
         if ((u32)a > func_8009CF8C(0x20)) continue;
 
-        u16 n4 = func_80136254(fp, &lbl_eu_8050E990[0x15], id);
-        u8 m1 = (u8)func_801361E8((u32)fp, &lbl_eu_8050E990[0x1e], id);
-        u8 m2 = (u8)func_801361E8((u32)fp, &lbl_eu_8050E990[0x27], id);
+        u16 n4 = BdatGetU16Direct(fp, &lbl_eu_8050E990[0x15], id);
+        u8 m1 = (u8)BdatGetU8Direct((u32)fp, &lbl_eu_8050E990[0x1e], id);
+        u8 m2 = (u8)BdatGetU8Direct((u32)fp, &lbl_eu_8050E990[0x27], id);
         u16 v = (u16)func_8009CF8C(0x20);
         if ((u32)v >= 0x2a && (u32)v < 0x113) {
             if ((u32)m1 == 3) continue;
@@ -346,9 +346,9 @@ void func_80272810(TalkListEntryArray* arr) {
 
         u32 v1 = func_8027305C(arr, m1);
         u32 v2 = func_8027305C(arr, m2);
-        u8 x = (u8)func_801361E8((u32)fp, &lbl_eu_8050E990[0x30], id);
-        char* cond = func_8013639C((const void*)lbl_eu_806640A8, &lbl_eu_8050E990[0x36], (int)x);
-        u8 y = (u8)func_801361E8((u32)fp, &lbl_eu_8050E990[0x3b], id);
+        u8 x = (u8)BdatGetU8Direct((u32)fp, &lbl_eu_8050E990[0x30], id);
+        char* cond = BdatGetPtrDirect((const void*)lbl_eu_806640A8, &lbl_eu_8050E990[0x36], (int)x);
+        u8 y = (u8)BdatGetU8Direct((u32)fp, &lbl_eu_8050E990[0x3b], id);
 
         func_80272FA8(&tmpB, (u32)fmt12, (u32)cond, v1, v2, (s8)1, (s16)n4, y);
         u8 c = arr->mCount;
@@ -364,12 +364,12 @@ void func_80272810(TalkListEntryArray* arr) {
         if (id == 0) continue;
         if (func_8009CF8C((u32)(id + 0x24b0)) != 0) continue;
 
-        u16 a = func_80136254(fp, &lbl_eu_8050E990[0x10], id);
+        u16 a = BdatGetU16Direct(fp, &lbl_eu_8050E990[0x10], id);
         if ((u32)a > func_8009CF8C(0x20)) continue;
 
-        u16 n4 = func_80136254(fp, &lbl_eu_8050E990[0x15], id);
-        u8 m1 = (u8)func_801361E8((u32)fp, &lbl_eu_8050E990[0x1e], id);
-        u8 m2 = (u8)func_801361E8((u32)fp, &lbl_eu_8050E990[0x27], id);
+        u16 n4 = BdatGetU16Direct(fp, &lbl_eu_8050E990[0x15], id);
+        u8 m1 = (u8)BdatGetU8Direct((u32)fp, &lbl_eu_8050E990[0x1e], id);
+        u8 m2 = (u8)BdatGetU8Direct((u32)fp, &lbl_eu_8050E990[0x27], id);
         u16 v = (u16)func_8009CF8C(0x20);
         if ((u32)v >= 0x2a && (u32)v < 0x113) {
             if ((u32)m1 == 3) continue;
@@ -381,9 +381,9 @@ void func_80272810(TalkListEntryArray* arr) {
 
         u32 v1 = func_8027305C(arr, m1);
         u32 v2 = func_8027305C(arr, m2);
-        u8 x = (u8)func_801361E8((u32)fp, &lbl_eu_8050E990[0x30], id);
-        char* cond = func_8013639C((const void*)lbl_eu_806640A8, &lbl_eu_8050E990[0x36], (int)x);
-        u8 y = (u8)func_801361E8((u32)fp, &lbl_eu_8050E990[0x3b], id);
+        u8 x = (u8)BdatGetU8Direct((u32)fp, &lbl_eu_8050E990[0x30], id);
+        char* cond = BdatGetPtrDirect((const void*)lbl_eu_806640A8, &lbl_eu_8050E990[0x36], (int)x);
+        u8 y = (u8)BdatGetU8Direct((u32)fp, &lbl_eu_8050E990[0x3b], id);
 
         func_80272FA8(&tmpC, (u32)fmt12, (u32)cond, v1, v2, (s8)2, (s16)n4, y);
         u8 c = arr->mCount;
@@ -400,8 +400,8 @@ void func_80272810(TalkListEntryArray* arr) {
         if (id == 0) continue;
         if (func_8009CF8C((u32)(id + 0x24b0)) != 0) continue;
 
-        u8 m1 = (u8)func_801361E8((u32)fp, &lbl_eu_8050E990[0x1e], id);
-        u8 m2 = (u8)func_801361E8((u32)fp, &lbl_eu_8050E990[0x27], id);
+        u8 m1 = (u8)BdatGetU8Direct((u32)fp, &lbl_eu_8050E990[0x1e], id);
+        u8 m2 = (u8)BdatGetU8Direct((u32)fp, &lbl_eu_8050E990[0x27], id);
         u16 v = (u16)func_8009CF8C(0x20);
         if ((u32)v >= 0x2a && (u32)v < 0x113) {
             if ((u32)m1 == 3) continue;
@@ -410,9 +410,9 @@ void func_80272810(TalkListEntryArray* arr) {
 
         u32 v1 = func_8027305C(arr, 0);
         u32 v2 = func_8027305C(arr, 0);
-        u8 x = (u8)func_801361E8((u32)fp, &lbl_eu_8050E990[0x30], id);
-        char* cond = func_8013639C((const void*)lbl_eu_806640A8, &lbl_eu_8050E990[0x36], (int)x);
-        u8 y = (u8)func_801361E8((u32)fp, &lbl_eu_8050E990[0x3b], id);
+        u8 x = (u8)BdatGetU8Direct((u32)fp, &lbl_eu_8050E990[0x30], id);
+        char* cond = BdatGetPtrDirect((const void*)lbl_eu_806640A8, &lbl_eu_8050E990[0x36], (int)x);
+        u8 y = (u8)BdatGetU8Direct((u32)fp, &lbl_eu_8050E990[0x3b], id);
 
         func_80272FA8(&tmpD, (u32)fmt12, (u32)cond, v1, v2, (s8)3, (s16)-1, y);
         u8 c = arr->mCount;
@@ -428,10 +428,10 @@ void func_80272810(TalkListEntryArray* arr) {
         if (id == 0) continue;
         if (func_8009CF8C((u32)(id + 0x24b0)) == 0) continue;
 
-        char* name0 = func_8013639C(fp, &lbl_eu_8050E990[0x40], id);
-        u16 n4 = func_80136254(fp, &lbl_eu_8050E990[0x15], id);
-        u8 m1 = (u8)func_801361E8((u32)fp, &lbl_eu_8050E990[0x1e], id);
-        u8 m2 = (u8)func_801361E8((u32)fp, &lbl_eu_8050E990[0x27], id);
+        char* name0 = BdatGetPtrDirect(fp, &lbl_eu_8050E990[0x40], id);
+        u16 n4 = BdatGetU16Direct(fp, &lbl_eu_8050E990[0x15], id);
+        u8 m1 = (u8)BdatGetU8Direct((u32)fp, &lbl_eu_8050E990[0x1e], id);
+        u8 m2 = (u8)BdatGetU8Direct((u32)fp, &lbl_eu_8050E990[0x27], id);
         u16 v = (u16)func_8009CF8C(0x20);
         if ((u32)v >= 0x113) {
             if ((u32)m1 == 3) m1 = 8;
@@ -440,9 +440,9 @@ void func_80272810(TalkListEntryArray* arr) {
 
         u32 v1 = func_8027305C(arr, m1);
         u32 v2 = func_8027305C(arr, m2);
-        u8 x = (u8)func_801361E8((u32)fp, &lbl_eu_8050E990[0x30], id);
-        char* cond = func_8013639C((const void*)lbl_eu_806640A8, &lbl_eu_8050E990[0x36], (int)x);
-        u8 y = (u8)func_801361E8((u32)fp, &lbl_eu_8050E990[0x3b], id);
+        u8 x = (u8)BdatGetU8Direct((u32)fp, &lbl_eu_8050E990[0x30], id);
+        char* cond = BdatGetPtrDirect((const void*)lbl_eu_806640A8, &lbl_eu_8050E990[0x36], (int)x);
+        u8 y = (u8)BdatGetU8Direct((u32)fp, &lbl_eu_8050E990[0x3b], id);
 
         func_80272FA8(&tmpE, (u32)name0, (u32)cond, v1, v2, (s8)0, (s16)n4, y);
         u8 c = arr->mCount;
@@ -629,14 +629,14 @@ extern "C" __declspec(noinline) void func_80273984(CKizunaTalkList* self) {
 }
 
 extern "C" __declspec(noinline) void func_802739D8(CKizunaTalkList* self) {
-    if (func_80137510(self->mpAnim28, lbl_eu_806689D4) != 0) {
+    if (AnimRewindFrame(self->mpAnim28, lbl_eu_806689D4) != 0) {
         self->mState85 = 5;
         func_80273A70(self);
     }
 }
 
 extern "C" __declspec(noinline) void func_80273A24(CKizunaTalkList* self) {
-    if (func_80137510(self->mpAnim24, lbl_eu_806689D4) != 0) {
+    if (AnimRewindFrame(self->mpAnim24, lbl_eu_806689D4) != 0) {
         self->mState85 = 0;
         self->mNeedsRebuild = 1;
     }
@@ -694,15 +694,15 @@ extern "C" __declspec(noinline) void func_80273B30(CKizunaTalkList* self) {
 
         // Title / description text.
         sprintf(buf, &lbl[0xcb], dispIdx);
-        func_80136B4C(self->mpLayout20, buf, (char*)entry->field_00, 0u);
+        LayoutSetTextBoxFmtValue(self->mpLayout20, buf, (char*)entry->field_00, 0u);
         sprintf(buf, &lbl[0xd7], dispIdx);
-        func_80136B4C(self->mpLayout20, buf, (char*)entry->field_04, 0u);
+        LayoutSetTextBoxFmtValue(self->mpLayout20, buf, (char*)entry->field_04, 0u);
 
         if (entry->field_12 != -1) {
             sprintf(buf, &lbl[0xe3], dispIdx);
-            func_80137E7C(self->mpLayout20, buf, (void*)entry->field_08);
+            PaneSetTexPaletteByName(self->mpLayout20, buf, (void*)entry->field_08);
             sprintf(buf, &lbl[0xf1], dispIdx);
-            func_80137E7C(self->mpLayout20, buf, (void*)entry->field_0C);
+            PaneSetTexPaletteByName(self->mpLayout20, buf, (void*)entry->field_0C);
         }
 
         sprintf(buf, &lbl[0xff], dispIdx);
@@ -730,7 +730,7 @@ extern "C" __declspec(noinline) void func_80273B30(CKizunaTalkList* self) {
 
         void* anim = ((void* (*)(void*, u32, const char*, int))(((void**)self->mUnknown1C)[0x0c / 4]))((void*)self->mUnknown1C, 0x74696d67, lvlStr, 0);
         if (anim)
-            func_80137E7C(self->mpLayout20, buf, anim);
+            PaneSetTexPaletteByName(self->mpLayout20, buf, anim);
 
         // Row highlight colour / visibility from the entry subtype.
         GXColorS10* c0;
@@ -755,7 +755,7 @@ extern "C" __declspec(noinline) void func_80273B30(CKizunaTalkList* self) {
         }
 
         sprintf(buf, &lbl[0xbe], dispIdx);
-        func_80139A18(self->mpLayout20, buf, c0, c1);
+        PaneMatSetTevColorsByName(self->mpLayout20, buf, c0, c1);
         sprintf(buf, &lbl[0x19f], dispIdx);
         pane = ((void* (*)(void*))(((void**)*(void**)((char*)self->mpLayout20 + 0x10))[0x3c / 4]))(*(void**)((char*)self->mpLayout20 + 0x10));
         if (pane)

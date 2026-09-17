@@ -61,7 +61,7 @@ cf::CfObjectPc::CfObjectPc() : CfObjectActor() {
     // place, passing the player sub-object (this + 0x3E9C, null-checked). The
     // ctor returns the object in r3, so no extra callee-saved register is
     // needed for the final store.
-    u8* res = (u8*)allocate__Q23mtl10MemManagerFUlUl(0x44, func_80061FFC());
+    u8* res = (u8*)allocate__Q23mtl10MemManagerFUlUl(0x44, CfRes_getAllocHandle());
     if (res != NULL) {
         // Player sub-object (this + 0x3E9C), null-checked like a secondary-
         // base conversion; the declared base sizes are 8 bytes off retail.
@@ -177,13 +177,13 @@ int cf::CfObjectPc::initialize() {
         ((CfObjectPcSubFields*)self)->field_0x3F08 |= 1;
     }
     this->pcMove()->setPointEnabled(1);
-    func_800BE33C((char*)self + 0x3E9C, 1);
+    CfObjectMove_setModelDisplayFlag((char*)self + 0x3E9C, 1);
     this->pcMove()->CfObjectModel_setModelVisible(1);
     func_80174B4C(self, 0x8000000);
     func_80174B4C(self, 0x10000000);
-    func_800BE824((u8*)((u32)self + 0x3E9C), 1);
+    CfObjectMove_setRegionAttached((u8*)((u32)self + 0x3E9C), 1);
     u8* region = self + 0x44A8;
-    func_804B0AD4(region, 0, lbl_eu_80666B0C, lbl_eu_80666B10);
+    ColiSetMoveVec2(region, 0, lbl_eu_80666B0C, lbl_eu_80666B10);
     *(u16*)((u8*)this + 0x44A8 + 0xB2) = 100;
     return 1;
 }
@@ -563,7 +563,7 @@ void CActorParam_UnkVirtualFunc88__Q22cf10CfObjectPcFv(
         if (func_80174C98(self, (int*)&state, 6) ||
             ((state = *(void**)(*(cf::CObjectState**)((u8*)self + 4))->CObjectState_getStateData()),
                 func_80174C98(self, (int*)&state, 9))) {
-            func_800BE12C((u8*)self + 0x3E9C, 0x1B, 0, 6, 1);
+            CfObjectMove_setAnimModeArgs((u8*)self + 0x3E9C, 0x1B, 0, 6, 1);
         }
     actedDone:;
     }

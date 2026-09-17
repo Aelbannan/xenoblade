@@ -27,7 +27,7 @@ namespace lyt {
 
 /* Layout cursor used by CEquipItemBox (CBaseCur-style), own vtable.
    Retail vtable lbl_eu_80538704: RTTI, 0, then a single virtual at +0x08
-   (func_80285994); CEIBPageCur overrides it with func_80285C84.
+   (setupEIBCur); CEIBPageCur overrides it with setupEIBPageCur.
    __declspec(novtable): the tables live in the data blob, the C-ABI ctors
    store the labels manually, and the retail plain-named bodies stay
    extern "C" free functions (only the dispatch goes through the virtual).
@@ -35,9 +35,7 @@ namespace lyt {
    mangling, so it is declared/defined with C linkage and called explicitly
    from derived ctors. */
 struct __declspec(novtable) CEIBCur {
-    virtual void initLayout();  // +0x08 (retail: func_80285994)
-    void func_80285A18();
-    void func_80285B24();
+    virtual void initLayout();  // +0x08 (retail: setupEIBCur)
     // Overlay on the implicit vptr at +0x00 so the free-function ctors can
     // store the retail table labels (same idiom as CBaseCur / CSysWin).
     void*& vtbl() { return *reinterpret_cast<void**>(this); }
@@ -62,7 +60,7 @@ extern "C" void* lbl_eu_805386EC[];
 void drawLayout(nw4r::lyt::Layout*, nw4r::lyt::DrawInfo*, int, int);
 
 /* Bind a named pane to a resource (code_80135FDC unit, 3-arg form). */
-extern "C" void func_80137E7C(nw4r::lyt::Layout*, const char*, u32);
+extern "C" void PaneSetTexPaletteByName(nw4r::lyt::Layout*, const char*, u32);
 
 /* Layout/anim builders (code_80135FDC unit). C++ linkage so MWCC mangles
    the unmangled identifiers to the retail names. */
@@ -70,11 +68,11 @@ void buildLayout(nw4r::lyt::Layout**, nw4r::lyt::ArcResourceAccessor*, const cha
 void bindLayoutAnimTransform(nw4r::lyt::Layout*, nw4r::lyt::AnimTransform**, nw4r::lyt::ArcResourceAccessor*, char*);
 
 /* CEIBPageCur - page-cursor subclass of CEIBCur, overrides the +0x08 slot
-   with func_80285C84 (vtable lbl_eu_805386EC).
+   with setupEIBPageCur (vtable lbl_eu_805386EC).
    Ctor is C-ABI like __ct__CEIBCur (retail symbol __ct__CEIBPageCur, no
    class-length mangling); called explicitly by OnFileEvent. */
 struct __declspec(novtable) CEIBPageCur : CEIBCur {
-    virtual void initLayout();  // +0x08 override (retail: func_80285C84)
+    virtual void initLayout();  // +0x08 override (retail: setupEIBPageCur)
 };
 extern "C" CEIBPageCur* __ct__CEIBPageCur(CEIBPageCur* self, void* arcResAcc);
 
@@ -140,24 +138,6 @@ struct CEquipItemBox {
     ~CEquipItemBox();
     int OnFileEvent(CEventFile* ev);
 
-    u8 func_802865A0();
-    u8 func_802865A8();
-    int func_80286650();
-    int func_802866A0();
-    void func_802866E8();
-    u8 func_80286698();
-    u8 func_80287EE8();
-    void func_80287EFC(u32 val);
-    void func_80288A1C();
-    void func_80288A6C();
-    void func_80282DF8();
-    void func_80282E24();
-    void func_80287D58();
-    u8 func_802832B4();
-    int func_802865B0();
-    void func_80286740();
-    int func_8028847C();
-    char* func_8028D0EC();
     void func_80286F6C();
     void func_80289754();
     void func_80289AA4();
@@ -318,12 +298,12 @@ extern "C" char* func_801355BC();
 extern "C" nw4r::lyt::ArcResourceAccessor* func_801355F4();
 void setLayoutTextBoxFont(nw4r::lyt::Layout*, char*, u32);
 extern "C" int isClassicController__Q22cf13CfGameManagerFv(int);
-extern "C" u16 func_8013606C(const void*, const void*, u16);
+extern "C" u16 BdatGetU16ByTableKey(const void*, const void*, u16);
 extern "C" CEquipItemBoxFourShorts func_80139658(void*, void*, u32);
 extern "C" CEquipItemBoxFourShorts func_801397AC(void*, u32);
 extern "C" void CopyVec4s(void*, const void*);
 extern "C" void func_80137F88(void*, u32);
-extern "C" char* func_8013639C(const void*, const void*, int);
+extern "C" char* BdatGetPtrDirect(const void*, const void*, int);
 extern "C" void func_801FA220(u8*, const u8*);
 extern "C" void __ct__CCur18(void*, void*);
 extern "C" void* func_8003AA34();  // bdat manager reset (no args; retail caller leaves r3 stale)
@@ -335,7 +315,7 @@ extern void* lbl_eu_806649E0;
 
 /* CSysWin vtable view exposing the layout-build virtual at +0x88 (slot 34 =
    declared index 32 after the MWCC offset-to-top + RTTI prefix), dispatched by
-   func_802861A8 after the file loads. Same shape as the CSysWinView classes in
+   loadEIBFiles after the file loads. Same shape as the CSysWinView classes in
    CSysWinSave.hpp / COption.hpp / CCollepedia.hpp. */
 class CEquipItemBoxSysWinView {
 public:
@@ -379,7 +359,7 @@ void copyEquipItemData(CEquipItemData* dst, const CEquipItemData* src);
 
 /* Item-impl vtable view exposing the slots the grid sorts dispatch: vf08
    (0x08), vf30 (0x30) and vf90 (0x90) carry the sort keys, plus the two
-   slots func_80283350 reads (vf08 / vf20). MWCC auto-inserts RTTI + null
+   slots fmtEIBItemName reads (vf08 / vf20). MWCC auto-inserts RTTI + null
    at vtable slots 0-1, so the declared virtuals land at slots 2..n.
    Declarations are padded out to 0x90 so the sort-key slot offsets match
    retail's vtable. */
@@ -461,7 +441,7 @@ struct CEquipItemBoxPagePosView {
     u32 pos[3];   // 0x200..0x20B
 };
 
-/* 6-byte equipment-slot definition used by func_80288544's slot scan:
+/* 6-byte equipment-slot definition used by findEIBEquipSlot's slot scan:
    category byte, item-id short and a per-category base offset byte. */
 struct CEquipItemBoxSlotDef {
     u8 cat;     // 0x0
@@ -472,13 +452,13 @@ struct CEquipItemBoxSlotDef {
 };
 
 /* 36-byte table of 6 slot definitions (data at lbl_eu_8050EF90). Copied to a
-   stack local by func_80288544 before the item ids are patched in. */
+   stack local by findEIBEquipSlot before the item ids are patched in. */
 struct CEquipItemBoxSlotTable {
     CEquipItemBoxSlotDef slots[6];
 };
 
 /* Item object returned by func_8009EC9C: 6 slot-id shorts at 0x1c..0x26
-   supply the item ids patched into the slot table by func_80288544. */
+   supply the item ids patched into the slot table by findEIBEquipSlot. */
 struct CEquipItemBoxItemView {
     u8 _pad00[0x1c];
     s16 field_1c;   // 0x1c
@@ -521,7 +501,7 @@ struct CEquipItemBoxMoveEntryView {
 };
 
 /* Overlay for the per-page item-id table at +0x210 (u16) and the 12 page
-   position VEC3 records at +0x228, reset by func_8028AA64. */
+   position VEC3 records at +0x228, reset by resetEIBPageView. */
 struct CEquipItemBoxPageStateView {
     u8 pad00[0x210];
     u16 field_210[0xC];       // 0x210..0x227
@@ -529,7 +509,7 @@ struct CEquipItemBoxPageStateView {
 };
 
 /* Stack-allocated enum-list holder/list used by func_8028CBCC's CfMove
-   search (func_80043D90 ctor / func_80043F18 getter / __dt__80043E88 dtor;
+   search (CTaskGame_enumListCtor ctor / CTaskGame_enumListGet getter / __dt__80043E88 dtor;
    the list's element count sits at +0x620). */
 struct CEquipItemBoxEnumHolder {
     void* list;   // 0x0
@@ -548,71 +528,71 @@ extern "C" u32 func_801D32DC(u8*);
 extern "C" u32 CSysWin_isReady(void*);
 extern "C" void func_80139198(void*);
 extern "C" void playUISound__FUl(u32);
-extern "C" u8 func_801392B4(u32);
+extern "C" u8 GetCollectedFlagByte(u32);
 extern "C" void func_8028A5D8(CEquipItemBox* self, int a);
 extern "C" void func_80288AC0(CEquipItemBox* self);
 extern "C" void func_8028AF98(CEquipItemBox* self, int a, int b);
 extern "C" void func_8028B7CC(CEquipItemBox* self, int a, int b);
 extern "C" void func_8028BE74(CEquipItemBox* self, int a, int b);
-extern "C" u8 func_802832D8(CEquipItemGrid* grid, u16 idx);
-extern "C" u8 func_80283280(CEquipItemGrid* grid, u32 param);
+extern "C" u8 getEIBByte2(CEquipItemGrid* grid, u16 idx);
+extern "C" u8 getEIBByte7(CEquipItemGrid* grid, u32 param);
 extern "C" int func_80288948(CEquipItemBox* box);
-extern "C" void func_8028AA64(CEquipItemBox* self);
-extern "C" void func_80289500(CEquipItemBox* self, int a);
-extern "C" void func_8028A1DC(CEquipItemBox* self);
-extern "C" void func_8028A07C(CEquipItemBox* self);
-extern "C" void func_8028A0C0(CEquipItemBox* self, u8 val);
+extern "C" void resetEIBPageView(CEquipItemBox* self);
+extern "C" void rebuildEIBPage(CEquipItemBox* self, int a);
+extern "C" void refreshEIBSortTabs(CEquipItemBox* self);
+extern "C" void clearEIBCatList(CEquipItemBox* self);
+extern "C" void pushEIBCatList(CEquipItemBox* self, u8 val);
 extern "C" void func_80289CC0(CEquipItemBox* self);
-extern "C" void func_80287024(CEquipItemBox* self);
-extern "C" void func_8028A160(CEquipItemBox* self);
-extern "C" void func_80285B70(CEIBCur* self);
+extern "C" void eibPagePrev(CEquipItemBox* self);
+extern "C" void eibSortPagePrev(CEquipItemBox* self);
+extern "C" void idleEIBCur(CEIBCur* self);
 extern "C" void func_8022B8E4(void*);
-extern "C" void func_80289E70(CEquipItemBox*);
+extern "C" void fillEIBSortMenu(CEquipItemBox*);
 // Same-TU helpers (defined as extern "C" free functions in CEquipItemBox.cpp;
 // the retail symbols are unmangled, so calls must reference the plain names).
-extern "C" void func_80282DF8(CEquipItemBox* self);
-extern "C" void func_80282E24(CEquipItemBox* self);
-extern "C" u8 func_802832B4(CEquipItemBox* self);
+extern "C" void eibGridNext(CEquipItemBox* self);
+extern "C" void eibGridPrev(CEquipItemBox* self);
+extern "C" u8 getEIBColCount(CEquipItemBox* self);
 extern "C" void func_80289754(CEquipItemBox* self);
 extern "C" void func_80289AA4(CEquipItemBox* self);
-extern "C" void func_80286D7C(CEquipItemBox* self);
+extern "C" void eibNavRight(CEquipItemBox* self);
 extern "C" void func_80286F6C(CEquipItemBox* self);
-extern "C" void func_8028A0E0(CEquipItemBox* self);
-extern "C" char* func_8028D0EC(CEquipItemBox* self);
-extern "C" void func_80288A1C(CEquipItemBox* self);
-extern "C" void func_80288A6C(CEquipItemBox* self);
-extern "C" void func_802889C0(CEquipItemBox* self);
-extern "C" void func_80285A18(CEIBCur* self);
-extern "C" void func_80285B24(CEIBCur* self);
-extern "C" u32 func_802857F0(CEquipItemBox* self, CItemInstance* item);
-extern "C" double func_80285708(CEquipItemBox* self, CItemInstance* item);
+extern "C" void eibSortPageNext(CEquipItemBox* self);
+extern "C" char* getEIBPageHint(CEquipItemBox* self);
+extern "C" void eibCloseAnim(CEquipItemBox* self);
+extern "C" void eibSysWin1Done(CEquipItemBox* self);
+extern "C" void eibPlayEntry(CEquipItemBox* self);
+extern "C" void updateEIBCur(CEIBCur* self);
+extern "C" void stepEIBCurAnim(CEIBCur* self);
+extern "C" u32 hasEIBSlotFlag(CEquipItemBox* self, CItemInstance* item);
+extern "C" double getEIBProgress(CEquipItemBox* self, CItemInstance* item);
 // Forward decls for the grid/array helpers (defined in CEquipItemBox.cpp).
-extern "C" CEquipItemData* func_80282574(CEquipItemData* dst, s16 a0, u8 a2, u8 a3, u8 a4, u8 a5, u8 a6, u8 a7);
-extern "C" void func_80282594(CEquipItemData* dst, const CEquipItemData* src);
+extern "C" CEquipItemData* setEIBItem(CEquipItemData* dst, s16 a0, u8 a2, u8 a3, u8 a4, u8 a5, u8 a6, u8 a7);
+extern "C" void copyEIBItem(CEquipItemData* dst, const CEquipItemData* src);
 extern "C" void func_80282610(CEquipItemGrid* grid, u8 v, u8 b, u8 hi);
-// String pool used by func_8028D0EC (offsets 0x2d / 0x36) and others.
+// String pool used by getEIBPageHint (offsets 0x2d / 0x36) and others.
 extern "C" char lbl_eu_8050EFDC[];
-extern "C" char* func_80136190(char*, char*, u32);
-extern "C" u32 func_801361E8(u32, const char*, u32);
+extern "C" char* BdatTouchStringCell(char*, char*, u32);
+extern "C" u32 BdatGetU8Direct(u32, const char*, u32);
 extern "C" void getEntry__5CBdatFUl(u32);
 extern "C" void closeFileHandle__FPP11CFileHandle(void*);
 extern "C" void releaseArcResourceAccessor__FPQ34nw4r3lyt19ArcResourceAccessor(void*);
 extern "C" void deleteRegion__17UnkClass_8045F564Fv(void*);
 extern "C" void func_801D3258(void*);
 extern "C" void func_8022B7F4(void*);
-extern "C" u16 func_80139358(u32);
+extern "C" u16 BdatGetItemId(u32);
 // Texture-name lookup (retail C-ABI; u16 arg, returns the resource name).
-extern "C" char* func_80138F78(u32);
-// Item-object validity/type check used by func_80288E14's texture pick.
-extern "C" int func_801C6E90(void*);
+extern "C" char* MakeTplNameSysFile(u32);
+// Item-object validity/type check used by bindEIBCellIcon's texture pick.
+extern "C" int IsSkillItem(void*);
 extern "C" void* func_8009EC9C(u32);
 // Item randomizer: reads the low 16 bits of the first word of the object
 // returned by func_8009EC9C (cf/CtrlObjectParam TU; callers pass that obj).
 extern "C" u32 func_800A082C(void*);
 // Item drop-rate helpers (code_80135FDC TU): name-table float probe and the
 // (rateA + rateB) clamp divisor shared by the equip-box/line stat displays.
-extern "C" f32 func_8013B380(u32 idx);
-extern "C" f32 func_80139C98(u32 a, u32 b, u32 c, f32 d);
+extern "C" f32 GetFloatTableEntry(u32 idx);
+extern "C" f32 BlendFloatAvgScale(u32 a, u32 b, u32 c, f32 d);
 extern "C" nw4r::math::VEC3* code80135FDC_setVec3(float*, float, float, float);
 extern "C" void copyVEC3(void*, const void*);
 // Declared with C++ linkage (same as CCol6System.hpp) so the two headers
@@ -626,7 +606,7 @@ extern "C" int func_801D3328(void*);
 extern "C" void func_801D377C(void*);
 extern "C" void func_80124270(void*, u32);
 // Pane-visibility query (C-ABI retail symbol; extern "C" so call sites emit
-// the plain name, matching func_80287250's reloc site).
+// the plain name, matching eibHandleSubPage's reloc site).
 extern "C" bool func_801C4648(nw4r::lyt::Pane*);
 
 // Item-box object type for the unk_20c pointer (forward decl; full layout in
@@ -660,31 +640,31 @@ extern "C" u32 func_801D4260(CItemBoxInfo* info, u8 arg2);
 // Layout text/visibility bind (retail mangled setLayoutTextBoxNumber__FPQ34nw4r3lyt6LayoutPcUc).
 void setLayoutTextBoxNumber(nw4r::lyt::Layout*, char*, u8);
 // Same-TU grid helper (retail plain name; defined in this .cpp).
-extern "C" u8 func_80282D60(CEquipItemGrid* grid);
+extern "C" u8 countEIBPages(CEquipItemGrid* grid);
 // Same-TU dispatch helpers used by func_8028345C (defined in this .cpp).
 extern "C" void func_80283E64(CEquipItemGrid* grid, u32 cat);
 extern "C" void func_80284C30(CEquipItemGrid* grid, u32 mode);
 // Same-TU grid sort helpers dispatched by func_8028345C (defined below).
-extern "C" void func_80284144(CEquipItemGrid* grid);
-extern "C" void func_80284244(CEquipItemGrid* grid);
-extern "C" void func_80284358(CEquipItemGrid* grid);
-extern "C" void func_80284490(CEquipItemGrid* grid, int param);
-extern "C" void func_8028461C(CEquipItemGrid* grid, int param);
-extern "C" void func_802847A4(CEquipItemGrid* grid);
-extern "C" void func_802848C4(CEquipItemGrid* grid);
-extern "C" void func_80284A00(CEquipItemGrid* grid);
-extern "C" void func_80284B18(CEquipItemGrid* grid);
+extern "C" void sortEIBByFlags(CEquipItemGrid* grid);
+extern "C" void sortEIBByCount(CEquipItemGrid* grid);
+extern "C" void sortEIBByVf08(CEquipItemGrid* grid);
+extern "C" void sortEIBByNm58(CEquipItemGrid* grid, int param);
+extern "C" void sortEIBByNm00(CEquipItemGrid* grid, int param);
+extern "C" void sortEIBByProg(CEquipItemGrid* grid);
+extern "C" void sortEIBByVf30(CEquipItemGrid* grid);
+extern "C" void sortEIBFlagAsc(CEquipItemGrid* grid);
+extern "C" void sortEIBFlagDesc(CEquipItemGrid* grid);
 extern "C" void func_80284DCC(CEquipItemGrid* grid);
 extern "C" void func_80284F1C(CEquipItemGrid* grid);
-extern "C" void func_8028506C(CEquipItemGrid* grid);
-extern "C" void func_802851BC(CEquipItemGrid* grid);
-extern "C" void func_8028530C(CEquipItemGrid* grid, int key);
-extern "C" void func_80285478(CEquipItemGrid* grid);
-extern "C" void func_802855C8(CEquipItemGrid* grid);
+extern "C" void sortEIBByNm72(CEquipItemGrid* grid);
+extern "C" void sortEIBByNm7A(CEquipItemGrid* grid);
+extern "C" void sortEIBByNm17(CEquipItemGrid* grid, int key);
+extern "C" void sortEIBByNm82(CEquipItemGrid* grid);
+extern "C" void sortEIBByVf90(CEquipItemGrid* grid);
 // Same-TU grid helpers used by the equip-list refresh (retail plain names).
-extern "C" void* func_80282F34(CEquipItemGrid* grid, u16 idx);
-extern "C" char* func_80283350(CEquipItemGrid* grid, u32 param);
-extern "C" void func_8028A9CC(CEquipItemBox* self, int a, int b);
+extern "C" void* getEIBItemObj(CEquipItemGrid* grid, u16 idx);
+extern "C" char* fmtEIBItemName(CEquipItemGrid* grid, u32 param);
+extern "C" void dispatchEIBKind(CEquipItemBox* self, int a, int b);
 extern "C" void func_801D3330(void*);
 extern "C" void func_801D3620(void*);
 extern "C" void func_801D3408(void*);
@@ -692,13 +672,13 @@ extern "C" void func_801D3430(void*, const nw4r::math::VEC3*);
 extern "C" void func_801D3454(void*, void*);
 extern "C" void func_801D353C(void*, u8);
 // Sort-menu page-list helpers (CSortMenu TU, retail plain names).
-// func_801D3818(menu, page, &outCount, &outRemain): writes func_8015780C(page)
+// func_801D3818(menu, page, &outCount, &outRemain): writes CItemBlock_getFlag120EC(page)
 // (clamped to >= 4) into outCount and (0 or count-4) into outRemain.
 extern "C" void func_801D3818(void*, u8, u8*, u8*);
 extern "C" void func_801D350C(void*);
 extern "C" void func_801D3518(void*, void*);
-extern "C" u16 func_8015780C(int);
-extern "C" void func_80136B4C(nw4r::lyt::Layout*, const char*, const char*, u32);
+extern "C" u16 CItemBlock_getFlag120EC(int);
+extern "C" void LayoutSetTextBoxFmtValue(nw4r::lyt::Layout*, const char*, const char*, u32);
 extern "C" void func_80137924(void*, void*, void*, void*);
 // Per-frame update helpers (retail plain names, defined in sibling TUs).
 extern "C" void func_801D3064(void*);
@@ -710,11 +690,11 @@ extern "C" void func_8022B748(void*);
 extern "C" void func_801D31F8(void*, nw4r::lyt::DrawInfo*);
 extern "C" void func_8022B7C8(void*, nw4r::lyt::DrawInfo*);
 extern "C" void func_801D20B0(void*, void*);
-// Layout text/colour setter used by the sort-menu page rebuild (func_8028A1DC);
+// Layout text/colour setter used by the sort-menu page rebuild (refreshEIBSortTabs);
 // the 3rd/4th args are .sbss colour-table pairs referenced via sda21.
-extern "C" void func_80139A18(nw4r::lyt::Layout*, char*, void*, void*);
+extern "C" void PaneMatSetTevColorsByName(nw4r::lyt::Layout*, char*, void*, void*);
 // .sbss colour-table initialisers used by sinit_8028DAB0 (retail plain names).
-extern "C" void func_801D1F9C(void*, u32);
+extern "C" void SplitU32ToS16s(void*, u32);
 extern "C" void func_801C4B60(void*, u32, u32, u32, u32);
 extern s16 lbl_eu_80664920[4];
 extern s16 lbl_eu_80664928[4];
@@ -740,17 +720,17 @@ extern s16 lbl_eu_806649C0[4];
 extern s16 lbl_eu_806649C8[4];
 extern s16 lbl_eu_806649D0[4];
 extern s16 lbl_eu_806649D8[4];
-// Sort-menu page handler called once per page by func_8028A1DC (this TU).
+// Sort-menu page handler called once per page by refreshEIBSortTabs (this TU).
 extern "C" void func_8028A374(CEquipItemBox* self, u8 v, u8 i);
 // Kind-specific equip-box rebuild tail (this TU, retail plain name).
 extern "C" void func_8028C280(CEquipItemBox* self, int kind, int item);
 
 // Same-TU grid helpers used by the equip-slot checks (defined in this .cpp;
 // retail plain names). Return u32 (lbz zero-extends; avoids call-site masks).
-extern "C" u32 func_80283208(CEquipItemGrid* grid, u16 idx);
-extern "C" u32 func_80282EC4(CEquipItemGrid* grid, u16 idx);
+extern "C" u32 getEIBByte6(CEquipItemGrid* grid, u16 idx);
+extern "C" u32 getEIBItemKind(CEquipItemGrid* grid, u16 idx);
 
-// Shared item/bdat table id passed as func_801361E8's group arg by the
+// Shared item/bdat table id passed as BdatGetU8Direct's group arg by the
 // equip-slot checks (same .sbss block as lbl_eu_806640F4).
 extern u32 lbl_eu_806640EC;
 // Resource/flag helper: 0 when the named resource id is absent (CQuestLog).
@@ -796,10 +776,10 @@ extern "C" char* func_eu_802B1474(void);
 extern "C" void func_80136A1C(nw4r::lyt::Layout*, char*, char*, u32);
 // Page-slot word-table accessors used by the grid-cursor scans.
 extern "C" u16 ArrayGet12(const u16*, u8);
-extern "C" void func_801CB9D8(nw4r::math::VEC3*, const u16*, u32);
+extern "C" void CopyTabSlotVec(nw4r::math::VEC3*, const u16*, u32);
 // Number-of-equip-pages byte (shared .sbss flag; > 1 means multi-page).
 extern "C" u8 code80135FDC_getByte_64077();
-// Sort-page colour table pairs (func_80139A18 3rd/4th args, .sbss).
+// Sort-page colour table pairs (PaneMatSetTevColorsByName 3rd/4th args, .sbss).
 extern s16 lbl_eu_806649B0[4];
 extern s16 lbl_eu_806649B8[4];
 extern s16 lbl_eu_806649C0[4];
@@ -807,7 +787,7 @@ extern s16 lbl_eu_806649C8[4];
 extern s16 lbl_eu_806649D0[4];
 extern s16 lbl_eu_806649D8[4];
 
-// Small-data global read by func_80285890 (item-impl table id, .sbss).
+// Small-data global read by getEIBNameKey (item-impl table id, .sbss).
 extern u32 lbl_eu_806640F4;
 
 // .sdata2 float constants used by the grid page-count math (func_80282610).
@@ -816,8 +796,8 @@ extern const float lbl_eu_80668B08;
 
 // CfMove enum-list holder helpers (retail plain names; sibling decls in
 // CItemBoxGrid.hpp / CfObjectImplMove.hpp).
-extern "C" void func_80043D90(void*);
-extern "C" void* func_80043F18(void*);
+extern "C" void CTaskGame_enumListCtor(void*);
+extern "C" void* CTaskGame_enumListGet(void*);
 extern "C" void func_800F4A98(void*, u32, u32);
 extern "C" void* func_800F6EC0(void*, u32);
 extern "C" void func_800BFDE0(void* obj, u32 arg);
@@ -835,7 +815,7 @@ extern "C" void func_8009E054(void*, int);
 extern "C" void func_800A1370(void*);
 
 // Item-count / category-base readers (cf/CItem TU, retail plain names).
-extern "C" u32 func_80157C20(u8);
+extern "C" u32 CItemBlock_countKindSlots(u8);
 extern "C" u32 func_801576C8(u8);
 
 // Char-data status lookup (code_8025FB10 TU): tests a flag at obj+0x3534.
@@ -856,7 +836,7 @@ extern const double lbl_eu_80668B18;
 extern const float lbl_eu_80668B20;
 
 // Item-impl accessor (retail CItemImpl vtable-indexed helper).
-extern "C" u32 func_801392E4(u32);
+extern "C" u32 BdatGetItemType(u32);
 
 // Sub-object destructors invoked by ~CEquipItemBox (retail C-ABI names; the
 // member-class dtors live in their own TUs as extern "C" free functions).
@@ -873,8 +853,8 @@ extern "C" void __ct__CSortMenu(void*);
 extern "C" void __ct__CSysWin(void*, int);
 extern "C" void __ct__UnkClass_8011C974(void* dst, void* src);
 extern "C" void func_8016742C(void* dst, void* src);
-extern "C" void func_80157824(u32 id, u32 arg);
-extern "C" void func_8013B2D4();
+extern "C" void CItemBlock_setFlag120EC(u32 id, u32 arg);
+extern "C" void ItemBlockSetDefaultFlags();
 
 /* Partial-copy views used by the ctor: the member CSortMenu is populated
    from a destroyed stack temp one sub-object at a time (the first 0x10 bytes

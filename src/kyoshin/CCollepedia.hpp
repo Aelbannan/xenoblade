@@ -14,7 +14,7 @@ namespace lyt {
 }
 }
 
-// 0x2800-byte entry storage block, copied member-wise in func_8025492C
+// 0x2800-byte entry storage block, copied member-wise in clpStartLoads
 struct CLPDataBlock {
     u8 v[0x2800];
 };
@@ -43,7 +43,7 @@ struct CCollepediaFull {
     u8 field_E8_start; // sub-array starts at +0xE8
 };
 
-// Container with a layout pointer at +0x04 (used by func_80253970)
+// Container with a layout pointer at +0x04 (used by clpCalcCurPos)
 struct LayoutContainer {
     u8 _00[0x04];
     nw4r::lyt::Layout* mpLayout; // at +0x04
@@ -68,8 +68,8 @@ struct CLPCurBody {
     u8 mVisible;  // +0x15
 };
 
-// Second-page setup record (built by func_8025348C, finished by
-// func_802534F0): accessor, loaded layout, bound animation transform.
+// Second-page setup record (built by clpInitPgInfo, finished by
+// clpSetupDetPg): accessor, loaded layout, bound animation transform.
 struct CLPPageSetup {
     nw4r::lyt::ArcResourceAccessor* mpAccessor;   // +0x00
     nw4r::lyt::Layout* mpLayout;                  // +0x04
@@ -93,7 +93,7 @@ struct CLPSize {
 };
 
 
-// Page-info record produced by func_8025348C and stored at +0x28EC.
+// Page-info record produced by clpInitPgInfo and stored at +0x28EC.
 struct CLPPageInfo {
     u32 field_00;                // +0x28EC
     nw4r::lyt::Layout* mpLayout; // +0x28F0
@@ -151,7 +151,7 @@ struct CCollepedia {
     /* 0xE9 */ u8 _E9[0xEC - 0xE9];
     /* 0xEC */ CLPDataBlock field_EC; // entry storage (ends at 0x28EC)
     /* 0x28EC */ u8 field_28EC[0x28F0 - 0x28EC];
-    /* 0x28F0 */ nw4r::lyt::Layout* field_28F0; // Layout* at 0x28F0 (used by func_80254B64)
+    /* 0x28F0 */ nw4r::lyt::Layout* field_28F0; // Layout* at 0x28F0 (used by clpDrawWindow)
     /* 0x28F4 */ u8 _28F4[0x28F9 - 0x28F4];
     /* 0x28F9 */ u8 field_28F9;
     /* 0x28FA */ u8 field_28FA;
@@ -174,7 +174,7 @@ extern "C" u32 CSysWin_isReady(u8*);
 extern "C" u32 CSysWin_getUnk34(u8*);
 extern "C" int CSysWin_isActive(u8*);
 extern "C" u32 func_801B481C();
-extern "C" u32 func_80158068(u16);
+extern "C" u32 CItem_sumFamilyByte6(u16);
 extern "C" char lbl_eu_8050C6E8[];
 extern "C" void* lbl_eu_806640A8;
 extern "C" void* lbl_eu_80664104;
@@ -191,8 +191,8 @@ extern "C" void* lbl_eu_80537474[];
 extern "C" void func_801D20B0(void*, void*);
 extern "C" void func_8022B7C8(void*, nw4r::lyt::DrawInfo*);
 // u32 (not u16): retail returns the lookup result untruncated (tail-branch b
-// in func_8025424C); narrowing here would emit an extra rlwinm after the call.
-extern "C" u32 func_80136254(const void*, const void*, int);
+// in clpGetCelIcon); narrowing here would emit an extra rlwinm after the call.
+extern "C" u32 BdatGetU16Direct(const void*, const void*, int);
 extern "C" void func_8013E2E0(u32, u32, u32, u32, u32, u32, u32, u32, u32);
 extern "C" void func_80137924(nw4r::math::VEC3*, nw4r::lyt::Pane*, nw4r::lyt::Pane*, nw4r::lyt::Pane*);
 extern "C" char* lbl_eu_806647DC;
@@ -201,7 +201,7 @@ extern "C" u32 func_8009EC6C(u16);
 extern "C" u16 lbl_eu_8050C6A0[];
 extern "C" void func_801D216C(void*, u8);
 extern "C" void func_801D202C(void*); // CCur per-frame update
-extern "C" u16 func_80139358(u32);
+extern "C" u16 BdatGetItemId(u32);
 extern "C" void func_8022B748(void*); // CSysWin per-frame update
 extern "C" u32 lbl_eu_806640EC;
 extern "C" void __dt__7CSysWinFv(void*, int);
@@ -216,8 +216,8 @@ extern "C" void getEntry__5CBdatFUl(u32);
 extern "C" void closeFileHandle__FPP11CFileHandle(void*);
 extern "C" void deleteRegion__17UnkClass_8045F564Fv(void*);
 extern "C" void func_8009EC18(u16, u32);
-extern "C" u32 func_801587E8(u16);
-extern "C" void func_80158118(void*, u16, u32);
+extern "C" u32 CItem_findRecByFamily(u16);
+extern "C" void CItemData_initFromFamily(void*, u16, u32);
 extern "C" void incrementEventCounter__FUl(u32);
 extern "C" void* getHandleMEM2__Q23mtl10MemManagerFv();
 extern "C" void* readFile__11CDeviceFileFUlPCcP10IWorkEventii(u32, const char*, void*, int, int);
@@ -233,11 +233,10 @@ extern void* lbl_eu_805373E0[]; // CCollepedia vtable (retail .data)
 extern "C" void __ct__CCur07(void* self, void* param);   // CCur07 ctor (+0x54)
 extern "C" void __ct__CCur18(void* self, void* param);   // CCur18 ctor (+0x84)
 extern "C" void __ct__CSysWin(CSysWin* self, int arg);   // CSysWin ctor
-extern "C" void func_8025348C(void* self, int arg);      // second-page init
 
 // Imports used by OnFileEvent / func_80253B3C
 extern "C" u32 func_8003B1EC(void*);                     // bdat row count
-extern "C" u32 func_801392E4(u16);                       // item kind lookup
+extern "C" u32 BdatGetItemType(u16);                       // item kind lookup
 extern "C" u32 func_8009CF8C(u32);                       // unlock-flag lookup
 extern "C" void* lbl_eu_806640A0;                        // bdat table A
 extern "C" u32 lbl_eu_80664184;                          // default category id

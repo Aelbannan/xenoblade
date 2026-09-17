@@ -226,7 +226,7 @@ extern "C" void Move__11CMenuUpdateFv(void* self) {
     // b exit (CMenuShopBuy::Move shape).
     if (isFlag01Set__9CTaskGameFv(taskGame) || testResInfoFlag(0x200000))
         return;
-    if (func_8013BE50() == 0) return;
+    if (IsMenuState621F0() == 0) return;
     if (func_80143F78(self)) return;
 
     switch ((int)obj->mMode) {
@@ -246,7 +246,7 @@ extern "C" void cbRenderBefore__11CMenuUpdateFv(void* self) {
     // Short-circuit OR gate (CMenuShopBuy::cbRenderBefore shape).
     if (isFlag01Set__9CTaskGameFv(taskGame) || testResInfoFlag(0x200000))
         return;
-    if (func_8013BE50() == 0) return;
+    if (IsMenuState621F0() == 0) return;
     if (func_80143F78(self)) return;
 
     GXSetZMode(GX_FALSE, GX_NEVER, GX_FALSE);
@@ -297,10 +297,10 @@ extern "C" void* func_80142B4C(void* self, u32 r4, int r5, int r6, int r7, int r
     if (r5 == 2) { func_80142C64(getGlobalA10()); }
     if (r5 == 6) {
         int val = getGlobal0E0();
-        u16 result = func_80136254((void*)val, (const char*)((u32)lbl_eu_805013C8 + 0x64), r6);
+        u16 result = BdatGetU16Direct((void*)val, (const char*)((u32)lbl_eu_805013C8 + 0x64), r6);
         if (!result) return 0;
         if (func_8009CF8C(r6 + 0x3214)) {
-            if (func_8013BFA8()) {
+            if (GetSysStateFlag22()) {
                 return 0;
             }
         } else {
@@ -339,7 +339,7 @@ extern "C" void func_80142CA0(void* self, void* name, void* fmtArg) {
     nw4r::lyt::ResourceAccessor* accessor =
         (nw4r::lyt::ResourceAccessor*)func_801355F4();
     void* text = accessor->GetResource(0x74696D67, (const char*)str, NULL);
-    if (text) func_80137E7C(obj->mLayout, (const char*)name, text);
+    if (text) PaneSetTexPaletteByName(obj->mLayout, (const char*)name, text);
 }
 
 // func_80142D60 - (re)bind the window layout's textures, animations and pane
@@ -354,17 +354,17 @@ extern "C" __declspec(noinline) void func_80142D60(void* self) {
     obj->mLayout->UnbindAllAnimation();
 
     // Shared icon texture: message id picked by controller type.
-    char* icon = func_80138F78(
-        func_8013606C((const char*)lbl_eu_805013C8 + 0x82,
+    char* icon = MakeTplNameSysFile(
+        BdatGetU16ByTableKey((const char*)lbl_eu_805013C8 + 0x82,
                       cf::CfGameManager::isClassicController(-1) ? (const char*)lbl_eu_805013C8 + 0x70
                                                            : (const char*)lbl_eu_805013C8 + 0x79,
                       0x2a));
     void* tex = ((nw4r::lyt::ArcResourceAccessor*)func_801355F4())
                     ->GetResource(0x74696D67 /* 'timg' */, icon, NULL);
     if (tex != NULL) {
-        func_80137E7C(obj->mLayout, (const char*)lbl_eu_805013C8 + 0x90, tex);
-        func_80137E7C(obj->mLayout, (const char*)lbl_eu_805013C8 + 0x9d, tex);
-        func_80137E7C(obj->mLayout, (const char*)lbl_eu_805013C8 + 0xaa, tex);
+        PaneSetTexPaletteByName(obj->mLayout, (const char*)lbl_eu_805013C8 + 0x90, tex);
+        PaneSetTexPaletteByName(obj->mLayout, (const char*)lbl_eu_805013C8 + 0x9d, tex);
+        PaneSetTexPaletteByName(obj->mLayout, (const char*)lbl_eu_805013C8 + 0xaa, tex);
 
         // Texture object carries pixel dimensions through a two-level chain.
         // u32 locals so the int->float conversion uses the 0x4330 double trick.
@@ -396,11 +396,11 @@ extern "C" __declspec(noinline) void func_80142D60(void* self) {
 
     // Bind the three state animations and hide all four state panes.
     char* animName =
-        func_80136190((const char*)lbl_eu_805013C8 + 0x82, (const char*)lbl_eu_805013C8 + 0x64,
+        BdatTouchStringCell((const char*)lbl_eu_805013C8 + 0x82, (const char*)lbl_eu_805013C8 + 0x64,
                       0x2a);
-    func_80136B4C(obj->mLayout, (const char*)lbl_eu_805013C8 + 0xb7, animName, 0);
-    func_80136B4C(obj->mLayout, (const char*)lbl_eu_805013C8 + 0xc5, animName, 0);
-    func_80136B4C(obj->mLayout, (const char*)lbl_eu_805013C8 + 0xd3, animName, 0);
+    LayoutSetTextBoxFmtValue(obj->mLayout, (const char*)lbl_eu_805013C8 + 0xb7, animName, 0);
+    LayoutSetTextBoxFmtValue(obj->mLayout, (const char*)lbl_eu_805013C8 + 0xc5, animName, 0);
+    LayoutSetTextBoxFmtValue(obj->mLayout, (const char*)lbl_eu_805013C8 + 0xd3, animName, 0);
 
     nw4r::lyt::Pane* paneA = ((nw4r::lyt::Pane*)getField10((u8*)obj->mLayout))
                                  ->FindPaneByName((const char*)lbl_eu_805013C8 + 0xe1, true);
@@ -431,14 +431,14 @@ extern "C" __declspec(noinline) void func_80142D60(void* self) {
         res = ((nw4r::lyt::ArcResourceAccessor*)func_801355F4())
                   ->GetResource(0x74696D67, (const char*)lbl_eu_805013C8 + 0x107, NULL);
         if (res != NULL) {
-            func_80137E7C(obj->mLayout, (const char*)lbl_eu_805013C8 + 0x120, res);
+            PaneSetTexPaletteByName(obj->mLayout, (const char*)lbl_eu_805013C8 + 0x120, res);
         }
         obj->mActiveAnim = obj->mAnim1;
         break;
     }
 
     case 4: {
-        char* s = func_80136190((const char*)lbl_eu_805013C8 + 0x140,
+        char* s = BdatTouchStringCell((const char*)lbl_eu_805013C8 + 0x140,
                                 (const char*)lbl_eu_805013C8 + 0x14d, obj->mSubState + 0x6f);
         func_80142CA0(obj, (void*)((const char*)lbl_eu_805013C8 + 0x156), s);
         func_80142CA0(obj, (void*)((const char*)lbl_eu_805013C8 + 0x161), s);
@@ -468,7 +468,7 @@ extern "C" __declspec(noinline) void func_80142D60(void* self) {
             break;
         }
         if (res != NULL) {
-            func_80137E7C(obj->mLayout, (const char*)lbl_eu_805013C8 + 0x156, res);
+            PaneSetTexPaletteByName(obj->mLayout, (const char*)lbl_eu_805013C8 + 0x156, res);
         }
 
         // Counter sign selects the countdown vs count-up gauge group; the
@@ -496,7 +496,7 @@ extern "C" __declspec(noinline) void func_80142D60(void* self) {
             res = ((nw4r::lyt::ArcResourceAccessor*)func_801355F4())
                       ->GetResource(0x74696D67, name, NULL);
             if (res != NULL) {
-                func_80137E7C(obj->mLayout, (const char*)lbl_eu_805013C8 + 0x213, res);
+                PaneSetTexPaletteByName(obj->mLayout, (const char*)lbl_eu_805013C8 + 0x213, res);
             }
         } else {
             func_80124270(((nw4r::lyt::Pane*)getField10((u8*)obj->mLayout))
@@ -525,7 +525,7 @@ extern "C" __declspec(noinline) void func_80142D60(void* self) {
             res = ((nw4r::lyt::ArcResourceAccessor*)func_801355F4())
                       ->GetResource(0x74696D67, name, NULL);
             if (res != NULL) {
-                func_80137E7C(obj->mLayout, (const char*)lbl_eu_805013C8 + 0x262, res);
+                PaneSetTexPaletteByName(obj->mLayout, (const char*)lbl_eu_805013C8 + 0x262, res);
             }
         }
         func_80124270(paneA, 1);
@@ -537,7 +537,7 @@ extern "C" __declspec(noinline) void func_80142D60(void* self) {
         // Wide-vs-narrow number strip chosen by whether 32 digits fit.
         // wideFlag initializes before the len call (retail hoists li r26,0).
         u32 wideFlag = 0;
-        u16 len = func_8013606C((const char*)lbl_eu_805013C8 + 0x293,
+        u16 len = BdatGetU16ByTableKey((const char*)lbl_eu_805013C8 + 0x293,
                                 (const char*)lbl_eu_805013C8 + 0x2a4, 5);
         if ((u32)func_8009CF8C(0x20) >= (u32)len) {
             wideFlag = 1;
@@ -550,13 +550,13 @@ extern "C" __declspec(noinline) void func_80142D60(void* self) {
         pairA[0] = lbl_eu_806673B0[wideFlag];
         pairA[1] = lbl_eu_806673B4[wideFlag];
 
-        char* s1 = func_80136190(
+        char* s1 = BdatTouchStringCell(
             (const char*)lbl_eu_805013C8 + 0x140, (const char*)lbl_eu_805013C8 + 0x14d,
-            func_8013606C((const char*)lbl_eu_805013C8 + 0x2ab, (const char*)obj->mSubType,
+            BdatGetU16ByTableKey((const char*)lbl_eu_805013C8 + 0x2ab, (const char*)obj->mSubType,
                           pairB[wideFlag]));
-        char* s2 = func_80136190(
+        char* s2 = BdatTouchStringCell(
             (const char*)lbl_eu_805013C8 + 0x140, (const char*)lbl_eu_805013C8 + 0x14d,
-            func_8013606C((const char*)lbl_eu_805013C8 + 0x2ab, (const char*)obj->mSubType,
+            BdatGetU16ByTableKey((const char*)lbl_eu_805013C8 + 0x2ab, (const char*)obj->mSubType,
                           pairA[wideFlag]));
         func_80142CA0(obj, (void*)((const char*)lbl_eu_805013C8 + 0x156), s1);
         func_80142CA0(obj, (void*)((const char*)lbl_eu_805013C8 + 0x161), s2);
@@ -585,7 +585,7 @@ extern "C" __declspec(noinline) void func_80142D60(void* self) {
             res = ((nw4r::lyt::ArcResourceAccessor*)func_801355F4())
                       ->GetResource(0x74696D67, name, NULL);
             if (res != NULL) {
-                func_80137E7C(obj->mLayout, (const char*)lbl_eu_805013C8 + 0x209, res);
+                PaneSetTexPaletteByName(obj->mLayout, (const char*)lbl_eu_805013C8 + 0x209, res);
             }
         } else {
             func_80124270(((nw4r::lyt::Pane*)getField10((u8*)obj->mLayout))
@@ -614,7 +614,7 @@ extern "C" __declspec(noinline) void func_80142D60(void* self) {
             res = ((nw4r::lyt::ArcResourceAccessor*)func_801355F4())
                       ->GetResource(0x74696D67, name, NULL);
             if (res != NULL) {
-                func_80137E7C(obj->mLayout, (const char*)lbl_eu_805013C8 + 0x258, res);
+                PaneSetTexPaletteByName(obj->mLayout, (const char*)lbl_eu_805013C8 + 0x258, res);
             }
         }
         func_80124270(paneA, 1);
@@ -623,8 +623,8 @@ extern "C" __declspec(noinline) void func_80142D60(void* self) {
     }
 
     case 6:
-        func_80136B4C(obj->mLayout, (const char*)lbl_eu_805013C8 + 0x328,
-                      func_8013639C((const void*)getGlobal0E0(),
+        LayoutSetTextBoxFmtValue(obj->mLayout, (const char*)lbl_eu_805013C8 + 0x328,
+                      BdatGetPtrDirect((const void*)getGlobal0E0(),
                                     (const char*)lbl_eu_805013C8 + 0x330, obj->mSubState),
                       0);
         func_80124270(paneD, 1);
@@ -636,7 +636,7 @@ extern "C" __declspec(noinline) void func_80142D60(void* self) {
         res = ((nw4r::lyt::ArcResourceAccessor*)func_801355F4())
                   ->GetResource(0x74696D67, (const char*)lbl_eu_805013C8 + 0x335, NULL);
         if (res != NULL) {
-            func_80137E7C(obj->mLayout, (const char*)lbl_eu_805013C8 + 0x120, res);
+            PaneSetTexPaletteByName(obj->mLayout, (const char*)lbl_eu_805013C8 + 0x120, res);
         }
         obj->mActiveAnim = obj->mAnim1;
         break;

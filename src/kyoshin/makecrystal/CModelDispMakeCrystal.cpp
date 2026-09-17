@@ -38,7 +38,7 @@
 // CModelDispEquip.hpp): hide the header copies so the class definitions
 // (CActParamAnim, CScnItemModel, CfObject, CResLookup, CSysWin) come through
 // intact while this TU keeps its own prototypes.
-#define func_8004B60C func_8004B60C_void_hidden
+#define writeVec3f writeVec3f_void_hidden
 #define func_8004B9D4 func_8004B9D4_hidden
 #define lbl_eu_805262F0 lbl_eu_805262F0_constchar_hidden
 #define lbl_eu_805262C8 lbl_eu_805262C8_constchar_hidden
@@ -55,7 +55,7 @@
 #include "kyoshin/cf/object/CfObject.hpp"
 #include "kyoshin/cf/IResInfo.hpp"
 #include "kyoshin/CSysWin.hpp"
-#undef func_8004B60C
+#undef writeVec3f
 #undef func_8004B9D4
 #undef lbl_eu_805262F0
 #undef lbl_eu_805262C8
@@ -140,7 +140,7 @@ extern "C" void* __dt__8021C540(void* obj, int flag);
 
 // --- external C-linkage helpers and global data for this TU ---
 extern "C" {
-void* func_8004B60C(void*, f32, f32, f32);
+void* writeVec3f(void*, f32, f32, f32);
 float scaleByGlobal(float val);
 void initCrystalData(unsigned char* p);
 int CSysWin_isActive(void* self);
@@ -171,15 +171,15 @@ void func_80297B68(void*);
 void func_80297E18(void*);
 void func_8022B7F4(void*);
 int func_80222A58(void*);
-void func_8004CF00(void*);
+void tickAnimFrame(void*);
 void func_8021FEDC(void*);
 int isClassicController__Q22cf13CfGameManagerFv(int arg);
-void func_8004B6BC(void*, void*);
+void releaseAnimObj(void*, void*);
 void func_80495E60(void*);
 void* func_80495E8C(void*, int, int, ...);
-void func_80485684(void*, int);
+void simSetLeafFlag4000(void*, int);
 void func_80482DF4(void*, int);
-void* func_8048315C(void*);
+void* simGetLeafActData(void*);
 void func_804831C4(void*, void*);
 void func_804E3CCC(void*);
 void func_804E3D0C(void*, void*);
@@ -198,7 +198,7 @@ void func_8022EA64(void*);
 void incrementEventCounter__FUl(u32);
 void func_802A1500(void);
 void func_80189C88(void);
-void func_80043C88(void);
+void CTaskGame_stopVision(void);
 void func_80133E58(u32, u32, u32);
 void playUISound__FUl(u32);
 void deleteRegion__17UnkClass_8045F564Fv(void* self);
@@ -237,16 +237,16 @@ void func_8029860C(void*, int);
 void func_80298614(void*);
 char lbl_eu_805090FC[];
 int sprintf(char*, const char*, ...);
-void func_80043D90(CMCryListHolder*);
-void* func_80043F18(CMCryListHolder*); // returns holder->list
+void CTaskGame_enumListCtor(CMCryListHolder*);
+void* CTaskGame_enumListGet(CMCryListHolder*); // returns holder->list
 void __dt__80043E88(CMCryListHolder*, int);
 void func_800F4A98(void*, unsigned int, unsigned int);
 void* func_800F6EC0(void*, unsigned int); // &slot -> +0x4 holds the move ptr
 void* getCfObjectPc__FPQ22cf12CfObjectMove(void*);
-void* func_80062C28(short, int);
-int func_80062A00();
-void* func_80062AD8(u32, void*);
-short func_800BE954(void*);
+void* CfRes_getPcGridEntry(short, int);
+int CfRes_isGridLoadIdle();
+void* CfRes_tryResolveToken(u32, void*);
+short CfObjectMove_getSubB0FieldA(void*);
 void func_8009ECB0();
 u32 func_80141E90(u32, s16, u32, u32);
 int func_800AA33C(void*, u32, int, int);
@@ -284,11 +284,11 @@ void validateHeap__17UnkClass_8045F564Fv(void*);
 void __dt__14Class_8045F858Fv(void*, int);
 void func_804CC1BC(void*);
 void* func_800584B8(void*, unsigned int, const char*);
-void func_8004B624(void*, void*, void*, unsigned int);
+void attachAnimObj(void*, void*, void*, unsigned int);
 void func_80200388(void*, void*);
 void func_8021E8E4(void*);
-void func_80213E20(void*, void*);
-void* func_802165E8(void*, const void*); // param copy helper (returns dst)
+void copyCrystalBoxParam(void*, void*);
+void* copyCrystalParamRet(void*, const void*); // param copy helper (returns dst)
 void func_80222D9C(void*, u8);
 void __dt__80222984(void*);
 void func_80222B14(void*, u8, u16, u16);
@@ -577,7 +577,7 @@ void __ct__CModelDispMakeCrystal(CModelDispMakeCrystal* self, CScn* scene)
     base[0x2dd5] = zero2;
 
     // --- crystal-position groups (two VEC3 pairs) ---
-    func_8004B60C(&group1[0], lbl_eu_806684A8, lbl_eu_806684AC, lbl_eu_806684B0);
+    writeVec3f(&group1[0], lbl_eu_806684A8, lbl_eu_806684AC, lbl_eu_806684B0);
     f32 g1y = lbl_eu_806684BC * lbl_eu_8066A210;
     f32 g2y = lbl_eu_806684C0 * lbl_eu_8066A210;
     group1[1].x = lbl_eu_806684B4;
@@ -586,7 +586,7 @@ void __ct__CModelDispMakeCrystal(CModelDispMakeCrystal* self, CScn* scene)
     group2[0].x = lbl_eu_806684A4;
     group2[0].y = g1y;
     group2[0].z = lbl_eu_806684A4;
-    func_8004B60C(&group2[1], lbl_eu_806684A4, g2y, lbl_eu_806684A4);
+    writeVec3f(&group2[1], lbl_eu_806684A4, g2y, lbl_eu_806684A4);
 
     // --- per-slot init (2 slots, stride 0x5cc at +0x44) ---
     // Retail colors: gp1=r23, gp2=r24, one=r25, eight=r26, sb=r28,
@@ -1067,7 +1067,7 @@ void func_8021CB20(CModelDispMakeCrystal* self)
     if (base[0xbdc]) return;
     base[0xbdc] = 1;
     base[0xbe8] = 0;
-    int r0 = func_801392B4(base[0x5f0]);
+    int r0 = GetCollectedFlagByte(base[0x5f0]);
     if (r0 == 3 || r0 == 8) {
         reinterpret_cast<CMCCylinderGauge*>(base + 0xbec)->setLevel(3);
     } else {
@@ -1085,10 +1085,10 @@ void func_8021CB20(CModelDispMakeCrystal* self)
     func_801F367C(base + 0xe38);
     func_8021FC28(reinterpret_cast<CModelDispMakeCrystal*>(base), 0);
     u8 bbc = base[0xbbc];
-    func_801392B4(base[0x5f0]);
+    GetCollectedFlagByte(base[0x5f0]);
     // Table lookup: byte-array indexing through a named offset so MWCC
     // keeps the scaled offset in a register (mulli) for both loads.
-    int off = ((int)func_801392B4(bbc) - 1) * 3;
+    int off = ((int)GetCollectedFlagByte(bbc) - 1) * 3;
     const u8* tbl = lbl_eu_80535D90->c;
     u8 c0 = tbl[off];
     u8 c1 = tbl[off + 1];
@@ -1144,7 +1144,7 @@ void func_8021CD8C(CModelDispMakeCrystal* self)
         for (u8 i = 0; i < 2; i++) {
             u8* p = base + (u32)i * 0x5cc;
             if (*reinterpret_cast<u32*>(p + 0x44)) {
-                func_8004CF00(p + 0x4c);
+                tickAnimFrame(p + 0x4c);
             }
         }
     }
@@ -1182,7 +1182,7 @@ void __declspec(noinline) func_8021CE4C(CModelDispMakeCrystal* self)
     }
     reinterpret_cast<CMCEffStart*>(base + 0xc8c)->startInAnim();
     base[0xbdd] = 0x1;
-    func_80220954(self, 0, func_801392B4(base[0xbbc]));
+    func_80220954(self, 0, GetCollectedFlagByte(base[0xbbc]));
 }
 #pragma optimize_for_size off
 
@@ -1207,7 +1207,7 @@ void __declspec(noinline) func_8021CEF0(CModelDispMakeCrystal* self)
                 }
             }
             base[0xbdd] = 0x2;
-            func_80220954(self, 0, func_801392B4(base[0x5f0]));
+            func_80220954(self, 0, GetCollectedFlagByte(base[0x5f0]));
         }
     }
 }
@@ -1265,7 +1265,7 @@ void __declspec(noinline) func_8021CFC0(CModelDispMakeCrystal* self)
         }
     }
     base[0xbdd] = 3;
-    func_80220954(self, 1, func_801392B4(base[0xbbc]));
+    func_80220954(self, 1, GetCollectedFlagByte(base[0xbbc]));
 }
 
 void __declspec(noinline) func_8021D168(CModelDispMakeCrystal* self)
@@ -1284,7 +1284,7 @@ void __declspec(noinline) func_8021D168(CModelDispMakeCrystal* self)
         }
     }
     base[0xbdd] = 0x4;
-    func_80220954(self, 1, func_801392B4(base[0x5f0]));
+    func_80220954(self, 1, GetCollectedFlagByte(base[0x5f0]));
 }
 
 // (was CMCVtA8: virtual dispatch at vtable offset +0xA8 returning a word.
@@ -1315,7 +1315,7 @@ void __declspec(noinline) func_8021D200(CModelDispMakeCrystal* self)
     incrementEventCounter__FUl(0x79);
     incrementEventCounter__FUl(0x7a);
     incrementEventCounter__FUl(0x7b);
-    if (base[0x2dd0] == 0 && (func_801392B4(base[0x5f0]) & 0xFF) == 6) {
+    if (base[0x2dd0] == 0 && (GetCollectedFlagByte(base[0x5f0]) & 0xFF) == 6) {
         base[0x2dd0] = 1;
         return;
     }
@@ -1323,7 +1323,7 @@ void __declspec(noinline) func_8021D200(CModelDispMakeCrystal* self)
     u8 chArg = base[0x5f0];
     base[0xbdd] = 6;
     // Named call-result temp so the phase init lands after the extract.
-    int cres = (func_801392B4(chArg) & 0xFF);
+    int cres = (GetCollectedFlagByte(chArg) & 0xFF);
     u8 phase = 0;
     if (cres == 1) phase = 1;
     s32 rv = ml::MTRand::getInstance()->rand31();
@@ -1441,7 +1441,7 @@ void __declspec(noinline) func_8021D564(CModelDispMakeCrystal* self)
         // Delta drawn first, then the char-state lookup (retail order).
         s8 delta = (s8)((int)ml::MTRand::getInstance()->rand31() % 11);
         delta += 0x14;
-        int r56 = (u8)func_801392B4(base[0x5f0]);
+        int r56 = (u8)GetCollectedFlagByte(base[0x5f0]);
         if (r56 == 6) delta = (s8)((s8)delta * 2);
         s16 nv = *reinterpret_cast<s16*>(base + 0x2dc4) - (s8)delta;
         *reinterpret_cast<s16*>(base + 0x2dc4) = nv;
@@ -1470,7 +1470,7 @@ extern "C" void func_8021D6B4(void* selfp)
     u8* base = reinterpret_cast<u8*>(selfp);
     *reinterpret_cast<f32*>(base + 0x2dcc) = lbl_eu_806684D8;
     if ((u8)code80135FDC_getByte_64077() > 2) {
-        u8 charId = (u8)func_801392B4(base[0xbbc]);
+        u8 charId = (u8)GetCollectedFlagByte(base[0xbbc]);
         for (u8 i = 0; i < 7; i++) {
             if ((s8)base[0x13b8 + i] <= 0) continue;
             u16 val = func_8013A7D0(charId, base[0x13b8 + i]);
@@ -1966,7 +1966,7 @@ void __declspec(noinline) func_8021E014(CModelDispMakeCrystal* self)
             s32 idx = (s8)base[0x2dc1] + (s8)base[0x2dc2];
             u8* entries = *reinterpret_cast<u8**>(base + 0xe1c);
             u16 ev = *(u16*)(entries + ((u32)((u16)idx << 3)) + 2);
-            char* s = func_80136190(&lbl_eu_805090FC[0x38], &lbl_eu_805090FC[0x42], ev);
+            char* s = BdatTouchStringCell(&lbl_eu_805090FC[0x38], &lbl_eu_805090FC[0x42], ev);
             func_8022B90C(base + 0xe78, 0);
             func_8022B9B4(base + 0xe78, s, 0);
             func_8022BFC8(base + 0xe78, 1);
@@ -2026,7 +2026,7 @@ public:
 
 // Local mirror of the item record used by func_8021E5C0: 0x34 bytes, head
 // zeroed as a u32 + u16, then copied into the 0x34-stride step slots at
-// +0x13c0 by func_8015704C.
+// +0x13c0 by CItem_copyRecMasked.
 struct CMCItemData {
     u32 field_00;
     u8 field_04;
@@ -2057,7 +2057,7 @@ void __declspec(noinline) func_8021E5C0(CModelDispMakeCrystal* self)
     func_80158300(&item, 1);
     ((CItemImpl*)CItem_initItemImplInstances(&item))->vf1C((CItemData*)&item);
     ((CItemImpl*)CItem_initItemImplInstances(&item))->vf84((CItemData*)&item, 1);
-    func_801570A0(&item, entries[1]);
+    CItemData_callVf0C(&item, entries[1]);
     for (u8 i = 0; i < 4; i++) {
         ((CItemImpl*)CItem_initItemImplInstances(&item))->vf50((CItemData*)&item, i, 0);
         ((CItemImpl*)CItem_initItemImplInstances(&item))->vf68((CItemData*)&item, i, 0);
@@ -2067,7 +2067,7 @@ void __declspec(noinline) func_8021E5C0(CModelDispMakeCrystal* self)
     ((CItemImpl*)CItem_initItemImplInstances(&item))->vf68((CItemData*)&item, 0, *(u16*)(entries + ((u16)idx << 3) + 4));
     u8 n = ((u8*)self)[0x2dc0];
     ((u8*)self)[0x2dc0] = n + 1;
-    func_8015704C((u8*)self + n * 0x34 + 0x13c0, &item);
+    CItem_copyRecMasked((u8*)self + n * 0x34 + 0x13c0, &item);
     func_8021E840(entries, idx);
     func_8021E888(entries);
     ((u8*)self)[0x2dc1] = 0;
@@ -2099,7 +2099,7 @@ void func_8021E840(CModelDispMakeCrystal* self, u16 idx)
     param.m4 = 0;
     param.m6 = 0;
     param.m7 = 0;
-    func_80213E20(base + ((u32)idx << 3) + 2, &param);
+    copyCrystalBoxParam(base + ((u32)idx << 3) + 2, &param);
 }
 
 // Retail 0x802206E0: refresh the crystal slot entry list, then find the first
@@ -2125,7 +2125,7 @@ void func_8021E888(CModelDispMakeCrystal* self)
 // then clear their +9 flag bytes.
 // pass 2 by the byte at entry+9 (both ascending, early-exit when a pass
 // makes no swap). Swaps move the 8-byte param record at entry+2 through
-// the retail copy helpers (func_802165E8 reads, func_80213E20 writes).
+// the retail copy helpers (copyCrystalParamRet reads, copyCrystalBoxParam writes).
 void func_8021E8E4(CModelDispMakeCrystal* self)
 {
     u8 i;                          // pass-1 outer / pass-2 inner
@@ -2143,9 +2143,9 @@ void func_8021E8E4(CModelDispMakeCrystal* self)
             u16 vi1 = *(u16*)(p_next + 2);
             if ((u32)vi < (u32)vi1) {
                 CMCrySlotParam tA, tB, tC;
-                func_802165E8(&tA, p_cur);
-                func_80213E20(p_cur, func_802165E8(&tB, p_next));
-                func_80213E20(p_next, func_802165E8(&tC, &tA));
+                copyCrystalParamRet(&tA, p_cur);
+                copyCrystalBoxParam(p_cur, copyCrystalParamRet(&tB, p_next));
+                copyCrystalBoxParam(p_next, copyCrystalParamRet(&tC, &tA));
                 swapped = 1;
             }
         }
@@ -2161,9 +2161,9 @@ void func_8021E8E4(CModelDispMakeCrystal* self)
             u8* p_next = e2 + 2;
             if ((u32)e1[9] < (u32)p_next[7]) {
                 CMCrySlotParam tA, tB, tC;
-                func_802165E8(&tA, p_cur);
-                func_80213E20(p_cur, func_802165E8(&tB, p_next));
-                func_80213E20(p_next, func_802165E8(&tC, &tA));
+                copyCrystalParamRet(&tA, p_cur);
+                copyCrystalBoxParam(p_cur, copyCrystalParamRet(&tB, p_next));
+                copyCrystalBoxParam(p_next, copyCrystalParamRet(&tC, &tA));
                 swapped = 1;
             }
         }
@@ -2289,9 +2289,9 @@ void __declspec(noinline) func_8021ECD4(CModelDispMakeCrystal* self)
                 // Jump to gauge-tuning state: rebuild the confirmation UI.
                 base[0xbdd] = 0x1a;
                 base[0x2dd1] = 0;
-                char* a = (char*)func_80136190(&lbl_eu_805090FC[0x47], &lbl_eu_805090FC[0x52], 2);
-                char* b = (char*)func_80136190(&lbl_eu_805090FC[0x47], &lbl_eu_805090FC[0x52], 4);
-                char* c = (char*)func_80136190(&lbl_eu_805090FC[0x47], &lbl_eu_805090FC[0x52], 5);
+                char* a = (char*)BdatTouchStringCell(&lbl_eu_805090FC[0x47], &lbl_eu_805090FC[0x52], 2);
+                char* b = (char*)BdatTouchStringCell(&lbl_eu_805090FC[0x47], &lbl_eu_805090FC[0x52], 4);
+                char* c = (char*)BdatTouchStringCell(&lbl_eu_805090FC[0x47], &lbl_eu_805090FC[0x52], 5);
                 func_8022B90C(base + 0xe78, 2);
                 func_8022B9B4(base + 0xe78, a, 0);
                 func_8022BF6C(base + 0xe78, b, c);
@@ -2426,7 +2426,7 @@ void __declspec(noinline) func_8021F214(CModelDispMakeCrystal* self)
             base[0xbdd] = 0x1d;
             func_802A1500();
             func_80189C88();
-            func_80043C88();
+            CTaskGame_stopVision();
             func_80133E58(0x9, *reinterpret_cast<u32*>(base + 0xc), 0x0);
         } else {
             base[0xbdd] = 0x19;
@@ -2497,9 +2497,9 @@ void __declspec(noinline) func_8021F2D8(CModelDispMakeCrystal* self)
                 // Jump to gauge-tuning state: rebuild the confirmation UI.
                 ((u8*)self)[0xbdd] = 0x21;
                 ((u8*)self)[0x2dd1] = 0;
-                char* a = func_80136190(&lbl_eu_805090FC[0x47], &lbl_eu_805090FC[0x52], 2);
-                char* b = func_80136190(&lbl_eu_805090FC[0x47], &lbl_eu_805090FC[0x52], 4);
-                char* c = func_80136190(&lbl_eu_805090FC[0x47], &lbl_eu_805090FC[0x52], 5);
+                char* a = BdatTouchStringCell(&lbl_eu_805090FC[0x47], &lbl_eu_805090FC[0x52], 2);
+                char* b = BdatTouchStringCell(&lbl_eu_805090FC[0x47], &lbl_eu_805090FC[0x52], 4);
+                char* c = BdatTouchStringCell(&lbl_eu_805090FC[0x47], &lbl_eu_805090FC[0x52], 5);
                 func_8022B90C((u8*)self + 0xe78, 2);
                 func_8022B9B4((u8*)self + 0xe78, a, 0);
                 func_8022BF6C((u8*)self + 0xe78, b, c);
@@ -2601,7 +2601,7 @@ void __declspec(noinline) func_8021F764(CModelDispMakeCrystal* self)
             base[0xbdd] = 0x24;
             func_802A1500();
             func_80189C88();
-            func_80043C88();
+            CTaskGame_stopVision();
             func_80133E58(0x3, *reinterpret_cast<u32*>(base + 0xc), 0x0);
         } else {
             base[0xbdd] = 0x20;
@@ -2625,9 +2625,9 @@ void __declspec(noinline) func_8021F828(CModelDispMakeCrystal* self)
     u8* base = reinterpret_cast<u8*>(self);
     base[0xbdd] = 0x26;
     base[0x2dd1] = 0x0;
-    char* a = (char*)func_80136190(&lbl_eu_805090FC[0x57], &lbl_eu_805090FC[0x63], 0x3d);
-    char* b = (char*)func_80136190(&lbl_eu_805090FC[0x57], &lbl_eu_805090FC[0x63], 0x3e);
-    char* c = (char*)func_80136190(&lbl_eu_805090FC[0x57], &lbl_eu_805090FC[0x63], 0x3f);
+    char* a = (char*)BdatTouchStringCell(&lbl_eu_805090FC[0x57], &lbl_eu_805090FC[0x63], 0x3d);
+    char* b = (char*)BdatTouchStringCell(&lbl_eu_805090FC[0x57], &lbl_eu_805090FC[0x63], 0x3e);
+    char* c = (char*)BdatTouchStringCell(&lbl_eu_805090FC[0x57], &lbl_eu_805090FC[0x63], 0x3f);
     func_8022B90C(base + 0xe78, 2);
     func_8022B9B4(base + 0xe78, a, 0);
     func_8022BF6C(base + 0xe78, b, c);
@@ -2719,7 +2719,7 @@ extern "C" void func_8021FB68(CModelDispMakeCrystal* self, u8* obj)
 {
     CDeviceVI::waitForDrawDone();
     if (*reinterpret_cast<u32*>(obj) == 0) return;
-    func_8004B6BC(obj + 0x8, *reinterpret_cast<void**>(obj + 0x4));
+    releaseAnimObj(obj + 0x8, *reinterpret_cast<void**>(obj + 0x4));
     reinterpret_cast<CActParamAnim*>(obj + 0x8)->func_8004B114();
     func_80495E60(*reinterpret_cast<void**>(obj + 0x4));
     func_80495E60(reinterpret_cast<void*>(*reinterpret_cast<u32*>(obj + 0x0)));
@@ -2778,8 +2778,8 @@ extern "C" void func_8021FC28(CModelDispMakeCrystal* self, u8 arg4)
 extern "C" void func_8021FD44(CModelDispMakeCrystal* self)
 {
     u8* base = reinterpret_cast<u8*>(self);
-    u8 r31 = func_801392B4(base[0x5f0]);
-    u8 r30 = func_801392B4(base[0xbbc]);
+    u8 r31 = GetCollectedFlagByte(base[0x5f0]);
+    u8 r30 = GetCollectedFlagByte(base[0xbbc]);
     u16 val = func_8013A7D0(r31, r30);
     s16 iv = (s16)(lbl_eu_806684FC * val + lbl_eu_806684F8);
     *reinterpret_cast<f32*>(base + 0x2dcc) = lbl_eu_806684A4;
@@ -2791,7 +2791,7 @@ extern "C" void func_8021FD44(CModelDispMakeCrystal* self)
         if (k >= code80135FDC_getByte_64077()) {
             base[0x13b8 + k] = 0;
         } else {
-            base[0x13b8 + k] = func_801392B4(k);
+            base[0x13b8 + k] = GetCollectedFlagByte(k);
         }
     }
     base[0x13b8 + (s8)base[0x5f0]] = 0;
@@ -2891,7 +2891,7 @@ void func_80220128(CModelDispMakeCrystal* self)
         ml::MTRand::getInstance();
         int rv8 = rand31__Q22ml6MTRandFv();
         int d = (s8)(rv8 - (rv8 / 8) * 8) + 3;
-        u8 c = func_801392B4(self->field_5F0);
+        u8 c = GetCollectedFlagByte(self->field_5F0);
         if (c == 2) {
             ml::MTRand::getInstance();
             d += (s8)((s8)(rand31__Q22ml6MTRandFv() % 5) + 1);
@@ -2921,7 +2921,7 @@ void func_80220128(CModelDispMakeCrystal* self)
             }
             ml::MTRand::getInstance();
             int d = (s8)(rand31__Q22ml6MTRandFv() % 5) + 1;
-            u8 c = func_801392B4(self->field_5F0);
+            u8 c = GetCollectedFlagByte(self->field_5F0);
             if (c == 7) {
                 ml::MTRand::getInstance();
                 d += (s8)((s8)(rand31__Q22ml6MTRandFv() % 5) + 1);
@@ -2943,7 +2943,7 @@ void func_80220128(CModelDispMakeCrystal* self)
     case 2: {
         // Gauge-tune: refresh the cylinder gauge fill with a char-dependent
         // constant, then flush the effect list.
-        u8 c = func_801392B4(self->field_5F0);
+        u8 c = GetCollectedFlagByte(self->field_5F0);
         if (c == 5) {
             reinterpret_cast<CMCCylinderGauge*>((u8*)self + 0xbec)->addFillValue(
                 lbl_eu_80668500);
@@ -3034,38 +3034,38 @@ void func_802203D8(void* selfp)
     switch (tier) {
     case 1: {
         const char* t = &lbl_eu_805090FC[0];
-        first = func_801361E8(reinterpret_cast<u32>(g2), t + 0x71, n);
-        second = func_801361E8(reinterpret_cast<u32>(g2), t + 0x79, n);
+        first = BdatGetU8Direct(reinterpret_cast<u32>(g2), t + 0x71, n);
+        second = BdatGetU8Direct(reinterpret_cast<u32>(g2), t + 0x79, n);
         break;
     }
     case 2: {
         const char* t = &lbl_eu_805090FC[0];
-        first = func_801361E8(reinterpret_cast<u32>(g2), t + 0x81, n);
-        second = func_801361E8(reinterpret_cast<u32>(g2), t + 0x89, n);
+        first = BdatGetU8Direct(reinterpret_cast<u32>(g2), t + 0x81, n);
+        second = BdatGetU8Direct(reinterpret_cast<u32>(g2), t + 0x89, n);
         break;
     }
     case 3: {
         const char* t = &lbl_eu_805090FC[0];
-        first = func_801361E8(reinterpret_cast<u32>(g2), t + 0x91, n);
-        second = func_801361E8(reinterpret_cast<u32>(g2), t + 0x99, n);
+        first = BdatGetU8Direct(reinterpret_cast<u32>(g2), t + 0x91, n);
+        second = BdatGetU8Direct(reinterpret_cast<u32>(g2), t + 0x99, n);
         break;
     }
     case 4: {
         const char* t = &lbl_eu_805090FC[0];
-        first = func_801361E8(reinterpret_cast<u32>(g2), t + 0xa1, n);
-        second = func_801361E8(reinterpret_cast<u32>(g2), t + 0xa9, n);
+        first = BdatGetU8Direct(reinterpret_cast<u32>(g2), t + 0xa1, n);
+        second = BdatGetU8Direct(reinterpret_cast<u32>(g2), t + 0xa9, n);
         break;
     }
     case 5: {
         const char* t = &lbl_eu_805090FC[0];
-        first = func_801361E8(reinterpret_cast<u32>(g2), t + 0xb1, n);
-        second = func_801361E8(reinterpret_cast<u32>(g2), t + 0xb9, n);
+        first = BdatGetU8Direct(reinterpret_cast<u32>(g2), t + 0xb1, n);
+        second = BdatGetU8Direct(reinterpret_cast<u32>(g2), t + 0xb9, n);
         break;
     }
     case 6: {
         const char* t = &lbl_eu_805090FC[0];
-        first = func_801361E8(reinterpret_cast<u32>(g2), t + 0xc1, n);
-        second = func_801361E8(reinterpret_cast<u32>(g2), t + 0xc9, n);
+        first = BdatGetU8Direct(reinterpret_cast<u32>(g2), t + 0xc1, n);
+        second = BdatGetU8Direct(reinterpret_cast<u32>(g2), t + 0xc9, n);
         break;
     }
     }
@@ -3089,7 +3089,7 @@ void func_802203D8(void* selfp)
     for (u8 k = 0; k < copyCount; k++) {
         u8 stepN = base[0x2dc0];
         base[0x2dc0] = (u8)(stepN + 1);
-        func_8015704C(base + 0x13c0 + stepN * 0x34, &item);
+        CItem_copyRecMasked(base + 0x13c0 + stepN * 0x34, &item);
     }
     func_8021E840(entries, 0);
     func_8021E888(entries);
@@ -3171,7 +3171,7 @@ void func_8022077C(CModelDispMakeCrystal* self)
 // Retail 0x802227AC: crystal-item spawn dispatcher - picks a crystal object
 // by the selection code (jumptable on sel), computes a position offset
 // (random sign for the random cases, char-dependent slot for others), and
-// spawns it through the vision helper func_8004392C.
+// spawns it through the vision helper CTaskGame_openVision.
 extern "C" void func_80220954(void* selfp, int sel, u8 chIn)
 {
     u8* base = reinterpret_cast<u8*>(selfp);
@@ -3200,7 +3200,7 @@ extern "C" void func_80220954(void* selfp, int sel, u8 chIn)
         ml::MTRand::getInstance();
         r = rand31__Q22ml6MTRandFv();
         s = (s8)(((r & 1) ^ (r >> 31)) - (r >> 31));
-        ch = func_801392B4(base[0x5f0 + s * 0x5cc]);
+        ch = GetCollectedFlagByte(base[0x5f0 + s * 0x5cc]);
         ml::MTRand::getInstance();
         r = rand31__Q22ml6MTRandFv();
         s = (s8)(((r & 1) ^ (r >> 31)) - (r >> 31));
@@ -3217,7 +3217,7 @@ extern "C" void func_80220954(void* selfp, int sel, u8 chIn)
         ml::MTRand::getInstance();
         r = rand31__Q22ml6MTRandFv();
         s = (s8)(((r & 1) ^ (r >> 31)) - (r >> 31));
-        ch = func_801392B4(base[0x5f0 + s * 0x5cc]);
+        ch = GetCollectedFlagByte(base[0x5f0 + s * 0x5cc]);
         ml::MTRand::getInstance();
         r = rand31__Q22ml6MTRandFv();
         s = (s8)(((r & 1) ^ (r >> 31)) - (r >> 31));
@@ -3234,7 +3234,7 @@ extern "C" void func_80220954(void* selfp, int sel, u8 chIn)
         ml::MTRand::getInstance();
         r = rand31__Q22ml6MTRandFv();
         s = (s8)(((r & 1) ^ (r >> 31)) - (r >> 31));
-        ch = func_801392B4(base[0x5f0 + s * 0x5cc]);
+        ch = GetCollectedFlagByte(base[0x5f0 + s * 0x5cc]);
         ml::MTRand::getInstance();
         r = rand31__Q22ml6MTRandFv();
         s = (s8)(((r & 1) ^ (r >> 31)) - (r >> 31));
@@ -3244,14 +3244,14 @@ extern "C" void func_80220954(void* selfp, int sel, u8 chIn)
         ml::MTRand::getInstance();
         r = rand31__Q22ml6MTRandFv();
         s = (s8)(((r & 1) ^ (r >> 31)) - (r >> 31));
-        ch = func_801392B4(base[0x5f0 + s * 0x5cc]);
+        ch = GetCollectedFlagByte(base[0x5f0 + s * 0x5cc]);
         ml::MTRand::getInstance();
         r = rand31__Q22ml6MTRandFv();
         s = (s8)(((r & 1) ^ (r >> 31)) - (r >> 31));
         off = (u16)(0xe16 - (s == 1));
         break;
     }
-    func_8004392C((u8)ch, off, (u32)getHandleMEM2__Q23mtl10MemManagerFv(), 2, 1,
+    CTaskGame_openVision((u8)ch, off, (u32)getHandleMEM2__Q23mtl10MemManagerFv(), 2, 1,
                   lbl_eu_806684A0);
 }
 
@@ -3275,17 +3275,17 @@ void func_80220C34(CModelDispMakeCrystal* self)
         *reinterpret_cast<void**>(base + 0x20) =
             func_80495E8C(*reinterpret_cast<void**>(base + 0xc),
                           *reinterpret_cast<u32*>(base + 0x28), -1, 1);
-        func_80485684(*reinterpret_cast<void**>(base + 0x20), 1);
+        simSetLeafFlag4000(*reinterpret_cast<void**>(base + 0x20), 1);
         func_80482DF4(*reinterpret_cast<void**>(base + 0x20), 1);
         reinterpret_cast<CScnItemModel*>(*reinterpret_cast<void**>(base + 0x20))->vfunc48(
             *reinterpret_cast<f32*>(base + 0xbe0));
-        void* p1 = func_8048315C(*reinterpret_cast<void**>(base + 0x20));
+        void* p1 = simGetLeafActData(*reinterpret_cast<void**>(base + 0x20));
         u8* s1 = reinterpret_cast<u8*>(lbl_eu_80576658);
         u8* o1 = reinterpret_cast<u8*>(p1);
         *reinterpret_cast<u32*>(o1 + 0x0) = *reinterpret_cast<u32*>(s1 + 0x0);
         *reinterpret_cast<u32*>(o1 + 0x4) = *reinterpret_cast<u32*>(s1 + 0x4);
         *reinterpret_cast<u32*>(o1 + 0x8) = *reinterpret_cast<u32*>(s1 + 0x8);
-        void* p2 = func_8048315C(*reinterpret_cast<void**>(base + 0x20));
+        void* p2 = simGetLeafActData(*reinterpret_cast<void**>(base + 0x20));
         u8* s2 = reinterpret_cast<u8*>(lbl_eu_80576664);
         u8* o2 = reinterpret_cast<u8*>(p2);
         *reinterpret_cast<u32*>(o2 + 0xc) = *reinterpret_cast<u32*>(s2 + 0x0);
@@ -3338,11 +3338,11 @@ void func_80220E14(CModelDispMakeCrystal* self, CMCrystalDispSub* sub)
     filters[2] = filt->v2;
 
     CMCryListHolder holder;
-    func_80043D90(&holder);
+    CTaskGame_enumListCtor(&holder);
 
     // Select the crystal list for the current char state and check it's loaded.
-    func_800F4A98(func_80043F18(&holder), filters[(s8)sub->field_5ac], 0);
-    if (*reinterpret_cast<u32*>(reinterpret_cast<u8*>(func_80043F18(&holder)) + 0x620) == 0) {
+    func_800F4A98(CTaskGame_enumListGet(&holder), filters[(s8)sub->field_5ac], 0);
+    if (*reinterpret_cast<u32*>(reinterpret_cast<u8*>(CTaskGame_enumListGet(&holder)) + 0x620) == 0) {
         func_8021FB68(self, reinterpret_cast<u8*>(sub));
         __dt__80043E88(&holder, -1);
         return;
@@ -3350,7 +3350,7 @@ void func_80220E14(CModelDispMakeCrystal* self, CMCrystalDispSub* sub)
 
     // Grab the first crystal object from the enum list.
     void* cfMove = *reinterpret_cast<void**>(
-        reinterpret_cast<u8*>(func_800F6EC0(func_80043F18(&holder), 0)) + 4);
+        reinterpret_cast<u8*>(func_800F6EC0(CTaskGame_enumListGet(&holder), 0)) + 4);
     if (cfMove == nullptr) {
         func_8021FB68(self, reinterpret_cast<u8*>(sub));
         __dt__80043E88(&holder, -1);
@@ -3388,9 +3388,9 @@ void func_80220E14(CModelDispMakeCrystal* self, CMCrystalDispSub* sub)
         sub->mCrystalVals[1] =
             (reinterpret_cast<cf::CfObject*>(&actor->move)->CfObject_getSlotBits(1) >> 12) &
             0x3ff;
-        s16 be = func_800BE954(&actor->move);
+        s16 be = CfObjectMove_getSubB0FieldA(&actor->move);
         CMCCryParamSlot* params =
-            reinterpret_cast<CMCCryParamSlot*>(func_80062C28(be, 0));
+            reinterpret_cast<CMCCryParamSlot*>(CfRes_getPcGridEntry(be, 0));
         // Crystal attachment points 2..5; do-while keeps the retail loop shape.
         u8 idx = 2;
         do {
@@ -3406,16 +3406,16 @@ void func_80220E14(CModelDispMakeCrystal* self, CMCrystalDispSub* sub)
         u32 handle = sub->field_5a4;
         sub->field_04 = func_800584B8(objs->field_0c, handle, &lbl_eu_805090FC[0xef]);
         reinterpret_cast<CActParamAnim*>(reinterpret_cast<u8*>(sub) + 0x8)->func_8004B114();
-        func_8004B624(reinterpret_cast<u8*>(sub) + 0x8, sub->field_00, sub->field_04, handle);
+        attachAnimObj(reinterpret_cast<u8*>(sub) + 0x8, sub->field_00, sub->field_04, handle);
         sub->field_14 |= 0x160;
         func_80200388(reinterpret_cast<u8*>(sub) + 0x8,
                       self ? reinterpret_cast<void*>(reinterpret_cast<u8*>(self) + 4)
                            : reinterpret_cast<void*>(self));
-        u32* posA = reinterpret_cast<u32*>(func_8048315C(sub->field_00));
+        u32* posA = reinterpret_cast<u32*>(simGetLeafActData(sub->field_00));
         posA[0] = sub->field_5b0;
         posA[1] = sub->field_5b4;
         posA[2] = sub->field_5b8;
-        u32* posB = reinterpret_cast<u32*>(func_8048315C(sub->field_00));
+        u32* posB = reinterpret_cast<u32*>(simGetLeafActData(sub->field_00));
         posB[3] = sub->field_5bc;
         posB[4] = sub->field_5c0;
         posB[5] = sub->field_5c4;
@@ -3441,7 +3441,7 @@ void func_802211CC(CModelDispMakeCrystal* self, u8* subp)
     CMCrystalDispSub* sub = reinterpret_cast<CMCrystalDispSub*>(subp);
     if (sub->field_00 != 0) return;
     func_8009ECB0();
-    u8 ch = (u8)func_801392B4((u8)sub->field_5ac);
+    u8 ch = (u8)GetCollectedFlagByte((u8)sub->field_5ac);
     if (ch == 0) return;
     u8* data = reinterpret_cast<u8*>(func_8009EC9C(ch));
     sub->mCrystalVals[1] = func_80141E90(ch, (s16)(u16)*(u16*)(data + 0xe), 1, 0);
@@ -3463,10 +3463,10 @@ void func_802211CC(CModelDispMakeCrystal* self, u8* subp)
                 u8* slot = subp + 0x568 + (i - 1) * 0xc;
                 if (*reinterpret_cast<u32*>(slot) == 0) {
                     anyLoaded = 0;
-                    if (func_80062A00() != 0) {
+                    if (CfRes_isGridLoadIdle() != 0) {
                         slot[4] = 1;
                         *reinterpret_cast<u32*>(slot) =
-                            reinterpret_cast<u32>(func_80062AD8(*(u32*)(subp + 0x544 + i * 4), &outTag));
+                            reinterpret_cast<u32>(CfRes_tryResolveToken(*(u32*)(subp + 0x544 + i * 4), &outTag));
                         if (outTag == 0xffffffff) {
                             syncFieldData__Q22cf13CfGameManagerFv(ch, false);
                         }
@@ -3495,7 +3495,7 @@ void func_802211CC(CModelDispMakeCrystal* self, u8* subp)
         sub->field_00 = func_80495E8C(
             *reinterpret_cast<void**>(reinterpret_cast<u8*>(self) + 0xc),
             *reinterpret_cast<u32*>(subp + 0x568), -1, 1);
-        func_80485684(sub->field_00, 1);
+        simSetLeafFlag4000(sub->field_00, 1);
         func_80482DF4(sub->field_00, 1);
         if (sub->field_00 == 0) return;
         func_804831C4(sub->field_00, *reinterpret_cast<void**>(subp + 0x574));
@@ -3507,17 +3507,17 @@ void func_802211CC(CModelDispMakeCrystal* self, u8* subp)
             *reinterpret_cast<void**>(reinterpret_cast<u8*>(self) + 0xc), f5a4,
             &lbl_eu_805090FC[0xef]);
         reinterpret_cast<CActParamAnim*>(subp + 0x8)->func_8004B114();
-        func_8004B624(subp + 0x8, sub->field_00, sub->field_04, f5a4);
+        attachAnimObj(subp + 0x8, sub->field_00, sub->field_04, f5a4);
         sub->field_14 |= 0x160;
         func_80200388(
             subp + 0x8,
             self ? reinterpret_cast<void*>(reinterpret_cast<u8*>(self) + 4)
                  : reinterpret_cast<void*>(self));
-        u32* g0 = reinterpret_cast<u32*>(func_8048315C(sub->field_00));
+        u32* g0 = reinterpret_cast<u32*>(simGetLeafActData(sub->field_00));
         g0[0] = sub->field_5b0;
         g0[1] = sub->field_5b4;
         g0[2] = sub->field_5b8;
-        u32* g1 = reinterpret_cast<u32*>(func_8048315C(sub->field_00));
+        u32* g1 = reinterpret_cast<u32*>(simGetLeafActData(sub->field_00));
         g1[3] = sub->field_5bc;
         g1[4] = sub->field_5c0;
         g1[5] = sub->field_5c4;
@@ -3792,9 +3792,9 @@ void func_80221B90(CModelDispMakeCrystal* self, u8 r4, u8 r5)
     func_80297928(base + 0xecc);
     void* m = func_80496264(*reinterpret_cast<void**>(base + 0xc), -1);
     nw4r::math::VEC3 v1;
-    func_8004B60C(&v1, lbl_eu_806684A4, lbl_eu_806684A0, lbl_eu_806684A4);
+    writeVec3f(&v1, lbl_eu_806684A4, lbl_eu_806684A0, lbl_eu_806684A4);
     nw4r::math::VEC3 v2;
-    func_8004B60C(&v2, lbl_eu_806684A4, lbl_eu_80668504, lbl_eu_806684CC);
+    writeVec3f(&v2, lbl_eu_806684A4, lbl_eu_80668504, lbl_eu_806684CC);
     func_8049EFF8(m, &v2, &v1);
     for (u8 j = 0; j < 2; j++) {
         for (u8 i = 0; i < 6; i++) {
@@ -3809,8 +3809,8 @@ void func_80221B90(CModelDispMakeCrystal* self, u8 r4, u8 r5)
     base[0xbbc] = r5;
     base[0x60c] = 0;
     base[0xbd8] = 0;
-    func_801392B4(r4);
-    func_801392B4(r5);
+    GetCollectedFlagByte(r4);
+    GetCollectedFlagByte(r5);
     func_8009D018(0xbd, 0);
     func_8009D018(0xbf, 0);
 }
@@ -3861,8 +3861,8 @@ void CModelDispMakeCrystal::destroyCrystalDispThunk8() { ((void(*)(void*))__dt__
 
 void sinit_80221DDC() {
     initCrystalData(lbl_eu_80664718);
-    func_8004B60C(lbl_eu_80576658, lbl_eu_80668508, lbl_eu_806684AC, lbl_eu_8066850C);
-    func_8004B60C(lbl_eu_80576664, lbl_eu_806684A4, scaleByGlobal(lbl_eu_80668510[0]), lbl_eu_806684A4);
+    writeVec3f(lbl_eu_80576658, lbl_eu_80668508, lbl_eu_806684AC, lbl_eu_8066850C);
+    writeVec3f(lbl_eu_80576664, lbl_eu_806684A4, scaleByGlobal(lbl_eu_80668510[0]), lbl_eu_806684A4);
 }
 
 
@@ -3925,9 +3925,9 @@ const void* lbl_eu_80535E70[50] = {
     (void*)WorkEvent22__10IWorkEventFv, (void*)WorkEvent23__10IWorkEventFv, (void*)WorkEvent24__10IWorkEventFv, (void*)WorkEvent25__10IWorkEventFv, // +0xE0+60
     (void*)WorkEvent26__10IWorkEventFv, (void*)WorkEvent27__10IWorkEventFv, (void*)WorkEvent28__10IWorkEventFv, (void*)WorkEvent29__10IWorkEventFv, // +0xE0+70
     (void*)WorkEvent30__10IWorkEventFv, (void*)WorkEvent31__10IWorkEventFv, (void*)lbl_eu_806627E8, (void*)0xFFFFFFFC, // +0xE0+80
-(void*)destroyCrystalDispThunk4__21CModelDispMakeCrystalFv, (void*)func_80054A20, (void*)func_800550D8, (void*)func_800550DC, // +0xE0+90
-    (void*)func_800550E0, (void*)func_800550E4, (void*)func_800554D8, (void*)func_800554D0, // +0xE0+A0
-(void*)func_800554D4, (void*)lbl_eu_806627E8, (void*)0xFFFFFFF8, (void*)destroyCrystalDispThunk8__21CModelDispMakeCrystalFv, // +0xE0+B0
+(void*)destroyCrystalDispThunk4__21CModelDispMakeCrystalFv, (void*)actParamNop0, (void*)actParamNop1, (void*)actParamNop2, // +0xE0+90
+    (void*)actParamNop3, (void*)actParamNop4, (void*)actParamNop7, (void*)actParamNop5, // +0xE0+A0
+(void*)actParamNop6, (void*)lbl_eu_806627E8, (void*)0xFFFFFFF8, (void*)destroyCrystalDispThunk8__21CModelDispMakeCrystalFv, // +0xE0+B0
     (void*)releaseCrystalDispThunk__21CModelDispMakeCrystalFv, (void*)func_80221D58__FPvUl, // +0xE0+C0
 };
 

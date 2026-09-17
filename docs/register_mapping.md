@@ -295,7 +295,7 @@ when both webs are in the same phase** (both low-degree). When one is high-degre
 (deferred to spill) and the other low-degree, birth order is ignored and the
 reuse is fixed — this is `AXFXChorusExpInit` (`i` reusing `j`'s r28),
 `bta_dm_inq_cmpl` (`p_buf` reusing the found-flag's r27), `btm_inq_db_reset`,
-`SFUO_Create`, `func_8003E528`, `__wudDeleteHandler`, `func_80164838`. The lever
+`SFUO_Create`, `getPartyHandle`, `__wudDeleteHandler`, `func_80164838`. The lever
 is to change a web's **degree** — split a long web, shorten its live range across
 a call, or add/remove a keeping-use — so it crosses the `available_colors`
 boundary, not to reorder declarations.

@@ -218,7 +218,7 @@ void CMenuSelectShop::Move() {
     if (isFlag01Set__9CTaskGameFv(getInstance__9CTaskGameFv()) ||
         (lbl_eu_80663E28 & 0x200000))
         return;
-    if (func_8013BE50() == 0) return;
+    if (IsMenuState621F0() == 0) return;
     if (func_8018C180() || func_8018B398())
         return;
 
@@ -386,7 +386,7 @@ void CMenuSelectShop::cbRenderBefore() {
     if (isFlag01Set__9CTaskGameFv(getInstance__9CTaskGameFv()) ||
         (lbl_eu_80663E28 & 0x200000))
         return;
-    if (func_8013BE50() == 0) return;
+    if (IsMenuState621F0() == 0) return;
     GXSetZMode(GX_FALSE, GX_NEVER, GX_FALSE);
     // Raw-storage DrawInfo built/destroyed via the C-ABI ct/dt calls so the
     // scope-exit destructor is not auto-emitted (CMenuShopBuy scheme).

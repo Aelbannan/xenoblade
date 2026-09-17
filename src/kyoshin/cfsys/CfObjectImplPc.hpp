@@ -836,7 +836,7 @@ public:
     u8 field_45B0;                   // 0x45B0
 };
 
-// Enum list returned by func_80043F18: element count at +0x620.
+// Enum list returned by CTaskGame_enumListGet: element count at +0x620.
 struct CfEnumList {
     u8 _pad00[0x620];                // 0x00-0x61F
     u32 field_620;                   // 0x620
@@ -977,9 +977,9 @@ extern "C" u32 getQueuedFileEventCount__Q22cf13CfGameManagerFv(void); // canonic
 void func_800CA948(u8* self);
 void func_8015BB3C(u8* a, u8* b, u8* c);
 void func_802A0B8C(u8* self, u8* owner);
-u32 func_80061FE8();
-char* func_800BEDC4(u8* move, int index);
-char* func_800BED80(u8* move, int index);
+u32 CfRes_getHeapHandle();
+char* CfObjectMove_getBdatNameCol11(u8* move, int index);
+char* CfObjectMove_getBdatNameCol7(u8* move, int index);
 void* func_8016FE34(void* src); // canonical void* form (CAIAction/CtrlPc owners)
 // Enum-list helper family: single canonical extern "C" void* forms
 // (CVision.hpp owner) so TUs including several of these headers see one
@@ -987,8 +987,8 @@ void* func_8016FE34(void* src); // canonical void* form (CAIAction/CtrlPc owners
 void* func_800F6EAC(void* list, u32 idx); // canonical void* return (CVision.hpp owner)
 void func_800F6ED0(void* list, void* value);
 void* func_800F6E08(void* list);
-void func_80043D90(void* holder);
-void* func_80043F18(void* holder);
+void CTaskGame_enumListCtor(void* holder);
+void* CTaskGame_enumListGet(void* holder);
 void func_800F4A98(void* list, u32 type, u32 filter);
 void __dt__80043E88(void* holder, int flag);
 void func_800AA318(u32 packed, u32* out0, u32* out1, u32* out2, u32* out3);
@@ -998,13 +998,13 @@ int func_80145F78(int id);
 int func_80145C00(int val);
 bool func_802799F0(void* chain, void* obj);
 bool func_80260264(void* obj, s32 idx, s32* out);
-void func_800BF29C(void* sub, u32 a, f32 b, u32 c, f32 d, u32 e);
-void func_800BF2B0(void* sub, u32 a, u32 b);
-// func_800BE12C is TU-local in CfObjectImplPc.cpp (same (void*,u32,u32,s32,u32)
+void CfObjectMove_relaySubB0Slot54(void* sub, u32 a, f32 b, u32 c, f32 d, u32 e);
+void CfObjectMove_relaySubB0Slot58(void* sub, u32 a, u32 b);
+// CfObjectMove_setAnimModeArgs is TU-local in CfObjectImplPc.cpp (same (void*,u32,u32,s32,u32)
 // form as below): the shared CfObjectMove.hpp owner decl (u8*,int x4) is a
 // distinct overload here (MWCC 10197), and only this TU uses it.
-void func_8004CEF8(void* obj, u32 val); // canonical u32 form (CActParamAnimGame.hpp/ImplMove.hpp)
-void func_802A300C(void* obj);
+void setAnimCount(void* obj, u32 val); // canonical u32 form (CActParamAnimGame.hpp/ImplMove.hpp)
+void CCharVoiceMan_EnqueuePcStateVoice(void* obj);
 void func_800EC8FC(void* mgr, void* obj, void* evtCopy, s32 flag);
 void func_800CB454(cf::CfObjectImplPc* self, CfObjectImplPcEvt* evt);
 void func_8018C820(void* obj, int value);
@@ -1013,11 +1013,11 @@ void func_801B248C(int value);
 void func_800CAB30(cf::CfObjectImplPc* self, CfObjectImplPcEvt* evt);
 // (func_800F3970: single shared import lives on CBattleManagerApi.hpp.)
 void func_800CD5DC(void* self, u32 a, u32 b, u32 c, u32 d, u32 e);
-int func_8004B9B8(void* obj);
+int getAnimChain(void* obj);
 // func_8004B9D4 is TU-local in CfObjectImplPc.cpp (same 5-arg form as below):
 // the shared CfObjectMove.hpp decl is a 4-arg overload (MWCC 10197).
 void func_801BFE8C(u32 a, u32 b, u32 c);
-void func_802A3074(void* obj);
+void CCharVoiceMan_EnqueuePcActionVoice(void* obj);
 void func_800CC964(void);
 void func_800983B8(void* a, int b);
 unsigned int addTableValueWithClamp__Q22cf13CfGameManagerFv(unsigned int a,
@@ -1026,7 +1026,7 @@ unsigned int addTableValueWithClamp__Q22cf13CfGameManagerFv(unsigned int a,
 int func_80260518(void* obj, int id, u32* outW, f32* outF);
 void func_800EA9A8(void* mgr, void* obj, void* arg, int a, int b);
 void func_800D81A8(int a, void* obj, int c);
-void func_802A2A74(void* a, void* b);
+void CCharVoiceMan_EnqueueGaugeResultVoice(void* a, void* b);
 void func_802809C8(void);
 void* func_80149154(void* obj, int id);
 void func_80133F48(int a, float b);
@@ -1082,7 +1082,7 @@ extern "C" void func_800E9B54(void* mgr, void* obj, u32 a, u32 b);
 extern "C" void func_800D9CA0(void* mgr, void* obj);
 extern "C" void* func_800EA444(void* mgr);
 extern "C" int func_801B1CCC(int idx);
-extern "C" int func_800B8C78(int id);
+extern "C" int findObjB48ById(int id);
 extern "C" void func_80084654__Q22cf13CfGameManagerFv(int flag);
 extern "C" int func_8025FDB8(void* obj, u32 idx);
 extern "C" f32 func_80260010(void* obj, u32 idx);

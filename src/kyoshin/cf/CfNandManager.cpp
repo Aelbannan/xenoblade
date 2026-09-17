@@ -544,12 +544,12 @@ extern "C" void func_8025ECE4(void* src, void* dst);
 extern "C" void queueEventId__Q22cf13CfGameManagerFv(u32 value);
 extern "C" void func_8006A814(u32* self);
 extern "C" void func_8006A028(f32 v);
-extern "C" void func_8006CBEC(void* v, f32 f);
+extern "C" void cfCam_storeFollowD(void* v, f32 f);
 extern "C" void func_8016E100(void* p);
 extern "C" void fadeOutGameEffects__Q22cf13CfGameManagerFv();
 extern "C" void func_80207D2C(u8* rec);
-extern "C" void func_800B72DC();
-extern "C" CfNandNameRoot* func_800B6CA0();
+extern "C" void rebuildTboxPool();
+extern "C" CfNandNameRoot* getReslistC48();
 extern "C" void updateConfig__FPUc(u8* src, int mode);
 extern "C" u32 func_8009CF8C(u32 resourceId);
 extern "C" void setEventCounterA__Q22cf13CfGameManagerFv(u32 value);
@@ -678,8 +678,8 @@ inline static void expandWorkEntry(CfNandWorkEntrySrc* src, CfNandWorkEntryDst* 
 
 inline static void restoreNameTable(CfNandSaveNameTable* names) {
     CfNandSaveNameEntry cur;
-    func_800B72DC();
-    CfNandNameRoot* root = func_800B6CA0();
+    rebuildTboxPool();
+    CfNandNameRoot* root = getReslistC48();
     u8* rec = (u8*)names;
     u8* recF = (u8*)names + 4;
     for (s32 i = 0; i < names->count; i++) {
@@ -765,7 +765,7 @@ extern "C" int func_8023D3D8(CfNandSaveImage* img) {
         CfNandPartySnapshot* snapDst = (CfNandPartySnapshot*)lbl_eu_80576CC0;
         *snapDst = image->snapshot;
         memcpy(lbl_eu_806641B8, image->itemBlob, 0x12120);
-        func_8006CBEC(&image->camBlock, image->camBlock.f0C);
+        cfCam_storeFollowD(&image->camBlock, image->camBlock.f0C);
         func_8016E100(&image->wthrBlock);
         fadeOutGameEffects__Q22cf13CfGameManagerFv();
         func_80207D2C(image->mineRegion);
@@ -882,7 +882,7 @@ extern "C" int func_8023D3D8(CfNandSaveImage* img) {
     *(u16*)(item + 0x1211A) = (u16)*(u32*)(blob + 0x157CC);
     *(u16*)(item + 0x1211C) = (u16)*(u32*)(blob + 0x157CC);
 
-    func_8006CBEC(&v1->camBlock, v1->camBlock.f0C);
+    cfCam_storeFollowD(&v1->camBlock, v1->camBlock.f0C);
     func_8016E100(&v1->wthrBlock);
     setMasterVolume__Fff(v1->sndArea.f00, lbl_eu_806686E0);
     func_801895F4(v1->sndArea.f04);

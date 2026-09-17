@@ -469,7 +469,7 @@ int func_80164A50(const char* path, int arg1, int arg2) {
     }
     if (getFileSize__11CDeviceFileFPCc(path, 1) < 0) return 0;
     if ((lbl_eu_80663E28 & 0x01000000) == 0) {
-        func_80043BC4();
+        CTaskGame_resetStream();
     }
     lbl_eu_80664240->field_0x1BC = 0;
     lbl_eu_80664240->field_0xB0 =
@@ -600,7 +600,7 @@ void func_80164DB8() {
     if (mgr->field_0xB0 == 0) return;
     func_80168484(1);
     if ((lbl_eu_80663E28 & 0x01000000) == 0) {
-        func_80043BC4();
+        CTaskGame_resetStream();
     }
     lbl_eu_80664240->field_0x1D0 = 0;
     lbl_eu_80664240->field_0x6C &= ~0x10;
@@ -724,7 +724,7 @@ void cf::CTaskREvent::Term() {
         this->field_0x1C4 = 0;
     }
     if ((lbl_eu_80663E28 & 0x01000000) == 0) {
-        func_80043BC4();
+        CTaskGame_resetStream();
     }
     // Re-read the global (not the local) after the manager section: the calls
     // above may have replaced the manager object.
@@ -787,7 +787,7 @@ void cf::CTaskREvent::Move() {
     }
     if (active != 0 && (lbl_eu_80663E28 & 0x01000000) == 0) {
         // Keep the screen alive during an active event.
-        func_80043B04(lbl_eu_8066762C * (float)(s32)lbl_eu_80662384);
+        CTaskGame_setStreamVol(lbl_eu_8066762C * (float)(s32)lbl_eu_80662384);
     }
 
     // CRI movie controller upkeep: drop a finished player, tick a live one.
@@ -955,10 +955,10 @@ void cf::CTaskREvent::Move() {
     func_804962A8(reinterpret_cast<u8*>(lbl_eu_80663E14), playing);
 
     // Frame-time tracking: watch for stalls while the game manager idles.
-    s32 cur = func_80043B54();
+    s32 cur = CTaskGame_getStreamPos();
     func_8016C6EC(0);
     if (cur >= 0) {
-        if (func_80043BA4() == 0 && (this->field_0x6C & 0x100) == 0 &&
+        if (CTaskGame_isStreamPaused() == 0 && (this->field_0x6C & 0x100) == 0 &&
             (lbl_eu_80663E28 & 0x01000000) == 0 &&
             cf::CfGameManager::isSceneLoading() == 0) {
             if (this->field_0x1F0 == (u32)cur) {
@@ -1260,7 +1260,7 @@ void cf::CTaskREvent::cbRenderBefore() {
 void func_801662E8(cf::CTaskREvent* self) {
     if (CGame::getInstance() == 0) return;
     CGame::setTaskManagerUpdateCount(1);
-    if (func_80043D68() == 0) return;
+    if (CTaskGame_playTimeGate() == 0) return;
     if (self->field_0xB0 == 0) return;
     // The 800829B8 check and the global bit test form an &&-goto chain:
     // retail emits bne end for the first disjunct and branch-over-branch
@@ -1273,7 +1273,7 @@ void func_801662E8(cf::CTaskREvent* self) {
 end:
     return;
 body:
-    int v = func_80043B54();
+    int v = CTaskGame_getStreamPos();
     if (CDeviceVI::isTvFormatPal()) v += 2;
     if (func_8016A3A8() < v) {
         if (func_eu_8016DA48(self->field_0xB0) != 0) {

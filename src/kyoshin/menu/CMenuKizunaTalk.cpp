@@ -229,7 +229,7 @@ void func_801BD0B4(CMenuKizunaTalk* self) {
             return;
         }
         func_8022B9B4(&self->mSysWin[0],
-                      (u32)func_80136190(&lbl_eu_80505118[0x33], &lbl_eu_80505118[0x3e], 0x24), 0);
+                      (u32)BdatTouchStringCell(&lbl_eu_80505118[0x33], &lbl_eu_80505118[0x3e], 0x24), 0);
         func_8022BFC8(&self->mSysWin[0], 1);
         func_8022B8B8(&self->mSysWin[0]);
         break;
@@ -243,10 +243,10 @@ void func_801BD0B4(CMenuKizunaTalk* self) {
         if (CSysWin_isReady(&self->mSysWin[0]) == 0) {
             return;
         }
-        char* s1 = func_80136190(&lbl_eu_80505118[0x33], &lbl_eu_80505118[0x3e], 0x2a);
-        char* s2 = func_8013639C(lbl_eu_80664424, &lbl_eu_80505118[0x43], self->mCharId);
-        char* s3 = func_80136190(&lbl_eu_80505118[0x33], &lbl_eu_80505118[0x3e], 0x2c);
-        char* s4 = func_80136190(&lbl_eu_80505118[0x33], &lbl_eu_80505118[0x3e], 0x2d);
+        char* s1 = BdatTouchStringCell(&lbl_eu_80505118[0x33], &lbl_eu_80505118[0x3e], 0x2a);
+        char* s2 = BdatGetPtrDirect(lbl_eu_80664424, &lbl_eu_80505118[0x43], self->mCharId);
+        char* s3 = BdatTouchStringCell(&lbl_eu_80505118[0x33], &lbl_eu_80505118[0x3e], 0x2c);
+        char* s4 = BdatTouchStringCell(&lbl_eu_80505118[0x33], &lbl_eu_80505118[0x3e], 0x2d);
         func_8022B9B4(&self->mSysWin[0], (u32)s1, (int)s2);
         func_8022BF6C(&self->mSysWin[0], (u32)s3, (u32)s4);
         func_8022BFC8(&self->mSysWin[0], 0);
@@ -395,7 +395,7 @@ void func_801BD594(CMenuKizunaTalk* self) {
         }
         break;
     case 1:
-        if (func_80137510(self->mAnim, lbl_eu_80667E68) != 0) {
+        if (AnimRewindFrame(self->mAnim, lbl_eu_80667E68) != 0) {
             self->mField64 = 1;
         }
         break;
@@ -416,13 +416,13 @@ void func_801BD594(CMenuKizunaTalk* self) {
 // Retail symbol is the unmangled func_801BD630.
 #pragma optimize_for_size on
 extern "C" __declspec(noinline) void func_801BD630(CMenuKizunaTalk* self) {
-    u16 total = func_80136254(lbl_eu_80664424, &lbl_eu_80505118[0x49], self->mCharId);
+    u16 total = BdatGetU16Direct(lbl_eu_80664424, &lbl_eu_80505118[0x49], self->mCharId);
     if ((u32)(u16)total <= func_8009CF8C((u32)0x20)) {
         u32 b1 = 0, b2 = 0, b3 = 0, b4 = 0;
-        u32 talk = func_801361E8((u32)lbl_eu_80664424, &lbl_eu_80505118[0x4e], self->mCharId);
-        u32 talk2 = func_801361E8((u32)lbl_eu_80664424, &lbl_eu_80505118[0x57], self->mCharId);
-        u16 value = func_80136254(lbl_eu_80664424, &lbl_eu_80505118[0x60], self->mCharId);
-        u32 rank = func_801361E8((u32)lbl_eu_80664424, &lbl_eu_80505118[0x69], self->mCharId);
+        u32 talk = BdatGetU8Direct((u32)lbl_eu_80664424, &lbl_eu_80505118[0x4e], self->mCharId);
+        u32 talk2 = BdatGetU8Direct((u32)lbl_eu_80664424, &lbl_eu_80505118[0x57], self->mCharId);
+        u16 value = BdatGetU16Direct(lbl_eu_80664424, &lbl_eu_80505118[0x60], self->mCharId);
+        u32 rank = BdatGetU8Direct((u32)lbl_eu_80664424, &lbl_eu_80505118[0x69], self->mCharId);
         if (func_8009CF8C((u32)0x20) >= 0x113) {
             if ((u8)talk == 3) talk = 8;
             if ((u8)talk2 == 3) talk2 = 8;
@@ -479,23 +479,23 @@ int func_801BD7D8(CMenuKizunaTalk* self, CEventFile* evt) {
         u32 fontVal = ((u32 (*)(void*))((void**)fontObj)[0x24 / 4])(fontObj);
         func_8013676C(rootPane, fontVal);
 
-        u32 charName = func_801361E8((u32)lbl_eu_80664424, &lbl_eu_80505118[0x4e], self->mCharId);
-        u32 charName2 = func_801361E8((u32)lbl_eu_80664424, &lbl_eu_80505118[0x57], self->mCharId);
-        u16 rank = func_80136254(lbl_eu_80664424, &lbl_eu_80505118[0x60], self->mCharId);
-        u32 affinity = func_801361E8((u32)lbl_eu_80664424, &lbl_eu_80505118[0x69], self->mCharId);
+        u32 charName = BdatGetU8Direct((u32)lbl_eu_80664424, &lbl_eu_80505118[0x4e], self->mCharId);
+        u32 charName2 = BdatGetU8Direct((u32)lbl_eu_80664424, &lbl_eu_80505118[0x57], self->mCharId);
+        u16 rank = BdatGetU16Direct(lbl_eu_80664424, &lbl_eu_80505118[0x60], self->mCharId);
+        u32 affinity = BdatGetU8Direct((u32)lbl_eu_80664424, &lbl_eu_80505118[0x69], self->mCharId);
 
-        func_80136B4C(layout, &lbl_eu_80505118[0xb7],
-                      func_80136190(&lbl_eu_80505118[0x33], &lbl_eu_80505118[0x3e], 0x25), 0);
-        func_80136B4C(layout, &lbl_eu_80505118[0xc4],
-                      func_80136190(&lbl_eu_80505118[0x33], &lbl_eu_80505118[0x3e], 0x26), 0);
-        func_80136B4C(layout, &lbl_eu_80505118[0xd1],
-                      func_80136190(&lbl_eu_80505118[0x33], &lbl_eu_80505118[0x3e], 0x28), 0);
-        func_80136B4C(layout, &lbl_eu_80505118[0xde],
-                      func_80136190(&lbl_eu_80505118[0x33], &lbl_eu_80505118[0x3e], 0x27), 0);
-        func_80136B4C(layout, &lbl_eu_80505118[0xf6],
-                      func_80136190(&lbl_eu_80505118[0xeb], &lbl_eu_80505118[0x3e], (u8)charName), 0);
-        func_80136B4C(layout, &lbl_eu_80505118[0x106],
-                      func_80136190(&lbl_eu_80505118[0xeb], &lbl_eu_80505118[0x3e], (u8)charName2), 0);
+        LayoutSetTextBoxFmtValue(layout, &lbl_eu_80505118[0xb7],
+                      BdatTouchStringCell(&lbl_eu_80505118[0x33], &lbl_eu_80505118[0x3e], 0x25), 0);
+        LayoutSetTextBoxFmtValue(layout, &lbl_eu_80505118[0xc4],
+                      BdatTouchStringCell(&lbl_eu_80505118[0x33], &lbl_eu_80505118[0x3e], 0x26), 0);
+        LayoutSetTextBoxFmtValue(layout, &lbl_eu_80505118[0xd1],
+                      BdatTouchStringCell(&lbl_eu_80505118[0x33], &lbl_eu_80505118[0x3e], 0x28), 0);
+        LayoutSetTextBoxFmtValue(layout, &lbl_eu_80505118[0xde],
+                      BdatTouchStringCell(&lbl_eu_80505118[0x33], &lbl_eu_80505118[0x3e], 0x27), 0);
+        LayoutSetTextBoxFmtValue(layout, &lbl_eu_80505118[0xf6],
+                      BdatTouchStringCell(&lbl_eu_80505118[0xeb], &lbl_eu_80505118[0x3e], (u8)charName), 0);
+        LayoutSetTextBoxFmtValue(layout, &lbl_eu_80505118[0x106],
+                      BdatTouchStringCell(&lbl_eu_80505118[0xeb], &lbl_eu_80505118[0x3e], (u8)charName2), 0);
 
         // Rank text ladder: pick the portrait texture by the rank value.
         void* rankTex;
@@ -521,34 +521,34 @@ int func_801BD7D8(CMenuKizunaTalk* self, CEventFile* evt) {
                                                        &lbl_eu_80505118[0x176], 0);
         }
         if (rankTex != 0) {
-            func_80137E7C(layout, &lbl_eu_80505118[0x18e], rankTex);
+            PaneSetTexPaletteByName(layout, &lbl_eu_80505118[0x18e], rankTex);
         }
 
         // Affinity rank name text.
         char* rankName;
         switch ((u8)affinity) {
-        case 0: rankName = func_80136190(&lbl_eu_80505118[0x33], &lbl_eu_80505118[0x3e], 0x23); break;
-        case 1: rankName = func_80136190(&lbl_eu_80505118[0x33], &lbl_eu_80505118[0x3e], 0x1f); break;
-        case 2: rankName = func_80136190(&lbl_eu_80505118[0x33], &lbl_eu_80505118[0x3e], 0x20); break;
-        case 3: rankName = func_80136190(&lbl_eu_80505118[0x33], &lbl_eu_80505118[0x3e], 0x21); break;
-        case 4: rankName = func_80136190(&lbl_eu_80505118[0x33], &lbl_eu_80505118[0x3e], 0x22); break;
+        case 0: rankName = BdatTouchStringCell(&lbl_eu_80505118[0x33], &lbl_eu_80505118[0x3e], 0x23); break;
+        case 1: rankName = BdatTouchStringCell(&lbl_eu_80505118[0x33], &lbl_eu_80505118[0x3e], 0x1f); break;
+        case 2: rankName = BdatTouchStringCell(&lbl_eu_80505118[0x33], &lbl_eu_80505118[0x3e], 0x20); break;
+        case 3: rankName = BdatTouchStringCell(&lbl_eu_80505118[0x33], &lbl_eu_80505118[0x3e], 0x21); break;
+        case 4: rankName = BdatTouchStringCell(&lbl_eu_80505118[0x33], &lbl_eu_80505118[0x3e], 0x22); break;
         }
-        func_80136B4C(layout, &lbl_eu_80505118[0x19a], rankName, 0);
+        LayoutSetTextBoxFmtValue(layout, &lbl_eu_80505118[0x19a], rankName, 0);
 
-        char* talkText = func_80136190(&lbl_eu_80505118[0x1aa], &lbl_eu_80505118[0x1b8], 0x2c);
-        func_80136B4C(layout, &lbl_eu_80505118[0x1bd], talkText, 0);
+        char* talkText = BdatTouchStringCell(&lbl_eu_80505118[0x1aa], &lbl_eu_80505118[0x1b8], 0x2c);
+        LayoutSetTextBoxFmtValue(layout, &lbl_eu_80505118[0x1bd], talkText, 0);
 
         // Character portrait texture: name differs per player in co-op.
         s32 player = isClassicController__Q22cf13CfGameManagerFv(-1);
         const char* name = &lbl_eu_80505118[0x1d2];
         if (player != 0) name = &lbl_eu_80505118[0x1c9];
-        u16 msgId = func_8013606C(&lbl_eu_80505118[0x1aa], name, 0x2c);
-        char* texName = func_80138F78((u32)msgId);
+        u16 msgId = BdatGetU16ByTableKey(&lbl_eu_80505118[0x1aa], name, 0x2c);
+        char* texName = MakeTplNameSysFile((u32)msgId);
         void* sys = func_801355F4();
         KizunaTextureView* tex = (KizunaTextureView*)((void* (*)(void*, u32, void*, u32))(
             (void**)sys)[0xc / 4])(sys, 0x74696d67, texName, 0);
         if (tex != 0) {
-            func_80137E7C(layout, &lbl_eu_80505118[0x1db], tex);
+            PaneSetTexPaletteByName(layout, &lbl_eu_80505118[0x1db], tex);
             nw4r::lyt::Pane* picPane = layout->GetRootPane();
             u16 w = tex->mHeader->mWidth;
             u16 h = tex->mHeader->mHeight;

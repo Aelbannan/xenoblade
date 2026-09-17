@@ -109,7 +109,7 @@ void CMenuLvUp::Move() {
     if (CTaskGame::getInstance()->isFlag01Set() ||
         (lbl_eu_80663E28 & 0x200000))
         return;
-    if (!func_8013BE50()) return;
+    if (!IsMenuState621F0()) return;
     if (lbl_eu_80663E24 & 0xbfe40000) return;
     if (isSceneLoading__Q22cf13CfGameManagerFv()) return;
 
@@ -163,7 +163,7 @@ void CMenuLvUp::cbRenderBefore() {
     if (CTaskGame::getInstance()->isFlag01Set() ||
         (lbl_eu_80663E28 & 0x200000))
         return;
-    if (!func_8013BE50()) return;
+    if (!IsMenuState621F0()) return;
     if (lbl_eu_80663E24 & 0xbfe40000) return;
     if (isSceneLoading__Q22cf13CfGameManagerFv()) return;
     if (mField11C == 0) return;
@@ -327,7 +327,7 @@ void func_802764A0(CMenuLvUp* self, CMenuLvUpEntry* entry) {
         case 1:
             entry->field_0x14 = 1;
             playUISound(0x4a);
-            func_802A2E68((int)entry->field_0x10);
+            CCharVoiceMan_PlayLevelUpVoice((int)entry->field_0x10);
             break;
         case 2:
             entry->field_0x14 = 2;

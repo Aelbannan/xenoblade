@@ -85,11 +85,11 @@ extern "C" __declspec(noinline) CTaskGamePic* __ct__CTaskGamePic(CTaskGamePic* p
     pThis->field_8C = 0;  // texture-ready flag
 
     // Three colour (RGBA) vectors - single shared float, four components.
-    func_800407C8(reinterpret_cast<func_800407C8_tmp*>(p + 0x24),
+    CTaskGame_setVec4(reinterpret_cast<CTaskGame_setVec4_tmp*>(p + 0x24),
                   lbl_eu_80668BB0, lbl_eu_80668BB0, lbl_eu_80668BB0, lbl_eu_80668BB0);
-    func_800407C8(reinterpret_cast<func_800407C8_tmp*>(p + 0x28),
+    CTaskGame_setVec4(reinterpret_cast<CTaskGame_setVec4_tmp*>(p + 0x28),
                   lbl_eu_80668BB0, lbl_eu_80668BB0, lbl_eu_80668BB0, lbl_eu_80668BB0);
-    func_800407C8(reinterpret_cast<func_800407C8_tmp*>(p + 0x2c),
+    CTaskGame_setVec4(reinterpret_cast<CTaskGame_setVec4_tmp*>(p + 0x2c),
                   lbl_eu_80668BB0, lbl_eu_80668BB0, lbl_eu_80668BB0, lbl_eu_80668BB0);
     p[0x30] = 0;                   // param_C0
     p[0x31] = 0;                   // param_C4

@@ -143,7 +143,7 @@ extern "C" void func_802ABCB4(cf::CfGimmickSaveOff* self) {
         // Walk an intrusive linked list; the terminator is re-read from
         // list+4 every iteration (sentinel node). Each node's vtable slot
         // 0x44 (0x110/4) returns an object whose +0x84 gets poked.
-        CfGimmickList* list = (CfGimmickList*)func_800B6BC8();
+        CfGimmickList* list = (CfGimmickList*)getReslistB48();
         CfGimmickListNode* tail = list->head;
         CfGimmickListNode* entry = tail->next;
         while (entry != list->head) {

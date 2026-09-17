@@ -41,7 +41,7 @@ void CBgTex::func_801C3A24() {
     } else if (regionId == 0x1A) {
         buildLayout(&mLayout, lbl_eu_80664464, lbl_eu_80505370 + 0x1E);
     } else {
-        switch (func_801372B4(regionId)) {
+        switch (MapValueToRank6(regionId)) {
         case 1:
             buildLayout(&mLayout, lbl_eu_80664464, lbl_eu_80505370 + 0x32);
             break;
@@ -89,7 +89,7 @@ bool CBgTex::func_801C3C14() {
     } else if (regionId == 0x1A) {
         file = lbl_eu_80505370 + 0xBE;
     } else {
-        switch (func_801372B4(regionId)) {
+        switch (MapValueToRank6(regionId)) {
         case 1:
             file = lbl_eu_80505370 + 0xD2;
             break;

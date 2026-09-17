@@ -18,7 +18,7 @@ unsigned long func_80167A18(void) { return *(unsigned long*)(&lbl_eu_80664258) !
  * (classic vs. others). Dispatches one grid action in priority order. */
 void func_80167A2C(CMenuItem* self) {
     // Help bar follows the grid's current mode.
-    u8 mode = func_801CDFB4(reinterpret_cast<CItemBoxGrid*>(&self->mItemBoxGrid[0]));
+    u8 mode = GetPromptState(reinterpret_cast<CItemBoxGrid*>(&self->mItemBoxGrid[0]));
     func_801C41E8(reinterpret_cast<CTitleAHelp*>(&self->mTitleAHelp[0]), mode);
 
     CfMenuPadData* pad = getCfPadData__Q22cf13CfGameManagerFv();
@@ -51,13 +51,13 @@ void func_80167A2C(CMenuItem* self) {
     if (up != 0) {
         func_801CCAF0(reinterpret_cast<CItemBoxGrid*>(&self->mItemBoxGrid[0]));
     } else if (down != 0) {
-        if (func_801CB0FC(reinterpret_cast<CItemBoxGrid*>(&self->mItemBoxGrid[0])) != 0) {
-            func_801CC7B0(reinterpret_cast<CItemBoxGrid*>(&self->mItemBoxGrid[0]), 0);
+        if (IsItemBoxActive(reinterpret_cast<CItemBoxGrid*>(&self->mItemBoxGrid[0])) != 0) {
+            HandleCancelBtn(reinterpret_cast<CItemBoxGrid*>(&self->mItemBoxGrid[0]), 0);
         } else {
             // Scroll failed: hide the help prompt, refresh the grid and move
             // to state 3.
             func_801C414C(reinterpret_cast<CTitleAHelp*>(&self->mTitleAHelp[0]));
-            func_801CB38C(reinterpret_cast<CItemBoxGrid*>(&self->mItemBoxGrid[0]));
+            AdvanceBoxState(reinterpret_cast<CItemBoxGrid*>(&self->mItemBoxGrid[0]));
             self->mState = 3;
         }
     } else if (turboCancel != 0) {
@@ -69,11 +69,11 @@ void func_80167A2C(CMenuItem* self) {
     } else if (decide != 0) {
         func_801CC0EC(reinterpret_cast<CItemBoxGrid*>(&self->mItemBoxGrid[0]));
     } else if (leftTrigger != 0) {
-        func_801CC5DC(reinterpret_cast<CItemBoxGrid*>(&self->mItemBoxGrid[0]));
+        OpenSortMenu(reinterpret_cast<CItemBoxGrid*>(&self->mItemBoxGrid[0]));
     } else if (xHeld != 0) {
         func_801CDC40(reinterpret_cast<CItemBoxGrid*>(&self->mItemBoxGrid[0]));
     } else if (yHeld != 0) {
-        func_801CDEE8(reinterpret_cast<CItemBoxGrid*>(&self->mItemBoxGrid[0]));
+        SelectCatRow(reinterpret_cast<CItemBoxGrid*>(&self->mItemBoxGrid[0]));
     }
 }
 

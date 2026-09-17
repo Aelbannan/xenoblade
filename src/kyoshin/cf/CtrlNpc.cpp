@@ -180,7 +180,7 @@ reinterpret_cast<cf::CfObjectMove*>(self->field_28)->CfObjectMove_setTargetC4Arg
         }
     }
     if (param <= 3) {
-        func_800BE12C((u8*)self->field_28, 1, 1, -1, 1);
+        CfObjectMove_setAnimModeArgs((u8*)self->field_28, 1, 1, -1, 1);
     }
     self->field_174 = 0;
     self->field_172 = 0;
@@ -238,7 +238,7 @@ bodyStart:
             cf::CCtrlNpcSearch* search = NpcCharView(self->field_28)->field_98;
             if (search == 0)
                 goto mask08;
-            if (func_80484F18(search) < lbl_eu_806666A4)
+            if (simGetLeafAnimDist(search) < lbl_eu_806666A4)
                 goto mask08;
             if (NpcCharView(self->field_28)->field_C4 != 0)
                 goto tail;
@@ -248,7 +248,7 @@ bodyStart:
                 goto tail;
             if (self->field_170 < 1)
                 goto tail;
-            func_800BE12C((u8*)self->field_28, self->field_170, 1, -1, 1);
+            CfObjectMove_setAnimModeArgs((u8*)self->field_28, self->field_170, 1, -1, 1);
             self->field_2C |= 0x10;
             goto tail;
         }
@@ -312,7 +312,7 @@ bodyStart:
                 if (reinterpret_cast<cf::CfObject*>(o)->CfObject_getProgressLow() >= lbl_eu_806666A4)
                     goto tail;
             settle3:
-                func_804876DC(reinterpret_cast<cf::CfObjectModelSub98*>(NpcCharView(o)->field_98));
+                scnImN4DynStart(reinterpret_cast<cf::CfObjectModelSub98*>(NpcCharView(o)->field_98));
             }
             goto tail;
         }
@@ -338,7 +338,7 @@ bodyStart:
                 if (reinterpret_cast<cf::CfObject*>(o)->CfObject_getProgressLow() >= lbl_eu_806666A4)
                     goto tail;
             settle4:
-                func_804876DC(reinterpret_cast<cf::CfObjectModelSub98*>(NpcCharView(o)->field_98));
+                scnImN4DynStart(reinterpret_cast<cf::CfObjectModelSub98*>(NpcCharView(o)->field_98));
             }
             goto tail;
         }
@@ -360,7 +360,7 @@ bodyStart:
                 if (reinterpret_cast<cf::CfObject*>(o)->CfObject_getProgressLow() >= lbl_eu_806666A4)
                     goto tail;
             settle5:
-                func_804876DC(reinterpret_cast<cf::CfObjectModelSub98*>(NpcCharView(o)->field_98));
+                scnImN4DynStart(reinterpret_cast<cf::CfObjectModelSub98*>(NpcCharView(o)->field_98));
             }
             goto tail;
         }
@@ -375,7 +375,7 @@ bodyStart:
             return;
         self->field_14 = lbl_eu_80666698;
         reinterpret_cast<cf::CfObject*>(self->field_28)->CfObject_setMoveHeadAngle(self->field_0C);
-        func_800BE12C((u8*)self->field_28, 3, 0, -1, 1);
+        CfObjectMove_setAnimModeArgs((u8*)self->field_28, 3, 0, -1, 1);
         reinterpret_cast<cf::CObjectState*>(self->field_28)->CObjectState_setStateBitFlag(4);
             return;
     }
@@ -427,7 +427,7 @@ void func_80093F28(cf::CtrlNpc* self) {
             cf::CfObject* target =
                 (cf::CfObject*)findObjectById(reinterpret_cast<cf::CObjectParam*>(self->field_28)->CObjectParam_getSelfObjectId());
             if (target != 0 && NpcCharView(self->field_28)->field_C4 != 0) {
-                int page = (int)func_8004C5EC(NpcCharView(self->field_28)->field_C4);
+                int page = (int)getAnimModelId(NpcCharView(self->field_28)->field_C4);
                 int flag = 1;
                 u32 st = NpcCharView(self->field_28)->field_8C;
                 if ((st == 1 || st == 8 || st == 0x13) && page >= 0x21 &&
@@ -469,7 +469,7 @@ void func_80093F28(cf::CtrlNpc* self) {
                     f32 h = lbl_eu_806666AC *
                             nw4r::math::Atan2FIdx(diffCopy.x, diffCopy.z);
                     reinterpret_cast<cf::CfObject*>(self->field_28)->CfObject_setMoveHeadAngle(h);
-                    func_800BE12C((u8*)self->field_28, 3, 0, -1, 1);
+                    CfObjectMove_setAnimModeArgs((u8*)self->field_28, 3, 0, -1, 1);
                 } else {
                     self->field_174 = 0;
                 }
@@ -486,15 +486,15 @@ void func_80093F28(cf::CtrlNpc* self) {
         if (reinterpret_cast<cf::CObjectState*>(self->field_28)->CObjectState_checkStateFlags(1) == 0) {
             if (reinterpret_cast<cf::CObjectState*>(self->field_28)->CObjectState_setStateBitMask0(1, 0) != 0 && self->field_174 != 0) {
                 reinterpret_cast<cf::CfObject*>(self->field_28)->CfObject_setMoveHeadAngle(self->field_178);
-                func_800BE12C((u8*)self->field_28, 3, 0, -1, 1);
+                CfObjectMove_setAnimModeArgs((u8*)self->field_28, 3, 0, -1, 1);
                 if (reinterpret_cast<cf::CObjectState*>(self->field_28)->CObjectState_checkStateFlags8(0x1000) == 0) {
-                    func_800BE12C((u8*)self->field_28, self->field_174, 0, -1, 1);
+                    CfObjectMove_setAnimModeArgs((u8*)self->field_28, self->field_174, 0, -1, 1);
                     self->field_174 = 0;
                 }
             }
             if (self->field_174 != 0 && reinterpret_cast<cf::CObjectState*>(self->field_28)->CObjectState_checkStateFlags8(0x1000) == 0 &&
                 reinterpret_cast<cf::CObjectState*>(self->field_28)->CObjectState_checkStateFlags8(1) == 0) {
-                func_800BE12C((u8*)self->field_28, self->field_174, 0, -1, 1);
+                CfObjectMove_setAnimModeArgs((u8*)self->field_28, self->field_174, 0, -1, 1);
                 self->field_174 = 0;
             }
         }
@@ -716,7 +716,7 @@ void __declspec(noinline) func_80094A9C(cf::CtrlNpc* self,
     if (self->field_28 != 0) {
         reinterpret_cast<cf::CfObject*>(self->field_28)->CfObject_setMoveHeadAngle(heading);
         if (reinterpret_cast<cf::CfObject*>(self->field_28)->CfObject_isMoveActiveNow() != 0)
-            func_800BE12C((u8*)self->field_28, 3, 0, -1, 1);
+            CfObjectMove_setAnimModeArgs((u8*)self->field_28, 3, 0, -1, 1);
     }
 }
 
@@ -842,7 +842,7 @@ float CfObject_UnkVirtualFunc71__Q22cf13CfObjectModelFv(void* self) { return *(f
 void func_80095000(cf::CtrlNpc* self) {
     cf::CfObjectMove* obj = self->field_28;
     if (NpcCharView(obj)->field_C4 != 0) {
-        func_800BE12C((u8*)obj, self->field_16C, 0, -1, 1);
+        CfObjectMove_setAnimModeArgs((u8*)obj, self->field_16C, 0, -1, 1);
         self->field_BE += 1;
     }
 }
@@ -854,9 +854,9 @@ void func_8009505C(cf::CtrlNpc* self) {
     cf::CfObjectMove* obj = self->field_28;
     if (NpcCharView(obj)->field_C4 != 0) {
         if (self->field_16C != 0) {
-            func_800BE12C((u8*)obj, self->field_16C, 1, -1, 1);
+            CfObjectMove_setAnimModeArgs((u8*)obj, self->field_16C, 1, -1, 1);
         } else {
-            func_800BE12C((u8*)obj, self->field_16E, 1, -1, 1);
+            CfObjectMove_setAnimModeArgs((u8*)obj, self->field_16E, 1, -1, 1);
             self->field_BE += 1;
         }
         self->field_BE += 1;
@@ -869,10 +869,10 @@ void func_8009505C(cf::CtrlNpc* self) {
 void func_800950E8(cf::CtrlNpc* self) {
     cf::CfObjectMove* obj = self->field_28;
     cf::CCtrlNpcC4Object* flag = NpcCharView(obj)->field_C4;
-    if (flag != 0 && (reinterpret_cast<cf::CfObject*>(obj)->CfObject_queryTargetState() != 0 || func_8004C5EC(flag) == 1)) {
+    if (flag != 0 && (reinterpret_cast<cf::CfObject*>(obj)->CfObject_queryTargetState() != 0 || getAnimModelId(flag) == 1)) {
         if (self->field_16E != 0) {
             int zero = (reinterpret_cast<cf::CfObject*>(self->field_28)->CfObject_getNpcTargetAction() == 0);
-            func_800BE12C((u8*)self->field_28, self->field_16E, zero, -1, 1);
+            CfObjectMove_setAnimModeArgs((u8*)self->field_28, self->field_16E, zero, -1, 1);
         }
         self->field_BE += 1;
     }
@@ -940,7 +940,7 @@ void func_80095224(cf::CtrlNpc* self) {
     if (self->field_28 != 0) {
         reinterpret_cast<cf::CfObject*>(self->field_28)->CfObject_setMoveHeadAngle(f1);
         if (reinterpret_cast<cf::CfObject*>(self->field_28)->CfObject_isMoveActiveNow() != 0)
-            func_800BE12C((u8*)self->field_28, 3, 0, -1, 1);
+            CfObjectMove_setAnimModeArgs((u8*)self->field_28, 3, 0, -1, 1);
     }
     self->field_BE = 2;
     self->field_B8 = (s16)(ml::math::mtRand(128) + 64);
@@ -1185,7 +1185,7 @@ void __declspec(noinline) func_8009565C(cf::CtrlNpc* self) {
                 if (ch != 0) {
                     reinterpret_cast<cf::CfObject*>(ch)->CfObject_setMoveHeadAngle(self->field_0C);
                     if (reinterpret_cast<cf::CfObject*>(ch)->CfObject_isMoveActiveNow() != 0)
-                        func_800BE12C((u8*)ch, 3, 0, -1, 1);
+                        CfObjectMove_setAnimModeArgs((u8*)ch, 3, 0, -1, 1);
                 }
             }
         } else {
@@ -1197,7 +1197,7 @@ void __declspec(noinline) func_8009565C(cf::CtrlNpc* self) {
                 if (ch != 0) {
                     reinterpret_cast<cf::CfObject*>(ch)->CfObject_setMoveHeadAngle(self->field_0C);
                     if (reinterpret_cast<cf::CfObject*>(ch)->CfObject_isMoveActiveNow() != 0)
-                        func_800BE12C((u8*)ch, 3, 0, -1, 1);
+                        CfObjectMove_setAnimModeArgs((u8*)ch, 3, 0, -1, 1);
                 }
             }
             self->field_C4 = nextWp;
@@ -1212,7 +1212,7 @@ void __declspec(noinline) func_8009565C(cf::CtrlNpc* self) {
         ml::CVec3 hd = last - *prev;
         nw4r::math::Atan2FIdx(hd.x, hd.z);
         reinterpret_cast<cf::CfObject*>(ch)->CfObject_applyMoveOffset(&last, lbl_eu_806666D0);
-        func_804B0B54((u8*)ch + 0x60C,
+        ColiSetAxisBlockInverse((u8*)ch + 0x60C,
                       reinterpret_cast<const float*>(reinterpret_cast<cf::CfObject*>(ch)->CfObject_getPosVector()));
 
         f32 f158 = self->field_158;
@@ -1282,7 +1282,7 @@ void func_80095F44(cf::CtrlNpc* self) {
     if (flag != 0) {
         if ((flag->field_4EC & 0x02000000) != 0 && self->field_15C <= 2) {
             f32 mag = PSVECMag(
-                reinterpret_cast<const Vec*>(func_800BE0B0(self->field_28)));
+                reinterpret_cast<const Vec*>(CfObjectMove_getSubObj54(self->field_28)));
             s16 bc = self->field_BC;
             if (bc >= 0x1e || mag >= lbl_eu_806666A8) {
                 distSq = lbl_eu_80666698;
@@ -1333,7 +1333,7 @@ void func_80095F44(cf::CtrlNpc* self) {
                 if (obj2 != 0) {
                     reinterpret_cast<cf::CfObject*>(obj2)->CfObject_setMoveHeadAngle(self->field_0C);
                     if (reinterpret_cast<cf::CfObject*>(obj2)->CfObject_isMoveActiveNow() != 0)
-                        func_800BE12C((u8*)obj2, 3, 0, -1, 1);
+                        CfObjectMove_setAnimModeArgs((u8*)obj2, 3, 0, -1, 1);
                 }
             }
             if ((lbl_eu_80663E28 & 0x20) != 0)
@@ -1428,7 +1428,7 @@ int func_800964EC(cf::CtrlNpc* self) {
         if (self->field_28 != 0) {
             reinterpret_cast<cf::CfObject*>(self->field_28)->CfObject_setMoveHeadAngle(self->field_0C);
             if (reinterpret_cast<cf::CfObject*>(self->field_28)->CfObject_isMoveActiveNow() != 0)
-                func_800BE12C((u8*)self->field_28, 3, 0, -1, 1);
+                CfObjectMove_setAnimModeArgs((u8*)self->field_28, 3, 0, -1, 1);
         }
     }
     return 0;

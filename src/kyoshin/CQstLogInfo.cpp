@@ -93,18 +93,18 @@ extern "C" __declspec(noinline) void func_802297BC(CQstLogInfo* self) {
 }
 
 // us-8022b640 - func_80229808
-// If the animation at 0x28 is done (via func_80137510), transition to state 5.
+// If the animation at 0x28 is done (via AnimRewindFrame), transition to state 5.
 extern "C" __declspec(noinline) void func_80229808(CQstLogInfo* self) {
-    if (func_80137510(self->field_0x28, lbl_eu_80668590) != 0) {
+    if (AnimRewindFrame(self->field_0x28, lbl_eu_80668590) != 0) {
         self->field_0x34 = 5;
         func_802298A0(self);
     }
 }
 
 // us-8022b68c - func_80229854
-// If the animation at 0x24 is done (via func_80137510), reset to state 0.
+// If the animation at 0x24 is done (via AnimRewindFrame), reset to state 0.
 extern "C" __declspec(noinline) void func_80229854(CQstLogInfo* self) {
-    if (func_80137510(self->field_0x24, lbl_eu_80668590) != 0) {
+    if (AnimRewindFrame(self->field_0x24, lbl_eu_80668590) != 0) {
         self->field_0x34 = 0;
         self->mField39 = 1;
     }
@@ -196,11 +196,11 @@ extern "C" __declspec(noinline) void func_80229960(CQstLogInfo* self) {
 // quest-category column, applied to the icon pane.
 extern "C" __declspec(noinline) void func_80229A0C(CQstLogInfo* self,
     const char* table, u32 key, u8 v) {
-    char* str = func_8013639C(table, &lbl_eu_8050A0B4[0x17], key);
-    func_80136B4C(self->mUnk20, &lbl_eu_8050A0B4[0x1d], str, 0);
+    char* str = BdatGetPtrDirect(table, &lbl_eu_8050A0B4[0x17], key);
+    LayoutSetTextBoxFmtValue(self->mUnk20, &lbl_eu_8050A0B4[0x1d], str, 0);
     nw4r::lyt::Pane* pane = self->mUnk20->GetRootPane()->FindPaneByName(
         &lbl_eu_8050A0B4[0x25], true);
-    u8 kind = func_801361E8((u32)table, &lbl_eu_8050A0B4[0x32], key);
+    u8 kind = BdatGetU8Direct((u32)table, &lbl_eu_8050A0B4[0x32], key);
     void* res = 0;
     switch (kind) {
     case 0:
@@ -230,9 +230,9 @@ extern "C" __declspec(noinline) void func_80229A0C(CQstLogInfo* self,
 #pragma optimize_for_size on
 extern "C" __declspec(noinline) void func_80229B54(CQstLogInfo* self,
     const char* table, u32 key) {
-    u16 v = func_80136254(table, &lbl_eu_8050A0B4[0x78], key);
-    func_80136B4C(self->mUnk20, &lbl_eu_8050A0B4[0x84],
-                  (char*)func_80138DA4(func_8013639C(
+    u16 v = BdatGetU16Direct(table, &lbl_eu_8050A0B4[0x78], key);
+    LayoutSetTextBoxFmtValue(self->mUnk20, &lbl_eu_8050A0B4[0x84],
+                  (char*)func_80138DA4(BdatGetPtrDirect(
                       (const char*)lbl_eu_80664098, &lbl_eu_8050A0B4[0x7f], v)),
                   0);
     int flag = 0;
@@ -241,17 +241,17 @@ extern "C" __declspec(noinline) void func_80229B54(CQstLogInfo* self,
     }
     char* str;
     if (flag != 0) {
-        str = func_80136190(&lbl_eu_8050A0B4[0x8c], &lbl_eu_8050A0B4[0x7f], 0x35);
+        str = BdatTouchStringCell(&lbl_eu_8050A0B4[0x8c], &lbl_eu_8050A0B4[0x7f], 0x35);
     } else {
-        if (func_801361E8((u32)table, &lbl_eu_8050A0B4[0x32], key) != 1) {
-            u16 v2 = func_80136254((const char*)lbl_eu_80664098,
+        if (BdatGetU8Direct((u32)table, &lbl_eu_8050A0B4[0x32], key) != 1) {
+            u16 v2 = BdatGetU16Direct((const char*)lbl_eu_80664098,
                                    &lbl_eu_8050A0B4[0x96], v);
-            str = func_80136190(&lbl_eu_8050A0B4[0x9e], &lbl_eu_8050A0B4[0x7f], v2);
+            str = BdatTouchStringCell(&lbl_eu_8050A0B4[0x9e], &lbl_eu_8050A0B4[0x7f], v2);
         } else {
-            str = func_80136190(&lbl_eu_8050A0B4[0x8c], &lbl_eu_8050A0B4[0x7f], 0x35);
+            str = BdatTouchStringCell(&lbl_eu_8050A0B4[0x8c], &lbl_eu_8050A0B4[0x7f], 0x35);
         }
     }
-    func_80136B4C(self->mUnk20, &lbl_eu_8050A0B4[0xab], str, 0);
+    LayoutSetTextBoxFmtValue(self->mUnk20, &lbl_eu_8050A0B4[0xab], str, 0);
 }
 #pragma optimize_for_size off
 
@@ -260,8 +260,8 @@ extern "C" __declspec(noinline) void func_80229B54(CQstLogInfo* self,
 // (field_0x2C selects the pane color/state).
 #pragma optimize_for_size on
 extern "C" __declspec(noinline) void func_80229CA0(CQstLogInfo* self, const char* table, u32 key) {
-    char* str = func_8013639C(table, &lbl_eu_8050A0B4[0xb3], key);
-    func_80136B4C(self->mUnk20, &lbl_eu_8050A0B4[0xbb], str, self->field_0x2C);
+    char* str = BdatGetPtrDirect(table, &lbl_eu_8050A0B4[0xb3], key);
+    LayoutSetTextBoxFmtValue(self->mUnk20, &lbl_eu_8050A0B4[0xbb], str, self->field_0x2C);
 }
 #pragma optimize_for_size off
 
@@ -281,10 +281,10 @@ extern "C" __declspec(noinline) void func_80229CF0(CQstLogInfo* self,
     char buf48[0x20];
     char buf28[0x20];
     char buf8[0x20];
-    if (func_801361E8((u32)table, &lbl_eu_8050A0B4[0xc3], key) == 1) {
-        char* s = func_8013639C((const void*)self->field_0x3C,
+    if (BdatGetU8Direct((u32)table, &lbl_eu_8050A0B4[0xc3], key) == 1) {
+        char* s = BdatGetPtrDirect((const void*)self->field_0x3C,
                                 &lbl_eu_8050A0B4[0xd0], key);
-        func_80136B4C(self->mUnk20, &lbl_eu_8050A0B4[0xda], s,
+        LayoutSetTextBoxFmtValue(self->mUnk20, &lbl_eu_8050A0B4[0xda], s,
                       self->field_0x2C);
         func_80124270(self->mUnk20->GetRootPane()->FindPaneByName(
                           &lbl_eu_8050A0B4[0xda], true), 1);
@@ -302,17 +302,17 @@ extern "C" __declspec(noinline) void func_80229CF0(CQstLogInfo* self,
             } else {
                 sprintf(bufE8, &lbl_eu_8050A0B4[0x108]);
             }
-            u32 val = func_80136254(table, bufE8, key);
+            u32 val = BdatGetU16Direct(table, bufE8, key);
             if ((u16)val != 0) {
                 if (odd) {
                     sprintf(bufE8, &lbl_eu_8050A0B4[0x115]);
                 } else {
                     sprintf(bufE8, &lbl_eu_8050A0B4[0x122]);
                 }
-                char* s2 = func_8013639C((const void*)self->field_0x3C,
+                char* s2 = BdatGetPtrDirect((const void*)self->field_0x3C,
                                          bufE8, key);
                 sprintf(bufE8, &lbl_eu_8050A0B4[0x12f], 2);
-                func_80136B4C(self->mUnk20, bufE8, s2, self->field_0x2C);
+                LayoutSetTextBoxFmtValue(self->mUnk20, bufE8, s2, self->field_0x2C);
                 func_80124270(self->mUnk20->GetRootPane()->FindPaneByName(
                                   bufE8, true), 1);
                 sprintf(bufE8, &lbl_eu_8050A0B4[0x13e], 2);
@@ -333,17 +333,17 @@ extern "C" __declspec(noinline) void func_80229CF0(CQstLogInfo* self,
             } else {
                 sprintf(bufC8, &lbl_eu_8050A0B4[0x163]);
             }
-            u32 val = func_80136254(table, bufC8, key);
+            u32 val = BdatGetU16Direct(table, bufC8, key);
             if ((u16)val != 0) {
                 if (odd) {
                     sprintf(bufC8, &lbl_eu_8050A0B4[0x170]);
                 } else {
                     sprintf(bufC8, &lbl_eu_8050A0B4[0x17d]);
                 }
-                char* s2 = func_8013639C((const void*)self->field_0x3C,
+                char* s2 = BdatGetPtrDirect((const void*)self->field_0x3C,
                                          bufC8, key);
                 sprintf(bufC8, &lbl_eu_8050A0B4[0x12f], idx + 1);
-                func_80136B4C(self->mUnk20, bufC8, s2, self->field_0x2C);
+                LayoutSetTextBoxFmtValue(self->mUnk20, bufC8, s2, self->field_0x2C);
                 func_80124270(self->mUnk20->GetRootPane()->FindPaneByName(
                                   bufC8, true), 1);
                 sprintf(bufC8, &lbl_eu_8050A0B4[0x13e], idx + 1);
@@ -364,17 +364,17 @@ extern "C" __declspec(noinline) void func_80229CF0(CQstLogInfo* self,
             } else {
                 sprintf(bufA8, &lbl_eu_8050A0B4[0x197]);
             }
-            u32 val = func_80136254(table, bufA8, key);
+            u32 val = BdatGetU16Direct(table, bufA8, key);
             if ((u16)val != 0) {
                 if (odd) {
                     sprintf(bufA8, &lbl_eu_8050A0B4[0x1a4]);
                 } else {
                     sprintf(bufA8, &lbl_eu_8050A0B4[0x1b1]);
                 }
-                char* s2 = func_8013639C((const void*)self->field_0x3C,
+                char* s2 = BdatGetPtrDirect((const void*)self->field_0x3C,
                                          bufA8, key);
                 sprintf(bufA8, &lbl_eu_8050A0B4[0x12f], idx + 1);
-                func_80136B4C(self->mUnk20, bufA8, s2, self->field_0x2C);
+                LayoutSetTextBoxFmtValue(self->mUnk20, bufA8, s2, self->field_0x2C);
                 func_80124270(self->mUnk20->GetRootPane()->FindPaneByName(
                                   bufA8, true), 1);
                 sprintf(bufA8, &lbl_eu_8050A0B4[0x13e], idx + 1);
@@ -389,11 +389,11 @@ extern "C" __declspec(noinline) void func_80229CF0(CQstLogInfo* self,
             }
         }
         if (v >= 0xFC) {
-            if (func_801361E8((u32)table, &lbl_eu_8050A0B4[0x1be], key) == 0) {
-                char* s2 = func_8013639C((const void*)self->field_0x3C,
+            if (BdatGetU8Direct((u32)table, &lbl_eu_8050A0B4[0x1be], key) == 0) {
+                char* s2 = BdatGetPtrDirect((const void*)self->field_0x3C,
                                          &lbl_eu_8050A0B4[0x1c8], key);
                 sprintf(buf88, &lbl_eu_8050A0B4[0x12f], idx + 1);
-                func_80136B4C(self->mUnk20, buf88, s2, self->field_0x2C);
+                LayoutSetTextBoxFmtValue(self->mUnk20, buf88, s2, self->field_0x2C);
                 func_80124270(self->mUnk20->GetRootPane()->FindPaneByName(
                                   buf88, true), 1);
                 sprintf(buf88, &lbl_eu_8050A0B4[0x13e], idx + 1);
@@ -409,19 +409,19 @@ extern "C" __declspec(noinline) void func_80229CF0(CQstLogInfo* self,
         }
         if (v >= 0xFE) {
             char* s2 = (v & 1) != 0
-                ? func_8013639C((const void*)self->field_0x3C,
+                ? BdatGetPtrDirect((const void*)self->field_0x3C,
                                 &lbl_eu_8050A0B4[0x1d4], key)
-                : func_8013639C((const void*)self->field_0x3C,
+                : BdatGetPtrDirect((const void*)self->field_0x3C,
                                 &lbl_eu_8050A0B4[0x1df], key);
             sprintf(buf68, &lbl_eu_8050A0B4[0x12f], idx + 1);
-            func_80136B4C(self->mUnk20, buf68, s2, self->field_0x2C);
+            LayoutSetTextBoxFmtValue(self->mUnk20, buf68, s2, self->field_0x2C);
             func_80124270(self->mUnk20->GetRootPane()->FindPaneByName(
                               buf68, true), 1);
         }
     } else {
-        char* s = func_8013639C((const void*)self->field_0x3C,
+        char* s = BdatGetPtrDirect((const void*)self->field_0x3C,
                                 &lbl_eu_8050A0B4[0xd0], key);
-        func_80136B4C(self->mUnk20, &lbl_eu_8050A0B4[0xda], s,
+        LayoutSetTextBoxFmtValue(self->mUnk20, &lbl_eu_8050A0B4[0xda], s,
                       self->field_0x2C);
         func_80124270(self->mUnk20->GetRootPane()->FindPaneByName(
                           &lbl_eu_8050A0B4[0xda], true), 1);
@@ -441,17 +441,17 @@ extern "C" __declspec(noinline) void func_80229CF0(CQstLogInfo* self,
             } else {
                 sprintf(buf48, &lbl_eu_8050A0B4[0x1f8], i + 2);
             }
-            u32 val = func_80136254(table, buf48, key);
+            u32 val = BdatGetU16Direct(table, buf48, key);
             if ((u16)val != 0) {
                 if (odd) {
                     sprintf(buf48, &lbl_eu_8050A0B4[0x206], i + 1);
                 } else {
                     sprintf(buf48, &lbl_eu_8050A0B4[0x214], i + 1);
                 }
-                char* s2 = func_8013639C((const void*)self->field_0x3C,
+                char* s2 = BdatGetPtrDirect((const void*)self->field_0x3C,
                                          buf48, key);
                 sprintf(buf48, &lbl_eu_8050A0B4[0x12f], idx + 1);
-                func_80136B4C(self->mUnk20, buf48, s2, self->field_0x2C);
+                LayoutSetTextBoxFmtValue(self->mUnk20, buf48, s2, self->field_0x2C);
                 func_80124270(self->mUnk20->GetRootPane()->FindPaneByName(
                                   buf48, true), 1);
                 sprintf(buf48, &lbl_eu_8050A0B4[0x13e], idx + 1);
@@ -475,11 +475,11 @@ extern "C" __declspec(noinline) void func_80229CF0(CQstLogInfo* self,
             }
         }
         if (v >= 0xFC) {
-            if (func_801361E8((u32)table, &lbl_eu_8050A0B4[0x1be], key) == 0) {
-                char* s2 = func_8013639C((const void*)self->field_0x3C,
+            if (BdatGetU8Direct((u32)table, &lbl_eu_8050A0B4[0x1be], key) == 0) {
+                char* s2 = BdatGetPtrDirect((const void*)self->field_0x3C,
                                          &lbl_eu_8050A0B4[0x1c8], key);
                 sprintf(buf28, &lbl_eu_8050A0B4[0x12f], idx + 1);
-                func_80136B4C(self->mUnk20, buf28, s2, self->field_0x2C);
+                LayoutSetTextBoxFmtValue(self->mUnk20, buf28, s2, self->field_0x2C);
                 func_80124270(self->mUnk20->GetRootPane()->FindPaneByName(
                                   buf28, true), 1);
                 sprintf(buf28, &lbl_eu_8050A0B4[0x13e], idx + 1);
@@ -495,12 +495,12 @@ extern "C" __declspec(noinline) void func_80229CF0(CQstLogInfo* self,
         }
         if (v >= 0xFE) {
             char* s2 = (v & 1) != 0
-                ? func_8013639C((const void*)self->field_0x3C,
+                ? BdatGetPtrDirect((const void*)self->field_0x3C,
                                 &lbl_eu_8050A0B4[0x1d4], key)
-                : func_8013639C((const void*)self->field_0x3C,
+                : BdatGetPtrDirect((const void*)self->field_0x3C,
                                 &lbl_eu_8050A0B4[0x1df], key);
             sprintf(buf8, &lbl_eu_8050A0B4[0x12f], idx + 1);
-            func_80136B4C(self->mUnk20, buf8, s2, self->field_0x2C);
+            LayoutSetTextBoxFmtValue(self->mUnk20, buf8, s2, self->field_0x2C);
             func_80124270(self->mUnk20->GetRootPane()->FindPaneByName(
                               buf8, true), 1);
         }
@@ -521,17 +521,17 @@ extern "C" __declspec(noinline) void func_8022A904(CQstLogInfo* self,
     char buf68[0x20];
     char* str = 0;
     if (v >= 0xFE) {
-        u8 kind = func_801361E8((u32)table, &lbl_eu_8050A0B4[0x222], key);
+        u8 kind = BdatGetU8Direct((u32)table, &lbl_eu_8050A0B4[0x222], key);
         if (kind == 1) {
-            func_80136B4C(self->mUnk20, &lbl_eu_8050A0B4[0x22d],
-                          func_80136190(&lbl_eu_8050A0B4[0x8c],
+            LayoutSetTextBoxFmtValue(self->mUnk20, &lbl_eu_8050A0B4[0x22d],
+                          BdatTouchStringCell(&lbl_eu_8050A0B4[0x8c],
                                         &lbl_eu_8050A0B4[0x7f], 0x33), 0);
             setLayoutTextBoxNumber(self->mUnk20, &lbl_eu_8050A0B4[0x238], 0);
             setLayoutTextBoxNumber(self->mUnk20, &lbl_eu_8050A0B4[0x243], 0);
             return;
         }
-        u16 a = func_80136254(table, &lbl_eu_8050A0B4[0x24d], key);
-        u16 b = func_80136254(table, &lbl_eu_8050A0B4[0x258], key);
+        u16 a = BdatGetU16Direct(table, &lbl_eu_8050A0B4[0x24d], key);
+        u16 b = BdatGetU16Direct(table, &lbl_eu_8050A0B4[0x258], key);
         setLayoutTextBoxNumber(self->mUnk20, &lbl_eu_8050A0B4[0x238], b * 10);
         setLayoutTextBoxNumber(self->mUnk20, &lbl_eu_8050A0B4[0x243], a * 10);
         u32 odd = v & 1;
@@ -541,41 +541,41 @@ extern "C" __declspec(noinline) void func_8022A904(CQstLogInfo* self,
             } else {
                 sprintf(buf48, &lbl_eu_8050A0B4[0x270], i + 1);
             }
-            u32 val = func_80136254(table, buf48, key);
+            u32 val = BdatGetU16Direct(table, buf48, key);
             if ((u16)val != 0) {
-                u32 v1 = func_801392E4((u16)val);
-                u32 v2 = func_80139358((u16)val);
+                u32 v1 = BdatGetItemType((u16)val);
+                u32 v2 = BdatGetItemId((u16)val);
                 switch ((u16)v1) {
                 case 0:
-                    str = func_8013639C((const void*)lbl_eu_806640F4,
+                    str = BdatGetPtrDirect((const void*)lbl_eu_806640F4,
                                         &lbl_eu_8050A0B4[0x7f], (u16)v2);
                     break;
                 case 1:
-                    str = func_8013639C((const void*)lbl_eu_806640D8,
+                    str = BdatGetPtrDirect((const void*)lbl_eu_806640D8,
                                         &lbl_eu_8050A0B4[0x7f], (u16)v2);
                     break;
                 case 2:
-                    str = func_8013639C((const void*)lbl_eu_806640F8,
+                    str = BdatGetPtrDirect((const void*)lbl_eu_806640F8,
                                         &lbl_eu_8050A0B4[0x7f], (u16)v2);
                     break;
                 case 3:
-                    str = func_8013639C((const void*)lbl_eu_806640FC,
+                    str = BdatGetPtrDirect((const void*)lbl_eu_806640FC,
                                         &lbl_eu_8050A0B4[0x7f], (u16)v2);
                     break;
                 case 4:
-                    str = func_8013639C((const void*)lbl_eu_80664104,
+                    str = BdatGetPtrDirect((const void*)lbl_eu_80664104,
                                         &lbl_eu_8050A0B4[0x7f], (u16)v2);
                     break;
                 case 5:
-                    str = func_8013639C((const void*)lbl_eu_80664108,
+                    str = BdatGetPtrDirect((const void*)lbl_eu_80664108,
                                         &lbl_eu_8050A0B4[0x7f], (u16)v2);
                     break;
                 case 6:
-                    str = func_8013639C((const void*)lbl_eu_8066410C,
+                    str = BdatGetPtrDirect((const void*)lbl_eu_8066410C,
                                         &lbl_eu_8050A0B4[0x7f], (u16)v2);
                     break;
                 case 7:
-                    str = func_8013639C((const void*)lbl_eu_80664110,
+                    str = BdatGetPtrDirect((const void*)lbl_eu_80664110,
                                         &lbl_eu_8050A0B4[0x7f], (u16)v2);
                     break;
                 default:
@@ -583,10 +583,10 @@ extern "C" __declspec(noinline) void func_8022A904(CQstLogInfo* self,
                 }
                 sprintf(buf48, &lbl_eu_8050A0B4[0x27b], i + 1);
                 if ((u16)v1 == 3) {
-                    u8 x = func_801361E8((u32)lbl_eu_806640EC,
+                    u8 x = BdatGetU8Direct((u32)lbl_eu_806640EC,
                                          &lbl_eu_8050A0B4[0x288], (u16)val);
                     sprintf(buf68, &lbl_eu_8050A0B4[0x29a], str,
-                            func_80136190(&lbl_eu_8050A0B4[0x291],
+                            BdatTouchStringCell(&lbl_eu_8050A0B4[0x291],
                                           &lbl_eu_8050A0B4[0x7f],
                                           0x1e - (x - 1)));
                 } else {
@@ -594,33 +594,33 @@ extern "C" __declspec(noinline) void func_8022A904(CQstLogInfo* self,
                 }
                 func_80136A1C(self->mUnk20, buf48, buf68, 0);
             } else if (i == 0) {
-                str = func_80136190(&lbl_eu_8050A0B4[0x8c],
+                str = BdatTouchStringCell(&lbl_eu_8050A0B4[0x8c],
                                     &lbl_eu_8050A0B4[0x7f], 0x33);
-                func_80136B4C(self->mUnk20, &lbl_eu_8050A0B4[0x22d], str, 0);
+                LayoutSetTextBoxFmtValue(self->mUnk20, &lbl_eu_8050A0B4[0x22d], str, 0);
             }
         }
     } else {
-        u8 kind = func_801361E8((u32)table, &lbl_eu_8050A0B4[0x222], key);
+        u8 kind = BdatGetU8Direct((u32)table, &lbl_eu_8050A0B4[0x222], key);
         if (kind == 3) {
-            func_80136B4C(self->mUnk20, &lbl_eu_8050A0B4[0x22d],
-                          func_80136190(&lbl_eu_8050A0B4[0x8c],
+            LayoutSetTextBoxFmtValue(self->mUnk20, &lbl_eu_8050A0B4[0x22d],
+                          BdatTouchStringCell(&lbl_eu_8050A0B4[0x8c],
                                         &lbl_eu_8050A0B4[0x7f], 0x32), 0);
-            u16 a = func_80136254(table, &lbl_eu_8050A0B4[0x24d], key);
-            u16 b = func_80136254(table, &lbl_eu_8050A0B4[0x258], key);
+            u16 a = BdatGetU16Direct(table, &lbl_eu_8050A0B4[0x24d], key);
+            u16 b = BdatGetU16Direct(table, &lbl_eu_8050A0B4[0x258], key);
             setLayoutTextBoxNumber(self->mUnk20, &lbl_eu_8050A0B4[0x238], b * 10);
             setLayoutTextBoxNumber(self->mUnk20, &lbl_eu_8050A0B4[0x243], a * 10);
             return;
         }
         if (kind == 1) {
-            func_80136B4C(self->mUnk20, &lbl_eu_8050A0B4[0x22d],
-                          func_80136190(&lbl_eu_8050A0B4[0x8c],
+            LayoutSetTextBoxFmtValue(self->mUnk20, &lbl_eu_8050A0B4[0x22d],
+                          BdatTouchStringCell(&lbl_eu_8050A0B4[0x8c],
                                         &lbl_eu_8050A0B4[0x7f], 0x33), 0);
             setLayoutTextBoxNumber(self->mUnk20, &lbl_eu_8050A0B4[0x238], 0);
             setLayoutTextBoxNumber(self->mUnk20, &lbl_eu_8050A0B4[0x243], 0);
             return;
         }
-        u16 a = func_80136254(table, &lbl_eu_8050A0B4[0x24d], key);
-        u16 b = func_80136254(table, &lbl_eu_8050A0B4[0x258], key);
+        u16 a = BdatGetU16Direct(table, &lbl_eu_8050A0B4[0x24d], key);
+        u16 b = BdatGetU16Direct(table, &lbl_eu_8050A0B4[0x258], key);
         setLayoutTextBoxNumber(self->mUnk20, &lbl_eu_8050A0B4[0x238], b * 10);
         setLayoutTextBoxNumber(self->mUnk20, &lbl_eu_8050A0B4[0x243], a * 10);
         u32 odd = v & 1;
@@ -640,41 +640,41 @@ extern "C" __declspec(noinline) void func_8022A904(CQstLogInfo* self,
                     sprintf(buf8, &lbl_eu_8050A0B4[0x265], i + 1);
                 }
             }
-            u32 val = func_80136254(table, buf8, key);
+            u32 val = BdatGetU16Direct(table, buf8, key);
             if ((u16)val != 0) {
-                u32 v1 = func_801392E4((u16)val);
-                u32 v2 = func_80139358((u16)val);
+                u32 v1 = BdatGetItemType((u16)val);
+                u32 v2 = BdatGetItemId((u16)val);
                 switch ((u16)v1) {
                 case 0:
-                    str = func_8013639C((const void*)lbl_eu_806640F4,
+                    str = BdatGetPtrDirect((const void*)lbl_eu_806640F4,
                                         &lbl_eu_8050A0B4[0x7f], (u16)v2);
                     break;
                 case 1:
-                    str = func_8013639C((const void*)lbl_eu_806640D8,
+                    str = BdatGetPtrDirect((const void*)lbl_eu_806640D8,
                                         &lbl_eu_8050A0B4[0x7f], (u16)v2);
                     break;
                 case 2:
-                    str = func_8013639C((const void*)lbl_eu_806640F8,
+                    str = BdatGetPtrDirect((const void*)lbl_eu_806640F8,
                                         &lbl_eu_8050A0B4[0x7f], (u16)v2);
                     break;
                 case 3:
-                    str = func_8013639C((const void*)lbl_eu_806640FC,
+                    str = BdatGetPtrDirect((const void*)lbl_eu_806640FC,
                                         &lbl_eu_8050A0B4[0x7f], (u16)v2);
                     break;
                 case 4:
-                    str = func_8013639C((const void*)lbl_eu_80664104,
+                    str = BdatGetPtrDirect((const void*)lbl_eu_80664104,
                                         &lbl_eu_8050A0B4[0x7f], (u16)v2);
                     break;
                 case 5:
-                    str = func_8013639C((const void*)lbl_eu_80664108,
+                    str = BdatGetPtrDirect((const void*)lbl_eu_80664108,
                                         &lbl_eu_8050A0B4[0x7f], (u16)v2);
                     break;
                 case 6:
-                    str = func_8013639C((const void*)lbl_eu_8066410C,
+                    str = BdatGetPtrDirect((const void*)lbl_eu_8066410C,
                                         &lbl_eu_8050A0B4[0x7f], (u16)v2);
                     break;
                 case 7:
-                    str = func_8013639C((const void*)lbl_eu_80664110,
+                    str = BdatGetPtrDirect((const void*)lbl_eu_80664110,
                                         &lbl_eu_8050A0B4[0x7f], (u16)v2);
                     break;
                 default:
@@ -682,10 +682,10 @@ extern "C" __declspec(noinline) void func_8022A904(CQstLogInfo* self,
                 }
                 sprintf(buf8, &lbl_eu_8050A0B4[0x27b], i + 1);
                 if ((u16)v1 == 3) {
-                    u8 x = func_801361E8((u32)lbl_eu_806640EC,
+                    u8 x = BdatGetU8Direct((u32)lbl_eu_806640EC,
                                          &lbl_eu_8050A0B4[0x288], (u16)val);
                     sprintf(buf28, &lbl_eu_8050A0B4[0x29a], str,
-                            func_80136190(&lbl_eu_8050A0B4[0x291],
+                            BdatTouchStringCell(&lbl_eu_8050A0B4[0x291],
                                           &lbl_eu_8050A0B4[0x7f],
                                           0x1e - (x - 1)));
                 } else {
@@ -693,9 +693,9 @@ extern "C" __declspec(noinline) void func_8022A904(CQstLogInfo* self,
                 }
                 func_80136A1C(self->mUnk20, buf8, buf28, 0);
             } else if (i == 0) {
-                str = func_80136190(&lbl_eu_8050A0B4[0x8c],
+                str = BdatTouchStringCell(&lbl_eu_8050A0B4[0x8c],
                                     &lbl_eu_8050A0B4[0x7f], 0x33);
-                func_80136B4C(self->mUnk20, &lbl_eu_8050A0B4[0x22d], str, 0);
+                LayoutSetTextBoxFmtValue(self->mUnk20, &lbl_eu_8050A0B4[0x22d], str, 0);
             }
         }
     }
@@ -706,18 +706,18 @@ extern "C" __declspec(noinline) void func_8022A904(CQstLogInfo* self,
 // the empty string (pool+0x2a2) and resets the state panes' visibility.
 #pragma optimize_for_size on
 extern "C" __declspec(noinline) void func_8022AFF8(CQstLogInfo* self) {
-    func_80136B4C(self->mUnk20, &lbl_eu_8050A0B4[0x1d], &lbl_eu_8050A0B4[0x2a2], 0);
-    func_80136B4C(self->mUnk20, &lbl_eu_8050A0B4[0x84], &lbl_eu_8050A0B4[0x2a2], 0);
-    func_80136B4C(self->mUnk20, &lbl_eu_8050A0B4[0xab], &lbl_eu_8050A0B4[0x2a2], 0);
-    func_80136B4C(self->mUnk20, &lbl_eu_8050A0B4[0xbb], &lbl_eu_8050A0B4[0x2a2], 0);
+    LayoutSetTextBoxFmtValue(self->mUnk20, &lbl_eu_8050A0B4[0x1d], &lbl_eu_8050A0B4[0x2a2], 0);
+    LayoutSetTextBoxFmtValue(self->mUnk20, &lbl_eu_8050A0B4[0x84], &lbl_eu_8050A0B4[0x2a2], 0);
+    LayoutSetTextBoxFmtValue(self->mUnk20, &lbl_eu_8050A0B4[0xab], &lbl_eu_8050A0B4[0x2a2], 0);
+    LayoutSetTextBoxFmtValue(self->mUnk20, &lbl_eu_8050A0B4[0xbb], &lbl_eu_8050A0B4[0x2a2], 0);
     func_80124270(self->mUnk20->GetRootPane()->FindPaneByName(
                       &lbl_eu_8050A0B4[0x25], true), 0);
-    func_80136B4C(self->mUnk20, &lbl_eu_8050A0B4[0xda], &lbl_eu_8050A0B4[0x2a2], 0);
-    func_80136B4C(self->mUnk20, &lbl_eu_8050A0B4[0x2a3], &lbl_eu_8050A0B4[0x2a2], 0);
-    func_80136B4C(self->mUnk20, &lbl_eu_8050A0B4[0x2b0], &lbl_eu_8050A0B4[0x2a2], 0);
-    func_80136B4C(self->mUnk20, &lbl_eu_8050A0B4[0x2bd], &lbl_eu_8050A0B4[0x2a2], 0);
-    func_80136B4C(self->mUnk20, &lbl_eu_8050A0B4[0x2ca], &lbl_eu_8050A0B4[0x2a2], 0);
-    func_80136B4C(self->mUnk20, &lbl_eu_8050A0B4[0x2d7], &lbl_eu_8050A0B4[0x2a2], 0);
+    LayoutSetTextBoxFmtValue(self->mUnk20, &lbl_eu_8050A0B4[0xda], &lbl_eu_8050A0B4[0x2a2], 0);
+    LayoutSetTextBoxFmtValue(self->mUnk20, &lbl_eu_8050A0B4[0x2a3], &lbl_eu_8050A0B4[0x2a2], 0);
+    LayoutSetTextBoxFmtValue(self->mUnk20, &lbl_eu_8050A0B4[0x2b0], &lbl_eu_8050A0B4[0x2a2], 0);
+    LayoutSetTextBoxFmtValue(self->mUnk20, &lbl_eu_8050A0B4[0x2bd], &lbl_eu_8050A0B4[0x2a2], 0);
+    LayoutSetTextBoxFmtValue(self->mUnk20, &lbl_eu_8050A0B4[0x2ca], &lbl_eu_8050A0B4[0x2a2], 0);
+    LayoutSetTextBoxFmtValue(self->mUnk20, &lbl_eu_8050A0B4[0x2d7], &lbl_eu_8050A0B4[0x2a2], 0);
     func_80124270(self->mUnk20->GetRootPane()->FindPaneByName(
                       &lbl_eu_8050A0B4[0xe7], true), 0);
     func_80124270(self->mUnk20->GetRootPane()->FindPaneByName(
@@ -742,11 +742,11 @@ extern "C" __declspec(noinline) void func_8022AFF8(CQstLogInfo* self) {
                       &lbl_eu_8050A0B4[0x336], true), 0);
     func_80124270(self->mUnk20->GetRootPane()->FindPaneByName(
                       &lbl_eu_8050A0B4[0x33f], true), 0);
-    func_80136B4C(self->mUnk20, &lbl_eu_8050A0B4[0x22d], &lbl_eu_8050A0B4[0x2a2], 0);
-    func_80136B4C(self->mUnk20, &lbl_eu_8050A0B4[0x348], &lbl_eu_8050A0B4[0x2a2], 0);
-    func_80136B4C(self->mUnk20, &lbl_eu_8050A0B4[0x353], &lbl_eu_8050A0B4[0x2a2], 0);
-    func_80136B4C(self->mUnk20, &lbl_eu_8050A0B4[0x238], &lbl_eu_8050A0B4[0x2a2], 0);
-    func_80136B4C(self->mUnk20, &lbl_eu_8050A0B4[0x243], &lbl_eu_8050A0B4[0x2a2], 0);
+    LayoutSetTextBoxFmtValue(self->mUnk20, &lbl_eu_8050A0B4[0x22d], &lbl_eu_8050A0B4[0x2a2], 0);
+    LayoutSetTextBoxFmtValue(self->mUnk20, &lbl_eu_8050A0B4[0x348], &lbl_eu_8050A0B4[0x2a2], 0);
+    LayoutSetTextBoxFmtValue(self->mUnk20, &lbl_eu_8050A0B4[0x353], &lbl_eu_8050A0B4[0x2a2], 0);
+    LayoutSetTextBoxFmtValue(self->mUnk20, &lbl_eu_8050A0B4[0x238], &lbl_eu_8050A0B4[0x2a2], 0);
+    LayoutSetTextBoxFmtValue(self->mUnk20, &lbl_eu_8050A0B4[0x243], &lbl_eu_8050A0B4[0x2a2], 0);
 }
 #pragma optimize_for_size off
 
@@ -790,8 +790,8 @@ int CQstLogInfo::OnFileEvent(CEventFile* event) {
             setLayoutTextBoxFont(mUnk20, &lbl_eu_8050A0B4[0x3b2], (u32)questName);
             setLayoutTextBoxFont(mUnk20, &lbl_eu_8050A0B4[0x243], (u32)questName);
         }
-        func_80136B4C(mUnk20, &lbl_eu_8050A0B4[0x3b2],
-                      func_80136190(&lbl_eu_8050A0B4[0x291],
+        LayoutSetTextBoxFmtValue(mUnk20, &lbl_eu_8050A0B4[0x3b2],
+                      BdatTouchStringCell(&lbl_eu_8050A0B4[0x291],
                                     &lbl_eu_8050A0B4[0x7f], 3), 0);
         func_802298A0(this);
         mUnk20->Animate(0);

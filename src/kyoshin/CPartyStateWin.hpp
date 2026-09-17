@@ -181,14 +181,14 @@ public:
 // with the same extern "C" symbols). Return types are int where the retail
 // call sites cmpwi the result directly (an u8 return would make MWCC emit a
 // normalizing rlwinm before the compare).
-extern "C" int func_801FF95C(CModelDispEquipView*);
-extern "C" void func_801FF96C(CModelDispEquipView*);
-extern "C" u32 func_801FF9A0(CModelDispEquipView*);
+extern "C" int ModelDispEquip_GetState20(CModelDispEquipView*);
+extern "C" void ModelDispEquip_StartFadeOut(CModelDispEquipView*);
+extern "C" u32 ModelDispEquip_GetEquipSlot(CModelDispEquipView*);
 extern "C" void func_802014C0(CModelDispEquipView*);
 extern "C" void func_8020151C(CModelDispEquipView*);
 extern "C" void func_80201808(CModelDispEquipView*);
 extern "C" void func_80201900(CModelDispEquipView*);
-extern "C" void func_801FF874(CModelDispEquipView*);
+extern "C" void ModelDispEquip_ResetDisplay(CModelDispEquipView*);
 
 // C-linkage import for the embedded CEquipChange sub-object used by
 // func_801FB560 (retail unmangled name; int return so the retail cmpwi
@@ -236,7 +236,7 @@ extern "C" void func_801C4080(CTitleAHelp*, nw4r::lyt::DrawInfo*);
 
 // String-pool lookup helper (retail unmangled; also declared in
 // CMenuKizunagram.hpp) and the string pool it indexes.
-extern "C" char* func_80136190(char* a, char* b, int id);
+extern "C" char* BdatTouchStringCell(char* a, char* b, int id);
 extern char lbl_eu_80507C94[];
 
 // C-linkage CSysWin helper imports (retail unmangled names, defined in
@@ -331,7 +331,7 @@ extern "C" CTaskGame* getInstance__9CTaskGameFv();
 extern "C" int isFlag01Set__9CTaskGameFv();
 
 // Screen-active check used by cbRenderBefore (retail unmangled).
-extern "C" int func_8013BE50();
+extern "C" int IsMenuState621F0();
 
 // nw4r DrawInfo helpers (retail emits the pre-mangled names; a C++ local
 // would virtual-dispatch its scope-exit destructor and bloat the body).
@@ -420,7 +420,7 @@ struct CTaskGameProcView {
 
 // Sub-object teardown helpers used by func_801FA254 (retail unmangled; the
 // embedded CTitleAHelp/CModelDisp/CPartyState/CEquipChange/CSysWin headers
-// cannot be included here). func_801FF874 is declared above.
+// cannot be included here). ModelDispEquip_ResetDisplay is declared above.
 extern "C" void func_801C40A0(CTitleAHelp*);
 extern "C" void func_801FC0C4(CModelDisp*);
 extern "C" void func_801FD0F4(CPartyState*);
@@ -442,7 +442,7 @@ extern "C" int CSysWin_isReady(CSysWin*);
 extern "C" void func_801C3FF0(CTitleAHelp*);
 extern "C" void func_801FC060(CModelDisp*);
 extern "C" void func_801FCFF4(CPartyState*);
-extern "C" void func_801FF82C(CModelDispEquipView*);
+extern "C" void ModelDispEquip_StepStateDispatch(CModelDispEquipView*);
 extern "C" void func_80202110(CEquipChange*);
 extern "C" void func_8022B748(CSysWin*);
 extern "C" void func_802024CC(CEquipChange*);
@@ -478,8 +478,8 @@ extern "C" u32 func_802039F4(CEquipChange*);
 extern "C" void func_8022B9B4(CSysWin*, char*, u32);
 extern "C" void func_8022BFC8(CSysWin*, u32);
 extern "C" void func_8022B8B8(CSysWin*);
-extern "C" int func_801FF964(CModelDispEquipView*);
-extern "C" void func_801FF98C(CModelDispEquipView*);
+extern "C" int ModelDispEquip_GetState21(CModelDispEquipView*);
+extern "C" void ModelDispEquip_StartFadeIn(CModelDispEquipView*);
 
 // Shared window object pointer value (.sdata, retail unmangled; func_801F9694
 // returns it, func_801FA338 reads its stored s16 pair at +0x1C8).
@@ -494,7 +494,7 @@ extern "C" void func_8020147C(CModelDispEquipView*, int);
 // shape as MiniMapEnumHolder/MiniMapEnumList in CMiniMap.cpp; the helpers are
 // the retail-unmangled scene-lookup API).
 struct CPartyStateWinHolder {
-    void* field_0x0;   // +0x00 (list pointer, written by func_80043D90)
+    void* field_0x0;   // +0x00 (list pointer, written by CTaskGame_enumListCtor)
     u32 field_0x4;     // +0x04
 };
 struct CPartyStateWinList {
@@ -512,8 +512,8 @@ namespace cf { class CfObjectMove; }
 // repo-wide (CAIAction.hpp / CItemBoxGrid.hpp): typed parameters would make
 // extern "C" re-declarations clash (10197 illegal function overloading) in
 // TUs that include both headers. ABI is unchanged.
-extern "C" void func_80043D90(void*);
-extern "C" void* func_80043F18(void*);
+extern "C" void CTaskGame_enumListCtor(void*);
+extern "C" void* CTaskGame_enumListGet(void*);
 extern "C" void func_800F4A98(void*, u32, u32);
 extern "C" void* func_800F6EC0(void*, u32);
 extern "C" void* getCfObjectPc__FPQ22cf12CfObjectMove(void* objMove);
@@ -744,7 +744,7 @@ extern "C" void CTitleAHelp_load(CTitleAHelp* self);
 extern "C" void func_801BE16C(CTitleAHelp* dest, CTitleAHelp* src);
 extern "C" void func_801FBFD8(CModelDisp* self);
 extern "C" void func_801FCF5C(CPartyState* self);
-extern "C" void func_801FF7B0(CModelDispEquipView* self);
+extern "C" void ModelDispEquip_SyncScalePose(CModelDispEquipView* self);
 extern "C" void func_80202090(CEquipChange* self);
 extern "C" void func_80496118(CScn* scn, CWorkThread* work, u32 flag);
 extern "C" void func_801F969C(CPartyStateS16Quad* dst, CPartyStateWinRectSrc* obj);
@@ -752,7 +752,7 @@ extern "C" void func_801F9730(CPartyStateWin* self, const u32* src);
 // Defined with C++ linkage in CTaskGameEff.cpp; declared here to match.
 void func_800452EC(CScn* scn);
 extern "C" u8* getField5C(CScn* scn);
-extern "C" void func_80492E08(u8* unk5c);
+extern "C" void scnVlInitLights2(u8* unk5c);
 class CProcess;
 extern "C" CScn* create__8CScnNw4rFv(CProcess* parent, char* name,
                                      u32 arg1, u32 handle,

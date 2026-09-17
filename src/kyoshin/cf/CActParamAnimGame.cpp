@@ -19,7 +19,7 @@
 // the ::CActParamAnim subobject, stores the retail vtable manually
 // (novtable class), zeroes the flag fields, invokes the +0xE0 virtual
 // (CActParamAnim::func_8004B114, overridden in the retail table by
-// func_8005A524), then parks the link argument at +0x4E8 and returns this.
+// resetAnimGame), then parks the link argument at +0x4E8 and returns this.
 cf::CActParamAnimGame* __ct__8005A3FC(cf::CActParamAnimGame* self, cf::CActParamAnimGameLink* arg) {
     __ct__13CActParamAnimFv(self);
     *(void**)self = (void*)lbl_eu_80526458;
@@ -56,8 +56,8 @@ bool func_8005DE68(cf::CActParamAnimGame* self);
 bool func_8005E28C(cf::CActParamAnimGame* self);
 bool func_8005E990(cf::CActParamAnimGame* self);
 
-void cf::CActParamAnimGame::func_8005A524() {
-    func_8004B114();
+void cf::CActParamAnimGame::resetAnimGame() {
+    CActParamAnim::func_8004B114();
     // sdata2 constants written inline (const-float globals hoist the loads at
     // retail's position and allocate retail's FPR coloring, MWCC_CASES
     // SDA-const hoist / FPR-coloring rules). Use raw offsets for retail
@@ -87,28 +87,28 @@ extern "C" void func_8005A5B0(cf::CActParamAnimGame* self);
 // Forward decls for func_8005B820 below (C-linkage retail names; most are
 // also declared in the shared block further down).
 extern "C" {
-void func_8004B7DC(void*, f32);
-int func_80051C40(void*);
-void func_80052924(void*, f32);
+void addAnimHeight(void*, f32);
+int shiftAnimPos(void*);
+void mulAnimHeight(void*, f32);
 void func_800527E8(void*);
 void func_80051CD4(void*);
-void func_80051AA8(void*, int);
-void func_80051A9C(void*);
-void func_80051CAC(void*);
+void setActiveBit(void*, int);
+void clrAnimHeight(void*);
+void stopAnimMove(void*);
 f32 getSecPerFrame__9CDeviceVIFv();
 f32 FrSqrt__Q24nw4r4mathFf(f32);
-bool func_8004B354(void*, const ml::CVec3*);
+bool setAnimSubPos(void*, const ml::CVec3*);
 }
 
 // Fall/air update: runs while airborne. Refreshes the fall scale pair,
 // applies the fall-timer penalty, integrates velocity/move over the frame
 // time into a drift delta, then either dispatches the paused vt+0xE8 probe
-// or lands via func_80051AA8/func_80051A9C.
+// or lands via setActiveBit/clrAnimHeight.
 // Retail symbol is an unmangled C-ABI global; extern "C" keeps the call-site
 // reloc on the retail name (approved fix, PLAN.md §17.6).
 extern "C" void __declspec(noinline) func_8005B820(cf::CActParamAnimGame* selfV) {
     cf::CActParamAnimGameView* self = (cf::CActParamAnimGameView*)selfV;
-    func_80051C40(self);
+    shiftAnimPos(self);
     self->f394 = lbl_eu_806660B0;
     self->f398 = lbl_eu_806660B4;
     if ((self->flags0C & 0x100) == 0) {
@@ -132,10 +132,10 @@ extern "C" void __declspec(noinline) func_8005B820(cf::CActParamAnimGame* selfV)
             if (!(drop >= lbl_eu_806660C0)) {
                 scale = lbl_eu_806660BC * drop * lbl_eu_806660B8;
             }
-            func_8004B7DC(self, scale);
+            addAnimHeight(self, scale);
         }
-        func_8004B7DC(self, -self->f380);
-        func_80052924(self, lbl_eu_806660C4);
+        addAnimHeight(self, -self->f380);
+        mulAnimHeight(self, lbl_eu_806660C4);
         func_800527E8(self);
         // Advance velocity and move vec over the frame time; the accumulated
         // drift is (vel*dt + face dir) + move*dt. The intermediate copies are
@@ -184,20 +184,20 @@ extern "C" void __declspec(noinline) func_8005B820(cf::CActParamAnimGame* selfV)
             int ret = selfV->initAnimBlendVectors(&pos, &delta);
             f32 vy = self->vel3C0.y;
             if (vy > lbl_eu_80666040 || ret == 0) {
-                func_80051AA8(self, 0);
+                setActiveBit(self, 0);
             }
         } else {
-            func_80051AA8(self, 1);
-            func_80051A9C(self);
+            setActiveBit(self, 1);
+            clrAnimHeight(self);
             pos.x += delta.x;
             pos.z += delta.z;
         }
-        func_8004B354(self, &pos);
+        setAnimSubPos(self, &pos);
     }
     if ((self->flags0C & 0x40) == 0) {
         func_80051CD4(self);
     }
-    func_80051CAC(self);
+    stopAnimMove(self);
     self->flags0C &= ~0x80;
 }
 
@@ -215,21 +215,21 @@ void PSVECNormalize(const Vec*, Vec*);
 f32 PSVECMag(const Vec*);
 bool isTvFormatPal__9CDeviceVIFv();
 f32 getSecPerFrame__9CDeviceVIFv();
-f32 func_eu_8048A084();
-void func_8004B7C0(void*, const ml::CVec3*);
-void func_8004B7DC(void*, f32);
-int func_80051C40(void*);
-void func_80052924(void*, f32);
+f32 simGetTvFadeConst();
+void setAnimPosVec(void*, const ml::CVec3*);
+void addAnimHeight(void*, f32);
+int shiftAnimPos(void*);
+void mulAnimHeight(void*, f32);
 void func_800527E8(void*);
 void func_80051CD4(void*);
-void func_80051AA8(void*, int);
-void func_80051A9C(void*);
-int func_80051BF4(void*);
-void func_80051CAC(void*);
-f32 func_8004B34C(void*);
-f32 func_80053958();
-bool func_8004B354(void*, const ml::CVec3*);
-bool func_8004B52C(void*, f32);
+void setActiveBit(void*, int);
+void clrAnimHeight(void*);
+int isSpeedBelow(void*);
+void stopAnimMove(void*);
+f32 getAnimWalkKmh(void*);
+f32 getAnimMinSpeed();
+bool setAnimSubPos(void*, const ml::CVec3*);
+bool setTurnScale(void*, f32);
 u32 func_804BE348(void*, void*, u32, u32, u32);
 u32 func_804BE5A4(u32, u32);
 u32 func_804BE4AC(void);
@@ -240,10 +240,10 @@ int func_804BE604(u32);
 void* func_804BE520(int);
 void* func_804BE50C(u32);
 u32 getTargetFramerate__9CDeviceVIFv(void);
-void func_804876E4(void*, void*);
+void scnImN4DynStop(void*, void*);
 int func_804B1164(void*, ml::CVec3*, ml::CVec3*, ml::CVec3*);
 int func_804B5658(void*, ml::CVec3*, ml::CVec3*, ml::CVec3*, ml::CVec3*);
-void func_8004B840(void*, f32);
+void setAnimHeight(void*, f32);
 void func_804BE628(int);
 int func_804BE5B8(void);
 int func_804BE5C0(void);
@@ -252,8 +252,8 @@ extern "C" void* getGimmickListHead__Q22cf13CfGameManagerFv(void);
 int getEventValue40__Q22cf13CfGameManagerFv(int);
 void setEventManagerValue__Q22cf13CfGameManagerFv(int, int);
 void queueEventId__Q22cf13CfGameManagerFv(int);
-void func_804B0B54(void*, const ml::CVec3*);
-void func_804B1130(void*, void*, void*, void*, void*);
+void ColiSetAxisBlockInverse(void*, const ml::CVec3*);
+void ColiResolveMoveDefault(void*, void*, void*, void*, void*);
 s8 lbl_eu_80663D64;
 s8 lbl_eu_80663D6C;
 s8 lbl_eu_80663D74;
@@ -310,8 +310,8 @@ extern "C" void __declspec(noinline) func_8005A5B0(cf::CActParamAnimGame* selfV)
             } else {
                 ml::CVec3 vec88 = self->pos3A8 + self->probe520;
                 self->f488 += self->probe520.y;
-                func_8004B354(self, &vec88);
-                if (self->obj3A0) func_804876E4(self->obj3A0, &self->probe520);
+                setAnimSubPos(self, &vec88);
+                if (self->obj3A0) scnImN4DynStop(self->obj3A0, &self->probe520);
             }
         }
         if ((self->flags0C & 0x80) == 0) {
@@ -336,9 +336,9 @@ extern "C" void __declspec(noinline) func_8005A5B0(cf::CActParamAnimGame* selfV)
                 } else {
                     ml::CVec3 vec = self->pos3A8 + self->probe520;
                     self->f488 += self->probe520.y;
-                    func_8004B354(self, &vec);
-                    if (localF != 0.0f) func_8004B52C(self, localF + self->f444);
-                    if (self->obj3A0) func_804876E4(self->obj3A0, &self->probe520);
+                    setAnimSubPos(self, &vec);
+                    if (localF != 0.0f) setTurnScale(self, localF + self->f444);
+                    if (self->obj3A0) scnImN4DynStop(self->obj3A0, &self->probe520);
                 }
             }
         } else {
@@ -349,8 +349,8 @@ extern "C" void __declspec(noinline) func_8005A5B0(cf::CActParamAnimGame* selfV)
                 } else {
                     ml::CVec3 vec = self->pos3A8 + self->probe520;
                     self->f488 += self->probe520.y;
-                    func_8004B354(self, &vec);
-                    if (self->obj3A0) func_804876E4(self->obj3A0, &self->probe520);
+                    setAnimSubPos(self, &vec);
+                    if (self->obj3A0) scnImN4DynStop(self->obj3A0, &self->probe520);
                 }
             }
         }
@@ -747,8 +747,8 @@ extern "C" void func_8005BC14(void* selfV) {
     self->f394 = 1.0f;
     self->f398 = 1.0f;
     *(ml::CVec3*)((u8*)self + 0x3F0) = zero__Q22ml5CVec3;
-    func_8004B7C0(self, &zero__Q22ml5CVec3);
-    func_80051C40(self);
+    setAnimPosVec(self, &zero__Q22ml5CVec3);
+    shiftAnimPos(self);
 
     if ((self->flags0C & 0x100) != 0) goto exit;
     if (self->obj3A0 == 0) goto exit;
@@ -776,7 +776,7 @@ extern "C" void func_8005BC14(void* selfV) {
 bit1clear:
     {
         f32 f31v = isTvFormatPal__9CDeviceVIFv() ? 1.2f : 1.0f;
-        f32 f29v = func_eu_8048A084();
+        f32 f29v = simGetTvFadeConst();
         f32 f30v = ((CActParamAnim*)self)->getAttachedAnimRate() - f29v;
         f32 f29b = ((CActParamAnim*)self)->getAttachedAnimTime();
         if (((CActParamAnim*)self)->getAttachedAnimScale() * f31v + f29b >= f30v) {
@@ -796,13 +796,13 @@ bit1clear:
             ml::CVec3 v;
             func_804BE4E0(&v, 0);
             if (v.y <= 0.7071f) {
-                func_8004B52C(self, 0.024543693f * Atan2FIdx__Q24nw4r4mathFff(-v.x, -v.z));
+                setTurnScale(self, 0.024543693f * Atan2FIdx__Q24nw4r4mathFff(-v.x, -v.z));
             }
         }
     }
 commit:
-    if (self->region4E8 != 0) func_804B0B54((u8*)self->region4E8 + 0x60C, &pos);
-    func_8004B354(self, &pos);
+    if (self->region4E8 != 0) ColiSetAxisBlockInverse((u8*)self->region4E8 + 0x60C, &pos);
+    setAnimSubPos(self, &pos);
     goto next;
 
 mode0:
@@ -815,12 +815,12 @@ mode0:
             ml::CVec3 v;
             func_804BE4E0(&v, 0);
             if (v.y <= 0.7071f) {
-                func_8004B52C(self, 0.024543693f * Atan2FIdx__Q24nw4r4mathFff(-v.x, -v.z));
+                setTurnScale(self, 0.024543693f * Atan2FIdx__Q24nw4r4mathFff(-v.x, -v.z));
             }
         }
         if (self->flags530 & 0x20) {
             pos.y += 0.1f * (self->f518 - pos.y);
-            func_8004B354(self, &pos);
+            setAnimSubPos(self, &pos);
         }
         moved = 0;
         goto next;
@@ -833,13 +833,13 @@ mode0:
         } else {
             pos.x += 0.3f * dx;
             pos.z += 0.3f * dz;
-            func_8004B354(self, &pos);
+            setAnimSubPos(self, &pos);
             moved = 0;
         }
     }
 next:
     if (self->flags530 & 0x200) {
-        if (((cf::CBattleState*)self->owner)->CBattleState_UnkVirtualFunc3() != 0 || func_80051BF4(self) != 0) {
+        if (((cf::CBattleState*)self->owner)->CBattleState_UnkVirtualFunc3() != 0 || isSpeedBelow(self) != 0) {
             self->flags530 &= 0xFDFF;
         } else {
             if (lbl_eu_80663D64 == 0) { lbl_eu_80663D60 = 60.0f * 0.017453292f; lbl_eu_80663D64 = 1; }
@@ -856,10 +856,10 @@ next:
     accel = ml::CVec3(0.0f, 0.0f, 0.0f);
     if ((self->flags530 & 0x200) == 0) {
         f29v = *(f32*)((u8*)self->owner + 0x14);
-        if (f29v * self->f430 >= func_80053958()) {
+        if (f29v * self->f430 >= getAnimMinSpeed()) {
             f28v = *(f32*)((u8*)self->owner + 0x14) * self->f394;
         }
-        f31v = f28v * (1000.0f * func_8004B34C(self) / 3600.0f) * (self->f390 * getSecPerFrame__9CDeviceVIFv());
+        f31v = f28v * (1000.0f * getAnimWalkKmh(self) / 3600.0f) * (self->f390 * getSecPerFrame__9CDeviceVIFv());
         if (self->flags530 & 0x400) {
             f32 a = *(f32*)((u8*)self->owner + 0xC);
             f30v = fabsf(f31v * SinFIdx__Q24nw4r4mathFf(40.743663f * a));
@@ -959,7 +959,7 @@ next:
             }
         }
         f28v = 0.024543693f * Atan2FIdx__Q24nw4r4mathFff(nx, nz);
-        func_8004B52C(self, f28v);
+        setTurnScale(self, f28v);
         dirM.x = SinFIdx__Q24nw4r4mathFf(40.743663f * f28v);
         dirM.z = CosFIdx__Q24nw4r4mathFf(40.743663f * f28v);
         if (accel.x == 0.0f && accel.y == 0.0f && accel.z == 0.0f) goto ground;
@@ -995,7 +995,7 @@ ground:
             if (self->region4E8 != 0) {
                 ml::CVec3 out;
                 ml::CVec3 sum = v2 + accel;
-                func_804B1130((u8*)self->region4E8 + 0x60C, &out, &sum, &sum, &v2);
+                ColiResolveMoveDefault((u8*)self->region4E8 + 0x60C, &out, &sum, &sum, &v2);
                 accel += out;
             }
             {
@@ -1046,24 +1046,24 @@ ground:
         }
     }
 after_hit:
-    func_8004B354(self, &pos);
+    setAnimSubPos(self, &pos);
     if (moved == 0) goto exit;
     self->flags530 &= 0xF7FF;
     self->flags4EC |= 0x40000;
     // func_8004B9D4 is declared in kyoshin/action/CActParamAnim.hpp
     // (CActParamAnim* first arg); cast the view pointer at the call site.
     func_8004B9D4((CActParamAnim*)self, 6, 0, -1, 0);
-    func_8004B52C(self, self->f444);
+    setTurnScale(self, self->f444);
     {
         ml::CVec3 zero2 = ml::CVec3(0.0f, 0.0f, 0.0f);
-        func_8004B7C0(self, &zero2);
+        setAnimPosVec(self, &zero2);
         ml::CVec3 d = ml::CVec3(0.2f * SinFIdx__Q24nw4r4mathFf(40.743663f * self->f444), 0.0f, 0.2f * CosFIdx__Q24nw4r4mathFf(40.743663f * self->f444));
         pos = pos - d;
-        func_8004B354(self, &pos);
+        setAnimSubPos(self, &pos);
     }
 exit:
     self->f488 = self->f47C = self->posY3AC;
-    func_80051CAC(self);
+    stopAnimMove(self);
 }
 
 void cf::CActParamAnimGame::func_8005D2C4() {
@@ -1079,10 +1079,10 @@ void cf::CActParamAnimGame::func_8005D2C4() {
     v->flags530 &= 0xFFFE;
 
     // Child-data timers: keep the current value only when it is non-negative.
-    f32 timerA = func_80055DD4(v->_10);
+    f32 timerA = getParamFloat0C(v->_10);
     if (timerA >= lbl_eu_80666040) v->f500 = timerA;
     if (v->f504 >= lbl_eu_80666040) v->f500 = v->f504;
-    f32 timerB = func_80055DB8(v->_10);
+    f32 timerB = getParamFloat08(v->_10);
     if (timerB >= lbl_eu_80666040) v->f508 = timerB;
     if (v->f50C >= lbl_eu_80666040) v->f508 = v->f50C;
 
@@ -1112,7 +1112,7 @@ void cf::CActParamAnimGame::func_8005D2C4() {
             u16 flags = v->flags530;
             if (flags & 0x30) {
                 v->flags530 &= 0xF5CF;
-                func_8004B354(this, (ml::CVec3*)&v->f514);
+                setAnimSubPos(this, (ml::CVec3*)&v->f514);
             } else if (flags & 0x800) {
                 // Small lateral pull toward the facing direction. Build the
                 // position member-wise, clear the flag between the position
@@ -1125,7 +1125,7 @@ void cf::CActParamAnimGame::func_8005D2C4() {
                 v->flags530 &= 0xF7FF;
                 p.x -= lbl_eu_80666068 * nw4r::math::SinFIdx(v->f444 * lbl_eu_806660CC);
                 p.z -= lbl_eu_80666068 * nw4r::math::CosFIdx(v->f444 * lbl_eu_806660CC);
-                func_8004B354(this, &p);
+                setAnimSubPos(this, &p);
             }
             if (v->f4F8 > lbl_eu_80666040) {
                 // Airborne: pick the ground-following scale pair from the
@@ -1270,7 +1270,7 @@ bool cf::CActParamAnimGame::clearFlag80000() {
 }
 
 // State-0/1 movement start: state 1 additionally dispatches the +0x8 link's
-// CBattleState_UnkVirtualFunc3 status; only when that status AND func_80051BF4
+// CBattleState_UnkVirtualFunc3 status; only when that status AND isSpeedBelow
 // both clear is
 // the 0x200 flag raised before notifying the region.
 bool cf::CActParamAnimGame::func_8005D76C(u32 type, u32 state) {
@@ -1284,7 +1284,7 @@ bool cf::CActParamAnimGame::func_8005D76C(u32 type, u32 state) {
     } else if (state == 1) {
         if (func_8005E28C(this)) {
             field_530 = (field_530 | 8) & ~0x100;
-            if (((cf::CBattleState*)self->owner)->CBattleState_UnkVirtualFunc3() == 0 && func_80051BF4(this) == 0) {
+            if (((cf::CBattleState*)self->owner)->CBattleState_UnkVirtualFunc3() == 0 && isSpeedBelow(this) == 0) {
                 field_530 |= 0x200;
             }
             ((void (*)(void*, u32))func_8004BC94)(this, type);
@@ -1300,7 +1300,7 @@ bool cf::CActParamAnimGame::func_8005D76C(u32 type, u32 state) {
 // func_8004BC94, r5 = requested state (0..3).
 bool cf::CActParamAnimGame::func_8005D84C(u32 type, u32 state) {
     if (field_530 & 0x1C0) return false;
-    if (func_80051B38(this) != 0 || func_80051AD0(this) != 0) {
+    if (isSpeedAbove(this) != 0 || isSpeedInRange(this) != 0) {
         if (state == 0) {
             if (field_52C == 1 && (field_530 & 0x200) == 0) {
                 field_530 |= 0x40;
@@ -1365,8 +1365,8 @@ bool cf::CActParamAnimGame::func_8005DA44(u32 type) {
     if (func_8005E990(this) == false) return false;
     field_530 |= 0x100;
     field_3F0 = zero__Q22ml5CVec3;
-    func_8004B7C0(this, &zero__Q22ml5CVec3);
-    func_8004CEF8(this, 2);
+    setAnimPosVec(this, &zero__Q22ml5CVec3);
+    setAnimCount(this, 2);
     ((void (*)(void*, u32))func_8004BC94)(this, type);
     return true;
 }
@@ -1444,7 +1444,7 @@ bool isAlwaysFalse__Q22cf17CActParamAnimGame() { return false; }
 // cached yaw (sin/cos of 40.743663f * field_444), rotates the yaw basis
 // through its first row, then walks the actor back along the new facing by
 // 104 units and sets the +0x4EC 0x40000 flag / clears the +0x0C 0x80 flag.
-// The position call is retail's 4-arg func_8004B354(self, out, pos, delta).
+// The position call is retail's 4-arg setAnimSubPos(self, out, pos, delta).
 // The yaw is snapshotted into a local for the first sin/cos pair (keeps two
 // callee-saved FPRs live like retail); the second pair reads field_444
 // directly so MWCC reloads it fresh each time.
@@ -1477,8 +1477,8 @@ void cf::CActParamAnimGame::func_8005DCA8() {
     rot.x = m[0][0] * (f32)-(double)sinv + m[0][1] * lbl_eu_80666040 + m[0][2] * (f32)(double)cosv;
     rot.y = m[0][0] * lbl_eu_80666040 + m[0][1] * lbl_eu_80666044 + m[0][2] * lbl_eu_80666040;
     rot.z = m[0][0] * (f32)(double)cosv + m[0][1] * lbl_eu_80666040 + m[0][2] * (f32)(double)sinv;
-    func_8004B7C0(this, &rot);
-    func_8004CEF8(this, 0);
+    setAnimPosVec(this, &rot);
+    setAnimCount(this, 0);
     d.x = lbl_eu_80666104 * nw4r::math::SinFIdx(v->f444 * lbl_eu_806660CC);
     d.y = lbl_eu_80666040;
     d.z = lbl_eu_80666104 * nw4r::math::CosFIdx(v->f444 * lbl_eu_806660CC);
@@ -1487,7 +1487,7 @@ void cf::CActParamAnimGame::func_8005DCA8() {
     target.x = delta.x;
     target.y = delta.y;
     target.z = delta.z;
-    ((bool (*)(void*, ml::CVec3*, const ml::CVec3*, const ml::CVec3*))func_8004B354)(this, &target, &delta, &d);
+    ((bool (*)(void*, ml::CVec3*, const ml::CVec3*, const ml::CVec3*))setAnimSubPos)(this, &target, &delta, &d);
     // Interleaved RMW pair: compute both masked words, then store (retail shape).
     u32 flags4ec = v->flags4EC | 0x40000;
     u32 flags0c = v->flags0C & ~0x80;
@@ -1589,7 +1589,7 @@ bool __declspec(noinline) func_8005DE68(cf::CActParamAnimGame* selfV) {
     vecEC.x = -norm.x * lbl_eu_806619F8 + hit.x;
     vecEC.y = self->pos3A8.y + lbl_eu_80666080;
     vecEC.z = -norm.z * lbl_eu_806619F8 + hit.z;
-    func_8004B52C(selfV,
+    setTurnScale(selfV,
                   lbl_eu_806660E0 * Atan2FIdx__Q24nw4r4mathFff(-norm.x, -norm.z));
     if (((BE398Fn)func_804BE398)(&vecEC, self->filter4A8, 0, 0,
                                  lbl_eu_80666124, lbl_eu_8066AF20) != 0) {
@@ -1655,7 +1655,7 @@ bool __declspec(noinline) func_8005E28C(cf::CActParamAnimGame* selfV) {
     ml::CVec3 norm;
     func_804BE4E0(&norm, 0);
     // Re-aim along the ground normal's yaw.
-    func_8004B52C(selfV,
+    setTurnScale(selfV,
                   lbl_eu_806660E0 * Atan2FIdx__Q24nw4r4mathFff(-norm.x, -norm.z));
     // Retail reuses the dead 'base' slot for the retarget point.
     base.x = -norm.x * lbl_eu_806619FC + land.x;
@@ -1698,7 +1698,7 @@ extern "C" bool func_8005E60C(cf::CActParamAnimGame* selfV) {
                     if (g.y - self->pos3A8.y <= lbl_eu_80666050) {
                         ml::CVec3 t(self->pos3A8.x, self->pos3A8.y, self->pos3A8.z);
                         t.y = g.y - lbl_eu_80666050;
-                        func_8004B354(selfV, &t);
+                        setAnimSubPos(selfV, &t);
                         self->f514 = g.x;
                         self->f518 = g.y;
                         self->f51C = g.z;
@@ -1747,7 +1747,7 @@ extern "C" bool func_8005E7C4(cf::CActParamAnimGame* selfV) {
                 *(u32*)&vec.x = *(u32*)&self->pos3A8.x;
                 *(u32*)&vec.z = *(u32*)&self->pos3A8.z;
                 vec.y = self->f518;
-                func_8004B354(selfV, &vec);
+                setAnimSubPos(selfV, &vec);
                 return true;
             }
         }
@@ -1852,7 +1852,7 @@ bool __declspec(noinline) func_8005E990(cf::CActParamAnimGame* selfV) {
         return false;
     }
     // Re-aim along the ground normal's yaw.
-    func_8004B52C(selfV,
+    setTurnScale(selfV,
                   lbl_eu_806660E0 * Atan2FIdx__Q24nw4r4mathFff(-norm.x, -norm.z));
     // Commit the refined ground point.
     self->f514 = lbl_eu_80666100 * norm.x + hit.x;
@@ -1923,7 +1923,7 @@ int cf::CActParamAnimGame::func_8005EEB4(ml::CVec3* pos, ml::CVec3* move) {
         } else {
             if (v134.y > lbl_eu_8066606C) {
                 if (field_3C0.y < 0.0f && field_3C0.y <= lbl_eu_80666128) {
-                    func_8004B840(this, field_3C0.y * lbl_eu_8066612C);
+                    setAnimHeight(this, field_3C0.y * lbl_eu_8066612C);
                 }
             }
         }
@@ -2041,7 +2041,7 @@ int cf::CActParamAnimGame::func_8005EEB4(ml::CVec3* pos, ml::CVec3* move) {
         r31v = 1;
         field_4EC &= ~0x1000;
         ml::CVec3 zz(0.0f, 0.0f, 0.0f);
-        func_8004B7C0(this, &zz);
+        setAnimPosVec(this, &zz);
         goto l60418;
     }
 
@@ -2074,7 +2074,7 @@ int cf::CActParamAnimGame::func_8005EEB4(ml::CVec3* pos, ml::CVec3* move) {
         if (func_804BE5B8()) {
             field_4EC |= 0x2000000;
             ml::CVec3 v68 = field_3C0 * lbl_eu_8066609C;
-            func_8004B7C0(this, &v68);
+            setAnimPosVec(this, &v68);
             if (lbl_eu_80666090 + field_464 < pos->y && lbl_eu_80666148 + f31v < pos->y) {
                 if (move->x != 0.0f || move->z != 0.0f) {
                     ml::CVec3 vEC(move->x, 0.0f, move->z);
@@ -2092,7 +2092,7 @@ int cf::CActParamAnimGame::func_8005EEB4(ml::CVec3* pos, ml::CVec3* move) {
             }
         }
         if (moveV.y < 0.0f && pos->y - f31v <= lbl_eu_806660D4 && field_3C0.y <= lbl_eu_80666128) {
-            func_8004B840(this, field_3C0.y * lbl_eu_8066612C);
+            setAnimHeight(this, field_3C0.y * lbl_eu_8066612C);
         }
         if (pos->y - field_464 <= lbl_eu_80666098 && field_3C0.y > 0.0f && !(field_4EC & 0x1000000)) {
             r31v = 0;
@@ -2147,7 +2147,7 @@ int cf::CActParamAnimGame::func_8005EEB4(ml::CVec3* pos, ml::CVec3* move) {
             field_4EC &= ~0x200000;
         }
         if (moveV.y < 0.0f && pos->y - f29v <= lbl_eu_806660D4 && field_3C0.y <= lbl_eu_80666128) {
-            func_8004B840(this, field_3C0.y * lbl_eu_8066612C);
+            setAnimHeight(this, field_3C0.y * lbl_eu_8066612C);
         }
         if (r31v == 0) {
             if (field_4EC & 0x40000) {

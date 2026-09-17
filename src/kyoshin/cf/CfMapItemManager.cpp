@@ -161,7 +161,7 @@ int isAnyFieldFlagSet__Q22cf13CfGameManagerFv();
 int isSceneActive__Q22cf13CfGameManagerFv();
 int isSceneReadyForInput__Q22cf13CfGameManagerFv();
 void func_802808AC(int v);
-void* func_801586D4(int v);
+void* CItem_thunkAllocRecord(int v);
 void func_801351C4(int v);
 int func_80140E00(int a, int b, int c, int d);
 void setInputMaskByAmount__Q22cf13CfGameManagerFv(u32 v);
@@ -910,7 +910,7 @@ void func_801742D4(CfMapItemManager* self) {
 
     CfMapItem* rec = pick = &self->mItems[idx];
     unsigned short kind = rec->field_14;
-    void* helpRow = func_801586D4(kind);
+    void* helpRow = CItem_thunkAllocRecord(kind);
     if (helpRow == 0) return;
     if (((*(u32*)helpRow >> 12) & 0xF) == 0xa) {
         *((u8*)lbl_eu_80664A10 + 0x14) = 1;

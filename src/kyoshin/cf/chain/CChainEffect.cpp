@@ -125,7 +125,7 @@ loopback:
     found = 1;
 scan:
     {
-        mgr = func_800B6C34();
+        mgr = getReslistBE8();
         node = mgr->field_04->field_00;
         while (node != mgr->field_04) {
             item = (CChainItem*)func_800AC610(node->field_08);

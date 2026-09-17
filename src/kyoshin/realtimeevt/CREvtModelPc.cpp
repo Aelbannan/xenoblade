@@ -67,8 +67,8 @@ extern "C" {
     extern void syncFieldData__Q22cf13CfGameManagerFv(u32 type, int flag);
 
     // Resource helpers
-    extern void* func_80062AD8(void* handle, u32* outType);
-    extern void func_800A9344(void* p, int type);
+    extern void* CfRes_tryResolveToken(void* handle, u32* outType);
+    extern void KyoshinHeap_Free78(void* p, int type);
     // Packed-token helpers (retail C-symbol names)
     extern char* func_800AA5C0(void* handle);
     extern void func_800AA318(u32 packed, u32* out0, u32* out1, u32* out2, u32* out3);
@@ -80,12 +80,12 @@ extern "C" {
     // Model helpers
     extern void* func_80495E8C(void* a, void* b, int c, int d);
     extern void* func_80495FF0(void* arg);
-    extern void func_80484E5C(void* model, f32 val);
-    extern void func_804827DC(void* model, int flag);
-    extern void func_80485684(void* model, int flag);
+    extern void simSetLeafDist7B0(void* model, f32 val);
+    extern void simSetFlag2000Chain(void* model, int flag);
+    extern void simSetLeafFlag4000(void* model, int flag);
     extern void func_804831C4(void* model, void* texName);
     extern void func_80483448(void* model, void* texName);
-    extern void func_80484F80(void* model, f32 val);
+    extern void simRefreshFlag8(void* model, f32 val);
 
     // __ptmf intrinsics
     extern void setHandleParam__11CDeviceFileFP11CFileHandleUl(CFileHandle* pFileHandle, u32 val);
@@ -231,7 +231,7 @@ extern "C" int func_80183978(void* self) {
             // Archived: release the archive allocation.
             void* data = FLD(void*, base, 0x6C);
             if (data != 0) {
-                func_800A9344(data, 0);
+                KyoshinHeap_Free78(data, 0);
             }
         }
 
@@ -305,7 +305,7 @@ void func_80183A3C(void* self) {
         } else if (status == 2) {
             void* data = pc.mData[i];
             if (data != 0) {
-                func_800A9344(data, 0);
+                KyoshinHeap_Free78(data, 0);
             }
         }
     }
@@ -369,7 +369,7 @@ extern "C" void func_80183C90(void* self) {
     //   decD: special id (== 9 gates the extra slot-5 load)
     u32 decA, decB, decC, decD;
     u32 objA, objB, objC, objD;
-    int typeOut;              // func_80062AD8 out-type (-1 sentinel)
+    int typeOut;              // CfRes_tryResolveToken out-type (-1 sentinel)
     void* gameMgr;
     void* obj;
     void* objList;
@@ -519,7 +519,7 @@ handles_done:
             pathName = func_800AA5C0((void*)handle);
             nameLen = strlen(pathName);
             strcpy(nameBuf, pathName);
-            func_80062AD8((void*)handle, (u32*)&typeOut);
+            CfRes_tryResolveToken((void*)handle, (u32*)&typeOut);
             if (isNewFile) {
                 typeOut = (int)neg1;
             }
@@ -648,12 +648,12 @@ extern "C" void func_801845F0(void* self) {
     char* s = (char*)self;
     u32 tmp;
 
-    // Get data for slot 0; func_80062AD8 returns the loaded pointer.
+    // Get data for slot 0; CfRes_tryResolveToken returns the loaded pointer.
     void* data0;
     if (FLD(void*, s, 0x6C) != 0) {
         data0 = FLD(void*, s, 0x6C);
     } else {
-        data0 = func_80062AD8(FLD(void*, s, 0x3C), &tmp);
+        data0 = CfRes_tryResolveToken(FLD(void*, s, 0x3C), &tmp);
     }
 
     // Confirm all remaining slots that have been requested are loaded.
@@ -671,7 +671,7 @@ extern "C" void func_801845F0(void* self) {
         if (FLD(void*, base, 0x6C) != 0) {
             data = FLD(void*, base, 0x6C);
         } else {
-            data = func_80062AD8(handle, &tmp);
+            data = CfRes_tryResolveToken(handle, &tmp);
         }
 
         if (data == 0) {
@@ -698,7 +698,7 @@ extern "C" void func_801846C4(void* self) {
     if (FLD(void*, s, 0x20) != 0) {
         int time = func_8016A35C();
         float ft = (float)time;
-        func_80484F80(FLD(void*, s, 0x20), ft);
+        simRefreshFlag8(FLD(void*, s, 0x20), ft);
     }
 
     if (FLD(u32, s, 0x18) & 0x800) {
@@ -724,7 +724,7 @@ extern "C" void func_80184730(void* self) {
     void* data0 = FLD(void*, s, 0x6C);
     if (data0 == 0) {
         u32 type;
-        func_80062AD8(FLD(void*, s, 0x3C), &type);
+        CfRes_tryResolveToken(FLD(void*, s, 0x3C), &type);
         data0 = (void*)type;
     }
 
@@ -737,7 +737,7 @@ extern "C" void func_80184730(void* self) {
         void* data = FLD(void*, s, 0x6C + i * 4);
         if (data == 0) {
             u32 type;
-            func_80062AD8(handle, &type);
+            CfRes_tryResolveToken(handle, &type);
             data = (void*)type;
         }
 
@@ -752,9 +752,9 @@ extern "C" void func_80184730(void* self) {
     void* model = func_80495E8C(lbl_eu_80663E14, data0, -1, 1);
     FLD(u32, s, 0x20) = (u32)model;
 
-    func_80484E5C(model, lbl_eu_80667918);
-    func_804827DC(model, 1);
-    func_80485684(model, 1);
+    simSetLeafDist7B0(model, lbl_eu_80667918);
+    simSetFlag2000Chain(model, 1);
+    simSetLeafFlag4000(model, 1);
     FLD(u32, model, 0x7A8) |= 0x4;
 
     // Set textures
@@ -765,7 +765,7 @@ extern "C" void func_80184730(void* self) {
         void* texData = FLD(void*, s, 0x6C + i * 4);
         if (texData == 0) {
             u32 type;
-            func_80062AD8(handle, &type);
+            CfRes_tryResolveToken(handle, &type);
             texData = (void*)type;
         }
 

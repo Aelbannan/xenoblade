@@ -151,14 +151,14 @@ extern "C" f32 func_800A3DF8(const ml::CVec3& v);
 // Ground-probe walk helper (code_800A3B24.cpp); third arg is a packed flag word.
 extern "C" int func_800A72E0(const ml::CVec3* self, ml::CVec3* out, s32 flags,
                              f32 f1, f32 f2);
-// Position-region copy helper (retail func_804B0B54). Same ABI as
+// Position-region copy helper (retail ColiSetAxisBlockInverse). Same ABI as
 // CfObjectMove.hpp / CfGimmickLock.hpp (void*, const float*).
-extern "C" void func_804B0B54(void* region, const float* vec);
+extern "C" void ColiSetAxisBlockInverse(void* region, const float* vec);
 // CfGameManager play-frame helper (see CfObjectImplWalker.hpp).
 extern "C" u32 getControllerWordA37C__Q22cf13CfGameManagerFv();
-// Battle-status position getter (retail func_800BE0B0): returns a Vec*
+// Battle-status position getter (retail CfObjectMove_getSubObj54): returns a Vec*
 // (the character object's +0x54 sub-object) fed straight into PSVECMag.
-extern "C" void* func_800BE0B0(void* self);
+extern "C" void* CfObjectMove_getSubObj54(void* self);
 
 // Unsigned-int -> double conversion scratch (MWCC 0x4330 idiom): build the
 // 0x43300000-prefixed double on the stack, then subtract the magic constant
@@ -213,7 +213,7 @@ extern "C" void* func_800BBC0C(void* obj);
 extern "C" void __ct__cf_CtrlMoveNpc(cf::CCtrlMoveNpc* self, cf::CtrlNpc* parent);
 // Talk/page helper: takes the character object's field_C4 word, returns a
 // page id (unsigned compare at the call site).
-extern "C" u32 func_8004C5EC(void* arg);
+extern "C" u32 getAnimModelId(void* arg);
 
 extern "C" void func_8019F6E8(cf::CCtrlMoveNpc* self, const ml::CVec3* vec, f32 scale, f32 paramB);
 extern "C" int func_8019F8E0(cf::CCtrlMoveNpc* self);
@@ -290,5 +290,5 @@ extern "C" void* getInstance__Q22cf13CfGameManagerFv();
 bool isGlobalCamFlagSet(int mask);
 // Search-helper helpers reached with CCtrlNpcChar::field_98.
 namespace cf { struct CfObjectModelSub98; }
-extern "C" float func_80484F18(cf::CCtrlNpcSearch* obj);
-extern "C" void func_804876DC(cf::CfObjectModelSub98* sub);
+extern "C" float simGetLeafAnimDist(cf::CCtrlNpcSearch* obj);
+extern "C" void scnImN4DynStart(cf::CfObjectModelSub98* sub);

@@ -9,7 +9,7 @@ class __declspec(novtable) CHelp_ArtsSet : public CHelp {
 public:
     // Help-availability predicate (CHelpManager help-list check): false until
     // the sequence counter (CfGameManager::getQueuedFileEventCount) reaches unkC, then
-    // true iff the Arts-Set menu instance exists (func_8022F530).
+    // true iff the Arts-Set menu instance exists (CMenuArtsSet_isCreated).
     bool isHelpAvailable();
 
     s32 unkC; // 0xC
@@ -17,4 +17,4 @@ public:
 } // namespace cf
 
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
-extern "C" bool func_8022F530();
+extern "C" bool CMenuArtsSet_isCreated();

@@ -18,7 +18,7 @@ extern "C" u32 CSysWin_isReady(void*);
 extern "C" int CSysWin_isActive(void*);
 
 // +0x60 sub-object advance helper (retail C-linkage, defined in CTitle.cpp).
-extern "C" void func_802B744C(void*);
+extern "C" void CTitle_update(void*);
 
 // CSysWin advance helper (retail C-linkage; same declaration as CSystemWindow.hpp).
 extern "C" void func_8022B748(void*);
@@ -30,7 +30,7 @@ extern "C" void func_8022B8B8(void* syswin);
 extern "C" void func_8022B8E4(void* syswin);
 
 // Pane-name format helper (code_80135FDC.cpp, retail unmangled name).
-extern "C" char* func_80136190(char* fmt, char* base, u32 id);
+extern "C" char* BdatTouchStringCell(char* fmt, char* base, u32 id);
 
 // String pool used by func_802B4F40's error message.
 extern char lbl_eu_805135E0[];
@@ -48,8 +48,8 @@ struct CErrMesPad {
 extern "C" void func_8022B7F4(void*);
 
 // CMenuTitle +0x60 sub-object advance/release helpers (retail C-linkage, CTitle.cpp).
-extern "C" void func_802B73D4(void*);
-extern "C" void func_802B74F4(void*);
+extern "C" void CTitle_startLoad(void*);
+extern "C" void CTitle_teardown(void*);
 
 // cf::CfGameManager helper. Retail names it with the no-arg Fv suffix, but the
 // call site passes three zero args; declare the retail symbol verbatim under
@@ -111,7 +111,7 @@ extern "C" __declspec(noinline) void func_802B5148(CErrMesSub* self);
 
 // CMenuTitle +0x60 sub-object render helper (retail C-linkage, CTitle.cpp):
 // draws the title sub-object with a layout DrawInfo.
-extern "C" void func_802B74A8(u8* self, nw4r::lyt::DrawInfo* drawInfo);
+extern "C" void CTitle_draw(u8* self, nw4r::lyt::DrawInfo* drawInfo);
 
 // CTitle sub-object destructor (retail C-linkage, CTitle.cpp).
 extern "C" void __dt__6CTitleFv(u8* self, int flags);
@@ -132,7 +132,7 @@ extern "C" void __dt__Q34nw4r3lyt8DrawInfoFv(nw4r::lyt::DrawInfo* self, int flag
 void func_80137250(nw4r::lyt::DrawInfo* drawInfo);
 
 // Circular-list views used by func_802B58A4's active-flag sweeps. The lists
-// returned by getListB28__Fv / func_800B6C7C share the same shape: the
+// returned by getListB28__Fv / getReslistC08 share the same shape: the
 // sentinel head lives at +0x04 and each node carries its item at +0x08.
 struct CErrMesListNode {
     CErrMesListNode* next;  // 0x00
@@ -149,7 +149,7 @@ struct CErrMesList {
 CErrMesList* getListB28();
 
 // Enemy-manager list accessor (retail unmangled C symbol).
-extern "C" CErrMesList* func_800B6C7C();
+extern "C" CErrMesList* getReslistC08();
 
 // Record base recovered from a list item by subtracting 0x3E9C (the item
 // points at the embedded CfObjectMove sub-object). func_802B58A4 clears the
@@ -356,7 +356,7 @@ public:
     /* 0x54 */ u8 field_0x54[0x04];  // +0x54..+0x58 - unknown region
     /* 0x58 */ u32 mScnRender;       // +0x58 - IScnRender vtable slot (render-callback subobject)
     /* 0x5C */ CScn* mScene;         // +0x5C - owning scene
-    /* 0x60 */ u8 field_0x60[0x88];  // +0x60..+0xE8 - opaque region (func_802B744C target)
+    /* 0x60 */ u8 field_0x60[0x88];  // +0x60..+0xE8 - opaque region (CTitle_update target)
     /* 0xE8 */ u8 field_0xE8;        // state byte (ptmf table index)
     /* 0xE9 */ u8 field_0xE9;        // cbRenderBefore gate byte (non-zero = draw title)
 };

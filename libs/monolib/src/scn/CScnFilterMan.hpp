@@ -5,11 +5,11 @@
 
 // Flag-test helper shared with the CScnVirtualLight unit (retail 0x8004BAB0):
 // returns (*(u32*)self & flags) != 0. C-linkage (flat retail symbol).
-extern "C" s32 func_8004B3D8(u32* self, u32 flags);
+extern "C" s32 testFlagMask(u32* self, u32 flags);
 
 // Placement-new operator (retail flat symbol 0x80497328): returns the
 // placement pointer unchanged. Shared with the CScnVirtualLight unit.
-extern "C" void* func_804932B4(void* self, void* param);
+extern "C" void* scnVlPlaceNew(void* self, void* param);
 
 // Minimal layout views for the CScnFilter reslist helpers in this TU
 

@@ -24,11 +24,11 @@ extern u32  func_80180954(void);
 extern u32  func_80180960(void);
 extern int func_8016A3A8(void);
 extern void func_804C0254(void* ptr, int flag);
-extern void* func_8048315C(void* model);
-extern void func_804838DC(void* model, int flag);
+extern void* simGetLeafActData(void* model);
+extern void simSetFlag2OnTree(void* model, int flag);
 extern void func_80482DF4(void* model, int flag);
 extern void func_804839D4(void* model, u32 r4, void* r5, u32 r6, u32 r7, u32 r8, u32 r9);
-extern void func_80484E04(void* model, int value);
+extern void simSetValue7E8(void* model, int value);
 extern void func_80482B3C(void* model, int flag);
 extern void* GetResAnmChr__Q34nw4r3g3d7ResFileCFi(void* resFile, int index);
 extern void* GetResUserData__Q34nw4r3g3d9ResAnmChrFv(void* self);
@@ -176,12 +176,12 @@ void func_801728F8(void* self) {
         pos.a[0] = lbl_eu_80667770;
         pos.a[1] = lbl_eu_80667770;
         pos.a[2] = lbl_eu_80667770;
-        ((CREvtModelPose*)func_8048315C(FLD(void*, self, 0x20)))->translate = pos;
+        ((CREvtModelPose*)simGetLeafActData(FLD(void*, self, 0x20)))->translate = pos;
         Vec3 rot;
         rot.a[0] = lbl_eu_80667770;
         rot.a[1] = lbl_eu_80667770;
         rot.a[2] = lbl_eu_80667770;
-        ((CREvtModelPose*)func_8048315C(FLD(void*, self, 0x20)))->rotate = rot;
+        ((CREvtModelPose*)simGetLeafActData(FLD(void*, self, 0x20)))->rotate = rot;
     }
 }
 
@@ -201,7 +201,7 @@ void func_801729F0(void* self, void* pData, void* pModelData) {
     reinterpret_cast<CREvtModel*>(self)->onEvent(flags & 1);
     void* model = FLD(void*, self, 0x20);
     if (model == 0) return;
-    func_804838DC(model, FLD(u32, pModelData, 4) & 1);
+    simSetFlag2OnTree(model, FLD(u32, pModelData, 4) & 1);
     void* p24 = FLD(void*, self, 0x24);
     if (p24 != 0) {
         reinterpret_cast<CREvtModel*>(self)->vfunc_08();
@@ -223,7 +223,7 @@ void func_801729F0(void* self, void* pData, void* pModelData) {
     func_804839D4(model, (u32)newData, 0, 0, 0, 1, -1);
     func_80172CE4(self, model);
     static_cast<CScnItemModel*>(model)->vfunc84(0);
-    func_80484E04(model, 1);
+    simSetValue7E8(model, 1);
     FLD(u32, model, 0x7A4) |= 0x20000000;
     FLD(s32, self, 0x2C) = 0;
     FLD(s32, self, 0x30) = 0;

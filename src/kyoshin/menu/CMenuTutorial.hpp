@@ -107,8 +107,8 @@ extern "C" void func_8029ACEC(CTutorial* self);
 extern "C" void func_8029ADF8(CTutorial* self);
 
 // CF / ui helpers (retail-unmangled names).
-extern "C" int func_8013BE50();
-extern "C" u8 func_8013B980();
+extern "C" int IsMenuState621F0();
+extern "C" u8 DecMenuCounter64080();
 extern "C" void func_80135550();
 extern "C" u8 code80135FDC_getByte_64080();
 extern "C" void code80135FDC_postIncByte_64080();

@@ -165,7 +165,7 @@ union VoicePmfEntry {
 extern "C" VoicePmfEntry lbl_eu_805398C0;
 extern "C" void* func_8016FE34(void* src);
 extern "C" void func_802AF9D0(void* r3, int voiceId, int r5);
-extern "C" void func_800B88E0(void* self, cf::IFactoryEvent* event);
+extern "C" void unlinkFactoryById(void* self, cf::IFactoryEvent* event);
 extern "C" cf::CSoundNode* func_802AF56C(void* c);
 extern "C" int func_802A7870(void* arr, int capacity, int unused);
 extern "C" cf::CSoundNode* __ct__802A92D8(void* b, void* a);

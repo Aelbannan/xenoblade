@@ -50,14 +50,14 @@ extern const f32 lbl_eu_8066AEB8;
 
 // C-linkage retail import (declared at global scope so MWCC emits the name
 // unmangled; the definition lives in the sibling coli unit).
-extern "C" void func_804A7ED0(void* self);
+extern "C" void ColiTranslatePoints(void* self);
 // Segment-query helpers imported from the sibling coli unit (stubs there).
-extern "C" void func_804A7878(void*, const void*, int);
-extern "C" void func_804B07F0(void*, const void*);
-extern "C" int func_804B236C(const void*, const void*, const void*);
-extern "C" void func_804A790C(void*, const Vec*, void*, f32);
-extern "C" void func_804B06FC(void*, const Vec*, f32);
-extern "C" int func_804B204C(const CColiQueryNode*, const void*, int);
+extern "C" void ColiInitPointSpec(void*, const void*, int);
+extern "C" void ColiCopyPointPair(void*, const void*);
+extern "C" int ColiQueryNodePoint(const void*, const void*, const void*);
+extern "C" void ColiInitPointRadius(void*, const Vec*, void*, f32);
+extern "C" void ColiMakeAabbRadius(void*, const Vec*, f32);
+extern "C" int ColiProcessSegmentPair(const CColiQueryNode*, const void*, int);
 // CProcess is abstract (pure virtuals), so the base ctor is invoked via its
 // pre-mangled retail symbol like the sibling sinit helpers do.
 extern "C" void __ct__8CProcessFv(CProcess* self);
@@ -119,7 +119,7 @@ void func_804B2FF0(CColiMover* self) {
             nw4r::math::VEC3Add((nw4r::math::VEC3*)&self->acc,
                                 (nw4r::math::VEC3*)&self->acc,
                                 (nw4r::math::VEC3*)&tmp);
-            func_804A7ED0(self->target);
+            ColiTranslatePoints(self->target);
         }
     }
 
@@ -127,7 +127,7 @@ void func_804B2FF0(CColiMover* self) {
     nw4r::math::VEC3Add((nw4r::math::VEC3*)&self->acc,
                         (nw4r::math::VEC3*)&self->acc,
                         (nw4r::math::VEC3*)&self->off);
-    func_804A7ED0(self->target)
+    ColiTranslatePoints(self->target)
 ;}
 
 // Dual-index collision node: primary index + flags at 0x0/0x2 and a secondary
@@ -263,7 +263,7 @@ struct CColiWalkStateObj : CColiWalkState {
 
 extern CColiWalkStateObj lbl_eu_8065D138;
 
-// Query scratch filled by func_804B077C/func_804B06FC: component-wise min x
+// Query scratch filled by func_804B077C/ColiMakeAabbRadius: component-wise min x
 // at +0x0 and max x at +0xC (trailing pad keeps the retail 0x18-byte slot).
 struct CColiQuery {
     f32 lo;         //0x0 min x
@@ -323,9 +323,9 @@ int func_804B4E10(CColiQueryResult* self, CColiQueryNode* owner, const Vec* a,
 
     char seg[0x318];
     CColiQuery query;
-    func_804A790C(&seg, a, st, v);
+    ColiInitPointRadius(&seg, a, st, v);
     int found = 0;
-    func_804B06FC(&query, a, v);
+    ColiMakeAabbRadius(&query, a, v);
 
     // Forward pass along the next chain: nodes whose +0x18 bound is below
     // the query low bound are skipped.
@@ -334,8 +334,8 @@ int func_804B4E10(CColiQueryResult* self, CColiQueryNode* owner, const Vec* a,
         if (!(mask & n->filter)) {
             if (query.lo >= n->maxX) {
                 if ((int)owner->level <= (int)n->level &&
-                    func_804B0818(&query, n) != 0 &&
-                    func_804B204C(n, &seg, arg) != 0) {
+                    ColiTestAabbContains(&query, n) != 0 &&
+                    ColiProcessSegmentPair(n, &seg, arg) != 0) {
                     found = 1;
                 }
             }
@@ -349,8 +349,8 @@ int func_804B4E10(CColiQueryResult* self, CColiQueryNode* owner, const Vec* a,
         if (!(mask & n->filter)) {
             if (query.hi <= n->minX) {
                 if ((int)owner->level <= (int)n->level &&
-                    func_804B0818(&query, n) != 0 &&
-                    func_804B204C(n, &seg, arg) != 0) {
+                    ColiTestAabbContains(&query, n) != 0 &&
+                    ColiProcessSegmentPair(n, &seg, arg) != 0) {
                     found = 1;
                 }
             } else if (query.hi > n->f_a4) {
@@ -440,8 +440,8 @@ int func_804B526C(CColiQueryResult* self, CColiQueryNode* owner, const Vec* a,
         if (!(mask & n->filter)) {
             if (query.lo >= n->maxX) {
                 if ((s16)owner->level <= (s16)n->level &&
-                    func_804B0818(&query, n) != 0 &&
-                    func_804B21A8(n, &seg, arg) != 0) {
+                    ColiTestAabbContains(&query, n) != 0 &&
+                    ColiProcessSegmentSelect(n, &seg, arg) != 0) {
                     found = 1;
                 }
             }
@@ -455,8 +455,8 @@ int func_804B526C(CColiQueryResult* self, CColiQueryNode* owner, const Vec* a,
         if (!(mask & n->filter)) {
             if (query.hi <= n->minX) {
                 if ((int)owner->level <= (int)n->level &&
-                    func_804B0818(&query, n) != 0 &&
-                    func_804B21A8(n, &seg, arg) != 0) {
+                    ColiTestAabbContains(&query, n) != 0 &&
+                    ColiProcessSegmentSelect(n, &seg, arg) != 0) {
                     found = 1;
                 }
             } else if (query.hi > n->f_a4) {
@@ -1551,11 +1551,11 @@ struct CColiList {
 };
 
 // Append `node` to the back of the list owned by `self`, conditioning it with
-// func_804B1DC0 first. If the node is already present it is left untouched.
+// ColiSetMoveEnableFlag first. If the node is already present it is left untouched.
 // Newly-linked nodes have their forward link cleared and their swept-distance
 // accumulator (+0xA4) reset to zero.
 void func_804B4BDC(CColiList* self, CColiListItem* node) {
-    func_804B1DC0(node, 1);
+    ColiSetMoveEnableFlag(node, 1);
     CColiListItem* cur = self->head;
     if (cur != 0) {
         CColiListItem* tail = cur;
@@ -1581,7 +1581,7 @@ void func_804B4BDC(CColiList* self, CColiListItem* node) {
 // the retail control flow: pre-check on the head value, entry jump to the
 // tail condition, and the found path falling out to the common epilogue.
 void func_804B4C7C(CColiList* self, CColiListItem* findNode) {
-    func_804B1DC0(findNode, 0);
+    ColiSetMoveEnableFlag(findNode, 0);
     // Declared at function top so the allocator colours prev/next before the
     // loop variable: retail keeps cur in r4 with prev/next sharing r3.
     CColiListItem* prev;
@@ -1696,8 +1696,8 @@ int func_804B5088(CColiQueryResult* self, const Vec* a, const Vec* b,
     CColiQueryNode* n = self->head;
     while (n != 0) {
         if (!(filter & n->filter)) {
-            if (func_804B0818(query, n) != 0 &&
-                func_804B21A8(n, seg, 1) != 0) {
+            if (ColiTestAabbContains(query, n) != 0 &&
+                ColiProcessSegmentSelect(n, seg, 1) != 0) {
                 found = 1;
             }
         }
@@ -1761,7 +1761,7 @@ void CTaskColiManager::Term() {
     // Empty override - no termination required.
 }
 
-// Walk the collision-node list every tick: condition the nodes (func_804B0CE8),
+// Walk the collision-node list every tick: condition the nodes (ColiNodeRefreshAxes),
 // fold any node requesting a pass into mFlags bit 1, re-walk for post-pass
 // cleanup (func_804B0DF4), then re-anchor at the front of the list.
 void CTaskColiManager::Move() {
@@ -1769,7 +1769,7 @@ void CTaskColiManager::Move() {
     mFlags &= ~0x2u;
     if (node != 0) {
         while (node != 0) {
-            func_804B0CE8(node);
+            ColiNodeRefreshAxes(node);
             if (node->flags & 0x2000) {
                 mFlags |= 0x2u;
             }
@@ -1820,16 +1820,16 @@ int func_804B54D4(u32 unused, CColiQueryNode* self, const CColiSeg* src,
     u8 big[0x320];
     Vec query[2];
 
-    func_804A7878(big, src, 0);
-    func_804B07F0(query, src);
+    ColiInitPointSpec(big, src, 0);
+    ColiCopyPointPair(query, src);
 
     for (CColiQueryNode* n = self->next; n != 0; n = n->next) {
         if (mask & n->filter) continue;
         // Only nodes whose max bound is at/below the segment start qualify.
         if (query[0].x >= n->maxX) {
             if ((int)self->level > (int)n->level) continue;
-            if (func_804B0818((const void*)query, n) == 0) continue;
-            if (func_804B236C(n, big, arg) == 0) continue;
+            if (ColiTestAabbContains((const void*)query, n) == 0) continue;
+            if (ColiQueryNodePoint(n, big, arg) == 0) continue;
             return 1;
         }
     }
@@ -1838,8 +1838,8 @@ int func_804B54D4(u32 unused, CColiQueryNode* self, const CColiSeg* src,
         if (mask & n->filter) continue;
         if (query[1].x <= n->minX) {
             if ((int)self->level > (int)n->level) continue;
-            if (func_804B0818((const void*)query, n) == 0) continue;
-            if (func_804B236C(n, big, arg) == 0) continue;
+            if (ColiTestAabbContains((const void*)query, n) == 0) continue;
+            if (ColiQueryNodePoint(n, big, arg) == 0) continue;
             return 1;
         }
         // Sweep stop: past the node's tail, abandon the search (falls out of
@@ -1906,8 +1906,8 @@ int func_804B5658(CColiWalkOwner* self, Vec* out1, Vec* out2,
 
     for (CColiQueryNode* n = self->head; n != 0; n = n->next) {
         if (n->flags & 0x2000) {
-            if (func_804B0818(query, n) != 0) {
-                func_804B21A8(n, seg, 1);
+            if (ColiTestAabbContains(query, n) != 0) {
+                ColiProcessSegmentSelect(n, seg, 1);
             }
         }
     }

@@ -22,7 +22,7 @@ extern const char lbl_eu_8056E178[];
 
 extern "C" const char lbl_eu_805247DC[0xC];  // def below (this TU .rodata)
 extern "C" u32 lbl_eu_80663C80;  // def below (this TU .sdata, "ref")
-extern "C" nw4r::g3d::ResMdl func_80488F44(void* model, int flag);  // CScnItemModel.cpp: model -> ResMdl accessor
+extern "C" nw4r::g3d::ResMdl scnImN4AddFrameId(void* model, int flag);  // CScnItemModel.cpp: model -> ResMdl accessor
 
 
 CMdlAnmUV::CMdlAnmUV() {
@@ -208,7 +208,7 @@ void func_804E6C80(CMdlAnmUV* self, CMdlAnmUVResModel* model) {
     const char* baseName = (const char*)lbl_eu_80663C74;
     const u32 matSfxOfs = strlen(baseName) + 2;
 
-    nw4r::g3d::ResMdl scanMdl = func_80488F44(model, 0);
+    nw4r::g3d::ResMdl scanMdl = scnImN4AddFrameId(model, 0);
     const u32 nNodes = scanMdl.GetResNodeNumEntries();
     for (u32 i = 0; i < nNodes; i++) {
         nw4r::g3d::ResNode node = scanMdl.GetResNode(i);

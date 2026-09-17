@@ -568,7 +568,7 @@ extern "C" void func_8019A9C4(cf::CCtrlMovePC* self) {
     func_80198710(&info, &tmp, 1, self->mFloat100,
                   lbl_eu_80667B70, lbl_eu_80667BA8, rnd);
     ml::CVec3 out;                               // stack +0xc0 candidate spot
-    int planned = func_8019876C(&info, &out);
+    int planned = CPartsChange_ProcessPartyInfo(&info, &out);
     if (planned == 0) {
         // Planner failed: fall back to the global coli-probe result.
         ml::CVec3 nearPt = self->mPos
@@ -627,7 +627,7 @@ extern "C" void func_8019A9C4(cf::CCtrlMovePC* self) {
     cf::CfObject* emb = (cf::CfObject*)((char*)self->mObject + 0x3e9c);
     emb->CfObject_syncMoveTarget(&out);                  // vtable 0xa8
     emb->CfObject_syncModelRate(lbl_eu_80667B68);        // vtable 0x168
-    func_800BC3B0((char*)self->mObject + 0x3e9c, lbl_eu_80667B90);
+    CfObjectMove_setMoveSpeedGated((char*)self->mObject + 0x3e9c, lbl_eu_80667B90);
     cf::CfMoveSub* sub2 = ((cf::CfObjWrap*)self->mObject)->mSub;
     if (sub2 != 0) {
         sub2->mField3F0 = ml::CVec3::zero.x;
@@ -925,7 +925,7 @@ extern "C" int func_8019C0D4(cf::CCtrlMovePC* self) {
         CfPartyInfoIn info;
         func_80198710(&info, &pos, 6, self->mFloat100, lbl_eu_80667B70,
                       lbl_eu_80667B60, self->mShort120);
-        if (func_8019876C(&info, &self->mVec54) == 0) {
+        if (CPartsChange_ProcessPartyInfo(&info, &self->mVec54) == 0) {
             // Planner failed: head straight for our own position.
             self->mFlags4C |= 1u;
             self->mVec54 = self->mPos;
@@ -2197,7 +2197,7 @@ extern "C" int func_8019DD54(cf::CCtrlMovePC* self) {
                           lbl_eu_80667B60, self->mShort120);
             self->mArr124[9] = 0;
             p1.mField2E = 1;
-            if (func_8019876C(&p1, &goal) == 0) {
+            if (CPartsChange_ProcessPartyInfo(&p1, &goal) == 0) {
                 return 0;
             }
             if (p1.mField2C != 0) {
@@ -2217,7 +2217,7 @@ extern "C" int func_8019DD54(cf::CCtrlMovePC* self) {
             } else {
                 p2.mField2E = 1;
             }
-            if (func_8019876C(&p2, &goal) == 0) {
+            if (CPartsChange_ProcessPartyInfo(&p2, &goal) == 0) {
                 // No candidate: probe straight down/up for walkable floor.
                 ml::CVec3 vHi = self->mPos;
                 vHi.y += lbl_eu_80667BBC;
@@ -2271,11 +2271,11 @@ extern "C" int func_8019DD54(cf::CCtrlMovePC* self) {
     emb->CfObject_syncMoveTarget((const ml::CVec3*)&goal);
     emb->CfObject_setMoveYaw(self->mFloat100);
     emb->CfObject_syncModelRate(lbl_eu_80667B68);
-    func_800BC3B0((char*)self->mObject + 0x3e9c, lbl_eu_80667B90);
+    CfObjectMove_setMoveSpeedGated((char*)self->mObject + 0x3e9c, lbl_eu_80667B90);
 
     if (obj->mSub != 0) {
         cf::CfMoveSub* sub2 = obj->mSub;
-        func_8004B7C0(sub2, &ml::CVec3::zero);
+        setAnimPosVec(sub2, &ml::CVec3::zero);
         sub2->mField3F0 = ml::CVec3::zero.x;
         sub2->mField3F4 = ml::CVec3::zero.y;
         sub2->mField3F8 = ml::CVec3::zero.z;

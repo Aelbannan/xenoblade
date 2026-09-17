@@ -31,7 +31,7 @@ cf::CfObjectTbox::CfObjectTbox() : CfObjectObj() {
     field_720 = 0;
     // The impl ctor returns the object in r3, so assigning it back keeps `res`
     // in volatile r3 for the mSubObjB0 store (no callee-saved slot).
-    void* res = mtl::MemManager::allocate(0x1c, func_80061FFC());
+    void* res = mtl::MemManager::allocate(0x1c, CfRes_getAllocHandle());
     if (res != 0) {
         res = (void*)__ct__cf_CfResTboxImpl((cf::CfResTboxImpl*)res, this);
     }

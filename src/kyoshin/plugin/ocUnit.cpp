@@ -21,18 +21,18 @@ extern "C" {
     extern u16 lbl_eu_80663E42;
     extern u16 lbl_eu_80663E44;
     extern float lbl_eu_80665C40;
-    void func_800BDB4C(void* obj);
+    void CfObjectMove_syncRegionToPos(void* obj);
     void cleanupMapEffects__Q22cf13CfGameManagerFv();
     extern char lbl_eu_804FA74C[];
     extern void* lbl_eu_806618D8;
     extern void* lbl_eu_806618F0;
     extern void* lbl_eu_806618E8;
     extern "C" void* __RTTI__Q22cf13CfObjectActor;
-    void func_800BE824(void* obj, int flag);
-    void func_800BE0F8(void* obj, int target);
-    void func_800BE33C(void* obj, int flag);
+    void CfObjectMove_setRegionAttached(void* obj, int flag);
+    void CfObjectMove_setMoveModeField(void* obj, int target);
+    void CfObjectMove_setModelDisplayFlag(void* obj, int flag);
     void* func_800BBC0C();
-    void func_800BF314(void* obj, int flag);
+    void CfObjectMove_setFlag6C9Bit0(void* obj, int flag);
     void func_800F38E0(void* battleMgr, void* actor, int flag);
     void func_800F3958(void* battleMgr, void* actor, int index);
     void func_800EC8FC(void* battleMgr, void* actor, void* data, int flag);
@@ -57,7 +57,7 @@ extern "C" {
 
 // Checks whether the current OC context object can start a battle/talk
 // interaction. Returns 1 to block, 0 to allow.
-extern "C" int func_8003BC10(void* obj) {
+extern "C" int isTalkBlocked(void* obj) {
     // Declaration order controls MWCC's r28/r29 naming (cur -> r28).
     // All locals are declared up front: MWCC forbids jumping past a
     // declaration/initializer (10211), so the late decls live here bare
@@ -81,7 +81,7 @@ extern "C" int func_8003BC10(void* obj) {
     // Booleanize the state byte's low bit (MWCC clrlwi/neg/or/srwi idiom).
     bit = *(u8*)((u8*)cur + 0x6C9) & 1;
     talkable = (u32)(-bit | bit) >> 31;
-    func_800BF314(cur, 0);
+    CfObjectMove_setFlag6C9Bit0(cur, 0);
     if (lbl_eu_80663E24 & 0x00400000) {
         goto done;
     }
@@ -188,7 +188,7 @@ extern "C" int func_8003BD7C(VMThread* pThread, int handle, u16 unk) {
     return 1;
 }
 
-extern "C" int func_8003C044(VMThread* pThread, int handle) {
+extern "C" int getPosX(VMThread* pThread, int handle) {
     void* ctx = func_801862C0();
     cf::CfObject* obj = (cf::CfObject*)func_801864DC(ctx, handle);
     VMArg retVal;
@@ -200,7 +200,7 @@ extern "C" int func_8003C044(VMThread* pThread, int handle) {
 
 ml::CVec3* cf::CfObject::CfObject_getPosVector() { return (ml::CVec3*)&mPos3C; }
 
-extern "C" int func_8003C0D0(VMThread* pThread, int handle) {
+extern "C" int getPosY(VMThread* pThread, int handle) {
     void* ctx = func_801862C0();
     cf::CfObject* obj = (cf::CfObject*)func_801864DC(ctx, handle);
     VMArg retVal;
@@ -210,7 +210,7 @@ extern "C" int func_8003C0D0(VMThread* pThread, int handle) {
     return 1;
 }
 
-extern "C" int func_8003C154(VMThread* pThread, int handle) {
+extern "C" int getPosZ(VMThread* pThread, int handle) {
     void* ctx = func_801862C0();
     cf::CfObject* obj = (cf::CfObject*)func_801864DC(ctx, handle);
     VMArg retVal;
@@ -220,7 +220,7 @@ extern "C" int func_8003C154(VMThread* pThread, int handle) {
     return 1;
 }
 
-extern "C" int func_8003C1D8(VMThread* pThread, int handle) {
+extern "C" int getObjAngle(VMThread* pThread, int handle) {
     void* ctx = func_801862C0();
     cf::CfObject* obj = (cf::CfObject*)func_801864DC(ctx, handle);
     VMArg retVal;
@@ -230,7 +230,7 @@ extern "C" int func_8003C1D8(VMThread* pThread, int handle) {
     return 1;
 }
 
-extern "C" int func_8003C260(VMThread* pThread, int handle) {
+extern "C" int getObjParam(VMThread* pThread, int handle) {
     void* ctx = func_801862C0();
     cf::CfObject* obj = (cf::CfObject*)func_801864DC(ctx, handle);
     VMArg retVal;
@@ -247,7 +247,7 @@ extern "C" void* CObjectParam_UnkVirtualFunc2__Q22cf12CObjectParamFv(cf::CObject
     return &self->mPtr10;
 }
 
-extern "C" int func_8003C2F4(VMThread* pThread, int handle) {
+extern "C" int getObjId(VMThread* pThread, int handle) {
     void* ctx = func_801862C0();
     cf::CfObject* obj = (cf::CfObject*)func_801864DC(ctx, handle);
     VMArg retVal;
@@ -257,7 +257,7 @@ extern "C" int func_8003C2F4(VMThread* pThread, int handle) {
     return 1;
 }
 
-extern "C" int func_8003C354(VMThread* pThread, int handle) {
+extern "C" int getTalkObj(VMThread* pThread, int handle) {
     void* ctx = func_801862C0();
     cf::CfObject* obj = (cf::CfObject*)func_801864DC(ctx, handle);
     VMArg retVal;
@@ -272,7 +272,7 @@ extern "C" int func_8003C354(VMThread* pThread, int handle) {
     return 1;
 }
 
-int func_8003C3D0(VMThread* pThread, int handle) {
+int getUnitHp(VMThread* pThread, int handle) {
     void* ctx = func_801862C0();
     cf::CfObject* obj = (cf::CfObject*)func_801864DC(ctx, handle);
     // Cast to CfObjectActor; if it is one, read the float at vtable slot
@@ -295,7 +295,7 @@ float cf::CActorParam::CActorParam_getHp() { return *(float*)((u8*)this + 0x17E8
 // us-8003c9fc: read the OC property as a signed value scaled by
 // 1/lbl_eu_80665C30, overwrite the object position vector's X with it and
 // pass the vector to vtable slot 0xA8.
-extern "C" int func_8003C480(VMThread* pThread, int handle) {
+extern "C" int setPosX(VMThread* pThread, int handle) {
     void* ctx = func_801862C0();
     cf::CfObject* obj = (cf::CfObject*)func_801864DC(ctx, handle);
     VMArg* prop = (VMArg*)vmOCPropertyGet(pThread);
@@ -319,9 +319,9 @@ extern "C" void CfObject_UnkVirtualFunc22__Q22cf8CfObjectFv(void* self, const vo
     ((u32*)((u8*)self + 0x3C))[2] = *(const u32*)((const u8*)src + 8);
 }
 
-// us-8003cadc: same shape as func_8003C480 but writes the computed angle to
+// us-8003cadc: same shape as setPosX but writes the computed angle to
 // the vector's Y component.
-extern "C" int func_8003C560(VMThread* pThread, int handle) {
+extern "C" int setPosY(VMThread* pThread, int handle) {
     void* ctx = func_801862C0();
     cf::CfObject* obj = (cf::CfObject*)func_801864DC(ctx, handle);
     VMArg* prop = (VMArg*)vmOCPropertyGet(pThread);
@@ -330,15 +330,15 @@ extern "C" int func_8003C560(VMThread* pThread, int handle) {
     vec.x = p->x;
     vec.y = p->y;
     vec.z = p->z;
-    // Same conversion as func_8003C480, written to the vector's Y.
+    // Same conversion as setPosX, written to the vector's Y.
     vec.y = (s32)prop->value.uintVal / lbl_eu_80665C30;
     obj->CfObject_syncMoveTarget((const ml::CVec3*)&vec);
     return 0;
 }
 
-// us-8003cba0: same shape as func_8003C480/func_8003C560 but writes the
+// us-8003cba0: same shape as setPosX/setPosY but writes the
 // computed angle to the vector's Z component.
-extern "C" int func_8003C624(VMThread* pThread, int handle) {
+extern "C" int setPosZ(VMThread* pThread, int handle) {
     void* ctx = func_801862C0();
     cf::CfObject* obj = (cf::CfObject*)func_801864DC(ctx, handle);
     VMArg* prop = (VMArg*)vmOCPropertyGet(pThread);
@@ -368,7 +368,7 @@ int func_8003C6E8(VMThread* pThread, int handle) {
 
 void cf::CfObject::CfObject_setMoveHeadAngle(float value) { mField4C = value; }
 
-int func_8003C78C(VMThread* pThread, int handle) {
+int setObjName(VMThread* pThread, int handle) {
     void* ctx = func_801862C0();
     cf::CfObject* obj = (cf::CfObject*)func_801864DC(ctx, handle);
     VMArg* prop = (VMArg*)vmOCPropertyGet(pThread);
@@ -386,7 +386,7 @@ extern "C" void CObjectParam_UnkVirtualFunc1__Q22cf12CObjectParamFv(void* self, 
 
 bool isValid() { return false; }
 
-extern "C" int func_8003C84C(VMThread* pThread, int handle) {
+extern "C" int applyPos(VMThread* pThread, int handle) {
     void* ctx = func_801862C0();
     cf::CfObject* obj = (cf::CfObject*)func_801864DC(ctx, handle);
     float* p = (float*)obj->CfObject_getPosVector();
@@ -401,7 +401,7 @@ extern "C" int func_8003C84C(VMThread* pThread, int handle) {
     obj->CfObject_applyMoveOffset(reinterpret_cast<const ml::CVec3*>(&vec),
                                    lbl_eu_80665C40);
     if (!(lbl_eu_80663E24 & 0xAFA40000) && (*(u32*)((u8*)obj + 0x64) & 8)) {
-        func_800BDB4C(obj);
+        CfObjectMove_syncRegionToPos(obj);
     }
     if (obj != 0 && obj == (cf::CfObject*)cf::CfGameManager::getPlayer(0) &&
         (lbl_eu_80663E24 & 0x00400000)) {
@@ -444,12 +444,12 @@ int dispOn(VMThread* pThread, int handle) {
     if (flag == 0) {
         obj->setPointEnabled(1);
     } else {
-        func_800BC3F0(obj);
+        CfObjectMove_attachMoveRegion(obj);
     }
     return 0;
 }
 
-extern "C" void func_800BC458(void* obj);
+extern "C" void CfObjectMove_detachMoveRegion(void* obj);
 
 int dispOff(VMThread* pThread, int handle) {
     int flag;
@@ -463,7 +463,7 @@ int dispOff(VMThread* pThread, int handle) {
     cf::CfObject* obj = (cf::CfObject*)func_801864DC(ctx, handle);
     // If the current display object still accepts display-off, bail out
     // before hiding this object.
-    cf::CfObject* disp = (cf::CfObject*)func_800BF324(obj);
+    cf::CfObject* disp = (cf::CfObject*)CfObjectMove_getSelfIfActive(obj);
     if (disp != 0 && !(disp->unk64 & 0x10000)) {
         if (((cf::CObjectState*)disp)->CObjectState_checkStateFlags8(1) != 0 ||
             ((cf::CObjectState*)disp)->CObjectState_checkStateFlags(1) != 0) {
@@ -475,7 +475,7 @@ int dispOff(VMThread* pThread, int handle) {
     if (flag == 0) {
         obj->setPointEnabled(0);
     } else {
-        func_800BC458(obj);
+        CfObjectMove_detachMoveRegion(obj);
     }
     return 0;
 }
@@ -486,7 +486,7 @@ int CObjectState_checkStateFlags__Q22cf12CObjectStateFv(void* self, int mask) {
     return (*(int*)((char*)self + 4) & mask) != 0 ? 1 : 0;
 }
 
-extern "C" int func_8003CB70(VMThread* pThread, int handle) {
+extern "C" int hideUnit(VMThread* pThread, int handle) {
     int arg;
     if (vmArgOmitChk(pThread, 1)) {
         arg = 0;
@@ -499,7 +499,7 @@ extern "C" int func_8003CB70(VMThread* pThread, int handle) {
     if (arg == 0) {
         obj->setPointEnabled(0);
     } else {
-        func_800BC458(obj);
+        CfObjectMove_detachMoveRegion(obj);
     }
     return 0;
 }
@@ -518,7 +518,7 @@ int func_8003CC0C(VMThread* pThread, int handle) {
     return 0;
 }
 
-int func_8003CC9C(VMThread* pThread, int handle) {
+int execNpcAction(VMThread* pThread, int handle) {
     VMArg* ptr = vmArgPtrGet(pThread, 1);
     int index = vmArgIntGet(2, ptr);
     void* ctx = func_801862C0();
@@ -543,7 +543,7 @@ int func_8003CC9C(VMThread* pThread, int handle) {
 
 void CfObject_forwardNpcAction__Q22cf8CfObjectFv(cf::CfObject* self, u32 value) { (void)self; (void)value; }
 
-extern "C" int func_8003CD6C(VMThread* pThread, int handle) {
+extern "C" int getNpcAction(VMThread* pThread, int handle) {
     void* ctx = func_801862C0();
     cf::CfObject* obj = (cf::CfObject*)func_801864DC(ctx, handle);
     VMArg retVal;
@@ -568,11 +568,11 @@ extern "C" int CfObject_UnkVirtualFunc50__Q22cf8CfObjectFv(cf::CfObject* self) {
 extern "C" int CfObject_UnkVirtualFunc50__Q22cf12CfObjectMoveFv(cf::CfObjectMove* self) { return self->field_6CE; }
 extern "C" int CfObject_UnkVirtualFunc51__Q22cf12CfObjectMoveFv(cf::CfObjectMove* self) { return self->field_6CF; }
 
-extern int func_8003BC10(void* obj);
-extern "C" int func_8003CDE0(VMThread* pThread, int handle) {
+extern int isTalkBlocked(void* obj);
+extern "C" int canTalk(VMThread* pThread, int handle) {
     void* ctx = func_801862C0();
     cf::CfObject* obj = (cf::CfObject*)func_801864DC(ctx, handle);
-    int r = func_8003BC10(obj);
+    int r = isTalkBlocked(obj);
     VMArg retVal;
     retVal.type = !r + 1;
     vmRetValSet(pThread, &retVal);
@@ -591,7 +591,7 @@ int walkR(VMThread* pThread, int handle) {
     return 0;
 }
 
-int func_8003CED0(VMThread* pThread, int handle) {
+int setMoveWait(VMThread* pThread, int handle) {
     VMArg* ptr = vmArgPtrGet(pThread, 1);
     int arg = vmArgIntGet(2, ptr);
     void* ctx = func_801862C0();
@@ -601,7 +601,7 @@ int func_8003CED0(VMThread* pThread, int handle) {
     return 0;
 }
 
-extern "C" int func_8003CF48(VMThread* pThread, int handle) {
+extern "C" int setTargetRot(VMThread* pThread, int handle) {
     VMArg* a1 = vmArgPtrGet(pThread, 1);
     int rotX = vmArgFixedGet(2, a1);
     VMArg* a2 = vmArgPtrGet(pThread, 2);
@@ -622,7 +622,7 @@ extern "C" int func_8003CF48(VMThread* pThread, int handle) {
 
 // us-8003d5dc: reads a VM array of fixed-point positions and hands them to
 // vtable slot 0x1E0 (path/move-list setter).
-extern "C" int func_8003D060(VMThread* pThread, int handle) {
+extern "C" int setNpcPath(VMThread* pThread, int handle) {
     // Declaration order controls MWCC's callee-saved register assignment;
     // ordered here to match retail's allocation.
     int angle;
@@ -662,7 +662,7 @@ extern "C" int func_8003D060(VMThread* pThread, int handle) {
     return 0;
 }
 
-int func_8003D2B8(VMThread* pThread, int handle) {
+int isMoving(VMThread* pThread, int handle) {
     void* ctx = func_801862C0();
     cf::CfObject* obj = (cf::CfObject*)func_801864DC(ctx, handle);
     int busy = ((cf::CfObjectMove*)obj)->CfObjectMove_queryNpcAdvance();
@@ -673,7 +673,7 @@ int func_8003D2B8(VMThread* pThread, int handle) {
     return 1;
 }
 
-int func_8003D32C(VMThread* pThread, int handle) {
+int waitMove(VMThread* pThread, int handle) {
     void* ctx = func_801862C0();
     cf::CfObject* obj = (cf::CfObject*)func_801864DC(ctx, handle);
     // If the object's "busy" check (vtable[0x1E8]) is false, hold the script.
@@ -692,7 +692,7 @@ int func_8003D32C(VMThread* pThread, int handle) {
 // (CfObjectMove_updateNpcTarget, whose Fv impl ignores them).
 int moveTo(VMThread* pThread, int handle) {
     // Declaration order controls MWCC's callee-saved register assignment
-    // (same scheme as func_8003D060: angle first, no reused VMArg* local).
+    // (same scheme as setNpcPath: angle first, no reused VMArg* local).
     int angle;
     cf::CfObject* obj;
     ml::CVec3 vec;
@@ -743,7 +743,7 @@ extern "C" int func_8003D570(VMThread* pThread, int handle) {
 }
 
 // us-8003db58: three (ptr,int) arg pairs dispatched to vtable slot 0x1FC.
-extern "C" int func_8003D5DC(VMThread* pThread, int handle) {
+extern "C" int restartNpc(VMThread* pThread, int handle) {
     VMArg* a1 = vmArgPtrGet(pThread, 1);
     int a = vmArgIntGet(2, a1);
     VMArg* a2 = vmArgPtrGet(pThread, 2);
@@ -877,9 +877,9 @@ extern "C" int CObjectState_UnkVirtualFunc8__Q22cf12CObjectStateFv(void* self, i
 
 // --- Batch 2 targets start here ---
 
-// us-8003df40: func_8003D9C4
+// us-8003df40: hasTalkFlag
 // Checks if a CfObject supports a talk/hybridheal flag, returns 1 or 2
-extern "C" int func_8003D9C4(VMThread* pThread, int handle) {
+extern "C" int hasTalkFlag(VMThread* pThread, int handle) {
     void* ctx = func_801862C0();
     cf::CfObject* obj = (cf::CfObject*)func_801864DC(ctx, handle);
     VMArg retVal;
@@ -940,9 +940,9 @@ extern "C" int winTalk(VMThread* pThread, int handle) {
     return 0;
 }
 
-// us-8003e1f8: func_8003DC7C
+// us-8003e1f8: setState10
 // Sets or clears a CfObject flag based on bool arg
-extern "C" int func_8003DC7C(VMThread* pThread, int handle) {
+extern "C" int setState10(VMThread* pThread, int handle) {
     int boolVal;
     if (vmArgOmitChk(pThread, 1)) {
         boolVal = 1;
@@ -962,9 +962,9 @@ extern "C" int func_8003DC7C(VMThread* pThread, int handle) {
     return 0;
 }
 
-// us-8003e2c0: func_8003DD44
+// us-8003e2c0: talkMsg
 // Gets a string arg and calls func_8013D07C on the object's sub-field
-extern "C" int func_8003DD44(VMThread* pThread, int handle) {
+extern "C" int talkMsg(VMThread* pThread, int handle) {
     VMArg* arg1 = vmArgPtrGet(pThread, 1);
     const char* str = vmArgStringGet(2, arg1);
     void* ctx = func_801862C0();
@@ -973,9 +973,9 @@ extern "C" int func_8003DD44(VMThread* pThread, int handle) {
     return 0;
 }
 
-// us-8003e328: func_8003DDAC
+// us-8003e328: getSearchHandle
 // Returns the current object handle (OC search result)
-extern "C" int func_8003DDAC(VMThread* pThread, int handle) {
+extern "C" int getSearchHandle(VMThread* pThread, int handle) {
     VMArg retVal;
     retVal.type = 3;
     retVal.value.uintVal = func_8013EC58();
@@ -983,9 +983,9 @@ extern "C" int func_8003DDAC(VMThread* pThread, int handle) {
     return 1;
 }
 
-// us-8003e370: func_8003DDF4
+// us-8003e370: sendNotify
 // Gets a string and calls a func, then handles notification flags
-extern "C" int func_8003DDF4(VMThread* pThread, int handle) {
+extern "C" int sendNotify(VMThread* pThread, int handle) {
     cf::CfObject* obj;
     VMArg* arg1;
     const char* str;
@@ -1021,9 +1021,9 @@ extern "C" int setAct(VMThread* pThread, int handle) {
     }
     void* ctx = func_801862C0();
     cf::CfObject* obj = (cf::CfObject*)func_801864DC(ctx, handle);
-    // func_800BE12C is header-declared as the 4-arg form; retail call sites
+    // CfObjectMove_setAnimModeArgs is header-declared as the 4-arg form; retail call sites
     // pass a 5th arg (r7=1) the callee ignores -- cast to keep the r3-r7 setup.
-    ((void (*)(void*, int, int, int, int))&func_800BE12C)(obj, actionId, 0, -1, 1);
+    ((void (*)(void*, int, int, int, int))&CfObjectMove_setAnimModeArgs)(obj, actionId, 0, -1, 1);
     if (fixedParam != 1) {
         float f = (float)(s32)fixedParam / 2048.0f;
         obj->CfObject_pushRefreshValue(f);
@@ -1031,9 +1031,9 @@ extern "C" int setAct(VMThread* pThread, int handle) {
     return 0;
 }
 
-// us-8003e560: func_8003DFE4
+// us-8003e560: setRefreshVal
 // Calls a virtual function with a fixed-point parameter converted to float
-extern "C" int func_8003DFE4(VMThread* pThread, int handle) {
+extern "C" int setRefreshVal(VMThread* pThread, int handle) {
     VMArg* arg1 = vmArgPtrGet(pThread, 1);
     int fixedVal = vmArgFixedGet(2, arg1);
     void* ctx = func_801862C0();
@@ -1125,15 +1125,15 @@ extern "C" int turn(VMThread* pThread, int handle) {
     cf::CfObject* obj = (cf::CfObject*)func_801864DC(ctx, handle);
     float f = (float)(s32)angle * lbl_eu_8066A210;
     obj->CfObject_setMoveHeadAngle(f);
-    // func_800BE12C is header-declared as the 4-arg form; retail call sites
+    // CfObjectMove_setAnimModeArgs is header-declared as the 4-arg form; retail call sites
     // pass a 5th arg (r7=1) the callee ignores -- cast to keep the r3-r7 setup.
-    ((void (*)(void*, int, int, int, int))&func_800BE12C)(obj, 3, 0, -1, 1);
+    ((void (*)(void*, int, int, int, int))&CfObjectMove_setAnimModeArgs)(obj, 3, 0, -1, 1);
     return 0;
 }
 
-// us-8003e9f4: func_8003E478
+// us-8003e9f4: flagUnit80000
 // Sets a flag on the object if it's alive
-extern "C" int func_8003E478(VMThread* pThread, int handle) {
+extern "C" int flagUnit80000(VMThread* pThread, int handle) {
     void* ctx = func_801862C0();
     cf::CfObject* obj = (cf::CfObject*)func_801864DC(ctx, handle);
     if (obj && (obj->unk64 & 0x80000000)) {
@@ -1142,9 +1142,9 @@ extern "C" int func_8003E478(VMThread* pThread, int handle) {
     return 0;
 }
 
-// us-8003ea4c: func_8003E4D0
+// us-8003ea4c: flagUnit100000
 // Sets a flag on the object if it's alive
-extern "C" int func_8003E4D0(VMThread* pThread, int handle) {
+extern "C" int flagUnit100000(VMThread* pThread, int handle) {
     void* ctx = func_801862C0();
     cf::CfObject* obj = (cf::CfObject*)func_801864DC(ctx, handle);
     if (obj && (obj->unk64 & 0x80000000)) {
@@ -1153,9 +1153,9 @@ extern "C" int func_8003E4D0(VMThread* pThread, int handle) {
     return 0;
 }
 
-// us-8003eaa4: func_8003E528
+// us-8003eaa4: getPartyHandle
 // Gets the current OC handle for the object's party member
-extern "C" int func_8003E528(VMThread* pThread, int handle) {
+extern "C" int getPartyHandle(VMThread* pThread, int handle) {
     // Declaration order controls MWCC's r30/r31 naming here: the OC handle
     // must land in r30 and the object pointer in r31 to match retail.
     cf::CfObject* obj = (cf::CfObject*)func_801864DC(func_801862C0(), handle);
@@ -1194,11 +1194,11 @@ extern "C" int func_8003E528(VMThread* pThread, int handle) {
     return 1;
 }
 
-// us-8003ebe8: func_8003E66C
+// us-8003ebe8: getTargetUnitId
 // Gets the current battle target's unit. The +0x4C virtual returns this
 // unit's own OC handle; when valid it is fed through the same virtual again
 // and resolved back to an object whose +0x8C halfword becomes the result.
-extern "C" int func_8003E66C(VMThread* pThread, int handle) {
+extern "C" int getTargetUnitId(VMThread* pThread, int handle) {
     cf::CfObject* obj = (cf::CfObject*)func_801864DC(func_801862C0(), handle);
     VMArg retVal;
     if (((cf::CObjectParam*)obj)->CObjectParam_getSelfObjectId()) {
@@ -1355,9 +1355,9 @@ extern "C" int func_8003E974(VMThread* pThread, int handle) {
     return 0;
 }
 
-// us-8003f0e0: func_8003EB64
+// us-8003f0e0: delBuff
 // Removes buff/debuff from an actor by index
-extern "C" int func_8003EB64(VMThread* pThread, int handle) {
+extern "C" int delBuff(VMThread* pThread, int handle) {
     VMArg* ptr = vmArgPtrGet(pThread, 1);
     int index = vmArgIntGet(2, ptr);
     void* ctx = func_801862C0();
@@ -1381,7 +1381,7 @@ extern "C" int setColi(VMThread* pThread, int handle) {
     cf::CfObject* obj = (cf::CfObject*)func_801864DC(ctx, handle);
     void* actor = (void*)__dynamic_cast(obj, 0, (void*)&lbl_eu_806618D8, (void*)&lbl_eu_806618F0, 0);
     if (actor) {
-        func_800BE824(actor, enable ? 1 : 0);
+        CfObjectMove_setRegionAttached(actor, enable ? 1 : 0);
     }
     return 0;
 }
@@ -1394,14 +1394,14 @@ extern "C" int setEye(VMThread* pThread, int handle) {
     void* ctx = func_801862C0();
     cf::CfObject* obj = (cf::CfObject*)func_801864DC(ctx, handle);
     if (obj) {
-        func_800BE0F8(obj, target);
+        CfObjectMove_setMoveModeField(obj, target);
     }
     return 0;
 }
 
-// us-8003f254: func_8003ECD8
+// us-8003f254: setGrav
 // Enables/disables gravity on an object
-extern "C" int func_8003ECD8(VMThread* pThread, int handle) {
+extern "C" int setGrav(VMThread* pThread, int handle) {
     VMArg* ptr = vmArgPtrGet(pThread, 1);
     int enable = vmArgBoolGet(2, ptr);
     void* ctx = func_801862C0();
@@ -1412,9 +1412,9 @@ extern "C" int func_8003ECD8(VMThread* pThread, int handle) {
     return 0;
 }
 
-// us-8003f2cc: func_8003ED50
+// us-8003f2cc: setUnitVisible
 // Enables/disables a visibility flag on an object and its model
-extern "C" int func_8003ED50(VMThread* pThread, int handle) {
+extern "C" int setUnitVisible(VMThread* pThread, int handle) {
     VMArg* ptr = vmArgPtrGet(pThread, 1);
     int enable = vmArgBoolGet(2, ptr);
     void* ctx = func_801862C0();
@@ -1437,29 +1437,29 @@ extern "C" int func_8003ED50(VMThread* pThread, int handle) {
     return 0;
 }
 
-// us-8003f380: func_8003EE04
+// us-8003f380: setUnitState
 // Enables/disables a flag on the object
-extern "C" int func_8003EE04(VMThread* pThread, int handle) {
+extern "C" int setUnitState(VMThread* pThread, int handle) {
     VMArg* ptr = vmArgPtrGet(pThread, 1);
     int enable = vmArgBoolGet(2, ptr);
     void* ctx = func_801862C0();
     cf::CfObject* obj = (cf::CfObject*)func_801864DC(ctx, handle);
     if (obj) {
-        func_800BE33C(obj, enable ? 1 : 0);
+        CfObjectMove_setModelDisplayFlag(obj, enable ? 1 : 0);
     }
     return 0;
 }
 
-// us-8003f3f0: func_8003EE74
+// us-8003f3f0: setGameFlag
 // Calls a game-level function with a bool parameter
-extern "C" int func_8003EE74(VMThread* pThread, int handle) {
+extern "C" int setGameFlag(VMThread* pThread, int handle) {
     VMArg* ptr = vmArgPtrGet(pThread, 1);
     int enable = vmArgBoolGet(2, ptr);
     void* ctx = func_801862C0();
     func_801864DC(ctx, handle);
     void* gameObj = func_800BBC0C();
     if (gameObj) {
-        func_800BF314(gameObj, enable);
+        CfObjectMove_setFlag6C9Bit0(gameObj, enable);
     }
     return 0;
 }
@@ -1548,9 +1548,9 @@ extern "C" int gravity(VMThread* pThread, int handle) {
     return 0;
 }
 
-// us-8003f78c: func_8003F210
+// us-8003f78c: findParty
 // Battle party lookup by name, returns OC handle
-extern "C" int func_8003F210(VMThread* pThread, int handle, int r5) {
+extern "C" int findParty(VMThread* pThread, int handle, int r5) {
     int param;
     int hadFlag;
     const char* name;
@@ -1596,9 +1596,9 @@ extern "C" int func_8003F210(VMThread* pThread, int handle, int r5) {
     return 1;
 }
 
-// us-8003f914: func_8003F398
+// us-8003f914: pointOnA
 // Sets a virtual function on the object (enable)
-extern "C" int func_8003F398(VMThread* pThread, int handle) {
+extern "C" int pointOnA(VMThread* pThread, int handle) {
     if (!vmArgOmitChk(pThread, 1)) {
         VMArg* ptr = vmArgPtrGet(pThread, 1);
         vmArgIntGet(2, ptr);
@@ -1609,9 +1609,9 @@ extern "C" int func_8003F398(VMThread* pThread, int handle) {
     return 0;
 }
 
-// us-8003f994: func_8003F418
+// us-8003f994: pointOffA
 // Sets a virtual function on the object (disable)
-extern "C" int func_8003F418(VMThread* pThread, int handle) {
+extern "C" int pointOffA(VMThread* pThread, int handle) {
     if (!vmArgOmitChk(pThread, 1)) {
         VMArg* ptr = vmArgPtrGet(pThread, 1);
         vmArgIntGet(2, ptr);
@@ -1622,10 +1622,10 @@ extern "C" int func_8003F418(VMThread* pThread, int handle) {
     return 0;
 }
 
-// us-8003fa14: func_8003F498
+// us-8003fa14: findBattleActor
 // Battle party member lookup by name/type. Saves event-flag bit 0x40000
 // aside, forces it per arg3 around the lookup, then restores it.
-extern "C" int func_8003F498(VMThread* pThread, int handle, int r5) {
+extern "C" int findBattleActor(VMThread* pThread, int handle, int r5) {
     int hadFlag;
     VMArg* ptr1 = vmArgPtrGet(pThread, 1);
     const char* name = vmArgStringGet(2, ptr1);
@@ -1670,9 +1670,9 @@ extern "C" int func_8003F498(VMThread* pThread, int handle, int r5) {
     return 1;
 }
 
-// us-8003fbc8: func_8003F64C
-// Enables a virtual function on the object (same as func_8003F398)
-extern "C" int func_8003F64C(VMThread* pThread, int handle) {
+// us-8003fbc8: pointOnB
+// Enables a virtual function on the object (same as pointOnA)
+extern "C" int pointOnB(VMThread* pThread, int handle) {
     if (!vmArgOmitChk(pThread, 1)) {
         VMArg* ptr = vmArgPtrGet(pThread, 1);
         vmArgIntGet(2, ptr);
@@ -1683,9 +1683,9 @@ extern "C" int func_8003F64C(VMThread* pThread, int handle) {
     return 0;
 }
 
-// us-8003fc48: func_8003F6CC
-// Disables a virtual function on the object (same as func_8003F418)
-extern "C" int func_8003F6CC(VMThread* pThread, int handle) {
+// us-8003fc48: pointOffB
+// Disables a virtual function on the object (same as pointOffA)
+extern "C" int pointOffB(VMThread* pThread, int handle) {
     if (!vmArgOmitChk(pThread, 1)) {
         VMArg* ptr = vmArgPtrGet(pThread, 1);
         vmArgIntGet(2, ptr);
@@ -1696,9 +1696,9 @@ extern "C" int func_8003F6CC(VMThread* pThread, int handle) {
     return 0;
 }
 
-// us-8003fcc8: func_8003F74C
+// us-8003fcc8: setChildVal
 // Sets a property on an object with a signed byte value
-extern "C" int func_8003F74C(VMThread* pThread, int handle) {
+extern "C" int setChildVal(VMThread* pThread, int handle) {
     int value;
     if (vmArgOmitChk(pThread, 1)) {
         value = 1;
@@ -1712,9 +1712,9 @@ extern "C" int func_8003F74C(VMThread* pThread, int handle) {
     return 0;
 }
 
-// us-8003fd48: func_8003F7CC
+// us-8003fd48: followUnit
 // Sets a follow/attention relationship between two objects
-extern "C" int func_8003F7CC(VMThread* pThread, int handle) {
+extern "C" int followUnit(VMThread* pThread, int handle) {
     int targetOC;
     if (vmArgOmitChk(pThread, 1)) {
         targetOC = 0;
@@ -1775,9 +1775,9 @@ extern "C" int func_8003F870(VMThread* pThread, int handle) {
     return 0;
 }
 
-// us-8003fef8: func_8003F97C
+// us-8003fef8: setUnitTarget
 // Unfollow/clear a relationship
-extern "C" int func_8003F97C(VMThread* pThread, int handle) {
+extern "C" int setUnitTarget(VMThread* pThread, int handle) {
     int targetOC;
     if (vmArgOmitChk(pThread, 1)) {
         targetOC = 0;
@@ -1796,9 +1796,9 @@ extern "C" int func_8003F97C(VMThread* pThread, int handle) {
     return 0;
 }
 
-// us-8003ff98: func_8003FA1C
+// us-8003ff98: startBattle
 // Sets up a battle encounter by name
-extern "C" int func_8003FA1C(VMThread* pThread, int handle, int r5) {
+extern "C" int startBattle(VMThread* pThread, int handle, int r5) {
     void* ctx;
     VMArg* ptr1 = vmArgPtrGet(pThread, 1);
     const char* name = vmArgStringGet(2, ptr1);
@@ -1830,9 +1830,9 @@ extern "C" int func_8003FA1C(VMThread* pThread, int handle, int r5) {
     return 1;
 }
 
-// us-80040094: func_8003FB18
-// Enables a virtual function on the object (same as func_8003F398)
-extern "C" int func_8003FB18(VMThread* pThread, int handle) {
+// us-80040094: pointOnC
+// Enables a virtual function on the object (same as pointOnA)
+extern "C" int pointOnC(VMThread* pThread, int handle) {
     if (!vmArgOmitChk(pThread, 1)) {
         VMArg* ptr = vmArgPtrGet(pThread, 1);
         vmArgIntGet(2, ptr);
@@ -1843,9 +1843,9 @@ extern "C" int func_8003FB18(VMThread* pThread, int handle) {
     return 0;
 }
 
-// us-80040114: func_8003FB98
-// Disables a virtual function on the object (same as func_8003F418)
-extern "C" int func_8003FB98(VMThread* pThread, int handle) {
+// us-80040114: pointOffC
+// Disables a virtual function on the object (same as pointOffA)
+extern "C" int pointOffC(VMThread* pThread, int handle) {
     if (!vmArgOmitChk(pThread, 1)) {
         VMArg* ptr = vmArgPtrGet(pThread, 1);
         vmArgIntGet(2, ptr);
@@ -1878,12 +1878,12 @@ extern "C" int func_8003FC18(VMThread* pThread, int handle) {
     return 0;
 }
 
-// us-800402c4: func_8003FD48
+// us-800402c4: moveToPos
 // Moves an object to a fixed-point position plus yaw angle: fetches four
 // fixed-point args, resolves the object, converts to floats (/2048 via the
 // 0x43300000 double trick), queries the move object through vtable slot 0xAC,
 // then forwards everything to func_800ABFC4.
-extern "C" int func_8003FD48(VMThread* pThread, int handle) {
+extern "C" int moveToPos(VMThread* pThread, int handle) {
     VMArg* ptr1 = vmArgPtrGet(pThread, 1);
     int x = vmArgFixedGet(2, ptr1);
     VMArg* ptr2 = vmArgPtrGet(pThread, 2);
@@ -1912,10 +1912,10 @@ extern "C" int func_8003FD48(VMThread* pThread, int handle) {
     return 0;
 }
 
-// us-80040458: func_8003FEDC
+// us-80040458: chkRange
 // Checks whether two OC objects are related (position/talk link), reporting
 // the result as a VM bool.
-extern "C" int func_8003FEDC(VMThread* pThread, int handle) {
+extern "C" int chkRange(VMThread* pThread, int handle) {
     cf::CfObject* target;
     if (vmArgOmitChk(pThread, 1)) {
         target = 0;
@@ -1952,10 +1952,10 @@ extern "C" int func_8003FEDC(VMThread* pThread, int handle) {
     return 1;
 }
 
-// us-80040570: func_8003FFF4
+// us-80040570: chkEventRange
 // Sets a position on an object using 3 fixed-point coords
 // us-80040570
-extern "C" int func_8003FFF4(VMThread* pThread, int handle) {
+extern "C" int chkEventRange(VMThread* pThread, int handle) {
     cf::CfObject* target;
     if (vmArgOmitChk(pThread, 1)) {
         target = 0;

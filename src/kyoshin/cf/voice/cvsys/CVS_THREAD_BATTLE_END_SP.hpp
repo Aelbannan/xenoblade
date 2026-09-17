@@ -106,7 +106,7 @@ extern "C" {
     int  func_802A77E8(CVoiceHandle* handle);
     int  func_802A8140();
     CVoiceHandle* func_802A330C(int size, int align);
-    u8*  func_802A34E4(int size);
+    u8*  CCharVoiceMan_AllocVoiceArena(int size);
     // Zero-arg declaration: the factory keeps the allocator result live in r3
     // so the ctor call needs no argument reload (matches retail).
     void __ct__cf_CVS_THREAD();

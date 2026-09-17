@@ -5,7 +5,7 @@
 #include "monolib/scn/CScnTimeApi.hpp"
 #include <string.h>
 
-// CTaskCulling::func_801A2BD0 (static) is called by Term. Note: this TU does
+// CTaskCulling::setOccDisabled (static) is called by Term. Note: this TU does
 // NOT include harness_catalog.hpp (which would pull CTaskGameEff.hpp's
 // minimal `class CScn` and collide with the real monolib CScn below).
 #include "kyoshin/cf/CTaskCulling.hpp"
@@ -349,7 +349,7 @@ extern "C" void func_80168610(cf::CTaskREvtSequence* self) {
     if (func_8012E6DC() != 0) {
         return;
     }
-    if (func_80062A00() == 0) {
+    if (CfRes_isGridLoadIdle() == 0) {
         return;
     }
     handleBattleEnd__Q22cf13CfGameManagerFv();
@@ -367,7 +367,7 @@ extern "C" void func_80168610(cf::CTaskREvtSequence* self) {
         return;
     }
     lbl_eu_80663EE0 |= 0x2;
-    func_800B9438((void*)4);
+    gmWalkByMask((void*)4);
     lbl_eu_80663EE0 |= 0x40;
 }
 
@@ -1122,7 +1122,7 @@ void func_8016925C(cf::CTaskREvtSequence* self) {
         }
     }
     if (isEventPending() != 0) {
-        func_800B1C78(0);
+        bindPadSubobjects(0);
     }
     // Start every realtime-event entry, run the event dispatch advance, then
     // tick them once.
@@ -1753,7 +1753,7 @@ void func_80169F28(cf::CTaskREvtSequence* self) {
     if (lbl_eu_80667658 != entry->field_0x3C) {
         func_8048EA38(entry->field_0x3C);
     }
-    cf::CTaskCulling::func_801A2BD0((entry->field_0x38 >> 3) & 1);
+    cf::CTaskCulling::setOccDisabled((entry->field_0x38 >> 3) & 1);
     self->field_0x5C &= ~0xF00;
 }
 
@@ -1860,7 +1860,7 @@ void cf::CTaskREvtSequence::Term() {
     if (field_0x115 == 0) {
         ((void(*)(void*))func_8016A480)(this);
     }
-    CTaskCulling::func_801A2BD0(0);
+    CTaskCulling::setOccDisabled(0);
     lbl_eu_80663EE0 &= ~0x40;
     func_8048EA38(field_0x12C);
 }
@@ -1935,7 +1935,7 @@ void func_8016A480(void* selfv) {
         func_8016FC0C(1);
     }
     if (isEventPending() != 0) {
-        func_800B1C78(1);
+        bindPadSubobjects(1);
     }
     // Cancel the three async file loads (direct read / common archive /
     // sequence chunk); cancelling the archive also drops its buffer.
@@ -2093,13 +2093,13 @@ void func_8016A480(void* selfv) {
     // dimmer once the event manager is up.
     if ((self->field_0x5C & 0x00400000) != 0) {
         if ((lbl_eu_80663E28 & 0x01000000) == 0) {
-            func_80043BC4();
+            CTaskGame_resetStream();
         }
         func_80189318(0, lbl_eu_80667658);
         func_80189424(lbl_eu_80667658);
     } else {
         if (isEventPending() != 0 && (lbl_eu_80663E28 & 0x01000000) == 0) {
-            func_80043BC4();
+            CTaskGame_resetStream();
         }
     }
     // Push a flat black fade into the scene when no sequence data remains.

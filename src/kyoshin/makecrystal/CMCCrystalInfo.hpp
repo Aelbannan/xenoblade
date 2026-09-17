@@ -154,6 +154,6 @@ extern "C" void __dl__FPv(void*);
 
 // Cross-TU imports with unmangled retail symbols (C linkage required so call
 // relocs bind to the retail names, not MWCC-mangled C++ forms).
-extern "C" u32 func_801392E4(u32);
-extern "C" u16 func_80139358(u32);
+extern "C" u32 BdatGetItemType(u32);
+extern "C" u16 BdatGetItemId(u32);
 extern "C" void* CItem_initItemImplInstances(void*);

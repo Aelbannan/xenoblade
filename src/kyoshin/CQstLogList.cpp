@@ -232,14 +232,14 @@ extern "C" __declspec(noinline) void func_802283EC(CQstLogList* self) {
 }
 
 extern "C" __declspec(noinline) void func_8022844C(CQstLogList* self) {
-    if (func_80137510(self->mpAnim1, lbl_eu_80668584) != 0) {
+    if (AnimRewindFrame(self->mpAnim1, lbl_eu_80668584) != 0) {
         self->field_0x174 = 5;
         func_802284E4(self);
     }
 }
 
 extern "C" __declspec(noinline) void func_80228498(CQstLogList* self) {
-    if (func_80137510(self->mpAnim0, lbl_eu_80668584) != 0) {
+    if (AnimRewindFrame(self->mpAnim0, lbl_eu_80668584) != 0) {
         self->field_0x174 = 0;
         self->mSortEnabled = 1;
     }
@@ -264,20 +264,20 @@ extern "C" __declspec(noinline) void func_802286F4(CQstLogList* self,
                                                     int questId, int index,
                                                     int mode, u8 a6, u8 a7) {
     char buf[0x20];
-    const char* str = func_8013639C(name, &lbl_eu_80509AB4[0x42], questId);
+    const char* str = BdatGetPtrDirect(name, &lbl_eu_80509AB4[0x42], questId);
     sprintf(buf, &lbl_eu_80509AB4[0x48], index);
-    func_80136B4C(self->mpLayout, buf, (char*)str, 0);
+    LayoutSetTextBoxFmtValue(self->mpLayout, buf, (char*)str, 0);
     func_80137B44(self->mpLayout, buf,
                   a6 != 0 ? 0xC81E1EFFu : lbl_eu_80662860);
 
     // Detail text: BDAT lookup chain (name -> column A -> column B -> row
     // string) formatted into the second pane.
-    u16 a = func_80136254(name, &lbl_eu_80509AB4[0x54], questId);
-    u16 b = func_80136254((const char*)lbl_eu_80664098, &lbl_eu_80509AB4[0x5b], a);
-    u8 c = func_8013600C(&lbl_eu_80509AB4[0x63], &lbl_eu_80509AB4[0x70], b);
-    const char* str2 = func_8013639C(lbl_eu_806640A8, &lbl_eu_80509AB4[0x76], c);
+    u16 a = BdatGetU16Direct(name, &lbl_eu_80509AB4[0x54], questId);
+    u16 b = BdatGetU16Direct((const char*)lbl_eu_80664098, &lbl_eu_80509AB4[0x5b], a);
+    u8 c = BdatGetU8ByTableKey(&lbl_eu_80509AB4[0x63], &lbl_eu_80509AB4[0x70], b);
+    const char* str2 = BdatGetPtrDirect(lbl_eu_806640A8, &lbl_eu_80509AB4[0x76], c);
     sprintf(buf, &lbl_eu_80509AB4[0x7b], index);
-    func_80136B4C(self->mpLayout, buf, (char*)str2, 0);
+    LayoutSetTextBoxFmtValue(self->mpLayout, buf, (char*)str2, 0);
     func_80137B44(self->mpLayout, buf,
                   a6 != 0 ? 0xC81E1EFFu : lbl_eu_80662860);
 
@@ -344,9 +344,9 @@ extern "C" __declspec(noinline) void func_802289F8(CQstLogList* self) {
     u32 i = 1;
     do {
         sprintf(buf, &lbl_eu_80509AB4[0x48], (u8)i);
-        func_80136B4C(self->mpLayout, buf, &lbl_eu_80509AB4[0x106], 0);
+        LayoutSetTextBoxFmtValue(self->mpLayout, buf, &lbl_eu_80509AB4[0x106], 0);
         sprintf(buf, &lbl_eu_80509AB4[0x7b], (u8)i);
-        func_80136B4C(self->mpLayout, buf, &lbl_eu_80509AB4[0x106], 0);
+        LayoutSetTextBoxFmtValue(self->mpLayout, buf, &lbl_eu_80509AB4[0x106], 0);
         sprintf(buf, &lbl_eu_80509AB4[0x87], (u8)i);
         nw4r::lyt::Pane* pane =
             self->mpLayout->GetRootPane()->FindPaneByName(buf, true);
@@ -562,7 +562,7 @@ int CQstLogList::OnFileEvent(CEventFile* event) {
     row0.mField0 = 0xFF;
     row0.mField1 = 0;
     sprintf((char*)&row0.mData[0], &s[0x10],
-            func_80136190(&s[0x166], &s[0x76], 0x44));
+            BdatTouchStringCell(&s[0x166], &s[0x76], 0x44));
     char* const table = lbl_eu_80576670;
     u32 n0 = lbl_eu_80664728;
     lbl_eu_80664728 = n0 + 1;
@@ -571,7 +571,7 @@ int CQstLogList::OnFileEvent(CEventFile* event) {
     row1.mField0 = 0xFF;
     row1.mField1 = 1;
     sprintf((char*)&row1.mData[0], &s[0x10],
-            func_80136190(&s[0x166], &s[0x76], 0x45));
+            BdatTouchStringCell(&s[0x166], &s[0x76], 0x45));
     u32 n1 = lbl_eu_80664728;
     lbl_eu_80664728 = n1 + 1;
     func_80227994((CQstLogListEntry*)&table[n1 * 0x22], &row1);
@@ -579,7 +579,7 @@ int CQstLogList::OnFileEvent(CEventFile* event) {
     row2.mField0 = 0xFF;
     row2.mField1 = 2;
     sprintf((char*)&row2.mData[0], &s[0x10],
-            func_80136190(&s[0x166], &s[0x76], 0x46));
+            BdatTouchStringCell(&s[0x166], &s[0x76], 0x46));
     u32 n2 = lbl_eu_80664728;
     lbl_eu_80664728 = n2 + 1;
     func_80227994((CQstLogListEntry*)&table[n2 * 0x22], &row2);
@@ -587,7 +587,7 @@ int CQstLogList::OnFileEvent(CEventFile* event) {
     row3.mField0 = 0xFF;
     row3.mField1 = 3;
     sprintf((char*)&row3.mData[0], &s[0x10],
-            func_80136190(&s[0x166], &s[0x76], 0x47));
+            BdatTouchStringCell(&s[0x166], &s[0x76], 0x47));
     u32 n3 = lbl_eu_80664728;
     lbl_eu_80664728 = n3 + 1;
     func_80227994((CQstLogListEntry*)&table[n3 * 0x22], &row3);
@@ -604,8 +604,8 @@ int CQstLogList::OnFileEvent(CEventFile* event) {
         case 0x15: case 0x16: case 0x17: case 0x18: case 0x19: case 0x1A: case 0x1B:
         case 0x1C:
             for (s32 j = 1; j <= numQuests; j++) {
-                if (func_801361E8((u32)lbl_eu_806640A0, &s[0x70], j) == i &&
-                    func_801361E8((u32)lbl_eu_806640A0, &s[0x170], j) == 0 &&
+                if (BdatGetU8Direct((u32)lbl_eu_806640A0, &s[0x70], j) == i &&
+                    BdatGetU8Direct((u32)lbl_eu_806640A0, &s[0x170], j) == 0 &&
                     func_8009CF8C((u32)(j + 0x20c8)) != 0) {
                     indices[count++] = i;
                     break;
@@ -624,8 +624,8 @@ int CQstLogList::OnFileEvent(CEventFile* event) {
         for (s8 inner = 0; inner < (s8)(last - outer); inner++) {
             u8 a = indices[inner];
             u8 b = indices[inner + 1];
-            if (func_801361E8((u32)lbl_eu_806640A8, &s[0xa], a) >
-                func_801361E8((u32)lbl_eu_806640A8, &s[0xa], b)) {
+            if (BdatGetU8Direct((u32)lbl_eu_806640A8, &s[0xa], a) >
+                BdatGetU8Direct((u32)lbl_eu_806640A8, &s[0xa], b)) {
                 u8 tmpSwap = a;
                 indices[inner] = b;
                 indices[inner + 1] = tmpSwap;
@@ -638,7 +638,7 @@ int CQstLogList::OnFileEvent(CEventFile* event) {
     // Append the sorted quest types as rows 5+ (byte1 = 4) with their names.
     for (u8 k = 0; k < count; k++) {
         u8 idx = indices[k];
-        char* text = func_8013639C(lbl_eu_806640A8, &s[0x76], idx);
+        char* text = BdatGetPtrDirect(lbl_eu_806640A8, &s[0x76], idx);
         rowSort.mField0 = idx;
         rowSort.mField1 = 4;
         sprintf((char*)&rowSort.mData[0], &s[0x10], text);
@@ -648,8 +648,8 @@ int CQstLogList::OnFileEvent(CEventFile* event) {
     }
 
     // Refresh the sort-menu header text and rebuild the list display.
-    char* t = func_80136190(&s[0x166], &s[0x76], 2);
-    func_80136B4C(mpLayout, &s[0x179], t, 0);
+    char* t = BdatTouchStringCell(&s[0x166], &s[0x76], 2);
+    LayoutSetTextBoxFmtValue(mpLayout, &s[0x179], t, 0);
     func_80228C98(this);
 
     // Look up the quest-log message texture ('timg') and size the panes from
@@ -657,12 +657,12 @@ int CQstLogList::OnFileEvent(CEventFile* event) {
     const char* sel = isClassicController__Q22cf13CfGameManagerFv(-1) != 0
                           ? &s[0x185]
                           : &s[0x18e];
-    u16 msgId = func_8013606C(&s[0x197], sel, 0x61);
-    char* texName = func_80138F78((u32)msgId);
+    u16 msgId = BdatGetU16ByTableKey(&s[0x197], sel, 0x61);
+    char* texName = MakeTplNameSysFile((u32)msgId);
     CQstLogListMsgObj* obj = (CQstLogListMsgObj*)func_801355F4()->GetResource(
         0x74696D67, texName, 0);
     if (obj != 0) {
-        func_80137E7C(mpLayout, &s[0x1a5], obj);
+        PaneSetTexPaletteByName(mpLayout, &s[0x1a5], obj);
         CQstLogListCoords* coords = obj->chain->pCoords;
         nw4r::lyt::Pane* pane = mpLayout->GetRootPane()->FindPaneByName(
             &s[0x1a5], true);

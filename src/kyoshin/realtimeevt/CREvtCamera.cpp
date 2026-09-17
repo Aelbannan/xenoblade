@@ -12,7 +12,7 @@ extern "C" {
     void __dt__80185754(CREvtCamera* self);
     CREvtCamManager* getCameraDataBlock__Q22cf13CfGameManagerFv();
     void func_80086B5C__Q22cf13CfGameManagerFv(u32, u32, u32);
-    void  func_8006BBF4(void* mgr, u32 mask, int flag);
+    void  cfCam_setClear04(void* mgr, u32 mask, int flag);
     unsigned char getLODData__8CTaskLODFv(s16 taskID);
     void activateLOD__8CTaskLODFv(s16 taskID);
     void deactivateLOD__8CTaskLODFv(s16 taskID);
@@ -24,10 +24,10 @@ extern "C" {
     void func_8049EB60();
     void func_8049F774(CREvtCamObj* camObj, const f32 mtx[3][4]);
     CREvtCamObj* func_80496264(u32 mgr, int a);
-    void func_804827DC(CScnItemModel* obj, int flag);
-    void func_80484E5C(CScnItemModel* obj, float val);
-    float func_804850A4(void* obj);
-    nw4r::g3d::ChrAnmResult* func_8048BAD4(CScnItemModel* model, const char* name, f32 time);
+    void simSetFlag2000Chain(CScnItemModel* obj, int flag);
+    void simSetLeafDist7B0(CScnItemModel* obj, float val);
+    float simGetLeafAnimDist2(void* obj);
+    nw4r::g3d::ChrAnmResult* scnImN4AnimFn(CScnItemModel* model, const char* name, f32 time);
     int func_8016A35C();
     void* func_801644B4();
     void func_8016841C();
@@ -35,7 +35,7 @@ extern "C" {
     int func_8016B5A4(void* obj, const char* name, void* out);
     int func_8016B164(void* obj, const char* name, void* out1, void* out2);
     void func_804839D4(void* obj, void* param, int a, int b, int c, int d, int e);
-    float func_804850A4(void* obj);
+    float simGetLeafAnimDist2(void* obj);
     void* getGlobalSda();
     void func_800599E0(void* sda, u32 a, u32 b, u32 c);
     int atoi(const char* str);
@@ -182,10 +182,10 @@ extern "C" CREvtCamera* __ct__80180088(CREvtCamera* self, int deleteFlag) {
         lbl_eu_806642A8 = 0;
 
         // Each getCameraDataBlock() call is a separate retrieval (MWCC cannot CSE
-        // function calls) - retail makes 3 calls before func_8006BBF4.
+        // function calls) - retail makes 3 calls before cfCam_setClear04.
         if (getCameraDataBlock__Q22cf13CfGameManagerFv()) {
             if (getCameraDataBlock__Q22cf13CfGameManagerFv()->field_0x0C) {
-                func_8006BBF4(getCameraDataBlock__Q22cf13CfGameManagerFv(), 0x04000000, 0);
+                cfCam_setClear04(getCameraDataBlock__Q22cf13CfGameManagerFv(), 0x04000000, 0);
 
                 if (self->mFieldA4) {
                     // Mirror the camera position into the game manager.
@@ -294,8 +294,8 @@ extern "C" void func_80180414(CREvtCamera* self) {
     if (handle) {
         CScnItemModel* obj = func_80495E8C((u32)lbl_eu_80663E14, handle, -1, 1);
         self->mField1C = (u32)obj;
-        func_804827DC(obj, 1);
-        func_80484E5C((CScnItemModel*)self->mField1C, lbl_eu_806678B0);
+        simSetFlag2000Chain(obj, 1);
+        simSetLeafDist7B0((CScnItemModel*)self->mField1C, lbl_eu_806678B0);
         ((CScnItemModel*)self->mField1C)->flags7A8 |= 4;
         self->mField90 = (u32)((CScnItemModel*)self->mField1C)->vfunc3C(lbl_eu_80662448);
         self->mField94 = (u32)((CScnItemModel*)self->mField1C)->vfunc3C(lbl_eu_8066244C);
@@ -324,17 +324,17 @@ static f32 ConvU32ToTime(u32 v) {
 // ============================================================================
 extern "C" void func_801804CC(CREvtCamera* self) {
     if (getCameraDataBlock__Q22cf13CfGameManagerFv()) {
-        func_8006BBF4(getCameraDataBlock__Q22cf13CfGameManagerFv(), 0x04000000, 1);
+        cfCam_setClear04(getCameraDataBlock__Q22cf13CfGameManagerFv(), 0x04000000, 1);
     }
     if (!self->mField1C) return;
     if (cf::CfGameManager::isSceneLoading()) return;
 
     CScnItemModel* sceneObj = (CScnItemModel*)self->mField1C;
     nw4r::g3d::ChrAnmResult* result =
-        func_8048BAD4(sceneObj, lbl_eu_8066244C, ConvU32ToTime((u32)func_8016A35C()));
+        scnImN4AnimFn(sceneObj, lbl_eu_8066244C, ConvU32ToTime((u32)func_8016A35C()));
     result->GetRotTrans((nw4r::math::MTX34*)self->mMatrix58);
     self->mFieldA4 = 1;
-    result = func_8048BAD4(sceneObj, lbl_eu_80662448, ConvU32ToTime((u32)func_8016A35C()));
+    result = scnImN4AnimFn(sceneObj, lbl_eu_80662448, ConvU32ToTime((u32)func_8016A35C()));
     result->GetRotTrans((nw4r::math::MTX34*)self->mMatrix28);
 
     CREvtCamObj* camObj = func_80496264((u32)lbl_eu_80663E14, -1);
@@ -380,7 +380,7 @@ extern "C" void func_80180664(CREvtCamera* self, void* eventData, void* somePara
             void* taskObj = func_80495EAC((void*)lbl_eu_80663E14, eventData, 0);
             self->mField20 = (u32)taskObj;
             func_804839D4((void*)self->mField1C, taskObj, 0, 0, 0, 1, -1);
-            self->mField43C = (s32)(u32)func_804850A4((void*)self->mField1C);
+            self->mField43C = (s32)(u32)simGetLeafAnimDist2((void*)self->mField1C);
             func_8016AF4C((void*)self->mField20, lbl_eu_805036D8 + 4, &self->mField98);
             func_8016AF4C((void*)self->mField20, lbl_eu_805036D8 + 15, &self->mField9C);
             func_8016AF4C((void*)self->mField20, lbl_eu_805036D8 + 23, &self->mFieldA0);

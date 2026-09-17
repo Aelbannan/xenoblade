@@ -209,7 +209,7 @@ void func_80468434__Q23LOD17UnkClass_80468434Fv(UnkClass_80468434* self,
             for (u32 i = 0; i < o->field_0x4; i++) {
                 LodRec1* rec = &records[i];
                 f32* mtx = &lbl_eu_80658048[i][0][0];
-                func_804A6C60(mtx, rec);
+                ColiLodBuildRecordMatrix(mtx, rec);
                 if (rec->field_0x4 != 0) {
                     PSMTXConcat(lbl_eu_80658048[rec->field_0x4 - 1],
                                 (const f32 (*)[4])mtx, (f32 (*)[4])mtx);
@@ -286,7 +286,7 @@ void func_8046A3B4__Q23LOD17UnkClass_80468434Fv(u32 idx, const f32* srcMtx,
     for (i = 0; i < o->field_0x4; i++) {
         mtx = &lbl_eu_80658048[i][0][0];
         rec = &records[i];
-        func_804A6C60(mtx, rec);
+        ColiLodBuildRecordMatrix(mtx, rec);
         if (rec->field_0x4 != 0) {
             PSMTXConcat(lbl_eu_80658048[rec->field_0x4 - 1],
                         (const f32 (*)[4])mtx, (f32 (*)[4])mtx);

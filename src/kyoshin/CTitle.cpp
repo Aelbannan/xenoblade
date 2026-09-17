@@ -20,15 +20,15 @@
 // TU-local plain functions (defined below in address order) called by the
 // state-machine helpers in this file. noinline keeps real bl branches
 // (retail calls them, so the call must survive).
-extern "C" void __declspec(noinline) func_802B6724(CTitleLogo* self);
-extern "C" void __declspec(noinline) func_802B67BC(CTitleLogo* self);
-extern "C" void __declspec(noinline) func_802B6FFC(CTitleLogo* self);
+extern "C" void __declspec(noinline) CTitleLogo_bindIntro(CTitleLogo* self);
+extern "C" void __declspec(noinline) CTitleLogo_bindAnim1(CTitleLogo* self);
+extern "C" void __declspec(noinline) CTitleMenu_bindAnim1(CTitleMenu* self);
 extern "C" void __declspec(noinline) func_802B71C4(CTitleLogo* self);
-void __declspec(noinline) func_802B6854(CTitleLogo* self);
-void __declspec(noinline) func_802B6F64(CTitleMenu* self);
+extern "C" void __declspec(noinline) CTitleLogo_bindAnim2(CTitleLogo* self);
+extern "C" void __declspec(noinline) CTitleMenu_bindIntro(CTitleMenu* self);
 void __declspec(noinline) func_802B71C4(CTitleMenu* self);
-void __declspec(noinline) func_802B7094(CTitleMenu* self);
-extern "C" __declspec(noinline) void func_802B725C(CTitleMenu* self);
+extern "C" void __declspec(noinline) CTitleMenu_bindAnim2(CTitleMenu* self);
+extern "C" __declspec(noinline) void CTitleMenu_bindOutro(CTitleMenu* self);
 
 // ---------------------------------------------------------------------------
 // CTitleLogo: vtable + six zero fields; field_0x19 starts at 1.
@@ -50,10 +50,10 @@ CTitleLogo::~CTitleLogo() {}
 
 // Build the logo layout from the freshly-attached arc: init the layout and
 // its three animation transforms, then unbind all (they get rebound by
-// func_802B6724 when the logo becomes active).
+// CTitleLogo_bindIntro when the logo becomes active).
 #pragma optimize_for_size on // -O4,s forces the retail stmw r30 block frame
 // noinline: retail keeps bl from OnFileEvent, so the call must survive;
-extern "C" __declspec(noinline) void func_802B63A4(CTitleLogo* self, nw4r::lyt::ArcResourceAccessor* arcResAcc) {
+extern "C" __declspec(noinline) void CTitleLogo_build(CTitleLogo* self, nw4r::lyt::ArcResourceAccessor* arcResAcc) {
     self->mAccessor = arcResAcc;
     buildLayout(&self->mLayout, self->mAccessor, &lbl_eu_80513628[0]);
     bindLayoutAnimTransform(self->mLayout, &self->mAnimTrans0, self->mAccessor, &lbl_eu_80513628[0x13]);
@@ -68,8 +68,8 @@ extern "C" __declspec(noinline) void func_802B63A4(CTitleLogo* self, nw4r::lyt::
 // shape reproduces the retail branch-over-branch gate (MWCC_CASES
 // sjrbf_PutChunk pattern).
 // extern "C": retail keeps these callsites as unmangled R_PPC_REL24 relocs
-// from func_802B744C.
-extern "C" void __declspec(noinline) func_802B6434(CTitleLogo* self) {
+// from CTitle_update.
+extern "C" void __declspec(noinline) CTitleLogo_update(CTitleLogo* self) {
     if (self->mLayout != 0 && self->field_0x18 != 0) {
         goto body;
     }
@@ -84,7 +84,7 @@ body:
 extern "C" void drawLayout__FPQ34nw4r3lyt6LayoutPQ34nw4r3lyt8DrawInfoii(void* layout, void* info, int a, int b);
 
 extern "C" void func_801D20B0(void*, void*);
-extern "C" __declspec(noinline) void func_802B64AC(void* self, void* drawInfo) {  // noinline: retail keeps bl from func_802B74A8
+extern "C" __declspec(noinline) void CTitleLogo_draw(void* self, void* drawInfo) {  // noinline: retail keeps bl from CTitle_draw
     CTitleLogo* logo = (CTitleLogo*)self;
     if (logo->mLayout != 0 && logo->field_0x18 != 0) {
         goto call;
@@ -98,7 +98,7 @@ call:
 // Release the logo layout: delete the +0x08 member, then clear it.
 // delete emits the deleting-dtor vcall (flag 1) and MWCC inserts its own
 // null-check before it, giving the retail branch-over-branch gate.
-extern "C" __declspec(noinline) void func_802B64DC(CTitleLogo* self) {
+extern "C" __declspec(noinline) void CTitleLogo_release(CTitleLogo* self) {
     if (self->mLayout != NULL) {
         delete self->mLayout;
         self->mLayout = NULL;
@@ -106,20 +106,20 @@ extern "C" __declspec(noinline) void func_802B64DC(CTitleLogo* self) {
 }
 
 #pragma optimize_for_size on  // -O4,s forces the retail stmw r30 block frame
-extern "C" __declspec(noinline) void func_802B6534(CTitleLogo* self) {  // noinline: retail keeps bl from func_802B7858
+extern "C" __declspec(noinline) void CTitleLogo_activate(CTitleLogo* self) {  // noinline: retail keeps bl from CTitle_showTitle
     if (self->field_0x1A == 0) {
         self->field_0x1A = 1;
-        func_802B6724(self);
+        CTitleLogo_bindIntro(self);
         self->field_0x18 = 1;
         self->field_0x19 = 0;
     }
 }
 #pragma optimize_for_size off
 
-void func_802B6580(CTitleLogo* self) {
+extern "C" void __declspec(noinline) CTitleLogo_beginOutro(CTitleLogo* self) {
     if (self->field_0x1A == 2) {
         self->field_0x1A = 3;
-        func_802B6854(self);
+        CTitleLogo_bindAnim2(self);
         self->field_0x19 = 0;
     }
 }
@@ -127,38 +127,38 @@ void func_802B6580(CTitleLogo* self) {
 // Logo state 1: park the first animation on its final frame (frame count minus
 // the per-frame delta), advance the layout, then step into state 2 and mark
 // the phase flag so the caller can proceed.
-extern "C" __declspec(noinline) void func_802B65C8(CTitleLogo* self) {
+extern "C" __declspec(noinline) void CTitleLogo_stepState1(CTitleLogo* self) {
     if (self->field_0x1A == 1) {
         self->mAnimTrans0->SetFrame((float)self->mAnimTrans0->GetFrameSize() - lbl_eu_80668FE0);
         self->mLayout->Animate(0);
         self->field_0x1A = 2;
-        func_802B67BC((CTitleLogo*)self);
+        CTitleLogo_bindAnim1((CTitleLogo*)self);
         self->field_0x19 = 1;
     }
 }
 
-void func_802B6660() {}
+extern "C" void CTitleLogo_nop() {}
 
 // When the +0xC layout is visible, raise the +0x1A state to 2, run the
 // +0x6C hook, and set the +0x19 flag.
 extern "C" u32 advanceAnimTransform__FPQ34nw4r3lyt13AnimTransformf(void*, float);
-extern "C" void func_802B6664(void* self) {
+extern "C" void CTitleLogo_onAnim0Done(void* self) {
     if (advanceAnimTransform__FPQ34nw4r3lyt13AnimTransformf(*(void**)((u8*)self + 0xC), lbl_eu_80668FE0)) {
         *((u8*)self + 0x1A) = 2;
-        func_802B67BC((CTitleLogo*)self);
+        CTitleLogo_bindAnim1((CTitleLogo*)self);
         *((u8*)self + 0x19) = 1;
     }
 }
 
 
-extern "C" void func_802B66B8(void* self) { advanceAnimTransform__FPQ34nw4r3lyt13AnimTransformf(*(void**)((u8*)self + 0x10), lbl_eu_80668FE0); }
+extern "C" void CTitleLogo_tickAnim1(void* self) { advanceAnimTransform__FPQ34nw4r3lyt13AnimTransformf(*(void**)((u8*)self + 0x10), lbl_eu_80668FE0); }
 
 // Logo state step: when animation 2 finishes, reset the state machine,
 // rebind the intro animation, and clear/set the phase flags.
-extern "C" void func_802B66C4(CTitleLogo* self) {
+extern "C" void CTitleLogo_onAnim2Done(CTitleLogo* self) {
     if (advanceAnimTransform__FPQ34nw4r3lyt13AnimTransformf(self->mAnimTrans2, lbl_eu_80668FE0) != 0) {
         self->field_0x1A = 0;
-        func_802B6724(self);
+        CTitleLogo_bindIntro(self);
         self->field_0x18 = 0;
         self->field_0x19 = 1;
     }
@@ -166,7 +166,7 @@ extern "C" void func_802B66C4(CTitleLogo* self) {
 
 // Logo intro: bind the logo "in" animation, reset it to frame 0, and advance
 // the layout once so it is ready to play.
-extern "C" void __declspec(noinline) func_802B6724(CTitleLogo* self) {
+extern "C" void __declspec(noinline) CTitleLogo_bindIntro(CTitleLogo* self) {
     self->mLayout->UnbindAnimation(self->mAnimTrans2);
     self->mLayout->BindAnimation(self->mAnimTrans0);
     self->mLayout->SetAnimationEnable(self->mAnimTrans0, true);
@@ -175,8 +175,8 @@ extern "C" void __declspec(noinline) func_802B6724(CTitleLogo* self) {
 }
 
 // Logo phase 2: unbind the intro animation, bind animation 1, reset it to
-// frame 0, and advance the layout (mirrors func_802B6724 with the next slot).
-void __declspec(noinline) func_802B67BC(CTitleLogo* self) {
+// frame 0, and advance the layout (mirrors CTitleLogo_bindIntro with the next slot).
+void __declspec(noinline) CTitleLogo_bindAnim1(CTitleLogo* self) {
     self->mLayout->UnbindAnimation(self->mAnimTrans0);
     self->mLayout->BindAnimation(self->mAnimTrans1);
     self->mLayout->SetAnimationEnable(self->mAnimTrans1, true);
@@ -185,7 +185,7 @@ void __declspec(noinline) func_802B67BC(CTitleLogo* self) {
 }
 
 // Logo phase 3: same switch pattern, moving from animation 1 to animation 2.
-void __declspec(noinline) func_802B6854(CTitleLogo* self) {
+extern "C" void __declspec(noinline) CTitleLogo_bindAnim2(CTitleLogo* self) {
     self->mLayout->UnbindAnimation(self->mAnimTrans1);
     self->mLayout->BindAnimation(self->mAnimTrans2);
     self->mLayout->SetAnimationEnable(self->mAnimTrans2, true);
@@ -216,11 +216,11 @@ CTitleMenu::~CTitleMenu() {}
 
 // Build the title menu layout: attach the accessor, load the layout and all
 // six animation transforms, then unbind all (rebound when the menu becomes
-// active). On the bit-30 gate, tint the title text via func_80139A18 with two
+// active). On the bit-30 gate, tint the title text via PaneMatSetTevColorsByName with two
 // grey colors (opaque + transparent).
 // -O4,s forces the retail [stmw]/lmw r29-r31 block frame.
 #pragma optimize_for_size on
-extern "C" __declspec(noinline) void func_802B6970(CTitleMenu* self, nw4r::lyt::ArcResourceAccessor* arcResAcc) {
+extern "C" __declspec(noinline) void CTitleMenu_build(CTitleMenu* self, nw4r::lyt::ArcResourceAccessor* arcResAcc) {
     GXColorS10 colorB;
     GXColorS10 colorA;
     char* strs = lbl_eu_80513628;
@@ -235,7 +235,7 @@ extern "C" __declspec(noinline) void func_802B6970(CTitleMenu* self, nw4r::lyt::
     self->mLayout->UnbindAllAnimation();
     if ((lbl_eu_80663E28 & 0x40000000) != 0) {
         // MWCC evaluates args right-to-left: colorA is built first.
-        func_80139A18(self->mLayout, &strs[0x109],
+        PaneMatSetTevColorsByName(self->mLayout, &strs[0x109],
                       func_801C4B60(&colorB, 0x80, 0x80, 0x80, 0x00),
                       func_801C4B60(&colorA, 0x80, 0x80, 0x80, 0xff));
     }
@@ -244,8 +244,8 @@ extern "C" __declspec(noinline) void func_802B6970(CTitleMenu* self, nw4r::lyt::
 
 // CTitleMenu per-frame update: run the state-machine entry selected by
 // field_0x26, then advance the layout animation (same gate shape as
-// func_802B6434).
-extern "C" void __declspec(noinline) func_802B6A90(CTitleMenu* self) {
+// CTitleLogo_update).
+extern "C" void __declspec(noinline) CTitleMenu_update(CTitleMenu* self) {
     if (self->mLayout != 0 && self->field_0x24 != 0) {
         goto body;
     }
@@ -257,7 +257,7 @@ body:
     self->mLayout->Animate(0);
 }
 
-extern "C" __declspec(noinline) void func_802B6B08(void* self, void* drawInfo) {  // noinline: retail keeps bl from func_802B74A8
+extern "C" __declspec(noinline) void CTitleMenu_draw(void* self, void* drawInfo) {  // noinline: retail keeps bl from CTitle_draw
     CTitleMenu* menu = (CTitleMenu*)self;
     if (menu->mLayout != 0 && menu->field_0x24 != 0) {
         goto call;
@@ -268,7 +268,7 @@ call:
         menu->mLayout, drawInfo, 0, 1);
 }
 
-// Menu-side sibling of func_802B64DC. Retail calls vtable slot +0x08 with an
+// Menu-side sibling of CTitleLogo_release. Retail calls vtable slot +0x08 with an
 // int flag of 1 (not a dtor call, which would pass -1), so go through a view
 // class with a plain virtual taking the flags argument.
 class CTitleLayoutView {
@@ -280,7 +280,7 @@ public:
 // branch is dead - MWCC CSEs the compare but keeps both branches).
 // Retail calls this via bl from the teardown path, so keep it out of line;
 // C linkage binds to the retail unmangled name.
-extern "C" __declspec(noinline) void func_802B6B38(CTitleMenu* self) {
+extern "C" __declspec(noinline) void CTitleMenu_release(CTitleMenu* self) {
     if (self->mLayout == NULL) {
         return;
     }
@@ -291,38 +291,38 @@ extern "C" __declspec(noinline) void func_802B6B38(CTitleMenu* self) {
 }
 
 #pragma optimize_for_size on  // -O4,s forces the retail stmw r30 block frame
-extern "C" __declspec(noinline) void func_802B6B90(CTitleMenu* self) {
+extern "C" __declspec(noinline) void CTitleMenu_activate(CTitleMenu* self) {
     if (self->field_0x26 == 0) {
         self->field_0x26 = 1;
-        func_802B6F64(self);
+        CTitleMenu_bindIntro(self);
         self->field_0x24 = 1;
         self->field_0x25 = 0;
     }
 }
 #pragma optimize_for_size off
 
-extern "C" __declspec(noinline) void func_802B6BDC(CTitleMenu* self) {
+extern "C" __declspec(noinline) void CTitleMenu_beginOutro(CTitleMenu* self) {
     if (self->field_0x26 == 2) {
         self->field_0x26 = 3;
-        func_802B7094(self);
+        CTitleMenu_bindAnim2(self);
         self->field_0x25 = 0;
     }
 }
 
-extern "C" void func_802B712C(void*);
-extern "C" __declspec(noinline) void func_802B6C24(void* self) {  // noinline: retail keeps bl from func_802B7858
+extern "C" void __declspec(noinline) CTitleMenu_bindAnim3(CTitleMenu*);
+extern "C" __declspec(noinline) void CTitleMenu_advanceToState4(void* self) {  // noinline: retail keeps bl from CTitle_showTitle
     if (*(u8*)((u8*)self + 0x26) != 3)
         return;
     *((u8*)self + 0x26) = 4;
-    func_802B712C(self);
+    CTitleMenu_bindAnim3((CTitleMenu*)self);
     *((u8*)self + 0x24) = 1;
     *((u8*)self + 0x25) = 0;
 }
 
-void func_802B6C74(CTitleMenu* self) {
+extern "C" void __declspec(noinline) CTitleMenu_beginFinal(CTitleMenu* self) {
     if (self->field_0x26 == 5) {
         self->field_0x26 = 6;
-        func_802B725C(self);
+        CTitleMenu_bindOutro(self);
         self->field_0x25 = 0;
     }
 }
@@ -332,7 +332,7 @@ void func_802B6C74(CTitleMenu* self) {
 // func_80137924 combine their transforms into dest.
 // -O4,s forces the retail [stmw]/lmw r28-r31 block frame.
 #pragma optimize_for_size on
-extern "C" __declspec(noinline) void func_802B6CBC(nw4r::math::VEC3* dest,
+extern "C" __declspec(noinline) void CTitleMenu_calcCursorPos(nw4r::math::VEC3* dest,
                                                     CTitleMenu* menu, u8 val) {
     char buf[0x28];
     char* strs = lbl_eu_80513628;
@@ -347,7 +347,7 @@ extern "C" __declspec(noinline) void func_802B6CBC(nw4r::math::VEC3* dest,
 // Menu state 4: park animation 3 on its final frame (frame count minus the
 // per-frame delta), advance the layout, step into state 5, and mark the
 // phase flag so the caller can proceed.
-extern "C" __declspec(noinline) void func_802B6D5C(CTitleMenu* self) {
+extern "C" __declspec(noinline) void CTitleMenu_stepState4(CTitleMenu* self) {
     if (self->field_0x26 == 4) {
         self->mAnimTrans3->SetFrame((float)self->mAnimTrans3->GetFrameSize() - lbl_eu_80668FE0);
         self->mLayout->Animate(0);
@@ -357,22 +357,22 @@ extern "C" __declspec(noinline) void func_802B6D5C(CTitleMenu* self) {
     }
 }
 
-void func_802B6DF4() {}
+extern "C" void CTitleMenu_nop() {}
 
 // Visibility-gated state set (+0x26 = 2, hook, +0x25 = 1) for the logo's
 // second phase.
-extern "C" void func_802B6DF8(void* self) {
+extern "C" void CTitleMenu_onAnim0Done(void* self) {
     if (advanceAnimTransform__FPQ34nw4r3lyt13AnimTransformf(*(void**)((u8*)self + 0xC), lbl_eu_80668FE0)) {
         *((u8*)self + 0x26) = 2;
-        func_802B6FFC((CTitleLogo*)self);
+        CTitleMenu_bindAnim1((CTitleMenu*)self);
         *((u8*)self + 0x25) = 1;
     }
 }
 
-extern "C" void func_802B6E4C(void* self) { advanceAnimTransform__FPQ34nw4r3lyt13AnimTransformf(*(void**)((u8*)self + 0x10), lbl_eu_80668FE0); }
+extern "C" void CTitleMenu_tickAnim1(void* self) { advanceAnimTransform__FPQ34nw4r3lyt13AnimTransformf(*(void**)((u8*)self + 0x10), lbl_eu_80668FE0); }
 
 // When the +0x14 anim transform has finished, set +0x24 = 0 and +0x25 = 1.
-extern "C" void func_802B6E58(CTitleMenu* self) {
+extern "C" void CTitleMenu_onAnim2Done(CTitleMenu* self) {
     if (advanceAnimTransform(self->mAnimTrans2, lbl_eu_80668FE0) != 0) {
         self->field_0x24 = 0;
         self->field_0x25 = 1;
@@ -381,7 +381,7 @@ extern "C" void func_802B6E58(CTitleMenu* self) {
 
 // Visibility-gated state set (+0x26 = 5, hook, +0x25 = 1) via the +0x18
 // layout and the shared anim-visibility test.
-extern "C" void func_802B6EA4(void* self) {
+extern "C" void CTitleMenu_onAnim3Done(void* self) {
     if (advanceAnimTransform__FPQ34nw4r3lyt13AnimTransformf(*(void**)((u8*)self + 0x18), lbl_eu_80668FE0)) {
         *((u8*)self + 0x26) = 5;
         func_802B71C4((CTitleLogo*)self);
@@ -389,14 +389,14 @@ extern "C" void func_802B6EA4(void* self) {
     }
 }
 
-extern "C" void func_802B6EF8(void* self) { advanceAnimTransform__FPQ34nw4r3lyt13AnimTransformf(*(void**)((u8*)self + 0x1C), lbl_eu_80668FE0); }
+extern "C" void CTitleMenu_tickAnim4(void* self) { advanceAnimTransform__FPQ34nw4r3lyt13AnimTransformf(*(void**)((u8*)self + 0x1C), lbl_eu_80668FE0); }
 
 // Menu state step: when animation 5 finishes, reset the state machine,
 // run the menu intro hook, and clear/set the phase flags.
-extern "C" void func_802B6F04(CTitleMenu* self) {
+extern "C" void CTitleMenu_onAnim5Done(CTitleMenu* self) {
     if (advanceAnimTransform__FPQ34nw4r3lyt13AnimTransformf(self->mAnimTrans5, lbl_eu_80668FE0) != 0) {
         self->field_0x26 = 0;
-        func_802B712C(self);
+        CTitleMenu_bindAnim3(self);
         self->field_0x24 = 0;
         self->field_0x25 = 1;
     }
@@ -404,7 +404,7 @@ extern "C" void func_802B6F04(CTitleMenu* self) {
 
 // Menu intro: unbind the last animation, bind animation 0, reset it to
 // frame 0, and advance the layout once so it is ready to play.
-void __declspec(noinline) func_802B6F64(CTitleMenu* self) {
+extern "C" void __declspec(noinline) CTitleMenu_bindIntro(CTitleMenu* self) {
     self->mLayout->UnbindAnimation(self->mAnimTrans5);
     self->mLayout->BindAnimation(self->mAnimTrans0);
     self->mLayout->SetAnimationEnable(self->mAnimTrans0, true);
@@ -414,7 +414,7 @@ void __declspec(noinline) func_802B6F64(CTitleMenu* self) {
 
 // Menu phase 2: unbind the intro animation, bind animation 1, reset it to
 // frame 0, and advance the layout.
-void func_802B6FFC(CTitleMenu* self) {
+extern "C" void CTitleMenu_bindAnim1(CTitleMenu* self) {
     self->mLayout->UnbindAnimation(self->mAnimTrans0);
     self->mLayout->BindAnimation(self->mAnimTrans1);
     self->mLayout->SetAnimationEnable(self->mAnimTrans1, true);
@@ -424,7 +424,7 @@ void func_802B6FFC(CTitleMenu* self) {
 
 // Menu phase 3: unbind the intro animation, bind animation 2, reset it to
 // frame 0, and advance the layout.
-void __declspec(noinline) func_802B7094(CTitleMenu* self) {
+extern "C" void __declspec(noinline) CTitleMenu_bindAnim2(CTitleMenu* self) {
     self->mLayout->UnbindAnimation(self->mAnimTrans1);
     self->mLayout->BindAnimation(self->mAnimTrans2);
     self->mLayout->SetAnimationEnable(self->mAnimTrans2, true);
@@ -434,7 +434,7 @@ void __declspec(noinline) func_802B7094(CTitleMenu* self) {
 
 // Menu phase 4: unbind animation 2, bind animation 3, enable it, park it on
 // its start frame, and advance the layout once.
-void func_802B712C(CTitleMenu* self) {
+extern "C" void __declspec(noinline) CTitleMenu_bindAnim3(CTitleMenu* self) {
     self->mLayout->UnbindAnimation(self->mAnimTrans2);
     self->mLayout->BindAnimation(self->mAnimTrans3);
     self->mLayout->SetAnimationEnable(self->mAnimTrans3, true);
@@ -454,7 +454,7 @@ void __declspec(noinline) func_802B71C4(CTitleMenu* self) {
 
 // Menu outro: unbind animation 4, bind animation 5, enable it, park it on
 // its start frame, and advance the layout once.
-extern "C" __declspec(noinline) void func_802B725C(CTitleMenu* self) {
+extern "C" __declspec(noinline) void CTitleMenu_bindOutro(CTitleMenu* self) {
     self->mLayout->UnbindAnimation(self->mAnimTrans4);
     self->mLayout->BindAnimation(self->mAnimTrans5);
     self->mLayout->SetAnimationEnable(self->mAnimTrans5, true);
@@ -503,11 +503,11 @@ extern "C" void* __dt__6CTitleFv(void* self, int flags) {
 
 // Kick off the async load of the title layout arc, register the file-event
 // callback, and expose this instance to the callback via the sbss singleton.
-void func_802B73D4(CTitle* self) {
+extern "C" void CTitle_startLoad(CTitle* self) {
     self->mFileHandle = CDeviceFile::readFile(mtl::MemManager::getHandleMEM2(),
                                               &lbl_eu_80513628[0x133], self, 0, 0);
     CDeviceFile::setHandleFlag1(self->mFileHandle);
-    if (func_8023FEDC(func_802B7948) == 0) {
+    if (func_8023FEDC(CTitle_fileEventCallback) == 0) {
         self->field_0x25 = 0;
     }
     self->field_0x1C = 0;
@@ -516,18 +516,18 @@ void func_802B73D4(CTitle* self) {
 
 // Per-frame update: dispatch the title state-machine entry selected by
 // field_0x24, then update the three embedded sub-objects.
-extern "C" void func_802B744C(CTitle* self) {
+extern "C" void CTitle_update(CTitle* self) {
     (self->*lbl_eu_8053B274[self->field_0x24])();
-    func_802B6434(&self->mLogo);
-    func_802B6A90(&self->mMenu);
+    CTitleLogo_update(&self->mLogo);
+    CTitleMenu_update(&self->mMenu);
     func_801D202C(reinterpret_cast<CBaseCur*>(&self->mCur[0]));
 }
 
 // Draw the three sub-objects (+0x2C, +0x48, +0x70) with the draw info.
 #pragma optimize_for_size on  // -O4,s forces the retail stmw r30 block frame
-extern "C" void func_802B74A8(void* self, void* drawInfo) {
-    func_802B64AC((u8*)self + 0x2C, drawInfo);
-    func_802B6B08((u8*)self + 0x48, drawInfo);
+extern "C" void CTitle_draw(void* self, void* drawInfo) {
+    CTitleLogo_draw((u8*)self + 0x2C, drawInfo);
+    CTitleMenu_draw((u8*)self + 0x48, drawInfo);
     func_801D20B0((u8*)self + 0x70, drawInfo);
 }
 #pragma optimize_for_size off
@@ -537,10 +537,11 @@ extern "C" void func_802B74A8(void* self, void* drawInfo) {
 // free the scratch mem region, and clear the file-event singleton.
 // -O4,s forces the retail stmw r30/r31 block frame.
 #pragma optimize_for_size on
-extern "C" void func_802B74F4(CTitle* self) {
-    func_801390E0(&self->mFileHandle);
-    func_802B64DC(&self->mLogo);
-    func_802B6B38(&self->mMenu);
+extern "C" void CTitle_teardown(CTitle* self) {
+    void closeFileHandle(CFileHandle**);
+    closeFileHandle(&self->mFileHandle);
+    CTitleLogo_release(&self->mLogo);
+    CTitleMenu_release(&self->mMenu);
     reinterpret_cast<CCur18View*>(&self->mCur[0])->vf03();
     releaseArcResourceAccessor(self->mAccessor);
     self->mAccessor = 0;
@@ -549,7 +550,7 @@ extern "C" void func_802B74F4(CTitle* self) {
 }
 #pragma optimize_for_size off
 
-extern "C" int func_802B7564(CTitle* self) {
+extern "C" int CTitle_isLoadDone(CTitle* self) {
     int r = 0;
     if (self->field_0x1C != 0 && (s8)self->field_0x25 != -1) {
         r = 1;
@@ -557,7 +558,7 @@ extern "C" int func_802B7564(CTitle* self) {
     return r;
 }
 
-extern "C" int func_802B7590(CTitle* self) {
+extern "C" int CTitle_isAnimDone(CTitle* self) {
     int r = 0;
     if (self->mLogo.field_0x19 != 0 && self->mMenu.field_0x25 != 0) {
         r = 1;
@@ -565,43 +566,43 @@ extern "C" int func_802B7590(CTitle* self) {
     return r;
 }
 
-extern "C" void func_802B75B8(CTitle* self) {
+extern "C" void CTitle_showMenu(CTitle* self) {
     if (self->field_0x24 != 0) return;
     self->field_0x24 = 1;
-    func_802B6B90(&self->mMenu);
+    CTitleMenu_activate(&self->mMenu);
 }
 
 // State-5 gate: advance +0x24 to 6, then run the +0x2C/+0x48 sub-objects
 // and the +0x70 layout with a zero flag.
-extern "C" void func_802B6580(void*);
-extern "C" void func_802B6C74(void*);
+extern "C" void __declspec(noinline) CTitleLogo_beginOutro(CTitleLogo*);
+extern "C" void __declspec(noinline) CTitleMenu_beginFinal(CTitleMenu*);
 extern "C" void func_801D216C(void*, u8);
-extern "C" void func_802B75D8(void* self) {
+extern "C" void CTitle_beginLogoOutro(void* self) {
     if (*(u8*)((u8*)self + 0x24) == 5) {
         *((u8*)self + 0x24) = 6;
-        func_802B6580((u8*)self + 0x2C);
-        func_802B6C74((u8*)self + 0x48);
+        CTitleLogo_beginOutro((CTitleLogo*)((u8*)self + 0x2C));
+        CTitleMenu_beginFinal((CTitleMenu*)((u8*)self + 0x48));
         func_801D216C((u8*)self + 0x70, 0);
     }
 }
 
-extern "C" void func_802B7630(CTitle* self) {
+extern "C" void CTitle_beginMenuOutro(CTitle* self) {
     if (self->field_0x24 != 2) return;
     self->field_0x24 = 3;
-    func_802B6BDC(&self->mMenu);
+    CTitleMenu_beginOutro(&self->mMenu);
 }
 
 // Selection cursor up: while in the selection phase, step the menu index back
 // (wrapping from -1 to 2), reposition the cursor over the new entry, and cue
 // the menu SFX.
-void func_802B7650(CTitle* self) {
+extern "C" void CTitle_moveCursorUp(CTitle* self) {
     if (self->field_0x24 == 5) {
         self->field_0x25 = self->field_0x25 - 1;
         if (self->field_0x25 < 0) {
             self->field_0x25 = 2;
         }
         nw4r::math::VEC3 pos;
-        func_802B6CBC(&pos, &self->mMenu, self->field_0x25);
+        CTitleMenu_calcCursorPos(&pos, &self->mMenu, self->field_0x25);
         reinterpret_cast<CCur18View*>(&self->mCur[0])->vf04(&pos);
         playUISound(1);
     }
@@ -609,14 +610,14 @@ void func_802B7650(CTitle* self) {
 
 // Selection cursor down: step the menu index forward (wrapping 3 -> 0),
 // reposition the cursor over the new entry, and cue the menu SFX.
-void func_802B76D4(CTitle* self) {
+extern "C" void CTitle_moveCursorDown(CTitle* self) {
     if (self->field_0x24 == 5) {
         self->field_0x25 = self->field_0x25 + 1;
         if (self->field_0x25 >= 3) {
             self->field_0x25 = 0;
         }
         nw4r::math::VEC3 pos;
-        func_802B6CBC(&pos, &self->mMenu, self->field_0x25);
+        CTitleMenu_calcCursorPos(&pos, &self->mMenu, self->field_0x25);
         reinterpret_cast<CCur18View*>(&self->mCur[0])->vf04(&pos);
         playUISound(1);
     }
@@ -625,7 +626,7 @@ void func_802B76D4(CTitle* self) {
 // Selection confirm (phase 5): dispatch the selection virtual on the +0x20
 // controller, cue the confirm/cancel SFX by the current index, and return
 // whether the selection index is unset (0).
-int func_802B775C(CTitle* self) {
+extern "C" int CTitle_confirmSelection(CTitle* self) {
     if (self->field_0x24 != 5) {
         return 0;
     }
@@ -643,52 +644,52 @@ int func_802B775C(CTitle* self) {
 }
 
 // us-802ba270 - init the embedded +0x2C and +0x48 sub-objects.
-extern "C" void func_802B7800(void* self) {
-    func_802B65C8((CTitleLogo*)((u8*)self + 0x2C));
-    func_802B6D5C((CTitleMenu*)((u8*)self + 0x48));
+extern "C" void CTitle_stepLogoMenu(void* self) {
+    CTitleLogo_stepState1((CTitleLogo*)((u8*)self + 0x2C));
+    CTitleMenu_stepState4((CTitleMenu*)((u8*)self + 0x48));
 }
 
-void func_802B7838() {}
+extern "C" void CTitle_nopA() {}
 
-void func_802B783C(u8* thisPtr) {
+extern "C" void CTitle_setState2IfFlag(u8* thisPtr) {
     if (thisPtr[0x6d] == 0) {
         return;
     }
     thisPtr[0x24] = 2;
 }
 
-void func_802B7854() {}
+extern "C" void CTitle_nopB() {}
 
 // When the +0x6D flag is clear, set +0x24 = 4 and run the two state steps.
-extern "C" void func_802B7858(CTitleMenu* self) {
+extern "C" void CTitle_showTitle(CTitleMenu* self) {
     if (*(u8*)((u8*)self + 0x6D) != 0) {
         self->field_0x24 = 4;
-        func_802B6534((CTitleLogo*)((u8*)self + 0x2C));
-        func_802B6C24((u8*)self + 0x48);
+        CTitleLogo_activate((CTitleLogo*)((u8*)self + 0x2C));
+        CTitleMenu_advanceToState4((u8*)self + 0x48);
     }
 }
 
 // Advance to the selection phase: mark phase 5, show the cursor, build the
 // cursor target from the current menu entry, and move the cursor to it.
-void func_802B78A4(CTitle* self) {
+extern "C" void CTitle_enterSelection(CTitle* self) {
     if (self->mLogo.field_0x19 != 0 && self->mMenu.field_0x25 != 0) {
         self->field_0x24 = 5;
         func_801D216C(&self->mCur[0], 1);
         nw4r::math::VEC3 pos;
-        func_802B6CBC(&pos, &self->mMenu, self->field_0x25);
+        CTitleMenu_calcCursorPos(&pos, &self->mMenu, self->field_0x25);
         reinterpret_cast<CCur18View*>(&self->mCur[0])->vf04(&pos);
     }
 }
 
-void func_802B7920() {}
+extern "C" void CTitle_nopC() {}
 
-extern "C" void func_802B7924(CTitle* self) {
+extern "C" void CTitle_resetState(CTitle* self) {
     if (self->mLogo.field_0x19 == 0) return;
     if (self->mMenu.field_0x25 == 0) return;
     self->field_0x24 = 0;
 }
 
-extern "C" void func_802B7948(void* a, unsigned int b, unsigned char v) {
+extern "C" void CTitle_fileEventCallback(void* a, unsigned int b, unsigned char v) {
     extern void* lbl_eu_80664C38;
     void* p = lbl_eu_80664C38;
     if (p) *(unsigned char*)((u8*)p + 0x25) = v;
@@ -709,8 +710,8 @@ bool CTitle::OnFileEvent(CEventFile* pEventFile) {
         mtl::MemManager::setMemInitFlag(false);
         mAccessor = CLibLayout::createArcResourceAccessor();
         mAccessor->Attach(fileData, &lbl_eu_80513628[0x14c]);
-        func_802B63A4(&mLogo, mAccessor);
-        func_802B6970(&mMenu, mAccessor);
+        CTitleLogo_build(&mLogo, mAccessor);
+        CTitleMenu_build(&mMenu, mAccessor);
         u8 cur18Temp[0x18];
         __ct__CCur18(reinterpret_cast<CBaseCur*>(cur18Temp), mAccessor);
         // Copy the constructed cursor body (everything past the vptr) into

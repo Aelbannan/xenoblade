@@ -3,63 +3,63 @@
 
 #include "kyoshin/harness_catalog.hpp"
 #include "kyoshin/cf/object/CfObjectMove.hpp"
-#define func_800BE824 func_800BE824_hidden
+#define CfObjectMove_setRegionAttached CfObjectMove_setRegionAttached_hidden
 #include "kyoshin/cf/CfResObjImpl.hpp"
-#undef func_800BE824
+#undef CfObjectMove_setRegionAttached
 // Owning-class virtuals for the +0xC4 target (CActParamAnim family: this TU's
 // mTargetC4 is the +0xD0 CActParamAnimGame). Five of this header's canonical
 // decls clash with TU-visible forms (same clash family as
 // CModelDispEquip.hpp's hidden form): 5-arg func_8004B9D4 vs the TU-local
 // 4-arg form, s32-id func_80496264 vs the TU-local int-index form, int
-// func_804BE398 vs harness_catalog's void* form, void* func_8048315C vs the
+// func_804BE398 vs harness_catalog's void* form, void* simGetLeafActData vs the
 // harness form, and float lbl_eu_8066A200 vs the const-f32 form. None is used
 // by inline code in that header (decls only), so hide them for the include;
 // all TU call sites resolve after the #undefs and are unaffected.
 #define func_8004B9D4 func_8004B9D4_hidden
 #define func_80496264 func_80496264_hidden
 #define func_804BE398 func_804BE398_hidden
-#define func_8048315C func_8048315C_hidden
+#define simGetLeafActData simGetLeafActData_hidden
 #define lbl_eu_8066A200 lbl_eu_8066A200_hidden
 #include "kyoshin/action/CActParamAnim.hpp"
 #undef func_8004B9D4
 #undef func_80496264
 #undef func_804BE398
-#undef func_8048315C
+#undef simGetLeafActData
 #undef lbl_eu_8066A200
 #include "monolib/math.hpp"
 #include <nw4r/math.h>
 #include <math.h>
 
-// Novtable dispatch view of cf::CfCam through slot +0x60 (func_8006B6A8).
+// Novtable dispatch view of cf::CfCam through slot +0x60 (cfCam_loadUnk164).
 // Full CfCam.hpp cannot be included in this TU: its extern "C" imports clash
-// with CActParamAnim.hpp (func_8004B3F0 / func_804BE4E0 return types). Slot
+// with CActParamAnim.hpp (copyVec3Words / func_804BE4E0 return types). Slot
 // names and arity match the owning class; never constructed here.
 namespace cf {
 class __declspec(novtable) CfCam {
 public:
     virtual ~CfCam();                               // 0x08
     virtual void func_8006CC68(int arg);            // 0x0C
-    virtual void* func_8006B6B8();                  // 0x10
-    virtual void func_80074D60(void* src);          // 0x14
-    virtual void func_8006CA2C(void* arg, float f); // 0x18
-    virtual void* func_80074D4C();                  // 0x1C
+    virtual void* cfCam_getPlus1C();                  // 0x10
+    virtual void cfCam_copyToPlus28(void* src);          // 0x14
+    virtual void cfCam_updFollowPos(void* arg, float f); // 0x18
+    virtual void* cfCam_nestedPlus118();                  // 0x1C
     virtual void func_8006E884(float f);            // 0x20
-    virtual void func_80071B74();                   // 0x24
+    virtual void cfCam_nopVirt24();                   // 0x24
     virtual void func_8006BFDC();                   // 0x28
-    virtual void* func_80073C74(void* src);         // 0x2C
-    virtual void* func_8006B6A0();                  // 0x30
-    virtual void* func_8006B6B0();                  // 0x34
-    virtual void func_8006D7A8(void* src);          // 0x38
-    virtual void func_8006C1BC(float f);            // 0x3C
-    virtual void func_8006BEF0(int arg);            // 0x40
-    virtual void* func_80074D44();                  // 0x44
-    virtual void func_80073DDC(CfObject* src);      // 0x48
+    virtual void* cfCam_copyToPlus10(void* src);         // 0x2C
+    virtual void* cfCam_getPlus10();                  // 0x30
+    virtual void* cfCam_getPlus40();                  // 0x34
+    virtual void cfCam_initFollowS(void* src);          // 0x38
+    virtual void cfCam_setFollowD(float f);            // 0x3C
+    virtual void cfCam_storeUnk08(int arg);            // 0x40
+    virtual void* cfCam_returnZero();                  // 0x44
+    virtual void cfCam_copyCamState(CfObject* src);      // 0x48
     virtual void func_800606AC();                   // 0x4C
     virtual void func_80060738();                   // 0x50
     virtual void func_800607C4();                   // 0x54
-    virtual float func_80074D58();                  // 0x58
-    virtual void func_8006C16C(void* target);       // 0x5C
-    virtual void* func_8006B6A8();                  // 0x60
+    virtual float cfCam_get1E0Again();                  // 0x58
+    virtual void cfCam_setFollowTg(void* target);       // 0x5C
+    virtual void* cfCam_loadUnk164();                  // 0x60
 };
 } // namespace cf
 
@@ -98,7 +98,7 @@ CfObjectMove::CfObjectMove() {
     *(void**)this = (void*)lbl_eu_80529690;
     mTargetC4 = 0;
     __ct__Q22cf17CActParamAnimGameFv((cf::CActParamAnimGame*)((u8*)this + 0xD0));
-    func_804B0924(_60C_region);
+    ColiNodeInit(_60C_region);
     mTarget6C0 = 0;
     mField6C4 = 1;
     mField6C8 = -1;
@@ -168,7 +168,7 @@ extern "C" void CfObject_UnkVirtualFunc4__Q22cf12CfObjectMoveFv(cf::CfObjectMove
         slot = &self->mTargetC8;
         while (i < 2) {
             if (*slot != 0) {
-                func_8004CF00(*slot);
+                tickAnimFrame(*slot);
             }
             i++;
             slot++;
@@ -287,7 +287,7 @@ extern "C" void CfObjectModel_UnkVirtualFunc1__Q22cf12CfObjectMoveFv(cf::CfObjec
     }
     self->CfObjectModel::CfObjectModel_UnkVirtualFunc1();
     self->mFlags68 &= ~0x4;
-    func_804B0A7C(self->_60C_region);
+    ColiNodeReleaseBuffer(self->_60C_region);
     if (self->mTargetC4 != 0) {
         // Same owning-class slot as above (CActParamAnim +0xE0).
         reinterpret_cast< ::CActParamAnim*>(self->mTargetC4)->func_8004B114();
@@ -310,14 +310,14 @@ extern "C" void CfObjectModel_UnkVirtualFunc2__Q22cf12CfObjectMoveFv(cf::CfObjec
     void*& list9C = *reinterpret_cast<void**>(self->field_0x9C);
     if (list9C != 0) {
         if (self->mTargetC4 != 0) {
-            func_8004B6BC(self->mTargetC4, list9C);
+            releaseAnimObj(self->mTargetC4, list9C);
         }
         func_80495E60(list9C);
         list9C = 0;
     }
     if (self->mField6D4 != 0) {
         if (self->mTargetC4 != 0) {
-            func_8004B6BC(self->mTargetC4, self->mField6D4);
+            releaseAnimObj(self->mTargetC4, self->mField6D4);
         }
         func_80495E60(self->mField6D4);
         self->mField6D4 = 0;
@@ -326,7 +326,7 @@ extern "C" void CfObjectModel_UnkVirtualFunc2__Q22cf12CfObjectMoveFv(cf::CfObjec
     // call the forced-name Fv so the reloc name matches.
     CfObjectModel_UnkVirtualFunc2__Q22cf13CfObjectModelFv(self);
     self->CfObjectMove_dropMoveRequest();
-    reinterpret_cast<cf::CfResObjImpl*>(self->mSubObjB0)->func_800BC2DC();
+    reinterpret_cast<cf::CfResObjImpl*>(self->mSubObjB0)->CfResObj_noop24();
 }
 
 
@@ -337,7 +337,7 @@ void cf::CfObjectMove::CfObjectMove_detachModelList() {
         for (int i = 0; i < 2; i++) {
             void* t = (&mTargetC8)[i];
             if (t != 0) {
-                func_8004B6BC(t, mField6D8);
+                releaseAnimObj(t, mField6D8);
             }
         }
         func_80495E60(mField6D8);
@@ -349,18 +349,18 @@ void cf::CfObjectMove::CfObjectMove_detachModelList() {
 void cf::CfObjectMove::CfObjectMove_dropMoveRequest() {
     // Forward to the +0xB0 sub-object's vtable slot +0x44, then clear the
     // two resource-request fields (retail stores 0 to +0x6DC / +0x6E0).
-    reinterpret_cast<cf::CfResObjImpl*>(*(void**)((u8*)this + 0xb0))->func_800BC3AC();
+    reinterpret_cast<cf::CfResObjImpl*>(*(void**)((u8*)this + 0xb0))->CfResObj_noop44();
     mField6DC = 0;
     mField6E0 = 0;
 }
 
 
 
-// Retail func_800BC4A0: clear bits 0xC00 of mFlags68 (rlwinm r0,r0,0,22,19)
+// Retail CfObjectMove_resetMoveSpeed: clear bits 0xC00 of mFlags68 (rlwinm r0,r0,0,22,19)
 // and reset the movement speed to the shared constant. (The old
 // setMoveSpeed/resetMoveSpeed method bodies duplicated the already-FULL
-// func_800BC3D8 twin and this retail body; retail keeps one unmangled copy.)
-extern "C" void func_800BC4A0(cf::CfObjectMove* self) {
+// CfObjectMove_setMoveSpeed twin and this retail body; retail keeps one unmangled copy.)
+extern "C" void CfObjectMove_resetMoveSpeed(cf::CfObjectMove* self) {
     u32 flags = self->mFlags68;
     f32 value = lbl_eu_80666A88;
     self->mMoveSpeed = value;
@@ -464,7 +464,7 @@ void CfObject_setMoveTargetPtr__Q22cf12CfObjectMoveFv(cf::CfObjectMove* self, vo
         }
     }
     if (self->mTargetC4 != 0) {
-        func_8004B730(self->mTargetC4, arg);
+        setAnimOwner(self->mTargetC4, arg);
         self->mTarget6C0 = arg;
         float x = *(float*)self->CfObject_getMoveRateScale();
         cf::CfObjectMoveTargetC4* c4 = (cf::CfObjectMoveTargetC4*)self->mTargetC4;
@@ -496,21 +496,21 @@ extern "C" void CfObject_createMoveTarget__Q22cf12CfObjectMoveFv(cf::CfObjectMov
     // obj declared (and zeroed) before the heap query so MWCC colours it
     // into r31 and the heap handle into r30, as in retail.
     void* obj = 0;
-    u32 heap = func_80061FE8();
+    u32 heap = CfRes_getHeapHandle();
     if (arg == 8) {
         // Single target variable: retail assigns the allocation result
         // straight into the tracked slot (no intermediate temporary).
-        obj = allocate__Q23mtl10MemManagerFUlUl(0x224, func_80061FFC());
+        obj = allocate__Q23mtl10MemManagerFUlUl(0x224, CfRes_getAllocHandle());
         if (obj != 0) {
             __ct__cf_CtrlEnemy(obj, self);
         }
     } else if (arg == 9) {
-        obj = allocate__Q23mtl10MemManagerFUlUl(0x180, func_80061FFC());
+        obj = allocate__Q23mtl10MemManagerFUlUl(0x180, CfRes_getAllocHandle());
         if (obj != 0) {
             __ct__CtrlNpc(obj, self);
         }
     } else if (arg == 10) {
-        obj = allocate__Q23mtl10MemManagerFUlUl(0x1DC, func_80061FE8());
+        obj = allocate__Q23mtl10MemManagerFUlUl(0x1DC, CfRes_getHeapHandle());
         if (obj != 0) {
             __ct__cf_CtrlPc(obj, self, 0);
         }
@@ -596,12 +596,12 @@ void CfObject_setMoveReadyFlag__Q22cf12CfObjectMoveFv(cf::CfObjectMove* self, in
     }
 }
 
-// Retail func_800BDB4C: when unk64 bit 3 (0x8) is set, reattach the position
+// Retail CfObjectMove_syncRegionToPos: when unk64 bit 3 (0x8) is set, reattach the position
 // region (+0x60C) to the move position (+0x3C). (Old updatePos method body
 // moved verbatim onto the retail unmangled name.)
-extern "C" void func_800BDB4C(cf::CfObjectMove* self) {
+extern "C" void CfObjectMove_syncRegionToPos(cf::CfObjectMove* self) {
     if ((self->unk64 & 8) != 0) {
-        func_804B0B54(self->_60C_region, &self->mPos3C);
+        ColiSetAxisBlockInverse(self->_60C_region, &self->mPos3C);
     }
 }
 
@@ -613,7 +613,7 @@ void CfObject_setMoveTargetVec__Q22cf12CfObjectMoveFv(cf::CfObjectMove* self, co
     if (target != 0) {
         // One-arg call: retail leaves r4 (the vec) untouched for the base
         // call below, so the source passes only the C4 target.
-        func_8004B354(target);
+        setAnimSubPos(target);
     }
     CfObject_setMoveTargetVec__Q22cf13CfObjectModelFv(self, vec);
 }
@@ -625,9 +625,9 @@ void CfObject_setMoveTargetVec__Q22cf12CfObjectMoveFv(cf::CfObjectMove* self, co
 void CfObject_UnkVirtualFunc22__Q22cf12CfObjectMoveFv(cf::CfObjectMove* self, const ml::CVec3* vec) {
     cf::CfObjectMoveTargetC4* target = (cf::CfObjectMoveTargetC4*)self->mTargetC4;
     if (target != 0) {
-        func_8004B40C(target);
+        setAnimLastPos(target);
         if (self->mSubObj98 != 0) {
-            func_804876DC(self->mSubObj98);
+            scnImN4DynStart(self->mSubObj98);
         }
     }
     CfObjectModel_syncMoveTarget(self, vec);
@@ -662,9 +662,9 @@ extern "C" void CfObject_UnkVirtualFunc25__Q22cf12CfObjectMoveFv(cf::CfObjectMov
     }
     if (self->mTargetC4 != 0) {
         // Two-arg call form: retail sets r4 = this+0x3C explicitly.
-        ((bool (*)(void*, void*))func_8004B354)(self->mTargetC4, &self->mPos3C);
+        ((bool (*)(void*, void*))setAnimSubPos)(self->mTargetC4, &self->mPos3C);
         if (self->mSubObj98 != 0) {
-            func_804876DC(self->mSubObj98);
+            scnImN4DynStart(self->mSubObj98);
         }
     }
 }
@@ -699,9 +699,9 @@ extern "C" void CfObject_UnkVirtualFunc26__Q22cf12CfObjectMoveFv(cf::CfObjectMov
         // Two-arg call form: retail sets r4 = this+0x3C (position) explicitly
         // before the call, so pass the position through the function-pointer
         // cast (the header declares the one-arg form used by Func22).
-        ((bool (*)(void*, void*))func_8004B40C)(self->mTargetC4, &self->mPos3C);
+        ((bool (*)(void*, void*))setAnimLastPos)(self->mTargetC4, &self->mPos3C);
         if (self->mSubObj98 != 0) {
-            func_804876DC(self->mSubObj98);
+            scnImN4DynStart(self->mSubObj98);
         }
     }
 }
@@ -734,20 +734,20 @@ extern "C" void CfObject_UnkVirtualFunc27__Q22cf12CfObjectMoveFPv(cf::CfObjectMo
     }
     CfObjectMoveTargetC4* target = (cf::CfObjectMoveTargetC4*)self->mTargetC4;
     if (target != 0 && (self->mFlags68 & 0x4) != 0) {
-        func_8004B4A4(target, vec->y);
+        setTurnAngle(target, vec->y);
     }
     self->CfObject_setModelRotVec(src);
 }
 
 // Retail symbol is Fv but the body consumes f1 (base call, C4-gated
-// func_8004B4A4, 6C0 +0xC store) - forced-name form carrying the hidden
+// setTurnAngle, 6C0 +0xC store) - forced-name form carrying the hidden
 // float arg (same scheme as CfObject_UnkVirtualFunc30). (Old method body
 // moved verbatim onto the retail Fv name.)
 void CfObject_setMoveHeadAngle__Q22cf12CfObjectMoveFv(cf::CfObjectMove* self, float value) {
     CfObject_setMoveHeadAngle__Q22cf13CfObjectModelFv(self);
     void* target = self->mTargetC4;
     if (target != 0 && ((self->mFlags68 & 0x4) != 0)) {
-        func_8004B4A4(target, value);
+        setTurnAngle(target, value);
     }
     target = self->mTarget6C0;
     if (target != 0) {
@@ -759,13 +759,13 @@ void CfObject_setMoveHeadAngle__Q22cf12CfObjectMoveFv(cf::CfObjectMove* self, fl
 // name (hand-built tables / CREvtModel). Retail symbol is Fv but the body
 // consumes f1 - forced-name form carrying the hidden float arg (same scheme
 // as CfObject_setMoveHeadAngle). Base call, then the C4 target's busy flag
-// (bit 2) gates a func_8004B52C call plus a +0x400 flag set (mTargetC4 is
+// (bit 2) gates a setTurnScale call plus a +0x400 flag set (mTargetC4 is
 // re-read after the call), and the 6C0 target's +0xC word receives the value.
 void CfObject_UnkVirtualFunc30__Q22cf12CfObjectMoveFv(cf::CfObjectMove* self, float value) {
     CfObject_setMoveHeadAngle__Q22cf13CfObjectModelFv(self);
     void* target = self->mTargetC4;
     if (target != 0 && ((self->mFlags68 & 0x4) != 0)) {
-        func_8004B52C(target, value);
+        setTurnScale(target, value);
         CfObjectMoveC4Flags* view = (CfObjectMoveC4Flags*)self->mTargetC4;
         view->flags |= 0x400;
     }
@@ -793,7 +793,7 @@ extern "C" int CfObject_queryTargetState__Q22cf12CfObjectMoveFv(cf::CfObjectMove
     return 1;
 }
 
-extern "C" void* func_800BE0B0(CfObjectMove* self) { return &self->mSubObj54; }
+extern "C" void* CfObjectMove_getSubObj54(CfObjectMove* self) { return &self->mSubObj54; }
 
 // Retail symbol is Fv but the body consumes f1 (store to self+0x6E4 and to
 // the C4 target) - forced-name form with the hidden float arg (same scheme as
@@ -887,7 +887,7 @@ extern "C" float CfObject_readRefreshValue__Q22cf12CfObjectMoveFv(cf::CfObjectMo
     return ((float (*)())func_80069EA0)();
 }
 
-// Retail symbol is Fv but ocUnit func_8003D060 leaves r4-r7/f1 live into
+// Retail symbol is Fv but ocUnit setNpcPath leaves r4-r7/f1 live into
 // the bctr (ignored here; tail call takes r3 only) - forced-name form with
 // hidden args (recordMoveValue precedent). Converted from a method so the
 // widened class decl keeps compiling; same Fv symbol, same body.
@@ -1124,9 +1124,9 @@ extern "C" int func_800BE8F4(cf::CfObjectMove* self) {
     return sub->field_30;
 }
 
-// Retail func_800BE924: release the +0x38 sub-object's voice handle.
+// Retail CfObjectMove_releaseVoiceHandle: release the +0x38 sub-object's voice handle.
 // (Old freeSub method body moved verbatim onto the retail unmangled name.)
-extern "C" void func_800BE924(cf::CfObjectMove* self)
+extern "C" void CfObjectMove_releaseVoiceHandle(cf::CfObjectMove* self)
 {
     extern void func_802A1304(void*);
     char* sub = (char*)self->mSubObj38;
@@ -1136,31 +1136,31 @@ extern "C" void func_800BE924(cf::CfObjectMove* self)
 }
 
 
-// Retail func_800BE948: store to the +0xB0 sub-object's +0xC halfword.
+// Retail CfObjectMove_setSubB0FieldC: store to the +0xB0 sub-object's +0xC halfword.
 // (Old setSubFieldC method body moved verbatim onto the retail name.)
-extern "C" void func_800BE948(cf::CfObjectMove* self, unsigned short val) {
+extern "C" void CfObjectMove_setSubB0FieldC(cf::CfObjectMove* self, unsigned short val) {
     void* ptr = self->mSubObjB0;
     *(unsigned short*)((char*)ptr + 0xc) = val;
 }
 
-// Retail func_800BE954: sign-extended load of the +0xB0 sub-object's +0xA
+// Retail CfObjectMove_getSubB0FieldA: sign-extended load of the +0xB0 sub-object's +0xA
 // halfword. (Old getSubFieldA method body moved onto the retail name.)
-extern "C" int func_800BE954(cf::CfObjectMove* self) { return *(s16*)((char*)self->mSubObjB0 + 10); }
+extern "C" int CfObjectMove_getSubB0FieldA(cf::CfObjectMove* self) { return *(s16*)((char*)self->mSubObjB0 + 10); }
 
-// Retail func_800BE960: store to the +0xB0 sub-object's +0xA halfword.
+// Retail CfObjectMove_setSubB0FieldA: store to the +0xB0 sub-object's +0xA halfword.
 // (Old setSubFieldA method body moved onto the retail name.)
-extern "C" void func_800BE960(cf::CfObjectMove* self, unsigned short val) {
+extern "C" void CfObjectMove_setSubB0FieldA(cf::CfObjectMove* self, unsigned short val) {
     void* ptr = self->mSubObjB0;
     *(unsigned short*)((char*)ptr + 0xa) = val;
 }
 
-// Retail func_800BE96C: sign-extended load of the +0xB0 sub-object's +0xE
+// Retail CfObjectMove_getSubB0FieldE: sign-extended load of the +0xB0 sub-object's +0xE
 // halfword. (Old getSubFieldE method body moved onto the retail name.)
-extern "C" int func_800BE96C(cf::CfObjectMove* self) { return *(s16*)((char*)self->mSubObjB0 + 14); }
+extern "C" int CfObjectMove_getSubB0FieldE(cf::CfObjectMove* self) { return *(s16*)((char*)self->mSubObjB0 + 14); }
 
-// Retail func_800BE978: store to the +0xB0 sub-object's +0xE halfword.
+// Retail CfObjectMove_setSubB0FieldE: store to the +0xB0 sub-object's +0xE halfword.
 // (Old setSubFieldE method body moved onto the retail name.)
-extern "C" void func_800BE978(cf::CfObjectMove* self, unsigned short val) {
+extern "C" void CfObjectMove_setSubB0FieldE(cf::CfObjectMove* self, unsigned short val) {
     void* ptr = self->mSubObjB0;
     *(unsigned short*)((char*)ptr + 0xe) = val;
 }
@@ -1170,7 +1170,7 @@ extern "C" void CfObject_isMoveActiveNow__Q22cf12CfObjectMoveFv(cf::CfObjectMove
 }
 
 extern "C" void CfObject_forwardSubObject__Q22cf12CfObjectMoveFv(cf::CfObjectMove* self) {
-    reinterpret_cast<cf::CfResObjImpl*>(*(void**)((u8*)self + 0xb0))->func_800BE9AC();
+    reinterpret_cast<cf::CfResObjImpl*>(*(void**)((u8*)self + 0xb0))->CfObjectMove_relaySubB0Slot14();
 }
 
 void cf::CfObjectMove::virtCall10(){
@@ -1199,7 +1199,7 @@ extern "C" void CfObject_UnkVirtualFunc12__Q22cf12CfObjectMoveFv(cf::CfObjectMov
     // reloads mSubObjB0 for each call, so keep the two calls as separate
     // member accesses rather than a cached pointer.
     reinterpret_cast<cf::CfResObjImpl*>(self->mSubObjB0)->func_8016CCE0();
-    reinterpret_cast<cf::CfResObjImpl*>(self->mSubObjB0)->func_800BEA34();
+    reinterpret_cast<cf::CfResObjImpl*>(self->mSubObjB0)->CfResObj_noop10();
 }
 
 
@@ -1266,13 +1266,13 @@ void CfObjectModel_UnkVirtualFunc19__Q22cf12CfObjectMoveFv(cf::CfObjectMove* sel
     for (int i = 0; i < 2; i++) {
         cf::CfObjectModelSub98* s = (cf::CfObjectModelSub98*)self->mField6F8[i];
         if (s != 0 && (((s->field_7A4 >> 1) & 1) != flag)) {
-            func_804838DC(s, flag);
+            simSetFlag2OnTree(s, flag);
         }
     }
 }
 
 extern "C" void CfObjectModel_UnkVirtualFunc6__Q22cf12CfObjectMoveFv(cf::CfObjectMove* self) {
-    reinterpret_cast<cf::CfResObjImpl*>(*(void**)((u8*)self + 0xb0))->func_800BEC44();
+    reinterpret_cast<cf::CfResObjImpl*>(*(void**)((u8*)self + 0xb0))->CfResObj_unk48();
 }
 
 
@@ -1299,7 +1299,7 @@ void CfObject_UnkVirtualFunc37__Q22cf12CfObjectMoveFv(cf::CfObjectMove* self, u3
 void CfObject_UnkVirtualFunc38__Q22cf12CfObjectMoveFv(cf::CfObjectMove* self, u32 arg) {
     self->CfObjectModel_releaseModelList();
     reinterpret_cast<cf::CfObjectMove90View*>(self)->field_94 = 0;
-    reinterpret_cast<cf::CfResObjImpl*>(self->mSubObjB0)->func_800BED5C(arg);
+    reinterpret_cast<cf::CfResObjImpl*>(self->mSubObjB0)->CfResObj_unk4C(arg);
 }
 
 
@@ -1328,7 +1328,7 @@ int CfObject_UnkVirtualFunc39__Q22cf12CfObjectMoveFv(cf::CfObjectMove* self, u32
         self->field_70C[0] = (u16)((int (*)(u32))func_80142428)(arg2);
         self->CfObject_setAnimSlotEntry(6, (u32)r);
         if (self->mSubObj98 != 0) {
-            reinterpret_cast<cf::CfResObjImpl*>(self->mSubObjB0)->func_800BED64((u32)r, 0);
+            reinterpret_cast<cf::CfResObjImpl*>(self->mSubObjB0)->CfResObj_unk3C((u32)r, 0);
         }
     }
     return 1;
@@ -1338,12 +1338,12 @@ int CfObject_UnkVirtualFunc39__Q22cf12CfObjectMoveFv(cf::CfObjectMove* self, u32
 // keeps Unk linker name. Retail symbol is Fv but the body consumes r4/r5
 // (a bdat id and a slot index) - forced-name form carrying the hidden args
 // (same scheme as CfObject_armAnimSlot0/42). Unlike the 39/42 pair the slot
-// index is first converted to a name (CfBdat::func_801424A8) and the arm
+// index is first converted to a name (CfBdat::getBdatStringEntry) and the arm
 // path feeds that name back through func_80142428. Slot 0 / flags 6,0.
 int CfObject_UnkVirtualFunc40__Q22cf12CfObjectMoveFv(cf::CfObjectMove* self, u32 arg1, u32 arg2) {
     int r;
     u32 name;
-    name = (u32)cf::CfBdat::func_801424A8((u16)arg2);
+    name = (u32)cf::CfBdat::getBdatStringEntry((u16)arg2);
     r = (int)cf::CfBdat::func_801422A8(arg1);
     self->field_710[0] = (u16)arg1;
     self->field_70C[0] = (u16)func_8014235C(arg1, &lbl_eu_804FC550[0x7], 0);
@@ -1353,7 +1353,7 @@ int CfObject_UnkVirtualFunc40__Q22cf12CfObjectMoveFv(cf::CfObjectMove* self, u32
         self->field_70C[0] = (u16)((int (*)(u32))func_80142428)(name);
         self->CfObject_setAnimSlotEntry(6, (u32)r);
         if (self->mSubObj98 != 0) {
-            reinterpret_cast<cf::CfResObjImpl*>(self->mSubObjB0)->func_800BED64((u32)r, 0);
+            reinterpret_cast<cf::CfResObjImpl*>(self->mSubObjB0)->CfResObj_unk3C((u32)r, 0);
         }
     }
     return 1;
@@ -1369,7 +1369,7 @@ int CfObject_UnkVirtualFunc42__Q22cf12CfObjectMoveFv(cf::CfObjectMove* self, u32
         self->field_70C[1] = (u16)((int (*)(u32))func_80142428)(arg2);
         self->CfObject_setAnimSlotEntry(7, (u32)r);
         if (self->mSubObj98 != 0) {
-            reinterpret_cast<cf::CfResObjImpl*>(self->mSubObjB0)->func_800BED64((u32)r, 1);
+            reinterpret_cast<cf::CfResObjImpl*>(self->mSubObjB0)->CfResObj_unk3C((u32)r, 1);
         }
     }
     return 1;
@@ -1384,7 +1384,7 @@ int CfObject_UnkVirtualFunc42__Q22cf12CfObjectMoveFv(cf::CfObjectMove* self, u32
 int CfObject_UnkVirtualFunc43__Q22cf12CfObjectMoveFv(cf::CfObjectMove* self, u32 arg1, u32 arg2) {
     int r;
     u32 name;
-    name = (u32)cf::CfBdat::func_801424A8((u16)arg2);
+    name = (u32)cf::CfBdat::getBdatStringEntry((u16)arg2);
     r = (int)cf::CfBdat::func_801422A8(arg1);
     self->field_710[1] = (u16)arg1;
     self->field_70C[1] = (u16)func_8014235C(arg1, &lbl_eu_804FC550[0x7], 1);
@@ -1394,7 +1394,7 @@ int CfObject_UnkVirtualFunc43__Q22cf12CfObjectMoveFv(cf::CfObjectMove* self, u32
         self->field_70C[1] = (u16)((int (*)(u32))func_80142428)(name);
         self->CfObject_setAnimSlotEntry(7, (u32)r);
         if (self->mSubObj98 != 0) {
-            reinterpret_cast<cf::CfResObjImpl*>(self->mSubObjB0)->func_800BED64((u32)r, 1);
+            reinterpret_cast<cf::CfResObjImpl*>(self->mSubObjB0)->CfResObj_unk3C((u32)r, 1);
         }
     }
     return 1;
@@ -1430,45 +1430,45 @@ void CfObject_UnkVirtualFunc45__Q22cf12CfObjectMoveFv(cf::CfObjectMove* self, u3
 
 
 
-void func_eu_800BFC78() {}
+void CfResObj_noop2C() {}
 
-extern "C" void func_800BEE1C(void* self) {
-    reinterpret_cast<cf::CfResObjImpl*>(*(void**)((u8*)self + 0xb0))->func_800BEE30();
+extern "C" void CfObjectMove_relaySubB0Slot40(void* self) {
+    reinterpret_cast<cf::CfResObjImpl*>(*(void**)((u8*)self + 0xb0))->CfResObj_noop40();
 }
 // Retail symbol is a bcctr thunk that leaves the caller's r4/r5/r6/f1/f2 live
 // into CfResObjImpl::func_8016C888 (slot +0x54).
-extern "C" void func_800BF29C(void* self, int a, int b, int c, float f1, float f2) {
+extern "C" void CfObjectMove_relaySubB0Slot54(void* self, int a, int b, int c, float f1, float f2) {
     reinterpret_cast<cf::CfResObjImpl*>(*(void**)((u8*)self + 0xb0))->func_8016C888(a, b, c, f1, f2);
 }
-extern "C" void func_800BF2B0(void* self) {
-    reinterpret_cast<cf::CfResObjImpl*>(*(void**)((u8*)self + 0xb0))->func_800BF2C4();
+extern "C" void CfObjectMove_relaySubB0Slot58(void* self) {
+    reinterpret_cast<cf::CfResObjImpl*>(*(void**)((u8*)self + 0xb0))->CfResObj_noop58();
 }
-extern "C" void func_800BF2CC(void* self) {
+extern "C" void CfObjectMove_relaySubB0Slot60(void* self) {
     reinterpret_cast<cf::CfResObjImpl*>(*(void**)((u8*)self + 0xb0))->func_8016C950();
 }
-extern "C" void func_800BF2E0(void* self) {
-    reinterpret_cast<cf::CfResObjImpl*>(*(void**)((u8*)self + 0xb0))->func_800BF2F4();
+extern "C" void CfObjectMove_relaySubB0Slot28(void* self) {
+    reinterpret_cast<cf::CfResObjImpl*>(*(void**)((u8*)self + 0xb0))->CfResObj_noop28();
 }
-extern "C" void func_800BF2F8(void* self) {
-    reinterpret_cast<cf::CfResObjImpl*>(*(void**)((u8*)self + 0xb0))->func_eu_800BFC78();
+extern "C" void CfObjectMove_relaySubB0Slot2C(void* self) {
+    reinterpret_cast<cf::CfResObjImpl*>(*(void**)((u8*)self + 0xb0))->CfResObj_noop2C();
 }
-extern "C" void func_eu_800BFC7C(void* self) {
-    reinterpret_cast<cf::CfResObjImpl*>(*(void**)((u8*)self + 0xb0))->func_800BF30C();
+extern "C" void CfObjectMove_relaySubB0Slot68(void* self) {
+    reinterpret_cast<cf::CfResObjImpl*>(*(void**)((u8*)self + 0xb0))->CfResObj_true68();
 }
-extern "C" void func_800BC4B8(void* self, float v) {
+extern "C" void CfObjectMove_setSubB0ScaledRate(void* self, float v) {
     extern float lbl_eu_80666A90;
     void* o = *(void**)((u8*)self + 0xb0);
     *(float*)((u8*)o + 4) = lbl_eu_80666A90 * v;
 }
 
 
-// (isActive's `return 1` body is the already-FULL func_800BF30C twin; no
+// (isActive's `return 1` body is the already-FULL CfResObj_true68 twin; no
 // separate method body - retail keeps one copy.)
 
-// Retail func_800BF314: insert the incoming bit into b0 of mFlags6C9
+// Retail CfObjectMove_setFlag6C9Bit0: insert the incoming bit into b0 of mFlags6C9
 // (rlwimi r0,r4,0,31,31). (Old setBit6c9 method body moved verbatim onto
 // the retail unmangled name.)
-extern "C" void func_800BF314(cf::CfObjectMove* self, unsigned long bit) {
+extern "C" void CfObjectMove_setFlag6C9Bit0(cf::CfObjectMove* self, unsigned long bit) {
     unsigned char val = self->mFlags6C9;
     self->mFlags6C9 = __rlwimi(val, bit, 0, 31, 31);
 }
@@ -1491,10 +1491,10 @@ void CfObject_UnkVirtualFunc70__Q22cf12CfObjectMoveFv(cf::CfObjectMove* self, fl
     }
 }
 
-// Retail func_800BF324: return this when set (non-null and unk64 bit 3),
+// Retail CfObjectMove_getSelfIfActive: return this when set (non-null and unk64 bit 3),
 // else null. (Old testFlag8 method body moved verbatim onto the retail
 // unmangled name.)
-extern "C" cf::CfObjectMove* func_800BF324(cf::CfObjectMove* self) {
+extern "C" cf::CfObjectMove* CfObjectMove_getSelfIfActive(cf::CfObjectMove* self) {
     if (self != NULL && (self->unk64 & 8) != 0) {
         return self;
     }
@@ -1504,7 +1504,7 @@ extern "C" cf::CfObjectMove* func_800BF324(cf::CfObjectMove* self) {
 } // namespace cf
 
 // Retail: vptr at +0x10, bcctr to slot +0x14 (CfResObjImpl::func_8016C860).
-extern "C" void func_800BE9AC(void* self) {
+extern "C" void CfObjectMove_relaySubB0Slot14(void* self) {
     reinterpret_cast<cf::CfResObjImpl*>(self)->func_8016C860();
 }
 
@@ -1522,19 +1522,19 @@ extern "C" void CfObject_UnkVirtualFunc33__Q22cf12CfObjectMoveFv(cf::CfObjectMov
     self->CfObject_setMoveYaw(f * lbl_eu_8066A210);
 }
 
-extern "C" void func_800BC2DC() {}
+extern "C" void CfResObj_noop24() {}
 
-extern "C" void func_800BC3AC() {}
+extern "C" void CfResObj_noop44() {}
 
-extern "C" void func_800BC3D8(cf::CfObjectMove* self, float value) {
-    // Unconditional speed set (sibling of func_800BC3B0 without the busy
+extern "C" void CfObjectMove_setMoveSpeed(cf::CfObjectMove* self, float value) {
+    // Unconditional speed set (sibling of CfObjectMove_setMoveSpeedGated without the busy
     // gate): store f1 to mMoveSpeed (+0x6F0), clear bit 0x400 of mFlags68
     // (rlwinm r0,r0,0,22,20) and set bit 0x800 (ori).
     self->mMoveSpeed = value;
     self->mFlags68 = (self->mFlags68 & ~0x400u) | 0x800u;
 }
 
-extern "C" void func_800BC3B0(cf::CfObjectMove* self, float value) {
+extern "C" void CfObjectMove_setMoveSpeedGated(cf::CfObjectMove* self, float value) {
     // Busy flag (bit 28 of mFlags68) gates the speed set; otherwise clear
     // bit 0x800 and set bits 0x100000+0x400.
     if ((self->mFlags68 & 0x10000000) != 0) {
@@ -1543,19 +1543,19 @@ extern "C" void func_800BC3B0(cf::CfObjectMove* self, float value) {
     self->mMoveSpeed = value;
     self->mFlags68 = (*(volatile u32*)&self->mFlags68 & ~0x800u) | 0x100400u;
 }
-extern "C" void func_800BC3F0(cf::CfObjectMove* self) {
+extern "C" void CfObjectMove_attachMoveRegion(cf::CfObjectMove* self) {
     // Set bits 20+13 of mFlags68 (clearing bit 14 first), then notify
     // the +0x98 sub-object and attach the position region.
     u32 flags = self->mFlags68;
     self->mFlags68 = (flags & ~0x4000u) | 0x00102000u;
     if (self->mSubObj98 != 0) {
-        func_804838DC(self->mSubObj98, 1);
+        simSetFlag2OnTree(self->mSubObj98, 1);
     }
     if (lbl_eu_80665958 != 0) {
         func_804B4BDC(lbl_eu_80665958, self->_60C_region);
     }
 }
-void func_800BC458(cf::CfObjectMove* self) {
+void CfObjectMove_detachMoveRegion(cf::CfObjectMove* self) {
     // Set bit 14 of mFlags68 (clearing bit 13 first; retail keeps both ops).
     // When the global flag bit 26 is set, also clear bit 14 and copy the
     // shared speed constant to +0xA4. Finally detach the position region.
@@ -1573,7 +1573,7 @@ void func_800BC458(cf::CfObjectMove* self) {
         func_804B4C7C(lbl_eu_80665958, self->_60C_region);
     }
 }
-extern "C" int func_800BC4CC(cf::CfObjectMove* self) {
+extern "C" int CfObjectMove_testMoveProximity(cf::CfObjectMove* self) {
     // Distance/state check for the movement update (called by func_800BC8D8):
     // resolves the scene object, then depending on the mFlags68 bits either
     // attaches the position region to the scene's target vector (bit 2), or
@@ -1593,7 +1593,7 @@ extern "C" int func_800BC4CC(cf::CfObjectMove* self) {
             cf::CfObjectMove6B4View* v = (cf::CfObjectMove6B4View*)self;
             u32 w = v->field_6B4;
             v->field_6B4 = w | 0x1000;
-            result = func_804B192C(self->_60C_region, &scene->x, 0, 0, lbl_eu_80666A94);
+            result = ColiCheckMoveRadius(self->_60C_region, &scene->x, 0, 0, lbl_eu_80666A94);
             v->field_6B4 &= ~0x1000;
         } else {
             if (((u32)__cntlzw((u32)__cntlzw(flags & 0x100) >> 5) >> 5) != 0) {
@@ -1621,13 +1621,13 @@ extern "C" int func_800BC4CC(cf::CfObjectMove* self) {
                     // placeholder name was a misattribution: 0x800821F8 is
                     // retail CfGameManager::setObjectFlags64 (a void setter).
                     void* mgr = getCameraDataBlock__Q22cf13CfGameManagerFv();
-                    if (mgr == 0 || (void*)self != reinterpret_cast<cf::CfCam*>(mgr)->func_8006B6A8()) {
+                    if (mgr == 0 || (void*)self != reinterpret_cast<cf::CfCam*>(mgr)->cfCam_loadUnk164()) {
                         dist += lbl_eu_80666AA0;
                     }
                 } else if ((void*)self != getPlayer__Q22cf13CfGameManagerFi(0)) {
                     dist += lbl_eu_80666AA0;
                 }
-                result = func_804B192C(self->_60C_region, &scene->x, 1, 0, dist);
+                result = ColiCheckMoveRadius(self->_60C_region, &scene->x, 1, 0, dist);
             }
         }
     }
@@ -1640,7 +1640,7 @@ extern "C" int func_800BC4CC(cf::CfObjectMove* self) {
 // lbl_eu_80666AA8 (epsilon-snap via ml::epsilon, then step down by
 // lbl_eu_80666AAC or up by lbl_eu_80666AB0, clamped at the target) or a
 // plain increase clamped at lbl_eu_80666A94.
-void func_800BC68C(cf::CfObjectMove* self, u32 arg) {
+void CfObjectMove_updateSpeedA8(cf::CfObjectMove* self, u32 arg) {
     cf::CfObjectMoveA8View* view = (cf::CfObjectMoveA8View*)self;
     if (arg != 0) {
         float v = view->field_A8 - lbl_eu_80666AA4;
@@ -1686,10 +1686,10 @@ extern "C" void func_800BC8D8(cf::CfObjectMove* self) {
             int r = 0;
             if (self->_6F4 != 0) {
                 r = 1;
-            } else if (func_800BC4CC(self) != 0) {
+            } else if (CfObjectMove_testMoveProximity(self) != 0) {
                 r = 1;
             }
-            func_800BC68C(self, r);
+            CfObjectMove_updateSpeedA8(self, r);
         }
     }
     cf::CfObjectMoveA8View* view = (cf::CfObjectMoveA8View*)self;
@@ -1731,13 +1731,13 @@ extern "C" void func_800BCD04(cf::CfObjectMove* self) {
             if ((self->mSubObj98->field_7A4 & 0x10000) != 0 && (*(volatile u32*)&lbl_eu_80663E24 & 0x01040000) == 0) {
                 if (self->CObjectState_checkStateFlags8(0x1000) == 0) {
                     func_800BC9EC(self);
-                    ((bool (*)(void*, void*))func_8004B40C)(self->mTargetC4, &self->mPos3C);
+                    ((bool (*)(void*, void*))setAnimLastPos)(self->mTargetC4, &self->mPos3C);
                     goto done_flags;
                 }
             }
         }
 if (self->CfObject_checkSubReady() != 0) {
-            func_8004CF00(self->mTargetC4);
+            tickAnimFrame(self->mTargetC4);
             // Copy the C4 position into the move position (integer copy) and
             // store the difference against the snapshot into the +0x54 area
             // (PS sub via the nw4r inline helper, then the float->int bridge).
@@ -1751,7 +1751,7 @@ if (self->CfObject_checkSubReady() != 0) {
             self->mField4C = ((cf::CfObjectMoveTargetC4*)self->mTargetC4)->field_444;
         } else {
             func_800BC9EC(self);
-            ((bool (*)(void*, void*))func_8004B40C)(self->mTargetC4, &self->mPos3C);
+            ((bool (*)(void*, void*))setAnimLastPos)(self->mTargetC4, &self->mPos3C);
         }
 done_flags:
         // Toggle the C4 target's busy bit 6 from the mFlags68 bit 0 / bit 24
@@ -1779,7 +1779,7 @@ done_flags:
         } else {
             // Zero the +0x54 area and reattach the position region.
             *reinterpret_cast<ml::CVec3*>(&((cf::CfObjectMove54View*)self)->field_54) = ml::CVec3::zero;
-            func_804B0B54(self->_60C_region, &self->mPos3C);
+            ColiSetAxisBlockInverse(self->_60C_region, &self->mPos3C);
         }
     }
 }
@@ -1802,7 +1802,7 @@ extern "C" void func_800BC9EC(cf::CfObjectMove* self) {
     f32 rate = tgt->field_14;
     if (getPlayer__Q22cf13CfGameManagerFi(0) == (void*)self && self->CfObject_isMoveActiveNow() == 0) {
         rate = lbl_eu_80666A88;
-        func_804B0B54(self->_60C_region, &self->mPos3C);
+        ColiSetAxisBlockInverse(self->_60C_region, &self->mPos3C);
     }
     int force = 0;
     void* enemy = func_800AD860((void*)self);
@@ -1856,7 +1856,7 @@ extern "C" void func_800BCFA0(cf::CfObjectMove* self) {
         return;
     }
     int wasC4Null = self->mTargetC4 == 0;
-    func_804B0A74(self->_60C_region);
+    ColiNodeSetWord8Rebuild(self->_60C_region);
     if (((cf::CfObjectMove94View*)self)->field_9C != 0 && self->mTargetC4 == 0) {
         // Construct the +0xD0 CActParamAnimGame sub-object as the C4 target.
         self->mTargetC4 = self->_D0;
@@ -1867,21 +1867,21 @@ extern "C" void func_800BCFA0(cf::CfObjectMove* self) {
         if ((flags & 0x2) != 0) {
             void* c4 = self->mTargetC4;
             if (getPlayer__Q22cf13CfGameManagerFi(0) == (void*)self) {
-                func_80051B84(c4);
+                startAnimModeA(c4);
                 ((cf::CfObjectMoveD0View*)self->mTargetC4)->field_530 |= 0x400;
             } else {
-                func_80051BA0(c4);
+                startAnimModeA2(c4);
             }
             ((cf::CfObjectMoveD0View*)self->mTargetC4)->field_4EC |= 0x4000;
             void* c4b = self->mTargetC4;
             ((cf::CfObjectMoveD0View*)c4b)->field_4EC =
                 (((cf::CfObjectMoveD0View*)c4b)->field_4EC & 0xFFF5FFFF) | 0x00040000;
         } else if ((flags & 0x4) != 0) {
-            func_80051BDC(self->mTargetC4);
+            startAnimModeC(self->mTargetC4);
         } else if ((flags & 0x8) != 0 || (flags & 0x1) != 0) {
-            func_80051BC4(self->mTargetC4);
+            startAnimModeB(self->mTargetC4);
         } else if ((flags & 0x100) != 0) {
-            func_80051B84(self->mTargetC4);
+            startAnimModeA(self->mTargetC4);
         }
     }
     if (self->mTargetC4 != 0) {
@@ -1893,10 +1893,10 @@ extern "C" void func_800BCFA0(cf::CfObjectMove* self) {
             void* field6D4 = self->mField6D4;
             void* sub98 = self->mSubObj98;
             void* anim = ((cf::CfObjectModel*)self)->CfObjectModel_getAnimState();
-            func_8004B624(self->mTargetC4, sub98, field6D4, (u32)anim);
-            func_8004B6A4(self->mTargetC4, (void*)((cf::CfObjectMove94View*)self)->field_9C, (void*)((cf::CfObjectMove94View*)self)->field_94);
+            attachAnimObj(self->mTargetC4, sub98, field6D4, (u32)anim);
+            pushAnimNode(self->mTargetC4, (void*)((cf::CfObjectMove94View*)self)->field_9C, (void*)((cf::CfObjectMove94View*)self)->field_94);
         } else {
-            func_8004B624(self->mTargetC4, self->mSubObj98, (void*)((cf::CfObjectMove94View*)self)->field_9C, ((cf::CfObjectMove94View*)self)->field_94);
+            attachAnimObj(self->mTargetC4, self->mSubObj98, (void*)((cf::CfObjectMove94View*)self)->field_9C, ((cf::CfObjectMove94View*)self)->field_94);
         }
     }
     u32 f68 = self->mFlags68;
@@ -1916,7 +1916,7 @@ extern "C" void func_800BCFA0(cf::CfObjectMove* self) {
     if (self->mTargetC4 != 0) {
         if (wasC4Null) {
             if (self->mTarget6C0 != 0) {
-                func_8004B730(self->mTargetC4, self->mTarget6C0);
+                setAnimOwner(self->mTargetC4, self->mTarget6C0);
             }
             float x = *(float*)self->CfObject_getMoveRateScale();
             cf::CfObjectMoveTargetC4* c4 = (cf::CfObjectMoveTargetC4*)self->mTargetC4;
@@ -1949,7 +1949,7 @@ extern "C" void func_800BCFA0(cf::CfObjectMove* self) {
     if ((self->mFlags68 & 0x2000000) != 0) {
         ((cf::CfObject*)self)->CfObject_setMoveReadyFlag(1);
     }
-    func_80484E5C(self->mSubObj98, lbl_eu_80666A94);
+    simSetLeafDist7B0(self->mSubObj98, lbl_eu_80666A94);
     // Real spelling for slot 0x168 (inline alias in CfObject.hpp;
     // identical virtual dispatch to CfObject_UnkVirtualFunc70).
     self->CfObject_syncModelRate(self->field_A0);
@@ -2025,16 +2025,16 @@ extern "C" void func_800BCFA0(cf::CfObjectMove* self) {
     }
 }
 // retail: lhz r0,0x1678(r3); extrwi r3,r0,1,28 = ((u16 at +0x1678)>>3)&1
-extern "C" u32 func_800BD638(void* self) { return (*(const u16*)((const char*)self + 0x1678) >> 3) & 1; }
+extern "C" u32 CfObjectMove_getStatusBit1678(void* self) { return (*(const u16*)((const char*)self + 0x1678) >> 3) & 1; }
 // Walk the two +0x6F8 animation slots; when the matching +0xC8/+0xCC
 // target is missing, allocate and construct it (field_378 = slot index,
 // +0x4/+0x34 = the +0x38 sub-object, +0x4F4 = self), then advance the
 // animation model (func_8005A594), attach the model list via the vtable
-// +0x188 query and func_8004B624, and reset the C4 target's pages via
-// func_8004C5EC + the 5-arg func_8004B9D4 form. Retail re-reads the
+// +0x188 query and attachAnimObj, and reset the C4 target's pages via
+// getAnimModelId + the 5-arg func_8004B9D4 form. Retail re-reads the
 // member target for the object field writes (no register reuse), so the
 // writes go through the member re-derivation.
-void func_800BD644(cf::CfObjectMove* self) {
+void CfObjectMove_ensureAnimTargets(cf::CfObjectMove* self) {
     // Walk the two +0x6F8 animation slots; both per-slot reads (the slot
     // array and the +0xC8/+0xCC target pair) index the same i so MWCC
     // strength-reduces them onto one stepped cursor.
@@ -2046,7 +2046,7 @@ void func_800BD644(cf::CfObjectMove* self) {
                 // scheme as CfObject_createMoveTarget) so MWCC colours the
                 // alloc result deterministically.
                 void* obj = 0;
-                obj = allocate__Q23mtl10MemManagerFUlUl(0x53C, func_80061FE8());
+                obj = allocate__Q23mtl10MemManagerFUlUl(0x53C, CfRes_getHeapHandle());
                 if (obj != 0) {
                     __ct__8005A3FC(obj, self);
                 }
@@ -2066,12 +2066,12 @@ void func_800BD644(cf::CfObjectMove* self) {
             if ((&self->mTargetC8)[i] != 0) {
                 func_8005A594((&self->mTargetC8)[i]);
                 u32 anim = (u32)reinterpret_cast<cf::CfObjectModel*>(self)->CfObjectModel_getAnimFlags();
-                func_8004B624((&self->mTargetC8)[i], slot, self->mField6D8, anim);
+                attachAnimObj((&self->mTargetC8)[i], slot, self->mField6D8, anim);
                 if (self->mTargetC4 != 0) {
-                    // Retail: bl func_8004C5EC; mr r4,r3; lwz r3,<target>;
+                    // Retail: bl getAnimModelId; mr r4,r3; lwz r3,<target>;
                     // li r5/r6/r7; bl func_8004B9D4.
                     ((void (*)(void*, void*, int, int, int))func_8004B9D4)(
-                        (&self->mTargetC8)[i], (void*)func_8004C5EC(self->mTargetC4), 0, -1, 0);
+                        (&self->mTargetC8)[i], (void*)getAnimModelId(self->mTargetC4), 0, -1, 0);
                 }
             }
         }
@@ -2081,7 +2081,7 @@ void func_800BD644(cf::CfObjectMove* self) {
     }
 }
 
-extern "C" void func_800BE0F8(cf::CfObjectMove* self, u32 value) {
+extern "C" void CfObjectMove_setMoveModeField(cf::CfObjectMove* self, u32 value) {
     // Insert (value << 1) into bits 27-30 of mFlags6C9, then forward the
     // inserted nibble to the +0x98 sub-object's vtable +0x64 (tail call).
     cf::CfObjectModelSub98* target = self->mSubObj98;
@@ -2094,7 +2094,7 @@ extern "C" void func_800BE0F8(cf::CfObjectMove* self, u32 value) {
         reinterpret_cast<CScnItemModel*>(target)->vfunc64((flags >> 1) & 0xF);
     }
 }
-void func_800BE12C(u8* obj, int a, int b, int c, int d) {
+void CfObjectMove_setAnimModeArgs(u8* obj, int a, int b, int c, int d) {
     // Store the two 6C4/6C8 fields and merge `b` into the top bits of
     // mFlags6C9 (rlwimi), then when a C4 target exists forward the incoming
     // args to the CActParamAnim reset helper and, unless the +0x64 flag bit
@@ -2118,8 +2118,8 @@ void func_800BE12C(u8* obj, int a, int b, int c, int d) {
 }
 
 // retail: lwz r3,0xB0(r3); lhz r3,0xC(r3); blr
-extern "C" u16 func_800BE93C(void* self) { return *(u16*)((u8*)*(void**)((u8*)self + 0xB0) + 0xC); }
-extern "C" void func_800BE1A4(cf::CfObjectMove* self) {
+extern "C" u16 CfObjectMove_getSubB0FieldC(void* self) { return *(u16*)((u8*)*(void**)((u8*)self + 0xB0) + 0xC); }
+extern "C" void CfObjectMove_resetAnimModeArgs(cf::CfObjectMove* self) {
     // Store 1 at +0x6C4, -1 at +0x6C8, and clear bits 24-26 of mFlags6C9.
     // Bitfield clear: MWCC emits the retail rlwinm r0,r0,0,27,23 directly
     // (a plain AND on the byte field folds the mask to 27,31).
@@ -2127,7 +2127,7 @@ extern "C" void func_800BE1A4(cf::CfObjectMove* self) {
     self->mField6C8 = -1;
     ((cf::CfFlags6C9*)&self->mFlags6C9)->top3 = 0;
 }
-void func_800BE28C(cf::CfObjectMove* self) {
+void CfObjectMove_forwardNpcSignal(cf::CfObjectMove* self) {
     cf::CtrlNpc* target = (cf::CtrlNpc*)self->mTarget6C0;
     if (target != 0) {
         func_80094FC8(target);
@@ -2138,7 +2138,7 @@ void func_800BE28C(cf::CfObjectMove* self) {
 // set path, the sub-object is re-read (retail reloads +0x98 after the call)
 // and its +0x7EC pointer's +0x2A byte receives the low byte of the +0x6CC
 // u16 field.
-void func_800BE33C(cf::CfObjectMove* self, int flag) {
+void CfObjectMove_setModelDisplayFlag(cf::CfObjectMove* self, int flag) {
     if (flag != 0) {
         self->mFlags68 |= 0x00020000;
     } else {
@@ -2171,14 +2171,14 @@ void func_800BE33C(cf::CfObjectMove* self, int flag) {
 // +0x6C bit 16 is raised and the +0xB0 sub-object's vtable +0x38 is invoked;
 // with it clear the model list (0x6D4) is released through the C4 target and
 // the list destructor, then bit 16 is lowered.
-void func_800BE3E8(cf::CfObjectMove* self, int flag) {
+void CfObjectMove_setModelListLock(cf::CfObjectMove* self, int flag) {
     if (flag != 0) {
         ((cf::CfObjectMoveFlags6C*)self)->field_6C |= 0x10000;
-        reinterpret_cast<cf::CfResObjImpl*>(self->mSubObjB0)->func_800BEA38();
+        reinterpret_cast<cf::CfResObjImpl*>(self->mSubObjB0)->CfResObj_false38();
     } else {
         if (self->mField6D4 != 0) {
             if (self->mTargetC4 != 0) {
-                func_8004B6BC(self->mTargetC4, self->mField6D4);
+                releaseAnimObj(self->mTargetC4, self->mField6D4);
             }
             func_80495E60(self->mField6D4);
             self->mField6D4 = 0;
@@ -2189,7 +2189,7 @@ void func_800BE3E8(cf::CfObjectMove* self, int flag) {
 // Forward a position region (self+0x60C) to the region-library manager
 // (lbl_eu_80665958); flag selects the attach (func_804B4BDC) vs detach
 // (func_804B4C7C) helper.
-extern "C" void func_800BE824(void* obj, int flag) {
+extern "C" void CfObjectMove_setRegionAttached(void* obj, int flag) {
     cf::CfObjectMove* self = (cf::CfObjectMove*)obj;
     if (lbl_eu_80665958 != 0) {
         if (flag != 0) {
@@ -2199,7 +2199,7 @@ extern "C" void func_800BE824(void* obj, int flag) {
         }
     }
 }
-int func_800BE8B4(cf::CfObjectMove* self, int value) {
+int CfObjectMove_checkSubCounter(cf::CfObjectMove* self, int value) {
     // Sub-object state query: returns whether the sub's +0x2C counter equals
     // `value`, or (for negative values) whether the counter is non-negative.
     struct SubObj { int dummy0[11]; int field_2c; };
@@ -2212,34 +2212,34 @@ int func_800BE8B4(cf::CfObjectMove* self, int value) {
     }
     return 0;
 }
-extern "C" void func_800BEA34() {}
-extern "C" bool func_800BEA38() { return false; }
-extern "C" void func_800BF2C4() {}
-extern "C" int func_800BF30C() { return 1; }
+extern "C" void CfResObj_noop10() {}
+extern "C" bool CfResObj_false38() { return false; }
+extern "C" void CfResObj_noop58() {}
+extern "C" int CfResObj_true68() { return 1; }
 // Look up a bdat column (offset 0x7 into the column-name table) for the
 // given id/flag; tail-calls the shared bdat reader.
-extern "C" u32 func_800BED6C(u32 id, u32 flag) {
+extern "C" u32 CfObjectMove_lookupBdatCol7(u32 id, u32 flag) {
     return func_8014235C(id, &lbl_eu_804FC550[0x7], flag);
 }
 // Column-name lookup through the bdat reader: index self->field_710[flag],
 // resolve column offset 0x7 of the name table, then map the u16 result to a
-// name string via CfBdat::func_801424A8.
-const char* func_800BED80(cf::CfObjectMove* self, u32 flag) {
+// name string via CfBdat::getBdatStringEntry.
+const char* CfObjectMove_getBdatNameCol7(cf::CfObjectMove* self, u32 flag) {
     u32 result = func_8014235C(self->field_710[flag], &lbl_eu_804FC550[0x7], flag);
-    return cf::CfBdat::func_801424A8((u16)result);
+    return cf::CfBdat::getBdatStringEntry((u16)result);
 }
 
-// Same as func_800BED80 but column offset 0x11.
-const char* func_800BEDC4(cf::CfObjectMove* self, u32 flag) {
+// Same as CfObjectMove_getBdatNameCol7 but column offset 0x11.
+const char* CfObjectMove_getBdatNameCol11(cf::CfObjectMove* self, u32 flag) {
     u32 result = func_8014235C(self->field_710[flag], &lbl_eu_804FC550[0x11], flag);
-    return cf::CfBdat::func_801424A8((u16)result);
+    return cf::CfBdat::getBdatStringEntry((u16)result);
 }
-// Same as func_800BED6C but column offset 0x11.
-extern "C" u32 func_800BEE08(u32 id, u32 flag) {
+// Same as CfObjectMove_lookupBdatCol7 but column offset 0x11.
+extern "C" u32 CfObjectMove_lookupBdatCol11(u32 id, u32 flag) {
     return func_8014235C(id, &lbl_eu_804FC550[0x11], flag);
 }
-extern "C" void func_800BEE30() {}
-extern "C" void func_800BF2F4() {}
+extern "C" void CfResObj_noop40() {}
+extern "C" void CfResObj_noop28() {}
 
 // typed data sections - source shape for retail bytes (replaces absorb blobs)
 __declspec(section ".rodata") __attribute__((used)) const char lbl_eu_804FC550[0x20] = "mapATR\0def_mount\0bat_mount";

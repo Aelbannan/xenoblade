@@ -47,7 +47,7 @@ void func_804B91E0(void* state, const void* pos, u32 filterA,
                    u32 mode, u32 flag);
 void func_804B9818(char* state);
 void func_804BF59C(void* obj, void* other);
-void func_8004B0B0(void* obj);
+void noopAnimVec3(void* obj);
 }
 extern u8 lbl_eu_8066597F;
 
@@ -960,7 +960,7 @@ extern u8 lbl_eu_8065F8C0[384];
 void sinit_804BF540() {
     __construct_array(lbl_eu_8065F428, (ConstructorDestructor)func_804BF59C,
                       NULL, 0x24, 32);
-    __construct_array(lbl_eu_8065F8C0, (ConstructorDestructor)func_8004B0B0,
+    __construct_array(lbl_eu_8065F8C0, (ConstructorDestructor)noopAnimVec3,
                       NULL, 12, 32);
 }
 

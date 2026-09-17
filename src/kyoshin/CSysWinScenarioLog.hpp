@@ -880,7 +880,7 @@ extern "C" CSysWinScenarioLog* __ct__CSysWinScenarioLog(CSysWinScenarioLog* _thi
 // Term / ctor imports (retail C-ABI names; the CfGameManager helper is Fv-mangled
 // but takes a vestigial bool arg - same convention as isClassicController above).
 extern "C" void setPresentationFlag__Q22cf13CfGameManagerFv(bool enable);
-extern "C" u8   func_8013B980();
+extern "C" u8   DecMenuCounter64080();
 extern "C" u8   code80135FDC_getByte_64080();
 extern "C" void code80135FDC_postIncByte_64080();
 extern "C" void getEntry__5CBdatFUl(u32);
@@ -900,17 +900,17 @@ extern "C" void* func_8009EC9C(u32 index);            // character-data lookup
 extern "C" u32 func_800A32BC();                       // character-data category
 extern "C" u32 func_8003B1EC(void* fp);               // BDAT row count
 extern "C" u32 func_8009CF8C(u32 resourceId);         // message-count lookup
-extern "C" u32 func_8013606C(const void*, const void*, u32);   // msg-id lookup
-// func_80136254 / func_8013639C return wider-than-u16 values in retail; the
+extern "C" u32 BdatGetU16ByTableKey(const void*, const void*, u32);   // msg-id lookup
+// BdatGetU16Direct / BdatGetPtrDirect return wider-than-u16 values in retail; the
 // call sites truncate with an explicit (u16) cast (see func_8027EA6C).
-extern "C" u16 func_80136254(const void*, const void*, int);
-// func_8013639C's third arg is the u16 row key; declared int so call sites
+extern "C" u16 BdatGetU16Direct(const void*, const void*, int);
+// BdatGetPtrDirect's third arg is the u16 row key; declared int so call sites
 // control the clrlwi with an explicit cast.
-extern "C" char* func_8013639C(const void*, const void*, int); // row name lookup
-extern "C" char* func_80136190(char*, char*, u32);    // format two strings
-extern "C" void func_80136B4C(nw4r::lyt::Layout*, const char*, const char*, u32);
-extern "C" void func_80137E7C(nw4r::lyt::Layout*, const char*, void* res);
-extern "C" char* func_80138F78(u32);
+extern "C" char* BdatGetPtrDirect(const void*, const void*, int); // row name lookup
+extern "C" char* BdatTouchStringCell(char*, char*, u32);    // format two strings
+extern "C" void LayoutSetTextBoxFmtValue(nw4r::lyt::Layout*, const char*, const char*, u32);
+extern "C" void PaneSetTexPaletteByName(nw4r::lyt::Layout*, const char*, void* res);
+extern "C" char* MakeTplNameSysFile(u32);
 extern "C" nw4r::lyt::ArcResourceAccessor* func_801355F4();
 extern "C" void func_8013676C(nw4r::lyt::Pane* rootPane, u32 fontHandle);
 extern "C" void setBdatEntry__5CBdatFUlPv(u32, void*);
@@ -934,10 +934,10 @@ extern char lbl_eu_8050EE24[];
 extern "C" double lbl_eu_80668AD8;
 
 // CSysWinScenarioLog::Move helpers.
-extern "C" int func_8013BE50();
+extern "C" int IsMenuState621F0();
 extern "C" s32  func_8029A658();
 extern "C" u32  advanceAnimTransform__FPQ34nw4r3lyt13AnimTransformf(nw4r::lyt::AnimTransform*, float);
-extern "C" u32  func_80137510(nw4r::lyt::AnimTransform*, float);
+extern "C" u32  AnimRewindFrame(nw4r::lyt::AnimTransform*, float);
 extern "C" void playUISound__FUl(u32);
 extern "C" int  isClassicController__Q22cf13CfGameManagerFv(int arg);
 extern "C" u32  lbl_eu_80663E28;

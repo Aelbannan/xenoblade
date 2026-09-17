@@ -149,7 +149,7 @@ union V3WordFloat {
     f32 f[3];
 };
 
-// Colour/scale quad passed to func_80139AC8: filled as two words from the
+// Colour/scale quad passed to PaneMatSetTevColors: filled as two words from the
 // default sdata pair, or as four signed halfwords from the selected s16 pair.
 union ColQuad {
     u32 w[2];
@@ -216,13 +216,13 @@ struct BattleTargetView {
     void* field04;        // +0x04
 };
 
-// func_800AD860(obj) result: u16 id at +0x3F28 (func_801361E8 key).
+// func_800AD860(obj) result: u16 id at +0x3F28 (BdatGetU8Direct key).
 struct AD860Result {
     u8 gap00[0x3F28];
     u16 id3F28;           // +0x3F28
 };
 
-// func_801984F0 list entry: actor id at +0x3F10.
+// CPartsChange_GetEnemySlotAt list entry: actor id at +0x3F10.
 struct EnemySlotListEntry {
     u8 gap00[0x3F10];
     u32 id3F10;           // +0x3F10
@@ -554,7 +554,7 @@ extern u32 lbl_eu_80663E28;
 // ---------------------------------------------------------------------------
 // Minimal local views replacing kyoshin/cf/CBattleManager.hpp + CfObjectPc.hpp.
 // Those headers include CfObjectActor.hpp, which currently cannot be parsed:
-// its extern "C" func_800BE12C 5-arg form (line 39) conflicts with the 4-arg
+// its extern "C" CfObjectMove_setAnimModeArgs 5-arg form (line 39) conflicts with the 4-arg
 // form in CfObjectMove.hpp (line 192) - same C symbol, MWCC 10197. Only the
 // members/symbols used below are declared; layouts match the retail offsets.
 // ---------------------------------------------------------------------------
@@ -663,7 +663,7 @@ extern "C" void* func_8016FE34(void* r3);
 #define lbl_eu_8066704C (sdata2_MESPool.f4C)
 #define lbl_eu_80667050 (sdata2_MESPool.f50)
 #define lbl_eu_80667054 (sdata2_MESPool.f54)
-int func_8013BF48();
+int GetSysStateFlag23();
 void func_800BBA08(void* r3);
 void func_800BBA7C(void* r3);
 int func_8013A4B4(void* a, void* b, void* c);
@@ -674,7 +674,7 @@ int func_8013A4B4(void* a, void* b, void* c);
 
 void* func_80496264(void* obj, int index);
 
-// Retail leaves func_80137510 unmangled (declared extern "C" in
+// Retail leaves AnimRewindFrame unmangled (declared extern "C" in
 // code_80135FDC.hpp); calls pass the AnimTransform* directly.
 }
 
@@ -754,7 +754,7 @@ void CMenuEnemyState::cbRenderBefore() {
     }
     DECOMP_ASM_INSN_END
 after_bit21:
-    if (!func_8013BE50()) {
+    if (!IsMenuState621F0()) {
         goto done;
     }
     if (lbl_eu_80663E24 & 0xAFA40000u) {
@@ -872,7 +872,7 @@ void CMenuEnemyState::Move() {
     }
     DECOMP_ASM_INSN_END
 after_bit21:
-    if (!func_8013BE50()) {
+    if (!IsMenuState621F0()) {
         goto done;
     }
     if (lbl_eu_80663E24 & 0xAFA40000u) {
@@ -992,7 +992,7 @@ after_bit21:
         }
 
         if (panel.panelType == 0) {
-            if (func_8013BF48()) {
+            if (GetSysStateFlag23()) {
                 u8& b1 = static_cast<ObjBBFlag*>(panel.obj1)->flagBB;
                 u8& b2 = static_cast<ObjBBFlag*>(panel.obj2)->flagBB;
                 u8& b3 = static_cast<ObjBBFlag*>(panel.obj3)->flagBB;
@@ -1186,7 +1186,7 @@ after_bit21:
             b1 = b1 & 0xFE;
             b2 = b2 & 0xFE;
             b3 = b3 & 0xFE;
-        } else if (!func_8013BF48()) {
+        } else if (!GetSysStateFlag23()) {
             u8& b1 = static_cast<ObjBBFlag*>(panel.obj1)->flagBB;
             u8& b2 = static_cast<ObjBBFlag*>(panel.obj2)->flagBB;
             u8& b3 = static_cast<ObjBBFlag*>(panel.obj3)->flagBB;
@@ -1226,7 +1226,7 @@ after_bit21:
         }
         break;
     case 3:
-        if (func_80137510(selectCursor.anim20, lbl_eu_80666FE8) != 0) {
+        if (AnimRewindFrame(selectCursor.anim20, lbl_eu_80666FE8) != 0) {
             selectCursor.byte40 = 1;
             selectCursor.field44 = 0;
         }
@@ -1504,7 +1504,7 @@ extern "C" void func_80110A78(CMenuEnemyState* self, u32 actorId) {
         quadB.h[2] = lbl_eu_80663F90[2];
         quadB.h[3] = lbl_eu_80663F90[3];
     }
-    func_80139AC8(reinterpret_cast<void*>(panel->unk38), quadA.w, quadB.w);
+    PaneMatSetTevColors(reinterpret_cast<void*>(panel->unk38), quadA.w, quadB.w);
 
     reinterpret_cast<ObjBBFlag*>(panel->unk38)->flagBB &= 0xFE;
     reinterpret_cast<ObjBBFlag*>(panel->obj2)->flagBB &= 0xFE;
@@ -1678,7 +1678,7 @@ extern "C" void func_801127B0(CMenuEnemyState* self) {
             bu[2] = static_cast<u16>(lbl_eu_80663F90[2]);
             bu[3] = static_cast<u16>(lbl_eu_80663F90[3]);
         }
-        func_80139AC8(reinterpret_cast<void*>(panel->unk38), reinterpret_cast<void*>(a),
+        PaneMatSetTevColors(reinterpret_cast<void*>(panel->unk38), reinterpret_cast<void*>(a),
                       reinterpret_cast<void*>(b));
 
         // Clear the highlight bits on the panel + shared panes.
@@ -1840,7 +1840,7 @@ extern "C" void func_801127B0(CMenuEnemyState* self) {
             bu2[2] = static_cast<u16>(lbl_eu_80663F90[2]);
             bu2[3] = static_cast<u16>(lbl_eu_80663F90[3]);
         }
-        func_80139AC8(reinterpret_cast<void*>(panel->unk38), reinterpret_cast<void*>(a2),
+        PaneMatSetTevColors(reinterpret_cast<void*>(panel->unk38), reinterpret_cast<void*>(a2),
                       reinterpret_cast<void*>(b2));
 
         // Clear the highlight bits on the panel + shared panes.
@@ -1903,7 +1903,7 @@ extern "C" void func_801127B0(CMenuEnemyState* self) {
 // highlight bit on all six indicator panes, re-lights the four "target" panes
 // when the battle actor list is non-empty, then positions the arrow pane
 // (field28, or field34 when the battle target matches) over the current enemy
-// (func_800B8B94 table entry by byte41, subobject at +0x3E9C): the cursor is
+// (findObjB28ById table entry by byte41, subobject at +0x3E9C): the cursor is
 // projected with the scene pose and its Y only moves downward toward the
 // enemy's live position.
 extern "C" void func_8010EE40(CPcSelectCursorLayout* self) {
@@ -1941,7 +1941,7 @@ extern "C" void func_8010EE40(CPcSelectCursorLayout* self) {
     ObjBBFlag* arrow = reinterpret_cast<ObjBBFlag*>(self->field28);
     u8* tbl = reinterpret_cast<u8*>(func_8009ECB0());
     void* entry = *reinterpret_cast<void**>(tbl + self->byte41 * 4 + 4);
-    void* sub = func_800B8B94(static_cast<s32>(reinterpret_cast<u32>(entry)));
+    void* sub = findObjB28ById(static_cast<s32>(reinterpret_cast<u32>(entry)));
     // Retail copies sub into the target register first, then patches up
     // +0x3E9C only when non-null (mr/beq/addi shape).
     PcEmbedLayout* target = reinterpret_cast<PcEmbedLayout*>(sub);
@@ -2062,13 +2062,13 @@ extern "C" void func_80112170(CMenuEnemyState* self, u8* panelData) {
     if (special != 0) {
         nw4r::lyt::Pane* pane = panel->layout2->GetRootPane()->FindPaneByName(
             &lbl_eu_804FDBF8[0x28e], true);
-        func_80137DB8(pane, 0xFF5A0000 + 0x3CFF, 0xFF5A0000 + 0x3CFF);
+        PaneSetVtxColorPairs(pane, 0xFF5A0000 + 0x3CFF, 0xFF5A0000 + 0x3CFF);
         if (panel->panelType != 0) {
             // Retail hoists the second call's pane pointer (r28) ahead of the
             // first call's argument setup.
             void* p90 = reinterpret_cast<void*>(self->field90);
-            func_80137DB8(reinterpret_cast<void*>(self->field8C), 0xFF5A0000 + 0x3CFF, 0xFF5A0000 + 0x3C00);
-            func_80137DB8(p90, 0xFF5A0000 + 0x3CFF, 0xFF5A0000 + 0x3C00);
+            PaneSetVtxColorPairs(reinterpret_cast<void*>(self->field8C), 0xFF5A0000 + 0x3CFF, 0xFF5A0000 + 0x3C00);
+            PaneSetVtxColorPairs(p90, 0xFF5A0000 + 0x3CFF, 0xFF5A0000 + 0x3C00);
         }
     } else {
         nw4r::lyt::Pane* pane = panel->layout2->GetRootPane()->FindPaneByName(
@@ -2077,15 +2077,15 @@ extern "C" void func_80112170(CMenuEnemyState* self, u8* panelData) {
         // Colours are written as hi/lo halves so MWCC emits them literally
         // (lis hi / addi lo) instead of re-splitting the folded constant.
         if (tgt >= 6) {
-            func_80137DB8(pane, 0xFF5A0000 + 0x3CFF, 0xFF5A0000 + 0x3CFF);
+            PaneSetVtxColorPairs(pane, 0xFF5A0000 + 0x3CFF, 0xFF5A0000 + 0x3CFF);
         } else if (tgt >= 3) {
-            func_80137DB8(pane, 0xD2D20000 + 0x28FF, 0xD2D20000 + 0x28FF);
+            PaneSetVtxColorPairs(pane, 0xD2D20000 + 0x28FF, 0xD2D20000 + 0x28FF);
         } else if (tgt <= -6) {
-            func_80137DB8(pane, 0, 0);
+            PaneSetVtxColorPairs(pane, 0, 0);
         } else if (tgt <= -3) {
-            func_80137DB8(pane, 0x288D0000 - 1, 0x288D0000 - 1);
+            PaneSetVtxColorPairs(pane, 0x288D0000 - 1, 0x288D0000 - 1);
         } else {
-            func_80137DB8(pane, 0xD2D30000 - 0x2D01, 0xD2D30000 - 0x2D01);
+            PaneSetVtxColorPairs(pane, 0xD2D30000 - 0x2D01, 0xD2D30000 - 0x2D01);
         }
         if (panel->panelType != 0) {
             // Both pane pointers are common to every branch; retail hoists
@@ -2093,20 +2093,20 @@ extern "C" void func_80112170(CMenuEnemyState* self, u8* panelData) {
             void* p8C = reinterpret_cast<void*>(self->field8C);
             void* p90 = reinterpret_cast<void*>(self->field90);
             if (tgt >= 6) {
-                func_80137DB8(p8C, 0xFF5A0000 + 0x3CFF, 0xFF5A0000 + 0x3C00);
-                func_80137DB8(p90, 0xFF5A0000 + 0x3CFF, 0xFF5A0000 + 0x3C00);
+                PaneSetVtxColorPairs(p8C, 0xFF5A0000 + 0x3CFF, 0xFF5A0000 + 0x3C00);
+                PaneSetVtxColorPairs(p90, 0xFF5A0000 + 0x3CFF, 0xFF5A0000 + 0x3C00);
             } else if (tgt >= 3) {
-                func_80137DB8(p8C, 0xD2D20000 + 0x28FF, 0xD2D20000 + 0x2800);
-                func_80137DB8(p90, 0xD2D20000 + 0x28FF, 0xD2D20000 + 0x2800);
+                PaneSetVtxColorPairs(p8C, 0xD2D20000 + 0x28FF, 0xD2D20000 + 0x2800);
+                PaneSetVtxColorPairs(p90, 0xD2D20000 + 0x28FF, 0xD2D20000 + 0x2800);
             } else if (tgt <= -6) {
-                func_80137DB8(p8C, 0, 0);
-                func_80137DB8(p90, 0, 0);
+                PaneSetVtxColorPairs(p8C, 0, 0);
+                PaneSetVtxColorPairs(p90, 0, 0);
             } else if (tgt <= -3) {
-                func_80137DB8(p8C, 0x288D0000 - 1, 0x288D0000 - 0x100);
-                func_80137DB8(p90, 0x288D0000 - 1, 0x288D0000 - 0x100);
+                PaneSetVtxColorPairs(p8C, 0x288D0000 - 1, 0x288D0000 - 0x100);
+                PaneSetVtxColorPairs(p90, 0x288D0000 - 1, 0x288D0000 - 0x100);
             } else {
-                func_80137DB8(p8C, 0xD2D30000 - 0x2D01, 0xD2D30000 - 0x2E00);
-                func_80137DB8(p90, 0xD2D30000 - 0x2D01, 0xD2D30000 - 0x2E00);
+                PaneSetVtxColorPairs(p8C, 0xD2D30000 - 0x2D01, 0xD2D30000 - 0x2E00);
+                PaneSetVtxColorPairs(p90, 0xD2D30000 - 0x2D01, 0xD2D30000 - 0x2E00);
             }
         }
     }
@@ -2120,13 +2120,13 @@ extern "C" void func_80112170(CMenuEnemyState* self, u8* panelData) {
     if (lastObj != NULL) {
         sub = getEffOwner____FPv(lastObj);
         if (sub != NULL) {
-            list = func_800B8A64();
+            list = lookupCA0By45C0();
             if (list != NULL) {
                 // Wide counter (retail cmplwi r30,0x10), truncated to u8 only
                 // at the call site (clrlwi).
                 for (u32 i = 0; i < 0x10; i++) {
                     EnemySlotListEntry* e = static_cast<EnemySlotListEntry*>(
-                        func_801984F0(list, static_cast<u8>(i)));
+                        CPartsChange_GetEnemySlotAt(list, static_cast<u8>(i)));
                     if (e != NULL && e != sub && e->id3F10 == panel->actorId) {
                         // Retail clears bit 0 then sets it (rlwinm + ori).
                         reinterpret_cast<ObjBBFlag*>(panel->unk40)->flagBB =
@@ -2194,17 +2194,17 @@ extern "C" void func_801115E8(CMenuEnemyState* self, u8* panelData) {
         reinterpret_cast<ObjBBFlag*>(self->field7C)->flagBB =
             (reinterpret_cast<ObjBBFlag*>(self->field7C)->flagBB & 0xFE) | 1;
         if (panel->unk20 != 0) {
-            func_80136B4C(self->unk74, &lbl_eu_804FDBF8[0x266],
-                          func_80136190(&lbl_eu_804FDBF8[0x256],
+            LayoutSetTextBoxFmtValue(self->unk74, &lbl_eu_804FDBF8[0x266],
+                          BdatTouchStringCell(&lbl_eu_804FDBF8[0x256],
                                         &lbl_eu_804FDBF8[0x261], 8),
                           0);
         } else if (panel->unk1F != 0) {
-            func_80136B4C(self->unk74, &lbl_eu_804FDBF8[0x266],
+            LayoutSetTextBoxFmtValue(self->unk74, &lbl_eu_804FDBF8[0x266],
                           reinterpret_cast<char*>(
                               reinterpret_cast<cf::CObjectParam*>(obj)->CObjectParam_getParamPtr()),
                           0);
         } else {
-            func_80136B4C(self->unk74, &lbl_eu_804FDBF8[0x266],
+            LayoutSetTextBoxFmtValue(self->unk74, &lbl_eu_804FDBF8[0x266],
                           func_80138DA4(reinterpret_cast<char*>(
                               reinterpret_cast<cf::CObjectParam*>(obj)->CObjectParam_getParamPtr())),
                           0);
@@ -2226,8 +2226,8 @@ extern "C" void func_801115E8(CMenuEnemyState* self, u8* panelData) {
         s32 a2id = static_cast<s32>(static_cast<u32>(
             reinterpret_cast<cf::CActorParam*>(actor2)->CActorParam_getActorLevel()));
         if (special != 0) {
-            func_80136B4C(self->unk74, &lbl_eu_804FDBF8[0x1b2],
-                          func_80136190(&lbl_eu_804FDBF8[0x256],
+            LayoutSetTextBoxFmtValue(self->unk74, &lbl_eu_804FDBF8[0x1b2],
+                          BdatTouchStringCell(&lbl_eu_804FDBF8[0x256],
                                         &lbl_eu_804FDBF8[0x261], 7),
                           0);
         } else {
@@ -2241,7 +2241,7 @@ extern "C" void func_801115E8(CMenuEnemyState* self, u8* panelData) {
                 reinterpret_cast<cf::CActorParam*>(actor2)->CActorParam_getActorLevel());
             func_80112170(self, panelData);
         }
-        func_80136B4C(self->unk74, &lbl_eu_804FDBF8[0x278],
+        LayoutSetTextBoxFmtValue(self->unk74, &lbl_eu_804FDBF8[0x278],
                       reinterpret_cast<char*>(
                           const_cast<char*>(reinterpret_cast<cf::CActorParam*>(actor2)->CActorParam_getActorName())),
                       0);
@@ -2252,7 +2252,7 @@ extern "C" void func_801115E8(CMenuEnemyState* self, u8* panelData) {
 
         void* sub = getEffOwner____FPv(obj);
         if (sub != NULL) {
-            u8 v = func_801361E8(lbl_eu_806640CC, &lbl_eu_804FDBF8[0x288],
+            u8 v = BdatGetU8Direct(lbl_eu_806640CC, &lbl_eu_804FDBF8[0x288],
                                  static_cast<AD860Result*>(sub)->id3F28);
             // Retail clrlwi's the result - keep the u8 narrowing.
             switch (v) {
@@ -2281,7 +2281,7 @@ extern "C" void func_801115E8(CMenuEnemyState* self, u8* panelData) {
         if (v298->field50 != NULL) {
             Obj50View* o50 = static_cast<Obj50View*>(v298->field50);
             if ((o50->word78 & (1 << 30)) != 0 && o50->f7C == lbl_eu_80666FEC) {
-                func_80136B4C(self->unk74, &lbl_eu_804FDBF8[0x278],
+                LayoutSetTextBoxFmtValue(self->unk74, &lbl_eu_804FDBF8[0x278],
                               reinterpret_cast<char*>(o50), 0);
                 func_80137B44(self->unk74, &lbl_eu_804FDBF8[0x278], 0xF52819FF);
             }
@@ -2461,10 +2461,10 @@ extern "C" void func_801124C8(CMenuEnemyState* self, Actor2Layout* actor2) {
                 reinterpret_cast<SubSlot5CResult*>(reinterpret_cast<cf::CBattleState*>(&actor2->sub8)->CBattleState_getEventEntry(idx));
             if (res->word30 != 0x800 && res->id0C != 0 && res->id0C != 0xF &&
                 res->id0C != 0x10 && res->id0C != 0x12) {
-                u16 id = func_80136254(lbl_eu_806640E0,
+                u16 id = BdatGetU16Direct(lbl_eu_806640E0,
                                        &lbl_eu_804FDBF8[0x295], res->id0C);
                 if (id != 0) {
-                    char* name = func_80138F78(id);
+                    char* name = MakeTplNameSysFile(id);
                     nw4r::lyt::ArcResourceAccessor* accessor =
                         static_cast<nw4r::lyt::ArcResourceAccessor*>(func_801355F4());
                     void* tex = accessor->GetResource(0x74696D67, name, 0);
@@ -2501,7 +2501,7 @@ extern "C" void func_801124C8(CMenuEnemyState* self, Actor2Layout* actor2) {
                 u16 v = arr16[idx2];
                 if (v != 0) {
                     if (idx2 == 0x20) {
-                        char* name = func_80138F78(0x13d);
+                        char* name = MakeTplNameSysFile(0x13d);
                         nw4r::lyt::ArcResourceAccessor* accessor =
                             static_cast<nw4r::lyt::ArcResourceAccessor*>(func_801355F4());
                         void* tex = accessor->GetResource(0x74696D67, name, 0);
@@ -2512,10 +2512,10 @@ extern "C" void func_801124C8(CMenuEnemyState* self, Actor2Layout* actor2) {
                             break;
                         }
                     } else {
-                        u16 id = func_80136254(lbl_eu_806640E0,
+                        u16 id = BdatGetU16Direct(lbl_eu_806640E0,
                                                &lbl_eu_804FDBF8[0x295], v);
                         if (id != 0) {
-                            char* name = func_80138F78(id);
+                            char* name = MakeTplNameSysFile(id);
                             nw4r::lyt::ArcResourceAccessor* accessor =
                                 static_cast<nw4r::lyt::ArcResourceAccessor*>(func_801355F4());
                             void* tex = accessor->GetResource(0x74696D67, name, 0);

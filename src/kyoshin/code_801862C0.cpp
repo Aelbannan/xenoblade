@@ -2,8 +2,8 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include "kyoshin/code_801862C0.hpp"
-#include "kyoshin/cf/CfMapMineManager.hpp" // func_800B8920 / func_800B9404
-#include "kyoshin/cf/object/CfObjectMoveApi.hpp" // func_800BE12C
+#include "kyoshin/cf/CfMapMineManager.hpp" // lookupWorkAtAddr / gmFileObject
+#include "kyoshin/cf/object/CfObjectMoveApi.hpp" // CfObjectMove_setAnimModeArgs
 #include "kyoshin/cf/object/CfObject.hpp"
 #include "libs/monolib/src/scn/CScnItemModel.hpp"
 #include "monolib/math/CVec3.hpp"
@@ -178,10 +178,10 @@ extern "C" void* __dt__801865C4(void* self, int flags) {
         for (i = 0; i < 64; i++) {
             void* ptr = *p;
             if (ptr != 0) {
-                if (func_800B8920(ptr) != 0) {
+                if (lookupWorkAtAddr(ptr) != 0) {
                     // Reload the slot pointer for the free call (retail
                     // re-reads through the slot address each time).
-                    func_800B9404(*p);
+                    gmFileObject(*p);
                     *p = (void*)0;
                 }
                 *p = (void*)0;
@@ -199,8 +199,8 @@ extern "C" void* __dt__801865C4(void* self, int flags) {
 }
 
 // func_80186664 (recovered): teardown loop over 64 widget slots.  For each
-// armed slot: run the check helper (func_800B8920) and, when it passes, the
-// free helper (func_800B9404); both the slot pointer and the slot's halfword
+// armed slot: run the check helper (lookupWorkAtAddr) and, when it passes, the
+// free helper (gmFileObject); both the slot pointer and the slot's halfword
 // flag at +0x100 are cleared on the armed path only.
 void func_80186664(u8* self) {
     void** p = (void**)self;
@@ -211,10 +211,10 @@ void func_80186664(u8* self) {
     for (i = 0; i < 64; i++) {
         void* ptr = *p;
         if (ptr != 0) {
-            if (func_800B8920(ptr) != 0) {
+            if (lookupWorkAtAddr(ptr) != 0) {
                 // Retail re-reads the slot pointer for the second call (no
                 // local kept across calls; the calls may alias the array).
-                func_800B9404(*p);
+                gmFileObject(*p);
                 *p = (void*)0;
             }
             *p = (void*)0;
@@ -463,7 +463,7 @@ void func_80186D20(void* p) {
                                   cols + 0x6b, cols + 0x78, cols + 0x82,
                                   cols + 0x8c, cols + 0x96) != 0 &&
                     stateId != slotFlags[0x80]) {
-                    func_800BE12C((u8*)*slots, stateId, 1, -1, 1);
+                    CfObjectMove_setAnimModeArgs((u8*)*slots, stateId, 1, -1, 1);
                     slotFlags[0x80] = stateId;
                 }
             }

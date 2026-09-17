@@ -116,7 +116,7 @@ void func_8018B0FC(void* dst, void* src) {
 // Open item: struct-copy loop (mItems 0x800 + mField804). Retail saves the
 // src pointer first (or r6,r4,r4 before or r7,r3,r3); MWCC invariantly saves
 // dst first across ~30 source shapes, 14 MWCC versions, -O4,s/-O4,p/-O3,
-// -ipa/-func_align variants (same ABI-boundary class as func_800B7680;
+// -ipa/-func_align variants (same ABI-boundary class as reslistCount;
 // witness rejects: r6/r7 and r3/r4 both swap, no consistent bijection).
 // The loop body and tail are otherwise byte-identical.
 void func_8018B130(void* dst, void* src) {
@@ -141,7 +141,7 @@ void CMenuShopSell::Term() {
 
     func_801C3D9C(&mBgTex);
     func_801C40A0(&mTitleAHelp);
-    func_801CAE9C(&mItemBoxGrid);
+    UnloadItemBox(&mItemBoxGrid);
 
     lbl_eu_806642F0 = 0;
     setPresentationFlag__Q22cf13CfGameManagerFv(0);
@@ -172,7 +172,7 @@ void CMenuShopSell::Move() {
     }
 
     func_801C3D54(&mBgTex);
-    func_801CABC8(&mItemBoxGrid);
+    UpdateItemBox(&mItemBoxGrid);
     func_801C3FF0(&mTitleAHelp);
 }
 
@@ -183,7 +183,7 @@ void CMenuShopSell::cbRenderBefore() {
     CTaskGame::getInstance();
     if (CTaskGame::isFlag01Set() || (lbl_eu_80663E28 & 0x200000))
         return;
-    if (func_8013BE50() == 0) return;
+    if (IsMenuState621F0() == 0) return;
 
     GXSetZMode(GX_FALSE, GX_NEVER, GX_FALSE);
     // Raw-storage DrawInfo built/destroyed via C-ABI pre-mangled ct/dt calls
@@ -192,7 +192,7 @@ void CMenuShopSell::cbRenderBefore() {
     __ct__Q34nw4r3lyt8DrawInfoFv(&drawInfo[0]);
     func_80137250((nw4r::lyt::DrawInfo*)&drawInfo[0]);
     func_801C3D7C(&mBgTex, (nw4r::lyt::DrawInfo*)&drawInfo[0]);
-    func_801CAD8C(&mItemBoxGrid, (nw4r::lyt::DrawInfo*)&drawInfo[0]);
+    DrawItemBoxGrid(&mItemBoxGrid, (nw4r::lyt::DrawInfo*)&drawInfo[0]);
     func_801C4080(&mTitleAHelp, (nw4r::lyt::DrawInfo*)&drawInfo[0]);
     __dt__Q34nw4r3lyt8DrawInfoFv(&drawInfo[0], -1);
 }
@@ -225,7 +225,7 @@ extern "C" bool func_8018B398() { return lbl_eu_806642F0 != 0; }
  * sound, then advance the phase byte at 0x4AC4. */
 extern "C" __declspec(noinline) void func_8018B3A8(CMenuShopSell* self) {
     if (func_801C3E34(&self->mBgTex) != 0 && func_801C4114(&self->mTitleAHelp) != 0 &&
-        func_801CB038(&self->mItemBoxGrid) != 0) {
+        IsItemBoxReady(&self->mItemBoxGrid) != 0) {
         func_801C412C(&self->mTitleAHelp);
         func_801CB28C(&self->mItemBoxGrid);
         self->mState = 1;
@@ -271,11 +271,11 @@ extern "C" __declspec(noinline) void func_8018B470(CMenuShopSell* self) {
         if (p200000) {
             func_801CCAF0(&self->mItemBoxGrid);
         } else if (p400000) {
-            if (func_801CB0FC(&self->mItemBoxGrid) != 0) {
-                func_801CC7B0(&self->mItemBoxGrid, 0);
+            if (IsItemBoxActive(&self->mItemBoxGrid) != 0) {
+                HandleCancelBtn(&self->mItemBoxGrid, 0);
             } else {
                 func_801C414C(&self->mTitleAHelp);
-                func_801CB38C(&self->mItemBoxGrid);
+                AdvanceBoxState(&self->mItemBoxGrid);
                 self->mState = 3;
             }
         } else if (t8004) {
@@ -287,11 +287,11 @@ extern "C" __declspec(noinline) void func_8018B470(CMenuShopSell* self) {
         } else if (t4002) {
             func_801CC0EC(&self->mItemBoxGrid);
         } else if (p1000000) {
-            func_801CC5DC(&self->mItemBoxGrid);
+            OpenSortMenu(&self->mItemBoxGrid);
         } else if (p200) {
             func_801CDC40(&self->mItemBoxGrid);
         } else if (p400) {
-            func_801CDEE8(&self->mItemBoxGrid);
+            SelectCatRow(&self->mItemBoxGrid);
         }
     } else {
         // Pointer input disabled: plain pad bits drive the flow.
@@ -310,11 +310,11 @@ extern "C" __declspec(noinline) void func_8018B470(CMenuShopSell* self) {
         if (p10) {
             func_801CCAF0(&self->mItemBoxGrid);
         } else if (p20) {
-            if (func_801CB0FC(&self->mItemBoxGrid) != 0) {
-                func_801CC7B0(&self->mItemBoxGrid, 0);
+            if (IsItemBoxActive(&self->mItemBoxGrid) != 0) {
+                HandleCancelBtn(&self->mItemBoxGrid, 0);
             } else {
                 func_801C414C(&self->mTitleAHelp);
-                func_801CB38C(&self->mItemBoxGrid);
+                AdvanceBoxState(&self->mItemBoxGrid);
                 self->mState = 3;
             }
         } else if (t8004) {
@@ -326,15 +326,15 @@ extern "C" __declspec(noinline) void func_8018B470(CMenuShopSell* self) {
         } else if (t4002) {
             func_801CC0EC(&self->mItemBoxGrid);
         } else if (p800) {
-            func_801CC5DC(&self->mItemBoxGrid);
+            OpenSortMenu(&self->mItemBoxGrid);
         } else if (p200) {
             func_801CDC40(&self->mItemBoxGrid);
         } else if (p40) {
-            func_801CDEE8(&self->mItemBoxGrid);
+            SelectCatRow(&self->mItemBoxGrid);
         }
     }
 
-    func_801C41E8(&self->mTitleAHelp, (u8)func_801CDFB4(&self->mItemBoxGrid));
+    func_801C41E8(&self->mTitleAHelp, (u8)GetPromptState(&self->mItemBoxGrid));
 }
 
 // Phase transition: once the title bar is idle and the item grid is ready,

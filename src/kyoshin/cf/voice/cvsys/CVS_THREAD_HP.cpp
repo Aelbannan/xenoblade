@@ -65,7 +65,7 @@ CVS_THREAD_HP* __ct__802A7254(CVoiceHandle* handle, int arg) {
     if (func_802A330C(0xD2, 1) == NULL) {
         return NULL;
     }
-    CVS_THREAD_HP* self = (CVS_THREAD_HP*)func_802A34E4(0x28);
+    CVS_THREAD_HP* self = (CVS_THREAD_HP*)CCharVoiceMan_AllocVoiceArena(0x28);
     if (self == NULL) {
         return NULL;
     }

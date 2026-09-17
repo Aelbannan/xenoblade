@@ -28,9 +28,9 @@ namespace cf{
         virtual bool isRayOccluded(const ml::CVec3& r4, const ml::CVec3& r5, int r6);
         virtual void cbRenderBefore();
 
-        static void func_801A2BD0(u32 r3);
+        static void setOccDisabled(u32 r3);
         static UNKTYPE* getOccBuffer();
-        static void func_801A2C94();
+        static void clearOccFrustums();
         static void func_801A2CAC();
 
 

@@ -15,7 +15,7 @@ extern "C" {
     int  func_802A3D54(CCharVoice* voicePtr, int voiceId, int arg);
     void __ct__cf_CVS_THREAD(void* self);
     int  func_802A77E8(CVoiceHandle* handle);
-    void* func_802A34E4(int size);
+    void* CCharVoiceMan_AllocVoiceArena(int size);
     // Runtime rethrow (NMWException.h): noreturn so MWCC elides the
     // __end__catch epilogue of the catch-all handler.
     __declspec(noreturn) void __throw(char* throwtype, u32 location,
@@ -664,7 +664,7 @@ void* __ct__802AF5CC(int arg) {
     if (func_802A330C(0x10e, 1) == NULL)
         return 0;
     CVS_THREAD_BATTLE_MAIN* self =
-        (CVS_THREAD_BATTLE_MAIN*)(u32)func_802A34E4(0x24);
+        (CVS_THREAD_BATTLE_MAIN*)(u32)CCharVoiceMan_AllocVoiceArena(0x24);
     if (self == NULL)
         return 0;
 

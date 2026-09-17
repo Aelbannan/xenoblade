@@ -7,7 +7,7 @@ namespace cf {
 class CfObject; // forward decl (effect object array elements)
 
 // Scene object referenced by CfMapEffectManager::field_0x134 (released via
-// func_800B9404 once func_800B8920 validates it).
+// gmFileObject once lookupWorkAtAddr validates it).
 struct CfMapEffectHandle {
     u8 field_0x0[0xB0];
     u32 field_0xB0;

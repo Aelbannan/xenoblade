@@ -9,12 +9,12 @@
    overload. This unit never calls it, so rename the stale declaration away
    for this inclusion only. */
 #define func_801393CC func_801393CC_stale_voidp
-#define func_801392B4 func_801392B4_stale_int_u8
+#define GetCollectedFlagByte GetCollectedFlagByte_stale_int_u8
 #define func_80136A1C func_80136A1C_stale_constcharp
 #define func_801397AC func_801397AC_stale_gxcolor
 #include "kyoshin/CItemBoxInfo.hpp"
 #undef func_801393CC
-#undef func_801392B4
+#undef GetCollectedFlagByte
 #undef func_80136A1C
 #undef func_801397AC
 
@@ -368,7 +368,7 @@ extern "C" void func_80159F6C(void* self, u32 family, u32 row, u16 kind);
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
 // Retail emits these as C-style (unmangled) symbols, so reference them with C
 // linkage. func_801D2ED8/CEquipItemBox gates take the object and return status.
-extern "C" u32 func_80137510(nw4r::lyt::AnimTransform*, float);
+extern "C" u32 AnimRewindFrame(nw4r::lyt::AnimTransform*, float);
 
 // CItemBoxInfo helpers used by the equip-change screen (C-ABI retail names).
 extern "C" u32 func_801D421C(CItemBoxInfo* info);
@@ -381,50 +381,50 @@ extern "C" void func_801D4174(CItemBoxInfo* info);
 // Free-function form (retail: advanceItemBoxState__FP12CItemBoxInfo).
 void advanceItemBoxState(CItemBoxInfo* info);
 
-extern "C" void func_80286264(CEquipItemBox* box);
+extern "C" void updateEIBBox(CEquipItemBox* box);
 // 2-arg subcur visibility setter (retail unmangled symbol; see CCur.cpp).
 extern "C" void func_801D2E4C(void*, u32);
-extern "C" void func_80286454(CEquipItemBox* box);
-extern "C" void func_802867E0(CEquipItemBox* box);
+extern "C" void closeEIBBox(CEquipItemBox* box);
+extern "C" void eibNavLeft(CEquipItemBox* box);
 extern "C" int func_801D2ED8(CBaseCur*);
-extern "C" int func_802865A0(CEquipItemBox* box);
-extern "C" int func_802865A8(CEquipItemBox* box);
-extern "C" int func_802865B0(CEquipItemBox* box);
-extern "C" void func_80286740(CEquipItemBox* box);
-extern "C" void func_80287250(CEquipItemBox* box, int arg);
+extern "C" int getEIBOpenFlag(CEquipItemBox* box);
+extern "C" int getEIBActiveMark(CEquipItemBox* box);
+extern "C" int eibInputBlocked(CEquipItemBox* box);
+extern "C" void finishEIBEntry(CEquipItemBox* box);
+extern "C" void eibHandleSubPage(CEquipItemBox* box, int arg);
 extern "C" void func_801D4B3C(void*, CItemBoxInfo*, u32);
-extern "C" int func_80286650(CEquipItemBox* box);
-extern "C" int func_80286698(CEquipItemBox* box);
-extern "C" int func_802866A0(CEquipItemBox* box);
-extern "C" int func_8028652C(CEquipItemBox* box);
-extern "C" int func_80287EE8(CEquipItemBox* box);
-extern "C" void func_802870DC(CEquipItemBox* box);
+extern "C" int eibMenuBusy(CEquipItemBox* box);
+extern "C" int getEIBNamePane(CEquipItemBox* box);
+extern "C" int eibSysWinBusy(CEquipItemBox* box);
+extern "C" int eibWindowsReady(CEquipItemBox* box);
+extern "C" int takeEIBAction(CEquipItemBox* box);
+extern "C" void eibConfirmSort(CEquipItemBox* box);
 extern "C" void func_802040FC(CEquipChange* self);
 extern "C" void func_801D4054(void* info);
-extern "C" void func_802861A8(CEquipItemBox* box);
+extern "C" void loadEIBFiles(CEquipItemBox* box);
 extern "C" u8 code80135FDC_getByte_64077();
 extern "C" void func_802042C0(CEquipChange* self);
 extern "C" void func_800A13C4(void* charObj, u32 flag);
 extern "C" void func_8009D7E4(void* rows, u32 count);
 extern "C" void* func_8009EC9C(u32);
 extern "C" void* func_80157C4C(u32 index, s16 value);
-extern "C" void func_80287EFC(CEquipItemBox* box, u32 val);
-extern "C" void func_80287DB4(CEquipItemBox* box, u16 packed, void* arg3, u16 arg4);
-extern "C" void func_802866E8(CEquipItemBox* box);
-extern "C" int func_8028876C(CEquipItemBox* box);
-extern "C" void func_80286340(CEquipItemBox* box, nw4r::lyt::DrawInfo* drawInfo);
+extern "C" void setEIBBoxInfo(CEquipItemBox* box, u32 val);
+extern "C" void eibOpenPages(CEquipItemBox* box, u16 packed, void* arg3, u16 arg4);
+extern "C" void openEIBBox(CEquipItemBox* box);
+extern "C" int eibHudPrompt(CEquipItemBox* box);
+extern "C" void drawEIBBox(CEquipItemBox* box, nw4r::lyt::DrawInfo* drawInfo);
 extern "C" void* func_802052A8(CEquipChange* self);
 extern "C" void func_801D20B0(void*, void*);
 extern "C" void func_801D4154(CItemBoxInfo* info, nw4r::lyt::DrawInfo* drawInfo);
 
 // CEquipItemBox gate/handler imports used by the equip-change handlers.
 extern "C" void func_802869B4(CEquipItemBox* box);
-extern "C" void func_80286B94(CEquipItemBox* box);
-extern "C" void func_80286D7C(CEquipItemBox* box);
+extern "C" void eibNavUp(CEquipItemBox* box);
+extern "C" void eibNavRight(CEquipItemBox* box);
 extern "C" int func_80288948(CEquipItemBox* box);
-extern "C" int func_80288530(CEquipItemBox* box);
-extern "C" int func_8028847C(CEquipItemBox* box);
-extern "C" int func_80288544(CEquipItemBox* box);
+extern "C" int getEIBSelCat(CEquipItemBox* box);
+extern "C" int eibRowMatches(CEquipItemBox* box);
+extern "C" int findEIBEquipSlot(CEquipItemBox* box);
 
 // bdat item-name table (sdata pointer) and message-count lookup used by
 // func_80203210's category equip checks.
@@ -449,17 +449,17 @@ extern u32 lbl_eu_80508068[3];
 struct CEquipEnumHolder { void* field_0x0; u32 field_0x4; };
 struct CEquipEnumList { u8 _00[0x620]; u32 field_0x620; };
 struct CEquipEnumListSlot { u8 _00[0x4]; void* field_0x4; };
-extern "C" void func_80043D90(void*);
-extern "C" void* func_80043F18(void*);
+extern "C" void CTaskGame_enumListCtor(void*);
+extern "C" void* CTaskGame_enumListGet(void*);
 extern "C" void func_800F4A98(void*, u32, u32);
 extern "C" void* func_800F6EC0(void*, u32);
 extern "C" void* getCfObjectPc__FPQ22cf12CfObjectMove(void* objMove);
 extern "C" void func_800BFDE0(void* obj, u32 flag);
 extern "C" void __dt__80043E88(void*, int);
-extern "C" int func_80287D58(CEquipItemBox* box);
+extern "C" int stepEIBSysWin2(CEquipItemBox* box);
 extern "C" int func_802882A4(CEquipItemBox* box);
 extern "C" void func_802873D8(CEquipItemBox* box);
-extern "C" void func_80287F04(CEquipItemBox* box, u16 arg2, void* arg3);
+extern "C" void eibApplySelect(CEquipItemBox* box, u16 arg2, void* arg3);
 extern "C" void func_80202EB4(CEquipChange* self, u8 cat);
 
 // Sub-cursor activate (defined in CCur.cpp).

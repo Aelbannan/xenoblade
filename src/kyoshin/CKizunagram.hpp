@@ -51,7 +51,7 @@ public:
     u8 field15;         // 0x15
     u8 field16;         // 0x16
     u8 field17;         // 0x17
-    u32 field18;        // 0x18 (pad word; func_8025CF40 copies it as a color word)
+    u32 field18;        // 0x18 (pad word; rebuildKizLine copies it as a color word)
     u32 field1C;        // 0x1C
     u32 field20;        // 0x20
     u8 field24;         // 0x24
@@ -144,10 +144,10 @@ struct UnkKizunaVec3 {
 };
 
 // ---------------------------------------------------------------------------
-// func_80259344 support types.
+// getLinePanePair support types.
 // ---------------------------------------------------------------------------
 
-// Two-word (8-byte) struct return building block for func_80259344.
+// Two-word (8-byte) struct return building block for getLinePanePair.
 struct UnkKizunaPair {
     u32 field_00;
     u32 field_04;
@@ -193,14 +193,14 @@ struct UnkKizunaRes59344 {
     u8 fieldB8; // 0xB8
 };
 
-// func_80259344 receives: +0x0C -> UnkKizunaMid59344.
+// getLinePanePair receives: +0x0C -> UnkKizunaMid59344.
 struct UnkKizunaSelf59344 {
     u8 _00[0x0C];
     UnkKizunaMid59344* field0C; // 0x0C
 };
 
 // ---------------------------------------------------------------------------
-// Targets func_80259C5C / func_80259394 support types.
+// Targets lineCountUp / func_80259394 support types.
 // ---------------------------------------------------------------------------
 
 // Mid object at +0x0C of the kizuna-line sub-object: retail vtable slots
@@ -235,7 +235,7 @@ struct UnkKizunaSelf59394 {
     UnkKizunaMidC5C* field0C; // 0x0C
 };
 
-// func_80258F9C view: child at +0x0C (slot-14 callable), mode bytes at
+// tickLineState view: child at +0x0C (slot-14 callable), mode bytes at
 struct UnkKizunaObjSlot14;
 // 0x14/0x15/0x16, the line-state u16 at 0x26 and state byte at 0x34.
 struct UnkKizunaSelf58F9C {
@@ -262,7 +262,7 @@ struct UnkKizunaSelfA11C {
     UnkKizunaMidC5C* field0C;    // 0x0C
 };
 
-// func_8025C61C view: draw gate byte at 0x38, mode byte at 0x39, the four
+// drawKizLayouts view: draw gate byte at 0x38, mode byte at 0x39, the four
 // layouts drawn conditionally, the counter at 0x8E and the enable byte 0xDD.
 struct UnkKizunaSelfC61C {
     u8 _00[0x38];
@@ -283,7 +283,7 @@ struct UnkKizunaSelfC61C {
 };
 
 // ---------------------------------------------------------------------------
-// Targets 9/10 (func_80257D90 / func_80257F44) support types.
+// Targets 9/10 (releaseRadarChild / releaseCurChild) support types.
 // ---------------------------------------------------------------------------
 
 // Object with a virtual method at vtable slot 2 (+0x08) taking one int.
@@ -299,7 +299,7 @@ struct UnkKizunaSelf57D90 {
 };
 
 // ---------------------------------------------------------------------------
-// Targets 1/2 (func_80259228 / func_80259280) support types.
+// Targets 1/2 (lineEnterMode1 / lineEnterMode3) support types.
 // ---------------------------------------------------------------------------
 
 // Object whose vfunc at vtable slot 8 (+0x20) takes one u32.
@@ -315,7 +315,7 @@ struct UnkKizunaObj59228 {
     virtual void target8(u32 a); // vtable slot 8 (+0x20)
 };
 
-// Self layout for func_80259228 / func_80259280 (sets byte flag + anim child).
+// Self layout for lineEnterMode1 / lineEnterMode3 (sets byte flag + anim child).
 struct UnkKizunaSelf59228 {
     u8 _00[0x0C];
     UnkKizunaObj59228* field0C; // 0x0C
@@ -327,7 +327,7 @@ struct UnkKizunaSelf59228 {
 };
 
 // ---------------------------------------------------------------------------
-// func_80257EE0 support types.
+// tickCurAnim support types.
 // ---------------------------------------------------------------------------
 
 // Object with a virtual method at vtable slot 14 (+0x38) taking one int.
@@ -356,7 +356,7 @@ struct UnkKizunaSelf57EE0 {
 };
 
 // ---------------------------------------------------------------------------
-// func_802592D8 support types.
+// kizAnimAtEnd support types.
 // ---------------------------------------------------------------------------
 
 struct UnkKizunaSelf592D8 {
@@ -365,20 +365,20 @@ struct UnkKizunaSelf592D8 {
 };
 
 // ---------------------------------------------------------------------------
-// Targets 8/9 (func_8025CAE4 / func_8025CB50) support types.
+// Targets 8/9 (kizCursorHoldA / kizCursorHoldB) support types.
 // ---------------------------------------------------------------------------
 
-// Opaque first argument of func_80231848 (object whose +0x44/+0x48 receive
+// Opaque first argument of CMenuArtsSet_setPaneScale (object whose +0x44/+0x48 receive
 // the copied pair).
 struct UnkKizunaFunc31848Obj;
 
-// Object stored at +0x10 of the +0xB4 holder; passed to func_80231848.
+// Object stored at +0x10 of the +0xB4 holder; passed to CMenuArtsSet_setPaneScale.
 struct UnkKizunaFieldB4 {
     u8 _00[0x10];
     UnkKizunaFunc31848Obj* field10; // 0x10
 };
 
-// func_8025CAE4/CB50 self: sub (at +0x68) is the func_80259344 argument whose
+// kizCursorHoldA/CB50 self: sub (at +0x68) is the getLinePanePair argument whose
 // +0x0C field (at +0x74) is the slot-14-callable child object.
 struct UnkKizunaSelfCAE4 {
     u8 _00[0x68];
@@ -393,7 +393,7 @@ struct UnkKizunaSelfCAE4 {
 // ---------------------------------------------------------------------------
 
 // func_80257B6C self: the line layout at +0x08 (Animate + root pane), two
-// reference panes at +0x0C/+0x10, and the +0x14 Vec2 filled by func_80257AFC.
+// reference panes at +0x0C/+0x10, and the +0x14 Vec2 filled by buildRadarLayout.
 struct UnkKizunaSelf57B6C {
     u8 _00[0x08];
     nw4r::lyt::Layout* field8;   // 0x08
@@ -403,7 +403,7 @@ struct UnkKizunaSelf57B6C {
 };
 
 // ---------------------------------------------------------------------------
-// func_80257AFC support types.
+// buildRadarLayout support types.
 // ---------------------------------------------------------------------------
 
 // Result of the slot-15 virtual; copyVEC2 source lives at +0x4C.
@@ -446,7 +446,7 @@ struct UnkKizunaSelfAFC {
 };
 
 // ---------------------------------------------------------------------------
-// Targets 1/2 (func_8025B958 / func_8025B9C8) support types.
+// Targets 1/2 (infoEnterMode1 / infoEnterMode4) support types.
 // ---------------------------------------------------------------------------
 
 // Child object whose vfuncs at retail slots 7 (+0x1C) and 11 (+0x2C) receive
@@ -465,7 +465,7 @@ struct UnkKizunaObjB958 {
     virtual void slot11(u32 a, u32 b);     // retail slot 11 (+0x2C)
 };
 
-// Self layout for func_8025B958 / func_8025B9C8 (mode byte at +0x14, child at
+// Self layout for infoEnterMode1 / infoEnterMode4 (mode byte at +0x14, child at
 // +0x08, value at +0x0C / +0x10).
 struct UnkKizunaSelfB958 {
     u8 _00[0x08];
@@ -478,7 +478,7 @@ struct UnkKizunaSelfB958 {
 };
 
 // ---------------------------------------------------------------------------
-// func_8025C510 support type: two file handles (0x28 / 0x2C).
+// loadKizBindFiles support type: two file handles (0x28 / 0x2C).
 // ---------------------------------------------------------------------------
 struct UnkKizunaSelfC510 {
     u8 _00[0x28];
@@ -487,7 +487,7 @@ struct UnkKizunaSelfC510 {
 };
 
 // ---------------------------------------------------------------------------
-// func_8025C7FC support type.
+// kizCloseChart support type.
 // ---------------------------------------------------------------------------
 struct UnkKizunaSelfC7FC {
     u8 _00[0x39];
@@ -520,7 +520,7 @@ struct UnkKizunaSelfCE00 {
 };
 
 // ---------------------------------------------------------------------------
-// func_8025CE78 support type: position floats at +0x40..+0x48, info/line
+// slideKizDown support type: position floats at +0x40..+0x48, info/line
 // sub-objects at +0x4C/+0x68, state byte at +0x3A, counter u16 at +0x8E.
 // ---------------------------------------------------------------------------
 struct UnkKizunaSelfCE78 {
@@ -538,7 +538,7 @@ struct UnkKizunaSelfCE78 {
 };
 
 // ---------------------------------------------------------------------------
-// func_8025C21C support types.
+// infoAnimToMode3 support types.
 // ---------------------------------------------------------------------------
 
 // Child object with retail slots 8 (+0x20) and 14 (+0x38); declared idx 6 / 12.
@@ -569,7 +569,7 @@ struct UnkKizunaSelfC21C {
 };
 
 // ---------------------------------------------------------------------------
-// Targets 7/8 (func_8025AB04 / func_8025AB84) support type.
+// Targets 7/8 (lineTickSelIn / lineTickSelOut) support type.
 // ---------------------------------------------------------------------------
 // Layout child holding the kizuna texture binder: vtable slot 3 (+0x0C)
 // resolves a fourcc-tagged resource ('timg') for a formatted pane name.
@@ -594,7 +594,7 @@ struct UnkKizunaSelfAB {
 };
 
 // ---------------------------------------------------------------------------
-// func_8025C6F0 support type.
+// teardownKizuna support type.
 // ---------------------------------------------------------------------------
 struct UnkKizunaSelfC6F0 {
     u8 _00[0x08];
@@ -616,7 +616,7 @@ struct UnkKizunaSelfC6F0 {
 };
 
 // ---------------------------------------------------------------------------
-// func_80257E58 support types.
+// buildCurLayout support types.
 // ---------------------------------------------------------------------------
 
 // Child layout object with retail slots 11 (+0x2C) and 14 (+0x38); declared idx 9 / 12.
@@ -644,14 +644,14 @@ struct UnkKizunaSelf57E58 {
 };
 
 // ---------------------------------------------------------------------------
-// Targets 11/12/13 (func_8025C874 / func_8025C904 / func_8025C994) types.
+// Targets 11/12/13 (kizCursorDir1 / kizCursorDir2 / kizCursorDir3) types.
 // ---------------------------------------------------------------------------
 
 // 3-float vector used with the code80135FDC_setVec3 C-ABI helper. The helper
 // writes x/y/z at the passed pointer and leaves the pointer in r3, so callers
 // copy the returned struct by value (retail emits lwz/stw word copies).
 
-// func_8025C874/C904/C994 self: mode byte at +0x3A, sub-objects at +0x4C /
+// kizCursorDir1/C904/C994 self: mode byte at +0x3A, sub-objects at +0x4C /
 // +0x68 / +0xAC, and a u16 counter at +0x8E.
 struct UnkKizunaSelfC874 {
     u8 _00[0x3A];
@@ -674,13 +674,13 @@ struct UnkKizunaSelfC874 {
 // code_80135FDC.cpp).
 extern "C" UnkKizunaVec3* code80135FDC_setVec3(float* dst, float x, float y, float z);
 
-// Same-TU display-state helpers called by func_8025B870 / func_8025C874
+// Same-TU display-state helpers called by tickInfoMode / kizCursorDir1
 // family (retail links these unmangled; extern "C" keeps the bl relocs
 // binding to the unmangled names).
-extern "C" void func_8025C16C(UnkKizunaSelfC21C* self);
-extern "C" void func_8025C21C(UnkKizunaSelfC21C* self);
-extern "C" void func_8025C298(UnkKizunaSelfC21C* self);
-extern "C" void func_8025C348(UnkKizunaSelfC21C* self);
+extern "C" void infoAnimToMode2(UnkKizunaSelfC21C* self);
+extern "C" void infoAnimToMode3(UnkKizunaSelfC21C* self);
+extern "C" void infoAnimToMode5(UnkKizunaSelfC21C* self);
+extern "C" void infoAnimToMode0(UnkKizunaSelfC21C* self);
 extern "C" void func_80259394(UnkKizunaSelf59394* self, UnkKizunaVec3* v);
 
 // func_8025BA38 self: the line layout child at +0x08 and the cached kizuna id
@@ -721,12 +721,12 @@ extern "C" void func_80127BC4(float* dst, const float* src); // copy 2 floats
 extern const float lbl_eu_8066882C;
 extern const float lbl_eu_80668830;
 extern const float lbl_eu_8066884C;
-extern "C" u32 func_80137510(nw4r::lyt::AnimTransform* anim, float frame);
-extern "C" void func_80231848(UnkKizunaFunc31848Obj* self, const UnkKizunaPair* src);
+extern "C" u32 AnimRewindFrame(nw4r::lyt::AnimTransform* anim, float frame);
+extern "C" void CMenuArtsSet_setPaneScale(UnkKizunaFunc31848Obj* self, const UnkKizunaPair* src);
 extern "C" void copyVEC2(void*, const void*);
 extern "C" void copyVEC3(float* dst, const float* src);
 extern "C" void func_8025AC1C(UnkKizunaSelfAB* self, u32 a);
-extern "C" void func_8025B5D4(char* dst, const char* src);
+extern "C" void copyKizTag3(char* dst, const char* src);
 extern "C" void func_8025CE00(UnkKizunaSelfCE00* self);
 
 // ---------------------------------------------------------------------------
@@ -741,23 +741,23 @@ struct UnkKizunaSelf9820 {
 };
 
 // ---------------------------------------------------------------------------
-// Targets 15/16 (func_80259B18 / func_80259098) support types.
+// Targets 15/16 (resetKizPaneTags / freeLinePanes) support types.
 // ---------------------------------------------------------------------------
 
-// Self for func_80259B18 / func_80259098: shared arc layout at +0x0C whose
+// Self for resetKizPaneTags / freeLinePanes: shared arc layout at +0x0C whose
 // +0x10 field is the slot-15-callable root pane.
 struct UnkKizunaSelf59B18 {
     u8 _00[0x0C];
     nw4r::lyt::Layout* field0C; // 0x0C
 };
 
-// View of a layout's +0x10 field (root pane) used by func_8025B670.
+// View of a layout's +0x10 field (root pane) used by buildInfoLayout.
 struct UnkKizunaLayoutView {
     u8 _00[0x10];
     nw4r::lyt::Pane* field10; // 0x10
 };
 
-// func_80259098's slot-15 result: a pane with a tag-context embedded at +0x10
+// freeLinePanes's slot-15 result: a pane with a tag-context embedded at +0x10
 // driving the pane-name iteration, and a slot-15 virtual at +0x3C returning
 // child panes. MWCC prepends two implicit vtable slots, so slot15 is declared
 // index 13.
@@ -786,16 +786,16 @@ struct UnkKizunaCtxPane59098 {
 };
 
 // Object finalized via vtable slot 2 (+0x08) with a 1 flag (release/null
-// helpers and the func_80259098 cleanup tail).
+// helpers and the freeLinePanes cleanup tail).
 struct UnkKizunaPaneFinalize {
     virtual void target2(int a); // vtable slot 2 (+0x08)
 };
 
 // ---------------------------------------------------------------------------
-// func_8025CF40 support types.
+// rebuildKizLine support types.
 // ---------------------------------------------------------------------------
 
-// Embedded line state at +0x68 of the func_8025CF40 self: layout matches
+// Embedded line state at +0x68 of the rebuildKizLine self: layout matches
 // CKizunaLine except +0x18..+0x20 are u32 color words (the source CKizunaLine
 // copies its pad bytes there) and the vtable word is not overwritten.
 struct UnkKizunaLineState {
@@ -831,7 +831,7 @@ struct UnkKizunaLineState {
 // after the slot-object types below).
 struct UnkKizunaLineBuild;
 
-// func_8025CF40 self: two pointers gating the rebuild, a flag byte, the
+// rebuildKizLine self: two pointers gating the rebuild, a flag byte, the
 // embedded line state at +0x68, the two slot-15 results, and the +0xDE byte.
 struct UnkKizunaSelfCF40 {
     u8 _00[0x30];
@@ -849,7 +849,7 @@ struct UnkKizunaSelfCF40 {
 };
 
 // ---------------------------------------------------------------------------
-// func_8025B670 support type.
+// buildInfoLayout support type.
 // ---------------------------------------------------------------------------
 
 struct UnkKizunaSelfB670 {
@@ -900,7 +900,7 @@ extern GXColorS10 lbl_eu_80664840;
 extern GXColorS10 lbl_eu_80664848;
 extern GXColorS10 lbl_eu_80664850;
 
-// Tag-context string helpers (CTagProcessor.cpp) and func_8025B670's font
+// Tag-context string helpers (CTagProcessor.cpp) and buildInfoLayout's font
 // result source.
 extern "C" const wchar_t* getContextStr(u8* self);
 extern "C" const wchar_t** getContextStrPtr(u8* self);
@@ -909,7 +909,7 @@ extern "C" const wchar_t* func_80127670(const wchar_t** self);
 extern "C" int func_801276C8(const wchar_t** a, const wchar_t** b);
 extern "C" u32 func_801355BC(void);
 
-// sprintf for func_80259B18's pane-name formatting.
+// sprintf for resetKizPaneTags's pane-name formatting.
 extern "C" int sprintf(char* str, const char* fmt, ...);
 
 // CDeviceFont font-object getter (retail symbol is the mangled C++ name).
@@ -917,10 +917,10 @@ extern "C" void* getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(
     u32 arg, nw4r::lyt::Layout* layout);
 
 // ---------------------------------------------------------------------------
-// Targets 17/18/19 (func_8025C580 / func_80259D44 / func_8025CBCC) types.
+// Targets 17/18/19 (tickKizMain / lineCountDown / kizChartStatus) types.
 // ---------------------------------------------------------------------------
 
-// func_8025C580 self: dispatch byte at +0x39, sub-objects at 0x4C/0x68/0xAC/0xC0.
+// tickKizMain self: dispatch byte at +0x39, sub-objects at 0x4C/0x68/0xAC/0xC0.
 struct UnkKizunaSelfC580 {
     u8 _00[0x39];
     u8 field39;                 // 0x39
@@ -933,7 +933,7 @@ struct UnkKizunaSelfC580 {
     UnkKizunaSelf57B6C subC0;   // 0xC0
 };
 
-// func_80259D44 self: countdown timer at +0x40, state bytes at 0x14/0x15, and
+// lineCountDown self: countdown timer at +0x40, state bytes at 0x14/0x15, and
 // a slot-15-callable layout at +0x0C -> +0x10.
 struct UnkKizunaSelf59D44 {
     u8 _00[0x0C];
@@ -945,7 +945,7 @@ struct UnkKizunaSelf59D44 {
     f32 field40;                // 0x40
 };
 
-// func_8025CBCC self: the +0x68 sub overlays UnkKizunaSelf59D88's first half
+// kizChartStatus self: the +0x68 sub overlays UnkKizunaSelf59D88's first half
 // (its anim pointer is self->field78), flag byte at +0x8C.
 struct UnkKizunaSub68CBCC {
     u8 _00[0x10];               // 0x68..0x78 (field10 == self->field78)
@@ -1032,33 +1032,33 @@ struct UnkKizunaSelf5949C {
 };
 
 // Same-TU callees (retail links these unmangled).
-extern "C" bool func_802592D8(UnkKizunaSelf592D8* self);
-extern "C" __declspec(noinline) void func_80258F9C(UnkKizunaSelf58F9C* self);
-// Same-TU callees used by func_80258F9C / the display-reset family.
+extern "C" bool kizAnimAtEnd(UnkKizunaSelf592D8* self);
+extern "C" __declspec(noinline) void tickLineState(UnkKizunaSelf58F9C* self);
+// Same-TU callees used by tickLineState / the display-reset family.
 extern "C" __declspec(noinline) bool func_80259DE8(UnkKizunaSelf59DE8* self);
 extern "C" bool func_8025A11C(UnkKizunaSelfA11C* self);
-extern "C" __declspec(noinline) void func_8025AAE0(void* self);
-extern "C" __declspec(noinline) void func_8025AB04(UnkKizunaSelfAB* self);
-extern "C" __declspec(noinline) void func_8025AB84(UnkKizunaSelfAB* self);
-extern "C" __declspec(noinline) void func_8025AC04(void* self);
-extern "C" __declspec(noinline) void func_80259C5C(UnkKizunaSelf59C5C* self);
-extern "C" __declspec(noinline) void func_80259D44(UnkKizunaSelf59D44* self);
-extern "C" void func_80257EE0(UnkKizunaSelf57EE0* self);
+extern "C" __declspec(noinline) void lineStartSelect(void* self);
+extern "C" __declspec(noinline) void lineTickSelIn(UnkKizunaSelfAB* self);
+extern "C" __declspec(noinline) void lineTickSelOut(UnkKizunaSelfAB* self);
+extern "C" __declspec(noinline) void lineClearSelect(void* self);
+extern "C" __declspec(noinline) void lineCountUp(UnkKizunaSelf59C5C* self);
+extern "C" __declspec(noinline) void lineCountDown(UnkKizunaSelf59D44* self);
+extern "C" void tickCurAnim(UnkKizunaSelf57EE0* self);
 extern "C" void func_80257B6C(UnkKizunaSelf57B6C* self);
-extern "C" void func_8025CC88(void* self);
-extern "C" void func_8025CCA8(void* self);
-extern "C" void func_8025CCF8(UnkKizunaSelfC580* self);
-extern "C" void func_8025CD10(UnkKizunaSelfC580* self);
+extern "C" void tryKizMode2(void* self);
+extern "C" void tryKizMode3(void* self);
+extern "C" void tryKizMode5(UnkKizunaSelfC580* self);
+extern "C" void tryKizIdle(UnkKizunaSelfC580* self);
 extern "C" void func_8025CD40(void* self);
 
 // BDAT/layout-manager helpers (unmangled retail symbols).
 extern "C" u32 func_8003B1EC(void* fp);              // BDAT row count
 extern "C" u32 func_8009CF8C(u32 idx);               // game-progress getter
 extern "C" u32 func_8009ECE0();                      // current kizuna id
-extern "C" char* func_80136254(const void* mgr, const void* name, int id);
-extern "C" int func_80136330(const void* mgr, const void* name, int id);
-extern "C" int func_80138E1C(int id);
-extern "C" void func_80137C1C(void* obj, u32 color);
+extern "C" char* BdatGetU16Direct(const void* mgr, const void* name, int id);
+extern "C" int BdatGetS16Direct(const void* mgr, const void* name, int id);
+extern "C" int BdatGetSexFlag(int id);
+extern "C" void PaneSetVtxColorAll(void* obj, u32 color);
 extern "C" int strcmp(const char*, const char*);
 extern "C" void func_80137F88(nw4r::lyt::Pane* pane, u32 res); // bind texture resource to pane
 // func_8003AA34 is declared by an included header (no-arg bdat manager refresh);
@@ -1067,7 +1067,7 @@ extern "C" void func_80137CD4(void* layout, const char* tag, int color1, u32 col
 
 // Same-TU callee: returns the new kizuna selection id (name = item + 0xBC).
 // Retail links it unmangled.
-extern "C" u16 func_8025AA38(UnkKizunaSelf5949C* self, const char* name);
+extern "C" u16 findKizByName(UnkKizunaSelf5949C* self, const char* name);
 
 // Per-frame kizuna-entry row cursor shared with func_8025A11C.
 extern u16 lbl_eu_80664858;

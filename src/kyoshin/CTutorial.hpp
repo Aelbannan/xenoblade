@@ -132,13 +132,13 @@ u32 getPackedFont();
 extern "C" void setLayoutTextBoxNumber__FPQ34nw4r3lyt6LayoutPcUc(nw4r::lyt::Layout*,
                                                         char*, int);
 
-// Remaining helpers from the func_80135FDC translation unit (same signatures
+// Remaining helpers from the MenuStateInitFlags translation unit (same signatures
 // as code_80135FDC.hpp so the mangled/unmangled reloc names are unchanged).
 u32 advanceAnimTransform(nw4r::lyt::AnimTransform*, float);
-extern "C" u32 func_80137510(nw4r::lyt::AnimTransform*, float);
+extern "C" u32 AnimRewindFrame(nw4r::lyt::AnimTransform*, float);
 void func_801390E0(CFileHandle**);
 void releaseArcResourceAccessor(nw4r::lyt::ArcResourceAccessor*);
-extern "C" void func_80137E7C(void*, void*, void*);
+extern "C" void PaneSetTexPaletteByName(void*, void*, void*);
 
 // Unmangled retail callees - C ABI. The retail reloc names for these are the
 // literal unmangled identifiers, so they must be declared with C linkage.
@@ -155,7 +155,7 @@ void setLayoutTextBoxFont(nw4r::lyt::Layout*, char*, u32);
 // Root-pane font bind (retail reloc is the literal unmangled name).
 extern "C" void func_8013676C(void*, u32);
 // BDAT field reader (retail reloc is the literal unmangled name).
-extern "C" u32 func_801361E8(u32, const char*, u32);
+extern "C" u32 BdatGetU8Direct(u32, const char*, u32);
 
 // Retail calls the language-flag query through its unmangled Fv symbol with a
 // dummy -1 argument that the callee ignores.

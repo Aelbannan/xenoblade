@@ -9,8 +9,8 @@ void CHelp_EnemyCount::resetEnemyCount() {
 
 bool CHelp_EnemyCount::checkEnemyCountDone() {
     if (unkC <= 0) {
-        // Count active enemy entries in the circular list from func_800B6C7C.
-        CHelp_EnemyList* list = func_800B6C7C();
+        // Count active enemy entries in the circular list from getReslistC08.
+        CHelp_EnemyList* list = getReslistC08();
         CHelp_EnemyListNode* node;      // node reuses the func-return register (r3)
         int count = 0;                   // r4
         CHelp_EnemyListNode* head = list->mHead; // r5

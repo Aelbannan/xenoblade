@@ -54,7 +54,7 @@ Retail asm for each symbol is in this directory (`asm_*.s`).
 
 ### `CMenuArtsSelect::Move` (`asm_Move_CMenuArtsSelect.s`)
 - Frame `-0x70` + `_savegpr_20`; same HUD gate family as `cbRenderBefore` / PTGauge:
-  - `CTaskGame` / `lbl_eu_80663E28` bit10 / `func_8013BE50` / mask
+  - `CTaskGame` / `lbl_eu_80663E28` bit10 / `IsMenuState621F0` / mask
   - then `lbl_eu_80663E24`, `CfGameManager`, `func_8018A608`, `func_80122448`, buffs, etc.
 - Large state machine after gates — follow full asm
 - Extend hpp fields for `Move`; **do not** edit `Term` or `cbRenderBefore`

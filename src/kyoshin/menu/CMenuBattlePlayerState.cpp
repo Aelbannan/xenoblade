@@ -6,26 +6,26 @@
 #include "kyoshin/cf/object/CfObjectActor.hpp"
 #include "kyoshin/cf/CBattleManager.hpp"
 #include "kyoshin/cf/CfGameManager.hpp"
-#undef func_80043D90
+#undef CTaskGame_enumListCtor
 #undef func_8017FD44
 #undef isSceneLoading__Q22cf13CfGameManagerFv
-#undef func_80043F18
+#undef CTaskGame_enumListGet
 // code_80135FDC.hpp declares lbl_eu_8066A208 as u32 (line 188);
 // CfObjectMove.hpp (via the CBattleManager.hpp include above) declares it
 // const float. This TU uses neither copy.
-#define func_80043D90 menuBpsEnumListCtor5
+#define CTaskGame_enumListCtor menuBpsEnumListCtor5
 #define func_8017FD44 menuBpsFd44Get5
 #define isSceneLoading__Q22cf13CfGameManagerFv menuBpsCfGameMgrCond5
-#define func_80043F18 menuBpsMoveEnumListGet5
+#define CTaskGame_enumListGet menuBpsMoveEnumListGet5
 // CfObjectModel.hpp (via CfObjectActor.hpp) declares this symbol as ml::CVec3;
 // code_80135FDC.hpp re-types it as nw4r::math::VEC3 -> MWCC 10563. This TU
 // never touches the zero vector, so rename the header-local decl away.
 #define zero__Q22ml5CVec3 menuBpsZeroVecDecl5
 #include "kyoshin/code_80135FDC.hpp"
-#undef func_80043D90
+#undef CTaskGame_enumListCtor
 #undef func_8017FD44
 #undef isSceneLoading__Q22cf13CfGameManagerFv
-#undef func_80043F18
+#undef CTaskGame_enumListGet
 #undef zero__Q22ml5CVec3
 #include "monolib/device/CDeviceVI.hpp"
 #include "monolib/util/MemManager.hpp"
@@ -72,7 +72,7 @@ void __ct__17UnkClass_8045F564Fv(UnkClass_8045F564*);
 
 
 void __construct_array(void* ptr, void* ctor, void* dtor, u32 size, u32 n);
-// func_800B8B94 is declared (extern "C", s32) by CAIAction.hpp, included
+// findObjB28ById is declared (extern "C", s32) by CAIAction.hpp, included
 // transitively via CfObjectActor.hpp -> CBattleManager.hpp.
 void func_8010D1B4(CMenuBattlePlayerState* self,
                    cf::CfObjectActor* actor,
@@ -465,9 +465,9 @@ void CMenuBattlePlayerState::Init() {
         void* actors[3];
         {
             int* party = func_8009ECB0();
-            actors[0] = func_800B8B94(party[1]);
-            actors[1] = func_800B8B94(party[2]);
-            actors[2] = func_800B8B94(party[3]);
+            actors[0] = findObjB28ById(party[1]);
+            actors[1] = findObjB28ById(party[2]);
+            actors[2] = findObjB28ById(party[3]);
         }
 
         {
@@ -571,7 +571,7 @@ void CMenuBattlePlayerState::Move() {
     }
     DECOMP_ASM_INSN_END
 after_bit21:
-    if (!func_8013BE50()) {
+    if (!IsMenuState621F0()) {
         goto done;
     }
     if (unk7C9 != 0) {
@@ -597,7 +597,7 @@ after_bit21:
         while (fi < 3) {
             // Retail: clrlslwi fi; add party; lwz 4(r3); ... stwx actors,same shift.
             int* p = party + fi;
-            void* actor = func_800B8B94(p[1]);
+            void* actor = findObjB28ById(p[1]);
             actors[fi] = actor;
             if (actor != NULL) {
                 aliveCount += 1;
@@ -773,9 +773,9 @@ after_bit21:
                 func_8010D8D4(this, slot);
                 break;
             case 3: {
-                u32 a = func_80137510(slot->unk04,
+                u32 a = AnimRewindFrame(slot->unk04,
                                       lbl_eu_80666F90);
-                u32 b = func_80137510(slot->unk1C,
+                u32 b = AnimRewindFrame(slot->unk1C,
                                       lbl_eu_80666F90);
                 // Retail: ori 0xc0; rlwinm clear PPC bits 21-23 (= 0x700)
                 slot->unk25C = (slot->unk25C | 0xC0u) & ~0x700u;
@@ -824,7 +824,7 @@ after_bit21:
             advanceAnimTransform(unk7F0, lbl_eu_80666F90);
             break;
         case 3:
-            if (func_80137510(unk7E8, lbl_eu_80666F90) !=
+            if (AnimRewindFrame(unk7E8, lbl_eu_80666F90) !=
                 0) {
                 unk7F4 = 1;
                 unk7F8 = 0;
@@ -899,7 +899,7 @@ void CMenuBattlePlayerState::cbRenderBefore() {
     }
     DECOMP_ASM_INSN_END
 after_bit21:
-    if (!func_8013BE50()) {
+    if (!IsMenuState621F0()) {
         goto done;
     }
     if (unk7C9 != 0) {
@@ -1239,7 +1239,7 @@ extern "C" void func_8010CF68(CMenuBattlePlayerState* self,
             k += iw;
             char* sA = tbl + 0x415;
             char* sB = tbl + 0x422;
-            result = static_cast<u8>(func_8013600C(sA, sB,
+            result = static_cast<u8>(BdatGetU8ByTableKey(sA, sB,
                                                    static_cast<u8>(k))) *
                      100;
         }
@@ -1358,9 +1358,9 @@ void func_8010D1B4(CMenuBattlePlayerState* self,
             if (rec->unk30 != 0x800 && rec->unk0C != 0 && rec->unk0C != 0xF &&
                 rec->unk0C != 0x10 && rec->unk0C != 0x12) {
                 u16 nameId = static_cast<u16>(
-                    func_80136254(lbl_eu_806640E0, tbl + 0x42B, rec->unk0C));
+                    BdatGetU16Direct(lbl_eu_806640E0, tbl + 0x42B, rec->unk0C));
                 if (nameId != 0) {
-                    char* tex = func_80138F78(nameId);
+                    char* tex = MakeTplNameSysFile(nameId);
                     u32 bound = reinterpret_cast<u32>(
                         reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(
                             func_801355F4())
@@ -1410,7 +1410,7 @@ void func_8010D1B4(CMenuBattlePlayerState* self,
             if (v != 0) {
                 if ((cur2 & 0xFF) == 0x20) {
                     // Fixed "level up" icon id, no BDAT lookup for entry 0x20.
-                    char* tex = func_80138F78(0x13D);
+                    char* tex = MakeTplNameSysFile(0x13D);
                     u32 bound = reinterpret_cast<u32>(
                         reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(
                             func_801355F4())
@@ -1427,9 +1427,9 @@ void func_8010D1B4(CMenuBattlePlayerState* self,
                     }
                 } else {
                     u16 nameId = static_cast<u16>(
-                        func_80136254(lbl_eu_806640E0, tbl2 + 0x42B, v));
+                        BdatGetU16Direct(lbl_eu_806640E0, tbl2 + 0x42B, v));
                     if (nameId != 0) {
-                        char* tex = func_80138F78(nameId);
+                        char* tex = MakeTplNameSysFile(nameId);
                         u32 bound = reinterpret_cast<u32>(
                             reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(
                                 func_801355F4())
@@ -1479,13 +1479,13 @@ void func_8010D4B0(CMenuBattlePlayerState* self,
     func_80136D74(reinterpret_cast<nw4r::lyt::Layout*>(slot->unk44), buf, 0);
     func_80136D74(
         reinterpret_cast<nw4r::lyt::Layout*>(slot->unk48),
-        func_80136190(lbl_eu_804FD720 + 0x406, lbl_eu_804FD720 + 0x410, 2),
+        BdatTouchStringCell(lbl_eu_804FD720 + 0x406, lbl_eu_804FD720 + 0x410, 2),
         0);
 
     if (slot->unk25C & 0x2) {
         slot->unk25C &= ~0x2u;
-        func_80136C98(slot->unk4C, slot->unk210);
-        func_80136C98(slot->unk50, slot->unk214);
+        LayoutSetTextBoxInt(slot->unk4C, slot->unk210);
+        LayoutSetTextBoxInt(slot->unk50, slot->unk214);
         // Color-set swap keyed on full-HP / dead / other.
         if (slot->unk210 == slot->unk214) {
             func_8013996C(slot->unk4C, lbl_eu_80663F38, 1);
@@ -1603,14 +1603,14 @@ extern "C" void func_8010D8D4(CMenuBattlePlayerState* self,
         func_80136D74(reinterpret_cast<nw4r::lyt::Layout*>(slot->unk44), buf, 0);
         func_80136D74(
             reinterpret_cast<nw4r::lyt::Layout*>(slot->unk48),
-            func_80136190(tbl + 0x406, tbl + 0x410, 2),
+            BdatTouchStringCell(tbl + 0x406, tbl + 0x410, 2),
             0);
     }
 
     if (slot->unk25C & 2) {
         slot->unk25C &= ~2u;
-        func_80136C98(slot->unk4C, slot->unk210);
-        func_80136C98(slot->unk50, slot->unk214);
+        LayoutSetTextBoxInt(slot->unk4C, slot->unk210);
+        LayoutSetTextBoxInt(slot->unk50, slot->unk214);
         // Color-set swap keyed on full-HP / dead / other.
         if (slot->unk210 == slot->unk214) {
             func_8013996C(slot->unk4C, lbl_eu_80663F38, 1);
@@ -1890,7 +1890,7 @@ extern "C" void func_8010D8D4(CMenuBattlePlayerState* self,
         break;
     case 9:
         changed1 = 1;
-        if (func_80137510(slot->unk0C, lbl_eu_80666F90) != 0) {
+        if (AnimRewindFrame(slot->unk0C, lbl_eu_80666F90) != 0) {
             slot->unk250 = 6;
         }
         break;

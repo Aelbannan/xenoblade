@@ -379,7 +379,7 @@ extern "C" CfMapMineManager* __ct__80205A7C(CfMapMineManager* self) {
     lbl_eu_806646A0 = self;
 
     // Allocate the node array (150 nodes x 0x2C).
-    u32 handle = func_80061FFC();
+    u32 handle = CfRes_getAllocHandle();
     void* mem = allocate_array__Q23mtl10MemManagerFUlUl(0x19D8, handle);
     self->mPoints.mList = (MineNode*)__construct_new_array(mem, (void*)func_80205F78, 0,
                                                            0x2C, 0x96);
@@ -453,14 +453,14 @@ extern "C" void func_80206388(CfMapMineManager* self) {
     MineNode* n = self->mPoints.mStartPtr->mNext;
     while (n != self->mPoints.mStartPtr) {
         if (n->mItem.mObj0 != 0) {
-            if (func_800B8920(n->mItem.mObj0) != 0) {
-                func_800B9404(n->mItem.mObj0);
+            if (lookupWorkAtAddr(n->mItem.mObj0) != 0) {
+                gmFileObject(n->mItem.mObj0);
             }
             n->mItem.mObj0 = 0;
         }
         if (n->mItem.mObj4 != 0) {
-            if (func_800B8920(n->mItem.mObj4) != 0) {
-                func_800B9404(n->mItem.mObj4);
+            if (lookupWorkAtAddr(n->mItem.mObj4) != 0) {
+                gmFileObject(n->mItem.mObj4);
             }
             n->mItem.mObj4 = 0;
         }
@@ -858,14 +858,14 @@ extern "C" void func_80206BD4(CfMapMineManager* self) {
     MineNode* n = start->mNext;
     while (n != start) {
         if (n->mItem.mObj0 != 0) {
-            if (func_800B8920(n->mItem.mObj0) != 0) {
-                func_800B9404(n->mItem.mObj0);
+            if (lookupWorkAtAddr(n->mItem.mObj0) != 0) {
+                gmFileObject(n->mItem.mObj0);
             }
             n->mItem.mObj0 = 0;
         }
         if (n->mItem.mObj4 != 0) {
-            if (func_800B8920(n->mItem.mObj4) != 0) {
-                func_800B9404(n->mItem.mObj4);
+            if (lookupWorkAtAddr(n->mItem.mObj4) != 0) {
+                gmFileObject(n->mItem.mObj4);
             }
             n->mItem.mObj4 = 0;
         }
@@ -989,13 +989,13 @@ extern "C" int func_802067E4(CfMapMineManager* self, MinePoint* pt,
         return 0;
     }
 
-    func_801583E0(item);
+    CItemData_enableFamFlag(item);
     CItemImpl* impl = (CItemImpl*)CItem_initItemImplInstances(item);
     impl->vf1C(item);
 
     u8 colA;
     u8 colB;
-    func_80157F04(rowVal, &colA, &colB);
+    CItem_resolveFamilyBdat(rowVal, &colA, &colB);
     u8 kind = getBdatStringColumnValue(file, cols + 0x53, colB);
 
     // Sum lottery weights over the active inventory categories (1-8).
@@ -1029,7 +1029,7 @@ extern "C" int func_802067E4(CfMapMineManager* self, MinePoint* pt,
     if (cap > kind && lbl_eu_80663E42 == 4) {
         kind = cap;
     }
-    func_801570A0(item, kind);
+    CItemData_callVf0C(item, kind);
 
     int rangeIdx = ((pt->mFlags >> 16) & 1) * 2 + *outFlag;
     u8 lo = lbl_eu_80662750[rangeIdx * 2];
@@ -1182,7 +1182,7 @@ extern "C" void func_802074F0(CfMapMineManager* self) {
     drop.mHead00 = 0;
     if (func_802067E4(mgr, &nearest->mItem, &drop, &dropFlag) == 0) return;
 
-    if (func_801599D4(&drop, 0) == 0) {
+    if (CItemData_lookupOrAlloc(&drop, 0) == 0) {
         const char* cols = lbl_eu_80508424;
         u32 msg = getBdatStringColumnValue(
             (BdatFilePointer*)getFP__FPCc(cols + 0x77), cols + 0x4E, 0x1B);
@@ -1199,8 +1199,8 @@ extern "C" void func_802074F0(CfMapMineManager* self) {
         nearest->mItem.mFlags = fl2;
         if (cnt == 0) {
             if (nearest->mItem.mObj4 != 0) {
-                if (func_800B8920(nearest->mItem.mObj4) != 0) {
-                    func_800B9404(nearest->mItem.mObj4);
+                if (lookupWorkAtAddr(nearest->mItem.mObj4) != 0) {
+                    gmFileObject(nearest->mItem.mObj4);
                     nearest->mItem.mObj4 = 0;
                 }
                 nearest->mItem.mObj4 = 0;

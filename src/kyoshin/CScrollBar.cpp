@@ -97,7 +97,7 @@ __attribute__((noinline)) void func_801F38FC(CScrollBar* self) {
 /* Leaving/shutdown: when the scroll-out animation is done, hide the bar. */
 __attribute__((noinline)) void func_801F3960(CScrollBar* self) {
     float frame = lbl_eu_80668150;
-    if (func_80137510(self->mAnimTransform, frame)) {
+    if (AnimRewindFrame(self->mAnimTransform, frame)) {
         self->mState = 0;
         self->mActive = 1;
         self->mAnimOffset = lbl_eu_80668138;

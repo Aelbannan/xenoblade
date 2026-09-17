@@ -85,14 +85,14 @@ extern "C" void func_801C412C(CTitleAHelp* self);
 extern "C" void func_801C3FF0(CTitleAHelp* self);
 extern "C" void func_801C4080(CTitleAHelp* self, nw4r::lyt::DrawInfo* drawInfo);
 extern "C" int isIdle__11CTitleAHelpFv(CTitleAHelp* self);
-extern "C" int func_801CB038(CItemBoxGrid* self);
+extern "C" int IsItemBoxReady(CItemBoxGrid* self);
 extern "C" void func_801CB28C(CItemBoxGrid* self);
-extern "C" void func_801CABC8(CItemBoxGrid* self);
-extern "C" void func_801CAD8C(CItemBoxGrid* self, nw4r::lyt::DrawInfo* drawInfo);
-extern "C" void func_801CAE9C(CItemBoxGrid* self);
+extern "C" void UpdateItemBox(CItemBoxGrid* self);
+extern "C" void DrawItemBoxGrid(CItemBoxGrid* self, nw4r::lyt::DrawInfo* drawInfo);
+extern "C" void UnloadItemBox(CItemBoxGrid* self);
 extern "C" int GetField61(CItemBoxGrid* self);
 extern "C" void playUISound__FUl(u32 op);
-extern "C" int func_8013BE50();
+extern "C" int IsMenuState621F0();
 
 // CW-mangled ctors/dtors referenced at the retail call sites (extern "C" stops
 // C++ re-mangling of the retail CW names).

@@ -335,7 +335,7 @@ extern "C" void func_8048F8E8(CScnRootNw4r* self) {
         anm->SetUpdateRate(func_80496288(self->field_0x4));
     }
 
-    func_804C2654(self->field_0x4->mEnvLgtCtrl);
+    scnLgtBindCamera(self->field_0x4->mEnvLgtCtrl);
     self->mScnRoot->UpdateFrame();
     self->mScnRoot->CalcWorld();
     self->mScnRoot->CalcMaterial();
@@ -386,7 +386,7 @@ extern "C" void func_8048F994(CScnRootNw4r* self) {
     ((void (*)(CScnRootNw4r*, u32))func_8048FAA8)(self, 0);
     ((void (*)(CScnRootNw4r*, u32))func_8048FAA8)(self, 1);
 
-    func_804C19B8(self->field_0x4->mEnvLgtCtrl);
+    scnLgtEnterMode20(self->field_0x4->mEnvLgtCtrl);
 }
 
 // us-80493b1c: two-phase draw dispatch.
@@ -430,7 +430,7 @@ extern "C" void func_8048FAA8(CScnRootNw4r* self, int flag) {
         CScnDrawNode* node;
         for (node = list->mStartNodePtr->mNext;
              node != list->mStartNodePtr; node = node->mNext) {
-            pending = func_80484734((CScnItemModel*)node->mItem, 1) | pending;
+            pending = simSyncBuf824Flags((CScnItemModel*)node->mItem, 1) | pending;
             pending = (pending != 0);
         }
 
@@ -448,7 +448,7 @@ extern "C" void func_8048FAA8(CScnRootNw4r* self, int flag) {
         // Clear the per-item request flags.
         for (CScnDrawNode* node = list->mStartNodePtr->mNext;
              node != list->mStartNodePtr; node = node->mNext) {
-            func_80484734((CScnItemModel*)node->mItem, 0);
+            simSyncBuf824Flags((CScnItemModel*)node->mItem, 0);
         }
         self->field_0x19 = 0;
     }
@@ -508,7 +508,7 @@ void func_8048FC68(CScnRootNw4r* self) {
 extern "C" u32 lbl_eu_806639A0;
 extern "C" u32 lbl_eu_80663998;
 extern "C" void func_8048F2F0();
-extern "C" void func_804871A8();
+extern "C" void scnImN4GetWord4AC();
 extern "C" void ExecCallback_CALC_MAT__Q34nw4r3g3d15IScnObjCallbackFQ44nw4r3g3d6ScnObj6TimingPQ34nw4r3g3d6ScnObjUlPv();
 extern "C" void ExecCallback_CALC_VIEW__Q34nw4r3g3d15IScnObjCallbackFQ44nw4r3g3d6ScnObj6TimingPQ34nw4r3g3d6ScnObjUlPv();
 extern "C" void ExecCallback_DRAW_OPA__Q34nw4r3g3d15IScnObjCallbackFQ44nw4r3g3d6ScnObj6TimingPQ34nw4r3g3d6ScnObjUlPv();
@@ -524,7 +524,7 @@ extern "C" u32 lbl_eu_8056E768[23] = {
     (u32)&func_8048FF90,
     (u32)&func_8048FFBC,
     (u32)&func_8048F2F0,
-    (u32)&func_804871A8,
+    (u32)&scnImN4GetWord4AC,
     (u32)&func_80490040,
     (u32)&func_80490038,
     (u32)&lbl_eu_806639A0,

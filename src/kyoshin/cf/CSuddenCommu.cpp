@@ -13,7 +13,7 @@
 #include "monolib/math/Random.hpp"
 // CBattleManager.hpp currently pulls a conflicting CfObjectActor.hpp decl
 // (func_80149154 overload); use the standalone header chain instead.
-// NOTE: CVision.hpp omitted - its extern "C" func_80043D90(void*) clashes
+// NOTE: CVision.hpp omitted - its extern "C" CTaskGame_enumListCtor(void*) clashes
 // with the typed decl reachable via harness_catalog.hpp -> CfObjectImplMove.hpp.
 #include "kyoshin/cf/CCharEffect.hpp" // setChildB59__ (cue release)
 #include "kyoshin/cf/CfObjectEnumList.hpp"
@@ -642,7 +642,7 @@ void func_801BB81C(CSuddenCommu* self) {
     func_801BC474(self);
     func_800EA484((cf::CBattleManager*)getInstance__Q22cf14CBattleManagerFv(), lbl_eu_80667E54, 0x13);
     func_802A35B8(self->field_10);
-    self->field_10 = func_802A3290();
+    self->field_10 = CCharVoiceMan_AllocCommuVoiceId();
     player = cf::CfGameManager::getPlayer(0);
     if (player != 0) player = (char*)player - 0x3E9C;
     if (player != 0) {
@@ -974,10 +974,10 @@ int func_801BBCBC(CSuddenCommu* self) {
 void func_801BC474(CSuddenCommu* self) {
     {
         CSuddenCommuEnumHolder holder;
-        func_80043D90(&holder);
-        func_800F4A98(func_80043F18(&holder), 0x100, 0);
-        for (u32 i = 0; i < ((cf::CfObjEnumList*)func_80043F18(&holder))->mPtrCount; i++) {
-            cf::CfObjEnumList* list = (cf::CfObjEnumList*)func_80043F18(&holder);
+        CTaskGame_enumListCtor(&holder);
+        func_800F4A98(CTaskGame_enumListGet(&holder), 0x100, 0);
+        for (u32 i = 0; i < ((cf::CfObjEnumList*)CTaskGame_enumListGet(&holder))->mPtrCount; i++) {
+            cf::CfObjEnumList* list = (cf::CfObjEnumList*)CTaskGame_enumListGet(&holder);
             void* p = func_800F6EAC((CfMoveEnumList*)list, i);
             CSuddenCommuActor* actor = (CSuddenCommuActor*)p;
             if (p != 0) actor = (CSuddenCommuActor*)((char*)p - 0x3E9C);
@@ -987,10 +987,10 @@ void func_801BC474(CSuddenCommu* self) {
     }
     {
         CSuddenCommuEnumHolder holder;
-        func_80043D90(&holder);
-        func_800F4A98(func_80043F18(&holder), 0x20, 0);
-        for (u32 i = 0; i < ((cf::CfObjEnumList*)func_80043F18(&holder))->mPtrCount; i++) {
-            cf::CfObjEnumList* list = (cf::CfObjEnumList*)func_80043F18(&holder);
+        CTaskGame_enumListCtor(&holder);
+        func_800F4A98(CTaskGame_enumListGet(&holder), 0x20, 0);
+        for (u32 i = 0; i < ((cf::CfObjEnumList*)CTaskGame_enumListGet(&holder))->mPtrCount; i++) {
+            cf::CfObjEnumList* list = (cf::CfObjEnumList*)CTaskGame_enumListGet(&holder);
             void* p = func_800F6EAC((CfMoveEnumList*)list, i);
             CSuddenCommuActor* actor = (CSuddenCommuActor*)p;
             if (p != 0) actor = (CSuddenCommuActor*)((char*)p - 0x3E9C);
@@ -1013,10 +1013,10 @@ void func_801BC590(CSuddenCommu* self) {
     self->field_24 &= ~0x2;
     {
         CSuddenCommuEnumHolder holder;
-        func_80043D90(&holder);
-        func_800F4A98(func_80043F18(&holder), 0x100, 0);
-        for (u32 i = 0; i < ((cf::CfObjEnumList*)func_80043F18(&holder))->mPtrCount; i++) {
-            cf::CfObjEnumList* list = (cf::CfObjEnumList*)func_80043F18(&holder);
+        CTaskGame_enumListCtor(&holder);
+        func_800F4A98(CTaskGame_enumListGet(&holder), 0x100, 0);
+        for (u32 i = 0; i < ((cf::CfObjEnumList*)CTaskGame_enumListGet(&holder))->mPtrCount; i++) {
+            cf::CfObjEnumList* list = (cf::CfObjEnumList*)CTaskGame_enumListGet(&holder);
             void* p = func_800F6EAC((CfMoveEnumList*)list, i);
             CSuddenCommuActor* actor = (CSuddenCommuActor*)p;
             if (p != 0) actor = (CSuddenCommuActor*)((char*)p - 0x3E9C);
@@ -1026,10 +1026,10 @@ void func_801BC590(CSuddenCommu* self) {
     }
     {
         CSuddenCommuEnumHolder holder;
-        func_80043D90(&holder);
-        func_800F4A98(func_80043F18(&holder), 0x20, 0);
-        for (u32 i = 0; i < ((cf::CfObjEnumList*)func_80043F18(&holder))->mPtrCount; i++) {
-            cf::CfObjEnumList* list = (cf::CfObjEnumList*)func_80043F18(&holder);
+        CTaskGame_enumListCtor(&holder);
+        func_800F4A98(CTaskGame_enumListGet(&holder), 0x20, 0);
+        for (u32 i = 0; i < ((cf::CfObjEnumList*)CTaskGame_enumListGet(&holder))->mPtrCount; i++) {
+            cf::CfObjEnumList* list = (cf::CfObjEnumList*)CTaskGame_enumListGet(&holder);
             void* p = func_800F6EAC((CfMoveEnumList*)list, i);
             CSuddenCommuActor* actor = (CSuddenCommuActor*)p;
             if (p != 0) actor = (CSuddenCommuActor*)((char*)p - 0x3E9C);

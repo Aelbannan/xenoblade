@@ -83,7 +83,7 @@ extern "C" void* func_80157C4C(u32 index, s16 value);                           
 extern "C" void* getArtsParamRC2(void* base, int row, int slot);               // CAttackSet.cpp (arts-slot record)
 extern "C" void setArtsSlotRC(void* base, int artsId, int row, int slot);     // CAttackSet.cpp (arts-slot write)
 
-extern "C" u16 func_80158018(u16 value);                                        // CItem.cpp (arts level lookup)
+extern "C" u16 CItem_getNameIdFromFam(u16 value);                                        // CItem.cpp (arts level lookup)
 
 // NOTE: CItem_initItemImplInstances is declared (with an item-pointer form)
 // by kyoshin/CItemBoxInfo.hpp; include that header rather than redeclaring
@@ -91,7 +91,7 @@ extern "C" u16 func_80158018(u16 value);                                        
 
 extern "C" void* getAtkParam(void* base, int index);                           // CAttackSet.cpp (attack-parameter record lookup)
 
-extern "C" void func_80157F04(u16 v, void* outA, void* outB);                  // CItemBoxInfo.cpp (item family resolver)
+extern "C" void CItem_resolveFamilyBdat(u16 v, void* outA, void* outB);                  // CItemBoxInfo.cpp (item family resolver)
 
 extern "C" u32 isResourceFlagSet__Q22cf13CfGameManagerFv(u32 bit);               // CfGameManager.cpp (flag-bit test)
 extern "C" u32 func_8009CF8C(u32 resourceId);                                // CfGameManager.cpp (resource lookup)
@@ -463,10 +463,10 @@ namespace cf {
     };
 
     // -- func_800A1370 view: arts-data object -------------------------------
-    // u16 type id at +0x00 (fed to func_800B8B94) and a write target at
+    // u16 type id at +0x00 (fed to findObjB28ById) and a write target at
     // +0x17C (func_80175A50's obj argument).
     struct CtrlObjectParamArtsView {
-        u16 field_00;         // +0x00: type id passed to func_800B8B94
+        u16 field_00;         // +0x00: type id passed to findObjB28ById
         u8  pad_02[0x17A];    // +0x02..0x17B
         u8  field_17C;        // +0x17C: write target of func_80175A50
     };
@@ -636,7 +636,7 @@ namespace cf {
     };
 
     // -- func_8009F6D4 view: u16 type id at +0, CActorParam at +0x17C ------
-    // lhz reads the u16 type at +0 (fed to func_800B8B94); the embedded
+    // lhz reads the u16 type at +0 (fed to findObjB28ById); the embedded
     // CActorParam drives the vtable-slot dispatches at +0x17C.
     struct CtrlObjectParamEntry9F6D4 {
         u16 field_00;           // +0x00: type id
@@ -794,7 +794,7 @@ namespace cf {
     // The struct/extern live at global scope (see top of header) so the
     // symbol stays unmangled.
     // -- func_800A18A4 view: arts-slot owner --------------------------------
-    // u16 type id at +0 (fed to func_800B8B94), u16 bdat row key at +0xC, a
+    // u16 type id at +0 (fed to findObjB28ById), u16 bdat row key at +0xC, a
     // 0x49-stride byte-row table at +0xE8 (indexed by the +0x58 column
     // value), and the embedded CActorParam at +0x17C (vtable slots 0xA4 /
     // 0x28C / 0x32C).

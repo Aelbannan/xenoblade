@@ -154,7 +154,7 @@ extern "C" int sprintf(char* str, const char* fmt, ...);
 // Data/build helpers used by func_80272810.
 extern "C" u32 func_8003B1EC(void* fp);
 extern "C" u32 func_8009CF8C(u32);
-extern "C" u16 func_80136254(const void* fp, const void* name, int id);
+extern "C" u16 BdatGetU16Direct(const void* fp, const void* name, int id);
 extern "C" u16 func_8013A7D0(u8 a, u8 b);
 u32 func_8027305C(TalkListEntryArray* self, u8 v);
 extern "C" u8* lbl_eu_806640A8;                            // .sbss BDAT table pointer

@@ -27,7 +27,7 @@ public:
     virtual bool wkStandbyLogout();
     void func_804591BC(IException* pException);
     void func_804591DC(IException* pException);
-    void func_8045925C();
+    void setGlobalMessage();
 
     static CException* convertToException(CWorkThread* pThread){
          CException* exception;

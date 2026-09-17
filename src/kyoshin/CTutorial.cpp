@@ -109,7 +109,7 @@ __declspec(noinline) void CTutorial::func_8029AF30() {
 
 // Rewind-anim start: mirror of func_8029AE9C with the transforms swapped.
 void CTutorial::func_8029AF7C() {
-    if (func_80137510(mpAnimTrans1, lbl_eu_80668C08) != 0) {
+    if (AnimRewindFrame(mpAnimTrans1, lbl_eu_80668C08) != 0) {
         field_45 = 5;
         mpLayout->SetAnimationEnable(mpAnimTrans1, false);
         mpLayout->SetAnimationEnable(mpAnimTrans0, true);
@@ -119,7 +119,7 @@ void CTutorial::func_8029AF7C() {
 
 /* Rewind-animation (0x3C) reached the start frame: state 0, visible. */
 __declspec(noinline) void CTutorial::func_8029B010() {
-    if (func_80137510(mpAnimTrans0, lbl_eu_80668C08) != 0) {
+    if (AnimRewindFrame(mpAnimTrans0, lbl_eu_80668C08) != 0) {
         field_45 = 0;
         field_47 = 1;
     }
@@ -142,7 +142,7 @@ void CTutorial::func_8029B124() {
     void* tex = reinterpret_cast<nw4r::lyt::ResourceAccessor*>(mFileHandle1)
                     ->GetResource(0x74696d67, buf, 0);
     if (tex != NULL) {
-        func_80137E7C(mpLayout, &lbl_eu_80510290[0xb5], tex);
+        PaneSetTexPaletteByName(mpLayout, &lbl_eu_80510290[0xb5], tex);
     }
 }
 
@@ -165,7 +165,7 @@ extern "C" void func_8029B05C(CTutorial* self) {
     self->field_44 = 1;
     self->field_50 = 0;
     self->field_51 =
-        (s8)func_801361E8(lbl_eu_80664A30, &lbl_eu_80510290[0x74], self->field_48);
+        (s8)BdatGetU8Direct(lbl_eu_80664A30, &lbl_eu_80510290[0x74], self->field_48);
     self->func_8029B124();}
 
 // Reset a block of UI flags (0x3340..0x33BE) owned by this tutorial, then set

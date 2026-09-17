@@ -168,7 +168,7 @@ void CSysWinBuff::Term() {
     IScnRender* render = reinterpret_cast<IScnRender*>(this);
     if (this) render = reinterpret_cast<IScnRender*>(&mScnRender);
     mScene->removeRenderCB(render);
-    func_8013B980();
+    DecMenuCounter64080();
     if (code80135FDC_getByte_64080() == 0)
         buff_setCfPresentationFlag(0);
 }
@@ -182,7 +182,7 @@ void CSysWinBuff::cbRenderBefore() {
     CTaskGame::getInstance();
     if (CTaskGame::func_800426F0() || (lbl_eu_80663E28 & 0x200000))
         return;
-    if (!func_8013BE50()) return;
+    if (!IsMenuState621F0()) return;
     if (func_8029A658() != 0) return;
     GXSetZMode(GX_FALSE, GX_NEVER, GX_FALSE);
     nw4r::lyt::DrawInfo drawInfo;

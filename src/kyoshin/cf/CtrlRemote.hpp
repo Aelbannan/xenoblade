@@ -4,7 +4,7 @@
 
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
 extern "C" u32 func_8009D1F8(u32* buffer, s32 index);
-extern "C" u32 func_80061FE8();
+extern "C" u32 CfRes_getHeapHandle();
 
 // Player-object state/event probe (retail unmangled C-ABI name; arg1 is the
 // actor object + 0x8 state region, arg2 a probe id).
@@ -149,10 +149,10 @@ extern "C" void* func_800451D8(u32 cls, void* param);
 
 // Voice-manager sweep helpers and the sudden-commu active check. Retail
 // relocs are the unmangled C names, so these are extern "C" imports.
-extern "C" void func_802A2BB0();
-extern "C" void func_802A2CF0();
-extern "C" void func_802A2B44();
-extern "C" void func_802A2C1C();
+extern "C" void CCharVoiceMan_EnqueueOrderVoice1();
+extern "C" void CCharVoiceMan_FlagPendingVoice();
+extern "C" void CCharVoiceMan_EnqueueOrderVoice0();
+extern "C" void CCharVoiceMan_EnqueueOrderVoice2();
 extern "C" int func_801B0F8C();
 
 // CtrlPc view exposing vf38 (vtable slot 0xA0) for func_8009BD14's menu-state
@@ -549,9 +549,9 @@ extern "C" unsigned long func_801BA2C8(void* self);
 extern "C" void func_80280ADC();
 extern "C" void func_8017FEF0(void* obj, int arg);
 extern "C" void* func_800EA444(void* bm);
-extern "C" u32 func_8004C5EC(void* obj);
-extern "C" void func_800BE12C(u8* obj, int a, int b, int c, int d);
-extern "C" void func_802A201C(void* a, void* b);
+extern "C" u32 getAnimModelId(void* obj);
+extern "C" void CfObjectMove_setAnimModeArgs(u8* obj, int a, int b, int c, int d);
+extern "C" void CCharVoiceMan_PushChainVoiceNode(void* a, void* b);
 extern "C" void func_801B0E88();
 extern "C" void func_8018C820(void* obj, int value);
 

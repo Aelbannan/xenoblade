@@ -26,7 +26,7 @@ class UnkClass_805764CC{
 public:
     static UnkClass_805764CC* getInstance();
     void registerFactoryEvent(cf::IFactoryEvent*);
-    void func_800B88E0(cf::IFactoryEvent*);
+    void unlinkFactoryById(cf::IFactoryEvent*);
 
     reslist<cf::CfObject*> mObjList1; //0x00
     UnkClass_800B0AD8 unk20; //0x20

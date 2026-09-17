@@ -120,7 +120,7 @@ extern "C" void func_8029ABB8(CTutorial* self, nw4r::lyt::DrawInfo* drawInfo);
 extern "C" void func_8029AB28(CTutorial* self);
 extern "C" void func_8029ACC4(CTutorial* self);
 extern "C" void func_8029ABD8(CTutorial* self);
-extern "C" u8 func_8013B980();
+extern "C" u8 DecMenuCounter64080();
 extern "C" u8 code80135FDC_getByte_64080();
 extern "C" void setPresentationFlag__Q22cf13CfGameManagerFv(u8 enable);
 // CfGameManager controller-type query: retail loads r3=-1 into the symbol (the

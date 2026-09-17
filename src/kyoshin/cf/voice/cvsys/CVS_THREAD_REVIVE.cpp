@@ -21,7 +21,7 @@ CVS_THREAD_REVIVE* __ct__802A86CC(CVoiceHandle* owner1, CVoiceHandle* owner2) {
     if (func_802A330C(0xE6, 1) == NULL) return NULL;
 
     // Allocate the actual CVS_THREAD_REVIVE object
-    CVS_THREAD_REVIVE* self = (CVS_THREAD_REVIVE*)func_802A34E4(0x28);
+    CVS_THREAD_REVIVE* self = (CVS_THREAD_REVIVE*)CCharVoiceMan_AllocVoiceArena(0x28);
     if (self == NULL) return NULL;
 
     // Retail emits a redundant self null re-check (the `beq`) guarding the

@@ -46,7 +46,7 @@ struct CMenuTitleCtorShim {
 class CMenuTitleSub {};
 
 // Layout of the menu object passed to the controller handlers.
-// 0x60: sub-menu object (func_802B75B8/775C/75D8/7650/76D4 target).
+// 0x60: sub-menu object (CTitle_showMenu/775C/75D8/7650/76D4 target).
 // 0xE8/0xE9/0xEA: state bytes written/read by the handler.
 struct CMenuTitleInput {
     u8 _pad00[0x60];           // 0x00-0x5F
@@ -60,14 +60,14 @@ struct CMenuTitleInput {
 
 
 // Sub-menu handler statics (plain C symbols) called on the +0x60 subobject.
-extern "C" int func_802B7564(CMenuTitleSub* sub);
-extern "C" int func_802B7590(CMenuTitleSub* sub);
-extern "C" int func_802B775C(CMenuTitleSub* sub);
-extern "C" void func_802B75D8(CMenuTitleSub* sub);
-extern "C" void func_802B7630(CMenuTitleSub* sub);
-extern "C" void func_802B7650(CMenuTitleSub* sub);
-extern "C" void func_802B76D4(CMenuTitleSub* sub);
-extern "C" void func_802B7800(CMenuTitleSub* sub);
+extern "C" int CTitle_isLoadDone(CMenuTitleSub* sub);
+extern "C" int CTitle_isAnimDone(CMenuTitleSub* sub);
+extern "C" int CTitle_confirmSelection(CMenuTitleSub* sub);
+extern "C" void CTitle_beginLogoOutro(CMenuTitleSub* sub);
+extern "C" void CTitle_beginMenuOutro(CMenuTitleSub* sub);
+extern "C" void CTitle_moveCursorUp(CMenuTitleSub* sub);
+extern "C" void CTitle_moveCursorDown(CMenuTitleSub* sub);
+extern "C" void CTitle_stepLogoMenu(CMenuTitleSub* sub);
 
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
 extern "C" void __dt__10CMenuTitleFv(void* self);

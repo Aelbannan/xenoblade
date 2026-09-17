@@ -117,7 +117,7 @@ void CMenuGCItem::Term() {
 
     func_801C3D9C(&mBgTex);
     func_801C40A0(&mTitleAHelp);
-    func_801CAE9C(&mItemBoxGrid);
+    UnloadItemBox(&mItemBoxGrid);
 
     lbl_eu_80664C00 = 0;
 }
@@ -134,7 +134,7 @@ void CMenuGCItem::Move() {
         // Once the bg texture, title bar and item grid are all ready, start
         // the panel intro animations and play the open cue (sound 0x6d).
         if (func_801C3E34(&mBgTex) != 0 && func_801C4114(&mTitleAHelp) != 0 &&
-            func_801CB038(&mItemBoxGrid) != 0) {
+            IsItemBoxReady(&mItemBoxGrid) != 0) {
             func_801C412C(&mTitleAHelp);
             func_801CB28C(&mItemBoxGrid);
             mState = 1;
@@ -160,7 +160,7 @@ void CMenuGCItem::Move() {
 
     func_801C3D54(&mBgTex);
     func_801C3FF0(&mTitleAHelp);
-    func_801CABC8(&mItemBoxGrid);
+    UpdateItemBox(&mItemBoxGrid);
 }
 
 /* Render the GC-item screen through a stack DrawInfo: gate on the task/busy
@@ -170,7 +170,7 @@ void CMenuGCItem::cbRenderBefore() {
     CTaskGame::getInstance();
     if (CTaskGame::isFlag01Set() || (lbl_eu_80663E28 & 0x200000))
         return;
-    if (func_8013BE50() == 0) return;
+    if (IsMenuState621F0() == 0) return;
 
     GXSetZMode(GX_FALSE, GX_NEVER, GX_FALSE);
     // Raw-storage DrawInfo built/destroyed via C-ABI pre-mangled ct/dt calls
@@ -180,7 +180,7 @@ void CMenuGCItem::cbRenderBefore() {
     func_80137250((nw4r::lyt::DrawInfo*)&drawInfo[0]);
     func_801C3D7C(&mBgTex, (nw4r::lyt::DrawInfo*)&drawInfo[0]);
     func_801C4080(&mTitleAHelp, (nw4r::lyt::DrawInfo*)&drawInfo[0]);
-    func_801CAD8C(&mItemBoxGrid, (nw4r::lyt::DrawInfo*)&drawInfo[0]);
+    DrawItemBoxGrid(&mItemBoxGrid, (nw4r::lyt::DrawInfo*)&drawInfo[0]);
     __dt__Q34nw4r3lyt8DrawInfoFv(&drawInfo[0], -1);
 }
 

@@ -9,7 +9,7 @@
 #include "monolib/core/CPadManager.hpp"
 
 // Remote pad "connected / usable" query. C-ABI symbol (defined in CfCam).
-extern "C" int func_8006D700(int controllerId);
+extern "C" int cfCam_padAbsent(int controllerId);
 
 // Tail-call alias for CfGameManager::getCurrentPad().
 CPad* cf::ICamControl::func_80274B28() {
@@ -18,7 +18,7 @@ CPad* cf::ICamControl::func_80274B28() {
 
 u32 cf::ICamControl::func_80274B2C(int controllerId) {
     CPad* st = this->func_80274B28();
-    if (func_8006D700(controllerId) != 0) {
+    if (cfCam_padAbsent(controllerId) != 0) {
         u32 flags = st->mHeldButtonFlags;
         if ((flags >> 4) & 1) {
             if ((flags & (1 << 5)) != 0) {
@@ -32,7 +32,7 @@ u32 cf::ICamControl::func_80274B2C(int controllerId) {
 
 u32 cf::ICamControl::func_80274BA4(int controllerId) {
     CPad* st = this->func_80274B28();
-    if (func_8006D700(controllerId) != 0) {
+    if (cfCam_padAbsent(controllerId) != 0) {
         u32 flags = st->mHeldButtonFlags;
         if ((flags & (1 << 4)) != 0 && (flags & (1 << 5)) != 0) {
             return false;
@@ -49,7 +49,7 @@ u32 cf::ICamControl::func_80274C20() {
 
 u32 cf::ICamControl::func_80274C68(int controllerId) {
     CPad* st = this->func_80274B28();
-    if (func_8006D700(controllerId) != 0 && (st->mPressedButtonFlags & (1 << 12)) != 0) {
+    if (cfCam_padAbsent(controllerId) != 0 && (st->mPressedButtonFlags & (1 << 12)) != 0) {
         return true;
     }
     return false;

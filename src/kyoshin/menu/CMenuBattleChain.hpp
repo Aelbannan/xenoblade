@@ -101,14 +101,14 @@ extern u32 __ptmf_null[3];
 extern char lbl_eu_8051088C[];
 // Anim-frame reset constant (sdata2 float pool).
 extern const f32 lbl_eu_80668CB0;
-// Anim "finished" threshold passed to advanceAnimTransform / func_80137510.
+// Anim "finished" threshold passed to advanceAnimTransform / AnimRewindFrame.
 extern const f32 lbl_eu_80668CB4;
 
 // cbRenderBefore flag (.sbss); bit 0x200000 gates CMenuBattleChain::Move.
 extern u32 lbl_eu_80663E28;
 
 // Battle-chain pane colour records (4x u16; zero-init .sbss, filled at
-// startup by sinit_802AAF24, passed as pairs to func_80139A18).
+// startup by sinit_802AAF24, passed as pairs to PaneMatSetTevColorsByName).
 extern u16 lbl_eu_80664A68[4];
 extern u16 lbl_eu_80664A70[4];
 extern u16 lbl_eu_80664A78[4];
@@ -203,7 +203,7 @@ extern "C" {
 nw4r::lyt::ArcResourceAccessor* func_801355F4();
 void __ct__17UnkClass_8045F564Fv(UnkClass_8045F564* self);
 void func_80137CD4(void*, const char*, int, u32);
-void func_80139BF4(void*, const char*, u32, u32);
+void PaneSetColorFieldPair(void*, const char*, u32, u32);
 void func_802AAC78(CMenuBattleChain* self);
 void func_802AA588(CMenuBattleChain* self);
 void sinit_802AAF24();

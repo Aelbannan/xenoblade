@@ -157,7 +157,7 @@ public:
     u32 getFontId();
     u32 func_804525F0();
     IDeviceFontInfo* getFontInfo(u32 fontId, nw4r::lyt::Layout* layout);
-    IDeviceFontInfo* func_eu_804558F4();
+    IDeviceFontInfo* findFontByDevice();
     u32 func_80452D80();
     void wkUpdate();
     void wkRender();

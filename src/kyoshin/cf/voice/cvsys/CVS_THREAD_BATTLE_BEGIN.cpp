@@ -41,7 +41,7 @@ CVS_THREAD_BATTLE_BEGIN* __ct__802AFA80(CVoiceHandle* handle, CVoiceHandle* A) {
     if (func_802A330C(0x1e, 1) == NULL) {
         return NULL;
     }
-    CVS_THREAD_BATTLE_BEGIN* obj = (CVS_THREAD_BATTLE_BEGIN*)func_802A34E4(0x3c);
+    CVS_THREAD_BATTLE_BEGIN* obj = (CVS_THREAD_BATTLE_BEGIN*)CCharVoiceMan_AllocVoiceArena(0x3c);
     if (obj == NULL) {
         return NULL;
     }

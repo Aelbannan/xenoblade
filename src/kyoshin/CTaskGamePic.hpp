@@ -42,13 +42,13 @@ extern char lbl_eu_80538AD8[];
 extern char lbl_eu_80538BC0[];
 
 // Color/vec4 helper imported from another TU. Retail symbol is the *unmangled*
-// `func_800407C8` (see include/functions.hpp), so it must be declared extern
+// `CTaskGame_setVec4` (see include/functions.hpp), so it must be declared extern
 // "C" here; including functions.hpp instead mangles it to
-// func_800407C8__FP17func_800407C8_tmpffff and drifts the reloc sites.
-struct func_800407C8_tmp {
+// CTaskGame_setVec4__FP17CTaskGame_setVec4_tmpffff and drifts the reloc sites.
+struct CTaskGame_setVec4_tmp {
     f32 unk00[4];
 };
-extern "C" func_800407C8_tmp* func_800407C8(func_800407C8_tmp*, f32, f32, f32, f32);
+extern "C" CTaskGame_setVec4_tmp* CTaskGame_setVec4(CTaskGame_setVec4_tmp*, f32, f32, f32, f32);
 
 // Shared .sdata2 float used as the GX texture LOD bias in the file-event
 // handler (func_8029539C). `const` routes it into the readonly sdata2 pool so

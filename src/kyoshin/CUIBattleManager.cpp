@@ -890,7 +890,7 @@ int func_8012F2C0(CUIBattleManager* self, CUIBattleFileEvt* evt) {
         }
         tex = acc->GetResource(
             0x74696D67,
-            func_80138F78(func_80136254(lbl_eu_80664090, &lbl_eu_804FFF2C[0x79],
+            MakeTplNameSysFile(BdatGetU16Direct(lbl_eu_80664090, &lbl_eu_804FFF2C[0x79],
                                         (int)(u8)partyId)),
             0);
         if (tex != NULL) {
@@ -898,7 +898,7 @@ int func_8012F2C0(CUIBattleManager* self, CUIBattleFileEvt* evt) {
         }
         tex = acc->GetResource(
             0x74696D67,
-            func_80138F78(func_80136254(lbl_eu_80664090, &lbl_eu_804FFF2C[0x84],
+            MakeTplNameSysFile(BdatGetU16Direct(lbl_eu_80664090, &lbl_eu_804FFF2C[0x84],
                                         (int)(u8)partyId)),
             0);
         if (tex != NULL) {
@@ -906,7 +906,7 @@ int func_8012F2C0(CUIBattleManager* self, CUIBattleFileEvt* evt) {
         }
         tex = acc->GetResource(
             0x74696D67,
-            func_80138F78(func_80136254(lbl_eu_80664090, &lbl_eu_804FFF2C[0x8f],
+            MakeTplNameSysFile(BdatGetU16Direct(lbl_eu_80664090, &lbl_eu_804FFF2C[0x8f],
                                         (int)(u8)partyId)),
             0);
         if (tex != NULL) {

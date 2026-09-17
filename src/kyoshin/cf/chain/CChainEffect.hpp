@@ -32,7 +32,7 @@ struct CChainObj {
     cf::CChainEffect* field_b0;   //0xB0
 };
 
-// Singleton chain manager returned by func_800B6C34.
+// Singleton chain manager returned by getReslistBE8.
 struct CChainManager {
     u32 field_00;                        //0x0
     struct CChainNode* field_04;         //0x4: head of circular node list
@@ -62,7 +62,7 @@ void* func_800451D8(u32 cls, int param);
 void setTargetObj_(void* obj, void* target);
 void setChildB59__(void* obj, s8 val);
 void func_800B3A88(void* self, void* target);
-struct CChainManager* func_800B6C34(void);
+struct CChainManager* getReslistBE8(void);
 void* func_800AC610(void* param);
 extern "C" u16 playActorSound__Q22cf10CfSoundManFUlUlUlUlf(u32 a, u32 b, u32 c, u32 d, f32 e);
 extern f32 lbl_eu_80668C50;

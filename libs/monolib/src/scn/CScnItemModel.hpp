@@ -12,7 +12,7 @@ class CScnItemModel;
 class CScnItemModelNw4r;
 
 // Overlay view of the model reference-slot run at CScnItemModel+0x08. The
-// slots[4] array lands at absolute offsets 0x7B4..0x7C0. func_804859E8
+// slots[4] array lands at absolute offsets 0x7B4..0x7C0. simClearNodeRefs
 // clears slots matching a node; retail folds the first two slots to direct
 // offsets and keeps the self+8 base for the last two (0x7B4/0x7B8 offsets).
 struct CScnItemModelRefs {
@@ -21,15 +21,15 @@ struct CScnItemModelRefs {
 };
 
 // Owner/scene object referenced from CScnItemModel::field_04. Only the pool
-// pointer at 0x60 is known (read by func_804830AC).
+// pointer at 0x60 is known (read by simRemoveFromPool).
 struct CScnItemModelOwner {
     u8 _00[0x60];       // 0x00..0x60 opaque
     CScnItemPool* pool; // 0x60
 };
 
-// Animation-resource wrapper passed to func_80484164 / func_804972E8
+// Animation-resource wrapper passed to simBindChrAnimChain / func_804972E8
 // (retail C-ABI). The embedded nw4r ResFile handle lives at +0xC, matching
-// the CScnItemAnim layout; func_80484164 queries its entry count.
+// the CScnItemAnim layout; simBindChrAnimChain queries its entry count.
 struct CScnItemAnimResFile {
     u8 _00[0xC];                 // 0x00..0x0C
     nw4r::g3d::ResFile resFile;  // 0x0C
@@ -38,7 +38,7 @@ struct CScnItemAnimResFile {
 // Sub-object at CScnItemModel+0x824 (0x10 bytes): owns a MemManager-backed
 // buffer (field_0) guarded by an ownership sentinel (field_C == 0xFFFFFFFF
 // means the buffer is not owned). field_4 is the buffer's element count
-// (walked by func_80484734); field_8 is cleared on destroy. Its destructor
+// (walked by simSyncBuf824Flags); field_8 is cleared on destroy. Its destructor
 // is the fragment symbol __dt__8048268C.
 struct CScnItemModel824 {
     u8* field_0;   // 0x00 owned buffer (released when owned)
@@ -47,7 +47,7 @@ struct CScnItemModel824 {
     u32 field_C;   // 0x0C ownership sentinel (0xFFFFFFFF = not owned)
 };
 
-// 4-byte buffer element owned by CScnItemModel824; func_80484734 toggles
+// 4-byte buffer element owned by CScnItemModel824; simSyncBuf824Flags toggles
 // the u16 flag at offset 2.
 struct CScnItemModel824Entry {
     u16 field_0;  // 0x00
@@ -65,8 +65,8 @@ public:
     // a 2-entry RTTI header to the vtable, so declared virtual N lands at
     // offset (N+1)*4). CScnItemModel's own virtuals follow: vfuncD4 (0xD4,
     // slot-list link notify called on the node with the parent as argument,
-    // see func_804858C8), vfuncD8 (0xD8, model-link notify, see
-    // func_80485994), and the destructor (0xDC) - 54 methods in total,
+    // see simLinkSlot7B4), vfuncD8 (0xD8, model-link notify, see
+    // simLinkModel7C4), and the destructor (0xDC) - 54 methods in total,
     // matching the retail vtable size of 0xE0.
     // Virtual names below are still vfuncXX placeholders (monolib wave owns
     // the full retail rename from lbl_eu_8056DD70 / Nw4r lbl_eu_8056DE80).
@@ -75,19 +75,19 @@ public:
     virtual void vfunc0C();
     virtual void vfunc10();
     virtual void vfunc14();
-    virtual const char* vfunc18();  // +0x18 Nw4r: func_80487B18 (model name)
+    virtual const char* vfunc18();  // +0x18 Nw4r: scnImN4GetResName (model name)
     virtual void vfunc1C();
     virtual void vfunc20();
     virtual void vfunc24();
     virtual void vfunc28(u32 a, u32 b);  // vtable 0x28 (2-arg notify)
-    virtual int vfunc2C(u32 param);  // +0x2C Nw4r: func_8048B30C (attach parent)
+    virtual int vfunc2C(u32 param);  // +0x2C Nw4r: scnImN4GetHidByNm (attach parent)
     virtual void vfunc30(u32 a, u32 b);  // vtable 0x30 (2-arg notify)
     virtual int vfunc34(u32 param);  // vtable 0x34 (1-arg query, non-zero = handled)
     virtual void vfunc38();
-    virtual void* vfunc3C(const char* name);  // +0x3C Nw4r: func_8048B68C (named node mtx)
+    virtual void* vfunc3C(const char* name);  // +0x3C Nw4r: scnImN4MtxByName (named node mtx)
     virtual void vfunc40();
     virtual void vfunc44();
-    virtual void vfunc48(float f);  // +0x48 base: func_80484838 / Nw4r: func_8048A588
+    virtual void vfunc48(float f);  // +0x48 base: simSetAndPropRate / Nw4r: func_8048A588
     virtual float vfunc4C();
     virtual void vfunc50(u32 a);
     virtual int vfunc54();
@@ -96,7 +96,7 @@ public:
     virtual void vfunc60();
     virtual void vfunc64(u32 a);  // vtable 0x64 (1-arg notify, see func_804831C4)
     virtual void vfunc68();
-    virtual void vfunc6C(u32 param);  // +0x6C Nw4r: func_80488FEC
+    virtual void vfunc6C(u32 param);  // +0x6C Nw4r: scnImN4LookBind
     virtual void vfunc70();
     virtual void vfunc74();
     virtual void vfunc78(void* arg);  // 0x78 - CfRes model sync (was void)
@@ -104,17 +104,17 @@ public:
     virtual void vfunc80();
     virtual void vfunc84(u32 a);
     virtual void vfunc88(int arg);  // 0x88 - CfRes flag (was void)
-    virtual void vfunc8C(u32 a);  // vtable 0x8C (1-arg notify, see func_804849E4)
+    virtual void vfunc8C(u32 a);  // vtable 0x8C (1-arg notify, see simNotifyVfunc8C)
     virtual int vfunc90(const void* vec, u32 flags);  // +0x90 Nw4r: func_80488C78
-    virtual void vfunc94(u32 a);  // vtable 0x94 (1-arg notify, see func_80484BB4)
-    virtual void vfunc98();  // +0x98 Nw4r: func_80488D14
+    virtual void vfunc94(u32 a);  // vtable 0x94 (1-arg notify, see simNotifyVfunc94)
+    virtual void vfunc98();  // +0x98 Nw4r: scnImN4OnMatAct
     virtual void vfunc9C(u32 a, u32 b);  // vtable 0x9C (2-arg notify)
-    virtual void vfuncA0();  // +0xA0 Nw4r: func_80488EF4 (post-attach notify)
-    virtual void vfuncA4(u32 a);  // vtable 0xA4 (1-arg notify, see func_804838DC)
-    virtual u32 vfuncA8();  // +0xA8 Nw4r: func_8048736C (effect-act owner word)
+    virtual void vfuncA0();  // +0xA0 Nw4r: scnImN4ResetAnims (post-attach notify)
+    virtual void vfuncA4(u32 a);  // vtable 0xA4 (1-arg notify, see simSetFlag2OnTree)
+    virtual u32 vfuncA8();  // +0xA8 Nw4r: scnImN4GetEffAct (effect-act owner word)
     virtual void vfuncAC(CScnItemModel* node);  // vtable 0xAC (1-arg notify, see func_804831C4)
     virtual void vfuncB0(CScnItemModel* node);  // vtable 0xB0 (1-arg notify, see func_80483448)
-    virtual void vfuncB4(u32 a);  // vtable 0xB4 (1-arg notify, see func_80484914)
+    virtual void vfuncB4(u32 a);  // vtable 0xB4 (1-arg notify, see simNotifyVfuncB4)
     virtual void vfuncB8();
     virtual void vfuncBC();
     virtual void vfuncC0();
@@ -143,12 +143,12 @@ public:
     u16 value08;                   // 0x08 (u16 type marker, set to 1 by the ctor)
     u8 _0A[0x2];                   // 0x0A..0x0C
     u8 field_0xC[0x1EC];           // 0x0C..0x1F8 (sub-object passed to func_80497724/90)
-    u8 field_0x1F8[0x5AC];         // 0x1F8..0x7A4 (act-data base returned by func_8048315C)
+    u8 field_0x1F8[0x5AC];         // 0x1F8..0x7A4 (act-data base returned by simGetLeafActData)
     u32 flags7A4;                  // 0x7A4
     u32 flags7A8;                  // 0x7A8
     f32 value7AC;                  // 0x7AC
     f32 value7B0;                  // 0x7B0
-    CScnItemModel* slots7B4[4];    // 0x7B4..0x7C4 (reference list, iterated by func_80485A48/98/84C84)
+    CScnItemModel* slots7B4[4];    // 0x7B4..0x7C4 (reference list, iterated by simNotifyVfunc28/98/84C84)
     CScnItemModel* field_0x7C4;    // 0x7C4
     CScnItemModel* field_0x7C8;    // 0x7C8
     f32 value7CC;                  // 0x7CC
@@ -163,7 +163,7 @@ public:
     u32 field_0x7F0[0xC];          // 0x7F0..0x820
     int count820;                  // 0x820 (signed: retail cmpw/cmpwi compares)
     CScnItemModel824 member824;    // 0x824..0x834 (buffer holder, dtor __dt__8048268C)
-    CScnItemModel* slots834[4];    // 0x834..0x844 (second reference list, iterated by func_80484C84)
+    CScnItemModel* slots834[4];    // 0x834..0x844 (second reference list, iterated by simNotifyReadyTree)
     u32 field_844;                 // 0x844
     u32 field_848;                 // 0x848
     u32 field_84C;                 // 0x84C
@@ -218,7 +218,7 @@ extern "C" void* __ct__80496B0C(void* self);
 
 // View of the act-data region at CScnItemModel+0x1F8 (0x5AC bytes). The
 // region starts with the embedded ml::CAttrTransform; the two floats touched
-// by func_80485CE8 are named fields (abs offsets 0x2E8 / 0x304). Only cast
+// by simRefreshActDist are named fields (abs offsets 0x2E8 / 0x304). Only cast
 // into, never constructed.
 struct CScnItemModelActData {
     ml::CAttrTransform transform;     // 0x1F8..0x2DC

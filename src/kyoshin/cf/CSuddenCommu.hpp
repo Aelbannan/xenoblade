@@ -110,7 +110,7 @@ struct CSuddenCommuVoiceCue {
 
 struct CSuddenCommuActBody;
 
-// 8-byte holder around a CfObjEnumList* (func_80043D90 / __dt__80043E88).
+// 8-byte holder around a CfObjEnumList* (CTaskGame_enumListCtor / __dt__80043E88).
 // Derives from the shared CfMoveEnumHolder view so the C-linkage import
 // declared for the move TUs accepts this TU's holder without casts.
 #include "kyoshin/cfsys/CfObjectImplMove.hpp"
@@ -203,7 +203,7 @@ extern "C" {
     // Voice-manager imports (defined in voice/CCharVoiceMan.cpp): retire/next
     // voice id. C linkage keeps the call relocs at the unmangled retail names.
     void func_802A35B8(u32 arg);
-    int func_802A3290();
+    int CCharVoiceMan_AllocCommuVoiceId();
     // Battle-voice dispatch (defined in voice/CCharVoiceMan.cpp): run the
     // voice node for `voiceId` with the target spot and the commu's result id.
     // Signature matches CChain.hpp (int/CChainBattleObjTail*/int) so both

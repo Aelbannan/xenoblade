@@ -53,29 +53,29 @@ void CMenuPause::Init() {
     mLayout->Animate(0);
 
     // Fill the two message-table text fields.
-    func_80136B4C(mLayout, &lbl_eu_8050C5C8[0x50],
-                  func_80136190(&lbl_eu_8050C5C8[0x40], &lbl_eu_8050C5C8[0x4b],
+    LayoutSetTextBoxFmtValue(mLayout, &lbl_eu_8050C5C8[0x50],
+                  BdatTouchStringCell(&lbl_eu_8050C5C8[0x40], &lbl_eu_8050C5C8[0x4b],
                                 8),
                   0);
-    func_80136B4C(mLayout, &lbl_eu_8050C5C8[0x70],
-                  func_80136190(&lbl_eu_8050C5C8[0x5d], &lbl_eu_8050C5C8[0x6b],
+    LayoutSetTextBoxFmtValue(mLayout, &lbl_eu_8050C5C8[0x70],
+                  BdatTouchStringCell(&lbl_eu_8050C5C8[0x5d], &lbl_eu_8050C5C8[0x6b],
                                 0x6b),
                   0);
 
     // ---- Cursor texture palette variants (classic vs remote pad). ----
     // Each: pick a message name by pad type, load the "timg" texture
-    // resource, bind it (func_80137E7C) and set the pane size from the
+    // resource, bind it (PaneSetTexPaletteByName) and set the pane size from the
     // texture's 2D dimension header (u16 w/h converted via the 2^52 trick).
     {
-        u16 msg = func_8013606C(
+        u16 msg = BdatGetU16ByTableKey(
             &lbl_eu_8050C5C8[0x5d],
             isClassicController__Q22cf13CfGameManagerFv(-1) ? &lbl_eu_8050C5C8[0x7d]
                                                       : &lbl_eu_8050C5C8[0x86],
             0x6b);
-        char* handle = func_80138F78(msg);
+        char* handle = MakeTplNameSysFile(msg);
         void* tex = func_801355F4()->GetResource(0x74696D67, handle, NULL);
         if (tex != NULL) {
-            func_80137E7C(mLayout, (void*)&lbl_eu_8050C5C8[0x8f], tex);
+            PaneSetTexPaletteByName(mLayout, (void*)&lbl_eu_8050C5C8[0x8f], tex);
             // u16 -> f32 via MWCC's own 0x43300000 double-trick conversion:
             // the width/height reads are hoisted ahead of FindPaneByName and
             // the Size copy lands as two stfs pairs (pane + stack scratch).
@@ -97,15 +97,15 @@ void CMenuPause::Init() {
         }
     }
     {
-        u16 msg = func_8013606C(
+        u16 msg = BdatGetU16ByTableKey(
             &lbl_eu_8050C5C8[0x5d],
             isClassicController__Q22cf13CfGameManagerFv(-1) ? &lbl_eu_8050C5C8[0x7d]
                                                       : &lbl_eu_8050C5C8[0x86],
             0x6c);
-        char* handle = func_80138F78(msg);
+        char* handle = MakeTplNameSysFile(msg);
         void* tex = func_801355F4()->GetResource(0x74696D67, handle, NULL);
         if (tex != NULL) {
-            func_80137E7C(mLayout, (void*)&lbl_eu_8050C5C8[0xa6], tex);
+            PaneSetTexPaletteByName(mLayout, (void*)&lbl_eu_8050C5C8[0xa6], tex);
             CMenuPauseTexDims* dims =
                 ((CMenuPauseTexObj*)tex)->mChain->mDims;
             u16 texHeight = dims->field_0x2;
@@ -173,7 +173,7 @@ void CMenuPause::Move() {
 exit:
     return;
 body:
-    if (!func_8013BE50()) {
+    if (!IsMenuState621F0()) {
         goto exit;
     }
     if (mLayout == NULL) {
@@ -194,7 +194,7 @@ body:
         break;
     case 3:
         // Closing animation: when it finishes, reset to state 0 / clear flag.
-        if (func_80137510(reinterpret_cast<nw4r::lyt::AnimTransform*>(mField80),
+        if (AnimRewindFrame(reinterpret_cast<nw4r::lyt::AnimTransform*>(mField80),
                           lbl_eu_806687D8) != 0) {
             mState = 0;
             mBProcess[0x50] = 1; // field 0x54 flag
@@ -216,7 +216,7 @@ void CMenuPause::cbRenderBefore() {
 done:
     return;
 body:
-    if (!func_8013BE50()) {
+    if (!IsMenuState621F0()) {
         goto done;
     }
 
@@ -364,7 +364,7 @@ extern "C" void func_80252564(CMenuPause* p) {
         second = (pad->mPressedButtonFlags >> 5) & 1;
     }
     if (first) {
-        func_eu_8013C8E8();
+        MenuStateClear64064();
         func_800853C8__Q22cf13CfGameManagerFv();
         func_801BFB34(lbl_eu_806687DC, 0, 3, 0);
         func_801BFB34(lbl_eu_806687DC, 0, 0xe, 0);

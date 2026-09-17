@@ -17,7 +17,7 @@ class CScnItemModelNw4r;
 // Frame-table add + ascending bubble-sort for the owner model's frame table
 // (defined in CScnItemModelNw4r.cpp). C++ linkage matches the definition's
 // mangled symbol; the retail symbol is the unmangled func_* fragment.
-void func_80488F44(CScnItemModelNw4r* ths, u32 value);
+void scnImN4AddFrameId(CScnItemModelNw4r* ths, u32 value);
 
 // Shared .sdata2 constants referenced by CMdlMouth (retail linker names).
 extern const f32 lbl_eu_8066B310; // reset mouth-open angle (1.0f)

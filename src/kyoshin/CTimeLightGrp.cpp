@@ -144,7 +144,7 @@ extern "C" void* __dt__reslist_CVirtualLightObj(void* self, int mode) {
             while (base->mStartNodePtr != node) {
                 _reslist_node<CVirtualLightObjPtr>* cur = node;
                 node = cur->mNext;
-                // func_8049CB70(cur) inlined: clear the forward link.
+                // ScnFilterList_freeNode(cur) inlined: clear the forward link.
                 cur->mNext = nullptr;
             }
             base->mStartNodePtr->mNext = base->mStartNodePtr;

@@ -134,7 +134,7 @@ void func_8022B7C8(void* syswin, nw4r::lyt::DrawInfo* drawInfo);
 void func_801D20B0(void* cursor, nw4r::lyt::DrawInfo* drawInfo);
 void __ct__Q34nw4r3lyt8DrawInfoFv(nw4r::lyt::DrawInfo* drawInfo);
 void __dt__Q34nw4r3lyt8DrawInfoFv(nw4r::lyt::DrawInfo* drawInfo, int flags);
-int func_8013BE50();
+int IsMenuState621F0();
 void setPresentationFlag__Q22cf13CfGameManagerFv(int enable);
 }
 

@@ -7,5 +7,5 @@
 // include closure cannot take the full owner header include this instead;
 // the declaration here is identical to the owner copy.
 
-// Battle-status add/remove helper (retail func_800BE12C).
-extern "C" void func_800BE12C(u8* obj, int a, int b, int c, int d);
+// Battle-status add/remove helper (retail CfObjectMove_setAnimModeArgs).
+extern "C" void CfObjectMove_setAnimModeArgs(u8* obj, int a, int b, int c, int d);

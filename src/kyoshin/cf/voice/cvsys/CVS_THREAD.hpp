@@ -104,7 +104,7 @@ extern float lbl_eu_80662CB0;   // scale multiplier
 extern float lbl_eu_80662CB4;   // pan/pitch constant, normal branch
 extern float lbl_eu_80662CB8;   // pan/pitch constant, flag branch
 
-extern "C" unsigned int func_802A35A0(unsigned int value);
+extern "C" unsigned int CCharVoiceMan_MakeVoiceEventId(unsigned int value);
 
 // Scratch-buffer allocator shared by the cvsys voice threads (same
 // C-ABI import as kyoshin/code_802B8A3C.hpp).

@@ -101,7 +101,7 @@ extern "C" void func_8013E2E0(u32, u32, u32, u32, u32, u32, u32, u32, u32);
 extern "C" void func_8013D55C(char* msg, int a, int b);
 extern "C" void func_8013D688(char* a, char* b, int c, int d);
 // Enum-list holder helpers for func_801359AC (defining TU: code_80043E08 TU).
-// func_80043E08 takes the holder itself (declared in the .cpp next to the
+// CTaskGame_enumListFill takes the holder itself (declared in the .cpp next to the
 // CUICfEnumListHolder type).
 extern "C" u8* __ct__800FC32C(u8* list, int a, int b, int c);
 // .sdata2 float constants (r2-sda21 loads; const routes them into .sdata2).
@@ -148,7 +148,7 @@ struct CUICfSwapBlock {
 };
 
 // Zero-view over CUICfSwapBlock for the swap clears (names the two zeroed
-// fields; the block copies go through func_8015704C with CUICfInitBlock*).
+// fields; the block copies go through CItem_copyRecMasked with CUICfInitBlock*).
 struct CUICfBlockZeroView {
     u32 field_0x00;
     u16 field_0x04;
@@ -449,7 +449,7 @@ public:
     }
     static CUICfManager* create(CProcess* pParent, CScnNw4r* pScene, mtl::ALLOC_HANDLE mHandle);
     static nw4r::lyt::ArcResourceAccessor* func_801355F4();
-    static int func_80135FDC();
+    static int MenuStateInitFlags();
 
     void Init();
     void Term();

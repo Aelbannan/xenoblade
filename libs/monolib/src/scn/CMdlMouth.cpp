@@ -172,7 +172,7 @@ extern "C" void func_804E65CC(CMdlMouth* ths, CMdlOwnerCtx* model) {
         ths->field_0x20 = node.ref().rot.z;
         // The model object is really a CScnItemModelNw4r; the view struct
         // above only exposes the fields this TU reads.
-        func_80488F44((CScnItemModelNw4r*)model, ths->field_0x0C);
+        scnImN4AddFrameId((CScnItemModelNw4r*)model, ths->field_0x0C);
     }
 
     // Scan materials for the eye-material name and stash its id. Each call

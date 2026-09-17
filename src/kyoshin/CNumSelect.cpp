@@ -102,10 +102,10 @@ extern "C" void func_801EB49C(CNumSelect* self) {
     }
 }
 
-// When the +0x20 animation has finished (func_80137510 with the 1.0 constant),
+// When the +0x20 animation has finished (AnimRewindFrame with the 1.0 constant),
 // reset the selection state bytes (m2C/m2E/m2F) for a fresh pass.
 void func_801EB530(CNumSelect* self) {
-    if (func_80137510(self->field_20, lbl_eu_80668088)) {
+    if (AnimRewindFrame(self->field_20, lbl_eu_80668088)) {
         self->field_2F = 0;
         self->field_2E = 1;
         self->field_2C = 0;
@@ -186,19 +186,19 @@ bool CNumSelect::OnFileEvent(CEventFile* evt) {
     if (field_30 == 1) {
         numCount = 12;
     }
-    func_80136B4C(mpLayout, &lbl_eu_80506C14[0x10b],
-                  func_80136190(fmtStr, idxStr, numCount),
+    LayoutSetTextBoxFmtValue(mpLayout, &lbl_eu_80506C14[0x10b],
+                  BdatTouchStringCell(fmtStr, idxStr, numCount),
                   0);
-    func_80136B4C(mpLayout, &lbl_eu_80506C14[0x115],
-                  func_80136190(&lbl_eu_80506C14[0x102], &lbl_eu_80506C14[0x33], 13),
+    LayoutSetTextBoxFmtValue(mpLayout, &lbl_eu_80506C14[0x115],
+                  BdatTouchStringCell(&lbl_eu_80506C14[0x102], &lbl_eu_80506C14[0x33], 13),
                   0);
-    func_80136B4C(mpLayout, &lbl_eu_80506C14[0x11f],
-                  func_80136190(&lbl_eu_80506C14[0x102], &lbl_eu_80506C14[0x33], 14),
+    LayoutSetTextBoxFmtValue(mpLayout, &lbl_eu_80506C14[0x11f],
+                  BdatTouchStringCell(&lbl_eu_80506C14[0x102], &lbl_eu_80506C14[0x33], 14),
                   0);
 
-    char* rangeText = func_80136190(&lbl_eu_80506C14[0x129], &lbl_eu_80506C14[0x137], 0x2b);
-    func_80136B4C(mpLayout, &lbl_eu_80506C14[0x13c], rangeText, 0);
-    func_80136B4C(mpLayout, &lbl_eu_80506C14[0x148], rangeText, 0);
+    char* rangeText = BdatTouchStringCell(&lbl_eu_80506C14[0x129], &lbl_eu_80506C14[0x137], 0x2b);
+    LayoutSetTextBoxFmtValue(mpLayout, &lbl_eu_80506C14[0x13c], rangeText, 0);
+    LayoutSetTextBoxFmtValue(mpLayout, &lbl_eu_80506C14[0x148], rangeText, 0);
 
     // Resolve the 'timg' texture named by the language-dependent message and
     // size both highlight panes to its dimensions.
@@ -207,12 +207,12 @@ bool CNumSelect::OnFileEvent(CEventFile* evt) {
     const char* msgKey = (isClassicController__Q22cf13CfGameManagerFv(-1) != 0)
                              ? &lbl_eu_80506C14[0x154]
                              : &lbl_eu_80506C14[0x15d];
-    u16 msgId = func_8013606C(&lbl_eu_80506C14[0x129], msgKey, 0x2b);
-    char* timgName = func_80138F78(msgId);
+    u16 msgId = BdatGetU16ByTableKey(&lbl_eu_80506C14[0x129], msgKey, 0x2b);
+    char* timgName = MakeTplNameSysFile(msgId);
     CNumSelectTimg* timg = (CNumSelectTimg*)func_801355F4()->GetResource(0x74696d67, timgName, 0);
     if (timg != NULL) {
-        func_80137E7C(mpLayout, &lbl_eu_80506C14[0x166], (u32)timg);
-        func_80137E7C(mpLayout, &lbl_eu_80506C14[0x170], (u32)timg);
+        PaneSetTexPaletteByName(mpLayout, &lbl_eu_80506C14[0x166], (u32)timg);
+        PaneSetTexPaletteByName(mpLayout, &lbl_eu_80506C14[0x170], (u32)timg);
         u16 timgH = timg->unk8->dims->m02;
         u16 timgW = timg->unk8->dims->m00;
 
@@ -318,17 +318,17 @@ extern "C" void func_801EAF9C(CNumSelect* self) {
 
 // Updates the pane named by lbl_eu_80506C14+0x17 with the given string.
 void CNumSelect::func_801EB030(char* str) {
-    func_80136B4C(mpLayout, &lbl_eu_80506C14[0x17], str, 0);
+    LayoutSetTextBoxFmtValue(mpLayout, &lbl_eu_80506C14[0x17], str, 0);
 }
 
 #pragma push
 #pragma optimize_for_size on
 
-// Builds "pic_NN"-style pane text: extracts the digits via func_80136190,
+// Builds "pic_NN"-style pane text: extracts the digits via BdatTouchStringCell,
 // formats them, and pushes the result into the layout pane.
 void CNumSelect::func_801EB064(int value) {
     char buf[0x1C];
-    char* digits = func_80136190(&lbl_eu_80506C14[0x2A], &lbl_eu_80506C14[0x33], 3);
+    char* digits = BdatTouchStringCell(&lbl_eu_80506C14[0x2A], &lbl_eu_80506C14[0x33], 3);
     sprintf(buf, &lbl_eu_80506C14[0x38], value, digits);
     func_80136A1C(mpLayout, &lbl_eu_80506C14[0x3D], buf, 0);
 }

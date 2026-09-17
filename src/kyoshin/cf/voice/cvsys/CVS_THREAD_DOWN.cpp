@@ -131,7 +131,7 @@ CVS_THREAD_DOWN* __ct__802A5B88(CVoiceHandle* owner1, CVoiceHandle* owner2) {
     // Allocate the (discarded) handle buffer, then the thread object itself.
     if (func_802A330C(0xF0, 1) == NULL) return NULL;
 
-    CVS_THREAD_DOWN* self = (CVS_THREAD_DOWN*)func_802A34E4(0x28);
+    CVS_THREAD_DOWN* self = (CVS_THREAD_DOWN*)CCharVoiceMan_AllocVoiceArena(0x28);
     if (self == NULL) return NULL;
 
     // Base-construct the object. The redundant `self != NULL` guard

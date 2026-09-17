@@ -147,7 +147,7 @@ float cf::CfObjectActor::CfObjectActor_getAdjustedFacing() {
     u8* p = reinterpret_cast<cf::CfActorField3F60*>(this)->field_0x3F60;
     if (p != 0) {
         float base = reinterpret_cast<cf::CfActorField3EE8*>(this)->field_0x3EE8;
-        return base + (float)(s16)func_80055F94(p + 16, 0);
+        return base + (float)(s16)getParamSelS16(p + 16, 0);
     }
     return reinterpret_cast<cf::CfActorField3EE8*>(this)->field_0x3EE8;
 }
@@ -600,7 +600,7 @@ extern "C" void CActorParam_resetArtsStatus__Q22cf13CfObjectActorFv(cf::CfObject
             ->CObjectState_getStateData());
     u32 id = *idPtr;
     if (func_80174C98(self, (int*)&id, 0x1c) != 0) {
-        func_800BE12C((u8*)self + 16028, 0x2f, 1, -1, 1);  // +0x3E9C: CfObjectMove subobject
+        CfObjectMove_setAnimModeArgs((u8*)self + 16028, 0x2f, 1, -1, 1);  // +0x3E9C: CfObjectMove subobject
     }
 }
 

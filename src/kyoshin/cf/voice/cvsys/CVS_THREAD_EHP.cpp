@@ -260,7 +260,7 @@ CVS_THREAD_EHP* __ct__802A5ED4(CVoiceHandle* handle, CVoiceHandle* owner2, s32 h
     if (func_802A330C(0xB4, 1) == NULL) {
         return NULL;
     }
-    self = (CVS_THREAD_EHP*)func_802A34E4(0x48);
+    self = (CVS_THREAD_EHP*)CCharVoiceMan_AllocVoiceArena(0x48);
     if (self == NULL) {
         return NULL;
     }
@@ -478,7 +478,7 @@ int func_802A6958(CVoiceHandle* self) {
     // Walk the global handle list; each node's value is biased by +0x3E9C
     // (points at the embedded CCharVoice), so undo the bias to recover the
     // handle base before dispatching virtuals.
-    list = func_800B6BC8();
+    list = getReslistB48();
     for (node = list->end->next; node != list->end; node = node->next) {
         handle = node->value;
         if (handle != NULL) {

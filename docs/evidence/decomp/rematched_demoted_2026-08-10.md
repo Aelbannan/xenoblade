@@ -4,7 +4,7 @@ Of 299 demoted FULL_MATCH rows, 107 were re-matched to byte-identical by source 
 
 | id | unit | symbol |
 |---|---|---|
-| us-802562a8 | kyoshin/CCollepedia | `func_8025406C` |
+| us-802562a8 | kyoshin/CCollepedia | `clpPrevPageIx` |
 | us-801fee3c | kyoshin/CPartyState | `func_801FD17C` |
 | us-801fee44 | kyoshin/CPartyState | `func_801FD184` |
 | us-801fee4c | kyoshin/CPartyState | `func_801FD18C` |
@@ -14,8 +14,8 @@ Of 299 demoted FULL_MATCH rows, 107 were re-matched to byte-identical by source 
 | us-80297e6c | kyoshin/CTaskGameEvt | `func_80295870` |
 | us-80297e74 | kyoshin/CTaskGameEvt | `func_80295878` |
 | us-80297e7c | kyoshin/CTaskGameEvt | `func_80295880` |
-| us-80194d8c | kyoshin/cf/CPartsChange | `func_80193670` |
-| us-80194f20 | kyoshin/cf/CPartsChange | `func_80193804` |
+| us-80194d8c | kyoshin/cf/CPartsChange | `CPartsChange_GetActorTable` |
+| us-80194f20 | kyoshin/cf/CPartsChange | `CPartsChange_GetLandmarkTable` |
 | us-801b3e20 | kyoshin/cf/CPcEffect07 | `func_801B255C` |
 | us-80165644 | kyoshin/cf/CTaskREvent | `func_801644AC` |
 | us-8016564c | kyoshin/cf/CTaskREvent | `func_801644B4` |
@@ -42,7 +42,7 @@ Of 299 demoted FULL_MATCH rows, 107 were re-matched to byte-identical by source 
 | us-802149c0 | kyoshin/makecrystal/CMakeCrystalWin | `func_80212B68` |
 | us-8021434c | kyoshin/makecrystal/CMenuMakeCrystal | `func_802124F4` |
 | us-80214354 | kyoshin/makecrystal/CMenuMakeCrystal | `func_802124FC` |
-| us-802368f8 | kyoshin/menu/CMenuArtsSet | `func_80234A00` |
+| us-802368f8 | kyoshin/menu/CMenuArtsSet | `CMenuArtsSet_isSlotWindowEmpty` |
 | us-801b317c | kyoshin/menu/CMenuBattleCommu | `func_801B18B8` |
 | us-801b3184 | kyoshin/menu/CMenuBattleCommu | `func_801B18C0` |
 | us-801b318c | kyoshin/menu/CMenuBattleCommu | `func_801B18C8` |
@@ -108,6 +108,6 @@ Of 299 demoted FULL_MATCH rows, 107 were re-matched to byte-identical by source 
 | us-804eb114 | monolib/src/scn/CMdlAnmUV | `func_804E6C78` |
 | us-80486010 | monolib/src/scn/CScnItemCameraNw4r | `func_80482040` |
 | us-80486260 | monolib/src/scn/CScnItemId | `func_80482290` |
-| us-80497f3c | monolib/src/scn/CScnVirtualLight | `func_80493EC8` |
-| us-80497f68 | monolib/src/scn/CScnVirtualLight | `func_80493EF4` |
+| us-80497f3c | monolib/src/scn/CScnVirtualLight | `scnVlGetEnabled` |
+| us-80497f68 | monolib/src/scn/CScnVirtualLight | `scnVlGetCount` |
 | us-803f7f68 | nw4r/src/g3d/g3d_scnobj | `GetTypeName__Q34nw4r3g3d6ScnObjCFv` |

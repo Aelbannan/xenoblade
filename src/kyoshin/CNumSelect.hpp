@@ -29,8 +29,8 @@ struct CNumSelectFull {
 extern char lbl_eu_80506C14[];
 
 // Name/label helpers from code_80135FDC (retail unmangled C symbols).
-extern "C" char* func_80136190(char*, char*, u32);
-extern "C" void func_80136B4C(nw4r::lyt::Layout*, char*, char*, int);
+extern "C" char* BdatTouchStringCell(char*, char*, u32);
+extern "C" void LayoutSetTextBoxFmtValue(nw4r::lyt::Layout*, char*, char*, int);
 extern "C" void func_80136A1C(nw4r::lyt::Layout*, char*, char*, int);
 
 /* Font-info objects from CDeviceFont::getFontInfo dispatch through
@@ -71,9 +71,9 @@ extern "C" void func_8013676C(nw4r::lyt::Pane*, void*);
 extern "C" void func_80124288(nw4r::lyt::Pane*, float*);
 extern "C" char* func_801355BC();
 extern "C" nw4r::lyt::ArcResourceAccessor* func_801355F4();
-extern "C" char* func_80138F78(u32);
-extern "C" u16 func_8013606C(const void*, const void*, u16);
-extern "C" void func_80137E7C(nw4r::lyt::Layout*, const char*, u32);
+extern "C" char* MakeTplNameSysFile(u32);
+extern "C" u16 BdatGetU16ByTableKey(const void*, const void*, u16);
+extern "C" void PaneSetTexPaletteByName(nw4r::lyt::Layout*, const char*, u32);
 extern "C" int isClassicController__Q22cf13CfGameManagerFv(int arg);
 
 // u32->float cast-magic constant shared with the retail sdata2 pool.
@@ -87,8 +87,8 @@ void setLayoutTextBoxNumber(nw4r::lyt::Layout*, char*, u8);
 void func_801390E0(CFileHandle**);
 void releaseArcResourceAccessor(nw4r::lyt::ArcResourceAccessor*);
 u32 advanceAnimTransform(nw4r::lyt::AnimTransform*, float);
-// Retail symbol is unmangled (plain func_80137510), so keep C linkage.
-extern "C" u32 func_80137510(nw4r::lyt::AnimTransform*, float);
+// Retail symbol is unmangled (plain AnimRewindFrame), so keep C linkage.
+extern "C" u32 AnimRewindFrame(nw4r::lyt::AnimTransform*, float);
 // Retail symbol is unmangled (plain func_80124270), so keep C linkage.
 extern "C" void func_80124270(nw4r::lyt::Pane*, u32);
 void playUISound(u32);

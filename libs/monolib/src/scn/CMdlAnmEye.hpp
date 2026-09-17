@@ -26,7 +26,7 @@ extern const char lbl_eu_806638E8[7]; // Panic arg (.sdata)
 // C-ABI imports (retail symbols are unmangled func_* names; declared here so
 // the call relocs keep the C names verbatim).
 extern "C" const char* func_804E6C78();   // second-eye material-name prefix (CMdlAnmUV.cpp)
-extern "C" f32 func_80484EB0(void* model); // owner-model scale query (CScnItemModel.cpp)
+extern "C" f32 simGetLeafDist7B0(void* model); // owner-model scale query (CScnItemModel.cpp)
 
 // Minimal owner-model view (defined in CMdlAnmEye.cpp).
 struct CMdlAnmEyeModel;

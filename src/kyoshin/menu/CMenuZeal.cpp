@@ -3,7 +3,7 @@
 #include "kyoshin/menu/CMenuZeal.hpp"
 
 #include "kyoshin/cf/CfGameManager.hpp"
-// (pluginUi.hpp not included: its extern "C" func_80136190 declaration
+// (pluginUi.hpp not included: its extern "C" BdatTouchStringCell declaration
 // clashes with code_80135FDC.hpp's; only func_800451D8 was needed and it is
 // declared in CMenuZeal.hpp.)
 #include "monolib/device/CDeviceVI.hpp"
@@ -209,7 +209,7 @@ void CMenuZeal::cbRenderBefore() {
 exit:
     return;
 body:
-    if (!func_8013BE50()) goto exit;
+    if (!IsMenuState621F0()) goto exit;
     if (mField_BD == 0) goto exit;
 
     // Inner block: the DrawInfo's scope-exit dtor is auto-emitted as the
@@ -271,7 +271,7 @@ int func_8017FD4C(CMenuZeal* self) {
     quadP[2] = 0xff;
     quadP[1] = 0xff;
     quadP[0] = 0xff;
-    func_80139A18(self->mLayout2, &lbl_eu_80503454[0x25e], quadP, quadQ);
+    PaneMatSetTevColorsByName(self->mLayout2, &lbl_eu_80503454[0x25e], quadP, quadQ);
 
     if (self->mField_94 >= lbl_eu_80667870) {
         // Texture name depends on the detected pad type.
@@ -280,7 +280,7 @@ int func_8017FD4C(CMenuZeal* self) {
                                   : &lbl_eu_80503454[0x1e2];
         void* tex = func_801355F4()->GetResource(0x74696D67, texName, 0);
         if (tex != 0) {
-            func_80137E7C(self->mLayout1, &lbl_eu_80503454[0x1fd], tex);
+            PaneSetTexPaletteByName(self->mLayout1, &lbl_eu_80503454[0x1fd], tex);
         }
 
         self->mField_94 = lbl_eu_80667874;

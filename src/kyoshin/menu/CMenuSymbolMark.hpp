@@ -129,8 +129,8 @@ struct ScnXformBlock {
 };
 
 // Retail imports used by func_8011EFB0.
-extern "C" void* func_800B6CF8(u32 idx);
-extern "C" void* func_80193804();
+extern "C" void* prepareReslistArg(u32 idx);
+extern "C" void* CPartsChange_GetLandmarkTable();
 
 // Input record consumed by func_8011E778: three world floats at +0xC/+0x1C/+0x2C.
 struct EntryInputPos {
@@ -222,7 +222,7 @@ public:
 
 // CfActorView pad deleted: use cf::CfObject / cf::CfObjectMove for 0xAC/0x12C/0x160 and CfObjectMove extended 0x228, and cf::CActorParam for 0x128 hp gate
 
-// Circular marker-object list shared by func_800B6BEC / func_800B6C58:
+// Circular marker-object list shared by getReslistB68 / getReslistBC8:
 // sentinel node at +0x04, nodes chained through their next at +0x00 with the
 // payload object at +0x08.
 struct CfObjListNode {
@@ -352,7 +352,7 @@ extern "C" void __dt__17UnkClass_8045F564Fv(void* self, int deleteFlag);
 
 // Unmangled retail helper imports.
 extern "C" {
-u32 func_80136254(const void* table, const char* str, u32 index);
+u32 BdatGetU16Direct(const void* table, const char* str, u32 index);
 int func_80138234(const void* table, u32 index);
 void func_8049B59C(nw4r::math::VEC3* out, ScnXformBlock* pose,
                    const nw4r::math::VEC3* in);

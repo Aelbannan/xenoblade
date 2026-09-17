@@ -72,12 +72,12 @@ extern "C" void func_801C414C(CTitleAHelp* self);
 extern "C" int isIdle__11CTitleAHelpFv(CTitleAHelp* h);
 
 // CCollepedia callees (retail-unmangled func_ names).
-extern "C" int func_80254D50(CCollepedia* self);
-extern "C" void func_80254C04(CCollepedia* self);
-extern "C" void func_80254D8C(CCollepedia* self);
-extern "C" void func_802552B4(CCollepedia* self);
-extern "C" int func_80255698(CCollepedia* self);
-extern "C" u32 func_802556DC(CCollepedia* self);
+extern "C" int clpGetInputOk(CCollepedia* self);
+extern "C" void clpFreeAllRes(CCollepedia* self);
+extern "C" void clpReqCloseVw(CCollepedia* self);
+extern "C" void clpOnCancel(CCollepedia* self);
+extern "C" int clpIsOverlay(CCollepedia* self);
+extern "C" u32 clpIsBusy(CCollepedia* self);
 
 // Widget ctor/dtor and Init helper calls (US retail strips these names).
 extern "C" void __ct__8CProcessFv(CProcess* self);
@@ -90,20 +90,20 @@ extern "C" void __dt__11CCollepediaFv(CCollepedia* self, int dealloc);
 extern "C" void __ct__UnkClass_8011C974(void* dst, void* src);
 extern "C" void CTitleAHelp_load(CTitleAHelp* self);
 extern "C" int func_801C3C14(CBgTex* self);
-extern "C" char* func_80136190(const void* a, const void* b, int id);
+extern "C" char* BdatTouchStringCell(const void* a, const void* b, int id);
 extern "C" void func_8018B0FC(void* dst, void* src);
-extern "C" void func_8025492C(CCollepedia* self);
+extern "C" void clpStartLoads(CCollepedia* self);
 extern "C" void func_801C41E8(CTitleAHelp* self, u8 mode);
 
 // func_80252DD8 callees (retail-unmangled func_ names).
-extern "C" int func_80255688(CCollepedia* self);
-extern "C" void func_80255210(CCollepedia* self);
-extern "C" void func_8025516C(CCollepedia* self);
-extern "C" void func_802553AC(CCollepedia* self);
-extern "C" void func_80254E64(CCollepedia* self);
-extern "C" void func_80254F2C(CCollepedia* self);
-extern "C" void func_80255000(CCollepedia* self);
-extern "C" void func_802550B4(CCollepedia* self);
+extern "C" int clpCanClaim(CCollepedia* self);
+extern "C" void clpPrevCatPg(CCollepedia* self);
+extern "C" void clpNextCatPg(CCollepedia* self);
+extern "C" void clpOnConfirm(CCollepedia* self);
+extern "C" void clpCursorLeft(CCollepedia* self);
+extern "C" void clpCursorRght(CCollepedia* self);
+extern "C" void clpCursorUp(CCollepedia* self);
+extern "C" void clpCursorDown(CCollepedia* self);
 // CfGameManager controller-type query: retail loads r3=-1 into the symbol
 // (the no-arg member wrapper drops it), so call through the C name directly.
 extern "C" int isClassicController__Q22cf13CfGameManagerFv(int arg);

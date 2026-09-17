@@ -258,13 +258,13 @@ extern "C" bool func_80495E84(u8* self) {
     return func_8048CB14(*(void**)((char*)self + 0x60));
 }
 extern "C" void* func_80495E8C(void* a, void* b, void* c, void* d) {
-    return func_80486068(a, b, c, d, 0);
+    return simFwdAnimSetup102(a, b, c, d, 0);
 }
 extern "C" void func_80495E94(s32 param_1, s32 param_2) {
-    func_80486068((void*)param_1, (void*)param_2, (void*)-1, (void*)0, 0);
+    simFwdAnimSetup102((void*)param_1, (void*)param_2, (void*)-1, (void*)0, 0);
 }
 extern "C" int func_80495EA4(int a, int b) {
-    return func_80486070(a, b, 8);
+    return simFwdAnimReset(a, b, 8);
 }
 extern "C" void func_80495EAC() {
     __ct__8049E710();

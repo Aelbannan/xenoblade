@@ -58,7 +58,7 @@ bool CHelp_Talk::func_802B86F0() {
             func_8016FE34(CfGameManager::getPlayer(0)));
         // Sub-object at +0x3E9C: vtable 0x4C yields the actor id.
         CTalkActor* targetObj = targetResult != nullptr
-            ? static_cast<CTalkActor*>(func_800BF324(findObjectById(
+            ? static_cast<CTalkActor*>(CfObjectMove_getSelfIfActive(findObjectById(
                 reinterpret_cast<int>(targetResult->field_3E9C.vf4C()))))
             : nullptr;
 
@@ -76,7 +76,7 @@ bool CHelp_Talk::func_802B86F0() {
             func_8016FE34(CfGameManager::getPlayer(0)));
         // vtable 0x228: current state id; success when it equals 3.
         bool stateOk = actorResult != nullptr
-            ? static_cast<CTalkActor*>(func_800BF324(findObjectById(
+            ? static_cast<CTalkActor*>(CfObjectMove_getSelfIfActive(findObjectById(
                 reinterpret_cast<int>(actorResult->field_3E9C.vf4C()))))->vf228() == 3
             : false;
         field_0x16 = stateOk ? 1 : 0;

@@ -85,7 +85,7 @@ void func_8016C98C(cf::CfResObjImpl* self) {
     cf::CfResObjParent* parent = self->field_00;
     parent->field_94 = 0;
     if (((cf::CfGameManager*)parent)->getEffectFlagState() == 0) return;
-    ResInfoEntry* entry = (ResInfoEntry*)func_80063038();
+    ResInfoEntry* entry = (ResInfoEntry*)CfRes_getInstPtr170();
     int ok = 1;
     if (entry->field_0x2C->isInUse(entry) == 0) ok = 0;
     if (!ok) return;
@@ -93,9 +93,9 @@ void func_8016C98C(cf::CfResObjImpl* self) {
     mtl::MemManager::setMemInitFlag(false);
     if ((self->field_00->field_6C & 0x20) && self->field_00->field_98 == 0) {
         u32 handle1 = self->func_8016CCBC(1);
-        self->field_00->field_90 = func_80066E7C(entry, handle1);
+        self->field_00->field_90 = CfRes_findEntryById(entry, handle1);
 f32 anim = ((cf::CfObject*)self->field_00)->CfObject_getObjScale();
-        u8* obj = func_80489A60((u8*)lbl_eu_80663E14, self->field_00->field_90, 6, 1, 0, 0x70);
+        u8* obj = scnImN4BuildByIdx((u8*)lbl_eu_80663E14, self->field_00->field_90, 6, 1, 0, 0x70);
         func_800BBADC(self->field_00, obj);
         if (self->field_00->field_98 != 0 &&
             (((cf::CfResObjModel98Data*)self->field_00->field_98)->field_7A4 & 0x800000) != 0 &&
@@ -115,7 +115,7 @@ f32 anim = ((cf::CfObject*)self->field_00)->CfObject_getObjScale();
             u32 handle0 = self->func_8016CCBC(0);
             func_800AA33C(*(ml::FixStr<64>*)buf64, handle0, 0, 0);
             u32 handle1 = self->func_8016CCBC(0);
-            self->field_00->field_94 = func_80066E7C(entry, handle1);
+            self->field_00->field_94 = CfRes_findEntryById(entry, handle1);
             self->field_00->field_9C = (u8*)func_800584B8(
                 (u32)CfRes_getD80Flag(), (u32)self->field_00->field_94, (const char*)buf64);
         }
@@ -123,10 +123,10 @@ f32 anim = ((cf::CfObject*)self->field_00)->CfObject_getObjScale();
     mtl::MemManager::setMemInitFlag(true);
     func_800BCFA0((cf::CfObjectMove*)self->field_00);
     u32 handle = self->func_8016CCBC(1);
-    u8* obj = func_80066E7C(entry, (handle & 0x07FFFFFF) | 0xF0000000);
+    u8* obj = CfRes_findEntryById(entry, (handle & 0x07FFFFFF) | 0xF0000000);
     if (obj != 0) {
-        func_804B0A6C(self->field_00->field_60C, obj);
-        func_800BE824(self->field_00, 1);
+        ColiNodeSetWord0Rebuild(self->field_00->field_60C, obj);
+        CfObjectMove_setRegionAttached(self->field_00, 1);
         self->field_00->field_6B8 = 2;
         self->field_00->field_6B4 |= 0x800;
     }
@@ -213,29 +213,29 @@ cf::CfResObjImplVtbl lbl_eu_80530F44 = { {
     0,
     (u32)__dt__Q22cf12CfResObjImplFv,
     (u32)func_8016CCE0,
-    (u32)func_800BEA34,
+    (u32)CfResObj_noop10,
     (u32)func_8016C860,
-    (u32)func_800BE9AC,
+    (u32)CfObjectMove_relaySubB0Slot14,
     (u32)func_8016CD64,
     (u32)func_8016C880,
-    (u32)func_800BC2DC,
-    (u32)func_800BF2F4,
-    (u32)func_eu_800BFC78,
+    (u32)CfResObj_noop24,
+    (u32)CfResObj_noop28,
+    (u32)CfResObj_noop2C,
     (u32)func_8016CD68,
     (u32)func_8016CCBC,
-    (u32)func_800BEA38,
-    (u32)func_800BED64,
-    (u32)func_800BEE30,
-    (u32)func_800BC3AC,
-    (u32)func_800BEC44,
-    (u32)func_800BED5C,
+    (u32)CfResObj_false38,
+    (u32)CfResObj_unk3C,
+    (u32)CfResObj_noop40,
+    (u32)CfResObj_noop44,
+    (u32)CfResObj_unk48,
+    (u32)CfResObj_unk4C,
     (u32)func_8016CD5C,
     (u32)func_8016C888,
-    (u32)func_800BF2C4,
-    (u32)func_800BF2C8,
+    (u32)CfResObj_noop58,
+    (u32)CfResObj_unk5C,
     (u32)func_8016C950,
     (u32)func_8016CD54,
-    (u32)func_800BF30C,
+    (u32)CfResObj_true68,
 } };
 
 // .data 0x10: RTTI descriptor (already 8-aligned, last object).

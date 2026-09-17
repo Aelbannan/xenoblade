@@ -198,7 +198,7 @@ CVS_THREAD_PARTY_GAGE* __ct__CVS_THREAD_PARTY_GAGE(int owner1, int owner2) {
     if (member == NULL) return NULL;
     if (func_802A330C(0x8c, 1) == NULL) return NULL;
 
-    CVS_THREAD_PARTY_GAGE* self = (CVS_THREAD_PARTY_GAGE*)func_802A34E4(0x2c);
+    CVS_THREAD_PARTY_GAGE* self = (CVS_THREAD_PARTY_GAGE*)CCharVoiceMan_AllocVoiceArena(0x2c);
     if (self == NULL) return NULL;
     CVS_THREAD_PARTY_GAGE_raw* raw = (CVS_THREAD_PARTY_GAGE_raw*)self;
 

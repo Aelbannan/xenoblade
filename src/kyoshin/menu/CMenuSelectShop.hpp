@@ -119,7 +119,7 @@ extern "C" void func_8022C8E0(CSelShopWin*);
 extern u32 lbl_eu_806642E8;
 
 // Menu/gate and cursor helper imports (retail C-ABI symbols; keep un-mangled).
-extern "C" int func_8013BE50();
+extern "C" int IsMenuState621F0();
 extern "C" int func_8018C180();
 extern "C" int func_8018B398();
 

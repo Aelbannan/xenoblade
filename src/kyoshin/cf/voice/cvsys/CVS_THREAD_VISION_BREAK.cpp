@@ -9,13 +9,13 @@
 #include "monolib/util/reslist.hpp"
 
 // All sibling-voice imports (func_802A3E88, func_802A3BEC, func_802A3C44,
-// func_802A3D54, func_802A330C, func_802A34E4, func_802A7A54,
-// func_8016FE34, func_800BE924), the base constructor __ct__cf_CVS_THREAD,
+// func_802A3D54, func_802A330C, CCharVoiceMan_AllocVoiceArena, func_802A7A54,
+// func_8016FE34, CfObjectMove_releaseVoiceHandle), the base constructor __ct__cf_CVS_THREAD,
 // and getListB28 are declared in CVS_THREAD_VISION_BREAK.hpp.
 
 // Sibling-voice imports (func_802A3E88, func_802A3BEC, func_802A3C44,
-// func_802A3D54, func_802A330C, func_802A34E4, func_802A7A54,
-// func_8016FE34, func_800BE924) and the base constructor
+// func_802A3D54, func_802A330C, CCharVoiceMan_AllocVoiceArena, func_802A7A54,
+// func_8016FE34, CfObjectMove_releaseVoiceHandle) and the base constructor
 // __ct__cf_CVS_THREAD are declared in CVS_THREAD_VISION_BREAK.hpp.
 // us-802abc94 (func_802A955C)
 // Completion callback: if no active voice is playing, invoke the playback
@@ -113,7 +113,7 @@ CVS_THREAD_VISION_BREAK* __ct__802A92D8(CVoiceHandle* handle, int param) {
     }
 
     // Allocate the 0x28-byte CVS_THREAD_VISION_BREAK object.
-    CVS_THREAD_VISION_BREAK* obj = (CVS_THREAD_VISION_BREAK*)func_802A34E4(0x28);
+    CVS_THREAD_VISION_BREAK* obj = (CVS_THREAD_VISION_BREAK*)CCharVoiceMan_AllocVoiceArena(0x28);
     if (obj == NULL) {
         return NULL;
     }
@@ -185,7 +185,7 @@ void func_802A93FC(CVS_THREAD_VISION_BREAK* self) {
         // func_8016FE34 returns a CVoiceHandle*, and the CCharVoice is embedded at +0x3E9C.
         CVoiceHandle* resultHandle = (CVoiceHandle*)func_8016FE34(obj);
         if (resultHandle != NULL) {
-            func_800BE924(&resultHandle->voice);
+            CfObjectMove_releaseVoiceHandle(&resultHandle->voice);
         }
     }
 

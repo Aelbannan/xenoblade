@@ -58,14 +58,14 @@ void cf::CfObjectMap::cleanupMap() {
     }
     CScnEnvLgtCtrlListItem* resource = this->field_0x2F3C;
     if (resource != 0) {
-        func_804C1D7C(reinterpret_cast<UnkSceneView*>(lbl_eu_80663E14)->field_0x7C, resource);
+        scnLgtRemoveLgtItem(reinterpret_cast<UnkSceneView*>(lbl_eu_80663E14)->field_0x7C, resource);
         this->field_0x2F3C = nullptr;
     }
-    func_801A2C94__Q22cf12CTaskCullingFv();
+    clearOccFrustums__Q22cf12CTaskCullingFv();
 }
 
 // Retail symbol is fake-Fv (MWCC_CASES §fake-Fv): the splitter mangled
-// no-args but the body reads r4 as a genuine input (used 3x: func_804838DC
+// no-args but the body reads r4 as a genuine input (used 3x: simSetFlag2OnTree
 // flag, the field_100 |=4 / &=~2 select, and the vfn6C boolean). Defined as
 // extern "C" with the explicit Fv-mangled name so the symbol matches retail.
 extern "C" void setMapVisibility__Q22cf11CfObjectMapFv(cf::CfObjectMap* self, u32 arg) {
@@ -79,7 +79,7 @@ extern "C" void setMapVisibility__Q22cf11CfObjectMapFv(cf::CfObjectMap* self, u3
     };
     V* v = reinterpret_cast<V*>(self);
     if (v->mSub98) {
-        func_804838DC((cf::CfObjectModelSub98*)v->mSub98, arg);
+        simSetFlag2OnTree((cf::CfObjectModelSub98*)v->mSub98, arg);
         if (v->field_6C & 0x8000) {
             if (arg) {
                 v->field_100 |= 4;
@@ -116,7 +116,7 @@ extern "C" int func_800B9C74(cf::CfObjectMap* self, u32 a, u32 b) {
         func_80495E60(self->field_0xEC);
         self->field_0xEC = 0;
     }
-    void* handle = func_800624A8(a, b, 3);
+    void* handle = CfRes_tryResolveLink(a, b, 3);
     if (handle != 0) {
         self->field_0x2F38 = func_800AA2BC(a, b);
         self->mFlags68 &= 0x40000000;
@@ -136,12 +136,12 @@ extern "C" int func_800B9C74(cf::CfObjectMap* self, u32 a, u32 b) {
         int size = getFileSize__11CDeviceFileFPCc(buf, 1);
         if (size > 0) {
             u32 rounded = (size + 0x7FF) & ~0x7FF;
-            UnkRes866A0* res = func_80062FF0();
-            if (res->field_0x2C->cmpField4Eq(res, func_800AA2BC(a, b)) != 0 && func_800A7FBC() != 0) {
-                self->field_0xE4 = func_800A7FBC();
+            UnkRes866A0* res = CfRes_getInstPtr134();
+            if (res->field_0x2C->cmpField4Eq(res, func_800AA2BC(a, b)) != 0 && KyoshinHeap_GetField18() != 0) {
+                self->field_0xE4 = KyoshinHeap_GetField18();
                 self->field_0x2F40 = 1;
             } else {
-                func_80065CA4(res->field_0x2C, res);
+                CfRes_cancelPendingRead(res->field_0x2C, res);
                 res->field_0x4 = 0;
                 res->field_0x8 = 0;
                 res->field_0x28 = 0;
@@ -149,7 +149,7 @@ extern "C" int func_800B9C74(cf::CfObjectMap* self, u32 a, u32 b) {
                 res->field_0x24 = 0;
                 res->field_0x20 = 0;
                 self->field_0xE4 = func_800A9784(rounded);
-                if (func_800626F4((u32)self->field_0xE4, field1, field2, 4) != 0) {
+                if (CfRes_tryResolveSlot130((u32)self->field_0xE4, field1, field2, 4) != 0) {
                     self->field_0x2F40 = 1;
                 }
             }
@@ -166,9 +166,9 @@ extern "C" void setMapId__Q22cf11CfObjectMapFv(cf::CfObjectMap* self,
 }
 
 extern "C" void func_800B9E4C(cf::CfObjectMap* self) {
-    UnkRes866A0* resA = func_80062F60();
-    UnkRes866A0* resB = func_80062F18();
-    UnkRes866A0* resC = func_80062FA8();
+    UnkRes866A0* resA = CfRes_getInstPtrBC();
+    UnkRes866A0* resB = CfRes_getInstPtr80();
+    UnkRes866A0* resC = CfRes_getInstPtrF8();
     u32 packed = self->field_0x2F38;
     u32 field1 = (packed >> 20) & 0x7F;
     u32 field2 = (packed >> 10) & 0x3FF;
@@ -177,7 +177,7 @@ extern "C" void func_800B9E4C(cf::CfObjectMap* self) {
         // Per-frame map event processing (model-space delegate list).
         if (resA->field_0x2C->isInUse(resA) != 0) {
             void* iter = resA->field_0x2C->getResourceBase(resA, 0);
-            u32 count = func_800621A0();
+            u32 count = CfRes_getNameRecCount();
             for (s32 i = 0; i < (s32)count; i++) {
                 u32 type;
                 u32 out10;
@@ -192,14 +192,14 @@ extern "C" void func_800B9E4C(cf::CfObjectMap* self) {
                     obj = func_800A965C((void*)outC);
                     self->field_0xE0 = obj;
                 } else if (type == 3) {
-                    obj = func_80065D00(resC->field_0x2C, resC);
+                    obj = CfRes_getLazyField20(resC->field_0x2C, resC);
                     self->field_0xDC = obj;
                 } else if (type == 4) {
-                    obj = func_800A81FC();
+                    obj = KyoshinHeap_GetField1C();
                     self->field_0xE8 = obj;
                 } else if (type == 6) {
                     obj = func_800A98A8((void*)outC);
-                    func_800627BC((void*)outC);
+                    CfRes_tryUpdateSlot16C((void*)outC);
                 } else if (type == 5) {
                     obj = func_801A2C04__Q22cf12CTaskCullingFv();
                 } else if (type == 7) {
@@ -215,7 +215,7 @@ extern "C" void func_800B9E4C(cf::CfObjectMap* self) {
             }
             resB->field_0x0 &= ~0x10;
             if (self->field_0xDC == 0) {
-                func_80062680(field1, field2, 3);
+                CfRes_tryResolveSlotF4(field1, field2, 3);
             }
         }
         goto done;
@@ -230,7 +230,7 @@ extern "C" void func_800B9E4C(cf::CfObjectMap* self) {
     }
     int loadedFlag;
     if (self->field_0x2F40 != 0) {
-        UnkRes866A0* res = func_80062FF0();
+        UnkRes866A0* res = CfRes_getInstPtr134();
         loadedFlag = res->field_0x2C->isInUse(res);
     } else {
         loadedFlag = 1;
@@ -244,9 +244,9 @@ extern "C" void func_800B9E4C(cf::CfObjectMap* self) {
         self->field_0x8E += 1;
         buf[0] = 0;
         func_800AA33C(reinterpret_cast<ml::FixStr<64>&>(buf), resB->field_0x4, 1, 0);
-        *reinterpret_cast<void**>(self->field_0x90) = func_80065D04(resB->field_0x2C, resB);
-        self->field_0xDC = func_80065D00(resC->field_0x2C, resC);
-        void* r3 = func_80489A60(lbl_eu_80663E14, *reinterpret_cast<void**>(self->field_0x90), 5, 1, 0, 0x30);
+        *reinterpret_cast<void**>(self->field_0x90) = CfRes_getLazyField10(resB->field_0x2C, resB);
+        self->field_0xDC = CfRes_getLazyField20(resC->field_0x2C, resC);
+        void* r3 = scnImN4BuildByIdx(lbl_eu_80663E14, *reinterpret_cast<void**>(self->field_0x90), 5, 1, 0, 0x30);
         func_800BBADC(self, r3);
         clearPoolData__17UnkClass_8047CD0CFv(&self->field_0x2F2C);
         if (self->field_0xDC != 0) {
@@ -339,7 +339,7 @@ extern "C" void func_800BA440(cf::CfObjectMap* self) {
     }
     // v passed uncast so MWCC emits a separate clrlwi per u16 parameter site
     updateLODRange__8CTaskLODFv(v, value);
-    func_804C1F10(reinterpret_cast<UnkSceneView*>(lbl_eu_80663E14)->field_0x7C, v, value);
+    scnLgtPushLgtValue(reinterpret_cast<UnkSceneView*>(lbl_eu_80663E14)->field_0x7C, v, value);
     if (lbl_eu_80663E28 & 0x01000000) {
         v = 2;
     } else {
@@ -381,11 +381,11 @@ void cf::CfObjectMap::dispatchMapState() {
 }
 
 extern "C" void setMapScale__Q22cf11CfObjectMapFv(cf::CfObjectMap* self, float f) {
-    extern void func_80484E5C(void*);
+    extern void simSetLeafDist7B0(void*);
     void* unk = *(void**)((char*)self + 0x98);
     *(float*)((char*)self + 0x2F48) = f;
     if (unk != 0) {
-        func_80484E5C(unk);
+        simSetLeafDist7B0(unk);
     }
 }
 

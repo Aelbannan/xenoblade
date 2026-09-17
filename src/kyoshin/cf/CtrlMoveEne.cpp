@@ -15,8 +15,8 @@
 #include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
 
 // From CtrlNpc.cpp (do not include CtrlNpc.hpp here - its C-ABI decls
-// clash with CCtrlMoveEne.hpp on func_804B0B54 / func_804876DC).
-extern "C" u32 func_8004C5EC(u32 arg);
+// clash with CCtrlMoveEne.hpp on ColiSetAxisBlockInverse / scnImN4DynStart).
+extern "C" u32 getAnimModelId(u32 arg);
 // CfObjectActor UVF6 - forced-name call avoids including CfObjectActor.hpp
 // (that pulls CCtrlMoveEne.hpp and clashes with this TU's func_8004B9D4 decl).
 namespace cf { class CfObjectActor; }
@@ -137,7 +137,7 @@ void func_8008A2C8(cf::CCtrlMoveEne* self) {
         if (actor->CActorParam_isBattleLocked() != 0 && actor->CActorParam_getHp() <= lbl_eu_806665C0) {
             if (f60 != 0 && (self->field_0x180 & 0x8u) != 0) {
                 view->field_0x17C &= ~0x8000u;
-                func_8004B8B0(f60, 0, 1, lbl_eu_806665C0);
+                setSnapFlags(f60, 0, 1, lbl_eu_806665C0);
                 reinterpret_cast<cf::CfObject*>(&obj->mSub2)->CfObject_setMoveBusyState(0);
             }
             return;
@@ -159,10 +159,10 @@ void func_8008A2C8(cf::CCtrlMoveEne* self) {
                     view->field_0x17C &= ~0x8000u;
                     u32 w3 = ((cf::CFunc8008B580Word*)obj->field_04->CObjectState_getStateData())->field_0;
                     if (func_80174C98(obj, &w3, 0x1C) != 0) {
-                        func_8004B8B0(f60, 0, 1, lbl_eu_806665C0);
+                        setSnapFlags(f60, 0, 1, lbl_eu_806665C0);
                         reinterpret_cast<cf::CfObject*>(&obj->mSub2)->CfObject_setMoveBusyState(0);
                     } else if ((view->field_0x17C & 0x800000u) != 0) {
-                        func_8004B8B0(f60, 0, 1, lbl_eu_806665C0);
+                        setSnapFlags(f60, 0, 1, lbl_eu_806665C0);
                         reinterpret_cast<cf::CfObject*>(&obj->mSub2)->CfObject_setMoveBusyState(0);
                     } else {
                         // Approach: resolve the action source and probe.
@@ -272,7 +272,7 @@ void func_8008A2C8(cf::CCtrlMoveEne* self) {
                                 f31 = reinterpret_cast<cf::CfObject*>(&obj->mSub2)->CfObject_getPosVector()
                                           ->y;
                             }
-                            func_8004B8B0(f60, 1, 0, f31);
+                            setSnapFlags(f60, 1, 0, f31);
                         }
                         func_800899AC(self, lbl_eu_806665E0);
                     }
@@ -413,10 +413,10 @@ void func_8008A2C8(cf::CCtrlMoveEne* self) {
             } else if ((f60->field_4EC & 0x100u) == 0 ||
                        (obj->field_3374 & 0x100000u) != 0) {
                 if ((view->field_0x17C & 0x4u) != 0) {
-                    void* r23 = func_800B89CC(obj->field_45C0);
-                    if (r23 != 0 && func_80198310() != 0) {
+                    void* r23 = lookupCA0ById(obj->field_45C0);
+                    if (r23 != 0 && CPartsChange_ResolveLinkedObj() != 0) {
                         cf::CFunc8008B580Obj* ro =
-                            (cf::CFunc8008B580Obj*)func_80198310();
+                            (cf::CFunc8008B580Obj*)CPartsChange_ResolveLinkedObj();
                         if (ro->field_3F60 != 0) {
                             // mSub2 = Move at +0x3E9C; +0x110 = CfObject::UVF48 -> void*.
                             void* tgt = reinterpret_cast<cf::CfObject*>(&ro->mSub2)
@@ -645,11 +645,11 @@ void func_8008A2C8(cf::CCtrlMoveEne* self) {
             }
             if (r28 == 0 && (view->field_0x17C & 0x4u) != 0) {
                 // Mark the party targets with the +0x08000000 flag.
-                void* r23 = func_800B89CC(obj->field_45C0);
+                void* r23 = lookupCA0ById(obj->field_45C0);
                 if (r23 != 0) {
                     s16 cnt = *(s16*)((u8*)r23 + 0xA2);
                     for (int i = 0; i < cnt; i++) {
-                        void* r3 = (void*)func_801984F0(r23, i);
+                        void* r3 = (void*)CPartsChange_GetEnemySlotAt(r23, i);
                         if (r3 != 0) {
                             cf::CFunc8008B580Obj* ro =
                                 (cf::CFunc8008B580Obj*)r3;
@@ -672,7 +672,7 @@ void func_8008A2C8(cf::CCtrlMoveEne* self) {
                 if (func_80174C98(obj, &w, 0x10) != 0 ||
                     func_80174C98(obj, &w, 0xA) != 0 ||
                     func_80174C98(obj, &w, 0x9) != 0) {
-                    func_800BE12C(&obj->mSub2, 0x31, 0, -1, 1);
+                    CfObjectMove_setAnimModeArgs(&obj->mSub2, 0x31, 0, -1, 1);
                 }
             }
             void* bm2 = getInstance__Q22cf14CBattleManagerFv();
@@ -733,7 +733,7 @@ void func_8008B580(cf::CCtrlMoveEne* self) {
         if (f60 == 0) return;
         if ((self->field_0x180 & 0x8u) == 0) return;
         self->field_0x17C &= ~0x10000u;
-        func_8004B8B0(f60, 0, 1, lbl_eu_806665C0);
+        setSnapFlags(f60, 0, 1, lbl_eu_806665C0);
         ((cf::CfObject*)&obj->mSub2)->CfObject_setMoveBusyState(0);
         return;
     }
@@ -748,7 +748,7 @@ void func_8008B580(cf::CCtrlMoveEne* self) {
             self->field_0x17C &= ~0x10000u;
             u32 w1 = ((cf::CFunc8008B580Word*)obj->field_04->CObjectState_getStateData())->field_0;
             if (func_80174C98(obj, &w1, 0x1C) != 0) {
-                func_8004B8B0(f60, 0, 1, lbl_eu_806665C0);
+                setSnapFlags(f60, 0, 1, lbl_eu_806665C0);
                 ((cf::CfObject*)&obj->mSub2)->CfObject_setMoveBusyState(0);
             } else {
                 u32 w2 = ((cf::CFunc8008B580Word*)obj->field_04->CObjectState_getStateData())->field_0;
@@ -756,7 +756,7 @@ void func_8008B580(cf::CCtrlMoveEne* self) {
                 if (func_80174C98(obj, &w2, 0x805) != 0 ||
                     (w3 = ((cf::CFunc8008B580Word*)obj->field_04->CObjectState_getStateData())->field_0,
                      func_80174C98(obj, &w3, 0x18)) != 0) {
-                    func_8004B8B0(f60, 0, 1, lbl_eu_806665C0);
+                    setSnapFlags(f60, 0, 1, lbl_eu_806665C0);
                     ((cf::CfObject*)&obj->mSub2)->CfObject_setMoveBusyState(0);
                 }
             }
@@ -986,10 +986,10 @@ __declspec(noinline) void func_8008C4F0(cf::CCtrlMoveEne* self) {
         if ((self->field_0x180 & 0x38u) != 0) {
             if ((self->field_0x180 & 0x8u) != 0) {
                 if ((self->field_0x17C & 0x10000u) == 0) {
-                    func_8004B8B0(f60, 1, 1, self->field_0x160);
+                    setSnapFlags(f60, 1, 1, self->field_0x160);
                     func_800899AC(self, lbl_eu_806665E0);
                 } else {
-                    func_8004B8B0(f60, 0, 1, lbl_eu_806665C0);
+                    setSnapFlags(f60, 0, 1, lbl_eu_806665C0);
                 }
             }
             if ((self->field_0x180 & 0x10u) != 0) {
@@ -1177,7 +1177,7 @@ __declspec(noinline) int func_8008D51C(cf::CCtrlMoveEne* self) {
     cf::CfObj3F60View* f60 = obj->field_3F60;
     int r28 = 1;
     if ((view->field_0x17C & 0x8u) != 0 && f60 != 0) {
-        if (func_8004C5EC((u32)f60) == 0x66) {
+        if (getAnimModelId((u32)f60) == 0x66) {
             r28 = 0;
         } else {
             view->field_0x17C &= ~0x8u;
@@ -1191,12 +1191,12 @@ __declspec(noinline) int func_8008D51C(cf::CCtrlMoveEne* self) {
             lbl_eu_806665C0;
         if (f60 != 0 && (self->field_0x180 & 0x8u) != 0) {
             if (view->field_0x18E != 0) {
-                func_8004B8B0(f60, 0, 1, lbl_eu_806665C0);
-                func_8004B7C0(f60, &ml::CVec3::zero);
+                setSnapFlags(f60, 0, 1, lbl_eu_806665C0);
+                setAnimPosVec(f60, &ml::CVec3::zero);
                 reinterpret_cast<cf::CfObject*>(&obj->mSub)->CfObject_setMoveBusyState(1);
                 reinterpret_cast<cf::CfObject*>(&obj->mSub)->CfObject_setMoveTargetVec(&view->mVec144);
             } else {
-                func_8004B8B0(f60, 1, 0, view->mVec144.y);
+                setSnapFlags(f60, 1, 0, view->mVec144.y);
             }
         }
         f32 f31 = reinterpret_cast<cf::CfObject*>(&obj->mSub)->CfObject_getMoveSpeedRate();
@@ -1255,8 +1255,8 @@ __declspec(noinline) int func_8008D51C(cf::CCtrlMoveEne* self) {
                 view->field_0x18E != 0) {
                 cf::CfObj3F60View* w = obj->field_3F60;
                 if (w != 0) {
-                    func_8004B8B0(w, 0, 1, lbl_eu_806665C0);
-                    func_8004B7C0(w, &ml::CVec3::zero);
+                    setSnapFlags(w, 0, 1, lbl_eu_806665C0);
+                    setAnimPosVec(w, &ml::CVec3::zero);
                 }
                 reinterpret_cast<cf::CfObject*>(sub2)->CfObject_setMoveBusyState(1);
             }
@@ -1275,7 +1275,7 @@ __declspec(noinline) int func_8008D51C(cf::CCtrlMoveEne* self) {
                         PSVECNormalize(dir, dir);
                     }
                 }
-                func_8004B8B0(f60, 1, 1, view->mVec144.y);
+                setSnapFlags(f60, 1, 1, view->mVec144.y);
                 if (dir.x * dir.x + dir.y * dir.y + dir.z * dir.z >
                     lbl_eu_80666640) {
                     f32 rate = lbl_eu_80666644 /
@@ -1308,8 +1308,8 @@ __declspec(noinline) int func_8008D51C(cf::CCtrlMoveEne* self) {
         if ((self->field_0x180 & 0x8u) != 0 && view->field_0x18E != 0) {
             cf::CfObj3F60View* w = obj->field_3F60;
             if (w != 0) {
-                func_8004B8B0(w, 0, 1, lbl_eu_806665C0);
-                func_8004B7C0(w, &ml::CVec3::zero);
+                setSnapFlags(w, 0, 1, lbl_eu_806665C0);
+                setAnimPosVec(w, &ml::CVec3::zero);
             }
             reinterpret_cast<cf::CfObject*>(&obj->mSub)->CfObject_setMoveBusyState(1);
         }
@@ -1331,8 +1331,8 @@ d51c_780:
     if ((self->field_0x180 & 0x8u) != 0 && view->field_0x18E != 0) {
         cf::CfObj3F60View* w = obj->field_3F60;
         if (w != 0) {
-            func_8004B8B0(w, 0, 1, lbl_eu_806665C0);
-            func_8004B7C0(w, &ml::CVec3::zero);
+            setSnapFlags(w, 0, 1, lbl_eu_806665C0);
+            setAnimPosVec(w, &ml::CVec3::zero);
         }
         reinterpret_cast<cf::CfObject*>(&obj->mSub)->CfObject_setMoveBusyState(1);
     }
@@ -1617,7 +1617,7 @@ void func_8008E2D4(cf::CCtrlMoveEne* self) {
 
 // Enemy move-controller (re)initialisation (retail func_8008E760): the big
 // setup split between the battle-state probe (r28) and the plain path. When
-// the +0x3F00 bit-26 state is clear and func_800B8AFC reports the object
+// the +0x3F00 bit-26 state is clear and lookupCA0BySelf reports the object
 // inactive, the plain path installs the +0x16C hook, seeds the +0x58/+0x5A/
 // +0x5C counters, runs the actor-id lookup / party-info probe, copies the
 // battle position and computes the movement-rate divisor. The active path
@@ -1642,7 +1642,7 @@ void func_8008E760(cf::CCtrlMoveEne* self) {
     if ((obj->field_3F00 & 0x04000000u) != 0) {
         active = 1;
     } else {
-        active = (func_800B8AFC(obj) == 0);
+        active = (lookupCA0BySelf(obj) == 0);
     }
     view->field_0x17C = 0;
     view->field_0x18C = 0;
@@ -1691,10 +1691,10 @@ void func_8008E760(cf::CCtrlMoveEne* self) {
         view->field_0x58 = 0;
         view->field_0x5A = (u16)(ml::math::mtRand() & 0xF);
         view->field_0x5C = (u32)(ml::math::mtRand() & 0xFFFF);
-        void* r28b = func_800B89CC(obj->field_45C0);
+        void* r28b = lookupCA0ById(obj->field_45C0);
         if (r28b != 0) {
             cf::CFunc8008E760BattleObj* r31b =
-                (cf::CFunc8008E760BattleObj*)func_80198310();
+                (cf::CFunc8008E760BattleObj*)CPartsChange_ResolveLinkedObj();
             if (r31b != 0) {
                 // +0x5B4 = CfObjectActor::UVF6 -> float; +0xC4 = CfObject::UVF29(float).
                 // First call leaves f1 live into UVF29 (retail Fv on both).
@@ -1720,7 +1720,7 @@ void func_8008E760(cf::CCtrlMoveEne* self) {
                 cf::CFunc8008E760PartyInfo info;
                 func_80198710(&info, &tmp20, f1, r27, r28v, f31, sum);
                 if ((self->field_0x180 & 1) != 0) info.field_2D = 0;
-                int r = func_8019876C(&info, &view->field_0C);
+                int r = CPartsChange_ProcessPartyInfo(&info, &view->field_0C);
                 if ((obj->field_3374 & 0x100u) != 0) {
                     view->field_0x58 |= 4;
                     view->field_0x10 = reinterpret_cast<cf::CfObject*>(&obj->mSub)->CfObject_getPosVector()->y;
@@ -1763,7 +1763,7 @@ void func_8008E760(cf::CCtrlMoveEne* self) {
         self->field_0x180 |= 0x8;
         s16 m = (s16)view->field_0x18C;
         if (m != 1 && m != 2) {
-            void* p = func_801974CC((void*)func_80193670(), obj);
+            void* p = CPartsChange_FindPartsElem((void*)CPartsChange_GetActorTable(), obj);
             if (p != 0 && (*(u8*)((u8*)p + 0x24) & 0xB0) != 0) {
                 self->field_0x17C |= 0x10000;
                 u8 b24 = *(u8*)((u8*)p + 0x24);
@@ -1841,7 +1841,7 @@ void func_8008EF04(cf::CCtrlMoveEne* self) {
         void* c4 =
             ((cf::CFunc8008EF04Sub*)self->field_0x34->field_0x28)->field_C4;
         if (c4 != 0) {
-            func_8004B8B0(c4, 0, 1, lbl_eu_806665C0);
+            setSnapFlags(c4, 0, 1, lbl_eu_806665C0);
             self->field_0x34->field_0x28->CfObject_setMoveBusyState(1);
         }
     }
@@ -1891,7 +1891,7 @@ check:
             cf::CFunc8008EF04Sub98* p98 = (cf::CFunc8008EF04Sub98*)sub->field_98;
             if (sub->field_C4 != 0 && p98 != 0 &&
                 (p98->field_7A4 & 0x10000u) == 0) {
-                func_800BE12C(sub, 3, 0, -1, 1);
+                CfObjectMove_setAnimModeArgs(sub, 3, 0, -1, 1);
                 ((cf::CfObject*)sub)->CObjectState_setStateBitFlag(4);
                 self->field_0x17C |= 1;
             }
@@ -1904,8 +1904,8 @@ check:
                         ->field_C4 != 0) {
                 self->field_0x17C |= 0x10000;
                 if (mode == 2) {
-                    func_800BE12C(self->field_0x34->field_0x28, 1, 0, 0, 1);
-                    func_8004B8B0(
+                    CfObjectMove_setAnimModeArgs(self->field_0x34->field_0x28, 1, 0, 0, 1);
+                    setSnapFlags(
                         ((cf::CFunc8008EF04Sub*)self->field_0x34->field_0x28)
                             ->field_C4,
                         0, 1, lbl_eu_806665C0);
@@ -1913,8 +1913,8 @@ check:
                         self->field_0x34->field_0x28->CfObject_setMoveBusyState(1);
                     }
                 } else if (mode == 3) {
-                    func_800BE12C(self->field_0x34->field_0x28, 1, 0, 1, 1);
-                    func_8004B8B0(
+                    CfObjectMove_setAnimModeArgs(self->field_0x34->field_0x28, 1, 0, 1, 1);
+                    setSnapFlags(
                         ((cf::CFunc8008EF04Sub*)self->field_0x34->field_0x28)
                             ->field_C4,
                         0, 1, lbl_eu_806665C0);
@@ -2153,7 +2153,7 @@ void func_8008FE8C(cf::CCtrlMoveEne* self) {
                 if (sub->field_C4 != 0 && sub->field_98 != 0 &&
                     (((cf::CFunc8008EF04Sub98*)sub->field_98)->field_7A4 &
                      0x10000u) == 0) {
-                    func_800BE12C(sub, 3, 0, -1, 1);
+                    CfObjectMove_setAnimModeArgs(sub, 3, 0, -1, 1);
                     reinterpret_cast<cf::CObjectState*>(sub)->CObjectState_setStateBitFlag(4);
                     view->field_0x17C |= 1;
                 }
@@ -2184,7 +2184,7 @@ void func_8008FE8C(cf::CCtrlMoveEne* self) {
                 if (sub->field_C4 != 0 && sub->field_98 != 0 &&
                     (((cf::CFunc8008EF04Sub98*)sub->field_98)->field_7A4 &
                      0x10000u) == 0) {
-                    func_800BE12C(sub, 3, 0, -1, 1);
+                    CfObjectMove_setAnimModeArgs(sub, 3, 0, -1, 1);
                     reinterpret_cast<cf::CObjectState*>(sub)->CObjectState_setStateBitFlag(4);
                     view->field_0x17C |= 1;
                 }
@@ -2212,7 +2212,7 @@ void func_8008FE8C(cf::CCtrlMoveEne* self) {
         if (sub->field_C4 != 0 && sub->field_98 != 0 &&
             (((cf::CFunc8008EF04Sub98*)sub->field_98)->field_7A4 &
              0x10000u) == 0) {
-            func_800BE12C(sub, 3, 0, -1, 1);
+            CfObjectMove_setAnimModeArgs(sub, 3, 0, -1, 1);
             reinterpret_cast<cf::CObjectState*>(sub)->CObjectState_setStateBitFlag(4);
             view->field_0x17C |= 1;
         }
@@ -2372,7 +2372,7 @@ void func_8008FE8C(cf::CCtrlMoveEne* self) {
             &view->field_0x78[(s16)view->field_0x5A];
         if ((entry4->field_0xC & 0x8u) != 0) {
             if (sub->field_C4 != 0) {
-                func_800BE12C(sub, 0x66, 0, -1, 1);
+                CfObjectMove_setAnimModeArgs(sub, 0x66, 0, -1, 1);
                 view->field_0x17C |= 0x8;
             }
         } else if ((entry4->field_0xC & 0x10u) != 0) {
@@ -2539,7 +2539,7 @@ void func_80090DB4(cf::CCtrlMoveEne* self) {
                 if (sub2->field_C4 != 0 && sub2->field_98 != 0 &&
                     (((cf::CFunc8008EF04Sub98*)sub2->field_98)->field_7A4 &
                      0x10000u) == 0) {
-                    func_800BE12C(sub2, 3, 0, -1, 1);
+                    CfObjectMove_setAnimModeArgs(sub2, 3, 0, -1, 1);
                     reinterpret_cast<cf::CObjectState*>(sub2)->CObjectState_setStateBitFlag(4);
                     view->field_0x17C |= 1;
                 }
@@ -2570,7 +2570,7 @@ void func_80090DB4(cf::CCtrlMoveEne* self) {
             if (sub2->field_C4 != 0 && sub2->field_98 != 0 &&
                 (((cf::CFunc8008EF04Sub98*)sub2->field_98)->field_7A4 &
                  0x10000u) == 0) {
-                func_800BE12C(sub2, 3, 0, -1, 1);
+                CfObjectMove_setAnimModeArgs(sub2, 3, 0, -1, 1);
                 reinterpret_cast<cf::CObjectState*>(sub2)->CObjectState_setStateBitFlag(4);
                 view->field_0x17C |= 1;
             }
@@ -2687,7 +2687,7 @@ void func_8009156C(cf::CCtrlMoveEne* self) {
             if ((v->field_0x70 & 0x10u) != 0) {
                 if (((cf::CFunc8008F9ECSub*)self->field_0x34->field_0x28)
                         ->field_C4 != 0) {
-                    func_800BE12C(self->field_0x34->field_0x28, 0x66, 0, -1, 1);
+                    CfObjectMove_setAnimModeArgs(self->field_0x34->field_0x28, 0x66, 0, -1, 1);
                     v->field_0x17C |= 0x8;
                 }
             } else if ((v->field_0x70 & 0x20u) != 0) {
@@ -2700,7 +2700,7 @@ void func_8009156C(cf::CCtrlMoveEne* self) {
             // Scan the gimmick list: mark any target whose XZ distance to the
             // move sub is at most the threshold.
             sub = self->field_0x34->field_0x28;
-            cf::CFunc8009156CList* list = func_800B6BC8();
+            cf::CFunc8009156CList* list = getReslistB48();
             f32 th = lbl_eu_80666678;
             for (cf::CFunc8009156CNode* node = list->head->next;
                  node != list->head; node = node->next) {
@@ -2770,7 +2770,7 @@ void func_80091864(cf::CCtrlMoveEne* selfRaw) {
         }
     }
 
-    b89 = (cf::CFunc8008E760B89*)func_800B89CC(ene->field_45C0);
+    b89 = (cf::CFunc8008E760B89*)lookupCA0ById(ene->field_45C0);
     if (b89 == 0) {
         ((cf::CFunc8009DataView*)((cf::CFunc80091864View*)selfRaw)
              ->field_0x34)
@@ -2778,7 +2778,7 @@ void func_80091864(cf::CCtrlMoveEne* selfRaw) {
         return;
     }
 
-    player = (cf::CFunc80091864Actor*)func_80198310();
+    player = (cf::CFunc80091864Actor*)CPartsChange_ResolveLinkedObj();
     if (player == 0) {
         if ((self->field_0x180 & 0x8) != 0) {
             self->field_0x160 = self->field_0x4;
@@ -2897,7 +2897,7 @@ void func_80091864(cf::CCtrlMoveEne* selfRaw) {
                 int found = 0;
                 for (s32 idx = (s32)ene->field_45C6 - 1; idx >= 0; idx--) {
                     cf::CFunc80091864Actor* cand =
-                        (cf::CFunc80091864Actor*)func_801984F0(b89, idx);
+                        (cf::CFunc80091864Actor*)CPartsChange_GetEnemySlotAt(b89, idx);
                     if (cand == 0) continue;
                     cf::CFunc80091864Target* tgt =
                         (cf::CFunc80091864Target*)(
@@ -2972,7 +2972,7 @@ void func_80091864(cf::CCtrlMoveEne* selfRaw) {
         }
 
         planned = 1;
-        int ok = func_8019876C(&pi, &goal);
+        int ok = CPartsChange_ProcessPartyInfo(&pi, &goal);
         int accept = 1;
         if (ok != 0) {
             if ((self->field_0x17C & 0x80000000u) != 0 && esc == 1) {
@@ -3157,7 +3157,7 @@ void func_80091864(cf::CCtrlMoveEne* selfRaw) {
         if (sub->field_C4 != 0 && sub->field_98 != 0 &&
             (((cf::CFunc8008EF04Sub98*)sub->field_98)->field_7A4 & 0x10000) ==
                 0) {
-            func_800BE12C(sub, 3, 0, -1, 1);
+            CfObjectMove_setAnimModeArgs(sub, 3, 0, -1, 1);
             ((cf::CfObject*)sub)->CObjectState_setStateBitFlag(4);
             self->field_0x17C |= 1;
         }
@@ -3325,7 +3325,7 @@ void func_80091864(cf::CCtrlMoveEne* selfRaw) {
                 if (sub->field_C4 != 0 && sub->field_98 != 0 &&
                     (((cf::CFunc8008EF04Sub98*)sub->field_98)->field_7A4 &
                      0x10000) == 0) {
-                    func_800BE12C(sub, 3, 0, -1, 1);
+                    CfObjectMove_setAnimModeArgs(sub, 3, 0, -1, 1);
                     ((cf::CfObject*)sub)->CObjectState_setStateBitFlag(4);
                     self->field_0x17C |= 1;
                 }
@@ -3630,7 +3630,7 @@ void func_80093618(cf::CNpcBaseDataView* self, f32 f) {
     if (sub) {
         sub->CfObject_setMoveHeadAngle(f);
         if (self->field_0x28->CfObject_isMoveActiveNow() != 0) {
-            func_800BE12C(self->field_0x28, 3, 0, -1, 1);
+            CfObjectMove_setAnimModeArgs(self->field_0x28, 3, 0, -1, 1);
         }
     }
 }

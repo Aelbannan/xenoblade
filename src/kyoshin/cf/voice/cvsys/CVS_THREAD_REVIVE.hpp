@@ -14,7 +14,7 @@ extern "C" {
     int           func_802A7850(int iter);
     int           func_802A7B90(CVoiceHandle* handle1, CVoiceHandle* handle2);
     CVoiceHandle* func_802A330C(int size, int align);
-    u8*           func_802A34E4(int size);
+    u8*           CCharVoiceMan_AllocVoiceArena(int size);
     CVS_THREAD*   __ct__cf_CVS_THREAD(CVS_THREAD* object);
 
     // Runtime rethrow (NMWException runtime, C ABI): declared noreturn so MWCC

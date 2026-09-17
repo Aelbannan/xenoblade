@@ -157,15 +157,15 @@ void CMenuBattleCommu::Init() {
     mField78->SetFrame(lbl_eu_80667DE0);
     mField74->Animate();
 
-    func_80136B4C(reinterpret_cast<nw4r::lyt::Layout*>(mField74),
+    LayoutSetTextBoxFmtValue(reinterpret_cast<nw4r::lyt::Layout*>(mField74),
                   lbl_eu_805047FC + 0x107, lbl_eu_805047FC + 0x13c, 0);
-    func_80136B4C(reinterpret_cast<nw4r::lyt::Layout*>(mField74),
+    LayoutSetTextBoxFmtValue(reinterpret_cast<nw4r::lyt::Layout*>(mField74),
                   lbl_eu_805047FC + 0x112, lbl_eu_805047FC + 0x13c, 0);
-    func_80136B4C(reinterpret_cast<nw4r::lyt::Layout*>(mField74),
+    LayoutSetTextBoxFmtValue(reinterpret_cast<nw4r::lyt::Layout*>(mField74),
                   lbl_eu_805047FC + 0x11d, lbl_eu_805047FC + 0x13c, 0);
-    func_80136B4C(reinterpret_cast<nw4r::lyt::Layout*>(mField74),
+    LayoutSetTextBoxFmtValue(reinterpret_cast<nw4r::lyt::Layout*>(mField74),
                   lbl_eu_805047FC + 0x128, lbl_eu_805047FC + 0x13c, 0);
-    func_80136B4C(reinterpret_cast<nw4r::lyt::Layout*>(mField74),
+    LayoutSetTextBoxFmtValue(reinterpret_cast<nw4r::lyt::Layout*>(mField74),
                   lbl_eu_805047FC + 0x133, lbl_eu_805047FC + 0x13c, 0);
 
     // Language/party-dependent tag text: the 4CC key 0x74696D67 ("timg")
@@ -175,25 +175,25 @@ void CMenuBattleCommu::Init() {
         char* res = static_cast<char*>(
             func_801355F4()->GetResource(0x74696D67, lbl_eu_805047FC + 0x13d, 0));
         if (res != 0) {
-            func_80137E7C(mField74, lbl_eu_805047FC + 0x158, res);
+            PaneSetTexPaletteByName(mField74, lbl_eu_805047FC + 0x158, res);
         }
         res = static_cast<char*>(
             func_801355F4()->GetResource(0x74696D67, lbl_eu_805047FC + 0x165, 0));
         if (res != 0) {
-            func_80137E7C(mField74, lbl_eu_805047FC + 0x182, res);
-            func_80137E7C(mField74, lbl_eu_805047FC + 0x18f, res);
+            PaneSetTexPaletteByName(mField74, lbl_eu_805047FC + 0x182, res);
+            PaneSetTexPaletteByName(mField74, lbl_eu_805047FC + 0x18f, res);
         }
     } else {
         char* res = static_cast<char*>(
             func_801355F4()->GetResource(0x74696D67, lbl_eu_805047FC + 0x19c, 0));
         if (res != 0) {
-            func_80137E7C(mField74, lbl_eu_805047FC + 0x158, res);
+            PaneSetTexPaletteByName(mField74, lbl_eu_805047FC + 0x158, res);
         }
         res = static_cast<char*>(
             func_801355F4()->GetResource(0x74696D67, lbl_eu_805047FC + 0x1b7, 0));
         if (res != 0) {
-            func_80137E7C(mField74, lbl_eu_805047FC + 0x182, res);
-            func_80137E7C(mField74, lbl_eu_805047FC + 0x18f, res);
+            PaneSetTexPaletteByName(mField74, lbl_eu_805047FC + 0x182, res);
+            PaneSetTexPaletteByName(mField74, lbl_eu_805047FC + 0x18f, res);
         }
     }
 
@@ -246,7 +246,7 @@ void CMenuBattleCommu::cbRenderBefore() {
         return;
     }
 draw:
-    if (func_8013BE50() == 0) {
+    if (IsMenuState621F0() == 0) {
         return;
     }
     if (lbl_eu_80663E24 & 0xafa40000) {
@@ -370,7 +370,7 @@ void func_801B0FB0(CMenuBattleCommu* self) {
     switch (reinterpret_cast<CBattleCommuBattleObj*>(player)->mState36C) {
     case 1: {
         char buf[0x40];
-        char* name = func_80136190(lbl_eu_805047FC + 0x1d4, lbl_eu_805047FC + 0x1e2,
+        char* name = BdatTouchStringCell(lbl_eu_805047FC + 0x1d4, lbl_eu_805047FC + 0x1e2,
                                    count + 0x1b);
         sprintf(buf, lbl_eu_805047FC + 0x1e7, name);
         func_80136A1C(reinterpret_cast<nw4r::lyt::Layout*>(self->mField74),
@@ -388,7 +388,7 @@ void func_801B0FB0(CMenuBattleCommu* self) {
     }
     case 2: {
         char buf[0x40];
-        char* name = func_80136190(lbl_eu_805047FC + 0x1d4, lbl_eu_805047FC + 0x1e2,
+        char* name = BdatTouchStringCell(lbl_eu_805047FC + 0x1d4, lbl_eu_805047FC + 0x1e2,
                                    count + 0x1c);
         sprintf(buf, lbl_eu_805047FC + 0x1e7, name);
         func_80136A1C(reinterpret_cast<nw4r::lyt::Layout*>(self->mField74),
@@ -406,7 +406,7 @@ void func_801B0FB0(CMenuBattleCommu* self) {
     }
     case 3: {
         char buf[0x40];
-        char* name = func_80136190(lbl_eu_805047FC + 0x1d4, lbl_eu_805047FC + 0x1e2,
+        char* name = BdatTouchStringCell(lbl_eu_805047FC + 0x1d4, lbl_eu_805047FC + 0x1e2,
                                    count + 0x1d);
         sprintf(buf, lbl_eu_805047FC + 0x1e7, name);
         func_80136A1C(reinterpret_cast<nw4r::lyt::Layout*>(self->mField74),
@@ -428,7 +428,7 @@ void func_801B0FB0(CMenuBattleCommu* self) {
         if (count == 1) {
             char buf[0x40];
             u8 value = (u8)sub->mId3F28;
-            char* name = func_80136190(lbl_eu_805047FC + 0x1d4, lbl_eu_805047FC + 0x1e2,
+            char* name = BdatTouchStringCell(lbl_eu_805047FC + 0x1d4, lbl_eu_805047FC + 0x1e2,
                                        0x1f);
             if (value != 0) {
                 u8 lang = CDeviceSC::getLanguage();
@@ -438,12 +438,12 @@ void func_801B0FB0(CMenuBattleCommu* self) {
                 }
                 if (jp != 0) {
                     sprintf(buf, lbl_eu_805047FC + 0x1ea,
-                            func_8013639C(lbl_eu_80664090, lbl_eu_805047FC + 0x1f0,
+                            BdatGetPtrDirect(lbl_eu_80664090, lbl_eu_805047FC + 0x1f0,
                                           value),
                             name);
                 } else {
                     sprintf(buf, lbl_eu_805047FC + 0x1ea, name,
-                            func_8013639C(lbl_eu_80664090, lbl_eu_805047FC + 0x1f0,
+                            BdatGetPtrDirect(lbl_eu_80664090, lbl_eu_805047FC + 0x1f0,
                                           value));
                 }
             } else {
@@ -462,7 +462,7 @@ void func_801B0FB0(CMenuBattleCommu* self) {
         } else {
             char buf[0x40];
             u8 value = (u8)sub->mId3F28;
-            char* name = func_80136190(lbl_eu_805047FC + 0x1d4, lbl_eu_805047FC + 0x1e2,
+            char* name = BdatTouchStringCell(lbl_eu_805047FC + 0x1d4, lbl_eu_805047FC + 0x1e2,
                                        0x20);
             if (value != 0) {
                 u8 lang = CDeviceSC::getLanguage();
@@ -472,12 +472,12 @@ void func_801B0FB0(CMenuBattleCommu* self) {
                 }
                 if (jp != 0) {
                     sprintf(buf, lbl_eu_805047FC + 0x1ea,
-                            func_8013639C(lbl_eu_80664090, lbl_eu_805047FC + 0x1f0,
+                            BdatGetPtrDirect(lbl_eu_80664090, lbl_eu_805047FC + 0x1f0,
                                           value),
                             name);
                 } else {
                     sprintf(buf, lbl_eu_805047FC + 0x1ea, name,
-                            func_8013639C(lbl_eu_80664090, lbl_eu_805047FC + 0x1f0,
+                            BdatGetPtrDirect(lbl_eu_80664090, lbl_eu_805047FC + 0x1f0,
                                           value));
                 }
             } else {
@@ -499,7 +499,7 @@ void func_801B0FB0(CMenuBattleCommu* self) {
     }
     case 7: {
         char buf[0x40];
-        char* name = func_80136190(lbl_eu_805047FC + 0x1d4, lbl_eu_805047FC + 0x1e2,
+        char* name = BdatTouchStringCell(lbl_eu_805047FC + 0x1d4, lbl_eu_805047FC + 0x1e2,
                                    count + 0x25);
         sprintf(buf, lbl_eu_805047FC + 0x1e7, name);
         func_80136A1C(reinterpret_cast<nw4r::lyt::Layout*>(self->mField74),
@@ -517,7 +517,7 @@ void func_801B0FB0(CMenuBattleCommu* self) {
     }
     case 8: {
         char buf[0x40];
-        char* name = func_80136190(lbl_eu_805047FC + 0x1d4, lbl_eu_805047FC + 0x1e2,
+        char* name = BdatTouchStringCell(lbl_eu_805047FC + 0x1d4, lbl_eu_805047FC + 0x1e2,
                                    count + 0x26);
         sprintf(buf, lbl_eu_805047FC + 0x1e7, name);
         func_80136A1C(reinterpret_cast<nw4r::lyt::Layout*>(self->mField74),

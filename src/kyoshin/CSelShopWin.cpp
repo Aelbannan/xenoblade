@@ -200,7 +200,7 @@ extern "C" void func_8022C9D4(CSelShopWin* self) {
 
 extern "C" void func_8022CA20(CSelShopWin* self) {
     float f = lbl_eu_80668600;
-    if (func_80137510(self->mAnimTransform, f) != 0) {
+    if (AnimRewindFrame(self->mAnimTransform, f) != 0) {
         self->mAnimState = 0;
         self->mAnimActive = 1;
     }
@@ -257,38 +257,38 @@ bool CSelShopWin::OnFileEvent(CEventFile* pEventFile) {
             }
         }
 
-        func_80136B4C(mLayout, &lbl_eu_8050A62C[0x7e], text, 0);
+        LayoutSetTextBoxFmtValue(mLayout, &lbl_eu_8050A62C[0x7e], text, 0);
         {
-            char* t = func_80136190(&lbl_eu_8050A62C[0x8b], &lbl_eu_8050A62C[0x94], 8);
-            func_80136B4C(mLayout, &lbl_eu_8050A62C[0x99], t, 0);
+            char* t = BdatTouchStringCell(&lbl_eu_8050A62C[0x8b], &lbl_eu_8050A62C[0x94], 8);
+            LayoutSetTextBoxFmtValue(mLayout, &lbl_eu_8050A62C[0x99], t, 0);
         }
         {
-            char* t = func_80136190(&lbl_eu_8050A62C[0x8b], &lbl_eu_8050A62C[0x94], 9);
-            func_80136B4C(mLayout, &lbl_eu_8050A62C[0xa0], t, 0);
+            char* t = BdatTouchStringCell(&lbl_eu_8050A62C[0x8b], &lbl_eu_8050A62C[0x94], 9);
+            LayoutSetTextBoxFmtValue(mLayout, &lbl_eu_8050A62C[0xa0], t, 0);
         }
         {
-            char* t = func_80136190(&lbl_eu_8050A62C[0x8b], &lbl_eu_8050A62C[0x94], 10);
-            func_80136B4C(mLayout, &lbl_eu_8050A62C[0xa7], t, 0);
+            char* t = BdatTouchStringCell(&lbl_eu_8050A62C[0x8b], &lbl_eu_8050A62C[0x94], 10);
+            LayoutSetTextBoxFmtValue(mLayout, &lbl_eu_8050A62C[0xa7], t, 0);
         }
-        char* t2b = func_80136190(&lbl_eu_8050A62C[0xae], &lbl_eu_8050A62C[0xbc], 0x2b);
-        func_80136B4C(mLayout, &lbl_eu_8050A62C[0xc1], t2b, 0);
-        func_80136B4C(mLayout, &lbl_eu_8050A62C[0xcd], t2b, 0);
+        char* t2b = BdatTouchStringCell(&lbl_eu_8050A62C[0xae], &lbl_eu_8050A62C[0xbc], 0x2b);
+        LayoutSetTextBoxFmtValue(mLayout, &lbl_eu_8050A62C[0xc1], t2b, 0);
+        LayoutSetTextBoxFmtValue(mLayout, &lbl_eu_8050A62C[0xcd], t2b, 0);
 
         // Ternary keeps both format strings as immediate addi offsets
         // (retail preloads 0xe2 then overwrites with 0xd9 when nonzero).
-        u16 val = static_cast<u16>(func_8013606C(
+        u16 val = static_cast<u16>(BdatGetU16ByTableKey(
             &lbl_eu_8050A62C[0xae],
             isClassicController__Q22cf13CfGameManagerFv(-1) != 0 ? &lbl_eu_8050A62C[0xd9]
                                                            : &lbl_eu_8050A62C[0xe2],
             0x2b));
-        char* mssg = func_80138F78(val);
+        char* mssg = MakeTplNameSysFile(val);
 
         // Look up the persistent shop message object by its 'timg' key.
         nw4r::lyt::ArcResourceAccessor* mgr = func_801355F4();
         UnkMsgObj* obj = static_cast<UnkMsgObj*>(mgr->GetResource(0x74696d67U, mssg, 0));
         if (obj != NULL) {
-            func_80137E7C(mLayout, &lbl_eu_8050A62C[0xeb], obj);
-            func_80137E7C(mLayout, &lbl_eu_8050A62C[0xf5], obj);
+            PaneSetTexPaletteByName(mLayout, &lbl_eu_8050A62C[0xeb], obj);
+            PaneSetTexPaletteByName(mLayout, &lbl_eu_8050A62C[0xf5], obj);
 
             // Two u16 counts ([+2] row, [+0] column) offsetting the two
             // panes; u32->float via the named 2^52+2^31 magic double keeps

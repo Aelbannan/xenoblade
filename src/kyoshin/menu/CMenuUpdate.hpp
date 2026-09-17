@@ -195,13 +195,13 @@ extern "C" void func_8013676C(void*, void*);
 extern "C" void drawLayout__FPQ34nw4r3lyt6LayoutPQ34nw4r3lyt8DrawInfoii(void*, void*, int, int);
 extern "C" void func_80137250__FPQ34nw4r3lyt8DrawInfo(void*);
 extern "C" bool advanceAnimTransform__FPQ34nw4r3lyt13AnimTransformf(void*, f32);
-extern "C" void func_80137E7C(void*, const char*, void*);
+extern "C" void PaneSetTexPaletteByName(void*, const char*, void*);
 extern "C" void func_80137B44(void*, const char*, int);
-extern "C" void func_80136B4C(void*, const char*, void*, int);
-// func_8013639C: declared with char* return in code_80135FDC.hpp
-extern "C" u16 func_80136254(void*, const char*, int);
-extern "C" u16 func_8013606C(const char*, const char*, int);
-// func_80136190: declared with char* return in code_80135FDC.hpp (caller-tuned)
+extern "C" void LayoutSetTextBoxFmtValue(void*, const char*, void*, int);
+// BdatGetPtrDirect: declared with char* return in code_80135FDC.hpp
+extern "C" u16 BdatGetU16Direct(void*, const char*, int);
+extern "C" u16 BdatGetU16ByTableKey(const char*, const char*, int);
+// BdatTouchStringCell: declared with char* return in code_80135FDC.hpp (caller-tuned)
 extern "C" void playUISound__FUl(u32);
 extern "C" bool func_80135898();
 extern "C" void func_80133A08(u32);
@@ -216,15 +216,15 @@ extern "C" bool isGlobalCamFlagSet__Fi(int);
 extern "C" bool func_801BCF38();
 extern "C" bool func_8029A658();
 extern "C" bool func_8029EE58();
-extern "C" bool func_8013BFA8();
+extern "C" bool GetSysStateFlag22();
 // func_8049603C: declared once in libs/monolib/src/scn/CScn_8049603C.hpp.
 
-extern "C" int func_8013BE50();
+extern "C" int IsMenuState621F0();
 extern "C" void* CfRes_getE14();
 extern "C" bool func_8009CF8C(int);
 extern "C" void func_8009D018(u32, u32);
 extern "C" void format__Q22ml10FixStr_32_FPCce(void*, const char*, ...);
-extern "C" char* func_80138F78(u32);
+extern "C" char* MakeTplNameSysFile(u32);
 extern "C" bool isSceneLoading__Q22cf13CfGameManagerFv();
 extern "C" bool isSceneActive__Q22cf13CfGameManagerFv();
 extern "C" bool isSceneReadyForInput__Q22cf13CfGameManagerFv();
@@ -243,6 +243,6 @@ extern "C" int func_80143F78(void* self);
 extern "C" void func_80144070(void* self);
 extern "C" void func_801440A8(void* self);
 extern "C" f32 func_801443E4();
-extern "C" char* func_80136190(const void*, const void*, int);
-extern "C" char* func_8013639C(const void*, const void*, int);
+extern "C" char* BdatTouchStringCell(const void*, const void*, int);
+extern "C" char* BdatGetPtrDirect(const void*, const void*, int);
 extern "C" void func_80144410(void* self);

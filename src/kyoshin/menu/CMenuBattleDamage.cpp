@@ -234,7 +234,7 @@ void CMenuBattleDamage::Move() {
     if (CTaskGame::getInstance()->isFlag01Set() ||
         (lbl_eu_80663E28 & 0x200000))
         return;
-    if (!func_8013BE50()) return;
+    if (!IsMenuState621F0()) return;
     if (_pad776[0] == 0) return;
 
     // Constant pool values cached in callee-saved FPRs (retail f29..f31,
@@ -344,7 +344,7 @@ void CMenuBattleDamage::cbRenderBefore() {
 done:
     return;
 body:
-    if (!func_8013BE50()) {
+    if (!IsMenuState621F0()) {
         goto done;
     }
     if (_pad776[0] == 0) {
@@ -501,14 +501,14 @@ extern "C" void func_80109784(int actorId, int value, u32 flags) {
     if (lbl_eu_80663F28 == NULL) {
         return;
     }
-    if (!func_8013BFD8()) {
+    if (!GetSysStateFlag24()) {
         return;
     }
     if (flags == 0) {
         return;
     }
     if (flags & 0x8) {
-        char* s = func_8013639C(reinterpret_cast<const void*>(lbl_eu_80664160),
+        char* s = BdatGetPtrDirect(reinterpret_cast<const void*>(lbl_eu_80664160),
                                 lbl_eu_804FD524 + 0xc4, value);
         if (strcmp(s, lbl_eu_804FD524 + 0xc9) == 0) {
             return;
@@ -759,32 +759,32 @@ void func_801098B0(CMenuBattleDamage* self, int actorId, int value,
             break;
         case 4:
             buf.format(lbl_eu_804FD524 + 0xd4,
-                       func_80136190(lbl_eu_804FD524 + 0xd7,
+                       BdatTouchStringCell(lbl_eu_804FD524 + 0xd7,
                                      lbl_eu_804FD524 + 0xc4, 0xb));
             break;
         case 5:
             buf.format(lbl_eu_804FD524 + 0xe2, buf8, e.field_20,
-                       func_80136190(lbl_eu_804FD524 + 0xd7,
+                       BdatTouchStringCell(lbl_eu_804FD524 + 0xd7,
                                      lbl_eu_804FD524 + 0xc4, 0xc));
             break;
         case 6:
             buf.format(lbl_eu_804FD524 + 0xe2, buf8, e.field_20,
-                       func_80136190(lbl_eu_804FD524 + 0xd7,
+                       BdatTouchStringCell(lbl_eu_804FD524 + 0xd7,
                                      lbl_eu_804FD524 + 0xc4, 0xe));
             break;
         case 7:
             buf.format(lbl_eu_804FD524 + 0xe2, buf8, e.field_20,
-                       func_80136190(lbl_eu_804FD524 + 0xd7,
+                       BdatTouchStringCell(lbl_eu_804FD524 + 0xd7,
                                      lbl_eu_804FD524 + 0xc4, 0xd));
             break;
         case 8:
             buf.format(lbl_eu_804FD524 + 0xd4,
-                       func_80136190(lbl_eu_804FD524 + 0xd7,
+                       BdatTouchStringCell(lbl_eu_804FD524 + 0xd7,
                                      lbl_eu_804FD524 + 0xc4, 0xe));
             break;
         case 9:
             buf.format(lbl_eu_804FD524 + 0xd4,
-                       func_80136190(lbl_eu_804FD524 + 0xd7,
+                       BdatTouchStringCell(lbl_eu_804FD524 + 0xd7,
                                      lbl_eu_804FD524 + 0xc4, 0xd));
             break;
         case 0xa:
@@ -833,7 +833,7 @@ void func_801098B0(CMenuBattleDamage* self, int actorId, int value,
         e.mLayout0->GetRootPane()
             ->FindPaneByName(animName, true)
             ->SetVisible(true);
-        func_80136B4C(e.mLayout0, animName, buf.c_str(), 0);
+        LayoutSetTextBoxFmtValue(e.mLayout0, animName, buf.c_str(), 0);
 
         if (self->_pad776[1] != 0) {
             e.mLayout0->GetRootPane()
@@ -891,11 +891,11 @@ void func_801098B0(CMenuBattleDamage* self, int actorId, int value,
         // Pick the label text for the small layout by flag bits.
         const char* text = func_80145AA8(value);
         if (flags & 0x8) {
-            text = func_8013639C(
+            text = BdatGetPtrDirect(
                 reinterpret_cast<const void*>(lbl_eu_806640E0),
                 lbl_eu_804FD524 + 0xc4, value);
         } else if (flags & 0x10) {
-            text = func_8013639C(
+            text = BdatGetPtrDirect(
                 reinterpret_cast<const void*>(lbl_eu_80664160),
                 lbl_eu_804FD524 + 0xc4, value);
         } else if (flags & 0x20) {
@@ -922,12 +922,12 @@ void func_801098B0(CMenuBattleDamage* self, int actorId, int value,
             e.mLayout1->GetRootPane()
                 ->FindPaneByName(lbl_eu_804FD524 + 0x133, true)
                 ->SetVisible(true);
-            func_80136B4C(e.mLayout1, lbl_eu_804FD524 + 0x139, text, 0);
+            LayoutSetTextBoxFmtValue(e.mLayout1, lbl_eu_804FD524 + 0x139, text, 0);
         } else {
             e.mLayout1->GetRootPane()
                 ->FindPaneByName(lbl_eu_804FD524 + 0x12d, true)
                 ->SetVisible(true);
-            func_80136B4C(e.mLayout1, lbl_eu_804FD524 + 0x148, text, 0);
+            LayoutSetTextBoxFmtValue(e.mLayout1, lbl_eu_804FD524 + 0x148, text, 0);
         }
 
         // Bind a "timg" resource to the small layout (name depends on the
@@ -948,7 +948,7 @@ void func_801098B0(CMenuBattleDamage* self, int actorId, int value,
                 0x74696D67, lbl_eu_804FD524 + 0x19c, 0));
         }
         if (res != 0) {
-            func_80137E7C(e.mLayout1, lbl_eu_804FD524 + 0x1af);
+            PaneSetTexPaletteByName(e.mLayout1, lbl_eu_804FD524 + 0x1af);
         }
 
         e.field_32 = 0;

@@ -309,21 +309,21 @@ extern "C" __declspec(noinline) void func_80058844(CTaskEnvironment* self) {
     // Each colour/direction vector is an unnamed temporary at the call site:
     // MWCC materialises temporaries into caller-stack slots (best of the
     // shapes tried; ctor-arg load order still differs from retail by a swap).
-    self->mLgtDC = func_804930BC(
+    self->mLgtDC = scnVlCreateAmb(
         self->mScene->field_0x5C, self->mScene->field_0x5C->field_0x6C,
         &ml::CVec4(FC0, FC0, FC0, FAC));
-    // Retail sets the +0x19 flag through the pointer func_804930BC returned.
+    // Retail sets the +0x19 flag through the pointer scnVlCreateAmb returned.
     self->mLgtDC->field_0x19 = 1;
-    self->mLgtAC = func_804930BC(
+    self->mLgtAC = scnVlCreateAmb(
         self->mScene->field_0x5C, self->mScene->field_0x5C->field_0x0C,
         &ml::CVec4(FAC, FAC, FAC, FAC));
     self->mLgtB0 = func_804933AC(
         self->mScene->field_0x5C, self->mScene->field_0x5C->field_0x0C,
         &ml::CVec4(FC0, FC0, FC0, FAC), &ml::CVec3(FC4, FC8, FC4));
     self->mLgtB8 =
-        func_804930BC(self->mScene->field_0x5C, self->mScene->field_0x5C->field_0x4C,
+        scnVlCreateAmb(self->mScene->field_0x5C, self->mScene->field_0x5C->field_0x4C,
                       lbl_eu_805708C0);
-    self->mLgtBC = func_804930BC(
+    self->mLgtBC = scnVlCreateAmb(
         self->mScene->field_0x5C, self->mScene->field_0x5C->field_0x2C,
         &ml::CVec4(FAC, FAC, FAC, FAC));
 
@@ -334,13 +334,13 @@ extern "C" __declspec(noinline) void func_80058844(CTaskEnvironment* self) {
         &ml::CVec4(sunTable[0] * FC0, sunTable[1] * FC0, sunTable[2] * FC0,
                    sunTable[3]),
         &ml::CVec3(FC4, FC8, FC4));
-    self->mLgtC4 = func_804930BC(
+    self->mLgtC4 = scnVlCreateAmb(
         self->mScene->field_0x5C, self->mScene->field_0x5C->field_0x0C,
         &ml::CVec4(FAC, FAC, FAC, FAC));
     self->mLgtC8 = func_804933AC(
         self->mScene->field_0x5C, self->mScene->field_0x5C->field_0x0C,
         &ml::CVec4(FC0, FC0, FC0, FAC), &ml::CVec3(FC4, FC8, FC4));
-    self->mLgtD4 = func_804930BC(
+    self->mLgtD4 = scnVlCreateAmb(
         self->mScene->field_0x5C, self->mScene->field_0x5C->field_0x2C,
         &ml::CVec4(FAC, FAC, FAC, FAC));
     self->mLgtD8 = func_804933AC(
@@ -383,12 +383,12 @@ extern "C" void func_80058BD8(ml::CVec4* out, const ml::CVec4* in, float s) {
 
 void CTaskEnvironment::Init() {
     func_80058844(this);
-    func_804C1094(mScene->mEnvLgtCtrl, 1);
+    scnLgtSetBlendBloom(mScene->mEnvLgtCtrl, 1);
     mScene->mEnvLgtCtrl->field_0 |= 0x80;
 }
 
 void CTaskEnvironment::Term() {
-    func_804C1094(mScene->mEnvLgtCtrl, 0);
+    scnLgtSetBlendBloom(mScene->mEnvLgtCtrl, 0);
     if (mUnkE4 != 0) {
         if (mUnkE4 != 0) {
             static_cast<CTaskEnvUnk*>(mUnkE4)->vfUnk1(1);
@@ -421,10 +421,10 @@ void CTaskEnvironment::Move() {
         func_80059A48(time, delta);
     }
 
-    func_804C123C(reinterpret_cast<CTaskEnvLgtCtrlAccess*>(
+    scnLgtSetSinkBit1(reinterpret_cast<CTaskEnvLgtCtrlAccess*>(
                       getSubField7C(reinterpret_cast<u8*>(mScene))),
                   1);
-    func_804C1270(reinterpret_cast<CTaskEnvLgtCtrlAccess*>(
+    scnLgtSetParamIdle(reinterpret_cast<CTaskEnvLgtCtrlAccess*>(
                       getSubField7C(reinterpret_cast<u8*>(mScene))),
                   1);
 
@@ -459,7 +459,7 @@ void CTaskEnvironment::Move() {
              lbl_eu_80665FB4);
     field_0x88 = dayFactor;
     field_0x8C =
-        lbl_eu_80665FD8 + field_0x78 + field_0x74 * func_8004CC74(sunAngle);
+        lbl_eu_80665FD8 + field_0x78 + field_0x74 * cosAnimFIdx(sunAngle);
 
     CTaskEnvRotMtx mtx;
     func_80059610(&mtx, scaleByGlobal(field_0x88));
@@ -469,10 +469,10 @@ void CTaskEnvironment::Move() {
     float dirSrc[3];   // sp+0x230 in retail
     float dirOut[3];   // sp+0x23C
     ml::CVec3* v = reinterpret_cast<ml::CVec3*>(
-        func_8004B60C((ml::CVec3*)dirSrc, lbl_eu_80665FA0, lbl_eu_80665FA0,
+        writeVec3f((ml::CVec3*)dirSrc, lbl_eu_80665FA0, lbl_eu_80665FA0,
                       lbl_eu_80665FDC));
     func_800598A8(reinterpret_cast<ml::CVec3*>(dirOut), &mtx, v);
-    func_8004B3F0(reinterpret_cast<void*>(&field_0x7C),
+    copyVec3Words(reinterpret_cast<void*>(&field_0x7C),
                   reinterpret_cast<void*>(dirOut));
 
     // Push the total seconds-of-day into the env-light controller.
@@ -480,7 +480,7 @@ void CTaskEnvironment::Move() {
         ((int)this->field_0x6C + (int)this->field_0x68 * 60) * 60;
     conv.w[1] = (u32)secsOfDay ^ 0x80000000;
     float fsod = (float)(conv.d - lbl_eu_80665FB8);
-    func_804C1600(
+    scnLgtBindLightArg(
         reinterpret_cast<CTaskEnvLgtCtrlAccess*>(
             getSubField7C(reinterpret_cast<u8*>(mScene))),
         (void*)(int)(fsod + field_0x70));
@@ -503,7 +503,7 @@ void CTaskEnvironment::Move() {
                           (void*)getSubField78(mScene))));
             field_0xA0 = func_8005871C((void*)getSubField78(mScene));
             field_0xA4 = func_80058724((void*)getSubField78(mScene));
-            func_8049347C(
+            scnVlApplyDir4C(
                 static_cast<CVirtualLightObj*>(
                     (void*)getField5C(reinterpret_cast<u8*>(mScene))),
                 reinterpret_cast<const ml::CVec4*>(tbl + 0x90), FAC);
@@ -691,8 +691,8 @@ postUpdate:
     if (checkBitFlag(reinterpret_cast<u8*>(
             getSubField7C(reinterpret_cast<u8*>(mScene)))) == 0) {
         if (field_0xA8 != 0) {
-            func_800407C8_tmp tmp;
-            void* fogColour = func_800407C8(
+            CTaskGame_setVec4_tmp tmp;
+            void* fogColour = CTaskGame_setVec4(
                 &tmp, field_0x90, field_0x90, field_0x90, field_0x9C);
             func_8049E350(reinterpret_cast<u8*>((void*)getSubField78(mScene)),
                           fogColour);

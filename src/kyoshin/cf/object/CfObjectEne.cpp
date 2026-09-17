@@ -112,7 +112,7 @@ cf::CfObjectEne* __ct__cf_CfObjectEne(cf::CfObjectEne* self) {
     tail->field_0x45C8 = 0;
     tail->field_0x45CA = 0;
     tail->field_0x45CC = 0.0f;
-    void* mem = mtl::MemManager::allocate(0x20, func_80061FFC());
+    void* mem = mtl::MemManager::allocate(0x20, CfRes_getAllocHandle());
     if (mem != 0) {
         // Retail: mr r4, r31 (default parent = self, i.e. 0 in the null case)
         // then a guarded addi for the +0x3E9C CfObjectMove-subobject address.
@@ -226,8 +226,8 @@ cf::CfObjectEne* __dt__Q22cf11CfObjectEneFv(cf::CfObjectEne* self, s32 deleteFla
 // us-800ae3f8: CfObjectEne vf2. Runs the CfObjectMove subobject's
 // CfObject_initEventState (Model UVF2 / slot +0x58), dispatches the subobject
 // vtable slot +0x158 with flag 1, clears two battle-state flag words
-// (func_800BE33C / func_800BE824 on the subobject with 1), raises three
-// actor flags via func_80174B4C, seeds the +0x44A8 region via func_804B0AD4
+// (CfObjectMove_setModelDisplayFlag / CfObjectMove_setRegionAttached on the subobject with 1), raises three
+// actor flags via func_80174B4C, seeds the +0x44A8 region via ColiSetMoveVec2
 // (two sdata2 floats) and sets its u16 at +0xB2 to 0xC8. Returns 1.
 // KNOWN WALL (allocation-grind; MWCC_PATTERMS 7j negative result): retail
 // recomputes addi r3,r31,0x3e9c per call keeping only r31=self, but MWCC
@@ -247,13 +247,13 @@ int func_800ADB2C__Q22cf11CfObjectEneFv(cf::CfObjectEne* self) {
         (cf::CfObjectModel*)&((cf::CfEneMoveBaseA*)self)->base);
     // +0x3E9C CfObjectMove: slot +0x158 = setPointEnabled.
     ((cf::CfObjectAt3E9C*)self)->setPointEnabled(1);
-    func_800BE33C(&((cf::CfEneMoveBaseB*)self)->base, 1);
+    CfObjectMove_setModelDisplayFlag(&((cf::CfEneMoveBaseB*)self)->base, 1);
     func_80174B4C(self, 0x100000);
     func_80174B4C(self, 0x08000000);
     func_80174B4C(self, 0x10000000);
-    func_800BE824(&((cf::CfEneMoveBaseC*)self)->base, 1);
+    CfObjectMove_setRegionAttached(&((cf::CfEneMoveBaseC*)self)->base, 1);
     u8* region = (u8*)self + 0x44A8;
-    func_804B0AD4(region, 0, lbl_eu_8066696C, lbl_eu_80666970);
+    ColiSetMoveVec2(region, 0, lbl_eu_8066696C, lbl_eu_80666970);
     ((cf::CfEneReloadArea*)region)->field_0xB2 = 0xC8;
     return 1;
 }
@@ -817,7 +817,7 @@ void func_800AF870(cf::CfObjectEne* self) {
     if (static_cast<cf::CActorParam*>(self)->CActorParam_isBattleLocked() != 0) return;
     cf::CfEneBmView* bm = (cf::CfEneBmView*)getInstance__Q22cf14CBattleManagerFv();
     // goto form blocks MWCC's unsigned range-check fusion
-    // (cf. CfObjectPc.cpp func_801575B0)
+    // (cf. CfObjectPc.cpp CItemBlock_testKindFlag)
     int ok = 0;
     if (bm->field_0x1AA < 1) goto bmCheck;
     if (0x18 < bm->field_0x1AA) goto bmCheck;

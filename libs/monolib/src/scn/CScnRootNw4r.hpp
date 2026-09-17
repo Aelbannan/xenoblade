@@ -25,7 +25,7 @@ struct CScnRootNw4rRes;
  *
  * Layout recovered from retail:
  *  - primary vtable (lbl_eu_8056E768) = RTTI + offset-to-top + 12 virtual
- *    slots; slot vf9 (retail func_804871A8) sits at vtable offset 0x2C and
+ *    slots; slot vf9 (retail scnImN4GetWord4AC) sits at vtable offset 0x2C and
  *    is the callee of func_80490040. The virtuals below are declared but
  *    never defined here (no key function -> no vtable emitted), purely so
  *    that call site compiles to the retail lwz/lwz/mtctr/bctrl sequence.
@@ -57,7 +57,7 @@ struct CScnMgrLayout {
     CScnCameraMan* mCamWork;          // +0x68 (arg of func_8049B024)
     u8 pad_0x6C[0x78 - 0x6C];         // +0x6C
     CScnFogMan* mFogMan;              // +0x78 (arg of func_8049DE70)
-    CScnEnvLgtCtrl* mEnvLgtCtrl;      // +0x7C (arg of func_804C2654 / 22F0 / 19B8)
+    CScnEnvLgtCtrl* mEnvLgtCtrl;      // +0x7C (arg of scnLgtBindCamera / 22F0 / 19B8)
     u8 pad_0x80[0xB4 - 0x80];         // +0x80
     ICulling* mCulling;               // +0xB4 (slot +0xC dispatch)
     u8 pad_0xB8[0x3E8 - 0xB8];        // +0xB8
@@ -113,9 +113,9 @@ struct CScnPairCb {
 
 // Unmangled monolib callees (retail C-linkage names).
 extern "C" void func_80496984(u32 value);
-extern "C" void func_804C2654(CScnEnvLgtCtrl* ctrl);
+extern "C" void scnLgtBindCamera(CScnEnvLgtCtrl* ctrl);
 extern "C" void func_804C22F0(CScnEnvLgtCtrl* ctrl);
-extern "C" void func_804C19B8(CScnEnvLgtCtrl* ctrl);
+extern "C" void scnLgtEnterMode20(CScnEnvLgtCtrl* ctrl);
 extern "C" void func_8049B024(CScnCameraMan* cam);
 extern "C" void func_8048D1B0(CScnLightMan* man);
 extern "C" void func_8049DE70(CScnFogMan* man);
@@ -137,7 +137,7 @@ extern "C" void func_8049AA74(CScnBloom* bloom);
 
 // Scene-item model pool item drawn through the kind-1 draw list.
 class CScnItemModel;
-extern "C" int func_80484734(CScnItemModel* item, int param);
+extern "C" int simSyncBuf824Flags(CScnItemModel* item, int param);
 
 // Kind-1 sub-pool list returned by the scene-item-pool accessor.
 extern "C" void* func_8048C698(void* pool, int kind);
@@ -182,7 +182,7 @@ public:
     virtual void vf6(u32 a, u32 b);   // vf6 (+0x20) func_8048FF90
     virtual void vf7(u32 a, u32 b);   // vf7 (+0x24) func_8048FFBC
     virtual void vf8();               // vf8 (+0x28) func_8048F2F0
-    virtual u32 vf9();                // vf9 (+0x2C) func_804871A8
+    virtual u32 vf9();                // vf9 (+0x2C) scnImN4GetWord4AC
     virtual u32 vf10();               // vf10 (+0x30) func_80490040
     virtual u32 vf11();               // vf11 (+0x34) func_80490038
 

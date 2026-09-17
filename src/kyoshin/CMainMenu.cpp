@@ -149,7 +149,7 @@ extern "C" void func_800FEF20(CMainMenu* self) {
 extern "C" void func_800FEF4C(CMainMenu* self) {
     // Main-menu frame update: gate on the system window, refresh the menu
     // availability flags, then dispatch on the current state.
-    if (func_8013BE50() == 0) {
+    if (IsMenuState621F0() == 0) {
         return;
     }
     if (lbl_eu_80663E24 & 0xAFE40000) {
@@ -162,7 +162,7 @@ extern "C" void func_800FEF4C(CMainMenu* self) {
     if (func_80167A18() != 0) return;
     if (func_8011CD5C() != 0) return;
     if (func_80212480() != 0) return;
-    if (func_8022F530() != 0) return;
+    if (CMenuArtsSet_isCreated() != 0) return;
     if (func_80242354() != 0) return;
     if (func_80252CD4() != 0) return;
     if (func_80257308() != 0) return;
@@ -196,14 +196,14 @@ extern "C" void func_800FEF4C(CMainMenu* self) {
             char* s2;
             int n = self->field_0xC0 + 1;
             if (n > 0) {
-                s1 = func_80136190(lbl_eu_804FCEBC + 0x5e, lbl_eu_804FCEBC + 0x67, n);
-                s2 = func_80136190(lbl_eu_804FCEBC + 0x5e, lbl_eu_804FCEBC + 0x6c, n);
-                func_80136B4C(self->field_0x7C, lbl_eu_804FCEBC + 0x71, s1, 0);
-                func_80136B4C(self->field_0x7C, lbl_eu_804FCEBC + 0x7c, s2, 0);
+                s1 = BdatTouchStringCell(lbl_eu_804FCEBC + 0x5e, lbl_eu_804FCEBC + 0x67, n);
+                s2 = BdatTouchStringCell(lbl_eu_804FCEBC + 0x5e, lbl_eu_804FCEBC + 0x6c, n);
+                LayoutSetTextBoxFmtValue(self->field_0x7C, lbl_eu_804FCEBC + 0x71, s1, 0);
+                LayoutSetTextBoxFmtValue(self->field_0x7C, lbl_eu_804FCEBC + 0x7c, s2, 0);
             } else {
-                func_80136B4C(self->field_0x7C, lbl_eu_804FCEBC + 0x71,
+                LayoutSetTextBoxFmtValue(self->field_0x7C, lbl_eu_804FCEBC + 0x71,
                               lbl_eu_804FCEBC + 0x89, 0);
-                func_80136B4C(self->field_0x7C, lbl_eu_804FCEBC + 0x7c,
+                LayoutSetTextBoxFmtValue(self->field_0x7C, lbl_eu_804FCEBC + 0x7c,
                               lbl_eu_804FCEBC + 0x89, 0);
             }
             func_801D216C(&self->_90[0], 1);
@@ -253,14 +253,14 @@ extern "C" void func_800FEF4C(CMainMenu* self) {
             char* s2;
             int n = self->field_0xC0 + 1;
             if (n > 0) {
-                s1 = func_80136190(lbl_eu_804FCEBC + 0x5e, lbl_eu_804FCEBC + 0x67, n);
-                s2 = func_80136190(lbl_eu_804FCEBC + 0x5e, lbl_eu_804FCEBC + 0x6c, n);
-                func_80136B4C(self->field_0x7C, lbl_eu_804FCEBC + 0x71, s1, 0);
-                func_80136B4C(self->field_0x7C, lbl_eu_804FCEBC + 0x7c, s2, 0);
+                s1 = BdatTouchStringCell(lbl_eu_804FCEBC + 0x5e, lbl_eu_804FCEBC + 0x67, n);
+                s2 = BdatTouchStringCell(lbl_eu_804FCEBC + 0x5e, lbl_eu_804FCEBC + 0x6c, n);
+                LayoutSetTextBoxFmtValue(self->field_0x7C, lbl_eu_804FCEBC + 0x71, s1, 0);
+                LayoutSetTextBoxFmtValue(self->field_0x7C, lbl_eu_804FCEBC + 0x7c, s2, 0);
             } else {
-                func_80136B4C(self->field_0x7C, lbl_eu_804FCEBC + 0x71,
+                LayoutSetTextBoxFmtValue(self->field_0x7C, lbl_eu_804FCEBC + 0x71,
                               lbl_eu_804FCEBC + 0x89, 0);
-                func_80136B4C(self->field_0x7C, lbl_eu_804FCEBC + 0x7c,
+                LayoutSetTextBoxFmtValue(self->field_0x7C, lbl_eu_804FCEBC + 0x7c,
                               lbl_eu_804FCEBC + 0x89, 0);
             }
             self->field_0xE0 = 2;
@@ -398,8 +398,8 @@ extern "C" bool __ct__800FF300(CMainMenu* self, CEventFile* pEventFile) {
                     getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1, self->field_0x7C))
                     ->sf9());
 
-            func_80136B4C(self->field_0x7C, &base[0x71], &base[0x89], 0);
-            func_80136B4C(self->field_0x7C, &base[0x7c], &base[0x89], 0);
+            LayoutSetTextBoxFmtValue(self->field_0x7C, &base[0x71], &base[0x89], 0);
+            LayoutSetTextBoxFmtValue(self->field_0x7C, &base[0x7c], &base[0x89], 0);
 
             // Park all animations except the intro (anim0), which stays enabled.
             self->field_0x7C->SetAnimationEnable(self->field_0x84, false);
@@ -485,7 +485,7 @@ void CMainMenu::cbRenderBefore() {
     // B -> beq continue / b exit (same shape as CMiniMap::cbRenderBefore).
     if (CTaskGame::getInstance()->isFlag01Set() || (lbl_eu_80663E28 & 0x200000))
         return;
-    if (!func_8013BE50())
+    if (!IsMenuState621F0())
         return;
     if (lbl_eu_80663E24 & 0xAFE40000)
         return;
@@ -550,7 +550,7 @@ int CMainMenu::isAnyMenuOpen() {
     if (func_80167A18()) return 1;
     if (func_8011CD5C()) return 1;
     if (func_80212480()) return 1;
-    if (func_8022F530()) return 1;
+    if (CMenuArtsSet_isCreated()) return 1;
     if (func_80242354()) return 1;
     if (func_80252CD4()) return 1;
     if (func_80257308()) return 1;
@@ -629,8 +629,8 @@ void func_800FF920(CMainMenu* self) {
         self->field_0x7C->SetAnimationEnable(self->field_0x84, true);
         // Retail materializes the rodata base only here, after the anim calls.
         char* base = lbl_eu_804FCEBC;
-        func_80136B4C(self->field_0x7C, base + 0x71, base + 0x89, 0);
-        func_80136B4C(self->field_0x7C, base + 0x7c, base + 0x89, 0);
+        LayoutSetTextBoxFmtValue(self->field_0x7C, base + 0x71, base + 0x89, 0);
+        LayoutSetTextBoxFmtValue(self->field_0x7C, base + 0x7c, base + 0x89, 0);
         func_801D216C(&self->_90[0], 0);
         playUISound__FUl(9);
         self->field_0xE0 = 3;
@@ -697,14 +697,14 @@ void func_800FF920(CMainMenu* self) {
         int n = self->field_0xC0 + 1;
         if (n > 0) {
             char* base = lbl_eu_804FCEBC;
-            char* s1 = func_80136190(base + 0x5e, base + 0x67, n);
-            char* s2 = func_80136190(base + 0x5e, base + 0x6c, n);
-            func_80136B4C(self->field_0x7C, base + 0x71, s1, 0);
-            func_80136B4C(self->field_0x7C, base + 0x7c, s2, 0);
+            char* s1 = BdatTouchStringCell(base + 0x5e, base + 0x67, n);
+            char* s2 = BdatTouchStringCell(base + 0x5e, base + 0x6c, n);
+            LayoutSetTextBoxFmtValue(self->field_0x7C, base + 0x71, s1, 0);
+            LayoutSetTextBoxFmtValue(self->field_0x7C, base + 0x7c, s2, 0);
         } else {
             char* base = lbl_eu_804FCEBC;
-            func_80136B4C(self->field_0x7C, base + 0x71, base + 0x89, 0);
-            func_80136B4C(self->field_0x7C, base + 0x7c, base + 0x89, 0);
+            LayoutSetTextBoxFmtValue(self->field_0x7C, base + 0x71, base + 0x89, 0);
+            LayoutSetTextBoxFmtValue(self->field_0x7C, base + 0x7c, base + 0x89, 0);
         }
         playUISound__FUl(0x6a);
         return;
@@ -726,14 +726,14 @@ void func_800FF920(CMainMenu* self) {
         int n = self->field_0xC0 + 1;
         if (n > 0) {
             char* base = lbl_eu_804FCEBC;
-            char* s1 = func_80136190(base + 0x5e, base + 0x67, n);
-            char* s2 = func_80136190(base + 0x5e, base + 0x6c, n);
-            func_80136B4C(self->field_0x7C, base + 0x71, s1, 0);
-            func_80136B4C(self->field_0x7C, base + 0x7c, s2, 0);
+            char* s1 = BdatTouchStringCell(base + 0x5e, base + 0x67, n);
+            char* s2 = BdatTouchStringCell(base + 0x5e, base + 0x6c, n);
+            LayoutSetTextBoxFmtValue(self->field_0x7C, base + 0x71, s1, 0);
+            LayoutSetTextBoxFmtValue(self->field_0x7C, base + 0x7c, s2, 0);
         } else {
             char* base = lbl_eu_804FCEBC;
-            func_80136B4C(self->field_0x7C, base + 0x71, base + 0x89, 0);
-            func_80136B4C(self->field_0x7C, base + 0x7c, base + 0x89, 0);
+            LayoutSetTextBoxFmtValue(self->field_0x7C, base + 0x71, base + 0x89, 0);
+            LayoutSetTextBoxFmtValue(self->field_0x7C, base + 0x7c, base + 0x89, 0);
         }
         playUISound__FUl(0x6a);
         return;
@@ -899,8 +899,8 @@ void func_800FF920(CMainMenu* self) {
         self->field_0x7C->SetAnimationEnable(self->field_0x80, false);
         self->field_0x7C->SetAnimationEnable(self->field_0x84, true);
         char* base = lbl_eu_804FCEBC;
-        func_80136B4C(self->field_0x7C, base + 0x71, base + 0x89, 0);
-        func_80136B4C(self->field_0x7C, base + 0x7c, base + 0x89, 0);
+        LayoutSetTextBoxFmtValue(self->field_0x7C, base + 0x71, base + 0x89, 0);
+        LayoutSetTextBoxFmtValue(self->field_0x7C, base + 0x7c, base + 0x89, 0);
         func_801D216C(&self->_90[0], 0);
         playUISound__FUl(9);
         self->field_0xE0 = 3;
@@ -970,13 +970,13 @@ extern "C" void func_80100E14(CMainMenu* self) {
                   *(nw4r::lyt::Pane**)((u8*)self->field_0x7C + 0x10));
     ((CBaseCur*)&self->subCur)->setRootPaneTranslate(&vec);
     if (idx > 0) {
-        char* s1 = func_80136190(base + 0x5e, base + 0x67, idx);
-        char* s2 = func_80136190(base + 0x5e, base + 0x6c, idx);
-        func_80136B4C(self->field_0x7C, base + 0x71, s1, 0);
-        func_80136B4C(self->field_0x7C, base + 0x7c, s2, 0);
+        char* s1 = BdatTouchStringCell(base + 0x5e, base + 0x67, idx);
+        char* s2 = BdatTouchStringCell(base + 0x5e, base + 0x6c, idx);
+        LayoutSetTextBoxFmtValue(self->field_0x7C, base + 0x71, s1, 0);
+        LayoutSetTextBoxFmtValue(self->field_0x7C, base + 0x7c, s2, 0);
     } else {
-        func_80136B4C(self->field_0x7C, base + 0x71, base + 0x89, 0);
-        func_80136B4C(self->field_0x7C, base + 0x7c, base + 0x89, 0);
+        LayoutSetTextBoxFmtValue(self->field_0x7C, base + 0x71, base + 0x89, 0);
+        LayoutSetTextBoxFmtValue(self->field_0x7C, base + 0x7c, base + 0x89, 0);
     }
     func_801D216C(&self->_90[0], 0);
     func_801D216C(&self->subCur, 1);
@@ -1198,13 +1198,13 @@ tail:
         break;
     }
     if (idx > 0) {
-        char* s1 = func_80136190(lbl_eu_804FCEBC + 0x5e, lbl_eu_804FCEBC + 0x67, idx);
-        char* s2 = func_80136190(lbl_eu_804FCEBC + 0x5e, lbl_eu_804FCEBC + 0x6c, idx);
-        func_80136B4C(self->field_0x7C, lbl_eu_804FCEBC + 0x71, s1, 0);
-        func_80136B4C(self->field_0x7C, lbl_eu_804FCEBC + 0x7c, s2, 0);
+        char* s1 = BdatTouchStringCell(lbl_eu_804FCEBC + 0x5e, lbl_eu_804FCEBC + 0x67, idx);
+        char* s2 = BdatTouchStringCell(lbl_eu_804FCEBC + 0x5e, lbl_eu_804FCEBC + 0x6c, idx);
+        LayoutSetTextBoxFmtValue(self->field_0x7C, lbl_eu_804FCEBC + 0x71, s1, 0);
+        LayoutSetTextBoxFmtValue(self->field_0x7C, lbl_eu_804FCEBC + 0x7c, s2, 0);
     } else {
-        func_80136B4C(self->field_0x7C, lbl_eu_804FCEBC + 0x71, lbl_eu_804FCEBC + 0x89, 0);
-        func_80136B4C(self->field_0x7C, lbl_eu_804FCEBC + 0x7c, lbl_eu_804FCEBC + 0x89, 0);
+        LayoutSetTextBoxFmtValue(self->field_0x7C, lbl_eu_804FCEBC + 0x71, lbl_eu_804FCEBC + 0x89, 0);
+        LayoutSetTextBoxFmtValue(self->field_0x7C, lbl_eu_804FCEBC + 0x7c, lbl_eu_804FCEBC + 0x89, 0);
     }
 }
 

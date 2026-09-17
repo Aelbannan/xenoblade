@@ -17,7 +17,7 @@ extern "C" void func_80252CE4(CMenuCollepedia* self);
 extern "C" void func_80252D88(CMenuCollepedia* self);
 extern "C" void func_80252DD8(CMenuCollepedia* self);
 extern "C" void func_8025306C(CMenuCollepedia* self);
-extern "C" void func_80254A20(CCollepedia* self);
+extern "C" void clpDoFrameUpd(CCollepedia* self);
 extern "C" void func_801C3D54(CBgTex* self);
 extern "C" void func_801C3FF0(CTitleAHelp* self);
 
@@ -100,7 +100,7 @@ void CMenuCollepedia::Init() {
     func_801C3C14(&mBgTex);
 
     // --- Re-initialise the embedded CTitleAHelp ---
-    char* name = func_80136190(lbl_eu_8050C688, lbl_eu_8050C688 + 0xc, 0x9);
+    char* name = BdatTouchStringCell(lbl_eu_8050C688, lbl_eu_8050C688 + 0xc, 0x9);
 
     u8 tempTitle[0x38];
     __ct__CTitleAHelp((CTitleAHelp*)tempTitle, name, 0x50);
@@ -201,7 +201,7 @@ void CMenuCollepedia::Init() {
     mCollepedia.field_28FA = *(u8*)(tempCollepedia + 0x28FA);
     __dt__11CCollepediaFv((CCollepedia*)tempCollepedia, -1);
 
-    func_8025492C(&mCollepedia);
+    clpStartLoads(&mCollepedia);
 
     // Register this screen as a render callback on the owning scene (the
     // `if (this)` is the MWCC idiom that splits mr r4,r31 / beq / addi r4,+0x58).
@@ -226,7 +226,7 @@ void CMenuCollepedia::Term() {
 
     func_801C3D9C(&mBgTex);
     func_801C40A0(&mTitleAHelp);
-    func_80254C04(&mCollepedia);
+    clpFreeAllRes(&mCollepedia);
 
     lbl_eu_806647D0 = 0;
     setPresentationFlag__Q22cf13CfGameManagerFv(0);
@@ -251,7 +251,7 @@ void CMenuCollepedia::Move() {
     }
     func_801C3D54(&mBgTex);
     func_801C3FF0(&mTitleAHelp);
-    func_80254A20(&mCollepedia);
+    clpDoFrameUpd(&mCollepedia);
 }
 
 void CMenuCollepedia::cbRenderBefore() {}
@@ -266,7 +266,7 @@ void func_80252CE4(){}
 // core is ready, open the menu (state 2).
 void func_80252D88(CMenuCollepedia* self) {
     if (isIdle__11CTitleAHelpFv(&self->mTitleAHelp) != 0) {
-        if (func_80254D50(&self->mCollepedia) != 0) {
+        if (clpGetInputOk(&self->mCollepedia) != 0) {
             self->mState = 2;
         }
     }
@@ -289,7 +289,7 @@ extern "C" void func_80252DD8(CMenuCollepedia* self) {
         (MenuCollepediaPadData*)cf::CfGameManager::getCfPadData();
     if (isClassicController__Q22cf13CfGameManagerFv(-1) != 0) {
         // Classic-controller (co-op) layout.
-        if (func_80255688(&self->mCollepedia) != 0) {
+        if (clpCanClaim(&self->mCollepedia) != 0) {
             func_801C41E8(&self->mTitleAHelp, 0x50);
         } else {
             func_801C41E8(&self->mTitleAHelp, 0x51);
@@ -297,15 +297,15 @@ extern "C" void func_80252DD8(CMenuCollepedia* self) {
         u32 turbo = pad->mTurboPressButtonFlags;
         u32 pressed = pad->mPadPressedFlags;
         if ((turbo >> 6) & 1) {
-            func_80255210(&self->mCollepedia);
+            clpPrevCatPg(&self->mCollepedia);
             return;
         }
         if ((turbo >> 5) & 1) {
-            func_8025516C(&self->mCollepedia);
+            clpNextCatPg(&self->mCollepedia);
             return;
         }
         if ((pressed >> 10) & 1) {
-            func_802553AC(&self->mCollepedia);
+            clpOnConfirm(&self->mCollepedia);
             return;
         }
         if ((pressed >> 9) & 1) {
@@ -313,19 +313,19 @@ extern "C" void func_80252DD8(CMenuCollepedia* self) {
             return;
         }
         if (turbo & 0x8004) {
-            func_80254E64(&self->mCollepedia);
+            clpCursorLeft(&self->mCollepedia);
             return;
         }
         if (((turbo >> 15) & 1) | ((turbo >> 28) & 1)) {
-            func_80254F2C(&self->mCollepedia);
+            clpCursorRght(&self->mCollepedia);
             return;
         }
         if (turbo & 0x2001) {
-            func_80255000(&self->mCollepedia);
+            clpCursorUp(&self->mCollepedia);
             return;
         }
         if (turbo & 0x4002) {
-            func_802550B4(&self->mCollepedia);
+            clpCursorDown(&self->mCollepedia);
             return;
         }
         if ((pressed >> 8) & 1) {
@@ -334,7 +334,7 @@ extern "C" void func_80252DD8(CMenuCollepedia* self) {
         }
     } else {
         // Single-player Wiimote-style layout.
-        if (func_80255688(&self->mCollepedia) != 0) {
+        if (clpCanClaim(&self->mCollepedia) != 0) {
             func_801C41E8(&self->mTitleAHelp, 0x50);
         } else {
             func_801C41E8(&self->mTitleAHelp, 0x51);
@@ -344,24 +344,24 @@ extern "C" void func_80252DD8(CMenuCollepedia* self) {
         // Holding the confirm button (bit 19) with the core idle plays the
         // open sound once and restarts the timer, then feeds the pad through.
         if (((pad->mPadHeldFlags >> 19) & 1) &&
-            func_802556DC(&self->mCollepedia) == 0) {
+            clpIsBusy(&self->mCollepedia) == 0) {
             func_801C41E8(&self->mTitleAHelp, 0x52);
             if (self->mTimer > lbl_eu_806687E4) {
                 playUISound__FUl(2);
             }
             self->mTimer = lbl_eu_806687E0;
             if (turbo & 0x2001) {
-                func_80255210(&self->mCollepedia);
+                clpPrevCatPg(&self->mCollepedia);
                 return;
             }
             if (turbo & 0x4002) {
-                func_8025516C(&self->mCollepedia);
+                clpNextCatPg(&self->mCollepedia);
                 return;
             }
             return;
         }
         if ((pressed >> 27) & 1) {
-            func_802553AC(&self->mCollepedia);
+            clpOnConfirm(&self->mCollepedia);
             return;
         }
         if ((pressed >> 26) & 1) {
@@ -369,19 +369,19 @@ extern "C" void func_80252DD8(CMenuCollepedia* self) {
             return;
         }
         if (turbo & 0x8004) {
-            func_80254E64(&self->mCollepedia);
+            clpCursorLeft(&self->mCollepedia);
             return;
         }
         if (((turbo >> 15) & 1) | ((turbo >> 28) & 1)) {
-            func_80254F2C(&self->mCollepedia);
+            clpCursorRght(&self->mCollepedia);
             return;
         }
         if (turbo & 0x2001) {
-            func_80255000(&self->mCollepedia);
+            clpCursorUp(&self->mCollepedia);
             return;
         }
         if (turbo & 0x4002) {
-            func_802550B4(&self->mCollepedia);
+            clpCursorDown(&self->mCollepedia);
             return;
         }
         if ((pressed >> 21) & 1) {
@@ -394,7 +394,7 @@ extern "C" void func_80252DD8(CMenuCollepedia* self) {
 // (mField54 = 1) instead of opening.
 void func_8025306C(CMenuCollepedia* self) {
     if (isIdle__11CTitleAHelpFv(&self->mTitleAHelp) != 0) {
-        if (func_80254D50(&self->mCollepedia) != 0) {
+        if (clpGetInputOk(&self->mCollepedia) != 0) {
             self->mField54 = 1;
         }
     }
@@ -403,7 +403,7 @@ void func_8025306C(CMenuCollepedia* self) {
 // Close the collepedia menu: when the core is not blocking, run the close
 // sequence (save prompt + close sound) and set state 4.
 void func_80253128(CMenuCollepedia* self) {
-    if (func_802556DC(&self->mCollepedia) == 0) {
+    if (clpIsBusy(&self->mCollepedia) == 0) {
         if (func_800FEDF8() != 0) {
             func_800FF914();
             playUISound__FUl(6);
@@ -416,12 +416,12 @@ void func_80253128(CMenuCollepedia* self) {
 // Navigate the collepedia menu: forward input to the core, or close the
 // detail view and return to the list (state 3).
 void func_802530BC(CMenuCollepedia* self) {
-    if (func_80255698(&self->mCollepedia) != 0) {
-        func_802552B4(&self->mCollepedia);
+    if (clpIsOverlay(&self->mCollepedia) != 0) {
+        clpOnCancel(&self->mCollepedia);
     } else {
-        if (func_802556DC(&self->mCollepedia) == 0) {
+        if (clpIsBusy(&self->mCollepedia) == 0) {
             func_801C414C(&self->mTitleAHelp);
-            func_80254D8C(&self->mCollepedia);
+            clpReqCloseVw(&self->mCollepedia);
             self->mState = 3;
         }
     }

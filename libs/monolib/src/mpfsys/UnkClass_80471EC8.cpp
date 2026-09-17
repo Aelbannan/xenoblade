@@ -138,7 +138,7 @@ extern u32 lbl_eu_80665884;
 extern "C" void* func_8049626C(void* camera, void* view);
 // Current-scene getter (scn TU) and its env-light controller push.
 extern "C" void* func_8049698C();
-extern "C" void func_804C19B8(void* ctrl);
+extern "C" void scnLgtEnterMode20(void* ctrl);
 // nw4r diagnostics / math helpers used by func_804728E8 (retail-named).
 extern "C" void Warning__Q24nw4r2dbFPCciPCce(const char*, int, const char*, ...);
 extern "C" f32 FrSqrt__Q24nw4r4mathFf(f32);
@@ -1403,7 +1403,7 @@ void func_80473984__Q26mpfsys17UnkClass_80471EC8Fv(
     }
 
     // Refresh the scene env-light controller, then reload fog state 0x40.
-    func_804C19B8(((MpfsysSceneCtrl*)func_8049698C())->envLgtCtrl);
+    scnLgtEnterMode20(((MpfsysSceneCtrl*)func_8049698C())->envLgtCtrl);
     lbl_eu_8066585C = 0;
     nw4r::g3d::G3DState::LoadFog(0x40);
 }

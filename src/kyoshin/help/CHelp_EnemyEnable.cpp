@@ -2,8 +2,8 @@
 #include "kyoshin/cf/CfGimmick.hpp"
 
 // Retail circular-object-list accessor (the "active objects" registry).
-// main.dol ships it as the unmangled C-style symbol func_800B6BC8.
-extern "C" CfGimmickList* func_800B6BC8();
+// main.dol ships it as the unmangled C-style symbol getReslistB48.
+extern "C" CfGimmickList* getReslistB48();
 
 // Resolves a CfGimmickListNode's object slot into the live object. Retail
 // mangled C++ symbol getEffOwner____FPv (single void* parameter), so a plain
@@ -16,7 +16,7 @@ namespace cf {
 // currently-spawned object reports its "enable" flag (the sub-object's vtable
 // slot 0x74) as set. Walks the circular CfGimmickList sentinel-headed list.
 bool CHelp_EnemyEnable::areAllEnemiesEnabled() {
-    CfGimmickList* list = func_800B6BC8();
+    CfGimmickList* list = getReslistB48();
     CfGimmickListNode* cur = list->head->next;
 
     while (cur != list->head) {

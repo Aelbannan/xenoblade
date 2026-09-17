@@ -11,7 +11,7 @@ void func_8025E0D8(CPcKizunagram* self);
 void func_8025D688(CPcKizunaCur* self);
 extern "C" CPcKizunaSlotEntry* func_8025F290(CPcKizunaSlotEntry* p);
 
-// Layout animation helpers from code_80135FDC (retail unmangled func_80137510).
+// Layout animation helpers from code_80135FDC (retail unmangled AnimRewindFrame).
 void drawLayout(nw4r::lyt::Layout*, nw4r::lyt::DrawInfo*, int, int);
 
 // String base for the affinity-chart layout paths (targets add byte offsets).
@@ -251,7 +251,7 @@ void func_8025D874(CPcKizunagram* self) {
 // When the opening animation (mAnimTransform at +0x20) finishes, mark the
 // window as open (sub-state 0, mIsOpen = 1).
 extern "C" void __declspec(noinline) func_8025DCB0(CPcKizunagram* self) {
-    if (func_80137510(self->mAnimTransform, lbl_eu_8066887C) != 0) {
+    if (AnimRewindFrame(self->mAnimTransform, lbl_eu_8066887C) != 0) {
         self->mStateByte2 = 0;
         self->mIsOpen = 1;
     }
@@ -267,7 +267,7 @@ extern "C" __declspec(noinline) void func_8025DCFC(CPcKizunagram* self) {
     func_8009CF8C(0x20);
 
     for (u8 n = 1; n <= count; n++) {
-        char* paneName = func_8013639C(table, lbl_eu_8050D868 + 0x90, (u8)n);
+        char* paneName = BdatGetPtrDirect(table, lbl_eu_8050D868 + 0x90, (u8)n);
         nw4r::lyt::Pane* pane = self->mLayout->GetRootPane()->FindPaneByName(paneName, true);
         if (func_8025E960(self, table, (u8)n) != 0) {
             // --- selected row ---
@@ -275,12 +275,12 @@ extern "C" __declspec(noinline) void func_8025DCFC(CPcKizunagram* self) {
             if (func_8025E9E4(self, table, (u8)n) != 0) {
                 // 64-bit intermediates force MWCC's lis(hi)+addi(lo) synthesis instead
     // of rematerializing the full literal at each use.
-    func_80137C1C(pane, (u32)((0x7777ull << 16) + 0x77ff));
+    PaneSetVtxColorAll(pane, (u32)((0x7777ull << 16) + 0x77ff));
             }
             for (u32 k = 1; k <= 6; k++) {
                 char buf[0x20];
                 sprintf(buf, lbl_eu_8050D868 + 0x96, (u8)k);
-                u32 e8 = func_801361E8((u32)table, buf, (u8)n);
+                u32 e8 = BdatGetU8Direct((u32)table, buf, (u8)n);
                 int rnd = (e8 & 0xff) + 0x29;
                 func_8009CF8C(rnd);
                 u8 lb9;
@@ -293,7 +293,7 @@ extern "C" __declspec(noinline) void func_8025DCFC(CPcKizunagram* self) {
                     r21 = 1;
                 }
                 int id = (e8 & 0xff) + 1;
-                char* str = (char*)func_80136190(lbl_eu_8050D868 + 0xa0, lbl_eu_8050D868 + 0xaf, id);
+                char* str = (char*)BdatTouchStringCell(lbl_eu_8050D868 + 0xa0, lbl_eu_8050D868 + 0xaf, id);
                 nw4r::lyt::Pane* p = self->mLayout->GetRootPane()->FindPaneByName(str, true);
                 if (p != 0) func_80124270(p, r21);
                 if (r21 != 0) {
@@ -301,10 +301,10 @@ extern "C" __declspec(noinline) void func_8025DCFC(CPcKizunagram* self) {
                         (u32)((0x7469ull << 16) + 0x6d67), lbl_eu_8050D868 + 0xb5, 0);
                     if (tex != 0) func_80137F88(p, tex);
                 }
-                char* str2 = (char*)func_80136190(lbl_eu_8050D868 + 0xa0, lbl_eu_8050D868 + 0xca, id);
+                char* str2 = (char*)BdatTouchStringCell(lbl_eu_8050D868 + 0xa0, lbl_eu_8050D868 + 0xca, id);
                 nw4r::lyt::Pane* p2 = self->mLayout->GetRootPane()->FindPaneByName(str2, true);
                 if (p2 != 0) func_80124270(p2, 0);
-                char* str3 = (char*)func_80136190(lbl_eu_8050D868 + 0xa0, lbl_eu_8050D868 + 0xd4, id);
+                char* str3 = (char*)BdatTouchStringCell(lbl_eu_8050D868 + 0xa0, lbl_eu_8050D868 + 0xd4, id);
                 nw4r::lyt::Pane* p3 = self->mLayout->GetRootPane()->FindPaneByName(str3, true);
                 if (p3 != 0) func_80124270(p3, 0);
             }
@@ -312,20 +312,20 @@ extern "C" __declspec(noinline) void func_8025DCFC(CPcKizunagram* self) {
             // --- deselected row ---
             if (pane != 0) func_80124270(pane, 0);
             if ((u8)n == 5) {
-                u16 r25 = (u16)func_8013606C(lbl_eu_8050D868 + 0x7f, lbl_eu_8050D868 + 0xdd, 5);
+                u16 r25 = (u16)BdatGetU16ByTableKey(lbl_eu_8050D868 + 0x7f, lbl_eu_8050D868 + 0xdd, 5);
                 if (func_8009CF8C(0x20) >= r25) {
                     for (u32 k = 1; k <= 6; k++) {
                         char buf[0x20];
                         sprintf(buf, lbl_eu_8050D868 + 0x96, (u8)k);
-                        u32 e8 = func_801361E8((u32)table, buf, (u8)n);
+                        u32 e8 = BdatGetU8Direct((u32)table, buf, (u8)n);
                         int id = (e8 & 0xff) + 1;
-                        char* str = (char*)func_80136190(lbl_eu_8050D868 + 0xa0, lbl_eu_8050D868 + 0xaf, id);
+                        char* str = (char*)BdatTouchStringCell(lbl_eu_8050D868 + 0xa0, lbl_eu_8050D868 + 0xaf, id);
                         nw4r::lyt::Pane* p = self->mLayout->GetRootPane()->FindPaneByName(str, true);
                         if (p != 0) func_80124270(p, 0);
-                        char* str2 = (char*)func_80136190(lbl_eu_8050D868 + 0xa0, lbl_eu_8050D868 + 0xca, id);
+                        char* str2 = (char*)BdatTouchStringCell(lbl_eu_8050D868 + 0xa0, lbl_eu_8050D868 + 0xca, id);
                         nw4r::lyt::Pane* p2 = self->mLayout->GetRootPane()->FindPaneByName(str2, true);
                         if (p2 != 0) func_80124270(p2, 0);
-                        char* str3 = (char*)func_80136190(lbl_eu_8050D868 + 0xa0, lbl_eu_8050D868 + 0xd4, id);
+                        char* str3 = (char*)BdatTouchStringCell(lbl_eu_8050D868 + 0xa0, lbl_eu_8050D868 + 0xd4, id);
                         nw4r::lyt::Pane* p3 = self->mLayout->GetRootPane()->FindPaneByName(str3, true);
                         if (p3 != 0) func_80124270(p3, 0);
                     }
@@ -349,21 +349,21 @@ void func_8025E0D8(CPcKizunagram* self) {
     // u8 counter/count drive the retail clrlwi + cmplw (unsigned) loop.
     count = (u8)func_8003B1EC(table);
     for (i = 0; i < count; i++) {
-        func_8013639C(table, lbl_eu_8050D868 + 0x90, (u8)i + 1);
+        BdatGetPtrDirect(table, lbl_eu_8050D868 + 0x90, (u8)i + 1);
     }
 
     // Second pass: refresh the 6 affinity rows (u32 counter -> cmplwi/ble).
     for (k = 1; k <= 6; k++) {
         char buf[0x20];
         sprintf(buf, lbl_eu_8050D868 + 0x96, (u8)k);
-        u32 e8 = func_801361E8((u32)table, buf, (s8)self->mField28 + 1);
+        u32 e8 = BdatGetU8Direct((u32)table, buf, (s8)self->mField28 + 1);
         // Two distinct mask forms stop MWCC from CSE-ing a single masked
         // temp; retail recomputes the byte after the rand call from a raw
         // copy held in a nonvolatile.
         u16 val = (u16)func_8009CF8C((e8 & 0xff) + 0x29);
         int id = (u8)e8 + 1;
 
-        char* str1 = (char*)func_80136190(lbl_eu_8050D868 + 0xa0, lbl_eu_8050D868 + 0xaf, id);
+        char* str1 = (char*)BdatTouchStringCell(lbl_eu_8050D868 + 0xa0, lbl_eu_8050D868 + 0xaf, id);
         nw4r::lyt::Pane* pane = self->mLayout->GetRootPane()->FindPaneByName(str1, true);
         if (pane == 0) continue;
         if (func_801C4648() == 0) continue;
@@ -382,7 +382,7 @@ void func_8025E0D8(CPcKizunagram* self) {
         u32 tex1 = (u32)self->mArcRes->GetResource(0x74696d67, s1, 0);
         if (tex1 != 0) func_80137F88(pane, tex1);
 
-        char* str2 = (char*)func_80136190(lbl_eu_8050D868 + 0xa0, lbl_eu_8050D868 + 0xca, id);
+        char* str2 = (char*)BdatTouchStringCell(lbl_eu_8050D868 + 0xa0, lbl_eu_8050D868 + 0xca, id);
         const char* s2;
         if (val >= 0xbb8) {
             s2 = (val >= 0x2711) ? 0 : (val >= 0x1388) ? lbl_eu_8050D868 + 0x1ad : lbl_eu_8050D868 + 0x195;
@@ -398,7 +398,7 @@ void func_8025E0D8(CPcKizunagram* self) {
             if (pane2 != 0) func_80124270(pane2, 1);
         }
 
-        char* str3 = (char*)func_80136190(lbl_eu_8050D868 + 0xa0, lbl_eu_8050D868 + 0xd4, id);
+        char* str3 = (char*)BdatTouchStringCell(lbl_eu_8050D868 + 0xa0, lbl_eu_8050D868 + 0xd4, id);
         setLayoutTextBoxNumber__FPQ34nw4r3lyt6LayoutPcUc(self->mLayout, str3, val);
         nw4r::lyt::Pane* pane3 = self->mLayout->GetRootPane()->FindPaneByName(str3, true);
         if (pane3 != 0) func_80124270(pane3, 1);
@@ -470,7 +470,7 @@ extern "C" void func_8025E3A4(CPcKizunagram* self, u32 arg) {
 // Target a text pane by name, then move the cursor so it sits over the row
 void __declspec(noinline) func_8025E4A4(CPcKizunagram* self) {
     char* path =
-        (char*)func_80136190(lbl_eu_8050D868 + 0x7f, lbl_eu_8050D868 + 0x90, (s8)self->mField28 + 1);
+        (char*)BdatTouchStringCell(lbl_eu_8050D868 + 0x7f, lbl_eu_8050D868 + 0x90, (s8)self->mField28 + 1);
     nw4r::lyt::Pane* pane1 = self->mLayout->GetRootPane()->FindPaneByName(path, true);
     nw4r::lyt::Pane* pane2 =
         self->mLayout->GetRootPane()->FindPaneByName(lbl_eu_8050D868 + 0x1c5, true);
@@ -515,19 +515,19 @@ extern "C" void func_8025E5E4(CPcKizunagram* self, u32 value) {
     table = getFP__FPCc(lbl_eu_8050D868 + 0x7f);
     count = (u8)func_8003B1EC((void*)table);
     for (i = 0; i < count; i++) {
-        func_8013639C(table, lbl_eu_8050D868 + 0x90, (u8)i + 1);
+        BdatGetPtrDirect(table, lbl_eu_8050D868 + 0x90, (u8)i + 1);
     }
 
     for (k = 1; k <= 6; k++) {
         char buf1[0x20];
         sprintf(buf1, lbl_eu_8050D868 + 0x96, (u8)k);
-        u32 e8 = func_801361E8((u32)table, buf1, (s8)self->mField28 + 1);
+        u32 e8 = BdatGetU8Direct((u32)table, buf1, (s8)self->mField28 + 1);
         // Retail evaluates the rand column first (keeping raw e8 live across
         // the call), then derives id from the masked byte.
         u16 val = (u16)func_8009CF8C((e8 & 0xff) + 0x29);
         int id = (u8)e8 + 1;
 
-        char* str1 = (char*)func_80136190(lbl_eu_8050D868 + 0xa0, lbl_eu_8050D868 + 0xaf, id);
+        char* str1 = (char*)BdatTouchStringCell(lbl_eu_8050D868 + 0xa0, lbl_eu_8050D868 + 0xaf, id);
         nw4r::lyt::Pane* pane = self->mLayout->GetRootPane()->FindPaneByName(str1, true);
         if (pane == 0) continue;
         if (func_801C4648() == 0) continue;
@@ -554,7 +554,7 @@ extern "C" void func_8025E5E4(CPcKizunagram* self, u32 value) {
         // Second panel: build its resource name from a value-dependent format.
         // Each range chooses a distinct format string; the val>=0x2711 range
         // skips the sprintf entirely (falls straight to the resource fetch).
-        char* str2 = (char*)func_80136190(lbl_eu_8050D868 + 0xa0, lbl_eu_8050D868 + 0xca, id);
+        char* str2 = (char*)BdatTouchStringCell(lbl_eu_8050D868 + 0xa0, lbl_eu_8050D868 + 0xca, id);
         char buf2[0x20];
         if (val < 0xbb8) {
             if (val < 0x7d0) {
@@ -578,7 +578,7 @@ extern "C" void func_8025E5E4(CPcKizunagram* self, u32 value) {
             if (pane2 != 0) func_80124270(pane2, 1);
         }
 
-        char* str3 = (char*)func_80136190(lbl_eu_8050D868 + 0xa0, lbl_eu_8050D868 + 0xd4, id);
+        char* str3 = (char*)BdatTouchStringCell(lbl_eu_8050D868 + 0xa0, lbl_eu_8050D868 + 0xd4, id);
         setLayoutTextBoxNumber__FPQ34nw4r3lyt6LayoutPcUc(self->mLayout, str3, val);
         nw4r::lyt::Pane* pane3 = self->mLayout->GetRootPane()->FindPaneByName(str3, true);
         if (pane3 != 0) func_80124270(pane3, 1);
@@ -602,8 +602,8 @@ extern "C" int func_8025E904(CPcKizunagram* self, const void* table, int val) {
 // noinline: retail callers emit a real bl (func_8025E904 etc).
 extern "C" int __declspec(noinline) func_8025E960(CPcKizunagram* self, const void* table, int id) {
     const char* base = lbl_eu_8050D868;
-    u16 v1 = func_80136254(table, base + 0xdd, id);
-    u16 v2 = func_80136254(table, base + 0x256, id);
+    u16 v1 = BdatGetU16Direct(table, base + 0xdd, id);
+    u16 v2 = BdatGetU16Direct(table, base + 0x256, id);
     u16 check = (u16)func_8009CF8C(0x20);
     int result = 0;
     if ((u32)v1 <= (u32)check && (u32)check <= (u32)v2) result = 1;
@@ -611,8 +611,8 @@ extern "C" int __declspec(noinline) func_8025E960(CPcKizunagram* self, const voi
 }
 
 extern "C" int func_8025E9E4(CPcKizunagram* self, const void* table, int id) {
-    u16 v1 = func_80136254(table, lbl_eu_8050D868 + 0x25d, id);
-    u16 v2 = func_80136254(table, lbl_eu_8050D868 + 0x264, id);
+    u16 v1 = BdatGetU16Direct(table, lbl_eu_8050D868 + 0x25d, id);
+    u16 v2 = BdatGetU16Direct(table, lbl_eu_8050D868 + 0x264, id);
     u16 check = (u16)func_8009CF8C(0x20);
     int result = 0;
     if ((u32)v1 <= (u32)check && (u32)check <= (u32)v2) result = 1;

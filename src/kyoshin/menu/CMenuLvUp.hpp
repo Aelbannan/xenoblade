@@ -214,7 +214,7 @@ void func_8049B59C(nw4r::math::VEC3* out, MenuLvUpPose* pose,
                    const nw4r::math::VEC3* in);
 int func_8013A4B4(const nw4r::math::VEC3* a, const nw4r::math::VEC3* b,
                   const nw4r::math::VEC3* c);
-void func_802A2E68(int id);
+void CCharVoiceMan_PlayLevelUpVoice(int id);
 void waitForDrawDone__9CDeviceVIFv();
 void removeRenderCB__4CScnFP10IScnRender(CScn*, IScnRender*);
 void addRenderCB__4CScnFP10IScnRenderUlUl(CScn*, IScnRender*, u32, u32);

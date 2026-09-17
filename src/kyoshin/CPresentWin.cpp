@@ -40,7 +40,7 @@ void func_8022DD68(CPresentWin* self) {
 void func_8022DD90(CPresentWin* self) {
     if (self->mField37 != 2) return;
 
-    u32 itemId = func_80139358(self->mField34) & 0xFFFF;
+    u32 itemId = BdatGetItemId(self->mField34) & 0xFFFF;
 
     u8 rank = func_8022E868(self, self->mField33);
     if (rank == 8) rank = 3;
@@ -51,7 +51,7 @@ void func_8022DD90(CPresentWin* self) {
     char buf[0x20];
     sprintf(buf, pool + 0x12a, rank);
 
-    int res = func_801362C0((const char*)lbl_eu_80664104, buf, (const char*)itemId);
+    int res = BdatGetS8Direct((const char*)lbl_eu_80664104, buf, (const char*)itemId);
 
     if ((s8)res < 0) {
         // Time not met: hide the result panes, show the failure panes and a
@@ -69,7 +69,7 @@ void func_8022DD90(CPresentWin* self) {
             tex = func_801355F4()->GetResource(0x74696D67, pool + 0x17f, NULL);
         }
         if (tex) {
-            func_80137E7C(self->mpLayout, pool + 0x149, tex);
+            PaneSetTexPaletteByName(self->mpLayout, pool + 0x149, tex);
         }
     } else {
         // Time met: show the result panes and a texture matching the rank.
@@ -90,7 +90,7 @@ void func_8022DD90(CPresentWin* self) {
             tex = func_801355F4()->GetResource(0x74696D67, pool + 0x17f, NULL);
         }
         if (tex) {
-            func_80137E7C(self->mpLayout, pool + 0x195, tex);
+            PaneSetTexPaletteByName(self->mpLayout, pool + 0x195, tex);
         }
     }
 
@@ -111,13 +111,13 @@ void func_8022DD90(CPresentWin* self) {
 tail:
     // Rebuild the item labels and message texture, then start the close
     // animation.
-    char* s1 = func_80136190(pool + 0xc5, pool + 0xd3, 0x2c);
-    func_80136B4C(self->mpLayout, pool + 0xd8, s1, 0);
-    func_80136B4C(self->mpLayout, pool + 0x100, pool + 0xc4, 0);
+    char* s1 = BdatTouchStringCell(pool + 0xc5, pool + 0xd3, 0x2c);
+    LayoutSetTextBoxFmtValue(self->mpLayout, pool + 0xd8, s1, 0);
+    LayoutSetTextBoxFmtValue(self->mpLayout, pool + 0x100, pool + 0xc4, 0);
 
     void* tex = self->mAccessor->GetResource(0x74696D67, pool + 0x117, NULL);
     if (tex) {
-        func_80137E7C(self->mpLayout, pool + 0x10d, tex);
+        PaneSetTexPaletteByName(self->mpLayout, pool + 0x10d, tex);
     }
 
     self->mField37 = 4;
@@ -134,7 +134,7 @@ extern "C" void* func_801394D4(u32);
 extern "C" void func_8022E204(void* self, u16 idx) {
     *(u16*)((u8*)self + 0x34) = idx;
     void* anim = func_801394D4(idx);
-    func_80136B4C((nw4r::lyt::Layout*)*(void**)((u8*)self + 8), lbl_eu_8050A84C + 0xB7, (char*)anim, 0);
+    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)*(void**)((u8*)self + 8), lbl_eu_8050A84C + 0xB7, (char*)anim, 0);
 }
 
 // Constructor: install the retail vtable, zero every field, except mField38
@@ -235,7 +235,7 @@ extern "C" __declspec(noinline) void func_8022E50C(CPresentWin* self) {
 
 extern const f32 lbl_eu_8066862C;
 extern "C" __declspec(noinline) void func_8022E558(CPresentWin* self) {
-    if (func_80137510((nw4r::lyt::AnimTransform*)*(void**)((u8*)self + 0xC), lbl_eu_8066862C)) {
+    if (AnimRewindFrame((nw4r::lyt::AnimTransform*)*(void**)((u8*)self + 0xC), lbl_eu_8066862C)) {
         *((u8*)self + 0x37) = 0;
         *((u8*)self + 0x38) = 1;
         *((u8*)self + 0x31) = 0;
@@ -267,10 +267,10 @@ extern "C" __declspec(noinline) void func_8022E5B0(CPresentWin* self) {
 // message texture to mPane28.
 extern "C" __declspec(noinline) void func_8022E698(CPresentWin* self) {
     u8 idx = func_8022E868(self, self->mField32);
-    char* name = func_8013639C(lbl_eu_80664090, &lbl_eu_8050A84C[0x1cb], idx);
+    char* name = BdatGetPtrDirect(lbl_eu_80664090, &lbl_eu_8050A84C[0x1cb], idx);
     func_80136D74((nw4r::lyt::Layout*)self->mPane20, name, 0);
-    u32 msgId = func_80136254(lbl_eu_80664090, &lbl_eu_8050A84C[0x1d0], idx) & 0xFFFF;
-    void* tex = self->mAccessor->GetResource(0x74696D67, func_80138F78(msgId), NULL);
+    u32 msgId = BdatGetU16Direct(lbl_eu_80664090, &lbl_eu_8050A84C[0x1d0], idx) & 0xFFFF;
+    void* tex = self->mAccessor->GetResource(0x74696D67, MakeTplNameSysFile(msgId), NULL);
     if (tex != NULL) {
         func_80137F88(self->mPane28, tex);
     }
@@ -279,10 +279,10 @@ extern "C" __declspec(noinline) void func_8022E698(CPresentWin* self) {
 // Same repaint for the mField33 (secondary) item, targeting mPane24/mPane2C.
 extern "C" __declspec(noinline) void func_8022E744(CPresentWin* self) {
     u8 idx = func_8022E868(self, self->mField33);
-    char* name = func_8013639C(lbl_eu_80664090, &lbl_eu_8050A84C[0x1cb], idx);
+    char* name = BdatGetPtrDirect(lbl_eu_80664090, &lbl_eu_8050A84C[0x1cb], idx);
     func_80136D74((nw4r::lyt::Layout*)self->mPane24, name, 0);
-    u32 msgId = func_80136254(lbl_eu_80664090, &lbl_eu_8050A84C[0x1d0], idx) & 0xFFFF;
-    void* tex = self->mAccessor->GetResource(0x74696D67, func_80138F78(msgId), NULL);
+    u32 msgId = BdatGetU16Direct(lbl_eu_80664090, &lbl_eu_8050A84C[0x1d0], idx) & 0xFFFF;
+    void* tex = self->mAccessor->GetResource(0x74696D67, MakeTplNameSysFile(msgId), NULL);
     if (tex != NULL) {
         func_80137F88(self->mPane2C, tex);
     }
@@ -294,7 +294,7 @@ extern "C" __declspec(noinline) void func_8022E7F0(CPresentWin* self) {
     self->mDataCount = 0;
     u8 count = code80135FDC_getByte_64077();
     for (u8 i = 0; i < count; i++) {
-        u8 val = func_801392B4(i);
+        u8 val = GetCollectedFlagByte(i);
         if (val <= 8) {
             u8 idx = self->mDataCount;
             self->mDataArray[idx] = val;
@@ -366,19 +366,19 @@ void func_8022DB7C(CPresentWin* self) {
         func_80137F88(self->mPane2C, tex);
     }
 
-    char* s1 = func_80136190(&lbl_eu_8050A84C[0xc5], &lbl_eu_8050A84C[0xd3], 0x2b);
-    func_80136B4C(self->mpLayout, &lbl_eu_8050A84C[0xd8], s1, 0);
-    char* s2 = func_80136190(&lbl_eu_8050A84C[0xc5], &lbl_eu_8050A84C[0xd3], 0x9b);
-    func_80136B4C(self->mpLayout, &lbl_eu_8050A84C[0x100], s2, 0);
+    char* s1 = BdatTouchStringCell(&lbl_eu_8050A84C[0xc5], &lbl_eu_8050A84C[0xd3], 0x2b);
+    LayoutSetTextBoxFmtValue(self->mpLayout, &lbl_eu_8050A84C[0xd8], s1, 0);
+    char* s2 = BdatTouchStringCell(&lbl_eu_8050A84C[0xc5], &lbl_eu_8050A84C[0xd3], 0x9b);
+    LayoutSetTextBoxFmtValue(self->mpLayout, &lbl_eu_8050A84C[0x100], s2, 0);
 
     const char* msgName = isClassicController__Q22cf13CfGameManagerFv(-1)
                               ? &lbl_eu_8050A84C[0xe4]
                               : &lbl_eu_8050A84C[0xed];
-    char* handle = func_80138F78(func_8013606C(&lbl_eu_8050A84C[0xc5], msgName, 0x9b));
+    char* handle = MakeTplNameSysFile(BdatGetU16ByTableKey(&lbl_eu_8050A84C[0xc5], msgName, 0x9b));
     nw4r::lyt::ArcResourceAccessor* mgr = func_801355F4();
     void* tex2 = mgr->GetResource(0x74696D67, handle, NULL);
     if (tex2) {
-        func_80137E7C(self->mpLayout, &lbl_eu_8050A84C[0x10d], tex2);
+        PaneSetTexPaletteByName(self->mpLayout, &lbl_eu_8050A84C[0x10d], tex2);
         // Texture dimensions are read before the pane lookup so the loads
         // schedule above the call (retail interleaves them).
         CPresentTexDims* dims = ((CPresentTexObj*)tex2)->mChain->mDims;
@@ -449,19 +449,19 @@ void func_8022D614(CPresentWin* self, nw4r::lyt::ArcResourceAccessor* accessor) 
     self->mPane2C = self->mpLayout->GetRootPane()->FindPaneByName(pool + 0xa1, 1);
 
     func_80124270(self->mpLayout->GetRootPane()->FindPaneByName(pool + 0xae, 1), 0);
-    func_80136B4C(self->mpLayout, pool + 0xb7, pool + 0xc4, 0);
+    LayoutSetTextBoxFmtValue(self->mpLayout, pool + 0xb7, pool + 0xc4, 0);
     func_80136D74((nw4r::lyt::Layout*)self->mPane20, pool + 0xc4, 0);
     func_80136D74((nw4r::lyt::Layout*)self->mPane24, pool + 0xc4, 0);
 
-    char* s1 = func_80136190(pool + 0xc5, pool + 0xd3, 0x2b);
-    func_80136B4C(self->mpLayout, pool + 0xd8, s1, 0);
+    char* s1 = BdatTouchStringCell(pool + 0xc5, pool + 0xd3, 0x2b);
+    LayoutSetTextBoxFmtValue(self->mpLayout, pool + 0xd8, s1, 0);
 
     const char* msgName1 = isClassicController__Q22cf13CfGameManagerFv(-1) ? pool + 0xe4 : pool + 0xed;
-    char* handle1 = func_80138F78(func_8013606C(pool + 0xc5, msgName1, 0x2b));
+    char* handle1 = MakeTplNameSysFile(BdatGetU16ByTableKey(pool + 0xc5, msgName1, 0x2b));
     nw4r::lyt::ArcResourceAccessor* mgr1 = func_801355F4();
     void* tex1 = mgr1->GetResource(0x74696D67, handle1, NULL);
     if (tex1) {
-        func_80137E7C(self->mpLayout, pool + 0x10d, tex1);
+        PaneSetTexPaletteByName(self->mpLayout, pool + 0x10d, tex1);
         // Texture dimensions are read before the pane lookup so the loads
         // schedule above the virtual call (retail interleaves them).
         CPresentTexDims* dims1 = ((CPresentTexObj*)tex1)->mChain->mDims;
@@ -478,15 +478,15 @@ void func_8022D614(CPresentWin* self, nw4r::lyt::ArcResourceAccessor* accessor) 
         }
     }
 
-    char* s2 = func_80136190(pool + 0xc5, pool + 0xd3, 0x9b);
-    func_80136B4C(self->mpLayout, pool + 0x100, s2, 0);
+    char* s2 = BdatTouchStringCell(pool + 0xc5, pool + 0xd3, 0x9b);
+    LayoutSetTextBoxFmtValue(self->mpLayout, pool + 0x100, s2, 0);
 
     const char* msgName2 = isClassicController__Q22cf13CfGameManagerFv(-1) ? pool + 0xe4 : pool + 0xed;
-    char* handle2 = func_80138F78(func_8013606C(pool + 0xc5, msgName2, 0x9b));
+    char* handle2 = MakeTplNameSysFile(BdatGetU16ByTableKey(pool + 0xc5, msgName2, 0x9b));
     nw4r::lyt::ArcResourceAccessor* mgr2 = func_801355F4();
     void* tex2 = mgr2->GetResource(0x74696D67, handle2, NULL);
     if (tex2) {
-        func_80137E7C(self->mpLayout, pool + 0x10d, tex2);
+        PaneSetTexPaletteByName(self->mpLayout, pool + 0x10d, tex2);
         CPresentTexDims* dims2 = ((CPresentTexObj*)tex2)->mChain->mDims;
         u16 h2 = dims2->mH;
         u16 w2 = dims2->mW;

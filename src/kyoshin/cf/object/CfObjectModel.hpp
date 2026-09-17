@@ -36,10 +36,10 @@ extern ml::CVec3 zero__Q22ml5CVec3;
 // whose +0x44 slot is the id-table lookup. Mirror of
 // libs/monolib/src/scn/CScnEffectActNw4r (same name, layout, and slot
 // order; kept in sync by hand). The monolib header cannot be included
-// from this TU: its extern "C" free decls (func_80495E60, func_8048315C,
-// func_804838DC) pin narrower arities that collide with this TU's
-// retail-accurate FULL-matching decls (notably the 2-arg func_804838DC
-// and the CActParamAnim void*-shaped func_8048315C). Slot map dumped from
+// from this TU: its extern "C" free decls (func_80495E60, simGetLeafActData,
+// simSetFlag2OnTree) pin narrower arities that collide with this TU's
+// retail-accurate FULL-matching decls (notably the 2-arg simSetFlag2OnTree
+// and the CActParamAnim void*-shaped simGetLeafActData). Slot map dumped from
 // the retail vtable lbl_eu_8056EAD8
 // (build/us/asm/monolib/src/scn/CScnEffectActNw4r.s); every impl is
 // decomp'd in CScnEffectActNw4r.cpp. The class is novtable (ctor/dtor are
@@ -234,7 +234,7 @@ extern "C" void func_80142428();
 
 // C-linkage import from libs/monolib/src/scn/CScnItemModel.cpp (retail uses
 // the unmangled name); tail-called by func_800BB618 with the model sub-object.
-extern "C" void func_804838DC(cf::CfObjectModelSub98* model, int flag);
+extern "C" void simSetFlag2OnTree(cf::CfObjectModelSub98* model, int flag);
 
 // operator delete (retail symbol __dl__FPv is the unmangled C name; declare
 // extern "C" so the bl reloc references exactly __dl__FPv).
@@ -245,7 +245,7 @@ extern "C" void __dl__FPv(void* object);
 // (reattaches a detached effect target; defined in CfObjectEff.cpp).
 // extern "C" so the bl relocs reference the unmangled retail names (a plain
 // C++ header declaration makes MWCC emit a mangled __F<params> name).
-extern "C" void func_80484E10(void* self, u32 a, u32 b);
+extern "C" void simSetFlags7A8_12(void* self, u32 a, u32 b);
 // Effect-chain helpers (defined in CfObjectEff.cpp). C linkage keeps
 // the call-site reloc at the plain retail name (a C++ declaration makes
 // MWCC emit the mangled __FPUc reference).

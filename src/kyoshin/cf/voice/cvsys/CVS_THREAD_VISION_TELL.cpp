@@ -55,7 +55,7 @@ CVS_THREAD_VISION_TELL* __ct__802A96C0(CVoiceHandle* h1, CVoiceHandle* h2) {
     }
 
     // Allocate the actual CVS_THREAD_VISION_TELL object.
-    CVS_THREAD_VISION_TELL* self = (CVS_THREAD_VISION_TELL*)func_802A34E4(0x28);
+    CVS_THREAD_VISION_TELL* self = (CVS_THREAD_VISION_TELL*)CCharVoiceMan_AllocVoiceArena(0x28);
     if (self == NULL) {
         return NULL;
     }

@@ -5,20 +5,20 @@
 #include "kyoshin/cf/object/CfObjectMoveApi.hpp"
 #include "kyoshin/cf/CfMapItemManager.hpp"
 // harness_catalog.hpp pulls CTaskGameEff.hpp -> CfObjectImplMove/Walker.hpp,
-// whose C++-linkage typed func_80043D90 / func_804BE398 decls clash with the
+// whose C++-linkage typed CTaskGame_enumListCtor / func_804BE398 decls clash with the
 // canonical extern "C" forms in CtrlMoveBase.hpp / CtrlPc.hpp. Hide them for
 // this TU (our call sites use the canonical extern "C" ABI).
-#define func_80043D90 func_80043D90_altdecl
+#define CTaskGame_enumListCtor CTaskGame_enumListCtor_altdecl
 #define func_8014B2DC func_8014B2DC_altdecl
-#define func_80043F18 func_80043F18_altdecl
+#define CTaskGame_enumListGet CTaskGame_enumListGet_altdecl
 #define func_80043E88 func_80043E88_altdecl
 #define __dt__80043E88 __dt__80043E88_altdecl
 #define func_800F6E08 func_800F6E08_altdecl
 #define func_800F4A98 func_800F4A98_altdecl
 #include "kyoshin/harness_catalog.hpp"
-#undef func_80043D90
+#undef CTaskGame_enumListCtor
 #undef func_8014B2DC
-#undef func_80043F18
+#undef CTaskGame_enumListGet
 #undef func_80043E88
 #undef __dt__80043E88
 #undef func_800F6E08
@@ -305,7 +305,7 @@ extern "C" void func_800D11B0(CtrlActView* self) {
                 self->mField14 = lbl_eu_80666CF8;
             } else {
                 void* ppos = self->mPlayer->mSub3E9C.getPosition();
-                if (func_804B19CC((u8*)src + 0x44A8, ppos, 0, 1) != 0) {
+                if (ColiQuerySpecDispatch((u8*)src + 0x44A8, ppos, 0, 1) != 0) {
                     self->mField14 = lbl_eu_80666CF8;
                 } else {
                     if (f27 < lbl_eu_80666D20) {
@@ -465,7 +465,7 @@ void func_800D1CFC(CtrlActView* self) {
         }
         ((CVoiceOwnerIntfPc*)&self->mPlayer->mSub3E9C)->v105(arg, lbl_eu_804FC81C);
         if (self->mPlayer->mField3F60 != 0) {
-            int page = func_8004C5EC(self->mPlayer->mField3F60);
+            int page = getAnimModelId(self->mPlayer->mField3F60);
             if (page < 0x21 || page > 0x2a) {
                 CVoicePos* p1 = self->mPlayer->mSub3E9C.getPosition();
                 CVoicePos* p2 = (CVoicePos*)((CtrlVoiceHandle*)src)->vf41();
@@ -476,7 +476,7 @@ void func_800D1CFC(CtrlActView* self) {
                 ml::CVec3 d = diff;
                 f32 ang = nw4r::math::Atan2FIdx(d.x, d.z);
                 self->mPlayer->mSub3E9C.v47(lbl_eu_80666D40 * ang);
-                func_800BE12C((u8*)&self->mPlayer->mSub3E9C, 3, 0, -1, 1);
+                CfObjectMove_setAnimModeArgs((u8*)&self->mPlayer->mSub3E9C, 3, 0, -1, 1);
             }
         }
     }
@@ -585,7 +585,7 @@ void func_800D1F0C(CtrlActView* self) {
             // L_3370: cancel the action.
             self->mPlayer->mField3E6C &= ~0x20;
             ((CtrlActEntryObj*)entry.mPtr18)->mField7C = lbl_eu_80666CF8;
-            func_800BE12C((u8*)&self->mPlayer->mSub3E9C, 0x31, 0, -1, 1);
+            CfObjectMove_setAnimModeArgs((u8*)&self->mPlayer->mSub3E9C, 0x31, 0, -1, 1);
             func_8014B2DC(&self->mPlayer->mField3380);
         } else if (st == 2) {
             // L_33B8: restart via command gates 0x806/0x10/0x18.
@@ -594,7 +594,7 @@ void func_800D1F0C(CtrlActView* self) {
                 func_80148778(&self->mPlayer->mField8, 0x10) == 0) {
                 u32 c2 = *self->mPlayer->mField4->vf30();
                 if (func_80174C98(self->mPlayer, &c2, 0x18) == 0) {
-                    func_800BE12C((u8*)&self->mPlayer->mSub3E9C, 0x11, 0, -1, 1);
+                    CfObjectMove_setAnimModeArgs((u8*)&self->mPlayer->mSub3E9C, 0x11, 0, -1, 1);
                 }
             }
         }
@@ -657,7 +657,7 @@ void func_800D1F0C(CtrlActView* self) {
         }
         u32 g806 = *self->mPlayer->mField4->vf30();
         if (func_80174C98(self->mPlayer, &g806, 0x806) == 0) {
-            func_800BE12C((u8*)&self->mPlayer->mSub3E9C, 0x11, 0, -1, 1);
+            CfObjectMove_setAnimModeArgs((u8*)&self->mPlayer->mSub3E9C, 0x11, 0, -1, 1);
             CtrlActEntryObj* eo = (CtrlActEntryObj*)entry.mPtr18;
             eo->mField7C = eo->mField2C;
             void* bm = getInstance__Q22cf14CBattleManagerFv();
@@ -680,24 +680,24 @@ void func_800D1F0C(CtrlActView* self) {
         break;
     case 4:
         func_8016FE34(findObjectById((int)entry.mField0));
-        func_800BE12C((u8*)&self->mPlayer->mSub3E9C, 0x1b, 0, 4, 1);
+        CfObjectMove_setAnimModeArgs((u8*)&self->mPlayer->mSub3E9C, 0x1b, 0, 4, 1);
         break;
     case 5: {
         void* src = func_8016FE34(findObjectById((int)entry.mField0));
-        func_800BE12C((u8*)&self->mPlayer->mSub3E9C, 0x1b, 0, 1, 1);
-        func_802A29A4(self->mPlayer, src);
+        CfObjectMove_setAnimModeArgs((u8*)&self->mPlayer->mSub3E9C, 0x1b, 0, 1, 1);
+        CCharVoiceMan_EnqueueCtrlActVoiceA(self->mPlayer, src);
         break;
     }
     case 6: {
         void* src = func_8016FE34(findObjectById((int)entry.mField0));
-        func_800BE12C((u8*)&self->mPlayer->mSub3E9C, 0x1b, 0, 0, 1);
-        func_802A2A0C(self->mPlayer, src);
+        CfObjectMove_setAnimModeArgs((u8*)&self->mPlayer->mSub3E9C, 0x1b, 0, 0, 1);
+        CCharVoiceMan_EnqueueCtrlActVoiceB(self->mPlayer, src);
         break;
     }
     case 7: {
         void* src = func_8016FE34(findObjectById((int)entry.mField0));
-        func_800BE12C((u8*)&self->mPlayer->mSub3E9C, 0x1b, 0, 2, 1);
-        func_802A2ADC(self->mPlayer, src);
+        CfObjectMove_setAnimModeArgs((u8*)&self->mPlayer->mSub3E9C, 0x1b, 0, 2, 1);
+        CCharVoiceMan_EnqueueCtrlActVoiceC(self->mPlayer, src);
         break;
     }
     case 8:
@@ -787,8 +787,8 @@ void func_800D1F0C(CtrlActView* self) {
         void* arg =
             (self->mPlayer != NULL) ? (void*)&self->mPlayer->mSub3E9C : NULL;
         CtrlActChainObj* obj = (CtrlActChainObj*)func_800AD860(arg);
-        void* o2 = func_80193670(obj);
-        if (func_80193AB0(o2, obj->mField45C0) != NULL) {
+        void* o2 = CPartsChange_GetActorTable(obj);
+        if (CPartsChange_FindActorById(o2, obj->mField45C0) != NULL) {
             ((CtrlActChainObj*)o2)->mFieldA0 |= 2;
         }
         break;
@@ -2166,10 +2166,10 @@ extern "C" void func_800D5A2C(CtrlActView* self) {
         for (int i = 0; i < 3; i++) {
             void* candidate = 0;
             CfEnumListHolder holder;
-            func_80043D90(&holder);
-            CfEnumList* lst = (CfEnumList*)func_80043F18(&holder);
+            CTaskGame_enumListCtor(&holder);
+            CfEnumList* lst = (CfEnumList*)CTaskGame_enumListGet(&holder);
             func_800F4A98(lst, data[i], 0);
-            lst = (CfEnumList*)func_80043F18(&holder);
+            lst = (CfEnumList*)CTaskGame_enumListGet(&holder);
             int id = (int)(intptr_t)func_800F6E08(lst);
             if (id != 0) {
                 void* actor = findObjectById(id);

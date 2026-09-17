@@ -10,12 +10,11 @@ extern "C" void func_8004A400();
 
 extern "C" void pluginCfsRegist();
 
-// ml::CVec3 with the retail static zero object (symbol zero__Q22ml5CVec3).
+// ml::CVec3 is already complete when the catalog include closure pulled
+// monolib/math; a second body here is a MWCC redefinition. Pointer uses
+// only need a forward declaration (zero__Q22ml5CVec3 lives on the math type).
 namespace ml {
-struct CVec3 {
-    float x, y, z;
-    static CVec3 zero;
-};
+struct CVec3;
 } // namespace ml
 
 namespace cf {

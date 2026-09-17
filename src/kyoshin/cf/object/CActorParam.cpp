@@ -610,8 +610,8 @@ extern "C" void func_800E9FE4(void*, void*, s32, s32, s32, s32, void*);
 extern "C" void func_800EC8FC(void*, void*, void*, u32);
 // func_801A891C: extern "C" decl from kyoshin/cf/object/CfObjectActor.hpp.
 extern "C" u32 func_801B1DCC(u32);
-extern "C" void func_80043D90(void*);
-extern "C" void* func_80043F18(void*);
+extern "C" void CTaskGame_enumListCtor(void*);
+extern "C" void* CTaskGame_enumListGet(void*);
 // func_800F4A98: extern "C" decl from kyoshin/cf/object/CAIAction.hpp (via CfObjectActor.hpp).
 extern "C" void* func_800F6EAC(void*, u32);
 extern "C" void __dt__80043E88(void*, int);
@@ -621,7 +621,7 @@ extern "C" int func_80260264(void*, int, void*);
 extern "C" int func_80260A6C(void*, int, s32*, s32*); // dual accessor (CUnkObj8025FB10.cpp)
 extern "C" int rand(void);
 extern "C" void func_802808AC(s32 mode);
-extern "C" void func_802A28C4(int a, int b, int c);
+extern "C" void CCharVoiceMan_EnqueueGaugeClampVoice(int a, int b, int c);
 extern "C" void func_801748B8(void*, int); // map-item position update (CfMapItemManager TU)
 
 // Map-item timer advance (CfMapItemManager TU; unmangled global). Its body
@@ -644,10 +644,10 @@ extern "C" int getArtsSlotRC(const void* arts, short index, short subindex);
 extern "C" void* getArtsParamRC2(const void* arts, int index, int subindex);
 
 // CCharVoiceMan voice-event push (retail: unmangled global symbol; the
-// CCharVoiceMan.cpp definition is `void func_802A2C88()`). The retail
+// CCharVoiceMan.cpp definition is `void CCharVoiceMan_EnqueueGaugePairVoice()`). The retail
 // Func48 caller passes two floats the callee ignores, so declare them here
 // for the ABI.
-extern "C" void func_802A2C88(float a, float b);
+extern "C" void CCharVoiceMan_EnqueueGaugePairVoice(float a, float b);
 
 // us-801779a0: arts/tension update tick. Divides the delta by the sdata2
 // divisor, feeds the actor-id check (unk15DC vtable slot 0x4C) into
@@ -1143,13 +1143,13 @@ unk28_done:
                 void* actor = func_8016FE34(findObjectById(e->unk10));
                 if (actor && !reinterpret_cast<cf::CActorParam*>(actor)->CActorParam_isBattleLocked()) break;
                 EnumListHolder holder;
-                func_80043D90(&holder);
-                void* list = func_80043F18(&holder);
+                CTaskGame_enumListCtor(&holder);
+                void* list = CTaskGame_enumListGet(&holder);
                 func_800F4A98(list, 0x20, 0x800);
-                u32 count = *(u32*)((u8*)func_80043F18(&holder) + 0x620);
+                u32 count = *(u32*)((u8*)CTaskGame_enumListGet(&holder) + 0x620);
                 if (count != 0) {
                     u32 idx = (u32)rand() % count;
-                    void* item = func_800F6EAC(func_80043F18(&holder), idx);
+                    void* item = func_800F6EAC(CTaskGame_enumListGet(&holder), idx);
                     e->unk10 = *(u32*)((u8*)item + 0x74);
                 }
                 __dt__80043E88(&holder, -1);
@@ -1175,16 +1175,16 @@ unk28_done:
                     if ((t & 0x3F) == 0x16) break;
                 }
                 EnumListHolder holder;
-                func_80043D90(&holder);
-                void* list = func_80043F18(&holder);
+                CTaskGame_enumListCtor(&holder);
+                void* list = CTaskGame_enumListGet(&holder);
                 if (*(u32*)((u8*)self->CActorParam_getActor() + 0x3F00) & 2) {
                     func_800F4A98(list, 0x4000, 0x800);
                     void* tgt = reinterpret_cast<cf::CfObject*>((u8*)self->CActorParam_getActor() + 0x3E9C)->CfObject_getPosVector();
-                    __ct__800FB044(func_80043F18(&holder), tgt, 0, (float)e->unk14);
+                    __ct__800FB044(CTaskGame_enumListGet(&holder), tgt, 0, (float)e->unk14);
                 } else {
                     func_800F4A98(list, 0x20, 0x800);
                     void* tgt = reinterpret_cast<cf::CfObject*>((u8*)self->CActorParam_getActor() + 0x3E9C)->CfObject_getPosVector();
-                    __ct__800FB044(func_80043F18(&holder), tgt, 0, (float)e->unk14);
+                    __ct__800FB044(CTaskGame_enumListGet(&holder), tgt, 0, (float)e->unk14);
                 }
                 cf::CBattleStateEntry st;
                 std::memset(&st, 0, sizeof(st));
@@ -1216,7 +1216,7 @@ unk28_done:
                 goto check73;
             loop73:
                 {
-                    void* actor = func_8016FE34(func_800F6EAC(func_80043F18(&holder), i2));
+                    void* actor = func_8016FE34(func_800F6EAC(CTaskGame_enumListGet(&holder), i2));
                     if (self->CActorParam_getActor() != actor) {
                         if (!func_80148778((u8*)actor + 8, st.unk0C)) {
                             func_800EC8FC(getInstance__Q22cf14CBattleManagerFv(), actor, &st, 0);
@@ -1226,7 +1226,7 @@ unk28_done:
                 }
             check73:
                 {
-                    if (i2 < *(u32*)((u8*)func_80043F18(&holder) + 0x620)) goto loop73;
+                    if (i2 < *(u32*)((u8*)CTaskGame_enumListGet(&holder) + 0x620)) goto loop73;
                 }
                 __dt__80043E88(&holder, -1);
                 break;
@@ -1237,16 +1237,16 @@ unk28_done:
                 float f15 = (float)e->unk14;
                 if (func_80148778(reinterpret_cast<cf::CBattleState*>(self), 0x109)) f15 *= 2.5f;
                 EnumListHolder holder;
-                func_80043D90(&holder);
-                void* list = func_80043F18(&holder);
+                CTaskGame_enumListCtor(&holder);
+                void* list = CTaskGame_enumListGet(&holder);
                 if (*(u32*)((u8*)self->CActorParam_getActor() + 0x3F00) & 2) {
                     func_800F4A98(list, 0x20, 0x800);
                     void* tgt = reinterpret_cast<cf::CfObject*>((u8*)self->CActorParam_getActor() + 0x3E9C)->CfObject_getPosVector();
-                    __ct__800FB044(func_80043F18(&holder), tgt, 0, f15);
+                    __ct__800FB044(CTaskGame_enumListGet(&holder), tgt, 0, f15);
                 } else {
                     func_800F4A98(list, 0x4000, 0x800);
                     void* tgt = reinterpret_cast<cf::CfObject*>((u8*)self->CActorParam_getActor() + 0x3E9C)->CfObject_getPosVector();
-                    __ct__800FB044(func_80043F18(&holder), tgt, 0, f15);
+                    __ct__800FB044(CTaskGame_enumListGet(&holder), tgt, 0, f15);
                 }
                 cf::CBattleStateEntry st;
                 std::memset(&st, 0, sizeof(st));
@@ -1267,7 +1267,7 @@ unk28_done:
                 goto check125;
             loop125:
                 {
-                    void* actor = func_8016FE34(func_800F6EAC(func_80043F18(&holder), i2));
+                    void* actor = func_8016FE34(func_800F6EAC(CTaskGame_enumListGet(&holder), i2));
                     cf::CBattleStateEntry* found = (cf::CBattleStateEntry*)func_80149330((u8*)actor + 8, st.unk0C, st.unk00, st.unk04, 0);
                     if (found) {
                         int nv = func_801B1DCC(r19) * st.unk10;
@@ -1286,7 +1286,7 @@ unk28_done:
                 }
             check125:
                 {
-                    if (i2 < *(u32*)((u8*)func_80043F18(&holder) + 0x620)) goto loop125;
+                    if (i2 < *(u32*)((u8*)CTaskGame_enumListGet(&holder) + 0x620)) goto loop125;
                 }
                 __dt__80043E88(&holder, -1);
                 break;
@@ -1299,7 +1299,7 @@ unk28_done:
         }
     }
 }
-// func_800B8B94: extern "C" decl from kyoshin/cf/object/CAIAction.hpp (via CfObjectActor.hpp; void* return, truthiness only).
+// findObjB28ById: extern "C" decl from kyoshin/cf/object/CAIAction.hpp (via CfObjectActor.hpp; void* return, truthiness only).
 // func_8026178C: extern "C" decl from kyoshin/cf/CVision.hpp.
 // func_80174C98: extern "C" decl from kyoshin/cf/object/CAIAction.hpp / CfMapItemManager.hpp.
 // func_8025FB10: extern "C" decl from kyoshin/cf/chain/CChainActorList.hpp (via CChain.hpp).
@@ -1313,21 +1313,21 @@ extern "C" void CActorParam_resetArtsStatus__Q22cf11CActorParamFv(cf::CActorPara
     int flag = 0;
     int delta = 0;
     if (arts != NULL) {
-        if (func_800B8B94(*(u16*)arts)) flag = 1;
+        if (findObjB28ById(*(u16*)arts)) flag = 1;
     }
     if (self->CActorParam_getActor()) flag = 1;
     if (self->CActorParam_getStatusTable() != NULL) {
         EnumListHolder holder;
-        func_80043D90(&holder);
-        void* list = func_80043F18(&holder);
+        CTaskGame_enumListCtor(&holder);
+        void* list = CTaskGame_enumListGet(&holder);
         func_800F4A98(list, 32, 1);
 
         if (func_8026178C(self->CActorParam_getStatusTable(), 31) != 0) {
             int r = func_8025FB10(self->CActorParam_getStatusTable(), 31);
             if (r != 0) {
                 delta = r;
-                for (u32 i = 0; i < *(u32*)((u8*)func_80043F18(&holder) + 0x620); i++) {
-                    void* actor = func_8016FE34(func_800F6EAC(func_80043F18(&holder), i));
+                for (u32 i = 0; i < *(u32*)((u8*)CTaskGame_enumListGet(&holder) + 0x620); i++) {
+                    void* actor = func_8016FE34(func_800F6EAC(CTaskGame_enumListGet(&holder), i));
                     void* obj = reinterpret_cast<cf::CActorParam*>(actor)->CActorParam_getStatusSyncBlock();
                     *(s16*)((u8*)obj + 0x60) += (s16)delta;
                     obj = reinterpret_cast<cf::CActorParam*>(actor)->CActorParam_getStatusSyncBlock();
@@ -1340,8 +1340,8 @@ extern "C" void CActorParam_resetArtsStatus__Q22cf11CActorParamFv(cf::CActorPara
             int r = func_8025FB10(self->CActorParam_getStatusTable(), 150);
             if (r != 0 && flag) {
                 delta = r;
-                for (u32 i = 0; i < *(u32*)((u8*)func_80043F18(&holder) + 0x620); i++) {
-                    void* actor = func_8016FE34(func_800F6EAC(func_80043F18(&holder), i));
+                for (u32 i = 0; i < *(u32*)((u8*)CTaskGame_enumListGet(&holder) + 0x620); i++) {
+                    void* actor = func_8016FE34(func_800F6EAC(CTaskGame_enumListGet(&holder), i));
                     void* obj = reinterpret_cast<cf::CActorParam*>(actor)->CActorParam_getArtsSyncBlock();
                     *(s16*)((u8*)obj + 0x18) += (s16)delta;
                     obj = reinterpret_cast<cf::CActorParam*>(actor)->CActorParam_getArtsSyncBlock();
@@ -2901,10 +2901,10 @@ void CActorParam_applyEventStatus__Q22cf11CActorParamFv(cf::CActorParam* self, c
                     if (ml::math::mtRand(100) < v2) {
                         if (self->CActorParam_getHitRate() < lbl_eu_8066786C) {
                             u8 holder[8];
-                            func_80043D90(holder);
-                            func_800F4A98(func_80043F18(holder), 0x20, 0x800);
-                            for (u32 i = 0; i < ((cf::CfObjEnumList*)func_80043F18(holder))->mPtrCount; i++) {
-                                void* actor = func_8016FE34(func_800F6EAC(func_80043F18(holder), i));
+                            CTaskGame_enumListCtor(holder);
+                            func_800F4A98(CTaskGame_enumListGet(holder), 0x20, 0x800);
+                            for (u32 i = 0; i < ((cf::CfObjEnumList*)CTaskGame_enumListGet(holder))->mPtrCount; i++) {
+                                void* actor = func_8016FE34(func_800F6EAC(CTaskGame_enumListGet(holder), i));
                                 if (*(u16*)((u8*)actor + 0x3F28) == 1) {
                                     // Retail chains magic-double conversions between every
                                     // truncation: vv = conv(v)*(Func38/scale), vv2 = conv(vv)*rate.
@@ -3073,7 +3073,7 @@ extern "C" void CActorParam_UnkVirtualFunc9__Q22cf11CActorParamFv(cf::CActorPara
 }
 // us-8017e9d4: retail symbol is Fv; the real ABI passes (self, delta). Adds
 // delta to the arts gauge at 0x17F0, clamps it to [default, 0x17FC], then
-// pushes the two Func49 gauge readings (second first) to func_802A2C88.
+// pushes the two Func49 gauge readings (second first) to CCharVoiceMan_EnqueueGaugePairVoice.
 void CActorParam_addArtsGauge__Q22cf11CActorParamFv(cf::CActorParam* self, float delta) {
     float b;
     float a = self->CActorParam_getArtsGauge();
@@ -3087,7 +3087,7 @@ void CActorParam_addArtsGauge__Q22cf11CActorParamFv(cf::CActorParam* self, float
     }
     b = self->CActorParam_getArtsGauge();
     self->CActorParam_getActor();
-    func_802A2C88(b, a);
+    CCharVoiceMan_EnqueueGaugePairVoice(b, a);
 }
 // us-8017eab4: find the battle-state entry with id 0x10 in the CBattleState
 // subobject (this+8) and reset its gauge (unk20) to the sdata2 default.
@@ -3221,7 +3221,7 @@ void CActorParam_addHate__Q22cf11CActorParamFv(cf::CActorParam* self, cf::CActor
     e->unk8 = lbl_eu_80667804;
     e->unkC = lbl_eu_80667804;
     // float->double->float round-trip pins retail's frsp on the param compare
-    // (MWCC_CASES func_800B06A4 pattern).
+    // (MWCC_CASES storeScaleSquare pattern).
     if ((float)(double)f1 < lbl_eu_806677E8) {
         e->unk10 = lbl_eu_806677E8;
     } else if (e->unk10 > lbl_eu_80667864) {
@@ -3252,7 +3252,7 @@ void CActorParam_addHate__Q22cf11CActorParamFv(cf::CActorParam* self, cf::CActor
 // arg through func_801748B8 into the 0x3358 status field, then, unless the
 // 0x335A counter is already positive, runs the id-0x73 arts scan: a hit sets
 // the counter to 1 (clamped), notifies func_802808AC and clears 0x3358.
-// Finally forwards (actor, clamped, original) to func_802A28C4.
+// Finally forwards (actor, clamped, original) to CCharVoiceMan_EnqueueGaugeClampVoice.
 void CActorParam_accumulateTension__Q22cf11CActorParamFv(cf::CActorParam* self, int arg) {
     // Plain byte-base alias for the absolute status fields (0x3358/0x335A
     // live past the layout shift; members would address the wrong bytes).
@@ -3276,11 +3276,11 @@ void CActorParam_accumulateTension__Q22cf11CActorParamFv(cf::CActorParam* self, 
             if (*(u32*)((u8*)obj + 0x3F00) & 2) {
                 if (func_8026178C(self->CActorParam_getStatusTable(), 0x73) != 0) {
                     EnumListHolder holder;
-                    func_80043D90(&holder);
-                    void* list = func_80043F18(&holder);
+                    CTaskGame_enumListCtor(&holder);
+                    void* list = CTaskGame_enumListGet(&holder);
                     func_800F4A98(list, 0x20, 0);
-                    for (u32 i = 0; i < *(u32*)((u8*)func_80043F18(&holder) + 0x620); i++) {
-                        void* actor = func_8016FE34(func_800F6EAC(func_80043F18(&holder), i));
+                    for (u32 i = 0; i < *(u32*)((u8*)CTaskGame_enumListGet(&holder) + 0x620); i++) {
+                        void* actor = func_8016FE34(func_800F6EAC(CTaskGame_enumListGet(&holder), i));
                         if (*(u16*)((u8*)actor + 0x3F28) == 1) {
                             static s16 sv;
                             sv = 1;
@@ -3304,7 +3304,7 @@ void CActorParam_accumulateTension__Q22cf11CActorParamFv(cf::CActorParam* self, 
     s16 clamped = *(s16*)(sb + 0x335A);
     u8* obj = (u8*)self->CActorParam_getActor();
     if (obj != NULL) {
-        func_802A28C4((int)obj, clamped, orig);
+        CCharVoiceMan_EnqueueGaugeClampVoice((int)obj, clamped, orig);
     }
 }
 // us-8017f5f0: retail symbol is Fv; the real ABI passes (self, val).
@@ -3324,7 +3324,7 @@ void CActorParam_raiseTensionValue__Q22cf11CActorParamFv(cf::CActorParam* self, 
 }
 // us-8017f67c: retail symbol is Fv; the real ABI passes (self, arg). Sets the
 // 0x335A status counter to (s16)arg clamped to [0, 4], zeroes 0x3358, then
-// forwards (actor, clamped, original) to func_802A28C4. A blocker on the
+// forwards (actor, clamped, original) to CCharVoiceMan_EnqueueGaugeClampVoice. A blocker on the
 // actor (func_80148778 id 0xBF) aborts the update; the id-0x73 arts scan
 // (arg <= 0) cancels it for dead arts.
 void CActorParam_resetTensionState__Q22cf11CActorParamFv(cf::CActorParam* self, int arg) {
@@ -3344,11 +3344,11 @@ void CActorParam_resetTensionState__Q22cf11CActorParamFv(cf::CActorParam* self, 
             if (*(u32*)((u8*)obj + 0x3F00) & 2) {
                 if (func_8026178C(self->CActorParam_getStatusTable(), 0x73) != 0) {
                     EnumListHolder holder;
-                    func_80043D90(&holder);
-                    void* list = func_80043F18(&holder);
+                    CTaskGame_enumListCtor(&holder);
+                    void* list = CTaskGame_enumListGet(&holder);
                     func_800F4A98(list, 0x20, 0);
-                    for (u32 i = 0; i < *(u32*)((u8*)func_80043F18(&holder) + 0x620); i++) {
-                        void* actor = func_8016FE34(func_800F6EAC(func_80043F18(&holder), i));
+                    for (u32 i = 0; i < *(u32*)((u8*)CTaskGame_enumListGet(&holder) + 0x620); i++) {
+                        void* actor = func_8016FE34(func_800F6EAC(CTaskGame_enumListGet(&holder), i));
                         if (*(u16*)((u8*)actor + 0x3F28) == 1) {
                             __dt__80043E88(&holder, -1);
                             return;
@@ -3371,13 +3371,13 @@ void CActorParam_resetTensionState__Q22cf11CActorParamFv(cf::CActorParam* self, 
     s16 clamped = *(s16*)((u8*)self + 0x335A);
     u8* obj = (u8*)self->CActorParam_getActor();
     if (obj != NULL) {
-        func_802A28C4((int)obj, clamped, orig);
+        CCharVoiceMan_EnqueueGaugeClampVoice((int)obj, clamped, orig);
     }
 }
 // us-8017f858: retail symbol is Fv; the real ABI passes (self, delta). Adds
 // (s16)delta to the 0x335A status counter clamped to [0, 4], zeroes 0x3358,
 // then if the actor (Func2) exists forwards (actor, clamped, original) to
-// func_802A28C4.
+// CCharVoiceMan_EnqueueGaugeClampVoice.
 void CActorParam_UnkVirtualFunc158__Q22cf11CActorParamFv(cf::CActorParam* self, int delta) {
     s16 cur = *(s16*)((u8*)self + 0x335A);
     s16 orig = *(volatile s16*)((u8*)self + 0x335A);
@@ -3393,7 +3393,7 @@ void CActorParam_UnkVirtualFunc158__Q22cf11CActorParamFv(cf::CActorParam* self, 
     s16 clamped = *(s16*)((u8*)self + 0x335A);
     u8* obj = (u8*)self->CActorParam_getActor();
     if (obj != NULL) {
-        func_802A28C4((int)obj, clamped, orig);
+        CCharVoiceMan_EnqueueGaugeClampVoice((int)obj, clamped, orig);
     }
 }
 // us-8017f8fc: retail symbol is Fv; the real ABI passes (self, arg).
@@ -3401,7 +3401,7 @@ void CActorParam_UnkVirtualFunc158__Q22cf11CActorParamFv(cf::CActorParam* self, 
 // recomputes 0x3358 from the 0x335C status table row indexed by the clamped
 // counter scaled by the 0x3368 rate. The id-0x73 arts scan (counter <= 0)
 // sets the counter to 1, notifies func_802808AC and clears 0x3358. Finally
-// forwards (actor, clamped, original) to func_802A28C4.
+// forwards (actor, clamped, original) to CCharVoiceMan_EnqueueGaugeClampVoice.
 void CActorParam_UnkVirtualFunc159__Q22cf11CActorParamFv(cf::CActorParam* self, int arg) {
     void* obj = self->CActorParam_getActor();
     if (obj != NULL) {
@@ -3429,11 +3429,11 @@ void CActorParam_UnkVirtualFunc159__Q22cf11CActorParamFv(cf::CActorParam* self, 
             if (*(u32*)((u8*)o + 0x3F00) & 2) {
                 if (func_8026178C(self->CActorParam_getStatusTable(), 0x73) != 0) {
                     EnumListHolder holder;
-                    func_80043D90(&holder);
-                    void* list = func_80043F18(&holder);
+                    CTaskGame_enumListCtor(&holder);
+                    void* list = CTaskGame_enumListGet(&holder);
                     func_800F4A98(list, 0x20, 0);
-                    for (u32 i = 0; i < *(u32*)((u8*)func_80043F18(&holder) + 0x620); i++) {
-                        void* actor = func_8016FE34(func_800F6EAC(func_80043F18(&holder), i));
+                    for (u32 i = 0; i < *(u32*)((u8*)CTaskGame_enumListGet(&holder) + 0x620); i++) {
+                        void* actor = func_8016FE34(func_800F6EAC(CTaskGame_enumListGet(&holder), i));
                         if (*(u16*)((u8*)actor + 0x3F28) == 1) {
                             static s16 sv;
                             sv = 1;
@@ -3457,7 +3457,7 @@ void CActorParam_UnkVirtualFunc159__Q22cf11CActorParamFv(cf::CActorParam* self, 
     s16 clamped = *(s16*)((u8*)self + 0x335A);
     u8* o = (u8*)self->CActorParam_getActor();
     if (o != NULL) {
-        func_802A28C4((int)o, clamped, orig);
+        CCharVoiceMan_EnqueueGaugeClampVoice((int)o, clamped, orig);
     }
 }
 // Returns (vtable slot 0x1F0) - (vtable slot 0x1E8): CActorParam_getLevelExp

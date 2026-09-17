@@ -404,7 +404,7 @@ extern "C" void func_801F5C18(u8* self) {
 // mode byte (+0x15E), clears the pending 0x400 state bit and gates the LOD
 // re-register on the +0x162/+0x163 id bytes. Then scans the +0xA4 step table
 // over [a, b): picks the last non-0.0f map-object status / area-manager id /
-// sound entry, refreshes the linked map object (func_800BE12C) and the area
+// sound entry, refreshes the linked map object (CfObjectMove_setAnimModeArgs) and the area
 // manager attach, updates the +0x190/+0x192 sound state, and finally applies
 // per-LOD frame updates to both registered LOD tasks.
 __declspec(noinline) void func_801F5C2C(cf::CfGimmickObject* self, int a, int b) {
@@ -459,9 +459,9 @@ __declspec(noinline) void func_801F5C2C(cf::CfGimmickObject* self, int a, int b)
                 u32 f = self->field_74;
                 if ((f & 0x10000) != 0 && (f & 0x8000) != 0 &&
                     (f & 0x01000000) != 0)
-                    func_800BE12C(obj, 0x24, 0, lodId, 1);
+                    CfObjectMove_setAnimModeArgs(obj, 0x24, 0, lodId, 1);
                 else
-                    func_800BE12C(obj, statusId, 0, lodId, 1);
+                    CfObjectMove_setAnimModeArgs(obj, statusId, 0, lodId, 1);
             }
         }
     }
@@ -758,7 +758,7 @@ int func_801F634C(cf::CfGimmickObject* self) {
 // func_801F6780 - per-step gimmick update. The +0xA4 step table (indexed by
 // field_188, 16 bytes per entry) drives: a +0x170 activation countdown,
 // camera events (func_8007B0C8), per-LOD frame updates (func_801F6B98), the
-// +0x68 map-object status (func_800BE12C), a player-control reset (getPlayer
+// +0x68 map-object status (CfObjectMove_setAnimModeArgs), a player-control reset (getPlayer
 // slot 0x110 -> func_80199678), the area-manager attach (createBattleActor with
 // vtable slots 0x9C/0xC4) and the step sound (func_801BFED0 / playActorSound /
 // func_80208C60 / func_80208C48, plus the func_801BFAE4 volume slot).
@@ -993,7 +993,7 @@ static int cfCountMatchingPlayers(CfGimmickList* mgr, int found) {
 // the +0x456C byte, low nibble = bit index into field_184) remain; the
 // 0x400000 flag is raised while any remain. When the count drops to 0.0f the
 // table scan index (field_18C) advances to the next non-0.0f entry, the id is
-// spawned via func_80195B04, and a clean end of the table clears 0x2000 /
+// spawned via CPartsChange_SpawnById, and a clean end of the table clears 0x2000 /
 // 0x400000 and raises 0x80000000 ("done").
 int func_801F72A4(cf::CfGimmickObject* self, u16* table) {
     u32 flags = self->field_74;
@@ -1013,7 +1013,7 @@ int func_801F72A4(cf::CfGimmickObject* self, u16* table) {
     if ((flags & 0x2000) != 0) {
         if (self->field_196 <= 0) {
             // Recount the matching players and (re)arm both counters.
-            int count = cfCountMatchingPlayers(func_800B6BC8(), found);
+            int count = cfCountMatchingPlayers(getReslistB48(), found);
             self->field_196 = (s16)count;
             self->field_198 = (s16)count;
             self->field_184 = 0;
@@ -1021,7 +1021,7 @@ int func_801F72A4(cf::CfGimmickObject* self, u16* table) {
         }
         // Count down the matching players; `remaining` tracks every id match
         // (decremented before the hp query), field_196 only the freshly dead.
-        CfGimmickList* list = func_800B6BC8();
+        CfGimmickList* list = getReslistB48();
         CfGimmickListNode* node = list->head->next;
         int remaining = self->field_196;
         while (node != list->head) {
@@ -1082,7 +1082,7 @@ state9190:
             if (self->field_198 == cur || remaining != cur)
                 goto skip_rename;
         }
-        func_80193678(found);
+        CPartsChange_FireIdEffect(found);
         self->field_196 = self->field_198;
         self->field_184 = 0;
         return 0;
@@ -1091,10 +1091,10 @@ skip_rename:
     }
 spawn:
     self->field_74 |= 0x2000;
-    if (func_80195B04(found) == 0)
+    if (CPartsChange_SpawnById(found) == 0)
         goto done_reset;
     {
-        int count = cfCountMatchingPlayers(func_800B6BC8(), found);
+        int count = cfCountMatchingPlayers(getReslistB48(), found);
         self->field_196 = (s16)count;
         self->field_198 = (s16)count;
         self->field_184 = 0;
@@ -1149,7 +1149,7 @@ int func_801F7D38(cf::CfGimmickObject* self) {
 // func_801F7F24 - spawn/effect driver. Runs the field_66 gate: 0x20 =
 // collision check via func_802098EC (success re-registers the map object),
 // otherwise a jumptable_eu_80535830[idx] checker is run against either the
-// reference point, the object list (func_800B6BC8 / func_800B6BEC) or the
+// reference point, the object list (getReslistB48 / getReslistB68) or the
 // players (slot 0xAC spot). The +0x74 flag 0x800 tail then drives the
 // field_164 state machine (availability table / id-table effects).
 int func_801F7F24(cf::CfGimmickObject* self) {
@@ -1208,16 +1208,16 @@ int func_801F89B8(cf::CfGimmickObject* self) {
 
 // func_801F8BB8 - state refresh. Set the +0x188 step from the +0x15E mode
 // byte (2 when +0x161 bit 7 is set, else 0; 6 when not active), fire the
-// id-table effects (func_80193678) for the +0x14A / +0x144 entries when the
+// id-table effects (CPartsChange_FireIdEffect) for the +0x14A / +0x144 entries when the
 // matching field_74 bits are raised, then clear the 0x80000000/0x400 work
 // flags and report "not busy".
-// func_801F8BB8 helpers: fire func_80193678 for the first three nonzero
+// func_801F8BB8 helpers: fire CPartsChange_FireIdEffect for the first three nonzero
 // entries of one of the gimmick's u16 id tables.
 static inline void fireTable14A(cf::CfGimmickObject* o) {
     for (int i = 0; i < 3; i++) {
         u16 id = o->field_14A[i];
         if (id != 0)
-            func_80193678(id);
+            CPartsChange_FireIdEffect(id);
     }
 }
 
@@ -1225,7 +1225,7 @@ static inline void fireTable144(cf::CfGimmickObject* o) {
     for (int i = 0; i < 3; i++) {
         u16 id = o->field_144[i];
         if (id != 0)
-            func_80193678(id);
+            CPartsChange_FireIdEffect(id);
     }
 }
 int func_801F8BB8(cf::CfGimmickObject* self) {

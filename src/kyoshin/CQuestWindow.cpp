@@ -32,7 +32,7 @@ extern "C" bool func_80122450() { extern u32 lbl_eu_80663FD0; return lbl_eu_8066
 
 int lbl_eu_80663D1C;
 
-int func_80042864() {
+int CTaskGame_hasLoadScreen() {
     return lbl_eu_80663D1C != 0;
 }
 
@@ -55,7 +55,7 @@ void func_80122654(QuestWinObj* self) {
 // layout animation and run the cursor update.
 // ---------------------------------------------------------------------------
 void func_801226C8(QuestWinObj* self) {
-    if (func_8013BE50() == 0) return;
+    if (IsMenuState621F0() == 0) return;
     switch (self->field_0xBC) {
     case 0:
         setPresentationFlag__Q22cf13CfGameManagerFv(true);
@@ -129,8 +129,8 @@ bool func_8012278C(CQuestWindow* self, CEventFile* event) {
             setLayoutTextBoxFont(self->mpLayout, &lbl_eu_804FEC84[0x77], (u32)fontStr);
         }
         char* s =
-            func_80136190(&lbl_eu_804FEC84[0x7f], &lbl_eu_804FEC84[0x88], 3);
-        func_80136B4C(self->mpLayout, &lbl_eu_804FEC84[0x6c], s, 0);
+            BdatTouchStringCell(&lbl_eu_804FEC84[0x7f], &lbl_eu_804FEC84[0x88], 3);
+        LayoutSetTextBoxFmtValue(self->mpLayout, &lbl_eu_804FEC84[0x6c], s, 0);
 
         // TextBox::mpTagProcessor at +0xF8 (MonolithSoft nw4r extension).
         struct TextBoxLayout {
@@ -196,7 +196,7 @@ bool func_8012278C(CQuestWindow* self, CEventFile* event) {
 void CQuestWindow::cbRenderBefore() {
     CTaskGame::getInstance();
     if (CTaskGame::isFlag01Set() || (lbl_eu_80663E28 & 0x200000)) return;
-    if (func_8013BE50() == 0) return;
+    if (IsMenuState621F0() == 0) return;
     GXSetZMode(GX_FALSE, GX_NEVER, GX_FALSE);
     // Raw-storage DrawInfo built/destroyed via C-ABI pre-mangled ct/dt calls
     // to match the retail direct calls (a C++ local would virtual-dispatch
@@ -427,7 +427,7 @@ __attribute__((noinline)) void func_80122C08(QuestWinObj* self) {
 // close-sequence sounds for the window's quest id.
 // ---------------------------------------------------------------------------
 __attribute__((noinline)) void func_80122EF8(QuestWinObj* self) {
-    if (func_80137510(self->mAnimA, lbl_eu_80667140) == 0) return;
+    if (AnimRewindFrame(self->mAnimA, lbl_eu_80667140) == 0) return;
     if (self->field_0xCC > 0) {
         func_800451D8(self->field_0xCC, getPlayer__Q22cf13CfGameManagerFi(0));
     }
@@ -461,12 +461,12 @@ __attribute__((noinline)) void func_80122EF8(QuestWinObj* self) {
             }
         }
     }
-    func_80157184((s32)(func_801571FC() + self->field_0xE0));
+    CItemBlock_setCount((s32)(CItemBlock_getPtr20E8() + self->field_0xE0));
     if (self->field_0xE4 != 1 && self->field_0xD4 != 0) {
         func_8013E2E0(self->field_0xD4, self->field_0xD6, self->field_0xD8,
                       0, 1, 1, 0, 1, 0);
     }
-    u8 r = func_801361E8(lbl_eu_80573D18[func_80138138(self->field_B8)],
+    u8 r = BdatGetU8Direct(lbl_eu_80573D18[func_80138138(self->field_B8)],
                          &lbl_eu_804FEC84[0xa2], self->field_B8);
     if (r == 0 || r == 3) {
         incrementEventCounter__FUl(0xb4);
@@ -477,7 +477,7 @@ __attribute__((noinline)) void func_80122EF8(QuestWinObj* self) {
     }
     if (self->field_B8 - 0x100 <= 4) {
         func_8009D018(self->field_B8 + 0x704, 2);
-        char* msg = func_80136190(&lbl_eu_804FEC84[0xac], &lbl_eu_804FEC84[0x88],
+        char* msg = BdatTouchStringCell(&lbl_eu_804FEC84[0xac], &lbl_eu_804FEC84[0x88],
                                   0x81);
         func_8013D55C(msg, 0, 0);
         // 5-byte patch table (f32 bits + trailing byte) indexed by (id-0x100).
@@ -518,11 +518,11 @@ void func_801231C4(CQuestWindow* self) {
     u32 questRow = lbl_eu_80573D18[func_80138138(questId)];
 
     self->field_0xDC =
-        (func_80136254((const void*)questRow, &base[0xb5], questId) & 0xFFFF) * 10;
+        (BdatGetU16Direct((const void*)questRow, &base[0xb5], questId) & 0xFFFF) * 10;
     self->field_0xE0 =
-        (func_80136254((const void*)questRow, &base[0xc0], questId) & 0xFFFF) * 10;
-    self->field_0xE4 = func_801361E8(questRow, &base[0xcd], questId);
-    u8 v = func_801361E8(questRow, &base[0xa2], questId);
+        (BdatGetU16Direct((const void*)questRow, &base[0xc0], questId) & 0xFFFF) * 10;
+    self->field_0xE4 = BdatGetU8Direct(questRow, &base[0xcd], questId);
+    u8 v = BdatGetU8Direct(questRow, &base[0xa2], questId);
     if (v == 1) {
         func_80124270((void*)self->mpLayout->GetRootPane()->FindPaneByName(&base[0xd8], true), 0);
         func_80124270((void*)self->mpLayout->GetRootPane()->FindPaneByName(&base[0xe1], true), 0);
@@ -547,55 +547,55 @@ void func_801231C4(CQuestWindow* self) {
         break;
     }
     if (res != 0) {
-        func_80137E7C(self->mpLayout, &base[0x13c], res);
+        PaneSetTexPaletteByName(self->mpLayout, &base[0x13c], res);
     }
     if ((questId - 0x100) <= 4) {
         if ((func_8009CF8C(questId + 0x220) & 0xFF) == 0) {
             func_8009D018(questId + 0x220, 1);
         }
     }
-    self->field_0xC4 = func_801361E8(questRow, &base[0x144], questId);
+    self->field_0xC4 = BdatGetU8Direct(questRow, &base[0x144], questId);
     char* s;
     if (self->field_0xC8 != 0) {
-        s = func_80136190(&base[0x14a], &base[0x88], 0x38);
+        s = BdatTouchStringCell(&base[0x14a], &base[0x88], 0x38);
     } else {
-        s = func_80136190(&base[0x14a], &base[0x88], 0x2e);
+        s = BdatTouchStringCell(&base[0x14a], &base[0x88], 0x2e);
     }
-    func_80136B4C(self->mpLayout, &base[0x154], s, 0);
-    s = func_8013639C((const void*)questRow, &base[0x15d], questId);
-    func_80136B4C(self->mpLayout, &base[0x163], s, 0);
-    u32 v172 = func_80136254((const void*)questRow, &base[0x172], questId);
+    LayoutSetTextBoxFmtValue(self->mpLayout, &base[0x154], s, 0);
+    s = BdatGetPtrDirect((const void*)questRow, &base[0x15d], questId);
+    LayoutSetTextBoxFmtValue(self->mpLayout, &base[0x163], s, 0);
+    u32 v172 = BdatGetU16Direct((const void*)questRow, &base[0x172], questId);
     s = (char*)func_80138DA4(
-        func_8013639C((const void*)lbl_eu_80664098, &base[0x88], v172 & 0xFFFF));
-    func_80136B4C(self->mpLayout, &base[0x179], s, 0);
-    s = func_8013639C((const void*)self->field_0xD0, &base[0x182], questId);
-    func_80136B4C(self->mpLayout, &base[0x96], s, (u32)self->field_0x90);
+        BdatGetPtrDirect((const void*)lbl_eu_80664098, &base[0x88], v172 & 0xFFFF));
+    LayoutSetTextBoxFmtValue(self->mpLayout, &base[0x179], s, 0);
+    s = BdatGetPtrDirect((const void*)self->field_0xD0, &base[0x182], questId);
+    LayoutSetTextBoxFmtValue(self->mpLayout, &base[0x96], s, (u32)self->field_0x90);
     char* cur;
     if (self->field_0xC8 != 0) {
         if ((func_8009CF8C(questId + 0x220) & 1) != 0) {
-            cur = func_8013639C((const void*)self->field_0xD0, &base[0x18a], questId);
+            cur = BdatGetPtrDirect((const void*)self->field_0xD0, &base[0x18a], questId);
         } else {
-            cur = func_8013639C((const void*)self->field_0xD0, &base[0x195], questId);
+            cur = BdatGetPtrDirect((const void*)self->field_0xD0, &base[0x195], questId);
         }
     } else {
-        if (func_801361E8(questRow, &base[0x1a0], questId) != 0) {
-            cur = func_8013639C((const void*)self->field_0xD0, &base[0x1ad], questId);
+        if (BdatGetU8Direct(questRow, &base[0x1a0], questId) != 0) {
+            cur = BdatGetPtrDirect((const void*)self->field_0xD0, &base[0x1ad], questId);
         } else {
-            cur = func_80136190(&base[0x14a], &base[0x88], 0x34);
+            cur = BdatTouchStringCell(&base[0x14a], &base[0x88], 0x34);
         }
     }
-    func_80136B4C(self->mpLayout, &base[0x8d], cur, (u32)self->field_0x90);
-    func_80136B4C(self->mpLayout, &base[0x1b7], &base[0x1c4], 0);
-    func_80136B4C(self->mpLayout, &base[0x1c5], &base[0x1c4], 0);
-    func_80136B4C(self->mpLayout, &base[0x1d2], &base[0x1c4], 0);
+    LayoutSetTextBoxFmtValue(self->mpLayout, &base[0x8d], cur, (u32)self->field_0x90);
+    LayoutSetTextBoxFmtValue(self->mpLayout, &base[0x1b7], &base[0x1c4], 0);
+    LayoutSetTextBoxFmtValue(self->mpLayout, &base[0x1c5], &base[0x1c4], 0);
+    LayoutSetTextBoxFmtValue(self->mpLayout, &base[0x1d2], &base[0x1c4], 0);
     if (self->field_0xC8 != 0) {
         if (func_8009ECF0() == questId) {
             func_8009ECFC(0);
         }
-        u8 vcd = func_801361E8(questRow, &base[0xcd], questId);
+        u8 vcd = BdatGetU8Direct(questRow, &base[0xcd], questId);
         if (vcd == 1) {
-            s = func_80136190(&base[0x14a], &base[0x88], 0x33);
-            func_80136B4C(self->mpLayout, &base[0x1b7], s, 0);
+            s = BdatTouchStringCell(&base[0x14a], &base[0x88], 0x33);
+            LayoutSetTextBoxFmtValue(self->mpLayout, &base[0x1b7], s, 0);
             setLayoutTextBoxNumber(self->mpLayout, &base[0x61], 0);
             setLayoutTextBoxNumber(self->mpLayout, &base[0x77], 0);
         } else {
@@ -615,49 +615,49 @@ void func_801231C4(CQuestWindow* self) {
                 } else {
                     sprintf(buf, &base[0x1ea], i + 1);
                 }
-                u32 v30 = func_80136254((const void*)questRow, buf, questId);
+                u32 v30 = BdatGetU16Direct((const void*)questRow, buf, questId);
                 if ((v30 & 0xFFFF) != 0) {
-                    u32 v22 = func_801392E4(v30 & 0xFFFF);
-                    u32 v5 = func_80139358(v30 & 0xFFFF);
+                    u32 v22 = BdatGetItemType(v30 & 0xFFFF);
+                    u32 v5 = BdatGetItemId(v30 & 0xFFFF);
                     switch (v22 & 0xFFFF) {
-                    case 0: cur = func_8013639C((const void*)lbl_eu_806640F4, &base[0x88], v5 & 0xFFFF); break;
-                    case 1: cur = func_8013639C((const void*)lbl_eu_806640D8, &base[0x88], v5 & 0xFFFF); break;
-                    case 2: cur = func_8013639C((const void*)lbl_eu_806640F8, &base[0x88], v5 & 0xFFFF); break;
-                    case 3: cur = func_8013639C((const void*)lbl_eu_806640FC, &base[0x88], v5 & 0xFFFF); break;
-                    case 4: cur = func_8013639C((const void*)lbl_eu_80664104, &base[0x88], v5 & 0xFFFF); break;
-                    case 5: cur = func_8013639C((const void*)lbl_eu_80664108, &base[0x88], v5 & 0xFFFF); break;
-                    case 6: cur = func_8013639C((const void*)lbl_eu_8066410C, &base[0x88], v5 & 0xFFFF); break;
-                    case 7: cur = func_8013639C((const void*)lbl_eu_80664110, &base[0x88], v5 & 0xFFFF); break;
+                    case 0: cur = BdatGetPtrDirect((const void*)lbl_eu_806640F4, &base[0x88], v5 & 0xFFFF); break;
+                    case 1: cur = BdatGetPtrDirect((const void*)lbl_eu_806640D8, &base[0x88], v5 & 0xFFFF); break;
+                    case 2: cur = BdatGetPtrDirect((const void*)lbl_eu_806640F8, &base[0x88], v5 & 0xFFFF); break;
+                    case 3: cur = BdatGetPtrDirect((const void*)lbl_eu_806640FC, &base[0x88], v5 & 0xFFFF); break;
+                    case 4: cur = BdatGetPtrDirect((const void*)lbl_eu_80664104, &base[0x88], v5 & 0xFFFF); break;
+                    case 5: cur = BdatGetPtrDirect((const void*)lbl_eu_80664108, &base[0x88], v5 & 0xFFFF); break;
+                    case 6: cur = BdatGetPtrDirect((const void*)lbl_eu_8066410C, &base[0x88], v5 & 0xFFFF); break;
+                    case 7: cur = BdatGetPtrDirect((const void*)lbl_eu_80664110, &base[0x88], v5 & 0xFFFF); break;
                     }
                     sprintf(buf, &base[0x1f5], i + 1);
                     if ((v22 & 0xFFFF) == 3) {
-                        u8 v204 = func_801361E8(lbl_eu_806640EC, &base[0x204], v30 & 0xFFFF);
-                        s = func_80136190(&base[0x7f], &base[0x88], 0x1e - (v204 - 1));
+                        u8 v204 = BdatGetU8Direct(lbl_eu_806640EC, &base[0x204], v30 & 0xFFFF);
+                        s = BdatTouchStringCell(&base[0x7f], &base[0x88], 0x1e - (v204 - 1));
                         buf2.format(&base[0x20d], cur, s);
                     } else {
                         buf2.format(&base[0x212], cur);
                     }
-                    func_80136B4C(self->mpLayout, buf, buf2.mString, 0);
+                    LayoutSetTextBoxFmtValue(self->mpLayout, buf, buf2.mString, 0);
                     ((u16*)&self->field_0xD4)[self->field_0xDA] = (u16)v30;
                     self->field_0xDA = self->field_0xDA + 1;
                 }
                 if (i == 0) {
-                    cur = func_80136190(&base[0x14a], &base[0x88], 0x33);
-                    func_80136B4C(self->mpLayout, &base[0x1b7], cur, 0);
+                    cur = BdatTouchStringCell(&base[0x14a], &base[0x88], 0x33);
+                    LayoutSetTextBoxFmtValue(self->mpLayout, &base[0x1b7], cur, 0);
                 }
                 i++;
             } while (i < 3);
         }
     } else {
-        u8 vcd = func_801361E8(questRow, &base[0xcd], questId);
+        u8 vcd = BdatGetU8Direct(questRow, &base[0xcd], questId);
         if (vcd == 3) {
-            s = func_80136190(&base[0x14a], &base[0x88], 0x32);
-            func_80136B4C(self->mpLayout, &base[0x1b7], s, 0);
+            s = BdatTouchStringCell(&base[0x14a], &base[0x88], 0x32);
+            LayoutSetTextBoxFmtValue(self->mpLayout, &base[0x1b7], s, 0);
             setLayoutTextBoxNumber(self->mpLayout, &base[0x61], self->field_0xE0);
             setLayoutTextBoxNumber(self->mpLayout, &base[0x77], self->field_0xDC);
         } else if (vcd == 1) {
-            s = func_80136190(&base[0x14a], &base[0x88], 0x33);
-            func_80136B4C(self->mpLayout, &base[0x1b7], s, 0);
+            s = BdatTouchStringCell(&base[0x14a], &base[0x88], 0x33);
+            LayoutSetTextBoxFmtValue(self->mpLayout, &base[0x1b7], s, 0);
             setLayoutTextBoxNumber(self->mpLayout, &base[0x61], 0);
             setLayoutTextBoxNumber(self->mpLayout, &base[0x77], 0);
         } else {
@@ -670,54 +670,54 @@ void func_801231C4(CQuestWindow* self) {
             char buf3[0x20];
             do {
                 sprintf(buf3, &base[0x1ea], i + 1);
-                u32 v31 = func_80136254((const void*)questRow, buf3, questId);
+                u32 v31 = BdatGetU16Direct((const void*)questRow, buf3, questId);
                 if ((v31 & 0xFFFF) != 0) {
-                    u32 v30 = func_801392E4(v31 & 0xFFFF);
-                    u32 v5 = func_80139358(v31 & 0xFFFF);
+                    u32 v30 = BdatGetItemType(v31 & 0xFFFF);
+                    u32 v5 = BdatGetItemId(v31 & 0xFFFF);
                     switch (v30 & 0xFFFF) {
-                    case 0: cur = func_8013639C((const void*)lbl_eu_806640F4, &base[0x88], v5 & 0xFFFF); break;
-                    case 1: cur = func_8013639C((const void*)lbl_eu_806640D8, &base[0x88], v5 & 0xFFFF); break;
-                    case 2: cur = func_8013639C((const void*)lbl_eu_806640F8, &base[0x88], v5 & 0xFFFF); break;
-                    case 3: cur = func_8013639C((const void*)lbl_eu_806640FC, &base[0x88], v5 & 0xFFFF); break;
-                    case 4: cur = func_8013639C((const void*)lbl_eu_80664104, &base[0x88], v5 & 0xFFFF); break;
-                    case 5: cur = func_8013639C((const void*)lbl_eu_80664108, &base[0x88], v5 & 0xFFFF); break;
-                    case 6: cur = func_8013639C((const void*)lbl_eu_8066410C, &base[0x88], v5 & 0xFFFF); break;
-                    case 7: cur = func_8013639C((const void*)lbl_eu_80664110, &base[0x88], v5 & 0xFFFF); break;
+                    case 0: cur = BdatGetPtrDirect((const void*)lbl_eu_806640F4, &base[0x88], v5 & 0xFFFF); break;
+                    case 1: cur = BdatGetPtrDirect((const void*)lbl_eu_806640D8, &base[0x88], v5 & 0xFFFF); break;
+                    case 2: cur = BdatGetPtrDirect((const void*)lbl_eu_806640F8, &base[0x88], v5 & 0xFFFF); break;
+                    case 3: cur = BdatGetPtrDirect((const void*)lbl_eu_806640FC, &base[0x88], v5 & 0xFFFF); break;
+                    case 4: cur = BdatGetPtrDirect((const void*)lbl_eu_80664104, &base[0x88], v5 & 0xFFFF); break;
+                    case 5: cur = BdatGetPtrDirect((const void*)lbl_eu_80664108, &base[0x88], v5 & 0xFFFF); break;
+                    case 6: cur = BdatGetPtrDirect((const void*)lbl_eu_8066410C, &base[0x88], v5 & 0xFFFF); break;
+                    case 7: cur = BdatGetPtrDirect((const void*)lbl_eu_80664110, &base[0x88], v5 & 0xFFFF); break;
                     }
                     sprintf(buf3, &base[0x1f5], i + 1);
                     if ((v30 & 0xFFFF) == 3) {
-                        u8 v204 = func_801361E8(lbl_eu_806640EC, &base[0x204], v31 & 0xFFFF);
-                        s = func_80136190(&base[0x7f], &base[0x88], 0x1e - (v204 - 1));
+                        u8 v204 = BdatGetU8Direct(lbl_eu_806640EC, &base[0x204], v31 & 0xFFFF);
+                        s = BdatTouchStringCell(&base[0x7f], &base[0x88], 0x1e - (v204 - 1));
                         buf2.format(&base[0x20d], cur, s);
                     } else {
                         buf2.format(&base[0x212], cur);
                     }
-                    func_80136B4C(self->mpLayout, buf3, buf2.mString, 0);
+                    LayoutSetTextBoxFmtValue(self->mpLayout, buf3, buf2.mString, 0);
                 }
                 if (i == 0) {
-                    cur = func_80136190(&base[0x14a], &base[0x88], 0x33);
-                    func_80136B4C(self->mpLayout, &base[0x1b7], cur, 0);
+                    cur = BdatTouchStringCell(&base[0x14a], &base[0x88], 0x33);
+                    LayoutSetTextBoxFmtValue(self->mpLayout, &base[0x1b7], cur, 0);
                 }
                 i++;
             } while (i < 3);
         }
     }
     // Common tail: button labels, classic-pad hint, timg resource panes.
-    s = func_80136190(&base[0x14a], &base[0x88], 0x30);
-    func_80136B4C(self->mpLayout, &base[0x215], s, 0);
-    s = func_80136190(&base[0x14a], &base[0x88], 0x31);
-    func_80136B4C(self->mpLayout, &base[0x21d], s, 0);
-    s = func_80136190(&base[0x14a], &base[0x88], self->field_0xC8 != 0 ? 0x2f : 0x30);
-    func_80136B4C(self->mpLayout, &base[0x224], s, 0);
-    s = func_80136190(&base[0x22d], &base[0x23b], 0x2b);
-    func_80136B4C(self->mpLayout, &base[0x240], s, 0);
-    func_80136B4C(self->mpLayout, &base[0x24b], s, 0);
+    s = BdatTouchStringCell(&base[0x14a], &base[0x88], 0x30);
+    LayoutSetTextBoxFmtValue(self->mpLayout, &base[0x215], s, 0);
+    s = BdatTouchStringCell(&base[0x14a], &base[0x88], 0x31);
+    LayoutSetTextBoxFmtValue(self->mpLayout, &base[0x21d], s, 0);
+    s = BdatTouchStringCell(&base[0x14a], &base[0x88], self->field_0xC8 != 0 ? 0x2f : 0x30);
+    LayoutSetTextBoxFmtValue(self->mpLayout, &base[0x224], s, 0);
+    s = BdatTouchStringCell(&base[0x22d], &base[0x23b], 0x2b);
+    LayoutSetTextBoxFmtValue(self->mpLayout, &base[0x240], s, 0);
+    LayoutSetTextBoxFmtValue(self->mpLayout, &base[0x24b], s, 0);
     const char* cp = isClassicController__Q22cf13CfGameManagerFv(-1) != 0 ? &base[0x256] : &base[0x25f];
-    char* resName = func_80138F78(func_8013606C(&base[0x22d], cp, 0x2b));
+    char* resName = MakeTplNameSysFile(BdatGetU16ByTableKey(&base[0x22d], cp, 0x2b));
     void* res2 = func_801355F4()->GetResource(0x74696D67, resName, 0);
     if (res2 != 0) {
-        func_80137E7C(self->mpLayout, &base[0x268], res2);
-        func_80137E7C(self->mpLayout, &base[0x271], res2);
+        PaneSetTexPaletteByName(self->mpLayout, &base[0x268], res2);
+        PaneSetTexPaletteByName(self->mpLayout, &base[0x271], res2);
         struct ResData {
             u8 pad[8];
             u16* pData;
@@ -751,13 +751,13 @@ void func_801231C4(CQuestWindow* self) {
             } else {
                 sprintf(buf4, &base[0x289], i + 1);
             }
-            u32 v27 = func_80136254((const void*)questRow, buf4, questId);
+            u32 v27 = BdatGetU16Direct((const void*)questRow, buf4, questId);
             if (flg != 0) {
                 sprintf(buf4, &base[0x298], i + 1);
             } else {
                 sprintf(buf4, &base[0x2a6], i + 1);
             }
-            u8 v2 = func_801361E8(questRow, buf4, questId);
+            u8 v2 = BdatGetU8Direct(questRow, buf4, questId);
             if ((v27 & 0xFFFF) != 0) {
                 func_8009D018((v27 & 0xFFFF) + 0x608, v2);
             }
@@ -767,9 +767,9 @@ void func_801231C4(CQuestWindow* self) {
                 } else {
                     sprintf(buf4, &base[0x2c0]);
                 }
-                u32 v30 = func_80136254((const void*)questRow, buf4, questId);
+                u32 v30 = BdatGetU16Direct((const void*)questRow, buf4, questId);
                 u8 v27b = (u8)func_8013732C(
-                    func_80136254((const void*)questRow, &base[0x172], questId) & 0xFFFF);
+                    BdatGetU16Direct((const void*)questRow, &base[0x172], questId) & 0xFFFF);
                 if ((v30 & 0xFFFF) != 0) {
                     s32 v21 = (s32)(v27b & 0xFF) + 0x21;
                     s32 v4 = (s32)func_8009CF8C((u32)v21) + (v30 & 0xFFFF);
@@ -983,7 +983,7 @@ void CQuestWindow::Term() {
     mMemRegion.func_8045F778();
     enablePadFlags__Q22cf13CfGameManagerFUlb(-1, 0);
     enablePadFlags__Q22cf13CfGameManagerFUlb(field_0xE8, 1);
-    func_8013B980();
+    DecMenuCounter64080();
     if (func_801B481C() == 0) {
         if (code80135FDC_getByte_64080() == 0) {
             setPresentationFlag__Q22cf13CfGameManagerFv(false);

@@ -435,7 +435,7 @@ extern "C" u8 func_801D3810(CSortMenu* _this) {
 // ============================================================================
 #pragma optimize_for_size on
 extern "C" void func_801D3818(CSortMenu* _this, int value, u8* outPage, u8* outSubPage) {
-    *outPage = func_8015780C(value);
+    *outPage = CItemBlock_getFlag120EC(value);
     *outSubPage = 0;
     if ((s8)*outPage >= 5) {
         *outSubPage = *outPage - 4;
@@ -470,7 +470,7 @@ extern "C" __declspec(noinline) void func_801D390C(CSortMenu* _this) {
 // func_801D3958: State 4 handler - scroll animation
 // ============================================================================
 extern "C" __declspec(noinline) void func_801D3958(CSortMenu* _this) {
-    if (func_80137510(_this->mpAnimTrans1, lbl_eu_80668000) != 0) {
+    if (AnimRewindFrame(_this->mpAnimTrans1, lbl_eu_80668000) != 0) {
         _this->field_0x2A = 5;
         _this->mpLayout->SetAnimationEnable(_this->mpAnimTrans1, false);
         _this->mpLayout->SetAnimationEnable(_this->mpAnimTrans0, true);
@@ -482,7 +482,7 @@ extern "C" __declspec(noinline) void func_801D3958(CSortMenu* _this) {
 // func_801D39EC: State 5 handler - closing animation
 // ============================================================================
 extern "C" __declspec(noinline) void func_801D39EC(CSortMenu* _this) {
-    if (func_80137510(_this->mpAnimTrans0, 1.0f) != 0) {
+    if (AnimRewindFrame(_this->mpAnimTrans0, 1.0f) != 0) {
         _this->field_0x2A = 0;
         _this->field_0x2B = 1;
         _this->field_0x28 = 0;
@@ -505,9 +505,9 @@ extern "C" __declspec(noinline) void func_801D3A3C(CSortMenu* _this) {
     for (u8 i = 0; i < 5; i++) {
         int idx = i + (s8)_this->mSubPage;
         if (idx >= (int)_this->mCount) {
-            func_80136B4C(_this->mpLayout, (char*)strTable[i], resBase + 0x3e, 0);
+            LayoutSetTextBoxFmtValue(_this->mpLayout, (char*)strTable[i], resBase + 0x3e, 0);
         } else {
-            func_80136B4C(_this->mpLayout, (char*)strTable[i], (char*)_this->mArray[idx], 0);
+            LayoutSetTextBoxFmtValue(_this->mpLayout, (char*)strTable[i], (char*)_this->mArray[idx], 0);
         }
     }
     // Single vreg for the converted value keeps the lbz/extsb/clrlwi chain

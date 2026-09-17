@@ -190,7 +190,7 @@ void func_80098EF8(CtrlPcVf38* self)
         func_8029EE58() != 0 ||
         (lbl_eu_80663E24 & 0x8429A000) != 0 ||
         ((lbl_eu_80663E28 & 0x20000) | (lbl_eu_80663E28 & 0x30)) != 0 ||
-        cf::CfPadTask::func_801C1BC0() != 0 ||
+        cf::CfPadTask::isInputDisabled() != 0 ||
         inBattle != 0 ||
         timerNZ != 0 ||
         (((CtrlVoiceOwnerC4View*)&self->mField5C->mSub3E9C)->mFieldC4 !=
@@ -588,7 +588,7 @@ void func_8009A1DC(cf::CtrlPc* self)
 // (gates 1, 2, 0x803, 0x802). When the 0x803 gate is active, run the
 // menu/battle-state mask sweep that derives the aim/voice flags (flagA /
 // flagB) and pushes them into the game-manager sub-object via
-// func_8006BC1C / func_8006BBF4; the final pass mirrors the 0x400 flag
+// cfCam_andcUnk04 / cfCam_setClear04; the final pass mirrors the 0x400 flag
 // range state into the 0x3 range.
 void func_8009A4AC(CtrlPcVf38* self)
 {
@@ -623,15 +623,15 @@ void func_8009A4AC(CtrlPcVf38* self)
             if ((s2->mField10 & mask2) != 0) {
                 if ((gm8->mField4 & 0x8000) != 0) {
                     flagA = 1;
-                    func_8006BC1C(gm8, 0x100);
-                    func_8006BC1C(gm8, 0x8000);
+                    cfCam_andcUnk04(gm8, 0x100);
+                    cfCam_andcUnk04(gm8, 0x8000);
                 } else {
                     if (self->mField5C->mSub3ED4->vf14(0x2000) == 0) {
                         flagA = 1;
-                        func_8006BC1C(gm8, 0x100);
+                        cfCam_andcUnk04(gm8, 0x100);
                     } else {
                         flagB = 1;
-                        func_8006BBF4(gm8, 0x100, 1);
+                        cfCam_setClear04(gm8, 0x100, 1);
                         self->mField5C->mSub3ED4->vf11(0x2000);
                     }
                 }
@@ -643,16 +643,16 @@ void func_8009A4AC(CtrlPcVf38* self)
                 if ((s3->mFieldC & mask3) != 0) {
                     if ((gm8->mField4 & 0x8000) != 0) {
                         flagA = 1;
-                        func_8006BC1C(gm8, 0x100);
-                        func_8006BC1C(gm8, 0x8000);
+                        cfCam_andcUnk04(gm8, 0x100);
+                        cfCam_andcUnk04(gm8, 0x8000);
                     } else {
                         if (self->mField5C->mSub3ED4->vf14(0x2000) == 0) {
                             flagB = 1;
-                            func_8006BBF4(gm8, 0x100, 1);
+                            cfCam_setClear04(gm8, 0x100, 1);
                             self->mField5C->mSub3ED4->vf11(0x2000);
                         } else {
                             flagA = 1;
-                            func_8006BC1C(gm8, 0x100);
+                            cfCam_andcUnk04(gm8, 0x100);
                         }
                     }
                 } else {
@@ -661,7 +661,7 @@ void func_8009A4AC(CtrlPcVf38* self)
                                     : lbl_eu_80527E98[29];
                     CtrlRemoteSubA0* s4 = (CtrlRemoteSubA0*)self->vf38();
                     if ((s4->mFieldC & mask4) != 0) {
-                        func_8006BBF4(gm8, 0x100, 1);
+                        cfCam_setClear04(gm8, 0x100, 1);
                         u32 mask5 = isClassicController__Q22cf13CfGameManagerFv(-1)
                                         ? lbl_eu_80527F10[18]
                                         : lbl_eu_80527E98[18];
@@ -688,7 +688,7 @@ void func_8009A4AC(CtrlPcVf38* self)
                                     self->mField5C->mSub3ED4->vf10(0x2000, 1);
                                 }
                                 flagB = 1;
-                                func_8006BC1C(gm8, 0x100);
+                                cfCam_andcUnk04(gm8, 0x100);
                             }
                         } else {
                             if ((gm8->mField4 & 0x10) != 0) {
@@ -714,9 +714,9 @@ void func_8009A4AC(CtrlPcVf38* self)
                     }
                 } else {
                     self->mField5C->mSub3ED4->vf11(0x2000);
-                    func_8006BBF4(gm8, 0x100, 1);
+                    cfCam_setClear04(gm8, 0x100, 1);
                 }
-                func_8006BC1C(gm8, 0x8000);
+                cfCam_andcUnk04(gm8, 0x8000);
             } else {
                 u32 mask8 = isClassicController__Q22cf13CfGameManagerFv(-1)
                                 ? lbl_eu_80527F10[18]
@@ -725,9 +725,9 @@ void func_8009A4AC(CtrlPcVf38* self)
                 if ((s8->mFieldC & mask8) != 0) {
                     if ((gm8->mField4 & 0x8000) == 0) {
                         self->mField5C->mSub3ED4->vf11(0x2000);
-                        func_8006BBF4(gm8, 0x100, 1);
+                        cfCam_setClear04(gm8, 0x100, 1);
                     }
-                    func_8006BC1C(gm8, 0x8000);
+                    cfCam_andcUnk04(gm8, 0x8000);
                 } else {
                     u32 mf4 = gm8->mField4;
                     if ((mf4 & 0x10) != 0) {
@@ -749,7 +749,7 @@ void func_8009A4AC(CtrlPcVf38* self)
                                 if ((sA->mField0 & maskA) != 0) {
                                     flagB = 1;
                                     self->mField5C->mSub3ED4->vf10(0x2000, 1);
-                                    func_8006BC1C(gm8, 0x8000);
+                                    cfCam_andcUnk04(gm8, 0x8000);
                                 }
                             }
                         } else {
@@ -770,7 +770,7 @@ void func_8009A4AC(CtrlPcVf38* self)
                             if ((mf4b & 0x8000) == 0) {
                                 flagB = 1;
                                 if ((mf4b & 0x100) != 0) {
-                                    func_8006BC1C(gm8, 0x100);
+                                    cfCam_andcUnk04(gm8, 0x100);
                                 }
                             }
                         }
@@ -784,7 +784,7 @@ void func_8009A4AC(CtrlPcVf38* self)
             flagB = 1;
         }
         if ((gm8->mField4 & 0x100) != 0) {
-            func_8006BC1C(gm8, 0x100);
+            cfCam_andcUnk04(gm8, 0x100);
         }
     }
 
@@ -793,14 +793,14 @@ void func_8009A4AC(CtrlPcVf38* self)
         flagB = 1;
     }
     if (flagB != 0 && (gm8->mField4 & 0x10) != 0) {
-        func_8006BC1C(gm8, 0x10);
+        cfCam_andcUnk04(gm8, 0x10);
     }
     if (flagA != 0) {
         if ((gm8->mField4 & 0x100) != 0) {
-            func_8006BC1C(gm8, 0x100);
+            cfCam_andcUnk04(gm8, 0x100);
         }
         if ((gm8->mField4 & 0x10) == 0 && actionSrc != 0) {
-            func_8006BBF4(gm8, 0x10, 1);
+            cfCam_setClear04(gm8, 0x10, 1);
         }
     }
     if ((gm8->mField4 & 0x10) != 0 && actionSrc != 0) {
@@ -815,12 +815,12 @@ void func_8009A4AC(CtrlPcVf38* self)
                         : lbl_eu_80527E98[19];
         CtrlRemoteSubA0* sC = (CtrlRemoteSubA0*)self->vf38();
         if ((sC->mField10 & maskC) != 0 && (gm8->mField4 & 0x220) == 0) {
-            func_8006BBF4(gm8, 0x20, 1);
+            cfCam_setClear04(gm8, 0x20, 1);
         }
     }
 
     // Mirror the 0x400 flag range state into the 0x3 range.
-    func_8006BBF4(gm8, 0x3, self->mField5C->mSub3ED4->vf14(0x400) == 0);
+    cfCam_setClear04(gm8, 0x3, self->mField5C->mSub3ED4->vf14(0x400) == 0);
 }
 
 // Target us-8009b858. Menu/battle-state sweep: probe the player control
@@ -1035,8 +1035,8 @@ void func_8009B788(CtrlPcVf38* self)
             if (sub3f60 != NULL && (sub3f60->mField4EC & 0x2) == 0) {
                 if (func_8016FE34(handle) != 0) {
                     CfEnumListHolder holder;
-                    func_80043D90(&holder);
-                    func_800F4A98(func_80043F18(&holder), 0x20, 1);
+                    CTaskGame_enumListCtor(&holder);
+                    func_800F4A98(CTaskGame_enumListGet(&holder), 0x20, 1);
                     self->mField4 |= 0x4;
                     __dt__80043E88(&holder, -1);
                 }
@@ -1113,7 +1113,7 @@ void func_8009B788(CtrlPcVf38* self)
             return;
         }
         self->mField4 |= 0x8;
-        func_802A2CF0();
+        CCharVoiceMan_FlagPendingVoice();
     }
 }
 
@@ -1187,19 +1187,19 @@ void func_8009BD14(CtrlPcVf38* self)
             // 0x10 state bit, noting whether any accessor already had either set.
             CfEnumListHolder holder1;
             bool flag = false;
-            func_80043D90(&holder1);
+            CTaskGame_enumListCtor(&holder1);
             CtrlEnumListSweep* list =
-                reinterpret_cast<CtrlEnumListSweep*>(func_80043F18(&holder1));
+                reinterpret_cast<CtrlEnumListSweep*>(CTaskGame_enumListGet(&holder1));
             list->count = 0;
             list->mField3030 = 0;
-            func_800F4A98(func_80043F18(&holder1), 0x20, 0);
+            func_800F4A98(CTaskGame_enumListGet(&holder1), 0x20, 0);
             for (s32 i = 0;
                  i < reinterpret_cast<CtrlEnumListSweep*>(
-                         func_80043F18(&holder1))
+                         CTaskGame_enumListGet(&holder1))
                          ->count;
                  i++) {
                 CtrlAccSweepView* acc = reinterpret_cast<CtrlAccSweepView*>(
-                    func_8016FE34(func_800F6EAC((CfMoveEnumList*)func_80043F18(&holder1), i)));
+                    func_8016FE34(func_800F6EAC((CfMoveEnumList*)CTaskGame_enumListGet(&holder1), i)));
                 if (acc->mField3E98 != 0 || (acc->mField3388 & 0x10) != 0) {
                     flag = true;
                 }
@@ -1207,7 +1207,7 @@ void func_8009BD14(CtrlPcVf38* self)
                 acc->mField3388 &= ~0x10;
             }
             if (flag) {
-                func_802A2BB0();
+                CCharVoiceMan_EnqueueOrderVoice1();
             }
             __dt__80043E88(&holder1, -1);
         } else {
@@ -1220,19 +1220,19 @@ void func_8009BD14(CtrlPcVf38* self)
                 // voice handle's id, flagging accessors that were out of sync.
                 CfEnumListHolder holder2;
                 bool flag2 = false;
-                func_80043D90(&holder2);
+                CTaskGame_enumListCtor(&holder2);
                 CtrlEnumListSweep* list2 =
-                    reinterpret_cast<CtrlEnumListSweep*>(func_80043F18(&holder2));
+                    reinterpret_cast<CtrlEnumListSweep*>(CTaskGame_enumListGet(&holder2));
                 list2->count = 0;
                 list2->mField3030 = 0;
-                func_800F4A98(func_80043F18(&holder2), 0x20, 0);
+                func_800F4A98(CTaskGame_enumListGet(&holder2), 0x20, 0);
                 for (s32 i = 0;
                      i < reinterpret_cast<CtrlEnumListSweep*>(
-                             func_80043F18(&holder2))
+                             CTaskGame_enumListGet(&holder2))
                              ->count;
                      i++) {
                     CtrlAccSweepView* acc = reinterpret_cast<CtrlAccSweepView*>(
-                        func_8016FE34(func_800F6EAC((CfMoveEnumList*)func_80043F18(&holder2), i)));
+                        func_8016FE34(func_800F6EAC((CfMoveEnumList*)CTaskGame_enumListGet(&holder2), i)));
                     // Retail reloads the voice handle id from the handle each
                     // iteration (lwz r4, 0x74(r31) inside the loop body).
                     u32 hv = reinterpret_cast<CtrlVoiceSweepView*>(handle)->mField74;
@@ -1243,7 +1243,7 @@ void func_8009BD14(CtrlPcVf38* self)
                     acc->mField3388 &= ~0x10;
                 }
                 if (flag2) {
-                    func_802A2B44();
+                    CCharVoiceMan_EnqueueOrderVoice0();
                     // Conditional addi on the same register (null stays null),
                     // matching retail's cmpwi/beq/addi/mr sequence.
                     u8* arg = reinterpret_cast<u8*>(func_8016FE34(handle));
@@ -1263,25 +1263,25 @@ void func_8009BD14(CtrlPcVf38* self)
                     // the 0x10 state bit, then re-arm the voice chain.
                     CfEnumListHolder holder3;
                     bool flag3 = false;
-                    func_80043D90(&holder3);
+                    CTaskGame_enumListCtor(&holder3);
                     CtrlEnumListSweep* list3 =
-                        reinterpret_cast<CtrlEnumListSweep*>(func_80043F18(&holder3));
+                        reinterpret_cast<CtrlEnumListSweep*>(CTaskGame_enumListGet(&holder3));
                     list3->count = 0;
                     list3->mField3030 = 0;
-                    func_800F4A98(func_80043F18(&holder3), 0x20, 0);
+                    func_800F4A98(CTaskGame_enumListGet(&holder3), 0x20, 0);
                     for (s32 i = 0;
                          i < reinterpret_cast<CtrlEnumListSweep*>(
-                                 func_80043F18(&holder3))
+                                 CTaskGame_enumListGet(&holder3))
                                  ->count;
                          i++) {
                         CtrlAccSweepView* acc = reinterpret_cast<CtrlAccSweepView*>(
-                            func_8016FE34(func_800F6EAC((CfMoveEnumList*)func_80043F18(&holder3), i)));
+                            func_8016FE34(func_800F6EAC((CfMoveEnumList*)CTaskGame_enumListGet(&holder3), i)));
                         acc->mField3E98 = 0;
                         flag3 = true;
                         acc->mField3388 |= 0x10;
                     }
                     if (flag3) {
-                        func_802A2C1C();
+                        CCharVoiceMan_EnqueueOrderVoice2();
                         u8* arg = reinterpret_cast<u8*>(self->mField5C);
                         if (arg != NULL) {
                             arg = reinterpret_cast<CtrlPlayerSweepView*>(arg)
@@ -1391,8 +1391,8 @@ void func_8009C1BC(CtrlPcVf38State* self)
         prm.h10 = 0;
         prm.b06 = 0x25;
         if (self->mField5C->mField3F60 != NULL) {
-            func_8004C5EC(self->mField5C->mField3F60);
-            func_800BE12C((u8*)&self->mField5C->mSub3E9C, 1, 0, -1, 1);
+            getAnimModelId(self->mField5C->mField3F60);
+            CfObjectMove_setAnimModeArgs((u8*)&self->mField5C->mSub3E9C, 1, 0, -1, 1);
         }
         break;
     case 2:
@@ -1404,8 +1404,8 @@ void func_8009C1BC(CtrlPcVf38State* self)
         prm.h10 = 0;
         prm.b06 = 0x25;
         if (self->mField5C->mField3F60 != NULL) {
-            func_8004C5EC(self->mField5C->mField3F60);
-            func_800BE12C((u8*)&self->mField5C->mSub3E9C, 1, 0, -1, 1);
+            getAnimModelId(self->mField5C->mField3F60);
+            CfObjectMove_setAnimModeArgs((u8*)&self->mField5C->mSub3E9C, 1, 0, -1, 1);
         }
         break;
     case 3:
@@ -1417,8 +1417,8 @@ void func_8009C1BC(CtrlPcVf38State* self)
         prm.h10 = 0;
         prm.b06 = 0x25;
         if (self->mField5C->mField3F60 != NULL) {
-            func_8004C5EC(self->mField5C->mField3F60);
-            func_800BE12C((u8*)&self->mField5C->mSub3E9C, 1, 0, -1, 1);
+            getAnimModelId(self->mField5C->mField3F60);
+            CfObjectMove_setAnimModeArgs((u8*)&self->mField5C->mSub3E9C, 1, 0, -1, 1);
         }
         break;
     case 7:
@@ -1430,8 +1430,8 @@ void func_8009C1BC(CtrlPcVf38State* self)
         prm.h10 = 0;
         prm.b06 = 0x25;
         if (self->mField5C->mField3F60 != NULL) {
-            func_8004C5EC(self->mField5C->mField3F60);
-            func_800BE12C((u8*)&self->mField5C->mSub3E9C, 1, 0, -1, 1);
+            getAnimModelId(self->mField5C->mField3F60);
+            CfObjectMove_setAnimModeArgs((u8*)&self->mField5C->mSub3E9C, 1, 0, -1, 1);
         }
         break;
     case 8:
@@ -1443,8 +1443,8 @@ void func_8009C1BC(CtrlPcVf38State* self)
         prm.h10 = 0;
         prm.b06 = 0x25;
         if (self->mField5C->mField3F60 != NULL) {
-            func_8004C5EC(self->mField5C->mField3F60);
-            func_800BE12C((u8*)&self->mField5C->mSub3E9C, 1, 0, -1, 1);
+            getAnimModelId(self->mField5C->mField3F60);
+            CfObjectMove_setAnimModeArgs((u8*)&self->mField5C->mSub3E9C, 1, 0, -1, 1);
         }
         break;
     case 4:
@@ -1463,7 +1463,7 @@ void func_8009C1BC(CtrlPcVf38State* self)
                               (cf::CChainBattleObj*)self->mField5C,
                               (cf::CChainBattleObj*)obj374,
                               chainId) != 0) {
-                func_802A201C(self->mField5C, obj374);
+                CCharVoiceMan_PushChainVoiceNode(self->mField5C, obj374);
                 gaugeBase[0x261a4] = 1;
                 func_8018C820(
                     (u8*)getInstance__Q22cf14CBattleManagerFv() + 0x194,
@@ -1559,7 +1559,7 @@ u32 func_8009C87C(cf::CtrlRemote* self)
 void* func_8009C8F4(cf::CtrlRemote* self, u32 a, u32 b)
 {
     u32 total = a * b;
-    void* p = mtl::MemManager::allocate_head(func_80061FE8(), total, 4);
+    void* p = mtl::MemManager::allocate_head(CfRes_getHeapHandle(), total, 4);
     if (p != NULL && b != 0) {
         memset(p, 0, b);
     }

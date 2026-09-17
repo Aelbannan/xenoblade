@@ -85,7 +85,7 @@ extern "C" {
     void func_804591BC__10CExceptionFP10IException(CException* self, IException* pException);
     void func_804591DC__10CExceptionFP10IException(CException* self);
     void logExceptionMessage__10CExceptionFv(const char* msg);
-    void func_8045925C__10CExceptionFv(CException* self);
+    void setGlobalMessage__10CExceptionFv(CException* self);
     CException* func_80457CA4__10CExceptionFP11CWorkThreadPCwUl(CWorkThread* thread, const wchar_t* msg, u32 val);
     void removeFileJob__11CDeviceFileFP14CDeviceFileJob(CDeviceFileJob* job);
 }

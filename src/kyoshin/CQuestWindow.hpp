@@ -210,7 +210,7 @@ extern char lbl_eu_8052D238[];
 extern u32 lbl_eu_80663FD0;
 
 // Quest-name table indexed by func_80138138(field_B8) then passed to
-// func_801361E8 (func_80122EF8).
+// BdatGetU8Direct (func_80122EF8).
 extern u32 lbl_eu_80573D18[];
 
 // Quest-name table indexed by func_80138138(field_B8) then passed to getFP
@@ -218,7 +218,7 @@ extern u32 lbl_eu_80573D18[];
 extern const char* lbl_eu_8052CFF4[];
 
 // func_801231C4 jump-table item-name pointers (.sdata): passed as the first
-// arg of func_8013639C for the quest-slot name switch (cases 1, 3 and 4).
+// arg of BdatGetPtrDirect for the quest-slot name switch (cases 1, 3 and 4).
 extern u32 lbl_eu_806640D8;
 extern u32 lbl_eu_806640EC;
 extern u32 lbl_eu_80664104;
@@ -325,7 +325,7 @@ void* getPlayer__Q22cf13CfGameManagerFi(int index);
 u32 isResourceFlagSet__Q22cf13CfGameManagerFv(u32);
 
 // C-ABI UI / misc imports used by Term, func_80122EF8, func_80122C08.
-u8 func_8013B980();
+u8 DecMenuCounter64080();
 u32 func_801B481C();
 void func_80135550();
 u8 code80135FDC_getByte_64080();
@@ -346,8 +346,8 @@ void* func_800451D8(u32 cls, void* param);
 u32 func_800A32BC();
 int func_8026178C(void* data, u32 flag);
 u32 func_8025FB10(void* data, u32 flag);
-char* func_801571FC();
-void func_80157184(s32 value);
+char* CItemBlock_getPtr20E8();
+void CItemBlock_setCount(s32 value);
 
 // CUICfManager font helpers (func_8012278C binds the font and rebuilds the
 // cursor). func_801355BC returns the font string, func_801355F4 the shared
@@ -361,9 +361,9 @@ void setBdatEntry__5CBdatFUlPv(u32, void*);
 // Quest-content helpers (func_801231C4). The *_E4/58/2C functions return raw
 // u32 values that the caller masks explicitly with & 0xFFFF (retail keeps the
 // unmasked value in a callee-saved register between the call and the mask).
-extern "C" u16 func_80136254(const void*, const void*, int);
-u32 func_801392E4(u32);
-extern "C" u16 func_80139358(u32);
+extern "C" u16 BdatGetU16Direct(const void*, const void*, int);
+u32 BdatGetItemType(u32);
+extern "C" u16 BdatGetItemId(u32);
 u32 func_8013732C(u32);
 void* func_80138DA4(const char*);
 u32 func_8009ECF0();

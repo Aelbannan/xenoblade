@@ -256,13 +256,13 @@ void CMenuGetItem::Init() {
         }
         break;
     case 2:
-        title = func_80136190(&lbl_eu_805018D0[0x64], &lbl_eu_805018D0[0x6f],
+        title = BdatTouchStringCell(&lbl_eu_805018D0[0x64], &lbl_eu_805018D0[0x6f],
                               mField_9C + 0x53);
         break;
     case 3:
-        title = func_80136190(&lbl_eu_805018D0[0x74], &lbl_eu_805018D0[0x82],
+        title = BdatTouchStringCell(&lbl_eu_805018D0[0x74], &lbl_eu_805018D0[0x82],
                               mField_9C);
-        mField_2B0 = func_8013606C(&lbl_eu_805018D0[0x74], &lbl_eu_805018D0[0x88],
+        mField_2B0 = BdatGetU16ByTableKey(&lbl_eu_805018D0[0x74], &lbl_eu_805018D0[0x88],
                                    mField_9C);
         break;
     }
@@ -283,7 +283,7 @@ void CMenuGetItem::Init() {
             (reinterpret_cast<PaneFlagView*>(mField_84)->flags & 0xFE) | (v > 2);
     }
 
-    func_80136B4C(mLayout, &lbl_eu_805018D0[0x8c], (char*)title, 0);
+    LayoutSetTextBoxFmtValue(mLayout, &lbl_eu_805018D0[0x8c], (char*)title, 0);
 
     // MI adjust: IScnRender subobject at +0x5c (null-this safe).
     IScnRender* cb = reinterpret_cast<IScnRender*>(this);
@@ -326,7 +326,7 @@ void CMenuGetItem::cbRenderBefore() {
     if (CTaskGame::isFlag01Set() || (lbl_eu_80663E28 & (1u << 21))) {
         return;
     }
-    if (!func_8013BE50()) {
+    if (!IsMenuState621F0()) {
         return;
     }
     if (lbl_eu_80663E24 & 0xbfe40000u) {
@@ -486,10 +486,10 @@ extern "C" void func_8014A570(CMenuGetItem* self, int arg0, int arg1) {
         }
         item->type = (u8)type;
         if (arg1 != 0) {
-            name = func_80136190(&lbl_eu_805018D0[0x74], &lbl_eu_805018D0[0x82],
+            name = BdatTouchStringCell(&lbl_eu_805018D0[0x74], &lbl_eu_805018D0[0x82],
                                  arg0);
         } else {
-            name = func_80136190(&lbl_eu_805018D0[0x64], &lbl_eu_805018D0[0x6f],
+            name = BdatTouchStringCell(&lbl_eu_805018D0[0x64], &lbl_eu_805018D0[0x6f],
                                  arg0 + 0x53);
         }
         sprintf(item->name, &lbl_eu_805018D0[0x95], name);

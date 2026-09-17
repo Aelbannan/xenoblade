@@ -76,7 +76,7 @@ char lbl_eu_8052E3BC[];
 u32 __ptmf_null[3];
 void __ct__8CProcessFv(CProcess*);
 void __dt__8CProcessFv(CProcess*, int);
-void func_8015704C(CUICfInitBlock*, const CUICfInitBlock*);
+void CItem_copyRecMasked(CUICfInitBlock*, const CUICfInitBlock*);
 void func_8009D0B4();
 void func_8009D514(cf::IFlagEvent*);
 void func_8009D414(cf::IFlagEvent*);
@@ -203,10 +203,10 @@ void CUICfManager::Init() {
         slot.unk04 = tmpl.state.mode;
         slot.unk05 = tmpl.state.state;
 
-        func_8015704C(&slot.unk08, &tmpl.block0);
-        func_8015704C(&slot.unk3C, initBlock1Ptr);
-        func_8015704C(&slot.unk70, initBlock2Ptr);
-        func_8015704C(&slot.unkA4, initBlock3Ptr);
+        CItem_copyRecMasked(&slot.unk08, &tmpl.block0);
+        CItem_copyRecMasked(&slot.unk3C, initBlock1Ptr);
+        CItem_copyRecMasked(&slot.unk70, initBlock2Ptr);
+        CItem_copyRecMasked(&slot.unkA4, initBlock3Ptr);
         slot.unkD8.unk00 = tmpl.tail.unk00;
         slot.unkD8.mid = tmpl.tail.mid;
         slot.unkD8.unk0C = tmpl.tail.unk0C;
@@ -368,8 +368,8 @@ void* func_8009EC9C(u16);
 // (defining TU: cf/CtrlObjectParam.cpp); declared here because including
 // CfGameManager.hpp pulls conflicting flat decls into this TU.
 void func_800A21F8(void*, u32, u32, u32);
-u8 func_801361E8(u32, const char*, u32);
-u16 func_8013606C(char*, char*, u16);
+u8 BdatGetU8Direct(u32, const char*, u32);
+u16 BdatGetU16ByTableKey(char*, char*, u16);
 void* lbl_eu_80573D18[];
 u8 lbl_eu_805000A8[];
 u16 lbl_eu_804FFFDC[];
@@ -441,7 +441,7 @@ range_221_607: {
 
     int idx = func_80138138(off);
     void* tableVal = lbl_eu_80573D18[idx];
-    u8 res = (u8)func_801361E8((u32)tableVal, (char*)lbl_eu_805000A8 + 0x43, lbl_eu_80664050);
+    u8 res = (u8)BdatGetU8Direct((u32)tableVal, (char*)lbl_eu_805000A8 + 0x43, lbl_eu_80664050);
     if (res == 2) {
         goto end;
     }
@@ -537,7 +537,7 @@ range_312c_31f3: {
     }
 
     {
-        u16 ret2 = func_8013606C((char*)lbl_eu_805000A8 + 0x4d, (char*)lbl_eu_805000A8 + 0x5b,
+        u16 ret2 = BdatGetU16ByTableKey((char*)lbl_eu_805000A8 + 0x4d, (char*)lbl_eu_805000A8 + 0x5b,
                                    codePersist);
         if (ret2 != 0) {
             int i = 1;
@@ -653,22 +653,22 @@ void* __ct__CMenuBattleMode(void*, u32);
 void* __ct__CMenuLvUp(void*, u32);
 void* __ct__CMenuGameClear(void*, u32); // game-clear screen factory (CMenuGameClear.cpp)
 
-// Opaque 8-byte holder around a CfObjEnumList* (func_80043D90 / __dt__80043E88).
+// Opaque 8-byte holder around a CfObjEnumList* (CTaskGame_enumListCtor / __dt__80043E88).
 struct CUICfEnumListHolder {
     void* list; // 0x0
     u32 handle; // 0x4
 };
 
-void func_80043D90(CUICfEnumListHolder*);
-void func_80043E08(CUICfEnumListHolder*, int, int); // holder init (r4=0x20, r5=0x800)
-void* func_80043F18(CUICfEnumListHolder*); // returns holder->list
+void CTaskGame_enumListCtor(CUICfEnumListHolder*);
+void CTaskGame_enumListFill(CUICfEnumListHolder*, int, int); // holder init (r4=0x20, r5=0x800)
+void* CTaskGame_enumListGet(CUICfEnumListHolder*); // returns holder->list
 void __dt__80043E88(CUICfEnumListHolder*, s16);
 void func_800F4A98(void* list, int type, int);
 void* __ct__800FB044(void* list, f32, void* obj, int);
 void* func_80496264(void* obj, int index);
 void* func_800F6EC0(void* list, int index); // &slot -> has +0x4 object ptr
 void* func_800F6E98(void* list, int index); // *slot -> object*
-int func_800B8920(void*);
+int lookupWorkAtAddr(void*);
 int func_8013A4B4(void* a, void* b, void* c);
  // &mInitSlots[0].unk04
 }
@@ -1017,15 +1017,15 @@ after_flags:
         goto after_enum;
     }
 
-    func_80043D90(&holder);
-    list = func_80043F18(&holder);
+    CTaskGame_enumListCtor(&holder);
+    list = CTaskGame_enumListGet(&holder);
     func_800F4A98(list, 0x130, 0);
     party = cf::CfGameManager::getPlayer(0);
     {
         void** vt = *reinterpret_cast<void***>(party);
         partyHandle = reinterpret_cast<CUICfVPtrFn>(vt[0xAC / 4])(party);
     }
-    list = func_80043F18(&holder);
+    list = CTaskGame_enumListGet(&holder);
     __ct__800FB044(list, lbl_eu_806672CC, partyHandle, 0);
 
     pose = func_80496264((void*)unk11C, -1);
@@ -1039,7 +1039,7 @@ after_flags:
     enumIdx = 0;
     goto enum_check;
 enum_body:
-    list = func_80043F18(&holder);
+    list = CTaskGame_enumListGet(&holder);
     slot = func_800F6EC0(list, enumIdx);
     partyHandle = *(void**)((u8*)slot + 4);
     if (partyHandle == NULL) {
@@ -1051,10 +1051,10 @@ enum_body:
             goto enum_next;
         }
     }
-    if (func_800B8920(partyHandle) == 0) {
+    if (lookupWorkAtAddr(partyHandle) == 0) {
         goto enum_next;
     }
-    list = func_80043F18(&holder);
+    list = CTaskGame_enumListGet(&holder);
     slot = func_800F6EC0(list, enumIdx);
     partyHandle = *(void**)((u8*)slot + 4);
     {
@@ -1067,13 +1067,13 @@ enum_body:
     if (func_8013A4B4(posA, posB, posC) == 0) {
         goto enum_next;
     }
-    list = func_80043F18(&holder);
+    list = CTaskGame_enumListGet(&holder);
     createdArg = func_800F6E98(list, enumIdx);
     func_801109D8(unk144, unk11C, createdArg);
 enum_next:
     enumIdx++;
 enum_check:
-    list = func_80043F18(&holder);
+    list = CTaskGame_enumListGet(&holder);
     if ((u32)enumIdx < *(u32*)((u8*)list + 0x620)) {
         goto enum_body;
     }
@@ -1252,14 +1252,14 @@ void* CUICfManager_getField5C(){
 }
 // Retail linker name for the slot-reset helper below (flat); declaring it
 // extern "C" here makes the C++ definition emit the flat retail symbol.
-extern "C" int func_80130244(u8* base);
+extern "C" int CUICfManager_tryResetFreeSlot(u8* base);
 
 int func_80135610() {
     CUICfManager* m = static_cast<CUICfManager*>(lbl_eu_80664054);
     if (m == 0) {
         return 0;
     }
-    return func_80130244(reinterpret_cast<u8*>(reinterpret_cast<CUICfManagerSlotView*>(m)->slots));
+    return CUICfManager_tryResetFreeSlot(reinterpret_cast<u8*>(reinterpret_cast<CUICfManagerSlotView*>(m)->slots));
 }
 // func_80135630: like func_80135610 but forwards its first argument (the
 // caller's this) as the src arg of the template-copy claim func_80130720.
@@ -1489,10 +1489,10 @@ extern "C" void func_8012FFB4(u8* base) {
     func_80131820(base);
     }
 }
-// func_80130244 (us-80130d18): slot reset. When no busy gate is set and
+// CUICfManager_tryResetFreeSlot (us-80130d18): slot reset. When no busy gate is set and
 // some init slot is in use, clears the first free (state 7) slot and rebuilds
 // the slot list (func_801311B8) unless the 0xb40 byte is set.
-extern "C" int func_80130244(u8* base) {
+extern "C" int CUICfManager_tryResetFreeSlot(u8* base) {
     int flag;
     if (func_80293C10() != 0) {
         flag = 1;
@@ -1641,10 +1641,10 @@ int func_80130720(u8* base, CUICfSrcCopyView* src) {
                 reinterpret_cast<CUICfSlotCopyView*>(base + j * 0x168);
             slot->field_0x00 = 3;
             changed = 1;
-            func_8015704C(&slot->block1, &src->block1);
-            func_8015704C(&slot->block2, &src->block2);
-            func_8015704C(&slot->block3, &src->block3);
-            func_8015704C(&slot->block4, &src->block4);
+            CItem_copyRecMasked(&slot->block1, &src->block1);
+            CItem_copyRecMasked(&slot->block2, &src->block2);
+            CItem_copyRecMasked(&slot->block3, &src->block3);
+            CItem_copyRecMasked(&slot->block4, &src->block4);
             slot->field_D4 = src->field_D0;
             break;
         }
@@ -1869,7 +1869,7 @@ int func_80130F98(u8* base, u16 a1, u16 a2) {
 //
 // Bubble-sort pass over the 8 init slots by flag byte (ascending; flag 7 =
 // free sorts last). Each pass compares adjacent slots and, when out of
-// order, swaps them through three stack templates (func_8015704C block
+// order, swaps them through three stack templates (CItem_copyRecMasked block
 // copies + sprintf of the two id strings). Passes repeat until a pass makes
 // no swap; the pass length shrinks by one each time (retail subfic limit).
 // ---------------------------------------------------------------------------
@@ -1905,10 +1905,10 @@ extern "C" void func_801311B8(u8* base) {
                 slots[2].wordD4 = 0;
                 slots[2].field_0 = slotI->field_0;
                 slots[2].field_1 = slotI->field_1;
-                func_8015704C(&slots[2].block1, &slotI->block1);
-                func_8015704C(&slots[2].block2, &slotI->block2);
-                func_8015704C(&slots[2].block3, &slotI->block3);
-                func_8015704C(&slots[2].block4, &slotI->block4);
+                CItem_copyRecMasked(&slots[2].block1, &slotI->block1);
+                CItem_copyRecMasked(&slots[2].block2, &slotI->block2);
+                CItem_copyRecMasked(&slots[2].block3, &slotI->block3);
+                CItem_copyRecMasked(&slots[2].block4, &slotI->block4);
                 slots[2].wordD4 = slotI->wordD4;
                 slots[2].ids[0] = slotI->ids[0];
                 slots[2].ids[1] = slotI->ids[1];
@@ -1938,10 +1938,10 @@ extern "C" void func_801311B8(u8* base) {
                 slots[1].wordD4 = 0;
                 slots[1].field_0 = slotJ->field_0;
                 slots[1].field_1 = slotJ->field_1;
-                func_8015704C(&slots[1].block1, &slotJ->block1);
-                func_8015704C(&slots[1].block2, &slotJ->block2);
-                func_8015704C(&slots[1].block3, &slotJ->block3);
-                func_8015704C(&slots[1].block4, &slotJ->block4);
+                CItem_copyRecMasked(&slots[1].block1, &slotJ->block1);
+                CItem_copyRecMasked(&slots[1].block2, &slotJ->block2);
+                CItem_copyRecMasked(&slots[1].block3, &slotJ->block3);
+                CItem_copyRecMasked(&slots[1].block4, &slotJ->block4);
                 slots[1].wordD4 = slotJ->wordD4;
                 slots[1].ids[0] = slotJ->ids[0];
                 slots[1].ids[1] = slotJ->ids[1];
@@ -1956,10 +1956,10 @@ extern "C" void func_801311B8(u8* base) {
                 // write-back A: slot i <- buffer B (raw copy, no sprintf).
                 slotI->field_0 = slots[1].field_0;
                 slotI->field_1 = slots[1].field_1;
-                func_8015704C(&slotI->block1, &slots[1].block1);
-                func_8015704C(&slotI->block2, &slots[1].block2);
-                func_8015704C(&slotI->block3, &slots[1].block3);
-                func_8015704C(&slotI->block4, &slots[1].block4);
+                CItem_copyRecMasked(&slotI->block1, &slots[1].block1);
+                CItem_copyRecMasked(&slotI->block2, &slots[1].block2);
+                CItem_copyRecMasked(&slotI->block3, &slots[1].block3);
+                CItem_copyRecMasked(&slotI->block4, &slots[1].block4);
                 slotI->wordD4 = slots[1].wordD4;
                 slotI->ids[0] = slots[1].ids[0];
                 slotI->ids[1] = slots[1].ids[1];
@@ -1989,10 +1989,10 @@ extern "C" void func_801311B8(u8* base) {
                 slots[0].wordD4 = 0;
                 slots[0].field_0 = slots[2].field_0;
                 slots[0].field_1 = slots[2].field_1;
-                func_8015704C(&slots[0].block1, &slots[2].block1);
-                func_8015704C(&slots[0].block2, &slots[2].block2);
-                func_8015704C(&slots[0].block3, &slots[2].block3);
-                func_8015704C(&slots[0].block4, &slots[2].block4);
+                CItem_copyRecMasked(&slots[0].block1, &slots[2].block1);
+                CItem_copyRecMasked(&slots[0].block2, &slots[2].block2);
+                CItem_copyRecMasked(&slots[0].block3, &slots[2].block3);
+                CItem_copyRecMasked(&slots[0].block4, &slots[2].block4);
                 slots[0].wordD4 = slots[2].wordD4;
                 slots[0].ids[0] = slots[2].ids[0];
                 slots[0].ids[1] = slots[2].ids[1];
@@ -2007,10 +2007,10 @@ extern "C" void func_801311B8(u8* base) {
                 // write-back C: slot j <- buffer A (raw copy, no sprintf).
                 slotJ->field_0 = slots[0].field_0;
                 slotJ->field_1 = slots[0].field_1;
-                func_8015704C(&slotJ->block1, &slots[0].block1);
-                func_8015704C(&slotJ->block2, &slots[0].block2);
-                func_8015704C(&slotJ->block3, &slots[0].block3);
-                func_8015704C(&slotJ->block4, &slots[0].block4);
+                CItem_copyRecMasked(&slotJ->block1, &slots[0].block1);
+                CItem_copyRecMasked(&slotJ->block2, &slots[0].block2);
+                CItem_copyRecMasked(&slotJ->block3, &slots[0].block3);
+                CItem_copyRecMasked(&slotJ->block4, &slots[0].block4);
                 slotJ->wordD4 = slots[0].wordD4;
                 slotJ->ids[0] = slots[0].ids[0];
                 slotJ->ids[1] = slots[0].ids[1];
@@ -2070,10 +2070,10 @@ extern "C" void func_80131820(u8* base) {
                 tpl.wordD4 = 0;
                 tpl.field_0 = slotI->field_0;
                 tpl.field_1 = slotI->field_1;
-                func_8015704C(&tpl.block1, &slotI->block1);
-                func_8015704C(&tpl.block2, &slotI->block2);
-                func_8015704C(&tpl.block3, &slotI->block3);
-                func_8015704C(&tpl.block4, &slotI->block4);
+                CItem_copyRecMasked(&tpl.block1, &slotI->block1);
+                CItem_copyRecMasked(&tpl.block2, &slotI->block2);
+                CItem_copyRecMasked(&tpl.block3, &slotI->block3);
+                CItem_copyRecMasked(&tpl.block4, &slotI->block4);
                 tpl.wordD4 = slotI->wordD4;
                 tpl.ids[0] = slotI->ids[0];
                 tpl.ids[1] = slotI->ids[1];
@@ -2103,10 +2103,10 @@ extern "C" void func_80131820(u8* base) {
                 bufB.wordD4 = 0;
                 bufB.field_0 = slotJ->field_0;
                 bufB.field_1 = slotJ->field_1;
-                func_8015704C(&bufB.block1, &slotJ->block1);
-                func_8015704C(&bufB.block2, &slotJ->block2);
-                func_8015704C(&bufB.block3, &slotJ->block3);
-                func_8015704C(&bufB.block4, &slotJ->block4);
+                CItem_copyRecMasked(&bufB.block1, &slotJ->block1);
+                CItem_copyRecMasked(&bufB.block2, &slotJ->block2);
+                CItem_copyRecMasked(&bufB.block3, &slotJ->block3);
+                CItem_copyRecMasked(&bufB.block4, &slotJ->block4);
                 bufB.wordD4 = slotJ->wordD4;
                 bufB.ids[0] = slotJ->ids[0];
                 bufB.ids[1] = slotJ->ids[1];
@@ -2121,10 +2121,10 @@ extern "C" void func_80131820(u8* base) {
                 // write-back A: slot i <- buffer B (raw copy, no sprintf).
                 slotI->field_0 = bufB.field_0;
                 slotI->field_1 = bufB.field_1;
-                func_8015704C(&slotI->block1, &bufB.block1);
-                func_8015704C(&slotI->block2, &bufB.block2);
-                func_8015704C(&slotI->block3, &bufB.block3);
-                func_8015704C(&slotI->block4, &bufB.block4);
+                CItem_copyRecMasked(&slotI->block1, &bufB.block1);
+                CItem_copyRecMasked(&slotI->block2, &bufB.block2);
+                CItem_copyRecMasked(&slotI->block3, &bufB.block3);
+                CItem_copyRecMasked(&slotI->block4, &bufB.block4);
                 slotI->wordD4 = bufB.wordD4;
                 slotI->ids[0] = bufB.ids[0];
                 slotI->ids[1] = bufB.ids[1];
@@ -2154,10 +2154,10 @@ extern "C" void func_80131820(u8* base) {
                 bufA.wordD4 = 0;
                 bufA.field_0 = tpl.field_0;
                 bufA.field_1 = tpl.field_1;
-                func_8015704C(&bufA.block1, &tpl.block1);
-                func_8015704C(&bufA.block2, &tpl.block2);
-                func_8015704C(&bufA.block3, &tpl.block3);
-                func_8015704C(&bufA.block4, &tpl.block4);
+                CItem_copyRecMasked(&bufA.block1, &tpl.block1);
+                CItem_copyRecMasked(&bufA.block2, &tpl.block2);
+                CItem_copyRecMasked(&bufA.block3, &tpl.block3);
+                CItem_copyRecMasked(&bufA.block4, &tpl.block4);
                 bufA.wordD4 = tpl.wordD4;
                 bufA.ids[0] = tpl.ids[0];
                 bufA.ids[1] = tpl.ids[1];
@@ -2172,10 +2172,10 @@ extern "C" void func_80131820(u8* base) {
                 // write-back C: slot j <- buffer A (raw copy, no sprintf).
                 slotJ->field_0 = bufA.field_0;
                 slotJ->field_1 = bufA.field_1;
-                func_8015704C(&slotJ->block1, &bufA.block1);
-                func_8015704C(&slotJ->block2, &bufA.block2);
-                func_8015704C(&slotJ->block3, &bufA.block3);
-                func_8015704C(&slotJ->block4, &bufA.block4);
+                CItem_copyRecMasked(&slotJ->block1, &bufA.block1);
+                CItem_copyRecMasked(&slotJ->block2, &bufA.block2);
+                CItem_copyRecMasked(&slotJ->block3, &bufA.block3);
+                CItem_copyRecMasked(&slotJ->block4, &bufA.block4);
                 slotJ->wordD4 = bufA.wordD4;
                 slotJ->ids[0] = bufA.ids[0];
                 slotJ->ids[1] = bufA.ids[1];
@@ -4153,10 +4153,10 @@ extern "C" int func_801359AC(u8* singleton) {
             return 2;
         }
     }
-    func_80043E08(&holder, 0x20, 0x800);
-    enumList = reinterpret_cast<CUICfEnumList620*>(func_80043F18(&holder));
+    CTaskGame_enumListFill(&holder, 0x20, 0x800);
+    enumList = reinterpret_cast<CUICfEnumList620*>(CTaskGame_enumListGet(&holder));
     __ct__800FC32C(reinterpret_cast<u8*>(enumList), 3, 4, 0);
-    enumList = reinterpret_cast<CUICfEnumList620*>(func_80043F18(&holder));
+    enumList = reinterpret_cast<CUICfEnumList620*>(CTaskGame_enumListGet(&holder));
     if (enumList->count == 0) {
         __dt__80043E88(&holder, -1);
         return 2;

@@ -4,7 +4,7 @@
 #include "kyoshin/harness_catalog.hpp"
 #include "kyoshin/CMapSel.hpp"
 #include "kyoshin/CScrollBar.hpp"
-// CMapSel.hpp declares the C-ABI layout helpers (func_80137E7C 2-arg etc.);
+// CMapSel.hpp declares the C-ABI layout helpers (PaneSetTexPaletteByName 2-arg etc.);
 // skip code_80135FDC.hpp's caller-tuned exports so the differing arity decls
 // don't clash (same mechanism code_80135FDC.cpp itself uses).
 #define CODE_80135FDC_CPP
@@ -112,7 +112,7 @@ CMapSel::CMapSel() {
         case 8: case 9: case 11: case 12: case 13: case 14: case 15: case 16:
         case 17: case 18: case 19: case 21: case 23: case 24: case 25: case 27:
             for (s32 j = 1; j <= mapCount; j++) {
-                if (func_801361E8((u32)mapTable, base, (u32)j) == mapId) {
+                if (BdatGetU8Direct((u32)mapTable, base, (u32)j) == mapId) {
                     if (func_8009CF8C((u32)(j + 0x20c8)) != 0) {
                         u8 idx = self->mGridData[0x20];
                         self->mGridData[idx] = mapId;
@@ -137,9 +137,9 @@ CMapSel::CMapSel() {
             // Retail hoists grid[k+1] into a callee-saved temp before the
             // first lookup, but passes grid[k] inline as its third argument.
             u8 b = self->mGridData[k + 1];
-            u8 keyA = func_801361E8((u32)orderTable, keys + 6,
+            u8 keyA = BdatGetU8Direct((u32)orderTable, keys + 6,
                                     self->mGridData[k]);
-            u8 keyB = func_801361E8((u32)orderTable, keys + 6, b);
+            u8 keyB = BdatGetU8Direct((u32)orderTable, keys + 6, b);
             if (keyA > keyB) {
                 self->mGridData[k] ^= self->mGridData[k + 1];
                 self->mGridData[k + 1] ^= self->mGridData[k];
@@ -481,7 +481,7 @@ extern "C" void __declspec(noinline) func_80243B88(CMapSel* self) {
 /* func_80243BE8 - Poll animation completion on mAnimTransform2, then enable both
    animations, set state to 5 (post-close cleanup), and notify the scrollbar. */
 extern "C" void __declspec(noinline) func_80243BE8(CMapSel* self) {
-    if (func_80137510(self->mAnimTransform2, 1.0f) != 0) {
+    if (AnimRewindFrame(self->mAnimTransform2, 1.0f) != 0) {
         self->mLayout->SetAnimationEnable(self->mAnimTransform2, false);
         self->mLayout->SetAnimationEnable(self->mAnimTransform1, true);
         self->mState = 5;
@@ -490,7 +490,7 @@ extern "C" void __declspec(noinline) func_80243BE8(CMapSel* self) {
 }
 
 extern "C" void __declspec(noinline) func_80243C6C(CMapSel* self) {
-    if (func_80137510(self->mAnimTransform1, lbl_eu_8066873C) != 0) {
+    if (AnimRewindFrame(self->mAnimTransform1, lbl_eu_8066873C) != 0) {
         *(u8*)((u8*)self + 0x33) = 1;
         self->mState = 0;
     }
@@ -508,15 +508,15 @@ extern "C" void __declspec(noinline) func_80243CFC(CMapSel* self) {
         sprintf(buf, base + 0x1f, (u8)i + 1);
         if ((s8)self->mSelX + (u8)i < self->mGridData[0x20]) {
             u8 g = self->mGridData[(s8)self->mSelX + (u8)i];
-            char* res = func_8013639C(lbl_eu_806640A8, base + 0x2b, g);
-            func_80136B4C(self->mLayout, buf, res, 0);
+            char* res = BdatGetPtrDirect(lbl_eu_806640A8, base + 0x2b, g);
+            LayoutSetTextBoxFmtValue(self->mLayout, buf, res, 0);
             if ((s8)self->mSelY == (u8)i) {
-                func_80136B4C(self->mLayout, base + 0x30, res, 0);
-                char* res2 = func_8013639C(lbl_eu_806640A8, base + 0x3a, g);
-                func_80136B4C(self->mLayout, base + 0x46, res2, 0);
+                LayoutSetTextBoxFmtValue(self->mLayout, base + 0x30, res, 0);
+                char* res2 = BdatGetPtrDirect(lbl_eu_806640A8, base + 0x3a, g);
+                LayoutSetTextBoxFmtValue(self->mLayout, base + 0x46, res2, 0);
             }
         } else {
-            func_80136B4C(self->mLayout, buf, base + 0x52, 0);
+            LayoutSetTextBoxFmtValue(self->mLayout, buf, base + 0x52, 0);
         }
     }
 }
@@ -536,12 +536,12 @@ extern "C" void __declspec(noinline) func_80243E08(CMapSel* self) {
         const void* res = self->mArcAccessor->GetResource(
             nw4r::lyt::ArcResourceAccessor::RES_TYPE_TEXTURE, base + 0x53, 0);
         if (res != 0) {
-            func_80137E7C(self->mLayout, base + 0x66, res);
+            PaneSetTexPaletteByName(self->mLayout, base + 0x66, res);
         }
         return;
     }
     base = lbl_eu_8050B4A8;
-    func_80137E7C(self->mLayout, base + 0x66, self->mAllocatedMem);
+    PaneSetTexPaletteByName(self->mLayout, base + 0x66, self->mAllocatedMem);
     nw4r::lyt::Pane* pane =
         self->mLayout->GetRootPane()->FindPaneByName(base + 0x66, true);
     func_80124270(pane, 1);
@@ -567,8 +567,8 @@ extern "C" void __declspec(noinline) func_80243ED8(CMapSel* self) {
     char buf[64];
     char* base = lbl_eu_8050B4A8;
     u8 idx = self->mGridData[(s8)self->mSelX + (s8)self->mSelY];
-    u16 res = func_80136254(lbl_eu_806640A8, base + 0x6e, idx);
-    char* name = func_80138F78(res);
+    u16 res = BdatGetU16Direct(lbl_eu_806640A8, base + 0x6e, idx);
+    char* name = MakeTplNameSysFile(res);
     sprintf(buf, base + 0x79, name);
     self->mFileHandle2 = CDeviceFile::readFile(
         mtl::MemManager::getHandleMEM2(), buf,

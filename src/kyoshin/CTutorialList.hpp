@@ -6,7 +6,7 @@
 #include "kyoshin/CSortMenu.hpp"      // CScrollBarData, CScrollBar_isVisible, func_801F367C
 #include "kyoshin/CBaseCur.hpp"         // CBaseCur (embedded cursor virtuals)
 #include "monolib/device/CDeviceFont.hpp" // IDeviceFontInfo / CDeviceFont
-#include "kyoshin/code_80135FDC.hpp"  // func_80137510, advanceAnimTransform, func_80136190, func_80136B4C
+#include "kyoshin/code_80135FDC.hpp"  // AnimRewindFrame, advanceAnimTransform, BdatTouchStringCell, LayoutSetTextBoxFmtValue
 #include "kyoshin/cf/voice/cvsys/CVS_THREAD_REVIVE.hpp"  // CVoiceHandle, CVoiceHandleVTV, func_802A77E8/802A330C/802A3D54
 
 /* CTutorialList -- tutorial list widget.

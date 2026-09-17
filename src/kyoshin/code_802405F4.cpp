@@ -1,7 +1,7 @@
 // Auto-scaffolded catalog TU for kyoshin/code_802405F4
 // Replace stubs with high-level C/C++ during decomp.
 
-// CMapSel.hpp carries a legacy (void*, float) pseudo-import for func_80137510;
+// CMapSel.hpp carries a legacy (void*, float) pseudo-import for AnimRewindFrame;
 // code_80135FDC.hpp (included below) declares the canonical
 // (nw4r::lyt::AnimTransform*, float). Skip the legacy decl so the two
 // extern "C" declarations don't clash (10197). Must be defined before any
@@ -9,7 +9,7 @@
 #define KYOSHIN_SKIP_CMAPSEL_LEGACY_LAYOUT_IMPORTS
 // code_80135FDC.hpp declares lbl_eu_8066A208 as u32; we need the float
 // (.sdata2 epsilon) view, so rename that declaration away.
-// (func_8013606C: CFloorMap.hpp's legacy u32-returning copy moved TU-local
+// (BdatGetU16ByTableKey: CFloorMap.hpp's legacy u32-returning copy moved TU-local
 // into CFloorMap.cpp; the canonical u16 decl on code_80135FDC.hpp is now the
 // only shared one - no rename guard needed here.)
 #include <types.h>
@@ -469,7 +469,7 @@ void CMenuMapSelect::Init() {
     } // bgTex destructor runs here
     mBgTex.func_801C3C14();
 
-    char* helpStr = (char*)func_80136190(lbl_eu_8050B498, lbl_eu_8050B498 + 8, 1);
+    char* helpStr = (char*)BdatTouchStringCell(lbl_eu_8050B498, lbl_eu_8050B498 + 8, 1);
     {
         CTitleAHelp titleHelp(helpStr, 0x4a);
         func_801BE16C(&mTitleHelp, &titleHelp);
@@ -763,7 +763,7 @@ void CMenuMapSelect::Move() {
     case 5:
         if (func_8024CE1C(&mFloorMap) == 0) break;
         func_801C4654(&mTitleHelp, 0);
-        func_801C46B4(&mTitleHelp, func_80136190(lbl_eu_8050B498, lbl_eu_8050B498 + 8, 3));
+        func_801C46B4(&mTitleHelp, BdatTouchStringCell(lbl_eu_8050B498, lbl_eu_8050B498 + 8, 3));
         if (func_8009CF8C((u32)0x3212) != 0) {
             func_801C46DC(&mTitleHelp, 1);
         }
@@ -787,7 +787,7 @@ void CMenuMapSelect::Move() {
         if (func_80244510(&mFade) == 0) break;
         func_8024CB94(&mFloorMap);
         func_801C4654(&mTitleHelp, 1);
-        func_801C46B4(&mTitleHelp, func_80136190(lbl_eu_8050B498, lbl_eu_8050B498 + 8, 3));
+        func_801C46B4(&mTitleHelp, BdatTouchStringCell(lbl_eu_8050B498, lbl_eu_8050B498 + 8, 3));
         func_801C46DC(&mTitleHelp, 0);
         func_801C41E8(&mTitleHelp, 0x4a);
         func_80244538(&mFade);
@@ -828,7 +828,7 @@ void CMenuMapSelect::Move() {
 // map selector, floor map, title help and fade through a stack DrawInfo.
 void CMenuMapSelect::cbRenderBefore() {
     if (CTaskGame::getInstance()->isFlag01Set() != 0 || (lbl_eu_80663E28 & 0x200000)) return;
-    if (func_8013BE50() == 0) return;
+    if (IsMenuState621F0() == 0) return;
     if (mState >= 0xb) return;
 
     GXSetZMode(GX_FALSE, GX_NEVER, GX_FALSE);

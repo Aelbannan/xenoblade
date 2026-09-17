@@ -156,7 +156,7 @@ void func_801D20B0(void*, void*);
 void func_80137250__FPQ34nw4r3lyt8DrawInfo(nw4r::lyt::DrawInfo* drawInfo);
 void __ct__Q34nw4r3lyt8DrawInfoFv(nw4r::lyt::DrawInfo* self);
 void __dt__Q34nw4r3lyt8DrawInfoFv(nw4r::lyt::DrawInfo* self, int flags);
-int func_8013BE50();
+int IsMenuState621F0();
 void* func_801355F4();
 void playUISound(u32 op);
 void* getCfPadData__Q22cf13CfGameManagerFv();

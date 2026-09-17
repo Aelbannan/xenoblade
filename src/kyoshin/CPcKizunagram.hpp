@@ -230,8 +230,8 @@ extern "C" u32 func_8003B1EC(void*);
 // Sound / effect helper (C-linkage retail symbol playUISound__FUl).
 extern "C" void playUISound__FUl(u32 arg);
 
-// Layout animation helpers from code_80135FDC (retail unmangled func_80137510).
-extern "C" u32 func_80137510(nw4r::lyt::AnimTransform*, float);
+// Layout animation helpers from code_80135FDC (retail unmangled AnimRewindFrame).
+extern "C" u32 AnimRewindFrame(nw4r::lyt::AnimTransform*, float);
 
 // BDAT table pointer (loaded via sda21 by func_8025EE94 / func_8025F2E8).
 extern "C" u32 lbl_eu_8066415C;
@@ -261,18 +261,18 @@ extern "C" void __ct__14Class_8045F858FP17UnkClass_8045F564(Class_8045F858* self
 extern "C" void __dt__14Class_8045F858Fv(Class_8045F858* self, int dealloc);
 
 // BDAT / random / pane-text helpers with unmangled retail names.
-extern "C" u16 func_80136254(const void*, const void*, int);
-extern "C" char* func_80136190(const void*, const void*, int);
-extern "C" char* func_8013639C(const void*, const void*, int);
+extern "C" u16 BdatGetU16Direct(const void*, const void*, int);
+extern "C" char* BdatTouchStringCell(const void*, const void*, int);
+extern "C" char* BdatGetPtrDirect(const void*, const void*, int);
 // u32-return view: retail masks the column byte at the call sites (clrlwi 24),
 // so this TU saw an int/unsigned return, not u8.
-extern "C" u32 func_801361E8(u32, const char*, u32);
+extern "C" u32 BdatGetU8Direct(u32, const char*, u32);
 extern "C" int func_801C4648(void);
-extern "C" u16 func_8013606C(const void*, const void*, u32);
+extern "C" u16 BdatGetU16ByTableKey(const void*, const void*, u32);
 extern "C" u32 func_8009CF8C(u32);
 extern "C" u32 func_801355BC(void);
 extern "C" void func_80137F88(void*, u32);
-extern "C" void func_80137C1C(void*, u32);
+extern "C" void PaneSetVtxColorAll(void*, u32);
 extern "C" void func_8013AB0C(u8*, u8*, int);
 extern "C" int sprintf(char*, const char*, ...);
 extern "C" const u32 lbl_eu_80668898;  // const: MWCC hoists the loads above the LR save (load-hoist family)

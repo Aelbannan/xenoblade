@@ -1,4 +1,4 @@
-// (func_800BE12C / func_80174C98 now have single unified owner-header
+// (CfObjectMove_setAnimModeArgs / func_80174C98 now have single unified owner-header
 // decls; no pre-include renames needed here.)
 #include "kyoshin/cf/object/CfObject.hpp"
 #include "kyoshin/cf/object/CfObjectMove.hpp"

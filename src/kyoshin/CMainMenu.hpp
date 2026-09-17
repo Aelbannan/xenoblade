@@ -21,7 +21,7 @@ class CFileHandle;
 
 // Minimal layout-identical view of CArtsInfo (only field_0x54 is used here).
 // Full definition in kyoshin/CArtsInfo.hpp, which cannot be included from
-// this TU (extern "C" func_8013606C signature clash with code_80135FDC.hpp).
+// this TU (extern "C" BdatGetU16ByTableKey signature clash with code_80135FDC.hpp).
 class CArtsInfo {
 public:
     u8 _00[0x54];
@@ -200,7 +200,7 @@ extern "C" u32 func_80122450();   // close-quest-menu gate (CHelp_CloseQuestMenu
 extern "C" int func_80135898();   // menu-system close (CUICfManager.cpp)
 extern "C" u32 func_80192BD0();   // party-state screen active (CMenuPTState.cpp)
 extern "C" u32 func_80212480();   // make-crystal menu active (CMenuMakeCrystal.cpp)
-extern "C" u32 func_8022F530();   // arts-set menu active (CMenuArtsSet.cpp)
+extern "C" u32 CMenuArtsSet_isCreated();   // arts-set menu active (CMenuArtsSet.cpp)
 
 // Gameplay-input gate helpers (cf::CfGameManager / cf::CBattleManager)
 extern "C" int isSceneLoading__Q22cf13CfGameManagerFv();
@@ -243,7 +243,7 @@ extern "C" void func_801398A4(nw4r::lyt::Layout* layout, const char* paneName,
 // Menu open/close gate (defined in code_80135FDC.cpp).
 extern "C" void func_80139198(u32 arg);
 // System-window busy gate (defined in code_80135FDC.cpp).
-extern "C" int func_8013BE50();
+extern "C" int IsMenuState621F0();
 // Another menu-open gate (kizuna-talk-list / message-log family).
 extern "C" u32 func_80263944();
 // Message-log busy gate (CSysWinMsgLog.cpp).

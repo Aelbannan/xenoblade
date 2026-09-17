@@ -45,7 +45,7 @@ struct CEffectInst {
     /* 0x5C */ s32 mMode;
 };
 
-// Minimal view of the layout model object created by func_80489A60
+// Minimal view of the layout model object created by scnImN4BuildByIdx
 // (only the fields touched by this TU are declared).
 struct CLibLayoutModel {
     /* 0x00 */ void* vtable;
@@ -143,10 +143,10 @@ extern "C" void func_804E3CDC(void* effect, f32 f1, f32 f2);
 extern "C" void func_804E3D48(void* effect, void* parent);
 
 // Model / animation
-extern "C" nw4r::g3d::ChrAnmResult* func_8048BAD4(void* model, const char* animName, f32 time);
-extern "C" void* func_80489A60(void* global, void* handle, int, int, int, int);
-extern "C" void func_80484E5C(void* model, f32 val);
-extern "C" void func_804827DC(void* model, int val);
+extern "C" nw4r::g3d::ChrAnmResult* scnImN4AnimFn(void* model, const char* animName, f32 time);
+extern "C" void* scnImN4BuildByIdx(void* global, void* handle, int, int, int, int);
+extern "C" void simSetLeafDist7B0(void* model, f32 val);
+extern "C" void simSetFlag2000Chain(void* model, int val);
 extern "C" void func_804839D4(void* model, void* animData, int, int, int, int, int);
 
 // Memory

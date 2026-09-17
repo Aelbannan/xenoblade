@@ -32,7 +32,7 @@ Retail asm for each symbol is in this directory (`asm_*.s`).
 - Large frame `-0x1A0`; `stmw r22`
 - `readFile__(unk118, lbl_eu_806621A8, IWorkEvent*, 0, 0)` → store `mFileHandle@0x114`; `func_8044F154(handle, 3)`
 - Allocate `0x54` via `getWorkMem` + `MemManager::allocate`; optional `CProcess` ctor + vtable/`__ptmf_null` PTMF block → store `unk144`; `Regist(proc, lbl_eu_80664054, false)`
-- Loop `i=0..?` with `mulli …,0x168` into per-slot embeds at `this+0x150…`; stack template clears; calls `func_8015704C` / helpers — match control flow from asm; declare missing helpers `extern`
+- Loop `i=0..?` with `mulli …,0x168` into per-slot embeds at `this+0x150…`; stack template clears; calls `CItem_copyRecMasked` / helpers — match control flow from asm; declare missing helpers `extern`
 
 ### `COccCulling::func_801A1188` (`asm_func_801A1188.s`)
 - Set `mInFirstList=1`; if `(mFlags & 3)==0` plane loop with `psq_l` / `lbl_eu_80667C8C`; early return keeps `mInFirstList=1`

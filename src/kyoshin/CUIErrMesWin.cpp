@@ -150,7 +150,7 @@ void func_802B4F00(CUIErrMesWin* self) {
 // from the string pool, hand it to the embedded CSysWin with the window kind
 // from field_0xA0, open it and advance the state byte to 3.
 void func_802B4F40(CUIErrMesWin* self) {
-    char* msg = func_80136190(lbl_eu_805135E0, lbl_eu_805135E0 + 0xb, self->field_0x9E);
+    char* msg = BdatTouchStringCell(lbl_eu_805135E0, lbl_eu_805135E0 + 0xb, self->field_0x9E);
     func_8022B9B4(&self->mSysWin[0], msg, 0);
     func_8022BFC8(reinterpret_cast<CSysWin*>(&self->mSysWin[0]), self->field_0xA0);
     func_8022B8B8(&self->mSysWin[0]);
@@ -262,14 +262,14 @@ extern "C" void func_802B58A4(CErrMesSub* self) {
         if (base != 0) base -= 0x3E9C;
         reinterpret_cast<CErrMesRecord*>(base)->field_0x4590 = 0;
     }
-    CfGimmickList* glist = func_800B6BC8();
+    CfGimmickList* glist = getReslistB48();
     for (CfGimmickListNode* gnode = glist->head->next; gnode != glist->head; gnode = gnode->next) {
         base = reinterpret_cast<u8*>(gnode->object);
         if (base != 0) base -= 0x3E9C;
         reinterpret_cast<CErrMesRecord*>(base)->field_0x4590 = 0;
     }
 
-    CErrMesList* elist = func_800B6C7C();
+    CErrMesList* elist = getReslistC08();
     for (CErrMesListNode* enode = elist->sentinel->next; enode != elist->sentinel; enode = enode->next) {
         reinterpret_cast<CErrMesEnemyObj*>(enode->object)->field_0x6F4 = 0;
     }
@@ -346,7 +346,7 @@ void CMenuTitle::Init() {
     IScnRender* render = reinterpret_cast<IScnRender*>(this);
     if (this) render = reinterpret_cast<IScnRender*>(&mScnRender);
     mScene->addRenderCB(render, 0xd, 1);
-    func_802B73D4(&field_0x60[0]);
+    CTitle_startLoad(&field_0x60[0]);
 }
 
 // CMenuTitle::Term (us-802b8750) - wait for draw completion, detach the render
@@ -356,15 +356,15 @@ void CMenuTitle::Term() {
     IScnRender* render = reinterpret_cast<IScnRender*>(this);
     if (this) render = reinterpret_cast<IScnRender*>(&mScnRender);
     mScene->removeRenderCB(render);
-    func_802B74F4(&field_0x60[0]);
+    CTitle_teardown(&field_0x60[0]);
     lbl_eu_80664C30 = 0;
 }
 
 // Dispatch the state ptmf table (lbl_eu_8053B040, indexed by the +0xE8 state
-// byte), then advance the +0x60 sub-object (func_802B744C).
+// byte), then advance the +0x60 sub-object (CTitle_update).
 void CMenuTitle::Move() {
     (this->*lbl_eu_8053B040[field_0xE8])();
-    func_802B744C(&field_0x60[0]);
+    CTitle_update(&field_0x60[0]);
 }
 
 // CMenuTitle::cbRenderBefore (us-802b87f0) - when the +0xE9 gate byte is set,
@@ -377,7 +377,7 @@ void CMenuTitle::cbRenderBefore() {
         u8 drawInfo[0x60];
         __ct__Q34nw4r3lyt8DrawInfoFv(drawInfo);
         func_80137250(reinterpret_cast<nw4r::lyt::DrawInfo*>(drawInfo));
-        func_802B74A8(&field_0x60[0], reinterpret_cast<nw4r::lyt::DrawInfo*>(drawInfo));
+        CTitle_draw(&field_0x60[0], reinterpret_cast<nw4r::lyt::DrawInfo*>(drawInfo));
         __dt__Q34nw4r3lyt8DrawInfoFv(reinterpret_cast<nw4r::lyt::DrawInfo*>(drawInfo), -1);
     }
 }

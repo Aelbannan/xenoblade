@@ -96,7 +96,7 @@ extern "C" void* func_8003AA34();
 extern "C" u32 func_8003B41C(void* bdat);
 extern "C" u32 func_8003B1EC(void* bdat);
 // Heap-handle query used as the allocation region for spawned gimmicks.
-extern "C" u32 func_80061FFC();
+extern "C" u32 CfRes_getAllocHandle();
 // Concrete gimmick constructors (cf/ units). The stored object is a
 // CGimmickEntry (shared CfGimmick base); the ctor fills the derived fields.
 extern "C" void* __ct__cf_CfGimmickLock(CGimmickEntry* self, int row);
@@ -115,7 +115,7 @@ extern u8* lbl_eu_8066413C;
 extern u8* lbl_eu_80664140;  // save-off gimmick bdat table (sda21)
 extern u8* lbl_eu_80664144;
 
-// Circular gimmick object list returned by func_800B6BC8 (CfGimmick.hpp
+// Circular gimmick object list returned by getReslistB48 (CfGimmick.hpp
 // layout): +0x00 opaque, +0x04 head node, nodes link through +0x00 and carry
 // the object at +0x08.
 struct CGimmickListNode {
@@ -144,7 +144,7 @@ extern "C" CGimmickEntry* __ct__cf_CfGimmickObject(CGimmickEntry* obj, int row,
 // global state slot.
 extern "C" void func_80208EDC(u32 value);
 // Gimmick object list accessor (func_80174C98 comes from CChainTimer.hpp).
-extern "C" CGimmickList* func_800B6BC8();
+extern "C" CGimmickList* getReslistB48();
 
 // Sibling spawn / lifecycle functions defined later in this TU (func_801F3CCC
 // sits before their definitions and calls them). C linkage keeps the call
@@ -244,7 +244,7 @@ void func_801F3CCC(CGimmickGlobal* self) {
         s32 n = (s32)func_8003B1EC(bdat);
         for (s32 i = 0; i < n; i++) {
             CGimmickEntry* obj =
-                (CGimmickEntry*)mtl::MemManager::allocate(0x88, func_80061FFC());
+                (CGimmickEntry*)mtl::MemManager::allocate(0x88, CfRes_getAllocHandle());
             if (obj)
                 obj = __ct__cf_CfGimmickSaveOff(obj, row);
             self->mGimmicks[self->mGimmickCount] = obj;
@@ -281,7 +281,7 @@ bool func_801F3E80(CGimmickGlobal* self) {
     s32 count0 = self->mGimmickCount;
     for (s32 i = 0; i < n; i++) {
         CGimmickEntry* obj =
-            (CGimmickEntry*)mtl::MemManager::allocate(0x19c, func_80061FFC());
+            (CGimmickEntry*)mtl::MemManager::allocate(0x19c, CfRes_getAllocHandle());
         if (obj)
             obj = __ct__cf_CfGimmickObject(obj, row, &self->mGimmicks[count0],
                                            self->mGimmickCount - count0, buf);
@@ -308,7 +308,7 @@ bool func_801F3F98(CGimmickGlobal* self) {
     u32 row = func_8003B41C(bdat);
     s32 n = (s32)func_8003B1EC(bdat);
     for (s32 i = 0; i < n; i++) {
-        void* obj = mtl::MemManager::allocate(0x1fc, func_80061FFC());
+        void* obj = mtl::MemManager::allocate(0x1fc, CfRes_getAllocHandle());
         if (obj)
             obj = __ct__cf_CfGimmickLock((CGimmickEntry*)obj, row);
         self->mGimmicks[self->mGimmickCount] = (CGimmickEntry*)obj;
@@ -331,7 +331,7 @@ bool func_801F4078(CGimmickGlobal* self) {
     u32 row = func_8003B41C(bdat);
     s32 n = (s32)func_8003B1EC(bdat);
     for (s32 i = 0; i < n; i++) {
-        void* obj = mtl::MemManager::allocate(0x1d8, func_80061FFC());
+        void* obj = mtl::MemManager::allocate(0x1d8, CfRes_getAllocHandle());
         if (obj)
             obj = __ct__cf_CfGimmickElv((CGimmickEntry*)obj, row);
         self->mGimmicks[self->mGimmickCount] = (CGimmickEntry*)obj;
@@ -354,7 +354,7 @@ bool func_801F4158(CGimmickGlobal* self) {
     u32 row = func_8003B41C(bdat);
     s32 n = (s32)func_8003B1EC(bdat);
     for (s32 i = 0; i < n; i++) {
-        void* obj = mtl::MemManager::allocate(0x10c, func_80061FFC());
+        void* obj = mtl::MemManager::allocate(0x10c, CfRes_getAllocHandle());
         if (obj)
             obj = __ct__cf_CfGimmickWarp((CGimmickEntry*)obj, row);
         self->mGimmicks[self->mGimmickCount] = (CGimmickEntry*)obj;
@@ -378,7 +378,7 @@ bool func_801F4238(CGimmickGlobal* self) {
     s32 n = (s32)func_8003B1EC(bdat);
     for (s32 i = 0; i < n; i++) {
         CGimmickEntry* obj =
-            (CGimmickEntry*)mtl::MemManager::allocate(0x170, func_80061FFC());
+            (CGimmickEntry*)mtl::MemManager::allocate(0x170, CfRes_getAllocHandle());
         if (obj)
             obj = __ct__cf_CfGimmickJump(obj, row);
         self->mGimmicks[self->mGimmickCount] = obj;
@@ -402,7 +402,7 @@ bool func_801F4318(CGimmickGlobal* self) {
     s32 n = (s32)func_8003B1EC(bdat);
     for (s32 i = 0; i < n; i++) {
         CGimmickEntry* obj =
-            (CGimmickEntry*)mtl::MemManager::allocate(0xa4, func_80061FFC());
+            (CGimmickEntry*)mtl::MemManager::allocate(0xa4, CfRes_getAllocHandle());
         if (obj)
             obj = __ct__cf_CfGimmickItem(obj, row);
         self->mGimmicks[self->mGimmickCount] = obj;
@@ -432,7 +432,7 @@ bool func_801F43F8(CGimmickGlobal* self) {
     }
     for (s32 i = 0; i < n; i++) {
         CGimmickEntry* obj =
-            (CGimmickEntry*)mtl::MemManager::allocate(0xc0, func_80061FFC());
+            (CGimmickEntry*)mtl::MemManager::allocate(0xc0, CfRes_getAllocHandle());
         if (obj)
             obj = __ct__cf_CfGimmickEne(obj, row);
         self->mGimmicks[self->mGimmickCount] = obj;
@@ -488,7 +488,7 @@ void func_801F4998(CGimmickGlobal* self, f32 value) {
         // for the clear instead of reusing the test's value)
         *(volatile u32*)&self->mFlags &= ~0x20;
     }
-    CGimmickList* list = func_800B6BC8();
+    CGimmickList* list = getReslistB48();
     cf::CChainBattleObj* obj;
     CGimmickListNode* node = list->head->next;
     while (node != list->head) {

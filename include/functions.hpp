@@ -3,10 +3,10 @@
 #include <types.h>
 
 //Vec4 constructor? Defined before CTaskGame::Term
-struct func_800407C8_tmp {
+struct CTaskGame_setVec4_tmp {
     f32 unk00[4];
 };
-extern "C" func_800407C8_tmp* func_800407C8(func_800407C8_tmp*, f32, f32, f32, f32);
+extern "C" CTaskGame_setVec4_tmp* CTaskGame_setVec4(CTaskGame_setVec4_tmp*, f32, f32, f32, f32);
 
 void func_8004302C(int, int);
 bool func_8009CF8C(int);

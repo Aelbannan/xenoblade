@@ -94,10 +94,10 @@ extern "C" {
     int           func_802A3C44(CVS_THREAD* self, CCharVoice* voicePtr, int voiceId);
     int           func_802A3D54(CCharVoice* voicePtr, int voiceId, int arg);
     CVoiceHandle* func_802A330C(int size, int align);
-    void*         func_802A34E4(int size);
+    void*         CCharVoiceMan_AllocVoiceArena(int size);
     CVoiceHandle* func_802A7A54(int arg);
     void*         func_8016FE34(void* r3);
-    void          func_800BE924(void* voice);
+    void          CfObjectMove_releaseVoiceHandle(void* voice);
 
     // Base CVS_THREAD constructor (C-linkage).
     void __ct__cf_CVS_THREAD(void* self);

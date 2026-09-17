@@ -109,7 +109,7 @@ struct CfObjectImplEneToken {
     u32 field_70;                            // 0x70
 };
 
-// Battle-actor result of func_800B8A64: u16 flag word at +0xA0 (bit 0 tested
+// Battle-actor result of lookupCA0By45C0: u16 flag word at +0xA0 (bit 0 tested
 // by func_800D0B04).
 struct CfObjectImplEneActor {
     u8 _pad00[0xA0];                         // 0x00-0x9F
@@ -272,7 +272,7 @@ struct CfImplEneTarget {
     u32 field_04;                            // 0x04
 };
 
-// Enum list returned by func_80043F18: element count at +0x620.
+// Enum list returned by CTaskGame_enumListGet: element count at +0x620.
 struct CfEnumList {
     u8 _pad00[0x620];                        // 0x00-0x61F
     u32 field_620;                           // 0x620
@@ -715,9 +715,9 @@ void func_800CAA44(void* self);
 void func_800CD5DC(void* self, u32 id, u32 kind, u32 x, u32 y, u32 z);
 void func_8015BB3C(void* a, void* b, void* c);
 void func_802A0B8C(void* self, void* owner);
-void* func_800B8A64(void* self);
+void* lookupCA0By45C0(void* self);
 void* func_8016FE34(void* src);
-void* func_801984E4(void* self, unsigned long idx);
+void* CPartsChange_GetSlotEntryAt(void* self, unsigned long idx);
 int func_800DA06C(void* self, unsigned int value);
 void func_800D9978(void* mgr, void* obj);
 int func_800AA33C(ml::FixStr<64>& buf, u32 packed, int prefixFlag, int suffixFlag);
@@ -728,20 +728,20 @@ void func_800CA964(void* self);
 void func_800CAB2C(void* self);
 void func_800CED64(void* self, int flag);
 void func_802A0E08(void* self);
-void* func_800630C8();
-void* func_80066E7C(void* self, u32 id);
+void* CfRes_getInstPtr224();
+void* CfRes_findEntryById(void* self, u32 id);
 void func_804E3B08(void* effect);
-float func_80484EB0(void* obj);
-void func_800BC3D8(void* player, float value);
-void func_800BE824(void* obj, int flag);
+float simGetLeafDist7B0(void* obj);
+void CfObjectMove_setMoveSpeed(void* player, float value);
+void CfObjectMove_setRegionAttached(void* obj, int flag);
 void func_800F3C6C(void* mgr, u32 key);
 void func_800E9B54(void* mgr, void* obj, int a, int b);
 void func_800D9CA0(void* mgr, void* target);
-void func_80197BA4(void* obj, int a, int b);
+void CPartsChange_ResetBattleEntry(void* obj, int a, int b);
 void func_80140E00(u32 a, u32 b, u32 c);
 void func_8013E2E0(u32 a1, u32 a2, u32 a3, u32 a4, u32 a5, u32 a6, u32 a7, u32 a8, u32 a9);
-void func_80043D90(void* holder);
-void* func_80043F18(void* holder);
+void CTaskGame_enumListCtor(void* holder);
+void* CTaskGame_enumListGet(void* holder);
 void func_800F4A98(void* list, u32 type, u32 filter);
 void* func_800F6EAC(void* list, u32 idx);
 void __dt__80043E88(void* holder, int);

@@ -1,4 +1,4 @@
-// (func_800BE12C now has a single unified decl on CfObjectMove.hpp; only one
+// (CfObjectMove_setAnimModeArgs now has a single unified decl on CfObjectMove.hpp; only one
 // form exists, so no pre-include rename is needed here.)
 // (single-owner-decl cleanup: all six pre-include renames are gone.
 // getArtsSlotRC / getArtsParamRC2 resolve via the single owner decl pair on
@@ -49,7 +49,7 @@ extern "C" cf::CBattleManager* lbl_eu_80663F00;
 // CVision.hpp; defined in CtrlObjectParam.cpp - no local copy needed.)
 extern void func_8009D7E4(UNKTYPE* r3, u32 r4);
 
-// Status add/remove helper (retail func_800BE12C). The shared headers carry
+// Status add/remove helper (retail CfObjectMove_setAnimModeArgs). The shared headers carry
 // two incompatible extern "C" forms ((u8*,...) and (void*,...)); this TU uses
 // the u8* form throughout, declared once here.
 
@@ -73,7 +73,7 @@ extern "C" void func_801BA1DC(cf::CSuddenCommu* self);
 // symbol as-is).
 extern "C" UnkClass_805764CC* getInstance__Fv();
 extern "C" void registerFactoryEvent__FPvPQ22cf13IFactoryEvent(UnkClass_805764CC* holder, cf::IFactoryEvent* ev);
-extern "C" void func_800B88E0(UnkClass_805764CC* holder, cf::IFactoryEvent* ev);
+extern "C" void unlinkFactoryById(UnkClass_805764CC* holder, cf::IFactoryEvent* ev);
 // Cross-actor id lookup used by func_800F3970's dispatch table (/100 scale).
 // (getTableValueByPair__Q2..Fv resolves via the single extern "C" s32 owner decl on
 // chain/CChainActorList.hpp, included above - no local copy needed.)
@@ -508,8 +508,8 @@ void* func_8016FE34(void*);
 // 0x34-byte symbol). Defined with the retail name so the lwzx reloc binds.
 extern u32 lbl_eu_804FCA08[];
 
-// 8-byte holder for the enum-list helpers (func_80043D90 ctor /
-// func_80043F18 / __dt__80043E88); the list returned by func_80043F18 has
+// 8-byte holder for the enum-list helpers (CTaskGame_enumListCtor ctor /
+// CTaskGame_enumListGet / __dt__80043E88); the list returned by CTaskGame_enumListGet has
 // its element count at +0x620.
 struct EnumListHolder {
     void* list;
@@ -606,9 +606,9 @@ namespace cf{
     CBattleManager::~CBattleManager(){
         // Manual vptr store under the retail symbol: MWCC's auto store would
         // emit __vt__Q22cf14CBattleManager. Then deregister from the holder
-        // (retail calls getInstance__Fv / func_800B88E0 with C linkage).
+        // (retail calls getInstance__Fv / unlinkFactoryById with C linkage).
         *(void**)this = (void*)lbl_eu_8052BCE0;
-        func_800B88E0(getInstance__Fv(), this);
+        unlinkFactoryById(getInstance__Fv(), this);
     }
 
 // Static member definition (storage for the singleton pointer)
@@ -702,11 +702,11 @@ CBattleManager* CBattleManager::getInstance() {
             func_80277B34(&mChain);
 
             EnumListHolder holder;
-            func_80043D90(&holder);
-            func_800F4A98(func_80043F18(&holder), 0x20, 0);
+            CTaskGame_enumListCtor(&holder);
+            func_800F4A98(CTaskGame_enumListGet(&holder), 0x20, 0);
 
-            for(u32 i = 0; i < ((CVisionEnumList*)func_80043F18(&holder))->count; i++){
-                void* action = func_8016FE34(func_800F6EAC(func_80043F18(&holder), i));
+            for(u32 i = 0; i < ((CVisionEnumList*)CTaskGame_enumListGet(&holder))->count; i++){
+                void* action = func_8016FE34(func_800F6EAC(CTaskGame_enumListGet(&holder), i));
                 ((cf::CActorParam*)action)->CActorParam_setupActorState();
                 ((cf::CActorParam*)action)->CActorParam_refreshBattleStatus();
                 ((cf::CActorParam*)action)->CActorParam_initStatusCounter();
@@ -820,7 +820,7 @@ extern "C" s32 isGimmickActive__Q22cf13CfGameManagerFv(void* self);
 // --- func_800D9978 imports (retail-unmangled names) ---
 extern "C" void func_802A2D84();
 extern "C" void func_8027F0A0();
-extern "C" void func_802A2210(void* actor);
+extern "C" void CCharVoiceMan_LatchPendingVoiceId(void* actor);
 extern "C" f32 lbl_eu_80666DF8;  // 25.0f
 extern "C" f32 lbl_eu_80666E00;  // 100.0f
 extern "C" f32 lbl_eu_80666E18;  // 50.0f
@@ -854,24 +854,24 @@ extern "C" f32 func_80154058(void*);                         // table[clamp(idx,
 extern "C" f32 func_8015408C(void*);                         // table[clamp(idx,0,5)] @0x80501990
 extern "C" f32 func_801540C0(void*);                         // per-frame-scaled table @0x805019A8
 extern "C" f32 func_80154134(void*);                         // table[clamp(idx,0,5)] @0x805019C0
-extern "C" void func_802A26D8(void*, void*, void*);          // battle-voice enqueue (3 args)
-extern "C" void func_802A25EC(void*);                        // battle-voice clear
-extern "C" void func_802A27F4(void*, void*, void*);          // battle-voice enqueue (3 args)
+extern "C" void CCharVoiceMan_EnqueueDamageVoice(void*, void*, void*);          // battle-voice enqueue (3 args)
+extern "C" void CCharVoiceMan_ClearPlayerVoiceCount(void*);                        // battle-voice clear
+extern "C" void CCharVoiceMan_EnqueueHurtVoice(void*, void*, void*);          // battle-voice enqueue (3 args)
 extern "C" void func_8027F848(void*, s32, void*);            // battle-voice (3 args)
 extern "C" f32 Atan2FIdx__Q24nw4r4mathFff(f32 y, f32 x);      // nw4r math
 extern "C" void* func_800FE68C(void);
 extern "C" void func_800FE96C(void*, u32);
 extern "C" void func_8016DF4C(s32);
 extern "C" s32 func_80195BD4(u32, u16);
-extern "C" void func_802A285C(void*, void*, void*);
-extern "C" void func_802A24B4(void*);
-extern "C" void func_802A2250(void*, void*, int);
+extern "C" void CCharVoiceMan_EnqueueBattleEventVoice(void*, void*, void*);
+extern "C" void CCharVoiceMan_HookPendingBattleVoice(void*);
+extern "C" void CCharVoiceMan_EnqueueBreakAndGaugeVoice(void*, void*, int);
 extern "C" void func_802A2648(void*, void*);
-extern "C" void func_802A232C(void*);
-extern "C" void func_802A2558(void*);
+extern "C" void CCharVoiceMan_TriggerBattleOrPlainVoice(void*);
+extern "C" void CCharVoiceMan_TickPlayerVoiceCount(void*);
 extern "C" void func_80280804(void*);
 extern "C" void func_8027FC04(void*, void*);
-extern "C" void* func_8005605C(void*);
+extern "C" void* getLiveParamPtr(void*);
 extern "C" void func_8004513C(void*, void*, u32, u32);
 extern "C" void func_801BAB94(void*, void*, void*, void*);
 extern "C" void func_801BAD24(void*, void*, void*);
@@ -1083,7 +1083,7 @@ extern "C" void func_80135380(u8 v);
 extern "C" void* func_80149330(void*, u32, u32, u32, u32);
 extern "C" s32 func_8015B130(s32 a, u16 b);
 extern "C" s32 func_801B1C5C(void);
-extern "C" void func_802A30DC(void* pc, s32 v);
+extern "C" void CCharVoiceMan_EnqueueArtsVoice(void* pc, s32 v);
 extern void getCfObjectPc(cf::CfObjectMove* moveObj);
 
 #define k0_0f 0.0f
@@ -1524,9 +1524,9 @@ extern "C" s32 func_800EC918(
         }
     }
 
-    // ---- func_80146148 check + func_802A285C ----
+    // ---- func_80146148 check + CCharVoiceMan_EnqueueBattleEventVoice ----
     if (func_80146148(evt->eventType)) {
-        func_802A285C(acc, pc, tgt);
+        CCharVoiceMan_EnqueueBattleEventVoice(acc, pc, tgt);
     }
 
     // ================================================================
@@ -2323,10 +2323,10 @@ extern "C" s32 func_800EC918(
         if (evt->field_10 != 0) {                    // beq .L_800EFD60
             // field_10 != 0 path (0x800EFC60..0x800EFD5C)
             EnumListHolder holder;
-            func_80043D90(&holder);
-            func_800F4A98(func_80043F18(&holder), 0x80000000, 0);  // lis r4,0x8000
-            for (u32 i = 0; i < *(u32*)((u8*)func_80043F18(&holder) + 0x620); i++) {
-                void* actorAcc = func_8016FE34(func_800F6EAC(func_80043F18(&holder), i));
+            CTaskGame_enumListCtor(&holder);
+            func_800F4A98(CTaskGame_enumListGet(&holder), 0x80000000, 0);  // lis r4,0x8000
+            for (u32 i = 0; i < *(u32*)((u8*)CTaskGame_enumListGet(&holder) + 0x620); i++) {
+                void* actorAcc = func_8016FE34(func_800F6EAC(CTaskGame_enumListGet(&holder), i));
                 // ((cf::CActorParam*)actorAcc)->CActorParam_findGaugeEntry(acc->3F10) -> hit result (or 0)
                 void* res = ((cf::CActorParam*)actorAcc)->CActorParam_findGaugeEntry(acc->field_3F10);
                 if (res != nullptr) {               // beq .L_800EFD38
@@ -2524,16 +2524,16 @@ extern "C" s32 func_800EC918(
             f32 f28b = (artsData != nullptr) ? *(f32*)((u8*)artsData + 0x60)
                                              : lbl_eu_80666DDC;
             EnumListHolder holder;
-            func_80043D90(&holder);
-            func_800F4A98(func_80043F18(&holder), 0x100, 0);  // li r4,0x100; li r5,0
+            CTaskGame_enumListCtor(&holder);
+            func_800F4A98(CTaskGame_enumListGet(&holder), 0x100, 0);  // li r4,0x100; li r5,0
 
             void* idObj = ((cf::CfObject*)((u8*)pc + 0x3E9C))->CfObject_getPosVector();   // slot 0xAC
 
             // __ct__800FB044(list, f28b, idObj, 8)
-            __ct__800FB044(func_80043F18(&holder), f28b, idObj, 8);
+            __ct__800FB044(CTaskGame_enumListGet(&holder), f28b, idObj, 8);
 
-            for (u32 i = 0; i < *(u32*)((u8*)func_80043F18(&holder) + 0x620); i++) {
-                void* actorAcc = func_8016FE34(func_800F6EAC(func_80043F18(&holder), i));
+            for (u32 i = 0; i < *(u32*)((u8*)CTaskGame_enumListGet(&holder) + 0x620); i++) {
+                void* actorAcc = func_8016FE34(func_800F6EAC(CTaskGame_enumListGet(&holder), i));
                 // ((cf::CActorParam*)actorAcc)->CActorParam_addHate(pc, 0.0f, 0.0f, (f32)(s32)r15)
                 ((cf::CfObjectActor*)actorAcc)->CActorParam_addHate(pc, lbl_eu_80666DDC, lbl_eu_80666DDC, (f32)(s32)r15);
             }
@@ -2858,25 +2858,25 @@ extern "C" s32 func_800EC918(
         // Single enum-list holder reused by all three passes (retail r1+0x58);
         // destructor once at the end.
         EnumListHolder holder;
-        func_80043D90(&holder);
+        CTaskGame_enumListCtor(&holder);
 
         // Pass 1 (0x800F14B4-0x800F15C0): filter (0x20, 0x800) then
         // __ct__800FB044(list, f28, pc->subIdent->vfAC(), 0);
         // apply event 0x58 to every listed actor via recursion.
         {
-            void* list = func_80043F18(&holder);
+            void* list = CTaskGame_enumListGet(&holder);
             func_800F4A98(list, 0x20, 0x800);
 
             void* idObj = ((cf::CfObject*)((u8*)pc + 0x3E9C))->CfObject_getPosVector();
 
-            list = func_80043F18(&holder);
+            list = CTaskGame_enumListGet(&holder);
             __ct__800FB044(list, f28, idObj, 0);
 
             for (u32 i = 0;; i++) {
-                void* l = func_80043F18(&holder);
+                void* l = CTaskGame_enumListGet(&holder);
                 u32 count = *(u32*)((u8*)l + 0x620);
                 if (i >= count) break;
-                void* actorAcc = func_8016FE34(func_800F6EAC(func_80043F18(&holder), i));
+                void* actorAcc = func_8016FE34(func_800F6EAC(CTaskGame_enumListGet(&holder), i));
                 func_800EC918(self, pc, (EC918_BattleObjAccessor*)actorAcc,
                               &eventWorkspace.case243Event, tgt);
             }
@@ -2886,10 +2886,10 @@ extern "C" s32 func_800EC918(
         // every actor except the acc itself.
         {
             for (u32 i = 0;; i++) {
-                void* l = func_80043F18(&holder);
+                void* l = CTaskGame_enumListGet(&holder);
                 u32 count = *(u32*)((u8*)l + 0x620);
                 if (i >= count) break;
-                void* actorAcc = func_8016FE34(func_800F6EAC(func_80043F18(&holder), i));
+                void* actorAcc = func_8016FE34(func_800F6EAC(CTaskGame_enumListGet(&holder), i));
                 if (actorAcc == acc) continue; // cmplw r3,r24; beq
                 ((cf::CBattleState*)((u8*)actorAcc + 0x08))->CBattleState_clearStatusId(0x0B);
             }
@@ -2902,19 +2902,19 @@ extern "C" s32 func_800EC918(
         // __ct__800FB044(list, f28, pc->subIdent->vfAC(), 8);
         // apply scaled arts damage to each listed actor.
         {
-            void* list = func_80043F18(&holder);
+            void* list = CTaskGame_enumListGet(&holder);
             func_800F4A98(list, 0x100, 0);
 
             void* idObj = ((cf::CfObject*)((u8*)pc + 0x3E9C))->CfObject_getPosVector();
 
-            list = func_80043F18(&holder);
+            list = CTaskGame_enumListGet(&holder);
             __ct__800FB044(list, f28, idObj, 8);
 
             for (u32 i = 0;; i++) {
-                void* l = func_80043F18(&holder);
+                void* l = CTaskGame_enumListGet(&holder);
                 u32 count = *(u32*)((u8*)l + 0x620);
                 if (i >= count) break;
-                void* actorAcc = func_8016FE34(func_800F6EAC(func_80043F18(&holder), i));
+                void* actorAcc = func_8016FE34(func_800F6EAC(CTaskGame_enumListGet(&holder), i));
                 if (actorAcc == acc) continue; // cmplw r3,r24; beq .L_800F1700
 
                 // skip actors whose subIdent->vf4C() == pc->field_3F10
@@ -3187,15 +3187,15 @@ extern "C" s32 func_800EC918(
         // fallback: random party member from enum list
         {
             EnumListHolder holder;
-            func_80043D90(&holder);
-            void* list = func_80043F18(&holder);
+            CTaskGame_enumListCtor(&holder);
+            void* list = CTaskGame_enumListGet(&holder);
             func_800F4A98(list, 0x20, 0x800);
 
-            void* l = func_80043F18(&holder);
+            void* l = CTaskGame_enumListGet(&holder);
             s32 count = *(s32*)((u8*)l + 0x620);
             if (count > 0) {
                 s32 idx = rand() % count;        // divwu/mullw/subf
-                void* item = func_800F6EAC(func_80043F18(&holder), (u32)idx);
+                void* item = func_800F6EAC(CTaskGame_enumListGet(&holder), (u32)idx);
                 evt->field_10 = *(u32*)((u8*)item + 0x74);
             }
             __dt__80043E88(&holder, -1);
@@ -3388,10 +3388,10 @@ extern "C" s32 func_800EC918(
 
     case 283: {
         EnumListHolder actorList;
-        func_80043D90(&actorList);                           // walker ctor @stack 0x48
-        func_800F4A98(func_80043F18(&actorList), 0x80000000, 0);  // lis r4,0x8000 ; li r5,0
-        for (s32 i = 0; i < *(s32*)((u8*)func_80043F18(&actorList) + 0x620); i++) {
-            void* actor = func_8016FE34(func_800F6EAC(func_80043F18(&actorList), i));
+        CTaskGame_enumListCtor(&actorList);                           // walker ctor @stack 0x48
+        func_800F4A98(CTaskGame_enumListGet(&actorList), 0x80000000, 0);  // lis r4,0x8000 ; li r5,0
+        for (s32 i = 0; i < *(s32*)((u8*)CTaskGame_enumListGet(&actorList) + 0x620); i++) {
+            void* actor = func_8016FE34(func_800F6EAC(CTaskGame_enumListGet(&actorList), i));
             void* result = ((cf::CActorParam*)actor)->CActorParam_findGaugeEntry(*(u32*)((u8*)acc + 0x3F10));
             if (result != nullptr) {
                 // Each vector component is evaluated independently in the original.
@@ -3439,10 +3439,10 @@ extern "C" s32 func_800EC918(
             }
             // actor-list walker, filter (0x20, 0x800)
             EnumListHolder actorList;
-            func_80043D90(&actorList);
-            func_800F4A98(func_80043F18(&actorList), 0x20, 0x800);
-            for (s32 i = 0; i < *(s32*)((u8*)func_80043F18(&actorList) + 0x620); i++) {
-                void* actor = func_8016FE34(func_800F6EAC(func_80043F18(&actorList), i));
+            CTaskGame_enumListCtor(&actorList);
+            func_800F4A98(CTaskGame_enumListGet(&actorList), 0x20, 0x800);
+            for (s32 i = 0; i < *(s32*)((u8*)CTaskGame_enumListGet(&actorList) + 0x620); i++) {
+                void* actor = func_8016FE34(func_800F6EAC(CTaskGame_enumListGet(&actorList), i));
                 if (actor != nullptr && actor != acc) {   // cmplw r3,r24 ; beq
                     SubAccessor* sub = (SubAccessor*)((u8*)actor + 8);
                     for (s32 j = 0; j < 0x20; j++) {  // vfunc 0x58 list
@@ -3643,7 +3643,7 @@ func_800A26A4(obj, 0, (void*)(uintptr_t)((u32)((cf::CActorParam*)acc)->CActorPar
             r28 = 0;
         }
         func_80135380((u8)r28);
-        func_802A30DC(pc, r27);
+        CCharVoiceMan_EnqueueArtsVoice(pc, r27);
         return 1;                                      // li r3,1 ; b .L_800F41D4
     }
 
@@ -4376,7 +4376,7 @@ extern "C" void func_800D9978(void* selfV, void* actorV) {
 
         if (acc->field_3F00 & 0x4) {
 ((cf::CfObject*)acc->field_3ED4)->CfObject_notifyActiveMember();
-            func_802A2210(actor);
+            CCharVoiceMan_LatchPendingVoiceId(actor);
         }
     }
 }
@@ -4460,11 +4460,11 @@ void func_800D9CA0(void* mgrV, void* targetV){
 
         // Enum list iteration
         EnumListHolder holder;
-        func_80043D90(&holder);
-        func_800F4A98(func_80043F18(&holder), 0x20, 0);
+        CTaskGame_enumListCtor(&holder);
+        func_800F4A98(CTaskGame_enumListGet(&holder), 0x20, 0);
 
-        for(u32 i = 0; i < ((cf::CVisionEnumList*)func_80043F18(&holder))->count; i++){
-            void* element = func_8016FE34(func_800F6EAC(func_80043F18(&holder), i));
+        for(u32 i = 0; i < ((cf::CVisionEnumList*)CTaskGame_enumListGet(&holder))->count; i++){
+            void* element = func_8016FE34(func_800F6EAC(CTaskGame_enumListGet(&holder), i));
             ((cf::CActorParam*)element)->CActorParam_setupActorState();
             ((cf::CActorParam*)element)->CActorParam_refreshBattleStatus();
             ((cf::CActorParam*)element)->CActorParam_initStatusCounter();
@@ -4479,9 +4479,9 @@ void func_800D9CA0(void* mgrV, void* targetV){
 extern "C" void* getCfObjectPc__FPQ22cf12CfObjectMove(void*);
 extern "C" void func_802A1C68(void*);
 extern "C" void func_802773EC(void*, void*);
-extern "C" void func_802A2EEC(void*);
+extern "C" void CCharVoiceMan_EnqueueDownedActorVoice(void*);
 extern "C" void func_8027F2DC(void*);
-extern "C" void func_802A2F54(void*);
+extern "C" void CCharVoiceMan_EnqueueFreqAndLevelVoice(void*);
 extern "C" void func_800FB270(void*, void*, f32, f32, f32, s32);
 extern "C" void __ct__800FBA18(void*, f32, f32, f32, s32);
 extern "C" void func_800FB5AC(void*, void*, f32, f32, f32, f32, f32, s32);
@@ -4500,7 +4500,7 @@ extern f32 lbl_eu_80666E28;
 extern f32 lbl_eu_80666E18;
 extern const f32 lbl_eu_8066A1F8;   // const form aligned with CChain.hpp / CfObjectEne.hpp
 extern "C" s32 getCurrentSlotIndex__Q22cf13CfGameManagerFv(void);
-extern "C" u32 func_8004C5EC(void*);
+extern "C" u32 getAnimModelId(void*);
 
 void func_800DA0A4(void* self_, void* actor_) {
     cf::CBattleManager* mgr = (cf::CBattleManager*)self_;
@@ -4591,7 +4591,7 @@ void func_800DA0A4(void* self_, void* actor_) {
     }
 
     EnumListHolder holder;
-    func_80043D90(&holder);
+    CTaskGame_enumListCtor(&holder);
 
     // Range value: scaled target-id (u16 at subObj+0x64).
     convA.w[1] = (u32)subObj->field_64 ^ 0x80000000;
@@ -4696,49 +4696,49 @@ f32 gauge = ((cf::CfObjectActor*)actor)->CfObjectActor_getAdjustedFacing();
 
     switch (splashKind) {
     case 1:
-        func_800F4A98(func_80043F18(&holder), tblWord, 0x1000);
-        func_800FB270(func_80043F18(&holder), &hitPos, power, range, gauge, dmgKind);
-        __ct__800FB044(func_80043F18(&holder), power, &hitPos, 0);
+        func_800F4A98(CTaskGame_enumListGet(&holder), tblWord, 0x1000);
+        func_800FB270(CTaskGame_enumListGet(&holder), &hitPos, power, range, gauge, dmgKind);
+        __ct__800FB044(CTaskGame_enumListGet(&holder), power, &hitPos, 0);
         break;
     case 2:
-        func_800F4A98(func_80043F18(&holder), tblWord, 0x1000);
-        func_800FB270(func_80043F18(&holder), &hitPos, power, range,
+        func_800F4A98(CTaskGame_enumListGet(&holder), tblWord, 0x1000);
+        func_800FB270(CTaskGame_enumListGet(&holder), &hitPos, power, range,
                       gauge + lbl_eu_8066A1F8, dmgKind);
-        __ct__800FB044(func_80043F18(&holder), power, &hitPos, 0);
+        __ct__800FB044(CTaskGame_enumListGet(&holder), power, &hitPos, 0);
         break;
     case 3:
-        func_800F4A98(func_80043F18(&holder), tblWord, 0x1000);
-        func_800FB5AC(func_80043F18(&holder), &hitPos, power, range,
+        func_800F4A98(CTaskGame_enumListGet(&holder), tblWord, 0x1000);
+        func_800FB5AC(CTaskGame_enumListGet(&holder), &hitPos, power, range,
                       gauge + lbl_eu_8066A1F8 * lbl_eu_80666DE8, range,
                       gauge - lbl_eu_8066A1F8 * lbl_eu_80666DE8, dmgKind);
-        __ct__800FB044(func_80043F18(&holder), power, &hitPos, 0);
+        __ct__800FB044(CTaskGame_enumListGet(&holder), power, &hitPos, 0);
         break;
     case 4:
-        func_800F4A98(func_80043F18(&holder), tblWord, 0x1000);
-        __ct__800FB044(func_80043F18(&holder), power, &hitPos, dmgKind);
+        func_800F4A98(CTaskGame_enumListGet(&holder), tblWord, 0x1000);
+        __ct__800FB044(CTaskGame_enumListGet(&holder), power, &hitPos, dmgKind);
         break;
     case 5: {
         convB.w[1] = (u32)subObj->field_64 ^ 0x80000000;
         range = (f32)(convB.d - lbl_eu_80666E08) / lbl_eu_80666E00;
-        func_800F4A98(func_80043F18(&holder), tblWord, 0x1000);
-        __ct__800FBA18(func_80043F18(&holder), power, range, gauge, dmgKind);
-        __ct__800FB044(func_80043F18(&holder), power, &hitPos, 0);
+        func_800F4A98(CTaskGame_enumListGet(&holder), tblWord, 0x1000);
+        __ct__800FBA18(CTaskGame_enumListGet(&holder), power, range, gauge, dmgKind);
+        __ct__800FB044(CTaskGame_enumListGet(&holder), power, &hitPos, 0);
         break;
     }
     case 6: {
         convB.w[1] = (u32)subObj->field_64 ^ 0x80000000;
         range = (f32)(convB.d - lbl_eu_80666E08) / lbl_eu_80666E00;
         void* pos = ((cf::CfObject*)(u8*)res + 0x3E9C)->CfObject_getPosVector();
-        func_800F4A98(func_80043F18(&holder), tblWord, 0x1000);
-        __ct__800FB044(func_80043F18(&holder), range, pos, dmgKind);
+        func_800F4A98(CTaskGame_enumListGet(&holder), tblWord, 0x1000);
+        __ct__800FB044(CTaskGame_enumListGet(&holder), range, pos, dmgKind);
         break;
     }
     case 7:
-        func_800F4A98(func_80043F18(&holder), tblWord, 0x1000);
+        func_800F4A98(CTaskGame_enumListGet(&holder), tblWord, 0x1000);
         break;
     default: {
         // empty the enum list.
-        void* list = func_80043F18(&holder);
+        void* list = CTaskGame_enumListGet(&holder);
         *(u32*)((u8*)list + 0x620) = 0;
         *(u32*)((u8*)list + 0x3030) = 0;
         if (subObj->field_5C == 2) {
@@ -4752,7 +4752,7 @@ f32 gauge = ((cf::CfObjectActor*)actor)->CfObjectActor_getAdjustedFacing();
     if (subObj->field_5C == 2) {
         bool registered = false;
         for (u32 i = 0;; i++) {
-            void* list = func_80043F18(&holder);
+            void* list = CTaskGame_enumListGet(&holder);
             if (i >= *(u32*)((u8*)list + 0x620)) break;
             if (func_800F6E98(list, i) == *(void**)((u8*)actor + 0x3F10)) {
                 registered = true;
@@ -4760,7 +4760,7 @@ f32 gauge = ((cf::CfObjectActor*)actor)->CfObjectActor_getAdjustedFacing();
             }
         }
         if (!registered) {
-            func_800F6D50(func_80043F18(&holder), (u32)*(void**)((u8*)actor + 0x3F10));
+            func_800F6D50(CTaskGame_enumListGet(&holder), (u32)*(void**)((u8*)actor + 0x3F10));
         }
     }
 
@@ -4825,9 +4825,9 @@ f32 gauge = ((cf::CfObjectActor*)actor)->CfObjectActor_getAdjustedFacing();
             }
         }
         func_8027F2DC(actor);
-        func_802A2F54(actor);
+        CCharVoiceMan_EnqueueFreqAndLevelVoice(actor);
     } else {
-        func_802A2EEC(actor);
+        CCharVoiceMan_EnqueueDownedActorVoice(actor);
         if (sub->mFlagsArray[1].flags & 0x02000000) {
             func_80109784(*(void**)((u8*)actor + 0x3F10), 2, 0x10);
         } else if (sub->mFlagsArray[1].flags & 0x01000000) {
@@ -5174,7 +5174,7 @@ void func_800DBACC(void* self, BattleObjAccessor* arg1, void* arg2, void* move_)
         if (!blocked) blocked = func_80148778((u8*)arg2 + 8, 0x106) != 0;
         // Extra-object page gate.
         if (!blocked && (*(void**)((u8*)tgt + 0x3F60)) == nullptr) blocked = true;
-        if (!blocked && func_8004C5EC((*(void**)((u8*)tgt + 0x3F60))) == 0x31) blocked = true;
+        if (!blocked && getAnimModelId((*(void**)((u8*)tgt + 0x3F60))) == 0x31) blocked = true;
 
         if (!blocked) {
             f32 chance = lbl_eu_80666DDC;
@@ -7169,10 +7169,10 @@ done1744_1B8C:;
         ev.field_20 = lbl_eu_80666E68;
         ev.field_24 = lbl_eu_80666DDC;
         EnumListHolder holder;
-        func_80043D90(&holder);
-        func_800F4A98(func_80043F18(&holder), 0x8000, 0);
-        for (u32 i = 0; i < *(u32*)((u8*)func_80043F18(&holder) + 0x620); i++) {
-            void* o = func_8016FE34(func_800F6EAC(func_80043F18(&holder), i));
+        CTaskGame_enumListCtor(&holder);
+        func_800F4A98(CTaskGame_enumListGet(&holder), 0x8000, 0);
+        for (u32 i = 0; i < *(u32*)((u8*)CTaskGame_enumListGet(&holder) + 0x620); i++) {
+            void* o = func_8016FE34(func_800F6EAC(CTaskGame_enumListGet(&holder), i));
             if (o != arg2) func_800EAA2C(self, arg1, o, &ev, move);
         }
         __dt__80043E88(&holder, -1);
@@ -7675,10 +7675,10 @@ postSwitch:
             ev.field_20 = lbl_eu_80666E68;
             ev.field_24 = lbl_eu_80666DDC;
             EnumListHolder holder;
-            func_80043D90(&holder);
-            func_800F4A98(func_80043F18(&holder), 0x8000, 0);
-            for (u32 i = 0; i < ((cf::CVisionEnumList*)func_80043F18(&holder))->count; i++) {
-                void* o = func_8016FE34(func_800F6EAC(func_80043F18(&holder), i));
+            CTaskGame_enumListCtor(&holder);
+            func_800F4A98(CTaskGame_enumListGet(&holder), 0x8000, 0);
+            for (u32 i = 0; i < ((cf::CVisionEnumList*)CTaskGame_enumListGet(&holder))->count; i++) {
+                void* o = func_8016FE34(func_800F6EAC(CTaskGame_enumListGet(&holder), i));
                 if (o != target) {
                     func_800EAA2C(self, attacker, o, &ev, move);
                 }
@@ -8193,7 +8193,7 @@ struct E1B5C_Workspace {
 extern "C" void func_8027750C(void*, void*);
 extern "C" void func_8027D478(void*, void*);
 extern "C" void func_80274B24(void*, void*);
-extern "C" void func_802A1D04(void*, void*);
+extern "C" void CCharVoiceMan_HookBattleSlotVoice(void*, void*);
 extern "C" void func_800E2594(void*, void*, void*, void*);
 
 void func_800E1B5C(void* mgr, void* actor) {
@@ -8238,12 +8238,12 @@ void func_800E1B5C(void* mgr, void* actor) {
             // member's 0x118 hook with the shared float constant.
             if (((E1B5C_TargetObj*)targetPtr)->flags_78 & 0x8000) {
                 EnumListHolder holder;
-                func_80043D90(&holder);
-                func_800F4A98(func_80043F18(&holder), 0x20, 0);
-                for (u32 i = 0; i < *(u32*)((u8*)func_80043F18(&holder) + 0x620);
+                CTaskGame_enumListCtor(&holder);
+                func_800F4A98(CTaskGame_enumListGet(&holder), 0x20, 0);
+                for (u32 i = 0; i < *(u32*)((u8*)CTaskGame_enumListGet(&holder) + 0x620);
                      i++) {
                     cf::CActorParam* o = (cf::CActorParam*)func_8016FE34(
-                        func_800F6EAC(func_80043F18(&holder), i));
+                        func_800F6EAC(CTaskGame_enumListGet(&holder), i));
                     o->CActorParam_setHp(lbl_eu_80666DDC);
                 }
                 __dt__80043E88(&holder, -1);
@@ -8281,7 +8281,7 @@ scan2:
                 func_8027D478((u8*)mgr + 0x20C8, actor);
             }
             func_80274B24((u8*)mgr + 0x2194, actor);
-            func_802A1D04(actor, action);
+            CCharVoiceMan_HookBattleSlotVoice(actor, action);
             func_800E2594(mgr, actor, src, action);
             if (((E1B5C_ObjView*)action)->field_3F00 & 0x4) {
             void* h = ((E1B5C_ObjView*)action)->field_3ED4;
@@ -8733,8 +8733,8 @@ extern "C" void func_800E2A9C(cf::CBattleManager* self, cf::CfObjectActor* attac
             amt = (s32)((f64)d + (d > 0.0f ? 0.5 : -0.5));
             ((cf::CActorParam*)(attacker))->CActorParam_applyDamage((float)((f64)(-amt)), (int)(2), (int)(0), (int)(0));
         }
-        func_802A26D8(attacker, target, (void*)amt);
-        func_802A25EC(target);
+        CCharVoiceMan_EnqueueDamageVoice(attacker, target, (void*)amt);
+        CCharVoiceMan_ClearPlayerVoiceCount(target);
         func_8027F848(target, (s32)(move->field_5C * f27), move);
         ((cf::CActorParam*)(attacker))->CActorParam_applyEventStatus((cf::CActorParam12Arg*)(move));
 
@@ -8752,7 +8752,7 @@ extern "C" void func_800E2A9C(cf::CBattleManager* self, cf::CfObjectActor* attac
             f32 d = move->field_5C * f26;
             s32 r28 = (s32)((f64)d + (d > 0.0f ? 0.5 : -0.5));
             if (move->field_50 == nullptr) return;
-            if ((move->field_74 & 0x2) || (move->field_74 & 0x60)) func_802A24B4(attacker);
+            if ((move->field_74 & 0x2) || (move->field_74 & 0x60)) CCharVoiceMan_HookPendingBattleVoice(attacker);
 
             // ---- 0x3CC8: per-tag attack parameter emission ----
             if (move->field_50 == nullptr) return;          // 0x3CB0
@@ -8908,10 +8908,10 @@ extern "C" void func_800E2A9C(cf::CBattleManager* self, cf::CfObjectActor* attac
                 if (sub2 != cf::CfGameManager::getPlayer(0)) {
                     struct EnumListHolder { void* list; u32 handle; };
                     EnumListHolder holder;
-                    func_80043D90(&holder);
-                    void* list = func_80043F18(&holder);
+                    CTaskGame_enumListCtor(&holder);
+                    void* list = CTaskGame_enumListGet(&holder);
                     func_800F4A98(list, 0x20, 0);
-                    list = func_80043F18(&holder);
+                    list = CTaskGame_enumListGet(&holder);
                     if (*(u32*)((u8*)list + 0x620) == 2) {
                         r15 = 1;
                     } else {
@@ -8931,8 +8931,8 @@ extern "C" void func_800E2A9C(cf::CBattleManager* self, cf::CfObjectActor* attac
             else if (move->field_74 & 0x00000800) mvType = 3;
 
             ((cf::CActorParam*)(target))->CActorParam_applyDamage((float)((f64)(-r28)), (int)(mvType), (int)((u32)r15), (int)(move->field_74));
-            func_802A26D8(target, attacker, (void*)(-r28));
-            func_802A25EC(attacker);
+            CCharVoiceMan_EnqueueDamageVoice(target, attacker, (void*)(-r28));
+            CCharVoiceMan_ClearPlayerVoiceCount(attacker);
             func_8027F848(attacker, r28, move);
             if (move->field_50 == nullptr) return;
 
@@ -8940,11 +8940,11 @@ extern "C" void func_800E2A9C(cf::CBattleManager* self, cf::CfObjectActor* attac
 
             // ---- 0x4A44: element-type sound selection ----
             {
-                void* elem = func_8005605C((u8*)(*(u32*)((u8*)attacker + 0x3F60)) + 0x10);
+                void* elem = getLiveParamPtr((u8*)(*(u32*)((u8*)attacker + 0x3F60)) + 0x10);
                 if (elem != nullptr) {
                     void* who = (*(u8*)((u8*)elem + 0xC) & 0x80) ? target : attacker;
-                    u8 b8 = *(u8*)((u8*)func_8005605C((u8*)(*(u32*)((u8*)attacker + 0x3F60)) + 0x10) + 0x08);
-                    u16 hA = *(u16*)((u8*)func_8005605C((u8*)(*(u32*)((u8*)attacker + 0x3F60)) + 0x10) + 0x0A);
+                    u8 b8 = *(u8*)((u8*)getLiveParamPtr((u8*)(*(u32*)((u8*)attacker + 0x3F60)) + 0x10) + 0x08);
+                    u16 hA = *(u16*)((u8*)getLiveParamPtr((u8*)(*(u32*)((u8*)attacker + 0x3F60)) + 0x10) + 0x0A);
                     func_8004513C(who, attacker, hA, b8);
                 } else {
                     u32 sf = *(u32*)((u8*)sub + 0x78);
@@ -9218,7 +9218,7 @@ extern "C" void func_800E2A9C(cf::CBattleManager* self, cf::CfObjectActor* attac
             // ---- 0x5A00 ----
             if (((cf::CActorParam*)(target))->CActorParam_isBattleLocked() != 0) {
                 func_802A2648(attacker, target);
-                func_802A232C(target);
+                CCharVoiceMan_TriggerBattleOrPlainVoice(target);
             } else {
                 bool r14b = true, r15b = true;
                 if (!(localMove.field_74 & 0x100)) {
@@ -9229,7 +9229,7 @@ extern "C" void func_800E2A9C(cf::CBattleManager* self, cf::CfObjectActor* attac
                     int sid = (int)getStatusId(target);
                     if (func_80174C98((u8*)target, &sid, 0x1A) == 0) r14b = false;
                 }
-                func_802A2250(target, attacker, r14b ? 1 : 0);
+                CCharVoiceMan_EnqueueBreakAndGaugeVoice(target, attacker, r14b ? 1 : 0);
             }
 
             applyBattleDamage((cf::CfObjectPc*)attacker, (cf::CfObjectEne*)target);
@@ -9249,14 +9249,14 @@ extern "C" void func_800E2A9C(cf::CBattleManager* self, cf::CfObjectActor* attac
                 // -> 0x6360
             } else if (localMove.field_74 & 0x2) {
                 if (!hasStatus(target, 0xA) && !hasStatus(target, 0xB)) {
-                    func_800BE12C((u8*)attacker + 0x3E9C, 0x2D, 0, -1, 1);
+                    CfObjectMove_setAnimModeArgs((u8*)attacker + 0x3E9C, 0x2D, 0, -1, 1);
                     if (func_802799F0(&self->mChain, target) == 0) {
-                        func_800BE12C((u8*)target + 0x3E9C, 0x2E, 0, -1, 1);
+                        CfObjectMove_setAnimModeArgs((u8*)target + 0x3E9C, 0x2E, 0, -1, 1);
                     }
                 }
             } else if (localMove.field_74 & 0x60) {
                 if (!hasStatus(target, 0xA) && !hasStatus(target, 0xB)) {
-                    func_800BE12C((u8*)attacker + 0x3E9C, 0x2D, 0, -1, 1);
+                    CfObjectMove_setAnimModeArgs((u8*)attacker + 0x3E9C, 0x2D, 0, -1, 1);
                     if (localMove.field_74 & 0x40) {
                         func_800451D8(0xB0, (int)((u8*)target + 0x3E9C));
                     }
@@ -9286,7 +9286,7 @@ extern "C" void func_800E2A9C(cf::CBattleManager* self, cf::CfObjectActor* attac
                             } else {
                                 *(f32*)((u8*)st2 + 0x468) = 0.0f;
                             }
-                            func_800BE12C((u8*)target + 0x3E9C, 0x1D, 0, -1, 1);
+                            CfObjectMove_setAnimModeArgs((u8*)target + 0x3E9C, 0x1D, 0, -1, 1);
                         }
                     } else if (localMove.field_74 & 0x20000) {
                         // ether hit
@@ -9325,13 +9325,13 @@ extern "C" void func_800E2A9C(cf::CBattleManager* self, cf::CfObjectActor* attac
                                     ((cf::CActorParam*)target)->CActorParam_addSecondGauge(1);
                                 }
                             }
-                            func_800BE12C((u8*)target + 0x3E9C, 0x1E, 0, -1, 1);
+                            CfObjectMove_setAnimModeArgs((u8*)target + 0x3E9C, 0x1E, 0, -1, 1);
                         }
                     } else {
                         if (!hasStatus(target, 0x800) && !hasStatus(target, 0x1D) &&
                             !hasStatus(target, 0x801)) {
                             if (r28 > 0) {
-                                func_800BE12C((u8*)target + 0x3E9C, 0x4, 0, -1, 1);
+                                CfObjectMove_setAnimModeArgs((u8*)target + 0x3E9C, 0x4, 0, -1, 1);
                             }
                         }
                     }
@@ -9357,10 +9357,10 @@ extern "C" void func_800E2A9C(cf::CBattleManager* self, cf::CfObjectActor* attac
                 if (sub2 != cf::CfGameManager::getPlayer(0)) {
                     struct EnumListHolder { void* list; u32 handle; };
                     EnumListHolder holder;
-                    func_80043D90(&holder);
-                    void* list = func_80043F18(&holder);
+                    CTaskGame_enumListCtor(&holder);
+                    void* list = CTaskGame_enumListGet(&holder);
                     func_800F4A98(list, 0x20, 0);
-                    list = func_80043F18(&holder);
+                    list = CTaskGame_enumListGet(&holder);
                     if (*(u32*)((u8*)list + 0x620) == 2) {
                         r14 = 1;
                     } else {
@@ -9420,7 +9420,7 @@ extern "C" void func_800E2A9C(cf::CBattleManager* self, cf::CfObjectActor* attac
                     }
                     *(s32*)((u8*)((cf::CfObject*)((u8*)target + 0x3E9C))->CfObject_getCurrentTarget() + 0x1C) = r14b;
                     if (!hasStatus(target, 0x802)) {
-                        func_800BE12C((u8*)target + 0x3E9C, 0x2C, 0, -1, 1);
+                        CfObjectMove_setAnimModeArgs((u8*)target + 0x3E9C, 0x2C, 0, -1, 1);
                     }
                 }
             }
@@ -9581,7 +9581,7 @@ struct BtlEvent {
     u32 mFlags30;      // +0x30
 };
 
-// enum-list holder used by the func_80043D90 / func_80043F18 pair
+// enum-list holder used by the CTaskGame_enumListCtor / CTaskGame_enumListGet pair
 struct EnumHolder {
     void* list;
     u32 handle;
@@ -9702,7 +9702,7 @@ static inline f32 dist3D(void* a, void* b) {
 
 // mActorList1 (reslist at self+0x4) membership walk + "node == sentinel"
 // check, as compiled at 0x70A0-0x70D8 (the subf/or/srwi pair is the inlined
-// reslist node-vs-sentinel test, cf. func_8049D548).
+// reslist node-vs-sentinel test, cf. ScnFilterListIter_notEqual).
 static inline bool inActorList1(void* self, void* item) {
     struct Node { Node* mNext; Node* mPrev; void* mItem; };
     Node* sentinel = *(Node**)((u8*)self + 0x08);
@@ -9814,9 +9814,9 @@ extern "C" void func_800E64CC(cf::CBattleManager* self, void* actor, void* arg5,
             // voice event A (0x7410-0x7494)
             {
                 s32 p = calcPower(move);              // re-computed
-                func_802A26D8(actor, (void*)target, (void*)(size_t)(s32)(rate * (f32)(-p)));
+                CCharVoiceMan_EnqueueDamageVoice(actor, (void*)target, (void*)(size_t)(s32)(rate * (f32)(-p)));
             }
-            func_802A25EC(target);                    // 0x7498
+            CCharVoiceMan_ClearPlayerVoiceCount(target);                    // 0x7498
 
             // voice event B (0x74A0-0x7520)
             {
@@ -10075,7 +10075,7 @@ postLoop:
                 case 0xD5:                            // 0x846C
                 case 0x107:
                     ev.mVal10 = -(s32)bm->mDmg;     // fneg+fctiwz (0x846C-0x848C)
-                    func_802A27F4(target, actor, move);
+                    CCharVoiceMan_EnqueueHurtVoice(target, actor, move);
                     break;
                 case 0xCF:                            // 0x8498
                     if (*(u32*)((u8*)actor + 0x3374) & 0x10000)
@@ -10120,13 +10120,13 @@ postLoop:
                     ev.mF24 = lbl_eu_80666DDC;        // 0.0f
                     {
                         EnumHolder holder;
-                        func_80043D90(&holder);
-                        func_800F4A98(func_80043F18(&holder), 0x80000000, 0);
+                        CTaskGame_enumListCtor(&holder);
+                        func_800F4A98(CTaskGame_enumListGet(&holder), 0x80000000, 0);
                         for (u32 i = 0; ; i++) {
-                            void* list = func_80043F18(&holder);
+                            void* list = CTaskGame_enumListGet(&holder);
                             u32 count = *(u32*)((u8*)list + 0x620);
                             if (i >= count) break;
-                            void* elem = func_8016FE34(func_800F6EAC(func_80043F18(&holder), i));
+                            void* elem = func_8016FE34(func_800F6EAC(CTaskGame_enumListGet(&holder), i));
                             if (elem != target)
                                 func_800EC918(self, actor, elem, &ev, move);
                         }
@@ -10226,11 +10226,11 @@ postLoop:
             }
 
             if (bm->mFlags74 & 0x2) {               // 0x8AEC
-                func_800BE12C((u8*)actor + 0x3E9C, 0x2D, 0, -1, 1);
+                CfObjectMove_setAnimModeArgs((u8*)actor + 0x3E9C, 0x2D, 0, -1, 1);
                 if (func_802799F0((u8*)self + 0x1A8, target) == 0)
-                    func_800BE12C((u8*)target + 0x3E9C, 0x2E, 0, -1, 1);
+                    CfObjectMove_setAnimModeArgs((u8*)target + 0x3E9C, 0x2E, 0, -1, 1);
             } else if (bm->mFlags74 & 0x60) {       // 0x8B40
-                func_800BE12C((u8*)actor + 0x3E9C, 0x2D, 0, -1, 1);
+                CfObjectMove_setAnimModeArgs((u8*)actor + 0x3E9C, 0x2D, 0, -1, 1);
                 if (bm->mFlags74 & 0x40)
                     func_800451D8(0xB0, (u32)(target ? (size_t)((u8*)target + 0x3E9C) : 0));
             } else {
@@ -10268,7 +10268,7 @@ postLoop:
                             md2->mFacing468 = func_80154058(sub);   // 0x8D48
                         }
                     }
-                    func_800BE12C((u8*)target + 0x3E9C, 0x1D, 0, -1, 1);   // 0x8D68
+                    CfObjectMove_setAnimModeArgs((u8*)target + 0x3E9C, 0x1D, 0, -1, 1);   // 0x8D68
                 } else if (bm->mFlags74 & 0x4000) { // 0x8D84
                     BtlMoveData* md = *(BtlMoveData**)((u8*)target + 0x3F60);
                     if (!(md->mFlags530 & 1)) {
@@ -10303,7 +10303,7 @@ postLoop:
                         ((cf::CActorParam*)target)->CActorParam_setGaugeRateB(func_80154134(sub));
                         ((cf::CActorParam*)target)->CActorParam_addSecondGauge(1);
                     }
-                    func_800BE12C((u8*)target + 0x3E9C, 0x1E, 0, -1, 1);   // 0x8F3C
+                    CfObjectMove_setAnimModeArgs((u8*)target + 0x3E9C, 0x1E, 0, -1, 1);   // 0x8F3C
                 } else {
                     void* sub4 = *(void**)((u8*)target + 0x04);
                     int v = *(u32*)((cf::CObjectState*)(sub4))->CObjectState_getStateData();
@@ -10554,12 +10554,12 @@ struct E484_Global6C {      // func_80044DF4 result: f32 at +0x6C
 };
 
 // ---- imports (retail-unmangled names) --------------------------------------
-extern "C" void func_802A2E08();
+extern "C" void CCharVoiceMan_FlagBattleActiveVoice();
 extern "C" void func_8027F0B8();
 extern "C" void func_80295BF4(void*);
 extern "C" void func_80295CC8(void*, void*);
 extern "C" s32 func_801B1E74(void*, s32, void*, s32);
-extern "C" void func_800BF29C(void*, int, int, u32, f32, f32);
+extern "C" void CfObjectMove_relaySubB0Slot54(void*, int, int, u32, f32, f32);
 extern "C" void func_80496294(void*);
 // Retail references func_800D7D24 by its unmangled symbol; route new calls
 // through a C-linkage overload (the C++-mangled definition above is untouched).
@@ -10598,22 +10598,22 @@ extern "C" void func_800E85F0(void* self, void* actor, void* target, void* move)
             // neg/or/srwi pair in retail computes (stat/0x10A result != 0).
             switch (type) {
             case 6:
-                func_800BF29C((u8*)actor + 0x3E9C, 0x67 + (stat != nullptr), 0, 0, lbl_eu_80666DD0, lbl_eu_80666E78);
+                CfObjectMove_relaySubB0Slot54((u8*)actor + 0x3E9C, 0x67 + (stat != nullptr), 0, 0, lbl_eu_80666DD0, lbl_eu_80666E78);
                 break;
             case 4:
-                func_800BF29C((u8*)actor + 0x3E9C, 0x69 + (stat != nullptr), 0, 0, lbl_eu_80666DD0, lbl_eu_80666E78);
+                CfObjectMove_relaySubB0Slot54((u8*)actor + 0x3E9C, 0x69 + (stat != nullptr), 0, 0, lbl_eu_80666DD0, lbl_eu_80666E78);
                 break;
             case 7:
-                func_800BF29C((u8*)actor + 0x3E9C, 0x6B + (stat != nullptr), 0, 0, lbl_eu_80666DD0, lbl_eu_80666E78);
+                CfObjectMove_relaySubB0Slot54((u8*)actor + 0x3E9C, 0x6B + (stat != nullptr), 0, 0, lbl_eu_80666DD0, lbl_eu_80666E78);
                 break;
             case 8:
-                func_800BF29C((u8*)actor + 0x3E9C, 0x6D + (stat != nullptr), 0, 0, lbl_eu_80666DD0, lbl_eu_80666E78);
+                CfObjectMove_relaySubB0Slot54((u8*)actor + 0x3E9C, 0x6D + (stat != nullptr), 0, 0, lbl_eu_80666DD0, lbl_eu_80666E78);
                 break;
             case 9:
-                func_800BF29C((u8*)actor + 0x3E9C, 0x6F + (stat != nullptr), 0, 0, lbl_eu_80666DD0, lbl_eu_80666E78);
+                CfObjectMove_relaySubB0Slot54((u8*)actor + 0x3E9C, 0x6F + (stat != nullptr), 0, 0, lbl_eu_80666DD0, lbl_eu_80666E78);
                 break;
             case 5:
-                func_800BF29C((u8*)actor + 0x3E9C, 0x71 + (stat != nullptr), 0, 0, lbl_eu_80666DD0, lbl_eu_80666E78);
+                CfObjectMove_relaySubB0Slot54((u8*)actor + 0x3E9C, 0x71 + (stat != nullptr), 0, 0, lbl_eu_80666DD0, lbl_eu_80666E78);
                 break;
             }
 
@@ -10817,7 +10817,7 @@ func_800A26A4(arts, (s32)(uintptr_t)((cf::CActorParam*)target)->CActorParam_getS
             SimpleListNode* cur;
             for (cur = sentinel->next; cur != sentinel; cur = cur->next) { cnt++; }
             if (cnt <= 1) {
-                func_802A2E08();
+                CCharVoiceMan_FlagBattleActiveVoice();
                 func_8027F0B8();
                 func_80295BF4((void*)lbl_eu_80664A10);
                 goto e9B54_tail;
@@ -10828,8 +10828,8 @@ func_800A26A4(arts, (s32)(uintptr_t)((cf::CActorParam*)target)->CActorParam_getS
 
         // ---- 0x800EA854: enum-list walk ----
         {
-            func_80043D90(&holder);
-            func_800F4A98(func_80043F18(&holder), 0x20, 0x800);
+            CTaskGame_enumListCtor(&holder);
+            func_800F4A98(CTaskGame_enumListGet(&holder), 0x20, 0x800);
 
             const s32 cArt35 = 0x35;
             const s32 cVal1000 = 0x1000;
@@ -10837,8 +10837,8 @@ func_800A26A4(arts, (s32)(uintptr_t)((cf::CActorParam*)target)->CActorParam_getS
             const s32 cSel5A = 0x5A;
             const s32 cSel13 = 0x13;
 
-            for (u32 i = 0; i < ((cf::CVisionEnumList*)func_80043F18(&holder))->count; i++) {
-                void* obj = func_8016FE34(func_800F6EAC(func_80043F18(&holder), i));
+            for (u32 i = 0; i < ((cf::CVisionEnumList*)CTaskGame_enumListGet(&holder))->count; i++) {
+                void* obj = func_8016FE34(func_800F6EAC(CTaskGame_enumListGet(&holder), i));
                 void* r29 = obj;
                 if (obj == attacker) {                       // 0x800EA8A0
                     if (((cf::CActorParam*)obj)->CActorParam_getStatusTable() &&       // called twice (retail)
@@ -10851,8 +10851,8 @@ func_800A26A4(arts, (s32)(uintptr_t)((cf::CActorParam*)target)->CActorParam_getS
                         ev.field_10 = out14;
                         ev.field_20 = out0c;
                         ev.field_0C = (u16)cEvType2;
-                        for (u32 j = 0; j < ((cf::CVisionEnumList*)func_80043F18(&holder))->count; j++) {
-                            void* sub = func_8016FE34(func_800F6EAC(func_80043F18(&holder), j));
+                        for (u32 j = 0; j < ((cf::CVisionEnumList*)CTaskGame_enumListGet(&holder))->count; j++) {
+                            void* sub = func_8016FE34(func_800F6EAC(CTaskGame_enumListGet(&holder), j));
                             ev.field_00 = (u32)(uintptr_t)((BattleObjAccessor*)sub)->field_3f10;
                             ev.field_04 = (u32)cArt35;
                             ev.field_08 = (u32)cVal1000;
@@ -10895,7 +10895,7 @@ func_800A26A4(arts, (s32)(uintptr_t)((cf::CActorParam*)target)->CActorParam_getS
     }
 
 e9B54_tail:                                                  // 0x800EAAA0
-    func_802A232C(target);
+    CCharVoiceMan_TriggerBattleOrPlainVoice(target);
     func_80174B4C(target, 0x2000000);
 }
 
@@ -11130,7 +11130,7 @@ extern "C" void func_800EA2A4(cf::CBattleManager* mgr, BattleObjAccessor* arg1) 
 // Update dispatch for the battle-manager refresh flags (bits 0x1 player list,
 // 0x2 player pairs, 0x4 vision actors, 0x8 enemy scene, 0x10 raygun, 0x20 /
 // 0x40 targeted filters). Each enabled step re-filters an enum list created by
-// func_80043D90 and broadcasts the given value over vtable slot 0x88 on the
+// CTaskGame_enumListCtor and broadcasts the given value over vtable slot 0x88 on the
 // matching objects.
 extern "C" void func_800EA484(cf::CBattleManager* self, f32 value, int flags) {
 
@@ -11140,27 +11140,27 @@ extern "C" void func_800EA484(cf::CBattleManager* self, f32 value, int flags) {
 
     EnumListHolder h1;    // sp+0x10
     EnumListHolder h2;    // sp+0x08
-    func_80043D90(&h1);
-    func_80043D90(&h2);
+    CTaskGame_enumListCtor(&h1);
+    CTaskGame_enumListCtor(&h2);
 
     if (flags & 0x1) {                                       // 0x800EAFAC
-        func_800F4A98(func_80043F18(&h1), 0x408, 0);
-        for (u32 i = 0; i < ((cf::CVisionEnumList*)func_80043F18(&h1))->count; i++) {
-            void* o = func_800F6EAC(func_80043F18(&h1), i);
+        func_800F4A98(CTaskGame_enumListGet(&h1), 0x408, 0);
+        for (u32 i = 0; i < ((cf::CVisionEnumList*)CTaskGame_enumListGet(&h1))->count; i++) {
+            void* o = func_800F6EAC(CTaskGame_enumListGet(&h1), i);
             void* c = __dynamic_cast(o, 0, &lbl_eu_806618E8, &lbl_eu_806618F0, 0);
             ((cf::CfObject*)c)->CfObject_pushRefreshValue((float)value);
         }
     }
 
     if (flags & 0x2) {                                       // 0x800EB020
-        func_800F4A98(func_80043F18(&h1), (0x40 << 16) + 0x320, 1);
-        func_800F4A98(func_80043F18(&h2), 0x80000, 0);
-        for (u32 i = 0; i < ((cf::CVisionEnumList*)func_80043F18(&h1))->count; i++) {
-            void* o = func_800F6EAC(func_80043F18(&h1), i);
+        func_800F4A98(CTaskGame_enumListGet(&h1), (0x40 << 16) + 0x320, 1);
+        func_800F4A98(CTaskGame_enumListGet(&h2), 0x80000, 0);
+        for (u32 i = 0; i < ((cf::CVisionEnumList*)CTaskGame_enumListGet(&h1))->count; i++) {
+            void* o = func_800F6EAC(CTaskGame_enumListGet(&h1), i);
             void* r28 = __dynamic_cast(o, 0, &lbl_eu_806618E8, &lbl_eu_806618F0, 0);
             ((cf::CfObject*)r28)->CfObject_pushRefreshValue((float)value);
-            for (u32 j = 0; j < ((cf::CVisionEnumList*)func_80043F18(&h2))->count; j++) {
-                void* o2 = func_800F6EAC(func_80043F18(&h2), j);
+            for (u32 j = 0; j < ((cf::CVisionEnumList*)CTaskGame_enumListGet(&h2))->count; j++) {
+                void* o2 = func_800F6EAC(CTaskGame_enumListGet(&h2), j);
                 void* r26 = __dynamic_cast(o2, 0, &lbl_eu_80661970, &lbl_eu_806618F0, 0);
                 if (((E484_TypeObj*)r26)->field_9C == r28)
                     ((cf::CfObject*)r26)->CfObject_pushRefreshValue((float)value);
@@ -11183,9 +11183,9 @@ extern "C" void func_800EA484(cf::CBattleManager* self, f32 value, int flags) {
     }
 
     if (flags & 0x20) {                                      // 0x800EB180
-        func_800F4A98(func_80043F18(&h1), 0x80000, 0);
-        for (u32 i = 0; i < ((cf::CVisionEnumList*)func_80043F18(&h1))->count; i++) {
-            void* o = func_800F6EAC(func_80043F18(&h1), i);
+        func_800F4A98(CTaskGame_enumListGet(&h1), 0x80000, 0);
+        for (u32 i = 0; i < ((cf::CVisionEnumList*)CTaskGame_enumListGet(&h1))->count; i++) {
+            void* o = func_800F6EAC(CTaskGame_enumListGet(&h1), i);
             void* r3 = __dynamic_cast(o, 0, &lbl_eu_80661970, &lbl_eu_806618F0, 0);
             // int local over the u16 field: retail emits a zero-extending
             // lhz but signed cmpi chains.
@@ -11211,9 +11211,9 @@ extern "C" void func_800EA484(cf::CBattleManager* self, f32 value, int flags) {
     }
 
     if (flags & 0x40) {                                      // 0x800EB244
-        func_800F4A98(func_80043F18(&h1), 0x80000, 0);
-        for (u32 i = 0; i < ((cf::CVisionEnumList*)func_80043F18(&h1))->count; i++) {
-            void* o = func_800F6EAC(func_80043F18(&h1), i);
+        func_800F4A98(CTaskGame_enumListGet(&h1), 0x80000, 0);
+        for (u32 i = 0; i < ((cf::CVisionEnumList*)CTaskGame_enumListGet(&h1))->count; i++) {
+            void* o = func_800F6EAC(CTaskGame_enumListGet(&h1), i);
             void* r3 = __dynamic_cast(o, 0, &lbl_eu_80661970, &lbl_eu_806618F0, 0);
             int t = ((E484_TypeObj*)r3)->type8C;
             if ((u32)(t - 0xA1) <= 3 || (u32)(t - 0xC0) <= 2 || t == 0xB8)
@@ -11234,9 +11234,9 @@ extern "C" void func_800EA484(cf::CBattleManager* self, f32 value, int flags) {
             void* r27 = func_8016FE34(findObjectById((s32)vp->field_04));
 ((cf::CfObjectActor*)r26)->CfObjectActor_pushRefreshValue((float)value);
 ((cf::CfObjectActor*)r27)->CfObjectActor_pushRefreshValue((float)value);
-            func_800F4A98(func_80043F18(&h2), 0x80000, 0);
-            for (u32 i = 0; i < ((cf::CVisionEnumList*)func_80043F18(&h2))->count; i++) {
-                void* r29 = __dynamic_cast(func_800F6EAC(func_80043F18(&h2), i), 0, &lbl_eu_80661970, &lbl_eu_806618F0, 0);
+            func_800F4A98(CTaskGame_enumListGet(&h2), 0x80000, 0);
+            for (u32 i = 0; i < ((cf::CVisionEnumList*)CTaskGame_enumListGet(&h2))->count; i++) {
+                void* r29 = __dynamic_cast(func_800F6EAC(CTaskGame_enumListGet(&h2), i), 0, &lbl_eu_80661970, &lbl_eu_806618F0, 0);
                 // Match the cast object's +0x9C pointer against either vision
                 // actor (or its embedded move sub-object at +0x3E9C).
                 if ((r26 != nullptr && ((E484_TypeObj*)r29)->field_9C == (u8*)r26 + 0x3E9C) ||
@@ -12350,11 +12350,11 @@ void func_800F3FC8(cf::CBattleManager* mgr) {
 // Performs battle cleanup: chain maintenance, enum list iteration with virtual calls,
 // actor list flag updates, and action cleanup.
 // Retail linker names for helpers called from func_800F4034 / func_800F41A0.
-extern "C" void func_80197BA4(void*, u32, u32);
-extern "C" void func_8015B11C();
+extern "C" void CPartsChange_ResetBattleEntry(void*, u32, u32);
+extern "C" void CItem_clearSharedBox();
 extern "C" s32 CfRes_checkFlags_48000();
 extern "C" void func_8013E424(void*, int);
-extern "C" void func_802A3144(void*);
+extern "C" void CCharVoiceMan_EnqueueItemVoice(void*);
 
 void func_800F4034(cf::CBattleManager* mgr) {
     // Chain maintenance
@@ -12363,8 +12363,8 @@ void func_800F4034(cf::CBattleManager* mgr) {
 
     // Setup enum list holder
     EnumListHolder holder;
-    func_80043D90(&holder);
-    void* list = func_80043F18(&holder);
+    CTaskGame_enumListCtor(&holder);
+    void* list = CTaskGame_enumListGet(&holder);
     func_800F4A98(list, 0x20, 0);
 
     // Loop with check at bottom, using unsigned comparison to match retail cmplw.
@@ -12375,7 +12375,7 @@ void func_800F4034(cf::CBattleManager* mgr) {
     goto check;
 loop:
     {
-        element = func_8016FE34(func_800F6EAC(func_80043F18(&holder), i));
+        element = func_8016FE34(func_800F6EAC(CTaskGame_enumListGet(&holder), i));
         // Retail uses canonical r12 virtual dispatch (slots 0xB0/0xB8/0x314).
         ((cf::CActorParam*)element)->CActorParam_setupActorState();
         ((cf::CActorParam*)element)->CActorParam_refreshBattleStatus();
@@ -12384,7 +12384,7 @@ loop:
     }
 check:
     {
-        void* list = func_80043F18(&holder);
+        void* list = CTaskGame_enumListGet(&holder);
         if (i < *(u32*)((u8*)list + 0x620)) goto loop;
     }
 
@@ -12407,7 +12407,7 @@ check:
                 void* result = func_800AD860(base);
                 if (result != nullptr) {
                     *(u32*)((u8*)result + 0x3f08) |= 0x8000000;
-                    func_80197BA4(result, 0, 0);
+                    CPartsChange_ResetBattleEntry(result, 0, 0);
                 }
             }
 
@@ -12421,7 +12421,7 @@ check:
             mgr->mActorList2.mStartNodePtr->mNext;
         while (cur != mgr->mActorList2.mStartNodePtr) {
             cf::CfObjectActor* actor = cur->mItem;
-            func_800BE12C((u8*)actor + 0x3e9c, 0x31, 0, -1, 1);
+            CfObjectMove_setAnimModeArgs((u8*)actor + 0x3e9c, 0x31, 0, -1, 1);
             cur = cur->mNext;
         }
     }
@@ -12444,20 +12444,20 @@ void func_800F41A0(cf::CBattleManager* mgr) {
 
     // Main path: set up enum list and iterate
     {
-        // func_80043D90 / func_80043F18 / __dt__80043E88 come from
+        // CTaskGame_enumListCtor / CTaskGame_enumListGet / __dt__80043E88 come from
         // CVision.hpp as extern "C" (void* params); no local re-declaration.
         extern void func_800F4A98(void*, u32, u32);
 
         EnumListHolder holder;
-        func_80043D90(&holder);
-        void* list = func_80043F18(&holder);
+        CTaskGame_enumListCtor(&holder);
+        void* list = CTaskGame_enumListGet(&holder);
         func_800F4A98(list, 0x20, 0x800);
 
-        list = func_80043F18(&holder);
+        list = CTaskGame_enumListGet(&holder);
         if (*(u32*)((u8*)list + 0x620) != 0) {
             func_8013E424(lbl_eu_80573EEC, 0);
 
-            func_8015B11C();
+            CItem_clearSharedBox();
 
             for (int i = 0; i < 3; i++) {
                 extern void* getPlayer__Q22cf13CfGameManagerFi(int);
@@ -12465,13 +12465,13 @@ void func_800F41A0(cf::CBattleManager* mgr) {
                 if (player != nullptr) {
                     if (*(u16*)((u8*)player + 0x8c) == 6) {
                         void* action = func_8016FE34(player);
-                        func_802A3144(action);
+                        CCharVoiceMan_EnqueueItemVoice(action);
                         goto cleanup;
                     }
                 }
             }
         } else {
-            func_8015B11C();
+            CItem_clearSharedBox();
         }
 
 cleanup:
@@ -12480,7 +12480,7 @@ cleanup:
     return;
 
 early_return:
-    func_8015B11C();
+    CItem_clearSharedBox();
 }
 
 // (.data absorb deleted: typified above as B080/B110/B784/B790 +

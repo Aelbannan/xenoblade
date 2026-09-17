@@ -1,7 +1,7 @@
 // Isolated Broadway/Gekko paired-single backend for named CfCam kernels.
 // This file is included only by CfCam.cpp; it does not provide shared helpers.
 #ifdef __MWERKS__
-extern "C" void func_8006BB04(register nw4r::math::VEC3* vector, register f32 scale) {
+extern "C" void cfCam_psScaleVec(register nw4r::math::VEC3* vector, register f32 scale) {
     register f32 source, result;
     ASM (
         psq_l    source, 0(vector), 0, 0
@@ -13,7 +13,7 @@ extern "C" void func_8006BB04(register nw4r::math::VEC3* vector, register f32 sc
     )
 }
 
-extern "C" void func_8006C6E8(register nw4r::math::VEC3* out,
+extern "C" void cfCam_psAddVec3(register nw4r::math::VEC3* out,
                                register const nw4r::math::VEC3* a,
                                register const nw4r::math::VEC3* b) {
     nw4r::math::VEC3 sum;
@@ -34,7 +34,7 @@ extern "C" void func_8006C6E8(register nw4r::math::VEC3* out,
     out->z = sum.z;
 }
 
-extern "C" f32 func_80071CF4(register const nw4r::math::VEC3* a,
+extern "C" f32 cfCam_distSqVec3(register const nw4r::math::VEC3* a,
                                register const nw4r::math::VEC3* b) {
     nw4r::math::VEC3 copy;
     nw4r::math::VEC3 delta;
@@ -64,13 +64,13 @@ extern "C" f32 func_80071CF4(register const nw4r::math::VEC3* a,
     return work0;
 }
 #else
-extern "C" void func_8006BB04(nw4r::math::VEC3* vector, f32 scale) {
+extern "C" void cfCam_psScaleVec(nw4r::math::VEC3* vector, f32 scale) {
     vector->x *= scale;
     vector->y *= scale;
     vector->z *= scale;
 }
 
-extern "C" void func_8006C6E8(nw4r::math::VEC3* out,
+extern "C" void cfCam_psAddVec3(nw4r::math::VEC3* out,
                                const nw4r::math::VEC3* a,
                                const nw4r::math::VEC3* b) {
     out->x = a->x + b->x;
@@ -78,7 +78,7 @@ extern "C" void func_8006C6E8(nw4r::math::VEC3* out,
     out->z = a->z + b->z;
 }
 
-extern "C" f32 func_80071CF4(const nw4r::math::VEC3* a,
+extern "C" f32 cfCam_distSqVec3(const nw4r::math::VEC3* a,
                                const nw4r::math::VEC3* b) {
     nw4r::math::VEC3 difference;
     difference.x = a->x - b->x;

@@ -36,32 +36,32 @@ extern "C" void CfRes_setE28Mask(u32 mask);
 extern "C" int CfRes_getE24Bit18();
 extern "C" int CfRes_getE14();
 extern "C" int CfRes_getE30();
-extern "C" int func_8006414C(u32 packed);
-extern "C" int func_80062928(u32 packed, int mode);
-extern "C" void func_80062AD8(u32 packed, u32* out);
-extern "C" u32 func_800623DC(u32 packed);
-extern "C" char* func_80062F60();
+extern "C" int CfRes_isPackedMarker(u32 packed);
+extern "C" int CfRes_tryResolveByBits(u32 packed, int mode);
+extern "C" void CfRes_tryResolveToken(u32 packed, u32* out);
+extern "C" u32 CfRes_getPackedFileSize(u32 packed);
+extern "C" char* CfRes_getInstPtrBC();
 extern "C" u32 CfRes_isField4Zero(u8* res);
 extern "C" void CfRes_initStruct_64994(u8* res);
-extern "C" bool func_8006861C(int instField, u32 packed, u32* out10, u32* outC);
+extern "C" bool CfRes_findHighEntryById(int instField, u32 packed, u32* out10, u32* outC);
 extern "C" void* func_800A8E6C(int size, int checkOnly);
-extern "C" u8* func_800A8B98(u32 size);
+extern "C" u8* KyoshinHeap_Alloc38(u32 size);
 extern "C" void CfRes_orBits_649B4(u8* self, u32 bits);
 extern "C" void CfRes_orBits_649CC(u8* self, u32 bits);
-extern "C" u8* func_800685BC(int instField, u32 packed, u32* out10, u32* outC);
-extern "C" u8* func_80068564(int instField, u32 packed, u32* out10, u32* outC);
+extern "C" u8* CfRes_findHighEntry(int instField, u32 packed, u32* out10, u32* outC);
+extern "C" u8* CfRes_findLowEntryOrMark(int instField, u32 packed, u32* out10, u32* outC);
 extern "C" bool findResEntry(int instField, u32 packed, u32* out10, u32* outC);
 extern "C" u32 getHandleMEM2__Q23mtl10MemManagerFv();
 extern "C" u32 getMaxAllocSize__Q23mtl10MemManagerFUl(u32 handle);
 extern "C" void* allocate_tail__Q23mtl10MemManagerFUlUli(u32 handle, u32 size, int align);
 extern "C" void* allocate_head__Q23mtl10MemManagerFUlUli(u32 handle, u32 size, int align);
-extern "C" void func_80066C74(u8* res, void* buf, u32 kind);
-extern "C" int func_800A8BD8(void* buf);
-extern "C" void func_800A8C1C(void* buf, int mode, u32 packed);
-extern "C" int func_800A9024(void* buf);
-extern "C" void func_800A92F8(void* buf, int mode, u32 packed);
-extern "C" int func_80062998(u32* outC, u32 packed, int kind);
-extern "C" int func_800649F4(void* self);
+extern "C" void CfRes_attachEntryData(u8* res, void* buf, u32 kind);
+extern "C" int KyoshinHeap_Contains38(void* buf);
+extern "C" void KyoshinHeap_Register38(void* buf, int mode, u32 packed);
+extern "C" int KyoshinHeap_Contains78(void* buf);
+extern "C" void KyoshinHeap_Register78(void* buf, int mode, u32 packed);
+extern "C" int CfRes_tryResolveType0(u32* outC, u32 packed, int kind);
+extern "C" int CfRes_getLookupFlags(void* self);
 extern "C" int CfRes_checkMask_64A08(u8* res, u32 mask);
 
 // Resource-load dispatcher: resolves a packed resource token to a resident
@@ -96,7 +96,7 @@ struct CfResSlot {
     u32 field_08;   // 0x08
 };
 
-// 0x10-byte name-keyed table record walked by func_80065694: the +0x00 word
+// 0x10-byte name-keyed table record walked by CfRes_lookupNameByType: the +0x00 word
 // is a relative offset from the table base (the result pointer), +0x04 is
 // the value written to *out, and +0x08 is the 8-byte name string hashed by
 // func_800AA714 (bits 27-31 of the hash select the record).
@@ -106,7 +106,7 @@ struct CfResNameEntry {
     char name[8];   // 0x08 - name string
 };
 
-// Table container read by func_80065694: entry count at +0x08, the entry
+// Table container read by CfRes_lookupNameByType: entry count at +0x08, the entry
 // array at +0x10.
 struct CfResNameTable {
     u8 _00[0x8];
@@ -164,8 +164,8 @@ public:
 };
 
 // CRTP task base (CTTask<CfResTask>) occupies 0x00-0x54; the embedded resource
-// storage lives past the base. Term() tears it down via func_80063158 and
-// func_80067D38 (the +0x58 region doubles as a ResInfoEntry array and a
+// storage lives past the base. Term() tears it down via CfRes_dtorStoragePlus4 and
+// CfRes_resetAllEntries (the +0x58 region doubles as a ResInfoEntry array and a
 // ResInfoStorage container). novtable: the retail ~CfResTask stores no vptr
 // (same pattern as IUIWindow / CUIErrMesWin).
 class __declspec(novtable) CfResTask : public CTTask<CfResTask> {
@@ -199,7 +199,7 @@ struct CfResNameRec {
     int mCount;     // 0x04
 };
 
-// 16-byte records of the name-keyed table walked by func_80062114: the +0x10
+// 16-byte records of the name-keyed table walked by CfRes_lookupStrTable: the +0x10
 // word is a relative offset from the table base, the +0x18 string resolves
 // through func_800AA600.
 struct CfResStrTableRec {
@@ -222,7 +222,7 @@ struct CfResExtRec {
 // Name-key string pointer (in .sdata; points at "DAP1" etc.).
 extern const char* lbl_eu_80661A24;
 
-// Name-key string pointer (in .sdata; table key compared by func_80062114).
+// Name-key string pointer (in .sdata; table key compared by CfRes_lookupStrTable).
 extern const char* lbl_eu_80661A20;
 
 // Extension separator character (in .sdata, ".\0"): the key func_80063C7C
@@ -233,7 +233,7 @@ extern char lbl_eu_80661A40[8];   // '.' separator + pad (retail .sdata 8 bytes)
 // Reset the ResInfoEntry array (defined in kyoshin/cf/IResInfo.cpp).
 // C linkage so the retail unmangled symbol name is emitted (struct params
 // would otherwise mangle it).
-extern "C" void func_80067D38(ResInfoEntry* entry);
+extern "C" void CfRes_resetAllEntries(ResInfoEntry* entry);
 
 // Global CfRes manager state word (zeroed by CfResTask::Term).
 extern u32 lbl_eu_80663D78;
@@ -242,7 +242,7 @@ extern u32 lbl_eu_80663D78;
 // also declared in kyoshin/CTaskGameEff.hpp).
 extern u32 lbl_eu_8065FC18[];
 
-// Shared string table in .rodata (path-format strings; func_eu_80065C7C
+// Shared string table in .rodata (path-format strings; CfRes_resolveSlot1E4
 // formats from +0x23).
 extern char lbl_eu_804FB214[];
 
@@ -250,47 +250,47 @@ extern char lbl_eu_804FB214[];
 extern "C" long __ptmf_test(void* ptmf);
 
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
-extern "C" int func_80068078(int);
-extern "C" int func_80068254(int);
+extern "C" int CfRes_reloadLoadedEntries(int);
+extern "C" int CfRes_updateFlaggedGrid(int);
 extern "C" int func_801BFA64(int);
-extern "C" int func_800A9068();
+extern "C" int KyoshinHeap_HasActive54();
 extern "C" int func_800A9134();
 extern "C" void func_800676F8(u8* self);
 // Same-TU archive-registration helper (defined in CfRes.cpp; C linkage so
 // the call reloc from __ct__Q22cf5CfResFv carries the retail name).
-extern "C" void func_80063120(u8* self, int arg);
+extern "C" void CfRes_initArchiveTables(u8* self, int arg);
 // Packed-token packer (kyoshin/code_800AA008.cpp) - retail C symbol name.
 extern "C" u32 func_800AA2BC(u32 a, u32 b);
 // Device-file allocation helper (retail C symbol name).
-extern "C" int func_800A8CD4();
+extern "C" int KyoshinHeap_GetActive54();
 // Same-unit helpers under their retail unmangled names (CfRes.cpp stubs -
 // linkage must stay C so call relocs carry the retail names).
 extern "C" int CfResEntry_decRefCount(u8* entry);
 extern "C" int CfResEntry_incRefCount(u8* entry);
-extern "C" int func_80063A60(u8* res);
-extern "C" int func_80064014(CfRes* self, CEventFile* evt, u32 field);
-extern "C" void func_eu_80065590(int inst, int index, u8* ptr);
-extern "C" u32 func_eu_80065640(u32 a, u32 b, u32 c, u32 d);
+extern "C" int CfRes_getResFileSize(u8* res);
+extern "C" int CfRes_onFileEventDone(CfRes* self, CEventFile* evt, u32 field);
+extern "C" void CfRes_reregisterTableEntry(int inst, int index, u8* ptr);
+extern "C" u32 CfRes_packFourFields(u32 a, u32 b, u32 c, u32 d);
 
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim).
 extern "C" char* getEntryPtr(char* base, int a, int b);
-extern "C" void func_80066714(ResInfoEntry* entry, bool cleanup);
+extern "C" void CfRes_releaseCachedBase(ResInfoEntry* entry, bool cleanup);
 extern "C" void func_800AA318(u32 packed, u32* out0, u32* out1, u32* out2, u32* out3);
 
-// func_80063E30 (0x800645FC): async archive-read pipeline (path build + open
+// CfRes_dispatchArchiveRead (0x800645FC): async archive-read pipeline (path build + open
 // + per-entry init). 6 args, int result; C linkage so the call reloc from
-// func_80063F1C carries the retail unmangled name.
-extern "C" int func_80063E30(void* a, void* b, u32 c, void* d, void* e, int f);
+// CfRes_buildPathAndRead carries the retail unmangled name.
+extern "C" int CfRes_dispatchArchiveRead(void* a, void* b, u32 c, void* d, void* e, int f);
 
-// func_80063F1C (0x800646E8): path build + archive-read dispatch for a packed
+// CfRes_buildPathAndRead (0x800646E8): path build + archive-read dispatch for a packed
 // resource id (5 args, int result).
-extern "C" int func_80063F1C(u8* a, u8* b, u32 c, u8* d, int e);
+extern "C" int CfRes_buildPathAndRead(u8* a, u8* b, u32 c, u8* d, int e);
 
-// func_80063994 (0x8006415C): table-entry handle registration/refcount bump.
-extern "C" void func_80063994(int a, int b);
+// CfRes_setTblHandle (0x8006415C): table-entry handle registration/refcount bump.
+extern "C" void CfRes_setTblHandle(int a, int b);
 
-// func_8006349C (0x80063C64): per-entry field_04/field_08 leftover rollover.
-extern "C" void func_8006349C();
+// CfRes_rolloverResFields (0x80063C64): per-entry field_04/field_08 leftover rollover.
+extern "C" void CfRes_rolloverResFields();
 
 // C++ virtual thunk dispatching the +0x2C sub-object's m02 (retail returns
 // the vtable call result in r3).
@@ -305,22 +305,22 @@ extern "C" void getEventHalfwordPair__Q22cf13CfGameManagerFv(u16* first, u16* se
 extern "C" bool func_80066788(void* self, bool r4, bool r5, bool r6);
 
 // Same-TU helpers (defined in CfRes.cpp; forward-declared so earlier callers
-// in the file can reference them). func_80065158 is C linkage so the call
-// reloc from func_800626F4 carries the retail unmangled name.
-extern "C" int func_80065158(int inst, int a, int b, int c, int d);
-int func_80065314(int inst, int a, int b);
+// in the file can reference them). CfRes_resolveSlot130 is C linkage so the call
+// reloc from CfRes_tryResolveSlot130 carries the retail unmangled name.
+extern "C" int CfRes_resolveSlot130(int inst, int a, int b, int c, int d);
+int CfRes_resolveSlot16C(int inst, int a, int b);
 
-// func_80063AD0 (0x8006429C): pre-open entry reservation/validation step in
+// CfRes_tryLoadFromCache (0x8006429C): pre-open entry reservation/validation step in
 // the archive-read pipeline (stub in CfRes.cpp; C linkage so the call reloc
-// from func_80063E30 carries the retail unmangled name).
-extern "C" int func_80063AD0(void* a, void* b, u32 c, void* d, int size, void* e);
+// from CfRes_dispatchArchiveRead carries the retail unmangled name).
+extern "C" int CfRes_tryLoadFromCache(void* a, void* b, u32 c, void* d, int size, void* e);
 
 // Same-TU helpers (defined in CfRes.cpp). C linkage so call relocs carry the
-// retail unmangled names (same rule as the func_80063A60 stub above).
-extern "C" u32 func_8006251C(void* self);
-extern "C" u32 func_80062524(void* self);
-extern "C" int func_8006252C(u16 a, u16 b, int c);
-extern "C" int func_80065694(int a, int b, int* out);
+// retail unmangled names (same rule as the CfRes_getResFileSize stub above).
+extern "C" u32 CfRes_extractBits20_7(void* self);
+extern "C" u32 CfRes_extractBits10_10(void* self);
+extern "C" int CfRes_tryResolvePackedAB(u16 a, u16 b, int c);
+extern "C" int CfRes_lookupNameByType(int a, int b, int* out);
 
 // Same-TU entry-table helpers (defined in CfRes.cpp). C linkage so call
 // relocs carry the retail unmangled names.
@@ -330,8 +330,8 @@ extern "C" u32 CfResEntry_getHandle(u8* self);
 extern "C" u32 CfResEntry_getField4(u8* self);
 extern "C" void CfResEntry_setHandle(u8* self, u32 val);
 
-// +0x28 load-request flag of the CfResPcTableEntry record (func_80062C28's
-// result; only this word is read by func_80062A00 - the full record layout
+// +0x28 load-request flag of the CfResPcTableEntry record (CfRes_getPcGridEntry's
+// result; only this word is read by CfRes_isGridLoadIdle - the full record layout
 // is declared in CfResPcImpl.hpp).
 struct CfResPcEntry28View {
     u8 _00[0x28];
@@ -342,7 +342,7 @@ struct CfResPcEntry28View {
 
 // Same-unit resource-table accessor (stub defined in CfRes.cpp; C linkage so
 // call relocs carry the retail unmangled name).
-extern "C" CfResPcEntry28View* func_80062C28(int id, int a);
+extern "C" CfResPcEntry28View* CfRes_getPcGridEntry(int id, int a);
 
 // Same-TU bit-field helpers (defined in CfRes.cpp). C linkage so call relocs
 // carry the retail unmangled names; noinline keeps them out-of-line calls
@@ -361,23 +361,23 @@ extern "C" u32 func_800AA714(const char* path);
 
 // Same-TU resource resolvers called by the func_80062xxx wrappers. C linkage
 // so the call relocs carry the retail unmangled names (same rule as the
-// func_80063A60 / func_80064014 stubs above).
-extern "C" int func_800653E4(int inst, int a, int b);
-extern "C" int func_800654B4(int inst, int a, int b);
-extern "C" int func_800655C4(int inst, int a, int b);
+// CfRes_getResFileSize / CfRes_onFileEventDone stubs above).
+extern "C" int CfRes_resolveSlot220(int inst, int a, int b);
+extern "C" int CfRes_resolveSlotByBits(int inst, int a, int b);
+extern "C" int CfRes_resolveSlot298(int inst, int a, int b);
 extern "C" int func_800641CC(int inst, int a, int b);
 
 // Same-TU resource resolvers called by the func_80062xxx wrappers. C linkage
 // so the call relocs carry the retail unmangled names (same rule as the
-// func_80063A60 / func_80064014 stubs above).
-extern "C" int func_80064EB0(int inst, int a, int b, int c);
-extern "C" int func_80064F78(int inst, int a, int b, int c);
-extern "C" int func_80065050(int inst, int a, int b, int c);
-extern "C" int func_eu_80065C7C(int inst, int a, int b, int c);
+// CfRes_getResFileSize / CfRes_onFileEventDone stubs above).
+extern "C" int CfRes_resolveAndLinkB8(int inst, int a, int b, int c);
+extern "C" int CfRes_resolveSlotB8(int inst, int a, int b, int c);
+extern "C" int CfRes_resolveSlotF4(int inst, int a, int b, int c);
+extern "C" int CfRes_resolveSlot1E4(int inst, int a, int b, int c);
 
 // +0x1E4 resource-slot getter (defined in CfRes.cpp; forward-declared so the
-// earlier func_eu_80065C7C caller can reference it).
-extern "C" void* func_eu_80065D60(void* self);
+// earlier CfRes_resolveSlot1E4 caller can reference it).
+extern "C" void* CfRes_ptrPlus1E4(void* self);
 
 // Effect-singleton resource registration (C-ABI import, retail unmangled
 // symbol name; same extern "C" convention as CREvtEffect.hpp).
@@ -391,13 +391,13 @@ extern "C" int CfRes_delegateOp0(void* a, void* b, void* c);
 
 // Same-unit resource resolvers (CfRes.cpp stubs - retail unmangled names so
 // call relocs carry the retail symbol names).
-extern "C" int func_80064A74(int inst, int a, int b, int c);
-extern "C" int func_80064CD8(int inst, int a, int b, int c);
-extern "C" int func_80064DC4(int inst, int a, int b, int d, int e);
-extern "C" int func_80063394(int handle);
+extern "C" int CfRes_resolveTokenByBits(int inst, int a, int b, int c);
+extern "C" int CfRes_resolveTokenType0(int inst, int a, int b, int c);
+extern "C" int CfRes_resolveTableToken(int inst, int a, int b, int d, int e);
+extern "C" int CfRes_registerTblHandle(int handle);
 extern "C" int func_80063C7C(ml::FixStr<64>& dest, const char* src);
-extern "C" int func_80064B78(int inst, int a, int b, int d, int e);
-extern "C" int func_80063A34(void* self);
+extern "C" int CfRes_resolveGridToken(int inst, int a, int b, int d, int e);
+extern "C" int CfRes_getDeviceFileSize(void* self);
 extern "C" ml::FixStr<64>* CfRes_stub_63ACC(ml::FixStr<64>* str);
 
 // Work-cache list helpers (defined in monolib/src/work/CWorkSystemCache.cpp
@@ -419,7 +419,7 @@ extern "C" void CfRes_setBits1_2(u8* self);
 extern "C" void CfRes_resetState2(u8* self);
 
 // Same-TU string helper (defined in CfRes.cpp; forward-declared so the later
-// func_80065158 caller can reference it). C linkage so the call reloc carries
+// CfRes_resolveSlot130 caller can reference it). C linkage so the call reloc carries
 // the retail unmangled name.
 extern "C" char* CfRes_strcatAppend(char* buffer, const char* suffix);
 
@@ -436,7 +436,7 @@ void cancel__11CDeviceFileFP11CFileHandle(CFileHandle* handle);
 // carry the retail unmangled symbol name.
 extern "C" void* __dt__8006754C(u8* self, int mode);
 
-// Resource-table entry cleaned up by func_80065CA4 (sibling of
+// Resource-table entry cleaned up by CfRes_cancelPendingRead (sibling of
 // cf::CfResPcLookupEntry in CfResPcImpl.hpp, which declares only the fields
 // other units touch; this mirrors the full cleanup access pattern).
 struct CfResCleanupEntry {
@@ -455,5 +455,5 @@ struct CfResCleanupEntry {
 // Cleanup helper: cancels the parent's pending file handle and clears its
 // state fields (defined in CfRes.cpp; the first arg is the +0x2C resource
 // object, passed through but unused by the cleanup).
-void func_80065CA4(CfResCleanupEntry* child, CfResCleanupEntry* parent);
+void CfRes_cancelPendingRead(CfResCleanupEntry* child, CfResCleanupEntry* parent);
 

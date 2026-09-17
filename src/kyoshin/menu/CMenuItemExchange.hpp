@@ -200,7 +200,7 @@ extern "C" void func_801EDA4C(CItemBoxLine* self, u8 val);
 extern "C" void func_801ED31C(CItemBoxLine* self);
 extern "C" void __ct__CItemBoxGrid(CItemBoxGrid* self, u32 a, u32 b, u32 c, u32 d);
 extern "C" void __dt__12CItemBoxGridFv(CItemBoxGrid* self, int flags);
-extern "C" void func_801CB480(CItemBoxGrid* self);
+extern "C" void ClearListSlots(CItemBoxGrid* self);
 extern "C" void PushToList(CItemBoxGrid* self, u8 val);
 
 // Load/anim hooks used by the phase gates (retail unmangled names).
@@ -210,7 +210,7 @@ extern "C" int func_801C4114(CTitleAHelp* self);       // help-bar ready query
 extern "C" void func_801C412C(CTitleAHelp* self);      // hide prompt
 extern "C" int func_801ED774(CItemBoxLine* self);      // line ready query
 extern "C" void func_801ED864(CItemBoxLine* self);     // finish line load
-extern "C" void func_801CAA6C(CItemBoxGrid* self);     // finish grid setup
+extern "C" void LoadItemBoxFiles(CItemBoxGrid* self);     // finish grid setup
 extern "C" void playUISound__FUl(u32 op);            // global menu-op kicker
 
 // Factory support (retail unmangled symbols; sibling-menu-TU scheme).
@@ -228,14 +228,14 @@ extern "C" CMenuItemExchange* __ct__CMenuItemExchange(CMenuItemExchange* self, C
  // ct/dt keep their pre-mangled forms - a C++ local would virtual-dispatch).
 extern "C" void* getInstance__9CTaskGameFv();
 extern "C" int isFlag01Set__9CTaskGameFv();
-extern "C" int func_8013BE50();
+extern "C" int IsMenuState621F0();
 namespace nw4r { namespace lyt { class DrawInfo; } }
 extern "C" void __ct__Q34nw4r3lyt8DrawInfoFv(nw4r::lyt::DrawInfo* self);
 extern "C" void __dt__Q34nw4r3lyt8DrawInfoFv(nw4r::lyt::DrawInfo* self, int flags);
 void func_80137250(nw4r::lyt::DrawInfo* drawInfo);  // C++ linkage (mangled retail symbol)
 extern "C" void func_801C3D7C(CBgTex* self, nw4r::lyt::DrawInfo* di);
 extern "C" void func_801ED4FC(CItemBoxLine* self, nw4r::lyt::DrawInfo* di);
-extern "C" void func_801CAD8C(CItemBoxGrid* self, nw4r::lyt::DrawInfo* di);
+extern "C" void DrawItemBoxGrid(CItemBoxGrid* self, nw4r::lyt::DrawInfo* di);
 extern "C" void func_801C4080(CTitleAHelp* self, nw4r::lyt::DrawInfo* di);
 extern u32 lbl_eu_80663E28;   // cbRenderBefore mode-flag word (.sbss)
 
@@ -261,28 +261,28 @@ extern "C" void func_801EEDF8(CItemBoxLine* self);
 extern "C" void func_801EF050(CItemBoxLine* self);
 extern "C" u8 func_801EF0EC(CItemBoxLine* self);
 extern "C" int func_801CCAF0(CItemBoxGrid* self);
-extern "C" int func_801CB0FC(CItemBoxGrid* self);
-extern "C" void func_801CC7B0(CItemBoxGrid* self, int arg);
-extern "C" int func_801CDBE0(CItemBoxGrid* self);
-extern "C" int func_801CB1E4(CItemBoxGrid* self);
-extern "C" void func_801CB38C(CItemBoxGrid* self);
+extern "C" int IsItemBoxActive(CItemBoxGrid* self);
+extern "C" void HandleCancelBtn(CItemBoxGrid* self, int arg);
+extern "C" int GetExchFlag52C(CItemBoxGrid* self);
+extern "C" int IsSubWinActive(CItemBoxGrid* self);
+extern "C" void AdvanceBoxState(CItemBoxGrid* self);
 extern "C" void func_801CB5F0(CItemBoxGrid* self);
 extern "C" void func_801CBA04(CItemBoxGrid* self);
 extern "C" void func_801CBDE8(CItemBoxGrid* self);
 extern "C" void func_801CC0EC(CItemBoxGrid* self);
-extern "C" void func_801CC5DC(CItemBoxGrid* self);
-extern "C" void func_801CDEE8(CItemBoxGrid* self);
-extern "C" u8 func_801CDFB4(CItemBoxGrid* self);
-extern "C" int func_801CB184(CItemBoxGrid* self);
+extern "C" void OpenSortMenu(CItemBoxGrid* self);
+extern "C" void SelectCatRow(CItemBoxGrid* self);
+extern "C" u8 GetPromptState(CItemBoxGrid* self);
+extern "C" int GetIdleFlag542(CItemBoxGrid* self);
 extern "C" int GetField52D(CItemBoxGrid* self);
 
 // Move()/phase-handler callees (retail unmangled names).
 extern "C" void func_801C3D54(CBgTex* self);          // bg per-frame update
 extern "C" void func_801ED3E8(CItemBoxLine* self);    // line per-frame update
-extern "C" void func_801CABC8(CItemBoxGrid* self);    // grid per-frame update
+extern "C" void UpdateItemBox(CItemBoxGrid* self);    // grid per-frame update
 extern "C" void func_801C3FF0(CTitleAHelp* self);     // help-bar per-frame update
-extern "C" int func_801CB038(CItemBoxGrid* self);     // grid ready query (phase 4)
-extern "C" void func_801CDB94(CItemBoxGrid* self, u16 arg); // grid page apply
+extern "C" int IsItemBoxReady(CItemBoxGrid* self);     // grid ready query (phase 4)
+extern "C" void SetInfoMsgId(CItemBoxGrid* self, u16 arg); // grid page apply
 extern "C" void func_801CB28C(CItemBoxGrid* self);    // grid refresh
 extern "C" void func_8018B0FC(void*, void*);          // CBaseCur body copy
 extern "C" void func_8018BE74(void*, void*);          // page-table copy helper

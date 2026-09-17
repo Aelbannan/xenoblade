@@ -54,7 +54,7 @@ extern char lbl_eu_80532450[]; // final composite vtable set
 extern u32 __ptmf_null[3];     // runtime ptmf.o null member-fn descriptor
 // Unmangled retail names (distinct from C++-mangled decls in code_80135FDC.hpp).
 // Layout/anim helpers: declared extern "C" where the retail symbol is unmangled.
-int func_8013BE50(); // Returns nonzero when battle is active (gate for all menu HUD widgets)
+int IsMenuState621F0(); // Returns nonzero when battle is active (gate for all menu HUD widgets)
 }
 
 extern void playUISound(u32);
@@ -132,7 +132,7 @@ void CMenuPTGauge::Init() {
  * Gate sequence (shared with cbRenderBefore):
  *   1. CTaskGame pause (isFlag01Set) -> skip
  *   2. lbl_eu_80663E28 bit 21 (IBM bit 10; realtime event busy) -> skip
- *   3. func_8013BE50 (battle inactive) -> skip
+ *   3. IsMenuState621F0 (battle inactive) -> skip
  *   4. lbl_eu_80663E24 & 0xAFA40000 (UI suppress mask) -> skip
  *
  * FSM phases (mPhase):
@@ -163,7 +163,7 @@ void CMenuPTGauge::Move() {
     }
     DECOMP_ASM_INSN_END
 after_bit21:
-    if (!func_8013BE50()) {
+    if (!IsMenuState621F0()) {
         goto done;
     }
     if (lbl_eu_80663E24 & 0xAFA40000u) { // UI suppress composite mask (event/talk/vision)
@@ -288,7 +288,7 @@ after_bit21:
         break;
     }
     case 3: {
-        if (func_80137510(mAnimDefault, lbl_eu_806679EC) != 0) {
+        if (AnimRewindFrame(mAnimDefault, lbl_eu_806679EC) != 0) {
             mPhase = 0;
         }
         break;
@@ -331,7 +331,7 @@ void CMenuPTGauge::cbRenderBefore() {
     }
     DECOMP_ASM_INSN_END
 after_bit21:
-    if (!func_8013BE50()) {
+    if (!IsMenuState621F0()) {
         goto done;
     }
     if (mPhase == 0) { // gauge not initialised yet

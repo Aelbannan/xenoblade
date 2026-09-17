@@ -604,7 +604,7 @@ struct LODResFileSlotArray {
 };
 
 // 0x1c-strided record (array base at LODMemMan+0x98).  Bit 2 of the flag
-// word gates the u16 threshold at +0xA; bit 1 drives the func_804A6D90
+// word gates the u16 threshold at +0xA; bit 1 drives the ColiLodLookupRecordBin
 // submit path and bit 0 the func_8046A3B4 billboard helper.
 struct LODRec1C {
     u32 field_0x0;    // 0x00 flags (bit 0: billboard, bit 1: submit, bit 2: threshold)
@@ -712,7 +712,7 @@ extern "C" void func_804C09E8(u8* outLight, u8* matrix, u8* mtx);
 // and the scene resource helpers (scn/code_804BC9EC.cpp).  Retail keeps the
 // plain unmangled names (C ABI); the Fv-suffixed names carry explicit ABI
 // args (MWCC_CASES "Fv ABI note").
-extern "C" s32 func_804A6D90(void* rec);
+extern "C" s32 ColiLodLookupRecordBin(void* rec);
 extern "C" void* getScnHandle__Fv(void);
 extern "C" u8 func_804BCC6C(void* ptr, u16 id);
 extern "C" void func_804BCC30(void* unused, s32 a);
@@ -2751,7 +2751,7 @@ void func_804702F0__Q23LOD9LODMemManFv(LOD::LODMemMan* self, LODElem20* elem) {
                 lbl_eu_80665754 = v;
                 lbl_eu_80665758 = (s16)v;
                 if (rec->field_0x0 & 2) {
-                    if (func_804A6D90(rec) != 0) {
+                    if (ColiLodLookupRecordBin(rec) != 0) {
                         void* p = getScnHandle__Fv();
                         func_804BCC30(p, desc->field_0x40);
                     } else {

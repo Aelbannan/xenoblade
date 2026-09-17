@@ -19,7 +19,7 @@ extern char lbl_eu_80510CC8[];
 // nw4r layout animation helpers (retail names; resolved by symbol tooling).
 void drawLayout(nw4r::lyt::Layout*, nw4r::lyt::DrawInfo*, int, int);
 u32 advanceAnimTransform(nw4r::lyt::AnimTransform*, float);
-u32 func_80137510(nw4r::lyt::AnimTransform*, float);
+u32 AnimRewindFrame(nw4r::lyt::AnimTransform*, float);
 void func_801390E0(CFileHandle**);
 void releaseArcResourceAccessor(nw4r::lyt::ArcResourceAccessor*);
 void buildLayout(nw4r::lyt::Layout**, nw4r::lyt::ArcResourceAccessor*, const char*);
@@ -196,7 +196,7 @@ void func_802AE7EC(CLoad* self) {
 
 // Step 3 -> idle: retry animation finished.
 __attribute__((noinline)) void func_802AE894(CLoad* self) {
-    if (func_80137510(self->mAnimTrans0, lbl_eu_80668DF0) != 0) {
+    if (AnimRewindFrame(self->mAnimTrans0, lbl_eu_80668DF0) != 0) {
         self->mAnimStep = 0;
         self->field_2C = 1;
     }

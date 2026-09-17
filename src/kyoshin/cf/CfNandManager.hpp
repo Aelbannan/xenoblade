@@ -561,13 +561,13 @@ struct CfNandWorkBuf {
 
 // --- imports for the save-image builder (func_8023C93C) ---
 extern "C" u8* func_8009CF0C();                     // capture-region source pointer
-extern "C" void func_8006CBD8(u8* dst, u8* src);    // camera settings fill
+extern "C" void cfCam_pullFollowD(u8* dst, u8* src);    // camera settings fill
 extern "C" void func_8016E09C(struct CfNandWthrBlock* w);
 extern "C" void func_80207C94(u8* dst);             // MINE region builder
 f32 getMasterVolume();                                // mangled __Fv in retail
 extern "C" f32 func_801896A0();
 extern "C" f32 func_801895EC();
-extern "C" struct CfNandNameRoot* func_800B6CA0(); // save-name directory container
+extern "C" struct CfNandNameRoot* getReslistC48(); // save-name directory container
 // Retail symbol is CfGameManager's static member but returns its result in r3.
 extern "C" u32 getEventCounterA__Q22cf13CfGameManagerFv();
 extern "C" u8* getInstance__14Class_80296898Fv();
@@ -612,7 +612,7 @@ struct CfNandCamBlock {
     u32 f0C;
 };
 
-// Node of the circular save-name directory chain rooted by func_800B6CA0.
+// Node of the circular save-name directory chain rooted by getReslistC48.
 struct CfNandNameNode {
     CfNandNameNode* mNext; // 0x00
     u8 _pad04[4];

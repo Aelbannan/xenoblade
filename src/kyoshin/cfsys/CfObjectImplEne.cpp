@@ -134,7 +134,7 @@ void func_800D02D4(cf::CfObjectImplEneObj* self) {
     int idI;
     if (func_80174C98(battleObj, &idA, 0x1e) != 0) {
         if (*(float*)battleObj->bh34() > lbl_eu_80666CE4) {
-            func_800BC3D8(&battleObj->mSub, lbl_eu_80666CE8);
+            CfObjectMove_setMoveSpeed(&battleObj->mSub, lbl_eu_80666CE8);
         }
         f32 f31 = battleObj->mSub.sg6C();
         if (isGlobalCamFlagSet(0x04000000) == 0 && f31 == lbl_eu_80666CEC &&
@@ -196,12 +196,12 @@ void func_800D02D4(cf::CfObjectImplEneObj* self) {
     if (func_80174C98(battleObj, &idG, 0x1a) != 0) return;
     if (func_80174C98(battleObj, &idH, 0x19) != 0) return;
     if (func_80174C98(battleObj, &idI, 0x04000000) != 0) {
-        func_800BE12C(&battleObj->mSub, 5, 0, -1, 1);
+        CfObjectMove_setAnimModeArgs(&battleObj->mSub, 5, 0, -1, 1);
         if (battleObj->field_3F60 == 0) func_80174B4C(battleObj, 0x1c);
         return;
     }
     func_80174B4C(battleObj, 0x04000000);
-    func_800BE12C(&battleObj->mSub, 5, 0, -1, 1);
+    CfObjectMove_setAnimModeArgs(&battleObj->mSub, 5, 0, -1, 1);
     if (battleObj->field_3F60 == 0) func_80174B4C(battleObj, 0x1c);
 
     // If a live vision target matches, run the removal sequence.
@@ -209,21 +209,21 @@ void func_800D02D4(cf::CfObjectImplEneObj* self) {
         (cf::CfImplEneTarget*)cf::CBattleManager::getInstance()->func_800EA444();
     if (!(isGlobalCamFlagSet(0x04000000) != 0 && tgt != 0 &&
           (tgt->field_04 == battleObj->field_3F10 || tgt->field_00 == battleObj->field_3F10))) {
-        func_800BE824(&battleObj->mSub, 0);
+        CfObjectMove_setRegionAttached(&battleObj->mSub, 0);
         self->vf100();
         func_800F3C6C(cf::CBattleManager::getInstance(), battleObj->field_3F28);
         func_800E9B54(cf::CBattleManager::getInstance(), battleObj, 0, 0);
         func_800D9CA0(cf::CBattleManager::getInstance(), battleObj);
-        func_80197BA4(battleObj, r31, ((battleObj->field_3374 >> 5) & 1) ^ 1);
+        CPartsChange_ResetBattleEntry(battleObj, r31, ((battleObj->field_3374 >> 5) & 1) ^ 1);
     }
 
     // Death id 0x968: refresh every tracked unit in the enum list.
     if (battleObj->field_3F28 == 0x968) {
         u8 holder[8];
-        func_80043D90(holder);
-        func_800F4A98(func_80043F18(holder), 0x80000000, 0);
-        for (u32 i = 0; i < ((cf::CfEnumList*)func_80043F18(holder))->field_620; i++) {
-            void* obj = func_8016FE34(func_800F6EAC(func_80043F18(holder), i));
+        CTaskGame_enumListCtor(holder);
+        func_800F4A98(CTaskGame_enumListGet(holder), 0x80000000, 0);
+        for (u32 i = 0; i < ((cf::CfEnumList*)CTaskGame_enumListGet(holder))->field_620; i++) {
+            void* obj = func_8016FE34(func_800F6EAC(CTaskGame_enumListGet(holder), i));
             if (obj != 0) {
                 ((cf::CfImplEneBattleObj*)obj)->bg18(lbl_eu_80666CE4);
             }
@@ -267,14 +267,14 @@ int func_800D0B04(cf::CfObjectImplEneObj* self) {
     if (base != 0) base = (u8*)base + 0x3e9c;
     void* obj = func_800AD860(base);
 
-    cf::CfObjectImplEneActor* actor = (cf::CfObjectImplEneActor*)func_800B8A64(obj);
+    cf::CfObjectImplEneActor* actor = (cf::CfObjectImplEneActor*)lookupCA0By45C0(obj);
     int count = 0;
     if (actor != 0 && (actor->field_A0 & 1) != 0) {
         void* v = ((cf::CfImplEneBattleObj*)self->field_18)->mSub.sf4C();
         void* src = func_8016FE34(findObjectById((int)v));
         for (int i = 0; i < 0x10; i++) {
             cf::CfImplEneBattleObj* p =
-                (cf::CfImplEneBattleObj*)func_800AD860((void*)findObjectById((int)func_801984E4(actor, i)));
+                (cf::CfImplEneBattleObj*)func_800AD860((void*)findObjectById((int)CPartsChange_GetSlotEntryAt(actor, i)));
             if (p == 0) continue;
             if (p == (cf::CfImplEneBattleObj*)self->field_18) continue;
             if (func_800DA06C(cf::CBattleManager::getInstance(), (unsigned int)p) != 0) continue;
@@ -345,7 +345,7 @@ int func_800D0C2C(cf::CfObjectImplEneObj* self, int flag) {
     // Create the direction-arrow effect once per engagement.
     if (self->field_36C == 0 && flag != 0 && self14->field_C4 != 0) {
         void* effect = func_804CC1F4(lbl_eu_8065FC18,
-                                     func_80066E7C(func_800630C8(), 0x70100000),
+                                     CfRes_findEntryById(CfRes_getInstPtr224(), 0x70100000),
                                      lbl_eu_80663E14, 0xa5, 0, 0);
         self->field_36C = (u32)effect;
         if (effect != 0) {
@@ -367,7 +367,7 @@ int func_800D0C2C(cf::CfObjectImplEneObj* self, int flag) {
         effect->mRotScaled[0] = *(s32*)&rotScaled[0];
         effect->mRotScaled[1] = *(s32*)&rotScaled[1];
         effect->mRotScaled[2] = *(s32*)&rotScaled[2];
-        f32 dt = func_80484EB0((void*)battleObj->field_3F34);
+        f32 dt = simGetLeafDist7B0((void*)battleObj->field_3F34);
         func_804E36DC((CSchedule*)effect, dt);
         func_804E3B08(effect);
     }

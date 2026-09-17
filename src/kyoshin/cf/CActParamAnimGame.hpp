@@ -5,11 +5,11 @@
 // declarations keep the real names; only CActParamAnim.hpp's legacy
 // void*-first declarations get renamed (this TU never calls any of them).
 #include "kyoshin/action/CActParamData.hpp"
-#define func_80053F7C func_80053F7C_animsig
+#define updateParamFloats updateParamFloats_animsig
 #define func_80053B24 func_80053B24_animsig
 #define func_80055B88 func_80055B88_animsig
 #include "kyoshin/action/CActParamAnim.hpp"
-#undef func_80053F7C
+#undef updateParamFloats
 #undef func_80053B24
 #undef func_80055B88
 #include "monolib/math/CVec3.hpp"
@@ -49,7 +49,7 @@ class __declspec(novtable) CActParamAnimGame : public ::CActParamAnim {
 public:
     CActParamAnimGame();
     virtual ~CActParamAnimGame();
-    void func_8005A524();
+    void resetAnimGame();
     void func_8005D2C4();
     bool isActionReady(u32 type);
     bool checkHeightThreshold();
@@ -290,14 +290,14 @@ extern u8 lbl_eu_80526458[];  // retail CActParamAnimGame vtable (.data split1)
 void* findObjectById(int id);
 
 // C-linkage imports (retail names, defined in kyoshin/action/CActParamAnim.cpp).
-extern "C" int func_80051AD0(CActParamAnim* self);
-extern "C" int func_80051B38(CActParamAnim* self);
-extern "C" void func_8004CEF8(void* self, u32 param);
+extern "C" int isSpeedInRange(CActParamAnim* self);
+extern "C" int isSpeedAbove(CActParamAnim* self);
+extern "C" void setAnimCount(void* self, u32 param);
 
 // C-linkage imports from kyoshin/action/CActParamData.cpp: float getters on
 // the +0x10 child-data region, and a global state query (func_8005D2C4).
-extern "C" float func_80055DD4(const void* data);
-extern "C" float func_80055DB8(const void* data);
+extern "C" float getParamFloat0C(const void* data);
+extern "C" float getParamFloat08(const void* data);
 extern "C" int func_804BCC10(void);
 
 // C-linkage imports from libs/monolib/src/scn/code_804BC9EC.cpp (sound

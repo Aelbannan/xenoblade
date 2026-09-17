@@ -15,7 +15,7 @@
 #include <revolution/os/OSError.h>
 
 // Local imports. code_80135FDC.hpp is deliberately NOT included here: this TU
-// calls the 2-argument form of func_8013639C, which that header declares with
+// calls the 2-argument form of BdatGetPtrDirect, which that header declares with
 // three parameters. Linkage/signatures mirror the retail symbols exactly.
 extern u32 lbl_eu_806640D8;
 void drawLayout(nw4r::lyt::Layout*, nw4r::lyt::DrawInfo*, int, int);
@@ -31,16 +31,16 @@ extern "C" void bindLayoutAnimTransform__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13Anim
 void func_801390E0(CFileHandle**);
 void releaseArcResourceAccessor(nw4r::lyt::ArcResourceAccessor*);
 // Retail symbol for this helper is the unmangled name - keep C linkage.
-extern "C" void func_80136B4C(nw4r::lyt::Layout*, char*, char*, u32);
+extern "C" void LayoutSetTextBoxFmtValue(nw4r::lyt::Layout*, char*, char*, u32);
 extern "C" {
-u32 func_80137510(nw4r::lyt::AnimTransform*, float);
+u32 AnimRewindFrame(nw4r::lyt::AnimTransform*, float);
 void func_8013676C(void*, u32);
-char* func_80136190(const void*, const void*, int);
-u8 func_801361E8(u32, const char*, u32);
-char* func_8013639C(const void*, const void*);
-void func_80137E7C(void*, void*, void*);
+char* BdatTouchStringCell(const void*, const void*, int);
+u8 BdatGetU8Direct(u32, const char*, u32);
+char* BdatGetPtrDirect(const void*, const void*);
+void PaneSetTexPaletteByName(void*, void*, void*);
 void func_80124270(void*, u32);
-void func_8013BD24(void*, void*);
+void AnimJumpToLast(void*, void*);
 }
 
 // Retail 0x80224580: constructor. Stores the retail vtable label, default-
@@ -236,18 +236,18 @@ void func_80222AF0(CMCCrystalList* self)
 void func_80222B14(CMCCrystalList* self, u32 idx, u32 id, u8 countArg) {
     char buf[0x20];
     // BDAT name lookup happens BEFORE the slot number is computed.
-    char* name = func_8013639C((const void*)lbl_eu_806640D8, &lbl_eu_805092C0[0x36]);
+    char* name = BdatGetPtrDirect((const void*)lbl_eu_806640D8, &lbl_eu_805092C0[0x36]);
     u32 slot = idx + 1;
     sprintf(buf, &lbl_eu_805092C0[0x3b], slot);
-    func_80136B4C(self->mLayout, buf, name, 0);
+    LayoutSetTextBoxFmtValue(self->mLayout, buf, name, 0);
     sprintf(buf, &lbl_eu_805092C0[0x4c], slot);
     setLayoutTextBoxNumber(self->mLayout, buf, countArg);
     sprintf(buf, &lbl_eu_805092C0[0x5e], slot);
-    char* desc = func_80136190(&lbl_eu_805092C0[0x6f], &lbl_eu_805092C0[0x36], 0x21);
-    func_80136B4C(self->mLayout, buf, desc, 0);
+    char* desc = BdatTouchStringCell(&lbl_eu_805092C0[0x6f], &lbl_eu_805092C0[0x36], 0x21);
+    LayoutSetTextBoxFmtValue(self->mLayout, buf, desc, 0);
 
     void* tex = NULL;
-    switch (func_801361E8(lbl_eu_806640D8, &lbl_eu_805092C0[0x78], id)) {
+    switch (BdatGetU8Direct(lbl_eu_806640D8, &lbl_eu_805092C0[0x78], id)) {
     case 0:
         tex = self->mArcResAccessor2->GetResource(
             nw4r::lyt::ArcResourceAccessor::RES_TYPE_TEXTURE,
@@ -286,7 +286,7 @@ void func_80222B14(CMCCrystalList* self, u32 idx, u32 id, u8 countArg) {
     }
     if (tex != NULL) {
         sprintf(buf, &lbl_eu_805092C0[0x11b], slot);
-        func_80137E7C(self->mLayout, buf, tex);
+        PaneSetTexPaletteByName(self->mLayout, buf, tex);
     }
 }
 #pragma optimize_for_size off
@@ -303,25 +303,25 @@ extern "C" void func_80222D9C(CMCCrystalList* self, u32 arg) {
     for (u8 i = 1; i <= 8; i++) {
         char buf[0x28];
         sprintf(buf, &lbl_eu_805092C0[0x3b], i);
-        func_80136B4C(self->mLayout, buf, &lbl_eu_805092C0[0x12a], 0);
+        LayoutSetTextBoxFmtValue(self->mLayout, buf, &lbl_eu_805092C0[0x12a], 0);
         sprintf(buf, &lbl_eu_805092C0[0x4c], i);
-        func_80136B4C(self->mLayout, buf, &lbl_eu_805092C0[0x12a], 0);
+        LayoutSetTextBoxFmtValue(self->mLayout, buf, &lbl_eu_805092C0[0x12a], 0);
         sprintf(buf, &lbl_eu_805092C0[0x5e], i);
-        func_80136B4C(self->mLayout, buf, &lbl_eu_805092C0[0x12a], 0);
+        LayoutSetTextBoxFmtValue(self->mLayout, buf, &lbl_eu_805092C0[0x12a], 0);
 
         void* tex = self->mArcResAccessor->GetResource(
             nw4r::lyt::ArcResourceAccessor::RES_TYPE_TEXTURE,
             &lbl_eu_805092C0[0x12b], NULL);
         if (tex != NULL) {
             sprintf(buf, &lbl_eu_805092C0[0x11b], i);
-            func_80137E7C(self->mLayout, buf, tex);
+            PaneSetTexPaletteByName(self->mLayout, buf, tex);
         }
 
         if (arg == 0 && self->mStateIdx >= 3) {
             sprintf(buf, &lbl_eu_805092C0[0x13e], i);
             func_80124270(
                 self->mLayout->GetRootPane()->FindPaneByName(buf, true), 0);
-            func_8013BD24(
+            AnimJumpToLast(
                 self->mLayout->GetRootPane()->FindPaneByName(buf, true),
                 self->mAnimRes5);
             self->mSlotStates[i] = 0;
@@ -351,8 +351,8 @@ void func_80222F64(CMCCrystalList* self, int idx)
 // kind 0: >=200 -> mark slot active, bind anim, optionally bind 'itmg' texture
 //         < 200 -> clear slot, bind anim only
 // kind 1: >=300 -> like kind 0 but with the second texture name;
-//         < 300 -> clear slot and (if texture found) rebind via func_8013BD24
-// kind 2: always clear slot; optional texture + func_8013BD24 rebind.
+//         < 300 -> clear slot and (if texture found) rebind via AnimJumpToLast
+// kind 2: always clear slot; optional texture + AnimJumpToLast rebind.
 // Finally toggles pane visibility: first two panes follow `result`, the third
 // gets its inverse.
 #pragma optimize_for_size on
@@ -377,7 +377,7 @@ void func_80223004(CMCCrystalList* self, u32 idx, u32 val, int kind) {
         if (val >= 200) {
             self->mSlotStates[idx] = 1;
             func_80223988(self);
-            func_8013BCD4(paneC, self->mAnimRes5);
+            AnimResetToFirst(paneC, self->mAnimRes5);
             void* tex = self->mArcResAccessor->GetResource(
                 0x74696D67, &lbl_eu_805092C0[0x167], NULL); // 'itmg'
             if (tex != NULL) {
@@ -387,14 +387,14 @@ void func_80223004(CMCCrystalList* self, u32 idx, u32 val, int kind) {
         } else {
             self->mSlotStates[idx] = 0;
             func_80223988(self);
-            func_8013BCD4(paneC, self->mAnimRes5);
+            AnimResetToFirst(paneC, self->mAnimRes5);
         }
         break;
     case 1:
         if (val >= 300) {
             self->mSlotStates[idx] = 1;
             func_80223988(self);
-            func_8013BCD4(paneC, self->mAnimRes5);
+            AnimResetToFirst(paneC, self->mAnimRes5);
             void* tex = self->mArcResAccessor->GetResource(
                 0x74696D67, &lbl_eu_805092C0[0x17b], NULL);
             if (tex != NULL) {
@@ -408,7 +408,7 @@ void func_80223004(CMCCrystalList* self, u32 idx, u32 val, int kind) {
             if (tex != NULL) {
                 func_80137F88(paneC, tex);
                 func_80223988(self);
-                func_8013BD24(paneC, self->mAnimRes5);
+                AnimJumpToLast(paneC, self->mAnimRes5);
             }
             result = 0;
         }
@@ -421,7 +421,7 @@ void func_80223004(CMCCrystalList* self, u32 idx, u32 val, int kind) {
             if (tex != NULL) {
                 func_80137F88(paneC, tex);
                 func_80223988(self);
-                func_8013BD24(paneC, self->mAnimRes5);
+                AnimJumpToLast(paneC, self->mAnimRes5);
             }
         }
         result = 0;
@@ -504,21 +504,21 @@ extern "C" void __declspec(noinline) func_80223614(CMCCrystalList* self, u32 idx
 }
 #pragma optimize_for_size off
 
-// Retail 0x80223498: wait for anim trans 2 (via func_80137510) to finish,
+// Retail 0x80223498: wait for anim trans 2 (via AnimRewindFrame) to finish,
 // then enter state 5 and run func_80223698.
 extern "C" void __declspec(noinline) func_80223498(CMCCrystalList* self)
 {
-    if (func_80137510(self->mAnimTrans2, lbl_eu_80668544) != 0) {
+    if (AnimRewindFrame(self->mAnimTrans2, lbl_eu_80668544) != 0) {
         self->mStateIdx = 5;
         func_80223698(self);
     }
 }
 
-// Retail 0x802234E4: wait for anim trans 1 (via func_80137510) to finish,
+// Retail 0x802234E4: wait for anim trans 1 (via AnimRewindFrame) to finish,
 // then reset to state 0 and activate.
 extern "C" void __declspec(noinline) func_802234E4(CMCCrystalList* self)
 {
-    if (func_80137510(self->mAnimTrans1, lbl_eu_80668544) != 0) {
+    if (AnimRewindFrame(self->mAnimTrans1, lbl_eu_80668544) != 0) {
         self->mStateIdx = 0;
         self->mIsActive = 1;
     }
@@ -533,11 +533,11 @@ extern "C" void __declspec(noinline) func_80223530(CMCCrystalList* self)
     }
 }
 
-// Retail 0x8022357C: wait for anim trans 3 (via func_80137510) to finish,
+// Retail 0x8022357C: wait for anim trans 3 (via AnimRewindFrame) to finish,
 // then activate state 3.
 extern "C" void __declspec(noinline) func_8022357C(CMCCrystalList* self)
 {
-    if (func_80137510(self->mAnimTrans3, lbl_eu_80668544) != 0) {
+    if (AnimRewindFrame(self->mAnimTrans3, lbl_eu_80668544) != 0) {
         self->mStateIdx = 3;
         self->mIsActive = 1;
     }
@@ -645,7 +645,7 @@ bool CMCCrystalList::OnFileEvent(CEventFile* pEventFile)
             mLayout, &mAnimTrans3, mArcResAccessor, &lbl_eu_805092C0[0x1f2]);
         bindLayoutAnimTransform__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(
             mLayout, &mAnimTrans4, mArcResAccessor, &lbl_eu_805092C0[0x20f]);
-        func_80136FA0(mLayout, &mAnimRes5, mArcResAccessor, &lbl_eu_805092C0[0x22b]);
+        LayoutBindAnimResource(mLayout, &mAnimRes5, mArcResAccessor, &lbl_eu_805092C0[0x22b]);
 
         // Bind the loaded font's pane into the layout root.
         nw4r::lyt::Pane* rootPane = mLayout->GetRootPane();
@@ -667,10 +667,10 @@ bool CMCCrystalList::OnFileEvent(CEventFile* pEventFile)
             }
         }
 
-        func_80136B4C(mLayout, &lbl_eu_805092C0[0x258],
-            func_80136190(&lbl_eu_805092C0[0x247], &lbl_eu_805092C0[0x253], 0x2c), 0);
-        func_80136B4C(mLayout, &lbl_eu_805092C0[0x267],
-            func_80136190(&lbl_eu_805092C0[0x247], &lbl_eu_805092C0[0x253], 0x2d), 0);
+        LayoutSetTextBoxFmtValue(mLayout, &lbl_eu_805092C0[0x258],
+            BdatTouchStringCell(&lbl_eu_805092C0[0x247], &lbl_eu_805092C0[0x253], 0x2c), 0);
+        LayoutSetTextBoxFmtValue(mLayout, &lbl_eu_805092C0[0x267],
+            BdatTouchStringCell(&lbl_eu_805092C0[0x247], &lbl_eu_805092C0[0x253], 0x2d), 0);
 
         func_80223698(this);
         mLayout->Animate(0);

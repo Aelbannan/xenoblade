@@ -55,11 +55,11 @@ public:
         if (unk1C == false) DELETE_ARRAY(mList);
     }
 
-    void func_8049CB6C(T* item){
+    void ScnFilterList_destroyItem(T* item){
 
     }
 
-    void func_8049CB70(_reslist_node<T>* r4){
+    void ScnFilterList_freeNode(_reslist_node<T>* r4){
         r4->mNext = nullptr;
     }
 
@@ -80,15 +80,15 @@ public:
         return i;
     }
 
-    //func_8049CAF4
+    //ScnFilterList_clear
     void clearList(){
         _reslist_node<T>* r5 = mStartNodePtr->mNext;
         
         while (r5 != mStartNodePtr) {
             _reslist_node<T>* r4 = r5;
             r5 = r5->mNext;
-            func_8049CB6C(&r4->mItem);
-            func_8049CB70(r4);
+            ScnFilterList_destroyItem(&r4->mItem);
+            ScnFilterList_freeNode(r4);
         }
     
         mStartNodePtr->mNext = mStartNodePtr;

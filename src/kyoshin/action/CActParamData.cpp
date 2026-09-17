@@ -17,8 +17,8 @@ extern void __dl__FPv(void*);
 }
 
 // Retail (unmangled) stream-reset entry; distinct from the TU-local
-// C++-linkage func_80055700.
-extern "C" int func_80055700(void* table, void* flag, void* stream);
+// C++-linkage unlinkParamRecs.
+extern "C" int unlinkParamRecs(void* table, void* flag, void* stream);
 
 // ============================================================
 // Constructor
@@ -44,66 +44,66 @@ CActParamData::~CActParamData() {}
 // the real virtuals without a TU-local pad.
 struct CActParamAnimView;
 
-extern "C" void func_80056128(void* self);
-extern "C" void func_80056138(void* self);
-extern "C" void func_80056148(void* self);
-extern "C" void func_80056158(void* self);
-extern "C" void func_80056168(void* self);
-extern "C" void func_80056178(void* self);
-extern "C" void func_80056188(void* self);
-extern "C" void func_80056198(void* self);
-extern "C" void func_800561A8(void* self);
-extern "C" void func_800561B8(void* self);
-extern "C" void func_800561C8(void* self);
-extern "C" void func_800561D8(void* self);
-extern "C" void func_800561E8(void* self);
-extern "C" void func_800561F8(void* self);
-extern "C" void func_80056208(void* self);
-extern "C" void func_80056218(void* self);
-extern "C" void func_80056228(void* self);
-extern "C" void func_80056238(void* self);
-extern "C" void func_80056248(void* self);
-extern "C" void func_80056258(void* self);
-extern "C" void func_80056614(void* self);
-extern "C" void func_80056660(void* self);
-extern "C" void func_80056670(void* self);
-extern "C" void func_800566F8(void* self);
-extern "C" void func_80056790(void* self);
-extern "C" void func_800567A0(void* self);
-extern "C" void func_800567B0(void* self);
-extern "C" void func_800567C0(void* self);
-extern "C" void func_800567D0(void* self);
-extern "C" void func_800567E0(void* self);
-extern "C" void func_80056104(void* self, u32 a, u32 b);
-extern "C" void func_80056268(void* self, u32 a);
-extern "C" void func_8005627C(void* self, u32 a);
-extern "C" void func_800564D4(void* self, u32 a);
-extern "C" void func_800564E8(void* self, u32 a);
-extern "C" void func_800564FC(void* self, u32 a);
-extern "C" void func_80056510(void* self, u32 a);
-extern "C" void func_80056524(void* self, u32 a);
-extern "C" void func_80056538(void* self, u32 a);
-extern "C" void func_8005654C(void* self, u32 a);
-extern "C" void func_80056560(void* self, u32 a);
-extern "C" void func_80056574(void* self, u32 a);
-extern "C" void func_80056588(void* self, u32 a);
-extern "C" void func_8005659C(void* self, u32 a);
-extern "C" void func_800565B0(void* self, u32 a);
-extern "C" void func_800565C4(void* self, u32 a);
-extern "C" void func_800565D8(void* self, u32 a);
-extern "C" void func_800565EC(void* self, u32 a);
-extern "C" void func_80056600(void* self, u32 a);
-extern "C" void func_80056624(void* self, u32 a);
-extern "C" void func_80056638(void* self, u32 a);
-extern "C" void func_8005664C(void* self, u32 a);
-extern "C" void func_80056680(void* self, u32 a);
-extern "C" void func_80056694(void* self, u32 a);
-extern "C" void func_800566A8(void* self, u32 a);
-extern "C" void func_800566BC(void* self, u32 a);
-extern "C" void func_800566D0(void* self, u32 a);
-extern "C" void func_800566E4(void* self, u32 a);
-extern "C" void func_80056708(void* self, u32 a);
-extern "C" void func_8005671C(void* self, u32 a);
+extern "C" void actAnimVt40(void* self);
+extern "C" void actAnimVt38(void* self);
+extern "C" void actAnimVt3C(void* self);
+extern "C" void actAnimVt44(void* self);
+extern "C" void actAnimVt48(void* self);
+extern "C" void actAnimVt4C(void* self);
+extern "C" void actAnimVt50(void* self);
+extern "C" void actAnimVt58(void* self);
+extern "C" void actAnimVt20(void* self);
+extern "C" void actAnimVt24(void* self);
+extern "C" void actAnimVt28(void* self);
+extern "C" void actAnimVt2C(void* self);
+extern "C" void actAnimVt5C(void* self);
+extern "C" void actAnimVt60(void* self);
+extern "C" void actAnimVt64(void* self);
+extern "C" void actAnimVt68(void* self);
+extern "C" void actAnimVt6C(void* self);
+extern "C" void actAnimVt70(void* self);
+extern "C" void actAnimVt74(void* self);
+extern "C" void actAnimVt78(void* self);
+extern "C" void actAnimVt9C(void* self);
+extern "C" void callAnimFrame(void* self);
+extern "C" void callAnimTrans(void* self);
+extern "C" void callAnimEffect(void* self);
+extern "C" void actAnimVtC8(void* self);
+extern "C" void actAnimVtCC(void* self);
+extern "C" void callAnimChain(void* self);
+extern "C" void callAnimLoop(void* self);
+extern "C" void callAnimMotion(void* self);
+extern "C" void callAnimBlend(void* self);
+extern "C" void callAnimBlendW(void* self, u32 a, u32 b);
+extern "C" void actAnimSlot01(void* self, u32 a);
+extern "C" void actAnimSlot02(void* self, u32 a);
+extern "C" void actAnimSlot32(void* self, u32 a);
+extern "C" void actAnimSlot33(void* self, u32 a);
+extern "C" void actAnimSlot34(void* self, u32 a);
+extern "C" void actAnimSlot35(void* self, u32 a);
+extern "C" void actAnimSlot36(void* self, u32 a);
+extern "C" void actAnimSlot37(void* self, u32 a);
+extern "C" void actAnimSlot38(void* self, u32 a);
+extern "C" void actAnimSlot39(void* self, u32 a);
+extern "C" void actAnimSlot40(void* self, u32 a);
+extern "C" void actAnimSlot41(void* self, u32 a);
+extern "C" void actAnimSlot42(void* self, u32 a);
+extern "C" void actAnimSlot43(void* self, u32 a);
+extern "C" void actAnimSlot44(void* self, u32 a);
+extern "C" void actAnimSlot45(void* self, u32 a);
+extern "C" void actAnimSlot46(void* self, u32 a);
+extern "C" void actAnimSlot47(void* self, u32 a);
+extern "C" void callAnimMode0(void* self, u32 a);
+extern "C" void callAnimMode1(void* self, u32 a);
+extern "C" void callAnimMode2(void* self, u32 a);
+extern "C" void callAnimScale0(void* self, u32 a);
+extern "C" void callAnimScale1(void* self, u32 a);
+extern "C" void callAnimScale2(void* self, u32 a);
+extern "C" void callAnimScale3(void* self, u32 a);
+extern "C" void callAnimRot0(void* self, u32 a);
+extern "C" void callAnimRot1(void* self, u32 a);
+extern "C" void callAnimUpdate0(void* self, u32 a);
+extern "C" void callAnimUpdate1(void* self, u32 a);
 
 // Real forwarder implementations - dispatch through CActParamAnim vt (lbl_eu_805261C8)
 // Minimal view of CActParamAnim vt (lbl_eu_805261C8) to avoid header overload conflicts.
@@ -167,108 +167,109 @@ struct CActParamAnimView {
 };
 // alias removed - CActParamAnimView is the view type
 
-extern "C" void func_80056128(void* self) { ((CActParamAnimView*)self)->func_8004E694(); }
-extern "C" void func_80056138(void* self) { ((CActParamAnimView*)self)->func_8004D2F8(); }
-extern "C" void func_80056148(void* self) { ((CActParamAnimView*)self)->func_8004D4AC(); }
-extern "C" void func_80056158(void* self) { ((CActParamAnimView*)self)->func_8004D650(); }
-extern "C" void func_80056168(void* self) { ((CActParamAnimView*)self)->__vt_48(); }
-extern "C" void func_80056178(void* self) { ((CActParamAnimView*)self)->func_8004D7EC(); }
-extern "C" void func_80056188(void* self) { ((CActParamAnimView*)self)->func_8004D950(); }
-extern "C" void func_80056198(void* self) { ((CActParamAnimView*)self)->func_8004ECF4(); }
-extern "C" void func_800561A8(void* self) { ((CActParamAnimView*)self)->func_8004DDD0(); }
-extern "C" void func_800561B8(void* self) { ((CActParamAnimView*)self)->func_8004DF9C(); }
-extern "C" void func_800561C8(void* self) { ((CActParamAnimView*)self)->func_8004E168(); }
-extern "C" void func_800561D8(void* self) { ((CActParamAnimView*)self)->func_8004E334(); }
-extern "C" void func_800561E8(void* self) { ((CActParamAnimView*)self)->func_8004F1E4(); }
-extern "C" void func_800561F8(void* self) { ((CActParamAnimView*)self)->func_8004F334(); }
-extern "C" void func_80056208(void* self) { ((CActParamAnimView*)self)->func_8004F884(); }
-extern "C" void func_80056218(void* self) { ((CActParamAnimView*)self)->func_8004FAB4(); }
-extern "C" void func_80056228(void* self) { ((CActParamAnimView*)self)->func_8004FCE0(); }
-extern "C" void func_80056238(void* self) { ((CActParamAnimView*)self)->func_8004FE58(); }
-extern "C" void func_80056248(void* self) { ((CActParamAnimView*)self)->func_80050744(); }
-extern "C" void func_80056258(void* self) { ((CActParamAnimView*)self)->__vt_78(); }
-extern "C" void func_80056614(void* self) { ((CActParamAnimView*)self)->func_8004F484(); }
-extern "C" void func_80056660(void* self) { (void)((CActParamAnimView*)self)->isAnimFrameActive(); }
-extern "C" void func_80056670(void* self) { (void)((CActParamAnimView*)self)->isAnimTransActive(); }
-extern "C" void func_800566F8(void* self) { (void)((CActParamAnimView*)self)->isAnimEffectActive(); }
-extern "C" void func_80056790(void* self) { ((CActParamAnimView*)self)->func_800517FC(); }
-extern "C" void func_800567A0(void* self) { ((CActParamAnimView*)self)->func_8005194C(); }
-extern "C" void func_800567B0(void* self) { (void)((CActParamAnimView*)self)->isAnimChainActive(); }
-extern "C" void func_800567C0(void* self) { (void)((CActParamAnimView*)self)->isAnimLoopActive(); }
-extern "C" void func_800567D0(void* self) { (void)((CActParamAnimView*)self)->isAnimMotionActive(); }
-extern "C" void func_800567E0(void* self) { (void)((CActParamAnimView*)self)->isAnimBlendActive(); }
+extern "C" void actAnimVt40(void* self) { ((CActParamAnimView*)self)->func_8004E694(); }
+extern "C" void actAnimVt38(void* self) { ((CActParamAnimView*)self)->func_8004D2F8(); }
+extern "C" void actAnimVt3C(void* self) { ((CActParamAnimView*)self)->func_8004D4AC(); }
+extern "C" void actAnimVt44(void* self) { ((CActParamAnimView*)self)->func_8004D650(); }
+extern "C" void actAnimVt48(void* self) { ((CActParamAnimView*)self)->__vt_48(); }
+extern "C" void actAnimVt4C(void* self) { ((CActParamAnimView*)self)->func_8004D7EC(); }
+extern "C" void actAnimVt50(void* self) { ((CActParamAnimView*)self)->func_8004D950(); }
+extern "C" void actAnimVt58(void* self) { ((CActParamAnimView*)self)->func_8004ECF4(); }
+extern "C" void actAnimVt20(void* self) { ((CActParamAnimView*)self)->func_8004DDD0(); }
+extern "C" void actAnimVt24(void* self) { ((CActParamAnimView*)self)->func_8004DF9C(); }
+extern "C" void actAnimVt28(void* self) { ((CActParamAnimView*)self)->func_8004E168(); }
+extern "C" void actAnimVt2C(void* self) { ((CActParamAnimView*)self)->func_8004E334(); }
+extern "C" void actAnimVt5C(void* self) { ((CActParamAnimView*)self)->func_8004F1E4(); }
+extern "C" void actAnimVt60(void* self) { ((CActParamAnimView*)self)->func_8004F334(); }
+extern "C" void actAnimVt64(void* self) { ((CActParamAnimView*)self)->func_8004F884(); }
+extern "C" void actAnimVt68(void* self) { ((CActParamAnimView*)self)->func_8004FAB4(); }
+extern "C" void actAnimVt6C(void* self) { ((CActParamAnimView*)self)->func_8004FCE0(); }
+extern "C" void actAnimVt70(void* self) { ((CActParamAnimView*)self)->func_8004FE58(); }
+extern "C" void actAnimVt74(void* self) { ((CActParamAnimView*)self)->func_80050744(); }
+extern "C" void actAnimVt78(void* self) { ((CActParamAnimView*)self)->__vt_78(); }
+extern "C" void actAnimVt9C(void* self) { ((CActParamAnimView*)self)->func_8004F484(); }
+extern "C" void callAnimFrame(void* self) { (void)((CActParamAnimView*)self)->isAnimFrameActive(); }
+extern "C" void callAnimTrans(void* self) { (void)((CActParamAnimView*)self)->isAnimTransActive(); }
+extern "C" void callAnimEffect(void* self) { (void)((CActParamAnimView*)self)->isAnimEffectActive(); }
+extern "C" void actAnimVtC8(void* self) { ((CActParamAnimView*)self)->func_800517FC(); }
+extern "C" void actAnimVtCC(void* self) { ((CActParamAnimView*)self)->func_8005194C(); }
+extern "C" void callAnimChain(void* self) { (void)((CActParamAnimView*)self)->isAnimChainActive(); }
+extern "C" void callAnimLoop(void* self) { (void)((CActParamAnimView*)self)->isAnimLoopActive(); }
+extern "C" void callAnimMotion(void* self) { (void)((CActParamAnimView*)self)->isAnimMotionActive(); }
+extern "C" void callAnimBlend(void* self) { (void)((CActParamAnimView*)self)->isAnimBlendActive(); }
 
-extern "C" void func_80056104(void* self, u32 a, u32 b) { ((CActParamAnimView*)self)->func_80050C50(a, (u32)(u16)b); }
-extern "C" void func_80056268(void* self, u32 a) { ((CActParamAnimView*)self)->func_80050890(a, 1); }
-extern "C" void func_8005627C(void* self, u32 a) { ((CActParamAnimView*)self)->func_80050890(a, 2); }
-extern "C" void func_800564D4(void* self, u32 a) { ((CActParamAnimView*)self)->func_80050890(a, 0x20); }
-extern "C" void func_800564E8(void* self, u32 a) { ((CActParamAnimView*)self)->func_80050890(a, 0x21); }
-extern "C" void func_800564FC(void* self, u32 a) { ((CActParamAnimView*)self)->func_80050890(a, 0x22); }
-extern "C" void func_80056510(void* self, u32 a) { ((CActParamAnimView*)self)->func_80050890(a, 0x23); }
-extern "C" void func_80056524(void* self, u32 a) { ((CActParamAnimView*)self)->func_80050890(a, 0x24); }
-extern "C" void func_80056538(void* self, u32 a) { ((CActParamAnimView*)self)->func_80050890(a, 0x25); }
-extern "C" void func_8005654C(void* self, u32 a) { ((CActParamAnimView*)self)->func_80050890(a, 0x26); }
-extern "C" void func_80056560(void* self, u32 a) { ((CActParamAnimView*)self)->func_80050890(a, 0x27); }
-extern "C" void func_80056574(void* self, u32 a) { ((CActParamAnimView*)self)->func_80050890(a, 0x28); }
-extern "C" void func_80056588(void* self, u32 a) { ((CActParamAnimView*)self)->func_80050890(a, 0x29); }
-extern "C" void func_8005659C(void* self, u32 a) { ((CActParamAnimView*)self)->func_80050890(a, 0x2a); }
-extern "C" void func_800565B0(void* self, u32 a) { ((CActParamAnimView*)self)->func_80050890(a, 0x2b); }
-extern "C" void func_800565C4(void* self, u32 a) { ((CActParamAnimView*)self)->func_80050890(a, 0x2c); }
-extern "C" void func_800565D8(void* self, u32 a) { ((CActParamAnimView*)self)->func_80050890(a, 0x2d); }
-extern "C" void func_800565EC(void* self, u32 a) { ((CActParamAnimView*)self)->func_80050890(a, 0x2e); }
-extern "C" void func_80056600(void* self, u32 a) { ((CActParamAnimView*)self)->func_80050890(a, 0x2f); }
-extern "C" void func_80056624(void* self, u32 a) { ((CActParamAnimView*)self)->func_8004F5FC(a, 0); }
-extern "C" void func_80056638(void* self, u32 a) { ((CActParamAnimView*)self)->func_8004F5FC(a, 1); }
-extern "C" void func_8005664C(void* self, u32 a) { ((CActParamAnimView*)self)->func_8004F5FC(a, 2); }
-// These three at 0xB0/0xB4 are boolean getters on the real class; extra args are ignored (retail leaves r4/r5 live).
-extern "C" void func_80056680(void* self, u32 a) { ((CActParamAnimView*)self)->isAnimScaleActive(a, 0); }
-extern "C" void func_80056694(void* self, u32 a) { ((CActParamAnimView*)self)->isAnimScaleActive(a, 0); }
-extern "C" void func_800566A8(void* self, u32 a) { ((CActParamAnimView*)self)->isAnimScaleActive(a, 0); }
-extern "C" void func_800566BC(void* self, u32 a) { ((CActParamAnimView*)self)->isAnimScaleActive(a, 0); }
-extern "C" void func_800566D0(void* self, u32 a) { ((CActParamAnimView*)self)->isAnimRotateActive(a, 0); }
-extern "C" void func_800566E4(void* self, u32 a) { ((CActParamAnimView*)self)->isAnimRotateActive(a, 0); }
-extern "C" void func_80056708(void* self, u32 a) { ((CActParamAnimView*)self)->isAnimUpdateActive(a, 0); }
-extern "C" void func_8005671C(void* self, u32 a) { ((CActParamAnimView*)self)->isAnimUpdateActive(a, 0); }
+extern "C" void callAnimBlendW(void* self, u32 a, u32 b) { ((CActParamAnimView*)self)->func_80050C50(a, (u32)(u16)b); }
+extern "C" void actAnimSlot01(void* self, u32 a) { ((CActParamAnimView*)self)->func_80050890(a, 1); }
+extern "C" void actAnimSlot02(void* self, u32 a) { ((CActParamAnimView*)self)->func_80050890(a, 2); }
+extern "C" void actAnimSlot32(void* self, u32 a) { ((CActParamAnimView*)self)->func_80050890(a, 0x20); }
+extern "C" void actAnimSlot33(void* self, u32 a) { ((CActParamAnimView*)self)->func_80050890(a, 0x21); }
+extern "C" void actAnimSlot34(void* self, u32 a) { ((CActParamAnimView*)self)->func_80050890(a, 0x22); }
+extern "C" void actAnimSlot35(void* self, u32 a) { ((CActParamAnimView*)self)->func_80050890(a, 0x23); }
+extern "C" void actAnimSlot36(void* self, u32 a) { ((CActParamAnimView*)self)->func_80050890(a, 0x24); }
+extern "C" void actAnimSlot37(void* self, u32 a) { ((CActParamAnimView*)self)->func_80050890(a, 0x25); }
+extern "C" void actAnimSlot38(void* self, u32 a) { ((CActParamAnimView*)self)->func_80050890(a, 0x26); }
+extern "C" void actAnimSlot39(void* self, u32 a) { ((CActParamAnimView*)self)->func_80050890(a, 0x27); }
+extern "C" void actAnimSlot40(void* self, u32 a) { ((CActParamAnimView*)self)->func_80050890(a, 0x28); }
+extern "C" void actAnimSlot41(void* self, u32 a) { ((CActParamAnimView*)self)->func_80050890(a, 0x29); }
+extern "C" void actAnimSlot42(void* self, u32 a) { ((CActParamAnimView*)self)->func_80050890(a, 0x2a); }
+extern "C" void actAnimSlot43(void* self, u32 a) { ((CActParamAnimView*)self)->func_80050890(a, 0x2b); }
+extern "C" void actAnimSlot44(void* self, u32 a) { ((CActParamAnimView*)self)->func_80050890(a, 0x2c); }
+extern "C" void actAnimSlot45(void* self, u32 a) { ((CActParamAnimView*)self)->func_80050890(a, 0x2d); }
+extern "C" void actAnimSlot46(void* self, u32 a) { ((CActParamAnimView*)self)->func_80050890(a, 0x2e); }
+extern "C" void actAnimSlot47(void* self, u32 a) { ((CActParamAnimView*)self)->func_80050890(a, 0x2f); }
+extern "C" void callAnimMode0(void* self, u32 a) { ((CActParamAnimView*)self)->func_8004F5FC(a, 0); }
+extern "C" void callAnimMode1(void* self, u32 a) { ((CActParamAnimView*)self)->func_8004F5FC(a, 1); }
+extern "C" void callAnimMode2(void* self, u32 a) { ((CActParamAnimView*)self)->func_8004F5FC(a, 2); }
+// Boolean getters; retail still materializes a selector in r5 before the
+// virtual call (vt+0xB0 scale / 0xB4 rotate / 0xAC update).
+extern "C" void callAnimScale0(void* self, u32 a) { ((CActParamAnimView*)self)->isAnimScaleActive(a, 0); }
+extern "C" void callAnimScale1(void* self, u32 a) { ((CActParamAnimView*)self)->isAnimScaleActive(a, 1); }
+extern "C" void callAnimScale2(void* self, u32 a) { ((CActParamAnimView*)self)->isAnimScaleActive(a, 2); }
+extern "C" void callAnimScale3(void* self, u32 a) { ((CActParamAnimView*)self)->isAnimScaleActive(a, 3); }
+extern "C" void callAnimRot0(void* self, u32 a) { ((CActParamAnimView*)self)->isAnimRotateActive(a, 0); }
+extern "C" void callAnimRot1(void* self, u32 a) { ((CActParamAnimView*)self)->isAnimRotateActive(a, 1); }
+extern "C" void callAnimUpdate0(void* self, u32 a) { ((CActParamAnimView*)self)->isAnimUpdateActive(a, 0); }
+extern "C" void callAnimUpdate1(void* self, u32 a) { ((CActParamAnimView*)self)->isAnimUpdateActive(a, 1); }
 
-extern "C" void func_800560E4(void* self) { ((CActParamAnimView*)self)->func_800510FC(); }
-extern "C" void func_800560F4(void* self) { ((CActParamAnimView*)self)->func_800512A8(); }
-extern "C" void func_80056118(void* self) { ((CActParamAnimView*)self)->func_8004E500(); }
-extern "C" int func_80056290(void* self, u32 a) { return ((CActParamAnimView*)self)->func_80050890(a, 3); }
-extern "C" int func_800562A4(void* self, u32 a) { return ((CActParamAnimView*)self)->func_80050890(a, 4); }
-extern "C" int func_800562B8(void* self, u32 a) { return ((CActParamAnimView*)self)->func_80050890(a, 5); }
-extern "C" int func_800562CC(void* self, int a) { return ((CActParamAnimView*)self)->func_80050890((u32)a, 6); }
-extern "C" int func_800562E0(void* self, u32 a) { return ((CActParamAnimView*)self)->func_80050890(a, 7); }
-extern "C" int func_800562F4(void* self, u32 a) { return ((CActParamAnimView*)self)->func_80050890(a, 8); }
-extern "C" int func_80056308(void* self, u32 a) { return ((CActParamAnimView*)self)->func_80050890(a, 9); }
-extern "C" int func_8005631C(void* self, u32 a) { return ((CActParamAnimView*)self)->func_80050890(a, 10); }
-extern "C" int func_80056330(void* self, u32 a) { return ((CActParamAnimView*)self)->func_80050890(a, 11); }
-extern "C" int func_80056344(void* self, u32 a) { return ((CActParamAnimView*)self)->func_80050890(a, 12); }
-extern "C" int func_80056358(void* self, u32 a) { return ((CActParamAnimView*)self)->func_80050890(a, 13); }
-extern "C" int func_8005636C(void* self, u32 a) { return ((CActParamAnimView*)self)->func_80050890(a, 14); }
-extern "C" int func_80056380(void* self, u32 a) { return ((CActParamAnimView*)self)->func_80050890(a, 15); }
-extern "C" int func_80056394(void* self, u32 a) { return ((CActParamAnimView*)self)->func_80050890(a, 16); }
-extern "C" int func_800563A8(void* self, u32 a) { return ((CActParamAnimView*)self)->func_80050890(a, 17); }
-extern "C" int func_800563D0(void* self, u32 a) { return ((CActParamAnimView*)self)->func_80050890(a, 19); }
-extern "C" int func_800563E4(void* self, u32 a) { return ((CActParamAnimView*)self)->func_80050890(a, 20); }
-extern "C" int func_800563F8(void* self, u32 a) { return ((CActParamAnimView*)self)->func_80050890(a, 21); }
-extern "C" int func_8005640C(void* self, u32 a) { return ((CActParamAnimView*)self)->func_80050890(a, 22); }
-extern "C" int func_80056420(void* self, u32 a) { return ((CActParamAnimView*)self)->func_80050890(a, 23); }
-extern "C" int func_80056434(void* self, u32 a) { return ((CActParamAnimView*)self)->func_80050890(a, 24); }
-extern "C" int func_80056448(void* self, u32 a) { return ((CActParamAnimView*)self)->func_80050890(a, 25); }
-extern "C" int func_8005645C(void* self, u32 a) { return ((CActParamAnimView*)self)->func_80050890(a, 26); }
-extern "C" int func_80056470(void* self, u32 a) { return ((CActParamAnimView*)self)->func_80050890(a, 27); }
-extern "C" int func_80056484(void* self, u32 a) { return ((CActParamAnimView*)self)->func_80050890(a, 28); }
-extern "C" int func_80056498(void* self, u32 a) { return ((CActParamAnimView*)self)->func_80050890(a, 29); }
-extern "C" int func_800564AC(void* self, int a) { return ((CActParamAnimView*)self)->func_80050890((u32)a, 30); }
-extern "C" int func_800564C0(void* self, u32 a) { return ((CActParamAnimView*)self)->func_80050890(a, 31); }
+extern "C" void actAnimVt90(void* self) { ((CActParamAnimView*)self)->func_800510FC(); }
+extern "C" void actAnimVt94(void* self) { ((CActParamAnimView*)self)->func_800512A8(); }
+extern "C" void actAnimVt30(void* self) { ((CActParamAnimView*)self)->func_8004E500(); }
+extern "C" int actAnimSlot03(void* self, u32 a) { return ((CActParamAnimView*)self)->func_80050890(a, 3); }
+extern "C" int actAnimSlot04(void* self, u32 a) { return ((CActParamAnimView*)self)->func_80050890(a, 4); }
+extern "C" int actAnimSlot05(void* self, u32 a) { return ((CActParamAnimView*)self)->func_80050890(a, 5); }
+extern "C" int actAnimSlot06(void* self, int a) { return ((CActParamAnimView*)self)->func_80050890((u32)a, 6); }
+extern "C" int actAnimSlot07(void* self, u32 a) { return ((CActParamAnimView*)self)->func_80050890(a, 7); }
+extern "C" int actAnimSlot08(void* self, u32 a) { return ((CActParamAnimView*)self)->func_80050890(a, 8); }
+extern "C" int actAnimSlot09(void* self, u32 a) { return ((CActParamAnimView*)self)->func_80050890(a, 9); }
+extern "C" int actAnimSlot10(void* self, u32 a) { return ((CActParamAnimView*)self)->func_80050890(a, 10); }
+extern "C" int actAnimSlot11(void* self, u32 a) { return ((CActParamAnimView*)self)->func_80050890(a, 11); }
+extern "C" int actAnimSlot12(void* self, u32 a) { return ((CActParamAnimView*)self)->func_80050890(a, 12); }
+extern "C" int actAnimSlot13(void* self, u32 a) { return ((CActParamAnimView*)self)->func_80050890(a, 13); }
+extern "C" int actAnimSlot14(void* self, u32 a) { return ((CActParamAnimView*)self)->func_80050890(a, 14); }
+extern "C" int actAnimSlot15(void* self, u32 a) { return ((CActParamAnimView*)self)->func_80050890(a, 15); }
+extern "C" int actAnimSlot16(void* self, u32 a) { return ((CActParamAnimView*)self)->func_80050890(a, 16); }
+extern "C" int actAnimSlot17(void* self, u32 a) { return ((CActParamAnimView*)self)->func_80050890(a, 17); }
+extern "C" int actAnimSlot19(void* self, u32 a) { return ((CActParamAnimView*)self)->func_80050890(a, 19); }
+extern "C" int actAnimSlot20(void* self, u32 a) { return ((CActParamAnimView*)self)->func_80050890(a, 20); }
+extern "C" int actAnimSlot21(void* self, u32 a) { return ((CActParamAnimView*)self)->func_80050890(a, 21); }
+extern "C" int actAnimSlot22(void* self, u32 a) { return ((CActParamAnimView*)self)->func_80050890(a, 22); }
+extern "C" int actAnimSlot23(void* self, u32 a) { return ((CActParamAnimView*)self)->func_80050890(a, 23); }
+extern "C" int actAnimSlot24(void* self, u32 a) { return ((CActParamAnimView*)self)->func_80050890(a, 24); }
+extern "C" int actAnimSlot25(void* self, u32 a) { return ((CActParamAnimView*)self)->func_80050890(a, 25); }
+extern "C" int actAnimSlot26(void* self, u32 a) { return ((CActParamAnimView*)self)->func_80050890(a, 26); }
+extern "C" int actAnimSlot27(void* self, u32 a) { return ((CActParamAnimView*)self)->func_80050890(a, 27); }
+extern "C" int actAnimSlot28(void* self, u32 a) { return ((CActParamAnimView*)self)->func_80050890(a, 28); }
+extern "C" int actAnimSlot29(void* self, u32 a) { return ((CActParamAnimView*)self)->func_80050890(a, 29); }
+extern "C" int actAnimSlot30(void* self, int a) { return ((CActParamAnimView*)self)->func_80050890((u32)a, 30); }
+extern "C" int actAnimSlot31(void* self, u32 a) { return ((CActParamAnimView*)self)->func_80050890(a, 31); }
 
-extern "C" void func_800560A4(void* self) { ((CActParamAnimView*)self)->func_8004E828(); }
-extern "C" void func_800560B4(void* self) { ((CActParamAnimView*)self)->func_80051448(); }
-extern "C" void func_800560C4(void* self) { ((CActParamAnimView*)self)->func_80050DB0(); }
-extern "C" void func_800560D4(void* self) { ((CActParamAnimView*)self)->func_80050F5C(); }
+extern "C" void actAnimVt34(void* self) { ((CActParamAnimView*)self)->func_8004E828(); }
+extern "C" void actAnimVt98(void* self) { ((CActParamAnimView*)self)->func_80051448(); }
+extern "C" void actAnimVt88(void* self) { ((CActParamAnimView*)self)->func_80050DB0(); }
+extern "C" void actAnimVt8C(void* self) { ((CActParamAnimView*)self)->func_80050F5C(); }
 
 
-int func_80055F24(CActParamData* self) {
+int getParamRefS16A(CActParamData* self) {
     u8* block = reinterpret_cast<u8*>(self) + 0x260;
     if (*(u32*)(reinterpret_cast<u8*>(self) + 0x2D4) == 0)
         block = reinterpret_cast<u8*>(self) + 0x2E0;
@@ -278,7 +279,7 @@ int func_80055F24(CActParamData* self) {
     return *reinterpret_cast<s16*>(static_cast<u8*>(entry) + 8);
 }
 
-int func_80055F54(CActParamData* self) {
+int getParamRefS16B(CActParamData* self) {
     u8* block = reinterpret_cast<u8*>(self) + 0x260;
     if (*(u32*)(reinterpret_cast<u8*>(self) + 0x2D4) == 0)
         block = reinterpret_cast<u8*>(self) + 0x2E0;
@@ -288,7 +289,7 @@ int func_80055F54(CActParamData* self) {
     return *reinterpret_cast<s16*>(static_cast<u8*>(entry) + 10);
 }
 
-u32 func_8005609C() {
+u32 actParamZero0() {
     return 0;
 }
 
@@ -305,9 +306,9 @@ void setupWithFlagAlt(){}
 void copyParamBlock(){}
 void iterLinkedList(){}
 
-void func_80054A20() {}
+void actParamNop0() {}
 
-int func_80054A24(CActParamData* self, u32 sel) {
+int getParamByteSel(CActParamData* self, u32 sel) {
     if (sel != 0) {
         return *(u8*)(reinterpret_cast<u8*>(self) + 0x344);
     }
@@ -326,16 +327,16 @@ void validateBlockData(){}
 void processBlockCore(void* self);
 void callBlockAt2E0(void* self) { processBlockCore((u8*)static_cast<CActParamData*>(self)->getResetBlock2E0()); }
 
-void func_800550D8() {}
-void func_800550DC() {}
-void func_800550E0() {}
-void func_800550E4() {}
+void actParamNop1() {}
+void actParamNop2() {}
+void actParamNop3() {}
+void actParamNop4() {}
 
 void processWithFlag24(){}
 
-void func_800554D0() {}
-void func_800554D4() {}
-void func_800554D8() {}
+void actParamNop5() {}
+void actParamNop6() {}
+void actParamNop7() {}
 
 void checkBlockBitFlag(){}
 void checkType3Data(){}
@@ -349,7 +350,7 @@ void getFloatFieldA(){}
 void getFloatFieldB(){}
 void resetBlockFields(){}
 
-extern "C" void* func_80055EA0(void* param) {
+extern "C" void* getSubObjPlus14(void* param) {
     void* val = *(void**)((u32)param + 0x2F4);
     return val ? (void*)((u32)val + 0x14) : 0;
 }
@@ -399,41 +400,41 @@ void actParamThunk_2(){}
 
 // Former former pad pad removed - wrappers now forward to CActParamAnim.
 struct CActParamAnimView;
-extern "C" void func_800560E4(void* self);
-extern "C" void func_800560F4(void* self);
-extern "C" void func_80056118(void* self);
-extern "C" int func_80056290(void* self, u32 a);
-extern "C" int func_800562A4(void* self, u32 a);
-extern "C" int func_800562B8(void* self, u32 a);
-extern "C" int func_800562CC(void* self, int a);
-extern "C" int func_800562E0(void* self, u32 a);
-extern "C" int func_800562F4(void* self, u32 a);
-extern "C" int func_80056308(void* self, u32 a);
-extern "C" int func_8005631C(void* self, u32 a);
-extern "C" int func_80056330(void* self, u32 a);
-extern "C" int func_80056344(void* self, u32 a);
-extern "C" int func_80056358(void* self, u32 a);
-extern "C" int func_8005636C(void* self, u32 a);
-extern "C" int func_80056380(void* self, u32 a);
-extern "C" int func_80056394(void* self, u32 a);
-extern "C" int func_800563A8(void* self, u32 a);
-extern "C" int func_800563D0(void* self, u32 a);
-extern "C" int func_800563E4(void* self, u32 a);
-extern "C" int func_800563F8(void* self, u32 a);
-extern "C" int func_8005640C(void* self, u32 a);
-extern "C" int func_80056420(void* self, u32 a);
-extern "C" int func_80056434(void* self, u32 a);
-extern "C" int func_80056448(void* self, u32 a);
-extern "C" int func_8005645C(void* self, u32 a);
-extern "C" int func_80056470(void* self, u32 a);
-extern "C" int func_80056484(void* self, u32 a);
-extern "C" int func_80056498(void* self, u32 a);
-extern "C" int func_800564AC(void* self, int a);
-extern "C" int func_800564C0(void* self, u32 a);
+extern "C" void actAnimVt90(void* self);
+extern "C" void actAnimVt94(void* self);
+extern "C" void actAnimVt30(void* self);
+extern "C" int actAnimSlot03(void* self, u32 a);
+extern "C" int actAnimSlot04(void* self, u32 a);
+extern "C" int actAnimSlot05(void* self, u32 a);
+extern "C" int actAnimSlot06(void* self, int a);
+extern "C" int actAnimSlot07(void* self, u32 a);
+extern "C" int actAnimSlot08(void* self, u32 a);
+extern "C" int actAnimSlot09(void* self, u32 a);
+extern "C" int actAnimSlot10(void* self, u32 a);
+extern "C" int actAnimSlot11(void* self, u32 a);
+extern "C" int actAnimSlot12(void* self, u32 a);
+extern "C" int actAnimSlot13(void* self, u32 a);
+extern "C" int actAnimSlot14(void* self, u32 a);
+extern "C" int actAnimSlot15(void* self, u32 a);
+extern "C" int actAnimSlot16(void* self, u32 a);
+extern "C" int actAnimSlot17(void* self, u32 a);
+extern "C" int actAnimSlot19(void* self, u32 a);
+extern "C" int actAnimSlot20(void* self, u32 a);
+extern "C" int actAnimSlot21(void* self, u32 a);
+extern "C" int actAnimSlot22(void* self, u32 a);
+extern "C" int actAnimSlot23(void* self, u32 a);
+extern "C" int actAnimSlot24(void* self, u32 a);
+extern "C" int actAnimSlot25(void* self, u32 a);
+extern "C" int actAnimSlot26(void* self, u32 a);
+extern "C" int actAnimSlot27(void* self, u32 a);
+extern "C" int actAnimSlot28(void* self, u32 a);
+extern "C" int actAnimSlot29(void* self, u32 a);
+extern "C" int actAnimSlot30(void* self, int a);
+extern "C" int actAnimSlot31(void* self, u32 a);
 
-// func_8005605C: sub-object selector: prefers the A-side pointer when the A
+// getLiveParamPtr: sub-object selector: prefers the A-side pointer when the A
 // gate byte and pointer are both live, otherwise falls back to the B side.
-extern "C" void* func_8005605C(CActParamData* self) {
+extern "C" void* getLiveParamPtr(CActParamData* self) {
     if (self->mField274 != 0) {
         void* p = self->mPtr2D8;
         if (p != 0) {
@@ -449,10 +450,10 @@ extern "C" void* func_8005605C(CActParamData* self) {
     return 0;
 }
 
-// func_800554DC: flush the pending tag/value pair of sub-object A (sel == 0)
+// flushParamPair: flush the pending tag/value pair of sub-object A (sel == 0)
 // or B (sel != 0), then notify the callback object at 0x24 via its vt+0x28
-// slot with the data object, the two vals words, and the func_80053960 tick.
-extern "C" void func_800554DC(CActParamData* self, int sel) {
+// slot with the data object, the two vals words, and the getAnimTick tick.
+extern "C" void flushParamPair(CActParamData* self, int sel) {
     // Word view of the selected 0x80-byte reset block (A at 0x260, B at 0x2E0).
     u32* blk = sel != 0 ? (u32*)&self->mField2E0 : (u32*)&self->mA260;
     if ((blk[0] & 0x80000) != 0) {
@@ -486,7 +487,7 @@ extern "C" void func_800554DC(CActParamData* self, int sel) {
     if (self->mField24 == 0) {
         return;
     }
-    u32 tick = func_80053960(static_cast<ActParamData388*>(self->mEntry04));
+    u32 tick = getAnimTick(static_cast<ActParamData388*>(self->mEntry04));
     reinterpret_cast<ActParamCbView28*>(self->mField24)
         ->invoke28(static_cast<ActParamData388*>(self->mEntry04), blk[3], blk[5], blk[2],
                    tick);
@@ -546,37 +547,37 @@ void setterBit1_ShortPair(){}
 
 // Flag-gated setters: when bit 2 of `flags` is set, store `val` into the
 // destination field; always return 0.
-int func_80056CE4(u32 flags, CActParamSet25C* dst, void* unused, u32 val) {
+int setParamWord25C(u32 flags, CActParamSet25C* dst, void* unused, u32 val) {
     if ((flags & 4) == 0) return 0;
     dst->field_0x25C = val;
     return 0;
 }
 
-u32 func_800567F0() {
+u32 actParamZero1() {
     return 0;
 }
 
-u32 func_800567F8() {
+u32 actParamZero2() {
     return 0;
 }
 
-u32 func_80056800() {
+u32 actParamZero3() {
     return 0;
 }
 
-int func_80056EAC(u32 flags, CActParamSet18* dst, void* unused, u32 val) {
+int setParamWord18(u32 flags, CActParamSet18* dst, void* unused, u32 val) {
     if ((flags & 4) == 0) return 0;
     dst->field_0x18 = val;
     return 0;
 }
 
-int func_80057264(u32 flags, void* unused, CActParamSet74* dst, u32 val) {
+int setParamWord74(u32 flags, void* unused, CActParamSet74* dst, u32 val) {
     if ((flags & 4) == 0) return 0;
     dst->field_0x74 = val;
     return 0;
 }
 
-int func_80057654(u32 flags, void* unused, CActParamSet78* dst, u32 val) {
+int setParamWord78(u32 flags, void* unused, CActParamSet78* dst, u32 val) {
     if ((flags & 4) == 0) return 0;
     dst->field_0x78 = val;
     return 0;
@@ -584,7 +585,7 @@ int func_80057654(u32 flags, void* unused, CActParamSet78* dst, u32 val) {
 
 // Flag-gated float copy: when bit 2 of `flags` is set, copy the float from
 // src+0x08 to dst+0x14; always return 0.
-int func_80056808(u32 flags, CActParamFloatDst14* dst, void* unused, const CActParamFloatSrc08* src) {
+int copyParamFlt14(u32 flags, CActParamFloatDst14* dst, void* unused, const CActParamFloatSrc08* src) {
     if ((flags & 4) == 0) return 0;
     dst->mFloat14 = src->mFloat08;
     return 0;
@@ -606,14 +607,14 @@ void ml::FixStr<16>::format(const char* fmt, ...) {
 }
 
 // Reset the 0x218 short table to -1 and clear the flag word at 0x258.
-void func_80053A90(CActParamData* self) {
+void resetParamShorts(CActParamData* self) {
     self->mField258 = 0;
     for (int i = 0; i < 32; i++) {
         self->mShorts218[i] = 0xFFFF;
     }
 }
 // True when any inline byte entry equals `value`.
-bool func_80053F40(CActParamByteList* list, u8 value) {
+bool hasParamByteVal(CActParamByteList* list, u8 value) {
     int count = list->mCount2C;
     for (int i = 0; i < count; i++) {
         if (value == list->mEntries[i]) {
@@ -652,10 +653,10 @@ bool func_80053F40(CActParamByteList* list, u8 value) {
             (selfP)->mField258 = 0;                                            \
     } while (0)
 
-void func_80053F7C(CActParamData* self, float arg1, float arg2);
+void updateParamFloats(CActParamData* self, float arg1, float arg2);
 extern "C" int func_80054614(CActParamData* data, u32* out,
                                ActParamT1Src* rec, u8 initFlag, u32 gate);
-u32 func_80054170(CActParamData* data, u32* out, u32 paramIdx, u8 initFlag,
+u32 evalParamBySlot(CActParamData* data, u32* out, u32 paramIdx, u8 initFlag,
                   u32 gate) {
     if (data->mByte216 == 0) {
         data->mByte216 = initFlag;
@@ -932,7 +933,7 @@ extern "C" int func_80054614(CActParamData* data, u32* out,
 // Per-frame update of both sub-object float blocks: shift current into the
 // shadow slot, accumulate the entry's threshold float, then recompute the
 // crossed-threshold flag and streak counters.
-void func_80053F7C(CActParamData* self, float arg1, float arg2) {
+void updateParamFloats(CActParamData* self, float arg1, float arg2) {
     // Sub-object A
     // References keep the store program-order (retail scheduling).
     float& prevA = self->mA2B0;
@@ -997,7 +998,7 @@ void func_80053F7C(CActParamData* self, float arg1, float arg2) {
         self->mField338 = 0;
     }
     if (self->mA260 & 0x1000000) {
-        func_eu_80053FDC();
+        setAnimGate();
     }
 }
 
@@ -1007,7 +1008,7 @@ void func_80053F7C(CActParamData* self, float arg1, float arg2) {
 void func_80053B24(CActParamData* self, void* entry, void* obj, void* nodeA,
                    void* nodeB) {
     self->mEntry04 = entry;
-    func_80055700(self, nodeA, nodeB);
+    unlinkParamRecs(self, nodeA, nodeB);
 
     // Sub-object A defaults
     self->mA260 = 0;
@@ -1131,7 +1132,7 @@ static inline CActParamWalkRec* advanceWalkRec(CActParamWalkRec* rec) {
 
 // Walk the type-9 record chain at +0x278; each type-9 record with a zero
 // selector triggers the vt+0x0C callback on the host's interface pointer.
-void func_80054980(ActParamWalkHost* host) {
+void walkParamType9(ActParamWalkHost* host) {
     if (host->mRec278 == 0) {
         return;
     }
@@ -1242,7 +1243,7 @@ check:
     }
     return 0;
 }
-extern "C" int func_80054A3C(void* self) {
+extern "C" int checkParamBlks(void* self) {
     int a = func_80054A94(static_cast<CActParamData*>(self),
                           reinterpret_cast<u8*>(self) + 0x2E0);
     int b = func_80054A94(static_cast<CActParamData*>(self),
@@ -1455,8 +1456,8 @@ check:
         goto body14;
     goto advance;
 }
-// func_80054D34: r4 = this+0x2E0, tail-branch to func_80054D3C (retail addi r4,r3,0x2e0; b)
-void func_80054D34(void* self) {
+// walkParamBlkB: r4 = this+0x2E0, tail-branch to func_80054D3C (retail addi r4,r3,0x2e0; b)
+void walkParamBlkB(void* self) {
     func_80054D3C(
         static_cast<CActParamData*>(self),
         reinterpret_cast<ActParamD3CMember*>(reinterpret_cast<u8*>(self) +
@@ -1464,7 +1465,7 @@ void func_80054D34(void* self) {
 }
 // vtable-dispatch wrappers (retail: lwz r12,0(r3); lwz r12,N(r12); mtctr; bctr).
 // A real C++ virtual call forces MWCC's r12 dispatch (fn-pointer form uses r4).
-// Former former pad pads removed - func_800560A4/B4/C4/D4 now forward to CActParamAnim virtuals (see below).
+// Former former pad pads removed - actAnimVt34/B4/C4/D4 now forward to CActParamAnim virtuals (see below).
 // Retail calls this out-of-line under an unmangled symbol; keep the stub
 // opaque so callers emit the bl.
 // func_800550E8: threshold-crossing dispatcher for the type-0x14 records.
@@ -1509,7 +1510,7 @@ __declspec(noinline) int func_800550E8(CActParamData* self,
                 self->mEntry04, 0);
             return 1;
         }
-        if (func_8004B990(self->mEntry04, 0) == 0 && gate == 0) {
+        if (callAttachFn(self->mEntry04, 0) == 0 && gate == 0) {
             // Shared no-fire exit with phase B below (retail .L_80055B14).
             goto noFire;
         }
@@ -1629,7 +1630,7 @@ noFire:
 }
 // us-80057a94: if (flags & 8) call func_800550E8(a, b, c, 0); always return 0.
 // Goto-gate keeps the call block out-of-line with li r3, 0 on both paths.
-extern "C" int func_8005742C(u32 flags, void* a, void* b, void* c) {
+extern "C" int fireParamPhaseA(u32 flags, void* a, void* b, void* c) {
     if (flags & 8) goto call;
     return 0;
 call:
@@ -1641,7 +1642,7 @@ call:
 // Clear the stream's record chain: unlink each linkable record from its table
 // slot and stop after the terminator record.
 __declspec(noinline) void
-func_80055700(CActParamLinkTable* table, int flag, CActParamRecStream* stream) {
+unlinkParamRecs(CActParamLinkTable* table, int flag, CActParamRecStream* stream) {
     if (flag == 0) return;
     if (stream->mFlag14 == 0) return;
     u8* recBase = (u8*)&stream->mFirst;
@@ -1715,7 +1716,7 @@ func_800555EC(CActParamLinkTable* table, CScnItemAnim* anim, ActParamStackNode* 
 
 // Push a node pair onto the stack slots, then splice b into the list after
 // the last node whose payload differs from b's.
-void func_80055AC4(ActParamStack* self, ActParamStackNode* a, ActParamStackNode* b) {
+void pushParamNode(ActParamStack* self, ActParamStackNode* a, ActParamStackNode* b) {
     func_800555EC(reinterpret_cast<CActParamLinkTable*>(self), reinterpret_cast<CScnItemAnim*>(a), b);
     self->mSlots1D0[self->mCount210] = a;
     // Post-increment inside the subscript: one load feeds both the address
@@ -1751,7 +1752,7 @@ void func_80055AC4(ActParamStack* self, ActParamStackNode* a, ActParamStackNode*
 //   goto-based unlink walk removes the found-path null retest; explicit
 //   headNext local is required (MWCC cannot hoist mNode0C->mNext0C across
 //   the later calls); key used for both the mA294 compare and the
-//   func_80055700 tag arg. Banked draft's 140 structural -> 96.
+//   unlinkParamRecs tag arg. Banked draft's 140 structural -> 96.
 // - Residual: uniform volatile-color rotation. Retail colors {i:r7,
 //   cursor:r6, count:r5(ctr), headNext:r0}; ours {i:r7, cursor:r5,
 //   count:r0(ctr), headNext:r6}. Every scratch use shifts r5<->r0
@@ -1854,13 +1855,13 @@ splice:
         it = nx;
     }
 
-    func_80055700(reinterpret_cast<CActParamLinkTable*>(self),
+    unlinkParamRecs(reinterpret_cast<CActParamLinkTable*>(self),
                   (int)(uintptr_t)key,
                   reinterpret_cast<CActParamRecStream*>(node));
     // Re-register each remaining stream.
     it = static_cast<ActParamNode94*>(self->mNode0C);
     while (it != 0) {
-        func_8005577C(reinterpret_cast<CActParamLinkTable*>(self),
+        linkParamSlots(reinterpret_cast<CActParamLinkTable*>(self),
                       reinterpret_cast<CActParamRecStream*>(it));
         ActParamNode94* nx = it->mNext0C;
         if (it == nx) {
@@ -1879,15 +1880,15 @@ splice:
 }
 // Float getter: read the float at +0x08 of the optional mPtr18 entry,
 // falling back to the default sdata2 constant when no entry is set.
-float func_80055DB8(CActParamData* self) {
+float getParamFloat08(CActParamData* self) {
     CActParamDataEntry* entry = static_cast<CActParamDataEntry*>(self->mPtr18);
     if (entry == NULL) {
         return lbl_eu_80665F7C;
     }
     return entry->mFloat08;
 }
-// Same shape as func_80055DB8 but reads the +0x0C float.
-float func_80055DD4(CActParamData* self) {
+// Same shape as getParamFloat08 but reads the +0x0C float.
+float getParamFloat0C(CActParamData* self) {
     CActParamDataEntry* entry = static_cast<CActParamDataEntry*>(self->mPtr18);
     if (entry == NULL) {
         return lbl_eu_80665F7C;
@@ -1897,7 +1898,7 @@ float func_80055DD4(CActParamData* self) {
 
 // Reset the SubObjB block: snapshot the tag word, wipe all fields to their
 // defaults (three sdata2 float constants), then restore the saved tag.
-void func_80055DF0(CActParamData* self) {
+void resetParamSubB(CActParamData* self) {
     u32 tag = self->mField2EC;
     if (self->mField2E8 == 2) tag = self->mField2E8;
     self->mField2E0 = 0;
@@ -1936,7 +1937,7 @@ void func_80055DF0(CActParamData* self) {
 }
 
 // Reset both sub-objects' saved flag/float shadow slots to defaults.
-extern "C" void func_80055F08(void* data) {
+extern "C" void clearParamShadow(void* data) {
     CActParamData* self = (CActParamData*)data;
     float defaultValue = lbl_eu_80665F7C;
     self->mField2CC = 0;
@@ -1944,9 +1945,9 @@ extern "C" void func_80055F08(void* data) {
     self->mField34C = 0;
     self->mFloat350 = defaultValue;
 }
-extern "C" void func_800563BC(void* self, u32 a) { ((CActParamAnimView*)self)->func_80050890(a, 0x12); }
+extern "C" void actAnimSlot18(void* self, u32 a) { ((CActParamAnimView*)self)->func_80050890(a, 0x12); }
 // Save the SubObjA flag/float and SubObjB tag/float into their shadow slots.
-void func_80055EE4(CActParamData* self) {
+void saveParamShadow(CActParamData* self) {
     self->mField2CC = self->mField274;
     self->mFloat2D0 = self->mFloat2B4;
     self->mField34C = (u32)self->mPtr2F4;
@@ -1954,7 +1955,7 @@ void func_80055EE4(CActParamData* self) {
 }
 
 // True when SubObjB has a tag pointer, or its fallback word at +0x2F8 is set.
-int func_80055EBC(CActParamData* self) {
+int hasParamSubObjB(CActParamData* self) {
     int result = 0;
     if (self->mPtr2F4 != 0 || self->mField2F8 != 0)
         result = 1;
@@ -1970,13 +1971,13 @@ struct ActParamSelBlk {
     u8 _pad4C[0x54 - 0x4C];
     float mLimit54;                        // 0x54
 };
-void func_80055F84(CActParamData* self) {
+void clearParamTags(CActParamData* self) {
     *(u32*)(reinterpret_cast<u8*>(self) + 0x2D4) = 0;
     *(u32*)(reinterpret_cast<u8*>(self) + 0x354) = 0;
 }
 
-int func_80055F94(CActParamData* self, int sel);
-int func_80055F94(CActParamData* self, int sel) {
+int getParamSelS16(CActParamData* self, int sel);
+int getParamSelS16(CActParamData* self, int sel) {
     ActParamSelBlk* blk;
     if (sel != 0) {
         blk = reinterpret_cast<ActParamSelBlk*>(self->getResetBlock2E0());
@@ -2017,7 +2018,7 @@ zero:
 
 // Tail-call the vt+0xC0 lookup with a 16-bit-truncated index, guarded by the
 // global table's entry count at +0x60.
-int func_80056760(ActParamCallView* self, void* unused, u32 index) {
+int findParamWide(ActParamCallView* self, void* unused, u32 index) {
     if (lbl_eu_80663D50->mCount60 < index) {
         return 0;
     }
@@ -2026,38 +2027,38 @@ int func_80056760(ActParamCallView* self, void* unused, u32 index) {
 
 // Flag-gated copies: when bit 2 of `flags` is set, copy src field into dst;
 // always return 0.
-int func_80056888(u32 flags, void* unused, CActParamSet20* dst, const CActParamWordSrc20* src) {
+int copyWord20Src(u32 flags, void* unused, CActParamSet20* dst, const CActParamWordSrc20* src) {
     if ((flags & 4) == 0) return 0;
     dst->field_0x20 = src->mWord20;
     return 0;
 }
 
-int func_800568A8(u32 flags, void* unused, CActParamFloatDst24* dst, const CActParamFloatSrc08* src) {
+int copyParamFlt24(u32 flags, void* unused, CActParamFloatDst24* dst, const CActParamFloatSrc08* src) {
     if ((flags & 4) == 0) return 0;
     dst->mFloat24 = src->mFloat08;
     return 0;
 }
 
-int func_800568C8(u32 flags, CActParamSet1C* dst, void* unused, const CActParamWordSrc08* src) {
+int copyWord1CSrc(u32 flags, CActParamSet1C* dst, void* unused, const CActParamWordSrc08* src) {
     if ((flags & 4) == 0) return 0;
     dst->field_0x1C = src->mWord08;
     return 0;
 }
 // Byte source zero-extended to a full word on store.
-int func_80056C34(u32 flags, void* unused, CActParamSet4C* dst, const CActParamByteSrc08* src) {
+int copyByteTo4C(u32 flags, void* unused, CActParamSet4C* dst, const CActParamByteSrc08* src) {
     if ((flags & 4) == 0) return 0;
     dst->field_0x4C = src->mByte08;
     return 0;
 }
 // Bit-2-gated word store into dst+0x48; always returns 0.
-int func_80056CC8(u32 flags, void* unused, CActParamBlock* dst, u32 val) {
+int setParamWord48(u32 flags, void* unused, CActParamBlock* dst, u32 val) {
     if ((flags & 4) == 0) return 0;
     dst->mField48 = val;
     return 0;
 }
 // Tail-call virtual slot 0xBC with a 16-bit-truncated index, guarded by the
 // global table's entry count.
-int func_80056730(ActParamCallView* self, void* unused, u32 index) {
+int findParamEntry(ActParamCallView* self, void* unused, u32 index) {
     if (lbl_eu_80663D50->mCount5C < index) {
         return 0;
     }
@@ -2065,7 +2066,7 @@ int func_80056730(ActParamCallView* self, void* unused, u32 index) {
 }
 // Flag-gated s16 copy: sign-extended load from src+0x08 stored as a halfword
 // at dst+0x7C; always return 0.
-int func_80057470(u32 flags, void* unused, CActParamSet7C* dst, const CActParamDataRef* src) {
+int copyS16To7C(u32 flags, void* unused, CActParamSet7C* dst, const CActParamDataRef* src) {
     if ((flags & 4) == 0) return 0;
     dst->field_0x7C = src->mShort08;
     return 0;
@@ -2217,7 +2218,7 @@ apply:
 // Bit-2-gated: store the selector from src+0x08 into dst+0x1C, then walk the
 // node chain table->mNodes[sel] until a type-1 terminator; a type-0 node's
 // payload address lands in dst+0x38. Always returns 0.
-int func_80056828(u32 flags, CActParamNodeTable* table, CActParamSet1C38* dst, const CActParamWordSrc08* src) {
+int bindParamNode(u32 flags, CActParamNodeTable* table, CActParamSet1C38* dst, const CActParamWordSrc08* src) {
     if ((flags & 4) == 0) return 0;
     u32 sel = src->mWord08;
     dst->mField1C = sel;
@@ -2237,7 +2238,7 @@ int func_80056828(u32 flags, CActParamNodeTable* table, CActParamSet1C38* dst, c
 // Walk the record stream at stream+0x20; each type-0 record with a nonzero
 // selector claims its table slot unless the slot is already held and the next
 // record is type 2. Stops after a type-1 record.
-void func_8005577C(CActParamLinkTable* table, CActParamRecStream* stream) {
+void linkParamSlots(CActParamLinkTable* table, CActParamRecStream* stream) {
     CActParamRec* rec = &stream->mFirst;
     for (;;) {
         u16 type = rec->mType2;
@@ -2261,7 +2262,7 @@ void func_8005577C(CActParamLinkTable* table, CActParamRecStream* stream) {
 
 // Bit-2-gated: append src's byte to the list if the list is empty and the
 // value is not already present. Always returns 0.
-int func_80057828(u32 flags, CActParamByteList* list, u8* unused, const CActParamByteSrc08* src) {
+int appendParamByte(u32 flags, CActParamByteList* list, u8* unused, const CActParamByteSrc08* src) {
     // Declared first so it claims src's dead argument register (r6) at the
     // tail, matching retail's allocation.
     int cnt;
@@ -2280,13 +2281,13 @@ int func_80057828(u32 flags, CActParamByteList* list, u8* unused, const CActPara
     list->mCount2C = cnt + 1;
     return 0;
 }
-int func_80057244(u32 flags, CActParamSet20* dst, void* unused, const CActParamWordSrc08* src) {
+int copyWord08To20(u32 flags, CActParamSet20* dst, void* unused, const CActParamWordSrc08* src) {
     if ((flags & 4) == 0) return 0;
     dst->field_0x20 = src->mWord08;
     return 0;
 }
 // Flag-gated float+byte copy from src+0x08/+0x0C to dst+0x28/+0x30.
-int func_80056C54(u32 flags, void* unused, CActParamCopyDst2830* dst, const CActParamCopySrc080C* src) {
+int copyFltByte28(u32 flags, void* unused, CActParamCopyDst2830* dst, const CActParamCopySrc080C* src) {
     if ((flags & 4) == 0) return 0;
     dst->mFloat28 = src->mFloat08;
     dst->mByte30 = src->mByte0C;
@@ -2296,7 +2297,7 @@ int func_80056C54(u32 flags, void* unused, CActParamCopyDst2830* dst, const CAct
 // Bit-3-gated threshold check (func_80056A98 variant): the vt+0x14 time
 // callback fires when t==0 and RETURNS the replacement time value (kept in
 // f1 across the call); on fire the cb object's vt+0x28 receives obj04, the
-// src mask word, two vals words, and func_80053960(obj04) evaluated as the
+// src mask word, two vals words, and getAnimTick(obj04) evaluated as the
 // last argument. Goto form mirrors retail's shared li r3,0 fail tail.
 //
 // Plateau packet (best 22 mismatch / 6 structural / 16 reg-swap, size PASS
@@ -2392,7 +2393,7 @@ invoke:
     reinterpret_cast<ActParamCbView28*>(host->mCb24)->invoke28(
         static_cast<ActParamData388*>(host->mObj04), src->mWord0C,
         vals->mField14, vals->mField0C,
-        func_80053960(static_cast<ActParamData388*>(host->mObj04)));
+        getAnimTick(static_cast<ActParamData388*>(host->mObj04)));
 ret:
     return 0;
 }
@@ -2490,7 +2491,7 @@ retzero:
 // us-80058344: func_80057CDC
 // One-time initialization of the two global handler dispatch tables used by
 // the record-chain walkers. Unimplemented slot ranges default to the generic
-// handlers func_80056800 (table1) / func_8005609C (table2).
+// handlers actParamZero3 (table1) / actParamZero0 (table2).
 // Defined further down in this TU.
 int func_80056A98(u32 flags, ActParamHost5* host, ActParamVals5* vals, ActParamSrc5* src);
 int func_80056D00(u32 flags, ActParamHost5* host, ActParamVals5* vals, ActParamSrc5* src);
@@ -2499,136 +2500,136 @@ int func_800568E8(u32 flags, ActParamHost5* host, ActParamVals5* vals, ActParamS
 
 void CActParamData::func_80057CDC() {
     ActParamTbl1Fn* t1 = (ActParamTbl1Fn*)lbl_eu_80570788;
-    t1[0] = func_800567F0;
-    t1[1] = func_800567F8;
-    t1[2] = func_80056800;
-    t1[3] = (ActParamTbl1Fn)func_80056808;
-    t1[4] = func_80056800;
-    t1[5] = (ActParamTbl1Fn)func_80056828;
-    t1[6] = (ActParamTbl1Fn)func_80056888;
-    t1[7] = (ActParamTbl1Fn)func_800568A8;
-    t1[8] = (ActParamTbl1Fn)func_800568C8;
+    t1[0] = actParamZero1;
+    t1[1] = actParamZero2;
+    t1[2] = actParamZero3;
+    t1[3] = (ActParamTbl1Fn)copyParamFlt14;
+    t1[4] = actParamZero3;
+    t1[5] = (ActParamTbl1Fn)bindParamNode;
+    t1[6] = (ActParamTbl1Fn)copyWord20Src;
+    t1[7] = (ActParamTbl1Fn)copyParamFlt24;
+    t1[8] = (ActParamTbl1Fn)copyWord1CSrc;
     t1[9] = (ActParamTbl1Fn)func_800568E8;
     t1[10] = (ActParamTbl1Fn)func_80056A98;
-    t1[11] = (ActParamTbl1Fn)func_80056C34;
-    t1[12] = (ActParamTbl1Fn)func_80056C54;
+    t1[11] = (ActParamTbl1Fn)copyByteTo4C;
+    t1[12] = (ActParamTbl1Fn)copyFltByte28;
     t1[13] = (ActParamTbl1Fn)func_80056D00;
-    t1[14] = (ActParamTbl1Fn)func_80056EAC;
+    t1[14] = (ActParamTbl1Fn)setParamWord18;
     t1[15] = (ActParamTbl1Fn)func_80056EC8;
     t1[16] = (ActParamTbl1Fn)func_80057084;
-    t1[17] = (ActParamTbl1Fn)func_80057244;
-    t1[18] = (ActParamTbl1Fn)func_80057264;
+    t1[17] = (ActParamTbl1Fn)copyWord08To20;
+    t1[18] = (ActParamTbl1Fn)setParamWord74;
     t1[19] = (ActParamTbl1Fn)func_80057280;
-    t1[20] = (ActParamTbl1Fn)func_8005742C;
+    t1[20] = (ActParamTbl1Fn)fireParamPhaseA;
 
     ActParamTbl19Fn* t2 = (ActParamTbl19Fn*)lbl_eu_805705F0;
-    t2[0] = func_8005609C;
-    t2[1] = (ActParamTbl19Fn)func_80056138;
-    t2[2] = (ActParamTbl19Fn)func_80056128;
-    t2[3] = (ActParamTbl19Fn)func_80056158;
-    t2[4] = (ActParamTbl19Fn)func_80056188;
-    t2[5] = (ActParamTbl19Fn)func_80056168;
-    t2[6] = (ActParamTbl19Fn)func_80056178;
-    t2[7] = (ActParamTbl19Fn)func_80056118;
-    t2[8] = (ActParamTbl19Fn)func_80056148;
-    t2[9] = func_8005609C;
-    t2[10] = func_8005609C;
-    t2[11] = (ActParamTbl19Fn)func_80056198;
-    t2[12] = (ActParamTbl19Fn)func_800560A4;
-    t2[13] = (ActParamTbl19Fn)func_800560C4;
-    t2[14] = (ActParamTbl19Fn)func_800560D4;
-    t2[15] = (ActParamTbl19Fn)func_800560E4;
-    t2[16] = (ActParamTbl19Fn)func_800560F4;
-    t2[17] = (ActParamTbl19Fn)func_800561A8;
-    t2[18] = (ActParamTbl19Fn)func_800561D8;
-    t2[19] = (ActParamTbl19Fn)func_800561C8;
-    t2[20] = (ActParamTbl19Fn)func_800561B8;
-    t2[21] = (ActParamTbl19Fn)func_800561E8;
-    t2[22] = (ActParamTbl19Fn)func_80056238;
-    t2[23] = (ActParamTbl19Fn)func_80056248;
-    t2[24] = (ActParamTbl19Fn)func_80056268;
-    t2[25] = (ActParamTbl19Fn)func_8005627C;
-    t2[26] = (ActParamTbl19Fn)func_80056290;
-    t2[27] = (ActParamTbl19Fn)func_800562A4;
-    t2[28] = (ActParamTbl19Fn)func_800562B8;
-    t2[29] = (ActParamTbl19Fn)func_800562CC;
-    t2[30] = (ActParamTbl19Fn)func_800562E0;
-    t2[31] = (ActParamTbl19Fn)func_800562F4;
-    t2[32] = (ActParamTbl19Fn)func_80056308;
-    t2[33] = (ActParamTbl19Fn)func_8005631C;
-    t2[34] = (ActParamTbl19Fn)func_80056330;
-    t2[35] = (ActParamTbl19Fn)func_80056344;
-    t2[36] = (ActParamTbl19Fn)func_80056358;
-    t2[37] = (ActParamTbl19Fn)func_8005636C;
-    t2[38] = (ActParamTbl19Fn)func_80056380;
-    t2[39] = (ActParamTbl19Fn)func_80056394;
-    t2[40] = (ActParamTbl19Fn)func_800563A8;
-    t2[41] = (ActParamTbl19Fn)func_800563BC;
-    t2[42] = (ActParamTbl19Fn)func_800563D0;
-    t2[43] = (ActParamTbl19Fn)func_800563E4;
-    t2[44] = (ActParamTbl19Fn)func_800563F8;
-    t2[45] = (ActParamTbl19Fn)func_8005640C;
-    t2[46] = (ActParamTbl19Fn)func_80056420;
-    t2[47] = (ActParamTbl19Fn)func_80056434;
-    t2[48] = (ActParamTbl19Fn)func_80056448;
-    t2[49] = (ActParamTbl19Fn)func_8005645C;
-    t2[50] = (ActParamTbl19Fn)func_80056470;
-    t2[51] = (ActParamTbl19Fn)func_80056484;
-    t2[52] = (ActParamTbl19Fn)func_80056498;
-    t2[53] = (ActParamTbl19Fn)func_800564AC;
-    t2[54] = (ActParamTbl19Fn)func_800564C0;
-    t2[55] = (ActParamTbl19Fn)func_800564D4;
-    t2[56] = (ActParamTbl19Fn)func_800564E8;
-    t2[57] = (ActParamTbl19Fn)func_800564FC;
-    t2[58] = (ActParamTbl19Fn)func_80056510;
-    t2[59] = (ActParamTbl19Fn)func_80056524;
-    t2[60] = (ActParamTbl19Fn)func_80056538;
-    t2[61] = (ActParamTbl19Fn)func_8005654C;
-    t2[62] = (ActParamTbl19Fn)func_80056560;
-    t2[63] = (ActParamTbl19Fn)func_80056574;
-    t2[64] = (ActParamTbl19Fn)func_80056588;
-    t2[65] = (ActParamTbl19Fn)func_8005659C;
-    t2[66] = (ActParamTbl19Fn)func_800565B0;
-    t2[67] = (ActParamTbl19Fn)func_800565C4;
-    t2[68] = (ActParamTbl19Fn)func_800565D8;
-    t2[69] = (ActParamTbl19Fn)func_800565EC;
-    t2[70] = (ActParamTbl19Fn)func_80056600;
-    t2[71] = (ActParamTbl19Fn)func_80056104;
-    t2[72] = (ActParamTbl19Fn)func_800560B4;
-    t2[73] = (ActParamTbl19Fn)func_80056614;
-    t2[74] = (ActParamTbl19Fn)func_80056624;
-    t2[75] = (ActParamTbl19Fn)func_80056638;
-    t2[76] = (ActParamTbl19Fn)func_8005664C;
-    t2[77] = (ActParamTbl19Fn)func_80056660;
-    t2[78] = (ActParamTbl19Fn)func_80056670;
-    t2[79] = (ActParamTbl19Fn)func_80056208;
-    t2[80] = (ActParamTbl19Fn)func_80056218;
-    t2[81] = (ActParamTbl19Fn)func_80056228;
-    t2[82] = (ActParamTbl19Fn)func_800561F8;
-    t2[83] = (ActParamTbl19Fn)func_80056708;
-    t2[84] = (ActParamTbl19Fn)func_8005671C;
-    t2[85] = (ActParamTbl19Fn)func_80056680;
-    t2[86] = (ActParamTbl19Fn)func_80056694;
-    t2[87] = (ActParamTbl19Fn)func_800566A8;
-    t2[88] = (ActParamTbl19Fn)func_800566BC;
-    t2[89] = (ActParamTbl19Fn)func_800566D0;
-    t2[90] = (ActParamTbl19Fn)func_800566E4;
-    t2[91] = (ActParamTbl19Fn)func_800566F8;
-    t2[92] = (ActParamTbl19Fn)func_80056730;
-    t2[93] = (ActParamTbl19Fn)func_80056760;
-    t2[94] = (ActParamTbl19Fn)func_80056258;
-    t2[95] = (ActParamTbl19Fn)func_80056790;
-    t2[96] = (ActParamTbl19Fn)func_800567A0;
-    t2[97] = (ActParamTbl19Fn)func_800567B0;
-    t2[98] = (ActParamTbl19Fn)func_800567C0;
-    t2[99] = (ActParamTbl19Fn)func_800567D0;
-    t2[100] = (ActParamTbl19Fn)func_800567E0;
+    t2[0] = actParamZero0;
+    t2[1] = (ActParamTbl19Fn)actAnimVt38;
+    t2[2] = (ActParamTbl19Fn)actAnimVt40;
+    t2[3] = (ActParamTbl19Fn)actAnimVt44;
+    t2[4] = (ActParamTbl19Fn)actAnimVt50;
+    t2[5] = (ActParamTbl19Fn)actAnimVt48;
+    t2[6] = (ActParamTbl19Fn)actAnimVt4C;
+    t2[7] = (ActParamTbl19Fn)actAnimVt30;
+    t2[8] = (ActParamTbl19Fn)actAnimVt3C;
+    t2[9] = actParamZero0;
+    t2[10] = actParamZero0;
+    t2[11] = (ActParamTbl19Fn)actAnimVt58;
+    t2[12] = (ActParamTbl19Fn)actAnimVt34;
+    t2[13] = (ActParamTbl19Fn)actAnimVt88;
+    t2[14] = (ActParamTbl19Fn)actAnimVt8C;
+    t2[15] = (ActParamTbl19Fn)actAnimVt90;
+    t2[16] = (ActParamTbl19Fn)actAnimVt94;
+    t2[17] = (ActParamTbl19Fn)actAnimVt20;
+    t2[18] = (ActParamTbl19Fn)actAnimVt2C;
+    t2[19] = (ActParamTbl19Fn)actAnimVt28;
+    t2[20] = (ActParamTbl19Fn)actAnimVt24;
+    t2[21] = (ActParamTbl19Fn)actAnimVt5C;
+    t2[22] = (ActParamTbl19Fn)actAnimVt70;
+    t2[23] = (ActParamTbl19Fn)actAnimVt74;
+    t2[24] = (ActParamTbl19Fn)actAnimSlot01;
+    t2[25] = (ActParamTbl19Fn)actAnimSlot02;
+    t2[26] = (ActParamTbl19Fn)actAnimSlot03;
+    t2[27] = (ActParamTbl19Fn)actAnimSlot04;
+    t2[28] = (ActParamTbl19Fn)actAnimSlot05;
+    t2[29] = (ActParamTbl19Fn)actAnimSlot06;
+    t2[30] = (ActParamTbl19Fn)actAnimSlot07;
+    t2[31] = (ActParamTbl19Fn)actAnimSlot08;
+    t2[32] = (ActParamTbl19Fn)actAnimSlot09;
+    t2[33] = (ActParamTbl19Fn)actAnimSlot10;
+    t2[34] = (ActParamTbl19Fn)actAnimSlot11;
+    t2[35] = (ActParamTbl19Fn)actAnimSlot12;
+    t2[36] = (ActParamTbl19Fn)actAnimSlot13;
+    t2[37] = (ActParamTbl19Fn)actAnimSlot14;
+    t2[38] = (ActParamTbl19Fn)actAnimSlot15;
+    t2[39] = (ActParamTbl19Fn)actAnimSlot16;
+    t2[40] = (ActParamTbl19Fn)actAnimSlot17;
+    t2[41] = (ActParamTbl19Fn)actAnimSlot18;
+    t2[42] = (ActParamTbl19Fn)actAnimSlot19;
+    t2[43] = (ActParamTbl19Fn)actAnimSlot20;
+    t2[44] = (ActParamTbl19Fn)actAnimSlot21;
+    t2[45] = (ActParamTbl19Fn)actAnimSlot22;
+    t2[46] = (ActParamTbl19Fn)actAnimSlot23;
+    t2[47] = (ActParamTbl19Fn)actAnimSlot24;
+    t2[48] = (ActParamTbl19Fn)actAnimSlot25;
+    t2[49] = (ActParamTbl19Fn)actAnimSlot26;
+    t2[50] = (ActParamTbl19Fn)actAnimSlot27;
+    t2[51] = (ActParamTbl19Fn)actAnimSlot28;
+    t2[52] = (ActParamTbl19Fn)actAnimSlot29;
+    t2[53] = (ActParamTbl19Fn)actAnimSlot30;
+    t2[54] = (ActParamTbl19Fn)actAnimSlot31;
+    t2[55] = (ActParamTbl19Fn)actAnimSlot32;
+    t2[56] = (ActParamTbl19Fn)actAnimSlot33;
+    t2[57] = (ActParamTbl19Fn)actAnimSlot34;
+    t2[58] = (ActParamTbl19Fn)actAnimSlot35;
+    t2[59] = (ActParamTbl19Fn)actAnimSlot36;
+    t2[60] = (ActParamTbl19Fn)actAnimSlot37;
+    t2[61] = (ActParamTbl19Fn)actAnimSlot38;
+    t2[62] = (ActParamTbl19Fn)actAnimSlot39;
+    t2[63] = (ActParamTbl19Fn)actAnimSlot40;
+    t2[64] = (ActParamTbl19Fn)actAnimSlot41;
+    t2[65] = (ActParamTbl19Fn)actAnimSlot42;
+    t2[66] = (ActParamTbl19Fn)actAnimSlot43;
+    t2[67] = (ActParamTbl19Fn)actAnimSlot44;
+    t2[68] = (ActParamTbl19Fn)actAnimSlot45;
+    t2[69] = (ActParamTbl19Fn)actAnimSlot46;
+    t2[70] = (ActParamTbl19Fn)actAnimSlot47;
+    t2[71] = (ActParamTbl19Fn)callAnimBlendW;
+    t2[72] = (ActParamTbl19Fn)actAnimVt98;
+    t2[73] = (ActParamTbl19Fn)actAnimVt9C;
+    t2[74] = (ActParamTbl19Fn)callAnimMode0;
+    t2[75] = (ActParamTbl19Fn)callAnimMode1;
+    t2[76] = (ActParamTbl19Fn)callAnimMode2;
+    t2[77] = (ActParamTbl19Fn)callAnimFrame;
+    t2[78] = (ActParamTbl19Fn)callAnimTrans;
+    t2[79] = (ActParamTbl19Fn)actAnimVt64;
+    t2[80] = (ActParamTbl19Fn)actAnimVt68;
+    t2[81] = (ActParamTbl19Fn)actAnimVt6C;
+    t2[82] = (ActParamTbl19Fn)actAnimVt60;
+    t2[83] = (ActParamTbl19Fn)callAnimUpdate0;
+    t2[84] = (ActParamTbl19Fn)callAnimUpdate1;
+    t2[85] = (ActParamTbl19Fn)callAnimScale0;
+    t2[86] = (ActParamTbl19Fn)callAnimScale1;
+    t2[87] = (ActParamTbl19Fn)callAnimScale2;
+    t2[88] = (ActParamTbl19Fn)callAnimScale3;
+    t2[89] = (ActParamTbl19Fn)callAnimRot0;
+    t2[90] = (ActParamTbl19Fn)callAnimRot1;
+    t2[91] = (ActParamTbl19Fn)callAnimEffect;
+    t2[92] = (ActParamTbl19Fn)findParamEntry;
+    t2[93] = (ActParamTbl19Fn)findParamWide;
+    t2[94] = (ActParamTbl19Fn)actAnimVt78;
+    t2[95] = (ActParamTbl19Fn)actAnimVtC8;
+    t2[96] = (ActParamTbl19Fn)actAnimVtCC;
+    t2[97] = (ActParamTbl19Fn)callAnimChain;
+    t2[98] = (ActParamTbl19Fn)callAnimLoop;
+    t2[99] = (ActParamTbl19Fn)callAnimMotion;
+    t2[100] = (ActParamTbl19Fn)callAnimBlend;
 }
 
 
 // When bit 2 of the flag is set, convert the s16 at src+8 to a float via the
 // signed 2^52 double-magic and store it at dst+64. Always returns 0.
-extern "C" u32 func_80056C7C(u32 flag, void* a2, void* dst, const void* src) {
+extern "C" u32 copyS16ToFlt(u32 flag, void* a2, void* dst, const void* src) {
     if ((flag & 4) != 0) goto convert;
     return 0;
 convert:
@@ -3250,7 +3251,7 @@ static inline ActParamT1Rec* nextT1Rec(ActParamT1Rec* rec) {
 }
 
 
-extern "C" __declspec(noinline) u32 func_80053960(ActParamData388* obj) {
+extern "C" __declspec(noinline) u32 getAnimTick(ActParamData388* obj) {
     const u8* p = reinterpret_cast<const u8*>(obj);
     u32 v4C4 = *(const u32*)(p + 0x4C4);
     if (v4C4 != 0) {

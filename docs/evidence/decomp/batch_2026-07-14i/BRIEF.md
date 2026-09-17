@@ -36,7 +36,7 @@ Retail asm for each symbol is in this directory (`asm_*.s`).
 
 ### `CMenuPTGauge::Move` (`asm_Move_CMenuPTGauge.s`)
 - Already ~97.1%: close the last gaps (likely Chaitin / branch / float pool / state-machine edge)
-- Same gate family as `cbRenderBefore` (`CTaskGame` / bit21 / `func_8013BE50` / mask `0xAFA40000`)
+- Same gate family as `cbRenderBefore` (`CTaskGame` / bit21 / `IsMenuState621F0` / mask `0xAFA40000`)
 - State machine on `unk8C`; leave `cbRenderBefore` untouched
 - Prefer §17.6 single-insn `b done` if MWCC collapses `rlwinm.`/`beq`/`b`
 

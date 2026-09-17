@@ -111,13 +111,13 @@ extern "C" void func_801FD48C(CPartyState* self) {
         goto same;
     }
     if ((s8)cur == 0) {
-        CPartyCharData* data = (CPartyCharData*)func_8009EC9C(func_801392B4(highlight));
+        CPartyCharData* data = (CPartyCharData*)func_8009EC9C(GetCollectedFlagByte(highlight));
         if (data->field_0x176C == 1) {
             playUISound(5);
             return;
         }
     } else if ((s8)highlight == 0) {
-        CPartyCharData* data = (CPartyCharData*)func_8009EC9C(func_801392B4(cur));
+        CPartyCharData* data = (CPartyCharData*)func_8009EC9C(GetCollectedFlagByte(cur));
         if (data->field_0x176C == 1) {
             playUISound(5);
             return;
@@ -172,13 +172,13 @@ extern "C" void func_801FD604(CPartyState* self) {
         goto same;
     }
     if ((s8)cur == 0) {
-        CPartyCharData* data = (CPartyCharData*)func_8009EC9C(func_801392B4(highlight));
+        CPartyCharData* data = (CPartyCharData*)func_8009EC9C(GetCollectedFlagByte(highlight));
         if (data->field_0x176C == 1) {
             playUISound(5);
             return;
         }
     } else if ((s8)highlight == 0) {
-        CPartyCharData* data = (CPartyCharData*)func_8009EC9C(func_801392B4(cur));
+        CPartyCharData* data = (CPartyCharData*)func_8009EC9C(GetCollectedFlagByte(cur));
         if (data->field_0x176C == 1) {
             playUISound(5);
             return;
@@ -275,7 +275,7 @@ extern "C" __declspec(noinline) void func_801FD76C(CPartyState* self) {
 // Party-state panel advance (closing): when the +0x24 anim transform reaches
 // the target frame, bind the panel anims and move to state 5.
 extern "C" __declspec(noinline) void func_801FD7CC(CPartyState* self) {
-    if (func_80137510(self->mAnimTrans0, lbl_eu_80668218) != 0) {
+    if (AnimRewindFrame(self->mAnimTrans0, lbl_eu_80668218) != 0) {
         self->mLayout->SetAnimationEnable(self->mAnimTrans0, false);
         self->mLayout->SetAnimationEnable(self->mAnimTrans1, true);
         self->field_0x2C = 5;
@@ -318,10 +318,10 @@ extern "C" void func_801FD220(CPartyState* self) {
 extern "C" __declspec(noinline) void func_801FE0C8(CPartyState* self) {
     int* party = func_8009ECB0();
     // (u8) result cast instead of `& 0xFF` — same mask, different VR birth.
-    u8 slotA = (u8)func_801392B4((u8)self->field_0x4D);
-    func_8009E168(party, slotA, func_801392B4(self->field_0x4C));
+    u8 slotA = (u8)GetCollectedFlagByte((u8)self->field_0x4D);
+    func_8009E168(party, slotA, GetCollectedFlagByte(self->field_0x4C));
     func_80139198(0);
-    func_80080888__Q22cf13CfGameManagerFv(func_801392B4(0), 0);
+    func_80080888__Q22cf13CfGameManagerFv(GetCollectedFlagByte(0), 0);
     func_801FDA7C(self);
     self->field_0x4D = -1;
     self->field_0x57 = 1;
@@ -337,7 +337,7 @@ extern "C" __declspec(noinline) void func_801FE20C(CPartyState* self, u32 member
     u32 found = 0;
     for (u8 i = 1; i <= 5; i++) {
         if (data->slotArea.records[slot].entries[i].word == 0) {
-            found = func_8013600C(&lbl_eu_80507D40[0x11a], &lbl_eu_80507D40[0x127],
+            found = BdatGetU8ByTableKey(&lbl_eu_80507D40[0x11a], &lbl_eu_80507D40[0x127],
                                   (u8)(i + slot * 5 + (memberIdx - 1) * 0x19)) * 100;
             break;
         }
@@ -418,7 +418,7 @@ extern "C" __declspec(noinline) void func_801FDA7C(CPartyState* self) {
             func_80124270(pane, 0);
             continue;
         }
-        u8 member = func_801392B4(i);
+        u8 member = GetCollectedFlagByte(i);
         CPartyCharData* data = (CPartyCharData*)func_8009EC9C(member);
         CPartySlotStats* s = &data->stats;
         s32 v0 = s->mVtbl->fn[0x42](s);
@@ -442,7 +442,7 @@ extern "C" __declspec(noinline) void func_801FDA7C(CPartyState* self) {
         sprintf(buf78, strs + 0x36, slotByte);
         setLayoutTextBoxNumber(self->mLayout, buf78, v2);
         sprintf(buf78, strs + 0x49, slotByte);
-        func_80136B4C(self->mLayout, buf78, v5, 0);
+        LayoutSetTextBoxFmtValue(self->mLayout, buf78, v5, 0);
         sprintf(buf78, strs + 0x5b, slotByte);
         func_801FE20C(self, member, buf78);
         sprintf(buf78, strs + 0x6c, slotByte);
@@ -450,12 +450,12 @@ extern "C" __declspec(noinline) void func_801FDA7C(CPartyState* self) {
         func_801FE39C(self, (float)v3, (float)v4, member, (u32)buf78);
 
         if (i >= 3) {
-            u16 id = func_80136254(lbl_eu_80664090, strs + 0x7d, member);
-            char* name = func_80138F78((u16)id);
+            u16 id = BdatGetU16Direct(lbl_eu_80664090, strs + 0x7d, member);
+            char* name = MakeTplNameSysFile((u16)id);
             u32 tex = (u32)self->mArcResAcc->GetResource(0x74696D67, name, 0);
             if (tex != 0) {
                 sprintf(buf78, strs + 0x88, slotByte);
-                func_80137E7C(self->mLayout, buf78, tex);
+                PaneSetTexPaletteByName(self->mLayout, buf78, tex);
             }
         } else {
             CPartyCharData* data2 = (CPartyCharData*)func_8009EC9C(member);
@@ -470,7 +470,7 @@ extern "C" __declspec(noinline) void func_801FDA7C(CPartyState* self) {
                 u32 tex = (u32)self->mArcResAcc->GetResource(0x74696D67, buf78, 0);
                 if (tex != 0) {
                     sprintf(buf78, strs + 0xc1, next);
-                    func_80137E7C(self->mLayout, buf78, tex);
+                    PaneSetTexPaletteByName(self->mLayout, buf78, tex);
                 }
             }
         }
@@ -484,14 +484,14 @@ extern "C" __declspec(noinline) void func_801FDA7C(CPartyState* self) {
             func_80124270(pane, 0);
             continue;
         }
-        u8 m2 = func_801392C8(k);
+        u8 m2 = GetCollectedFlagWord8(k);
         if (m2 == 0) continue;
-        u16 id = func_80136254(lbl_eu_80664098, strs + 0xe1, m2);
-        char* name = func_80138F78((u16)id);
+        u16 id = BdatGetU16Direct(lbl_eu_80664098, strs + 0xe1, m2);
+        char* name = MakeTplNameSysFile((u16)id);
         u32 tex = (u32)func_801355F4()->GetResource(0x74696D67, name, 0);
         if (tex != 0) {
             sprintf(buf18, strs + 0xed, k + 1);
-            func_80137E7C(self->mLayout, buf18, tex);
+            PaneSetTexPaletteByName(self->mLayout, buf18, tex);
         }
     }
 }
@@ -599,25 +599,25 @@ bool CPartyState::OnFileEvent(CEventFile* pEventFile) {
         mLayout->SetAnimationEnable(mAnimTrans1, true);
         mLayout->Animate(0);
 
-        char* s2 = func_80136190(strs + 0x1ba, strs + 0x1c4, 2);
-        char* s3 = func_80136190(strs + 0x1ba, strs + 0x1c4, 3);
-        char* s4 = func_80136190(strs + 0x1ba, strs + 0x1c4, 4);
-        func_80136190(strs + 0x1ba, strs + 0x1c4, 5);
+        char* s2 = BdatTouchStringCell(strs + 0x1ba, strs + 0x1c4, 2);
+        char* s3 = BdatTouchStringCell(strs + 0x1ba, strs + 0x1c4, 3);
+        char* s4 = BdatTouchStringCell(strs + 0x1ba, strs + 0x1c4, 4);
+        BdatTouchStringCell(strs + 0x1ba, strs + 0x1c4, 5);
         for (u8 i = 1; i <= 7; i++) {
             sprintf(buf48, strs + 0x1a8, i);
-            func_80136B4C(mLayout, buf48, s2, 0);
+            LayoutSetTextBoxFmtValue(mLayout, buf48, s2, 0);
             sprintf(buf48, strs + 0x1c9, i);
-            func_80136B4C(mLayout, buf48, s3, 0);
+            LayoutSetTextBoxFmtValue(mLayout, buf48, s3, 0);
             sprintf(buf48, strs + 0x196, i);
-            func_80136B4C(mLayout, buf48, s4, 0);
+            LayoutSetTextBoxFmtValue(mLayout, buf48, s4, 0);
         }
         func_801FE154(this);
         strs = lbl_eu_80507D40;
-        char* s8 = func_80136190(strs + 0x1ba, strs + 0x1c4, 8);
-        sprintf(buf28, strs + 0x1db, func_801571FC(), s8);
+        char* s8 = BdatTouchStringCell(strs + 0x1ba, strs + 0x1c4, 8);
+        sprintf(buf28, strs + 0x1db, CItemBlock_getPtr20E8(), s8);
         func_80136A1C(mLayout, strs + 0x189, buf28, 0);
-        char* s9 = func_80136190(strs + 0x1ba, strs + 0x1c4, 9);
-        func_80136B4C(mLayout, strs + 0x17b, s9, 0);
+        char* s9 = BdatTouchStringCell(strs + 0x1ba, strs + 0x1c4, 9);
+        LayoutSetTextBoxFmtValue(mLayout, strs + 0x17b, s9, 0);
 
         // Build the embedded cursor on the stack and copy its state into place.
         __ct__CCur22(&tmp, mArcResAcc);

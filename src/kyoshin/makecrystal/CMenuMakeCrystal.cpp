@@ -42,7 +42,7 @@ extern "C" {
 void waitForDrawDone__9CDeviceVIFv();
 void func_801338C8();
 void func_80137250__FPQ34nw4r3lyt8DrawInfo(nw4r::lyt::DrawInfo* di);
-int  func_8013BE50();
+int  IsMenuState621F0();
 void func_801C3D7C(void* self, nw4r::lyt::DrawInfo* di);   // CBgTex layout draw
 void func_801C3D54(void* self);                            // CBgTex animate
 int  func_80212B68(void* self);                            // CMakeCrystalWin query
@@ -70,7 +70,7 @@ int  func_8009CF8C(int id);
 void func_8011C400();
 void func_802A1500();
 void func_80189C88();
-void func_80043C88();
+void CTaskGame_stopVision();
 void cbRenderBefore__16CMenuMakeCrystalFv(void*);
 void* __dt__15CMakeCrystalWinFv(void*, int);
 void __dt__6CBgTexFv(void*, int);
@@ -178,7 +178,7 @@ struct MCRecTail {
 void CMenuMakeCrystal::Init() {
     func_802A1500();
     func_80189C88();
-    func_80043C88();
+    CTaskGame_stopVision();
     setPresentationFlag__Q22cf13CfGameManagerFv(1);
 
     // Build a temporary CBgTex, clone its UnkClass sub-object into this+0x64
@@ -381,7 +381,7 @@ void CMenuMakeCrystal::Move() {
 void CMenuMakeCrystal::cbRenderBefore() {
     if (CTaskGame::getInstance()->isFlag01Set() || (lbl_eu_80663E28 & 0x200000))
         return;
-    if (func_8013BE50() == 0)
+    if (IsMenuState621F0() == 0)
         return;
     GXSetZMode(GX_DISABLE, GX_NEVER, GX_DISABLE);
     nw4r::lyt::DrawInfo drawInfo;

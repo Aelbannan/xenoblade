@@ -44,16 +44,16 @@ using getMenuMultiItemImplShim::CItem_initItemImplInstances;
 // applies explicit (u8) masks only at the use sites - the u8-returning
 // global decls would force an rlwinm at every assignment.
 namespace getItemMultiE8WideShim {
-extern "C" u32 func_801361E8(u32, const char*, u32);
+extern "C" u32 BdatGetU8Direct(u32, const char*, u32);
 }
-using getItemMultiE8WideShim::func_801361E8;
-#define func_801361E8(a, b, c) getItemMultiE8WideShim::func_801361E8(a, b, c)
+using getItemMultiE8WideShim::BdatGetU8Direct;
+#define BdatGetU8Direct(a, b, c) getItemMultiE8WideShim::BdatGetU8Direct(a, b, c)
 
 namespace getItemMulti600CWideShim {
-extern "C" u32 func_8013600C(const void*, const void*, u32);
+extern "C" u32 BdatGetU8ByTableKey(const void*, const void*, u32);
 }
-using getItemMulti600CWideShim::func_8013600C;
-#define func_8013600C(a, b, c) getItemMulti600CWideShim::func_8013600C(a, b, c)
+using getItemMulti600CWideShim::BdatGetU8ByTableKey;
+#define BdatGetU8ByTableKey(a, b, c) getItemMulti600CWideShim::BdatGetU8ByTableKey(a, b, c)
 
 struct CMenuGetItemPaneWord {
     CMenuGetItemPaneWord() {}
@@ -144,23 +144,23 @@ void __ct__8CProcessFv(CProcess*);
 void code80135FDC_postIncByte_64080();
 nw4r::lyt::ArcResourceAccessor* func_801355F4();
 u32 func_801355BC();
-char* func_80138F78(u32);
+char* MakeTplNameSysFile(u32);
 CMenuGetItemFourShorts func_801397AC(void*, u32);
-u32 func_80139358(u32);
+u32 BdatGetItemId(u32);
 char* func_801393CC(u32);
 char* func_801394D4(u16);
 // Match CItem.cpp defs: bare cmpi on r3 in Init special2 (u8 view inserts clrlwi).
-s32 func_80157CD0(u32);
+s32 CItemBlock_countEmpty(u32);
 // Slot-sum call sites want a raw mr of r3; u32 return matches the def and
 // still allows mr without an extra clrlwi when passed through.
-u32 func_80158068(u32);
+u32 CItem_sumFamilyByte6(u32);
 // setLayoutTextBoxNumber is declared by the included code_80135FDC.hpp / unit header.
-// Retail passes the raw id to func_801392E4 without a halfword mask (mr r3,
+// Retail passes the raw id to BdatGetItemType without a halfword mask (mr r3,
 // r4 directly), so the visible param is u32 here.
-u32 func_801392E4(u32);
+u32 BdatGetItemType(u32);
 char* func_eu_802B1474();
 char* func_eu_802B148C();
-u16 func_80136254(const void*, const char*, u16);
+u16 BdatGetU16Direct(const void*, const char*, u16);
 void func_80137B44(nw4r::lyt::Layout*, char*, u32);
 void* getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32, nw4r::lyt::Layout*);
 CBaseCur* __ct__CCur18(CBaseCur*, nw4r::lyt::ArcResourceAccessor*);
@@ -434,8 +434,8 @@ void CMenuGetItemMulti::Init() {
         mLayout->GetRootPane()->FindPaneByName(&lbl_eu_80504A3C[0x81], true));
     pane->flags = (pane->flags & 0xfe) | 1;
 
-    func_80136B4C(mLayout, &lbl_eu_80504A3C[0x146],
-                   func_80136190(&lbl_eu_80504A3C[0x133], &lbl_eu_80504A3C[0x141], 43), 0);
+    LayoutSetTextBoxFmtValue(mLayout, &lbl_eu_80504A3C[0x146],
+                   BdatTouchStringCell(&lbl_eu_80504A3C[0x133], &lbl_eu_80504A3C[0x141], 43), 0);
 
     char* fileName;
     if (isClassicController__Q22cf13CfGameManagerFv(-1) != 0) {
@@ -443,14 +443,14 @@ void CMenuGetItemMulti::Init() {
     } else {
         fileName = &lbl_eu_80504A3C[0x158];
     }
-    u16 keyTextId = func_8013606C(&lbl_eu_80504A3C[0x133], fileName, 43);
-    char* buttonTexture = func_80138F78(keyTextId);
+    u16 keyTextId = BdatGetU16ByTableKey(&lbl_eu_80504A3C[0x133], fileName, 43);
+    char* buttonTexture = MakeTplNameSysFile(keyTextId);
     nw4r::lyt::ArcResourceAccessor* accessor = func_801355F4();
     CMenuGetItemTextureResource* texture = reinterpret_cast<CMenuGetItemTextureResource*>(
         accessor->GetResource(nw4r::lyt::ArcResourceAccessor::RES_TYPE_TEXTURE,
                               buttonTexture, NULL));
     if (texture != NULL) {
-        func_80137E7C(mLayout, &lbl_eu_80504A3C[0x161], texture);
+        PaneSetTexPaletteByName(mLayout, &lbl_eu_80504A3C[0x161], texture);
         u16 textureWidth = texture->data->header->width;
         u16 textureHeight = texture->data->header->height;
         nw4r::lyt::Pane* buttonPane = mLayout->GetRootPane()->FindPaneByName(
@@ -472,10 +472,10 @@ void CMenuGetItemMulti::Init() {
         reinterpret_cast<CMenuGetItemPaneExtra*>(closePane)->getPaneWord(0);
     lbl_eu_80664410 = closeWord.value;
 
-    func_80136B4C(mLayout, &lbl_eu_80504A3C[0x187],
-                   func_80136190(&lbl_eu_80504A3C[0x177], &lbl_eu_80504A3C[0x182], 6), 0);
-    func_80136B4C(mLayout, &lbl_eu_80504A3C[0x16b],
-                   func_80136190(&lbl_eu_80504A3C[0x133], &lbl_eu_80504A3C[0x141], 79), 0);
+    LayoutSetTextBoxFmtValue(mLayout, &lbl_eu_80504A3C[0x187],
+                   BdatTouchStringCell(&lbl_eu_80504A3C[0x177], &lbl_eu_80504A3C[0x182], 6), 0);
+    LayoutSetTextBoxFmtValue(mLayout, &lbl_eu_80504A3C[0x16b],
+                   BdatTouchStringCell(&lbl_eu_80504A3C[0x133], &lbl_eu_80504A3C[0x141], 79), 0);
 
     {
         u32 paneIndex;
@@ -483,40 +483,40 @@ void CMenuGetItemMulti::Init() {
         for (i = 0; i < 4; ++i) {
             paneIndex = (u8)i + 1;
             sprintf(setupPaneName, &lbl_eu_80504A3C[0x192], paneIndex);
-            func_80136B4C(mLayout, setupPaneName, &lbl_eu_80504A3C[0x19f], 0);
+            LayoutSetTextBoxFmtValue(mLayout, setupPaneName, &lbl_eu_80504A3C[0x19f], 0);
             sprintf(setupPaneName, &lbl_eu_80504A3C[0x1a0], paneIndex);
-            func_80136B4C(mLayout, setupPaneName, &lbl_eu_80504A3C[0x19f], 0);
+            LayoutSetTextBoxFmtValue(mLayout, setupPaneName, &lbl_eu_80504A3C[0x19f], 0);
         }
     }
 
-    func_80136B4C(mLayout, &lbl_eu_80504A3C[0x1b8],
-                   func_80136190(&lbl_eu_80504A3C[0x1ac], &lbl_eu_80504A3C[0x182], 16), 0);
+    LayoutSetTextBoxFmtValue(mLayout, &lbl_eu_80504A3C[0x1b8],
+                   BdatTouchStringCell(&lbl_eu_80504A3C[0x1ac], &lbl_eu_80504A3C[0x182], 16), 0);
 
     void* itemFP = getFP__FPCc(&lbl_eu_80504A3C[0x1c1]);
-    func_80136B4C(mLayout, &lbl_eu_80504A3C[0x1ca],
-                   func_8013639C(itemFP, &lbl_eu_80504A3C[0x182], 10), 0);
-    func_80136B4C(mLayout, &lbl_eu_80504A3C[0x1d5],
-                   func_8013639C(itemFP, &lbl_eu_80504A3C[0x182], 13), 0);
-    func_80136B4C(mLayout, &lbl_eu_80504A3C[0x1e0],
-                   func_8013639C(itemFP, &lbl_eu_80504A3C[0x182], 17), 0);
-    func_80136B4C(mLayout, &lbl_eu_80504A3C[0x1eb],
-                   func_8013639C(itemFP, &lbl_eu_80504A3C[0x182], 18), 0);
-    func_80136B4C(mLayout, &lbl_eu_80504A3C[0x1f6],
-                   func_8013639C(itemFP, &lbl_eu_80504A3C[0x182], 12), 0);
-    func_80136B4C(mLayout, &lbl_eu_80504A3C[0x201],
-                   func_8013639C(itemFP, &lbl_eu_80504A3C[0x182], 19), 0);
-    func_80136B4C(mLayout, &lbl_eu_80504A3C[0x20c],
-                   func_8013639C(itemFP, &lbl_eu_80504A3C[0x182], 24), 0);
-    func_80136B4C(mLayout, &lbl_eu_80504A3C[0x217],
-                   func_8013639C(itemFP, &lbl_eu_80504A3C[0x182], 36), 0);
-    func_80136B4C(mLayout, &lbl_eu_80504A3C[0x222],
-                   func_8013639C(itemFP, &lbl_eu_80504A3C[0x182], 37), 0);
-    func_80136B4C(mLayout, &lbl_eu_80504A3C[0x22d],
-                   func_8013639C(itemFP, &lbl_eu_80504A3C[0x182], 24), 0);
-    func_80136B4C(mLayout, &lbl_eu_80504A3C[0x238],
-                   func_8013639C(itemFP, &lbl_eu_80504A3C[0x182], 47), 0);
-    func_80136B4C(mLayout, &lbl_eu_80504A3C[0x24c],
-                   func_80136190(&lbl_eu_80504A3C[0x243], &lbl_eu_80504A3C[0x182], 30), 0);
+    LayoutSetTextBoxFmtValue(mLayout, &lbl_eu_80504A3C[0x1ca],
+                   BdatGetPtrDirect(itemFP, &lbl_eu_80504A3C[0x182], 10), 0);
+    LayoutSetTextBoxFmtValue(mLayout, &lbl_eu_80504A3C[0x1d5],
+                   BdatGetPtrDirect(itemFP, &lbl_eu_80504A3C[0x182], 13), 0);
+    LayoutSetTextBoxFmtValue(mLayout, &lbl_eu_80504A3C[0x1e0],
+                   BdatGetPtrDirect(itemFP, &lbl_eu_80504A3C[0x182], 17), 0);
+    LayoutSetTextBoxFmtValue(mLayout, &lbl_eu_80504A3C[0x1eb],
+                   BdatGetPtrDirect(itemFP, &lbl_eu_80504A3C[0x182], 18), 0);
+    LayoutSetTextBoxFmtValue(mLayout, &lbl_eu_80504A3C[0x1f6],
+                   BdatGetPtrDirect(itemFP, &lbl_eu_80504A3C[0x182], 12), 0);
+    LayoutSetTextBoxFmtValue(mLayout, &lbl_eu_80504A3C[0x201],
+                   BdatGetPtrDirect(itemFP, &lbl_eu_80504A3C[0x182], 19), 0);
+    LayoutSetTextBoxFmtValue(mLayout, &lbl_eu_80504A3C[0x20c],
+                   BdatGetPtrDirect(itemFP, &lbl_eu_80504A3C[0x182], 24), 0);
+    LayoutSetTextBoxFmtValue(mLayout, &lbl_eu_80504A3C[0x217],
+                   BdatGetPtrDirect(itemFP, &lbl_eu_80504A3C[0x182], 36), 0);
+    LayoutSetTextBoxFmtValue(mLayout, &lbl_eu_80504A3C[0x222],
+                   BdatGetPtrDirect(itemFP, &lbl_eu_80504A3C[0x182], 37), 0);
+    LayoutSetTextBoxFmtValue(mLayout, &lbl_eu_80504A3C[0x22d],
+                   BdatGetPtrDirect(itemFP, &lbl_eu_80504A3C[0x182], 24), 0);
+    LayoutSetTextBoxFmtValue(mLayout, &lbl_eu_80504A3C[0x238],
+                   BdatGetPtrDirect(itemFP, &lbl_eu_80504A3C[0x182], 47), 0);
+    LayoutSetTextBoxFmtValue(mLayout, &lbl_eu_80504A3C[0x24c],
+                   BdatTouchStringCell(&lbl_eu_80504A3C[0x243], &lbl_eu_80504A3C[0x182], 30), 0);
 
     nw4r::lyt::Pane* rectPane = mLayout->GetRootPane()->FindPaneByName(
         &lbl_eu_80504A3C[0x63], true);
@@ -552,14 +552,14 @@ void CMenuGetItemMulti::Init() {
                     u16 rankCount = (u16)reinterpret_cast<CMenuGetItemImplRankWide*>(
                         CItem_initItemImplInstances(entry))->getRankCount(entry);
                     itemName = CItem_initItemImplInstances(entry)->getName(entry);
-                    char* rankName = func_80136190(&lbl_eu_80504A3C[0x1c1],
+                    char* rankName = BdatTouchStringCell(&lbl_eu_80504A3C[0x1c1],
                                                    &lbl_eu_80504A3C[0x182],
                                                    30 - (rankCount - 1));
                     rankText.format(&lbl_eu_80504A3C[0x259], itemName, rankName);
-                    func_80136B4C(mLayout, itemPaneName, rankText.mString, 0);
+                    LayoutSetTextBoxFmtValue(mLayout, itemPaneName, rankText.mString, 0);
                 } else {
                     itemName = CItem_initItemImplInstances(entry)->getName(entry);
-                    func_80136B4C(mLayout, itemPaneName, itemName, 0);
+                    LayoutSetTextBoxFmtValue(mLayout, itemPaneName, itemName, 0);
                 }
 
                 sprintf(itemPaneName, &lbl_eu_80504A3C[0x25e], mVisibleItemCount + 1);
@@ -584,9 +584,9 @@ void CMenuGetItemMulti::Init() {
                     u32 fontCheck = lbl_eu_80664108;
                     // Retail: clrlwi into r3, set default texture, then
                     // neg/or/rlwinm bool-normalize (not rlwinm.+beq on a u8 local).
-                    u32 fontHit = (u8)func_801361E8(
+                    u32 fontHit = (u8)BdatGetU8Direct(
                         fontCheck, &lbl_eu_80504A3C[0x33b],
-                        (u16)func_80139358((u16)(entry->packed >> 20)));
+                        (u16)BdatGetItemId((u16)(entry->packed >> 20)));
                     textureName = &lbl_eu_80504A3C[0x355];
                     if ((u32)(-(s32)fontHit | fontHit) >> 31) {
                         textureName = &lbl_eu_80504A3C[0x340];
@@ -606,12 +606,12 @@ void CMenuGetItemMulti::Init() {
                         &lbl_eu_80504A3C[0x26b], NULL);
                 }
                 if (itemTexture != NULL) {
-                    func_80137E7C(mLayout, itemPaneName, itemTexture);
+                    PaneSetTexPaletteByName(mLayout, itemPaneName, itemTexture);
                 }
 
                 sprintf(itemPaneName, &lbl_eu_80504A3C[0x1a0], mVisibleItemCount + 1);
-                func_80136B4C(mLayout, itemPaneName, &lbl_eu_80504A3C[0x19f], 0);
-                func_80139A18(mLayout, itemPaneName, &lbl_eu_806643E0, &lbl_eu_806643E8);
+                LayoutSetTextBoxFmtValue(mLayout, itemPaneName, &lbl_eu_80504A3C[0x19f], 0);
+                PaneMatSetTevColorsByName(mLayout, itemPaneName, &lbl_eu_806643E0, &lbl_eu_806643E8);
 
                 {
                     // Commuted high bound blocks subi/cmpli fusion
@@ -641,16 +641,16 @@ void CMenuGetItemMulti::Init() {
                         // reg (r19); a u8 local truncates to r0 then mr.
                         u32 slotCount = (u8)CItem_initItemImplInstances(entry)->hasSlot(entry);
                         if (slotCount != 0) {
-                            func_80136B4C(mLayout, itemPaneName, func_eu_802B148C(), 0);
-                            func_80139A18(mLayout, itemPaneName, &lbl_eu_806643F0,
+                            LayoutSetTextBoxFmtValue(mLayout, itemPaneName, func_eu_802B148C(), 0);
+                            PaneMatSetTevColorsByName(mLayout, itemPaneName, &lbl_eu_806643F0,
                                          &lbl_eu_806643F8);
                             for (u8 slot = 0; slot < slotCount; ++slot) {
                                 if (CItem_initItemImplInstances(entry)->getSlotId(entry, slot) == -1) {
                                     u16* slotData = reinterpret_cast<u16*>(
                                         CItem_initItemImplInstances(entry)->getSlot(entry, slot));
                                     if (slotData != NULL && (slotData[2] & 1) != 0) {
-                                        func_80136B4C(mLayout, itemPaneName, func_eu_802B1474(), 0);
-                                        func_80139A18(mLayout, itemPaneName, &lbl_eu_80664400,
+                                        LayoutSetTextBoxFmtValue(mLayout, itemPaneName, func_eu_802B1474(), 0);
+                                        PaneMatSetTevColorsByName(mLayout, itemPaneName, &lbl_eu_80664400,
                                                      &lbl_eu_80664408);
                                         break;
                                     }
@@ -663,11 +663,11 @@ void CMenuGetItemMulti::Init() {
                     {
                         u16 rankCount = (u16)reinterpret_cast<CMenuGetItemImplRankWide*>(
                             CItem_initItemImplInstances(entry))->getRankCount(entry);
-                        func_80136B4C(mLayout, itemPaneName,
-                                       func_80136190(&lbl_eu_80504A3C[0x1c1],
+                        LayoutSetTextBoxFmtValue(mLayout, itemPaneName,
+                                       BdatTouchStringCell(&lbl_eu_80504A3C[0x1c1],
                                                     &lbl_eu_80504A3C[0x182],
                                                     30 - ((u8)rankCount - 1)), 0);
-                        func_80139A18(mLayout, itemPaneName, &lbl_eu_806643E0,
+                        PaneMatSetTevColorsByName(mLayout, itemPaneName, &lbl_eu_806643E0,
                                      &lbl_eu_806643E8);
                     }
                 after_cat_dispatch:;
@@ -680,7 +680,7 @@ void CMenuGetItemMulti::Init() {
                     u32 special = 0;
                     u32 catN = (entry->packed >> 16) & 0xf;
                     if (catN != 3 && catN != 9) {
-                        u32 hit = (u8)func_801361E8(
+                        u32 hit = (u8)BdatGetU8Direct(
                             lbl_eu_806640EC, &lbl_eu_80504A3C[0x394],
                             (u16)(entry->packed >> 20));
                         special = (u32)(-(s32)hit | hit) >> 31;
@@ -706,12 +706,12 @@ void CMenuGetItemMulti::Init() {
                     }
                     DECOMP_ASM_INSN_END
                 do_cat2_e4:
-                    tmp = (u16)func_801392E4(itemKey);
+                    tmp = (u16)BdatGetItemType(itemKey);
                 cat2_join:
                     {
                         u32 cat2 = (u16)tmp;
                         u32 special2;
-                        func_80139358(itemKey);
+                        BdatGetItemId(itemKey);
                         if ((u32)(cat2 - 2) <= 7) {
                             goto special2_lo;
                         }
@@ -720,14 +720,14 @@ void CMenuGetItemMulti::Init() {
                         }
                         goto special2_zero;
                     special2_lo:
-                        if (func_80157CD0(cat2) == 0) {
+                        if (CItemBlock_countEmpty(cat2) == 0) {
                             goto special2_zero;
                         }
                         special2 = 1;
                         goto special2_test;
                     special2_hi:
                         {
-                            int y = func_80158068(itemKey);
+                            int y = CItem_sumFamilyByte6(itemKey);
                             if (y < 1) {
                                 goto special2_y_lt1;
                             }
@@ -737,7 +737,7 @@ void CMenuGetItemMulti::Init() {
                             special2 = 1;
                             goto special2_test;
                         special2_y_lt1:
-                            if (func_80157CD0(cat2) == 0) {
+                            if (CItemBlock_countEmpty(cat2) == 0) {
                                 goto special2_zero;
                             }
                             special2 = 1;
@@ -764,15 +764,15 @@ void CMenuGetItemMulti::Init() {
         for (u8 sourceIndex = 0; sourceIndex < 4; ++sourceIndex) {
             u16 itemId = (u16)initialItems[sourceIndex];
             char* itemTable = func_801393CC(itemId);
-            u8 category = (u8)func_801392E4(itemId);
-            u32 tableId = func_80139358(itemId);
+            u8 category = (u8)BdatGetItemType(itemId);
+            u32 tableId = BdatGetItemId(itemId);
             if (itemId != 0) {
                 sprintf(initialTextPaneName, &lbl_eu_80504A3C[0x192],
                         mVisibleItemCount + 1);
-                func_80136B4C(mLayout, initialTextPaneName, func_801394D4(itemId), 0);
+                LayoutSetTextBoxFmtValue(mLayout, initialTextPaneName, func_801394D4(itemId), 0);
                 u32 special = 0;
                 if (category != 3 && category != 9) {
-                    u32 hit = (u8)func_801361E8(lbl_eu_806640EC,
+                    u32 hit = (u8)BdatGetU8Direct(lbl_eu_806640EC,
                                                 &lbl_eu_80504A3C[0x394],
                                                 itemId);
                     special = (u32)(-(s32)hit | hit) >> 31;
@@ -783,9 +783,9 @@ void CMenuGetItemMulti::Init() {
                 // Same special2 goto-chain as the entry-loop path (u32 cat2 +
                 // range subi/cmpli + bottom li0 merge).
                 {
-                    u32 cat2 = (u16)func_801392E4(itemId);
+                    u32 cat2 = (u16)BdatGetItemType(itemId);
                     u32 special2;
-                    func_80139358(itemId);
+                    BdatGetItemId(itemId);
                     if ((u32)(cat2 - 2) <= 7) {
                         goto init_special2_lo;
                     }
@@ -794,14 +794,14 @@ void CMenuGetItemMulti::Init() {
                     }
                     goto init_special2_zero;
                 init_special2_lo:
-                    if (func_80157CD0(cat2) == 0) {
+                    if (CItemBlock_countEmpty(cat2) == 0) {
                         goto init_special2_zero;
                     }
                     special2 = 1;
                     goto init_special2_test;
                 init_special2_hi:
                     {
-                        int y = func_80158068(itemId);
+                        int y = CItem_sumFamilyByte6(itemId);
                         if (y < 1) {
                             goto init_special2_y_lt1;
                         }
@@ -811,7 +811,7 @@ void CMenuGetItemMulti::Init() {
                         special2 = 1;
                         goto init_special2_test;
                     init_special2_y_lt1:
-                        if (func_80157CD0(cat2) == 0) {
+                        if (CItemBlock_countEmpty(cat2) == 0) {
                             goto init_special2_zero;
                         }
                         special2 = 1;
@@ -854,7 +854,7 @@ void CMenuGetItemMulti::Init() {
             case 11: {
                 u32 fontCheck = lbl_eu_80664108;
                 char* fontKey = &lbl_eu_80504A3C[0x33b];
-                u32 fontHit = (u8)func_801361E8(
+                u32 fontHit = (u8)BdatGetU8Direct(
                     fontCheck, fontKey, (u16)tableId);
                 textureName = &lbl_eu_80504A3C[0x355];
                 if ((u32)(-(s32)fontHit | fontHit) >> 31) {
@@ -875,12 +875,12 @@ void CMenuGetItemMulti::Init() {
                     &lbl_eu_80504A3C[0x26b], NULL);
             }
             if (itemTexture != NULL) {
-                func_80137E7C(mLayout, initialItemPaneName, itemTexture);
+                PaneSetTexPaletteByName(mLayout, initialItemPaneName, itemTexture);
             }
 
             sprintf(initialItemPaneName, &lbl_eu_80504A3C[0x1a0], sourceIndex + 1);
-            func_80136B4C(mLayout, initialItemPaneName, &lbl_eu_80504A3C[0x19f], 0);
-            func_80139A18(mLayout, initialItemPaneName, &lbl_eu_806643E0,
+            LayoutSetTextBoxFmtValue(mLayout, initialItemPaneName, &lbl_eu_80504A3C[0x19f], 0);
+            PaneMatSetTevColorsByName(mLayout, initialItemPaneName, &lbl_eu_806643E0,
                          &lbl_eu_806643E8);
 
             {
@@ -900,19 +900,19 @@ void CMenuGetItemMulti::Init() {
                 goto after_initial_cat;
             do_initial_slots:
                 {
-                    u32 slotCount = func_801361E8(
+                    u32 slotCount = BdatGetU8Direct(
                         (u32)itemTable, &lbl_eu_80504A3C[0x39e], (u16)tableId);
                     if ((u8)slotCount != 0) {
-                        func_80136B4C(mLayout, initialItemPaneName, func_eu_802B148C(), 0);
-                        func_80139A18(mLayout, initialItemPaneName, &lbl_eu_806643F0,
+                        LayoutSetTextBoxFmtValue(mLayout, initialItemPaneName, func_eu_802B148C(), 0);
+                        PaneMatSetTevColorsByName(mLayout, initialItemPaneName, &lbl_eu_806643F0,
                                      &lbl_eu_806643F8);
                         for (u8 slot = 0; slot < (u8)slotCount; ++slot) {
                             sprintf(slotPaneName, &lbl_eu_80504A3C[0x3a7], slot + 1);
-                            if (func_80136254(itemTable, slotPaneName,
+                            if (BdatGetU16Direct(itemTable, slotPaneName,
                                               (u16)tableId) != 0) {
-                                func_80136B4C(mLayout, initialItemPaneName,
+                                LayoutSetTextBoxFmtValue(mLayout, initialItemPaneName,
                                                func_eu_802B1474(), 0);
-                                func_80139A18(mLayout, initialItemPaneName,
+                                PaneMatSetTevColorsByName(mLayout, initialItemPaneName,
                                              &lbl_eu_80664400, &lbl_eu_80664408);
                                 break;
                             }
@@ -922,13 +922,13 @@ void CMenuGetItemMulti::Init() {
                 goto after_initial_cat;
             do_initial_rank:
                 {
-                    u32 rankCount = func_801361E8(lbl_eu_806640EC,
+                    u32 rankCount = BdatGetU8Direct(lbl_eu_806640EC,
                                                   &lbl_eu_80504A3C[0x3b3], itemId);
-                    func_80136B4C(mLayout, initialItemPaneName,
-                                   func_80136190(&lbl_eu_80504A3C[0x1c1],
+                    LayoutSetTextBoxFmtValue(mLayout, initialItemPaneName,
+                                   BdatTouchStringCell(&lbl_eu_80504A3C[0x1c1],
                                                 &lbl_eu_80504A3C[0x182],
                                                 30 - ((u8)rankCount - 1)), 0);
-                    func_80139A18(mLayout, initialItemPaneName, &lbl_eu_806643E0,
+                    PaneMatSetTevColorsByName(mLayout, initialItemPaneName, &lbl_eu_806643E0,
                                  &lbl_eu_806643E8);
                 }
             after_initial_cat:;
@@ -1043,7 +1043,7 @@ void CMenuGetItemMulti::Term() {
     lbl_eu_80664414 = 0;
     lbl_eu_80664418 = 0;
     if (mEntryCount != 0 || field_1F6 != 0) {
-        func_8013B980();
+        DecMenuCounter64080();
         if (code80135FDC_getByte_64080() == 0) {
             setPresentationFlag__Q22cf13CfGameManagerFv(0);
         }
@@ -1058,7 +1058,7 @@ void CMenuGetItemMulti::Term() {
             if (src != 0 && (src->field_64 & 0x100) != 0) {
                 reinterpret_cast<CfGameManagerTermFields*>(
                     cf::CfGameManager::getInstance())->field_80 = 0;
-                func_800B7320(reinterpret_cast<u32>(src));
+                removeTboxById(reinterpret_cast<u32>(src));
                 src->field_68 |= 0x60;
             }
         }
@@ -1076,7 +1076,7 @@ void CMenuGetItemMulti::Move() {
 exit:
     return;
 body:
-    if (!func_8013BE50()) goto exit;
+    if (!IsMenuState621F0()) goto exit;
 
     // Per-frame state machine: field_1F8 selects the menu sub-state; the
     // dense 0..11 range is emitted as a jump table, and every case falls
@@ -1114,7 +1114,7 @@ body:
         func_801B82E8(this);
         break;
     case 3:  // closing animation: flag the fade-out
-        if (func_80137510(mAnim, lbl_eu_80667E10) == 0) break;
+        if (AnimRewindFrame(mAnim, lbl_eu_80667E10) == 0) break;
         field_64 = 1;
         break;
     case 4:  // closing: teardown handler
@@ -1140,7 +1140,7 @@ body:
             if (mEntryCount != 0) {
                 cat = (mVisibleEntries[(s8)mMaxVisibleItems]->packed >> 16) & 0xF;
             } else {
-                cat = func_801392E4(mVisibleItemIds[(s8)mMaxVisibleItems]) & 0xff;
+                cat = BdatGetItemType(mVisibleItemIds[(s8)mMaxVisibleItems]) & 0xff;
             }
             func_80133E58((u8)cat, 0, field_201);
             field_1F8 = 0xb;
@@ -1287,7 +1287,7 @@ void CMenuGetItemMulti::cbRenderBefore() {
 exit:
     return;
 body:
-    if (!func_8013BE50()) goto exit;
+    if (!IsMenuState621F0()) goto exit;
     {
         GXSetZMode(GX_FALSE, GX_NEVER, GX_FALSE);
         nw4r::lyt::DrawInfo drawInfo;
@@ -1349,9 +1349,9 @@ void func_801B4830(CMenuGetItemMulti* self) {
     for (u8 i = 0; i < 4; ++i) {
         char buf[32];
         sprintf(buf, &lbl_eu_80504A3C[0x192], i + 1);
-        func_80136B4C(self->mLayout, buf, &lbl_eu_80504A3C[0x19f], 0);
+        LayoutSetTextBoxFmtValue(self->mLayout, buf, &lbl_eu_80504A3C[0x19f], 0);
         sprintf(buf, &lbl_eu_80504A3C[0x1a0], i + 1);
-        func_80136B4C(self->mLayout, buf, &lbl_eu_80504A3C[0x19f], 0);
+        LayoutSetTextBoxFmtValue(self->mLayout, buf, &lbl_eu_80504A3C[0x19f], 0);
         sprintf(buf, &lbl_eu_80504A3C[0x25e], i + 1);
         nw4r::lyt::Pane* pane = self->mLayout->GetRootPane()->FindPaneByName(buf, true);
         if (pane != 0) {
@@ -1392,31 +1392,31 @@ void func_801B4830(CMenuGetItemMulti* self) {
                 rankText.mLength = 0;
                 u16 rankCount = CItem_initItemImplInstances(entry)->getRankCount(entry);
                 itemName = CItem_initItemImplInstances(entry)->getName(entry);
-                char* rankName = func_80136190(&lbl_eu_80504A3C[0x1c1],
+                char* rankName = BdatTouchStringCell(&lbl_eu_80504A3C[0x1c1],
                                                &lbl_eu_80504A3C[0x182],
                                                30 - (rankCount - 1));
                 rankText.format(&lbl_eu_80504A3C[0x259], itemName, rankName);
-                func_80136B4C(self->mLayout, paneName, rankText.mString, 0);
+                LayoutSetTextBoxFmtValue(self->mLayout, paneName, rankText.mString, 0);
             } else {
                 itemName = CItem_initItemImplInstances(entry)->getName(entry);
-                func_80136B4C(self->mLayout, paneName, itemName, 0);
+                LayoutSetTextBoxFmtValue(self->mLayout, paneName, itemName, 0);
             }
 
             u32 id = entry->packed >> 20;
             u16 cat = (entry->packed >> 12) & 0xF;
             if (cat == 0) {
-                cat = (u16)func_801392E4(id);
+                cat = (u16)BdatGetItemType(id);
             }
-            func_80139358(id);
+            BdatGetItemId(id);
             int special = 0;
             if (cat >= 2 && cat <= 9) {
-                if (func_80157CD0(cat) != 0) {
+                if (CItemBlock_countEmpty(cat) != 0) {
                     special = 1;
                 }
             } else if (cat >= 10 && cat <= 13) {
-                int lvl = func_80158068(id);
+                int lvl = CItem_sumFamilyByte6(id);
                 if (lvl < 1) {
-                    if (func_80157CD0(cat) != 0) {
+                    if (CItemBlock_countEmpty(cat) != 0) {
                         special = 1;
                     }
                 } else if (lvl < 0x63) {
@@ -1433,7 +1433,7 @@ void func_801B4830(CMenuGetItemMulti* self) {
             u32 cat2 = (raw >> 12) & 0xF;
             int special2 = 0;
             if (cat2 != 3 && cat2 != 9) {
-                special2 = func_801361E8(lbl_eu_806640EC, &lbl_eu_80504A3C[0x394],
+                special2 = BdatGetU8Direct(lbl_eu_806640EC, &lbl_eu_80504A3C[0x394],
                                          raw >> 20) != 0;
             }
             if (cat2 == 12 || special2 != 0) {
@@ -1462,8 +1462,8 @@ void func_801B4830(CMenuGetItemMulti* self) {
             case 11: {
                 u32 fontCheck = lbl_eu_80664108;
                 textureName = &lbl_eu_80504A3C[0x355];
-                if (func_801361E8(fontCheck, &lbl_eu_80504A3C[0x33b],
-                                 func_80139358((u16)(entry->packed >> 20)))) {
+                if (BdatGetU8Direct(fontCheck, &lbl_eu_80504A3C[0x33b],
+                                 BdatGetItemId((u16)(entry->packed >> 20)))) {
                     textureName = &lbl_eu_80504A3C[0x340];
                 }
                 break;
@@ -1481,28 +1481,28 @@ void func_801B4830(CMenuGetItemMulti* self) {
                     &lbl_eu_80504A3C[0x26b], NULL);
             }
             if (itemTexture != NULL) {
-                func_80137E7C(self->mLayout, texPaneName, itemTexture);
+                PaneSetTexPaletteByName(self->mLayout, texPaneName, itemTexture);
             }
 
             sprintf(paneName, &lbl_eu_80504A3C[0x1a0], i + 1);
-            func_80136B4C(self->mLayout, paneName, &lbl_eu_80504A3C[0x19f], 0);
-            func_80139A18(self->mLayout, paneName, &lbl_eu_806643E0,
+            LayoutSetTextBoxFmtValue(self->mLayout, paneName, &lbl_eu_80504A3C[0x19f], 0);
+            PaneMatSetTevColorsByName(self->mLayout, paneName, &lbl_eu_806643E0,
                          &lbl_eu_806643E8);
 
             u32 cat3 = (entry->packed >> 12) & 0xF;
             if ((cat3 >= 4 && cat3 <= 8) || cat3 == 2) {
                 u8 slotCount = CItem_initItemImplInstances(entry)->hasSlot(entry);
                 if (slotCount != 0) {
-                    func_80136B4C(self->mLayout, paneName, func_eu_802B148C(), 0);
-                    func_80139A18(self->mLayout, paneName, &lbl_eu_806643F0,
+                    LayoutSetTextBoxFmtValue(self->mLayout, paneName, func_eu_802B148C(), 0);
+                    PaneMatSetTevColorsByName(self->mLayout, paneName, &lbl_eu_806643F0,
                                  &lbl_eu_806643F8);
                     for (u8 slot = 0; slot < slotCount; ++slot) {
                         if (CItem_initItemImplInstances(entry)->getSlotId(entry, slot) == -1) {
                             u16* slotData = reinterpret_cast<u16*>(
                                 CItem_initItemImplInstances(entry)->getSlot(entry, slot));
                             if (slotData != NULL && (slotData[2] & 1) != 0) {
-                                func_80136B4C(self->mLayout, paneName, func_eu_802B1474(), 0);
-                                func_80139A18(self->mLayout, paneName, &lbl_eu_80664400,
+                                LayoutSetTextBoxFmtValue(self->mLayout, paneName, func_eu_802B1474(), 0);
+                                PaneMatSetTevColorsByName(self->mLayout, paneName, &lbl_eu_80664400,
                                              &lbl_eu_80664408);
                                 break;
                             }
@@ -1511,11 +1511,11 @@ void func_801B4830(CMenuGetItemMulti* self) {
                 }
             } else if (cat3 == 3 || cat3 == 9) {
                 u16 rankCount = CItem_initItemImplInstances(entry)->getRankCount(entry);
-                func_80136B4C(self->mLayout, paneName,
-                               func_80136190(&lbl_eu_80504A3C[0x1c1],
+                LayoutSetTextBoxFmtValue(self->mLayout, paneName,
+                               BdatTouchStringCell(&lbl_eu_80504A3C[0x1c1],
                                             &lbl_eu_80504A3C[0x182],
                                             30 - ((u8)rankCount - 1)), 0);
-                func_80139A18(self->mLayout, paneName, &lbl_eu_806643E0,
+                PaneMatSetTevColorsByName(self->mLayout, paneName, &lbl_eu_806643E0,
                              &lbl_eu_806643E8);
             }
         }
@@ -1537,26 +1537,26 @@ void func_801B4830(CMenuGetItemMulti* self) {
         for (u8 i = 0; i < self->mVisibleItemCount; ++i) {
             u16 itemId = self->mVisibleItemIds[i];
             char* itemTable = func_801393CC(itemId);
-            u8 category = (u8)func_801392E4(itemId);
-            u16 tableId = func_80139358(itemId);
+            u8 category = (u8)BdatGetItemType(itemId);
+            u16 tableId = BdatGetItemId(itemId);
             if (itemId == 0) {
                 continue;
             }
             char paneName[32];
             sprintf(paneName, &lbl_eu_80504A3C[0x192], i + 1);
-            func_80136B4C(self->mLayout, paneName, func_801394D4(itemId), 0);
+            LayoutSetTextBoxFmtValue(self->mLayout, paneName, func_801394D4(itemId), 0);
 
-            u16 cat = (u16)func_801392E4(itemId);
-            func_80139358(itemId);
+            u16 cat = (u16)BdatGetItemType(itemId);
+            BdatGetItemId(itemId);
             int special = 0;
             if (cat >= 2 && cat <= 9) {
-                if (func_80157CD0(cat) != 0) {
+                if (CItemBlock_countEmpty(cat) != 0) {
                     special = 1;
                 }
             } else if (cat >= 10 && cat <= 13) {
-                int lvl = func_80158068(itemId);
+                int lvl = CItem_sumFamilyByte6(itemId);
                 if (lvl < 1) {
-                    if (func_80157CD0(cat) != 0) {
+                    if (CItemBlock_countEmpty(cat) != 0) {
                         special = 1;
                     }
                 } else if (lvl < 0x63) {
@@ -1568,7 +1568,7 @@ void func_801B4830(CMenuGetItemMulti* self) {
 
             int special2 = 0;
             if (category != 3 && category != 9) {
-                special2 = func_801361E8(lbl_eu_806640EC, &lbl_eu_80504A3C[0x394],
+                special2 = BdatGetU8Direct(lbl_eu_806640EC, &lbl_eu_80504A3C[0x394],
                                          itemId) != 0;
             }
             if (category == 12 || special2 != 0) {
@@ -1598,7 +1598,7 @@ void func_801B4830(CMenuGetItemMulti* self) {
             case 11: {
                 u32 fontCheck = lbl_eu_80664108;
                 textureName = &lbl_eu_80504A3C[0x355];
-                if (func_801361E8(fontCheck, &lbl_eu_80504A3C[0x33b], tableId)) {
+                if (BdatGetU8Direct(fontCheck, &lbl_eu_80504A3C[0x33b], tableId)) {
                     textureName = &lbl_eu_80504A3C[0x340];
                 }
                 break;
@@ -1614,40 +1614,40 @@ void func_801B4830(CMenuGetItemMulti* self) {
                     &lbl_eu_80504A3C[0x26b], NULL);
             }
             if (itemTexture != NULL) {
-                func_80137E7C(self->mLayout, paneName, itemTexture);
+                PaneSetTexPaletteByName(self->mLayout, paneName, itemTexture);
             }
 
             sprintf(paneName, &lbl_eu_80504A3C[0x1a0], i + 1);
-            func_80136B4C(self->mLayout, paneName, &lbl_eu_80504A3C[0x19f], 0);
-            func_80139A18(self->mLayout, paneName, &lbl_eu_806643E0,
+            LayoutSetTextBoxFmtValue(self->mLayout, paneName, &lbl_eu_80504A3C[0x19f], 0);
+            PaneMatSetTevColorsByName(self->mLayout, paneName, &lbl_eu_806643E0,
                          &lbl_eu_806643E8);
 
             if ((category >= 4 && category <= 8) || category == 2) {
-                u8 slotCount = func_801361E8((u32)itemTable, &lbl_eu_80504A3C[0x39e],
+                u8 slotCount = BdatGetU8Direct((u32)itemTable, &lbl_eu_80504A3C[0x39e],
                                              tableId);
                 if (slotCount != 0) {
-                    func_80136B4C(self->mLayout, paneName, func_eu_802B148C(), 0);
-                    func_80139A18(self->mLayout, paneName, &lbl_eu_806643F0,
+                    LayoutSetTextBoxFmtValue(self->mLayout, paneName, func_eu_802B148C(), 0);
+                    PaneMatSetTevColorsByName(self->mLayout, paneName, &lbl_eu_806643F0,
                                  &lbl_eu_806643F8);
                     for (u8 slot = 0; slot < slotCount; ++slot) {
                         char slotPaneName[32];
                         sprintf(slotPaneName, &lbl_eu_80504A3C[0x3a7], slot + 1);
-                        if (func_80136254(itemTable, slotPaneName, tableId) != 0) {
-                            func_80136B4C(self->mLayout, paneName, func_eu_802B1474(), 0);
-                            func_80139A18(self->mLayout, paneName, &lbl_eu_80664400,
+                        if (BdatGetU16Direct(itemTable, slotPaneName, tableId) != 0) {
+                            LayoutSetTextBoxFmtValue(self->mLayout, paneName, func_eu_802B1474(), 0);
+                            PaneMatSetTevColorsByName(self->mLayout, paneName, &lbl_eu_80664400,
                                          &lbl_eu_80664408);
                             break;
                         }
                     }
                 }
             } else if (category == 3 || category == 9) {
-                u8 rankCount = func_801361E8(lbl_eu_806640EC, &lbl_eu_80504A3C[0x3b3],
+                u8 rankCount = BdatGetU8Direct(lbl_eu_806640EC, &lbl_eu_80504A3C[0x3b3],
                                              itemId);
-                func_80136B4C(self->mLayout, paneName,
-                               func_80136190(&lbl_eu_80504A3C[0x1c1],
+                LayoutSetTextBoxFmtValue(self->mLayout, paneName,
+                               BdatTouchStringCell(&lbl_eu_80504A3C[0x1c1],
                                             &lbl_eu_80504A3C[0x182],
                                             30 - (rankCount - 1)), 0);
-                func_80139A18(self->mLayout, paneName, &lbl_eu_806643E0,
+                PaneMatSetTevColorsByName(self->mLayout, paneName, &lbl_eu_806643E0,
                              &lbl_eu_806643E8);
             }
         }
@@ -1740,7 +1740,7 @@ __declspec(noinline) void func_801B59F4(CMenuGetItemMulti* self) {
     reinterpret_cast<CMenuGetItemPaneView*>(pane)->flags &= 0xfe;
     pane = self->mLayout->GetRootPane()->FindPaneByName(&lbl_eu_80504A3C[0xeb], true);
     reinterpret_cast<CMenuGetItemPaneView*>(pane)->flags &= 0xfe;
-    func_80136B4C(self->mLayout, &lbl_eu_80504A3C[0xeb], &lbl_eu_80504A3C[0x19f], 0);
+    LayoutSetTextBoxFmtValue(self->mLayout, &lbl_eu_80504A3C[0xeb], &lbl_eu_80504A3C[0x19f], 0);
     pane = self->mLayout->GetRootPane()->FindPaneByName(&lbl_eu_80504A3C[0x1ca], true);
     reinterpret_cast<CMenuGetItemPaneView*>(pane)->flags &= 0xfe;
     pane = self->mLayout->GetRootPane()->FindPaneByName(&lbl_eu_80504A3C[0x1d5], true);
@@ -1801,15 +1801,15 @@ __declspec(noinline) void func_801B59F4(CMenuGetItemMulti* self) {
     reinterpret_cast<CMenuGetItemPaneView*>(pane)->flags &= 0xfe;
     pane = self->mLayout->GetRootPane()->FindPaneByName(&lbl_eu_80504A3C[0xf7], true);
     reinterpret_cast<CMenuGetItemPaneView*>(pane)->flags &= 0xfe;
-    func_80136B4C(self->mLayout, &lbl_eu_80504A3C[0xf7], &lbl_eu_80504A3C[0x19f], 0);
+    LayoutSetTextBoxFmtValue(self->mLayout, &lbl_eu_80504A3C[0xf7], &lbl_eu_80504A3C[0x19f], 0);
 
     // Blank the four per-rank text/slot panes.
     for (u8 i = 0; i < 4; ++i) {
         char buf[32];
         sprintf(buf, &lbl_eu_80504A3C[0x4c6], i * 2 + 0x1f);
-        func_80136B4C(self->mLayout, buf, &lbl_eu_80504A3C[0x19f], 0);
+        LayoutSetTextBoxFmtValue(self->mLayout, buf, &lbl_eu_80504A3C[0x19f], 0);
         sprintf(buf, &lbl_eu_80504A3C[0x4d3], i + 0x1f);
-        func_80136B4C(self->mLayout, buf, &lbl_eu_80504A3C[0x19f], 0);
+        LayoutSetTextBoxFmtValue(self->mLayout, buf, &lbl_eu_80504A3C[0x19f], 0);
     }
 }
 
@@ -1832,11 +1832,11 @@ void func_801B5860(CMenuGetItemMulti* self, int arg2, CMenuGetItemMultiEntry* ar
         // Inline ternary: branches compute into the arg register (r3), the
         // u16 assignment masks once at the join (retail clrlwi r3, r3, 16).
         u16 id = (arg3 != 0) ? (arg3->packed >> 20) : (u32)arg2;
-        setLayoutTextBoxNumber(self->mLayout, &lbl_eu_80504A3C[0xeb], func_80158068(id));
+        setLayoutTextBoxNumber(self->mLayout, &lbl_eu_80504A3C[0xeb], CItem_sumFamilyByte6(id));
         // Arms kept uncast: with the u8-typed helper return the ternary is
         // signed-typed, which keeps MWCC's clrlwi+cmpwi dispatch chain.
         u8 cat = (arg3 != 0) ? ((arg3->packed >> 16) & 0xf)
-                             : func_801392E4(arg2);
+                             : BdatGetItemType(arg2);
         // Goto-chain dispatch: MWCC emits the comparison chain first, then the
         // bodies in this order (2, 4-8, 3, 9, 10, 13) - the retail layout.
         if (cat >= 4 && cat <= 8) goto case4_8;
@@ -1943,19 +1943,19 @@ __declspec(noinline) void func_801B6184(CMenuGetItemMulti* self, int arg2,
     // regs across all the lookups; results stay full-width u32 with masks
     // only at the use sites).
     u32 font = lbl_eu_806640F4;
-    func_801392E4(arg2);
-    u32 tableId = func_80139358(arg2);
+    BdatGetItemType(arg2);
+    u32 tableId = BdatGetItemId(arg2);
 
-    u32 w1 = func_80136254((const void*)font, &lbl_eu_80504A3C[0x4e1], (u16)tableId);
-    u32 w2 = func_80136254((const void*)font, &lbl_eu_80504A3C[0x4e9], (u16)tableId);
-    u32 v97 = func_801361E8(font, &lbl_eu_80504A3C[0x4f0], (u16)tableId);
-    u32 va3 = func_801361E8(font, &lbl_eu_80504A3C[0x4f8], (u16)tableId);
-    u32 vaf = func_801361E8(font, &lbl_eu_80504A3C[0x500], (u16)tableId);
+    u32 w1 = BdatGetU16Direct((const void*)font, &lbl_eu_80504A3C[0x4e1], (u16)tableId);
+    u32 w2 = BdatGetU16Direct((const void*)font, &lbl_eu_80504A3C[0x4e9], (u16)tableId);
+    u32 v97 = BdatGetU8Direct(font, &lbl_eu_80504A3C[0x4f0], (u16)tableId);
+    u32 va3 = BdatGetU8Direct(font, &lbl_eu_80504A3C[0x4f8], (u16)tableId);
+    u32 vaf = BdatGetU8Direct(font, &lbl_eu_80504A3C[0x500], (u16)tableId);
     // Window scale factor: byte lookup converted via the int->double magic
     // constant, normalized by a per-window constant.
-    u32 vscale = func_801361E8(font, &lbl_eu_80504A3C[0x508], (u16)tableId);
+    u32 vscale = BdatGetU8Direct(font, &lbl_eu_80504A3C[0x508], (u16)tableId);
     f32 total = (f32)((f64)(u8)vscale - lbl_eu_80667E08) / lbl_eu_80667E20;
-    u32 vbb = func_801361E8(font, &lbl_eu_80504A3C[0x517], (u16)tableId);
+    u32 vbb = BdatGetU8Direct(font, &lbl_eu_80504A3C[0x517], (u16)tableId);
 
     if ((vbb & 4) != 0) {
         // Scale the name/level window by the active character's id-derived
@@ -1977,55 +1977,55 @@ __declspec(noinline) void func_801B6184(CMenuGetItemMulti* self, int arg2,
     for (u32 i = 1; i <= 10; ++i) {
         char buf[0x20];
         sprintf(buf, &lbl_eu_80504A3C[0x51c], (u8)i);
-        if (func_801361E8(font, buf, (u16)tableId) != 0) {
-            total += func_8013B380((u8)i);
+        if (BdatGetU8Direct(font, buf, (u16)tableId) != 0) {
+            total += GetFloatTableEntry((u8)i);
             break;
         }
     }
 
-    func_80139C98((u16)w1, (u16)w2, 0, total);
+    BlendFloatAvgScale((u16)w1, (u16)w2, 0, total);
 
     ml::FixStr<32> str;
-    char* midText = func_80136190(&lbl_eu_80504A3C[0x1c1], &lbl_eu_80504A3C[0x182], 11);
+    char* midText = BdatTouchStringCell(&lbl_eu_80504A3C[0x1c1], &lbl_eu_80504A3C[0x182], 11);
     str.format(&lbl_eu_80504A3C[0x527], (u16)w1, midText, (u16)w2);
-    func_80136B4C(self->mLayout, &lbl_eu_80504A3C[0x8b], str.mString, 0);
+    LayoutSetTextBoxFmtValue(self->mLayout, &lbl_eu_80504A3C[0x8b], str.mString, 0);
     setLayoutTextBoxNumber(self->mLayout, &lbl_eu_80504A3C[0x97], (u8)v97);
     setLayoutTextBoxNumber(self->mLayout, &lbl_eu_80504A3C[0xa3], (u8)va3);
 
     // Two more formatted lines: when the lookup byte is set they show the
     // 127/128 rank strings, otherwise the raw byte value.
-    char* s7f = func_80136190(&lbl_eu_80504A3C[0x1c1], &lbl_eu_80504A3C[0x182], 0x7f);
-    char* s80 = func_80136190(&lbl_eu_80504A3C[0x1c1], &lbl_eu_80504A3C[0x182], 0x80);
+    char* s7f = BdatTouchStringCell(&lbl_eu_80504A3C[0x1c1], &lbl_eu_80504A3C[0x182], 0x7f);
+    char* s80 = BdatTouchStringCell(&lbl_eu_80504A3C[0x1c1], &lbl_eu_80504A3C[0x182], 0x80);
     if ((u8)vaf != 0) {
         str.format(&lbl_eu_80504A3C[0x52e], s7f, s80);
     } else {
         str.format(&lbl_eu_80504A3C[0x535], (u8)vaf, s80);
     }
-    func_80136B4C(self->mLayout, &lbl_eu_80504A3C[0xaf], str.mString, 0);
+    LayoutSetTextBoxFmtValue(self->mLayout, &lbl_eu_80504A3C[0xaf], str.mString, 0);
 
-    char* t7f = func_80136190(&lbl_eu_80504A3C[0x1c1], &lbl_eu_80504A3C[0x182], 0x7f);
-    char* t80 = func_80136190(&lbl_eu_80504A3C[0x1c1], &lbl_eu_80504A3C[0x182], 0x80);
+    char* t7f = BdatTouchStringCell(&lbl_eu_80504A3C[0x1c1], &lbl_eu_80504A3C[0x182], 0x7f);
+    char* t80 = BdatTouchStringCell(&lbl_eu_80504A3C[0x1c1], &lbl_eu_80504A3C[0x182], 0x80);
     if ((u8)vbb != 0) {
         str.format(&lbl_eu_80504A3C[0x52e], t7f, t80);
     } else {
         str.format(&lbl_eu_80504A3C[0x535], (u8)vbb, t80);
     }
-    func_80136B4C(self->mLayout, &lbl_eu_80504A3C[0xbb], str.mString, 0);
+    LayoutSetTextBoxFmtValue(self->mLayout, &lbl_eu_80504A3C[0xbb], str.mString, 0);
 
     // Clear the description panes.
-    func_80136B4C(self->mLayout, &lbl_eu_80504A3C[0xc7], &lbl_eu_80504A3C[0x19f], 0);
-    func_80136B4C(self->mLayout, &lbl_eu_80504A3C[0x448], &lbl_eu_80504A3C[0x19f], 0);
-    func_80136B4C(self->mLayout, &lbl_eu_80504A3C[0x453], &lbl_eu_80504A3C[0x19f], 0);
+    LayoutSetTextBoxFmtValue(self->mLayout, &lbl_eu_80504A3C[0xc7], &lbl_eu_80504A3C[0x19f], 0);
+    LayoutSetTextBoxFmtValue(self->mLayout, &lbl_eu_80504A3C[0x448], &lbl_eu_80504A3C[0x19f], 0);
+    LayoutSetTextBoxFmtValue(self->mLayout, &lbl_eu_80504A3C[0x453], &lbl_eu_80504A3C[0x19f], 0);
 
     // Slot colour/position refresh: shared slots use the default palette,
     // the two item-specific ones use the alt palette.
-    func_80139A18(self->mLayout, &lbl_eu_80504A3C[0x1ca], &lbl_eu_806643A0, &lbl_eu_806643A8);
-    func_80139A18(self->mLayout, &lbl_eu_80504A3C[0x1eb], &lbl_eu_806643A0, &lbl_eu_806643A8);
-    func_80139A18(self->mLayout, &lbl_eu_80504A3C[0x1f6], &lbl_eu_806643A0, &lbl_eu_806643A8);
-    func_80139A18(self->mLayout, &lbl_eu_80504A3C[0x1d5], &lbl_eu_806643A0, &lbl_eu_806643A8);
-    func_80139A18(self->mLayout, &lbl_eu_80504A3C[0x1e0], &lbl_eu_806643A0, &lbl_eu_806643A8);
-    func_80139A18(self->mLayout, &lbl_eu_80504A3C[0x201], &lbl_eu_806643B0, &lbl_eu_806643B8);
-    func_80139A18(self->mLayout, &lbl_eu_80504A3C[0x238], &lbl_eu_806643B0, &lbl_eu_806643B8);
+    PaneMatSetTevColorsByName(self->mLayout, &lbl_eu_80504A3C[0x1ca], &lbl_eu_806643A0, &lbl_eu_806643A8);
+    PaneMatSetTevColorsByName(self->mLayout, &lbl_eu_80504A3C[0x1eb], &lbl_eu_806643A0, &lbl_eu_806643A8);
+    PaneMatSetTevColorsByName(self->mLayout, &lbl_eu_80504A3C[0x1f6], &lbl_eu_806643A0, &lbl_eu_806643A8);
+    PaneMatSetTevColorsByName(self->mLayout, &lbl_eu_80504A3C[0x1d5], &lbl_eu_806643A0, &lbl_eu_806643A8);
+    PaneMatSetTevColorsByName(self->mLayout, &lbl_eu_80504A3C[0x1e0], &lbl_eu_806643A0, &lbl_eu_806643A8);
+    PaneMatSetTevColorsByName(self->mLayout, &lbl_eu_80504A3C[0x201], &lbl_eu_806643B0, &lbl_eu_806643B8);
+    PaneMatSetTevColorsByName(self->mLayout, &lbl_eu_80504A3C[0x238], &lbl_eu_806643B0, &lbl_eu_806643B8);
 
     func_801B7A58(self, arg2, arg3);
 }
@@ -2099,11 +2099,11 @@ __declspec(noinline) void func_801B69F4(CMenuGetItemMulti* self, int arg2, CMenu
     // Results stay full-width (retail saves each with a plain mr; the byte
     // mask happens only when passed as the u8 arg of setLayoutTextBoxNumber).
     u32 itemFont = lbl_eu_806640F8;
-    func_801392E4(arg2);
-    u32 tableId = func_80139358(arg2);
-    u32 v1 = func_801361E8(itemFont, &lbl_eu_80504A3C[0x4f0], (u16)tableId);
-    u32 v2 = func_801361E8(itemFont, &lbl_eu_80504A3C[0x4f8], (u16)tableId);
-    u32 v3 = func_801361E8(itemFont, &lbl_eu_80504A3C[0x53a], (u16)tableId);
+    BdatGetItemType(arg2);
+    u32 tableId = BdatGetItemId(arg2);
+    u32 v1 = BdatGetU8Direct(itemFont, &lbl_eu_80504A3C[0x4f0], (u16)tableId);
+    u32 v2 = BdatGetU8Direct(itemFont, &lbl_eu_80504A3C[0x4f8], (u16)tableId);
+    u32 v3 = BdatGetU8Direct(itemFont, &lbl_eu_80504A3C[0x53a], (u16)tableId);
     setLayoutTextBoxNumber(self->mLayout, &lbl_eu_80504A3C[0x97], (u8)v1);
     setLayoutTextBoxNumber(self->mLayout, &lbl_eu_80504A3C[0xa3], (u8)v2);
     setLayoutTextBoxNumber(self->mLayout, &lbl_eu_80504A3C[0xc7], (u8)v3);
@@ -2113,8 +2113,8 @@ __declspec(noinline) void func_801B69F4(CMenuGetItemMulti* self, int arg2, CMenu
     // comparison chain runs on the byte view (unsigned range test), while the
     // suffix switch below re-masks the raw value.
     u32 rankFont = lbl_eu_806640F8;
-    u32 rankVal = func_801361E8(rankFont, &lbl_eu_80504A3C[0x543],
-                                (u16)func_80139358(arg2));
+    u32 rankVal = BdatGetU8Direct(rankFont, &lbl_eu_80504A3C[0x543],
+                                (u16)BdatGetItemId(arg2));
     // Signed local: MWCC rewrites the 4..13 range test as an unsigned
     // subi/cmplwi pair but keeps signed cmpwi for the ==3/2/1 tests.
     s32 rank = rankVal & 0xff;
@@ -2125,64 +2125,64 @@ __declspec(noinline) void func_801B69F4(CMenuGetItemMulti* self, int arg2, CMenu
     if (rank == 1) goto rank1;
     goto rankDefault;
 rank3:
-    rankName = func_80136190(&lbl_eu_80504A3C[0x1c1], &lbl_eu_80504A3C[0x182], 0x32);
+    rankName = BdatTouchStringCell(&lbl_eu_80504A3C[0x1c1], &lbl_eu_80504A3C[0x182], 0x32);
     goto rankDone;
 rank2:
-    rankName = func_80136190(&lbl_eu_80504A3C[0x1c1], &lbl_eu_80504A3C[0x182], 0x31);
+    rankName = BdatTouchStringCell(&lbl_eu_80504A3C[0x1c1], &lbl_eu_80504A3C[0x182], 0x31);
     goto rankDone;
 rank1:
-    rankName = func_80136190(&lbl_eu_80504A3C[0x1c1], &lbl_eu_80504A3C[0x182], 0x30);
+    rankName = BdatTouchStringCell(&lbl_eu_80504A3C[0x1c1], &lbl_eu_80504A3C[0x182], 0x30);
     goto rankDone;
 rank4_13:
-    rankName = func_80136190(&lbl_eu_80504A3C[0x1c1], &lbl_eu_80504A3C[0x182], 0x2e);
+    rankName = BdatTouchStringCell(&lbl_eu_80504A3C[0x1c1], &lbl_eu_80504A3C[0x182], 0x2e);
     goto rankDone;
 rankDefault:
     rankName = 0;
 rankDone:
-    func_80136B4C(self->mLayout, &lbl_eu_80504A3C[0x448], rankName, 0);
+    LayoutSetTextBoxFmtValue(self->mLayout, &lbl_eu_80504A3C[0x448], rankName, 0);
 
     // Per-rank suffix string (0x77 + rank-4), table-dispatched for ranks 4-12.
     char* rankSuffix = 0;
     switch ((u8)rankVal - 4) {
     case 0:
-        rankSuffix = func_80136190(&lbl_eu_80504A3C[0x54c], &lbl_eu_80504A3C[0x182], 0x77);
+        rankSuffix = BdatTouchStringCell(&lbl_eu_80504A3C[0x54c], &lbl_eu_80504A3C[0x182], 0x77);
         break;
     case 1:
-        rankSuffix = func_80136190(&lbl_eu_80504A3C[0x54c], &lbl_eu_80504A3C[0x182], 0x78);
+        rankSuffix = BdatTouchStringCell(&lbl_eu_80504A3C[0x54c], &lbl_eu_80504A3C[0x182], 0x78);
         break;
     case 2:
-        rankSuffix = func_80136190(&lbl_eu_80504A3C[0x54c], &lbl_eu_80504A3C[0x182], 0x79);
+        rankSuffix = BdatTouchStringCell(&lbl_eu_80504A3C[0x54c], &lbl_eu_80504A3C[0x182], 0x79);
         break;
     case 3:
-        rankSuffix = func_80136190(&lbl_eu_80504A3C[0x54c], &lbl_eu_80504A3C[0x182], 0x7a);
+        rankSuffix = BdatTouchStringCell(&lbl_eu_80504A3C[0x54c], &lbl_eu_80504A3C[0x182], 0x7a);
         break;
     case 4:
-        rankSuffix = func_80136190(&lbl_eu_80504A3C[0x54c], &lbl_eu_80504A3C[0x182], 0x7b);
+        rankSuffix = BdatTouchStringCell(&lbl_eu_80504A3C[0x54c], &lbl_eu_80504A3C[0x182], 0x7b);
         break;
     case 5:
-        rankSuffix = func_80136190(&lbl_eu_80504A3C[0x54c], &lbl_eu_80504A3C[0x182], 0x7c);
+        rankSuffix = BdatTouchStringCell(&lbl_eu_80504A3C[0x54c], &lbl_eu_80504A3C[0x182], 0x7c);
         break;
     case 6:
-        rankSuffix = func_80136190(&lbl_eu_80504A3C[0x54c], &lbl_eu_80504A3C[0x182], 0x7d);
+        rankSuffix = BdatTouchStringCell(&lbl_eu_80504A3C[0x54c], &lbl_eu_80504A3C[0x182], 0x7d);
         break;
     case 7:
-        rankSuffix = func_80136190(&lbl_eu_80504A3C[0x54c], &lbl_eu_80504A3C[0x182], 0x7e);
+        rankSuffix = BdatTouchStringCell(&lbl_eu_80504A3C[0x54c], &lbl_eu_80504A3C[0x182], 0x7e);
         break;
     case 8:
-        rankSuffix = func_80136190(&lbl_eu_80504A3C[0x54c], &lbl_eu_80504A3C[0x182], 0x7f);
+        rankSuffix = BdatTouchStringCell(&lbl_eu_80504A3C[0x54c], &lbl_eu_80504A3C[0x182], 0x7f);
         break;
     }
-    func_80136B4C(self->mLayout, &lbl_eu_80504A3C[0x453], rankSuffix, 0);
+    LayoutSetTextBoxFmtValue(self->mLayout, &lbl_eu_80504A3C[0x453], rankSuffix, 0);
 
     // Slot pane colour/position refresh; the shared entries use the default
     // palette, the two item-specific slots use the alt palette.
-    func_80139A18(self->mLayout, &lbl_eu_80504A3C[0x1ca], &lbl_eu_806643B0, &lbl_eu_806643B8);
-    func_80139A18(self->mLayout, &lbl_eu_80504A3C[0x1eb], &lbl_eu_806643A0, &lbl_eu_806643A8);
-    func_80139A18(self->mLayout, &lbl_eu_80504A3C[0x1f6], &lbl_eu_806643A0, &lbl_eu_806643A8);
-    func_80139A18(self->mLayout, &lbl_eu_80504A3C[0x1d5], &lbl_eu_806643B0, &lbl_eu_806643B8);
-    func_80139A18(self->mLayout, &lbl_eu_80504A3C[0x1e0], &lbl_eu_806643B0, &lbl_eu_806643B8);
-    func_80139A18(self->mLayout, &lbl_eu_80504A3C[0x201], &lbl_eu_806643A0, &lbl_eu_806643A8);
-    func_80139A18(self->mLayout, &lbl_eu_80504A3C[0x238], &lbl_eu_806643A0, &lbl_eu_806643A8);
+    PaneMatSetTevColorsByName(self->mLayout, &lbl_eu_80504A3C[0x1ca], &lbl_eu_806643B0, &lbl_eu_806643B8);
+    PaneMatSetTevColorsByName(self->mLayout, &lbl_eu_80504A3C[0x1eb], &lbl_eu_806643A0, &lbl_eu_806643A8);
+    PaneMatSetTevColorsByName(self->mLayout, &lbl_eu_80504A3C[0x1f6], &lbl_eu_806643A0, &lbl_eu_806643A8);
+    PaneMatSetTevColorsByName(self->mLayout, &lbl_eu_80504A3C[0x1d5], &lbl_eu_806643B0, &lbl_eu_806643B8);
+    PaneMatSetTevColorsByName(self->mLayout, &lbl_eu_80504A3C[0x1e0], &lbl_eu_806643B0, &lbl_eu_806643B8);
+    PaneMatSetTevColorsByName(self->mLayout, &lbl_eu_80504A3C[0x201], &lbl_eu_806643A0, &lbl_eu_806643A8);
+    PaneMatSetTevColorsByName(self->mLayout, &lbl_eu_80504A3C[0x238], &lbl_eu_806643A0, &lbl_eu_806643A8);
 
     func_801B7A58(self, arg2, arg3);
 }
@@ -2216,45 +2216,45 @@ void func_801B70BC(CMenuGetItemMulti* self, int arg2, CMenuGetItemMultiEntry* ar
 
     // No-entry path validates the id through the item table (result unused).
     if (arg3 == 0) {
-        func_801392E4((u16)itemId);
+        BdatGetItemType((u16)itemId);
     }
 
     u32 itemId2;
     if (arg3 != 0) {
         itemId2 = CItem_initItemImplInstances(arg3)->vf54(arg3);
     } else {
-        itemId2 = func_80139358((u16)itemId);
+        itemId2 = BdatGetItemId((u16)itemId);
     }
 
-    // Rank count is a nested ternary temporary inside the func_80136190
+    // Rank count is a nested ternary temporary inside the BdatTouchStringCell
     // argument (retail masks both arms into r0 and joins with a third
     // byte-mask straight into the argument register).
-    char* rankName = func_80136190(
+    char* rankName = BdatTouchStringCell(
         &lbl_eu_80504A3C[0x1c1], &lbl_eu_80504A3C[0x182],
         30 - ((u8)((arg3 != 0)
                        ? (u16)CItem_initItemImplInstances(arg3)->getRankCount(arg3)
-                       : (u16)func_801361E8(lbl_eu_806640EC, &lbl_eu_80504A3C[0x3b3],
+                       : (u16)BdatGetU8Direct(lbl_eu_806640EC, &lbl_eu_80504A3C[0x3b3],
                                             (u16)itemId)) -
               1));
-    func_80136B4C(self->mLayout, &lbl_eu_80504A3C[0xd3], rankName, 0);
+    LayoutSetTextBoxFmtValue(self->mLayout, &lbl_eu_80504A3C[0xd3], rankName, 0);
 
-    u16 v = func_80136254(lbl_eu_806640D8, &lbl_eu_80504A3C[0x554], (u16)itemId2);
-    char* rankText = func_80136190(&lbl_eu_80504A3C[0x558], &lbl_eu_80504A3C[0x182], 0xf);
+    u16 v = BdatGetU16Direct(lbl_eu_806640D8, &lbl_eu_80504A3C[0x554], (u16)itemId2);
+    char* rankText = BdatTouchStringCell(&lbl_eu_80504A3C[0x558], &lbl_eu_80504A3C[0x182], 0xf);
     if (arg3 != 0) {
         setLayoutTextBoxNumber(self->mLayout, &lbl_eu_80504A3C[0xdf],
                       CItem_initItemImplInstances(arg3)->vf90(arg3));
     } else {
-        func_80136B4C(self->mLayout, &lbl_eu_80504A3C[0xdf],
+        LayoutSetTextBoxFmtValue(self->mLayout, &lbl_eu_80504A3C[0xdf],
                       (v == 1) ? &lbl_eu_80504A3C[0x19f] : rankText, 0);
     }
 
-    char* itemName = func_8013639C(lbl_eu_806640D8, &lbl_eu_80504A3C[0x182], (u16)itemId2);
-    func_80136B4C(self->mLayout, &lbl_eu_80504A3C[0x4a3], itemName, 0);
+    char* itemName = BdatGetPtrDirect(lbl_eu_806640D8, &lbl_eu_80504A3C[0x182], (u16)itemId2);
+    LayoutSetTextBoxFmtValue(self->mLayout, &lbl_eu_80504A3C[0x4a3], itemName, 0);
 
-    u8 n = (u8)func_801361E8((u32)lbl_eu_806640D8, &lbl_eu_80504A3C[0x561], (u16)itemId2);
-    char* rankStr = func_80136190(&lbl_eu_80504A3C[0x1c1], &lbl_eu_80504A3C[0x182],
+    u8 n = (u8)BdatGetU8Direct((u32)lbl_eu_806640D8, &lbl_eu_80504A3C[0x561], (u16)itemId2);
+    char* rankStr = BdatTouchStringCell(&lbl_eu_80504A3C[0x1c1], &lbl_eu_80504A3C[0x182],
                                   n + 0x15);
-    func_80136B4C(self->mLayout, &lbl_eu_80504A3C[0x568], rankStr, 0);
+    LayoutSetTextBoxFmtValue(self->mLayout, &lbl_eu_80504A3C[0x568], rankStr, 0);
 
     nw4r::lyt::Pane* slotPane = self->mLayout->GetRootPane()->FindPaneByName(
         &lbl_eu_80504A3C[0x4a3], true);
@@ -2292,28 +2292,28 @@ __declspec(noinline) void func_801B76CC(CMenuGetItemMulti* self, int arg2) {
 
     // Item id -> table id, then fill the rank-name and description panes.
     void* tbl = lbl_eu_80664104;
-    func_801392E4(arg2);
-    u32 tableId = func_80139358(arg2);
+    BdatGetItemType(arg2);
+    u32 tableId = BdatGetItemId(arg2);
     // Separate statement: retail keeps the lookup result live in r0 across
-    // the func_80136190 arg setup (mr r0, r3 / clrlwi r5, r0, 24).
-    u32 rankN = func_801361E8((u32)tbl, &lbl_eu_80504A3C[0x573], (u16)tableId);
-    char* rankText = func_80136190(
+    // the BdatTouchStringCell arg setup (mr r0, r3 / clrlwi r5, r0, 24).
+    u32 rankN = BdatGetU8Direct((u32)tbl, &lbl_eu_80504A3C[0x573], (u16)tableId);
+    char* rankText = BdatTouchStringCell(
         &lbl_eu_80504A3C[0x1ac], &lbl_eu_80504A3C[0x182], (u8)rankN);
-    func_80136B4C(self->mLayout, &lbl_eu_80504A3C[0x4ae], rankText, 0);
+    LayoutSetTextBoxFmtValue(self->mLayout, &lbl_eu_80504A3C[0x4ae], rankText, 0);
 
     // Description text: fixed string 0x1a gets a formatted entry, otherwise
     // the plain key-item name from the font table.
     char* text;
     // Raw u32 kept in r0; the (u8) truncations happen at the use sites
     // (retail mr r0/r3 + rlwinm shape).
-    u32 descId = func_801361E8((u32)tbl, &lbl_eu_80504A3C[0x578], (u16)tableId);
+    u32 descId = BdatGetU8Direct((u32)tbl, &lbl_eu_80504A3C[0x578], (u16)tableId);
     if ((u8)descId == 0x1a) {
-        text = func_80136190(&lbl_eu_80504A3C[0x1ac], &lbl_eu_80504A3C[0x182], 20);
+        text = BdatTouchStringCell(&lbl_eu_80504A3C[0x1ac], &lbl_eu_80504A3C[0x182], 20);
     } else {
         // Third arg rides in r5 from the lookup above (retail leaves it live).
-        text = func_8013639C(lbl_eu_806640A8, &lbl_eu_80504A3C[0x182], (u8)descId);
+        text = BdatGetPtrDirect(lbl_eu_806640A8, &lbl_eu_80504A3C[0x182], (u8)descId);
     }
-    func_80136B4C(self->mLayout, &lbl_eu_80504A3C[0x4ba], text, 0);
+    LayoutSetTextBoxFmtValue(self->mLayout, &lbl_eu_80504A3C[0x4ba], text, 0);
 }
 
 // Category-9 (rank item) display update: show the rank pane, render the rank
@@ -2330,10 +2330,10 @@ void func_801B7440(CMenuGetItemMulti* self, CMenuGetItemMultiEntry* arg3) {
         (reinterpret_cast<CMenuGetItemPaneView*>(pane)->flags & 0xfe) | 1;
 
     u16 rankCount = (u16)CItem_initItemImplInstances(arg3)->getRankCount(arg3);
-    char* rankName = func_80136190(&lbl_eu_80504A3C[0x1c1],
+    char* rankName = BdatTouchStringCell(&lbl_eu_80504A3C[0x1c1],
                                    &lbl_eu_80504A3C[0x182],
                                    30 - ((u8)rankCount - 1));
-    func_80136B4C(self->mLayout, &lbl_eu_80504A3C[0xf7], rankName, 0);
+    LayoutSetTextBoxFmtValue(self->mLayout, &lbl_eu_80504A3C[0xf7], rankName, 0);
 
     // paneNo counts only the non-empty slots (its pane names are built from
     // it), while i indexes the impl slots -- MWCC keeps them as two counters.
@@ -2347,8 +2347,8 @@ void func_801B7440(CMenuGetItemMulti* self, CMenuGetItemMultiEntry* arg3) {
         }
         char paneName[32];
         sprintf(paneName, &lbl_eu_80504A3C[0x4c6], paneNo * 2 + 0x1f);
-        char* itemName = func_8013639C(lbl_eu_806640D8, &lbl_eu_80504A3C[0x182], itemId);
-        func_80136B4C(self->mLayout, paneName, itemName, 0);
+        char* itemName = BdatGetPtrDirect(lbl_eu_806640D8, &lbl_eu_80504A3C[0x182], itemId);
+        LayoutSetTextBoxFmtValue(self->mLayout, paneName, itemName, 0);
 
         nw4r::lyt::Pane* slotPane =
             self->mLayout->GetRootPane()->FindPaneByName(paneName, true);
@@ -2375,8 +2375,8 @@ void func_801B7440(CMenuGetItemMulti* self, CMenuGetItemMultiEntry* arg3) {
         sprintf(paneName, &lbl_eu_80504A3C[0x4d3], paneNo + 0x1f);
         u32 slotId = CItem_initItemImplInstances(arg3)->vf64(arg3, i);
         str.format(&lbl_eu_80504A3C[0x535], (u16)slotId,
-                   func_80136190(&lbl_eu_80504A3C[0x1c1], &lbl_eu_80504A3C[0x182], 0x21));
-        func_80136B4C(self->mLayout, paneName, str.mString, 0);
+                   BdatTouchStringCell(&lbl_eu_80504A3C[0x1c1], &lbl_eu_80504A3C[0x182], 0x21));
+        LayoutSetTextBoxFmtValue(self->mLayout, paneName, str.mString, 0);
 
         ++paneNo;
     }
@@ -2395,16 +2395,16 @@ __declspec(noinline) void func_801B78B4(CMenuGetItemMulti* self, int arg2) {
 
     void* tbl = (void*)lbl_eu_80664110;
     // No-entry path validates the id through the item table (result unused).
-    func_801392E4(arg2);
-    u32 tableId = func_80139358(arg2);
+    BdatGetItemType(arg2);
+    u32 tableId = BdatGetItemId(arg2);
     // Raw results kept unmasked (retail stores each with a plain mr and
     // truncates only at the use sites).
-    int kindA = func_801361E8((u32)tbl, &lbl_eu_80504A3C[0x57e], (u16)tableId);
-    u32 artIdx = func_801361E8((u32)tbl, &lbl_eu_80504A3C[0x58a], (u16)tableId);
+    int kindA = BdatGetU8Direct((u32)tbl, &lbl_eu_80504A3C[0x57e], (u16)tableId);
+    u32 artIdx = BdatGetU8Direct((u32)tbl, &lbl_eu_80504A3C[0x58a], (u16)tableId);
     // Record address: per-character stride 0x49 plus the doubled selector,
     // folded back into selIdx (all-u32 so MWCC targets its register).
-    u32 selIdx = func_801361E8((u32)tbl, &lbl_eu_80504A3C[0x592], (u16)tableId);
-    selIdx = func_8013600C(&lbl_eu_80504A3C[0x54c], &lbl_eu_80504A3C[0x59b],
+    u32 selIdx = BdatGetU8Direct((u32)tbl, &lbl_eu_80504A3C[0x592], (u16)tableId);
+    selIdx = BdatGetU8ByTableKey(&lbl_eu_80504A3C[0x54c], &lbl_eu_80504A3C[0x59b],
                            (u8)selIdx);
     void* mgr = func_8009EC9C((u8)artIdx);
     // Record address: per-character stride 0x49 plus the doubled selector,
@@ -2415,30 +2415,30 @@ __declspec(noinline) void func_801B78B4(CMenuGetItemMulti* self, int arg2) {
     CMenuGetItemCat13Record* rec =
         reinterpret_cast<CMenuGetItemCat13Record*>(selIdx);
     char* rankName =
-        func_80136190(&lbl_eu_80504A3C[0x1c1], &lbl_eu_80504A3C[0x182], 0x2c);
+        BdatTouchStringCell(&lbl_eu_80504A3C[0x1c1], &lbl_eu_80504A3C[0x182], 0x2c);
 
     switch ((u8)kindA) {
     case 1:
         if (rec->flagE8 != 0) {
-            rankName = func_80136190(&lbl_eu_80504A3C[0x1c1],
+            rankName = BdatTouchStringCell(&lbl_eu_80504A3C[0x1c1],
                                      &lbl_eu_80504A3C[0x182], 0x2b);
         }
         break;
     case 2:
         if ((rec->bitsE9 >> 7) & 1) {
-            rankName = func_80136190(&lbl_eu_80504A3C[0x1c1],
+            rankName = BdatTouchStringCell(&lbl_eu_80504A3C[0x1c1],
                                      &lbl_eu_80504A3C[0x182], 0x2b);
         }
         break;
     case 3:
         if ((rec->bitsE9 >> 6) & 1) {
-            rankName = func_80136190(&lbl_eu_80504A3C[0x1c1],
+            rankName = BdatTouchStringCell(&lbl_eu_80504A3C[0x1c1],
                                      &lbl_eu_80504A3C[0x182], 0x2b);
         }
         break;
     }
 
-    func_80136B4C(self->mLayout, &lbl_eu_80504A3C[0x59f], rankName, 0);
+    LayoutSetTextBoxFmtValue(self->mLayout, &lbl_eu_80504A3C[0x59f], rankName, 0);
 }
 
 // Rank-window slot filler (slots 8-10) shared by the equipped/slotted-item
@@ -2478,10 +2478,10 @@ void func_801B7A58(CMenuGetItemMulti* self, int arg2, CMenuGetItemMultiEntry* ar
                     void* fontTbl = lbl_eu_806640D8;
                     slotRank = (slot->bits04 >> 7) & 7;
                     slotVal = (s16)((slot->bits04 >> 10) & 0x7FF);
-                    char* rankStr = func_80136190(
+                    char* rankStr = BdatTouchStringCell(
                         &lbl_eu_80504A3C[0x1c1], &lbl_eu_80504A3C[0x182],
                         30 - (slotRank - 1));
-                    switch ((u8)func_801361E8(
+                    switch ((u8)BdatGetU8Direct(
                         (u32)fontTbl, &lbl_eu_80504A3C[0x5b9], slotItemId)) {
                     case 0:
                         texture = func_801355F4()->GetResource(
@@ -2520,7 +2520,7 @@ void func_801B7A58(CMenuGetItemMulti* self, int arg2, CMenuGetItemMultiEntry* ar
                         break;
                     }
                     str.format(&lbl_eu_80504A3C[0x65c],
-                               func_8013639C(fontTbl, &lbl_eu_80504A3C[0x182],
+                               BdatGetPtrDirect(fontTbl, &lbl_eu_80504A3C[0x182],
                                              slotItemId),
                                rankStr);
                 } else {
@@ -2528,11 +2528,11 @@ void func_801B7A58(CMenuGetItemMulti* self, int arg2, CMenuGetItemMultiEntry* ar
                         nw4r::lyt::ArcResourceAccessor::RES_TYPE_TEXTURE,
                         &lbl_eu_80504A3C[0x5c2], NULL);
                     str.format(&lbl_eu_80504A3C[0x65c],
-                               func_80136190(&lbl_eu_80504A3C[0x1c1],
+                               BdatTouchStringCell(&lbl_eu_80504A3C[0x1c1],
                                              &lbl_eu_80504A3C[0x182], 0x2a));
                 }
                 sprintf(buf, &lbl_eu_80504A3C[0x65f], (u8)i + 1);
-                func_80136B4C(self->mLayout, buf, str.mString, 0);
+                LayoutSetTextBoxFmtValue(self->mLayout, buf, str.mString, 0);
                 if (texture != 0) {
                     func_80137F88(pane, texture);
                 }
@@ -2540,7 +2540,7 @@ void func_801B7A58(CMenuGetItemMulti* self, int arg2, CMenuGetItemMultiEntry* ar
                 reinterpret_cast<CMenuGetItemPaneView*>(pane)->flags =
                     reinterpret_cast<CMenuGetItemPaneView*>(pane)->flags & 0xfe;
                 sprintf(buf, &lbl_eu_80504A3C[0x65f], (u8)i + 1);
-                func_80136B4C(self->mLayout, buf, &lbl_eu_80504A3C[0x19f], 0);
+                LayoutSetTextBoxFmtValue(self->mLayout, buf, &lbl_eu_80504A3C[0x19f], 0);
             }
 
             nw4r::lyt::Pane* refPane = self->mLayout->GetRootPane()->FindPaneByName(
@@ -2567,9 +2567,9 @@ void func_801B7A58(CMenuGetItemMulti* self, int arg2, CMenuGetItemMultiEntry* ar
         }
     } else {
         void* itemTable = func_801393CC(arg2);
-        u32 tableId = func_80139358(arg2);
+        u32 tableId = BdatGetItemId(arg2);
         u8 count =
-            (u8)func_801361E8((u32)itemTable, &lbl_eu_80504A3C[0x39e], (u16)tableId);
+            (u8)BdatGetU8Direct((u32)itemTable, &lbl_eu_80504A3C[0x39e], (u16)tableId);
         u16 slotId = 0;
         u8 rankCnt = 0;
         u16 altFlag = 0;
@@ -2584,23 +2584,23 @@ void func_801B7A58(CMenuGetItemMulti* self, int arg2, CMenuGetItemMultiEntry* ar
                 reinterpret_cast<CMenuGetItemPaneView*>(pane)->flags =
                     (reinterpret_cast<CMenuGetItemPaneView*>(pane)->flags & 0xfe) | 1;
                 str.format(&lbl_eu_80504A3C[0x3a7], (u8)j + 1);
-                u16 id = func_80136254(itemTable, str.mString, (u16)tableId);
+                u16 id = BdatGetU16Direct(itemTable, str.mString, (u16)tableId);
                 if (id == 0) {
                     texture = func_801355F4()->GetResource(
                         nw4r::lyt::ArcResourceAccessor::RES_TYPE_TEXTURE,
                         &lbl_eu_80504A3C[0x5c2], NULL);
                     str.format(&lbl_eu_80504A3C[0x65c],
-                               func_80136190(&lbl_eu_80504A3C[0x1c1],
+                               BdatTouchStringCell(&lbl_eu_80504A3C[0x1c1],
                                              &lbl_eu_80504A3C[0x182], 0x2a));
                 } else {
-                    altFlag = func_801361E8(lbl_eu_806640EC,
+                    altFlag = BdatGetU8Direct(lbl_eu_806640EC,
                                             &lbl_eu_80504A3C[0x66b], id);
-                    rankCnt = func_801361E8(lbl_eu_806640EC,
+                    rankCnt = BdatGetU8Direct(lbl_eu_806640EC,
                                             &lbl_eu_80504A3C[0x3b3], id);
                     void* fontTbl2 = lbl_eu_806640D8;
-                    switch ((u8)func_801361E8(
+                    switch ((u8)BdatGetU8Direct(
                         (u32)fontTbl2, &lbl_eu_80504A3C[0x5b9],
-                        (u16)func_80139358(id))) {
+                        (u16)BdatGetItemId(id))) {
                     case 0:
                         texture = func_801355F4()->GetResource(
                             nw4r::lyt::ArcResourceAccessor::RES_TYPE_TEXTURE,
@@ -2638,16 +2638,16 @@ void func_801B7A58(CMenuGetItemMulti* self, int arg2, CMenuGetItemMultiEntry* ar
                         break;
                     }
                     str.format(&lbl_eu_80504A3C[0x65c], func_801394D4(id));
-                    slotId = func_80139358(id);
+                    slotId = BdatGetItemId(id);
                 }
                 sprintf(buf, &lbl_eu_80504A3C[0x65f], (u8)j + 1);
-                func_80136B4C(self->mLayout, buf, str.mString, 0);
+                LayoutSetTextBoxFmtValue(self->mLayout, buf, str.mString, 0);
                 if (texture != 0) {
                     func_80137F88(pane, texture);
                 }
             } else {
                 sprintf(buf, &lbl_eu_80504A3C[0x65f], (u8)j + 1);
-                func_80136B4C(self->mLayout, buf, &lbl_eu_80504A3C[0x19f], 0);
+                LayoutSetTextBoxFmtValue(self->mLayout, buf, &lbl_eu_80504A3C[0x19f], 0);
                 reinterpret_cast<CMenuGetItemPaneView*>(pane)->flags &= 0xfe;
             }
 
@@ -2736,9 +2736,9 @@ __declspec(noinline) void func_801B82E8(CMenuGetItemMulti* self) {
             // all six label arguments from it.
             char* base = lbl_eu_80504A3C;
             self->field_1F8 = 8;
-            char* n1 = func_80136190(base + 0x177, base + 0x182, 0x1c);
-            char* n2 = func_80136190(base + 0x177, base + 0x182, 0x1d);
-            char* n3 = func_80136190(base + 0x177, base + 0x182, 0x1e);
+            char* n1 = BdatTouchStringCell(base + 0x177, base + 0x182, 0x1c);
+            char* n2 = BdatTouchStringCell(base + 0x177, base + 0x182, 0x1d);
+            char* n3 = BdatTouchStringCell(base + 0x177, base + 0x182, 0x1e);
             func_8022B90C(reinterpret_cast<CSysWin*>(&self->mSystemWindow[0]), 2);
             func_8022B9B4(&self->mSystemWindow[0], n1, 0);
             func_8022BF6C(&self->mSystemWindow[0], n2, n3);
@@ -2966,7 +2966,7 @@ __declspec(noinline) void func_801B82E8(CMenuGetItemMulti* self) {
                 if (flag == 3) {
                     text = func_801D3C74();
                 } else {
-                    text = func_8013639C(reinterpret_cast<const void*>(lbl_eu_80664418),
+                    text = BdatGetPtrDirect(reinterpret_cast<const void*>(lbl_eu_80664418),
                                          &lbl_eu_80504A3C[0x141], slotId);
                 }
                 func_8022B90C(reinterpret_cast<CSysWin*>(&self->mSystemWindow[0]), 0);
@@ -3024,8 +3024,8 @@ __declspec(noinline) void func_801B82E8(CMenuGetItemMulti* self) {
 // visible item list and drops entries that are no longer special (or the
 // single currently-selected item), then refreshes the display and repositions
 // the cursor. Category/level classification shared with Init's special2 logic:
-//   2-9 -> special iff func_80157CD0(cat) != 0
-//   10-13 -> special iff level in [1, 99), or level 0 with func_80157CD0(cat)
+//   2-9 -> special iff CItemBlock_countEmpty(cat) != 0
+//   10-13 -> special iff level in [1, 99), or level 0 with CItemBlock_countEmpty(cat)
 __declspec(noinline) void func_801B8E2C(CMenuGetItemMulti* self) {
     if ((s8)self->mMaxVisibleItems == 4) {
         // All four panes visible: sweep every visible item, drop the ones
@@ -3045,19 +3045,19 @@ __declspec(noinline) void func_801B8E2C(CMenuGetItemMulti* self) {
                 // retail masks the merged value to 16 bits before use.
                 u32 rawCat = (packed >> 12) & 0xF;
                 if (rawCat == 0) {
-                    rawCat = (u16)func_801392E4(id);
+                    rawCat = (u16)BdatGetItemType(id);
                 }
                 u32 cat = rawCat & 0xFFFF;
-                func_80139358(id);
+                BdatGetItemId(id);
                 int special = 0;
                 if (cat - 2 <= 7u) {
-                    if (func_80157CD0(cat) != 0) {
+                    if (CItemBlock_countEmpty(cat) != 0) {
                         special = 1;
                     }
                 } else if (cat - 10 <= 3u) {
-                    int lvl = func_80158068(id);
+                    int lvl = CItem_sumFamilyByte6(id);
                     if (lvl < 1) {
-                        if (func_80157CD0(cat) != 0) {
+                        if (CItemBlock_countEmpty(cat) != 0) {
                             special = 1;
                         }
                     } else if (lvl < 0x63) {
@@ -3065,7 +3065,7 @@ __declspec(noinline) void func_801B8E2C(CMenuGetItemMulti* self) {
                     }
                 }
                 if (special != 0) {
-                    func_801599D4(entry, 0);
+                    CItemData_lookupOrAlloc(entry, 0);
                     self->mVisibleEntries[i] = 0;
                     func_80140E00(2, entry->packed >> 20, 0);
                 }
@@ -3079,17 +3079,17 @@ __declspec(noinline) void func_801B8E2C(CMenuGetItemMulti* self) {
                 if (self->mPaneVisible[i] != 0) {
                     continue;
                 }
-                u32 cat = (u16)func_801392E4(id);
-                func_80139358(id);
+                u32 cat = (u16)BdatGetItemType(id);
+                BdatGetItemId(id);
                 int special = 0;
                 if (cat - 2 <= 7u) {
-                    if (func_80157CD0(cat) != 0) {
+                    if (CItemBlock_countEmpty(cat) != 0) {
                         special = 1;
                     }
                 } else if (cat - 10 <= 3u) {
-                    int lvl = func_80158068(id);
+                    int lvl = CItem_sumFamilyByte6(id);
                     if (lvl < 1) {
-                        if (func_80157CD0(cat) != 0) {
+                        if (CItemBlock_countEmpty(cat) != 0) {
                             special = 1;
                         }
                     } else if (lvl < 0x63) {
@@ -3097,7 +3097,7 @@ __declspec(noinline) void func_801B8E2C(CMenuGetItemMulti* self) {
                     }
                 }
                 if (special != 0) {
-                    func_801586D4(id, 1);
+                    CItem_thunkAllocRecord(id, 1);
                     self->mVisibleItemIds[i] = 0;
                     func_80140E00(2, id, 0);
                 }
@@ -3142,7 +3142,7 @@ __declspec(noinline) void func_801B8E2C(CMenuGetItemMulti* self) {
             return;
         }
         if (self->mPaneVisible[(s8)self->mMaxVisibleItems] == 0) {
-            func_801599D4(entry, 0);
+            CItemData_lookupOrAlloc(entry, 0);
             self->mVisibleEntries[(s8)self->mMaxVisibleItems] = 0;
             func_80140E00(2, entry->packed >> 20, 0);
             func_801B4830(self);
@@ -3179,9 +3179,9 @@ __declspec(noinline) void func_801B8E2C(CMenuGetItemMulti* self) {
         u32 packedSel = entry->packed;
         u32 cat = (packedSel >> 12) & 0xF;
         if ((u8)(cat - 10) <= 3u) {
-            if (func_80158068(packedSel >> 20) >= 0x63) {
+            if (CItem_sumFamilyByte6(packedSel >> 20) >= 0x63) {
                 self->field_1F8 = 2;
-                char* name = func_80136190(&lbl_eu_80504A3C[0x177],
+                char* name = BdatTouchStringCell(&lbl_eu_80504A3C[0x177],
                                            &lbl_eu_80504A3C[0x182], 3);
                 func_8022B90C(reinterpret_cast<CSysWin*>(&self->mSystemWindow[0]), 0);
                 func_8022B9B4(&self->mSystemWindow[0], name, 0);
@@ -3190,11 +3190,11 @@ __declspec(noinline) void func_801B8E2C(CMenuGetItemMulti* self) {
                 func_801D216C(&self->mCursor, 0);
             } else {
                 self->field_1F8 = 5;
-                char* n2 = func_80136190(&lbl_eu_80504A3C[0x177],
+                char* n2 = BdatTouchStringCell(&lbl_eu_80504A3C[0x177],
                                          &lbl_eu_80504A3C[0x182], 2);
-                char* n4 = func_80136190(&lbl_eu_80504A3C[0x177],
+                char* n4 = BdatTouchStringCell(&lbl_eu_80504A3C[0x177],
                                          &lbl_eu_80504A3C[0x182], 4);
-                char* n5 = func_80136190(&lbl_eu_80504A3C[0x177],
+                char* n5 = BdatTouchStringCell(&lbl_eu_80504A3C[0x177],
                                          &lbl_eu_80504A3C[0x182], 5);
                 func_8022B90C(reinterpret_cast<CSysWin*>(&self->mSystemWindow[0]), 2);
                 func_8022B9B4(&self->mSystemWindow[0], n2, 0);
@@ -3206,11 +3206,11 @@ __declspec(noinline) void func_801B8E2C(CMenuGetItemMulti* self) {
             }
         } else {
             self->field_1F8 = 5;
-            char* n2 = func_80136190(&lbl_eu_80504A3C[0x177],
+            char* n2 = BdatTouchStringCell(&lbl_eu_80504A3C[0x177],
                                      &lbl_eu_80504A3C[0x182], 2);
-            char* n4 = func_80136190(&lbl_eu_80504A3C[0x177],
+            char* n4 = BdatTouchStringCell(&lbl_eu_80504A3C[0x177],
                                      &lbl_eu_80504A3C[0x182], 4);
-            char* n5 = func_80136190(&lbl_eu_80504A3C[0x177],
+            char* n5 = BdatTouchStringCell(&lbl_eu_80504A3C[0x177],
                                      &lbl_eu_80504A3C[0x182], 5);
             func_8022B90C(reinterpret_cast<CSysWin*>(&self->mSystemWindow[0]), 2);
             func_8022B9B4(&self->mSystemWindow[0], n2, 0);
@@ -3228,7 +3228,7 @@ __declspec(noinline) void func_801B8E2C(CMenuGetItemMulti* self) {
         return;
     }
     if (self->mPaneVisible[(s8)self->mMaxVisibleItems] == 0) {
-        func_801586D4(id, 1);
+        CItem_thunkAllocRecord(id, 1);
         self->mVisibleItemIds[(s8)self->mMaxVisibleItems] = 0;
         func_80140E00(2, id, 0);
         func_801B4830(self);
@@ -3258,11 +3258,11 @@ __declspec(noinline) void func_801B8E2C(CMenuGetItemMulti* self) {
         }
         return;
     }
-    u32 cat = func_801392E4(id) & 0xFF;
+    u32 cat = BdatGetItemType(id) & 0xFF;
     if ((u8)(cat - 10) <= 3u) {
-        if (func_80158068(id) >= 0x63) {
+        if (CItem_sumFamilyByte6(id) >= 0x63) {
             self->field_1F8 = 2;
-            char* name = func_80136190(&lbl_eu_80504A3C[0x177],
+            char* name = BdatTouchStringCell(&lbl_eu_80504A3C[0x177],
                                        &lbl_eu_80504A3C[0x182], 3);
             func_8022B90C(reinterpret_cast<CSysWin*>(&self->mSystemWindow[0]), 0);
             func_8022B9B4(&self->mSystemWindow[0], name, 0);
@@ -3271,11 +3271,11 @@ __declspec(noinline) void func_801B8E2C(CMenuGetItemMulti* self) {
             func_801D216C(&self->mCursor, 0);
         } else {
             self->field_1F8 = 5;
-            char* n2 = func_80136190(&lbl_eu_80504A3C[0x177],
+            char* n2 = BdatTouchStringCell(&lbl_eu_80504A3C[0x177],
                                      &lbl_eu_80504A3C[0x182], 2);
-            char* n4 = func_80136190(&lbl_eu_80504A3C[0x177],
+            char* n4 = BdatTouchStringCell(&lbl_eu_80504A3C[0x177],
                                      &lbl_eu_80504A3C[0x182], 4);
-            char* n5 = func_80136190(&lbl_eu_80504A3C[0x177],
+            char* n5 = BdatTouchStringCell(&lbl_eu_80504A3C[0x177],
                                      &lbl_eu_80504A3C[0x182], 5);
             func_8022B90C(reinterpret_cast<CSysWin*>(&self->mSystemWindow[0]), 2);
             func_8022B9B4(&self->mSystemWindow[0], n2, 0);
@@ -3287,11 +3287,11 @@ __declspec(noinline) void func_801B8E2C(CMenuGetItemMulti* self) {
         }
     } else {
         self->field_1F8 = 5;
-        char* n2 = func_80136190(&lbl_eu_80504A3C[0x177],
+        char* n2 = BdatTouchStringCell(&lbl_eu_80504A3C[0x177],
                                  &lbl_eu_80504A3C[0x182], 2);
-        char* n4 = func_80136190(&lbl_eu_80504A3C[0x177],
+        char* n4 = BdatTouchStringCell(&lbl_eu_80504A3C[0x177],
                                  &lbl_eu_80504A3C[0x182], 4);
-        char* n5 = func_80136190(&lbl_eu_80504A3C[0x177],
+        char* n5 = BdatTouchStringCell(&lbl_eu_80504A3C[0x177],
                                  &lbl_eu_80504A3C[0x182], 5);
         func_8022B90C(reinterpret_cast<CSysWin*>(&self->mSystemWindow[0]), 2);
         func_8022B9B4(&self->mSystemWindow[0], n2, 0);

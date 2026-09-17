@@ -8,7 +8,7 @@ extern const float lbl_eu_80665F80;  // default float (sdata2)
 extern const float lbl_eu_80665F84;  // default float (sdata2)
 extern const float lbl_eu_80665F88;  // default float (sdata2)
 extern const double lbl_eu_80665F90; // sdata2: 2^52 (int->float magic)
-extern const double lbl_eu_80665F98; // sdata2: 2^52 (int->float magic, func_80055F94)
+extern const double lbl_eu_80665F98; // sdata2: 2^52 (int->float magic, getParamSelS16)
 
 // External data referenced by sub-object pointers at +0x74.
 // Both getShortValue_A and getShortValue_B read from this.
@@ -16,7 +16,7 @@ struct CActParamDataRef {
     u8 _pad_00[0x08];  // 0x00-0x07
     s16 mShort08;       // 0x08: read in getShortValue_A
     s16 mShort0A;       // 0x0A: read in getShortValue_B
-    s16 mShort0C;       // 0x0C: returned by func_80055F94
+    s16 mShort0C;       // 0x0C: returned by getParamSelS16
 };
 
 // Pointer-offset return for getSubObjPtr (val + 0x14).
@@ -52,7 +52,7 @@ public:
     u8 _pad215;                     // 0x215
     u8 mByte216;                    // 0x216
     u8 _pad217;
-    u16 mShorts218[32];             // 0x218-0x257: reset to 0xFFFF by func_80053A90
+    u16 mShorts218[32];             // 0x218-0x257: reset to 0xFFFF by resetParamShorts
     u32 mField258;                  // 0x258
     u32 mField25C;                  // 0x25C
     // Sub-object A at 0x260 (0x80 bytes to 0x2DF)
@@ -79,26 +79,26 @@ public:
     u32 mA2A8;                      // 0x2A8
     u32 mA2AC;                      // 0x2AC
     float mA2B0;                    // 0x2B0: previous-value shadow of +0x2B4
-    float mFloat2B4;                // 0x2B4: float saved by func_80055EE4
+    float mFloat2B4;                // 0x2B4: float saved by saveParamShadow
     u32 mA2B8;                      // 0x2B8
     u32 mA2BC;                      // 0x2BC
     u32 mA2C0;                      // 0x2C0
     u8 mA2C4;                       // 0x2C4
     u8 _pad2C5[0x2C8 - 0x2C5];
     float mA2C8;                    // 0x2C8: accumulated float
-    u32 mField2CC;                  // 0x2CC: flag cleared by func_80055F08
-    float mFloat2D0;                // 0x2D0: float cleared by func_80055F08
+    u32 mField2CC;                  // 0x2CC: flag cleared by clearParamShadow
+    float mFloat2D0;                // 0x2D0: float cleared by clearParamShadow
     u32 mField2D4;                  // 0x2D4 (tag/ptr for SubObjA)
     void* mPtr2D8;                  // 0x2D8 (getNonNullPtr)
     s16 mShort2DC;                  // 0x2DC: reset to -1 by func_80053B24
-    // Sub-object B at 0x2E0 (reset block walked/cleared by func_80055DF0)
+    // Sub-object B at 0x2E0 (reset block walked/cleared by resetParamSubB)
     u32 mField2E0;                  // 0x2E0
     u32 mField2E4;                  // 0x2E4
     u32 mField2E8;                  // 0x2E8
     u32 mField2EC;                  // 0x2EC
     u32 mField2F0;                  // 0x2F0: saved tag word
     void* mPtr2F4;                  // 0x2F4 (tag/ptr, getSubObjPtr)
-    u32 mField2F8;                  // 0x2F8: fallback flag checked by func_80055EBC
+    u32 mField2F8;                  // 0x2F8: fallback flag checked by hasParamSubObjB
     u32 mField2FC;                  // 0x2FC
     u32 mField300;                  // 0x300
     float mFloat304;                // 0x304
@@ -115,18 +115,18 @@ public:
     u32 mField328;                  // 0x328
     u32 mField32C;                  // 0x32C
     float mFloat330;                // 0x330
-    float mFloat334;                // 0x334: float saved by func_80055EE4
+    float mFloat334;                // 0x334: float saved by saveParamShadow
     u32 mField338;                  // 0x338
     u32 mField33C;                  // 0x33C
     u32 mField340;                  // 0x340
     u8 mByte344;                    // 0x344
     u8 _pad345[0x348 - 0x345];
     float mFloat348;                // 0x348
-    u32 mField34C;                  // 0x34C: flag cleared by func_80055F08
-    float mFloat350;                // 0x350: float cleared by func_80055F08
+    u32 mField34C;                  // 0x34C: flag cleared by clearParamShadow
+    float mFloat350;                // 0x350: float cleared by clearParamShadow
     u32 mField354;                  // 0x354 (tag/ptr for SubObjB)
     void* mPtr358;                  // 0x358 (getNonNullPtr)
-    s16 mShort35C;                  // 0x35C: reset to -1 by func_80055DF0
+    s16 mShort35C;                  // 0x35C: reset to -1 by resetParamSubB
 
     u8* getResetBlock2E0() { return (u8*)&mField2E0; }
 };
@@ -136,11 +136,11 @@ struct CActParamSet25C { u8 _pad00[0x25C]; u32 field_0x25C; };
 struct CActParamSet18  { u8 _pad00[0x18]; u32 field_0x18; };
 struct CActParamSet74  { u8 _pad00[0x74]; u32 field_0x74; };
 struct CActParamSet78  { u8 _pad00[0x78]; u32 field_0x78; };
-// Float copy pair for func_80056808: read src+0x08, write dst+0x14.
+// Float copy pair for copyParamFlt14: read src+0x08, write dst+0x14.
 struct CActParamFloatSrc08 { u8 _pad00[0x08]; float mFloat08; };
 struct CActParamFloatDst14 { u8 _pad00[0x14]; float mFloat14; };
 
-// Flag-gated copy helpers (func_80056888..func_80057244).
+// Flag-gated copy helpers (copyWord20Src..copyWord08To20).
 // Word/byte/float source blocks read by each setter.
 struct CActParamWordSrc20 { u8 _pad00[0x20]; u32 mWord20; };
 struct CActParamWordSrc08 { u8 _pad00[0x08]; u32 mWord08; };
@@ -150,16 +150,16 @@ struct CActParamSet20  { u8 _pad00[0x20]; u32 field_0x20; };
 struct CActParamSet1C  { u8 _pad00[0x1C]; u32 field_0x1C; };
 struct CActParamSet4C  { u8 _pad00[0x4C]; u32 field_0x4C; };
 
-int func_80056CE4(u32 flags, CActParamSet25C* dst, void* unused, u32 val);
-int func_80056EAC(u32 flags, CActParamSet18* dst, void* unused, u32 val);
-int func_80057264(u32 flags, void* unused, CActParamSet74* dst, u32 val);
-int func_80057654(u32 flags, void* unused, CActParamSet78* dst, u32 val);
-int func_80056808(u32 flags, CActParamFloatDst14* dst, void* unused, const CActParamFloatSrc08* src);
+int setParamWord25C(u32 flags, CActParamSet25C* dst, void* unused, u32 val);
+int setParamWord18(u32 flags, CActParamSet18* dst, void* unused, u32 val);
+int setParamWord74(u32 flags, void* unused, CActParamSet74* dst, u32 val);
+int setParamWord78(u32 flags, void* unused, CActParamSet78* dst, u32 val);
+int copyParamFlt14(u32 flags, CActParamFloatDst14* dst, void* unused, const CActParamFloatSrc08* src);
 
-// Destination block for func_80057470: s16 stored at +0x7C.
+// Destination block for copyS16To7C: s16 stored at +0x7C.
 struct CActParamSet7C { u8 _pad00[0x7C]; s16 field_0x7C; };
 
-// Float/byte copy pair for func_80056C54: read src+0x08 float and src+0x0C byte,
+// Float/byte copy pair for copyFltByte28: read src+0x08 float and src+0x0C byte,
 // write dst+0x28 float and dst+0x30 byte.
 struct CActParamCopyDst2830 {
     u8 _pad00[0x28];
@@ -173,11 +173,11 @@ struct CActParamCopySrc080C {
     u8 mByte0C;           // 0x0C
 };
 
-// Global table referenced by func_80056730 (entry-count guard at +0x5C).
+// Global table referenced by findParamEntry (entry-count guard at +0x5C).
 struct ActParamGlobalTable {
     u8 _pad00[0x5C];
     u32 mCount5C;         // 0x5C
-    u32 mCount60;         // 0x60: entry-count guard used by func_80056760
+    u32 mCount60;         // 0x60: entry-count guard used by findParamWide
 };
 // Node in the linked chain at CActParamData+0x0C.
 struct ActParamNode94 {
@@ -222,9 +222,9 @@ struct ActParamObjView {
 };
 
 // Retail EU-side helper (unmangled symbol).
-extern "C" void func_eu_80053FDC();
+extern "C" void setAnimGate();
 extern "C" int func_80054438(CActParamData* self, void* data, int sel, u32 gate);
-extern "C" void func_80053F7C(CActParamData* self, float arg1, float arg2);
+extern "C" void updateParamFloats(CActParamData* self, float arg1, float arg2);
 extern "C" int func_80054A94(CActParamData* self, void* ctx);
 extern "C" int func_80055B88(CActParamData* self, void* key, u32 tag);
 extern "C" void func_80053B24(CActParamData* self, void* entry, void* obj, void* nodeA, void* nodeB);
@@ -234,13 +234,13 @@ extern "C" void func_80053B24(CActParamData* self, void* entry, void* obj, void*
 extern ActParamGlobalTable* lbl_eu_80663D50;
 
 void* getNonNullPtr(void* param);
-int func_80055EBC(CActParamData* self);
-void func_80055EE4(CActParamData* self);
-int func_80056730(struct ActParamCallView* self, void* unused, u32 index);
-int func_80056C54(u32 flags, void* unused, CActParamCopyDst2830* dst, const CActParamCopySrc080C* src);
-int func_80057470(u32 flags, void* unused, CActParamSet7C* dst, const CActParamDataRef* src);
+int hasParamSubObjB(CActParamData* self);
+void saveParamShadow(CActParamData* self);
+int findParamEntry(struct ActParamCallView* self, void* unused, u32 index);
+int copyFltByte28(u32 flags, void* unused, CActParamCopyDst2830* dst, const CActParamCopySrc080C* src);
+int copyS16To7C(u32 flags, void* unused, CActParamSet7C* dst, const CActParamDataRef* src);
 
-// Interface whose virtual at vt+0xBC is tail-called by func_80056730.
+// Interface whose virtual at vt+0xBC is tail-called by findParamEntry.
 struct ActParamCallView {
     virtual void dummy008(); virtual void dummy00C(); virtual void dummy010(); virtual void dummy014();
     virtual void dummy018(); virtual void dummy01C(); virtual void dummy020(); virtual void dummy024();
@@ -260,25 +260,25 @@ struct ActParamCallView {
 
 // Flag-gated copies: when bit 2 of `flags` is set, copy src field into dst;
 // always return 0.
-int func_80056888(u32 flags, void* unused, CActParamSet20* dst, const CActParamWordSrc20* src);
-int func_800568A8(u32 flags, void* unused, CActParamFloatDst24* dst, const CActParamFloatSrc08* src);
-int func_80056C34(u32 flags, void* unused, CActParamSet4C* dst, const CActParamByteSrc08* src);
-int func_80057244(u32 flags, CActParamSet20* dst, void* unused, const CActParamWordSrc08* src);
+int copyWord20Src(u32 flags, void* unused, CActParamSet20* dst, const CActParamWordSrc20* src);
+int copyParamFlt24(u32 flags, void* unused, CActParamFloatDst24* dst, const CActParamFloatSrc08* src);
+int copyByteTo4C(u32 flags, void* unused, CActParamSet4C* dst, const CActParamByteSrc08* src);
+int copyWord08To20(u32 flags, CActParamSet20* dst, void* unused, const CActParamWordSrc08* src);
 
-// Entry referenced by mPtr18: floats read by func_80055DB8 / func_80055DD4.
+// Entry referenced by mPtr18: floats read by getParamFloat08 / getParamFloat0C.
 struct CActParamDataEntry {
     u8 _pad_00[0x08];   // 0x00-0x07
     float mFloat08;     // 0x08
     float mFloat0C;     // 0x0C
 };
 
-// Target block whose +0x48 word is written by func_80056CC8.
+// Target block whose +0x48 word is written by setParamWord48.
 struct CActParamBlock {
     u8 _pad_00[0x48];   // 0x00-0x47
     u32 mField48;       // 0x48
 };
 
-int func_80056CC8(u32 flags, void* unused, CActParamBlock* dst, u32 val);
+int setParamWord48(u32 flags, void* unused, CActParamBlock* dst, u32 val);
 
 // Inline byte-entry table: entries start at +0x28; the count word at +0x2C
 // overlaps the tail of the inline area (retail layout, hence reloads).
@@ -293,7 +293,7 @@ struct CActParamByteList {
     };
 };
 
-// Linked node chain walked by func_80056828.
+// Linked node chain walked by bindParamNode.
 struct CActParamNodePayload { u8 _pad00[4]; };
 struct CActParamNode {
     u16 mOffset0;                  // 0x00: stride to the next node
@@ -312,7 +312,7 @@ struct CActParamSet1C38 {
     u8* mPayload38;                // 0x38: receives &type-0 node payload
 };
 
-// Slot table + record stream walked by func_8005577C.
+// Slot table + record stream walked by linkParamSlots.
 struct CActParamLinkTable {
     u8 _pad00[8];
     u32 mGate08;                   // 0x08: enables the name-list search
@@ -325,11 +325,11 @@ struct CActParamRec {
     u8 _pad04[4];
     u32 mSel8;                     // 0x08: slot selector
     u8 _pad0C[0x10 - 0x0C];
-    u32 mField10;                  // 0x10: set to -1 by func_80055700
+    u32 mField10;                  // 0x10: set to -1 by unlinkParamRecs
 };
 struct CActParamRecStream {
     u8 _pad00[0x14];
-    u32 mFlag14;                   // 0x14: gate checked by func_80055700
+    u32 mFlag14;                   // 0x14: gate checked by unlinkParamRecs
     u8 _pad18[0x20 - 0x18];
     CActParamRec mFirst;
 };
@@ -346,11 +346,11 @@ struct ActParamStrRec {
     u32 mField24;                  // 0x24: receives the index for type-0x29 records
 };
 extern "C" int func_80055960(CActParamLinkTable* table, ActParamStrRec* list, ActParamStrRec* rec);
-int func_80056760(ActParamCallView* self, void* unused, u32 index);
-bool func_80053F40(CActParamByteList* list, u8 value);
-int func_80056828(u32 flags, CActParamNodeTable* table, CActParamSet1C38* dst, const CActParamWordSrc08* src);
-void func_8005577C(CActParamLinkTable* table, CActParamRecStream* stream);
-int func_80057828(u32 flags, CActParamByteList* list, u8* unused, const CActParamByteSrc08* src);
+int findParamWide(ActParamCallView* self, void* unused, u32 index);
+bool hasParamByteVal(CActParamByteList* list, u8 value);
+int bindParamNode(u32 flags, CActParamNodeTable* table, CActParamSet1C38* dst, const CActParamWordSrc08* src);
+void linkParamSlots(CActParamLinkTable* table, CActParamRecStream* stream);
+int appendParamByte(u32 flags, CActParamByteList* list, u8* unused, const CActParamByteSrc08* src);
 
 // ---- func_80057BA0 ----
 struct ActParamT19ArgA { u8 _pad00[0x10]; u32 mField10; };
@@ -366,37 +366,37 @@ struct ActParamT19ArgC {
 typedef int (*ActParamTbl19Fn)(u32, u32, u32);
 extern const ActParamTbl19Fn lbl_eu_805705F0[];
 // Handlers referenced by the dispatch tables but not yet decompiled.
-int func_8005609C(u32, u32, u32);
-int func_800567F0(u32, void*, void*, void*);
-int func_800567F8(u32, void*, void*, void*);
-int func_80056800(u32, void*, void*, void*);
+int actParamZero0(u32, u32, u32);
+int actParamZero1(u32, void*, void*, void*);
+int actParamZero2(u32, void*, void*, void*);
+int actParamZero3(u32, void*, void*, void*);
 // vtable-thunk handlers referenced by lbl_eu_805705F0 but not yet decompiled.
-extern "C" int func_80056290(void*, u32);
-extern "C" int func_800562A4(void*, u32);
-extern "C" int func_800562B8(void*, u32);
-extern "C" int func_800562E0(void*, u32);
-extern "C" int func_800562F4(void*, u32);
-extern "C" int func_80056308(void*, u32);
-extern "C" int func_8005631C(void*, u32);
-extern "C" int func_80056330(void*, u32);
-extern "C" int func_80056344(void*, u32);
-extern "C" int func_80056358(void*, u32);
-extern "C" int func_8005636C(void*, u32);
-extern "C" int func_80056380(void*, u32);
-extern "C" int func_80056394(void*, u32);
-extern "C" int func_800563A8(void*, u32);
-extern "C" int func_800563D0(void*, u32);
-extern "C" int func_800563E4(void*, u32);
-extern "C" int func_800563F8(void*, u32);
-extern "C" int func_8005640C(void*, u32);
-extern "C" int func_80056420(void*, u32);
-extern "C" int func_80056434(void*, u32);
-extern "C" int func_80056448(void*, u32);
-extern "C" int func_8005645C(void*, u32);
-extern "C" int func_80056470(void*, u32);
-extern "C" int func_80056484(void*, u32);
-extern "C" int func_80056498(void*, u32);
-extern "C" int func_800564C0(void*, u32);
+extern "C" int actAnimSlot03(void*, u32);
+extern "C" int actAnimSlot04(void*, u32);
+extern "C" int actAnimSlot05(void*, u32);
+extern "C" int actAnimSlot07(void*, u32);
+extern "C" int actAnimSlot08(void*, u32);
+extern "C" int actAnimSlot09(void*, u32);
+extern "C" int actAnimSlot10(void*, u32);
+extern "C" int actAnimSlot11(void*, u32);
+extern "C" int actAnimSlot12(void*, u32);
+extern "C" int actAnimSlot13(void*, u32);
+extern "C" int actAnimSlot14(void*, u32);
+extern "C" int actAnimSlot15(void*, u32);
+extern "C" int actAnimSlot16(void*, u32);
+extern "C" int actAnimSlot17(void*, u32);
+extern "C" int actAnimSlot19(void*, u32);
+extern "C" int actAnimSlot20(void*, u32);
+extern "C" int actAnimSlot21(void*, u32);
+extern "C" int actAnimSlot22(void*, u32);
+extern "C" int actAnimSlot23(void*, u32);
+extern "C" int actAnimSlot24(void*, u32);
+extern "C" int actAnimSlot25(void*, u32);
+extern "C" int actAnimSlot26(void*, u32);
+extern "C" int actAnimSlot27(void*, u32);
+extern "C" int actAnimSlot28(void*, u32);
+extern "C" int actAnimSlot29(void*, u32);
+extern "C" int actAnimSlot31(void*, u32);
 int func_80057BA0(u32 flags, ActParamT19ArgA* a, ActParamT19ArgB* b, ActParamT19ArgC* c);
 
 // ---- func_80053DE8 ----
@@ -457,7 +457,7 @@ struct ActParamSrc5 {
 };
 int func_80056A98(u32 flags, ActParamHost5* host, ActParamVals5* vals, ActParamSrc5* src);
 
-// ---- func_80054980 walker ----
+// ---- walkParamType9 walker ----
 // Record with a halfword selector at 0x08 and bytes at 0x0A/0x0B (type 9).
 struct CActParamWalkRec {
     u16 mOffset0;                  // 0x00: stride to next record
@@ -487,7 +487,7 @@ struct ActParamWalkHost {
     CActParamWalkRec* volatile mRec278; // 0x278: record chain head (volatile: retail re-reads per access)
 };
 
-// ---- func_80055AC4 stack push ----
+// ---- pushParamNode stack push ----
 struct ActParamStackNode {
     u8 _pad00[0x08];
     ActParamStackNode* mPtr08;     // 0x08
@@ -524,11 +524,11 @@ extern "C" int func_8049E648(CScnItemAnim* self, const char* name);
 // Register a stream's record chain into the table's slots; returns 0.
 extern "C" __declspec(noinline) int func_800555EC(CActParamLinkTable* table, CScnItemAnim* anim, ActParamStackNode* node);
 extern "C" int func_800557E8(ActParamStack* self, ActParamStrRec* dst, ActParamStrRec* src);
-float func_80055DB8(CActParamData* self);  // mPtr18 entry float getter
-float func_80055DD4(CActParamData* self);
-void func_80055DF0(CActParamData* self);
-void func_80053A90(CActParamData* self);
-void func_80054980(ActParamWalkHost* host);
+float getParamFloat08(CActParamData* self);  // mPtr18 entry float getter
+float getParamFloat0C(CActParamData* self);
+void resetParamSubB(CActParamData* self);
+void resetParamShorts(CActParamData* self);
+void walkParamType9(ActParamWalkHost* host);
 
 // ---- func_80056D00 / func_80057280 / func_800568E8 / func_80057670 ----
 // Variants of func_80056A98 differing only in the callback invoked at the end.
@@ -557,7 +557,7 @@ struct ActParamCbView18 {
     virtual void invoke18(void* obj, void* src); // vt+0x18
 };
 // Callback interface used by func_80057490
-// data object, the source mask word, two vals words, and the func_80053960
+// data object, the source mask word, two vals words, and the getAnimTick
 // tick value.
 struct ActParamCbView28 {
     virtual void dummy00(); virtual void dummy04(); virtual void dummy08();
@@ -567,7 +567,7 @@ struct ActParamCbView28 {
                           u32 flag0C, u32 tick); // vt+0x28
 };
 // Import from kyoshin/action/CActParamAnim (asm-side): per-entry tick getter.
-extern "C" u32 func_80053960(ActParamData388* obj);
+extern "C" u32 getAnimTick(ActParamData388* obj);
 
 // View of the data object extended to the callback pointer at 0x3a0
 // (used by func_8005789C).
@@ -640,7 +640,7 @@ struct ActParamCbViewSel24 {
 // Anim-side state queries used by func_800550E8 (defined in the
 // kyoshin/action/CActParamAnim split).
 extern "C" int func_8004B8F8(void* obj, u32 sel);
-extern "C" int func_8004B990(void* obj, u32 sel);
+extern "C" int callAttachFn(void* obj, u32 sel);
 
 // Owner block walked by func_80054D3C (a CActParamData sub-object).
 struct ActParamD3CMember {
@@ -741,14 +741,14 @@ struct ActParamT1Host {
     u32 mField25C;
 };
 extern "C" void* func_800547D4(ActParamT1Host* host, ActParamT1Dst* dst, ActParamT1Src* src);
-__declspec(noinline) void func_80055700(CActParamLinkTable* table, int flag, CActParamRecStream* stream);
-void func_80055AC4(ActParamStack* self, ActParamStackNode* a, ActParamStackNode* b);
+__declspec(noinline) void unlinkParamRecs(CActParamLinkTable* table, int flag, CActParamRecStream* stream);
+void pushParamNode(ActParamStack* self, ActParamStackNode* a, ActParamStackNode* b);
 // Retail no-op stubs (blr only)
-extern "C" void func_80054A20();
-extern "C" void func_800550D8();
-extern "C" void func_800550DC();
-extern "C" void func_800550E0();
-extern "C" void func_800550E4();
-extern "C" void func_800554D0();
-extern "C" void func_800554D4();
-extern "C" void func_800554D8();
+extern "C" void actParamNop0();
+extern "C" void actParamNop1();
+extern "C" void actParamNop2();
+extern "C" void actParamNop3();
+extern "C" void actParamNop4();
+extern "C" void actParamNop5();
+extern "C" void actParamNop6();
+extern "C" void actParamNop7();

@@ -91,7 +91,7 @@ extern "C" void __dt__13CMenuTutorialFv(CMenuTutorial* self);
 CMenuTutorial::~CMenuTutorial() {}
 
 void CMenuTutorial::Init() {
-    char* name = func_80136190(lbl_eu_80510260, lbl_eu_80510260 + 9, 0x23);
+    char* name = BdatTouchStringCell(lbl_eu_80510260, lbl_eu_80510260 + 9, 0x23);
 
     // Re-initialise the embedded CTitleAHelp via a temporary: copy the unk4
     // sub-object with its copy-ctor, then copy the remaining scalar fields.
@@ -174,7 +174,7 @@ void CMenuTutorial::Term() {
     cf::CfGameManager::enablePadFlags((u32)-1, false);
     cf::CfGameManager::enablePadFlags(mSavedInputFlags, true);
 
-    func_8013B980();
+    DecMenuCounter64080();
     if (mSomething == 0) {
         if (code80135FDC_getByte_64080() == 0) {
             setPresentationFlag__Q22cf13CfGameManagerFv(0);
@@ -227,7 +227,7 @@ void CMenuTutorial::cbRenderBefore() {
     }
     return;
 body:
-    if (func_8013BE50() == 0) {
+    if (IsMenuState621F0() == 0) {
         return;
     }
     GXSetZMode(GX_FALSE, GX_NEVER, GX_FALSE);
@@ -282,7 +282,7 @@ void func_8029A668(CMenuTutorial* self) {
         func_8029ACAC(&self->mTutorial) != 0) {
         func_801C4760(&self->mTitleAHelp);
         func_801C41C0(&self->mTitleAHelp,
-            func_80136190(lbl_eu_80510260 + 0xe, lbl_eu_80510260 + 0x17,
+            BdatTouchStringCell(lbl_eu_80510260 + 0xe, lbl_eu_80510260 + 0x17,
                 self->mType));
 
         u8 phase = func_8029AE5C(&self->mTutorial);

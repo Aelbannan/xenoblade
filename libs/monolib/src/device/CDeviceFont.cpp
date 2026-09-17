@@ -740,7 +740,7 @@ IDeviceFontInfo* CDeviceFont::getFontInfo(u32 fontId,
 // returned 0). Returns the matching provider or null. The item pointer is
 // re-read from the node at every use (retail reloads node->mItem per vtable
 // call).
-IDeviceFontInfo* CDeviceFont::func_eu_804558F4() {
+IDeviceFontInfo* CDeviceFont::findFontByDevice() {
     CDeviceFont* font = lbl_eu_80665678;
     if (font == 0) return 0;
 

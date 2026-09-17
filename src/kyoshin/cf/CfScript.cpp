@@ -485,11 +485,11 @@ void CfScriptManager::init() {
         // Per-slot VM constructor (retail: if/else-if chain, cmpwi/cmplwi).
         u8* vmCtx = nullptr;
         if (i == 0) {
-            vmCtx = (u8*)func_800A82BC();
+            vmCtx = (u8*)KyoshinHeap_GetFieldA0();
         } else if (i == 1) {
-            vmCtx = (u8*)func_800A837C();
+            vmCtx = (u8*)KyoshinHeap_GetFieldA4();
         } else if (i == 2) {
-            vmCtx = (u8*)func_800A843C();
+            vmCtx = (u8*)KyoshinHeap_GetFieldA8();
         }
 
         script.mVmContext = vmCtx;

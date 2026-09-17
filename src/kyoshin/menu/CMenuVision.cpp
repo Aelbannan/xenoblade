@@ -52,11 +52,11 @@ void* func_800F477C(void*);
 int func_800F4648(void*);
 f32 func_800F42AC(void*);
 void playUISound__FUl(u32);
-void func_80139B5C(void*, const char*, u32);
-void func_80139BF4(void*, const char*, u32, u32);
+void PaneSetColorFieldSingle(void*, const char*, u32);
+void PaneSetColorFieldPair(void*, const char*, u32, u32);
 void func_80137F88(void*, void*);
-u16 func_80136254(void*, const char*, u32);
-char* func_80138F78(u32);
+u16 BdatGetU16Direct(void*, const char*, u32);
+char* MakeTplNameSysFile(u32);
 
 extern u32 lbl_eu_80662580;
 extern u32 lbl_eu_80662584;
@@ -165,7 +165,7 @@ static inline void menuVisionSetImage(CMenuVisionEntry& entry, const char* paneN
     nw4r::lyt::Pane* pane = entry.mLayout->GetRootPane()->FindPaneByName(paneName, true);
     menuVisionSetVisible(pane, false);
     if (image != 0) {
-        func_80137E7C(entry.mLayout, (char*)paneName, image);
+        PaneSetTexPaletteByName(entry.mLayout, (char*)paneName, image);
         menuVisionSetVisible(pane, true);
     }
 }
@@ -419,7 +419,7 @@ void CMenuVision::cbRenderBefore() {
     if (CTaskGame::getInstance()->isFlag01Set() || (lbl_eu_80663E28 & 0x200000)) {
         return;
     }
-    if (!func_8013BE50()) {
+    if (!IsMenuState621F0()) {
         return;
     }
     if (lbl_eu_80663E24 & 0x2000000) {
@@ -699,12 +699,12 @@ extern "C" void func_801AD504(int flags) {
         CMenuVision* menu = lbl_eu_80664388;
         CMenuVisionEntry& entry = menu->mEntries[1];
         u32 font = func_800F4784(battle);
-        func_80136B4C(entry.mLayout, lbl_eu_80504268 + 0x1AB, (char*)font, 0);
-        func_80136B4C(entry.mLayout, lbl_eu_80504268 + 0x1B8, (char*)font, 0);
-        func_80136B4C(entry.mLayout, lbl_eu_80504268 + 0x1C5, (char*)font, 0);
-        func_80136B4C(entry.mLayout, lbl_eu_80504268 + 0x1D2, (char*)font, 0);
-        func_80136B4C(entry.mLayout, lbl_eu_80504268 + 0x1DF, (char*)font, 0);
-        func_80136B4C(entry.mLayout, lbl_eu_80504268 + 0x1ED, (char*)font, 0);
+        LayoutSetTextBoxFmtValue(entry.mLayout, lbl_eu_80504268 + 0x1AB, (char*)font, 0);
+        LayoutSetTextBoxFmtValue(entry.mLayout, lbl_eu_80504268 + 0x1B8, (char*)font, 0);
+        LayoutSetTextBoxFmtValue(entry.mLayout, lbl_eu_80504268 + 0x1C5, (char*)font, 0);
+        LayoutSetTextBoxFmtValue(entry.mLayout, lbl_eu_80504268 + 0x1D2, (char*)font, 0);
+        LayoutSetTextBoxFmtValue(entry.mLayout, lbl_eu_80504268 + 0x1DF, (char*)font, 0);
+        LayoutSetTextBoxFmtValue(entry.mLayout, lbl_eu_80504268 + 0x1ED, (char*)font, 0);
 
         u32 color1 = lbl_eu_80662580;
         u32 color2 = lbl_eu_80662584;
@@ -747,11 +747,11 @@ extern "C" void func_801AD504(int flags) {
             }
             break;
         }
-        func_80139B5C(entry.mLayout, lbl_eu_80504268 + 0x1AB, color1);
-        func_80139B5C(entry.mLayout, lbl_eu_80504268 + 0x1B8, color1);
-        func_80139B5C(entry.mLayout, lbl_eu_80504268 + 0x1C5, color1);
-        func_80139B5C(entry.mLayout, lbl_eu_80504268 + 0x1D2, color1);
-        func_80139BF4(entry.mLayout, lbl_eu_80504268 + 0x1ED, color2, color3);
+        PaneSetColorFieldSingle(entry.mLayout, lbl_eu_80504268 + 0x1AB, color1);
+        PaneSetColorFieldSingle(entry.mLayout, lbl_eu_80504268 + 0x1B8, color1);
+        PaneSetColorFieldSingle(entry.mLayout, lbl_eu_80504268 + 0x1C5, color1);
+        PaneSetColorFieldSingle(entry.mLayout, lbl_eu_80504268 + 0x1D2, color1);
+        PaneSetColorFieldPair(entry.mLayout, lbl_eu_80504268 + 0x1ED, color2, color3);
 
         u16 range = *(u16*)((u8*)func_800F477C(battle) + 0x5E);
         void* image;
@@ -771,7 +771,7 @@ extern "C" void func_801AD504(int flags) {
             break;
         }
         if (image != 0) {
-            func_80137E7C(entry.mLayout, (char*)(lbl_eu_80504268 + 0x422), image);
+            PaneSetTexPaletteByName(entry.mLayout, (char*)(lbl_eu_80504268 + 0x422), image);
         }
         menuVisionBeginWithoutSecond(entry);
     }
@@ -899,8 +899,8 @@ extern "C" void func_801AD504(int flags) {
                 pane->scaleX = scale.x;
                 pane->scaleY = scale.y;
             } else {
-                char* text = func_80136190(lbl_eu_80504268 + 0x56B, lbl_eu_80504268 + 0x576, 11);
-                func_80136B4C(entry.mLayout, lbl_eu_80504268 + 0x1FB, text, 0);
+                char* text = BdatTouchStringCell(lbl_eu_80504268 + 0x56B, lbl_eu_80504268 + 0x576, 11);
+                LayoutSetTextBoxFmtValue(entry.mLayout, lbl_eu_80504268 + 0x1FB, text, 0);
                 nw4r::math::VEC2 scale;
                 scale.x = lbl_eu_80667DC4;
                 scale.y = lbl_eu_80667DC4;
@@ -955,8 +955,8 @@ extern "C" void func_801AD504(int flags) {
                 }
                 break;
             }
-            func_80139BF4(entry.mLayout, lbl_eu_80504268 + 0x1FB, color1, color2);
-            func_80139A18(entry.mLayout, lbl_eu_80504268 + 0x1FB, &first, &second);
+            PaneSetColorFieldPair(entry.mLayout, lbl_eu_80504268 + 0x1FB, color1, color2);
+            PaneMatSetTevColorsByName(entry.mLayout, lbl_eu_80504268 + 0x1FB, &first, &second);
 
             u32 current = battle->value828;
             u32 previous = battle->value82C;
@@ -1000,16 +1000,16 @@ extern "C" void func_801AD504(int flags) {
                         i++;
                     } while (i < 4);
                     if (!(reinterpret_cast<PaneVisAccess*>(panic)->visByte & 1)) {
-                        u16 id = func_80136254(lbl_eu_806640E0, lbl_eu_80504268 + 0x57B, previous);
+                        u16 id = BdatGetU16Direct(lbl_eu_806640E0, lbl_eu_80504268 + 0x57B, previous);
                         if (id != 0) {
-                            menuVisionReplacePaneImage(status, menuVisionResource(func_80138F78(id)));
+                            menuVisionReplacePaneImage(status, menuVisionResource(MakeTplNameSysFile(id)));
                         }
                     }
                 }
                 if (current != 0) {
-                    u16 id = func_80136254(lbl_eu_806640E0, lbl_eu_80504268 + 0x57B, current);
+                    u16 id = BdatGetU16Direct(lbl_eu_806640E0, lbl_eu_80504268 + 0x57B, current);
                     if (id != 0) {
-                        menuVisionReplacePaneImage(statusAlt, menuVisionResource(func_80138F78(id)));
+                        menuVisionReplacePaneImage(statusAlt, menuVisionResource(MakeTplNameSysFile(id)));
                     }
                 }
             } else {
@@ -1036,16 +1036,16 @@ extern "C" void func_801AD504(int flags) {
                         i++;
                     } while (i < 4);
                     if (!(reinterpret_cast<PaneVisAccess*>(panic)->visByte & 1)) {
-                        u16 id = func_80136254(lbl_eu_806640E0, lbl_eu_80504268 + 0x57B, current);
+                        u16 id = BdatGetU16Direct(lbl_eu_806640E0, lbl_eu_80504268 + 0x57B, current);
                         if (id != 0) {
-                            menuVisionReplacePaneImage(status, menuVisionResource(func_80138F78(id)));
+                            menuVisionReplacePaneImage(status, menuVisionResource(MakeTplNameSysFile(id)));
                         }
                     }
                 }
                 if (previous != 0) {
-                    u16 id = func_80136254(lbl_eu_806640E0, lbl_eu_80504268 + 0x57B, previous);
+                    u16 id = BdatGetU16Direct(lbl_eu_806640E0, lbl_eu_80504268 + 0x57B, previous);
                     if (id != 0) {
-                        menuVisionReplacePaneImage(statusAlt, menuVisionResource(func_80138F78(id)));
+                        menuVisionReplacePaneImage(statusAlt, menuVisionResource(MakeTplNameSysFile(id)));
                     }
                 }
             }
@@ -1196,7 +1196,7 @@ void CMenuVision::Move() {
 L_ret:
     return;
 L_continue:
-    if (!func_8013BE50()) {
+    if (!IsMenuState621F0()) {
         goto L_ret;
     }
     if (lbl_eu_80663E24 & 0x2000000) {

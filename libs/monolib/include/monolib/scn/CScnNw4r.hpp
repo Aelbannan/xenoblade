@@ -5,7 +5,7 @@
 
 class CScnNw4r : public CScn{
 public:
-    void func_8049602C(int arg1, func_800407C8_tmp* arg2);
+    void func_8049602C(int arg1, CTaskGame_setVec4_tmp* arg2);
     void func_8007DAE0(int arg1, f32* arg2);
 
 private:

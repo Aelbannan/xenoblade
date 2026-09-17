@@ -14,8 +14,8 @@ namespace cf { class CfGameManager; }
 // getPlayer__Q22cf13CfGameManagerFi needs no guard: all headers in this
 // TU's chain now share the extern "C" void*(int) form (CfObjectImplMove.hpp
 // was converted from C++ linkage).
-// Shield-clearing note (H3): the enum-list helper family (func_80043D90 /
-// func_80043F18 / func_800F6EAC / __dt__80043E88 / func_800F4A98) carries
+// Shield-clearing note (H3): the enum-list helper family (CTaskGame_enumListCtor /
+// CTaskGame_enumListGet / func_800F6EAC / __dt__80043E88 / func_800F4A98) carries
 // ONE identical extern "C" void* form on every header in this TU's include
 // chain now -- CAIAction.hpp, CVision.hpp and CfObjectImplMove.hpp all agree
 // (return types, parameter lists and linkage) -- so the former
@@ -85,14 +85,14 @@ extern "C" void* __dt__801A36D0(cf::UnkClass_801A36D0* self, int deleting);
 // duplicates of the chain-header forms (legal redeclaration) and act as
 // this TU's visible import anchors.
 // Removed here: #undef func_8016FE34, #undef func_800F477C,
-// #undef func_80043D90, #undef func_80043F18, #undef func_800F6EAC,
+// #undef CTaskGame_enumListCtor, #undef CTaskGame_enumListGet, #undef func_800F6EAC,
 // #undef __dt__80043E88, #undef func_800F4A98 (no macros remain).
 // Region line count preserved: MWCC -ipa file codegen in this TU is
 // sensitive to downstream source line numbers (CMenuPTGauge case).
 //
 extern "C" u16 playActorSound__Q22cf10CfSoundManFUlUlUlUlf(u32 a, u32 b, u32 c, u32 d, f32 e);
-extern "C" void func_80043D90(void* list);
-extern "C" void* func_80043F18(void* list);
+extern "C" void CTaskGame_enumListCtor(void* list);
+extern "C" void* CTaskGame_enumListGet(void* list);
 extern "C" void __dt__80043E88(void* list, int tags);
 extern "C" void* func_800F6EAC(void* list, u32 idx);
 extern "C" void func_800F4A98(void* list, u32 type, u32 filter);
@@ -163,7 +163,7 @@ struct CVisionFxParam {
 };
 
 // Kept inline (not moved to CVision.hpp): sibling TUs stub these.
-extern "C" void func_802A1FB4(void* a, void* b); // CCharVoiceMan.cpp defines an empty stub
+extern "C" void CCharVoiceMan_PushFreshSoundNode(void* a, void* b); // CCharVoiceMan.cpp defines an empty stub
 extern "C" void func_801AF934(u32 a);            // CMenuVision.cpp defines an empty stub
 
 // Object handed to func_801A5E58 by func_800F477C (reads byte at 0x42).
@@ -898,11 +898,11 @@ void func_801A4194(CVision* self) {
     }
     if (w4) {
         u8 vdlist[8];
-        func_80043D90(vdlist);
-        func_800F4A98(func_80043F18(vdlist), 0x328, 0);
+        CTaskGame_enumListCtor(vdlist);
+        func_800F4A98(CTaskGame_enumListGet(vdlist), 0x328, 0);
         u32 i = 0;
-        while (i < *(u32*)((u8*)func_80043F18(vdlist) + 0x620)) {
-            void* elem = func_800F6EAC(func_80043F18(vdlist), i);
+        while (i < *(u32*)((u8*)CTaskGame_enumListGet(vdlist) + 0x620)) {
+            void* elem = func_800F6EAC(CTaskGame_enumListGet(vdlist), i);
             void* obj = __dynamic_cast(elem, 0, &lbl_eu_806618E8, &lbl_eu_806618F0, 0);
             if (obj == 0) {
                 self->vt_20(1);
@@ -1044,7 +1044,7 @@ void func_801A47D0(CVision* self) {
     bool atBase = (lbl_eu_80667CD4 == self->field_2619C);
     if (atBase) {
         void* mem = getHandleMEM2__Q23mtl10MemManagerFv();
-        func_8004392C(1, 0x12f, (u32)mem, 2, 1, lbl_eu_80667CF8);
+        CTaskGame_openVision(1, 0x12f, (u32)mem, 2, 1, lbl_eu_80667CF8);
     }
     // Materialized timer-window checks (retail evaluates each into r0).
     int w1;
@@ -1088,11 +1088,11 @@ void func_801A47D0(CVision* self) {
     }
     if (w4) {
         u8 vdlist[8];
-        func_80043D90(vdlist);
-        func_800F4A98(func_80043F18(vdlist), 0x328, 0x1);
+        CTaskGame_enumListCtor(vdlist);
+        func_800F4A98(CTaskGame_enumListGet(vdlist), 0x328, 0x1);
         u32 i = 0;
-        while (i < *(u32*)((u8*)func_80043F18(vdlist) + 0x620)) {
-            void* elem = func_800F6EAC(func_80043F18(vdlist), i);
+        while (i < *(u32*)((u8*)CTaskGame_enumListGet(vdlist) + 0x620)) {
+            void* elem = func_800F6EAC(CTaskGame_enumListGet(vdlist), i);
             void* obj = __dynamic_cast(elem, 0, &lbl_eu_806618E8, &lbl_eu_806618F0, 0);
             if (obj == 0) {
                 self->vt_20(1);
@@ -1145,7 +1145,7 @@ void func_801A4BC8(CVision* self) {
     if (atBase) {
         self->vt_2C(3);
         void* mem = getHandleMEM2__Q23mtl10MemManagerFv();
-        func_8004392C(1, 0x130, (u32)mem, 2, 1, lbl_eu_80667CF8);
+        CTaskGame_openVision(1, 0x130, (u32)mem, 2, 1, lbl_eu_80667CF8);
     }
     // Materialized timer-window checks (retail evaluates both into r0).
     int w1;
@@ -1157,7 +1157,7 @@ void func_801A4BC8(CVision* self) {
     }
     if (w1) {
         lookupEffectForResource__Q22cf13CfGameManagerFv(0, 0, 0);
-        func_8006E5D8();
+        cfCam_pushStateToActive();
     }
     int w2;
     if (self->field_26198 - self->field_261A0 <= lbl_eu_80667CFC &&
@@ -1211,14 +1211,14 @@ void func_801A4CF8(CVision* self) {
         ((CVisionFusionSub*)p1)->vf5C4(lbl_eu_80667CF0);
         if (sub->field_824 & 0x20000) {
             ((CVisionFusionSub*)p1)->vf5C8(1);
-            func_800BE12C((u8*)p1 + 0x3e9c, 0x11, 1, -1, 1);
+            CfObjectMove_setAnimModeArgs((u8*)p1 + 0x3e9c, 0x11, 1, -1, 1);
         } else {
-            func_800BE12C((u8*)p1 + 0x3e9c, 0x1, 1, -1, 1);
+            CfObjectMove_setAnimModeArgs((u8*)p1 + 0x3e9c, 0x1, 1, -1, 1);
         }
         func_80174B4C(p1, 0x4000);
         if (p1 != p2) {
             ((CVisionFusionSub*)p2)->vf5C4(lbl_eu_80667CF0);
-            func_800BE12C((u8*)p2 + 0x3e9c, 0x1, 1, -1, 1);
+            CfObjectMove_setAnimModeArgs((u8*)p2 + 0x3e9c, 0x1, 1, -1, 1);
             func_80174B4C(p2, 0x4000);
             p2->field_3388 |= 0x2;
         }
@@ -1776,13 +1776,13 @@ void func_801A60B0(CVision* self) {
     }
     if (w2) {
         u8 vdlist[8];
-        func_80043D90(vdlist);
-        func_800F4A98(func_80043F18(vdlist), 0x328, 0);
+        CTaskGame_enumListCtor(vdlist);
+        func_800F4A98(CTaskGame_enumListGet(vdlist), 0x328, 0);
         // Flag every matching player object; bail out with vt_20(1) if the
         // cast fails mid-iteration.
         u32 i = 0;
-        while (i < *(u32*)((u8*)func_80043F18(vdlist) + 0x620)) {
-            void* elem = func_800F6EAC(func_80043F18(vdlist), i);
+        while (i < *(u32*)((u8*)CTaskGame_enumListGet(vdlist) + 0x620)) {
+            void* elem = func_800F6EAC(CTaskGame_enumListGet(vdlist), i);
             void* obj = __dynamic_cast(elem, 0, &lbl_eu_806618E8, &lbl_eu_806618F0, 0);
             if (obj == 0) {
                 self->vt_20(1);
@@ -1799,7 +1799,7 @@ void func_801A60B0(CVision* self) {
         self->vt_18();
         self->vt_30(1);
         lookupEffectForResource__Q22cf13CfGameManagerFv(0, 0, 0);
-        func_8006E5D8();
+        cfCam_pushStateToActive();
     }
     f32 t3 = lbl_eu_80667D44;
     int w3;
@@ -2122,7 +2122,7 @@ void func_801A6540(CVision* self) {
         p.mid.h_10 = 0;
         p.mid.b_06 = 6;
         func_8014AC38(&((CVisionFusion*)fu)->field_3380, &p);
-        func_800BE12C((u8*)fu + 0x3e9c, 1, 0, -1, 1);
+        CfObjectMove_setAnimModeArgs((u8*)fu + 0x3e9c, 1, 0, -1, 1);
         if (func_8014B8BC(&((CVisionFusion*)fu)->field_3380, &p) == 0) {
             func_801537E0(&((CVisionFusion*)fu)->field_3380);
             func_800EA484(CBattleManager::getInstance(), lbl_eu_80667CF0, 0x13);
@@ -2269,7 +2269,7 @@ int func_801A6BCC(CVision* self, CVisionObjV* obj, CVisionObjV* r5) {
     if (obj->vt2BC() != 0) {
         return 0;
     }
-    if (func_eu_80053FD4() != 0) {
+    if (getAnimGate() != 0) {
         return 0;
     }
     u32 nc = *((u8*)CBattleManager::getInstance() + 0x1aa);
@@ -2534,10 +2534,10 @@ int func_801A70DC(CVision* self, void* obj, void* obj2) {
     // Clear the engaged flag on every other battle actor and refresh its
     // per-slot vision parameter block.
     u8 vdlist[8];
-    func_80043D90(vdlist);
-    func_800F4A98(func_80043F18(vdlist), 0x20, 0);
-    for (u32 i = 0; i < ((CVisionEnumList*)func_80043F18(vdlist))->count; i++) {
-        void* elem = func_800F6EAC(func_80043F18(vdlist), i);
+    CTaskGame_enumListCtor(vdlist);
+    func_800F4A98(CTaskGame_enumListGet(vdlist), 0x20, 0);
+    for (u32 i = 0; i < ((CVisionEnumList*)CTaskGame_enumListGet(vdlist))->count; i++) {
+        void* elem = func_800F6EAC(CTaskGame_enumListGet(vdlist), i);
         void* actor = __dynamic_cast(elem, 0, &__RTTI__Q22cf13CfObjectActor, &lbl_eu_806618F0, 0);
         if (actor != obj && actor != obj2) {
             CVisionActor3388* a = (CVisionActor3388*)actor;
@@ -2551,7 +2551,7 @@ int func_801A70DC(CVision* self, void* obj, void* obj2) {
     self->field_26198 = lbl_eu_80667CD4;
     lbl_eu_80663DA0 |= 0x1;
     lbl_eu_80663E24 |= 0x400;
-    func_802A1FB4(obj, obj2);
+    CCharVoiceMan_PushFreshSoundNode(obj, obj2);
     // Install the fade-in / fade-out resume callback depending on the
     // auto-vision flag captured above.
     if (sub->field_824 & 0x40000) {
@@ -2678,11 +2678,11 @@ void func_801A7704(CVision* self) {
     }
 
     u8 vdlist[8];
-    func_80043D90(vdlist);
-    func_800F4A98(func_80043F18(vdlist), 0x20, 0);
+    CTaskGame_enumListCtor(vdlist);
+    func_800F4A98(CTaskGame_enumListGet(vdlist), 0x20, 0);
     u32 off = 0, i = 0;
-    for (; i < ((CVisionEnumList*)func_80043F18(vdlist))->count; off += 0x4818, i++) {
-        void* elem = func_800F6EAC(func_80043F18(vdlist), i);
+    for (; i < ((CVisionEnumList*)CTaskGame_enumListGet(vdlist))->count; off += 0x4818, i++) {
+        void* elem = func_800F6EAC(CTaskGame_enumListGet(vdlist), i);
         void* obj = __dynamic_cast(elem, 0, &__RTTI__Q22cf13CfObjectActor, &lbl_eu_806618F0, 0);
         if (obj == (void*)p1 || obj == (void*)p2) {
             continue;
@@ -2714,10 +2714,10 @@ void func_801A7704(CVision* self) {
     // Enumerate the 0x8000000-tagged list; raise a state flag on every
     // actor whose battle-state id is outside [0xa1,0xa4] and != 0xb8.
     u8 vdlist2[8];
-    func_80043D90(vdlist2);
-    func_800F4A98(func_80043F18(vdlist2), 0x80000, 0);
-    for (u32 i = 0; i < ((CVisionEnumList*)func_80043F18(vdlist2))->count; i++) {
-        void* elem = func_800F6EAC(func_80043F18(vdlist2), i);
+    CTaskGame_enumListCtor(vdlist2);
+    func_800F4A98(CTaskGame_enumListGet(vdlist2), 0x80000, 0);
+    for (u32 i = 0; i < ((CVisionEnumList*)CTaskGame_enumListGet(vdlist2))->count; i++) {
+        void* elem = func_800F6EAC(CTaskGame_enumListGet(vdlist2), i);
         void* obj = __dynamic_cast(elem, 0, &lbl_eu_80661970, &lbl_eu_806618F0, 0);
         if (obj == 0) {
             self->vt_20(1);
@@ -2743,10 +2743,10 @@ void func_801A7D6C(CVision* self, void* r4) {
         sub = &self->sub;
     }
     u8 vdlist[8];
-    func_80043D90(vdlist);
-    func_800F4A98(func_80043F18(vdlist), 0x328, 0);
-    for (u32 i = 0; i < ((CVisionEnumList*)func_80043F18(vdlist))->count; i++) {
-        void* elem = func_800F6EAC(func_80043F18(vdlist), i);
+    CTaskGame_enumListCtor(vdlist);
+    func_800F4A98(CTaskGame_enumListGet(vdlist), 0x328, 0);
+    for (u32 i = 0; i < ((CVisionEnumList*)CTaskGame_enumListGet(vdlist))->count; i++) {
+        void* elem = func_800F6EAC(CTaskGame_enumListGet(vdlist), i);
         void* obj = __dynamic_cast(elem, 0, &lbl_eu_806618E8, &lbl_eu_806618F0, 0);
         if (obj == 0) {
             self->vt_20(1);
@@ -2762,7 +2762,7 @@ void func_801A7D6C(CVision* self, void* r4) {
     self->vt_30(1);
     if (r4 != 0) {
         lookupEffectForResource__Q22cf13CfGameManagerFv(1, 0, 0);
-        func_8006E5D8();
+        cfCam_pushStateToActive();
     }
     func_800EA484(CBattleManager::getInstance(), lbl_eu_80667CF0, 0x13);
     func_801AF934(0);
@@ -2779,9 +2779,9 @@ void func_801A7D6C(CVision* self, void* r4) {
         }
         func_800F449C(sub);
     }
-    func_800F4A98(func_80043F18(vdlist), 0x20, 0);
-    for (u32 i = 0; i < *(u32*)((u8*)func_80043F18(vdlist) + 0x620); i++) {
-        void* elem = func_800F6EAC(func_80043F18(vdlist), i);
+    func_800F4A98(CTaskGame_enumListGet(vdlist), 0x20, 0);
+    for (u32 i = 0; i < *(u32*)((u8*)CTaskGame_enumListGet(vdlist) + 0x620); i++) {
+        void* elem = func_800F6EAC(CTaskGame_enumListGet(vdlist), i);
         CVisionFusion* actor = (CVisionFusion*)__dynamic_cast(elem, 0, &__RTTI__Q22cf13CfObjectActor, &lbl_eu_806618F0, 0);
         actor->field_3388 &= 0xFFFD;
         actor->field_04->v20(0x4000);
@@ -2857,10 +2857,10 @@ void func_801A8244(CVision* self, void* r25, int r26, int r27, int r28) {
     }
     if (r26 != 0) {
         u8 vdlist[8];
-        func_80043D90(vdlist);
-        func_800F4A98(func_80043F18(vdlist), 0x20, 0);
-        for (u32 i = 0; i < ((CVisionEnumList*)func_80043F18(vdlist))->count; i++) {
-            CVisionBattleObj* obj = (CVisionBattleObj*)func_8016FE34(func_800F6EAC(func_80043F18(vdlist), i));
+        CTaskGame_enumListCtor(vdlist);
+        func_800F4A98(CTaskGame_enumListGet(vdlist), 0x20, 0);
+        for (u32 i = 0; i < ((CVisionEnumList*)CTaskGame_enumListGet(vdlist))->count; i++) {
+            CVisionBattleObj* obj = (CVisionBattleObj*)func_8016FE34(func_800F6EAC(CTaskGame_enumListGet(vdlist), i));
             if (obj->vf308() == 3) {
                 obj->vf304(4);
             } else if (obj->vf308() == 0) {
@@ -2871,7 +2871,7 @@ void func_801A8244(CVision* self, void* r25, int r26, int r27, int r28) {
     }
     if (r26 != 0) {
         if (r27 != 0) {
-            func_802A2078(r26, r28, fu);
+            CCharVoiceMan_EnqueuePendingActionVoice(r26, r28, fu);
         }
         func_80280D04(r26);
     }

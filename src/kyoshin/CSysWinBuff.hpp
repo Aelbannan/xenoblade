@@ -198,11 +198,11 @@ void getEntry__5CBdatFUl(u32 value);
 void setBdatEntry__5CBdatFUlPv(u32 value, void* data);
 void func_8003AA34();
 void* getFP__FPCc(const char* name);
-u8 func_8013B980();
+u8 DecMenuCounter64080();
 u8 code80135FDC_getByte_64080();
 void code80135FDC_postIncByte_64080();
 s32 func_8029A658();
-int func_8013BE50();
+int IsMenuState621F0();
 void setPresentationFlag__Q22cf13CfGameManagerFv(bool enable);
 
 // CSysWin / system-window helper imports (C-linkage retail symbols, defined in
@@ -221,10 +221,10 @@ void* readCommonArchiveFile__11CDeviceFileFUlPCcP10IWorkEventii(
     u32 handle, const char* path, void* workEvent, int a, int b);
 u32 func_800A9D90();
 
-// BDAT message lookup helpers (unmangled retail C symbols): func_80136254
-// resolves a row id, func_8013639C resolves the message string for the id.
-u32 func_80136254(void* obj, const char* key, u32 id);
-char* func_8013639C(void* obj, const char* key, u16 id);
+// BDAT message lookup helpers (unmangled retail C symbols): BdatGetU16Direct
+// resolves a row id, BdatGetPtrDirect resolves the message string for the id.
+u32 BdatGetU16Direct(void* obj, const char* key, u32 id);
+char* BdatGetPtrDirect(void* obj, const char* key, u16 id);
 }
 
 // C++-linkage helpers (MWCC mangles the plain names to the retail forms

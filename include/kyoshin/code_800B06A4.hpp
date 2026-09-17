@@ -29,7 +29,7 @@ struct CfReslistNode {
 
 // Mirror of the reslist<cf::IFactoryEvent*> pool list (0x20 bytes) walked by
 // the flattened dtors (__dt__800B151C/__dt__800B18CC) and the pool-insert
-// helpers (func_800B2DB0/func_800B39C8).
+// helpers (poolInsertBack/poolInsertFront).
 struct FactoryPoolList {
     void* mVtable;                // 0x00
     CfReslistNode* mStartNodePtr; // 0x04 inline sentinel node
@@ -59,9 +59,9 @@ struct TboxInfoReslistLayout {
     u8 field_0x34;                // 0x34
 };
 
-// Argument to func_800B4A24: an embedded sub-object (parent offset -0x3E9C).
+// Argument to evtTypeSlot7E: an embedded sub-object (parent offset -0x3E9C).
 // First word is a real vtable (virtual slot 0x80 = +0x200 called by
-// func_800B4A24), and +0x64 holds status flags (bit 2 = 0x4).
+// evtTypeSlot7E), and +0x64 holds status flags (bit 2 = 0x4).
 class CEvtTypeVt {
 public:
     virtual void unk00();
@@ -190,7 +190,7 @@ public:
     virtual void unk7B();
     virtual void unk7C();
     virtual void unk7D();
-    virtual s32 unk7E();   // func_800B4A24 dispatches here (vtable +0x200)
+    virtual s32 unk7E();   // evtTypeSlot7E dispatches here (vtable +0x200)
     virtual void unk7F();
     virtual s32 unk80();
 };
@@ -200,8 +200,8 @@ struct CEvtTypeArg : public CEvtTypeVt {
     u32 flags;              // +0x64 (bit 2 => 0x4)
 };
 
-// --- func_800B4CA0 support ---
-// Battle/HUD controller walked by func_800B4CA0: one shared vtable serves two
+// --- hudCtrlSlot46 support ---
+// Battle/HUD controller walked by hudCtrlSlot46: one shared vtable serves two
 // dispatch sites (slot 0x46 at +0x118 takes a float; slot 0xAF at +0x2BC
 // returns a status int), plus plain fields at 0x3F00/0x3F08/0x3F60.
 class IDispB4CA0 {
@@ -384,7 +384,7 @@ public:
     virtual s32 unkAF();             // vtable +0x2BC
 };
 
-// Object layout walked by func_800B4CA0. Standalone class (v2).
+// Object layout walked by hudCtrlSlot46. Standalone class (v2).
 // Slots 0x00-0xAF mirror the shared dispatch table: slot 0x46 at +0x118 takes
 // a float; slot 0xAF at +0x2BC returns a status int.
 class Func4CA0Obj {
@@ -580,7 +580,7 @@ struct Func4CA0Sub {
     u32 field_4EC;                   // bit 18 tested ((v >> 18) & 1)
 };
 
-// Object walked by func_800B8B94 / func_800B8C78 (u16 id at +0x8C).
+// Object walked by findObjB28ById / findObjB48ById (u16 id at +0x8C).
 struct B8B94Obj {
     u8 _pad00[0x8C];
     u16 field_8C;
@@ -594,8 +594,12 @@ struct B8B94Obj {
 //                                  (import; defined in CTaskGame.cpp)
 class UnkClass_800B0AD8;
 extern "C" UnkClass_800B0AD8* __dt__800B0AF4(void* self, int flags);
-extern "C" void* func_800B76A4();      // head of the B28 object list
-extern "C" void* func_800B76CC();      // head of the B48 object list
+extern "C" void* firstReslistB28();      // head of the B28 object list
+extern "C" void* firstReslistB48();      // head of the B48 object list
+extern "C" void* firstReslistB68();
+extern "C" void* firstReslistB88();
+extern "C" void* firstReslistBC8();
+extern "C" void* firstReslistC08();
 extern "C" void* func_8016FE34(void* source);
 extern "C" int func_800DA06C(void* bm, void* obj);
 #include "monolib/util/FixStr.hpp"
@@ -683,12 +687,12 @@ struct ResPoolNode {
 };
 
 // Field accessor view over a CfObject payload walked by the reslist search
-// helpers (func_800B4278 / func_800B42E8).
+// helpers (walkReslistByMask / walkReslistByType).
 struct CfObjFieldView {
     u8 _pad00[0x64];
-    u32 field_0x64;   // mask bits tested by func_800B4278
+    u32 field_0x64;   // mask bits tested by walkReslistByMask
     u8 _pad68[0x94 - 0x68];
-    s32 field_0x94;   // type id compared by func_800B42E8
+    s32 field_0x94;   // type id compared by walkReslistByType
     u8 _pad98[0x9C - 0x98];
     u32 field_0x9C;
 };
@@ -887,7 +891,7 @@ public:
     u32 field_0x15F0;   // exactly 0x15F0
 };
 
-// --- func_800B7A18 support: circular object-list iteration ---
+// --- triggerObjsByType support: circular object-list iteration ---
 // Mirror of retail UnkF8C0Node/UnkF8C0Source (CfGameManager.cpp). The
 // iterator node holds the current ItemListNode pointer; the list header is
 // the shared { +0x00 unused, +0x04 head-sentinel } shape used by
@@ -908,11 +912,11 @@ extern "C" void** getObjectNodePtr__Q22cf13CfGameManagerFv(F8C0IteratorNode* ite
 extern "C" void linkItemNode__Q22cf13CfGameManagerFv(F8C0IteratorNode* destination, F8C0IteratorNode* source, u32 unused);
 extern "C" void checkFlagEquality__Q22cf13CfGameManagerFv(F8C0IteratorNode* destination, const F8C0ListSource* source);
 extern "C" bool compareFlagValues__Q22cf13CfGameManagerFv(const u32* first, const u32* second);
-extern "C" void* func_800B182C(void* node);
+extern "C" void* followIterNext(void* node);
 extern "C" u16 getItemId__Q22cf13CfGameManagerFv(void* object);
 
-// Imports used by func_800B70FC / func_800B7214 (retail symbol names).
-extern "C" void func_800B71C4();
+// Imports used by walkListByItemId / func_800B7214 (retail symbol names).
+extern "C" void getGlobalU32_40F4();
 extern "C" void* getListB28__Fv();
 extern "C" void func_800BFDE0(void* obj, u32 flag);
 
@@ -1036,8 +1040,8 @@ extern "C" u32 getEventValue40__Q22cf13CfGameManagerFv(u32 id);
 extern "C" void setEventManagerValue__Q22cf13CfGameManagerFv(u32 id, u32 value);
 extern "C" void queueEventId__Q22cf13CfGameManagerFv(u32 value);
 extern "C" void func_80062600();
-extern "C" void* func_800B6C7C();
-extern "C" void* func_800B6C58();
+extern "C" void* getReslistC08();
+extern "C" void* getReslistBC8();
 extern "C" int func_800AB580(void* obj, void* arg, int flag, float range);
 extern const float lbl_eu_80666A28;
 extern const float lbl_eu_80666A2C;
@@ -1182,9 +1186,9 @@ extern "C" void* allocate__Q23mtl10MemManagerFUlUl(unsigned long size, unsigned 
 extern "C" void __ct__Q22cf13CfObjectModelFv(void* self);
 extern "C" void __ct__Q22cf11CfObjectNpcFv(void* self, int flag);
 extern "C" void __ct__Q22cf10CfObjectPcFv(void* self);
-extern "C" void func_800BE948(void* obj, u16 id);
-extern "C" void func_800BE960(void* obj, s32 a);
-extern "C" void func_800BE978(void* obj, s32 a);
+extern "C" void CfObjectMove_setSubB0FieldC(void* obj, u16 id);
+extern "C" void CfObjectMove_setSubB0FieldA(void* obj, s32 a);
+extern "C" void CfObjectMove_setSubB0FieldE(void* obj, s32 a);
 extern "C" s32 getQueuedFileEventCount__Q22cf13CfGameManagerFv();
 extern "C" s32 func_80063560(s32 kind, s32 a, s32 b);
 extern "C" s32 func_8006398C(s32 a);
@@ -1421,7 +1425,7 @@ extern "C" void func_8004B0B0(void* dst);
 extern "C" void func_8004B3F0(void* dst, const B47Vec3* src);
 extern "C" int testResInfoFlag(unsigned long mask);
 extern "C" void* getUnk80664658();
-extern "C" void* func_800B6494();
+extern "C" void* scaleAboveZero();
 extern "C" int CfRes_getE24Bit22();
 extern float lbl_eu_80661CD4;
 extern float lbl_eu_80661CC8;
@@ -1542,39 +1546,49 @@ public:
 };
 
 // Object type-id / trigger helpers (CfObjectMove.cpp).
-extern "C" u16 func_800BE93C(void* self);
-extern "C" void func_800BF2E0(void* self);
+extern "C" u16 CfObjectMove_getSubB0FieldC(void* self);
+extern "C" void CfObjectMove_relaySubB0Slot28(void* self);
 
 // Circular object-list accessors (defined in this unit's retail span).
-extern "C" void* func_800B6BC8();
-extern "C" void* func_800B6BEC();
+extern "C" void* getReslistB48();
+extern "C" void* getReslistB68();
+extern "C" void* getReslistB88();
+extern "C" void* resetMgrReslist();
+extern "C" void* insertReslistB88(void* obj);
+extern "C" void gflagNandMask(int mask);
+extern "C" void factoryEventNopB();
+extern "C" void gmCallInit1120();
+extern "C" void gmCallNopA();
+extern "C" void gmCallNopB();
+extern "C" void gmCallInit1954();
+extern "C" void* gmSpawnAfterAA2(u32 first, u32 second);
 
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
-extern "C" unsigned long func_800B1C00();
-extern "C" s32 func_800B1C0C(u32 mask);
-extern "C" void* func_800B6DD0(void* reslist, void* obj);
-extern "C" void func_800B1B2C(void* obj);
-extern "C" void func_800B2D88(void* self, void* arg);
-extern "C" void func_800B2DB0(FactoryPoolList* self, void* payloadSrc);
-extern "C" void func_800B39C8(FactoryPoolList* self, void* payloadSrc);
-extern "C" void func_800B1E2C(const char* name);
-extern "C" void func_800B1EB8(int mask);
+extern "C" unsigned long gflagTestBit6();
+extern "C" s32 gflagHasMask(u32 mask);
+extern "C" void* reslistFindObj(void* reslist, void* obj);
+extern "C" void resetSubManagers(void* obj);
+extern "C" void poolInsertThunk(void* self, void* arg);
+extern "C" void poolInsertBack(FactoryPoolList* self, void* payloadSrc);
+extern "C" void poolInsertFront(FactoryPoolList* self, void* payloadSrc);
+extern "C" void setMgrFixStrName(const char* name);
+extern "C" void gflagClearMask(int mask);
 extern "C" void func_80068A30(void* dst, const char* src);
-extern "C" void func_800B9A30(void* dst);
-extern "C" void func_800B1368(int mask);
+extern "C" void clearFixStrBuf(void* dst);
+extern "C" void gflagOrMask(int mask);
 // Split1 .rodata string table; the compared name sits at +0x35.
 extern char lbl_eu_804FC4D8[];
-extern "C" void func_800B15A4(UnkClass_805764CC* self);
+extern "C" void teardownGameMgr(UnkClass_805764CC* self);
 extern "C" void __dt__800B151C(FactoryPoolList* self);
 extern "C" void __dt__800B18CC(FactoryPoolList* self);
-extern "C" void func_800B1E18(UnkClass_805764CC* self, void* arg);
-extern "C" void func_800B7058(void* obj);
-extern "C" void func_800B93D0(void* obj);
-extern "C" void func_800B9404(void* obj);
-extern "C" void* func_800B6EC0(UnkClass_805764CC* self, int arg);
-extern "C" void func_800B1C24(int arg, void* ptr);
-extern "C" void* func_800B39C0(void* arg);
-extern "C" void func_800BC3B0(void* obj, float val);
+extern "C" void notifyObjCA0(UnkClass_805764CC* self, void* arg);
+extern "C" void gmInsertObject(void* obj);
+extern "C" void gmNotifyCA0(void* obj);
+extern "C" void gmFileObject(void* obj);
+extern "C" void* findWorkById(UnkClass_805764CC* self, int arg);
+extern "C" void gflagSetOrClear(int arg, void* ptr);
+extern "C" void* getObjIdAt74(void* arg);
+extern "C" void CfObjectMove_setMoveSpeedGated(void* obj, float val);
 extern "C" void* findObjectById__Fi(int arg);
 // Enum-list holder helpers (cf::CfObjEnumList) used by func_800B98C8.
 extern "C" void func_80043D90(void* holder);
@@ -1582,40 +1596,40 @@ extern "C" void* func_80043F18(void* holder);
 extern "C" void __dt__80043E88(void* holder, int flag);
 extern "C" void func_800F4A98(void* list, u32 type, u32 filter);
 extern "C" void* func_800F6E98(void* list, int index);
-extern "C" int func_800B9984(void* list);
+extern "C" int getObjField620(void* list);
 extern "C" void* __dynamic_cast(void* obj, long offset, const void* srcType,
                                 const void* dstType, void* src2dst);
 // RTTI typeinfo pair for the actor dynamic_cast.
 extern const void* lbl_eu_806618E8;
 extern const void* lbl_eu_806618F0;
 extern "C" void* func_80193CD0(void* a, void* b);
-extern "C" unsigned long func_80061FFC();
+extern "C" unsigned long CfRes_getAllocHandle();
 extern "C" void __dl__FPv(void*);
 extern "C" void __dla__FPv(void*);
-extern "C" void* func_800B1AC0(void* a, void* b);
-extern "C" void func_800B73E8(void* a, void* b, void* c);
+extern "C" void* copyIterFrom(void* a, void* b);
+extern "C" void unlinkListNode(void* a, void* b, void* c);
 extern "C" void __dt__8047BDA8(void*);
 extern "C" void func_800B0894(UnkClass_805764CC* self, unsigned long handle, s32 count);
-extern "C" void func_800B4278(void* object, u32 arg);
-extern "C" void func_800B42E8(void* object, u32 arg);
-extern "C" unsigned long func_800B0FEC(void* self);
+extern "C" void walkReslistByMask(void* object, u32 arg);
+extern "C" void walkReslistByType(void* object, u32 arg);
+extern "C" unsigned long factoryPoolCount(void* self);
 extern "C" void func_800B0FF4(void* self, unsigned long handle, unsigned long count);
 extern "C" void* func_800B20B4(UnkClass_805764CC* self, u32 arg1,
                                 const B20B4Payload* arg2, u32 arg3);
 // CfRes.cpp import (retail exports the unmangled name).
 extern "C" u32 CfRes_extractBits27_5(void* self);
-extern "C" void func_800B084C(UnkClass_805764CC* self, unsigned long count);
+extern "C" void allocFactoryPool(UnkClass_805764CC* self, unsigned long count);
 extern "C" void func_801742D4(void* obj);
 extern "C" void func_80173C6C(void* obj, void* arg);
 extern "C" void func_802B2A08(void* obj);
-extern "C" void func_800B1F6C(UnkClass_805764CC* self);
-extern "C" void func_800B1F2C(UnkClass_805764CC* self, void* obj);
-extern "C" void func_800B205C(UnkClass_805764CC* self);
-extern "C" void func_800B2034(UnkClass_805764CC* self, void* obj);
-extern "C" void func_800B1FD8(UnkClass_805764CC* self);
-extern "C" void func_800B1EC8(UnkClass_805764CC* self);
-void func_800B1EC8(UnkClass_805764CC* self);
-void func_800B1C78(UnkClass_805764CC* self);
+extern "C" void tickPadSubobjects(UnkClass_805764CC* self);
+extern "C" void notifyObjCA0D48(UnkClass_805764CC* self, void* obj);
+extern "C" void tickMineSubobject(UnkClass_805764CC* self);
+extern "C" void notifyObjCFCccc(UnkClass_805764CC* self, void* obj);
+extern "C" void releasePadObjects(UnkClass_805764CC* self);
+extern "C" void runMgrTeardownSeq(UnkClass_805764CC* self);
+void runMgrTeardownSeq(UnkClass_805764CC* self);
+void bindPadSubobjects(UnkClass_805764CC* self);
 
 // --- imports for func_800B655C (us-800b6e58) ---
 // Returns the raw flag word so callers can use the value-context !=0 idiom.
@@ -1623,22 +1637,22 @@ extern "C" int testResInfoFlag(unsigned long mask);
 extern "C" void* func_8006A6D0();
 extern "C" u8 func_800AF7E4(void* container, const char* name);
 extern "C" int func_801949E0(void* ctx);
-extern "C" int func_8006DBD4(void* container, u16 flag);
-extern "C" void func_800BE824(void* data, u32 flag);
-extern "C" void func_800B66AC(void* data);
-extern "C" void func_800B64F8(void* data);
+extern "C" int cfCam_queryVoxArts(void* container, u16 flag);
+extern "C" void CfObjectMove_setRegionAttached(void* data, u32 flag);
+extern "C" void orObj68bit6(void* data);
+extern "C" void orObj68bits5_6(void* data);
 
-// --- imports for func_800B4120 (us-800b4a1c) ---
-extern "C" int func_8006C1B0(void* obj);
-extern "C" int func_8006DF9C(void* obj);
-extern "C" int func_800B31BC(void* obj);
-extern "C" int func_800B31C8(void* obj);
-extern "C" int func_800B31E0(void* obj);
-extern "C" int func_800B31EC(void* obj);
-extern "C" int func_800B31F8(void* obj);
-extern "C" int func_800B3204(void* obj);
-extern "C" int func_800B31B0(void* obj);
-extern "C" void func_800B3A60(void* list, void* obj);
+// --- imports for fileObjIntoReslist (us-800b4a1c) ---
+extern "C" int cfCam_bit1At0x64(void* obj);
+extern "C" int cfCam_getBit2_64(void* obj);
+extern "C" int testObj64bit8(void* obj);
+extern "C" int testFlag64b3(void* obj);
+extern "C" int testObj64bit5(void* obj);
+extern "C" int testObj64bit6(void* obj);
+extern "C" int testObj64bit15(void* obj);
+extern "C" int testObj64bit14(void* obj);
+extern "C" int testObj64bit9(void* obj);
+extern "C" void unlinkMatchingNode(void* list, void* obj);
 
 // --- imports for func_800B83AC (us-800b8cc8) ---
 extern "C" int isTimerActive__Q22cf13CfGameManagerFv();
@@ -1651,8 +1665,8 @@ extern "C" int CfRes_getD80Flag();
 extern "C" void func_80496288();
 extern "C" void func_801765A4(void* obj, int arg);
 
-// --- imports for func_800B7410 (us-800b7d30) ---
-extern "C" void func_800B75C4(void* obj, unsigned long mask, int flag);
+// --- imports for scanTboxByXY (us-800b7d30) ---
+extern "C" void setObj6Cmask(void* obj, unsigned long mask, int flag);
 extern float lbl_eu_80666A10;
 extern float lbl_eu_80666A08;
 extern float lbl_eu_80663EC8;
@@ -1838,41 +1852,51 @@ struct B83ACCharObj {
 
 // Scratch entry-array accessors over the temp buffer built by func_800B5994
 // (retail names; begin/end/iterator primitives used by func_800B4D84).
-extern "C" void** func_800B5944(void* buf);
-extern "C" void** func_800B5948(void* buf);
-extern "C" void func_800B5958(void* it);
-extern "C" u32* func_800B5964(void* it, u32 index);
-extern "C" u32 func_800B5970(void* it);
-extern "C" int func_800B6544(const void* a, const void* b);
+extern "C" void** sortBufIdentity(void* buf);
+extern "C" void** sortBufEnd(void* buf);
+extern "C" void clearField380(void* it);
+extern "C" u32* sortBufAt(void* it, u32 index);
+extern "C" u32 sortBufCount(void* it);
+extern "C" int cmpFloatAt4(const void* a, const void* b);
 extern "C" void func_800B4FAC(void** first, void** last, int (*cmp)(const void*, const void*));
 extern "C" void* getUnk80664658();
-extern "C" void* func_800B4F58(void* p);
-extern "C" unsigned short func_800B4F64();
-extern "C" u32 func_800B4FA4(void* obj);
-extern "C" void func_800B4F6C(void* obj);
-extern "C" void func_800B4F90(void* obj);
-extern "C" void func_800B4F80(void* obj, u32 mask);
-extern "C" int func_800B3D4C(void* obj, u32 flag);
+extern "C" void* testCamBit15(void* p);
+extern "C" unsigned short getGlobalU16_4314();
+extern "C" u32 getObjField70(void* obj);
+extern "C" void setObj6Cbit1(void* obj);
+extern "C" void setObj6Cbit0(void* obj);
+extern "C" void orObj6Cmask(void* obj, u32 mask);
+extern "C" int testObj6Cmask(void* obj, u32 flag);
 extern "C" int isObjectFlagMaskSet__Q22cf13CfGameManagerFv(void* obj);
-extern "C" u32 func_eu_800BFC7C(void* obj);
+extern "C" u32 CfObjectMove_relaySubB0Slot68(void* obj);
 extern "C" u32 func_800A8C84();
 extern "C" void CfRes_callFunc_68110(u32 value);
 extern "C" void CfRes_callFunc_68078();
 
-// Extra list heads / misc imports for func_800B45A0 / func_800B1120.
-extern "C" void* func_800B6C34();
-extern "C" void func_80063160(s32 arg);
-extern "C" void func_800631FC(s32 arg);
-extern "C" void func_800B4588(void* self);
+// Extra list heads / misc imports for probeReadyLists / func_800B1120.
+extern "C" void* getReslistBE8();
+extern "C" void CfRes_initResEntries(s32 arg);
+extern "C" void CfRes_initTblEntries(s32 arg);
+extern "C" void CfRes_decResRefByHandle(s32 handle);
+extern "C" void CfRes_decTblRefByIdx(s32 idx);
+extern "C" int CfRes_hasTblHandle(int handle);
+extern "C" int CfRes_registerTblHandle(int handle);
+extern "C" void* CfRes_getArrayElem12Idx(int arg);
+extern "C" void* CfRes_getArrayElem19Idx(int arg);
+extern "C" void* CfRes_getArrayElem20Idx(int arg);
+extern "C" void* CfRes_getArrayElem21Idx(int arg);
+extern "C" void* CfRes_getArrayElem22Idx(int arg);
+extern "C" void CfRes_runUpdatePipeline();
+extern "C" void setFieldD08Hi(void* self);
 
 // Factory-event queue iterator primitives (retail names).
-extern "C" void func_800B14C4(void* dst, void* list);
-extern "C" void** func_800B14D4(void* it);
-extern "C" void func_800B14E0(void* it);
-extern "C" void func_800B14F0(void* dst, void* list);
-extern "C" int func_800B14FC(void* a, void* b);
+extern "C" void factoryIterBegin(void* dst, void* list);
+extern "C" void** factoryIterItem(void* it);
+extern "C" void factoryIterNext(void* it);
+extern "C" void factoryIterSentinel(void* dst, void* list);
+extern "C" u32 wordsDiffer(void* a, void* b);
 
-// Sub-object ctors/dtors driven by func_800B1120 / func_800B15A4.
+// Sub-object ctors/dtors driven by func_800B1120 / teardownGameMgr.
 extern "C" void __dt__800B183C(void* self);
 extern "C" void __dt__80206170(void* self, int flags);
 extern "C" void __dt__801732F8(void* self, int flags);
@@ -1885,7 +1909,7 @@ extern "C" void* __ct__cf_CfHikariItemManager(void* self);
 extern "C" void* func_800AD860__FPv(void* data);
 extern "C" void CfRes_callFunc_68254();
 
-// Payload objects walked by func_800B45A0: status callback at slot 0x1D
+// Payload objects walked by probeReadyLists: status callback at slot 0x1D
 // (+0x74) plus a flag word at +0x64 (bit 15 tested).
 class IEvB45A0 {
 public:
@@ -1924,7 +1948,7 @@ struct B45A0ObjView : public IEvB45A0 {
 };
 
 // Factory-event payloads drained by func_800B1120 (slot 5) and
-// func_800B15A4 (slot 6). MWCC pads two hidden vtable slots ahead of the
+// teardownGameMgr (slot 6). MWCC pads two hidden vtable slots ahead of the
 // declared virtuals, so the callbacks sit two entries early here.
 class IFeEventBase {
 public:
@@ -1935,7 +1959,7 @@ public:
     virtual void vf06();   // compiled slot 6 (+0x18)
 };
 
-// Object dispatched at vtable slot 21 (+0x54) by func_800B15A4's
+// Object dispatched at vtable slot 21 (+0x54) by teardownGameMgr's
 // game-manager walk.
 class IDispB15A4 {
 public:
@@ -2076,7 +2100,7 @@ struct B8D5CObj {
     void* field_3F60;                  // must be null on the success path
 };
 
-// --- func_800B7410 support types ---
+// --- scanTboxByXY support types ---
 // TboxInfo reslist payload view used while spawning voice objects.
 struct B7410Node {
     u32 field_00;          // +0x00 occupied guard (0 == free to spawn)
@@ -2376,20 +2400,20 @@ struct B8524Sub {
 };
 
 // Imports used by the batch targets (retail symbol names).
-extern "C" int func_800B4594(void* obj);
+extern "C" int testObj64bit16(void* obj);
 // C++ linkage so MWCC emits the retail-mangled isGlobalCamFlagSet__Fi reloc.
 bool isGlobalCamFlagSet(int mask);
-extern "C" int func_800B64B8(void* obj, u32 mask);
+extern "C" int testObj68mask(void* obj, u32 mask);
 extern "C" void func_8004CB80(void* dst, void* a, void* b);
-extern "C" float func_80073F88(void* p);
+extern "C" float cfCam_xzLength(void* p);
 extern "C" void func_800B6AF4(void* self);
 extern "C" void func_80496264(int arg, int val);
 extern "C" void* CfRes_getInstanceField();
 extern "C" void func_80067DB4();
 extern "C" void* func_800BBC0C(void* data);
-extern "C" void func_800BC3D8(void* obj, float val);
+extern "C" void CfObjectMove_setMoveSpeed(void* obj, float val);
 extern "C" void func_8004CF00();
-extern "C" void* func_800B77BC();
+extern "C" void* firstReslistBA8();
 extern "C" s32 func_800B7AF0(UnkClass_805764CC* self, class IB7Arg* arg);
 extern "C" void func_800B9C14(void* obj);
 extern "C" void func_80068358(void* obj);
@@ -2397,20 +2421,20 @@ extern "C" void func_80068358(void* obj);
 // CfGameManagerApi.hpp - canonical UnkClass_800821F8* view; this TU's use
 // site casts to the local IDispB3A88Mgr vtable proxy.)
 #include "kyoshin/cf/CfGameManagerApi.hpp"
-extern "C" void* func_8006E59C();
+extern "C" void* cfCam_getEventMgr();
 extern "C" void* func_800755B0(void* mgr, int index);
-extern "C" s32 func_800BE96C(void* obj);
+extern "C" s32 CfObjectMove_getSubB0FieldE(void* obj);
 extern "C" void func_80063900(u32 id);
 extern "C" void func_800638B4(s32 id);
-extern "C" s32 func_800BF2CC(void* obj);
+extern "C" s32 CfObjectMove_relaySubB0Slot60(void* obj);
 extern "C" void func_eu_801C17FC(u32 a, u32 b, int c);
 extern "C" s32 func_80198400(void* voice, u32 key);
 extern "C" void func_80197B4C(void* container, int flag);
 extern "C" void func_80197BA4(void* container, int a, int b);
 
-extern "C" u32* func_800B1818(void* iter, int arg);
-extern "C" void* func_800B1820(void* dst, void* src);
-extern "C" void func_800B3A54(void* dst, void* src);
+extern "C" u32* storeIterWord(void* iter, int arg);
+extern "C" void* copyIterWord(void* dst, void* src);
+extern "C" void copyIterWord2(void* dst, void* src);
 extern "C" void func_800B3A88(UnkClass_805764CC* self, void* obj);
 extern "C" void func_800B8524(UnkClass_805764CC* self, void* arg, void* other);
 extern "C" void func_800B68A8(UnkClass_805764CC* self, void* partner,
@@ -2420,7 +2444,7 @@ extern "C" u32 func_800B47A8(int modeScale, float scale, const B47Vec3* posA,
                              float* outDist, u8* outHit);
 extern "C" u32 func_800B2ED0(UnkClass_805764CC* self, cf::CfObject* obj);
 
-// Spawned object interface used by func_800B7410.
+// Spawned object interface used by scanTboxByXY.
 class IDispB7410 {
 public:
     virtual void unk00();
@@ -2460,7 +2484,7 @@ public:
     virtual void unk22();
     virtual void unk23();
     virtual void unk24();
-    /* Calibrated fake interface for func_800B7410's three dispatches
+    /* Calibrated fake interface for scanTboxByXY's three dispatches
      * (retail vtable offsets 0x9c/0xc4/0xdc). MWCC's slot assignment for this
      * shape does not track declaration order linearly; the filler counts here
      * are empirical (see hexdiff iterations). */
@@ -2589,8 +2613,8 @@ public:
 
 // --- imports for func_800B5994 dispatch (retail symbol names) ---
 extern "C" void func_800B6520(const F8C0ListSource* src, void* rec);
-extern "C" float func_8006BAF0();
-extern "C" B5994Obj* func_800B64DC(void* obj);
-extern "C" u32 func_800B64E4(void* ctrl);
-extern "C" int func_800B64EC(void* obj);
+extern "C" float cfCam_absFloat();
+extern "C" B5994Obj* getObjField98(void* obj);
+extern "C" u32 getObjU16_45C0(void* ctrl);
+extern "C" int testObj64bit26(void* obj);
 #endif

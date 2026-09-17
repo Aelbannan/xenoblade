@@ -39,29 +39,29 @@ class __declspec(novtable) CfResTboxImpl : public CfResTboxImplPrefix {
 public:
     virtual ~CfResTboxImpl();                // 0x08
     virtual void func_801F91B4();            // 0x0C
-    virtual void func_800BEA34();            // 0x10
+    virtual void CfResObj_noop10();            // 0x10
     virtual int func_8016C860();             // 0x14
-    virtual void func_800BE9AC();            // 0x18
+    virtual void CfObjectMove_relaySubB0Slot14();            // 0x18
     virtual void func_8016CD64();            // 0x1C
     virtual int func_801F8E70();             // 0x20
-    virtual void func_800BC2DC();            // 0x24
-    virtual void func_800BF2F4();            // 0x28
-    virtual void func_eu_800BFC78();         // 0x2C
+    virtual void CfResObj_noop24();            // 0x24
+    virtual void CfResObj_noop28();            // 0x28
+    virtual void CfResObj_noop2C();         // 0x2C
     virtual void func_8016CD68(int idx, int value); // 0x30
     virtual u32 func_8016CCBC(int idx);      // 0x34
-    virtual void func_800BEA38();            // 0x38
-    virtual void func_800BED64();            // 0x3C
-    virtual void func_800BEE30();            // 0x40
-    virtual void func_800BC3AC();            // 0x44
-    virtual void func_800BEC44();            // 0x48
-    virtual void func_800BED5C();            // 0x4C
+    virtual void CfResObj_false38();            // 0x38
+    virtual void CfResObj_unk3C();            // 0x3C
+    virtual void CfResObj_noop40();            // 0x40
+    virtual void CfResObj_noop44();            // 0x44
+    virtual void CfResObj_unk48();            // 0x48
+    virtual void CfResObj_unk4C();            // 0x4C
     virtual void func_8016CD5C();            // 0x50
     virtual void func_8016C888(int a, int b, int c, float f1, float f2); // 0x54
-    virtual void func_800BF2C4();            // 0x58
-    virtual void func_800BF2C8();            // 0x5C
+    virtual void CfResObj_noop58();            // 0x58
+    virtual void CfResObj_unk5C();            // 0x5C
     virtual int func_801F8E78();             // 0x60
     virtual int func_8016CD54();             // 0x64
-    virtual int func_800BF30C();             // 0x68
+    virtual int CfResObj_true68();             // 0x68
 
     CfResTboxImplVtbl*& vtbl() {
         return *reinterpret_cast<CfResTboxImplVtbl**>(reinterpret_cast<u8*>(this) + 0x10);
@@ -105,11 +105,11 @@ extern float lbl_eu_806681D0;
 extern float lbl_eu_806681D4;
 void func_801F92B0(u8* base, int idx1, int idx2, int idx3);
 extern "C" bool isSceneActive__Q22cf13CfGameManagerFv();
-extern "C" char* func_80063080();
-extern "C" u8* func_80066E7C(ResInfoEntry* entry, u32 id);
-extern "C" u8* func_80062114(char* key, int index, u32** out);
-extern "C" u8* func_80489A60(u8* global, u8* handle, int a, int b, int c, int d);
+extern "C" char* CfRes_getInstPtr29C();
+extern "C" u8* CfRes_findEntryById(ResInfoEntry* entry, u32 id);
+extern "C" u8* CfRes_lookupStrTable(char* key, int index, u32** out);
+extern "C" u8* scnImN4BuildByIdx(u8* global, u8* handle, int a, int b, int c, int d);
 extern "C" void func_800BBADC(cf::CfResTboxParent* parent, u8* handle);
 extern "C" u8* func_800584B8(u32 global, u32 id, const char* name);
 extern "C" int CfRes_getD80Flag();
-extern "C" void func_800BC3B0(cf::CfObjectMove* player, float value);
+extern "C" void CfObjectMove_setMoveSpeedGated(cf::CfObjectMove* player, float value);

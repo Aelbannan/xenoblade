@@ -99,7 +99,7 @@ namespace cf{
         virtual void vf190(u32 a);  // declared index 98 -> vtable 0x190
     };
 
-    // Object list created by func_80043D90 / filled by func_800F4A98; the
+    // Object list created by CTaskGame_enumListCtor / filled by func_800F4A98; the
     // element count lives at +0x620.
     struct CVisionEnumList {
         u8 unk0[0x620];
@@ -586,9 +586,9 @@ extern "C" f32 lbl_eu_80667D48;
 extern "C" f32 lbl_eu_80667CE8;
 
 extern "C" void lookupEffectForResource__Q22cf13CfGameManagerFv(u32 a, u32 b, u32 c);
-extern "C" void func_8006E5D8();
+extern "C" void cfCam_pushStateToActive();
 extern "C" void* getHandleMEM2__Q23mtl10MemManagerFv();
-// func_8004392C is owned by kyoshin/CTaskGame.hpp (single unified decl).
+// CTaskGame_openVision is owned by kyoshin/CTaskGame.hpp (single unified decl).
 extern "C" void func_801537E0(void* obj); // void return: CAIAction.cpp definition
 extern "C" void func_801537F0(void* obj);
 extern "C" int findObjectById__Fi(int id);
@@ -606,8 +606,8 @@ extern "C" void* func_8009EC9C(u32 index);
 extern "C" void* getPlayer__Q22cf13CfGameManagerFi(int idx);
 extern "C" void func_801BFE8C(u32 a, u32 b, u32 c);
 extern "C" u16 playActorSound__Q22cf10CfSoundManFUlUlUlUlf(u32 a, u32 b, u32 c, u32 d, f32 e);
-extern "C" void func_80043D90(void* list);
-extern "C" void* func_80043F18(void* list);
+extern "C" void CTaskGame_enumListCtor(void* list);
+extern "C" void* CTaskGame_enumListGet(void* list);
 extern "C" void __dt__80043E88(void* list, int tags);
 extern "C" u8* getGlobalSda(void);
 extern "C" void func_8006E2FC(int id);
@@ -645,7 +645,7 @@ extern "C" const f64 lbl_eu_80667D58;
 
 // Mode-dispatch helpers used by func_801A8244's per-mode FX setup.
 extern "C" void func_801ACD5C(u32 a);
-extern "C" void func_802A2078(u32 a, u32 b, void* c);
+extern "C" void CCharVoiceMan_EnqueuePendingActionVoice(u32 a, u32 b, void* c);
 extern "C" void func_80280D04(u32 a);
 
 // Per-slot FX helper used by func_801A897C's loop (func_80174C98 is
@@ -705,7 +705,7 @@ extern "C" int __ptmf_cmpr(void* a, void* b);
 extern "C" u32 __ptmf_null[3];
 extern "C" u32 lbl_eu_8053317C[3];
 extern "C" u32 lbl_eu_80533200[3];
-extern "C" int func_eu_80053FD4(void);
+extern "C" int getAnimGate(void);
 extern "C" s32 CfRes_getE24Bit22(void);
 extern "C" u32 func_801B481C(void);
 extern "C" void CBattleManager_preCalcTotalDamage(void* self, void* actor, f32* outDamage, u32* outCount);

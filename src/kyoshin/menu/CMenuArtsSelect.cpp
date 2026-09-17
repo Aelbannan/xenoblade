@@ -6,8 +6,8 @@
 // CTaskGame.hpp:571 also declares lbl_eu_80663E24 non-volatile, which
 // conflicts with the volatile declaration in CfObjectMove.hpp (reached via
 // the CBattleManager.hpp include below). Rename that CTaskGame.hpp copy out
-// of the way (same scheme as CMenuKizunaTalk.hpp's func_801361E8 rename).
-// (func_8004392C now has a single unified decl.)
+// of the way (same scheme as CMenuKizunaTalk.hpp's BdatGetU8Direct rename).
+// (CTaskGame_openVision now has a single unified decl.)
 // The battle-manager singleton getter has ONE canonical declaration in
 // kyoshin/cf/CBattleManagerApi.hpp; no rename guards are needed anymore.
 #include "kyoshin/CTaskGame.hpp"
@@ -144,12 +144,12 @@ struct ArtsSelEnumIds {
     u32 id[3];
 };
 
-// 8-byte CfObjEnumList holder (func_80043D90 ctor / __dt__80043E88 dtor).
+// 8-byte CfObjEnumList holder (CTaskGame_enumListCtor ctor / __dt__80043E88 dtor).
 struct ArtsEnumHolder {
     u8 _data[8];
 };
 
-// Enum-list handle returned by func_80043F18 (element count at +0x620).
+// Enum-list handle returned by CTaskGame_enumListGet (element count at +0x620).
 struct ArtsEnumList {
     u8 _pad00[0x620];
     u32 mCount620;  // +0x620
@@ -176,11 +176,11 @@ struct ArtsSelModeTbl {
 int func_8018A608();
 int func_80122448();
 
-u8 func_8013BEB8();
+u8 GetSysStateFlag21();
 
 // func_801072E0 / func_80107580 imports (unmangled retail names)
 u32 func_800A32BC(void*); // character-data category
-u16 func_80139358(u32 value);
+u16 BdatGetItemId(u32 value);
 void* func_80157C4C(u32 index);
 // CUIBattleManager.hpp only declares this as a friend; re-declare at file scope.
 void* func_8012FD04(const char* name);
@@ -239,11 +239,11 @@ void func_8010ED38(void*);
 void func_8010ED58(void*);
 void func_8010A710(void*);
 void func_8010A7A8(void*);
-void* func_800B8B94(s32 id);                 // actor-container lookup by id
+void* findObjB28ById(s32 id);                 // actor-container lookup by id
 void* func_80496264(void* scn, int index);   // matches CfCam.hpp decl
 void func_8049B59C(f32* out, void* pose, nw4r::math::VEC3* pos);
-void func_80043D90(void* holder);
-void* func_80043F18(void* holder);
+void CTaskGame_enumListCtor(void* holder);
+void* CTaskGame_enumListGet(void* holder);
 void __dt__80043E88(void* holder, int flag);
 void func_800F4A98(void* list, u32 type, u32 filter);
 void* func_800F6EC0(void* list, u32 index);
@@ -574,8 +574,8 @@ void CMenuArtsSelect::Init() {
         }
     }
 
-    func_80136B4C(unk80, arc + 0x69, NULL, 0);
-    func_80136B4C(unk80, arc + 0x5c, NULL, reinterpret_cast<u32>(unk294));
+    LayoutSetTextBoxFmtValue(unk80, arc + 0x69, NULL, 0);
+    LayoutSetTextBoxFmtValue(unk80, arc + 0x5c, NULL, reinterpret_cast<u32>(unk294));
 
     unk80->SetAnimationEnable(unk88, false);
     unk80->SetAnimationEnable(unk84, true);
@@ -837,7 +837,7 @@ void CMenuArtsSelect::Move() {
     }
     DECOMP_ASM_INSN_END
 after_bit21:
-    if (!func_8013BE50()) {
+    if (!IsMenuState621F0()) {
         goto done;
     }
 
@@ -877,7 +877,7 @@ after_ce48:
     ::func_801080F8(this);
 
     {
-        u8 flag = func_8013BEB8();
+        u8 flag = GetSysStateFlag21();
         u8* b;
         b = &unk26C[0]->unkBB;
         *b = static_cast<u8>((*b & 0xFEu) | flag);
@@ -937,11 +937,11 @@ after_ce48:
             nw4r::lyt::Pane* rootPane8C = unk8C->GetRootPane();
             rootPane8C->SetVisible(true);
             char* nameStr =
-                func_80136190(lbl_eu_804FD1E0 + 0x249, lbl_eu_804FD1E0 + 0x254, 1);
+                BdatTouchStringCell(lbl_eu_804FD1E0 + 0x249, lbl_eu_804FD1E0 + 0x254, 1);
             char* helpStr =
-                func_80136190(lbl_eu_804FD1E0 + 0x249, lbl_eu_804FD1E0 + 0x259, 1);
-            func_80136B4C(unk80, lbl_eu_804FD1E0 + 0x69, nameStr, 0);
-            func_80136B4C(unk80, lbl_eu_804FD1E0 + 0x5c, helpStr,
+                BdatTouchStringCell(lbl_eu_804FD1E0 + 0x249, lbl_eu_804FD1E0 + 0x259, 1);
+            LayoutSetTextBoxFmtValue(unk80, lbl_eu_804FD1E0 + 0x69, nameStr, 0);
+            LayoutSetTextBoxFmtValue(unk80, lbl_eu_804FD1E0 + 0x5c, helpStr,
                           reinterpret_cast<u32>(unk294));
             unk298 = 2;
         }
@@ -1172,7 +1172,7 @@ after_ce48:
                     break;
                 case 0x13:
                     unk314 |= (one << i) | (one << (i + 9));
-                    if (func_80137510(unk194[i],
+                    if (AnimRewindFrame(unk194[i],
                                       lbl_eu_80666F2C) != 0) {
                         unk2E4[i] = 0x10;
                     }
@@ -1249,7 +1249,7 @@ void CMenuArtsSelect::cbRenderBefore() {
     }
     DECOMP_ASM_INSN_END
 after_bit21:
-    if (!func_8013BE50()) {
+    if (!IsMenuState621F0()) {
         goto done;
     }
     if (lbl_eu_80663E24 & 0xAFA40000u) {
@@ -1476,8 +1476,8 @@ extern "C" void func_80104454(CMenuArtsSelect* self) {
         self->unk80->SetAnimationEnable(self->unk84, false);
         self->unk80->SetAnimationEnable(self->unk88, true);
         self->unk8C->GetRootPane()->SetVisible(false);
-        func_80136B4C(self->unk80, lbl_eu_804FD1E0 + 0x69, NULL, 0);
-        func_80136B4C(self->unk80, lbl_eu_804FD1E0 + 0x5c, NULL,
+        LayoutSetTextBoxFmtValue(self->unk80, lbl_eu_804FD1E0 + 0x69, NULL, 0);
+        LayoutSetTextBoxFmtValue(self->unk80, lbl_eu_804FD1E0 + 0x5c, NULL,
                       reinterpret_cast<u32>(self->unk294));
         playUISound__FUl(67);
         self->unk298 = 3;
@@ -1690,12 +1690,12 @@ extern "C" void func_80104454(CMenuArtsSelect* self) {
                 } else {
                 s16* selTab = reinterpret_cast<s16*>(tbl + 0x4C);
                     s16 v = reinterpret_cast<s16*>(tbl + 0x4C)[self->unk328];
-                    char* nameStr = func_80136190(lbl_eu_804FD1E0 + 0x249,
+                    char* nameStr = BdatTouchStringCell(lbl_eu_804FD1E0 + 0x249,
                                                   lbl_eu_804FD1E0 + 0x254, v);
-                    char* helpStr = func_80136190(lbl_eu_804FD1E0 + 0x249,
+                    char* helpStr = BdatTouchStringCell(lbl_eu_804FD1E0 + 0x249,
                                                   lbl_eu_804FD1E0 + 0x259, v);
-                    func_80136B4C(self->unk80, lbl_eu_804FD1E0 + 0x69, nameStr, 0);
-                    func_80136B4C(self->unk80, lbl_eu_804FD1E0 + 0x5c, helpStr,
+                    LayoutSetTextBoxFmtValue(self->unk80, lbl_eu_804FD1E0 + 0x69, nameStr, 0);
+                    LayoutSetTextBoxFmtValue(self->unk80, lbl_eu_804FD1E0 + 0x5c, helpStr,
                                   reinterpret_cast<u32>(self->unk294));
                 }
                 playUISound__FUl(85);
@@ -1724,12 +1724,12 @@ extern "C" void func_80104454(CMenuArtsSelect* self) {
             } else {
                 s16* selTab = reinterpret_cast<s16*>(tbl + 0x4C);
                 s16 v = reinterpret_cast<s16*>(tbl + 0x4C)[self->unk328];
-                char* nameStr = func_80136190(lbl_eu_804FD1E0 + 0x249,
+                char* nameStr = BdatTouchStringCell(lbl_eu_804FD1E0 + 0x249,
                                               lbl_eu_804FD1E0 + 0x254, v);
-                char* helpStr = func_80136190(lbl_eu_804FD1E0 + 0x249,
+                char* helpStr = BdatTouchStringCell(lbl_eu_804FD1E0 + 0x249,
                                               lbl_eu_804FD1E0 + 0x259, v);
-                func_80136B4C(self->unk80, lbl_eu_804FD1E0 + 0x69, nameStr, 0);
-                func_80136B4C(self->unk80, lbl_eu_804FD1E0 + 0x5c, helpStr,
+                LayoutSetTextBoxFmtValue(self->unk80, lbl_eu_804FD1E0 + 0x69, nameStr, 0);
+                LayoutSetTextBoxFmtValue(self->unk80, lbl_eu_804FD1E0 + 0x5c, helpStr,
                               reinterpret_cast<u32>(self->unk294));
             }
             self->unk8C->GetRootPane()->FindPaneByName(lbl_eu_804FD1E0 + 0x25E, true)
@@ -1812,12 +1812,12 @@ extern "C" void func_80104454(CMenuArtsSelect* self) {
                 } else {
                 s16* selTab = reinterpret_cast<s16*>(tbl + 0x4C);
                     s16 v = reinterpret_cast<s16*>(tbl + 0x4C)[self->unk328];
-                    char* nameStr = func_80136190(lbl_eu_804FD1E0 + 0x249,
+                    char* nameStr = BdatTouchStringCell(lbl_eu_804FD1E0 + 0x249,
                                                   lbl_eu_804FD1E0 + 0x254, v);
-                    char* helpStr = func_80136190(lbl_eu_804FD1E0 + 0x249,
+                    char* helpStr = BdatTouchStringCell(lbl_eu_804FD1E0 + 0x249,
                                                   lbl_eu_804FD1E0 + 0x259, v);
-                    func_80136B4C(self->unk80, lbl_eu_804FD1E0 + 0x69, nameStr, 0);
-                    func_80136B4C(self->unk80, lbl_eu_804FD1E0 + 0x5c, helpStr,
+                    LayoutSetTextBoxFmtValue(self->unk80, lbl_eu_804FD1E0 + 0x69, nameStr, 0);
+                    LayoutSetTextBoxFmtValue(self->unk80, lbl_eu_804FD1E0 + 0x5c, helpStr,
                                   reinterpret_cast<u32>(self->unk294));
                 }
                 playUISound__FUl(85);
@@ -1867,12 +1867,12 @@ extern "C" void func_80104454(CMenuArtsSelect* self) {
             } else {
                 s16* selTab = reinterpret_cast<s16*>(tbl + 0x4C);
                 s16 v = reinterpret_cast<s16*>(tbl + 0x4C)[self->unk328];
-                char* nameStr = func_80136190(lbl_eu_804FD1E0 + 0x249,
+                char* nameStr = BdatTouchStringCell(lbl_eu_804FD1E0 + 0x249,
                                               lbl_eu_804FD1E0 + 0x254, v);
-                char* helpStr = func_80136190(lbl_eu_804FD1E0 + 0x249,
+                char* helpStr = BdatTouchStringCell(lbl_eu_804FD1E0 + 0x249,
                                               lbl_eu_804FD1E0 + 0x259, v);
-                func_80136B4C(self->unk80, lbl_eu_804FD1E0 + 0x69, nameStr, 0);
-                func_80136B4C(self->unk80, lbl_eu_804FD1E0 + 0x5c, helpStr,
+                LayoutSetTextBoxFmtValue(self->unk80, lbl_eu_804FD1E0 + 0x69, nameStr, 0);
+                LayoutSetTextBoxFmtValue(self->unk80, lbl_eu_804FD1E0 + 0x5c, helpStr,
                               reinterpret_cast<u32>(self->unk294));
             }
             self->unk8C->GetRootPane()->FindPaneByName(lbl_eu_804FD1E0 + 0x25E, true)
@@ -1891,8 +1891,8 @@ extern "C" void func_80104454(CMenuArtsSelect* self) {
                     reinterpret_cast<ArtsParamInfo*>(getArtsParamAtCnt(arts2, q));
                 char* name = (char*)p->mNamePtr;
                 if (name == NULL) name = lbl_eu_80661E08;
-                func_80136B4C(self->unk80, lbl_eu_804FD1E0 + 0x69, (char*)p, 0);
-                func_80136B4C(self->unk80, lbl_eu_804FD1E0 + 0x5c, name,
+                LayoutSetTextBoxFmtValue(self->unk80, lbl_eu_804FD1E0 + 0x69, (char*)p, 0);
+                LayoutSetTextBoxFmtValue(self->unk80, lbl_eu_804FD1E0 + 0x5c, name,
                               reinterpret_cast<u32>(self->unk294));
             }
             self->unk8C->GetRootPane()->FindPaneByName(lbl_eu_804FD1E0 + 0x25E, true)
@@ -1942,12 +1942,12 @@ extern "C" void func_80104454(CMenuArtsSelect* self) {
             } else {
                 s16* selTab = reinterpret_cast<s16*>(tbl + 0x4C);
                 s16 v = reinterpret_cast<s16*>(tbl + 0x4C)[self->unk328];
-                char* nameStr = func_80136190(lbl_eu_804FD1E0 + 0x249,
+                char* nameStr = BdatTouchStringCell(lbl_eu_804FD1E0 + 0x249,
                                               lbl_eu_804FD1E0 + 0x254, v);
-                char* helpStr = func_80136190(lbl_eu_804FD1E0 + 0x249,
+                char* helpStr = BdatTouchStringCell(lbl_eu_804FD1E0 + 0x249,
                                               lbl_eu_804FD1E0 + 0x259, v);
-                func_80136B4C(self->unk80, lbl_eu_804FD1E0 + 0x69, nameStr, 0);
-                func_80136B4C(self->unk80, lbl_eu_804FD1E0 + 0x5c, helpStr,
+                LayoutSetTextBoxFmtValue(self->unk80, lbl_eu_804FD1E0 + 0x69, nameStr, 0);
+                LayoutSetTextBoxFmtValue(self->unk80, lbl_eu_804FD1E0 + 0x5c, helpStr,
                               reinterpret_cast<u32>(self->unk294));
             }
             self->unk8C->GetRootPane()->FindPaneByName(lbl_eu_804FD1E0 + 0x25E, true)
@@ -1966,8 +1966,8 @@ extern "C" void func_80104454(CMenuArtsSelect* self) {
                     reinterpret_cast<ArtsParamInfo*>(getArtsParamAtCnt(arts2, q));
                 char* name = (char*)p->mNamePtr;
                 if (name == NULL) name = lbl_eu_80661E08;
-                func_80136B4C(self->unk80, lbl_eu_804FD1E0 + 0x69, (char*)p, 0);
-                func_80136B4C(self->unk80, lbl_eu_804FD1E0 + 0x5c, name,
+                LayoutSetTextBoxFmtValue(self->unk80, lbl_eu_804FD1E0 + 0x69, (char*)p, 0);
+                LayoutSetTextBoxFmtValue(self->unk80, lbl_eu_804FD1E0 + 0x5c, name,
                               reinterpret_cast<u32>(self->unk294));
             }
             self->unk8C->GetRootPane()->FindPaneByName(lbl_eu_804FD1E0 + 0x25E, true)
@@ -2023,7 +2023,7 @@ extern "C" void func_80104454(CMenuArtsSelect* self) {
                 int* cfg = func_8009ECB0();
                 for (s32 i = 0; i < 3; i++) {
                     if (cfg[i + 1] == (s32)actor->mField3F28) continue;
-                    void* obj = func_800B8B94(cfg[i + 1]);
+                    void* obj = findObjB28ById(cfg[i + 1]);
                     if (reinterpret_cast<cf::CActorParam*>(obj)->CActorParam_getHp() > lbl_eu_80666F28) {
                         self->unk330 = i;
                         break;
@@ -2124,12 +2124,12 @@ void CMenuArtsSelect::func_80105A34() {
                         unk328 = 0;
                         ::func_80107580(this);
                         s16 v = lbl_eu_804FD11C[unk328];
-                        char* name = func_80136190(lbl_eu_804FD1E0 + 0x249,
+                        char* name = BdatTouchStringCell(lbl_eu_804FD1E0 + 0x249,
                                                     lbl_eu_804FD1E0 + 0x254, v);
-                        char* help = func_80136190(lbl_eu_804FD1E0 + 0x249,
+                        char* help = BdatTouchStringCell(lbl_eu_804FD1E0 + 0x249,
                                                     lbl_eu_804FD1E0 + 0x259, v);
-                        func_80136B4C(unk80, lbl_eu_804FD1E0 + 0x69, name, 0);
-                        func_80136B4C(unk80, lbl_eu_804FD1E0 + 0x5c, help,
+                        LayoutSetTextBoxFmtValue(unk80, lbl_eu_804FD1E0 + 0x69, name, 0);
+                        LayoutSetTextBoxFmtValue(unk80, lbl_eu_804FD1E0 + 0x5c, help,
                                       reinterpret_cast<u32>(unk294));
                     }
                 }
@@ -2153,9 +2153,9 @@ void CMenuArtsSelect::func_80105A34() {
                                 getArtsParamAtCnt(arts2, q));
                             char* name = static_cast<char*>(p2->mNamePtr);
                             name = (name != NULL) ? name : lbl_eu_80661E08;
-                            func_80136B4C(unk80, lbl_eu_804FD1E0 + 0x69,
+                            LayoutSetTextBoxFmtValue(unk80, lbl_eu_804FD1E0 + 0x69,
                                           reinterpret_cast<char*>(p2), 0);
-                            func_80136B4C(unk80, lbl_eu_804FD1E0 + 0x5c, name,
+                            LayoutSetTextBoxFmtValue(unk80, lbl_eu_804FD1E0 + 0x5c, name,
                                           reinterpret_cast<u32>(unk294));
                         }
                     } else {
@@ -2168,12 +2168,12 @@ void CMenuArtsSelect::func_80105A34() {
             unk320 = 0;
             ::func_80107580(this);
             s16 v = lbl_eu_804FD11C[unk328];
-            char* name = func_80136190(lbl_eu_804FD1E0 + 0x249,
+            char* name = BdatTouchStringCell(lbl_eu_804FD1E0 + 0x249,
                                         lbl_eu_804FD1E0 + 0x254, v);
-            char* help = func_80136190(lbl_eu_804FD1E0 + 0x249,
+            char* help = BdatTouchStringCell(lbl_eu_804FD1E0 + 0x249,
                                         lbl_eu_804FD1E0 + 0x259, v);
-            func_80136B4C(unk80, lbl_eu_804FD1E0 + 0x69, name, 0);
-            func_80136B4C(unk80, lbl_eu_804FD1E0 + 0x5c, help,
+            LayoutSetTextBoxFmtValue(unk80, lbl_eu_804FD1E0 + 0x69, name, 0);
+            LayoutSetTextBoxFmtValue(unk80, lbl_eu_804FD1E0 + 0x5c, help,
                           reinterpret_cast<u32>(unk294));
         }
     }
@@ -2296,7 +2296,7 @@ extern "C" void func_80105D54(CMenuArtsSelect* self) {
             func_80496264(self->mScn, -1);
             int* cfg = func_8009ECB0();            u32 id = cfg[self->unk330 + 1];
             BattleActor* cand =
-                static_cast<BattleActor*>(func_800B8B94(id));
+                static_cast<BattleActor*>(findObjB28ById(id));
             CfObjectMoveArtsView* mv = reinterpret_cast<CfObjectMoveArtsView*>(cand);
             if (mv != NULL) {
                 mv = reinterpret_cast<CfObjectMoveArtsView*>(
@@ -2304,18 +2304,18 @@ extern "C" void func_80105D54(CMenuArtsSelect* self) {
             }
             s32 matchIdx = 0;
             if (mv != NULL) {
-                func_80043D90(&holder);
+                CTaskGame_enumListCtor(&holder);
                 ids.id[0] = lbl_eu_804FD128.id[0];
                 ids.id[1] = lbl_eu_804FD128.id[1];
                 ids.id[2] = lbl_eu_804FD128.id[2];
                 // Find which enum type matches the target's +0x8C object id.
                 for (s32 k = 0; k < 3; k++) {
                     ArtsEnumList* list =
-                        static_cast<ArtsEnumList*>(func_80043F18(&holder));
+                        static_cast<ArtsEnumList*>(CTaskGame_enumListGet(&holder));
                     func_800F4A98(list, ids.id[k], 0);
-                    list = static_cast<ArtsEnumList*>(func_80043F18(&holder));
+                    list = static_cast<ArtsEnumList*>(CTaskGame_enumListGet(&holder));
                     if (list->mCount620 == 0) continue;
-                    list = static_cast<ArtsEnumList*>(func_80043F18(&holder));
+                    list = static_cast<ArtsEnumList*>(CTaskGame_enumListGet(&holder));
                     ArtsEnumSlot* slot =
                         static_cast<ArtsEnumSlot*>(func_800F6EC0(list, 0));
                     if (slot->mObj == NULL) continue;
@@ -2385,7 +2385,7 @@ extern "C" void func_80105D54(CMenuArtsSelect* self) {
     s32 count = 0;
     for (s32 i = 0; i < 3; i++) {
         u32 entryId = cfg[i + 1];
-        BattleActor* cand = static_cast<BattleActor*>(func_800B8B94(entryId));
+        BattleActor* cand = static_cast<BattleActor*>(findObjB28ById(entryId));
         CfObjectMoveArtsView* mv = reinterpret_cast<CfObjectMoveArtsView*>(cand);
         if (mv != NULL) {
             mv = reinterpret_cast<CfObjectMoveArtsView*>(
@@ -2506,9 +2506,9 @@ void CMenuArtsSelect::func_80106450() {
                             // select keeps name in r30; only this ternary
                             // shape emits the branch-over-branch.
                             name = (name != NULL) ? name : lbl_eu_80661E08;
-                            func_80136B4C(unk80, lbl_eu_804FD1E0 + 0x69,
+                            LayoutSetTextBoxFmtValue(unk80, lbl_eu_804FD1E0 + 0x69,
                                           reinterpret_cast<char*>(p), 0);
-                            func_80136B4C(unk80, lbl_eu_804FD1E0 + 0x5c, name,
+                            LayoutSetTextBoxFmtValue(unk80, lbl_eu_804FD1E0 + 0x5c, name,
                                           reinterpret_cast<u32>(unk294));
                         }
                     } else {
@@ -2910,8 +2910,8 @@ void CMenuArtsSelect::func_801072E0() {
                 code = 0x77;
                 break;
             }
-            u16 cat = func_80139358(*reinterpret_cast<u32*>(rec) >> 20);
-            switch (func_801361E8(lbl_eu_806640F8, lbl_eu_804FD1E0 + 0x28e, cat)) {
+            u16 cat = BdatGetItemId(*reinterpret_cast<u32*>(rec) >> 20);
+            switch (BdatGetU8Direct(lbl_eu_806640F8, lbl_eu_804FD1E0 + 0x28e, cat)) {
             case 4:  code = 0x77; break;
             case 5:  code = 0x78; break;
             case 6:  code = 0x79; break;
@@ -2932,15 +2932,15 @@ void CMenuArtsSelect::func_801072E0() {
     }
 
     if (actor != NULL && code != 0) {
-        func_8013606C(base + 0x297, base + 0x254, code);
-        char* nameStr = func_80136190(base + 0x297, base + 0x254, code);
-        char* helpStr = func_80136190(base + 0x297, base + 0x259, code);
-        func_80136B4C(unk80, base + 0x69, nameStr, 0);
-        func_80136B4C(unk80, base + 0x5c, helpStr,
+        BdatGetU16ByTableKey(base + 0x297, base + 0x254, code);
+        char* nameStr = BdatTouchStringCell(base + 0x297, base + 0x254, code);
+        char* helpStr = BdatTouchStringCell(base + 0x297, base + 0x259, code);
+        LayoutSetTextBoxFmtValue(unk80, base + 0x69, nameStr, 0);
+        LayoutSetTextBoxFmtValue(unk80, base + 0x5c, helpStr,
                       reinterpret_cast<u32>(unk294));
     } else {
-        func_80136B4C(unk80, base + 0x69, NULL, 0);
-        func_80136B4C(unk80, base + 0x5c, NULL,
+        LayoutSetTextBoxFmtValue(unk80, base + 0x69, NULL, 0);
+        LayoutSetTextBoxFmtValue(unk80, base + 0x5c, NULL,
                       reinterpret_cast<u32>(unk294));
     }
 }
@@ -2949,7 +2949,7 @@ void CMenuArtsSelect::func_801072E0() {
 // func_80107580 (us-80108068) -- set the arts/gauge texture panes.
 // Name and gauge ids come either from the rodata per-mode tables (indexed by
 // unk328) or, in render-mode 4, from the same switch as func_801072E0 plus two
-// table lookups. Each id resolves through func_80138F78 to a texture name.
+// table lookups. Each id resolves through MakeTplNameSysFile to a texture name.
 // ---------------------------------------------------------------------------
 void CMenuArtsSelect::func_80107580() {
     char* base = lbl_eu_804FD1E0;
@@ -3004,8 +3004,8 @@ void CMenuArtsSelect::func_80107580() {
                 code = 0x77;
                 break;
             }
-            u16 cat = func_80139358(*reinterpret_cast<u32*>(rec) >> 20);
-            switch (func_801361E8(lbl_eu_806640F8, lbl_eu_804FD1E0 + 0x28e, cat)) {
+            u16 cat = BdatGetItemId(*reinterpret_cast<u32*>(rec) >> 20);
+            switch (BdatGetU8Direct(lbl_eu_806640F8, lbl_eu_804FD1E0 + 0x28e, cat)) {
             case 4:  code = 0x77; break;
             case 5:  code = 0x78; break;
             case 6:  code = 0x79; break;
@@ -3023,25 +3023,25 @@ void CMenuArtsSelect::func_80107580() {
             code = 0;
             break;
         }
-        nameId = func_8013606C(base + 0x297, base + 0x29f, code);
-        gaugeId = func_8013606C(base + 0x297, base + 0x2a9, code);
+        nameId = BdatGetU16ByTableKey(base + 0x297, base + 0x29f, code);
+        gaugeId = BdatGetU16ByTableKey(base + 0x297, base + 0x2a9, code);
     }
 
     if (nameId != 0) {
-        void* tex = func_8012FD60(func_80138F78(nameId));
+        void* tex = func_8012FD60(MakeTplNameSysFile(nameId));
         if (tex != NULL) {
-            func_80137E7C(unk80, lbl_eu_804FD1E0 + 0x2ae, tex);
+            PaneSetTexPaletteByName(unk80, lbl_eu_804FD1E0 + 0x2ae, tex);
         }
     }
     if (gaugeId != 0) {
         void* tex;
         if (unk328 == 4) {
-            tex = func_8012FC74(func_80138F78(gaugeId));
+            tex = func_8012FC74(MakeTplNameSysFile(gaugeId));
         } else {
-            tex = func_8012FD04(func_80138F78(gaugeId));
+            tex = func_8012FD04(MakeTplNameSysFile(gaugeId));
         }
         if (tex != NULL) {
-            func_80137E7C(unk80, lbl_eu_804FD1E0 + 0x2b9, tex);
+            PaneSetTexPaletteByName(unk80, lbl_eu_804FD1E0 + 0x2b9, tex);
         }
     }
 }
@@ -3320,12 +3320,12 @@ void CMenuArtsSelect::func_801080F8() {
                             func_801072E0();
                         } else {
                             s16 v = selTab[unk328];
-                            char* name = func_80136190(lbl_eu_804FD1E0 + 0x249,
+                            char* name = BdatTouchStringCell(lbl_eu_804FD1E0 + 0x249,
                                                         lbl_eu_804FD1E0 + 0x254, v);
-                            char* help = func_80136190(lbl_eu_804FD1E0 + 0x249,
+                            char* help = BdatTouchStringCell(lbl_eu_804FD1E0 + 0x249,
                                                         lbl_eu_804FD1E0 + 0x259, v);
-                            func_80136B4C(unk80, lbl_eu_804FD1E0 + 0x69, name, 0);
-                            func_80136B4C(unk80, lbl_eu_804FD1E0 + 0x5c, help,
+                            LayoutSetTextBoxFmtValue(unk80, lbl_eu_804FD1E0 + 0x69, name, 0);
+                            LayoutSetTextBoxFmtValue(unk80, lbl_eu_804FD1E0 + 0x5c, help,
                                           reinterpret_cast<u32>(unk294));
                         }
                     } else {
@@ -3343,9 +3343,9 @@ void CMenuArtsSelect::func_801080F8() {
                                 getArtsParamAtCnt(arts2, q));
                             char* name = static_cast<char*>(p2->mNamePtr);
                             name = (name != NULL) ? name : lbl_eu_80661E08;
-                            func_80136B4C(unk80, lbl_eu_804FD1E0 + 0x69,
+                            LayoutSetTextBoxFmtValue(unk80, lbl_eu_804FD1E0 + 0x69,
                                           reinterpret_cast<char*>(p2), 0);
-                            func_80136B4C(unk80, lbl_eu_804FD1E0 + 0x5c, name,
+                            LayoutSetTextBoxFmtValue(unk80, lbl_eu_804FD1E0 + 0x5c, name,
                                           reinterpret_cast<u32>(unk294));
                         }
                     }
@@ -3394,12 +3394,12 @@ void CMenuArtsSelect::func_801080F8() {
                     func_801072E0();
                 } else {
                     s16 v = selTab[unk328];
-                    char* name = func_80136190(lbl_eu_804FD1E0 + 0x249,
+                    char* name = BdatTouchStringCell(lbl_eu_804FD1E0 + 0x249,
                                                 lbl_eu_804FD1E0 + 0x254, v);
-                    char* help = func_80136190(lbl_eu_804FD1E0 + 0x249,
+                    char* help = BdatTouchStringCell(lbl_eu_804FD1E0 + 0x249,
                                                 lbl_eu_804FD1E0 + 0x259, v);
-                    func_80136B4C(unk80, lbl_eu_804FD1E0 + 0x69, name, 0);
-                    func_80136B4C(unk80, lbl_eu_804FD1E0 + 0x5c, help,
+                    LayoutSetTextBoxFmtValue(unk80, lbl_eu_804FD1E0 + 0x69, name, 0);
+                    LayoutSetTextBoxFmtValue(unk80, lbl_eu_804FD1E0 + 0x5c, help,
                                   reinterpret_cast<u32>(unk294));
                 }
                 reinterpret_cast<UnkArtsSelectEntry*>(
@@ -3429,12 +3429,12 @@ void CMenuArtsSelect::func_801080F8() {
             if (!(unk308 & mask)) {
                 unk308 = (unk308 | mask) | 0x20;
             }
-            char* tex = func_80138F78(param->mCheckFlag);
+            char* tex = MakeTplNameSysFile(param->mCheckFlag);
             u8* res = static_cast<u8*>(func_8012FD60(tex));
             if (res != NULL) {
                 func_80137F88(reinterpret_cast<nw4r::lyt::Pane*>(unk200[i]), res);
             }
-            tex = func_80138F78(param->mField72);
+            tex = MakeTplNameSysFile(param->mField72);
             res = static_cast<u8*>(func_8012FC74(tex));
             if (res != NULL) {
                 func_80137F88(reinterpret_cast<nw4r::lyt::Pane*>(unk224[i]), res);

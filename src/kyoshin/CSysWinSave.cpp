@@ -222,7 +222,7 @@ void CSysWinSave::Move() {
     CTaskGame::getInstance();
     if (CTaskGame::func_800426F0() || (lbl_eu_80663E28 & 0x200000))
         return;
-    if (func_8013BE50() == 0) return;
+    if (IsMenuState621F0() == 0) return;
 
     switch (mFlagDC) {
     case 0: {
@@ -235,9 +235,9 @@ void CSysWinSave::Move() {
             // so MWCC's saved-register coloring lands s1 in r29 / s2 in r30.
             const char* s2;
             const char* s1;
-            s1 = func_80136190(base + 0xc, base + 0x17, 0x4e);
-            s2 = func_80136190(base + 0xc, base + 0x17, 0x4f);
-            const char* s3 = func_80136190(base + 0xc, base + 0x17, 0x50);
+            s1 = BdatTouchStringCell(base + 0xc, base + 0x17, 0x4e);
+            s2 = BdatTouchStringCell(base + 0xc, base + 0x17, 0x4f);
+            const char* s3 = BdatTouchStringCell(base + 0xc, base + 0x17, 0x50);
             func_8022B9B4(&mSysWin[0], (void*)s1, 0);
             func_8022BF6C(&mSysWin[0], (void*)s2, (void*)s3);
             func_8022BFC8(&mSysWin[0], 0);
@@ -338,7 +338,7 @@ void CSysWinSave::cbRenderBefore() {
 end:
     return;
 body:
-    if (func_8013BE50() == 0) {
+    if (IsMenuState621F0() == 0) {
         return;
     }
     GXSetZMode(GX_FALSE, GX_NEVER, GX_FALSE);

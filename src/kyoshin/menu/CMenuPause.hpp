@@ -104,7 +104,7 @@ extern "C" {
     void func_80188890(u32);
     int isClassicController__Q22cf13CfGameManagerFv(int arg);
     void func_801BFB34(f32, int, int, int);
-    void func_eu_8013C8E8();
+    void MenuStateClear64064();
     void func_800853C8__Q22cf13CfGameManagerFv();
     void setPresentationFlag__Q22cf13CfGameManagerFv(bool);
 

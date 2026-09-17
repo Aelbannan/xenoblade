@@ -170,7 +170,7 @@ struct CAIPartyObj {
     u16 unk3F28;              // 0x3F28 current arts id
 };
 
-// Iterator object handed out by the func_80043F18 family; limit word at +0x620.
+// Iterator object handed out by the CTaskGame_enumListGet family; limit word at +0x620.
 struct CAIEnumIter {
     u8 pad[0x620];
     u32 field620;             // 0x620 entry count / limit
@@ -189,7 +189,7 @@ struct CAIArtsParamView {
     f32 field80;              // 0x80 power value
 };
 
-// Element row (func_80193AB0 result): s16 gate value at +0xA2.
+// Element row (CPartsChange_FindActorById result): s16 gate value at +0xA2.
 struct CAIElemA4View {
     u8 pad00[0xA2];
     s16 fieldA2;
@@ -217,11 +217,11 @@ extern "C" int func_801B1FFC(int idx);
 extern "C" u16 func_8016DF2C(void);   // canonical u16 form (chapter/episode getter)
 extern "C" u32 func_800A32BC(void* obj);
 extern "C" u32 func_8009CF8C(u32 id);
-extern "C" int func_80158018(u32 v);
+extern "C" int CItem_getNameIdFromFam(u32 v);
 extern "C" u32 getBdatStringColumnValue(void* table, const char* col, s32 index = 0); // canonical ocBdat.hpp form; default keeps 2-arg call sites compiling
-extern "C" void* func_80193AB0(void* table, u32 id);
+extern "C" void* CPartsChange_FindActorById(void* table, u32 id);
 void* func_800AD860(void* obj);   // C++ linkage -> getEffOwner____FPv
-extern "C" void* func_80193670(void);
+extern "C" void* CPartsChange_GetActorTable(void);
 extern "C" int func_80260264(void* self, int id, void* out);
 extern "C" int func_80145C00(int id);   // canonical int param (CBattleState.cpp definition)
 extern "C" int func_801554DC(void* param, void* actor, u32 flags);
@@ -285,7 +285,7 @@ extern "C" void* func_8016FE34(void*);          // -> func_8016FE34
 // by CBattleManager.hpp). With both typed pointers visible in one TU, MWCC
 // reports (10197) illegal function overloading, breaking every TU that
 // includes both headers. ABI is unchanged (opaque pointer).
-extern "C" void func_80043D90(void*);
+extern "C" void CTaskGame_enumListCtor(void*);
 extern "C" void __dt__80043E88(void*, int);
 extern "C" void* func_80150828(cf::CAIAction*, CAIActionQuery*);
 extern "C" void* func_80150618(cf::CAIAction*, CAIActionQuery*);
@@ -295,7 +295,7 @@ extern "C" int func_8014CE78(cf::CAIAction*, const u8*, cf::CAIActionSlot*);
 void func_8014B344(cf::CAIAction*, u32);
 
 // CfObjEnumList helper family (retail names unmangled -> extern "C").
-extern "C" void* func_80043F18(void*);
+extern "C" void* CTaskGame_enumListGet(void*);
 extern "C" void func_800F4A98(void*, u32, u32);
 extern "C" void func_800F6D50(void*, u32);
 extern "C" void* func_800F6E08(void*);
@@ -315,9 +315,9 @@ extern "C" void __ct__800FCB80(void*, void*, u32);
 extern "C" void __ct__800FCD10(void*, void*, u32);
 extern "C" void __ct__800FCF1C(void*, u32, u32);
 extern "C" void __ct__800FD250(void*);
-extern "C" void* func_800B76A4(void*);
-extern "C" void* func_800B77E4(void*, void*);
-extern "C" void* func_800B8B94(s32);
+extern "C" void* firstReslistB28(void*);
+extern "C" void* nextReslistB28(void*, void*);
+extern "C" void* findObjB28ById(s32);
 extern void* getInstance();   // C++ linkage -> getInstance__Fv
 extern "C" int func_80148778(void*, int);
 extern "C" void* func_80149154(void*, u32);

@@ -713,8 +713,8 @@ extern "C" cf::CfResReloadImpl* __ct__cf_CfResReloadImpl(cf::CfResReloadImpl* se
 // C-ABI imports used by the CfObjectEne ctor (func_80061FFC + MemManager),
 // func_800ADB2C and the dtor (retail symbols are unmangled).
 extern "C" unsigned long func_80061FFC();
-extern "C" void func_800BE33C(void* obj, int flag);
-extern "C" void func_800BE824(void* obj, int flag);
+extern "C" void CfObjectMove_setModelDisplayFlag(void* obj, int flag);
+extern "C" void CfObjectMove_setRegionAttached(void* obj, int flag);
 // func_80174B4C is declared in CfObjectActor.hpp with its full 5-arg ABI
 // signature; a second C-linkage declaration here would be an illegal overload.
 extern "C" void func_804B0AD4(void* obj, int param, float a, float b);

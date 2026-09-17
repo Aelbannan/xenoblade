@@ -15,9 +15,9 @@
 // TU-local C-ABI imports (moved out of CfObjectImplPc.hpp so that header
 // stays co-includable with kyoshin/cf/object/CfObjectMove.hpp, whose owner
 // decls for these two names are distinct overloads (MWCC 10197); same
-// pattern as CChain.cpp's local func_800BE12C). Only this TU uses them.
+// pattern as CChain.cpp's local CfObjectMove_setAnimModeArgs). Only this TU uses them.
 extern "C" {
-void func_800BE12C(void* sub, u32 a, u32 b, s32 c, u32 d);
+void CfObjectMove_setAnimModeArgs(void* sub, u32 a, u32 b, s32 c, u32 d);
 void func_8004B9D4(void* obj, u32 a, u32 b, void* c, u32 d);
 }
 
@@ -205,7 +205,7 @@ void func_800C5998(cf::CfObjectImplPc* self)
     u32 out8;
     func_800AA318(self->field_14->field_70, &out14, &out10, &outC, &out8);
     if (out10 == 7) {
-        u8* mem = (u8*)mtl::MemManager::allocate(0x64, func_80061FE8());
+        u8* mem = (u8*)mtl::MemManager::allocate(0x64, CfRes_getHeapHandle());
         if (mem != 0) {
             u8* actor = (u8*)self->field_14;
             if (actor != 0) {
@@ -439,11 +439,11 @@ L_tail:
             obj->v234();
             cf::CfGameManager::getInstance();
             if (isGlobalCamFlagSet(0x04000000) == 0) {
-                if (func_800B8C78(0x9c5)) {
+                if (findObjB48ById(0x9c5)) {
                     u8 h58[8];
-                    func_80043D90(h58);
-                    func_800F4A98(func_80043F18(h58), 0x20, 0x800);
-                    if (((cf::CfEnumList*)func_80043F18(h58))->field_620 != 0) {
+                    CTaskGame_enumListCtor(h58);
+                    func_800F4A98(CTaskGame_enumListGet(h58), 0x20, 0x800);
+                    if (((cf::CfEnumList*)CTaskGame_enumListGet(h58))->field_620 != 0) {
                         __dt__80043E88(h58, -1);
                     } else {
                         // No other actors queued: drop every player into the
@@ -456,7 +456,7 @@ L_tail:
                             if (pl != 0) {
                                 u32 pid = *pl->field_04->vf30();
                                 if (func_80174C98(pl, &pid, 0x1c) == 0) {
-                                    func_800BE12C(
+                                    CfObjectMove_setAnimModeArgs(
                                         reinterpret_cast<cf::CfObjectImplPcSub3E9C*>(
                                             (u8*)pl + 0x3e9c),
                                         5, 0, -1, 1);
@@ -513,12 +513,12 @@ L_tail:
                 goto L_end;
             }
             u8 h50[8];
-            func_80043D90(h50);
-            func_800F4A98(func_80043F18(h50), 0x20, 0x1000);
-            if (((cf::CfEnumList*)func_80043F18(h50))->field_620 != 0) {
+            CTaskGame_enumListCtor(h50);
+            func_800F4A98(CTaskGame_enumListGet(h50), 0x20, 0x1000);
+            if (((cf::CfEnumList*)CTaskGame_enumListGet(h50))->field_620 != 0) {
                 obj->v11C(lbl_eu_80666BC8);
                 obj->v314();
-                func_800BE12C(&obj->mSub, 0x2f, 1, -1, 1);
+                CfObjectMove_setAnimModeArgs(&obj->mSub, 0x2f, 1, -1, 1);
                 obj->mSub.v08(0x200);
             }
             __dt__80043E88(h50, -1);
@@ -549,7 +549,7 @@ L_tail:
         if (func_80174C98(obj, &e, 0x04000000) == 0) {
             // Raise: push the battle-start state; when nothing is paired,
             // also arm the 0x1c flag for next time.
-            func_800BE12C(&obj->mSub, 5, 0, -1, 1);
+            CfObjectMove_setAnimModeArgs(&obj->mSub, 5, 0, -1, 1);
             if (obj->field_3F60 == 0) {
                 func_80174B4C(obj, 0x1c);
             }
@@ -571,13 +571,13 @@ L_tail:
             // Landing reset: enumerate actors, replay each idler's landing
             // scale, then rebase the chain gauge from the 0x48 query rate.
             u8 h48[8];
-            func_80043D90(h48);
-            func_800F4A98(func_80043F18(h48), 0x20, 0);
-            cf::CfEnumList* list = (cf::CfEnumList*)func_80043F18(h48);
+            CTaskGame_enumListCtor(h48);
+            func_800F4A98(CTaskGame_enumListGet(h48), 0x20, 0);
+            cf::CfEnumList* list = (cf::CfEnumList*)CTaskGame_enumListGet(h48);
             for (u32 i = 0; i < list->field_620; i++) {
                 cf::CfObjectImplPc18* o2 = reinterpret_cast<cf::CfObjectImplPc18*>(
                     func_8016FE34(
-                        func_800F6EAC((u8*)func_80043F18(h48), i)));
+                        func_800F6EAC((u8*)CTaskGame_enumListGet(h48), i)));
                 if (o2 != self->field_18 && o2->vf308() == 4) {
                     o2->vf304(1);
                     cf::CfObjectImplPc2F4* t = o2->vf2F4();
@@ -585,7 +585,7 @@ L_tail:
                     o2->vf2FC((s32)(t->field_10 * pb[4]) / 2);
                 }
             }
-            func_800BE12C(&self->field_18->mSub, 5, 0, -1, 1);
+            CfObjectMove_setAnimModeArgs(&self->field_18->mSub, 5, 0, -1, 1);
             CfObjectImplPcEA444* res = reinterpret_cast<CfObjectImplPcEA444*>(
                 func_800EA444(cf::CBattleManager::getInstance()));
             cf::CfGameManager::getInstance();
@@ -605,8 +605,8 @@ L_tail:
                 func_800E9B54(cf::CBattleManager::getInstance(), ob, 0, 0);
                 func_800D9CA0(cf::CBattleManager::getInstance(), ob);
                 u8 h40[8];
-                func_80043D90(h40);
-                func_800F4A98(func_80043F18(h40), 0x20, 0x800);
+                CTaskGame_enumListCtor(h40);
+                func_800F4A98(CTaskGame_enumListGet(h40), 0x20, 0x800);
                 void* q = ob->vf290();
                 u32 w38 = 0;
                 f32 fv34 = 0.0f;
@@ -616,12 +616,12 @@ L_tail:
                     if (q != 0) {
                         if (func_80260264(q, 0x48, (s32*)&w38)) {
                             cf::CfEnumList* list2 =
-                                (cf::CfEnumList*)func_80043F18(h40);
+                                (cf::CfEnumList*)CTaskGame_enumListGet(h40);
                             for (u32 i = 0; i < list2->field_620; i++) {
                                 cf::CfObjectImplPc18* o2 =
                                     reinterpret_cast<cf::CfObjectImplPc18*>(
                                         func_8016FE34(func_800F6EAC(
-                                            (u8*)func_80043F18(h40), i)));
+                                            (u8*)CTaskGame_enumListGet(h40), i)));
                                 func_800D81A8(0, o2, 0);
                                 // Rebase the stored gauge off the magic
                                 // double bias, then rescale by BD0.
@@ -633,11 +633,11 @@ L_tail:
                     }
                 }
                 for (u32 i = 0;
-                     i < ((cf::CfEnumList*)func_80043F18(h40))->field_620;
+                     i < ((cf::CfEnumList*)CTaskGame_enumListGet(h40))->field_620;
                      i++) {
                     cf::CfObjectImplPc18* o2 =
                         reinterpret_cast<cf::CfObjectImplPc18*>(func_8016FE34(
-                            func_800F6EAC((u8*)func_80043F18(h40), i)));
+                            func_800F6EAC((u8*)CTaskGame_enumListGet(h40), i)));
                     if (o2->vf290() == 0) {
                         continue;
                     }
@@ -680,7 +680,7 @@ L_tail:
                                       &eff, 0x9a, 0);
                     }
                     if (func_80260264(o2->vf290(), 0x62, (s32*)&w38)) {
-                        if (((cf::CfEnumList*)func_80043F18(h40))->field_620
+                        if (((cf::CfEnumList*)CTaskGame_enumListGet(h40))->field_620
                             == 1) {
                             func_8018C820(
                                 &cf::CBattleManager::getInstance()->unk194,
@@ -766,16 +766,16 @@ L_flags:
     }
 
     u8 holder[8];
-    func_80043D90(holder);
-    func_800F4A98(func_80043F18(holder), 0x80000002, 0);
+    CTaskGame_enumListCtor(holder);
+    func_800F4A98(CTaskGame_enumListGet(holder), 0x80000002, 0);
     u32 startId = self->vf40();
-    func_800F6ED0(func_80043F18(holder), (void*)startId);
-    if (((cf::CfEnumList*)func_80043F18(holder))->field_620 != 0) {
+    func_800F6ED0(CTaskGame_enumListGet(holder), (void*)startId);
+    if (((cf::CfEnumList*)CTaskGame_enumListGet(holder))->field_620 != 0) {
         // Non-empty list: reset iteration (holder passed directly), publish
         // the result via vtable 0x70, and forward entry 0's actor to 0x2C4.
         u32 resetId = (u32)func_800F6E08(holder);
         self->vf68(resetId);
-        u8* item = (u8*)func_800F6EAC(func_80043F18(holder), 0);
+        u8* item = (u8*)func_800F6EAC(CTaskGame_enumListGet(holder), 0);
         u8* target = item;
         if (target != 0) {
             target -= 0x3e9c;  // back up from the embedded mSub to the owner
@@ -811,7 +811,7 @@ L_reset:
                 battle->field_3380.field_3594 = 0;
                 battle->field_3380.field_3590 = 0;
                 func_8014B2DC(&self->field_18->field_3380);
-                func_800BE12C(&self->field_18->mSub, 0x31, 0, -1, 1);
+                CfObjectMove_setAnimModeArgs(&self->field_18->mSub, 0x31, 0, -1, 1);
             } else {
                 battle = self->field_18;
                 f803b = *battle->field_04->vf30();
@@ -853,10 +853,10 @@ void func_800C6F30(cf::CfObjectImplPc* self, int arg2, int arg3, int arg4)
         // slot-0 body, jump, slot-1 body, then the shared name check.
         if (arg4 == 0) {
             flag = 0;
-            name = func_800BEDC4((u8*)&battleObj->mSub, 0);
+            name = CfObjectMove_getBdatNameCol11((u8*)&battleObj->mSub, 0);
         } else if (arg4 == 1) {
             flag = 1;
-            name = func_800BEDC4((u8*)&battleObj->mSub, 1);
+            name = CfObjectMove_getBdatNameCol11((u8*)&battleObj->mSub, 1);
         }
         if (strcmp(name, lbl_eu_804FC758) == 0) {
             name = 0;
@@ -871,10 +871,10 @@ void func_800C6F30(cf::CfObjectImplPc* self, int arg2, int arg3, int arg4)
     {
         if (arg4 == 0) {
             flag = 0;
-            name = func_800BED80((u8*)&battleObj->mSub, 0);
+            name = CfObjectMove_getBdatNameCol7((u8*)&battleObj->mSub, 0);
         } else if (arg4 == 1) {
             flag = 1;
-            name = func_800BED80((u8*)&battleObj->mSub, 1);
+            name = CfObjectMove_getBdatNameCol7((u8*)&battleObj->mSub, 1);
         }
         if (strcmp(name, lbl_eu_804FC758) == 0) {
             name = 0;
@@ -1057,7 +1057,7 @@ void func_800C819C(cf::CfObjectImplPc* self, u32 id, u32 a3, u32 a4, u32 a5,
         // Flag word 0x200000 (retail: lis r4, 0x20).
         if (sub->v0C(0x200000) != 0) {
             self->field_18->mSub.v10();
-            func_800BE12C(&self->field_18->mSub, 0x1b, 0, 6, 1);
+            CfObjectMove_setAnimModeArgs(&self->field_18->mSub, 0x1b, 0, 6, 1);
             return;
         }
     }
@@ -1068,11 +1068,11 @@ void func_800C819C(cf::CfObjectImplPc* self, u32 id, u32 a3, u32 a4, u32 a5,
 
     // Sync both battle-id objects against their source: refresh the cached
     // word and re-run the pairing; when the source moved to a new state,
-    // reset through func_8004CEF8 and pair again. field_18 is reloaded per
+    // reset through setAnimCount and pair again. field_18 is reloaded per
     // access (no cached pointers - retail holds none).
     if (self->field_18->field_3F64 != 0) {
         ((cf::CfObjectImplPc3F60*)self->field_18->field_3F64)->field_4B4 =
-            func_8004B9B8((cf::CfObjectImplPc3F60*)self->field_18->field_3F60);
+            getAnimChain((cf::CfObjectImplPc3F60*)self->field_18->field_3F60);
         func_8004B9D4((cf::CfObjectImplPc3F60*)self->field_18->field_3F64, a3,
                       0,
                       ((cf::CfObjectImplPc3F60*)self->field_18->field_3F60)
@@ -1080,11 +1080,11 @@ void func_800C819C(cf::CfObjectImplPc* self, u32 id, u32 a3, u32 a4, u32 a5,
                       0);
         if (((cf::CfObjectImplPc3F60*)self->field_18->field_3F60)->field_374 !=
             ((cf::CfObjectImplPc3F60*)self->field_18->field_3F64)->field_374) {
-            func_8004CEF8((cf::CfObjectImplPc3F60*)self->field_18->field_3F64,
+            setAnimCount((cf::CfObjectImplPc3F60*)self->field_18->field_3F64,
                           ((cf::CfObjectImplPc3F60*)self->field_18->field_3F60)
                               ->field_374);
             ((cf::CfObjectImplPc3F60*)self->field_18->field_3F64)->field_4B4 =
-                func_8004B9B8(
+                getAnimChain(
                     (cf::CfObjectImplPc3F60*)self->field_18->field_3F60);
             func_8004B9D4(
                 (cf::CfObjectImplPc3F60*)self->field_18->field_3F64, a3, 0,
@@ -1094,7 +1094,7 @@ void func_800C819C(cf::CfObjectImplPc* self, u32 id, u32 a3, u32 a4, u32 a5,
     }
     if (self->field_18->field_3F68 != 0) {
         ((cf::CfObjectImplPc3F60*)self->field_18->field_3F68)->field_4B4 =
-            func_8004B9B8((cf::CfObjectImplPc3F60*)self->field_18->field_3F60);
+            getAnimChain((cf::CfObjectImplPc3F60*)self->field_18->field_3F60);
         func_8004B9D4((cf::CfObjectImplPc3F60*)self->field_18->field_3F68, a3,
                       0,
                       ((cf::CfObjectImplPc3F60*)self->field_18->field_3F60)
@@ -1102,11 +1102,11 @@ void func_800C819C(cf::CfObjectImplPc* self, u32 id, u32 a3, u32 a4, u32 a5,
                       0);
         if (((cf::CfObjectImplPc3F60*)self->field_18->field_3F60)->field_374 !=
             ((cf::CfObjectImplPc3F60*)self->field_18->field_3F68)->field_374) {
-            func_8004CEF8((cf::CfObjectImplPc3F60*)self->field_18->field_3F68,
+            setAnimCount((cf::CfObjectImplPc3F60*)self->field_18->field_3F68,
                           ((cf::CfObjectImplPc3F60*)self->field_18->field_3F60)
                               ->field_374);
             ((cf::CfObjectImplPc3F60*)self->field_18->field_3F68)->field_4B4 =
-                func_8004B9B8(
+                getAnimChain(
                     (cf::CfObjectImplPc3F60*)self->field_18->field_3F60);
             func_8004B9D4(
                 (cf::CfObjectImplPc3F60*)self->field_18->field_3F68, a3, 0,
@@ -1184,26 +1184,26 @@ void func_800C819C(cf::CfObjectImplPc* self, u32 id, u32 a3, u32 a4, u32 a5,
         }
         if (self->field_18->field_3F28 == 5 &&
             func_80148778(&self->field_18->mArts, 0xf1) == 0) {
-            func_800BE12C(&self->field_18->mSub, 0x31, 0, -1, 1);
+            CfObjectMove_setAnimModeArgs(&self->field_18->mSub, 0x31, 0, -1, 1);
         }
         goto L_case_end;
     L_st_c:
         if (self->field_18->field_3F28 == 2) {
             if (func_80148778(&self->field_18->mArts, 0xeb) == 0) {
-                func_800BE12C(&self->field_18->mSub, 0x31, 0, -1, 1);
+                CfObjectMove_setAnimModeArgs(&self->field_18->mSub, 0x31, 0, -1, 1);
             }
             goto L_case_end;
         }
         if (self->field_18->field_3F28 == 5) {
             if (func_80148778(&self->field_18->mArts, 0xef) == 0) {
-                func_800BE12C(&self->field_18->mSub, 0x31, 0, -1, 1);
+                CfObjectMove_setAnimModeArgs(&self->field_18->mSub, 0x31, 0, -1, 1);
             }
         }
         goto L_case_end;
     L_st_d:
         if (self->field_18->field_3F28 == 5 &&
             func_80148778(&self->field_18->mArts, 0xf0) == 0) {
-            func_800BE12C(&self->field_18->mSub, 0x31, 0, -1, 1);
+            CfObjectMove_setAnimModeArgs(&self->field_18->mSub, 0x31, 0, -1, 1);
         }
     L_case_end:
         break;
@@ -1230,7 +1230,7 @@ void func_800C819C(cf::CfObjectImplPc* self, u32 id, u32 a3, u32 a4, u32 a5,
             (((cf::CfObjectImplPc3F60*)self->field_18->field_3F60)->field_4EC &
              0x40000000) == 0) {
             func_80174B4C(self->field_18, 4);
-            func_802A3074(func_8016FE34((u8*)self->field_14));
+            CCharVoiceMan_EnqueuePcActionVoice(func_8016FE34((u8*)self->field_14));
         }
         break;
     case 29:
@@ -1271,20 +1271,20 @@ void func_800C86E8(cf::CfObjectImplPc* self)
     self->field_18->field_04->vf20(0x400000);
     self->field_18->field_04->vf20(0x800000);
     u8 holder[8];
-    func_80043D90(holder);
-    func_800F4A98(func_80043F18(holder), 0x80000002, 0);
+    CTaskGame_enumListCtor(holder);
+    func_800F4A98(CTaskGame_enumListGet(holder), 0x80000002, 0);
     u32 startId = self->vf40();
-    func_800F6ED0(func_80043F18(holder), (void*)startId);
+    func_800F6ED0(CTaskGame_enumListGet(holder), (void*)startId);
     // Unrotated in retail (init; b cond; body; incr; cond) - kept as a plain
     // while since MWCC emits identical bytes either way.
     u32 i = 0;
-    while (i < ((cf::CfEnumList*)func_80043F18(holder))->field_620) {
+    while (i < ((cf::CfEnumList*)CTaskGame_enumListGet(holder))->field_620) {
         cf::CfObjectImplPc18* obj = (cf::CfObjectImplPc18*)func_8016FE34(
-            func_800F6EAC(func_80043F18(holder), i));
+            func_800F6EAC(CTaskGame_enumListGet(holder), i));
         self->field_18->vf2C4((u8*)obj, lbl_eu_80666BCC, lbl_eu_80666BCC, lbl_eu_80666BCC);
         i++;
     }
-    u32 listId = (u32)func_800F6E08(func_80043F18(holder));
+    u32 listId = (u32)func_800F6E08(CTaskGame_enumListGet(holder));
     __dt__80043E88(holder, -1);
     if (self->field_18->mSub.sf4C() == 0) {
         self->field_18->mSub.sf50(listId);
@@ -1626,13 +1626,13 @@ void func_800C9A20(cf::CfObjectImplPc* self, CfObjectImplPcEvt* evt)
     }
     goto L_chainEnd;
 L_ea:
-    func_800BF29C(&self->field_18->mSub, 0x66, lbl_eu_80666BC8, 0, lbl_eu_80666BF8, 0);
+    CfObjectMove_relaySubB0Slot54(&self->field_18->mSub, 0x66, lbl_eu_80666BC8, 0, lbl_eu_80666BF8, 0);
     goto L_chainEnd;
 L_f0:
-    func_800BF29C(&self->field_18->mSub, 0x66, lbl_eu_80666BC8, 0, lbl_eu_80666BF8, 0);
+    CfObjectMove_relaySubB0Slot54(&self->field_18->mSub, 0x66, lbl_eu_80666BC8, 0, lbl_eu_80666BF8, 0);
     goto L_chainEnd;
 L_10a:
-    func_800BF29C(&self->field_18->mSub, 0x66, lbl_eu_80666BC8, 0, lbl_eu_80666BF8, 0);
+    CfObjectMove_relaySubB0Slot54(&self->field_18->mSub, 0x66, lbl_eu_80666BC8, 0, lbl_eu_80666BF8, 0);
 L_chainEnd:
     if (func_802799F0(&cf::CBattleManager::getInstance()->mChain, self->field_18) == 0) {
         if ((u32)(evt->id() - 0xF) <= 1 || evt->id() == 9 || evt->id() == 0xB) {
@@ -1704,7 +1704,7 @@ L_eb:
     if (reinterpret_cast<cf::CfObjectImplPcSub3E9CData*>(&self->field_18->mSub)->field_8C == 2 &&
         reinterpret_cast<cf::CfObjectImplPcSub3E9CData*>(&self->field_18->mSub)
             ->field_C4->field_374 != 0xb) {
-        func_800BE12C(&self->field_18->mSub, 0x31, 0, -1, 1);
+        CfObjectMove_setAnimModeArgs(&self->field_18->mSub, 0x31, 0, -1, 1);
     }
     goto L_default;
 L_ef:
@@ -1715,9 +1715,9 @@ L_ef:
             s32 state = sub->field_C4->field_374;
             if (state != 0xb) {
                 if (state == 0xc) {
-                    func_800BE12C(sub, 0x31, 0, -1, 1);
+                    CfObjectMove_setAnimModeArgs(sub, 0x31, 0, -1, 1);
                 } else {
-                    func_8004CEF8(sub->field_C4, 0xb);
+                    setAnimCount(sub->field_C4, 0xb);
                 }
             }
         }
@@ -1728,8 +1728,8 @@ L_f0:
         cf::CfObjectImplPcSub3E9CData* sub = reinterpret_cast<cf::CfObjectImplPcSub3E9CData*>(
             &self->field_18->mSub);
         if (sub->field_8C == 5 && sub->field_C4->field_374 != 0xb) {
-            func_800BE12C(sub, 0x31, 0, -1, 1);
-            func_802A300C(self->field_18);
+            CfObjectMove_setAnimModeArgs(sub, 0x31, 0, -1, 1);
+            CCharVoiceMan_EnqueuePcStateVoice(self->field_18);
         }
     }
     goto L_default;
@@ -1738,7 +1738,7 @@ L_f1:
         cf::CfObjectImplPcSub3E9CData* const sub = reinterpret_cast<cf::CfObjectImplPcSub3E9CData*>(
             &self->field_18->mSub);
         if (sub->field_8C == 5 && sub->field_C4->field_374 != 0xb) {
-            func_800BE12C(sub, 0x31, 0, -1, 1);
+            CfObjectMove_setAnimModeArgs(sub, 0x31, 0, -1, 1);
         }
     }
     goto L_default;
@@ -1746,7 +1746,7 @@ L_f8:
     {
         cf::CfObjectImplPc18* obj = self->field_18;
         if (obj->v2BC() == 0) {
-            func_800BE12C(&obj->mSub, 0x2f, 0, -1, 1);
+            CfObjectMove_setAnimModeArgs(&obj->mSub, 0x2f, 0, -1, 1);
             // Re-dispatch a synthetic 0x93 event (float payload swapped)
             // into the battle manager.
             CfObjectImplPcEvt copy = *evt;
@@ -1797,13 +1797,13 @@ L_default:
     }
     goto L_chain;
 L_refresh66_a:
-    func_800BF2B0(&self->field_18->mSub, 0x66, 0);
+    CfObjectMove_relaySubB0Slot58(&self->field_18->mSub, 0x66, 0);
     goto L_chain;
 L_refresh66_b:
-    func_800BF2B0(&self->field_18->mSub, 0x66, 0);
+    CfObjectMove_relaySubB0Slot58(&self->field_18->mSub, 0x66, 0);
     goto L_chain;
 L_refresh66_c:
-    func_800BF2B0(&self->field_18->mSub, 0x66, 0);
+    CfObjectMove_relaySubB0Slot58(&self->field_18->mSub, 0x66, 0);
 L_chain:
     func_800CB454(self, evt);
 }
@@ -1889,11 +1889,11 @@ int func_800CA294(cf::CfObjectImplPc* self)
     u32 prev = self->field_37C;
     self->field_37C = 0;
     u8 holder[8];
-    func_80043D90(holder);
-    func_800F4A98(func_80043F18(holder), 0x80000000, 0x800);
-    for (u32 i = 0; i < ((cf::CfEnumList*)func_80043F18(holder))->field_620; i++) {
+    CTaskGame_enumListCtor(holder);
+    func_800F4A98(CTaskGame_enumListGet(holder), 0x80000000, 0x800);
+    for (u32 i = 0; i < ((cf::CfEnumList*)CTaskGame_enumListGet(holder))->field_620; i++) {
         cf::CfObjectImplPc18* obj = (cf::CfObjectImplPc18*)func_8016FE34(
-            func_800F6EAC(func_80043F18(holder), i));
+            func_800F6EAC(CTaskGame_enumListGet(holder), i));
         if (obj->mSub.sf4C() == self->field_18->field_3F10) {
             self->field_37C++;
         }
@@ -2026,7 +2026,7 @@ void func_800C75D4(cf::CfObjectImplPc* self, u32 token,
                 hit = func_80174C98(res, &f9, 9) != 0;
             }
             if (hit) {
-                func_800BE12C(&res->mSub, 0x1b, 0, 6, 1);
+                CfObjectMove_setAnimModeArgs(&res->mSub, 0x1b, 0, 6, 1);
             }
             if (self->field_18->vf290() == 0) {
                 break;
@@ -2140,7 +2140,7 @@ void func_800C75D4(cf::CfObjectImplPc* self, u32 token,
             if (func_80174C98(res, &w, 0x1c) == 0) {
                 break;
             }
-            func_800BE12C(&res->mSub, 0x2f, 1, -1, 1);
+            CfObjectMove_setAnimModeArgs(&res->mSub, 0x2f, 1, -1, 1);
             s32 dmg = 100;
             void* q7a = self->field_18->vf290();
             if (q7a != 0) {
@@ -2152,7 +2152,7 @@ void func_800C75D4(cf::CfObjectImplPc* self, u32 token,
             func_8018C820(&cf::CBattleManager::getInstance()->unk194, -dmg);
             addTableValueWithClamp__Q22cf13CfGameManagerFv(self->field_18->field_3F28,
                                                    res->field_3F28, 0x14);
-            func_802A2A74(self->field_18, res);
+            CCharVoiceMan_EnqueueGaugeResultVoice(self->field_18, res);
             func_802809C8();
             break;
         }

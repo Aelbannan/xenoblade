@@ -77,7 +77,7 @@ namespace cf{
         lbl_eu_80664328 = nullptr;
     }
 
-void CTaskCulling::func_801A2BD0(unsigned long r3){
+void CTaskCulling::setOccDisabled(unsigned long r3){
     CTaskCulling* instance = lbl_eu_80664328;
     
     if(instance != nullptr){
@@ -110,16 +110,16 @@ bool CTaskCulling::isRayOccluded(const ml::CVec3& r4, const ml::CVec3& r5, int r
         return mOccCulling.func_801A1550(r4, r5, r6);
     }
 
-void CTaskCulling::func_801A2C94(){
+void CTaskCulling::clearOccFrustums(){
     CTaskCulling* instance = lbl_eu_80664328;
     if (instance == nullptr) return;
-    (void)instance;
+    instance->mOccCulling.clear();
 }
 
     void CTaskCulling::func_801A2CAC(){
         if(lbl_eu_80664328 == nullptr) return;
 
-        func_801A2C94();
+        clearOccFrustums();
 
         cf::CfGameManager* gm = (cf::CfGameManager*)cf::CfGameManager::getGameSubManager();
         u32 outA, outB, outC, outD;

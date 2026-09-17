@@ -165,7 +165,7 @@ void func_8027B200(cf::CChainActorList* self){
     while (node != self->mChainActorList.mStartNodePtr) {
         u32 base = node->mItem->unk0;
         if (base != 0) base += 0x3e9c;
-        if (func_800B8920((void*)base) == 0) {
+        if (lookupWorkAtAddr((void*)base) == 0) {
             cf::CChainActor* actor = node->mItem;
             actor->func_80279DC0();
             // Pass the node's own item slot so the inlined remove compares
@@ -475,7 +475,7 @@ int func_8027BC14(cf::CChainActorList* self, u32 key){
     // The battle object's arts-selection state must not match the no-chain id.
     int local = *reinterpret_cast<int*>(reinterpret_cast<cf::CChainBattleObj*>(key)->field_04->f30());
     if (func_80174C98((void*)key, &local, 0x1f) != 0) return 0;
-    if (func_8004C5EC(reinterpret_cast<cf::CChainBattleObj*>(key)->field_3F60) == 0x31)
+    if (getAnimModelId(reinterpret_cast<cf::CChainBattleObj*>(key)->field_3F60) == 0x31)
         return 0;
     if (actor->func_8027A338(1) == 0) return 0;
     // Count how many other actors are chainable against the candidate. The
@@ -701,7 +701,7 @@ extern "C" __declspec(noinline) void func_8027C45C(cf::CChainList* self) {
     self->mFlag = 0;
 }
 // Removes from @p self every actor whose referenced object is dead
-// (func_800B8920), calling vtable[5] and shifting the array down.
+// (lookupWorkAtAddr), calling vtable[5] and shifting the array down.
 void func_8027C49C(cf::CChainList* self){
     cf::CChainActor** p;
     int i = 0;
@@ -709,7 +709,7 @@ void func_8027C49C(cf::CChainList* self){
         p = &self->mActors[i];
         u32 base = (*p)->unk0;
         if (base != 0) base += 0x3e9c;
-        if (func_800B8920((void*)base) == 0) {
+        if (lookupWorkAtAddr((void*)base) == 0) {
             cf::CChainActor* actor = *p;
             actor->func_80279DC0();
             if ((int)self->mCount - i - 1 > 0) {

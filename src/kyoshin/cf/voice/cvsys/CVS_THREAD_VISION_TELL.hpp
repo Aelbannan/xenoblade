@@ -93,6 +93,6 @@ extern "C" {
     int           func_802A7B90(CVoiceHandle* handle1, CVoiceHandle* handle2);
     int           func_802A7EB0(CVoiceHandle* handle1, CVoiceHandle* handle2);
     CVoiceHandle* func_802A330C(int size, int align);
-    u8*           func_802A34E4(int size);
+    u8*           CCharVoiceMan_AllocVoiceArena(int size);
     void          __ct__cf_CVS_THREAD(void* self);
 }

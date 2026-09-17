@@ -103,7 +103,7 @@ struct CfGimmickObject : public cf::CfObject {
 // Player object helpers are provided by cf::CfObject / cf::CfObjectMove
 // (vtable slots +0x74, +0xAC, +0xCC, +0x160 and raw field +0xC4).
 
-// Circular object list returned by func_800B6BC8 / func_800B6BEC.  The head
+// Circular object list returned by getReslistB48 / getReslistB68.  The head
 // node stored at +0x04 is the sentinel; real nodes are reached from head->next
 // and terminate when they wrap back to head.
 struct CfGimmickListNode {
@@ -189,8 +189,8 @@ extern "C" u32 func_8003B41C(void* bdat);
 extern "C" u32 func_8003B1EC(void* bdat);
 
 // Player per-heal helpers paired with CfObject_syncModelRate (+0x168).
-extern "C" void func_800BC3B0(cf::CfObjectMove* player, float value);
-extern "C" void func_800BC3D8(cf::CfObjectMove* player, float value);
+extern "C" void CfObjectMove_setMoveSpeedGated(cf::CfObjectMove* player, float value);
+extern "C" void CfObjectMove_setMoveSpeed(cf::CfObjectMove* player, float value);
 
 // Scale factor for bdat int -> float position conversion.
 extern "C" const float lbl_eu_80668364;
@@ -221,8 +221,8 @@ extern "C" const f32 lbl_eu_80668354;
 // Checker functions dispatched by gimmick->field_44 (jumptable_eu_80535830).
 typedef int (*CfGimmickChecker)(cf::CfGimmick*, const CfGimmickVec3*, const CfGimmickVec3*);
 extern "C" CfGimmickChecker jumptable_eu_80535830[];
-extern "C" CfGimmickList* func_800B6BC8();
-extern "C" CfGimmickList* func_800B6BEC();
+extern "C" CfGimmickList* getReslistB48();
+extern "C" CfGimmickList* getReslistB68();
 // Fixed rotation angle used by func_802098EC's mask-0x4 occlusion test.
 extern "C" f32 lbl_eu_806646B0;
 

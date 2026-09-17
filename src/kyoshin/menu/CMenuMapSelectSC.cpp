@@ -90,7 +90,7 @@ void CMenuMapSelectSC::Init() {
     setPresentationFlag__Q22cf13CfGameManagerFv(1);
 
     // --- Re-initialise the embedded CTitleAHelp via a temporary ---
-    char* name = func_80136190(lbl_eu_8050C5A4, lbl_eu_8050C5A4 + 8, 1);
+    char* name = BdatTouchStringCell(lbl_eu_8050C5A4, lbl_eu_8050C5A4 + 8, 1);
 
     u8 tempTitle[0x38];
     __ct__CTitleAHelp(reinterpret_cast<CTitleAHelp*>(tempTitle), name, 0x4a);
@@ -334,7 +334,7 @@ void CMenuMapSelectSC::cbRenderBefore() {
 end:
     return;
 body:
-    if (func_8013BE50() == 0) {
+    if (IsMenuState621F0() == 0) {
         goto end;
     }
     GXSetZMode(GX_FALSE, GX_NEVER, GX_FALSE);
@@ -401,7 +401,7 @@ extern "C" void func_802515B8(CMenuMapSelectSC* self) {
 extern "C" void func_80251628(CMenuMapSelectSC* self) {
     if (func_8024CE1C(&self->mFloorMap) != 0) {
         func_801C4654(&self->mTitleAHelp, 0);
-        char* name = func_80136190(lbl_eu_8050C5A4, lbl_eu_8050C5A4 + 8, 3);
+        char* name = BdatTouchStringCell(lbl_eu_8050C5A4, lbl_eu_8050C5A4 + 8, 3);
         func_801C46B4(&self->mTitleAHelp, name);
         if (func_8009CF8C(0x3212) != 0) {
             func_801C46DC(&self->mTitleAHelp, 1);

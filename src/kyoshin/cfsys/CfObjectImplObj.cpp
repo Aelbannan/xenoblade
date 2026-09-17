@@ -19,12 +19,12 @@ void* func_800CA538(void* self) { return (void*)((u8*)self + 0x68); }
 // the +0x368 CPartsChange at the driver sub-object's +0x98 event id.
 void func_800CA540(cf::CfObjectImplObj* self) {
     func_800CAB00((CfObjectImplMoveObj*)self);
-    func_80192E80(reinterpret_cast<cf::CPartsChange*>(self->mPartsChange), 0,
+    CPartsChange_ResolveSlotNames(reinterpret_cast<cf::CPartsChange*>(self->mPartsChange), 0,
                   (PartsChangeIf*)self->field_14->field_0x98);
 }
 
-extern "C" void func_801930A0(void* a, void* b, int c);
-extern "C" void func_800CA580(void* self, void* b) { func_801930A0((char*)self + 0x368, b, 1); }
+extern "C" void CPartsChange_SyncSlotState(void* a, void* b, int c);
+extern "C" void func_800CA580(void* self, void* b) { CPartsChange_SyncSlotState((char*)self + 0x368, b, 1); }
 
 void func_800CA58C(void) {}
 

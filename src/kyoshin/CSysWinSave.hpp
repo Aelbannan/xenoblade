@@ -203,7 +203,7 @@ void deleteRegion__17UnkClass_8045F564Fv(UnkClass_8045F564* region);
 void func_8022B7F4(void* syswin);
 void func_8022B7C8(void* syswin, nw4r::lyt::DrawInfo* drawInfo);
 void func_801D20B0(void*, void*);
-int func_8013BE50();
+int IsMenuState621F0();
 void __ct__Q34nw4r3lyt8DrawInfoFv(nw4r::lyt::DrawInfo* self);
 void __dt__Q34nw4r3lyt8DrawInfoFv(nw4r::lyt::DrawInfo* self, int flags);
 void setPresentationFlag__Q22cf13CfGameManagerFv(bool enable);
@@ -234,7 +234,7 @@ void func_8022B748(void* syswin);
 void func_8022C1B4(void* out, void* syswin, u8 sel);
 void func_801D216C(void* cur, int val);
 void func_801D202C(void* cur);
-char* func_80136190(const void* a, const void* b, int id);
+char* BdatTouchStringCell(const void* a, const void* b, int id);
 void func_80134B50(int a, int b);
 }
 

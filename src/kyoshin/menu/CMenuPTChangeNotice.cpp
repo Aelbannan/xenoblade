@@ -113,16 +113,16 @@ extern "C" int func_8029348C(CMenuPTChangeNotice* self, CEventFile* evt) {
     self->mLayout90->Animate(0);
 
     // Default-0 text fields.
-    func_80136B4C(self->mLayout90, &lbl_eu_8050FC20[0x5c],
-                  func_80136190(&lbl_eu_8050FC20[0x4d], &lbl_eu_8050FC20[0x57],
+    LayoutSetTextBoxFmtValue(self->mLayout90, &lbl_eu_8050FC20[0x5c],
+                  BdatTouchStringCell(&lbl_eu_8050FC20[0x4d], &lbl_eu_8050FC20[0x57],
                                 0xb),
                   0);
-    func_80136B4C(self->mLayout90, &lbl_eu_8050FC20[0x69],
-                  func_80136190(&lbl_eu_8050FC20[0x4d], &lbl_eu_8050FC20[0x57],
+    LayoutSetTextBoxFmtValue(self->mLayout90, &lbl_eu_8050FC20[0x69],
+                  BdatTouchStringCell(&lbl_eu_8050FC20[0x4d], &lbl_eu_8050FC20[0x57],
                                 0xa),
                   0);
-    func_80136B4C(self->mLayout90, &lbl_eu_8050FC20[0x89],
-                  func_80136190(&lbl_eu_8050FC20[0x76], &lbl_eu_8050FC20[0x84],
+    LayoutSetTextBoxFmtValue(self->mLayout90, &lbl_eu_8050FC20[0x89],
+                  BdatTouchStringCell(&lbl_eu_8050FC20[0x76], &lbl_eu_8050FC20[0x84],
                                 0x2f),
                   0);
 
@@ -132,12 +132,12 @@ extern "C" int func_8029348C(CMenuPTChangeNotice* self, CEventFile* evt) {
         const char* msgName = isClassicController__Q22cf13CfGameManagerFv(-1)
                                   ? &lbl_eu_8050FC20[0x95]
                                   : &lbl_eu_8050FC20[0x9e];
-        u16 msg = func_8013606C(&lbl_eu_8050FC20[0x76], msgName, 0x2f);
-        char* handle = func_80138F78(msg);
+        u16 msg = BdatGetU16ByTableKey(&lbl_eu_8050FC20[0x76], msgName, 0x2f);
+        char* handle = MakeTplNameSysFile(msg);
         nw4r::lyt::ArcResourceAccessor* mgr = func_801355F4();
         void* tex = mgr->GetResource(0x74696D67 /* 'timg' */, handle, NULL);
         if (tex != NULL) {
-            func_80137E7C(self->mLayout90, &lbl_eu_8050FC20[0xa7], tex);
+            PaneSetTexPaletteByName(self->mLayout90, &lbl_eu_8050FC20[0xa7], tex);
             // Texture sub-resource carries a 2D dimension header (u16 w,h).
             CMenuPTChangeNotice::CTextureDims* dims = ((CMenuPTChangeNotice::CTextureObj*)tex)->mChain->mDims;
             u16 h = dims->mH;
@@ -168,19 +168,19 @@ extern "C" int func_8029348C(CMenuPTChangeNotice* self, CEventFile* evt) {
             func_80124270(pane, 0);
         }
     } else {
-        func_80136B4C(self->mLayout90, &lbl_eu_8050FC20[0xb1],
-                      func_80136190(&lbl_eu_8050FC20[0x76],
+        LayoutSetTextBoxFmtValue(self->mLayout90, &lbl_eu_8050FC20[0xb1],
+                      BdatTouchStringCell(&lbl_eu_8050FC20[0x76],
                                     &lbl_eu_8050FC20[0x84], 0x2e),
                       0);
         const char* msgName = isClassicController__Q22cf13CfGameManagerFv(-1)
                                   ? &lbl_eu_8050FC20[0x95]
                                   : &lbl_eu_8050FC20[0x9e];
-        u16 msg = func_8013606C(&lbl_eu_8050FC20[0x76], msgName, 0x2e);
-        char* handle = func_80138F78(msg);
+        u16 msg = BdatGetU16ByTableKey(&lbl_eu_8050FC20[0x76], msgName, 0x2e);
+        char* handle = MakeTplNameSysFile(msg);
         nw4r::lyt::ArcResourceAccessor* mgr = func_801355F4();
         void* tex = mgr->GetResource(0x74696D67 /* 'timg' */, handle, NULL);
         if (tex != NULL) {
-            func_80137E7C(self->mLayout90, &lbl_eu_8050FC20[0xb8], tex);
+            PaneSetTexPaletteByName(self->mLayout90, &lbl_eu_8050FC20[0xb8], tex);
             CMenuPTChangeNotice::CTextureDims* dims = ((CMenuPTChangeNotice::CTextureObj*)tex)->mChain->mDims;
             u16 h = dims->mH;
             u16 w = dims->mW;
@@ -204,18 +204,18 @@ extern "C" int func_8029348C(CMenuPTChangeNotice* self, CEventFile* evt) {
         for (u32 i = 0; i < 7; i++) {
             u8 idx = (u8)i;
             if (idx < count) {
-                u8 val = func_801392B4(idx);
+                u8 val = GetCollectedFlagByte(idx);
                 if (idx < 3) {
                     sprintf(buf, &lbl_eu_8050FC20[0xde], idx + 1);
                 } else {
                     sprintf(buf, &lbl_eu_8050FC20[0xec], idx - 2);
                 }
-                u16 msg = func_80136254(lbl_eu_80664090,
+                u16 msg = BdatGetU16Direct(lbl_eu_80664090,
                                         &lbl_eu_8050FC20[0xfa], val);
-                char* str = func_80138F78(msg);
+                char* str = MakeTplNameSysFile(msg);
                 void* tex = self->mAccessor->GetResource(0x74696D67, str, NULL);
                 if (tex != NULL) {
-                    func_80137E7C(self->mLayout90, buf, tex);
+                    PaneSetTexPaletteByName(self->mLayout90, buf, tex);
                 }
             } else {
                 if (idx < 3) {
@@ -238,15 +238,15 @@ extern "C" int func_8029348C(CMenuPTChangeNotice* self, CEventFile* evt) {
         for (u32 i = 0; i < 3; i++) {
             u8 idx = (u8)i;
             if (idx < count) {
-                u8 val = func_801392C8(idx);
+                u8 val = GetCollectedFlagWord8(idx);
                 sprintf(buf, &lbl_eu_8050FC20[0x113], idx + 1);
-                u16 msg = func_80136254(lbl_eu_80664098,
+                u16 msg = BdatGetU16Direct(lbl_eu_80664098,
                                         &lbl_eu_8050FC20[0x121], val);
-                char* str = func_80138F78(msg);
+                char* str = MakeTplNameSysFile(msg);
                 nw4r::lyt::ArcResourceAccessor* mgr = func_801355F4();
                 void* tex = mgr->GetResource(0x74696D67, str, NULL);
                 if (tex != NULL) {
-                    func_80137E7C(self->mLayout90, buf, tex);
+                    PaneSetTexPaletteByName(self->mLayout90, buf, tex);
                 }
             } else {
                 sprintf(buf, &lbl_eu_8050FC20[0x105], idx + 1);
@@ -313,7 +313,7 @@ void func_80293C64(){}
 // frame, raise the party-change trigger flag at +0x64.
 // ---------------------------------------------------------------------------
 extern "C" void func_80293D2C(CMenuPTChangeNotice* self) {
-    if (func_80137510(self->mAnim94, lbl_eu_80668B90) != 0) {
+    if (AnimRewindFrame(self->mAnim94, lbl_eu_80668B90) != 0) {
         self->mField64 = 1;
     }
 }

@@ -32,7 +32,7 @@ struct MakeCrystalItemObj {
 // --- imports ---
 // Item-table helpers (retail unmangled symbols): declared with the proper
 // C-linkage signatures in the shared kyoshin menu header.
-#include "kyoshin/CItemBoxGrid.hpp"   // func_80157C4C, func_80157C20, func_8015780C
+#include "kyoshin/CItemBoxGrid.hpp"   // func_80157C4C, CItemBlock_countKindSlots, CItemBlock_getFlag120EC
 // CItem_initItemImplInstances comes from CfGameManager.hpp (harness chain).
 
 // Item-instance vtable shim (crystal-id getter lives at vtable offset 8). The
@@ -56,8 +56,8 @@ extern f32 lbl_eu_8066845C;
 // decomp-pool entries (@...) and register as un-fixable reloc drift.
 
 // sibling unit (CMCCrystalBox.cpp) helpers
-extern "C" void func_80213988(MakeCrystalTable* d);
-extern "C" void func_80213B1C(MakeCrystalTable* d);
+extern "C" void sortCrystalIdOrder(MakeCrystalTable* d);
+extern "C" void sortCrystalKeyOrder(MakeCrystalTable* d);
 
 // 4-byte {s16, u8} crystal-entry copy helper (defined below the callers so
 // MWCC treats it out-of-line, matching retail's bl).
@@ -119,7 +119,7 @@ void func_80213570(MakeCrystalTable* d, u8 target) {
         tmp.flag = 0;
         func_8021351C(&d->entries[i], &tmp);
     }
-    int total = (int)func_80157C20(d->byte_1002);
+    int total = (int)CItemBlock_countKindSlots(d->byte_1002);
     u16 i = 0;
     while ((u16)i < total) {
         MakeCrystalItemObj* obj =
@@ -146,9 +146,9 @@ void func_80213570(MakeCrystalTable* d, u8 target) {
         t++;
     d->limit = (u8)t;
     d->current = 0;
-    func_80213988(d);
-    if ((func_8015780C(9) & 0xffffU) == 0) {
-        func_80213B1C(d);
+    sortCrystalIdOrder(d);
+    if ((CItemBlock_getFlag120EC(9) & 0xffffU) == 0) {
+        sortCrystalKeyOrder(d);
     }
 }
 

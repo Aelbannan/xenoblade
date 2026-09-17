@@ -506,7 +506,7 @@ struct CMenuPTWinCopyView {
 };
 
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
-extern "C" int func_8013BE50();
+extern "C" int IsMenuState621F0();
 extern "C" void func_80137250__FPQ34nw4r3lyt8DrawInfo(void*);
 
 // --- imports used by the Move / dispatcher functions ---------------------
@@ -562,7 +562,7 @@ extern "C" cf::CfObjectMove* func_8007FF6C__Q22cf13CfGameManagerFv(u16 objectId,
                                                                     u32 selector,
                                                                     float amount);
 extern "C" int isClassicController__Q22cf13CfGameManagerFv(int selector);
-extern "C" void func_800BC3B0(cf::CfObjectMove* player, float value);
+extern "C" void CfObjectMove_setMoveSpeedGated(cf::CfObjectMove* player, float value);
 extern "C" void triggerPlayerEffects__Q22cf13CfGameManagerFv(u32 objectValue, u32 flag,
                                                         float value);
 
@@ -592,7 +592,7 @@ struct MenuCmdRingView {
     u32 field_400;
     u32 field_404;
 };
-extern "C" int func_80061C5C(MenuCmdRingView* buffer, u32* headerOut,
+extern "C" int CfResBuf_popRecord(MenuCmdRingView* buffer, u32* headerOut,
                              u32* dataOut);
 
 // Party-slot character-data lookups used by func_8018FA2C.

@@ -217,14 +217,14 @@ public:
 
 } // namespace cf
 
-// 8-byte stack holder around a CfObjEnumList* (func_80043D90 ctor /
-// __dt__80043E88 dtor; func_80043F18 reads the wrapped list pointer).
+// 8-byte stack holder around a CfObjEnumList* (CTaskGame_enumListCtor ctor /
+// __dt__80043E88 dtor; CTaskGame_enumListGet reads the wrapped list pointer).
 struct CfEnumListHolder {
     void* list;  // 0x0
     u32 handle;  // 0x4
 };
 
-// Enum list returned by func_80043F18: element count at +0x620.
+// Enum list returned by CTaskGame_enumListGet: element count at +0x620.
 struct CfEnumList {
     u8 _00[0x620];
     u32 count;  // 0x620
@@ -259,8 +259,8 @@ extern "C" int isClassicController__Q22cf13CfGameManagerFv(int arg);
 // Direct (non-inlinable) call to the CtrlPc destructor (retail symbol name).
 extern "C" void* __dt__Q22cf6CtrlPcFv(cf::CtrlPc* obj, int flags);
 // CfObjEnumList stack-holder helpers (retail C-ABI names).
-extern "C" void func_80043D90(void* holder);
-extern "C" void* func_80043F18(void* holder);
+extern "C" void CTaskGame_enumListCtor(void* holder);
+extern "C" void* CTaskGame_enumListGet(void* holder);
 extern "C" void func_800F4A98(void* list, u32 type, u32 filter);
 extern "C" void* __ct__800FB044(void* list, f32 radius, void* pos, int arg);
 extern "C" void __dt__80043E88(void* holder, int flags);
@@ -269,15 +269,15 @@ extern "C" void* func_800F6E98(void* list, int index);
 // Voice/AI-action helpers + C-ABI imports used by the pad-handler funcs.
 // (func_80174C98 comes from CtrlMovePC.hpp.)
 class UnkClass_800821F8View;   // defined below (getCameraDataBlock result view)
-extern "C" void func_8004DACC(void* obj);
+extern "C" void clrAnimEff(void* obj);
 extern "C" void func_8014AC38(void* a, void* b);
 extern "C" void func_8027936C(void* a, int b);
 extern "C" void* __dynamic_cast(void* src, long offset, const void* src_type,
                                 const void* dst_type, void* src2dst);
 extern "C" void* func_800FEDF8(void);
 extern "C" int func_800DA06C(void* bm, void* obj);
-extern "C" void func_8006BC1C(void* obj, u32 mask);
-extern "C" void func_8006BBF4(void* obj, u32 mask, int flag);
+extern "C" void cfCam_andcUnk04(void* obj, u32 mask);
+extern "C" void cfCam_setClear04(void* obj, u32 mask, int flag);
 extern "C" CfObj90E4* func_800FE68C(void);
 // (getCameraDataBlock__Q22cf13CfGameManagerFv: single winning decl on
 // CfGameManagerApi.hpp - canonical UnkClass_800821F8* view; call sites cast
@@ -389,7 +389,7 @@ struct ArtsSelStateViewPc {
 };
 extern "C" ArtsSelStateViewPc* CMenuArtsSelect_getSelectState(void);
 extern "C" void bindPartnerO_(void* obj, void* target, u32 child);
-extern "C" void func_800BE12C(u8* owner, int a, int b, int c, int d); // u8* (not void*) to match CfObjectMove.hpp/CfObjectMoveApi.hpp - distinct extern "C" first-param types are an illegal overload when co-visible
+extern "C" void CfObjectMove_setAnimModeArgs(u8* owner, int a, int b, int c, int d); // u8* (not void*) to match CfObjectMove.hpp/CfObjectMoveApi.hpp - distinct extern "C" first-param types are an illegal overload when co-visible
 extern "C" void func_800F6D50(CfEnumList* list, u32 val);
 // void* parameter form matches CAIAction.hpp's declaration (two extern "C"
 // overloads of the same name are illegal).

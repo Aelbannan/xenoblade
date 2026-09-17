@@ -154,7 +154,7 @@ extern const f32 lbl_eu_80667264;
 extern wchar_t lbl_eu_80661FC8[2];
 
 // BDAT-style value table used by func_8012A460's tag-2 lookup chain
-// (retail .rodata:0x804FFC48, 0x50 bytes): func_80136130(lbl_eu_804FFC48,
+// (retail .rodata:0x804FFC48, 0x50 bytes): BdatGetS16ByTableKey(lbl_eu_804FFC48,
 // &lbl_eu_804FFC48[0xc], idx) maps a name index to an s16 value.
 extern char lbl_eu_804FFC48[];
 
@@ -794,7 +794,7 @@ struct __declspec(novtable) CTagProcessorSE : public CTagProcessorBase {
 // func_801276F4 / func_8012615C / func_80128740 / func_801287BC are also
 // declared in CTalkWindow.hpp / CSimpleEveTalkWin.hpp with these signatures.
 extern "C" {
-void func_801366F4(u16* str);  // uppercase wide string (code_80135FDC.cpp)
+void WcsToUpperInPlace(u16* str);  // uppercase wide string (code_80135FDC.cpp)
 void func_801258D0(TagParam* p);  // reset a tag-param block
 void initTagParam(u8* obj, unsigned char a, unsigned char b, float c);  // 12-byte tag-param init
 void copyTagParam(u8* dst, const u8* src);  // 12-byte tag-param copy
@@ -808,7 +808,7 @@ int func_80127FB4(nw4r::lyt::AnimTransform* tag, nw4r::lyt::Pane* pane);
 s32 func_80189A04(s32 index);                                // sound-slot busy check
 void func_8018986C(int handle, f32 fadeTime);                 // stop voice
 // Plugin UI mode query (pluginUi.cpp).
-int func_eu_8013C8F4();
+int MenuStateCheck64064or30();
 int func_80128740(void* tagProc, nw4r::lyt::Pane* pane);
 // Retail r5 is a string (wcscpy source), not a flag. The CSimpleEveTalkWin.hpp
 // copy still declares the older int-flag shape; the two headers are never
@@ -926,7 +926,7 @@ u16* func_80129008(void* unused, u16* dst, wchar_t* str);
 int func_801365E4(u16* src, u16 delim, u16** outTokens);
 // BDAT s16-keyed lookup (code_80135FDC.cpp): maps a key into the table pair
 // to an s16 value (func_8012A460's tag-2 name chain).
-s16 func_80136130(const void* a, const void* b, u32 key); // u32: matches defining TU code_80135FDC.cpp verbatim
+s16 BdatGetS16ByTableKey(const void* a, const void* b, u32 key); // u32: matches defining TU code_80135FDC.cpp verbatim
 // Message pre-processor: copy the raw message, normalize/compact the buffer
 // (CRLF strip + '<name=value>' tag dispatch), return the buffer.
 u16* func_80125B58(CTagProcessorBase* self, const void* src, f32 a, f32 b,
@@ -952,7 +952,7 @@ u32 func_8009CF8C(u32 id);
 void func_8009D018(u32 owner, u32 value);
 void* func_800451D8(u32 cls, void* param);
 void func_8013DB6C(u32 a, u32 b, u32 c, u32 d);
-void func_8013BE38();
+void MenuStateClear6405A();
 u8 code80135FDC_getByte_6405A();
 u8 code80135FDC_getByte_6405B();
 u32 code80135FDC_getWord_6405C();

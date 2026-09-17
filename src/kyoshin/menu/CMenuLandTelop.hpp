@@ -148,7 +148,7 @@ void __dt__8CProcessFv(CProcess* _this, int flags);
 CMenuLandTelop* __dt__14CMenuLandTelopFv(CMenuLandTelop* _this, int flags);
 void cbRenderBefore__14CMenuLandTelopFv(void* _this);
 int func_80226B94();
-int func_8013BE50();
+int IsMenuState621F0();
 // getBdatStringColumnValue / getInstance__Q22cf14CBattleManagerFv come from
 // their canonical headers via the include chain (u32 / void* from
 // kyoshin/cf/CBattleManagerApi.hpp).
@@ -194,7 +194,7 @@ extern f64 lbl_eu_806673F8;       // u32->double conversion bias
 // identifiers (declaring them C++ would emit a mangled reloc).
 extern "C" {
 nw4r::lyt::ArcResourceAccessor* func_801355F4();
-u8 func_8013600C(const void*, const void*, u32);
+u8 BdatGetU8ByTableKey(const void*, const void*, u32);
 void* func_8010CE48();                    // system menu open gate
 unsigned char func_8014A2A0();
 unsigned char func_8014A2B4();

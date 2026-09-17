@@ -1396,11 +1396,11 @@ extern "C" CfCamEventObj* func_800784A0(u32 first, CfCamEventObj* second,
                                                       CfCamDataTable* sixth,
                                                       CfCamEventObj* seventh);
 extern "C" void  getCamManagerData__Q22cf13CfGameManagerFv(u32 mode);
-extern "C" void* func_80074CEC(void* self, void* arg2);
+extern "C" void* cfCam_newFollowCam(void* self, void* arg2);
 extern "C" void* __ct__8006B310(void* self, void* arg2);
-extern "C" void  func_8006BC1C(void* obj, u32 mask);
-extern "C" void  func_8006BBF4(void* obj, u32 mask, int flag);
-extern "C" void  func_8006D450(void* a, void* b, void* c, f32 f,
+extern "C" void  cfCam_andcUnk04(void* obj, u32 mask);
+extern "C" void  cfCam_setClear04(void* obj, u32 mask, int flag);
+extern "C" void  cfCam_recomputeEyeTarget(void* a, void* b, void* c, f32 f,
                                 void* d, void* e, void* g);
 extern "C" void func_80077F20(void* out, void* a,
                                                        void* b, u16 c, u16 d,
@@ -1413,7 +1413,7 @@ extern "C" void* func_80076F88(CfCamEventManager* self, int unk34,
                                 void* srcArg, CfCamDataTable* cam);
 extern "C" int func_800A4050(void* dst, void* b, void* c);
 // Pose-solver helper called by func_80075934.
-extern "C" void func_80074010(void* out, void* in, f32 f, void* vec);
+extern "C" void cfCam_applyBasis(void* out, void* in, f32 f, void* vec);
 extern "C" f32 lbl_eu_80666450;   // sdata2 damping factor
 extern "C" void* func_800FE68C(void);
 extern "C" int func_804BE348(void* a, void* b, u32 c, u32 d);
@@ -1421,7 +1421,7 @@ extern "C" void func_80075934(ml::CVec3* out1, ml::CVec3* out2, CamCamSrc* a,
                                CamCamSrc* b, ml::CVec3* v1, ml::CVec3* v2,
                                u16 c1, u16 c2, u8 s0, u8 s1);
 extern "C" UnkClass_800821F8* getCameraDataBlock__Q22cf13CfGameManagerFv(void);
-extern "C" u32   func_80061FFC(void);
+extern "C" u32   CfRes_getAllocHandle(void);
 extern "C" void  func_80240878(u8* p);
 extern "C" void  func_80240A64(u8* base);
 extern const f32 lbl_eu_8066A200;

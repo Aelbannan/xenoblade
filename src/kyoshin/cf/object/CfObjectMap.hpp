@@ -19,7 +19,7 @@ class CView;
 // the mangled names are spelled out verbatim with extern "C" linkage.
 // ---------------------------------------------------------------------------
 
-// Map resource managers returned by func_80062F18/60/A8/FF0.
+// Map resource managers returned by CfRes_getInstPtr80/60/A8/FF0.
 struct UnkRes866A0 {
     u32 field_0x0;         // 0x00 flags
     u32 field_0x4;         // 0x04
@@ -93,42 +93,42 @@ extern "C" {
 
     // ---- CTaskCulling statics ----
     void* func_801A2C04__Q22cf12CTaskCullingFv();
-    void func_801A2C94__Q22cf12CTaskCullingFv();
+    void clearOccFrustums__Q22cf12CTaskCullingFv();
     void func_801A2CAC__Q22cf12CTaskCullingFv();
 
     // ---- scene / resource helpers ----
     void func_80495E60(void* ptr);
     int getFileSize__11CDeviceFileFPCc(const char* path, int flags);
     void* func_804C1BA0(void* mgr, const void* name, int flag);
-    void func_804C1D7C(void* mgr, void* resource);
-    void func_804C1F10(void* mgr, u16 value, float amount);
+    void scnLgtRemoveLgtItem(void* mgr, void* resource);
+    void scnLgtPushLgtValue(void* mgr, u16 value, float amount);
     void func_80496294(CScn* scene, float value);
     void* func_80495EB0(void* r3, void* r4, void* r5);
-    void* func_80489A60(void* r3, void* r4, u32 r5, u32 r6, u32 r7, u32 r8);
+    void* scnImN4BuildByIdx(void* r3, void* r4, u32 r5, u32 r6, u32 r7, u32 r8);
     void func_800BBADC(void* r3, void* r4);
     void* getHandleMEM1__Q23mtl10MemManagerFv();
 
     // ---- CfRes helpers ----
-    u32 func_800621A0();
+    u32 CfRes_getNameRecCount();
     void* func_800621F4(void* r3, s16 r4, void* r5, void* r6, void* r7);
-    void* func_800624A8(u32 a, u32 b, u32 c);
-    void func_80062680(u32 a, u32 b, u32 c);
-    u32 func_800626F4(u32 a, u32 b, u32 c, u32 d);
-    UnkRes866A0* func_80062F18();
-    UnkRes866A0* func_80062F60();
-    UnkRes866A0* func_80062FA8();
-    UnkRes866A0* func_80062FF0();
-    void func_80065CA4(void* child, void* parent);
-    void* func_80065D00(void* r3, void* r4);
-    void* func_80065D04(void* r3, void* r4);
-    void* func_800A7FBC();
-    void* func_800A81FC();
+    void* CfRes_tryResolveLink(u32 a, u32 b, u32 c);
+    void CfRes_tryResolveSlotF4(u32 a, u32 b, u32 c);
+    u32 CfRes_tryResolveSlot130(u32 a, u32 b, u32 c, u32 d);
+    UnkRes866A0* CfRes_getInstPtr80();
+    UnkRes866A0* CfRes_getInstPtrBC();
+    UnkRes866A0* CfRes_getInstPtrF8();
+    UnkRes866A0* CfRes_getInstPtr134();
+    void CfRes_cancelPendingRead(void* child, void* parent);
+    void* CfRes_getLazyField20(void* r3, void* r4);
+    void* CfRes_getLazyField10(void* r3, void* r4);
+    void* KyoshinHeap_GetField18();
+    void* KyoshinHeap_GetField1C();
     void* func_800A9534(void* r3);
     void* func_800A965C(void* r3);
     void* func_800A9784(u32 size);
     void* func_800A98A8(void* r3);
     void* func_800A9CD0();
-    void func_800627BC(void* r3);
+    void CfRes_tryUpdateSlot16C(void* r3);
     u32 func_800AA2BC(u32 a, u32 b);
     int func_800AA33C(ml::FixStr<64>& buf, u32 packed, int prefixFlag, int suffixFlag);
     void CfRes_delegateOp2(void* r3, void* r4, void* r5);

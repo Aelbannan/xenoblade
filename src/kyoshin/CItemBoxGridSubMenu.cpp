@@ -118,15 +118,15 @@ void CItemBoxGridSubMenu::func_802084D4(int arg) {
     func_80136D74((char*)mTxtBoxC, &lbl_eu_805084BC[0xb3], 0);
 
     if (arg == 10) {
-        func_80136D74((char*)mTxtBoxA, (char*)func_80136190(&lbl_eu_805084BC[0xb4], &lbl_eu_805084BC[0xbd], 'A'), 0);
-        func_80136D74((char*)mTxtBoxB, (char*)func_80136190(&lbl_eu_805084BC[0xb4], &lbl_eu_805084BC[0xbd], 'C'), 0);
+        func_80136D74((char*)mTxtBoxA, (char*)BdatTouchStringCell(&lbl_eu_805084BC[0xb4], &lbl_eu_805084BC[0xbd], 'A'), 0);
+        func_80136D74((char*)mTxtBoxB, (char*)BdatTouchStringCell(&lbl_eu_805084BC[0xb4], &lbl_eu_805084BC[0xbd], 'C'), 0);
         mSubState = 2;
     } else if (arg == 13) {
-        func_80136D74((char*)mTxtBoxA, (char*)func_80136190(&lbl_eu_805084BC[0xb4], &lbl_eu_805084BC[0xbd], '@'), 0);
-        func_80136D74((char*)mTxtBoxB, (char*)func_80136190(&lbl_eu_805084BC[0xb4], &lbl_eu_805084BC[0xbd], 'C'), 0);
+        func_80136D74((char*)mTxtBoxA, (char*)BdatTouchStringCell(&lbl_eu_805084BC[0xb4], &lbl_eu_805084BC[0xbd], '@'), 0);
+        func_80136D74((char*)mTxtBoxB, (char*)BdatTouchStringCell(&lbl_eu_805084BC[0xb4], &lbl_eu_805084BC[0xbd], 'C'), 0);
         mSubState = 2;
     } else {
-        func_80136D74((char*)mTxtBoxA, (char*)func_80136190(&lbl_eu_805084BC[0xb4], &lbl_eu_805084BC[0xbd], 'C'), 0);
+        func_80136D74((char*)mTxtBoxA, (char*)BdatTouchStringCell(&lbl_eu_805084BC[0xb4], &lbl_eu_805084BC[0xbd], 'C'), 0);
     }
 
     nw4r::lyt::Pane* pane1 = mLayout->GetRootPane()->FindPaneByName(&lbl_eu_805084BC[0xc2], true);
@@ -198,19 +198,19 @@ void func_80207FC8(CItemBoxGridSubMenu* self, nw4r::lyt::ArcResourceAccessor* ac
     nw4r::lyt::Pane* collPane = self->mLayout->GetRootPane()->FindPaneByName(&lbl_eu_805084BC[0x6f], true);
     collPane->SetVisible(false);
 
-    char* str = (char*)func_80136190(&lbl_eu_805084BC[0x78], &lbl_eu_805084BC[0x86], 0x2b);
-    func_80136B4C(self->mLayout, &lbl_eu_805084BC[0x8b], str, 0);
+    char* str = (char*)BdatTouchStringCell(&lbl_eu_805084BC[0x78], &lbl_eu_805084BC[0x86], 0x2b);
+    LayoutSetTextBoxFmtValue(self->mLayout, &lbl_eu_805084BC[0x8b], str, 0);
 
     int gmVal = isClassicController__Q22cf13CfGameManagerFv(-1);
     const char* fileID = (gmVal == 0) ? &lbl_eu_805084BC[0xa0] : &lbl_eu_805084BC[0x97];
 
-    u16 msgId = func_8013606C(&lbl_eu_805084BC[0x78], (char*)fileID, 0x2b);
-    u8* tex = (u8*)func_80138F78(msgId);
+    u16 msgId = BdatGetU16ByTableKey(&lbl_eu_805084BC[0x78], (char*)fileID, 0x2b);
+    u8* tex = (u8*)MakeTplNameSysFile(msgId);
 
     u8* sys = (u8*)func_801355F4();
     u8* mat = (u8*)((nw4r::lyt::ArcResourceAccessor*)sys)->GetResource(0x74696d67, (const char*)tex, 0);
     if (mat != NULL) {
-        func_80137E7C(self->mLayout, &lbl_eu_805084BC[0xa9], mat);
+        PaneSetTexPaletteByName(self->mLayout, &lbl_eu_805084BC[0xa9], mat);
 
         nw4r::lyt::Pane* picPane = self->mLayout->GetRootPane()->FindPaneByName(&lbl_eu_805084BC[0xa9], true);
         u16 w = *(u16*)(*(u8**)mat + 8 + 2);
@@ -248,11 +248,11 @@ void func_80208844(CItemBoxGridSubMenu* self) {
     }
 }
 
-// When the +0xC sub-object is visible (func_80137510 with the constant),
+// When the +0xC sub-object is visible (AnimRewindFrame with the constant),
 // reset the selection bytes (descending store order matches the retail).
 extern "C" void func_80208890(void* self) {
     extern const f32 lbl_eu_8066831C;
-    if (func_80137510((nw4r::lyt::AnimTransform*)*(void**)((u8*)self + 0xC), lbl_eu_8066831C)) {
+    if (AnimRewindFrame((nw4r::lyt::AnimTransform*)*(void**)((u8*)self + 0xC), lbl_eu_8066831C)) {
         *((u8*)self + 0x22) = 0;
         *((u8*)self + 0x21) = 1;
         *((u8*)self + 0x20) = 0;

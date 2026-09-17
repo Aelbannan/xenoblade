@@ -14,11 +14,11 @@ void __ct__cf_CPartsChange(){}
 
 // removed destructor to suppress vtable duplication
 
-void func_80192E80(){}
+void CPartsChange_ResolveSlotNames(){}
 
-void func_80192F94(){}
+void CPartsChange_NotifySlotStates(){}
 
-void func_801930A0(){}
+void CPartsChange_SyncSlotState(){}
 
 void func_801931D0(){}
 
@@ -30,24 +30,24 @@ void __dt__reslist_cf_CfPartyInfo(){}
 
 void __dt__80193538(){}
 
-bool func_80193670() { return false; }
+bool CPartsChange_GetActorTable() { return false; }
 
-void func_80193678(){}
+void CPartsChange_FireIdEffect(){}
 
 void func_80193710(){}
 
-bool func_80193804() { return false; }
+bool CPartsChange_GetLandmarkTable() { return false; }
 
-void func_8019380C(void){}
+void CPartsChange_DispatchChangeList(void){}
 
 extern void* findObjectById(int);
-extern "C" int func_800B8920(void* addr);
-extern "C" void func_800B9404(void* addr);
+extern "C" int lookupWorkAtAddr(void* addr);
+extern "C" void gmFileObject(void* addr);
 extern "C" s16 lbl_eu_80664314;
 
 // Walk the party-change list at this+0xA80C: for each node whose slot
 // table has bit0 set, resolve up to 16 object ids through findObjectById,
-// keep those that pass func_800B8920, then notify each via func_800B9404
+// keep those that pass lookupWorkAtAddr, then notify each via gmFileObject
 // and reset the list / 0xA40-byte work buffer.
 extern "C" void func_80193810(u8* self) {
     struct Slot {
@@ -74,7 +74,7 @@ extern "C" void func_80193810(u8* self) {
                 void* q = p != 0 ? (u8*)p - 0x3E9C : p;
                 if (q != 0) {
                     void* r = q != 0 ? (u8*)q + 0x3E9C : q;
-                    if (func_800B8920(r) != 0) {
+                    if (lookupWorkAtAddr(r) != 0) {
                         if (q != 0) q = (u8*)q + 0x3E9C;
                         found[count++] = q;
                     }
@@ -87,7 +87,7 @@ extern "C" void func_80193810(u8* self) {
     {
         u32 i;
         for (i = 0; i < count; i++) {
-            func_800B9404(found[i]);
+            gmFileObject(found[i]);
         }
     }
 
@@ -110,21 +110,21 @@ extern "C" void func_80193810(u8* self) {
     lbl_eu_80664314 = 0;
 }
 
-void func_8019397C(){}
+void CPartsChange_InitChangeRecord(){}
 
-void CfActorAccessors::func_80193A88(int enable) { if (enable) mFlags1E |= 0x400; else mFlags1E &= ~0x400; }
+void CfActorAccessors::SetFlag400(int enable) { if (enable) mFlags1E |= 0x400; else mFlags1E &= ~0x400; }
 
-void func_80193AB0(){}
+void CPartsChange_FindActorById(){}
 
-u32 CfActorAccessors::func_80193B04() { return mField94; }
+u32 CfActorAccessors::GetField94() { return mField94; }
 
 void func_80193B0C(){}
 
-void func_80193C74(){}
+void CPartsChange_InitActorEntry(){}
 
-u16 CfActorAccessors::func_80193CC8() { return mField9E; }
+u16 CfActorAccessors::GetField9E() { return mField9E; }
 
-void func_80193CD0(){}
+void CPartsChange_FindActorByObj(){}
 
 void func_80193D48(){}
 
@@ -140,7 +140,7 @@ void func_80194AFC(){}
 
 void func_80194D5C(){}
 
-// 0x4C-stride party-change element + manager view for func_8019514C
+// 0x4C-stride party-change element + manager view for CPartsChange_UpdateElemSpeeds
 // (layout from CPartsChange.ctx.c).
 struct CfPartsElem4C {
     u8 pad_00[0x10];
@@ -166,7 +166,7 @@ extern const f32 lbl_eu_80667AC0;
 extern const f32 lbl_eu_80667AD4;
 
 // Per-frame speed decay across the party-change element array.
-extern "C" void func_8019514C(CfPartsManager* self) {
+extern "C" void CPartsChange_UpdateElemSpeeds(CfPartsManager* self) {
     CfRes_getD80Flag();
     f32 step = func_80496288();
     CfPartsElemArray* arr = &self->mElems;
@@ -192,39 +192,39 @@ extern "C" void func_8019514C(CfPartsManager* self) {
     }
 }
 
-u32 CfActorAccessors::func_80195284() { return (mFlags1E >> 10) & 0x1u; }
+u32 CfActorAccessors::TestFlag400() { return (mFlags1E >> 10) & 0x1u; }
 
-void func_80195290(){}
+void CPartsChange_IsSubStateClear(){}
 
-void func_801952CC(){}
+void CPartsChange_UpdateCollectionState(){}
 
-void func_80195384(){}
+void CPartsChange_CheckNameEntry(){}
 
 void func_801953E8(){}
 
-u32 CfActorAccessors::func_80195AC0() { return (mFlags1E >> 3) & 0x1u; }
+u32 CfActorAccessors::TestFlag8() { return (mFlags1E >> 3) & 0x1u; }
 
-void CfActorAccessors::func_80195ACC(float val) { mField8C = val; }
+void CfActorAccessors::SetField8C(float val) { mField8C = val; }
 
-void CfObjectPcExt::func_80195AD4(u16 val) { mField45C4 = val; }
+void CfObjectPcExt::SetField45C4(u16 val) { mField45C4 = val; }
 
-void CfObjectPcExt::func_80195ADC(u16 val) { mField45C8 = val; }
+void CfObjectPcExt::SetField45C8(u16 val) { mField45C8 = val; }
 
-u16 CfObjectPcExt::func_80195AE4() { return mField45C6; }
+u16 CfObjectPcExt::GetField45C6() { return mField45C6; }
 
-void* CfActorAccessors::func_80195AEC() { return &mField30; }
+void* CfActorAccessors::GetField30() { return &mField30; }
 
-void* CfObjectPcExt::func_80195AF4() { return (void*)((u8*)this + 0x60c); }
+void* CfObjectPcExt::GetField60C() { return (void*)((u8*)this + 0x60c); }
 
-void CfPartyInfo::func_80195AFC(u8 val) { field_2D = val; }
+void CfPartyInfo::SetField2D(u8 val) { field_2D = val; }
 
-void func_80195B04(){}
+void CPartsChange_SpawnById(){}
 
 void func_80195BD4(){}
 
 void func_80195E5C(){}
 
-bool func_8019641C(const CfPartyInfoSortKey* a, const CfPartyInfoSortKey* b) {
+bool CompareSortKey(const CfPartyInfoSortKey* a, const CfPartyInfoSortKey* b) {
     return a->sortKey < b->sortKey;
 }
 
@@ -232,25 +232,25 @@ void func_80196434(){}
 
 void func_80196864(){}
 
-void func_80196C94(){}
+void CPartsChange_CopyObjFields(){}
 
 void func_80196E04(){}
 
-void func_8019747C(){}
+void CPartsChange_FindEntryById(){}
 
-void func_801974CC(){}
+void CPartsChange_FindPartsElem(){}
 
 void func_80197538(){}
 
-void func_80197AA0(){}
+void CPartsChange_ResolveActorEntry(){}
 
-void func_80197B28(){}
+void CPartsChange_CountListNodes(){}
 
-void func_80197B4C(){}
+void CPartsChange_TeardownContainer(){}
 
-void func_80197BA4(){}
+void CPartsChange_ResetBattleEntry(){}
 
-void func_80197C6C(){}
+void CPartsChange_SpawnItemDrop(){}
 
 void func_80197DE8(){}
 
@@ -258,7 +258,7 @@ int lbl_eu_80664308;
 u32 lbl_eu_8066430C;
 unsigned char lbl_eu_80664310;
 short lbl_eu_80664312;
-void func_80198108(int arg) {
+void CPartsChange_SetLoadFlag(int arg) {
     if (lbl_eu_8066430C == 0) return;
     unsigned char* p = (unsigned char*)lbl_eu_8066430C + 0x10000;
     *(unsigned short*)(p - 0x4d88) = (unsigned short)arg;
@@ -267,25 +267,25 @@ void func_80198108(int arg) {
     *(unsigned short*)(p2 - 0x4d8a) = 0;
 }
 
-void func_80198138(){}
+void CPartsChange_FindFreeSlot(){}
 
-void func_80198284(){}
+void CPartsChange_UnregisterEntry(){}
 
-void func_80198310(){}
+void CPartsChange_ResolveLinkedObj(){}
 
-void func_80198340(){}
+void CPartsChange_HasAnyEntry(){}
 
-void func_80198400(){}
+void CPartsChange_FindVoiceIndex(){}
 
-void* func_801984E4(void* self, unsigned long idx) {
+void* CPartsChange_GetSlotEntryAt(void* self, unsigned long idx) {
     return *(void**)((char*)self + (idx << 3));
 }
 
-void func_801984F0(){}
+void CPartsChange_GetEnemySlotAt(){}
 
 void func_80198524(){}
 
-void func_801986CC(){}
+void CPartsChange_RemoveListNode(){}
 
 void CfPartyInfo::func_80198710(void* r4, float f1, int r5, int r6, float f2, float f3) {
     int r8 = *(int*)((char*)r4 + 0);
@@ -309,27 +309,27 @@ void CfPartyInfo::func_80198710(void* r4, float f1, int r5, int r6, float f2, fl
     field_2E = 0;
 }
 
-void func_8019876C(){}
+void CPartsChange_ProcessPartyInfo(){}
 
-void func_801987A4(){}
+void CPartsChange_ProbePartyCollisions(){}
 
-void func_80198AC4(){}
+void CPartsChange_CopyHeaderAndLoad(){}
 
 void func_80198AE0(){}
 
-void func_80198C24(){}
+void CPartsChange_ComputeSpawnPoseA(){}
 
 void func_80198D44(){}
 
-void func_80198E0C(){}
+void CPartsChange_ComputeSpawnPoseB(){}
 
-void func_80198EE8(){}
+void CPartsChange_ComputeSpawnPoseC(){}
 
-void func_80198FC4(){}
+void CPartsChange_ComputeSpawnPoseD(){}
 
 void func_801990F0(){}
 
-void func_8019922C(){}
+void CPartsChange_ComputeSpawnPoseFull(){}
 
 
 // absorb tails - generated to match retail ET_REL bytes

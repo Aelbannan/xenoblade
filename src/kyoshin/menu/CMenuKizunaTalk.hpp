@@ -210,7 +210,7 @@ extern "C" void* func_8003AA34();
 int advanceAnimTransform(nw4r::lyt::AnimTransform* anim, float frame);
 
 #include "kyoshin/CItemBoxGrid.hpp"
-// func_801361E8 comes from CItemBoxGrid.hpp's wide-view (u32) decl - the
+// BdatGetU8Direct comes from CItemBoxGrid.hpp's wide-view (u32) decl - the
 // callee's lbz already zero-extends and callers keep the raw result (mr),
 // masking only at use. The old rename guard + local redeclaration are gone.
 

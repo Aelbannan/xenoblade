@@ -101,10 +101,10 @@ void acquireLODResource__8CTaskLODFv(void* task, u32 value);
 extern mtl::ALLOC_HANDLE func_80495FF0(void* self);
 void func_80495E60(void* pEmote);
 void* func_80495E8C(void* a, void* b, int c, int d);
-void func_804838DC(void* pEmote, int r4);
-void func_80484E5C(void* pEmote, float scale);
-void func_80484F80(void* pEmote, float time);
-void func_804C1D7C(void* pData);
+void simSetFlag2OnTree(void* pEmote, int r4);
+void simSetLeafDist7B0(void* pEmote, float scale);
+void simRefreshFlag8(void* pEmote, float time);
+void scnLgtRemoveLgtItem(void* pData);
 void* func_804C1BA0(void* pData, void* pFile, int r5);
 mtl::ALLOC_HANDLE getScnCounter__Fv();
 void* getGlobalSda();
@@ -291,7 +291,7 @@ bool func_80180CBC(CREvtModelMap* self)
         self->mEmoteModel = nullptr;
     }
     if (self->mLoadedModelData) {
-        func_804C1D7C(*(void**)((u8*)lbl_eu_80663E14 + 0x7C));
+        scnLgtRemoveLgtItem(*(void**)((u8*)lbl_eu_80663E14 + 0x7C));
         self->mLoadedModelData = nullptr;
     }
     void* p1 = self->mFileData1;
@@ -487,8 +487,8 @@ void func_8018140C(CREvtModelMap* self)
     if (self->mFlags & 2) {
         if (!self->mFileHandle1 && self->mFileData1 && !self->mEmoteModel) {
             self->mEmoteModel = (CScnItemModel*)func_80495E8C(lbl_eu_80663E14, self->mFileData1, 7, 1);
-            func_804838DC(self->mEmoteModel, 0);
-            func_80484E5C(self->mEmoteModel, lbl_eu_806678C0);
+            simSetFlag2OnTree(self->mEmoteModel, 0);
+            simSetLeafDist7B0(self->mEmoteModel, lbl_eu_806678C0);
             reinterpret_cast<CScnItemModel*>(self->mEmoteModel)->flags7A8 |= 4;
             self->mVisible = 0;
             if (lbl_eu_806642B4 == self) {
@@ -523,7 +523,7 @@ void func_8018152C(CREvtModelMap* self)
 {
     if (self->mEmoteModel) {
         f32 fTime = (f32)(s32)func_8016A35C();
-        func_80484F80(self->mEmoteModel, fTime);
+        simRefreshFlag8(self->mEmoteModel, fTime);
     }
     reinterpret_cast<CREvtModel*>(self)->setVisible(func_80180960());
     func_80168514(self);
@@ -603,7 +603,7 @@ void func_801815AC(CREvtModelMap* self, unsigned int visible)
                 lbl_eu_806642B4 = 0;
             }
             if (self->mLoadedModelData) {
-                func_804C1D7C(*(void**)((u8*)lbl_eu_80663E14 + 0x7C));
+                scnLgtRemoveLgtItem(*(void**)((u8*)lbl_eu_80663E14 + 0x7C));
                 self->mLoadedModelData = 0;
                 cf::CfGameManager* m2 = (cf::CfGameManager*)cf::CfGameManager::getGameSubManager();
                 if (m2 && *(void**)((u8*)m2 + 0x2F3C)) {
@@ -612,7 +612,7 @@ void func_801815AC(CREvtModelMap* self, unsigned int visible)
                 }
             }
         }
-        func_804838DC(self->mEmoteModel, visible);
+        simSetFlag2OnTree(self->mEmoteModel, visible);
     }
 visible_store:
     self->mVisible = (u8)visible;

@@ -417,8 +417,8 @@ struct CFloorMapFloorNameEntry {
     u8 _00[0x10];
     u8 field_10;              // +0x10 - floor id (1-based)
     u8 _11;
-    u16 field_12;             // +0x12 - floor-name id (from func_80136330)
-    u32 field_14;             // +0x14 - floor-name string (from func_8013639C)
+    u16 field_12;             // +0x12 - floor-name id (from BdatGetS16Direct)
+    u32 field_14;             // +0x14 - floor-name string (from BdatGetPtrDirect)
     u8 _18[0x318 - 0x18];
     u8 field_318;             // +0x318 - row/entry count
 };
@@ -643,8 +643,8 @@ struct CFloorMapVec3 {
     f32 z;                                   // +0x08
 };
 
-// Linked list of marker objects returned by func_800B6CF8/func_800B6C58/
-// func_800B6BEC (same layout as CMiniMap's MiniMapList): head sentinel at
+// Linked list of marker objects returned by prepareReslistArg/getReslistBC8/
+// getReslistB68 (same layout as CMiniMap's MiniMapList): head sentinel at
 // +0x04, node next at +0x00 and the object at +0x08.
 struct CFloorMapObjList {
     u32 field_00;                            // +0x00
@@ -670,7 +670,7 @@ struct CFloorMapObj {
     u8 m91;                                  // 0x91 - marker kind (6 = landmark)
 };
 
-// 0x4C-byte landmark entry walked by func_8024A748 case 2 (func_80193804
+// 0x4C-byte landmark entry walked by func_8024A748 case 2 (CPartsChange_GetLandmarkTable
 // array); the id sits at +0x1C.
 struct CFloorMapCase2Elem {
     f32 x;                                   // +0x00
@@ -684,14 +684,14 @@ struct CFloorMapCase2Elem {
 // C-linkage name/table lookups used by the marker placement (retail flat names).
 // Retail masks the raw results (rlwinm 24/16) after every call, so these
 // return wider ints; callers apply the (u8)/(u16) truncations explicitly.
-// (func_8013606C: only CFloorMap.cpp needs the wider view, so its u32 copy
+// (BdatGetU16ByTableKey: only CFloorMap.cpp needs the wider view, so its u32 copy
 // lives TU-local there; the shared decl is the canonical u16 one on
 // code_80135FDC.hpp.)
-extern "C" u8 func_8013600C(const void*, const void*, u32);
-extern "C" void* func_800B6CF8(int);
-extern "C" void* func_800B6C58();
-extern "C" void* func_800B6BEC();
-extern "C" void* func_80193804();
+extern "C" u8 BdatGetU8ByTableKey(const void*, const void*, u32);
+extern "C" void* prepareReslistArg(int);
+extern "C" void* getReslistBC8();
+extern "C" void* getReslistB68();
+extern "C" void* CPartsChange_GetLandmarkTable();
 extern "C" void func_80141DC4(float*, int = 0);
 
 // C-linkage UI helper imports. buildLayout/bindLayoutAnimTransform keep their retail
@@ -700,12 +700,12 @@ extern "C" void func_80141DC4(float*, int = 0);
 void buildLayout(nw4r::lyt::Layout**, nw4r::lyt::ArcResourceAccessor*, const char*);
 void bindLayoutAnimTransform(nw4r::lyt::Layout*, nw4r::lyt::AnimTransform**, nw4r::lyt::ArcResourceAccessor*, char*);
 extern "C" void func_8013676C(nw4r::lyt::Pane*, u32);
-// C-linkage name/label helpers from code_80135FDC.cpp. func_80136190 builds
+// C-linkage name/label helpers from code_80135FDC.cpp. BdatTouchStringCell builds
 // a pane name from a format string, a base string and an index (JP retail
-// symbol func_80136190__FPcPcUl = (char*, char*, u32); fixed args so MWCC
-// does not emit the varargs CR1 clear); func_80136B4C updates a pane.
-extern "C" char* func_80136190(char*, char*, u32);
-extern "C" void func_80136B4C(nw4r::lyt::Layout*, char*, char*, u32);
+// symbol BdatTouchStringCell__FPcPcUl = (char*, char*, u32); fixed args so MWCC
+// does not emit the varargs CR1 clear); LayoutSetTextBoxFmtValue updates a pane.
+extern "C" char* BdatTouchStringCell(char*, char*, u32);
+extern "C" void LayoutSetTextBoxFmtValue(nw4r::lyt::Layout*, char*, char*, u32);
 extern "C" void* getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32, nw4r::lyt::Layout*);
 extern "C" void func_801375A0(nw4r::math::VEC3*, nw4r::lyt::Pane*);
 extern "C" void func_801F3850(void*, u16);
@@ -713,7 +713,7 @@ extern "C" void func_801F3850(void*, u16);
 // func_80246200 instead of the mangled C++ name at every call site.
 extern "C" void func_80246200(void*);
 extern "C" void func_80137B44(nw4r::lyt::Layout*, const char*, u32);
-extern "C" void* func_80137E7C(void*, const char*, void*);
+extern "C" void* PaneSetTexPaletteByName(void*, const char*, void*);
 extern "C" u32 func_8009CF8C(u32);
 
 // Flat C-ABI imports used by the map-cursor functions (retail symbols are
@@ -741,18 +741,18 @@ extern void playUISound(u32);
 // C-ABI imports used by the floor-map update functions (retail plain names).
 // (code80135FDC_setVec3 comes from kyoshin/CSysWin.hpp: VEC3* form.)
 extern "C" void copyVEC3(void*, const void*);
-extern "C" void func_80137738(nw4r::math::VEC3*, const nw4r::math::VEC3*);
-extern "C" char* func_8013639C(const void*, const void*, int);
-extern "C" char* func_80138F78(u32);
-extern "C" u16 func_80136254(const void*, const void*, int);
-extern "C" u8 func_801361E8(u32, const char*, u32);
-extern "C" s16 func_80136330(u32, const char*, u32);
+extern "C" void Vec3AddInto(nw4r::math::VEC3*, const nw4r::math::VEC3*);
+extern "C" char* BdatGetPtrDirect(const void*, const void*, int);
+extern "C" char* MakeTplNameSysFile(u32);
+extern "C" u16 BdatGetU16Direct(const void*, const void*, int);
+extern "C" u8 BdatGetU8Direct(u32, const char*, u32);
+extern "C" s16 BdatGetS16Direct(u32, const char*, u32);
 extern "C" u32 func_8003B1EC(void* bdat);   // BDAT row count (canonical void* form)
 extern "C" void* getFP__FPCc(const char*);
 extern "C" void* func_8003AA34();
 extern "C" void func_80136400(const char* src, u16* dst, u32 destLen);
 extern "C" void func_80125D00(f32* out, nw4r::lyt::Pane* pane, u16* str);
-extern "C" s32 func_801362C0(const void*, const void*, s32);
+extern "C" s32 BdatGetS8Direct(const void*, const void*, s32);
 // Height thresholds picking which of the three status panes lights up.
 extern f32 lbl_eu_80668780;
 extern f32 lbl_eu_80668784;
@@ -785,7 +785,7 @@ extern f32 lbl_eu_806687BC;
 extern f32 lbl_eu_806687A0;
 extern f32 lbl_eu_80668794;
 
-// .sbss color tables used by func_80139A18 (init in sinit_80250CB4).
+// .sbss color tables used by PaneMatSetTevColorsByName (init in sinit_80250CB4).
 extern u16 lbl_eu_806647A0[4];
 extern u16 lbl_eu_806647A8[4];
 extern u16 lbl_eu_806647B0[4];
@@ -818,7 +818,7 @@ struct CFloorMapPaneRotate {
 
 // C-ABI helpers used by func_80245950 (defined in code_80135FDC.cpp).
 extern "C" int func_8013AC3C(u8 max, u8 count, u16 off);
-extern "C" void func_80139A18(void*, void*, void*, void*);
+extern "C" void PaneMatSetTevColorsByName(void*, void*, void*, void*);
 extern u32 lbl_eu_8066479C;
 extern u32 lbl_eu_806640A8;
 extern u8 lbl_eu_80664798;
@@ -873,7 +873,7 @@ public:
 extern void* lbl_eu_80573D18[0x1C];
 int func_80138138(int idx);
 extern "C" u32 func_80138574(const char* name, u32 id);
-extern "C" u32 func_8013C038(u16 id);
+extern "C" u32 CheckState2CC8Active(u16 id);
 extern "C" CFloorMapVec3* func_801F4E68(CFloorMapGimmickGlobal* mgr, u16 id);
 
 // (Font handles dispatch through IDeviceFontInfo::getFont at +0x24;

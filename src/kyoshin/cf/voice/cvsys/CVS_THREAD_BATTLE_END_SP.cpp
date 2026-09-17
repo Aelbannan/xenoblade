@@ -240,7 +240,7 @@ CVS_THREAD_BATTLE_END_SP* __ct__802AB5F0() {
     if (func_802A330C(0x46, 1) == NULL) {
         return NULL;
     }
-    CVS_THREAD_BATTLE_END_SP* self = (CVS_THREAD_BATTLE_END_SP*)func_802A34E4(0x34);
+    CVS_THREAD_BATTLE_END_SP* self = (CVS_THREAD_BATTLE_END_SP*)CCharVoiceMan_AllocVoiceArena(0x34);
     if (self == NULL) {
         return NULL;
     }

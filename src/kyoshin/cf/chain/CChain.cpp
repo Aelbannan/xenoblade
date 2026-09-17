@@ -8,13 +8,13 @@
 #include "kyoshin/menu/CMenuArtsSelect.hpp"
 #include "kyoshin/cf/CArtsSet.hpp" // cf::CAttackParam (arts param +0x5e probe)
 #include "monolib/math/Random.hpp"
-extern "C" CChainGimmickList* func_800B6BC8();
+extern "C" CChainGimmickList* getReslistB48();
 extern "C" int func_801537E0(void* self);
-// func_800BE12C is also declared locally (with different arg spellings) by
+// CfObjectMove_setAnimModeArgs is also declared locally (with different arg spellings) by
 // CBattleManager.cpp / CVision.cpp, which include CChain.hpp via
 // CBattleManager.hpp - keep it out of the header like the trio above.
 // (func_800F3970: single shared decl on kyoshin/cf/CBattleManagerApi.hpp.)
-extern "C" void func_800BE12C(u8* obj, int a, int b, int c, int d);
+extern "C" void CfObjectMove_setAnimModeArgs(u8* obj, int a, int b, int c, int d);
 
 // (The former TU-local voice-dispatch pads are gone. Their slots are
 // recovered: the first dispatched on the battle object's embedded voice
@@ -170,7 +170,7 @@ void func_80276CAC(u8* a, CChainBattleObjTail* b, int c) {
         func_802A35B8((u32)lbl_eu_80662A20);
         lbl_eu_80662A20 = -1;
     }
-    int id = func_802A3214();
+    int id = CCharVoiceMan_AllocChainVoiceId();
     lbl_eu_80662A20 = id;
     if ((u32)id + 0x10000 != 0xffff) {
         if (b != 0) b = (CChainBattleObjTail*)&b->field_0x3E9C;
@@ -576,7 +576,7 @@ __declspec(noinline) void func_80277B38(cf::CChain* self) {
         } else {
             actor = 0;
         }
-        func_800BE12C((u8*)((cf::CChainBattleObj*)actor->unk0) + 0x3e9c, 0x1b, 0,
+        CfObjectMove_setAnimModeArgs((u8*)((cf::CChainBattleObj*)actor->unk0) + 0x3e9c, 0x1b, 0,
                       3, 1);
         if ((int)(s8)((cf::CChainHeadView*)self)->field_0 <
             (int)((cf::CChainMemberListMirror*)self)->mChainMember.mCount) {
@@ -1059,7 +1059,7 @@ __declspec(noinline) void func_80277B38(cf::CChain* self) {
                     actor = 0;
                 }
                 u32 battleObj = (actor != 0) ? actor->unk0 : 0;
-                func_800BE12C((u8*)battleObj + 0x3e9c, 0x1b, 0, 5, 1);
+                CfObjectMove_setAnimModeArgs((u8*)battleObj + 0x3e9c, 0x1b, 0, 5, 1);
             }
             ((cf::CChainHeadView*)self)->field_5 =
                 (u8)(ml::math::mtRand(2) != 0);
@@ -1573,7 +1573,7 @@ void func_80279694(cf::CChain* self, u32 param) {
 // Retail passes the chain object in r3 at every call site (e.g.
 // func_8027990C's `mr r3, r28; bl func_80279A4C`); the body ignores it.
 extern "C" int func_80279A4C(cf::CChain* self) {
-    CChainGimmickList* list = func_800B6BC8();
+    CChainGimmickList* list = getReslistB48();
     CChainGimmickListNode* head = list->head;
     CChainGimmickListNode* node;
     int local;
@@ -1739,7 +1739,7 @@ void func_80279DC0(cf::CChainActor* self) {
         if (p != NULL) {
             p = (CChainBattleObjTail*)((u8*)p + 0x3e9c);
         }
-        if (func_800B8920(p) != 0) {
+        if (lookupWorkAtAddr(p) != 0) {
             self->func_80279E48(0);
             self->func_80279F6C(0);
         }
@@ -2043,7 +2043,7 @@ int func_8027A8C8(cf::CChainVoiceHolder* self) {
     int local1 = *(int*)battleObj->field_04->f30();
     if (func_80174C98(battleObj, &local1, 0x1000) != 0) return 0;
     cf::CChainField3F60* f = self->field_0->field_3F60;
-    if (f != 0 && func_8004C5EC(f) == 0x31) return 0;
+    if (f != 0 && getAnimModelId(f) == 0x31) return 0;
     cf::CChainBattleObj* battleObj2 = self->field_0;
     int local2 = *(int*)battleObj2->field_04->f30();
     if (func_80174C98(battleObj2, &local2, 0x6) == 0) return 0;

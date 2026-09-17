@@ -47,12 +47,12 @@ struct CfResObjParent {
     u8 field_70[0x74 - 0x70];
     /* 0x74 */ u8* field_74;                 // sound-related pointer passed to func_801BFE20
     u8 field_78[0x90 - 0x78];
-    /* 0x90 */ u8* field_90;                 // resource handle (func_80066E7C result)
+    /* 0x90 */ u8* field_90;                 // resource handle (CfRes_findEntryById result)
     /* 0x94 */ u8* field_94;                 // resource handle
     /* 0x98 */ ::CScnItemModel* field_98;  // model object (vtable slots 0x78(void*)/0x88(int) -> CScnItemModel::vfunc78/88)
     /* 0x9C */ u8* field_9C;                 // model handle (func_800584B8 result)
     u8 field_A0[0x60C - 0xA0];
-    /* 0x60C */ u8 field_60C[0x8];           // sub-object passed to func_804B0A6C
+    /* 0x60C */ u8 field_60C[0x8];           // sub-object passed to ColiNodeSetWord0Rebuild
     u8 field_614[0x6B4 - 0x614];
     /* 0x6B4 */ u32 field_6B4;
     /* 0x6B8 */ u32 field_6B8;
@@ -107,31 +107,31 @@ public:
     CfResObjImpl(CfResObjParent* parent);
     virtual ~CfResObjImpl();                // 0x08
     virtual void func_8016CCE0();           // 0x0C
-    virtual void func_800BEA34();           // 0x10
+    virtual void CfResObj_noop10();           // 0x10
     virtual int func_8016C860();            // 0x14
-    virtual void func_800BE9AC();           // 0x18
+    virtual void CfObjectMove_relaySubB0Slot14();           // 0x18
     virtual void func_8016CD64();           // 0x1C
     virtual int func_8016C880();            // 0x20
-    virtual void func_800BC2DC();           // 0x24
-    virtual void func_800BF2F4();           // 0x28
-    virtual void func_eu_800BFC78();        // 0x2C
+    virtual void CfResObj_noop24();           // 0x24
+    virtual void CfResObj_noop28();           // 0x28
+    virtual void CfResObj_noop2C();        // 0x2C
     virtual void func_8016CD68(int idx, int value); // 0x30
     virtual u32 func_8016CCBC(int idx);     // 0x34
-    virtual int func_800BEA38();            // 0x38
+    virtual int CfResObj_false38();            // 0x38
     // Widened: Move UVF39/40/42/43 leave r4/r5 live into this slot.
-    virtual void func_800BED64(u32 a, u32 b); // 0x3C
-    virtual void func_800BEE30();           // 0x40
-    virtual void func_800BC3AC();           // 0x44
-    virtual void func_800BEC44();           // 0x48
+    virtual void CfResObj_unk3C(u32 a, u32 b); // 0x3C
+    virtual void CfResObj_noop40();           // 0x40
+    virtual void CfResObj_noop44();           // 0x44
+    virtual void CfResObj_unk48();           // 0x48
     // Widened: Move UVF38 leaves r4 live into this slot.
-    virtual void func_800BED5C(u32 arg);    // 0x4C
+    virtual void CfResObj_unk4C(u32 arg);    // 0x4C
     virtual int func_8016CD5C();            // 0x50
     virtual void func_8016C888(int arg2, int arg3, int arg4, float f1, float f2); // 0x54
-    virtual void func_800BF2C4();           // 0x58
-    virtual void func_800BF2C8();           // 0x5C
+    virtual void CfResObj_noop58();           // 0x58
+    virtual void CfResObj_unk5C();           // 0x5C
     virtual int func_8016C950();            // 0x60
     virtual int func_8016CD54();            // 0x64
-    virtual int func_800BF30C();            // 0x68
+    virtual int CfResObj_true68();            // 0x68
 
     CfResObjImplVtbl*& vtbl() {
         return *reinterpret_cast<CfResObjImplVtbl**>(reinterpret_cast<u8*>(this) + 0x10);
@@ -188,37 +188,37 @@ extern const double lbl_eu_80667690;
 
 struct ResInfoEntry;     // fwd; full def in kyoshin/cf/IResInfo.hpp (global scope)
 
-// func_80063038: return the manager's +0x170 region (entry-table base) if
+// CfRes_getInstPtr170: return the manager's +0x170 region (entry-table base) if
 // the CfRes manager exists (CfRes.cpp).
-extern "C" char* func_80063038();
-extern "C" u8* func_80066E7C(ResInfoEntry* entry, u32 id);
-extern "C" u8* func_80489A60(u8* global, u8* handle, int a, int b, int c, int d);
+extern "C" char* CfRes_getInstPtr170();
+extern "C" u8* CfRes_findEntryById(ResInfoEntry* entry, u32 id);
+extern "C" u8* scnImN4BuildByIdx(u8* global, u8* handle, int a, int b, int c, int d);
 extern "C" void func_800BBADC(cf::CfResObjParent* parent, u8* handle);
 extern "C" u8* func_800584B8(u32 global, u32 id, const char* name);
 extern "C" int CfRes_getD80Flag();
 extern "C" void func_800BCFA0(cf::CfObjectMove* self);
-extern "C" void func_800BE824(cf::CfResObjParent* parent, int flag);
-extern "C" void func_804B0A6C(u8* subObj, u8* handle);
+extern "C" void CfObjectMove_setRegionAttached(cf::CfResObjParent* parent, int flag);
+extern "C" void ColiNodeSetWord0Rebuild(u8* subObj, u8* handle);
 extern "C" int func_801BFE20(int a, int b, u8* c, float f1, float f2);
 extern "C" cf::SoundSlotEntry* func_801BFAE4(u16 handle);
 
 // Free-function vtable-slot targets owned by other TUs (retail .data
 // lbl_eu_80530F44 references these unmangled names; the same-named virtuals
 // above are scoped methods and do not collide).
-extern "C" void func_800BEA34();
+extern "C" void CfResObj_noop10();
 // Defined in CfObjectMove.cpp as void(void*) (CScnItemModel::vfunc14 hop).
-extern "C" void func_800BE9AC(void* self);
-extern "C" void func_800BC2DC();
-extern "C" void func_800BF2F4();
-extern "C" void func_eu_800BFC78();
-extern "C" bool func_800BEA38();
-extern "C" void func_800BED64();
-extern "C" void func_800BEE30();
-extern "C" void func_800BC3AC();
-extern "C" void func_800BEC44();
-extern "C" void func_800BED5C();
-extern "C" void func_800BF2C4();
-extern "C" void func_800BF2C8();
-extern "C" int func_800BF30C();
+extern "C" void CfObjectMove_relaySubB0Slot14(void* self);
+extern "C" void CfResObj_noop24();
+extern "C" void CfResObj_noop28();
+extern "C" void CfResObj_noop2C();
+extern "C" bool CfResObj_false38();
+extern "C" void CfResObj_unk3C();
+extern "C" void CfResObj_noop40();
+extern "C" void CfResObj_noop44();
+extern "C" void CfResObj_unk48();
+extern "C" void CfResObj_unk4C();
+extern "C" void CfResObj_noop58();
+extern "C" void CfResObj_unk5C();
+extern "C" int CfResObj_true68();
 // Compiler-generated deleting destructor (defined in this TU's .text).
 extern "C" void __dt__Q22cf12CfResObjImplFv();

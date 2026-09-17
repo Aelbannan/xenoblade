@@ -19,7 +19,7 @@ namespace nw4r { namespace math { struct VEC3; } }
  *   +0x14: CFileHandle* - async load handle
  *   +0x18: ArcResourceAccessor* - built from the loaded arc
  *   +0x1C: u8 - layout-ready flag
- *   +0x20: u32 (opaque; used as a pointer w/ vtable by func_802B775C)
+ *   +0x20: u32 (opaque; used as a pointer w/ vtable by CTitle_confirmSelection)
  *   +0x24: u8 - phase/state
  *   +0x25: s8 - menu selection index (-1 = none)
  *   +0x2C: CTitleLogo (0x1C)
@@ -131,19 +131,19 @@ extern "C" CBaseCur* __ct__CCur18(CBaseCur* self, nw4r::lyt::ArcResourceAccessor
 extern "C" void __dt__6CCur18Fv(void* self, int flags);
 extern "C" void func_801D216C(void* pCur, u8 val);
 extern "C" void func_801D202C(CBaseCur* pCur);
-extern "C" void func_802B7948(void* a, unsigned int b, unsigned char v);
+extern "C" void CTitle_fileEventCallback(void* a, unsigned int b, unsigned char v);
 extern "C" int func_8023FEDC(void (*pCallback)(void*, unsigned int, unsigned char));
 // Menu-cursor SFX cue (mangles to playUISound__FUl).
 void playUISound(u32);
 // Cursor-position builder (retail calls it via bl, so keep it out of line).
-extern "C" void __declspec(noinline) func_802B6CBC(nw4r::math::VEC3* dest, CTitleMenu* menu, u8 val);
+extern "C" void __declspec(noinline) CTitleMenu_calcCursorPos(nw4r::math::VEC3* dest, CTitleMenu* menu, u8 val);
 
 // Shared string pool (split1 .rodata) - "/menu/Title.arc" etc.
 extern char lbl_eu_80513628[];
 // Secondary mode bitfield (.sbss) - bit 30 gates the menu color pass.
 extern u32 lbl_eu_80663E28;
 // RGB color builder (defined in CTitleAHelp.cpp; returns the dest pointer so
-// callers can thread it into func_80139A18). Retail keeps the unmangled short
+// callers can thread it into PaneMatSetTevColorsByName). Retail keeps the unmangled short
 // name, so declare it with C linkage.
 extern "C" GXColorS10* func_801C4B60(GXColorS10* color, s16 r, s16 g, s16 b, s16 a);
 // .sdata2 constants used by the logo/menu animation helpers (US/EU names).

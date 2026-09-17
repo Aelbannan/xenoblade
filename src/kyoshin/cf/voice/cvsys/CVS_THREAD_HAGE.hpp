@@ -16,7 +16,7 @@ extern "C" {
     int func_802A77E8(CVoiceHandle* handle);
     int func_802A7850(int iter);
     int func_802A7B90(CVoiceHandle* handle1, CVoiceHandle* handle2);
-    u8* func_802A34E4(int size);
+    u8* CCharVoiceMan_AllocVoiceArena(int size);
     void __ct__cf_CVS_THREAD();
 
     // Runtime rethrow (NMWException.h): declared noreturn so MWCC elides the

@@ -68,7 +68,7 @@ extern "C" __attribute__((noinline)) void func_8022D1F8(CExchangeWin* self) {
 
 extern "C" void func_8022D244(CExchangeWin* self) {
     float f = lbl_eu_80668610;
-    if (func_80137510(self->mAnimTransform, f)) {
+    if (AnimRewindFrame(self->mAnimTransform, f)) {
         self->_26 = 0;
         self->field_27 = 1;
         self->field_24 = 0;
@@ -118,17 +118,17 @@ bool CExchangeWin::OnFileEvent(CEventFile* pEventFile) {
     mLayout->Animate(0);
 
     // Set text fields from message table
-    char* t1 = func_80136190(&lbl_eu_8050A740[0x94], &lbl_eu_8050A740[0x9d], 0x24);
-    func_80136B4C(mLayout, &lbl_eu_8050A740[0xa2], t1, 0);
+    char* t1 = BdatTouchStringCell(&lbl_eu_8050A740[0x94], &lbl_eu_8050A740[0x9d], 0x24);
+    LayoutSetTextBoxFmtValue(mLayout, &lbl_eu_8050A740[0xa2], t1, 0);
 
-    char* t2 = func_80136190(&lbl_eu_8050A740[0x94], &lbl_eu_8050A740[0x9d], 0x25);
-    func_80136B4C(mLayout, &lbl_eu_8050A740[0xaf], t2, 0);
+    char* t2 = BdatTouchStringCell(&lbl_eu_8050A740[0x94], &lbl_eu_8050A740[0x9d], 0x25);
+    LayoutSetTextBoxFmtValue(mLayout, &lbl_eu_8050A740[0xaf], t2, 0);
 
-    char* t3 = func_80136190(&lbl_eu_8050A740[0x94], &lbl_eu_8050A740[0x9d], 0x26);
-    func_80136B4C(mLayout, &lbl_eu_8050A740[0xba], t3, 0);
+    char* t3 = BdatTouchStringCell(&lbl_eu_8050A740[0x94], &lbl_eu_8050A740[0x9d], 0x26);
+    LayoutSetTextBoxFmtValue(mLayout, &lbl_eu_8050A740[0xba], t3, 0);
 
-    char* t4 = func_80136190(&lbl_eu_8050A740[0xc5], &lbl_eu_8050A740[0xd3], 0x2b);
-    func_80136B4C(mLayout, &lbl_eu_8050A740[0xd8], t4, 0);
+    char* t4 = BdatTouchStringCell(&lbl_eu_8050A740[0xc5], &lbl_eu_8050A740[0xd3], 0x2b);
+    LayoutSetTextBoxFmtValue(mLayout, &lbl_eu_8050A740[0xd8], t4, 0);
 
     // Choose the message texture name by the game-manager mode flag (ternary
     // keeps the selection after the call so MWCC loads it straight into r4).
@@ -136,15 +136,15 @@ bool CExchangeWin::OnFileEvent(CEventFile* pEventFile) {
                              ? &lbl_eu_8050A740[0xe4]
                              : &lbl_eu_8050A740[0xed];
 
-    u16 keyVal = func_8013606C(&lbl_eu_8050A740[0xc5], fileID, 0x2b);
-    char* name = func_80138F78(keyVal);
+    u16 keyVal = BdatGetU16ByTableKey(&lbl_eu_8050A740[0xc5], fileID, 0x2b);
+    char* name = MakeTplNameSysFile(keyVal);
 
     nw4r::lyt::ArcResourceAccessor* resAcc = func_801355F4();
     TPLPalette* resource =
         (TPLPalette*)resAcc->GetResource(0x74696D67, name, 0);
 
     if (resource != nullptr) {
-        func_80137E7C(mLayout, &lbl_eu_8050A740[0xf6], resource);
+        PaneSetTexPaletteByName(mLayout, &lbl_eu_8050A740[0xf6], resource);
 
         // The TPL dims are captured before the pane lookup: retail keeps them
         // in callee-saved r29/r30 across the FindPaneByName call.
@@ -186,8 +186,8 @@ extern "C" void func_8022D0D0(CExchangeWin* self) {
     playUISound(0xe);
 }
 extern "C" void func_8022D19C(CExchangeWin* self, char* text1, char* text2) {
-    func_80136B4C(self->mLayout, (char*)&lbl_eu_8050A740[0x34], text1, 0);
-    func_80136B4C(self->mLayout, (char*)&lbl_eu_8050A740[0x41], text2, 0);
+    LayoutSetTextBoxFmtValue(self->mLayout, (char*)&lbl_eu_8050A740[0x34], text1, 0);
+    LayoutSetTextBoxFmtValue(self->mLayout, (char*)&lbl_eu_8050A740[0x41], text2, 0);
 }
 
 extern "C" void func_8022D0F8(void* dst, CExchangeWin* src, u8 val) {

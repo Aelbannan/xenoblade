@@ -30,32 +30,32 @@ extern const char lbl_eu_8056E194[];  // panic file name (func_804EC418)
 extern const char lbl_eu_8056E178[];  // panic message
 extern const char lbl_eu_80663910[8]; // panic format arg (.sdata, sda21)
 extern char lbl_eu_80663CBC[4]; // panic format arg (.sdata, sda21)
-extern const char lbl_eu_80530DC4[];  // panic file name (func_804EB4C0)
+extern const char lbl_eu_80530DC4[];  // panic file name (MdlDyn_GetEntryCount)
 extern const char lbl_eu_80530DA8[];  // panic message
 extern const char lbl_eu_80530D68[];  // panic format arg
 extern char lbl_eu_80663CC8[8]; // panic format arg (.sdata, sda21)
-extern const char lbl_eu_8056E1C8[];  // panic file name (func_804E9FD0)
+extern const char lbl_eu_8056E1C8[];  // panic file name (MdlDyn_GetShapeKind)
 extern const char lbl_eu_8056E1A8[];  // panic message
 extern const char lbl_eu_80529678[];  // panic file name (func_804EC344)
 extern const char lbl_eu_80529658[];  // panic message
-extern const char lbl_eu_8056E850[];  // panic file name (func_804EA038)
-extern const char lbl_eu_8056E834[];  // panic message (func_804EA038)
-extern char lbl_eu_80663CB8[4]; // panic format arg (.sdata, sda21, func_804EA038)
-extern const char lbl_eu_8056E820[];  // panic file name (func_804EA038)
-extern const char lbl_eu_8056E7F8[];  // panic message (func_804EA038)
-extern const char lbl_eu_80530D18[];  // panic file name (func_804EB22C)
-extern const char lbl_eu_80530CFC[];  // panic message (func_804EB22C)
-extern const char lbl_eu_80530CF0[];  // panic message (func_804EB22C)
-extern char lbl_eu_80663CC0[4]; // panic format arg (.sdata, sda21, func_804EB22C)
-extern const char lbl_eu_80530F08[];  // panic file name (func_804EB22C)
-extern const char lbl_eu_80530EE0[];  // panic message (func_804EB22C)
-extern const char lbl_eu_80530E74[];  // panic file name (func_804EB310)
-extern const char lbl_eu_80530E30[];  // panic message (func_804EB310)
-extern const char lbl_eu_80530D94[];  // panic file name (func_804EB310)
-extern const char lbl_eu_80530D78[];  // panic message (func_804EB310)
-extern const char lbl_eu_80530E1C[];  // panic file name (func_804EB3E8)
-extern const char lbl_eu_80530DD8[];  // panic message (func_804EB3E8)
-extern char lbl_eu_80663CC4[4]; // panic format arg (.sdata, sda21, func_804EB310)
+extern const char lbl_eu_8056E850[];  // panic file name (MdlDyn_ResolveSubData)
+extern const char lbl_eu_8056E834[];  // panic message (MdlDyn_ResolveSubData)
+extern char lbl_eu_80663CB8[4]; // panic format arg (.sdata, sda21, MdlDyn_ResolveSubData)
+extern const char lbl_eu_8056E820[];  // panic file name (MdlDyn_ResolveSubData)
+extern const char lbl_eu_8056E7F8[];  // panic message (MdlDyn_ResolveSubData)
+extern const char lbl_eu_80530D18[];  // panic file name (MdlDyn_FindDictEntry)
+extern const char lbl_eu_80530CFC[];  // panic message (MdlDyn_FindDictEntry)
+extern const char lbl_eu_80530CF0[];  // panic message (MdlDyn_FindDictEntry)
+extern char lbl_eu_80663CC0[4]; // panic format arg (.sdata, sda21, MdlDyn_FindDictEntry)
+extern const char lbl_eu_80530F08[];  // panic file name (MdlDyn_FindDictEntry)
+extern const char lbl_eu_80530EE0[];  // panic message (MdlDyn_FindDictEntry)
+extern const char lbl_eu_80530E74[];  // panic file name (MdlDyn_GetEntryData)
+extern const char lbl_eu_80530E30[];  // panic message (MdlDyn_GetEntryData)
+extern const char lbl_eu_80530D94[];  // panic file name (MdlDyn_GetEntryData)
+extern const char lbl_eu_80530D78[];  // panic message (MdlDyn_GetEntryData)
+extern const char lbl_eu_80530E1C[];  // panic file name (MdlDyn_GetEntryDataUnchecked)
+extern const char lbl_eu_80530DD8[];  // panic message (MdlDyn_GetEntryDataUnchecked)
+extern char lbl_eu_80663CC4[4]; // panic format arg (.sdata, sda21, MdlDyn_GetEntryData)
 
 // --- FSqrt-style normalize warnings (func_804EC8AC) and asin-domain warning
 // --- (func_804EC514); rodata strings addressed via lis/addi.
@@ -77,34 +77,34 @@ extern const float lbl_eu_8066B3DC;  // normalized-direction scale
 extern const float lbl_eu_8066B3E0;  // velocity decay scale
 
 // --- Cross-TU math/scene helpers invoked by func_804EBBCC ---
-extern "C" void func_8004B0B0(nw4r::math::VEC3* p);
-extern "C" void func_8004B0B4(void* p);
-extern "C" void func_8006BEC0(void* p);
-extern "C" void func_8006BEC4(void* p);
-extern "C" s32 func_8004B3D8(u32* self, u32 flags);
-extern "C" void* func_8004B3F0(void* dst, const void* src);
-extern "C" void func_8006D6A8(void* out, const Mtx m, const nw4r::math::VEC3* v);
-extern "C" void func_8004CB80(nw4r::math::VEC3* out, const nw4r::math::VEC3* a,
+extern "C" void noopAnimVec3(nw4r::math::VEC3* p);
+extern "C" void noopAnimQuat(void* p);
+extern "C" void cfCam_nopCtorSlot(void* p);
+extern "C" void cfCam_zeroVec3(void* p);
+extern "C" s32 testFlagMask(u32* self, u32 flags);
+extern "C" void* copyVec3Words(void* dst, const void* src);
+extern "C" void cfCam_multMtxVec(void* out, const Mtx m, const nw4r::math::VEC3* v);
+extern "C" void subVec3f(nw4r::math::VEC3* out, const nw4r::math::VEC3* a,
                               const nw4r::math::VEC3* b);
-extern "C" nw4r::math::VEC3* func_8004B75C(nw4r::math::VEC3* out,
+extern "C" nw4r::math::VEC3* scaleVec3f(nw4r::math::VEC3* out,
                                            const nw4r::math::VEC3* in, f32 s);
-extern "C" void func_8004B738(void* a, const void* b);
-extern "C" void func_8004B79C(void* out, const void* v);
-extern "C" void* func_8004B60C(nw4r::math::VEC3* out, f32 a, f32 b, f32 c);
-extern "C" f32 func_8006BB00(const nw4r::math::VEC3* v);
-extern "C" f32 func_8006BB04(nw4r::math::VEC3* v, f32 s);
-extern "C" f32 func_8006DFC8(const nw4r::math::VEC3* v);
-extern "C" f32 func_8004EC78(f32 x);
-extern "C" void func_8006C6E8(nw4r::math::VEC3* out, const nw4r::math::VEC3* a,
+extern "C" void addVec3f(void* a, const void* b);
+extern "C" void copyVec3f(void* out, const void* v);
+extern "C" void* writeVec3f(nw4r::math::VEC3* out, f32 a, f32 b, f32 c);
+extern "C" f32 cfCam_vecLength(const nw4r::math::VEC3* v);
+extern "C" f32 cfCam_psScaleVec(nw4r::math::VEC3* v, f32 s);
+extern "C" f32 cfCam_vecLenSq(const nw4r::math::VEC3* v);
+extern "C" f32 safeFSqrt(f32 x);
+extern "C" void cfCam_psAddVec3(nw4r::math::VEC3* out, const nw4r::math::VEC3* a,
                               const nw4r::math::VEC3* b);
 extern "C" void func_80052584(void* out, const void* a, const void* b);
-extern "C" void func_8007420C(void* out, const Mtx m);
-extern "C" void func_8006EF1C(void* out, const nw4r::math::MTX34* m);
-extern "C" s32 func_8006BA80(void* self);
-extern "C" void func_8004CBC8(void* self);
-extern "C" void func_8004B694(u32* self, u32 flags);
-extern "C" s32 func_804842B0(void* model);
-extern "C" void func_80484E04(void* model, s32 flag);
+extern "C" void cfCam_extractTrans(void* out, const Mtx m);
+extern "C" void cfCam_copyBlock48(void* out, const nw4r::math::MTX34* m);
+extern "C" s32 cfCam_isVecNear0(void* self);
+extern "C" void normVec3(void* self);
+extern "C" void clearFlagMask(u32* self, u32 flags);
+extern "C" s32 simQueryLeafAnim(void* model);
+extern "C" void simSetValue7E8(void* model, s32 flag);
 
 // g3d ResMdl node lookup (member call emits this exact retail symbol).
 extern "C" unsigned long GetResNode__Q34nw4r3g3d6ResMdlCFUl(nw4r::g3d::ResMdl* mdl,
@@ -112,8 +112,8 @@ extern "C" unsigned long GetResNode__Q34nw4r3g3d6ResMdlCFUl(nw4r::g3d::ResMdl* m
 
 // --- Cross-TU imports used by func_804EAA18 ---
 extern "C" float scaleByGlobal(float val);
-extern "C" void func_800B0A90(void* self);   // zero the u32 at self
-extern "C" void func_8049D8D4(u32* self, u32 flags); // OR flag bits
+extern "C" void zeroFirstWord(void* self);   // zero the u32 at self
+extern "C" void ScnFilterMan_setFlags(u32* self, u32 flags); // OR flag bits
 // "DCbal"/"DCpla"/"DCcyl" tag-pointer table (defined in CMdlLook.cpp)
 extern "C" u32 lbl_eu_805701F0[3];
 extern const char lbl_eu_80524840[]; // "Dwet\0Ddmp\0Dsta\0Dbld\0Dlrx..." tags
@@ -122,8 +122,8 @@ extern const char lbl_eu_80570230[]; // panic file name (shape payload checks)
 extern const char lbl_eu_80570208[]; // panic message (shape payload checks)
 
 // Element-array allocator used by func_804EA284.
-extern "C" void* func_80488954(void* heap, u32 size);
-extern "C" s32 func_80488938(void* heap, u32 size); // heap space query
+extern "C" void* scnImN4PoolAlloc(void* heap, u32 size);
+extern "C" s32 scnImN4PoolHasSpc(void* heap, u32 size); // heap space query
 extern "C" u32 func_80496018(void* scene); // scene -> mtl::ALLOC_HANDLE
 extern "C" void func_80482DF4(CScnItemModel* self, u32 param);
 
@@ -200,31 +200,31 @@ CMdlDynamics::CMdlDynamics() {
 
 CMdlDynamics::~CMdlDynamics() {}
 
-// func_804E9FC8 (inline getter at 0x804E9FC8) defined once - all harness stubs
+// MdlDyn_GetResMdlData (inline getter at 0x804E9FC8) defined once - all harness stubs
 // mapping to the same symbol reference it rather than redefining.
-extern "C" __declspec(noinline) u32 func_804E9FC8(u8* self) { return *(u32*)((u8*)self + 0x146c); }
+extern "C" __declspec(noinline) u32 MdlDyn_GetResMdlData(u8* self) { return *(u32*)((u8*)self + 0x146c); }
 
-// (mapped to func_804E9FC8 above)
+// (mapped to MdlDyn_GetResMdlData above)
 
-// (mapped to func_804E9FC8 above)
+// (mapped to MdlDyn_GetResMdlData above)
 
-// (mapped to func_804E9FC8 above)
+// (mapped to MdlDyn_GetResMdlData above)
 
-// (mapped to func_804E9FC8 above)
+// (mapped to MdlDyn_GetResMdlData above)
 
-// (mapped to func_804E9FC8 above)
+// (mapped to MdlDyn_GetResMdlData above)
 
-// (mapped to func_804E9FC8 above)
+// (mapped to MdlDyn_GetResMdlData above)
 
-// (mapped to func_804E9FC8 above)
+// (mapped to MdlDyn_GetResMdlData above)
 
-// (mapped to func_804E9FC8 above)
+// (mapped to MdlDyn_GetResMdlData above)
 
-extern "C" __declspec(noinline) void func_804EA0D4(u8* self, const void* src) { *(u32*)self = *(const u32*)src; }
+extern "C" __declspec(noinline) void MdlDyn_StoreResRef(u8* self, const void* src) { *(u32*)self = *(const u32*)src; }
 
-extern "C" __declspec(noinline) u32 func_804EA0E0(u8* self) { return *(u32*)((u8*)self + 0x4); }
+extern "C" __declspec(noinline) u32 MdlDyn_GetListCount(u8* self) { return *(u32*)((u8*)self + 0x4); }
 
-// (mapped to func_804E9FC8 above)
+// (mapped to MdlDyn_GetResMdlData above)
 
 // us-804ed91c: deleting destructor for the dynamic buffer holder (retail keeps
 // the full MWCC scaffold: null check, r4 > 0 delete flag, return this).
@@ -267,9 +267,9 @@ void* __dt__804EA1D0(CMdlDynBuffer* self, s32 freeIt) {
     return self;
 }
 
-extern "C" __declspec(noinline) u32 func_804EA268(u8* self) { return *(u32*)((u8*)self + 0x0); }
+extern "C" __declspec(noinline) u32 MdlDyn_GetListBase(u8* self) { return *(u32*)((u8*)self + 0x0); }
 
-extern "C" __declspec(noinline) void* func_804EA270(u8* self) { return (char*)*(void**)self + (*(u32*)((u8*)self + 4) << 2); }
+extern "C" __declspec(noinline) void* MdlDyn_GetListEnd(u8* self) { return (char*)*(void**)self + (*(u32*)((u8*)self + 4) << 2); }
 
 // Model resource root; the ResMdl data word used for node lookups sits at 0x146C.
 struct MdlResRoot {
@@ -294,7 +294,7 @@ struct CMdlDynHolder {
     CMdlDynSub* field_0x0; // 0x0
 };
 
-extern "C" s32 func_804EB2FC(void* self); // dict entry presence query
+extern "C" s32 MdlDyn_HasDictEntry(void* self); // dict entry presence query
 
 // 0x98-stride dynamic-model element driven by func_804ECAC4.
 struct CMdlDynElem98 {
@@ -325,7 +325,7 @@ struct DynShapeData {
 // pass 2 allocates a 0x98-stride element array and fills each element with
 // the node pointer, the node's animated matrix and its inverse, and the
 // shape kind byte (ball shapes skip the animation solve).
-extern "C" u32 func_804E9FD0(const CMdlDynHolder* self);
+extern "C" u32 MdlDyn_GetShapeKind(const CMdlDynHolder* self);
 // Retail symbol is the unmangled C name.
 extern "C" void func_804EA284(CMdlDynamics* self) {
     u32 ids[16];
@@ -461,13 +461,13 @@ extern "C" void func_804EA284(CMdlDynamics* self) {
         if (shape != 0) {
             CMdlDynHolder wrap;
             wrap.field_0x0 = (CMdlDynSub*)node;
-            ids[count] = func_804E9FD0(&wrap);
+            ids[count] = MdlDyn_GetShapeKind(&wrap);
             count++;
         }
     }
 
     if (count != 0) {
-        u8* base = (u8*)func_80488954(
+        u8* base = (u8*)scnImN4PoolAlloc(
             (void*)(unsigned long)self->field_0x4,
             count * sizeof(CMdlDynElem98));
         self->buf18.field_0x0 = base;
@@ -590,20 +590,20 @@ extern "C" void func_804EA284(CMdlDynamics* self) {
 }
 
 // Thin wrappers over the SDK matrix functions (header-declared via <revolution/MTX.h>).
-// Thin SDK wrapper; noinline keeps the retail `bl func_804EAA10` call sites
+// Thin SDK wrapper; noinline keeps the retail `bl MdlDyn_InvertMatrix` call sites
 // under -ipa file.
-extern "C" __declspec(noinline) void func_804EAA10(const Mtx a, Mtx b) {
+extern "C" __declspec(noinline) void MdlDyn_InvertMatrix(const Mtx a, Mtx b) {
     PSMTXInverse(a, b);
 }
 
-extern "C" __declspec(noinline) void func_804EAA14(void*) {}
+extern "C" __declspec(noinline) void MdlDyn_NoopChrResult(void*) {}
 
 
-extern "C" __declspec(noinline) u32 func_804EB1C4(u8* self) { return *(u32*)self != 0; }
+extern "C" __declspec(noinline) u32 MdlDyn_IsDictPresent(u8* self) { return *(u32*)self != 0; }
 
 // Stores a value at self+0 and asserts it is 4-byte aligned (retail panics
 // with the same file/line/message as the nw4r ResDic alignment checks).
-extern "C" __declspec(noinline) u8* func_804EB1D8(u8* self, u32 arg) {
+extern "C" __declspec(noinline) u8* MdlDyn_InitDictHolder(u8* self, u32 arg) {
     *(u32*)self = arg;
     if ((arg & 3) != 0) {
         nw4r::db::Panic(lbl_eu_80530D54, 0x26, lbl_eu_80530D2C);
@@ -667,7 +667,7 @@ struct CMdlDynSet {
 
 // Looks up a named entry in the sub-object's embedded resource dictionary
 // (ResDic at sub+4) and returns the resolved data pointer (4-aligned).
-extern "C" __declspec(noinline) u8* func_804EB22C(const CMdlDynHolder* self, const char* name) {
+extern "C" __declspec(noinline) u8* MdlDyn_FindDictEntry(const CMdlDynHolder* self, const char* name) {
     if (!self->field_0x0) {
         nw4r::db::Panic(lbl_eu_80530D18, 0x57, lbl_eu_80530CFC, lbl_eu_80530CF0,
                         lbl_eu_80663CC0);
@@ -686,9 +686,9 @@ extern "C" __declspec(noinline) u8* func_804EB22C(const CMdlDynHolder* self, con
 
 // Resolves the sub-object's embedded data pointer: asserts the dictionary is
 // present (two checks) and that its kind is not zero, then resolves the
-// offset at field_0x4 (same shape as func_804EB310 but the kind check is
+// offset at field_0x4 (same shape as MdlDyn_GetEntryData but the kind check is
 // `!= 0` with a different file/line/message).
-extern "C" __declspec(noinline) u8* func_804EB3E8(CMdlDynHolder* self) {
+extern "C" __declspec(noinline) u8* MdlDyn_GetEntryDataUnchecked(CMdlDynHolder* self) {
     if (self->field_0x0 == 0) {
         nw4r::db::Panic(lbl_eu_80530DC4, 0x26, lbl_eu_80530DA8, lbl_eu_80530D68,
                         lbl_eu_80663CC8);
@@ -710,7 +710,7 @@ extern "C" __declspec(noinline) u8* func_804EB3E8(CMdlDynHolder* self) {
 
 // Returns the sub-object's embedded data pointer: asserts the dictionary
 // kind (field_0xC == 1) and resolves the offset at field_0x4.
-extern "C" __declspec(noinline) u8* func_804EB310(CMdlDynHolder* self) {
+extern "C" __declspec(noinline) u8* MdlDyn_GetEntryData(CMdlDynHolder* self) {
     if (self->field_0x0 == 0) {
         nw4r::db::Panic(lbl_eu_80530DC4, 0x26, lbl_eu_80530DA8, lbl_eu_80530D68,
                         lbl_eu_80663CC8);
@@ -731,7 +731,7 @@ extern "C" __declspec(noinline) u8* func_804EB310(CMdlDynHolder* self) {
     return 0;
 }
 
-extern "C" __declspec(noinline) u32 func_804EB4C0(const CMdlDynHolder* self) {
+extern "C" __declspec(noinline) u32 MdlDyn_GetEntryCount(const CMdlDynHolder* self) {
     CMdlDynSub* sub = self->field_0x0;
     if (sub == 0) {
         nw4r::db::Panic(lbl_eu_80530DC4, 0x26, lbl_eu_80530DA8, lbl_eu_80530D68,
@@ -740,9 +740,9 @@ extern "C" __declspec(noinline) u32 func_804EB4C0(const CMdlDynHolder* self) {
     return self->field_0x0->field_0x8;
 }
 
-extern "C" __declspec(noinline) void func_804EB524(u8* self, const void* src) { *(u32*)self = *(const u32*)src; }
+extern "C" __declspec(noinline) void MdlDyn_StoreDictHolder(u8* self, const void* src) { *(u32*)self = *(const u32*)src; }
 
-extern "C" __declspec(noinline) void func_804EB530(u8* self) {
+extern "C" __declspec(noinline) void MdlDyn_ClearElemBuffers(u8* self) {
     u8* s = (u8*)self;
     *(u32*)(s + 0x8C) = 0;
     *(u32*)(s + 0x90) = 0;
@@ -753,9 +753,9 @@ extern "C" __declspec(noinline) void func_804EB530(u8* self) {
     *(u32*)(s + 0xAC) = -1;
 }
 
-extern "C" __declspec(noinline) void func_804EB558(u8* self, const void* src) { *(u32*)self = *(const u32*)src; }
+extern "C" __declspec(noinline) void MdlDyn_StoreEntryPtr(u8* self, const void* src) { *(u32*)self = *(const u32*)src; }
 
-// Raw 0xB0-byte element view used by the append-copy func_804EB564 (retail
+// Raw 0xB0-byte element view used by the append-copy MdlDyn_AppendElem (retail
 // copies the head word + four floats, then the remaining 39 words raw).
 struct CMdlDynElemRaw {
     u32 field_0x0;      // 0x0
@@ -767,7 +767,7 @@ struct CMdlDynElemRaw {
 // bumps the element count. Field copies are written explicitly (rather than
 // a struct assignment, which MWCC would copy word-by-word) so the head
 // floats use lfs/stfs like retail.
-extern "C" __declspec(noinline) void func_804EB564(CMdlDynList* self, const CMdlDynElemRaw* src) {
+extern "C" __declspec(noinline) void MdlDyn_AppendElem(CMdlDynList* self, const CMdlDynElemRaw* src) {
     u32 idx = self->field_0x4;
     u32 base = (u32)self->field_0x0;
     u32 off = idx * 0xB0;
@@ -820,11 +820,11 @@ extern "C" __declspec(noinline) void func_804EB564(CMdlDynList* self, const CMdl
 }
 
 // Returns a pointer to element idx of a 0x98-byte-stride array stored at self+0.
-extern "C" __declspec(noinline) u8* func_804EB6E0(u8* self, u32 idx) {
+extern "C" __declspec(noinline) u8* MdlDyn_GetAnchorElem(u8* self, u32 idx) {
     return *(u8**)self + idx * 0x98;
 }
 
-extern "C" __declspec(noinline) u32 func_804EB6F0(u8* self) { return *(u32*)((u8*)self + 0x4); }
+extern "C" __declspec(noinline) u32 MdlDyn_GetAnchorCount(u8* self) { return *(u32*)((u8*)self + 0x4); }
 
 // Returns a pointer to element idx of a 0xB0-byte-stride array stored at self+0.
 extern "C" __declspec(noinline) u8* func_804EB6F8(u8* self, u32 idx) {
@@ -1039,7 +1039,7 @@ extern const float lbl_eu_8066B3D4;
 // Chain-tail distance query (retail C-ABI, defined in CScnItemModel.cpp).
 // Local declaration only - CScnItemModel.hpp is outside this session's
 // writable scope; move it there when headers become writable.
-extern "C" float func_80484EB0(CScnItemModel* self);
+extern "C" float simGetLeafDist7B0(CScnItemModel* self);
 
 // us-804effa4: anim-speed update. Reads the chain-tail distance (scale) of
 // the referenced model, forces scale to 1 when either model flag bit
@@ -1050,7 +1050,7 @@ void func_804EBAE8(CMdlDynModelRef* self) {
     if (self->field_0x4 == 0) {
         return;
     }
-    f32 scale = func_80484EB0(self->field_0x4);
+    f32 scale = simGetLeafDist7B0(self->field_0x4);
     if ((self->field_0x4->flags7A8 & 0x4) != 0 || (self->field_0x4->flags7A8 & 0x8) != 0) {
         scale = lbl_eu_8066B3D4;
     }
@@ -1085,7 +1085,7 @@ struct MdlDynObj {
 
 // Resolved dictionary-entry scratch wrapper used while reading the shape
 // user-data dictionaries (entry pointer + typed accessors below).
-u8* func_804EA038(CMdlDynHolder* self);
+u8* MdlDyn_ResolveSubData(CMdlDynHolder* self);
 
 // us-804eeed4: builds one 0xB0 dynamic-model element from the shape node's
 // user-data dictionaries and appends it to the list.
@@ -1096,69 +1096,69 @@ u8* func_804EA038(CMdlDynHolder* self);
 //   in elem.field_0x8C) and whose last two are bounds kept ordered x <= y.
 void func_804EAA18(MdlDynObj* model, CMdlDynList* list, u32 index) {
     nw4r::g3d::ResMdl mdl(
-        (void*)(unsigned long)func_804E9FC8((u8*)model->field_0x4));
+        (void*)(unsigned long)MdlDyn_GetResMdlData((u8*)model->field_0x4));
     unsigned long nodeIdx =
         GetResNode__Q34nw4r3g3d6ResMdlCFUl(&mdl, index);
     nw4r::g3d::ResNode resNode;
-    func_804EA0D4((u8*)&resNode, &nodeIdx);
+    MdlDyn_StoreResRef((u8*)&resNode, &nodeIdx);
 
     CMdlDynHolder holderNode;
-    func_804EA0D4((u8*)&holderNode, &resNode);
-    u8* subData = func_804EA038(&holderNode);
+    MdlDyn_StoreResRef((u8*)&holderNode, &resNode);
+    u8* subData = MdlDyn_ResolveSubData(&holderNode);
     nw4r::g3d::ResNode subNode;
-    func_804EA0D4((u8*)&subNode, &subData);
+    MdlDyn_StoreResRef((u8*)&subNode, &subData);
 
     void* udA = resNode.GetResUserData();
     CMdlDynHolder dictA;
-    func_804EB524((u8*)&dictA, &udA);
+    MdlDyn_StoreDictHolder((u8*)&dictA, &udA);
     void* udB = subNode.GetResUserData();
     CMdlDynHolder dictB;
-    func_804EB524((u8*)&dictB, &udB);
+    MdlDyn_StoreDictHolder((u8*)&dictB, &udB);
 
-    if (!func_804EB1C4((u8*)&dictA)) {
+    if (!MdlDyn_IsDictPresent((u8*)&dictA)) {
         return;
     }
 
     CMdlDynElem elem;
-    func_804EB530((u8*)&elem); // zero both embedded buffers
+    MdlDyn_ClearElemBuffers((u8*)&elem); // zero both embedded buffers
     CMdlDynHolder entry;
-    func_804EB1D8((u8*)&entry, 0);
-    func_800B0A90(&elem.field_0x8C);
-    elem.field_0x0 = func_804E9FD0(&holderNode);
+    MdlDyn_InitDictHolder((u8*)&entry, 0);
+    zeroFirstWord(&elem.field_0x8C);
+    elem.field_0x0 = MdlDyn_GetShapeKind(&holderNode);
 
     // Scalar tags from the node dictionary; absent entries read 0.
-    u8* found = func_804EB22C(&dictA, lbl_eu_80524840 + 0); // "Dwet"
-    func_804EB558((u8*)&entry, &found);
+    u8* found = MdlDyn_FindDictEntry(&dictA, lbl_eu_80524840 + 0); // "Dwet"
+    MdlDyn_StoreEntryPtr((u8*)&entry, &found);
     f32 val;
-    if (func_804EB2FC(&entry)) {
-        val = *func_804EB310(&entry);
+    if (MdlDyn_HasDictEntry(&entry)) {
+        val = *MdlDyn_GetEntryData(&entry);
     } else {
         val = lbl_eu_8066B3D0;
     }
     elem.field_0x4 = val;
 
-    found = func_804EB22C(&dictA, lbl_eu_80524840 + 5); // "Ddmp"
-    func_804EB558((u8*)&entry, &found);
-    if (func_804EB2FC(&entry)) {
-        val = *func_804EB310(&entry);
+    found = MdlDyn_FindDictEntry(&dictA, lbl_eu_80524840 + 5); // "Ddmp"
+    MdlDyn_StoreEntryPtr((u8*)&entry, &found);
+    if (MdlDyn_HasDictEntry(&entry)) {
+        val = *MdlDyn_GetEntryData(&entry);
     } else {
         val = lbl_eu_8066B3D0;
     }
     elem.field_0x8 = val;
 
-    found = func_804EB22C(&dictA, lbl_eu_80524840 + 0xa); // "Dsta"
-    func_804EB558((u8*)&entry, &found);
-    if (func_804EB2FC(&entry)) {
-        val = *func_804EB310(&entry);
+    found = MdlDyn_FindDictEntry(&dictA, lbl_eu_80524840 + 0xa); // "Dsta"
+    MdlDyn_StoreEntryPtr((u8*)&entry, &found);
+    if (MdlDyn_HasDictEntry(&entry)) {
+        val = *MdlDyn_GetEntryData(&entry);
     } else {
         val = lbl_eu_8066B3D0;
     }
     elem.field_0xC = val;
 
-    found = func_804EB22C(&dictA, lbl_eu_80524840 + 0xf); // "Dbld"
-    func_804EB558((u8*)&entry, &found);
-    if (func_804EB2FC(&entry)) {
-        val = *func_804EB310(&entry);
+    found = MdlDyn_FindDictEntry(&dictA, lbl_eu_80524840 + 0xf); // "Dbld"
+    MdlDyn_StoreEntryPtr((u8*)&entry, &found);
+    if (MdlDyn_HasDictEntry(&entry)) {
+        val = *MdlDyn_GetEntryData(&entry);
     } else {
         val = lbl_eu_8066B3D0;
     }
@@ -1172,72 +1172,72 @@ void func_804EAA18(MdlDynObj* model, CMdlDynList* list, u32 index) {
     // 4-float record {flagX, flagY, boundX, boundY}. Non-zero flags set bits
     // in the element's flag word; when both flags of an axis are set the two
     // bounds are swapped so the smaller one comes first.
-    if (func_804EB1C4((u8*)&dictB)) {
+    if (MdlDyn_IsDictPresent((u8*)&dictB)) {
         f32* d;
         f32 sx;
         f32 sy;
 
-        found = func_804EB22C(&dictB, lbl_eu_80524840 + 0x14); // "Dlrx"
-        func_804EB558((u8*)&entry, &found);
-        if (func_804EB2FC(&entry)) {
-            d = (f32*)func_804EB310(&entry);
+        found = MdlDyn_FindDictEntry(&dictB, lbl_eu_80524840 + 0x14); // "Dlrx"
+        MdlDyn_StoreEntryPtr((u8*)&entry, &found);
+        if (MdlDyn_HasDictEntry(&entry)) {
+            d = (f32*)MdlDyn_GetEntryData(&entry);
             if (d[0] != lbl_eu_8066B3D0) {
-                func_8049D8D4(&elem.field_0x8C, 0x1);
+                ScnFilterMan_setFlags(&elem.field_0x8C, 0x1);
             }
-            d = (f32*)func_804EB310(&entry);
+            d = (f32*)MdlDyn_GetEntryData(&entry);
             if (d[1] != lbl_eu_8066B3D0) {
-                func_8049D8D4(&elem.field_0x8C, 0x2);
+                ScnFilterMan_setFlags(&elem.field_0x8C, 0x2);
             }
-            sx = scaleByGlobal(((f32*)func_804EB310(&entry))[2]);
-            sy = scaleByGlobal(((f32*)func_804EB310(&entry))[3]);
+            sx = scaleByGlobal(((f32*)MdlDyn_GetEntryData(&entry))[2]);
+            sy = scaleByGlobal(((f32*)MdlDyn_GetEntryData(&entry))[3]);
             elem.minX = sx;
             elem.maxX = sy;
-            if (func_8004B3D8(&elem.field_0x8C, 0x1) != 0 &&
-                func_8004B3D8(&elem.field_0x8C, 0x2) != 0 && sx > sy) {
+            if (testFlagMask(&elem.field_0x8C, 0x1) != 0 &&
+                testFlagMask(&elem.field_0x8C, 0x2) != 0 && sx > sy) {
                 elem.minX = sy;
                 elem.maxX = sx;
             }
         }
 
-        found = func_804EB22C(&dictB, lbl_eu_80524840 + 0x19); // "Dlry"
-        func_804EB558((u8*)&entry, &found);
-        if (func_804EB2FC(&entry)) {
-            d = (f32*)func_804EB310(&entry);
+        found = MdlDyn_FindDictEntry(&dictB, lbl_eu_80524840 + 0x19); // "Dlry"
+        MdlDyn_StoreEntryPtr((u8*)&entry, &found);
+        if (MdlDyn_HasDictEntry(&entry)) {
+            d = (f32*)MdlDyn_GetEntryData(&entry);
             if (d[0] != lbl_eu_8066B3D0) {
-                func_8049D8D4(&elem.field_0x8C, 0x4);
+                ScnFilterMan_setFlags(&elem.field_0x8C, 0x4);
             }
-            d = (f32*)func_804EB310(&entry);
+            d = (f32*)MdlDyn_GetEntryData(&entry);
             if (d[1] != lbl_eu_8066B3D0) {
-                func_8049D8D4(&elem.field_0x8C, 0x8);
+                ScnFilterMan_setFlags(&elem.field_0x8C, 0x8);
             }
-            sx = scaleByGlobal(((f32*)func_804EB310(&entry))[2]);
-            sy = scaleByGlobal(((f32*)func_804EB310(&entry))[3]);
+            sx = scaleByGlobal(((f32*)MdlDyn_GetEntryData(&entry))[2]);
+            sy = scaleByGlobal(((f32*)MdlDyn_GetEntryData(&entry))[3]);
             elem.minY = sx;
             elem.maxY = sy;
-            if (func_8004B3D8(&elem.field_0x8C, 0x4) != 0 &&
-                func_8004B3D8(&elem.field_0x8C, 0x8) != 0 && sx > sy) {
+            if (testFlagMask(&elem.field_0x8C, 0x4) != 0 &&
+                testFlagMask(&elem.field_0x8C, 0x8) != 0 && sx > sy) {
                 elem.minY = sy;
                 elem.maxY = sx;
             }
         }
 
-        found = func_804EB22C(&dictB, lbl_eu_80524840 + 0x1e); // "Dlrz"
-        func_804EB558((u8*)&entry, &found);
-        if (func_804EB2FC(&entry)) {
-            d = (f32*)func_804EB310(&entry);
+        found = MdlDyn_FindDictEntry(&dictB, lbl_eu_80524840 + 0x1e); // "Dlrz"
+        MdlDyn_StoreEntryPtr((u8*)&entry, &found);
+        if (MdlDyn_HasDictEntry(&entry)) {
+            d = (f32*)MdlDyn_GetEntryData(&entry);
             if (d[0] != lbl_eu_8066B3D0) {
-                func_8049D8D4(&elem.field_0x8C, 0x10);
+                ScnFilterMan_setFlags(&elem.field_0x8C, 0x10);
             }
-            d = (f32*)func_804EB310(&entry);
+            d = (f32*)MdlDyn_GetEntryData(&entry);
             if (d[1] != lbl_eu_8066B3D0) {
-                func_8049D8D4(&elem.field_0x8C, 0x20);
+                ScnFilterMan_setFlags(&elem.field_0x8C, 0x20);
             }
-            sx = scaleByGlobal(((f32*)func_804EB310(&entry))[2]);
-            sy = scaleByGlobal(((f32*)func_804EB310(&entry))[3]);
+            sx = scaleByGlobal(((f32*)MdlDyn_GetEntryData(&entry))[2]);
+            sy = scaleByGlobal(((f32*)MdlDyn_GetEntryData(&entry))[3]);
             elem.minZ = sx;
             elem.maxZ = sy;
-            if (func_8004B3D8(&elem.field_0x8C, 0x10) != 0 &&
-                func_8004B3D8(&elem.field_0x8C, 0x20) != 0 && sx > sy) {
+            if (testFlagMask(&elem.field_0x8C, 0x10) != 0 &&
+                testFlagMask(&elem.field_0x8C, 0x20) != 0 && sx > sy) {
                 elem.minZ = sy;
                 elem.maxZ = sx;
             }
@@ -1246,19 +1246,19 @@ void func_804EAA18(MdlDynObj* model, CMdlDynList* list, u32 index) {
 
     // Animate the shape node and stash its matrix into the element copy.
     nw4r::g3d::ChrAnmResult chrRes;
-    func_804EAA14(&chrRes);
+    MdlDyn_NoopChrResult(&chrRes);
     resNode.CalcChrAnmResult(&chrRes);
     nw4r::math::MTX34 mtx;
     chrRes.GetMtx(&mtx);
     nw4r::math::VEC3 v164;
-    func_8006BEC4(&v164);
+    cfCam_zeroVec3(&v164);
     nw4r::math::VEC3 v170;
-    func_8006BEC4(&v170);
+    cfCam_zeroVec3(&v170);
     nw4r::math::VEC3 v188;
-    func_8006BEC4(&v188);
+    cfCam_zeroVec3(&v188);
     nw4r::math::VEC3 v17c;
-    func_8006BEC4(&v17c);
-    func_804EB564(list, (CMdlDynElemRaw*)&elem);
+    cfCam_zeroVec3(&v17c);
+    MdlDyn_AppendElem(list, (CMdlDynElemRaw*)&elem);
 
     // Anchor-tag scan: for each of "DCbal"/"DCpla"/"DCcyl" present in the
     // dictionary, match every listed id against the model's 0x98-stride
@@ -1267,19 +1267,19 @@ void func_804EAA18(MdlDynObj* model, CMdlDynList* list, u32 index) {
     u32 matchCount = 0;
     for (u32 j = 0; j < 3; j++) {
         const char* tagName = (const char*)lbl_eu_805701F0[j];
-        found = func_804EB22C(&dictA, tagName);
-        func_804EB558((u8*)&entry, &found);
-        if (!func_804EB2FC(&entry)) {
+        found = MdlDyn_FindDictEntry(&dictA, tagName);
+        MdlDyn_StoreEntryPtr((u8*)&entry, &found);
+        if (!MdlDyn_HasDictEntry(&entry)) {
             continue;
         }
         u32 a = 0;
         u32 off = 0;
-        while (a < func_804EB4C0(&entry)) {
+        while (a < MdlDyn_GetEntryCount(&entry)) {
             for (u32 i = 0;
-                 i < func_804EB6F0((u8*)&model->elems18); i++) {
-                u8* e98 = func_804EB6E0((u8*)&model->elems18, i);
+                 i < MdlDyn_GetAnchorCount((u8*)&model->elems18); i++) {
+                u8* e98 = MdlDyn_GetAnchorElem((u8*)&model->elems18, i);
                 u32 elemId = *(u32*)e98;
-                u8* data = func_804EB3E8(&entry);
+                u8* data = MdlDyn_GetEntryDataUnchecked(&entry);
                 if (*(u32*)(data + off) == elemId) {
                     ids[matchCount++] = i;
                 }
@@ -1292,20 +1292,20 @@ void func_804EAA18(MdlDynObj* model, CMdlDynList* list, u32 index) {
     if (matchCount != 0) {
         // Append every matched anchor node id to the newest list element's
         // id buffer (buf90).
-        u32 lastIdx = func_804EA0E0((u8*)list);
+        u32 lastIdx = MdlDyn_GetListCount((u8*)list);
         CMdlDynElem* last =
             (CMdlDynElem*)func_804EB6F8((u8*)list, lastIdx - 1);
-        u32 mem = (u32)func_80488954((void*)model->field_0x4,
+        u32 mem = (u32)scnImN4PoolAlloc((void*)model->field_0x4,
                                      matchCount << 2);
         func_804EB708((u8*)&last->buf90, mem, matchCount);
         for (u32 k = 0; k < matchCount; k++) {
             nw4r::g3d::ResMdl mdl2(
-                (void*)(unsigned long)func_804E9FC8((u8*)model->field_0x4));
-            u8* e98 = func_804EB6E0((u8*)&model->elems18, ids[k]);
+                (void*)(unsigned long)MdlDyn_GetResMdlData((u8*)model->field_0x4));
+            u8* e98 = MdlDyn_GetAnchorElem((u8*)&model->elems18, ids[k]);
             unsigned long nid =
                 GetResNode__Q34nw4r3g3d6ResMdlCFUl(&mdl2, *(u32*)e98);
             nw4r::g3d::ResNode nres;
-            func_804EA0D4((u8*)&nres, &nid);
+            MdlDyn_StoreResRef((u8*)&nres, &nid);
             func_804EB720((u8*)&last->buf90, &nres);
         }
     }
@@ -1313,27 +1313,27 @@ void func_804EAA18(MdlDynObj* model, CMdlDynList* list, u32 index) {
     // Link table ("Dlink" + "Dllen"): append {id, weight} pairs from the
     // dictionary to the newest element's link buffer (bufA0), recording the
     // destination buffer header for the append helper.
-    found = func_804EB22C(&dictA, lbl_eu_80524840 + 0x23); // "Dlink"
-    func_804EB558((u8*)&entry, &found);
-    if (func_804EB2FC(&entry) && func_804EB4C0(&entry) != 0) {
-        u32 lastIdx = func_804EA0E0((u8*)list);
+    found = MdlDyn_FindDictEntry(&dictA, lbl_eu_80524840 + 0x23); // "Dlink"
+    MdlDyn_StoreEntryPtr((u8*)&entry, &found);
+    if (MdlDyn_HasDictEntry(&entry) && MdlDyn_GetEntryCount(&entry) != 0) {
+        u32 lastIdx = MdlDyn_GetListCount((u8*)list);
         CMdlDynElem* last =
             (CMdlDynElem*)func_804EB6F8((u8*)list, lastIdx - 1);
-        u32 cnt = func_804EB4C0(&entry);
+        u32 cnt = MdlDyn_GetEntryCount(&entry);
         u32 mem =
-            (u32)func_80488954((void*)model->field_0x4,
-                               func_804EB4C0(&entry) * 12);
+            (u32)scnImN4PoolAlloc((void*)model->field_0x4,
+                               MdlDyn_GetEntryCount(&entry) * 12);
         func_804EB740((u8*)&last->bufA0, mem, cnt);
 
-        found = func_804EB22C(&dictA, lbl_eu_80524840 + 0x29); // "Dllen"
+        found = MdlDyn_FindDictEntry(&dictA, lbl_eu_80524840 + 0x29); // "Dllen"
         CMdlDynHolder lens;
         func_804EB758((u8*)&lens, &found);
         u32 recIdx = 0; // third record word stays zero across the loop
         u32 rec[3];
-        for (u32 i = 0; i < func_804EB4C0(&entry); i++) {
-            rec[0] = *(u32*)(func_804EB3E8(&entry) + i * 4);
+        for (u32 i = 0; i < MdlDyn_GetEntryCount(&entry); i++) {
+            rec[0] = *(u32*)(MdlDyn_GetEntryDataUnchecked(&entry) + i * 4);
             rec[1] =
-                (u32)(unsigned long)*(f32*)((u8*)func_804EB310(&lens) + i * 4);
+                (u32)(unsigned long)*(f32*)((u8*)MdlDyn_GetEntryData(&lens) + i * 4);
             rec[2] = recIdx;
             func_804EB764((u8*)&last->bufA0, (void*)rec);
         }
@@ -1365,7 +1365,7 @@ struct CMdlDynTarget {
 
 // Forward declarations (linkage matches each definition below).
 u32 func_804EC344(const CMdlDynHolder* self);
-u8* func_804EA038(CMdlDynHolder* self);
+u8* MdlDyn_ResolveSubData(CMdlDynHolder* self);
 extern "C" void func_804EC47C(nw4r::math::MTX34* out, const nw4r::math::MTX34* a,
                    const nw4r::math::MTX34* b);
 extern "C" s32 func_804EC514(const Quaternion* q, nw4r::math::VEC3* out);
@@ -1413,15 +1413,15 @@ void func_804EBBCC(CMdlDynamics* self, nw4r::math::MTX34* matrices) {
     while (it98 != (u8*)func_804EC9EC((u8*)self->field_0x4 + 0x18)) {
         if (((CMdlDynElem98*)it98)->field_0x94 == 1) {
             nw4r::g3d::ResMdl mdl(
-                (void*)(unsigned long)func_804E9FC8((u8*)self->field_0x4));
+                (void*)(unsigned long)MdlDyn_GetResMdlData((u8*)self->field_0x4));
             unsigned long node =
                 GetResNode__Q34nw4r3g3d6ResMdlCFUl(&mdl, *(u32*)it98);
             CMdlDynHolder wrapNode;
-            func_804EA0D4((u8*)&wrapNode, &node);
+            MdlDyn_StoreResRef((u8*)&wrapNode, &node);
             CMdlDynHolder wrapData;
-            wrapData.field_0x0 = (CMdlDynSub*)func_804EA038(&wrapNode);
+            wrapData.field_0x0 = (CMdlDynSub*)MdlDyn_ResolveSubData(&wrapNode);
             u32 n = func_804EC344(&wrapData);
-            func_804EAA10(matrices[n].mtx, (f32 (*)[4])it98);
+            MdlDyn_InvertMatrix(matrices[n].mtx, (f32 (*)[4])it98);
         }
         it98 += sizeof(CMdlDynElem98);
     }
@@ -1430,7 +1430,7 @@ void func_804EBBCC(CMdlDynamics* self, nw4r::math::MTX34* matrices) {
     s32 flag = 0;
     if (func_804EC3AC((u8*)self->field_0x4) != 0 &&
         func_804EC3B8((u8*)self->field_0x4) != 0 &&
-        func_804842B0((void*)self->field_0x4) != 0) {
+        simQueryLeafAnim((void*)self->field_0x4) != 0) {
         flag = 1;
     }
 
@@ -1439,29 +1439,29 @@ void func_804EBBCC(CMdlDynamics* self, nw4r::math::MTX34* matrices) {
     f32 zero = lbl_eu_8066B3D0;
     f32 eps = lbl_eu_8066B3D8;
     while (frame < (u32)func_804EBBC4((u8*)self->field_0x4)) {
-        CMdlDynList** lstIt = (CMdlDynList**)func_804EA268((u8*)&self->buf08);
-        while (lstIt != (CMdlDynList**)func_804EA270((u8*)&self->buf08)) {
+        CMdlDynList** lstIt = (CMdlDynList**)MdlDyn_GetListBase((u8*)&self->buf08);
+        while (lstIt != (CMdlDynList**)MdlDyn_GetListEnd((u8*)&self->buf08)) {
             u32 idx = 0;
-            while (idx != func_804EA0E0((u8*)*lstIt)) {
+            while (idx != MdlDyn_GetListCount((u8*)*lstIt)) {
                 CMdlDynElem* e = (CMdlDynElem*)func_804EB6F8((u8*)*lstIt, idx);
 
                 // Resolve the element's res node (wrapper hop) and its data
                 // (second hop); the two holders yield two matrix indices.
                 nw4r::g3d::ResMdl mdl(
-                    (void*)(unsigned long)func_804E9FC8((u8*)self->field_0x4));
+                    (void*)(unsigned long)MdlDyn_GetResMdlData((u8*)self->field_0x4));
                 unsigned long node =
                     GetResNode__Q34nw4r3g3d6ResMdlCFUl(&mdl, e->field_0x0);
                 CMdlDynHolder wrapNode; // node wrapper
-                func_804EA0D4((u8*)&wrapNode, &node);
+                MdlDyn_StoreResRef((u8*)&wrapNode, &node);
                 CMdlDynHolder wrapData;
-                wrapData.field_0x0 = (CMdlDynSub*)func_804EA038(&wrapNode);
+                wrapData.field_0x0 = (CMdlDynSub*)MdlDyn_ResolveSubData(&wrapNode);
                 u32 nD = func_804EC344(&wrapData);
                 nw4r::math::MTX34* mD = &matrices[nD];
                 u32 nN = func_804EC344(&wrapNode);
                 nw4r::math::MTX34* mN = &matrices[nN];
 
                 s32 dynOk = 1;
-                if (flag == 0 && func_8004B3D8(&e->field_0x8C, 0x40) == 0) {
+                if (flag == 0 && testFlagMask(&e->field_0x8C, 0x40) == 0) {
                     dynOk = 0;
                 }
 
@@ -1469,44 +1469,44 @@ void func_804EBBCC(CMdlDynamics* self, nw4r::math::MTX34* matrices) {
                     if (dynOk != 0 && frame == 0) {
                         // Seed the element pose from the anchor translation.
                         func_804EC3D0((u8*)mD->mtx, &e->field_0x68);
-                        void* p = func_8004B3F0(&e->field_0x5C, &e->field_0x68);
-                        func_8004B3F0(&e->field_0x80, p);
-                        func_8006BEC4(&e->field_0x74);
+                        void* p = copyVec3Words(&e->field_0x5C, &e->field_0x68);
+                        copyVec3Words(&e->field_0x80, p);
+                        cfCam_zeroVec3(&e->field_0x74);
                     }
                     if (e->field_0xC != zero) {
                         nw4r::math::VEC3 v130;
-                        func_8004B0B0(&v130);
+                        noopAnimVec3(&v130);
                         nw4r::math::VEC3 vC8;
                         func_804EC3FC((u8*)&vC8,
                                       func_804EC418((CMdlDynHolder*)&wrapNode));
                         nw4r::math::VEC3 vD4;
-                        func_8006D6A8(&vD4, mD->mtx, &vC8);
-                        func_8004B3F0(&v130, &vD4);
+                        cfCam_multMtxVec(&vD4, mD->mtx, &vC8);
+                        copyVec3Words(&v130, &vD4);
                         nw4r::math::VEC3 vB0;
-                        func_8004CB80(&vB0, &v130, &e->field_0x80);
+                        subVec3f(&vB0, &v130, &e->field_0x80);
                         nw4r::math::VEC3 vBC;
-                        func_8004B738(&e->field_0x74,
-                                      func_8004B75C(&vBC, &vB0, e->field_0xC));
+                        addVec3f(&e->field_0x74,
+                                      scaleVec3f(&vBC, &vB0, e->field_0xC));
                         nw4r::math::VEC3 v124;
-                        func_8004CB80(&v124, &e->field_0x80, &v130);
+                        subVec3f(&v124, &e->field_0x80, &v130);
                         nw4r::math::VEC3 v98;
-                        func_8004B60C(&v98, e->field_0xC, mD->m[1][3],
+                        writeVec3f(&v98, e->field_0xC, mD->m[1][3],
                                       e->field_0xC);
                         nw4r::math::VEC3 vA4;
-                        func_8004CB80(&vA4, &v130, &v98);
-                        f32 mag = func_8006BB00(&vA4);
-                        f32 lenSq = func_8006DFC8(&v124);
+                        subVec3f(&vA4, &v130, &v98);
+                        f32 mag = cfCam_vecLength(&vA4);
+                        f32 lenSq = cfCam_vecLenSq(&v124);
                         if (!(mag * mag >= lenSq)) {
                             if (lenSq != zero) {
-                                func_8006BB04(&v124,
-                                              one / func_8004EC78(lenSq));
+                                cfCam_psScaleVec(&v124,
+                                              one / safeFSqrt(lenSq));
                             } else {
                                 func_804EC3EC((u8*)&v124, zero, zero, one);
                             }
-                            func_8004B75C(&e->field_0x80, &v124, mag);
+                            scaleVec3f(&e->field_0x80, &v124, mag);
                             nw4r::math::VEC3 v8Ct;
-                            func_8006C6E8(&v8Ct, &e->field_0x80, &v130);
-                            func_8004B3F0(&e->field_0x80, &v8Ct);
+                            cfCam_psAddVec3(&v8Ct, &e->field_0x80, &v130);
+                            copyVec3Words(&e->field_0x80, &v8Ct);
                         }
                     }
                     // Common tail: gravity on vel.y, relaxed velocity blend.
@@ -1514,49 +1514,49 @@ void func_804EBBCC(CMdlDynamics* self, nw4r::math::MTX34* matrices) {
                         e->field_0x74.y -= e->field_0x4;
                     }
                     nw4r::math::VEC3 v68t;
-                    func_8004CB80(&v68t, &e->field_0x68, &e->field_0x5C);
+                    subVec3f(&v68t, &e->field_0x68, &e->field_0x5C);
                     nw4r::math::VEC3 v74t;
-                    func_8004B738(&e->field_0x74,
-                                  func_8004B75C(&v74t, &v68t, e->field_0x8));
-                    func_8004B3F0(&e->field_0x5C, &e->field_0x68);
+                    addVec3f(&e->field_0x74,
+                                  scaleVec3f(&v74t, &v68t, e->field_0x8));
+                    copyVec3Words(&e->field_0x5C, &e->field_0x68);
                     nw4r::math::VEC3 v118;
-                    func_8004B79C(&v118, &e->field_0x74);
-                    f32 lsq = func_8006DFC8(&v118);
+                    copyVec3f(&v118, &e->field_0x74);
+                    f32 lsq = cfCam_vecLenSq(&v118);
                     if (lsq < eps) {
-                        func_8006BB04(&v118, one / sqrtf(lsq));
-                        func_8006BB04(&v118, lbl_eu_8066B3DC);
+                        cfCam_psScaleVec(&v118, one / sqrtf(lsq));
+                        cfCam_psScaleVec(&v118, lbl_eu_8066B3DC);
                     }
-                    func_8004B738(&e->field_0x68, &v118);
-                    func_8004B738(&e->field_0x80, &v118);
-                    func_8006BB04(&e->field_0x74, lbl_eu_8066B3E0);
+                    addVec3f(&e->field_0x68, &v118);
+                    addVec3f(&e->field_0x80, &v118);
+                    cfCam_psScaleVec(&e->field_0x74, lbl_eu_8066B3E0);
                 }
 
                 // Pose solve: inverse anchor -> local space, quat blending.
                 nw4r::math::MTX34 v2F0;
-                func_8006BEC0(&v2F0);
+                cfCam_nopCtorSlot(&v2F0);
                 nw4r::math::VEC3 v10C;
-                func_8004B0B0(&v10C);
+                noopAnimVec3(&v10C);
                 nw4r::math::VEC3 v100;
-                func_8004B0B0(&v100);
-                func_804EAA10(mD->mtx, v2F0.mtx);
+                noopAnimVec3(&v100);
+                MdlDyn_InvertMatrix(mD->mtx, v2F0.mtx);
                 nw4r::math::VEC3 v5Ct;
-                func_8006D6A8(&v5Ct, v2F0.mtx, &e->field_0x68);
-                func_8004B3F0(&v100, &v5Ct);
-                if (func_8006BA80(&v100) != 0) {
+                cfCam_multMtxVec(&v5Ct, v2F0.mtx, &e->field_0x68);
+                copyVec3Words(&v100, &v5Ct);
+                if (cfCam_isVecNear0(&v100) != 0) {
                     func_804EC3EC((u8*)&v100, zero, zero, one);
                 }
-                func_8004CBC8(&v100);
+                normVec3(&v100);
                 nw4r::math::VEC3 v50;
                 func_804EC3FC((u8*)&v50,
                               func_804EC418((CMdlDynHolder*)&wrapNode));
-                func_8004B3F0(&v10C, &v50);
-                func_8004CBC8(&v10C);
+                copyVec3Words(&v10C, &v50);
+                normVec3(&v10C);
                 Quaternion vF0;
-                func_8004B0B4(&vF0);
+                noopAnimQuat(&vF0);
                 nw4r::math::MTX34 v2C0;
-                func_8006BEC0(&v2C0);
+                cfCam_nopCtorSlot(&v2C0);
                 nw4r::math::VEC3 vE0;
-                func_8004B0B0(&vE0);
+                noopAnimVec3(&vE0);
 
                 if (func_804EC3C4((u8*)self->field_0x4) == 0) {
                     func_80052584(&vF0, &v10C, &v100);
@@ -1565,20 +1565,20 @@ void func_804EBBCC(CMdlDynamics* self, nw4r::math::MTX34* matrices) {
                     func_804EC47C(&v260, mD, &v2C0);
                     nw4r::math::MTX34 v290;
                     func_804EC47C(&v290, &v260, &e->field_0x2C);
-                    func_8006EF1C(&v2C0, &v290);
+                    cfCam_copyBlock48(&v2C0, &v290);
                     nw4r::math::MTX34 v44;
-                    func_8007420C(&v44, v2C0.mtx);
-                    func_8004B3F0(&e->field_0x68, &v44);
+                    cfCam_extractTrans(&v44, v2C0.mtx);
+                    copyVec3Words(&e->field_0x68, &v44);
                     func_804ECAC4((MdlDynObj*)self, (CMdlDynTarget*)e, matrices);
                 }
 
                 nw4r::math::VEC3 v38;
-                func_8006D6A8(&v38, v2F0.mtx, &e->field_0x68);
-                func_8004B3F0(&v100, &v38);
-                if (func_8006BA80(&v100) != 0) {
+                cfCam_multMtxVec(&v38, v2F0.mtx, &e->field_0x68);
+                copyVec3Words(&v100, &v38);
+                if (cfCam_isVecNear0(&v100) != 0) {
                     func_804EC3EC((u8*)&v100, zero, zero, one);
                 }
-                func_8004CBC8(&v100);
+                normVec3(&v100);
                 func_80052584(&vF0, &v10C, &v100);
                 func_804EC514(&vF0, &vE0);
                 func_804ECA00((CMdlDynSet*)self, &vE0, e);
@@ -1587,30 +1587,30 @@ void func_804EBBCC(CMdlDynamics* self, nw4r::math::MTX34* matrices) {
                 if (e->field_0x10 == zero) {
                     nw4r::math::MTX34 v230;
                     func_804EC47C(&v230, mD, &v2C0);
-                    func_8006EF1C(mD, &v230);
+                    cfCam_copyBlock48(mD, &v230);
                 } else {
                     nw4r::math::MTX34 v200;
                     func_804EC47C(&v200, mD, &v2C0);
-                    func_8006EF1C(&v2C0, &v200);
+                    cfCam_copyBlock48(&v2C0, &v200);
                     nw4r::math::MTX34 v170;
                     func_804EC81C(&v170, mD, e->field_0x10);
                     nw4r::math::MTX34 v1A0;
                     func_804EC81C(&v1A0, &v2C0, one - e->field_0x10);
                     nw4r::math::MTX34 v1D0;
                     func_804EC78C(&v1D0, &v1A0, &v170);
-                    func_8006EF1C(mD, &v1D0);
+                    cfCam_copyBlock48(mD, &v1D0);
                     func_804EC8AC(mD);
                 }
                 nw4r::math::MTX34 v140;
                 func_804EC47C(&v140, mD, &e->field_0x2C);
-                func_8006EF1C(mN, &v140);
+                cfCam_copyBlock48(mN, &v140);
 
                 if (func_804EC3C4((u8*)self->field_0x4) == 0) {
                     nw4r::math::MTX34 v2Ct;
-                    func_8007420C(&v2Ct, mN->mtx);
-                    void* q = func_8004B3F0(&e->field_0x68, &v2Ct);
-                    func_8004B3F0(&e->field_0x80, q);
-                    func_8004B694(&e->field_0x8C, 0x40);
+                    cfCam_extractTrans(&v2Ct, mN->mtx);
+                    void* q = copyVec3Words(&e->field_0x68, &v2Ct);
+                    copyVec3Words(&e->field_0x80, q);
+                    clearFlagMask(&e->field_0x8C, 0x40);
                 }
 
                 if (dynOk != 0) {
@@ -1618,8 +1618,8 @@ void func_804EBBCC(CMdlDynamics* self, nw4r::math::MTX34* matrices) {
                     // re-seed the previous-position shadow.
                     if ((u32)(frame - 1) ==
                         (u32)func_804EBBC4((u8*)self->field_0x4)) {
-                        func_8006BEC4(&e->field_0x74);
-                        func_8004B3F0(&e->field_0x5C, &e->field_0x68);
+                        cfCam_zeroVec3(&e->field_0x74);
+                        copyVec3Words(&e->field_0x5C, &e->field_0x68);
                     }
                 }
                 idx++;
@@ -1631,7 +1631,7 @@ void func_804EBBCC(CMdlDynamics* self, nw4r::math::MTX34* matrices) {
         }
         frame++;
     }
-    func_80484E04((void*)self->field_0x4, 1);
+    simSetValue7E8((void*)self->field_0x4, 1);
 }
 
 extern "C" __declspec(noinline) u32 func_804EC32C(u8* self) { return (*(u32*)((u8*)self + 0x7A4) >> 3) & 1; }
@@ -2458,7 +2458,7 @@ extern "C" __declspec(noinline) void func_804E95E0(CMdlDynamics* self,
         }
 
         if (shape != 0) {
-            CMdlDynList* list = (CMdlDynList*)func_80488954(root, 0x10);
+            CMdlDynList* list = (CMdlDynList*)scnImN4PoolAlloc(root, 0x10);
             if (list != NULL) {
                 list->field_0x0 = NULL;
                 list->field_0x4 = 0;
@@ -2510,7 +2510,7 @@ extern "C" __declspec(noinline) void func_804E95E0(CMdlDynamics* self,
                 }
 
                 // Resolve the sub-node's embedded data pointer through the
-                // asserted offset accessor (inlined func_804EA038 shape).
+                // asserted offset accessor (inlined MdlDyn_ResolveSubData shape).
                 if (nd == NULL) {
                     nw4r::db::Panic(lbl_eu_8056E850, 0x2c, lbl_eu_8056E834,
                                     lbl_eu_80663910, lbl_eu_80663CB8);
@@ -2573,8 +2573,8 @@ extern "C" __declspec(noinline) void func_804E95E0(CMdlDynamics* self,
 
             // Allocate the element array for this list.
             u32 bytes = cnt * sizeof(CMdlDynElem);
-            if (func_80488938(root, bytes)) {
-                list->field_0x0 = (CMdlDynElem*)func_80488954(root, bytes);
+            if (scnImN4PoolHasSpc(root, bytes)) {
+                list->field_0x0 = (CMdlDynElem*)scnImN4PoolAlloc(root, bytes);
                 list->field_0x4 = 0;
                 list->field_0x8 = cnt;
             } else {
@@ -2684,7 +2684,7 @@ extern "C" __declspec(noinline) void func_804E95E0(CMdlDynamics* self,
         }
     }
 }
-extern "C" __declspec(noinline) u32 func_804E9FD0(const CMdlDynHolder* self) {
+extern "C" __declspec(noinline) u32 MdlDyn_GetShapeKind(const CMdlDynHolder* self) {
     CMdlDynSub* sub = self->field_0x0;
     if (sub == NULL) {
         nw4r::db::Panic(lbl_eu_8056E1C8, 0x38, lbl_eu_8056E1A8);
@@ -2693,7 +2693,7 @@ extern "C" __declspec(noinline) u32 func_804E9FD0(const CMdlDynHolder* self) {
 }
 // Returns the sub-object's embedded data pointer: reads an offset at 0x5C on
 // the sub-object and resolves it against the base (asserted 4-aligned).
-__declspec(noinline) u8* func_804EA038(CMdlDynHolder* self) {
+__declspec(noinline) u8* MdlDyn_ResolveSubData(CMdlDynHolder* self) {
     if (self->field_0x0 == 0) {
         nw4r::db::Panic(lbl_eu_8056E850, 0x2c, lbl_eu_8056E834, lbl_eu_80663910,
                         lbl_eu_80663CB8);

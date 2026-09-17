@@ -6,7 +6,7 @@
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
 extern "C" void* func_8016FE34(void* source);
 extern "C" u32 func_8009CF8C(u32 resourceId);
-extern "C" void* func_800BF324(void* objParam);
+extern "C" void* CfObjectMove_getSelfIfActive(void* objParam);
 
 namespace cf {
 
@@ -34,7 +34,7 @@ struct CParamSub4C {
     virtual void* vf4C(); // index 17 -> vtable 0x4C
 };
 
-// Actor object returned by func_800BF324(findObjectById(...)): state id at
+// Actor object returned by CfObjectMove_getSelfIfActive(findObjectById(...)): state id at
 // vtable 0x228 (index 136) and a u16 id at +0x8C.
 struct CTalkActor : public CParamSub4C {
     // Filler slots 0x50-0x224 (indices 18-135) so vf228 sits at its retail offset.

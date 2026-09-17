@@ -5,7 +5,7 @@ using namespace ml;
 namespace cf {
 
 extern "C" {
-    void func_80074488(ml::CVec3* out, ml::CVec3* lookat, ml::CVec3 const* dir, f32 unk284);
+    void cfCam_posFromLookat(ml::CVec3* out, ml::CVec3* lookat, ml::CVec3 const* dir, f32 unk284);
     // Default Z value for the camera direction vector, reset on setPos/setLookat.
     extern const f32 lbl_eu_80666268;
 
@@ -23,7 +23,7 @@ void CfCamTargetIntf_setPos(CfCamTargetIntf* /*self*/, CfCamEvent* camEvent, CVe
 // Set the camera direction and compute the resulting base position.
 void CfCamTargetIntf_setDir(CfCamTargetIntf* /*self*/, CfCamEvent* camEvent, CVec3 const* dir) {
     CVec3 result;
-    func_80074488(&result, &camEvent->mLookat, dir, camEvent->unk284);
+    cfCam_posFromLookat(&result, &camEvent->mLookat, dir, camEvent->unk284);
     camEvent->unk274 = result;
     camEvent->unk25C = *dir;
 }

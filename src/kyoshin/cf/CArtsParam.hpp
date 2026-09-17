@@ -207,7 +207,7 @@ public:
     void* field_3F60;                         // 0x3F60
 };
 
-// Word holder behind battle-object field_3F60 (func_8004DAC4 key).
+// Word holder behind battle-object field_3F60 (getAnimEff key).
 struct CArtsParamField3F60 {
     u8 _pad[0x374];
     u32 field_374; // 0x374

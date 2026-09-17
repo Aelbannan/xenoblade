@@ -50,7 +50,7 @@ extern "C" {
     void func_800F3FC8(cf::CBattleManager*);
 
     // Enum list holder ctor (dtor/accessors come from CfObjectImplMove.hpp)
-    void func_80043E08(void* holder, int type, int subtype);
+    void CTaskGame_enumListFill(void* holder, int type, int subtype);
 
     // Enum list operations
     void __ct__800FC32C(void* list, int a, int b, int c);
@@ -141,10 +141,10 @@ int isEnd(VMThread* pThread) {
         ++count;
     }
     if (count == 0) {
-        func_80043E08(&holder, 0x20, 0x800);
-        void* list = func_80043F18((CfMoveEnumHolder*)holder);
+        CTaskGame_enumListFill(&holder, 0x20, 0x800);
+        void* list = CTaskGame_enumListGet((CfMoveEnumHolder*)holder);
         __ct__800FC32C(list, 3, 4, 0);
-        list = func_80043F18((CfMoveEnumHolder*)holder);
+        list = CTaskGame_enumListGet((CfMoveEnumHolder*)holder);
         if (*(u32*)((u8*)list + 0x620) != 0) {
             result = 1;
         }
@@ -203,11 +203,11 @@ int attackEne(VMThread* pThread) {
         targetId = vmArgIntGet(2, vmArgPtrGet(pThread, 1));
     }
     u8 holder[8];
-    func_80043D90((CfMoveEnumHolder*)holder);
-    func_800F4A98(func_80043F18((CfMoveEnumHolder*)holder), 0x100, 0);
+    CTaskGame_enumListCtor((CfMoveEnumHolder*)holder);
+    func_800F4A98(CTaskGame_enumListGet((CfMoveEnumHolder*)holder), 0x100, 0);
     // Count is re-read via the holder accessor every iteration (retail shape).
-    for (u32 i = 0; i < *(u32*)((u8*)func_80043F18((CfMoveEnumHolder*)holder) + 0x620); i++) {
-        void* unit = func_8016FE34(func_800F6EAC((CfMoveEnumList*)func_80043F18((CfMoveEnumHolder*)holder), i));
+    for (u32 i = 0; i < *(u32*)((u8*)CTaskGame_enumListGet((CfMoveEnumHolder*)holder) + 0x620); i++) {
+        void* unit = func_8016FE34(func_800F6EAC((CfMoveEnumList*)CTaskGame_enumListGet((CfMoveEnumHolder*)holder), i));
         if (targetId == *(u16*)((u8*)unit + 0x3F28)) {
             func_800D9978(cf::CBattleManager::getInstance(), unit);
         }
@@ -233,18 +233,18 @@ int selectTgt(VMThread* pThread) {
         }
     } else {
         u8 holder[8];
-        func_80043D90((CfMoveEnumHolder*)holder);
-        void* list = func_80043F18((CfMoveEnumHolder*)holder);
+        CTaskGame_enumListCtor((CfMoveEnumHolder*)holder);
+        void* list = CTaskGame_enumListGet((CfMoveEnumHolder*)holder);
         func_800F4A98((CfMoveEnumList*)list, 0x100, 0x802);
         void* player = cf::CfGameManager::getPlayer(0);
         // Target getter at vtable+0xAC is
         // cf::CfObject::CfObject_getPosVector on the player object.
         void* target = (void*)((cf::CfObject*)player)->CfObject_getPosVector();
-        list = func_80043F18((CfMoveEnumHolder*)holder);
+        list = CTaskGame_enumListGet((CfMoveEnumHolder*)holder);
         func_800F6ED0((CfMoveEnumList*)list, target);
         void* cam = func_800FE68C();
         func_800FE950(cam, 0x80000003, 0, 0);
-        void* val = func_800F6E08(func_80043F18((CfMoveEnumHolder*)holder));
+        void* val = func_800F6E08(CTaskGame_enumListGet((CfMoveEnumHolder*)holder));
         cam = func_800FE68C();
         func_800FE96C(cam, val);
         __dt__80043E88((CfMoveEnumHolder*)holder, -1);

@@ -191,7 +191,7 @@ struct CActorTargetView {
 
 // C-ABI import used by cbRenderBefore (retail unmangled name; not declared by
 // any shared header yet, so declared here).
-extern "C" int func_8013BEE8();
+extern "C" int GetSysStateFlag20();
 
 // C-linkage imports (retail names are unmangled free functions; MWCC mangles
 // plain global-scope free functions with a __F suffix, so the declarations
@@ -199,9 +199,9 @@ extern "C" int func_8013BEE8();
 extern "C" {
 nw4r::lyt::ArcResourceAccessor* func_801355F4();
 void func_80137F88(void* pane, void* tex);
-u16 func_8013606C(const void*, const void*, u32);
-char* func_80136190(const void*, const void*, int);
-void func_80136B4C(nw4r::lyt::Layout*, char*, char*, u32);
+u16 BdatGetU16ByTableKey(const void*, const void*, u32);
+char* BdatTouchStringCell(const void*, const void*, int);
+void LayoutSetTextBoxFmtValue(nw4r::lyt::Layout*, char*, char*, u32);
 void func_8013676C(void*, u32);
 // Scratch-region ctor (retail emits the direct C-ABI call with a plain addi;
 // a C++ placement new would add a null-check branch the retail does not have).
@@ -214,7 +214,7 @@ int func_8017FD44(void);
 int func_800FF738();
 // Arts-state gate helpers used by Move (retail unmangled; declared in their
 // own TUs but not by any included header).
-void* func_800BF324(void* objParam);
+void* CfObjectMove_getSelfIfActive(void* objParam);
 void* func_8016FE34(void* source);
 bool CMenuArtsSelect_isCreated();
 }

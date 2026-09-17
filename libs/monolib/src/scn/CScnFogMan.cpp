@@ -230,7 +230,7 @@ extern "C" bool func_8049DEC4(CScnFogMan* self) {
         }
         return true;
     } else if (self->value08 == 2) {
-        func_804C1674(self->rootView->field_0x7c);
+        scnLgtApplyFogByte(self->rootView->field_0x7c);
     } else if (self->value08 == 0) {
         GXFogType newType = (GXFogType)self->field_0x50;
         if (fog.ptr() == NULL) {

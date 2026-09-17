@@ -97,8 +97,8 @@ void func_804F2A8C(void* obj);
 void* func_804D5F54(void* self, s16 count);
 void func_804D6070(void* vtx);
 void func_804D6074(void* trailSeg, void* trail, const void* color, u32 a, u32 b, const void* c, const void* d);
-void* func_80494128(void* res);
-void func_80494188(void* res);
+void* scnVlAllocSlot(void* res);
+void scnVlFreeSlot(void* res);
 void func_804C03A0(void* light, u32 mode);
 void func_804C0454(void* light, void* arg);
 void func_804C07F0(void* light, const void* color);
@@ -887,7 +887,7 @@ extern "C" void func_804D7B28(CETrail* t, const ml::CVec3* posA, const ml::CVec3
 // ---------------------------------------------------------------------------
 extern "C" CETrailLight* func_804D807C(CETrailLight* self, CResHolder* parent) {
     self->m_parent = parent;
-    self->m_light = (CLight*)func_80494128(parent->m_res);
+    self->m_light = (CLight*)scnVlAllocSlot(parent->m_res);
     if (self->m_light == nullptr) {
         return self;
     }
@@ -911,7 +911,7 @@ struct CETrailLightDtor {
 extern "C" CETrailLightDtor* __dt__804D80F0(CETrailLightDtor* self, int deleting) {
     if (self != nullptr) {
         if (self->m_light != nullptr) {
-            func_80494188(self->m_parent->m_res);
+            scnVlFreeSlot(self->m_parent->m_res);
             self->m_light = nullptr;
         }
         if (deleting > 0) {

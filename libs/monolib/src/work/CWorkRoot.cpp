@@ -49,9 +49,9 @@ public:
     // "li r4, 0; bl __dt__29_reslist_base<Fv>" call.
     virtual ~_reslist_base();
 
-    void func_8049CB6C(T* item){}
+    void ScnFilterList_destroyItem(T* item){}
 
-    void func_8049CB70(_reslist_node<T>* r4){
+    void ScnFilterList_freeNode(_reslist_node<T>* r4){
         r4->mNext = nullptr;
     }
 
@@ -275,8 +275,8 @@ __declspec(noinline) void _reslist_base<T>::clearList(){
     while (r5 != mStartNodePtr) {
         _reslist_node<T>* r4 = r5;
         r5 = r5->mNext;
-        func_8049CB6C(&r4->mItem);
-        func_8049CB70(r4);
+        ScnFilterList_destroyItem(&r4->mItem);
+        ScnFilterList_freeNode(r4);
     }
 
     mStartNodePtr->mNext = mStartNodePtr;

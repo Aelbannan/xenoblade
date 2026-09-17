@@ -91,7 +91,7 @@ cf::CVS_THREAD_CHAIN* __ct__802A5830() {
     if (handleBuf == nullptr) {
         return nullptr;
     }
-    cf::CVS_THREAD_CHAIN* self = (cf::CVS_THREAD_CHAIN*)func_802A34E4(0x24);
+    cf::CVS_THREAD_CHAIN* self = (cf::CVS_THREAD_CHAIN*)CCharVoiceMan_AllocVoiceArena(0x24);
     if (self == nullptr) {
         return nullptr;
     }

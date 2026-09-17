@@ -199,7 +199,7 @@ extern f32 lbl_eu_80667E14;
 extern f64 lbl_eu_80667E18;
 
 // Anim frame target used by Move's open/close states (advanceAnimTransform /
-// func_80137510 argument), plus the rank-window size/position constants
+// AnimRewindFrame argument), plus the rank-window size/position constants
 // func_801B6184 scales the item window by.
 extern f32 lbl_eu_80667E10;
 extern f32 lbl_eu_80667E20;
@@ -258,7 +258,7 @@ struct CfGameManagerTermFields {
 extern "C" void func_8003AA34();                    // bdat refresh (paired with the lbl_eu_80504A3C fp lookup)
 extern "C" void setBdatEntry__5CBdatFUlPv(u32 value, u8* data);
 extern "C" void getEntry__5CBdatFUl(u32 value);
-extern "C" u8 func_8013B980();                      // flag reset alongside code80135FDC_getByte_64080
+extern "C" u8 DecMenuCounter64080();                      // flag reset alongside code80135FDC_getByte_64080
 extern "C" u8 code80135FDC_getByte_64080();
 extern "C" void func_8022B7F4(u8* syswin);          // CSysWin teardown (Term, after the lbl_eu_80664414/18 clears)
 extern "C" void func_8022B7C8(u8* syswin, nw4r::lyt::DrawInfo* drawInfo);
@@ -271,8 +271,8 @@ extern "C" void func_8022B8B8(u8* syswin);
 extern "C" void func_8022BF6C(u8* syswin, char* a, char* b);
 // Item removal helpers (item sweeps in func_801B8E2C): release an entry
 // and notify the item system.
-extern "C" void func_801599D4(CMenuGetItemMultiEntry* entry, u32 flags);
-extern "C" void func_801586D4(u32 id, u32 flags);
+extern "C" void CItemData_lookupOrAlloc(CMenuGetItemMultiEntry* entry, u32 flags);
+extern "C" void CItem_thunkAllocRecord(u32 id, u32 flags);
 extern "C" void func_80140E00(u32 a, u32 id, u32 b);
 // Slot-window name source used by func_801B82E8's A-press open (no args).
 extern "C" char* func_801D3C74();
@@ -290,10 +290,10 @@ extern "C" u32 CSysWin_getUnk34(u8* syswin); // window state query (pad handlers
 extern "C" u32 func_80167A18();
 extern "C" u32 func_80133E58(u8 self, u8 arg1, u8 arg2);
 // Rank-window geometry helpers (CItemBoxInfo.cpp family).
-extern "C" f32 func_8013B380(u32 idx);
-extern "C" void func_80139C98(u16 a, u16 b, int c, f32 d);
+extern "C" f32 GetFloatTableEntry(u32 idx);
+extern "C" void BlendFloatAvgScale(u16 a, u16 b, int c, f32 d);
 extern "C" void func_80137F88(void* pane, void* tex); // pane texture setter
-extern "C" void func_800B7320(u32 obj);             // action-source teardown (Term, after the lbl_eu_80663E24 clear)
+extern "C" void removeTboxById(u32 obj);             // action-source teardown (Term, after the lbl_eu_80663E24 clear)
 extern "C" void func_80137924(nw4r::math::VEC3* out, nw4r::lyt::Pane* a,
                                nw4r::lyt::Pane* b, nw4r::lyt::Pane* root); // cursor position from two panes
 // UI sound effect (retail pre-mangled name).

@@ -61,4 +61,4 @@ public:
 // Cross-TU import (definition in CScnEnvLgtCtrl.cpp): set +0x00 bit 0x20 /
 // clear bit 0x10 on the environment-light controller, then walk its
 // light-object ring applying the fog-manager state.
-void func_804C1674(CScnEnvLgtCtrl* self);
+void scnLgtApplyFogByte(CScnEnvLgtCtrl* self);

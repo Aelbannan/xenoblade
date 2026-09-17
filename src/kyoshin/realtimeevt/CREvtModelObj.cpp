@@ -53,11 +53,11 @@ extern "C" {
     extern int func_8016846C(void);
     extern void* func_80167F6C(int, int, int);
     extern void* func_800A8E6C(int, int);
-    extern void func_800A9344(void*, int);
+    extern void KyoshinHeap_Free78(void*, int);
     extern void func_800AA318(void* r3, void* r4, void* r5, void* r6, void* r7);
     extern char* func_800AA5C0(void* r3);
-    extern void func_80062AD8(void* r3, void* r4);
-    extern int func_80062B3C(void* r3, int);
+    extern void CfRes_tryResolveToken(void* r3, void* r4);
+    extern int CfRes_tryDelegateLoad1(void* r3, int);
     extern void func_804E3CCC(void*);
     extern void func_804E3D0C(void*, void*);
     extern void func_804E3CDC(void*, float, float);
@@ -66,9 +66,9 @@ extern "C" {
     extern void func_804CC1D8(void* mgr, void* key);
     extern void* func_80495FF0(u32);
     extern void* func_80495E8C(u32, void*, int, int);
-    extern void func_80484E5C(void*, float);
-    extern void func_80484F80(void*, float);
-    extern void func_804838DC(void*, int);
+    extern void simSetLeafDist7B0(void*, float);
+    extern void simRefreshFlag8(void*, float);
+    extern void simSetFlag2OnTree(void*, int);
     extern void func_80483448(void*, void*);
     extern void* getScnCounter__Fv(void);
     extern void* isVisionPackLoaded__Q22cf13CfGameManagerFv(void);
@@ -261,7 +261,7 @@ extern "C" void func_80181C90(CREvtModelObj* self, void* r4, void* r5) {
     // Refresh the model when the parent requests player-specific handling
     if ((self->mParent->mField58 & 0x80) != 0 && self->mModel != 0) {
         if (isVisionPackLoaded__Q22cf13CfGameManagerFv() != 0) {
-            func_804838DC(self->mModel, 0);
+            simSetFlag2OnTree(self->mModel, 0);
         }
     }
 }
@@ -296,7 +296,7 @@ extern "C" int func_80181DDC(CREvtModelObj* self) {
         }
     } else if (fileState == 2) {
         if (self->mAllocData3 != 0) {
-            func_800A9344(self->mAllocData3, 0);
+            KyoshinHeap_Free78(self->mAllocData3, 0);
             self->mAllocData3 = 0;
             self->mAllocData = 0;
         }
@@ -369,7 +369,7 @@ extern "C" void func_80181F28(void* self) {
     } else if (fileState == 2) {
         void* data = FLD(void*, s, 0x78);
         if (data != 0) {
-            func_800A9344(data, 0);
+            KyoshinHeap_Free78(data, 0);
             FLD(u32, s, 0x78) = 0;
             FLD(u32, s, 0x48) = 0;
         }
@@ -630,7 +630,7 @@ extern "C" void func_80182B2C(void* self) {
             if (model != 0) {
                 // Setup model
                 FLD(u32, model, 0x7A4) |= 0x20000000;
-                func_80484E5C(model, lbl_eu_8066790C);
+                simSetLeafDist7B0(model, lbl_eu_8066790C);
 
                 FLD(u32, model, 0x7A8) |= 4;
 
@@ -688,7 +688,7 @@ extern "C" void func_80182B2C(void* self) {
                     }
                 }
 
-                func_804838DC(model, 0);
+                simSetFlag2OnTree(model, 0);
             }
 
             // Parse resource info
@@ -747,8 +747,8 @@ extern "C" void func_80182B2C(void* self) {
 
         // Check if data is KYP archive
         u8* bytes = (u8*)r18c;
-        // Wait, r18c is the result from func_80062AD8...
-        // Actually, func_80062AD8 takes the resource ID and returns a pointer
+        // Wait, r18c is the result from CfRes_tryResolveToken...
+        // Actually, CfRes_tryResolveToken takes the resource ID and returns a pointer
 
         // This path needs more careful analysis
         // For now, let me just set up the basic structure
@@ -770,7 +770,7 @@ extern "C" void func_80183268(void* self) {
         // §7i manual pattern regresses here (adds frsp / reschedules;
         // 3 non-improving attempts, see attempts.jsonl).
         float ft = (float)val;
-        func_80484F80(FLD(void*, s, 0x20), ft);
+        simRefreshFlag8(FLD(void*, s, 0x20), ft);
     }
 
     func_80168514(self);

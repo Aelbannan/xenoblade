@@ -245,7 +245,7 @@ void CMenuBattleMode::Move() {
 end:
     return;
 run:
-    if (func_8013BE50() == 0) {
+    if (IsMenuState621F0() == 0) {
         return;
     }
     cf::CfGameManager::getInstance();
@@ -297,7 +297,7 @@ run:
     }
 
     case 3:
-        if (func_80137510(mAnimDefault, lbl_eu_80667C84)) {
+        if (AnimRewindFrame(mAnimDefault, lbl_eu_80667C84)) {
             mState = 0;
         }
         break;
@@ -326,7 +326,7 @@ void CMenuBattleMode::cbRenderBefore() {
 end:
     return;
 draw:
-    if (func_8013BE50() == 0) {
+    if (IsMenuState621F0() == 0) {
         return;
     }
     cf::CfGameManager::getInstance();

@@ -147,7 +147,7 @@ void CMenuGameClear::cbRenderBefore() {
 end:
     return;
 body:
-    if (func_8013BE50() != 0) {
+    if (IsMenuState621F0() != 0) {
         GXSetZMode(GX_FALSE, GX_NEVER, GX_FALSE);
         // Raw-storage DrawInfo built/destroyed via C-ABI pre-mangled ct/dt
         // calls (a C++ local would virtual-dispatch its scope-exit dtor).

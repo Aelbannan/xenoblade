@@ -271,7 +271,7 @@ extern "C" CfEnumObject* triggerVoiceDown();
 extern "C" VoiceSource* getVoiceSourcePtr();
 extern "C" CfEnumObject* resetVoiceSystem(CfEnumObject* obj);
 extern "C" VoiceSource* getVoiceSourceForSystem(VoiceSource* source);
-extern "C" void func_800BF2F8(cf::CfObject* obj);
+extern "C" void CfObjectMove_relaySubB0Slot2C(cf::CfObject* obj);
 extern "C" void func_801F34F4(CScrollBar* self);
 extern "C" void func_8022C1B4(u8* out, u8* syswin, u8 sel);
 extern "C" void __ct__UnkClass_8011C974(u8* dst, u8* src);
@@ -314,6 +314,6 @@ extern "C" void func_8022B9B4(void*, void*, void*);
 extern "C" void func_8022BF6C(void*, void*, void*);
 extern "C" void func_8022B8B8(void*);
 extern "C" void func_801D202C(void*);
-extern "C" char* func_80136190(const void*, const void*, int);
+extern "C" char* BdatTouchStringCell(const void*, const void*, int);
 extern "C" void initInstance__FP14Class_80296898(void*);
 

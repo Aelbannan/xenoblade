@@ -54,13 +54,13 @@ extern "C" void func_8014B7B0(u8* obj);                  // CAIAction.cpp
 extern "C" void func_8015396C(u8* obj, u32 a, u32 b);    // CAIAction.cpp
 
 extern "C" void func_8009EF9C(void* self, u32 arg2);     // CtrlObjectParam.cpp
-extern "C" void func_800BE33C(void* obj, int flag);      // CfObjectMove.cpp
-extern "C" void func_800BE824(void* obj, int flag);      // CfObjectMove.cpp
-extern "C" void func_804B0AD4(void* region, int param, float a, float b);
+extern "C" void CfObjectMove_setModelDisplayFlag(void* obj, int flag);      // CfObjectMove.cpp
+extern "C" void CfObjectMove_setRegionAttached(void* obj, int flag);      // CfObjectMove.cpp
+extern "C" void ColiSetMoveVec2(void* region, int param, float a, float b);
 extern "C" void __dl__FPv(void* object);
 extern "C" void __dt__Q22cf12CfObjectMoveFv(cf::CfObjectMove* self, int flag);
 extern "C" void __ct__8009ED08(void* destination, u32 itemId);   // CtrlObjectParam.cpp
-extern "C" unsigned long func_80061FFC();   // bdat heap handle getter
+extern "C" unsigned long CfRes_getAllocHandle();   // bdat heap handle getter
 // NOTE: retail keeps the virtual-call result in r3 across the second arg's
 // address computation, so the value is the FIRST declared parameter.
 // NOTE: the real definition is func_80175A50(CActorParam* dst, CActorParam*

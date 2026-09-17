@@ -64,7 +64,7 @@ CVS_THREAD_SUDDEN* __ct__802A8C04() {
     if (handleBuf == NULL) {
         return NULL;
     }
-    CVS_THREAD_SUDDEN* self = (CVS_THREAD_SUDDEN*)func_802A34E4(0x24);
+    CVS_THREAD_SUDDEN* self = (CVS_THREAD_SUDDEN*)CCharVoiceMan_AllocVoiceArena(0x24);
     if (self == NULL) {
         return NULL;
     }

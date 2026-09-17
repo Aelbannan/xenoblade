@@ -3,7 +3,7 @@
 
 #include "kyoshin/menu/CMenuTutorialList.hpp"
 #include "kyoshin/CTutorial.hpp"       // playUISound (retail playUISound__FUl)
-#include "kyoshin/code_80135FDC.hpp"   // func_80136190 string-format helper
+#include "kyoshin/code_80135FDC.hpp"   // BdatTouchStringCell string-format helper
 #include "kyoshin/CTaskGame.hpp"       // CTaskGame::getInstance / isFlag01Set
 #include "kyoshin/cf/CfGameManager.hpp" // cf::CfGameManager::getCurrentPad
 #include "monolib/core/CPadManager.hpp" // CPad::mPressedButtonFlags
@@ -98,7 +98,7 @@ void CMenuTutorialList::Term() {
 
     lbl_eu_80664BE8 = 0;
 
-    func_8013B980();
+    DecMenuCounter64080();
     if (code80135FDC_getByte_64080() == 0) {
         setPresentationFlag__Q22cf13CfGameManagerFv(0);
     }
@@ -185,7 +185,7 @@ void CMenuTutorialList::cbRenderBefore() {
 exit:
     return;
 body:
-    if (func_8013BE50() == 0) {
+    if (IsMenuState621F0() == 0) {
         goto exit;
     }
     GXSetZMode(GX_FALSE, GX_NEVER, GX_FALSE);
@@ -260,7 +260,7 @@ void func_802AC8F4(CMenuTutorialList* self) {
         self->mFlag = 5;
         func_801C4760(&self->mTitleAHelp);
         func_801C41C0(&self->mTitleAHelp,
-            func_80136190(lbl_eu_80510B44 + 0xe, lbl_eu_80510B44 + 0x17,
+            BdatTouchStringCell(lbl_eu_80510B44 + 0xe, lbl_eu_80510B44 + 0x17,
                 func_802AD838(reinterpret_cast<CTutorialList*>(self->mTutorialList))));
         func_8029ACC4(reinterpret_cast<CTutorial*>(self->mTutorial));
     }
@@ -346,7 +346,7 @@ void func_802ACB50(CMenuTutorialList* self) {
         self->mFlag = 2;
         func_801C4744(&self->mTitleAHelp);
         func_801C41C0(&self->mTitleAHelp,
-            func_80136190(lbl_eu_80510B44, lbl_eu_80510B44 + 0x9, 0x23));
+            BdatTouchStringCell(lbl_eu_80510B44, lbl_eu_80510B44 + 0x9, 0x23));
         func_8029ABD8(reinterpret_cast<CTutorial*>(self->mTutorial));
         func_801C41E8(&self->mTitleAHelp, 0x73);
     }

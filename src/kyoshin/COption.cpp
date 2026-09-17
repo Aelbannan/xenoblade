@@ -106,7 +106,7 @@ void CMenuOption::Init() {
     func_801C3C14((CBgTex*)mBgTex);
 
     // --- Re-initialise the embedded CTitleAHelp via a temporary ---
-    char* name = func_80136190(lbl_eu_805103C4, lbl_eu_805103C4 + 9, 0x3b);
+    char* name = BdatTouchStringCell(lbl_eu_805103C4, lbl_eu_805103C4 + 9, 0x3b);
 
     u8 tempTitle[0x38];
     __ct__CTitleAHelp(reinterpret_cast<CTitleAHelp*>(tempTitle), name, 0x6c);
@@ -240,7 +240,7 @@ void CMenuOption::cbRenderBefore() {
     CTaskGame::getInstance();
     if (CTaskGame::isFlag01Set() || (lbl_eu_80663E28 & 0x200000))
         return;
-    if (func_8013BE50() == 0)
+    if (IsMenuState621F0() == 0)
         return;
 
     GXSetZMode(GX_FALSE, GX_NEVER, GX_FALSE);

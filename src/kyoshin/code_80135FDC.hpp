@@ -24,27 +24,27 @@ class CScn;
 
 // All definitions in code_80135FDC.cpp are C-linkage (extern "C"), so the
 // declarations MUST match -- otherwise callers emit Itanium-mangled relocs
-// (e.g. func_8013639C__FPvPcUs) while retail has the unmangled name, and the
+// (e.g. BdatGetPtrDirect__FPvPcUs) while retail has the unmangled name, and the
 // witness rejects the pair at the reloc gate (us-8025658c / us-8025650c were
 // stuck at 99.4-99.6% on exactly this).
 // Params use const void* so both const char* (CArtsInfo, CExchangeWin) and
 // const void* (CCollepedia) call sites bind without conversions.
 extern "C" {
-u16 func_8013606C(const void*, const void*, u32);
-u8 func_8013600C(const void*, const void*, u32);
-s16 func_80136130(const void*, const void*, u32);
-s8 func_801360CC(const void*, const void*, u32);
+u16 BdatGetU16ByTableKey(const void*, const void*, u32);
+u8 BdatGetU8ByTableKey(const void*, const void*, u32);
+s16 BdatGetS16ByTableKey(const void*, const void*, u32);
+s8 BdatGetS8ByTableKey(const void*, const void*, u32);
 #ifndef CODE_80135FDC_CPP
 // The definitions of these in code_80135FDC.cpp use different (not-yet-)
 // matched signatures/linkage; code_80135FDC.cpp defines CODE_80135FDC_CPP
 // before including so these caller-tuned exports don't clash with them.
-extern "C" char* func_80136190(const void*, const void*, int);
-u8 func_801361E8(u32, const char*, u32);
-char* func_8013639C(const void*, const void*, int);
+extern "C" char* BdatTouchStringCell(const void*, const void*, int);
+u8 BdatGetU8Direct(u32, const char*, u32);
+char* BdatGetPtrDirect(const void*, const void*, int);
 void func_8013676C(void*, u32);
 #endif
 void func_80136A1C(nw4r::lyt::Layout*, char*, char*, u32);
-void func_80136B4C(nw4r::lyt::Layout*, char*, char*, u32);
+void LayoutSetTextBoxFmtValue(nw4r::lyt::Layout*, char*, char*, u32);
 // Retail symbols for these ARE the Itanium-mangled names; declare them under
 // C linkage so calls bind to the literal mangled identifier (declaring them
 // as C++ functions would re-derive the same mangling, but the extern "C" +
@@ -77,16 +77,16 @@ void releaseArcResourceAccessor(nw4r::lyt::ArcResourceAccessor*);
 // bind to the unmangled name, not an Itanium-mangled re-derivation.
 extern "C" {
 #ifndef CODE_80135FDC_CPP
-u8 func_801372B4(u32);
+u8 MapValueToRank6(u32);
 #endif
-u32 func_80137510(nw4r::lyt::AnimTransform*, float);
+u32 AnimRewindFrame(nw4r::lyt::AnimTransform*, float);
 #ifndef CODE_80135FDC_CPP
-void func_80137E7C(void*, void*, void*);
-char* func_80138F78(u32);
-void func_80139A18(void*, void*, void*, void*);
+void PaneSetTexPaletteByName(void*, void*, void*);
+char* MakeTplNameSysFile(u32);
+void PaneMatSetTevColorsByName(void*, void*, void*, void*);
 #endif
 }
-extern "C" int func_8013BE50();
+extern "C" int IsMenuState621F0();
 extern "C" u8 code80135FDC_getByte_64077();
 
 // Frame object returned by func_8049626C as consumed by drawLayout: the
@@ -116,7 +116,7 @@ struct XBMapTable1 { u32 w[35]; };   // 140 B -> 17x8 loop + tail word
 struct XBMapTable2 { u32 w[31]; };   // 124 B -> 15x8 loop + tail word
 struct XBMapTable3 { u32 w[34]; };   // 136 B -> 17x8 loop, no tail
 #ifndef CODE_80135FDC_CPP
-extern "C" u8 func_801392B4(u32);
+extern "C" u8 GetCollectedFlagByte(u32);
 #endif
 
 // Pane colour / material dispatches (func_80137B44 and siblings) go through
@@ -163,7 +163,7 @@ extern u32 lbl_eu_80664060;
 extern u8 lbl_eu_80664064;
 extern u32 lbl_eu_80664068;
 extern u32 lbl_eu_8066406C;
-// 7-byte indexed buffer (func_801392B4 indexes &lbl[idx]); was scalar u8.
+// 7-byte indexed buffer (GetCollectedFlagByte indexes &lbl[idx]); was scalar u8.
 extern u8 lbl_eu_80664070[7];
 extern u8 lbl_eu_80664077;
 extern u16 lbl_eu_80664078[3];
@@ -242,7 +242,7 @@ extern u8 lbl_eu_80500230[];
 // Minimap pointer tables: heterogeneous (strings + NULLs); entries are relocs.
 extern const void* lbl_eu_80500480[32];
 extern const void* lbl_eu_805005A8[34];
-// 13-entry float table copied wholesale to the stack by func_8013B380.
+// 13-entry float table copied wholesale to the stack by GetFloatTableEntry.
 struct FloatTable13 { f32 w[13]; };
 extern FloatTable13 lbl_eu_80500630;
 extern char lbl_eu_80573C30[];
@@ -255,7 +255,7 @@ extern nw4r::math::VEC3 zero__Q22ml5CVec3;
 extern "C" void* func_8009EC9C(u32 idx);
 extern "C" int func_8009EBE8(u32 idx);
 extern "C" void func_8009EB94(u32 idx, u32 value);
-extern "C" void func_80157824(u8, u32);
+extern "C" void CItemBlock_setFlag120EC(u8, u32);
 
 extern "C" void activateLOD__8CTaskLODFv(s8);
 extern "C" void deactivateLOD__8CTaskLODFv(u8);

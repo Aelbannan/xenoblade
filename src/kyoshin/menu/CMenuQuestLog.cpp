@@ -23,7 +23,7 @@ public:
     static bool isFlag01Set();
 };
 #include "kyoshin/cf/CfGameManager.hpp"  // cf::CfGameManager::getCurrentPad / isClassicController
-#include "kyoshin/code_80135FDC.hpp"     // func_8013BE50 / func_80137250
+#include "kyoshin/code_80135FDC.hpp"     // IsMenuState621F0 / func_80137250
 #include "monolib/core/CPadManager.hpp"   // CPad::mPressedButtonFlags
 #include "monolib/util/MemManager.hpp"
 #include "monolib/device/CDeviceVI.hpp"
@@ -128,7 +128,7 @@ void CMenuQuestLog::Init() {
     func_801C3C14(&mBgTex);
 
     // --- CTitleAHelp ---
-    char* name = func_80136190(lbl_eu_804FE518, lbl_eu_804FE518 + 0xa, 1);
+    char* name = BdatTouchStringCell(lbl_eu_804FE518, lbl_eu_804FE518 + 0xa, 1);
     __ct__CTitleAHelp((CTitleAHelp*)tmp.title, name, 0x3c);
     __ct__UnkClass_8011C974(reinterpret_cast<u32*>(&mTitleAHelp.unk4), (const u32*)(tmp.title + 0x4));
     mTitleAHelp.mFileHandle = *(CFileHandle**)(tmp.title + 0x14);
@@ -299,7 +299,7 @@ void CMenuQuestLog::Term() {
     func_80227BD8(&mQstLogList);
     func_80229620(&mQstLogInfo);
     lbl_eu_80663FC0 = 0;
-    func_8013B980();
+    DecMenuCounter64080();
     if (code80135FDC_getByte_64080() == 0)
         setPresentationFlag__Q22cf13CfGameManagerFv(false);
     func_80135550();
@@ -391,7 +391,7 @@ __declspec(noinline) void CMenuQuestLog::cbRenderBefore() {
 exit:
     return;
 body:
-    if (func_8013BE50() == 0) {
+    if (IsMenuState621F0() == 0) {
         goto exit;
     }
     GXSetZMode(GX_FALSE, GX_NEVER, GX_FALSE);

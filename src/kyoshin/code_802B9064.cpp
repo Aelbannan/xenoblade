@@ -68,7 +68,7 @@ extern "C" bool func_802B9064(BattleGauge* obj, f32 curVal, f32 prevVal) {
     if (!func_802A330C(0x7D, 1)) {
         return false;
     }
-    if (!func_802A34E4(0x20)) {
+    if (!CCharVoiceMan_AllocVoiceArena(0x20)) {
         return false;
     }
 

@@ -5,7 +5,7 @@
 // Opaque sound-system / scene types referenced through pointers only.
 struct CVoiceSndMgr;        // sound-manager singleton (lbl_eu_80663E14)
 struct CVoicePoseBlock;     // scene pose/xform block (func_80496264 result)
-struct CVoiceBattleSndMgr;  // battle sound manager (func_800BF2CC result)
+struct CVoiceBattleSndMgr;  // battle sound manager (CfObjectMove_relaySubB0Slot60 result)
 
 /**
  * CCharVoice -- single character voice playback instance.

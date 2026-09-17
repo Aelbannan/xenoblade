@@ -34,11 +34,11 @@ extern "C" void func_80189424(float vol);
 // (C-linkage, retail unmangled names), CfGameManager helpers, the id getter
 // and the sound-system flag arm.
 extern "C" bool func_8012E6DC();
-extern "C" int func_80062A00();
+extern "C" int CfRes_isGridLoadIdle();
 extern "C" void handleBattleEnd__Q22cf13CfGameManagerFv();
 extern "C" void getControllerValues__Q22cf13CfGameManagerFv(u16* first, u16* second);
 extern "C" u32 func_8016E08C();
-extern "C" void func_800B9438(void* arg);
+extern "C" void gmWalkByMask(void* arg);
 // Event-manager readiness check (defined at global scope in CTaskREvent.cpp,
 // so C++ linkage mangles it back to the retail isEventPending__Fv).
 u32 isEventPending();
@@ -1153,7 +1153,7 @@ class CFileHandle;
 extern "C" void func_80180E1C();
 extern "C" void cancel__11CDeviceFileFP11CFileHandle(CFileHandle* handle);
 extern "C" void activateLOD__8CTaskLODFv(s16 taskId);
-extern "C" void func_80043BC4();
+extern "C" void CTaskGame_resetStream();
 // Static shutdown for the shared menu-text state (code_8025FB10.cpp).
 extern "C" void __dt__80261B1C();
 extern "C" void func_80167EF8();

@@ -7,7 +7,7 @@
 struct CScnEnvLgtCtrl;  // scene-light control ring (CScnEnvLgtCtrl.hpp)
 
 // Pointee of CTaskLOD::mParam1 (offset 0x54): an opaque manager object whose
-// +0x7C slot holds the scene-light control list head handed to func_804C2014
+// +0x7C slot holds the scene-light control list head handed to scnLgtCallLightV26
 // by the activateLOD/deactivateLOD/setLODEnable wrappers.
 struct LODParam1Obj {
     u8 _00[0x7C];

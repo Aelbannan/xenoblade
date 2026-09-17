@@ -246,7 +246,7 @@ struct CfEmbeddedSubObj_3E9C {
     u8 _78_8B[0x8c - 0x78];       // 0x78-0x8b
     u16 field_0x8C;               // +0x8c (actor 0x3F28 state halfword)
     u8 _8E_97[0x98 - 0x8e];       // 0x8e-0x97
-    void* field_98;               // +0x98 (actor 0x3F34, func_80482AD4 target)
+    void* field_98;               // +0x98 (actor 0x3F34, simRemoveWordFromBuf target)
     u8 _9C_C3[0x28];              // 0x9c-0xc3
     u32 field_C4;                 // +0xc4 (actor 0x3F60, battle id)
     u8 _C8_6F7[0x6f8 - 0xc8];     // 0xc8-0x6f7
@@ -773,8 +773,8 @@ public:
     u8 field_0x28[0x10];          // 0x28 (opaque; address taken)
 };
 
-// Stack-allocated enum-list holder (func_80043D90 ctor / __dt__80043E88 dtor)
-// and the list returned by func_80043F18 (element count at +0x620).
+// Stack-allocated enum-list holder (CTaskGame_enumListCtor ctor / __dt__80043E88 dtor)
+// and the list returned by CTaskGame_enumListGet (element count at +0x620).
 struct CfMoveEnumHolder {
     void* list;   // 0x0
     u32 handle;   // 0x4
@@ -838,15 +838,15 @@ extern bool isGlobalCamFlagSet(int mask);
 extern "C" {
 void* func_8016FE34(void* source);
 void func_8014B2DC(void* buf); // canonical void* form (CtrlAct.hpp/ImplPc.hpp)
-void func_80482AB8(u32 id, void* source);
+void simPushWordToBuf(u32 id, void* source);
 void* func_800EA444(void* bm);
 #include "kyoshin/cf/CfMapItemManager.hpp" // func_80174C98 (owner decl)
 void* getInstance__Q22cf13CfGameManagerFv();
 void func_802A0E08(void* self);
-void func_802A31AC(void* a, void* b, void* c);
+void CCharVoiceMan_EnqueueRebindVoice(void* a, void* b, void* c);
 // Enum-list helper family: canonical extern "C" void* forms (CVision.hpp).
-void func_80043D90(void* holder);
-void* func_80043F18(void* holder);
+void CTaskGame_enumListCtor(void* holder);
+void* CTaskGame_enumListGet(void* holder);
 void func_800F4A98(void* list, u32 type, u32 filter);
 void func_800F6ED0(void* list, void* value); // canonical (void*,void*) form (CAIAction/ImplPc/ImplWalker)
 void* func_800F6EAC(void* list, u32 idx);
@@ -863,7 +863,7 @@ void func_8014AE00(void* buf);   // move-state buffer init (actor +0x3380)
 void* createBattleActor__Q22cf13CfGameManagerFv(u32 value, u32 unused);
 void setTargetObj_(void* obj, void* target);
 void func_804E3CDC(void* effect, f32 f1, f32 f2);
-void func_80482AD4(void* handler, void* source);
+void simRemoveWordFromBuf(void* handler, void* source);
 void func_8015BD94(void* effect);
 void func_802A0FE8(void* self);
 void* func_80496264(void* scene, int index);  // scene pose lookup (func_800CD460)
@@ -881,11 +881,11 @@ extern "C" void func_800D9978(void* mgr, void* obj);
 extern "C" void func_800D9CA0(void* mgr, void* target);
 extern "C" void func_800DA0A4(void* mgr, void* actor, u32 param);
 // Voice-manager hook fired at the end of func_800CD5DC's case 8 body.
-extern "C" void func_802A2D0C(void* actor);
+extern "C" void CCharVoiceMan_FlushPendingActorVoice(void* actor);
 // Vision-system refresh (code_800F42AC.cpp), called by func_800CD5DC.
 extern "C" void func_800F449C(void* obj);
 // Battle-status add helper (CActParamAnimGame.cpp), used by func_800CD5DC.
-extern "C" void func_8004CEF8(void* obj, u32 param);
+extern "C" void setAnimCount(void* obj, u32 param);
 
 // Event dispatcher defined below in this TU; retail symbol is unmangled, so
 // declare it with C linkage here (the definition below inherits it).
@@ -1009,7 +1009,7 @@ extern "C" void setChildV40__(void* a, void* b);
 extern "C" void func_801BFDE8(u32 mode, u32 value, u32 playerValue, f32 first,
     f32 second); // single shared uint form (CfGimmick.hpp / UnityHelpers)
 extern "C" void func_801BFE8C(u32 a, u32 b, u32 c); // canonical u32 form (CVision/CfResReload/ImplPc/ImplEne)
-extern "C" void* func_8048315C(void);
+extern "C" void* simGetLeafActData(void);
 // func_800CF810 shape: ground/screen probe writing the adjusted position and
 // taking the source vector plus a float constant.
 // Canonical form (matches CPartsChange.hpp / CtrlMoveBase.hpp / CfCam.cpp).

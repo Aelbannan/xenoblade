@@ -339,15 +339,15 @@ extern "C" __declspec(noinline) void func_802ADCE8(CTutorialList* self) {
         sprintf(buf, &lbl_eu_80510B78[0x6a], (u8)i + 1);
         u16 sel = func_802ACE04((CTutorialWindowIds*)self->mSubObj180, idx);
         if (sel == 0) {
-            func_80136B4C(self->mLayout20, buf, &lbl_eu_80510B78[0x76], 0);
+            LayoutSetTextBoxFmtValue(self->mLayout20, buf, &lbl_eu_80510B78[0x76], 0);
         } else {
             // Retail passes only two args here (the third header param is
             // unused at this site); cast to the 2-arg form so no li r5 is
             // emitted.
-            char* txt = ((char* (*)(const void*, const void*))func_8013639C)(
+            char* txt = ((char* (*)(const void*, const void*))BdatGetPtrDirect)(
                 (const void*)lbl_eu_80664BF0, &lbl_eu_80510B78[0x77]);
-            func_80136B4C(self->mLayout20, buf, txt, 0);
-            if (func_801361E8(lbl_eu_80664BF0, &lbl_eu_80510B78[0x7d], sel) == 0) {
+            LayoutSetTextBoxFmtValue(self->mLayout20, buf, txt, 0);
+            if (BdatGetU8Direct(lbl_eu_80664BF0, &lbl_eu_80510B78[0x7d], sel) == 0) {
                 if (func_8009CF8C((u16)sel + 0x33bf) == 0) {
                     func_80124270(text, 1);
                 }
@@ -451,14 +451,14 @@ extern "C" __declspec(noinline) void func_802ADB3C(CTutorialList* self) {
 }
 
 extern "C" __declspec(noinline) void func_802ADB90(CTutorialList* self) {
-    if (func_80137510(self->mAnim28, lbl_eu_80668DE4) != 0) {
+    if (AnimRewindFrame(self->mAnim28, lbl_eu_80668DE4) != 0) {
         self->mState175 = 5;
         func_802ADC28(self);
     }
 }
 
 extern "C" __declspec(noinline) void func_802ADBDC(CTutorialList* self) {
-    if (func_80137510(self->mAnim24, lbl_eu_80668DE4) != 0) {
+    if (AnimRewindFrame(self->mAnim24, lbl_eu_80668DE4) != 0) {
         self->mState175 = 0;
         self->mInitialized = 1;
     }
@@ -503,19 +503,19 @@ extern "C" __declspec(noinline) void func_802ADEE4(CTutorialList* self) {
     if (func_801D3320(&self->mSortMenu84[0]) != 0) return;
     func_801D350C(&self->mSortMenu84[0]);
     func_801D3518(&self->mSortMenu84[0],
-                  func_80136190(&lbl_eu_80510B78[0x8e], &lbl_eu_80510B78[0x97], 0x25));
+                  BdatTouchStringCell(&lbl_eu_80510B78[0x8e], &lbl_eu_80510B78[0x97], 0x25));
     func_801D3518(&self->mSortMenu84[0],
-                  func_80136190(&lbl_eu_80510B78[0x8e], &lbl_eu_80510B78[0x97], 0x26));
+                  BdatTouchStringCell(&lbl_eu_80510B78[0x8e], &lbl_eu_80510B78[0x97], 0x26));
     func_801D3518(&self->mSortMenu84[0],
-                  func_80136190(&lbl_eu_80510B78[0x8e], &lbl_eu_80510B78[0x97], 0x27));
+                  BdatTouchStringCell(&lbl_eu_80510B78[0x8e], &lbl_eu_80510B78[0x97], 0x27));
     func_801D3518(&self->mSortMenu84[0],
-                  func_80136190(&lbl_eu_80510B78[0x8e], &lbl_eu_80510B78[0x97], 0x28));
+                  BdatTouchStringCell(&lbl_eu_80510B78[0x8e], &lbl_eu_80510B78[0x97], 0x28));
     func_801D353C(&self->mSortMenu84[0], self->mField17E);
 }
 
 extern "C" __declspec(noinline) void func_802ADFA8(CTutorialList* self) {
-    char* text = func_80136190(&lbl_eu_80510B78[0x8e], &lbl_eu_80510B78[0x97], self->mField17E + 0x25);
-    func_80136B4C(self->mLayout20, &lbl_eu_80510B78[0x9c], text, 0);
+    char* text = BdatTouchStringCell(&lbl_eu_80510B78[0x8e], &lbl_eu_80510B78[0x97], self->mField17E + 0x25);
+    LayoutSetTextBoxFmtValue(self->mLayout20, &lbl_eu_80510B78[0x9c], text, 0);
 }
 
 // func_802AE004 - open the tutorial list once the layout resource finished
@@ -595,20 +595,20 @@ int CTutorialList::OnFileEvent(CEventFile* event) {
         mLayout20->Animate(0);
 
         char* title =
-            func_80136190(&lbl_eu_80510B78[0x8e], &lbl_eu_80510B78[0x97], 0x24);
-        func_80136B4C(mLayout20, &lbl_eu_80510B78[0x10c], title, 0);
+            BdatTouchStringCell(&lbl_eu_80510B78[0x8e], &lbl_eu_80510B78[0x97], 0x24);
+        LayoutSetTextBoxFmtValue(mLayout20, &lbl_eu_80510B78[0x10c], title, 0);
 
         // Pick the message archive variant from the game-manager mode.
         const char* sel = isClassicController__Q22cf13CfGameManagerFv(-1) != 0
                               ? (const char*)&lbl_eu_80510B78[0x117]
                               : (const char*)&lbl_eu_80510B78[0x120];
         u16 msgId =
-            func_8013606C(&lbl_eu_80510B78[0x129], sel, 0x61);
-        char* texName = func_80138F78((u32)msgId);
+            BdatGetU16ByTableKey(&lbl_eu_80510B78[0x129], sel, 0x61);
+        char* texName = MakeTplNameSysFile((u32)msgId);
         CTutorialMsgObj* obj =
             (CTutorialMsgObj*)func_801355F4()->GetResource(0x74696d67, texName, 0);
         if (obj != 0) {
-            func_80137E7C(mLayout20, &lbl_eu_80510B78[0x137], obj);
+            PaneSetTexPaletteByName(mLayout20, &lbl_eu_80510B78[0x137], obj);
             // Row/col counts are lhz-loaded before the pane lookup; the
             // u16->f32 stores expand to MWCC's 0x4330-magic int-to-double
             // sequence against the .sdata2 pool constant.
@@ -794,7 +794,7 @@ __declspec(noinline) void func_802ACC30(u8* self, u16 target, int filter) {
     for (int id = 1; id <= total; id++) {
         if (func_8009CF8C(id + 0x333f) == 0) continue;
         if (filter != 0 &&
-            (int)(u8)func_801361E8((u32)table, lbl_eu_80510B78, id) != catFilter)
+            (int)(u8)BdatGetU8Direct((u32)table, lbl_eu_80510B78, id) != catFilter)
             continue;
         list->mIds[list->mCount++] = id;
     }
@@ -807,8 +807,8 @@ __declspec(noinline) void func_802ACC30(u8* self, u16 target, int filter) {
             u16 a = list->mIds[j];
             u16* p = &list->mIds[j];
             u16 b = p[1];
-            if ((u8)func_801361E8((u32)table, names + 9, a) >
-                (u8)func_801361E8((u32)table, names + 9, b)) {
+            if ((u8)BdatGetU8Direct((u32)table, names + 9, a) >
+                (u8)BdatGetU8Direct((u32)table, names + 9, b)) {
                 swapped = 1;
                 const u16 x = p[1] ^ p[0];
                 const u16 nb = p[1] ^ x;

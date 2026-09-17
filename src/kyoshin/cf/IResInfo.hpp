@@ -43,9 +43,9 @@ public:
     virtual void* vfunc0B(void* entry);                  // vtable +0x3C - resolution probe (1 arg)
     virtual int isInUse(void* entry);                      // vtable +0x40
     virtual int cmpField4Eq(void* entry, u32 val);       // vtable +0x44 - was m17 (field_04 compare)
-    virtual int checkFlag48(void* entry);                // vtable +0x48 - was m16 / func_80068998
+    virtual int checkFlag48(void* entry);                // vtable +0x48 - was m16 / CfRes_isEntryValid
     virtual int checkFlag4C(void* entry);                // vtable +0x4C - was isResFlag0 / func_800661A8
-    virtual void cleanup50(void* entry);                 // vtable +0x50 - was func_800665A0
+    virtual void cleanup50(void* entry);                 // vtable +0x50 - was CfRes_abortEntryIO
     // Wrappers keep call sites stable after _v rename
     inline u8* getHandle18(void* e) { return getResHandle18(e); }
     inline u8* getHandle1C(void* e) { return getResHandle1C(e); }
@@ -58,7 +58,7 @@ public:
 struct ResInfoEntry {
     u32 field_0x00;             // 0x00 - flags
     u32 field_0x04;             // 0x04
-    u32* data;                  // 0x08 - data pointer (passed to func_80062430)
+    u32* data;                  // 0x08 - data pointer (passed to CfRes_lookupNameTable)
     u32 field_0x0C;             // 0x0C - 0x0F
     u32 field_0x10;             // 0x10
     u8 field_0x14[4];           // 0x14 - 0x17
@@ -226,7 +226,7 @@ extern u32 lbl_eu_80663E30;
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
 extern "C" char* getEntryPtrGrid(char* self, int a, int b);
 extern "C" void clearWordFlag(u32* self, u32 mask);
-extern "C" void* func_80068494(void*, u32, u32*, u32*, int, int);
+extern "C" void* CfRes_findGridEntry(void*, u32, u32*, u32*, int, int);
 extern "C" bool func_800686E4(ResInfoContainer*, bool);
 
 extern "C" bool testResInfoFlag(u32 flags);

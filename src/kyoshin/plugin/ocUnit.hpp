@@ -33,10 +33,10 @@ extern const float lbl_eu_80665C30;  // fixed-point scale (2048.0)
 extern const double lbl_eu_80665C38; // sdata2: int->double magic (2^52 + 2^31)
 
 // 6-entry u32 event-arg table (.rodata, other split) copied into a local
-// buffer by func_8003CC9C before indexing.
+// buffer by execNpcAction before indexing.
 extern const u32 lbl_eu_804FA4C0[6];
 
-// .sdata2 float constant passed by func_8003FFF4 to func_800AB580.
+// .sdata2 float constant passed by chkEventRange to func_800AB580.
 extern const float lbl_eu_80665D44;
 
 // Defined in kyoshin/cf/object/CfObjectColl.cpp (declaration kept here so
@@ -100,8 +100,8 @@ extern "C" {
 #endif
 
 void ocUnitRegist();
-void func_800BC3F0(cf::CfObject* obj);
-void* func_800BF324(void* objParam);
+void CfObjectMove_attachMoveRegion(cf::CfObject* obj);
+void* CfObjectMove_getSelfIfActive(void* objParam);
 void func_8013D07C(void* obj, const char* str, int mode);
 void func_8013D448(void* obj, const char* str);
 unsigned int func_8013EC58();

@@ -72,7 +72,7 @@ extern "C" {
     u32 func_8009CF8C(u32);
     CMB_PartyList_8018C5FC* getListB28__Fv();
     s32 func_8026178C(s32, u32);
-    void func_802A293C(s32, s32);
+    void CCharVoiceMan_EnqueuePartyGageVoice(s32, s32);
     extern "C" u16 playActorSound__Q22cf10CfSoundManFUlUlUlUlf(u32, u32, u32, u32, f32);
 }
 
@@ -154,7 +154,7 @@ void func_8018C610(UnkClass_8018C5FC* _this) {
                 _this->gaugeValue = 0x12c;
             }
 
-            func_802A293C(_this->gaugeValue, oldVal);
+            CCharVoiceMan_EnqueuePartyGageVoice(_this->gaugeValue, oldVal);
 
             s32 clamped = _this->gaugeValue;
             if ((oldVal < 0x64 && clamped >= 0x64) ||
@@ -183,7 +183,7 @@ s32 func_8018C820(UnkClass_8018C5FC* _this, s32 delta) {
         _this->gaugeValue = 0x12c;
     }
 
-    func_802A293C(_this->gaugeValue, oldVal);
+    CCharVoiceMan_EnqueuePartyGageVoice(_this->gaugeValue, oldVal);
 
     s32 clamped = _this->gaugeValue;
     if ((oldVal < 0x64 && clamped >= 0x64) ||
@@ -210,7 +210,7 @@ s32 func_8018C8F4(UnkClass_8018C5FC* _this, s32 val) {
         _this->gaugeValue = 0x12c;
     }
 
-    func_802A293C(_this->gaugeValue, oldVal);
+    CCharVoiceMan_EnqueuePartyGageVoice(_this->gaugeValue, oldVal);
 
     s32 clamped = _this->gaugeValue;
     if ((oldVal < 0x64 && clamped >= 0x64) ||

@@ -34,13 +34,13 @@ cf::CfObjectNpc* __ct__Q22cf11CfObjectNpcFv(cf::CfObjectNpc* self, int heapFlag)
     *(void**)self = lbl_eu_805298B8;
 
     if (heapFlag != 0) {
-        void* mem = mtl::MemManager::allocate(0x44, func_80061FFC());
+        void* mem = mtl::MemManager::allocate(0x44, CfRes_getAllocHandle());
         if (mem != NULL) {
             mem = __ct__cf_CfResPcImpl((u8*)mem, (cf::CfObjectMove*)self);
         }
         self->mSubObjB0 = mem;
     } else {
-        void* mem = mtl::MemManager::allocate(0x20, func_80061FFC());
+        void* mem = mtl::MemManager::allocate(0x20, CfRes_getAllocHandle());
         if (mem != NULL) {
             mem = __ct__cf_CfResReloadImpl(mem, self);
         }
@@ -74,9 +74,9 @@ CfObjectNpc::~CfObjectNpc() {
 bool CfObjectNpc::initNpcFlags() {
     this->CfObjectModel::CfObjectModel_releaseModelList();
     mFlags68 |= 0x100000;
-    func_800BE33C(this, 1);
-    func_800BE824(this, 1);
-    func_804B0AD4(_60C_region, 0, lbl_eu_80666AE4, lbl_eu_80666AE8);
+    CfObjectMove_setModelDisplayFlag(this, 1);
+    CfObjectMove_setRegionAttached(this, 1);
+    ColiSetMoveVec2(_60C_region, 0, lbl_eu_80666AE4, lbl_eu_80666AE8);
     *(u16*)&_60C_region[0xB2] = 0x15E;
     return true;
 }

@@ -4,18 +4,18 @@
 #include "kyoshin/harness_catalog.hpp"
 #include "kyoshin/CModelDisp.hpp"
 // CfObjectImplMove.hpp (via harness_catalog) now declares canonical extern "C"
-// void* forms of func_80043D90/func_80043F18/func_800F4A98; CModelDispEquip.hpp
+// void* forms of CTaskGame_enumListCtor/CTaskGame_enumListGet/func_800F4A98; CModelDispEquip.hpp
 // re-declares them with typed prototypes, which MWCC rejects as an illegal
 // extern-"C" overload. Rename the typed decls out of the way for the include;
 // call sites below then bind to the canonical void* forms (same retail names).
-#define func_80043D90 dispEnumListCtor_typed
-#define func_80043F18 dispEnumListGet_typed
+#define CTaskGame_enumListCtor dispEnumListCtor_typed
+#define CTaskGame_enumListGet dispEnumListGet_typed
 #define func_800F4A98 dispEnumListFill_typed
 #define __dt__80043E88 dispEnumListDtor_typed
 #define getPlayer__Q22cf13CfGameManagerFi dispGetPlayer_typed
 #include "kyoshin/menu/parts/CModelDispEquip.hpp"
-#undef func_80043D90
-#undef func_80043F18
+#undef CTaskGame_enumListCtor
+#undef CTaskGame_enumListGet
 #undef func_800F4A98
 #undef __dt__80043E88
 #undef getPlayer__Q22cf13CfGameManagerFi
@@ -152,8 +152,8 @@ extern "C" void func_801FC2B4(void* self, CActParamHolder* h) {
             h->animModelPtrs[i] = NULL;
         }
     }
-    func_8004B6BC(&h->actParam, h->field_0x04);
-    func_8004B6BC(&h->actParam, h->field_0x08);
+    releaseAnimObj(&h->actParam, h->field_0x04);
+    releaseAnimObj(&h->actParam, h->field_0x08);
     reinterpret_cast<CActParamAnim*>(&h->actParam)->func_8004B114();
     func_80495E60(h->field_0x04);
     func_80495E60(h->field_0x08);
@@ -267,14 +267,14 @@ extern "C" __declspec(noinline) void func_801FC3B0(CModelDisp* self) {
     for (u8 i = 0; i < 3; i++) {
         CActParamHolder* h = (CActParamHolder*)((u8*)self + i * 0xFF0 + 8);
         CModelDispListHolder holder;
-        func_80043D90(&holder);
-        func_800F4A98((CModelDispEnumList*)func_80043F18(&holder), names[i], 0);
-        if (((CModelDispEnumList*)func_80043F18(&holder))->field_620 == 0) {
+        CTaskGame_enumListCtor(&holder);
+        func_800F4A98((CModelDispEnumList*)CTaskGame_enumListGet(&holder), names[i], 0);
+        if (((CModelDispEnumList*)CTaskGame_enumListGet(&holder))->field_620 == 0) {
             func_801FC2B4(self, h);
             __dt__80043E88(&holder, -1);
             continue;
         }
-        CModelDispSlot* slot = func_800F6EC0((CModelDispEnumList*)func_80043F18(&holder), 0);
+        CModelDispSlot* slot = func_800F6EC0((CModelDispEnumList*)CTaskGame_enumListGet(&holder), 0);
         if (slot->field_04 == NULL) {
             __dt__80043E88(&holder, -1);
             continue;
@@ -288,8 +288,8 @@ extern "C" __declspec(noinline) void func_801FC3B0(CModelDisp* self) {
             charId = actor->field_3F2C;
             if (charId == 0)
                 ok = false;
-            s16 idx = func_800BE954((cf::CfObjectMove*)&actor->move[0]);
-            CModelDispParamSlot* table = func_80062C28(idx, 0);
+            s16 idx = CfObjectMove_getSubB0FieldA((cf::CfObjectMove*)&actor->move[0]);
+            CModelDispParamSlot* table = CfRes_getPcGridEntry(idx, 0);
             for (u8 j = 2; j <= 5; j++) {
                 if (reinterpret_cast<cf::CfObject*>(&actor->move[0])->CfObject_getSlotBits(j) == 0)
                     continue;
@@ -302,7 +302,7 @@ extern "C" __declspec(noinline) void func_801FC3B0(CModelDisp* self) {
             if (actor->field_3F30 == 0 ||
                 reinterpret_cast<u32>(reinterpret_cast<cf::CfObjectModel*>(&actor->move[0])->CfObjectModel_getAnimState()) == 0)
                 ok = false;
-            CModelDispParamSlot* e = func_80062DA4(idx);
+            CModelDispParamSlot* e = CfRes_getArrayElem18Idx(idx);
             if (e->field_2C->getResourceBase(e, 0) == NULL)
                 ok = false;
             if (e->field_2C->isInUse(e) == 0)
@@ -320,8 +320,8 @@ extern "C" __declspec(noinline) void func_801FC3B0(CModelDisp* self) {
             ((CScnItemModel*)h->field_0x00)->vfunc64(0);
             u32 stateBits = reinterpret_cast<cf::CfObject*>(&actor->move[0])->CfObject_getSlotBits(1);
             ((CModelDispSub*)h)->mFlagFD4 = (stateBits >> 12) & 0x3FF;
-            s16 idx2 = func_800BE954((cf::CfObjectMove*)&actor->move[0]);
-            CModelDispParamSlot* table2 = func_80062C28(idx2, 0);
+            s16 idx2 = CfObjectMove_getSubB0FieldA((cf::CfObjectMove*)&actor->move[0]);
+            CModelDispParamSlot* table2 = CfRes_getPcGridEntry(idx2, 0);
             for (u8 j = 2; j <= 5; j++) {
                 if (reinterpret_cast<cf::CfObject*>(&actor->move[0])->CfObject_getSlotBits(j) != 0) {
                     CModelDispParamSlot* ps = &table2[j];
@@ -338,10 +338,10 @@ extern "C" __declspec(noinline) void func_801FC3B0(CModelDisp* self) {
                 (u32)self->mInitParam,
                 reinterpret_cast<u32>(reinterpret_cast<cf::CfObjectModel*>(&actor->move[0])->CfObjectModel_getAnimState()), nameBase + 4);
             reinterpret_cast<CActParamAnim*>(&h->actParam)->func_8004B114();
-            func_8004B624(&h->actParam, (CScnItemModel*)h->field_0x00,
+            attachAnimObj(&h->actParam, (CScnItemModel*)h->field_0x00,
                           h->field_0x08,
                           reinterpret_cast<u32>(reinterpret_cast<cf::CfObjectModel*>(&actor->move[0])->CfObjectModel_getAnimState()));
-            func_8004B6A4(&h->actParam, h->field_0x04, actor->field_3F30);
+            pushAnimNode(&h->actParam, h->field_0x04, actor->field_3F30);
             // Clear act-param busy bit 23, then restart its chain buffer.
             ((CDispHolderWordView*)h)->flags18 &= ~0x800000;
             func_8004B9D4(&h->actParam, (void*)1, 0, -1, 0);
@@ -381,18 +381,18 @@ extern "C" __declspec(noinline) void func_801FC3B0(CModelDisp* self) {
             vec[0] = f0;
             vec[1] = f1;
             vec[2] = f2;
-            func_8004B354(&h->actParam, vec);
+            setAnimSubPos(&h->actParam, vec);
             ((CDispHolderWordView*)h)->flags18 |= 0x160;
             ((CDispHolderWordView*)h)->owner10 = self;
             ((CDispHolderWordView*)h)->owner40 = self;
-            CModelDispParamSlot* e3 = func_80062DA4(idx2);
+            CModelDispParamSlot* e3 = CfRes_getArrayElem18Idx(idx2);
             if (actor->field_3F08 & 0x1000) {
                 h->animModelPtrs[0] =
                     func_80495E94((u32)self->mInitParam, reinterpret_cast<CModelDispNameParam*>(e3->field_2C->getResourceBase(e3, 0)));
                 if (h->animModelPtrs[0] != NULL) {
                     ((CScnItemModel*)h->field_0x00)->vfuncC4(
                         (CScnItemModel*)h->animModelPtrs[0],
-                        reinterpret_cast<u32>(func_800BED80((cf::CfObjectMove*)&actor->move[0], 0)), 0);
+                        reinterpret_cast<u32>(CfObjectMove_getBdatNameCol7((cf::CfObjectMove*)&actor->move[0], 0)), 0);
                 }
             }
             if (actor->field_3F08 & 0x2000) {
@@ -401,7 +401,7 @@ extern "C" __declspec(noinline) void func_801FC3B0(CModelDisp* self) {
                 if (h->animModelPtrs[1] != NULL) {
                     ((CScnItemModel*)h->field_0x00)->vfuncC4(
                         (CScnItemModel*)h->animModelPtrs[1],
-                        reinterpret_cast<u32>(func_800BED80((cf::CfObjectMove*)&actor->move[0], 1)), 0);
+                        reinterpret_cast<u32>(CfObjectMove_getBdatNameCol7((cf::CfObjectMove*)&actor->move[0], 1)), 0);
                 }
             }
             if (actor->field_3F08 & 0x20000 &&
@@ -417,7 +417,7 @@ extern "C" __declspec(noinline) void func_801FC3B0(CModelDisp* self) {
                         CActParamAnimView* ap = &h->actParams[j];
                         ap->field_0x378 = j;
                         func_8005A594(ap);
-                        func_8004B624(
+                        attachAnimObj(
                             ap, mp, h->unk_55C,
                             reinterpret_cast<cf::CfObjectModel*>(&actor->move[0])->CfObjectModel_getAnimFlags());
                         func_8004B9D4(ap, (void*)1, 0, -1, 0);
@@ -442,7 +442,7 @@ extern "C" __declspec(noinline) void func_801FC3B0(CModelDisp* self) {
 #pragma pop
 
 // Retail 0x801FBFD8: fetches the pose block for this display's init param,
-// builds two vec3 temps with func_8004B60C, applies them to the pose via
+// builds two vec3 temps with writeVec3f, applies them to the pose via
 // func_8049EFF8, then runs the fade-in state (func_801FC3B0).
 // optimize_for_size gives the retail _savegpr_29/_restgpr_29 helper frame
 // (-O4,p would emit individual stw/lwz pairs).
@@ -451,13 +451,13 @@ extern "C" __declspec(noinline) void func_801FC3B0(CModelDisp* self) {
 extern "C" void func_801FBFD8(CModelDisp* self) {
     f32 vecB[3]; // sp+0x14 in retail
     f32 vecA[3]; // sp+0x08 in retail
-    // Retail keeps func_80496264's pose and the FIRST func_8004B60C dest
+    // Retail keeps func_80496264's pose and the FIRST writeVec3f dest
     // pointer live across calls; the SECOND dest flows straight into arg3.
     void* pVecA;
     void* pose = func_80496264(self->mInitParam, -1);
     void* pVecB;
-    pVecA = func_8004B60C(&vecA[0], lbl_eu_806681EC, lbl_eu_806681E8, lbl_eu_806681EC);
-    pVecB = func_8004B60C(&vecB[0], lbl_eu_806681EC, lbl_eu_806681F0, lbl_eu_806681F4);
+    pVecA = writeVec3f(&vecA[0], lbl_eu_806681EC, lbl_eu_806681E8, lbl_eu_806681EC);
+    pVecB = writeVec3f(&vecB[0], lbl_eu_806681EC, lbl_eu_806681F0, lbl_eu_806681F4);
     func_8049EFF8(pose, lbl_eu_806681EC, pVecB, pVecA);
     func_801FC3B0(self);
 }
@@ -467,7 +467,7 @@ int func_801FCAC0(void* self) { return 0; }
 
 // Retail 0x801FCAC8: for each active slot, restart its chain buffer once
 // (guarded by the signed countdown at +0x550), then flush it via
-// func_8004CF00. Resetting the countdown to 150 throttles the restart.
+// tickAnimFrame. Resetting the countdown to 150 throttles the restart.
 // -O4,s keeps the stmw/lmw four-register save frame.
 #pragma push
 #pragma optimize_for_size on
@@ -482,7 +482,7 @@ extern "C" __declspec(noinline) void func_801FCAC8(CModelDisp* self) {
             func_8004B9D4((u8*)sub + 0x14, (void*)1, 0, -1, 0);
             sub->field_550 = 150;
         }
-        func_8004CF00((CActParamAnimView*)((u8*)sub + 0x14));
+        tickAnimFrame((CActParamAnimView*)((u8*)sub + 0x14));
     }
 }
 #pragma pop
@@ -513,10 +513,10 @@ void func_801FCBF4(CModelDisp* self, CModelDispParent* param, s32 enable,
             names[1] = *src++;
             names[2] = *src++;
             CModelDispListHolder holder;
-            func_80043D90(&holder);
-            func_800F4A98((CModelDispEnumList*)func_80043F18(&holder), names[i], 0);
-            if (((CModelDispEnumList*)func_80043F18(&holder))->field_620 >= 1) {
-                CModelDispSlot* slot = func_800F6EC0((CModelDispEnumList*)func_80043F18(&holder), 0);
+            CTaskGame_enumListCtor(&holder);
+            func_800F4A98((CModelDispEnumList*)CTaskGame_enumListGet(&holder), names[i], 0);
+            if (((CModelDispEnumList*)CTaskGame_enumListGet(&holder))->field_620 >= 1) {
+                CModelDispSlot* slot = func_800F6EC0((CModelDispEnumList*)CTaskGame_enumListGet(&holder), 0);
                 if (slot->field_04 != NULL) {
                     CModelDispActor* actor = getCfObjectPc(slot->field_04);
                     CModelDispNameParam* res = NULL; // name param from the lookup
@@ -528,11 +528,11 @@ void func_801FCBF4(CModelDisp* self, CModelDispParent* param, s32 enable,
                         switch (slotIdx) {
                         case 0:
                             flag = 0;
-                            res = func_800BEDC4((cf::CfObjectMove*)&actor->move[0], 0);
+                            res = CfObjectMove_getBdatNameCol11((cf::CfObjectMove*)&actor->move[0], 0);
                             break;
                         case 1:
                             flag = 1;
-                            res = func_800BEDC4((cf::CfObjectMove*)&actor->move[0], 1);
+                            res = CfObjectMove_getBdatNameCol11((cf::CfObjectMove*)&actor->move[0], 1);
                             break;
                         }
                         if (res != NULL) {
@@ -543,11 +543,11 @@ void func_801FCBF4(CModelDisp* self, CModelDispParent* param, s32 enable,
                         switch (slotIdx) {
                         case 0:
                             flag = 0;
-                            res = func_800BED80((cf::CfObjectMove*)&actor->move[0], 0);
+                            res = CfObjectMove_getBdatNameCol7((cf::CfObjectMove*)&actor->move[0], 0);
                             break;
                         case 1:
                             flag = 1;
-                            res = func_800BED80((cf::CfObjectMove*)&actor->move[0], 1);
+                            res = CfObjectMove_getBdatNameCol7((cf::CfObjectMove*)&actor->move[0], 1);
                             break;
                         }
                         if (res != NULL) {
@@ -598,12 +598,12 @@ void func_801FCDB4(CModelDisp* self, void* param, void* chainArg) {
         CModelDispSub* sub = (CModelDispSub*)((u8*)self + i * 0xFF0);
         if ((u32)sub->mpController == *(u32*)((u8*)param + 0x3A0)) {
             if (sub->mFlagFD0 != 0) {
-                sub->mResultA = func_8004B9B8((u8*)sub + 0x14);
+                sub->mResultA = getAnimChain((u8*)sub + 0x14);
                 func_8004B9D4(sub->mBuffer, chainArg, 0, -1, 0);
             }
 
             if (sub->mFlagFD4 != 0) {
-                sub->mResultB = func_8004B9B8((u8*)sub + 0x14);
+                sub->mResultB = getAnimChain((u8*)sub + 0x14);
                 func_8004B9D4(sub->_A94, chainArg, 0, -1, 0);
             }
 

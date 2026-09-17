@@ -375,7 +375,7 @@ u16* func_80125B58(CTagProcessorBase* self, const void* src, f32 a, f32 b, u32 c
                 off += 2;
             }
             func_801365E4(scratchA, 0x3D, (u16**)tokens);
-            func_801366F4((u16*)tokens[0]);
+            WcsToUpperInPlace((u16*)tokens[0]);
             wcscpy(bigbuf, p + count + 2);
             const wchar_t* name = tokens[0];
             for (const TagNameEntry* e = (const TagNameEntry*)lbl_eu_8052D478;; e++) {
@@ -776,7 +776,7 @@ __declspec(noinline) int func_8012615C(nw4r::lyt::AnimTransform* tag,
                         if (v28 < 0) {
                             v28 = (s16)-code80135FDC_getWord_6405C();
                             v26 = (s16)-code80135FDC_getWord_64060();
-                            func_8013BE38();
+                            MenuStateClear6405A();
                         }
                     } else {
                         int val = (int)func_8009CF8C(v4 + 0x29) + v28;
@@ -1789,7 +1789,7 @@ __declspec(noinline) int func_80127FB4(nw4r::lyt::AnimTransform* tag,
             // spills an FPR around the bl.
             if (msg->field_824 >= lbl_eu_80667208) {
                 if (msg->field_824 < lbl_eu_80667250) {
-                    if (func_eu_8013C8F4() == 0 &&
+                    if (MenuStateCheck64064or30() == 0 &&
                         func_80189A04(0) != 0 && msg->field_804 != 0 &&
                         member != 0)
                         member->v58(0, 0);
@@ -2042,7 +2042,7 @@ extern "C" void* func_801289B4(void* a, void* b, u8 code, u8* dst) {
 // output buffer, and thread the r4 arg through (same family as func_801289B4).
 #pragma optimize_for_size on
 extern "C" void* func_801289FC(void* a, void* b, u16* str, u8* dst) {
-    func_801366F4(str);
+    WcsToUpperInPlace(str);
     wchar_t* endptr = 0;
     TagParam p;
     long val = wcstol((const wchar_t*)str, &endptr, 10);
@@ -2077,7 +2077,7 @@ extern "C" void* func_80128AB8(u8* a1, TagParam* ret, u8 a3, TagParam* target) {
 // Same as func_801289FC but with tag-param code 4.
 #pragma optimize_for_size on
 extern "C" void* func_80128B0C(void* a, void* b, u16* str, u8* dst) {
-    func_801366F4(str);
+    WcsToUpperInPlace(str);
     wchar_t* endptr = 0;
     TagParam p;
     long val = wcstol((const wchar_t*)str, &endptr, 10);
@@ -2088,8 +2088,8 @@ extern "C" void* func_80128B0C(void* a, void* b, u16* str, u8* dst) {
 #pragma optimize_for_size off
 
 void* callInitTagProc(void* arg1, void* arg2) {
-    extern void func_8013BDE4(void*);
-    func_8013BDE4(arg1);
+    extern void MenuStateSet6405A(void*);
+    MenuStateSet6405A(arg1);
     return arg2;
 }
 
@@ -2106,7 +2106,7 @@ extern "C" void* func_80128BB0(void* a, void* b, u8 code, u8* dst) {
 // Same as func_801289FC but with tag-param code 2.
 #pragma optimize_for_size on
 extern "C" void* func_80128BF8(void* a, void* b, u16* str, u8* dst) {
-    func_801366F4(str);
+    WcsToUpperInPlace(str);
     wchar_t* endptr = 0;
     TagParam p;
     long val = wcstol((const wchar_t*)str, &endptr, 10);
@@ -2134,7 +2134,7 @@ void* func_80128C6C(void* unused, void* ret, wchar_t* str, TagParam* dst) {
     TagParam p;
     int count = func_801365E4((u16*)str, 0x3a, (u16**)tokens);
     u8 idx = 0;
-    func_801366F4((u16*)tokens[0]);
+    WcsToUpperInPlace((u16*)tokens[0]);
     if (wcscmp(tokens[0], &lbl_eu_80661FC8[0]) == 0)
         idx = 0;
     else if (wcscmp(tokens[0], &lbl_eu_80661FC8[4]) == 0)
@@ -2142,7 +2142,7 @@ void* func_80128C6C(void* unused, void* ret, wchar_t* str, TagParam* dst) {
     else if (wcscmp(tokens[0], &lbl_eu_80661FC8[10]) == 0)
         idx = 2;
     if (count > 1) {
-        func_801366F4((u16*)tokens[1]);
+        WcsToUpperInPlace((u16*)tokens[1]);
         wchar_t* endptr = 0;
         long val = wcstol(tokens[1], &endptr, 10);
         // Builtin s32->f32 conversion: byte-identical to retail's
@@ -2181,7 +2181,7 @@ u16* func_80128DA0(void* unused, u16* dst, wchar_t* str) {
     out.w.c1 = lbl_eu_80667188;
     out.w.c2 = lbl_eu_8066718C;
     for (int i = 0; i < count; i++) {
-        func_801366F4((u16*)tokens[i]);
+        WcsToUpperInPlace((u16*)tokens[i]);
         for (int j = 0; j < 0x40; j++) {
             if (names.names[j] == 0)
                 break;
@@ -2701,7 +2701,7 @@ __declspec(noinline) void func_80129F3C(nw4r::ut::TextWriterBase<wchar_t>* tw, f
 // optimize_for_size: retail saves r28-r31 with stmw (the -O4,s save shape).
 #pragma optimize_for_size on
 u16* func_8012A1A4(void* a, u16* dst, wchar_t* str) {
-    func_801366F4((u16*)str);
+    WcsToUpperInPlace((u16*)str);
     s16 v = 0xff;
     if (wcscmp(str, &lbl_eu_80661FC8[0x12]) == 0)
         v = 0;
@@ -2721,7 +2721,7 @@ u16* func_8012A1A4(void* a, u16* dst, wchar_t* str) {
 #pragma optimize_for_size on
 void* func_8012A224(void* unused, void* ret, wchar_t* str, TagParam* dst) {
     u8 v = 0;
-    func_801366F4((u16*)str);
+    WcsToUpperInPlace((u16*)str);
     if (wcscmp(str, &lbl_eu_80661FC8[0x19]) == 0)
         v = 1;
     else if (wcscmp(str, &lbl_eu_80661FC8[0x1f]) == 0)
@@ -2756,7 +2756,7 @@ void* func_8012A224(void* unused, void* ret, wchar_t* str, TagParam* dst) {
 #pragma optimize_for_size on
 void* func_8012A388(void* unused, void* ret, wchar_t* str, TagParam* dst) {
     u8 v = 0;
-    func_801366F4((u16*)str);
+    WcsToUpperInPlace((u16*)str);
     if (wcscmp(str, &lbl_eu_80661FC8[0x58]) == 0)
         v = 0;
     else if (wcscmp(str, &lbl_eu_80661FC8[0x5c]) == 0)
@@ -2777,7 +2777,7 @@ void* func_8012A388(void* unused, void* ret, wchar_t* str, TagParam* dst) {
 // Tag-code writer (code 0xB): split the arg string on ':', uppercase token 0
 // and map it to a 1..2 tag id via the tag-string table (+0xd8/+0xdc), parse
 // token 1 as the numeric value, then map token 2 through the 26-entry BDAT
-// lookup chain (each match yields func_80136130(lbl_eu_804FFC48,
+// lookup chain (each match yields BdatGetS16ByTableKey(lbl_eu_804FFC48,
 // &lbl_eu_804FFC48[0xc], n)) or a wcstol fallback. Tokens 3/4 (when present)
 // are decimal values. Writes <0xb, (tag1<<8)|0xff, val, tag2, tag3, tag4>
 // when the split produced >= 3 tokens and returns the position after the
@@ -2790,79 +2790,79 @@ u16* func_8012A460(void* unused, u16* out, wchar_t* str) {
     u8 tag1 = 0xff;
     int tag3 = 0xff;
     int tag4 = 0xff;
-    func_801366F4((u16*)tokens[0]);
+    WcsToUpperInPlace((u16*)tokens[0]);
     if (wcscmp(tokens[0], &lbl_eu_80661FC8[0x6c]) == 0)
         tag1 = 1;
     else if (wcscmp(tokens[0], &lbl_eu_80661FC8[0x6e]) == 0)
         tag1 = 2;
-    func_801366F4((u16*)tokens[1]);
+    WcsToUpperInPlace((u16*)tokens[1]);
     wchar_t* end1 = 0;
     int val = (int)wcstol(tokens[1], &end1, 10);
-    func_801366F4((u16*)tokens[2]);
+    WcsToUpperInPlace((u16*)tokens[2]);
     int tag2;
     if (wcscmp(tokens[2], &lbl_eu_80661FC8[0x70]) == 0)
-        tag2 = func_80136130(lbl_eu_804FFC48, &lbl_eu_804FFC48[0xc], 1);
+        tag2 = BdatGetS16ByTableKey(lbl_eu_804FFC48, &lbl_eu_804FFC48[0xc], 1);
     else if (wcscmp(tokens[2], &lbl_eu_80661FC8[0x72]) == 0)
-        tag2 = func_80136130(lbl_eu_804FFC48, &lbl_eu_804FFC48[0xc], 2);
+        tag2 = BdatGetS16ByTableKey(lbl_eu_804FFC48, &lbl_eu_804FFC48[0xc], 2);
     else if (wcscmp(tokens[2], &lbl_eu_80661FC8[0x74]) == 0)
-        tag2 = func_80136130(lbl_eu_804FFC48, &lbl_eu_804FFC48[0xc], 3);
+        tag2 = BdatGetS16ByTableKey(lbl_eu_804FFC48, &lbl_eu_804FFC48[0xc], 3);
     else if (wcscmp(tokens[2], &lbl_eu_80661FC8[0x76]) == 0)
-        tag2 = func_80136130(lbl_eu_804FFC48, &lbl_eu_804FFC48[0xc], 4);
+        tag2 = BdatGetS16ByTableKey(lbl_eu_804FFC48, &lbl_eu_804FFC48[0xc], 4);
     else if (wcscmp(tokens[2], &lbl_eu_80661FC8[0x78]) == 0)
-        tag2 = func_80136130(lbl_eu_804FFC48, &lbl_eu_804FFC48[0xc], 5);
+        tag2 = BdatGetS16ByTableKey(lbl_eu_804FFC48, &lbl_eu_804FFC48[0xc], 5);
     else if (wcscmp(tokens[2], &lbl_eu_80661FC8[0x6e]) == 0)
-        tag2 = func_80136130(lbl_eu_804FFC48, &lbl_eu_804FFC48[0xc], 6);
+        tag2 = BdatGetS16ByTableKey(lbl_eu_804FFC48, &lbl_eu_804FFC48[0xc], 6);
     else if (wcscmp(tokens[2], &lbl_eu_80661FC8[0x7a]) == 0)
-        tag2 = func_80136130(lbl_eu_804FFC48, &lbl_eu_804FFC48[0xc], 7);
+        tag2 = BdatGetS16ByTableKey(lbl_eu_804FFC48, &lbl_eu_804FFC48[0xc], 7);
     else if (wcscmp(tokens[2], &lbl_eu_80661FC8[0x7c]) == 0)
-        tag2 = func_80136130(lbl_eu_804FFC48, &lbl_eu_804FFC48[0xc], 8);
+        tag2 = BdatGetS16ByTableKey(lbl_eu_804FFC48, &lbl_eu_804FFC48[0xc], 8);
     else if (wcscmp(tokens[2], &lbl_eu_80661FC8[0x7e]) == 0)
-        tag2 = func_80136130(lbl_eu_804FFC48, &lbl_eu_804FFC48[0xc], 9);
+        tag2 = BdatGetS16ByTableKey(lbl_eu_804FFC48, &lbl_eu_804FFC48[0xc], 9);
     else if (wcscmp(tokens[2], &lbl_eu_80661FC8[0x80]) == 0)
-        tag2 = func_80136130(lbl_eu_804FFC48, &lbl_eu_804FFC48[0xc], 0xa);
+        tag2 = BdatGetS16ByTableKey(lbl_eu_804FFC48, &lbl_eu_804FFC48[0xc], 0xa);
     else if (wcscmp(tokens[2], &lbl_eu_80661FC8[0x82]) == 0)
-        tag2 = func_80136130(lbl_eu_804FFC48, &lbl_eu_804FFC48[0xc], 0xb);
+        tag2 = BdatGetS16ByTableKey(lbl_eu_804FFC48, &lbl_eu_804FFC48[0xc], 0xb);
     else if (wcscmp(tokens[2], &lbl_eu_80661FC8[0x84]) == 0)
-        tag2 = func_80136130(lbl_eu_804FFC48, &lbl_eu_804FFC48[0xc], 0xc);
+        tag2 = BdatGetS16ByTableKey(lbl_eu_804FFC48, &lbl_eu_804FFC48[0xc], 0xc);
     else if (wcscmp(tokens[2], &lbl_eu_80661FC8[0x86]) == 0)
-        tag2 = func_80136130(lbl_eu_804FFC48, &lbl_eu_804FFC48[0xc], 0xd);
+        tag2 = BdatGetS16ByTableKey(lbl_eu_804FFC48, &lbl_eu_804FFC48[0xc], 0xd);
     else if (wcscmp(tokens[2], &lbl_eu_80661FC8[0x88]) == 0)
-        tag2 = func_80136130(lbl_eu_804FFC48, &lbl_eu_804FFC48[0xc], 0xe);
+        tag2 = BdatGetS16ByTableKey(lbl_eu_804FFC48, &lbl_eu_804FFC48[0xc], 0xe);
     else if (wcscmp(tokens[2], &lbl_eu_80661FC8[0x8a]) == 0)
-        tag2 = func_80136130(lbl_eu_804FFC48, &lbl_eu_804FFC48[0xc], 0xf);
+        tag2 = BdatGetS16ByTableKey(lbl_eu_804FFC48, &lbl_eu_804FFC48[0xc], 0xf);
     else if (wcscmp(tokens[2], &lbl_eu_80661FC8[0x6c]) == 0)
-        tag2 = func_80136130(lbl_eu_804FFC48, &lbl_eu_804FFC48[0xc], 0x10);
+        tag2 = BdatGetS16ByTableKey(lbl_eu_804FFC48, &lbl_eu_804FFC48[0xc], 0x10);
     else if (wcscmp(tokens[2], &lbl_eu_80661FC8[0x8c]) == 0)
-        tag2 = func_80136130(lbl_eu_804FFC48, &lbl_eu_804FFC48[0xc], 0x11);
+        tag2 = BdatGetS16ByTableKey(lbl_eu_804FFC48, &lbl_eu_804FFC48[0xc], 0x11);
     else if (wcscmp(tokens[2], &lbl_eu_80661FC8[0x8e]) == 0)
-        tag2 = func_80136130(lbl_eu_804FFC48, &lbl_eu_804FFC48[0xc], 0x12);
+        tag2 = BdatGetS16ByTableKey(lbl_eu_804FFC48, &lbl_eu_804FFC48[0xc], 0x12);
     else if (wcscmp(tokens[2], &lbl_eu_80661FC8[0x90]) == 0)
-        tag2 = func_80136130(lbl_eu_804FFC48, &lbl_eu_804FFC48[0xc], 0x13);
+        tag2 = BdatGetS16ByTableKey(lbl_eu_804FFC48, &lbl_eu_804FFC48[0xc], 0x13);
     else if (wcscmp(tokens[2], &lbl_eu_80661FC8[0x92]) == 0)
-        tag2 = func_80136130(lbl_eu_804FFC48, &lbl_eu_804FFC48[0xc], 0x14);
+        tag2 = BdatGetS16ByTableKey(lbl_eu_804FFC48, &lbl_eu_804FFC48[0xc], 0x14);
     else if (wcscmp(tokens[2], &lbl_eu_80661FC8[0x94]) == 0)
-        tag2 = func_80136130(lbl_eu_804FFC48, &lbl_eu_804FFC48[0xc], 0x15);
+        tag2 = BdatGetS16ByTableKey(lbl_eu_804FFC48, &lbl_eu_804FFC48[0xc], 0x15);
     else if (wcscmp(tokens[2], &lbl_eu_80661FC8[0x96]) == 0)
-        tag2 = func_80136130(lbl_eu_804FFC48, &lbl_eu_804FFC48[0xc], 0x16);
+        tag2 = BdatGetS16ByTableKey(lbl_eu_804FFC48, &lbl_eu_804FFC48[0xc], 0x16);
     else if (wcscmp(tokens[2], &lbl_eu_80661FC8[0x98]) == 0)
-        tag2 = func_80136130(lbl_eu_804FFC48, &lbl_eu_804FFC48[0xc], 0x17);
+        tag2 = BdatGetS16ByTableKey(lbl_eu_804FFC48, &lbl_eu_804FFC48[0xc], 0x17);
     else if (wcscmp(tokens[2], &lbl_eu_80661FC8[0x9a]) == 0)
-        tag2 = func_80136130(lbl_eu_804FFC48, &lbl_eu_804FFC48[0xc], 0x18);
+        tag2 = BdatGetS16ByTableKey(lbl_eu_804FFC48, &lbl_eu_804FFC48[0xc], 0x18);
     else if (wcscmp(tokens[2], &lbl_eu_80661FC8[0x9c]) == 0)
-        tag2 = func_80136130(lbl_eu_804FFC48, &lbl_eu_804FFC48[0xc], 0x19);
+        tag2 = BdatGetS16ByTableKey(lbl_eu_804FFC48, &lbl_eu_804FFC48[0xc], 0x19);
     else if (wcscmp(tokens[2], &lbl_eu_80661FC8[0x9e]) == 0)
-        tag2 = func_80136130(lbl_eu_804FFC48, &lbl_eu_804FFC48[0xc], 0x1a);
+        tag2 = BdatGetS16ByTableKey(lbl_eu_804FFC48, &lbl_eu_804FFC48[0xc], 0x1a);
     else {
         wchar_t* end2 = 0;
         tag2 = wcstol(tokens[2], &end2, 10);
     }
     if (count > 3) {
-        func_801366F4((u16*)tokens[3]);
+        WcsToUpperInPlace((u16*)tokens[3]);
         wchar_t* end3 = 0;
         tag3 = (int)wcstol(tokens[3], &end3, 10);
     }
     if (count > 4) {
-        func_801366F4((u16*)tokens[4]);
+        WcsToUpperInPlace((u16*)tokens[4]);
         wchar_t* end4 = 0;
         tag4 = (int)wcstol(tokens[4], &end4, 10);
     }
@@ -2886,7 +2886,7 @@ u16* func_8012A460(void* unused, u16* out, wchar_t* str) {
 // -O4,s save shape (stmw r28).
 #pragma optimize_for_size on
 u16* func_8012AAA4(void* a, u16* out, wchar_t* str) {
-    func_801366F4((u16*)str);
+    WcsToUpperInPlace((u16*)str);
     u32 v = 0;
     if (wcscmp(str, &lbl_eu_80661FC8[0x58]) == 0)
         v = 0x483A21FF;
@@ -3321,7 +3321,7 @@ __declspec(noinline) int func_8012B440(void* unused, void* unused2,
 // selects -1 and the second selects 0 (strings at +0x17e / +0x186).
 #pragma optimize_for_size on
 u16* func_8012B8C4(void* a, u16* dst, wchar_t* str) {
-    func_801366F4((u16*)str);
+    WcsToUpperInPlace((u16*)str);
     s16 v = 0xff;
     if (wcscmp(str, &lbl_eu_80661FC8[0xbf]) == 0)
         v = -1;
@@ -3339,7 +3339,7 @@ u16* func_8012B8C4(void* a, u16* dst, wchar_t* str) {
 // position after the block. The r3 arg is unused (family idiom).
 #pragma optimize_for_size on
 u16* func_8012B944(void* unused, u16* dst, wchar_t* str) {
-    func_801366F4((u16*)str);
+    WcsToUpperInPlace((u16*)str);
     s32 v;
     if (wcscmp(str, &lbl_eu_80661FC8[0xc8]) == 0)
         v = -1;

@@ -27,7 +27,7 @@ CVS_THREAD_ORDER* __ct__CVS_THREAD_ORDER(CVoiceHandle* owner) {
     if (func_802A330C(0x78, 0) == NULL) {
         return NULL;
     }
-    CVS_THREAD_ORDER* self = (CVS_THREAD_ORDER*)func_802A34E4(0x24);
+    CVS_THREAD_ORDER* self = (CVS_THREAD_ORDER*)CCharVoiceMan_AllocVoiceArena(0x24);
     if (self == NULL) {
         return NULL;
     }
@@ -210,7 +210,7 @@ int func_802B8D4C() {
         if (count <= 0) {
             cfg = NULL;
         } else {
-            OrderGimmickList* glist = func_800B6BC8();
+            OrderGimmickList* glist = getReslistB48();
             OrderGimmickNode* cur;
             for (cur = glist->head->next; cur != glist->head; cur = cur->next) {
                 // De-bias the gimmick object pointer back to its handle.
@@ -265,7 +265,7 @@ int func_802B8D4C() {
     if (func_802A330C(0x14, 1) == NULL) {
         return 0;
     }
-    if (func_802A34E4(0x20) == NULL) {
+    if (CCharVoiceMan_AllocVoiceArena(0x20) == NULL) {
         return 0;
     }
 

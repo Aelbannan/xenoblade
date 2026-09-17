@@ -3,7 +3,7 @@
 
 #include <harness_catalog.h>
 #include <monolib/core/code_804E36DC.hpp> // func_80496288 frame-delta query (C ABI)
-#include "libs/monolib/src/scn/CMdlAnmEye.hpp" // func_80484EB0 fade query
+#include "libs/monolib/src/scn/CMdlAnmEye.hpp" // simGetLeafDist7B0 fade query
 #include <nw4r/math/math_types.h>
 #include <nw4r/math/math_triangular.h>
 #include <revolution/MTX.h>
@@ -68,7 +68,7 @@ extern "C" u32 lbl_eu_805701E0[0x4];
 
 // Stripped retail placeholder symbols need C linkage to emit matching
 // reloc names; noinline keeps MWCC from folding them into func_804E8290.
-extern void func_80488F44(u8* model);
+extern void scnImN4AddFrameId(u8* model);
 extern "C" void func_804E830C(CMdlLook* look, u8* unk, u32 a, u32 b);
 extern "C" void func_804E8AAC(CMdlLook* look, u8* unk, u32 a, u32 b);
 
@@ -111,10 +111,10 @@ void func_804E8290(CMdlLook* look, u8* unk, u32 idx1, u32 idx2) {
 
 // Stripped retail placeholder symbols need C linkage to emit matching
 // reloc names; noinline keeps MWCC from folding them into func_804E8290.
-extern void func_80488F44(u8* model);
+extern void scnImN4AddFrameId(u8* model);
 
 extern "C" __declspec(noinline) void func_804E830C(CMdlLook* look, u8* unk, u32 a, u32 b) {
-    func_80488F44(unk);
+    scnImN4AddFrameId(unk);
 }
 
 // Aims the model's facing axes toward a target direction: builds the
@@ -147,7 +147,7 @@ extern "C" __declspec(noinline) void func_804E8AAC(CMdlLook* look, u8* unkBytes,
     }
 
     f32 delta = func_80496288(unk->field_0x04);
-    f32 fade = func_80484EB0(unk) * delta;
+    f32 fade = simGetLeafDist7B0(unk) * delta;
     if (fade == lbl_eu_8066B370) {
         // Faded out: only guard against a fully-degenerate facing vector.
         if (!(unk->field_0x7a8 & 1)) {

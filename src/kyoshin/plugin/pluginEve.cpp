@@ -16,7 +16,7 @@ extern "C" int processBattleQueue__Q22cf13CfGameManagerFv(u32 mode);
 extern "C" void func_8008566C__Q22cf13CfGameManagerFv(u32 mode, const float* color,
                                                        u32 param);
 extern "C" void func_80140E00(int a, int b, int c);
-extern "C" void func_80291A04();
+extern "C" void awardQuestFlags();
 
 extern "C" void* __dynamic_cast(void* obj, long offset, const void* src_type,
                                 const void* dst_type, void* src2dst);
@@ -82,7 +82,7 @@ int setFlag(VMThread* pThread) {
                 }
             }
             if ((u32)(flags - 0x0a200000) == 0x12c) {
-                func_80291A04();
+                awardQuestFlags();
             }
         } else {
             vmPluginExceptionThrow(pThread);

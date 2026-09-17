@@ -127,7 +127,7 @@ void func_8012D8C0(CTalkWindow* self) {
                     // Talk-stop flag: leave the intro playing.
                     if ((src->mTalkC4->field_270 & 0x80) != 0) return;
                     src->mVoice->play(1, 0);
-                    int page = func_8004C5EC(src->mTalkC4);
+                    int page = getAnimModelId(src->mTalkC4);
                     // Two separate compares branching to a shared call site
                     // (not a fused range test): retail keeps
                     // `cmpwi 0x21 / cmpwi 0x26` with blt/ble gates.
@@ -171,7 +171,7 @@ void func_8012DA6C(CTalkWindow* self) {
         root->FindPaneByName(&lbl_eu_804FFCA4[0xb0], 1);
 
     int state;
-    if (func_8013BF78() != 0) {
+    if (GetSysStateFlag31() != 0) {
         state = func_801276F4(self->field_5C, p1, p2, p3);
     } else {
         CTalkPadView* pad = reinterpret_cast<CTalkPadView*>(
@@ -211,7 +211,7 @@ void func_8012DA6C(CTalkWindow* self) {
                     CTalkWinTalkC4* talkC4 = src->mTalkC4;
                     if (talkC4 != 0) {
                         src->mVoice->play(0, 0);
-                        int page = func_8004C5EC(talkC4);
+                        int page = getAnimModelId(talkC4);
                         if (page < 0x21 || page > 0x26) {
                             func_8004B9D4(talkC4, 1, 0, -1, 0);
                         }
@@ -662,11 +662,11 @@ void CTalkWindow::Init() {
         char* msg = func_80138DA4(reinterpret_cast<char*>(
             reinterpret_cast<cf::CfObject*>(
                 findObjectById(field_68))->CObjectParam_getParamPtr()));
-        func_80136B4C(mpLayout, &lbl_eu_804FFCA4[0xb0], msg, 0);
-        func_80136B4C(mpLayout, &lbl_eu_804FFCA4[0xb9], msg, 0);
-        func_80136B4C(mpLayout, &lbl_eu_804FFCA4[0xc7], msg, 0);
-        func_80136B4C(mpLayout, &lbl_eu_804FFCA4[0xd5], msg, 0);
-        func_80136B4C(mpLayout, &lbl_eu_804FFCA4[0xe3], msg, 0);
+        LayoutSetTextBoxFmtValue(mpLayout, &lbl_eu_804FFCA4[0xb0], msg, 0);
+        LayoutSetTextBoxFmtValue(mpLayout, &lbl_eu_804FFCA4[0xb9], msg, 0);
+        LayoutSetTextBoxFmtValue(mpLayout, &lbl_eu_804FFCA4[0xc7], msg, 0);
+        LayoutSetTextBoxFmtValue(mpLayout, &lbl_eu_804FFCA4[0xd5], msg, 0);
+        LayoutSetTextBoxFmtValue(mpLayout, &lbl_eu_804FFCA4[0xe3], msg, 0);
 
         // Page-select pane: attach the tag processor and name the sub-panes.
         CTalkWinPane* paneF1 = reinterpret_cast<CTalkWinPane*>(
@@ -675,9 +675,9 @@ void CTalkWindow::Init() {
         paneF1->AllocStringBuffer(0x400);
         paneF1->mFlag |= 1;
         paneF1->field_F8 = reinterpret_cast<u32>(field_5C);
-        func_80136B4C(mpLayout, &lbl_eu_804FFCA4[0xfc], &lbl_eu_804FFCA4[0x107], 0);
-        func_80136B4C(mpLayout, &lbl_eu_804FFCA4[0x108], &lbl_eu_804FFCA4[0x107], 0);
-        func_80136B4C(mpLayout, &lbl_eu_804FFCA4[0x113], &lbl_eu_804FFCA4[0x107], 0);
+        LayoutSetTextBoxFmtValue(mpLayout, &lbl_eu_804FFCA4[0xfc], &lbl_eu_804FFCA4[0x107], 0);
+        LayoutSetTextBoxFmtValue(mpLayout, &lbl_eu_804FFCA4[0x108], &lbl_eu_804FFCA4[0x107], 0);
+        LayoutSetTextBoxFmtValue(mpLayout, &lbl_eu_804FFCA4[0x113], &lbl_eu_804FFCA4[0x107], 0);
 
         func_80127764(field_5C,
                       mpLayout->GetRootPane()->FindPaneByName(
@@ -783,8 +783,8 @@ void CTalkWindow::Init() {
 
         // Bind the page texture to the two arrow panes.
         if (res != 0) {
-            func_80137E7C(mpLayout, &lbl_eu_804FFCA4[0x11e], res);
-            func_80137E7C(mpLayout, &lbl_eu_804FFCA4[0x12c], res);
+            PaneSetTexPaletteByName(mpLayout, &lbl_eu_804FFCA4[0x11e], res);
+            PaneSetTexPaletteByName(mpLayout, &lbl_eu_804FFCA4[0x12c], res);
         }
 
         IScnRender* render = reinterpret_cast<IScnRender*>(this);
@@ -810,7 +810,7 @@ void CTalkWindow::Init() {
 void CTalkWindow::Move() {
     CTaskGame::getInstance();
     if (CTaskGame::isFlag01Set() || (lbl_eu_80663E28 & 0x200000)) return;
-    if (func_8013BE50() == 0) return;
+    if (IsMenuState621F0() == 0) return;
     if (cf::CfGameManager::isSceneLoading() != 0) return;
     func_8012CD38(this);
 
@@ -932,7 +932,7 @@ void CTalkWindow::cbRenderBefore() {
     CTaskGame::getInstance();
     if (CTaskGame::isFlag01Set() || (lbl_eu_80663E28 & 0x200000))
         return;
-    if (func_8013BE50() == 0)
+    if (IsMenuState621F0() == 0)
         return;
     if (findObjectById((int)field_68) == 0)
         return;

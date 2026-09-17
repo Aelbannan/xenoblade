@@ -47,7 +47,7 @@ void func_801F8EB0(CfResTboxImpl* ths) {
     if (((cf::CfGameManager*)parent)->getEffectFlagState() == 0) return;
     if (lbl_eu_80663E24 & 0x100000) return;
     if (isSceneActive__Q22cf13CfGameManagerFv() != 0) return;
-    ResInfoEntry* entry = (ResInfoEntry*)func_80063080();
+    ResInfoEntry* entry = (ResInfoEntry*)CfRes_getInstPtr29C();
     int ok = 1;
     if (entry->field_0x2C->isInUse(entry) == 0) ok = 0;
     if (!ok) return;
@@ -55,11 +55,11 @@ void func_801F8EB0(CfResTboxImpl* ths) {
     mtl::MemManager::setMemInitFlag(false);
     if ((ths->field_00->field_6C & 0x20) && ths->field_00->field_98 == 0) {
         u32 handle1 = ths->func_8016CCBC(1);
-        ths->field_00->field_90 = func_80066E7C(entry, handle1);
+        ths->field_00->field_90 = CfRes_findEntryById(entry, handle1);
         ths->field_00->field_90 =
-            func_80062114((char*)ths->field_00->field_90, 0, (u32**)&outC);
+            CfRes_lookupStrTable((char*)ths->field_00->field_90, 0, (u32**)&outC);
 float anim = ((cf::CfObject*)ths->field_00)->CfObject_getObjScale();
-        u8* obj = func_80489A60((u8*)lbl_eu_80663E14, ths->field_00->field_90, 6, 1, 0, 0x70);
+        u8* obj = scnImN4BuildByIdx((u8*)lbl_eu_80663E14, ths->field_00->field_90, 6, 1, 0, 0x70);
         func_800BBADC(ths->field_00, obj);
 ((cf::CfObject*)ths->field_00)->CfObject_setObjScale(anim);
     }
@@ -70,9 +70,9 @@ float anim = ((cf::CfObject*)ths->field_00)->CfObject_getObjScale();
             u32 handle0 = ths->func_8016CCBC(0);
             func_800AA33C(*(ml::FixStr<64>*)buf64, handle0, 0, 0);
             u32 handle1 = ths->func_8016CCBC(1);
-            ths->field_00->field_94 = func_80066E7C(entry, handle1);
+            ths->field_00->field_94 = CfRes_findEntryById(entry, handle1);
             ths->field_00->field_94 =
-                func_80062114((char*)ths->field_00->field_94, 1, (u32**)&out8);
+                CfRes_lookupStrTable((char*)ths->field_00->field_94, 1, (u32**)&out8);
             ths->field_00->field_9C = (u8*)func_800584B8(
                 (u32)CfRes_getD80Flag(), (u32)ths->field_00->field_94, (const char*)buf64);
         }
@@ -83,7 +83,7 @@ float anim = ((cf::CfObject*)ths->field_00)->CfObject_getObjScale();
         ths->field_00->field_6C =
             *(volatile u32*)&ths->field_00->field_6C & ~0x20000000;
 ((cf::CfObject*)ths->field_00)->CfObject_syncModelRate(anim);
-        func_800BC3B0((cf::CfObjectMove*)ths->field_00, lbl_eu_806681D4);
+        CfObjectMove_setMoveSpeedGated((cf::CfObjectMove*)ths->field_00, lbl_eu_806681D4);
     }
     func_800BCFA0((cf::CfObjectMove*)ths->field_00);
     if (ths->field_00->field_38 != 0) {

@@ -103,7 +103,7 @@ void CMenuSave::Init() {
     func_801C3C14(&mBgTex);
 
     // --- Re-initialise the embedded CTitleAHelp ---
-    char* name = func_80136190(lbl_eu_8050F7B0, lbl_eu_8050F7B0 + 0xb,
+    char* name = BdatTouchStringCell(lbl_eu_8050F7B0, lbl_eu_8050F7B0 + 0xb,
                                 mField208 != 0 ? 0x49 : 0x48);
 
     u8 tempTitle[0x38];
@@ -225,7 +225,7 @@ void CMenuSave::Term() {
 
     func_801C3D9C(&mBgTex);
     func_801C40A0(&mTitleAHelp);
-    func_8028F4AC(reinterpret_cast<CSaveLoad*>(mSaveLoad));
+    CSaveLoad_reset(reinterpret_cast<CSaveLoad*>(mSaveLoad));
 
     lbl_eu_806649E8 = 0;
 
@@ -262,7 +262,7 @@ void CMenuSave::Move() {
 
     func_801C3D54(&mBgTex);
     func_801C3FF0(&mTitleAHelp);
-    func_8028F2CC(reinterpret_cast<CSaveLoad*>(mSaveLoad));
+    CSaveLoad_update(reinterpret_cast<CSaveLoad*>(mSaveLoad));
 }
 
 // Render the save screen through a stack DrawInfo: gate on the task/busy
@@ -272,7 +272,7 @@ void CMenuSave::cbRenderBefore() {
     CTaskGame::getInstance();
     if (CTaskGame::isFlag01Set() || (lbl_eu_80663E28 & 0x200000))
         return;
-    if (func_8013BE50() == 0) return;
+    if (IsMenuState621F0() == 0) return;
 
     GXSetZMode(GX_FALSE, GX_NEVER, GX_FALSE);
     // Raw-storage DrawInfo built/destroyed via C-ABI pre-mangled ct/dt calls
@@ -281,7 +281,7 @@ void CMenuSave::cbRenderBefore() {
     __ct__Q34nw4r3lyt8DrawInfoFv(&drawInfo[0]);
     func_80137250((nw4r::lyt::DrawInfo*)&drawInfo[0]);
     func_801C3D7C(&mBgTex, (nw4r::lyt::DrawInfo*)&drawInfo[0]);
-    func_8028F3D4(reinterpret_cast<CSaveLoad*>(mSaveLoad),
+    CSaveLoad_draw(reinterpret_cast<CSaveLoad*>(mSaveLoad),
                   (nw4r::lyt::DrawInfo*)&drawInfo[0]);
     func_801C4080(&mTitleAHelp, (nw4r::lyt::DrawInfo*)&drawInfo[0]);
     __dt__Q34nw4r3lyt8DrawInfoFv(&drawInfo[0], -1);
@@ -312,7 +312,7 @@ void stub_us_802908bc() {}
  * save-load panel has finished its intro (writes the state byte at 0x20B). */
 extern "C" void func_8028E4E0(CMenuSave* self) {
     if (isIdle__11CTitleAHelpFv(&self->mTitleAHelp) != 0 &&
-        func_8028F664(reinterpret_cast<CSaveLoad*>(self->mSaveLoad)) != 0) {
+        CSaveLoad_getIdle(reinterpret_cast<CSaveLoad*>(self->mSaveLoad)) != 0) {
         self->mState = 2;
     }
 }
@@ -325,11 +325,11 @@ extern "C" void func_8028E4E0(CMenuSave* self) {
  * subic/subfe bool idiom.
  */
 extern "C" void func_8028E530(CMenuSave* self) {
-    if (func_8028F5C4(reinterpret_cast<CSaveLoad*>(self->mSaveLoad)) == 0) {
+    if (CSaveLoad_isReady(reinterpret_cast<CSaveLoad*>(self->mSaveLoad)) == 0) {
         return;
     }
 
-    if (func_8028FEC4(reinterpret_cast<CSaveLoad*>(self->mSaveLoad)) != 0) {
+    if (CSaveLoad_getDone(reinterpret_cast<CSaveLoad*>(self->mSaveLoad)) != 0) {
         if (func_800FEDF8() != 0) {
             func_800FF914();
         }
@@ -343,28 +343,28 @@ extern "C" void func_8028E530(CMenuSave* self) {
         u32 turbo = pad->mTurboPressButtonFlags;
         u32 pressed = pad->mPadPressedFlags;
         if ((pressed >> 21) & 1) {
-            func_8028FC18(reinterpret_cast<CSaveLoad*>(self->mSaveLoad));
+            CSaveLoad_confirm(reinterpret_cast<CSaveLoad*>(self->mSaveLoad));
         } else if ((pressed >> 22) & 1) {
-            if (func_8028F66C(reinterpret_cast<CSaveLoad*>(self->mSaveLoad)) == 0) {
+            if (CSaveLoad_isBusy(reinterpret_cast<CSaveLoad*>(self->mSaveLoad)) == 0) {
                 func_801C414C(&self->mTitleAHelp);
-                func_8028F774(reinterpret_cast<CSaveLoad*>(self->mSaveLoad));
+                CSaveLoad_close(reinterpret_cast<CSaveLoad*>(self->mSaveLoad));
                 self->mState = 3;
             } else {
-                func_8028FE50(reinterpret_cast<CSaveLoad*>(self->mSaveLoad));
+                CSaveLoad_cancel(reinterpret_cast<CSaveLoad*>(self->mSaveLoad));
             }
         } else if ((pressed >> 28) & 1) {
-            func_8028FECC(reinterpret_cast<CSaveLoad*>(self->mSaveLoad));
+            CSaveLoad_openDel(reinterpret_cast<CSaveLoad*>(self->mSaveLoad));
         } else if ((turbo & 0x8004) == 0) {
-            func_8028F7D0(reinterpret_cast<CSaveLoad*>(self->mSaveLoad));
+            CSaveLoad_curUp(reinterpret_cast<CSaveLoad*>(self->mSaveLoad));
         } else if ((((turbo >> 16) & 1) | (turbo & 8)) == 0) {
-            func_8028F904(reinterpret_cast<CSaveLoad*>(self->mSaveLoad));
+            CSaveLoad_curDown(reinterpret_cast<CSaveLoad*>(self->mSaveLoad));
         } else if ((turbo & 0x2001) == 0) {
-            func_8028FA54(reinterpret_cast<CSaveLoad*>(self->mSaveLoad));
+            CSaveLoad_pageUp(reinterpret_cast<CSaveLoad*>(self->mSaveLoad));
         } else if ((turbo & 0x4002) == 0) {
-            func_8028FB20(reinterpret_cast<CSaveLoad*>(self->mSaveLoad));
+            CSaveLoad_pageDown(reinterpret_cast<CSaveLoad*>(self->mSaveLoad));
         } else if ((pressed >> 23) & 1) {
             if (self->mField209 == 0 &&
-                func_8028F66C(reinterpret_cast<CSaveLoad*>(self->mSaveLoad)) == 0) {
+                CSaveLoad_isBusy(reinterpret_cast<CSaveLoad*>(self->mSaveLoad)) == 0) {
                 if (func_800FEDF8() != 0) {
                     func_800FF914();
                 }
@@ -378,28 +378,28 @@ extern "C" void func_8028E530(CMenuSave* self) {
         u32 turbo = pad->mTurboPressButtonFlags;
         u32 pressed = pad->mPadPressedFlags;
         if ((pressed >> 4) & 1) {
-            func_8028FC18(reinterpret_cast<CSaveLoad*>(self->mSaveLoad));
+            CSaveLoad_confirm(reinterpret_cast<CSaveLoad*>(self->mSaveLoad));
         } else if ((pressed >> 5) & 1) {
-            if (func_8028F66C(reinterpret_cast<CSaveLoad*>(self->mSaveLoad)) == 0) {
+            if (CSaveLoad_isBusy(reinterpret_cast<CSaveLoad*>(self->mSaveLoad)) == 0) {
                 func_801C414C(&self->mTitleAHelp);
-                func_8028F774(reinterpret_cast<CSaveLoad*>(self->mSaveLoad));
+                CSaveLoad_close(reinterpret_cast<CSaveLoad*>(self->mSaveLoad));
                 self->mState = 3;
             } else {
-                func_8028FE50(reinterpret_cast<CSaveLoad*>(self->mSaveLoad));
+                CSaveLoad_cancel(reinterpret_cast<CSaveLoad*>(self->mSaveLoad));
             }
         } else if ((pressed >> 7) & 1) {
-            func_8028FECC(reinterpret_cast<CSaveLoad*>(self->mSaveLoad));
+            CSaveLoad_openDel(reinterpret_cast<CSaveLoad*>(self->mSaveLoad));
         } else if ((turbo & 0x8004) == 0) {
-            func_8028F7D0(reinterpret_cast<CSaveLoad*>(self->mSaveLoad));
+            CSaveLoad_curUp(reinterpret_cast<CSaveLoad*>(self->mSaveLoad));
         } else if ((((turbo >> 16) & 1) | (turbo & 8)) == 0) {
-            func_8028F904(reinterpret_cast<CSaveLoad*>(self->mSaveLoad));
+            CSaveLoad_curDown(reinterpret_cast<CSaveLoad*>(self->mSaveLoad));
         } else if ((turbo & 0x2001) == 0) {
-            func_8028FA54(reinterpret_cast<CSaveLoad*>(self->mSaveLoad));
+            CSaveLoad_pageUp(reinterpret_cast<CSaveLoad*>(self->mSaveLoad));
         } else if ((turbo & 0x4002) == 0) {
-            func_8028FB20(reinterpret_cast<CSaveLoad*>(self->mSaveLoad));
+            CSaveLoad_pageDown(reinterpret_cast<CSaveLoad*>(self->mSaveLoad));
         } else if ((pressed >> 10) & 1) {
             if (self->mField209 == 0 &&
-                func_8028F66C(reinterpret_cast<CSaveLoad*>(self->mSaveLoad)) == 0) {
+                CSaveLoad_isBusy(reinterpret_cast<CSaveLoad*>(self->mSaveLoad)) == 0) {
                 if (func_800FEDF8() != 0) {
                     func_800FF914();
                 }
@@ -417,7 +417,7 @@ extern "C" void func_8028E530(CMenuSave* self) {
  * 0x54 instead of the state byte. */
 extern "C" void func_8028E768(CMenuSave* self) {
     if (isIdle__11CTitleAHelpFv(&self->mTitleAHelp) != 0 &&
-        func_8028F664(reinterpret_cast<CSaveLoad*>(self->mSaveLoad)) != 0) {
+        CSaveLoad_getIdle(reinterpret_cast<CSaveLoad*>(self->mSaveLoad)) != 0) {
         self->mField54 = 1;
     }
 }
@@ -454,11 +454,11 @@ extern "C" unsigned long func_8028E440(void) { return lbl_eu_806649E8 != 0; }
 extern "C" void func_8028E450(CMenuSave* self) {
     if (func_801C3E34(&self->mBgTex) != 0 &&
         func_801C4114(&self->mTitleAHelp) != 0 &&
-        func_8028F5C4(reinterpret_cast<CSaveLoad*>(self->mSaveLoad)) != 0) {
+        CSaveLoad_isReady(reinterpret_cast<CSaveLoad*>(self->mSaveLoad)) != 0) {
         u8 slot = func_8028FFD4(reinterpret_cast<CSaveLoad*>(self->mSaveLoad));
         func_801C41E8(&self->mTitleAHelp, slot);
         func_801C412C(&self->mTitleAHelp);
-        func_8028F6DC(reinterpret_cast<CSaveLoad*>(self->mSaveLoad));
+        CSaveLoad_open(reinterpret_cast<CSaveLoad*>(self->mSaveLoad));
         self->mState = 1;
         playUISound__FUl(0x6d);
     }

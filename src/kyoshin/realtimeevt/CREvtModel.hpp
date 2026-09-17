@@ -61,7 +61,7 @@ public:
     /* 0x34 */ int mField34;            // animation index counter
 };
 
-// Pose block returned by func_8048315C and filled by func_801728F8:
+// Pose block returned by simGetLeafActData and filled by func_801728F8:
 // translation at 0x00, rotation at 0x0C.
 struct Vec3 {
     float a[3];

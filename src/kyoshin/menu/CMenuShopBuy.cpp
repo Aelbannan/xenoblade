@@ -98,7 +98,7 @@ void CMenuShopBuy::Init() {
     // fields into the member, then destroy the temp.
     u8 tmpTitleRaw[0x38];
     __ct__CTitleAHelp(reinterpret_cast<CTitleAHelp*>(tmpTitleRaw),
-                      func_80136190(lbl_eu_80503B20, lbl_eu_80503B20 + 9, 1), 0);
+                      BdatTouchStringCell(lbl_eu_80503B20, lbl_eu_80503B20 + 9, 1), 0);
     __ct__UnkClass_8011C974(&mTitleAHelp.unk4,
                             &reinterpret_cast<CTitleAHelp*>(tmpTitleRaw)->unk4);
     mTitleAHelp.mFileHandle = reinterpret_cast<CTitleAHelp*>(tmpTitleRaw)->mFileHandle;
@@ -336,7 +336,7 @@ void CMenuShopBuy::cbRenderBefore() {
     if (isFlag01Set__9CTaskGameFv(getInstance__9CTaskGameFv()) ||
         (lbl_eu_80663E28 & 0x200000))
         return;
-    if (func_8013BE50() == 0) return;
+    if (IsMenuState621F0() == 0) return;
     GXSetZMode(GX_FALSE, GX_NEVER, GX_FALSE);
     // Raw-storage DrawInfo built/destroyed via the C-ABI ct/dt calls so the
     // scope-exit destructor is not virtual-dispatched (same scheme as

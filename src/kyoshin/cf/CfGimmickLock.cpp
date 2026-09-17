@@ -16,8 +16,8 @@ using namespace cf;
 extern "C" void* __ct__cf_CfGimmickLock(cf::CfGimmickLock* self, u16 row) {
     __ct__cf_CfGimmick(self);
     *(void**)self = (void*)lbl_eu_80535900;
-    func_804B0924(&self->subA);
-    func_804B0924(&self->subB);
+    ColiNodeInit(&self->subA);
+    ColiNodeInit(&self->subB);
     self->typeId = 2;
 
     void* bdat = func_8003AA34();
@@ -200,7 +200,7 @@ extern "C" void func_8020C640(cf::CfGimmickLock* self) {
                     CfGimmickLockGetTargetFn getTarget =
                         *(CfGimmickLockGetTargetFn*)(*(u32*)player + 0xac);
                     void* target = getTarget(player);
-                    if (func_804B192C(&self->subA, target, 1, 0, lbl_eu_806683B4 + f31) != 0) {
+                    if (ColiCheckMoveRadius(&self->subA, target, 1, 0, lbl_eu_806683B4 + f31) != 0) {
                         if ((self->flags & 0x8) == 0) {
                             func_8020A484(self->resourceId);
                             self->field_1F8 = 0x3c;
@@ -284,9 +284,9 @@ void func_8020CB28(cf::CfGimmickLock* self) {
         vec[1] = (self->extent1 - self->extent2) * lbl_eu_806683B8;
         vec[0] = self->extent0;
         vec[2] = self->extent3;
-        func_804B0B0C(&self->subA, vec);
+        ColiSetMoveVecFlagged(&self->subA, vec);
     } else if (self->stateIndex - 1 <= 1) {
-        func_804B0AD4(&self->subA, flag, self->extent0, self->extent1 - self->extent2);
+        ColiSetMoveVec2(&self->subA, flag, self->extent0, self->extent1 - self->extent2);
     }
 
     if (self->stateIndex - 3 <= 1) {
@@ -294,13 +294,13 @@ void func_8020CB28(cf::CfGimmickLock* self) {
         vec[1] = ((self->position.y + self->extent1) + (self->position.y + self->extent2)) * lbl_eu_806683B8;
         vec[0] = self->position.x;
         vec[2] = self->position.z;
-        func_804B0C0C(&self->subA, vec, &self->rotation);
+        ColiSetAxisBlockRotInverse(&self->subA, vec, &self->rotation);
     } else if (self->stateIndex - 1 <= 1) {
         f32 vec[3];
         vec[0] = self->position.x;
         vec[1] = self->position.y + self->extent2;
         vec[2] = self->position.z;
-        func_804B0B54(&self->subA, vec);
+        ColiSetAxisBlockInverse(&self->subA, vec);
     }
 
     self->subA.timer = 0x2710;
@@ -326,13 +326,13 @@ extern "C" void func_8020CC9C(cf::CfGimmickLock* self) {
             vec[0] = self->position.x;
             vec[2] = self->position.z;
             vec[1] = t * lbl_eu_806683B8;
-            func_804B0C0C(&self->subA, vec, &self->rotation);
+            ColiSetAxisBlockRotInverse(&self->subA, vec, &self->rotation);
         } else if (self->stateIndex - 1 <= 1) {
             f32 vec[3];
             vec[0] = self->position.x;
             vec[1] = self->position.y + self->extent2;
             vec[2] = self->position.z;
-            func_804B0B54(&self->subA, vec);
+            ColiSetAxisBlockInverse(&self->subA, vec);
         }
     }
 
@@ -385,22 +385,22 @@ extern "C" void func_8020CC9C(cf::CfGimmickLock* self) {
         vec[1] = (self->extent1 - self->extent2) * lbl_eu_806683B8;
         vec[2] = self->extent3;
         VEC3Scale((nw4r::math::VEC3*)vec, (const nw4r::math::VEC3*)vec, self->field_1F4);
-        func_804B0B0C(&self->subB, vec);
+        ColiSetMoveVecFlagged(&self->subB, vec);
 
         f32 vec2[3];
         vec2[0] = self->position.x;
         vec2[1] = ((self->position.y + self->extent1) + (self->position.y + self->extent2)) * lbl_eu_806683B8;
         vec2[2] = self->position.z;
-        func_804B0C0C(&self->subB, vec2, &self->rotation);
+        ColiSetAxisBlockRotInverse(&self->subB, vec2, &self->rotation);
     } else if (self->stateIndex - 1 <= 1) {
-        func_804B0AD4(&self->subB, flag, self->extent0 * self->field_1F4,
+        ColiSetMoveVec2(&self->subB, flag, self->extent0 * self->field_1F4,
                       self->field_1F4 * (self->extent1 - self->extent2));
 
         f32 vec[3];
         vec[0] = self->position.x;
         vec[1] = self->position.y + self->extent2;
         vec[2] = self->position.z;
-        func_804B0B54(&self->subB, vec);
+        ColiSetAxisBlockInverse(&self->subB, vec);
     }
 
     self->subB.timer = 1;
@@ -443,7 +443,7 @@ extern "C" void func_8020CFD0(cf::CfGimmickLock* self) {
                 ((cf::CfGimmickLockObj*)self->field_78)->setScale(self->extent0 / lbl_eu_806683C4);
             }
             // Touch the target of every fight-list entry.
-            CfGimmickList* list = func_800B6BC8();
+            CfGimmickList* list = getReslistB48();
             CfGimmickListNode* node = list->head->next;
             while (node != list->head) {
                 CfGimmickLockObj* entry = (CfGimmickLockObj*)node->object;
@@ -495,7 +495,7 @@ extern "C" void func_8020D204(cf::CfGimmickLock* self, int flag) {
         }
     }
 
-    list = func_800B6BC8();
+    list = getReslistB48();
     node = list->head->next;
     while (node != list->head) {
         base = (CfGimmickLockPlayer*)node->object;

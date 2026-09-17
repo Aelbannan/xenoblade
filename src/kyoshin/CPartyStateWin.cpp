@@ -409,7 +409,7 @@ void func_801FA254(CPartyStateWin* self) {
     func_801C40A0(reinterpret_cast<CTitleAHelp*>(&self->_pad18));
     func_801FC0C4(reinterpret_cast<CModelDisp*>(&self->_pad50));
     func_801FD0F4(reinterpret_cast<CPartyState*>(&self->_pad3038));
-    func_801FF874(&self->mModelDispEquip);
+    ModelDispEquip_ResetDisplay(&self->mModelDispEquip);
     func_8020228C(reinterpret_cast<CEquipChange*>(&self->_pad4150));
     func_8022B7F4(reinterpret_cast<CSysWin*>(&self->_pad6BA8));
     CScn* scene2 = self->mScene;
@@ -471,7 +471,7 @@ extern "C" void func_801C473C(void* self, u32 a);
 // When the equip model display (+0x3090) is active, mark the +0x6BE4 state
 // byte 7 and run the +0x18 sub-object init.
 extern "C" __declspec(noinline) void func_801FBC30(CPartyStateWin* self) {
-    if (func_801FF95C(&self->mModelDispEquip) != 0) {
+    if (ModelDispEquip_GetState20(&self->mModelDispEquip) != 0) {
         *(u8*)((u8*)self + 0x6BE4) = 7;
         func_801C473C((u8*)self + 0x18, 1);
     }
@@ -509,7 +509,7 @@ extern "C" void func_801FA338(CPartyStateWin* self) {
         break;
     case 0x10: func_801FB8B0(self); break;
     case 0x11:
-        if (func_801FF95C(&self->mModelDispEquip) != 0) {
+        if (ModelDispEquip_GetState20(&self->mModelDispEquip) != 0) {
             self->field_6BE4 = 0x12;
         }
         break;
@@ -520,7 +520,7 @@ extern "C" void func_801FA338(CPartyStateWin* self) {
     func_801C3FF0(reinterpret_cast<CTitleAHelp*>(&self->_pad18));
     func_801FC060(reinterpret_cast<CModelDisp*>(&self->_pad50));
     func_801FCFF4(reinterpret_cast<CPartyState*>(&self->_pad3038));
-    func_801FF82C(&self->mModelDispEquip);
+    ModelDispEquip_StepStateDispatch(&self->mModelDispEquip);
     if (self->field_6BE4 != 0x12) {
         func_80202110(reinterpret_cast<CEquipChange*>(&self->_pad4150));
     }
@@ -702,7 +702,7 @@ extern "C" __declspec(noinline) void func_801FA92C(CPartyStateWin* self) {
         CSysWin_isReady(reinterpret_cast<CSysWin*>(&self->_pad6BA8))) {
         func_801FC0C4(reinterpret_cast<CModelDisp*>(&self->_pad50));
         char* name =
-            func_80136190(&lbl_eu_80507C94[0x2d], &lbl_eu_80507C94[0x28], 0x6b);
+            BdatTouchStringCell(&lbl_eu_80507C94[0x2d], &lbl_eu_80507C94[0x28], 0x6b);
         func_801C41C0(reinterpret_cast<CTitleAHelp*>(&self->_pad18), name);
         func_801C41E8(reinterpret_cast<CTitleAHelp*>(&self->_pad18), 0x15);
         func_8020147C(&self->mModelDispEquip,
@@ -710,7 +710,7 @@ extern "C" __declspec(noinline) void func_801FA92C(CPartyStateWin* self) {
         // The slot value goes through a local so the mask lands after the
         // receiver setup (retail: mr r0,r3 / addi r3 / clrlwi r4,r0,24 -
         // same shape as func_801FB66C).
-        u32 equipSlot = func_801FF9A0(&self->mModelDispEquip);
+        u32 equipSlot = ModelDispEquip_GetEquipSlot(&self->mModelDispEquip);
         func_80202EB4(reinterpret_cast<CEquipChange*>(&self->_pad4150),
                       (u8)equipSlot);
         self->field_6BE4 = 0x5;
@@ -753,14 +753,14 @@ extern "C" __declspec(noinline) void func_801FAA60(CPartyStateWin* self) {
             if (func_802023C8(reinterpret_cast<CEquipChange*>(&self->_pad4150)) != 0 &&
                 (u8)func_80203138(reinterpret_cast<CEquipChange*>(&self->_pad4150)) == 3) {
                 func_8022B9B4(reinterpret_cast<CSysWin*>(&self->_pad6BA8),
-                              func_80136190(&lbl_eu_80507C94[0x2d], &lbl_eu_80507C94[0x28], 0x85),
+                              BdatTouchStringCell(&lbl_eu_80507C94[0x2d], &lbl_eu_80507C94[0x28], 0x85),
                               0);
                 func_8022BFC8(reinterpret_cast<CSysWin*>(&self->_pad6BA8), 1);
                 func_8022B8B8(reinterpret_cast<CSysWin*>(&self->_pad6BA8));
                 self->field_6BE4 = 0xD;
                 goto tail;
             }
-            func_801FF98C(&self->mModelDispEquip);
+            ModelDispEquip_StartFadeIn(&self->mModelDispEquip);
             self->field_6BE4 = 0xB;
             playUISound(0xA);
             goto tail;
@@ -772,14 +772,14 @@ extern "C" __declspec(noinline) void func_801FAA60(CPartyStateWin* self) {
             if (func_802023C8(reinterpret_cast<CEquipChange*>(&self->_pad4150)) != 0 &&
                 (u8)func_80203138(reinterpret_cast<CEquipChange*>(&self->_pad4150)) == 3) {
                 func_8022B9B4(reinterpret_cast<CSysWin*>(&self->_pad6BA8),
-                              func_80136190(&lbl_eu_80507C94[0x2d], &lbl_eu_80507C94[0x28], 0x85),
+                              BdatTouchStringCell(&lbl_eu_80507C94[0x2d], &lbl_eu_80507C94[0x28], 0x85),
                               0);
                 func_8022BFC8(reinterpret_cast<CSysWin*>(&self->_pad6BA8), 1);
                 func_8022B8B8(reinterpret_cast<CSysWin*>(&self->_pad6BA8));
                 self->field_6BE4 = 0xD;
                 goto tail;
             }
-            func_801FF98C(&self->mModelDispEquip);
+            ModelDispEquip_StartFadeIn(&self->mModelDispEquip);
             self->field_6BE4 = 0xA;
             playUISound(0xA);
             goto tail;
@@ -787,14 +787,14 @@ extern "C" __declspec(noinline) void func_801FAA60(CPartyStateWin* self) {
         if ((cfPad->mPad.mPressedButtonFlags & 0x00200000) != 0) {
             func_80202CCC(reinterpret_cast<CEquipChange*>(&self->_pad4150));
             if (func_8020392C(reinterpret_cast<CEquipChange*>(&self->_pad4150)) != 0) {
-                func_801FF98C(&self->mModelDispEquip);
+                ModelDispEquip_StartFadeIn(&self->mModelDispEquip);
                 self->field_6BE4 = 0xC;
                 goto tail;
             }
             if ((u8)func_80203994(reinterpret_cast<CEquipChange*>(&self->_pad4150)) == 2) {
                 playUISound(0x5);
                 func_8022B9B4(reinterpret_cast<CSysWin*>(&self->_pad6BA8),
-                              func_80136190(&lbl_eu_80507C94[0x2d], &lbl_eu_80507C94[0x28], 0x84),
+                              BdatTouchStringCell(&lbl_eu_80507C94[0x2d], &lbl_eu_80507C94[0x28], 0x84),
                               0);
                 func_8022BFC8(reinterpret_cast<CSysWin*>(&self->_pad6BA8), 1);
                 func_8022B8B8(reinterpret_cast<CSysWin*>(&self->_pad6BA8));
@@ -805,7 +805,7 @@ extern "C" __declspec(noinline) void func_801FAA60(CPartyStateWin* self) {
                 u16 v = func_80203A98(reinterpret_cast<CEquipChange*>(&self->_pad4150), 1);
                 if (v == 0x296 || v == 0x2A0) {
                     func_8022B9B4(reinterpret_cast<CSysWin*>(&self->_pad6BA8),
-                                  func_80136190(&lbl_eu_80507C94[0x2d], &lbl_eu_80507C94[0x28], 0x8A),
+                                  BdatTouchStringCell(&lbl_eu_80507C94[0x2d], &lbl_eu_80507C94[0x28], 0x8A),
                                   0);
                     func_8022BFC8(reinterpret_cast<CSysWin*>(&self->_pad6BA8), 1);
                     func_8022B8B8(reinterpret_cast<CSysWin*>(&self->_pad6BA8));
@@ -825,7 +825,7 @@ extern "C" __declspec(noinline) void func_801FAA60(CPartyStateWin* self) {
             }
             func_801C4198(reinterpret_cast<CTitleAHelp*>(&self->_pad18));
             func_80202578(reinterpret_cast<CEquipChange*>(&self->_pad4150));
-            func_801FF98C(&self->mModelDispEquip);
+            ModelDispEquip_StartFadeIn(&self->mModelDispEquip);
             self->field_6BE4 = 0x8;
             goto tail;
         }
@@ -856,13 +856,13 @@ extern "C" __declspec(noinline) void func_801FAA60(CPartyStateWin* self) {
             if (func_802023D0(reinterpret_cast<CEquipChange*>(&self->_pad4150)) == 0) {
                 u8 v = (u8)func_80203210(reinterpret_cast<CEquipChange*>(&self->_pad4150));
                 if (v == 1) {
-                    func_801FF98C(&self->mModelDispEquip);
+                    ModelDispEquip_StartFadeIn(&self->mModelDispEquip);
                     self->field_6BE4 = 0xC;
                     goto tail;
                 }
                 if (v == 2) {
                     func_8022B9B4(reinterpret_cast<CSysWin*>(&self->_pad6BA8),
-                                  func_80136190(&lbl_eu_80507C94[0x2d], &lbl_eu_80507C94[0x28], 0x84),
+                                  BdatTouchStringCell(&lbl_eu_80507C94[0x2d], &lbl_eu_80507C94[0x28], 0x84),
                                   0);
                     func_8022BFC8(reinterpret_cast<CSysWin*>(&self->_pad6BA8), 1);
                     func_8022B8B8(reinterpret_cast<CSysWin*>(&self->_pad6BA8));
@@ -874,7 +874,7 @@ extern "C" __declspec(noinline) void func_801FAA60(CPartyStateWin* self) {
                     u16 w = func_80203A98(reinterpret_cast<CEquipChange*>(&self->_pad4150), 0);
                     if (w == 0x296 || w == 0x2A0) {
                         func_8022B9B4(reinterpret_cast<CSysWin*>(&self->_pad6BA8),
-                                      func_80136190(&lbl_eu_80507C94[0x2d], &lbl_eu_80507C94[0x28], 0x8A),
+                                      BdatTouchStringCell(&lbl_eu_80507C94[0x2d], &lbl_eu_80507C94[0x28], 0x8A),
                                       0);
                         func_8022BFC8(reinterpret_cast<CSysWin*>(&self->_pad6BA8), 1);
                         func_8022B8B8(reinterpret_cast<CSysWin*>(&self->_pad6BA8));
@@ -895,10 +895,10 @@ extern "C" __declspec(noinline) void func_801FAA60(CPartyStateWin* self) {
         }
         if ((cfPad->mPad.mPressedButtonFlags & 0x00000400) != 0) {
             if (func_802023D0(reinterpret_cast<CEquipChange*>(&self->_pad4150)) == 0 &&
-                func_801FF964(&self->mModelDispEquip) != 0 &&
+                ModelDispEquip_GetState21(&self->mModelDispEquip) != 0 &&
                 func_802023C8(reinterpret_cast<CEquipChange*>(&self->_pad4150)) == 0) {
                 self->field_6BE4 = 0x10;
-                func_801FF98C(&self->mModelDispEquip);
+                ModelDispEquip_StartFadeIn(&self->mModelDispEquip);
                 playUISound(0x2);
                 goto tail;
             }
@@ -924,14 +924,14 @@ extern "C" __declspec(noinline) void func_801FAA60(CPartyStateWin* self) {
                 if (func_802023C8(reinterpret_cast<CEquipChange*>(&self->_pad4150)) != 0 &&
                     (u8)func_80203138(reinterpret_cast<CEquipChange*>(&self->_pad4150)) == 3) {
                     func_8022B9B4(reinterpret_cast<CSysWin*>(&self->_pad6BA8),
-                                  func_80136190(&lbl_eu_80507C94[0x2d], &lbl_eu_80507C94[0x28], 0x85),
+                                  BdatTouchStringCell(&lbl_eu_80507C94[0x2d], &lbl_eu_80507C94[0x28], 0x85),
                                   0);
                     func_8022BFC8(reinterpret_cast<CSysWin*>(&self->_pad6BA8), 1);
                     func_8022B8B8(reinterpret_cast<CSysWin*>(&self->_pad6BA8));
                     self->field_6BE4 = 0xD;
                     goto tail;
                 }
-                func_801FF98C(&self->mModelDispEquip);
+                ModelDispEquip_StartFadeIn(&self->mModelDispEquip);
                 self->field_6BE4 = 0xB;
                 playUISound(0xA);
                 goto tail;
@@ -940,14 +940,14 @@ extern "C" __declspec(noinline) void func_801FAA60(CPartyStateWin* self) {
                 if (func_802023C8(reinterpret_cast<CEquipChange*>(&self->_pad4150)) != 0 &&
                     (u8)func_80203138(reinterpret_cast<CEquipChange*>(&self->_pad4150)) == 3) {
                     func_8022B9B4(reinterpret_cast<CSysWin*>(&self->_pad6BA8),
-                                  func_80136190(&lbl_eu_80507C94[0x2d], &lbl_eu_80507C94[0x28], 0x85),
+                                  BdatTouchStringCell(&lbl_eu_80507C94[0x2d], &lbl_eu_80507C94[0x28], 0x85),
                                   0);
                     func_8022BFC8(reinterpret_cast<CSysWin*>(&self->_pad6BA8), 1);
                     func_8022B8B8(reinterpret_cast<CSysWin*>(&self->_pad6BA8));
                     self->field_6BE4 = 0xD;
                     goto tail;
                 }
-                func_801FF98C(&self->mModelDispEquip);
+                ModelDispEquip_StartFadeIn(&self->mModelDispEquip);
                 self->field_6BE4 = 0xA;
                 playUISound(0xA);
                 goto tail;
@@ -957,14 +957,14 @@ extern "C" __declspec(noinline) void func_801FAA60(CPartyStateWin* self) {
         if ((cfPad->mPad.mPressedButtonFlags & 0x10) != 0) {
             func_80202CCC(reinterpret_cast<CEquipChange*>(&self->_pad4150));
             if (func_8020392C(reinterpret_cast<CEquipChange*>(&self->_pad4150)) != 0) {
-                func_801FF98C(&self->mModelDispEquip);
+                ModelDispEquip_StartFadeIn(&self->mModelDispEquip);
                 self->field_6BE4 = 0xC;
                 goto tail;
             }
             if ((u8)func_80203994(reinterpret_cast<CEquipChange*>(&self->_pad4150)) == 2) {
                 playUISound(0x5);
                 func_8022B9B4(reinterpret_cast<CSysWin*>(&self->_pad6BA8),
-                              func_80136190(&lbl_eu_80507C94[0x2d], &lbl_eu_80507C94[0x28], 0x84),
+                              BdatTouchStringCell(&lbl_eu_80507C94[0x2d], &lbl_eu_80507C94[0x28], 0x84),
                               0);
                 func_8022BFC8(reinterpret_cast<CSysWin*>(&self->_pad6BA8), 1);
                 func_8022B8B8(reinterpret_cast<CSysWin*>(&self->_pad6BA8));
@@ -975,7 +975,7 @@ extern "C" __declspec(noinline) void func_801FAA60(CPartyStateWin* self) {
                 u16 v = func_80203A98(reinterpret_cast<CEquipChange*>(&self->_pad4150), 1);
                 if (v == 0x296 || v == 0x2A0) {
                     func_8022B9B4(reinterpret_cast<CSysWin*>(&self->_pad6BA8),
-                                  func_80136190(&lbl_eu_80507C94[0x2d], &lbl_eu_80507C94[0x28], 0x8A),
+                                  BdatTouchStringCell(&lbl_eu_80507C94[0x2d], &lbl_eu_80507C94[0x28], 0x8A),
                                   0);
                     func_8022BFC8(reinterpret_cast<CSysWin*>(&self->_pad6BA8), 1);
                     func_8022B8B8(reinterpret_cast<CSysWin*>(&self->_pad6BA8));
@@ -995,7 +995,7 @@ extern "C" __declspec(noinline) void func_801FAA60(CPartyStateWin* self) {
             }
             func_801C4198(reinterpret_cast<CTitleAHelp*>(&self->_pad18));
             func_80202578(reinterpret_cast<CEquipChange*>(&self->_pad4150));
-            func_801FF98C(&self->mModelDispEquip);
+            ModelDispEquip_StartFadeIn(&self->mModelDispEquip);
             self->field_6BE4 = 0x8;
             goto tail;
         }
@@ -1026,13 +1026,13 @@ extern "C" __declspec(noinline) void func_801FAA60(CPartyStateWin* self) {
             if (func_802023D0(reinterpret_cast<CEquipChange*>(&self->_pad4150)) == 0) {
                 u8 v = (u8)func_80203210(reinterpret_cast<CEquipChange*>(&self->_pad4150));
                 if (v == 1) {
-                    func_801FF98C(&self->mModelDispEquip);
+                    ModelDispEquip_StartFadeIn(&self->mModelDispEquip);
                     self->field_6BE4 = 0xC;
                     goto tail;
                 }
                 if (v == 2) {
                     func_8022B9B4(reinterpret_cast<CSysWin*>(&self->_pad6BA8),
-                                  func_80136190(&lbl_eu_80507C94[0x2d], &lbl_eu_80507C94[0x28], 0x84),
+                                  BdatTouchStringCell(&lbl_eu_80507C94[0x2d], &lbl_eu_80507C94[0x28], 0x84),
                                   0);
                     func_8022BFC8(reinterpret_cast<CSysWin*>(&self->_pad6BA8), 1);
                     func_8022B8B8(reinterpret_cast<CSysWin*>(&self->_pad6BA8));
@@ -1044,7 +1044,7 @@ extern "C" __declspec(noinline) void func_801FAA60(CPartyStateWin* self) {
                     u16 w = func_80203A98(reinterpret_cast<CEquipChange*>(&self->_pad4150), 0);
                     if (w == 0x296 || w == 0x2A0) {
                         func_8022B9B4(reinterpret_cast<CSysWin*>(&self->_pad6BA8),
-                                      func_80136190(&lbl_eu_80507C94[0x2d], &lbl_eu_80507C94[0x28], 0x8A),
+                                      BdatTouchStringCell(&lbl_eu_80507C94[0x2d], &lbl_eu_80507C94[0x28], 0x8A),
                                       0);
                         func_8022BFC8(reinterpret_cast<CSysWin*>(&self->_pad6BA8), 1);
                         func_8022B8B8(reinterpret_cast<CSysWin*>(&self->_pad6BA8));
@@ -1065,10 +1065,10 @@ extern "C" __declspec(noinline) void func_801FAA60(CPartyStateWin* self) {
         }
         if ((cfPad->mPad.mPressedButtonFlags & 0x40) != 0) {
             if (func_802023D0(reinterpret_cast<CEquipChange*>(&self->_pad4150)) == 0 &&
-                func_801FF964(&self->mModelDispEquip) != 0 &&
+                ModelDispEquip_GetState21(&self->mModelDispEquip) != 0 &&
                 func_802023C8(reinterpret_cast<CEquipChange*>(&self->_pad4150)) == 0) {
                 self->field_6BE4 = 0x10;
-                func_801FF98C(&self->mModelDispEquip);
+                ModelDispEquip_StartFadeIn(&self->mModelDispEquip);
                 playUISound(0x2);
                 goto tail;
             }
@@ -1095,10 +1095,10 @@ tail:
 // pool names, refresh all sub-objects) and arm state 0x9.
 extern "C" __declspec(noinline) void func_801FB560(CPartyStateWin* self) {
     if (isIdle__11CTitleAHelpFv(reinterpret_cast<CTitleAHelp*>(&self->_pad18)) &&
-        func_801FF95C(&self->mModelDispEquip) &&
+        ModelDispEquip_GetState20(&self->mModelDispEquip) &&
         func_802023C0(reinterpret_cast<CEquipChange*>(&self->_pad4150))) {
-        func_801FF874(&self->mModelDispEquip);
-        char* name = func_80136190(&lbl_eu_80507C94[0x1e], &lbl_eu_80507C94[0x28], 1);
+        ModelDispEquip_ResetDisplay(&self->mModelDispEquip);
+        char* name = BdatTouchStringCell(&lbl_eu_80507C94[0x1e], &lbl_eu_80507C94[0x28], 1);
         func_801C41C0(reinterpret_cast<CTitleAHelp*>(&self->_pad18), name);
         func_801FBC7C(self);
         func_801C416C(reinterpret_cast<CTitleAHelp*>(&self->_pad18));
@@ -1121,9 +1121,9 @@ extern "C" __declspec(noinline) void func_801FB60C(CPartyStateWin* self) {
 // Equip display enter: once state20 clears, restart the display, hand the
 // current equip-slot category to CEquipChange and arm the window (state 0x7).
 extern "C" __declspec(noinline) void func_801FB66C(CPartyStateWin* self) {
-    if (func_801FF95C(&self->mModelDispEquip)) {
+    if (ModelDispEquip_GetState20(&self->mModelDispEquip)) {
         func_802014C0(&self->mModelDispEquip);
-        u32 equipSlot = func_801FF9A0(&self->mModelDispEquip);
+        u32 equipSlot = ModelDispEquip_GetEquipSlot(&self->mModelDispEquip);
         func_80202EB4(reinterpret_cast<CEquipChange*>(&self->_pad4150),
                       (u8)equipSlot);
         self->field_6BE4 = 0x7;
@@ -1135,9 +1135,9 @@ extern "C" __declspec(noinline) void func_801FB66C(CPartyStateWin* self) {
 // display, hand the current equip-slot category to CEquipChange and arm the
 // window (state 0x7).
 extern "C" __declspec(noinline) void func_801FB6CC(CPartyStateWin* self) {
-    if (func_801FF95C(&self->mModelDispEquip)) {
+    if (ModelDispEquip_GetState20(&self->mModelDispEquip)) {
         func_8020151C(&self->mModelDispEquip);
-        u32 equipSlot = func_801FF9A0(&self->mModelDispEquip);
+        u32 equipSlot = ModelDispEquip_GetEquipSlot(&self->mModelDispEquip);
         func_80202EB4(reinterpret_cast<CEquipChange*>(&self->_pad4150),
                       (u8)equipSlot);
         self->field_6BE4 = 0x7;
@@ -1153,13 +1153,13 @@ extern "C" __declspec(noinline) void func_801FB6CC(CPartyStateWin* self) {
 // plain -O4,p emits three stw's - same fix as func_801F9894).
 #pragma optimize_for_size on
 extern "C" __declspec(noinline) void func_801FB72C(CPartyStateWin* self) {
-    if (func_801FF95C(&self->mModelDispEquip)) {
+    if (ModelDispEquip_GetState20(&self->mModelDispEquip)) {
         func_8020147C(&self->mModelDispEquip, -1);
         // The slot value goes through a local so the mask lands after the
         // receiver setup (retail: mr r0,r3 / addi r3 / clrlwi r4,r0,24).
-        u32 v = func_801FF9A0(&self->mModelDispEquip);
+        u32 v = ModelDispEquip_GetEquipSlot(&self->mModelDispEquip);
         func_80202EB4(reinterpret_cast<CEquipChange*>(&self->_pad4150), (u8)v);
-        if ((u8)func_801FF9A0(&self->mModelDispEquip) < 3) {
+        if ((u8)ModelDispEquip_GetEquipSlot(&self->mModelDispEquip) < 3) {
             CPartyStateWinHolder holder;
             u32 names[3];
             // Post-increment loads fold the base materialization into the
@@ -1169,13 +1169,13 @@ extern "C" __declspec(noinline) void func_801FB72C(CPartyStateWin* self) {
             names[0] = *src++;
             names[1] = *src++;
             names[2] = *src++;
-            func_80043D90(&holder);
-            func_800F4A98(func_80043F18(&holder),
-                          names[(u8)func_801FF9A0(&self->mModelDispEquip)], 0);
-            if (reinterpret_cast<CPartyStateWinList*>(func_80043F18(&holder))
+            CTaskGame_enumListCtor(&holder);
+            func_800F4A98(CTaskGame_enumListGet(&holder),
+                          names[(u8)ModelDispEquip_GetEquipSlot(&self->mModelDispEquip)], 0);
+            if (reinterpret_cast<CPartyStateWinList*>(CTaskGame_enumListGet(&holder))
                     ->field_0x620 >= 1) {
                 CPartyStateWinListSlot* slot = reinterpret_cast<CPartyStateWinListSlot*>(
-                    func_800F6EC0(func_80043F18(&holder), 0));
+                    func_800F6EC0(CTaskGame_enumListGet(&holder), 0));
                 if (slot->field_0x4 != 0) {
                     func_800BFDE0(
                         getCfObjectPc__FPQ22cf12CfObjectMove(slot->field_0x4),
@@ -1215,9 +1215,9 @@ extern "C" __declspec(noinline) void func_801FB834(CPartyStateWin* self) {
 // Equip display exit: once state20 clears, arm the window (state 0x11),
 // restart the display and repaint it.
 extern "C" __declspec(noinline) void func_801FB8B0(CPartyStateWin* self) {
-    if (func_801FF95C(&self->mModelDispEquip)) {
+    if (ModelDispEquip_GetState20(&self->mModelDispEquip)) {
         self->field_6BE4 = 0x11;
-        func_801FF96C(&self->mModelDispEquip);
+        ModelDispEquip_StartFadeOut(&self->mModelDispEquip);
         func_80201900(&self->mModelDispEquip);
     }
 }
@@ -1320,7 +1320,7 @@ helpBlock:
     return;
 armBlock:
     self->field_6BE4 = 0x13;
-    func_801FF98C(&self->mModelDispEquip);
+    ModelDispEquip_StartFadeIn(&self->mModelDispEquip);
     playUISound(0x2);
 }
 
@@ -1328,9 +1328,9 @@ armBlock:
 // Menu-open for the equip window: once state20 clears, arm the window
 // (state 0x14), restart the display and repaint it.
 extern "C" __declspec(noinline) void func_801FBBE0(CPartyStateWin* self) {
-    if (func_801FF95C(&self->mModelDispEquip)) {
+    if (ModelDispEquip_GetState20(&self->mModelDispEquip)) {
         self->field_6BE4 = 0x14;
-        func_801FF96C(&self->mModelDispEquip);
+        ModelDispEquip_StartFadeOut(&self->mModelDispEquip);
         func_80201808(&self->mModelDispEquip);
     }
 }
@@ -1397,7 +1397,7 @@ __declspec(noinline) void CPartyStateWin::cbRenderBefore() {
 end:
     return;
 body:
-    if (func_8013BE50() == 0) {
+    if (IsMenuState621F0() == 0) {
         return;
     }
     GXSetZMode(GX_FALSE, GX_NEVER, GX_FALSE);
@@ -1462,7 +1462,7 @@ extern "C" void func_801F941C(CPartyStateWin* self, u32 arg1, u32 arg2) {
     // CModelDisp temp@0x3c38.
     CPartyStateWinMem mem;
     CPartyStateS16Quad quad;
-    func_800407C8_tmp quadTmp;
+    CTaskGame_setVec4_tmp quadTmp;
     u32 sysWinTmp[0x10];
     u32 titleTmp[0x18];
     PartyGaugeRecord gauge;
@@ -1484,7 +1484,7 @@ extern "C" void func_801F941C(CPartyStateWin* self, u32 arg1, u32 arg2) {
 
     f32 c = lbl_eu_806681D8;
     func_801F9730(self, reinterpret_cast<const u32*>(
-                            func_800407C8(&quadTmp, c, c, c, c)));
+                            CTaskGame_setVec4(&quadTmp, c, c, c, c)));
     func_801F9754(reinterpret_cast<CPartyStateWinRing*>(self->mWork14), 0);
 
     func_801F981C(&mem);
@@ -1497,11 +1497,11 @@ extern "C" void func_801F941C(CPartyStateWin* self, u32 arg1, u32 arg2) {
     self->mScene = scn;
     func_80496118(scn, self->mWork14, 0);
     func_800452EC(scn);
-    func_80492E08(getField5C(scn));
+    scnVlInitLights2(getField5C(scn));
     mtl::MemManager::setOptimalAlloc(true);
 
     char* titleName =
-        func_80136190(&lbl_eu_80507C94[0x1e], &lbl_eu_80507C94[0x28], 1);
+        BdatTouchStringCell(&lbl_eu_80507C94[0x1e], &lbl_eu_80507C94[0x28], 1);
     __ct__CTitleAHelp(reinterpret_cast<CTitleAHelp*>(titleTmp), titleName, 0x10);
     func_801BE16C(reinterpret_cast<CTitleAHelp*>(&self->_pad18),
                   reinterpret_cast<CTitleAHelp*>(titleTmp));
@@ -1526,7 +1526,7 @@ extern "C" void func_801F941C(CPartyStateWin* self, u32 arg1, u32 arg2) {
                   reinterpret_cast<CPartyStateWinBlob10C0*>(equipViewTmp));
     __dt__15CModelDispEquipFv(
         reinterpret_cast<CModelDispEquipView*>(equipViewTmp), -1);
-    func_801FF7B0(&self->mModelDispEquip);
+    ModelDispEquip_SyncScalePose(&self->mModelDispEquip);
 
     __ct__CEquipChange(reinterpret_cast<CEquipChange*>(equipChangeTmp));
     func_801F9CB4(reinterpret_cast<CEquipChange*>(&self->_pad4150),

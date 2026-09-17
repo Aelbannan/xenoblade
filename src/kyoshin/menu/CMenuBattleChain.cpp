@@ -186,7 +186,7 @@ void CMenuBattleChain::Move() {
     if (CTaskGame::getInstance()->isFlag01Set() || (lbl_eu_80663E28 & 0x200000)) {
         return;
     }
-    if (func_8013BE50() == 0) {
+    if (IsMenuState621F0() == 0) {
         return;
     }
     switch (mField9C) {
@@ -242,7 +242,7 @@ void CMenuBattleChain::Move() {
         }
         break;
     case 7:
-        if (func_80137510(mAnim0, lbl_eu_80668CB4) != 0) {
+        if (AnimRewindFrame(mAnim0, lbl_eu_80668CB4) != 0) {
             mField9C = 8;
         }
         break;
@@ -267,7 +267,7 @@ void CMenuBattleChain::cbRenderBefore() {
 end:
     return;
 body:
-    if (func_8013BE50() == 0) {
+    if (IsMenuState621F0() == 0) {
         return;
     }
     GXSetZMode(GX_FALSE, GX_NEVER, GX_FALSE);
@@ -364,114 +364,114 @@ extern "C" void func_802AA588(CMenuBattleChain* self) {
         break;
     case 1: {
         char* base = lbl_eu_8051088C;
-        func_80139A18(self->mLayout, &base[0xc9], lbl_eu_80664A68, lbl_eu_80664A70);
+        PaneMatSetTevColorsByName(self->mLayout, &base[0xc9], lbl_eu_80664A68, lbl_eu_80664A70);
         func_80137CD4(self->mLayout, &base[0xd0], -1, lbl_eu_80662D70);
         func_80137CD4(self->mLayout, &base[0xdc], -1, lbl_eu_80662D70);
         func_80137CD4(self->mLayout, &base[0xe8], -1, lbl_eu_80662D70);
-        func_80139BF4(self->mLayout, &base[0xf4], lbl_eu_80662D90, lbl_eu_80662D94);
-        func_80139A18(self->mLayout, &base[0xfc], lbl_eu_80664AE8, lbl_eu_80664AF0);
-        func_80139A18(self->mLayout, &base[0x106], lbl_eu_80664B68, lbl_eu_80664B70);
-        func_80139A18(self->mLayout, &base[0x115], lbl_eu_80664B68, lbl_eu_80664B70);
-        func_80139A18(self->mLayout, &base[0x124], lbl_eu_80664B68, lbl_eu_80664B70);
-        func_80139A18(self->mLayout, &base[0x133], lbl_eu_80664B68, lbl_eu_80664B70);
+        PaneSetColorFieldPair(self->mLayout, &base[0xf4], lbl_eu_80662D90, lbl_eu_80662D94);
+        PaneMatSetTevColorsByName(self->mLayout, &base[0xfc], lbl_eu_80664AE8, lbl_eu_80664AF0);
+        PaneMatSetTevColorsByName(self->mLayout, &base[0x106], lbl_eu_80664B68, lbl_eu_80664B70);
+        PaneMatSetTevColorsByName(self->mLayout, &base[0x115], lbl_eu_80664B68, lbl_eu_80664B70);
+        PaneMatSetTevColorsByName(self->mLayout, &base[0x124], lbl_eu_80664B68, lbl_eu_80664B70);
+        PaneMatSetTevColorsByName(self->mLayout, &base[0x133], lbl_eu_80664B68, lbl_eu_80664B70);
         break;
     }
     case 2: {
         char* base = lbl_eu_8051088C;
-        func_80139A18(self->mLayout, &base[0xc9], lbl_eu_80664A78, lbl_eu_80664A80);
+        PaneMatSetTevColorsByName(self->mLayout, &base[0xc9], lbl_eu_80664A78, lbl_eu_80664A80);
         func_80137CD4(self->mLayout, &base[0xd0], -1, lbl_eu_80662D74);
         func_80137CD4(self->mLayout, &base[0xdc], -1, lbl_eu_80662D74);
         func_80137CD4(self->mLayout, &base[0xe8], -1, lbl_eu_80662D74);
-        func_80139BF4(self->mLayout, &base[0xf4], lbl_eu_80662D98, lbl_eu_80662D9C);
-        func_80139A18(self->mLayout, &base[0xfc], lbl_eu_80664AF8, lbl_eu_80664B00);
-        func_80139A18(self->mLayout, &base[0x106], lbl_eu_80664B78, lbl_eu_80664B80);
-        func_80139A18(self->mLayout, &base[0x115], lbl_eu_80664B78, lbl_eu_80664B80);
-        func_80139A18(self->mLayout, &base[0x124], lbl_eu_80664B78, lbl_eu_80664B80);
-        func_80139A18(self->mLayout, &base[0x133], lbl_eu_80664B78, lbl_eu_80664B80);
+        PaneSetColorFieldPair(self->mLayout, &base[0xf4], lbl_eu_80662D98, lbl_eu_80662D9C);
+        PaneMatSetTevColorsByName(self->mLayout, &base[0xfc], lbl_eu_80664AF8, lbl_eu_80664B00);
+        PaneMatSetTevColorsByName(self->mLayout, &base[0x106], lbl_eu_80664B78, lbl_eu_80664B80);
+        PaneMatSetTevColorsByName(self->mLayout, &base[0x115], lbl_eu_80664B78, lbl_eu_80664B80);
+        PaneMatSetTevColorsByName(self->mLayout, &base[0x124], lbl_eu_80664B78, lbl_eu_80664B80);
+        PaneMatSetTevColorsByName(self->mLayout, &base[0x133], lbl_eu_80664B78, lbl_eu_80664B80);
         break;
     }
     case 3: {
         char* base = lbl_eu_8051088C;
-        func_80139A18(self->mLayout, &base[0xc9], lbl_eu_80664A88, lbl_eu_80664A90);
+        PaneMatSetTevColorsByName(self->mLayout, &base[0xc9], lbl_eu_80664A88, lbl_eu_80664A90);
         func_80137CD4(self->mLayout, &base[0xd0], -1, lbl_eu_80662D78);
         func_80137CD4(self->mLayout, &base[0xdc], -1, lbl_eu_80662D78);
         func_80137CD4(self->mLayout, &base[0xe8], -1, lbl_eu_80662D78);
-        func_80139BF4(self->mLayout, &base[0xf4], lbl_eu_80662DA0, lbl_eu_80662DA4);
-        func_80139A18(self->mLayout, &base[0xfc], lbl_eu_80664B08, lbl_eu_80664B10);
-        func_80139A18(self->mLayout, &base[0x106], lbl_eu_80664B88, lbl_eu_80664B90);
-        func_80139A18(self->mLayout, &base[0x115], lbl_eu_80664B88, lbl_eu_80664B90);
-        func_80139A18(self->mLayout, &base[0x124], lbl_eu_80664B88, lbl_eu_80664B90);
-        func_80139A18(self->mLayout, &base[0x133], lbl_eu_80664B88, lbl_eu_80664B90);
+        PaneSetColorFieldPair(self->mLayout, &base[0xf4], lbl_eu_80662DA0, lbl_eu_80662DA4);
+        PaneMatSetTevColorsByName(self->mLayout, &base[0xfc], lbl_eu_80664B08, lbl_eu_80664B10);
+        PaneMatSetTevColorsByName(self->mLayout, &base[0x106], lbl_eu_80664B88, lbl_eu_80664B90);
+        PaneMatSetTevColorsByName(self->mLayout, &base[0x115], lbl_eu_80664B88, lbl_eu_80664B90);
+        PaneMatSetTevColorsByName(self->mLayout, &base[0x124], lbl_eu_80664B88, lbl_eu_80664B90);
+        PaneMatSetTevColorsByName(self->mLayout, &base[0x133], lbl_eu_80664B88, lbl_eu_80664B90);
         break;
     }
     case 4: {
         char* base = lbl_eu_8051088C;
-        func_80139A18(self->mLayout, &base[0xc9], lbl_eu_80664A98, lbl_eu_80664AA0);
+        PaneMatSetTevColorsByName(self->mLayout, &base[0xc9], lbl_eu_80664A98, lbl_eu_80664AA0);
         func_80137CD4(self->mLayout, &base[0xd0], -1, lbl_eu_80662D7C);
         func_80137CD4(self->mLayout, &base[0xdc], -1, lbl_eu_80662D7C);
         func_80137CD4(self->mLayout, &base[0xe8], -1, lbl_eu_80662D7C);
-        func_80139BF4(self->mLayout, &base[0xf4], lbl_eu_80662DA8, lbl_eu_80662DAC);
-        func_80139A18(self->mLayout, &base[0xfc], lbl_eu_80664B18, lbl_eu_80664B20);
-        func_80139A18(self->mLayout, &base[0x106], lbl_eu_80664B98, lbl_eu_80664BA0);
-        func_80139A18(self->mLayout, &base[0x115], lbl_eu_80664B98, lbl_eu_80664BA0);
-        func_80139A18(self->mLayout, &base[0x124], lbl_eu_80664B98, lbl_eu_80664BA0);
-        func_80139A18(self->mLayout, &base[0x133], lbl_eu_80664B98, lbl_eu_80664BA0);
+        PaneSetColorFieldPair(self->mLayout, &base[0xf4], lbl_eu_80662DA8, lbl_eu_80662DAC);
+        PaneMatSetTevColorsByName(self->mLayout, &base[0xfc], lbl_eu_80664B18, lbl_eu_80664B20);
+        PaneMatSetTevColorsByName(self->mLayout, &base[0x106], lbl_eu_80664B98, lbl_eu_80664BA0);
+        PaneMatSetTevColorsByName(self->mLayout, &base[0x115], lbl_eu_80664B98, lbl_eu_80664BA0);
+        PaneMatSetTevColorsByName(self->mLayout, &base[0x124], lbl_eu_80664B98, lbl_eu_80664BA0);
+        PaneMatSetTevColorsByName(self->mLayout, &base[0x133], lbl_eu_80664B98, lbl_eu_80664BA0);
         break;
     }
     case 5: {
         char* base = lbl_eu_8051088C;
-        func_80139A18(self->mLayout, &base[0xc9], lbl_eu_80664AA8, lbl_eu_80664AB0);
+        PaneMatSetTevColorsByName(self->mLayout, &base[0xc9], lbl_eu_80664AA8, lbl_eu_80664AB0);
         func_80137CD4(self->mLayout, &base[0xd0], -1, lbl_eu_80662D80);
         func_80137CD4(self->mLayout, &base[0xdc], -1, lbl_eu_80662D80);
         func_80137CD4(self->mLayout, &base[0xe8], -1, lbl_eu_80662D80);
-        func_80139BF4(self->mLayout, &base[0xf4], lbl_eu_80662DB0, lbl_eu_80662DB4);
-        func_80139A18(self->mLayout, &base[0xfc], lbl_eu_80664B28, lbl_eu_80664B30);
-        func_80139A18(self->mLayout, &base[0x106], lbl_eu_80664BA8, lbl_eu_80664BB0);
-        func_80139A18(self->mLayout, &base[0x115], lbl_eu_80664BA8, lbl_eu_80664BB0);
-        func_80139A18(self->mLayout, &base[0x124], lbl_eu_80664BA8, lbl_eu_80664BB0);
-        func_80139A18(self->mLayout, &base[0x133], lbl_eu_80664BA8, lbl_eu_80664BB0);
+        PaneSetColorFieldPair(self->mLayout, &base[0xf4], lbl_eu_80662DB0, lbl_eu_80662DB4);
+        PaneMatSetTevColorsByName(self->mLayout, &base[0xfc], lbl_eu_80664B28, lbl_eu_80664B30);
+        PaneMatSetTevColorsByName(self->mLayout, &base[0x106], lbl_eu_80664BA8, lbl_eu_80664BB0);
+        PaneMatSetTevColorsByName(self->mLayout, &base[0x115], lbl_eu_80664BA8, lbl_eu_80664BB0);
+        PaneMatSetTevColorsByName(self->mLayout, &base[0x124], lbl_eu_80664BA8, lbl_eu_80664BB0);
+        PaneMatSetTevColorsByName(self->mLayout, &base[0x133], lbl_eu_80664BA8, lbl_eu_80664BB0);
         break;
     }
     case 6: {
         char* base = lbl_eu_8051088C;
-        func_80139A18(self->mLayout, &base[0xc9], lbl_eu_80664AB8, lbl_eu_80664AC0);
+        PaneMatSetTevColorsByName(self->mLayout, &base[0xc9], lbl_eu_80664AB8, lbl_eu_80664AC0);
         func_80137CD4(self->mLayout, &base[0xd0], -1, lbl_eu_80662D84);
         func_80137CD4(self->mLayout, &base[0xdc], -1, lbl_eu_80662D84);
         func_80137CD4(self->mLayout, &base[0xe8], -1, lbl_eu_80662D84);
-        func_80139BF4(self->mLayout, &base[0xf4], lbl_eu_80662DB8, lbl_eu_80662DBC);
-        func_80139A18(self->mLayout, &base[0xfc], lbl_eu_80664B38, lbl_eu_80664B40);
-        func_80139A18(self->mLayout, &base[0x106], lbl_eu_80664BB8, lbl_eu_80664BC0);
-        func_80139A18(self->mLayout, &base[0x115], lbl_eu_80664BB8, lbl_eu_80664BC0);
-        func_80139A18(self->mLayout, &base[0x124], lbl_eu_80664BB8, lbl_eu_80664BC0);
-        func_80139A18(self->mLayout, &base[0x133], lbl_eu_80664BB8, lbl_eu_80664BC0);
+        PaneSetColorFieldPair(self->mLayout, &base[0xf4], lbl_eu_80662DB8, lbl_eu_80662DBC);
+        PaneMatSetTevColorsByName(self->mLayout, &base[0xfc], lbl_eu_80664B38, lbl_eu_80664B40);
+        PaneMatSetTevColorsByName(self->mLayout, &base[0x106], lbl_eu_80664BB8, lbl_eu_80664BC0);
+        PaneMatSetTevColorsByName(self->mLayout, &base[0x115], lbl_eu_80664BB8, lbl_eu_80664BC0);
+        PaneMatSetTevColorsByName(self->mLayout, &base[0x124], lbl_eu_80664BB8, lbl_eu_80664BC0);
+        PaneMatSetTevColorsByName(self->mLayout, &base[0x133], lbl_eu_80664BB8, lbl_eu_80664BC0);
         break;
     }
     case 7: {
         char* base = lbl_eu_8051088C;
-        func_80139A18(self->mLayout, &base[0xc9], lbl_eu_80664AC8, lbl_eu_80664AD0);
+        PaneMatSetTevColorsByName(self->mLayout, &base[0xc9], lbl_eu_80664AC8, lbl_eu_80664AD0);
         func_80137CD4(self->mLayout, &base[0xd0], -1, lbl_eu_80662D88);
         func_80137CD4(self->mLayout, &base[0xdc], -1, lbl_eu_80662D88);
         func_80137CD4(self->mLayout, &base[0xe8], -1, lbl_eu_80662D88);
-        func_80139BF4(self->mLayout, &base[0xf4], lbl_eu_80662DC0, lbl_eu_80662DC4);
-        func_80139A18(self->mLayout, &base[0xfc], lbl_eu_80664B48, lbl_eu_80664B50);
-        func_80139A18(self->mLayout, &base[0x106], lbl_eu_80664BC8, lbl_eu_80664BD0);
-        func_80139A18(self->mLayout, &base[0x115], lbl_eu_80664BC8, lbl_eu_80664BD0);
-        func_80139A18(self->mLayout, &base[0x124], lbl_eu_80664BC8, lbl_eu_80664BD0);
-        func_80139A18(self->mLayout, &base[0x133], lbl_eu_80664BC8, lbl_eu_80664BD0);
+        PaneSetColorFieldPair(self->mLayout, &base[0xf4], lbl_eu_80662DC0, lbl_eu_80662DC4);
+        PaneMatSetTevColorsByName(self->mLayout, &base[0xfc], lbl_eu_80664B48, lbl_eu_80664B50);
+        PaneMatSetTevColorsByName(self->mLayout, &base[0x106], lbl_eu_80664BC8, lbl_eu_80664BD0);
+        PaneMatSetTevColorsByName(self->mLayout, &base[0x115], lbl_eu_80664BC8, lbl_eu_80664BD0);
+        PaneMatSetTevColorsByName(self->mLayout, &base[0x124], lbl_eu_80664BC8, lbl_eu_80664BD0);
+        PaneMatSetTevColorsByName(self->mLayout, &base[0x133], lbl_eu_80664BC8, lbl_eu_80664BD0);
         break;
     }
     case 8: {
         char* base = lbl_eu_8051088C;
-        func_80139A18(self->mLayout, &base[0xc9], lbl_eu_80664AD8, lbl_eu_80664AE0);
+        PaneMatSetTevColorsByName(self->mLayout, &base[0xc9], lbl_eu_80664AD8, lbl_eu_80664AE0);
         func_80137CD4(self->mLayout, &base[0xd0], -1, lbl_eu_80662D8C);
         func_80137CD4(self->mLayout, &base[0xdc], -1, lbl_eu_80662D8C);
         func_80137CD4(self->mLayout, &base[0xe8], -1, lbl_eu_80662D8C);
-        func_80139BF4(self->mLayout, &base[0xf4], lbl_eu_80662DC8, lbl_eu_80662DCC);
-        func_80139A18(self->mLayout, &base[0xfc], lbl_eu_80664B58, lbl_eu_80664B60);
-        func_80139A18(self->mLayout, &base[0x106], lbl_eu_80664BD8, lbl_eu_80664BE0);
-        func_80139A18(self->mLayout, &base[0x115], lbl_eu_80664BD8, lbl_eu_80664BE0);
-        func_80139A18(self->mLayout, &base[0x124], lbl_eu_80664BD8, lbl_eu_80664BE0);
-        func_80139A18(self->mLayout, &base[0x133], lbl_eu_80664BD8, lbl_eu_80664BE0);
+        PaneSetColorFieldPair(self->mLayout, &base[0xf4], lbl_eu_80662DC8, lbl_eu_80662DCC);
+        PaneMatSetTevColorsByName(self->mLayout, &base[0xfc], lbl_eu_80664B58, lbl_eu_80664B60);
+        PaneMatSetTevColorsByName(self->mLayout, &base[0x106], lbl_eu_80664BD8, lbl_eu_80664BE0);
+        PaneMatSetTevColorsByName(self->mLayout, &base[0x115], lbl_eu_80664BD8, lbl_eu_80664BE0);
+        PaneMatSetTevColorsByName(self->mLayout, &base[0x124], lbl_eu_80664BD8, lbl_eu_80664BE0);
+        PaneMatSetTevColorsByName(self->mLayout, &base[0x133], lbl_eu_80664BD8, lbl_eu_80664BE0);
         break;
     }
     }

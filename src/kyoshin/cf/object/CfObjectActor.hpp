@@ -51,7 +51,7 @@ extern u8 lbl_eu_8053109C[];
 extern "C" void func_8014AA10(void* obj, unsigned int value);
 
 // C-linkage imports (retail symbols are unmangled).
-extern "C" int func_80055F94(u8* obj, int arg);   // CActParamData short-value helper
+extern "C" int getParamSelS16(u8* obj, int arg);   // CActParamData short-value helper
 
 // Retail symbol is Fv but the real ABI passes (self, arg, f1, f2, f3);
 // CfObjectActor::CActorParam_addHate tail-calls this base entry

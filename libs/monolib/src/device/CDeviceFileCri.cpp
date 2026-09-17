@@ -937,7 +937,7 @@ bool CDeviceFileCri::wkStandbyExceptionRetry(u32 wid) {
 
     mRetryCounter++;
     if (mRetryCounter < maxRetries) {
-        func_8045925C__10CExceptionFv((CException*)lbl_eu_806636D0[0]);
+        setGlobalMessage__10CExceptionFv((CException*)lbl_eu_806636D0[0]);
         return false;
     }
     

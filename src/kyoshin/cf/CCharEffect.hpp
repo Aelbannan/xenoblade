@@ -11,8 +11,8 @@ int func_8015CCB4();
 
 // Retail C-ABI imports used by func_8015C2B0 (no shared kyoshin header owns
 // them yet; same pattern as include/kyoshin/cf/CCharEffectEne.hpp).
-extern "C" u32 func_80053F40(u8* p, u32 v);
-extern "C" void func_80484EB0(u8* ptr);
+extern "C" u32 hasParamByteVal(u8* p, u32 v);
+extern "C" void simGetLeafDist7B0(u8* ptr);
 extern "C" void setChildF50G_(u8* self);
 
 // Retail C-ABI imports used by func_8015BB3C / func_8015C404 (retail symbols

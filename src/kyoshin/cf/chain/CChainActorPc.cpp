@@ -105,7 +105,7 @@ struct CChainBigObj {
 };
 
 // Shared external declarations
-extern void func_804B1DC0(void*, int);
+extern void ColiSetMoveEnableFlag(void*, int);
 extern void func_80279B34(cf::CChainActorPc*);
 extern u8* func_80282380(cf::CChainActorPc*);
 extern void func_80279E48(cf::CChainActorPc*, int);
@@ -177,9 +177,9 @@ tail_check:
     if ((self->unk6C & 1) || (self->unk6C & 2)) {
         float f1 = ((float(*)(u8*))(*(u8***)((u8*)big + 0x3e9c))[35])((u8*)big + 0x3e9c);
         if (f1 > lbl_eu_80668AEC) {
-            func_804B1DC0(big->field_44a8, 1);
+            ColiSetMoveEnableFlag(big->field_44a8, 1);
         } else {
-            func_804B1DC0(big->field_44a8, 0);
+            ColiSetMoveEnableFlag(big->field_44a8, 0);
         }
     }
 }
@@ -229,7 +229,7 @@ check_cond:
 arg0:
     // arg == 0: healing/damage loop over all battle actors
     big->field_455a = 100;
-    func_804B1DC0(big->field_44a8, 1);
+    ColiSetMoveEnableFlag(big->field_44a8, 1);
     u8* unk0obj = (u8*)big;
     float f30;
     if (((int(*)(u8*))(*(u8***)unk0obj)[164])(unk0obj) != 0) {
@@ -263,13 +263,13 @@ done:
 }
 // Retail symbol: func_80279F6C
 
-// Sets a chain actor flag and optionally resets chain field via func_804B1DC0
+// Sets a chain actor flag and optionally resets chain field via ColiSetMoveEnableFlag
 // when arg is 0 and the current bit state differs.
 extern "C" void func_80281F38(cf::CChainActorPc* self, int arg) {
     // Use u32 compare to force cmpl (unsigned) to match retail
     u32 bit = (self->unk6C >> 1) & 1;
     if ((u32)arg != bit && arg == 0) {
-        func_804B1DC0((void*)(self->unk0 + 0x44a8), 1);
+        ColiSetMoveEnableFlag((void*)(self->unk0 + 0x44a8), 1);
     }
     func_80279F6C(self, arg);
 }

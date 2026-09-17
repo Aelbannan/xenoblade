@@ -176,7 +176,7 @@ struct CFunc8008B580Obj {
     u8 _pad3F64[0x4550 - 0x3F64];       // 0x3F64-0x454F
     u32 field_4550;                     // 0x4550 flags
     u8 _pad4554[0x45C0 - 0x4554];       // 0x4554-0x45BF
-    u16 field_45C0;                     // 0x45C0 (func_800B89CC id)
+    u16 field_45C0;                     // 0x45C0 (lookupCA0ById id)
     u16 field_45C4;                     // 0x45C4
     u16 field_45C6;                     // 0x45C6
 
@@ -230,7 +230,7 @@ struct CFunc8008EF04Sub98 {
 // +0x6E8 float), and call sites dereference the +0x138 / +0x1D8 results as
 // floats. object/CfObjectMove.hpp cannot be included here (its 4-arg
 // func_8004B9D4 clashes with this TU's retail 5-arg form, and its 5-arg
-// func_800BE12C takes u8* while this TU passes through void*), so the Move
+// CfObjectMove_setAnimModeArgs takes u8* while this TU passes through void*), so the Move
 // leg is redeclared here with retail names and arity (Move1-4 copied from
 // object/CfObjectMove.hpp; Move5 is float* per the +0x6E8 impl and the
 // dereference/divide call sites). Never instantiated, so no vtable emitted.
@@ -363,7 +363,7 @@ struct CFunc8008CDE8Probe {
     f32 field_0x68;             // 0x68
 };
 
-// Circular gimmick list returned by func_800B6BC8 (same layout as
+// Circular gimmick list returned by getReslistB48 (same layout as
 // CfGimmickList): head node at +0x04 is the sentinel, nodes terminate when
 // they wrap back to it.
 struct CFunc8009156CNode {
@@ -424,19 +424,19 @@ struct CFunc8008E760Obj {
     u16 field_45C6;                                     // 0x45C6
 };
 
-// func_800B89CC result (r28): the +0x8C float read by func_8008E760.
+// lookupCA0ById result (r28): the +0x8C float read by func_8008E760.
 struct CFunc8008E760B89 {
     u8 _pad[0x8C];                                      // 0x00-0x8B
     f32 field_8C;                                       // 0x8C
 };
 
-// func_801974CC result: the +0x24 mode byte func_8008E760 tests.
+// CPartsChange_FindPartsElem result: the +0x24 mode byte func_8008E760 tests.
 struct CFunc8008E760Elem {
     u8 _pad[0x24];                                      // 0x00-0x23
     u8 field_24;                                        // 0x24
 };
 
-// Stack block passed to func_80198710 / func_8019876C (CfPartyInfo layout:
+// Stack block passed to func_80198710 / CPartsChange_ProcessPartyInfo (CfPartyInfo layout:
 // func_8008E760 clears its +0x2D byte when the +0x180 bit-0 flag is set).
 struct CFunc8008E760PartyInfo {
     u32 field_00;                                       // 0x00
@@ -467,7 +467,7 @@ struct CFunc8008E760Data {
 // uses lwz/stw word stores (the float-store path goes through CCtrlMoveEne).
 struct CFunc8008E760View {
     CFunc8008E760Vec3W mPos0W;          // 0x00
-    u8 field_0C[4];                     // 0x0C (arg to slot 0x9C / func_8019876C)
+    u8 field_0C[4];                     // 0x0C (arg to slot 0x9C / CPartsChange_ProcessPartyInfo)
     f32 field_0x10;                     // 0x10
     u8 _pad14[0x34 - 0x14];             // 0x14-0x33
     CNpcBaseDataView* field_0x34;       // 0x34
@@ -724,7 +724,7 @@ struct CFunc80091864Actor {
     u8 _pad3F64[0x44D8 - 0x3F64];                       // 0x3F64-0x44D7
     f32 field_44D8;                                     // 0x44D8
     u8 _pad44DC[0x45C0 - 0x44DC];                       // 0x44DC-0x45BF
-    u16 field_45C0;                                     // 0x45C0 (func_800B89CC id)
+    u16 field_45C0;                                     // 0x45C0 (lookupCA0ById id)
     u16 field_45C4;                                     // 0x45C4
     u16 field_45C6;                                     // 0x45C6
 };
@@ -817,7 +817,7 @@ extern "C" void func_800896F4(cf::CCtrlMoveEne* self, ml::CVec3* out,
                               const ml::CVec3* src);
 // Circular gimmick-object list accessor (CfGimmick.cpp) and battle-event
 // helper (CfObjectImpl.cpp); func_80174C98 queries an actor word (CfAct.cpp).
-extern "C" cf::CFunc8009156CList* func_800B6BC8();
+extern "C" cf::CFunc8009156CList* getReslistB48();
 // Icon-display helper (CActParamAnim.cpp).
 extern "C" void func_8004B9D4(void* w, int a, int b, int c, int d);
 // bdat row-value reader (CfObjectEne.cpp): (obj, column, row) -> raw word.
@@ -857,14 +857,14 @@ extern "C" int initPadSubSystem__Q22cf13CfGameManagerFv();
 // func_8008E760 call sites: battle-object probe helpers (code_800B06A4.cpp),
 // parts-element lookup (CPartsChange.cpp), party-info state builder/dispatch
 // (CPartsChange.cpp) and the file/bdat column readers (retail C-ABI names).
-extern "C" void* func_800B8AFC(void* self);
-extern "C" void* func_800B89CC(u32 id);
-extern "C" void* func_80198310(void);
-extern "C" void* func_80193670(void);
-extern "C" void* func_801974CC(void* a, void* b);
+extern "C" void* lookupCA0BySelf(void* self);
+extern "C" void* lookupCA0ById(u32 id);
+extern "C" void* CPartsChange_ResolveLinkedObj(void);
+extern "C" void* CPartsChange_GetActorTable(void);
+extern "C" void* CPartsChange_FindPartsElem(void* a, void* b);
 extern "C" void func_80198710(void* out, void* src, f32 a, int b, int c,
                                f32 d, f32 e);
-extern "C" int func_8019876C(void* a, void* b);
+extern "C" int CPartsChange_ProcessPartyInfo(void* a, void* b);
 extern "C" int func_804BE348(void* a, void* b, int c, int d, int e);
 extern "C" void func_80089398(void* self, ml::CVec3* dst, const ml::CVec3* src,
                               int flag);
@@ -874,8 +874,8 @@ extern const char lbl_eu_80526324[];
 extern const char lbl_eu_80526300[];
 extern "C" void* getFP__FPCc(const char* name);
 // func_8008D51C call sites:
-// refresh (retail C-ABI names; func_8004C5EC is declared in CtrlNpc.hpp).
-// func_8004B7C0 is declared in include/kyoshin/cf/CfGameManager.hpp
+// refresh (retail C-ABI names; getAnimModelId is declared in CtrlNpc.hpp).
+// setAnimPosVec is declared in include/kyoshin/cf/CfGameManager.hpp
 // (returns void*); do not redeclare it here with a different return type.
 extern "C" void func_80193710(void* self);
 // func_8008FE8C call site: direction-commit helper (CtrlMoveBase.cpp) and the
@@ -887,7 +887,7 @@ extern "C" int rand(void);
 extern "C" int findObjectById__Fi(int id);
 extern "C" void* func_8016FE34(void* src);
 extern "C" int func_80148778(void* self, int id);
-extern "C" int func_801984F0(void* self, int index);
+extern "C" int CPartsChange_GetEnemySlotAt(void* self, int index);
 extern "C" void* getInstance__Q22cf13CfGameManagerFv(void);
 // NOTE: deliberately no extern "C" - matches the plain-C++-linkage form
 // used by CPartsChange.hpp / CfGimmickObject.hpp / CtrlEnemy.hpp; an
@@ -896,7 +896,7 @@ void* getPlayer__Q22cf13CfGameManagerFi(int index);
 extern "C" void* getUnk80664658(void);
 #include "kyoshin/cf/CBattleManagerApi.hpp"
 extern "C" void func_800D9CA0(void* self, void* obj);
-extern "C" void func_800BE12C(void* obj, int a, int b, int c, int d);
+extern "C" void CfObjectMove_setAnimModeArgs(void* obj, int a, int b, int c, int d);
 // func_8008A2C8 call site: game-flag query (C++ linkage mangles to the retail
 // isGlobalCamFlagSet__Fi).
 bool isGlobalCamFlagSet(int r3);
@@ -1036,11 +1036,11 @@ extern const u8 lbl_eu_805279FC[];
 // unmangled names). extern "C" keeps the call-site relocs unmangled - a plain
 // C++ declaration makes MWCC append the __FP<params> mangling at the call
 // site. __ct__80088904 / func_80089684 / func_800899AC are defined in
-// CtrlMoveBase.cpp; func_8004B8B0 in CActParamAnim.cpp; func_800AF7E4 in
+// CtrlMoveBase.cpp; setSnapFlags in CActParamAnim.cpp; func_800AF7E4 in
 // CfObjectEne.cpp; func_8008D444 / func_8008BEEC in this TU.
 extern "C" void __ct__80088904(cf::CCtrlMoveEne* self);
 extern "C" void func_80089684(cf::CCtrlMoveEne* self);
-extern "C" void func_8004B8B0(void* self, u32 a, u32 b, f32 value);
+extern "C" void setSnapFlags(void* self, u32 a, u32 b, f32 value);
 extern "C" void func_800899AC(void* obj, f32 value);
 extern "C" u32 func_800AF7E4(void* self, const char* column);
 extern "C" void func_8008D444(cf::CCtrlMoveEne* self, cf::CFunc8008D444Obj* obj, int flag);

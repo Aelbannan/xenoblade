@@ -166,16 +166,16 @@ struct CScnEffectActMgr {
 
 // Import from monolib/src/scn/CScnItemModel.cpp: base pointer of the
 // manager's act data (caller applies the slot offset).
-extern "C" u8* func_8048315C(CScnEffectActMgr* mgr);
+extern "C" u8* simGetLeafActData(CScnEffectActMgr* mgr);
 
 // Cross-TU imports behind the CScnEffectActNw4r vtable thunks and update
 // hooks (unrecovered retail plain-name symbols).
 extern "C" bool func_80495E60(CScnEffectActMgr* mgr);
-extern "C" void func_80484E5C(CScnEffectActMgr* mgr);
-extern "C" void func_804838DC(CScnEffectActMgr* mgr);
-extern "C" void func_80482AB8(CScnEffectActMgr* mgr);
-extern "C" void func_80482AD4(CScnEffectActMgr* mgr);
-extern "C" void func_8048856C(CScnEffectActMgr* mgr);
+extern "C" void simSetLeafDist7B0(CScnEffectActMgr* mgr);
+extern "C" void simSetFlag2OnTree(CScnEffectActMgr* mgr);
+extern "C" void simPushWordToBuf(CScnEffectActMgr* mgr);
+extern "C" void simRemoveWordFromBuf(CScnEffectActMgr* mgr);
+extern "C" void scnImN4PushXform(CScnEffectActMgr* mgr);
 
 class __declspec(novtable) CScnEffectActNw4r {
 public:

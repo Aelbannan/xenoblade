@@ -58,7 +58,7 @@ struct CfGimmickLodFrame {
 struct CfGimmickObjectStep {
     /* 0x00 */ u16 field_00;   // activation frames (seeds field_170)
     /* 0x02 */ u16 field_02;   // camera-event id passed to func_8007B0C8
-    /* 0x04 */ u8 field_04;    // map-object status id (func_800BE12C)
+    /* 0x04 */ u8 field_04;    // map-object status id (CfObjectMove_setAnimModeArgs)
     /* 0x05 */ u8 field_05;    // LOD flags (CfGimmickLodFrame alias)
     /* 0x06 */ u8 field_06;    // LOD id byte (CfGimmickLodFrame alias)
     /* 0x07 */ u8 field_07;    // area-manager id (createBattleActor)
@@ -165,7 +165,7 @@ public:
     /* 0x196 */ s16 field_196;         // remaining target count (func_801F72A4)
     /* 0x198 */ s16 field_198;
     /* 0x19A */ u8 gap_19A[0x60C - 0x19A];
-    /* 0x60C */ u8 field_60C[0x20];    // chain/attach data (func_804B1DC0)
+    /* 0x60C */ u8 field_60C[0x20];    // chain/attach data (ColiSetMoveEnableFlag)
 };
 
 } // namespace cf
@@ -226,7 +226,7 @@ void* getScnHandle__Fv(void);
 void func_804BCC30(void* snd, u8 id);
 void func_804BCC3C(void* snd, u8 id);
 void* func_80186BC8(int id);
-void func_804B1DC0(void* self, int mode);
+void ColiSetMoveEnableFlag(void* self, int mode);
 // Same-TU call targets (scaffold stubs; signatures match the stubs in the .cpp).
 int func_801F72A4(cf::CfGimmickObject* self, u16* table);
 void func_801F6780(cf::CfGimmickObject* self);
@@ -272,16 +272,16 @@ int func_802096EC(void* obj);
 u32 func_8006A33C();
 int func_802098EC(u32 mask, cf::CfGimmick* gimmick, const CfGimmickVec3* point,
                   const f32* ang, void* partyId);
-void func_80159C04(unsigned int a, int b);
+void CItem_consumeFamilyCnt(unsigned int a, int b);
 void func_8020974C(unsigned int a, int b);
-unsigned int func_801587E8(unsigned short id);
+unsigned int CItem_findRecByFamily(unsigned short id);
 u32 getQueuedFileEventCount__Q22cf13CfGameManagerFv();
 u32 getResourceFromTable__Q22cf13CfGameManagerFv(u32 resourceId);
 u16 func_80208C48(u16 id, f32* vec);
-void func_80193678(int id);
+void CPartsChange_FireIdEffect(int id);
 // Step-table / sound helpers (func_801F6780 / func_801F76A8).
 void func_80140E00(u32 a, u32 b, u32 c);
-void func_8015B25C(u16 id);
+void CItem_createBoxContents(u16 id);
 void func_8020A6B0(void* reg, const CfGimmickVec3* point, u16 c, f32 d,
                   int e, int g);
 extern "C" void setChildV40__(void* obj, void* src);  // matches CfObjectImplMove.hpp (const void* is a distinct type)
@@ -293,7 +293,7 @@ extern "C" u16 playActorSound__Q22cf10CfSoundManFUlUlUlUlf(u32 a, u32 b, u32 c,
 u16 func_80208C60(u16 id, f32* pos, f32 d);
 void func_801BFF78(int a, u16 b, int c);
 CfGimmickSoundSlot* func_801BFAE4(u16 handle);
-int func_80195B04(int id);
+int CPartsChange_SpawnById(int id);
 void func_8007B0C8(int idx);
 void func_8020A0F8();
 extern "C" void* createBattleActor__Q22cf13CfGameManagerFv(u32 id, u32 mode);  // void* form matches CTaskGameEff.hpp (return-type unity pending repo-wide)
@@ -316,7 +316,7 @@ void clearPlayerEffect__Q22cf13CfGameManagerFv(void* obj);
 
 
 
-// Base of a CfObjectMove player (func_800B6BC8 nodes point at base+0x3E9C);
+// Base of a CfObjectMove player (getReslistB48 nodes point at base+0x3E9C);
 // +0x456C holds the u16 id/bit byte scanned by func_801F72A4.
 struct CfGimmickPlayerBase {
     void** vtable;           // +0x00
@@ -333,7 +333,7 @@ struct CfGimmickPlayerFlags {
     u32 field_3F08;                    // +0x3F08
 };
 
-// Circular object list returned by func_800B6BC8 (mirror of
+// Circular object list returned by getReslistB48 (mirror of
 // CfGimmickList/CfGimmickListNode in CfGimmick.hpp with a typed node).
 struct CfGimmickObjectListNode {
     CfGimmickObjectListNode* next;  // +0x00

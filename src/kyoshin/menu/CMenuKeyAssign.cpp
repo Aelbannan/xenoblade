@@ -129,10 +129,10 @@ void CMenuKeyAssign::Move() {
     if (lbl_eu_80663E28 & (1u << 21)) {
         return;
     }
-    if (func_8013BE50() == 0) {
+    if (IsMenuState621F0() == 0) {
         return;
     }
-    if (func_8013BEE8() == 0) {
+    if (GetSysStateFlag20() == 0) {
         return;
     }
     if (lbl_eu_80663E24 & 0xafa40000u) {
@@ -281,7 +281,7 @@ void CMenuKeyAssign::Move() {
                         if (target != 0) {
                             u32 flags = ((CActorTargetView*)target)->mFlags64;
                             if (flags & 0x10000000) {
-                                void* bf = func_800BF324(target);
+                                void* bf = CfObjectMove_getSelfIfActive(target);
                                 u32 st =
                                     ((u32 (*)(void*))((void**)bf)[0x228 / 4])(bf);
                                 switch (st) {
@@ -491,7 +491,7 @@ void CMenuKeyAssign::Move() {
                     if (target != 0) {
                         u32 flags = ((CActorTargetView*)target)->mFlags64;
                         if (flags & 0x10000000) {
-                            void* bf = func_800BF324(target);
+                            void* bf = CfObjectMove_getSelfIfActive(target);
                             u32 st =
                                 ((u32 (*)(void*))((void**)bf)[0x228 / 4])(bf);
                             switch (st) {
@@ -561,13 +561,13 @@ void CMenuKeyAssign::cbRenderBefore() {
     if (CTaskGame::isFlag01Set() || (lbl_eu_80663E28 & (1u << 21))) {
         return;
     }
-    if (!func_8013BE50()) {
+    if (!IsMenuState621F0()) {
         return;
     }
     if (getUnk80664658()->field_214 & (1u << 20)) {
         return;
     }
-    if (!func_8013BEE8()) {
+    if (!GetSysStateFlag20()) {
         return;
     }
     if (lbl_eu_80663E24 & 0xafa40000u) {
@@ -645,7 +645,7 @@ extern "C" CMenuKeyAssign* __ct__CMenuKeyAssign(CProcess* parent, CScn* scene) {
 
 // Open the key-assign menu for `count` remap columns starting at `state`
 // (target us-80115b3c). Hides the panes, loads the remap-column names via
-// func_8013606C/func_80136190, finds the "timg" texture and sizes the pane
+// BdatGetU16ByTableKey/BdatTouchStringCell, finds the "timg" texture and sizes the pane
 // from the texture dimensions (u16 -> f32 via the 0x43300000 magic double),
 // then assigns the button labels through func_80115DB0. The F64Conv pairs are
 // function-scope (their 0x43300000 words are stored once, before the guards).
@@ -683,10 +683,10 @@ extern "C" void func_80115060(CMenuKeyAssign* self, int state, int count, int mo
         for (i = 0; i < count; i++) {
             int idx = state + i;
             u32 timg = 0x74696d67;
-            u16 r = func_8013606C(&base[0x3b], name, idx);
+            u16 r = BdatGetU16ByTableKey(&base[0x3b], name, idx);
             ml::FixStr<32> str(true);
             f32 sx, sy;
-            str.format(&base[0x5f], func_80136190(&base[0x49], &base[0x56], r));
+            str.format(&base[0x5f], BdatTouchStringCell(&base[0x49], &base[0x56], r));
             nw4r::lyt::ArcResourceAccessor* acc = func_801355F4();
             TexView* tex = (TexView*)acc->GetResource(timg, str.mString, NULL);
             if (tex != 0) {
@@ -710,17 +710,17 @@ extern "C" void func_80115060(CMenuKeyAssign* self, int state, int count, int mo
                 pv->flags = (pv->flags & 0xFE) | 1;
             }
             if (i < 4) {
-                char* s2 = func_80136190(&base[0x3b], &base[0x72], idx);
+                char* s2 = BdatTouchStringCell(&base[0x3b], &base[0x72], idx);
                 func_80115DB0(self, s2, i);
             }
         }
     } else {
         // count <= 0: two fixed panes (name index 26, then `state`).
         {
-            u16 r = func_8013606C(&base[0x3b], name, 26);
+            u16 r = BdatGetU16ByTableKey(&base[0x3b], name, 26);
             ml::FixStr<32> str2(true);
             f32 sx2, sy2;
-            str2.format(&base[0x5f], func_80136190(&base[0x49], &base[0x56], r));
+            str2.format(&base[0x5f], BdatTouchStringCell(&base[0x49], &base[0x56], r));
             nw4r::lyt::ArcResourceAccessor* acc = func_801355F4();
             TexView* tex = (TexView*)acc->GetResource(0x74696d67, str2.mString, NULL);
             if (tex != 0) {
@@ -739,14 +739,14 @@ extern "C" void func_80115060(CMenuKeyAssign* self, int state, int count, int mo
                 pv->sizeY = sy2;
                 pv->flags = (pv->flags & 0xFE) | 1;
             }
-            char* s2 = func_80136190(&base[0x3b], &base[0x72], 26);
+            char* s2 = BdatTouchStringCell(&base[0x3b], &base[0x72], 26);
             func_80115DB0(self, s2, 0);
         }
         {
-            u16 r = func_8013606C(&base[0x3b], name, state);
+            u16 r = BdatGetU16ByTableKey(&base[0x3b], name, state);
             ml::FixStr<32> str3(true);
             f32 sx3, sy3;
-            str3.format(&base[0x5f], func_80136190(&base[0x49], &base[0x56], r));
+            str3.format(&base[0x5f], BdatTouchStringCell(&base[0x49], &base[0x56], r));
             nw4r::lyt::ArcResourceAccessor* acc = func_801355F4();
             TexView* tex = (TexView*)acc->GetResource(0x74696d67, str3.mString, NULL);
             if (tex != 0) {
@@ -765,7 +765,7 @@ extern "C" void func_80115060(CMenuKeyAssign* self, int state, int count, int mo
                 pv->sizeY = sy3;
                 pv->flags = (pv->flags & 0xFE) | 1;
             }
-            char* s2 = func_80136190(&base[0x3b], &base[0x72], state);
+            char* s2 = BdatTouchStringCell(&base[0x3b], &base[0x72], state);
             func_80115DB0(self, s2, 1);
         }
     }
@@ -822,9 +822,9 @@ extern "C" void func_801154D0(CMenuKeyAssign* self, int a, int b, int c, int d, 
         int i;
         for (i = 0; i < count; i++) {
             int idx = args[i];
-            u16 r = func_8013606C(&base[0x3b], name, idx);
+            u16 r = BdatGetU16ByTableKey(&base[0x3b], name, idx);
             ml::FixStr<32> str(true);
-            str.format(&base[0x5f], func_80136190(&base[0x49], &base[0x56], r));
+            str.format(&base[0x5f], BdatTouchStringCell(&base[0x49], &base[0x56], r));
             nw4r::lyt::ArcResourceAccessor* acc = func_801355F4();
             TexView* tex = (TexView*)acc->GetResource(0x74696d67, str.mString, NULL);
             if (tex != 0) {
@@ -848,16 +848,16 @@ extern "C" void func_801154D0(CMenuKeyAssign* self, int a, int b, int c, int d, 
                 pv->flags = (pv->flags & 0xFE) | 1;
             }
             if (i < 4) {
-                char* s2 = func_80136190(&base[0x3b], &base[0x72], idx);
+                char* s2 = BdatTouchStringCell(&base[0x3b], &base[0x72], idx);
                 func_80115DB0(self, s2, i);
             }
         }
     } else {
         // count == 0: two fixed panes (name index 26, then `state`).
         {
-            u16 r = func_8013606C(&base[0x3b], name, 26);
+            u16 r = BdatGetU16ByTableKey(&base[0x3b], name, 26);
             ml::FixStr<32> str2(true);
-            str2.format(&base[0x5f], func_80136190(&base[0x49], &base[0x56], r));
+            str2.format(&base[0x5f], BdatTouchStringCell(&base[0x49], &base[0x56], r));
             nw4r::lyt::ArcResourceAccessor* acc = func_801355F4();
             TexView* tex = (TexView*)acc->GetResource(0x74696d67, str2.mString, NULL);
             if (tex != 0) {
@@ -876,13 +876,13 @@ extern "C" void func_801154D0(CMenuKeyAssign* self, int a, int b, int c, int d, 
                 pv->sizeY = sy;
                 pv->flags = (pv->flags & 0xFE) | 1;
             }
-            char* s2 = func_80136190(&base[0x3b], &base[0x72], 26);
+            char* s2 = BdatTouchStringCell(&base[0x3b], &base[0x72], 26);
             func_80115DB0(self, s2, 0);
         }
         {
-            u16 r = func_8013606C(&base[0x3b], name, state);
+            u16 r = BdatGetU16ByTableKey(&base[0x3b], name, state);
             ml::FixStr<32> str3(true);
-            str3.format(&base[0x5f], func_80136190(&base[0x49], &base[0x56], r));
+            str3.format(&base[0x5f], BdatTouchStringCell(&base[0x49], &base[0x56], r));
             nw4r::lyt::ArcResourceAccessor* acc = func_801355F4();
             TexView* tex = (TexView*)acc->GetResource(0x74696d67, str3.mString, NULL);
             if (tex != 0) {
@@ -901,14 +901,14 @@ extern "C" void func_801154D0(CMenuKeyAssign* self, int a, int b, int c, int d, 
                 pv->sizeY = sy;
                 pv->flags = (pv->flags & 0xFE) | 1;
             }
-            char* s2 = func_80136190(&base[0x3b], &base[0x72], state);
+            char* s2 = BdatTouchStringCell(&base[0x3b], &base[0x72], state);
             func_80115DB0(self, s2, 1);
         }
     }
 }
 
 // Open the key-assign menu for one of the 4 player indices (state 3 = already
-// open). Loads the remap-column names via func_8013606C/func_80136190, finds
+// open). Loads the remap-column names via BdatGetU16ByTableKey/BdatTouchStringCell, finds
 // the corresponding "timg" texture and sizes the target pane from the texture
 // dimensions (u16 -> f32 via the 0x43300000 magic double), then assigns the
 // button labels through func_80115DB0.
@@ -938,9 +938,9 @@ extern "C" void func_801159DC(CMenuKeyAssign* self) {
             mapped = 5;
         }
         u8 idx = i + 3;
-        u16 r = func_8013606C(&base[0x3b], name, idx);
+        u16 r = BdatGetU16ByTableKey(&base[0x3b], name, idx);
         ml::FixStr<32> str(true);
-        str.format(&base[0x5f], func_80136190(&base[0x49], &base[0x56], r));
+        str.format(&base[0x5f], BdatTouchStringCell(&base[0x49], &base[0x56], r));
         nw4r::lyt::ArcResourceAccessor* acc = func_801355F4();
         TexView* tex = (TexView*)acc->GetResource(0x74696d67, str.mString, NULL);
         if (tex != 0) {
@@ -961,7 +961,7 @@ extern "C" void func_801159DC(CMenuKeyAssign* self) {
         if (mapped == 4) {
             mapped = 2;
         }
-        char* s2 = func_80136190(&base[0x3b], &base[0x72], idx);
+        char* s2 = BdatTouchStringCell(&base[0x3b], &base[0x72], idx);
         func_80115DB0(self, s2, mapped);
     }
 }
@@ -1003,23 +1003,23 @@ extern "C" void func_80115DB0(CMenuKeyAssign* self, char* str, int idx) {
     char buf[0x20];
     int v = idx + 1;
     sprintf(buf, &lbl_eu_804FDEE8[0x77], v);
-    func_80136B4C(self->mLayout, buf, str, 0);
+    LayoutSetTextBoxFmtValue(self->mLayout, buf, str, 0);
     PaneFlagView* p = (PaneFlagView*)self->mLayout->GetRootPane()->FindPaneByName(buf, true);
     p->flags = (p->flags & 0xFE) | 1;
     sprintf(buf, &lbl_eu_804FDEE8[0x83], v);
-    func_80136B4C(self->mLayout, buf, str, 0);
+    LayoutSetTextBoxFmtValue(self->mLayout, buf, str, 0);
     p = (PaneFlagView*)self->mLayout->GetRootPane()->FindPaneByName(buf, true);
     p->flags = (p->flags & 0xFE) | 1;
     sprintf(buf, &lbl_eu_804FDEE8[0x91], v);
-    func_80136B4C(self->mLayout, buf, str, 0);
+    LayoutSetTextBoxFmtValue(self->mLayout, buf, str, 0);
     p = (PaneFlagView*)self->mLayout->GetRootPane()->FindPaneByName(buf, true);
     p->flags = (p->flags & 0xFE) | 1;
     sprintf(buf, &lbl_eu_804FDEE8[0x9f], v);
-    func_80136B4C(self->mLayout, buf, str, 0);
+    LayoutSetTextBoxFmtValue(self->mLayout, buf, str, 0);
     p = (PaneFlagView*)self->mLayout->GetRootPane()->FindPaneByName(buf, true);
     p->flags = (p->flags & 0xFE) | 1;
     sprintf(buf, &lbl_eu_804FDEE8[0xad], v);
-    func_80136B4C(self->mLayout, buf, str, 0);
+    LayoutSetTextBoxFmtValue(self->mLayout, buf, str, 0);
     p = (PaneFlagView*)self->mLayout->GetRootPane()->FindPaneByName(buf, true);
     p->flags = (p->flags & 0xFE) | 1;
 }

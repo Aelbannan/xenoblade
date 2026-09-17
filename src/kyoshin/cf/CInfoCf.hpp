@@ -107,10 +107,10 @@ extern "C" {
 void setPresentationFlag__Q22cf13CfGameManagerFv(u32 enable);
 void func_801C3D9C(CBgTex* self);
 void func_801C40A0(CTitleAHelp* self);
-void func_801CAE9C(CItemBoxGrid* self);
-void func_80062F60();
-int func_800A8CD4();
-u32 func_800A8DA4();
+void UnloadItemBox(CItemBoxGrid* self);
+void CfRes_getInstPtrBC();
+int KyoshinHeap_GetActive54();
+u32 KyoshinHeap_GetSize500000();
 u32 func_80166830();
 void __dt__8CProcessFv(CProcess* self, int flags);
 // CMenuItem dtor (retail D1, manual member/base destruction - see the cpp)
@@ -127,8 +127,8 @@ void __ct__CItemBoxGrid(CItemBoxGrid* self, u32 type, u32 unk, u32 scene, u32 fl
 int func_801C3C14(CBgTex* self);
 void func_801C3A24(CBgTex* self);
 void CTitleAHelp_load(CTitleAHelp* self);
-void func_801CB480(CItemBoxGrid* self);
-void func_801CAA6C(CItemBoxGrid* self);
+void ClearListSlots(CItemBoxGrid* self);
+void LoadItemBoxFiles(CItemBoxGrid* self);
 void PushToList(CItemBoxGrid* self, u8 val);
 }
 
@@ -558,7 +558,7 @@ extern "C" void func_80167A2C(CMenuItem* self);
 
 // CItemBoxGrid C-ABI helper (body lives in kyoshin/CItemBoxGrid.cpp); no
 // header declares the retail-unmangled name, so declare it here.
-extern "C" u32 func_801CB1E4(CItemBoxGrid* self);
+extern "C" u32 IsSubWinActive(CItemBoxGrid* self);
 
 // Render-gate mode bitfield (.sbss; bit 21 = busy), shared with the other
 // menu-screen TUs.

@@ -10,7 +10,7 @@ namespace {
 #include <decomp.h>
 #include "monolib/device.hpp"
 #include "monolib/lib.hpp"
-#include "functions.hpp"  // func_800407C8 (vec4 setter)
+#include "functions.hpp"  // CTaskGame_setVec4 (vec4 setter)
 
 // CViewRoot::getRootView is defined in CViewRoot.cpp as a C-linkage free
 // function (retail symbol getRootView__9CViewRootFP5CView); the read-only
@@ -18,7 +18,7 @@ namespace {
 extern "C" CView* getRootView__9CViewRootFP5CView(CView* view);
 // CGXCache ring command-2 cache update (retail func_8044A578__8CGXCacheFv);
 // the read-only CGXCache.hpp omits it.
-extern "C" void func_8044A578__8CGXCacheFv(CGXCache* self, func_800407C8_tmp* color, int flag);
+extern "C" void func_8044A578__8CGXCacheFv(CGXCache* self, CTaskGame_setVec4_tmp* color, int flag);
 // CDeviceFile work-thread detach (retail setParent__11CDeviceFileFP11CWorkThread);
 // the read-only CDeviceFile.hpp only stubs a no-arg member form.
 extern "C" void setParent__11CDeviceFileFP11CWorkThread(CWorkThread* parent);
@@ -141,8 +141,8 @@ bool CDesktop::wkStandbyLogin(){
     // Seed the CGXCache color cache with a transparent-black CCol4, then tell
     // CDeviceFile that the desktop owns the file work threads.
     CGXCache* cache = CDeviceGX::getCacheInstance();
-    func_800407C8_tmp col1;
-    func_8044A578__8CGXCacheFv(cache, func_800407C8(&col1, lbl_eu_8066A460, lbl_eu_8066A460, lbl_eu_8066A460, lbl_eu_8066A45C), 1);
+    CTaskGame_setVec4_tmp col1;
+    func_8044A578__8CGXCacheFv(cache, CTaskGame_setVec4(&col1, lbl_eu_8066A460, lbl_eu_8066A460, lbl_eu_8066A460, lbl_eu_8066A45C), 1);
     setParent__11CDeviceFileFP11CWorkThread(this);
 
     // Create the desktop's view (named after the desktop itself), then give
@@ -155,7 +155,7 @@ bool CDesktop::wkStandbyLogin(){
     mView = this->pssCreateView(this->mName.c_str(), CViewRoot::getInstance(), 0x80);
 
     ml::CVec4 col2;
-    func_800407C8(reinterpret_cast<func_800407C8_tmp*>(&col2), lbl_eu_8066A460, lbl_eu_8066A460, lbl_eu_8066A460, lbl_eu_8066A45C);
+    CTaskGame_setVec4(reinterpret_cast<CTaskGame_setVec4_tmp*>(&col2), lbl_eu_8066A460, lbl_eu_8066A460, lbl_eu_8066A460, lbl_eu_8066A45C);
     mView->unk444 = col2;
 
     // Push a tag-3 context message (the drainer ORs unk278 with 0x3). Retail

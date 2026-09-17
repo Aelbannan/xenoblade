@@ -142,7 +142,7 @@ extern const float lbl_eu_80668A68;
 extern const float lbl_eu_80668A6C;
 extern const float lbl_eu_80668A70;
 extern const double lbl_eu_80668A78;
-extern "C" int func_800B8920(void* addr);
+extern "C" int lookupWorkAtAddr(void* addr);
 extern "C" int func_80148778(void*, int);
 extern "C" void addTableValueWithClamp__Q22cf13CfGameManagerFv(int, int, int);
 // CfGameManager pair-value query (retail Fv-form symbol; call sites pass
@@ -170,11 +170,11 @@ extern "C" int func_8027C1A8(cf::CChainChanceS* self,
 extern "C" __declspec(noinline) void func_802811FC(cf::CChainActorList* self);
 extern "C" cf::CChainActor* func_8028120C(cf::CChainActorList* self);
 extern "C" void func_8027B8C8(cf::CChainActorList* self, cf::CChainActor* actor);
-extern "C" u32 func_8004C5EC(void* battleObj);
+extern "C" u32 getAnimModelId(void* battleObj);
 
 // Tail view of the battle object (shared with CChain.cpp / CSuddenCommu):
 // an embedded sub-object with a manual vtable sits at +0x3E9C, and +0x3F60
-// holds a battle-object pointer queried by func_8004C5EC. This TU now calls
+// holds a battle-object pointer queried by getAnimModelId. This TU now calls
 // the same slots through cf::CChainBattleObj (CChainTimer.hpp) instead.
 class CChainBattleObjTail {
 public:

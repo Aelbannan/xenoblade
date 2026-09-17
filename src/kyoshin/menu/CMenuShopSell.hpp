@@ -125,24 +125,24 @@ struct ShopSellPadData {
     u32 mTurboFlags;                  // +0x104 (CfPadData::mTurboPressButtonFlags)
 };
 
-// func_8018B470 pad/flag callees (retail unmangled names). func_801CB0FC is
-// declared int so the caller compares with cmpwi directly; func_801CDFB4 is
+// func_8018B470 pad/flag callees (retail unmangled names). IsItemBoxActive is
+// declared int so the caller compares with cmpwi directly; GetPromptState is
 // declared int so the (u8) cast at the tail emits the retail clrlwi.
 extern "C" int func_8029A658();
 extern "C" ShopSellPadData* getCfPadData__Q22cf13CfGameManagerFv();
 extern "C" void func_801CCAF0(CItemBoxGrid* self);
-extern "C" int func_801CB0FC(CItemBoxGrid* self);
-extern "C" void func_801CC7B0(CItemBoxGrid* self, u32 arg);
+extern "C" int IsItemBoxActive(CItemBoxGrid* self);
+extern "C" void HandleCancelBtn(CItemBoxGrid* self, u32 arg);
 extern "C" void func_801C414C(CTitleAHelp* self);
-extern "C" void func_801CB38C(CItemBoxGrid* self);
+extern "C" void AdvanceBoxState(CItemBoxGrid* self);
 extern "C" void func_801CB5F0(CItemBoxGrid* self);
 extern "C" void func_801CBA04(CItemBoxGrid* self);
 extern "C" void func_801CBDE8(CItemBoxGrid* self);
 extern "C" void func_801CC0EC(CItemBoxGrid* self);
-extern "C" void func_801CC5DC(CItemBoxGrid* self);
+extern "C" void OpenSortMenu(CItemBoxGrid* self);
 extern "C" void func_801CDC40(CItemBoxGrid* self);
-extern "C" void func_801CDEE8(CItemBoxGrid* self);
-extern "C" int func_801CDFB4(CItemBoxGrid* self);
+extern "C" void SelectCatRow(CItemBoxGrid* self);
+extern "C" int GetPromptState(CItemBoxGrid* self);
 extern "C" void func_801C41E8(CTitleAHelp* self, u8 mode);
 
 // Retail-unmangled callee names (US strips the member manglings for these
@@ -150,21 +150,21 @@ extern "C" void func_801C41E8(CTitleAHelp* self, u8 mode);
 // caller's `!= 0` as a plain cmpwi (no u8 mask), like retail.
 extern "C" void func_801C3D9C(CBgTex* self);
 extern "C" void func_801C40A0(CTitleAHelp* self);
-extern "C" void func_801CAE9C(CItemBoxGrid* self);
+extern "C" void UnloadItemBox(CItemBoxGrid* self);
 extern "C" int GetField61(CItemBoxGrid* self);
 extern "C" void setPresentationFlag__Q22cf13CfGameManagerFv(u8 enable);
 extern "C" int func_801C3E34(CBgTex* self);
 extern "C" int func_801C4114(CTitleAHelp* self);
 extern "C" void func_801C412C(CTitleAHelp* self);
-extern "C" int func_801CB038(CItemBoxGrid* self);
+extern "C" int IsItemBoxReady(CItemBoxGrid* self);
 extern "C" void func_801CB28C(CItemBoxGrid* self);
 extern "C" void func_801C3D54(CBgTex* self);
 extern "C" void func_801C3D7C(CBgTex* self, nw4r::lyt::DrawInfo* drawInfo);
-extern "C" void func_801CABC8(CItemBoxGrid* self);
-extern "C" void func_801CAD8C(CItemBoxGrid* self, nw4r::lyt::DrawInfo* drawInfo);
+extern "C" void UpdateItemBox(CItemBoxGrid* self);
+extern "C" void DrawItemBoxGrid(CItemBoxGrid* self, nw4r::lyt::DrawInfo* drawInfo);
 extern "C" void func_801C3FF0(CTitleAHelp* self);
 extern "C" void func_801C4080(CTitleAHelp* self, nw4r::lyt::DrawInfo* drawInfo);
-extern "C" int func_8013BE50();
+extern "C" int IsMenuState621F0();
 extern "C" void playUISound__FUl(u32 op);
 
 // Subobject dtors (retail keeps the C++ mangled names) and the game-side

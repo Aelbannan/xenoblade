@@ -90,7 +90,7 @@ void func_80096974(cf::CtrlPc* self) {
     if (flag28 != 0) {
         self->mField5C->mSub3ED4->vf10(0x2000, 1);
         if ((gmSub->mField4 & 0x10) != 0) {
-            func_8006BC1C(gmSub, 0x10);
+            cfCam_andcUnk04(gmSub, 0x10);
             if (self->mField5C->mSub3ED4->vf14(0x400) == 0) {
                 flag26 = 1;
             }
@@ -99,7 +99,7 @@ void func_80096974(cf::CtrlPc* self) {
     if (lock != 0) {
         if ((gmSub->mField4 & 0x10) == 0) {
             if (self->mField5C->mSub3ED4->vf14(0x2000) == 0) {
-                func_8006BBF4(gmSub, 0x10, 1);
+                cfCam_setClear04(gmSub, 0x10, 1);
                 flag27 = 1;
             }
         }
@@ -108,9 +108,9 @@ void func_80096974(cf::CtrlPc* self) {
         gmSub->vf09(vh->vf41());
     }
     if ((self->vf37()->mField10 & func_80098B74(0x13)) != 0) {
-        func_8006BBF4(gmSub, 0x20, 1);
+        cfCam_setClear04(gmSub, 0x20, 1);
     }
-    func_8006BBF4(gmSub, 3, self->mField5C->mSub3ED4->vf14(0x400) == 0);
+    cfCam_setClear04(gmSub, 3, self->mField5C->mSub3ED4->vf14(0x400) == 0);
     if ((self->vf37()->mField4 & func_80098B74(0x14)) != 0) {
         v4 = self->mField5C->mSub3ED4->vf14(0x1000);
         if (v4 != 0) {
@@ -361,7 +361,7 @@ void func_80097598(cf::CtrlPc* self) {
     }
     self->mField14 = lbl_eu_80666720;
     self->mField5C->mSub3E9C.v47(self->mFieldC);
-    func_800BE12C((u8*)&self->mField5C->mSub3E9C, 3, 0, -1, 1);
+    CfObjectMove_setAnimModeArgs((u8*)&self->mField5C->mSub3E9C, 3, 0, -1, 1);
     self->mField5C->mSub3E9C.v02(4);
 }
 
@@ -495,7 +495,7 @@ void func_80097C74(cf::CtrlPc* self) {
     }
     self->mField14 = lbl_eu_80666720;
     self->mField5C->mSub3E9C.v47(self->mFieldC);
-    func_800BE12C((u8*)&self->mField5C->mSub3E9C, 3, 0, -1, 1);
+    CfObjectMove_setAnimModeArgs((u8*)&self->mField5C->mSub3E9C, 3, 0, -1, 1);
     self->mField5C->mSub3E9C.v02(4);
 }
 

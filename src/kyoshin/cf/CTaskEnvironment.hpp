@@ -82,7 +82,7 @@ struct CTaskEnvGlobal {
 };
 
 // C-linkage import (retail symbol): env-light-control enable (monolib scn).
-extern "C" void func_804C1094(CTaskEnvLgtCtrlAccess* ctrl, int flag);
+extern "C" void scnLgtSetBlendBloom(CTaskEnvLgtCtrlAccess* ctrl, int flag);
 
 // Time-of-day record: seconds as float at +0x70, minute/hour/day/month carry
 // chain (+0x6C/+0x68/+0x64/+0x60) and a total counter at +0x5C. Written by
@@ -149,16 +149,16 @@ extern "C" int isManagerInitialized__Q22cf13CfGameManagerFv();
 extern "C" void getControllerValues__Q22cf13CfGameManagerFv(unsigned short* outA,
                                                        unsigned short* outB);
 extern "C" unsigned int getControllerWordA3BC__Q22cf13CfGameManagerFv();
-extern "C" void func_804C123C(CTaskEnvLgtCtrlAccess* ctrl, int flag);
-extern "C" void func_804C1270(CTaskEnvLgtCtrlAccess* ctrl, int flag);
-extern "C" void func_804C1600(CTaskEnvLgtCtrlAccess* ctrl, void* arg);
-extern "C" void* func_8004B3F0(void* dst, const void* src);
-extern "C" void* func_8004B60C(ml::CVec3* out, float x, float y, float z);
-extern "C" float func_8004CC74(float angle);
+extern "C" void scnLgtSetSinkBit1(CTaskEnvLgtCtrlAccess* ctrl, int flag);
+extern "C" void scnLgtSetParamIdle(CTaskEnvLgtCtrlAccess* ctrl, int flag);
+extern "C" void scnLgtBindLightArg(CTaskEnvLgtCtrlAccess* ctrl, void* arg);
+extern "C" void* copyVec3Words(void* dst, const void* src);
+extern "C" void* writeVec3f(ml::CVec3* out, float x, float y, float z);
+extern "C" float cosAnimFIdx(float angle);
 extern "C" void func_8005A374(CTimeLightGrp* grp);
 extern "C" void func_8049E374(u8* self, float a, float b);
 extern "C" void func_8049E350(u8* self, const void* src);
-extern "C" void func_8049347C(CVirtualLightObj* self, const ml::CVec4* src,
+extern "C" void scnVlApplyDir4C(CVirtualLightObj* self, const ml::CVec4* src,
                               f32 value);
 
 // Static-init table filled by sinit_80059D60 (160 bytes of floats) and the
@@ -187,7 +187,7 @@ extern "C" void func_804923F8(CTaskEnvScnMgr* mgr, int flag);
 extern "C" void* func_80496004(void* scene);
 extern "C" CTimeLightGrp* __ct__CTimeLightGrp(CTimeLightGrp* self,
                                                void* parent);
-extern "C" CVirtualLightObj* func_804930BC(CTaskEnvScnMgr* mgr, const u8* slot,
+extern "C" CVirtualLightObj* scnVlCreateAmb(CTaskEnvScnMgr* mgr, const u8* slot,
                                            const void* color);
 extern "C" CVirtualLightObj* func_804933AC(CTaskEnvScnMgr* mgr, const u8* slot,
                                            const void* color, const void* dir);

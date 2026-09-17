@@ -523,7 +523,7 @@ extern "C" void func_8013CBB4(u32 arg0, int id, int arg2, int arg3) {
         if (lbl_eu_80664088 == NULL) {
             return;
         }
-        if (func_801361E8(
+        if (BdatGetU8Direct(
                 (u32)lbl_eu_80573D18[func_80138138(id - 0x220)],
                 lbl_eu_8050097C, id - 0x220) == 2) {
             return;
@@ -745,7 +745,7 @@ extern "C" void func_8013CBB4(u32 arg0, int id, int arg2, int arg3) {
                 startNode->mPrev = temp;
             }
         }
-        u8 v = func_8013600C(&lbl_eu_8050097C[0xa],
+        u8 v = BdatGetU8ByTableKey(&lbl_eu_8050097C[0xa],
                              &lbl_eu_8050097C[0x17], id - 0x20c8);
         func_8013B88C(v);
         break;
@@ -1399,7 +1399,7 @@ extern "C" IUIWindow* func_8013DB6C(int first, u32 second, s32 third,
     }
     if (first == 1) {
         int idx = (int)func_80138138(second);
-        if ((u8)func_801361E8((u32)lbl_eu_80573D18[idx], lbl_eu_8050097C,
+        if ((u8)BdatGetU8Direct((u32)lbl_eu_80573D18[idx], lbl_eu_8050097C,
                               second) == 2) {
             return NULL;
         }
@@ -2611,7 +2611,7 @@ int func_8013F3F0(CFlagBuffer* flagBuf) {
 // per-item rows this invocation owns by probing the shared flag buffer, then
 // walks that row's four entries applying per-type updates to the signed byte
 // table (field_0xC4): type 1 counts up toward the row cap, types 3/5 set the
-// deferred state, type 2/6 absorb via func_80158068/func_80159C04, type 4
+// deferred state, type 2/6 absorb via CItem_sumFamilyByte6/CItem_consumeFamilyCnt, type 4
 // plain count. Afterwards unblocks the 0xFC/0xFD flag-memory states.
 // Returns 1 when the buffer's flag-memory word changed.
 int func_8013F6C4(CFlagBuffer* self, u32 arg1, u32 arg2, u32 arg3, u32 arg4) {
@@ -2739,7 +2739,7 @@ int func_8013F6C4(CFlagBuffer* self, u32 arg1, u32 arg2, u32 arg3, u32 arg4) {
                         }
                         if (ok) {
                             int stored = 0;
-                            if (func_80158068((u16)arg2) >=
+                            if (CItem_sumFamilyByte6((u16)arg2) >=
                                 row->field_0x12[j]) {
                                 cells[j] = 1;
                                 stored = 1;
@@ -2748,7 +2748,7 @@ int func_8013F6C4(CFlagBuffer* self, u32 arg1, u32 arg2, u32 arg3, u32 arg4) {
                             if (self->field_0x08 != 2) {
                                 func_8013E704(self->field_0x52,
                                               (u32)(u16)arg2,
-                                              (u32)(u8)func_80158068(val),
+                                              (u32)(u8)CItem_sumFamilyByte6(val),
                                               row->field_0x12[j]);
                             }
                             if (stored) {
@@ -2756,7 +2756,7 @@ int func_8013F6C4(CFlagBuffer* self, u32 arg1, u32 arg2, u32 arg3, u32 arg4) {
                                     lbl_eu_806640EC, &lbl_eu_80500A50[9],
                                     (u32)(u16)arg2);
                                 if ((u32)((u16)col - 0xA) <= 1) {
-                                    func_80159C04((u32)(u16)arg2,
+                                    CItem_consumeFamilyCnt((u32)(u16)arg2,
                                                   row->field_0x12[j]);
                                 }
                             }
@@ -2805,7 +2805,7 @@ int func_8013F6C4(CFlagBuffer* self, u32 arg1, u32 arg2, u32 arg3, u32 arg4) {
                                             if (self->field_0x08 != 2) {
                                                 func_8013E704(
                                                     self->field_0x52, val,
-                                                    (u32)(u8)func_80158068(
+                                                    (u32)(u8)CItem_sumFamilyByte6(
                                                         val),
                                                     row->field_0x12[j]);
                                             }
@@ -2813,7 +2813,7 @@ int func_8013F6C4(CFlagBuffer* self, u32 arg1, u32 arg2, u32 arg3, u32 arg4) {
                                                 lbl_eu_806640EC,
                                                 &lbl_eu_80500A50[9], val);
                                             if ((u32)((u16)col - 0xA) <= 1) {
-                                                func_80159C04(
+                                                CItem_consumeFamilyCnt(
                                                     val,
                                                     row->field_0x12[j]);
                                             }
@@ -2838,14 +2838,14 @@ int func_8013F6C4(CFlagBuffer* self, u32 arg1, u32 arg2, u32 arg3, u32 arg4) {
                                         if (self->field_0x08 != 2) {
                                             func_8013E704(
                                                 self->field_0x52, val,
-                                                (u32)(u8)func_80158068(val),
+                                                (u32)(u8)CItem_sumFamilyByte6(val),
                                                 row->field_0x12[j]);
                                         }
                                         u32 col = getBdatStringColumnValue(
                                             lbl_eu_806640EC,
                                             &lbl_eu_80500A50[9], val);
                                         if ((u32)((u16)col - 0xA) <= 1) {
-                                            func_80159C04(
+                                            CItem_consumeFamilyCnt(
                                                 val, row->field_0x12[j]);
                                         }
                                     }
@@ -2959,9 +2959,9 @@ int func_80140854(CItemQuery* self, u32 arg1, u32 arg2) {
         return 0;
     }
     // No explicit local: MWCC CSEs the field_0x04 load until the
-    // func_80158068 call forces a reload in the type-2 tail.
+    // CItem_sumFamilyByte6 call forces a reload in the type-2 tail.
     // No explicit item-id local: MWCC CSEs the field_0x04 load until the
-    // func_80158068 call forces a reload in the type-2 tail.
+    // CItem_sumFamilyByte6 call forces a reload in the type-2 tail.
     if ((u32)(self->field_0x04 - 0xFC) <= 3) {
         return 1;
     }
@@ -2972,7 +2972,7 @@ int func_80140854(CItemQuery* self, u32 arg1, u32 arg2) {
         if ((s8)self->field_0xC4[arg1 * 4 + arg2] >= 1) {
             return 1;
         }
-        if ((int)func_80158068(row->field_0x0A[arg2]) >=
+        if ((int)CItem_sumFamilyByte6(row->field_0x0A[arg2]) >=
             (int)row->field_0x12[arg2]) {
             return 1;
         }

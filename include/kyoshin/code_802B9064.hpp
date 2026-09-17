@@ -10,5 +10,5 @@ struct CVoiceHandle;
 // NonMatching retail CVS_* objects); extern "C" keeps the refs linkable
 // since MWCC would otherwise mangle C++ free functions.
 extern "C" CVoiceHandle* func_802A330C(int size, int align);
-extern "C" bool func_802A34E4(u32 size);
+extern "C" bool CCharVoiceMan_AllocVoiceArena(u32 size);
 extern "C" int func_802A3D54(CCharVoice* voicePtr, int voiceId, int arg);

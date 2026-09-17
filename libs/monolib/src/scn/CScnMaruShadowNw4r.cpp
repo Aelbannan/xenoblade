@@ -255,7 +255,7 @@ void func_8048D500(CScnMaruShadowNw4r* self, ShadowCtx* ctx) {
         float cx = *(float*)((char*)rec + 0xC);
         float cy = *(float*)((char*)rec + 0x1C);
         float cz = *(float*)((char*)rec + 0x2C);
-        void* obj = func_8048315C(ctx);
+        void* obj = simGetLeafActData(ctx);
         float dx = *(float*)((char*)obj + 0xB8) - cx;
         float dy = *(float*)((char*)obj + 0xBC) - cy;
         float dz = *(float*)((char*)obj + 0xC0) - cz;

@@ -98,15 +98,15 @@ unsigned int func_8020A5DC(void);
 void func_80209F2C(void);
 void func_8020A6B0(CfGimmickReg* reg, const CfGimmickVec3* point,
                    unsigned short c, float d, int e, int g);
-void func_80159C04(unsigned int a, int b);
-void func_801586D4(unsigned int a, unsigned int b);
+void CItem_consumeFamilyCnt(unsigned int a, int b);
+void CItem_thunkAllocRecord(unsigned int a, unsigned int b);
 void func_8020974C(unsigned int a, int b);
 int func_80209754(u32 mask, cf::CfGimmick* gimmick, const CfGimmickVec3* point,
                   const f32* ang, u32 partyId);
 void func_80208C48(u32 id, const CfGimmickVec3* pos);
 u32 getQueuedFileEventCount__Q22cf13CfGameManagerFv(void);
 u32 getResourceFromTable__Q22cf13CfGameManagerFv(u32 a);
-unsigned int func_801587E8(unsigned short id);
+unsigned int CItem_findRecByFamily(unsigned short id);
 void* func_8003AA34(void);
 void func_80208F34(cf::CfGimmick* self, float* out, void* unused, void* holder);
 void func_80209020(cf::CfGimmick* self, cf::CfGimmick* out, void* unused, void* holder);

@@ -291,7 +291,7 @@ bool func_8015C294(unsigned int* param1, int param2) {
 
 // func_8015C2B0: apply an effect to a target object. Resolves the effect
 // data source from the manager, ORs the (flags>>7)&1 bit with the result
-// of func_80053F40 (data holder + 0x10, type&0xFF) to get a boolean flag,
+// of hasParamByteVal (data holder + 0x10, type&0xFF) to get a boolean flag,
 // then attaches the target to the manager, drives its setEffLockFg_ method
 // with the flag, and dispatches a per-type handler (byte table
 // lbl_eu_80501DF8: 1 = copy the data string into the target, 2 = scale
@@ -302,7 +302,7 @@ void func_8015C2B0(CCharEffect* self, cf::CfObjectEff* eff, u32 type, u32 flags)
 
     u8* p = ((CCharEffectMgr*)self->mManager)->field_C4;
     p += 0x10;
-    u32 x = ((flags >> 7) & 1) | func_80053F40(p, type & 0xFF);
+    u32 x = ((flags >> 7) & 1) | hasParamByteVal(p, type & 0xFF);
     bool bitFlag = (x != 0);
     const char* name = ((CScnItemModel*)((CCharEffectMgr*)self->mManager)->field_98)->vfunc18();
     if (strstr(name, lbl_eu_80501E38) != NULL && type == 3) {
@@ -321,7 +321,7 @@ void func_8015C2B0(CCharEffect* self, cf::CfObjectEff* eff, u32 type, u32 flags)
         eff->CfObject_setObjScale(lbl_eu_80667530 * d->field_2E8);
     }
 
-    func_80484EB0((u8*)((CCharEffectMgr*)self->mManager)->field_98);
+    simGetLeafDist7B0((u8*)((CCharEffectMgr*)self->mManager)->field_98);
     setChildF50G_((u8*)eff);
 }
 

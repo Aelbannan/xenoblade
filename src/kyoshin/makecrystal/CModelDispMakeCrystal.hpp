@@ -32,7 +32,7 @@ struct CModelDispMakeCrystalFull {
     u8 field_2DD2;                // +0x2DD2
 };
 
-// CMCryAnim folded into cf::CActParamAnimGame (vtable +0xE0 is func_8005A524) - use void* vptr to avoid header conflict
+// CMCryAnim folded into cf::CActParamAnimGame (vtable +0xE0 is resetAnimGame) - use void* vptr to avoid header conflict
 
 // (was CMCryMove: virtual dispatch on the crystal-charged actor's embedded
 // CfObjectMove at +0x3e9c, at +0x74 (no args) and +0x148 (index arg). These
@@ -52,7 +52,7 @@ struct CModelDispMakeCrystalFull {
 // directly.)
 class CResLookup;
 
-// 8-byte holder around a CfObjEnumList* (func_80043D90 / __dt__80043E88).
+// 8-byte holder around a CfObjEnumList* (CTaskGame_enumListCtor / __dt__80043E88).
 struct CMCryListHolder {
     cf::CfObjEnumList* list;   // 0x0
     u32 handle;   // 0x4
@@ -115,7 +115,7 @@ struct CMCrystalDispSub {
 
 // 8-byte param record written at each crystal slot entry's +2 (entries have
 // an 8-byte stride, so the record overlaps 2 bytes into the next slot). Same
-// layout as CMCCrystalBoxParam; copied by func_80213E20.
+// layout as CMCCrystalBoxParam; copied by copyCrystalBoxParam.
 struct CMCrySlotParam {
     u16 m0;   // +0x00
     u16 m2;   // +0x02
@@ -186,13 +186,13 @@ extern "C" void func_8021FC28(CModelDispMakeCrystal*, u8);
 extern "C" void func_8021FD44(CModelDispMakeCrystal*);
 extern "C" void func_802200A8(void*);
 extern "C" void func_80220954(void*, int, u8);
-// func_8004392C is owned by kyoshin/CTaskGame.hpp (single unified decl).
+// CTaskGame_openVision is owned by kyoshin/CTaskGame.hpp (single unified decl).
 
 // C-linkage helpers for the cylinder-count finalize (func_8021E5C0):
 // item-step-list setup and scrollbar refresh.
 extern "C" void func_80158300(void* item, int mode);
-extern "C" void func_801570A0(void* item, u8 flag);
-extern "C" void func_8015704C(void* dst, const void* src);
+extern "C" void CItemData_callVf0C(void* item, u8 flag);
+extern "C" void CItem_copyRecMasked(void* dst, const void* src);
 extern "C" void* CItem_initItemImplInstances(void* item);
 extern "C" void func_801F3850(void* scrollbar, u16 index);
 extern "C" void func_8021E840(void* entries, u16 idx);

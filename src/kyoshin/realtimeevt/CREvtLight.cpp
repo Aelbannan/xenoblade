@@ -34,7 +34,7 @@ struct SceneResMgrView {
 // Resource globals / imports (C ABI from external TUs). func_804C1BA0 is
 // declared in CfObjectMap.hpp as (void*, const void*, int) to cover both
 // const char* (CREvtLight) and void* (CfObjectMap) call sites.
-extern "C" void func_804C1D7C(void* mgr, void* handle);
+extern "C" void scnLgtRemoveLgtItem(void* mgr, void* handle);
 extern "C" void* func_804C1BA0(void* mgr, const void* name, int flag);
 extern "C" u32   func_80180940(void);
 
@@ -82,7 +82,7 @@ CREvtLight* __ct__801C3604(CREvtLight* self, int dealloc_flag) {
         if (oldResource != nullptr) {
             // Release old resource through CScn manager
             void* mgr = reinterpret_cast<SceneResMgrView*>(lbl_eu_80663E14)->resMgr;
-            func_804C1D7C(mgr, oldResource);
+            scnLgtRemoveLgtItem(mgr, oldResource);
             self->field_20 = nullptr;
 
             // Notify the object behind the game manager's +0x2F3C pointer.
@@ -118,7 +118,7 @@ void func_801C36C4(CREvtLight* self, const char* resourceName, u32 fieldValue) {
     // Release old resource
     if (self->field_20 != nullptr) {
         void* mgr = reinterpret_cast<SceneResMgrView*>(lbl_eu_80663E14)->resMgr;
-        func_804C1D7C(mgr, self->field_20);
+        scnLgtRemoveLgtItem(mgr, self->field_20);
         self->field_20 = nullptr;
 
         if (cf::CfGameManager::getGameSubManager() != nullptr) {

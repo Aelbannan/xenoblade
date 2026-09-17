@@ -43,29 +43,29 @@ extern "C" {
 // ============================================================
 extern "C" {
     void getEventHalfwordPair__Q22cf13CfGameManagerFv(u16*, u16*);
-    int func_800A86D8(int, int);
-    int func_800A85D8(u8);
-    int func_800A84FC(u8);
-    int func_800A87E0(int);
-    int func_800A8704(int);
-    int func_800A88C8(int);
-    int func_800A89C0(int);
-    int func_800A8AAC(int);
-    int func_800A86AC(int, int, int);
-    u32 func_80062430(u32*, int, u32*);
+    int KyoshinHeap_GetPtrTblB(int, int);
+    int KyoshinHeap_GetBaseTbl(u8);
+    int KyoshinHeap_GetBaseTblOff(u8);
+    int KyoshinHeap_GetBlk90Off32(int);
+    int KyoshinHeap_GetBlk90(int);
+    int KyoshinHeap_GetBlk90OffFA(int);
+    int KyoshinHeap_GetBlk94(int);
+    int KyoshinHeap_GetBlk98(int);
+    int KyoshinHeap_GetPtrTblA(int, int, int);
+    u32 CfRes_lookupNameTable(u32*, int, u32*);
     int func_800AA600(void*);
-    bool func_800A9068(void*);
-    bool func_800A8BD8(void*);
-    void func_800A8C68(void*);
-    bool func_800A9024(void*);
-    void func_800A9344(void*, int);
-    void func_800B79A4(void*);
-    void func_800B7A18(void);
+    bool KyoshinHeap_HasActive54(void*);
+    bool KyoshinHeap_Contains38(void*);
+    void KyoshinHeap_Free38(void*);
+    bool KyoshinHeap_Contains78(void*);
+    void KyoshinHeap_Free78(void*, int);
+    void walkReslistBE8vt(void*);
+    void triggerObjsByType(void);
     void func_801BFE8C(u32, u32, u32);
     void func_804CC1BC(void*, void*);
     void func_804CC1D8(void*, void*);
-    s32 func_800B1C40();
-    u32 func_80061FFC(void);
+    s32 gflagGateMask8();
+    u32 CfRes_getAllocHandle(void);
     bool processEventQueueB__Q22cf13CfGameManagerFv(void);
     void cancel__11CDeviceFileFP11CFileHandle(void*);
     void waitForDrawDone__9CDeviceVIFv(void);
@@ -75,10 +75,10 @@ extern "C" {
     void __dl__FPv(void*);
     void CfRes_orBits_649B4(void*, int);
     void func_800A9CD0(void);
-    void* func_80066E7C(ResInfoEntry*, u32);
-    void* func_80066CF8(ResInfoEntry*);
-    void* func_80066DAC(ResInfoEntry*, u32*);
-    int func_800A8C90(void);
+    void* CfRes_findEntryById(ResInfoEntry*, u32);
+    void* CfRes_findKypEntryA(ResInfoEntry*);
+    void* CfRes_findKypEntryB(ResInfoEntry*, u32*);
+    int KyoshinHeap_GetCount38(void);
 }
 
 // Main per-entry update tick (defined below).
@@ -92,33 +92,36 @@ extern "C" bool testWordFlag(const u32* p, u32 mask);
 // Tiny functions
 // ============================================================
 
-extern "C" void func_eu_80066938() {
+extern "C" void CfRes_notifyAudioManager() {
     func_800A9CD0();
 }
 
-extern "C" bool func_80068998() { return true; }
-extern "C" int func_800689B8() { return 4; }
-extern "C" int func_800689C8() { return 2; }
-extern "C" int func_800689E0() { return 0x200; }
-extern "C" int func_800689E8() { return 0x200; }
-extern "C" int func_800689F0() { return 0x200; }
-extern "C" int func_800689F8() { return 0x20; }
-extern "C" int func_80068A00() { return 0x200; }
-extern "C" int func_80068A08() { return 0x200; }
-extern "C" int func_80068A10() { return 0x200; }
-extern "C" int func_eu_800693E8() { return 0x200; }
-extern "C" int func_8006846C(void* self, int a) { return a * 11 + 13; }
-extern "C" int func_800689AC() { return 0x10004; }
+extern "C" void CfRes_noopEntry() {
+}
+
+extern "C" bool CfRes_isEntryValid() { return true; }
+extern "C" int CfRes_getSlotCount4() { return 4; }
+extern "C" int CfRes_getSlotCount2() { return 2; }
+extern "C" int CfRes_getLimit512a() { return 0x200; }
+extern "C" int CfRes_getLimit512b() { return 0x200; }
+extern "C" int CfRes_getLimit512c() { return 0x200; }
+extern "C" int CfRes_getLimit32() { return 0x20; }
+extern "C" int CfRes_getLimit512d() { return 0x200; }
+extern "C" int CfRes_getLimit512e() { return 0x200; }
+extern "C" int CfRes_getLimit512f() { return 0x200; }
+extern "C" int CfRes_getLimit512g() { return 0x200; }
+extern "C" int CfRes_hashIndex11(void* self, int a) { return a * 11 + 13; }
+extern "C" int CfRes_getResKindMask() { return 0x10004; }
 
 // Accessors on the 0x3C-byte resource record. The leading unused int is the
 // retail hidden argument: the object arrives in r4 (MWCC free-function ABI),
 // leaving r3 free for the return value.
-extern "C" void func_800665F4(int, ResInfoEntry* self) {
+extern "C" void CfRes_releaseVoiceSlot(int, ResInfoEntry* self) {
     u8 b = self->field_0x32;
     if (b < 8) func_801BFA64(b + 5);
 }
 
-extern "C" u32 func_80066160(int, ResInfoEntry* self) {
+extern "C" u32 CfRes_getField18IfType10(int, ResInfoEntry* self) {
     u8 t = self->field_0x33;
     u32 ret = 0;
     s16 v = self->field_0x34;
@@ -126,7 +129,7 @@ extern "C" u32 func_80066160(int, ResInfoEntry* self) {
     return ret;
 }
 
-extern "C" u32 func_80066184(int, ResInfoEntry* self) {
+extern "C" u32 CfRes_getField18IfType0(int, ResInfoEntry* self) {
     u8 t = self->field_0x33;
     u32 ret = 0;
     s16 v = self->field_0x34;
@@ -134,88 +137,88 @@ extern "C" u32 func_80066184(int, ResInfoEntry* self) {
     return ret;
 }
 
-extern "C" int func_8006626C(int, ResInfoEntry* self) {
+extern "C" int CfRes_getVoiceSlotType9(int, ResInfoEntry* self) {
     u8 t = self->field_0x33;
     int v = self->field_0x34;
     if (t == 9 && v >= 0) return func_801BFA64(v + 2);
     return v;
 }
 
-extern "C" int func_8006611C(int, ResInfoEntry* self) {
+extern "C" int CfRes_getType10AudioSlot(int, ResInfoEntry* self) {
     int ret = 0;
     u8 t = self->field_0x33;
     s16 v = self->field_0x34;
-    if (t == 10 && v < 3) ret = func_800A8AAC(v);
+    if (t == 10 && v < 3) ret = KyoshinHeap_GetBlk98(v);
     return ret;
 }
 
 // ============================================================
-// func_80062430 wrapper functions
+// CfRes_lookupNameTable wrapper functions
 // ============================================================
 
-extern "C" u32 func_8006638C(int unused, ResInfoEntry* self) {
+extern "C" u32 CfRes_lookupNameSlot0(int unused, ResInfoEntry* self) {
     u32 result = 0;
     if (self != 0 && self->data != 0) {
-        return func_80062430(self->data, 0, &result);
+        return CfRes_lookupNameTable(self->data, 0, &result);
     }
     return 0;
 }
 
-extern "C" u32 func_800663D8(int unused, ResInfoEntry* self) {
+extern "C" u32 CfRes_lookupNameSlot1(int unused, ResInfoEntry* self) {
     u32 result = 0;
     if (self != 0 && self->data != 0) {
-        return func_80062430(self->data, 1, &result);
+        return CfRes_lookupNameTable(self->data, 1, &result);
     }
     return 0;
 }
 
-extern "C" u32 func_80066424(int unused, ResInfoEntry* self) {
+extern "C" u32 CfRes_lookupNameSlot1b(int unused, ResInfoEntry* self) {
     u32 result = 0;
     if (self != 0) {
         u32* r = self->data;
         if (r != 0) {
-            func_80062430(r, 1, &result);
+            CfRes_lookupNameTable(r, 1, &result);
         }
     }
     return result;
 }
 
-extern "C" u32 func_8006646C(int unused, ResInfoEntry* self) {
+extern "C" u32 CfRes_lookupNameSlot4(int unused, ResInfoEntry* self) {
     u32 result = 0;
     if (self != 0 && self->data != 0) {
-        return func_80062430(self->data, 4, &result);
+        return CfRes_lookupNameTable(self->data, 4, &result);
     }
     return 0;
 }
 
-extern "C" u32 func_800664B8(int unused, ResInfoEntry* self) {
+extern "C" u32 CfRes_lookupNameSlot2cached(int unused, ResInfoEntry* self) {
     u32 result = 0;
     if (self != 0 && self->data != 0) {
-        func_80062430(self->data, 2, &result);
+        CfRes_lookupNameTable(self->data, 2, &result);
     }
     return self->field_0x10;
 }
 
-extern "C" u32 func_8006650C(int unused, ResInfoEntry* self) {
+extern "C" u32 CfRes_lookupNameSlot2(int unused, ResInfoEntry* self) {
     u32 result = 0;
     if (self != 0) {
         u32* r = self->data;
         if (r != 0) {
-            func_80062430(r, 2, &result);
+            CfRes_lookupNameTable(r, 2, &result);
         }
     }
     return result;
 }
 
-extern "C" u32 func_80066554(int unused, ResInfoEntry* self) {
+extern "C" u32 CfRes_lookupNameSlot3(int unused, ResInfoEntry* self) {
     u32 result = 0;
     if (self != 0 && self->data != 0) {
-        return func_80062430(self->data, 3, &result);
+        return CfRes_lookupNameTable(self->data, 3, &result);
     }
     return 0;
 }
 
-extern "C" void func_800665A0(int unused, ResInfoEntry* self) {
+extern "C" void CfRes_abortEntryIO(int unused, ResInfoEntry* self) {
     CFileHandle* handle = self->field_0x28;
     if (handle != 0) {
         CDeviceFile::cancel(handle);
@@ -229,13 +232,13 @@ extern "C" void func_800665A0(int unused, ResInfoEntry* self) {
 }
 
 // ============================================================
-// func_80065F24 (0x90)
+// CfRes_resolveEventResource (0x90)
 // ============================================================
-extern "C" void func_80065F24(int unused, ResInfoEntry* param) {
+extern "C" void CfRes_resolveEventResource(int unused, ResInfoEntry* param) {
     if (param->field_0x10 == 0) {
         u16 a, b;
         getEventHalfwordPair__Q22cf13CfGameManagerFv(&a, &b);
-        u32 result = (u32)func_80066E7C(param, (b << 10) | ((a << 20) | 0x60000000));
+        u32 result = (u32)CfRes_findEntryById(param, (b << 10) | ((a << 20) | 0x60000000));
         if (result != 0) {
             u32* fc18 = lbl_eu_8065FC18;
             if (fc18 != 0) {
@@ -248,40 +251,40 @@ extern "C" void func_80065F24(int unused, ResInfoEntry* param) {
 }
 
 // ============================================================
-// func_eu_80066940 (0x4C)
+// CfRes_publishBdatResource (0x4C)
 // ============================================================
-extern "C" void func_eu_80066940(int unused, ResInfoEntry* self) {
+extern "C" void CfRes_publishBdatResource(int unused, ResInfoEntry* self) {
     void* result = self->field_0x2C->getResourceBase(self, 0);
-    CBdat::func_8003AA78(1, result);
+    CBdat::setBdatEntry(1, result);
     lbl_eu_80663E28 |= 0x2000;
 }
 
 // ============================================================
-// func_80065FB4 (0x168) - switch dispatch
+// CfRes_getTypeSlotValue (0x168) - switch dispatch
 // ============================================================
 // The entry record arrives in r4 (leading unused int keeps the retail
 // free-function ABI, leaving r3 free for the default return 0). Dispatches
 // on the entry type: types 0-4 sum an audio-manager slot value with a
 // subtype-indexed offset, type 5 reads the bank base, and types 6-10 map
 // the entry index (guarded < 3) through per-type accessors.
-extern "C" int func_80065FB4(int unused, ResInfoEntry* self, int param) {
+extern "C" int CfRes_getTypeSlotValue(int unused, ResInfoEntry* self, int param) {
     int ret = 0;
     u8 type = self->field_0x33;
     u8 subtype = self->field_0x32;
     s16 v34 = self->field_0x34;
 
     switch (type) {
-    case 0: ret = func_800A85D8(subtype) + func_800A86D8(param, 0); break;
-    case 1: ret = func_800A85D8(subtype) + func_800A86D8(param, 1); break;
-    case 2: ret = func_800A85D8(subtype) + func_800A86D8(param, 2); break;
-    case 3: ret = func_800A85D8(subtype) + func_800A86D8(param, 3); break;
-    case 4: ret = func_800A85D8(subtype) + func_800A86D8(param, 4); break;
-    case 5: ret = func_800A84FC(subtype); break;
-    case 6: if (v34 < 3) ret = func_800A87E0(v34); break;
-    case 7: if (v34 < 3) ret = func_800A8704(v34); break;
-    case 8: if (v34 < 3) ret = func_800A88C8(v34); break;
-    case 9: if (v34 < 3) ret = func_800A89C0(v34); break;
-    case 10: if (v34 < 3) ret = func_800A8AAC(v34); break;
+    case 0: ret = KyoshinHeap_GetBaseTbl(subtype) + KyoshinHeap_GetPtrTblB(param, 0); break;
+    case 1: ret = KyoshinHeap_GetBaseTbl(subtype) + KyoshinHeap_GetPtrTblB(param, 1); break;
+    case 2: ret = KyoshinHeap_GetBaseTbl(subtype) + KyoshinHeap_GetPtrTblB(param, 2); break;
+    case 3: ret = KyoshinHeap_GetBaseTbl(subtype) + KyoshinHeap_GetPtrTblB(param, 3); break;
+    case 4: ret = KyoshinHeap_GetBaseTbl(subtype) + KyoshinHeap_GetPtrTblB(param, 4); break;
+    case 5: ret = KyoshinHeap_GetBaseTblOff(subtype); break;
+    case 6: if (v34 < 3) ret = KyoshinHeap_GetBlk90Off32(v34); break;
+    case 7: if (v34 < 3) ret = KyoshinHeap_GetBlk90(v34); break;
+    case 8: if (v34 < 3) ret = KyoshinHeap_GetBlk90OffFA(v34); break;
+    case 9: if (v34 < 3) ret = KyoshinHeap_GetBlk94(v34); break;
+    case 10: if (v34 < 3) ret = KyoshinHeap_GetBlk98(v34); break;
     }
     return ret;
 }
@@ -300,7 +303,7 @@ extern "C" bool func_800661A8(int unused, ResInfoEntry* entry, u32 value, u32 pa
     u32 mask = 0;
     u8 type = entry->field_0x33;
     switch (type) {
-    case 0: mask = func_800A86AC(slot, type - 1, 0); break;
+    case 0: mask = KyoshinHeap_GetPtrTblA(slot, type - 1, 0); break;
     case 1: mask = 0x10000; break;
     case 2: mask = 0x32000; break;
     case 3: mask = 0xC8000; break;
@@ -315,13 +318,13 @@ extern "C" bool func_800661A8(int unused, ResInfoEntry* entry, u32 value, u32 pa
 }
 
 // ============================================================
-// func_80066290 (0xE4)
+// CfRes_cacheOrPublishSound (0xE4)
 // ============================================================
 // Entry record arrives in r4 (retail hidden first arg in r3). Type 10 caches
 // the resource base in field_0x10; type 9 publishes it to the sound manager.
 // Computing slot (= idx+2) before the virtual call lets MWCC reuse the idx
 // register (r5) for the call's 0 argument, matching retail allocation.
-extern "C" void func_80066290(int unused, ResInfoEntry* self) {
+extern "C" void CfRes_cacheOrPublishSound(int unused, ResInfoEntry* self) {
     u8 type = self->field_0x33;
     s16 idx = self->field_0x34;
     if (type == 10) {
@@ -341,20 +344,20 @@ extern "C" void func_80066290(int unused, ResInfoEntry* self) {
 }
 
 // ============================================================
-// func_8006660C (0x108)
+// CfRes_acquireSoundEntry (0x108)
 // ============================================================
 // Object arrives in r4 (retail hidden first arg in r3). Resolves the base
-// via func_80066CF8, caches it in field_0x10 (registered in the FC18 list),
+// via CfRes_findKypEntryA, caches it in field_0x10 (registered in the FC18 list),
 // then publishes the entry to the sound manager (subtype -> slot idx+5) and
 // raises bit 11 (0x800).
-extern "C" void func_8006660C(int unused, ResInfoEntry* self) {
-    void* r = func_80066CF8(self);
+extern "C" void CfRes_acquireSoundEntry(int unused, ResInfoEntry* self) {
+    void* r = CfRes_findKypEntryA(self);
     if (self->field_0x10 == 0 && r != 0 && lbl_eu_8065FC18 != 0) {
         self->field_0x10 = (u32)r;
         func_804CC1BC(lbl_eu_8065FC18, r);
     }
     u32 out;
-    void* entry = func_80066DAC(self, &out);
+    void* entry = CfRes_findKypEntryB(self, &out);
     if (!(self->field_0x00 & 0x800) && entry != 0 && self->field_0x32 < 8) {
         int idx = self->field_0x32 + 5;
         func_801BFA64(idx);
@@ -367,13 +370,13 @@ extern "C" void func_8006660C(int unused, ResInfoEntry* self) {
 }
 
 // ============================================================
-// func_80066714 (0x74)
+// CfRes_releaseCachedBase (0x74)
 // ============================================================
-void func_80066714(ResInfoEntry* self, bool cleanup) {
+extern "C" void CfRes_releaseCachedBase(ResInfoEntry* self, bool cleanup) {
     u32* fc18 = lbl_eu_8065FC18;
     if (fc18 != 0) {
         if (self->field_0x10 != 0) {
-            func_800B79A4((u32*)self->field_0x10);
+            walkReslistBE8vt((u32*)self->field_0x10);
             if (cleanup) {
                 func_804CC1D8(fc18, (u32*)self->field_0x10);
                 self->field_0x10 = 0;
@@ -383,9 +386,9 @@ void func_80066714(ResInfoEntry* self, bool cleanup) {
 }
 
 // ============================================================
-// func_80066C74 (0x84)
+// CfRes_attachEntryData (0x84)
 // ============================================================
-void func_80066C74(ResInfoEntry* self, u32* data, u32 size) {
+extern "C" void CfRes_attachEntryData(ResInfoEntry* self, u32* data, u32 size) {
     if (self->field_0x2C->getFlags() & 0x18E) {
         func_80066788(self, 0, 0, 0);
         self->data = data;
@@ -395,9 +398,9 @@ void func_80066C74(ResInfoEntry* self, u32* data, u32 size) {
 }
 
 // ============================================================
-// func_80066CF8 (0xB4) - find entry by name
+// CfRes_findKypEntryA (0xB4) - find entry by name
 // ============================================================
-extern "C" __declspec(noinline) void* func_80066CF8(ResInfoEntry* self) {
+extern "C" __declspec(noinline) void* CfRes_findKypEntryA(ResInfoEntry* self) {
     void* base;
     u8* p;
     void* result = 0;
@@ -421,9 +424,9 @@ extern "C" __declspec(noinline) void* func_80066CF8(ResInfoEntry* self) {
 }
 
 // ============================================================
-// func_80066DAC (0xD0) - find entry by name, return index
+// CfRes_findKypEntryB (0xD0) - find entry by name, return index
 // ============================================================
-extern "C" __declspec(noinline) void* func_80066DAC(ResInfoEntry* self, u32* outIdx) {
+extern "C" __declspec(noinline) void* CfRes_findKypEntryB(ResInfoEntry* self, u32* outIdx) {
     *outIdx = 0;
     void* base;
     u8* p;
@@ -447,13 +450,13 @@ extern "C" __declspec(noinline) void* func_80066DAC(ResInfoEntry* self, u32* out
 }
 
 // ============================================================
-// func_80066E7C (0x120) - find entry by ID
+// CfRes_findEntryById (0x120) - find entry by ID
 // ============================================================
 // Resolves the resource base through the object's lookup and returns the
 // entry whose 8-byte name tag (at base+0x10 + i*0x10 + 8) matches the packed
 // token formatted by func_800AA33C. Categories 14/15 short-circuit on the
 // vtable+0x40 probe instead of the name table.
-extern "C" void* func_80066E7C(ResInfoEntry* self, u32 id) {
+extern "C" void* CfRes_findEntryById(ResInfoEntry* self, u32 id) {
     void* base;
     char* p;
     u32 cnt;
@@ -464,7 +467,7 @@ extern "C" void* func_80066E7C(ResInfoEntry* self, u32 id) {
     base = self->field_0x2C->getResourceBase(self, 0);
     cat = id >> 27;
     if (cat >= 0x0E && cat <= 0x0F) {
-        if (self->field_0x2C->vfunc0C(self) != 0) return base;
+        if (self->field_0x2C->isInUse(self) != 0) return base;
         return 0;
     }
     if (base != 0 && strcmp(lbl_eu_804FB380, (const char*)base) == 0) {
@@ -500,7 +503,7 @@ bool func_80066788(ResInfoEntry* self, bool paramLoad, bool paramFade, bool para
 
     // Bit set while a system-wide clear is active (raises the unload floor).
     bool hasClear = false;
-    if (func_800B1C40()) {
+    if (gflagGateMask8()) {
         if (lbl_eu_80663E28 & 0x10) {
             hasClear = true;
         }
@@ -524,11 +527,11 @@ bool func_80066788(ResInfoEntry* self, bool paramLoad, bool paramFade, bool para
                     }
                 }
                 CDeviceVI::waitForDrawDone();
-                if (func_800A8BD8(self->data)) {
-                    func_800A8C68(self->data);
+                if (KyoshinHeap_Contains38(self->data)) {
+                    KyoshinHeap_Free38(self->data);
                 } else {
-                    if (func_800A9024(self->data)) {
-                        func_800A9344(self->data, 1);
+                    if (KyoshinHeap_Contains78(self->data)) {
+                        KyoshinHeap_Free78(self->data, 1);
                     } else if (self->data != 0) {
                         deallocate__Q23mtl10MemManagerFPv(self->data);
                         self->data = 0;
@@ -539,11 +542,11 @@ bool func_80066788(ResInfoEntry* self, bool paramLoad, bool paramFade, bool para
                 if (self->field_0x2C->vfunc0B(self) != 0) {
                     CDeviceFile::cancel(self->field_0x28);
                     self->field_0x28 = 0;
-                    if (func_800A8BD8(self->data)) {
-                        func_800A8C68(self->data);
+                    if (KyoshinHeap_Contains38(self->data)) {
+                        KyoshinHeap_Free38(self->data);
                     } else {
-                        if (func_800A9024(self->data)) {
-                            func_800A9344(self->data, 1);
+                        if (KyoshinHeap_Contains78(self->data)) {
+                            KyoshinHeap_Free78(self->data, 1);
                         } else if (self->data != 0) {
                             deallocate__Q23mtl10MemManagerFPv(self->data);
                             self->data = 0;
@@ -554,7 +557,7 @@ bool func_80066788(ResInfoEntry* self, bool paramLoad, bool paramFade, bool para
                 if (paramLoad) {
                     // Fade start: pick an initial counter value from the global
                     // mode bits and the entry flags.
-                    int st = func_800A8C90();
+                    int st = KyoshinHeap_GetCount38();
                     // Global mode word is read twice (retail keeps two loads).
                     u32 f24a = *(volatile u32*)&lbl_eu_80663E24;
                     int mode = 1;
@@ -566,7 +569,7 @@ bool func_80066788(ResInfoEntry* self, bool paramLoad, bool paramFade, bool para
                         self->field_0x0C = (u32)self->data;
                         if (mode != 0) {
                             if (lbl_eu_8065FC18 != 0 && self->field_0x10 != 0) {
-                                func_800B79A4((void*)self->field_0x10);
+                                walkReslistBE8vt((void*)self->field_0x10);
                             }
                             self->field_0x36 = 2;
                         } else if (self->field_0x00 & 0x200) {
@@ -608,14 +611,14 @@ bool func_80066788(ResInfoEntry* self, bool paramLoad, bool paramFade, bool para
                             // Fade threshold reached: unregister from the shared
                             // list and notify the audio grid for ids 0x59..0x60.
                             if (lbl_eu_8065FC18 != 0 && self->field_0x10 != 0) {
-                                func_800B79A4((void*)self->field_0x10);
+                                walkReslistBE8vt((void*)self->field_0x10);
                             }
                             // Keep the raw id live in r3: retail computes
                             // id+0x10000 into a second register.
                             u32 id = self->field_0x30;
                             u32 n = id + 0x10000;
                             if ((u16)(n - 0x59) <= 7) {
-                                func_800B7A18();
+                                triggerObjsByType();
                             }
                             if (self->field_0x00 & 0x800) {
                                 func_801BFE8C(self->field_0x32 + 5, -1, 0);
@@ -627,7 +630,7 @@ bool func_80066788(ResInfoEntry* self, bool paramLoad, bool paramFade, bool para
                                 func_801BFA64(self->field_0x32 + 5);
                                 self->field_0x00 &= ~0x800;
                             }
-                            func_800A8C68((void*)self->field_0x0C);
+                            KyoshinHeap_Free38((void*)self->field_0x0C);
                             didWork = true;
                         }
                     }
@@ -637,7 +640,7 @@ bool func_80066788(ResInfoEntry* self, bool paramLoad, bool paramFade, bool para
                         func_801BFA64(self->field_0x32 + 5);
                         self->field_0x00 &= ~0x800;
                     }
-                    func_800A8C68((void*)self->data);
+                    KyoshinHeap_Free38((void*)self->data);
                     didWork = true;
                 }
             }
@@ -645,7 +648,7 @@ bool func_80066788(ResInfoEntry* self, bool paramLoad, bool paramFade, bool para
     } else {
         // No data attached: just drop any cached resource registration.
         if (self->field_0x10 != 0 && lbl_eu_8065FC18 != 0) {
-            func_800B79A4((void*)self->field_0x10);
+            walkReslistBE8vt((void*)self->field_0x10);
             func_804CC1D8(lbl_eu_8065FC18, (void*)self->field_0x10);
             self->field_0x10 = 0;
         }
@@ -656,14 +659,14 @@ bool func_80066788(ResInfoEntry* self, bool paramLoad, bool paramFade, bool para
         // reset the record back to its empty state.
         lbl_eu_80663E28 &= ~0x40;
         if (lbl_eu_8065FC18 != 0 && self->field_0x10 != 0) {
-            func_800B79A4((void*)self->field_0x10);
+            walkReslistBE8vt((void*)self->field_0x10);
             func_804CC1D8(lbl_eu_8065FC18, (void*)self->field_0x10);
             self->field_0x10 = 0;
         }
         u32 id = self->field_0x30;
         u32 n = id + 0x10000;
         if ((u16)(n - 0x59) <= 7) {
-            func_800B7A18();
+            triggerObjsByType();
         }
         self->data = 0;
         self->field_0x1C = 0;
@@ -678,9 +681,9 @@ bool func_80066788(ResInfoEntry* self, bool paramLoad, bool paramFade, bool para
 }
 
 // ============================================================
-// func_80068494 (0xD0) - search entry
+// CfRes_findGridEntry (0xD0) - search entry
 // ============================================================
-extern "C" void* func_80068494(void* self, u32 id, u32* outIdx, u32* outVal, int start, int end) {
+extern "C" void* CfRes_findGridEntry(void* self, u32 id, u32* outIdx, u32* outVal, int start, int end) {
     *outIdx = 0;
     *outVal = -1;
     if (id != 0) {
@@ -711,18 +714,18 @@ extern "C" void* func_80068494(void* self, u32 id, u32* outIdx, u32* outVal, int
 }
 
 // ============================================================
-// func_80068564 (0x58)
+// CfRes_findLowEntryOrMark (0x58)
 // ============================================================
-extern "C" void* func_80068564(u8* self, u32 id, u32* outIdx, u32* outVal) {
-    void* r = func_80068494(self, id, outIdx, outVal, 0x59, 0x61);
+extern "C" void* CfRes_findLowEntryOrMark(u8* self, u32 id, u32* outIdx, u32* outVal) {
+    void* r = CfRes_findGridEntry(self, id, outIdx, outVal, 0x59, 0x61);
     if (r == 0) CfRes_orBits_649B4(self, 2);
     return r;
 }
 
 // ============================================================
-// func_800685C8 (0x54) - search entries at 0x2D0
+// CfRes_findMidEntry (0x54) - search entries at 0x2D0
 // ============================================================
-extern "C" void* func_800685C8(u8* self, u32 id, u32* outIdx) {
+extern "C" void* CfRes_findMidEntry(u8* self, u32 id, u32* outIdx) {
     *outIdx = 0;
     if (id != 0) {
         // 0x4D entries at self+0x2D0 (logical indices 0xC..0x58). Keep a
@@ -739,9 +742,9 @@ extern "C" void* func_800685C8(u8* self, u32 id, u32* outIdx) {
 }
 
 // ============================================================
-// func_8006861C (0x64) - search entries at 0x16BC
+// CfRes_findHighEntryById (0x64) - search entries at 0x16BC
 // ============================================================
-u8* func_8006861C(u8* self, u32 id, u32* outIdx, u32* outVal) {
+extern "C" u8* CfRes_findHighEntryById(u8* self, u32 id, u32* outIdx, u32* outVal) {
     *outIdx = 0;
     *outVal = -1;
     if (id != 0) {
@@ -813,7 +816,7 @@ extern "C" bool func_800686E4(ResInfoContainer* self, bool param) {
     target = (ResGridEntry*)&self->grid[0].field_0x04;  // 0x14E0
     for (i = 0x59; i < 0x81; i++, base++, target++) {
         res = base->lookup->getResourceBase(target, 0);
-        if (res != 0 && func_800A8BD8(res)) {
+        if (res != 0 && KyoshinHeap_Contains38(res)) {
             bool unload;
             if (i >= 0x61) {
                 unload = (self->field_0x1ED0 <= minVal)
@@ -842,7 +845,7 @@ extern "C" bool func_800686E4(ResInfoContainer* self, bool param) {
                     }
                 }
             } else {
-                if (base->lookup->vfunc0C(target) != 0) {
+                if (base->lookup->isInUse(target) != 0) {
                     if (base->field_0x10 != 0) {
                         base->field_0x10 = 0;
                     }
@@ -884,16 +887,16 @@ found:
 }
 
 // ============================================================
-// func_800685BC (0xC) - wrapper
+// CfRes_findHighEntry (0xC) - wrapper
 // ============================================================
-extern "C" void* func_800685BC(u8* self, u32 id, u32* outIdx, u32* outVal) {
-    return func_80068494(self, id, outIdx, outVal, 0x61, 0x81);
+extern "C" void* CfRes_findHighEntry(u8* self, u32 id, u32* outIdx, u32* outVal) {
+    return CfRes_findGridEntry(self, id, outIdx, outVal, 0x61, 0x81);
 }
 
 // ============================================================
-// func_80067D38 (0x7C) - reset entries
+// CfRes_resetAllEntries (0x7C) - reset entries
 // ============================================================
-void func_80067D38(ResInfoEntry* entry) {
+void CfRes_resetAllEntries(ResInfoEntry* entry) {
     ResInfoEntry* e = entry;
     for (int i = 0; i < 0x82; i++, e++) {
         if (e->field_0x2C != 0) {
@@ -912,15 +915,15 @@ void func_80067D38(ResInfoEntry* entry) {
 }
 
 // ============================================================
-// func_80067DB4, 80067E78, 80067F10, 80067FE0, 80068078, 80068110, 80068254 - loop over entries
+// CfRes_initHighGrid, 80067E78, 80067F10, 80067FE0, 80068078, 80068110, 80068254 - loop over entries
 // ============================================================
 
-// func_80067DB4 (0xC4) - init entries
+// CfRes_initHighGrid (0xC4) - init entries
 // Zeroes the overlapping s16 state words that trail every gridLow record
 // (they physically overlay the following record's first bytes), then walks
 // the 0x16BC grid resolving each entry's resource base and clearing its own
 // trailing state words.
-extern "C" void func_80067DB4(u8* self) {
+extern "C" void CfRes_initHighGrid(u8* self) {
     // Zero the trailing s16 state words of each gridLow record (they
     // physically overlay the following record's first bytes). Written as an
     // offset loop so MWCC unrolls to r3-relative halfword stores.
@@ -940,10 +943,10 @@ extern "C" void func_80067DB4(u8* self) {
     }
 }
 
-// func_80067E78 (0x98) - load entries
+// CfRes_updateHighGrid (0x98) - load entries
 // Walks the 0x16BC grid (indices 0x61..0x80): for each entry whose resource
 // object resolves a base for the target record, run the main update.
-extern "C" void func_80067E78(u8* self, bool param) {
+extern "C" void CfRes_updateHighGrid(u8* self, bool param) {
     ResGridEntry* target = (ResGridEntry*)(self + 0x16C0);
     ResGridEntry* base = (ResGridEntry*)(self + 0x16BC);
     for (int i = 0x61; i < 0x81; i++) {
@@ -955,9 +958,9 @@ extern "C" void func_80067E78(u8* self, bool param) {
     }
 }
 
-// func_80067F10 (0xD0)
-extern "C" void func_80067F10(void* self, bool param) {
-    if (func_800A9068(self)) return;
+// CfRes_updateHighGridFiltered (0xD0)
+extern "C" void CfRes_updateHighGridFiltered(void* self, bool param) {
+    if (KyoshinHeap_HasActive54(self)) return;
     ResGridEntry* target = (ResGridEntry*)((u8*)self + 0x16C0);
     ResGridEntry* base = (ResGridEntry*)((u8*)self + 0x16BC);
     for (int i = 0x61; i < 0x81; i++, target++, base++) {
@@ -971,10 +974,10 @@ extern "C" void func_80067F10(void* self, bool param) {
     }
 }
 
-// func_80067FE0 (0x98)
+// CfRes_updateHighGridFlagged (0x98)
 // Same grid walk; only entries whose data word carries the 0x30000 flag bits
 // are updated.
-extern "C" void func_80067FE0(u8* self) {
+extern "C" void CfRes_updateHighGridFlagged(u8* self) {
     ResGridEntry* target = (ResGridEntry*)(self + 0x16C0);
     ResGridEntry* base = (ResGridEntry*)(self + 0x16BC);
     for (int i = 0x61; i < 0x81; i++) {
@@ -988,10 +991,10 @@ extern "C" void func_80067FE0(u8* self) {
     }
 }
 
-// func_80068078 (0x98)
+// CfRes_reloadLoadedEntries (0x98)
 // Walks the 0x14DC grid (indices 0x59..0x80); entries whose resolved base is
 // a loaded MCA are force-reloaded.
-extern "C" void func_80068078(u8* self) {
+extern "C" void CfRes_reloadLoadedEntries(u8* self) {
     // Walks the 0x14DC grid (indices 0x59..0x80); entries whose resolved
     // base is a loaded MCA are force-reloaded.
     ResGridEntry* target = (ResGridEntry*)(self + 0x14E0);
@@ -999,7 +1002,7 @@ extern "C" void func_80068078(u8* self) {
     for (int i = 0x59; i < 0x81; i++) {
         void* r = base->lookup->getResourceBase(target, 0);
         if (r != 0) {
-            if (func_800A8BD8(r)) {
+            if (KyoshinHeap_Contains38(r)) {
                 func_80066788((ResInfoEntry*)target, 1, 1, 0);
             }
         }
@@ -1008,12 +1011,12 @@ extern "C" void func_80068078(u8* self) {
     }
 }
 
-// func_80068110 (0x144)
+// CfRes_updateLowGrid (0x144)
 // Grid walk over 0x14DC (indices 0x59..0x60). With `param` the update runs
 // for entries carrying the 0x200/0x400 bits; without it, entries lacking
 // those bits are updated unless the global flagResult (0x40000/0x8000)
 // excludes the entry's category (8/11).
-extern "C" void func_80068110(u8* self, bool param) {
+extern "C" void CfRes_updateLowGrid(u8* self, bool param) {
     CDeviceVI::waitForDrawDone();
     u32 flags24 = lbl_eu_80663E24;
     bool flagResult = (flags24 & 0x40000) | (flags24 & 0x8000);
@@ -1021,9 +1024,9 @@ extern "C" void func_80068110(u8* self, bool param) {
     ResGridEntry* base = (ResGridEntry*)(self + 0x14DC);
     for (int i = 0x59; i < 0x61; i++, target++, base++) {
         void* r = base->lookup->getResourceBase(target, 0);
-        if (r != 0 && func_800A8BD8(r)) {
+        if (r != 0 && KyoshinHeap_Contains38(r)) {
             if (*(s16*)((u8*)base + 0x3E) == 0) {
-                if (base->lookup->vfunc0C(target) != 0) {
+                if (base->lookup->isInUse(target) != 0) {
                     u32 fl = base->field_0x04;
                     bool hasFlag2 = (fl & 0x200) || (fl & 0x400);
                     if (param && hasFlag2) {
@@ -1040,20 +1043,20 @@ extern "C" void func_80068110(u8* self, bool param) {
     }
 }
 
-// func_80068254 (0x104)
+// CfRes_updateFlaggedGrid (0x104)
 // Grid walk over 0x14DC (indices 0x59..0x80): run the main update for each
 // entry whose resolved base is a loaded MCA, not dirty (s16 at +0x3E), and
 // resolvable via the vtable+0x40 probe, carrying the 0x200/0x400 bits.
 // waitForDrawDone precedes the first update only.
-extern "C" void func_80068254(u8* self) {
+extern "C" void CfRes_updateFlaggedGrid(u8* self) {
     ResGridEntry* target = (ResGridEntry*)(self + 0x14E0);
     ResGridEntry* base = (ResGridEntry*)(self + 0x14DC);
     bool waited = false;
     for (int i = 0x59; i < 0x81; i++, target++, base++) {
         void* r = base->lookup->getResourceBase(target, 0);
-        if (r != 0 && func_800A8BD8(r)) {
+        if (r != 0 && KyoshinHeap_Contains38(r)) {
             if (*(s16*)((u8*)base + 0x3E) == 0) {
-                if (base->lookup->vfunc0C(target) != 0) {
+                if (base->lookup->isInUse(target) != 0) {
                     bool hasFlag2 = true;
                     u32 fl = base->field_0x04;
                     if ((fl & 0x200) == 0 && (fl & 0x400) == 0) hasFlag2 = false;
@@ -1069,15 +1072,15 @@ extern "C" void func_80068254(u8* self) {
 }
 
 // ============================================================
-// func_80068358 (0xD4) - flag handling
+// CfRes_tickIfFlagged (0xD4) - flag handling
 // ============================================================
-extern "C" void func_80068358(void* self) {
+extern "C" void CfRes_tickIfFlagged(void* self) {
     bool f40, f10, flag2;
     flag2 = testWordFlag((const u32*)self, 2) != 0;
     f10 = testResInfoFlag(0x10) != 0;
     f40 = testResInfoFlag(0x40) != 0;
 
-    if (func_800B1C40() || (f10 && f40)) {
+    if (gflagGateMask8() || (f10 && f40)) {
         flag2 = true;
         CfRes_orBits_649B4(self, 1);
     }
@@ -1156,7 +1159,7 @@ extern "C" void __ct__80066F9C(ResCtorLayout* self) {
     self->vtable = lbl_eu_80526938;
     self->vtable = lbl_eu_80526920;
 
-    u32 heapId = func_80061FFC();
+    u32 heapId = CfRes_getAllocHandle();
     self->mList = (ResListUSNode*)allocate_array__Q23mtl10MemManagerFUlUl(0x618, heapId);
     for (int i = 0; i < 0x82; i++) {
         self->mList[i].next = NULL;

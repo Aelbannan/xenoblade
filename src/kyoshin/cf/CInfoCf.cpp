@@ -67,9 +67,9 @@ void func_801667AC(cf::CInfoCf* self) {
     // when the cached setting matches the option-flag/pause combo).
     cf::CfGameManager::getInstance();
     self->mField08 = func_80166830();
-    func_80062F60();
-    self->mField0C = func_800A8CD4();
-    u32 v = func_800A8DA4();
+    CfRes_getInstPtrBC();
+    self->mField0C = KyoshinHeap_GetActive54();
+    u32 v = KyoshinHeap_GetSize500000();
     u32 flags = self->mFlags & ~1;
     u32 f08 = self->mField08;
     self->mField10 = v;
@@ -139,7 +139,7 @@ void CMenuItem::Init() {
     }
 
     // --- Re-initialise the embedded CTitleAHelp via a temporary ---
-    char* name = func_80136190(lbl_eu_8050303C, lbl_eu_8050303C + 9, 1);
+    char* name = BdatTouchStringCell(lbl_eu_8050303C, lbl_eu_8050303C + 9, 1);
     u8 tempTitle[0x38];
     __ct__CTitleAHelp(reinterpret_cast<CTitleAHelp*>(tempTitle), name, 1);
     CTitleAHelp* tmpTitle = reinterpret_cast<CTitleAHelp*>(tempTitle);
@@ -242,7 +242,7 @@ void CMenuItem::Init() {
     func_801674D0(&dstBody->obj54C, &srcBody->obj54C);
     __dt__12CItemBoxGridFv(reinterpret_cast<CItemBoxGrid*>(tempGrid), -1);
 
-    func_801CB480(&mItemBoxGrid);
+    ClearListSlots(&mItemBoxGrid);
 
     if (mField4AC5 == 0) {
         // Single-player item list ordering.
@@ -261,7 +261,7 @@ void CMenuItem::Init() {
     } else {
         PushToList(&mItemBoxGrid, mField4AC5);
     }
-    func_801CAA6C(&mItemBoxGrid);
+    LoadItemBoxFiles(&mItemBoxGrid);
 
     // Register the render callback (this or the IScnRender subobject).
     IScnRender* renderCB = reinterpret_cast<IScnRender*>(this);
@@ -466,7 +466,7 @@ void CMenuItem::Term() {
 
     func_801C3D9C(&mBgTex);
     func_801C40A0(&mTitleAHelp);
-    func_801CAE9C(&mItemBoxGrid);
+    UnloadItemBox(&mItemBoxGrid);
 
     lbl_eu_80664258 = 0;
     if (mField4AC5 == 0) {
@@ -490,7 +490,7 @@ void CMenuItem::Move() {
     }
     if (pressed != 0) {
         // Close a pending item-box interaction, then mark the menu done.
-        if (func_801CB1E4(&mItemBoxGrid) == 0) {
+        if (IsSubWinActive(&mItemBoxGrid) == 0) {
             if (func_800FEDF8() != 0) {
                 func_800FF914();
             }
@@ -505,7 +505,7 @@ void CMenuItem::Move() {
         // Once the bg texture, title bar and item grid are all ready,
         // start the panel intro animations and play the open cue.
         if (func_801C3E34(&mBgTex) != 0 && func_801C4114(&mTitleAHelp) != 0 &&
-            func_801CB038(&mItemBoxGrid) != 0) {
+            IsItemBoxReady(&mItemBoxGrid) != 0) {
             func_801C412C(&mTitleAHelp);
             func_801CB28C(&mItemBoxGrid);
             mState = 1;
@@ -530,7 +530,7 @@ void CMenuItem::Move() {
     }
 
     func_801C3D54(&mBgTex);
-    func_801CABC8(&mItemBoxGrid);
+    UpdateItemBox(&mItemBoxGrid);
     func_801C3FF0(&mTitleAHelp);
 }
 
@@ -538,7 +538,7 @@ void CMenuItem::cbRenderBefore() {
     CTaskGame::getInstance();
     if (CTaskGame::isFlag01Set() || (lbl_eu_80663E28 & 0x200000))
         return;
-    if (func_8013BE50() == 0) return;
+    if (IsMenuState621F0() == 0) return;
     GXSetZMode(GX_FALSE, GX_NEVER, GX_FALSE);
     // Raw-storage DrawInfo built/destroyed via C-ABI ct/dt calls (same
     // scheme as CMenuGCItem::cbRenderBefore; a C++ local would
@@ -547,7 +547,7 @@ void CMenuItem::cbRenderBefore() {
     __ct__Q34nw4r3lyt8DrawInfoFv(&drawInfo[0]);
     func_80137250((nw4r::lyt::DrawInfo*)&drawInfo[0]);
     func_801C3D7C(&mBgTex, (nw4r::lyt::DrawInfo*)&drawInfo[0]);
-    func_801CAD8C(&mItemBoxGrid, (nw4r::lyt::DrawInfo*)&drawInfo[0]);
+    DrawItemBoxGrid(&mItemBoxGrid, (nw4r::lyt::DrawInfo*)&drawInfo[0]);
     func_801C4080(&mTitleAHelp, (nw4r::lyt::DrawInfo*)&drawInfo[0]);
     __dt__Q34nw4r3lyt8DrawInfoFv(&drawInfo[0], -1);
 }

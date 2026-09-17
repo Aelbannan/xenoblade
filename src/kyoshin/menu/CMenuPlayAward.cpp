@@ -6,9 +6,9 @@
 
 #include "kyoshin/harness_catalog.hpp"
 
-extern "C" void playUISound__FUl(u32); // from CTutorial.hpp (C++ mangled playUISound__FUl); forward decl to avoid CTutorial/code_80135FDC extern "C" overload clash on func_801361E8/setLayoutTextBoxNumber
+extern "C" void playUISound__FUl(u32); // from CTutorial.hpp (C++ mangled playUISound__FUl); forward decl to avoid CTutorial/code_80135FDC extern "C" overload clash on BdatGetU8Direct/setLayoutTextBoxNumber
 inline void playUISound(u32 cue) { playUISound__FUl(cue); }
-#include "kyoshin/code_80135FDC.hpp" // func_80137510 / advanceAnimTransform (anim frame advance)
+#include "kyoshin/code_80135FDC.hpp" // AnimRewindFrame / advanceAnimTransform (anim frame advance)
 #include "kyoshin/cf/CfGameManager.hpp" // cf::CfGameManager::getCurrentPad / getCfPadData
 #include "monolib/core/CPadManager.hpp" // CPad::mPressedButtonFlags
 #include "kyoshin/menu/CMenuPlayAward.hpp"
@@ -98,7 +98,7 @@ void CMenuPlayAward::Init() {
     func_801C3C14(&mBgTex);
 
     // --- Re-initialise the embedded CTitleAHelp ---
-    char* name = func_80136190(lbl_eu_8050E7A0, lbl_eu_8050E7A0 + 0xb, 0x9);
+    char* name = BdatTouchStringCell(lbl_eu_8050E7A0, lbl_eu_8050E7A0 + 0xb, 0x9);
 
     u8 tempTitle[0x38];
     __ct__CTitleAHelp((CTitleAHelp*)tempTitle, name, 0x66);
@@ -292,7 +292,7 @@ void CMenuPlayAward::cbRenderBefore() {
 exit:
     return;
 body:
-    if (func_8013BE50() == 0) {
+    if (IsMenuState621F0() == 0) {
         goto exit;
     }
     GXSetZMode(GX_FALSE, GX_NEVER, GX_FALSE);
@@ -501,8 +501,8 @@ void func_80270770(CPlayAwardEntryArray* self) {
         for (u8 inner = 0; inner < (self->field_1001 - 1) - outer; inner++) {
             u8 a = buf[inner];
             u8 b = buf[inner + 1];
-            if (func_801361E8((u32)bdat, &s[0xe], a) >
-                func_801361E8((u32)bdat, &s[0xe], b)) {
+            if (BdatGetU8Direct((u32)bdat, &s[0xe], a) >
+                BdatGetU8Direct((u32)bdat, &s[0xe], b)) {
                 buf[inner] = b;
                 buf[inner + 1] = a;
                 swapped = 1;
@@ -513,14 +513,14 @@ void func_80270770(CPlayAwardEntryArray* self) {
 
     // Build the per-page award entries: bind the text for each award and
     // append it to the page indexed by its type key.
-    char* def = func_80136190(&s[0x14], &s[0x1f], 0x10);
+    char* def = BdatTouchStringCell(&s[0x14], &s[0x1f], 0x10);
     for (u8 k = 0; k < count; k++) {
         u8 val = buf[k];
-        u8 page = (u8)(func_801361E8((u32)bdat, &s[0x24], val) - 1);
+        u8 page = (u8)(BdatGetU8Direct((u32)bdat, &s[0x24], val) - 1);
         int has = func_8009CF8C(0x312c + val % 200) != 0;
 
-        u8 key2 = func_801361E8((u32)bdat, &s[0x2a], val);
-        u16 key3 = func_80136254(bdat, &s[0x36], val);
+        u8 key2 = BdatGetU8Direct((u32)bdat, &s[0x2a], val);
+        u16 key3 = BdatGetU16Direct(bdat, &s[0x36], val);
         int flag = 0;
         if (key2 <= self->field_1000 && key3 <= func_8009CF8C(0x20)) {
             flag = 1;
@@ -529,11 +529,11 @@ void func_80270770(CPlayAwardEntryArray* self) {
         char* s1;
         char* s2;
         if (has != 0) {
-            s1 = func_8013639C(fp, &s[0x42], val);
-            s2 = func_8013639C(bdat, &s[0x48], val);
+            s1 = BdatGetPtrDirect(fp, &s[0x42], val);
+            s2 = BdatGetPtrDirect(bdat, &s[0x48], val);
         } else if (flag != 0) {
             s1 = def;
-            s2 = func_8013639C(bdat, &s[0x51], val);
+            s2 = BdatGetPtrDirect(bdat, &s[0x51], val);
         } else {
             s1 = def;
             s2 = def;
@@ -939,7 +939,7 @@ void func_802714D4(CPlayAwardList* self) {
 // Award list close transition: once the list's reverse animation reaches its
 // start, mark the list state as closed (5) and run the close sequence.
 void func_80271528(CPlayAwardList* self) {
-    if (func_80137510(self->mAnimTrans28, lbl_eu_806689C0) != 0) {
+    if (AnimRewindFrame(self->mAnimTrans28, lbl_eu_806689C0) != 0) {
         self->field_0x89 = 5;
         func_802715C0(self);
     }
@@ -948,7 +948,7 @@ void func_80271528(CPlayAwardList* self) {
 // Award list close transition (reverse): when the list's reverse animation
 // reaches its start, reset the state (0) and set the ready flag (1).
 void func_80271574(CPlayAwardList* self) {
-    if (func_80137510(self->mAnimTrans24, lbl_eu_806689C0) != 0) {
+    if (AnimRewindFrame(self->mAnimTrans24, lbl_eu_806689C0) != 0) {
         self->field_0x89 = 0;
         self->field_0x8B = 1;
     }
@@ -977,9 +977,9 @@ void func_80271680(CPlayAwardList* self) {
         CPlayAwardEntry* entry = reinterpret_cast<CPlayAwardEntry*>(
             func_80270AEC(&self->mEntryArray, (u8)(i + self->field_0x8E)));
         sprintf(buf, &lbl_eu_8050E7C0[0x93], i + 1);
-        func_80136B4C(self->mLayout20, buf, reinterpret_cast<char*>(entry->word0), 0);
+        LayoutSetTextBoxFmtValue(self->mLayout20, buf, reinterpret_cast<char*>(entry->word0), 0);
         sprintf(buf, &lbl_eu_8050E7C0[0x9f], i + 1);
-        func_80136B4C(self->mLayout20, buf, reinterpret_cast<char*>(entry->word1),
+        LayoutSetTextBoxFmtValue(self->mLayout20, buf, reinterpret_cast<char*>(entry->word1),
                       self->field_0x2C);
     }
 }
@@ -1003,26 +1003,26 @@ void func_802717F8(CPlayAwardList* self) {
     char* s1;
     char* s2;
     void* fp = getFP__FPCc(&lbl_eu_8050E7C0[0x14]);
-    s1 = func_8013639C(fp, &lbl_eu_8050E7C0[0x1f], 0xa);
-    s2 = func_8013639C(fp, &lbl_eu_8050E7C0[0x1f], 0xb);
-    func_80136B4C(self->mLayout20, &lbl_eu_8050E7C0[0xba],
+    s1 = BdatGetPtrDirect(fp, &lbl_eu_8050E7C0[0x1f], 0xa);
+    s2 = BdatGetPtrDirect(fp, &lbl_eu_8050E7C0[0x1f], 0xb);
+    LayoutSetTextBoxFmtValue(self->mLayout20, &lbl_eu_8050E7C0[0xba],
                   self->field_0x90 != 0 ? s2 : s1, 0);
 
     // Resolve the award title and the two per-page help strings, then look up
     // the 'timg' texture for the page and size its pane from the row/col.
     char* s5;
-    char* s4 = func_80136190(&lbl_eu_8050E7C0[0xc4], &lbl_eu_8050E7C0[0xd2], 0x8a);
-    s5 = func_80136190(&lbl_eu_8050E7C0[0xc4], &lbl_eu_8050E7C0[0xd2], 0x89);
+    char* s4 = BdatTouchStringCell(&lbl_eu_8050E7C0[0xc4], &lbl_eu_8050E7C0[0xd2], 0x8a);
+    s5 = BdatTouchStringCell(&lbl_eu_8050E7C0[0xc4], &lbl_eu_8050E7C0[0xd2], 0x89);
     const char* sel = isClassicController__Q22cf13CfGameManagerFv(-1) != 0
                           ? &lbl_eu_8050E7C0[0xd7]
                           : &lbl_eu_8050E7C0[0xe0];
-    u16 msgId = func_8013606C(&lbl_eu_8050E7C0[0xc4], sel, 0x3a);
-    char* texName = func_80138F78((u32)msgId);
+    u16 msgId = BdatGetU16ByTableKey(&lbl_eu_8050E7C0[0xc4], sel, 0x3a);
+    char* texName = MakeTplNameSysFile((u32)msgId);
     nw4r::lyt::ArcResourceAccessor* mgr = func_801355F4();
     CPlayAwardMsgObj* obj = reinterpret_cast<CPlayAwardMsgObj*>(
         mgr->GetResource(0x74696D67, texName, 0));
     if (obj != 0) {
-        func_80137E7C(self->mLayout20, &lbl_eu_8050E7C0[0xe9], obj);
+        PaneSetTexPaletteByName(self->mLayout20, &lbl_eu_8050E7C0[0xe9], obj);
         CPlayAwardCoords* coords = obj->chain->pCoords;
         u16 row = coords->row;
         u16 col = coords->col;
@@ -1038,10 +1038,10 @@ void func_802717F8(CPlayAwardList* self) {
     }
 
     // Bind the page title/help strings (help string differs by page).
-    func_80136B4C(self->mLayout20, &lbl_eu_8050E7C0[0xf5],
+    LayoutSetTextBoxFmtValue(self->mLayout20, &lbl_eu_8050E7C0[0xf5],
                   self->field_0x90 == 0 ? s5 : s4, 0);
-    char* s6 = func_80136190(&lbl_eu_8050E7C0[0xfd], &lbl_eu_8050E7C0[0x108], 0x19);
-    func_80136B4C(self->mLayout20, &lbl_eu_8050E7C0[0x10d], s6, 0);
+    char* s6 = BdatTouchStringCell(&lbl_eu_8050E7C0[0xfd], &lbl_eu_8050E7C0[0x108], 0x19);
+    LayoutSetTextBoxFmtValue(self->mLayout20, &lbl_eu_8050E7C0[0x10d], s6, 0);
 }
 
 // Award-list load handler: when the layout arc accessor is ready and the
@@ -1126,12 +1126,12 @@ bool CPlayAwardList::OnFileEvent(CEventFile* event) {
 
         // Bind the three page-title/help strings.
         void* fp = getFP__FPCc(&lbl_eu_8050E7C0[0x14]);
-        func_80136B4C(mLayout20, &lbl_eu_8050E7C0[0xba],
-                      func_8013639C(fp, &lbl_eu_8050E7C0[0x1f], 0xa), 0);
-        func_80136B4C(mLayout20, &lbl_eu_8050E7C0[0x179],
-                      func_8013639C(fp, &lbl_eu_8050E7C0[0x1f], 0xb), 0);
-        func_80136B4C(mLayout20, &lbl_eu_8050E7C0[0x16f],
-                      func_8013639C(fp, &lbl_eu_8050E7C0[0x1f], 0xd), 0);
+        LayoutSetTextBoxFmtValue(mLayout20, &lbl_eu_8050E7C0[0xba],
+                      BdatGetPtrDirect(fp, &lbl_eu_8050E7C0[0x1f], 0xa), 0);
+        LayoutSetTextBoxFmtValue(mLayout20, &lbl_eu_8050E7C0[0x179],
+                      BdatGetPtrDirect(fp, &lbl_eu_8050E7C0[0x1f], 0xb), 0);
+        LayoutSetTextBoxFmtValue(mLayout20, &lbl_eu_8050E7C0[0x16f],
+                      BdatGetPtrDirect(fp, &lbl_eu_8050E7C0[0x1f], 0xd), 0);
 
         // Bind the eight award panes and stash the tag processor on each.
         for (u8 i = 1; i <= 9; i++) {

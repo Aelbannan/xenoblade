@@ -49,7 +49,7 @@ public:
 struct CScnEnvLgtCtrl;  // scene-light control ring (CScnEnvLgtCtrl.hpp)
 
 // Pointee of CTaskLOD::mParam1 (offset 0x54): an opaque manager object whose
-// +0x7C slot holds the scene-light control list head handed to func_804C2014
+// +0x7C slot holds the scene-light control list head handed to scnLgtCallLightV26
 // by the activateLOD/deactivateLOD/setLODEnable wrappers.
 struct LODParam1Obj {
     u8 _00[0x7C];
@@ -158,13 +158,13 @@ extern "C" void freePersistentBuffer__Q23LOD9LODMemManFv();
 extern "C" void __dt__8046D144(LOD::LODMemMan* self, int flag);
 extern "C" void __ct__Q23LOD9LODMemManFv(LOD::LODMemMan* self);
 extern "C" void __ct__8CProcessFv(CProcess* self);
-extern "C" void func_804C2014(CScnEnvLgtCtrl* self, CTaskLOD* a, int b);
+extern "C" void scnLgtCallLightV26(CScnEnvLgtCtrl* self, CTaskLOD* a, int b);
 extern "C" void func_8046DAC0__Q23LOD9LODMemManFv(LOD::LODMemMan* self, int param);
 extern "C" void configureShrinkTargets__Q23LOD9LODMemManFv(LOD::LODMemMan* self, CTaskLOD* task, int a);
 extern "C" void* func_8046D898__Q23LOD9LODMemManFv(LOD::LODMemMan* self, CTaskLOD* task, LODParam1Obj* p1);
 extern "C" void allocPersistentBuffer__Q23LOD9LODMemManFv(u32 handle, u32 size);
 extern "C" void getLodVisState__Q23LOD17UnkClass_8046A530Fv(LOD::LODMemMan* self, u32 a, u32 b);
-extern "C" void func_804C2094(CScnEnvLgtCtrl* self, float f, CTaskLOD* task, void* a);
+extern "C" void scnLgtCallLightV27(CScnEnvLgtCtrl* self, float f, CTaskLOD* task, void* a);
 
 // Overlay for the compiler-placed vptr slot at +0x10 (the CDoubleListNode
 // base occupies 0x00-0x10).  create() installs the retail vtable pointers
@@ -413,18 +413,18 @@ void dispatchLODArgs__8CTaskLODFv(CTaskLOD* self, void* a, void* b, void* c) {
 
 // LOD activation wrappers: enable/disable LOD for `this` task on the active
 // manager, then dispatch the same task + flag through the singleton's
-// scene-light control list (func_804C2014 ring walk).
+// scene-light control list (scnLgtCallLightV26 ring walk).
 void CTaskLOD::activateLOD() {
     if (lbl_eu_80665730[0]) {
         clearElementFlag__Q23LOD9LODMemManFv(lbl_eu_80665730[0]->mpActiveLOD, this);
-        func_804C2014(lbl_eu_80665730[0]->mParam1->field_0x7C, this, 1);
+        scnLgtCallLightV26(lbl_eu_80665730[0]->mParam1->field_0x7C, this, 1);
     }
 }
 
 void CTaskLOD::deactivateLOD() {
     if (lbl_eu_80665730[0]) {
         setElementFlag__Q23LOD9LODMemManFv(lbl_eu_80665730[0]->mpActiveLOD, this);
-        func_804C2014(lbl_eu_80665730[0]->mParam1->field_0x7C, this, 0);
+        scnLgtCallLightV26(lbl_eu_80665730[0]->mParam1->field_0x7C, this, 0);
     }
 }
 
@@ -435,7 +435,7 @@ void CTaskLOD::deactivateLOD() {
 extern "C" void setLODEnable__8CTaskLODFv(CTaskLOD* self, int flag) {
     if (lbl_eu_80665730[0]) {
         toggleElementFlag__Q23LOD9LODMemManFv(lbl_eu_80665730[0]->mpActiveLOD, self, flag);
-        func_804C2014(lbl_eu_80665730[0]->mParam1->field_0x7C, self, flag);
+        scnLgtCallLightV26(lbl_eu_80665730[0]->mParam1->field_0x7C, self, flag);
     }
 }
 // Value-delegates.  Like the void wrappers above, each forwards to the
@@ -456,12 +456,12 @@ void CTaskLOD::refreshLOD() {
 }
 
 // Forward the task + arg pair to the active LODMemMan (func_8046E988), then
-// walk the singleton's scene-light control ring (func_804C2094) with the same
+// walk the singleton's scene-light control ring (scnLgtCallLightV27) with the same
 // task/arg and the float value.  `b` is unused in retail.
 extern "C" void setLODParam__8CTaskLODFv(CTaskLOD* self, float val, int a, int b) {
     if (lbl_eu_80665730[0]) {
         configureShrinkTargets__Q23LOD9LODMemManFv(lbl_eu_80665730[0]->mpActiveLOD, self, a);
-        func_804C2094(lbl_eu_80665730[0]->mParam1->field_0x7C, val, self, (void*)(u32)a);
+        scnLgtCallLightV27(lbl_eu_80665730[0]->mParam1->field_0x7C, val, self, (void*)(u32)a);
     }
 }
 

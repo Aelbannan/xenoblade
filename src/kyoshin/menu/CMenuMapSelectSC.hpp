@@ -155,7 +155,7 @@ extern "C" void func_80244460(CFade* self, nw4r::lyt::DrawInfo* drawInfo);
 extern "C" void func_8024448C(CFade* self);
 // UI/sound + scene-active helpers.
 extern "C" void func_8013EC6C(u32 a, u32 b);
-extern "C" int func_8013BE50();
+extern "C" int IsMenuState621F0();
 extern "C" void setPresentationFlag__Q22cf13CfGameManagerFv(bool enable);
 // Retail constructor (unmangled global, ctor with explicit arg).
 extern "C" CMenuMapSelectSC* __ct__CMenuMapSelectSC(CMenuMapSelectSC* self, CProcess* arg);
@@ -167,7 +167,7 @@ extern "C" void __ct__CFloorMap(CFloorMap* self);
 extern "C" void __ct__UnkClass_8011C974(void* dest, void* src);
 extern "C" void func_8016742C(void* dest, void* src);
 extern "C" void CTitleAHelp_load(CTitleAHelp* self);
-extern "C" char* func_80136190(char* a, char* b, u32 id);
+extern "C" char* BdatTouchStringCell(char* a, char* b, u32 id);
 // D2-form subobject/base destructor helpers (explicit delete flags), used by
 // the free-function form of ~CMenuMapSelectSC. __dt__800FED0C is the CProcess
 // base dtor retail symbol (the game-side D2 wrapper, distinct from the library

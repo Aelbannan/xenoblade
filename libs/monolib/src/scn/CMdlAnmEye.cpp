@@ -102,7 +102,7 @@ void func_804E77BC(CMdlAnmEye* self, u32 val) {
 void func_804E77C4(CMdlAnmEye* self) {
     if (self->value2C == 4) return;
     if (self->field_1C == 0) return;
-    f32 scale = func_80484EB0(self->field_04);
+    f32 scale = simGetLeafDist7B0(self->field_04);
     if (self->field_04->field_0x7A8 & 4) {
         scale = lbl_eu_8066B364;
     }

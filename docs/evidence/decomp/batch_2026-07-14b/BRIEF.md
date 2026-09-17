@@ -26,7 +26,7 @@ Retail asm for each symbol is in this directory (`asm_*.s`).
 
 ### `CfCamDirectionIntf_setDir` (`asm_CfCamDirectionIntf_setDir.s`)
 - Frame `-0x20`; saves r30=camEvent (r4), r31=dir (r5)
-- `lfs f1, 0x284(r4)`; `addi r4, r4, 0x274`; `bl func_80074900` with out at `sp+8`
+- `lfs f1, 0x284(r4)`; `addi r4, r4, 0x274`; `bl cfCam_posMinusOff` with out at `sp+8`
 - Word-copy result → camEvent `0x268/0x26c/0x270` (`mLookat`); copy dir → `0x25c/0x260/0x264` (`unk25C`)
 - Existing draft in TU may already be close — close reloc/stack gaps to FULL_MATCH
 
@@ -35,7 +35,7 @@ Retail asm for each symbol is in this directory (`asm_*.s`).
 - Need `extern const f32 lbl_eu_80666268` (same pattern as sibling `setLookat`)
 
 ### `CamLookatIntf_setDir` (`asm_CamLookatIntf_setDir.s`)
-- Same shape as dir setDir but `bl func_80074488` with `addi r4, r4, 0x268` (`&mLookat`); write result to `0x274/0x278/0x27c` (`unk274`); copy dir to `unk25C`
+- Same shape as dir setDir but `bl cfCam_posFromLookat` with `addi r4, r4, 0x268` (`&mLookat`); write result to `0x274/0x278/0x27c` (`unk274`); copy dir to `unk25C`
 
 ### `getHandleMEM2` (`asm_getHandleMEM2.s`)
 - Exact retail: `lwz r3, lbl_eu_8066350C@sda21; blr`

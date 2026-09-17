@@ -2193,7 +2193,7 @@ static inline void* initFullRect(void* dst, s16 h) {
 // cache entries (cmds 0..0xd).
 CGXCache::CGXCache() {
     u32 payload[4];
-    func_800407C8_tmp v4;
+    CTaskGame_setVec4_tmp v4;
     u32 col;
     s16 rect[4];
     s32 subH;    // heights for the sub-rect + stack rect temps (retail r31)
@@ -2242,7 +2242,7 @@ CGXCache::CGXCache() {
     // Retail nests the vec4 setter into the ring call: the callee's r3 return
     // is moved to r5 (mr), not recomputed as a fresh stack-temp address.
     ((CMsgParam<32>*)&unk4)->func_804498A4(2,
-        (u32*)func_800407C8(&v4, lbl_eu_8066A378, lbl_eu_8066A378, lbl_eu_8066A378, lbl_eu_8066A378));
+        (u32*)CTaskGame_setVec4(&v4, lbl_eu_8066A378, lbl_eu_8066A378, lbl_eu_8066A378, lbl_eu_8066A378));
 
     ((CMsgParam<32>*)&unk4)->func_80449B94(3, &lbl_eu_80663624);
     ((CMsgParam<32>*)&unk4)->func_80449B94(4, &lbl_eu_80663628);

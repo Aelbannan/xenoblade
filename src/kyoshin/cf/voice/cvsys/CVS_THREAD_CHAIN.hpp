@@ -30,7 +30,7 @@ extern "C" {
     void          func_802A3E28(CVS_THREAD* self);
     int           func_802A3D54(CCharVoice* voicePtr, int voiceId, int arg);
     CVoiceHandle* func_802A330C(int size, int align);
-    u8*           func_802A34E4(int size);
+    u8*           CCharVoiceMan_AllocVoiceArena(int size);
     int           func_800BE8F4(CCharVoice* voicePtr);
     void          __ct__cf_CVS_THREAD();
     // Runtime rethrow (NMWException.h): declared noreturn so MWCC elides the

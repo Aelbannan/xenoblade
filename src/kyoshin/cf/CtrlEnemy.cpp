@@ -234,7 +234,7 @@ L_887F4:
     }
     self->field_0x14 = lbl_eu_80666570;
     self->field_0x80->mSub.s0C4(self->field_0x0C);
-    func_800BE12C((u8*)&self->field_0x80->mSub, 0x3, 0, -0x1, 0x1);
+    CfObjectMove_setAnimModeArgs((u8*)&self->field_0x80->mSub, 0x3, 0, -0x1, 0x1);
     self->field_0x80->mSub.s010(0x4);
 end:
     return;
@@ -310,52 +310,52 @@ void* CtrlEnemy_UnkFunc_80087EEC(cf::CtrlEnemy* self) {
         anchor[1] = src[1];
         anchor[2] = src[2];
     }
-    func_80043D90(&holder);
+    CTaskGame_enumListCtor(&holder);
     switch (*self->field_0x80->v258()) {
     case 1:
-        func_800F4A98(func_80043F18(&holder), 0x20, 0x900);
+        func_800F4A98(CTaskGame_enumListGet(&holder), 0x20, 0x900);
         sub = self->field_0x80->mSub.s0AC();
         powTmp = self->field_0x80->v5B4();
         {
             f32 f270 = *self->field_0x80->v270();
             f32 f268 = *self->field_0x80->v268();
-            func_800FB270(func_80043F18(&holder), sub, f268, f270,
+            func_800FB270(CTaskGame_enumListGet(&holder), sub, f268, f270,
                           (f32)powTmp, 0);
         }
-        __ct__800FAE3C(func_80043F18(&holder), anchor, 0);
+        __ct__800FAE3C(CTaskGame_enumListGet(&holder), anchor, 0);
         break;
     case 2:
-        func_800F4A98(func_80043F18(&holder), 0x20, 0xa00);
+        func_800F4A98(CTaskGame_enumListGet(&holder), 0x20, 0xa00);
         sub = self->field_0x80->mSub.s0AC();
         {
             f32 f268 = *self->field_0x80->v268();
-            __ct__800FB044(func_80043F18(&holder), f268, sub, 0);
+            __ct__800FB044(CTaskGame_enumListGet(&holder), f268, sub, 0);
         }
-        __ct__800FAE3C(func_80043F18(&holder), anchor, 0);
+        __ct__800FAE3C(CTaskGame_enumListGet(&holder), anchor, 0);
         break;
     case 3:
-        func_800F4A98(func_80043F18(&holder), 0x20, 0x800);
+        func_800F4A98(CTaskGame_enumListGet(&holder), 0x20, 0x800);
         sub = self->field_0x80->mSub.s0AC();
         {
             f32 f268 = *self->field_0x80->v268();
-            __ct__800FB044(func_80043F18(&holder), f268, sub, 0);
+            __ct__800FB044(CTaskGame_enumListGet(&holder), f268, sub, 0);
         }
-        __ct__800FD0B4(func_80043F18(&holder), 0);
-        __ct__800FAE3C(func_80043F18(&holder), anchor, 0);
+        __ct__800FD0B4(CTaskGame_enumListGet(&holder), 0);
+        __ct__800FAE3C(CTaskGame_enumListGet(&holder), anchor, 0);
         break;
     case 4:
-        func_800F4A98(func_80043F18(&holder), 0x20, 0x800);
+        func_800F4A98(CTaskGame_enumListGet(&holder), 0x20, 0x800);
         sub = self->field_0x80->mSub.s0AC();
         {
             f32 f268 = *self->field_0x80->v268();
-            __ct__800FB044(func_80043F18(&holder), f268, sub, 0);
+            __ct__800FB044(CTaskGame_enumListGet(&holder), f268, sub, 0);
         }
-        __ct__800FC4FC(func_80043F18(&holder), lbl_eu_80666580, 0);
+        __ct__800FC4FC(CTaskGame_enumListGet(&holder), lbl_eu_80666580, 0);
         break;
     }
     // Scan candidates: nearest eligible enemy wins.
-    for (i = 0; i < (int)func_80043F18(&holder)->field_620; i++) {
-        id = (int)func_800F6E98(func_80043F18(&holder), i);
+    for (i = 0; i < (int)CTaskGame_enumListGet(&holder)->field_620; i++) {
+        id = (int)func_800F6E98(CTaskGame_enumListGet(&holder), i);
         obj = (cf::CtrlEnemyActor*)func_8016FE34(findObjectById(id));
         if (obj->field_3F60 != 0 &&
             (((cf::CtrlEnemySubFlag*)obj->field_3F60)->field_530 & 1) != 0) {
@@ -437,15 +437,15 @@ void* CtrlEnemy_UnkFunc_80088620(cf::CtrlEnemy* self) {
         return 0;
     }
     cf::CtrlEnemyEnumHolder holder;
-    func_80043D90(&holder);
+    CTaskGame_enumListCtor(&holder);
     self->field_0x80->v258();
-    func_800F4A98(func_80043F18(&holder), 0x80000000, 0);
+    func_800F4A98(CTaskGame_enumListGet(&holder), 0x80000000, 0);
     void* pos = self->field_0x80->mSub.s0AC();
     f32 gauge = *self->field_0x80->v268();
-    __ct__800FB044(func_80043F18(&holder), gauge, pos, 0);
-    for (u32 i = 0; i < func_80043F18(&holder)->field_620; i++) {
+    __ct__800FB044(CTaskGame_enumListGet(&holder), gauge, pos, 0);
+    for (u32 i = 0; i < CTaskGame_enumListGet(&holder)->field_620; i++) {
         cf::CtrlEnemyActor* obj = (cf::CtrlEnemyActor*)func_8016FE34(
-            findObjectById((int)func_800F6E98(func_80043F18(&holder), i)));
+            findObjectById((int)func_800F6E98(CTaskGame_enumListGet(&holder), i)));
         if (obj == 0) continue;
         int objId = obj->v0E0();
         int battleId = self->field_0x80->v0E0();

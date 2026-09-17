@@ -278,7 +278,7 @@ namespace cf {
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
 // ---------------------------------------------------------------------------
 extern "C" {
-int func_800B8920(void* addr);
+int lookupWorkAtAddr(void* addr);
 int func_80148778(void*, int);
 void* func_8016FE34(void* source);
 unsigned long func_801BA2C8(void* self);

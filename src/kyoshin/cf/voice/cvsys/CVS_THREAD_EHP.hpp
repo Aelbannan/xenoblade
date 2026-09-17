@@ -124,7 +124,7 @@ int func_802A3C44(CVS_THREAD* self, CCharVoice* voicePtr, int voiceId);
 int func_802A3D54(CCharVoice* voicePtr, int voiceId, int arg);
 CVoiceHandle* func_802A7998(CVoiceHandle* exclude);
 CVoiceHandle* func_802A330C(int size, int align);
-CVoiceHandleList* func_800B6BC8();
+CVoiceHandleList* getReslistB48();
 int func_802A7FE4(CVoiceHandle* handle);
 int func_802A77E8(CVoiceHandle* handle);
 int func_802A7B90(CVoiceHandle* handle1, CVoiceHandle* handle2);
@@ -144,7 +144,7 @@ extern u32 lbl_eu_80539B2C[];
 
 // Scratch-buffer allocator and base constructor shared by the cvsys voice
 // thread factories (same C-ABI imports the sibling thread TUs declare).
-extern "C" u8* func_802A34E4(int size);
+extern "C" u8* CCharVoiceMan_AllocVoiceArena(int size);
 extern "C" CVS_THREAD* __ct__cf_CVS_THREAD(CVS_THREAD* self);
 
 // Runtime rethrow (NMWException.h): declared noreturn so MWCC elides the

@@ -258,7 +258,7 @@ void CSimpleEveTalkWin::Init() {
         texName = &lbl_eu_80503E14[0xaa];
     void* tex = func_801355F4()->GetResource(0x74696D67, texName, 0);
     if (tex != 0) {
-        func_80137E7C(mpLayout, &lbl_eu_80503E14[0xc6], tex);
+        PaneSetTexPaletteByName(mpLayout, &lbl_eu_80503E14[0xc6], tex);
     }
 
     if (field_68 != 0) {
@@ -266,27 +266,27 @@ void CSimpleEveTalkWin::Init() {
         char* msgText = reinterpret_cast<char*>(
             reinterpret_cast<cf::CfObject*>(findObjectById(field_68))
                 ->CObjectParam_getParamPtr());
-        func_80136B4C(mpLayout, &lbl_eu_80503E14[0xd3], msgText, 0);
-        func_80136B4C(mpLayout, &lbl_eu_80503E14[0xdc], msgText, 0);
-        func_80136B4C(mpLayout, &lbl_eu_80503E14[0xe7], msgText, 0);
-        func_80136B4C(mpLayout, &lbl_eu_80503E14[0xf2], msgText, 0);
-        func_80136B4C(mpLayout, &lbl_eu_80503E14[0xfd], msgText, 0);
+        LayoutSetTextBoxFmtValue(mpLayout, &lbl_eu_80503E14[0xd3], msgText, 0);
+        LayoutSetTextBoxFmtValue(mpLayout, &lbl_eu_80503E14[0xdc], msgText, 0);
+        LayoutSetTextBoxFmtValue(mpLayout, &lbl_eu_80503E14[0xe7], msgText, 0);
+        LayoutSetTextBoxFmtValue(mpLayout, &lbl_eu_80503E14[0xf2], msgText, 0);
+        LayoutSetTextBoxFmtValue(mpLayout, &lbl_eu_80503E14[0xfd], msgText, 0);
     } else {
         // No talk source: leave the name fields empty.
-        func_80136B4C(mpLayout, &lbl_eu_80503E14[0xd3],
+        LayoutSetTextBoxFmtValue(mpLayout, &lbl_eu_80503E14[0xd3],
                       &lbl_eu_80503E14[0x108], 0);
-        func_80136B4C(mpLayout, &lbl_eu_80503E14[0xdc],
+        LayoutSetTextBoxFmtValue(mpLayout, &lbl_eu_80503E14[0xdc],
                       &lbl_eu_80503E14[0x108], 0);
-        func_80136B4C(mpLayout, &lbl_eu_80503E14[0xe7],
+        LayoutSetTextBoxFmtValue(mpLayout, &lbl_eu_80503E14[0xe7],
                       &lbl_eu_80503E14[0x108], 0);
-        func_80136B4C(mpLayout, &lbl_eu_80503E14[0xf2],
+        LayoutSetTextBoxFmtValue(mpLayout, &lbl_eu_80503E14[0xf2],
                       &lbl_eu_80503E14[0x108], 0);
-        func_80136B4C(mpLayout, &lbl_eu_80503E14[0xfd],
+        LayoutSetTextBoxFmtValue(mpLayout, &lbl_eu_80503E14[0xfd],
                       &lbl_eu_80503E14[0x108], 0);
     }
 
     // Attach the tag processor to the message text box and show it.
-    func_80136B4C(mpLayout, &lbl_eu_80503E14[0x109], &lbl_eu_80503E14[0x108],
+    LayoutSetTextBoxFmtValue(mpLayout, &lbl_eu_80503E14[0x109], &lbl_eu_80503E14[0x108],
                   0);
     nw4r::lyt::Pane* textPane =
         mpLayout->GetRootPane()->FindPaneByName(&lbl_eu_80503E14[0x109], 1);
@@ -325,7 +325,7 @@ void CSimpleEveTalkWin::Move() {
     CTaskGame::getInstance();
     if (CTaskGame::isFlag01Set() || (lbl_eu_80663E28 & 0x200000))
         return;
-    if (func_8013BE50() == 0) return;
+    if (IsMenuState621F0() == 0) return;
     if (isInitialized__10CMenuPauseFv()) return;
 
     switch (field_AD) {
@@ -350,7 +350,7 @@ void CSimpleEveTalkWin::Move() {
     case 3:
         // Closing animation finished: unregister the render callback and hand
         // control back to the caller.
-        if (func_80137510(field_8C, lbl_eu_80667CB0) != 0) {
+        if (AnimRewindFrame(field_8C, lbl_eu_80667CB0) != 0) {
             CDeviceVI::waitForDrawDone();
             IScnRender* render = reinterpret_cast<IScnRender*>(this);
             if (this != 0) {
@@ -396,7 +396,7 @@ void CSimpleEveTalkWin::cbRenderBefore() {
     CTaskGame::getInstance();
     if (CTaskGame::isFlag01Set() || (lbl_eu_80663E28 & 0x200000))
         return;
-    if (func_8013BE50() == 0)
+    if (IsMenuState621F0() == 0)
         return;
     GXSetZMode(GX_FALSE, GX_NEVER, GX_FALSE);
     // Raw-storage DrawInfo built/destroyed via C-ABI pre-mangled ct/dt calls
@@ -524,7 +524,7 @@ extern "C" __declspec(noinline) void func_801A2190(CSimpleEveTalkWin* owner,
         texName = &lbl_eu_80503E14[0xaa];
     void* tex = func_801355F4()->GetResource(0x74696D67, texName, 0);
     if (tex != 0) {
-        func_80137E7C(owner->mpLayout, &lbl_eu_80503E14[0xc6], tex);
+        PaneSetTexPaletteByName(owner->mpLayout, &lbl_eu_80503E14[0xc6], tex);
     }
 
     if (owner->field_68 != 0) {
@@ -533,31 +533,31 @@ extern "C" __declspec(noinline) void func_801A2190(CSimpleEveTalkWin* owner,
         char* msgText = reinterpret_cast<char*>(
             reinterpret_cast<cf::CfObject*>(findObjectById(owner->field_68))
                 ->CObjectParam_getParamPtr());
-        func_80136B4C(owner->mpLayout, &lbl_eu_80503E14[0xd3], msgText, 0);
-        func_80136B4C(owner->mpLayout, &lbl_eu_80503E14[0xdc], msgText, 0);
-        func_80136B4C(owner->mpLayout, &lbl_eu_80503E14[0xe7], msgText, 0);
-        func_80136B4C(owner->mpLayout, &lbl_eu_80503E14[0xf2], msgText, 0);
-        func_80136B4C(owner->mpLayout, &lbl_eu_80503E14[0xfd], msgText, 0);
+        LayoutSetTextBoxFmtValue(owner->mpLayout, &lbl_eu_80503E14[0xd3], msgText, 0);
+        LayoutSetTextBoxFmtValue(owner->mpLayout, &lbl_eu_80503E14[0xdc], msgText, 0);
+        LayoutSetTextBoxFmtValue(owner->mpLayout, &lbl_eu_80503E14[0xe7], msgText, 0);
+        LayoutSetTextBoxFmtValue(owner->mpLayout, &lbl_eu_80503E14[0xf2], msgText, 0);
+        LayoutSetTextBoxFmtValue(owner->mpLayout, &lbl_eu_80503E14[0xfd], msgText, 0);
         void* src = findObjectById(owner->field_68);
         if (src != 0) {
             reinterpret_cast<CSimpleTalkFields*>(src)->voice98->play(1, 0);
         }
     } else {
         // No talk source: leave the name fields empty.
-        func_80136B4C(owner->mpLayout, &lbl_eu_80503E14[0xd3],
+        LayoutSetTextBoxFmtValue(owner->mpLayout, &lbl_eu_80503E14[0xd3],
                       &lbl_eu_80503E14[0x108], 0);
-        func_80136B4C(owner->mpLayout, &lbl_eu_80503E14[0xdc],
+        LayoutSetTextBoxFmtValue(owner->mpLayout, &lbl_eu_80503E14[0xdc],
                       &lbl_eu_80503E14[0x108], 0);
-        func_80136B4C(owner->mpLayout, &lbl_eu_80503E14[0xe7],
+        LayoutSetTextBoxFmtValue(owner->mpLayout, &lbl_eu_80503E14[0xe7],
                       &lbl_eu_80503E14[0x108], 0);
-        func_80136B4C(owner->mpLayout, &lbl_eu_80503E14[0xf2],
+        LayoutSetTextBoxFmtValue(owner->mpLayout, &lbl_eu_80503E14[0xf2],
                       &lbl_eu_80503E14[0x108], 0);
-        func_80136B4C(owner->mpLayout, &lbl_eu_80503E14[0xfd],
+        LayoutSetTextBoxFmtValue(owner->mpLayout, &lbl_eu_80503E14[0xfd],
                       &lbl_eu_80503E14[0x108], 0);
     }
 
     // Attach the tag processor to the message text box and show it.
-    func_80136B4C(owner->mpLayout, &lbl_eu_80503E14[0x109],
+    LayoutSetTextBoxFmtValue(owner->mpLayout, &lbl_eu_80503E14[0x109],
                   &lbl_eu_80503E14[0x108], 0);
     nw4r::lyt::Pane* textPane = owner->mpLayout->GetRootPane()
                                     ->FindPaneByName(&lbl_eu_80503E14[0x109],
@@ -632,7 +632,7 @@ extern "C" void func_801A2624(CSimpleEveTalkWin* self) {
             advanceAnimTransform(self->field_94, lbl_eu_80667CB0);
             break;
         case 7:
-            if (func_80137510(self->field_90, lbl_eu_80667CB0) != 0) {
+            if (AnimRewindFrame(self->field_90, lbl_eu_80667CB0) != 0) {
                 self->mpLayout->SetAnimationEnable(self->field_8C, 0);
                 self->mpLayout->SetAnimationEnable(self->field_94, 0);
                 self->mpLayout->SetAnimationEnable(self->field_90, 1);

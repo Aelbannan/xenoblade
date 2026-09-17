@@ -4,7 +4,7 @@
 #include "kyoshin/harness_catalog.hpp"
 #include "kyoshin/cf/object/CfObjectMoveApi.hpp"
 #include "kyoshin/cf/object/CfObjectModel.hpp"
-#include "kyoshin/cf/object/CfObjectMove.hpp"  // func_800BE12C (owner decl)
+#include "kyoshin/cf/object/CfObjectMove.hpp"  // CfObjectMove_setAnimModeArgs (owner decl)
 #include "kyoshin/cf/CfResReloadImpl.hpp"
 #include "libs/monolib/src/scn/CScnItemModel.hpp"  // real owner of parent+0x98 (vfunc64/vfunc88)
 // IResInfo's func_800AA33C uses FixStr; this TU needs the u8* form - hide the
@@ -62,7 +62,7 @@ int func_8016CE5C(const cf::CfResReloadImpl* self) {
     cf::CfResReloadParent* p = self->field_00;
     if ((p->field_64 & 0x4) && self->field_04 > lbl_eu_80667698 &&
         self->field_08 == 1 && (p->field_6C & 0x20)) {
-        cf::CfResLookupEntry* e = func_80062EC4((s16)self->field_0A);
+        cf::CfResLookupEntry* e = CfRes_getEntryPtrCol0((s16)self->field_0A);
         cf::CfResReloadParent* q = self->field_00;
         if (e->field_04 == q->field_70) {
             // slot +0x40 takes the owning entry as r4 (same convention as
@@ -83,13 +83,13 @@ int func_8016CE5C(const cf::CfResReloadImpl* self) {
 int getTypeId() { return 12; }
 
 // Computes a pseudo-random reload byte: calls the secondary-interface slot
-// +0x34 with (this, 1), and when both that result and func_80063A60 are
+// +0x34 with (this, 1), and when both that result and CfRes_getResFileSize are
 // nonzero, hashes the value (multiply-high + correction) into field_1F.
 // Returns the byte, or 1 when it is zero.
 int func_8016CF24(cf::CfResReloadImpl* self) {
     int v = self->func_8016CFBC(1);
     if (self->field_1F == 0 && v != 0) {
-        unsigned int h = func_80063A60(v);
+        unsigned int h = CfRes_getResFileSize(v);
         if (h != 0) {
             // retail: magic materialized into r3, h+0xBCFFF built addis-
             // first via addis/subi into r0, mulhwu + correction + extrwi.
@@ -137,7 +137,7 @@ void func_8016CFDC(cf::CfResReloadImpl* self, int arg2, int arg3, float f1, floa
     if (v < 0) {
         id = -1;
     } else {
-        cf::CfResLookupEntry* e = func_80062EC4(v);
+        cf::CfResLookupEntry* e = CfRes_getEntryPtrCol0(v);
         if (e->field_00 & 0x800) {
             id = e->field_32 + 5;
         }
@@ -160,7 +160,7 @@ void func_8016D0C0(cf::CfResReloadImpl* self, int arg2, int arg3) {
     if (v < 0) {
         r = -1;
     } else {
-        cf::CfResLookupEntry* e = func_80062EC4(v);
+        cf::CfResLookupEntry* e = CfRes_getEntryPtrCol0(v);
         if (e->field_00 & 0x800) {
             r = e->field_32 + 5;
         }
@@ -178,7 +178,7 @@ void func_8016D144(cf::CfResReloadImpl* self, int arg2, int arg3, int arg4) {
     if (v < 0) {
         r = -1;
     } else {
-        cf::CfResLookupEntry* e = func_80062EC4(v);
+        cf::CfResLookupEntry* e = CfRes_getEntryPtrCol0(v);
         if (e->field_00 & 0x800) {
             r = e->field_32 + 5;
         }
@@ -200,7 +200,7 @@ int func_8016D1D8(const cf::CfResReloadImpl* self) {
     if (v < 0) {
         r = -1;
     } else {
-        cf::CfResLookupEntry* e = func_80062EC4(v);
+        cf::CfResLookupEntry* e = CfRes_getEntryPtrCol0(v);
         if (e->field_00 & 0x800) {
             r = e->field_32 + 5;
         }
@@ -252,7 +252,7 @@ int func_8016D2FC(cf::CfResReloadImpl* self, int arg2) {
     } else if (self->field_00->field_64 & 0x10000) {
         p = 4;
     }
-    int ret = func_80062998(v, arg2, p);
+    int ret = CfRes_tryResolveType0(v, arg2, p);
     // retail computes the != 0 test as a 0/1 value (neg/or/rlwinm) once and
     // reuses it for the branch and the return value.
     int ok = (u32)(-ret | ret) >> 31;
@@ -271,7 +271,7 @@ int func_8016D390(cf::CfResReloadImpl* self, int arg2) {
     if (self->field_00->field_68 & 0x04000000) {
         p = 3;
     }
-    int ret = func_80062998(v, arg2, p);
+    int ret = CfRes_tryResolveType0(v, arg2, p);
     // retail computes the != 0 test as a 0/1 value (neg/or/srwi) once and
     // reuses it for the branch and the return value.
     int ok = (u32)(-ret | ret) >> 31;
@@ -284,7 +284,7 @@ int func_8016D390(cf::CfResReloadImpl* self, int arg2) {
 // Reload driver: gated by the game-manager state flag, either decrements the
 // reload counter or performs a full reload: dispatch the secondary-interface
 // slot +0x34, query the resource instance table (findResEntry /
-// func_80068564 depending on parent flag bit 0x10000), install the found
+// CfRes_findLowEntryOrMark depending on parent flag bit 0x10000), install the found
 // row's values into field_0C/field_0A, set parent flag bits 0x30 and dispatch
 // the +0x10 vtable slot. A failed lookup can instead seed the 0x40 reload
 // flag and run the effect helper. All parent accesses go through
@@ -352,10 +352,10 @@ extern "C" void func_8016D3F8(cf::CfResReloadImpl* self) {
     int ret;
     if (r5 != 0) {
         // retail hardcodes 4 here (li r4,0x4), overriding p
-        ret = func_80062B3C(v, 4);
+        ret = CfRes_tryDelegateLoad1(v, 4);
     } else {
         // retail passes p in r4 (no reload before the call)
-        ret = func_80062BAC(v, p);
+        ret = CfRes_tryDelegateLoad0(v, p);
     }
     cf::ResReloadFindEntry* found = 0;
     if (ret != 0) {
@@ -364,7 +364,7 @@ extern "C" void func_8016D3F8(cf::CfResReloadImpl* self) {
         if (self->field_00->field_64 & 0x10000) {
             found = findResEntry(inst, v, &spC, &sp8);
         } else {
-            found = func_80068564(inst, v, &spC, &sp8);
+            found = CfRes_findLowEntryOrMark(inst, v, &spC, &sp8);
         }
         if (found != 0) {
             self->field_0C = (u16)spC;
@@ -379,15 +379,15 @@ extern "C" void func_8016D3F8(cf::CfResReloadImpl* self) {
         if (cf::CfGameManager::isSceneLoading() == 0) {
             if (lbl_eu_80663E28 & 0x40) {
                 if (self->field_00->field_64 & 0x4) {
-                    func_80063A60((s32)v);
+                    CfRes_getResFileSize((s32)v);
                     lbl_eu_80663E28 |= 0x40;
                 }
             }
         }
     }
-    if (func_800B4A24(self->field_00) != 0) {
+    if (evtTypeSlot7E(self->field_00) != 0) {
         if (found == 0) {
-            func_800B1BBC(1);
+            maybeNullThenFlag(1);
         }
     }
 }
@@ -400,7 +400,7 @@ extern "C" void func_8016D3F8(cf::CfResReloadImpl* self) {
 // (r29) is also reused for the +0x68 flag extracted near the end.
 extern "C" void func_8016D688(cf::CfResReloadImpl* self) {
     // retail signs the index (lha) when passing it straight through
-    cf::CfResLookupEntry* entry = func_80062EC4((s16)self->field_0A);
+    cf::CfResLookupEntry* entry = CfRes_getEntryPtrCol0((s16)self->field_0A);
     int ok = 1;
     u32 f6c = self->field_00->field_6C;
     if ((f6c & 0x2) != 0) {
@@ -435,10 +435,10 @@ extern "C" void func_8016D688(cf::CfResReloadImpl* self) {
     if (f64 & 0x4) {
         ok = 0;
         // retail keeps this pointer in r3 across these calls: it is `parent`
-        // if func_800B4A24 was never called, else B4A24's return value.
+        // if evtTypeSlot7E was never called, else B4A24's return value.
         cf::CfGameManager* mgr = (cf::CfGameManager*)parent;
         if (lbl_eu_80663E28 & 0x10) {
-            mgr = (cf::CfGameManager*)func_800B4A24(parent);
+            mgr = (cf::CfGameManager*)evtTypeSlot7E(parent);
             if (mgr == 0) {
                 ok = 1;
             }
@@ -460,7 +460,7 @@ extern "C" void func_8016D688(cf::CfResReloadImpl* self) {
         if (self->field_00->field_98 == 0) {
             u8* slot18 = entry->field_2C->getHandle18(entry);
             self->field_00->field_90 = slot18;
-            u8* h = func_80489A60((u8*)lbl_eu_80663E14, self->field_00->field_90, -1, 1, 0, 0x76);
+            u8* h = scnImN4BuildByIdx((u8*)lbl_eu_80663E14, self->field_00->field_90, -1, 1, 0, 0x76);
             func_800BBADC(self->field_00, h);
         }
     }
@@ -509,18 +509,18 @@ reinterpret_cast<cf::CfObject*>(self->field_00)->CfObject_syncModelRate(lbl_eu_8
         self->field_1E = 1;
     }
     if (lbl_eu_80663E24 & 0x40000) {
-        func_800BE824(self->field_00, 0);
+        CfObjectMove_setRegionAttached(self->field_00, 0);
     } else if (self->field_00->field_C4 != 0) {
         u8* slot30 = entry->field_2C->getHandle30(entry);
         if (slot30 != 0) {
-            func_804B0A6C(self->field_00->field_60C, slot30);
+            ColiNodeSetWord0Rebuild(self->field_00->field_60C, slot30);
         }
     }
     if (ok2 != 0) {
         self->field_00->field_68 |= 0x00100000;
     }
     if (self->field_00->field_64 & 0x8) {
-        func_800BE12C((u8*)self->field_00, self->field_00->field_6C4, 0, -1, 1);
+        CfObjectMove_setAnimModeArgs((u8*)self->field_00, self->field_00->field_6C4, 0, -1, 1);
     }
     // x & -3 lowers to the retail wrap-mask rlwinm(0,31,29)
     self->field_00->field_6C &= -3;
@@ -538,7 +538,7 @@ reinterpret_cast<cf::CfObject*>(self->field_00)->CfObject_syncModelRate(lbl_eu_8
             reinterpret_cast<CScnItemModel*>(p->field_98)->vfunc88(0);
             // fresh parent load: retail does not keep the pointer live
             // across the virtual call above
-            func_800BC3B0((cf::CfObjectMove*)self->field_00, lbl_eu_806676A0);
+            CfObjectMove_setMoveSpeedGated((cf::CfObjectMove*)self->field_00, lbl_eu_806676A0);
     }
     }
     self->func_8016DCE4();
@@ -614,7 +614,7 @@ ef7c:
             goto efe8;
         }
     }
-    func_800BC4A0((cf::CfObjectMove*)self->field_00);
+    CfObjectMove_resetMoveSpeed((cf::CfObjectMove*)self->field_00);
 reinterpret_cast<cf::CfObject*>(self->field_00)->CfObject_syncModelRate(lbl_eu_806676A4);
     return;
 efe8:
@@ -625,7 +625,7 @@ effc:
     if (obj != 0) {
         obj->field_45CA &= 0xFFF9;
     }
-    func_800BC3B0((cf::CfObjectMove*)self->field_00, lbl_eu_806676A8);
+    CfObjectMove_setMoveSpeedGated((cf::CfObjectMove*)self->field_00, lbl_eu_806676A8);
     self->field_08++;
 }
 
@@ -672,7 +672,7 @@ void func_8016DDE8(cf::CfResReloadImpl* self) {
 void func_eu_8016F1C4(cf::CfResReloadImpl* self) {
     s16 v = self->field_0A;
     if (v >= 0) {
-        func_eu_80063174(v, self->field_00->field_70);
+        CfRes_tryReregisterSlot(v, self->field_00->field_70);
     }
     self->func_8016DDE8();
 }

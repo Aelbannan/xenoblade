@@ -21,7 +21,7 @@ public:
     void func_804E54B8(void* arg);
 
     /* 0x04 */ void* field_0x04;    // Pointer to owner/context object (opaque)
-    /* 0x08 */ void* buffer;        // GXColor array (written from func_80488954/allocate_array void*)
+    /* 0x08 */ void* buffer;        // GXColor array (written from scnImN4PoolAlloc/allocate_array void*)
     /* 0x0C */ u32 field_0x0C;      // Write index for GXColor buffer
     /* 0x10 */ u8 flag_0x10;        // Controls buffer ownership: 0 = owned (delete[]), non-0 = unowned
     /* 0x11 */ u8 pad_0x11[3];

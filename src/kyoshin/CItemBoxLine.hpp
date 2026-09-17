@@ -382,13 +382,13 @@ extern "C" void playUISound__FUl(unsigned int);
 extern "C" u8 code80135FDC_getByte_64077();
 extern "C" void func_801E174C(void*, void*, unsigned int);
 extern "C" u32 advanceAnimTransform__FPQ34nw4r3lyt13AnimTransformf(void*, float);
-extern "C" u32 func_80137510(nw4r::lyt::AnimTransform*, float);
+extern "C" u32 AnimRewindFrame(nw4r::lyt::AnimTransform*, float);
 extern "C" u32 func_801393CC(u32);
-extern "C" u32 func_801392E4(u32);
-extern "C" u16 func_80139358(u32);
-extern "C" void func_801586D4(u32, u32);
-extern "C" void* func_801571FC(void);
-extern "C" void func_80157184(s32);
+extern "C" u32 BdatGetItemType(u32);
+extern "C" u16 BdatGetItemId(u32);
+extern "C" void CItem_thunkAllocRecord(u32, u32);
+extern "C" void* CItemBlock_getPtr20E8(void);
+extern "C" void CItemBlock_setCount(s32);
 extern "C" void func_801EB030(void*, void*);
 extern "C" void func_801EB04C(void*, u8);
 extern "C" void func_801EB064(void*, unsigned int);
@@ -425,7 +425,7 @@ extern "C" void func_801EF2FC(void*);
 extern "C" void func_801EF378(void*);
 extern "C" void func_801EF3E8(void*);
 extern "C" void func_801EF45C(void*);
-extern "C" u8 func_801361E8(u32, const char*, unsigned int);
+extern "C" u8 BdatGetU8Direct(u32, const char*, unsigned int);
 extern "C" void* lbl_eu_80664104;
 extern "C" void* lbl_eu_806640A8;
 extern "C" void* lbl_eu_806640EC;
@@ -474,8 +474,8 @@ extern const double lbl_eu_80668100;
 
 // func_801F107C: character-data / item helpers (C-ABI).
 extern "C" u32 func_800A082C(void*);
-extern "C" float func_8013B380(unsigned int);
-extern "C" void func_80139C98(u16, u16, u32, float);
+extern "C" float GetFloatTableEntry(unsigned int);
+extern "C" void BlendFloatAvgScale(u16, u16, u32, float);
 
 // func_801EBC00: tab-format / item-name helpers + rodata tables.
 extern const char lbl_eu_80506D90[];        // rodata name/format tables
@@ -483,10 +483,10 @@ extern const char lbl_eu_80506D90[];        // rodata name/format tables
 extern "C" u8 getLanguage__9CDeviceSCFv();
 extern u32 lbl_eu_80664098;
 extern u32 lbl_eu_80664184;                 // name-index byte (sda21)
-extern "C" u16 func_8013606C(const void*, const void*, u16);
+extern "C" u16 BdatGetU16ByTableKey(const void*, const void*, u16);
 
 extern "C" void* getFP__FPCc(const char*);
-extern "C" u32 func_801372B4(unsigned int);
+extern "C" u32 MapValueToRank6(unsigned int);
 extern "C" u16 func_8009CF8C(u32);
 extern "C" int func_8026178C(u32, u32);
 extern "C" u32 func_801EC9E0(void*, unsigned int);
@@ -497,7 +497,7 @@ extern "C" u32 func_801EC9E0(void*, unsigned int);
 // instead of inlining the local body.
 extern "C" void* func_801EC3D0(void*, unsigned int);
 extern "C" u32 func_801EC260(void*, unsigned int);
-extern "C" u16 func_801EC3B0(CIBLTab*, unsigned int);
+extern "C" u16 ItemBoxLine_GetTabEntryItem(CIBLTab*, unsigned int);
 extern "C" u8 func_801EC284(void*, unsigned int);
 
 // Sibling tab-dispatch helpers in this merged unit (external relocs in retail).
@@ -512,7 +512,7 @@ extern "C" void func_801EFE6C(void*);
 extern "C" void func_801EDA6C(void*);
 extern "C" void func_801EDB80(void*);
 extern "C" void func_80139198(unsigned int);
-extern "C" void func_80139A18(nw4r::lyt::Layout*, char*, void*, void*);
+extern "C" void PaneMatSetTevColorsByName(nw4r::lyt::Layout*, char*, void*, void*);
 extern "C" char* func_eu_802B148C(void);
 extern "C" char* func_eu_802B1474(void);
 // Syswin content-setter helpers (defined in CSysWin.cpp) + item-name provider
@@ -525,14 +525,14 @@ extern "C" u32 func_801D3C74(void*, u32);
 // setLayoutTextBoxNumber is a C++ function (mangled retail name); the text helpers are
 // C-ABI (plain retail names).
 extern "C" void setLayoutTextBoxNumber__FPQ34nw4r3lyt6LayoutPcUc(nw4r::lyt::Layout*, char*, u32);
-extern "C" void func_80136B4C(nw4r::lyt::Layout*, char*, char*, u32);
-extern "C" char* func_80136190(char*, char*, u32);
-extern "C" char* func_8013639C(void*, char*);
+extern "C" void LayoutSetTextBoxFmtValue(nw4r::lyt::Layout*, char*, char*, u32);
+extern "C" char* BdatTouchStringCell(char*, char*, u32);
+extern "C" char* BdatGetPtrDirect(void*, char*);
 extern "C" void func_80137F88(void*, u32);  // bind texture resource to pane
 
 // Item-box-line refresh helpers (external retail symbols).
 extern "C" void func_801EBC00(CIBLTab*, unsigned char, unsigned short, unsigned char);
-extern "C" u32 func_801392B4(u32);
+extern "C" u32 GetCollectedFlagByte(u32);
 
 extern "C" void func_8022B8E4(void*);
 extern "C" int func_801EB028(void*);
@@ -549,16 +549,16 @@ extern "C" void func_801E13F8(CItemBoxInfo2*);           // info2 destroy
 extern "C" void func_801F35DC(CScrollBar*);              // scrollbar destroy
 extern "C" void func_8022B7F4(CSysWinFull*);             // syswin destroy
 // Tab-page helpers used by func_801F0488 (retail plain names).
-extern "C" void func_801CB9D8(CIBLVec3*, const u16*, u32);
+extern "C" void CopyTabSlotVec(CIBLVec3*, const u16*, u32);
 extern "C" void copyVEC3(void*, const void*);
 extern "C" u16 ArrayGet12(const u16*, u8);
 extern "C" u8 func_801EF034(const u8*, unsigned int);   // same-TU body kept external
 extern "C" char* func_801EC438(CIBLTabFull*, u16);    // tab-format setter (external call shape)
 
 // code_80135FDC string/table helpers (retail unmangled C-ABI names).
-extern "C" u16 func_80136254(u32 table, const void* name, int id);
-extern "C" char* func_80138F78(u32);
-extern "C" void func_80137E7C(nw4r::lyt::Layout*, const char*, u32);
+extern "C" u16 BdatGetU16Direct(u32 table, const void* name, int id);
+extern "C" char* MakeTplNameSysFile(u32);
+extern "C" void PaneSetTexPaletteByName(nw4r::lyt::Layout*, const char*, u32);
 
 // .sbss item-kind owner tables (u32 values; SDA-accessed).
 extern u32 lbl_eu_806640F4;
@@ -568,16 +568,16 @@ extern u32 lbl_eu_806640F8;
 extern u32 lbl_eu_80664110;
 
 // func_801EC284: character-data lookup helpers (C-ABI).
-extern "C" u32 func_80157CD0(u8);
-extern "C" u32 func_80158068(unsigned int);
+extern "C" u32 CItemBlock_countEmpty(u8);
+extern "C" u32 CItem_sumFamilyByte6(unsigned int);
 
 // func_801F2880: string/kind-table helpers (C-ABI).
-extern "C" u8 func_8013600C(const void*, const void*, u32);
+extern "C" u8 BdatGetU8ByTableKey(const void*, const void*, u32);
 extern "C" void* func_8009EC9C(u32);
 extern "C" u32 func_800A32BC();
 
 // sinit_801F32EC: static color-object ctor helpers (C-ABI).
-extern "C" void func_801D1F9C(void*, u32);
+extern "C" void SplitU32ToS16s(void*, u32);
 extern "C" void func_801EF734(void*, u32, u32);   // pane texture refresh (external overload)
 extern "C" void func_801EF844(void*, u32, u32);   // pane texture refresh (external overload)
 extern "C" void func_801EF954(void*, u32, s8, u32); // item-slot name format (external overload)
@@ -594,7 +594,7 @@ extern u32 lbl_eu_8066464C;
 extern u32 lbl_eu_80664650;
 
 // sinit_801F32EC: the fourteen 8-byte .sbss color objects, constructed in
-// retail call order (func_801D1F9C resets, func_801C4B60 sets RGBA).
+// retail call order (SplitU32ToS16s resets, func_801C4B60 sets RGBA).
 extern u8 lbl_eu_806645D8[8];
 extern u8 lbl_eu_806645E0[8];
 extern u8 lbl_eu_806645E8[8];

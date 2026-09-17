@@ -16,7 +16,7 @@ extern "C" void* createNpcActor__Q22cf13CfGameManagerFv(u32 value);
 extern "C" void* createBattleActor__Q22cf13CfGameManagerFv(u32 value, u32 unused);
 extern "C" void bindPartnerO_(void* obj, void* mgr, u32 val);
 extern "C" void setChild34Sc_(void* obj, const void* src);
-// setChildF50G_ / func_80484EB0 are owned by kyoshin/cf/CCharEffect.hpp
+// setChildF50G_ / simGetLeafDist7B0 are owned by kyoshin/cf/CCharEffect.hpp
 // (canonical u8* form); do not redeclare here (MWCC 10197).
 extern "C" u8 lbl_eu_8052FDD8[];
 extern "C" void* __ct__CCharEffect(void* self);
@@ -131,6 +131,6 @@ extern "C" void func_8015CF90(CCharEffectEne* self, void* target, u32 type, u32 
     bindPartnerO_(target, self->mManager, (u32)(uintptr_t)dataSrc);
     reinterpret_cast<cf::CfObjectEff*>(target)->setEffLockFg_(bitFlag);
     setChild34Sc_(target, (void*)((u8*)(*(void**)((u8*)self->mManager + 0x98)) + 0x304));
-    func_80484EB0((u8*)(*(void**)((u8*)self->mManager + 0x98)));
+    simGetLeafDist7B0((u8*)(*(void**)((u8*)self->mManager + 0x98)));
     setChildF50G_((u8*)target);
 }

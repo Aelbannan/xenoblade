@@ -19,7 +19,7 @@ extern "C" void func_80193810(unsigned long a, void* b);
 extern "C" void func_801F3CCC(unsigned long a, void* b);
 extern "C" void func_801F45B4(unsigned long a, void* b);
 extern "C" void func_802074F0(unsigned long a, void* b);
-extern "C" void func_8019397C(unsigned long a, void* b);
+extern "C" void CPartsChange_InitChangeRecord(unsigned long a, void* b);
 extern "C" void func_80193D48(unsigned long a, void* b);
 extern "C" void func_80195E5C(unsigned long a, float b);
 
@@ -38,7 +38,7 @@ void setResourceField04(void* self, cf::CfObject* obj);
 // Retail emits frsp f2,f1 for `float sq` - the float->double->float round-trip
 // (double d = a; float sq = (float)d;) keeps the explicit conversion; a plain
 // `float sq = a` lets MWCC drop it.
-extern "C" void func_800B06A4(float a) {
+extern "C" void storeScaleSquare(float a) {
     extern float lbl_eu_80661CCC, lbl_eu_80661CD0;
     extern float lbl_eu_80663EC8, lbl_eu_80663ECC, lbl_eu_80663ED0, lbl_eu_80663ED4;
     double d = (double)a;
@@ -98,12 +98,12 @@ void func_800B06C8() {
     lbl_eu_80663ED0 = lbl_eu_80661CD0;
     lbl_eu_80663ED4 = lbl_eu_80661CCC * lbl_eu_80661CCC;
 }
-// us-800b1118 - func_800B084C
-// Calls func_80061FFC() to get a handle, then passes it along with `count` to func_800B0894.
+// us-800b1118 - allocFactoryPool
+// Calls CfRes_getAllocHandle() to get a handle, then passes it along with `count` to func_800B0894.
 #pragma push
 #pragma auto_inline off
-void func_800B084C(UnkClass_805764CC* self, unsigned long count) {
-    func_800B0894(self, func_80061FFC(), count);
+void allocFactoryPool(UnkClass_805764CC* self, unsigned long count) {
+    func_800B0894(self, CfRes_getAllocHandle(), count);
 }
 #pragma pop
 
@@ -158,12 +158,12 @@ extern "C" void __ct__reslist_cf_CfObject(void* self) {
     o->mStartNodePtr->mPrev = &o->mStartNode;
     o->mVtable = (void*)lbl_eu_805290E8;
 }
-// us-800b186c - func_800B0FA0
+// us-800b186c - ensureFactoryPool
 #pragma push
 #pragma auto_inline off
-extern "C" DECOMP_DONT_INLINE void func_800B0FA0(UnkClass_805764CC* self) {
-    if (func_800B0FEC(&self->field_0xC80) == 0) {
-        func_800B0FF4(&self->field_0xC80, func_80061FFC(), 4);
+extern "C" DECOMP_DONT_INLINE void ensureFactoryPool(UnkClass_805764CC* self) {
+    if (factoryPoolCount(&self->field_0xC80) == 0) {
+        func_800B0FF4(&self->field_0xC80, CfRes_getAllocHandle(), 4);
     }
 }
 #pragma pop
@@ -171,13 +171,13 @@ extern "C" DECOMP_DONT_INLINE void func_800B0FA0(UnkClass_805764CC* self) {
 
 void init_0FA0(){}
 u32 UnkClass_805764CC::get_u32_18(){return *(u32*)((u8*)this + 0x18);}
-// func_800B0A90: zero the u32 at self (retail: li r0,0; stw r0,0x0(r3))
-extern "C" void func_800B0A90(void* self) { *(u32*)self = 0; }
+// zeroFirstWord: zero the u32 at self (retail: li r0,0; stw r0,0x0(r3))
+extern "C" void zeroFirstWord(void* self) { *(u32*)self = 0; }
 void init_dispatchTarget_1(){}
-// func_800B1808: zero the global flag word (retail: li r0,0; stw r0,lbl_eu_80663EE0@sda21)
+// gflagClearAll: zero the global flag word (retail: li r0,0; stw r0,lbl_eu_80663EE0@sda21)
 #pragma push
 #pragma auto_inline off
-extern "C" void func_800B1808() { extern u32 lbl_eu_80663EE0; lbl_eu_80663EE0 = 0; }
+extern "C" void gflagClearAll() { extern u32 lbl_eu_80663EE0; lbl_eu_80663EE0 = 0; }
 #pragma pop
 void gflag_setBits(unsigned long flags){extern unsigned long lbl_eu_80663EE0;lbl_eu_80663EE0 |= flags;}
 void FactoryEvent3__Q22cf13IFactoryEventFv(){}
@@ -187,13 +187,12 @@ void* node_getDataPtr(void* self){return (char*)(*(void**)self) + 8;}
 void init_14E0(){}
 void node_copyNextU32(void* dst, void* src){*(unsigned long*)dst = *(unsigned long*)((char*)src + 4);}
 void init_14FC(){}
-void __dt__800B151C();
-// Retail callers (func_800B15A4) pass the list address in r3; the thunk
+// Retail callers (teardownGameMgr) pass the list address in r3; the thunk
 // forwards it to __dt__800B151C, so the parameter is part of the ABI even
 // though the body ignores it.
 #pragma push
 #pragma auto_inline off
-extern "C" void func_800B1518(void* self){void(*dtor)() = __dt__800B151C; dtor();}
+extern "C" void factoryListDtor(void* self){void(*dtor)() = (void(*)())__dt__800B151C; dtor();}
 #pragma pop
 // us-800b1de8 - reslist<cf::IFactoryEvent*> destructor (flattened).
 // Unlinks every chained node (each node's next is nulled as it is walked),
@@ -225,8 +224,8 @@ void gvar_clearF24(){lbl_eu_80663F24 = 0;}
 void FactoryEvent4__Q22cf13IFactoryEventFv(){}
 void UnkClass_805764CC::set_u32_00(u32 val){*(u32*)((u8*)this + 0x0) = val;}
 void copy_int_ptr(int* dst, int* src){*dst = *src;}
-// us-800b2398 - func_800B1ACC: copy the second u32 of src into dst.
-extern "C" void func_800B1ACC(void* a, void* b) {
+// us-800b2398 - copyWordAt4: copy the second u32 of src into dst.
+extern "C" void copyWordAt4(void* a, void* b) {
     *(u32*)a = ((u32*)b)[1];
 }
 void init_182C(){}
@@ -257,40 +256,40 @@ void __dt__800B18CC(FactoryPoolList* self) {
     self->mCapacity = 0;
 }
 void init_dispatchTarget_5(){}
-extern "C" void func_800B93AC() {
-    func_800B1B2C(getInstance());
+extern "C" void gmResetSubMgrs() {
+    resetSubManagers(getInstance());
 }
 
-// us-800b9df0 - func_800B94D4
-void func_800B94D4(cf::CfObject* obj) {
+// us-800b9df0 - spawnObjFromRes
+void spawnObjFromRes(cf::CfObject* obj) {
     u8 stackBuf[0x28];
     clearResourceStack(stackBuf);
     setResourceField04(stackBuf, obj);
     func_800B20B4(getInstance(), 0x200, (const B20B4Payload*)stackBuf, 0);
 }
 
-// us-800b23f8 - func_800B1B2C
+// us-800b23f8 - resetSubManagers
 // Reset pass over the singleton: copy the default float, then release each
 // optional sub-object (each null-guarded) with its own teardown entry point.
-extern "C" void func_8019380C(u32 obj);
+extern "C" void CPartsChange_DispatchChangeList(u32 obj);
 extern "C" void func_80173338(u32 obj);
 extern "C" void func_801F4504(u32 obj);
 extern "C" void func_802B2A18(u32 obj);
 extern "C" void func_80206388(u32 obj);
-extern "C" int func_800B6508(void* self);
-extern "C" void func_800B1A8C(void* iter, void* list);
-extern "C" void* func_800B1A9C(void* iter);
-extern "C" int func_800B64AC(void* p);
-extern "C" int func_800B7680(void* self);
+extern "C" int reslistIsBusy(void* self);
+extern "C" void tboxIterBegin(void* iter, void* list);
+extern "C" void* tboxIterItem(void* iter);
+extern "C" int testObj68bit6(void* p);
+extern "C" int reslistCount(void* self);
 extern float lbl_eu_80663EDC;
 #pragma push
 #pragma auto_inline off
-void func_800B1B2C(UnkClass_805764CC* self) {
+void resetSubManagers(UnkClass_805764CC* self) {
     // const decl lets MWCC hoist the sdata2 load above the frame stores.
     extern const float lbl_eu_806669D8;
     lbl_eu_80663EDC = lbl_eu_806669D8;
     if (self->field_0xCA0 != 0) {
-        func_8019380C(self->field_0xCA0);
+        CPartsChange_DispatchChangeList(self->field_0xCA0);
     }
     if (self->field_0xCA4 != 0) {
         func_80173338(self->field_0xCA4);
@@ -310,15 +309,15 @@ void func_800B1B2C(UnkClass_805764CC* self) {
 }
 #pragma pop
 
-// us-800b765c - func_800B6D3C
+// us-800b765c - reslistFirstItem
 // Reset an object-list-backed reslist: bail (return 0) when the guard says
 // the manager is busy; otherwise take the game manager's first item, and if
-// it passes func_800B64AC, re-bind it via func_800B6DD0; otherwise fall back
+// it passes testObj68bit6, re-bind it via reslistFindObj; otherwise fall back
 // to restarting the iteration and returning the raw first item.
 #pragma push
 #pragma auto_inline off
-void* func_800B6D3C(void* self) {
-    if (func_800B6508(self) != 0) {
+void* reslistFirstItem(void* self) {
+    if (reslistIsBusy(self) != 0) {
         return 0;
     }
     // Retail uses two separate iterator slots (first at sp+0xC, fallback at
@@ -326,23 +325,23 @@ void* func_800B6D3C(void* self) {
     F8C0IteratorNode it[2];
     copyItemSourceNode__Q22cf13CfGameManagerFv(&it[1], (F8C0ListSource*)self);
     cf::CfObject* item = (cf::CfObject*)*getObjectNodePtr__Q22cf13CfGameManagerFv(&it[1]);
-    if (func_800B64AC(item) != 0) {
-        return func_800B6DD0(self, item);
+    if (testObj68bit6(item) != 0) {
+        return reslistFindObj(self, item);
     }
     copyItemSourceNode__Q22cf13CfGameManagerFv(&it[0], (F8C0ListSource*)self);
     return *getObjectNodePtr__Q22cf13CfGameManagerFv(&it[0]);
 }
 #pragma pop
 
-// us-800b7f08 - func_800B75EC
+// us-800b7f08 - evictTboxOverflow
 // When the TboxInfo reslist holds >= 0x14 entries, inspect the current
-// entry: if its id resolves via findObjectById, fire func_800B9404; either
-// way step the iterator back and rebind the removed entry via func_800B73E8.
+// entry: if its id resolves via findObjectById, fire gmFileObject; either
+// way step the iterator back and rebind the removed entry via unlinkListNode.
 #pragma push
 #pragma auto_inline off
-void func_800B75EC() {
+void evictTboxOverflow() {
     UnkClass_805764CC* ctx = getInstance();
-    if ((u32)func_800B7680(&ctx->field_0xC48) < 0x14) {
+    if ((u32)reslistCount(&ctx->field_0xC48) < 0x14) {
         return;
     }
     // Scalar locals reproduce retail's stack layout: prevDst=sp+0x8,
@@ -351,20 +350,20 @@ void func_800B75EC() {
     u32 iter;
     u32 outDst;
     u32 prevDst;
-    func_800B1A8C(&iter, &ctx->field_0xC48);
-    // Retail calls func_800B1A9C once per test.
-    if (*(u32*)func_800B1A9C(&iter) != 0) {
-        // Retail forwards the lookup result in r3 straight into func_800B9404.
-        void* hit = findObjectById__Fi(*(s32*)func_800B1A9C(&iter));
+    tboxIterBegin(&iter, &ctx->field_0xC48);
+    // Retail calls tboxIterItem once per test.
+    if (*(u32*)tboxIterItem(&iter) != 0) {
+        // Retail forwards the lookup result in r3 straight into gmFileObject.
+        void* hit = findObjectById__Fi(*(s32*)tboxIterItem(&iter));
         if (hit != 0) {
-            func_800B9404(hit);
+            gmFileObject(hit);
         }
     }
-    func_800B73E8(&outDst, &ctx->field_0xC48, func_800B1AC0(&prevDst, &iter));
+    unlinkListNode(&outDst, &ctx->field_0xC48, copyIterFrom(&prevDst, &iter));
 }
 #pragma pop
 
-extern "C" DECOMP_DONT_INLINE void func_800B1A5C(void* list) {
+extern "C" DECOMP_DONT_INLINE void clearReslistLinks(void* list) {
     u32 sentinel, cur, next, zero;
     u32* p;
     sentinel = *(u32*)((u32*)list + 1);
@@ -382,13 +381,13 @@ check:
 }
 // (no #pragma inline here: func_800B1954 must call this, not inline it)
 
-// us-800b23c0 - func_800B1AF4: run the list/state init via
-// func_800B72DC, then clear the 0x100 mask bit via func_800B4278.
-extern "C" void* func_800B6CA0();
+// us-800b23c0 - resetTboxThenMask: run the list/state init via
+// rebuildTboxPool, then clear the 0x100 mask bit via walkReslistByMask.
+extern "C" void* getReslistC48();
 extern "C" void func_800B137C(void* self, unsigned long handle, unsigned long count);
 
 // Game-manager/player-like object whose status callback is at vtable slot
-// 0x1D (+0x74); used by func_800B1CDC.
+// 0x1D (+0x74); used by syncPlayerSubMgr.
 class IDispB74 {
 public:
     virtual void unk00();
@@ -421,7 +420,7 @@ public:
     virtual bool unk1D();   // vtable +0x74 (compiler pads 2 slots)
 };
 
-// Object created by func_800B957C: the final dispatch on the owner goes to
+// Object created by spawnVoiceActor: the final dispatch on the owner goes to
 // vtable slot 0x1C (+0x70) with the freshly constructed child.
 class IDispB970C {
 public:
@@ -454,21 +453,21 @@ public:
     virtual void unk1C(void* child);   // vtable +0x70 (compiler pads 2 slots)
 };
 // us-800b7bfc - fetch the node list, run the teardown dtor, then
-// pass (list, handle, 0x14) to the binder helper. func_80061FFC is declared
+// pass (list, handle, 0x14) to the binder helper. CfRes_getAllocHandle is declared
 // via the TU-wide extern (see line 59 family).
 #pragma push
 #pragma auto_inline off
-extern "C" void func_800B72DC(void* self) {
-    reslist<cf::TboxInfo>* obj = (reslist<cf::TboxInfo>*)func_800B6CA0();
+extern "C" void rebuildTboxPool(void* self) {
+    reslist<cf::TboxInfo>* obj = (reslist<cf::TboxInfo>*)getReslistC48();
     __dt__800B183C(obj);
-    func_800B137C(obj, func_80061FFC(), 0x14);
+    func_800B137C(obj, CfRes_getAllocHandle(), 0x14);
 }
 #pragma pop
-extern "C" void func_800B4278(void* object, u32 mask);
+extern "C" void walkReslistByMask(void* object, u32 mask);
 
-extern "C" void func_800B1AF4(void* self) {
-    func_800B72DC(self);
-    func_800B4278(self, 256);
+extern "C" void resetTboxThenMask(void* self) {
+    rebuildTboxPool(self);
+    walkReslistByMask(self, 256);
 }
 
 // us-800b1bf8 - cf::CfValueItemManager ctor: base ctor call then
@@ -495,36 +494,36 @@ void init_1AF4(){}
 void init_dispatchTarget_6(){}
 void init_1BBC(){}
 // us-800b2488: if the flag bit-6 test is set, null the self arg, then call
-// func_800B1C24(8, self-or-0) (declared in code_800B06A4.hpp).
+// gflagSetOrClear(8, self-or-0) (declared in code_800B06A4.hpp).
 // auto_inline off: retail calls this (func_800B8524 must not inline it).
 #pragma push
 #pragma auto_inline off
-extern "C" void func_800B1BBC(void* self) {
-    if (func_800B1C00()) {
+extern "C" void maybeNullThenFlag(void* self) {
+    if (gflagTestBit6()) {
         self = 0;
     }
-    func_800B1C24(8, self);
+    gflagSetOrClear(8, self);
 }
 #pragma pop
-// func_800B1C00: bit 6 of the global flag word (retail: lwz r0,lbl_eu_80663EE0; extrwi r3,r0,1,25 = (x>>6)&1)
+// gflagTestBit6: bit 6 of the global flag word (retail: lwz r0,lbl_eu_80663EE0; extrwi r3,r0,1,25 = (x>>6)&1)
 #pragma push
 #pragma auto_inline off
-extern "C" DECOMP_DONT_INLINE u32 func_800B1C00(){ extern u32 lbl_eu_80663EE0; return (lbl_eu_80663EE0 >> 6) & 1; }
+extern "C" DECOMP_DONT_INLINE u32 gflagTestBit6(){ extern u32 lbl_eu_80663EE0; return (lbl_eu_80663EE0 >> 6) & 1; }
 #pragma pop
 void init_1C0C(){}
 void init_1C24(){}
 #pragma push
 #pragma auto_inline off
-extern "C" s32 func_800B1C40() {
-    if (func_800B1C00()) {
+extern "C" s32 gflagGateMask8() {
+    if (gflagTestBit6()) {
         return 0;
     }
-    return func_800B1C0C(8);
+    return gflagHasMask(8);
 }
 #pragma pop
 // us-800b2544: fetch the singleton, then bind the 0xCA4/0xCA8 sub-objects
 // to `self` via func_80173C6C, each null-guarded.
-void func_800B1C78(UnkClass_805764CC* self) {
+void bindPadSubobjects(UnkClass_805764CC* self) {
     UnkClass_805764CC* obj = getInstance();
     if (obj->field_0xCA4 != 0) {
         func_80173C6C((void*)obj->field_0xCA4, self);
@@ -538,28 +537,28 @@ void init_1E18(){}
 // field_0xCA0; if nonzero tail-call with (field, r4-passthrough) (retail lwz;cmpwi;beqlr;b)
 #pragma push
 #pragma auto_inline off
-extern "C" void func_800B1E18(UnkClass_805764CC* self, void* obj){if (self->field_0xCA0){func_8019397C(self->field_0xCA0, obj);}}
+extern "C" void notifyObjCA0(UnkClass_805764CC* self, void* obj){if (self->field_0xCA0){CPartsChange_InitChangeRecord(self->field_0xCA0, obj);}}
 #pragma pop
 void init_1E2C(){}
 
 // us-800b26f8 - reset the singleton's FixStr scratch buffer, then
 // either seed it with `name` and check it against the split1 string table
 // (+0x35), or just re-clear it when no name was given.
-extern "C" void func_800B1E2C(const char* name) {
+extern "C" void setMgrFixStrName(const char* name) {
     UnkClass_805764CC* obj = getInstance();
-    func_800B1B2C(obj);
+    resetSubManagers(obj);
     if (name != 0) {
         func_80068A30(&obj->field_0xCB0, name);
-        func_800B1EB8(2);
+        gflagClearMask(2);
         if (strcmp(name, lbl_eu_804FC4D8 + 0x35) == 0) {
             // Retail emits this call without materializing r3 (the argument
             // register keeps the strcmp result), so call through a no-arg
             // pointer type to suppress the argument move.
-            ((void (*)())func_800B1EC8)();
+            ((void (*)())runMgrTeardownSeq)();
         }
     } else {
-        func_800B9A30(&obj->field_0xCB0);
-        func_800B1368(2);
+        clearFixStrBuf(&obj->field_0xCB0);
+        gflagOrMask(2);
     }
 }
 void init_1EB8(){}
@@ -568,31 +567,31 @@ void init_1EB8(){}
 // update sequence.
 #pragma push
 #pragma auto_inline off
-extern "C" void func_800B1EC8(UnkClass_805764CC* self) {
+extern "C" void runMgrTeardownSeq(UnkClass_805764CC* self) {
     UnkClass_805764CC* obj = getInstance();
-    if (func_800B1C0C(2) == 0) {
-        func_800B1B2C(obj);
+    if (gflagHasMask(2) == 0) {
+        resetSubManagers(obj);
         // Retail passes no second arg (r4 dead at callee); the 1-param
         // pointer type skips li r4,0 while the matched 2-arg definition
         // in this TU stays untouched.
-        ((void (*)(UnkClass_805764CC*))func_800B1F2C)(obj);
+        ((void (*)(UnkClass_805764CC*))notifyObjCA0D48)(obj);
     }
-    func_800B1F6C(obj);
-    func_800B205C(obj);
-    ((void (*)(UnkClass_805764CC*))func_800B2034)(obj);
+    tickPadSubobjects(obj);
+    tickMineSubobject(obj);
+    ((void (*)(UnkClass_805764CC*))notifyObjCFCccc)(obj);
 }
 #pragma pop
 void init_1F2C(){}
 #pragma push
 #pragma auto_inline off
-extern "C" void func_800B1F2C(UnkClass_805764CC* self, void* obj){if (self->field_0xCA0){func_80193D48(self->field_0xCA0, obj);}}
+extern "C" void notifyObjCA0D48(UnkClass_805764CC* self, void* obj){if (self->field_0xCA0){func_80193D48(self->field_0xCA0, obj);}}
 #pragma pop
-extern "C" void func_800B1F40(UnkClass_805764CC* self, void* obj){if (self->field_0xCA0){func_80193810(self->field_0xCA0, obj);}}
+extern "C" void notifyObjCA0810(UnkClass_805764CC* self, void* obj){if (self->field_0xCA0){func_80193810(self->field_0xCA0, obj);}}
 
 // us-800b2820 - field_0xCA0; if nonzero tail-call func_80195E5C(field, const)
 #pragma push
 #pragma auto_inline off
-extern "C" void func_800B1F54(UnkClass_805764CC* self) {
+extern "C" void setCA0ScaleFloat(UnkClass_805764CC* self) {
     if (self->field_0xCA0 == 0) return;
     extern float lbl_eu_80663EC8;
     func_80195E5C(self->field_0xCA0, lbl_eu_80663EC8);
@@ -604,7 +603,7 @@ extern "C" u32 getEffectFlagState__Q22cf13CfGameManagerFv();
 #pragma auto_inline off
 // us-800b2838: with the game manager active, run the virtual slot-2 callback
 // on the optional 0xCA4 / 0xCA8 sub-objects (each null-guarded).
-void func_800B1F6C(UnkClass_805764CC* self) {
+void tickPadSubobjects(UnkClass_805764CC* self) {
     if (getEffectFlagState__Q22cf13CfGameManagerFv() == 0) {
         return;
     }
@@ -620,7 +619,7 @@ void func_800B1F6C(UnkClass_805764CC* self) {
 // func_801742D4, 0xD00 via func_802B2A08), each null-guarded.
 #pragma push
 #pragma auto_inline off
-extern "C" void func_800B1FD8(UnkClass_805764CC* self) {
+extern "C" void releasePadObjects(UnkClass_805764CC* self) {
     if (self->field_0xCA4 != 0) {
         func_801742D4((void*)self->field_0xCA4);
     }
@@ -634,13 +633,13 @@ extern "C" void func_800B1FD8(UnkClass_805764CC* self) {
 #pragma pop
 #pragma push
 #pragma auto_inline off
-extern "C" void func_800B2034(UnkClass_805764CC* self, void* obj){if (self->field_0xCFC){func_801F3CCC(self->field_0xCFC, obj);}}
+extern "C" void notifyObjCFCccc(UnkClass_805764CC* self, void* obj){if (self->field_0xCFC){func_801F3CCC(self->field_0xCFC, obj);}}
 #pragma pop
-extern "C" void func_800B2048(UnkClass_805764CC* self, void* obj){if (self->field_0xCFC){func_801F45B4(self->field_0xCFC, obj);}}
+extern "C" void notifyObjCFC5b4(UnkClass_805764CC* self, void* obj){if (self->field_0xCFC){func_801F45B4(self->field_0xCFC, obj);}}
 // TEST_FUNC_205C
 #pragma push
 #pragma auto_inline off
-extern "C" void func_800B20A0(UnkClass_805764CC* self, void* obj){if (self->field_0xCAC){func_802074F0(self->field_0xCAC, obj);}}
+extern "C" void notifyObjCAC(UnkClass_805764CC* self, void* obj){if (self->field_0xCAC){func_802074F0(self->field_0xCAC, obj);}}
 #pragma pop
 void init_20B4(){}
 // us-800b2928: if the game-manager getter is nonzero and self->field_0xCAC
@@ -648,7 +647,7 @@ void init_20B4(){}
 extern "C" u32 getEffectFlagState__Q22cf13CfGameManagerFv();
 #pragma push
 #pragma auto_inline off
-extern "C" void func_800B205C(UnkClass_805764CC* self) {
+extern "C" void tickMineSubobject(UnkClass_805764CC* self) {
     if (getEffectFlagState__Q22cf13CfGameManagerFv() && self->field_0xCAC) {
         func_80206BD4((CfMapMineManager*)self->field_0xCAC);
     }
@@ -678,7 +677,7 @@ void fwd_2DB0_body(){}
 // payload's first word into entry.data, then links the entry after the
 // sentinel's prev node. The count and pool base are re-read from self inside
 // the search loop (retail reloads them each iteration).
-extern "C" void func_800B2DB0(FactoryPoolList* self, void* payloadSrc) {
+extern "C" void poolInsertBack(FactoryPoolList* self, void* payloadSrc) {
     int idx = 0;
     int off = 0;
     int count;
@@ -834,10 +833,10 @@ extern "C" void func_800B3210(UnkClass_800B0AD8* self, UnkClass_805764CC** item_
 u32 UnkClass_805764CC::get_u32_74(){return *(u32*)((u8*)this + 0x74);}
 void init_39C8(){}
 
-// us-800b39C8 variant of func_800B2DB0 that inserts BEFORE the
+// us-800b39C8 variant of poolInsertBack that inserts BEFORE the
 // current head node instead of before the sentinel: the head pointer is
 // captured up front (sentinel->next) and used as the insertion anchor.
-extern "C" void func_800B39C8(FactoryPoolList* self, void* payloadSrc) {
+extern "C" void poolInsertFront(FactoryPoolList* self, void* payloadSrc) {
     int idx = 0;
     int off = 0;
     CfReslistNode* sentinel = self->mStartNodePtr;   // r5
@@ -885,7 +884,7 @@ void init_42E8(){}
 // us-800b4b74: walk the reslist at self+4; for each node whose payload's
 // field_0x64 mask intersects `mask`, invoke func_800B3A88. The head pointer
 // is re-read from memory every iteration (retail reloads self+4).
-extern "C" void func_800B4278(void* object, u32 mask) {
+extern "C" void walkReslistByMask(void* object, u32 mask) {
     CfReslistNode* headCell = *(CfReslistNode**)((u8*)object + 4);
     CfReslistNode* cur = (CfReslistNode*)headCell->mNext;
     while (cur != *(CfReslistNode**)((u8*)object + 4)) {
@@ -902,7 +901,7 @@ extern "C" void func_800B4278(void* object, u32 mask) {
 // us-800b4be4: same walk over the reslist at self+0xBCC, matching payloads
 // whose type id (field_0x94) is 5 and whose low 16 bits of field_0x9C equal
 // the search value.
-extern "C" void func_800B42E8(void* object, u32 value) {
+extern "C" void walkReslistByType(void* object, u32 value) {
     CfReslistNode* headCell = *(CfReslistNode**)((u8*)object + 0xBCC);
     CfReslistNode* cur = (CfReslistNode*)headCell->mNext;
     while (cur != *(CfReslistNode**)((u8*)object + 0xBCC)) {
@@ -914,14 +913,14 @@ extern "C" void func_800B42E8(void* object, u32 value) {
     }
 }
 #pragma pop
-// us-800b4c64 - func_800B4368
+// us-800b4c64 - walkReslistByName
 // Walk a linked list of CfObject nodes starting from self->field_0xBCC,
 // find entries where data->field_0x94 == 2, and if name is NULL or
 // strcmp(name, data->field_0x120) == 0, call func_800B3A88(self, data).
 // The list has sentinel at *(self+0xBCC), nodes are [0]=next, [8]=data_ptr.
 #pragma push
 #pragma auto_inline off
-extern "C" DECOMP_DONT_INLINE void func_800B4368(UnkClass_805764CC* self, const char* name) {
+extern "C" DECOMP_DONT_INLINE void walkReslistByName(UnkClass_805764CC* self, const char* name) {
     u8* cur = *(u8**)(*(u8**)((u8*)self + 0xBCC));
 
     while (cur != *(u8**)((u8*)self + 0xBCC)) {
@@ -938,11 +937,11 @@ extern "C" DECOMP_DONT_INLINE void func_800B4368(UnkClass_805764CC* self, const 
 #pragma pop
 // List-walk search: start at *headPtr and skip nodes until the cursor equals
 // *valA or its +8 link equals *valB, advancing *headPtr past each skipped
-// node; store the found node to *out (retail func_800B4554).
-// auto_inline off: retail keeps this as a real call from func_800B6DD0.
+// node; store the found node to *out (retail findListNode).
+// auto_inline off: retail keeps this as a real call from reslistFindObj.
 #pragma push
 #pragma auto_inline off
-extern "C" void func_800B4554(void** out, void** headPtr, void** valA, void** valB) {
+extern "C" void findListNode(void** out, void** headPtr, void** valA, void** valB) {
     void* node;
     while ((node = *headPtr) != *valA && *(void**)((u8*)node + 8) != *valB) {
         *headPtr = *(void**)node;
@@ -953,24 +952,24 @@ extern "C" void func_800B4554(void** out, void** headPtr, void** valA, void** va
 
 // Null-guarded triple dispatch: fetch a handle, reset, then pass the reset
 // result + handle to the forwarder (retail: handle in r4).
-extern "C" void* func_800B720C();
-extern "C" void* func_800B6CA0();
+extern "C" void* getPtrAt720();
+extern "C" void* getReslistC48();
 extern "C" void func_800B7214(void* a, void* b);
 
-extern "C" void func_800B71CC(void* arg) {
+extern "C" void copyTboxFromObj(void* arg) {
     if (arg != 0) {
-        void* v = func_800B720C();
-        func_800B7214(func_800B6CA0(), v);
+        void* v = getPtrAt720();
+        func_800B7214(getReslistC48(), v);
     }
 }
 
 // us-800b4cfc - func_800B4400
 // Clears all nodes from reslist at field_0xC28, then reinitializes its sentinel.
 // Then iterates reslist at field_0xBC8, and for each node whose data's field_0x94
-// is 1 or 6, calls func_800B2D88(&this->field_0xC28).
+// is 1 or 6, calls poolInsertThunk(&this->field_0xC28).
 extern "C" void func_800B4400(UnkClass_805764CC* self) {
     // Clears the pool list at field_0xC28, re-links its sentinel, then walks
-    // the field_0xBC8 list calling func_800B2D88 for nodes whose payload type
+    // the field_0xBC8 list calling poolInsertThunk for nodes whose payload type
     // id (+0x94) is 1 or 6. The sentinel values are re-read through the typed
     // members every pass: the loop store / call keeps MWCC from caching them.
     CfReslistNode* cur = (CfReslistNode*)self->field_0xC28.field_0x04;
@@ -995,7 +994,7 @@ loop2:
     void* data = cur->mItem;                 // node->field_0x08 payload
     s32 type = *(s32*)((u8*)data + 0x94);    // data->field_0x94 type id
     if (type == 1 || type == 6) {
-        func_800B2D88(&self->field_0xC28, data);
+        poolInsertThunk(&self->field_0xC28, data);
     }
     cur = cur->mNext;
 check2:
@@ -1012,7 +1011,7 @@ int CfObjectMove_UnkVirtualFunc15__Q22cf12CfObjectMoveFv(void* self){return 0;}
 // us-800b5408: flag cascade over field_0x15F0 - equivalent to (4 <= v <= 8)
 // but written as retail's chained guards so each stage short-circuits into
 // its own compare/branch pair.
-int func_800B4B0C(UnkClass_805764CC* self) {
+int testMode15F0Range(UnkClass_805764CC* self) {
     int ret = 1;
     int c = 1;
     int b = 1;
@@ -1032,15 +1031,15 @@ int func_800B4B0C(UnkClass_805764CC* self) {
     }
     return ret;
 }
-int func_800B4B74(UnkClass_805764CC* self, u32 val){return (self->field_0x15F0 == val) ? 1 : 0;}
+int testMode15F0Eq(UnkClass_805764CC* self, u32 val){return (self->field_0x15F0 == val) ? 1 : 0;}
 void init_4B88(){}
 extern const float lbl_eu_806669D8;
-// Target us-800b559c: func_800B4CA0
+// Target us-800b559c: hudCtrlSlot46
 // Battle-state gate: pass when the object's slot-0xAF callback reports set or
 // the 0x3F08 bit-4 flag is on; otherwise require the battle manager to be up,
 // this to be in the battle list, and the sub-record's bit 18 before firing
 // the slot-0x46 float callback.
-extern "C" s32 func_800B4CA0(Func4CA0Obj* self) {
+extern "C" s32 hudCtrlSlot46(Func4CA0Obj* self) {
     // Battle-state gate: returns 0 when the slot-0xAF callback reports set or
     // the +0x3F08 bit-4 flag is on; otherwise requires the battle manager,
     // membership via func_800DA06C, and the sub-record's bit 18 before firing
@@ -1076,7 +1075,7 @@ extern u16 lbl_eu_8066408C;
 unsigned short gvar_get408C(){return lbl_eu_8066408C;}
 #pragma push
 #pragma auto_inline off
-extern "C" u16 func_800B4F64(){extern u16 lbl_eu_80664314; return lbl_eu_80664314;}
+extern "C" u16 getGlobalU16_4314(){extern u16 lbl_eu_80664314; return lbl_eu_80664314;}
 #pragma pop
 void init_4F6C(){}
 void init_4F80(){}
@@ -1113,7 +1112,7 @@ UnkClass_800B0AD8* __dt__800B0AF4(void* selfv, int flags) {
 // Single-expression postfix form `arr[(*cnt)++] = *val` is required: it puts
 // the rlwinm addr in r0 and the addi next in r4 (dead param reg) exactly like
 // retail; the two-statement form always emits the swapped colors (r0/r4).
-extern "C" void func_800B5978(UnkClass_805764CC* self, const u32* val) {
+extern "C" void pushWordToBuf(UnkClass_805764CC* self, const u32* val) {
     u32* cnt = (u32*)((u8*)self + 0x380);
     ((u32*)self)[(*cnt)++] = *val;
 }
@@ -1148,7 +1147,7 @@ void init_66BC(){}
 //  matches under GC/3.0a5.2; Wii/1.1 folds the range into (u8)(val-1)<=23)
 #pragma push
 #pragma auto_inline off
-extern "C" DECOMP_DONT_INLINE int func_800B67CC(void* self) {
+extern "C" DECOMP_DONT_INLINE int isTypeId1to24(void* self) {
     u8 val = *(u8*)((u8*)self + 2);
     int result = 0;
     if (val >= 1) {
@@ -1164,7 +1163,7 @@ void UnkClass_805764CC::clear_700(){*(u32*)((u8*)this + 1792) = 0;}
 void init_6800(){}
 void init_68A8(){}
 void init_6AF4(){}
-extern "C" UnkClass_805764CC* func_800B6BA0() { return getInstance(); }
+extern "C" UnkClass_805764CC* getGameMgr() { return getInstance(); }
 void* sub_getReslist_B28(){return &UnkClass_805764CC::getInstance()->field_0xB28;}
 void* sub_getReslist_B48(){return &UnkClass_805764CC::getInstance()->field_0xB48;}
 void* sub_getReslist_B68(){return &UnkClass_805764CC::getInstance()->field_0xB68;}
@@ -1175,20 +1174,20 @@ void* sub_getReslist_C08(){return &UnkClass_805764CC::getInstance()->field_0xC08
 #pragma push
 #pragma auto_inline off
 extern "C" void* getListB28__Fv() { return (void*)((char*)getInstance() + 0xB28); }
-extern "C" void* func_800B6CA0() { return (char*)getInstance() + 0xC48; }
+extern "C" void* getReslistC48() { return (char*)getInstance() + 0xC48; }
 #pragma pop
-extern "C" reslist<cf::CfObject*>* func_800B6CC4() {
+extern "C" reslist<cf::CfObject*>* prepareReslistC28() {
     UnkClass_805764CC* obj = getInstance();
     func_800B4400(obj);
     return &obj->field_0xC28;
 }
 
-// us-800b76f0 - func_800B6DD0
-// Locate `obj` in the object list (walk via func_800B4554 between two fresh
+// us-800b76f0 - reslistFindObj
+// Locate `obj` in the object list (walk via findListNode between two fresh
 // iterators), then double-check it against two more iterator snapshots
-// (func_800B182C advances the found node) before extracting the matched
+// (followIterNext advances the found node) before extracting the matched
 // entry. A valid entry is re-bound through a recursive call.
-extern "C" void* func_800B6DD0(void* reslist, void* obj) {
+extern "C" void* reslistFindObj(void* reslist, void* obj) {
     if (obj == 0) {
         return 0;
     }
@@ -1199,30 +1198,30 @@ extern "C" void* func_800B6DD0(void* reslist, void* obj) {
     F8C0IteratorNode itD;      // retail sp+0xC
     checkFlagEquality__Q22cf13CfGameManagerFv(&itA, (F8C0ListSource*)reslist);
     copyItemSourceNode__Q22cf13CfGameManagerFv(&itB, (F8C0ListSource*)reslist);
-    func_800B4554(&found, (void**)&itB, (void**)&itA, &obj);
+    findListNode(&found, (void**)&itB, (void**)&itA, &obj);
     void* result;
     result = 0;
     checkFlagEquality__Q22cf13CfGameManagerFv(&itC, (F8C0ListSource*)reslist);
     if (compareFlagValues__Q22cf13CfGameManagerFv((const u32*)&found, (const u32*)&itC)) {
         checkFlagEquality__Q22cf13CfGameManagerFv(&itD, (F8C0ListSource*)reslist);
-        // func_800B182C hands back the node pointer; keeping it in a variable
+        // followIterNext hands back the node pointer; keeping it in a variable
         // lets MWCC pass it to compareFlagValues in r3 without recomputing &found.
-        void* advanced = func_800B182C(&found);
+        void* advanced = followIterNext(&found);
         if (compareFlagValues__Q22cf13CfGameManagerFv((const u32*)advanced, (const u32*)&itD)) {
             result = *getObjectNodePtr__Q22cf13CfGameManagerFv((F8C0IteratorNode*)&found);
         }
     }
-    if (result != 0 && func_800B64AC(result)) {
-        return func_800B6DD0(reslist, result);
+    if (result != 0 && testObj68bit6(result)) {
+        return reslistFindObj(reslist, result);
     }
     return result;
 }
-extern "C" void* func_800B6CF8(void* arg) {
+extern "C" void* prepareReslistArg(void* arg) {
     UnkClass_805764CC* obj = getInstance();
     func_800B44A0(obj, arg);
     return &obj->field_0xC28;
 }
-void* func_800B6D3C(void*);
+void* reslistFirstItem(void*);
 void fwd_6DD0_body(){}
 void init_6EC0(){}
 u32 UnkClass_800B0AD8::getCount(){return *(u32*)((u8*)this + 0xB00);}
@@ -1231,7 +1230,7 @@ void* UnkClass_800B0AD8::getRingElem(u32 index){
     u32 start = *(u32*)((u8*)this + 0xAFC); u32 count = *(u32*)((u8*)this + 0xB04);
     u32* base = *(u32**)((u8*)this + 0xAF8); return &base[(start + index) % count];
 }
-void sub_mainReset(){func_800B6D3C(getInstance());}
+void sub_mainReset(){reslistFirstItem(getInstance());}
 void init_7058(){}
 void init_708C(){}
 void init_70FC(){}
@@ -1256,8 +1255,8 @@ void UnkClass_805764CC::maskField_6C(u32 mask, int enable){
 }
 #pragma push
 #pragma auto_inline off
-extern "C" u16 func_800B75B4(){extern u16 lbl_eu_80663E42; return lbl_eu_80663E42;}
-extern "C" u16 func_800B75BC(){extern u16 lbl_eu_80663E44; return lbl_eu_80663E44;}
+extern "C" u16 getGlobalU16_3E42(){extern u16 lbl_eu_80663E42; return lbl_eu_80663E42;}
+extern "C" u16 getGlobalU16_3E44(){extern u16 lbl_eu_80663E44; return lbl_eu_80663E44;}
 #pragma pop
 void init_75EC(){}
 
@@ -1265,10 +1264,10 @@ void init_75EC(){}
 // Retail assigns head=r5/cur=r4. Winning shape: declare cur BEFORE head
 // (uninitialized) so head's vreg is born after cur's, giving head the
 // higher register r5 (retail lwz r5,4(r3); lwz r4,0(r5); cmpl r4,r5).
-// auto_inline off: retail calls this (not inlined) from func_800B75EC.
+// auto_inline off: retail calls this (not inlined) from evictTboxOverflow.
 #pragma push
 #pragma auto_inline off
-extern "C" int func_800B7680(void* self) {
+extern "C" int reslistCount(void* self) {
     void* cur;
     void* head = *(void**)((u8*)self + 4);
     cur = *(void**)head;
@@ -1277,39 +1276,39 @@ extern "C" int func_800B7680(void* self) {
     return count;
 }
 #pragma pop
-void sub_resetReslist_B28(void* self){func_800B6D3C(&UnkClass_805764CC::getInstance()->field_0xB28);}
-void sub_resetReslist_B48(void* self){func_800B6D3C(&UnkClass_805764CC::getInstance()->field_0xB48);}
-void sub_resetReslist_B68(void* self){func_800B6D3C(&UnkClass_805764CC::getInstance()->field_0xB68);}
-void* sub_resetReslist_B88(void* self){return func_800B6D3C(&UnkClass_805764CC::getInstance()->field_0xB88);}
-void* sub_resetReslist_BE8(void* self){return func_800B6D3C(&UnkClass_805764CC::getInstance()->field_0xBE8);}
-void* sub_resetReslist_BC8(void* self){return func_800B6D3C(&UnkClass_805764CC::getInstance()->field_0xBC8);}
-void* sub_resetReslist_C08(void* self){return func_800B6D3C(&UnkClass_805764CC::getInstance()->field_0xC08);}
-void* sub_resetReslist_BA8(void* self){return func_800B6D3C(&UnkClass_805764CC::getInstance()->field_0xBA8);}
+void sub_resetReslist_B28(void* self){reslistFirstItem(&UnkClass_805764CC::getInstance()->field_0xB28);}
+void sub_resetReslist_B48(void* self){reslistFirstItem(&UnkClass_805764CC::getInstance()->field_0xB48);}
+void sub_resetReslist_B68(void* self){reslistFirstItem(&UnkClass_805764CC::getInstance()->field_0xB68);}
+void* sub_resetReslist_B88(void* self){return reslistFirstItem(&UnkClass_805764CC::getInstance()->field_0xB88);}
+void* sub_resetReslist_BE8(void* self){return reslistFirstItem(&UnkClass_805764CC::getInstance()->field_0xBE8);}
+void* sub_resetReslist_BC8(void* self){return reslistFirstItem(&UnkClass_805764CC::getInstance()->field_0xBC8);}
+void* sub_resetReslist_C08(void* self){return reslistFirstItem(&UnkClass_805764CC::getInstance()->field_0xC08);}
+void* sub_resetReslist_BA8(void* self){return reslistFirstItem(&UnkClass_805764CC::getInstance()->field_0xBA8);}
 // auto_inline off: retail keeps these list-step helpers as real calls (bl)
-// from func_800B8B94/func_800B8C78; without this the -ipa pass folds them in.
+// from findObjB28ById/findObjB48ById; without this the -ipa pass folds them in.
 #pragma push
 #pragma auto_inline off
-extern "C" cf::CfObject* func_800B77E4(cf::CfObject* obj) {
+extern "C" cf::CfObject* nextReslistB28(cf::CfObject* obj) {
     UnkClass_805764CC* ctx = getInstance();
-    cf::CfObject* next = (cf::CfObject*)func_800B6DD0(&ctx->field_0xB28, obj);
-    // Retail returns the next entry in r3 (kept from func_800B6DD0).
+    cf::CfObject* next = (cf::CfObject*)reslistFindObj(&ctx->field_0xB28, obj);
+    // Retail returns the next entry in r3 (kept from reslistFindObj).
     return next;
 }
 #pragma pop
 
-void func_800B7854(cf::CfObject* obj) {
+void insertReslistB68(cf::CfObject* obj) {
     UnkClass_805764CC* ctx = getInstance();
-    func_800B6DD0(&ctx->field_0xB68, obj);
+    reslistFindObj(&ctx->field_0xB68, obj);
 }
 
 #pragma push
 #pragma auto_inline off
 // extern "C": retail exports this helper under the unmangled name (reloc fix).
-extern "C" cf::CfObject* func_800B781C(cf::CfObject* obj);
-cf::CfObject* func_800B781C(cf::CfObject* obj) {
+extern "C" cf::CfObject* nextReslistB48(cf::CfObject* obj);
+cf::CfObject* nextReslistB48(cf::CfObject* obj) {
     UnkClass_805764CC* ctx = getInstance();
-    cf::CfObject* next = (cf::CfObject*)func_800B6DD0(&ctx->field_0xB48, obj);
-    // Retail returns the next entry in r3 (kept from func_800B6DD0).
+    cf::CfObject* next = (cf::CfObject*)reslistFindObj(&ctx->field_0xB48, obj);
+    // Retail returns the next entry in r3 (kept from reslistFindObj).
     return next;
 }
 #pragma pop
@@ -1317,47 +1316,47 @@ cf::CfObject* func_800B781C(cf::CfObject* obj) {
 #pragma push
 #pragma auto_inline off
 // extern "C": retail symbol is the unmangled name (see reloc fix in hexdiff).
-extern "C" void* func_800B78C4(cf::CfObject* obj) {
+extern "C" void* nextReslistBE8(cf::CfObject* obj) {
     UnkClass_805764CC* ctx = getInstance();
-    func_800B6DD0(&ctx->field_0xBE8, obj);
-    // No explicit return: retail keeps whatever func_800B6DD0 left in r3
+    reslistFindObj(&ctx->field_0xBE8, obj);
+    // No explicit return: retail keeps whatever reslistFindObj left in r3
     // (the next list entry) as the return value.
 }
 #pragma pop
 
 // us-800b8218 - Add CfObject to reslist at field_0xBC8
-void func_800B78FC(cf::CfObject* obj) {
+void insertReslistBC8(cf::CfObject* obj) {
     UnkClass_805764CC* ctx = getInstance();
-    func_800B6DD0(&ctx->field_0xBC8, obj);
+    reslistFindObj(&ctx->field_0xBC8, obj);
 }
 
 // us-800b8250 - Add CfObject to reslist at field_0xBA8
-void func_800B7934(cf::CfObject* obj) {
+void insertReslistBA8(cf::CfObject* obj) {
     UnkClass_805764CC* ctx = getInstance();
-    func_800B6DD0(&ctx->field_0xBA8, obj);
+    reslistFindObj(&ctx->field_0xBA8, obj);
 }
 
 // us-800b8288 - Add CfObject to reslist at field_0xC08
-void func_800B796C(cf::CfObject* obj) {
+void insertReslistC08(cf::CfObject* obj) {
     UnkClass_805764CC* ctx = getInstance();
-    func_800B6DD0(&ctx->field_0xC08, obj);
+    reslistFindObj(&ctx->field_0xC08, obj);
 }
 void init_79A4(){}
 extern "C" void* getResetDataPtr__Q22cf13CfGameManagerFv();
-extern "C" void* func_800B7744();
+extern "C" void* firstReslistBE8();
 #pragma push
 #pragma auto_inline off
 // us-800b82c0: while the game manager is active, iterate the object chain
-// starting at func_800B7744(), invoking virtual slot 0x67 (vtable + 0x19C)
-// with the singleton as argument; func_800B78C4 yields the next entry.
-void func_800B79A4(UnkClass_805764CC* self) {
+// starting at firstReslistBE8(), invoking virtual slot 0x67 (vtable + 0x19C)
+// with the singleton as argument; nextReslistBE8 yields the next entry.
+void walkReslistBE8vt(UnkClass_805764CC* self) {
     if (getResetDataPtr__Q22cf13CfGameManagerFv() == 0) {
         return;
     }
-    IDispB79A4* node = (IDispB79A4*)func_800B7744();
+    IDispB79A4* node = (IDispB79A4*)firstReslistBE8();
     while (node != 0) {
         node->unk67(self);
-        node = (IDispB79A4*)func_800B78C4((cf::CfObject*)node);
+        node = (IDispB79A4*)nextReslistBE8((cf::CfObject*)node);
     }
 }
 #pragma pop
@@ -1368,11 +1367,11 @@ void init_8524(){}
 void init_dispatchTarget_3(){}
 void init_dispatchTarget_4(){}
 void init_8804(){}
-// us-800b91fc - func_800B88E0
+// us-800b91fc - unlinkFactoryById
 // Remove nodes matching a given ID from a linked list at offset 0xC84.
 // `next` is declared before `node` so MWCC colors node=r7/next=r6 like
 // retail (the reverse declaration order swaps the registers).
-void func_800B88E0(u8* self, u32 targetId) {
+void unlinkFactoryById(u8* self, u32 targetId) {
     u32* head = *(u32**)(self + 0xC84);
     u32* sentinel = head;
     u32* next;
@@ -1396,11 +1395,11 @@ extern "C" {
     extern void __ct__17UnkClass_805764CCFv(void*);
     extern void __register_global_object(void*, void*, void*);
     extern void* allocate_array__Q23mtl10MemManagerFUlUl(u32 size, u32 handle);
-    extern int func_800B64AC(void* p);
+    extern int testObj68bit6(void* p);
 }
 // us-800b10b4 - getInstance (singleton sinit: init once, then return &singleton)
 // auto_inline off: DECOMP_DONT_INLINE is empty under GC/3.0a5.2 (__MWERKS__ 0x4199)
-// so the -ipa pass folds this body into func_800B6CC4/6CF8's spans.
+// so the -ipa pass folds this body into prepareReslistC28/6CF8's spans.
 #pragma push
 #pragma auto_inline off
 UnkClass_805764CC* getInstance() {
@@ -1415,8 +1414,8 @@ UnkClass_805764CC* getInstance() {
 #pragma inline
 // us-800b1160 - func_800B0894 (allocate + zero-fill array of count*0xc, store at +0x14/+0x18)
 // auto_inline off: without it the -ipa pass folds this 0x12C body into
-// func_800B084C (its only caller), inflating the wrapper to 316B. Retail's
-// func_800B084C stays a plain wrapper, so the inline must be blocked.
+// allocFactoryPool (its only caller), inflating the wrapper to 316B. Retail's
+// allocFactoryPool stays a plain wrapper, so the inline must be blocked.
 // Typed view over the list: the pool member is a node pointer in retail
 // (no int->pointer cast in the fill loop).
 struct B0894List {
@@ -1458,13 +1457,13 @@ extern "C" void func_800B0894(UnkClass_805764CC* self, unsigned long handle, s32
 // produces).
 #pragma inline
 // us-800b2220 - func_800B1954 (list cleanup)
-extern "C" void func_800B1A8C(void* a, void* b);
-extern "C" void* func_800B1A9C(void* a);
-extern "C" void func_800B1AA8(void* a, void* b, int c);
-extern "C" void func_800B1ACC(void* a, void* b);
-extern "C" int func_800B1AD8(void* a, void* b);
-extern "C" void func_800B0B40(void* a);
-extern "C" void func_800B4278(void* object, u32 mask);
+extern "C" void tboxIterBegin(void* a, void* b);
+extern "C" void* tboxIterItem(void* a);
+extern "C" void tboxIterStep(void* a, void* b, int c);
+extern "C" void copyWordAt4(void* a, void* b);
+extern "C" int iterWordsDiffer(void* a, void* b);
+extern "C" void clearWorkCounters(void* a);
+extern "C" void walkReslistByMask(void* object, u32 mask);
 extern float lbl_eu_80663EDC;
 extern u32 lbl_eu_80663EE4;
 #pragma push
@@ -1474,19 +1473,19 @@ extern u32 lbl_eu_80663EE4;
 // state, then walk the C48 reslist nulling each entry.
 extern "C" void func_800B1954(UnkClass_805764CC* self) {
     // Retail builds 0xFDFF as lis 1 / subi 0x201: write it as the subtraction.
-    func_800B4278(self, 0x10000 - 0x201);
-    func_800B4278(self, -1);
-    func_800B1A5C(&self->field_0xC28);
-    func_800B1A5C(&self->field_0xC08);
-    func_800B1A5C(&self->field_0xBC8);
-    func_800B1A5C(&self->field_0xBE8);
-    func_800B1A5C(&self->field_0xB88);
-    func_800B1A5C(&self->field_0xB68);
-    func_800B1A5C(&self->field_0xB48);
-    func_800B1A5C(&self->field_0xB28);
-    func_800B1A5C(&self->field_0xBA8);
-    func_800B1A5C(self);
-    func_800B0B40(&self->field_0x20);
+    walkReslistByMask(self, 0x10000 - 0x201);
+    walkReslistByMask(self, -1);
+    clearReslistLinks(&self->field_0xC28);
+    clearReslistLinks(&self->field_0xC08);
+    clearReslistLinks(&self->field_0xBC8);
+    clearReslistLinks(&self->field_0xBE8);
+    clearReslistLinks(&self->field_0xB88);
+    clearReslistLinks(&self->field_0xB68);
+    clearReslistLinks(&self->field_0xB48);
+    clearReslistLinks(&self->field_0xB28);
+    clearReslistLinks(&self->field_0xBA8);
+    clearReslistLinks(self);
+    clearWorkCounters(&self->field_0x20);
     self->field_0xD0E = 0;
     self->field_0xD10 = 0;
     self->field_0xD04 = 0;
@@ -1495,23 +1494,23 @@ extern "C" void func_800B1954(UnkClass_805764CC* self) {
     // Iterator slots as an array (retail sp+0x8 / sp+0xC / sp+0x10): A=iter[2],
     // B=iter[0], C=iter[1].
     u32 iter[3];
-    func_800B1A8C(&iter[2], &self->field_0xC48);
+    tboxIterBegin(&iter[2], &self->field_0xC48);
     // check-first loop shape: retail tests iterator-end before the body.
     goto check;
 loop:
-    *(u32*)func_800B1A9C(&iter[2]) = 0;
-    func_800B1AA8(&iter[1], &iter[2], 0);
+    *(u32*)tboxIterItem(&iter[2]) = 0;
+    tboxIterStep(&iter[1], &iter[2], 0);
 check:
-    func_800B1ACC(&iter[0], &self->field_0xC48);
-    if (func_800B1AD8(&iter[2], &iter[0]) != 0) {
+    copyWordAt4(&iter[0], &self->field_0xC48);
+    if (iterWordsDiffer(&iter[2], &iter[0]) != 0) {
         goto loop;
     }
 }
 #pragma pop
 // us-800b6fb8 - func_800B66BC (guard-chain + event queue dispatch)
 extern "C" void func_800B655C(UnkClass_805764CC* self, const F8C0ListSource* list);
-extern "C" void* func_800B67EC();
-extern "C" void func_800B67F4(void* buf);
+extern "C" void* getPtrAt1A8();
+extern "C" void clearField700(void* buf);
 extern "C" void func_800B5994(UnkClass_805764CC* self, IB8FC4Player* anchor,
                               void* list, const F8C0ListSource* buf, float f);
 extern "C" void func_800B4D84(void* self, void* buf);
@@ -1524,7 +1523,7 @@ extern float lbl_eu_80661CCC;
 extern "C" void func_800B66BC(UnkClass_805764CC* self, void* arg) {
     if (arg == 0) return;
     if (isSceneLoading__Q22cf13CfGameManagerFv() != 0) return;
-    if (func_800B1C0C(2) == 0) {
+    if (gflagHasMask(2) == 0) {
         func_800B655C(self, (const F8C0ListSource*)((u8*)self + 0xb48));
     }
     if (lbl_eu_80663ED8 > lbl_eu_806669D8) {
@@ -1537,12 +1536,12 @@ extern "C" void func_800B66BC(UnkClass_805764CC* self, void* arg) {
     }
     int result = 0;
     if (CfRes_getE24Bit22() == 0 && getInstance__Q22cf14CBattleManagerFv() != 0) {
-        void* tmp = func_800B67EC();
-        result = func_800B67CC(tmp);
+        void* tmp = getPtrAt1A8();
+        result = isTypeId1to24(tmp);
     }
     if (result == 0) {
         char buf[0x700];
-        func_800B67F4(buf);
+        clearField700(buf);
         func_800B5994(self, (IB8FC4Player*)arg, (void*)((u8*)self + 0xb48),
                       (const F8C0ListSource*)buf, lbl_eu_80663EC8);
         func_800B5994(self, (IB8FC4Player*)arg, (void*)((u8*)self + 0xb68),
@@ -1554,7 +1553,7 @@ extern "C" void func_800B66BC(UnkClass_805764CC* self, void* arg) {
 extern "C" void func_800B6800(UnkClass_805764CC* self, void* arg, int flag, float value) {
     extern const float lbl_eu_806669D8;
     if (flag) {
-        self->field_0xCF4 = (u32)func_800B39C0(arg);
+        self->field_0xCF4 = (u32)getObjIdAt74(arg);
         self->field_0xCF8 = value;
     } else {
         self->field_0xCF8 = lbl_eu_806669D8;
@@ -1565,27 +1564,27 @@ extern "C" void func_800B6800(UnkClass_805764CC* self, void* arg, int flag, floa
         // (retail: single lfs f1 hoisted to top, stfs f1; decomp: lfs f0 for stfs + lfs f1
         // per call). 7 source shapes tried; next: PS-float angle / expression order.
     }
-    func_800B1C24(4, (void*)flag);
+    gflagSetOrClear(4, (void*)flag);
 }
 // us-800b79ac - findObjectById (singleton lookup + flag check)
-// auto_inline off: retail calls this out-of-line from func_800B75EC.
+// auto_inline off: retail calls this out-of-line from evictTboxOverflow.
 #pragma push
 #pragma auto_inline off
 extern "C" void* findObjectById__Fi(int id) {
     UnkClass_805764CC* obj = getInstance();
-    void* result = func_800B6EC0(obj, id);
+    void* result = findWorkById(obj, id);
     bool valid = false;
-    if (result != 0 && func_800B64AC(result) == 0) {
+    if (result != 0 && testObj68bit6(result) == 0) {
         valid = true;
     }
     return valid ? result : 0;
 }
 #pragma pop
-// us-800b923c - func_800B8920
+// us-800b923c - lookupWorkAtAddr
 // Checks if an address is aligned and within a valid range [0x80000000, 0x93800000),
-// then looks up the singleton and calls func_800B6EC0(&singleton, *(this+0x74)).
-// Returns 1 if the check passes and func_800B6EC0 returns non-zero, else 0.
-extern "C" int func_800B8920(u32 addr) {
+// then looks up the singleton and calls findWorkById(&singleton, *(this+0x74)).
+// Returns 1 if the check passes and findWorkById returns non-zero, else 0.
+extern "C" int lookupWorkAtAddr(u32 addr) {
     if (lbl_eu_80663EE8 == 0) {
         __ct__17UnkClass_805764CCFv(lbl_eu_80572CD4);
         __register_global_object(lbl_eu_80572CD4, (void*)__dt__17UnkClass_805764CCFv, lbl_eu_80572CC8);
@@ -1593,7 +1592,7 @@ extern "C" int func_800B8920(u32 addr) {
     }
 
     // Retail computes the singleton address once here (dominating the checks)
-    // and reuses it for the func_800B6EC0 call below.
+    // and reuses it for the findWorkById call below.
     void* inst = (void*)lbl_eu_80572CD4;
 
     // Check alignment: low 2 bits must be 0, and address must be in [0x80000000, 0x93800000)
@@ -1602,14 +1601,14 @@ extern "C" int func_800B8920(u32 addr) {
     }
 
     u32 val = *(u32*)(addr + 0x74);
-    return func_800B6EC0((UnkClass_805764CC*)inst, val) != 0;
+    return findWorkById((UnkClass_805764CC*)inst, val) != 0;
 }
-// us-800b92e8 - func_800B89CC
+// us-800b92e8 - lookupCA0ById
 // Singleton accessor for UnkClass_805764CC at lbl_eu_80572CD4.
 // If the singleton hasn't been initialized (lbl_eu_80663EE8 == 0),
 // construct it and register as a global object.
-// Then access field_0xCA0 and call func_80193AB0(field_0xCA0, id).
-// Returns the result of func_80193AB0, or 0 if field_0xCA0 is NULL.
+// Then access field_0xCA0 and call CPartsChange_FindActorById(field_0xCA0, id).
+// Returns the result of CPartsChange_FindActorById, or 0 if field_0xCA0 is NULL.
 extern "C" {
     extern s8 lbl_eu_80663EE8;
     extern u8 lbl_eu_80572CD4[];
@@ -1617,10 +1616,10 @@ extern "C" {
     extern void __dt__17UnkClass_805764CCFv(void*, int);
     extern void __ct__17UnkClass_805764CCFv(void*);
     extern void __register_global_object(void*, void*, void*);
-    extern void* func_80193AB0(void*, u32);
+    extern void* CPartsChange_FindActorById(void*, u32);
 }
 
-extern "C" void* func_800B89CC(u32 id) {
+extern "C" void* lookupCA0ById(u32 id) {
     void* result = NULL;
 
     if (lbl_eu_80663EE8 == 0) {
@@ -1631,18 +1630,18 @@ extern "C" void* func_800B89CC(u32 id) {
 
     void* ca0 = *(void**)(lbl_eu_80572CD4 + 0xCA0);
     if (ca0 != NULL) {
-        result = func_80193AB0(ca0, id);
+        result = CPartsChange_FindActorById(ca0, id);
     }
 
     return result;
 }
 
-// us-800b9380 - func_800B8A64
-// Same singleton pattern as func_800B89CC, but reads a u16 from
-// this->field_0x45C0 and passes it as the id to func_80193AB0.
+// us-800b9380 - lookupCA0By45C0
+// Same singleton pattern as lookupCA0ById, but reads a u16 from
+// this->field_0x45C0 and passes it as the id to CPartsChange_FindActorById.
 #pragma push
 #pragma auto_inline off
-extern "C" void* func_800B8A64(void* self) {
+extern "C" void* lookupCA0By45C0(void* self) {
     u16 id = *(u16*)((u8*)self + 0x45C0);
     void* result = NULL;
 
@@ -1654,16 +1653,16 @@ extern "C" void* func_800B8A64(void* self) {
 
     void* ca0 = *(void**)(lbl_eu_80572CD4 + 0xCA0);
     if (ca0 != NULL) {
-        result = func_80193AB0(ca0, id);
+        result = CPartsChange_FindActorById(ca0, id);
     }
 
     return result;
 }
 #pragma pop
 
-// us-800b9418 - func_800B8AFC
-// Singleton accessor + field_0xCA0 lookup, then calls func_80193CD0(field_0xCA0, this).
-extern "C" void* func_800B8AFC(void* self) {
+// us-800b9418 - lookupCA0BySelf
+// Singleton accessor + field_0xCA0 lookup, then calls CPartsChange_FindActorByObj(field_0xCA0, this).
+extern "C" void* lookupCA0BySelf(void* self) {
     void* result = NULL;
 
     if (lbl_eu_80663EE8 == 0) {
@@ -1674,20 +1673,20 @@ extern "C" void* func_800B8AFC(void* self) {
 
     void* ca0 = *(void**)(lbl_eu_80572CD4 + 0xCA0);
     if (ca0 != NULL) {
-        result = func_80193CD0(ca0, self);
+        result = CPartsChange_FindActorByObj(ca0, self);
     }
 
     return result;
 }
-// Target us-800b94b0 / us-800b9594: func_800B8B94 / func_800B8C78
-// Walk an object list (head via func_800B76A4/func_800B76CC, advance via
-// func_800B77E4/func_800B781C); when an entry's +0x8C id matches, resolve it
+// Target us-800b94b0 / us-800b9594: findObjB28ById / findObjB48ById
+// Walk an object list (head via firstReslistB28/firstReslistB48, advance via
+// nextReslistB28/nextReslistB48); when an entry's +0x8C id matches, resolve it
 // through func_8016FE34 and return. Each step re-runs the inlined singleton
 // init guard.
-extern "C" void* func_800B76A4();
-extern "C" void* func_800B76CC();
+extern "C" void* firstReslistB28();
+extern "C" void* firstReslistB48();
 
-void* func_800B8B94(s32 id) {
+void* findObjB28ById(s32 id) {
     if (id == 0) {
         return 0;
     }
@@ -1696,7 +1695,7 @@ void* func_800B8B94(s32 id) {
         __register_global_object(lbl_eu_80572CD4, (void*)__dt__17UnkClass_805764CCFv, lbl_eu_80572CC8);
         lbl_eu_80663EE8 = 1;
     }
-    B8B94Obj* obj = (B8B94Obj*)func_800B76A4();
+    B8B94Obj* obj = (B8B94Obj*)firstReslistB28();
     while (obj != 0) {
         if (id == obj->field_8C) {
             return func_8016FE34(obj);
@@ -1706,12 +1705,12 @@ void* func_800B8B94(s32 id) {
             __register_global_object(lbl_eu_80572CD4, (void*)__dt__17UnkClass_805764CCFv, lbl_eu_80572CC8);
             lbl_eu_80663EE8 = 1;
         }
-        obj = (B8B94Obj*)func_800B77E4((cf::CfObject*)obj);
+        obj = (B8B94Obj*)nextReslistB28((cf::CfObject*)obj);
     }
     return 0;
 }
 
-void* func_800B8C78(s32 id) {
+void* findObjB48ById(s32 id) {
     if (id == 0) {
         return 0;
     }
@@ -1720,7 +1719,7 @@ void* func_800B8C78(s32 id) {
         __register_global_object(lbl_eu_80572CD4, (void*)__dt__17UnkClass_805764CCFv, lbl_eu_80572CC8);
         lbl_eu_80663EE8 = 1;
     }
-    B8B94Obj* obj = (B8B94Obj*)func_800B76CC();
+    B8B94Obj* obj = (B8B94Obj*)firstReslistB48();
     while (obj != 0) {
         // Operand order (id first) matches retail's cmpw r26, r0.
         if (id == obj->field_8C) {
@@ -1731,7 +1730,7 @@ void* func_800B8C78(s32 id) {
             __register_global_object(lbl_eu_80572CD4, (void*)__dt__17UnkClass_805764CCFv, lbl_eu_80572CC8);
             lbl_eu_80663EE8 = 1;
         }
-        obj = (B8B94Obj*)func_800B781C((cf::CfObject*)obj);
+        obj = (B8B94Obj*)nextReslistB48((cf::CfObject*)obj);
     }
     return 0;
 }
@@ -1740,7 +1739,7 @@ void init_8FC4(){}
 void sub_dispatchInit_1(){getInstance(); ((void(*)())init_dispatchTarget_1)();}
 void sub_dispatchInit_2(){getInstance(); ((void(*)())init_dispatchTarget_2)();}
 // us-800b9c18 - pass the singleton, self and arg to the pair helper.
-extern "C" void func_800B92FC(void* self, void* arg) {
+extern "C" void gmDispatchPair(void* self, void* arg) {
     UnkClass_805764CC* obj = getInstance();
     func_800B8524(obj, self, arg);
 }
@@ -1803,15 +1802,15 @@ extern "C" void* __ct__800B970C(void* self) {
 
     return self;
 }
-// us-800ba0bc - func_800B97A0
+// us-800ba0bc - mapKindToSpawn
 // Reads the packed resource token at record+0x4, extracts its type field
 // (bits 27..5) and translates it into a func_800B20B4 spawn mask, then
 // spawns into the manager singleton, forwarding the record as payload.
-extern "C" u32 func_800B2D28(u8* self);
+extern "C" u32 getWordAt4(u8* self);
 #pragma push
 #pragma auto_inline off
-void* func_800B97A0(void* self, u32 arg) {
-    u32 idx = CfRes_extractBits27_5((void*)(uintptr_t)func_800B2D28((u8*)self));
+void* mapKindToSpawn(void* self, u32 arg) {
+    u32 idx = CfRes_extractBits27_5((void*)(uintptr_t)getWordAt4((u8*)self));
     u32 mask = 0;
     switch (idx) {
     case 2:  mask = 0x2; break;
@@ -1827,22 +1826,22 @@ void* func_800B97A0(void* self, u32 arg) {
     return func_800B20B4(getInstance(), mask, (const B20B4Payload*)self, arg);
 }
 #pragma pop
-// CfGameManager imports used by func_800B985C (retail mangled names).
+// CfGameManager imports used by spawnFromRecord (retail mangled names).
 extern "C" void clearResourceStack__Q22cf13CfGameManagerFv(void* self);
 extern "C" void setResourceField04__Q22cf13CfGameManagerFv(void* self, void* value);
 extern "C" void setResourceField00__Q22cf13CfGameManagerFv(void* self, unsigned long value);
-extern "C" void* func_800B97A0(void* self, void* value);
+extern "C" void* mapKindToSpawn(void* self, void* value);
 #pragma push
 #pragma auto_inline off
 // us-800ba178: build a scratch Unk812Data record on the stack, seed it from
 // the three arguments via the CfGameManager setters, then hand it to
-// func_800B97A0.
-void func_800B985C(void* argA, void* argB, void* argC) {
+// mapKindToSpawn.
+void spawnFromRecord(void* argA, void* argB, void* argC) {
     u8 buf[0x28];
     clearResourceStack__Q22cf13CfGameManagerFv(buf);
     setResourceField04__Q22cf13CfGameManagerFv(buf, argA);
     setResourceField00__Q22cf13CfGameManagerFv(buf, (unsigned long)argB);
-    func_800B97A0(buf, argC);
+    mapKindToSpawn(buf, argC);
 }
 #pragma pop
 void init_98C8(){}
@@ -1920,7 +1919,7 @@ UnkClass_805764CC::UnkClass_805764CC() {
     field_0xD0E = 0;
     field_0xD10 = 0;
     extern u32 lbl_eu_80663EE0;
-    func_800B0A90(&lbl_eu_80663EE0);
+    zeroFirstWord(&lbl_eu_80663EE0);
 }
 
 // Target us-800b145c - _reslist_base<cf::TboxInfo>::~_reslist_base()
@@ -2013,12 +2012,12 @@ void func_800B587C(SortEntry* start, SortEntry* end, SortEntryCompare compare) {
     }
 }
 
-// us-800b7a1c - func_800B70FC
+// us-800b7a1c - walkListByItemId
 // Walks the item-manager list via the CfGameManager iterator primitives; for
 // every node whose type id matches arg1, raises func_800BFDE0 with the node's
 // container base (the raw node pointer sits at +0x3E9C inside the container).
-void func_800B70FC(u32 arg1, u32 arg2) {
-    func_800B71C4();
+void walkListByItemId(u32 arg1, u32 arg2) {
+    getGlobalU32_40F4();
     // node declared first so its vreg is born earliest (retail colors it
     // r31); source follows and lands in r30.
     u32 node;
@@ -2140,7 +2139,7 @@ reslist<cf::TboxInfo>::~reslist() {
 // sentinel to itself, then frees the owned pool buffer (mList) unless the
 // ownership flag at 0x1C is set. The null-check and flags-delete tails are
 // MWCC-generated for member destructors; the goto/check loop mirrors the
-// matched func_800B1A5C shape (retail re-reads field_0x04 every iteration).
+// matched clearReslistLinks shape (retail re-reads field_0x04 every iteration).
 template <>
 _reslist_base<cf::IFactoryEvent*>::~_reslist_base() {
     extern void* lbl_eu_805290B8[];
@@ -2205,22 +2204,22 @@ check:
 }
 #pragma pop
 
-// us-800ba2a8 - func_800B998C
+// us-800ba2a8 - call47A8flag1
 // Retail is a pure GPR-rotation tail call into func_800B47A8 with an all-GPR
 // argument view (r3=flag, r4=self, r5..r8=a1..a4; a5 is dropped).
 typedef void* (*B99ShimFn)(long, void*, void*, void*, void*, void*, void*);
-void* func_800B998C(void* self, void* a1, void* a2, void* a3, void* a4, void* a5) {
+void* call47A8flag1(void* self, void* a1, void* a2, void* a3, void* a4, void* a5) {
     return ((B99ShimFn)func_800B47A8)(1, self, a1, a2, a3, a4, a5);
 }
 
-// us-800ba2d8 - func_800B99BC
-void* func_800B99BC(void* self, void* a1, void* a2, void* a3, void* a4, void* a5) {
+// us-800ba2d8 - call47A8flag0
+void* call47A8flag0(void* self, void* a1, void* a2, void* a3, void* a4, void* a5) {
     return ((B99ShimFn)func_800B47A8)(0, self, a1, a2, a3, a4, a5);
 }
 
-// us-800ba308 - func_800B99EC: walk the sentinel list at +4 and
+// us-800ba308 - unlinkNodesByKey: walk the sentinel list at +4 and
 // unlink every node whose +8 field equals *(u32*)arg.
-extern "C" void func_800B99EC(void* list, void* arg) {
+extern "C" void unlinkNodesByKey(void* list, void* arg) {
     u32 sentinel = *(u32*)((u32*)list + 1);
     u32 next;
     u32 cur = *(u32*)sentinel;
@@ -2256,75 +2255,75 @@ extern "C" void sinit_800B9A40() {
 // us-800b1da0 - deref field at +0x0 and add 8
 #pragma push
 #pragma auto_inline off
-u32 func_800B14D4(u8* self) {
+u32 factoryIterItem(u8* self) {
     return *(u32*)self + 8;
 }
 #pragma pop
 // us-800b1dc8 - compare two u32 for inequality (dual-subf/or/srwi idiom)
-u32 func_800B14FC(int* a, int* b) {
-    int va = *a;
-    int vb = *b;
+extern "C" u32 wordsDiffer(void* a, void* b) {
+    int va = *(int*)a;
+    int vb = *(int*)b;
     return va != vb;
 }
-// us-800b23a4 - func_800B1AD8: same dual-subf inequality idiom over two
+// us-800b23a4 - iterWordsDiffer: same dual-subf inequality idiom over two
 // iter words (retail: lwz/lwz/subf/subf/or/srwi 31).
 #pragma push
 #pragma auto_inline off
-extern "C" int func_800B1AD8(void* a, void* b) {
+extern "C" int iterWordsDiffer(void* a, void* b) {
     u32 va = *(u32*)a;
     u32 vb = *(u32*)b;
     return va != vb;
 }
 #pragma pop
 // us-800b35f4 - accessor returning field at +0x4
-// auto_inline off: retail calls this out-of-line (e.g. from func_800B97A0).
+// auto_inline off: retail calls this out-of-line (e.g. from mapKindToSpawn).
 #pragma push
 #pragma auto_inline off
-extern "C" u32 func_800B2D28(u8* self) {
+extern "C" u32 getWordAt4(u8* self) {
     return *(u32*)(self + 0x4);
 }
 #pragma pop
 // us-800b3aa0 - extract bit 7 of field at +0x64
-// auto_inline off: retail calls this out-of-line from func_800B4120.
+// auto_inline off: retail calls this out-of-line from fileObjIntoReslist.
 // extern "C": retail exports the unmangled name.
 #pragma push
 #pragma auto_inline off
-extern "C" u32 func_800B31D4(u8* self) {
+extern "C" u32 testObj64bit7(u8* self) {
     return (*(u32*)(self + 0x64) >> 7) & 1;
 }
 #pragma pop
-// func_800B31BC: sibling predicate, bit 7 of field at +0x64.
+// testObj64bit8: sibling predicate, bit 7 of field at +0x64.
 // The asm-scaffold copy carried a stale 0x90 reset body; retail is this 3-op
-// bit test (called out-of-line from func_800B4120 / func_800B2ED0).
+// bit test (called out-of-line from fileObjIntoReslist / func_800B2ED0).
 #pragma push
 #pragma auto_inline off
-extern "C" int func_800B31BC(void* self) {
+extern "C" int testObj64bit8(void* self) {
     return (int)((*(u32*)((u8*)self + 0x64) >> 8) & 1);
 }
 #pragma pop
-// func_800B31F8: sibling predicate, bit 15 of field at +0x64 (retail leaf:
+// testObj64bit15: sibling predicate, bit 15 of field at +0x64 (retail leaf:
 // lwz r0,0x64(r3); rlwinm r3,r0,17,31,31; blr; called out-of-line from
-// func_800B4120). Definition was missing entirely (stale FULL_MATCH status).
+// fileObjIntoReslist). Definition was missing entirely (stale FULL_MATCH status).
 #pragma push
 #pragma auto_inline off
-extern "C" int func_800B31F8(void* self) {
+extern "C" int testObj64bit15(void* self) {
     return (int)((*(u32*)((u8*)self + 0x64) >> 15) & 1);
 }
 #pragma pop
 // us-800b4630 - return bit 31 of field at +0x64
-u32 func_800B3D34(u8* self) {
+u32 testObj64bit31(u8* self) {
     return (*(u32*)(self + 0x64) >> 31) & 1;
 }
 // us-800b463c - return bit 27 of field at +0x6C
-u32 func_800B3D40(u8* self) {
+u32 testObj6Cbit27(u8* self) {
     return (*(u32*)(self + 0x6C) >> 27) & 1;
 }
-// Target us-800b5320: func_800B4A24
+// Target us-800b5320: evtTypeSlot7E
 // Rejects null / non-enabled args, then checks whether the parent container's
 // field_0x15F0 type id lies in {4,5,6,7,8}. Retail presets four flags to 1
 // then clears them in a cascading chain (each stage only re-tests when the
 // previous flag cleared).
-extern "C" s32 func_800B4A24(CEvtTypeArg* arg) {
+extern "C" s32 evtTypeSlot7E(CEvtTypeArg* arg) {
     s32 result = 0;
     if (arg != 0) {
         if (arg->unk7E() != 0 && (arg->flags & 4) != 0) {  // vtable +0x200
@@ -2362,14 +2361,14 @@ extern "C" s32 func_800B4A24(CEvtTypeArg* arg) {
     return result;
 }
 
-// Target us-800b5484 - func_800B4B88
-// Same gate chain as func_800B4A24 but dispatched from slot 0x80 (+0x200),
+// Target us-800b5484 - evtTypeSlot80
+// Same gate chain as evtTypeSlot7E but dispatched from slot 0x80 (+0x200),
 // wrapped by a global event-flag kill switch (retail rlwinm masks value bit
-// 6) and a func_800B1C40 fallback when the type cascade rejects.
+// 6) and a gflagGateMask8 fallback when the type cascade rejects.
 // Codegen notes: this toolchain emits `& 0x40` as retail's exact rlwinm mask;
 // splitting `accepted` into decl-then-assignment while `result` is initialized
 // at its declaration reproduces retail's li r30/li r31 emission order.
-extern "C" s32 func_800B4B88(CEvtTypeArg* arg) {
+extern "C" s32 evtTypeSlot80(CEvtTypeArg* arg) {
     extern u32 lbl_eu_80663EE0;
     if (lbl_eu_80663EE0 & 0x40) {
         return 0;
@@ -2385,7 +2384,7 @@ extern "C" s32 func_800B4B88(CEvtTypeArg* arg) {
             if (container != 0) {
                 container = (UnkClass_805764CC*)((u8*)container - 0x3E9C);
             }
-            // Cascade identical to func_800B4A24 (declaration order drives
+            // Cascade identical to evtTypeSlot7E (declaration order drives
             // MWCC coloring: f0->r0, f3->r3, f4->r4, f5->r5, value->r6).
             int f0 = 1;
             int f3 = 1;
@@ -2409,60 +2408,60 @@ extern "C" s32 func_800B4B88(CEvtTypeArg* arg) {
             }
         }
     }
-    if (accepted == 0 && func_800B1C40() != 0) {
+    if (accepted == 0 && gflagGateMask8() != 0) {
         result = 1;
     }
     return result;
 }
 // us-800b5868 - clear bit 0 and set bit 1 of the field at +0x6C
-void func_800B4F6C(u8* self) {
+void setObj6Cbit1(u8* self) {
     *(u32*)(self + 0x6C) = (*(u32*)(self + 0x6C) & ~1u) | 2u;
 }
 // us-800b58a0 - accessor returning field at +0x70
-u32 func_800B4FA4(u8* self) {
+u32 getObjField70(u8* self) {
     return *(u32*)(self + 0x70);
 }
 // us-800b6dcc - return mask & field at +0x6C
-u32 func_800B64D0(u8* self, u32 mask) {
+u32 andObj6Cmask(u8* self, u32 mask) {
     return mask & *(u32*)(self + 0x6C);
 }
-// us-800b3654 - func_800B2D88
-// Thunk: copy arg to a stack local, then forward its address to func_800B2DB0.
+// us-800b3654 - poolInsertThunk
+// Thunk: copy arg to a stack local, then forward its address to poolInsertBack.
 // auto_inline off: retail calls this out-of-line from func_800B4400 etc.
 #pragma push
 #pragma auto_inline off
-void func_800B2D88(void* self, void* arg) {
-    func_800B2DB0((FactoryPoolList*)self, &arg);
+void poolInsertThunk(void* self, void* arg) {
+    poolInsertBack((FactoryPoolList*)self, &arg);
 }
 #pragma pop
 
-// us-800b9bf4 - func_800B92D8
-// Wrapper: fetch the singleton and forward it to func_800B15A4.
-void func_800B92D8() {
-    func_800B15A4(getInstance());
+// us-800b9bf4 - gmTeardown
+// Wrapper: fetch the singleton and forward it to teardownGameMgr.
+void gmTeardown() {
+    teardownGameMgr(getInstance());
 }
 
-// us-800b9cec - func_800B93D0
-// Wrapper: fetch the singleton and forward (singleton, obj) to func_800B1E18.
-void func_800B93D0(void* obj) {
-    func_800B1E18(getInstance(), obj);
+// us-800b9cec - gmNotifyCA0
+// Wrapper: fetch the singleton and forward (singleton, obj) to notifyObjCA0.
+void gmNotifyCA0(void* obj) {
+    notifyObjCA0(getInstance(), obj);
 }
 
-// us-800b9d20 - func_800B9404
+// us-800b9d20 - gmFileObject
 // Wrapper: fetch the singleton and forward (singleton, obj) to func_800B3A88.
-// auto_inline off: retail calls this out-of-line from func_800B75EC.
+// auto_inline off: retail calls this out-of-line from evictTboxOverflow.
 #pragma push
 #pragma auto_inline off
-void func_800B9404(void* obj) {
+void gmFileObject(void* obj) {
     func_800B3A88(getInstance(), obj);
 }
 #pragma pop
 
 
-// us-800b7978 - func_800B7058
-// Wrapper: fetch the singleton and insert obj into it via func_800B6DD0.
-void func_800B7058(void* obj) {
-    func_800B6DD0(getInstance(), obj);
+// us-800b7978 - gmInsertObject
+// Wrapper: fetch the singleton and insert obj into it via reslistFindObj.
+void gmInsertObject(void* obj) {
+    reslistFindObj(getInstance(), obj);
 }
 
 // ---------------------------------------------------------------------------
@@ -2515,23 +2514,23 @@ extern "C" void func_800B0FF4(void* listv, unsigned long handle, unsigned long c
 extern "C" IDispB74* getGameSubManager__Q22cf13CfGameManagerFv();
 extern "C" IDispB74* getPlayer__Q22cf13CfGameManagerFi(int index);
 extern "C" bool CfRes_checkFlags_2000400();
-extern "C" void func_80198108(int arg);
+extern "C" void CPartsChange_SetLoadFlag(int arg);
 extern "C" void disableGameFlag__Q22cf13CfGameManagerFv(void* arg);
 extern "C" int testResInfoFlag(unsigned long mask);
 extern "C" bool CfRes_getE24Bit18();
 
-// us-800b25a8 - func_800B1CDC
+// us-800b25a8 - syncPlayerSubMgr
 // Per-frame state driver: on a resource-reload flag, kick the reload helpers
 // and clear the event word. Otherwise require game manager + player to report
 // ready; bail out early on the scene-blockers, otherwise tear down and rebuild
 // the optional sub-objects (with the E24-bit18 shortcut restarting the reload).
 #pragma push
 #pragma auto_inline off
-extern "C" void func_800B1CDC(UnkClass_805764CC* self) {
+extern "C" void syncPlayerSubMgr(UnkClass_805764CC* self) {
     IDispB74* mgr = getGameSubManager__Q22cf13CfGameManagerFv();
     IDispB74* player = getPlayer__Q22cf13CfGameManagerFi(0);
     if (CfRes_checkFlags_2000400()) {
-        func_80198108(1);
+        CPartsChange_SetLoadFlag(1);
         disableGameFlag__Q22cf13CfGameManagerFv((void*)0x80000000);
         self->field_0xD0E = 0;
         return;
@@ -2549,61 +2548,61 @@ extern "C" void func_800B1CDC(UnkClass_805764CC* self) {
         return;
     }
     // Retail forwards only self (r4 keeps the stale virtual-call result).
-    ((void (*)(UnkClass_805764CC*))func_800B2048)(self);
+    ((void (*)(UnkClass_805764CC*))notifyObjCFC5b4)(self);
     if (CfRes_getE24Bit18()) {
-        func_80198108(1);
+        CPartsChange_SetLoadFlag(1);
         disableGameFlag__Q22cf13CfGameManagerFv((void*)0x80000000);
         self->field_0xD0E = 0;
         return;
     }
-    func_800B1FD8(self);
-    ((void (*)(UnkClass_805764CC*))func_800B20A0)(self);
-    if (func_800B1C0C(2) == 0) {
-        func_800B1F54(self);
+    releasePadObjects(self);
+    ((void (*)(UnkClass_805764CC*))notifyObjCAC)(self);
+    if (gflagHasMask(2) == 0) {
+        setCA0ScaleFloat(self);
     }
 }
 #pragma pop
 
-// Ring-buffer accessors over the AD8 block (sorted by the func_800B39C0 key).
-extern "C" unsigned long func_800B6FFC(void* ctx);
-extern "C" unsigned long func_800B7004(void* ctx);
-extern "C" void** func_800B700C(void* ctx, int index);
+// Ring-buffer accessors over the AD8 block (sorted by the getObjIdAt74 key).
+extern "C" unsigned long workBufCount(void* ctx);
+extern "C" unsigned long workBufSize(void* ctx);
+extern "C" void** workBufElem(void* ctx, int index);
 
-// us-800b77e0 - func_800B6EC0
+// us-800b77e0 - findWorkById
 // Binary search over the sorted ring buffer at singleton+0x20 by the key
-// returned from func_800B39C0; boundary elements are checked before the
+// returned from getObjIdAt74; boundary elements are checked before the
 // (unsigned) range rejection, then the classic lo/hi bisection runs.
-extern "C" void* func_800B6EC0(UnkClass_805764CC* self, int id) {
+extern "C" void* findWorkById(UnkClass_805764CC* self, int id) {
     if (id == 0) {
         return 0;
     }
     UnkClass_805764CC* inst = getInstance();
     void* ctx = (u8*)inst + 0x20;
     int lo = 0;
-    unsigned long count = func_800B6FFC(ctx);
-    func_800B7004(ctx);
+    unsigned long count = workBufCount(ctx);
+    workBufSize(ctx);
     if (count == 0) {
         return 0;
     }
-    void* entry = *func_800B700C(ctx, 0);
-    if ((u32)func_800B39C0(entry) == (u32)id) {
+    void* entry = *workBufElem(ctx, 0);
+    if ((u32)getObjIdAt74(entry) == (u32)id) {
         return entry;
     }
-    if ((u32)id < (u32)func_800B39C0(entry)) {
+    if ((u32)id < (u32)getObjIdAt74(entry)) {
         return 0;
     }
-    entry = *func_800B700C(ctx, (int)count - 1);
-    if ((u32)func_800B39C0(entry) == (u32)id) {
+    entry = *workBufElem(ctx, (int)count - 1);
+    if ((u32)getObjIdAt74(entry) == (u32)id) {
         return entry;
     }
-    if ((u32)id > (u32)func_800B39C0(entry)) {
+    if ((u32)id > (u32)getObjIdAt74(entry)) {
         return 0;
     }
     int hi = (int)count;
     while (lo <= hi) {
         int mid = (lo + hi) >> 1;
-        entry = *func_800B700C(ctx, mid);
-        int delta = (int)((u32)id - (u32)func_800B39C0(entry));
+        entry = *workBufElem(ctx, mid);
+        int delta = (int)((u32)id - (u32)getObjIdAt74(entry));
         if (delta == 0) {
             return entry;
         }
@@ -2648,7 +2647,7 @@ extern "C" void* func_800B6EC0(UnkClass_805764CC* self, int id) {
 // (-O4,s) negotiation per walls #6/#13.
 extern "C" void* __construct_new_array(void* block, void* dtor, unsigned long flag,
                                        unsigned long elemSize, unsigned long count);
-extern "C" void func_800B0B8C();
+extern "C" void factoryCtorNop();
 
 #pragma push
 #pragma auto_inline off
@@ -2656,7 +2655,7 @@ extern "C" void func_800B137C(void* self, unsigned long handle, unsigned long co
     TboxInfoReslistPoolView* list = (TboxInfoReslistPoolView*)self;
     list->mSlots = (TboxPoolSlot*)__construct_new_array(
         allocate_array__Q23mtl10MemManagerFUlUl(count * 0x24 + 0x10, handle),
-        (void*)func_800B0B8C, 0, 0x24, count);
+        (void*)factoryCtorNop, 0, 0x24, count);
     for (int i = 0; i < (int)count; i++) {
         list->mSlots[i].mLink0 = 0;
     }
@@ -2664,25 +2663,25 @@ extern "C" void func_800B137C(void* self, unsigned long handle, unsigned long co
 }
 #pragma pop
 
-// Imports for func_800B957C (voice/actor spawn path).
-extern "C" void* func_eu_80065640(unsigned long a, unsigned long b, unsigned long c, void* d);
-extern "C" void* func_800B96C4(void* obj, void* arg);
-extern "C" void func_800B96CC(void* obj, unsigned long a, unsigned long b);
-extern "C" void func_800B96D8(u8* self, u32 val);
-extern "C" void func_800B96E0(void* obj, void* arg);
-extern "C" void func_800B96E8(void* obj, void* arg);
-extern "C" void func_800B9704(void* obj, float val);
-extern "C" void* func_80061FE8();
+// Imports for spawnVoiceActor (voice/actor spawn path).
+extern "C" void* CfRes_packFourFields(unsigned long a, unsigned long b, unsigned long c, void* d);
+extern "C" void* setObjField734(void* obj, void* arg);
+extern "C" void setObjXY_73A(void* obj, unsigned long a, unsigned long b);
+extern "C" void setObjField720(u8* self, u32 val);
+extern "C" void setObjField738(void* obj, void* arg);
+extern "C" void copyObjVec724(void* obj, void* arg);
+extern "C" void setObjFloat730(void* obj, float val);
+extern "C" void* CfRes_getHeapHandle();
 extern "C" void* allocate__Q23mtl10MemManagerFUlUl(unsigned long size, unsigned long handle);
 
-// us-800b9e98 - func_800B957C
+// us-800b9e98 - spawnVoiceActor
 // Spawn a voice/actor object: resolve two resources keyed by the tag, build a
 // scratch record via the CfGameManager setters, create the object through
 // func_800B20B4 (mask 0x100), populate its fields, heap-construct a 0x7c-byte
 // child and hand it to the owner's vtable slot 0x1C.
-extern "C" void* func_800B957C(void* tag, void* argB, void* argC, float val) {
-    void* resA = func_eu_80065640(6, 0x53, 0, tag);
-    void* resB = func_eu_80065640(0xa, 0x53, 0, tag);
+extern "C" void* spawnVoiceActor(void* tag, void* argB, void* argC, float val) {
+    void* resA = CfRes_packFourFields(6, 0x53, 0, tag);
+    void* resB = CfRes_packFourFields(0xa, 0x53, 0, tag);
     u8 buf[0x28];
     clearResourceStack__Q22cf13CfGameManagerFv(buf);
     setResourceField04__Q22cf13CfGameManagerFv(buf, resA);
@@ -2690,18 +2689,18 @@ extern "C" void* func_800B957C(void* tag, void* argB, void* argC, float val) {
     UnkClass_805764CC* inst = getInstance();
     void* obj = func_800B20B4(inst, 0x100, (const B20B4Payload*)buf, 0);
     if (obj != 0) {
-        func_800B96C4(obj, tag);
+        setObjField734(obj, tag);
         // Results land in saved regs unmasked; the (u16) zero-extension is
         // deferred to the 96CC argument setup like retail.
         u16 w, v;
-        w = func_800B75BC();
-        v = func_800B75B4();
-        func_800B96CC(obj, v, w);
-        func_800B96D8((u8*)obj, (u32)func_800B39C0(obj));
-        func_800B96E0(obj, argB);
-        func_800B96E8(obj, argC);
-        func_800B9704(obj, val);
-        void* src = func_80061FE8();
+        w = getGlobalU16_3E44();
+        v = getGlobalU16_3E42();
+        setObjXY_73A(obj, v, w);
+        setObjField720((u8*)obj, (u32)getObjIdAt74(obj));
+        setObjField738(obj, argB);
+        copyObjVec724(obj, argC);
+        setObjFloat730(obj, val);
+        void* src = CfRes_getHeapHandle();
         void* child = allocate__Q23mtl10MemManagerFUlUl(0x7c, (unsigned long)src);
         if (child != 0) {
             child = __ct__800B970C(child);
@@ -2710,52 +2709,52 @@ extern "C" void* func_800B957C(void* tag, void* argB, void* argC, float val) {
     }
     return obj;
 }
-// us-800b7c40 - func_800B7320
+// us-800b7c40 - removeTboxById
 // Iterate the TboxInfo reslist at singleton->field_0xC48; for each node whose
-// data's first word equals func_800B39C0(self), remove that node (via
-// func_800B73E8 with a saved cursor) and return. The 4-byte list cursors are
+// data's first word equals getObjIdAt74(self), remove that node (via
+// unlinkListNode with a saved cursor) and return. The 4-byte list cursors are
 // local u32s; the goto/check loop shape reproduces retail's layout (body
-// first, head-check at the end, init jumps to the head). func_800B1AC0 is
-// declared void* so MWCC reuses its r3 (== &saved) as arg3 of func_800B73E8
+// first, head-check at the end, init jumps to the head). copyIterFrom is
+// declared void* so MWCC reuses its r3 (== &saved) as arg3 of unlinkListNode
 // exactly like retail's mr r5,r3.
-extern "C" void func_800B7320(void* self) {
+extern "C" void removeTboxById(void* self) {
     if (self == 0) {
         return;
     }
     UnkClass_805764CC* singleton = getInstance();
     u32 cursor;      // main cursor (r1+0x18)
-    u32 tmp73E8;     // func_800B73E8 dst (r1+0x14)
+    u32 tmp73E8;     // unlinkListNode dst (r1+0x14)
     u32 saved;       // saved cursor for removal (r1+0x10)
-    u32 tmpAA8;      // func_800B1AA8 dst (r1+0xc)
+    u32 tmpAA8;      // tboxIterStep dst (r1+0xc)
     u32 cursorEnd;   // sentinel cursor (r1+0x8)
-    func_800B1A8C(&cursor, &singleton->field_0xC48);
+    tboxIterBegin(&cursor, &singleton->field_0xC48);
     goto check;
 loop:
-    void* item = func_800B39C0(self);
-    void* data = func_800B1A9C(&cursor);
+    void* item = getObjIdAt74(self);
+    void* data = tboxIterItem(&cursor);
     if (*(u32*)data == (u32)item) {
-        void* cur = func_800B1AC0(&saved, &cursor);
-        func_800B73E8(&tmp73E8, &singleton->field_0xC48, cur);
+        void* cur = copyIterFrom(&saved, &cursor);
+        unlinkListNode(&tmp73E8, &singleton->field_0xC48, cur);
         return;
     } else {
-        func_800B1AA8(&tmpAA8, &cursor, 0);
+        tboxIterStep(&tmpAA8, &cursor, 0);
     }
 check:
-    func_800B1ACC(&cursorEnd, &singleton->field_0xC48);
-    if (func_800B1AD8(&cursor, &cursorEnd) != 0) {
+    copyWordAt4(&cursorEnd, &singleton->field_0xC48);
+    if (iterWordsDiffer(&cursor, &cursorEnd) != 0) {
         goto loop;
     }
 }
-// us-800b8334 - func_800B7A18
-// Iterate the two circular object lists (func_800B6BC8 then func_800B6BEC)
+// us-800b8334 - triggerObjsByType
+// Iterate the two circular object lists (getReslistB48 then getReslistB68)
 // with the CfGameManager item-list iterator primitives; for each object whose
-// type id ((u16)func_800BE93C) equals arg, trigger func_800BF2E0 on it.
-extern "C" void func_800B7A18(s32 arg) {
+// type id ((u16)CfObjectMove_getSubB0FieldC) equals arg, trigger CfObjectMove_relaySubB0Slot28 on it.
+extern "C" void triggerObjsByType(s32 arg) {
     if (arg < 0) {
         return;
     }
     for (s32 i = 0; i < 2; i++) {
-        void* list = i != 0 ? func_800B6BEC() : func_800B6BC8();
+        void* list = i != 0 ? getReslistB68() : getReslistB48();
         F8C0IteratorNode iterator;
         copyItemSourceNode__Q22cf13CfGameManagerFv(&iterator, (const F8C0ListSource*)list);
         F8C0IteratorNode previous;
@@ -2763,14 +2762,14 @@ extern "C" void func_800B7A18(s32 arg) {
         while (checkFlagEquality__Q22cf13CfGameManagerFv(&end, (const F8C0ListSource*)list),
                compareFlagValues__Q22cf13CfGameManagerFv(&iterator.field_0x0, &end.field_0x0)) {
             void* object = *getObjectNodePtr__Q22cf13CfGameManagerFv(&iterator);
-            if (arg == (u16)func_800BE93C(object)) {
-                func_800BF2E0(object);
+            if (arg == (u16)CfObjectMove_getSubB0FieldC(object)) {
+                CfObjectMove_relaySubB0Slot28(object);
             }
             linkItemNode__Q22cf13CfGameManagerFv(&previous, &iterator, 0);
         }
     }
 }
-extern "C" void func_800B87FC() {}
+extern "C" void factoryEventNopA() {}
 // Target us-800b9120: registerFactoryEvent(self, event)
 // Ensure the reslist pool @ field_0xC80 is set up, then look for an existing
 // node whose data pointer equals `event`; if none, claim the first empty
@@ -2786,7 +2785,7 @@ extern "C" void registerFactoryEvent__FPvPQ22cf13IFactoryEvent(UnkClass_805764CC
     if (event == 0) {
         return;
     }
-    func_800B0FA0(self);
+    ensureFactoryPool(self);
 
     // Walk the node list at field_0xC80; node next/prev/data links.
     sentinel = (CFactoryEventPoolNode*)(*(u32*)((u8*)self + 0xc84));
@@ -2831,30 +2830,30 @@ extern "C" void registerFactoryEvent__FPvPQ22cf13IFactoryEvent(UnkClass_805764CC
     sentinel->prev->next = newEntry;
     sentinel->prev = newEntry;
 }
-// us-800b9d54 - func_800B9438
-// Fetch the singleton and forward (singleton, arg) to func_800B4278.
-void func_800B9438(void* arg) {
-    func_800B4278(getInstance(), (u32)arg);
+// us-800b9d54 - gmWalkByMask
+// Fetch the singleton and forward (singleton, arg) to walkReslistByMask.
+void gmWalkByMask(void* arg) {
+    walkReslistByMask(getInstance(), (u32)arg);
 }
-// us-800b9d88 - func_800B946C
-// Fetch the singleton and forward (singleton, arg) to func_800B42E8.
-void func_800B946C(void* arg) {
-    func_800B42E8(getInstance(), (u32)arg);
+// us-800b9d88 - gmWalkByType
+// Fetch the singleton and forward (singleton, arg) to walkReslistByType.
+void gmWalkByType(void* arg) {
+    walkReslistByType(getInstance(), (u32)arg);
 }
-// us-800b9dbc - func_800B94A0
-// Fetch the singleton and forward (singleton, name) to func_800B4368.
-extern "C" void func_800B94A0(const char* name) {
-    func_800B4368(getInstance(), name);
+// us-800b9dbc - gmWalkByName
+// Fetch the singleton and forward (singleton, name) to walkReslistByName.
+extern "C" void gmWalkByName(const char* name) {
+    walkReslistByName(getInstance(), name);
 }
-// us-800b9e64 - func_800B9548
+// us-800b9e64 - gmSpawnMask8000
 // Fetch the singleton and forward (singleton, 0x8000, 0, 0) to func_800B20B4.
-void func_800B9548() {
+void gmSpawnMask8000() {
     func_800B20B4(getInstance(), 0x8000, 0, 0);
 }
 // us-800b9ff4 - setter storing val at +0x720
 #pragma push
 #pragma auto_inline off
-void func_800B96D8(u8* self, u32 val) {
+void setObjField720(u8* self, u32 val) {
     *(u32*)(self + 0x720) = val;
 }
 #pragma pop
@@ -2885,15 +2884,15 @@ void func_800B655C(UnkClass_805764CC* self, const F8C0ListSource* list) {
             p = (u8*)p - 0x3e9c;
         }
         linkItemNode__Q22cf13CfGameManagerFv(&mid, &outer, 0);
-        if (func_800B64AC((u8*)p + 0x3e9c) == 0) {
+        if (testObj68bit6((u8*)p + 0x3e9c) == 0) {
             u8 matched = (u8)func_800AF7E4(p, lbl_eu_804FC4D8 + 0x47);
             if (matched != 0 && func_801949E0(ctx) == 0 &&
-                func_8006DBD4(p, 0x802) != 0) {
-                func_800BE824((u8*)p + 0x3e9c, 0);
+                cfCam_queryVoxArts(p, 0x802) != 0) {
+                CfObjectMove_setRegionAttached((u8*)p + 0x3e9c, 0);
                 if (big != 0) {
-                    func_800B66AC((u8*)p + 0x3e9c);
+                    orObj68bit6((u8*)p + 0x3e9c);
                 } else {
-                    func_800B64F8((u8*)p + 0x3e9c);
+                    orObj68bits5_6((u8*)p + 0x3e9c);
                 }
             }
         }
@@ -2906,31 +2905,31 @@ void func_800B655C(UnkClass_805764CC* self, const F8C0ListSource* list) {
     }
 }
 
-// us-800b4a1c - func_800B4120
+// us-800b4a1c - fileObjIntoReslist
 // Route an object into the reslist matching its type: the first predicate
 // that fires selects the destination list.
 #pragma push
 #pragma auto_inline off
-extern "C" void func_800B4120(UnkClass_805764CC* self, cf::CfObject* obj) {
+extern "C" void fileObjIntoReslist(UnkClass_805764CC* self, cf::CfObject* obj) {
     if (obj == 0) {
         return;
     }
-    if (func_8006C1B0(obj)) {
-        func_800B3A60(&self->field_0xB28, obj);
-    } else if (func_800B31BC(obj)) {
-        func_800B3A60(&self->field_0xC08, obj);
-    } else if (func_8006DF9C(obj)) {
-        func_800B3A60(&self->field_0xB48, obj);
-    } else if (func_800B31C8(obj)) {
-        func_800B3A60(&self->field_0xB68, obj);
-    } else if (func_800B31D4((u8*)obj)) {
-        func_800B3A60(&self->field_0xB88, obj);
-    } else if (func_800B31E0(obj) || func_800B31EC(obj)) {
-        func_800B3A60(&self->field_0xBE8, obj);
-    } else if (func_800B31F8(obj) || func_800B3204(obj)) {
-        func_800B3A60(&self->field_0xBC8, obj);
-    } else if (func_800B31B0(obj)) {
-        func_800B3A60(&self->field_0xBA8, obj);
+    if (cfCam_bit1At0x64(obj)) {
+        unlinkMatchingNode(&self->field_0xB28, obj);
+    } else if (testObj64bit8(obj)) {
+        unlinkMatchingNode(&self->field_0xC08, obj);
+    } else if (cfCam_getBit2_64(obj)) {
+        unlinkMatchingNode(&self->field_0xB48, obj);
+    } else if (testFlag64b3(obj)) {
+        unlinkMatchingNode(&self->field_0xB68, obj);
+    } else if (testObj64bit7((u8*)obj)) {
+        unlinkMatchingNode(&self->field_0xB88, obj);
+    } else if (testObj64bit5(obj) || testObj64bit6(obj)) {
+        unlinkMatchingNode(&self->field_0xBE8, obj);
+    } else if (testObj64bit15(obj) || testObj64bit14(obj)) {
+        unlinkMatchingNode(&self->field_0xBC8, obj);
+    } else if (testObj64bit9(obj)) {
+        unlinkMatchingNode(&self->field_0xBA8, obj);
     }
 }
 #pragma pop
@@ -3038,52 +3037,52 @@ extern "C" void func_800B83AC() {
     }
 }
 
-// us-800b7d30 - func_800B7410
+// us-800b7d30 - scanTboxByXY
 // Scan the TboxInfo list (rebuild trigger) for a free entry matching both language bytes and
 // spawn a voice/actor object from it; the spawn result is written back over
 // the consumed entry.
-void func_800B7410() {
+void scanTboxByXY() {
     UnkClass_805764CC* ctx = getInstance();
-    u16 langA = func_800B75B4();
-    u16 langB = func_800B75BC();
+    u16 langA = getGlobalU16_3E42();
+    u16 langB = getGlobalU16_3E44();
     u32 cursor;
     u32 nextCur;
     u32 endCur;
-    func_800B1A8C(&cursor, &ctx->field_0xC48);
+    tboxIterBegin(&cursor, &ctx->field_0xC48);
     goto check;
 loop:
-    // Retail re-reads the current entry through func_800B1A9C once per test;
+    // Retail re-reads the current entry through tboxIterItem once per test;
     // each failed guard jumps straight to the iterator advance.
-    if (*(u32*)func_800B1A9C(&cursor) != 0) {
+    if (*(u32*)tboxIterItem(&cursor) != 0) {
         goto advance;
     }
-    if ((u16)langA != ((B7410Node*)func_800B1A9C(&cursor))->field_1A) {
+    if ((u16)langA != ((B7410Node*)tboxIterItem(&cursor))->field_1A) {
         goto advance;
     }
-    if ((u16)langB != ((B7410Node*)func_800B1A9C(&cursor))->field_1B) {
+    if ((u16)langB != ((B7410Node*)tboxIterItem(&cursor))->field_1B) {
         goto advance;
     }
     {
-        B7410Node* nVol = (B7410Node*)func_800B1A9C(&cursor);
-        B7410Node* nTag = (B7410Node*)func_800B1A9C(&cursor);
-        B7410Node* nId = (B7410Node*)func_800B1A9C(&cursor);
-        B7410Node* nSrc = (B7410Node*)func_800B1A9C(&cursor);
-        IDispB7410* obj = (IDispB7410*)func_800B957C(
+        B7410Node* nVol = (B7410Node*)tboxIterItem(&cursor);
+        B7410Node* nTag = (B7410Node*)tboxIterItem(&cursor);
+        B7410Node* nId = (B7410Node*)tboxIterItem(&cursor);
+        B7410Node* nSrc = (B7410Node*)tboxIterItem(&cursor);
+        IDispB7410* obj = (IDispB7410*)spawnVoiceActor(
             (void*)nSrc->field_14, (void*)(u32)nId->field_18,
             (u8*)nTag + 4, nVol->field_10);
         // Retail uses the spawn result without a null guard.
-        obj->unk39((u8*)func_800B1A9C(&cursor) + 4);
-        obj->unk49(((B7410Node*)func_800B1A9C(&cursor))->field_10);
+        obj->unk39((u8*)tboxIterItem(&cursor) + 4);
+        obj->unk49(((B7410Node*)tboxIterItem(&cursor))->field_10);
         obj->unk55(lbl_eu_80666A10);
-        func_800B75C4(obj, 0x20000000, 1);
-        func_800BC3B0(obj, lbl_eu_80666A08);
-        *(void**)func_800B1A9C(&cursor) = func_800B39C0(obj);
+        setObj6Cmask(obj, 0x20000000, 1);
+        CfObjectMove_setMoveSpeedGated(obj, lbl_eu_80666A08);
+        *(void**)tboxIterItem(&cursor) = getObjIdAt74(obj);
     }
 advance:
-    func_800B1AA8(&nextCur, &cursor, 0);
+    tboxIterStep(&nextCur, &cursor, 0);
 check:
-    func_800B1ACC(&endCur, &ctx->field_0xC48);
-    if (func_800B1AD8(&cursor, &endCur)) {
+    copyWordAt4(&endCur, &ctx->field_0xC48);
+    if (iterWordsDiffer(&cursor, &endCur)) {
         goto loop;
     }
 }
@@ -3093,72 +3092,72 @@ check:
 
 // us-800b5680 - func_800B4D84
 // Post-processing pass over the sorted scratch buffer built by func_800B5994:
-// sort it (func_800B4FAC with the func_800B6544 comparator), run the
+// sort it (func_800B4FAC with the cmpFloatAt4 comparator), run the
 // resource-flag side effects once, then walk the entries. Each live entry is
-// either flagged via func_800B4F6C/func_800B4F90 (depending on the D10 gate
+// either flagged via setObj6Cbit1/setObj6Cbit0 (depending on the D10 gate
 // and the running count), and its id (+0x70 value) is appended to the local
 // dedup list unless already present; the count accumulates the per-entry
-// weight from func_eu_800BFC7C.
+// weight from CfObjectMove_relaySubB0Slot68.
 void func_800B4D84(UnkClass_805764CC* self, void* buf) {
-    void** end = func_800B5948(buf);
-    func_800B4FAC(func_800B5944(buf), end, func_800B6544);
+    void** end = sortBufEnd(buf);
+    func_800B4FAC(sortBufIdentity(buf), end, cmpFloatAt4);
     testResInfoFlag(0x10);
     testResInfoFlag(0x40);
     if (getUnk80664658() != 0) {
-        func_800B4F58(getUnk80664658());
+        testCamBit15(getUnk80664658());
     }
     testResInfoFlag(0x20);
     int hasVal = (s16)self->field_0xD10 != 0;
     u32 lateFlag = 0;
-    if (func_800B1C40() != 0) {
+    if (gflagGateMask8() != 0) {
         // Retail clrlwi's the getter result before the unsigned < 4 compare.
-        if ((u32)func_800B4F64() >= 4) {
+        if ((u32)getGlobalU16_4314() >= 4) {
             lateFlag = 1;
         }
     }
-    // Dedup list + count cursor; func_800B5978 writes at buf+0x380, so the
+    // Dedup list + count cursor; pushWordToBuf writes at buf+0x380, so the
     // scratch must span that far (retail frame: spill @ sp+0x8, it @ sp+0xc).
     u32 v;
     u8 itBuf[0x384];
     u32 count = 0;
-    func_800B5958(itBuf);
-    func_800A8C84();
-    void** cur = func_800B5944(buf);
-    while (cur != func_800B5948(buf)) {
+    clearField380(itBuf);
+    KyoshinHeap_Reset38();
+    void** cur = sortBufIdentity(buf);
+    while (cur != sortBufEnd(buf)) {
         void* obj = *cur;
         if (isObjectFlagMaskSet__Q22cf13CfGameManagerFv(obj) != 0) {
             if (hasVal != 0 || count >= 8) {
-                if (func_800B3D4C(obj, 1) != 0) {
-                    func_800B4F6C(obj);
+                if (testObj6Cmask(obj, 1) != 0) {
+                    setObj6Cbit1(obj);
                 }
             } else {
-                if (func_800B3D4C(obj, 1) == 0) {
-                    func_800B4F90(obj);
+                if (testObj6Cmask(obj, 1) == 0) {
+                    setObj6Cbit0(obj);
                 }
             }
             if (count == 0 && lateFlag != 0) {
                 count = 8;
             }
-            v = func_800B4FA4(obj);
+            v = getObjField70(obj);
             if (v != 0) {
                 u32 found = 0;
-                for (u32 i = 0; i < func_800B5970(itBuf); i++) {
-                    if (*(u32*)func_800B5964(itBuf, i) == v) {
+                for (u32 i = 0; i < sortBufCount(itBuf); i++) {
+                    if (*(u32*)sortBufAt(itBuf, i) == v) {
                         found = 1;
                         break;
                     }
                 }
                 if (!found) {
-                    func_800B5978((UnkClass_805764CC*)itBuf, &v);
+                    pushWordToBuf((UnkClass_805764CC*)itBuf, &v);
                 }
-                count += func_eu_800BFC7C(obj);
+                count += CfObjectMove_relaySubB0Slot68(obj);
             }
         }
         cur++;
     }
 }
 
-// Inlined by func_800B45A0 once per list (retail emits four copies).
+// Inlined by probeReadyLists once per list (retail emits four copies).
 static bool listReady45A0(void* list) {
     CfReslistNode* cur = ((CfReslistNode*)*(u32*)((u8*)list + 4))->mNext;
     while (cur != *(CfReslistNode**)((u8*)list + 4)) {
@@ -3171,11 +3170,11 @@ static bool listReady45A0(void* list) {
     return true;
 }
 
-// us-800b4e9c - func_800B45A0
+// us-800b4e9c - probeReadyLists
 // Validity check across four object lists (the B28-family heads): every
 // entry whose +0x64 flag word has bit 16 set must report ready through its
 // slot-0x1D callback. Any failure aborts with false.
-bool func_800B45A0() {
+bool probeReadyLists() {
     if (!lbl_eu_80663EE8) {
         __ct__17UnkClass_805764CCFv(lbl_eu_80572CD4);
         __register_global_object(lbl_eu_80572CD4, (void*)__dt__17UnkClass_805764CCFv, lbl_eu_80572CC8);
@@ -3184,13 +3183,13 @@ bool func_800B45A0() {
     if (!listReady45A0(getListB28__Fv())) {
         return false;
     }
-    if (!listReady45A0(func_800B6BC8())) {
+    if (!listReady45A0(getReslistB48())) {
         return false;
     }
-    if (!listReady45A0(func_800B6BEC())) {
+    if (!listReady45A0(getReslistB68())) {
         return false;
     }
-    if (!listReady45A0(func_800B6C34())) {
+    if (!listReady45A0(getReslistBE8())) {
         return false;
     }
     return true;
@@ -3201,37 +3200,37 @@ bool func_800B45A0() {
 // pool, heap-construct the six optional sub-managers, clear the state words,
 // then drain the IFactoryEvent queue firing each event's slot-5 callback.
 void func_800B1120(UnkClass_805764CC* self) {
-    func_800B084C(self, 0x2be);
-    func_800B084C((UnkClass_805764CC*)&self->field_0xBA8, 2);
-    func_800B084C((UnkClass_805764CC*)&self->field_0xB28, 9);
-    func_800B084C((UnkClass_805764CC*)&self->field_0xB48, 0x60);
-    func_800B084C((UnkClass_805764CC*)&self->field_0xB68, 0x80);
-    func_800B084C((UnkClass_805764CC*)&self->field_0xB88, 0x40);
-    func_800B084C((UnkClass_805764CC*)&self->field_0xBE8, 0x100);
-    func_800B084C((UnkClass_805764CC*)&self->field_0xBC8, 0x80);
-    func_800B084C((UnkClass_805764CC*)&self->field_0xC08, 0x14);
-    func_800B084C((UnkClass_805764CC*)&self->field_0xC28, 0x80);
-    func_800B137C(&self->field_0xC48, func_80061FFC(), 0x14);
-    func_800B0B40(&self->field_0x20);
+    allocFactoryPool(self, 0x2be);
+    allocFactoryPool((UnkClass_805764CC*)&self->field_0xBA8, 2);
+    allocFactoryPool((UnkClass_805764CC*)&self->field_0xB28, 9);
+    allocFactoryPool((UnkClass_805764CC*)&self->field_0xB48, 0x60);
+    allocFactoryPool((UnkClass_805764CC*)&self->field_0xB68, 0x80);
+    allocFactoryPool((UnkClass_805764CC*)&self->field_0xB88, 0x40);
+    allocFactoryPool((UnkClass_805764CC*)&self->field_0xBE8, 0x100);
+    allocFactoryPool((UnkClass_805764CC*)&self->field_0xBC8, 0x80);
+    allocFactoryPool((UnkClass_805764CC*)&self->field_0xC08, 0x14);
+    allocFactoryPool((UnkClass_805764CC*)&self->field_0xC28, 0x80);
+    func_800B137C(&self->field_0xC48, CfRes_getAllocHandle(), 0x14);
+    clearWorkCounters(&self->field_0x20);
 
     // Retail relies on each ctor returning its argument (r3) so the store
     // sits on the join path without a saved temp.
-    void* p = allocate__Q23mtl10MemManagerFUlUl(0xB27C, func_80061FFC());
+    void* p = allocate__Q23mtl10MemManagerFUlUl(0xB27C, CfRes_getAllocHandle());
     self->field_0xCA0 =
         (u32)(p != 0 ? __ct__80193270(p) : p);
-    p = allocate__Q23mtl10MemManagerFUlUl(0x3808, func_80061FFC());
+    p = allocate__Q23mtl10MemManagerFUlUl(0x3808, CfRes_getAllocHandle());
     self->field_0xCA4 =
         (u32)(p != 0 ? __ct__cf_CfMapItemManager(p) : p);
-    p = allocate__Q23mtl10MemManagerFUlUl(0x3808, func_80061FFC());
+    p = allocate__Q23mtl10MemManagerFUlUl(0x3808, CfRes_getAllocHandle());
     self->field_0xCA8 =
         (u32)(p != 0 ? __ct__cf_CfValueItemManager(p) : p);
-    p = allocate__Q23mtl10MemManagerFUlUl(0x220, func_80061FFC());
+    p = allocate__Q23mtl10MemManagerFUlUl(0x220, CfRes_getAllocHandle());
     self->field_0xCFC =
         (u32)(p != 0 ? __ct__801F3BE8(p) : p);
-    p = allocate__Q23mtl10MemManagerFUlUl(0x11a4, func_80061FFC());
+    p = allocate__Q23mtl10MemManagerFUlUl(0x11a4, CfRes_getAllocHandle());
     self->field_0xD00 =
         (u32)(p != 0 ? __ct__cf_CfHikariItemManager(p) : p);
-    p = allocate__Q23mtl10MemManagerFUlUl(0x554, func_80061FFC());
+    p = allocate__Q23mtl10MemManagerFUlUl(0x554, CfRes_getAllocHandle());
     self->field_0xCAC =
         (u32)(p != 0 ? __ct__80205A7C(p) : p);
 
@@ -3239,34 +3238,34 @@ void func_800B1120(UnkClass_805764CC* self) {
     self->field_0xD10 = 0;
     self->field_0xD04 = 0;
     lbl_eu_80663EE4 = 0;
-    func_800B4588(self);
-    func_80063160(-1);
-    func_800631FC(-1);
-    func_800B1368(1);
-    func_800B0FA0(self);
+    setFieldD08Hi(self);
+    CfRes_initResEntries(-1);
+    CfRes_initTblEntries(-1);
+    gflagOrMask(1);
+    ensureFactoryPool(self);
 
     // Drain the IFactoryEvent queue, invoking slot 5 on each entry.
     u32 it[3];
     u32 endCur;
-    func_800B14C4(it, &self->field_0xC80);
+    factoryIterBegin(it, &self->field_0xC80);
     goto check;
 loop:
-    ((IFeEventBase*)*func_800B14D4(it))->vf05();
-    func_800B14E0(it);
+    ((IFeEventBase*)*factoryIterItem(it))->vf05();
+    factoryIterNext(it);
 check:
-    func_800B14F0(&endCur, &self->field_0xC80);
-    if (func_800B14FC(it, &endCur) != 0) {
+    factoryIterSentinel(&endCur, &self->field_0xC80);
+    if (wordsDiffer(it, &endCur) != 0) {
         goto loop;
     }
 }
 
-// us-800b1e70 - func_800B15A4
+// us-800b1e70 - teardownGameMgr
 // Singleton teardown: release each optional sub-manager (each null-guarded,
 // field_0xD00 via its slot-2 reset), re-file every game-manager object into
 // the matching reslist while nulling the queue slots, destroy all reslists
 // in reverse construction order, then drain the IFactoryEvent queue firing
 // slot 6 and destroy the queue itself.
-void func_800B15A4(UnkClass_805764CC* self) {
+void teardownGameMgr(UnkClass_805764CC* self) {
     // Local block laid out to mirror retail stack slots.
     u32 d00;
     F8C0IteratorNode outer;
@@ -3306,14 +3305,14 @@ void func_800B15A4(UnkClass_805764CC* self) {
     }
 
     // Walk the game-manager item list: file each object into this singleton
-    // via func_800B4120, fire its slot-21 reset, and clear the queue slot.
+    // via fileObjIntoReslist, fire its slot-21 reset, and clear the queue slot.
     copyItemSourceNode__Q22cf13CfGameManagerFv(&outer, (const F8C0ListSource*)self);
     goto check;
 body:
     if (*getObjectNodePtr__Q22cf13CfGameManagerFv(&outer) == 0) {
         goto advance;
     }
-    func_800B4120(self, (cf::CfObject*)*getObjectNodePtr__Q22cf13CfGameManagerFv(&outer));
+    fileObjIntoReslist(self, (cf::CfObject*)*getObjectNodePtr__Q22cf13CfGameManagerFv(&outer));
     if (*getObjectNodePtr__Q22cf13CfGameManagerFv(&outer) == 0) {
         goto advance;
     }
@@ -3334,29 +3333,29 @@ check:
     }
 
     // Destroy every reslist in reverse construction order.
-    func_800B1518(&self->field_0xC28);
-    func_800B1518(&self->field_0xC08);
-    func_800B1518(&self->field_0xBC8);
-    func_800B1518(&self->field_0xBE8);
-    func_800B1518(&self->field_0xB88);
-    func_800B1518(&self->field_0xB68);
-    func_800B1518(&self->field_0xB48);
-    func_800B1518(&self->field_0xB28);
-    func_800B1518(&self->field_0xBA8);
-    func_800B1518(self);
-    func_800B0B40(&self->field_0x20);
+    factoryListDtor(&self->field_0xC28);
+    factoryListDtor(&self->field_0xC08);
+    factoryListDtor(&self->field_0xBC8);
+    factoryListDtor(&self->field_0xBE8);
+    factoryListDtor(&self->field_0xB88);
+    factoryListDtor(&self->field_0xB68);
+    factoryListDtor(&self->field_0xB48);
+    factoryListDtor(&self->field_0xB28);
+    factoryListDtor(&self->field_0xBA8);
+    factoryListDtor(self);
+    clearWorkCounters(&self->field_0x20);
     __dt__800B183C(&self->field_0xC48);
-    func_800B1808();
+    gflagClearAll();
 
     // Drain the queue firing slot 6, then destroy the queue list.
-    func_800B14C4(&it, &self->field_0xC80);
+    factoryIterBegin(&it, &self->field_0xC80);
     goto check2;
 loop2:
-    ((IFeEventBase*)*func_800B14D4(&it))->vf06();
-    func_800B14E0(&it);
+    ((IFeEventBase*)*factoryIterItem(&it))->vf06();
+    factoryIterNext(&it);
 check2:
-    func_800B14F0(&itEnd, &self->field_0xC80);
-    if (func_800B14FC(&it, &itEnd) != 0) {
+    factoryIterSentinel(&itEnd, &self->field_0xC80);
+    if (wordsDiffer(&it, &itEnd) != 0) {
         goto loop2;
     }
     __dt__800B18CC((FactoryPoolList*)&self->field_0xC80);
@@ -3374,7 +3373,7 @@ int func_800B8D5C() {
     if ((lbl_eu_80663E24 & 0x400000) != 0) {
         CfRes_callFunc_68254();
     }
-    if ((lbl_eu_80663E28 & 0x10) != 0 && func_800B1C40() != 0) {
+    if ((lbl_eu_80663E28 & 0x10) != 0 && gflagGateMask8() != 0) {
         return 0;
     }
     if (!lbl_eu_80663EE8) {
@@ -3388,7 +3387,7 @@ int func_800B8D5C() {
     if (*(u32*)(inst + 0xCA0) != 0) {
         func_80195E5C(*(u32*)(inst + 0xCA0), lbl_eu_80663EC8);
     }
-    list = func_800B6BC8();
+    list = getReslistB48();
     cur = ((CfReslistNode*)*(u32*)((u8*)list + 4))->mNext;
     const float threshold = lbl_eu_806669D8;
     // Sentinel re-read from the list header every iteration; the cursor
@@ -3482,7 +3481,7 @@ int func_800B8D5C() {
 // Residuals: (a) prologue still spills stfd/psq_st BEFORE addi r11,r1,0x40
 // (retail after); psq_st words differ (GC/3.0a5.2 field layout? hexdiff shows
 // W=1,qr3 vs W=0,qr0); (b) TWO extra instrs between the second unk2B() bctrl
-// and bl func_8004CB80 (drift starts +0x144) - likely stw/lwz spill of the
+// and bl subVec3f (drift starts +0x144) - likely stw/lwz spill of the
 // objPos temp because decomp's apply lands in r31 (reg_mapping li*rd 29->31),
 // blocking objPos from r31; hoisting `int apply = 1` above the loop was tried
 // and REGRESSED (li moved to prologue, shifting init block - keep assignment
@@ -3490,9 +3489,9 @@ int func_800B8D5C() {
 // (byte-identical output, MWCC normalizes); next lever: find source shape that
 // colors apply=r29 while keeping li r29,1 in-loop, or inspect hexdiff --asm; (c) GPR targets:
 // retail r26=partner r27=list r28=flag r29=apply r30=obj r31=objPos. Entries are filtered (busy check
-// via func_800B4594, resource-flag 0x100); with flag==0 the object's slot-0x174
-// level gates a func_800BC3B0 boost; otherwise the partner distance drives a
-// fade toward the shared cap before func_800BE824 commits the result.
+// via testObj64bit16, resource-flag 0x100); with flag==0 the object's slot-0x174
+// level gates a CfObjectMove_setMoveSpeedGated boost; otherwise the partner distance drives a
+// fade toward the shared cap before CfObjectMove_setRegionAttached commits the result.
 extern "C" void func_800B68A8(UnkClass_805764CC* self, void* partner,
                               const void* listv, int flag, float limit) {
     F8C0IteratorNode outer;
@@ -3509,14 +3508,14 @@ extern "C" void func_800B68A8(UnkClass_805764CC* self, void* partner,
                      &end))) {
         cf::CfObject* obj = (cf::CfObject*)*getObjectNodePtr__Q22cf13CfGameManagerFv(&outer);
         linkItemNode__Q22cf13CfGameManagerFv(&stepBack, &outer, 0);
-        if (func_800B4594(obj) == 0 && isGlobalCamFlagSet(0x100) != 0) {
+        if (testObj64bit16(obj) == 0 && isGlobalCamFlagSet(0x100) != 0) {
             apply = 1;
             if (flag == 0) {
                 // Level gate: only boost objects above the zero level.
-                if (func_800B64B8(obj, 0x10) != 0) {
+                if (testObj68mask(obj, 0x10) != 0) {
                     float level = ((IB68Obj*)obj)->unk5D();
                     if (level > lbl_eu_806669D8) {
-                        func_800BC3B0(obj, lbl_eu_80666A08);
+                        CfObjectMove_setMoveSpeedGated(obj, lbl_eu_80666A08);
                     } else {
                         apply = 0;
                     }
@@ -3526,11 +3525,11 @@ extern "C" void func_800B68A8(UnkClass_805764CC* self, void* partner,
             } else if (partner != 0) {
                 void* objPos = ((IB68Obj*)obj)->unk2B();
                 void* partnerPos = ((IB68Obj*)partner)->unk2B();
-                func_8004CB80(distBuf, partnerPos, objPos);
-                float dist = func_80073F88(distBuf);
+                subVec3f(distBuf, partnerPos, objPos);
+                float dist = cfCam_xzLength(distBuf);
                 if (dist < limit) {
                     apply = 0;
-                    if (func_800B64B8(obj, 0xC00) == 0 && func_800B64B8(obj, 0x10) != 0) {
+                    if (testObj68mask(obj, 0xC00) == 0 && testObj68mask(obj, 0x10) != 0) {
                         float gap = limit - dist;
                         if (gap < lbl_eu_80666A0C) {
                             // Inside the range ramp: fade volume down from one.
@@ -3545,7 +3544,7 @@ extern "C" void func_800B68A8(UnkClass_805764CC* self, void* partner,
                     }
                 }
             }
-            func_800BE824(obj, apply);
+            CfObjectMove_setRegionAttached(obj, apply);
         }
     }
 }
@@ -3651,12 +3650,12 @@ extern "C" void func_800B8524(UnkClass_805764CC* self, void* arg, void* other) {
     func_800B6AF4(self);
     func_80496264(CfRes_getD80Flag(), -1);
     s32 gmActive = getEffectFlagState__Q22cf13CfGameManagerFv();
-    func_800B1BBC(0);
+    maybeNullThenFlag(0);
     CfReslistNode* cur;
     void* instField;
     instField = CfRes_getInstanceField();
     if (instField != 0) {
-        func_80067DB4();
+        CfRes_initHighGrid();
     }
 
     float one = lbl_eu_806669DC;
@@ -3677,14 +3676,14 @@ extern "C" void func_800B8524(UnkClass_805764CC* self, void* arg, void* other) {
                     data->unk18();
                     // When the next entry's key lookup fails, rewind the
                     // cursor so the (unchanged) node is visited again.
-                    if (key != 0 && func_800B6EC0(self, (int)key) == 0) {
+                    if (key != 0 && findWorkById(self, (int)key) == 0) {
                         cur = prev->mNext;
                     }
                 }
             } else {
                 if ((f68 & 0x20) != 0 && (data->flags64 & 0x100) != 0 &&
                     data->field_C4 != 0) {
-                    func_8004CF00();
+                    tickAnimFrame();
                 }
                 data->unk19();
             }
@@ -3698,7 +3697,7 @@ extern "C" void func_800B8524(UnkClass_805764CC* self, void* arg, void* other) {
             } else if ((sub->field68 & 0x800) != 0) {
                 // Leave the flags untouched.
             } else if (((IB68Obj*)sub)->unk5B() < one) {
-                func_800BC3D8(sub, lbl_eu_80666A08);
+                CfObjectMove_setMoveSpeed(sub, lbl_eu_80666A08);
             } else {
                 data->flags68 = data->flags68 & 0x70;
             }
@@ -3715,23 +3714,23 @@ extern "C" void func_800B8524(UnkClass_805764CC* self, void* arg, void* other) {
     }
 
     func_800B83AC();
-    if (func_800B1C40()) {
-        func_800B1BBC((void*)1);
+    if (gflagGateMask8()) {
+        maybeNullThenFlag((void*)1);
     }
-    void* probe = func_800B77BC();
+    void* probe = firstReslistBA8();
     if (probe != 0) {
         if (((IDispB74*)probe)->unk1D()) {
             func_800B7AF0(self, (IB7Arg*)arg);
         }
     }
-    func_800B1CDC(self);
+    syncPlayerSubMgr(self);
     if (probe != 0) {
         func_800B9C14(probe);
     }
     if (instField != 0) {
         if (isSceneLoading__Q22cf13CfGameManagerFv() == 0 &&
             (lbl_eu_80663E28 & 0x20) == 0) {
-            func_80068358(instField);
+            CfRes_tickIfFlagged(instField);
         }
     }
     // Count nodes in the BEC list head (sentinel-terminated circular chain).
@@ -3761,7 +3760,7 @@ extern "C" void func_800B3A88(UnkClass_805764CC* self, void* objv) {
     if (mgr != 0 && mgr->unk18() == obj) {
         mgr->unk17(0);
     }
-    void* base = func_8006E59C();
+    void* base = cfCam_getEventMgr();
     if (base != 0) {
         for (int i = 0; i < 3; i++) {
             IDispB3A88Mgr* m = (IDispB3A88Mgr*)func_800755B0(base, i);
@@ -3770,52 +3769,52 @@ extern "C" void func_800B3A88(UnkClass_805764CC* self, void* objv) {
             }
         }
     }
-    if (func_8006C1B0(obj)) {
-        s32 id = func_800BE96C(obj);
-        func_80063900(getItemId__Q22cf13CfGameManagerFv(obj));
+    if (cfCam_bit1At0x64(obj)) {
+        s32 id = CfObjectMove_getSubB0FieldE(obj);
+        CfRes_decResRefByHandle(getItemId__Q22cf13CfGameManagerFv(obj));
         if (id >= 0) {
-            func_800638B4(id);
+            CfRes_decTblRefByIdx(id);
         }
-    } else if (func_800B3D34((u8*)obj)) {
-        func_80063900(getItemId__Q22cf13CfGameManagerFv(obj));
-    } else if (func_8006DF9C(obj)) {
+    } else if (testObj64bit31((u8*)obj)) {
+        CfRes_decResRefByHandle(getItemId__Q22cf13CfGameManagerFv(obj));
+    } else if (cfCam_getBit2_64(obj)) {
         // Recover the enclosing container (obj sits at +0x3E9C within it).
         UnkClass_805764CC* container = (UnkClass_805764CC*)obj;
         if (container != 0) {
             container = (UnkClass_805764CC*)((u8*)container - 0x3e9c);
         }
         int flag = 0;
-        if (((IDispB4CA0*)obj)->unkAF() != 0 || func_800B3D40((u8*)obj) != 0) {
+        if (((IDispB4CA0*)obj)->unkAF() != 0 || testObj6Cbit27((u8*)obj) != 0) {
             flag = 1;
         }
         if (flag == 0) {
-            func_80197B4C(container, 1);
+            CPartsChange_TeardownContainer(container, 1);
         } else {
-            if (func_800BF2CC((u8*)obj) >= 0) {
-                u32 key = (u32)func_800B39C0((u8*)obj);
-                func_eu_801C17FC(key, (u32)func_800BF2CC((u8*)obj), 0xa);
+            if (CfObjectMove_relaySubB0Slot60((u8*)obj) >= 0) {
+                u32 key = (u32)getObjIdAt74((u8*)obj);
+                func_eu_801C17FC(key, (u32)CfObjectMove_relaySubB0Slot60((u8*)obj), 0xa);
             }
-            void* voice = func_800B8A64(container);
-            if (voice != 0 && func_80198400(voice, (u32)func_800B39C0((u8*)obj)) >= 0) {
-                func_80197BA4(container, 0, 0);
+            void* voice = lookupCA0By45C0(container);
+            if (voice != 0 && CPartsChange_FindVoiceIndex(voice, (u32)getObjIdAt74((u8*)obj)) >= 0) {
+                CPartsChange_ResetBattleEntry(container, 0, 0);
             }
         }
     }
     // Drain the factory-event queue, firing each payload's remove callback.
     u32 it;
     u32 endIt;
-    func_800B14C4(&it, &self->field_0xC80);
+    factoryIterBegin(&it, &self->field_0xC80);
     goto check;
 loop:
-    ((IQItem4*)*func_800B14D4(&it))->unk04(obj);
-    func_800B14E0(&it);
+    ((IQItem4*)*factoryIterItem(&it))->unk04(obj);
+    factoryIterNext(&it);
 check:
-    func_800B14F0(&endIt, &self->field_0xC80);
-    if (func_800B14FC((int*)&it, (int*)&endIt) != 0) {
+    factoryIterSentinel(&endIt, &self->field_0xC80);
+    if (wordsDiffer((int*)&it, (int*)&endIt) != 0) {
         goto loop;
     }
-    func_800B3A60(self, obj);
-    func_800B4120(self, obj);
+    unlinkMatchingNode(self, obj);
+    fileObjIntoReslist(self, obj);
     func_800B3D64(&self->field_0x20, &obj);
     if (obj != 0) {
         ((IDispObj54*)obj)->unk15(1);
@@ -3845,14 +3844,14 @@ extern "C" u32 func_800B2ED0(UnkClass_805764CC* self, cf::CfObject* obj) {
     u32 tplMain;
     u8 flag;
 
-    if (func_800B31B0(obj)) {
-        func_800B39C8((FactoryPoolList*)self, &obj);
-    } else if (func_8006C1B0(obj)) {
+    if (testObj64bit9(obj)) {
+        poolInsertFront((FactoryPoolList*)self, &obj);
+    } else if (cfCam_bit1At0x64(obj)) {
         // Scan the game-manager list once, collecting insertion anchors for
         // both type families as they appear. A node of neither family ends
         // the scan immediately (without the advance/compare tail).
-        func_800B1818(&itMain, 0);
-        func_800B1818(&itOther, 0);
+        storeIterWord(&itMain, 0);
+        storeIterWord(&itOther, 0);
         copyItemSourceNode__Q22cf13CfGameManagerFv((F8C0IteratorNode*)&outer, (const F8C0ListSource*)self);
         // Rotated while loop: advance+compare runs before each body pass
         // (comma expression keeps both calls in the loop condition).
@@ -3861,10 +3860,10 @@ extern "C" u32 func_800B2ED0(UnkClass_805764CC* self, cf::CfObject* obj) {
                 compareFlagValues__Q22cf13CfGameManagerFv(&outer, &endLoop))) {
             linkItemNode__Q22cf13CfGameManagerFv((F8C0IteratorNode*)&stepBack, (F8C0IteratorNode*)&outer, 0);
             cf::CfObject* node = *(cf::CfObject**)getObjectNodePtr__Q22cf13CfGameManagerFv((F8C0IteratorNode*)&stepBack);
-            if (func_800B31B0(node)) {
-                func_800B3A54(&itMain, &outer);
-            } else if (func_8006C1B0(node)) {
-                func_800B3A54(&itOther, &outer);
+            if (testObj64bit9(node)) {
+                copyIterWord2(&itMain, &outer);
+            } else if (cfCam_bit1At0x64(node)) {
+                copyIterWord2(&itOther, &outer);
             } else {
                 // A node of neither family ends the scan immediately,
                 // skipping the remaining passes.
@@ -3873,43 +3872,43 @@ extern "C" u32 func_800B2ED0(UnkClass_805764CC* self, cf::CfObject* obj) {
         }
         // Insert after the last same-family anchor found by the scan (or
         // append straight into the flat list when no anchor matched).
-        u32* endOtherEnd = func_800B1818(&endOther, 0);
+        u32* endOtherEnd = storeIterWord(&endOther, 0);
         if (compareFlagValues__Q22cf13CfGameManagerFv(&itOther, endOtherEnd)) {
-            void* tpl = func_800B1820(&tplOther, &itOther);
+            void* tpl = copyIterWord(&tplOther, &itOther);
             func_800B2E38((void**)&outOther, self, tpl, &obj);
         } else {
-            u32* endMainEnd = func_800B1818(&endMain, 0);
+            u32* endMainEnd = storeIterWord(&endMain, 0);
             if (compareFlagValues__Q22cf13CfGameManagerFv(&itMain, endMainEnd)) {
-                void* tpl2 = func_800B1820(&tplMain, &itMain);
+                void* tpl2 = copyIterWord(&tplMain, &itMain);
                 func_800B2E38((void**)&outMain, self, tpl2, &obj);
             } else {
-                func_800B2D88(self, obj);
+                poolInsertThunk(self, obj);
             }
         }
     } else {
-        func_800B2D88(self, obj);
+        poolInsertThunk(self, obj);
     }
 
     // Register in the sorted ring buffer, then route into the reslists.
     // Single-exit else-if chain matches retail's shared return tail.
     flag = 0;
     func_800B3210((UnkClass_800B0AD8*)((u8*)self + 0x20), (UnkClass_805764CC**)&obj, &flag);
-    if (func_8006C1B0(obj)) {
-        func_800B2D88(&self->field_0xB28, obj);
-    } else if (func_800B31BC(obj)) {
-        func_800B2D88(&self->field_0xC08, obj);
-    } else if (func_8006DF9C(obj)) {
-        func_800B2D88(&self->field_0xB48, obj);
-    } else if (func_800B31C8(obj)) {
-        func_800B2D88(&self->field_0xB68, obj);
-    } else if (func_800B31D4((u8*)obj)) {
-        func_800B2D88(&self->field_0xB88, obj);
-    } else if (func_800B31E0(obj) || func_800B31EC(obj)) {
-        func_800B2D88(&self->field_0xBE8, obj);
-    } else if (func_800B31F8(obj) || func_800B3204(obj)) {
-        func_800B2D88(&self->field_0xBC8, obj);
-    } else if (func_800B31B0(obj)) {
-        func_800B2D88(&self->field_0xBA8, obj);
+    if (cfCam_bit1At0x64(obj)) {
+        poolInsertThunk(&self->field_0xB28, obj);
+    } else if (testObj64bit8(obj)) {
+        poolInsertThunk(&self->field_0xC08, obj);
+    } else if (cfCam_getBit2_64(obj)) {
+        poolInsertThunk(&self->field_0xB48, obj);
+    } else if (testFlag64b3(obj)) {
+        poolInsertThunk(&self->field_0xB68, obj);
+    } else if (testObj64bit7((u8*)obj)) {
+        poolInsertThunk(&self->field_0xB88, obj);
+    } else if (testObj64bit5(obj) || testObj64bit6(obj)) {
+        poolInsertThunk(&self->field_0xBE8, obj);
+    } else if (testObj64bit15(obj) || testObj64bit14(obj)) {
+        poolInsertThunk(&self->field_0xBC8, obj);
+    } else if (testObj64bit9(obj)) {
+        poolInsertThunk(&self->field_0xBA8, obj);
     }
     return 1;
 }
@@ -4225,10 +4224,10 @@ extern "C" void func_800B4FAC(void** firstV, void** lastV, int (*cmp)(const void
 // passes its threshold; otherwise walks the object list: objects near the
 // player (or failing their status gates with <4 processed) return 0.
 extern "C" float func_80069EA0();
-extern "C" s32 func_800B1C40();
+extern "C" s32 gflagGateMask8();
 extern "C" s32 func_800B8FC4() {
     extern float lbl_eu_80663EC8;
-    s32 mgr = func_800B1C40();
+    s32 mgr = gflagGateMask8();
     // Retail expands the getInstance singleton-init sequence inline here.
     if (lbl_eu_80663EE8 == 0) {
         __ct__17UnkClass_805764CCFv(lbl_eu_80572CD4);
@@ -4251,7 +4250,7 @@ extern "C" s32 func_800B8FC4() {
         func_80195E5C(self->field_0xCA0, lbl_eu_80663EC8);
     }
     IB8FC4Player* player = (IB8FC4Player*)getPlayer__Q22cf13CfGameManagerFi(0);
-    F8C0ListSource* list = (F8C0ListSource*)func_800B6BC8();
+    F8C0ListSource* list = (F8C0ListSource*)getReslistB48();
     const float maxDistSq = lbl_eu_80666A2C;
     const float maxY = lbl_eu_80666A30;
     s32 processed = 0;
@@ -4492,7 +4491,7 @@ void* func_800B20B4(UnkClass_805764CC* self, u32 mask,
     switch ((u16)mask) {
     case 0x200: {
         // ObjectModel: flat ctor then a hand-inlined finisher over the block.
-        void* mem = allocate__Q23mtl10MemManagerFUlUl(0x2f50, (unsigned long)func_80061FE8());
+        void* mem = allocate__Q23mtl10MemManagerFUlUl(0x2f50, (unsigned long)CfRes_getHeapHandle());
         if (mem != 0) {
             __ct__Q22cf13CfObjectModelFv(mem);
             B20B4ModelView* mv = (B20B4ModelView*)mem;
@@ -4531,13 +4530,13 @@ void* func_800B20B4(UnkClass_805764CC* self, u32 mask,
             break;
         }
         if (payload->h24 != 0) {
-            void* mem = allocate__Q23mtl10MemManagerFUlUl(0x724, (unsigned long)func_80061FE8());
+            void* mem = allocate__Q23mtl10MemManagerFUlUl(0x724, (unsigned long)CfRes_getHeapHandle());
             if (mem != 0) {
                 __ct__Q22cf11CfObjectNpcFv(mem, 1);
             }
             obj = mem;
         } else {
-            void* mem = allocate__Q23mtl10MemManagerFUlUl(0x45C4, (unsigned long)func_80061FE8());
+            void* mem = allocate__Q23mtl10MemManagerFUlUl(0x45C4, (unsigned long)CfRes_getHeapHandle());
             if (mem != 0) {
                 __ct__Q22cf10CfObjectPcFv(mem);
                 mem = (u8*)mem + 0x3e9c;
@@ -4572,10 +4571,10 @@ void* func_800B20B4(UnkClass_805764CC* self, u32 mask,
             s32 handle = -1;
             u32 first = 0;
             if (res != 0 && slot >= 0 && payload->h24 == 0) {
-                first = func_80063310(w00);
-                handle = func_80063394(w00);
+                first = CfRes_hasTblHandle(w00);
+                handle = CfRes_registerTblHandle(w00);
                 if (handle >= 0) {
-                    resId = func_8006846C(CfRes_getInstanceField(), slot);
+                    resId = CfRes_hashIndex11(CfRes_getInstanceField(), slot);
                 }
                 if (handle < 0) {
                     slot = -1;
@@ -4588,9 +4587,9 @@ void* func_800B20B4(UnkClass_805764CC* self, u32 mask,
                 ((IB20B4Vt54*)obj)->fail(1);
                 return 0;
             }
-            func_800BE948(obj, (u16)resId);
-            func_800BE960(obj, (s16)slot);
-            func_800BE978(obj, (s16)handle);
+            CfObjectMove_setSubB0FieldC(obj, (u16)resId);
+            CfObjectMove_setSubB0FieldA(obj, (s16)slot);
+            CfObjectMove_setSubB0FieldE(obj, (s16)handle);
             B20B4_SET_FIELDS(obj)
             {
                 // Deep fields: counter snapshot then the halfword row.
@@ -4606,11 +4605,11 @@ void* func_800B20B4(UnkClass_805764CC* self, u32 mask,
             if (slot >= 0 && handle >= 0) {
                 // Claim the slot: stamp our handle into this entry set,
                 // then clear earlier duplicates when it was free.
-                B20B4Entry* e1 = (B20B4Entry*)func_80062C88(slot);
-                B20B4Entry* e2 = (B20B4Entry*)func_80062E04(slot);
-                B20B4Entry* e3 = (B20B4Entry*)func_80062E64(slot);
-                B20B4Entry* e4 = (B20B4Entry*)func_80062CE4(slot);
-                B20B4Entry* e5 = (B20B4Entry*)func_80062D44(slot);
+                B20B4Entry* e1 = (B20B4Entry*)CfRes_getArrayElem12Idx(slot);
+                B20B4Entry* e2 = (B20B4Entry*)CfRes_getArrayElem19Idx(slot);
+                B20B4Entry* e3 = (B20B4Entry*)CfRes_getArrayElem20Idx(slot);
+                B20B4Entry* e4 = (B20B4Entry*)CfRes_getArrayElem21Idx(slot);
+                B20B4Entry* e5 = (B20B4Entry*)CfRes_getArrayElem22Idx(slot);
                 e1->h34 = (s16)handle;
                 e2->h34 = (s16)handle;
                 e3->h34 = (s16)handle;
@@ -4618,7 +4617,7 @@ void* func_800B20B4(UnkClass_805764CC* self, u32 mask,
                 e5->h34 = (s16)handle;
                 mask = 2;
                 if (first == 0) {
-                    func_80066714(1);
+                    CfRes_releaseCachedBase(1);
                     // resId doubles as the shared zero constant here.
                     resId = 0;
                     e1->field04 = resId;
@@ -4628,15 +4627,15 @@ void* func_800B20B4(UnkClass_805764CC* self, u32 mask,
                     e4->field04 = resId;
                     // Clear stale duplicates across the lower slots.
                     for (first = 0; first != (u32)slot && first < 7; first++) {
-                        B20B4Entry* f1 = (B20B4Entry*)func_80062C88((s32)first);
+                        B20B4Entry* f1 = (B20B4Entry*)CfRes_getArrayElem12Idx((s32)first);
                         if (f1->h34 != (s16)handle) {
                             break;
                         }
-                        B20B4Entry* f2 = (B20B4Entry*)func_80062E04((s32)first);
-                        B20B4Entry* f3 = (B20B4Entry*)func_80062E64((s32)first);
-                        B20B4Entry* f4 = (B20B4Entry*)func_80062CE4((s32)first);
-                        B20B4Entry* f5 = (B20B4Entry*)func_80062D44((s32)first);
-                        func_80066714(1);
+                        B20B4Entry* f2 = (B20B4Entry*)CfRes_getArrayElem19Idx((s32)first);
+                        B20B4Entry* f3 = (B20B4Entry*)CfRes_getArrayElem20Idx((s32)first);
+                        B20B4Entry* f4 = (B20B4Entry*)CfRes_getArrayElem21Idx((s32)first);
+                        B20B4Entry* f5 = (B20B4Entry*)CfRes_getArrayElem22Idx((s32)first);
+                        CfRes_releaseCachedBase(1);
                         f1->field04 = resId;
                         f2->field04 = resId;
                         f3->field04 = resId;
@@ -4664,13 +4663,13 @@ void* func_800B20B4(UnkClass_805764CC* self, u32 mask,
             break;
         }
         if ((u16)mask == 0x04) {
-            void* mem = allocate__Q23mtl10MemManagerFUlUl(0x45d0, (unsigned long)func_80061FE8());
+            void* mem = allocate__Q23mtl10MemManagerFUlUl(0x45d0, (unsigned long)CfRes_getHeapHandle());
             if (mem != 0) {
                 void* built = __ct__cf_CfObjectEne(mem);
                 obj = (built != 0) ? (u8*)built + 0x3e9c : built;
             }
         } else {
-            void* mem = allocate__Q23mtl10MemManagerFUlUl(0x724, (unsigned long)func_80061FE8());
+            void* mem = allocate__Q23mtl10MemManagerFUlUl(0x724, (unsigned long)CfRes_getHeapHandle());
             obj = mem;
             if (mem != 0) {
                 __ct__Q22cf11CfObjectNpcFv(mem, 0);
@@ -4679,8 +4678,8 @@ void* func_800B20B4(UnkClass_805764CC* self, u32 mask,
         if (obj == 0) {
             break;
         }
-        func_800BE948(obj, 0);
-        func_800BE960(obj, -1);
+        CfObjectMove_setSubB0FieldC(obj, 0);
+        CfObjectMove_setSubB0FieldA(obj, -1);
         ((IB20B4Set*)obj)->setField(0, w00);
         ((IB20B4Set*)obj)->setField(1, w04);
         B20B4_BUMP(obj);
@@ -4690,7 +4689,7 @@ void* func_800B20B4(UnkClass_805764CC* self, u32 mask,
         if (res == 0) {
             break;
         }
-        void* mem = allocate__Q23mtl10MemManagerFUlUl(0x720, (unsigned long)func_80061FE8());
+        void* mem = allocate__Q23mtl10MemManagerFUlUl(0x720, (unsigned long)CfRes_getHeapHandle());
         if (mem != 0) {
             mem = __ct__cf_CfObjectObj(mem);
         }
@@ -4706,7 +4705,7 @@ void* func_800B20B4(UnkClass_805764CC* self, u32 mask,
         if (res == 0) {
             break;
         }
-        void* mem = allocate__Q23mtl10MemManagerFUlUl(0x740, (unsigned long)func_80061FE8());
+        void* mem = allocate__Q23mtl10MemManagerFUlUl(0x740, (unsigned long)CfRes_getHeapHandle());
         if (mem != 0) {
             mem = __ct__Q22cf12CfObjectTboxFv(mem);
         }
@@ -4732,7 +4731,7 @@ void* func_800B20B4(UnkClass_805764CC* self, u32 mask,
                 count++;
             }
             if (count < self->field_0xBE8.field_0x18) {
-                void* mem = allocate__Q23mtl10MemManagerFUlUl(0xc0, (unsigned long)func_80061FFC());
+                void* mem = allocate__Q23mtl10MemManagerFUlUl(0xc0, (unsigned long)CfRes_getAllocHandle());
                 if (mem != 0) {
                     __ct__Q22cf11CfObjectEffFv(mem);
                 }
@@ -4759,7 +4758,7 @@ void* func_800B20B4(UnkClass_805764CC* self, u32 mask,
         }
         // Big marker: same initializer plus the extended tail fields and a
         // fixed-size record zeroed through MWCC's rounded divide loop.
-        void* mem = allocate__Q23mtl10MemManagerFUlUl(0x164, (unsigned long)func_80061FFC());
+        void* mem = allocate__Q23mtl10MemManagerFUlUl(0x164, (unsigned long)CfRes_getAllocHandle());
         obj = mem;
         if (mem != 0) {
             B20B4PtView* p = (B20B4PtView*)mem;
@@ -4830,7 +4829,7 @@ void* func_800B20B4(UnkClass_805764CC* self, u32 mask,
         }
         // Small marker: hand-rolled initializer over raw memory, finishing
         // through the bootstrap table hook and the real vtable.
-        void* mem = allocate__Q23mtl10MemManagerFUlUl(0x94, (unsigned long)func_80061FFC());
+        void* mem = allocate__Q23mtl10MemManagerFUlUl(0x94, (unsigned long)CfRes_getAllocHandle());
         obj = mem;
         if (mem != 0) {
             B20B4PtView* p = (B20B4PtView*)mem;
@@ -4924,29 +4923,29 @@ void func_800B5994(UnkClass_805764CC* self, IB8FC4Player* anchor, void* listv,
     typedef s32 (*EvtFn)(void*, void*);
     typedef u32 (*B47Fn)(int, float, const B47Vec3*, const B47Vec3*, int,
                          void*, void*);
-    if (func_800B6508(listv) != 0) {
+    if (reslistIsBusy(listv) != 0) {
         return;
     }
 
     B47Vec3 base30;                 // sp+0x30 anchor position
-    func_8004B0B0(&base30);
+    noopAnimVec3(&base30);
     if (anchor != 0) {
-        func_8004B3F0(&base30, anchor->unk2B());
+        copyVec3Words(&base30, anchor->unk2B());
     }
 
     float f24 = speed + lbl_eu_80661CD4;   // scaled base speed
     float f23 = f24;                        // current multiplier
     isTimerActive__Q22cf13CfGameManagerFv();
 
-    s32 r20 = func_800B1C0C(0x20);
+    s32 r20 = gflagHasMask(0x20);
     int r21 = (isGlobalCamFlagSet(0x200) != 0);
     int r22 = (testResInfoFlag(0x10) != 0);
     int r23 = (testResInfoFlag(0x40) != 0);
     void* r24 = 0;
     if (getUnk80664658() != 0) {
-        r24 = func_800B4F58(getUnk80664658());
+        r24 = testCamBit15(getUnk80664658());
     }
-    void* r27 = func_800B6494();
+    void* r27 = scaleAboveZero();
     int r26 = (testResInfoFlag(0x20) != 0);
     int r25 = CfRes_getE24Bit22();
 
@@ -4963,7 +4962,7 @@ void func_800B5994(UnkClass_805764CC* self, IB8FC4Player* anchor, void* listv,
     }
     if (self->field_0xD10 > 0) {
         self->field_0xD10--;
-        if (func_800A8C84() >= 0x5e8000u) {
+        if (KyoshinHeap_Reset38() >= 0x5e8000u) {
             self->field_0xD10 = 0;
         } else if (self->field_0xD10 >= 8) {
             int sub = 0;
@@ -4997,17 +4996,17 @@ void func_800B5994(UnkClass_805764CC* self, IB8FC4Player* anchor, void* listv,
         B5994Obj* obj = *(B5994Obj**)getObjectNodePtr__Q22cf13CfGameManagerFv(&it24);
         F8C0IteratorNode it1c;              // sp+0x1C step-back iterator
         linkItemNode__Q22cf13CfGameManagerFv(&it1c, &it24, 0);
-        if (func_800B64AC(obj) == 0) {
+        if (testObj68bit6(obj) == 0) {
             float f17 = f23;
             float f22 = f23;
             int r18 = 0, r17 = 0, r16 = 0, r24f = 0;
 
-            if (func_800B31C8(obj) != 0) {
+            if (testFlag64b3(obj) != 0) {
                 if (obj->lvl174() == lbl_eu_806669D8) {
                     r24f = 1;
                 }
             }
-            if (func_8006DF9C(obj) != 0) {
+            if (cfCam_getBit2_64(obj) != 0) {
                 // Name-probe on the embedded controller view (obj-0x3e9c);
                 // bits 4/3/1 of the result select the per-object branches.
                 u8* minus = (obj != 0) ? (u8*)obj - 0x3e9c : 0;
@@ -5027,15 +5026,15 @@ void func_800B5994(UnkClass_805764CC* self, IB8FC4Player* anchor, void* listv,
                     r16 = 1;
                 }
             }
-            if (func_800B64B8(obj, 8) != 0 || func_800B4594(obj) != 0) {
-                func_800B4F90(obj);
+            if (testObj68mask(obj, 8) != 0 || testObj64bit16(obj) != 0) {
+                setObj6Cbit0(obj);
                 goto next;
             }
             if (r21 != 0) {
-                if (func_800B64D0((u8*)obj, 2) != 0) {
+                if (andObj6Cmask((u8*)obj, 2) != 0) {
                     goto next;
                 }
-                func_800B4F6C(obj);
+                setObj6Cbit1(obj);
                 goto next;
             }
             if (anchor == 0) {
@@ -5043,7 +5042,7 @@ void func_800B5994(UnkClass_805764CC* self, IB8FC4Player* anchor, void* listv,
             }
             int sel = (r17 != 0 || r16 != 0) ? 1 : 0;
             float f18v = (r17 != 0 || r16 != 0) ? f24 : f23;
-            s32 df = func_8006DF9C(obj);
+            s32 df = cfCam_getBit2_64(obj);
             B47Vec3* pos = obj->pos2B();
             float tmp20 = 0;               // sp+0x20 out-param of B47A8
             s32 r15res = ((B47Fn)func_800B47A8)(0, f18v, pos,
@@ -5054,7 +5053,7 @@ void func_800B5994(UnkClass_805764CC* self, IB8FC4Player* anchor, void* listv,
                 B47Vec3* pos2 = obj->pos2B();
                 volatile float t14 = base30.y - pos2->y;   // sp+0x14
                 (void)t14;
-                if (func_8006BAF0() < lbl_eu_80663ED0) {
+                if (cfCam_absFloat() < lbl_eu_80663ED0) {
                     r15res = 1;
                 }
             }
@@ -5068,44 +5067,44 @@ void func_800B5994(UnkClass_805764CC* self, IB8FC4Player* anchor, void* listv,
             if (((Call2Fn)isObjectFlagMaskSet__Q22cf13CfGameManagerFv)(obj, 0x800) != 0) {
                 goto ctrl_tail;
             }
-            if (func_8006DF9C(obj) == 0 || r15res != 0) {
+            if (cfCam_getBit2_64(obj) == 0 || r15res != 0) {
                 goto ctrl_tail;
             }
             {
                 u8* r15d = (obj != 0) ? (u8*)obj - 0x3e9c : 0;
                 int r16b = 0;
                 if (((IDispB4CA0*)r15d)->unkAF() != 0 ||
-                    func_800B3D40(r15d + 0x3e9c) != 0) {
+                    testObj6Cbit27(r15d + 0x3e9c) != 0) {
                     r16b = 1;
                 }
                 if (r16b != 0) {
                     goto loop_end;
                 }
                 if (r22 != 0 && r23 != 0) {
-                    if (func_800B4B0C((UnkClass_805764CC*)r15d) == 0) {
+                    if (testMode15F0Range((UnkClass_805764CC*)r15d) == 0) {
                         goto bc8;
                     }
-                    if (func_800B3D4C(obj, 2) != 0) {
+                    if (testObj6Cmask(obj, 2) != 0) {
                         goto loop_end;
                     }
-                    if (func_800B3D4C(obj, 0x400) != 0) {
-                        func_800B4F90(obj);
+                    if (testObj6Cmask(obj, 0x400) != 0) {
+                        setObj6Cbit0(obj);
                         goto loop_end;
                     }
-                    func_800B4F6C(obj);
-                    func_800B4F80(obj, 0x400);
+                    setObj6Cbit1(obj);
+                    orObj6Cmask(obj, 0x400);
                     goto loop_end;
                 }
             bc8:
-                r16b = (int)func_800B4CA0((Func4CA0Obj*)r15d);
+                r16b = (int)hudCtrlSlot46((Func4CA0Obj*)r15d);
                 if (r16b != 0) {
                     goto loop_end;
                 }
-                if ((u16)func_800B64E4(r15d) != 0) {
+                if ((u16)getObjU16_45C0(r15d) != 0) {
                     u8* obj2 = r15d + 0x3e9c;
-                    if (func_800B64EC(obj2) != 0) {
+                    if (testObj64bit26(obj2) != 0) {
                         func_800B3A88(self, obj2);
-                    } else if (func_800B8AFC(obj2) == 0) {
+                    } else if (lookupCA0BySelf(obj2) == 0) {
                         func_800B3A88(self, obj2);
                     }
                     goto loop_end;
@@ -5116,29 +5115,29 @@ void func_800B5994(UnkClass_805764CC* self, IB8FC4Player* anchor, void* listv,
                 if (r25 != 0) {
                     func_800B3A88(self, r15d + 0x3e9c);
                 } else {
-                    func_800B64F8(obj);
+                    orObj68bits5_6(obj);
                 }
                 goto loop_end;
             }
         big15:
             // r15!=0 path: emit the {object, weight} event record.
             if (((Call2Fn)isObjectFlagMaskSet__Q22cf13CfGameManagerFv)(obj, 0x10) == 0) {
-                if (func_800B64D0((u8*)obj, 2) != 0) {
+                if (andObj6Cmask((u8*)obj, 2) != 0) {
                     goto next;
                 }
-                func_800B4F6C(obj);
+                setObj6Cbit1(obj);
                 goto next;
             }
             {
                 // Retail reuses the dead base-position slot (sp+0x30) as the
                 // B4B88 scratch record.
-                if (((EvtFn)func_800B4B88)(obj, &base30) != 0) {
-                    func_800B4F6C(obj);
+                if (((EvtFn)evtTypeSlot80)(obj, &base30) != 0) {
+                    setObj6Cbit1(obj);
                     goto next;
                 }
-                if (func_800B3D4C(obj, 1) == 0) {
+                if (testObj6Cmask(obj, 1) == 0) {
                     if (r17 != 0 || r16 != 0) {
-                        func_800B4F90(obj);
+                        setObj6Cbit0(obj);
                     }
                 }
                 SpdRec rec;
@@ -5149,29 +5148,29 @@ void func_800B5994(UnkClass_805764CC* self, IB8FC4Player* anchor, void* listv,
                     B47Vec3* p = obj->pos2B();
                     volatile float t10 = p->y - base30.y;      // sp+0x10
                     (void)t10;
-                    float bv = func_8006BAF0();
+                    float bv = cfCam_absFloat();
                     rec.w = (tmp20 + bv) / lbl_eu_806669E4;
                 } else {
                     B47Vec3* p = obj->pos2B();
                     volatile float t0c = p->y - base30.y;      // sp+0x0C
                     (void)t0c;
-                    float bv = func_8006BAF0();
+                    float bv = cfCam_absFloat();
                     rec.w = lbl_eu_80666A00 * bv + tmp20;
                 }
                 void* r15c = func_8016FE34(obj);
                 if (r15c != 0 &&
-                    func_800B4B0C((UnkClass_805764CC*)r15c) != 0) {
+                    testMode15F0Range((UnkClass_805764CC*)r15c) != 0) {
                     rec.w *= lbl_eu_80666A04;
-                    if (func_eu_800BFC7C((u8*)r15c + 0x3e9c) != 0) {
-                        if (func_eu_800BFC7C((u8*)r15c + 0x3e9c) >= 5 &&
-                            func_800B4B74((UnkClass_805764CC*)r15c, 5) != 0) {
+                    if (CfObjectMove_relaySubB0Slot68((u8*)r15c + 0x3e9c) != 0) {
+                        if (CfObjectMove_relaySubB0Slot68((u8*)r15c + 0x3e9c) >= 5 &&
+                            testMode15F0Eq((UnkClass_805764CC*)r15c, 5) != 0) {
                             rec.w = rec.w / lbl_eu_806669F4;
                             goto emit;
                         }
                         // Raw 64-bit bit-cast of {r27, fc7c-result} minus D0.
                         B6C8F64Conv conv;
                         conv.w[0] = (u32)(unsigned long)r27;
-                        conv.w[1] = func_eu_800BFC7C((u8*)r15c + 0x3e9c);
+                        conv.w[1] = CfObjectMove_relaySubB0Slot68((u8*)r15c + 0x3e9c);
                         rec.w = rec.w / (float)(conv.d - lbl_eu_806669D0);
                     }
                 }
@@ -5183,25 +5182,25 @@ void func_800B5994(UnkClass_805764CC* self, IB8FC4Player* anchor, void* listv,
             // Controller tail (.L_800B6C7C): slot-0x74 probe selects whether
             // the removal flag path runs; slot-0x7C gates it otherwise.
             if (obj->q74() != 0) {
-                if (func_800B64D0((u8*)obj, 2) == 0) {
-                    func_800B4F6C(obj);
+                if (andObj6Cmask((u8*)obj, 2) == 0) {
+                    setObj6Cbit1(obj);
                 }
                 goto loop_end;
             }
             if (obj->q1F() == 0) {
                 goto loop_end;
             }
-            if (func_800B64D0((u8*)obj, 2) != 0) {
+            if (andObj6Cmask((u8*)obj, 2) != 0) {
                 goto loop_end;
             }
-            func_800B4F6C(obj);
+            setObj6Cbit1(obj);
             goto loop_end;
         next:
             // Fade/level application driven by the residual speed delta.
-            if (func_800B64B8(obj, 0xc00) != 0) {
+            if (testObj68mask(obj, 0xc00) != 0) {
                 goto loop_end;
             }
-            if (func_800B64B8(obj, 0x10) == 0) {
+            if (testObj68mask(obj, 0x10) == 0) {
                 goto loop_end;
             }
             if (isGlobalCamFlagSet(0x980) != 0) {
@@ -5209,16 +5208,16 @@ void func_800B5994(UnkClass_805764CC* self, IB8FC4Player* anchor, void* listv,
             }
             {
                 float f17n = f22 - tmp20;
-                if (r20 != 0 && func_8006DF9C(obj) != 0 && obj->q74() != 0) {
-                    func_800BC3B0(obj, lbl_eu_80666A08);
+                if (r20 != 0 && cfCam_getBit2_64(obj) != 0 && obj->q74() != 0) {
+                    CfObjectMove_setMoveSpeedGated(obj, lbl_eu_80666A08);
                     goto loop_end;
                 }
                 if (r17 != 0 || r16 != 0) {
-                    if (func_8006DF9C(obj) != 0 &&
+                    if (cfCam_getBit2_64(obj) != 0 &&
                         obj->lvl16C() > lbl_eu_806669D8) {
-                        func_800BC3B0(obj, lbl_eu_80666A08);
+                        CfObjectMove_setMoveSpeedGated(obj, lbl_eu_80666A08);
                     }
-                    B5994Obj* tgt = func_800B64DC(obj);
+                    B5994Obj* tgt = getObjField98(obj);
                     if (tgt == 0) {
                         goto loop_end;
                     }
@@ -5249,7 +5248,7 @@ void func_800B5994(UnkClass_805764CC* self, IB8FC4Player* anchor, void* listv,
         break;
     }
 }
-// Per-frame scan over the object reslist (func_800B6C58): find the closest
+// Per-frame scan over the object reslist (getReslistBC8): find the closest
 // object matching the caller's acquisition request and drive the global
 // event flags / sequence counters accordingly.
 // extern "C": retail exports this entry under the unmangled name.
@@ -5295,7 +5294,7 @@ extern "C" s32 func_800B7AF0(UnkClass_805764CC* self, IB7Arg* arg) {
     }
 
     int count = 0;
-    void* list = func_800B6C58();
+    void* list = getReslistBC8();
     CfReslistNode* sentinel = *(CfReslistNode**)((u8*)list + 4);
     CfReslistNode* node = sentinel->mNext;
     ml::CVec3 accum = ml::CVec3::zero;
@@ -5441,7 +5440,7 @@ extern "C" s32 func_800B7AF0(UnkClass_805764CC* self, IB7Arg* arg) {
                             (lbl_eu_80663E24 & 0x400) == 0 &&
                             flagR20 == 0 && flagR19 == 0 &&
                             (lbl_eu_80663E24 & 0x40) == 0) {
-                            func_80062600();
+                            CfRes_runUpdatePipeline();
                             clearGlobalState__Q22cf13CfGameManagerFv(lo, hi, 0);
                             b63 = 1;
                         }
@@ -5456,7 +5455,7 @@ extern "C" s32 func_800B7AF0(UnkClass_805764CC* self, IB7Arg* arg) {
                         }
                     } else if (ty == 6) {
                         if (gate69 == 0 && gate13 == 0) {
-                            void* lst = func_800B6C7C();
+                            void* lst = getReslistC08();
                             CfReslistNode* sn = *(CfReslistNode**)((u8*)lst + 4);
                             int found = 0;
                             // Quirk: retail passes each node's payload as the

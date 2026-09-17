@@ -39,8 +39,8 @@ namespace cf {
 
         void copyInputFlag(CPad* pPad, u32 srcFlag, u32 dstFlag);
         static void setInputDisableTime(float f1);
-        static bool func_801C1BC0();
-        static void func_801C1BD8(float f1);
+        static bool isInputDisabled();
+        static void setButtonDisableTime(float f1);
         void updateCfPadData(CfPadData* padData, const CPad* pad);
         static u32 getWiimoteBattery();
         static u32 getDetectedPadType() { return lbl_80666D3C; }

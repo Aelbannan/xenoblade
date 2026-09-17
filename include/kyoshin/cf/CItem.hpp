@@ -6,25 +6,25 @@
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
 extern "C" u32 func_8009CF8C(u32 resourceId);
 
-// BDAT row base/count helpers (used by func_8015B25C's item-box scan).
+// BDAT row base/count helpers (used by CItem_createBoxContents's item-box scan).
 extern "C" u32 func_8003B41C(void* bdat);
 extern "C" u32 func_8003B1EC(void* bdat);
 
-// Item-box post-processing helper (used by func_8015B25C).
+// Item-box post-processing helper (used by CItem_createBoxContents).
 extern "C" void func_8013E424(void* self, int a);
 
 // Variadic format helper (MWCC emits the crclr cr1eq varargs marker before
 // the call; C linkage keeps the call-site reloc on the plain name).
 extern "C" int sprintf(char*, const char*, ...);
 
-// Global BDAT handles used by func_801558B4's lookups.
+// Global BDAT handles used by CItemRec_packFromBdat's lookups.
 extern void* lbl_eu_806640D8;
 extern void* lbl_eu_806640EC;
 
 // BDAT handle used by func_8015B130's item-box creation lookups.
 extern void* lbl_eu_806640CC;
 
-// BDAT handle used by func_8015B25C's item-box creation lookups.
+// BDAT handle used by CItem_createBoxContents's item-box creation lookups.
 extern void* lbl_eu_806640E8;
 
 // BDAT handle used by func_8015ACAC's random-roll lookups.
@@ -43,7 +43,7 @@ extern void* lbl_eu_8066414C;
 // lbl_eu_806640F4, cat in [4,8] picks lbl_eu_806640F8).
 extern void* lbl_eu_806640F4;
 extern void* lbl_eu_806640F8;
-// BDAT handles selected by func_80157F04's category dispatch (cases 2..7).
+// BDAT handles selected by CItem_resolveFamilyBdat's category dispatch (cases 2..7).
 extern void* lbl_eu_806640FC;
 extern void* lbl_eu_80664104;
 extern void* lbl_eu_80664108;
@@ -56,7 +56,7 @@ extern void* lbl_eu_80664100;
 // BDAT handle used by func_8015AAB4's weighted random-roll lookups.
 extern void* lbl_eu_80664150;
 
-// Item-name string pool (also the +0x42 column-name argument in func_801558B4).
+// Item-name string pool (also the +0x42 column-name argument in CItemRec_packFromBdat).
 extern char lbl_eu_80501C58[];
 
 // Global item block base pointer (allocated once; freed by __dt__80157150).
@@ -153,7 +153,7 @@ extern s8 lbl_eu_80664204;
 // Item data types (unit kyoshin/cf/CItem)
 // ---------------------------------------------------------------------------
 
-// 8-byte item record written by func_801558B4 (u32 packed word + u16 flags).
+// 8-byte item record written by CItemRec_packFromBdat (u32 packed word + u16 flags).
 struct CItemRec {
     /* 0x00 */ u32 field_00;
     /* 0x04 */ u16 field_04;
@@ -161,7 +161,7 @@ struct CItemRec {
 
 // Bitfield view over CItemData::field_00: bits 2-4 (LSB, i.e. MSB 27-29)
 // are the item category. A category write re-reads the word (retail reloads
-// before the rlwimi in func_80156ED4). PPC bitfields allocate from the MSB.
+// before the rlwimi in CItemData_ensureCatPack). PPC bitfields allocate from the MSB.
 struct ItemWordCat {
     u32 pad0 : 27;
     /* MSB bits 27-29 */ u32 mCat : 3;
@@ -173,7 +173,7 @@ struct ItemWordCat {
 // ---------------------------------------------------------------------------
 
 // Item record: 32-bit packed word at 0x00, record buffer at 0x08.
-// func_80156F0C / func_80156F30 pack bitfields into field_00; func_801558B4
+// CItemData_setCatAndPack / CItemData_setRowAndPack pack bitfields into field_00; CItemRec_packFromBdat
 // fills the 8-byte record at field_08.
 struct CItemData {
     /* 0x00 */ u32 field_00;
@@ -188,7 +188,7 @@ struct CItemData {
 
 // Item extension block (52 bytes): packed item word at 0x00, 8-byte sub
 // records at 0x08, s16 entry array at 0x28 with u8 count at 0x30.
-// func_8015B86C returns mEntries[idx] when idx < mCount else 0;
+// CItemExt_getEntry returns mEntries[idx] when idx < mCount else 0;
 // func_8015B6B4 clears the 0x08 sub-records and the entries in place.
 struct CItemExt {
     /* 0x00 */ u32 field_00;
@@ -215,7 +215,7 @@ struct CItemFour {
     CItemFour();
 };
 
-// Shared four-record item block used by func_8015AFA4 / func_8015B25C.
+// Shared four-record item block used by CItem_openAreaEventBox / CItem_createBoxContents.
 extern CItemFour lbl_eu_80573E18;
 extern CItemFour lbl_eu_80573EEC;
 
@@ -228,7 +228,7 @@ struct CItemScratch {
     /* 0x06 */ u8 field_06[46];
 };
 
-// Indirect u16-id holder used by the func_801589A0 comparator (returns 1 when
+// Indirect u16-id holder used by the CItemFamily_cmpId comparator (returns 1 when
 // a->mpFamily->mId < b->mpFamily->mId).
 struct CItemFamily {
     u8 field_00[4];
@@ -253,7 +253,7 @@ struct CItemFamilyBuf {
     /* 0x640 */ s32 mCount;
 };
 
-// Sort the pointer range [base, end) using the func_801589A0 comparator
+// Sort the pointer range [base, end) using the CItemFamily_cmpId comparator
 // (retail symbol unmangled - C linkage). The comparator receives element
 // slot addresses; callers pass a record-typed callback whose first field
 // aliases the stored pointer.
@@ -261,17 +261,17 @@ extern "C" void func_80158AF4(u32* base, u32* end,
                               int (*cmp)(u32*, u32*));
 
 // Comparator used by __dt__801589BC's sort: 1 when a's family id < b's.
-extern "C" u32 func_801589A0(CItemFamilyRec* a, CItemFamilyRec* b);
+extern "C" u32 CItemFamily_cmpId(CItemFamilyRec* a, CItemFamilyRec* b);
 
 // Window over the global item block (lbl_eu_806641B8). 0x10000 is the base of
-// the per-slot region (func_8015783C / func_80157948 index it), 0x12038 holds a
-// u16 slot/sub-slot table, 0x120E8 the item-count word (func_80157184),
-// 0x120EC a u16 flag table (func_8015780C / func_80157824), and 0x12108 the
+// the per-slot region (CItemBlock_getKindSlot / CItemBlock_getSlotU16 index it), 0x12038 holds a
+// u16 slot/sub-slot table, 0x120E8 the item-count word (CItemBlock_setCount),
+// 0x120EC a u16 flag table (CItemBlock_getFlag120EC / CItemBlock_setFlag120EC), and 0x12108 the
 // 32-bit counters.
 struct CItemBlockCounters {
     u8 field_00000[0x10000];
     u8 field_10000[0x2038];
-    /* 0x12038 */ u16 mSlots12038[1];  // grows: func_80157948 indexes (b + (a-1)*8) beyond [0]
+    /* 0x12038 */ u16 mSlots12038[1];  // grows: CItemBlock_getSlotU16 indexes (b + (a-1)*8) beyond [0]
     u8 field_1203A[0xAE];
     /* 0x120E8 */ u32 mCountE8;
     /* 0x120EC */ u16 mFlags120EC[0x0E];
@@ -298,7 +298,7 @@ struct CItemParam {
 
 // Object exposing an item size via its 4th virtual (vtable slot 0x14;
 // MWCC leaves 2 reserved slots at 0x00/0x04 before user virtuals here).
-// func_8015B46C dispatches to slot 0x14 to size a memset of an output buffer.
+// CItem_clearVtblBuf dispatches to slot 0x14 to size a memset of an output buffer.
 struct CItemVtblSize {
     virtual void vf00() = 0;
     virtual void vf04() = 0;
@@ -319,7 +319,7 @@ struct CItemSortBuf {
 };
 extern CItemSortBuf lbl_eu_80573FC0;
 
-// Second lazy-init guard/buffer pair used by func_80156060 / func_80156164
+// Second lazy-init guard/buffer pair used by CItemData_fillSortBufA / CItemData_fillSortBufB
 // (same layout as CItemSortBuf).
 extern s8 lbl_eu_806641FD;
 extern s8 lbl_eu_806641FE;
@@ -439,10 +439,10 @@ extern "C" void syncItemGroups__Q22cf13CfGameManagerFv();
 extern "C" int getLanguage__9CDeviceSCFv();
 
 // ---------------------------------------------------------------------------
-// Party item-slot bookkeeping table (func_80159348)
+// Party item-slot bookkeeping table (CItemParty_refreshSlots)
 // ---------------------------------------------------------------------------
 
-// Per-party inventory/equip-slot tables refreshed by func_80159348: the 13
+// Per-party inventory/equip-slot tables refreshed by CItemParty_refreshSlots: the 13
 // characters (ids 1..13) each own six equip slots (u16 at +0x0C, row stride
 // 0xC) and up to eight parallel (item id, slot, sub-index) tuples stored in
 // the three u16 arrays at +0xAC / +0x17C / +0x24C (row stride 0x10). The
@@ -458,19 +458,19 @@ struct CItemPartySlots {
     /* 0x30C */ u8 pad_30C[8];
 };
 
-// Count the zero records in the func_801579C4 list for arg, minus the
+// Count the zero records in the CItemBlock_getKindList list for arg, minus the
 // randomizer result when the category is in [2,8].
-extern "C" s32 func_80157CD0(u32 arg);
+extern "C" s32 CItemBlock_countEmpty(u32 arg);
 
 // Party item-slot table refresh (retail symbol unmangled - C linkage).
-extern "C" void func_80159348(CItemPartySlots* self);
+extern "C" void CItemParty_refreshSlots(CItemPartySlots* self);
 
 // Compact one kind's record list into the out table (retail symbol
 // unmangled - C linkage; the capacity argument is ignored by the callee).
 extern "C" int func_80158894(u16 arg, u16* out, s32 capacity);
 
 // Item-slot randomizer (size 0x144): counts non-empty slots for kind 3
-// (per-slot u16 high-byte table) or the func_801575B0 family flags.
+// (per-slot u16 high-byte table) or the CItemBlock_testKindFlag family flags.
 // C linkage: retail symbol is unmangled, so the call-site relocs must
 // reference the plain name.
 extern "C" s32 func_801576C8(u32 arg);
@@ -490,7 +490,7 @@ extern "C" __declspec(noinline) CItemExt* func_80157C4C(u32 kind, s16 idx);
 
 // Three-element sort helper used by func_80158AF4's median-of-3 pivot
 // selection (retail symbol unmangled - C linkage).
-extern "C" void func_801591F4(u32* a, u32* b, u32* c, int (**pCmp)(u32*, u32*));
+extern "C" void CItem_sortMedian3(u32* a, u32* b, u32* c, int (**pCmp)(u32*, u32*));
 
 // Recursive half-sort used by func_80158AF4's introsort loop (retail
 // symbol unmangled - C linkage).
@@ -499,11 +499,11 @@ extern "C" void __declspec(noinline) func_80158E74(u32* base, u32* end,
 
 // Item-family BDAT resolver (unit-local): returns the BDAT file handle for
 // family id v and writes the kind/row sub-ids into outA/outB. The retail
-// return value is recovered from the func_80155DBC/func_80155E30 call sites,
+// return value is recovered from the CItemRec_lookup8C/CItemRec_twin88b call sites,
 // which pass it straight to getBdatStringColumnValue. C linkage so the
 // call-site reloc uses the plain retail name (PLAN.md §17.6). The first
 // param is u32 so call sites pass the id unmasked (retail mr, not clrlwi).
-extern "C" void* func_80157F04(u32 v, void* outA, void* outB);
+extern "C" void* CItem_resolveFamilyBdat(u32 v, void* outA, void* outB);
 
 // Character-data / equip-table helpers (defined in CtrlObjectParam.cpp):
 // resolve the item instance for an equip slot, set an equip-slot entry, and

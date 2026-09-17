@@ -41,9 +41,9 @@ extern "C" void func_80137F88(nw4r::lyt::Pane*, const char*);
 extern "C" void func_80124270(nw4r::lyt::Pane*, u32);
 
 // BDAT text / name helpers (retail unmangled).
-extern "C" u16 func_80136254(const void*, const void*, int);
-extern "C" u32 func_801392E4(u32);
-extern "C" u32 func_80139358(u32);
+extern "C" u16 BdatGetU16Direct(const void*, const void*, int);
+extern "C" u32 BdatGetItemType(u32);
+extern "C" u32 BdatGetItemId(u32);
 extern "C" void* func_80138DA4(const char*);
 extern "C" char* func_801355BC();
 // func_801412D0 is owned by kyoshin/CUIWindowManager.hpp.

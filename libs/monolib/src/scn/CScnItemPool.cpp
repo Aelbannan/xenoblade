@@ -29,8 +29,8 @@ public:
         mStartNodePtr->mPrev = mStartNode.mNext;
     }
 
-    void func_8049CB6C(T* item) {}
-    void func_8049CB70(_reslist_node<T>* r4) { r4->mNext = nullptr; }
+    void ScnFilterList_destroyItem(T* item) {}
+    void ScnFilterList_freeNode(_reslist_node<T>* r4) { r4->mNext = nullptr; }
 
     // Shared-reslist.hpp clearList shape (proven FULL_MATCH in CWorkThread/
     // CDeviceVI/CView): walker declared first, cur copy inside the body.
@@ -39,8 +39,8 @@ public:
         while (r5 != mStartNodePtr) {
             _reslist_node<T>* r4 = r5;
             r5 = r5->mNext;
-            func_8049CB6C(&r4->mItem);
-            func_8049CB70(r4);
+            ScnFilterList_destroyItem(&r4->mItem);
+            ScnFilterList_freeNode(r4);
         }
         mStartNodePtr->mNext = mStartNodePtr;
         mStartNodePtr->mPrev = mStartNodePtr;
@@ -234,9 +234,9 @@ public:
 };
 
 // Cross-unit pool-item helpers (retail C-ABI, unmangled symbols).
-extern "C" void func_80485774(CScnItem* item, u32 arg);
-extern "C" void func_804859E8(CScnItem* item, u32 arg);
-extern "C" void func_804838DC(CScnItem* item, u32 arg);
+extern "C" void simSetLeafAnimTag(CScnItem* item, u32 arg);
+extern "C" void simClearNodeRefs(CScnItem* item, u32 arg);
+extern "C" void simSetFlag2OnTree(CScnItem* item, u32 arg);
 
 // reslist<CScnItem> constructor (retail __ct__reslist_CScnItem). The base
 // ctor is inlined; MWCC emits the base-vtable store at entry and the
@@ -327,7 +327,7 @@ struct CScnPoolSceneIf {
 
 // func_8048C750: releases `item` from the pool per its kind.
 //  kind 1: scene = pool->id resolved via func_8048C8BC; scene->apply(item);
-//          item->vfuncCC(); func_804838DC(item, 0); recycle onto sub-pool 0xAC
+//          item->vfuncCC(); simSetFlag2OnTree(item, 0); recycle onto sub-pool 0xAC
 //          via func_8048C524.
 //  kind 2: item->vfunc08(-1); clear small-slot flag at (item-mSlotsD0)/0x58.
 //  kind 4: item->vfunc08(-1); clear big-slot flag at (item-mSlotsD8)/0x3A8
@@ -338,7 +338,7 @@ extern "C" __declspec(noinline) void func_8048C750(CScnItemPool* self, CScnItem*
         CScnPoolSceneIf* scene = (CScnPoolSceneIf*)func_8048C8BC(*(u8**)((char*)self + 8));
         scene->apply(item);
         item->vfuncCC();
-        func_804838DC(item, 0);
+        simSetFlag2OnTree(item, 0);
         func_8048C524((u32)((char*)self + 0xAC), (u32*)&item);
     } else if (func_8048C690((u8*)item) == 2) {
         item->vfunc08(-1);
@@ -447,7 +447,7 @@ void func_8048CB14(CScnItemPool* self, u32 key) {
         func_8048C9C8((int*)&node);
     }
 }
-// func_8048CBC0: iterates the reslist at 0xC and calls func_80485774 on each
+// func_8048CBC0: iterates the reslist at 0xC and calls simSetLeafAnimTag on each
 // item, forwarding `arg`.
 extern "C" void func_8048CBC0(CScnItemPool* self, u32 arg) {
     CScnItemPoolNode* iter;
@@ -456,11 +456,11 @@ extern "C" void func_8048CBC0(CScnItemPool* self, u32 arg) {
     while ((func_8048C5AC((int*)&sentinel, &self->mList0C),
             func_8048C9D8((u32*)&iter, (u32*)&sentinel)) != 0) {
         CScnItem* item = *(CScnItem**)func_8048C9F4((u8*)&iter);
-        func_80485774(item, arg);
+        simSetLeafAnimTag(item, arg);
         func_8048C9C8((int*)&iter);
     }
 }
-// func_8048CC40: iterates the reslist at 0xC and calls func_804859E8 on each
+// func_8048CC40: iterates the reslist at 0xC and calls simClearNodeRefs on each
 // item, forwarding `arg`.
 extern "C" void func_8048CC40(CScnItemPool* self, u32 arg) {
     CScnItemPoolNode* iter;
@@ -469,7 +469,7 @@ extern "C" void func_8048CC40(CScnItemPool* self, u32 arg) {
     while ((func_8048C5AC((int*)&sentinel, &self->mList0C),
             func_8048C9D8((u32*)&iter, (u32*)&sentinel)) != 0) {
         CScnItem* item = *(CScnItem**)func_8048C9F4((u8*)&iter);
-        func_804859E8(item, arg);
+        simClearNodeRefs(item, arg);
         func_8048C9C8((int*)&iter);
     }
 }

@@ -81,20 +81,20 @@ extern "C" void func_802B5F0C(void* self) { *(u8*)((u8*)self + 0xE8) = 1; }
 
 void func_802B5F18(CMenuTitleInput* self) {
     // Opening menu: query the +0x60 sub-menu, flag this menu when it opens.
-    if (func_802B7564(&self->mSub)) {
+    if (CTitle_isLoadDone(&self->mSub)) {
         self->field_e8 = 0x2;
     }
 }
 
 void func_802B5F58(CMenuTitleInput* self) {
-    extern void func_802B75B8(CMenuTitleSub*);
+    extern void CTitle_showMenu(CMenuTitleSub*);
     ((unsigned char*)self)[0xe8] = 3;
-    func_802B75B8(&self->mSub);
+    CTitle_showMenu(&self->mSub);
 }
 
 void func_802B5F68(CMenuTitleInput* self) {
     // Non-zero sub-menu query -> open the sub-menu transition state.
-    if (func_802B7590(&self->mSub)) {
+    if (CTitle_isAnimDone(&self->mSub)) {
         self->field_e8 = 0x4;
     }
 }
@@ -108,21 +108,21 @@ void func_802B5FA8(CMenuTitleInput* self) {
     u32 mask = (isClassicController__Q22cf13CfGameManagerFv(-1) != 0) ? 0x1fe0060fU : 0x1effU;
     if (pad->mPadPressedFlags & mask) {
         self->field_e8 = 5;
-        func_802B7630(&self->mSub);
+        CTitle_beginMenuOutro(&self->mSub);
         self->field_ec = lbl_eu_80668FD0;
     }
 }
 
 void func_802B6020(CMenuTitleInput* self) {
     // Sub-menu still closed: poll input and open it on the activation mask.
-    if (func_802B7590(&self->mSub) == 0) {
+    if (CTitle_isAnimDone(&self->mSub) == 0) {
         CfPadDataLocal* pad =
             (CfPadDataLocal*)cf::CfGameManager::getCfPadData();
         u32 mask = (isClassicController__Q22cf13CfGameManagerFv(-1) != 0)
                        ? 0x1fe0060fU
                        : 0x1effU;
         if (pad->mPadPressedFlags & mask) {
-            func_802B7800(&self->mSub);
+            CTitle_stepLogoMenu(&self->mSub);
         }
         self->field_ec = lbl_eu_80668FD4;
     } else {
@@ -182,29 +182,29 @@ void func_802B60CC(CMenuTitleInput* self) {
 
         // Each branch handles one input; every path falls through to the exit.
         if (trigger1 != 0) {
-            if (func_802B775C(&self->mSub) != 0) {
+            if (CTitle_confirmSelection(&self->mSub) != 0) {
                 self->field_e8 = 8;
             }
         } else if (trigger2 != 0) {
             self->field_e8 = 7;
-            func_802B75D8(&self->mSub);
+            CTitle_beginLogoOutro(&self->mSub);
         } else if (dirButton != 0) {
-            func_802B7650(&self->mSub);
+            CTitle_moveCursorUp(&self->mSub);
         } else if (cancelButton != 0) {
-            func_802B76D4(&self->mSub);
+            CTitle_moveCursorDown(&self->mSub);
         }
     }
 }
 
 void func_802B6200(CMenuTitleInput* self) {
     // Non-zero sub-menu query -> re-open the sub-menu transition state.
-    if (func_802B7590(&self->mSub)) {
+    if (CTitle_isAnimDone(&self->mSub)) {
         self->field_e8 = 0x2;
     }
 }
 
 void func_802B6240(CMenuTitleInput* self) {
-    if (func_802B7590(&self->mSub)) {
+    if (CTitle_isAnimDone(&self->mSub)) {
         self->field_e8 = 0x9;
     }
 }

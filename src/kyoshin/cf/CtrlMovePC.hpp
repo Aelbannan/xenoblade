@@ -176,15 +176,15 @@ f32  FrSqrt__Q24nw4r4mathFf(f32 x);
 // C-linkage imports for the move-state helpers (retail names).
 extern "C" {
 int  func_80198710(void* out, void* src, int a, f32 b, f32 c, f32 d, int e);
-int  func_8019876C(void* a, void* b);
+int  CPartsChange_ProcessPartyInfo(void* a, void* b);
 int  func_804BE348(void* a, void* b, int c, int d, int e);
 void func_804BE4B4(void* out, int a);
 void func_804BE4E0(void* out, int a);
 int  func_804B526C(void* a, void* b, void* c, void* d, int e, int f, void* g);
 int  func_804B54D4(void* a, void* b, void* c, int d, int e);
 void* findObjectById__Fi(int id);
-void* func_8004B7C0(void* out, const ml::CVec3* src); // matches CfGameManager.hpp decl
-void func_800BC3B0(void* a, f32 b);
+void* setAnimPosVec(void* out, const ml::CVec3* src); // matches CfGameManager.hpp decl
+void CfObjectMove_setMoveSpeedGated(void* a, f32 b);
 void func_80089990(cf::CCtrlMovePC* self);
 void* getPlayer__Q22cf13CfGameManagerFi(int idx);
 }
@@ -255,7 +255,7 @@ public:
     void* allocFreeNode();
 };
 
-// Result block filled by func_8019876C (CfPartyInfo at stack +0x128): the
+// Result block filled by CPartsChange_ProcessPartyInfo (CfPartyInfo at stack +0x128): the
 // goal position is the leading x/y/z triple (y doubles as mGoalY).
 struct CfPartyInfoOut {
     f32 x;               // 0x00

@@ -293,14 +293,14 @@ void CfObject_notifyEventDone__Q22cf13CfObjectModelFv(cf::CfObjectModel* self, v
     self->mSubObj38 = newObj;
     if (newObj != 0) {
         // +0x2C with r4=self, r5 untouched = CScnItemModel::attachModelParent
-        // (Nw4r func_8048B30C; us-800BB550: mr r3,newObj / mr r4,self /
+        // (Nw4r scnImN4GetHidByNm; us-800BB550: mr r3,newObj / mr r4,self /
         // lwz r12,0x2C(r12)/bctrl). A CObjectState_setStateBitMask0(self)
         // spelling does NOT compile: the (int,int) decl rejects a 1-arg call
         // (MWCC 10248) and a 2-arg call emits an r5 setup with zero split
         // room. The (u32) cast is free.
         reinterpret_cast<CScnItemModel*>(newObj)->attachModelParent((u32)self);
         // +0xA0 with no FP setup = CScnItemModel::notifyModelAttached
-        // (Nw4r func_80488EF4; us-800BB568: lwz r3,0x38 / lwz r12,0xA0(r12)
+        // (Nw4r scnImN4ResetAnims; us-800BB568: lwz r3,0x38 / lwz r12,0xA0(r12)
         // / bctrl). The CfObject-family slot here (UVF20(float,float)) would
         // emit f1/f2 setups with zero split room, so the arity-exact scene
         // slot is used.
@@ -409,7 +409,7 @@ u32 func_800BAE28(cf::CfObject* obj) {
 // symbol is Fv even though the body reads r4).
 void CfObject_setMoveTargetVec__Q22cf13CfObjectModelFv(cf::CfObjectModel* self, const ml::CVec3* vec) {
     if (self->mSubObj98 != 0) {
-        ml::CAttrTransform* transform = static_cast<ml::CAttrTransform*>(func_8048315C(self->mSubObj98));
+        ml::CAttrTransform* transform = static_cast<ml::CAttrTransform*>(simGetLeafActData(self->mSubObj98));
         transform->mPos = *vec;
         transform->update();
     }
@@ -423,7 +423,7 @@ void CfObject_setMoveTargetVec__Q22cf13CfObjectModelFv(cf::CfObjectModel* self, 
 // symbol is Fv even though the body reads r4; same body as the +0x9C slot).
 void CfObject_UnkVirtualFunc22__Q22cf13CfObjectModelFv(cf::CfObjectModel* self, const ml::CVec3* vec) {
     if (self->mSubObj98 != 0) {
-        ml::CAttrTransform* transform = static_cast<ml::CAttrTransform*>(func_8048315C(self->mSubObj98));
+        ml::CAttrTransform* transform = static_cast<ml::CAttrTransform*>(simGetLeafActData(self->mSubObj98));
         transform->mPos = *vec;
         transform->update();
     }
@@ -510,7 +510,7 @@ void CfObject_UnkVirtualFunc20__Q22cf13CfObjectModelFv(cf::CfObjectModel* self, 
 // this +0x3C when there is no sub-object.
 ml::CVec3* cf::CfObjectModel::CfObject_getPosVector() {
     if (mSubObj98 != 0) {
-        return reinterpret_cast<ml::CVec3*>(reinterpret_cast<uintptr_t>(func_8048315C(mSubObj98)) + 0xB8);
+        return reinterpret_cast<ml::CVec3*>(reinterpret_cast<uintptr_t>(simGetLeafActData(mSubObj98)) + 0xB8);
     }
     return reinterpret_cast<ml::CVec3*>(reinterpret_cast<uintptr_t>(this) + 0x3C);
 }
@@ -528,7 +528,7 @@ struct ModelVec48 {
 };
 void CfObject_setModelRotVec__Q22cf13CfObjectModelFPv(cf::CfObjectModel* self, const ml::CVec3* vec) {
     if (self->mSubObj98 != 0) {
-        ml::CAttrTransform* transform = static_cast<ml::CAttrTransform*>(func_8048315C(self->mSubObj98));
+        ml::CAttrTransform* transform = static_cast<ml::CAttrTransform*>(simGetLeafActData(self->mSubObj98));
         transform->mRot = *vec;
         transform->update();
     }
@@ -544,7 +544,7 @@ void* CfObject_UnkVirtualFunc28__Q22cf13CfObjectModelFv(void* self) {
     Data* data = static_cast<Data*>(self);
     void* ptr = data->mPtr;
     if (ptr) {
-        return reinterpret_cast<void*>(reinterpret_cast<uintptr_t>(func_8048315C(ptr)) + 0xC4);
+        return reinterpret_cast<void*>(reinterpret_cast<uintptr_t>(simGetLeafActData(ptr)) + 0xC4);
     } else {
         return data->field_48;
     }
@@ -555,7 +555,7 @@ void* CfObject_UnkVirtualFunc28__Q22cf13CfObjectModelFv(void* self) {
 // reads f1).
 void CfObject_setMoveHeadAngle__Q22cf13CfObjectModelFv(cf::CfObjectModel* self, float value) {
     if (self->mSubObj98 != 0) {
-        ml::CAttrTransform* transform = static_cast<ml::CAttrTransform*>(func_8048315C(self->mSubObj98));
+        ml::CAttrTransform* transform = static_cast<ml::CAttrTransform*>(simGetLeafActData(self->mSubObj98));
         transform->mRot.y = value;
         transform->update();
     }
@@ -565,7 +565,7 @@ void CfObject_setMoveHeadAngle__Q22cf13CfObjectModelFv(cf::CfObjectModel* self, 
 float CfObject_getMoveHeadAngle__Q22cf13CfObjectModelFv(void* self) {
     void* ptr = *(void**)((unsigned char*)self + 0x98);
     if (ptr != 0) {
-        void* result = func_8048315C(ptr);
+        void* result = simGetLeafActData(ptr);
         return *(float*)((unsigned char*)result + 0xc8);
     } else {
         return *(float*)((unsigned char*)self + 0x4c);
@@ -603,7 +603,7 @@ u32 func_800BB340(cf::CfObjectModel* self) {
     cf::CfObjectModelSub98* sub = self->mSubObj98;
     if (sub != 0) {
         // Retail dispatches to the sub-object's vtable slot +0xA8 and returns
-        // its value; Nw4r owner is func_8048736C (getEffectActOwner alias).
+        // its value; Nw4r owner is scnImN4GetEffAct (getEffectActOwner alias).
         return reinterpret_cast<CScnItemModel*>(sub)->getEffectActOwner();
     }
     return 0;
@@ -681,7 +681,7 @@ u32 CfObject_UnkVirtualFunc54__Q22cf13CfObjectModelFv(cf::CfObjectModel* self) {
 // Forwards the arg through the sub-object's vtable+0xA8 result to the
 // effect-act id-table lookup at +0x44 (retail symbol is Fv even though the
 // body reads r4). The +0xA8 call takes no args: on the Nw4r scene model it
-// dispatches func_8048736C, which ignores r4 and returns the embedded
+// dispatches scnImN4GetEffAct, which ignores r4 and returns the embedded
 // CScnEffectActNw4r (+0x14C4); retail keeps r4 live across that bctrl and
 // restores it into the +0x44 bctrl, whose callee is func_8049C18C
 // (CScnEffectAct* (u32 idx)). Both dispatches go through the real owning
@@ -719,7 +719,7 @@ extern "C" void* CfObjectModel_UnkVirtualFunc3__Q22cf13CfObjectModelFv(cf::CfObj
 void func_800BB618(cf::CfObjectModel* self, u32 flag) {
     cf::CfObjectModelSub98* sub = self->mSubObj98;
     if (sub != 0 && ((sub->field_7A4 >> 1) & 1) != flag) {
-        func_804838DC(sub, flag);
+        simSetFlag2OnTree(sub, flag);
     }
 }
 
@@ -734,7 +734,7 @@ void CfObject_UnkVirtualFunc66__Q22cf13CfObjectModelFv(cf::CfObjectModel* self, 
     }
     cf::CfObjectModelSub98* sub = self->mSubObj98;
     if (sub != 0 && ((sub->field_7A4 >> 1) & 1) != flag) {
-        func_804838DC(sub, flag);
+        simSetFlag2OnTree(sub, flag);
     }
 }
 
@@ -753,7 +753,7 @@ void CfObject_UnkVirtualFunc67__Q22cf13CfObjectModelFv(cf::CfObjectModel* self, 
     int bit20 = (self->mFlags68 >> 20) & 1;
     cf::CfObjectModelSub98* sub = self->mSubObj98;
     if (sub != 0 && ((sub->field_7A4 >> 1) & 1) != ((flag != 0) && (bit20 != 0))) {
-        func_804838DC(sub, (flag != 0) && (bit20 != 0));
+        simSetFlag2OnTree(sub, (flag != 0) && (bit20 != 0));
     }
 }
 
@@ -779,10 +779,10 @@ void CfObjectModel_UnkVirtualFunc12__Q22cf13CfObjectModelFv(void* self, float va
 // Retail symbol is Fv (no params) but the body reads r4 and forwards it to
 // the sub-object's vtable slot +0x6C; written with the verbatim mangled
 // name. The sub-object is read fresh from +0x98 for each call (retail
-// reloads it after the func_80484E10 call).
+// reloads it after the simSetFlags7A8_12 call).
 void CfObjectModel_UnkVirtualFunc13__Q22cf13CfObjectModelFv(cf::CfObjectModel* self, u32 arg) {
     if (self->mSubObj98 != 0) {
-        func_80484E10(self->mSubObj98, 1, self->field_BD);
+        simSetFlags7A8_12(self->mSubObj98, 1, self->field_BD);
         reinterpret_cast<CScnItemModel*>(self->mSubObj98)->setModelFlag6C(arg);
     }
 }
@@ -835,7 +835,7 @@ void CfObjectModel_UnkVirtualFunc14__Q22cf13CfObjectModelFv(
     }
     // Release the current binding when inactive.
     if (self->field_BC == 0) {
-        func_80484E10(self->mSubObj98, 0, 1);
+        simSetFlags7A8_12(self->mSubObj98, 0, 1);
     }
 }
 

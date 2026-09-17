@@ -106,8 +106,8 @@ class CView;
 
 extern "C" s32 func_8049AF80(UnkScn68* cam);
 extern "C" CView* func_8049B0A0(UnkScn68* cam, s16 idx);
-extern "C" void* func_80486068(void*, void*, void*, void*, int);
-extern "C" int func_80486070(int, int, int);
+extern "C" void* simFwdAnimSetup102(void*, void*, void*, void*, int);
+extern "C" int simFwdAnimReset(int, int, int);
 extern "C" void __ct__8049E710();
 extern "C" void __ct__804820F8();
 extern "C" void func_8049C72C(int);

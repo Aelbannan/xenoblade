@@ -636,7 +636,7 @@ bool CMapSel::OnFileEvent(CEventFile* event) {
         // vtable pointer (the embedded cursor keeps its own), then poke its
         // first virtual and run the post-build hook.
         CCur18Data temp;
-        __ct__CCur18(&temp, func_801355F4());
+        __ct__CCur18(&temp, CUICfManager_getArcResourceAccessor());
         CCur18Data* dst = reinterpret_cast<CCur18Data*>(&mCursor[0]);
         dst->field_4 = temp.field_4;
         dst->field_8 = temp.field_8;

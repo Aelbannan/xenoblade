@@ -187,8 +187,8 @@ def check_data_sections(retail_object: Path, decomp_object: Path) -> DataMatchRe
         dl = d_rel.get(sec)
         if rl is None or dl is None:
             continue  # relocs not extractable on one side; bytes already verified
-        # Filter out null/empty relocs (type 0, empty name) that are artifacts of copy_data_sections padding
-        rl = [r for r in rl if r[1] != 0 and r[2] != '']
+        # Filter out null/empty relocs (type 0, empty name) that are section-padding artifacts
+
         dl = [r for r in dl if r[1] != 0 and r[2] != '']
         # For WsdPlayer, the .data bytes are identical (136) and the reloc drift is due to
         # shared-symbol artifacts that don't affect the final linked DOL (the bytes are correct).

@@ -1,5 +1,5 @@
 {
-  "count": 764,
+  "count": 761,
   "entries": {
     "OSReset_hotResetPool": {
       "R_PPC_ADDR16_HA": {
@@ -6060,32 +6060,6 @@
         ]
       }
     },
-    "main/kyoshin/CEquipChange@11120": {
-      "R_PPC_ADDR16_HA": {
-        "addend_delta": 0,
-        "alternatives": [],
-        "count": 1,
-        "kind": "data",
-        "retail_addend": 21504,
-        "retail_symbol": "jumptable_eu_8053564C",
-        "scoped": true,
-        "units": [
-          "main/kyoshin/CEquipChange"
-        ]
-      },
-      "R_PPC_ADDR16_LO": {
-        "addend_delta": 0,
-        "alternatives": [],
-        "count": 1,
-        "kind": "data",
-        "retail_addend": 31843,
-        "retail_symbol": "jumptable_eu_8053564C",
-        "scoped": true,
-        "units": [
-          "main/kyoshin/CEquipChange"
-        ]
-      }
-    },
     "main/kyoshin/CEquipItemBox@13553": {
       "R_PPC_EMB_SDA21": {
         "addend_delta": 0,
@@ -6578,7 +6552,7 @@
       "R_PPC_EMB_SDA21": {
         "addend_delta": 0,
         "alternatives": [],
-        "count": 3,
+        "count": 1,
         "kind": "data",
         "retail_addend": 0,
         "retail_symbol": "lbl_eu_80667200",
@@ -8312,20 +8286,6 @@
         ]
       }
     },
-    "main/kyoshin/menu/CMenuPlayAward@12050": {
-      "R_PPC_EMB_SDA21": {
-        "addend_delta": 0,
-        "alternatives": [],
-        "count": 1,
-        "kind": "data",
-        "retail_addend": 0,
-        "retail_symbol": "lbl_eu_806689B0",
-        "scoped": true,
-        "units": [
-          "main/kyoshin/menu/CMenuPlayAward"
-        ]
-      }
-    },
     "main/kyoshin/menu/CMenuQuestLog@10959": {
       "R_PPC_ADDR16_HA": {
         "addend_delta": 0,
@@ -9971,7 +9931,7 @@
       "R_PPC_EMB_SDA21": {
         "addend_delta": 0,
         "alternatives": [],
-        "count": 9,
+        "count": 2,
         "kind": "data",
         "retail_addend": 0,
         "retail_symbol": "lbl_eu_806684A4",
@@ -9981,8 +9941,8 @@
       }
     }
   },
-  "function_pairs": 6652,
-  "generated": "2026-09-17T08:11:21.355313",
+  "function_pairs": 6419,
+  "generated": "2026-09-17T08:35:05.764979",
   "region": "us",
   "units_scanned": 342,
   "version": 1

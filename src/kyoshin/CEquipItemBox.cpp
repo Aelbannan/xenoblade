@@ -1527,7 +1527,7 @@ extern "C" void loadEIBFiles(CEquipItemBox* self) {
                                            &lbl_eu_8050EFDC[0x14d],
                                            reinterpret_cast<IWorkEvent*>(self), 0, 0);
     CDeviceFile::setHandleFlag1((CFileHandle*)self->field_28);
-    self->field_2C = CDeviceFile::readCommonArchiveFile(func_800A9D90(),
+    self->field_2C = CDeviceFile::readCommonArchiveFile(KyoshinHeap_GetField44(),
                                                         &lbl_eu_8050EFDC[0x166],
                                                         reinterpret_cast<IWorkEvent*>(self), 0, 0);
     func_801D3064(&self->_padSortMenu[0]);
@@ -3863,7 +3863,7 @@ int CEquipItemBox::OnFileEvent(CEventFile* ev) {
         char* msg = getPackedFont();
         setLayoutTextBoxFont(field_38, base + 0x29b, (u32)msg);
         setLayoutTextBoxFont(field_38, base + 0x27c, (u32)msg);
-        char* msg2 = func_801355BC();
+        char* msg2 = CUICfManager_getPackedFont9C();
         for (u8 i = 1; i <= 0x1e; i++) {
             char buf2[0x20];
             sprintf(buf2, base + 0x219, i);
@@ -3877,7 +3877,7 @@ int CEquipItemBox::OnFileEvent(CEventFile* ev) {
         const char* name = (isClassicController__Q22cf13CfGameManagerFv(-1) == 0) ? base + 0x761 : base + 0x758;
         u16 key = BdatGetU16ByTableKey(base + 0x76a, name, 0x49);
         char* texName = MakeTplNameSysFile(key);
-        nw4r::lyt::ArcResourceAccessor* acc2 = func_801355F4();
+        nw4r::lyt::ArcResourceAccessor* acc2 = CUICfManager_getArcResourceAccessor();
         void* tex = acc2->GetResource(nw4r::lyt::ArcResourceAccessor::RES_TYPE_TEXTURE, texName, 0);
         if (tex != 0) {
             PaneSetTexPaletteByName(field_38, base + 0x778, (u32)tex);
@@ -3926,15 +3926,15 @@ int CEquipItemBox::OnFileEvent(CEventFile* ev) {
         // typed temp would need vptr init; the C-ABI ctor writes the vtable.
         u8 temp1Buf[0x18];
         __ct__CEIBCur((CEIBCur*)temp1Buf, field_30);
-        func_801FA220((u8*)&_pad44[0], (const u8*)temp1Buf);
+        PartyStateWin_CopySlotRec((u8*)&_pad44[0], (const u8*)temp1Buf);
         ((CEIBCur*)&_pad44[0])->initLayout();
         u8 temp2Buf[0x18];
         __ct__CEIBPageCur((CEIBPageCur*)temp2Buf, field_30);
-        func_801FA220((u8*)&pagecur[0], (const u8*)temp2Buf);
+        PartyStateWin_CopySlotRec((u8*)&pagecur[0], (const u8*)temp2Buf);
         __dt__80285C44(temp2Buf, -1);
         ((CEIBPageCur*)&pagecur[0])->initLayout();
         u8 tempCur[0x1A];
-        __ct__CCur18(tempCur, func_801355F4());
+        __ct__CCur18(tempCur, CUICfManager_getArcResourceAccessor());
         CEquipItemBoxCCur18CopyView* curSrc = (CEquipItemBoxCCur18CopyView*)&tempCur[4];
         CEquipItemBoxCCur18CopyView* curDst = (CEquipItemBoxCCur18CopyView*)&ccur18[4];
         curDst->word0 = curSrc->word0;
@@ -3945,7 +3945,7 @@ int CEquipItemBox::OnFileEvent(CEventFile* ev) {
         curDst->b1 = curSrc->b1;
         __dt__6CCur18Fv(tempCur, -1);
         ((CBaseCur*)&ccur18[0])->initLayout();
-        char* msg3 = func_801355BC();
+        char* msg3 = CUICfManager_getPackedFont9C();
         setLayoutTextBoxFont(field_38, base + 0x522, (u32)msg3);
         setLayoutTextBoxFont(field_38, base + 0x546, (u32)msg3);
         setLayoutTextBoxFont(field_38, base + 0x552, (u32)msg3);

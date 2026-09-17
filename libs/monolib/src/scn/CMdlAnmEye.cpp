@@ -16,12 +16,12 @@
 // Minimal view of the owner model (CScnItemModelNw4r) fields used here.
 // 0x146C is the model resource data, 0x147C the g3d scene object (ScnMdl).
 // Forward owner view used at +0x04 (same role as CMdlMouth's
-// CScnItemModelNw4rOwner*); only passed to func_80496288 here.
+// CScnItemModelNw4rOwner*); only passed to Scn_GetFrameDelta here.
 struct CScnItemModelNw4rOwner;
 
 struct CMdlAnmEyeModel {
     u8 pad_00[0x04];                 // 0x00..0x04 (vtable)
-    CScnItemModelNw4rOwner* field_04; // 0x04 owner (func_80496288 arg)
+    CScnItemModelNw4rOwner* field_04; // 0x04 owner (Scn_GetFrameDelta arg)
     u8 pad_08[0x7A8 - 0x08];
     u32 field_0x7A8;                 // 0x7A8 flag word (bit 2 = force scale 1.0)
     u8 pad_7AC[0x146C - 0x7AC];
@@ -106,7 +106,7 @@ void func_804E77C4(CMdlAnmEye* self) {
     if (self->field_04->field_0x7A8 & 4) {
         scale = lbl_eu_8066B364;
     }
-    f32 dt = func_80496288(self->field_04->field_04);
+    f32 dt = Scn_GetFrameDelta(self->field_04->field_04);
     f32 v = self->field_28 + scale * dt;
     self->field_28 = v;
     switch (self->field_20) {

@@ -291,7 +291,7 @@ extern "C" __declspec(noinline) void func_80058844(CTaskEnvironment* self) {
     // Re-assign from the ctor's returned 'this' so the pointer lives only in
     // r3 across the call (retail stores the post-ctor r3 at the merge point).
     void* grpA = mtl::MemManager::allocate(0x3C,
-                                           (u32)func_80496004(self->mScene));
+                                           (u32)Scn_CallUnk8C_V10(self->mScene));
     if (grpA != NULL) {
         grpA = __ct__CTimeLightGrp(static_cast<CTimeLightGrp*>(grpA),
                                    self->mScene);
@@ -299,7 +299,7 @@ extern "C" __declspec(noinline) void func_80058844(CTaskEnvironment* self) {
     self->mUnkE0 = grpA;
 
     void* grpB = mtl::MemManager::allocate(0x3C,
-                                           (u32)func_80496004(self->mScene));
+                                           (u32)Scn_CallUnk8C_V10(self->mScene));
     if (grpB != NULL) {
         grpB = __ct__CTimeLightGrp(static_cast<CTimeLightGrp*>(grpB),
                                    self->mScene);
@@ -417,7 +417,7 @@ void CTaskEnvironment::Move() {
         u32 secArg = getControllerWordA3BC__Q22cf13CfGameManagerFv();
         func_800599E0(time, hourArg, minuteArg, secArg & 0xFFFF);
     } else if (field_0x58 == 0) {
-        float delta = lbl_eu_80665FCC * func_80496288(mScene);
+        float delta = lbl_eu_80665FCC * Scn_GetFrameDelta(mScene);
         func_80059A48(time, delta);
     }
 

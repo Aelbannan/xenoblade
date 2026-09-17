@@ -1472,7 +1472,7 @@ void func_804F3988(s32 mode) {
 }
 
 void func_804F3B4C(Mtx mtx, const void* scene) {
-    func_80496120(scene, mtx, -1);
+    Scn_CopyCamProjMatrix(scene, mtx, -1);
 }
 
 // Variant of func_804F4628 that writes the projection into a caller-supplied
@@ -1738,7 +1738,7 @@ void func_804F06C4(int texMap, CDrawCtxLocal* drawCtx, const ml::CVec3* pos,
 
     if (flag != 0 && pos->z != lbl_eu_8066B440) {
         // Depth-sorted path.
-        ProjInfo* pi = static_cast<ProjInfo*>(func_80496264(drawCtx->field_0x00, -1));
+        ProjInfo* pi = static_cast<ProjInfo*>(Scn_FindCamItem(drawCtx->field_0x00, -1));
         f32 persp = lbl_eu_8066B454 * pi->field_0x1e0;
         if (pos->z == lbl_eu_8066B440 || lbl_eu_8066B440 < pos->z) {
             GXSetZMode(GX_TRUE, GX_LEQUAL, GX_FALSE);
@@ -1903,7 +1903,7 @@ void func_804F06C4(int texMap, CDrawCtxLocal* drawCtx, const ml::CVec3* pos,
 
 void func_804F45EC(const void* src) {
     Mtx44 m;
-    func_80496120(src, m, -1);
+    Scn_CopyCamProjMatrix(src, m, -1);
     GXSetProjection(m, GX_PERSPECTIVE);
 }
 

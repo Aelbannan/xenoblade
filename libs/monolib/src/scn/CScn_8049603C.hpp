@@ -4,7 +4,7 @@
 
 class CScn;
 
-// Single winning declaration for func_8049603C (body in CScn.cpp:
+// Single winning declaration for Scn_QueryUnk80State (body in CScn.cpp:
 // loads CScn+0x80 and tail-calls func_8049C7A8, returning the scene
 // float block; floats live at +0/+4/+8/+C).
 //
@@ -16,4 +16,4 @@ class CScn;
 //
 // NOTE: deliberately NOT included by CScn.cpp - the provisional
 // u32(u8*) definition there must stay verbatim for its match.
-extern "C" void* func_8049603C(CScn* scene);
+extern "C" void* Scn_QueryUnk80State(CScn* scene);

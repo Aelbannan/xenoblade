@@ -150,7 +150,7 @@ void func_800D02D4(cf::CfObjectImplEneObj* self) {
         if (*(float*)battleObj->bh34() > lbl_eu_80666CEC) {
             if (func_80174C98(battleObj, &idC, 0x20000000) == 0) {
                 if (battleObj->bi44() != 0) {
-                    func_8013E2E0(battleObj->bi44(), 0, 0, 0, 0, 1, 0, 1, 0);
+                    UIWin_CreateItemMulti(battleObj->bi44(), 0, 0, 0, 0, 1, 0, 1, 0);
                 }
                 func_80174B4C(battleObj, 0x20000000);
             }
@@ -169,7 +169,7 @@ void func_800D02D4(cf::CfObjectImplEneObj* self) {
                     battleObj->mSub.sf08(0x400);
                     if (func_80174C98(battleObj, &idE, 0x20000000) == 0) {
                         if (battleObj->bi44() != 0) {
-                            func_8013E2E0(battleObj->bi44(), 0, 0, 0, 0, 1, 0, 1, 0);
+                            UIWin_CreateItemMulti(battleObj->bi44(), 0, 0, 0, 0, 1, 0, 1, 0);
                         }
                         func_80174B4C(battleObj, 0x20000000);
                     }
@@ -293,7 +293,7 @@ int func_800D0B04(cf::CfObjectImplEneObj* self) {
 // toward the current target, and spawns/updates an arrow effect token at
 // +0x36C. Returns 1 while engaged, 0 when the guard chain fails.
 int func_800D0C2C(cf::CfObjectImplEneObj* self, int flag) {
-    if (func_80496288(lbl_eu_80663E14) == lbl_eu_80666CE4) return 0;
+    if (Scn_GetFrameDelta(lbl_eu_80663E14) == lbl_eu_80666CE4) return 0;
 
     cf::CfImplEneBattleObj* battleObj = (cf::CfImplEneBattleObj*)self->field_18;
     if (battleObj->bhBC() != 0) goto fail;

@@ -14,7 +14,7 @@ namespace nw4r { namespace lyt {
 class CProcess;
 class CScn;
 
-// Object returned by func_8049603C (frame-timing provider)
+// Object returned by Scn_QueryUnk80State (frame-timing provider)
 struct Unk_8049603C {
     u8 _00[0xC];
     f32 field_C;
@@ -187,7 +187,7 @@ extern "C" void waitForDrawDone__9CDeviceVIFv();
 extern "C" void* getHandleMEM2__Q23mtl10MemManagerFv();
 extern "C" void* allocate__Q23mtl10MemManagerFUlUl(u32, u32);
 extern "C" void* getWorkMem__17CWorkThreadSystemFv();
-extern "C" void* func_801355F4();
+extern "C" void* CUICfManager_getArcResourceAccessor();
 extern "C" void Regist__8CProcessFP8CProcessb(void*, void*, bool);
 extern "C" void buildLayout__FPPQ34nw4r3lyt6LayoutPQ34nw4r3lyt19ArcResourceAccessorPCc(void*, void*, const char*);
 extern "C" void bindLayoutAnimTransform__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(void*, void**, void*, char*);
@@ -203,11 +203,11 @@ extern "C" u16 BdatGetU16Direct(void*, const char*, int);
 extern "C" u16 BdatGetU16ByTableKey(const char*, const char*, int);
 // BdatTouchStringCell: declared with char* return in code_80135FDC.hpp (caller-tuned)
 extern "C" void playUISound__FUl(u32);
-extern "C" bool func_80135898();
-extern "C" void func_80133A08(u32);
-extern "C" void func_801347EC(u32);
-extern "C" void func_8013D7C0(u32);
-extern "C" void func_80134F2C(u32);
+extern "C" bool CUICfManager_hasInUseSlot();
+extern "C" void CUICfManager_queueQuestLogMenu(u32);
+extern "C" void CUICfManager_queueKizunagramMenu(u32);
+extern "C" void UIWin_CreateSysWinBuff(u32);
+extern "C" void CUICfManager_queueTutorialListMenu(u32);
 extern "C" bool func_80122450();
 extern "C" bool func_80226B94();
 extern "C" void func_80124270(void*, u32);
@@ -217,7 +217,7 @@ extern "C" bool func_801BCF38();
 extern "C" bool func_8029A658();
 extern "C" bool func_8029EE58();
 extern "C" bool GetSysStateFlag22();
-// func_8049603C: declared once in libs/monolib/src/scn/CScn_8049603C.hpp.
+// Scn_QueryUnk80State: declared once in libs/monolib/src/scn/CScn_8049603C.hpp.
 
 extern "C" int IsMenuState621F0();
 extern "C" void* CfRes_getE14();

@@ -174,9 +174,9 @@ extern void* lbl_eu_80664090;
 extern char* lbl_eu_80664098;
 
 // Character stats getters (unmangled retail symbols).
-extern "C" char* func_801355BC();
-extern "C" u32 func_801355D8();
-extern "C" nw4r::lyt::ArcResourceAccessor* func_801355F4();
+extern "C" char* CUICfManager_getPackedFont9C();
+extern "C" u32 CUICfManager_getPackedFontD8();
+extern "C" nw4r::lyt::ArcResourceAccessor* CUICfManager_getArcResourceAccessor();
 extern "C" char* CItemBlock_getPtr20E8();
 
 // BDAT string/value lookups (unmangled retail symbols).
@@ -212,7 +212,7 @@ extern "C" int getFileSize__11CDeviceFileFPCc(const char*, int);
 // Scene object behind the common-archive alloc handle (virtual at vtable
 // 0x2C of *lbl_eu_80663E14; returns an mtl alloc handle).
 class CScn;
-extern "C" u32 func_80495FF0(CScn*);
+extern "C" u32 Scn_CallUnk8C_V9(CScn*);
 
 // Party-state layout arc path pointer (.sdata).
 extern char* lbl_eu_80662728;
@@ -259,7 +259,7 @@ extern "C" void func_801D2CF4(CBaseCur*, u8, u8);
 extern "C" void func_801375A0(nw4r::math::VEC3*, nw4r::lyt::Pane*);
 
 // Pane size/position copy helpers (retail unmangled).
-extern "C" void func_80127BC4(float*, float*);
+extern "C" void TagCopyVec2f(float*, float*);
 extern "C" void func_80124288(nw4r::lyt::Pane*, float*);
 
 // Party-state string table (.rodata).

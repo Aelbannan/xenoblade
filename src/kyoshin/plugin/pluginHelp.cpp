@@ -8,9 +8,9 @@
 extern "C" {
     extern u32 func_8009CF8C(u32 resourceId);
     extern void func_8009D018(u32 destination, u32 value);
-    extern void func_80134D18(u32 param0, u32 param1, u32 param2);
+    extern void CUICfManager_queueTutorialMenu(u32 param0, u32 param1, u32 param2);
     extern u32 func_8029A658();
-    extern void func_8013E8E0(u32 param0);
+    extern void UIWin_CreatePTChange(u32 param0);
     extern void enablePadFlags__Q22cf13CfGameManagerFUlb(int, int);
 }
 
@@ -19,7 +19,7 @@ extern "C" {
 /// Returns 0 and sets wait mode if the help system is active.
 int func_802AEBC4(VMThread* pThread) {
     if (func_8009CF8C(0x3340) == 0) {
-        func_80134D18(1, 0, 0);
+        CUICfManager_queueTutorialMenu(1, 0, 0);
         func_8009D018(0x3340, 1);
     }
 
@@ -34,7 +34,7 @@ int func_802AEBC4(VMThread* pThread) {
 /// Mirrors func_802AEBC4 but with different resource/help IDs.
 int func_802AEC30(VMThread* pThread) {
     if (func_8009CF8C(0x337D) == 0) {
-        func_80134D18(0x3E, 0, 0);
+        CUICfManager_queueTutorialMenu(0x3E, 0, 0);
         func_8009D018(0x337D, 1);
     }
 
@@ -55,7 +55,7 @@ int func_802AEC9C(VMThread* pThread) {
     }
 
     enablePadFlags__Q22cf13CfGameManagerFUlb(-1, 1);
-    func_8013E8E0(0);
+    UIWin_CreatePTChange(0);
     return 0;
 }
 

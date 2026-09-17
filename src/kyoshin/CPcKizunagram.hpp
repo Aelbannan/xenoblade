@@ -62,8 +62,8 @@ public:
 };
 
 // C-linkage accessors matching retail unmangled symbols.
-extern "C" u8 func_8025DA40(CPcKizunagram* pKizunagram);
-extern "C" u8 func_8025DA48(CPcKizunagram* pKizunagram);
+extern "C" u8 KizunagramIsHidden(CPcKizunagram* pKizunagram);
+extern "C" u8 KizunagramIsOpen(CPcKizunagram* pKizunagram);
 
 // ---------------------------------------------------------------------------
 // CPcKizunaCur - the per-character cursor sub-object (0x18 bytes) embedded at
@@ -99,8 +99,8 @@ extern "C" void __declspec(noinline) __ct__CPcKizunaCur(CPcKizunaCur* self,
 // Support types for the free functions in this TU (not part of CPcKizunagram).
 // ---------------------------------------------------------------------------
 
-// Large object func_8025EE7C / func_8025EE94 operate on (u32 field at 0x89C).
-// func_8025EDC8 clears an array of 11 slots (stride 0xC4) plus tail fields.
+// Large object KizunagramSetActiveSlot / func_8025EE94 operate on (u32 field at 0x89C).
+// KizunagramClearChart clears an array of 11 slots (stride 0xC4) plus tail fields.
 
 // Per-0x20 block in an affinity slot: only the low byte of word and byte14
 // carry state; the rest is memset to zero. Word-granular access at +0x00
@@ -126,7 +126,7 @@ struct CPcKizunaSlot {                // 0xC4 bytes
     u8 _padC1[3];                     // 0xC1
 };
 
-// Compact per-slot form (stride 0xD) produced by func_8025EC0C from a
+// Compact per-slot form (stride 0xD) produced by KizunagramPackChart from a
 // CPcKizunagramBig, inverted by func_8025ECE4. Byte order matches the packing
 // loops: [0]=data00.lo, [1]=data00.b14, [2,4,6,8,10]=sub[k].lo,
 // [3,5,7,9,11]=sub[k].b14, [0xC]=byteC0.
@@ -134,7 +134,7 @@ struct CPcKizunaCompactSlot {         // 0xD bytes
     u8 bytes[0xD];
 };
 
-// func_8025EC0C/ECE4 container: 11 compact slots then the reused tail fields.
+// KizunagramPackChart/ECE4 container: 11 compact slots then the reused tail fields.
 struct CPcKizunaCompact {             // 0xAD bytes
     CPcKizunaCompactSlot slots[0xb];  // 0x00 .. 0x8E
     u8 _pad8F;                        // 0x8F
@@ -179,7 +179,7 @@ struct CPcKizunaWorkEntryPos {
     CPcKizunaSlotEntry entry;     // 0x3D4
 };
 
-// func_8025D6E0: nested pointer chain -> leaf struct holding a Vec3 at 0x2C.
+// KizunaTreeSetLeafPos: nested pointer chain -> leaf struct holding a Vec3 at 0x2C.
 struct CPcKizunaTreeLeaf {
     u8 _00[0x2C];
     f32 x;                                    // 0x2C
@@ -211,19 +211,19 @@ struct CPcKizunaVec3 {
 
 // Intra-TU callees defined in CPcKizunagram.cpp (free unmangled functions).
 extern "C" void func_8025DCFC(CPcKizunagram* self);
-extern "C" void func_8025E3A4(CPcKizunagram* self, u32 arg);
+extern "C" void KizunagramStepRow(CPcKizunagram* self, u32 arg);
 extern "C" void func_8025E4A4(CPcKizunagram* self);
-extern "C" void func_8025DC08(CPcKizunagram* self);
-extern "C" void func_8025DC8C(CPcKizunagram* self);
-extern "C" void func_8025DCB0(CPcKizunagram* self);
-extern "C" void func_8025E56C(CPcKizunagram* self);
-extern "C" void func_8025E5A8(CPcKizunagram* self);
+extern "C" void KizunagramFinishOpening(CPcKizunagram* self);
+extern "C" void KizunagramTickPulse(CPcKizunagram* self);
+extern "C" void KizunagramFinishClosing(CPcKizunagram* self);
+extern "C" void KizunagramPulseRise(CPcKizunagram* self);
+extern "C" void KizunagramPulseFall(CPcKizunagram* self);
 extern "C" void func_8025E5E4(CPcKizunagram* self, u32 value);
 extern "C" void func_8025EE94(CPcKizunagramBig* self);
 extern "C" void func_8025F9AC(CPcKizunaChart* self, int a, int b);
-extern "C" int func_8025E904(CPcKizunagram* self, const void* table, int val);
-extern "C" int func_8025E9E4(CPcKizunagram* self, const void* table, int id);
-extern "C" int func_8025E960(CPcKizunagram* self, const void* table, int id);
+extern "C" int KizunagramCheckMappedRowValid(CPcKizunagram* self, const void* table, int val);
+extern "C" int KizunagramCheckRowHighlight(CPcKizunagram* self, const void* table, int id);
+extern "C" int KizunagramCheckRowAvailable(CPcKizunagram* self, const void* table, int id);
 extern "C" void* getFP__FPCc(const char* path);
 extern "C" u32 func_8003B1EC(void*);
 
@@ -241,7 +241,7 @@ extern "C" u32 lbl_eu_80664158;
 extern "C" u32 lbl_eu_806688A8;
 extern "C" u32 lbl_eu_806688AC;
 
-// nw4r layout/animation loaders used by the cursor init (func_8025D4E4).
+// nw4r layout/animation loaders used by the cursor init (KizunaCurInitLayout).
 extern "C" void buildLayout__FPPQ34nw4r3lyt6LayoutPQ34nw4r3lyt19ArcResourceAccessorPCc(
     nw4r::lyt::Layout** dst, nw4r::lyt::ArcResourceAccessor* acc, const char* name);
 extern "C" void bindLayoutAnimTransform__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(
@@ -270,7 +270,7 @@ extern "C" u32 BdatGetU8Direct(u32, const char*, u32);
 extern "C" int func_801C4648(void);
 extern "C" u16 BdatGetU16ByTableKey(const void*, const void*, u32);
 extern "C" u32 func_8009CF8C(u32);
-extern "C" u32 func_801355BC(void);
+extern "C" u32 CUICfManager_getPackedFont9C(void);
 extern "C" void func_80137F88(void*, u32);
 extern "C" void PaneSetVtxColorAll(void*, u32);
 extern "C" void func_8013AB0C(u8*, u8*, int);
@@ -287,7 +287,7 @@ extern "C" void func_80137924(void*, void*, void*, void*);
 extern "C" void func_80124270(void*, u32);
 
 // Cursor destroy helper (external retail symbol, not in this TU).
-extern "C" void func_8025D688(CPcKizunaCur* cur);
+extern "C" void KizunaCurDestroyLayout(CPcKizunaCur* cur);
 
 // Fixed 8-entry cursor-row ordering (signed bytes) kept in .sdata2 as two
 // separate u32 words (retail loads lbl_eu_80668888 and lbl_eu_8066888C via

@@ -193,13 +193,13 @@ extern f64 lbl_eu_806673F8;       // u32->double conversion bias
 // C-linkage imports whose retail symbols are unmangled or pre-mangled
 // identifiers (declaring them C++ would emit a mangled reloc).
 extern "C" {
-nw4r::lyt::ArcResourceAccessor* func_801355F4();
+nw4r::lyt::ArcResourceAccessor* CUICfManager_getArcResourceAccessor();
 u8 BdatGetU8ByTableKey(const void*, const void*, u32);
 void* func_8010CE48();                    // system menu open gate
 unsigned char func_8014A2A0();
 unsigned char func_8014A2B4();
 f32 func_801895EC();                      // scene BGM volume
-u32 func_80495FF0(CScn* scene);           // scene audio handle
+u32 Scn_CallUnk8C_V9(CScn* scene);           // scene audio handle
 void func_80043738(u32, const char*, u32, u32, u32, u32, f32);
 u32 isResourceFlagSet__Q22cf13CfGameManagerFv(u32);
 void* getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32,

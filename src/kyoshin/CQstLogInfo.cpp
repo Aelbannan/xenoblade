@@ -118,7 +118,7 @@ void func_802294C0(CQstLogInfo* self) {
     self->mField38 = 0;
 }
 
-// Same SetAnimationEnable shape as CQstLogList::func_802284E4 (FULL_MATCH).
+// Same SetAnimationEnable shape as CQstLogList::QstLogList_ShowOpenAnim (FULL_MATCH).
 extern "C" __declspec(noinline) void func_802298A0(CQstLogInfo* self) {
     self->mUnk20->SetAnimationEnable(self->field_0x28, false);
     self->mUnk20->SetAnimationEnable(self->field_0x24, true);
@@ -169,7 +169,7 @@ extern "C" __declspec(noinline) void func_80229620(CQstLogInfo* self) {
 #pragma optimize_for_size on
 void func_80229510(CQstLogInfo* self) {
     self->field_0x18 = CDeviceFile::readCommonArchiveFile(
-        func_800A9D90(),
+        KyoshinHeap_GetField44(),
         lbl_eu_80536320[func_80138138(self->mField3A)],
         reinterpret_cast<IWorkEvent*>(self), 0, 0);
     self->mField38 = 0;
@@ -428,7 +428,7 @@ extern "C" __declspec(noinline) void func_80229CF0(CQstLogInfo* self,
         func_80124270(self->mUnk20->GetRootPane()->FindPaneByName(
                           &lbl_eu_8050A0B4[0xe7], true), 1);
         u32 odd = ((s32)v >= 0xFC ? v - 1 : v) & 1;
-        void* r28 = func_801412D0(key);
+        void* r28 = UIWin_BuildFlagBuf(key);
         u32 notOdd = !odd;
         if (func_80140854((CItemQuery*)r28, notOdd, 0) != 0) {
             func_80124270(self->mUnk20->GetRootPane()->FindPaneByName(
@@ -784,7 +784,7 @@ int CQstLogInfo::OnFileEvent(CEventFile* event) {
         void* font = getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1, mUnk20);
         func_8013676C(rootPane, ((CQstLogInfoFontView*)font)->sf9());
 
-        char* questName = func_801355BC();
+        char* questName = CUICfManager_getPackedFont9C();
         if (questName != 0) {
             setLayoutTextBoxFont(mUnk20, &lbl_eu_8050A0B4[0x238], (u32)questName);
             setLayoutTextBoxFont(mUnk20, &lbl_eu_8050A0B4[0x3b2], (u32)questName);

@@ -32,7 +32,7 @@ struct CEventFile;
 
 // C-linkage imports used by func_80229510 (retail names are unmangled).
 extern "C" u32 func_80138138(u16);
-extern "C" u32 func_800A9D90();
+extern "C" u32 KyoshinHeap_GetField44();
 // Random / name-table helpers (retail unmangled).
 extern "C" u32 func_8009CF8C(u32);
 extern u32 lbl_eu_80573D18[];  // quest-name table (split1 .rodata)
@@ -45,8 +45,8 @@ extern "C" u16 BdatGetU16Direct(const void*, const void*, int);
 extern "C" u32 BdatGetItemType(u32);
 extern "C" u32 BdatGetItemId(u32);
 extern "C" void* func_80138DA4(const char*);
-extern "C" char* func_801355BC();
-// func_801412D0 is owned by kyoshin/CUIWindowManager.hpp.
+extern "C" char* CUICfManager_getPackedFont9C();
+// UIWin_BuildFlagBuf is owned by kyoshin/CUIWindowManager.hpp.
 
 // Font-info lookup (retail pre-mangled name).
 extern "C" void* getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32, nw4r::lyt::Layout*);

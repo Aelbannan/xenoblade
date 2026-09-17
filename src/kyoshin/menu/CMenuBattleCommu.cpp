@@ -111,26 +111,26 @@ void CMenuBattleCommu::Init() {
     // Scoped region guard - destructor releases the region when Init finishes.
     Class_8045F858 regionGuard(reinterpret_cast<UnkClass_8045F564*>(&mMemRegion));
 
-    nw4r::lyt::ArcResourceAccessor* accessor = func_801355F4();
+    nw4r::lyt::ArcResourceAccessor* accessor = CUICfManager_getArcResourceAccessor();
     buildLayout(reinterpret_cast<nw4r::lyt::Layout**>(&mField74), accessor,
                   lbl_eu_805047FC + 0x10);
 
-    accessor = func_801355F4();
+    accessor = CUICfManager_getArcResourceAccessor();
     bindLayoutAnimTransform(reinterpret_cast<nw4r::lyt::Layout*>(mField74), &mField78,
                   accessor, lbl_eu_805047FC + 0x2c);
-    accessor = func_801355F4();
+    accessor = CUICfManager_getArcResourceAccessor();
     bindLayoutAnimTransform(reinterpret_cast<nw4r::lyt::Layout*>(mField74), &mField7C,
                   accessor, lbl_eu_805047FC + 0x4b);
-    accessor = func_801355F4();
+    accessor = CUICfManager_getArcResourceAccessor();
     bindLayoutAnimTransform(reinterpret_cast<nw4r::lyt::Layout*>(mField74), &mField80,
                   accessor, lbl_eu_805047FC + 0x71);
-    accessor = func_801355F4();
+    accessor = CUICfManager_getArcResourceAccessor();
     bindLayoutAnimTransform(reinterpret_cast<nw4r::lyt::Layout*>(mField74), &mField84,
                   accessor, lbl_eu_805047FC + 0x99);
-    accessor = func_801355F4();
+    accessor = CUICfManager_getArcResourceAccessor();
     bindLayoutAnimTransform(reinterpret_cast<nw4r::lyt::Layout*>(mField74), &mField88,
                   accessor, lbl_eu_805047FC + 0xc0);
-    accessor = func_801355F4();
+    accessor = CUICfManager_getArcResourceAccessor();
     bindLayoutAnimTransform(reinterpret_cast<nw4r::lyt::Layout*>(mField74), &mField8C,
                   accessor, lbl_eu_805047FC + 0xe0);
 
@@ -173,24 +173,24 @@ void CMenuBattleCommu::Init() {
     // 0x158 / 0x182+0x18f.
     if (isClassicController__Q22cf13CfGameManagerFv(-1) != 0) {
         char* res = static_cast<char*>(
-            func_801355F4()->GetResource(0x74696D67, lbl_eu_805047FC + 0x13d, 0));
+            CUICfManager_getArcResourceAccessor()->GetResource(0x74696D67, lbl_eu_805047FC + 0x13d, 0));
         if (res != 0) {
             PaneSetTexPaletteByName(mField74, lbl_eu_805047FC + 0x158, res);
         }
         res = static_cast<char*>(
-            func_801355F4()->GetResource(0x74696D67, lbl_eu_805047FC + 0x165, 0));
+            CUICfManager_getArcResourceAccessor()->GetResource(0x74696D67, lbl_eu_805047FC + 0x165, 0));
         if (res != 0) {
             PaneSetTexPaletteByName(mField74, lbl_eu_805047FC + 0x182, res);
             PaneSetTexPaletteByName(mField74, lbl_eu_805047FC + 0x18f, res);
         }
     } else {
         char* res = static_cast<char*>(
-            func_801355F4()->GetResource(0x74696D67, lbl_eu_805047FC + 0x19c, 0));
+            CUICfManager_getArcResourceAccessor()->GetResource(0x74696D67, lbl_eu_805047FC + 0x19c, 0));
         if (res != 0) {
             PaneSetTexPaletteByName(mField74, lbl_eu_805047FC + 0x158, res);
         }
         res = static_cast<char*>(
-            func_801355F4()->GetResource(0x74696D67, lbl_eu_805047FC + 0x1b7, 0));
+            CUICfManager_getArcResourceAccessor()->GetResource(0x74696D67, lbl_eu_805047FC + 0x1b7, 0));
         if (res != 0) {
             PaneSetTexPaletteByName(mField74, lbl_eu_805047FC + 0x182, res);
             PaneSetTexPaletteByName(mField74, lbl_eu_805047FC + 0x18f, res);

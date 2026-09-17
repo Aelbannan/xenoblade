@@ -219,7 +219,7 @@ void* __dt__11CSysWinSaveFv(CSysWinSave* self, int flags);
 
 // Additional C-ABI imports used by Init/Move/func_80294638 (retail symbols
 // are unmangled / non-namespace, so C linkage is required).
-void* func_801355F4();
+void* CUICfManager_getArcResourceAccessor();
 void* getCfPadData__Q22cf13CfGameManagerFv();
 int isClassicController__Q22cf13CfGameManagerFv(int arg);
 void playUISound__FUl(u32 op);
@@ -235,7 +235,7 @@ void func_8022C1B4(void* out, void* syswin, u8 sel);
 void func_801D216C(void* cur, int val);
 void func_801D202C(void* cur);
 char* BdatTouchStringCell(const void* a, const void* b, int id);
-void func_80134B50(int a, int b);
+void CUICfManager_queueSaveMenu(int a, int b);
 }
 
 // DrawInfo helper (retail mangled name func_80137250__FPQ34nw4r3lyt8DrawInfo).

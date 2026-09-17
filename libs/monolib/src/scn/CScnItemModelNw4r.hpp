@@ -228,7 +228,7 @@ struct CScnItemModelNw4rAnimC {
     void* field_0x0;   // +0x00 owner (CScn*)
 };
 
-// Virtual-dispatch view for the vtable-0x20 slot of the func_80496264 result
+// Virtual-dispatch view for the vtable-0x20 slot of the Scn_FindCamItem result
 // (declared virtual N lands at 8+4*N, so v06 -> 0x20). Used by func_804885FC
 // to query the owner's node at the -1 index.
 struct CScnItemModelNw4rV20 {
@@ -488,7 +488,7 @@ extern "C" void simSetFlag1MTree(CScnItemModelNw4r* self, u32 param);
 // Cross-TU imports used by scnImN4UnlinkChain / scnImN4SetNodeVis / scnImN4NotifyMat:
 // model release (defined in CScn.cpp), chain-wide 2-arg notify (defined in
 // CScnItemModel.cpp), material sub-object notify (defined in CMdlMaterial.cpp).
-extern "C" bool func_80495E60(CScnItemModel* self);
+extern "C" bool Scn_IsAnimActiveOrNull(CScnItemModel* self);
 extern "C" void simNotifyVfunc30(CScnItemModel* self, u32 a, u32 b);
 extern "C" void func_804E64B0(CScnItemModelNw4rSub16C8* sub, u32 param,
                               CScnItemModelNw4r* obj);
@@ -521,7 +521,7 @@ extern "C" CScnItemModelNw4r* __dt__17CScnItemModelNw4rFv(CScnItemModelNw4r* sel
 
 // Cross-TU sub-object hooks (defined in CMdlDynamics.cpp; retail names are
 // unmangled func_* symbols).
-extern "C" void func_804EB798(u8* self);
+extern "C" void MdlDyn_MarkAllDynamic(u8* self);
 extern "C" void func_804EB7F8(u8* self);
 
 // scnImN4Teardown cross-TU imports: anim sub-object teardown (defined in
@@ -599,7 +599,7 @@ extern "C" void simSetFlag2000000(CScnItemModelNw4r* self, u32 enable);
 extern "C" void simSetAndPropRate(CScnItemModelNw4r* self, f32 param);
 // CMdlDynamics per-frame refresh (defined in CMdlDynamics.cpp), func_80487EE0
 // +0x17A0 hook.
-extern "C" void func_804EBAE8(void* self);
+extern "C" void MdlDyn_UpdateAnimSpeed(void* self);
 
 // Sub-object destructors invoked by the model dtor (retail fragment symbols;
 // defined in their own TUs).
@@ -675,7 +675,7 @@ extern const char* lbl_eu_806638D0;
 // handle.
 extern "C" void simSetFlag20Link(CScnItemModelNw4r* self, u32 param);
 extern "C" void simSetFlag100Link(CScnItemModelNw4r* self, u32 param);
-extern "C" u32 func_80496018(CScnItemModelNw4rOwner* owner);
+extern "C" u32 Scn_CallUnk8C_V8(CScnItemModelNw4rOwner* owner);
 // Flag-bit setter for the ctor's effect-act registration (defined in
 // CScnItemModel.cpp): syncs the +0x7A4 bit-30 flag to `param`.
 extern "C" void simSetFlag2OnTree(CScnItemModel* self, u32 param);
@@ -687,7 +687,7 @@ extern "C" nw4r::g3d::ResNode func_80490AF4(void* self, const char* name);
 // imports (defined in CScnItemModel.cpp / CScn.cpp / CScnItemPool.cpp).
 extern "C" void simNotifyVfunc9C(CScnItemModelNw4r* self, u32 a, u32 b);
 extern "C" void simNotifyVfuncB4(CScnItemModel* self, u32 param);
-extern "C" u32 func_80495FF0(CScnItemModelNw4r* self);
+extern "C" u32 Scn_CallUnk8C_V9(CScnItemModelNw4r* self);
 extern "C" u32 func_8048C5B8(u8* pool, s32 kind);
 extern "C" u32 func_8048C630(u8* pool, CScnItemModelNw4r* model, u32 flag);
 
@@ -731,7 +731,7 @@ extern char lbl_eu_80526300[];
 // Owner memory/nodelist lookup (defined in CScn.cpp): resolve the owner's
 // node at `idx` (-1 = default). func_804885FC calls vtable-0x20 on the
 // result.
-extern "C" void* func_80496264(void* rsrc, int idx);
+extern "C" void* Scn_FindCamItem(void* rsrc, int idx);
 // Owner scale getter (defined in CScn.cpp), func_8048AB2C fade scale input.
 
 // func_8048AB2C shadow-math constants (.sdata2).

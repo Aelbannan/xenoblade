@@ -34,7 +34,7 @@ namespace cf { class CfGameManager; }
 #include "kyoshin/harness_catalog.hpp"
 #include "kyoshin/CTaskGameApi.hpp"
 // (CUIWindowManagerApi.hpp omitted: conflicts with this TU's closure.)
-extern "C" void* func_801412D0(u32 target);
+extern "C" void* UIWin_BuildFlagBuf(u32 target);
 
 // The BFC38/BFE8C shields are gone: all headers in this TU's chain now share
 // one extern "C" form per symbol (BFC38 unified on the u16-returning
@@ -58,7 +58,7 @@ extern "C" void* __dt__801A36D0(cf::UnkClass_801A36D0* self, int deleting);
 //
 // CSuddenCommu.hpp's imports now match the chain headers (see CSuddenCommu.hpp);
 // the symbols this TU uses (lbl_eu_80663E24,
-// func_80496288, isGlobalCamFlagSet__Fi, func_80260264) resolve to the
+// Scn_GetFrameDelta, isGlobalCamFlagSet__Fi, func_80260264) resolve to the
 // chain-header / local declarations instead.
 //
 // func_8016FE34's single canonical extern "C" void*(void*) chain form comes
@@ -759,7 +759,7 @@ void func_801A39D8(CVision* self) {
         // Ring slot for element i, offset by the write cursor field_64.
         CVisionU32F32U32* el =
             &((CVisionU32F32U32*)self->unk261C4.w60)[(self->unk261C4.field_64 + i) % self->unk261C4.w6C];
-        el->b -= decay * func_80496288(lbl_eu_80663E14);
+        el->b -= decay * Scn_GetFrameDelta(lbl_eu_80663E14);
         if (!(zero < el->b)) {
             i++;
             continue;
@@ -794,7 +794,7 @@ void func_801A39D8(CVision* self) {
     }
 
     if (__ptmf_test(&self->mPtmf) != 0) {
-        f32 step = lbl_eu_80667CDC * func_80496288(lbl_eu_80663E14);
+        f32 step = lbl_eu_80667CDC * Scn_GetFrameDelta(lbl_eu_80663E14);
         self->field_26198 = self->field_26194;
         self->field_26194 += step;
 
@@ -971,7 +971,7 @@ void func_801A4578(CVision* self) {
             w1 = 0;
         }
         if (w1) {
-            func_80133F48(5, lbl_eu_80667CF0);
+            CUICfManager_queueFactoryMenu(5, lbl_eu_80667CF0);
         }
         if (sub->field_824 & 0x80000) {
             u32* src = &lbl_eu_80533140.mPfn;
@@ -1667,7 +1667,7 @@ void func_801A5BA8(CVision* self) {
 
 // ---------------------------------------------------------------------------
 // us-801a7578: When the vision field is active, ask each player's battle
-// state whether it should show, and forward it to func_80133F48 (retail
+// state whether it should show, and forward it to CUICfManager_queueFactoryMenu (retail
 // func_801A5E58).
 // ---------------------------------------------------------------------------
 void func_801A5E58(CVision* self) {
@@ -1997,8 +1997,8 @@ void func_801A897C(CVision* self, void* slot, void* r28) {
                 p->w_824 |= 0x10000;
                 if (p->w_824 & 0x20000) {
                     func_8009D018(0x30e3, 0);
-                    func_801412D0(0x375);
-                    func_8013F244();
+                    UIWin_BuildFlagBuf(0x375);
+                    UIWin_FlagBufClear();
                 }
                 continue;
             }
@@ -2517,8 +2517,8 @@ int func_801A70DC(CVision* self, void* obj, void* obj2) {
     if (eff->field_78 & 0x8000) {
         sub->field_824 |= 0x20000;
         func_8009D018(0x30e3, 0);
-        func_801412D0(0x375);
-        func_8013F244();
+        UIWin_BuildFlagBuf(0x375);
+        UIWin_FlagBufClear();
     }
     if (o->field_3F00 & 0x4) {
         u16 h = o->field_3F28;

@@ -197,7 +197,7 @@ extern "C" void __ct__CItemBoxLine(CItemBoxLine* self, u32 a, u32 b);
 extern "C" void __dt__12CItemBoxLineFv(CItemBoxLine* self, int flags);
 extern "C" void func_801EDA08(CItemBoxLine* self);
 extern "C" void func_801EDA4C(CItemBoxLine* self, u8 val);
-extern "C" void func_801ED31C(CItemBoxLine* self);
+extern "C" void ItemBoxLine_LoadFiles(CItemBoxLine* self);
 extern "C" void __ct__CItemBoxGrid(CItemBoxGrid* self, u32 a, u32 b, u32 c, u32 d);
 extern "C" void __dt__12CItemBoxGridFv(CItemBoxGrid* self, int flags);
 extern "C" void ClearListSlots(CItemBoxGrid* self);
@@ -278,7 +278,7 @@ extern "C" int GetField52D(CItemBoxGrid* self);
 
 // Move()/phase-handler callees (retail unmangled names).
 extern "C" void func_801C3D54(CBgTex* self);          // bg per-frame update
-extern "C" void func_801ED3E8(CItemBoxLine* self);    // line per-frame update
+extern "C" void ItemBoxLine_UpdateStates(CItemBoxLine* self);    // line per-frame update
 extern "C" void UpdateItemBox(CItemBoxGrid* self);    // grid per-frame update
 extern "C" void func_801C3FF0(CTitleAHelp* self);     // help-bar per-frame update
 extern "C" int IsItemBoxReady(CItemBoxGrid* self);     // grid ready query (phase 4)

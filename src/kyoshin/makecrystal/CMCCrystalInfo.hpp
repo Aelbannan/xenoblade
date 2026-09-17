@@ -133,9 +133,9 @@ extern char lbl_eu_80508DF8[];
 extern const float lbl_eu_80668498;   // 1.0f animation advance constant (.sdata2)
 
 // Imports whose retail symbols are unmangled (plain global C++ would be
-// mangled by MWCC, e.g. func_801355BC__Fv) — C linkage keeps the call relocs
+// mangled by MWCC, e.g. CUICfManager_getPackedFont9C__Fv) — C linkage keeps the call relocs
 // bound to the retail names.
-extern "C" u32 func_801355BC();
+extern "C" u32 CUICfManager_getPackedFont9C();
 extern "C" FourShorts func_801397AC(void*, u32);
 extern "C" void CopyVec4s(short* dst, const short* src);
 // GXColorS10-style shared slot colours (4 s16 channels each); the alpha

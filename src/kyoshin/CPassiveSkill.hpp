@@ -498,7 +498,7 @@ extern "C" void* getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32 arg, nw4r:
 
 // Character/party name-text value pushed into layout panes by setLayoutTextBoxFont
 // (retail symbol unmangled; same convention as CPartyState.hpp).
-extern "C" u32 func_801355BC();
+extern "C" u32 CUICfManager_getPackedFont9C();
 
 // Texture-dimension record read by CPassiveSkillInfo_init: the 'timg' texture
 // resource's +0x8 chain pointer leads (via +0x0) to a pair of u16 dims.
@@ -580,7 +580,7 @@ extern "C" void func_8013AB0C(u8*, u8*, int);
 extern void* lbl_eu_80664090;
 
 // Shared arc resource accessor (retail symbol unmangled; also in CPresentWin.hpp).
-extern "C" nw4r::lyt::ArcResourceAccessor* func_801355F4();
+extern "C" nw4r::lyt::ArcResourceAccessor* CUICfManager_getArcResourceAccessor();
 
 // Skill grid data tables (.sdata pointers; values resolved at link time).
 // lbl_eu_8066488C is passed as the message table to BdatGetU16Direct by

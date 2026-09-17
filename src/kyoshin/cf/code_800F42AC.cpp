@@ -6,7 +6,7 @@
 
 // NOTE: this import lost its declaring header (concurrent edits); restored
 // TU-locally so the TU keeps compiling.
-extern "C" void func_8013F244();
+extern "C" void UIWin_FlagBufClear();
 
 #include "kyoshin/cf/code_800F42AC.hpp"
 
@@ -66,10 +66,10 @@ float func_800F4424(ScMain* self) {
 /// status flag is set, first tears down a register with id 0x375.
 void func_800F449C(ScMain* self) {
     if (self->flags_824 & 0x20000) {
-        if (func_80141270(0x375) == 0) {
+        if (UIWin_QueryPageFlag(0x375) == 0) {
             func_8009D018(0x30e3, 0);
-            func_801412D0(0x375);
-            func_8013F244();
+            UIWin_BuildFlagBuf(0x375);
+            UIWin_FlagBufClear();
         }
     }
     self->field_04 = 0;

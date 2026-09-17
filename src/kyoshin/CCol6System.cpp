@@ -108,15 +108,15 @@ void CCol6CheckBat::Move() {
     }
 
     if (lbl_eu_8066235C >= 0) {
-        func_80135998(1);
+        CUICfManager_setMessageWindowVisible(1);
         char* msg = BdatTouchStringCell(lbl_eu_80502050, &lbl_eu_80502050[9], 0x7f);
-        func_8013D55C(msg, 0, 0);
+        UIWin_CreateSysWin0(msg, 0, 0);
         msg = BdatTouchStringCell(lbl_eu_80502050, &lbl_eu_80502050[9], 0x80);
-        func_8013D55C(msg, 0, 0);
+        UIWin_CreateSysWin0(msg, 0, 0);
 
-        func_8013DA60(lbl_eu_8066235C + 0x100, 0, 0);
+        UIWin_CreateQuestWin(lbl_eu_8066235C + 0x100, 0, 0);
         lbl_eu_8066235C = -1;
-        func_80135998(0);
+        CUICfManager_setMessageWindowVisible(0);
 
         // Retail keeps a copy of this store in BOTH arms (the b-over-else
         // emits the extra branch); do not hoist it out of the if/else.
@@ -718,7 +718,7 @@ extern "C" void func_8015DD4C(CCol6Hint* self) {
 
     // Rebuild the embedded cursor from a stack temp (data fields only).
     u8 tempC[0x18];
-    __ct__CCur18(tempC, func_801355F4());
+    __ct__CCur18(tempC, CUICfManager_getArcResourceAccessor());
     CCol6Cur18Data* mc = reinterpret_cast<CCol6Cur18Data*>(self->mCur18);
     CCol6Cur18Data* tc = reinterpret_cast<CCol6Cur18Data*>(tempC);
     mc->f_04 = tc->f_04;
@@ -1457,7 +1457,7 @@ body:
         if (CSysWin_isActive(&mSysWin1) == 0) break;
         if ((s8)mPadA5[1] == 0) {
             mFieldA4 = 0xd;
-            func_80135464(0, 0, lbl_eu_80667578, lbl_eu_80667578,
+            CUICfManager_queueFadeMenu(0, 0, lbl_eu_80667578, lbl_eu_80667578,
                           lbl_eu_80667578);
             func_80160EE4((u32)(uintptr_t)this, (s8)mPadA5[0]);
         } else {
@@ -1481,7 +1481,7 @@ body:
         // Sound done: fade out and move the camera to the stored position.
         if (func_801BFAE4(mFieldA2) != 0) break;
         mFieldA4 = 0x10;
-        func_80135464(2, 0, lbl_eu_80667578, lbl_eu_80667578,
+        CUICfManager_queueFadeMenu(2, 0, lbl_eu_80667578, lbl_eu_80667578,
                       lbl_eu_80667578);
         notifyBattleSystem__Q22cf13CfGameManagerFv(9, 0, 0, 0, 0);
         isEffectReady__Q22cf13CfGameManagerFv(
@@ -1533,7 +1533,7 @@ body:
         if (func_80113E1C() == 0) break;
         if (func_80113E24(func_80113E1C()) != 0) break;
         mFieldA4 = 0xe;
-        func_80135464(2, 0, lbl_eu_80667578, lbl_eu_80667578,
+        CUICfManager_queueFadeMenu(2, 0, lbl_eu_80667578, lbl_eu_80667578,
                       lbl_eu_80667578);
         lookupEffectForResource__Q22cf13CfGameManagerFv(0, 0, 0);
         break;
@@ -1649,7 +1649,7 @@ body:
             u16 id = BdatGetU16ByTableKey(&lbl_eu_80502050[0xbd],
                                    &lbl_eu_80502050[0xc9],
                                    (s8)mPadA5[0] + 1);
-            func_8013E2E0(id, 0, 0, 0, 0, 1, 0, 1, 0);
+            UIWin_CreateItemMulti(id, 0, 0, 0, 0, 1, 0, 1, 0);
         }
         break;
 
@@ -1675,7 +1675,7 @@ body:
                                      0x7c);
             u16 id = BdatGetU16ByTableKey(&lbl_eu_80502050[0xbd],
                                    &lbl_eu_80502050[0xc9], 5);
-            func_8013E2E0(id, 0, 0, 0, 0, 1, 0, 1, 0);
+            UIWin_CreateItemMulti(id, 0, 0, 0, 0, 1, 0, 1, 0);
         }
         break;
 
@@ -1737,7 +1737,7 @@ body:
                 }
             }
             mFieldA4 = 0x15;
-            func_80135464(0, 0, lbl_eu_80667578, lbl_eu_80667578,
+            CUICfManager_queueFadeMenu(0, 0, lbl_eu_80667578, lbl_eu_80667578,
                           lbl_eu_80667578);
         }
         break;
@@ -1780,7 +1780,7 @@ body:
             }
         } else {
             mFieldA4 = 0x15;
-            func_80135464(0, 0, lbl_eu_80667578, lbl_eu_80667578,
+            CUICfManager_queueFadeMenu(0, 0, lbl_eu_80667578, lbl_eu_80667578,
                           lbl_eu_80667578);
         }
         break;
@@ -1915,7 +1915,7 @@ extern "C" void func_80160370(CCol6System* self) {
     func_8013676C(rootPane, reinterpret_cast<CCol6FontView*>(fontObj)->vf7());
 
     // If the font value is present, label all 21 count panes with it.
-    u32 fontVal = func_801355BC();
+    u32 fontVal = CUICfManager_getPackedFont9C();
     if (fontVal != 0) {
         setLayoutTextBoxFont(self->mpLayout, &lbl_eu_80502050[0x105], fontVal);
         setLayoutTextBoxFont(self->mpLayout, &lbl_eu_80502050[0x10f], fontVal);
@@ -1953,7 +1953,7 @@ extern "C" void func_80160370(CCol6System* self) {
 
     // Rebuild cursor 1 (mCur1 at +0xA8) from a stack temp (data fields only).
     u8 tempC[0x18];
-    __ct__CCur18(tempC, func_801355F4());
+    __ct__CCur18(tempC, CUICfManager_getArcResourceAccessor());
     CCol6Cur18Data* mc1 = reinterpret_cast<CCol6Cur18Data*>(self->mCur1);
     CCol6Cur18Data* tc1 = reinterpret_cast<CCol6Cur18Data*>(tempC);
     mc1->f_04 = tc1->f_04;
@@ -1967,7 +1967,7 @@ extern "C" void func_80160370(CCol6System* self) {
 
     // Rebuild cursor 2 (mCur2 at +0xC0) from a stack temp (data fields only).
     u8 tempC2[0x18];
-    __ct__CCur18(tempC2, func_801355F4());
+    __ct__CCur18(tempC2, CUICfManager_getArcResourceAccessor());
     CCol6Cur18Data* mc2 = reinterpret_cast<CCol6Cur18Data*>(self->mCur2);
     CCol6Cur18Data* tc2 = reinterpret_cast<CCol6Cur18Data*>(tempC2);
     mc2->f_04 = tc2->f_04;
@@ -2970,7 +2970,7 @@ void func_80162DB4(CCol6System* self) {
 
     self->mFieldA4 = 0x17;
     f32 vol = lbl_eu_80667578;
-    func_80135464(2, 0, vol, vol, vol);
+    CUICfManager_queueFadeMenu(2, 0, vol, vol, vol);
     notifyBattleSystem__Q22cf13CfGameManagerFv(9, 0, 0, 0, 0);
     isEffectReady__Q22cf13CfGameManagerFv(
         0, &self->mCamPos, &self->mCamLookAt, 0, lbl_eu_80667564);
@@ -3098,7 +3098,7 @@ extern "C" void func_80162EF8(CCol6System* self) {
 
         if (ok != 0) {
             self->mFieldA4 = 0x16;
-            func_80135464(0, 0, lbl_eu_80667578, lbl_eu_80667578,
+            CUICfManager_queueFadeMenu(0, 0, lbl_eu_80667578, lbl_eu_80667578,
                           lbl_eu_80667578);
         } else if (big != 0) {
             // "player N joined" banner in window 2.
@@ -3168,11 +3168,11 @@ extern "C" void func_80162EF8(CCol6System* self) {
                     }
                 }
                 self->mFieldA4 = 0x15;
-                func_80135464(0, 0, lbl_eu_80667578, lbl_eu_80667578,
+                CUICfManager_queueFadeMenu(0, 0, lbl_eu_80667578, lbl_eu_80667578,
                               lbl_eu_80667578);
             } else {
                 self->mFieldA4 = 0x15;
-                func_80135464(0, 0, lbl_eu_80667578, lbl_eu_80667578,
+                CUICfManager_queueFadeMenu(0, 0, lbl_eu_80667578, lbl_eu_80667578,
                               lbl_eu_80667578);
             }
         }
@@ -3274,7 +3274,7 @@ void func_8016378C(CCol6System* self) {
         if (sel != 5) {
             u16 id = BdatGetU16ByTableKey(&lbl_eu_80502050[0xbd],
                                    &lbl_eu_80502050[0xc9], sel + 5);
-            func_8013E2E0((u32)id, 0, 0, 0, 0, 1, 0, 1, 0);
+            UIWin_CreateItemMulti((u32)id, 0, 0, 0, 0, 1, 0, 1, 0);
         }
     }
 }
@@ -3359,12 +3359,12 @@ void func_801638C0(CCol6System* self) {
             }
         }
         self->mFieldA4 = 0x15;
-        func_80135464(0, 0, lbl_eu_80667578, lbl_eu_80667578, lbl_eu_80667578);
+        CUICfManager_queueFadeMenu(0, 0, lbl_eu_80667578, lbl_eu_80667578, lbl_eu_80667578);
     } else {
         // Retail keeps a copy of this store/fade in BOTH arms (the b-over-else
         // emits the extra branch); do not hoist it out of the if/else.
         self->mFieldA4 = 0x15;
-        func_80135464(0, 0, lbl_eu_80667578, lbl_eu_80667578, lbl_eu_80667578);
+        CUICfManager_queueFadeMenu(0, 0, lbl_eu_80667578, lbl_eu_80667578, lbl_eu_80667578);
     }
 }
 
@@ -3454,12 +3454,12 @@ slotFound:
             }
         }
         self->mFieldA4 = 0x15;
-        func_80135464(0, 0, lbl_eu_80667578, lbl_eu_80667578, lbl_eu_80667578);
+        CUICfManager_queueFadeMenu(0, 0, lbl_eu_80667578, lbl_eu_80667578, lbl_eu_80667578);
     } else {
         // Retail keeps a copy of this store/fade in BOTH arms (the b-over-else
         // emits the extra branch); do not hoist it out of the if/else.
         self->mFieldA4 = 0x15;
-        func_80135464(0, 0, lbl_eu_80667578, lbl_eu_80667578, lbl_eu_80667578);
+        CUICfManager_queueFadeMenu(0, 0, lbl_eu_80667578, lbl_eu_80667578, lbl_eu_80667578);
     }
 }
 
@@ -3505,7 +3505,7 @@ void CCol6Invite::Init() {
 
     ml::FixStr<128> buf;
     buf.format(&lbl_eu_80502050[0x480], str0, str1, str2, mArg3, str3, mArg4);
-    func_8013D55C(buf.mString, 0, 0);
+    UIWin_CreateSysWin0(buf.mString, 0, 0);
 }
 
 // CCol6Invite::Move() - while no system menu is closing, re-run the invite

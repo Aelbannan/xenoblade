@@ -52,7 +52,7 @@ int  func_800FEDF8();
 void func_800FF914();
 void __ct__CBgTex(void* self, int arg);
 void __ct__UnkClass_8011C974(void* self, const void* src);
-void func_804962A0(void*, int);
+void Scn_SetPauseFlag(void*, int);
 void func_801C3D9C(void*);
 void func_8021299C(void*);
 void setPresentationFlag__Q22cf13CfGameManagerFv(int);
@@ -233,7 +233,7 @@ void CMenuMakeCrystal::Init() {
     addRenderCB__4CScnFP10IScnRenderUlUl(
         *reinterpret_cast<void**>(reinterpret_cast<u8*>(this) + 0x5C), render,
         0xD, 1);
-    func_804962A0(*reinterpret_cast<void**>(reinterpret_cast<u8*>(this) + 0x5C),
+    Scn_SetPauseFlag(*reinterpret_cast<void**>(reinterpret_cast<u8*>(this) + 0x5C),
                   0);
 
     reinterpret_cast<MCTailState*>(this)->gate = (func_8009CF8C(0x3386) != 0);
@@ -309,7 +309,7 @@ public:
 void CMenuMakeCrystal::Term() {
     waitForDrawDone__9CDeviceVIFv();
     func_801338C8();
-    func_804962A0(*(void**)((u8*)this + 0x5C), 1);
+    Scn_SetPauseFlag(*(void**)((u8*)this + 0x5C), 1);
     void* render = this;
     if (this) render = (u8*)this + 0x58;
     ((CScn*)*(void**)((u8*)this + 0x5C))->removeRenderCB((IScnRender*)render);

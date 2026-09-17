@@ -144,20 +144,20 @@ extern "C" void func_801FC2B4(void* self, CActParamHolder* h) {
             reinterpret_cast<CActParamAnim*>(&h->actParams[i])->func_8004B114();
         }
     }
-    func_80495E60(h->unk_55C);
+    Scn_IsAnimActiveOrNull(h->unk_55C);
     h->unk_55C = NULL;
     for (u8 i = 0; i < 2; i++) {
         if (h->animModelPtrs[i] != NULL) {
-            func_80495E60((CModelDispObj*)h->animModelPtrs[i]);
+            Scn_IsAnimActiveOrNull((CModelDispObj*)h->animModelPtrs[i]);
             h->animModelPtrs[i] = NULL;
         }
     }
     releaseAnimObj(&h->actParam, h->field_0x04);
     releaseAnimObj(&h->actParam, h->field_0x08);
     reinterpret_cast<CActParamAnim*>(&h->actParam)->func_8004B114();
-    func_80495E60(h->field_0x04);
-    func_80495E60(h->field_0x08);
-    func_80495E60((CModelDispObj*)h->field_0x00);
+    Scn_IsAnimActiveOrNull(h->field_0x04);
+    Scn_IsAnimActiveOrNull(h->field_0x08);
+    Scn_IsAnimActiveOrNull((CModelDispObj*)h->field_0x00);
     h->field_0x00 = NULL;
 }
 #pragma pop
@@ -316,7 +316,7 @@ extern "C" __declspec(noinline) void func_801FC3B0(CModelDisp* self) {
         // both values like the retail branch chain.
         if (h->field_0x00 == NULL && ok != false) {
             // Build: create the display model and rebind both anim slots.
-            h->field_0x00 = func_80495E8C((u32)self->mInitParam, charId, -1, 1);
+            h->field_0x00 = Scn_SetupAnim((u32)self->mInitParam, charId, -1, 1);
             ((CScnItemModel*)h->field_0x00)->vfunc64(0);
             u32 stateBits = reinterpret_cast<cf::CfObject*>(&actor->move[0])->CfObject_getSlotBits(1);
             ((CModelDispSub*)h)->mFlagFD4 = (stateBits >> 12) & 0x3FF;
@@ -388,7 +388,7 @@ extern "C" __declspec(noinline) void func_801FC3B0(CModelDisp* self) {
             CModelDispParamSlot* e3 = CfRes_getArrayElem18Idx(idx2);
             if (actor->field_3F08 & 0x1000) {
                 h->animModelPtrs[0] =
-                    func_80495E94((u32)self->mInitParam, reinterpret_cast<CModelDispNameParam*>(e3->field_2C->getResourceBase(e3, 0)));
+                    Scn_SetupAnimDefault((u32)self->mInitParam, reinterpret_cast<CModelDispNameParam*>(e3->field_2C->getResourceBase(e3, 0)));
                 if (h->animModelPtrs[0] != NULL) {
                     ((CScnItemModel*)h->field_0x00)->vfuncC4(
                         (CScnItemModel*)h->animModelPtrs[0],
@@ -397,7 +397,7 @@ extern "C" __declspec(noinline) void func_801FC3B0(CModelDisp* self) {
             }
             if (actor->field_3F08 & 0x2000) {
                 h->animModelPtrs[1] =
-                    func_80495E94((u32)self->mInitParam, reinterpret_cast<CModelDispNameParam*>(e3->field_2C->getResourceBase(e3, 0)));
+                    Scn_SetupAnimDefault((u32)self->mInitParam, reinterpret_cast<CModelDispNameParam*>(e3->field_2C->getResourceBase(e3, 0)));
                 if (h->animModelPtrs[1] != NULL) {
                     ((CScnItemModel*)h->field_0x00)->vfuncC4(
                         (CScnItemModel*)h->animModelPtrs[1],
@@ -409,7 +409,7 @@ extern "C" __declspec(noinline) void func_801FC3B0(CModelDisp* self) {
                 CModelDispMca mca;
                 __ct__CMcaFile(
                     &mca, reinterpret_cast<cf::CfObjectModel*>(&actor->move[0])->CfObjectModel_getAnimFlags());
-                h->unk_55C = func_80495EAC((u32)self->mInitParam, mca.mDataAdj,
+                h->unk_55C = Scn_InitGlobalA((u32)self->mInitParam, mca.mDataAdj,
                                            nameBase + 8);
                 for (u8 j = 0; j < 2; j++) {
                     CScnItemModel* mp = (CScnItemModel*)h->animModelPtrs[j];
@@ -451,10 +451,10 @@ extern "C" __declspec(noinline) void func_801FC3B0(CModelDisp* self) {
 extern "C" void func_801FBFD8(CModelDisp* self) {
     f32 vecB[3]; // sp+0x14 in retail
     f32 vecA[3]; // sp+0x08 in retail
-    // Retail keeps func_80496264's pose and the FIRST writeVec3f dest
+    // Retail keeps Scn_FindCamItem's pose and the FIRST writeVec3f dest
     // pointer live across calls; the SECOND dest flows straight into arg3.
     void* pVecA;
-    void* pose = func_80496264(self->mInitParam, -1);
+    void* pose = Scn_FindCamItem(self->mInitParam, -1);
     void* pVecB;
     pVecA = writeVec3f(&vecA[0], lbl_eu_806681EC, lbl_eu_806681E8, lbl_eu_806681EC);
     pVecB = writeVec3f(&vecB[0], lbl_eu_806681EC, lbl_eu_806681F0, lbl_eu_806681F4);

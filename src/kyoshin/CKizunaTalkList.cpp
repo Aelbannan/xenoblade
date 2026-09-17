@@ -137,7 +137,7 @@ extern "C" TalkListEntryArray* __dt__802727B4(TalkListEntryArray* self, int flag
 void func_802732F4(CKizunaTalkList* self) {
     void* handle = getHandleMEM2__Q23mtl10MemManagerFv();
     self->mEntryCount = (u32)readFile__11CDeviceFileFUlPCcP10IWorkEventii((u32)handle, &lbl_eu_8050E990[0x67], self, 0, 0);
-    self->mUnknown18 = (u32)readCommonArchiveFile__11CDeviceFileFUlPCcP10IWorkEventii(func_800A9D90(), &lbl_eu_8050E990[0x82], self, 0, 0);
+    self->mUnknown18 = (u32)readCommonArchiveFile__11CDeviceFileFUlPCcP10IWorkEventii(KyoshinHeap_GetField44(), &lbl_eu_8050E990[0x82], self, 0, 0);
     func_801F34F4(&self->mScrollBar);
     self->mUnknown86 = 0;
 }
@@ -291,7 +291,7 @@ __declspec(noinline) u32 func_8027305C(TalkListEntryArray* self, u8 v) {
     }
     u16 id = BdatGetU16Direct(lbl_eu_80664090, &lbl_eu_8050E990[0x5e], v);
     char* name = MakeTplNameSysFile(id);
-    void* resAcc = func_801355F4();
+    void* resAcc = CUICfManager_getArcResourceAccessor();
     void* found = ((KtlResView*)resAcc)->v01(
         (const char*)0x74696d67 /* "timg" */, name, 0);
     if (found != 0)
@@ -865,7 +865,7 @@ bool CKizunaTalkList::OnFileEvent(CEventFile* pEventFile) {
 
         // Create the CCur18 cursor on the stack and copy its body into the
         // embedded cursor (+0x2c), skipping the vtable at +0.
-        void* ccur18Accessor = (void*)func_801355F4();
+        void* ccur18Accessor = (void*)CUICfManager_getArcResourceAccessor();
         u8 cur18Temp[0x18];
         __ct__CCur18(cur18Temp, ccur18Accessor);
         *(u32*)((u8*)this + 0x30) = *(u32*)(cur18Temp + 4);

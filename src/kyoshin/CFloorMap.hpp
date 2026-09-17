@@ -291,7 +291,7 @@ extern "C" void __dt__10CScrollBarFv(void*, int);
 extern "C" void __dt__17UnkClass_8045F564Fv(UnkClass_8045F564*, int);
 // CCur18 construction (retail unmangled) + shared UI accessor import.
 extern "C" void __ct__CCur18(void*, nw4r::lyt::ArcResourceAccessor*);
-extern "C" nw4r::lyt::ArcResourceAccessor* func_801355F4();
+extern "C" nw4r::lyt::ArcResourceAccessor* CUICfManager_getArcResourceAccessor();
 
 // Same-TU helper definitions used by CFloorMap::OnFileEvent (retail flat
 // names; the extern "C" declaration fixes the definition linkage).

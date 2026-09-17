@@ -202,7 +202,7 @@ union SndConv {
 
 extern "C" u32 getCameraDataBlock__Q22cf13CfGameManagerFv();
 int CfRes_getD80Flag();
-D80VolObj* func_8049603C();
+D80VolObj* Scn_QueryUnk80State();
 extern "C" float func_800A47C8(const ml::CVec3& a, const ml::CVec3& b,
                                const ml::CVec3& c, float* outT, ml::CVec3* out);
 SndSlotRef* func_801BFAE4(u16 handle);
@@ -345,7 +345,7 @@ extern "C" void func_801A96A0(SndCtrlObj* self, ml::CVec3* unk4, int farArg,
         // Looping path: plain distance-attenuated volume updates.
         f32 vol = self->m24;
         if (CfRes_getD80Flag()) {
-            vol *= lbl_eu_80667D60 - func_8049603C()->field_0xC;
+            vol *= lbl_eu_80667D60 - Scn_QueryUnk80State()->field_0xC;
         }
         if ((lbl_eu_80663E24 & 0x40000) != 0) {
             if (self->m32 != 0) {
@@ -372,13 +372,13 @@ extern "C" void func_801A96A0(SndCtrlObj* self, ml::CVec3* unk4, int farArg,
 
     // Directed path: recompute the blend toward the scene pose target, then
     // apply the same D80/presentation-bit volume chain.
-    DirSrc* pose = (DirSrc*)func_80496264(lbl_eu_80663E14, -1);
+    DirSrc* pose = (DirSrc*)Scn_FindCamItem(lbl_eu_80663E14, -1);
     func_801A9348((ml::CVec3*)&self->m20, &self->m1C, pose,
                   (ml::CVec3*)lbl_eu_8057164C, &self->mVec1,
                   lbl_eu_80667D68, lbl_eu_80667D68 + self->m18);
     f32 vol = self->m1C * self->m24;
     if (CfRes_getD80Flag()) {
-        vol *= lbl_eu_80667D60 - func_8049603C()->field_0xC;
+        vol *= lbl_eu_80667D60 - Scn_QueryUnk80State()->field_0xC;
     }
     if ((lbl_eu_80663E24 & 0x40000) != 0) {
         if (self->m32 != 0) {

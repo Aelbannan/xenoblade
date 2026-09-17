@@ -29,7 +29,7 @@
 // CVision.hpp's lbl_eu_80663E24 copy is volatile, which clashes with
 // CfObjectMove.hpp's non-volatile extern (recently aligned with
 // CSystemWindow.hpp); this TU reads E24 via the CfObjectMove copy, so rename
-// CVision's copy out of the way. (CVision.hpp's func_80496288 copy is gone;
+// CVision's copy out of the way. (CVision.hpp's Scn_GetFrameDelta copy is gone;
 // the symbol now has a single unified decl.)
 #include "kyoshin/cf/CVision.hpp"
 // CSuddenCommu.hpp's import signatures now match the chain / CfObjectActor
@@ -134,7 +134,7 @@ struct ArtsActionSource {
 
 // func_80105D54 support types.
 
-// Opaque scene pose object (func_80496264 result; passed to func_8049B59C).
+// Opaque scene pose object (Scn_FindCamItem result; passed to func_8049B59C).
 struct ArtsSelPose {
     u8 _pad00[0x10];
 };
@@ -188,7 +188,7 @@ void* func_8012FD04(const char* name);
 int func_8012FA5C();
 void func_80138078__FUl(u32);
 void playUISound__FUl(u32); // retail sound callee in func_80104454 (cf code_80135FDC owns 38078)
-nw4r::lyt::ArcResourceAccessor* func_801355F4();
+nw4r::lyt::ArcResourceAccessor* CUICfManager_getArcResourceAccessor();
 int func_8010EDD4(void*);
 int func_8010A840(void*);
 // Layout/anim helpers defined in code_80135FDC.cpp with mangled C-linkage
@@ -240,7 +240,7 @@ void func_8010ED58(void*);
 void func_8010A710(void*);
 void func_8010A7A8(void*);
 void* findObjB28ById(s32 id);                 // actor-container lookup by id
-void* func_80496264(void* scn, int index);   // matches CfCam.hpp decl
+void* Scn_FindCamItem(void* scn, int index);   // matches CfCam.hpp decl
 void func_8049B59C(f32* out, void* pose, nw4r::math::VEC3* pos);
 void CTaskGame_enumListCtor(void* holder);
 void* CTaskGame_enumListGet(void* holder);
@@ -551,7 +551,7 @@ void CMenuArtsSelect::Init() {
     }
     unk294 = static_cast<nw4r::lyt::Layout*>(tagProc);
 
-    unk68 = reinterpret_cast<u32>(func_801355F4());
+    unk68 = reinterpret_cast<u32>(CUICfManager_getArcResourceAccessor());
 
     func_80136E84__FPPQ34nw4r3lyt6LayoutPQ34nw4r3lyt19ArcResourceAccessorPCc(&unk80, reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(unk68), arc + 0x10);
     func_80136F08__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(unk80, &unk84, reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(unk68), arc + 0x27);
@@ -813,7 +813,7 @@ void CMenuArtsSelect::Term() {
         func_8010A8E4(reinterpret_cast<u8*>(func_8010CE48()) + 0x7cc);
     }
     if (unk334 != 0) {
-        func_80133770();
+        CUICfManager_queueBaseMenu();
     }
 }
 
@@ -2293,7 +2293,7 @@ extern "C" void func_80105D54(CMenuArtsSelect* self) {
             self->unk7D = reinterpret_cast<const u8*>(&tbl)[self->unk328];
             self->unk7E = static_cast<u8>(self->unk330);
         } else {
-            func_80496264(self->mScn, -1);
+            Scn_FindCamItem(self->mScn, -1);
             int* cfg = func_8009ECB0();            u32 id = cfg[self->unk330 + 1];
             BattleActor* cand =
                 static_cast<BattleActor*>(findObjB28ById(id));
@@ -2363,7 +2363,7 @@ extern "C" void func_80105D54(CMenuArtsSelect* self) {
     if (self->unk31C <= 1) return;
     if (actor == NULL) return;
 
-    void* pose = func_80496264(self->mScn, -1);
+    void* pose = Scn_FindCamItem(self->mScn, -1);
     int* cfg = func_8009ECB0();
 
     s32 listIdx = self->unk324;

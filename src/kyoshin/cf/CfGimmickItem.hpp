@@ -55,8 +55,8 @@ public:
     /* 0x84 */ u16 field_84[3];          // per-slot item ids
     /* 0x8A */ u16 field_8A;
     /* 0x8C */ u16 field_8C;
-    /* 0x8E */ u16 field_8E;             // effect id triggered while working (func_80208C48)
-    /* 0x90 */ u16 field_90;             // effect id (func_80208C48, same as field_8E)
+    /* 0x8E */ u16 field_8E;             // effect id triggered while working (CfGimmick_PlaySoundAtPos)
+    /* 0x90 */ u16 field_90;             // effect id (CfGimmick_PlaySoundAtPos, same as field_8E)
     /* 0x92 */ u16 field_92;
     /* 0x94 */ u16 field_94;             // resource id passed to getResourceFromTable
     /* 0x96 */ u8 field_96;              // lower bound of the respawn-count window
@@ -91,28 +91,28 @@ typedef void (CfGimmickItem::*CfGimmickItemState)();
 extern "C" {
 void __ct__cf_CfGimmick(cf::CfGimmick* self);
 void __dt__Q22cf9CfGimmickFv(cf::CfGimmick* self, int mode);  // ABI deleting-dtor twin
-void func_80208EE4(cf::CfGimmick* self);
+void CfGimmick_ClearManagerBinding(cf::CfGimmick* self);
 void func_8020A434(CfGimmickReg* self);                     // unregister field_7C object
 void func_8020A484(unsigned short id);
 unsigned int func_8020A5DC(void);
-void func_80209F2C(void);
+void CfGimmick_SetGlobalFlagC0042(void);
 void func_8020A6B0(CfGimmickReg* reg, const CfGimmickVec3* point,
                    unsigned short c, float d, int e, int g);
 void CItem_consumeFamilyCnt(unsigned int a, int b);
 void CItem_thunkAllocRecord(unsigned int a, unsigned int b);
-void func_8020974C(unsigned int a, int b);
-int func_80209754(u32 mask, cf::CfGimmick* gimmick, const CfGimmickVec3* point,
+void CfGimmick_TriggerSound2CC8(unsigned int a, int b);
+int CfGimmick_CheckTriggerGated(u32 mask, cf::CfGimmick* gimmick, const CfGimmickVec3* point,
                   const f32* ang, u32 partyId);
-void func_80208C48(u32 id, const CfGimmickVec3* pos);
+void CfGimmick_PlaySoundAtPos(u32 id, const CfGimmickVec3* pos);
 u32 getQueuedFileEventCount__Q22cf13CfGameManagerFv(void);
 u32 getResourceFromTable__Q22cf13CfGameManagerFv(u32 a);
 unsigned int CItem_findRecByFamily(unsigned short id);
 void* func_8003AA34(void);
-void func_80208F34(cf::CfGimmick* self, float* out, void* unused, void* holder);
-void func_80209020(cf::CfGimmick* self, cf::CfGimmick* out, void* unused, void* holder);
-void func_80209288(cf::CfGimmick* self, f32* out, void* bdat, void* table);
+void CfGimmick_LoadBdatAreaPos(cf::CfGimmick* self, float* out, void* unused, void* holder);
+void CfGimmick_LoadBdatAreaExtents(cf::CfGimmick* self, cf::CfGimmick* out, void* unused, void* holder);
+void CfGimmick_LoadBdatAreaRotation(cf::CfGimmick* self, f32* out, void* bdat, void* table);
 void func_8007B0C8(int idx);
-int func_8020971C(u8* obj);
+int CfGimmick_CheckStateFlag2CC8(u8* obj);
 void attachLODObject__8CTaskLODFv(u8 lod, int mode);
 void removeLODEntry__8CTaskLODFv(u8 lod, float f);
 void clearLODEntry__8CTaskLODFv(u8 lod);

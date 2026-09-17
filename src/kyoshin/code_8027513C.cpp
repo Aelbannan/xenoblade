@@ -14,7 +14,7 @@
 
 #include "kyoshin/code_8027513C.hpp"
 #include "kyoshin/cf/ICamControl.hpp"
-#include "libs/monolib/src/scn/CScn_8049603C.hpp" // func_8049603C (single owner decl)
+#include "libs/monolib/src/scn/CScn_8049603C.hpp" // Scn_QueryUnk80State (single owner decl)
 #include "kyoshin/cf/object/CfObjectMove.hpp"
 
 // CfGameManager gate query (retail 0x8007F91C); called as a free function -
@@ -26,7 +26,7 @@ int isTimerActive__Q22cf13CfGameManagerFv();
 class CScn;
 
 // createNpcActor/setChildV40__/bindPartnerO_/func_801BFDE8: declared in
-// code_8027513C.hpp with retail-accurate linkage. func_8049603C: single owner
+// code_8027513C.hpp with retail-accurate linkage. Scn_QueryUnk80State: single owner
 // decl in libs/monolib/src/scn/CScn_8049603C.hpp.
 
 // (No vtable helper structs: the position slots are real CfObject virtuals
@@ -188,7 +188,7 @@ void func_80275454(UnkCode8027513C* self) {
                 }
 
                 // Play sound effect at the fetched position
-                UnkCamObj* camObj = (UnkCamObj*)func_8049603C(lbl_eu_80663E14);
+                UnkCamObj* camObj = (UnkCamObj*)Scn_QueryUnk80State(lbl_eu_80663E14);
                 func_801BFDE8(0, mode, (u32)(uintptr_t)pos, lbl_eu_806689E8 - camObj->field_0xC,
                               lbl_eu_806689EC);
             }

@@ -56,7 +56,7 @@ public:
     CNumSelectTimgRef* unk8; // 0x8
 };
 
-/* The 'timg' source from func_801355F4 is an nw4r::lyt::ArcResourceAccessor;
+/* The 'timg' source from CUICfManager_getArcResourceAccessor is an nw4r::lyt::ArcResourceAccessor;
  * GetResource(+0x0C) resolves the named texture record. */
 
 // code_80135FDC layout-build helpers (retail mangled C++ names).
@@ -69,8 +69,8 @@ void setLayoutTextBoxFont(nw4r::lyt::Layout*, char*, u32);
 extern "C" void* getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32, nw4r::lyt::Layout*);
 extern "C" void func_8013676C(nw4r::lyt::Pane*, void*);
 extern "C" void func_80124288(nw4r::lyt::Pane*, float*);
-extern "C" char* func_801355BC();
-extern "C" nw4r::lyt::ArcResourceAccessor* func_801355F4();
+extern "C" char* CUICfManager_getPackedFont9C();
+extern "C" nw4r::lyt::ArcResourceAccessor* CUICfManager_getArcResourceAccessor();
 extern "C" char* MakeTplNameSysFile(u32);
 extern "C" u16 BdatGetU16ByTableKey(const void*, const void*, u16);
 extern "C" void PaneSetTexPaletteByName(nw4r::lyt::Layout*, const char*, u32);

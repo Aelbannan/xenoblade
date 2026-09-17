@@ -129,5 +129,5 @@ extern "C" {
     void* getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32, nw4r::lyt::Layout*);
     void validateHeap__17UnkClass_8045F564Fv(void*);
     void addRenderCB__4CScnFP10IScnRenderUlUl(void*, void*, u32, u32);
-    nw4r::lyt::ArcResourceAccessor* func_801355F4();
+    nw4r::lyt::ArcResourceAccessor* CUICfManager_getArcResourceAccessor();
 }

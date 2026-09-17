@@ -187,7 +187,7 @@ void CTaskGameCf::func_800444FC(){
         // tasks. Bit 3 of unk_54 marks a restart (skip the scene-color reset).
         if(!(unk_54 & 8)){
             CTaskGame_setVec4_tmp tmp;
-            func_8049602C(pTaskGame->getScene(), 0,
+            Scn_ReleaseUnk80(pTaskGame->getScene(), 0,
                           reinterpret_cast<u32*>(CTaskGame_setVec4(&tmp, lbl_eu_80665D88, lbl_eu_80665D88, lbl_eu_80665D88, lbl_eu_80665D8C)));
         }
 
@@ -208,7 +208,7 @@ void CTaskGameCf::func_800444FC(){
             // Scene argument is evaluated before the MEM2 handle query.
             CScnNw4r* wmScene = pTaskGame->getScene();
             u32 memHandle = mtl::MemManager::getHandleMEM2();
-            func_8013CFDC(this, wmScene, memHandle);
+            UIWin_CreateManager(this, wmScene, memHandle);
             func_8012F558(this, pTaskGame->getScene(), -1);
             lbl_eu_80663E28 |= 0x10000000;
         }
@@ -219,7 +219,7 @@ void CTaskGameCf::func_800444FC(){
             lbl_eu_80663E28 &= ~0x40000000u;
         }
 
-        func_801336E4(CTaskManager::GetRootProcGame(), pTaskGame->getScene(), -1);
+        CUICfManager_createInstance(CTaskManager::GetRootProcGame(), pTaskGame->getScene(), -1);
         func_801665A4(CTaskManager::GetRootProcRealTime(), pTaskGame->getScene(), pTaskGame->unk70);
 
         if(newCampaign){
@@ -281,11 +281,11 @@ void CTaskGameCf::func_800444FC(){
             // Reset scene color while the message system is unloaded (bit 24 of lbl_eu_80663E28).
             if(!(lbl_eu_80663E28 & 0x01000000)){
                 CTaskGame_setVec4_tmp tmp;
-                func_8049602C(pTaskGame->getScene(), 0, CTaskGame_setVec4(&tmp, lbl_eu_80665D88, lbl_eu_80665D88, lbl_eu_80665D88, lbl_eu_80665D8C));
+                Scn_ReleaseUnk80(pTaskGame->getScene(), 0, CTaskGame_setVec4(&tmp, lbl_eu_80665D88, lbl_eu_80665D88, lbl_eu_80665D88, lbl_eu_80665D8C));
             }
 
-            if(func_8013C54C()){
-                ((CProcess*)func_8013C54C())->SetRemove();
+            if(UIWin_GetInstance()){
+                ((CProcess*)UIWin_GetInstance())->SetRemove();
             }
 
             ::func_8012F87C(0);

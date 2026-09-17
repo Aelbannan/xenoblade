@@ -224,7 +224,7 @@ void CMenuQuestLog::Init() {
     mQstLogList.mQstData.field_2004 = tmp.list[0x2186];
     mQstLogList.mQstData.field_2005 = tmp.list[0x2187];
     __dt__11CQstLogListFv((CQstLogList*)tmp.list, -1);
-    func_80227A60(&mQstLogList);
+    QstLogList_LoadArc(&mQstLogList);
 
     // --- CQstLogInfo ---
     __ct__CQstLogInfo((CQstLogInfo*)tmp.info);
@@ -296,13 +296,13 @@ void CMenuQuestLog::Term() {
     reinterpret_cast<CScn*>(mScene)->removeRenderCB(render);
     func_801C3D9C(&mBgTex);
     func_801C40A0(&mTitleAHelp);
-    func_80227BD8(&mQstLogList);
+    QstLogList_Unload(&mQstLogList);
     func_80229620(&mQstLogInfo);
     lbl_eu_80663FC0 = 0;
     DecMenuCounter64080();
     if (code80135FDC_getByte_64080() == 0)
         setPresentationFlag__Q22cf13CfGameManagerFv(false);
-    func_80135550();
+    CUICfManager_setTimeout30();
 }
 
 void CMenuQuestLog::Move() {
@@ -373,7 +373,7 @@ body:
 
     func_801C3D54(&mBgTex);
     func_801C3FF0(&mTitleAHelp);
-    func_80227AC4(&mQstLogList);
+    QstLogList_FrameUpdate(&mQstLogList);
     func_80229570(&mQstLogInfo);
 }
 
@@ -399,7 +399,7 @@ body:
         nw4r::lyt::DrawInfo drawInfo;
         func_80137250(&drawInfo);
         func_801C3D7C(&mBgTex, &drawInfo);
-        func_80227B6C(&mQstLogList, &drawInfo);
+        QstLogList_Draw(&mQstLogList, &drawInfo);
         func_80229600(&mQstLogInfo, &drawInfo);
         func_801C4080(&mTitleAHelp, &drawInfo);
     }
@@ -440,7 +440,7 @@ extern "C" void func_8011CD6C(CMenuQuestLog* self) {
             if (func_80227C70(&self->mQstLogList)) {
                 if (func_802296D0(&self->mQstLogInfo)) {
                     func_801C412C(&self->mTitleAHelp);
-                    func_80227CDC(&self->mQstLogList);
+                    QstLogList_BeginSortOpen(&self->mQstLogList);
                     self->mState = 1;
                     playUISound(0x6d);
                 }
@@ -452,7 +452,7 @@ extern "C" void func_8011CD6C(CMenuQuestLog* self) {
 // Gate the quest-log list state: when the help sub-object is idle and the
 // list accepts input, raise the state byte to 2.
 extern "C" void func_8011CDF4(CMenuQuestLog* self) {
-    if (isIdle__11CTitleAHelpFv(&self->mTitleAHelp) && func_80227CCC(&self->mQstLogList))
+    if (isIdle__11CTitleAHelpFv(&self->mTitleAHelp) && QstLogList_IsSortEnabled(&self->mQstLogList))
         self->mState = 2;
 }
 
@@ -489,48 +489,48 @@ extern "C" __declspec(noinline) void func_8011CE44(CMenuQuestLog* self) {
     }
 
     if (trigger1) {
-        func_802282F8(&self->mQstLogList);
-        if (!func_80227CCC(&self->mQstLogList)) {
+        QstLogList_ApplySortSelection(&self->mQstLogList);
+        if (!QstLogList_IsSortEnabled(&self->mQstLogList)) {
             func_801C4198(&self->mTitleAHelp);
-            func_80227D78(&self->mQstLogList, 0);
+            QstLogList_EndSortMode(&self->mQstLogList, 0);
             self->mState = 4;
         } else {
             func_801C41E8(&self->mTitleAHelp, 0x3c);
         }
     } else if (trigger2) {
-        if (func_80227CD4(&self->mQstLogList)) {
-            func_80228280(&self->mQstLogList, 0);
+        if (QstLogList_IsSortDescending(&self->mQstLogList)) {
+            QstLogList_ConfirmSort(&self->mQstLogList, 0);
             func_801C41E8(&self->mTitleAHelp, 0x3c);
         } else {
             func_801C414C(&self->mTitleAHelp);
-            func_80227D78(&self->mQstLogList, 1);
+            QstLogList_EndSortMode(&self->mQstLogList, 1);
             self->mState = 3;
         }
     } else if (cancel) {
-        func_80227DE8(&self->mQstLogList);
+        QstLogList_ScrollUp(&self->mQstLogList);
     } else if (dir) {
-        func_80227EC8(&self->mQstLogList);
+        QstLogList_ScrollDown(&self->mQstLogList);
     } else if (confirm) {
-        func_80227FC0(&self->mQstLogList);
+        QstLogList_PageUp(&self->mQstLogList);
     } else if (menu) {
-        func_8022807C(&self->mQstLogList);
+        QstLogList_PageDown(&self->mQstLogList);
     } else if (trigger3) {
-        func_80228164(&self->mQstLogList);
-        func_801C41E8(&self->mTitleAHelp, func_80227CD4(&self->mQstLogList) ? 0x3e : 0x3c);
+        QstLogList_ToggleSort(&self->mQstLogList);
+        func_801C41E8(&self->mTitleAHelp, QstLogList_IsSortDescending(&self->mQstLogList) ? 0x3e : 0x3c);
     }
 }
 
 // Same gate as func_8011CDF4 but toggles the +0x54 byte to 1.
 extern "C" void func_8011D03C(CMenuQuestLog* self) {
-    if (isIdle__11CTitleAHelpFv(&self->mTitleAHelp) && func_80227CCC(&self->mQstLogList))
+    if (isIdle__11CTitleAHelpFv(&self->mTitleAHelp) && QstLogList_IsSortEnabled(&self->mQstLogList))
         self->mField54 = 1;
 }
 
 void func_8011D08C(CMenuQuestLog* self)
 {
     CMenuQuestLog* base = self;
-    if (isIdle__11CTitleAHelpFv(&base->mTitleAHelp) && func_80227CCC(&base->mQstLogList)) {
-        unsigned int value = func_80228394(&base->mQstLogList);
+    if (isIdle__11CTitleAHelpFv(&base->mTitleAHelp) && QstLogList_IsSortEnabled(&base->mQstLogList)) {
+        unsigned int value = QstLogList_GetSelectedQuestLo(&base->mQstLogList);
         func_80229768(&base->mQstLogInfo, static_cast<unsigned short>(value));
         func_80229510(&base->mQstLogInfo);
         base->mState = 5;
@@ -594,7 +594,7 @@ extern "C" void func_8011D22C(CMenuQuestLog* self) {
     if (isIdle__11CTitleAHelpFv(&self->mTitleAHelp) && func_802296D8(&self->mQstLogInfo)) {
         func_801C41E8(&self->mTitleAHelp, 0x3c);
         func_801C416C(&self->mTitleAHelp);
-        func_80227CDC(&self->mQstLogList);
+        QstLogList_BeginSortOpen(&self->mQstLogList);
         self->mState = 9;
     }
 }
@@ -604,7 +604,7 @@ extern "C" void func_8011D22C(CMenuQuestLog* self) {
 // When the title help is idle and sorting is enabled, advance to state 2.
 // ---------------------------------------------------------------------------
 extern "C" void func_8011D298(CMenuQuestLog* self) {
-    if (isIdle__11CTitleAHelpFv(&self->mTitleAHelp) && func_80227CCC(&self->mQstLogList)) {
+    if (isIdle__11CTitleAHelpFv(&self->mTitleAHelp) && QstLogList_IsSortEnabled(&self->mQstLogList)) {
         self->mState = 2;
     }
 }

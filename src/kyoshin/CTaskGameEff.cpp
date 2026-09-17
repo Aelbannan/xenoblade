@@ -164,7 +164,7 @@ void CTaskGameEff::Init() {
     // call site via the two-statement guard idiom.
     IScnRender* cb = reinterpret_cast<IScnRender*>(this);
     if (this) cb = &field_0x54;
-    func_80495FC8(mScene, cb, 8);
+    Scn_CallUnk8C_V6(mScene, cb, 8);
 
     cb = reinterpret_cast<IScnRender*>(this);
     if (this) cb = &field_0x58;
@@ -209,7 +209,7 @@ void CTaskGameEff::Term() {
 
     IScnRender* cb54 = reinterpret_cast<IScnRender*>(this);
     if (this) cb54 = &field_0x54;
-    func_80495FDC(mScene, cb54, 8);
+    Scn_CallUnk8C_V7(mScene, cb54, 8);
 
     mScene->removeRenderCB(&field_0x70);
     func_804CC154(&lbl_eu_8065FC18[0]);
@@ -353,7 +353,7 @@ void func_800452EC(CScn* scene) {
         CTaskGameEff* gt = lbl_eu_80663D40;
         IScnRender* cb54 = reinterpret_cast<IScnRender*>(gt);
         if (gt != nullptr) cb54 = &gt->field_0x54;
-        func_80495FC8(scene, cb54, 8);
+        Scn_CallUnk8C_V6(scene, cb54, 8);
 
         gt = lbl_eu_80663D40;
         IScnRender* cb58 = reinterpret_cast<IScnRender*>(gt);
@@ -389,7 +389,7 @@ void func_800453EC(CScn* scene) {
     gt = lbl_eu_80663D40;
     cb = reinterpret_cast<IScnRender*>(gt);
     if (gt != nullptr) cb = &gt->field_0x54;
-    func_80495FDC(node->mItem, cb, 8);
+    Scn_CallUnk8C_V7(node->mItem, cb, 8);
 
     gt = lbl_eu_80663D40;
     node->mItem->removeRenderCB(&gt->field_0x70);

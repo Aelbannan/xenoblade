@@ -49,9 +49,9 @@ public:
 };
 
 // Imports whose retail symbols are unmangled (plain global C++ would be
-// mangled by MWCC, e.g. func_801355BC__Fv) - C linkage keeps the call relocs
+// mangled by MWCC, e.g. CUICfManager_getPackedFont9C__Fv) - C linkage keeps the call relocs
 // bound to the retail names.
-extern "C" u32 func_801355BC();
+extern "C" u32 CUICfManager_getPackedFont9C();
 extern "C" void LayoutBindAnimResource(nw4r::lyt::Layout*, nw4r::lyt::AnimResource**, nw4r::lyt::ArcResourceAccessor*, char*);
 
 /* Crystal list for the makecrystal UI. Manages available crystals and their

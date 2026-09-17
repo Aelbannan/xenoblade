@@ -92,9 +92,9 @@ extern "C" void Term__4CScnFv();
 extern "C" void Move__4CScnFv();
 extern "C" void Draw__4CScnFv();
 extern "C" void Tail__8CProcessFv();
-extern "C" void func_80496B04();
-extern "C" void func_80496970();
-extern "C" void func_8049695C();
+extern "C" void Scn_DtorThunk54();
+extern "C" void Scn_CallUnk60_V4();
+extern "C" void Scn_CallUnk68_V3();
 extern "C" int WorkEvent1__10IWorkEventFPvPCc(void*, const char*);
 extern "C" int OnFileEvent__10IWorkEventFP10CEventFile(void*);
 extern "C" int WorkEvent3__4CScnFPv(void*);
@@ -147,7 +147,7 @@ extern "C" u32 lbl_eu_8056E8D0[45] = {
     (u32)&Draw__4CScnFv,
     (u32)&Tail__8CProcessFv,
     (u32)&lbl_eu_80663988, 0xFFFFFFAC,
-    (u32)&func_80496B04,
+    (u32)&Scn_DtorThunk54,
     (u32)&WorkEvent1__10IWorkEventFPvPCc,
     (u32)&OnFileEvent__10IWorkEventFP10CEventFile,
     (u32)&WorkEvent3__4CScnFPv,
@@ -179,8 +179,8 @@ extern "C" u32 lbl_eu_8056E8D0[45] = {
     (u32)&WorkEvent29__10IWorkEventFv,
     (u32)&WorkEvent30__10IWorkEventFv,
     (u32)&WorkEvent31__10IWorkEventFv,
-    (u32)&func_80496970,
-    (u32)&func_8049695C,
+    (u32)&Scn_CallUnk60_V4,
+    (u32)&Scn_CallUnk68_V3,
 };
 extern "C" u32 lbl_eu_8056E984[9] = {
     (u32)&lbl_eu_80663990, 0x00000000,
@@ -517,7 +517,7 @@ void func_80497AA8(CScn80496B0C* self) {
         // narrowing goes through the shared 0x4330 magic double (retail
         // rematerializes the whole conversion per loop).
         s32 frames =
-            (s32)(self->field_0x178 * func_80496288(self->field_0x0) +
+            (s32)(self->field_0x178 * Scn_GetFrameDelta(self->field_0x0) +
                   lbl_eu_8066AAD8);
         CScnChild80496B0C* walk = self->field_0x8;
         for (u32 i = 0; i < 3; i++, walk = (CScnChild80496B0C*)((u8*)walk + 4)) {
@@ -538,7 +538,7 @@ void func_80497AA8(CScn80496B0C* self) {
                 (u32)frames ^ 0x80000000u, conv, lbl_eu_8066AAD0));
         }
     } else {
-        f32 s = self->field_0x178 * func_80496288(self->field_0x0);
+        f32 s = self->field_0x178 * Scn_GetFrameDelta(self->field_0x0);
         CScnChild80496B0C* walk = self->field_0x8;
         for (u32 i = 0; i < 3; i++, walk = (CScnChild80496B0C*)((u8*)walk + 4)) {
             CScnNode80496B0C* n = walk->field_0x84[0];
@@ -549,7 +549,7 @@ void func_80497AA8(CScn80496B0C* self) {
         }
         // Retail re-reads the scene pointer here (volatile calls clobbered
         // the cached register).
-        s = self->field_0x178 * func_80496288(self->field_0x0);
+        s = self->field_0x178 * Scn_GetFrameDelta(self->field_0x0);
         walk = self->field_0xC;
         for (u32 i = 0; i < 3; i++, walk = (CScnChild80496B0C*)((u8*)walk + 4)) {
             CScnNode80496B0C* n = walk->field_0x84[0];
@@ -570,7 +570,7 @@ void func_80497AA8(CScn80496B0C* self) {
         // also read after the call so nothing floats across it.
         self->field_0x174 =
             self->field_0x174 +
-            self->field_0x178 * func_80496288(self->field_0x0);
+            self->field_0x178 * Scn_GetFrameDelta(self->field_0x0);
         f32 prev = self->field_0x170;
         if (prev > self->field_0x174) {
             // Fade finished backwards: ease the weight toward the floor.
@@ -583,7 +583,7 @@ void func_80497AA8(CScn80496B0C* self) {
             weight = lbl_eu_8066AAD8;
             if (prev > self->field_0x174 -
                            self->field_0x178 *
-                               func_80496288(self->field_0x0)) {
+                               Scn_GetFrameDelta(self->field_0x0)) {
                 int nodeId = self->field_0x1D8;
                 if (((u32)nodeId + 0x10000) != 0xFFFF) {
                     // Countdown scan over child1's slots; first bound slot
@@ -959,7 +959,7 @@ extern "C" void func_804986F8(CScnChild80496B0C* self, f32 rate) {
     if (head->field_0x8 < head->field_0x4) {
         // Growing: advance toward the target by the scene-reported step.
         // Double fabs before the f32 narrowing pins retail's fabs+frsp pair.
-        f32 step = (f32)__fabs(func_80496288(head->field_0x18->scn));
+        f32 step = (f32)__fabs(Scn_GetFrameDelta(head->field_0x18->scn));
         head->field_0x8 = head->field_0x8 + step;
         if (head->field_0x8 > head->field_0x4) {
             head->field_0x8 = head->field_0x4;

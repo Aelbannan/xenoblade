@@ -63,5 +63,5 @@ struct CChainCombo_ArtsCategory {
 };
 
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
-extern "C" void func_8013EAB0();
+extern "C" void UIWin_CreateAA2A0Win();
 extern "C" void func_802A07F4(int, void*);

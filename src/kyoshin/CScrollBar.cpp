@@ -34,7 +34,7 @@ struct CScrollBarPane {
     u8 pad_00[0x2C]; // +0x00..+0x2B (nw4r Pane internal state)
     nw4r::math::VEC3 mDims; // +0x2C thumb/track size (x=thumb height, y=content)
     u8 pad_38[0x4C - 0x38];
-    f32 mDrag[2]; // +0x4C drag position (copied via func_80127BC4)
+    f32 mDrag[2]; // +0x4C drag position (copied via TagCopyVec2f)
 };
 
 u8 CScrollBar::isVisible() { return mVisible; }
@@ -130,7 +130,7 @@ bool CScrollBar::OnFileEvent(CEventFile* pEventFile) {
         nw4r::lyt::Pane* pane =
             mLayout->GetRootPane()->FindPaneByName(lbl_eu_80534DC0[mDirection], true);
         float drag[2];
-        func_80127BC4(drag, reinterpret_cast<float*>(reinterpret_cast<u8*>(pane) + 0x4C));
+        TagCopyVec2f(drag, reinterpret_cast<float*>(reinterpret_cast<u8*>(pane) + 0x4C));
         nw4r::math::VEC3 dims =
             *reinterpret_cast<nw4r::math::VEC3*>(reinterpret_cast<u8*>(pane) + 0x2C);
         mScrollPosY = drag[1];
@@ -210,7 +210,7 @@ void func_801F36BC(CScrollBar* self, u32 scrollFrom, u32 scrollTo) {
     if (delta <= 0) {
         // Bottom of the scroll range: park the thumb at the tail position.
         float tmp[2];
-        func_80127BC4(tmp, pdata->mDrag);
+        TagCopyVec2f(tmp, pdata->mDrag);
         tmp[1] = self->mScrollPosY;
         func_80124288(pane, tmp);
         self->mScrollRatio = lbl_eu_80668138;
@@ -229,7 +229,7 @@ void func_801F36BC(CScrollBar* self, u32 scrollFrom, u32 scrollTo) {
         if (ratio < lbl_eu_8066813C)
             ratio = lbl_eu_8066813C;
         float tmp[2];
-        func_80127BC4(tmp, pdata->mDrag);
+        TagCopyVec2f(tmp, pdata->mDrag);
         tmp[1] = ratio;
         func_80124288(pane, tmp);
         self->mScrollRatio = (self->mScrollPosY - ratio) / (f32)delta;

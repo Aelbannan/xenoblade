@@ -170,8 +170,8 @@ bool CNumSelect::OnFileEvent(CEventFile* evt) {
     void* fontObj = getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1, mpLayout);
     func_8013676C(rootPane,
                   ((IDeviceFontInfo*)fontObj)->getFont());
-    setLayoutTextBoxFont(mpLayout, &lbl_eu_80506C14[0x20], (u32)func_801355BC());
-    setLayoutTextBoxFont(mpLayout, &lbl_eu_80506C14[0x3d], (u32)func_801355BC());
+    setLayoutTextBoxFont(mpLayout, &lbl_eu_80506C14[0x20], (u32)CUICfManager_getPackedFont9C());
+    setLayoutTextBoxFont(mpLayout, &lbl_eu_80506C14[0x3d], (u32)CUICfManager_getPackedFont9C());
 
     mpLayout->UnbindAllAnimation();
     func_80124270(
@@ -209,7 +209,7 @@ bool CNumSelect::OnFileEvent(CEventFile* evt) {
                              : &lbl_eu_80506C14[0x15d];
     u16 msgId = BdatGetU16ByTableKey(&lbl_eu_80506C14[0x129], msgKey, 0x2b);
     char* timgName = MakeTplNameSysFile(msgId);
-    CNumSelectTimg* timg = (CNumSelectTimg*)func_801355F4()->GetResource(0x74696d67, timgName, 0);
+    CNumSelectTimg* timg = (CNumSelectTimg*)CUICfManager_getArcResourceAccessor()->GetResource(0x74696d67, timgName, 0);
     if (timg != NULL) {
         PaneSetTexPaletteByName(mpLayout, &lbl_eu_80506C14[0x166], (u32)timg);
         PaneSetTexPaletteByName(mpLayout, &lbl_eu_80506C14[0x170], (u32)timg);

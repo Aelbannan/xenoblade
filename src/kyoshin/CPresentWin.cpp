@@ -62,11 +62,11 @@ void func_8022DD90(CPresentWin* self) {
 
         void* tex;
         if ((s8)res <= -0x32) {
-            tex = func_801355F4()->GetResource(0x74696D67, pool + 0x153, NULL);
+            tex = CUICfManager_getArcResourceAccessor()->GetResource(0x74696D67, pool + 0x153, NULL);
         } else if ((s8)res <= -0x10) {
-            tex = func_801355F4()->GetResource(0x74696D67, pool + 0x169, NULL);
+            tex = CUICfManager_getArcResourceAccessor()->GetResource(0x74696D67, pool + 0x169, NULL);
         } else {
-            tex = func_801355F4()->GetResource(0x74696D67, pool + 0x17f, NULL);
+            tex = CUICfManager_getArcResourceAccessor()->GetResource(0x74696D67, pool + 0x17f, NULL);
         }
         if (tex) {
             PaneSetTexPaletteByName(self->mpLayout, pool + 0x149, tex);
@@ -79,15 +79,15 @@ void func_8022DD90(CPresentWin* self) {
 
         void* tex;
         if ((s8)res >= 0x12c) {
-            tex = func_801355F4()->GetResource(0x74696D67, pool + 0x19f, NULL);
+            tex = CUICfManager_getArcResourceAccessor()->GetResource(0x74696D67, pool + 0x19f, NULL);
         } else if ((s8)res >= 0x32) {
-            tex = func_801355F4()->GetResource(0x74696D67, pool + 0x153, NULL);
+            tex = CUICfManager_getArcResourceAccessor()->GetResource(0x74696D67, pool + 0x153, NULL);
         } else if ((s8)res >= 0x15) {
-            tex = func_801355F4()->GetResource(0x74696D67, pool + 0x1b5, NULL);
+            tex = CUICfManager_getArcResourceAccessor()->GetResource(0x74696D67, pool + 0x1b5, NULL);
         } else if ((s8)res >= 0x10) {
-            tex = func_801355F4()->GetResource(0x74696D67, pool + 0x169, NULL);
+            tex = CUICfManager_getArcResourceAccessor()->GetResource(0x74696D67, pool + 0x169, NULL);
         } else {
-            tex = func_801355F4()->GetResource(0x74696D67, pool + 0x17f, NULL);
+            tex = CUICfManager_getArcResourceAccessor()->GetResource(0x74696D67, pool + 0x17f, NULL);
         }
         if (tex) {
             PaneSetTexPaletteByName(self->mpLayout, pool + 0x195, tex);
@@ -375,7 +375,7 @@ void func_8022DB7C(CPresentWin* self) {
                               ? &lbl_eu_8050A84C[0xe4]
                               : &lbl_eu_8050A84C[0xed];
     char* handle = MakeTplNameSysFile(BdatGetU16ByTableKey(&lbl_eu_8050A84C[0xc5], msgName, 0x9b));
-    nw4r::lyt::ArcResourceAccessor* mgr = func_801355F4();
+    nw4r::lyt::ArcResourceAccessor* mgr = CUICfManager_getArcResourceAccessor();
     void* tex2 = mgr->GetResource(0x74696D67, handle, NULL);
     if (tex2) {
         PaneSetTexPaletteByName(self->mpLayout, &lbl_eu_8050A84C[0x10d], tex2);
@@ -458,7 +458,7 @@ void func_8022D614(CPresentWin* self, nw4r::lyt::ArcResourceAccessor* accessor) 
 
     const char* msgName1 = isClassicController__Q22cf13CfGameManagerFv(-1) ? pool + 0xe4 : pool + 0xed;
     char* handle1 = MakeTplNameSysFile(BdatGetU16ByTableKey(pool + 0xc5, msgName1, 0x2b));
-    nw4r::lyt::ArcResourceAccessor* mgr1 = func_801355F4();
+    nw4r::lyt::ArcResourceAccessor* mgr1 = CUICfManager_getArcResourceAccessor();
     void* tex1 = mgr1->GetResource(0x74696D67, handle1, NULL);
     if (tex1) {
         PaneSetTexPaletteByName(self->mpLayout, pool + 0x10d, tex1);
@@ -483,7 +483,7 @@ void func_8022D614(CPresentWin* self, nw4r::lyt::ArcResourceAccessor* accessor) 
 
     const char* msgName2 = isClassicController__Q22cf13CfGameManagerFv(-1) ? pool + 0xe4 : pool + 0xed;
     char* handle2 = MakeTplNameSysFile(BdatGetU16ByTableKey(pool + 0xc5, msgName2, 0x9b));
-    nw4r::lyt::ArcResourceAccessor* mgr2 = func_801355F4();
+    nw4r::lyt::ArcResourceAccessor* mgr2 = CUICfManager_getArcResourceAccessor();
     void* tex2 = mgr2->GetResource(0x74696D67, handle2, NULL);
     if (tex2) {
         PaneSetTexPaletteByName(self->mpLayout, pool + 0x10d, tex2);

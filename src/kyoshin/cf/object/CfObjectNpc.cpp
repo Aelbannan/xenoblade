@@ -112,7 +112,7 @@ void CfObjectNpc::updateNpcDialog() {
         }
 
         // Dialogue-decided path.
-        if (func_80496288(lbl_eu_80663E14) > lbl_eu_80666AE0 &&
+        if (Scn_GetFrameDelta(lbl_eu_80663E14) > lbl_eu_80666AE0 &&
             this->CObjectState_checkStateFlags8(1) != 0 &&
             this->CObjectState_checkStateFlags(1) == 0 &&
             this->CObjectState_checkStateFlags(0x10) == 0 &&
@@ -126,7 +126,7 @@ void CfObjectNpc::updateNpcDialog() {
                 // Local forces the scene-pointer load before the slot call,
                 // matching retail's r31 hoist.
                 CScn* scene = lbl_eu_80663E14;
-                this->mTimer += func_80496288(scene) *
+                this->mTimer += Scn_GetFrameDelta(scene) *
                                 static_cast<cf::CfObject*>(this)->CfObject_getMoveSpeedRate() / lbl_eu_80666AF0;            }
             resetTimer = false;
         }

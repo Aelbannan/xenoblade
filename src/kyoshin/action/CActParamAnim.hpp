@@ -317,7 +317,7 @@ extern "C" void clearParamShadow(void* data);
 extern "C" void func_8004C608(void* self);
 extern "C" void func_8004CC8C(void* self);
 extern "C" void pushParamNode(void* data);
-extern "C" void* func_80496264(void* obj, s32 id);
+extern "C" void* Scn_FindCamItem(void* obj, s32 id);
 extern "C" void simSetLeafDist7B0(void* self, f32 value);
 extern "C" int func_804BE398(void* vec, u32 a, u32 b, u32 c, f32 d, f32 e);
 extern "C" void func_804BE4B4(void* out, int a);

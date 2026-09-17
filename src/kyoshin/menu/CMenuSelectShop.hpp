@@ -138,7 +138,7 @@ extern "C" void func_80137250__FPQ34nw4r3lyt8DrawInfo(void*);
 extern "C" void __ct__Q34nw4r3lyt8DrawInfoFv(void*);
 extern "C" void __dt__Q34nw4r3lyt8DrawInfoFv(void*, int);
 extern "C" void playUISound__FUl(u32);
-extern "C" void* func_801355F4();
+extern "C" void* CUICfManager_getArcResourceAccessor();
 extern "C" void __ct__8CProcessFv(void*);
 extern "C" void __ct__CCur18(void*, void*);
 extern "C" void __ct__17UnkClass_8045F564Fv(void*);
@@ -157,8 +157,8 @@ extern "C" void func_8018A4A0(CMenuSelectShop*);
 // Shop-window close animation hook + select-shop selection actions (retail
 // unmangled C-ABI symbols; defined in CSelShopWin/CUICfManager TUs).
 extern "C" void func_8022C908(CSelShopWin*);
-extern "C" void func_80134024(u32);
-extern "C" void func_80134100();
+extern "C" void CUICfManager_queueShopBuyMenu(u32);
+extern "C" void CUICfManager_queueShopSellMenu();
 
 // Global data imports (MWCC does not mangle global-scope data names).
 extern u32 lbl_eu_80663E28;             // cbRenderBefore gate flag (.sbss)

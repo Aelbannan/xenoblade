@@ -158,13 +158,13 @@ void CMenuBattleDamage::Init() {
         CMenuBattleDamageEntry& e = mEntries[i];
         nw4r::lyt::ArcResourceAccessor* acc;
 
-        acc = func_801355F4();
+        acc = CUICfManager_getArcResourceAccessor();
         buildLayout(&e.mLayout0, acc, lbl_eu_804FD524 + 0x12);
-        acc = func_801355F4();
+        acc = CUICfManager_getArcResourceAccessor();
         bindLayoutAnimTransform(e.mLayout0, &e.mAnim0, acc, lbl_eu_804FD524 + 0x2d);
-        acc = func_801355F4();
+        acc = CUICfManager_getArcResourceAccessor();
         bindLayoutAnimTransform(e.mLayout0, &e.mAnim1, acc, lbl_eu_804FD524 + 0x4c);
-        acc = func_801355F4();
+        acc = CUICfManager_getArcResourceAccessor();
         bindLayoutAnimTransform(e.mLayout0, &e.mAnim2, acc, lbl_eu_804FD524 + 0x6b);
 
         {
@@ -174,9 +174,9 @@ void CMenuBattleDamage::Init() {
         }
         e.mLayout0->UnbindAllAnimation();
 
-        acc = func_801355F4();
+        acc = CUICfManager_getArcResourceAccessor();
         buildLayout(&e.mLayout1, acc, lbl_eu_804FD524 + 0x8a);
-        acc = func_801355F4();
+        acc = CUICfManager_getArcResourceAccessor();
         bindLayoutAnimTransform(e.mLayout1, &e.mAnim3, acc, lbl_eu_804FD524 + 0xa2);
 
         {
@@ -281,7 +281,7 @@ void CMenuBattleDamage::Move() {
                 world.y += one;
             }
 
-            CMenuBattleDamagePose* pose = func_80496264(mScn, -1);
+            CMenuBattleDamagePose* pose = Scn_FindCamItem(mScn, -1);
             func_8049B59C(&screen, pose, &world);
 
             screen.z = zero;
@@ -702,7 +702,7 @@ void func_801098B0(CMenuBattleDamage* self, int actorId, int value,
             world.y += lbl_eu_80666F6C;
         }
 
-        CMenuBattleDamagePose* pose = func_80496264(self->mScn, -1);
+        CMenuBattleDamagePose* pose = Scn_FindCamItem(self->mScn, -1);
         func_8049B59C(&screen, pose, &world);
 
         screen.y = (screen.y - lbl_eu_80666F74) * lbl_eu_80666F78;
@@ -932,19 +932,19 @@ void func_801098B0(CMenuBattleDamage* self, int actorId, int value,
 
         // Bind a "timg" resource to the small layout (name depends on the
         // flag bits), then set the fixed label string if one was found.
-        u8* res = static_cast<u8*>(func_801355F4()->GetResource(
+        u8* res = static_cast<u8*>(CUICfManager_getArcResourceAccessor()->GetResource(
             0x74696D67, lbl_eu_804FD524 + 0x157, 0));
         if (flags & 0x8) {
-            res = static_cast<u8*>(func_801355F4()->GetResource(
+            res = static_cast<u8*>(CUICfManager_getArcResourceAccessor()->GetResource(
                 0x74696D67, lbl_eu_804FD524 + 0x16e, 0));
         } else if (flags & 0x10) {
-            res = static_cast<u8*>(func_801355F4()->GetResource(
+            res = static_cast<u8*>(CUICfManager_getArcResourceAccessor()->GetResource(
                 0x74696D67, lbl_eu_804FD524 + 0x185, 0));
         } else if (flags & 0x20) {
-            res = static_cast<u8*>(func_801355F4()->GetResource(
+            res = static_cast<u8*>(CUICfManager_getArcResourceAccessor()->GetResource(
                 0x74696D67, lbl_eu_804FD524 + 0x19c, 0));
         } else if (flags & 0x40) {
-            res = static_cast<u8*>(func_801355F4()->GetResource(
+            res = static_cast<u8*>(CUICfManager_getArcResourceAccessor()->GetResource(
                 0x74696D67, lbl_eu_804FD524 + 0x19c, 0));
         }
         if (res != 0) {

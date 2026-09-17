@@ -54,5 +54,5 @@ extern "C" const float lbl_eu_80668318; // -37.0f
 extern "C" const double lbl_eu_806682F8;
 extern "C" u32 getPackedFont__Fv();
 extern "C" int isClassicController__Q22cf13CfGameManagerFv(int);
-extern "C" nw4r::lyt::ArcResourceAccessor* func_801355F4();
+extern "C" nw4r::lyt::ArcResourceAccessor* CUICfManager_getArcResourceAccessor();
 extern "C" void drawLayout__FPQ34nw4r3lyt6LayoutPQ34nw4r3lyt8DrawInfoii(void*, void*, int, int);

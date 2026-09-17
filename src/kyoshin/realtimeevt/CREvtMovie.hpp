@@ -13,7 +13,7 @@
  *   vfunc 1: func_80294CB0  -- empty override (just blr)
  *   vfunc 2: func_8029493C
  *   vfunc 3: inherited (func_80185758 -- returns 0)
- *   vfunc 4: inherited (func_80169048)
+ *   vfunc 4: inherited (CREvtObjVfunc10Default)
  *   vfunc 5: inherited (func_801809A8)
  *   vfunc 6: inherited (func_801696C4)
  *

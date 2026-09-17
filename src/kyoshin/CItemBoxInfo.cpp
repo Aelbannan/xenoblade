@@ -312,7 +312,7 @@ void tryActivateItemBox(CItemBoxInfo* info) {
     }
 }
 
-u32 func_801D4AB0(void* arg) {
+u32 isItemBoxType9Flagged(void* arg) {
     u32 v = *(u32*)arg;
     u32 result = 0;
     if (((v >> 16) & 0xF) == 9) {
@@ -2062,7 +2062,7 @@ extern "C" void func_801D8B08(CItemBoxInfo* info) {
 #pragma pop
 
 // Retail func_801D8C0C: per-slot item-box1 renderer. Loops 7 slots; for slots
-// below the active count it resolves the item name via func_801355F4/vtable[3]
+// below the active count it resolves the item name via CUICfManager_getArcResourceAccessor/vtable[3]
 // and colors the pane; slots at/above the count get a plain label pane. Uses
 // the stmw/lmw frame (optimize_for_size prologue merge). The two sprintf
 // buffers stay separate locals (retail sp+0x48 / sp+0x28).
@@ -2087,7 +2087,7 @@ extern "C" void func_801D8C0C(CItemBoxInfo* info) {
             u32 tag = 0x74696D67u;
             u32 nameId = (u16)BdatGetU16Direct(lbl_eu_80664090, (char*)&lbl_eu_805063BC[0x4ce], slot);
             u32 itemId = (u32)MakeTplNameSysFile(nameId);
-            u32 found = (u32)func_801355F4()->GetResource(tag, (const char*)itemId, NULL);
+            u32 found = (u32)CUICfManager_getArcResourceAccessor()->GetResource(tag, (const char*)itemId, NULL);
             if (found != 0) {
                 idx = (u32)((u8)i + 1);
                 sprintf(buf, (char*)&lbl_eu_805063BC[0x303], idx);
@@ -4560,7 +4560,7 @@ bool CItemBoxInfo::OnFileEvent(CEventFile* file) {
         func_8013676C(root, static_cast<IDeviceFontInfo*>(fontObj)->getFont());
 
         // Seed the label textboxes with the shared text object.
-        char* text = func_801355BC();
+        char* text = CUICfManager_getPackedFont9C();
         setLayoutTextBoxFont(state.layout, &lbl_eu_805063BC[0x25b], (u32)text);
         setLayoutTextBoxFont(state.layout, &lbl_eu_805063BC[0x267], (u32)text);
         setLayoutTextBoxFont(state.layout, &lbl_eu_805063BC[0x273], (u32)text);
@@ -5001,7 +5001,7 @@ extern "C" void func_801E14DC(CItemBoxInfo2* info, u16 arg2, void* arg3, u16 arg
     u16 idFinal = arg2;
     if (*(u8*)((u8*)info + 0x9A) == 4) idFinal = id;
     u32 r = (u8)(u32)BdatGetItemType((u32)idFinal);
-    if (arg3 != NULL && (IsSkillItem(arg3) != 0 || func_801D4AB0(arg3) != 0)) r = 9;
+    if (arg3 != NULL && (IsSkillItem(arg3) != 0 || isItemBoxType9Flagged(arg3) != 0)) r = 9;
     if (r - 4 <= 4) {
         func_801E2C5C(info, idFinal, arg3, arg4);
     } else if (r == 2) {
@@ -6331,7 +6331,7 @@ void func_801E40E8(CItemBoxInfo2* info) {
 
 // Retail func_801E4194: ItemBox2 variant of func_801D8C0C (same body, same
 // stmw r22 frame). Loops 7 slots; below the active count it resolves the item
-// name via func_801355F4/vtable+0x0C and colors the pane; otherwise a plain
+// name via CUICfManager_getArcResourceAccessor/vtable+0x0C and colors the pane; otherwise a plain
 // label pane. The two alpha-only vertex colours are packed into a 4-word block
 // shared by sprintf and the per-vertex func_801D62F8 loop.
 #pragma push
@@ -6354,7 +6354,7 @@ extern "C" void func_801E4194(CItemBoxInfo2* info) {
             u32 nameId = (u16)BdatGetU16Direct(lbl_eu_80664090, (char*)&lbl_eu_805063BC[0x4ce], slot);
             u32 itemId = (u32)MakeTplNameSysFile(nameId);
             // Item-name lookup through the shared name system (vtable+0x0C).
-            u32 found = (u32)func_801355F4()->GetResource(tag, (const char*)itemId, NULL);
+            u32 found = (u32)CUICfManager_getArcResourceAccessor()->GetResource(tag, (const char*)itemId, NULL);
             if (found != 0) {
                 idx = (u32)((u8)i + 1);
                 sprintf(buf, (char*)&lbl_eu_805063BC[0x303], idx);
@@ -7922,7 +7922,7 @@ bool CItemBoxInfo2::OnFileEvent(CEventFile* file) {
         func_8013676C(root, static_cast<IDeviceFontInfo*>(fontObj)->getFont());
 
         // Seed the label textboxes with the shared text object.
-        char* text = func_801355BC();
+        char* text = CUICfManager_getPackedFont9C();
         setLayoutTextBoxFont(state.layout, &lbl_eu_805063BC[0x25b], (u32)text);
         setLayoutTextBoxFont(state.layout, &lbl_eu_805063BC[0x267], (u32)text);
         setLayoutTextBoxFont(state.layout, &lbl_eu_805063BC[0x273], (u32)text);
@@ -8379,7 +8379,7 @@ void func_801D47D4(CItemBoxInfo* info, u16 arg2, void* arg3, u16 arg4) {
         slot = category;
     }
     u8 kind = (u8)BdatGetItemType((u32)slot);
-    if (item2 != 0 && (IsSkillItem(item2) != 0 || func_801D4AB0(item2) == 0)) {
+    if (item2 != 0 && (IsSkillItem(item2) != 0 || isItemBoxType9Flagged(item2) == 0)) {
         kind = 9;
     }
     // Dispatch on the selection kind; the 4..8 range opens the item-box

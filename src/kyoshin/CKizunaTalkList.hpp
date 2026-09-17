@@ -108,7 +108,7 @@ public:
 extern "C" void* getHandleMEM2__Q23mtl10MemManagerFv();
 extern "C" void* readFile__11CDeviceFileFUlPCcP10IWorkEventii(u32, const char*, void*, int, int);
 extern "C" void* readCommonArchiveFile__11CDeviceFileFUlPCcP10IWorkEventii(u32, const char*, void*, int, int);
-extern "C" int func_800A9D90();
+extern "C" int KyoshinHeap_GetField44();
 extern "C" void func_801F34F4(void*);
 extern "C" void func_801F35B0(void*, void*);
 extern "C" void func_801F3670(void*, void*);
@@ -140,7 +140,7 @@ extern "C" void setMemInitFlag__Q23mtl10MemManagerFb(bool value);
 extern "C" nw4r::lyt::ArcResourceAccessor* createArcResourceAccessor__10CLibLayoutFv();
 extern "C" bool Attach__Q34nw4r3lyt19ArcResourceAccessorFPvPCc(nw4r::lyt::ArcResourceAccessor* self, void* data, const char* name);
 extern "C" void* getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32 arg, nw4r::lyt::Layout* layout);
-extern "C" nw4r::lyt::ArcResourceAccessor* func_801355F4();
+extern "C" nw4r::lyt::ArcResourceAccessor* CUICfManager_getArcResourceAccessor();
 extern "C" CBaseCur* __ct__CCur18(void* self, void* param);
 extern "C" void __ct__17UnkClass_8045F564Fv(void* self);
 extern "C" void __ct__CScrollBar(void* self, u8 direction);

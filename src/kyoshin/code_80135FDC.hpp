@@ -89,7 +89,7 @@ void PaneMatSetTevColorsByName(void*, void*, void*, void*);
 extern "C" int IsMenuState621F0();
 extern "C" u8 code80135FDC_getByte_64077();
 
-// Frame object returned by func_8049626C as consumed by drawLayout: the
+// Frame object returned by Scn_HasCamItem as consumed by drawLayout: the
 // view matrix lives at +0xCC (3x4) and the projection matrix at +0x194.
 // Struct assignment of the matrix member makes MWCC emit the retail lwz/stw
 // pair copy inline (a u32 loop would degrade to sequential loads/stores).
@@ -140,7 +140,7 @@ extern void deallocate__Q23mtl10MemManagerFPv(void*);
 extern void Set__Q34nw4r3lyt12AnimResourceFPCv(void*, const void*);
 extern void PSVECNormalize(const Vec*, Vec*);
 extern void* getCurrentView__5CViewFv();
-extern void* func_8049626C(void*, void*);
+extern void* Scn_HasCamItem(void*, void*);
 extern void SetFont__Q34nw4r3lyt7TextBoxFPCQ34nw4r2ut4Font(nw4r::lyt::TextBox*, const nw4r::ut::Font*);
 extern void func_8006A234(u16*, u16*);
 extern int func_8006A6D0();

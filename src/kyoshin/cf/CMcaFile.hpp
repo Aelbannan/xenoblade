@@ -4,7 +4,7 @@
 #include "monolib/util/FixStr.hpp"
 
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
-extern "C" void func_80495EAC(void*, void*, ml::FixStr<64>&);
+extern "C" void Scn_InitGlobalA(void*, void*, ml::FixStr<64>&);
 // Retail CMcaFile vtable data (kyoshin split .data @0x80526348). The class is
 // __declspec(novtable), so the ctor assigns the retail label explicitly
 // instead of the compiler-generated __vt__8CMcaFile (which would add

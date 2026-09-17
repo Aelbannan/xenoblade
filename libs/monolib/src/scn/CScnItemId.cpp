@@ -75,7 +75,7 @@ CScnItemId* __ct__804820F8(CScnItemIdHost* self, u32 value, const char* name) {
     }
 
     if (name != NULL) {
-        CScnItemId* newItem = (CScnItemId*)mtl::MemManager::allocate(0x54, func_80496018(self));
+        CScnItemId* newItem = (CScnItemId*)mtl::MemManager::allocate(0x54, Scn_CallUnk8C_V8(self));
         if (newItem != NULL) {
             // Retail does not default-construct the FixStr before
             // getNoPathExtName fills it (no ctor call in the retail body); the
@@ -95,7 +95,7 @@ CScnItemId* __ct__804820F8(CScnItemIdHost* self, u32 value, const char* name) {
         }
         item = newItem;
     } else {
-        item = (CScnItemId*)mtl::MemManager::allocate(0x54, func_80496018(self));
+        item = (CScnItemId*)mtl::MemManager::allocate(0x54, Scn_CallUnk8C_V8(self));
         if (item != NULL) {
             item->mParent = self;
             item->mType = 5;

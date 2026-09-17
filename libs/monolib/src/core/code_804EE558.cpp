@@ -45,7 +45,7 @@ extern CGradEntry lbl_eu_80660B78[360]; // cos table
 extern GXRenderModeObj* getRenderModeObj__9CDeviceVIFv();
 extern void* cacheInstance__9CDeviceGX;
 extern u32 getAdjustFlag__8CGXCacheFv(void* cache);
-extern void* func_80496264(void* rsrc, int idx);
+extern void* Scn_FindCamItem(void* rsrc, int idx);
 extern void func_804D8B28(void* desktop);
 extern void func_804D8B30(void* desktop);
 extern void func_804D8B38(void* draw);
@@ -280,10 +280,10 @@ extern "C" void func_804EE658(CLytBind* self, CBindSource* src) {
         break;
     case 11: {
         if (self->mFlag == 0) {
-            void* obj = func_80496264(self->mPane->mRsrc, -1);
+            void* obj = Scn_FindCamItem(self->mPane->mRsrc, -1);
             func_804DCD94(&self->mMtx, (u8*)obj + 0x118);
         } else {
-            void* obj = func_80496264(self->mPane->mRsrc, -1);
+            void* obj = Scn_FindCamItem(self->mPane->mRsrc, -1);
             func_804DD440(&self->mMtx, obj, *(float*)((u8*)obj + 0x11C));
         }
         break;
@@ -337,7 +337,7 @@ extern "C" void func_804EE8FC(CLytBind* self, CBindSource* src) {
         }
     }
     if (mt == 11) {
-        void* obj = func_80496264(self->mPane->mRsrc, -1);
+        void* obj = Scn_FindCamItem(self->mPane->mRsrc, -1);
         const float* v = (const float*)((u8*)obj + 0x10C);
         pos.set(v[0], v[1], v[2]);
     }

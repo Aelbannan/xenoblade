@@ -11,7 +11,7 @@ namespace cf {
 void CHelp::dispatchHelp() {
     UNKWORD a = this->getSkipResetFlag();
     UNKWORD b = this->getHelpSceneId();
-    func_80134D18(static_cast<u8>(mParam), b, a);
+    CUICfManager_queueTutorialMenu(static_cast<u8>(mParam), b, a);
     func_8009D018(mOwner, 1);
 }
 
@@ -25,10 +25,10 @@ extern "C" void func_802B7C64() {
     func_8029A658();
 }
 
-// Close/refresh the party menu: func_8013DB6C(mode 3) on this instance's
+// Close/refresh the party menu: UIWin_CreateMenuUpdate(mode 3) on this instance's
 // parameter, then re-arms the interface via func_8009D018.
 void cf::CHelp::func_802B7C68() {
-    func_8013DB6C(3, this->mParam, 0, 0);
+    UIWin_CreateMenuUpdate(3, this->mParam, 0, 0);
     func_8009D018(this->mOwner, 1);
 }
 

@@ -294,8 +294,8 @@ extern "C" void func_8013676C(nw4r::lyt::Pane*, void*);
 // Font/line text providers: getPackedFont is the retail MANGLED name (C++
 // linkage), the other two are plain C-ABI names.
 char* getPackedFont();
-extern "C" char* func_801355BC();
-extern "C" nw4r::lyt::ArcResourceAccessor* func_801355F4();
+extern "C" char* CUICfManager_getPackedFont9C();
+extern "C" nw4r::lyt::ArcResourceAccessor* CUICfManager_getArcResourceAccessor();
 void setLayoutTextBoxFont(nw4r::lyt::Layout*, char*, u32);
 extern "C" int isClassicController__Q22cf13CfGameManagerFv(int);
 extern "C" u16 BdatGetU16ByTableKey(const void*, const void*, u16);
@@ -304,7 +304,7 @@ extern "C" CEquipItemBoxFourShorts func_801397AC(void*, u32);
 extern "C" void CopyVec4s(void*, const void*);
 extern "C" void func_80137F88(void*, u32);
 extern "C" char* BdatGetPtrDirect(const void*, const void*, int);
-extern "C" void func_801FA220(u8*, const u8*);
+extern "C" void PartyStateWin_CopySlotRec(u8*, const u8*);
 extern "C" void __ct__CCur18(void*, void*);
 extern "C" void* func_8003AA34();  // bdat manager reset (no args; retail caller leaves r3 stale)
 extern "C" void* getFP__FPCc(const char*);
@@ -682,7 +682,7 @@ extern "C" void LayoutSetTextBoxFmtValue(nw4r::lyt::Layout*, const char*, const 
 extern "C" void func_80137924(void*, void*, void*, void*);
 // Per-frame update helpers (retail plain names, defined in sibling TUs).
 extern "C" void func_801D3064(void*);
-extern "C" int func_800A9D90(void);
+extern "C" int KyoshinHeap_GetField44(void);
 extern "C" void func_801D202C(void*);
 extern "C" void func_801D3160(void*);
 extern "C" void func_8022B748(void*);

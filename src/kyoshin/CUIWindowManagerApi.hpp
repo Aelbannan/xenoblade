@@ -7,8 +7,8 @@
 // whose include closure cannot take the full owner header include this
 // instead; the declaration here is identical to the owner copy.
 
-// Flag-buffer builder (retail func_801412D0).
-extern "C" u8* func_801412D0(u32 target);
+// Flag-buffer builder (retail UIWin_BuildFlagBuf).
+extern "C" u8* UIWin_BuildFlagBuf(u32 target);
 
 // Item-availability query (retail func_80140854); same signature as the
 // owner copy in CUIWindowManager.hpp.

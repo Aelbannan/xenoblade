@@ -287,7 +287,7 @@ void cf::CfHikariItemManager::cbRenderBefore() {
         return;
     }
 
-    CfViewFrame* viewFrame = (CfViewFrame*)func_8049626C(lbl_eu_80663E14,
+    CfViewFrame* viewFrame = (CfViewFrame*)Scn_HasCamItem(lbl_eu_80663E14,
                                                          lbl_eu_80663E10);
     GXSetProjection(viewFrame->projection, GX_PERSPECTIVE);
     GXSetCurrentMtx(0);
@@ -368,7 +368,7 @@ void cf::CfHikariItemManager::cbRenderBefore() {
 
     // Fade amount from the frame timer; forced to 0 while the game is in a
     // menu/fade state or when the manager's bit-1 toggle was already set.
-    f32 fade = func_80496288(lbl_eu_80663E14);
+    f32 fade = Scn_GetFrameDelta(lbl_eu_80663E14);
     if (cf::CfGameManager::isSceneLoading()) {
         fade = lbl_eu_80668EC8;
     }

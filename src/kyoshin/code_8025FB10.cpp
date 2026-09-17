@@ -432,9 +432,9 @@ SUM:
 // Retail unrolls 5 levels then tail-calls itself. The nested-if shape with
 // the n3-return kept flat reproduces retail's register rotation (n1=r4,
 // n2=r5, n3=r3, n4=r4, n5=r3) and bottom ret-blocks (MWCC_CASES
-// func_8025F290 pattern); the fully-flat or fully-nested forms differ.
+// KizunaEntryFindListHead pattern); the fully-flat or fully-nested forms differ.
 // extern "C" keeps the self tail-call reloc name verbatim (reloc-site
-// gate) - same as func_8025F290 in CPcKizunagram.cpp.
+// gate) - same as KizunaEntryFindListHead in CPcKizunagram.cpp.
 extern "C" CUnkList8025FB10* func_8025FD60(CUnkList8025FB10* p) {
     CUnkList8025FB10* n1 = p->field_18;
     if (n1 == 0) return p;

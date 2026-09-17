@@ -284,7 +284,7 @@ bool CSelShopWin::OnFileEvent(CEventFile* pEventFile) {
         char* mssg = MakeTplNameSysFile(val);
 
         // Look up the persistent shop message object by its 'timg' key.
-        nw4r::lyt::ArcResourceAccessor* mgr = func_801355F4();
+        nw4r::lyt::ArcResourceAccessor* mgr = CUICfManager_getArcResourceAccessor();
         UnkMsgObj* obj = static_cast<UnkMsgObj*>(mgr->GetResource(0x74696d67U, mssg, 0));
         if (obj != NULL) {
             PaneSetTexPaletteByName(mLayout, &lbl_eu_8050A62C[0xeb], obj);

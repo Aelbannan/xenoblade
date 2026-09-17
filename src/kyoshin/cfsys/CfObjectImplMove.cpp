@@ -4,7 +4,7 @@
 #include "kyoshin/harness_catalog.hpp"
 #include "kyoshin/cf/CfMapItemManager.hpp"
 #include "kyoshin/cf/object/CfObjectMove.hpp" // CfObjectMove_setAnimModeArgs (owner decl)
-#include "libs/monolib/src/scn/CScn_8049603C.hpp" // func_8049603C (single owner decl)
+#include "libs/monolib/src/scn/CScn_8049603C.hpp" // Scn_QueryUnk80State (single owner decl)
 #include "monolib/scn/CScnTimeApi.hpp"
 #include "kyoshin/cfsys/CfObjectImplMove.hpp"
 #include <nw4r/math.h>
@@ -487,7 +487,7 @@ void func_800CB9AC(void* selfV, u32 id) {
 // actor id 5 is registered and its float counter exceeds the threshold.
 void func_800CBBD8(CfObjectImplMoveObj* self) {
     getInstance__Q22cf13CfGameManagerFv();
-    if (!isGlobalCamFlagSet(0x400) && func_80496288(lbl_eu_80663E14) != lbl_eu_80666C60) {
+    if (!isGlobalCamFlagSet(0x400) && Scn_GetFrameDelta(lbl_eu_80663E14) != lbl_eu_80666C60) {
         void* src = self->field_0x18->sub.vfn13();
         if (src == nullptr) {
             // No source bound: only reset when the probe stays empty.
@@ -577,7 +577,7 @@ void func_800CC020(CfObjectImplMoveObj* self) {
     if (evt == nullptr)
         return;
     getInstance__Q22cf13CfGameManagerFv();
-    if (func_80496288(lbl_eu_80663E14) == lbl_eu_80666C60)
+    if (Scn_GetFrameDelta(lbl_eu_80663E14) == lbl_eu_80666C60)
         return;
     f32 t = evt->field_4F8;
     if (!(t > lbl_eu_80666C60) || evt->field_4AC == 8)
@@ -753,7 +753,7 @@ void func_800CC964(CfObjectImplMoveObj* self, u32 id, CfMoveReqParam* param) {
             return;
         }
         u32 handle = ((CfObjectImplMoveSubObj*)self->mSubObj)->field_0x74;
-        f32 vol = ((f32*)func_8049603C((CScn*)lbl_eu_80663E14))[3];
+        f32 vol = ((f32*)Scn_QueryUnk80State((CScn*)lbl_eu_80663E14))[3];
         func_801BFE20(0, snd, (u8*)(uintptr_t)handle,
             lbl_eu_80666C64 - vol, lbl_eu_80666C98);
         break;
@@ -976,7 +976,7 @@ void func_800CD460(CfObjectImplMoveObj* self, CfMoveCd460Target* target,
         return;
     }
 
-    CfMoveCd460Pose* pose = (CfMoveCd460Pose*)func_80496264(lbl_eu_80663E14, -1);
+    CfMoveCd460Pose* pose = (CfMoveCd460Pose*)Scn_FindCamItem(lbl_eu_80663E14, -1);
 
     // Position delta between the actor and the scene pose: VEC3Sub lowers to
     // the inlined PS kernel; the components are then re-stored through a
@@ -1716,7 +1716,7 @@ void func_800CEE80(CfObjectImplMoveObj* self) {
         lbl_eu_80666C64};
     setChildV40__(mgr, epos);
     if (flag == 0) {
-        f32 vol = ((f32*)func_8049603C((CScn*)lbl_eu_80663E14))[3];
+        f32 vol = ((f32*)Scn_QueryUnk80State((CScn*)lbl_eu_80663E14))[3];
         func_801BFDE8(0, sndId, (u32)(uintptr_t)&vec, lbl_eu_80666C64 - vol,
             lbl_eu_80666C98);
     }
@@ -1800,7 +1800,7 @@ void func_800CF064(CfObjectImplMoveObj* self, CfMoveContact* param) {
         if (lbl_eu_80663EF0 != 0) {
             return;
         }
-        f32 vol = ((f32*)func_8049603C((CScn*)lbl_eu_80663E14))[3];
+        f32 vol = ((f32*)Scn_QueryUnk80State((CScn*)lbl_eu_80663E14))[3];
         u32 handle = self->mSubObj->field_0x74;
         func_801BFE20(0, 0xce, (u8*)(uintptr_t)handle,
             lbl_eu_80666CA8 * (lbl_eu_80666C64 - vol), lbl_eu_80666C98);
@@ -1966,7 +1966,7 @@ void func_800CF064(CfObjectImplMoveObj* self, CfMoveContact* param) {
 
     // Tail: tiered impact sound.
     if ((int)sndId >= 0 && lbl_eu_80663EF0 == 0) {
-        f32 vol = ((f32*)func_8049603C((CScn*)lbl_eu_80663E14))[3];
+        f32 vol = ((f32*)Scn_QueryUnk80State((CScn*)lbl_eu_80663E14))[3];
         u32 handle = self->mSubObj->field_0x74;
         func_801BFE20(0, sndId, (u8*)(uintptr_t)handle,
             lbl_eu_80666CA8 * (lbl_eu_80666C64 - vol), lbl_eu_80666C98);
@@ -2199,7 +2199,7 @@ void func_800CF810(CfObjectImplMoveObj* self, CfMoveContact* param) {
     if (lbl_eu_80663EF0 != 0)
         return;
     u32 handle = self->mSubObj->field_0x74;
-    f32 vol = ((f32*)func_8049603C((CScn*)lbl_eu_80663E14))[3];
+    f32 vol = ((f32*)Scn_QueryUnk80State((CScn*)lbl_eu_80663E14))[3];
     func_801BFE20(0, sndId, (u8*)(uintptr_t)handle,
                   lbl_eu_80666CA8 * (lbl_eu_80666C64 - vol),
                   lbl_eu_80666C98);

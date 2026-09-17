@@ -12,19 +12,19 @@ extern "C" {
 void __ct__cf_CfGimmick(void* self);
 void __dt__Q22cf9CfGimmickFv(void* self, int mode);
 void* func_8003AA34();
-void func_8020938C(void* self, void* subobj, void* bdat, void* stack, int idx);
-void func_802095D8(void* self, void* subobj, void* bdat, void* stack, int idx);
-void func_80209488(void* self, void* subobj, void* bdat, void* stack, int idx);
+void CfGimmick_LoadBdatAreaPosIndexed(void* self, void* subobj, void* bdat, void* stack, int idx);
+void CfGimmick_LoadBdatAreaRotationIndexed(void* self, void* subobj, void* bdat, void* stack, int idx);
+void CfGimmick_LoadBdatAreaExtentsIndexed(void* self, void* subobj, void* bdat, void* stack, int idx);
 void func_802089BC(void* dst, void* src1, void* src2);
-// func_80208C48 plays a sound id at a position (first arg comes from a u16 field)
-void func_80208C48(int id, void* pos);
+// CfGimmick_PlaySoundAtPos plays a sound id at a position (first arg comes from a u16 field)
+void CfGimmick_PlaySoundAtPos(int id, void* pos);
 // bdat-driven SFX lookup: (id, position)
-int func_80208C60(u16 id, void* pos);
-void func_80208EE4(void* self);
-int func_8020971C(u16 id);
-int func_80209754(u8 flag, void* a, void* b, void* c, u32 d);
+int CfGimmick_PlaySoundAtPosScaled(u16 id, void* pos);
+void CfGimmick_ClearManagerBinding(void* self);
+int CfGimmick_CheckStateFlag2CC8(u16 id);
+int CfGimmick_CheckTriggerGated(u8 flag, void* a, void* b, void* c, u32 d);
 // Retail evidence: called with no visible argument setup (r3 left as-is)
-void func_80209F5C(void);
+void CfGimmick_SetGlobalFlagC0002(void);
 void* func_8020A35C(void* self, int a, void* b);
 void func_8020A434(void* ptr);
 void func_8020A484(u16 id);

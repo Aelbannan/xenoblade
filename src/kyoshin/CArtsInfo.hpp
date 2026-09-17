@@ -186,7 +186,7 @@ extern "C" int getLanguage__9CDeviceSCFv();
 extern "C" s8 BdatGetS8ByTableKey(const void*, const char*, u8); // BDAT string -> s8
 extern "C" void* getHandleMEM2__Q23mtl10MemManagerFv();
 extern "C" void* readFile__11CDeviceFileFUlPCcP10IWorkEventii(u32, const char*, void*, int, int);
-extern "C" u32 func_800A9D90();
+extern "C" u32 KyoshinHeap_GetField44();
 extern "C" void* readCommonArchiveFile__11CDeviceFileFUlPCcP10IWorkEventii(u32, const char*, void*, int, int);
 extern "C" void getEntry__5CBdatFUl(u32);
 extern "C" void closeFileHandle__FPP11CFileHandle(void*);
@@ -270,7 +270,7 @@ extern double lbl_eu_806686A8;
 extern float lbl_eu_806686A4;
 
 // Float constants in the small data area (sda21-accessed via lfs): scaling
-// factors for the arts-level percentage computations in func_80237238.
+// factors for the arts-level percentage computations in CArtsInfo_CalcDmg52.
 extern float lbl_eu_80668690;
 extern float lbl_eu_80668694;
 
@@ -302,13 +302,13 @@ extern "C" void setMemInitFlag__Q23mtl10MemManagerFb(bool);
 extern "C" nw4r::lyt::ArcResourceAccessor* createArcResourceAccessor__10CLibLayoutFv();
 extern "C" void* getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32, nw4r::lyt::Layout*);
 extern "C" void func_8013676C(nw4r::lyt::Pane*, u32);
-extern "C" char* func_801355BC(void);
+extern "C" char* CUICfManager_getPackedFont9C(void);
 extern "C" void setLayoutTextBoxFont(nw4r::lyt::Layout*, char*, u32);
 extern "C" void buildLayout(nw4r::lyt::Layout**, nw4r::lyt::ArcResourceAccessor*, const char*);
 extern "C" void bindLayoutAnimTransform(nw4r::lyt::Layout*, nw4r::lyt::AnimTransform**, nw4r::lyt::ArcResourceAccessor*, char*);
 extern "C" int isClassicController__Q22cf13CfGameManagerFv(int);
 extern "C" char* MakeTplNameSysFile(u32);
-extern "C" nw4r::lyt::ArcResourceAccessor* func_801355F4();
+extern "C" nw4r::lyt::ArcResourceAccessor* CUICfManager_getArcResourceAccessor();
 extern "C" void PaneSetTexPaletteByName(nw4r::lyt::Layout*, const char*, u32);
 extern "C" void func_80124270(void*, u32);
 extern "C" void setBdatEntry__5CBdatFUlPv(u32, void*);

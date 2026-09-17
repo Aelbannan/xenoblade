@@ -42,9 +42,9 @@ extern "C" {
     void setTargetObj_(void* obj, void* target);
     void func_800AC4A8(void* obj, u16 param);
     void func_800ABF24(void* obj, void* pos, void* offset, float f);
-    void func_8013D07C(void* subObj, const char* str, int flag);
-    void func_8013D448(void* subObj, const char* str);
-    unsigned int func_8013EC58();
+    void UIWin_CreateTalkWin(void* subObj, const char* str, int flag);
+    void UIWin_CreateEveTalkWin(void* subObj, const char* str);
+    unsigned int UIWin_GetTimer();
     int code80135FDC_getByte_64058();
     void* __dynamic_cast(void* obj, int offset, void* rtti, void* targetRtti, int flag);
     int strcmp(const char* s1, const char* s2);
@@ -912,7 +912,7 @@ extern "C" int winTalk(VMThread* pThread, int handle) {
     if (player != NULL) {
         player = (cf::CfObjectMove*)((u8*)player - 0x3E9C);
     }
-    func_8013D07C(*(void**)((u8*)obj + 0x74), str, 1);
+    UIWin_CreateTalkWin(*(void**)((u8*)obj + 0x74), str, 1);
     u32 flags = obj->unk64;
     if (flags & 0x8) {
         if (((cf::CObjectState*)obj)->CObjectState_setStateBitMask0(1, 1) == 0) {
@@ -963,13 +963,13 @@ extern "C" int setState10(VMThread* pThread, int handle) {
 }
 
 // us-8003e2c0: talkMsg
-// Gets a string arg and calls func_8013D07C on the object's sub-field
+// Gets a string arg and calls UIWin_CreateTalkWin on the object's sub-field
 extern "C" int talkMsg(VMThread* pThread, int handle) {
     VMArg* arg1 = vmArgPtrGet(pThread, 1);
     const char* str = vmArgStringGet(2, arg1);
     void* ctx = func_801862C0();
     cf::CfObject* obj = (cf::CfObject*)func_801864DC(ctx, handle);
-    func_8013D07C(*(void**)((u8*)obj + 0x74), str, 1);
+    UIWin_CreateTalkWin(*(void**)((u8*)obj + 0x74), str, 1);
     return 0;
 }
 
@@ -978,7 +978,7 @@ extern "C" int talkMsg(VMThread* pThread, int handle) {
 extern "C" int getSearchHandle(VMThread* pThread, int handle) {
     VMArg retVal;
     retVal.type = 3;
-    retVal.value.uintVal = func_8013EC58();
+    retVal.value.uintVal = UIWin_GetTimer();
     vmRetValSet(pThread, &retVal);
     return 1;
 }
@@ -993,7 +993,7 @@ extern "C" int sendNotify(VMThread* pThread, int handle) {
     str = vmArgStringGet(2, arg1);
     void* ctx = func_801862C0();
     obj = (cf::CfObject*)func_801864DC(ctx, handle);
-    func_8013D448(*(void**)((u8*)obj + 0x74), str);
+    UIWin_CreateEveTalkWin(*(void**)((u8*)obj + 0x74), str);
     if (obj->unk64 & 0x8) {
         if (!((cf::CObjectState*)obj)->CObjectState_setStateBitMask0(1, 1)) {
             ((cf::CObjectState*)obj)->CObjectState_setStateBitMask(1);

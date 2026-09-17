@@ -217,7 +217,7 @@ extern "C" void func_8044BB20__8CGXCacheFv(CGXCache* cache, f32* projOut,
 // C-linkage declarations reproduce them; the retail map resolves the symbols).
 struct CScnCameraItemHost;
 extern "C" u32 func_8048C5B8(u8* self, s32 kind);
-extern "C" u8* func_8048C480(u8* self);
+extern "C" u8* CScnItemPool_allocBigSlot(u8* self);
 extern "C" u32 func_8048C630(u8* self, u8* other, u32 flag);
 // Runtime throw helper (NMWException.h is not included: it drags in
 // __ppc_eabi_linker.h which conflicts with __ppc_eabi_init.h's _stack_addr).
@@ -821,7 +821,7 @@ CScnItemCamera* func_8049F9A8(CScnCameraItemHost* self, int arg2) {
     ml::FixStr<32> str(true);
     str.format(lbl_eu_80524258, arg2);
 
-    u8* alloc = func_8048C480(self->mPool);
+    u8* alloc = CScnItemPool_allocBigSlot(self->mPool);
     CScnItemCamera* cam = (CScnItemCamera*)alloc;
     if (alloc != 0) {
         // Construct the Nw4r camera. The try/catch is the retail exception

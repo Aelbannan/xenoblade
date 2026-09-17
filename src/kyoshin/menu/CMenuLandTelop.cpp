@@ -245,17 +245,17 @@ void CMenuLandTelop::Move() {
             switch (kind) {
             case 0:
                 func_80043738(0, &lbl_eu_80501720[0x29],
-                              func_80495FF0(lbl_eu_80663E14), 2, 1, 0,
+                              Scn_CallUnk8C_V9(lbl_eu_80663E14), 2, 1, 0,
                               func_801895EC());
                 break;
             case 1:
                 func_80043738(0, &lbl_eu_80501720[0x39],
-                              func_80495FF0(lbl_eu_80663E14), 2, 1, 0x5a,
+                              Scn_CallUnk8C_V9(lbl_eu_80663E14), 2, 1, 0x5a,
                               func_801895EC());
                 break;
             case 2:
                 func_80043738(0, &lbl_eu_80501720[0x49],
-                              func_80495FF0(lbl_eu_80663E14), 2, 1, 0,
+                              Scn_CallUnk8C_V9(lbl_eu_80663E14), 2, 1, 0,
                               lbl_eu_806673EC * func_801895EC());
                 break;
             }
@@ -447,9 +447,9 @@ void func_8014548C(CMenuLandTelop* self) {
 
     switch (self->field_8E) {
     case 0:
-        buildLayout(&self->field_54, func_801355F4(),
+        buildLayout(&self->field_54, CUICfManager_getArcResourceAccessor(),
                       &lbl_eu_80501720[0x68]);
-        bindLayoutAnimTransform(self->field_54, &self->field_88, func_801355F4(),
+        bindLayoutAnimTransform(self->field_54, &self->field_88, CUICfManager_getArcResourceAccessor(),
                       &lbl_eu_80501720[0x81]);
 
         // Retail re-derives the root pane inline for every lookup.
@@ -514,9 +514,9 @@ void func_8014548C(CMenuLandTelop* self) {
         }
         break;
     case 1: // field_8E == 1
-        buildLayout(&self->field_54, func_801355F4(),
+        buildLayout(&self->field_54, CUICfManager_getArcResourceAccessor(),
                       &lbl_eu_80501720[0x11b]);
-        bindLayoutAnimTransform(self->field_54, &self->field_88, func_801355F4(),
+        bindLayoutAnimTransform(self->field_54, &self->field_88, CUICfManager_getArcResourceAccessor(),
                       &lbl_eu_80501720[0x134]);
 
         self->field_54->GetRootPane()

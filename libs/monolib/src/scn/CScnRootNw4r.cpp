@@ -328,18 +328,18 @@ extern "C" void func_8048F8E8(CScnRootNw4r* self) {
     }
 
     self->field_0x1C = 0;
-    func_80496984((u32)self->field_0x4);
+    Scn_SetCurrentScene((u32)self->field_0x4);
 
     nw4r::g3d::AnmScn* anm = self->mScnRoot->mpAnmScn;
     if (anm != NULL) {
-        anm->SetUpdateRate(func_80496288(self->field_0x4));
+        anm->SetUpdateRate(Scn_GetFrameDelta(self->field_0x4));
     }
 
     scnLgtBindCamera(self->field_0x4->mEnvLgtCtrl);
     self->mScnRoot->UpdateFrame();
     self->mScnRoot->CalcWorld();
     self->mScnRoot->CalcMaterial();
-    func_80496984(0);
+    Scn_SetCurrentScene(0);
     self->field_0x18 = 1;
 }
 
@@ -370,7 +370,7 @@ extern "C" void func_8048F994(CScnRootNw4r* self) {
     ICulling* culling = self->field_0x4->mCulling;
     if (culling != NULL) {
         culling->update(
-            (ml::CFrustum*)func_80496264(self->field_0x4, -1));
+            (ml::CFrustum*)Scn_FindCamItem(self->field_0x4, -1));
     }
 
     func_804C22F0(self->field_0x4->mEnvLgtCtrl);

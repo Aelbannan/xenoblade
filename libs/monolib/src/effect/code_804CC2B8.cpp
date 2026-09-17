@@ -260,7 +260,7 @@ extern "C" void __attribute__((never_inline)) __dt__804CC2E4(EffectStruct* self)
     if (saved != 0) {
         // Two-arg call form keeps the checked pointer live in r4 across the
         // compare (retail passes it through as a spare argument).
-        ((void (*)(void*, void*))func_80495E84)(
+        ((void (*)(void*, void*))Scn_HasWorkItem)(
             *(void**)((u8*)self->field_0x08 + 0x10), saved);
         self->field_0x32c = 0;
     }
@@ -1281,11 +1281,11 @@ extern "C" void __attribute__((never_inline)) func_804CE9A4(EffectScene* self, M
     Mtx mtx1a0;
     s32 mtxFlag = 0;
     if (tp == 0 || tp == 6) {
-        void* obj = func_80496264(*(void**)((u8*)self->field_0x08 + 0x10), -1);
+        void* obj = Scn_FindCamItem(*(void**)((u8*)self->field_0x08 + 0x10), -1);
         func_804D927C(mtx1a0, obj);
         mtxFlag = 1;
     } else if (tp == 1 || tp == 7) {
-        void* obj = func_80496264(*(void**)((u8*)self->field_0x08 + 0x10), -1);
+        void* obj = Scn_FindCamItem(*(void**)((u8*)self->field_0x08 + 0x10), -1);
         func_804D928C(mtx1a0, (const u8*)obj);
         mtxFlag = 1;
     }
@@ -1500,7 +1500,7 @@ extern "C" void __attribute__((never_inline)) func_804CF700(EffectScene* self, f
     // defined by the tone-range u16s; skipped when sub bit 0x0800 is set,
     // the table is missing or the class is 4.
     if (!((sub->field_0x1c & 0x0800)) && sub->field_0xdc != 0 && sub->field_0x00 != 4) {
-        void* rsrc = func_80496264(obj->field_0x10, -1);
+        void* rsrc = Scn_FindCamItem(obj->field_0x10, -1);
         ml::CVec3 diff = *(const ml::CVec3*)p1 - *(const ml::CVec3*)((u8*)rsrc + 0x10c);
         f32 mag = PSVECMag(diff);
         ToneRange* tr = sub->field_0xdc;
@@ -1894,7 +1894,7 @@ extern "C" void __attribute__((never_inline)) func_804D01E0(EffectScene* self, v
             Mtx tmp;
             Mtx mtxA0;
             MatFlags* mat = (MatFlags*)self->field_0x08;
-            void* m = func_80496264(mat->field_0x10, -1);
+            void* m = Scn_FindCamItem(mat->field_0x10, -1);
             PSMTXConcat((const float(*)[4])((u8*)m + 0xcc), node->mtx, tmp);
             *(MtxCopy*)&node->mtx = *(MtxCopy*)&tmp;
             *(MtxCopy*)&mtxA0 = *(MtxCopy*)&tmp;
@@ -2096,7 +2096,7 @@ extern "C" void __attribute__((never_inline)) func_804D0AB4(EffectScene* self, s
             Mtx stackMtx;
             Mtx mtxA0;
             MatFlags* mat = (MatFlags*)self->field_0x08;
-            void* m = func_80496264(mat->field_0x10, -1);
+            void* m = Scn_FindCamItem(mat->field_0x10, -1);
             PSMTXConcat((const float(*)[4])((u8*)m + 0xcc), node->mtx, stackMtx);
             *(MtxCopy*)&node->mtx = *(MtxCopy*)&stackMtx;
             *(MtxCopy*)&mtxA0 = *(MtxCopy*)&stackMtx;
@@ -2548,7 +2548,7 @@ extern "C" void __attribute__((never_inline)) func_804D189C(EffectNode* nodeRaw,
             Mtx stackMtx;
             Mtx mtxA0;
             MatFlags* mat = (MatFlags*)self->field_0x08;
-            void* m = func_80496264(mat->field_0x10, -1);
+            void* m = Scn_FindCamItem(mat->field_0x10, -1);
             PSMTXConcat((const float(*)[4])((u8*)m + 0xcc), node->mtx, stackMtx);
             *(MtxCopy*)&node->mtx = *(MtxCopy*)&stackMtx;
             *(MtxCopy*)&mtxA0 = *(MtxCopy*)&stackMtx;
@@ -2701,7 +2701,7 @@ extern "C" void __attribute__((never_inline)) func_804D20EC(EffectNode* nodeRaw,
             Mtx stackMtx;
             Mtx mtxA0;
             MatFlags* mat = (MatFlags*)self->field_0x08;
-            void* m = func_80496264(mat->field_0x10, -1);
+            void* m = Scn_FindCamItem(mat->field_0x10, -1);
             PSMTXConcat((const float(*)[4])((u8*)m + 0xcc), node->mtx, stackMtx);
             *(MtxCopy*)&node->mtx = *(MtxCopy*)&stackMtx;
             *(MtxCopy*)&mtxA0 = *(MtxCopy*)&stackMtx;
@@ -2843,7 +2843,7 @@ extern "C" void __attribute__((never_inline)) func_804D2B60(EffectNode* nodeRaw,
             Mtx stackMtx;
             Mtx mtxA0;
             MatFlags* mat = (MatFlags*)self->field_0x08;
-            void* m = func_80496264(mat->field_0x10, -1);
+            void* m = Scn_FindCamItem(mat->field_0x10, -1);
             PSMTXConcat((const float(*)[4])((u8*)m + 0xcc), node->mtx, stackMtx);
             *(MtxCopy*)&node->mtx = *(MtxCopy*)&stackMtx;
             *(MtxCopy*)&mtxA0 = *(MtxCopy*)&stackMtx;
@@ -2971,7 +2971,7 @@ extern "C" void __attribute__((never_inline)) func_804D3098(EffectNode* nodeRaw,
             Mtx stackMtx;
             Mtx mtxA0;
             MatFlags* mat = (MatFlags*)self->field_0x08;
-            void* m = func_80496264(mat->field_0x10, -1);
+            void* m = Scn_FindCamItem(mat->field_0x10, -1);
             PSMTXConcat((const float(*)[4])((u8*)m + 0xcc), node->mtx, stackMtx);
             *(MtxCopy*)&node->mtx = *(MtxCopy*)&stackMtx;
             // Second dead-looking stack copy that retail keeps.
@@ -3100,7 +3100,7 @@ extern "C" void __attribute__((never_inline)) func_804D361C(EffectNode* nodeRaw,
             Mtx stackMtx;
             Mtx mtxA0;
             MatFlags* mat = (MatFlags*)self->field_0x08;
-            void* m = func_80496264(mat->field_0x10, -1);
+            void* m = Scn_FindCamItem(mat->field_0x10, -1);
             PSMTXConcat((const float(*)[4])((u8*)m + 0xcc), node->mtx, stackMtx);
             *(MtxCopy*)&node->mtx = *(MtxCopy*)&stackMtx;
             *(MtxCopy*)&mtxA0 = *(MtxCopy*)&stackMtx;
@@ -3214,7 +3214,7 @@ extern "C" void __attribute__((never_inline)) func_804D2690(EffectNode* nodeRaw,
             Mtx out1;
             Mtx out2;
             MatFlags* mat = (MatFlags*)self->field_0x08;
-            void* m = func_80496264(mat->field_0x10, -1);
+            void* m = Scn_FindCamItem(mat->field_0x10, -1);
             PSMTXConcat((const float(*)[4])((u8*)m + 0xcc), node->mtx, out1);
             *(MtxCopy*)&node->mtx = *(MtxCopy*)&out1;
             // Retail keeps a second (dead-looking) copy of the result on the
@@ -4143,7 +4143,7 @@ extern "C" void func_804D5764(RenderObj* self) {
     }
     GXSetTexCoordGen2(GX_TEXCOORD0, GX_TG_MTX2x4, GX_TG_TEX0, 0x1e, GX_FALSE, 0x7d);
     GXSetTexCoordGen2(GX_TEXCOORD1, GX_TG_MTX2x4, GX_TG_TEX1, 0x21, GX_FALSE, 0x7d);
-    void* m = func_80496264((void*)self->field_0x10->field_0x10, -1);
+    void* m = Scn_FindCamItem((void*)self->field_0x10->field_0x10, -1);
     GXLoadPosMtxImm((const float(*)[4])((u8*)m + 0xcc), 0);
     q = self->field_0x14->field_0x114;
     u16 b2 = q ? *(u16*)((u8*)q - 0x1a) : 0;
@@ -4525,7 +4525,7 @@ s32 func_804D3B14(D3B14Cam* cam, Vec* outA, Vec* outB) {
     if (lbl_eu_8066B0DC <= z) {
         Mtx m;
         f32 s = lbl_eu_8066B0D8 / -z;
-        func_80496120(cam->field_0x08->field_0x10, m, -1);
+        Scn_CopyCamProjMatrix(cam->field_0x08->field_0x10, m, -1);
 
         Vec v;
         v.y = outA->x * m[1][0] + outA->y * m[1][1] + outA->z * m[1][2] + m[1][3];

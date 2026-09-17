@@ -86,13 +86,13 @@ struct ScnRoot {
 } // namespace g3d
 } // namespace nw4r
 
-// Scn object returned by func_80496264 (field_0x0c selects a view).
+// Scn object returned by Scn_FindCamItem (field_0x0c selects a view).
 struct ScnObj {
     u8 pad_0x00[0x0c];
     void* field_0x0c;
 };
-extern "C" ScnObj* func_80496264(void* src, s32 index);
-extern "C" void* func_8049627C(void* self, s32 index);
+extern "C" ScnObj* Scn_FindCamItem(void* src, s32 index);
+extern "C" void* Scn_SetCamIndex(void* self, s32 index);
 
 // Source object owning a texture-work pointer at +0x6c.
 struct TexSrc {
@@ -156,8 +156,8 @@ extern "C" void func_804D8B38(CDrawCtx* self) {
 // func_804D8B4C: establish the draw context for a desktop/material, computing
 //       the target texture size from the owning view's rect.
 int func_804D8B4C(CDrawCtx* draw, TexSrc* desktop, void* material) {
-    ScnObj* obj = func_80496264(desktop, -1);
-    void* view = func_8049627C(desktop, (s32)obj->field_0x0c);
+    ScnObj* obj = Scn_FindCamItem(desktop, -1);
+    void* view = Scn_SetCamIndex(desktop, (s32)obj->field_0x0c);
     ml::CRect rect;
     func_8043E928__5CViewFRQ22ml5CRectP5CView(rect, view);
     draw->field_0x00 = (TexSrc*)desktop;
@@ -179,8 +179,8 @@ int func_804D8B4C(CDrawCtx* draw, TexSrc* desktop, void* material) {
 
 // func_804D8C68: load the draw-context texture and blit the view rect into it.
 extern "C" void func_804D8C68(CDrawCtx* draw, GXTexMapID p2, const ml::CVec2* p3) {
-    ScnObj* obj = func_80496264(draw->field_0x00, -1);
-    void* view = func_8049627C(draw->field_0x00, (s32)obj->field_0x0c);
+    ScnObj* obj = Scn_FindCamItem(draw->field_0x00, -1);
+    void* view = Scn_SetCamIndex(draw->field_0x00, (s32)obj->field_0x0c);
     ml::CRect rect;
     func_8043E928__5CViewFRQ22ml5CRectP5CView(rect, view);
     s32 w = rect.mSize.x;

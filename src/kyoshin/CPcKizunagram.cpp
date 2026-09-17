@@ -1,5 +1,5 @@
 // TU for kyoshin/CPcKizunagram - PC affinity chart window.
-// func_8025DA40 / func_8025DA48: FULL_MATCH (byte-identical).
+// KizunagramIsHidden / KizunagramIsOpen: FULL_MATCH (byte-identical).
 
 #include "kyoshin/CPcKizunagram.hpp"
 
@@ -8,8 +8,8 @@
 
 // Forward declarations of intra-TU callees.
 void func_8025E0D8(CPcKizunagram* self);
-void func_8025D688(CPcKizunaCur* self);
-extern "C" CPcKizunaSlotEntry* func_8025F290(CPcKizunaSlotEntry* p);
+void KizunaCurDestroyLayout(CPcKizunaCur* self);
+extern "C" CPcKizunaSlotEntry* KizunaEntryFindListHead(CPcKizunaSlotEntry* p);
 
 // Layout animation helpers from code_80135FDC (retail unmangled AnimRewindFrame).
 void drawLayout(nw4r::lyt::Layout*, nw4r::lyt::DrawInfo*, int, int);
@@ -22,7 +22,7 @@ extern char lbl_eu_8050DB18[];
 
 extern "C" void func_8025F114(CPcKizunagramBig* self, CPcKizunaSlotEntry* entry);
 
-// Named float constants in .sdata2 referenced via @sda21 by func_8025E56C/E5A8.
+// Named float constants in .sdata2 referenced via @sda21 by KizunagramPulseRise/E5A8.
 extern const float lbl_eu_8066887C;
 extern const float lbl_eu_80668880;
 extern const float lbl_eu_80668890;
@@ -34,7 +34,7 @@ u32 advanceAnimTransform(nw4r::lyt::AnimTransform*, float);
 void func_801390E0(CFileHandle**);
 void releaseArcResourceAccessor(nw4r::lyt::ArcResourceAccessor*);
 
-u8 func_8025DA40(CPcKizunagram* pKizunagram) { return pKizunagram->mIsHidden; }
+u8 KizunagramIsHidden(CPcKizunagram* pKizunagram) { return pKizunagram->mIsHidden; }
 
 
 
@@ -45,7 +45,7 @@ u8 func_8025DA40(CPcKizunagram* pKizunagram) { return pKizunagram->mIsHidden; }
 
 
 
-extern "C" void __declspec(noinline) func_8025D704(CPcKizunaCur* self) {
+extern "C" void __declspec(noinline) KizunaCurAdvanceSwapAnim(CPcKizunaCur* self) {
     if (advanceAnimTransform(self->mpAnim1, lbl_eu_8066887C) == 0) return;
     self->mField14 = 0;
     self->mField15 = 1;
@@ -55,41 +55,41 @@ extern "C" void __declspec(noinline) func_8025D704(CPcKizunaCur* self) {
 }
 
 // Step the current sub-state of the cursor, then always re-animate its layout.
-extern "C" void __declspec(noinline) func_8025D610(CPcKizunaCur* self) {
+extern "C" void __declspec(noinline) KizunaCurUpdate(CPcKizunaCur* self) {
     if (self->mpLayout == 0) return;
     switch (self->mField14) {
     case 0:
         advanceAnimTransform(self->mpAnim0, lbl_eu_8066887C);
         break;
     case 1:
-        func_8025D704(self);
+        KizunaCurAdvanceSwapAnim(self);
         break;
     }
     self->mpLayout->Animate(0);
 }
 
-extern "C" void func_8025D8C4(CPcKizunagram* self) {
+extern "C" void KizunagramUpdateMainState(CPcKizunagram* self) {
     if (self->mStateByte1 == 0) return;
     if (self->mStateByte2 == 0) return;
     switch (self->mStateByte2) {
     case 1:
-        func_8025DC08(self);
+        KizunagramFinishOpening(self);
         break;
     case 2:
-        func_8025DC8C(self);
+        KizunagramTickPulse(self);
         break;
     case 3:
-        func_8025DCB0(self);
+        KizunagramFinishClosing(self);
         break;
     }
     self->mLayout->Animate(0);
-    func_8025D610((CPcKizunaCur*)self->mKizunaCur);
+    KizunaCurUpdate((CPcKizunaCur*)self->mKizunaCur);
 }
 
 // Destroy the cursor's layout: delete it through its vtable (deleting dtor,
 // slot 2) and null out the pointer. The double null-check is MWCC's `delete`
-// lowering for this class (same shape as func_8025D9C4's mLayout delete).
-extern "C" void __declspec(noinline) func_8025D688(CPcKizunaCur* self) {
+// lowering for this class (same shape as KizunagramTeardown's mLayout delete).
+extern "C" void __declspec(noinline) KizunaCurDestroyLayout(CPcKizunaCur* self) {
     if (self->mpLayout != 0) {
         delete self->mpLayout;
         self->mpLayout = 0;
@@ -97,7 +97,7 @@ extern "C" void __declspec(noinline) func_8025D688(CPcKizunaCur* self) {
 }
 
 // Draw the main layout and, if present, the embedded cursor layout.
-void func_8025D954(CPcKizunagram* self, nw4r::lyt::DrawInfo* drawInfo) {
+void KizunagramDraw(CPcKizunagram* self, nw4r::lyt::DrawInfo* drawInfo) {
     if (self->mStateByte1 == 0) return;
     if (self->mStateByte2 == 0) return;
     drawLayout(self->mLayout, drawInfo, 0, 1);
@@ -107,10 +107,10 @@ void func_8025D954(CPcKizunagram* self, nw4r::lyt::DrawInfo* drawInfo) {
     }
 }
 
-extern "C" void func_8025D9C4(CPcKizunagram* self) {
+extern "C" void KizunagramTeardown(CPcKizunagram* self) {
     func_801390E0(&self->mFileHandle);
     self->mStateByte1 = 0;
-    func_8025D688((CPcKizunaCur*)self->mKizunaCur);
+    KizunaCurDestroyLayout((CPcKizunaCur*)self->mKizunaCur);
     if (self->mLayout != 0) {
         delete self->mLayout;
         self->mLayout = 0;
@@ -120,7 +120,7 @@ extern "C" void func_8025D9C4(CPcKizunagram* self) {
 }
 
 
-u8 func_8025DA48(CPcKizunagram* pKizunagram) { return pKizunagram->mIsOpen; }
+u8 KizunagramIsOpen(CPcKizunagram* pKizunagram) { return pKizunagram->mIsOpen; }
 
 // CPcKizunaCur constructor: paint the fixed layout with the vtable and the
 // embedded accessor, then zero the following fields (visible flag = 1).
@@ -164,14 +164,14 @@ CPcKizunagram::CPcKizunagram() {
     mFloat48 = lbl_eu_80668880;
 }
 
-extern "C" void func_8025D6E0(CPcKizunaTreeRoot* self, CPcKizunaVec3* src) {
+extern "C" void KizunaTreeSetLeafPos(CPcKizunaTreeRoot* self, CPcKizunaVec3* src) {
     CPcKizunaTreeLeaf* leaf = self->field8->field10;
     leaf->x = src->x;
     leaf->y = src->y;
     leaf->z = src->z;
 }
 
-void func_8025DA50(CPcKizunagram* self) {
+void KizunagramOpen(CPcKizunagram* self) {
     if (self->mStateByte2 != 0) return;
     self->mStateByte2 = 1;
     self->mIsOpen = 0;
@@ -180,7 +180,7 @@ void func_8025DA50(CPcKizunagram* self) {
 
 // Close the affinity-chart window: from the open state (2) go to closing (3),
 // hide the cursor pane and play the close sound.
-void func_8025DA78(CPcKizunagram* self) {
+void KizunagramClose(CPcKizunagram* self) {
     if (self->mStateByte2 != 2) return;
     self->mStateByte2 = 3;
     self->mIsOpen = 0;
@@ -190,35 +190,35 @@ void func_8025DA78(CPcKizunagram* self) {
     playUISound__FUl(6);
 }
 
-void func_8025DAE8(CPcKizunagram* self) {
-    func_8025E3A4(self, 1);
+void KizunagramCursorUp(CPcKizunagram* self) {
+    KizunagramStepRow(self, 1);
     func_8025E4A4(self);
     func_8025DCFC(self);
     playUISound__FUl(1);
 }
 
-void func_8025DB30(CPcKizunagram* self) {
-    func_8025E3A4(self, 0);
+void KizunagramCursorDown(CPcKizunagram* self) {
+    KizunagramStepRow(self, 0);
     func_8025E4A4(self);
     func_8025DCFC(self);
     playUISound__FUl(1);
 }
 
-void func_8025DB78(CPcKizunagram* self) {
-    func_8025E3A4(self, 1);
+void KizunagramCursorPageUp(CPcKizunagram* self) {
+    KizunagramStepRow(self, 1);
     func_8025E4A4(self);
     func_8025DCFC(self);
     playUISound__FUl(1);
 }
 
-void func_8025DBC0(CPcKizunagram* self) {
-    func_8025E3A4(self, 0);
+void KizunagramCursorPageDown(CPcKizunagram* self) {
+    KizunagramStepRow(self, 0);
     func_8025E4A4(self);
     func_8025DCFC(self);
     playUISound__FUl(1);
 }
 
-extern "C" void __declspec(noinline) func_8025DC08(CPcKizunagram* self) {
+extern "C" void __declspec(noinline) KizunagramFinishOpening(CPcKizunagram* self) {
     if (advanceAnimTransform(self->mAnimTransform, lbl_eu_8066887C) == 0) return;
     self->mStateByte2 = 2;
     self->mIsOpen = 1;
@@ -229,20 +229,20 @@ extern "C" void __declspec(noinline) func_8025DC08(CPcKizunagram* self) {
 }
 
 // Dispatch on the state byte at +0x44; each branch is a tail call.
-extern "C" void __declspec(noinline) func_8025DC8C(CPcKizunagram* self) {
+extern "C" void __declspec(noinline) KizunagramTickPulse(CPcKizunagram* self) {
     switch (self->mByte44) {
     case 0:
-        func_8025E56C(self);
+        KizunagramPulseRise(self);
         break;
     case 1:
-        func_8025E5A8(self);
+        KizunagramPulseFall(self);
         break;
     }
 }
 
 // Start an async file read of the affinity-chart layout; stash the handle and
 // mark the file job for flag-2 handling.
-void func_8025D874(CPcKizunagram* self) {
+void KizunagramBeginFileRead(CPcKizunagram* self) {
     self->mFileHandle = CDeviceFile::readFile(
         mtl::MemManager::getHandleMEM2(), lbl_eu_8050D868 + 0x66, (IWorkEvent*)self, 0, 0);
     CDeviceFile::setHandleFlag2(self->mFileHandle);
@@ -250,7 +250,7 @@ void func_8025D874(CPcKizunagram* self) {
 
 // When the opening animation (mAnimTransform at +0x20) finishes, mark the
 // window as open (sub-state 0, mIsOpen = 1).
-extern "C" void __declspec(noinline) func_8025DCB0(CPcKizunagram* self) {
+extern "C" void __declspec(noinline) KizunagramFinishClosing(CPcKizunagram* self) {
     if (AnimRewindFrame(self->mAnimTransform, lbl_eu_8066887C) != 0) {
         self->mStateByte2 = 0;
         self->mIsOpen = 1;
@@ -269,10 +269,10 @@ extern "C" __declspec(noinline) void func_8025DCFC(CPcKizunagram* self) {
     for (u8 n = 1; n <= count; n++) {
         char* paneName = BdatGetPtrDirect(table, lbl_eu_8050D868 + 0x90, (u8)n);
         nw4r::lyt::Pane* pane = self->mLayout->GetRootPane()->FindPaneByName(paneName, true);
-        if (func_8025E960(self, table, (u8)n) != 0) {
+        if (KizunagramCheckRowAvailable(self, table, (u8)n) != 0) {
             // --- selected row ---
             if (pane != 0) func_80124270(pane, 1);
-            if (func_8025E9E4(self, table, (u8)n) != 0) {
+            if (KizunagramCheckRowHighlight(self, table, (u8)n) != 0) {
                 // 64-bit intermediates force MWCC's lis(hi)+addi(lo) synthesis instead
     // of rematerializing the full literal at each use.
     PaneSetVtxColorAll(pane, (u32)((0x7777ull << 16) + 0x77ff));
@@ -289,7 +289,7 @@ extern "C" __declspec(noinline) void func_8025DCFC(CPcKizunagram* self) {
                 lb8 = 0;
                 func_8013AB0C(&lb9, &lb8, rnd);
                 int r21 = 0;
-                if (func_8025E904(self, table, lb9) != 0 && func_8025E904(self, table, lb8) != 0) {
+                if (KizunagramCheckMappedRowValid(self, table, lb9) != 0 && KizunagramCheckMappedRowValid(self, table, lb8) != 0) {
                     r21 = 1;
                 }
                 int id = (e8 & 0xff) + 1;
@@ -409,7 +409,7 @@ void func_8025E0D8(CPcKizunagram* self) {
 // Initialise the per-character cursor widget: load its layout and two animation
 // transforms, enable the idle anim, pin down two named panes, then reset the
 // root pane scale. noinline: retail callers (OnFileEvent) emit a real bl.
-extern "C" void __declspec(noinline) func_8025D4E4(CPcKizunaCur* self) {
+extern "C" void __declspec(noinline) KizunaCurInitLayout(CPcKizunaCur* self) {
     buildLayout__FPPQ34nw4r3lyt6LayoutPQ34nw4r3lyt19ArcResourceAccessorPCc(
         &self->mpLayout, self->mAccessor, lbl_eu_8050D868 + 0x00);
     bindLayoutAnimTransform__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(
@@ -428,7 +428,7 @@ extern "C" void __declspec(noinline) func_8025D4E4(CPcKizunaCur* self) {
 
 // Move the affinity-chart cursor by one row in the given direction (arg!=0
 // steps backward, wrapping 0->7), skipping invalid target rows.
-extern "C" void func_8025E3A4(CPcKizunagram* self, u32 arg) {
+extern "C" void KizunagramStepRow(CPcKizunagram* self, u32 arg) {
     // 8-entry row order table built from two sdata words.
     u32 order[2];
     order[0] = lbl_eu_80668888;
@@ -459,7 +459,7 @@ extern "C" void func_8025E3A4(CPcKizunagram* self, u32 arg) {
             idx = idx + 1;
             if (idx > 7) idx = 0;
         }
-        if (func_8025E960(self, table, (u8)(((u8*)order)[idx] + 1)) != 0) {
+        if (KizunagramCheckRowAvailable(self, table, (u8)(((u8*)order)[idx] + 1)) != 0) {
             self->mField28 = ((u8*)order)[idx];
             break;
         }
@@ -482,10 +482,10 @@ void __declspec(noinline) func_8025E4A4(CPcKizunagram* self) {
     tmp[0] = *(u32*)&pos.x;
     tmp[1] = *(u32*)&pos.y;
     tmp[2] = *(u32*)&pos.z;
-    func_8025D6E0((CPcKizunaTreeRoot*)self->mKizunaCur, (CPcKizunaVec3*)tmp);
+    KizunaTreeSetLeafPos((CPcKizunaTreeRoot*)self->mKizunaCur, (CPcKizunaVec3*)tmp);
 }
 
-extern "C" void __declspec(noinline) func_8025E56C(CPcKizunagram* self) {
+extern "C" void __declspec(noinline) KizunagramPulseRise(CPcKizunagram* self) {
     self->mFloat48 += lbl_eu_8066887C;
     if (self->mFloat48 >= lbl_eu_80668890) {
         self->mByte44 = 1;
@@ -494,7 +494,7 @@ extern "C" void __declspec(noinline) func_8025E56C(CPcKizunagram* self) {
     }
 }
 
-extern "C" void __declspec(noinline) func_8025E5A8(CPcKizunagram* self) {
+extern "C" void __declspec(noinline) KizunagramPulseFall(CPcKizunagram* self) {
     self->mFloat48 += lbl_eu_8066887C;
     if (self->mFloat48 >= lbl_eu_80668894) {
         self->mByte44 = 0;
@@ -585,7 +585,7 @@ extern "C" void func_8025E5E4(CPcKizunagram* self, u32 value) {
     }
 }
 
-extern "C" int func_8025E904(CPcKizunagram* self, const void* table, int val) {
+extern "C" int KizunagramCheckMappedRowValid(CPcKizunagram* self, const void* table, int val) {
     // Map the input via two byte tables built from sdata constants, then score
     // the mapped row through the standard BDAT range check.
     u8 t1[8];
@@ -595,12 +595,12 @@ extern "C" int func_8025E904(CPcKizunagram* self, const void* table, int val) {
     *(u32*)&t2[0] = lbl_eu_806688A0;
     *(u32*)&t2[4] = lbl_eu_806688A4;
     u8 idx = t1[val - 1];
-    return func_8025E960(self, table, (u8)(t2[idx] + 1));
+    return KizunagramCheckRowAvailable(self, table, (u8)(t2[idx] + 1));
 }
 
 // BDAT range check: random row must fall between two bounded column values.
-// noinline: retail callers emit a real bl (func_8025E904 etc).
-extern "C" int __declspec(noinline) func_8025E960(CPcKizunagram* self, const void* table, int id) {
+// noinline: retail callers emit a real bl (KizunagramCheckMappedRowValid etc).
+extern "C" int __declspec(noinline) KizunagramCheckRowAvailable(CPcKizunagram* self, const void* table, int id) {
     const char* base = lbl_eu_8050D868;
     u16 v1 = BdatGetU16Direct(table, base + 0xdd, id);
     u16 v2 = BdatGetU16Direct(table, base + 0x256, id);
@@ -610,7 +610,7 @@ extern "C" int __declspec(noinline) func_8025E960(CPcKizunagram* self, const voi
     return result;
 }
 
-extern "C" int func_8025E9E4(CPcKizunagram* self, const void* table, int id) {
+extern "C" int KizunagramCheckRowHighlight(CPcKizunagram* self, const void* table, int id) {
     u16 v1 = BdatGetU16Direct(table, lbl_eu_8050D868 + 0x25d, id);
     u16 v2 = BdatGetU16Direct(table, lbl_eu_8050D868 + 0x264, id);
     u16 check = (u16)func_8009CF8C(0x20);
@@ -645,7 +645,7 @@ int CPcKizunagram::OnFileEvent(CEventFile* event) {
             (CDeviceFontVtblView*)getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1, mLayout);
         u32 fontResult = font->vf7();
         func_8013676C(rootPane, fontResult);
-        func_801355BC();
+        CUICfManager_getPackedFont9C();
 
         mLayout->SetAnimationEnable(mAnimTransform, true);
         mLayout->Animate(0);
@@ -663,7 +663,7 @@ int CPcKizunagram::OnFileEvent(CEventFile* event) {
         curDst->mField14 = curSrc->mField14;
         curDst->mField15 = curSrc->mField15;
         curDst->mField16 = curSrc->mField16;
-        func_8025D4E4(curDst);
+        KizunaCurInitLayout(curDst);
 
         mIsHidden = 1;
         mStateByte1 = 1;
@@ -683,7 +683,7 @@ int CPcKizunagram::OnFileEvent(CEventFile* event) {
 #pragma use_lmw_stmw off
 // src is non-const: a const param makes MWCC hoist the tail-field loads
 // above the LR-save/prologue stores, which retail does not do.
-extern "C" void func_8025EC0C(CPcKizunaCompact* dst, CPcKizunagramBig* src) {
+extern "C" void KizunagramPackChart(CPcKizunaCompact* dst, CPcKizunagramBig* src) {
     dst->field_0xA8 = src->field_0x89C;
     dst->field_0x90 = src->field_0x884;
     memcpy(dst->data94, src->data888, 0x14);
@@ -715,7 +715,7 @@ extern "C" void func_8025EC0C(CPcKizunaCompact* dst, CPcKizunagramBig* src) {
 }
 #pragma pop
 
-// Invert func_8025EC0C: rebuild each 0xC4 slot from its compact 0xD form.
+// Invert KizunagramPackChart: rebuild each 0xC4 slot from its compact 0xD form.
 // Retail signature is (src=compact, dst=big) - r3 holds the compact struct.
 extern "C" void func_8025ECE4(CPcKizunaCompact* src, CPcKizunagramBig* dst) {
     dst->field_0x89C = src->field_0xA8;
@@ -756,7 +756,7 @@ extern "C" void func_8025ECE4(CPcKizunaCompact* src, CPcKizunagramBig* dst) {
 // Clear the 11 affinity slots (each 0xC4 bytes) and the trailing counters.
 // Declaration order j/slot/sub/i drives the retail register coloring
 // (r30/r29/r28/r27) under MWCC's descending declaration-order allocator.
-extern "C" CPcKizunagramBig* func_8025EDC8(CPcKizunagramBig* self) {
+extern "C" CPcKizunagramBig* KizunagramClearChart(CPcKizunagramBig* self) {
     int j;
     CPcKizunaSlot* slot = &self->slots[0];
     CPcKizunaSlotEntry* sub;
@@ -782,7 +782,7 @@ extern "C" CPcKizunagramBig* func_8025EDC8(CPcKizunagramBig* self) {
     return self;
 }
 
-void func_8025EE7C(CPcKizunagramBig* self, int r4) {
+void KizunagramSetActiveSlot(CPcKizunagramBig* self, int r4) {
     if (self->field_0x89C != r4) {
         self->field_0x89C = r4;
         func_8025EE94(self);
@@ -921,13 +921,13 @@ extern "C" void func_8025F114(CPcKizunagramBig* self, CPcKizunaSlotEntry* entry)
     // Search the whole chart for another entry with the same id, then
     // insert this entry before the head of that entry's prev chain.
     // Retail unrolls the head-walk 10 levels, then hands the remainder
-    // to func_8025F290.
+    // to KizunaEntryFindListHead.
     for (int e = 0; e < 66; e++) {
         CPcKizunaSlotEntry* pos = &self->slots[e / 6].data00 + (e % 6);
         if (id != pos->field04) continue;
         if (pos == entry) continue;
         // Walk the prev chain toward the list head; retail unrolls 10 loads,
-        // then hands the remainder to the shared walker func_8025F290.
+        // then hands the remainder to the shared walker KizunaEntryFindListHead.
         CPcKizunaSlotEntry* head = pos;
         CPcKizunaSlotEntry* cur = pos;
         CPcKizunaSlotEntry* nxt = cur->pField1C;
@@ -959,7 +959,7 @@ extern "C" void func_8025F114(CPcKizunagramBig* self, CPcKizunaSlotEntry* entry)
                                             cur = nxt;
                                             nxt = cur->pField1C;
                                             if (nxt != 0) {
-                                                head = func_8025F290(nxt);
+                                                head = KizunaEntryFindListHead(nxt);
                                             } else {
                                                 head = cur;
                                             }
@@ -1007,7 +1007,7 @@ extern "C" void func_8025F114(CPcKizunagramBig* self, CPcKizunaSlotEntry* entry)
 // register rotation (n1=r4, n2=r5, n3=r3, n4=r4, n5=r3) and the bottom
 // ret-blocks (beq-down for n1/n2/n4, beqlr for p/n3); the fully-flat or
 // fully-nested forms give different layouts (probe-verified).
-extern "C" __declspec(noinline) CPcKizunaSlotEntry* func_8025F290(CPcKizunaSlotEntry* p) {
+extern "C" __declspec(noinline) CPcKizunaSlotEntry* KizunaEntryFindListHead(CPcKizunaSlotEntry* p) {
     CPcKizunaSlotEntry* n1 = p->pField1C;
     if (n1 == 0) return p;
     CPcKizunaSlotEntry* n2 = n1->pField1C;
@@ -1018,7 +1018,7 @@ extern "C" __declspec(noinline) CPcKizunaSlotEntry* func_8025F290(CPcKizunaSlotE
             if (n4 == 0) return n3;
             CPcKizunaSlotEntry* n5 = n4->pField1C;
             if (n5 != 0) {
-                return func_8025F290(n5);
+                return KizunaEntryFindListHead(n5);
             }
             return n4;
         }

@@ -365,11 +365,11 @@ void func_8022B7C8(void* syswin, nw4r::lyt::DrawInfo* drawInfo);     // CSysWin.
 void func_8022B7F4(void* syswin);                                    // CSysWin.cpp
 void func_8022B8E4(void* syswin);                                    // CSysWin.cpp
 void func_801D20B0(void*, void*);     // CCur.cpp
-void func_8013D55C(char* msg, int a, int b);                         // CUICfManager.cpp
+void UIWin_CreateSysWin0(char* msg, int a, int b);                         // CUICfManager.cpp
 void func_8009D018(u32 destination, u32 value);                      // CfGameManager.cpp
 CCol6Pad* getCurrentPad__Q22cf13CfGameManagerFv();                   // cf::CfGameManager
 int isClassicController__Q22cf13CfGameManagerFv(int arg);                  // cf::CfGameManager
-void func_8013E2E0(u32, u32, u32, u32, u32, u32, u32, u32, u32);     // CUICfManager.cpp
+void UIWin_CreateItemMulti(u32, u32, u32, u32, u32, u32, u32, u32, u32);     // CUICfManager.cpp
 u8 BdatGetU8ByTableKey(const void*, const void*, u32);                     // code_80135FDC.cpp
 s32 CItemBlock_getPtr20E8();                                                 // CItemBoxInfo.cpp
 void CItemBlock_setCount(s32);                                             // CItemBoxInfo.cpp
@@ -382,7 +382,7 @@ void CItemData_initFromFamily(void*, u16, u32);                                 
 u32 func_80124B78();                                                  // CHelp_CloseSysMenu.cpp
 CCol6Fade* func_80113E1C();                                           // CMenuFade.cpp
 int func_80113E24(CCol6Fade* fade);                                    // CMenuFade.cpp (byte result, tested unmasked)
-void func_80135464(u32 a, u32 b, f32 x, f32 y, f32 z);                // CUICfManager.cpp
+void CUICfManager_queueFadeMenu(u32 a, u32 b, f32 x, f32 y, f32 z);                // CUICfManager.cpp
 u32 func_801B481C();                                                   // code_80135FDC.cpp (any block condition active)
 u16 BdatGetU16ByTableKey(const void*, const void*, u32);                     // code_80135FDC.cpp
 char* BdatTouchStringCell(const void*, const void*, int);                   // code_80135FDC.cpp
@@ -412,11 +412,11 @@ void func_801F369C(void* scrollbar);                                 // CScrollB
 void func_801F3850(void* scrollbar, u16 value);                     // CScrollBar.cpp (thumb position)
 void func_801D216C(void* cursor, int arg);                            // CCur.cpp
 void func_801D202C(void* cursor);                                     // CCur.cpp
-void* func_801355F4();                                                // CCur.cpp (vtable source for __ct__CCur18)
+void* CUICfManager_getArcResourceAccessor();                                                // CCur.cpp (vtable source for __ct__CCur18)
 void* getCfPadData__Q22cf13CfGameManagerFv();                        // cf::CfGameManager
 u8 BdatGetU8Direct(const void*, const char*, u8);                      // code_80135FDC.cpp
 void LayoutSetTextBoxFmtValue(nw4r::lyt::Layout*, const char*, const char*, u32); // code_80135FDC.cpp
-u32 func_801355BC();                                                    // CUICfManager.cpp (font value)
+u32 CUICfManager_getPackedFont9C();                                                    // CUICfManager.cpp (font value)
 s16 BdatGetS16ByTableKey(const void*, const void*, u32);                     // code_80135FDC.cpp (s16-keyed lookup); u32 matches the definition verbatim
 void func_8013676C(nw4r::lyt::Pane*, u32);                           // code_80135FDC.cpp
 void BdatGetItemType(u16);                                             // CItemBoxInfo.cpp
@@ -517,7 +517,7 @@ extern "C" void __ct__Q34nw4r3lyt8DrawInfoFv(void* drawInfo);
 extern "C" void __dt__Q34nw4r3lyt8DrawInfoFv(void* drawInfo, int flags);
 extern "C" void func_801F35DC(CScrollBar* scrollbar);                    // scrollbar destroy
 extern "C" void func_801F35B0(void* scrollbar, nw4r::lyt::DrawInfo* di); // scrollbar draw
-extern "C" void func_80135998(u8 enable);                                // message-window show/hide
-extern "C" void func_8013DA60(int id, int a, int b);                     // window open request
+extern "C" void CUICfManager_setMessageWindowVisible(u8 enable);                                // message-window show/hide
+extern "C" void UIWin_CreateQuestWin(int id, int a, int b);                     // window open request
 extern u32 lbl_eu_80663E28;  // .sbss mode bitfield (bit 0x400000 gates hint draws)
 extern "C" void __ct__17UnkClass_8045F564Fv(void* self);

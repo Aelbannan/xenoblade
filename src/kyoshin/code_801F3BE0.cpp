@@ -89,8 +89,8 @@ extern "C" void func_8026E678(cf::CfGimmickEne* self, cf::CActorParam* actor);
 extern "C" int func_8020D368(cf::CfGimmickLock* self, void* target);
 
 // Teardown / spawn helpers used by the lifecycle functions below.
-// func_80208E98 resets the shared CfGimmick state globals (CfGimmick.cpp).
-extern "C" void func_80208E98();
+// CfGimmick_InitPartyGlobals resets the shared CfGimmick state globals (CfGimmick.cpp).
+extern "C" void CfGimmick_InitPartyGlobals();
 // CBdat table helpers: prepare table, first row index, row count.
 extern "C" void* func_8003AA34();
 extern "C" u32 func_8003B41C(void* bdat);
@@ -142,7 +142,7 @@ extern "C" CGimmickEntry* __ct__cf_CfGimmickObject(CGimmickEntry* obj, int row,
 
 // CfGimmick shared bdat-row reset (CfGimmick.cpp): stores the row into a
 // global state slot.
-extern "C" void func_80208EDC(u32 value);
+extern "C" void CfGimmick_SetGlobalB8Value(u32 value);
 // Gimmick object list accessor (func_80174C98 comes from CChainTimer.hpp).
 extern "C" CGimmickList* getReslistB48();
 
@@ -191,7 +191,7 @@ CGimmickGlobal* __dt__801F3C08(CGimmickGlobal* self, int flags) {
         self->mGimmickCount = 0;
         self->field_0x218 = 0;
         self->field_0x210 = 0;
-        func_80208E98();
+        CfGimmick_InitPartyGlobals();
         lbl_eu_80664658 = 0;
         if (flags > 0)
             delete self;
@@ -221,7 +221,7 @@ void func_801F3CCC(CGimmickGlobal* self) {
     self->mGimmickCount = 0;
     self->field_0x218 = 0;
     self->field_0x210 = 0;
-    func_80208E98();
+    CfGimmick_InitPartyGlobals();
     if (!func_801F3E80(self))
         return;
     if (!func_801F3F98(self))
@@ -268,7 +268,7 @@ bool func_801F3E80(CGimmickGlobal* self) {
     self->field_0x208 = 0;
     u8* bdat = lbl_eu_80664128;
     if (bdat == NULL) {
-        func_80208EDC(0);
+        CfGimmick_SetGlobalB8Value(0);
         return true;
     }
     self->mFlags |= 0x100;
@@ -277,7 +277,7 @@ bool func_801F3E80(CGimmickGlobal* self) {
     s32 n = (s32)func_8003B1EC(bdat);
     u8 buf[0x20];
     memset(buf, 0, 0x20);
-    func_80208EDC(row - 1);
+    CfGimmick_SetGlobalB8Value(row - 1);
     s32 count0 = self->mGimmickCount;
     for (s32 i = 0; i < n; i++) {
         CGimmickEntry* obj =
@@ -466,7 +466,7 @@ void func_801F4504(CGimmickGlobal* self) {
     self->mGimmickCount = 0;
     self->field_0x218 = 0;
     self->field_0x210 = 0;
-    func_80208E98();
+    CfGimmick_InitPartyGlobals();
 }
 
 void func_801F45B4(){}

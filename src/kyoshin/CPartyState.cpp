@@ -356,7 +356,7 @@ extern "C" __declspec(noinline) void func_801FE20C(CPartyState* self, u32 member
     nw4r::lyt::Pane* pane = self->mLayout->GetRootPane()->FindPaneByName(paneName, true);
     if (pane != NULL) {
         float tmp[2];
-        func_80127BC4(tmp, const_cast<float*>(&pane->GetSize().width));
+        TagCopyVec2f(tmp, const_cast<float*>(&pane->GetSize().width));
         tmp[0] = lbl_eu_80668234 * ratio;
         func_80124288(pane, tmp);
     }
@@ -488,7 +488,7 @@ extern "C" __declspec(noinline) void func_801FDA7C(CPartyState* self) {
         if (m2 == 0) continue;
         u16 id = BdatGetU16Direct(lbl_eu_80664098, strs + 0xe1, m2);
         char* name = MakeTplNameSysFile((u16)id);
-        u32 tex = (u32)func_801355F4()->GetResource(0x74696D67, name, 0);
+        u32 tex = (u32)CUICfManager_getArcResourceAccessor()->GetResource(0x74696D67, name, 0);
         if (tex != 0) {
             sprintf(buf18, strs + 0xed, k + 1);
             PaneSetTexPaletteByName(self->mLayout, buf18, tex);
@@ -540,7 +540,7 @@ extern "C" __declspec(noinline) void func_801FE39C(CPartyState* self, float f1, 
         table = *(const CPartyStateFiveFloats*)lbl_eu_80507D20;
         float value = lbl_eu_80668248 * ratio + table.f[(u8)idx];
         float tmp[2];
-        func_80127BC4(tmp, reinterpret_cast<float*>(reinterpret_cast<u8*>(pane) + 0x4c));
+        TagCopyVec2f(tmp, reinterpret_cast<float*>(reinterpret_cast<u8*>(pane) + 0x4c));
         tmp[0] = value;
         func_80124288(pane, tmp);
     }
@@ -576,7 +576,7 @@ bool CPartyState::OnFileEvent(CEventFile* pEventFile) {
         FontHelper* font = reinterpret_cast<FontHelper*>(CDeviceFont::getFontInfo(1, mLayout));
         func_8013676C(rootPane, (void*)font->v7());
 
-        u32 textVal = (u32)func_801355BC();
+        u32 textVal = (u32)CUICfManager_getPackedFont9C();
         if (textVal != 0) {
             setLayoutTextBoxFont(mLayout, strs + 0x100, textVal);
             setLayoutTextBoxFont(mLayout, strs + 0x10d, textVal);
@@ -586,9 +586,9 @@ bool CPartyState::OnFileEvent(CEventFile* pEventFile) {
                 sprintf(buf68, strs + 0x196, i);
                 setLayoutTextBoxFont(mLayout, buf68, textVal);
                 sprintf(buf68, strs + 0x10, i);
-                setLayoutTextBoxFont(mLayout, buf68, func_801355D8());
+                setLayoutTextBoxFont(mLayout, buf68, CUICfManager_getPackedFontD8());
                 sprintf(buf68, strs + 0x1a8, i);
-                setLayoutTextBoxFont(mLayout, buf68, func_801355D8());
+                setLayoutTextBoxFont(mLayout, buf68, CUICfManager_getPackedFontD8());
                 sprintf(buf68, strs + 0x23, i);
                 setLayoutTextBoxFont(mLayout, buf68, textVal);
                 sprintf(buf68, strs + 0x36, i);
@@ -644,12 +644,12 @@ bool CPartyState::OnFileEvent(CEventFile* pEventFile) {
 extern "C" void func_801FCF5C(CPartyState* self) {
     int fileSize = getFileSize__11CDeviceFileFPCc(lbl_eu_80662728, 1);
     int mem1Max = (int)mtl::MemManager::getMaxAllocSize(mtl::MemManager::getHandleMEM1());
-    int mem2Max = (int)mtl::MemManager::getMaxAllocSize(func_80495FF0(lbl_eu_80663E14));
+    int mem2Max = (int)mtl::MemManager::getMaxAllocSize(Scn_CallUnk8C_V9(lbl_eu_80663E14));
     mtl::ALLOC_HANDLE handle = mtl::MemManager::getHandleMEM2();
     if (fileSize < mem1Max - 0x10000) {
         handle = mtl::MemManager::getHandleMEM1();
     } else if (fileSize < mem2Max - 0x80000) {
-        handle = func_80495FF0(lbl_eu_80663E14);
+        handle = Scn_CallUnk8C_V9(lbl_eu_80663E14);
     }
     self->mFileHandle = CDeviceFile::readFile(handle, lbl_eu_80662728,
         reinterpret_cast<IWorkEvent*>(self), 0, 0);

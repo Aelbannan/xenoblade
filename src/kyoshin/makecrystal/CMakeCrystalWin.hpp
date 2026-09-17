@@ -80,11 +80,11 @@ extern "C" {
 int getCrystalStateA(CModelDispMakeCrystal* self);
 int getCrystalStateB(CModelDispMakeCrystal* self);
 int getCrystalStateC(CModelDispMakeCrystal* self);
-int func_80221CD0(CModelDispMakeCrystal* self);
+int MakeCrystal_GetPromptState(CModelDispMakeCrystal* self);
 void setCrystalCursor(CModelDispMakeCrystal* self, u32 val);
 void func_80221B90(CModelDispMakeCrystal* self, u8 a, u8 b);
-void func_8021C928(CModelDispMakeCrystal* self, nw4r::lyt::DrawInfo* drawInfo);
-void func_8021C8B0(CModelDispMakeCrystal* self);
+void MakeCrystal_DrawAll(CModelDispMakeCrystal* self, nw4r::lyt::DrawInfo* drawInfo);
+void MakeCrystal_CleanupFiles(CModelDispMakeCrystal* self);
 void func_8021C6E4(CModelDispMakeCrystal* self);
 void func_80210E9C(u8* dst, const u8* src);
 int func_8029A658();

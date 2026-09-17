@@ -95,8 +95,7 @@ class UnitRules:
     # exactly. Only grows; drops use drop_data_tail/drop_data_range.
     pad_data_section: tuple[tuple[str, int], ...] = ()
     patch_data: tuple[tuple[str, int, bytes], ...] = ()
-    copy_data_sections: tuple[str, ...] = ()
-    # Set sh_addralign on named sections. The ppcdis splitter writes align=4
+
     # for sections MWCC emits with align=8 (same content); the data gate
     # compares section alignment for both file-backed and NOBITS sections.
     set_data_align: tuple[tuple[str, int], ...] = ()
@@ -10016,144 +10015,7 @@ def patch_data_func(path: Path, section: str, offset: int, data_bytes: bytes) ->
     sec_size = struct.unpack_from(">I", data, sec_hoff + 20)[0]
     if offset + len(data_bytes) > sec_size:
         return False
-    data[sec_off + offset : sec_off + offset + len(data_bytes)] = data_bytes
-    path.write_bytes(data)
-    return True
-
-
-def copy_data_sections_func(path: Path, section: str) -> bool:
-    data = bytearray(path.read_bytes())
-    if data[:4] != b"\x7fELF" or data[5] != 2:
-        raise ValueError(f"expected big-endian ELF32: {path}")
-    retail = Path(str(path).replace("build/us/src", "build/us/obj"))
-    # Temp copies from data-diff live under .scratch and contain no
-    # "build/us/src" substring, so the replace is a no-op and retail ==
-    # path (which does exist). Force the glob fallback in that case.
-    if not retail.is_file() or str(retail) == str(path):
-        # Fallback for monolib units where retail split is at build/us/asm/...
-        alt = Path(str(path).replace("build/us/src", "build/us/asm").replace(".o", ".s"))
-        # The asm is text, not ELF, so we need to find the actual retail object
-        # For monolib, the retail data is in the blob, but for CWorkThread the
-        # retail data is in the TU's own split, which is at build/us/asm/...
-        # Instead, try to find the retail object via the split's .o (if exists at obj)
-        # If still not found, try the asm's .o at build/us/asm (which is not an object)
-        # For now, try the asm's corresponding .o at build/us/obj (which should exist for monolib)
-        # If that also fails, try the original retail .o at build/us/asm's .o (which is text, so skip)
-        # As a last resort, try to find any retail .o that contains the section
-        import pathlib as _pl
-        cand = list(_pl.Path("build/us/obj").rglob(path.name))
-        if cand:
-            retail = cand[0]
-        else:
-            return False
-    if not retail.is_file():
-        return False
-    r_data = retail.read_bytes()
-    e_shoff = struct.unpack_from(">I", data, 32)[0]
-    e_shentsize = struct.unpack_from(">H", data, 46)[0]
-    e_shnum = struct.unpack_from(">H", data, 48)[0]
-    e_shstrndx = struct.unpack_from(">H", data, 50)[0]
-    shstr_off = struct.unpack_from(">I", data, e_shoff + e_shstrndx * e_shentsize + 16)[0]
-    r_e_shoff = struct.unpack_from(">I", r_data, 32)[0]
-    r_e_shentsize = struct.unpack_from(">H", r_data, 46)[0]
-    r_e_shnum = struct.unpack_from(">H", r_data, 48)[0]
-    r_e_shstrndx = struct.unpack_from(">H", r_data, 50)[0]
-    r_shstr_off = struct.unpack_from(">I", r_data, r_e_shoff + r_e_shstrndx * r_e_shentsize + 16)[0]
-    sec_idx = None; r_sec_idx = None
-    for i in range(e_shnum):
-        hoff = e_shoff + i * e_shentsize
-        sh_name = struct.unpack_from(">I", data, hoff)[0]
-        end = data.index(0, shstr_off + sh_name)
-        name = data[shstr_off + sh_name : end].decode("ascii")
-        if name == section:
-            sec_idx = i
-    for i in range(r_e_shnum):
-        hoff = r_e_shoff + i * r_e_shentsize
-        sh_name = struct.unpack_from(">I", r_data, hoff)[0]
-        end = r_data.index(0, r_shstr_off + sh_name)
-        name = r_data[r_shstr_off + sh_name : end].decode("ascii")
-        if name == section:
-            r_sec_idx = i
-    if sec_idx is None or r_sec_idx is None:
-        return False
-    sec_hoff = e_shoff + sec_idx * e_shentsize
-    r_sec_hoff = r_e_shoff + r_sec_idx * r_e_shentsize
-    sec_off = struct.unpack_from(">I", data, sec_hoff + 16)[0]
-    r_sec_off = struct.unpack_from(">I", r_data, r_sec_hoff + 16)[0]
-    r_sec_size = struct.unpack_from(">I", r_data, r_sec_hoff + 20)[0]
-    r_sec_align = struct.unpack_from(">I", r_data, r_sec_hoff + 32)[0]
-    struct.pack_into(">I", data, sec_hoff + 20, r_sec_size)
-    struct.pack_into(">I", data, sec_hoff + 32, r_sec_align)
-    if r_sec_size > 0:
-        if sec_off + r_sec_size > len(data):
-            data.extend(b'\\x00' * (sec_off + r_sec_size - len(data)))
-        data[sec_off:sec_off+r_sec_size] = r_data[r_sec_off:r_sec_off+r_sec_size]
-    rela_name = ".rela" + section
-    r_rela_idx = None; d_rela_idx = None
-    for i in range(r_e_shnum):
-        hoff = r_e_shoff + i * r_e_shentsize
-        sh_name = struct.unpack_from(">I", r_data, hoff)[0]
-        end = r_data.index(0, r_shstr_off + sh_name)
-        name = r_data[r_shstr_off + sh_name : end].decode("ascii")
-        if name == rela_name:
-            r_rela_idx = i
-    for i in range(e_shnum):
-        hoff = e_shoff + i * e_shentsize
-        sh_name = struct.unpack_from(">I", data, hoff)[0]
-        end = data.index(0, shstr_off + sh_name)
-        name = data[shstr_off + sh_name : end].decode("ascii")
-        if name == rela_name:
-            d_rela_idx = i
-    if r_rela_idx is not None and d_rela_idx is not None:
-        r_rela_hoff = r_e_shoff + r_rela_idx * r_e_shentsize
-        r_rela_off = struct.unpack_from(">I", r_data, r_rela_hoff + 16)[0]
-        r_rela_size = struct.unpack_from(">I", r_data, r_rela_hoff + 20)[0]
-        r_rela_bytes = r_data[r_rela_off:r_rela_off+r_rela_size]
-        d_rela_hoff = e_shoff + d_rela_idx * e_shentsize
-        d_rela_off = struct.unpack_from(">I", data, d_rela_hoff + 16)[0]
-        struct.pack_into(">I", data, d_rela_hoff + 20, r_rela_size)
-        if d_rela_off + r_rela_size > len(data):
-            data.extend(b'\\x00' * (d_rela_off + r_rela_size - len(data)))
-        data[d_rela_off:d_rela_off+r_rela_size] = r_rela_bytes
-    # Also copy symtab and strtab to make reloc symbol names match
-    r_sym_idx = None; d_sym_idx = None
-    for i in range(r_e_shnum):
-        hoff = r_e_shoff + i * r_e_shentsize
-        sh_name = struct.unpack_from(">I", r_data, hoff)[0]
-        end = r_data.index(0, r_shstr_off + sh_name)
-        name = r_data[r_shstr_off + sh_name : end].decode("ascii")
-        if name == ".symtab":
-            r_sym_idx = i
-    for i in range(e_shnum):
-        hoff = e_shoff + i * e_shentsize
-        sh_name = struct.unpack_from(">I", data, hoff)[0]
-        end = data.index(0, shstr_off + sh_name)
-        name = data[shstr_off + sh_name : end].decode("ascii")
-        if name == ".symtab":
-            d_sym_idx = i
-    if r_sym_idx is not None and d_sym_idx is not None:
-        r_sym_hoff = r_e_shoff + r_sym_idx * r_e_shentsize
-        d_sym_hoff = e_shoff + d_sym_idx * e_shentsize
-        r_sym_off = struct.unpack_from(">I", r_data, r_sym_hoff + 16)[0]
-        r_sym_size = struct.unpack_from(">I", r_data, r_sym_hoff + 20)[0]
-        r_sym_bytes = r_data[r_sym_off:r_sym_off+r_sym_size]
-        d_sym_off = struct.unpack_from(">I", data, d_sym_hoff + 16)[0]
-        struct.pack_into(">I", data, d_sym_hoff + 20, r_sym_size)
-        if d_sym_off + r_sym_size > len(data):
-            data.extend(b'\\x00' * (d_sym_off + r_sym_size - len(data)))
-        data[d_sym_off:d_sym_off+r_sym_size] = r_sym_bytes
-        r_str_idx = struct.unpack_from(">I", r_data, r_sym_hoff + 24)[0]
-        d_str_idx = struct.unpack_from(">I", data, d_sym_hoff + 24)[0]
-        r_str_hoff = r_e_shoff + r_str_idx * r_e_shentsize
-        d_str_hoff = e_shoff + d_str_idx * e_shentsize
-        r_str_off = struct.unpack_from(">I", r_data, r_str_hoff + 16)[0]
-        r_str_size = struct.unpack_from(">I", r_data, r_str_hoff + 20)[0]
-        r_str_bytes = r_data[r_str_off:r_str_off+r_str_size]
-        d_str_off = struct.unpack_from(">I", data, d_str_hoff + 16)[0]
-        struct.pack_into(">I", data, d_str_hoff + 20, r_str_size)
-        if d_str_off + r_str_size > len(data):
-            data.extend(b'\\x00' * (d_str_off + r_str_size - len(data)))
-        data[d_str_off:d_str_off+r_str_size] = r_str_bytes
+        data[sec_off + offset : sec_off + offset + len(data_bytes)] = data_bytes
     path.write_bytes(data)
     return True
 
@@ -11510,9 +11372,7 @@ def postprocess_object(path: Path, rules: UnitRules | None = None) -> bool:
         changed = pad_data_section_func(path, sec, target) or changed
     for sec, off, data_bytes in rules.patch_data:
         changed = patch_data_func(path, sec, off, data_bytes) or changed
-    for sec in rules.copy_data_sections:
-        changed = copy_data_sections_func(path, sec) or changed
-    for sec, align in rules.set_data_align:
+
         changed = set_section_align(path, sec, align) or changed
     if rules.permute_sdata2_words:
         changed = permute_sdata2_words(path, rules.permute_sdata2_words) or changed

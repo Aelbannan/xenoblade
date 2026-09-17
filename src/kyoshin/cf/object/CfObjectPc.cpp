@@ -116,7 +116,7 @@ cf::CfObjectPc* __dt__Q22cf10CfObjectPcFv(cf::CfObjectPc* self, s32 deleteFlag) 
 // returns a string pointer; only its first byte is consumed).
 void func_800BFDE0(cf::CfObjectPc* obj) {
     CfObjectPcSubFields* f = (CfObjectPcSubFields*)obj;
-    func_8018CBE8(f->mPtr3F4C);
+    CfResPcImpl_loadPcState(f->mPtr3F4C);
     obj->resetArtsState();
     obj->CActorParam_rearmAttackList();
     obj->dispatchPlayerBranch();
@@ -420,7 +420,7 @@ extern "C" void func_800C0524__Q22cf10CfObjectPcFv(cf::CfObjectPc* self) {
 
     // Gauge scale: slot 0x8C value times the global scale factor.
     float gauge = reinterpret_cast<cf::CfObjectMove*>((u8*)self + 0x3E9C)->CfObject_getMoveSpeedRate();
-    float scaled = func_80496288(lbl_eu_80663E14) * gauge;
+    float scaled = Scn_GetFrameDelta(lbl_eu_80663E14) * gauge;
     func_801765A4(self, scaled, 1);
 
     cf::CObjectState* s4c = *(cf::CObjectState**)((u8*)self + 4);
@@ -657,7 +657,7 @@ extern "C" int func_800C0DD4(cf::CfObjectPc* self, int flag) {
             if ((int)(u16)vB != channel) continue;
             u32 vC = getBdatStringColumnValue(mgr, names + 0x49, i);
             float sv = reinterpret_cast<cf::CfObjectPc*>(self)->pcMoveRefB().CfObject_getMoveSpeedRate();
-            float newGauge = func_80496288(lbl_eu_80663E14) * sv +
+            float newGauge = Scn_GetFrameDelta(lbl_eu_80663E14) * sv +
                 ((CfObjectPcSubFields*)self)->field_0x45C0;
             ((CfObjectPcSubFields*)self)->field_0x45C0 = newGauge;
             double thr = (double)(int)((vC & 0xFF) * 30);

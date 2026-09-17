@@ -122,7 +122,7 @@ bool func_8012278C(CQuestWindow* self, CEventFile* event) {
         u32 fontResult = reinterpret_cast<CQuestWinFontView*>(fontObj)->v7();
         func_8013676C(rootPane, fontResult);
 
-        char* fontStr = (char*)func_801355BC();
+        char* fontStr = (char*)CUICfManager_getPackedFont9C();
         if (fontStr != 0) {
             setLayoutTextBoxFont(self->mpLayout, &lbl_eu_804FEC84[0x61], (u32)fontStr);
             setLayoutTextBoxFont(self->mpLayout, &lbl_eu_804FEC84[0x6c], (u32)fontStr);
@@ -157,7 +157,7 @@ bool func_8012278C(CQuestWindow* self, CEventFile* event) {
         // Build the cursor on the stack, copy its body into the member region
         // (skipping the +0x00 vtable pointer) and destroy the temp.
         u8 tmpCur[0x18];
-        __ct__CCur18(tmpCur, func_801355F4());
+        __ct__CCur18(tmpCur, CUICfManager_getArcResourceAccessor());
         CCur18Data* curDst = reinterpret_cast<CCur18Data*>(&self->mCursor[0]);
         CCur18Data* curSrc = reinterpret_cast<CCur18Data*>(tmpCur);
         curDst->f_04 = curSrc->f_04;
@@ -463,7 +463,7 @@ __attribute__((noinline)) void func_80122EF8(QuestWinObj* self) {
     }
     CItemBlock_setCount((s32)(CItemBlock_getPtr20E8() + self->field_0xE0));
     if (self->field_0xE4 != 1 && self->field_0xD4 != 0) {
-        func_8013E2E0(self->field_0xD4, self->field_0xD6, self->field_0xD8,
+        UIWin_CreateItemMulti(self->field_0xD4, self->field_0xD6, self->field_0xD8,
                       0, 1, 1, 0, 1, 0);
     }
     u8 r = BdatGetU8Direct(lbl_eu_80573D18[func_80138138(self->field_B8)],
@@ -479,7 +479,7 @@ __attribute__((noinline)) void func_80122EF8(QuestWinObj* self) {
         func_8009D018(self->field_B8 + 0x704, 2);
         char* msg = BdatTouchStringCell(&lbl_eu_804FEC84[0xac], &lbl_eu_804FEC84[0x88],
                                   0x81);
-        func_8013D55C(msg, 0, 0);
+        UIWin_CreateSysWin0(msg, 0, 0);
         // 5-byte patch table (f32 bits + trailing byte) indexed by (id-0x100).
         union {
             struct {
@@ -495,7 +495,7 @@ __attribute__((noinline)) void func_80122EF8(QuestWinObj* self) {
         func_8009D018(0x7fc, s);
         if (func_8015D310() != 0) {
             func_8015D3A0();
-            func_8013E030();
+            UIWin_CreateCol6Check();
         }
     }
 }
@@ -714,7 +714,7 @@ void func_801231C4(CQuestWindow* self) {
     LayoutSetTextBoxFmtValue(self->mpLayout, &base[0x24b], s, 0);
     const char* cp = isClassicController__Q22cf13CfGameManagerFv(-1) != 0 ? &base[0x256] : &base[0x25f];
     char* resName = MakeTplNameSysFile(BdatGetU16ByTableKey(&base[0x22d], cp, 0x2b));
-    void* res2 = func_801355F4()->GetResource(0x74696D67, resName, 0);
+    void* res2 = CUICfManager_getArcResourceAccessor()->GetResource(0x74696D67, resName, 0);
     if (res2 != 0) {
         PaneSetTexPaletteByName(self->mpLayout, &base[0x268], res2);
         PaneSetTexPaletteByName(self->mpLayout, &base[0x271], res2);
@@ -781,7 +781,7 @@ void func_801231C4(CQuestWindow* self) {
                         u16 field_8C;
                     };
                     u16 pid = ((PlayerView*)getPlayer__Q22cf13CfGameManagerFi(0))->field_8C;
-                    func_8013DB6C(4, pid, v27b & 0xFF, v30 & 0xFFFF);
+                    UIWin_CreateMenuUpdate(4, pid, v27b & 0xFF, v30 & 0xFFFF);
                     if ((v30 & 0xFFFF) != 0) {
                         self->field_0xCC = (u32)c26;
                         playUISound__FUl(0x34);
@@ -942,7 +942,7 @@ void CQuestWindow::Init() {
         evt = (IWorkEvent*)((u8*)this + 0x6c);
     }
     field_0x8C = (CFileHandle*)CDeviceFile::readCommonArchiveFile(
-        func_800A9D90(),
+        KyoshinHeap_GetField44(),
         lbl_eu_8052CF80[func_80138138(field_B8)], evt, 0, 0);
     IWorkEvent* evt2 = (IWorkEvent*)this;
     if (this != 0) {
@@ -988,7 +988,7 @@ void CQuestWindow::Term() {
         if (code80135FDC_getByte_64080() == 0) {
             setPresentationFlag__Q22cf13CfGameManagerFv(false);
         }
-        func_80135550();
+        CUICfManager_setTimeout30();
     }
     lbl_eu_80663FD0 = lbl_eu_80663FD0 - 1;
 }

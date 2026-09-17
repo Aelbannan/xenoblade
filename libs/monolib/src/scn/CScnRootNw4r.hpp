@@ -112,7 +112,7 @@ struct CScnPairCb {
 };
 
 // Unmangled monolib callees (retail C-linkage names).
-extern "C" void func_80496984(u32 value);
+extern "C" void Scn_SetCurrentScene(u32 value);
 extern "C" void scnLgtBindCamera(CScnEnvLgtCtrl* ctrl);
 extern "C" void func_804C22F0(CScnEnvLgtCtrl* ctrl);
 extern "C" void scnLgtEnterMode20(CScnEnvLgtCtrl* ctrl);

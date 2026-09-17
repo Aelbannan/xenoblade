@@ -149,10 +149,10 @@ extern "C" cf::CfGimmickObject* __ct__cf_CfGimmickObject(
 
     // Sub-object init: placement vec (+0x04), collider A (+0x1C), collider B
     // (+0xF4), reference point (+0x10); then the vtable slot 0x20 hook.
-    func_80208F34(self, &self->field_04, mgr, &holder);
-    func_80209020(self, &self->field_1C, mgr, &holder);
-    func_8020915C(self, &self->field_F4, mgr, &holder);
-    func_80209288(self, &self->field_10, mgr, &holder);
+    CfGimmick_LoadBdatAreaPos(self, &self->field_04, mgr, &holder);
+    CfGimmick_LoadBdatAreaExtents(self, &self->field_1C, mgr, &holder);
+    CfGimmick_LoadBdatClAreaExtents(self, &self->field_F4, mgr, &holder);
+    CfGimmick_LoadBdatAreaRotation(self, &self->field_10, mgr, &holder);
     self->vf_801F7930();
 
     // Scalar columns from lbl_eu_80507B60 and the lbl_eu_805357E8 pointer
@@ -289,14 +289,14 @@ extern "C" cf::CfGimmickObject* __ct__cf_CfGimmickObject(
     if ((self->field_66 & 0x20) != 0) {
         // Collision-gated: run the availability chain and jump straight to
         // step 3 when the map object and both checks pass.
-        if (func_8020971C((void*)(u32)self->field_64) != 0 &&
+        if (CfGimmick_CheckStateFlag2CC8((void*)(u32)self->field_64) != 0 &&
             func_801F7978(self) != 0 && func_801F7B44(self) != 0) {
             func_801F5C2C(self, 0, 3);
             self->field_188 = 3;
         }
     } else if (self->field_15E == 3) {
         self->field_74 |= 0x200;
-        if (func_8020971C((void*)(u32)self->field_64) != 0) {
+        if (CfGimmick_CheckStateFlag2CC8((void*)(u32)self->field_64) != 0) {
             self->field_74 &= ~0x8200u;
             // Duplicate-area suppression: another spawned object sharing our
             // LOD id and any area/effect id blocks the initial step-5 start.
@@ -351,7 +351,7 @@ void func_801F7930(cf::CfGimmickObject* self) {
 
 cf::CfGimmickObject::~CfGimmickObject() {
     *(void**)this = (void*)lbl_eu_80534F70;
-    func_80208EE4((void*)this);
+    CfGimmick_ClearManagerBinding((void*)this);
     func_8020A434(&this->field_7C);
     __dt__Q22cf9CfGimmickFv((void*)this, 0);
     // MWCC appends the deleting-dtor prologue (null guard) and epilogue
@@ -505,7 +505,7 @@ __declspec(noinline) void func_801F5C2C(cf::CfGimmickObject* self, int a, int b)
     }
 
     if (mgrId != 0) {
-        func_80208EE4(self);
+        CfGimmick_ClearManagerBinding(self);
         CfGimmickObjectMgr* mgr =
             (CfGimmickObjectMgr*)createBattleActor__Q22cf13CfGameManagerFv(mgrId, 0);
         self->field_78 = mgr;
@@ -519,7 +519,7 @@ __declspec(noinline) void func_801F5C2C(cf::CfGimmickObject* self, int a, int b)
             ((void (*)(void*, f32))mgr->vtable[0x31])(mgr, self->field_10.y);
         }
     } else if (effClear != 0) {
-        func_80208EE4(self);
+        CfGimmick_ClearManagerBinding(self);
     }
 
     // The 0x18000 flag pair forces the pending sound to be dropped.
@@ -743,7 +743,7 @@ int func_801F634C(cf::CfGimmickObject* self) {
 
         // bit 5: +0x17C expiry.
         if ((self->field_74 & 0x20) != 0) {
-            func_8020A010();
+            CfGimmick_SetGlobalFlag80000();
             f32 v = self->field_17C - delta;
             self->field_17C = v;
                 self->field_74 &= ~0x20;
@@ -761,7 +761,7 @@ int func_801F634C(cf::CfGimmickObject* self) {
 // +0x68 map-object status (CfObjectMove_setAnimModeArgs), a player-control reset (getPlayer
 // slot 0x110 -> func_80199678), the area-manager attach (createBattleActor with
 // vtable slots 0x9C/0xC4) and the step sound (func_801BFED0 / playActorSound /
-// func_80208C60 / func_80208C48, plus the func_801BFAE4 volume slot).
+// CfGimmick_PlaySoundAtPosScaled / CfGimmick_PlaySoundAtPos, plus the func_801BFAE4 volume slot).
 #endif
 
 void func_801F6780(cf::CfGimmickObject* self) {
@@ -1108,17 +1108,17 @@ done_reset:
 
 // func_801F75CC - countdown/activation step. While flag 0x4000 is set,
 // decrement +0x170 by the scene allocator's frame delta and keep returning 1
-// sound for the old handle, refresh the handle via func_80208C48 and return 1.
+// sound for the old handle, refresh the handle via CfGimmick_PlaySoundAtPos and return 1.
 int func_801F75CC(cf::CfGimmickObject* self) {
     return 0;
 }
 
 // func_801F76A8 - step-machine cleanup: resolves the +0x6A area registration
 // (func_8020A6B0 / func_8020A434), runs the +0x180 effect countdown
-// (func_80496288 delta; on expiry notify func_80208EE4, otherwise scale the
+// (Scn_GetFrameDelta delta; on expiry notify CfGimmick_ClearManagerBinding, otherwise scale the
 // remaining time into setChildV40__'s position vector), and plays / refreshes
 // the step sound selected by field_192 (playActorSound for kind 3,
-// func_80208C60 for kinds 2/1, func_80208C48 otherwise). The sound-slot
+// CfGimmick_PlaySoundAtPosScaled for kinds 2/1, CfGimmick_PlaySoundAtPos otherwise). The sound-slot
 // volume (func_801BFAE4 +0x1C) is forced to 0/1 by the global 0x8 flag.
 void func_801F76A8(cf::CfGimmickObject* self) {
     return;

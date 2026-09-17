@@ -52,7 +52,7 @@ extern void setPresentationFlag__Q22cf13CfGameManagerFv(bool enable);
 
 // Term-time helpers (declared here; retail unmangled call relocs).
 extern "C" void waitForDrawDone__9CDeviceVIFv();
-extern "C" void func_804962A0(CScn* scn, int flag);
+extern "C" void Scn_SetPauseFlag(CScn* scn, int flag);
 extern "C" void func_801C3D9C(CBgTex* self);
 extern "C" void func_801C40A0(CTitleAHelp* self);
 extern "C" void func_802435CC(CMapSel* self);
@@ -177,7 +177,7 @@ void func_80240878(){}
 // object base (retail strength-reduces them to a +4 byte walker); the
 // !(x <= eps) form reproduces retail's cror eq,lt,eq branch fusion.
 extern "C" void func_802408D4(MenuFxObj* obj) {
-    float delta = func_80496288((void*)CfRes_getD80Flag());
+    float delta = Scn_GetFrameDelta((void*)CfRes_getD80Flag());
 
     obj->pos = ml::CVec3::zero;
     obj->pos2 = ml::CVec3::zero;
@@ -698,7 +698,7 @@ void func_80241920(CFloorMap* dest, CFloorMap* src) {
 
 void CMenuMapSelect::Term() {
     waitForDrawDone__9CDeviceVIFv();
-    func_804962A0(mScn, 1);
+    Scn_SetPauseFlag(mScn, 1);
 
     IScnRender* cb = reinterpret_cast<IScnRender*>(this);
     if (this != 0) {
@@ -737,7 +737,7 @@ void CMenuMapSelect::Move() {
         mState = 1;
         playUISound__FUl(0x6d);
         func_8013EC6C(1, 0);
-        func_804962A0(mScn, 0);
+        Scn_SetPauseFlag(mScn, 0);
         break;
 
     case 1:

@@ -551,7 +551,7 @@ int func_80164C48() {
         result = !lbl_eu_80664240->field_0xB0;
     }
     if (result) {
-        result = !func_8016847C();
+        result = !EvtSeqGetSharedState();
     }
     if (result) {
         result = !lbl_eu_80664240->field_0x1D0;
@@ -598,7 +598,7 @@ void func_80164DB8() {
     CEventMgr* mgr = lbl_eu_80664240;
     if (mgr == 0) return;
     if (mgr->field_0xB0 == 0) return;
-    func_80168484(1);
+    EvtSeqSetBgmGateFlag(1);
     if ((lbl_eu_80663E28 & 0x01000000) == 0) {
         CTaskGame_resetStream();
     }
@@ -620,7 +620,7 @@ void cf::CTaskREvent::Init() {
 
 // Loads an SFD movie through the CRI player when the manager is idle
 // (mCri == (CLibCri*)-1). `handle` selects the buffer source: a fresh MEM2
-// handle vs the scene alloc handle (func_80495FF0(lbl_eu_80663E14)). The
+// handle vs the scene alloc handle (Scn_CallUnk8C_V9(lbl_eu_80663E14)). The
 // finished player is stored back through the global, re-read after the call
 // because it may have been replaced.
 void func_80164ED0(const char* path, int flag, u8* handle) {
@@ -630,7 +630,7 @@ void func_80164ED0(const char* path, int flag, u8* handle) {
         if (handle != 0) {
             buffer = mtl::MemManager::getHandleMEM2();
         } else {
-            buffer = func_80495FF0(lbl_eu_80663E14);
+            buffer = Scn_CallUnk8C_V9(lbl_eu_80663E14);
         }
         CLibCri* cri = startMovie__7CLibCriFv(
             path, mtl::MemManager::getHandleMEM2(), buffer, flag, 0);
@@ -855,7 +855,7 @@ void cf::CTaskREvent::Move() {
                 if (next >= 0xAE) this->field_0x1D4 = 0;
             }
         } else if ((lbl_eu_80663E28 & 0x01000000) != 0 && this->field_0xB0 != 0 &&
-                   func_801684F4() != 0) {
+                   EvtSeqGetStateBit10() != 0) {
             // Event-active path: advance the subtitle clock and set up the
             // current subtitle entry.
             if (!cf::CfGameManager::isSceneLoading()) {
@@ -952,7 +952,7 @@ void cf::CTaskREvent::Move() {
         }
         playing = (st != 0) ? 1 : 0;
     }
-    func_804962A8(reinterpret_cast<u8*>(lbl_eu_80663E14), playing);
+    Scn_SetStopFlag(reinterpret_cast<u8*>(lbl_eu_80663E14), playing);
 
     // Frame-time tracking: watch for stalls while the game manager idles.
     s32 cur = CTaskGame_getStreamPos();

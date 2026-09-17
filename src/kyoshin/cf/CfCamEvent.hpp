@@ -182,7 +182,7 @@ extern "C" void func_800707C0(void*, void*, void*);
 extern "C" int func_80073640(void*, ml::CVec3*, ml::CVec3*, ml::CVec3*, int);
 extern "C" void cfCam_applyRelPos(void*, void*, void*, int, float, float);
 extern "C" int CfRes_getD80Flag();
-extern "C" float func_80496288();                     // scene elapsed-time getter
+extern "C" float Scn_GetFrameDelta();                     // scene elapsed-time getter
 extern "C" int func_804BE398(void*, u32, u32, u32, f32, f32);
 extern "C" void func_804BE4B4(void*, int);
 extern "C" void scnImN4DynStart();

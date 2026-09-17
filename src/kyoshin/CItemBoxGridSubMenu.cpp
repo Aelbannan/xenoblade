@@ -8,7 +8,7 @@ extern "C" void func_80137924(void*, void*, void*, void*);
 
 // C-linkage pseudo-imports for this TU (playUISound__FUl, lbl_eu_805084BC,
 // the lbl_eu_806683xx sdata2 constants, getPackedFont__Fv,
-// isClassicController__Q22cf13CfGameManagerFv, func_801355F4,
+// isClassicController__Q22cf13CfGameManagerFv, CUICfManager_getArcResourceAccessor,
 // drawLayout__FPQ34nw4r3lyt6LayoutPQ34nw4r3lyt8DrawInfoii) now live in the
 // "C-linkage imports" section of kyoshin/CItemBoxGridSubMenu.hpp.
 
@@ -16,7 +16,7 @@ extern void* lbl_eu_80535750[];
 
 // Forward declarations for functions not in included headers
 void func_80136D74(char*, const char*, int);
-void func_80127BC4(char*, const char*);
+void TagCopyVec2f(char*, const char*);
 void func_80124288(char*, char*);
 void func_801D2150(nw4r::lyt::Pane* pane, const nw4r::math::VEC3* trans);
 void code80135FDC_setVec3(float*, float, float, float);
@@ -207,7 +207,7 @@ void func_80207FC8(CItemBoxGridSubMenu* self, nw4r::lyt::ArcResourceAccessor* ac
     u16 msgId = BdatGetU16ByTableKey(&lbl_eu_805084BC[0x78], (char*)fileID, 0x2b);
     u8* tex = (u8*)MakeTplNameSysFile(msgId);
 
-    u8* sys = (u8*)func_801355F4();
+    u8* sys = (u8*)CUICfManager_getArcResourceAccessor();
     u8* mat = (u8*)((nw4r::lyt::ArcResourceAccessor*)sys)->GetResource(0x74696d67, (const char*)tex, 0);
     if (mat != NULL) {
         PaneSetTexPaletteByName(self->mLayout, &lbl_eu_805084BC[0xa9], mat);

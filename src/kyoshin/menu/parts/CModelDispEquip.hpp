@@ -11,9 +11,9 @@
 // definitions (CActParamAnim, CScnItemModel) come through intact.
 #define writeVec3f writeVec3f_void_hidden
 #define func_8004B9D4 func_8004B9D4_hidden
-#define func_80495E94 func_80495E94_1arg_hidden
-#define func_80496264 func_80496264_s32_hidden
-#define func_80495E60 func_80495E60_void_hidden
+#define Scn_SetupAnimDefault Scn_SetupAnimDefault_1arg_hidden
+#define Scn_FindCamItem Scn_FindCamItem_s32_hidden
+#define Scn_IsAnimActiveOrNull Scn_IsAnimActiveOrNull_void_hidden
 #define lbl_eu_805262F0 lbl_eu_805262F0_constchar_hidden
 #define lbl_eu_805262C8 lbl_eu_805262C8_constchar_hidden
 #define zero__Q22ml5CVec3 zero__Q22ml5CVec3_ml_hidden
@@ -27,9 +27,9 @@
 #include "kyoshin/cf/IResInfo.hpp"
 #undef writeVec3f
 #undef func_8004B9D4
-#undef func_80495E94
-#undef func_80496264
-#undef func_80495E60
+#undef Scn_SetupAnimDefault
+#undef Scn_FindCamItem
+#undef Scn_IsAnimActiveOrNull
 #undef lbl_eu_805262F0
 #undef lbl_eu_805262C8
 #undef zero__Q22ml5CVec3
@@ -55,8 +55,8 @@ struct FileSlot {
     u8 _pad[3];
 };
 
-// 8-byte buffer-budget context built by func_801F981C / func_801F9894
-// (retail: two remaining-size words at +0/+4, decremented by func_801F9894
+// 8-byte buffer-budget context built by PartyStateWin_InitMemCounters / PartyStateWin_PickAllocHandle
+// (retail: two remaining-size words at +0/+4, decremented by PartyStateWin_PickAllocHandle
 // when it picks the MEM1/MEM2 alloc handle for the file size).
 struct CModelDispFileCtx {
     u32 field_0x00; // +0 remaining MEM1 budget
@@ -86,7 +86,7 @@ struct CActParamAnimView {
     u8 _4B8[0x84];
 };
 
-// Effect-instance view written by func_8020131C: word at +0x14 (result of the
+// Effect-instance view written by ModelDispEquip_HandleSlotCmd: word at +0x14 (result of the
 // vtable+0xA8 call) and a byte at +0x59 (active flag, set in the cmd==3 case).
 struct CModelDispEffectView {
     u8 _00[0x14];
@@ -95,7 +95,7 @@ struct CModelDispEffectView {
     u8 field_0x59;  // +0x59
 };
 
-// Command buffer passed to func_8020131C: byte +0xA selects the command
+// Command buffer passed to ModelDispEquip_HandleSlotCmd: byte +0xA selects the command
 // (2 = load model slot, 3 = mark active); +0x1C holds an optional numeric
 // string that is atoi'd when its first byte is a digit.
 struct CModelDispEquipCmd {
@@ -123,7 +123,7 @@ struct CModelDispNameParam {
     u8 _00[4];
 };
 
-// Character/equip record returned by func_8009EC9C (func_80200394): the five
+// Character/equip record returned by func_8009EC9C (ModelDispEquip_BuildEquipModel): the five
 // equip ids at +0x0E..0x16 and the u16 weapon id at +0x18. The equip ids are
 // u16 (retail lhz + extsh pairs at the call sites) - callers sign-extend.
 struct CModelDispCharRecord {
@@ -182,18 +182,18 @@ struct CModelDispMca {
     u8 field_04;   // +0x04 flag
     u8 _05[3];
     u8* field_08;  // +0x08
-    u8* mDataAdj;  // +0x0C (passed to func_80495EAC)
+    u8* mDataAdj;  // +0x0C (passed to Scn_InitGlobalA)
 };
 
 // Parent object whose +0x3A0 field must equal the holder's model pointer
-// (func_80200FB0's early guard).
+// (ModelDispEquip_SwapPartyEquip's early guard).
 struct CModelDispParent {
     u8 _00[0x3A0];
     CModelDispObj* field_0x3A0; // +0x3A0
 };
 
 // 12-byte filter triple copied by value out of lbl_eu_80507FDC in
-// func_80200FB0 (retail loads it as one struct: lwzu/lwz/lwz).
+// ModelDispEquip_SwapPartyEquip (retail loads it as one struct: lwzu/lwz/lwz).
 struct CModelDispFilterTbl {
     u32 slot[3];
 };
@@ -230,14 +230,14 @@ struct CModelDispSlot {
 
 // Sub-object at CModelDispEquip+0x10: 3 vtable words + act-param objects.
 // The animModelPtrs array sits at the holder's tail (+0xFC8) - retail code
-// addresses it through the holder base (e.g. func_80200E94's lwz 0xfc8(r31)).
+// addresses it through the holder base (e.g. ModelDispEquip_RearmAnimSlot's lwz 0xfc8(r31)).
 struct CActParamHolder {
     void* field_0x00; // +0x00 object pointer (vtable dispatch at 0xC4/0xC8)
     CModelDispObj* field_0x04; // +0x04 anim object (func_800584B8 result)
     CModelDispObj* field_0x08; // +0x08 anim object (func_800584B8 result)
     CActParamAnimView actParam;    // +0x0C (0x53C bytes)
     s32 timer;        // +0x548
-    CModelDispObj* unk_55C; // +0x54C loaded-model record (func_80495EAC result)
+    CModelDispObj* unk_55C; // +0x54C loaded-model record (Scn_InitGlobalA result)
     CActParamAnimView actParams[2]; // +0x550 (0xA78 bytes)
     void* animModelPtrs[2]; // +0xFC8 animation model slot pointers (indexed by r5/i)
     u32 equipPtrs[8];       // +0xFD0
@@ -268,8 +268,8 @@ public:
     void setState14_3();
     static void storeFloats(float* dest, float a, float b, float c, float d);
 
-    void func_80201298();
-    void func_8020131C();
+    void ModelDispEquip_ReplaySlotAnims();
+    void ModelDispEquip_HandleSlotCmd();
 
     void vfunc18();
     void vfunc40();
@@ -325,7 +325,7 @@ extern u32 lbl_eu_8057655C[3];
 // Vtable base written by the ctor into _vtable/_vtable2/_vtable3
 // (offsets +0x0 / +0x88 / +0xB4 within the vtable block).
 extern u32 lbl_eu_805354C8[];
-// 3 state filter values selected by equipSlot (ModelDispEquip_BuildPartyModel / func_80200FB0).
+// 3 state filter values selected by equipSlot (ModelDispEquip_BuildPartyModel / ModelDispEquip_SwapPartyEquip).
 extern u32 lbl_eu_80507FD0[];
 extern u32 lbl_eu_80507FDC[];
 // Equip-name string table (accessed at +0x0/+0x4/+0x8/+0xC/+0x58/+0x62).
@@ -338,7 +338,7 @@ extern const f32 lbl_eu_8066829C;
 extern const f32 lbl_eu_80668278;
 extern const f32 lbl_eu_80668270;
 extern const f32 lbl_eu_8066827C; // alpha step for ModelDispEquip_StepFadeIn
-// Step / clamp constants for func_80201570/15D4/1740/17A4 and 1638/16BC.
+// Step / clamp constants for ModelDispEquip_FadeAlphaUp/15D4/1740/17A4 and 1638/16BC.
 extern const f32 lbl_eu_80668280;
 extern const f32 lbl_eu_80668284; // scale1[1] upper clamp
 extern const f32 lbl_eu_80668288; // scale2[1] upper clamp
@@ -346,7 +346,7 @@ extern const f32 lbl_eu_8066828C; // scale1[1] lower clamp
 extern const f32 lbl_eu_80668290; // scale2[1] lower clamp
 extern const f32 lbl_eu_80668294; // scale1[2] lower clamp
 extern const f32 lbl_eu_80668298; // scale1[2] upper clamp
-// 3-word anim-id table read by func_80200CE8: the random sign (-1/0/+1)
+// 3-word anim-id table read by ModelDispEquip_TickAnim: the random sign (-1/0/+1)
 // indexes the array, so the middle entry sits at the label (sdata2 -> @sda21).
 // Declared as [2] (8 bytes) so MWCC keeps it small-data eligible and emits
 // li r3, lbl@sda21 like retail (a 12-byte extern falls back to lis/addi).
@@ -361,7 +361,7 @@ extern "C" s32 getInstance__Q22ml6MTRandFv();
 extern "C" u32 rand31__Q22ml6MTRandFv();
 extern "C" int atoi(const char* str);
 extern "C" bool setTurnScale(void*, f32);
-extern "C" void* func_80496264(void*, int);
+extern "C" void* Scn_FindCamItem(void*, int);
 extern "C" void func_8049EFF8(void*, f32, void*, void*);
 extern "C" void* getAnimChain(void* self);
 extern "C" void func_8004B9D4(void* self, void* arg, u32, s32, u32);
@@ -373,8 +373,8 @@ extern "C" void __dt__Q22cf17CActParamAnimGameFv(cf::CActParamAnimGame*, int);
 extern "C" int func_800BBC04(void* arg);
 extern "C" void* getBdatEntryColumn__Q22cf13CfGameManagerFv(u32 type, int slot);
 extern "C" int func_800AA33C(ml::FixStr<64>& buf, u32 packed, int prefixFlag, int suffixFlag);
-extern "C" void func_801F981C(CModelDispFileCtx* ctx);
-extern "C" u32 func_801F9894(CModelDispFileCtx* ctx, u32 size);
+extern "C" void PartyStateWin_InitMemCounters(CModelDispFileCtx* ctx);
+extern "C" u32 PartyStateWin_PickAllocHandle(CModelDispFileCtx* ctx, u32 size);
 extern "C" int getFileSize__11CDeviceFileFPCc(const char* path, int flags);
 extern "C" void* readFile__11CDeviceFileFUlPCcP10IWorkEventii(u32 allocHandle, const char* path, void* workEvent, int, int);
 extern "C" void setHandleFlag1__11CDeviceFileFP11CFileHandle(CFileHandle* fh);
@@ -407,10 +407,10 @@ extern "C" void syncFieldData__Q22cf13CfGameManagerFv(u32 value, bool searchEntr
 extern "C" void simSetLeafFlag4000(void* model, int flag);
 extern "C" void func_80482DF4(void* model, int flag);
 extern "C" CModelDispObj* func_800584B8(u32 global, u32 id, const char* name);
-extern "C" CScnItemModel* func_80495E8C(u32 global, u32 id, int a, int b);
-extern "C" CScnItemModel* func_80495E94(u32 global, CModelDispNameParam* param);
-extern "C" CModelDispObj* func_80495EAC(u32 global, u8* mDataAdj, const char* name);
-extern "C" void func_80495E60(CModelDispObj* obj);
+extern "C" CScnItemModel* Scn_SetupAnim(u32 global, u32 id, int a, int b);
+extern "C" CScnItemModel* Scn_SetupAnimDefault(u32 global, CModelDispNameParam* param);
+extern "C" CModelDispObj* Scn_InitGlobalA(u32 global, u8* mDataAdj, const char* name);
+extern "C" void Scn_IsAnimActiveOrNull(CModelDispObj* obj);
 extern "C" int CfObjectMove_getSubB0FieldA(cf::CfObjectMove* move); // int return: callers store
 // into an s16 local, forcing the extsh into the home register at assignment.
 extern "C" CModelDispParamSlot* CfRes_getPcGridEntry(s16 id, int a);

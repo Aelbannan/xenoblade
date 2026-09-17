@@ -336,7 +336,7 @@ void func_8049032C() {
 }
 
 // Camera resolver in CScn.cpp (retail also receives the view in r4).
-extern "C" void* func_80496274(void* scene, void* view);
+extern "C" void* Scn_GetCamList(void* scene, void* view);
 
 // Apply the camera's perspective (matrix at cam+0x9c, fov/near/far at
 // cam+0x1e0/0x1ec/0x1f0) to the given CDrawGX; falls back to the current view.
@@ -344,7 +344,7 @@ int func_8049034C(CScnTexWorkMan* scene, CDrawGX* gx, CView* view) {
     if (view == NULL) {
         view = CView::getCurrentView();
     }
-    const u8* cam = (const u8*)func_80496274(scene, view);
+    const u8* cam = (const u8*)Scn_GetCamList(scene, view);
     // Sequenced to match retail's load order (far, mat addr, mid, near).
     const f32 valFar = *(const f32*)(cam + 0x1f0);
     const ml::CMat34& mat = *(const ml::CMat34*)(cam + 0x9c);

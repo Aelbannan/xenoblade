@@ -96,8 +96,8 @@ extern "C" {
     void SetTextColor__Q34nw4r2ut10CharWriterFQ34nw4r2ut5Color(void* writer, u32 color);
     void SetupGX__Q34nw4r2ut10CharWriterFv(void* writer);
     void Print__Q34nw4r2ut17TextWriterBaseFPCwi(void* writer, const wchar_t* text, int len);
-    void func_80129F3C(void* writer, f32 a, f32 b);
-    void func_8012B204(void* writer, f32 a);
+    void TagWriterSetScale(void* writer, f32 a, f32 b);
+    void TagWriterSetCharSpace(void* writer, f32 a);
     void* getMessageQueueSlot__10CExceptionFv(CMsgParamEntry* entries, u32 value);
     void func_80458084__10CExceptionFv(const void* message);
     void func_80458B78__10CExceptionFv(u8* writer, f32 x, f32 y, f32 z);

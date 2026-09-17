@@ -9,10 +9,10 @@
 // includable (owner: kyoshin/code_80135FDC).
 // int return: retail tests the result with a bare cmpwi (no rlwinm mask).
 extern "C" int code80135FDC_getByte_64059();
-// func_8049603C: retail branches here WITHOUT setting up r3 (stale-register
+// Scn_QueryUnk80State: retail branches here WITHOUT setting up r3 (stale-register
 // call), so this TU keeps a private no-arg declaration and must not include
 // libs/monolib/src/scn/CScn_8049603C.hpp (owner: monolib CScn).
-extern "C" void* func_8049603C();
+extern "C" void* Scn_QueryUnk80State();
 #include "kyoshin/cf/CfGameManager.hpp"
 #include "kyoshin/cf/IResInfo.hpp"
 #include "monolib/util/FixStr.hpp"
@@ -165,13 +165,13 @@ extern "C" void Init__11CMenuUpdateFv(void* self) {
 
     Class_8045F858 stackObj(&obj->mMemRegion);
 
-    void* accessor = func_801355F4();
+    void* accessor = CUICfManager_getArcResourceAccessor();
     buildLayout__FPPQ34nw4r3lyt6LayoutPQ34nw4r3lyt19ArcResourceAccessorPCc((void*)&obj->mLayout, accessor, (const char*)((u32)lbl_eu_805013C8 + 0xC));
 
-    accessor = func_801355F4();
+    accessor = CUICfManager_getArcResourceAccessor();
     bindLayoutAnimTransform__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc((void*)obj->mLayout, (void**)&obj->mAnim1, accessor, (char*)((u32)lbl_eu_805013C8 + 0x25));
 
-    accessor = func_801355F4();
+    accessor = CUICfManager_getArcResourceAccessor();
     bindLayoutAnimTransform__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc((void*)obj->mLayout, (void**)&obj->mAnim2, accessor, (char*)((u32)lbl_eu_805013C8 + 0x41));
 
     // One-arg call: retail carries &mAnim2 into r4 from the preceding
@@ -337,7 +337,7 @@ extern "C" void func_80142CA0(void* self, void* name, void* fmtArg) {
     void* str = noop_80142D5C(buf);
 
     nw4r::lyt::ResourceAccessor* accessor =
-        (nw4r::lyt::ResourceAccessor*)func_801355F4();
+        (nw4r::lyt::ResourceAccessor*)CUICfManager_getArcResourceAccessor();
     void* text = accessor->GetResource(0x74696D67, (const char*)str, NULL);
     if (text) PaneSetTexPaletteByName(obj->mLayout, (const char*)name, text);
 }
@@ -359,7 +359,7 @@ extern "C" __declspec(noinline) void func_80142D60(void* self) {
                       cf::CfGameManager::isClassicController(-1) ? (const char*)lbl_eu_805013C8 + 0x70
                                                            : (const char*)lbl_eu_805013C8 + 0x79,
                       0x2a));
-    void* tex = ((nw4r::lyt::ArcResourceAccessor*)func_801355F4())
+    void* tex = ((nw4r::lyt::ArcResourceAccessor*)CUICfManager_getArcResourceAccessor())
                     ->GetResource(0x74696D67 /* 'timg' */, icon, NULL);
     if (tex != NULL) {
         PaneSetTexPaletteByName(obj->mLayout, (const char*)lbl_eu_805013C8 + 0x90, tex);
@@ -428,7 +428,7 @@ extern "C" __declspec(noinline) void func_80142D60(void* self) {
 
     case 2: {
         func_80124270(paneC, 1);
-        res = ((nw4r::lyt::ArcResourceAccessor*)func_801355F4())
+        res = ((nw4r::lyt::ArcResourceAccessor*)CUICfManager_getArcResourceAccessor())
                   ->GetResource(0x74696D67, (const char*)lbl_eu_805013C8 + 0x107, NULL);
         if (res != NULL) {
             PaneSetTexPaletteByName(obj->mLayout, (const char*)lbl_eu_805013C8 + 0x120, res);
@@ -447,23 +447,23 @@ extern "C" __declspec(noinline) void func_80142D60(void* self) {
         res = NULL;
         switch (obj->mSubType) {
         case 1:
-            res = ((nw4r::lyt::ArcResourceAccessor*)func_801355F4())
+            res = ((nw4r::lyt::ArcResourceAccessor*)CUICfManager_getArcResourceAccessor())
                       ->GetResource(0x74696D67, (const char*)lbl_eu_805013C8 + 0x16c, NULL);
             break;
         case 2:
-            res = ((nw4r::lyt::ArcResourceAccessor*)func_801355F4())
+            res = ((nw4r::lyt::ArcResourceAccessor*)CUICfManager_getArcResourceAccessor())
                       ->GetResource(0x74696D67, (const char*)lbl_eu_805013C8 + 0x187, NULL);
             break;
         case 3:
-            res = ((nw4r::lyt::ArcResourceAccessor*)func_801355F4())
+            res = ((nw4r::lyt::ArcResourceAccessor*)CUICfManager_getArcResourceAccessor())
                       ->GetResource(0x74696D67, (const char*)lbl_eu_805013C8 + 0x1a2, NULL);
             break;
         case 4:
-            res = ((nw4r::lyt::ArcResourceAccessor*)func_801355F4())
+            res = ((nw4r::lyt::ArcResourceAccessor*)CUICfManager_getArcResourceAccessor())
                       ->GetResource(0x74696D67, (const char*)lbl_eu_805013C8 + 0x1bd, NULL);
             break;
         case 5:
-            res = ((nw4r::lyt::ArcResourceAccessor*)func_801355F4())
+            res = ((nw4r::lyt::ArcResourceAccessor*)CUICfManager_getArcResourceAccessor())
                       ->GetResource(0x74696D67, (const char*)lbl_eu_805013C8 + 0x1d8, NULL);
             break;
         }
@@ -493,7 +493,7 @@ extern "C" __declspec(noinline) void func_80142D60(void* self) {
             } else {
                 name = (const char*)lbl_eu_805013C8 + 0x244;
             }
-            res = ((nw4r::lyt::ArcResourceAccessor*)func_801355F4())
+            res = ((nw4r::lyt::ArcResourceAccessor*)CUICfManager_getArcResourceAccessor())
                       ->GetResource(0x74696D67, name, NULL);
             if (res != NULL) {
                 PaneSetTexPaletteByName(obj->mLayout, (const char*)lbl_eu_805013C8 + 0x213, res);
@@ -522,7 +522,7 @@ extern "C" __declspec(noinline) void func_80142D60(void* self) {
             } else {
                 name = (const char*)lbl_eu_805013C8 + 0x244;
             }
-            res = ((nw4r::lyt::ArcResourceAccessor*)func_801355F4())
+            res = ((nw4r::lyt::ArcResourceAccessor*)CUICfManager_getArcResourceAccessor())
                       ->GetResource(0x74696D67, name, NULL);
             if (res != NULL) {
                 PaneSetTexPaletteByName(obj->mLayout, (const char*)lbl_eu_805013C8 + 0x262, res);
@@ -582,7 +582,7 @@ extern "C" __declspec(noinline) void func_80142D60(void* self) {
             } else {
                 name = (const char*)lbl_eu_805013C8 + 0x2e6;
             }
-            res = ((nw4r::lyt::ArcResourceAccessor*)func_801355F4())
+            res = ((nw4r::lyt::ArcResourceAccessor*)CUICfManager_getArcResourceAccessor())
                       ->GetResource(0x74696D67, name, NULL);
             if (res != NULL) {
                 PaneSetTexPaletteByName(obj->mLayout, (const char*)lbl_eu_805013C8 + 0x209, res);
@@ -611,7 +611,7 @@ extern "C" __declspec(noinline) void func_80142D60(void* self) {
             } else {
                 name = (const char*)lbl_eu_805013C8 + 0x2e6;
             }
-            res = ((nw4r::lyt::ArcResourceAccessor*)func_801355F4())
+            res = ((nw4r::lyt::ArcResourceAccessor*)CUICfManager_getArcResourceAccessor())
                       ->GetResource(0x74696D67, name, NULL);
             if (res != NULL) {
                 PaneSetTexPaletteByName(obj->mLayout, (const char*)lbl_eu_805013C8 + 0x258, res);
@@ -633,7 +633,7 @@ extern "C" __declspec(noinline) void func_80142D60(void* self) {
 
     case 3: {
         func_80124270(paneC, 1);
-        res = ((nw4r::lyt::ArcResourceAccessor*)func_801355F4())
+        res = ((nw4r::lyt::ArcResourceAccessor*)CUICfManager_getArcResourceAccessor())
                   ->GetResource(0x74696D67, (const char*)lbl_eu_805013C8 + 0x335, NULL);
         if (res != NULL) {
             PaneSetTexPaletteByName(obj->mLayout, (const char*)lbl_eu_805013C8 + 0x120, res);
@@ -876,7 +876,7 @@ extern "C" __declspec(noinline) void func_801440A8(void* self) {
         // Confirm-button handling on the state-machine side.
         CMenuUpdatePadData* pad = (CMenuUpdatePadData*)cf::CfGameManager::getCurrentPad();
         if (pad->mPressedButtonFlags & 0x200) {
-            if (code80135FDC_getByte_64059() || func_80135898() || func_80122450() ||
+            if (code80135FDC_getByte_64059() || CUICfManager_hasInUseSlot() || func_80122450() ||
                 func_80226B94()) {
                 playUISound__FUl(5);
             } else {
@@ -888,10 +888,10 @@ extern "C" __declspec(noinline) void func_801440A8(void* self) {
                 if (!(v >= lbl_eu_806673C4) || !(obj->mFloat12C <= lbl_eu_806673A0)) {
                 } else {
                     switch (obj->mState) {
-                    case 1: func_80133A08(obj->mSubState & 0xFFFF); break;
-                    case 2: func_801347EC(0); break;
-                    case 6: func_8013D7C0(obj->mSubState & 0xFFFF); break;
-                    case 3: func_80134F2C(obj->mSubState & 0xFFFF); break;
+                    case 1: CUICfManager_queueQuestLogMenu(obj->mSubState & 0xFFFF); break;
+                    case 2: CUICfManager_queueKizunagramMenu(0); break;
+                    case 6: UIWin_CreateSysWinBuff(obj->mSubState & 0xFFFF); break;
+                    case 3: CUICfManager_queueTutorialListMenu(obj->mSubState & 0xFFFF); break;
                     }
                 }
             }
@@ -903,7 +903,7 @@ extern "C" __declspec(noinline) void func_801440A8(void* self) {
 
 // func_801443E4
 extern "C" __declspec(noinline) f32 func_801443E4() {
-    Unk_8049603C* mgr = (Unk_8049603C*)func_8049603C();
+    Unk_8049603C* mgr = (Unk_8049603C*)Scn_QueryUnk80State();
     f32 val = mgr->field_C;
     return lbl_eu_806673C4 - val;
 }
@@ -916,7 +916,7 @@ extern "C" __declspec(noinline) void func_80144410(void* self) {
     if (isGlobalCamFlagSet__Fi(0x1000000) && obj->mEntries[0].field_0 != 4 &&
         obj->mEntries[0].field_0 != 5)
         return;
-    if (func_80135898() || func_80122450() || func_80226B94())
+    if (CUICfManager_hasInUseSlot() || func_80122450() || func_80226B94())
         return;
 
     if (obj->mEntries[0].field_0 == 0) {

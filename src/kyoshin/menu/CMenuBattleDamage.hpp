@@ -252,7 +252,7 @@ struct CMenuBattleDamageObjPos {
     f32 field_0x2c; // +0x2c
 };
 
-// Opaque view of the func_80496264(scene, -1) camera/pose block (only passed
+// Opaque view of the Scn_FindCamItem(scene, -1) camera/pose block (only passed
 // through to func_8049B59C in this unit).
 struct CMenuBattleDamagePose;
 
@@ -305,7 +305,7 @@ void __ct__14Class_8045F858FP17UnkClass_8045F564(Class_8045F858* self,
 void __dt__14Class_8045F858Fv(Class_8045F858* self, int dealloc);
 void __ct__Q34nw4r3lyt8DrawInfoFv(nw4r::lyt::DrawInfo* self);
 void __dt__Q34nw4r3lyt8DrawInfoFv(nw4r::lyt::DrawInfo* self, int flags);
-nw4r::lyt::ArcResourceAccessor* func_801355F4();
+nw4r::lyt::ArcResourceAccessor* CUICfManager_getArcResourceAccessor();
 int GetSysStateFlag24();
 int IsMenuState621F0();
 const char* func_80145AA8(int index);
@@ -318,7 +318,7 @@ void setLayoutTextBoxNumber__FPQ34nw4r3lyt6LayoutPcUc(nw4r::lyt::Layout*, char*,
                                               u32);
 void* getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(
     u32 arg, nw4r::lyt::Layout* layout);
-CMenuBattleDamagePose* func_80496264(CScn* scene, int index);
+CMenuBattleDamagePose* Scn_FindCamItem(CScn* scene, int index);
 void func_8049B59C(nw4r::math::VEC3* out, CMenuBattleDamagePose* pose,
                    const nw4r::math::VEC3* in);
 char* BdatTouchStringCell(const void*, const void*, int);

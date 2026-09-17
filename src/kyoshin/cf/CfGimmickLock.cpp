@@ -24,9 +24,9 @@ extern "C" void* __ct__cf_CfGimmickLock(cf::CfGimmickLock* self, u16 row) {
     void* holder = lbl_eu_8066412C;
     self->rowId = row;
 
-    func_80208F34(self, &self->position, bdat, &holder);
-    func_80209020(self, &self->scale, bdat, &holder);
-    func_80209288(self, &self->rotation, bdat, &holder);
+    CfGimmick_LoadBdatAreaPos(self, &self->position, bdat, &holder);
+    CfGimmick_LoadBdatAreaExtents(self, &self->scale, bdat, &holder);
+    CfGimmick_LoadBdatAreaRotation(self, &self->rotation, bdat, &holder);
 
     // Bdat columns: min/max unlock bounds and the resource id (the cells are
     // string pointers; only the low 16 bits are used).
@@ -78,7 +78,7 @@ extern "C" void* __ct__cf_CfGimmickLock(cf::CfGimmickLock* self, u16 row) {
 // members and the CfGimmick base.
 cf::CfGimmickLock::~CfGimmickLock() {
     *(void**)this = (void*)lbl_eu_80535900;
-    func_80208EE4(this);
+    CfGimmick_ClearManagerBinding(this);
 
     // Inner region (0x8C) was registered with the global manager.
     if (this->flags & 1) {
@@ -166,7 +166,7 @@ extern "C" void func_8020C640(cf::CfGimmickLock* self) {
             } else {
                 if ((self->flags & 2) != 0) {
                     self->flags &= ~0x803;
-                    func_80208EE4(self);
+                    CfGimmick_ClearManagerBinding(self);
                     if ((self->flags & 0x1000) != 0) {
                         if (lbl_eu_80665958 != 0) {
                             func_804B4C7C(lbl_eu_80665958, &self->subB);
@@ -234,7 +234,7 @@ cleanup:
     }
     if ((self->flags & 2) != 0) {
         self->flags &= ~0x803;
-        func_80208EE4(self);
+        CfGimmick_ClearManagerBinding(self);
         if ((self->flags & 0x1000) != 0) {
             if (lbl_eu_80665958 != 0) {
                 func_804B4C7C(lbl_eu_80665958, &self->subB);
@@ -256,7 +256,7 @@ void func_8020CAAC(cf::CfGimmickLock* self) {
         // volatile re-read forces the retail lwz (MWCC would otherwise CSE
         // the two adjacent flag reads into one register).
         *(volatile u32*)&self->flags &= ~0x802;
-        func_80208EE4(self);
+        CfGimmick_ClearManagerBinding(self);
         if (self->flags & 0x1000) {
             if (lbl_eu_80665958 != 0) {
                 func_804B4C7C(lbl_eu_80665958, &self->subB);
@@ -356,7 +356,7 @@ extern "C" void func_8020CC9C(cf::CfGimmickLock* self) {
 
     // Probe the lock area; on success mark it open and release the outer
     // region if it was registered.
-    void* scene = func_8049626C(lbl_eu_80663E14, lbl_eu_80663E10);
+    void* scene = Scn_HasCamItem(lbl_eu_80663E14, lbl_eu_80663E10);
     int hit = jumptable_eu_80535830[self->stateIndex](
         (cf::CfGimmick*)&self->scale, (const CfGimmickVec3*)((u8*)scene + 0x10c), &self->position);
     if (hit != 0) {
@@ -372,7 +372,7 @@ extern "C" void func_8020CC9C(cf::CfGimmickLock* self) {
     }
 
     // Open countdown: shrink the radius, then place the outer region.
-    f32 f = self->field_1F4 - lbl_eu_806683BC * func_80496288(lbl_eu_80663E14);
+    f32 f = self->field_1F4 - lbl_eu_806683BC * Scn_GetFrameDelta(lbl_eu_80663E14);
     self->field_1F4 = f;
     if (f < lbl_eu_806683C0) {
         self->field_1F4 = lbl_eu_806683C0;
@@ -472,7 +472,7 @@ extern "C" void func_8020CFD0(cf::CfGimmickLock* self) {
             }
         }
     }
-    func_80209F8C();
+    CfGimmick_SetGlobalFlag8008();
 }
 
 // Mark the lock's four lock-id slots: unused slots get their presence bit in

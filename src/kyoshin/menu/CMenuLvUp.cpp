@@ -45,18 +45,18 @@ void CMenuLvUp::Init() {
     for (u8 i = 0; i < 3; i++) {
         CMenuLvUpEntry* entry = &mEntries[i];
 
-        nw4r::lyt::ArcResourceAccessor* accessor = func_801355F4();
+        nw4r::lyt::ArcResourceAccessor* accessor = CUICfManager_getArcResourceAccessor();
         buildLayout(&entry->field_0x00, accessor, &lbl_eu_8050EC70[0xa]);
-        accessor = func_801355F4();
+        accessor = CUICfManager_getArcResourceAccessor();
         bindLayoutAnimTransform(entry->field_0x00, &entry->field_0x04, accessor,
                       &lbl_eu_8050EC70[0x21]);
         entry->field_0x00->SetAnimationEnable(entry->field_0x04, true);
         entry->field_0x04->SetFrame(resetFrame);
         entry->field_0x00->Animate(0);
 
-        accessor = func_801355F4();
+        accessor = CUICfManager_getArcResourceAccessor();
         buildLayout(&entry->field_0x08, accessor, &lbl_eu_8050EC70[0x3b]);
-        accessor = func_801355F4();
+        accessor = CUICfManager_getArcResourceAccessor();
         bindLayoutAnimTransform(entry->field_0x08, &entry->field_0x0C, accessor,
                       &lbl_eu_8050EC70[0x54]);
         entry->field_0x08->SetAnimationEnable(entry->field_0x0C, true);
@@ -462,7 +462,7 @@ void func_802768E0(CMenuLvUp* self, CMenuLvUpEntry* entry) {
         world.y = src->y;
         world.z = src->z;
 
-        MenuLvUpPose* pose = func_80496264(self->mScene, -1);
+        MenuLvUpPose* pose = Scn_FindCamItem(self->mScene, -1);
         func_8049B59C(&screen, pose, &world);
         screen.x -= lbl_eu_80668A08;
         screen.y -= lbl_eu_80668A0C;

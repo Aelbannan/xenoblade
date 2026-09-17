@@ -4,7 +4,7 @@
 #include <harness_catalog.h>
 #include "monolib/lod/LODMemMan.hpp"
 #include "monolib/core/CView.hpp"           // CView::getCurrentView
-#include "monolib/core/code_804E36DC.hpp"   // func_80496288 (frame delta, C ABI)
+#include "monolib/core/code_804E36DC.hpp"   // Scn_GetFrameDelta (frame delta, C ABI)
 #include "nw4r/g3d/g3d_obj.h"               // nw4r::g3d::G3dObj::Destroy
 #include <string.h>                         // strlen / strcpy
 #include <math.h>                           // tan
@@ -465,7 +465,7 @@ struct LODBindView {
     LODBindSlot mSlots[16];        // 0xC8..0x187
 };
 
-// View frame returned by func_8049626C; +0x9C is handed to the LOD layer
+// View frame returned by Scn_HasCamItem; +0x9C is handed to the LOD layer
 // updates and +0x1E0 holds the scale (mirrors UnkViewFrame in
 // code_8047BB54.cpp).
 struct LODViewFrame {
@@ -623,7 +623,7 @@ struct LODMemManLayout {
     /* 0x10 */ LODElem20* field_0x10;         // index-list head
     /* 0x14 */ LODElem20* field_0x14;         // index-list tail
     /* 0x18 */ s32 mCount_18;                 // element count
-    /* 0x1C */ u8* mView_1C;                  // view (func_80496288 arg)
+    /* 0x1C */ u8* mView_1C;                  // view (Scn_GetFrameDelta arg)
     /* 0x20 */ u32 field_0x20;                // flag word (bit 6: buffer allocated)
     /* 0x24 */ u32 field_0x24;                // allocated block (getOrCreatePoolData)
     /* 0x28 */ u32 field_0x28;                // size-table value
@@ -698,8 +698,8 @@ extern "C" void func_8046F594__Q23LOD9LODMemManFv(LOD::LODMemMan* self);
 
 // Scene / view helpers defined in other monolib TUs.  Retail kept the plain
 // unmangled names; C linkage forces the verbatim names at the call sites.
-extern "C" CScn* func_8049698C();
-extern "C" LODViewFrame* func_8049626C(CScn* camera, CView* view);
+extern "C" CScn* Scn_GetCurrentScene();
+extern "C" LODViewFrame* Scn_HasCamItem(CScn* camera, CView* view);
 extern "C" u32 func_8048ECD0(CScn* self);
 extern "C" nw4r::g3d::ScnObj* func_8048EC14(CScn* self, u32 idx);
 extern "C" void* func_8048ECE4(CScn* self);
@@ -1341,7 +1341,7 @@ extern "C" void updateLodTick__Q23LOD9LODMemManFv(LOD::LODMemMan* self) {
             return;
         }
     }
-    l->field_0x80 = l->field_0x7C * func_80496288(l->mView_1C);
+    l->field_0x80 = l->field_0x7C * Scn_GetFrameDelta(l->mView_1C);
     if (!(l->field_0x6C & 8)) {
         l->field_0x6C |= 0x80;
         LODCacheBuf58* buf = (LODCacheBuf58*)l->field_0x5C;
@@ -2098,7 +2098,7 @@ f32 getElementCachedValue__Q23LOD9LODMemManFv(LOD::LODMemMan* self, int task) {
 void updateSingleElement__Q23LOD9LODMemManFv(LOD::LODMemMan* self, int id) {
     LODMemManLayout* l = (LODMemManLayout*)self;
     if (l->field_0x6C & 1) {
-        f32 dt = func_80496288(l->mView_1C);
+        f32 dt = Scn_GetFrameDelta(l->mView_1C);
         l->field_0x80 = l->field_0x7C * dt;
         LODElem48* p48 = l->field_0x90;
         LODElem20* p20 = l->field_0x4;
@@ -2965,10 +2965,10 @@ extern "C" void func_804708B4__Q23LOD9LODMemManFv(
 void dispatchViewUpdate__Q23LOD9LODMemManFv(LOD::LODMemMan* self, int task) {
     LODMemManLayout* l = (LODMemManLayout*)self;
     CView* view = CView::getCurrentView();
-    LODViewFrame* frame = func_8049626C(func_8049698C(), view);
+    LODViewFrame* frame = Scn_HasCamItem(Scn_GetCurrentScene(), view);
     LOD::LODMemMan* sub = ((LODSubMgrView*)self)->field_0xF0;
     if (task != 0) {
-        if (((LODScnGate*)func_8048ECD0(func_8049698C()))->field_0x19 == 0) {
+        if (((LODScnGate*)func_8048ECD0(Scn_GetCurrentScene()))->field_0x19 == 0) {
             func_8046DD9C__Q23LOD9LODMemManFv(sub, frame->field_0x9C, frame->field_0x1E0);
         }
         func_8046E1DC__Q23LOD9LODMemManFv(sub, frame->field_0x9C, task);
@@ -2982,14 +2982,14 @@ void dispatchViewUpdate__Q23LOD9LODMemManFv(LOD::LODMemMan* self, int task) {
 // ---------------------------------------------------------------------------
 extern "C" void handleViewUpdate__Q23LOD9LODMemManFv(LOD::LODMemMan* self, int param) {
     if (param == 0) {
-        CScn* scn = func_8049698C();
+        CScn* scn = Scn_GetCurrentScene();
         CScn* scn2 = (CScn*)func_8048ECD0(scn);
         if (((LODScnGate*)scn2)->field_0x19 != 0) {
             return;
         }
         CView* view = CView::getCurrentView();
-        CScn* scn3 = func_8049698C();
-        LODViewFrame* vf = func_8049626C(scn3, view);
+        CScn* scn3 = Scn_GetCurrentScene();
+        LODViewFrame* vf = Scn_HasCamItem(scn3, view);
         LOD::LODMemMan* sub = *(LOD::LODMemMan**)((u8*)self + 0xF0);
         func_8046E1DC__Q23LOD9LODMemManFv(sub, (u8*)vf + 0x9C, param);
     }

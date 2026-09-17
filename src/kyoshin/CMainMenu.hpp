@@ -188,7 +188,7 @@ extern "C" u32 func_80167A18();   // item menu active (CMenuItem.cpp)
 extern "C" u32 func_80242354();   // map-select menu active (CMenuMapSelect.cpp)
 extern "C" u32 func_80252CD4();   // collepedia active (CMenuCollepedia.cpp)
 extern "C" u32 func_80257308();   // kizunagram active (CMenuKizunagram.cpp)
-extern "C" u32 func_8027037C();   // play-award active (CMenuPlayAward.cpp)
+extern "C" u32 PlayAward_IsActive();   // play-award active (CMenuPlayAward.cpp)
 extern "C" u32 func_80272488();   // kizuna-talk-list active (CMenuKizunaTalkList.cpp)
 extern "C" u32 func_8029BBA0();   // option menu active (CMenuOption.cpp)
 extern "C" u32 func_802AC510();   // tutorial-list active (CMenuTutorialList.cpp)
@@ -197,7 +197,7 @@ extern "C" u32 func_80124B78();   // close-system-menu gate (CHelp_CloseSysMenu.
 extern "C" u32 func_8028E440();   // save-menu active (CMenuSave.cpp)
 extern "C" u32 func_8029EE58();   // update menu active (CMenuUpdate.cpp)
 extern "C" u32 func_80122450();   // close-quest-menu gate (CHelp_CloseQuestMenu.cpp)
-extern "C" int func_80135898();   // menu-system close (CUICfManager.cpp)
+extern "C" int CUICfManager_hasInUseSlot();   // menu-system close (CUICfManager.cpp)
 extern "C" u32 func_80192BD0();   // party-state screen active (CMenuPTState.cpp)
 extern "C" u32 func_80212480();   // make-crystal menu active (CMenuMakeCrystal.cpp)
 extern "C" u32 CMenuArtsSet_isCreated();   // arts-set menu active (CMenuArtsSet.cpp)
@@ -252,8 +252,8 @@ extern "C" u32 func_8027EA64();
 class CSysWinBuff;
 extern "C" CSysWinBuff* getInstance__11CSysWinBuffFv();
 // Window focus gates (CUICfManager.cpp).
-extern "C" void func_80134460();
-extern "C" void func_801341D8();
+extern "C" void CUICfManager_queueMapSelectMenu();
+extern "C" void CUICfManager_queuePTStateMenu();
 // Pad-enable/disable and mode gates (cf::CfGameManager).
 extern "C" void setPresentationFlag__Q22cf13CfGameManagerFv(u8 enable); // bool in CMenuPassiveSkill.hpp
 extern "C" int isClassicController__Q22cf13CfGameManagerFv(int arg);
@@ -282,7 +282,7 @@ public:
 // Cursor per-frame update helper (defined in CCur.cpp).
 extern "C" void func_801D202C(void* cur);
 // Pane-config finish gate (defined in CUICfManager.cpp).
-extern "C" void func_8013D8A0();
+extern "C" void UIWin_CreateExtraWin();
 
 // Sub-menu pane-name table (14 words) and cursor->angle s16 table.
 struct CMainMenuNameTable {
@@ -346,17 +346,17 @@ extern "C" CMainMenuGimmickGlobal* getUnk80664658();
 
 // Menu dispatch handlers (defined in CUICfManager.cpp / menu TUs)
 extern "C" int func_8029A658();            // party-change notice gate
-extern "C" void func_80133D78();
-extern "C" void func_801342B0();
-extern "C" void func_80134714();
-extern "C" void func_80134388();
-extern "C" void func_801348C8();
-extern "C" void func_80133A08(u32 value);
-extern "C" void func_801347EC(u32 value);
-extern "C" void func_80134A78();
-extern "C" void func_801349A0();
-extern "C" void func_80133CA0();
-extern "C" void func_80134F2C(u32 value);
-extern "C" void func_80134B50(int a, int b);
+extern "C" void CUICfManager_queueBaseMenuItem();
+extern "C" void CUICfManager_queueMakeCrystalMenu();
+extern "C" void CUICfManager_queueCollepediaMenu();
+extern "C" void CUICfManager_queueArtsSetMenu();
+extern "C" void CUICfManager_queuePassiveSkillMenu();
+extern "C" void CUICfManager_queueQuestLogMenu(u32 value);
+extern "C" void CUICfManager_queueKizunagramMenu(u32 value);
+extern "C" void CUICfManager_queueKizunaTalkMenu();
+extern "C" void CUICfManager_queuePlayAwardMenu();
+extern "C" void CUICfManager_queueSkipTimerMenu();
+extern "C" void CUICfManager_queueTutorialListMenu(u32 value);
+extern "C" void CUICfManager_queueSaveMenu(int a, int b);
 extern "C" void func_80134C34();
-extern "C" void func_80134E50(u32 value);
+extern "C" void CUICfManager_queueOptionMenu(u32 value);

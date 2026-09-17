@@ -139,7 +139,7 @@ int func_800FF738();
 // Family-canonical form - must match CfObjectPc.hpp / CAIAction.hpp /
 // code_802B8A3C.hpp (see the 10197 note in CTaskGame.hpp).
 bool isGlobalCamFlagSet__Fi(UNKWORD r3);
-void* func_801355F4();
+void* CUICfManager_getArcResourceAccessor();
 }
 
 extern u32 getPackedFont();
@@ -237,7 +237,7 @@ void CUIBattleManager::Move() {
     if ((unk82 & 2) != 0 && getPackedFont() != 0) {
         unk82 &= 0xfd;
         if (lbl_eu_80664048 != NULL) {
-            if (func_801355F4() == NULL) {
+            if (CUICfManager_getArcResourceAccessor() == NULL) {
                 lbl_eu_80664048->unk82 |= 2;
             } else {
                 lbl_eu_80664048->unk82 &= 0xfd;
@@ -265,7 +265,7 @@ void CUIBattleManager::Move() {
     if ((unk82 & 8) != 0 && getPackedFont() != 0) {
         unk82 &= 0xf7;
         if (lbl_eu_80664048 != NULL) {
-            if (func_801355F4() == NULL) {
+            if (CUICfManager_getArcResourceAccessor() == NULL) {
                 lbl_eu_80664048->unk82 |= 8;
             } else {
                 lbl_eu_80664048->unk82 &= 0xf7;
@@ -294,7 +294,7 @@ void CUIBattleManager::Move() {
         if (lbl_eu_80664048 != NULL) {
             // Retail: cntlzw/srwi zero-test on func_8009CF8C(0x3357).
             if (__cntlzw((u32)func_8009CF8C(0x3357)) >> 5 != 0 ||
-                func_801355F4() == NULL) {
+                CUICfManager_getArcResourceAccessor() == NULL) {
                 lbl_eu_80664048->unk82 |= 0x10;
             } else {
                 lbl_eu_80664048->unk82 &= 0xef;
@@ -321,7 +321,7 @@ void CUIBattleManager::Move() {
     if ((unk82 & 0x20) != 0 && getPackedFont() != 0) {
         unk82 &= 0xdf;
         if (lbl_eu_80664048 != NULL) {
-            if (func_801355F4() == NULL) {
+            if (CUICfManager_getArcResourceAccessor() == NULL) {
                 lbl_eu_80664048->unk82 |= 0x20;
             } else {
                 lbl_eu_80664048->unk82 &= 0xdf;
@@ -682,7 +682,7 @@ extern "C" __declspec(noinline) CUIBattleManager* __ct__CUIBattleManager(
     {
         // Child-node slot array (8 x 0xC nodes) from the scene's alloc region.
         u32* list = reinterpret_cast<u32*>(
-            mtl::MemManager::allocate_array(0x60, func_80496004(pScene)));
+            mtl::MemManager::allocate_array(0x60, Scn_CallUnk8C_V10(pScene)));
         int i;
         self_->mChildList.mList = reinterpret_cast<_reslist_node<CUIBattleChild*>*>(list);
         for (i = 0; i < 8; i++) {
@@ -950,7 +950,7 @@ extern "C" CUIBattleChild* func_8012F5F8() {
     if (lbl_eu_80664048 == NULL) {
         return NULL;
     }
-    if (func_801355F4() == NULL) {
+    if (CUICfManager_getArcResourceAccessor() == NULL) {
         lbl_eu_80664048->unk82 |= 1;
         return NULL;
     }
@@ -1005,7 +1005,7 @@ extern "C" CUIBattleChild* func_8012F750(u32 arg) {
     if (lbl_eu_80664048 == NULL) {
         return NULL;
     }
-    if (func_801355F4() == NULL) {
+    if (CUICfManager_getArcResourceAccessor() == NULL) {
         lbl_eu_80664048->unk82 |= 8;
         return NULL;
     }

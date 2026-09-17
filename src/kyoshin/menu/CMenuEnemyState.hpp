@@ -191,12 +191,12 @@ public:
 extern "C" void __ct__CPcSelectCursor(void* self);
 extern "C" void* func_8016FE34(void* r3);
 // Shared-arc text value (unmangled retail symbol); feeds setLayoutTextBoxFont.
-extern "C" u32 func_801355D8();
+extern "C" u32 CUICfManager_getPackedFontD8();
 // 4-short colour pairs read off a pane (unmangled retail symbol).
 extern "C" FourShorts func_801397AC(void*, u32);
 extern "C" void* __dt__15CMenuEnemyStateFv(CMenuEnemyState* self, int flags);
 extern "C" void* __ct__CMenuEnemyState(void* self, void* scn);
-extern "C" void* func_801355F4();
+extern "C" void* CUICfManager_getArcResourceAccessor();
 extern "C" void __dt__8CProcessFv(void* self, int flags);
 extern "C" void func_80110A78(CMenuEnemyState* self, u32 actorId);
 // Layout sound effect helper (retail symbol is unmangled).

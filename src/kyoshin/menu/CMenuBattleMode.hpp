@@ -52,7 +52,7 @@ extern char lbl_eu_80532DD0[];
 // Null pointer-to-member-function constant used for the PTMF callback slots.
 extern u32 __ptmf_null[3];
 // Shared battle ARC resource accessor -- retail calls the unmangled name.
-extern "C" nw4r::lyt::ArcResourceAccessor* func_801355F4();
+extern "C" nw4r::lyt::ArcResourceAccessor* CUICfManager_getArcResourceAccessor();
 // CProcess ctor import: CProcess is abstract (pure virtuals) so it cannot be
 // placement-new'd from the factory; retail emits its mangled C-ABI name.
 extern "C" void __ct__8CProcessFv(CProcess* self);

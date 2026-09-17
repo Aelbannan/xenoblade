@@ -132,17 +132,17 @@ void CMenuBattleChain::Init() {
     Class_8045F858 regionGuard(&mRegion);
 
     buildLayout__FPPQ34nw4r3lyt6LayoutPQ34nw4r3lyt19ArcResourceAccessorPCc(
-        &mLayout, func_801355F4(), &base[0x11]);
+        &mLayout, CUICfManager_getArcResourceAccessor(), &base[0x11]);
     bindLayoutAnimTransform__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(
-        mLayout, &mAnim0, func_801355F4(), &base[0x2a]);
+        mLayout, &mAnim0, CUICfManager_getArcResourceAccessor(), &base[0x2a]);
     bindLayoutAnimTransform__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(
-        mLayout, &mAnim1, func_801355F4(), &base[0x46]);
+        mLayout, &mAnim1, CUICfManager_getArcResourceAccessor(), &base[0x46]);
     bindLayoutAnimTransform__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(
-        mLayout, &mAnim2, func_801355F4(), &base[0x64]);
+        mLayout, &mAnim2, CUICfManager_getArcResourceAccessor(), &base[0x64]);
     bindLayoutAnimTransform__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(
-        mLayout, &mAnim3, func_801355F4(), &base[0x87]);
+        mLayout, &mAnim3, CUICfManager_getArcResourceAccessor(), &base[0x87]);
     bindLayoutAnimTransform__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(
-        mLayout, &mAnim4, func_801355F4(), &base[0xaa]);
+        mLayout, &mAnim4, CUICfManager_getArcResourceAccessor(), &base[0xaa]);
 
     nw4r::lyt::Pane* rootPane = mLayout->GetRootPane();
     func_8013676C(rootPane, getPackedFont());

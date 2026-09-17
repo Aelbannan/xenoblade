@@ -142,8 +142,8 @@ extern u32 __ptmf_null[3];     // null pointer-to-member-function constant
 void __ct__8CProcessFv(CProcess*);
 
 void code80135FDC_postIncByte_64080();
-nw4r::lyt::ArcResourceAccessor* func_801355F4();
-u32 func_801355BC();
+nw4r::lyt::ArcResourceAccessor* CUICfManager_getArcResourceAccessor();
+u32 CUICfManager_getPackedFont9C();
 char* MakeTplNameSysFile(u32);
 CMenuGetItemFourShorts func_801397AC(void*, u32);
 u32 BdatGetItemId(u32);
@@ -385,23 +385,23 @@ void CMenuGetItemMulti::Init() {
     mFileHandle = CDeviceFile::readFile(memHandle, &lbl_eu_80504A3C[0x12], workEvent, 0, 0);
 
     buildLayout__FPPQ34nw4r3lyt6LayoutPQ34nw4r3lyt19ArcResourceAccessorPCc(
-        &mLayout, func_801355F4(), &lbl_eu_80504A3C[0x2e]);
+        &mLayout, CUICfManager_getArcResourceAccessor(), &lbl_eu_80504A3C[0x2e]);
     bindLayoutAnimTransform__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(
-        mLayout, &mAnim, func_801355F4(), &lbl_eu_80504A3C[0x47]);
+        mLayout, &mAnim, CUICfManager_getArcResourceAccessor(), &lbl_eu_80504A3C[0x47]);
 
     nw4r::lyt::Pane* rootPane = mLayout->GetRootPane();
     CMenuGetItemFontObject* fontObject = reinterpret_cast<CMenuGetItemFontObject*>(
         getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1, mLayout));
     func_8013676C(rootPane, fontObject->getPane());
 
-    u32 font = func_801355BC();
+    u32 font = CUICfManager_getPackedFont9C();
     if (font != 0) {
         setLayoutTextBoxFont__FPQ34nw4r3lyt6LayoutPcUl(mLayout, &lbl_eu_80504A3C[0x63], font);
         setLayoutTextBoxFont__FPQ34nw4r3lyt6LayoutPcUl(mLayout, &lbl_eu_80504A3C[0x6d], font);
         setLayoutTextBoxFont__FPQ34nw4r3lyt6LayoutPcUl(mLayout, &lbl_eu_80504A3C[0x77], font);
         setLayoutTextBoxFont__FPQ34nw4r3lyt6LayoutPcUl(mLayout, &lbl_eu_80504A3C[0x81], font);
 
-        font = func_801355BC();
+        font = CUICfManager_getPackedFont9C();
         setLayoutTextBoxFont__FPQ34nw4r3lyt6LayoutPcUl(mLayout, &lbl_eu_80504A3C[0x8b], font);
         setLayoutTextBoxFont__FPQ34nw4r3lyt6LayoutPcUl(mLayout, &lbl_eu_80504A3C[0x97], font);
         setLayoutTextBoxFont__FPQ34nw4r3lyt6LayoutPcUl(mLayout, &lbl_eu_80504A3C[0xa3], font);
@@ -445,7 +445,7 @@ void CMenuGetItemMulti::Init() {
     }
     u16 keyTextId = BdatGetU16ByTableKey(&lbl_eu_80504A3C[0x133], fileName, 43);
     char* buttonTexture = MakeTplNameSysFile(keyTextId);
-    nw4r::lyt::ArcResourceAccessor* accessor = func_801355F4();
+    nw4r::lyt::ArcResourceAccessor* accessor = CUICfManager_getArcResourceAccessor();
     CMenuGetItemTextureResource* texture = reinterpret_cast<CMenuGetItemTextureResource*>(
         accessor->GetResource(nw4r::lyt::ArcResourceAccessor::RES_TYPE_TEXTURE,
                               buttonTexture, NULL));
@@ -596,11 +596,11 @@ void CMenuGetItemMulti::Init() {
                 case 12: textureName = &lbl_eu_80504A3C[0x36a]; break;
                 case 13: textureName = &lbl_eu_80504A3C[0x37f]; break;
                 }
-                nw4r::lyt::ArcResourceAccessor* accessor = func_801355F4();
+                nw4r::lyt::ArcResourceAccessor* accessor = CUICfManager_getArcResourceAccessor();
                 void* itemTexture = accessor->GetResource(
                     nw4r::lyt::ArcResourceAccessor::RES_TYPE_TEXTURE, textureName, NULL);
                 if (itemTexture == NULL) {
-                    accessor = func_801355F4();
+                    accessor = CUICfManager_getArcResourceAccessor();
                     itemTexture = accessor->GetResource(
                         nw4r::lyt::ArcResourceAccessor::RES_TYPE_TEXTURE,
                         &lbl_eu_80504A3C[0x26b], NULL);
@@ -865,11 +865,11 @@ void CMenuGetItemMulti::Init() {
             case 12: textureName = &lbl_eu_80504A3C[0x36a]; break;
             case 13: textureName = &lbl_eu_80504A3C[0x37f]; break;
             }
-            nw4r::lyt::ArcResourceAccessor* accessor = func_801355F4();
+            nw4r::lyt::ArcResourceAccessor* accessor = CUICfManager_getArcResourceAccessor();
             void* itemTexture = accessor->GetResource(
                 nw4r::lyt::ArcResourceAccessor::RES_TYPE_TEXTURE, textureName, NULL);
             if (itemTexture == NULL) {
-                accessor = func_801355F4();
+                accessor = CUICfManager_getArcResourceAccessor();
                 itemTexture = accessor->GetResource(
                     nw4r::lyt::ArcResourceAccessor::RES_TYPE_TEXTURE,
                     &lbl_eu_80504A3C[0x26b], NULL);
@@ -955,7 +955,7 @@ void CMenuGetItemMulti::Init() {
     func_801B5860(this, 0, 0);
 
     CBaseCur cursorTemp;
-    __ct__CCur18(&cursorTemp, func_801355F4());
+    __ct__CCur18(&cursorTemp, CUICfManager_getArcResourceAccessor());
     mCursor.mArcResAcc = cursorTemp.mArcResAcc;
     mCursor.mpLayout = cursorTemp.mpLayout;
     mCursor.mpAnimTrans0 = cursorTemp.mpAnimTrans0;
@@ -1142,7 +1142,7 @@ body:
             } else {
                 cat = BdatGetItemType(mVisibleItemIds[(s8)mMaxVisibleItems]) & 0xff;
             }
-            func_80133E58((u8)cat, 0, field_201);
+            CUICfManager_queuePauseItemMenu((u8)cat, 0, field_201);
             field_1F8 = 0xb;
             field_1F5 = 0;
         } else {
@@ -1471,12 +1471,12 @@ void func_801B4830(CMenuGetItemMulti* self) {
             case 12: textureName = &lbl_eu_80504A3C[0x36a]; break;
             case 13: textureName = &lbl_eu_80504A3C[0x37f]; break;
             }
-            // Retail consumes func_801355F4() immediately (no cached accessor
+            // Retail consumes CUICfManager_getArcResourceAccessor() immediately (no cached accessor
             // live across the virtual GetResource call).
-            void* itemTexture = func_801355F4()->GetResource(
+            void* itemTexture = CUICfManager_getArcResourceAccessor()->GetResource(
                 nw4r::lyt::ArcResourceAccessor::RES_TYPE_TEXTURE, textureName, NULL);
             if (itemTexture == NULL) {
-                itemTexture = func_801355F4()->GetResource(
+                itemTexture = CUICfManager_getArcResourceAccessor()->GetResource(
                     nw4r::lyt::ArcResourceAccessor::RES_TYPE_TEXTURE,
                     &lbl_eu_80504A3C[0x26b], NULL);
             }
@@ -1606,10 +1606,10 @@ void func_801B4830(CMenuGetItemMulti* self) {
             case 12: textureName = &lbl_eu_80504A3C[0x36a]; break;
             case 13: textureName = &lbl_eu_80504A3C[0x37f]; break;
             }
-            void* itemTexture = func_801355F4()->GetResource(
+            void* itemTexture = CUICfManager_getArcResourceAccessor()->GetResource(
                 nw4r::lyt::ArcResourceAccessor::RES_TYPE_TEXTURE, textureName, NULL);
             if (itemTexture == NULL) {
-                itemTexture = func_801355F4()->GetResource(
+                itemTexture = CUICfManager_getArcResourceAccessor()->GetResource(
                     nw4r::lyt::ArcResourceAccessor::RES_TYPE_TEXTURE,
                     &lbl_eu_80504A3C[0x26b], NULL);
             }
@@ -2484,37 +2484,37 @@ void func_801B7A58(CMenuGetItemMulti* self, int arg2, CMenuGetItemMultiEntry* ar
                     switch ((u8)BdatGetU8Direct(
                         (u32)fontTbl, &lbl_eu_80504A3C[0x5b9], slotItemId)) {
                     case 0:
-                        texture = func_801355F4()->GetResource(
+                        texture = CUICfManager_getArcResourceAccessor()->GetResource(
                             nw4r::lyt::ArcResourceAccessor::RES_TYPE_TEXTURE,
                             &lbl_eu_80504A3C[0x5c2], NULL);
                         break;
                     case 4:
-                        texture = func_801355F4()->GetResource(
+                        texture = CUICfManager_getArcResourceAccessor()->GetResource(
                             nw4r::lyt::ArcResourceAccessor::RES_TYPE_TEXTURE,
                             &lbl_eu_80504A3C[0x5d8], NULL);
                         break;
                     case 5:
-                        texture = func_801355F4()->GetResource(
+                        texture = CUICfManager_getArcResourceAccessor()->GetResource(
                             nw4r::lyt::ArcResourceAccessor::RES_TYPE_TEXTURE,
                             &lbl_eu_80504A3C[0x5ee], NULL);
                         break;
                     case 6:
-                        texture = func_801355F4()->GetResource(
+                        texture = CUICfManager_getArcResourceAccessor()->GetResource(
                             nw4r::lyt::ArcResourceAccessor::RES_TYPE_TEXTURE,
                             &lbl_eu_80504A3C[0x604], NULL);
                         break;
                     case 7:
-                        texture = func_801355F4()->GetResource(
+                        texture = CUICfManager_getArcResourceAccessor()->GetResource(
                             nw4r::lyt::ArcResourceAccessor::RES_TYPE_TEXTURE,
                             &lbl_eu_80504A3C[0x61a], NULL);
                         break;
                     case 8:
-                        texture = func_801355F4()->GetResource(
+                        texture = CUICfManager_getArcResourceAccessor()->GetResource(
                             nw4r::lyt::ArcResourceAccessor::RES_TYPE_TEXTURE,
                             &lbl_eu_80504A3C[0x630], NULL);
                         break;
                     case 9:
-                        texture = func_801355F4()->GetResource(
+                        texture = CUICfManager_getArcResourceAccessor()->GetResource(
                             nw4r::lyt::ArcResourceAccessor::RES_TYPE_TEXTURE,
                             &lbl_eu_80504A3C[0x646], NULL);
                         break;
@@ -2524,7 +2524,7 @@ void func_801B7A58(CMenuGetItemMulti* self, int arg2, CMenuGetItemMultiEntry* ar
                                              slotItemId),
                                rankStr);
                 } else {
-                    texture = func_801355F4()->GetResource(
+                    texture = CUICfManager_getArcResourceAccessor()->GetResource(
                         nw4r::lyt::ArcResourceAccessor::RES_TYPE_TEXTURE,
                         &lbl_eu_80504A3C[0x5c2], NULL);
                     str.format(&lbl_eu_80504A3C[0x65c],
@@ -2586,7 +2586,7 @@ void func_801B7A58(CMenuGetItemMulti* self, int arg2, CMenuGetItemMultiEntry* ar
                 str.format(&lbl_eu_80504A3C[0x3a7], (u8)j + 1);
                 u16 id = BdatGetU16Direct(itemTable, str.mString, (u16)tableId);
                 if (id == 0) {
-                    texture = func_801355F4()->GetResource(
+                    texture = CUICfManager_getArcResourceAccessor()->GetResource(
                         nw4r::lyt::ArcResourceAccessor::RES_TYPE_TEXTURE,
                         &lbl_eu_80504A3C[0x5c2], NULL);
                     str.format(&lbl_eu_80504A3C[0x65c],
@@ -2602,37 +2602,37 @@ void func_801B7A58(CMenuGetItemMulti* self, int arg2, CMenuGetItemMultiEntry* ar
                         (u32)fontTbl2, &lbl_eu_80504A3C[0x5b9],
                         (u16)BdatGetItemId(id))) {
                     case 0:
-                        texture = func_801355F4()->GetResource(
+                        texture = CUICfManager_getArcResourceAccessor()->GetResource(
                             nw4r::lyt::ArcResourceAccessor::RES_TYPE_TEXTURE,
                             &lbl_eu_80504A3C[0x5c2], NULL);
                         break;
                     case 4:
-                        texture = func_801355F4()->GetResource(
+                        texture = CUICfManager_getArcResourceAccessor()->GetResource(
                             nw4r::lyt::ArcResourceAccessor::RES_TYPE_TEXTURE,
                             &lbl_eu_80504A3C[0x5d8], NULL);
                         break;
                     case 5:
-                        texture = func_801355F4()->GetResource(
+                        texture = CUICfManager_getArcResourceAccessor()->GetResource(
                             nw4r::lyt::ArcResourceAccessor::RES_TYPE_TEXTURE,
                             &lbl_eu_80504A3C[0x5ee], NULL);
                         break;
                     case 6:
-                        texture = func_801355F4()->GetResource(
+                        texture = CUICfManager_getArcResourceAccessor()->GetResource(
                             nw4r::lyt::ArcResourceAccessor::RES_TYPE_TEXTURE,
                             &lbl_eu_80504A3C[0x604], NULL);
                         break;
                     case 7:
-                        texture = func_801355F4()->GetResource(
+                        texture = CUICfManager_getArcResourceAccessor()->GetResource(
                             nw4r::lyt::ArcResourceAccessor::RES_TYPE_TEXTURE,
                             &lbl_eu_80504A3C[0x61a], NULL);
                         break;
                     case 8:
-                        texture = func_801355F4()->GetResource(
+                        texture = CUICfManager_getArcResourceAccessor()->GetResource(
                             nw4r::lyt::ArcResourceAccessor::RES_TYPE_TEXTURE,
                             &lbl_eu_80504A3C[0x630], NULL);
                         break;
                     case 9:
-                        texture = func_801355F4()->GetResource(
+                        texture = CUICfManager_getArcResourceAccessor()->GetResource(
                             nw4r::lyt::ArcResourceAccessor::RES_TYPE_TEXTURE,
                             &lbl_eu_80504A3C[0x646], NULL);
                         break;

@@ -370,7 +370,7 @@ struct CfNandBmView {
 extern u8 lbl_eu_80576AC0[];
 
 // --- imports used only by func_8023C2E4 ---
-extern "C" void func_8025EC0C(u8* dst, const u8* src);   // kizuna compaction
+extern "C" void KizunagramPackChart(u8* dst, const u8* src);   // kizuna compaction
 struct CfNandSub14;
 extern "C" void func_80174658(CfNandSub14* state);        // scratch initializer
 
@@ -472,7 +472,7 @@ struct CfNandWorkEntryDst {
     u32 f1E8;
     u32 f1EC;
     u32 f1F0;
-    u8 kizuna[0xAC]; // 0x1F4: compact kizuna block (func_8025EC0C)
+    u8 kizuna[0xAC]; // 0x1F4: compact kizuna block (KizunagramPackChart)
     u32 f2A0;
     u32 f2A4;
     u32 f2A8;

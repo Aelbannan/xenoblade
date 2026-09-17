@@ -209,7 +209,7 @@ void func_802B5148(CErrMesSub* self) {
 // sub-object is active.
 extern "C" void func_802B515C(CErrMesSub* self, int flag) {
     if (flag != 0) {
-        void* d80 = func_80496264((void*)CfRes_getD80Flag(), -1);
+        void* d80 = Scn_FindCamItem((void*)CfRes_getD80Flag(), -1);
         CErrMesObjView* p1 =
             reinterpret_cast<CErrMesObjView*>(
                 func_8016FE34(getPlayer__Q22cf13CfGameManagerFi(0)));

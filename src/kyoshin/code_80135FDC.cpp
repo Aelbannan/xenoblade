@@ -1,7 +1,7 @@
 // Auto-scaffolded catalog TU for kyoshin/code_80135FDC
 // Replace stubs with high-level C/C++ during decomp.
 
-#include "libs/monolib/src/scn/CScn_8049603C.hpp" // func_8049603C (single owner decl)
+#include "libs/monolib/src/scn/CScn_8049603C.hpp" // Scn_QueryUnk80State (single owner decl)
 #include "kyoshin/harness_catalog.hpp"
 #include "kyoshin/cf/CfGameManager.hpp"
 
@@ -664,7 +664,7 @@ extern "C" void func_80137038__FPQ34nw4r3lyt6LayoutPQ34nw4r3lyt8DrawInfoii(
         void* camera = reinterpret_cast<void*>(lbl_eu_80663E14);
         void* view = getCurrentView__5CViewFv();
         CViewFrame37038* viewFrame =
-            reinterpret_cast<CViewFrame37038*>(func_8049626C(camera, view));
+            reinterpret_cast<CViewFrame37038*>(Scn_HasCamItem(camera, view));
         GXSetProjection(viewFrame->projection, GX_PERSPECTIVE);
 
         drawInfo->SetViewMtx(viewFrame->mtx);
@@ -2466,7 +2466,7 @@ extern "C" void func_8013ACFC() {
     u8* tbl = lbl_eu_80500108;
     if (func_8009CF8C(0x20) <= 4) return;
     if ((lbl_eu_80663E24 & 0x100) == 0) return;
-    void* cam = (void*)func_8049603C((CScn*)lbl_eu_80663E14);
+    void* cam = (void*)Scn_QueryUnk80State((CScn*)lbl_eu_80663E14);
     f32 f = lbl_eu_806672E8 - *(f32*)((u8*)cam + 0xC);
     if (f < lbl_eu_806672E8) return;
 

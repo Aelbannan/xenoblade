@@ -130,7 +130,7 @@ extern "C" int func_801AC124();
 extern "C" u32 func_80242354();
 extern "C" bool func_80251550();
 bool isGlobalCamFlagSet(int mask);   // isGlobalCamFlagSet__Fi (mangled C++)
-extern "C" u32 func_80134538();
+extern "C" u32 CUICfManager_queueWorldMapMenu();
 extern "C" void func_8013ACFC();
 extern "C" int GetSysStateFlag11();
 // (getCameraDataBlock__Q22cf13CfGameManagerFv: single winning decl on

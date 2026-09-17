@@ -96,7 +96,7 @@ struct CMenuQstCnt {
 
 extern "C" int func_80144FF0();
 extern "C" int func_80145030(void);
-extern "C" nw4r::lyt::ArcResourceAccessor* func_801355F4();
+extern "C" nw4r::lyt::ArcResourceAccessor* CUICfManager_getArcResourceAccessor();
 extern "C" void initQstInfo(QstInfo* ptr);
 extern "C" void* __dt__80227030(void* self, int mode);
 extern "C" QstInfo* copyQstInfo(QstInfo* dst, const QstInfo* src);

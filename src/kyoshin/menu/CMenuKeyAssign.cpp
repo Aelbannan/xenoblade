@@ -67,7 +67,7 @@ void CMenuKeyAssign::Init() {
     mtl::MemManager::setMemInitFlag(false);
 
     // Build the layout from the arc resource.
-    buildLayout(&mLayout, func_801355F4(), &lbl_eu_804FDEE8[0xf]);
+    buildLayout(&mLayout, CUICfManager_getArcResourceAccessor(), &lbl_eu_804FDEE8[0xf]);
 
     // Bind the font: push the font object's pane back onto the root pane.
     nw4r::lyt::Pane* rootPane = mLayout->GetRootPane();
@@ -687,7 +687,7 @@ extern "C" void func_80115060(CMenuKeyAssign* self, int state, int count, int mo
             ml::FixStr<32> str(true);
             f32 sx, sy;
             str.format(&base[0x5f], BdatTouchStringCell(&base[0x49], &base[0x56], r));
-            nw4r::lyt::ArcResourceAccessor* acc = func_801355F4();
+            nw4r::lyt::ArcResourceAccessor* acc = CUICfManager_getArcResourceAccessor();
             TexView* tex = (TexView*)acc->GetResource(timg, str.mString, NULL);
             if (tex != 0) {
                 int flag = 0;
@@ -721,7 +721,7 @@ extern "C" void func_80115060(CMenuKeyAssign* self, int state, int count, int mo
             ml::FixStr<32> str2(true);
             f32 sx2, sy2;
             str2.format(&base[0x5f], BdatTouchStringCell(&base[0x49], &base[0x56], r));
-            nw4r::lyt::ArcResourceAccessor* acc = func_801355F4();
+            nw4r::lyt::ArcResourceAccessor* acc = CUICfManager_getArcResourceAccessor();
             TexView* tex = (TexView*)acc->GetResource(0x74696d67, str2.mString, NULL);
             if (tex != 0) {
                 str2.format(&base[0x66], 1);
@@ -747,7 +747,7 @@ extern "C" void func_80115060(CMenuKeyAssign* self, int state, int count, int mo
             ml::FixStr<32> str3(true);
             f32 sx3, sy3;
             str3.format(&base[0x5f], BdatTouchStringCell(&base[0x49], &base[0x56], r));
-            nw4r::lyt::ArcResourceAccessor* acc = func_801355F4();
+            nw4r::lyt::ArcResourceAccessor* acc = CUICfManager_getArcResourceAccessor();
             TexView* tex = (TexView*)acc->GetResource(0x74696d67, str3.mString, NULL);
             if (tex != 0) {
                 str3.format(&base[0x66], 2);
@@ -825,7 +825,7 @@ extern "C" void func_801154D0(CMenuKeyAssign* self, int a, int b, int c, int d, 
             u16 r = BdatGetU16ByTableKey(&base[0x3b], name, idx);
             ml::FixStr<32> str(true);
             str.format(&base[0x5f], BdatTouchStringCell(&base[0x49], &base[0x56], r));
-            nw4r::lyt::ArcResourceAccessor* acc = func_801355F4();
+            nw4r::lyt::ArcResourceAccessor* acc = CUICfManager_getArcResourceAccessor();
             TexView* tex = (TexView*)acc->GetResource(0x74696d67, str.mString, NULL);
             if (tex != 0) {
                 int flag = 0;
@@ -858,7 +858,7 @@ extern "C" void func_801154D0(CMenuKeyAssign* self, int a, int b, int c, int d, 
             u16 r = BdatGetU16ByTableKey(&base[0x3b], name, 26);
             ml::FixStr<32> str2(true);
             str2.format(&base[0x5f], BdatTouchStringCell(&base[0x49], &base[0x56], r));
-            nw4r::lyt::ArcResourceAccessor* acc = func_801355F4();
+            nw4r::lyt::ArcResourceAccessor* acc = CUICfManager_getArcResourceAccessor();
             TexView* tex = (TexView*)acc->GetResource(0x74696d67, str2.mString, NULL);
             if (tex != 0) {
                 str2.format(&base[0x66], 1);
@@ -883,7 +883,7 @@ extern "C" void func_801154D0(CMenuKeyAssign* self, int a, int b, int c, int d, 
             u16 r = BdatGetU16ByTableKey(&base[0x3b], name, state);
             ml::FixStr<32> str3(true);
             str3.format(&base[0x5f], BdatTouchStringCell(&base[0x49], &base[0x56], r));
-            nw4r::lyt::ArcResourceAccessor* acc = func_801355F4();
+            nw4r::lyt::ArcResourceAccessor* acc = CUICfManager_getArcResourceAccessor();
             TexView* tex = (TexView*)acc->GetResource(0x74696d67, str3.mString, NULL);
             if (tex != 0) {
                 str3.format(&base[0x66], 2);
@@ -941,7 +941,7 @@ extern "C" void func_801159DC(CMenuKeyAssign* self) {
         u16 r = BdatGetU16ByTableKey(&base[0x3b], name, idx);
         ml::FixStr<32> str(true);
         str.format(&base[0x5f], BdatTouchStringCell(&base[0x49], &base[0x56], r));
-        nw4r::lyt::ArcResourceAccessor* acc = func_801355F4();
+        nw4r::lyt::ArcResourceAccessor* acc = CUICfManager_getArcResourceAccessor();
         TexView* tex = (TexView*)acc->GetResource(0x74696d67, str.mString, NULL);
         if (tex != 0) {
             str.format(&base[0x66], mapped + 1);

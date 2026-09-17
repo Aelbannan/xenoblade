@@ -195,7 +195,7 @@ extern "C" void clpSetupDetPg(CLPPageSetup* pg) {
     u32 fontHandle = (u32)((IDeviceFontInfo*)fontObj)->getFont();
     func_8013676C(rootPane, fontHandle);
 
-    char* tagStr = (char*)func_801355BC();
+    char* tagStr = (char*)CUICfManager_getPackedFont9C();
     setLayoutTextBoxFont(pg->mpLayout, &lbl_eu_8050C6E8[0x82], (u32)tagStr);
     setLayoutTextBoxFont(pg->mpLayout, &lbl_eu_8050C6E8[0x92], (u32)tagStr);
 
@@ -218,7 +218,7 @@ extern "C" void clpSetupDetPg(CLPPageSetup* pg) {
     u16 id = BdatGetU16ByTableKey(&lbl_eu_8050C6E8[0xf0], texTable, 0x2b);
     char* texName = MakeTplNameSysFile(id);
 
-    nw4r::lyt::ArcResourceAccessor* resAcc = func_801355F4();
+    nw4r::lyt::ArcResourceAccessor* resAcc = CUICfManager_getArcResourceAccessor();
     TPLPalette* resource = (TPLPalette*)resAcc->GetResource(0x74696D67, texName, NULL);
 
     if (resource != NULL) {
@@ -881,7 +881,7 @@ void clpStartLoads(CCollepedia* this_) {
         (u32)getHandleMEM2__Q23mtl10MemManagerFv(), &lbl_eu_8050C6E8[0x1b3], this_, 0, 0);
 
     this_->field_2C = readCommonArchiveFile__11CDeviceFileFUlPCcP10IWorkEventii(
-        func_800A9D90(), &lbl_eu_8050C6E8[0x1cc], this_, 0, 0);
+        KyoshinHeap_GetField44(), &lbl_eu_8050C6E8[0x1cc], this_, 0, 0);
 
     // Virtual call on CSysWin at this+0x9C: loadSystemArc at vtable +0x88.
     ((CSysWin*)&this_->field_9C)->loadSystemArc();
@@ -1474,7 +1474,7 @@ __declspec(noinline) void func_802559DC(CCollepedia* this_) {
 #pragma optimize_for_size on
 #pragma dont_inline on
 // us-80257cf0
-// If CSysWin is active, set state, look up table entry, format string, call func_8013E2E0
+// If CSysWin is active, set state, look up table entry, format string, call UIWin_CreateItemMulti
 extern "C" __declspec(noinline) void func_80255AB4(CCollepedia* this_) {
     if (!CSysWin_isActive(&this_->field_9C)) return;
 
@@ -1491,7 +1491,7 @@ extern "C" __declspec(noinline) void func_80255AB4(CCollepedia* this_) {
         (u32)(u16)count + d9);
 
     u32 zero = 0;
-    func_8013E2E0((u16)result, 0, 0, 0, 0, 0, 0, 0, zero);
+    UIWin_CreateItemMulti((u16)result, 0, 0, 0, 0, 0, 0, 0, zero);
 }
 #pragma pop
 
@@ -1533,7 +1533,7 @@ __declspec(noinline) void clpPlayTblSe(CCollepedia* this_) {
     // Table lookup folded into the call so the index comes straight from clpGetPageCat
     u32 result = BdatGetU16Direct(lbl_eu_806647DC, &lbl_eu_8050C6E8[0x1f9],
         lbl_eu_8050C6A0[clpGetPageCat(&this_->field_E8) & 0xFF]);
-    func_8013E2E0((u16)result, 0, 0, 0, 0, 0, 0, 0, 0);
+    UIWin_CreateItemMulti((u16)result, 0, 0, 0, 0, 0, 0, 0, 0);
 }
 
 // us-80257efc
@@ -1855,7 +1855,7 @@ bool CCollepedia::OnFileEvent(CEventFile* pEventFile) {
 
         // +0x84 cursor (CCur18): stack-build, copy, refresh.
         u8 tmpCur18[0x18];
-        __ct__CCur18(tmpCur18, func_801355F4());
+        __ct__CCur18(tmpCur18, CUICfManager_getArcResourceAccessor());
         func_8018B0FC(reinterpret_cast<u8*>(this) + 0x84, tmpCur18);
         __dt__6CCur18Fv(tmpCur18, -1);
         ((CBaseCur*)(reinterpret_cast<u8*>(this) + 0x84))->initLayout();

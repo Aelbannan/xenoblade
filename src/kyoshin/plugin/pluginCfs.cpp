@@ -66,7 +66,7 @@ extern "C" {
     void func_801F4B68(int, int);
     void func_801F4BFC(int, int);
     void func_801F4C90(int, int, int);
-    void func_eu_8049AB50(int, int);
+    void Scn_SetPalFixFlag(int, int);
     int getUnk80664658();
     int isTvFormatPal__9CDeviceVIFv();
     // CItem_initItemImplInstances: CfGameManager.hpp declares it returning
@@ -1989,7 +1989,7 @@ int setIgnorePal(VMThread* vmThread) {
     int val = vmArgBoolGet(2, arg);
     int neg = -val;
     int orVal = neg | val;
-    func_eu_8049AB50((int)lbl_eu_80663E14, (unsigned int)orVal >> 31);
+    Scn_SetPalFixFlag((int)lbl_eu_80663E14, (unsigned int)orVal >> 31);
     return 0;
 }
 

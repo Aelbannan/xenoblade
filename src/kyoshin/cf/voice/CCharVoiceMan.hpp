@@ -125,7 +125,7 @@ extern "C" const float lbl_eu_80668C68;
 extern "C" u8 lbl_eu_805398CC[28];
 class CScn;
 extern "C" u32 lbl_eu_80664A5C;
-extern "C" mtl::ALLOC_HANDLE func_80496004(void* src);
+extern "C" mtl::ALLOC_HANDLE Scn_CallUnk8C_V10(void* src);
 extern "C" int func_802B03A4(void* self);
 extern "C" cf::CSoundNode* func_802A9604();
 extern "C" cf::CSoundNode* __ct__802A4E48();

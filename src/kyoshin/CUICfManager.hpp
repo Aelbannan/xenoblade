@@ -71,7 +71,7 @@ extern "C" void __dla__FPv(void* p);
 extern "C" int sprintf(char* str, const char* fmt, ...);
 // Memory-handle getter for the ctor's node-pool allocation (CUIWindowManager.hpp).
 class CScn;
-extern "C" mtl::ALLOC_HANDLE func_80496004(void* ptr); // void* param: must match CUIBattleManager.hpp (10197)
+extern "C" mtl::ALLOC_HANDLE Scn_CallUnk8C_V10(void* ptr); // void* param: must match CUIBattleManager.hpp (10197)
 
 // This unit's own slot helpers (flat retail names; bodies live in the .cpp).
 extern "C" int func_801359AC(u8* singleton);
@@ -82,7 +82,7 @@ extern "C" void func_8012FFB4(u8* base);          // slot dispatch + rebuild (th
 
 // --- flat imports for the free-menu helpers (func_8012FFB4 family) ---
 // Caller-shape CTaskGame imports (the full CTaskGame.hpp conflicts with this
-// TU's local flat decls for func_8049603C / lbl_eu_80663E14; declared with
+// TU's local flat decls for Scn_QueryUnk80State / lbl_eu_80663E14; declared with
 // the verbatim retail names per the CLibCri caller-shape scheme in CTaskGame.hpp).
 class CTaskGame;
 extern "C" CTaskGame* getInstance__9CTaskGameFv();
@@ -95,11 +95,11 @@ extern "C" int isAnyFieldFlagSet__Q22cf13CfGameManagerFv();
 extern "C" int func_8011CD5C();
 extern "C" bool CMenuArtsSelect_isCreated();
 // Window/IUI helpers (flat retail names; defining TU is CUIWindowManager.cpp).
-extern "C" void func_8013E8E0(int mode);
-extern "C" void func_8013E424(u8* str, int flags);
-extern "C" void func_8013E2E0(u32, u32, u32, u32, u32, u32, u32, u32, u32);
-extern "C" void func_8013D55C(char* msg, int a, int b);
-extern "C" void func_8013D688(char* a, char* b, int c, int d);
+extern "C" void UIWin_CreatePTChange(int mode);
+extern "C" void UIWin_CreateB4790Win(u8* str, int flags);
+extern "C" void UIWin_CreateItemMulti(u32, u32, u32, u32, u32, u32, u32, u32, u32);
+extern "C" void UIWin_CreateSysWin0(char* msg, int a, int b);
+extern "C" void UIWin_CreateSysWin1(char* a, char* b, int c, int d);
 // Enum-list holder helpers for func_801359AC (defining TU: code_80043E08 TU).
 // CTaskGame_enumListFill takes the holder itself (declared in the .cpp next to the
 // CUICfEnumListHolder type).
@@ -113,7 +113,7 @@ extern char lbl_eu_806621E8[4];
 
 // Read-only queue-helper view over the lbl_eu_80664054 singleton: factory
 // ctx at +0x144, scene id at +0x11C, reslist head at +0x128, free-slot array
-// at +0x138 with count at +0x13C (used by the func_80133CA0 family).
+// at +0x138 with count at +0x13C (used by the CUICfManager_queueSkipTimerMenu family).
 struct CUICfQueueMgrView {
     u8 pad0[0x11C];
     u32 field_11C;
@@ -126,7 +126,7 @@ struct CUICfQueueMgrView {
     u32 field_144;               // menu-factory ctx
 };
 
-// 0x168-stride view over mInitSlots[].unk04 (func_80135898's flag scan).
+// 0x168-stride view over mInitSlots[].unk04 (CUICfManager_hasInUseSlot's flag scan).
 struct CUICfSlotFlagView {
     u8 flag;                     // mInitSlots[i].unk04 (0x14c + i*0x168)
     u8 pad[0x168 - 0x01];
@@ -192,7 +192,7 @@ struct CUICfEnumList620 {
     u32 count;                   // +0x620
 };
 
-// View returned by func_8049603C (f32 at +0/+4/+8/+C).
+// View returned by Scn_QueryUnk80State (f32 at +0/+4/+8/+C).
 struct CUICfCamView {
     f32 field_0;
     f32 field_4;
@@ -325,7 +325,7 @@ struct CUICfEventQueue {
 };
 
 // Public-layout mirror of the CUICfManager fields the free menu-create
-// helpers (func_80133A08 family) touch; the real fields are private.
+// helpers (CUICfManager_queueQuestLogMenu family) touch; the real fields are private.
 struct CUICfManagerCreateView {
     u8 field_0x00[0x5C];
     void* field_0x5C;              // 0x5C - resource accessor (mArcResourceAccessor)
@@ -448,7 +448,7 @@ public:
         return spInstance;
     }
     static CUICfManager* create(CProcess* pParent, CScnNw4r* pScene, mtl::ALLOC_HANDLE mHandle);
-    static nw4r::lyt::ArcResourceAccessor* func_801355F4();
+    static nw4r::lyt::ArcResourceAccessor* CUICfManager_getArcResourceAccessor();
     static int MenuStateInitFlags();
 
     void Init();

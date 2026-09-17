@@ -34,13 +34,13 @@ extern "C" cf::CBattleManager* lbl_eu_80663F00;
 // The include/kyoshin/cf/CfGameManager.hpp C-ABI import tail conflicts with
 // the cfsys/chain walker decls already visible in this TU for the few names
 // it shares; guard only those (call sites bind to the global-scope decls,
-// same retail symbol names). (func_80496288 now has a single unified decl.)
+// same retail symbol names). (Scn_GetFrameDelta now has a single unified decl.)
 // (func_800D9354: CfGameManager.hpp's copy is gone; single decl on
 // kyoshin/cf/CBattleManagerApi.hpp, included via CBattleManager.hpp above.)
 // (func_800AD860: CfObjectMove.hpp and CfGameManager.hpp now carry the
 // identical void*(void*) C++-linkage form - no guard needed.)
 #include "kyoshin/cf/CfGameManager.hpp"
-// (func_801412D0 is owned by kyoshin/CUIWindowManager.hpp; single decl.)
+// (UIWin_BuildFlagBuf is owned by kyoshin/CUIWindowManager.hpp; single decl.)
 #include "monolib/work.hpp"
 
 // Arts-data row returned by func_8009EC9C: the per-entry table scanned by
@@ -1079,7 +1079,7 @@ extern "C" int mtRand__Q22ml4mathFii(int a, int b);
 extern "C" void* getFP__FPCc(const char* str);
 // func_8003AA34: already declared (void form) by a visible shared header.
 extern "C" u8 lbl_eu_80573EEC[];
-extern "C" void func_80135380(u8 v);
+extern "C" void CUICfManager_queueMultiGetItemMenu(u8 v);
 extern "C" void* func_80149330(void*, u32, u32, u32, u32);
 extern "C" s32 func_8015B130(s32 a, u16 b);
 extern "C" s32 func_801B1C5C(void);
@@ -3642,7 +3642,7 @@ func_800A26A4(obj, 0, (void*)(uintptr_t)((u32)((cf::CActorParam*)acc)->CActorPar
             }
             r28 = 0;
         }
-        func_80135380((u8)r28);
+        CUICfManager_queueMultiGetItemMenu((u8)r28);
         CCharVoiceMan_EnqueueArtsVoice(pc, r27);
         return 1;                                      // li r3,1 ; b .L_800F41D4
     }
@@ -4249,7 +4249,7 @@ extern "C" float func_800D81A8(void* obj, void* target, void* source){
 // and handing it to func_800D9CA0 when the actor-id gate passes.
 extern "C" void func_800D9354(cf::CBattleManager* self) {
     // Frame-delta scaled by the art-recovery rate.
-    f32 delta = func_80496288(lbl_eu_80663E14) * lbl_eu_80666DEC;
+    f32 delta = Scn_GetFrameDelta(lbl_eu_80663E14) * lbl_eu_80666DEC;
 
     if (!self->CheckUnk84Flag(0x10)) {
         self->func_800E2584(0x10);
@@ -10560,7 +10560,7 @@ extern "C" void func_80295BF4(void*);
 extern "C" void func_80295CC8(void*, void*);
 extern "C" s32 func_801B1E74(void*, s32, void*, s32);
 extern "C" void CfObjectMove_relaySubB0Slot54(void*, int, int, u32, f32, f32);
-extern "C" void func_80496294(void*);
+extern "C" void Scn_SetTimeScale(void*);
 // Retail references func_800D7D24 by its unmangled symbol; route new calls
 // through a C-linkage overload (the C++-mangled definition above is untouched).
 extern "C" s32 func_800D7D24(void*);
@@ -11135,7 +11135,7 @@ extern "C" void func_800EA2A4(cf::CBattleManager* mgr, BattleObjAccessor* arg1) 
 extern "C" void func_800EA484(cf::CBattleManager* self, f32 value, int flags) {
 
     if (flags & 0x8) {                                       // 0x800EAF78
-        func_80496294(lbl_eu_80663E14);
+        Scn_SetTimeScale(lbl_eu_80663E14);
     }
 
     EnumListHolder h1;    // sp+0x10
@@ -12353,7 +12353,7 @@ void func_800F3FC8(cf::CBattleManager* mgr) {
 extern "C" void CPartsChange_ResetBattleEntry(void*, u32, u32);
 extern "C" void CItem_clearSharedBox();
 extern "C" s32 CfRes_checkFlags_48000();
-extern "C" void func_8013E424(void*, int);
+extern "C" void UIWin_CreateB4790Win(void*, int);
 extern "C" void CCharVoiceMan_EnqueueItemVoice(void*);
 
 void func_800F4034(cf::CBattleManager* mgr) {
@@ -12455,7 +12455,7 @@ void func_800F41A0(cf::CBattleManager* mgr) {
 
         list = CTaskGame_enumListGet(&holder);
         if (*(u32*)((u8*)list + 0x620) != 0) {
-            func_8013E424(lbl_eu_80573EEC, 0);
+            UIWin_CreateB4790Win(lbl_eu_80573EEC, 0);
 
             CItem_clearSharedBox();
 

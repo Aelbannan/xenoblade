@@ -71,30 +71,30 @@ extern const float lbl_eu_8066A210;
 
 extern void __ct__cf_CfGimmick(void* self);
 extern void __dt__Q22cf9CfGimmickFv(void* self, int deleting);
-extern void func_80208EE4(void* self);
+extern void CfGimmick_ClearManagerBinding(void* self);
 extern void func_8020A434(void* value);
 extern void func_802089BC(void* destination, void* position, void* rotation);
-extern void func_80208F34(void* self, void* destination, void* bdat, void* table);
-extern void func_80209020(void* self, void* destination, void* bdat, void* table);
-extern void func_8020915C(void* self, void* destination, void* bdat, void* table);
-extern void func_80209288(void* self, void* destination, void* bdat, void* table);
+extern void CfGimmick_LoadBdatAreaPos(void* self, void* destination, void* bdat, void* table);
+extern void CfGimmick_LoadBdatAreaExtents(void* self, void* destination, void* bdat, void* table);
+extern void CfGimmick_LoadBdatClAreaExtents(void* self, void* destination, void* bdat, void* table);
+extern void CfGimmick_LoadBdatAreaRotation(void* self, void* destination, void* bdat, void* table);
 extern void func_8020A6B0(void* effect, void* position, u16 resourceId, f32 scale,
                           int arg5, int arg6);
 extern void func_8020F540(CfGimmickJump* self);
 extern void func_8020A484(u16 resourceId);
 extern int func_8020A5DC(void* self);
 extern int func_8020A87C(void* self, void* effect);
-extern int func_8020971C(u16 duration);
-extern int func_80209754(u16 flags, void* first, void* second, void* third,
+extern int CfGimmick_CheckStateFlag2CC8(u16 duration);
+extern int CfGimmick_CheckTriggerGated(u16 flags, void* first, void* second, void* third,
                          void* effect);
-extern void func_80209F5C();
+extern void CfGimmick_SetGlobalFlagC0002();
 extern void* func_8003AA34();
 extern int getBdatStringColumnValue(void* bdat, const char* column, u16 row);
 extern CfGimmickWork* createBattleActor__Q22cf13CfGameManagerFv(u16 id, int mode);
 extern int func_801BFAE4(u16 handle);
 extern void func_801BFAE8(u16 handle, void* position);
 extern void func_801BFED0(int kind, u16 handle, int mode);
-extern u16 func_80208C60(u16 effectId, void* position, f32 distance);
+extern u16 CfGimmick_PlaySoundAtPosScaled(u16 effectId, void* position, f32 distance);
 extern void setAnimHeight(void* target, f32 amount);
 extern f32 FrSqrt__Q24nw4r4mathFf(f32 value);
 extern void Warning__Q24nw4r2dbFPCciPCce(const char* file, int line,
@@ -199,10 +199,10 @@ extern "C" CfGimmickJump* __ct__cf_CfGimmickJump(CfGimmickJump* self,
     void* table = lbl_eu_80664138;
     self->bdatRow = row;
 
-    func_80208F34(self, &self->position, bdat, &table);
-    func_80209020(self, &self->initialState, bdat, &table);
-    func_80209288(self, &self->rotation, bdat, &table);
-    func_8020915C(self, &self->transformedPosition, bdat, &table);
+    CfGimmick_LoadBdatAreaPos(self, &self->position, bdat, &table);
+    CfGimmick_LoadBdatAreaExtents(self, &self->initialState, bdat, &table);
+    CfGimmick_LoadBdatAreaRotation(self, &self->rotation, bdat, &table);
+    CfGimmick_LoadBdatClAreaExtents(self, &self->transformedPosition, bdat, &table);
 
     char* columns = lbl_eu_8050873C;
     u32 value = (u32)getBdatStringColumnValue(table, columns, row);
@@ -257,7 +257,7 @@ extern "C" CfGimmickJump* __ct__cf_CfGimmickJump(CfGimmickJump* self,
 
 CfGimmickJump::~CfGimmickJump() {
     *(void**)this = lbl_eu_80535A18;
-    func_80208EE4(this);
+    CfGimmick_ClearManagerBinding(this);
     func_8020A434(&effect);
     __dt__Q22cf9CfGimmickFv(this, 0);
 }
@@ -271,7 +271,7 @@ extern "C" void func_8020F38C(CfGimmickJump* self) {
 
 extern "C" void func_8020F484(CfGimmickJump* self) {
     if ((lbl_eu_80663E24 & 0x4000000) == 0) {
-        self->timer += func_80496288(lbl_eu_80663E14);
+        self->timer += Scn_GetFrameDelta(lbl_eu_80663E14);
         // State handler dispatch: retail stores 12-byte member-function
         // pointers over CfGimmickJump (__ptmf_scall) indexed by motionState.
         JumpStateFn* stateTable = reinterpret_cast<JumpStateFn*>((void*)lbl_eu_805359E8);
@@ -310,7 +310,7 @@ extern "C" void func_8020F8C4(CfGimmickJump* self) {
     }
 
     self->flags |= 0x400;
-    if (self->duration == 0 || func_8020971C(self->duration) != 0) {
+    if (self->duration == 0 || CfGimmick_CheckStateFlag2CC8(self->duration) != 0) {
         self->motionState = 1;
     }
 }
@@ -342,7 +342,7 @@ extern "C" void func_8020F984(CfGimmickJump* self) {
     if ((self->flags & 1) == 0) {
         self->flags |= 0x400;
         if ((self->flags66 & 8) == 0 &&
-            func_80209754(self->flags66, &self->initialState,
+            CfGimmick_CheckTriggerGated(self->flags66, &self->initialState,
                           &self->position, &self->rotation, self->effect) == 0) {
             return;
         }
@@ -388,7 +388,7 @@ extern "C" void func_8020F984(CfGimmickJump* self) {
         } else if (position.y < self->position.y) {
             position.y = self->position.y;
         }
-        self->soundHandle = func_80208C60(self->effectId, &position, 1.0f);
+        self->soundHandle = CfGimmick_PlaySoundAtPosScaled(self->effectId, &position, 1.0f);
     }
 
     self->motionState = 2;
@@ -453,7 +453,7 @@ extern "C" void func_8020FD2C(CfGimmickJump* self) {
         }
     }
 
-    f32 elapsed = self->frameScale * func_80496288(lbl_eu_80663E14);
+    f32 elapsed = self->frameScale * Scn_GetFrameDelta(lbl_eu_80663E14);
     if (self->timer <= self->frameScale) {
         self->verticalOffset += elapsed;
         if (self->verticalOffset > self->height) {
@@ -544,7 +544,7 @@ extern "C" void func_8020FD2C(CfGimmickJump* self) {
         setAnimHeight(target, 0.0f);
         target->flags4EC |= 0x4000000;
         if (index == 0) {
-            func_80209F5C();
+            CfGimmick_SetGlobalFlagC0002();
         }
 
         if (self->playerHeight[index] <= self->height + self->position.y) {

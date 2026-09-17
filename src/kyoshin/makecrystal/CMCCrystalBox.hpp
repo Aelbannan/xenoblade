@@ -174,7 +174,7 @@ public:
 };
 
 // Pane +0x4C/+0x50 float pair written by OnFileEvent from the timg-resource
-// u16 position header (same +0x4C offset func_80127BC4 reads as a drag pair).
+// u16 position header (same +0x4C offset TagCopyVec2f reads as a drag pair).
 struct PanePosMirror {
     u8 _pad[0x4C];   // +0x00..+0x4B
     f32 m4C;         // +0x4C
@@ -548,8 +548,8 @@ extern "C" void func_80124270(void*, u32);   // pane visibility setter
 // OnFileEvent (code_80135FDC-unit) imports: unmangled retail symbols keep C
 // linkage; getPackedFont / isClassicController__Q22cf13CfGameManagerFv use the
 // plain C++ forms that re-derive the retail mangled names.
-extern "C" u32 func_801355BC();
-extern "C" void* func_801355F4();   // shared timg resource accessor
+extern "C" u32 CUICfManager_getPackedFont9C();
+extern "C" void* CUICfManager_getArcResourceAccessor();   // shared timg resource accessor
 // C++ linkage so MWCC mangles to the retail getPackedFont__Fv.
 u32 getPackedFont();
 extern "C" u16 BdatGetU16ByTableKey(const void*, const void*, u32);
@@ -710,7 +710,7 @@ extern "C" void* getHandleMEM1__Q23mtl10MemManagerFv();
 extern "C" void* getHandleMEM2__Q23mtl10MemManagerFv();
 extern "C" void* readFile__11CDeviceFileFUlPCcP10IWorkEventii(unsigned long, const char*, void*, int, int);
 extern "C" void* readCommonArchiveFile__11CDeviceFileFUlPCcP10IWorkEventii(unsigned long, const char*, void*, int, int);
-extern "C" u32 func_800A9D90();
+extern "C" u32 KyoshinHeap_GetField44();
 extern "C" void __ct__UnkClass_8011C974(void*, void*);   // 4-word mem-region copy
 // (func_8011C998 is the CScrollBar-data copy; retail symbol is unmangled)
 extern "C" void func_8011C998(void*, void*);

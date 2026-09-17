@@ -116,7 +116,7 @@ extern char lbl_eu_805018D0[];
 // MWCC mangles plain global-scope free functions with a __F suffix, so the
 // declarations must sit under extern "C" to emit the retail reloc names).
 extern "C" u8 func_80144FC8();
-extern "C" nw4r::lyt::ArcResourceAccessor* func_801355F4();
+extern "C" nw4r::lyt::ArcResourceAccessor* CUICfManager_getArcResourceAccessor();
 extern "C" void* func_801394D4(u32);
 // Pre-mangled static member name (CDeviceFont::getFontInfo(u32, Layout*));
 // extern "C" keeps the literal identifier (no double mangling).

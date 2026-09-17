@@ -13,7 +13,7 @@ extern "C" void* func_8016FE34(void* r3);
 void releaseArcResourceAccessor(nw4r::lyt::ArcResourceAccessor* accessor);
 
 // C-linkage imports used by the battle-manager constructor.
-extern "C" mtl::ALLOC_HANDLE func_80496004(void* ptr);
+extern "C" mtl::ALLOC_HANDLE Scn_CallUnk8C_V10(void* ptr);
 extern "C" void CMenuArtsSelect_clearArtsRef();
 // Layout/BDAT helpers used by the file-event handler.
 extern "C" nw4r::lyt::ArcResourceAccessor* createArcResourceAccessor__10CLibLayoutFv();

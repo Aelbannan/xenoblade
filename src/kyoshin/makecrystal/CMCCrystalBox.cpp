@@ -424,13 +424,13 @@ CMCCrystalBox::~CMCCrystalBox() {
 void initCrystalBoxResources(CMCCrystalBox* self) {
     // Resource archives: sort menu (+0x24), crystal info (+0x28), common
     // (+0x2C). The first two use the heap handle, the third the common-archive
-    // file after func_800A9D90's handle setup.
+    // file after KyoshinHeap_GetField44's handle setup.
     self->subObjPtrs[0] = (nw4r::lyt::AnimTransform*)readFile__11CDeviceFileFUlPCcP10IWorkEventii(
         (unsigned long)getHandleMEM1__Q23mtl10MemManagerFv(), lbl_eu_8050888C + 0xc, self, 0, 0);
     self->subObjPtrs[1] = (nw4r::lyt::AnimTransform*)readFile__11CDeviceFileFUlPCcP10IWorkEventii(
         (unsigned long)getHandleMEM2__Q23mtl10MemManagerFv(), lbl_eu_8050888C + 0x25, self, 0, 0);
     self->subObjPtrs[2] = (nw4r::lyt::AnimTransform*)readCommonArchiveFile__11CDeviceFileFUlPCcP10IWorkEventii(
-        (unsigned long)func_800A9D90(), lbl_eu_8050888C + 0x3e, self, 0, 0);
+        (unsigned long)KyoshinHeap_GetField44(), lbl_eu_8050888C + 0x3e, self, 0, 0);
 
     // Re-init the sort menu from a default temp: copy every member except the
     // +0x6C s32 array (retail copies the mem region, pointer fields, flags,
@@ -3132,7 +3132,7 @@ bool CMCCrystalBox::OnFileEvent(CEventFile* event) {
             setLayoutTextBoxFont__FPQ34nw4r3lyt6LayoutPcUl(
                 (nw4r::lyt::Layout*)subObjPtrs[5], lbl_eu_8050888C + 0x365, cnt);
         }
-        u32 cnt2 = func_801355BC();
+        u32 cnt2 = CUICfManager_getPackedFont9C();
         if (cnt2 != 0) {
             for (u8 i = 1; i <= 30; i++) {
                 sprintf(buf, lbl_eu_8050888C + 0x102, i);
@@ -3174,7 +3174,7 @@ bool CMCCrystalBox::OnFileEvent(CEventFile* event) {
                                   : lbl_eu_8050888C + 0x4e6;
         u16 id = (u16)BdatGetU16ByTableKey(lbl_eu_8050888C + 0x4ef, msgName, 0x49);
         void* msg = MakeTplNameSysFile(id);
-        void* res = ((nw4r::lyt::ArcResourceAccessor*)func_801355F4())
+        void* res = ((nw4r::lyt::ArcResourceAccessor*)CUICfManager_getArcResourceAccessor())
                         ->GetResource(0x74696D67, (const char*)msg, 0);
         if (res != 0) {
             PaneSetTexPaletteByName((nw4r::lyt::Layout*)subObjPtrs[5],
@@ -3273,7 +3273,7 @@ bool CMCCrystalBox::OnFileEvent(CEventFile* event) {
         func_801D24E8((u8*)this + 0x84, &v2, &v1);
 
         u8 tmp90[0x18];
-        __ct__CCur18(tmp90, func_801355F4());
+        __ct__CCur18(tmp90, CUICfManager_getArcResourceAccessor());
         func_8018B0FC((u8*)this + 0x9c, tmp90);
         __dt__6CCur18Fv(tmp90, -1);
         ((CCurVf0C*)((u8*)this + 0x9c))->vf_00();
@@ -3291,7 +3291,7 @@ bool CMCCrystalBox::OnFileEvent(CEventFile* event) {
         ((CCurVf0C*)((u8*)this + 0xcc))->vf_00();
 
         u8 tmp48[0x18];
-        __ct__CCur18(tmp48, func_801355F4());
+        __ct__CCur18(tmp48, CUICfManager_getArcResourceAccessor());
         func_8018B0FC((u8*)this + 0xe4, tmp48);
         __dt__6CCur18Fv(tmp48, -1);
         ((CCurVf0C*)((u8*)this + 0xe4))->vf_00();

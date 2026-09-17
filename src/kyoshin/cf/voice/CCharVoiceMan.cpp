@@ -166,7 +166,7 @@ int CCharVoiceMan_NullVoiceDispatch(void* self) { return 0; }
 
 // Allocate the 0x234-byte CCharVoiceMan and store it as the singleton.
 void CCharVoiceMan_CreateSingleton() {
-    mtl::ALLOC_HANDLE handle = func_80496004(lbl_eu_80663E14);
+    mtl::ALLOC_HANDLE handle = Scn_CallUnk8C_V10(lbl_eu_80663E14);
     cf::CCharVoiceMan* man =
         (cf::CCharVoiceMan*)mtl::MemManager::allocate(0x234, handle);
     if (man != 0)

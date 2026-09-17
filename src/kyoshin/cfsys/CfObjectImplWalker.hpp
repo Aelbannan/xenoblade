@@ -969,11 +969,11 @@ void func_800C86E8(void* self);
 void func_800D9978(void* mgr, void* obj);
 void cfCam_setClear04(void* obj, u32 mask, int flag);
 u32 func_8009CF8C(u32 resourceId);
-int func_80133F48(int id, float f);
+int CUICfManager_queueFactoryMenu(int id, float f);
 void* func_800451D8(u32 cls, int param);
 void simSetLeafAnimTag(void* obj, u32 flags);
 void CItem_openAreaEventBox(u32 a, u32 b);
-void func_8013E424(void* str, int flags);
+void UIWin_CreateB4790Win(void* str, int flags);
 void* getCameraDataBlock__Q22cf13CfGameManagerFv(void* self);
 u32 getEventValue40__Q22cf13CfGameManagerFv(u32 id);
 void setEventManagerValue__Q22cf13CfGameManagerFv(u32 id, u32 value);
@@ -994,8 +994,8 @@ int func_80148778(void* obj, int id); // canonical (void*,int) form
 void* func_8003AA34(void);
 void* getFP__FPCc(const char* path);
 u32 func_8003B1EC(void* bdat);
-void func_8013D07C(u32 obj, const char* str, int flag);
-int func_801413DC(u32 a, int b);
+void UIWin_CreateTalkWin(u32 obj, const char* str, int flag);
+int UIWin_PackHiLo(u32 a, int b);
 void awardCount91(void);
 void awardCount8F(void);
 int rand(void);
@@ -1006,16 +1006,16 @@ void func_800EA9A8(void* mgr, void* item, void* rec, u32 id, u32 flag);
 int func_80260FB0(void* obj, u32 id, u32* outA, u32* outB, f32* outC);
 int func_80260518(void* obj, u32 id, u32* outA, f32* outB);
 int func_80260264(void* obj, u32 id, u32* outA);
-void func_8013E2E0(u32 a, u32 b, u32 c, u32 d, u32 e, u32 f, u32 g, u32 h);
+void UIWin_CreateItemMulti(u32 a, u32 b, u32 c, u32 d, u32 e, u32 f, u32 g, u32 h);
 u32 func_80084654__Q22cf13CfGameManagerFv(int flag);
 int getNullPtrC__Q22cf13CfGameManagerFv(u32 mask);
 void* func_800EA444(void* mgr);
 // NOTE: real decl below returns cf::CfWalkEA444* via overload-free rename.
 
 // Action/art play + system helpers.
-void* func_8049627C(void* scene, int flag);
+void* Scn_SetCamIndex(void* scene, int flag);
 void func_8043E928__5CViewFRQ22ml5CRectP5CView(void* rect, void* view);
-// func_80496044 is declared in kyoshin/cf/CfGameManager.hpp (already in scope).
+// Scn_IsDefaultScale is declared in kyoshin/cf/CfGameManager.hpp (already in scope).
 // isAnyFieldFlagSet__Q22cf13CfGameManagerFv (retail mangled C++ name).
 int isAnyFieldFlagSet__Q22cf13CfGameManagerFv(void);
 int func_800967F8(void);
@@ -1032,11 +1032,11 @@ void awardQuestFlags(void);
 void func_8009ECD0(u32 id);
 void* func_80140AFC(u32 id);
 void* func_80140CA4(u32 id);
-void func_8013F354(void* obj);
-void func_8013F3EC(void* obj);
-void func_8013F2A0(void* obj);
-int func_8013EC58(void);
-void func_8013EC60(void);
+void UIWin_FlagBufCommit(void* obj);
+void UIWin_FlagBufResetAlias(void* obj);
+void UIWin_FlagBufReset(void* obj);
+int UIWin_GetTimer(void);
+void UIWin_ClearTimer(void);
 int func_80122448(void);
 
 // Enum-list constructors (decompiler placeholder addresses; same pattern as

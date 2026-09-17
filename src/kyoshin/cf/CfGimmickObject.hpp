@@ -63,7 +63,7 @@ struct CfGimmickObjectStep {
     /* 0x06 */ u8 field_06;    // LOD id byte (CfGimmickLodFrame alias)
     /* 0x07 */ u8 field_07;    // area-manager id (createBattleActor)
     /* 0x08 */ u16 field_08;   // effect/flag bitmask
-    /* 0x0A */ u16 field_0A;   // sound id (func_80208C60 / func_80208C48)
+    /* 0x0A */ u16 field_0A;   // sound id (CfGimmick_PlaySoundAtPosScaled / CfGimmick_PlaySoundAtPos)
     /* 0x0C */ u16 field_0C;   // frame count (CfGimmickLodFrame alias)
     /* 0x0E */ u8 field_0E;    // sound flag byte
     /* 0x0F */ u8 gap_0F;
@@ -135,7 +135,7 @@ public:
     /* 0x152 */ u16 field_152;         // party-member flag word (func_801F6D8C)
     /* 0x154 */ u16 field_154;
     /* 0x156 */ u16 field_156;
-    /* 0x158 */ u16 field_158;         // gimmick id passed to func_80208C48
+    /* 0x158 */ u16 field_158;         // gimmick id passed to CfGimmick_PlaySoundAtPos
     /* 0x15A */ u16 field_15A;
     /* 0x15C */ u16 field_15C;         // countdown seed (func_801F879C)
     /* 0x15E */ u8 field_15E;          // mode byte (1 = active) checked by func_801F8BB8
@@ -187,10 +187,10 @@ extern char* lbl_eu_80534F20[10];  // step-table column names (5 slots x 10)
 
 // Gimmick sub-object initializers (CfGimmick.cpp family; holder receives
 // &ctor-local bdat handle slot like the sibling gimmick ctors).
-extern "C" void func_80208F34(void* self, void* out, void* bdat, void* holder);
-extern "C" void func_80209020(void* self, void* out, void* bdat, void* holder);
-extern "C" void func_8020915C(void* self, void* out, void* bdat, void* holder);
-extern "C" void func_80209288(void* self, void* out, void* bdat, void* holder);
+extern "C" void CfGimmick_LoadBdatAreaPos(void* self, void* out, void* bdat, void* holder);
+extern "C" void CfGimmick_LoadBdatAreaExtents(void* self, void* out, void* bdat, void* holder);
+extern "C" void CfGimmick_LoadBdatClAreaExtents(void* self, void* out, void* bdat, void* holder);
+extern "C" void CfGimmick_LoadBdatAreaRotation(void* self, void* out, void* bdat, void* holder);
 
 // PMF dispatch tables (6 x 12-byte member pointers) indexed by field_188 in
 // func_801F5B00; MWCC lowers (self->*table[idx])() to mulli/add + `bl
@@ -218,7 +218,7 @@ extern u32 lbl_eu_80663E28;
 // ---------------------------------------------------------------------------
 extern "C" {
 void func_802089BC(void* matrix, const f32* basis, const CfGimmickVec3* point);
-void func_80208EE4(void* self);
+void CfGimmick_ClearManagerBinding(void* self);
 void func_8020A434(void* self);
 void __dt__Q22cf9CfGimmickFv(void* self, int mode);
 void setLODEnable__8CTaskLODFv(u8 lod, int mode);
@@ -259,25 +259,25 @@ void addLODEntry__8CTaskLODFv(u8 lod, int mode);
 void setLODObject__8CTaskLODFv(u8 lod, u16 id);
 int* func_8009ECB0();
 int func_8009E284(int* data, int id);
-void func_8020A010();
-void func_80209F2C();
+void CfGimmick_SetGlobalFlag80000();
+void CfGimmick_SetGlobalFlagC0042();
 void func_8020A0CC();
-void func_80209F5C();
-void func_8020A068(int arg0, int flag, u32 value);
+void CfGimmick_SetGlobalFlagC0002();
+void CfGimmick_SetGlobalFlag80AndValue(int arg0, int flag, u32 value);
 unsigned int func_8020A5DC();
 int func_8020A87C(void* self, u32 arg);
 void func_8020A484(u16 id);
-int func_8020971C(void* obj);
-int func_802096EC(void* obj);
+int CfGimmick_CheckStateFlag2CC8(void* obj);
+int CfGimmick_CheckStateFlag1D44(void* obj);
 u32 func_8006A33C();
 int func_802098EC(u32 mask, cf::CfGimmick* gimmick, const CfGimmickVec3* point,
                   const f32* ang, void* partyId);
 void CItem_consumeFamilyCnt(unsigned int a, int b);
-void func_8020974C(unsigned int a, int b);
+void CfGimmick_TriggerSound2CC8(unsigned int a, int b);
 unsigned int CItem_findRecByFamily(unsigned short id);
 u32 getQueuedFileEventCount__Q22cf13CfGameManagerFv();
 u32 getResourceFromTable__Q22cf13CfGameManagerFv(u32 resourceId);
-u16 func_80208C48(u16 id, f32* vec);
+u16 CfGimmick_PlaySoundAtPos(u16 id, f32* vec);
 void CPartsChange_FireIdEffect(int id);
 // Step-table / sound helpers (func_801F6780 / func_801F76A8).
 void func_80140E00(u32 a, u32 b, u32 c);
@@ -290,7 +290,7 @@ int func_801BFABC(int a);
 // see CfObjectImplMove.hpp).
 extern "C" u16 playActorSound__Q22cf10CfSoundManFUlUlUlUlf(u32 a, u32 b, u32 c,
                                                          u32 d, f32 f);
-u16 func_80208C60(u16 id, f32* pos, f32 d);
+u16 CfGimmick_PlaySoundAtPosScaled(u16 id, f32* pos, f32 d);
 void func_801BFF78(int a, u16 b, int c);
 CfGimmickSoundSlot* func_801BFAE4(u16 handle);
 int CPartsChange_SpawnById(int id);

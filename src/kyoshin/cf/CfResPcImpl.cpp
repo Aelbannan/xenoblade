@@ -72,12 +72,12 @@ cf::CfResPcImpl::~CfResPcImpl() {
     }
 }
 
-int func_8018CB14(void* p)
+int CfResPcImpl_isHandlerActive(void* p)
 {
     return (unsigned int)*(unsigned short*)((char*)p + 8) >= 3;
 }
 
-int func_8018CB34() { return 2; }
+int CfResPcImpl_getHandlerLimit() { return 2; }
 
 // func_8018CB3C - PC resource teardown: dispatches the parent's vtable slots
 // +0x1CC/+0x17C/+0x178 around func_800BBB50, zeroes the parent's
@@ -102,9 +102,9 @@ void func_8018CB3C(cf::CfResPcImpl* self) {
 // set, queries the +0x10 table slot +0x34 for a resource object; when the
 // instance field is live and the local state at field_38 is positive,
 // notifies the resource (CfRes_tryReregisterSlot) and dispatches table slot +0x28.
-void func_eu_8018E19C(cf::CfResPcImpl* self) {
+void CfResPcImpl_euReregisterOnFlag(cf::CfResPcImpl* self) {
     if (self->field_00->field_64 & 0x80000000) {
-        int res = (self)->func_8018D134(0);
+        int res = (self)->CfResPcImpl_getSlotTableEntry(0);
         if (res != 0) {
             u8* inst = CfRes_getInstanceField();
             s16 state = self->field_38;
@@ -117,7 +117,7 @@ void func_eu_8018E19C(cf::CfResPcImpl* self) {
 }
 
 // Getter for the 8-slot table at +0x14; out-of-range indexes return 0.
-u32 func_8018D134(cf::CfResPcImpl* self, int idx)
+u32 CfResPcImpl_getSlotTableEntry(cf::CfResPcImpl* self, int idx)
 {
     if (idx < 8) {
         return self->field_14[idx];
@@ -125,26 +125,26 @@ u32 func_8018D134(cf::CfResPcImpl* self, int idx)
     return 0;
 }
 
-// func_8018CBE8 - PC state load: dispatches the +0x28 slot, queries the
+// CfResPcImpl_loadPcState - PC state load: dispatches the +0x28 slot, queries the
 // slot-table buffer via func_80080F48 and installs the queried ids into the
 // secondary-interface slots (+0x30) and the parent +0x70C..+0x712 words.
 // The +0x30 slot index order (0,1,2,4,3,5,6) matches retail.
-void func_8018CBE8(cf::CfResPcImpl* self, u16 arg2) {
+void CfResPcImpl_loadPcState(cf::CfResPcImpl* self, u16 arg2) {
     cf::CfResPcLoadBuffer buf;
     (self)->func_8018CB3C();
     func_80080F48__Q22cf13CfGameManagerFv(self->field_00->field_8C, &buf, 0, 1);
     self->field_40 = arg2;
     if (arg2 == 0) {
-        (self)->func_8018D510(0, buf.field_00[0]);
-        (self)->func_8018D510(1, buf.field_00[1]);
-        (self)->func_8018D510(2, buf.field_00[2]);
-        (self)->func_8018D510(4, buf.field_00[3]);
-        (self)->func_8018D510(3, buf.field_00[4]);
-        (self)->func_8018D510(5, buf.field_00[5]);
-        (self)->func_8018D510(6, buf.field_00[6]);
+        (self)->CfResPcImpl_setSlotTableEntry(0, buf.field_00[0]);
+        (self)->CfResPcImpl_setSlotTableEntry(1, buf.field_00[1]);
+        (self)->CfResPcImpl_setSlotTableEntry(2, buf.field_00[2]);
+        (self)->CfResPcImpl_setSlotTableEntry(4, buf.field_00[3]);
+        (self)->CfResPcImpl_setSlotTableEntry(3, buf.field_00[4]);
+        (self)->CfResPcImpl_setSlotTableEntry(5, buf.field_00[5]);
+        (self)->CfResPcImpl_setSlotTableEntry(6, buf.field_00[6]);
     }
     if (buf.field_1E != 0) {
-        (self)->func_8018D510(7, buf.field_00[6]);
+        (self)->CfResPcImpl_setSlotTableEntry(7, buf.field_00[6]);
     }
     self->field_00->field_70C[0] = buf.field_1C;
     self->field_00->field_70C[1] = buf.field_1E;
@@ -156,13 +156,13 @@ void func_8018CBE8(cf::CfResPcImpl* self, u16 arg2) {
     self->field_00->field_6C |= 0x1;
 }
 
-// func_8018CD9C - PC sound-notify: when the state at field_0E is valid and
+// CfResPcImpl_notifySound - PC sound-notify: when the state at field_0E is valid and
 // the parent's +0x68 flag bit 21 is set and its vtable slot +0x74 reports
 // the resource live, sends (state+2, arg2, parent->field_74, f1, f2) to
 // func_801BFE20 and, when the resulting sound slot holds a live sound object
 // and arg4 is nonzero, sets its player priority to arg4. arg3 (r5) is an
 // unused register-slot parameter (retail never reads it).
-void func_8018CD9C(cf::CfResPcImpl* self, int arg2, int arg3, int arg4, f32 f1, f32 f2) {
+void CfResPcImpl_notifySound(cf::CfResPcImpl* self, int arg2, int arg3, int arg4, f32 f1, f32 f2) {
     s16 state = self->field_0E;
     if (state < 0) {
         return;
@@ -182,9 +182,9 @@ void func_8018CD9C(cf::CfResPcImpl* self, int arg2, int arg3, int arg4, f32 f1, 
     }
 }
 
-// func_8018CE70 - same dispatch shape as func_8018CF08 but forwards state+2
+// CfResPcImpl_notifyReloadSimple - same dispatch shape as CfResPcImpl_notifyReload but forwards state+2
 // with only two caller args to func_801BFE8C.
-void func_8018CE70(cf::CfResPcImpl* self, int arg2, int arg3) {
+void CfResPcImpl_notifyReloadSimple(cf::CfResPcImpl* self, int arg2, int arg3) {
     s16 state = self->field_0E;
     if (state < 0) {
         return;
@@ -201,11 +201,11 @@ void func_8018CE70(cf::CfResPcImpl* self, int arg2, int arg3) {
     }
 }
 
-// func_8018CF08 - dispatch a reload-type message when the state at field_0E
+// CfResPcImpl_notifyReload - dispatch a reload-type message when the state at field_0E
 // is valid and the parent's +0x68 flag bit 21 (0x200000) is set and its
 // vtable slot +0x74 reports the resource live; forwards state+2 with the
 // three caller args to func_801BFF04.
-void func_8018CF08(cf::CfResPcImpl* self, int arg2, int arg3, int arg4) {
+void CfResPcImpl_notifyReload(cf::CfResPcImpl* self, int arg2, int arg3, int arg4) {
     // ok declared first so MWCC assigns it r31 (retail keeps state in r30);
     // the zero-init stays after the parent load to match retail ordering.
     int ok;
@@ -225,11 +225,11 @@ void func_8018CF08(cf::CfResPcImpl* self, int arg2, int arg3, int arg4) {
     }
 }
 
-// func_8018CF90 - returns state+2 when the state at field_0E is valid and
+// CfResPcImpl_getLiveStateId - returns state+2 when the state at field_0E is valid and
 // the parent's +0x68 flag bit 21 is set and its vtable slot +0x74 reports
 // the resource live; otherwise -1.
-int func_8018CF90(cf::CfResPcImpl* self) {
-    // Same regalloc shape as func_8018CF08 (ok in r31, state in r30); the
+int CfResPcImpl_getLiveStateId(cf::CfResPcImpl* self) {
+    // Same regalloc shape as CfResPcImpl_notifyReload (ok in r31, state in r30); the
     // nested-success / single-fail-exit layout makes MWCC share one
     // `li r3,-1` tail like retail.
     int ok;
@@ -249,13 +249,13 @@ int func_8018CF90(cf::CfResPcImpl* self) {
     return -1;
 }
 
-// func_8018D00C - PC lookup probe: when parent flag bit 1 is set and the
+// CfResPcImpl_lookupPackedToken - PC lookup probe: when parent flag bit 1 is set and the
 // state at field_0A is valid, packs the parent's +0x8C slot id into a token
 // (0x3800AC0A when the id is 4 or 0xC/0xD and the bdat text id's bits 5..11
 // equal 0x2B, else 0x3800000A) and queries the table via CfRes_tryResolveByBits;
 // returns the packed token (0 when gated out). Retail reuses one register
 // for result/idx/packed, so the source reuses one int variable.
-int func_8018D00C(cf::CfResPcImpl* self) {
+int CfResPcImpl_lookupPackedToken(cf::CfResPcImpl* self) {
     int result = 0;
     cf::CfResPcParent* parent = self->field_00;
     if (parent->field_64 & 0x2) {
@@ -275,11 +275,11 @@ int func_8018D00C(cf::CfResPcImpl* self) {
     return result;
 }
 
-// func_8018D0C4 - PC resource teardown: detaches the active lookup entry's
+// CfResPcImpl_teardownLookupEntry - PC resource teardown: detaches the active lookup entry's
 // resource object (CfRes_cancelPendingRead), cleans the entry (parent flag bit 1), then
 // clears the entry/reload slots at +0x6DC/+0x6E0. All parent accesses go
 // through self->field_00 directly (retail reloads it at every site).
-void func_8018D0C4(cf::CfResPcImpl* self) {
+void CfResPcImpl_teardownLookupEntry(cf::CfResPcImpl* self) {
     cf::CfResPcLookupEntry* entry = self->field_00->field_6DC;
     if (entry != 0) {
         CfRes_cancelPendingRead(entry->field_2C, entry);
@@ -291,13 +291,13 @@ void func_8018D0C4(cf::CfResPcImpl* self) {
     self->field_00->field_6E0 = 0;
 }
 
-// func_8018D154 - PC resource request: when arg2 != 0 and the state at
+// CfResPcImpl_requestResource - PC resource request: when arg2 != 0 and the state at
 // field_0A is valid, queries the resource table with (state, arg2, 3); on
 // success dispatches the secondary vtable slot +0x30 with (arg3, arg2) and
 // sets parent flag bits 0x20/0x40/0x80/0x100/0x200 for arg3 == 1..5, then
 // resets the handler index field_08 to 1. Returns whether the query
 // succeeded (retail neg/or/srwi normalize reused for branch+return).
-extern "C" __declspec(noinline) int func_8018D154(cf::CfResPcImpl* self, u32 arg2, u32 arg3) {
+extern "C" __declspec(noinline) int CfResPcImpl_requestResource(cf::CfResPcImpl* self, u32 arg2, u32 arg3) {
     if (arg2 == 0) {
         return 0;
     }
@@ -308,7 +308,7 @@ extern "C" __declspec(noinline) int func_8018D154(cf::CfResPcImpl* self, u32 arg
     int ret = CfRes_tryResolveByBits(state, arg2, 3);
     int ok = (u32)(-ret | ret) >> 31;
     if (ok) {
-        (self)->func_8018D510(arg3, arg2);
+        (self)->CfResPcImpl_setSlotTableEntry(arg3, arg2);
         if ((int)arg3 == 1) {
             self->field_00->field_6C |= 0x20;
         } else if ((int)arg3 == 2) {
@@ -325,18 +325,18 @@ extern "C" __declspec(noinline) int func_8018D154(cf::CfResPcImpl* self, u32 arg
     return ok;
 }
 
-// retail: clrlwi r5, r4, 22; b func_8018D154 (r5 = arg2 & 0x3FF)
-extern "C" void func_8018D288(void* self, u32 a, u32 b){
-    func_8018D154((cf::CfResPcImpl*)self, a, a & 0x3FF);
+// retail: clrlwi r5, r4, 22; b CfResPcImpl_requestResource (r5 = arg2 & 0x3FF)
+extern "C" void CfResPcImpl_requestResourceMasked(void* self, u32 a, u32 b){
+    CfResPcImpl_requestResource((cf::CfResPcImpl*)self, a, a & 0x3FF);
 }
 
-// func_8018D290 - PC lookup probe: when the state at field_0A is valid,
+// CfResPcImpl_probeAndDispatch0 - PC lookup probe: when the state at field_0A is valid,
 // queries the resource table with (field_38, arg2, 5) or (state, arg2, 3)
 // depending on parent flag bit 0; on success dispatches the secondary vtable
 // slot +0x30 with (0, arg2), sets parent flag bit 4 (0x10) and selects
 // handler index 1. Returns whether the query succeeded (retail
 // neg/or/srwi normalize reused for branch+return).
-int func_8018D290(cf::CfResPcImpl* self, int arg2) {
+int CfResPcImpl_probeAndDispatch0(cf::CfResPcImpl* self, int arg2) {
     s16 v = self->field_0A;
     if (v < 0) {
         return 0;
@@ -349,19 +349,19 @@ int func_8018D290(cf::CfResPcImpl* self, int arg2) {
     }
     int ok = (u32)(-ret | ret) >> 31;
     if (ok) {
-        (self)->func_8018D510(0, arg2);
+        (self)->CfResPcImpl_setSlotTableEntry(0, arg2);
         self->field_00->field_6C |= 0x10;
         self->field_08 = 1;
     }
     return ok;
 }
 
-// func_8018D354 - PC lookup probe: when the state at field_0A is valid,
+// CfResPcImpl_probeAndCapHandler - PC lookup probe: when the state at field_0A is valid,
 // queries the resource table with (field_3C, arg2, 5) or (state, arg2, 3)
 // depending on parent flag bit 0; on success sets parent flag bit 17
 // (0x20000) and caps the handler index field_08 at 2. Returns whether the
 // query succeeded (retail neg/or/srwi normalize reused for branch+return).
-int func_8018D354(cf::CfResPcImpl* self, int arg2) {
+int CfResPcImpl_probeAndCapHandler(cf::CfResPcImpl* self, int arg2) {
     s16 v = self->field_0A;
     if (v < 0) {
         return 0;
@@ -382,14 +382,14 @@ int func_8018D354(cf::CfResPcImpl* self, int arg2) {
     return ok;
 }
 
-// func_8018D3F0 - PC resource request: when arg3 <= 1 and the state at
+// CfResPcImpl_requestBdatResource - PC resource request: when arg3 <= 1 and the state at
 // field_0A is valid, notifies the parent vtable slot +0x1D0 with arg3,
 // resolves arg2 through bdat, queries the resource table with
 // (state, resolved, 3) and dispatches the secondary vtable slot +0x30 with
 // (6, arg2); on success sets parent flag bit 0x2000 (arg3 == 1) or 0x1000
 // and caps the handler index at 2; when the query failed, success is
 // reported only when arg2 == 0.
-int func_8018D3F0(cf::CfResPcImpl* self, u32 arg2, u32 arg3) {
+int CfResPcImpl_requestBdatResource(cf::CfResPcImpl* self, u32 arg2, u32 arg3) {
     if (arg3 > 1) {
         return 0;
     }
@@ -400,7 +400,7 @@ int func_8018D3F0(cf::CfResPcImpl* self, u32 arg2, u32 arg3) {
     reinterpret_cast<cf::CfObjectMove*>(self->field_00)->CfObjectMove_releaseSlotById(arg3);
     int ret = CfRes_tryResolveByBits(state, cf::CfBdat::func_801422A8(arg2), 3);
     int ok = (u32)(-ret | ret) >> 31;
-    (self)->func_8018D510(6, arg2);
+    (self)->CfResPcImpl_setSlotTableEntry(6, arg2);
     if (ok) {
         if ((int)arg3 == 1) {
             self->field_00->field_6C |= 0x2000;
@@ -419,7 +419,7 @@ int func_8018D3F0(cf::CfResPcImpl* self, u32 arg2, u32 arg3) {
 // Setter for the 8-slot table at +0x14. Indexes 6/7 run the value through
 // the bdat token resolver first (retail: subi/cmplwi range test, then
 // func_801422A8__Q22cf6CfBdatFUl).
-void func_8018D510(cf::CfResPcImpl* self, int idx, u32 value)
+void CfResPcImpl_setSlotTableEntry(cf::CfResPcImpl* self, int idx, u32 value)
 {
     if (idx < 8) {
         if ((u32)(idx - 6) <= 1) {
@@ -429,13 +429,13 @@ void func_8018D510(cf::CfResPcImpl* self, int idx, u32 value)
     }
 }
 
-// func_8018D570 - PC per-state cleanup: when parent flag bit 0 is set and
+// CfResPcImpl_cleanupStateCounters - PC per-state cleanup: when parent flag bit 0 is set and
 // the instance field is live, walks the three state halfwords at +0x38/
 // +0x3A/+0x3C; for each valid state (parent flag bit 16 clear) looks up the
 // resource entry by state and, when its +0x04 id matches the secondary
 // vtable slot +0x34 result, bumps the entry's +0x38 counter (and +0x3A too
 // when parent flag bit 0 of +0x6C is set).
-void func_8018D570(cf::CfResPcImpl* self) {
+void CfResPcImpl_cleanupStateCounters(cf::CfResPcImpl* self) {
     if (!(self->field_00->field_64 & 0x80000000)) {
         return;
     }
@@ -454,7 +454,7 @@ void func_8018D570(cf::CfResPcImpl* self) {
         if (obj == 0) {
             continue;
         }
-        if (obj->field_04 != (u32)(self)->func_8018D134(0)) {
+        if (obj->field_04 != (u32)(self)->CfResPcImpl_getSlotTableEntry(0)) {
             continue;
         }
         obj->field_38++;
@@ -464,7 +464,7 @@ void func_8018D570(cf::CfResPcImpl* self) {
     }
 }
 
-// func_8018D65C - PC resource open/close: when arg2 != 0, dispatches the
+// CfResPcImpl_setResourceOpen - PC resource open/close: when arg2 != 0, dispatches the
 // parent vtable slots +0x1CC/+0x17C/+0x178 around func_800BBB50, clears the
 // parent +0x90/+0x94/+0x704 words and the three state halfwords, folds the
 // parent +0x6C flag word (mask 0xFFD88C0C, then set bit 0x4), zeroes the
@@ -473,7 +473,7 @@ void func_8018D570(cf::CfResPcImpl* self) {
 // secondary vtable slot +0x38 and forwards (state, result) to
 // CfRes_setTblHandle, clears parent flag bit 0x4 and sets bit 0x1, then latches
 // field_3E = 3.
-void func_8018D65C(cf::CfResPcImpl* self, int arg2) {
+void CfResPcImpl_setResourceOpen(cf::CfResPcImpl* self, int arg2) {
     if (arg2 != 0) {
         reinterpret_cast<cf::CfObjectMove*>(self->field_00)->CfObjectMove_detachModelList();
         reinterpret_cast<cf::CfObjectModel*>(self->field_00)->CfObjectModel_releaseModelList();
@@ -496,7 +496,7 @@ void func_8018D65C(cf::CfResPcImpl* self, int arg2) {
     } else {
         s16 state = self->field_0E;
         if (state >= 0) {
-            int result = (self)->func_8018D00C();
+            int result = (self)->CfResPcImpl_lookupPackedToken();
             CfRes_setTblHandle(state, result);
         }
         self->field_00->field_6C &= ~0x4;
@@ -552,8 +552,8 @@ void func_8018D79C(cf::CfResPcImpl* self) {
         self->field_3E--;
         return;
     }
-    int v034_0 = (self)->func_8018D134(0);
-    int v034_6 = (self)->func_8018D134(6);
+    int v034_0 = (self)->CfResPcImpl_getSlotTableEntry(0);
+    int v034_6 = (self)->CfResPcImpl_getSlotTableEntry(6);
     int r29 = 1;
     int r25 = 0;
     if (self->field_00->field_64 & 0x80000000) {
@@ -586,9 +586,9 @@ void func_8018D79C(cf::CfResPcImpl* self) {
         return;
     }
     if (self->field_00->field_64 & 0x2) {
-        int v6 = (self)->func_8018D134(6);
+        int v6 = (self)->CfResPcImpl_getSlotTableEntry(6);
         if (v6 != 0) {
-            int v6b = (self)->func_8018D134(6);
+            int v6b = (self)->CfResPcImpl_getSlotTableEntry(6);
             if (((v6b >> 5) & 0x7F) != 0) {
                 u16 slot = self->field_00->field_8C;
                 if (slot == 0xB) {
@@ -627,7 +627,7 @@ void func_8018D79C(cf::CfResPcImpl* self) {
         (cf::CfResPcCharData*)func_8009EC9C(self->field_00->field_8C);
     u32 idx = 0;
     for (int i = 1; i <= 5; i++, idx++) {
-        int v = (self)->func_8018D134(i);
+        int v = (self)->CfResPcImpl_getSlotTableEntry(i);
         u32 r5;
         if (self->field_00->field_64 & 0x8) {
             r5 = (u32)func_8009E120(charData, (u16)(i - 1));
@@ -638,14 +638,14 @@ void func_8018D79C(cf::CfResPcImpl* self) {
         }
         if ((u32)v != r5) {
             v = (int)r5;
-            (self)->func_8018D510(i, r5);
+            (self)->CfResPcImpl_setSlotTableEntry(i, r5);
         }
-        func_8018D154((cf::CfResPcImpl*)self, (u32)v, (u32)i);
+        CfResPcImpl_requestResource((cf::CfResPcImpl*)self, (u32)v, (u32)i);
     }
     if (self->field_00->field_64 & 0x2) {
         CfObjectMove_setModelListLock(self->field_00, 1);
     }
-    (self)->func_8018D290(v034_0);
+    (self)->CfResPcImpl_probeAndDispatch0(v034_0);
     if (r29 != 0) {
         if (self->field_00->field_6C & 0x100000) {
             cf::CfResPcLoadBuffer buf;
@@ -655,9 +655,9 @@ void func_8018D79C(cf::CfResPcImpl* self) {
         }
         for (int j = 0; j < 2; j++) {
             if ((j == 0 && self->field_00->field_70C[0] != 0) || (j == 1 && self->field_00->field_70C[1] != 0)) {
-                int v = (self)->func_8018D134(j + 6);
+                int v = (self)->CfResPcImpl_getSlotTableEntry(j + 6);
                 if (v != 0) {
-                    (self)->func_8018D3F0(j, v);
+                    (self)->CfResPcImpl_requestBdatResource(j, v);
                     if (self->field_00->field_70C[j] == 0) {
                         self->field_00->field_70C[j] = 4;
                     }
@@ -666,13 +666,13 @@ void func_8018D79C(cf::CfResPcImpl* self) {
         }
     }
     int token = 0;
-    int v6 = (self)->func_8018D134(6);
+    int v6 = (self)->CfResPcImpl_getSlotTableEntry(6);
     if (v6 != 0) {
         token = (v6 & 0xFE0) | 0x58000400;
     }
     if (self->field_00->field_64 & 0x2) {
         if (token != 0) {
-            (self)->func_8018D354(token);
+            (self)->CfResPcImpl_probeAndCapHandler(token);
         }
     } else if ((self->field_00->field_64 & 0x80000000) && r29 != 0 &&
                (lbl_eu_80663E24 & 0x40000) && inst != 0 && token != 0) {
@@ -722,7 +722,7 @@ void func_8018DE8C(cf::CfResPcImpl* self) {
         c = 0;
     }
     int ok = 1;
-    int v = (self)->func_8018D134(0);
+    int v = (self)->CfResPcImpl_getSlotTableEntry(0);
     if ((u32)b->field_04 != (u32)v) {
         self->field_00->field_6C &= 0xFFD88C0F;
         self->field_08 = 0;
@@ -730,8 +730,8 @@ void func_8018DE8C(cf::CfResPcImpl* self) {
         u8 msgBuf[0x84];
         ml::FixStr<128>* msg = (ml::FixStr<128>*)msgBuf;
         msg->clear();
-        int v1 = (self)->func_8018D134(0);
-        int v2 = (self)->func_8018D134(0);
+        int v1 = (self)->CfResPcImpl_getSlotTableEntry(0);
+        int v2 = (self)->CfResPcImpl_getSlotTableEntry(0);
         msg->format(lbl_eu_80503BC4, (const char*)func_800AA5C0((void*)v2), v1);
         return;
     }
@@ -769,7 +769,7 @@ void func_8018DE8C(cf::CfResPcImpl* self) {
     }
     for (int i = 1; i <= 5; i++) {
         if (self->field_00->field_6C & 0x20) {
-            int v2 = (self)->func_8018D134(i);
+            int v2 = (self)->CfResPcImpl_getSlotTableEntry(i);
             if (v2 != 0) {
                 cf::CfResPcLookupEntry* e = (cf::CfResPcLookupEntry*)&a[i];
                 if ((e->field_2C)->isInUse(e) == 0) {
@@ -808,7 +808,7 @@ void func_8018DE8C(cf::CfResPcImpl* self) {
     setMemInitFlag__Q23mtl10MemManagerFb(false);
     if ((self->field_00->field_6C & 0x20) && self->field_00->field_98 == 0) {
         u8* h = 0;
-        int v1 = (self)->func_8018D134(1);
+        int v1 = (self)->CfResPcImpl_getSlotTableEntry(1);
         if (v1 != 0) {
             s16 st = self->field_0A;
             if (st < 0) {
@@ -820,7 +820,7 @@ void func_8018DE8C(cf::CfResPcImpl* self) {
             }
         }
         self->field_00->field_90 = (u32)h;
-        void* hnd = func_80495E8C(CfRes_getD80Flag(), (u32)self->field_00->field_90, -1, 1);
+        void* hnd = Scn_SetupAnim(CfRes_getD80Flag(), (u32)self->field_00->field_90, -1, 1);
         u8* d = (u8*)__dynamic_cast(hnd, 0, &lbl_eu_806624C0, &lbl_eu_806624D0, 0);
         func_800BBADC(self->field_00, d);
         simResetAnimAtC(self->field_00->field_98, lbl_eu_80503BC4 + 7);
@@ -829,7 +829,7 @@ void func_8018DE8C(cf::CfResPcImpl* self) {
             reinterpret_cast<CScnItemModel*>(self->field_00->field_98)->vfunc64(0);
         }
         for (int i = 2; i <= 5; i++) {
-            int v2 = (self)->func_8018D134(i);
+            int v2 = (self)->CfResPcImpl_getSlotTableEntry(i);
             if (v2 != 0) {
                 u8* res = (u8*)(a[i].field_2C)->getResourceBase((cf::CfResPcLookupEntry*)&a[i], slot);
                 if (*(u32*)res != 0) {
@@ -864,7 +864,7 @@ void func_8018DE8C(cf::CfResPcImpl* self) {
     }
     if (self->field_00->field_6C & 0x40000) {
         self->field_00->field_6DC = c;
-        int v6 = (self)->func_8018D134(6);
+        int v6 = (self)->CfResPcImpl_getSlotTableEntry(6);
         self->field_00->field_6E0 = ((u32)slot << 20) | 0x78000000 | ((u32)v6 >> 10) & 0x3F8000;
     }
     setMemInitFlag__Q23mtl10MemManagerFb(true);
@@ -899,13 +899,13 @@ reinterpret_cast<cf::CfObject*>(self->field_00)->CfObject_syncModelRate(lbl_eu_8
     func_8018E7E4(self);
 }
 
-// func_8018E69C - PC resource detach: looks up six resource-table entries
+// CfResPcImpl_detachResources - PC resource detach: looks up six resource-table entries
 // by the state at field_0A and detaches each according to the parent +0x6C
 // flag bits (0x40000 -> b, 0x3000 -> d, 0x20000 -> e, 0x200000 -> c,
 // 0x10000 -> f, 0x10 -> a; the 0x40000 case also runs CfRes_releaseCachedBase with
 // cleanup), then folds the +0x6C flag word with 0xFFD88C0F and resets the
 // handler index field_08.
-void func_8018E69C(cf::CfResPcImpl* self) {
+void CfResPcImpl_detachResources(cf::CfResPcImpl* self) {
     s16 state = self->field_0A;
     cf::CfResPcLookupEntry* a = CfRes_getArrayElem12Idx(state);
     cf::CfResPcLookupEntry* b = CfRes_getArrayElem22Idx(state);
@@ -1049,7 +1049,7 @@ void func_8018E7E4(cf::CfResPcImpl* self) {
             self->field_00->field_704 = (u32)(entry_e->field_2C)->getResourceBase(entry_e, slot);
             CfResPcMca mca;
             __ct__CMcaFile((CMcaFile*)&mca, (void*)self->field_00->field_704);
-            self->field_00->field_6D8 = (u32)func_80495EAC((void*)CfRes_getD80Flag(), mca.field_0C, (void*)&buf);
+            self->field_00->field_6D8 = (u32)Scn_InitGlobalA((void*)CfRes_getD80Flag(), mca.field_0C, (void*)&buf);
             CfObjectMove_ensureAnimTargets(self->field_00);
         }
         if (!(self->field_00->field_68 & 0x100000)) {
@@ -1066,13 +1066,13 @@ reinterpret_cast<cf::CfObject*>(self->field_00->field_38)->CfObject_getPosTriple
     }
 }
 
-// func_8018EE18 - PC reload state machine: with parent flag bit 0 of +0x6C
+// CfResPcImpl_reloadStateMachine - PC reload state machine: with parent flag bit 0 of +0x6C
 // set, asks the player object (parent minus 0x3E9C) via its vtable slot
 // +0x2BC whether the resource is still in use; when it is not, clears that
 // flag bit. With bit 0 clear and bit 1 set, invalidates the three state
 // halfwords, notifies func_800BAB64, clears the +0x6C flag bits and resets
 // the handler index.
-void func_8018EE18(cf::CfResPcImpl* self) {
+void CfResPcImpl_reloadStateMachine(cf::CfResPcImpl* self) {
     cf::CfResPcParent* parent = self->field_00;
     u32 flags6C = parent->field_6C;
     if (flags6C & 0x1) {
@@ -1104,7 +1104,7 @@ void func_8018EE18(cf::CfResPcImpl* self) {
 // Dispatch one of the 4 reload handlers selected by field_08 (u16) when the
 // state at field_0A is valid (>= 0). MWCC lowers the pmf call to
 // mulli/lis/addi + `bl __ptmf_scall` against the lbl_eu_80532730 table.
-void func_8018EEF0(cf::CfResPcImpl* self)
+void CfResPcImpl_dispatchReloadHandler(cf::CfResPcImpl* self)
 {
     if (self->field_0A >= 0 && self->field_08 < 4) {
         (self->*lbl_eu_80532730[self->field_08].p)();
@@ -1126,18 +1126,18 @@ cf::UnkClass_8018EF3C::~UnkClass_8018EF3C()
     memset(this, 0, 0x400);
 }
 
-void func_8018EFB4(unsigned char* p)
+void CfResPcFileHost_clear(unsigned char* p)
 {
     *reinterpret_cast<unsigned int*>(p + 0x404) = 0;
     *reinterpret_cast<unsigned int*>(p + 0x400) = 0;
     memset(p, 0, 0x400);
 }
 
-int func_8018EFCC() { return 1; }
+int CfResPcImpl_isLoadReady() { return 1; }
 
 // Load the file-event archive for `param` through the archive pair at +0x408
 // (slot chosen by `flag`), then always report success.
-int func_8018EFD4(cf::UnkClass_8018EF3C* self, int flag, u32 param)
+int CfResPcImpl_loadFileEventArchive(cf::UnkClass_8018EF3C* self, int flag, u32 param)
 {
     cf::CfTFile* file;
     if (flag != 0) {
@@ -1149,12 +1149,12 @@ int func_8018EFD4(cf::UnkClass_8018EF3C* self, int flag, u32 param)
     return 1;
 }
 
-// func_8018F018 - PC file-event load: picks the archive from the +0x408 pair
+// CfResPcImpl_handleFileEventLoad - PC file-event load: picks the archive from the +0x408 pair
 // by arg2 (field_04 when arg2 != 0, field_00 otherwise) and, depending on the
 // archive state (func_80069C14), either clears the event flags and cancels
 // the archive (func_800699B0), runs the 9-event, the 0xa-event or the
 // 0x26-event.
-int func_8018F018(cf::CfResPcFileHost* self, u32 arg2, u32 arg3, u32 arg4, u32 arg5) {
+int CfResPcImpl_handleFileEventLoad(cf::CfResPcFileHost* self, u32 arg2, u32 arg3, u32 arg4, u32 arg5) {
     cf::CfTFile* file;
     if (arg2 != 0) {
         file = self->field_408->field_04;
@@ -1194,10 +1194,10 @@ int func_8018F018(cf::CfResPcFileHost* self, u32 arg2, u32 arg3, u32 arg4, u32 a
     return result;
 }
 
-// func_8018F164 - PC resource load request: when CfRes_resolveSelfPacked(arg3, 5)
+// CfResPcImpl_requestResourceLoad - PC resource load request: when CfRes_resolveSelfPacked(arg3, 5)
 // succeeds, clears the game-manager mode flag bit 16 (0x10000); otherwise
 // runs the 0x26 event with (arg2+1, arg3) and reports success.
-int func_8018F164(cf::CfResPcImpl* self, int arg2, int arg3) {
+int CfResPcImpl_requestResourceLoad(cf::CfResPcImpl* self, int arg2, int arg3) {
     int result = 0;
     if (CfRes_resolveSelfPacked(arg3, 5) != 0) {
         lbl_eu_80663E28 &= ~0x10000;
@@ -1208,12 +1208,12 @@ int func_8018F164(cf::CfResPcImpl* self, int arg2, int arg3) {
     return result;
 }
 
-// func_8018F1FC - PC map/section reload: resets manager helpers, latches the
+// CfResPcImpl_reloadMapSection - PC map/section reload: resets manager helpers, latches the
 // area id/sub-id halfwords into the event-flag block (clearing its bits
 // 19/20), reloads the map bdat pointers, detaches the active lookup entry,
 // then requests the section via the manager and re-enables pads. Always
 // returns 1.
-int func_8018F1FC(cf::CfResPcHostGM* self, u32 arg2, u32 arg3) {
+int CfResPcImpl_reloadMapSection(cf::CfResPcHostGM* self, u32 arg2, u32 arg3) {
     stubEmptyC__Q22cf13CfGameManagerFv(0);
     setMgrFixStrName(0);
     self->field_408->func_8007D84C();
@@ -1238,11 +1238,11 @@ int func_8018F1FC(cf::CfResPcHostGM* self, u32 arg2, u32 arg3) {
     return 1;
 }
 
-// func_8018F2EC - PC resource load request: when the game-manager event
+// CfResPcImpl_handleMapChangeEvent - PC resource load request: when the game-manager event
 // flag bit 22 (0x400000) is clear, runs the event (arg2, 1), enables the
 // pad mask 0x1FE01EFF and seeds the event timer to 0x5A; then stops voice
 // id 4 and pokes character slots 1..13.
-int func_8018F2EC(u32 arg1, u16 arg2) {
+int CfResPcImpl_handleMapChangeEvent(u32 arg1, u16 arg2) {
     if (!(lbl_eu_80663E24 & 0x400000)) {
         func_8008413C__Q22cf13CfGameManagerFv(arg2, 1);
         cf::CfGameManager::enablePadFlags(0x1FE01EFF, true);
@@ -1255,14 +1255,14 @@ int func_8018F2EC(u32 arg1, u16 arg2) {
     return 0;
 }
 
-// func_8018F368 - slot cleanup for the manager's second inner object: gated
+// CfResPcImpl_cleanupMgrSlotTable2 - slot cleanup for the manager's second inner object: gated
 // on the inner +0x82C bit 2 flag, the game-manager event-flag bit 5 and
 // arg3 matching the inner +0x830 word. Each of the three record groups
 // (handles at inner+0x834/+0x934/+0xA34, counts at +0xE4C/+0xE4E/+0xE50)
 // is reset via CfRes_tryDelegateLoad1(handle, 4). arg2 (r4) is an unused
-// register-slot parameter (retail never reads it; func_8018F510 passes its
+// register-slot parameter (retail never reads it; CfResPcImpl_dispatchSlotCleanup passes its
 // own cond through the tail call). Returns 0.
-extern "C" __declspec(noinline) int func_8018F368(void* self, u32 arg2, u32 arg3) {
+extern "C" __declspec(noinline) int CfResPcImpl_cleanupMgrSlotTable2(void* self, u32 arg2, u32 arg3) {
     cf::CfResPcMgrInner2* inner = ((cf::CfResPcMgrHost*)self)->field_408->field_04;
     if (!(inner->field_82C & 0x4) && (lbl_eu_80663E24 & 0x20) && arg3 == inner->field_830) {
         cf::CfResPcSlotTable2* tab = &inner->field_834;
@@ -1288,17 +1288,17 @@ extern "C" __declspec(noinline) int func_8018F368(void* self, u32 arg2, u32 arg3
     return 0;
 }
 
-// func_8018F46C - slot cleanup: when the inner manager's +0x82C flag bit 2
+// CfResPcImpl_cleanupMgrSlots - slot cleanup: when the inner manager's +0x82C flag bit 2
 // is clear, walks the 8-byte slot records (count at inner+0xE56) and, for
 // each live handle, ensures the manager global is initialized
-// (func_800A98A8(0x200000) when KyoshinHeap_GetField34() reports empty) and resets
-// the slot via CfRes_tryRefreshSlot16C(handle, 4); then runs func_8018F63C, the
+// (KyoshinHeap_AllocFld34(0x200000) when KyoshinHeap_GetField34() reports empty) and resets
+// the slot via CfRes_tryRefreshSlot16C(handle, 4); then runs CfResPcImpl_refreshMapAreaEvents, the
 // manager's notifyObjectMapChange and runMgrTeardownSeq, and returns 0. extern "C" +
-// noinline keep func_8018F510's call-site reloc at the retail C name; the
-// void* boundary matches func_8018F510's existing call (MWCC rejects an
+// noinline keep CfResPcImpl_dispatchSlotCleanup's call-site reloc at the retail C name; the
+// void* boundary matches CfResPcImpl_dispatchSlotCleanup's existing call (MWCC rejects an
 // implicit void*->T* conversion, and a cast there would touch a matched
 // function).
-extern "C" __declspec(noinline) int func_8018F46C(void* self) {
+extern "C" __declspec(noinline) int CfResPcImpl_cleanupMgrSlots(void* self) {
     cf::CfResPcMgrInner* inner = ((cf::CfResPcMgrHost*)self)->field_408->field_00;
     if (!(inner->field_82C & 0x4)) {
         cf::CfResPcSlotTable* tab = &inner->field_834;
@@ -1306,31 +1306,31 @@ extern "C" __declspec(noinline) int func_8018F46C(void* self) {
             u8* obj = tab->field_610[i].field_00;
             if (obj != 0) {
                 if (KyoshinHeap_GetField34() == 0) {
-                    func_800A98A8(0x200000);
+                    KyoshinHeap_AllocFld34(0x200000);
                 }
                 CfRes_tryRefreshSlot16C(obj, 4);
             }
         }
     }
-    func_8018F63C(self);
+    CfResPcImpl_refreshMapAreaEvents(self);
     notifyObjectMapChange__Q22cf13CfGameManagerFv(((cf::CfResPcMgrHost*)self)->field_408);
     runMgrTeardownSeq();
     return 0;
 }
 
-extern "C" void func_8018F510(void* self, unsigned long cond, unsigned long arg3){
+extern "C" void CfResPcImpl_dispatchSlotCleanup(void* self, unsigned long cond, unsigned long arg3){
     if (cond != 0)
-        func_8018F368(self, cond, arg3);
+        CfResPcImpl_cleanupMgrSlotTable2(self, cond, arg3);
     else
-        func_8018F46C(self);
+        CfResPcImpl_cleanupMgrSlots(self);
 }
 
-// func_8018F520 - file-event loader: queries the file-event table
+// CfResPcImpl_loadFileEventTable - file-event loader: queries the file-event table
 // (func_8009D5FC), loads the archive selected by arg2's packed bit fields
 // into the manager name buffer at +0x28 (func_8009EB2C), re-opens it
 // (loadBdatTableCache) with the result's two u16 ids, runs the script slot and
 // latches the game-manager event flag bit 13 (0x2000).
-int func_8018F520(cf::CfResPcHost408* self, u32 arg1, u32 arg2) {
+int CfResPcImpl_loadFileEventTable(cf::CfResPcHost408* self, u32 arg1, u32 arg2) {
     // Local layout view of the CfGameManager.hpp CfFileEventIdsView result
     // (two leading u16 ids); avoids pulling that header into this TU.
     struct LocalEventIds { u16 field_0x0; u16 field_0x2; };
@@ -1342,11 +1342,11 @@ int func_8018F520(cf::CfResPcHost408* self, u32 arg1, u32 arg2) {
     return 0;
 }
 
-// func_8018F5A4 - PC resource load: when the manager's unk90 is live
+// CfResPcImpl_loadPlayerOrEvent2 - PC resource load: when the manager's unk90 is live
 // (vtable slot +0x74 returns 0), runs the 0x2 event with four caller args
 // and reports success; otherwise falls back to loadPlayerResources with
 // (arg2, arg3).
-int func_8018F5A4(cf::CfResPcHostGM* self, u32 arg2, u32 arg3, u32 arg4, u32 arg5) {
+int CfResPcImpl_loadPlayerOrEvent2(cf::CfResPcHostGM* self, u32 arg2, u32 arg3, u32 arg4, u32 arg5) {
     int result = 0;
     cf::CfGameManager* manager = self->field_408;
     UnkClass_80083298* obj = manager->unk90;
@@ -1359,13 +1359,13 @@ int func_8018F5A4(cf::CfResPcHostGM* self, u32 arg2, u32 arg3, u32 arg4, u32 arg
     return result;
 }
 
-// func_8018F63C - PC map/area file-event refresh: resets two manager
+// CfResPcImpl_refreshMapAreaEvents - PC map/area file-event refresh: resets two manager
 // helpers, loads the packed area token through the file-event table (mode
 // 0x1b event when the area flag is set), then - unless a load flag is set -
 // resets the three handler slots, checks a set of area/event conditions
 // against the static table and finally copies the file pair and syncs the
 // area ids.
-__declspec(noinline) void func_8018F63C(void* self) {
+__declspec(noinline) void CfResPcImpl_refreshMapAreaEvents(void* self) {
     func_8007B0A0(0);
     func_800B06C8();
     if (lbl_eu_80663E24 & 0x80000) {
@@ -1385,7 +1385,7 @@ __declspec(noinline) void func_8018F63C(void* self) {
         } else if (lbl_eu_80663E28 & 0x8000) {
             // Retail reloads the flag word for the mask store (test read it
             // moments earlier); volatile keeps MWCC from CSE-eliminating the
-            // second read (same pattern as func_8018F018).
+            // second read (same pattern as CfResPcImpl_handleFileEventLoad).
             *(volatile u32*)&lbl_eu_80663E28 |= 0x2;
         } else if ((u32)cf::CfGameManager::getQueuedFileEventCount() == 0x11 &&
                    lbl_eu_80663E42 == 2 && lbl_eu_80663E44 == 1 &&
@@ -1449,7 +1449,7 @@ CfResPcImplPmfEntry lbl_eu_80532730[4] = {
     { 0, 0xFFFFFFFFu, (u32)func_8018D79C },
     { 0, 0xFFFFFFFFu, (u32)func_8018DE8C },
     { 0, 0xFFFFFFFFu, (u32)func_8018E7E4 },
-    { 0, 0xFFFFFFFFu, (u32)func_8018EE18 },
+    { 0, 0xFFFFFFFFu, (u32)CfResPcImpl_reloadStateMachine },
 };
 // .data 0x14: RTTI descriptor pairs.
 __declspec(section ".data") __attribute__((aligned(8), used))
@@ -1460,28 +1460,28 @@ void* lbl_eu_80532774[27] = {
     (void*)lbl_eu_806624C8,
     0,
     (void*)__dt__Q22cf11CfResPcImplFv,
-    (void*)func_8018EEF0,
-    (void*)func_8018D570,
-    (void*)func_8018CB14,
+    (void*)CfResPcImpl_dispatchReloadHandler,
+    (void*)CfResPcImpl_cleanupStateCounters,
+    (void*)CfResPcImpl_isHandlerActive,
     (void*)CfObjectMove_relaySubB0Slot14,
     (void*)func_8016CD64,
-    (void*)func_8018CB34,
-    (void*)func_8018E69C,
+    (void*)CfResPcImpl_getHandlerLimit,
+    (void*)CfResPcImpl_detachResources,
     (void*)func_8018CB3C,
-    (void*)func_eu_8018E19C,
-    (void*)func_8018D510,
-    (void*)func_8018D134,
-    (void*)func_8018D00C,
-    (void*)func_8018D3F0,
-    (void*)func_8018D65C,
-    (void*)func_8018D0C4,
-    (void*)func_8018D288,
-    (void*)func_8018D290,
-    (void*)func_8018D354,
-    (void*)func_8018CD9C,
-    (void*)func_8018CE70,
-    (void*)func_8018CF08,
-    (void*)func_8018CF90,
+    (void*)CfResPcImpl_euReregisterOnFlag,
+    (void*)CfResPcImpl_setSlotTableEntry,
+    (void*)CfResPcImpl_getSlotTableEntry,
+    (void*)CfResPcImpl_lookupPackedToken,
+    (void*)CfResPcImpl_requestBdatResource,
+    (void*)CfResPcImpl_setResourceOpen,
+    (void*)CfResPcImpl_teardownLookupEntry,
+    (void*)CfResPcImpl_requestResourceMasked,
+    (void*)CfResPcImpl_probeAndDispatch0,
+    (void*)CfResPcImpl_probeAndCapHandler,
+    (void*)CfResPcImpl_notifySound,
+    (void*)CfResPcImpl_notifyReloadSimple,
+    (void*)CfResPcImpl_notifyReload,
+    (void*)CfResPcImpl_getLiveStateId,
     (void*)func_8016CD54,
     (void*)CfResObj_true68,
 };
@@ -1490,7 +1490,7 @@ __declspec(section ".data") __attribute__((aligned(8), used))
 const void* lbl_eu_805327E0[3] = { lbl_eu_806623D8, 0, 0 };
 __declspec(section ".data") __attribute__((aligned(8), used))
 const void* lbl_eu_805327EC[3] = { lbl_eu_806624D8, 0, 0 };
-// .data tail 0x40: area-id table (CfResPcAreaEntry[8]) walked by func_8018F63C.
+// .data tail 0x40: area-id table (CfResPcAreaEntry[8]) walked by CfResPcImpl_refreshMapAreaEvents.
 // Elv pattern (typed struct bytes, zero absorbs): F63C keeps reading the
 // UNDEF hpp decl, because any locally-named def (plain or volatile) makes
 // MWCC reorder its bit tests 100% -> 96.4% (bisect-proven twice), so there

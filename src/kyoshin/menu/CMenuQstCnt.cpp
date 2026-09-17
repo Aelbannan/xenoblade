@@ -6,7 +6,7 @@
 #include "kyoshin/code_80135FDC.hpp"
 #include "kyoshin/cf/CfGameManager.hpp"
 #include "kyoshin/CTaskGame.hpp"
-#include "libs/monolib/src/scn/CScn_8049603C.hpp" // func_8049603C (single owner decl)
+#include "libs/monolib/src/scn/CScn_8049603C.hpp" // Scn_QueryUnk80State (single owner decl)
 #include "kyoshin/CUICfManager.hpp"
 #include "monolib/work/CProcess.hpp"
 #include "monolib/lib/UnkClass_8045F564.hpp"
@@ -215,9 +215,9 @@ void CMenuQstCnt::Init() {
     Class_8045F858 regionGuard(
         reinterpret_cast<UnkClass_8045F564*>(mMemRegion));
 
-    buildLayout(&mLayout, func_801355F4(),
+    buildLayout(&mLayout, CUICfManager_getArcResourceAccessor(),
                   &lbl_eu_80509A10[0xc]);
-    bindLayoutAnimTransform(mLayout, &mAnim88, func_801355F4(),
+    bindLayoutAnimTransform(mLayout, &mAnim88, CUICfManager_getArcResourceAccessor(),
                   (char*)&lbl_eu_80509A10[0x25]);
 
     // Bind the font and hand the loaded font object over to the root pane.
@@ -297,7 +297,7 @@ void CMenuQstCnt::Move() {
     if (cf::CfGameManager::isSceneLoading()) return;
     if (lbl_eu_80663E24 & (1u << 9)) return;
     {
-        CTaskGameCamView* cam = (CTaskGameCamView*)func_8049603C(lbl_eu_80663E14);
+        CTaskGameCamView* cam = (CTaskGameCamView*)Scn_QueryUnk80State(lbl_eu_80663E14);
         // Load camDist into a local first so MWCC emits lfs f1,0xc(r3)
         // before lfs f0,CONST (retail operand order for the fsubs/fcmpo).
         f32 camDist = *(f32*)((u8*)cam + 0xC);
@@ -336,7 +336,7 @@ void CMenuQstCnt::cbRenderBefore() {
     if (!(e24a & (1u << 24)) && (e24b & 0xAFE40000u)) return;
     if (cf::CfGameManager::isSceneLoading()) return;
     {
-        CTaskGameCamView* cam = (CTaskGameCamView*)func_8049603C(lbl_eu_80663E14);
+        CTaskGameCamView* cam = (CTaskGameCamView*)Scn_QueryUnk80State(lbl_eu_80663E14);
         f32 camDist = *(f32*)((u8*)cam + 0xC);
         f32 result = lbl_eu_8066856C - camDist;
         if (result < lbl_eu_8066856C) return;

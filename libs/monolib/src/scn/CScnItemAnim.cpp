@@ -86,7 +86,7 @@ CScnItemAnim* __ct__8049E710(CScnItemAnimHost* self,
     resFile.Init();
     resFile.Bind(resFile);
 
-    CScnItemAnim* item = func_8048C400(self->mPool);
+    CScnItemAnim* item = CScnItemPool_allocSmallSlot(self->mPool);
     if (item != 0) {
         item->mParent = self;
         item->mType = 2;

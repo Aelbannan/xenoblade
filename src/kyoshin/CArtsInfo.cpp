@@ -49,11 +49,11 @@ void drawLayout(nw4r::lyt::Layout*, nw4r::lyt::DrawInfo*, int, int);
 extern "C" __declspec(noinline) void CArtsInfo_BindAllPanes(CArtsInfo*);
 extern "C" void CArtsInfo_RefreshLayout(CArtsInfo*);
 extern "C" void CArtsInfo_UpdateCursor(CArtsInfo*);
-extern "C" void func_802375A8(CArtsInfo*, u8, u8);
+extern "C" void CArtsInfo_UpdateArtsRow(CArtsInfo*, u8, u8);
 // Damage/level helpers: extern "C" so the sprintf-family call sites
 // (func_80238298 / func_80238038) emit bl to the unmangled retail names.
-extern "C" int func_80237238(CArtsInfo*);
-extern "C" int func_80237394(CArtsInfo*);
+extern "C" int CArtsInfo_CalcDmg52(CArtsInfo*);
+extern "C" int CArtsInfo_CalcDmg53(CArtsInfo*);
 // Stat-id helper: noinline + C linkage so func_80238038 emits a bl to the
 // retail (unmangled) symbol instead of an inlined vtable dispatch. The
 // definition (later in this TU) inherits the linkage; its body is unchanged.
@@ -174,7 +174,7 @@ void CArtsInfo_LoadFiles(CArtsInfo* self) {
 
     self->field_0x18 =
         (int)readCommonArchiveFile__11CDeviceFileFUlPCcP10IWorkEventii(
-            (u32)func_800A9D90(), (const char*)(lbl_eu_8050B00C + 0x15),
+            (u32)KyoshinHeap_GetField44(), (const char*)(lbl_eu_8050B00C + 0x15),
             (void*)self, 0, 0);
 }
 #pragma optimize_for_size off
@@ -660,7 +660,7 @@ extern "C" __declspec(noinline) void CArtsInfo_BindAllPanes(CArtsInfo* self) {
 // CArtsInfo_RefreshLayout - arts info full layout refresh. Formats the arts name/lv
 // strings and the colour/flag rows, then binds the row strings to the named
 // panes on both layouts. The trailing loop walks arts rows 1..10 (slot 0x1b2
-// names) and grows the arts list (func_802375A8) for each row that has a
+// names) and grows the arts list (CArtsInfo_UpdateArtsRow) for each row that has a
 // non-empty entry.
 // noinline: CArtsInfo_RefreshIfReady (FULL_MATCH) tail-calls the retail symbol; inlining
 // would balloon its body. optimize_for_size gives the retail stmw r25
@@ -718,7 +718,7 @@ extern "C" __declspec(noinline) void CArtsInfo_RefreshLayout(CArtsInfo* self) {
     }
 
     // Loop counters: full-width ints narrowed to u8 at the call sites
-    // (retail clrlwi's the sprintf vararg and the func_802375A8 arg, but
+    // (retail clrlwi's the sprintf vararg and the CArtsInfo_UpdateArtsRow arg, but
     // tests the loop bound with a bare cmplwi - a u8 counter would force an
     // extra rlwinm mask before the bound test). n declared first: saved-reg
     // allocation gives it the lower register (retail n->r25, i->r26).
@@ -728,7 +728,7 @@ extern "C" __declspec(noinline) void CArtsInfo_RefreshLayout(CArtsInfo* self) {
         sprintf(buf, lbl_eu_8050B00C + 0x1b2, (u8)i);
         u8 f = BdatGetU8Direct(self->field_0x4C, buf, self->field_0x55);
         if (f != 0) {
-            func_802375A8(self, f, (u8)n++);
+            CArtsInfo_UpdateArtsRow(self, f, (u8)n++);
         }
         i++;
     } while (i <= 0xA);
@@ -768,23 +768,23 @@ int CArtsInfo_GetStatId1C(CArtsInfo* self) {
     return st->field_0x1C;
 }
 
-// func_80236DF0 - same dispatch, return the id at +0x20. Retail treats the
+// CArtsInfo_GetStatId20 - same dispatch, return the id at +0x20. Retail treats the
 // result as a full-width int (callers use it without re-sign-extending:
 // func_8023A2D8 shifts it directly), so the return type is int.
 // .text:0x16E8, size 0x38
 // noinline + extern "C": the sprintf-family callers (func_8023A2D8) must emit
 // a bl to the retail (unmangled) symbol, not an inlined vtable dispatch.
-extern "C" __declspec(noinline) int func_80236DF0(CArtsInfo* self) {
+extern "C" __declspec(noinline) int CArtsInfo_GetStatId20(CArtsInfo* self) {
     CArtsCharData* obj = (CArtsCharData*)func_8009EC9C(self->field_0x54);
     CArtsStatBlock* st = (CArtsStatBlock*)((cf::CActorParam*)&obj->stats)->CActorParam_getBattleParams();
     return st->field_0x20;
 }
 
-// func_80236E28 - same dispatch, return (int)float at +0x10
+// CArtsInfo_GetStatF10 - same dispatch, return (int)float at +0x10
 // .text:0x1720, size 0x44
 // noinline + extern "C": the arts-level callers (func_8023939C) must emit a
 // bl to the retail (unmangled) symbol, not an inlined vtable dispatch.
-extern "C" __declspec(noinline) int func_80236E28(CArtsInfo* self) {
+extern "C" __declspec(noinline) int CArtsInfo_GetStatF10(CArtsInfo* self) {
     CArtsCharData* obj = (CArtsCharData*)func_8009EC9C(self->field_0x54);
     CArtsStatBlock* st = (CArtsStatBlock*)((cf::CActorParam*)&obj->stats)->CActorParam_getBattleParams();
     return (int)st->field_0x10;
@@ -843,7 +843,7 @@ extern "C" __declspec(noinline) int func_80236E6C(CArtsInfo* self, int arg2) {
     return result;
 }
 
-// func_80237050 - arts skill lookup (flag 0x5C)
+// CArtsInfo_GetSkill5C - arts skill lookup (flag 0x5C)
 // .text:0x18E0, size 0x58
 // Walks the character-data +0x3534 object: func_8026178C tests whether the
 // skill is reachable, func_8025FB10 returns its summed value (see
@@ -852,7 +852,7 @@ extern "C" __declspec(noinline) int func_80236E6C(CArtsInfo* self, int arg2) {
 // unmangled out-of-line symbol; without both, MWCC mangles the call-site
 // reloc and -inline auto expands the body inline. int return: the caller's
 // (float) conversion uses the signed xoris magic (retail codegen).
-extern "C" __declspec(noinline) int func_80237050(CArtsInfo* self) {
+extern "C" __declspec(noinline) int CArtsInfo_GetSkill5C(CArtsInfo* self) {
     u8* obj = (u8*)func_8009EC9C(self->field_0x54) + 0x3534;
     if (func_8026178C(obj, 0x5C) != 0) {
         return func_8025FB10(obj, 0x5C);
@@ -860,11 +860,11 @@ extern "C" __declspec(noinline) int func_80237050(CArtsInfo* self) {
     return 0;
 }
 
-// func_802370A8 - arts skill lookup (flag 0x2D)
+// CArtsInfo_GetSkill2D - arts skill lookup (flag 0x2D)
 // .text:0x1938, size 0x58
-// extern "C": the retail symbol is unmangled, and func_80237238 must emit a
+// extern "C": the retail symbol is unmangled, and CArtsInfo_CalcDmg52 must emit a
 // bl to it (noinline + C linkage keeps the call-site reloc name retail-identical).
-extern "C" __declspec(noinline) u32 func_802370A8(CArtsInfo* self) {
+extern "C" __declspec(noinline) u32 CArtsInfo_GetSkill2D(CArtsInfo* self) {
     u8* obj = (u8*)func_8009EC9C(self->field_0x54) + 0x3534;
     if (func_8026178C(obj, 0x2D) != 0) {
         return func_8025FB10(obj, 0x2D);
@@ -872,7 +872,7 @@ extern "C" __declspec(noinline) u32 func_802370A8(CArtsInfo* self) {
     return 0;
 }
 
-// func_80237100 - arts list lookup: fetch two table entries keyed by arg3
+// CArtsInfo_GetGridA - arts list lookup: fetch two table entries keyed by arg3
 // (or field_0x55 when arg3 is 0) and combine them into a grid offset:
 // u16 first-entry + u8 second-entry * (arg2 - 1). The ternaries stay int so
 // the u8 mask is emitted at the call sites (retail: mr r0,r30 / clrlwi).
@@ -881,7 +881,7 @@ extern "C" __declspec(noinline) u32 func_802370A8(CArtsInfo* self) {
 // unmangled out-of-line symbol; without both, MWCC mangles the call-site
 // reloc and -inline auto expands the body inline. u8 params: retail call
 // sites mask the level+1 argument (clrlwi 24) before the call.
-extern "C" __declspec(noinline) int func_80237100(CArtsInfo* self, u8 arg2, u8 arg3) {
+extern "C" __declspec(noinline) int CArtsInfo_GetGridA(CArtsInfo* self, u8 arg2, u8 arg3) {
     int v1 = (arg3 != 0) ? arg3 : self->field_0x55;
     u16 a = BdatGetU16ByTableKey(lbl_eu_8050B00C + 0x18b, lbl_eu_8050B00C + 0x1d8, v1);
     int v2 = (arg3 != 0) ? arg3 : self->field_0x55;
@@ -890,11 +890,11 @@ extern "C" __declspec(noinline) int func_80237100(CArtsInfo* self, u8 arg2, u8 a
 }
 #pragma optimize_for_size off
 
-// func_8023719C - arts list lookup: same shape as func_80237100 but with
+// CArtsInfo_GetGridB - arts list lookup: same shape as CArtsInfo_GetGridA but with
 // different string-table offsets (0x1e8/0x1ee).
 #pragma optimize_for_size on
-// extern "C" + noinline: see func_80237100 (u8 params).
-extern "C" __declspec(noinline) int func_8023719C(CArtsInfo* self, u8 arg2, u8 arg3) {
+// extern "C" + noinline: see CArtsInfo_GetGridA (u8 params).
+extern "C" __declspec(noinline) int CArtsInfo_GetGridB(CArtsInfo* self, u8 arg2, u8 arg3) {
     int v1 = (arg3 != 0) ? arg3 : self->field_0x55;
     u16 a = BdatGetU16ByTableKey(lbl_eu_8050B00C + 0x18b, lbl_eu_8050B00C + 0x1e8, v1);
     int v2 = (arg3 != 0) ? arg3 : self->field_0x55;
@@ -903,7 +903,7 @@ extern "C" __declspec(noinline) int func_8023719C(CArtsInfo* self, u8 arg2, u8 a
 }
 #pragma optimize_for_size off
 
-// func_80237238 - arts info damage/level helper. Reads the character's weapon
+// CArtsInfo_CalcDmg52 - arts info damage/level helper. Reads the character's weapon
 // id (+0x26 of the func_8009EC9C data), finds the entry whose first word's
 // top 12 bits match it (func_80157C4C/BdatGetItemId), then looks up the
 // weapon's name row (BdatGetU16Direct) and a flag byte (BdatGetU8Direct). When
@@ -913,7 +913,7 @@ extern "C" __declspec(noinline) int func_8023719C(CArtsInfo* self, u8 arg2, u8 a
 // Both int->float conversions use MWCC's s32 magic (xoris + lbl_eu_80668698).
 // Single shared fail label (return 0) at the bottom, matching retail's block
 // layout (all guards jump forward to it).
-int func_80237238(CArtsInfo* self) {
+int CArtsInfo_CalcDmg52(CArtsInfo* self) {
     CArtsCharData* obj = (CArtsCharData*)func_8009EC9C(self->field_0x54);
     s16 weapon = obj->field_0x26;
     if (weapon == -1) goto fail;
@@ -930,17 +930,17 @@ int func_80237238(CArtsInfo* self) {
         hp = (int)(lbl_eu_80668690 * (float)((hp & 0xffff) * base));
         if ((hp & 0xffffu) >= 0x3e7u) hp = 0x3e7;  // unsigned cmpli, clamp 999
     }
-    // Both lookups inline: MWCC evaluates + right-to-left, so func_802370A8
+    // Both lookups inline: MWCC evaluates + right-to-left, so CArtsInfo_GetSkill2D
     // (rightmost) runs first and its result survives in r31 like retail.
-    return (int)(lbl_eu_80668694 * (float)((hp & 0xffff) * ((int)func_80236E6C(self, 0x52) + (int)func_802370A8(self) + 100))) & 0xffff;
+    return (int)(lbl_eu_80668694 * (float)((hp & 0xffff) * ((int)func_80236E6C(self, 0x52) + (int)CArtsInfo_GetSkill2D(self) + 100))) & 0xffff;
 fail:
     return 0;
 }
 
-// func_80237394
-// func_80237238 but the name-row string offset is 0x205 and the HP
+// CArtsInfo_CalcDmg53
+// CArtsInfo_CalcDmg52 but the name-row string offset is 0x205 and the HP
 // scale factor is lbl_eu_806686A0.
-int func_80237394(CArtsInfo* self) {
+int CArtsInfo_CalcDmg53(CArtsInfo* self) {
     CArtsCharData* obj = (CArtsCharData*)func_8009EC9C(self->field_0x54);
     s16 weapon = obj->field_0x26;
     if (weapon == -1) goto fail;
@@ -957,9 +957,9 @@ int func_80237394(CArtsInfo* self) {
         hp = (int)(lbl_eu_806686A0 * (float)((hp & 0xffff) * base));
         if ((hp & 0xffffu) >= 0x3e7u) hp = 0x3e7;  // unsigned cmpli, clamp 999
     }
-    // Both lookups inline: MWCC evaluates + right-to-left, so func_802370A8
+    // Both lookups inline: MWCC evaluates + right-to-left, so CArtsInfo_GetSkill2D
     // (rightmost) runs first and its result survives in r31 like retail.
-    return (int)(lbl_eu_80668694 * (float)((hp & 0xffff) * ((int)func_80236E6C(self, 0x53) + (int)func_802370A8(self) + 100))) & 0xffff;
+    return (int)(lbl_eu_80668694 * (float)((hp & 0xffff) * ((int)func_80236E6C(self, 0x53) + (int)CArtsInfo_GetSkill2D(self) + 100))) & 0xffff;
 fail:
     return 0;
 }
@@ -970,7 +970,7 @@ fail:
 // list; if present, BdatTouchStringCell formats the string (3rd arg = the row's
 // byte index, which retail keeps in r5 from the clrlwi mask). Result lives
 // in a local so MWCC hoists `li r30, 0` before the call and returns it via
-// r30 (same shape as func_8023754C).
+// r30 (same shape as CArtsInfo_GetSkillStr).
 #pragma optimize_for_size on
 extern "C" __declspec(noinline) char* func_802374F0(CArtsInfo* self, u32 arg2) {
     char* result = 0;
@@ -982,11 +982,11 @@ extern "C" __declspec(noinline) char* func_802374F0(CArtsInfo* self, u32 arg2) {
 }
 #pragma optimize_for_size off
 
-// func_8023754C - arts skill string lookup (same shape as func_802374F0,
+// CArtsInfo_GetSkillStr - arts skill string lookup (same shape as func_802374F0,
 // different string-table offset 0x212). result lives in a local so MWCC
 // hoists `li r30, 0` before the call and returns it via r30.
 #pragma optimize_for_size on
-extern "C" __declspec(noinline) char* func_8023754C(CArtsInfo* self, u32 arg2) {
+extern "C" __declspec(noinline) char* CArtsInfo_GetSkillStr(CArtsInfo* self, u32 arg2) {
     char* result = 0;
     u8 r = BdatGetU8Direct((u32)self->field_0x50, lbl_eu_8050B00C + 0x212, arg2);
     if (r != 0) {
@@ -996,7 +996,7 @@ extern "C" __declspec(noinline) char* func_8023754C(CArtsInfo* self, u32 arg2) {
 }
 #pragma optimize_for_size off
 
-// func_802375A8 - arts list entry update. Formats the current arts-row name
+// CArtsInfo_UpdateArtsRow - arts list entry update. Formats the current arts-row name
 // (BdatGetPtrDirect row lookup for field_0x50 at table 0x1ab) and the level
 // string (arg3 + 2) into a buffer bound to the row pane on both layouts
 // (layout 2 only when field_0x56 < 0xA), then dispatches on the row id
@@ -1048,7 +1048,7 @@ extern "C" __declspec(noinline) void func_8023B12C(CArtsInfo*, u32, int);
 extern "C" __declspec(noinline) void func_8023B280(CArtsInfo*, u32, int);
 extern "C" __declspec(noinline) void func_8023B368(CArtsInfo*, u32, int);
 
-extern "C" __declspec(noinline) void func_802375A8(CArtsInfo* self, u8 arg2, u8 arg3) {
+extern "C" __declspec(noinline) void CArtsInfo_UpdateArtsRow(CArtsInfo* self, u8 arg2, u8 arg3) {
     char buf[32]; // sprintf at +0x8
     char* s = BdatGetPtrDirect((const void*)self->field_0x50, lbl_eu_8050B00C + 0x1ab, arg2);
     sprintf(buf, lbl_eu_8050B00C + 0x218, arg3 + 2);
@@ -1109,7 +1109,7 @@ extern "C" __declspec(noinline) void func_802375A8(CArtsInfo* self, u8 arg2, u8 
 
 // func_80237A0C - arts info text update. Formats a computed percentage
 // (base value scaled by the arts-skill lookups func_80236E6C(0x2d) and
-// func_80237050) into buf1, post-processes it (func_eu_80136F90 +
+// CArtsInfo_GetSkill5C) into buf1, post-processes it (func_eu_80136F90 +
 // func_eu_8023D490), then pushes it onto both layouts (layout 2 only when
 // field_0x56 < 0xA). The base is a u8-keyed lookup scaled by
 // lbl_eu_806686A4 when non-zero; the skill values are s32->float converted
@@ -1118,7 +1118,7 @@ void func_80237A0C(CArtsInfo* self, u32 arg2, int arg3) {
     char buf1[32]; // sprintf at +0x28
     char buf2[32]; // sprintf at +0x8
     char* s1 = func_802374F0(self, arg2);
-    char* s2 = func_8023754C(self, arg2);
+    char* s2 = CArtsInfo_GetSkillStr(self, arg2);
     u8 r = BdatGetU8ByTableKey(lbl_eu_8050B00C + 0x18b, lbl_eu_8050B00C + 0x22d, self->field_0x55);
     float d = (float)r;
     if (r != 0) {
@@ -1128,7 +1128,7 @@ void func_80237A0C(CArtsInfo* self, u32 arg2, int arg3) {
     // folded through fnmsubs (retail: fmuls d*(float)x; fnmsubs f30, scale2,
     // f1, f31).
     float f = d - lbl_eu_80668694 * (d * (float)func_80236E6C(self, 0x2d));
-    f -= lbl_eu_80668694 * (d * (float)func_80237050(self));
+    f -= lbl_eu_80668694 * (d * (float)CArtsInfo_GetSkill5C(self));
     sprintf(buf1, lbl_eu_8050B00C + 0x232, s1, f, s2);
     func_eu_80136F90(buf1);
     func_eu_8023D490(self, arg2, buf1);
@@ -1152,7 +1152,7 @@ void func_80237B88(CArtsInfo* self, u32 arg2, int arg3) {
     char buf2[32]; // sprintf at +0x28
     char buf3[32]; // sprintf at +0x8
     char* s1 = func_802374F0(self, arg2);
-    char* s2 = func_8023754C(self, arg2);
+    char* s2 = CArtsInfo_GetSkillStr(self, arg2);
     func_800A32BC(func_8009EC9C(self->field_0x54));
     BdatGetU8ByTableKey(lbl_eu_8050B00C + 0x18b, lbl_eu_8050B00C + 0x24c, self->field_0x55);
     u8 v = BdatGetU8ByTableKey(lbl_eu_8050B00C + 0x18b, lbl_eu_8050B00C + 0x250, self->field_0x55);
@@ -1201,7 +1201,7 @@ void func_80237D58(CArtsInfo* self, u32 arg2, int arg3) {
     char buf1[32]; // sprintf at +0x28
     char buf2[32]; // sprintf at +0x8
     char* s1 = func_802374F0(self, arg2);
-    char* s2 = func_8023754C(self, arg2);
+    char* s2 = CArtsInfo_GetSkillStr(self, arg2);
     s8 r = BdatGetS8ByTableKey(lbl_eu_8050B00C + 0x18b, lbl_eu_8050B00C + 0x263, self->field_0x55);
     sprintf(buf1, lbl_eu_8050B00C + 0x266, s1, (s8)abs(r), s2);
     sprintf(buf2, lbl_eu_8050B00C + 0x23b, arg3 + 2);
@@ -1227,7 +1227,7 @@ void func_80237E24(CArtsInfo* self_, u32 arg2_, int arg3_) {
     char buf1[32]; // sprintf at +0x28
     char buf2[32]; // sprintf at +0x8
     char* s1 = func_802374F0(self, arg2);
-    char* s2 = func_8023754C(self, arg2);
+    char* s2 = CArtsInfo_GetSkillStr(self, arg2);
     u16 v1 = BdatGetU16ByTableKey(lbl_eu_8050B00C + 0x18b, lbl_eu_8050B00C + 0x26d, self->field_0x55);
     float f1 = (float)v1;
     u8 v2 = BdatGetU8ByTableKey(lbl_eu_8050B00C + 0x18b, lbl_eu_8050B00C + 0x275, self->field_0x55);
@@ -1271,19 +1271,19 @@ void func_80237E24(CArtsInfo* self_, u32 arg2_, int arg3_) {
 
 // func_80238038 - arts info text update. Same shape as func_80238298
 // (stat + min(damage1, damage2) grids scaled by 0.5) but the grid lookups
-// func_80237100/8023719C are keyed on the 4th parameter instead of 0 and
+// CArtsInfo_GetGridA/8023719C are keyed on the 4th parameter instead of 0 and
 // the stat comes from CArtsInfo_GetStatId1C.
 void func_80238038(CArtsInfo* self, u32 arg2, int arg3, u8 arg4) {
     char buf1[32]; // sprintf at +0x28
     char buf2[32]; // sprintf at +0x8
     int level;
     func_802374F0(self, arg2);
-    func_8023754C(self, arg2);
+    CArtsInfo_GetSkillStr(self, arg2);
     int stat = CArtsInfo_GetStatId1C(self);
-    int g1 = func_80237100(self, self->field_0x56, arg4);
-    int g2 = func_8023719C(self, self->field_0x56, arg4);
-    int m1 = func_80237238(self);
-    int m2 = func_80237394(self);
+    int g1 = CArtsInfo_GetGridA(self, self->field_0x56, arg4);
+    int g2 = CArtsInfo_GetGridB(self, self->field_0x56, arg4);
+    int m1 = CArtsInfo_CalcDmg52(self);
+    int m2 = CArtsInfo_CalcDmg53(self);
     if (m1 > m2) m1 = m2;
     int s = m1 + stat;
     int v1 = RoundHalfAway0((float)(lbl_eu_80668694 * (float)(g1 * s)));
@@ -1295,8 +1295,8 @@ void func_80238038(CArtsInfo* self, u32 arg2, int arg3, u8 arg4) {
     sprintf(buf2, lbl_eu_8050B00C + 0x23b, level);
     func_80136A1C(self->mpLayout1, buf2, buf1, 0);
     if (self->field_0x56 < 0xA) {
-        int g1n = func_80237100(self, self->field_0x56 + 1, arg4);
-        int g2n = func_8023719C(self, self->field_0x56 + 1, arg4);
+        int g1n = CArtsInfo_GetGridA(self, self->field_0x56 + 1, arg4);
+        int g2n = CArtsInfo_GetGridB(self, self->field_0x56 + 1, arg4);
         int v1n = RoundHalfAway0((float)(lbl_eu_80668694 * (float)(g1n * s)));
         int v2n = RoundHalfAway0((float)(lbl_eu_80668694 * (float)(g2n * t)));
         char* str2 = BdatTouchStringCell(lbl_eu_8050B00C + 0x32, lbl_eu_8050B00C + 0x3d, 0x52);
@@ -1308,8 +1308,8 @@ void func_80238038(CArtsInfo* self, u32 arg2, int arg3, u8 arg4) {
 }
 
 // func_80238298 - arts info text update. Combines the stat id
-// (func_80236DF0) with the min of the two damage/level helpers
-// (func_80237238/80237394): the two grids are 0.5*stat*(m+stat) products,
+// (CArtsInfo_GetStatId20) with the min of the two damage/level helpers
+// (CArtsInfo_CalcDmg52/80237394): the two grids are 0.5*stat*(m+stat) products,
 // formatted into buf1 (sprintf 0x282). On level-up the level+1 grids are
 // recomputed for layout 2 and the colour-pair helper always runs.
 // NOTE: the (float)(int) casts intentionally use MWCC's plain-cast form
@@ -1320,12 +1320,12 @@ void func_80238298(CArtsInfo* self, u32 arg2, int arg3) {
     char buf2[32]; // sprintf at +0x8
     int level;
     func_802374F0(self, arg2);
-    func_8023754C(self, arg2);
-    int stat = func_80236DF0(self);
-    int g1 = func_80237100(self, self->field_0x56, 0);
-    int g2 = func_8023719C(self, self->field_0x56, 0);
-    int m1 = func_80237238(self);
-    int m2 = func_80237394(self);
+    CArtsInfo_GetSkillStr(self, arg2);
+    int stat = CArtsInfo_GetStatId20(self);
+    int g1 = CArtsInfo_GetGridA(self, self->field_0x56, 0);
+    int g2 = CArtsInfo_GetGridB(self, self->field_0x56, 0);
+    int m1 = CArtsInfo_CalcDmg52(self);
+    int m2 = CArtsInfo_CalcDmg53(self);
     if (m1 > m2) m1 = m2;
     int s = m1 + stat;
     int v1 = RoundHalfAway0(lbl_eu_80668694 * (float)(g1 * s));
@@ -1337,8 +1337,8 @@ void func_80238298(CArtsInfo* self, u32 arg2, int arg3) {
     sprintf(buf2, lbl_eu_8050B00C + 0x23b, level);
     func_80136A1C(self->mpLayout1, buf2, buf1, 0);
     if (self->field_0x56 < 0xA) {
-        int g1n = func_80237100(self, self->field_0x56 + 1, 0);
-        int g2n = func_8023719C(self, self->field_0x56 + 1, 0);
+        int g1n = CArtsInfo_GetGridA(self, self->field_0x56 + 1, 0);
+        int g2n = CArtsInfo_GetGridB(self, self->field_0x56 + 1, 0);
         int v1n = RoundHalfAway0(lbl_eu_80668694 * (float)(g1n * s));
         int v2n = RoundHalfAway0(lbl_eu_80668694 * (float)(g2n * t));
         char* str2 = BdatTouchStringCell(lbl_eu_8050B00C + 0x32, lbl_eu_8050B00C + 0x3d, 0x52);
@@ -1351,7 +1351,7 @@ void func_80238298(CArtsInfo* self, u32 arg2, int arg3) {
 
 // func_802384F4 - arts info text update. Combines the stat id
 // (CArtsInfo_GetStatId1C) with the min of the two damage/level helpers
-// (func_80237238/80237394): the two grids are 0.5*stat*(m+stat) products
+// (CArtsInfo_CalcDmg52/80237394): the two grids are 0.5*stat*(m+stat) products
 // (RoundHalfAway0), then both grids are scaled by a byte-keyed factor
 // (BdatGetU8ByTableKey at 0x289) and get the 0x49-keyed arts lookup
 // (func_80236E6C) contribution added: value = v + 0.5*v*func_80236E6C(0x49).
@@ -1363,12 +1363,12 @@ void func_802384F4(CArtsInfo* self, u32 arg2, int arg3) {
     char buf1[32]; // sprintf at +0x28
     char buf2[32]; // sprintf at +0x8
     func_802374F0(self, arg2);
-    func_8023754C(self, arg2);
+    CArtsInfo_GetSkillStr(self, arg2);
     int stat = CArtsInfo_GetStatId1C(self);
-    int g1 = func_80237100(self, self->field_0x56, 0);
-    int g2 = func_8023719C(self, self->field_0x56, 0);
-    int m1 = func_80237238(self);
-    int m2 = func_80237394(self);
+    int g1 = CArtsInfo_GetGridA(self, self->field_0x56, 0);
+    int g2 = CArtsInfo_GetGridB(self, self->field_0x56, 0);
+    int m1 = CArtsInfo_CalcDmg52(self);
+    int m2 = CArtsInfo_CalcDmg53(self);
     if (m1 > m2) m1 = m2;
     int s = m1 + stat;
     int v1 = RoundHalfAway0(lbl_eu_80668694 * (float)(g1 * s));
@@ -1389,8 +1389,8 @@ void func_802384F4(CArtsInfo* self, u32 arg2, int arg3) {
     sprintf(buf2, lbl_eu_8050B00C + 0x23b, level);
     func_80136A1C(self->mpLayout1, buf2, buf1, 0);
     if (self->field_0x56 < 0xA) {
-        int g1n = func_80237100(self, self->field_0x56 + 1, 0);
-        int g2n = func_8023719C(self, self->field_0x56 + 1, 0);
+        int g1n = CArtsInfo_GetGridA(self, self->field_0x56 + 1, 0);
+        int g2n = CArtsInfo_GetGridB(self, self->field_0x56 + 1, 0);
         int v1n = RoundHalfAway0(lbl_eu_80668694 * (float)(g1n * s));
         int v2n = RoundHalfAway0(lbl_eu_80668694 * (float)(g2n * t));
         v1n = RoundHalfAway0(lbl_eu_80668694 * (float)(v1n * v3));
@@ -1408,7 +1408,7 @@ void func_802384F4(CArtsInfo* self, u32 arg2, int arg3) {
 }
 
 // func_80238904 - arts info text update. Same stat+min(damage1,damage2)
-// grid shape as func_80238298 (func_80236DF0 stat, func_80237100/8023719C
+// grid shape as func_80238298 (CArtsInfo_GetStatId20 stat, CArtsInfo_GetGridA/8023719C
 // offsets), then the grids are scaled by a field_0x55 arts-type base
 // (BdatGetU8ByTableKey at 0x289, overridden by the 0x68/0x69/0x70 switch to fixed
 // 0x28/0x3c/0x64). A BdatGetU16ByTableKey lookup at 0x297 picks the arts lookup
@@ -1425,12 +1425,12 @@ void func_80238904(CArtsInfo* self, u32 const arg2, int arg3) {
     char buf1[32]; // sprintf at +0x28
     char buf2[32]; // sprintf at +0x8
     func_802374F0(self, arg2);
-    func_8023754C(self, arg2);
-    int stat = func_80236DF0(self);
-    int g1 = func_80237100(self, self->field_0x56, 0);
-    int g2 = func_8023719C(self, self->field_0x56, 0);
-    int m1 = func_80237238(self);
-    int m2 = func_80237394(self);
+    CArtsInfo_GetSkillStr(self, arg2);
+    int stat = CArtsInfo_GetStatId20(self);
+    int g1 = CArtsInfo_GetGridA(self, self->field_0x56, 0);
+    int g2 = CArtsInfo_GetGridB(self, self->field_0x56, 0);
+    int m1 = CArtsInfo_CalcDmg52(self);
+    int m2 = CArtsInfo_CalcDmg53(self);
     if (m1 > m2) m1 = m2;
     // Distinct locals so MWCC keeps the clamped m1 live in its own saved reg
     // and computes s into a fresh one (retail: min@r29, s@r30).
@@ -1484,8 +1484,8 @@ void func_80238904(CArtsInfo* self, u32 const arg2, int arg3) {
     sprintf(buf2, lbl_eu_8050B00C + 0x23b, level);
     func_80136A1C(self->mpLayout1, buf2, buf1, 0);
     if (self->field_0x56 < 0xA) {
-        int g1n = func_80237100(self, self->field_0x56 + 1, 0);
-        int g2n = func_8023719C(self, self->field_0x56 + 1, 0);
+        int g1n = CArtsInfo_GetGridA(self, self->field_0x56 + 1, 0);
+        int g2n = CArtsInfo_GetGridB(self, self->field_0x56 + 1, 0);
         int v1n = RoundHalfAway0(lbl_eu_80668694 * (float)(g1n * s));
         int v2n = RoundHalfAway0(lbl_eu_80668694 * (float)(g2n * t));
         v1n = RoundHalfAway0(lbl_eu_80668694 * (float)(v1n * base));
@@ -1521,7 +1521,7 @@ void func_80238904(CArtsInfo* self, u32 const arg2, int arg3) {
 }
 
 // func_80239030 - arts info text update. Same shape as func_8023AF60 but the
-// two lookups' results are combined into a grid offset (func_80237100
+// two lookups' results are combined into a grid offset (CArtsInfo_GetGridA
 // pattern: first-entry + second-entry * (level - 1)), formatted, then on
 // level-up the offset for the next level is formatted on layout 2 and the
 // colour-pair helper runs when the two offsets differ.
@@ -1529,7 +1529,7 @@ void func_80239030(CArtsInfo* self, u32 arg2, int arg3) {
     char buf1[32]; // sprintf at +0x28
     char buf2[32]; // sprintf at +0x8
     char* s1 = func_802374F0(self, arg2);
-    char* s2 = func_8023754C(self, arg2);
+    char* s2 = CArtsInfo_GetSkillStr(self, arg2);
     u8 v1 = BdatGetU8ByTableKey(lbl_eu_8050B00C + 0x18b, lbl_eu_8050B00C + 0x289, self->field_0x55);
     u8 v2 = BdatGetU8ByTableKey(lbl_eu_8050B00C + 0x18b, lbl_eu_8050B00C + 0x29f, self->field_0x55);
     u32 cur = v1 + v2 * (self->field_0x56 - 1);
@@ -1547,8 +1547,8 @@ void func_80239030(CArtsInfo* self, u32 arg2, int arg3) {
 }
 
 // func_8023916C - arts grid percentage. Both string lookups are called but
-// their results discarded; the stat id (func_80236DF0) is multiplied by two
-// grid offsets (func_80237100/8023719C keyed on the arts level), each scaled
+// their results discarded; the stat id (CArtsInfo_GetStatId20) is multiplied by two
+// grid offsets (CArtsInfo_GetGridA/8023719C keyed on the arts level), each scaled
 // by 0.5 and converted via RoundHalfAway0, then formatted with the
 // BdatTouchStringCell(0x32, 0x3d, 0x52) string into buf1. On level-up (< 0xA) the
 // level+1 offsets are recomputed and formatted on layout 2 and the
@@ -1579,10 +1579,10 @@ void func_8023916C(CArtsInfo* self_, u32 arg2_, int arg3_) {
     // sprintf like retail's in-place addi r27, r26, 2.
     int level;
     func_802374F0(self, arg2);
-    func_8023754C(self, arg2);
-    int stat = func_80236DF0(self);
-    int g1 = func_80237100(self, self->field_0x56, 0);
-    int g2 = func_8023719C(self, self->field_0x56, 0);
+    CArtsInfo_GetSkillStr(self, arg2);
+    int stat = CArtsInfo_GetStatId20(self);
+    int g1 = CArtsInfo_GetGridA(self, self->field_0x56, 0);
+    int g2 = CArtsInfo_GetGridB(self, self->field_0x56, 0);
     int v1 = RoundHalfAway0(lbl_eu_80668694 * (float)(g1 * stat));
     int v2 = RoundHalfAway0(lbl_eu_80668694 * (float)(g2 * stat));
     char* str = BdatTouchStringCell(lbl_eu_8050B00C + 0x32, lbl_eu_8050B00C + 0x3d, 0x52);
@@ -1591,8 +1591,8 @@ void func_8023916C(CArtsInfo* self_, u32 arg2_, int arg3_) {
     sprintf(buf2, lbl_eu_8050B00C + 0x23b, level);
     func_80136A1C(self->mpLayout1, buf2, buf1, 0);
     if (self->field_0x56 < 0xA) {
-        int g1n = func_80237100(self, self->field_0x56 + 1, 0);
-        int g2n = func_8023719C(self, self->field_0x56 + 1, 0);
+        int g1n = CArtsInfo_GetGridA(self, self->field_0x56 + 1, 0);
+        int g2n = CArtsInfo_GetGridB(self, self->field_0x56 + 1, 0);
         int v1n = RoundHalfAway0(lbl_eu_80668694 * (float)(g1n * stat));
         int v2n = RoundHalfAway0(lbl_eu_80668694 * (float)(g2n * stat));
         char* str2 = BdatTouchStringCell(lbl_eu_8050B00C + 0x32, lbl_eu_8050B00C + 0x3d, 0x52);
@@ -1603,7 +1603,7 @@ void func_8023916C(CArtsInfo* self_, u32 arg2_, int arg3_) {
     }
 }
 
-// func_8023939C - arts info text update. The stat value (func_80236E28) is
+// func_8023939C - arts info text update. The stat value (CArtsInfo_GetStatF10) is
 // scaled by 100 into cur, combined with a grid offset (v1*(level-1)+v2) and
 // scaled again, then formatted into buf1. On level-up (< 0xA) the lookups are
 // re-fetched and the level grid recomputed for layout 2; the colour-pair
@@ -1616,8 +1616,8 @@ void func_8023939C(CArtsInfo* self, u32 const arg2, int arg3) {
     char buf2[32]; // sprintf at +0x8
     char buf1[32]; // sprintf at +0x28
     char* s1 = func_802374F0(self, arg2);
-    char* s2 = func_8023754C(self, arg2);
-    int base = func_80236E28(self);
+    char* s2 = CArtsInfo_GetSkillStr(self, arg2);
+    int base = CArtsInfo_GetStatF10(self);
     u8 v1 = BdatGetU8ByTableKey(lbl_eu_8050B00C + 0x18b, lbl_eu_8050B00C + 0x289, self->field_0x55);
     u8 v2 = BdatGetU8ByTableKey(lbl_eu_8050B00C + 0x18b, lbl_eu_8050B00C + 0x29f, self->field_0x55);
     int cur = (int)(lbl_eu_80668694 * ConvS32ToF64(base * 100));
@@ -1645,7 +1645,7 @@ void func_8023939C(CArtsInfo* self, u32 const arg2, int arg3) {
     }
 }
 
-// func_8023959C - arts info text update. The stat value (func_80236E28,
+// func_8023959C - arts info text update. The stat value (CArtsInfo_GetStatF10,
 // (int)float at +0x10) is scaled by 100 then halved into x1; the two grids
 // are x1*g1 and x1*g2, each halved, formatted into buf1 (sprintf 0x282). On
 // level-up the level+1 grids are recomputed for layout 2 and the colour-pair
@@ -1668,10 +1668,10 @@ void func_8023959C(CArtsInfo* self_, u32 arg2_, int arg3_) {
 
     // Results discarded: retail keeps both calls but never uses the strings.
     func_802374F0(self, arg2);
-    func_8023754C(self, arg2);
-    int stat = func_80236E28(self);
-    int g1 = func_80237100(self, self->field_0x56, 0);
-    int g2 = func_8023719C(self, self->field_0x56, 0);
+    CArtsInfo_GetSkillStr(self, arg2);
+    int stat = CArtsInfo_GetStatF10(self);
+    int g1 = CArtsInfo_GetGridA(self, self->field_0x56, 0);
+    int g2 = CArtsInfo_GetGridB(self, self->field_0x56, 0);
     // (float)(int) casts emit MWCC's 0x4330-magic stack-slot conversion
     // (lis 0x4330 hoisted into the prologue, xoris'd low word per site).
     int x1 = RoundHalfAway0(lbl_eu_80668694 * (float)(stat * 100));
@@ -1683,8 +1683,8 @@ void func_8023959C(CArtsInfo* self_, u32 arg2_, int arg3_) {
     sprintf(buf2, lbl_eu_8050B00C + 0x23b, level);
     func_80136A1C(self->mpLayout1, buf2, buf1, 0);
     if (self->field_0x56 < 0xA) {
-        int g1n = func_80237100(self, self->field_0x56 + 1, 0);
-        int g2n = func_8023719C(self, self->field_0x56 + 1, 0);
+        int g1n = CArtsInfo_GetGridA(self, self->field_0x56 + 1, 0);
+        int g2n = CArtsInfo_GetGridB(self, self->field_0x56 + 1, 0);
         // Dead call kept: retail emits the conversion+call and drops the result.
         RoundHalfAway0(lbl_eu_80668694 * (float)(x1 * g1n));
         int x3n = RoundHalfAway0(lbl_eu_80668694 * (float)(x1 * g2n));
@@ -1700,7 +1700,7 @@ void func_8023959C(CArtsInfo* self_, u32 arg2_, int arg3_) {
 // func_802397F4 - arts info text update. Same shape as func_8023B12C: the
 // two string lookups are discarded and the formatted string comes from
 // BdatTouchStringCell(0x32, 0x3d, 0x52), but the two grid offsets come from the
-// func_80237100/8023719C lookups keyed on the current arts level. On level-up
+// CArtsInfo_GetGridA/8023719C lookups keyed on the current arts level. On level-up
 // (< 0xA) the offsets for level+1 are formatted on layout 2 and the
 // colour-pair helper always runs.
 void func_802397F4(CArtsInfo* self, u32 arg2, int arg3) {
@@ -1714,9 +1714,9 @@ void func_802397F4(CArtsInfo* self, u32 arg2, int arg3) {
     u32 grid1;
     u32 grid2;
     func_802374F0(self, arg2);
-    func_8023754C(self, arg2);
-    grid1 = func_80237100(self, self->field_0x56, 0);
-    grid2 = func_8023719C(self, self->field_0x56, 0);
+    CArtsInfo_GetSkillStr(self, arg2);
+    grid1 = CArtsInfo_GetGridA(self, self->field_0x56, 0);
+    grid2 = CArtsInfo_GetGridB(self, self->field_0x56, 0);
     char* str = BdatTouchStringCell(lbl_eu_8050B00C + 0x32, lbl_eu_8050B00C + 0x3d, 0x52);
     sprintf(buf1, lbl_eu_8050B00C + 0x282, grid1, str, grid2);
     // Eager intermediate forces the addi next to sprintf1 like retail
@@ -1725,8 +1725,8 @@ void func_802397F4(CArtsInfo* self, u32 arg2, int arg3) {
     sprintf(buf2, lbl_eu_8050B00C + 0x23b, level);
     func_80136A1C(self->mpLayout1, buf2, buf1, 0);
     if (self->field_0x56 < 0xA) {
-        grid2 = func_80237100(self, self->field_0x56 + 1, 0);
-        grid1 = func_8023719C(self, self->field_0x56 + 1, 0);
+        grid2 = CArtsInfo_GetGridA(self, self->field_0x56 + 1, 0);
+        grid1 = CArtsInfo_GetGridB(self, self->field_0x56 + 1, 0);
         char* str2 = BdatTouchStringCell(lbl_eu_8050B00C + 0x32, lbl_eu_8050B00C + 0x3d, 0x52);
         sprintf(buf1, lbl_eu_8050B00C + 0x282, grid2, str2, grid1);
         sprintf(buf2, lbl_eu_8050B00C + 0x23b, level);
@@ -1742,7 +1742,7 @@ void func_80239964(CArtsInfo* self, u32 arg2, int arg3) {
     char buf1[32]; // sprintf at +0x28
     char buf2[32]; // sprintf at +0x8
     char* s1 = func_802374F0(self, arg2);
-    char* s2 = func_8023754C(self, arg2);
+    char* s2 = CArtsInfo_GetSkillStr(self, arg2);
     u8 v1 = BdatGetU8ByTableKey(lbl_eu_8050B00C + 0x18b, lbl_eu_8050B00C + 0x289, self->field_0x55);
     u8 v2 = BdatGetU8ByTableKey(lbl_eu_8050B00C + 0x18b, lbl_eu_8050B00C + 0x29f, self->field_0x55);
     u32 cur = v1 + v2 * (self->field_0x56 - 1);
@@ -1766,7 +1766,7 @@ void func_80239AA0(CArtsInfo* self, u32 arg2, int arg3) {
     char buf1[32]; // sprintf at +0x28
     char buf2[32]; // sprintf at +0x8
     char* s1 = func_802374F0(self, arg2);
-    char* s2 = func_8023754C(self, arg2);
+    char* s2 = CArtsInfo_GetSkillStr(self, arg2);
     u8 v1 = BdatGetU8ByTableKey(lbl_eu_8050B00C + 0x18b, lbl_eu_8050B00C + 0x289, self->field_0x55);
     u8 v2 = BdatGetU8ByTableKey(lbl_eu_8050B00C + 0x18b, lbl_eu_8050B00C + 0x29f, self->field_0x55);
     u32 cur = v1 + v2 * (self->field_0x56 - 1);
@@ -1790,7 +1790,7 @@ void func_80239BDC(CArtsInfo* self, u32 arg2, int arg3) {
     char buf1[32]; // sprintf at +0x28
     char buf2[32]; // sprintf at +0x8
     char* s1 = func_802374F0(self, arg2);
-    char* s2 = func_8023754C(self, arg2);
+    char* s2 = CArtsInfo_GetSkillStr(self, arg2);
     u8 v1 = BdatGetU8ByTableKey(lbl_eu_8050B00C + 0x18b, lbl_eu_8050B00C + 0x289, self->field_0x55);
     u8 v2 = BdatGetU8ByTableKey(lbl_eu_8050B00C + 0x18b, lbl_eu_8050B00C + 0x29f, self->field_0x55);
     u32 cur = (v1 + v2 * (self->field_0x56 - 1)) * 10;
@@ -1827,7 +1827,7 @@ void func_80239D20(CArtsInfo* self_, u32 arg2_, int arg3_) {
     char buf1[32]; // sprintf at +0x28
     char buf2[32]; // sprintf at +0x8
     char* s1 = func_802374F0(self, arg2);
-    char* s2 = func_8023754C(self, arg2);
+    char* s2 = CArtsInfo_GetSkillStr(self, arg2);
     // fb declared (uninitialized) before fa: MWCC colours equal-lifetime FPRs
     // in reverse declaration order, and retail keeps fb in f31 / fa in f30.
     // The conversion statements keep the retail evaluation order.
@@ -1880,7 +1880,7 @@ void func_8023AB8C(CArtsInfo* self_, u32 arg2_, int arg3_) {
     char buf1[32]; // sprintf at +0x28
     char buf2[32]; // sprintf at +0x8
     char* s1 = func_802374F0(self, arg2);
-    char* s2 = func_8023754C(self, arg2);
+    char* s2 = CArtsInfo_GetSkillStr(self, arg2);
     u8 v1 = BdatGetU8ByTableKey(lbl_eu_8050B00C + 0x18b, lbl_eu_8050B00C + 0x289, self->field_0x55);
     float fa = (float)v1;
     u8 v2 = BdatGetU8ByTableKey(lbl_eu_8050B00C + 0x18b, lbl_eu_8050B00C + 0x29f, self->field_0x55);
@@ -1910,7 +1910,7 @@ void func_80239EFC(CArtsInfo* self, u32 arg2, int arg3) {
     char buf1[32]; // sprintf at +0x28
     char buf2[32]; // sprintf at +0x8
     char* s1 = func_802374F0(self, arg2);
-    char* s2 = func_8023754C(self, arg2);
+    char* s2 = CArtsInfo_GetSkillStr(self, arg2);
     u8 r = BdatGetU8ByTableKey(lbl_eu_8050B00C + 0x18b, lbl_eu_8050B00C + 0x289, self->field_0x55);
     sprintf(buf1, lbl_eu_8050B00C + 0x266, s1, r, s2);
     sprintf(buf2, lbl_eu_8050B00C + 0x23b, arg3 + 2);
@@ -1933,7 +1933,7 @@ void func_80239FC4(CArtsInfo* self, u32 arg2, int arg3) {
     char buf1[32]; // sprintf at +0x28
     char buf2[32]; // sprintf at +0x8
     char* s1 = func_802374F0(self, arg2);
-    char* s2 = func_8023754C(self, arg2);
+    char* s2 = CArtsInfo_GetSkillStr(self, arg2);
     u8 r = BdatGetU8ByTableKey(lbl_eu_8050B00C + 0x18b, lbl_eu_8050B00C + 0x2ab, self->field_0x55);
     u32 cur = (u32)(lbl_eu_806686BC * (float)self->field_0x56 + (float)r);
     sprintf(buf1, lbl_eu_8050B00C + 0x266, s1, cur, s2);
@@ -1956,7 +1956,7 @@ void func_8023A148(CArtsInfo* self, u32 arg2, int arg3) {
     char buf1[32]; // sprintf at +0x28
     char buf2[32]; // sprintf at +0x8
     char* s1 = func_802374F0(self, arg2);
-    char* s2 = func_8023754C(self, arg2);
+    char* s2 = CArtsInfo_GetSkillStr(self, arg2);
     s16 r = BdatGetS16ByTableKey(lbl_eu_8050B00C + 0x18b, lbl_eu_8050B00C + 0x2b3, self->field_0x55);
     sprintf(buf1, lbl_eu_8050B00C + 0x266, s1, r, s2);
     sprintf(buf2, lbl_eu_8050B00C + 0x23b, arg3 + 2);
@@ -1973,7 +1973,7 @@ void func_8023A210(CArtsInfo* self, u32 arg2, int arg3) {
     char buf1[32]; // sprintf at +0x28
     char buf2[32]; // sprintf at +0x8
     char* s1 = func_802374F0(self, arg2);
-    char* s2 = func_8023754C(self, arg2);
+    char* s2 = CArtsInfo_GetSkillStr(self, arg2);
     s16 r = BdatGetS16ByTableKey(lbl_eu_8050B00C + 0x18b, lbl_eu_8050B00C + 0x2b3, self->field_0x55);
     sprintf(buf1, lbl_eu_8050B00C + 0x266, s1, r, s2);
     sprintf(buf2, lbl_eu_8050B00C + 0x23b, arg3 + 2);
@@ -1984,15 +1984,15 @@ void func_8023A210(CArtsInfo* self, u32 arg2, int arg3) {
 }
 
 // func_8023A2D8 - arts info text update. Formats the arts skill name and the
-// doubled stat id (func_80236DF0) into buf1, the level string into buf2,
+// doubled stat id (CArtsInfo_GetStatId20) into buf1, the level string into buf2,
 // then pushes both onto the layouts (layout 2 only when field_0x56 < 0xA).
 void func_8023A2D8(CArtsInfo* self, u32 arg2, int arg3) {
     u32 a2 = arg2;
     char buf1[32]; // sprintf at +0x28
     char buf2[32]; // sprintf at +0x8
     char* s1 = func_802374F0(self, a2);
-    char* s2 = func_8023754C(self, a2);
-    int id = func_80236DF0(self);
+    char* s2 = CArtsInfo_GetSkillStr(self, a2);
+    int id = CArtsInfo_GetStatId20(self);
     sprintf(buf1, lbl_eu_8050B00C + 0x266, s1, id << 1, s2);
     sprintf(buf2, lbl_eu_8050B00C + 0x23b, arg3 + 2);
     func_80136A1C(self->mpLayout1, buf2, buf1, 0);
@@ -2008,7 +2008,7 @@ void func_8023A398(CArtsInfo* self, u32 arg2, int arg3) {
     char buf1[32]; // sprintf at +0x28
     char buf2[32]; // sprintf at +0x8
     char* s1 = func_802374F0(self, arg2);
-    char* s2 = func_8023754C(self, arg2);
+    char* s2 = CArtsInfo_GetSkillStr(self, arg2);
     u8 r = BdatGetU8ByTableKey(lbl_eu_8050B00C + 0x18b, lbl_eu_8050B00C + 0x289, self->field_0x55);
     sprintf(buf1, lbl_eu_8050B00C + 0x266, s1, r, s2);
     sprintf(buf2, lbl_eu_8050B00C + 0x23b, arg3 + 2);
@@ -2025,7 +2025,7 @@ void func_8023A460(CArtsInfo* self, u32 arg2, int arg3) {
     char buf1[32]; // sprintf at +0x28
     char buf2[32]; // sprintf at +0x8
     char* s1 = func_802374F0(self, arg2);
-    char* s2 = func_8023754C(self, arg2);
+    char* s2 = CArtsInfo_GetSkillStr(self, arg2);
     s16 r = BdatGetS16ByTableKey(lbl_eu_8050B00C + 0x18b, lbl_eu_8050B00C + 0x2b3, self->field_0x55);
     // MWCC s32->f32 magic (retail: extsh + 0x4330/xoris/lfd/fsubs, no frsp).
     float d = (float)r;
@@ -2054,7 +2054,7 @@ void func_8023A55C(CArtsInfo* self, u32 arg2, int arg3) {
     char buf1[32]; // sprintf at +0x28
     char buf2[32]; // sprintf at +0x8
     char* s1 = func_802374F0(self, arg2);
-    sprintf(buf1, lbl_eu_8050B00C + 0x266, s1, 5, func_8023754C(self, arg2));
+    sprintf(buf1, lbl_eu_8050B00C + 0x266, s1, 5, CArtsInfo_GetSkillStr(self, arg2));
     sprintf(buf2, lbl_eu_8050B00C + 0x23b, arg3 + 2);
     func_80136A1C(self->mpLayout1, buf2, buf1, 0);
     if (self->field_0x56 < 0xA) {
@@ -2082,7 +2082,7 @@ void func_8023A60C(CArtsInfo* self_, u32 arg2_, int arg3_) {
     char buf1[32]; // sprintf at +0x28
     char buf2[32]; // sprintf at +0x8
     char* s1 = func_802374F0(self, arg2);
-    char* s2 = func_8023754C(self, arg2);
+    char* s2 = CArtsInfo_GetSkillStr(self, arg2);
     sprintf(buf1, lbl_eu_8050B00C + 0x232, s1, lbl_eu_806686C0, s2);
     func_eu_80136F90(buf1);
     func_eu_8023D490(self, arg2, buf1);
@@ -2100,7 +2100,7 @@ void func_8023A6BC(CArtsInfo* self, u32 arg2, int arg3) {
     char buf1[32]; // sprintf at +0x28
     char buf2[32]; // sprintf at +0x8
     char* s1 = func_802374F0(self, arg2);
-    char* s2 = func_8023754C(self, arg2);
+    char* s2 = CArtsInfo_GetSkillStr(self, arg2);
     sprintf(buf1, lbl_eu_8050B00C + 0x266, s1, 25, s2);
     sprintf(buf2, lbl_eu_8050B00C + 0x23b, arg3 + 2);
     func_80136A1C(self->mpLayout1, buf2, buf1, 0);
@@ -2118,7 +2118,7 @@ void func_8023A76C(CArtsInfo* self, u32 arg2, int arg3) {
     char buf1[32]; // sprintf at +0x28
     char buf2[32]; // sprintf at +0x8
     char* s1 = func_802374F0(self, arg2);
-    char* s2 = func_8023754C(self, arg2);
+    char* s2 = CArtsInfo_GetSkillStr(self, arg2);
     sprintf(buf1, lbl_eu_8050B00C + 0x266, s1, 25, s2);
     sprintf(buf2, lbl_eu_8050B00C + 0x23b, arg3 + 2);
     func_80136A1C(self->mpLayout1, buf2, buf1, 0);
@@ -2134,7 +2134,7 @@ void func_8023A81C(CArtsInfo* self, u32 arg2, int arg3) {
     char buf1[32]; // sprintf at +0x28
     char buf2[32]; // sprintf at +0x8
     char* s1 = func_802374F0(self, arg2);
-    char* s2 = func_8023754C(self, arg2);
+    char* s2 = CArtsInfo_GetSkillStr(self, arg2);
     sprintf(buf1, lbl_eu_8050B00C + 0x266, s1, 50, s2);
     sprintf(buf2, lbl_eu_8050B00C + 0x23b, arg3 + 2);
     func_80136A1C(self->mpLayout1, buf2, buf1, 0);
@@ -2150,7 +2150,7 @@ void func_8023A8CC(CArtsInfo* self, u32 arg2, int arg3) {
     char buf1[32]; // sprintf at +0x28
     char buf2[32]; // sprintf at +0x8
     char* s1 = func_802374F0(self, arg2);
-    char* s2 = func_8023754C(self, arg2);
+    char* s2 = CArtsInfo_GetSkillStr(self, arg2);
     sprintf(buf1, lbl_eu_8050B00C + 0x266, s1, 100, s2);
     sprintf(buf2, lbl_eu_8050B00C + 0x23b, arg3 + 2);
     func_80136A1C(self->mpLayout1, buf2, buf1, 0);
@@ -2166,7 +2166,7 @@ void func_8023A97C(CArtsInfo* self, u32 arg2, int arg3) {
     char buf1[32]; // sprintf at +0x28
     char buf2[32]; // sprintf at +0x8
     char* s1 = func_802374F0(self, arg2);
-    char* s2 = func_8023754C(self, arg2);
+    char* s2 = CArtsInfo_GetSkillStr(self, arg2);
     sprintf(buf1, lbl_eu_8050B00C + 0x2bb, s1, lbl_eu_806686C8, s2);
     func_eu_80136F90(buf1);
     func_eu_8023D490(self, arg2, buf1);
@@ -2188,7 +2188,7 @@ void func_8023AA2C(CArtsInfo* self_, u32 arg2_, int arg3_) {
     char buf1[32]; // sprintf at +0x28
     char buf2[32]; // sprintf at +0x8
     char* s1 = func_802374F0(self, arg2);
-    char* s2 = func_8023754C(self, arg2);
+    char* s2 = CArtsInfo_GetSkillStr(self, arg2);
     sprintf(buf1, lbl_eu_8050B00C + 0x266, s1, 50, s2);
     sprintf(buf2, lbl_eu_8050B00C + 0x23b, arg3 + 2);
     func_80136A1C(self->mpLayout1, buf2, buf1, 0);
@@ -2208,7 +2208,7 @@ void func_8023AADC(CArtsInfo* self, u32 arg2, int arg3) {
     char buf1[32]; // sprintf at +0x28
     char buf2[32]; // sprintf at +0x8
     char* s1 = func_802374F0(self, arg2);
-    char* s2 = func_8023754C(self, arg2);
+    char* s2 = CArtsInfo_GetSkillStr(self, arg2);
     sprintf(buf1, lbl_eu_8050B00C + 0x266, s1, 2, s2);
     sprintf(buf2, lbl_eu_8050B00C + 0x23b, arg3 + 2);
     func_80136A1C(self->mpLayout1, buf2, buf1, 0);
@@ -2224,7 +2224,7 @@ void func_8023AD5C(CArtsInfo* self, u32 arg2, int arg3) {
     char buf2[32]; // sprintf at +0x8
     u32 a2 = arg2;
     char* s1 = func_802374F0(self, a2);
-    char* s2 = func_8023754C(self, a2);
+    char* s2 = CArtsInfo_GetSkillStr(self, a2);
     u8 r = BdatGetU8ByTableKey(lbl_eu_8050B00C + 0x18b, lbl_eu_8050B00C + 0x2ab, self->field_0x55);
     sprintf(buf1, lbl_eu_8050B00C + 0x266, s1, r, s2);
     sprintf(buf2, lbl_eu_8050B00C + 0x23b, arg3 + 2);
@@ -2242,13 +2242,13 @@ void func_8023AD5C(CArtsInfo* self, u32 arg2, int arg3) {
 // emits the param-1 copy first. Shadow-locals, early local copy of arg2, and
 // buf declaration reordering were all tried - none change the copy order
 // (copy-locals coalesce; decl reorder swaps frame offsets; optimize_for_size
-// is neutral here - unlike CTagProcessor func_801289B4). Same 2-op
+// is neutral here - unlike CTagProcessor TagWriterCode7). Same 2-op
 // reg_swap present in func_80239030/39AA0/916C/9EFC/A55C.
 void func_8023AE24(CArtsInfo* self, u32 arg2, int arg3) {
     char buf1[32]; // sprintf at +0x28
     char buf2[32]; // sprintf at +0x8
     char* s1 = func_802374F0(self, arg2);
-    char* s2 = func_8023754C(self, arg2);
+    char* s2 = CArtsInfo_GetSkillStr(self, arg2);
     u8 v1 = BdatGetU8ByTableKey(lbl_eu_8050B00C + 0x18b, lbl_eu_8050B00C + 0x289, self->field_0x55);
     u8 v2 = BdatGetU8ByTableKey(lbl_eu_8050B00C + 0x18b, lbl_eu_8050B00C + 0x29f, self->field_0x55);
     u32 cur = v1 + v2 * (self->field_0x56 - 1);
@@ -2275,7 +2275,7 @@ void func_8023AF60(CArtsInfo* self, u32 arg2, int arg3) {
     char buf1[32]; // sprintf at +0x28
     char buf2[32]; // sprintf at +0x8
     char* s1 = func_802374F0(self, arg2);
-    char* s2 = func_8023754C(self, arg2);
+    char* s2 = CArtsInfo_GetSkillStr(self, arg2);
     BdatGetU8ByTableKey(lbl_eu_8050B00C + 0x18b, lbl_eu_8050B00C + 0x289, self->field_0x55);
     BdatGetU8ByTableKey(lbl_eu_8050B00C + 0x18b, lbl_eu_8050B00C + 0x29f, self->field_0x55);
     u32 level = self->field_0x56;
@@ -2303,7 +2303,7 @@ void func_8023B074(CArtsInfo* self_, u32 arg2_, int arg3_) {
     char buf1[32]; // sprintf at +0x28
     char buf2[32]; // sprintf at +0x8
     char* s1 = func_802374F0(self, arg2);
-    char* s2 = func_8023754C(self, arg2);
+    char* s2 = CArtsInfo_GetSkillStr(self, arg2);
     sprintf(buf1, lbl_eu_8050B00C + 0x232, s1, lbl_eu_806686A0, s2);
     func_eu_80136F90(buf1);
     func_eu_8023D490(self, arg2, buf1);
@@ -2324,7 +2324,7 @@ void func_8023B12C(CArtsInfo* self_, u32 arg2_, int arg3_) {
     u32 arg2 = arg2_;
     func_802374F0(self_, arg2);
     CArtsInfo* self = self_;
-    func_8023754C(self, arg2);
+    CArtsInfo_GetSkillStr(self, arg2);
     int arg3 = arg3_;
     char buf1[32]; // sprintf at +0x28
     char buf2[32]; // sprintf at +0x8
@@ -2354,7 +2354,7 @@ void func_8023B280(CArtsInfo* self, u32 arg2, int arg3) {
     char buf1[32]; // sprintf at +0x28
     char buf2[32]; // sprintf at +0x8
     char* s1 = func_802374F0(self, arg2);
-    char* s2 = func_8023754C(self, arg2);
+    char* s2 = CArtsInfo_GetSkillStr(self, arg2);
     s16 r = BdatGetS16ByTableKey(lbl_eu_8050B00C + 0x18b, lbl_eu_8050B00C + 0x2b3, self->field_0x55);
     // MWCC s32->f32 magic (retail: extsh + 0x4330/xoris/lfd/fsubs, no frsp).
     float d = (float)r;
@@ -2375,7 +2375,7 @@ void func_8023B368(CArtsInfo* self, u32 arg2, int arg3) {
     char buf2[32]; // sprintf at +0x8
     u32 a2 = arg2;
     char* s1 = func_802374F0(self, a2);
-    char* s2 = func_8023754C(self, a2);
+    char* s2 = CArtsInfo_GetSkillStr(self, a2);
     s16 r = BdatGetS16ByTableKey(lbl_eu_8050B00C + 0x18b, lbl_eu_8050B00C + 0x2c4, self->field_0x55);
     sprintf(buf1, lbl_eu_8050B00C + 0x266, s1, r, s2);
     sprintf(buf2, lbl_eu_8050B00C + 0x23b, arg3 + 2);
@@ -2484,7 +2484,7 @@ int CArtsInfo::OnFileEvent(CEventFile* event) {
         void* fontObj1 = getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1, mpLayout1);
         func_8013676C(root1, (u32)((IDeviceFontInfo*)fontObj1)->getFont());
 
-        char* lang = func_801355BC();
+        char* lang = CUICfManager_getPackedFont9C();
         if (lang != 0) {
             setLayoutTextBoxFont(mpLayout1, &lbl_eu_8050B00C[71], (u32)lang);
             setLayoutTextBoxFont(mpLayout1, &lbl_eu_8050B00C[388], (u32)lang);
@@ -2599,7 +2599,7 @@ int CArtsInfo::OnFileEvent(CEventFile* event) {
         // Build a temporary cursor against the shared accessor and copy its
         // body over the embedded one (vptr at +0 preserved; word copies).
         u8 tmpCursor[0x18];
-        __ct__CCur18(tmpCursor, func_801355F4());
+        __ct__CCur18(tmpCursor, CUICfManager_getArcResourceAccessor());
         *(u32*)&mCursor[4] = *(u32*)&tmpCursor[4];
         *(u32*)&mCursor[8] = *(u32*)&tmpCursor[8];
         *(u32*)&mCursor[12] = *(u32*)&tmpCursor[12];

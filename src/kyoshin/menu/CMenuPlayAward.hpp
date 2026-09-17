@@ -23,7 +23,7 @@ public:
     static bool isFlag01Set();
 };
 
-// 8-byte award list entry (array element; zeroed by func_802706C4 and freed by
+// 8-byte award list entry (array element; zeroed by PlayAward_InitEntry and freed by
 // __dt__802706D4).
 struct CPlayAwardEntry {
     u32 word0;
@@ -32,7 +32,7 @@ struct CPlayAwardEntry {
 
 // Layout of the entry-array region (CPlayAwardList + 0x94): 512 entries
 // (0x1000 bytes) followed by the trailing state fields at +0x1000..+0x100F
-// (initialised by func_80270654; page index for entry lookup at +0x100A).
+// (initialised by PlayAward_InitEntryArray; page index for entry lookup at +0x100A).
 struct CPlayAwardEntryArray {
     CPlayAwardEntry mEntries[0x200]; // 0x00-0xFFF
     u8 field_1000;                   // 0x1000
@@ -42,8 +42,8 @@ struct CPlayAwardEntryArray {
     u8 field_1008[2];                // 0x1008-0x1009: per-page entry counts (field_1008[page])
     u8 mPageIndex;                   // 0x100A: page index for entry lookup (<< 11)
     u8 _100B;                        // 0x100B
-    s16 field_100C;                  // 0x100C (s16; func_80270F74 reads it via a u16 cast)
-    s16 field_100E;                  // 0x100E (s16; func_80270F74 reads it via a u16 cast)
+    s16 field_100C;                  // 0x100C (s16; PlayAward_RequestOpen reads it via a u16 cast)
+    s16 field_100E;                  // 0x100E (s16; PlayAward_RequestOpen reads it via a u16 cast)
 };
 
 // Mirror of the CScrollBar layout (0x40 bytes) for the raw body copy in the
@@ -154,7 +154,7 @@ public:
 
 // Object behind CPlayAwardList::field_0x2C: only observed uses are `delete`
 // through the virtual dtor (vtable +0x08) and passing the pointer bits as the
-// second award text attr (func_80271680). Never constructed here, so the dtor
+// second award text attr (PlayAward_RefreshEntryPanes). Never constructed here, so the dtor
 // stays undefined and no vtable is emitted.
 class CPlayAwardAttrObj {
 public:
@@ -170,31 +170,31 @@ public:
     // Layout (IWorkEvent base at 0x00-0x03, then members):
     // 0x04-0x13: UnkClass_8045F564 layout memory region
     // 0x14/0x18: CDeviceFile read handles (readFile / readCommonArchiveFile)
-    // 0x20:      Layout* render target (drawn by func_80270E04)
-    // 0x24:      AnimTransform* reverse-advance target (func_80271574/80271480)
-    // 0x28:      AnimTransform* reverse-advance target (func_80271528)
+    // 0x20:      Layout* render target (drawn by PlayAward_DrawList)
+    // 0x24:      AnimTransform* reverse-advance target (PlayAward_FinishCloseAnimB/80271480)
+    // 0x28:      AnimTransform* reverse-advance target (PlayAward_FinishCloseAnimA)
     // 0x30-0x47: cursor region (drawn via func_801D20B0)
     // 0x48-0x87: CScrollBar region (0x40, opaque)
-    // 0x88:      render gate (nonzero enables func_80270E04) | 0x89: state byte
+    // 0x88:      render gate (nonzero enables PlayAward_DrawList) | 0x89: state byte
     // 0x8A/0x8B: flag bytes
     // 0x8C/0x8E: s16 scroll position fields | 0x90: page byte | 0x94: entry array
     UnkClass_8045F564 mMemRegion;           // 0x04-0x13: layout memory region
     CFileHandle* mFileHandle;               // 0x14: readFile handle
     CFileHandle* mFileHandle2;              // 0x18: readCommonArchiveFile handle
-    nw4r::lyt::ArcResourceAccessor* mArcAccessor1C; // 0x1C: layout arc accessor (freed by func_80270E64)
-    nw4r::lyt::Layout* mLayout20;           // 0x20: layout drawn by func_80270E04
+    nw4r::lyt::ArcResourceAccessor* mArcAccessor1C; // 0x1C: layout arc accessor (freed by PlayAward_ReleaseList)
+    nw4r::lyt::Layout* mLayout20;           // 0x20: layout drawn by PlayAward_DrawList
     nw4r::lyt::AnimTransform* mAnimTrans24; // 0x24
     nw4r::lyt::AnimTransform* mAnimTrans28; // 0x28
-    u32 field_0x2C;                         // 0x2C: second award text color/attr (func_80271680)
+    u32 field_0x2C;                         // 0x2C: second award text color/attr (PlayAward_RefreshEntryPanes)
     u8 mCursor[0x18];                       // 0x30-0x47: cursor region (func_801D20B0)
     u8 mScrollBar[0x40];                    // 0x48-0x87 (CScrollBar region)
-    u8 field_0x88;                          // 0x88: render gate checked by func_80270E04
+    u8 field_0x88;                          // 0x88: render gate checked by PlayAward_DrawList
     u8 field_0x89;                          // 0x89: state byte (5/0/2 on transitions)
-    u8 field_0x8A;                          // 0x8A: checked by func_80270F28
+    u8 field_0x8A;                          // 0x8A: checked by PlayAward_IsListReady
     u8 field_0x8B;                          // 0x8B: some state/flag byte
     s16 field_0x8C;                         // 0x8C: scroll position (halfword)
     s16 field_0x8E;                         // 0x8E: scroll offset (halfword)
-    s8 field_0x90;                          // 0x90: page byte used by func_80271468
+    s8 field_0x90;                          // 0x90: page byte used by PlayAward_GetPageCue
     u8 _pad91[0x94 - 0x91];                 // 0x91-0x93
     CPlayAwardEntryArray mEntryArray;       // 0x94: 512-entry array + state fields
 };
@@ -215,7 +215,7 @@ public:
     // help-display byte at 0x1160.
     u32 ptmf0[3];                                              // 0x3C-0x47: null PMF callback slot group 1
     u32 ptmf1[3];                                              // 0x48-0x53: null PMF callback slot group 2
-    u8 mField54;                                               // 0x54: state byte (set to 1 by func_802705F4)
+    u8 mField54;                                               // 0x54: state byte (set to 1 by PlayAward_Phase3_RequestClose)
     u8 mField55;                                               // 0x55
     u8 _pad56[0x58 - 0x56];                                    // 0x56-0x57
     IScnRender mIScnRender;                                    // 0x58-0x5B: render-callback subobject (vptr)
@@ -224,7 +224,7 @@ public:
     CTitleAHelp mTitleAHelp;                                   // 0x80-0xB7
     CPlayAwardList mPlayAwardList;                             // 0xB8
     f32 mField115C;                                            // 0x115C: float state (ctor: lbl_eu_80668998)
-    u8 mField1160;                                             // 0x1160: help-display byte (set to 2 by func_80270404)
+    u8 mField1160;                                             // 0x1160: help-display byte (set to 2 by PlayAward_Phase1_Advance)
     u8 _pad1161[0x1164 - 0x1161];                              // 0x1161-0x1163: pad to total 0x1164
 };
 
@@ -232,11 +232,11 @@ public:
 extern "C" void* __dl__FPv(void*);
 
 // .sdata2 float pool: 1.0f -- animation frame step for the award list
-// open/close transitions (func_80271528 / func_80271574 / func_80271480).
+// open/close transitions (PlayAward_FinishCloseAnimA / PlayAward_FinishCloseAnimB / PlayAward_FinishOpenAnimA).
 extern const float lbl_eu_806689C0;
 
-// .sdata2 float pool: entry-array init constant (func_80270654) and the
-// scrollbar init vector for func_80270F74 (x/y at 806689B8/BC, z at 806689A8).
+// .sdata2 float pool: entry-array init constant (PlayAward_InitEntryArray) and the
+// scrollbar init vector for PlayAward_RequestOpen (x/y at 806689B8/BC, z at 806689A8).
 extern const float lbl_eu_806689A8;
 extern const float lbl_eu_806689B8;
 extern const float lbl_eu_806689BC;
@@ -247,12 +247,12 @@ extern const float lbl_eu_8066899C;
 extern const float lbl_eu_806689A0;
 
 // .sdata2 double pool: 2^52 (0x4330000000000000) -- unsigned->float conversion
-// constant for the award texture row/column sizes (func_802717F8). The lfd
+// constant for the award texture row/column sizes (PlayAward_RefreshPageTitles). The lfd
 // reloc binds a TU-local pool entry (@N) that cannot be named in source
 // (makecrystal precedent); the value matches the retail symbol.
 extern const double lbl_eu_806689B0;
 
-// Menu-open singleton (0 = closed; cleared by Term, checked by func_80270308).
+// Menu-open singleton (0 = closed; cleared by Term, checked by PlayAward_CreateMenu).
 extern unsigned long lbl_eu_806648A0;
 
 // Loaded-BDAT pointer for the award tables (stored by OnFileEvent branch 2
@@ -284,8 +284,8 @@ extern u32 __ptmf_null[3];
 extern const float lbl_eu_80668998;
 
 // MEM2 alloc-handle query (retail-unmangled; C linkage so the zero-arg name
-// stays bare instead of mangling to func_800A9D90__Fv).
-extern "C" int func_800A9D90();
+// stays bare instead of mangling to KyoshinHeap_GetField44__Fv).
+extern "C" int KyoshinHeap_GetField44();
 
 // Scene-active query (retail-unmangled; gates cbRenderBefore draws).
 extern "C" int IsMenuState621F0();
@@ -304,51 +304,51 @@ extern "C" void __dt__Q34nw4r3lyt8DrawInfoFv(nw4r::lyt::DrawInfo* self, int flag
 // mangling). C linkage keeps call relocs on the bare retail names;
 // __declspec(noinline) keeps the same-TU calls as real `bl` instructions.
 // Return types are int (not u8) so callers compare with cmpwi directly.
-extern "C" int __declspec(noinline) func_80270F6C(CPlayAwardList* self);
-extern "C" void __declspec(noinline) func_802715C0(CPlayAwardList* self);
-extern "C" void __declspec(noinline) func_80271620(CPlayAwardList* self);
-extern "C" void __declspec(noinline) func_80271730(CPlayAwardList* self);
-extern "C" void __declspec(noinline) func_80270E64(CPlayAwardList* self);
-extern "C" int __declspec(noinline) func_80270F28(CPlayAwardList* self);
-extern "C" void __declspec(noinline) func_80270F74(CPlayAwardList* self);
-extern "C" void __declspec(noinline) func_80271480(CPlayAwardList* self);
-extern "C" void __declspec(noinline) func_802714D4(CPlayAwardList* self);
-extern "C" void __declspec(noinline) func_80271528(CPlayAwardList* self);
-extern "C" void __declspec(noinline) func_80271574(CPlayAwardList* self);
-extern "C" void __declspec(noinline) func_80271680(CPlayAwardList* self);
-extern "C" void __declspec(noinline) func_802713BC(CPlayAwardList* self);
-extern "C" void __declspec(noinline) func_802710D4(CPlayAwardList* self);
-extern "C" void __declspec(noinline) func_80271300(CPlayAwardList* self);
+extern "C" int __declspec(noinline) PlayAward_IsReadyFlag(CPlayAwardList* self);
+extern "C" void __declspec(noinline) PlayAward_BindCloseAnims(CPlayAwardList* self);
+extern "C" void __declspec(noinline) PlayAward_BindOpenAnims(CPlayAwardList* self);
+extern "C" void __declspec(noinline) PlayAward_RefreshCursor(CPlayAwardList* self);
+extern "C" void __declspec(noinline) PlayAward_ReleaseList(CPlayAwardList* self);
+extern "C" int __declspec(noinline) PlayAward_IsListReady(CPlayAwardList* self);
+extern "C" void __declspec(noinline) PlayAward_RequestOpen(CPlayAwardList* self);
+extern "C" void __declspec(noinline) PlayAward_FinishOpenAnimA(CPlayAwardList* self);
+extern "C" void __declspec(noinline) PlayAward_FinishOpenAnimB(CPlayAwardList* self);
+extern "C" void __declspec(noinline) PlayAward_FinishCloseAnimA(CPlayAwardList* self);
+extern "C" void __declspec(noinline) PlayAward_FinishCloseAnimB(CPlayAwardList* self);
+extern "C" void __declspec(noinline) PlayAward_RefreshEntryPanes(CPlayAwardList* self);
+extern "C" void __declspec(noinline) PlayAward_FlipPage(CPlayAwardList* self);
+extern "C" void __declspec(noinline) PlayAward_MoveCursorUp(CPlayAwardList* self);
+extern "C" void __declspec(noinline) PlayAward_ScrollPageDown(CPlayAwardList* self);
 extern "C" void __declspec(noinline) func_80271190(CPlayAwardList* self);
 extern "C" void __declspec(noinline) func_802719F8(CPlayAwardList* self);
-extern "C" void __declspec(noinline) func_802717F8(CPlayAwardList* self);
+extern "C" void __declspec(noinline) PlayAward_RefreshPageTitles(CPlayAwardList* self);
 extern "C" void func_80270770(CPlayAwardEntryArray* self);
-extern "C" void __declspec(noinline) func_80270E04(CPlayAwardList* self, nw4r::lyt::DrawInfo* drawInfo);
-extern "C" __declspec(noinline) u8* func_80270AEC(CPlayAwardEntryArray* self, int param);
+extern "C" void __declspec(noinline) PlayAward_DrawList(CPlayAwardList* self, nw4r::lyt::DrawInfo* drawInfo);
+extern "C" __declspec(noinline) u8* PlayAward_FindEntry(CPlayAwardEntryArray* self, int param);
 
 // Menu phase handlers + per-frame list update (retail-unmangled names; same
 // C-linkage scheme as the rest of this unit -- keeps call relocs on the bare
 // retail names).
-extern "C" void func_8027038C(CMenuPlayAward* self);
-extern "C" void func_80270404(CMenuPlayAward* self);
+extern "C" void PlayAward_Phase0_ShowHelp(CMenuPlayAward* self);
+extern "C" void PlayAward_Phase1_Advance(CMenuPlayAward* self);
 extern "C" void func_80270454(CMenuPlayAward* self);
-extern "C" void func_802705F4(CMenuPlayAward* self);
-extern "C" void func_80270D64(CPlayAwardList* self);
-extern "C" void func_80270CEC(CPlayAwardList* self);
-extern "C" void func_80270AD8(CPlayAwardEntry* dst, const CPlayAwardEntry* src);
-extern "C" void func_80271260(CPlayAwardList* self);
-extern "C" s32 __declspec(noinline) func_80271468(CPlayAwardList* self);
+extern "C" void PlayAward_Phase3_RequestClose(CMenuPlayAward* self);
+extern "C" void PlayAward_UpdateList(CPlayAwardList* self);
+extern "C" void PlayAward_LoadLayouts(CPlayAwardList* self);
+extern "C" void PlayAward_CopyEntry(CPlayAwardEntry* dst, const CPlayAwardEntry* src);
+extern "C" void PlayAward_ScrollPageUp(CPlayAwardList* self);
+extern "C" s32 __declspec(noinline) PlayAward_GetPageCue(CPlayAwardList* self);
 
 // Award-list state handlers / helpers (retail-unmangled names; see above).
-extern "C" void __declspec(noinline) func_80271070(CPlayAwardList* self);
-extern "C" __declspec(noinline) CPlayAwardEntryArray* func_80270654(CPlayAwardEntryArray* self);
+extern "C" void __declspec(noinline) PlayAward_RequestClose(CPlayAwardList* self);
+extern "C" __declspec(noinline) CPlayAwardEntryArray* PlayAward_InitEntryArray(CPlayAwardEntryArray* self);
 
 // Menu factory (retail-unmangled): allocate + construct the singleton menu,
 // register it as a child of `parent`, return the stored instance.
-extern "C" __declspec(noinline) CMenuPlayAward* func_80270308(CProcess* parent, CScn* scene);
+extern "C" __declspec(noinline) CMenuPlayAward* PlayAward_CreateMenu(CProcess* parent, CScn* scene);
 
 // Retail constructor symbol (unmangled global in US). Free-function form so
-// the factory (func_80270308) emits a real bl to the bare retail symbol;
+// the factory (PlayAward_CreateMenu) emits a real bl to the bare retail symbol;
 // returns `this` in r3 like retail.
 extern "C" CMenuPlayAward* __ct__CMenuPlayAward(CMenuPlayAward* self, CScn* scene);
 
@@ -390,8 +390,8 @@ extern "C" int func_800FEDF8();
 extern "C" void func_800FF914();
 
 // Shared layout-arc resource manager (retail-unmangled; ArcResourceAccessor
-// with GetResource at vtable +0x0C, used by func_802717F8).
-extern "C" nw4r::lyt::ArcResourceAccessor* func_801355F4();
+// with GetResource at vtable +0x0C, used by PlayAward_RefreshPageTitles).
+extern "C" nw4r::lyt::ArcResourceAccessor* CUICfManager_getArcResourceAccessor();
 
 // CfGameManager controller-type query (retail pre-mangled name; declared
 // under C linkage so calls bind the literal identifier).
@@ -415,7 +415,7 @@ extern "C" void __ct__CCur18(u8* cursor, void* arg);
 extern "C" void func_801F35B0(u8* scrollBar, nw4r::lyt::DrawInfo* drawInfo);
 extern "C" void func_801D20B0(u8* cursor, nw4r::lyt::DrawInfo* drawInfo);
 
-// Cursor/scrollbar helpers used by the close sequence (func_80271070).
+// Cursor/scrollbar helpers used by the close sequence (PlayAward_RequestClose).
 extern "C" void func_801D216C(u8* cursor, u8 val);
 extern "C" void func_801F369C(u8* scrollBar);
 
@@ -455,7 +455,7 @@ extern "C" void* createArcResourceAccessor__10CLibLayoutFv();
 extern "C" void setMemInitFlag__Q23mtl10MemManagerFb(bool);
 extern "C" void* __ct__CTagProcessor(void*);
 extern "C" void* getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32, nw4r::lyt::Layout*);
-extern "C" u32 func_801355BC();
+extern "C" u32 CUICfManager_getPackedFont9C();
 extern "C" void setBdatEntry__5CBdatFUlPv(u32, void*);
 extern "C" u32 func_8003B1EC(void*);
 extern "C" u32 func_8009CF8C(u32);
@@ -468,7 +468,7 @@ extern "C" void CTitleAHelp_load(CTitleAHelp* self);
 // names). Declaring the element dtor with C linkage keeps the
 // __construct_array/__destroy_arr element-dtor relocs bound to the bare
 // retail names (cf. CMenuQstCnt's __dt__80227030).
-extern "C" void func_802706C4(CPlayAwardEntry* self);
+extern "C" void PlayAward_InitEntry(CPlayAwardEntry* self);
 extern "C" void* __dt__802706D4(CPlayAwardEntry* self, int mode);
 extern "C" void __construct_array(void*, void*, void*, u32, u32);
 extern "C" void __destroy_arr(void*, void*, int, int);
@@ -484,5 +484,5 @@ extern "C" void __dt__800FED0C(CProcess* self, int flags);
 
 // IScnRender-vtable thunk targets: the C++ members are emitted under their
 // mangled names; C linkage keeps the verbatim retail symbols (so the
-// func_80270644 / func_8027064C thunks bind the literal identifiers).
+// PlayAward_RenderThunk / PlayAward_DtorThunk thunks bind the literal identifiers).
 extern "C" void cbRenderBefore__14CMenuPlayAwardFv(CMenuPlayAward* self);

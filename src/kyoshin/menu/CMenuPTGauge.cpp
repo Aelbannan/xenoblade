@@ -81,22 +81,22 @@ void CMenuPTGauge::Init() {
 
     nw4r::lyt::ArcResourceAccessor* accessor;
 
-    accessor = func_801355F4();
+    accessor = CUICfManager_getArcResourceAccessor();
     buildLayout(&mLayout, accessor, lbl_eu_805039C8 + 0xd);
 
-    accessor = func_801355F4();
+    accessor = CUICfManager_getArcResourceAccessor();
     bindLayoutAnimTransform(mLayout, &mAnimDefault, accessor, lbl_eu_805039C8 + 0x29);
 
-    accessor = func_801355F4();
+    accessor = CUICfManager_getArcResourceAccessor();
     bindLayoutAnimTransform(mLayout, &mAnimOpen, accessor, lbl_eu_805039C8 + 0x48);
 
-    accessor = func_801355F4();
+    accessor = CUICfManager_getArcResourceAccessor();
     bindLayoutAnimTransform(mLayout, &mAnimClose, accessor, lbl_eu_805039C8 + 0x6f);
 
-    accessor = func_801355F4();
+    accessor = CUICfManager_getArcResourceAccessor();
     bindLayoutAnimTransform(mLayout, &mAnimIdle, accessor, lbl_eu_805039C8 + 0x96);
 
-    accessor = func_801355F4();
+    accessor = CUICfManager_getArcResourceAccessor();
     bindLayoutAnimTransform(mLayout, &mAnimSpecial, accessor, lbl_eu_805039C8 + 0xb7);
 
     // Retail: layout+0x10 is the root pane (GetRootPane inlines to this load).

@@ -296,7 +296,7 @@ extern "C" u8 BdatGetU8ByTableKey(const void*, const void*, u32);
 extern "C" u32 func_800A32BC();
 extern "C" void func_801D4A2C(void*);
 extern "C" int IsSkillItem(void*);
-extern "C" u32 func_801D4AB0(void*);
+extern "C" u32 isItemBoxType9Flagged(void*);
 extern "C" void func_801D6394(CItemBoxInfo*, u32, void*, u32);
 extern "C" void func_801D5DA4(CItemBoxInfo*, u16, void*, u16);
 extern "C" void func_801D79F8(CItemBoxInfo*, u16, void*, u32);
@@ -429,14 +429,14 @@ extern "C" void func_80137F88(void*, u32);
 extern "C" void PaneSetVtxColorAll(void*, u32);
 extern "C" u16 BdatGetU16Direct(const void*, const void*, int);
 extern "C" char* MakeTplNameSysFile(u32);
-extern "C" nw4r::lyt::ArcResourceAccessor* func_801355F4();
+extern "C" nw4r::lyt::ArcResourceAccessor* CUICfManager_getArcResourceAccessor();
 
 // Layout-build helpers for OnFileEvent (retail mangled C++ symbols; keep
 // signature shapes verbatim so the mangled names line up).
 extern "C" nw4r::lyt::ArcResourceAccessor* createArcResourceAccessor__10CLibLayoutFv();
 extern "C" void* getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32, nw4r::lyt::Layout*);
 extern "C" void func_8013676C(nw4r::lyt::Pane*, void*);
-extern "C" char* func_801355BC(void);
+extern "C" char* CUICfManager_getPackedFont9C(void);
 extern "C" char* func_80138DA4(const char* msg);
 void buildLayout(nw4r::lyt::Layout**, nw4r::lyt::ArcResourceAccessor*, const char*);
 void bindLayoutAnimTransform(nw4r::lyt::Layout*, nw4r::lyt::AnimTransform**, nw4r::lyt::ArcResourceAccessor*, char*);

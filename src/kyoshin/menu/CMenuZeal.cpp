@@ -278,7 +278,7 @@ int func_8017FD4C(CMenuZeal* self) {
         const char* texName = isClassicController__Q22cf13CfGameManagerFv(-1)
                                   ? &lbl_eu_80503454[0x1c7]
                                   : &lbl_eu_80503454[0x1e2];
-        void* tex = func_801355F4()->GetResource(0x74696D67, texName, 0);
+        void* tex = CUICfManager_getArcResourceAccessor()->GetResource(0x74696D67, texName, 0);
         if (tex != 0) {
             PaneSetTexPaletteByName(self->mLayout1, &lbl_eu_80503454[0x1fd], tex);
         }

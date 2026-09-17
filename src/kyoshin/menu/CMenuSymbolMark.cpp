@@ -35,13 +35,13 @@ extern "C" void deleteRegion__17UnkClass_8045F564Fv(void* region);
 extern "C" void* getReslistB68();
 extern "C" void* getReslistBC8();
 // Scene pose block comes from the typed view in the header
-// (ScnXformBlock, returned by func_80496264).
+// (ScnXformBlock, returned by Scn_FindCamItem).
 extern "C" int func_8013A4B4(void* anchor, void* extent, void* pos);
 extern "C" void LayoutSetTextBoxFmtValue(nw4r::lyt::Layout*, char*, char*, u32);
 extern "C" void PaneSetTexPaletteByName(nw4r::lyt::Layout*, const char*);
 extern "C" char* BdatGetPtrDirect(void*, const char*, u32);
-extern "C" nw4r::lyt::ArcResourceAccessor* func_801355F4();
-extern "C" void* func_801355BC();
+extern "C" nw4r::lyt::ArcResourceAccessor* CUICfManager_getArcResourceAccessor();
+extern "C" void* CUICfManager_getPackedFont9C();
 extern "C" void* getPackedFont();
 extern "C" void func_8013676C(nw4r::lyt::Pane*, u32);
 // Naturally-mangled retail helpers (MWCC emits these exact symbols).
@@ -244,7 +244,7 @@ void CMenuSymbolMark::Init() {
                            (const char*)&lbl_eu_804FE720[0x53], 0);
     Class_8045F858 regionGuard(&mUnkClass);
     for (u32 i = 0; i < 16; i++) {
-        buildLayout((nw4r::lyt::Layout**)&mEntries[i].layout, func_801355F4(),
+        buildLayout((nw4r::lyt::Layout**)&mEntries[i].layout, CUICfManager_getArcResourceAccessor(),
                       (const char*)&lbl_eu_804FE720[0x63]);
         // Re-read the layout pointer at every use so nothing spans the virtual
         // calls (retail reloads the slot from the entry base each time).
@@ -618,7 +618,7 @@ extern "C" void func_8011E540(CMenuSymbolMark* self, u32 id, Vec* pos, void* arg
     char* markerName = BdatGetPtrDirect(self->mAnotherFP, S + 0x7b, id);
     ml::FixStr<32> name;
     name.format(S + 0x86, markerName);
-    nw4r::lyt::ArcResourceAccessor* acc = (nw4r::lyt::ArcResourceAccessor*)func_801355F4();
+    nw4r::lyt::ArcResourceAccessor* acc = (nw4r::lyt::ArcResourceAccessor*)CUICfManager_getArcResourceAccessor();
     if (acc->GetResource(0x74696d67 /* "timg" */,
                   (const char*)name.c_str(), 0) != 0) {
         PaneSetTexPaletteByName((nw4r::lyt::Layout*)entry->layout, S + 0x8d);
@@ -658,7 +658,7 @@ extern "C" __declspec(noinline) void func_8011E778(
         world = &posTmp;
     }
     worldPos = *world;
-    ScnXformBlock* pose = (ScnXformBlock*)func_80496264(self->mScn, -1);
+    ScnXformBlock* pose = (ScnXformBlock*)Scn_FindCamItem(self->mScn, -1);
     if (posSrc == 0) {
         if (flag != 0) {
             worldPos.y += lbl_eu_806670F0;
@@ -867,7 +867,7 @@ extern "C" void func_8011EDDC(CMenuSymbolMark* self) {
         // query runs inside the loop, after the position is captured.
         pos = (Vec*)((cf::CfObject*)obj)->CfObject_getPosVector();
         ScnObjPositions* scn =
-            (ScnObjPositions*)func_80496264(self->mScn, -1);
+            (ScnObjPositions*)Scn_FindCamItem(self->mScn, -1);
         Vec extent;
         Vec anchor;
         anchor.x = scn->posX;
@@ -1149,7 +1149,7 @@ extern "C" void func_8011F8F8(CMenuSymbolMark* self) {
             }
             Vec* pos = (Vec*)actorV->CfObject_getPosVector();
             ScnObjPositions* scn =
-                (ScnObjPositions*)func_80496264(self->mScn, -1);
+                (ScnObjPositions*)Scn_FindCamItem(self->mScn, -1);
             anchor.x = scn->posX;
             anchor.y = scn->posY;
             anchor.z = scn->posZ;
@@ -1329,7 +1329,7 @@ void func_8011FB68(CMenuSymbolMark* self) {
                     continue;
                 }
                 Vec* pos = (Vec*)actorV->CfObject_getPosVector();
-                if (!SYM_IN_SCENE_BOUNDS(func_80496264(self->mScn, -1), pos)) {
+                if (!SYM_IN_SCENE_BOUNDS(Scn_FindCamItem(self->mScn, -1), pos)) {
                     continue;
                 }
                 u32 name = actor->name74;
@@ -1376,7 +1376,7 @@ void func_8011FB68(CMenuSymbolMark* self) {
                     continue;
                 }
                 Vec* pos = (Vec*)tbl;
-                if (!SYM_IN_SCENE_BOUNDS(func_80496264(self->mScn, -1), pos)) {
+                if (!SYM_IN_SCENE_BOUNDS(Scn_FindCamItem(self->mScn, -1), pos)) {
                     continue;
                 }
                 if (SYM_ENTRY_DUP(self, rowId)) {
@@ -1414,7 +1414,7 @@ void func_8011FB68(CMenuSymbolMark* self) {
             if (SYM_ENTRY_DUP(self, id)) {
                 break;
             }
-            if (!SYM_IN_SCENE_BOUNDS(func_80496264(self->mScn, -1), &worldPos)) {
+            if (!SYM_IN_SCENE_BOUNDS(Scn_FindCamItem(self->mScn, -1), &worldPos)) {
                 break;
             }
             self->mEntries[self->mEntryCount].unk04 = id;
@@ -1454,7 +1454,7 @@ void func_8011FB68(CMenuSymbolMark* self) {
             rawPos.x = SymConvS16ToF64(BdatGetS16Direct(fp, S + 0xd6, id), convBias);
             rawPos.y = SymConvS16ToF64(BdatGetS16Direct(fp, S + 0xdb, id), convBias);
             rawPos.z = SymConvS16ToF64(BdatGetS16Direct(fp, S + 0xe0, id), convBias);
-            if (!SYM_IN_SCENE_BOUNDS(func_80496264(self->mScn, -1), &rawPos)) {
+            if (!SYM_IN_SCENE_BOUNDS(Scn_FindCamItem(self->mScn, -1), &rawPos)) {
                 break;
             }
             self->mEntries[self->mEntryCount].unk04 = id;
@@ -1498,7 +1498,7 @@ void func_8011FB68(CMenuSymbolMark* self) {
             recPos.x = rec.x;
             recPos.y = rec.y;
             recPos.z = rec.z;
-            if (!SYM_IN_SCENE_BOUNDS(func_80496264(self->mScn, -1), &recPos)) {
+            if (!SYM_IN_SCENE_BOUNDS(Scn_FindCamItem(self->mScn, -1), &recPos)) {
                 break;
             }
             self->mEntries[self->mEntryCount].unk04 = id;
@@ -1835,7 +1835,7 @@ void CArrow3D::cbRenderBefore() {
         if (player == 0) {
             return;
         }
-        ScnXformBlock* pose = (ScnXformBlock*)func_80496264(
+        ScnXformBlock* pose = (ScnXformBlock*)Scn_FindCamItem(
             reinterpret_cast<CScn*>(lbl_eu_80663E14), -1);
         Vec* pos = (Vec*)( (cf::CfObject*)player)->CfObject_getPosVector();
         // Player-relative horizontal offset (y ignored by the length test).
@@ -2235,9 +2235,9 @@ void CArrow3D::Init() {
         }
         mAlignedData = aligned;
     }
-    buildLayout((nw4r::lyt::Layout**)&mLayout, func_801355F4(), S);
+    buildLayout((nw4r::lyt::Layout**)&mLayout, CUICfManager_getArcResourceAccessor(), S);
     nw4r::lyt::Layout* lay = (nw4r::lyt::Layout*)mLayout;
-    func_8013676C(lay->GetRootPane(), (u32)func_801355BC());
+    func_8013676C(lay->GetRootPane(), (u32)CUICfManager_getPackedFont9C());
     LayoutSetTextBoxFmtValue(lay, (char*)S + 0x14, (char*)S + 0x1b, 0);
     lay->GetRootPane()->FindPaneByName(S + 0x14, true)->SetVisible(false);
     lay->GetRootPane()->FindPaneByName(S + 0x26, true)->SetVisible(false);

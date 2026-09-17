@@ -19,7 +19,7 @@ extern "C" {
 
 #include <stdio.h>
 
-u8 CQstLogList::func_80227CCC() { return mSortEnabled; }
+u8 CQstLogList::QstLogList_IsSortEnabled() { return mSortEnabled; }
 
 // Copies a 0x22-byte quest-log entry: 2 head bytes + 4x8-byte word loop.
 // Struct assignment reproduces retail exactly (MWCC emits the counted loop
@@ -27,14 +27,14 @@ u8 CQstLogList::func_80227CCC() { return mSortEnabled; }
 // -O4,p unroll (MWCC_CASES line 226).
 #pragma push
 #pragma optimize_for_size on
-extern "C" __declspec(noinline) CQstLogListEntry* func_80227994(CQstLogListEntry* pDst, const CQstLogListEntry* pSrc) {
+extern "C" __declspec(noinline) CQstLogListEntry* QstLogList_CopyEntry(CQstLogListEntry* pDst, const CQstLogListEntry* pSrc) {
     *pDst = *pSrc;
     return pDst;
 }
 #pragma pop
 
 
-u8 CQstLogList::func_80227CD4() { return mSortDescending; }
+u8 CQstLogList::QstLogList_IsSortDescending() { return mSortDescending; }
 
 // Returns the quest-list's own "layout loaded" byte only when the scroll bar
 // AND the sort menu are both visible (mirrors CSortMenu::func_801D32DC's
@@ -54,10 +54,10 @@ u8 func_80227C70(CQstLogList* self) {
 // options instead; otherwise advance the row index (field_0x17D), wrapping
 // through the scroll position (field_0x17E) against the shared boundary
 // (lbl_eu_8066472C).
-void func_80227EC8(CQstLogList* self) {
+void QstLogList_ScrollDown(CQstLogList* self) {
     if (self->mSortDescending != 0) {
         func_801D3698(reinterpret_cast<CSortMenu*>(&self->mSortMenuData));
-        func_80228B10(self);
+        QstLogList_MoveCursor(self);
     } else {
         if (lbl_eu_8066472C >= 10) {
             u8 d = self->field_0x17D + 1;
@@ -79,8 +79,8 @@ void func_80227EC8(CQstLogList* self) {
                 self->field_0x17E = 0;
             }
         }
-        func_802285A4(self);
-        func_80228B10(self);
+        QstLogList_RefreshRows(self);
+        QstLogList_MoveCursor(self);
         func_801F3850(&self->mScrollBar, (u16)self->field_0x17E);
     }
     playUISound(1);
@@ -88,10 +88,10 @@ void func_80227EC8(CQstLogList* self) {
 
 // Quest-log page up. With the sort menu open, page up through its options;
 // otherwise step the scroll position (field_0x17E) back by a page of 10.
-void func_80227FC0(CQstLogList* self) {
+void QstLogList_PageUp(CQstLogList* self) {
     if (self->mSortDescending != 0) {
         func_801D3724(reinterpret_cast<CSortMenu*>(&self->mSortMenuData));
-        func_80228B10(self);
+        QstLogList_MoveCursor(self);
     } else {
         if (lbl_eu_8066472C >= 10) {
             s16 v = self->field_0x17E - 10;
@@ -107,8 +107,8 @@ void func_80227FC0(CQstLogList* self) {
             self->field_0x17D = 0;
             self->field_0x17E = 0;
         }
-        func_802285A4(self);
-        func_80228B10(self);
+        QstLogList_RefreshRows(self);
+        QstLogList_MoveCursor(self);
         func_801F3850(&self->mScrollBar, (u16)self->field_0x17E);
     }
     playUISound(1);
@@ -116,10 +116,10 @@ void func_80227FC0(CQstLogList* self) {
 
 // Quest-log page down. With the sort menu open, page down through its
 // options; otherwise step the scroll position forward by a page of 10.
-void func_8022807C(CQstLogList* self) {
+void QstLogList_PageDown(CQstLogList* self) {
     if (self->mSortDescending != 0) {
         func_801D377C(reinterpret_cast<CSortMenu*>(&self->mSortMenuData));
-        func_80228B10(self);
+        QstLogList_MoveCursor(self);
     } else {
         if (lbl_eu_8066472C >= 10) {
             s16 v = self->field_0x17E + 10;
@@ -139,15 +139,15 @@ void func_8022807C(CQstLogList* self) {
                 self->field_0x17D = 0;
             }
         }
-        func_802285A4(self);
-        func_80228B10(self);
+        QstLogList_RefreshRows(self);
+        QstLogList_MoveCursor(self);
         func_801F3850(&self->mScrollBar, (u16)self->field_0x17E);
     }
     playUISound(1);
 }
 
 extern "C" void func_80228C98(CQstLogList* self);
-extern "C" void func_80228C04(CQstLogList* self);
+extern "C" void QstLogList_FillSortMenu(CQstLogList* self);
 
 // Quest-log sort toggle. With the sort menu active, closing the menu (current
 // direction descending) resets the direction and rebuilds; otherwise the
@@ -155,7 +155,7 @@ extern "C" void func_80228C04(CQstLogList* self);
 // pragma optimize_for_size: retail saves r28-r31 via stmw/lmw.
 #pragma push
 #pragma optimize_for_size on
-void func_80228164(CQstLogList* self) {
+void QstLogList_ToggleSort(CQstLogList* self) {
     if (func_801D3328(&self->mSortMenuData) == 0) {
         return;
     }
@@ -164,7 +164,7 @@ void func_80228164(CQstLogList* self) {
         func_801D3408(&self->mSortMenuData);
         self->mSortDescending = 0;
         func_80228C98(self);
-        func_80228B10(self);
+        QstLogList_MoveCursor(self);
         playUISound(6);
     } else {
         // Four live values here (self/pool base/root/pane1) drive the
@@ -178,29 +178,29 @@ void func_80228164(CQstLogList* self) {
         func_80137924(&pos, root->FindPaneByName(&s[0x2a], true),
                       root->FindPaneByName(&s[0x33], true), root);
         func_801D3430(&self->mSortMenuData, &pos);
-        func_80228C04(self);
+        QstLogList_FillSortMenu(self);
         func_801D216C(&self->mCur18[0], 1);
         func_801D3330(&self->mSortMenuData);
         self->mSortDescending = 1;
-        func_80228B10(self);
+        QstLogList_MoveCursor(self);
         playUISound(2);
     }
 }
 #pragma pop
 
 // Sort-menu confirm/select: rebuilds the quest list (func_80228C98) and
-// re-sorts (func_80228B10) when the sort menu reports an active button.
-// noinline: retail keeps this an out-of-line call from func_802282F8.
+// re-sorts (QstLogList_MoveCursor) when the sort menu reports an active button.
+// noinline: retail keeps this an out-of-line call from QstLogList_ApplySortSelection.
 // pragma optimize_for_size: retail saves r30-r31 via stmw/lmw.
 #pragma push
 #pragma optimize_for_size on
-__declspec(noinline) void func_80228280(CQstLogList* self, int flag) {
+__declspec(noinline) void QstLogList_ConfirmSort(CQstLogList* self, int flag) {
     if (func_801D3328(&self->mSortMenuData) != 0) {
         func_801D216C(&self->mCur18[0], 1);
         func_801D3408(&self->mSortMenuData);
         self->mSortDescending = 0;
         func_80228C98(self);
-        func_80228B10(self);
+        QstLogList_MoveCursor(self);
         if (flag == 0) {
             playUISound(6);
         }
@@ -209,48 +209,48 @@ __declspec(noinline) void func_80228280(CQstLogList* self, int flag) {
 #pragma pop
 
 // retail: lwz r0,lbl_eu_80664730@sda21; clrlwi r3,r0,16 = (u16)global
-extern "C" u32 func_80228394() { extern u32 lbl_eu_80664730; return lbl_eu_80664730 & 0xFFFF; }
+extern "C" u32 QstLogList_GetSelectedQuestLo() { extern u32 lbl_eu_80664730; return lbl_eu_80664730 & 0xFFFF; }
 
-extern "C" __declspec(noinline) void func_802283A0(CQstLogList* self) {
+extern "C" __declspec(noinline) void QstLogList_StepOpenAnim(CQstLogList* self) {
     f32 frame = lbl_eu_80668584;
     nw4r::lyt::AnimTransform* anim = self->mpAnim0;
     if (advanceAnimTransform(anim, frame) != 0) {
         self->field_0x174 = 2;
-        func_80228544(self);
+        QstLogList_ShowSortAnim(self);
     }
 }
 
-extern "C" __declspec(noinline) void func_802283EC(CQstLogList* self) {
+extern "C" __declspec(noinline) void QstLogList_StepSortAnim(CQstLogList* self) {
     f32 frame = lbl_eu_80668584;
     nw4r::lyt::AnimTransform* anim = self->mpAnim1;
     if (advanceAnimTransform(anim, frame) != 0) {
         self->field_0x174 = 3;
         func_801D216C(&self->mCur18[0], 1);
-        func_80228B10(self);
+        QstLogList_MoveCursor(self);
         self->mSortEnabled = 1;
     }
 }
 
-extern "C" __declspec(noinline) void func_8022844C(CQstLogList* self) {
+extern "C" __declspec(noinline) void QstLogList_RewindSortAnim(CQstLogList* self) {
     if (AnimRewindFrame(self->mpAnim1, lbl_eu_80668584) != 0) {
         self->field_0x174 = 5;
-        func_802284E4(self);
+        QstLogList_ShowOpenAnim(self);
     }
 }
 
-extern "C" __declspec(noinline) void func_80228498(CQstLogList* self) {
+extern "C" __declspec(noinline) void QstLogList_RewindOpenAnim(CQstLogList* self) {
     if (AnimRewindFrame(self->mpAnim0, lbl_eu_80668584) != 0) {
         self->field_0x174 = 0;
         self->mSortEnabled = 1;
     }
 }
 
-extern "C" __declspec(noinline) void func_802284E4(CQstLogList* self) {
+extern "C" __declspec(noinline) void QstLogList_ShowOpenAnim(CQstLogList* self) {
     self->mpLayout->SetAnimationEnable(self->mpAnim1, false);
     self->mpLayout->SetAnimationEnable(self->mpAnim0, true);
 }
 
-extern "C" __declspec(noinline) void func_80228544(CQstLogList* self) {
+extern "C" __declspec(noinline) void QstLogList_ShowSortAnim(CQstLogList* self) {
     self->mpLayout->SetAnimationEnable(self->mpAnim0, false);
     self->mpLayout->SetAnimationEnable(self->mpAnim1, true);
 }
@@ -259,7 +259,7 @@ extern "C" __declspec(noinline) void func_80228544(CQstLogList* self) {
 // icon pane. mode selects the icon resource key (0xFE/0xFF = unused-row
 // state, 1 = the active row's texture); a6 picks the color pool; a7 picks
 // the icon pane's resource key.
-extern "C" __declspec(noinline) void func_802286F4(CQstLogList* self,
+extern "C" __declspec(noinline) void QstLogList_DrawRow(CQstLogList* self,
                                                     const char* name,
                                                     int questId, int index,
                                                     int mode, u8 a6, u8 a7) {
@@ -334,7 +334,7 @@ iconDone:
 // emits reversed individual stw's (MWCC_CASES CPartyState/CTagProcessor).
 #pragma push
 #pragma optimize_for_size on
-extern "C" __declspec(noinline) void func_802289F8(CQstLogList* self) {
+extern "C" __declspec(noinline) void QstLogList_ClearRows(CQstLogList* self) {
     char buf[0x20];
     // No explicit pool-base local: MWCC CSEs the lbl_eu_80509AB4 base into
     // r31 itself (lis hoisted above the LR store, addi sunk to first use),
@@ -364,7 +364,7 @@ extern "C" __declspec(noinline) void func_802289F8(CQstLogList* self) {
 
 // Scroll-bar/page refresh helper (retail name unmangled - extern "C" keeps
 // the bl relocs from the scroll/page handlers bound to the retail symbol).
-extern "C" __declspec(noinline) void func_802285A4(CQstLogList* self) {
+extern "C" __declspec(noinline) void QstLogList_RefreshRows(CQstLogList* self) {
     // Quest text table entry selected by the two signed index bytes.
     // Declaration order matters here: MWCC pre-colors the callee-saved
     // homes for row/e1/questId/e0 in this order, matching retail.
@@ -377,7 +377,7 @@ extern "C" __declspec(noinline) void func_802285A4(CQstLogList* self) {
     row = &lbl_eu_80576670[off];
     e0 = (s8)lbl_eu_80576670[off];
     e1 = row[1];
-    func_802289F8(self);
+    QstLogList_ClearRows(self);
     lbl_eu_8066472C = 0;
     func_80227260(&self->mQstData.mList[0], e1, (u8)e0);
 
@@ -392,7 +392,7 @@ extern "C" __declspec(noinline) void func_802285A4(CQstLogList* self) {
         questId = entry->f0;
         u32 idx = func_80138138(questId);
         u8 res = (u8)func_8009CF8C(questId + 0x220);
-        func_802286F4(self, (const char*)lbl_eu_80573D18[idx], questId,
+        QstLogList_DrawRow(self, (const char*)lbl_eu_80573D18[idx], questId,
                       (u8)(i + 1), res, entry->f5, entry->f6);
         if (i == self->field_0x17D) {
             lbl_eu_80664730 = questId;
@@ -414,7 +414,7 @@ extern "C" __declspec(noinline) void func_802285A4(CQstLogList* self) {
 // pragma optimize_for_size: retail saves r29-r31 via stmw/lmw.
 #pragma push
 #pragma optimize_for_size on
-extern "C" __declspec(noinline) void func_80228B10(CQstLogList* self) {
+extern "C" __declspec(noinline) void QstLogList_MoveCursor(CQstLogList* self) {
     char buf[0x20];
     nw4r::math::VEC3 pos;
     nw4r::math::VEC3 tmp;
@@ -437,11 +437,11 @@ extern "C" __declspec(noinline) void func_80228B10(CQstLogList* self) {
 
 // Re-populate the embedded sort menu's array from the shared quest text table
 // (one entry per logged quest) and select the current page.
-// noinline: retail keeps this an out-of-line call from func_80228164.
+// noinline: retail keeps this an out-of-line call from QstLogList_ToggleSort.
 // pragma optimize_for_size: retail saves r29-r31 via stmw/lmw.
 #pragma push
 #pragma optimize_for_size on
-__declspec(noinline) void func_80228C04(CQstLogList* self) {
+__declspec(noinline) void QstLogList_FillSortMenu(CQstLogList* self) {
     if (func_801D32DC(reinterpret_cast<CSortMenu*>(&self->mSortMenuData)) == 0) {
         return;
     }
@@ -483,7 +483,7 @@ extern "C" void sinit_80229378() {
 
 // Loads the quest-log arc file (lbl_eu_80509AB4+0x13) into the mem2 handle,
 // then primes the scroll bar and sort menu layouts.
-void func_80227A60(CQstLogList* self) {
+void QstLogList_LoadArc(CQstLogList* self) {
     self->mFileHandle = (CFileHandle*)readFile__11CDeviceFileFUlPCcP10IWorkEventii(
         (unsigned long)getHandleMEM2__Q23mtl10MemManagerFv(), &lbl_eu_80509AB4[0x13], self, 0, 0);
     func_801F34F4(&self->mScrollBar);
@@ -536,12 +536,12 @@ int CQstLogList::OnFileEvent(CEventFile* event) {
     u32 fontResult = ((u32 (*)(void*))(((void**)fontObj)[0x24 / 4]))(fontObj);
     func_8013676C(rootPane, fontResult);
 
-    func_802284E4(this);
+    QstLogList_ShowOpenAnim(this);
     mpLayout->Animate(0);
 
     // Build the cursor on the stack, copy its body into the member region
     // (skipping the +0x00 vtable pointer) and destroy the temp.
-    __ct__CCur18(tmpCur, func_801355F4());
+    __ct__CCur18(tmpCur, CUICfManager_getArcResourceAccessor());
     CCur18Data* curDst = reinterpret_cast<CCur18Data*>(&mCur18[0]);
     CCur18Data* curSrc = reinterpret_cast<CCur18Data*>(tmpCur);
     curDst->field_4 = curSrc->field_4;
@@ -566,7 +566,7 @@ int CQstLogList::OnFileEvent(CEventFile* event) {
     char* const table = lbl_eu_80576670;
     u32 n0 = lbl_eu_80664728;
     lbl_eu_80664728 = n0 + 1;
-    func_80227994((CQstLogListEntry*)&table[n0 * 0x22], &row0);
+    QstLogList_CopyEntry((CQstLogListEntry*)&table[n0 * 0x22], &row0);
 
     row1.mField0 = 0xFF;
     row1.mField1 = 1;
@@ -574,7 +574,7 @@ int CQstLogList::OnFileEvent(CEventFile* event) {
             BdatTouchStringCell(&s[0x166], &s[0x76], 0x45));
     u32 n1 = lbl_eu_80664728;
     lbl_eu_80664728 = n1 + 1;
-    func_80227994((CQstLogListEntry*)&table[n1 * 0x22], &row1);
+    QstLogList_CopyEntry((CQstLogListEntry*)&table[n1 * 0x22], &row1);
 
     row2.mField0 = 0xFF;
     row2.mField1 = 2;
@@ -582,7 +582,7 @@ int CQstLogList::OnFileEvent(CEventFile* event) {
             BdatTouchStringCell(&s[0x166], &s[0x76], 0x46));
     u32 n2 = lbl_eu_80664728;
     lbl_eu_80664728 = n2 + 1;
-    func_80227994((CQstLogListEntry*)&table[n2 * 0x22], &row2);
+    QstLogList_CopyEntry((CQstLogListEntry*)&table[n2 * 0x22], &row2);
 
     row3.mField0 = 0xFF;
     row3.mField1 = 3;
@@ -590,7 +590,7 @@ int CQstLogList::OnFileEvent(CEventFile* event) {
             BdatTouchStringCell(&s[0x166], &s[0x76], 0x47));
     u32 n3 = lbl_eu_80664728;
     lbl_eu_80664728 = n3 + 1;
-    func_80227994((CQstLogListEntry*)&table[n3 * 0x22], &row3);
+    QstLogList_CopyEntry((CQstLogListEntry*)&table[n3 * 0x22], &row3);
 
     // Collect every quest type (2..0x1c) that has at least one active,
     // uncompleted quest in the BDAT quest table. Types 6..0x1c dispatch
@@ -644,7 +644,7 @@ int CQstLogList::OnFileEvent(CEventFile* event) {
         sprintf((char*)&rowSort.mData[0], &s[0x10], text);
         u32 nk = lbl_eu_80664728;
         lbl_eu_80664728 = nk + 1;
-        func_80227994((CQstLogListEntry*)&table[nk * 0x22], &rowSort);
+        QstLogList_CopyEntry((CQstLogListEntry*)&table[nk * 0x22], &rowSort);
     }
 
     // Refresh the sort-menu header text and rebuild the list display.
@@ -659,7 +659,7 @@ int CQstLogList::OnFileEvent(CEventFile* event) {
                           : &s[0x18e];
     u16 msgId = BdatGetU16ByTableKey(&s[0x197], sel, 0x61);
     char* texName = MakeTplNameSysFile((u32)msgId);
-    CQstLogListMsgObj* obj = (CQstLogListMsgObj*)func_801355F4()->GetResource(
+    CQstLogListMsgObj* obj = (CQstLogListMsgObj*)CUICfManager_getArcResourceAccessor()->GetResource(
         0x74696D67, texName, 0);
     if (obj != 0) {
         PaneSetTexPaletteByName(mpLayout, &s[0x1a5], obj);
@@ -678,7 +678,7 @@ int CQstLogList::OnFileEvent(CEventFile* event) {
                           ->GetVtxColor(0);
 
     func_802270CC(&mQstData.mList[0]);
-    func_802285A4(this);
+    QstLogList_RefreshRows(this);
 
     // Position the selection on the quest-log's own list entry.
     u16 listIdx = func_80227710(&mQstData.mList[0], field_0x180);
@@ -690,7 +690,7 @@ int CQstLogList::OnFileEvent(CEventFile* event) {
         field_0x17E = (s16)(listIdx - 9);
     }
 
-    func_802285A4(this);
+    QstLogList_RefreshRows(this);
     field_0x178 = 1;
     field_0x170 = 1;
     mFileHandle = 0;
@@ -706,7 +706,7 @@ int CQstLogList::OnFileEvent(CEventFile* event) {
 // pragma optimize_for_size: retail saves r30-r31 via stmw/lmw.
 #pragma push
 #pragma optimize_for_size on
-void func_80227B6C(CQstLogList* self, nw4r::lyt::DrawInfo* drawInfo) {
+void QstLogList_Draw(CQstLogList* self, nw4r::lyt::DrawInfo* drawInfo) {
     if (self->field_0x170 != 0) {
         drawLayout(self->mpLayout, drawInfo, 0, 1);
         func_801F35B0(&self->mScrollBar, drawInfo);
@@ -718,7 +718,7 @@ void func_80227B6C(CQstLogList* self, nw4r::lyt::DrawInfo* drawInfo) {
 
 // Unload the quest-log screen: close the arc file handle, delete the layout,
 // release the resource accessor and tear down cursor/scroll bar/sort menu.
-extern "C" void func_80227BD8(CQstLogList* self) {
+extern "C" void QstLogList_Unload(CQstLogList* self) {
     func_801390E0(&self->mFileHandle);
     self->field_0x170 = 0;
     if (self->mpLayout != 0) {
@@ -734,12 +734,12 @@ extern "C" void func_80227BD8(CQstLogList* self) {
 
 // Sort-menu open-in animation start (one-shot on mode 0): switch animations,
 // prime the scroll bar geometry and request scroll-in.
-extern "C" void func_80227CDC(CQstLogList* self) {
+extern "C" void QstLogList_BeginSortOpen(CQstLogList* self) {
     if (self->field_0x174 == 0) {
         self->field_0x174 = 1;
         self->mSortEnabled = 0;
-        func_802284E4(self);
-        func_80228B10(self);
+        QstLogList_ShowOpenAnim(self);
+        QstLogList_MoveCursor(self);
         f32 pos[3];
         pos[0] = lbl_eu_80668578;
         pos[1] = lbl_eu_8066857C;
@@ -753,7 +753,7 @@ extern "C" void func_80227CDC(CQstLogList* self) {
 
 // Sort-menu confirm: adopt the selected page/entry indices into the list,
 // reset the row cursor and rebuild; otherwise clear sorting once entries exist.
-extern "C" void func_802282F8(CQstLogList* self) {
+extern "C" void QstLogList_ApplySortSelection(CQstLogList* self) {
     if (self->mSortDescending != 0) {
         if (func_801D3328(&self->mSortMenuData) == 0) {
             return;
@@ -762,8 +762,8 @@ extern "C" void func_802282F8(CQstLogList* self) {
         self->field_0x17C = func_801D3810(&self->mSortMenuData);
         self->field_0x17D = 0;
         self->field_0x17E = 0;
-        func_80228280(self, 1);
-        func_802285A4(self);
+        QstLogList_ConfirmSort(self, 1);
+        QstLogList_RefreshRows(self);
     } else {
         if (lbl_eu_8066472C > 0) {
             self->mSortEnabled = 0;
@@ -774,20 +774,20 @@ extern "C" void func_802282F8(CQstLogList* self) {
 
 // Per-frame update while the quest-log list is loaded: run the active open/
 // close animation step, then advance layout, cursor, scroll bar and sort menu.
-extern "C" void func_80227AC4(CQstLogList* self) {
+extern "C" void QstLogList_FrameUpdate(CQstLogList* self) {
     if (self->field_0x170 != 0) {
         switch (self->field_0x174) {
         case 1:
-            func_802283A0(self);
+            QstLogList_StepOpenAnim(self);
             break;
         case 2:
-            func_802283EC(self);
+            QstLogList_StepSortAnim(self);
             break;
         case 4:
-            func_8022844C(self);
+            QstLogList_RewindSortAnim(self);
             break;
         case 5:
-            func_80228498(self);
+            QstLogList_RewindOpenAnim(self);
             break;
         }
         self->mpLayout->Animate(0);
@@ -802,11 +802,11 @@ extern "C" void func_80227AC4(CQstLogList* self) {
 // pragma optimize_for_size: retail saves r30-r31 (self + flag) via stmw/lmw.
 #pragma push
 #pragma optimize_for_size on
-void func_80227D78(CQstLogList* self, int flag) {
+void QstLogList_EndSortMode(CQstLogList* self, int flag) {
     if (self->field_0x174 == 3) {
         self->field_0x174 = 4;
         self->mSortEnabled = 0;
-        func_80228544(self);
+        QstLogList_ShowSortAnim(self);
         func_801D216C(&self->mCur18[0], 0);
         func_801F369C(&self->mScrollBar);
         if (flag != 0) {
@@ -819,10 +819,10 @@ void func_80227D78(CQstLogList* self, int flag) {
 // Quest-log scroll up. With the sort menu open, scroll up through its
 // options; otherwise step the row index (field_0x17D) back, wrapping through
 // the scroll position (field_0x17E) against the shared boundary.
-void func_80227DE8(CQstLogList* self) {
+void QstLogList_ScrollUp(CQstLogList* self) {
     if (self->mSortDescending != 0) {
         func_801D3620(reinterpret_cast<CSortMenu*>(&self->mSortMenuData));
-        func_80228B10(self);
+        QstLogList_MoveCursor(self);
     } else {
         u8 d = self->field_0x17D - 1;
         self->field_0x17D = (s8)d;
@@ -843,8 +843,8 @@ void func_80227DE8(CQstLogList* self) {
                 }
             }
         }
-        func_802285A4(self);
-        func_80228B10(self);
+        QstLogList_RefreshRows(self);
+        QstLogList_MoveCursor(self);
         func_801F3850(&self->mScrollBar, (u16)self->field_0x17E);
     }
     playUISound(1);
@@ -917,7 +917,7 @@ CQstLogList::CQstLogList(u16 arg2) {
         buf.mField0 = -1;
         buf.mField1 = 0;
         sprintf((char*)&buf.mData[0], &lbl_eu_80509AB4[0x10], 0);
-        func_80227994(
+        QstLogList_CopyEntry(
             (CQstLogListEntry*)&lbl_eu_80576670[(u8)tbl_i * 0x22], &buf);
     }
 

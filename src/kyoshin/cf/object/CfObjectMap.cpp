@@ -42,7 +42,7 @@ void* cf::CfObjectMap::checkTarget() {
 void cf::CfObjectMap::cleanupMap() {
     this->CfObjectModel_releaseModelSub();
     if (this->field_0xEC != 0) {
-        func_80495E60(this->field_0xEC);
+        Scn_IsAnimActiveOrNull(this->field_0xEC);
         this->field_0xEC = 0;
     }
     resetPoolState__17UnkClass_8047CD0CFv(&this->field_0x2F2C);
@@ -98,8 +98,8 @@ extern "C" void* checkMpfFlags__17UnkClass_8047BB54Fv(void*, void*);
 // shared scene-view globals and re-bind the +0xF0 sub-object's +0x9C offset.
 extern "C" void func_800B9C14(void* self) {
     if (*(u32*)((u8*)self + 0x6C) & 0x8000) {
-        extern void* func_8049626C(void*, void*);
-        void* r = func_8049626C((void*)lbl_eu_80663E14, (void*)lbl_eu_80663E10);
+        extern void* Scn_HasCamItem(void*, void*);
+        void* r = Scn_HasCamItem((void*)lbl_eu_80663E14, (void*)lbl_eu_80663E10);
         checkMpfFlags__17UnkClass_8047BB54Fv((u8*)self + 0xF0, (u8*)r + 0x9C);
     }
 }
@@ -113,7 +113,7 @@ void func_800B9C70() {}
 extern "C" int func_800B9C74(cf::CfObjectMap* self, u32 a, u32 b) {
     self->CfObjectModel_releaseModelSub();
     if (self->field_0xEC != 0) {
-        func_80495E60(self->field_0xEC);
+        Scn_IsAnimActiveOrNull(self->field_0xEC);
         self->field_0xEC = 0;
     }
     void* handle = CfRes_tryResolveLink(a, b, 3);
@@ -148,7 +148,7 @@ extern "C" int func_800B9C74(cf::CfObjectMap* self, u32 a, u32 b) {
                 res->field_0x0 = 0;
                 res->field_0x24 = 0;
                 res->field_0x20 = 0;
-                self->field_0xE4 = func_800A9784(rounded);
+                self->field_0xE4 = KyoshinHeap_AllocFld18(rounded);
                 if (CfRes_tryResolveSlot130((u32)self->field_0xE4, field1, field2, 4) != 0) {
                     self->field_0x2F40 = 1;
                 }
@@ -186,10 +186,10 @@ extern "C" void func_800B9E4C(cf::CfObjectMap* self) {
                 void* obj = 0;
                 u32 flag = 0;
                 if (type == 1) {
-                    func_800A9534((void*)outC);
+                    KyoshinHeap_AllocFld10((void*)outC);
                     obj = resB->field_0x2C->getResourceBase(resB, 0);
                 } else if (type == 2) {
-                    obj = func_800A965C((void*)outC);
+                    obj = KyoshinHeap_AllocFld14((void*)outC);
                     self->field_0xE0 = obj;
                 } else if (type == 3) {
                     obj = CfRes_getLazyField20(resC->field_0x2C, resC);
@@ -198,12 +198,12 @@ extern "C" void func_800B9E4C(cf::CfObjectMap* self) {
                     obj = KyoshinHeap_GetField1C();
                     self->field_0xE8 = obj;
                 } else if (type == 6) {
-                    obj = func_800A98A8((void*)outC);
+                    obj = KyoshinHeap_AllocFld34((void*)outC);
                     CfRes_tryUpdateSlot16C((void*)outC);
                 } else if (type == 5) {
                     obj = func_801A2C04__Q22cf12CTaskCullingFv();
                 } else if (type == 7) {
-                    obj = func_800A9CD0();
+                    obj = KyoshinHeap_GetField40();
                     flag = 1;
                 }
                 if (obj != 0) {
@@ -250,7 +250,7 @@ extern "C" void func_800B9E4C(cf::CfObjectMap* self) {
         func_800BBADC(self, r3);
         clearPoolData__17UnkClass_8047CD0CFv(&self->field_0x2F2C);
         if (self->field_0xDC != 0) {
-            self->field_0xEC = func_80495EB0(lbl_eu_80663E14, self->field_0xDC, buf);
+            self->field_0xEC = Scn_InitGlobalB(lbl_eu_80663E14, self->field_0xDC, buf);
             initNodePool__17UnkClass_8047CD0CFv(&self->field_0x2F2C,
                                                  getHandleMEM1__Q23mtl10MemManagerFv(), 0xB0000, 0x32);
             func_8047CD0C__17UnkClass_8047CD0CFv(&self->field_0x2F2C, self->field_0xDC);
@@ -307,8 +307,8 @@ extern "C" void func_800B9E4C(cf::CfObjectMap* self) {
     }
     self->field_0x2F44 = 10;
     func_801A2CAC__Q22cf12CTaskCullingFv();
-    if (func_80496288(lbl_eu_80663E14) > lbl_eu_80666A50) {
-        func_80496294(lbl_eu_80663E14, lbl_eu_80666A3C);
+    if (Scn_GetFrameDelta(lbl_eu_80663E14) > lbl_eu_80666A50) {
+        Scn_SetTimeScale(lbl_eu_80663E14, lbl_eu_80666A3C);
     }
     func_801C028C(0, 0);
     func_801C028C(1, 0);
@@ -317,7 +317,7 @@ done:
 }
 
 extern "C" void func_800BA440(cf::CfObjectMap* self) {
-    float scale = func_80496288(lbl_eu_80663E14);
+    float scale = Scn_GetFrameDelta(lbl_eu_80663E14);
     float value = self->field_0x2F48 * scale;
     if (lbl_eu_80663E24 & 0x04000000) {
         value = lbl_eu_80666A38;

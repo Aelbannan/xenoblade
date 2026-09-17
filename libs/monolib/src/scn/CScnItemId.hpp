@@ -20,7 +20,7 @@ void resetScnData(void* p);
 int func_804BC9F4(void* outStruct, u32 data);
 
 // Host scene-object accessors (unmangled C-linkage retail names).
-extern "C" u32 func_80496018(void* self);            // scene allocation handle
+extern "C" u32 Scn_CallUnk8C_V8(void* self);            // scene allocation handle
 extern "C" u32 func_8048C5B8(void* pool, s32 kind);  // sub-pool capacity check
 extern "C" void* func_8048C698(void* pool, int kind);  // sub-pool slot accessor
 extern "C" void func_8048C630(void* pool, void* item, u32 value);  // register item

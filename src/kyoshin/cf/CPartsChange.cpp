@@ -161,14 +161,14 @@ struct CfPartsManager {
     CfPartsElemArray mElems;
 };
 extern "C" int CfRes_getD80Flag();
-extern "C" f32 func_80496288(void);
+extern "C" f32 Scn_GetFrameDelta(void);
 extern const f32 lbl_eu_80667AC0;
 extern const f32 lbl_eu_80667AD4;
 
 // Per-frame speed decay across the party-change element array.
 extern "C" void CPartsChange_UpdateElemSpeeds(CfPartsManager* self) {
     CfRes_getD80Flag();
-    f32 step = func_80496288();
+    f32 step = Scn_GetFrameDelta();
     CfPartsElemArray* arr = &self->mElems;
     for (CfPartsElem4C* e = arr->mElems; e != arr->mElems + arr->mCount; e++) {
         if (e->field_1E & 0x400) {

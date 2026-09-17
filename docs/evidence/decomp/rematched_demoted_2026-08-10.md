@@ -26,10 +26,10 @@ Of 299 demoted FULL_MATCH rows, 107 were re-matched to byte-identical by source 
 | us-801678a0 | kyoshin/cf/CTaskREvent | `func_801666E4` |
 | us-801678a8 | kyoshin/cf/CTaskREvent | `func_801666EC` |
 | us-801678b8 | kyoshin/cf/CTaskREvent | `func_801666FC` |
-| us-80169678 | kyoshin/cf/CTaskREvtSequence | `func_8016847C` |
+| us-80169678 | kyoshin/cf/CTaskREvtSequence | `EvtSeqGetSharedState` |
 | us-8016db34 | kyoshin/cf/CTaskREvtSequence | `func_8016C7D8` |
 | us-8016db3c | kyoshin/cf/CTaskREvtSequence | `func_8016C7E0` |
-| us-8020acbc | kyoshin/cf/CfGimmick | `func_80208EDC` |
+| us-8020acbc | kyoshin/cf/CfGimmick | `CfGimmick_SetGlobalB8Value` |
 | us-80174c98 | kyoshin/cf/CfMapItemManager | `func_8017389C` |
 | us-80174ca0 | kyoshin/cf/CfMapItemManager | `func_801738A4` |
 | us-802abd34 | kyoshin/cf/voice/cvsys/CVS_THREAD_VISION_BREAK | `func_802A95FC` |
@@ -90,10 +90,10 @@ Of 299 demoted FULL_MATCH rows, 107 were re-matched to byte-identical by source 
 | us-8018135c | kyoshin/menu/CMenuZeal | `func_8017FF60` |
 | us-80181364 | kyoshin/menu/CMenuZeal | `func_8017FF68` |
 | us-8018136c | kyoshin/menu/CMenuZeal | `func_8017FF70` |
-| us-8020373c | kyoshin/menu/parts/CModelDispEquip | `func_80201A44` |
-| us-8020374c | kyoshin/menu/parts/CModelDispEquip | `func_80201A54` |
-| us-8020375c | kyoshin/menu/parts/CModelDispEquip | `func_80201A64` |
-| us-8020376c | kyoshin/menu/parts/CModelDispEquip | `func_80201A74` |
+| us-8020373c | kyoshin/menu/parts/CModelDispEquip | `ModelDispEquip_ThunkReplayAnims` |
+| us-8020374c | kyoshin/menu/parts/CModelDispEquip | `ModelDispEquip_ThunkSlotCmd` |
+| us-8020375c | kyoshin/menu/parts/CModelDispEquip | `ModelDispEquip_ThunkRefreshRef` |
+| us-8020376c | kyoshin/menu/parts/CModelDispEquip | `ModelDispEquip_ThunkClearAnimPtr` |
 | us-80182e5c | kyoshin/realtimeevt/CREvtModelMap | `func_80181A54` |
 | us-801849d8 | kyoshin/realtimeevt/CREvtModelObj | `func_801835BC` |
 | us-80184b20 | kyoshin/realtimeevt/CREvtModelObj | `OnFileEvent__13CREvtModelObjFP10CEventFile` |

@@ -726,7 +726,7 @@ void setFontScale__16CDeviceFontLayerFv(CDeviceFontLayer* self, f32 scaleX,
 }
 
 // Queue a font-id change; the layer's own font id is updated immediately.
-// The reslist append follows the func_8048C524/CDeviceVI recipe: hand-inlined
+// The reslist append follows the CScnItemPool_pushItemToList/CDeviceVI recipe: hand-inlined
 // push_back walk with explicit byteOff + comma-init so the register assignment
 // matches retail (cmd r4, i r5, byteOff r6, capacity r7, sentinel r8).
 void setFontId__16CDeviceFontLayerFv(CDeviceFontLayer* self, u32 arg) {

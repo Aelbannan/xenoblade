@@ -88,8 +88,8 @@ bool func_80181988(CREvtModelMap* self, CEventFile* ev);
 void func_8016BC1C(CREvtModelMap* self);
 bool func_8016BDA8(void* self, s32* pId);
 u32 func_8016A35C();
-u32 func_8016846C();
-void func_80168514(CREvtModelMap* self);
+u32 EvtSeqGetStateBit5();
+void EvtSeqCheckEventRunGuard(CREvtModelMap* self);
 u32 func_80180960();
 s32 func_80180978();
 s32 func_80180990();
@@ -98,9 +98,9 @@ void enableLOD__8CTaskLODFv();
 void restorePrimaryLOD__8CTaskLODFv();
 void disableLOD__8CTaskLODFv();
 void acquireLODResource__8CTaskLODFv(void* task, u32 value);
-extern mtl::ALLOC_HANDLE func_80495FF0(void* self);
-void func_80495E60(void* pEmote);
-void* func_80495E8C(void* a, void* b, int c, int d);
+extern mtl::ALLOC_HANDLE Scn_CallUnk8C_V9(void* self);
+void Scn_IsAnimActiveOrNull(void* pEmote);
+void* Scn_SetupAnim(void* a, void* b, int c, int d);
 void simSetFlag2OnTree(void* pEmote, int r4);
 void simSetLeafDist7B0(void* pEmote, float scale);
 void simRefreshFlag8(void* pEmote, float time);
@@ -287,7 +287,7 @@ bool func_80180CBC(CREvtModelMap* self)
     }
     func_801726DC(self);
     if (self->mEmoteModel) {
-        func_80495E60(self->mEmoteModel);
+        Scn_IsAnimActiveOrNull(self->mEmoteModel);
         self->mEmoteModel = nullptr;
     }
     if (self->mLoadedModelData) {
@@ -399,16 +399,16 @@ void func_80180EBC(CREvtModelMap* self)
             u32 innerFlags = ((CREvtModelMapNameInfo*)self->mPtr1C)->field_0x58;
             if ((innerFlags & 2) && !(innerFlags & 0x40)) {
                 self->mFileHandle1 = CDeviceFile::readFile(
-                    func_80495FF0(lbl_eu_80663E14), filePath.mString,
+                    Scn_CallUnk8C_V9(lbl_eu_80663E14), filePath.mString,
                     (IWorkEvent*)(self ? (char*)self + 0x38 : (char*)self), 0, 0);
                 addAllocHandle__11CDeviceFileFP11CFileHandleUl(self->mFileHandle1, mtl::MemManager::getHandleMEM2());
             } else {
                 self->mFileHandle1 = CDeviceFile::readFile(
                     mtl::MemManager::getHandleMEM2(), filePath.mString,
                     (IWorkEvent*)(self ? (char*)self + 0x38 : (char*)self), 0, 0);
-                addAllocHandle__11CDeviceFileFP11CFileHandleUl(self->mFileHandle1, func_80495FF0(lbl_eu_80663E14));
+                addAllocHandle__11CDeviceFileFP11CFileHandleUl(self->mFileHandle1, Scn_CallUnk8C_V9(lbl_eu_80663E14));
             }
-            if (func_8016846C()) {
+            if (EvtSeqGetStateBit5()) {
                 addAllocHandle__11CDeviceFileFP11CFileHandleUl(self->mFileHandle1, getScnCounter__Fv());
             }
             addAllocHandle__11CDeviceFileFP11CFileHandleUl(self->mFileHandle1, mtl::MemManager::getHandleMEM1());
@@ -422,16 +422,16 @@ void func_80180EBC(CREvtModelMap* self)
                 u32 innerFlags = ((CREvtModelMapNameInfo*)self->mPtr1C)->field_0x58;
                 if ((innerFlags & 2) && !(innerFlags & 0x40)) {
                     self->mFileHandle2 = CDeviceFile::readFile(
-                        func_80495FF0(lbl_eu_80663E14), filePath.mString,
+                        Scn_CallUnk8C_V9(lbl_eu_80663E14), filePath.mString,
                         (IWorkEvent*)(self ? (char*)self + 0x38 : (char*)self), 0, 0);
                     addAllocHandle__11CDeviceFileFP11CFileHandleUl(self->mFileHandle2, mtl::MemManager::getHandleMEM2());
                 } else {
                     self->mFileHandle2 = CDeviceFile::readFile(
                         mtl::MemManager::getHandleMEM2(), filePath.mString,
                         (IWorkEvent*)(self ? (char*)self + 0x38 : (char*)self), 0, 0);
-                    addAllocHandle__11CDeviceFileFP11CFileHandleUl(self->mFileHandle2, func_80495FF0(lbl_eu_80663E14));
+                    addAllocHandle__11CDeviceFileFP11CFileHandleUl(self->mFileHandle2, Scn_CallUnk8C_V9(lbl_eu_80663E14));
                 }
-                if (func_8016846C()) {
+                if (EvtSeqGetStateBit5()) {
                     addAllocHandle__11CDeviceFileFP11CFileHandleUl(self->mFileHandle2, getScnCounter__Fv());
                 }
                 addAllocHandle__11CDeviceFileFP11CFileHandleUl(self->mFileHandle2, mtl::MemManager::getHandleMEM1());
@@ -446,16 +446,16 @@ void func_80180EBC(CREvtModelMap* self)
                 u32 innerFlags = ((CREvtModelMapNameInfo*)self->mPtr1C)->field_0x58;
                 if ((innerFlags & 2) && !(innerFlags & 0x40)) {
                     self->mFileHandle3 = CDeviceFile::readFile(
-                        func_80495FF0(lbl_eu_80663E14), filePath.mString,
+                        Scn_CallUnk8C_V9(lbl_eu_80663E14), filePath.mString,
                         (IWorkEvent*)(self ? (char*)self + 0x38 : (char*)self), 0, 0);
                     addAllocHandle__11CDeviceFileFP11CFileHandleUl(self->mFileHandle3, mtl::MemManager::getHandleMEM2());
                 } else {
                     self->mFileHandle3 = CDeviceFile::readFile(
                         mtl::MemManager::getHandleMEM2(), filePath.mString,
                         (IWorkEvent*)(self ? (char*)self + 0x38 : (char*)self), 0, 0);
-                    addAllocHandle__11CDeviceFileFP11CFileHandleUl(self->mFileHandle3, func_80495FF0(lbl_eu_80663E14));
+                    addAllocHandle__11CDeviceFileFP11CFileHandleUl(self->mFileHandle3, Scn_CallUnk8C_V9(lbl_eu_80663E14));
                 }
-                if (func_8016846C()) {
+                if (EvtSeqGetStateBit5()) {
                     addAllocHandle__11CDeviceFileFP11CFileHandleUl(self->mFileHandle2, getScnCounter__Fv());
                 }
                 addAllocHandle__11CDeviceFileFP11CFileHandleUl(self->mFileHandle3, mtl::MemManager::getHandleMEM1());
@@ -486,7 +486,7 @@ void func_8018140C(CREvtModelMap* self)
 {
     if (self->mFlags & 2) {
         if (!self->mFileHandle1 && self->mFileData1 && !self->mEmoteModel) {
-            self->mEmoteModel = (CScnItemModel*)func_80495E8C(lbl_eu_80663E14, self->mFileData1, 7, 1);
+            self->mEmoteModel = (CScnItemModel*)Scn_SetupAnim(lbl_eu_80663E14, self->mFileData1, 7, 1);
             simSetFlag2OnTree(self->mEmoteModel, 0);
             simSetLeafDist7B0(self->mEmoteModel, lbl_eu_806678C0);
             reinterpret_cast<CScnItemModel*>(self->mEmoteModel)->flags7A8 |= 4;
@@ -526,7 +526,7 @@ void func_8018152C(CREvtModelMap* self)
         simRefreshFlag8(self->mEmoteModel, fTime);
     }
     reinterpret_cast<CREvtModel*>(self)->setVisible(func_80180960());
-    func_80168514(self);
+    EvtSeqCheckEventRunGuard(self);
 }
 
 void func_801815AC(CREvtModelMap* self, unsigned int visible)

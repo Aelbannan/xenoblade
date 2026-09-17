@@ -85,13 +85,13 @@ void CMenuBattleMode::Init() {
     // Scoped region guard - destructor releases the region when Init finishes
     Class_8045F858 regionGuard(&mLayoutMem);
 
-    nw4r::lyt::ArcResourceAccessor* accessor = func_801355F4();
+    nw4r::lyt::ArcResourceAccessor* accessor = CUICfManager_getArcResourceAccessor();
     buildLayout(&mLayout, accessor, lbl_eu_80503D80 + 0x10);
 
-    accessor = func_801355F4();
+    accessor = CUICfManager_getArcResourceAccessor();
     bindLayoutAnimTransform(mLayout, &mAnimDefault, accessor, lbl_eu_80503D80 + 0x29);
 
-    accessor = func_801355F4();
+    accessor = CUICfManager_getArcResourceAccessor();
     bindLayoutAnimTransform(mLayout, &mAnimLabel, accessor, lbl_eu_80503D80 + 0x45);
 
     mLayout->SetAnimationEnable(mAnimLabel, false);

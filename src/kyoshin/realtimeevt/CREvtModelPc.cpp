@@ -56,9 +56,9 @@ extern "C" {
     extern void func_8016BC1C(void* self);
     extern int func_8016BDA8(void* self, void* pId);
     extern void* func_8016C300(void* self);
-    extern void func_80168514(void* self);
-    extern int func_801683FC();
-    extern int func_8016840C();
+    extern void EvtSeqCheckEventRunGuard(void* self);
+    extern int EvtSeqGetStateBit14();
+    extern int EvtSeqGetStateBit12();
     extern void* func_80164724(void* parent, u32 type, int slot);
 
     // CfGameManager
@@ -78,8 +78,8 @@ extern "C" {
     extern int func_800A8E6C(u32 value, int enable);
 
     // Model helpers
-    extern void* func_80495E8C(void* a, void* b, int c, int d);
-    extern void* func_80495FF0(void* arg);
+    extern void* Scn_SetupAnim(void* a, void* b, int c, int d);
+    extern void* Scn_CallUnk8C_V9(void* arg);
     extern void simSetLeafDist7B0(void* model, f32 val);
     extern void simSetFlag2000Chain(void* model, int flag);
     extern void simSetLeafFlag4000(void* model, int flag);
@@ -448,7 +448,7 @@ handles_done:
     // First choice: reuse handles registered on the parent resource.
     hasAllHandles = 0;
     parent = FLD(void*, s, 0x1C);
-    if (FLD(s8, parent, 0x48) != 0 && !func_8016840C()) {
+    if (FLD(s8, parent, 0x48) != 0 && !EvtSeqGetStateBit12()) {
         for (i = 1; i <= 5; i++) {
             handle = (u32)func_80164724((char*)parent + 0x48, decB, i);
             FLD(u32, s, 0x38 + i * 4) = handle;
@@ -462,7 +462,7 @@ handles_done:
 
     skipLoading = 0;
     if (!hasAllHandles) {
-        if (matchChr != 0 && !func_8016840C()) {
+        if (matchChr != 0 && !EvtSeqGetStateBit12()) {
             // Pull handles out of the live character via its getter virtual.
             for (i = 1; i <= 5; i++) {
                 objPtr = (char*)matchChr + 0x3E9C;
@@ -471,7 +471,7 @@ handles_done:
                 handle = (u32)getHandle(objPtr, i);
                 FLD(u32, s, 0x38 + i * 4) = handle;
             }
-        } else if (decC == 1 && !func_8016840C()) {
+        } else if (decC == 1 && !EvtSeqGetStateBit12()) {
             // Already-loading shortcut through the game manager cache.
             if (isNewFile) {
                 syncFieldData__Q22cf13CfGameManagerFv(decB, 0);
@@ -484,12 +484,12 @@ handles_done:
         } else {
             // Build the five packed tokens from scratch.
             slotIdx0 = slotIdx1 = slotIdx2 = decC;
-            if (func_8016840C()) {
+            if (EvtSeqGetStateBit12()) {
                 slotIdx0 = FLD(u32, lbl_eu_805037A8, decB * 4);
             }
             if (decB == 8 && slotIdx0 == 1) {
                 slotIdx0 = slotIdx1 = slotIdx2 = 4;
-            } else if (func_8016840C()) {
+            } else if (EvtSeqGetStateBit12()) {
                 // Co-op mode remaps some slot indices per character id.
                 if (decB == 1 && slotIdx0 == 2) slotIdx1 = 1;
                 if (decB == 2 && slotIdx0 == 3) slotIdx1 = 1;
@@ -554,11 +554,11 @@ handles_done:
             } else {
                 // Streamed read into MEM2.
                 memHandle = (void*)mtl::MemManager::getHandleMEM2();
-                h = func_80495FF0(lbl_eu_80663E14);
+                h = Scn_CallUnk8C_V9(lbl_eu_80663E14);
                 h2 = h;
                 parent = FLD(void*, s, 0x1C);
                 if (FLD(u32, parent, 0x58) & 0x2) {
-                    h = func_80495FF0(lbl_eu_80663E14);
+                    h = Scn_CallUnk8C_V9(lbl_eu_80663E14);
                     memHandle = h;
                     h2 = (void*)mtl::MemManager::getHandleMEM2();
                 }
@@ -571,7 +571,7 @@ handles_done:
                 if (FLD(u32, parent, 0x58) & 0x1) {
                     CDeviceFile::setHandleFlag1(reqHandle);
                 }
-                if (func_801683FC()) {
+                if (EvtSeqGetStateBit14()) {
                     CDeviceFile::setHandleFlag2(reqHandle);
                 }
                 FLD(u32, walk, 0x84) = status3;
@@ -605,11 +605,11 @@ handles_done:
             FLD(u32, s, 0x68) = (u32)reqHandle;
         } else {
             memHandle = (void*)mtl::MemManager::getHandleMEM2();
-            h = func_80495FF0(lbl_eu_80663E14);
+            h = Scn_CallUnk8C_V9(lbl_eu_80663E14);
             h2 = h;
             parent = FLD(void*, s, 0x1C);
             if (FLD(u32, parent, 0x58) & 0x2) {
-                h = func_80495FF0(lbl_eu_80663E14);
+                h = Scn_CallUnk8C_V9(lbl_eu_80663E14);
                 memHandle = h;
                 h2 = (void*)mtl::MemManager::getHandleMEM2();
             }
@@ -622,7 +622,7 @@ handles_done:
             if (FLD(u32, parent, 0x58) & 0x1) {
                 CDeviceFile::setHandleFlag1(reqHandle);
             }
-            if (func_801683FC()) {
+            if (EvtSeqGetStateBit14()) {
                 CDeviceFile::setHandleFlag2(reqHandle);
             }
             FLD(u32, s, 0x98) = 3;
@@ -702,7 +702,7 @@ extern "C" void func_801846C4(void* self) {
     }
 
     if (FLD(u32, s, 0x18) & 0x800) {
-        func_80168514(self);
+        EvtSeqCheckEventRunGuard(self);
     }
 }
 
@@ -749,7 +749,7 @@ extern "C" void func_80184730(void* self) {
     if (data0 == 0 || !allLoaded) return;
 
     // Create model
-    void* model = func_80495E8C(lbl_eu_80663E14, data0, -1, 1);
+    void* model = Scn_SetupAnim(lbl_eu_80663E14, data0, -1, 1);
     FLD(u32, s, 0x20) = (u32)model;
 
     simSetLeafDist7B0(model, lbl_eu_80667918);

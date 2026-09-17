@@ -164,7 +164,7 @@ extern "C" void playUISound__FUl(u32);               // UI sound effect
 extern "C" u16 BdatGetU16Direct(const void*, const void*, int);
 extern "C" void func_80124270(void*, u32);
 extern "C" void __ct__CCur18(void*, nw4r::lyt::ArcResourceAccessor*);
-extern "C" nw4r::lyt::ArcResourceAccessor* func_801355F4();
+extern "C" nw4r::lyt::ArcResourceAccessor* CUICfManager_getArcResourceAccessor();
 extern "C" int sprintf(char*, const char*, ...);
 // Map-select string pool (split1 .rodata): pane-name format at +0x1F, fixed
 // pane name at +0x88.

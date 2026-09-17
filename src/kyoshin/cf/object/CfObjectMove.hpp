@@ -75,7 +75,7 @@ extern u32 lbl_eu_80663E28;   // global flag word (bit 26) gating the CfObjectMo
 extern u32 lbl_eu_80663E24;
 extern u16 lbl_eu_80663E42;   // mode words checked by CfObject_UnkVirtualFunc26 (== 4 / == 1)
 extern u16 lbl_eu_80663E44;
-extern CScn* lbl_eu_80663E14;  // shared scene pointer passed to the func_80496288 time query
+extern CScn* lbl_eu_80663E14;  // shared scene pointer passed to the Scn_GetFrameDelta time query
 // Shared speed constant (retail unmangled name; the .cpp also defines a
 // namespace-cf copy used by the resetMoveSpeed helper). Declared const so
 // MWCC treats the SDA load as read-only and hoists/schedules it at retail's
@@ -123,7 +123,7 @@ extern const float lbl_eu_80666ACC;
 // Scene-time query (CfGameManager.cpp, retail unmangled name): returns the
 // current time value from the shared scene object. extern "C" keeps the
 // call-site reloc at the unmangled retail name (docs/MWCC_CASES.md sec 2).
-extern "C" f32 func_80496288(void* scene);
+extern "C" f32 Scn_GetFrameDelta(void* scene);
 // Minimal bdat imports (CfBdat.hpp cannot be included here: its
 // getBdatStringColumnValue declaration conflicts with harness_catalog.hpp's).
 // The static-member forms keep the retail mangled reloc names.
@@ -184,7 +184,7 @@ extern "C" void func_800BC9EC(cf::CfObjectMove* self);
 extern "C" void func_800BCFA0(cf::CfObjectMove* self);
 // Scene/manager queries used by CfObjectMove_testMoveProximity / func_800BC9EC / func_800BCFA0.
 extern "C" int CfRes_getD80Flag();
-extern "C" void* func_80496264(void* obj, int index);
+extern "C" void* Scn_FindCamItem(void* obj, int index);
 extern "C" int func_8007560C();
 extern "C" bool func_800829B8__Q22cf13CfGameManagerFv();
 extern "C" void* getPlayer__Q22cf13CfGameManagerFi(int index);
@@ -248,7 +248,7 @@ extern "C" void __ct__cf_CtrlPad(void* self, void* parent, int arg);
 
 // bdat column lookup helper (defined in kyoshin/cf/CfBdat.cpp, retail
 // unmangled name). Declared here because the canonical CModelDispEquip.hpp
-// declaration conflicts with CfObjectModel.hpp's func_80495E60 (C-linkage
+// declaration conflicts with CfObjectModel.hpp's Scn_IsAnimActiveOrNull (C-linkage
 // overload) and CfBdat.hpp (read-only) does not declare it.
 extern "C" u32 func_8014235C(u32 param1, const char* column, u32 param3);
 
@@ -320,7 +320,7 @@ extern "C" void func_8004B9D4(void* self, u32 a, u32 b, u32 c);
 // kyoshin/action/CActParamAnim.cpp / CActParamAnimGame.cpp, retail
 // unmangled names; the canonical CModelDispEquip.hpp declarations take
 // CActParamAnimView* which is not visible here - CfObjectMove.hpp's
-// func_80495E60 C-linkage form conflicts with that header).
+// Scn_IsAnimActiveOrNull C-linkage form conflicts with that header).
 // func_8005A594 advances the view's animation model; attachAnimObj
 // attaches a model list + state with a vtable-query parameter;
 // getAnimModelId returns the C4 target's page id.
@@ -709,7 +709,7 @@ namespace cf {
         u8 _pad[0x6B4];         // 0x00-0x6B3
         u32 field_6B4;          // 0x6B4
     };
-    // View of the scene object func_80496264 returns: its +0x10C position
+    // View of the scene object Scn_FindCamItem returns: its +0x10C position
     // vector is read by CfObjectMove_testMoveProximity (the ColiCheckMoveRadius target).
     struct CfResScene10C {
         u8 _pad[0x10C];         // 0x00-0x10B

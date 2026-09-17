@@ -17,9 +17,9 @@ extern "C" void* __ct__cf_CfGimmickSaveOff(cf::CfGimmickSaveOff* self, s32 param
     void* holder = (void*)lbl_eu_80664140;
     self->mParam = (u16)param;
 
-    func_80208F34((cf::CfGimmick*)self, &self->mVec04.x, mgr, &holder);
-    func_80209020((cf::CfGimmick*)self, (cf::CfGimmick*)self->mBlock1C, mgr, &holder);
-    func_80209288((cf::CfGimmick*)self, (f32*)self->mBlock10, mgr, &holder);
+    CfGimmick_LoadBdatAreaPos((cf::CfGimmick*)self, &self->mVec04.x, mgr, &holder);
+    CfGimmick_LoadBdatAreaExtents((cf::CfGimmick*)self, (cf::CfGimmick*)self->mBlock1C, mgr, &holder);
+    CfGimmick_LoadBdatAreaRotation((cf::CfGimmick*)self, (f32*)self->mBlock10, mgr, &holder);
 
     // Read three bdat string cells (the cells are string pointers); lower
     // 16 bits go into the u16 bounds, the low byte into the type.
@@ -155,7 +155,7 @@ extern "C" void func_802ABCB4(cf::CfGimmickSaveOff* self) {
             entry = entry->next;
         }
     } else if ((s32)self->mType == 1) {
-        func_8020A03C();
+        CfGimmick_SetGlobalFlag200000();
     } else {
         func_8020A0CC();
     }

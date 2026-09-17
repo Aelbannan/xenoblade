@@ -245,7 +245,7 @@ extern float lbl_eu_80667E48;
 extern float lbl_eu_80667E4C;   // commu partner timer clamp (voice re-arm)
 extern float lbl_eu_80667E50;
 extern float lbl_eu_80667E5C;   // cue countdown timeout threshold
-extern float lbl_eu_80667E60;   // camera/trigger frame value (func_80133F48 arg)
+extern float lbl_eu_80667E60;   // camera/trigger frame value (CUICfManager_queueFactoryMenu arg)
 extern float lbl_eu_80667E64;   // field_18 lower clamp (idle commu path)
 extern float lbl_eu_80667E54;
 extern float lbl_eu_80667E58;
@@ -289,7 +289,7 @@ struct CSuddenCommuPadView {
     u32 field_00;   // +0 button flags
 };
 
-// Camera/trigger position view (func_8049603C result): f32 at +0xC.
+// Camera/trigger position view (Scn_QueryUnk80State result): f32 at +0xC.
 struct CSuddenCommuCamView {
     u8 pad_00[0xC];
     f32 field_C;    // 0xC
@@ -306,7 +306,7 @@ extern u8 lbl_eu_80662600;
 extern u16 lbl_eu_80662608[1];
 extern const u8 lbl_eu_805050B0[];
 extern u32 lbl_eu_80575870[];   // .bss: state-handler PMF table (12-byte ptmf stride)
-extern "C" int func_80133F48(int id, float f);   // camera/trigger helper (CVision.hpp owner)
+extern "C" int CUICfManager_queueFactoryMenu(int id, float f);   // camera/trigger helper (CVision.hpp owner)
 extern "C" void func_801537E0(void* voiceAct);   // voice-act reset (CVision.hpp owner)
 // Battle-actor enum-list helpers are declared by CfObjectImplMove.hpp
 // (owner: code_800B06A4.hpp); this TU picks them up through the include chain.

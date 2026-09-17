@@ -844,7 +844,7 @@ extern "C" void* func_8016FE34(void* r3);       // voice/battle-list resolve
 extern "C" int getAnimModelId(void* battleObj);  // battle-state page id
 extern "C" int func_80148778(void* obj, int id);
 // func_800D11B0 / func_800D69D8 extra imports (retail C-ABI names).
-extern "C" f32 func_80190938();                    // battle-list fallback height
+extern "C" f32 CfCmd_GetThreshold();                    // battle-list fallback height
 // Chain-start gate (chain/CChain.cpp); retail call site uses the plain name.
 extern "C" int func_80279778(void* a, void* b);
 // monolib coli segment probes (retail C-ABI names).
@@ -913,7 +913,7 @@ extern "C" void func_800D755C(CtrlActView* self, ml::CVec3* pos);
 extern "C" int func_800D64E8(CtrlActView* self);
 extern "C" int func_800D6720(CtrlActView* self, int flag);
 
-// Scene object pointer fed to func_80496288 (.sbss).
+// Scene object pointer fed to Scn_GetFrameDelta (.sbss).
 class CScn;
 
 // Retail vtables stored manually by the novtable ctors (.data).

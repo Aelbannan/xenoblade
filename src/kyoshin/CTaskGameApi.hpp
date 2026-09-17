@@ -4,7 +4,7 @@
 
 // Thin owner-API header for kyoshin/CTaskGame (the definitions live in
 // CTaskGame.cpp, canonical declarations in CTaskGame.hpp). TUs whose include
-// closure conflicts with unrelated CTaskGame.hpp copies (e.g. func_8049603C)
+// closure conflicts with unrelated CTaskGame.hpp copies (e.g. Scn_QueryUnk80State)
 // include this instead; the declaration here is identical to the owner copy.
 
 // Vision resource-copy helper (retail CTaskGame_openVision).

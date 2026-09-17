@@ -67,7 +67,7 @@ namespace cf{
 
 // Cross-unit imports used by func_800447B4 (retail unmangled symbols).
 extern "C" u8* getGlobalSda();
-extern "C" u32 func_8013C54C();
+extern "C" u32 UIWin_GetInstance();
 extern "C" u32 func_801644B4();
 extern u32 lbl_eu_80663E28;   // .sbss mode bitfield (bit 0x01000000)
 extern const f32 lbl_eu_80665D88; // .sdata2 float
@@ -85,9 +85,9 @@ extern "C" void init__17UnkClass_8007DAE0FP8CScnNw4rP5CViewUs(CScnNw4r* scene, C
 #define UnkClass_8007DAE0_init init__17UnkClass_8007DAE0FP8CScnNw4rP5CViewUs
 extern "C" void* __ct__800FDB4C();
 extern "C" void setPauseMode__Q22cf13CfGameManagerFv(bool arg);
-extern "C" void func_8013CFDC(void* self, CScnNw4r* pScene, u32 memHandle);
+extern "C" void UIWin_CreateManager(void* self, CScnNw4r* pScene, u32 memHandle);
 extern "C" void func_8012F558(void* self, CScnNw4r* pScene, s32 memHandle);
-extern "C" void func_801336E4(CProcess* pParent, CScnNw4r* pScene, s32 memHandle);
+extern "C" void CUICfManager_createInstance(CProcess* pParent, CScnNw4r* pScene, s32 memHandle);
 extern "C" void func_801665A4(CProcess* pParent, CScnNw4r* pScene, CView* pView);
 extern "C" void func_eu_8006B238();
 extern "C" void func_80086B5C__Q22cf13CfGameManagerFv(int arg1, int arg2, int arg3);

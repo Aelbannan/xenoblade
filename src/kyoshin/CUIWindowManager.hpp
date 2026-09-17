@@ -25,7 +25,7 @@ struct CItemQueryRow {
 
 // 0xC8-byte flag buffer (retail BSS at lbl_eu_80573C50): a build/active flag,
 // per-table byte flags, and the quest/mission slot ids consumed by the
-// flag-buffer helpers func_8013F3F0 / func_80140AFC in this unit.
+// flag-buffer helpers UIWin_FlagBufCanShow / func_80140AFC in this unit.
 struct CFlagBuffer {
     u8  field_0x00;              //0x00 - bit0: active/build flag
     u8  field_0x01[3];           //0x01-0x03
@@ -93,11 +93,11 @@ extern "C" {
 IUIWindow* func_80122B2C(CProcess* pParent, CScn* pScene, u32 a2, u32 a3);
 IUIWindow* func_801A20DC(CProcess* pParent, CScn* pScene, u32 text, const u8* msgSrc, u8 flag);
 IUIWindow* func_80124AEC(CProcess* pParent, void* pSceneOrWin, u32 flag, u32 a3, u32 a4);
-int func_80135694(u16 arg);
-int func_801356BC();
-int func_801356E0();
+int CUICfManager_claimSlotByIdState(u16 arg);
+int CUICfManager_claimSlotFormatted();
+int CUICfManager_claimSlotByTwoIds();
 namespace nw4r { namespace lyt { class ArcResourceAccessor; } }
-nw4r::lyt::ArcResourceAccessor* func_801355F4();
+nw4r::lyt::ArcResourceAccessor* CUICfManager_getArcResourceAccessor();
 void* func_8003AA34();
 u32 func_8003B1EC(void* fp);
 
@@ -107,11 +107,11 @@ u32 func_80138138(u32 idx);                 // quest id -> name-table index
 
 // Multi-item entry guard (owning TU: CUICfManager): 5 u16 args, nonzero
 // blocks the window creation.
-int func_80135654(u16 a, u16 b, u16 c, u16 d, u16 e);
+int CUICfManager_claimSlotByIds(u16 a, u16 b, u16 c, u16 d, u16 e);
 
 // Entry guard (owning TU: code_80135FDC family): nonzero blocks creation.
-int func_80135610();
-int func_80135630();
+int CUICfManager_tryResetSlots();
+int CUICfManager_claimSlotByTemplate();
 
 // Party-change-notice factory (owning TU: CMenuPTChangeNotice).
 IUIWindow* func_80293B9C(CProcess* pParent, CScn* pScene);
@@ -155,14 +155,14 @@ u32 BdatGetU8Direct(u32 entry, const char* text, u32 row);
 u8* func_80140AFC(u32 target);
 void func_8013D26C(int mode);
 int func_80140854(CItemQuery* self, u32 arg1, u32 arg2);
-int func_8013F3F0(CFlagBuffer* flagBuf);
+int UIWin_FlagBufCanShow(CFlagBuffer* flagBuf);
 void func_8013FFF8(void* flagBuf, void* entry, u32 value);
 
 // C-ABI imports used by the window-manager ctor and the flag-buffer helpers
 // (owning TUs: CScn / CCol6System / CQuestWindow / CMenuGetItemMulti /
 // CTalkWindow / code_8003B148 family). C linkage so call relocs bind to the
 // literal retail names.
-mtl::ALLOC_HANDLE func_80496004(void* ptr); // void* param: must match CUIBattleManager.hpp (10197)
+mtl::ALLOC_HANDLE Scn_CallUnk8C_V10(void* ptr); // void* param: must match CUIBattleManager.hpp (10197)
 void func_8015D0B8();
 void func_80122460();
 void func_801B29E0();
@@ -214,7 +214,7 @@ struct CActorFlagsView {
     u16 mId8C;                 //+0x8C
 };
 
-// Global data used by func_801412D0 (retail BSS/rodata in other splits).
+// Global data used by UIWin_BuildFlagBuf (retail BSS/rodata in other splits).
 extern u8 lbl_eu_80573C50[0xC8];     // flag buffer (0xC8 bytes, byte flags)
 extern void* lbl_eu_80573D18[0x1C];  // per-table entry pointers (filled at runtime)
 extern const u8 lbl_804FC1D0[0x70];  // per-table base offsets (rodata)
@@ -222,7 +222,7 @@ extern const u8 lbl_804FC1D0[0x70];  // per-table base offsets (rodata)
 // Flag-buffer builder (defined in this TU): zeroes the 0xC8-byte flag
 // buffer, marks it active, refreshes per-table entry pointers, scans every
 // table's rows for `row + baseOffset[i] == target`.
-extern "C" u8* func_801412D0(u32 target);
+extern "C" u8* UIWin_BuildFlagBuf(u32 target);
 
 // Pair of consecutive per-table base offsets; the flag-buffer builders copy
 // the 28-entry offset table as 14 x 8-byte chunks.
@@ -270,7 +270,7 @@ public:
     static CUIWindowManager* getInstance();
     static CUIWindowManager* create(CProcess* pParent, CScnNw4r* pScene, mtl::ALLOC_HANDLE mHandle);
 
-    // Retail creator func_8013CFDC is an unmangled free function, so the ctor
+    // Retail creator UIWin_CreateManager is an unmangled free function, so the ctor
     // must be reachable from it.
     CUIWindowManager(CScn* pScene, mtl::ALLOC_HANDLE mHandle);
 
@@ -288,8 +288,8 @@ public:
     bool unkA1; //0xA1 - request: force update-mark on all windows in both queues
     char unkA2[0xA4 - 0xA2]; //0xA2
 
-    // The retail window creators func_8013DE6C / func_8013E9D8 / func_8013E204
-    // / func_8013E52C / func_8013D7C0 are free functions (unmangled retail
+    // The retail window creators UIWin_Create5DCD0Win / UIWin_CreateSaveWin / UIWin_CreateBEDE0Win
+    // / UIWin_CreateKizunaTalk / UIWin_CreateSysWinBuff are free functions (unmangled retail
     // symbols) that push newly created windows onto mWindowList1, so the data
     // members above are public for them. The singleton ctor/dtor stay private.
 

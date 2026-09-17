@@ -975,7 +975,7 @@ extern "C" void setMemInitFlag__Q23mtl10MemManagerFb(bool);
 extern "C" bool Attach__Q34nw4r3lyt19ArcResourceAccessorFPvPCc(nw4r::lyt::ArcResourceAccessor*, void*, const char*);
 extern "C" void* getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32, nw4r::lyt::Layout*);
 extern "C" void func_8013676C(void*, u32);
-extern "C" void* func_801355BC();
+extern "C" void* CUICfManager_getPackedFont9C();
 extern "C" void setLayoutTextBoxFont__FPQ34nw4r3lyt6LayoutPcUl(nw4r::lyt::Layout*, char*, u32);
 extern "C" u32 CSysWin_isReady(void*);
 extern "C" u32 CScrollBar_isVisible(void*);
@@ -1066,7 +1066,7 @@ extern void* lbl_eu_80664090;
 extern "C" u32 BdatGetU16Direct(const void* tbl, const void* key, int id);
 extern "C" char* MakeTplNameSysFile(u32 id);
 extern "C" void PaneSetTexPaletteByName(nw4r::lyt::Layout* layout, const char* name, void* res);
-extern "C" nw4r::lyt::ArcResourceAccessor* func_801355F4();
+extern "C" nw4r::lyt::ArcResourceAccessor* CUICfManager_getArcResourceAccessor();
 extern "C" void LayoutSetTextBoxFmtValue(nw4r::lyt::Layout*, char*, char*, int);
 // Mangled retail symbol declared directly so the third argument stays a
 // full register (retail passes the raw manager value without truncation).

@@ -53,7 +53,7 @@ public:
 // Scene-item pool helpers (retail reloc names are unmangled short forms, so
 // C-linkage declarations reproduce them; the retail map resolves the symbols).
 extern "C" void func_8048CBC0(void* self, void* arg);
-extern "C" CScnItemAnim* func_8048C400(void* self);
+extern "C" CScnItemAnim* CScnItemPool_allocSmallSlot(void* self);
 extern "C" u32 func_8048C630(void* pool, void* item, u32 flag);
 
 // Runtime throw helper (NMWException.h is not included: it drags in

@@ -295,7 +295,7 @@ extern "C" void ScnFilterIterList_destroy(CScnFilterIteratorReslist* self);
 // register with the scene render-callback chain.
 extern "C" void __ct__IScnRender(void* self);
 extern "C" void zeroFirstWord(void* self);
-extern "C" void* func_80496018(CScn* scene);
+extern "C" void* Scn_CallUnk8C_V8(CScn* scene);
 extern "C" u32 lbl_eu_8056EB78[4];
 
 extern "C" CScnFilterMan* __ct__CScnFilterMan(CScnFilterMan* self, CScn* scene) {
@@ -306,8 +306,8 @@ extern "C" CScnFilterMan* __ct__CScnFilterMan(CScnFilterMan* self, CScn* scene) 
     __ct__8049CBD4((CScnFilterReslist*)&self->field_28);
     ScnFilterZeroWord(&self->field_48);
     zeroFirstWord(&self->field_48);
-    ScnFilterList_reserve(&self->field_08, (u32)func_80496018(scene), 4);
-    ScnFilterIterList_reserve(&self->field_28, (u32)func_80496018(scene), 4);
+    ScnFilterList_reserve(&self->field_08, (u32)Scn_CallUnk8C_V8(scene), 4);
+    ScnFilterIterList_reserve(&self->field_28, (u32)Scn_CallUnk8C_V8(scene), 4);
     scene->addRenderCB((IScnRender*)self, 3, 0);
     return self;
 }

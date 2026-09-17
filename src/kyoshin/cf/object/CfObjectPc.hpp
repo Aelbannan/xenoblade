@@ -75,7 +75,7 @@ extern "C" void CActorParam_UnkVirtualFunc176__Q22cf11CActorParamFv(
 extern "C" void func_800A11A4(u8* obj, int flag);         // CtrlObjectParam.cpp
 extern "C" void* func_8009EC9C(u32 index);   // CtrlObjectParam.cpp (character-data lookup; owner canonical u32 form)
 extern "C" void func_800A13C4(u8* obj, int flag);         // CtrlObjectParam.cpp
-extern "C" void func_8018CBE8(u8* obj);                   // CfResPcImpl.cpp
+extern "C" void CfResPcImpl_loadPcState(u8* obj);                   // CfResPcImpl.cpp
 extern "C" void func_8012FAA8();                          // camera/screen reset
 extern "C" void func_801765A4(void* actor, f32 value, u32 arg); // CActorParam.cpp
 extern "C" int func_8013EB90(int flag);                   // CfObjectImplWalker.cpp

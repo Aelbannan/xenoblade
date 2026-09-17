@@ -208,7 +208,7 @@ struct CScnEnvLgtCtrlResList {
         u32 mCount;                        // +0x00 interface vtable slot / count
         u32 flags;                         // +0x00 flags view (bit 3 = blend/bloom pair, __dt__804C0E48)
     };
-    CScnItemModelNw4rOwner* mOwner;    // +0x04 scene owner (func_80496018 arg)
+    CScnItemModelNw4rOwner* mOwner;    // +0x04 scene owner (Scn_CallUnk8C_V8 arg)
     CScnEnvLgtCtrlIScnResBase base;    // +0x08 _reslist_base<IScnEnvCtl>
     CScnEnvLgtBlend* field_0x28;       // +0x28 blend object (released via vtable slot 2)
     CScnEnvLgtBloom* field_0x2C;       // +0x2C bloom object (main vtable at +0x80, slot 7)
@@ -494,7 +494,7 @@ public:
         u32 flags;                          // +0x00 flags view
     };
     // +0x04: control flags (0x800/0x1000 light bits, scnLgtSetSlotBits) and the
-    // scene-view pointer handed to func_80496288 / func_8048ECD8.
+    // scene-view pointer handed to Scn_GetFrameDelta / func_8048ECD8.
     union {
         u32 field_0x04;                     // +0x04 control flags
         void* field_0x04_ptr;               // +0x04 view/owner pointer
@@ -1441,7 +1441,7 @@ extern "C" CScnEnvLgtBlend* __ct__CScnBlend(CScnEnvLgtBlend* self);
 extern "C" CScnEnvLgtBloom* __ct__CScnBloom(CScnEnvLgtBloom* self);
 
 // Cross-TU helpers (definitions live in CScn.cpp / CScnFilterMan.cpp).
-extern "C" CScnEnvLgtCtrlLgtParamCtl* func_8049699C(CScnItemModelNw4rOwner* owner);
+extern "C" CScnEnvLgtCtrlLgtParamCtl* Scn_CallUnk8C_V11(CScnItemModelNw4rOwner* owner);
 extern "C" void ScnFilterMan_appendFilter(u8* man, CScnEnvLgtBlend* filter);
 extern "C" void ScnFilterMan_toggleFilter(u8* man, CScnEnvLgtBlend* filter);
 

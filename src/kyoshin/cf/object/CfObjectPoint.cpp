@@ -304,7 +304,7 @@ void CfObjectPoint::updatePointState() {
 
 main_body:
     {
-        float dist = func_80496288(lbl_eu_80663E14);
+        float dist = Scn_GetFrameDelta(lbl_eu_80663E14);
         if (dist > lbl_eu_80666B48) {
             if (checkStateFlags8(1) != 0) {
                 if (checkStateFlags(1) == 0) {

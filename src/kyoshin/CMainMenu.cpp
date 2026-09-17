@@ -167,7 +167,7 @@ extern "C" void func_800FEF4C(CMainMenu* self) {
     if (func_80252CD4() != 0) return;
     if (func_80257308() != 0) return;
     if (func_80263944() != 0) return;
-    if (func_8027037C() != 0) return;
+    if (PlayAward_IsActive() != 0) return;
     if (func_80272488() != 0) return;
     if (func_8028E440() != 0) return;
     if (func_8029BBA0() != 0) return;
@@ -227,10 +227,10 @@ extern "C" void func_800FEF4C(CMainMenu* self) {
         if (func_80101A88(self) == 0 && func_8029A658() == 0) {
             switch (self->field_0xC0) {
             case 0:
-                func_80134460();
+                CUICfManager_queueMapSelectMenu();
                 break;
             case 3:
-                func_801341D8();
+                CUICfManager_queuePTStateMenu();
                 break;
             }
         }
@@ -555,7 +555,7 @@ int CMainMenu::isAnyMenuOpen() {
     if (func_80252CD4()) return 1;
     if (func_80257308()) return 1;
     if (func_80263944()) return 1;
-    if (func_8027037C()) return 1;
+    if (PlayAward_IsActive()) return 1;
     if (func_80272488()) return 1;
     if (func_8028E440()) return 1;
     if (func_8029BBA0()) return 1;
@@ -907,7 +907,7 @@ void func_800FF920(CMainMenu* self) {
         return;
     }
     if (bPressed != 0) {
-        func_8013D8A0();
+        UIWin_CreateExtraWin();
     }
 done:
     ;
@@ -1155,7 +1155,7 @@ extern "C" void func_801010B8(CMainMenu* self) {
         playUISound__FUl(6);
         self->field_0xE0 = 7;
     } else if (bPressed != 0) {
-        func_8013D8A0();
+        UIWin_CreateExtraWin();
     }
 
 tail:
@@ -1216,36 +1216,36 @@ extern "C" void func_801018F4(CMainMenu* self) {
         switch (self->field_0xC0) {
         case 1:
             switch (self->field_0xC4) {
-            case 0: func_80133D78(); break;
-            case 1: func_801342B0(); break;
-            case 2: func_80134714(); break;
+            case 0: CUICfManager_queueBaseMenuItem(); break;
+            case 1: CUICfManager_queueMakeCrystalMenu(); break;
+            case 2: CUICfManager_queueCollepediaMenu(); break;
             }
             break;
         case 2:
             switch (self->field_0xC4) {
-            case 0: func_80134388(); break;
-            case 1: func_801348C8(); break;
+            case 0: CUICfManager_queueArtsSetMenu(); break;
+            case 1: CUICfManager_queuePassiveSkillMenu(); break;
             }
             break;
         case 4:
             switch (self->field_0xC4) {
-            case 0: func_80133A08(0); break;
-            case 1: func_801347EC(1); break;
-            case 2: func_80134A78(); break;
-            case 3: func_801349A0(); break;
+            case 0: CUICfManager_queueQuestLogMenu(0); break;
+            case 1: CUICfManager_queueKizunagramMenu(1); break;
+            case 2: CUICfManager_queueKizunaTalkMenu(); break;
+            case 3: CUICfManager_queuePlayAwardMenu(); break;
             }
             break;
         case 5:
             switch (self->field_0xC4) {
-            case 0: func_80133CA0(); break;
-            case 1: func_80134F2C(0); break;
+            case 0: CUICfManager_queueSkipTimerMenu(); break;
+            case 1: CUICfManager_queueTutorialListMenu(0); break;
             }
             break;
         case 6:
             switch (self->field_0xC4) {
-            case 0: func_80134B50(0, 1); break;
+            case 0: CUICfManager_queueSaveMenu(0, 1); break;
             case 1: func_80134C34(); break;
-            case 2: func_80134E50(1); break;
+            case 2: CUICfManager_queueOptionMenu(1); break;
             }
             break;
         }
@@ -1308,7 +1308,7 @@ battle:
 ret2:
     return 1;
 end:
-    return func_80135898();
+    return CUICfManager_hasInUseSlot();
 }
 
 extern "C" void func_80101BF8(CMainMenu* self) {

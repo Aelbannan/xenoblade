@@ -219,7 +219,7 @@ void func_8022B748(void* syswin);
 // verbatim names, per the repo-wide convention).
 void* readCommonArchiveFile__11CDeviceFileFUlPCcP10IWorkEventii(
     u32 handle, const char* path, void* workEvent, int a, int b);
-u32 func_800A9D90();
+u32 KyoshinHeap_GetField44();
 
 // BDAT message lookup helpers (unmangled retail C symbols): BdatGetU16Direct
 // resolves a row id, BdatGetPtrDirect resolves the message string for the id.

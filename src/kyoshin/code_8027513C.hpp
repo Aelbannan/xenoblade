@@ -59,7 +59,7 @@ struct UnkPosContainer {
     float posZ;    // 0x768
 };
 
-// Camera/scene settings object returned by func_8049603C.
+// Camera/scene settings object returned by Scn_QueryUnk80State.
 // Real name unknown; float at 0xC read by func_80275454.
 struct UnkCamObj {
     u8 _00[0xC];

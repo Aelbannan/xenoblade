@@ -203,7 +203,7 @@ void CMenuSkipTimer::Term() {
 
     func_801C3D9C(&mBgTex);
     func_801C40A0(&mTitleAHelp);
-    func_8029FE30(&mTimerData);
+    CSkipTimerTeardown(&mTimerData);
 
     lbl_eu_80664A48 = 0;
     setPresentationFlag__Q22cf13CfGameManagerFv(0);
@@ -250,7 +250,7 @@ void CMenuSkipTimer::Move() {
 
     func_801C3D54(&mBgTex);
     func_801C3FF0(&mTitleAHelp);
-    func_8029FCDC(&mTimerData);
+    CSkipTimerTick(&mTimerData);
 }
 
 void CMenuSkipTimer::cbRenderBefore() {
@@ -266,7 +266,7 @@ void CMenuSkipTimer::cbRenderBefore() {
     __ct__Q34nw4r3lyt8DrawInfoFv((nw4r::lyt::DrawInfo*)&drawInfo[0]);
     func_80137250((nw4r::lyt::DrawInfo*)&drawInfo[0]);
     func_801C3D7C(&mBgTex, (nw4r::lyt::DrawInfo*)&drawInfo[0]);
-    func_8029FDBC(&mTimerData, (nw4r::lyt::DrawInfo*)&drawInfo[0]);
+    CSkipTimerDraw(&mTimerData, (nw4r::lyt::DrawInfo*)&drawInfo[0]);
     func_801C4080(&mTitleAHelp, (nw4r::lyt::DrawInfo*)&drawInfo[0]);
     __dt__Q34nw4r3lyt8DrawInfoFv((nw4r::lyt::DrawInfo*)&drawInfo[0], -1);
 }
@@ -305,7 +305,7 @@ extern "C" {
 int func_801C3E34(CBgTex* self);
 int func_801C4114(CTitleAHelp* self);
 void func_801C412C(CTitleAHelp* self);
-void func_802A0008(CSkipTimer* self);
+void CSkipTimerFlagButton(CSkipTimer* self);
 }
 
 // When the bg texture, title/help bar, and skip-timer panel are all ready,
@@ -313,9 +313,9 @@ void func_802A0008(CSkipTimer* self);
 extern "C" void func_8029EE68(CMenuSkipTimer* self) {
     if (func_801C3E34(&self->mBgTex) != 0 &&
         func_801C4114(&self->mTitleAHelp) != 0 &&
-        func_8029FEBC(&self->mTimerData) != 0) {
+        CSkipTimerIsReady(&self->mTimerData) != 0) {
         func_801C412C(&self->mTitleAHelp);
-        func_802A0008(&self->mTimerData);
+        CSkipTimerFlagButton(&self->mTimerData);
         self->mFlag3 = 1;
         playUISound__FUl(0x6d);
     }
@@ -327,7 +327,7 @@ extern "C" unsigned long func_8029EE58(void) { return lbl_eu_80664A48 != 0; }
 // widget as having reached phase 2 (mFlag3 at 0x150).
 extern "C" void func_8029EEE0(CMenuSkipTimer* self) {
     if (isIdle__11CTitleAHelpFv(&self->mTitleAHelp) != 0 &&
-        func_8029FF00(&self->mTimerData) != 0) {
+        CSkipTimerGetSkipButton(&self->mTimerData) != 0) {
         self->mFlag3 = 2;
     }
 }
@@ -337,7 +337,7 @@ extern "C" void func_8029EEE0(CMenuSkipTimer* self) {
  * masks and dispatch to the switch-key advance/retreat helpers; if the timer
  * is then active, leave the skip state machine and raise phase 3. */
 extern "C" void func_8029EF30(CMenuSkipTimer* self) {
-    if (func_8029FEBC(&self->mTimerData) == 0) return;
+    if (CSkipTimerIsReady(&self->mTimerData) == 0) return;
 
     cf::CfPadData* pad = cf::CfGameManager::getCfPadData();
     bool upM, dnM;
@@ -359,18 +359,18 @@ extern "C" void func_8029EF30(CMenuSkipTimer* self) {
     }
 
     if (upBit) {
-        func_802A005C(&self->mTimerData);
+        CSkipTimerConfirmSkip(&self->mTimerData);
     } else if (dnBit) {
-        func_802A0148(&self->mTimerData);
+        CSkipTimerEngageSkip(&self->mTimerData);
     } else if (upM) {
-        func_8029FF24(&self->mTimerData);
+        CSkipTimerNextKey(&self->mTimerData);
     } else if (dnM) {
-        func_8029FF98(&self->mTimerData);
+        CSkipTimerPrevKey(&self->mTimerData);
     }
 
-    if (func_8029FF1C(&self->mTimerData) != 0) {
+    if (CSkipTimerGetActive(&self->mTimerData) != 0) {
         func_801C414C(&self->mTitleAHelp);
-        func_802A0028(&self->mTimerData);
+        CSkipTimerLeaveSkip(&self->mTimerData);
         self->mFlag3 = 3;
     }
 }
@@ -378,7 +378,7 @@ extern "C" void func_8029EF30(CMenuSkipTimer* self) {
 // Same idle+advance check, but advances to phase 1 (writes mFlag1 at 0x54).
 extern "C" void func_8029F048(CMenuSkipTimer* self) {
     if (isIdle__11CTitleAHelpFv(&self->mTitleAHelp) != 0 &&
-        func_8029FF00(&self->mTimerData) != 0) {
+        CSkipTimerGetSkipButton(&self->mTimerData) != 0) {
         self->mFlag1 = 1;
     }
 }

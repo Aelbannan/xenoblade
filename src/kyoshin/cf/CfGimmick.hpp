@@ -40,8 +40,8 @@ public:
     /* 0x7C */ u32 field_7C;
     /* 0x80 */ u16 field_80;
 
-    void func_8020896C(CfGameManager* other);
-    void func_80208988();
+    void CfGimmick_DetachManager(CfGameManager* other);
+    void CfGimmick_UpdateColliderMatrix();
     int func_8020A8AC();
 };
 
@@ -50,7 +50,7 @@ public:
 // Global settings object returned by getUnk80664658 (field_214 flag word).
 struct CfGimmickGlobal {
     u8 pad[0x210];
-    u32 field_210;   // 0x210 - value set by func_8020A068
+    u32 field_210;   // 0x210 - value set by CfGimmick_SetGlobalFlag80AndValue
     u32 field_214;   // 0x214 - flag bits set by several setters
 };
 
@@ -61,7 +61,7 @@ struct CfGimmickVec3 {
     f32 z;  // 0x08
 };
 
-// u32-view of the 12-byte position block: func_80208CC0 copies the player
+// u32-view of the 12-byte position block: CfGimmick_UpdatePartyAnchorState copies the player
 // target vector with integer lwz/stw moves (no float conversion).
 struct CfGimmickVec3u {
     u32 x;  // 0x00
@@ -141,7 +141,7 @@ struct CfPlayerIdView {
 };
 
 // CfGimmick::field_78 dispatch at +0x88 is driven through the CfObject view
-// (CfObject_pushRefreshValue slot, float arity) at the func_8020899C
+// (CfObject_pushRefreshValue slot, float arity) at the CfGimmick_PushRefreshValue
 // definition in CfGimmick.cpp.
 
 // ---------------------------------------------------------------------------
@@ -157,7 +157,7 @@ extern "C" u32 func_8009CF8C(u32 resourceId);
 // Small-data globals accessed by CfGimmick-region helpers (@sda21 loads/stores).
 extern "C" u32 lbl_eu_806646B4;
 extern "C" u32 lbl_eu_806646BC;
-// Cached value written by func_80208EDC (retail: single stw + blr).
+// Cached value written by CfGimmick_SetGlobalB8Value (retail: single stw + blr).
 extern "C" u32 lbl_eu_806646B8;
 extern "C" float lbl_eu_80662784;
 extern "C" u16 lbl_eu_806646C0;
@@ -168,7 +168,7 @@ extern "C" u8 lbl_eu_80535844[];
 // Reference point the gimmick range checks are measured from.
 extern "C" CfGimmickVec3 lbl_eu_805765A0;
 
-// Downward drop offset recorded by func_80208CC0 when the stage ground is
+// Downward drop offset recorded by CfGimmick_UpdatePartyAnchorState when the stage ground is
 // above zero (.sdata).
 extern "C" f32 lbl_eu_80662780;
 // 1.0f fill constant used when no player is present (.sdata2).
@@ -177,7 +177,7 @@ extern "C" const f32 lbl_eu_80668360;
 // Shared singleton accessor; refs resolve to the unmangled retail name.
 extern "C" CfGimmickGlobal* getUnk80664658();
 
-// Bdat table data used by func_8020A608 / func_80208F34 columns.
+// Bdat table data used by func_8020A608 / CfGimmick_LoadBdatAreaPos columns.
 extern "C" const void* lbl_eu_805357E8[];
 extern "C" void* lbl_eu_80664148;   // .sbss - current bdat file pointer
 // Returned when func_8020A608 cannot fetch a column row.
@@ -211,7 +211,7 @@ extern "C" const float lbl_eu_80668350;
 // u32 spellings (not unsigned int): must match CfObjectImplMove.hpp/UnityHelpers exactly
 extern "C" void func_801BFDE8(u32 mode, u32 value,
                                u32 playerValue, float first, float second);
-// Sound constants loaded in func_80208C48 / func_80208C60 (retail .sda21 loads)
+// Sound constants loaded in CfGimmick_PlaySoundAtPos / CfGimmick_PlaySoundAtPosScaled (retail .sda21 loads)
 extern "C" const float lbl_eu_80668358;
 extern "C" const float lbl_eu_8066835C;
 extern "C" unsigned int func_80124B78();
@@ -234,7 +234,7 @@ extern "C" void func_800C13FC(void* obj, const char* name, int arg);
 extern "C" CfGimmickObject* func_800B20B4(void* mgr, int a, int b, int c);
 
 // Message-posting helpers (CUICfManager.cpp / CUIWindowManager.cpp).
-extern "C" u32 func_8013C54C();
-extern "C" void func_8013D55C(char* msg, int a, int b);
+extern "C" u32 UIWin_GetInstance();
+extern "C" void UIWin_CreateSysWin0(char* msg, int a, int b);
 // Shared message format buffer (retail .data, absolute-address access).
 extern "C" char lbl_eu_805765D8[128];

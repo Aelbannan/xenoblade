@@ -10,7 +10,7 @@
 #include "kyoshin/cf/CfGameManager.hpp"
 #include "kyoshin/cf/CfSoundMan.hpp"
 #include "kyoshin/cf/CfGameManagerData.hpp"  // lbl_eu_80663E14 (CScn*)
-#include "monolib/scn/CScnTimeApi.hpp"        // func_80496288
+#include "monolib/scn/CScnTimeApi.hpp"        // Scn_GetFrameDelta
 
 // TU-local C-ABI imports (moved out of CfObjectImplPc.hpp so that header
 // stays co-includable with kyoshin/cf/object/CfObjectMove.hpp, whose owner
@@ -712,7 +712,7 @@ void func_800C6A58(cf::CfObjectImplPc* self)
     if (isGlobalCamFlagSet(0x04000000)) {
         return;
     }
-    if (func_80496288(lbl_eu_80663E14) == lbl_eu_80666BCC) {
+    if (Scn_GetFrameDelta(lbl_eu_80663E14) == lbl_eu_80666BCC) {
         return;
     }
     // NOTE: field_18 is deliberately never cached in a local - retail
@@ -2282,7 +2282,7 @@ L_tail:
     if ((res->field_74 & 0x62) != 0) {
         return;
     }
-    func_80133F48(4, lbl_eu_80666BC8);
+    CUICfManager_queueFactoryMenu(4, lbl_eu_80666BC8);
 }
 
 // Trailing .data pad word (retail gap_07_8052A7E4_data, all zero): a plain

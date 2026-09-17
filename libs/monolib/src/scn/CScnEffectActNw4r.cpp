@@ -32,7 +32,7 @@ CScnEffectActNw4r::~CScnEffectActNw4r() {}
 
 // Most slots are one-line forwarders: load mpMgr and tail-call into the
 // manager's implementation.
-extern "C" void func_8049BEA4(CScnEffectActNw4r* self) { func_80495E60(self->mpMgr); }
+extern "C" void func_8049BEA4(CScnEffectActNw4r* self) { Scn_IsAnimActiveOrNull(self->mpMgr); }
 
 extern "C" void func_8049BEAC(CScnEffectActNw4r* self) { simSetLeafDist7B0(self->mpMgr); }
 

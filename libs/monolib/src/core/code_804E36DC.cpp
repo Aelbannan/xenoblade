@@ -197,7 +197,7 @@ extern "C" void func_804E36DC(CSchedule* self, f32 dt) {
         return;
     }
 
-    f32 step = dt * self->field_0x50 * func_80496288(self->field_0x10);
+    f32 step = dt * self->field_0x50 * Scn_GetFrameDelta(self->field_0x10);
 
     u32 hasTranslation =
         (self->field_0x1c != lbl_eu_8066B2E4) || (self->field_0x20 != lbl_eu_8066B2E4) || (self->field_0x24 != lbl_eu_8066B2E4);
@@ -305,11 +305,11 @@ extern "C" void func_804E3B6C(CSchedule* self) {
     if (self->field_0x14 != 0) {
         CSchedulePosLink* link = reinterpret_cast<CSchedulePosLink*>(self->field_0x14);
         const ml::CVec3* pos = (const ml::CVec3*)link->vfunc11();
-        u8* target = (u8*)func_80496264(self->field_0x10, -1);
+        u8* target = (u8*)Scn_FindCamItem(self->field_0x10, -1);
         ml::CVec3 diff = *(const ml::CVec3*)((u8*)target + 0x10C) - *pos;
         dist = PSVECMag(diff);
     } else {
-        u8* target = (u8*)func_80496264(self->field_0x10, -1);
+        u8* target = (u8*)Scn_FindCamItem(self->field_0x10, -1);
         ml::CVec3 diff = *(const ml::CVec3*)((u8*)target + 0x10C) - *(const ml::CVec3*)&self->field_0x1c;
         dist = PSVECMag(diff);
     }

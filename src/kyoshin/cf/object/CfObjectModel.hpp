@@ -36,7 +36,7 @@ extern ml::CVec3 zero__Q22ml5CVec3;
 // whose +0x44 slot is the id-table lookup. Mirror of
 // libs/monolib/src/scn/CScnEffectActNw4r (same name, layout, and slot
 // order; kept in sync by hand). The monolib header cannot be included
-// from this TU: its extern "C" free decls (func_80495E60, simGetLeafActData,
+// from this TU: its extern "C" free decls (Scn_IsAnimActiveOrNull, simGetLeafActData,
 // simSetFlag2OnTree) pin narrower arities that collide with this TU's
 // retail-accurate FULL-matching decls (notably the 2-arg simSetFlag2OnTree
 // and the CActParamAnim void*-shaped simGetLeafActData). Slot map dumped from
@@ -223,7 +223,7 @@ struct CfObjectModelVec3 {
 // Imports (retail uses unmangled names; extern "C" so the linkage matches
 // the CfObjectMap.hpp declarations of the same helpers).
 // Releases a sub-object (used by CfObjectModel_UnkVirtualFunc1).
-extern "C" void func_80495E60(void* ptr);
+extern "C" void Scn_IsAnimActiveOrNull(void* ptr);
 // Fills the two output vectors for the model sub-object (used by
 // CfObject_UnkVirtualFunc56).
 extern "C" void func_80490A44(cf::CfObjectModelSub98* obj, CfObjectModelVec3* outA, CfObjectModelVec3* outB);

@@ -46,11 +46,11 @@ extern "C" {
     extern int func_8016A35C(void* self);
     extern int func_8016A3A8(void);
     extern int func_8016A3C4(void);
-    extern void func_80168514(void* self);
+    extern void EvtSeqCheckEventRunGuard(void* self);
     extern void func_801832D4(void* self);
     extern void func_801836CC(void* self, unsigned long value);
-    extern int func_801683FC(void);
-    extern int func_8016846C(void);
+    extern int EvtSeqGetStateBit14(void);
+    extern int EvtSeqGetStateBit5(void);
     extern void* func_80167F6C(int, int, int);
     extern void* func_800A8E6C(int, int);
     extern void KyoshinHeap_Free78(void*, int);
@@ -64,8 +64,8 @@ extern "C" {
     extern "C" void* func_804CC1F4(void*, u32, u32, int, int, int);
     extern void func_804CC1BC(void*);
     extern void func_804CC1D8(void* mgr, void* key);
-    extern void* func_80495FF0(u32);
-    extern void* func_80495E8C(u32, void*, int, int);
+    extern void* Scn_CallUnk8C_V9(u32);
+    extern void* Scn_SetupAnim(u32, void*, int, int);
     extern void simSetLeafDist7B0(void*, float);
     extern void simRefreshFlag8(void*, float);
     extern void simSetFlag2OnTree(void*, int);
@@ -624,7 +624,7 @@ extern "C" void func_80182B2C(void* self) {
                 priority = 8;
             }
 
-            void* model = func_80495E8C(allocHandle, FLD(void*, s, 0x68), priority, 1);
+            void* model = Scn_SetupAnim(allocHandle, FLD(void*, s, 0x68), priority, 1);
             FLD(u32, s, 0x20) = (u32)model;
 
             if (model != 0) {
@@ -773,7 +773,7 @@ extern "C" void func_80183268(void* self) {
         simRefreshFlag8(FLD(void*, s, 0x20), ft);
     }
 
-    func_80168514(self);
+    EvtSeqCheckEventRunGuard(self);
     func_801832D4(self);
 }
 

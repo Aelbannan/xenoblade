@@ -287,8 +287,8 @@ extern "C" {
     // CRI movie-player setup: retail func_80164ED0 passes 4 extra words even
     // though the retail symbol is Fv; declared here with the caller's shape.
     CLibCri* startMovie__7CLibCriFv(const char* self, u32 memHandle, u32 buffer, int flag, int zero);
-    u32 func_8016847C();
-    u32 func_80495FF0(CScn* scene);
+    u32 EvtSeqGetSharedState();
+    u32 Scn_CallUnk8C_V9(CScn* scene);
     void func_80164ED0(const char* path, int flag, u8* handle);
     int func_80164C48();
     void func_80164CFC();
@@ -313,7 +313,7 @@ extern "C" {
     int func_80164A50(const char* path, int arg1, int arg2);
     int func_801663A8(cf::CTaskREvent* self, CTaskREventFileEvent* ev);
     // Imports for func_80164DB8
-    void func_80168484(int arg);
+    void EvtSeqSetBgmGateFlag(int arg);
     void CTaskGame_resetStream();
     // Imports for cf::CTaskREvent::cbRenderBefore
     CView* getCurrentView__5CViewFv();
@@ -378,11 +378,11 @@ extern "C" {
     void deactivateLOD__8CTaskLODFv(s16 taskID);
     void activateLOD__8CTaskLODFv(s16 taskID);
     // Imports for cf::CTaskREvent::Move
-    int func_801684F4();
+    int EvtSeqGetStateBit10();
     void func_8016C6EC(int arg);
     int func_8016A35C();
     int CTaskGame_isStreamPaused();
-    void func_804962A8(u8* self, u32 flag);
+    void Scn_SetStopFlag(u8* self, u32 flag);
     u32 func_800EA444(u32 battle);
     extern f32 lbl_eu_80667638;
     extern f32 lbl_eu_8066763C;

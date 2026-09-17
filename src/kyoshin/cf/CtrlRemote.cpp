@@ -88,7 +88,7 @@ void func_80098CB8(CtrlPcVf44* self)
                    : lbl_eu_80527E98[21];
     CtrlPcSub37Ae80* sub = self->vf37();
     if ((sub->mField4 & mask) != 0) {
-        func_80133770();
+        CUICfManager_queueBaseMenu();
     }
 
     // Push one sample into the float ring: the constant while the cutscene

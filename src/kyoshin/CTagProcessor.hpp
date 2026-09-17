@@ -13,7 +13,7 @@ namespace lyt {
 class AnimTransform;
 class Pane;
 
-/* Layout view of nw4r::lyt::Font used by func_80127D20: only the two virtual
+/* Layout view of nw4r::lyt::Font used by TagMeasureTextWidth: only the two virtual
  * slots the function calls are used (+0x34 int-returning height-ish getter,
  * +0x48 char-width getter). MWCC emits 2 hidden leading slots for
  * polymorphic classes in this TU (RTTI), so the first declared virtual sits
@@ -41,7 +41,7 @@ public:
 };
 #endif
 
-/* Layout view of nw4r::lyt::TextBox for func_80127D20 (GetFont is the only
+/* Layout view of nw4r::lyt::TextBox for TagMeasureTextWidth (GetFont is the only
  * member used; mangled name GetFont__Q34nw4r3lyt7TextBoxCFv). Only defined
  * when the real lyt_textBox.h has not been included yet. */
 #ifndef NW4R_LYT_TEXTBOX_H
@@ -54,7 +54,7 @@ public:
 }
 }
 
-/* Table copies used by func_80128DA0's color-tag writer: 55 value dwords and
+/* Table copies used by TagWriterColorBlock's color-tag writer: 55 value dwords and
  * 56 name pointers copied from retail .data (0x804FEFB8 / 0x804FF488) onto
  * the stack as struct assignments (MWCC emits the mtctr/bdnz copy loop for
  * these sizes - 220 and 224 bytes). */
@@ -78,7 +78,7 @@ union TagConvTemp {
     } w;
 };
 
-/* 6-byte color-tag scratch used by func_80128DA0: the write side seeds it
+/* 6-byte color-tag scratch used by TagWriterColorBlock: the write side seeds it
  * from the sdata2 color constants (u32 + u16), the read side (loop matches +
  * final pack) sees three s16 slots. */
 union TagColorOut {
@@ -93,12 +93,12 @@ union TagColorOut {
 // (retail: .sdata2:0x806671F0).
 extern const f32 lbl_eu_806671F0;
 
-// sdata2 float constant used by the tag-writer family (func_80129128 sets
+// sdata2 float constant used by the tag-writer family (TagWriterCharSpacePP sets
 // the TextWriter font size from it; retail: .sdata2:0x80667260).
 extern const f32 lbl_eu_80667260;
 
 // sdata2 float constants used by the tag-writer position clamp
-// (func_80127BF4: line-height/offset math + the y snap thresholds;
+// (TagProcCalcPageLayout: line-height/offset math + the y snap thresholds;
 // retail .sdata2:0x806671F4..0x8066724C).
 extern const f32 lbl_eu_806671F4;
 extern const f32 lbl_eu_80667230;
@@ -130,14 +130,14 @@ extern const f32 lbl_eu_80667254;
 extern const f32 lbl_eu_80667258;
 
 // f64 magic constant (0x4330000080000000 = 2^52 + 2^31) used by
-// func_80128C6C's long->float conversion (retail .sdata2:0x80667200).
+// TagWriterParseColonParam's long->float conversion (retail .sdata2:0x80667200).
 extern const f64 lbl_eu_80667200;
 
-// f32 fallback value used by func_80128C6C's single-token tag-param init
+// f32 fallback value used by TagWriterParseColonParam's single-token tag-param init
 // (retail .sdata2:0x8066725C).
 extern const f32 lbl_eu_8066725C;
 
-// sdata2 color defaults used by func_80128DA0's color-tag writer
+// sdata2 color defaults used by TagWriterColorBlock's color-tag writer
 // (retail .sdata2:0x80667188 / 0x8066718C).
 extern const u32 lbl_eu_80667188;
 extern const u16 lbl_eu_8066718C;
@@ -153,7 +153,7 @@ extern const f32 lbl_eu_80667264;
 // address + constant offsets.
 extern wchar_t lbl_eu_80661FC8[2];
 
-// BDAT-style value table used by func_8012A460's tag-2 lookup chain
+// BDAT-style value table used by TagWriterCode2Lookup's tag-2 lookup chain
 // (retail .rodata:0x804FFC48, 0x50 bytes): BdatGetS16ByTableKey(lbl_eu_804FFC48,
 // &lbl_eu_804FFC48[0xc], idx) maps a name index to an s16 value.
 extern char lbl_eu_804FFC48[];
@@ -167,38 +167,38 @@ extern u32 lbl_eu_8052DA68[];  // CTagProcessorBase vtable
 // nw4r db Panic file/message strings used by the tag-writer accessors
 // (retail .data:0x8052DBAC..0x8052DF60). First symbol of each pair is the
 // Panic(file, ...) argument, second is the message (Panic(..., fmt) arg).
-extern char lbl_eu_8052DBAC[];  // func_801291F4 message
-extern char lbl_eu_8052DBE0[];  // func_801291F4 file
-extern char lbl_eu_8052DF2C[];  // func_80129564 message
-extern char lbl_eu_8052DF60[];  // func_80129564 file
-extern char lbl_eu_8052DEE8[];  // func_801299D4 message
-extern char lbl_eu_8052DF1C[];  // func_801299D4 file
-extern char lbl_eu_8052DB64[];  // func_8012B328 message
-extern char lbl_eu_8052DB98[];  // func_8012B328 file
-extern char lbl_eu_8052DC3C[];  // func_80129E20 message
-extern char lbl_eu_8052DC70[];  // func_80129E20 file
-extern char lbl_eu_8052DD94[];  // func_80129AEC message
-extern char lbl_eu_8052DDC8[];  // func_80129AEC file
-extern char lbl_eu_8052DDD8[];  // func_80129C04 message
-extern char lbl_eu_8052DE0C[];  // func_80129C04 file
-extern char lbl_eu_8052DB50[];  // func_8012930C file
-extern char lbl_eu_8052DB1C[];  // func_8012930C message
-extern char lbl_eu_8052DC28[];  // func_8012B204 file
-extern char lbl_eu_8052DBF4[];  // func_8012B204 message
-extern char lbl_eu_8052DED8[];  // func_80129430 file
-extern char lbl_eu_8052DEA4[];  // func_80129430 message
-extern char lbl_eu_8052DD84[];  // func_80129F3C file
-extern char lbl_eu_8052DD50[];  // func_80129F3C message
-extern char lbl_eu_8052DE1C[];  // func_8012A070 message
-extern char lbl_eu_8052DE50[];  // func_8012A070 file
-extern char lbl_eu_8052DD40[];  // func_8012AD40 chain-1 file
-extern char lbl_eu_8052DD0C[];  // func_8012AD40 chain-1 message
-extern char lbl_eu_8052DCFC[];  // func_8012AD40 chain-2 file
-extern char lbl_eu_8052DCC8[];  // func_8012AD40 chain-2 message
-extern char lbl_eu_8052DCB8[];  // func_8012968C chain-1 file
-extern char lbl_eu_8052DC84[];  // func_8012968C chain-1 message
-extern char lbl_eu_8052DE94[];  // func_8012968C chain-2 file
-extern char lbl_eu_8052DE60[];  // func_8012968C chain-2 message
+extern char lbl_eu_8052DBAC[];  // TagWriterGetWidthLimit message
+extern char lbl_eu_8052DBE0[];  // TagWriterGetWidthLimit file
+extern char lbl_eu_8052DF2C[];  // TagWriterGetCursorY message
+extern char lbl_eu_8052DF60[];  // TagWriterGetCursorY file
+extern char lbl_eu_8052DEE8[];  // TagWriterGetCursorX message
+extern char lbl_eu_8052DF1C[];  // TagWriterGetCursorX file
+extern char lbl_eu_8052DB64[];  // TagWriterGetCharSpace message
+extern char lbl_eu_8052DB98[];  // TagWriterGetCharSpace file
+extern char lbl_eu_8052DC3C[];  // TagWriterSetFontSize message
+extern char lbl_eu_8052DC70[];  // TagWriterSetFontSize file
+extern char lbl_eu_8052DD94[];  // TagWriterGetScaleX message
+extern char lbl_eu_8052DDC8[];  // TagWriterGetScaleX file
+extern char lbl_eu_8052DDD8[];  // TagWriterGetScaleY message
+extern char lbl_eu_8052DE0C[];  // TagWriterGetScaleY file
+extern char lbl_eu_8052DB50[];  // TagWriterSetWidthLimit file
+extern char lbl_eu_8052DB1C[];  // TagWriterSetWidthLimit message
+extern char lbl_eu_8052DC28[];  // TagWriterSetCharSpace file
+extern char lbl_eu_8052DBF4[];  // TagWriterSetCharSpace message
+extern char lbl_eu_8052DED8[];  // TagWriterAdvanceCursorX file
+extern char lbl_eu_8052DEA4[];  // TagWriterAdvanceCursorX message
+extern char lbl_eu_8052DD84[];  // TagWriterSetScale file
+extern char lbl_eu_8052DD50[];  // TagWriterSetScale message
+extern char lbl_eu_8052DE1C[];  // TagWriterSetCursorPos message
+extern char lbl_eu_8052DE50[];  // TagWriterSetCursorPos file
+extern char lbl_eu_8052DD40[];  // TagWriterApplyColor chain-1 file
+extern char lbl_eu_8052DD0C[];  // TagWriterApplyColor chain-1 message
+extern char lbl_eu_8052DCFC[];  // TagWriterApplyColor chain-2 file
+extern char lbl_eu_8052DCC8[];  // TagWriterApplyColor chain-2 message
+extern char lbl_eu_8052DCB8[];  // TagWriterMeasureScratch chain-1 file
+extern char lbl_eu_8052DC84[];  // TagWriterMeasureScratch chain-1 message
+extern char lbl_eu_8052DE94[];  // TagWriterMeasureScratch chain-2 file
+extern char lbl_eu_8052DE60[];  // TagWriterMeasureScratch chain-2 message
 extern char lbl_eu_8052DB08[];  // func_8012B440 chain-1 file
 extern char lbl_eu_8052DAD4[];  // func_8012B440 chain-1 message
 extern char lbl_eu_8052DAC0[];  // func_8012B440 chain-2 file
@@ -216,8 +216,8 @@ struct TagParam {
     f32 field_08;  // +0x08
 };
 
-/* 0x68-byte view of the nw4r TextWriterBase used by func_80129D1C's copy
- * and the tag-writer scratch writers (func_8012B070 / func_8012968C). */
+/* 0x68-byte view of the nw4r TextWriterBase used by TagWriterCopyBlock's copy
+ * and the tag-writer scratch writers (func_8012B070 / TagWriterMeasureScratch). */
 struct TagCopyBlock {
     u32 w00, w04, w08, w0C, w10, w14, w18, w1C;
     u32 w20, w24, w28, w2C, w30, w34, w38, w3C;
@@ -271,7 +271,7 @@ struct Color {
 namespace nw4r {
 namespace ut {
 
-/* Opaque CharWriter font (ut::detail::Font view) used by func_8012968C:
+/* Opaque CharWriter font (ut::detail::Font view) used by TagWriterMeasureScratch:
  * vtable slot +0x48 is a no-arg int getter whose value is doubled and
  * float-converted for the cursor-advance math. 2 hidden leading slots
  * (RTTI), so 16 declared virtuals precede the +0x48 slot. */
@@ -294,7 +294,7 @@ public:
     virtual void v3C();
     virtual void v40();
     virtual void v44();
-    virtual int v48(u16 c);  // +0x48 char-width getter (func_8012968C passes U+2500)
+    virtual int v48(u16 c);  // +0x48 char-width getter (TagWriterMeasureScratch passes U+2500)
 };
 #endif
 
@@ -311,14 +311,14 @@ public:
     void UpdateVertexColor();  // out-of-line nw4r method (retail bl)
 
     u8  pad_00[0x18];                    // +0x00 mColorMapping..mVertexColor-1
-    nw4r::ut::Color mVertexColor;        // +0x18 (func_8012AD40 merges alpha here)
+    nw4r::ut::Color mVertexColor;        // +0x18 (TagWriterApplyColor merges alpha here)
     u8  pad_1C[0x8];                     // +0x1C
-    f32 field_24;                        // +0x24 (mScale region; func_80129AEC reads this)
-    f32 field_28;                        // +0x28 (mScale region; func_80129C04 reads this)
+    f32 field_24;                        // +0x24 (mScale region; TagWriterGetScaleX reads this)
+    f32 field_28;                        // +0x28 (mScale region; TagWriterGetScaleY reads this)
     f32 cursorX;                         // +0x2C mCursorPos.x
     f32 cursorY;                         // +0x30 mCursorPos.y
     u8  pad_34[0x14];                    // +0x34 mCursorPos.z .. +0x47
-    FontH* mFont;                        // +0x48 (func_8012968C reads the +0x48 getter)
+    FontH* mFont;                        // +0x48 (TagWriterMeasureScratch reads the +0x48 getter)
 };
 #endif
 
@@ -328,7 +328,7 @@ public:
 template <typename T> class TextWriterBase : public CharWriter {
 public:
     f32 CalcStringWidth(const T* pStr, int len) const;
-    void Print(const T* pStr, int len);  // func_8012968C prints the 1-char marker
+    void Print(const T* pStr, int len);  // TagWriterMeasureScratch prints the 1-char marker
     ~TextWriterBase();  // __dt__Q34nw4r2ut17TextWriterBase<w>Fv (local scratch dtor)
 
     f32 widthLimit;    // +0x4C mWidthLimit
@@ -349,7 +349,7 @@ public:
 
 /* Tag-processor message object (retail tag-proc layout, 0x858 heap block):
  * 1024-wchar message buffer at +0x00, then u16 state fields. The tag-writer
- * family (func_801276F4 / func_80128740) reads/writes the position counters. */
+ * family (TagProcPumpMessage / TagProcStartMessage) reads/writes the position counters. */
 struct CTagProcMsg {
     u16 buf[0x400];    // +0x000 message buffer (0x800 bytes)
     u8  pad_800[0x4];  // +0x800
@@ -379,7 +379,7 @@ struct CTagProcMsg {
 /* Local view of the message text pane vtable (nw4r::lyt::TextBox layout):
  * MWCC emits 2 hidden leading slots, Pane's 27 declared virtuals fill
  * slots 2..28 (0x08..0x70), then the two TextBox-only slots used by
- * func_80128740: AllocStringBuffer at 0x74 and FreeStringBuffer at 0x78.
+ * TagProcStartMessage: AllocStringBuffer at 0x74 and FreeStringBuffer at 0x78.
  * The real TextBox header cannot be included here (ut_Color.h clash). */
 struct CTalkTextBoxVtbl {
     virtual void v08();
@@ -435,7 +435,7 @@ struct TalkPaneView : public CTalkTextBoxVtbl {
 };
 
 /* Tag-code dispatch table entry (retail .data:0x8052D478; 25 entries x 12B).
- * func_80125AB8 / func_80125B08 walk this table; field_04 == 0 marks the
+ * TagProcDispatchProcess / TagProcDispatchCalcRect walk this table; field_04 == 0 marks the
  * terminal "no handler" entry that falls back to the base TagProcessor. */
 struct TagEntry {
     u16 tag;       // +0x00 tag-code value
@@ -717,7 +717,7 @@ struct __declspec(novtable) CTagProcessor : public CTagProcessorBase {
 };
 
 /* Char-space/position context updated by the tag-writer family
- * (func_80129128 writes field_04/field_08, addToCharSpace reads field_04
+ * (TagWriterCharSpacePP writes field_04/field_08, addToCharSpace reads field_04
  * and writes field_0c). */
 struct TagCharContext {
     f32 field_00;  // +0x00
@@ -726,8 +726,8 @@ struct TagCharContext {
     f32 field_0c;  // +0x0C
 };
 
-/* Holder for the active nw4r text writer (func_80129128 reads field_00
- * twice - once into a local, once for the func_80129564 argument;
+/* Holder for the active nw4r text writer (TagWriterCharSpacePP reads field_00
+ * twice - once into a local, once for the TagWriterGetCursorY argument;
  * func_8012B070 also reads field_04/field_10 and rewrites field_04). */
 struct TagWriterHolder {
     nw4r::ut::TextWriterBase<wchar_t>* field_00;  // +0x00
@@ -736,7 +736,7 @@ struct TagWriterHolder {
     u32 field_10;                                 // +0x10 flags
 };
 
-/* Arg block for the color-tag writer func_8012AD40: the target CharWriter
+/* Arg block for the color-tag writer TagWriterApplyColor: the target CharWriter
  * and the source color. The writer's current alpha is preserved (the merge
  * writes src.a = writer.mVertexColor.a before the out-of-line assign). */
 struct TagColorArg {
@@ -745,7 +745,7 @@ struct TagColorArg {
 };
 
 /* Message-context view used by the tag-writer position clamp
- * (func_80127BF4): wchar_t* message string at +0xD8, copied into a local
+ * (TagProcCalcPageLayout): wchar_t* message string at +0xD8, copied into a local
  * buffer before func_80125D00 measures it. func_80125D00 reads the float
  * at +0xF4 (per-char spacing added to each glyph width). */
 struct CTagMsgView {
@@ -755,7 +755,7 @@ struct CTagMsgView {
     f32 field_F4;        // +0xF4 per-char spacing
 };
 
-/* Output view used by the tag-writer position clamp (func_80127BF4):
+/* Output view used by the tag-writer position clamp (TagProcCalcPageLayout):
  * VEC2 destination at +0x4C (copyVEC2 target). */
 struct CTagOutView {
     u8 pad[0x4C];    // +0x00
@@ -791,14 +791,14 @@ struct __declspec(novtable) CTagProcessorSE : public CTagProcessorBase {
 // C-ABI imports used by the tag-writer family. These retail symbols are
 // unmangled, so they must stay C-linkage or MWCC appends a __F<argtypes>
 // suffix to the emitted reloc names (MWCC_CASES core pattern 2).
-// func_801276F4 / func_8012615C / func_80128740 / func_801287BC are also
+// TagProcPumpMessage / func_8012615C / TagProcStartMessage / func_801287BC are also
 // declared in CTalkWindow.hpp / CSimpleEveTalkWin.hpp with these signatures.
 extern "C" {
 void WcsToUpperInPlace(u16* str);  // uppercase wide string (code_80135FDC.cpp)
-void func_801258D0(TagParam* p);  // reset a tag-param block
+void TagParamClear(TagParam* p);  // reset a tag-param block
 void initTagParam(u8* obj, unsigned char a, unsigned char b, float c);  // 12-byte tag-param init
 void copyTagParam(u8* dst, const u8* src);  // 12-byte tag-param copy
-int func_801276F4(nw4r::lyt::AnimTransform* tag, nw4r::lyt::Pane* a,
+int TagProcPumpMessage(nw4r::lyt::AnimTransform* tag, nw4r::lyt::Pane* a,
                   nw4r::lyt::Pane* b, nw4r::lyt::Pane* c);
 int func_8012615C(nw4r::lyt::AnimTransform* tag, nw4r::lyt::Pane* a,
                   nw4r::lyt::Pane* b, nw4r::lyt::Pane* c);
@@ -809,7 +809,7 @@ s32 func_80189A04(s32 index);                                // sound-slot busy 
 void func_8018986C(int handle, f32 fadeTime);                 // stop voice
 // Plugin UI mode query (pluginUi.cpp).
 int MenuStateCheck64064or30();
-int func_80128740(void* tagProc, nw4r::lyt::Pane* pane);
+int TagProcStartMessage(void* tagProc, nw4r::lyt::Pane* pane);
 // Retail r5 is a string (wcscpy source), not a flag. The CSimpleEveTalkWin.hpp
 // copy still declares the older int-flag shape; the two headers are never
 // included together, and extern "C" keeps the symbol flat either way.
@@ -818,7 +818,7 @@ void func_801287BC(CTagProcessorBase* tagProc, nw4r::lyt::Pane* pane,
 // Same signatures as the CTalkWindow.hpp declarations (shared C-ABI symbols).
 void func_80127764(CTagProcMsg* msg, TalkPaneView* a, TalkPaneView* b,
                    TalkPaneView* c, const wchar_t* text);
-void func_80127E74(nw4r::lyt::AnimTransform* tag, nw4r::lyt::Pane* a,
+void TagProcResetPage(nw4r::lyt::AnimTransform* tag, nw4r::lyt::Pane* a,
                    nw4r::lyt::Pane* b, nw4r::lyt::Pane* c);
 
 // Tag-proc ctors: retail symbols are the short C-ABI names (no class-length
@@ -863,48 +863,48 @@ void __ct__CTagCodeMakeCrystal(void* self);
 // Tag-writer family entries (unmangled retail names; the arg-taking members
 // must stay C-linkage or MWCC appends a __F<argtypes> suffix to the emitted
 // reloc names - MWCC_CASES core pattern 2).
-float func_801291F4(nw4r::ut::TextWriterBase<wchar_t>* tw);
-void func_8012930C(nw4r::ut::TextWriterBase<wchar_t>* tw, float v);
-void func_80129430(nw4r::ut::TextWriterBase<wchar_t>* tw, float v);
-float func_80129564(nw4r::ut::TextWriterBase<wchar_t>* tw);
-float func_801299D4(nw4r::ut::TextWriterBase<wchar_t>* tw);
+float TagWriterGetWidthLimit(nw4r::ut::TextWriterBase<wchar_t>* tw);
+void TagWriterSetWidthLimit(nw4r::ut::TextWriterBase<wchar_t>* tw, float v);
+void TagWriterAdvanceCursorX(nw4r::ut::TextWriterBase<wchar_t>* tw, float v);
+float TagWriterGetCursorY(nw4r::ut::TextWriterBase<wchar_t>* tw);
+float TagWriterGetCursorX(nw4r::ut::TextWriterBase<wchar_t>* tw);
 // Same nw4r-pointer-validation accessor family (GetScale-ish / GetCharSpace
 // / font-size store wrappers; unmangled retail names).
-float func_80129AEC(nw4r::ut::TextWriterBase<wchar_t>* tw);
-float func_80129C04(nw4r::ut::TextWriterBase<wchar_t>* tw);
-float func_8012B328(nw4r::ut::TextWriterBase<wchar_t>* tw);
-void func_80129E20(nw4r::ut::TextWriterBase<wchar_t>* tw, u32 value);
-void func_8012B204(nw4r::ut::TextWriterBase<wchar_t>* tw, float v);
-void func_80129F3C(nw4r::ut::TextWriterBase<wchar_t>* tw, float x, float y);
+float TagWriterGetScaleX(nw4r::ut::TextWriterBase<wchar_t>* tw);
+float TagWriterGetScaleY(nw4r::ut::TextWriterBase<wchar_t>* tw);
+float TagWriterGetCharSpace(nw4r::ut::TextWriterBase<wchar_t>* tw);
+void TagWriterSetFontSize(nw4r::ut::TextWriterBase<wchar_t>* tw, u32 value);
+void TagWriterSetCharSpace(nw4r::ut::TextWriterBase<wchar_t>* tw, float v);
+void TagWriterSetScale(nw4r::ut::TextWriterBase<wchar_t>* tw, float x, float y);
 // Tag-param writer: split the arg string on ':', map the first token to a
 // tag index, and init/copy a 1-tag-param block (numeric value when a second
 // token exists, else the fixed f32 fallback). Returns the r4 arg.
-void* func_80128C6C(void* unused, void* ret, wchar_t* str, TagParam* dst);
+void* TagWriterParseColonParam(void* unused, void* ret, wchar_t* str, TagParam* dst);
 // Text-position measurement for the tag-writer position clamp
-// (func_80127BF4): out = (x, y) computed from the message context + string.
+// (TagProcCalcPageLayout): out = (x, y) computed from the message context + string.
 // noinline: the retail kept this as a real call (0x384-byte body); the local
-// stub body must not be folded into func_80127BF4's call site.
+// stub body must not be folded into TagProcCalcPageLayout's call site.
 void func_80125D00(f32* out, CTagMsgView* msg, wchar_t* buf);
 // Tag-writer position clamp: copy the message into a local buffer, measure
 // it, clamp/snap the y position to the fixed step table, and write the
 // resulting VEC2 to out->field_4C.
-void func_80127BF4(void* unused, CTagMsgView* msg, CTagOutView* out);
-int func_80129128(void* unused, TagCharContext* ctx, void* unused2,
+void TagProcCalcPageLayout(void* unused, CTagMsgView* msg, CTagOutView* out);
+int TagWriterCharSpacePP(void* unused, TagCharContext* ctx, void* unused2,
                   TagWriterHolder* holder);
-void* func_8012A388(void* unused, void* ret, wchar_t* str, TagParam* dst);
+void* TagWriterSelectParam8b(void* unused, void* ret, wchar_t* str, TagParam* dst);
 // Tag-writer cursor setter: validate the writer, then store mCursorPos.x/y
-// (CharWriter +0x2C/+0x30). Same pointer validation as func_801291F4.
-void func_8012A070(nw4r::ut::TextWriterBase<wchar_t>* tw, float x, float y);
+// (CharWriter +0x2C/+0x30). Same pointer validation as TagWriterGetWidthLimit.
+void TagWriterSetCursorPos(nw4r::ut::TextWriterBase<wchar_t>* tw, float x, float y);
 // Tag-writer helper: max line width + font height of a string (uses the
 // TextBox's font height getter and char-width getter).
-void __declspec(noinline) func_80127D20(f32* out, void* unused,
+void __declspec(noinline) TagMeasureTextWidth(f32* out, void* unused,
                                         nw4r::lyt::TextBox* textbox,
                    const wchar_t* str);
 // Color-tag writer: match tokens against the copied name table and pack the
 // result block. Returns the position after the block.
-u16* func_80128DA0(void* unused, u16* dst, wchar_t* str);
+u16* TagWriterColorBlock(void* unused, u16* dst, wchar_t* str);
 // Tag-code writer (code 8, name selection): map the string to a value 1..9.
-void* func_8012A224(void* unused, void* ret, wchar_t* str, TagParam* dst);
+void* TagWriterSelectParam8a(void* unused, void* ret, wchar_t* str, TagParam* dst);
 // Tag-writer line layout: measure two adjacent strings from the tag buffer
 // into a scratch writer, advance the buffer pointer, return 2.
 int func_8012B070(void* unused, TagLineOutView* out, void* unused2,
@@ -913,35 +913,35 @@ int func_8012B070(void* unused, TagLineOutView* out, void* unused2,
 // writer, distribute any excess width of the real writer's copy as char
 // space, print both strings, and advance the buffer pointer. Returns 2.
 int func_8012B440(void* unused, void* unused2, TagWriterHolder* holder);
-u16* func_8012AF90(void* unused, u16* dst, wchar_t* str);
-u16* func_8012B944(void* unused, u16* dst, wchar_t* str);
+u16* TagWriterCode1List(void* unused, u16* dst, wchar_t* str);
+u16* TagWriterCode5Value(void* unused, u16* dst, wchar_t* str);
 // Tag-code writer (code 0xB): split the arg string on ':', map token 0 to a
 // 1..2 tag id and tokens 1..4 to numeric values (tag 2 via the BDAT s16
 // lookup chain), write the 6-u16 block, return the advanced position.
-u16* func_8012A460(void* unused, u16* out, wchar_t* str);
-u16* func_80128EF8(void* unused, u16* dst, wchar_t* str);
-u16* func_80129008(void* unused, u16* dst, wchar_t* str);
+u16* TagWriterCode2Lookup(void* unused, u16* out, wchar_t* str);
+u16* TagWriterCode7List(void* unused, u16* dst, wchar_t* str);
+u16* TagWriterCode6List(void* unused, u16* dst, wchar_t* str);
 // String splitter (code_80135FDC.cpp): split src on delim into outTokens,
 // returns the token count.
 int func_801365E4(u16* src, u16 delim, u16** outTokens);
 // BDAT s16-keyed lookup (code_80135FDC.cpp): maps a key into the table pair
-// to an s16 value (func_8012A460's tag-2 name chain).
+// to an s16 value (TagWriterCode2Lookup's tag-2 name chain).
 s16 BdatGetS16ByTableKey(const void* a, const void* b, u32 key); // u32: matches defining TU code_80135FDC.cpp verbatim
 // Message pre-processor: copy the raw message, normalize/compact the buffer
 // (CRLF strip + '<name=value>' tag dispatch), return the buffer.
 u16* func_80125B58(CTagProcessorBase* self, const void* src, f32 a, f32 b,
                    u32 c);
-// Talk-open text setup (func_80128740's callee): build the display string
+// Talk-open text setup (TagProcStartMessage's callee): build the display string
 // from the message buffer (or the caller's string) and lay out the pane.
 // Tag-writer scratch-writer copy (retail 0x104-byte call; noinline keeps
 // -ipa from folding it into the call sites).
-void func_80129D1C(TagCopyBlock* dst, const TagCopyBlock* src);
+void TagWriterCopyBlock(TagCopyBlock* dst, const TagCopyBlock* src);
 // Color-name tag writer: map the uppercased string to a packed RGB value.
 u16* func_8012AAA4(void* unused, u16* out, wchar_t* str);
 // Color-tag writer: apply the source color to the CharWriter (alpha kept).
-u32 func_8012AD40(void* unused, void* ret, TagColorArg* arg);
+u32 TagWriterApplyColor(void* unused, void* ret, TagColorArg* arg);
 // Tag-writer: print a marker into a scratch writer and advance the cursor.
-int func_8012968C(void* unused, void* unused2, TagWriterHolder* holder);
+int TagWriterMeasureScratch(void* unused, void* unused2, TagWriterHolder* holder);
 // Accumulated pane translate (code_80135FDC.cpp).
 void func_801375A0(f32* out, nw4r::lyt::Pane* pane);
 
@@ -951,7 +951,7 @@ extern "C" void func_8004B9D4(void* w, int a, int b, int c, int d);
 u32 func_8009CF8C(u32 id);
 void func_8009D018(u32 owner, u32 value);
 void* func_800451D8(u32 cls, void* param);
-void func_8013DB6C(u32 a, u32 b, u32 c, u32 d);
+void UIWin_CreateMenuUpdate(u32 a, u32 b, u32 c, u32 d);
 void MenuStateClear6405A();
 u8 code80135FDC_getByte_6405A();
 u8 code80135FDC_getByte_6405B();
@@ -962,9 +962,9 @@ void code80135FDC_setPair_6405C_64060(u32 a, u32 b);
 // but the call passes -1 in r3 (same convention as CTalkWindow.hpp).
 int isClassicController__Q22cf13CfGameManagerFv(int arg);
 // Local context-walk helpers (defined in CTagProcessor.cpp).
-void* func_80127670(void* self);
+void* TagCtxGetNodeHeader(void* self);
 u32 func_801276C8(const u32* a, const u32* b);
-void* func_801276E0(void* self, int a);
+void* TagCtxAdvanceHead(void* self, int a);
 const wchar_t* getContextStr(u8* self);
 const wchar_t** getContextStrPtr(u8* self);
 void copyVEC2(float* dst, const float* src);

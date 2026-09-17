@@ -79,7 +79,7 @@ void func_8021299C(CMakeCrystalWin* self) {
     }
 
     func_801C40A0(&self->mTitleAHelp);
-    func_8021C8B0(reinterpret_cast<CModelDispMakeCrystal*>(&self->mModelDispArea[0]));
+    MakeCrystal_CleanupFiles(reinterpret_cast<CModelDispMakeCrystal*>(&self->mModelDispArea[0]));
     teardownCrystalBox(&self->mCrystalBox);
     func_802AE62C(&self->mLoad);
 
@@ -231,7 +231,7 @@ void func_802132A0(CMakeCrystalWin* self) {
         self->field_4360 = 0xb;
         func_801C414C(&self->mTitleAHelp);
     }
-    int mode = func_80221CD0(reinterpret_cast<CModelDispMakeCrystal*>(&self->mModelDispArea));
+    int mode = MakeCrystal_GetPromptState(reinterpret_cast<CModelDispMakeCrystal*>(&self->mModelDispArea));
     func_801C41E8(&self->mTitleAHelp, (u8)mode);
 }
 
@@ -243,7 +243,7 @@ void func_80213300(CMakeCrystalWin* self) {
     if (isIdle__11CTitleAHelpFv(&self->mTitleAHelp) != 0) {
         if (getCrystalStateC(reinterpret_cast<CModelDispMakeCrystal*>(&self->mModelDispArea[0])) != 0) {
             self->field_4360 = 0;
-            func_8021C8B0(reinterpret_cast<CModelDispMakeCrystal*>(&self->mModelDispArea[0]));
+            MakeCrystal_CleanupFiles(reinterpret_cast<CModelDispMakeCrystal*>(&self->mModelDispArea[0]));
 
             // Rebuild the crystal box: construct a temp, copy it in, destroy.
             // MWCC assigns stack slots in reverse declaration order, so the
@@ -284,7 +284,7 @@ void CMakeCrystalWin::cbRenderBefore() {
     u8 drawInfo[0x54];
     __ct__Q34nw4r3lyt8DrawInfoFv(&drawInfo[0]);
     func_80137250((nw4r::lyt::DrawInfo*)&drawInfo[0]);
-    func_8021C928(reinterpret_cast<CModelDispMakeCrystal*>(&mModelDispArea[0]), (nw4r::lyt::DrawInfo*)&drawInfo[0]);
+    MakeCrystal_DrawAll(reinterpret_cast<CModelDispMakeCrystal*>(&mModelDispArea[0]), (nw4r::lyt::DrawInfo*)&drawInfo[0]);
     drawCrystalBox(&mCrystalBox, (nw4r::lyt::DrawInfo*)&drawInfo[0]);
     func_802AE5F0(&mLoad, (nw4r::lyt::DrawInfo*)&drawInfo[0]);
     func_801C4080(&mTitleAHelp, (nw4r::lyt::DrawInfo*)&drawInfo[0]);

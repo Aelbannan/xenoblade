@@ -83,7 +83,7 @@ CMenuKizunaTalk::~CMenuKizunaTalk() {
 #pragma optimize_for_size on
 void CMenuKizunaTalk::Init() {
     mFile2 = (CFileHandle*)readCommonArchiveFile__11CDeviceFileFUlPCcP10IWorkEventii(
-        func_800A9D90(), lbl_eu_80505118, static_cast<IWorkEvent*>(this), 0, 0);
+        KyoshinHeap_GetField44(), lbl_eu_80505118, static_cast<IWorkEvent*>(this), 0, 0);
     func_8009D018(mCharId + 0x3440, 1);
 }
 #pragma optimize_for_size off
@@ -197,7 +197,7 @@ void func_801BCF48(CMenuKizunaTalk* self) {
         __dt__7CSysWinFv(&scratch.mWin2[0], -1);
         reinterpret_cast<KizunaSysWinView*>(&self->mSysWin[0])->v20();
 
-        __ct__CCur18(&scratch.mCur[0], func_801355F4());
+        __ct__CCur18(&scratch.mCur[0], CUICfManager_getArcResourceAccessor());
         KizunaCurFields* dst = reinterpret_cast<KizunaCurFields*>(&self->mCur[0]);
         KizunaCurFields* src = reinterpret_cast<KizunaCurFields*>(&scratch.mCur[0]);
         dst->f_04 = src->f_04;
@@ -544,7 +544,7 @@ int func_801BD7D8(CMenuKizunaTalk* self, CEventFile* evt) {
         if (player != 0) name = &lbl_eu_80505118[0x1c9];
         u16 msgId = BdatGetU16ByTableKey(&lbl_eu_80505118[0x1aa], name, 0x2c);
         char* texName = MakeTplNameSysFile((u32)msgId);
-        void* sys = func_801355F4();
+        void* sys = CUICfManager_getArcResourceAccessor();
         KizunaTextureView* tex = (KizunaTextureView*)((void* (*)(void*, u32, void*, u32))(
             (void**)sys)[0xc / 4])(sys, 0x74696d67, texName, 0);
         if (tex != 0) {

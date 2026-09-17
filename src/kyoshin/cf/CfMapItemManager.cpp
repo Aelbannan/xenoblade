@@ -153,7 +153,7 @@ void* func_8016FE34(void* p);
 int func_800FF8B0();
 int func_80251550();
 int func_80083118__Q22cf13CfGameManagerFv(int v);
-int func_8020971C(int v);
+int CfGimmick_CheckStateFlag2CC8(int v);
 u32 getCurrentSlotIndex__Q22cf13CfGameManagerFv();
 u32 getQueuedFileEventCount__Q22cf13CfGameManagerFv();
 u32 getResourceFromTable__Q22cf13CfGameManagerFv(u32 v);
@@ -162,7 +162,7 @@ int isSceneActive__Q22cf13CfGameManagerFv();
 int isSceneReadyForInput__Q22cf13CfGameManagerFv();
 void func_802808AC(int v);
 void* CItem_thunkAllocRecord(int v);
-void func_801351C4(int v);
+void CUICfManager_queueGetItemMenu(int v);
 int func_80140E00(int a, int b, int c, int d);
 void setInputMaskByAmount__Q22cf13CfGameManagerFv(u32 v);
 void CfRes_getD80Flag();
@@ -685,7 +685,7 @@ extern "C" int func_80173CA0(CfMapItemManager* self, ml::CVec3* pos) {
             // Timer-only slot: decay timer back toward the default scale.
             if ((*flagsW & 0x10000) == 0) continue;
             CfRes_getD80Flag();
-            f32 dec = func_80496288(lbl_eu_80663E14);
+            f32 dec = Scn_GetFrameDelta(lbl_eu_80663E14);
             f32 t = rec->field_10_f;
             if (t > k80) {
                 rec->field_10_f = t - dec;
@@ -760,7 +760,7 @@ extern "C" int func_80173CA0(CfMapItemManager* self, ml::CVec3* pos) {
         if (!self->func_801737CC()) {
             // Story-flag gate: item hidden until the flag engine reports it.
             cStory.raw = getBdatStringColumnValue(table, cols + 0x4c, row);
-            if (cStory.s != 0 && func_8020971C(cStory.s) == 0) {
+            if (cStory.s != 0 && CfGimmick_CheckStateFlag2CC8(cStory.s) == 0) {
                 u32 h = rec->handle;
                 if (h != 0) {
                     func_802B37F4(h);
@@ -923,7 +923,7 @@ void func_801742D4(CfMapItemManager* self) {
     playActorSound__Q22cf10CfSoundManFUlUlUlUlf(0, 0x45, 0, 0, lbl_eu_806677D4);
     if (self->func_801737CC()) {
         // No event: wipe the record and bump the flag-table reset counter.
-        func_801351C4(kind);
+        CUICfManager_queueGetItemMenu(kind);
         func_8009D018((rec->field_18 >> 20) + 0x2b9c, 1);
         rec->field_14 = 0;
         rec->handle = 0;
@@ -932,7 +932,7 @@ void func_801742D4(CfMapItemManager* self) {
         rec->field_18 = (rec->field_18 & 0xFFFF) & ~0x2000;
     } else {
         // Event-driven respawn: read the timer column and arm the record.
-        func_801351C4(kind);
+        CUICfManager_queueGetItemMenu(kind);
         u8 secs = (u8)getBdatStringColumnValue((void*)lbl_eu_806640A8, &lbl_eu_805033C0[0x6a], lbl_eu_80664184);
         if (secs != 0) {
             // u32->double via the 0x43300000 scratch double.

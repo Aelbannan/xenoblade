@@ -139,7 +139,7 @@ bool CExchangeWin::OnFileEvent(CEventFile* pEventFile) {
     u16 keyVal = BdatGetU16ByTableKey(&lbl_eu_8050A740[0xc5], fileID, 0x2b);
     char* name = MakeTplNameSysFile(keyVal);
 
-    nw4r::lyt::ArcResourceAccessor* resAcc = func_801355F4();
+    nw4r::lyt::ArcResourceAccessor* resAcc = CUICfManager_getArcResourceAccessor();
     TPLPalette* resource =
         (TPLPalette*)resAcc->GetResource(0x74696D67, name, 0);
 

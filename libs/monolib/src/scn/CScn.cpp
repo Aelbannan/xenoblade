@@ -147,7 +147,7 @@ extern "C" CScn* __ct__CScn(CScn* self) {
 // Retail thunk: the IWorkEvent subobject at +0x54 delegates back to the
 // complete-object destructor with this-0x54.
 extern "C" void* __dt__4CScnFv(CScn* self, int flags);
-extern "C" void func_80496B04(void* pThis, int r4) {
+extern "C" void Scn_DtorThunk54(void* pThis, int r4) {
     __dt__4CScnFv((CScn*)((char*)pThis - 0x54), r4);
 }
 
@@ -246,63 +246,63 @@ void CScn::Draw() {
 }
 
 
-extern "C" bool func_80495E60(u8* self) {
+extern "C" bool Scn_IsAnimActiveOrNull(u8* self) {
     extern bool func_8048C8C4(void*, void*);
     if (self == 0) {
         return 1;
     }
     return func_8048C8C4(*(void**)((char*)*(void**)(self + 4) + 0x60), self);
 }
-extern "C" bool func_80495E84(u8* self) {
+extern "C" bool Scn_HasWorkItem(u8* self) {
     extern bool func_8048CB14(void*);
     return func_8048CB14(*(void**)((char*)self + 0x60));
 }
-extern "C" void* func_80495E8C(void* a, void* b, void* c, void* d) {
+extern "C" void* Scn_SetupAnim(void* a, void* b, void* c, void* d) {
     return simFwdAnimSetup102(a, b, c, d, 0);
 }
-extern "C" void func_80495E94(s32 param_1, s32 param_2) {
+extern "C" void Scn_SetupAnimDefault(s32 param_1, s32 param_2) {
     simFwdAnimSetup102((void*)param_1, (void*)param_2, (void*)-1, (void*)0, 0);
 }
-extern "C" int func_80495EA4(int a, int b) {
+extern "C" int Scn_ResetAnim(int a, int b) {
     return simFwdAnimReset(a, b, 8);
 }
-extern "C" void func_80495EAC() {
+extern "C" void Scn_InitGlobalA() {
     __ct__8049E710();
 }
-extern "C" void func_80495EB0() {
+extern "C" void Scn_InitGlobalB() {
     __ct__804820F8();
 }
-extern "C" void func_80495FC8(u8* self) {
+extern "C" void Scn_CallUnk8C_V6(u8* self) {
     VTarget* obj = (VTarget*)*(void**)((u8*)self + 140);
     obj->v6();
 }
-extern "C" void func_80495FDC(u8* self) {
+extern "C" void Scn_CallUnk8C_V7(u8* self) {
     VTarget* obj = (VTarget*)*(void**)((u8*)self + 140);
     obj->v7();
 }
-extern "C" void func_80495FF0(u8* self) {
+extern "C" void Scn_CallUnk8C_V9(u8* self) {
     VTarget* obj = (VTarget*)*(void**)((u8*)self + 140);
     obj->v9();
 }
-extern "C" void func_80496004(u8* self) {
+extern "C" void Scn_CallUnk8C_V10(u8* self) {
     VTarget* obj = (VTarget*)*(void**)((u8*)self + 140);
     obj->v10();
 }
-extern "C" void func_80496018(u8* self) {
+extern "C" void Scn_CallUnk8C_V8(u8* self) {
     VTarget* obj = (VTarget*)*(void**)((u8*)self + 140);
     obj->v8();
 }
-extern "C" void func_8049602C(void* p) {
+extern "C" void Scn_ReleaseUnk80(void* p) {
     func_8049C72C(*(int*)((u8*)p + 0x80));
 }
-extern "C" void* func_80496034(void* _this) {
+extern "C" void* Scn_GetUnk80Handle(void* _this) {
     return func_8049C794(*(void**)((char*)_this + 0x80));
 }
-extern "C" u32 func_8049603C(u8* self) {
+extern "C" u32 Scn_QueryUnk80State(u8* self) {
     extern u32 func_8049C7A8(u32);
     return func_8049C7A8(*(u32*)((char*)self + 0x80));
 }
-extern "C" bool func_80496044(u8* self) {
+extern "C" bool Scn_IsDefaultScale(u8* self) {
     extern void* func_8049C7A8(void*);
     bool result = false;
     if (func_8049C794(*(void**)((u8*)self + 0x80))) {
@@ -311,8 +311,8 @@ extern "C" bool func_80496044(u8* self) {
     }
     return result;
 }
-// Same shape as func_80496044 but an ordered >= compare against 1.0f.
-extern "C" bool func_804960A8(u8* self) {
+// Same shape as Scn_IsDefaultScale but an ordered >= compare against 1.0f.
+extern "C" bool Scn_IsScaleAtLeastOne(u8* self) {
     extern void* func_8049C7A8(void*);
     bool result = false;
     if (func_8049C794(*(void**)((u8*)self + 0x80))) {
@@ -321,10 +321,10 @@ extern "C" bool func_804960A8(u8* self) {
     }
     return result;
 }
-extern "C" void* func_80496110(u8* self) {
+extern "C" void* Scn_GetUnk80Resource(u8* self) {
     return func_8049C7B0(*(void**)((char*)self + 0x80));
 }
-extern "C" int func_80496118(void* _this) {
+extern "C" int Scn_GetCamWorkInt(void* _this) {
     return func_8049AED4(*(int*)((char*)_this + 0x68));
 }
 // Fetches the camera item for `id` and copies its +0x194 projection matrix
@@ -332,7 +332,7 @@ extern "C" int func_80496118(void* _this) {
 // LODMemMan rule): the hi-word temp is DECLARED first (colors r0 like
 // retail) while reads/stores run lo-word first (pins emission order); each
 // slot uses a fresh declaration pair so slots 1..7 keep the same colors.
-extern "C" void func_80496120(CScn* self, ScnCamParams* dest, s32 id) {
+extern "C" void Scn_CopyCamProjMatrix(CScn* self, ScnCamParams* dest, s32 id) {
     // Two-arg camera lookup (the TU-wide decl above is the 1-arg form kept
     // for the already-matched single-arg callers).
     extern ScnCamItemView* func_8049B158(void* camWork, s32 id);
@@ -397,7 +397,7 @@ extern "C" void func_80496120(CScn* self, ScnCamParams* dest, s32 id) {
 // Get the camera item handle, lazily creating id -1 when missing; returns
 // the item payload +0x9C (the sibling +0xCC variant mirrors it).
 extern "C" void* func_8049B1CC(void*);
-extern "C" void* func_804961D4(void* self) {
+extern "C" void* Scn_GetCamItem9C(void* self) {
     void* r = func_8049B1CC(*(void**)((u8*)self + 0x68));
     if (!r)
         r = ((void* (*)(void*, int))func_8049B1CC)(*(void**)((u8*)self + 0x68), -1);
@@ -405,24 +405,24 @@ extern "C" void* func_804961D4(void* self) {
 }
 
 // Sibling with the +0xCC payload offset.
-extern "C" void* func_8049621C(void* self) {
+extern "C" void* Scn_GetCamItemCC(void* self) {
     void* r = func_8049B1CC(*(void**)((u8*)self + 0x68));
     if (!r)
         r = ((void* (*)(void*, int))func_8049B1CC)(*(void**)((u8*)self + 0x68), -1);
     return (u8*)r + 0xCC;
 }
-extern "C" int func_80496264(void* _this) {
+extern "C" int Scn_FindCamItem(void* _this) {
     return func_8049B158(*(int*)((char*)_this + 0x68));
 }
-extern "C" bool func_8049626C(void* _this) {
+extern "C" bool Scn_HasCamItem(void* _this) {
     return func_8049B240(*(int*)((char*)_this + 0x68));
 }
-extern "C" void* func_80496274(void* _this) {
+extern "C" void* Scn_GetCamList(void* _this) {
     return func_8049B2C4(*(void**)((char*)_this + 0x68));
 }
-extern "C" void func_8049627C(u8* self, int arg) { func_8049B0A0(*(UnkScn68**)((char*)self + 0x68), (short)arg); }
+extern "C" void Scn_SetCamIndex(u8* self, int arg) { func_8049B0A0(*(UnkScn68**)((char*)self + 0x68), (short)arg); }
 // Scene time scale: PAL consoles without the speed fix run at 1.2x.
-float func_80496288(void* self_) {
+float Scn_GetFrameDelta(void* self_) {
     u8* self = (u8*)self_;
     int pal = 0;
     if (CDeviceVI::isTvFormatPal()) {
@@ -439,26 +439,26 @@ float func_80496288(void* self_) {
     return scale * mul;
 }
 // retail: lwz r3,0x84(r3); stfs f1,0xC(r3); blr
-void func_80496294(CScn* self, float v) {
+void Scn_SetTimeScale(CScn* self, float v) {
     ((ScnFloats*)*(void**)((u8*)self + 0x84))->unk0C = v;
 }
-extern "C" void func_804962A0(void* p, unsigned char v) {
+extern "C" void Scn_SetPauseFlag(void* p, unsigned char v) {
     ((unsigned char*)p)[0x3e5] = v;
 }
 // retail: stb r4,0x3e6(r3); blr
-extern "C" void func_804962A8(u8* self, u8 v) { self[0x3E6] = v; }
-extern "C" void func_8049695C(u8* self) {
+extern "C" void Scn_SetStopFlag(u8* self, u8 v) { self[0x3E6] = v; }
+extern "C" void Scn_CallUnk68_V3(u8* self) {
     VTarget* obj = (VTarget*)*(void**)((u8*)self + 104);
     obj->v3();
 }
-extern "C" void func_80496970(u8* self) {
+extern "C" void Scn_CallUnk60_V4(u8* self) {
     VTarget* obj = (VTarget*)*(void**)((u8*)self + 96);
     obj->v4();
 }
-extern "C" void func_80496984(u32 value) {
+extern "C" void Scn_SetCurrentScene(u32 value) {
     lbl_eu_80665908 = (CScn *)value;
 }
-extern "C" int func_8049698C() {
+extern "C" int Scn_GetCurrentScene() {
     return (int)lbl_eu_80665908;
 }
 extern "C" void func_8049B3FC();
@@ -468,11 +468,11 @@ void resetScriptCode__Fv(void) { func_8049B408(); }
 // Virtual dispatch target: v_i at vtable offset 8+4*i (MWCC RTTI header).
 
 
-extern "C" void func_eu_8049AB50(u8* self, unsigned char byte) {
+extern "C" void Scn_SetPalFixFlag(u8* self, unsigned char byte) {
     *(unsigned char*)((uintptr_t)self + 0x3e9) = byte;
 }
 
-extern "C" void func_8049699C(u8* self) {
+extern "C" void Scn_CallUnk8C_V11(u8* self) {
     VTarget* obj = (VTarget*)*(void**)((u8*)self + 0x8C);
     obj->v11();
 }

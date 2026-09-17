@@ -193,7 +193,7 @@ char lbl_eu_805095EC[] =
 // Kept inline (not promoted to CMCEffStart.hpp): see the NOTE in the header.
 extern "C" void func_80124270(nw4r::lyt::Pane*, u32);
 
-extern u32 func_801355BC();
+extern u32 CUICfManager_getPackedFont9C();
 
 // Minimal abstract mirror of the font object returned by
 // CDeviceFont::getFontInfo. Its slot 9 sits at vtable offset 0x24 and
@@ -350,7 +350,7 @@ void CMCEffUpPrm::init() {
         buildLayout__FPPQ34nw4r3lyt6LayoutPQ34nw4r3lyt19ArcResourceAccessorPCc(&unkStructure->layout, mArcResourceAccessor, &lbl_eu_805095EC[0xc4]);
         bindLayoutAnimTransform__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(unkStructure->layout, &unkStructure->animTrans, mArcResourceAccessor, &lbl_eu_805095EC[0xdb]);
         nw4r::lyt::Pane* rootPane = unkStructure->layout->GetRootPane();
-        func_8013676C(rootPane, (u32)func_801355BC());
+        func_8013676C(rootPane, (u32)CUICfManager_getPackedFont9C());
         unkStructure->layout->SetAnimationEnable(unkStructure->animTrans, true);
         unkStructure->layout->Animate(0);
     }

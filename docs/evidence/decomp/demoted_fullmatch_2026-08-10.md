@@ -70,7 +70,7 @@ Demoted 299 rows from FULL_MATCH -> NOT_STARTED (non-byte-identical bodies).
 | us-801ff2b4 | kyoshin/CPartyState | `func_801FD5F4` | func_801FD5F4 | 0x801FF2B4 |
 | us-801ff2bc | kyoshin/CPartyState | `func_801FD5FC` | func_801FD5FC | 0x801FF2BC |
 | us-80293800 | kyoshin/CSaveLoad | `CSaveLoad_onFile` | CSaveLoad_onFile | 0x80293800 |
-| us-802a26cc | kyoshin/CSkipTimer | `func_8029FF98` | func_8029FF98 | 0x802A26CC |
+| us-802a26cc | kyoshin/CSkipTimer | `CSkipTimerPrevKey` | CSkipTimerPrevKey | 0x802A26CC |
 | us-80297e6c | kyoshin/CTaskGameEvt | `func_80295870` | func_80295870 | 0x80297E6C |
 | us-80297e74 | kyoshin/CTaskGameEvt | `func_80295878` | func_80295878 | 0x80297E74 |
 | us-80297e7c | kyoshin/CTaskGameEvt | `func_80295880` | func_80295880 | 0x80297E7C |
@@ -105,12 +105,12 @@ Demoted 299 rows from FULL_MATCH -> NOT_STARTED (non-byte-identical bodies).
 | us-801678a0 | kyoshin/cf/CTaskREvent | `func_801666E4` | func_801666E4 | 0x801678A0 |
 | us-801678a8 | kyoshin/cf/CTaskREvent | `func_801666EC` | func_801666EC | 0x801678A8 |
 | us-801678b8 | kyoshin/cf/CTaskREvent | `func_801666FC` | func_801666FC | 0x801678B8 |
-| us-80169678 | kyoshin/cf/CTaskREvtSequence | `func_8016847C` | func_8016847C | 0x80169678 |
+| us-80169678 | kyoshin/cf/CTaskREvtSequence | `EvtSeqGetSharedState` | EvtSeqGetSharedState | 0x80169678 |
 | us-8016db34 | kyoshin/cf/CTaskREvtSequence | `func_8016C7D8` | func_8016C7D8 | 0x8016DB34 |
 | us-8016db3c | kyoshin/cf/CTaskREvtSequence | `func_8016C7E0` | func_8016C7E0 | 0x8016DB3C |
 | us-801a9830 | kyoshin/cf/CVision | `func_801A80FC` | func_801A80FC | 0x801A9830 |
 | us-800ab8dc | kyoshin/cf/CfCollCylinderImpl | `func_800AB010` | func_800AB010 | 0x800AB8DC |
-| us-8020acbc | kyoshin/cf/CfGimmick | `func_80208EDC` | func_80208EDC | 0x8020ACBC |
+| us-8020acbc | kyoshin/cf/CfGimmick | `CfGimmick_SetGlobalB8Value` | CfGimmick_SetGlobalB8Value | 0x8020ACBC |
 | us-80174c98 | kyoshin/cf/CfMapItemManager | `func_8017389C` | func_8017389C | 0x80174C98 |
 | us-80174ca0 | kyoshin/cf/CfMapItemManager | `func_801738A4` | func_801738A4 | 0x80174CA0 |
 | us-800ff17c | kyoshin/cf/CfObjectSelectorObj | `func_800FE694` | func_800FE694 | 0x800FF17C |
@@ -192,10 +192,10 @@ Demoted 299 rows from FULL_MATCH -> NOT_STARTED (non-byte-identical bodies).
 | us-80181364 | kyoshin/menu/CMenuZeal | `func_8017FF68` | func_8017FF68 | 0x80181364 |
 | us-8018136c | kyoshin/menu/CMenuZeal | `func_8017FF70` | func_8017FF70 | 0x8018136C |
 | us-8018dbb0 | kyoshin/menu/code_8018C5FC | `__ct__Q22cf17UnkClass_8018C5FCFv` | cf::UnkClass_8018C5FC::UnkClass_8018C5FC() | 0x8018DBB0 |
-| us-8020373c | kyoshin/menu/parts/CModelDispEquip | `func_80201A44` | func_80201A44 | 0x8020373C |
-| us-8020374c | kyoshin/menu/parts/CModelDispEquip | `func_80201A54` | func_80201A54 | 0x8020374C |
-| us-8020375c | kyoshin/menu/parts/CModelDispEquip | `func_80201A64` | func_80201A64 | 0x8020375C |
-| us-8020376c | kyoshin/menu/parts/CModelDispEquip | `func_80201A74` | func_80201A74 | 0x8020376C |
+| us-8020373c | kyoshin/menu/parts/CModelDispEquip | `ModelDispEquip_ThunkReplayAnims` | ModelDispEquip_ThunkReplayAnims | 0x8020373C |
+| us-8020374c | kyoshin/menu/parts/CModelDispEquip | `ModelDispEquip_ThunkSlotCmd` | ModelDispEquip_ThunkSlotCmd | 0x8020374C |
+| us-8020375c | kyoshin/menu/parts/CModelDispEquip | `ModelDispEquip_ThunkRefreshRef` | ModelDispEquip_ThunkRefreshRef | 0x8020375C |
+| us-8020376c | kyoshin/menu/parts/CModelDispEquip | `ModelDispEquip_ThunkClearAnimPtr` | ModelDispEquip_ThunkClearAnimPtr | 0x8020376C |
 | us-80169224 | kyoshin/realtimeevt/CREvtMem | `func_80168028` | func_80168028 | 0x80169224 |
 | us-80182e54 | kyoshin/realtimeevt/CREvtModelMap | `OnFileEvent__13CREvtModelMapFP10CEventFile` | CREvtModelMap::OnFileEvent(...*, 1, 0, C, E, v, e, n, t, int, long, e) | 0x80182E54 |
 | us-80182e5c | kyoshin/realtimeevt/CREvtModelMap | `func_80181A54` | func_80181A54 | 0x80182E5C |

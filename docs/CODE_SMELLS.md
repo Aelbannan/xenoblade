@@ -11,9 +11,9 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 
 | metric | count |
 |---|---|
-| extern "C" (total lines) | 17056 |
-| extern "C" declarations (non-lbl_*, imports) | 7665 |
-| extern "C" definitions (forced names) | 4382 |
+| extern "C" (total lines) | 17063 |
+| extern "C" declarations (non-lbl_*, imports) | 7664 |
+| extern "C" definitions (forced names) | 4390 |
 | `self`/register-style params | 13626 |
 | `void*` (params + locals) | 7658 |
 | raw pointer offset arithmetic | 7894 |
@@ -140,7 +140,7 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 | libs/monolib/src/scn/CLight.cpp | 0 | 2 | 10 | 1 | 20 | 4 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/scn/CMdlAnmEye.cpp | 2 | 2 | 8 | 3 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/scn/CMdlAnmUV.cpp | 3 | 2 | 4 | 3 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
-| libs/monolib/src/scn/CMdlDynamics.cpp | 65 | 44 | 87 | 42 | 49 | 33 | 0 | 1 | 1 | 0 | 0 | 0 |
+| libs/monolib/src/scn/CMdlDynamics.cpp | 64 | 45 | 87 | 42 | 49 | 33 | 0 | 1 | 1 | 0 | 0 | 0 |
 | libs/monolib/src/scn/CMdlLook.cpp | 4 | 1 | 1 | 2 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/scn/CMdlMaterial.cpp | 6 | 0 | 1 | 14 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/scn/CMdlMouth.cpp | 2 | 7 | 0 | 3 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
@@ -362,7 +362,7 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 | src/kyoshin/CTutorial.cpp | 0 | 3 | 3 | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/CTutorialList.cpp | 9 | 30 | 66 | 7 | 3 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/CUIBattleManager.cpp | 16 | 14 | 37 | 44 | 3 | 3 | 0 | 1 | 0 | 0 | 0 | 0 |
-| src/kyoshin/CUICfManager.cpp | 67 | 21 | 12 | 48 | 28 | 38 | 0 | 0 | 203 | 0 | 0 | 0 |
+| src/kyoshin/CUICfManager.cpp | 67 | 28 | 12 | 48 | 28 | 38 | 0 | 0 | 203 | 0 | 0 | 0 |
 | src/kyoshin/CUIErrMesWin.cpp | 6 | 5 | 27 | 11 | 2 | 2 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/CUIWindowManager.cpp | 20 | 40 | 28 | 27 | 0 | 28 | 0 | 0 | 103 | 0 | 0 | 0 |
 | src/kyoshin/action/CActParamAnim.cpp | 4 | 71 | 298 | 46 | 131 | 66 | 0 | 0 | 17 | 0 | 0 | 0 |
@@ -1603,8 +1603,8 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
  "libs/monolib/src/scn/CMdlDynamics.cpp": {
   "asm_insn_shim": 0,
   "deref_arith": 33,
-  "extern_c_nonlbl_decl": 65,
-  "extern_c_nonlbl_def": 44,
+  "extern_c_nonlbl_decl": 64,
+  "extern_c_nonlbl_def": 45,
   "goto_count": 1,
   "init_side_effect": 0,
   "ptr_arith": 49,
@@ -3871,7 +3871,7 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
   "asm_insn_shim": 0,
   "deref_arith": 38,
   "extern_c_nonlbl_decl": 67,
-  "extern_c_nonlbl_def": 21,
+  "extern_c_nonlbl_def": 28,
   "goto_count": 203,
   "init_side_effect": 0,
   "ptr_arith": 28,

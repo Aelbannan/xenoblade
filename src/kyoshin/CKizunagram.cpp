@@ -340,7 +340,7 @@ extern "C" __declspec(noinline) void func_802580CC(UnkKizunaLineBuild* self) {
         UnkKizunaRes59344* resScale =
             ((UnkKizunaObj59344*)res)->target((int)(str + 0xe3), 1);
         f32 scalePair[2];
-        func_80127BC4(scalePair, resScale->scale);
+        TagCopyVec2f(scalePair, resScale->scale);
         f32 scaled[3];
         kizScaleVec3(scaled, &posBase.x, lbl_eu_80668830);
         copyVEC3(&self->result18.x, scaled);
@@ -604,8 +604,8 @@ extern "C" __declspec(noinline) void freeLinePanes(UnkKizunaSelf59B18* self) {
     while (condEnd = (const wchar_t*)getContextStrPtr(ctx), condCur = cur,
            func_801276C8(&condCur, &condEnd)) {
         tmp = cur;
-        func_801276E0(&tmp, 0);
-        const wchar_t* s = func_80127670(&cur);
+        TagCtxAdvanceHead(&tmp, 0);
+        const wchar_t* s = TagCtxGetNodeHeader(&cur);
         nw4r::lyt::Pane* child = res->slot15((const char*)s + 0xbc, 1);
         ((nw4r::lyt::Pane*)res)->RemoveChild(child);
         // duplicated guard reproduces retail's paired beq (CSE'd load)
@@ -695,7 +695,7 @@ extern "C" __declspec(noinline) int func_8025949C(UnkKizunaSelf5949C* self) {
            func_801276C8(&condCur, &condEnd)) {
         UnkKizunaVec3 work = linePos;   // refreshed every pass
         const UnkKizunaCtxItem* item =
-            reinterpret_cast<const UnkKizunaCtxItem*>(func_80127670(&cur));
+            reinterpret_cast<const UnkKizunaCtxItem*>(TagCtxGetNodeHeader(&cur));
         // retail materializes the item position copy (@0x6c) before the
         // delta temp (@0x48), then adds into work in place
         UnkKizunaVec3 itemPos = item->pos;
@@ -710,7 +710,7 @@ extern "C" __declspec(noinline) int func_8025949C(UnkKizunaSelf5949C* self) {
             UnkKizunaVec3 scaled;
             f32 snapA[2] = { lbl_eu_80668834, lbl_eu_80668834 };
             const UnkKizunaCtxItem* it2 =
-                reinterpret_cast<const UnkKizunaCtxItem*>(func_80127670(&cur));
+                reinterpret_cast<const UnkKizunaCtxItem*>(TagCtxGetNodeHeader(&cur));
             CMenuArtsSet_setPaneScale((UnkKizunaFunc31848Obj*)it2,
                           reinterpret_cast<const UnkKizunaPair*>(&snapA[0]));
             kizScaleVec3(&scaled.x, &work.x, lbl_eu_80668830);
@@ -721,7 +721,7 @@ extern "C" __declspec(noinline) int func_8025949C(UnkKizunaSelf5949C* self) {
                 (lbl_eu_80668854 + lbl_eu_80668854) *
                     (lbl_eu_80668854 + lbl_eu_80668854)) {
                 const UnkKizunaCtxItem* it3 =
-                    reinterpret_cast<const UnkKizunaCtxItem*>(func_80127670(&cur));
+                    reinterpret_cast<const UnkKizunaCtxItem*>(TagCtxGetNodeHeader(&cur));
                 // the item's name lives at +0xBC of the context item
                 self->field26 =
                     findKizByName(self, reinterpret_cast<const char*>(it3) + 0xBC);
@@ -734,10 +734,10 @@ extern "C" __declspec(noinline) int func_8025949C(UnkKizunaSelf5949C* self) {
         } else {
             f32 far_[2] = { lbl_eu_8066884C, lbl_eu_8066884C };
             const UnkKizunaCtxItem* it4 =
-                reinterpret_cast<const UnkKizunaCtxItem*>(func_80127670(&cur));
+                reinterpret_cast<const UnkKizunaCtxItem*>(TagCtxGetNodeHeader(&cur));
             CMenuArtsSet_setPaneScale((UnkKizunaFunc31848Obj*)it4,
                           reinterpret_cast<const UnkKizunaPair*>(&far_[0]));
-            func_801276E0(&cur, 0);
+            TagCtxAdvanceHead(&cur, 0);
         }
     }
     // list exhausted: ease toward the pane's registered position.
@@ -751,7 +751,7 @@ extern "C" __declspec(noinline) int func_8025949C(UnkKizunaSelf5949C* self) {
     UnkKizunaRes59344* reg2 = ((UnkKizunaObj59344*)linePane)->target(
         (int)(lbl_eu_8050CB20 + 0xe3), 1);
     f32 sz[2];
-    func_80127BC4(sz, reg2->scale);
+    TagCopyVec2f(sz, reg2->scale);
     f32 rad = lbl_eu_8066884C * (sz[0] - lbl_eu_80668858);
     f32 distSq2 = -eased.y * -eased.y + -eased.x * -eased.x;
     if (distSq2 <= (rad + rad) * (rad + rad)) {
@@ -905,7 +905,7 @@ extern "C" __declspec(noinline) void func_80259394(UnkKizunaSelf59394* self,
         self->field0C->field10->target((int)(lbl_eu_8050CB20 + 0xa4), 1);
     UnkKizunaVec3 pos = res->pos;      // word-copy of the animated position
     f32 size[2];
-    func_80127BC4(size, res->scale);  // copy the pane's current size pair
+    TagCopyVec2f(size, res->scale);  // copy the pane's current size pair
     // Statement order is load-bearing for byte-identity (MWCC scheduling):
     // x offset, both C1-scaled bounds, y offset, then the two C2 bounds.
     // The `arg` parameter must stay non-const: const-qualified TBAA changes
@@ -1287,7 +1287,7 @@ extern "C" __declspec(noinline) void buildInfoLayout(UnkKizunaSelfB670* self) {
     void* fontObj = getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1, self->field8);
     u32 fontResult = static_cast<UnkKizunaFontView*>(fontObj)->vf7();
     func_8013676C(rootPane, fontResult);
-    u32 val = func_801355BC();
+    u32 val = CUICfManager_getPackedFont9C();
     setLayoutTextBoxFont(self->field8, lbl_eu_8050CB20 + 0xb5d, val);
     setLayoutTextBoxFont(self->field8, lbl_eu_8050CB20 + 0xb6b, val);
     setLayoutTextBoxFont(self->field8, lbl_eu_8050CB20 + 0xb79, val);
@@ -1406,23 +1406,23 @@ extern "C" __declspec(noinline) void func_8025BA38(UnkKizunaSelf57D90* selfArg,
     char* texName = NULL;
     switch (MapValueToRank6(colIdx)) {
     case 1:
-        texName = ((UnkKizunaAccBA38*)func_801355F4())
+        texName = ((UnkKizunaAccBA38*)CUICfManager_getArcResourceAccessor())
                       ->getTex(0x74696d67, lbl_eu_8050CB20 + 0xc22, 0);
         break;
     case 2:
-        texName = ((UnkKizunaAccBA38*)func_801355F4())
+        texName = ((UnkKizunaAccBA38*)CUICfManager_getArcResourceAccessor())
                       ->getTex(0x74696d67, lbl_eu_8050CB20 + 0xc3d, 0);
         break;
     case 3:
-        texName = ((UnkKizunaAccBA38*)func_801355F4())
+        texName = ((UnkKizunaAccBA38*)CUICfManager_getArcResourceAccessor())
                       ->getTex(0x74696d67, lbl_eu_8050CB20 + 0xc58, 0);
         break;
     case 4:
-        texName = ((UnkKizunaAccBA38*)func_801355F4())
+        texName = ((UnkKizunaAccBA38*)CUICfManager_getArcResourceAccessor())
                       ->getTex(0x74696d67, lbl_eu_8050CB20 + 0xc73, 0);
         break;
     case 5:
-        texName = ((UnkKizunaAccBA38*)func_801355F4())
+        texName = ((UnkKizunaAccBA38*)CUICfManager_getArcResourceAccessor())
                       ->getTex(0x74696d67, lbl_eu_8050CB20 + 0xc8e, 0);
         break;
     }
@@ -2125,7 +2125,7 @@ __declspec(noinline) void func_80257B6C(UnkKizunaSelf57B6C* self) {
             f32 sx = lbl_eu_8066882C - sc.x;
             f32 sy = lbl_eu_8066882C - sc.y;
             f32 tmp[2];
-            func_80127BC4(tmp, self->field14);
+            TagCopyVec2f(tmp, self->field14);
             tmp[0] *= sx;
             tmp[1] *= sy;
             nw4r::lyt::Pane* pane = self->field8->GetRootPane()->FindPaneByName(
@@ -2141,13 +2141,13 @@ __declspec(noinline) void func_80257B6C(UnkKizunaSelf57B6C* self) {
             nw4r::lyt::Pane* paneA = self->field8->GetRootPane()->FindPaneByName(
                 strbase + 0x13, 1);
             f32 sa[2];
-            func_80127BC4(sa, const_cast<f32*>(&paneA->GetSize().width));
+            TagCopyVec2f(sa, const_cast<f32*>(&paneA->GetSize().width));
             nw4r::lyt::Pane* paneB = self->field8->GetRootPane()->FindPaneByName(
                 strbase + 0x1d, 1);
             f32 sb[2];
-            func_80127BC4(sb, const_cast<f32*>(&paneB->GetSize().width));
+            TagCopyVec2f(sb, const_cast<f32*>(&paneB->GetSize().width));
             f32 sc2[2];
-            func_80127BC4(sc2, const_cast<f32*>(&c->GetSize().width));
+            TagCopyVec2f(sc2, const_cast<f32*>(&c->GetSize().width));
             sb[0] -= sa[0];
             sb[1] -= sa[1];
             f32 rx = sb[0] / sc2[0];

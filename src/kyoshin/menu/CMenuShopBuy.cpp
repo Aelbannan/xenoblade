@@ -272,7 +272,7 @@ void CMenuShopBuy::Init() {
     func_801EDA4C(reinterpret_cast<CItemBoxLine*>(mItemBoxLine), 7);
     func_801EDA4C(reinterpret_cast<CItemBoxLine*>(mItemBoxLine), 8);
     func_801EDA4C(reinterpret_cast<CItemBoxLine*>(mItemBoxLine), 0xd);
-    func_801ED31C(reinterpret_cast<CItemBoxLine*>(mItemBoxLine));
+    ItemBoxLine_LoadFiles(reinterpret_cast<CItemBoxLine*>(mItemBoxLine));
 
     IScnRender* cb = reinterpret_cast<IScnRender*>(this);
     if (this != 0) {
@@ -327,7 +327,7 @@ void CMenuShopBuy::Move() {
     }
 
     func_801C3D54(&mBgTex);
-    func_801ED3E8(reinterpret_cast<CItemBoxLine*>(mItemBoxLine));
+    ItemBoxLine_UpdateStates(reinterpret_cast<CItemBoxLine*>(mItemBoxLine));
     func_801C3FF0(&mTitleAHelp);
 }
 

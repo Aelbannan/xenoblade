@@ -2669,7 +2669,7 @@ extern "C" void LoadItemBoxFiles(void* self, int r4) {
     *(u32*)(p + 0x2c) = (u32)readFile__11CDeviceFileFUlPCcP10IWorkEventii((u32)allocHandle, strs + 0x27e, self, 0, 0);
 
     if (p[0x543]) {
-        allocHandle = (void*)func_800A9D90();
+        allocHandle = (void*)KyoshinHeap_GetField44();
         *(u32*)(p + 0x30) = (u32)readCommonArchiveFile__11CDeviceFileFUlPCcP10IWorkEventii((u32)allocHandle, strs + 0x297, self, 0, 0);
 
         allocHandle = getHandleMEM2__Q23mtl10MemManagerFv();
@@ -5576,7 +5576,7 @@ void func_801C4BB4(void* self) {
                 }
             } else {
                 // Fallback: no base name and no teach key - check ability slots
-                u32 obj = (u32)func_801412D0((u16)id);
+                u32 obj = (u32)UIWin_BuildFlagBuf((u16)id);
                 if (!func_80140854((CItemQuery*)obj, 0, 0)) {
                     if ((u8)BdatGetU8Direct((u32)tbl, &XB_K[0xd], (u16)id) == 2) XB_PUSH(tbl, 0x1a);
                 }
@@ -5716,7 +5716,7 @@ extern "C" int OnFileEvent__12CItemBoxGridFP10CEventFile(void* self, void* event
     u32 screenW = (u32)getPackedFont__Fv();
     setLayoutTextBoxFont__FPQ34nw4r3lyt6LayoutPcUl(layout, (char*)&lbl_eu_8050566C[0x55d], screenW);
     setLayoutTextBoxFont__FPQ34nw4r3lyt6LayoutPcUl(layout, (char*)&lbl_eu_8050566C[0x53e], screenW);
-    u32 screenH = (u32)func_801355BC();
+    u32 screenH = (u32)CUICfManager_getPackedFont9C();
     u8 i;
     for (i = 1; i <= 0x1e; i++) {
         char nameBuf[0x20];
@@ -5744,7 +5744,7 @@ extern "C" int OnFileEvent__12CItemBoxGridFP10CEventFile(void* self, void* event
     if (isClassicController__Q22cf13CfGameManagerFv(-1)) modeStr = &lbl_eu_8050566C[0x6dd];
     u16 msgKey = BdatGetU16ByTableKey(&lbl_eu_8050566C[0x6ef], modeStr, 0x49);
     u32 msgId = (u32)MakeTplNameSysFile(msgKey);
-    void* sysWin = func_801355F4();
+    void* sysWin = CUICfManager_getArcResourceAccessor();
     void* texRes = ((nw4r::lyt::ArcResourceAccessor*)sysWin)->GetResource(0x74696D67, (const char*)msgId, 0);
     if (texRes != NULL) {
         PaneSetTexPaletteByName(layout, (void*)&lbl_eu_8050566C[0x6fd], texRes);
@@ -5804,7 +5804,7 @@ extern "C" int OnFileEvent__12CItemBoxGridFP10CEventFile(void* self, void* event
     code80135FDC_setVec3((float*)&vecMax, lbl_eu_80667F98, lbl_eu_80667F94, lbl_eu_80667F34);
     func_801D24E8(p + 0x88, vecMax, vecMin);
     u8 cur18Buf[0x18];
-    __ct__CCur18(cur18Buf, func_801355F4());
+    __ct__CCur18(cur18Buf, CUICfManager_getArcResourceAccessor());
     func_8018B0FC(p + 0xa0, cur18Buf);
     __dt__6CCur18Fv(cur18Buf, -1);
     ((CBaseCur*)(p + 0xa0))->initLayout();

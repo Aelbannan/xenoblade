@@ -1,5 +1,5 @@
 #include "kyoshin/CUICfManager.hpp"
-#include "libs/monolib/src/scn/CScn_8049603C.hpp" // func_8049603C (single owner decl)
+#include "libs/monolib/src/scn/CScn_8049603C.hpp" // Scn_QueryUnk80State (single owner decl)
 #include "kyoshin/cf/CfGameManager.hpp"
 
 // --- CTTask<CUICfManager> out-of-line specializations ---
@@ -254,19 +254,19 @@ int lbl_eu_80664050;
 int func_80138138(int);
 u32 code80135FDC_setByte_6407F(u8);
 int func_8014A1D4(void*, u32, u8, int);
-// Menu factories used by the func_80133A08-family create helpers below.
+// Menu factories used by the CUICfManager_queueQuestLogMenu-family create helpers below.
 u32 func_8029BB24(CUICfUnk144*, u32, u32);
 u32 func_8014A11C(CUICfUnk144*, u32, u32);
 u32 func_8011CCE0(CUICfUnk144*, u32, u32);
 u32 func_802AC494(CUICfUnk144*, u32, u32);
 u32 __ct__CMenuItem(CUICfUnk144*, u32, u32, u32);
-// Additional menu factories used by the func_80133A08-family create helpers.
+// Additional menu factories used by the CUICfManager_queueQuestLogMenu-family create helpers.
 u32 __ct__CMenuPause(CUICfUnk144*, u32);
-// 6-arg factory: (ctx, scene, a, b, y, x) - func_80135464 forwards its two
+// 6-arg factory: (ctx, scene, a, b, y, x) - CUICfManager_queueFadeMenu forwards its two
 // dead int params as args 3/4 (retail materializes them in the prologue).
 u32 func_80113C84(CUICfUnk144*, u32, u32, u32, f32, f32);
 u32 func_802514D4(CUICfUnk144*, u32);
-// Menu factories used by the func_80133CA0-family queue helpers below.
+// Menu factories used by the CUICfManager_queueSkipTimerMenu-family queue helpers below.
 // Local flat decls (same caller-shape as the defining TUs' headers:
 // CMenuSkipTimer.hpp / CMenuShopSell.hpp / CMenuPTState.cpp /
 // CMenuMakeCrystal.cpp); including those headers here would pull
@@ -277,25 +277,25 @@ u32 func_8018C104(u32, u32, u32);
 void* __ct__CMenuPTState(u32, u32);
 u32 func_8021240C(CUICfUnk144*, u32);
 void* __ct__CMenuArtsSet(u32, u32);
-// Factories for the remaining queue helpers (func_80134460 family); same
+// Factories for the remaining queue helpers (CUICfManager_queueMapSelectMenu family); same
 // caller-shape as the defining TUs' flat decls.
 u32 __ct__CMenuMapSelect(CUICfUnk144*, u32);
 u32 func_8025728C(CUICfUnk144*, u32, u32);
 u32 func_80252C60(CUICfUnk144*, u32);
 u32 func_802638D0(CUICfUnk144*, u32);
-u32 func_80270308(CUICfUnk144*, u32);
+u32 PlayAward_CreateMenu(CUICfUnk144*, u32);
 u32 func_80272414(CUICfUnk144*, u32);
 // cpp-only imports: declared here rather than in the .hpp because other
 // headers declare these same flat symbols with different signatures
 // (func_80124B78: CMenuQstCnt.hpp int vs CMainMenu.hpp u32; func_8029A5DC:
-// CMenuTutorial.hpp C++ member; func_8049603C: CTaskGame.hpp/code_80135FDC.hpp
+// CMenuTutorial.hpp C++ member; Scn_QueryUnk80State: CTaskGame.hpp/code_80135FDC.hpp
 // CScn* arg; getUnk80664658: CfGimmick.hpp vs CMainMenu.hpp already differ;
 // lbl_eu_80663E14: CScn* in CTaskGame.hpp/code_80135FDC.hpp), so a header
 // declaration would break TUs that co-include those headers.
 extern "C" {
 u32 func_80124B78();
 void* func_8029A5DC(void* self, u32 parent, u32 arg2);
-// Local complete type for func_8049603C's result (canonical name per
+// Local complete type for Scn_QueryUnk80State's result (canonical name per
 // CfGameManager.hpp fwd-decl; layout matches CTaskGame.hpp's view exactly).
 struct CTaskGameCamView {
     u32 field_0x0;
@@ -310,7 +310,7 @@ void* __ct__8011C1B8(void* ctx, u32 scene);
 // lbl_eu_80663E14 comes from CfGameManagerData.hpp (CScn*) - no local redecl.
 }
 
-// Busy/state probe called by func_80134538 with the singleton as its arg
+// Busy/state probe called by CUICfManager_queueWorldMapMenu with the singleton as its arg
 // (retail passes the just-loaded singleton through r3). noinline keeps
 // the retail bl (MWCC would fold the trivial body otherwise).
 int __declspec(noinline) func_80135D04(CUICfManagerCreateView* singleton) {
@@ -354,7 +354,7 @@ int __declspec(noinline) func_80135D04(CUICfManagerCreateView* singleton) {
     // Best-known shape: 4-insn residual is an F0/F1 rename in this tail
     // (retail colors field_C->f1, const->f0). Every const-first ordering
     // spills f31 (stfd/psq_st prologue) - MWCC coloring cap, not steerable.
-    f32 v = ((float*)func_8049603C((CScn*)lbl_eu_80663E14))[3];
+    f32 v = ((float*)Scn_QueryUnk80State((CScn*)lbl_eu_80663E14))[3];
     f32 c = lbl_eu_806672C8;
     return (c - v) < c;
 }
@@ -362,7 +362,7 @@ int __declspec(noinline) func_80135D04(CUICfManagerCreateView* singleton) {
 u32 __ct__CMenuGCItem(CUICfUnk144*, u32, u8);
 u32 func_8014A064(CUICfUnk144*, u32, u16);
 u32 func_8028E3B4(CUICfUnk144*, u32, u32, u32, u32);
-void func_8013DA60(int, int, int);
+void UIWin_CreateQuestWin(int, int, int);
 void* func_8009EC9C(u16);
 // Same caller-shape as the decl in include/kyoshin/cf/CfGameManager.hpp
 // (defining TU: cf/CtrlObjectParam.cpp); declared here because including
@@ -446,7 +446,7 @@ range_221_607: {
         goto end;
     }
 
-    func_8013DA60(lbl_eu_80664050, 1, 0);
+    UIWin_CreateQuestWin(lbl_eu_80664050, 1, 0);
 
     idTable = *(const CUICfIdTable*)lbl_eu_804FFFDC;
     {
@@ -638,7 +638,7 @@ end:
 #include "monolib/device/CDeviceVI.hpp"
 
 // Flat retail symbol (Move calls it by the unmangled name).
-extern "C" u32 func_80133770();
+extern "C" u32 CUICfManager_queueBaseMenu();
 extern "C" u32 func_801338C8(CUICfManager*);
 extern "C" {
 u32 lbl_eu_80663E24;
@@ -665,7 +665,7 @@ void* CTaskGame_enumListGet(CUICfEnumListHolder*); // returns holder->list
 void __dt__80043E88(CUICfEnumListHolder*, s16);
 void func_800F4A98(void* list, int type, int);
 void* __ct__800FB044(void* list, f32, void* obj, int);
-void* func_80496264(void* obj, int index);
+void* Scn_FindCamItem(void* obj, int index);
 void* func_800F6EC0(void* list, int index); // &slot -> has +0x4 object ptr
 void* func_800F6E98(void* list, int index); // *slot -> object*
 int lookupWorkAtAddr(void*);
@@ -739,7 +739,7 @@ void CUICfManager::Move() {
             volatile u16* fp = &mFlags;
             *fp = (u16)(*fp & ~0x1); // rlwinm ...,16,30
         }
-        func_80133770();
+        CUICfManager_queueBaseMenu();
         goto after_flags;
     }
     if ((flags & 0x4) != 0) {
@@ -1028,7 +1028,7 @@ after_flags:
     list = CTaskGame_enumListGet(&holder);
     __ct__800FB044(list, lbl_eu_806672CC, partyHandle, 0);
 
-    pose = func_80496264((void*)unk11C, -1);
+    pose = Scn_FindCamItem((void*)unk11C, -1);
     posA[0] = *reinterpret_cast<f32*>((u8*)pose + 0x10c);
     posA[1] = *reinterpret_cast<f32*>((u8*)pose + 0x110);
     posA[2] = *reinterpret_cast<f32*>((u8*)pose + 0x114);
@@ -1200,11 +1200,11 @@ unlink_done:
     }
 }
 
-// func_8013314C: when no file handle is loaded, copy the 12-byte event
+// CUICfManager_initEventTriplet: when no file handle is loaded, copy the 12-byte event
 // triplet (lbl_eu_8052E294) onto self+0x3C. The pair copy stores w1 before
 // w0 (retail lwzu/lwz + reversed stw pair + trailing word).
 extern u32 lbl_eu_8052E294[3];
-extern "C" void func_8013314C(CUICfManager* self) {
+extern "C" void CUICfManager_initEventTriplet(CUICfManager* self) {
     if (*(void**)((u8*)self + 0x114) != 0) {
         return;
     }
@@ -1218,18 +1218,18 @@ extern "C" void func_8013314C(CUICfManager* self) {
     dst[0] = w0;
     dst[2] = src[2];
 }
-void CUICfManager_func_33178(){}
-int CUICfManager_prepareMenus(){
+extern "C" void CUICfManager_emptyStub() {}
+extern "C" int CUICfManager_prepareMenus() {
     CUICfManager* m = (CUICfManager*)lbl_eu_80664054;
     if (m == 0) return 0;
     return m->prepareMenus();
 }
-void CUICfManager_setTimeout30(){
+extern "C" void CUICfManager_setTimeout30() {
     if (lbl_eu_80664054 != 0) {
         static_cast<CUICfManager*>(lbl_eu_80664054)->setTimeout30();
     }
 }
-void CUICfManager_setFlags(int value){
+extern "C" void CUICfManager_setFlagState(int value) {
     if (lbl_eu_80664054 == 0) return;
     CUICfManager* manager = static_cast<CUICfManager*>(lbl_eu_80664054);
     manager->setFlagState(value != 0);
@@ -1242,11 +1242,11 @@ void* CUICfManager_getPackedFont9C(){
     CUICfManager* m = (CUICfManager*)lbl_eu_80664054;
     return m == 0 ? 0 : m->getPackedFont9C();
 }
-void* CUICfManager_getPackedFontD8(){
+extern "C" void* CUICfManager_getPackedFontD8() {
     CUICfManager* m = (CUICfManager*)lbl_eu_80664054;
     return m == 0 ? 0 : m->getPackedFontD8();
 }
-void* CUICfManager_getField5C(){
+extern "C" void* CUICfManager_getArcResourceAccessor() {
     CUICfManager* m = (CUICfManager*)lbl_eu_80664054;
     return m == 0 ? 0 : m->getArcResourceAccessor();
 }
@@ -1254,19 +1254,19 @@ void* CUICfManager_getField5C(){
 // extern "C" here makes the C++ definition emit the flat retail symbol.
 extern "C" int CUICfManager_tryResetFreeSlot(u8* base);
 
-int func_80135610() {
+int CUICfManager_tryResetSlots() {
     CUICfManager* m = static_cast<CUICfManager*>(lbl_eu_80664054);
     if (m == 0) {
         return 0;
     }
     return CUICfManager_tryResetFreeSlot(reinterpret_cast<u8*>(reinterpret_cast<CUICfManagerSlotView*>(m)->slots));
 }
-// func_80135630: like func_80135610 but forwards its first argument (the
+// CUICfManager_claimSlotByTemplate: like CUICfManager_tryResetSlots but forwards its first argument (the
 // caller's this) as the src arg of the template-copy claim func_80130720.
 // Declaring func_80130720 extern "C" makes its C++ definition emit the
 // flat retail symbol.
 extern "C" int func_80130720(u8* base, CUICfSrcCopyView* src);
-extern "C" int func_80135630(CUICfSrcCopyView* src) {
+extern "C" int CUICfManager_claimSlotByTemplate(CUICfSrcCopyView* src) {
     CUICfManager* m = static_cast<CUICfManager*>(lbl_eu_80664054);
     if (m == 0) {
         return 0;
@@ -1274,10 +1274,10 @@ extern "C" int func_80135630(CUICfSrcCopyView* src) {
     return func_80130720(
         reinterpret_cast<u8*>(reinterpret_cast<CUICfManagerSlotView*>(m)->slots), src);
 }
-// func_80135654: forwards all five args to the 5-id slot claim
+// CUICfManager_claimSlotByIds: forwards all five args to the 5-id slot claim
 // func_80130960 after the null gate (retail shifts the arg registers up).
 extern "C" int func_80130960(u8* base, u16 a1, u16 a2, u16 a3, u16 a4, u16 a5);
-extern "C" int func_80135654(u16 a1, u16 a2, u16 a3, u16 a4, u16 a5) {
+extern "C" int CUICfManager_claimSlotByIds(u16 a1, u16 a2, u16 a3, u16 a4, u16 a5) {
     CUICfManager* m = static_cast<CUICfManager*>(lbl_eu_80664054);
     if (m == 0) {
         return 0;
@@ -1286,10 +1286,10 @@ extern "C" int func_80135654(u16 a1, u16 a2, u16 a3, u16 a4, u16 a5) {
         reinterpret_cast<u8*>(reinterpret_cast<CUICfManagerSlotView*>(m)->slots),
         a1, a2, a3, a4, a5);
 }
-// func_80135694: forwards both args (id, state) to the slot claim
+// CUICfManager_claimSlotByIdState: forwards both args (id, state) to the slot claim
 // func_80130B74 after the null gate (retail: or r5,r4,r4; or r4,r3,r3).
 extern "C" int func_80130B74(u8* base, u16 id, u8 state);
-extern "C" int func_80135694(u16 id, u8 state) {
+extern "C" int CUICfManager_claimSlotByIdState(u16 id, u8 state) {
     CUICfManager* m = static_cast<CUICfManager*>(lbl_eu_80664054);
     if (m == 0) {
         return 0;
@@ -1297,11 +1297,11 @@ extern "C" int func_80135694(u16 id, u8 state) {
     return func_80130B74(
         reinterpret_cast<u8*>(reinterpret_cast<CUICfManagerSlotView*>(m)->slots), id, state);
 }
-// func_801356BC: forwards its first argument as the (u16) second arg of the
+// CUICfManager_claimSlotFormatted: forwards its first argument as the (u16) second arg of the
 // sprintf-based slot claim func_80130D80 (same null-gate shape as the other
 // slot helpers).
 extern "C" int func_80130D80(u8* base, u16 arg1);
-extern "C" int func_801356BC(u16 arg1) {
+extern "C" int CUICfManager_claimSlotFormatted(u16 arg1) {
     CUICfManager* m = static_cast<CUICfManager*>(lbl_eu_80664054);
     if (m == 0) {
         return 0;
@@ -1309,9 +1309,9 @@ extern "C" int func_801356BC(u16 arg1) {
     return func_80130D80(
         reinterpret_cast<u8*>(reinterpret_cast<CUICfManagerSlotView*>(m)->slots), arg1);
 }
-// func_801356E0: same two-arg forward to func_80130F98 (slot claim with id + arg).
+// CUICfManager_claimSlotByTwoIds: same two-arg forward to func_80130F98 (slot claim with id + arg).
 extern "C" int func_80130F98(u8* base, u16 a1, u16 a2);
-extern "C" int func_801356E0(u16 a1, u16 a2) {
+extern "C" int CUICfManager_claimSlotByTwoIds(u16 a1, u16 a2) {
     CUICfManager* m = static_cast<CUICfManager*>(lbl_eu_80664054);
     if (m == 0) {
         return 0;
@@ -1319,7 +1319,7 @@ extern "C" int func_801356E0(u16 a1, u16 a2) {
     return func_80130F98(
         reinterpret_cast<u8*>(reinterpret_cast<CUICfManagerSlotView*>(m)->slots), a1, a2);
 }
-extern "C" int func_80135898() {
+extern "C" int CUICfManager_hasInUseSlot() {
     CUICfManager* inst = (CUICfManager*)lbl_eu_80664054;
     if (inst == 0) {
         return 0;
@@ -1335,7 +1335,7 @@ extern "C" int func_80135898() {
     }
     return 0;
 }
-void CUICfManager_setFieldC8C(u8 value){
+extern "C" void CUICfManager_setMessageWindowVisible(u8 value) {
     CUICfManager* m = (CUICfManager*)lbl_eu_80664054;
     if (m == NULL)
         return;
@@ -1382,7 +1382,7 @@ extern "C" void func_8012FFB4(u8* base) {
             }
         }
         {
-            f32 v = ((float*)func_8049603C((CScn*)lbl_eu_80663E14))[3];
+            f32 v = ((float*)Scn_QueryUnk80State((CScn*)lbl_eu_80663E14))[3];
             f32 c = lbl_eu_806672C8;
             if ((c - v) < c) {
                 return;
@@ -1416,7 +1416,7 @@ extern "C" void func_8012FFB4(u8* base) {
         }
     switch (slot->field_0x00) {
     case 0:
-        func_8013E8E0(1);
+        UIWin_CreatePTChange(1);
         break;
     case 1: {
         inst = (CUICfManagerCreateView*)lbl_eu_80664054;
@@ -1462,24 +1462,24 @@ extern "C" void func_8012FFB4(u8* base) {
         break;
     }
     case 3:
-        func_8013E424(reinterpret_cast<u8*>(&slot->block_04), 1);
+        UIWin_CreateB4790Win(reinterpret_cast<u8*>(&slot->block_04), 1);
         break;
     case 2: {
         // Retail holds 1 in one reg (arg6 immediate), copies it to r9/r10.
         int one;
         one = 1;
-        func_8013E2E0(slot->field_D8, slot->field_DA, slot->field_DC, slot->field_DE,
+        UIWin_CreateItemMulti(slot->field_D8, slot->field_DA, slot->field_DC, slot->field_DE,
                       slot->field_E0, 1, one, one, 0);
         break;
     }
     case 4:
-        func_8013DA60(slot->field_E2, slot->field_E4, 1);
+        UIWin_CreateQuestWin(slot->field_E2, slot->field_E4, 1);
         break;
     case 5:
-        func_8013D55C(slot->str_E6, 0, 1);
+        UIWin_CreateSysWin0(slot->str_E6, 0, 1);
         break;
     case 6:
-        func_8013D688(slot->str_E6, slot->str_126, 0, 1);
+        UIWin_CreateSysWin1(slot->str_E6, slot->str_126, 0, 1);
         break;
     default:
         break;
@@ -2205,7 +2205,7 @@ extern "C" void func_80131820(u8* base) {
 // pool, and re-installs the move/draw PTMFs from lbl_eu_8052E288.
 // ---------------------------------------------------------------------------
 // Retail keeps a flat unmangled ctor symbol, so the constructor is written as
-// a global function (CQuestWindow idiom); the creator func_801336E4 calls the
+// a global function (CQuestWindow idiom); the creator CUICfManager_createInstance calls the
 // literal retail name.
 extern "C" void* __ct__CUICfManager(CUICfManager* self, CScnNw4r* pScene,
                                     mtl::ALLOC_HANDLE mHandle) {
@@ -2279,7 +2279,7 @@ extern "C" void* __ct__CUICfManager(CUICfManager* self, CScnNw4r* pScene,
     this_->unkC88[0] = 0;                            // 0xC8C
     this_->mFlags = 0;                               // 0xC90
     this_->unk138 = (CUICfListNode*)mtl::MemManager::allocate_array(
-        0x90, func_80496004((CScn*)pScene));
+        0x90, Scn_CallUnk8C_V10((CScn*)pScene));
     this_->unk13C = 0xc;
     for (u32 i = 0; i < 0xc; i++) {
         this_->unk138[i].next = NULL;
@@ -2291,7 +2291,7 @@ extern "C" void* __ct__CUICfManager(CUICfManager* self, CScnNw4r* pScene,
 // caller passes -1, allocate the 0xC94-byte instance from the work heap,
 // construct it, cache it in the global singleton slot, register it under
 // pParent, and return the cached slot value.
-extern "C" CUICfManager* func_801336E4(CProcess* pParent, CScnNw4r* pScene,
+extern "C" CUICfManager* CUICfManager_createInstance(CProcess* pParent, CScnNw4r* pScene,
                                        mtl::ALLOC_HANDLE mHandle) {
     if ((u32)mHandle == 0xFFFFFFFF) {
         mHandle = mtl::MemManager::getHandleMEM2();
@@ -2304,12 +2304,12 @@ extern "C" CUICfManager* func_801336E4(CProcess* pParent, CScnNw4r* pScene,
     Regist__8CProcessFP8CProcessb((CProcess*)mem, pParent, 0);
     return (CUICfManager*)lbl_eu_80664054;
 }
-// func_80133770 (us-80134244): teardown/create of the base menu for Move's
+// CUICfManager_queueBaseMenu (us-80134244): teardown/create of the base menu for Move's
 // mFlags bit 0x1. Gates on the singleton + resource accessor, probes the
 // busy chain (with the 0x20-resource / state-2 retry sound), then creates
 // the menu via func_800FF6BC and pushes it onto the event queue (same
-// reslist shape as the func_80133A08 family).
-extern "C" u32 func_80133770() {
+// reslist shape as the CUICfManager_queueQuestLogMenu family).
+extern "C" u32 CUICfManager_queueBaseMenu() {
     CUICfManagerCreateView* inst;
     volatile u32 savedRet;
     int i;
@@ -2451,7 +2451,7 @@ slot_found:
     return savedRet;
 }
 // ---------------------------------------------------------------------------
-// Menu-create + event-queue push helpers (func_80133A08 family).
+// Menu-create + event-queue push helpers (CUICfManager_queueQuestLogMenu family).
 //
 // Shared skeleton (same slot walk as func_80133324's queue push):
 //   1) null-check the lbl_eu_80664054 singleton,
@@ -2465,8 +2465,8 @@ slot_found:
 //   5) link the node into the circular list at unk128 and return savedRet.
 // ---------------------------------------------------------------------------
 
-// func_80134E50: create the option menu and queue it.
-u32 func_80134E50(u32 arg) {
+// CUICfManager_queueOptionMenu: create the option menu and queue it.
+u32 CUICfManager_queueOptionMenu(u32 arg) {
     CUICfManagerCreateView* inst;
     volatile u32 savedRet;
     int i;
@@ -2520,8 +2520,8 @@ slot_found:
     return savedRet;
 }
 
-// func_801352A4: create the get-item menu and queue it.
-u32 func_801352A4(u32 arg) {
+// CUICfManager_queueGetItemMenuById: create the get-item menu and queue it.
+u32 CUICfManager_queueGetItemMenuById(u32 arg) {
     CUICfManagerCreateView* inst;
     volatile u32 savedRet;
     int i;
@@ -2575,8 +2575,8 @@ slot_found:
     return savedRet;
 }
 
-// func_80133A08: create the quest-log menu and queue it (id narrowed to u16).
-u32 func_80133A08(u32 arg) {
+// CUICfManager_queueQuestLogMenu: create the quest-log menu and queue it (id narrowed to u16).
+u32 CUICfManager_queueQuestLogMenu(u32 arg) {
     CUICfManagerCreateView* inst;
     volatile u32 savedRet;
     int i;
@@ -2630,8 +2630,8 @@ slot_found:
     return savedRet;
 }
 
-// func_80133D78: construct the base menu item and queue it.
-u32 func_80133D78() {
+// CUICfManager_queueBaseMenuItem: construct the base menu item and queue it.
+u32 CUICfManager_queueBaseMenuItem() {
     CUICfManagerCreateView* inst;
     volatile u32 savedRet;
     int i;
@@ -2685,8 +2685,8 @@ slot_found:
     return savedRet;
 }
 
-// func_80134F2C: create the tutorial-list menu and queue it (id narrowed to u16).
-u32 func_80134F2C(u32 arg) {
+// CUICfManager_queueTutorialListMenu: create the tutorial-list menu and queue it (id narrowed to u16).
+u32 CUICfManager_queueTutorialListMenu(u32 arg) {
     CUICfManagerCreateView* inst;
     volatile u32 savedRet;
     int i;
@@ -2740,9 +2740,9 @@ slot_found:
     return savedRet;
 }
 
-// func_80133B80: create the event menu via func_801109D8 and queue it
+// CUICfManager_queueEventMenu: create the event menu via func_801109D8 and queue it
 // (mFlags bit 0x10; busy-bit and accessor gates, same as Move's flag path).
-extern "C" u32 func_80133B80() {
+extern "C" u32 CUICfManager_queueEventMenu() {
     CUICfManagerCreateView* inst;
     volatile u32 savedRet;
     int i;
@@ -2849,10 +2849,10 @@ queue_found:                                                                   \
     return savedRet;
 
 // us-80134774: create + queue the CMenuSkipTimer-style menu. Same create+queue
-// body as func_80133770 above; only the factory differs (no gates in retail).
+// body as CUICfManager_queueBaseMenu above; only the factory differs (no gates in retail).
 // Flat-prototype decl makes the definition below emit the retail symbol.
-extern "C" u32 func_80133CA0();
-u32 func_80133CA0() {
+extern "C" u32 CUICfManager_queueSkipTimerMenu();
+u32 CUICfManager_queueSkipTimerMenu() {
     CUICfQueueMgrView* inst;
     volatile u32 savedRet;
     int i;
@@ -2909,7 +2909,7 @@ slot_found:
 // us-8013492c: create the pause-style menu via CMenuPause's factory and queue
 // it. The 3rd factory arg is the u8-narrowed first param, the 2nd is the
 // caller's scene id or the manager's own unk11C when 0.
-u32 func_80133E58(CUICfManager* self, u32 arg1, u32 arg2) {
+u32 CUICfManager_queuePauseItemMenu(CUICfManager* self, u32 arg1, u32 arg2) {
     CUICfManagerCreateView* inst;
     volatile u32 savedRet;
     int i;
@@ -2965,9 +2965,9 @@ slot_found:
 }
 // us-80134a1c: create + queue a menu via func_8017FC88; the function's own
 // u32 param passes straight through as the factory's 3rd arg (kept live in
-// r5 across the singleton loads). Same shape as func_80134460 otherwise.
+// r5 across the singleton loads). Same shape as CUICfManager_queueMapSelectMenu otherwise.
 extern "C" void* func_8017FC88(u32, u32, u32);
-u32 func_80133F48(u32 param) {
+u32 CUICfManager_queueFactoryMenu(u32 param) {
     CUICfManagerCreateView* inst;
     volatile u32 savedRet;
     int i;
@@ -3024,8 +3024,8 @@ slot_found:
 }
 // us-80134024: create + queue the CMenuShopBuy-style menu. Takes one param
 // passed straight through as the factory's 3rd arg (kept live in r5 across
-// the singleton loads). Same shape as func_80134100 otherwise.
-u32 func_80134024(u32 param) {
+// the singleton loads). Same shape as CUICfManager_queueShopSellMenu otherwise.
+u32 CUICfManager_queueShopBuyMenu(u32 param) {
     CUICfQueueMgrView* inst;
     volatile u32 savedRet;
     int i;
@@ -3086,7 +3086,7 @@ slot_found:
 // +0 word is clear, 0xC stride). Goto loop keeps MWCC's register split;
 // capacity-before-startNode decls color capacity=r7 / startNode=r8; the
 // expanded setItem try/catch emits the fp idiom and the 0x24(sp) frame home.
-u32 func_80134100() {
+u32 CUICfManager_queueShopSellMenu() {
     CUICfQueueMgrView* inst;
     volatile u32 savedRet;
     int i;
@@ -3143,8 +3143,8 @@ slot_found:
     return savedRet;
 }
 // us-80134cac: create + queue the CMenuPTState-style menu. Same create+queue
-// body as func_80134100 above; only the factory (__ct__CMenuPTState) differs.
-u32 func_801341D8() {
+// body as CUICfManager_queueShopSellMenu above; only the factory (__ct__CMenuPTState) differs.
+u32 CUICfManager_queuePTStateMenu() {
     CUICfQueueMgrView* inst;
     volatile u32 savedRet;
     int i;
@@ -3201,8 +3201,8 @@ slot_found:
     return savedRet;
 }
 // us-80134d84: create + queue the CMenuMakeCrystal-style menu. Explicit body
-// (same shape as func_80134460 below); only the factory call differs.
-u32 func_801342B0() {
+// (same shape as CUICfManager_queueMapSelectMenu below); only the factory call differs.
+u32 CUICfManager_queueMakeCrystalMenu() {
     CUICfManagerCreateView* inst;
     volatile u32 savedRet;
     int i;
@@ -3258,7 +3258,7 @@ slot_found:
     return savedRet;
 }
 // us-80134e5c: create + queue the CMenuArtsSet-style menu.
-u32 func_80134388() {
+u32 CUICfManager_queueArtsSetMenu() {
     CUICfManagerCreateView* inst;
     volatile u32 savedRet;
     int i;
@@ -3314,12 +3314,12 @@ slot_found:
     return savedRet;
 }
 // us-80134f34: create + queue the CMenuMapSelect-style menu.
-// Shared body shape with func_80134538/func_80134628 below: null-check the
+// Shared body shape with CUICfManager_queueWorldMapMenu/CUICfManager_queuePauseMenu below: null-check the
 // singleton, call the factory with (field_0x144, field_0x11C), bail on 0,
 // then push the node into the free-slot circular list. The goto loop keeps
 // MWCC's retail register split; setItem's try/catch emits the 0x24(sp) frame
 // home and the volatile save keeps the result in a stack slot.
-u32 func_80134460() {
+u32 CUICfManager_queueMapSelectMenu() {
     CUICfManagerCreateView* inst;
     volatile u32 savedRet;
     int i;
@@ -3376,7 +3376,7 @@ slot_found:
 }
 // us-8013500c: probe func_80135D04, then create the world-map menu via
 // func_802514D4 and queue it.
-u32 func_80134538() {
+u32 CUICfManager_queueWorldMapMenu() {
     CUICfManagerCreateView* inst;
     volatile u32 savedRet;
     int i;
@@ -3435,7 +3435,7 @@ slot_found:
 }
 // us-801350fc: create the pause menu via __ct__CMenuPause and queue it
 // (gated on the lbl_eu_80663E28 busy bit).
-u32 func_80134628() {
+u32 CUICfManager_queuePauseMenu() {
     CUICfManagerCreateView* inst;
     volatile u32 savedRet;
     int i;
@@ -3492,7 +3492,7 @@ slot_found:
     return savedRet;
 }
 // us-801351e8: create + queue the CMenuCollepedia-style menu.
-// Same create+queue body as func_80134460 above; only the factory differs.
+// Same create+queue body as CUICfManager_queueMapSelectMenu above; only the factory differs.
 #define CF_QUEUE_EXPLICIT(fn)                                                  \
     CUICfManagerCreateView* inst = (CUICfManagerCreateView*)lbl_eu_80664054;   \
     volatile u32 savedRet;                                                     \
@@ -3545,11 +3545,11 @@ slot_found:                                                                    \
         startNode->prev = temp2;                                               \
     }                                                                          \
     return savedRet;
-u32 func_80134714() { CF_QUEUE_EXPLICIT(func_80252C60) }
+u32 CUICfManager_queueCollepediaMenu() { CF_QUEUE_EXPLICIT(func_80252C60) }
 // us-801352c0: create + queue the CMenuKizunagram-style menu. Same body as
-// func_80134460 above; only the factory differs (this helper's own argument
+// CUICfManager_queueMapSelectMenu above; only the factory differs (this helper's own argument
 // becomes the factory's third parameter, materialized in the prologue).
-u32 func_801347EC(u32 arg) {
+u32 CUICfManager_queueKizunagramMenu(u32 arg) {
     CUICfManagerCreateView* inst;
     volatile u32 savedRet;
     int i;
@@ -3604,14 +3604,14 @@ slot_found:
     return savedRet;
 }
 // us-8013539c: create + queue the CMenuPassiveSkill-style menu.
-u32 func_801348C8() { CF_QUEUE_EXPLICIT(func_802638D0) }
+u32 CUICfManager_queuePassiveSkillMenu() { CF_QUEUE_EXPLICIT(func_802638D0) }
 // us-80135474: create + queue the CMenuPlayAward-style menu.
-u32 func_801349A0() { CF_QUEUE_EXPLICIT(func_80270308) }
+u32 CUICfManager_queuePlayAwardMenu() { CF_QUEUE_EXPLICIT(PlayAward_CreateMenu) }
 // us-8013554c: create + queue the CMenuKizunaTalkList-style menu.
-u32 func_80134A78() { CF_QUEUE_EXPLICIT(func_80272414) }
-// func_80134B50: create the save menu and queue it, forwarding both own args
+u32 CUICfManager_queueKizunaTalkMenu() { CF_QUEUE_EXPLICIT(func_80272414) }
+// CUICfManager_queueSaveMenu: create the save menu and queue it, forwarding both own args
 // (retail keeps them in r6/r7 across the singleton check for the call).
-u32 func_80134B50(u32 arg0, u32 arg1) {
+u32 CUICfManager_queueSaveMenu(u32 arg0, u32 arg1) {
     CUICfManagerCreateView* inst;
     volatile u32 savedRet;
     int i;
@@ -3720,10 +3720,10 @@ slot_found:
     return savedRet;
 }
 
-// func_80134D18: create the tutorial menu via func_8029A5DC and queue it.
+// CUICfManager_queueTutorialMenu: create the tutorial menu via func_8029A5DC and queue it.
 // arg0 = slot index (u8), arg1 = scene id (or the manager's own when 0),
 // arg2 = skip-reset flag (0 resets the slot via func_8013042C first).
-extern "C" u32 func_80134D18(u32 a0, u32 a1, u32 a2) {
+extern "C" u32 CUICfManager_queueTutorialMenu(u32 a0, u32 a1, u32 a2) {
     CUICfManagerCreateView* inst;
     volatile u32 savedRet;
     int i;
@@ -3791,10 +3791,10 @@ slot_found:
     }
     return savedRet;
 }
-// func_8013500C: create the game-clear menu and queue it. Same skeleton as
-// the func_80133A08 family but with no script argument; the factory is the
+// CUICfManager_queueGameClearMenu: create the game-clear menu and queue it. Same skeleton as
+// the CUICfManager_queueQuestLogMenu family but with no script argument; the factory is the
 // CMenuGameClear singleton ctor.
-u32 func_8013500C() {
+u32 CUICfManager_queueGameClearMenu() {
     CUICfManagerCreateView* inst;
     volatile u32 savedRet;
     int i;
@@ -3848,8 +3848,8 @@ slot_found:
     return savedRet;
 }
 
-// func_801350E4: create the GC-item menu and queue it (id narrowed to u8).
-u32 func_801350E4(u32 arg) {
+// CUICfManager_queueGCItemMenu: create the GC-item menu and queue it (id narrowed to u8).
+u32 CUICfManager_queueGCItemMenu(u32 arg) {
     CUICfManagerCreateView* inst;
     volatile u32 savedRet;
     int i;
@@ -3903,8 +3903,8 @@ slot_found:
     return savedRet;
 }
 
-// func_801351C4: create the get-item menu and queue it (id narrowed to u16).
-u32 func_801351C4(u32 arg) {
+// CUICfManager_queueGetItemMenu: create the get-item menu and queue it (id narrowed to u16).
+u32 CUICfManager_queueGetItemMenu(u32 arg) {
     CUICfManagerCreateView* inst;
     volatile u32 savedRet;
     int i;
@@ -3958,8 +3958,8 @@ slot_found:
     return savedRet;
 }
 
-// func_80135380: create the multi get-item menu and queue it (id narrowed to u8).
-u32 func_80135380(u32 arg) {
+// CUICfManager_queueMultiGetItemMenu: create the multi get-item menu and queue it (id narrowed to u8).
+u32 CUICfManager_queueMultiGetItemMenu(u32 arg) {
     CUICfManagerCreateView* inst;
     volatile u32 savedRet;
     int i;
@@ -4016,7 +4016,7 @@ slot_found:
 // dead int params are forwarded as the factory's args 3/4 (retail materializes
 // them with mr r5,r3 / mr r6,r4 at the prologue) and the float params are
 // swapped (retail fmr f0,f1 / f1=f2 / f2=f0).
-u32 func_80135464(u32 a, u32 b, f32 x, f32 y) {
+u32 CUICfManager_queueFadeMenu(u32 a, u32 b, f32 x, f32 y) {
     CUICfManagerCreateView* inst;
     volatile u32 savedRet;
     int i;
@@ -4351,7 +4351,7 @@ void CUICfManager::onFileEventThunk() {
 
 // retail: lwz r3,lbl_eu_80664054; cmpi r3,0; beq -> 0; addi r3,r3,0x9C
 // returns the process sub-object at +0x9C, or null when the process is absent.
-extern "C" void* func_801355BC() {
+extern "C" void* CUICfManager_getPackedFont9C() {
     if (lbl_eu_80664054 == 0) return 0;
     return (u8*)lbl_eu_80664054 + 0x9C;
 }

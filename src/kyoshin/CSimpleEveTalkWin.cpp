@@ -227,19 +227,19 @@ void CSimpleEveTalkWin::Init() {
         // float before the 0x81A byte.
         f32 voiceVol = tagFields->field_0x81C;
         u8 voiceId = tagFields->field_0x81A;
-        func_80135464(voiceId, 0, voiceVol, lbl_eu_80667CA4,
+        CUICfManager_queueFadeMenu(voiceId, 0, voiceVol, lbl_eu_80667CA4,
                       lbl_eu_80667CA4);
         field_64 = 1;
         __dt__14Class_8045F858Fv(regionGuard, -1);
         return;
     }
 
-    buildLayout(&mpLayout, func_801355F4(), &lbl_eu_80503E14[0x12]);
-    bindLayoutAnimTransform(mpLayout, &field_8C, func_801355F4(),
+    buildLayout(&mpLayout, CUICfManager_getArcResourceAccessor(), &lbl_eu_80503E14[0x12]);
+    bindLayoutAnimTransform(mpLayout, &field_8C, CUICfManager_getArcResourceAccessor(),
                   &lbl_eu_80503E14[0x2b]);
-    bindLayoutAnimTransform(mpLayout, &field_90, func_801355F4(),
+    bindLayoutAnimTransform(mpLayout, &field_90, CUICfManager_getArcResourceAccessor(),
                   &lbl_eu_80503E14[0x47]);
-    bindLayoutAnimTransform(mpLayout, &field_94, func_801355F4(),
+    bindLayoutAnimTransform(mpLayout, &field_94, CUICfManager_getArcResourceAccessor(),
                   &lbl_eu_80503E14[0x6a]);
 
     // Bind the font and hand the loaded font object over to the root pane.
@@ -256,7 +256,7 @@ void CSimpleEveTalkWin::Init() {
         texName = &lbl_eu_80503E14[0x8e];
     else
         texName = &lbl_eu_80503E14[0xaa];
-    void* tex = func_801355F4()->GetResource(0x74696D67, texName, 0);
+    void* tex = CUICfManager_getArcResourceAccessor()->GetResource(0x74696D67, texName, 0);
     if (tex != 0) {
         PaneSetTexPaletteByName(mpLayout, &lbl_eu_80503E14[0xc6], tex);
     }
@@ -482,7 +482,7 @@ extern "C" __declspec(noinline) void func_801A2190(CSimpleEveTalkWin* owner,
     if (tagFields->field_0x814 == 1) {
         f32 voiceVol = tagFields->field_0x81C;
         u8 voiceId = tagFields->field_0x81A;
-        func_80135464(voiceId, 0, voiceVol, lbl_eu_80667CA4,
+        CUICfManager_queueFadeMenu(voiceId, 0, voiceVol, lbl_eu_80667CA4,
                       lbl_eu_80667CA4);
         owner->field_64 = 1;
         __dt__14Class_8045F858Fv(regionGuard, -1);
@@ -493,12 +493,12 @@ extern "C" __declspec(noinline) void func_801A2190(CSimpleEveTalkWin* owner,
     owner->field_90 = 0;
     owner->field_94 = 0;
 
-    buildLayout(&owner->mpLayout, func_801355F4(), &lbl_eu_80503E14[0x12]);
-    bindLayoutAnimTransform(owner->mpLayout, &owner->field_8C, func_801355F4(),
+    buildLayout(&owner->mpLayout, CUICfManager_getArcResourceAccessor(), &lbl_eu_80503E14[0x12]);
+    bindLayoutAnimTransform(owner->mpLayout, &owner->field_8C, CUICfManager_getArcResourceAccessor(),
                   &lbl_eu_80503E14[0x2b]);
-    bindLayoutAnimTransform(owner->mpLayout, &owner->field_90, func_801355F4(),
+    bindLayoutAnimTransform(owner->mpLayout, &owner->field_90, CUICfManager_getArcResourceAccessor(),
                   &lbl_eu_80503E14[0x47]);
-    bindLayoutAnimTransform(owner->mpLayout, &owner->field_94, func_801355F4(),
+    bindLayoutAnimTransform(owner->mpLayout, &owner->field_94, CUICfManager_getArcResourceAccessor(),
                   &lbl_eu_80503E14[0x6a]);
 
     // Bind the font and hand the loaded font object over to the root pane.
@@ -522,7 +522,7 @@ extern "C" __declspec(noinline) void func_801A2190(CSimpleEveTalkWin* owner,
         texName = &lbl_eu_80503E14[0x8e];
     else
         texName = &lbl_eu_80503E14[0xaa];
-    void* tex = func_801355F4()->GetResource(0x74696D67, texName, 0);
+    void* tex = CUICfManager_getArcResourceAccessor()->GetResource(0x74696D67, texName, 0);
     if (tex != 0) {
         PaneSetTexPaletteByName(owner->mpLayout, &lbl_eu_80503E14[0xc6], tex);
     }
@@ -604,7 +604,7 @@ extern "C" void func_801A2624(CSimpleEveTalkWin* self) {
 
     if (state == 4) {
         // Selection accepted: play the confirm voice.
-        func_80128740(self->field_88, pane);
+        TagProcStartMessage(self->field_88, pane);
         void* src = findObjectById(self->field_68);
         if (src != 0) {
             reinterpret_cast<CSimpleTalkFields*>(src)->voice98->play(1, 0);

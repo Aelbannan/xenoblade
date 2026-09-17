@@ -200,7 +200,7 @@ struct CArtsSelectStateView {
 
 // C-linkage imports (retail unmangled symbols - keep linkage verbatim).
 extern "C" {
-nw4r::lyt::ArcResourceAccessor* func_801355F4();
+nw4r::lyt::ArcResourceAccessor* CUICfManager_getArcResourceAccessor();
 void __ct__17UnkClass_8045F564Fv(UnkClass_8045F564* self);
 void func_80137CD4(void*, const char*, int, u32);
 void PaneSetColorFieldPair(void*, const char*, u32, u32);

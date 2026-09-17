@@ -157,7 +157,7 @@ skip_b9d4:;
 // ---------------------------------------------------------------------------
 // func_8012DA6C (us-8012e53c)
 // Window-state 2 driver: find the three page panes, blend the tag-processor
-// animation (func_801276F4 / func_8012615C depending on the confirm button),
+// animation (TagProcPumpMessage / func_8012615C depending on the confirm button),
 // then dispatch the result: state 4 accepts the selection, otherwise the
 // voice/page logic runs (or the page-loop flag flips).
 // ---------------------------------------------------------------------------
@@ -172,7 +172,7 @@ void func_8012DA6C(CTalkWindow* self) {
 
     int state;
     if (GetSysStateFlag31() != 0) {
-        state = func_801276F4(self->field_5C, p1, p2, p3);
+        state = TagProcPumpMessage(self->field_5C, p1, p2, p3);
     } else {
         CTalkPadView* pad = reinterpret_cast<CTalkPadView*>(
             cf::CfGameManager::getCurrentPad());
@@ -183,7 +183,7 @@ void func_8012DA6C(CTalkWindow* self) {
         else
             confirm = (pad->field_04 & 0x00000030) != 0;
         if (confirm != 0)
-            state = func_801276F4(self->field_5C, p1, p2, p3);
+            state = TagProcPumpMessage(self->field_5C, p1, p2, p3);
         else
             state = func_8012615C(self->field_5C, p1, p2, p3);
     }
@@ -413,7 +413,7 @@ extern "C" void func_8012CD38(CTalkWindow* self) {
     world.z = wsrc->z;
 
     // Project the world anchor through the scene camera into screen space.
-    CTalkWinPose* pose = func_80496264(self->mScene, -1);
+    CTalkWinPose* pose = Scn_FindCamItem(self->mScene, -1);
     func_8049B59C(&screen, pose, &world);
 
     screen.z = lbl_eu_80667280;
@@ -592,12 +592,12 @@ void CTalkWindow::Init() {
     u8 type = tagProc->field_0x814;
     switch (type) {
     case 0:
-        func_80135464(tagProc->field_0x81A, 0, tagProc->field_0x81C,
+        CUICfManager_queueFadeMenu(tagProc->field_0x81A, 0, tagProc->field_0x81C,
                       lbl_eu_8066727C, lbl_eu_8066727C);
         field_64 = 1;
         break;
     case 1:
-        func_8013DA60(tagProc->field_0x818, 0, 0);
+        UIWin_CreateQuestWin(tagProc->field_0x818, 0, 0);
         field_64 = 1;
         break;
     case 2: {
@@ -616,17 +616,17 @@ void CTalkWindow::Init() {
     case 4: {
         cf::CfObject* s4 = reinterpret_cast<cf::CfObject*>(
             findObjectById(field_68));
-        func_8013E204(
+        UIWin_CreateBEDE0Win(
             reinterpret_cast<CTalkActorId*>(s4)->msgId8C);
         field_64 = 1;
         break;
     }
     case 5:
-        func_8013E104(tagProc->field_0x818);
+        UIWin_CreateShopWin(tagProc->field_0x818);
         field_64 = 1;
         break;
     case 6:
-        func_801342B0();
+        CUICfManager_queueMakeCrystalMenu();
         field_64 = 1;
         break;
     case 7: {
@@ -636,17 +636,17 @@ void CTalkWindow::Init() {
         field_A4 = tagProc->field_0x816;
 
         buildLayout__FPPQ34nw4r3lyt6LayoutPQ34nw4r3lyt19ArcResourceAccessorPCc(
-            &mpLayout, func_801355F4(), &lbl_eu_804FFCA4[0xc]);
+            &mpLayout, CUICfManager_getArcResourceAccessor(), &lbl_eu_804FFCA4[0xc]);
         bindLayoutAnimTransform__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(
-            mpLayout, &field_88, func_801355F4(), &lbl_eu_804FFCA4[0x23]);
+            mpLayout, &field_88, CUICfManager_getArcResourceAccessor(), &lbl_eu_804FFCA4[0x23]);
         bindLayoutAnimTransform__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(
-            mpLayout, &field_8C, func_801355F4(), &lbl_eu_804FFCA4[0x3d]);
+            mpLayout, &field_8C, CUICfManager_getArcResourceAccessor(), &lbl_eu_804FFCA4[0x3d]);
         bindLayoutAnimTransform__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(
-            mpLayout, &field_90, func_801355F4(), &lbl_eu_804FFCA4[0x58]);
+            mpLayout, &field_90, CUICfManager_getArcResourceAccessor(), &lbl_eu_804FFCA4[0x58]);
         bindLayoutAnimTransform__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(
-            mpLayout, &field_94, func_801355F4(), &lbl_eu_804FFCA4[0x73]);
+            mpLayout, &field_94, CUICfManager_getArcResourceAccessor(), &lbl_eu_804FFCA4[0x73]);
         bindLayoutAnimTransform__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(
-            mpLayout, &field_98, func_801355F4(), &lbl_eu_804FFCA4[0x92]);
+            mpLayout, &field_98, CUICfManager_getArcResourceAccessor(), &lbl_eu_804FFCA4[0x92]);
 
         void* fontObj = getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(
             1, mpLayout);
@@ -722,9 +722,9 @@ void CTalkWindow::Init() {
             FindPaneByName(&lbl_eu_804FFCA4[0x13b], 1))->mFlag |= 1;
         reinterpret_cast<CTalkWinPane*>(mpLayout->GetRootPane()->
             FindPaneByName(&lbl_eu_804FFCA4[0x141], 1))->mFlag &= ~1;
-        void* res = func_801355F4()->GetResource(
+        void* res = CUICfManager_getArcResourceAccessor()->GetResource(
             0x74696d67, &lbl_eu_804FFCA4[0x147], 0);
-        func_801355F4()->GetResource(
+        CUICfManager_getArcResourceAccessor()->GetResource(
             0x74696d67, &lbl_eu_804FFCA4[0x161], 0);
         playUISound(0x29);
 
@@ -737,9 +737,9 @@ void CTalkWindow::Init() {
                         FindPaneByName(&lbl_eu_804FFCA4[0x13b], 1))->mFlag |= 1;
                     reinterpret_cast<CTalkWinPane*>(mpLayout->GetRootPane()->
                         FindPaneByName(&lbl_eu_804FFCA4[0x141], 1))->mFlag &= ~1;
-                    res = func_801355F4()->GetResource(
+                    res = CUICfManager_getArcResourceAccessor()->GetResource(
                         0x74696d67, &lbl_eu_804FFCA4[0x147], 0);
-                    func_801355F4()->GetResource(
+                    CUICfManager_getArcResourceAccessor()->GetResource(
                         0x74696d67, &lbl_eu_804FFCA4[0x161], 0);
                     playUISound(0x29);
                 } else if (field_A4 == 1) {
@@ -747,9 +747,9 @@ void CTalkWindow::Init() {
                         FindPaneByName(&lbl_eu_804FFCA4[0x13b], 1))->mFlag &= ~1;
                     reinterpret_cast<CTalkWinPane*>(mpLayout->GetRootPane()->
                         FindPaneByName(&lbl_eu_804FFCA4[0x141], 1))->mFlag |= 1;
-                    res = func_801355F4()->GetResource(
+                    res = CUICfManager_getArcResourceAccessor()->GetResource(
                         0x74696d67, &lbl_eu_804FFCA4[0x17b], 0);
-                    func_801355F4()->GetResource(
+                    CUICfManager_getArcResourceAccessor()->GetResource(
                         0x74696d67, &lbl_eu_804FFCA4[0x195], 0);
                     lbl_eu_80664040 = 1;
                     reinterpret_cast<CTalkWinPane*>(mpLayout->GetRootPane()->
@@ -762,9 +762,9 @@ void CTalkWindow::Init() {
                         FindPaneByName(&lbl_eu_804FFCA4[0x13b], 1))->mFlag |= 1;
                     reinterpret_cast<CTalkWinPane*>(mpLayout->GetRootPane()->
                         FindPaneByName(&lbl_eu_804FFCA4[0x141], 1))->mFlag &= ~1;
-                    res = func_801355F4()->GetResource(
+                    res = CUICfManager_getArcResourceAccessor()->GetResource(
                         0x74696d67, &lbl_eu_804FFCA4[0x1af], 0);
-                    func_801355F4()->GetResource(
+                    CUICfManager_getArcResourceAccessor()->GetResource(
                         0x74696d67, &lbl_eu_804FFCA4[0x1c9], 0);
                     playUISound(0x74);
                 }
@@ -851,7 +851,7 @@ void CTalkWindow::Move() {
             lbl_eu_8052DF70[field_A4], 1);
         nw4r::lyt::Pane* p3 = mpLayout->GetRootPane()->FindPaneByName(
             &lbl_eu_804FFCA4[0xb0], 1);
-        func_80127E74(field_5C, p1, p2, p3);
+        TagProcResetPage(field_5C, p1, p2, p3);
         func_8012D3D8(this);
         field_B0 = 5;
         break;

@@ -53,7 +53,7 @@ distinct frontier functions that reference them.
 | 21 | `func_800AA318` | 0x800AA318 | 4 | 3 | CTaskREvtSequence, CCharVoice, CREvtModelPc |
 | 22 | `func_80086DA0` | 0x80086DA0 | 3 | 3 | ocCfp, pluginTime |
 | 23 | `cfCam_testUnk04M` | 0x8006BFC4 | 3 | 3 | CfCam |
-| 24 | `func_80227CCC` | 0x80227CCC | 3 | 3 | CMenuQuestLog |
+| 24 | `QstLogList_IsSortEnabled` | 0x80227CCC | 3 | 3 | CMenuQuestLog |
 | 25 | `func_8003B1EC` | 0x8003B1EC | 3 | 3 | CFloorMap, CfBdat, code_801862C0 |
 | 26 | `func_801EB020` | 0x801EB020 | 3 | 3 | CItemBoxGrid, CItemBoxLine |
 | 27 | `func_8044BE24` | 0x8044BE24 | 3 | 3 | code_804F0258 |
@@ -66,7 +66,7 @@ distinct frontier functions that reference them.
 | 34 | **`CLODCacheManagerS`** | **0x804630C0** | **4** | **2** | **CLODCacheManagerS** |
 | 35 | `func_80065804` | 0x80065804 | 3 | 2 | CfRes |
 | 36 | `cfCam_vec3AtIndex` | 0x8006BF14 | 3 | 2 | CfCam |
-| 37 | `func_8013EC58` | 0x8013EC58 | 2 | 2 | ocUnit, pluginUi |
+| 37 | `UIWin_GetTimer` | 0x8013EC58 | 2 | 2 | ocUnit, pluginUi |
 | 38 | `func_800442DC` | 0x800442DC | 2 | 2 | CTaskGame |
 | 39 | `func_8009ECB0` | 0x8009ECB0 | 2 | 2 | CChainActorPc, pluginCfs |
 | 40 | `func_8006348C` | 0x8006348C | 2 | 2 | CfRes |

@@ -21,7 +21,7 @@
 
 // Layout-compatible access to the color-alpha byte at +0xB8 of an
 // nw4r::lyt::Pane (returned by FindPaneByName). Used to mirror the pane
-// alpha between the two slot panes in func_8029F504 / func_8029F5CC.
+// alpha between the two slot panes in CSkipTimer2OnFwdDone / CSkipTimer2OnRewindDone.
 struct PaneAlphaB8 {
     u8 pad[0xB8];   /* 0x000 */
     u8 field_0xB8;  /* 0x0B8 color-alpha byte */
@@ -103,12 +103,12 @@ public:
 
     // Returns the skip-timer active flag at +0x30.
     u8 getActive() const { return mActive; }
-    u8 func_8029FF1C() { return mActive; }
+    u8 CSkipTimerGetActive() { return mActive; }
 
     // --- member fields ---
     /* 0x00 */ void* mVtbl;                       // vtable pointer, set at construction
     /* 0x04 */ UnkClass_8045F564 mMemRegion;      // scratch region for layout build
-    /* 0x14 */ CFileHandle* mFileHandle;          // file handle, freed in func_8029FE30
+    /* 0x14 */ CFileHandle* mFileHandle;          // file handle, freed in CSkipTimerTeardown
     /* 0x18 */ nw4r::lyt::Layout* mLayout;        // layout 1 (pane stamping / accessor release)
     /* 0x1C */ nw4r::lyt::Layout* mLayout2;       // layout 2 (draw + animation binding)
     /* 0x20 */ nw4r::lyt::AnimTransform* mAnimTransform20;
@@ -133,7 +133,7 @@ public:
 extern "C" void* lbl_eu_80539884[];
 // CSkipTimer vtable pointer stored at +0x00.
 extern "C" void* lbl_eu_805397F0[];
-// String pool used by func_8029F440 (pane name + sprintf format).
+// String pool used by CSkipTimerStampSlotText (pane name + sprintf format).
 extern "C" char lbl_eu_80510568[];
 // CSkipTimer2 ctor: retail symbol is the short form (no length/sig suffix),
 // so it must be a C-linkage function carrying the exact retail name
@@ -169,36 +169,36 @@ extern "C" u32 func_800FEDF8();
 extern "C" void func_800FF914();
 
 // Shared-arc font/text value feeding setLayoutTextBoxFont (unmangled retail symbol).
-extern "C" u32 func_801355D8();
+extern "C" u32 CUICfManager_getPackedFontD8();
 // Sub-controller layout rebind helper (unmangled retail symbol).
-extern "C" void func_8029F7A4(CSkipTimer2* self);
+extern "C" void CSkipTimer2RebindAnim(CSkipTimer2* self);
 // Post-build flag setter on the sub-controller (unmangled retail symbol).
-extern "C" void func_8029F788(u8* self);
+extern "C" void CSkipTimer2MarkActive(u8* self);
 
 // Unmatched same-unit siblings referenced as extern (linker resolves to retail
 // address) so in-unit callers emit a direct `bl` instead of inlining a stub.
 // Retail strips mangling for these func_ names in US, hence extern "C".
-extern "C" void func_8029F82C(CSkipTimer2* self, u8 arg);
+extern "C" void CSkipTimer2SelectSlotPane(CSkipTimer2* self, u8 arg);
 extern "C" void func_8029F6EC(CSkipTimer2* self);
-extern "C" void func_8029F73C(CSkipTimer2* self);
+extern "C" void CSkipTimer2OnFwdReady(CSkipTimer2* self);
 // func_8029FBE0: System.arc load kickoff (retail strips mangling on US func_
 // names), so the definition binds to the literal retail symbol.
 extern "C" void func_8029FBE0(CSkipTimer* self);
-// func_8029F168: post-build hook on the sub-controller (body lives in retail).
-extern "C" void func_8029F168(CSkipTimer2* self);
+// CSkipTimer2RebuildLayout: post-build hook on the sub-controller (body lives in retail).
+extern "C" void CSkipTimer2RebuildLayout(CSkipTimer2* self);
 extern "C" int func_802A04F0(CSkipTimer* self);
-extern "C" void func_8029F364(CSkipTimer2* self, u8 arg);
-// func_8029F2FC: reset the sub-controller (body lives in retail).
-extern "C" void func_8029F2FC(CSkipTimer2* self);
+extern "C" void CSkipTimer2Start(CSkipTimer2* self, u8 arg);
+// CSkipTimer2Reset: reset the sub-controller (body lives in retail).
+extern "C" void CSkipTimer2Reset(CSkipTimer2* self);
 
 // Same-unit siblings DEFINED in this TU whose retail callers emit a direct
 // `bl` (retail keeps them out-of-line). The definitions in CSkipTimer.cpp are
 // guarded with #pragma auto_inline off (MWCC_CASES sec. hbm/seq) so
-// -inline auto does not inline them into func_8029F26C / func_802A03AC /
-// func_8029FF24; the extern "C" form binds both the definitions and the call
+// -inline auto does not inline them into CSkipTimer2DriveState / func_802A03AC /
+// CSkipTimerNextKey; the extern "C" form binds both the definitions and the call
 // sites to the literal (un)mangled retail names.
-extern "C" void func_8029F504(CSkipTimer2* self);
-extern "C" void func_8029F5CC(CSkipTimer2* self);
+extern "C" void CSkipTimer2OnFwdDone(CSkipTimer2* self);
+extern "C" void CSkipTimer2OnRewindDone(CSkipTimer2* self);
 extern "C" void func_802A041C(CSkipTimer* self);
 extern "C" void func_802A05E4(CSkipTimer* self);
 extern "C" void func_802A055C(CSkipTimer* self);

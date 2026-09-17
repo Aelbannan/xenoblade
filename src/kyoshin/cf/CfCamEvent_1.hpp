@@ -172,7 +172,7 @@ struct CfCamEventShakeElem {
 };
 
 // Camera-data block read by func_80075674 (source: object from
-// func_80496264). Three f32 triplets at 0x10C/0x118/0x138 and an f32 at
+// Scn_FindCamItem). Three f32 triplets at 0x10C/0x118/0x138 and an f32 at
 // 0x1E0 are copied into the manager's 0x54..0x78 range (bit patterns, so
 // the triplet members are f32 to keep the lwz/stw copy schedule).
 struct CfCamEventCopySrc {
@@ -1408,7 +1408,7 @@ extern "C" void func_80077F20(void* out, void* a,
 extern "C" void* func_800778E4(CfCamEventManager* self, int unk34,
                                                       void* srcArg, u32 rowOverride);
 extern "C" int func_80078400(int action, int param);
-extern "C" void* func_80496264(void* obj, int index);
+extern "C" void* Scn_FindCamItem(void* obj, int index);
 extern "C" void* func_80076F88(CfCamEventManager* self, int unk34,
                                 void* srcArg, CfCamDataTable* cam);
 extern "C" int func_800A4050(void* dst, void* b, void* c);

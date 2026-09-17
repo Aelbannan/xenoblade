@@ -100,7 +100,7 @@ public:
 extern "C" {
 void waitForDrawDone__9CDeviceVIFv();
 void func_801375A0(nw4r::math::VEC3* out, nw4r::lyt::Pane* pane);
-nw4r::lyt::ArcResourceAccessor* func_801355F4();
+nw4r::lyt::ArcResourceAccessor* CUICfManager_getArcResourceAccessor();
 void func_80124270(nw4r::lyt::Pane*, u32);
 void func_80124288(nw4r::lyt::Pane*, float*);
 u32 BdatGetItemId(u32);

@@ -496,7 +496,7 @@ void func_80098CB8(CtrlPcVf44* self);
 
 // Menu base teardown/recreate (menu/CMenuArtsSelect.cpp; retail exports the
 // unmangled C-ABI name).
-extern "C" void func_80133770();
+extern "C" void CUICfManager_queueBaseMenu();
 
 // Circular list node used by the +0x28 head (next at +0x00).
 struct CtrlSweepNode {

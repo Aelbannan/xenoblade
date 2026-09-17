@@ -15,8 +15,8 @@ extern void* __dt__Q22cf8CREvtObjFv(void* self, int dealloc);
 extern void __dt__80185754(void* self);
 extern void func_80185700(void* self);
 extern void* func_80185748(u32 size);
-extern u32 func_80495E60(void* ptr);
-extern void* func_80495EAC(void* global, void* data, int param);
+extern u32 Scn_IsAnimActiveOrNull(void* ptr);
+extern void* Scn_InitGlobalA(void* global, void* data, int param);
 extern void func_8016AF4C(void* data, const char* name, int* outValue);
 extern void func_8016B384(void* data, const char* name, void* outValue);
 extern int  func_8016B788(void* data);
@@ -117,9 +117,9 @@ void* __ct__80172668(void* self, int deallocFlag) {
 void func_80172768(void* self) {
     reinterpret_cast<CREvtModel*>(self)->vfunc_08();
     void* p24 = FLD(void*, self, 0x24);
-    if (p24 != 0) { func_80495E60(p24); FLD(void*, self, 0x24) = 0; }
+    if (p24 != 0) { Scn_IsAnimActiveOrNull(p24); FLD(void*, self, 0x24) = 0; }
     void* p20 = FLD(void*, self, 0x20);
-    if (p20 != 0) { func_80495E60(p20); FLD(void*, self, 0x20) = 0; }
+    if (p20 != 0) { Scn_IsAnimActiveOrNull(p20); FLD(void*, self, 0x20) = 0; }
 }
 
 int func_801726DC(void* self) {
@@ -127,9 +127,9 @@ int func_801726DC(void* self) {
     if (flags & 0x80) { return 1; }
     reinterpret_cast<CREvtModel*>(self)->vfunc_08();
     void* p24 = FLD(void*, self, 0x24);
-    if (p24 != 0) { func_80495E60(p24); FLD(void*, self, 0x24) = 0; }
+    if (p24 != 0) { Scn_IsAnimActiveOrNull(p24); FLD(void*, self, 0x24) = 0; }
     void* p20 = FLD(void*, self, 0x20);
-    if (p20 != 0) { func_80495E60(p20); FLD(void*, self, 0x20) = 0; }
+    if (p20 != 0) { Scn_IsAnimActiveOrNull(p20); FLD(void*, self, 0x20) = 0; }
     FLD(u32, self, 0x18) |= 0x80;
     return 1;
 }
@@ -187,7 +187,7 @@ void func_801728F8(void* self) {
 
 void func_8017298C(void* self) {
     void* p = FLD(void*, self, 0x28);
-    if (p != 0) { func_80495E60(p); FLD(void*, self, 0x28) = 0; }
+    if (p != 0) { Scn_IsAnimActiveOrNull(p); FLD(void*, self, 0x28) = 0; }
 }
 
 int func_801729D0(void* self) {
@@ -217,7 +217,7 @@ void func_801729F0(void* self, void* pData, void* pModelData) {
         }
         return;
     }
-    void* newData = func_80495EAC(&lbl_eu_80663E14, pData, 0);
+    void* newData = Scn_InitGlobalA(&lbl_eu_80663E14, pData, 0);
     FLD(void*, self, 0x24) = newData;
     func_80482DF4(model, func_80180954() == 0 ? 1 : 0);
     func_804839D4(model, (u32)newData, 0, 0, 0, 1, -1);

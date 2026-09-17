@@ -568,7 +568,7 @@ void func_8027C0B0(cf::CChainChanceS* self) {
     }
     if (flag != 0) {
         float snd = lbl_eu_8050EDE0[self->mField0A];
-        func_80133F48(3, snd);
+        CUICfManager_queueFactoryMenu(3, snd);
         // Both counters are read before either store; the wrap check uses
         // the already-updated field0A value.
         int nextB = self->mField08 + 1;
@@ -861,8 +861,8 @@ int func_8027CAE0(cf::CChainList* self, int target, int check){
 void func_8027CBE8(cf::CChainCounter* self) {
     if (self->field_0x0 > 0) {
         requestCancelChain__Fv();
-        func_8013C54C();
-        func_8013E800(self->field_0x0);
+        UIWin_GetInstance();
+        UIWin_Create6F8B0Win(self->field_0x0);
         func_8027BFE0(self->field_0x0);
         self->field_0x0 = 0;
     }

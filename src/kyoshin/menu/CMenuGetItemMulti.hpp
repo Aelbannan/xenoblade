@@ -288,7 +288,7 @@ extern "C" u32 CSysWin_isReady(u8* syswin);
 extern "C" u32 CSysWin_getUnk34(u8* syswin); // window state query (pad handlers)
 // Item-menu active check (CMenuItem.cpp) and item-created callback (CUICfManager.cpp).
 extern "C" u32 func_80167A18();
-extern "C" u32 func_80133E58(u8 self, u8 arg1, u8 arg2);
+extern "C" u32 CUICfManager_queuePauseItemMenu(u8 self, u8 arg1, u8 arg2);
 // Rank-window geometry helpers (CItemBoxInfo.cpp family).
 extern "C" f32 GetFloatTableEntry(u32 idx);
 extern "C" void BlendFloatAvgScale(u16 a, u16 b, int c, f32 d);

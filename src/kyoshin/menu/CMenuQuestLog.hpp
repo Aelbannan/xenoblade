@@ -84,15 +84,15 @@ public:
 
 // Quest-log sub-object helpers. Retail uses the unmangled func_ names, so
 // declare them with C linkage (a C++ member call would re-mangle the reloc).
-extern "C" void func_802282F8(CQstLogList* self);
-extern "C" void func_80227D78(CQstLogList* self, int arg);
-extern "C" int func_80227CD4(CQstLogList* self);
-extern "C" void func_80228280(CQstLogList* self, int arg);
-extern "C" void func_80227DE8(CQstLogList* self);
-extern "C" void func_80227EC8(CQstLogList* self);
-extern "C" void func_80227FC0(CQstLogList* self);
-extern "C" void func_8022807C(CQstLogList* self);
-extern "C" void func_80228164(CQstLogList* self);
+extern "C" void QstLogList_ApplySortSelection(CQstLogList* self);
+extern "C" void QstLogList_EndSortMode(CQstLogList* self, int arg);
+extern "C" int QstLogList_IsSortDescending(CQstLogList* self);
+extern "C" void QstLogList_ConfirmSort(CQstLogList* self, int arg);
+extern "C" void QstLogList_ScrollUp(CQstLogList* self);
+extern "C" void QstLogList_ScrollDown(CQstLogList* self);
+extern "C" void QstLogList_PageUp(CQstLogList* self);
+extern "C" void QstLogList_PageDown(CQstLogList* self);
+extern "C" void QstLogList_ToggleSort(CQstLogList* self);
 extern "C" void func_801C414C(CTitleAHelp* self);
 extern "C" bool func_802296D0(CQstLogInfo* self);
 extern "C" bool func_802296D8(CQstLogInfo* self);
@@ -106,7 +106,7 @@ struct CQuestLogPadData {
     u32 mTurboPressButtonFlags; // +0x104
 };
 extern "C" void func_802296E0(CQstLogInfo* self);
-extern "C" void func_80227CDC(CQstLogList* self);
+extern "C" void QstLogList_BeginSortOpen(CQstLogList* self);
 extern "C" void func_801C41E8(CTitleAHelp* self, u8 mode);
 extern "C" void func_801C416C(CTitleAHelp* self);
 extern "C" void func_801C4198(CTitleAHelp* self);
@@ -116,7 +116,7 @@ extern "C" void func_80229724(CQstLogInfo* self);
 extern char lbl_eu_804FE518[];   // menu text string pool (split1 .rodata)
 extern "C" bool func_801C3C14(CBgTex* self);
 extern "C" void CTitleAHelp_load(CTitleAHelp* self);
-extern "C" void func_80227A60(CQstLogList* self);
+extern "C" void QstLogList_LoadArc(CQstLogList* self);
 extern "C" void func_802294C0(CQstLogInfo* self);
 extern "C" void __dt__6CBgTexFv(CBgTex* self, int flags);
 extern "C" void __dt__11CTitleAHelpFv(CTitleAHelp* self, int flags);
@@ -126,12 +126,12 @@ extern "C" void __dt__11CQstLogInfoFv(CQstLogInfo* self, int flags);
 // Widget teardown helpers called by Term (retail unmangled names).
 extern "C" void func_801C3D9C(CBgTex* self);
 extern "C" void func_801C40A0(CTitleAHelp* self);
-extern "C" void func_80227BD8(CQstLogList* self);
+extern "C" void QstLogList_Unload(CQstLogList* self);
 extern "C" void func_80229620(CQstLogInfo* self);
 
 // Term tail helpers.
 extern "C" u8 DecMenuCounter64080();
-extern "C" void func_80135550();
+extern "C" void CUICfManager_setTimeout30();
 extern "C" u8 code80135FDC_getByte_64080();
 
 // Retail constructor symbol (unmangled global, 2 args after `this`). The
@@ -149,8 +149,8 @@ extern u32 lbl_eu_80663E28;
 
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
 extern "C" bool isIdle__11CTitleAHelpFv(void*);
-extern "C" bool func_80227CCC(void*);
-extern "C" unsigned int func_80228394(void*);
+extern "C" bool QstLogList_IsSortEnabled(void*);
+extern "C" unsigned int QstLogList_GetSelectedQuestLo(void*);
 extern "C" void func_80229768(void*, unsigned short);
 extern "C" void func_80229510(void*);
 
@@ -165,8 +165,8 @@ extern "C" void func_801C3D54(CBgTex* self);
 extern "C" void func_801C3FF0(CTitleAHelp* self);
 extern "C" void func_801C3D7C(CBgTex* self, nw4r::lyt::DrawInfo* drawInfo);
 extern "C" void func_801C4080(CTitleAHelp* self, nw4r::lyt::DrawInfo* drawInfo);
-extern "C" void func_80227AC4(CQstLogList* self);
-extern "C" void func_80227B6C(CQstLogList* self, nw4r::lyt::DrawInfo* drawInfo);
+extern "C" void QstLogList_FrameUpdate(CQstLogList* self);
+extern "C" void QstLogList_Draw(CQstLogList* self, nw4r::lyt::DrawInfo* drawInfo);
 extern "C" void func_80229600(CQstLogInfo* self, nw4r::lyt::DrawInfo* drawInfo);
 extern "C" void func_80229570(CQstLogInfo* self);
 

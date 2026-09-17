@@ -8,12 +8,12 @@ extern "C" void func_80261A80();
 extern "C" float func_8048EA40();
 extern "C" u8* getGlobalSda(void);
 extern "C" void func_800599E0(void* sda, u32 a, u32 b, u32 c);
-extern "C" void func_eu_8049AB50(u8* self, unsigned char byte);
+extern "C" void Scn_SetPalFixFlag(u8* self, unsigned char byte);
 extern "C" void func_8048EA38(float v);
 // Sibling in this TU: CTaskREvtSequence::Term forwards `this` (retail name
 // func_8016A480, unmangled -> C linkage).
 extern "C" void func_8016A480(void* self);
-// UI-state flag toggle used by func_801686B0 (defined in CInfoCf.cpp).
+// UI-state flag toggle used by EvtSeqBeginFileRead (defined in CInfoCf.cpp).
 extern "C" void func_80166788();
 // Sibling ctor in this TU (retail __ct__cf_CTaskREvtSequence, 0x218-byte
 // body): takes (self, sequence-name string), returns self. The retail symbol
@@ -25,12 +25,12 @@ class CTaskREvtSequence;
 }
 extern "C" cf::CTaskREvtSequence* __ct__cf_CTaskREvtSequence(
     cf::CTaskREvtSequence* self, const char* name);
-// func_80168484 (this unit) toggles a flag and fades BGM (menu sound system).
-extern "C" void func_80168484(int a);
+// EvtSeqSetBgmGateFlag (this unit) toggles a flag and fades BGM (menu sound system).
+extern "C" void EvtSeqSetBgmGateFlag(int a);
 extern "C" void func_80189318(s32 clearName, float fadeTime);
 extern "C" void func_80189424(float vol);
 
-// Imports for func_80168610 (event-sequence boot): sequence-system / UI gates
+// Imports for EvtSeqBootSequence (event-sequence boot): sequence-system / UI gates
 // (C-linkage, retail unmangled names), CfGameManager helpers, the id getter
 // and the sound-system flag arm.
 extern "C" bool func_8012E6DC();
@@ -59,7 +59,7 @@ extern u32 lbl_eu_80663E28;
 // .sbss event-sequence flag word (bit 25 cleared by Term)
 extern u32 lbl_eu_80663EE0;
 
-// .sdata2 BGM fade volume used by func_80168484
+// .sdata2 BGM fade volume used by EvtSeqSetBgmGateFlag
 extern f32 lbl_eu_80667658;
 
 #include "monolib/scn/CScn.hpp"
@@ -71,13 +71,13 @@ extern f32 lbl_eu_80667658;
 // (retail .data:0x80530AF4, size 0x18; only the first 3 words are read).
 extern u32 lbl_eu_80530AF4[6];
 
-// ptmf table copied into field_0x3C by func_801686B0 (retail .data:0x80530A4C)
+// ptmf table copied into field_0x3C by EvtSeqBeginFileRead (retail .data:0x80530A4C)
 extern u32 lbl_eu_80530A4C[3];
 
-// ptmf table copied into field_0x3C by func_80168610 (retail .data:0x80530A40)
+// ptmf table copied into field_0x3C by EvtSeqBootSequence (retail .data:0x80530A40)
 extern u32 lbl_eu_80530A40[6];
 
-// ptmf table copied into field_0x3C by func_8016872C (retail .data:0x80530A58)
+// ptmf table copied into field_0x3C by EvtSeqLoadSequenceFile (retail .data:0x80530A58)
 extern u32 lbl_eu_80530A58[6];
 
 // String pool used by func_8016B788: name string at +0x5D passed to
@@ -100,7 +100,7 @@ class CfEvtCamManager;
 class UnkEvtListEntry;  // full layout below (UnkState_80664268::field_0x10C)
 // func_8016DF4C: reload-count selector (CfResReloadImpl.cpp).
 extern "C" void func_8016DF4C(u32 type);
-// func_8049602C: scene vec4 setter - declared once on kyoshin/CTaskGame.hpp
+// Scn_ReleaseUnk80: scene vec4 setter - declared once on kyoshin/CTaskGame.hpp
 // (flat retail name); TUs here reach it via that header.
 
 // (CREvtCamera.cpp / CTaskREvent.cpp).
@@ -161,7 +161,7 @@ extern "C" void func_80294980(CREvtMovie* self);
 // Imports for func_8016ABA8 (async file-event handler): scene dim helper
 // (CfObjectImplWalker.cpp) and the menu tag-processor (re)init pair
 // (code_8025FB10.cpp).
-extern "C" u8* func_8049627C(CScn* scene, int flag);
+extern "C" u8* Scn_SetCamIndex(CScn* scene, int flag);
 extern "C" void func_802618D8(u8* arg);
 extern "C" void func_80261944(int arg);
 // Imports for func_80169050 (fade/arm sequence state): CfGameManager helpers
@@ -189,7 +189,7 @@ extern f32 lbl_eu_80667674;
 extern f32 lbl_eu_80667678;
 extern f32 lbl_eu_8066767C;
 
-// ptmf table copied into field_0x3C by func_80168F38 (retail .data:0x80530A7C).
+// ptmf table copied into field_0x3C by EvtSeqUpdateRealtimeEvents (retail .data:0x80530A7C).
 extern u32 lbl_eu_80530A7C[3];
 
 // ptmf tables copied into field_0x3C by func_80169050 (retail .data:
@@ -243,7 +243,7 @@ extern u16 lbl_eu_806642E0;
 // .sdata2 BGM volume used by func_80169050's fade calls.
 extern f32 lbl_eu_8066765C;
 
-// 4-float stack blob passed to func_8049602C by func_80169CD0 (fade vec).
+// 4-float stack blob passed to Scn_ReleaseUnk80 by func_80169CD0 (fade vec).
 struct EvtSeqVec4 {
     f32 x, y, z, w;
 };
@@ -406,9 +406,9 @@ struct UnkState_80664268 {
     u8 gap108[0x04];                 // 0x108-0x10B
     UnkEvtListEntry** field_0x10C;   // 0x10C: realtime-event entry pointer list
     s32 field_0x110;                 // 0x110: entry count (signed walk bound)
-    u8 field_0x114;                  // 0x114 (byte gate read/stored by func_80168514)
+    u8 field_0x114;                  // 0x114 (byte gate read/stored by EvtSeqCheckEventRunGuard)
     u8 gap115[0x01];                 // 0x115
-    u16 field_0x116;                 // 0x116 (halfword read by func_8016841C)
+    u16 field_0x116;                 // 0x116 (halfword read by EvtSeqPublishIdHalfwords)
     u16 field_0x118;                 // 0x118
     u8 gap11C[0x20];                 // 0x11C-0x13B
     u8 field_0x13C[8];               // 0x13C: per-state-index byte counters
@@ -448,7 +448,7 @@ struct EvtBdabPtr1C {
 };
 
 // Layout view of CTaskREvtSequence exposing the IWorkEvent secondary base at
-// +0x54 (CTTask head 0x00-0x54, then IWorkEvent). func_801686B0 uses it to
+// +0x54 (CTTask head 0x00-0x54, then IWorkEvent). EvtSeqBeginFileRead uses it to
 // reproduce the retail null-guarded upcast when passing the callback object.
 struct EvtSeqHead54 {
     u8 gap00[0x54];
@@ -491,10 +491,10 @@ public:
     virtual void* vf_0x0C();   // user 1 -> vtable+0x0C
     virtual void* vf_0x10();   // user 2 -> vtable+0x10
     virtual void* vf_0x14();   // user 3 -> vtable+0x14: resolve the name object
-    virtual void* vf_0x18();   // user 4 -> vtable+0x18 (func_80168F38 busy probe)
+    virtual void* vf_0x18();   // user 4 -> vtable+0x18 (EvtSeqUpdateRealtimeEvents busy probe)
     virtual void* vf_0x1C();   // user 5
     virtual void* vf_0x20();   // user 6
-    virtual void* vf_0x24();   // user 7 -> vtable+0x24 (func_80168F38 walk call)
+    virtual void* vf_0x24();   // user 7 -> vtable+0x24 (EvtSeqUpdateRealtimeEvents walk call)
     virtual void* vf_0x28();   // user 8
     virtual void* vf_0x2C();   // user 9 -> vtable+0x2C (func_80169DD0 match call)
     virtual void* vf_0x30();            // user 10 -> vtable+0x30
@@ -562,7 +562,7 @@ public:
 };
 
 // File-header object at CTaskREvtSequence::field_0xC0: size word at +0x18,
-// flags halfword at +0x46 (both read by func_8016872C).
+// flags halfword at +0x46 (both read by EvtSeqLoadSequenceFile).
 struct UnkFileHeader {
     u8 gap00[0x18];   // 0x00
     u32 field_0x18;   // 0x18
@@ -598,7 +598,7 @@ struct UnkObj1C80168514 {
     u16 field_0x38;    // 0x38
 };  // size 0x3A
 
-// Object passed to func_80168514: standard MWCC vtable at +0x0 (2-word
+// Object passed to EvtSeqCheckEventRunGuard: standard MWCC vtable at +0x0 (2-word
 // header, first user virtual at +0x08), flag word at +0x18, data object at
 // +0x1C. The dispatched slots are user virtual 13 (vtable+0x3C, returns a
 // tested value) and user virtual 14 (vtable+0x40).
@@ -778,10 +778,10 @@ public:
     u32 field_0xAC;   // 0xAC (spare word)
     u32 field_0xB0;   // 0xB0 (ALLOC_HANDLE; -1 = invalid)
     u32 field_0xB4;   // 0xB4
-    u32 field_0xB8;   // 0xB8 (CFileHandle* stored by func_801686B0)
+    u32 field_0xB8;   // 0xB8 (CFileHandle* stored by EvtSeqBeginFileRead)
     u32 field_0xBC;   // 0xBC (CFileHandle* from readCommonArchiveFile)
-    u32 field_0xC0;   // 0xC0 (file-header object; freed by func_8016872C)
-    u32 field_0xC4;   // 0xC4 (newly allocated buffer, read into by func_8016872C)
+    u32 field_0xC0;   // 0xC0 (file-header object; freed by EvtSeqLoadSequenceFile)
+    u32 field_0xC4;   // 0xC4 (newly allocated buffer, read into by EvtSeqLoadSequenceFile)
     u32 field_0xC8;   // 0xC8
     u32 field_0xCC;   // 0xCC
     UnkStateTable_D0* field_0xD0; // 0xD0 (event table walked by func_80169DD0)
@@ -802,9 +802,9 @@ public:
     u8 field_0x109;            // 0x109 (ctor arms this to 1)
     u32 field_0x10C;           // 0x10C
     u32 field_0x110;           // 0x110
-    u8 field_0x114;            // 0x114 (byte cleared by func_80168F38)
+    u8 field_0x114;            // 0x114 (byte cleared by EvtSeqUpdateRealtimeEvents)
     u8 field_0x115;            // 0x115 (Term tests this byte)
-    u16 field_0x116;  // 0x116 (id halfword pair published by func_80168610)
+    u16 field_0x116;  // 0x116 (id halfword pair published by EvtSeqBootSequence)
     u16 field_0x118;  // 0x118
     u8 gap11A[0x02];  // 0x11A-0x11B
     u32 field_0x11C;  // 0x11C (func_80168028 arena pointer)
@@ -815,7 +815,7 @@ public:
     u32 field_0x130;  // 0x130 (zero-check by func_80169DD0)
     u16 field_0x134;  // 0x134 (sequence id halfword from func_8016E08C)
     u8 gap136[0x02];  // 0x136-0x137
-    u32 field_0x138;  // 0x138 (frame counter incremented by func_80168F38)
+    u32 field_0x138;  // 0x138 (frame counter incremented by EvtSeqUpdateRealtimeEvents)
     u8 mBuf13C[0x100]; // 0x13C-0x23B (zeroed by the ctor)
     u32 field_0x23C;   // 0x23C (id-list A base; func_80169F28 scratch word)
     u32 field_0x240;   // 0x240 (id-list B base)
@@ -839,7 +839,7 @@ public:
 extern "C" cf::CTaskREvtSequence* func_8016AED4(CProcess* parent, const char* name);
 
 // Sequence file loader (this TU): async readFile into field_0xB8 + ptmf table.
-extern "C" void func_801686B0(cf::CTaskREvtSequence* self);
+extern "C" void EvtSeqBeginFileRead(cf::CTaskREvtSequence* self);
 
 // Sibling in this TU (retail func_8016AF4C, unmangled): resolve a name
 // string from a data object into `out`; returns 1 on a hit. C linkage
@@ -863,7 +863,7 @@ extern "C" int getLODData__8CTaskLODFv(s16 taskId);
 // keep the emitted symbols byte-identical to retail).
 extern "C" void func_80168800(cf::CTaskREvtSequence* self);
 extern "C" void func_80169CD0(cf::CTaskREvtSequence* self);
-extern "C" void func_80168F38(cf::CTaskREvtSequence* self);
+extern "C" void EvtSeqUpdateRealtimeEvents(cf::CTaskREvtSequence* self);
 extern "C" void func_80169DD0(cf::CTaskREvtSequence* self, u32 idx);
 extern "C" void func_8016BC1C(UnkEvtListEntry* self);
 extern "C" u32 func_8016C118(u32 resId);
@@ -871,7 +871,7 @@ extern "C" int func_8016B788(u8* data);
 extern "C" int func_8016ADF8(UnkEvtListEntry* self);
 extern "C" int func_8016C300(UnkEvtListEntry* self);
 extern "C" void func_8016BB38(cf::CTaskREvtSequence* self);
-extern "C" int func_80168514(UnkObj80168514* self);
+extern "C" int EvtSeqCheckEventRunGuard(UnkObj80168514* self);
 extern "C" bool func_8016ABA8(cf::CTaskREvtSequence* self, EvtSeqFileEvent* ev);
 extern "C" int func_8016B5A4(u8* data, const char* name, s32* out);
 extern "C" int func_8016B164(u8* data, const char* name, s32* out, s32* out2);
@@ -894,7 +894,7 @@ extern "C" void func_801AACA8(u8 v);
 
 // Imports for func_80169A38 (event-sequence update): scene fade helpers
 // (CfObjectImplWalker.cpp).
-extern "C" void func_80496294(CScn* scene, float value);
+extern "C" void Scn_SetTimeScale(CScn* scene, float value);
 
 // ptmf tables copied into field_0x3C by func_801696CC (retail .data:
 // fixed offsets 0x78/0x84/0x90 inside the lbl_eu_80530A40 pool).
@@ -914,7 +914,7 @@ extern "C" void func_80180394();
 // as a u32).
 extern "C" const char* func_801644AC();
 // Scene alloc-handle getter (CTaskGame.cpp).
-extern "C" u32 func_80495FF0(CScn* scene);
+extern "C" u32 Scn_CallUnk8C_V9(CScn* scene);
 // BGM stream starter (CTaskGame.cpp): volume arrives in f1.
 extern "C" void func_80043738(u32 a1, const char* path, u32 handle, u32 a4,
                               u32 a5, u32 a6, float volume);
@@ -1159,7 +1159,7 @@ extern "C" void __dt__80261B1C();
 extern "C" void func_80167EF8();
 extern "C" void finalizeGameState__Q22cf13CfGameManagerFv();
 extern "C" void func_801338C8();
-extern "C" void func_80133B80();
+extern "C" void CUICfManager_queueEventMenu();
 extern "C" void func_8012F750(u32 arg);
 extern "C" void updateScnCounter__FUl(u32 arg);
 

@@ -182,9 +182,9 @@ extern "C" void __ct__Q22cf17CActParamAnimGameFv(void* p);
 extern "C" void __dt__Q22cf17CActParamAnimGameFv(void* obj, int flag);
 
 // Plain-C-linkage functions defined in this TU (retail symbol = plain name).
-extern "C" void func_8021FC28(CModelDispMakeCrystal*, u8);
+extern "C" void MakeCrystal_ResetSlotList(CModelDispMakeCrystal*, u8);
 extern "C" void func_8021FD44(CModelDispMakeCrystal*);
-extern "C" void func_802200A8(void*);
+extern "C" void MakeCrystal_AdvanceSlotEntries(void*);
 extern "C" void func_80220954(void*, int, u8);
 // CTaskGame_openVision is owned by kyoshin/CTaskGame.hpp (single unified decl).
 
@@ -195,7 +195,7 @@ extern "C" void CItemData_callVf0C(void* item, u8 flag);
 extern "C" void CItem_copyRecMasked(void* dst, const void* src);
 extern "C" void* CItem_initItemImplInstances(void* item);
 extern "C" void func_801F3850(void* scrollbar, u16 index);
-extern "C" void func_8021E840(void* entries, u16 idx);
+extern "C" void MakeCrystal_ClearSlotParam(void* entries, u16 idx);
 extern "C" void func_8021E888(void* entries);
 
 // C-linkage imports for the constructor (retail bare-name symbols - the

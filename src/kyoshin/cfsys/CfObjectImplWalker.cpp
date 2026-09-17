@@ -138,7 +138,7 @@ L2DE0:
     if (isGlobalCamFlagSet(0x4000000) != 0) goto L2EA0;
 
     // Accumulate elapsed time against one target-frame window.
-    self->field_3A0 = self->field_3A0 + func_80496288(lbl_eu_80663E14);
+    self->field_3A0 = self->field_3A0 + Scn_GetFrameDelta(lbl_eu_80663E14);
     {
         f64 frames = CDeviceVI::getTargetFramerate() * 0x3c;
         if ((f64)self->field_3A0 < frames - lbl_eu_80666B98) goto L2EA0;
@@ -252,7 +252,7 @@ L313C:
 void func_800C2714(cf::CfObjectImplWalker* self) {
     u32 v1, v2, v3, v4, v5;
     if (lbl_eu_80663E24 & 0x5000000) return;
-    if (func_80496288(lbl_eu_80663E14) == lbl_eu_80666B84) return;
+    if (Scn_GetFrameDelta(lbl_eu_80663E14) == lbl_eu_80666B84) return;
     u32 gid = func_800FE68C()->field_90E4;
     u32 gid0 = gid;
     cf::CfWalkTalkSrc* actor =
@@ -376,7 +376,7 @@ void func_800C2C90(cf::CfObjectImplWalker* self) {
     void* cast = __dynamic_cast(battleObj->mSub.m110(), 0,
                                 (const void*)&lbl_eu_80661C08,
                                 (const void*)&lbl_eu_80661C10, 0);
-    if (func_80496288(lbl_eu_80663E14) != lbl_eu_80666B84 && cast != 0) {
+    if (Scn_GetFrameDelta(lbl_eu_80663E14) != lbl_eu_80666B84 && cast != 0) {
         cf::CfWalkBattleSub* sub = (cf::CfWalkBattleSub*)cast;
         if (sub->vf44() != 0) {
             func_800FE920(func_800FE68C());
@@ -503,7 +503,7 @@ void func_800C3878(cf::CfObjectImplWalker* self) {
             {
                 u32 v = func_8009CF8C(0x335F);
                 if (((u32)__cntlzw(v) >> 5) == 0) {
-                    func_80133F48(1, lbl_eu_80666B8C);
+                    CUICfManager_queueFactoryMenu(1, lbl_eu_80666B8C);
                     func_800451D8(0xC3, 0);
                 }
             }
@@ -596,7 +596,7 @@ void func_800C3BF0(cf::CfObjectImplWalker* self) {
         if (mgr->vf174() < lbl_eu_80666B8C) return;
         if (!(mgr->field_68 & 0x100000)) return;
         if (mgr->field_68 & 0x6000) return;
-        if (func_80496044((CScn*)lbl_eu_80663E14) == 0) return;
+        if (Scn_IsDefaultScale((CScn*)lbl_eu_80663E14) == 0) return;
         if (isAnyFieldFlagSet__Q22cf13CfGameManagerFv() != 0) return;
         mgr->t110();
         if (func_800967F8() != 0) return;
@@ -705,7 +705,7 @@ void func_800C3BF0(cf::CfObjectImplWalker* self) {
     }
     if (f64 & 0x100) return;
 L4C30:
-    func_8013EC60();
+    UIWin_ClearTimer();
     self->field_18->mSub.m10(1);
     func_80174B4C(self->field_18, 1);
     self->field_18->vf230();
@@ -723,7 +723,7 @@ void func_800C2E3C(cf::CfObjectImplWalker* self) {
     __ct__800FA9B4(CTaskGame_enumListGet(&holder), lbl_eu_80663E14, 1);
     cf::CfWalkRect4 rect;
     func_8043E928__5CViewFRQ22ml5CRectP5CView(
-        &rect, func_8049627C(lbl_eu_80663E14, -1));
+        &rect, Scn_SetCamIndex(lbl_eu_80663E14, -1));
     // No user float locals here: retail hoists the int->float bias double
     // (lbl_eu_80666BA8) and the two comparison constants (B84, B8C) straight
     // into f29/f30/f31 in first-use order.
@@ -745,7 +745,7 @@ void func_800C2E3C(cf::CfObjectImplWalker* self) {
         if (src->field_C4 == 0) goto L3ADC;
         if (src->t164() == 0) goto L3ADC;
         if (src->field_98 == 0) goto L3ADC;
-        if (func_80496044((CScn*)lbl_eu_80663E14) == 0) goto L3ADC;
+        if (Scn_IsDefaultScale((CScn*)lbl_eu_80663E14) == 0) goto L3ADC;
         // Target found: run the target-query checks to decide the hook.
         cf::CfWalkBattleObj* bo = self->field_18;
         u32 v1 = bo->field_04->b30()->field_0;
@@ -843,26 +843,26 @@ L3C68:
                         u32 t = ((cf::CfWalkArtRec*)art)->field_4;
                         bool isFC = (t == 0xfc || t == 0xfd);
                         if (isFC) {
-                            func_8013F354(art);
+                            UIWin_FlagBufCommit(art);
                             self->vf30(0x10000, 1);
                             __dt__80043E88(&holder, -1);
                             goto L4070;
                         }
                         if (t == 0x2) {
-                            if (func_8013EC58() == 0) {
-                                func_8013F354(art);
+                            if (UIWin_GetTimer() == 0) {
+                                UIWin_FlagBufCommit(art);
                             } else {
-                                func_8013F3EC(art);
+                                UIWin_FlagBufResetAlias(art);
                             }
                         }
                     } else {
                         void* art2 = func_80140CA4(
                             ((cf::CfWalkTalkSrc*)actor)->field_8C);
                         if (art2 != 0) {
-                            if (func_8013EC58() == 1) {
-                                func_8013F2A0(art2);
+                            if (UIWin_GetTimer() == 1) {
+                                UIWin_FlagBufReset(art2);
                             } else {
-                                func_8013EC58();
+                                UIWin_GetTimer();
                             }
                         }
                     }
@@ -946,7 +946,7 @@ int func_800C4244(cf::CfObjectImplWalker* self, u32 battleId, u32 slot) {
                 if (v == *(const u8*)&cType) {
                     char* col3 =
                         (char*)getBdatStringColumnValue(fp, lbl_eu_804FC694 + 0x13, idx);
-                    func_8013D07C(self->field_18->mSub.field_74, col3, 1);
+                    UIWin_CreateTalkWin(self->field_18->mSub.field_74, col3, 1);
                     self->field_388++;
                     return 1;
                 }
@@ -1002,7 +1002,7 @@ int func_800C4244(cf::CfObjectImplWalker* self, u32 battleId, u32 slot) {
                         }
                         self->field_390 = 0;
                         u32 hit = (u32)func_8009CF8C(
-                            (u32)func_801413DC(0x280016, digit + 1));
+                            (u32)UIWin_PackHiLo(0x280016, digit + 1));
                         u32 rem = (u32)rand();
                         f32 rate = (f32)(s32)hit;
                         if ((f32)(s32)(rem % 100) <
@@ -1014,7 +1014,7 @@ int func_800C4244(cf::CfObjectImplWalker* self, u32 battleId, u32 slot) {
                             fp, lbl_eu_804FC694 +
                                 (self->field_390 ? 0x31 : 0x24),
                             idx);
-                        func_8013D07C(talk->field_74, col5, 1);
+                        UIWin_CreateTalkWin(talk->field_74, col5, 1);
                         self->field_38C = idx;
                         self->field_388++;
                         cf::CfWalkMoveSub* msub = self->field_18 ? &self->field_18->mSub : 0;
@@ -1032,7 +1032,7 @@ int func_800C4244(cf::CfObjectImplWalker* self, u32 battleId, u32 slot) {
         if (self->field_390 == 0) goto reset;
         char* col = (char*)getBdatStringColumnValue(
             fp, lbl_eu_804FC694 + 0x3f, self->field_38C);
-        func_8013D07C(self->field_18->mSub.field_74, col, 1);
+        UIWin_CreateTalkWin(self->field_18->mSub.field_74, col, 1);
         cf::CfWalkTalkSrc* talk =
             (cf::CfWalkTalkSrc*)func_800BBC0C(findObjectById((int)self->field_394));
         if (talk != 0) {
@@ -1215,7 +1215,7 @@ int func_800C4BD4(cf::CfObjectImplWalker* self, u32 a, u32 b) {
             func_8013EC6C(1, 1);
             self->field_394 = mgr->field_74;
             self->field_38C = kind;
-            func_8013D07C(mgr->field_74, col, 1);
+            UIWin_CreateTalkWin(mgr->field_74, col, 1);
             // Retail converts the sdata2 constant through __cvt_fp2unsigned.
             CfObjectMove_relaySubB0Slot54(mgr, 0x65, 0,
                           (u32)__cvt_fp2unsigned(lbl_eu_80666B80),
@@ -1224,7 +1224,7 @@ int func_800C4BD4(cf::CfObjectImplWalker* self, u32 a, u32 b) {
         }
         break;
     case 1: {
-        func_8013D07C(self->field_394, lbl_eu_804FC694 + 0x61, 1);
+        UIWin_CreateTalkWin(self->field_394, lbl_eu_804FC694 + 0x61, 1);
         u32 st = self->field_388;
         self->field_388 = st + 1;
         CfObjectMove_relaySubB0Slot58(mgr, 0x65, 0, st);
@@ -1232,7 +1232,7 @@ int func_800C4BD4(cf::CfObjectImplWalker* self, u32 a, u32 b) {
     }
     case 2:
         if (func_801BEE6C() != 0) {
-            func_8013D07C(self->field_394,
+            UIWin_CreateTalkWin(self->field_394,
                           (char*)getBdatStringColumnValue(
                               lbl_eu_806640C4, lbl_eu_804FC694 + 0x66,
                               self->field_38C),
@@ -1242,7 +1242,7 @@ int func_800C4BD4(cf::CfObjectImplWalker* self, u32 a, u32 b) {
                           lbl_eu_80666B8C, lbl_eu_80666BB8);
             self->field_388++;
         } else {
-            func_8013D07C(self->field_394,
+            UIWin_CreateTalkWin(self->field_394,
                           (char*)getBdatStringColumnValue(
                               lbl_eu_806640C4, lbl_eu_804FC694 + 0x70,
                               self->field_38C),
@@ -1254,12 +1254,12 @@ int func_800C4BD4(cf::CfObjectImplWalker* self, u32 a, u32 b) {
         // Queue the follow-up event with fixed flags (last arg on stack).
         char* ev = (char*)getBdatStringColumnValue(
             tbl98, lbl_eu_804FC694 + 0x7a, (int)mgr->field_8C);
-        func_8013E2E0(*(u16*)&ev, 0, 0, 0, 0, 1, 0, 1, 0);
+        UIWin_CreateItemMulti(*(u16*)&ev, 0, 0, 0, 0, 1, 0, 1, 0);
         self->field_388++;
         break;
     }
     case 4:
-        func_8013D07C(self->field_394,
+        UIWin_CreateTalkWin(self->field_394,
                       (char*)getBdatStringColumnValue(
                           lbl_eu_806640C4, lbl_eu_804FC694 + 0x70,
                           self->field_38C),
@@ -1510,7 +1510,7 @@ void func_800C525C(cf::CfObjectImplWalker* self) {
                 // Local pointer makes MWCC materialize the address with a
                 // lis/addi pair instead of an SDA21 reference.
                 char* str = &lbl_eu_80573E18;
-                func_8013E424(str, 0);
+                UIWin_CreateB4790Win(str, 0);
                 lbl_eu_80663E24 &= ~0x200000;
                 self->field_39C = 0;
                 // Bump the area step counters for the leaving area.

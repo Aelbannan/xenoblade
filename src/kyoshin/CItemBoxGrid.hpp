@@ -341,7 +341,7 @@ extern "C" void* getHandleMEM1__Q23mtl10MemManagerFv();
 extern "C" u32 getMaxAllocSize__Q23mtl10MemManagerFUl(u32);
 extern "C" void deallocate__Q23mtl10MemManagerFPv(void*);
 extern "C" u32 func_80212480();
-extern "C" int func_800A9D90();
+extern "C" int KyoshinHeap_GetField44();
 extern "C" void* readFile__11CDeviceFileFUlPCcP10IWorkEventii(u32, const char*, void*, int, int);
 extern "C" void* readCommonArchiveFile__11CDeviceFileFUlPCcP10IWorkEventii(u32, const char*, void*, int, int);
 extern "C" void func_801D4154(void*);
@@ -404,7 +404,7 @@ extern "C" u32 isResourceFlagSet__Q22cf13CfGameManagerFv(u32);
 extern "C" void func_800A18A4(void*, u8);
 extern "C" u32 func_801380A0(u16);
 extern "C" u32 func_80138138(u16);
-// func_801412D0 is owned by kyoshin/CUIWindowManager.hpp.
+// UIWin_BuildFlagBuf is owned by kyoshin/CUIWindowManager.hpp.
 
 extern "C" void* getHandleMEM2__Q23mtl10MemManagerFv(void);
 extern "C" void* createRegion__17UnkClass_8045F564FiiPCci(void*, void*, int, const char*, int);
@@ -419,11 +419,11 @@ extern "C" void buildLayout__FPPQ34nw4r3lyt6LayoutPQ34nw4r3lyt19ArcResourceAcces
 extern "C" void bindLayoutAnimTransform__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(nw4r::lyt::Layout*, nw4r::lyt::AnimTransform**, nw4r::lyt::ArcResourceAccessor*, char*);
 extern "C" void func_8013676C(void*, u32);
 extern "C" void* getPackedFont__Fv(void);
-extern "C" void* func_801355BC(void);
+extern "C" void* CUICfManager_getPackedFont9C(void);
 extern "C" void setLayoutTextBoxFont__FPQ34nw4r3lyt6LayoutPcUl(nw4r::lyt::Layout*, char*, u32);
 extern "C" void func_80139198(u32);
 extern "C" u16 BdatGetU16ByTableKey(const void*, const void*, u32);
-extern "C" nw4r::lyt::ArcResourceAccessor* func_801355F4();
+extern "C" nw4r::lyt::ArcResourceAccessor* CUICfManager_getArcResourceAccessor();
 // Pane-colour vector returned by value from func_801397AC/func_80139658
 // (r3:r4 pair); same layout as CEquipItemBox.hpp's CEquipBoxFourShorts,
 // defined locally because CEquipItemBox.hpp is not in this TU's include closure.

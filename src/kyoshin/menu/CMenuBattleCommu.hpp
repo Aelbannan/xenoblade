@@ -169,7 +169,7 @@ CBattleCommuActor2* func_8016FE34(CBattleCommuPlayer* source);
 void* __dynamic_cast(void* src, long offset, const void* src_type,
                      const void* dst_type, void* src2dst);
 // Shared ARC resource accessor / message manager.
-nw4r::lyt::ArcResourceAccessor* func_801355F4();
+nw4r::lyt::ArcResourceAccessor* CUICfManager_getArcResourceAccessor();
 // CDeviceFont font handle (retail called with a single argument; the second
 // layout parameter is left unset at this call site).
 CBattleCommuFontObj* getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32 arg);

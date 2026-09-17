@@ -201,7 +201,7 @@ extern "C" u32 func_804978B8(u8* self);
 
 // Cross-TU query: returns the model owned by the given scene owner's pool
 // (called by func_804831C4; defined in CScn_80496B0C.cpp).
-extern "C" CScnItemModel* func_80495E94(CScnItemModelOwner* owner);
+extern "C" CScnItemModel* Scn_SetupAnimDefault(CScnItemModelOwner* owner);
 
 // Fragment-anchored destructors of sub-objects destroyed by the
 // CScnItemModel dtor (defined in code_804BF59C.cpp / CScn_80496B0C.cpp).

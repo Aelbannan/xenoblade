@@ -191,4 +191,4 @@ extern "C" u16 BdatGetU16Direct(const void* table, const void* key, int id);
 extern "C" void LayoutSetTextBoxInt(void* pane, u32 value);
 extern "C" void func_8013996C(void* pane, const void* colors, int arg);
 // Unmangled retail symbol (the CUICfManager static emits the mangled name).
-extern "C" void* func_801355F4();
+extern "C" void* CUICfManager_getArcResourceAccessor();

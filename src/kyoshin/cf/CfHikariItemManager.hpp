@@ -45,7 +45,7 @@ extern const float lbl_eu_80668EF8;
 // sdata2 random-velocity scale (func_802B3568) - NON-const so MWCC reloads
 // it per mtRand conversion like retail.
 extern float lbl_eu_80668EEC;
-// sdata2 draw-pass constants for cbRenderBefore (func_8049626C view axes).
+// sdata2 draw-pass constants for cbRenderBefore (Scn_HasCamItem view axes).
 extern const float lbl_eu_80668ED0; // 1.0f
 extern const float lbl_eu_80668ED4; // 0.4f
 extern const float lbl_eu_80668ED8; // -0.4f
@@ -137,7 +137,7 @@ class CView;
 extern CView* lbl_eu_80663E10;
 
 // Scene/camera helpers (retail C-linkage symbols).
-extern "C" void* func_8049626C(void* scene, void* view);
+extern "C" void* Scn_HasCamItem(void* scene, void* view);
 // Manager singleton getter (retail func_802B262C, defined in CMenuGameClear).
 extern "C" cf::CfHikariItemManager* func_802B262C();
 
@@ -255,7 +255,7 @@ extern "C" void func_802B4460(CfHikariItemRecord* self);
 extern "C" s32 func_802B4470(CfHikariItemRecord* self, f32 delta);
 extern "C" void func_802B44C8(CfHikariItemRecord* self, const CfHikariQuadCorners* corners);
 
-// Minimal view of the frame object returned by func_8049626C (retail field
+// Minimal view of the frame object returned by Scn_HasCamItem (retail field
 // accesses: 3x4 matrix at +0x9C, Hikari record block at +0x10C, projection at
 // +0x194).  Used by cbRenderBefore for the inverse-matrix / projection setup.
 // 3x4 matrix copy type: struct assignment makes MWCC emit the retail lwz/stw

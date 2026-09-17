@@ -72,7 +72,7 @@ extern "C" {
     void func_800B98C8(int);
     void func_8012F860();
     void func_801338C8();
-    void func_80133AE8();
+    void CUICfManager_prepareMenus();
     s32 func_8011C2E8();
     void lookupResourceByKeys__Q22cf13CfGameManagerFv(void* this_, u32 second, u32 third);
 
@@ -83,13 +83,13 @@ extern "C" {
     void func_8012FAA8();
     int  CfRes_lookupLocalIndex(s32 arg);
     int  func_802A3748(u32 value);
-    void func_80135550();
-    int  func_804962A0(CScn* scn, int flag);
+    void CUICfManager_setTimeout30();
+    int  Scn_SetPauseFlag(CScn* scn, int flag);
     void func_8009EB2C(int a, int b, u8* c);
     int  CfRes_tryResolveSlot1E4(u16 a, u16 b, int c);
     bool func_80061D2C(UnkClass_80085334* obj, u32 mode);
     void func_801C3D9C(u8* obj);
-    void func_801FA254(u8* obj);
+    void PartyStateWin_TeardownWindow(u8* obj);
     void func_8008566C__Q22cf13CfGameManagerFv(u32 mode, const UnkFloat4* value, u32 third);
     void cleanupMapEffects__Q22cf13CfGameManagerFv();
     int  isSceneReadyForInput__Q22cf13CfGameManagerFv();
@@ -115,14 +115,14 @@ using namespace cf;
 // 1-arg view of func_801F941C for Move's call site (r4/r5 unset in retail).
 extern "C" void func_801F941C(CPartyStateWin* self);
 
-int func_8018F8D8(u32 p0, u32 p1, u32 p2, u32 p3, u32 p4) {
+int CfCmd_Gate8000Fwd(u32 p0, u32 p1, u32 p2, u32 p3, u32 p4) {
     if (lbl_eu_80663E24 & 0x8000) {
         func_80061A80(p0, 0x23, p1, p2, p3, p4);
     }
     return 1;
 }
 
-int func_8018F924(u32 p0, u32 p1, u32 p2, u32 p3, u32 p4) {
+int CfCmd_RecoverFwd24(u32 p0, u32 p1, u32 p2, u32 p3, u32 p4) {
     if (func_800B8FC4() != 0) {
         lbl_eu_80663E28 &= ~0x20;
         recoverFieldState__Q22cf13CfGameManagerFv(true);
@@ -132,7 +132,7 @@ int func_8018F924(u32 p0, u32 p1, u32 p2, u32 p3, u32 p4) {
     return 1;
 }
 
-int func_8018F9A0(u32 p0, u32 p1, u32 p2, u32 p3, u32 p4) {
+int CfCmd_ClearOrFwd25(u32 p0, u32 p1, u32 p2, u32 p3, u32 p4) {
     // Clear the event-pending flag when an event is already active/disabled
     // (busy manager, bit9 latching, or bit7 set); otherwise forward the request.
     if (isSceneReadyForInput__Q22cf13CfGameManagerFv() != 0 ||
@@ -231,7 +231,7 @@ int func_8018FA2C(CFuncHost* self, u32 p1, u32 p2, u32 p3, u32 p4) {
     return 0;
 }
 
-int func_8018FC78(void* p0, void* p1, cf::CfGameManager* gm, u32* p3) {
+int CfCmd_LookupResKeys(void* p0, void* p1, cf::CfGameManager* gm, u32* p3) {
     lookupResourceByKeys__Q22cf13CfGameManagerFv(gm, *p3, 0);
     return 0;
 }
@@ -331,18 +331,18 @@ int func_8018FCA8(CFuncHost* self, u32 a, u32 b, u32 c, u32 d) {
     return 0;
 }
 
-int func_80190034(CFuncHost* self) {
+int CfCmd_Call82C48(CFuncHost* self) {
     cf::CfGameManager* gm =
         reinterpret_cast<cf::CfGameManager*>(self->manager->unk94[0]);
     gm->func_80082C48();
     return 0;
 }
 
-int func_80190060(void* self) { return 0; }
+int CfCmd_Stub0060(void* self) { return 0; }
 
-int func_80190068(void* self) { return 0; }
+int CfCmd_Stub0068(void* self) { return 0; }
 
-int func_80190070(u32 p0, int p1, u32 p2, u32 p3, u32 p4) {
+int CfCmd_FwdCmd6(u32 p0, int p1, u32 p2, u32 p3, u32 p4) {
     int r = 0;
     if (p1 != 0) {
         func_80061A80(p0, 6, (u16)(p1 - 1), p2, p3, p4);
@@ -351,18 +351,18 @@ int func_80190070(u32 p0, int p1, u32 p2, u32 p3, u32 p4) {
     return r;
 }
 
-int func_801900C0(void* p0, int a, int b) {
+int CfCmd_RefreshUI(void* p0, int a, int b) {
     if (a != 0) {
         func_8012F860();
     }
     if (b != 0) {
         func_801338C8();
-        func_80133AE8();
+        CUICfManager_prepareMenus();
     }
     return 0;
 }
 
-int func_80190108(u32 p0, u32 p1, u32 p2, u32 p3, u32 p4) {
+int CfCmd_Fwd1FOrFlush(u32 p0, u32 p1, u32 p2, u32 p3, u32 p4) {
     int r = 0;
     if (func_8012FA5C() != 0) {
         func_8012FAA8();
@@ -373,7 +373,7 @@ int func_80190108(u32 p0, u32 p1, u32 p2, u32 p3, u32 p4) {
     return r;
 }
 
-int func_8019017C(CFuncHost* self) {
+int CfCmd_Call86778(CFuncHost* self) {
     self->manager->func_80086778();
     return 0;
 }
@@ -382,7 +382,7 @@ int func_8019017C(CFuncHost* self) {
 // floats (byte * scale) and hand them to the scene vec4 setter when bit 7 of
 // the mode word is clear. Retail leaves arg2 (r4) unset at the call site, so
 // the local is intentionally uninitialized.
-int func_801901A4(u32 p0, u32 p1, u32 color) {
+int CfCmd_SetSceneColor(u32 p0, u32 p1, u32 color) {
     const float scale = lbl_eu_80667A78;
     u8* c = reinterpret_cast<u8*>(&color);
     float cr = c[0] * scale;
@@ -393,16 +393,16 @@ int func_801901A4(u32 p0, u32 p1, u32 color) {
         // Retail leaves arg2 (r4) unconsumed here; forwarding the untouched
         // p1 parameter keeps r4 untouched too.
         CTaskGame_setVec4_tmp v = { cr, cg, cb, ca };
-        func_8049602C(reinterpret_cast<CScnNw4r*>(lbl_eu_80663E14), (int)p1, &v);
+        Scn_ReleaseUnk80(reinterpret_cast<CScnNw4r*>(lbl_eu_80663E14), (int)p1, &v);
     }
     return 0;
 }
 
-int func_80190254(int a, int b) { extern int func_801C0094(int); func_801C0094(b); return 0; }
+int CfCmd_CallC0094(int a, int b) { extern int func_801C0094(int); func_801C0094(b); return 0; }
 
-int func_8019027C(void* self) { return 0; }
+int CfCmd_Stub027C(void* self) { return 0; }
 
-unsigned long func_80190284() {
+unsigned long CfCmd_SetFlag8() {
     lbl_eu_80663E24 |= 8;
     return 0;
 }
@@ -411,7 +411,7 @@ unsigned long func_80190284() {
 // manager is locked (sentinel id -1 at +0x88, or busy per resetCameraManager), in
 // which case abort: clear the pending-event bit, reset the scene state and
 // disable the menu input path.
-int func_80190298(CFuncHost* self, u32 p1, u32 p2, u32 p3, u32 p4) {
+int CfCmd_OpenMenu12(CFuncHost* self, u32 p1, u32 p2, u32 p3, u32 p4) {
     cf::CfGameManager* mgr = self->manager;
     if (mgr->field_0x88 != -1 && resetCameraManager__Q22cf13CfGameManagerFv() == 0) {
         func_80061A80((u32)self, 0x12, p1, p2, p3, p4);
@@ -425,7 +425,7 @@ int func_80190298(CFuncHost* self, u32 p1, u32 p2, u32 p3, u32 p4) {
     return 0;
 }
 
-int func_80190334(u32 p0, u16 p1, u32 p2, u32 p3, u32 p4) {
+int CfCmd_Fwd13OrClear(u32 p0, u16 p1, u32 p2, u32 p3, u32 p4) {
     int r = 0;
     if (p1 != 0) {
         func_80061A80(p0, 0x13, (u16)(p1 - 1), p2, p3, p4);
@@ -436,7 +436,7 @@ int func_80190334(u32 p0, u16 p1, u32 p2, u32 p3, u32 p4) {
     return r;
 }
 
-int func_80190394(u32 p0, u32 p1, u32 p2, u32 p3, u32 p4) {
+int CfCmd_Fwd16IfItem(u32 p0, u32 p1, u32 p2, u32 p3, u32 p4) {
     int r = 0;
     if ((u32)(u16)p2 + 0x10000 != 0xffff && func_802A3748((u16)p2)) {
         func_80061A80(p0, 0x16, p1, p2, p3, p4);
@@ -445,7 +445,7 @@ int func_80190394(u32 p0, u32 p1, u32 p2, u32 p3, u32 p4) {
     return r;
 }
 
-int func_80190414(void* p0, void* p1) {
+int CfCmd_SetPAnimMode(void* p0, void* p1) {
     cf::CfObjectMove* player = cf::CfGameManager::getPlayer(0);
     if (player != 0) {
         CfObjectMove_setAnimModeArgs((u8*)player, (int)p1, 0, 0, 1);
@@ -453,7 +453,7 @@ int func_80190414(void* p0, void* p1) {
     return 0;
 }
 
-int func_80190464(u32 p0, u32 p1, u32 p2, u32 p3, u32 p4) {
+int CfCmd_Fwd18IfCam(u32 p0, u32 p1, u32 p2, u32 p3, u32 p4) {
     if (resetCameraManager__Q22cf13CfGameManagerFv() == 0) {
         func_80061A80(p0, 0x18, p1, p2, p3, p4);
         return 1;
@@ -461,7 +461,7 @@ int func_80190464(u32 p0, u32 p1, u32 p2, u32 p3, u32 p4) {
     return 0;
 }
 
-int func_801904D0(void* self) {
+int CfCmd_FadeSetup(void* self) {
     // If the colour-fade is already active (bit30 of lbl28), just clear it.
     // Otherwise set up an all-zero colour mix and dispatch a full-colour
     // request event when the colour-change latch (bit12) is set.
@@ -491,7 +491,7 @@ int func_801904D0(void* self) {
 // via triggerPlayerEffects; any other cmd forwards (cmd-1) to the task queue.
 // Retail keeps the (redundant-looking) per-player cmd==0 re-test inside the
 // loop, so it is written out explicitly here.
-int func_80190568(u32 self, u32 cmd, u32 a2, u32 a3, u32 a4) {
+int CfCmd_PartyMenuDisp(u32 self, u32 cmd, u32 a2, u32 a3, u32 a4) {
     int result = 0;
     if (cmd != 0) {
         if (cmd == 0x19) {
@@ -518,7 +518,7 @@ int func_80190568(u32 self, u32 cmd, u32 a2, u32 a3, u32 a4) {
     return result;
 }
 
-int func_80190690(u32 p0, u32 p1, u32 p2, u32 p3, u32 p4) {
+int CfCmd_Fwd1EIfBusy(u32 p0, u32 p1, u32 p2, u32 p3, u32 p4) {
     int r = 0;
     if (func_8023C1C0() != 0) {
         func_80061A80(p0, 0x1e, p1, p2, p3, p4);
@@ -527,26 +527,26 @@ int func_80190690(u32 p0, u32 p1, u32 p2, u32 p3, u32 p4) {
     return r;
 }
 
-extern "C" unsigned long func_801906FC() {
+extern "C" unsigned long CfCmd_Clear80000() {
     lbl_eu_80663E24 &= ~0x80000;
     return 0;
 }
 
-int func_80190710() {
+int CfCmd_RefreshUI2() {
     func_8012F860();
     func_801338C8();
-    func_80133AE8();
+    CUICfManager_prepareMenus();
     return 0;
 }
 
-int func_8019073C() {
+int CfCmd_Cond338C8() {
     if (func_8011C2E8() == 0) {
         func_801338C8();
     }
     return 0;
 }
 
-int func_8019076C(u32 p0, u32 p1, u32 p2, u32 p3, u32 p4) {
+int CfCmd_Fwd1BIfLocal(u32 p0, u32 p1, u32 p2, u32 p3, u32 p4) {
     int r = 0;
     if (p2 != 0 && CfRes_lookupLocalIndex(p2) == 0) {
         func_80061A80(p0, 0x1b, p1, p2, p3, p4);
@@ -555,7 +555,7 @@ int func_8019076C(u32 p0, u32 p1, u32 p2, u32 p3, u32 p4) {
     return r;
 }
 
-int func_801907E4() {
+int CfCmd_FadeClear() {
     if (!(lbl_eu_80663E24 & 0x400000)) {
         float f = lbl_eu_80667A70;
         UnkFloat4 v;
@@ -570,7 +570,7 @@ int func_801907E4() {
     return 0;
 }
 
-int func_eu_80191E88(CFuncHost408* self, u32 arg1, u32 arg2) {
+int CfCmd_ResolveSlot1E4(CFuncHost408* self, u32 arg1, u32 arg2) {
     // func_8009D5FC is declared in CfGameManager.hpp (CfFileEventIdsView*);
     // retail treats the result as this 4-byte pair.
     UnkR31_8019E88* p = reinterpret_cast<UnkR31_8019E88*>(func_8009D5FC());
@@ -581,7 +581,7 @@ int func_eu_80191E88(CFuncHost408* self, u32 arg1, u32 arg2) {
     return 0;
 }
 
-int func_eu_80191F08(u32 p0, u32 p1, u32 p2, u32 p3, u32 p4) {
+int CfCmd_Fwd28IfClear(u32 p0, u32 p1, u32 p2, u32 p3, u32 p4) {
     int r = 0;
     if (!(lbl_eu_80663E28 & 0x2000)) {
         func_80061A80(p0, 0x28, p1, p2, p3, p4);
@@ -595,7 +595,7 @@ int func_eu_80191F08(u32 p0, u32 p1, u32 p2, u32 p3, u32 p4) {
 // the cmd word's top byte; bits 20-23 hold the popped data-word count and
 // bit 19 suppresses dispatch for that record. A handler returning nonzero
 // publishes the command byte and ends the pump.
-int func_80190840(MenuCmdRingView* buf, u32* outFlag) {
+int CfCmd_PumpRingBuf(MenuCmdRingView* buf, u32* outFlag) {
     *outFlag = 0;
     if (!(lbl_eu_80663E28 & 0x10000) && cf::CfGameManager::isSceneLoading()) {
         return buf->field_404 == 0;
@@ -624,7 +624,7 @@ int func_80190840(MenuCmdRingView* buf, u32* outFlag) {
 }
 
 extern float lbl_eu_80667A90;
-float func_80190938() { return lbl_eu_80667A90; }
+float CfCmd_GetThreshold() { return lbl_eu_80667A90; }
 
 // State-gate probe: refresh the actor's current control word through the
 // +0x4 sub-object's slot-0x30 getter, then test it against `gate` via
@@ -1141,7 +1141,7 @@ void CMenuPTState::Init() {
 #undef s
 
     field_0x5C->addRenderCB(this, 0xd, 1);
-    func_804962A0(field_0x5C, 0);
+    Scn_SetPauseFlag(field_0x5C, 0);
 }
 
 // Memberwise copy of the SCopy_80191C88 state blob from src to dst, in the
@@ -1487,14 +1487,14 @@ __declspec(noinline) void func_80192268(SCopy_80192268* dst, const SCopy_8019226
 
 void CMenuPTState::Term() {
     CDeviceVI::waitForDrawDone();
-    func_804962A0(field_0x5C, 1);
+    Scn_SetPauseFlag(field_0x5C, 1);
     field_0x5C->removeRenderCB(this);
     func_801C3D9C((u8*)&field_0x60);
-    func_801FA254((u8*)&field_0x80);
+    PartyStateWin_TeardownWindow((u8*)&field_0x80);
     lbl_eu_80664300 = 0;
     processEventList__Q22cf13CfGameManagerFv();
     setPresentationFlag__Q22cf13CfGameManagerFv(false);
-    func_80135550();
+    CUICfManager_setTimeout30();
 }
 
 // Minimal view of the pad word block returned by getCurrentPad() (only the
@@ -1515,7 +1515,7 @@ void CMenuPTState::Move() {
     }
     {
         if ((u8)(field_0x6C6C + 0xff) <= 1) {
-            if (func_801FA524(&field_0x80) == 0) {
+            if (PartyStateWin_QueryMenuClose(&field_0x80) == 0) {
                 MenuPTPadView* pad = reinterpret_cast<MenuPTPadView*>(
                     cf::CfGameManager::getCurrentPad());
                 int accept;
@@ -1526,7 +1526,7 @@ void CMenuPTState::Move() {
                     accept = (pad->buttons >> 10) & 1;
                 }
                 if (accept != 0) {
-                    func_801FA4F4(&field_0x80);
+                    PartyStateWin_StepPartySub(&field_0x80);
                     if (func_800FEDF8() != 0) {
                         func_800FF914();
                         playUISound(6);
@@ -1548,7 +1548,7 @@ void CMenuPTState::Move() {
             field_0x6C6C = 2;
             break;
         case 2:
-            if (func_801FA4EC(&field_0x80) != 0) {
+            if (PartyStateWin_GetLatchFlag(&field_0x80) != 0) {
                 field_0x6C6C = 3;
             }
             break;
@@ -1561,7 +1561,7 @@ void CMenuPTState::Move() {
         }
         func_801C3D54(&field_0x60);
         if (field_0x6C6C != 3) {
-            func_801FA338(&field_0x80);
+            PartyStateWin_FrameStep(&field_0x80);
         }
     }
 }

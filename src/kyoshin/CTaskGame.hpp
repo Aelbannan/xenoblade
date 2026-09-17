@@ -271,9 +271,9 @@ extern "C" void func_8023FD4C(int mode);
 // cf/CTaskREvtSequence.hpp - two different extern "C" type lists for the same
 // symbol make any TU that includes both headers fail with "illegal function
 // overloading" (10197). Pointer params are ABI-identical either way.
-extern "C" void func_8049602C(void* scene, int index, void* vec);
+extern "C" void Scn_ReleaseUnk80(void* scene, int index, void* vec);
 // Scene current-process query (flat retail name; defined in CfGameManager.cpp).
-extern "C" void* func_80496034(CScn* scene);
+extern "C" void* Scn_GetUnk80Handle(CScn* scene);
 
 // Hbm state toggle (flat retail names; defined in CLibHbm.cpp). Retail
 // CTaskGame_moveNandReset disables via setHbmActiveFlag then re-enables via setHbmStopFlag.
@@ -555,11 +555,11 @@ extern "C" void* __ct__CMenuTitle(CTaskGame* self, CScnNw4r* scene, ITitleMenu* 
 // CTaskGame_openVision / func_80042274 call sites (same scheme as the CLibCri
 // caller-shape imports above). Flat retail names; the defining TUs emit
 // C-linkage symbols.
-extern "C" u32 func_80495FF0(CScn* scene);
-extern "C" int func_801684F4();
+extern "C" u32 Scn_CallUnk8C_V9(CScn* scene);
+extern "C" int EvtSeqGetStateBit10();
 extern "C" void func_80134C34();
-extern "C" void func_80134E50(u32 value);
-extern "C" u32 func_80496110(CScnNw4r* scene);
+extern "C" void CUICfManager_queueOptionMenu(u32 value);
+extern "C" u32 Scn_GetUnk80Resource(CScnNw4r* scene);
 extern "C" int func_802A0CB8(char* buffer, int index, int value);
 extern "C" int dispatchFilePlayback__7CLibCriFPCcUli(const char* filename, u32 allocHandle, int fileHandle);
 extern "C" u32 calcStreamBufferSize__7CLibCriFv(int arg);
@@ -573,7 +573,7 @@ extern "C" int func_eu_804520D0(const char* str);
 // cf::CTaskGameCf::create defined with the retail flat name (retail call
 // sites pass the parent + 0; the defining TU emits the Fv symbol).
 extern "C" cf::CTaskGameCf* create__Q22cf11CTaskGameCfFv(CProcess* pParent, int arg2);
-// Scene object (alloc-handle source for func_80495FF0; same symbol as
+// Scene object (alloc-handle source for Scn_CallUnk8C_V9; same symbol as
 // CTaskREvent.hpp).
 // Global flag word raised to 0x10000000 by retail func_80042274 after the
 // cf::CTaskGameCf create call.
@@ -591,14 +591,14 @@ extern "C" char* CTaskGame_strAppend2(ml::FixStr<32>* str, const char* s);
 // declare the caller's shape under extern "C" to keep the verbatim symbol.
 extern "C" void cbRenderBefore__9CTaskGameFv(CTaskGame* self, CScn* scene);
 
-// Camera/view object returned by func_8049603C (f32 at +0/+4/+8/+C).
+// Camera/view object returned by Scn_QueryUnk80State (f32 at +0/+4/+8/+C).
 struct CTaskGameCamView {
     f32 field_0;
     f32 field_4;
     f32 field_8;
     f32 field_C;
 };
-// func_8049603C is declared once in libs/monolib/src/scn/CScn_8049603C.hpp
+// Scn_QueryUnk80State is declared once in libs/monolib/src/scn/CScn_8049603C.hpp
 // (owner: monolib CScn); include that header where the symbol is used.
 
 
@@ -633,7 +633,7 @@ extern "C" void releasePoolMemory__17UnkClass_8047CD0CFv();
 class CTaskGameEvt;
 class CTaskGamePic;
 // Scene async-load kick + resource-flag setter.
-extern "C" void func_80496118(CScn* scn, CWorkThread* work, u32 flag);
+extern "C" void Scn_GetCamWorkInt(CScn* scn, CWorkThread* work, u32 flag);
 // Scene factory (defined in monolib with the flat retail symbol).
 extern "C" CScnNw4r* create__8CScnNw4rFv(CProcess* parent, char* name,
                                          u32 arg1, u32 handle, void* param);

@@ -129,8 +129,8 @@ namespace cf {
 
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
 extern "C" void func_802A07F4(int, void*);
-extern "C" u32 func_8013C54C();
-extern "C" void func_8013E800(int);
+extern "C" u32 UIWin_GetInstance();
+extern "C" void UIWin_Create6F8B0Win(int);
 extern "C" int lbl_eu_80662A80;
 extern "C" float lbl_eu_8050EDE0[4];
 // Retail .sdata2 object (8 bytes); defined in another TU.

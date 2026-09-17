@@ -43,7 +43,7 @@ void func_80293E24(cf::CChainCombo* self, cf::CfObjectActor* actor) {
     }
 
     self->mArtsType = newArtsType;
-    func_8013EAB0();
+    UIWin_CreateAA2A0Win();
 
     if (self->mComboCount < 5) {
         self->mComboCount++;

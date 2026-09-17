@@ -7,7 +7,7 @@
 
 namespace nw4r { namespace math { struct VEC3; } }
 
-/* 0x22-byte quest-log entry record, copied wholesale by func_80227994.
+/* 0x22-byte quest-log entry record, copied wholesale by QstLogList_CopyEntry.
    Layout matches the retail copy: 2 head bytes + 4x8-byte word loop. */
 struct CQstLogListEntry {
     s8 mField0;          // 0x0 (retail li r5,-1 store - signed)
@@ -66,8 +66,8 @@ struct CQstLogListSortMenuData {
    Layout (from retail ASM):
      +0x00: vtable pointer
      +0x04: UnkClass_8045F564 sub-object (0x10 bytes)
-     +0x14: CFileHandle* (readFile result from func_80227A60)
-     +0x18: ArcResourceAccessor* (texture lookups in func_802286F4)
+     +0x14: CFileHandle* (readFile result from QstLogList_LoadArc)
+     +0x18: ArcResourceAccessor* (texture lookups in QstLogList_DrawRow)
      +0x1C: nw4r layout
      +0x20/+0x24: animation transforms
      +0x28: CCur18 cursor sub-object (0x18 bytes)
@@ -105,8 +105,8 @@ struct CQstLogListMsgObj {
 
 struct CQstLogList {
     CQstLogList(u16 arg2);   // retail symbol __ct__CQstLogList (unmangled ctor)
-    u8 func_80227CCC();
-    u8 func_80227CD4();
+    u8 QstLogList_IsSortEnabled();
+    u8 QstLogList_IsSortDescending();
     int OnFileEvent(CEventFile* event);   // file-load completion callback
     ~CQstLogList();
 
@@ -136,16 +136,16 @@ struct CQstLogList {
 
 // In-TU helper functions. Retail symbols are unmangled (C linkage), so the
 // declarations must be extern "C" to bind the bl reloc to the retail name.
-extern "C" void func_802284E4(CQstLogList* self);
-extern "C" void func_80228544(CQstLogList* self);
-extern "C" void func_802285A4(CQstLogList* self);
-extern "C" void func_80228B10(CQstLogList* self);
-extern "C" void func_802286F4(CQstLogList* self, const char* name, int questId,
+extern "C" void QstLogList_ShowOpenAnim(CQstLogList* self);
+extern "C" void QstLogList_ShowSortAnim(CQstLogList* self);
+extern "C" void QstLogList_RefreshRows(CQstLogList* self);
+extern "C" void QstLogList_MoveCursor(CQstLogList* self);
+extern "C" void QstLogList_DrawRow(CQstLogList* self, const char* name, int questId,
                               int index, int mode, u8 a6, u8 a7);
-extern "C" void func_802289F8(CQstLogList* self);
-extern "C" void func_80228C04(CQstLogList* self);
+extern "C" void QstLogList_ClearRows(CQstLogList* self);
+extern "C" void QstLogList_FillSortMenu(CQstLogList* self);
 extern "C" void func_80228C98(CQstLogList* self);
-extern "C" CQstLogListEntry* func_80227994(CQstLogListEntry* pDst, const CQstLogListEntry* pSrc);
+extern "C" CQstLogListEntry* QstLogList_CopyEntry(CQstLogListEntry* pDst, const CQstLogListEntry* pSrc);
 
 // Abstract view into the embedded CCur18 cursor vtable (sibling copies live
 // in CMapSel.hpp / CTitle.hpp). MWCC prefixes the vtable with offset-to-top +
@@ -212,7 +212,7 @@ extern "C" u16 func_80227710(u8*, u16);
 
 // BDAT helpers / msg-manager imports (C-ABI retail symbols).
 extern "C" u32 func_8003B1EC(void*);              // BDAT row count
-extern "C" nw4r::lyt::ArcResourceAccessor* func_801355F4();
+extern "C" nw4r::lyt::ArcResourceAccessor* CUICfManager_getArcResourceAccessor();
 extern "C" int isClassicController__Q22cf13CfGameManagerFv(int);
 extern void* lbl_eu_806640A0;                      // BDAT table pointer (.sbss)
 

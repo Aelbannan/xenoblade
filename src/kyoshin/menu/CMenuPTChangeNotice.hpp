@@ -124,7 +124,7 @@ char* BdatTouchStringCell(const void*, const void*, int);
 void func_8013676C(void*, u32);
 void PaneSetTexPaletteByName(nw4r::lyt::Layout*, const char*, void*);
 char* MakeTplNameSysFile(u32);
-nw4r::lyt::ArcResourceAccessor* func_801355F4();
+nw4r::lyt::ArcResourceAccessor* CUICfManager_getArcResourceAccessor();
 u16 BdatGetU16Direct(const void*, const void*, int);
 void func_80124270(nw4r::lyt::Pane*, u32);
 void func_80124288(nw4r::lyt::Pane*, float*);

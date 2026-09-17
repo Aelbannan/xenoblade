@@ -285,7 +285,7 @@ void func_801D202C(void* cur);             // cursor per-frame update (CCur)
 void func_801D20B0(void*, void*); // cursor draw
 void __ct__Q34nw4r3lyt8DrawInfoFv(nw4r::lyt::DrawInfo* self);
 void __dt__Q34nw4r3lyt8DrawInfoFv(nw4r::lyt::DrawInfo* self, int flags);
-extern "C" int func_800A9D90(void);        // common-archive handle
+extern "C" int KyoshinHeap_GetField44(void);        // common-archive handle
 u32 func_80138138(u32 questId);             // quest id -> name-table index
 void setPresentationFlag__Q22cf13CfGameManagerFv(bool enable); // cf pad enable/disable
 void* __ct__CQuestWindow(CQuestWindow* self, u32 arg1, u32 arg2, u32 arg3);
@@ -327,7 +327,7 @@ u32 isResourceFlagSet__Q22cf13CfGameManagerFv(u32);
 // C-ABI UI / misc imports used by Term, func_80122EF8, func_80122C08.
 u8 DecMenuCounter64080();
 u32 func_801B481C();
-void func_80135550();
+void CUICfManager_setTimeout30();
 u8 code80135FDC_getByte_64080();
 void code80135FDC_postIncByte_64080();
 void code80135FDC_setByte_6405B();
@@ -337,11 +337,11 @@ void playUISound__FUl(u32);
 void incrementEventCounter__FUl(u32);
 void func_8009D018(u32 owner, u32 flag);
 u32 func_8009CF8C(u32 resourceId);
-void func_8013D55C(char* msg, int a, int b);
+void UIWin_CreateSysWin0(char* msg, int a, int b);
 int func_8015D310();
 void func_8015D3A0();
-void func_8013E030();
-void func_8013E2E0(u32, u32, u32, u32, u32, u32, u32, u32, u32);
+void UIWin_CreateCol6Check();
+void UIWin_CreateItemMulti(u32, u32, u32, u32, u32, u32, u32, u32, u32);
 void* func_800451D8(u32 cls, void* param);
 u32 func_800A32BC();
 int func_8026178C(void* data, u32 flag);
@@ -350,10 +350,10 @@ char* CItemBlock_getPtr20E8();
 void CItemBlock_setCount(s32 value);
 
 // CUICfManager font helpers (func_8012278C binds the font and rebuilds the
-// cursor). func_801355BC returns the font string, func_801355F4 the shared
+// cursor). CUICfManager_getPackedFont9C returns the font string, CUICfManager_getArcResourceAccessor the shared
 // arc accessor.
-extern "C" void* func_801355BC(void);
-extern "C" nw4r::lyt::ArcResourceAccessor* func_801355F4();
+extern "C" void* CUICfManager_getPackedFont9C(void);
+extern "C" nw4r::lyt::ArcResourceAccessor* CUICfManager_getArcResourceAccessor();
 
 // BDAT archive attach helpers (func_8012278C common-archive branch).
 void setBdatEntry__5CBdatFUlPv(u32, void*);
@@ -368,7 +368,7 @@ u32 func_8013732C(u32);
 void* func_80138DA4(const char*);
 u32 func_8009ECF0();
 void func_8009ECFC(u16);
-void func_8013DB6C(u32, u32, u32, u32);
+void UIWin_CreateMenuUpdate(u32, u32, u32, u32);
 
 // Pane visible-bit toggle (clears bit 0 of the pane +0xBB flag byte and ORs
 // the caller's flag byte; func_801231C4 pane show/hide calls).

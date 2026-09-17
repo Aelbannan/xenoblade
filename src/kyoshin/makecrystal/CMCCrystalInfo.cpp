@@ -584,7 +584,7 @@ bool CMCCrystalInfo::OnFileEvent(CEventFile* pEventFile)
                 ->vf7());
 
         // If a character set is loaded, stamp every text pane with it.
-        u32 sh = func_801355BC();
+        u32 sh = CUICfManager_getPackedFont9C();
         if (sh != 0) {
             setLayoutTextBoxFont((nw4r::lyt::Layout*)mLayout, &lbl_eu_80508DF8[0x15a], sh);
             setLayoutTextBoxFont((nw4r::lyt::Layout*)mLayout, &lbl_eu_80508DF8[0x21a], sh);

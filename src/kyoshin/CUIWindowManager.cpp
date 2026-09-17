@@ -104,7 +104,7 @@ public:
     bool field_0x65;         //0x65 - pending update-mark flag
     bool field_0x66;         //0x66 - removal-mark (func_8013D26C)
     u8 unk67;                //0x67 - pending flag (queried by func_8013EB90)
-    u32 field_0x68;          //0x68 - window id (matched by func_8013D07C)
+    u32 field_0x68;          //0x68 - window id (matched by UIWin_CreateTalkWin)
 };
 
 typedef reslist<IUIWindow*>::iterator WindowIter;
@@ -284,7 +284,7 @@ void CUIWindowManager::Move() {
     unkA1 = false;
 }
 
-extern "C" u32 func_8013C54C() {
+extern "C" u32 UIWin_GetInstance() {
     return (u32)lbl_eu_80664088;
 }
 // Window-queue sweep (retail func_8013D26C): walk the secondary queue. With
@@ -321,11 +321,11 @@ void func_8013D26C(int mode) {
         }
     }
 }
-extern "C" unsigned short func_8013EC58()
+extern "C" unsigned short UIWin_GetTimer()
 {
     return lbl_eu_8066408C;
 }
-extern "C" void func_8013EC60() {
+extern "C" void UIWin_ClearTimer() {
     lbl_eu_8066408C = 0;
 }
 // Bulk window-list control (retail func_8013EC6C). With arg1 set, marks every
@@ -430,14 +430,14 @@ extern "C" void Init__Q216CUIWindowManager5CTestFv(void* self) {}
 // arg is ignored by the retail body.
 extern "C" void func_8013CBB4(u32 arg0, int id = 0, int arg2 = 0, int arg3 = 0);
 
-extern "C" void* func_8013F234(void* self) {
+extern "C" void* UIWin_ThunkCBB4(void* self) {
     // Retail tail-jumps into func_8013CBB4 and forwards whatever it leaves in
     // r3; route through a matching prototype so no extra r3 setup is emitted.
     typedef void* (*ThunkFn)(u32);
     return ((ThunkFn)&func_8013CBB4)((u32)((char*)self - 0x54));
 }
 void __dt__16CUIWindowManagerFv(CUIWindowManager*);
-extern "C" void func_8013F23C(CUIWindowManager* p) {
+extern "C" void UIWin_DtorAdaptor(CUIWindowManager* p) {
     __dt__16CUIWindowManagerFv((CUIWindowManager*)((char*)p - 0x54));
 }
 
@@ -450,9 +450,9 @@ namespace cf {
 IFlagEvent::~IFlagEvent() {}
 }
 CUIWindowManager::~CUIWindowManager() {}
-extern "C" void func_8013F2A0(CUIWindowManager* self);
-extern "C" void func_8013F3EC(CUIWindowManager* self) { func_8013F2A0(self); }
-extern "C" int func_801413DC(unsigned int arg0, int arg1) { unsigned int low = arg0 & 0xffff; unsigned int high = arg0 >> 16; if (arg1 >= (int)low) return -1; return (int)(high + arg1); }
+extern "C" void UIWin_FlagBufReset(CUIWindowManager* self);
+extern "C" void UIWin_FlagBufResetAlias(CUIWindowManager* self) { UIWin_FlagBufReset(self); }
+extern "C" int UIWin_PackHiLo(unsigned int arg0, int arg1) { unsigned int low = arg0 & 0xffff; unsigned int high = arg0 >> 16; if (arg1 >= (int)low) return -1; return (int)(high + arg1); }
 
 // Singleton ctor: CProcess base first, then the complete-object vtable, the
 // IFlagEvent sub-vtable, the scene, and the two window queues (each reslist
@@ -464,8 +464,8 @@ CUIWindowManager::CUIWindowManager(CScn* pScene, mtl::ALLOC_HANDLE mHandle)
     unkA0 = false;
     unkA1 = false;
 
-    mWindowList1.reserve(func_80496004(pScene), 8);
-    mWindowList2.reserve(func_80496004(pScene), 8);
+    mWindowList1.reserve(Scn_CallUnk8C_V10(pScene), 8);
+    mWindowList2.reserve(Scn_CallUnk8C_V10(pScene), 8);
 
     func_8015D0B8();
     func_80122460();
@@ -768,7 +768,7 @@ extern "C" __declspec(noinline) void* __ct__CUIWindowManager(
 // 0xA4-byte instance from the work heap, construct it (falling back to the
 // MEM2 handle when the caller passes -1), register it under `pParent`, and
 // cache it in the global singleton slot.
-extern "C" CUIWindowManager* func_8013CFDC(CProcess* pParent, CScn* pScene,
+extern "C" CUIWindowManager* UIWin_CreateManager(CProcess* pParent, CScn* pScene,
                                            mtl::ALLOC_HANDLE mHandle) {
     if (lbl_eu_80664088 != NULL) {
         return lbl_eu_80664088;
@@ -866,13 +866,13 @@ end:
 // Window factory: create a talk window on the secondary queue, removing any
 // existing window with the same id first (retail splices the node out of the
 // reslist). Returns 0 when the singleton or layout manager is absent.
-extern "C" IUIWindow* func_8013D07C(u32 id, const u8* msgSrc, u32 a3) {
+extern "C" IUIWindow* UIWin_CreateTalkWin(u32 id, const u8* msgSrc, u32 a3) {
     volatile u32 savedRet;
     CUIWindowManager* inst = lbl_eu_80664088;
     if (inst == NULL) {
         return NULL;
     }
-    if (func_801355F4() == NULL) {
+    if (CUICfManager_getArcResourceAccessor() == NULL) {
         return NULL;
     }
 
@@ -977,13 +977,13 @@ void func_8013D1E8(u32 id) {
 // Window factory: create the simple eve-talk window on the secondary queue.
 // Returns 0 when the manager singleton is absent, the layout manager is not
 // ready, or the factory declined (message handed to the existing window).
-extern "C" IUIWindow* func_8013D448(u32 text, const u8* msgSrc) {
+extern "C" IUIWindow* UIWin_CreateEveTalkWin(u32 text, const u8* msgSrc) {
     volatile u32 savedRet;
     CUIWindowManager* inst = lbl_eu_80664088;
     if (inst == NULL) {
         return NULL;
     }
-    if (func_801355F4() == NULL) {
+    if (CUICfManager_getArcResourceAccessor() == NULL) {
         return NULL;
     }
     {
@@ -1040,7 +1040,7 @@ queue_found:
 // Window factory: create a system window on the primary queue. `str` is a
 // non-empty string (the window title); returns 0 when the singleton is absent,
 // the string is empty, or the entry check rejects the request.
-extern "C" IUIWindow* func_8013D55C(const char* str, void* arg1, u32 arg2) {
+extern "C" IUIWindow* UIWin_CreateSysWin0(const char* str, void* arg1, u32 arg2) {
     volatile u32 savedRet;
     CUIWindowManager* inst = lbl_eu_80664088;
     if (inst == NULL) {
@@ -1049,7 +1049,7 @@ extern "C" IUIWindow* func_8013D55C(const char* str, void* arg1, u32 arg2) {
     if (str[0] == 0) {
         return NULL;
     }
-    if (arg2 == 0 && func_801356BC() != 0) {
+    if (arg2 == 0 && CUICfManager_claimSlotFormatted() != 0) {
         return NULL;
     }
     {
@@ -1105,13 +1105,13 @@ queue_found:
 
 // Window factory: create a system window on the primary queue (flag = 1
 // variant). Returns 0 when the singleton is absent or the entry check rejects.
-extern "C" IUIWindow* func_8013D688(u32 arg0, void* arg1, void* arg2, u32 arg3) {
+extern "C" IUIWindow* UIWin_CreateSysWin1(u32 arg0, void* arg1, void* arg2, u32 arg3) {
     volatile u32 savedRet;
     CUIWindowManager* inst = lbl_eu_80664088;
     if (inst == NULL) {
         return NULL;
     }
-    if (arg3 == 0 && func_801356E0() != 0) {
+    if (arg3 == 0 && CUICfManager_claimSlotByTwoIds() != 0) {
         return NULL;
     }
     {
@@ -1168,7 +1168,7 @@ queue_found:
 // Same body shape as CUICfManager's CF_QUEUE_MENU creators: save the
 // factory result in a volatile stack-homed savedRet, re-read the singleton,
 // walk the free-slot list with an i/byteOff cursor pair, then setItem+splice.
-extern "C" IUIWindow* func_8013D7C0(u32 id) {
+extern "C" IUIWindow* UIWin_CreateSysWinBuff(u32 id) {
     volatile u32 savedRet;
     CUIWindowManager* inst = lbl_eu_80664088;
     if (inst == NULL) {
@@ -1225,7 +1225,7 @@ queue_found:
 // primary window list. Retail spills the result to the frame across the
 // inlined push_back scan.
 extern "C" IUIWindow* func_8027E9E8(CProcess* pProc, CScn* pScene);
-int func_8013D8A0() {
+int UIWin_CreateExtraWin() {
     volatile u32 savedRet;
     CUIWindowManager* inst = lbl_eu_80664088;
     if (inst == NULL) {
@@ -1275,8 +1275,8 @@ queue_found:
     startNode->mPrev = temp;
     return savedRet;
 }
-// Retail window creator (same body shape as func_8013D7C0).
-extern "C" IUIWindow* func_8013D978(u32 a1, u32 a2, u32 a3) {
+// Retail window creator (same body shape as UIWin_CreateSysWinBuff).
+extern "C" IUIWindow* UIWin_Create25070Win(u32 a1, u32 a2, u32 a3) {
     volatile u32 savedRet;
     CUIWindowManager* inst = lbl_eu_80664088;
     if (inst == NULL) {
@@ -1330,13 +1330,13 @@ queue_found:
 // Window factory: create the quest window on the primary queue. Returns 0
 // when the manager singleton is absent or the entry check rejects the id;
 // note this creator does NOT null-check the factory result before queueing.
-extern "C" IUIWindow* func_8013DA60(u32 id, void* arg1, u32 arg2) {
+extern "C" IUIWindow* UIWin_CreateQuestWin(u32 id, void* arg1, u32 arg2) {
     volatile u32 savedRet;
     CUIWindowManager* inst = lbl_eu_80664088;
     if (inst == NULL) {
         return NULL;
     }
-    if (arg2 == 0 && func_80135694((u16)id) != 0) {
+    if (arg2 == 0 && CUICfManager_claimSlotByIdState((u16)id) != 0) {
         return NULL;
     }
     {
@@ -1390,7 +1390,7 @@ queue_found:
 // it on the primary window list. Type 1 (quest) windows are rejected when the
 // quest table already reports the row as shown. Retail inlines
 // reslist::push_back (find-first-empty-slot + splice onto the sentinel).
-extern "C" IUIWindow* func_8013DB6C(int first, u32 second, s32 third,
+extern "C" IUIWindow* UIWin_CreateMenuUpdate(int first, u32 second, s32 third,
                                     s32 fourth) {
     volatile u32 savedRet;
     CUIWindowManager* inst = lbl_eu_80664088;
@@ -1450,8 +1450,8 @@ queue_found:
     startNode->mPrev = temp;
     return (IUIWindow*)savedRet;
 }
-// Retail window creator (same body shape as func_8013D7C0).
-extern "C" IUIWindow* func_8013DCAC(u32 a1, u32 a2) {
+// Retail window creator (same body shape as UIWin_CreateSysWinBuff).
+extern "C" IUIWindow* UIWin_Create44EE4Win(u32 a1, u32 a2) {
     volatile u32 savedRet;
     CUIWindowManager* inst = lbl_eu_80664088;
     if (inst == NULL) {
@@ -1510,7 +1510,7 @@ queue_found:
 
 // Retail window creator: create the window from func_801602F4 and queue it
 // on the primary window list.
-extern "C" IUIWindow* func_8013DD94() {
+extern "C" IUIWindow* UIWin_Create602F4Win() {
     volatile u32 savedRet;
     CUIWindowManager* inst = lbl_eu_80664088;
     if (inst == NULL) {
@@ -1564,7 +1564,7 @@ queue_found:
 }
 // Retail window creator: create the Col6 hint window and queue it on the
 // primary window list.
-extern "C" IUIWindow* func_8013DE6C() {
+extern "C" IUIWindow* UIWin_Create5DCD0Win() {
     volatile u32 savedRet;
     CUIWindowManager* inst = lbl_eu_80664088;
     if (inst == NULL) {
@@ -1624,7 +1624,7 @@ queue_found:
 
 // Retail window creator: construct a CCol6Invite subobject on the manager's
 // flagged child window and queue the resulting window handle.
-extern "C" IUIWindow* func_8013DF44(u32 a1, u32 a2, u32 a3) {
+extern "C" IUIWindow* UIWin_CreateCol6Invite(u32 a1, u32 a2, u32 a3) {
     volatile u32 savedRet;
     CUIWindowManager* inst = lbl_eu_80664088;
     if (inst == NULL) {
@@ -1681,7 +1681,7 @@ queue_found:
 // Window creator (int): construct a CCol6CheckBat subobject on the flagged
 // child (unk9C) and queue the result on the primary window list.
 extern "C" void* __ct__CCol6CheckBat(void* self);
-int func_8013E030() {
+int UIWin_CreateCol6Check() {
     volatile u32 savedRet;
     CUIWindowManager* inst = lbl_eu_80664088;
     if (inst == NULL) {
@@ -1736,7 +1736,7 @@ queue_found:
 // Retail window creator: create the shop-select window and queue it on the
 // primary list (expanded inlined reslist::push_back). A quest-menu open guard
 // can veto the creation.
-extern "C" IUIWindow* func_8013E104(u32 id) {
+extern "C" IUIWindow* UIWin_CreateShopWin(u32 id) {
     volatile u32 savedRet;
     if (lbl_eu_80664088 == NULL) {
         return NULL;
@@ -1792,7 +1792,7 @@ queue_found:
 }
 // Retail window creator: create the item-exchange window and queue it on the
 // primary window list.
-extern "C" IUIWindow* func_8013E204(u32 id) {
+extern "C" IUIWindow* UIWin_CreateBEDE0Win(u32 id) {
     volatile u32 savedRet;
     CUIWindowManager* inst = lbl_eu_80664088;
     if (inst == NULL) {
@@ -1849,7 +1849,7 @@ queue_found:
 // Window factory: create an item-multi window on the primary queue. The
 // entry guard only runs when arg7 is clear. The 9th argument is a byte flag
 // forwarded to the factory (retail reads it from the stack slot's low byte).
-extern "C" IUIWindow* func_8013E2E0(u32 a1, u32 a2, u32 a3, u32 a4, u32 a5,
+extern "C" IUIWindow* UIWin_CreateItemMulti(u32 a1, u32 a2, u32 a3, u32 a4, u32 a5,
                                     u32 a6, u32 a7, u32 a8, u8 a9) {
     volatile u32 savedRet;
     // Retail homes the stack byte arg into a callee-saved register with a
@@ -1859,7 +1859,7 @@ extern "C" IUIWindow* func_8013E2E0(u32 a1, u32 a2, u32 a3, u32 a4, u32 a5,
     if (inst == NULL) {
         return NULL;
     }
-    if (a7 == 0 && func_80135654(a1, a2, a3, a4, a5)) {
+    if (a7 == 0 && CUICfManager_claimSlotByIds(a1, a2, a3, a4, a5)) {
         return NULL;
     }
     {
@@ -1911,13 +1911,13 @@ queue_found:
 // Window factory: create an item-multi related window on the primary queue.
 // Returns 0 when the singleton is absent, the entry guard rejects (only
 // consulted when arg2 is clear), or the factory returned 0.
-extern "C" IUIWindow* func_8013E424(u32 arg1, u32 arg2) {
+extern "C" IUIWindow* UIWin_CreateB4790Win(u32 arg1, u32 arg2) {
     volatile u32 savedRet;
     CUIWindowManager* inst = lbl_eu_80664088;
     if (inst == NULL) {
         return NULL;
     }
-    if (arg2 == 0 && func_80135630() != 0) {
+    if (arg2 == 0 && CUICfManager_claimSlotByTemplate() != 0) {
         return NULL;
     }
     {
@@ -1969,7 +1969,7 @@ queue_found:
 }
 // Retail window creator: create the kizuna-talk window and queue it on the
 // primary window list.
-extern "C" IUIWindow* func_8013E52C(u32 charId) {
+extern "C" IUIWindow* UIWin_CreateKizunaTalk(u32 charId) {
     volatile u32 savedRet;
     CUIWindowManager* inst = lbl_eu_80664088;
     if (inst == NULL) {
@@ -2026,7 +2026,7 @@ queue_found:
 
 // Retail window creator: create the quest-log menu window and queue it.
 // The trailing entry byte passed to the factory is a literal 0 here.
-extern "C" IUIWindow* func_8013E608(u32 a1, u32 a2, u32 a3, u32 a4) {
+extern "C" IUIWindow* UIWin_CreateQuestLog0(u32 a1, u32 a2, u32 a3, u32 a4) {
     volatile u32 savedRet;
     CUIWindowManager* inst = lbl_eu_80664088;
     if (inst == NULL) {
@@ -2081,8 +2081,8 @@ queue_found:
     return (IUIWindow*)savedRet;
 }
 
-// Same shape as func_8013E608 with the literal entry byte set to 1.
-extern "C" IUIWindow* func_8013E704(u32 a1, u32 a2, u32 a3, u32 a4) {
+// Same shape as UIWin_CreateQuestLog0 with the literal entry byte set to 1.
+extern "C" IUIWindow* UIWin_CreateQuestLog1(u32 a1, u32 a2, u32 a3, u32 a4) {
     volatile u32 savedRet;
     CUIWindowManager* inst = lbl_eu_80664088;
     if (inst == NULL) {
@@ -2136,10 +2136,10 @@ queue_found:
     startNode->mPrev = temp;
     return (IUIWindow*)savedRet;
 }
-// Retail window creator (same body shape as func_8013D7C0): factory call,
+// Retail window creator (same body shape as UIWin_CreateSysWinBuff): factory call,
 // volatile stack-homed savedRet, singleton re-read, free-slot cursor walk,
 // expanded setItem + splice.
-extern "C" IUIWindow* func_8013E800(u32 id) {
+extern "C" IUIWindow* UIWin_Create6F8B0Win(u32 id) {
     volatile u32 savedRet;
     CUIWindowManager* inst = lbl_eu_80664088;
     if (inst == NULL) {
@@ -2194,14 +2194,14 @@ queue_found:
 }
 // Retail window creator: create the party-change-notice window and queue it.
 // When flag is clear, an entry guard can still veto the creation.
-extern "C" IUIWindow* func_8013E8E0(u32 flag) {
+extern "C" IUIWindow* UIWin_CreatePTChange(u32 flag) {
     volatile u32 savedRet;
     // No local caching of the singleton here: retail reloads the global
     // around each call instead of keeping it in a saved register.
     if (lbl_eu_80664088 == NULL) {
         return NULL;
     }
-    if (flag == 0 && func_80135610()) {
+    if (flag == 0 && CUICfManager_tryResetSlots()) {
         return NULL;
     }
     {
@@ -2253,7 +2253,7 @@ queue_found:
 }
 // Retail window creator: create the save window (CSysWinSave) and queue it on
 // the primary window list.
-extern "C" IUIWindow* func_8013E9D8() {
+extern "C" IUIWindow* UIWin_CreateSaveWin() {
     volatile u32 savedRet;
     CUIWindowManager* inst = lbl_eu_80664088;
     if (inst == NULL) {
@@ -2306,8 +2306,8 @@ queue_found:
     return (IUIWindow*)savedRet;
 }
 
-// Retail window creator (same body shape as func_8013D7C0).
-extern "C" IUIWindow* func_8013EAB0(u32 id) {
+// Retail window creator (same body shape as UIWin_CreateSysWinBuff).
+extern "C" IUIWindow* UIWin_CreateAA2A0Win(u32 id) {
     volatile u32 savedRet;
     CUIWindowManager* inst = lbl_eu_80664088;
     if (inst == NULL) {
@@ -2408,7 +2408,7 @@ extern "C" void* __dt__Q216CUIWindowManager5CTestFv(void* self, s32 flags) {
 }
 // Clamp the +0x52 page id into the 544..1543 range, then when the clamp is
 // valid run the +0xC4 layout resize (0, 0, 8) and a 4-byte memset.
-extern "C" void func_8013F244(void* self) {
+extern "C" void UIWin_FlagBufClear(void* self) {
     CFlagBuffer* buf = (CFlagBuffer*)self;
     u16 page = buf->field_0x52;
     int idx = ((s32)page < 1000) ? page + 544 : -1;
@@ -2419,7 +2419,7 @@ extern "C" void func_8013F244(void* self) {
 }
 // Release any pending flag-memory writes for this buffer's quest page: the
 // 0xFC/0xFD deferred states are committed as 0xFE/0xFF.
-void func_8013F354(CFlagBuffer* self) {
+void UIWin_FlagBufCommit(CFlagBuffer* self) {
     CFlagBuffer* global = (CFlagBuffer*)lbl_eu_80573C50;
     if (global->field_0x6C[0] == 0) {
         return;
@@ -2440,7 +2440,7 @@ void func_8013F354(CFlagBuffer* self) {
 }
 // Reset the buffer's layout and mission slots: commit slot 0x52 as value 1,
 // clear the 8-byte per-item table, then release slots 0x68/0x6A with 0xC8.
-void func_8013F2A0(CFlagBuffer* self) {
+void UIWin_FlagBufReset(CFlagBuffer* self) {
     int v52 = self->field_0x52;
     int id = -1;
     if (v52 < 0x3E8) {
@@ -2476,12 +2476,12 @@ void func_8013F2A0(CFlagBuffer* self) {
         func_8009D018(id, 0xC8);
     }
 }
-// Flag-buffer availability check (retail func_8013F3F0): returns 1 when the
+// Flag-buffer availability check (retail UIWin_FlagBufCanShow): returns 1 when the
 // buffer's window can still be shown, 0 otherwise. Bit0 of field_0x00 is
 // cleared by the caller before querying. The quest id (0x52) must not map to
 // a blocked flag-memory state, and each nonzero mission slot (0x58-0x64)
 // must pass its own flag-memory gate.
-int func_8013F3F0(CFlagBuffer* flagBuf) {
+int UIWin_FlagBufCanShow(CFlagBuffer* flagBuf) {
     if ((flagBuf->field_0x00 & 1) != 0) {
         return 0;
     }
@@ -2689,7 +2689,7 @@ int func_8013F6C4(CFlagBuffer* self, u32 arg1, u32 arg2, u32 arg3, u32 arg4) {
                                 }
                                 if (self->field_0x08 == 0 ||
                                     self->field_0x08 == 3) {
-                                    func_8013E608(self->field_0x52,
+                                    UIWin_CreateQuestLog0(self->field_0x52,
                                                   (u32)(u16)arg2,
                                                   (u32)(u8)nv, 0);
                                 }
@@ -2746,7 +2746,7 @@ int func_8013F6C4(CFlagBuffer* self, u32 arg1, u32 arg2, u32 arg3, u32 arg4) {
                                 changed = 1;
                             }
                             if (self->field_0x08 != 2) {
-                                func_8013E704(self->field_0x52,
+                                UIWin_CreateQuestLog1(self->field_0x52,
                                               (u32)(u16)arg2,
                                               (u32)(u8)CItem_sumFamilyByte6(val),
                                               row->field_0x12[j]);
@@ -2770,7 +2770,7 @@ int func_8013F6C4(CFlagBuffer* self, u32 arg1, u32 arg2, u32 arg3, u32 arg4) {
                         if (row->field_0x01 == 0 ||
                             !(j > 0 && times[j - 1] > self->field_0x04)) {
                             cells[j] = cells[j] + 1;
-                            func_8013DB6C(1, self->field_0x52, 0, 0);
+                            UIWin_CreateMenuUpdate(1, self->field_0x52, 0, 0);
                         }
                         goto next;
                     }
@@ -2803,7 +2803,7 @@ int func_8013F6C4(CFlagBuffer* self, u32 arg1, u32 arg2, u32 arg3, u32 arg4) {
                                             cells[j] = 1;
                                             changed = 1;
                                             if (self->field_0x08 != 2) {
-                                                func_8013E704(
+                                                UIWin_CreateQuestLog1(
                                                     self->field_0x52, val,
                                                     (u32)(u8)CItem_sumFamilyByte6(
                                                         val),
@@ -2836,7 +2836,7 @@ int func_8013F6C4(CFlagBuffer* self, u32 arg1, u32 arg2, u32 arg3, u32 arg4) {
                                         cells[j] = 1;
                                         changed = 1;
                                         if (self->field_0x08 != 2) {
-                                            func_8013E704(
+                                            UIWin_CreateQuestLog1(
                                                 self->field_0x52, val,
                                                 (u32)(u8)CItem_sumFamilyByte6(val),
                                                 row->field_0x12[j]);
@@ -2895,7 +2895,7 @@ int func_8013F6C4(CFlagBuffer* self, u32 arg1, u32 arg2, u32 arg3, u32 arg4) {
                 // Some entry is still pending: refresh quest windows when
                 // something was absorbed, and report any timestamp change.
                 if (changed != 0) {
-                    func_8013DB6C(1, self->field_0x52, 0, 0);
+                    UIWin_CreateMenuUpdate(1, self->field_0x52, 0, 0);
                 }
                 if (self->field_0x04 != saved04) {
                     return 1;
@@ -3120,7 +3120,7 @@ u8* func_80140AFC(u32 target) {
 // mark it active, refresh the per-table entry pointers, then scan every
 // table's rows for a row whose bdat column value matches `target`. On a hit
 // set the flag for that table and, when the window-open guard is clear
-// (flagBuf[9] == 0 and func_8013F3F0 accepts), clear the +4 slot and return
+// (flagBuf[9] == 0 and UIWin_FlagBufCanShow accepts), clear the +4 slot and return
 // the buffer, otherwise 0.
 extern "C" u8* func_80140CA4(u32 target) {
     u8* flagBuf = lbl_eu_80573C50;
@@ -3146,7 +3146,7 @@ extern "C" u8* func_80140CA4(u32 target) {
             if ((u16)getBdatStringColumnValue(entry, &lbl_eu_80500A50[0x32],
                                               (int)v) == target) {
                 func_8013FFF8(flagBuf, entry, v);
-                if (flagBuf[9] == 0 && func_8013F3F0((CFlagBuffer*)flagBuf) != 0) {
+                if (flagBuf[9] == 0 && UIWin_FlagBufCanShow((CFlagBuffer*)flagBuf) != 0) {
                     // Clear the per-table entry slot (retail writes a word).
                     *reinterpret_cast<u32*>(&flagBuf[4]) = 0;
                     return flagBuf;
@@ -3160,7 +3160,7 @@ void func_80140E00(){}
 // Flag-slot availability query: map the page id into the flag-memory index
 // (1000..1543 -> 544..1087) and report whether the slot is not locked to the
 // 0xFE/0xFF pair.
-extern "C" int func_80141270(s32 page) {
+extern "C" int UIWin_QueryPageFlag(s32 page) {
     int id = -1;
     if (page < 0x3E8) {
         id = page + 0x220;
@@ -3178,7 +3178,7 @@ extern "C" int func_80141270(s32 page) {
 // The 28 base offsets live in a 112-byte block; retail copies it wholesale
 // (backend struct-assign copy loop) once into `work`, and again into a
 // scratch block per row visited.
-extern "C" u8* func_801412D0(u32 target) {
+extern "C" u8* UIWin_BuildFlagBuf(u32 target) {
     // Declared up-front: retail forms both table addresses and zeroes the
     // index/cursors before the first block copy.
     CFlagOffsets tmp;

@@ -75,4 +75,4 @@ extern "C" void __dt__14Class_8045F858Fv(void* self, int dealloc);
 extern "C" int isClassicController__Q22cf13CfGameManagerFv(int arg);
 // Retail reloc is the UNMANGLED name; the C++ member in CUICfManager.hpp
 // would mangle it, so keep C linkage here.
-extern "C" nw4r::lyt::ArcResourceAccessor* func_801355F4();
+extern "C" nw4r::lyt::ArcResourceAccessor* CUICfManager_getArcResourceAccessor();

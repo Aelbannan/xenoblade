@@ -1268,7 +1268,7 @@ void* func_80248920(void* self, const char* name, f32 x, f32 y, void* arg5, cons
     char buf[20];
     sprintf(buf, &lbl_eu_8050BEA8[0x30e], result);
 
-    nw4r::lyt::ArcResourceAccessor* accessor = (nw4r::lyt::ArcResourceAccessor*)func_801355F4();
+    nw4r::lyt::ArcResourceAccessor* accessor = (nw4r::lyt::ArcResourceAccessor*)CUICfManager_getArcResourceAccessor();
     void* picture = accessor->GetResource(0x74696d67, buf, NULL);
 
     if (!picture) return NULL;
@@ -4231,7 +4231,7 @@ extern "C" void func_8022B8E4(void*);
 extern "C" void* getHandleMEM2__Q23mtl10MemManagerFv();
 extern "C" void* readFile__11CDeviceFileFUlPCcP10IWorkEventii(u32, char const*, void*, int, int);
 extern "C" void* readCommonArchiveFile__11CDeviceFileFUlPCcP10IWorkEventii(u32, char const*, void*, int, int);
-extern "C" int func_800A9D90();
+extern "C" int KyoshinHeap_GetField44();
 extern "C" void func_801F34F4(void*);
 
 // Size-optimized region: the shared string-table copy below must keep its
@@ -4243,7 +4243,7 @@ void func_8024C104(void* self) {
     char* namebuf[28];
     u32 handle = (u32)getHandleMEM2__Q23mtl10MemManagerFv();
     *(void**)(p + 0x24) = readFile__11CDeviceFileFUlPCcP10IWorkEventii(handle, &lbl_eu_8050BEA8[0x4e7], self, 0, 0);
-    u32 handle2 = func_800A9D90();
+    u32 handle2 = KyoshinHeap_GetField44();
     *(void**)(p + 0x30) = readCommonArchiveFile__11CDeviceFileFUlPCcP10IWorkEventii(handle2, &lbl_eu_8050BEA8[0x4fc], self, 0, 0);
     // Build the local map-file name table from the shared string table
     // (entries 1..28), copied two pointers at a time.
@@ -4632,7 +4632,7 @@ u32 CFloorMap::OnFileEvent(CEventFile* event) {
         func_80244764((CFloorMapLayoutData0*)&this->layout_3334);
 
         u8 tmpCur[0x18];
-        __ct__CCur18(tmpCur, func_801355F4());
+        __ct__CCur18(tmpCur, CUICfManager_getArcResourceAccessor());
         CCur18Data* curDst = reinterpret_cast<CCur18Data*>(&this->mCursorA0[0]);
         CCur18Data* curSrc = reinterpret_cast<CCur18Data*>(tmpCur);
         curDst->field_4 = curSrc->field_4;

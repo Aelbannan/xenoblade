@@ -26,8 +26,8 @@ struct UnkStruct_804E36DC {
 // ---------------------------------------------------------------------------
 
 // Scene/view helpers (other TUs)
-extern "C" f32 func_80496288(void* view);
-extern "C" void* func_80496264(void* view, s32 idx);
+extern "C" f32 Scn_GetFrameDelta(void* view);
+extern "C" void* Scn_FindCamItem(void* view, s32 idx);
 
 // Effect system helpers (monolib/src/core/code_804DEDA8, effect TUs)
 extern "C" void func_804DCA88(void* mtx, const void* params);

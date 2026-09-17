@@ -656,7 +656,7 @@ bool CMCCrystalList::OnFileEvent(CEventFile* pEventFile)
 
         // If a character set is loaded, stamp every crystal-slot text pane
         // (8 slots, two text panes each) with it.
-        u32 sh = func_801355BC();
+        u32 sh = CUICfManager_getPackedFont9C();
         if (sh != 0) {
             char buf[0x20];
             for (u8 i = 1; i <= 8; i++) {

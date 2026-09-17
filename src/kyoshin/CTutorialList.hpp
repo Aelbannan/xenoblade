@@ -61,7 +61,7 @@ extern "C" void func_801D3330(void*);                     // rebuild sort menu
 extern "C" void func_801D3454(nw4r::math::VEC3*, void*);  // copy cursor target
 extern "C" void func_801D216C(void*, int);
 // Device/memory helper (retail unmangled C symbol).
-extern "C" int func_800A9D90();
+extern "C" int KyoshinHeap_GetField44();
 void func_801390E0(CFileHandle**);
 extern "C" void* readCommonArchiveFile__11CDeviceFileFUlPCcP10IWorkEventii(unsigned long, const char*, void*, int, int);
 // UI sound: retail symbol is the C++-mangled playUISound__FUl.
@@ -132,7 +132,7 @@ extern "C" void __dt__14Class_8045F858Fv(void* self, int dealloc);
 extern "C" void setMemInitFlag__Q23mtl10MemManagerFb(bool value);
 extern "C" nw4r::lyt::ArcResourceAccessor* createArcResourceAccessor__10CLibLayoutFv();
 extern "C" bool Attach__Q34nw4r3lyt19ArcResourceAccessorFPvPCc(nw4r::lyt::ArcResourceAccessor* self, void* data, const char* name);
-extern "C" nw4r::lyt::ArcResourceAccessor* func_801355F4();
+extern "C" nw4r::lyt::ArcResourceAccessor* CUICfManager_getArcResourceAccessor();
 extern "C" void __ct__CCur18(void* self, void* param);
 extern "C" void validateHeap__17UnkClass_8045F564Fv(void*);
 extern "C" u32 func_8003B1EC(void* fp);

@@ -102,9 +102,9 @@ extern "C" {
 void ocUnitRegist();
 void CfObjectMove_attachMoveRegion(cf::CfObject* obj);
 void* CfObjectMove_getSelfIfActive(void* objParam);
-void func_8013D07C(void* obj, const char* str, int mode);
-void func_8013D448(void* obj, const char* str);
-unsigned int func_8013EC58();
+void UIWin_CreateTalkWin(void* obj, const char* str, int mode);
+void UIWin_CreateEveTalkWin(void* obj, const char* str);
+unsigned int UIWin_GetTimer();
 // Retail caller compares the raw register (cmpwi), so declare as int, not u8.
 int code80135FDC_getByte_64058();
 
@@ -120,7 +120,7 @@ void* createMapObjectInstance__Q22cf13CfGameManagerFv(const char* name, u16 inde
 void* createPlayerEffectInstance__Q22cf13CfGameManagerFv(u32 modelId, u32 motionId);
 void* func_8003AA34(void);
 const char* getFP__FPCc(const char* name);
-unsigned int func_8013EC58();
+unsigned int UIWin_GetTimer();
 void* getPlayerContainerForCam__Q22cf13CfGameManagerFv();
 bool isPlayerInEventRange__Q22cf13CfGameManagerFv(int arg);
 

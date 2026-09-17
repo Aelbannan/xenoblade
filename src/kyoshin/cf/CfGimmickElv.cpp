@@ -107,18 +107,18 @@ extern "C" void __ct__cf_CfGimmickElv(CfGimmickElvData* self, u16 rowId) {
 
     // Initialize sub-objects (4 groups x 3 types)
     u32 stackVar = (u32)table;
-    func_8020938C(self, &self->vec0, (void*)lbl_eu_805357E8, &stackVar, 0);
-    func_802095D8(self, &self->vec1, (void*)lbl_eu_805357E8, &stackVar, 0);
-    func_80209488(self, &self->vec2, (void*)lbl_eu_805357E8, &stackVar, 0);
-    func_8020938C(self, &self->elvVec0, (void*)lbl_eu_805357E8, &stackVar, 1);
-    func_802095D8(self, &self->elvVec3, (void*)lbl_eu_805357E8, &stackVar, 1);
-    func_80209488(self, &self->elvVec6, (void*)lbl_eu_805357E8, &stackVar, 1);
-    func_8020938C(self, &self->elvVec1, (void*)lbl_eu_805357E8, &stackVar, 2);
-    func_802095D8(self, &self->elvVec4, (void*)lbl_eu_805357E8, &stackVar, 2);
-    func_80209488(self, &self->elvVec7, (void*)lbl_eu_805357E8, &stackVar, 2);
-    func_8020938C(self, &self->elvVec2, (void*)lbl_eu_805357E8, &stackVar, 3);
-    func_802095D8(self, &self->elvVec5, (void*)lbl_eu_805357E8, &stackVar, 3);
-    func_80209488(self, &self->elvVec8, (void*)lbl_eu_805357E8, &stackVar, 3);
+    CfGimmick_LoadBdatAreaPosIndexed(self, &self->vec0, (void*)lbl_eu_805357E8, &stackVar, 0);
+    CfGimmick_LoadBdatAreaRotationIndexed(self, &self->vec1, (void*)lbl_eu_805357E8, &stackVar, 0);
+    CfGimmick_LoadBdatAreaExtentsIndexed(self, &self->vec2, (void*)lbl_eu_805357E8, &stackVar, 0);
+    CfGimmick_LoadBdatAreaPosIndexed(self, &self->elvVec0, (void*)lbl_eu_805357E8, &stackVar, 1);
+    CfGimmick_LoadBdatAreaRotationIndexed(self, &self->elvVec3, (void*)lbl_eu_805357E8, &stackVar, 1);
+    CfGimmick_LoadBdatAreaExtentsIndexed(self, &self->elvVec6, (void*)lbl_eu_805357E8, &stackVar, 1);
+    CfGimmick_LoadBdatAreaPosIndexed(self, &self->elvVec1, (void*)lbl_eu_805357E8, &stackVar, 2);
+    CfGimmick_LoadBdatAreaRotationIndexed(self, &self->elvVec4, (void*)lbl_eu_805357E8, &stackVar, 2);
+    CfGimmick_LoadBdatAreaExtentsIndexed(self, &self->elvVec7, (void*)lbl_eu_805357E8, &stackVar, 2);
+    CfGimmick_LoadBdatAreaPosIndexed(self, &self->elvVec2, (void*)lbl_eu_805357E8, &stackVar, 3);
+    CfGimmick_LoadBdatAreaRotationIndexed(self, &self->elvVec5, (void*)lbl_eu_805357E8, &stackVar, 3);
+    CfGimmick_LoadBdatAreaExtentsIndexed(self, &self->elvVec8, (void*)lbl_eu_805357E8, &stackVar, 3);
 
     // Virtual call: vtable[8] (offset 0x20)
     void (*vfunc)(CfGimmickElvData*) = *(void(**)(CfGimmickElvData*))(*(u32*)self + 0x20);
@@ -237,7 +237,7 @@ extern "C" void __ct__cf_CfGimmickElv(CfGimmickElvData* self, u16 rowId) {
 extern "C" void* __dt__Q22cf12CfGimmickElvFv(CfGimmickElvData* self, int mode) {
     if (self != NULL) {
         self->vtable = (void*)lbl_eu_805358C8;
-        func_80208EE4(self);
+        CfGimmick_ClearManagerBinding(self);
         func_8020A434((void*)&self->unk7C);
         func_8020A434((void*)&self->unk1A4);
         func_8020A434((void*)&self->unk1A8);
@@ -359,7 +359,7 @@ extern "C" void func_8020B474(CfGimmickElvData* self) {
     }
 
     // Start moving when no wait is configured or the wait event finished
-    if (self->val1B4 == 0 || func_8020971C(self->val1B4)) {
+    if (self->val1B4 == 0 || CfGimmick_CheckStateFlag2CC8(self->val1B4)) {
         self->state = 1;
     }
 }
@@ -376,24 +376,24 @@ extern "C" void func_8020B5C4(CfGimmickElvData* self) {
         if (f & 0x20) {
             // Upward travel
             self->flags = f | 0x800000;
-            if (func_80209754(self->flag1B1, &self->elvVec7, &self->elvVec1,
+            if (CfGimmick_CheckTriggerGated(self->flag1B1, &self->elvVec7, &self->elvVec1,
                              &self->elvVec4, self->unk1A8)) {
                 self->state = 3;
                 self->flags &= ~0x1000u;
                 if (self->val1B6 != 0) {
-                    func_80208C48(self->val1B6, &self->elvVec1);
+                    CfGimmick_PlaySoundAtPos(self->val1B6, &self->elvVec1);
                 }
             }
         }
     } else {
         // Downward travel
         self->flags = f | 0x200000;
-        if (func_80209754(self->unk66, &self->vec2, &self->vec0,
+        if (CfGimmick_CheckTriggerGated(self->unk66, &self->vec2, &self->vec0,
                          &self->vec1, self->unk7C)) {
             self->state = 2;
             self->flags &= ~0x1000u;
             if (self->val1B6 != 0) {
-                func_80208C48(self->val1B6, &self->vec0);
+                CfGimmick_PlaySoundAtPos(self->val1B6, &self->vec0);
             }
 
             // Post-move: notify game manager when flag1B3 set.
@@ -401,7 +401,7 @@ extern "C" void func_8020B5C4(CfGimmickElvData* self) {
             // live across both virtual calls.
             if (self->flag1B3 != 0) {
                 f32 height = self->vec1.y;
-                func_80208EE4(self);
+                CfGimmick_ClearManagerBinding(self);
                 self->unk78 = (u32)createBattleActor__Q22cf13CfGameManagerFv(self->flag1B3, 0);
                 if (self->unk78 != 0) {
                     *(CfGimmickElvData**)(self->unk78 + 0xB0) = self;
@@ -421,28 +421,28 @@ extern "C" void func_8020B5C4(CfGimmickElvData* self) {
     if (g & 4) {
         if (g & 0x40) {
             self->flags |= 0x1000000;
-            if (func_80209754(self->flag1B2, &self->elvVec8, &self->elvVec2,
+            if (CfGimmick_CheckTriggerGated(self->flag1B2, &self->elvVec8, &self->elvVec2,
                              &self->elvVec5, self->unk1AC)) {
                 self->state = 2;
                 self->flags &= ~0x1000u;
                 if (self->val1B6 != 0) {
-                    func_80208C48(self->val1B6, &self->elvVec2);
+                    CfGimmick_PlaySoundAtPos(self->val1B6, &self->elvVec2);
                 }
             }
         }
     } else {
         self->flags |= 0x400000;
-        if (func_80209754(self->flag1B0, &self->elvVec6, &self->elvVec0,
+        if (CfGimmick_CheckTriggerGated(self->flag1B0, &self->elvVec6, &self->elvVec0,
                          &self->elvVec3, self->unk1A4)) {
             self->state = 3;
             self->flags |= 0x1000;
             if (self->val1B6 != 0) {
-                func_80208C48(self->val1B6, &self->elvVec0);
+                CfGimmick_PlaySoundAtPos(self->val1B6, &self->elvVec0);
             }
 
             if (self->flag1B3 != 0) {
                 f32 height = self->elvVec3.y;
-                func_80208EE4(self);
+                CfGimmick_ClearManagerBinding(self);
                 self->unk78 = (u32)createBattleActor__Q22cf13CfGameManagerFv(self->flag1B3, 0);
                 if (self->unk78 != 0) {
                     *(CfGimmickElvData**)(self->unk78 + 0xB0) = self;
@@ -484,7 +484,7 @@ extern "C" void func_8020B870(CfGimmickElvData* self) {
 // func_8020B89C (0x1FC bytes) - LOD fade update (single axis)
 // ============================================================
 extern "C" void func_8020B89C(CfGimmickElvData* self) {
-    f32 dt = func_80496288(lbl_eu_80663E14);
+    f32 dt = Scn_GetFrameDelta(lbl_eu_80663E14);
     self->val1C8 += dt;
 
     u16 dir = self->direction;
@@ -539,7 +539,7 @@ extern "C" void func_8020B89C(CfGimmickElvData* self) {
         self->flags |= lodBit;
 
         if (self->val1B8 != 0) {
-            func_80208C48(self->val1B8, (dir != 0) ? (void*)&self->elvVec0 : (void*)&self->vec0);
+            CfGimmick_PlaySoundAtPos(self->val1B8, (dir != 0) ? (void*)&self->elvVec0 : (void*)&self->vec0);
         }
     }
 
@@ -552,7 +552,7 @@ extern "C" void func_8020B89C(CfGimmickElvData* self) {
 // func_8020BA98 (0x210 bytes) - LOD fade update (both axes loop)
 // ============================================================
 extern "C" void func_8020BA98(CfGimmickElvData* self) {
-    self->val1C8 += func_80496288(lbl_eu_80663E14);
+    self->val1C8 += Scn_GetFrameDelta(lbl_eu_80663E14);
 
     // Per-axis LOD fade driver (direction bits 0x20/0x40, latch bits 0x100/0x200)
     int allDone = 1;
@@ -604,14 +604,14 @@ extern "C" void func_8020BA98(CfGimmickElvData* self) {
 
             self->flags |= lodBit;
             if (self->val1B8 != 0) {
-                func_80208C48(self->val1B8, (i != 0) ? (void*)&self->elvVec0 : (void*)&self->vec0);
+                CfGimmick_PlaySoundAtPos(self->val1B8, (i != 0) ? (void*)&self->elvVec0 : (void*)&self->vec0);
             }
             self->val1C8 = lbl_eu_80668380;
         }
     }
 
     if (!(self->flags & 0x1000)) {
-        func_80209F5C();
+        CfGimmick_SetGlobalFlagC0002();
     }
 
     if (allDone) {

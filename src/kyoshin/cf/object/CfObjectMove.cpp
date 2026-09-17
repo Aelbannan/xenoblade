@@ -10,19 +10,19 @@
 // mTargetC4 is the +0xD0 CActParamAnimGame). Five of this header's canonical
 // decls clash with TU-visible forms (same clash family as
 // CModelDispEquip.hpp's hidden form): 5-arg func_8004B9D4 vs the TU-local
-// 4-arg form, s32-id func_80496264 vs the TU-local int-index form, int
+// 4-arg form, s32-id Scn_FindCamItem vs the TU-local int-index form, int
 // func_804BE398 vs harness_catalog's void* form, void* simGetLeafActData vs the
 // harness form, and float lbl_eu_8066A200 vs the const-f32 form. None is used
 // by inline code in that header (decls only), so hide them for the include;
 // all TU call sites resolve after the #undefs and are unaffected.
 #define func_8004B9D4 func_8004B9D4_hidden
-#define func_80496264 func_80496264_hidden
+#define Scn_FindCamItem Scn_FindCamItem_hidden
 #define func_804BE398 func_804BE398_hidden
 #define simGetLeafActData simGetLeafActData_hidden
 #define lbl_eu_8066A200 lbl_eu_8066A200_hidden
 #include "kyoshin/action/CActParamAnim.hpp"
 #undef func_8004B9D4
-#undef func_80496264
+#undef Scn_FindCamItem
 #undef func_804BE398
 #undef simGetLeafActData
 #undef lbl_eu_8066A200
@@ -312,14 +312,14 @@ extern "C" void CfObjectModel_UnkVirtualFunc2__Q22cf12CfObjectMoveFv(cf::CfObjec
         if (self->mTargetC4 != 0) {
             releaseAnimObj(self->mTargetC4, list9C);
         }
-        func_80495E60(list9C);
+        Scn_IsAnimActiveOrNull(list9C);
         list9C = 0;
     }
     if (self->mField6D4 != 0) {
         if (self->mTargetC4 != 0) {
             releaseAnimObj(self->mTargetC4, self->mField6D4);
         }
-        func_80495E60(self->mField6D4);
+        Scn_IsAnimActiveOrNull(self->mField6D4);
         self->mField6D4 = 0;
     }
     // Base +0x17C: retail reloc spells UnkVirtualFunc2 (Model's empty stub);
@@ -340,7 +340,7 @@ void cf::CfObjectMove::CfObjectMove_detachModelList() {
                 releaseAnimObj(t, mField6D8);
             }
         }
-        func_80495E60(mField6D8);
+        Scn_IsAnimActiveOrNull(mField6D8);
         mField6D8 = 0;
         mField704 = 0;
     }
@@ -374,7 +374,7 @@ extern "C" void CfObjectMove_resetMoveSpeed(cf::CfObjectMove* self) {
 // form keeps the Unk linker name that hand-built tables / CREvtModel
 // reference; the renamed member decl serves call-site codegen.
 extern "C" void CfObject_UnkVirtualFunc5__Q22cf12CfObjectMoveFv(cf::CfObjectMove* self) {
-    float v = func_80496288(lbl_eu_80663E14);
+    float v = Scn_GetFrameDelta(lbl_eu_80663E14);
     cf::CfObjectMoveA8View* view = (cf::CfObjectMoveA8View*)self;
     // The flag word is read once for the direction tests (kept in a local)
     // while the clamp-path clears re-read the member - retail reloads
@@ -1223,7 +1223,7 @@ void CfObjectMove_releaseSlotById__Q22cf12CfObjectMoveFv(cf::CfObjectMove* self,
                     func_8015C8F4((void*)q, self->mField6F8[index]);
                 }
             }
-            func_80495E60(self->mField6F8[index]);
+            Scn_IsAnimActiveOrNull(self->mField6F8[index]);
             self->mField6F8[index] = 0;
         }
         if (index == 1) {
@@ -1585,7 +1585,7 @@ extern "C" int CfObjectMove_testMoveProximity(cf::CfObjectMove* self) {
     // builtin exactly as CfObjectImplWalker.cpp does.
     void* res;
     int result = 0;
-    res = func_80496264((void*)CfRes_getD80Flag(), -1);
+    res = Scn_FindCamItem((void*)CfRes_getD80Flag(), -1);
     if (res != 0) {
         cf::CfResScene10C* scene = (cf::CfResScene10C*)res;
         u32 flags = self->unk64;
@@ -2180,7 +2180,7 @@ void CfObjectMove_setModelListLock(cf::CfObjectMove* self, int flag) {
             if (self->mTargetC4 != 0) {
                 releaseAnimObj(self->mTargetC4, self->mField6D4);
             }
-            func_80495E60(self->mField6D4);
+            Scn_IsAnimActiveOrNull(self->mField6D4);
             self->mField6D4 = 0;
         }
         ((cf::CfObjectMoveFlags6C*)self)->field_6C &= ~0x10000;

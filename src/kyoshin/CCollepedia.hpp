@@ -193,7 +193,7 @@ extern "C" void func_8022B7C8(void*, nw4r::lyt::DrawInfo*);
 // u32 (not u16): retail returns the lookup result untruncated (tail-branch b
 // in clpGetCelIcon); narrowing here would emit an extra rlwinm after the call.
 extern "C" u32 BdatGetU16Direct(const void*, const void*, int);
-extern "C" void func_8013E2E0(u32, u32, u32, u32, u32, u32, u32, u32, u32);
+extern "C" void UIWin_CreateItemMulti(u32, u32, u32, u32, u32, u32, u32, u32, u32);
 extern "C" void func_80137924(nw4r::math::VEC3*, nw4r::lyt::Pane*, nw4r::lyt::Pane*, nw4r::lyt::Pane*);
 extern "C" char* lbl_eu_806647DC;
 extern "C" void* lbl_eu_806647D8;
@@ -222,7 +222,7 @@ extern "C" void incrementEventCounter__FUl(u32);
 extern "C" void* getHandleMEM2__Q23mtl10MemManagerFv();
 extern "C" void* readFile__11CDeviceFileFUlPCcP10IWorkEventii(u32, const char*, void*, int, int);
 extern "C" void* readCommonArchiveFile__11CDeviceFileFUlPCcP10IWorkEventii(u32, const char*, void*, int, int);
-extern "C" u32 func_800A9D90();
+extern "C" u32 KyoshinHeap_GetField44();
 extern "C" float func_801895EC();
 extern "C" void func_80043738(u32, const char*, void*, u32, u32, u32);
 extern "C" void func_80124270(void*, u32);
@@ -247,8 +247,8 @@ extern "C" void* getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32,
 // Shared tag string; retail symbol is the MANGLED getPackedFont__Fv, so this
 // import must keep C++ linkage (MWCC appends __Fv).
 void* getPackedFont();
-extern "C" nw4r::lyt::ArcResourceAccessor* func_801355F4(); // CLibLayout accessor
-extern "C" void* func_801355BC();                           // shared tag string
+extern "C" nw4r::lyt::ArcResourceAccessor* CUICfManager_getArcResourceAccessor(); // CLibLayout accessor
+extern "C" void* CUICfManager_getPackedFont9C();                           // shared tag string
 // Verbatim-mangled import: the real retail CfGameManager controller-type check
 extern "C" int isClassicController__Q22cf13CfGameManagerFv(int arg);
 extern "C" void func_8018B0FC(void* dst, void* src);     // cursor body copy

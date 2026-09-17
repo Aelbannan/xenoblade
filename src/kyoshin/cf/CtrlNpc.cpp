@@ -387,7 +387,7 @@ bodyStart:
 // looks up the NPC's talk row in the bdat tables and drives the heading toward
 // the talk target.
 // Message buffer: text at 0x88..0x187 and length word at 0x188 (the struct's
-// address escapes through strcpy / func_8013D07C, which keeps the length
+// address escapes through strcpy / UIWin_CreateTalkWin, which keeps the length
 // stores alive exactly like retail).
 struct NpcMsgBuf {
     char text[0x100];   // 0x00
@@ -404,7 +404,7 @@ void func_80093F28(cf::CtrlNpc* self) {
     NpcColNarrow v48, v44, v40, v3C, v38, v34, v30, v2C, v28, v24, v20, v1C,
         v18, v14, v10, v0C, v08;
 
-    if (func_80496288(lbl_eu_80663E14) > lbl_eu_80666698) {
+    if (Scn_GetFrameDelta(lbl_eu_80663E14) > lbl_eu_80666698) {
         msg.text[0] = 0;
         msg.len = 0;
 
@@ -529,7 +529,7 @@ void func_80093F28(cf::CtrlNpc* self) {
                     fp2, lbl_eu_804FBB0C + 0x28, count);
                 v40.w = getBdatStringColumnValue(
                     fp2, lbl_eu_804FBB0C + 0x33, count);
-                u32 cur = func_8009CF8C(func_801413DC(0x200001, 0));
+                u32 cur = func_8009CF8C(UIWin_PackHiLo(0x200001, 0));
                 if ((int)cur < (int)v44.h)
                     continue;
                 if ((int)v40.h < (int)cur)
@@ -545,7 +545,7 @@ void func_80093F28(cf::CtrlNpc* self) {
                 v38.w = getBdatStringColumnValue(
                     fp2, lbl_eu_804FBB0C + 0x3E, count);
                 if (v38.h != 0) {
-                    u32 f = func_8009CF8C(func_801413DC(0x2203E8, v38.h));
+                    u32 f = func_8009CF8C(UIWin_PackHiLo(0x2203E8, v38.h));
                     if (f != 0xFE && f != 0xFF)
                         continue;
                 }
@@ -554,7 +554,7 @@ void func_80093F28(cf::CtrlNpc* self) {
                     fp2, lbl_eu_804FBB0C + 0x47, count);
                 if (v34.h != 0) {
                     u32 f =
-                        func_8009CF8C(func_801413DC(0x608190, v34.h));
+                        func_8009CF8C(UIWin_PackHiLo(0x608190, v34.h));
                     v30.w = getBdatStringColumnValue(
                         fp2, lbl_eu_804FBB0C + 0x51, count);
                     if (f != v30.b)
@@ -564,7 +564,7 @@ void func_80093F28(cf::CtrlNpc* self) {
                 v2C.w = getBdatStringColumnValue(
                     fp2, lbl_eu_804FBB0C + 0x58, count);
                 if (v2C.b != 0) {
-                    u32 f = func_8009CF8C(func_801413DC(0x798064, v2C.b));
+                    u32 f = func_8009CF8C(UIWin_PackHiLo(0x798064, v2C.b));
                     v28.w = getBdatStringColumnValue(
                         fp2, lbl_eu_804FBB0C + 0x62, count);
                     if (f != v28.b)
@@ -574,7 +574,7 @@ void func_80093F28(cf::CtrlNpc* self) {
                 v24.w = getBdatStringColumnValue(
                     fp2, lbl_eu_804FBB0C + 0x69, count);
                 if (v24.b != 0) {
-                    u32 f = func_8009CF8C(func_801413DC(0x210007, v24.b));
+                    u32 f = func_8009CF8C(UIWin_PackHiLo(0x210007, v24.b));
                     v20.w = getBdatStringColumnValue(
                         fp2, lbl_eu_804FBB0C + 0x74, count);
                     if (f < v20.h)
@@ -585,7 +585,7 @@ void func_80093F28(cf::CtrlNpc* self) {
                     fp2, lbl_eu_804FBB0C + 0x7C, count);
                 if (v1C.h != 0) {
                     u32 f =
-                        func_8009CF8C(func_801413DC(0xA2012C, v1C.h));
+                        func_8009CF8C(UIWin_PackHiLo(0xA2012C, v1C.h));
                     if (f == 0)
                         continue;
                 }
@@ -593,7 +593,7 @@ void func_80093F28(cf::CtrlNpc* self) {
                 v18.w = getBdatStringColumnValue(
                     fp2, lbl_eu_804FBB0C + 0x87, count);
                 if (v18.b != 0) {
-                    u32 f = func_8009CF8C(func_801413DC(0x7FC008, v18.b));
+                    u32 f = func_8009CF8C(UIWin_PackHiLo(0x7FC008, v18.b));
                     v14.w = getBdatStringColumnValue(
                         fp2, lbl_eu_804FBB0C + 0x91, count);
                     if (f < v14.h)
@@ -603,7 +603,7 @@ void func_80093F28(cf::CtrlNpc* self) {
                 v10.w = getBdatStringColumnValue(
                     fp2, lbl_eu_804FBB0C + 0x98, count);
                 if (v10.b != 0) {
-                    u32 f = func_8009CF8C(func_801413DC(0x25781E, v10.b));
+                    u32 f = func_8009CF8C(UIWin_PackHiLo(0x25781E, v10.b));
                     v0C.w = getBdatStringColumnValue(
                         fp2, lbl_eu_804FBB0C + 0xA2, count);
                     if (f != v0C.b)
@@ -614,7 +614,7 @@ void func_80093F28(cf::CtrlNpc* self) {
                     fp2, lbl_eu_804FBB0C + 0xA9, count);
                 msg.len = strlen(text);
                 strcpy(msg.text, text);
-                func_8013D07C(NpcCharView(self->field_28)->field_74, msg.text, 0);
+                UIWin_CreateTalkWin(NpcCharView(self->field_28)->field_74, msg.text, 0);
                 self->field_17C = count;
                 break;
             }

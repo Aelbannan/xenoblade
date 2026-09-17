@@ -184,8 +184,8 @@ void* __dt___unnamed_CTagProcessor_cpp_CTagCodeMakeCrystal(void* self, int delet
 
 // Reset a tag-param block to all zero (float field takes the sdata2 constant).
 // noinline + C linkage (declared in the header): the tag-proc ctors call it
-// via bl and the retail reloc name is the flat func_801258D0.
-__declspec(noinline) void func_801258D0(TagParam* p) {
+// via bl and the retail reloc name is the flat TagParamClear.
+__declspec(noinline) void TagParamClear(TagParam* p) {
     p->field_00 = 0;
     p->field_01 = 0;
     p->field_02 = 0;
@@ -212,9 +212,9 @@ __declspec(noinline) void initTagParam(u8* obj, unsigned char a, unsigned char b
 
 // Init a tag-param block with a byte code (field_00) and a u16 value (field_04).
 // extern "C" + __declspec(noinline): the tag-writer family calls it via bl with
-// the flat retail name func_8012591C - keep the symbol unmangled and the call
-// out of line so the reloc matches retail (same convention as func_80125944).
-extern "C" __declspec(noinline) void func_8012591C(TagParam* p, u8 a, u16 b) {
+// the flat retail name TagParamInitCodeU16 - keep the symbol unmangled and the call
+// out of line so the reloc matches retail (same convention as TagParamInitCode).
+extern "C" __declspec(noinline) void TagParamInitCodeU16(TagParam* p, u8 a, u16 b) {
     p->field_00 = a;
     p->field_01 = 0;
     p->field_02 = 0;
@@ -228,7 +228,7 @@ extern "C" __declspec(noinline) void func_8012591C(TagParam* p, u8 a, u16 b) {
 // extern "C" + __declspec(noinline): retail kept this helper as a flat
 // C-linkage symbol in a separate TU, so the tag-writer family calls it via
 // bl with the unmangled name - do not let MWCC mangle/inline it here.
-extern "C" __declspec(noinline) void func_80125944(TagParam* p, u8 a) {
+extern "C" __declspec(noinline) void TagParamInitCode(TagParam* p, u8 a) {
     p->field_00 = a;
     p->field_01 = 0;
     p->field_02 = 0;
@@ -256,10 +256,10 @@ CTagProcessorBase::CTagProcessorBase() {
     field_808 = lbl_eu_806671F0;
     field_80c = lbl_eu_806671F0;
     field_810 = 0;
-    func_801258D0(&field_814);
+    TagParamClear(&field_814);
     memset(mBuf, 0, sizeof(mBuf));
     TagParam tmp;
-    func_801258D0(&tmp);
+    TagParamClear(&tmp);
     copyTagParam((u8*)&field_814, (const u8*)&tmp);
 }
 
@@ -283,7 +283,7 @@ extern "C" __declspec(noinline) void copyTagParam(u8* dst, const u8* src) {
 // genuine C++ member dtor of the derived class — the compiler emits the nw4r
 // base-dtor call with flag 0 and the operator delete when the deleting flag
 // is set (the retail shape). optimize_for_size merges the r30/r31 saves into
-// stmw/lmw and fixes the copy order (func_801289B4 family pattern).
+// stmw/lmw and fixes the copy order (TagWriterCode7 family pattern).
 #pragma optimize_for_size on
 extern "C" __declspec(noinline) CTagProcessorBase::~CTagProcessorBase() {}
 #pragma optimize_for_size off
@@ -297,7 +297,7 @@ extern "C" __declspec(noinline) CTagProcessorBase::~CTagProcessorBase() {}
 // handler object's Process override (vtable slot 3). The byte offset keeps
 // MWCC's base+offset induction shape (retail: add r8,r7,r6 / addi r6,r6,0xC).
 #pragma optimize_for_size on  // -O4,s keeps base+offset (retail); -O4,p walks the pointer
-nw4r::ut::TagProcessorBase<wchar_t>::Operation func_80125AB8(
+nw4r::ut::TagProcessorBase<wchar_t>::Operation TagProcDispatchProcess(
     nw4r::ut::TagProcessorBase<wchar_t>* self, u16 tag,
     nw4r::ut::PrintContext<wchar_t>* ctx) {
     u32 o = 0;
@@ -320,7 +320,7 @@ nw4r::ut::TagProcessorBase<wchar_t>::Operation func_80125AB8(
 // falls back to the base TagProcessor, a matching tag dispatches to the
 // handler object's CalcRect override (vtable slot 4).
 #pragma optimize_for_size on  // -O4,s keeps base+offset (retail); -O4,p walks the pointer
-nw4r::ut::TagProcessorBase<wchar_t>::Operation func_80125B08(
+nw4r::ut::TagProcessorBase<wchar_t>::Operation TagProcDispatchCalcRect(
     nw4r::ut::TagProcessorBase<wchar_t>* self, nw4r::ut::Rect* rect,
     u16 tag, nw4r::ut::PrintContext<wchar_t>* ctx) {
     u32 o = 0;
@@ -842,9 +842,9 @@ __declspec(noinline) int func_8012615C(nw4r::lyt::AnimTransform* tag,
                 }
                 if (type == 1) {
                     if (player != 0)
-                        func_8013DB6C(4, player->field_8C, v4, v28);
+                        UIWin_CreateMenuUpdate(4, player->field_8C, v4, v28);
                 } else if (type == 2) {
-                    func_8013DB6C(5, 0, v4 + 1, v28);
+                    UIWin_CreateMenuUpdate(5, 0, v4 + 1, v28);
                 }
                 msg->field_810 += 6;
                 msg->field_820 += 6;
@@ -923,7 +923,7 @@ __declspec(noinline) int func_8012615C(nw4r::lyt::AnimTransform* tag,
                     // walk 1: find the context node matching the current text
                     ctxA = (u32*)getContextStr(ctxBase);
                     for (;;) {
-                        u8* node = (u8*)func_80127670(&ctxA);
+                        u8* node = (u8*)TagCtxGetNodeHeader(&ctxA);
                         if (strcmp((char*)(node + 0xbc),
                                    (char*)pane->field_BC) == 0)
                             break;
@@ -933,7 +933,7 @@ __declspec(noinline) int func_8012615C(nw4r::lyt::AnimTransform* tag,
                         if (func_801276C8(&pair1[1], &pair1[0]) == 0)
                             break;
                     }
-                    func_801276E0(&ctxA, 0);
+                    TagCtxAdvanceHead(&ctxA, 0);
                     // walk 2: create the per-name panes, set text + colors
                     u32 paneIdx = 0;
                     for (;;) {
@@ -944,7 +944,7 @@ __declspec(noinline) int func_8012615C(nw4r::lyt::AnimTransform* tag,
                         if (paneIdx >= msg->field_830)
                             break;
                         TalkNamePane* np = pane->field_0C->v3C(
-                            (const wchar_t*)((u8*)func_80127670(&ctxA) + 0xbc),
+                            (const wchar_t*)((u8*)TagCtxGetNodeHeader(&ctxA) + 0xbc),
                             1);
                         copyVEC2(&np->field_4C[0], &pane->field_4C[0]);
                         np->v78();
@@ -966,7 +966,7 @@ __declspec(noinline) int func_8012615C(nw4r::lyt::AnimTransform* tag,
                         // walk 3: find (second ctx)
                         ctxB = (u32*)getContextStr(ctxBase);
                         for (;;) {
-                            u8* node = (u8*)func_80127670(&ctxB);
+                            u8* node = (u8*)TagCtxGetNodeHeader(&ctxB);
                             if (strcmp((char*)(node + 0xbc),
                                        (char*)pane->field_BC) == 0)
                                 break;
@@ -976,7 +976,7 @@ __declspec(noinline) int func_8012615C(nw4r::lyt::AnimTransform* tag,
                             if (func_801276C8(&pair3[1], &pair3[0]) == 0)
                                 break;
                         }
-                        func_801276E0(&ctxB, 0);
+                        TagCtxAdvanceHead(&ctxB, 0);
                         // walk 4: highlight (last name selected)
                         paneIdx = 0;
                         for (;;) {
@@ -987,7 +987,7 @@ __declspec(noinline) int func_8012615C(nw4r::lyt::AnimTransform* tag,
                             if (paneIdx >= msg->field_830)
                                 break;
                             TalkNamePane* np = pane->field_0C->v3C(
-                                (const wchar_t*)((u8*)func_80127670(&ctxB) +
+                                (const wchar_t*)((u8*)TagCtxGetNodeHeader(&ctxB) +
                                                  0xbc),
                                 1);
                             if (paneIdx == msg->field_834) {
@@ -1037,7 +1037,7 @@ __declspec(noinline) int func_8012615C(nw4r::lyt::AnimTransform* tag,
                             // walk 5': find
                             ctxD = (u32*)getContextStr(ctxBase2);
                             for (;;) {
-                                u8* node = (u8*)func_80127670(&ctxD);
+                                u8* node = (u8*)TagCtxGetNodeHeader(&ctxD);
                                 if (strcmp((char*)(node + 0xbc),
                                            (char*)pane->field_BC) == 0)
                                     break;
@@ -1047,7 +1047,7 @@ __declspec(noinline) int func_8012615C(nw4r::lyt::AnimTransform* tag,
                                 if (func_801276C8(&pair5p[1], &pair5p[0]) == 0)
                                     break;
                             }
-                            func_801276E0(&ctxD, 0);
+                            TagCtxAdvanceHead(&ctxD, 0);
                             // walk 6': highlight
                             u32 paneIdx2 = 0;
                             for (;;) {
@@ -1058,7 +1058,7 @@ __declspec(noinline) int func_8012615C(nw4r::lyt::AnimTransform* tag,
                                 if (paneIdx2 >= msg->field_830)
                                     break;
                                 TalkNamePane* np = pane->field_0C->v3C(
-                                    (const wchar_t*)((u8*)func_80127670(&ctxD) +
+                                    (const wchar_t*)((u8*)TagCtxGetNodeHeader(&ctxD) +
                                                      0xbc),
                                     1);
                                 if (paneIdx2 == msg->field_834) {
@@ -1083,7 +1083,7 @@ __declspec(noinline) int func_8012615C(nw4r::lyt::AnimTransform* tag,
                         // walk 5: find
                         ctxC = (u32*)getContextStr(ctxBase3);
                         for (;;) {
-                            u8* node = (u8*)func_80127670(&ctxC);
+                            u8* node = (u8*)TagCtxGetNodeHeader(&ctxC);
                             if (strcmp((char*)(node + 0xbc),
                                        (char*)pane->field_BC) == 0)
                                 break;
@@ -1093,7 +1093,7 @@ __declspec(noinline) int func_8012615C(nw4r::lyt::AnimTransform* tag,
                             if (func_801276C8(&pair5[1], &pair5[0]) == 0)
                                 break;
                         }
-                        func_801276E0(&ctxC, 0);
+                        TagCtxAdvanceHead(&ctxC, 0);
                         // walk 6: accept highlight
                         u32 paneIdx3 = 0;
                         for (;;) {
@@ -1104,7 +1104,7 @@ __declspec(noinline) int func_8012615C(nw4r::lyt::AnimTransform* tag,
                             if (paneIdx3 >= msg->field_830)
                                 break;
                             TalkNamePane* np = pane->field_0C->v3C(
-                                (const wchar_t*)((u8*)func_80127670(&ctxC) +
+                                (const wchar_t*)((u8*)TagCtxGetNodeHeader(&ctxC) +
                                                  0xbc),
                                 1);
                             np->v78();
@@ -1143,7 +1143,7 @@ __declspec(noinline) int func_8012615C(nw4r::lyt::AnimTransform* tag,
                     // walk 7: find
                     ctxE = (u32*)getContextStr(ctxBase4);
                     for (;;) {
-                        u8* node = (u8*)func_80127670(&ctxE);
+                        u8* node = (u8*)TagCtxGetNodeHeader(&ctxE);
                         if (strcmp((char*)(node + 0xbc),
                                    (char*)pane->field_BC) == 0)
                             break;
@@ -1153,7 +1153,7 @@ __declspec(noinline) int func_8012615C(nw4r::lyt::AnimTransform* tag,
                         if (func_801276C8(&pair7[1], &pair7[0]) == 0)
                             break;
                     }
-                    func_801276E0(&ctxE, 0);
+                    TagCtxAdvanceHead(&ctxE, 0);
                     // walk 8: highlight
                     u32 paneIdx4 = 0;
                     for (;;) {
@@ -1164,7 +1164,7 @@ __declspec(noinline) int func_8012615C(nw4r::lyt::AnimTransform* tag,
                         if (paneIdx4 >= msg->field_830)
                             break;
                         TalkNamePane* np = pane->field_0C->v3C(
-                            (const wchar_t*)((u8*)func_80127670(&ctxE) + 0xbc),
+                            (const wchar_t*)((u8*)TagCtxGetNodeHeader(&ctxE) + 0xbc),
                             1);
                         if (paneIdx4 == msg->field_834) {
                             cW8a1.v = 0x006400ff;
@@ -1191,7 +1191,7 @@ __declspec(noinline) int func_8012615C(nw4r::lyt::AnimTransform* tag,
                     // walk 9: find
                     ctxF = (u32*)getContextStr(ctxBase5);
                     for (;;) {
-                        u8* node = (u8*)func_80127670(&ctxF);
+                        u8* node = (u8*)TagCtxGetNodeHeader(&ctxF);
                         if (strcmp((char*)(node + 0xbc),
                                    (char*)pane->field_BC) == 0)
                             break;
@@ -1201,7 +1201,7 @@ __declspec(noinline) int func_8012615C(nw4r::lyt::AnimTransform* tag,
                         if (func_801276C8(&pair9[1], &pair9[0]) == 0)
                             break;
                     }
-                    func_801276E0(&ctxF, 0);
+                    TagCtxAdvanceHead(&ctxF, 0);
                     // walk 10: highlight
                     u32 paneIdx5 = 0;
                     for (;;) {
@@ -1212,7 +1212,7 @@ __declspec(noinline) int func_8012615C(nw4r::lyt::AnimTransform* tag,
                         if (paneIdx5 >= msg->field_830)
                             break;
                         TalkNamePane* np = pane->field_0C->v3C(
-                            (const wchar_t*)((u8*)func_80127670(&ctxF) + 0xbc),
+                            (const wchar_t*)((u8*)TagCtxGetNodeHeader(&ctxF) + 0xbc),
                             1);
                         if (paneIdx5 == msg->field_834) {
                             cW10a1.v = 0x006400ff;
@@ -1298,7 +1298,7 @@ finish:
     return -1;
 }
 
-// noinline: func_80127BF4 keeps the bl copyVEC2 call in retail - a tiny
+// noinline: TagProcCalcPageLayout keeps the bl copyVEC2 call in retail - a tiny
 // same-TU body like this would otherwise be folded into the call site.
 extern "C" __declspec(noinline) void copyVEC2(float *dst, const float *src) {
     dst[0] = src[0];
@@ -1337,14 +1337,14 @@ extern "C" const wchar_t* getContextStr(u8* self) { return *(const wchar_t**)(se
 extern "C" const wchar_t** getContextStrPtr(u8* self) { return (const wchar_t**)(self + 0x4); }
 
 // Char-space accumulation helper (retail C-ABI symbol in this unit).
-// noinline: the tag-writer family (func_80129128) calls it via bl in retail,
+// noinline: the tag-writer family (TagWriterCharSpacePP) calls it via bl in retail,
 // so the tiny body must not be folded into call sites.
 extern "C" __declspec(noinline) void addToCharSpace(u8* self, float val) { *(float*)(self + 0xC) = *(float*)(self + 0x4) + val; };
 
 // Fetch the tag chain head and return the first node's list header (4 bytes
 // before the payload). Retail asserts when the chain is empty.
 extern "C" void Panic__Q24nw4r2dbFPCciPCce(const char*, int, const char*, ...);
-void* func_80127670(void* self) {
+void* TagCtxGetNodeHeader(void* self) {
     extern u8 lbl_eu_8052CB40[], lbl_eu_8052CB1C[];
     void* node = *(void**)self;
     if (!node)
@@ -1361,7 +1361,7 @@ u32 func_801276C8(const u32* a, const u32* b) {
 }
 #pragma optimize_for_size off
 
-extern "C" void* func_801276E0(void* self, int a) {
+extern "C" void* TagCtxAdvanceHead(void* self, int a) {
     void* p = *(void**)self;
     *(u32*)self = *(u32*)p;
     return p;
@@ -1371,7 +1371,7 @@ extern "C" void* func_801276E0(void* self, int a) {
 // the message is exhausted return 3, otherwise keep running the text-processing
 // step func_8012615C until it reports <= 4 (page/section done).
 #pragma optimize_for_size on
-int func_801276F4(nw4r::lyt::AnimTransform* tag, nw4r::lyt::Pane* a,
+int TagProcPumpMessage(nw4r::lyt::AnimTransform* tag, nw4r::lyt::Pane* a,
                   nw4r::lyt::Pane* b, nw4r::lyt::Pane* c) {
     CTagProcMsg* msg = (CTagProcMsg*)tag;
     const u16* p = &msg->buf[msg->field_810];
@@ -1385,10 +1385,10 @@ int func_801276F4(nw4r::lyt::AnimTransform* tag, nw4r::lyt::Pane* a,
 }
 #pragma optimize_for_size off
 
-// noinline: func_801287BC keeps the bl func_80127BC4 / copyVEC3 calls in
+// noinline: func_801287BC keeps the bl TagCopyVec2f / copyVEC3 calls in
 // retail - the tiny same-TU bodies would otherwise be folded into the call
 // sites (same convention as copyVEC2 below).
-extern "C" __declspec(noinline) void func_80127BC4(float* dst, const float* src) {
+extern "C" __declspec(noinline) void TagCopyVec2f(float* dst, const float* src) {
     dst[0] = src[0];
     dst[1] = src[1];
 }
@@ -1498,7 +1498,7 @@ __declspec(noinline) void func_80127764(CTagProcMsg* msg, TalkPaneView* a, TalkP
         memset(str, 0, sizeof(str));
         wcscpy(str, c->field_D8);
         f32 size[2];  // +0x10 measured name width/height
-        func_80127D20(size, msg, (nw4r::lyt::TextBox*)c, str);
+        TagMeasureTextWidth(size, msg, (nw4r::lyt::TextBox*)c, str);
         dim[0] = size[0];
         dim[1] = size[1];
         f32 maxX = lbl_eu_80667214 + size[0];
@@ -1524,7 +1524,7 @@ __declspec(noinline) void func_80127764(CTagProcMsg* msg, TalkPaneView* a, TalkP
         f32 w[2];                  // +0x18 corner xy scratch
         TagVec3 s = a->vec_2C;     // dead in retail too; kept across the
                                    // opaque helper calls below
-        func_80127BC4(w, a->field_4C);
+        TagCopyVec2f(w, a->field_4C);
         copyVEC3(&s.v[0], b->vec_2C.v);
         copyVEC2(w, b->field_4C);
         copyVEC3(c->vec_2C.v, &s.v[0]);
@@ -1555,7 +1555,7 @@ __declspec(noinline) void func_80127764(CTagProcMsg* msg, TalkPaneView* a, TalkP
 // The y-transform and clamp must be written with the constants INLINE (no
 // f32 temps): named temps shift MWCC's FPR birth order and swap c34/c30
 // between f2/f3 (6 reg_swap).
-void func_80127BF4(void* unused, CTagMsgView* msg, CTagOutView* out) {
+void TagProcCalcPageLayout(void* unused, CTagMsgView* msg, CTagOutView* out) {
     wchar_t buf[0x400];
     f32 xy[2];
     wcscpy(buf, msg->field_D8);
@@ -1581,10 +1581,10 @@ void func_80127BF4(void* unused, CTagMsgView* msg, CTagOutView* out) {
 }
 
 // Tag-writer accessor: set CharWriter::mCursorPos (+0x2C/+0x30) with the
-// same nw4r pointer validation as func_801291F4 (different Panic site/strings).
+// same nw4r pointer validation as TagWriterGetWidthLimit (different Panic site/strings).
 // Flags declared in reverse chain order, hi = 0xFF000000 mask reused by the
 // 0x80/0xC0 checks only - the retail flag/mask colors.
-void func_8012A070(nw4r::ut::TextWriterBase<wchar_t>* tw, float x, float y) {
+void TagWriterSetCursorPos(nw4r::ut::TextWriterBase<wchar_t>* tw, float x, float y) {
     bool validRegs2 = true;
     bool validRegs = true;
     bool validIo2 = true;
@@ -1627,7 +1627,7 @@ void func_8012A070(nw4r::ut::TextWriterBase<wchar_t>* tw, float x, float y) {
 // optimize_for_size: retail saves r27-r31 + f28-f31 with _savegpr_27 (the
 // -O4,s save shape).
 #pragma optimize_for_size on
-void __declspec(noinline) func_80127D20(f32* out, void* unused,
+void __declspec(noinline) TagMeasureTextWidth(f32* out, void* unused,
                                         nw4r::lyt::TextBox* textbox,
                    const wchar_t* str) {
     wchar_t buf[0x400];
@@ -1645,7 +1645,7 @@ void __declspec(noinline) func_80127D20(f32* out, void* unused,
     // byte-identically. Hand-building the bit pattern against
     // lbl_eu_80667200 would name the sdata2 reloc but adds a rounding insn
     // and shifts regalloc - the builtin is the closest byte-identical state
-    // (see func_80128C6C note / MWCC_CASES 7i).
+    // (see TagWriterParseColonParam note / MWCC_CASES 7i).
     f32 height = (f32)font->v34();
     for (;;) {
         u16 c = str[i];
@@ -1668,7 +1668,7 @@ void __declspec(noinline) func_80127D20(f32* out, void* unused,
 // retail leaves r3 as whatever func_80127764 left there.
 #pragma push
 #pragma optimize_for_size on
-void func_80127E74(nw4r::lyt::AnimTransform* tag, nw4r::lyt::Pane* a,
+void TagProcResetPage(nw4r::lyt::AnimTransform* tag, nw4r::lyt::Pane* a,
                    nw4r::lyt::Pane* b, nw4r::lyt::Pane* c) {
     CTalkTextBoxVtbl* tb = (CTalkTextBoxVtbl*)a;
     tb->v78();          // FreeStringBuffer()
@@ -1950,7 +1950,7 @@ void func_801286E0(){}
 // run the message start step, and clear the done flag. No explicit return: the
 // retail leaves r3 as whatever func_801287BC left there.
 #pragma optimize_for_size on
-extern "C" __declspec(noinline) int func_80128740(void* tagProc, nw4r::lyt::Pane* pane) {
+extern "C" __declspec(noinline) int TagProcStartMessage(void* tagProc, nw4r::lyt::Pane* pane) {
     CTalkTextBoxVtbl* tb = (CTalkTextBoxVtbl*)pane;
     tb->v78();          // FreeStringBuffer()
     tb->v74(0x400);     // AllocStringBuffer(0x400)
@@ -2008,7 +2008,7 @@ extern "C" __declspec(noinline) void func_801287BC(CTagProcessorBase* msg, nw4r:
     else
         out[1] = lbl_eu_8066720C * out[1];
     func_801375A0(out2, pane);
-    func_80127BC4(v3, pv->field_4C);
+    TagCopyVec2f(v3, pv->field_4C);
     // Retail computes BOTH differences first, then both products; out2
     // entries forward the stored v3 values.
     f32 dy = v3[1] - out[1];
@@ -2029,9 +2029,9 @@ extern "C" __declspec(noinline) void func_801287BC(CTagProcessorBase* msg, nw4r:
 // into stmw/lmw and fixes the copy order (MWCC_CASES CPartyState
 // func_801FD0A0 pattern); plain -O4,p emits reversed stw pairs + moves.
 #pragma optimize_for_size on
-extern "C" void* func_801289B4(void* a, void* b, u8 code, u8* dst) {
+extern "C" void* TagWriterCode7(void* a, void* b, u8 code, u8* dst) {
     TagParam p;
-    func_80125944(&p, 7);
+    TagParamInitCode(&p, 7);
     copyTagParam(dst, (const u8*)&p);
     return b;
 }
@@ -2039,24 +2039,24 @@ extern "C" void* func_801289B4(void* a, void* b, u8 code, u8* dst) {
 
 // Tag-writer variant with a numeric value: uppercase the value string, parse it
 // with wcstol, store tag-param code 6 plus the value, copy the block into the
-// output buffer, and thread the r4 arg through (same family as func_801289B4).
+// output buffer, and thread the r4 arg through (same family as TagWriterCode7).
 #pragma optimize_for_size on
-extern "C" void* func_801289FC(void* a, void* b, u16* str, u8* dst) {
+extern "C" void* TagWriterCode6Value(void* a, void* b, u16* str, u8* dst) {
     WcsToUpperInPlace(str);
     wchar_t* endptr = 0;
     TagParam p;
     long val = wcstol((const wchar_t*)str, &endptr, 10);
-    func_8012591C(&p, 6, (u16)val);
+    TagParamInitCodeU16(&p, 6, (u16)val);
     copyTagParam(dst, (const u8*)&p);
     return b;
 }
 #pragma optimize_for_size off
 
-// Same stmw/lmw save-merge + copy-order fix as func_801289B4.
+// Same stmw/lmw save-merge + copy-order fix as TagWriterCode7.
 #pragma optimize_for_size on
-extern "C" void* func_80128A70(void* a, void* b, u8 code, u8* dst) {
+extern "C" void* TagWriterCode5(void* a, void* b, u8 code, u8* dst) {
     TagParam p;
-    func_80125944(&p, 5);
+    TagParamInitCode(&p, 5);
     copyTagParam(dst, (const u8*)&p);
     return b;
 }
@@ -2065,23 +2065,23 @@ extern "C" void* func_80128A70(void* a, void* b, u8 code, u8* dst) {
 // Build a fresh tag-param (mode 8) on the stack, copy it onto the target,
 // set its +1 flag, and return the ret pointer (retail keeps a1/a3 phantom).
 #pragma optimize_for_size on  // -O4,s keeps the retail stmw r30 frame
-extern "C" void* func_80128AB8(u8* a1, TagParam* ret, u8 a3, TagParam* target) {
+extern "C" void* TagWriterCode8Target(u8* a1, TagParam* ret, u8 a3, TagParam* target) {
     TagParam tmp;
-    func_80125944(&tmp, 8);
+    TagParamInitCode(&tmp, 8);
     copyTagParam((u8*)target, (const u8*)&tmp);
     target->field_01 |= 1;
     return ret;
 }
 #pragma optimize_for_size off
 
-// Same as func_801289FC but with tag-param code 4.
+// Same as TagWriterCode6Value but with tag-param code 4.
 #pragma optimize_for_size on
-extern "C" void* func_80128B0C(void* a, void* b, u16* str, u8* dst) {
+extern "C" void* TagWriterCode4Value(void* a, void* b, u16* str, u8* dst) {
     WcsToUpperInPlace(str);
     wchar_t* endptr = 0;
     TagParam p;
     long val = wcstol((const wchar_t*)str, &endptr, 10);
-    func_8012591C(&p, 4, (u16)val);
+    TagParamInitCodeU16(&p, 4, (u16)val);
     copyTagParam(dst, (const u8*)&p);
     return b;
 }
@@ -2093,24 +2093,24 @@ void* callInitTagProc(void* arg1, void* arg2) {
     return arg2;
 }
 
-// Same stmw/lmw save-merge + copy-order fix as func_801289B4.
+// Same stmw/lmw save-merge + copy-order fix as TagWriterCode7.
 #pragma optimize_for_size on
-extern "C" void* func_80128BB0(void* a, void* b, u8 code, u8* dst) {
+extern "C" void* TagWriterCode3(void* a, void* b, u8 code, u8* dst) {
     TagParam p;
-    func_80125944(&p, 3);
+    TagParamInitCode(&p, 3);
     copyTagParam(dst, (const u8*)&p);
     return b;
 }
 #pragma optimize_for_size off
 
-// Same as func_801289FC but with tag-param code 2.
+// Same as TagWriterCode6Value but with tag-param code 2.
 #pragma optimize_for_size on
-extern "C" void* func_80128BF8(void* a, void* b, u16* str, u8* dst) {
+extern "C" void* TagWriterCode2Value(void* a, void* b, u16* str, u8* dst) {
     WcsToUpperInPlace(str);
     wchar_t* endptr = 0;
     TagParam p;
     long val = wcstol((const wchar_t*)str, &endptr, 10);
-    func_8012591C(&p, 2, (u16)val);
+    TagParamInitCodeU16(&p, 2, (u16)val);
     copyTagParam(dst, (const u8*)&p);
     return b;
 }
@@ -2129,7 +2129,7 @@ extern "C" void* func_80128BF8(void* a, void* b, u16* str, u8* dst) {
 // tokens[16]: retail's frame places the token array at +0x28 and the
 // conversion scratch at +0x68, which a 16-pointer array reproduces.
 #pragma optimize_for_size on
-void* func_80128C6C(void* unused, void* ret, wchar_t* str, TagParam* dst) {
+void* TagWriterParseColonParam(void* unused, void* ret, wchar_t* str, TagParam* dst) {
     wchar_t* tokens[16];
     TagParam p;
     int count = func_801365E4((u16*)str, 0x3a, (u16**)tokens);
@@ -2170,7 +2170,7 @@ void* func_80128C6C(void* unused, void* ret, wchar_t* str, TagParam* dst) {
 // (a<<8)|0xff> and return the position after the block.
 // optimize_for_size: retail saves r21-r31 with stmw (the -O4,s save shape).
 #pragma optimize_for_size on
-u16* func_80128DA0(void* unused, u16* dst, wchar_t* str) {
+u16* TagWriterColorBlock(void* unused, u16* dst, wchar_t* str) {
     TagColorOut out;
     wchar_t* tokens[16];
     TagColorValues values;
@@ -2205,7 +2205,7 @@ u16* func_80128DA0(void* unused, u16* dst, wchar_t* str) {
 // optimize_for_size: retail saves r26-r31 with stmw (the -O4,s save shape);
 // the unsigned trip shift is what retail uses (rlwinm, not srawi).
 #pragma optimize_for_size on
-u16* func_80128EF8(void* unused, u16* dst, wchar_t* str) {
+u16* TagWriterCode7List(void* unused, u16* dst, wchar_t* str) {
     wchar_t* tokens[16];
     int count = func_801365E4((u16*)str, 0x2f, (u16**)tokens);
     u8 lens[16];
@@ -2228,9 +2228,9 @@ u16* func_80128EF8(void* unused, u16* dst, wchar_t* str) {
 }
 #pragma optimize_for_size off
 
-// Tag-code writer (code 6): same shape as func_80128EF8 but with tag code 6.
+// Tag-code writer (code 6): same shape as TagWriterCode7List but with tag code 6.
 #pragma optimize_for_size on
-u16* func_80129008(void* unused, u16* dst, wchar_t* str) {
+u16* TagWriterCode6List(void* unused, u16* dst, wchar_t* str) {
     wchar_t* tokens[16];
     int count = func_801365E4((u16*)str, 0x2f, (u16**)tokens);
     u8 lens[16];
@@ -2263,15 +2263,15 @@ extern "C" u16* writeTagCode0D(void* dummy, u16* buf) {
 // speed-up string "++" (tag table +0x1a), restores the previous font size,
 // and stores the result back into the char-space context. Returns 2.
 #pragma optimize_for_size on
-int func_80129128(void* unused, TagCharContext* ctx, void* unused2,
+int TagWriterCharSpacePP(void* unused, TagCharContext* ctx, void* unused2,
                   TagWriterHolder* holder) {
     nw4r::ut::TextWriterBase<wchar_t>* tw = holder->field_00;
-    f32 sp = func_801291F4(tw);
-    func_8012930C(tw, lbl_eu_80667260);
+    f32 sp = TagWriterGetWidthLimit(tw);
+    TagWriterSetWidthLimit(tw, lbl_eu_80667260);
     f32 w = tw->CalcStringWidth(&lbl_eu_80661FC8[0xd], 2);
-    func_8012930C(tw, sp);
-    func_80129430(tw, w);
-    f32 h = func_80129564(holder->field_00);
+    TagWriterSetWidthLimit(tw, sp);
+    TagWriterAdvanceCursorX(tw, w);
+    f32 h = TagWriterGetCursorY(holder->field_00);
     ctx->field_04 = h;
     ctx->field_08 = ctx->field_00 + w;
     addToCharSpace((u8*)ctx, tw->GetFontHeight());
@@ -2289,7 +2289,7 @@ int func_80129128(void* unused, TagCharContext* ctx, void* unused2,
 // 0xFF000000 mask kept in a short-lived `hi` local (only the 0x80/0xC0 checks
 // use it - retail r11) while the other masks are recomputed from tw per check
 // so they die per-condition.
-__declspec(noinline) float func_801291F4(nw4r::ut::TextWriterBase<wchar_t>* tw) {
+__declspec(noinline) float TagWriterGetWidthLimit(nw4r::ut::TextWriterBase<wchar_t>* tw) {
     // nw4r pointer validation: panic unless the writer lives in one of the
     // known memory regions. The cascading if-chain (each check gated on the
     // previous one failing) is the retail shape. Flags are declared in
@@ -2329,10 +2329,10 @@ __declspec(noinline) float func_801291F4(nw4r::ut::TextWriterBase<wchar_t>* tw) 
 }
 
 // Tag-writer accessor: TextWriterBase::SetWidthLimit (+0x4C) with the same
-// nw4r pointer validation as func_801291F4 (different Panic site/strings).
+// nw4r pointer validation as TagWriterGetWidthLimit (different Panic site/strings).
 // Flags declared in reverse chain order, hi = 0xFF000000 mask reused by the
 // 0x80/0xC0 checks only - the retail flag/mask colors.
-__declspec(noinline) void func_8012930C(nw4r::ut::TextWriterBase<wchar_t>* tw, float v) {
+__declspec(noinline) void TagWriterSetWidthLimit(nw4r::ut::TextWriterBase<wchar_t>* tw, float v) {
     bool validRegs2 = true;
     bool validRegs = true;
     bool validIo2 = true;
@@ -2365,8 +2365,8 @@ __declspec(noinline) void func_8012930C(nw4r::ut::TextWriterBase<wchar_t>* tw, f
 }
 
 // Tag-writer accessor: add to CharWriter::mCursorPos.x (+0x2C) with the same
-// nw4r pointer validation as func_801291F4 (different Panic site/strings).
-__declspec(noinline) void func_80129430(nw4r::ut::TextWriterBase<wchar_t>* tw, float v) {
+// nw4r pointer validation as TagWriterGetWidthLimit (different Panic site/strings).
+__declspec(noinline) void TagWriterAdvanceCursorX(nw4r::ut::TextWriterBase<wchar_t>* tw, float v) {
     bool validRegs2 = true;
     bool validRegs = true;
     bool validIo2 = true;
@@ -2399,10 +2399,10 @@ __declspec(noinline) void func_80129430(nw4r::ut::TextWriterBase<wchar_t>* tw, f
 }
 
 // Tag-writer accessor: CharWriter::GetCursorY (+0x30) with the same pointer
-// validation as func_801291F4 (different Panic site/strings). Flags declared
+// validation as TagWriterGetWidthLimit (different Panic site/strings). Flags declared
 // in reverse chain order, hi = 0xFF000000 mask reused by the 0x80/0xC0 checks
 // only - the retail flag/mask colors.
-__declspec(noinline) float func_80129564(nw4r::ut::TextWriterBase<wchar_t>* tw) {
+__declspec(noinline) float TagWriterGetCursorY(nw4r::ut::TextWriterBase<wchar_t>* tw) {
     bool validRegs2 = true;
     bool validRegs = true;
     bool validIo2 = true;
@@ -2442,18 +2442,18 @@ __declspec(noinline) float func_80129564(nw4r::ut::TextWriterBase<wchar_t>* tw) 
 // cursor x plus the doubled font-slot value. Two nw4r pointer-validation
 // chains (on the scratch and on the real writer) bracket the measurement.
 // The scratch's dtor is emitted automatically at scope exit. Returns 2.
-int func_8012968C(void* unused, void* unused2, TagWriterHolder* holder) {
+int TagWriterMeasureScratch(void* unused, void* unused2, TagWriterHolder* holder) {
     nw4r::ut::TextWriterBase<wchar_t>* tw = holder->field_00;
-    f32 x = func_801299D4(tw);
-    f32 y = func_80129564(tw);
-    f32 sx = func_80129AEC(tw);
-    f32 sy = func_80129C04(tw);
+    f32 x = TagWriterGetCursorX(tw);
+    f32 y = TagWriterGetCursorY(tw);
+    f32 sx = TagWriterGetScaleX(tw);
+    f32 sy = TagWriterGetScaleY(tw);
     nw4r::ut::TextWriterBase<wchar_t> local;
-    func_80129D1C((TagCopyBlock*)&local, (const TagCopyBlock*)tw);
-    func_80129E20(&local, 0x300);
-    func_8012930C(&local, lbl_eu_80667260);
-    func_80129F3C(&local, lbl_eu_806671F8 * sx, sy);
-    func_8012A070(&local, x, y);
+    TagWriterCopyBlock((TagCopyBlock*)&local, (const TagCopyBlock*)tw);
+    TagWriterSetFontSize(&local, 0x300);
+    TagWriterSetWidthLimit(&local, lbl_eu_80667260);
+    TagWriterSetScale(&local, lbl_eu_806671F8 * sx, sy);
+    TagWriterSetCursorPos(&local, x, y);
     local.Print(&lbl_eu_80661FC8[0x10], 1);
     bool validRegs2 = true;
     bool validRegs = true;
@@ -2478,8 +2478,8 @@ int func_8012968C(void* unused, void* unused2, TagWriterHolder* holder) {
         nw4r::db::Panic(lbl_eu_8052DCB8, 0x47, lbl_eu_8052DC84, &local);
     int fw = local.mFont->v48(0x2500);
     f32 conv = (f32)(fw << 1);
-    func_8012A070(&local, x + conv, y);
-    f32 cx = func_801299D4(&local);
+    TagWriterSetCursorPos(&local, x + conv, y);
+    f32 cx = TagWriterGetCursorX(&local);
     bool validRegs2b = true;
     bool validRegsb = true;
     bool validIo2b = true;
@@ -2506,10 +2506,10 @@ int func_8012968C(void* unused, void* unused2, TagWriterHolder* holder) {
 }
 
 // Tag-writer accessor: CharWriter::GetCursorX (+0x2C) with the same pointer
-// validation as func_801291F4 (different Panic site/strings). Flags declared
+// validation as TagWriterGetWidthLimit (different Panic site/strings). Flags declared
 // in reverse chain order, hi = 0xFF000000 mask reused by the 0x80/0xC0 checks
 // only - the retail flag/mask colors.
-__declspec(noinline) float func_801299D4(nw4r::ut::TextWriterBase<wchar_t>* tw) {
+__declspec(noinline) float TagWriterGetCursorX(nw4r::ut::TextWriterBase<wchar_t>* tw) {
     bool validRegs2 = true;
     bool validRegs = true;
     bool validIo2 = true;
@@ -2542,10 +2542,10 @@ __declspec(noinline) float func_801299D4(nw4r::ut::TextWriterBase<wchar_t>* tw) 
 }
 
 // Tag-writer accessor: CharWriter scale-x (+0x24) with the same nw4r
-// pointer validation as func_801291F4 (different Panic site/strings). Flags
+// pointer validation as TagWriterGetWidthLimit (different Panic site/strings). Flags
 // declared in reverse chain order, hi = 0xFF000000 mask reused by the
 // 0x80/0xC0 checks only - the retail flag/mask colors.
-__declspec(noinline) float func_80129AEC(nw4r::ut::TextWriterBase<wchar_t>* tw) {
+__declspec(noinline) float TagWriterGetScaleX(nw4r::ut::TextWriterBase<wchar_t>* tw) {
     bool validRegs2 = true;
     bool validRegs = true;
     bool validIo2 = true;
@@ -2578,8 +2578,8 @@ __declspec(noinline) float func_80129AEC(nw4r::ut::TextWriterBase<wchar_t>* tw) 
 }
 
 // Tag-writer accessor: CharWriter scale-y (+0x28) with the same nw4r
-// pointer validation as func_801291F4 (different Panic site/strings).
-__declspec(noinline) float func_80129C04(nw4r::ut::TextWriterBase<wchar_t>* tw) {
+// pointer validation as TagWriterGetWidthLimit (different Panic site/strings).
+__declspec(noinline) float TagWriterGetScaleY(nw4r::ut::TextWriterBase<wchar_t>* tw) {
     bool validRegs2 = true;
     bool validRegs = true;
     bool validIo2 = true;
@@ -2614,19 +2614,19 @@ __declspec(noinline) float func_80129C04(nw4r::ut::TextWriterBase<wchar_t>* tw) 
 // extern "C" + noinline: the tag-writer family (func_8012B070) calls it via
 // bl in retail; noinline keeps -ipa from folding the 0x68-byte struct copy
 // into the call site (the retail kept it as a real 0x104-byte call).
-extern "C" __declspec(noinline) void func_80129D1C(TagCopyBlock* dst, const TagCopyBlock* src) {
+extern "C" __declspec(noinline) void TagWriterCopyBlock(TagCopyBlock* dst, const TagCopyBlock* src) {
     *dst = *src;
 }
 
 // Tag-writer accessor: store into TextWriterBase +0x5C (mFontSize.y region)
-// with the same nw4r pointer validation as func_801291F4. This one keeps
+// with the same nw4r pointer validation as TagWriterGetWidthLimit. This one keeps
 // both tw and value live across the Panic call, so MWCC saves r30/r31
 // (stmw prologue) instead of just r31.
 // optimize_for_size: retail saves r30/r31 with a single stmw/lmw (the -O4,s
 // save shape); under the unit's -O4,p they split into stw pairs with
-// reversed moves (same artifact as func_801289B4).
+// reversed moves (same artifact as TagWriterCode7).
 #pragma optimize_for_size on
-__declspec(noinline) void func_80129E20(nw4r::ut::TextWriterBase<wchar_t>* tw, u32 value) {
+__declspec(noinline) void TagWriterSetFontSize(nw4r::ut::TextWriterBase<wchar_t>* tw, u32 value) {
     bool validRegs2 = true;
     bool validRegs = true;
     bool validIo2 = true;
@@ -2660,9 +2660,9 @@ __declspec(noinline) void func_80129E20(nw4r::ut::TextWriterBase<wchar_t>* tw, u
 #pragma optimize_for_size off
 
 // Tag-writer accessor: CharWriter scale set (+0x24/+0x28, mScale region)
-// with the same nw4r pointer validation as func_801291F4 (different Panic
+// with the same nw4r pointer validation as TagWriterGetWidthLimit (different Panic
 // site/strings).
-__declspec(noinline) void func_80129F3C(nw4r::ut::TextWriterBase<wchar_t>* tw, float x, float y) {
+__declspec(noinline) void TagWriterSetScale(nw4r::ut::TextWriterBase<wchar_t>* tw, float x, float y) {
     bool validRegs2 = true;
     bool validRegs = true;
     bool validIo2 = true;
@@ -2700,7 +2700,7 @@ __declspec(noinline) void func_80129F3C(nw4r::ut::TextWriterBase<wchar_t>* tw, f
 // return the position after the block. The r3 arg is unused (family idiom).
 // optimize_for_size: retail saves r28-r31 with stmw (the -O4,s save shape).
 #pragma optimize_for_size on
-u16* func_8012A1A4(void* a, u16* dst, wchar_t* str) {
+u16* TagWriterCode9Switch(void* a, u16* dst, wchar_t* str) {
     WcsToUpperInPlace((u16*)str);
     s16 v = 0xff;
     if (wcscmp(str, &lbl_eu_80661FC8[0x12]) == 0)
@@ -2719,7 +2719,7 @@ u16* func_8012A1A4(void* a, u16* dst, wchar_t* str) {
 // "has value" bit. Returns the r4 arg.
 // optimize_for_size: retail saves r27-r31 with stmw (the -O4,s save shape).
 #pragma optimize_for_size on
-void* func_8012A224(void* unused, void* ret, wchar_t* str, TagParam* dst) {
+void* TagWriterSelectParam8a(void* unused, void* ret, wchar_t* str, TagParam* dst) {
     u8 v = 0;
     WcsToUpperInPlace((u16*)str);
     if (wcscmp(str, &lbl_eu_80661FC8[0x19]) == 0)
@@ -2741,7 +2741,7 @@ void* func_8012A224(void* unused, void* ret, wchar_t* str, TagParam* dst) {
     else if (wcscmp(str, &lbl_eu_80661FC8[0x51]) == 0)
         v = 9;
     TagParam p;
-    func_80125944(&p, 8);
+    TagParamInitCode(&p, 8);
     copyTagParam((u8*)dst, (const u8*)&p);
     dst->field_03 = v;
     dst->field_01 |= 0x2;
@@ -2754,7 +2754,7 @@ void* func_8012A224(void* unused, void* ret, wchar_t* str, TagParam* dst) {
 // 0..3), init a tag-param block with code 8, copy it into dst, then tag the
 // block with the selected value and the "has value" bit. Returns the r4 arg.
 #pragma optimize_for_size on
-void* func_8012A388(void* unused, void* ret, wchar_t* str, TagParam* dst) {
+void* TagWriterSelectParam8b(void* unused, void* ret, wchar_t* str, TagParam* dst) {
     u8 v = 0;
     WcsToUpperInPlace((u16*)str);
     if (wcscmp(str, &lbl_eu_80661FC8[0x58]) == 0)
@@ -2766,7 +2766,7 @@ void* func_8012A388(void* unused, void* ret, wchar_t* str, TagParam* dst) {
     else if (wcscmp(str, &lbl_eu_80661FC8[0x66]) == 0)
         v = 3;
     TagParam p;
-    func_80125944(&p, 8);
+    TagParamInitCode(&p, 8);
     copyTagParam((u8*)dst, (const u8*)&p);
     dst->field_02 = v;
     dst->field_01 |= 0x4;
@@ -2784,7 +2784,7 @@ void* func_8012A388(void* unused, void* ret, wchar_t* str, TagParam* dst) {
 // block.
 // optimize_for_size: retail saves r23-r31 with stmw (the -O4,s save shape).
 #pragma optimize_for_size on
-u16* func_8012A460(void* unused, u16* out, wchar_t* str) {
+u16* TagWriterCode2Lookup(void* unused, u16* out, wchar_t* str) {
     wchar_t* tokens[16];
     int count = func_801365E4((u16*)str, 0x3a, (u16**)tokens);
     u8 tag1 = 0xff;
@@ -2956,7 +2956,7 @@ u16* func_8012AAA4(void* a, u16* out, wchar_t* str) {
 }
 #pragma optimize_for_size off
 
-extern "C" u32 func_8012AD2C(void* a, void* b, void* c, u8* p) {
+extern "C" u32 TagWriterAdvancePtr4(void* a, void* b, void* c, u8* p) {
     void* base = *(void**)(p + 4);
     *(void**)(p + 4) = (u8*)base + 4;
     return 0;
@@ -2969,7 +2969,7 @@ extern "C" u32 func_8012AD2C(void* a, void* b, void* c, u8* p) {
 // CharWriter::UpdateVertexColor, then the source pointer advances.
 // -O4,s save shape (stmw r30).
 #pragma optimize_for_size on
-u32 func_8012AD40(void* a, void* b, TagColorArg* arg) {
+u32 TagWriterApplyColor(void* a, void* b, TagColorArg* arg) {
     bool validRegs2 = true;
     bool validRegs = true;
     bool validIo2 = true;
@@ -3030,7 +3030,7 @@ u32 func_8012AD40(void* a, void* b, TagColorArg* arg) {
 // two lengths), then copy every token into dst in order, advancing by each
 // token's stored length. Returns the end of the copied region.
 #pragma optimize_for_size on
-u16* func_8012AF90(void* unused, u16* dst, wchar_t* str) {
+u16* TagWriterCode1List(void* unused, u16* dst, wchar_t* str) {
     wchar_t* tokens[16];
     int count = func_801365E4((u16*)str, 0x2f, (u16**)tokens);
     u8 lens[16];
@@ -3050,7 +3050,7 @@ u16* func_8012AF90(void* unused, u16* dst, wchar_t* str) {
 #pragma optimize_for_size off
 
 // Tag-writer line layout: copy the active TextWriter into a local scratch
-// writer (no ctor - -ipa drops the dead __ct__ since func_80129D1C
+// writer (no ctor - -ipa drops the dead __ct__ since TagWriterCopyBlock
 // overwrites every byte), zero its font-size field, scale it by the sdata2
 // factor, measure two adjacent strings from the tag buffer (lengths are the
 // low/high bytes of the u16 header; the second string starts 2*len2 bytes in),
@@ -3070,15 +3070,15 @@ int func_8012B070(void* unused, TagLineOutView* out, void* unused2,
     const wchar_t* s2 = (const wchar_t*)(buf + 2);
     const wchar_t* s1 = s2 + ((h >> 8) & 0xFF);
     nw4r::ut::TextWriterBase<wchar_t> local;
-    func_80129D1C((TagCopyBlock*)&local, (const TagCopyBlock*)tw);
-    func_80129E20(&local, 0);
-    func_8012B204(&local, lbl_eu_806671F0);
-    f32 yscale = lbl_eu_80667264 * func_80129C04(&local);
-    f32 xscale = func_80129AEC(&local);
-    func_80129F3C(&local, lbl_eu_80667264 * xscale, yscale);
-    func_8012930C(&local, lbl_eu_80667260);
-    f32 wlimit = func_801291F4(tw);
-    func_8012930C(tw, lbl_eu_80667260);
+    TagWriterCopyBlock((TagCopyBlock*)&local, (const TagCopyBlock*)tw);
+    TagWriterSetFontSize(&local, 0);
+    TagWriterSetCharSpace(&local, lbl_eu_806671F0);
+    f32 yscale = lbl_eu_80667264 * TagWriterGetScaleY(&local);
+    f32 xscale = TagWriterGetScaleX(&local);
+    TagWriterSetScale(&local, lbl_eu_80667264 * xscale, yscale);
+    TagWriterSetWidthLimit(&local, lbl_eu_80667260);
+    f32 wlimit = TagWriterGetWidthLimit(tw);
+    TagWriterSetWidthLimit(tw, lbl_eu_80667260);
     // "no leading char space" flag, materialized before the width calls
     u32 noSpace = (holder->field_10 & 1) ^ 1;
     f32 w1 = tw->CalcStringWidth(s1, lenLo);
@@ -3087,12 +3087,12 @@ int func_8012B070(void* unused, TagLineOutView* out, void* unused2,
         w1 = w2;
     f32 cs;
     if (noSpace != 0)
-        cs = func_8012B328(tw);
+        cs = TagWriterGetCharSpace(tw);
     else
         cs = lbl_eu_806671F0;
     w1 += cs;
-    func_8012930C(tw, wlimit);
-    func_80129430(tw, w1);
+    TagWriterSetWidthLimit(tw, wlimit);
+    TagWriterAdvanceCursorX(tw, w1);
     out->field_08 = out->field_00 + w1;
     addToCharSpace((u8*)out, tw->GetFontHeight());
     holder->field_04 = (const u8*)(s1 + lenLo);
@@ -3101,8 +3101,8 @@ int func_8012B070(void* unused, TagLineOutView* out, void* unused2,
 #pragma optimize_for_size off
 
 // Tag-writer accessor: TextWriterBase::SetCharSpace (+0x50) with the same
-// nw4r pointer validation as func_801291F4 (different Panic site/strings).
-__declspec(noinline) void func_8012B204(nw4r::ut::TextWriterBase<wchar_t>* tw, float v) {
+// nw4r pointer validation as TagWriterGetWidthLimit (different Panic site/strings).
+__declspec(noinline) void TagWriterSetCharSpace(nw4r::ut::TextWriterBase<wchar_t>* tw, float v) {
     bool validRegs2 = true;
     bool validRegs = true;
     bool validIo2 = true;
@@ -3135,8 +3135,8 @@ __declspec(noinline) void func_8012B204(nw4r::ut::TextWriterBase<wchar_t>* tw, f
 }
 
 // Tag-writer accessor: TextWriterBase::GetCharSpace (+0x50) with the same
-// nw4r pointer validation as func_801291F4 (different Panic site/strings).
-__declspec(noinline) float func_8012B328(nw4r::ut::TextWriterBase<wchar_t>* tw) {
+// nw4r pointer validation as TagWriterGetWidthLimit (different Panic site/strings).
+__declspec(noinline) float TagWriterGetCharSpace(nw4r::ut::TextWriterBase<wchar_t>* tw) {
     bool validRegs2 = true;
     bool validRegs = true;
     bool validIo2 = true;
@@ -3189,11 +3189,11 @@ __declspec(noinline) int func_8012B440(void* unused, void* unused2,
     const u16* s1;
     const u16* s2;
     msg = holder->field_00;
-    f32 savedWidth = func_801291F4(msg);
-    func_8012930C(msg, lbl_eu_80667260);
+    f32 savedWidth = TagWriterGetWidthLimit(msg);
+    TagWriterSetWidthLimit(msg, lbl_eu_80667260);
     // "no leading char space" flag: re-apply the current char space when set.
     if ((holder->field_10 & 1) == 0)
-        func_80129430(msg, func_8012B328(msg));
+        TagWriterAdvanceCursorX(msg, TagWriterGetCharSpace(msg));
 
     // Validation-flag scratch: initialized before the header decode so the
     // allocator pins them to the low volatile window (retail r4..r9).
@@ -3235,17 +3235,17 @@ __declspec(noinline) int func_8012B440(void* unused, void* unused2,
     }
 
     savedFontSize = msg->field_5C;
-    f32 cursorX = func_801299D4(msg);
-    f32 cursorY = func_80129564(msg);
+    f32 cursorX = TagWriterGetCursorX(msg);
+    f32 cursorY = TagWriterGetCursorY(msg);
     if (lenHi == 0) {
         nw4r::db::Panic(&lbl_eu_804FFC48[0x27], 0x120,
                         &lbl_eu_804FFC48[0x15]);
     }
 
     nw4r::ut::TextWriterBase<wchar_t> local;
-    func_80129D1C((TagCopyBlock*)&local, (TagCopyBlock*)msg);
-    func_80129E20(&local, 0x300);
-    func_8012B204(&local, lbl_eu_806671F0);
+    TagWriterCopyBlock((TagCopyBlock*)&local, (TagCopyBlock*)msg);
+    TagWriterSetFontSize(&local, 0x300);
+    TagWriterSetCharSpace(&local, lbl_eu_806671F0);
 
     validRegs2 = true;
     validRegs = true;
@@ -3277,9 +3277,9 @@ __declspec(noinline) int func_8012B440(void* unused, void* unused2,
     }
 
     local.field_5Cf = lbl_eu_806671F0;
-    f32 yscale = lbl_eu_80667264 * func_80129C04(&local);
-    f32 xscale = func_80129AEC(&local);
-    func_80129F3C(&local, lbl_eu_80667264 * xscale, yscale);
+    f32 yscale = lbl_eu_80667264 * TagWriterGetScaleY(&local);
+    f32 xscale = TagWriterGetScaleX(&local);
+    TagWriterSetScale(&local, lbl_eu_80667264 * xscale, yscale);
 
     f32 wMsg = msg->CalcStringWidth((const wchar_t*)s1, lenHi);
     f32 wLocal = local.CalcStringWidth((const wchar_t*)s1, lenHi);
@@ -3296,31 +3296,31 @@ __declspec(noinline) int func_8012B440(void* unused, void* unused2,
         f32 lenF = (f32)(conv.d - lbl_eu_80667200);
         f32 share = excess / lenF;
         cursorX += share * lbl_eu_80667228;
-        func_8012B204(&local, share);
+        TagWriterSetCharSpace(&local, share);
     }
 
     f32 descent = local.GetFontDescent();
     f32 height = msg->GetFontAscent() + descent;
-    func_8012A070(&local, cursorX, cursorY - height);
+    TagWriterSetCursorPos(&local, cursorX, cursorY - height);
     local.Print((const wchar_t*)s1, lenHi);
     if (excess < lbl_eu_806671F0) {
-        func_80129430(msg, -excess * lbl_eu_80667228);
+        TagWriterAdvanceCursorX(msg, -excess * lbl_eu_80667228);
     }
-    func_80129E20(msg, 0x300);
+    TagWriterSetFontSize(msg, 0x300);
     msg->Print((const wchar_t*)s2, lenLo);
-    func_80129E20(msg, savedFontSize);
+    TagWriterSetFontSize(msg, savedFontSize);
     if (excess < lbl_eu_806671F0) {
-        func_80129430(msg, -excess * lbl_eu_80667228);
+        TagWriterAdvanceCursorX(msg, -excess * lbl_eu_80667228);
     }
     holder->field_04 = (const u8*)(s2 + lenLo);
-    func_8012930C(msg, savedWidth);
+    TagWriterSetWidthLimit(msg, savedWidth);
     return 2;
 }
 
-// Tag-code writer (code 4): same shape as func_8012A1A4, but the first match
+// Tag-code writer (code 4): same shape as TagWriterCode9Switch, but the first match
 // selects -1 and the second selects 0 (strings at +0x17e / +0x186).
 #pragma optimize_for_size on
-u16* func_8012B8C4(void* a, u16* dst, wchar_t* str) {
+u16* TagWriterCode4Switch(void* a, u16* dst, wchar_t* str) {
     WcsToUpperInPlace((u16*)str);
     s16 v = 0xff;
     if (wcscmp(str, &lbl_eu_80661FC8[0xbf]) == 0)
@@ -3338,7 +3338,7 @@ u16* func_8012B8C4(void* a, u16* dst, wchar_t* str) {
 // decimal parse of the string). Writes <5, value> into dst and returns the
 // position after the block. The r3 arg is unused (family idiom).
 #pragma optimize_for_size on
-u16* func_8012B944(void* unused, u16* dst, wchar_t* str) {
+u16* TagWriterCode5Value(void* unused, u16* dst, wchar_t* str) {
     WcsToUpperInPlace((u16*)str);
     s32 v;
     if (wcscmp(str, &lbl_eu_80661FC8[0xc8]) == 0)

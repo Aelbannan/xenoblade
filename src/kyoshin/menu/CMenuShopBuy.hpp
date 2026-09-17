@@ -241,7 +241,7 @@ extern "C" void func_801EF050(CItemBoxLine* self);
 extern "C" u8 func_801EF0EC(CItemBoxLine* self);
 extern "C" void func_801EDA08(CItemBoxLine* self);
 extern "C" void func_801EDA4C(CItemBoxLine* self, u8 val);
-extern "C" void func_801ED31C(CItemBoxLine* self);
+extern "C" void ItemBoxLine_LoadFiles(CItemBoxLine* self);
 extern "C" void func_8018B0FC(void* dest, void* src);
 extern "C" void __ct__UnkClass_8011C974(void* dest, void* src);
 extern "C" char* BdatTouchStringCell(const void* a, const void* b, int id);
@@ -271,7 +271,7 @@ extern "C" void func_801C3D54(CBgTex* self);
 extern "C" void func_801C3D7C(CBgTex* self, nw4r::lyt::DrawInfo* drawInfo);
 extern "C" void func_801C3FF0(CTitleAHelp* self);
 extern "C" void func_801C4080(CTitleAHelp* self, nw4r::lyt::DrawInfo* drawInfo);
-extern "C" void func_801ED3E8(CItemBoxLine* self);
+extern "C" void ItemBoxLine_UpdateStates(CItemBoxLine* self);
 extern "C" void func_801ED4FC(CItemBoxLine* self, nw4r::lyt::DrawInfo* drawInfo);
 
 // DrawInfo raw-storage ct/dt (C-ABI so the scope-exit dtor is not

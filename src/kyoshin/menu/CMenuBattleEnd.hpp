@@ -102,7 +102,7 @@ void cbRenderBefore__14CMenuBattleEndFv(void* sub);
 }
 
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim).
-// NOTE: addRenderCB / func_801355F4 bypass the broken monolib work.hpp-umbrella
+// NOTE: addRenderCB / CUICfManager_getArcResourceAccessor bypass the broken monolib work.hpp-umbrella
 // headers (CScn.hpp / CUICfManager.hpp) which fail to compile repo-wide (CTTask
 // redefinition); declared here directly with their literal retail names.
 extern "C" {
@@ -112,7 +112,7 @@ extern char lbl_eu_8050E6F8[];      // layout/animation/pane name string table
 extern u32 __ptmf_null[];           // null member-function-pointer triple
 extern f32 lbl_eu_80668990;         // anim frame target for advanceAnimTransform
 extern f32 lbl_eu_80668994;         // anim reset frame for SetFrame
-nw4r::lyt::ArcResourceAccessor* func_801355F4();
+nw4r::lyt::ArcResourceAccessor* CUICfManager_getArcResourceAccessor();
 void addRenderCB__4CScnFP10IScnRenderUlUl(CScn*, IScnRender*, u32, u32);
 void removeRenderCB__4CScnFP10IScnRender(CScn*, IScnRender*);
 void __ct__17UnkClass_8045F564Fv(void*);

@@ -39,7 +39,7 @@ extern "C" void func_80137924(nw4r::math::VEC3*, nw4r::lyt::Pane*, nw4r::lyt::Pa
 
 // OnFileEvent imports (retail symbols, unmangled / pre-mangled C-ABI names).
 extern "C" {
-nw4r::lyt::ArcResourceAccessor* func_801355F4();
+nw4r::lyt::ArcResourceAccessor* CUICfManager_getArcResourceAccessor();
 void* func_80138DA4(const char*);
 void func_80124288(nw4r::lyt::Pane*, float*);
 void* getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32, nw4r::lyt::Layout*);

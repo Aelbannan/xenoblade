@@ -133,7 +133,7 @@ struct MenuLvUpPaneFlag {
     u8 field_0xbb; // +0xbb
 };
 
-// Opaque view of the func_80496264(scene, -1) camera/pose block (retail reads
+// Opaque view of the Scn_FindCamItem(scene, -1) camera/pose block (retail reads
 // the two anchor VEC3s at +0x10c and +0x138).
 struct MenuLvUpPose {
     u8 _00[0x10c];
@@ -209,7 +209,7 @@ void func_80276B14(CMenuLvUp* self, CMenuLvUpEntry* entry);
 void func_802768E0(CMenuLvUp* self, CMenuLvUpEntry* entry);
 void func_802764A0(CMenuLvUp* self, CMenuLvUpEntry* entry);
 CMenuLvUp* __ct__CMenuLvUp(CProcess* parent, CScn* scene);
-MenuLvUpPose* func_80496264(CScn* scene, int index);
+MenuLvUpPose* Scn_FindCamItem(CScn* scene, int index);
 void func_8049B59C(nw4r::math::VEC3* out, MenuLvUpPose* pose,
                    const nw4r::math::VEC3* in);
 int func_8013A4B4(const nw4r::math::VEC3* a, const nw4r::math::VEC3* b,
@@ -226,7 +226,7 @@ void __ct__17UnkClass_8045F564Fv(UnkClass_8045F564* mem);
 void __ct__Q34nw4r3lyt8DrawInfoFv(nw4r::lyt::DrawInfo* drawInfo);
 void __dt__Q34nw4r3lyt8DrawInfoFv(nw4r::lyt::DrawInfo* drawInfo, int flags);
 bool isSceneLoading__Q22cf13CfGameManagerFv();
-nw4r::lyt::ArcResourceAccessor* func_801355F4();
+nw4r::lyt::ArcResourceAccessor* CUICfManager_getArcResourceAccessor();
 }
 
 // C++-linkage imports (retail symbols are the Itanium-mangled forms).

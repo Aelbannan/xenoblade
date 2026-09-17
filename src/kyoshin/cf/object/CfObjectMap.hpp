@@ -97,13 +97,13 @@ extern "C" {
     void func_801A2CAC__Q22cf12CTaskCullingFv();
 
     // ---- scene / resource helpers ----
-    void func_80495E60(void* ptr);
+    void Scn_IsAnimActiveOrNull(void* ptr);
     int getFileSize__11CDeviceFileFPCc(const char* path, int flags);
     void* func_804C1BA0(void* mgr, const void* name, int flag);
     void scnLgtRemoveLgtItem(void* mgr, void* resource);
     void scnLgtPushLgtValue(void* mgr, u16 value, float amount);
-    void func_80496294(CScn* scene, float value);
-    void* func_80495EB0(void* r3, void* r4, void* r5);
+    void Scn_SetTimeScale(CScn* scene, float value);
+    void* Scn_InitGlobalB(void* r3, void* r4, void* r5);
     void* scnImN4BuildByIdx(void* r3, void* r4, u32 r5, u32 r6, u32 r7, u32 r8);
     void func_800BBADC(void* r3, void* r4);
     void* getHandleMEM1__Q23mtl10MemManagerFv();
@@ -123,11 +123,11 @@ extern "C" {
     void* CfRes_getLazyField10(void* r3, void* r4);
     void* KyoshinHeap_GetField18();
     void* KyoshinHeap_GetField1C();
-    void* func_800A9534(void* r3);
-    void* func_800A965C(void* r3);
-    void* func_800A9784(u32 size);
-    void* func_800A98A8(void* r3);
-    void* func_800A9CD0();
+    void* KyoshinHeap_AllocFld10(void* r3);
+    void* KyoshinHeap_AllocFld14(void* r3);
+    void* KyoshinHeap_AllocFld18(u32 size);
+    void* KyoshinHeap_AllocFld34(void* r3);
+    void* KyoshinHeap_GetField40();
     void CfRes_tryUpdateSlot16C(void* r3);
     u32 func_800AA2BC(u32 a, u32 b);
     int func_800AA33C(ml::FixStr<64>& buf, u32 packed, int prefixFlag, int suffixFlag);

@@ -212,7 +212,7 @@ void func_8006ACC0(CfCamEvent* self) {
         }
     }
 
-    if (CfRes_getD80Flag() == 0 || func_80496288() == lbl_eu_80666268) {
+    if (CfRes_getD80Flag() == 0 || Scn_GetFrameDelta() == lbl_eu_80666268) {
         return;
     }
 

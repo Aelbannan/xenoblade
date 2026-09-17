@@ -143,7 +143,7 @@ void CMenuItemExchange::Init() {
     func_801EDA4C(reinterpret_cast<CItemBoxLine*>(&mItemBoxLine[0]), 0xb);
     func_801EDA4C(reinterpret_cast<CItemBoxLine*>(&mItemBoxLine[0]), 3);
     func_801EDA4C(reinterpret_cast<CItemBoxLine*>(&mItemBoxLine[0]), 0xa);
-    func_801ED31C(reinterpret_cast<CItemBoxLine*>(&mItemBoxLine[0]));
+    ItemBoxLine_LoadFiles(reinterpret_cast<CItemBoxLine*>(&mItemBoxLine[0]));
 
     // Item-box grid: temp CItemBoxGrid -> copy -> destroy, then register the
     // two tab lists.
@@ -353,7 +353,7 @@ body:
     case 8: func_801BF70C(this); break;
     }
     func_801C3D54(&mBgTex);
-    func_801ED3E8(reinterpret_cast<CItemBoxLine*>(mItemBoxLine));
+    ItemBoxLine_UpdateStates(reinterpret_cast<CItemBoxLine*>(mItemBoxLine));
     UpdateItemBox(&mItemBoxGrid);
     func_801C3FF0(&mTitleAHelp);
 }

@@ -29,7 +29,7 @@ extern const float lbl_eu_80668154; // entering-done threshold
 // Cross-TU layout helpers (kyoshin .text). Retail references these by their
 // unmangled C names (US split strips the C++ mangling), so they need C
 // linkage declarations - same convention as CSysWin/CKizunagram/etc.
-extern "C" void func_80127BC4(float* dst, float* src); // copy 2 floats (VEC2)
+extern "C" void TagCopyVec2f(float* dst, float* src); // copy 2 floats (VEC2)
 extern "C" void func_80124270(void* pane, u32 a); // set pane visible flag
 
 /* Sets mVtbl before UnkClass_8045F564 is constructed (retail ctor order:

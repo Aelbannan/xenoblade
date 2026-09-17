@@ -118,7 +118,7 @@ extern "C" int func_8049B158(int);
 extern "C" bool func_8049B240(int);
 extern "C" void* func_8049B2C4(void*);
 
-// Camera-item payload block copied by func_80496120: the 64-byte projection
+// Camera-item payload block copied by Scn_CopyCamProjMatrix: the 64-byte projection
 // matrix (MTX44) at item+0x194.
 struct ScnCamParams {
     u32 w[16]; // 0x00..0x3C

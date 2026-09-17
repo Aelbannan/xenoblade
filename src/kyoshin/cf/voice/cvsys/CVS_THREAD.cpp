@@ -1,7 +1,7 @@
 #include "kyoshin/cf/voice/cvsys/CVS_THREAD.hpp"
 #include "kyoshin/cf/CfGameManager.hpp"
 #include "kyoshin/cf/CfGameManagerData.hpp"          // lbl_eu_80663E14
-#include "libs/monolib/src/scn/CScn_8049603C.hpp"     // func_8049603C (single owner decl)
+#include "libs/monolib/src/scn/CScn_8049603C.hpp"     // Scn_QueryUnk80State (single owner decl)
 #include "monolib/math/Random.hpp"
 
 // Phantom vtable view over a CVoiceHandle vtable (vptr at +0x00) so the
@@ -66,7 +66,7 @@ struct CVoiceSndFlagView {
     u32 flag64;
 };
 
-// Scene camera-view block returned by func_8049603C (float at +0xC is the
+// Scene camera-view block returned by Scn_QueryUnk80State (float at +0xC is the
 // remaining display-time fraction subtracted from the base volume).
 struct CVoiceSndCamView {
     u8 _00[0xC];

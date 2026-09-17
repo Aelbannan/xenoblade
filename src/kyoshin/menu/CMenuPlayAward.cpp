@@ -25,7 +25,7 @@ void func_801390E0(CFileHandle**);
 extern "C" void __ct__17UnkClass_8045F564Fv(void*);
 
 // Retail constructor symbol (unmangled global in US). Kept out-of-line so the
-// factory (func_80270308) emits a real bl to it, and returns `this` in r3
+// factory (PlayAward_CreateMenu) emits a real bl to it, and returns `this` in r3
 // like a real constructor.
 __declspec(noinline) CMenuPlayAward* __ct__CMenuPlayAward(CMenuPlayAward* self, CScn* scene) {
     __ct__8CProcessFv((CProcess*)self);
@@ -193,7 +193,7 @@ void CMenuPlayAward::Init() {
     arrDst->field_100E = arrSrc->field_100E;
     __dt__14CPlayAwardListFv((CPlayAwardList*)tempList, -1);
 
-    func_80270CEC(&mPlayAwardList);
+    PlayAward_LoadLayouts(&mPlayAwardList);
 
     // Register this screen as a render callback on the owning scene (the
     // `if (this)` is the MWCC idiom that splits mr r4,r31 / beq / addi r4,+0x58).
@@ -218,7 +218,7 @@ void CMenuPlayAward::Term() {
 
     func_801C3D9C(&mBgTex);
     func_801C40A0(&mTitleAHelp);
-    func_80270E64(&mPlayAwardList);
+    PlayAward_ReleaseList(&mPlayAwardList);
 
     lbl_eu_806648A0 = 0;
     setPresentationFlag__Q22cf13CfGameManagerFv(0);
@@ -260,22 +260,22 @@ body:
     // Phase state machine (dispatch on the help-display byte 0x1160).
     switch (mField1160) {
     case 0:
-        func_8027038C(this);
+        PlayAward_Phase0_ShowHelp(this);
         break;
     case 1:
-        func_80270404(this);
+        PlayAward_Phase1_Advance(this);
         break;
     case 2:
         func_80270454(this);
         break;
     case 3:
-        func_802705F4(this);
+        PlayAward_Phase3_RequestClose(this);
         break;
     }
 
     func_801C3D54(&mBgTex);
     func_801C3FF0(&mTitleAHelp);
-    func_80270D64(&mPlayAwardList);
+    PlayAward_UpdateList(&mPlayAwardList);
 }
 
 void CMenuPlayAward::cbRenderBefore() {
@@ -302,7 +302,7 @@ body:
     __ct__Q34nw4r3lyt8DrawInfoFv(drawInfo);
     func_80137250(reinterpret_cast<nw4r::lyt::DrawInfo*>(drawInfo));
     func_801C3D7C(&mBgTex, reinterpret_cast<nw4r::lyt::DrawInfo*>(drawInfo));
-    func_80270E04(&mPlayAwardList, reinterpret_cast<nw4r::lyt::DrawInfo*>(drawInfo));
+    PlayAward_DrawList(&mPlayAwardList, reinterpret_cast<nw4r::lyt::DrawInfo*>(drawInfo));
     func_801C4080(&mTitleAHelp, reinterpret_cast<nw4r::lyt::DrawInfo*>(drawInfo));
     __dt__Q34nw4r3lyt8DrawInfoFv(reinterpret_cast<nw4r::lyt::DrawInfo*>(drawInfo), -1);
 }
@@ -310,7 +310,7 @@ body:
 /* Factory: lazily allocate + construct the single award-list menu instance
  * and register it as a child of `parent`. Returns the stored instance (or 0
  * if it already exists). */
-CMenuPlayAward* func_80270308(CProcess* parent, CScn* scene) {
+CMenuPlayAward* PlayAward_CreateMenu(CProcess* parent, CScn* scene) {
     if (lbl_eu_806648A0 != 0) {
         return 0;
     }
@@ -328,12 +328,12 @@ void stub_us_80272800() {}
 
 // Help-bar show: when the background, title/help bar and award list are all
 // ready, display the help bar, play its sound, and flag the menu (0x1160 = 1).
-void func_8027038C(CMenuPlayAward* self) {
+void PlayAward_Phase0_ShowHelp(CMenuPlayAward* self) {
     if (func_801C3E34(&self->mBgTex) != 0
         && func_801C4114(&self->mTitleAHelp) != 0
-        && func_80270F28(&self->mPlayAwardList) != 0) {
+        && PlayAward_IsListReady(&self->mPlayAwardList) != 0) {
         func_801C412C(&self->mTitleAHelp);
-        func_80270F74(&self->mPlayAwardList);
+        PlayAward_RequestOpen(&self->mPlayAwardList);
         self->mField1160 = 1;
         playUISound(0x6d);
     }
@@ -341,8 +341,8 @@ void func_8027038C(CMenuPlayAward* self) {
 
 // Help-bar show: when the title/help bar is idle and the award list is in its
 // "ready" state, display the help bar (byte at 0x1160 = 2).
-void func_80270404(CMenuPlayAward* self) {
-    if (isIdle__11CTitleAHelpFv(&self->mTitleAHelp) != 0 && func_80270F6C(&self->mPlayAwardList) != 0) {
+void PlayAward_Phase1_Advance(CMenuPlayAward* self) {
+    if (isIdle__11CTitleAHelpFv(&self->mTitleAHelp) != 0 && PlayAward_IsReadyFlag(&self->mPlayAwardList) != 0) {
         self->mField1160 = 2;
     }
 }
@@ -390,40 +390,40 @@ void func_80270454(CMenuPlayAward* self) {
         // nothing -- blocks the remaining input handlers
     } else if (right) {
         func_801C414C(&self->mTitleAHelp);
-        func_80271070(&self->mPlayAwardList);
+        PlayAward_RequestClose(&self->mPlayAwardList);
         self->mField1160 = 3;
     } else if (up) {
-        func_802710D4(&self->mPlayAwardList);
+        PlayAward_MoveCursorUp(&self->mPlayAwardList);
     } else if (down) {
         func_80271190(&self->mPlayAwardList);
     } else if (pageUp) {
-        func_80271260(&self->mPlayAwardList);
+        PlayAward_ScrollPageUp(&self->mPlayAwardList);
     } else if (pageDown) {
-        func_80271300(&self->mPlayAwardList);
+        PlayAward_ScrollPageDown(&self->mPlayAwardList);
     } else if (pageLeft) {
-        func_802713BC(&self->mPlayAwardList);
+        PlayAward_FlipPage(&self->mPlayAwardList);
     }
-    s32 page = func_80271468(&self->mPlayAwardList);
+    s32 page = PlayAward_GetPageCue(&self->mPlayAwardList);
     func_801C41E8(&self->mTitleAHelp, (u8)page);
 }
 
 // Help-bar hide: when the title/help bar is idle and the award list is in its
 // "ready" state, mark the menu as closing (byte at 0x54 = 1).
-void func_802705F4(CMenuPlayAward* self) {
-    if (isIdle__11CTitleAHelpFv(&self->mTitleAHelp) != 0 && func_80270F6C(&self->mPlayAwardList) != 0) {
+void PlayAward_Phase3_RequestClose(CMenuPlayAward* self) {
+    if (isIdle__11CTitleAHelpFv(&self->mTitleAHelp) != 0 && PlayAward_IsReadyFlag(&self->mPlayAwardList) != 0) {
         self->mField54 = 1;
     }
 }
 
-void func_80270644(void* self) { ((void(*)(void*))cbRenderBefore__14CMenuPlayAwardFv)((char*)self - 0x58); }
+void PlayAward_RenderThunk(void* self) { ((void(*)(void*))cbRenderBefore__14CMenuPlayAwardFv)((char*)self - 0x58); }
 
-void func_8027064C(void* self) { ((void(*)(void*))__dt__14CMenuPlayAwardFv)((char*)self - 0x58); }
+void PlayAward_DtorThunk(void* self) { ((void(*)(void*))__dt__14CMenuPlayAwardFv)((char*)self - 0x58); }
 
-// Entry-array initialiser (retail func_80270654): construct the 512 award
+// Entry-array initialiser (retail PlayAward_InitEntryArray): construct the 512 award
 // entries via the MWCC array helper, then initialise the trailing state
 // fields. Returns self like a constructor.
-CPlayAwardEntryArray* func_80270654(CPlayAwardEntryArray* self) {
-    __construct_array(self->mEntries, (void*)func_802706C4, (void*)__dt__802706D4, 8, 0x200);
+CPlayAwardEntryArray* PlayAward_InitEntryArray(CPlayAwardEntryArray* self) {
+    __construct_array(self->mEntries, (void*)PlayAward_InitEntry, (void*)__dt__802706D4, 8, 0x200);
     self->field_1000 = 0;
     self->field_1001 = 0;
     self->field_1004 = lbl_eu_806689A8;
@@ -435,7 +435,7 @@ CPlayAwardEntryArray* func_80270654(CPlayAwardEntryArray* self) {
     return self;
 }
 
-void func_802706C4(CPlayAwardEntry* self) {
+void PlayAward_InitEntry(CPlayAwardEntry* self) {
     self->word0 = 0;
     self->word1 = 0;
 }
@@ -543,7 +543,7 @@ void func_80270770(CPlayAwardEntryArray* self) {
         entry.word1 = (u32)s2;
         u8 cnt = self->field_1008[page];
         self->field_1008[page] = cnt + 1;
-        func_80270AD8(&self->mEntries[page * 0x200 + cnt], &entry);
+        PlayAward_CopyEntry(&self->mEntries[page * 0x200 + cnt], &entry);
 
         // Remember the scroll position for the entry the player is on.
         u8 cur = code80135FDC_getByte_6407F();
@@ -561,11 +561,11 @@ void func_80270770(CPlayAwardEntryArray* self) {
 }
 
 // Copy an 8-byte award entry (load both words before storing, like entries[i] = src).
-void func_80270AD8(CPlayAwardEntry* dst, const CPlayAwardEntry* src) { *dst = *src; }
+void PlayAward_CopyEntry(CPlayAwardEntry* dst, const CPlayAwardEntry* src) { *dst = *src; }
 
 // Entry lookup: array base + (pageIndex << 11) + ((param & 0xFF) << 3);
 // returns 0 when param >= 0x100.
-u8* func_80270AEC(CPlayAwardEntryArray* self, int param) {
+u8* PlayAward_FindEntry(CPlayAwardEntryArray* self, int param) {
     if (param >= 256) return 0;
     return (u8*)self + (self->mPageIndex << 11) + ((param & 0xFF) << 3);
 }
@@ -592,7 +592,7 @@ CPlayAwardList* __ct__CPlayAwardList(CPlayAwardList* self, int arg) {
     self->field_0x8C = 0;
     self->field_0x8E = 0;
     self->field_0x90 = 0;
-    func_80270654(&self->mEntryArray);
+    PlayAward_InitEntryArray(&self->mEntryArray);
 
     // Temp scrollbar body copy (retail copies each field: lwz/stw, lbz/stb,
     // lfs/stfs).
@@ -644,12 +644,12 @@ CPlayAwardList* __dt__14CPlayAwardListFv(CPlayAwardList* self, int dealloc) {
 
 // Load the award-list layout arc files: the list arc via readFile (handle from
 // MEM2) and the common archive via readCommonArchiveFile (handle re-queried by
-// func_800A9D90). Then build the scroll bar layout and clear the flag byte.
-void func_80270CEC(CPlayAwardList* self) {
+// KyoshinHeap_GetField44). Then build the scroll bar layout and clear the flag byte.
+void PlayAward_LoadLayouts(CPlayAwardList* self) {
     self->mFileHandle = CDeviceFile::readFile(
         mtl::MemManager::getHandleMEM2(), &lbl_eu_8050E7C0[0x5a], self, 0, 0);
     self->mFileHandle2 = CDeviceFile::readCommonArchiveFile(
-        func_800A9D90(), &lbl_eu_8050E7C0[0x74], self, 0, 0);
+        KyoshinHeap_GetField44(), &lbl_eu_8050E7C0[0x74], self, 0, 0);
     func_801F34F4(self->mScrollBar);
     self->field_0x8A = 0;
 }
@@ -657,20 +657,20 @@ void func_80270CEC(CPlayAwardList* self) {
 // Per-frame award-list move: when the list is loaded (field_0x88), run the
 // state-transition handler for the current state byte, advance the layout
 // animation, and update the cursor + scroll bar.
-void func_80270D64(CPlayAwardList* self) {
+void PlayAward_UpdateList(CPlayAwardList* self) {
     if (self->field_0x88 != 0) {
         switch (self->field_0x89) {
         case 1:
-            func_80271480(self);
+            PlayAward_FinishOpenAnimA(self);
             break;
         case 2:
-            func_802714D4(self);
+            PlayAward_FinishOpenAnimB(self);
             break;
         case 4:
-            func_80271528(self);
+            PlayAward_FinishCloseAnimA(self);
             break;
         case 5:
-            func_80271574(self);
+            PlayAward_FinishCloseAnimB(self);
             break;
         }
         self->mLayout20->Animate(0);
@@ -681,7 +681,7 @@ void func_80270D64(CPlayAwardList* self) {
 
 // Draw the award-list layout, scroll bar and cursor when the list is loaded
 // (field_0x88 nonzero).
-void func_80270E04(CPlayAwardList* self, nw4r::lyt::DrawInfo* drawInfo) {
+void PlayAward_DrawList(CPlayAwardList* self, nw4r::lyt::DrawInfo* drawInfo) {
     if (self->field_0x88 != 0) {
         drawLayout(self->mLayout20, drawInfo, 0, 1);
         func_801F35B0(self->mScrollBar, drawInfo);
@@ -692,7 +692,7 @@ void func_80270E04(CPlayAwardList* self, nw4r::lyt::DrawInfo* drawInfo) {
 // Release the award-list widgets: close the two file handles, destroy the
 // layout + 0x2C object, release the arc resource accessor, then run the
 // cursor/scrollbar/region teardown helpers.
-void func_80270E64(CPlayAwardList* self) {
+void PlayAward_ReleaseList(CPlayAwardList* self) {
     func_801390E0(&self->mFileHandle);
     func_801390E0(&self->mFileHandle2);
     self->field_0x88 = 0;
@@ -715,20 +715,20 @@ bool CScrollBar_isVisible(void*);
 // Award list "ready to show" query: visible when the embedded scroll bar is
 // visible AND the flag byte at 0x8A is set. Int return so callers compare
 // with cmpwi directly (cf. CMenuTutorialList.hpp).
-int func_80270F28(CPlayAwardList* self) {
+int PlayAward_IsListReady(CPlayAwardList* self) {
     if (CScrollBar_isVisible((u8*)self + 0x48)) {
         return self->field_0x8A;
     }
     return 0;
 }
 
-int func_80270F6C(CPlayAwardList* self) { return self->field_0x8B; }
+int PlayAward_IsReadyFlag(CPlayAwardList* self) { return self->field_0x8B; }
 
-void func_80270F74(CPlayAwardList* self) {
+void PlayAward_RequestOpen(CPlayAwardList* self) {
     if (self->field_0x89 != 0) return;
     self->field_0x89 = 1;
     self->field_0x8B = 0;
-    func_802715C0(self);
+    PlayAward_BindCloseAnims(self);
 
     // Scroll the bar in with the 3-float init vector.
     float vec[3];
@@ -753,19 +753,19 @@ void func_80270F74(CPlayAwardList* self) {
 
     self->field_0x90 = self->mEntryArray.mPageIndex;
     func_801F3850(self->mScrollBar, self->field_0x8E);
-    func_802717F8(self);
-    func_80271680(self);
-    func_80271730(self);
+    PlayAward_RefreshPageTitles(self);
+    PlayAward_RefreshEntryPanes(self);
+    PlayAward_RefreshCursor(self);
 }
 
-// Award-list close request (retail func_80271070): when the list is in its
+// Award-list close request (retail PlayAward_RequestClose): when the list is in its
 // "open" state (3), mark it closing (4), reset the ready flag, stop the open
 // animations, hide the cursor, scroll the bar out and play the close sound.
-void func_80271070(CPlayAwardList* self) {
+void PlayAward_RequestClose(CPlayAwardList* self) {
     if (self->field_0x89 == 3) {
         self->field_0x89 = 4;
         self->field_0x8B = 0;
-        func_80271620(self);
+        PlayAward_BindOpenAnims(self);
         func_801D216C(self->mCursor, 0);
         func_801F369C(self->mScrollBar);
         playUISound(6);
@@ -775,7 +775,7 @@ void func_80271070(CPlayAwardList* self) {
 // Award-list cursor down: decrement the scroll position, and when it wraps
 // past the bottom of the page, move to the previous page (9-entry rows,
 // 8-entry remainder page). Refresh the list + scroll bar afterwards.
-void func_802710D4(CPlayAwardList* self) {
+void PlayAward_MoveCursorUp(CPlayAwardList* self) {
     u8 page = self->mEntryArray.mPageIndex;
     u8 count = self->mEntryArray.field_1008[page];
     self->field_0x8C = self->field_0x8C - 1;
@@ -796,8 +796,8 @@ void func_802710D4(CPlayAwardList* self) {
             }
         }
     }
-    func_80271680(self);
-    func_80271730(self);
+    PlayAward_RefreshEntryPanes(self);
+    PlayAward_RefreshCursor(self);
     func_801F3850(self->mScrollBar, self->field_0x8E);
     playUISound(1);
 }
@@ -829,8 +829,8 @@ void func_80271190(CPlayAwardList* self) {
             self->field_0x8E = 0;
         }
     }
-    func_80271680(self);
-    func_80271730(self);
+    PlayAward_RefreshEntryPanes(self);
+    PlayAward_RefreshCursor(self);
     func_801F3850(self->mScrollBar, self->field_0x8E);
     playUISound(1);
 }
@@ -838,7 +838,7 @@ void func_80271190(CPlayAwardList* self) {
 // Award-list scroll step: when the current page's entry count reaches 9,
 // decrement the scroll offset by 9 (wrapping through the 8-entry remainder),
 // otherwise reset both scroll fields. Then refresh the list and scroll bar.
-void func_80271260(CPlayAwardList* self) {
+void PlayAward_ScrollPageUp(CPlayAwardList* self) {
     if (self->mEntryArray.field_1008[self->mEntryArray.mPageIndex] >= 9) {
         s16 scroll = self->field_0x8E - 9;
         self->field_0x8E = scroll;
@@ -853,8 +853,8 @@ void func_80271260(CPlayAwardList* self) {
         self->field_0x8C = 0;
         self->field_0x8E = 0;
     }
-    func_80271680(self);
-    func_80271730(self);
+    PlayAward_RefreshEntryPanes(self);
+    PlayAward_RefreshCursor(self);
     func_801F3850(self->mScrollBar, self->field_0x8E);
     playUISound(1);
 }
@@ -862,7 +862,7 @@ void func_80271260(CPlayAwardList* self) {
 // Award-list cursor up: when the current page's entry count reaches 9,
 // advance the scroll offset by 9 (wrapping through the 8-entry remainder),
 // otherwise reset both scroll fields. Refresh the list + scroll bar.
-void func_80271300(CPlayAwardList* self) {
+void PlayAward_ScrollPageDown(CPlayAwardList* self) {
     u8 count = self->mEntryArray.field_1008[self->mEntryArray.mPageIndex];
     if (count >= 9) {
         int delta = count - 9;
@@ -883,15 +883,15 @@ void func_80271300(CPlayAwardList* self) {
             self->field_0x8C = 0;
         }
     }
-    func_80271680(self);
-    func_80271730(self);
+    PlayAward_RefreshEntryPanes(self);
+    PlayAward_RefreshCursor(self);
     func_801F3850(self->mScrollBar, self->field_0x8E);
     playUISound(1);
 }
 
 // Page-flip: increment the 0x90 page byte (wrapping 2 -> 0), stash the page
 // index for entry lookup, then re-range the scroll bar and refresh the list.
-void func_802713BC(CPlayAwardList* self) {
+void PlayAward_FlipPage(CPlayAwardList* self) {
     self->field_0x90++;
     if (self->field_0x90 >= 2) {
         self->field_0x90 = 0;
@@ -905,22 +905,22 @@ void func_802713BC(CPlayAwardList* self) {
     u8 count = self->mEntryArray.field_1008[self->mEntryArray.mPageIndex];
     func_801F36BC(self->mScrollBar, 9, count);
     func_801F3850(self->mScrollBar, self->field_0x8E);
-    func_802717F8(self);
-    func_80271680(self);
-    func_80271730(self);
+    PlayAward_RefreshPageTitles(self);
+    PlayAward_RefreshEntryPanes(self);
+    PlayAward_RefreshCursor(self);
     playUISound(0xa);
 }
 
 // Page-flip helper: 0x67 when the 0x90 page byte is nonzero, else 0x66.
-s32 func_80271468(CPlayAwardList* self) { return (self->field_0x90 != 0) + 0x66; }
+s32 PlayAward_GetPageCue(CPlayAwardList* self) { return (self->field_0x90 != 0) + 0x66; }
 
 // Award list open transition: once the list's forward animation reaches its
 // end, mark the list state as showing (2), run the page/scroll setup and
 // request the scroll bar scroll-in.
-void func_80271480(CPlayAwardList* self) {
+void PlayAward_FinishOpenAnimA(CPlayAwardList* self) {
     if (advanceAnimTransform(self->mAnimTrans24, lbl_eu_806689C0) != 0) {
         self->field_0x89 = 2;
-        func_80271620(self);
+        PlayAward_BindOpenAnims(self);
         func_801F367C(self->mScrollBar);
     }
 }
@@ -928,26 +928,26 @@ void func_80271480(CPlayAwardList* self) {
 // Award list open transition: once the list's forward animation reaches its
 // end, mark the list state as opening (3), run the page/scroll setup and set
 // the ready flag.
-void func_802714D4(CPlayAwardList* self) {
+void PlayAward_FinishOpenAnimB(CPlayAwardList* self) {
     if (advanceAnimTransform(self->mAnimTrans28, lbl_eu_806689C0) != 0) {
         self->field_0x89 = 3;
-        func_80271730(self);
+        PlayAward_RefreshCursor(self);
         self->field_0x8B = 1;
     }
 }
 
 // Award list close transition: once the list's reverse animation reaches its
 // start, mark the list state as closed (5) and run the close sequence.
-void func_80271528(CPlayAwardList* self) {
+void PlayAward_FinishCloseAnimA(CPlayAwardList* self) {
     if (AnimRewindFrame(self->mAnimTrans28, lbl_eu_806689C0) != 0) {
         self->field_0x89 = 5;
-        func_802715C0(self);
+        PlayAward_BindCloseAnims(self);
     }
 }
 
 // Award list close transition (reverse): when the list's reverse animation
 // reaches its start, reset the state (0) and set the ready flag (1).
-void func_80271574(CPlayAwardList* self) {
+void PlayAward_FinishCloseAnimB(CPlayAwardList* self) {
     if (AnimRewindFrame(self->mAnimTrans24, lbl_eu_806689C0) != 0) {
         self->field_0x89 = 0;
         self->field_0x8B = 1;
@@ -956,14 +956,14 @@ void func_80271574(CPlayAwardList* self) {
 
 // Award list close transition: bind the reverse/forward animation transforms
 // to the layout (anim28 disabled, anim24 enabled).
-void func_802715C0(CPlayAwardList* self) {
+void PlayAward_BindCloseAnims(CPlayAwardList* self) {
     self->mLayout20->SetAnimationEnable(self->mAnimTrans28, false);
     self->mLayout20->SetAnimationEnable(self->mAnimTrans24, true);
 }
 
 // Award list open transition: bind the forward/reverse animation transforms
 // to the layout (anim24 disabled, anim28 enabled).
-void func_80271620(CPlayAwardList* self) {
+void PlayAward_BindOpenAnims(CPlayAwardList* self) {
     self->mLayout20->SetAnimationEnable(self->mAnimTrans24, false);
     self->mLayout20->SetAnimationEnable(self->mAnimTrans28, true);
 }
@@ -971,11 +971,11 @@ void func_80271620(CPlayAwardList* self) {
 // Refresh the 9 award-entry panes of the current page: format each pane name
 // and bind the entry words into the layout (first text white, second text in
 // the field_0x2C attribute color).
-void func_80271680(CPlayAwardList* self) {
+void PlayAward_RefreshEntryPanes(CPlayAwardList* self) {
     char buf[0x20];
     for (u8 i = 0; i < 9; i++) {
         CPlayAwardEntry* entry = reinterpret_cast<CPlayAwardEntry*>(
-            func_80270AEC(&self->mEntryArray, (u8)(i + self->field_0x8E)));
+            PlayAward_FindEntry(&self->mEntryArray, (u8)(i + self->field_0x8E)));
         sprintf(buf, &lbl_eu_8050E7C0[0x93], i + 1);
         LayoutSetTextBoxFmtValue(self->mLayout20, buf, reinterpret_cast<char*>(entry->word0), 0);
         sprintf(buf, &lbl_eu_8050E7C0[0x9f], i + 1);
@@ -987,7 +987,7 @@ void func_80271680(CPlayAwardList* self) {
 // Refresh the cursor position: format the current pane name, show the cursor,
 // find the two anchor panes, translate the cursor's target position and move
 // the cursor to it (retail reloads the root pane each time).
-void func_80271730(CPlayAwardList* self) {
+void PlayAward_RefreshCursor(CPlayAwardList* self) {
     nw4r::math::VEC3 pos;
     char buf[0x20];
     sprintf(buf, &lbl_eu_8050E7C0[0x93], self->field_0x8C + 1);
@@ -998,7 +998,7 @@ void func_80271730(CPlayAwardList* self) {
     reinterpret_cast<CCursor18*>(&self->mCursor)->vf4(&pos);
 }
 
-void func_802717F8(CPlayAwardList* self) {
+void PlayAward_RefreshPageTitles(CPlayAwardList* self) {
     // Load the two page-title strings ("%s"-style templates from the pool).
     char* s1;
     char* s2;
@@ -1018,7 +1018,7 @@ void func_802717F8(CPlayAwardList* self) {
                           : &lbl_eu_8050E7C0[0xe0];
     u16 msgId = BdatGetU16ByTableKey(&lbl_eu_8050E7C0[0xc4], sel, 0x3a);
     char* texName = MakeTplNameSysFile((u32)msgId);
-    nw4r::lyt::ArcResourceAccessor* mgr = func_801355F4();
+    nw4r::lyt::ArcResourceAccessor* mgr = CUICfManager_getArcResourceAccessor();
     CPlayAwardMsgObj* obj = reinterpret_cast<CPlayAwardMsgObj*>(
         mgr->GetResource(0x74696D67, texName, 0));
     if (obj != 0) {
@@ -1058,7 +1058,7 @@ body:
     self->field_0x8A = 1;
     self->field_0x88 = 1;
     CPlayAwardEntryArray tmp;
-    func_80270654(&tmp);
+    PlayAward_InitEntryArray(&tmp);
     for (u32 i = 0; i < 0x200; i++) {
         self->mEntryArray.mEntries[i] = tmp.mEntries[i];
     }
@@ -1072,8 +1072,8 @@ body:
     self->mEntryArray.field_100E = tmp.field_100E;
     __destroy_arr(tmp.mEntries, (void*)&__dt__802706D4, 8, 0x200);
     func_80270770(&self->mEntryArray);
-    func_802717F8(self);
-    func_80271680(self);
+    PlayAward_RefreshPageTitles(self);
+    PlayAward_RefreshEntryPanes(self);
 }
 
 // File-load completion callback: when the award-list arc (mFileHandle) is
@@ -1120,8 +1120,8 @@ bool CPlayAwardList::OnFileEvent(CEventFile* event) {
         u32 fontResult = fontObj->getFontHandle();
         func_8013676C(rootPane, fontResult);
 
-        setLayoutTextBoxFont(mLayout20, &lbl_eu_8050E7C0[0x16f], func_801355BC());
-        func_802715C0(this);
+        setLayoutTextBoxFont(mLayout20, &lbl_eu_8050E7C0[0x16f], CUICfManager_getPackedFont9C());
+        PlayAward_BindCloseAnims(this);
         mLayout20->Animate(0);
 
         // Bind the three page-title/help strings.
@@ -1143,7 +1143,7 @@ bool CPlayAwardList::OnFileEvent(CEventFile* event) {
 
         // Build the cursor on the stack, copy its body into the member region
         // (skipping the +0x00 vtable pointer) and destroy the temp.
-        __ct__CCur18(tmpCur, func_801355F4());
+        __ct__CCur18(tmpCur, CUICfManager_getArcResourceAccessor());
         CCur18Data* curDst = reinterpret_cast<CCur18Data*>(&mCursor[0]);
         CCur18Data* curSrc = reinterpret_cast<CCur18Data*>(tmpCur);
         curDst->field_4 = curSrc->field_4;
@@ -1175,4 +1175,4 @@ bool CPlayAwardList::OnFileEvent(CEventFile* event) {
     return 0;
 }
 
-extern "C" unsigned long func_8027037C(void) { return lbl_eu_806648A0 != 0; }
+extern "C" unsigned long PlayAward_IsActive(void) { return lbl_eu_806648A0 != 0; }

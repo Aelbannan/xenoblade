@@ -1,5 +1,5 @@
 #include "kyoshin/CTaskGame.hpp"
-#include "libs/monolib/src/scn/CScn_8049603C.hpp" // func_8049603C (single owner decl)
+#include "libs/monolib/src/scn/CScn_8049603C.hpp" // Scn_QueryUnk80State (single owner decl)
 #include "kyoshin/cf/CTaskGameCf.hpp"
 #include "kyoshin/cf/CfObjectEnumList.hpp"
 #include "kyoshin/cf/CfGameManager.hpp"
@@ -201,7 +201,7 @@ void CTaskGame::Init(){
     unk74 = static_cast<CScnNw4r*>(create__8CScnNw4rFv(
         CTaskManager::GetRootProcScn(), lbl_eu_80661908, 0x440000, mem1,
         &param));
-    func_80496118(unk74, unk70, 0);
+    Scn_GetCamWorkInt(unk74, unk70, 0);
     CfRes_setD80Flag(unk74);
     __ct__8009D604();
     func_800450CC(this, unk74);
@@ -223,7 +223,7 @@ void CTaskGame::Init(){
 
     unk7C = 0;
     CTaskGame_setVec4_tmp buf;
-    func_8049602C(unk74, 0,
+    Scn_ReleaseUnk80(unk74, 0,
                   CTaskGame_setVec4(&buf, lbl_eu_80665D74, lbl_eu_80665D74,
                                 lbl_eu_80665D74, lbl_eu_80665D6C));
 
@@ -759,7 +759,7 @@ extern "C" void cbRenderBefore__9CTaskGameFv(CTaskGame* self, CScn* scene) {
             }
         } else if (lbl_eu_80663D24 == 1) {
             if (func_802AE6BC(lbl_eu_80663D1C) != 0) {
-                if (((CTaskGameCamView*)func_8049603C(scene))->field_C < lbl_eu_80665D78) {
+                if (((CTaskGameCamView*)Scn_QueryUnk80State(scene))->field_C < lbl_eu_80665D78) {
                     lbl_eu_80663D24++;
                     func_802AE758(lbl_eu_80663D1C);
                 }
@@ -782,16 +782,16 @@ extern "C" void cbRenderBefore__9CTaskGameFv(CTaskGame* self, CScn* scene) {
         self->unk8C = 0;
     } else {
         // ===== D1C == 0: frame-counter / idle-pose gate =====
-        if (func_804960A8(scene) != 0) {
+        if (Scn_IsScaleAtLeastOne(scene) != 0) {
             if (lbl_eu_80663E24 & 0xafa40000) {
                 self->unk8C = 0;
             }
             self->unk8C++;
             if (!(lbl_eu_80663E28 & 0x01000000) && !(lbl_eu_80663E24 & 0xafa40000)) {
                 if ((s16)self->unk8C > 0x1e) {
-                    if (((CTaskGameCamView*)func_8049603C(scene))->field_4 == ((CTaskGameCamView*)func_8049603C(scene))->field_0 &&
-                        ((CTaskGameCamView*)func_8049603C(scene))->field_8 == ((CTaskGameCamView*)func_8049603C(scene))->field_4 &&
-                        ((CTaskGameCamView*)func_8049603C(scene))->field_0 == lbl_eu_80665D74) {
+                    if (((CTaskGameCamView*)Scn_QueryUnk80State(scene))->field_4 == ((CTaskGameCamView*)Scn_QueryUnk80State(scene))->field_0 &&
+                        ((CTaskGameCamView*)Scn_QueryUnk80State(scene))->field_8 == ((CTaskGameCamView*)Scn_QueryUnk80State(scene))->field_4 &&
+                        ((CTaskGameCamView*)Scn_QueryUnk80State(scene))->field_0 == lbl_eu_80665D74) {
                         lbl_eu_80663D28 = 1;
                     }
                 }
@@ -810,12 +810,12 @@ extern "C" void cbRenderBefore__9CTaskGameFv(CTaskGame* self, CScn* scene) {
             }
         }
         // Camera at idle pose with non-origin x -> skip the draw.
-        if (((CTaskGameCamView*)func_8049603C(scene))->field_4 == ((CTaskGameCamView*)func_8049603C(scene))->field_0 &&
-            ((CTaskGameCamView*)func_8049603C(scene))->field_8 == ((CTaskGameCamView*)func_8049603C(scene))->field_4 &&
-            ((CTaskGameCamView*)func_8049603C(scene))->field_0 != lbl_eu_80665D74) {
+        if (((CTaskGameCamView*)Scn_QueryUnk80State(scene))->field_4 == ((CTaskGameCamView*)Scn_QueryUnk80State(scene))->field_0 &&
+            ((CTaskGameCamView*)Scn_QueryUnk80State(scene))->field_8 == ((CTaskGameCamView*)Scn_QueryUnk80State(scene))->field_4 &&
+            ((CTaskGameCamView*)Scn_QueryUnk80State(scene))->field_0 != lbl_eu_80665D74) {
             goto L_8004316C;
         }
-        if (func_801684F4() != 0) {
+        if (EvtSeqGetStateBit10() != 0) {
             goto L_8004316C;
         }
         if (func_802B0D10() != 0) {
@@ -862,7 +862,7 @@ L_8004321C:
     {
         bool flag = false;
         if (lbl_eu_80663D1C == 0 && lbl_eu_80663D34 == 0) {
-            if (func_804960A8(scene) == 0) {
+            if (Scn_IsScaleAtLeastOne(scene) == 0) {
                 if (lbl_eu_80663D20 != 0) {
                     lbl_eu_80663D20->releaseLayout();
                 }
@@ -909,12 +909,12 @@ L_8004321C:
             }
             lbl_eu_80663D20->mLayoutReady = (lbl_eu_806649F4 == 0);
             // Camera at idle pose with non-origin x -> D34-gated draw.
-            if (((CTaskGameCamView*)func_8049603C(scene))->field_4 == ((CTaskGameCamView*)func_8049603C(scene))->field_0 &&
-                ((CTaskGameCamView*)func_8049603C(scene))->field_8 == ((CTaskGameCamView*)func_8049603C(scene))->field_4 &&
-                ((CTaskGameCamView*)func_8049603C(scene))->field_0 != lbl_eu_80665D74) {
+            if (((CTaskGameCamView*)Scn_QueryUnk80State(scene))->field_4 == ((CTaskGameCamView*)Scn_QueryUnk80State(scene))->field_0 &&
+                ((CTaskGameCamView*)Scn_QueryUnk80State(scene))->field_8 == ((CTaskGameCamView*)Scn_QueryUnk80State(scene))->field_4 &&
+                ((CTaskGameCamView*)Scn_QueryUnk80State(scene))->field_0 != lbl_eu_80665D74) {
                 goto L_80043454;
             }
-            if (func_801684F4() != 0) {
+            if (EvtSeqGetStateBit10() != 0) {
                 goto L_80043454;
             }
             if (func_802B0D10() != 0) {
@@ -1079,7 +1079,7 @@ extern "C" void CTaskGame_moveFadeOut(CTaskGame* self) {
                   getTargetFramerate__9CDeviceVIFv() >> 1,
                   reinterpret_cast<const u32*>(CTaskGame_setVec4(&buf2, lbl_eu_80665D74, lbl_eu_80665D74, lbl_eu_80665D74, lbl_eu_80665D74)));
     CTaskGame_setVec4_tmp buf3;
-    func_8049602C(self->unk74, 0, CTaskGame_setVec4(&buf3, lbl_eu_80665D74, lbl_eu_80665D74, lbl_eu_80665D74, lbl_eu_80665D74));
+    Scn_ReleaseUnk80(self->unk74, 0, CTaskGame_setVec4(&buf3, lbl_eu_80665D74, lbl_eu_80665D74, lbl_eu_80665D74, lbl_eu_80665D74));
     u32 v0;
     u32* pool = reinterpret_cast<u32*>(lbl_eu_8052558C);
     v0 = pool[0];
@@ -1236,7 +1236,7 @@ void func_80040EB4(CTaskGame* self) {
 // frame counter; when the window-state gate (CTaskGame_windowGate) is clear, tick
 // the unk78 frame budget. While the budget is exhausted: push the float
 // constants through the vec4 setter into the unkCC/unkD0 objects (index 0)
-// and the scene (func_8049602C, index 0), clear the busy bytes at +0x39 and
+// and the scene (Scn_ReleaseUnk80, index 0), clear the busy bytes at +0x39 and
 // null the unkCC/unkD0 objects, and once the frame counter passes fps*8
 // switch the move-hook ptmf to pool lbl_eu_805255F8 (lbl_eu_80663D2C set) or
 // lbl_eu_80525604.
@@ -1260,7 +1260,7 @@ extern "C" void CTaskGame_moveTeardown(CTaskGame* self) {
                       reinterpret_cast<const u32*>(CTaskGame_setVec4(&buf2, lbl_eu_80665D74, lbl_eu_80665D74, lbl_eu_80665D74, lbl_eu_80665D6C)));
     }
     CTaskGame_setVec4_tmp buf3;
-    func_8049602C(self->unk74, 0, CTaskGame_setVec4(&buf3, lbl_eu_80665D74, lbl_eu_80665D74, lbl_eu_80665D74, lbl_eu_80665D6C));
+    Scn_ReleaseUnk80(self->unk74, 0, CTaskGame_setVec4(&buf3, lbl_eu_80665D74, lbl_eu_80665D74, lbl_eu_80665D74, lbl_eu_80665D6C));
     if (self->unkCC != 0) {
         reinterpret_cast<CTaskGameFlag39*>(self->unkCC)->field_0x39 = 1;
         self->unkCC = 0;
@@ -1784,20 +1784,20 @@ void func_80041BC0(CTaskGame* self) {
 // Target us-80042240: title-screen tick. Raises unk68 bit 0x400000, then
 // when the window-state gate (CTaskGame_windowGate) is clear and the title
 // captions are empty and the play-time gate (CTaskGame_playTimeGate) is closed but
-// the script-time gate (func_801684F4) opens: start streaming the
+// the script-time gate (EvtSeqGetStateBit10) opens: start streaming the
 // lbl_eu_804FA890[0x6E] caption with the scene's alloc handle
 // (func_80043738). Pokes the unkD4 event object; then when unk68 bit 0x1000
 // is set: clear bit 0x800, and by unkF4 mode clear the unkF0 object's +0x39
-// busy byte (0), run the func_80134C34 / func_80134E50 pair and store the
-// scene's func_80496110 byte into unk188 (1/2), then push the float
+// busy byte (0), run the func_80134C34 / CUICfManager_queueOptionMenu pair and store the
+// scene's Scn_GetUnk80Resource byte into unk188 (1/2), then push the float
 // constants through the vec4 setter into the scene at framerate/2 and switch
 // the move-hook ptmf to pool lbl_eu_80525790. Otherwise clear the unkF0
 // object's +0xEA byte.
 extern "C" void CTaskGame_moveTitleTick(CTaskGame* self) {
     self->unk68 |= 0x400000;
     if (CTaskGame_windowGate(self) == 0) {
-        if (self->unk86 == 0 && CTaskGame_playTimeGate() == 0 && func_801684F4() != 0) {
-            func_80043738(0, &lbl_eu_804FA890[0x6E], func_80495FF0(self->unk74), 0, 1, 0, lbl_eu_80665D6C);
+        if (self->unk86 == 0 && CTaskGame_playTimeGate() == 0 && EvtSeqGetStateBit10() != 0) {
+            func_80043738(0, &lbl_eu_804FA890[0x6E], Scn_CallUnk8C_V9(self->unk74), 0, 1, 0, lbl_eu_80665D6C);
         }
         if (self->unkD4 != 0) {
             func_802956A4(reinterpret_cast<void*>(self->unkD4));
@@ -1817,13 +1817,13 @@ extern "C" void CTaskGame_moveTitleTick(CTaskGame* self) {
                 }
             } else if (f4 == 1) {
                 func_80134C34();
-                self->unk188 = static_cast<u8>(func_80496110(self->unk74));
+                self->unk188 = static_cast<u8>(Scn_GetUnk80Resource(self->unk74));
             } else if (f4 == 2) {
-                func_80134E50(0);
-                self->unk188 = static_cast<u8>(func_80496110(self->unk74));
+                CUICfManager_queueOptionMenu(0);
+                self->unk188 = static_cast<u8>(Scn_GetUnk80Resource(self->unk74));
             }
             CTaskGame_setVec4_tmp buf;
-            func_8049602C(self->unk74, getTargetFramerate__9CDeviceVIFv() >> 1,
+            Scn_ReleaseUnk80(self->unk74, getTargetFramerate__9CDeviceVIFv() >> 1,
                           CTaskGame_setVec4(&buf, lbl_eu_80665D74, lbl_eu_80665D74, lbl_eu_80665D74, lbl_eu_80665D6C));
             u32 v0;
             u32* pool = reinterpret_cast<u32*>(lbl_eu_80525790);
@@ -1840,7 +1840,7 @@ extern "C" void CTaskGame_moveTitleTick(CTaskGame* self) {
     }
 }
 // Target us-800423cc: scene gate then move-hook switch by unkF4 mode. When
-// the scene current-process query (func_80496034) returns non-null: for
+// the scene current-process query (Scn_GetUnk80Handle) returns non-null: for
 // unkF4==0 show the default loading caption via setLoadingCaption, for
 // unkF4==1/2 clear the unkF0 object's +0xE9 byte; each case copies a
 // different move-hook ptmf pool (+0x234 / +0x240 / +0x24C), held in one
@@ -1852,7 +1852,7 @@ void func_80041E54(CTaskGame* self) {
     // Base held in one callee-saved register across all three cases (retail
     // lis/addi hoisted above the gate).
     u32* base = lbl_eu_80525568;
-    if (func_80496034(self->unk74) != 0) {
+    if (Scn_GetUnk80Handle(self->unk74) != 0) {
         if (self->unkF4 == 0) {
             self->setLoadingCaption(0, 0, &lbl_eu_804FA890[0x6D], 0);
             // Retail keeps the entry address in a register (addi rX,base,off)
@@ -1908,11 +1908,11 @@ extern "C" void CTaskGame_moveAfterSave(CTaskGame* self) {
     words->field_0x44 = pool[2];
     if (self->unk188 != 0) {
         CTaskGame_setVec4_tmp buf;
-        func_8049602C(self->unk74, 0,
+        Scn_ReleaseUnk80(self->unk74, 0,
                       CTaskGame_setVec4(&buf, lbl_eu_80665D74, lbl_eu_80665D74, lbl_eu_80665D74, lbl_eu_80665D6C));
     } else {
         CTaskGame_setVec4_tmp buf2;
-        func_8049602C(self->unk74, getTargetFramerate__9CDeviceVIFv() >> 1,
+        Scn_ReleaseUnk80(self->unk74, getTargetFramerate__9CDeviceVIFv() >> 1,
                       CTaskGame_setVec4(&buf2, lbl_eu_80665D74, lbl_eu_80665D74, lbl_eu_80665D74, lbl_eu_80665D74));
     }
     self->unk188 = 0;
@@ -1940,11 +1940,11 @@ extern "C" void CTaskGame_moveAfterOpt(CTaskGame* self) {
     words->field_0x44 = pool[2];
     if (self->unk188 != 0) {
         CTaskGame_setVec4_tmp buf;
-        func_8049602C(self->unk74, 0,
+        Scn_ReleaseUnk80(self->unk74, 0,
                       CTaskGame_setVec4(&buf, lbl_eu_80665D74, lbl_eu_80665D74, lbl_eu_80665D74, lbl_eu_80665D6C));
     } else {
         CTaskGame_setVec4_tmp buf2;
-        func_8049602C(self->unk74, getTargetFramerate__9CDeviceVIFv() >> 1,
+        Scn_ReleaseUnk80(self->unk74, getTargetFramerate__9CDeviceVIFv() >> 1,
                       CTaskGame_setVec4(&buf2, lbl_eu_80665D74, lbl_eu_80665D74, lbl_eu_80665D74, lbl_eu_80665D74));
     }
     self->unk188 = 0;
@@ -1958,7 +1958,7 @@ extern "C" void CTaskGame_moveAfterOpt(CTaskGame* self) {
 // cf::CTaskGameCf singleton is live raise unk68 bit 0x8, request its exit and
 // switch the move-hook ptmf to pool lbl_eu_805257D8; otherwise halve the
 // unk78 budget, run the CRI ramp (CTaskGame_fadeStream), push the float constants
-// through the vec4 setter into the scene (func_8049602C, index framerate/2),
+// through the vec4 setter into the scene (Scn_ReleaseUnk80, index framerate/2),
 // and switch the move-hook ptmf to pool lbl_eu_805257E4.
 extern "C" void CTaskGame_moveExitFade(CTaskGame* self) {
     if (self->unkCC != 0) {
@@ -1988,7 +1988,7 @@ extern "C" void CTaskGame_moveExitFade(CTaskGame* self) {
         self->unk78 = getTargetFramerate__9CDeviceVIFv() >> 1;
         CTaskGame_fadeStream(getTargetFramerate__9CDeviceVIFv() >> 1, lbl_eu_80665D74);
         CTaskGame_setVec4_tmp buf;
-        func_8049602C(self->unk74,
+        Scn_ReleaseUnk80(self->unk74,
                       getTargetFramerate__9CDeviceVIFv() >> 1,
                       CTaskGame_setVec4(&buf, lbl_eu_80665D74, lbl_eu_80665D74, lbl_eu_80665D74, lbl_eu_80665D6C));
         u32 v1;
@@ -2001,7 +2001,7 @@ extern "C" void CTaskGame_moveExitFade(CTaskGame* self) {
     }
 }
 // Target us-800427ec: scene-handoff / mission-start setup. When the scene
-// current-process query (func_80496034) returns non-null: run the shared
+// current-process query (Scn_GetUnk80Handle) returns non-null: run the shared
 // reset (CTaskGame_resetStream), set unk68 bits (unk68 & ~3) | 4, and for the
 // unk128 == 3 title path: copy the unk86/unk88 caption pair into
 // unk80/unk82, strlen+strcpy the unkA4 caption into unkA0/unk90, copy the
@@ -2017,7 +2017,7 @@ extern "C" void CTaskGame_moveExitFade(CTaskGame* self) {
 // optimize_for_size: retail saves r29-r31 with a single stmw.
 #pragma optimize_for_size on
 void func_80042274(CTaskGame* self) {
-    if (func_80496034(self->unk74) == 0) {
+    if (Scn_GetUnk80Handle(self->unk74) == 0) {
         return;
     }
     CTaskGame_resetStream();
@@ -2330,7 +2330,7 @@ s32 CTaskGame::isMoveFuncActive() {
 // the unkDC budget is not exceeded: resolve the file extension; when the
 // func_804DE010 pack check identifies an archive path (func_804DDD54) the
 // size check is skipped; otherwise getFileSize(path, 1) must be >= 0. Then
-// run the shared reset (CTaskGame_resetStream), pick the alloc handle (func_80495FF0
+// run the shared reset (CTaskGame_resetStream), pick the alloc handle (Scn_CallUnk8C_V9
 // on lbl_eu_80663E14 when the caller passed -1), copy the path into a local
 // FixStr<256> (mLength + strcpy; func_eu_804520D0 path fix-up for the
 // non-archive case), open the CRI stream (dispatchFilePlayback) into unkD8, set the
@@ -2366,7 +2366,7 @@ void func_80043738(u32 a1, const char* path, u32 a3, u32 a4, u32 a5, u32 a6, flo
     }
     CTaskGame_resetStream();
     if ((u32)(a3 + 0x10000) == 0xFFFF) {
-        a3 = func_80495FF0(lbl_eu_80663E14);
+        a3 = Scn_CallUnk8C_V9(lbl_eu_80663E14);
     }
     ml::FixStr<256> filename(false);
     filename.mLength = static_cast<int>(strlen(path));

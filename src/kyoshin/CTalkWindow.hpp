@@ -250,7 +250,7 @@ public:
     virtual u32 getFontHandle();       // 0x24
 };
 
-// Opaque func_80496264(scene, -1) pose block passed to func_8049B59C.
+// Opaque Scn_FindCamItem(scene, -1) pose block passed to func_8049B59C.
 struct CTalkWinPose;
 
 // C-ABI function imports: these retail symbols are unmangled (or carry a
@@ -276,18 +276,18 @@ int isClassicController__Q22cf13CfGameManagerFv(int arg);
 CTalkWinTalkSrc* func_800BBC0C();
 int getAnimModelId(CTalkWinTalkC4* talkC4);
 void func_8004B9D4(CTalkWinTalkC4* talkC4, int a, int b, int c, int d);
-int func_801276F4(nw4r::lyt::AnimTransform* tag, nw4r::lyt::Pane* a,
+int TagProcPumpMessage(nw4r::lyt::AnimTransform* tag, nw4r::lyt::Pane* a,
                   nw4r::lyt::Pane* b, nw4r::lyt::Pane* c);
 int func_8012615C(nw4r::lyt::AnimTransform* tag, nw4r::lyt::Pane* a,
                   nw4r::lyt::Pane* b, nw4r::lyt::Pane* c);
-void func_80127E74(nw4r::lyt::AnimTransform* tag, nw4r::lyt::Pane* a,
+void TagProcResetPage(nw4r::lyt::AnimTransform* tag, nw4r::lyt::Pane* a,
                    nw4r::lyt::Pane* b, nw4r::lyt::Pane* c);
-void func_80135464(u8 a, int b, float c, float d, float e);
-void func_8013DA60(u16 id, int a, int b);
-void func_8013E104(u16 id);
-void func_8013E204(u16 id);
-void func_801342B0();
-nw4r::lyt::ArcResourceAccessor* func_801355F4();
+void CUICfManager_queueFadeMenu(u8 a, int b, float c, float d, float e);
+void UIWin_CreateQuestWin(u16 id, int a, int b);
+void UIWin_CreateShopWin(u16 id);
+void UIWin_CreateBEDE0Win(u16 id);
+void CUICfManager_queueMakeCrystalMenu();
+nw4r::lyt::ArcResourceAccessor* CUICfManager_getArcResourceAccessor();
 char* func_80138DA4(const char* msg);
 void LayoutSetTextBoxFmtValue(nw4r::lyt::Layout* layout, const char* name, const char* text,
                    u32 flag);
@@ -305,7 +305,7 @@ void buildLayout__FPPQ34nw4r3lyt6LayoutPQ34nw4r3lyt19ArcResourceAccessorPCc(
 void bindLayoutAnimTransform__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(
     nw4r::lyt::Layout* layout, nw4r::lyt::AnimTransform** ppAnimTrans,
     nw4r::lyt::ArcResourceAccessor* accessor, char* name);
-CTalkWinPose* func_80496264(CScn* scene, int index);
+CTalkWinPose* Scn_FindCamItem(CScn* scene, int index);
 void func_8049B59C(nw4r::math::VEC3* out, CTalkWinPose* pose,
                    const nw4r::math::VEC3* in);
 }

@@ -11,8 +11,8 @@
 #include "monolib/work/CEventFile.hpp"
 #include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
 extern "C" char* getEntryPtrGrid(char* self, int a, int b);
-extern "C" void* func_80495FF0(void* scene);
-extern "C" mtl::ALLOC_HANDLE func_80496004(void* src);
+extern "C" void* Scn_CallUnk8C_V9(void* scene);
+extern "C" mtl::ALLOC_HANDLE Scn_CallUnk8C_V10(void* src);
 extern "C" void* getHandleMEM1__Q23mtl10MemManagerFv();
 
 // Two-word ring record built on the caller's frame by func_80061870; both
@@ -222,14 +222,14 @@ int CfRes_getD80Flag() { return lbl_eu_80663D80; }
 extern u32 lbl_eu_80663D80;
 u32 CfRes_setD80Flag(u32 val) { lbl_eu_80663D80 = val; return val; }
 
-// retail: lwz r3,lbl; cmpwi; beq; b func_80495FF0 / b getHandleMEM1 (tail calls)
+// retail: lwz r3,lbl; cmpwi; beq; b Scn_CallUnk8C_V9 / b getHandleMEM1 (tail calls)
 extern "C" void* CfRes_getHeapHandle() {
-    if (lbl_eu_80663D80 != 0) { return func_80495FF0((void*)lbl_eu_80663D80); }
+    if (lbl_eu_80663D80 != 0) { return Scn_CallUnk8C_V9((void*)lbl_eu_80663D80); }
     return (void*)getHandleMEM1__Q23mtl10MemManagerFv();
 }
 
 extern "C" mtl::ALLOC_HANDLE CfRes_getAllocHandle() {
-    if (lbl_eu_80663D80 != 0) { return func_80496004((void*)lbl_eu_80663D80); }
+    if (lbl_eu_80663D80 != 0) { return Scn_CallUnk8C_V10((void*)lbl_eu_80663D80); }
     return (mtl::ALLOC_HANDLE)(uintptr_t)getHandleMEM1__Q23mtl10MemManagerFv();
 }
 
@@ -1740,7 +1740,7 @@ int func_800643F0(void* self, u32 packed, int flag, int kind) {
                     } else if (h == 1) {
                         handle = (u32)getHandleMEM1__Q23mtl10MemManagerFv();
                     } else {
-                        handle = (u32)func_80495FF0((void*)CfRes_getE14());
+                        handle = (u32)Scn_CallUnk8C_V9((void*)CfRes_getE14());
                     }
                     if (rounded <= getMaxAllocSize__Q23mtl10MemManagerFUl(handle)) {
                         buf = h == 0 ? allocate_tail__Q23mtl10MemManagerFUlUli(handle, rounded, 0x20)
@@ -2511,8 +2511,8 @@ extern "C" int KyoshinHeap_GetField10();
 extern "C" int KyoshinHeap_GetField18();
 extern "C" int KyoshinHeap_GetField20();
 extern "C" int KyoshinHeap_GetActive54();
-extern "C" int func_800A99D0();
-extern "C" int func_800A9A90();
+extern "C" int KyoshinHeap_GetFieldAC();
+extern "C" int KyoshinHeap_GetField50();
 extern "C" int KyoshinHeap_GetField34();
 int CfRes_getLazyField20() { return KyoshinHeap_GetField20(); }
 int CfRes_getLazyField10() { return KyoshinHeap_GetField10(); }
@@ -2552,7 +2552,7 @@ int CfRes_getLazyField20b() { return KyoshinHeap_GetField20(); }
 
 int CfRes_getLazyField18() { return KyoshinHeap_GetField18(); }
 
-int CfRes_getLazyFieldAC() { return func_800A99D0(); }
+int CfRes_getLazyFieldAC() { return KyoshinHeap_GetFieldAC(); }
 
 extern "C" void CfRes_stub_65D8C() {}
 
@@ -2578,12 +2578,12 @@ extern "C" u32 CfRes_getField24(u32 unused, void* obj) { return *(u32*)((char*)o
 extern "C" void* CfRes_dispatchTypeA(void* unused, const void* obj) {
     u8 val = *(const u8*)((const u8*)obj + 0x32);
     if (val == 10) {
-        extern void* func_800A9B50();
-        return func_800A9B50();
+        extern void* KyoshinHeap_GetField38();
+        return KyoshinHeap_GetField38();
     }
     if (val == 7) {
-        extern void* func_800A9C10();
-        return func_800A9C10();
+        extern void* KyoshinHeap_GetField3C();
+        return KyoshinHeap_GetField3C();
     }
     return 0;
 }
@@ -2619,7 +2619,7 @@ void CfRes_cacheSoundBase(int unused, ResInfoEntry* self) {
     }
 }
 
-int CfRes_getLazyField50() { return func_800A9A90(); }
+int CfRes_getLazyField50() { return KyoshinHeap_GetField50(); }
 
 int CfRes_getLazyField34() { return KyoshinHeap_GetField34(); }
 

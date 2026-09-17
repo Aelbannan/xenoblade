@@ -123,7 +123,7 @@ struct UnkBuf8047BB54 {
     u32 field_0x0;        // +0x00 (a - headerSize)
 };
 
-// View frame returned by func_8049626C; +0x9C is handed to the layer draws,
+// View frame returned by Scn_HasCamItem; +0x9C is handed to the layer draws,
 // +0x1E0 holds the layer scale.
 struct UnkViewFrame {
     u8 pad_0x0[0x9C];
@@ -187,8 +187,8 @@ extern "C" void func_8047CC4C__17UnkClass_8047CA88Fv(
     UnkClass_8047CA88* self, void* desc, void* dataPtr,
     nw4r::math::VEC3* vec, f32 scale);
 extern "C" CView* getCurrentView__5CViewFv();
-extern "C" void* func_8049698C(CView* view);
-extern "C" void* func_8049626C(void* camera, CView* view);
+extern "C" void* Scn_GetCurrentScene(CView* view);
+extern "C" void* Scn_HasCamItem(void* camera, CView* view);
 
 // .sdata2 float for the layer-scale setup (func_8047230C).
 extern const f32 lbl_eu_8066A858;
@@ -568,7 +568,7 @@ extern "C" void initMpfDrawBuffer__17UnkClass_8047BB54Fv(
     if (((CScnRootNw4rGate*)func_8048ECD0(self->field_0x2E2C))->field_0x19 != 0)
         return;
     view = getCurrentView__5CViewFv();
-    vf = func_8049626C(func_8049698C(view), view);
+    vf = Scn_HasCamItem(Scn_GetCurrentScene(view), view);
     lbl_eu_80665838 = (u8*)self + 0x24;
     if (opa) {
         void* frame = submitDraw__Q26mpfsys17UnkClass_80471EC8Fv(

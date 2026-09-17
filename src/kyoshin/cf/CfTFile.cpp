@@ -232,7 +232,7 @@ float func_80069EE4() {
 void func_80069F2C() {
     if (CfRes_getD80Flag()) {
         // Retail reuses the flag call's r3 as the scene-pointer argument.
-        lbl_eu_80661AF0 = func_80496288((void*)CfRes_getD80Flag());
+        lbl_eu_80661AF0 = Scn_GetFrameDelta((void*)CfRes_getD80Flag());
     }
     int paused = lbl_eu_80663DA0 & 1;
     float oldClock = lbl_eu_80663D94;

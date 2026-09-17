@@ -549,7 +549,7 @@ Together these shapes reach 98.8% CODE_MATCH, exact `0x650` size, zero structura
 | VM plugin funcs call `func_801862C0` with a stale `r3`; decomp's `func_801862C0(pThread)` emits an extra `mr r3,r30` → +4 bytes structural | `func_801862C0` (`us-80187748`, FULL_MATCH) **ignores r3**; callers never need to set it. When a `vmArg*` precedes the call, retail leaves r3 stale while decomp reloads `mr r3,r30` | **RESOLVED**: `func_801862C0` is now `void* func_801862C0(void)` in `code_801862C0.hpp`+`.cpp`; all ~61 callsites in `ocUnit`/`pluginCfs`/`pluginCam`/`pluginBtl`/`CfObjectPoint` call `func_801862C0()`. C-linkage symbol unchanged → impl FULL_MATCH preserved; ~40 ocUnit VM funcs jumped 50%→90%+. (Note: `pluginBtl`/`pluginCfs` have *pre-existing* unrelated compile errors — `cf::CfGameManager::getInstance` / `func_8009D790` overloading — not caused by this change.) |
 | `__dynamic_cast` RTTI args: decomp passes the global's **value** `(void*)lbl_eu_806618D8` → MWCC dereferences (`lwz`) | retail passes the **address** (`li r5, lbl_eu_806618D8@sda21`) | Pass `&lbl_eu_806618D8` (address-of), matching `CBattleManager.cpp`/`CVision.cpp`. Fixed across ocUnit.cpp |
 | Same RTTI address (0x806618D8) has **two reloc names** across functions | retail uses `__RTTI__Q22cf13CfObjectActor` in `invin`/`lookAt`/`func_8003E974` but `lbl_eu_806618D8` in `setColi`/`delBuff` — **per-function** | Match the exact name each function uses (check `hexdiff --symbol X --brief` “Reloc drift”); declare `extern "C" void* __RTTI__Q22cf13CfObjectActor;` (from `CVision.hpp`) where needed |
-| CfObject talk sub-object: source used `obj->mSubObj38` (offset 0x38) | retail reads `obj+0x74` for the `func_8013D07C`/`func_8013D448`/vtable[0x50] sub-object arg | `mSubObj38` (header offset 0x38) is a **different** field used by other TUs — don't retarget the header. In ocUnit.cpp use `*(void**)((u8*)obj + 0x74)` for the talk sub-object (winTalk/talkMsg/sendNotify/getPartyHandle) |
+| CfObject talk sub-object: source used `obj->mSubObj38` (offset 0x38) | retail reads `obj+0x74` for the `UIWin_CreateTalkWin`/`UIWin_CreateEveTalkWin`/vtable[0x50] sub-object arg | `mSubObj38` (header offset 0x38) is a **different** field used by other TUs — don't retarget the header. In ocUnit.cpp use `*(void**)((u8*)obj + 0x74)` for the talk sub-object (winTalk/talkMsg/sendNotify/getPartyHandle) |
 | SDA vs far addressing | Different insn (`lwz@sda21` vs `lis`/`addi`) | Correct section/size via linker script |
 | Wrong callee-save depth | `_savegpr_29` vs `_savegpr_28` | Shrink live ranges across large functions |
 | Inlined vs outlined | Extra/missing `bl` | Match retail inline boundaries; IPA pragmas |
@@ -883,7 +883,7 @@ Recover a better name from the vtable + body, then `symbols rename-plan` /
    the signature from how r4 / f1 are used (`_Fv` is not evidence).
 3. Read overrides: a `blr` base + a leaf that clearly checks X is the evaluate
    slot; Switch `func_802B7CB0` (`mFlag = 1`) is the enable/reset override of
-   Unk1; Unk2 calls Unk5 then Unk4, then `func_80134D18` / `func_8009D018`.
+   Unk1; Unk2 calls Unk5 then Unk4, then `CUICfManager_queueTutorialMenu` / `func_8009D018`.
 4. Rename only after the class tree is right. Do not invent a pad named after
    the leaf to "hold" an unrecovered slot.
 
@@ -2476,7 +2476,7 @@ reproduced the retail `bgt` exactly (91.7% → 100%). Symptom to look for:
 retail `bgt`/`ble` after `addic.` where the decomp emits `bne`/`beq`.
 
 ### Struct-assignment copy loops returning the dst pointer
-func_80227994 (CQstLogList): a 0x22-byte entry copy compiled by retail as 2
+QstLogList_CopyEntry (CQstLogList): a 0x22-byte entry copy compiled by retail as 2
 byte copies + a 4x8-byte `lwzu/stwu` update-form counted loop (`mtctr`/`bdnz`).
 The hand-rolled word loop emits plain `lwz/stw + addi`; the natural source
 `*pDst = *pSrc; return pDst;` (full struct assignment) reproduces the retail
@@ -3015,7 +3015,7 @@ be the intended fix rather than externing the data.
 
 **3. u8 truncation via memory round-trip = deref-of-storage.** `func_800A32C4` (us-800a3b8c): retail `bl getBdatStringColumnValue; stw r3,8(sp); lbz r3,8(sp)` (0x40). The `(u8)` cast folds to `rlwinm r3,r3,0,24,31` (0x3c). Write `u32 v = call(...); return *(const u8*)&v;` — the stw/lbz round-trip (CfObjectNpc MWCC_CASES rule; a bare `&call()` is "not an lvalue", so use the local).
 
-**4. `#pragma optimize_for_size on` merges r30/r31 saves into stmw/lmw + fixes the copy order** — confirmed again on the CTagProcessor tag-writer family (func_801289B4 us-80129480, func_80128A70 us-8012953c, func_80128BB0 us-8012967c, all 0x48 → 100% FULL_MATCH). Retail prologue `stwu; mflr; stw r0; stmw r30; or r30,r4,r4; or r31,r6,r6`; plain `-O4,p -use_lmw_stmw on` emits `or r31,r6,r6` first + reversed `stw r31,28(sp); stw r30,24(sp)` pairs. The pragma (scoped on/off around the function) makes MWCC copy r3→r30 first and merge the saves (CPartyState func_801FD0A0 pattern).
+**4. `#pragma optimize_for_size on` merges r30/r31 saves into stmw/lmw + fixes the copy order** — confirmed again on the CTagProcessor tag-writer family (TagWriterCode7 us-80129480, TagWriterCode5 us-8012953c, TagWriterCode3 us-8012967c, all 0x48 → 100% FULL_MATCH). Retail prologue `stwu; mflr; stw r0; stmw r30; or r30,r4,r4; or r31,r6,r6`; plain `-O4,p -use_lmw_stmw on` emits `or r31,r6,r6` first + reversed `stw r31,28(sp); stw r30,24(sp)` pairs. The pragma (scoped on/off around the function) makes MWCC copy r3→r30 first and merge the saves (CPartyState func_801FD0A0 pattern).
 
 **5. MWCC rejects `extern const float` vs `extern float` redeclarations of the same symbol** — a new non-const `extern float lbl_eu_8066A20C` in CActParamAnim.hpp (added 2026-08-14) silently broke the whole CfObjectModel TU build (stale .o since Aug 13, "identifier redeclared as 'float'" at the include site). Align the redeclaration qualifier with the first declaration (`extern const float`).
 
@@ -3917,11 +3917,11 @@ reordering among uninitialized decls alone had no effect (birth follows first us
 - Confidence: repo_proven
 - Applies to/a.k.a.: any signed `%`/`/` by 2^k constant where retail shows srawi/addze; also explains "unsigned magic" mismatches near rand31()%N call sites (u32 return of MTRand::rand31 is NOT the cause — cast/local signedness does not change the selection)
 
-## Ellipsis (`...`) prototype on a shared extern "C" import: MWCC emits `crxor cr1` before every call (negative result, func_8049603C, Wii/1.1 -O4,p)
+## Ellipsis (`...`) prototype on a shared extern "C" import: MWCC emits `crxor cr1` before every call (negative result, Scn_QueryUnk80State, Wii/1.1 -O4,p)
 - Symptom:   after retyping a shared import as `extern "C" void* f(...)`, every caller gains an extra `crxor 6,6,6` (cr1 clear) immediately before the `bl`, shifting all later offsets (+4 bytes/call site); a previously FULL_MATCH no-arg caller dropped to 25%.
 - Cause:     for variadic-prototyped calls MWCC clears CR1 at the call site per the SysV varargs contract — even when zero arguments are passed and none are float. A fixed-arity prototype emits a plain `bl`.
 - Fix:       never use an ellipsis prototype to unify mixed-arity retail call sites. Give the shared owner header one fixed-arity declaration, and give genuine stale-r3 (no-source-arg) retail call sites a documented TU-local fixed-arity declaration instead (they must not include the owner header).
-- Result:    func_8049603C callers verified back at 100% (CMenuUpdate func_801443E4, CfCam cfCam_updateFrame, CfSoundMan func_801BFC38, CMenuQstCnt Move/cbRenderBefore, CfGimmick func_80208CC0).
+- Result:    Scn_QueryUnk80State callers verified back at 100% (CMenuUpdate func_801443E4, CfCam cfCam_updateFrame, CfSoundMan func_801BFC38, CMenuQstCnt Move/cbRenderBefore, CfGimmick CfGimmick_UpdatePartyAnchorState).
 - Confidence: repo_proven
 - Applies to/a.k.a.: single-winning-declaration (H3) cleanups; "too few arguments" vs stale-register call sites; any symbol called both with and without source-level arguments.
 
@@ -4238,7 +4238,7 @@ reordering among uninitialized decls alone had no effect (birth follows first us
 - Symptom:   dispatcher function explodes to many times retail size; hexdiff shows hundreds of structural diffs and decomp-side relocs vanish (case bodies present inline instead of `bl` per case)
 - Cause:     `-ipa file` inlines every same-TU callee into the switch, destroying the jump-table form
 - Fix:       add `__declspec(noinline)` to each case-target DEFINITION (bodies unchanged), plus an `extern "C"` declaration block BEFORE the definitions so call sites resolve to the unmangled retail symbols. Verify the state->function mapping against the retail asm table entry-by-entry (a one-slot shift cascades through all subsequent relocs). Existing postprocess `data_pool_patterns` rules name the auto-emitted jumptable once the shape matches
-- Result:    func_8021FEDC (CModelDispMakeCrystal) 0.7% -> 100.0% FULL_MATCH; unit .text overage 3640B -> 324B
+- Result:    MakeCrystal_DispatchState (CModelDispMakeCrystal) 0.7% -> 100.0% FULL_MATCH; unit .text overage 3640B -> 324B
 - Confidence: repo_proven
 - Applies to/a.k.a.: any state-machine/opcode dispatcher over same-TU runners; also check the cmpli bounds constant (table size) and inline-case bodies against retail before assuming deeper problems
 

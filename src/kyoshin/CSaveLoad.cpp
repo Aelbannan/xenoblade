@@ -1566,7 +1566,7 @@ void func_80290994(CSaveLoad* self) {
                     char* iconName = (char*)MakeTplNameSysFile(
                         (u16)BdatGetU16Direct(lbl_eu_80664090, (const char*)&strBase[0x1f6], (u8)rec));
                     void* awardRes =
-                        ((nw4r::lyt::ArcResourceAccessor*)func_801355F4())
+                        ((nw4r::lyt::ArcResourceAccessor*)CUICfManager_getArcResourceAccessor())
                             ->GetResource(0x74696D67, iconName, 0);
                     if (awardRes != 0) {
                         sprintf(textBuf, (const char*)&strBase[0x1ff], slotNum, btn + 1);
@@ -1779,7 +1779,7 @@ int OnFileEvent__9CSaveLoadFv(CSaveLoad* self, CEventFile* event) {
     func_8013676C((nw4r::lyt::Pane*)rootPane, fontResult);
 
     // Japanese-only caption strings applied to fixed pane names
-    char* capJp = (char*)func_801355D8();
+    char* capJp = (char*)CUICfManager_getPackedFontD8();
     if (capJp != nullptr) {
         setLayoutTextBoxFont__FPQ34nw4r3lyt6LayoutPcUl(self->mLayout, (char*)&strBase[0x27f], (u32)capJp);
         setLayoutTextBoxFont__FPQ34nw4r3lyt6LayoutPcUl(self->mLayout, (char*)&strBase[0x288], (u32)capJp);
@@ -1790,7 +1790,7 @@ int OnFileEvent__9CSaveLoadFv(CSaveLoad* self, CEventFile* event) {
     }
 
     // Localized caption strings applied to fifteen fixed pane names
-    char* capLoc = (char*)func_801355BC();
+    char* capLoc = (char*)CUICfManager_getPackedFont9C();
     if (capLoc != nullptr) {
         setLayoutTextBoxFont__FPQ34nw4r3lyt6LayoutPcUl(self->mLayout, (char*)&strBase[0x2c1], (u32)capLoc);
         setLayoutTextBoxFont__FPQ34nw4r3lyt6LayoutPcUl(self->mLayout, (char*)&strBase[0x2cd], (u32)capLoc);
@@ -1848,7 +1848,7 @@ int OnFileEvent__9CSaveLoadFv(CSaveLoad* self, CEventFile* event) {
     ((VtSlot8Call*)((u8*)self + 0x28))->vf2();
 
     // Same pattern for the CCur18 sub-object at self+0x40
-    __ct__CCur18(cur18Tmp, func_801355F4());
+    __ct__CCur18(cur18Tmp, CUICfManager_getArcResourceAccessor());
     CurMirror40* src40 = reinterpret_cast<CurMirror40*>(cur18Tmp);
     CurMirror40* dst40 = reinterpret_cast<CurMirror40*>((u8*)self + 0x40);
     dst40->w4 = src40->w4;

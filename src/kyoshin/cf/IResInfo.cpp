@@ -44,11 +44,11 @@ extern "C" {
 extern "C" {
     void getEventHalfwordPair__Q22cf13CfGameManagerFv(u16*, u16*);
     int KyoshinHeap_GetPtrTblB(int, int);
-    int KyoshinHeap_GetBaseTbl(u8);
-    int KyoshinHeap_GetBaseTblOff(u8);
-    int KyoshinHeap_GetBlk90Off32(int);
-    int KyoshinHeap_GetBlk90(int);
-    int KyoshinHeap_GetBlk90OffFA(int);
+    int KyoshinHeap_GetBaseTblRaw(u8);
+    int KyoshinHeap_GetBaseTblPlus96k(u8);
+    int KyoshinHeap_GetBlk90Plus32k(int);
+    int KyoshinHeap_GetBlk90Raw(int);
+    int KyoshinHeap_GetBlk90PlusFA(int);
     int KyoshinHeap_GetBlk94(int);
     int KyoshinHeap_GetBlk98(int);
     int KyoshinHeap_GetPtrTblA(int, int, int);
@@ -74,7 +74,7 @@ extern "C" {
     void __dla__FPv(void*);
     void __dl__FPv(void*);
     void CfRes_orBits_649B4(void*, int);
-    void func_800A9CD0(void);
+    void KyoshinHeap_GetField40(void);
     void* CfRes_findEntryById(ResInfoEntry*, u32);
     void* CfRes_findKypEntryA(ResInfoEntry*);
     void* CfRes_findKypEntryB(ResInfoEntry*, u32*);
@@ -93,7 +93,7 @@ extern "C" bool testWordFlag(const u32* p, u32 mask);
 // ============================================================
 
 extern "C" void CfRes_notifyAudioManager() {
-    func_800A9CD0();
+    KyoshinHeap_GetField40();
 }
 
 extern "C" void CfRes_noopEntry() {
@@ -274,15 +274,15 @@ extern "C" int CfRes_getTypeSlotValue(int unused, ResInfoEntry* self, int param)
     s16 v34 = self->field_0x34;
 
     switch (type) {
-    case 0: ret = KyoshinHeap_GetBaseTbl(subtype) + KyoshinHeap_GetPtrTblB(param, 0); break;
-    case 1: ret = KyoshinHeap_GetBaseTbl(subtype) + KyoshinHeap_GetPtrTblB(param, 1); break;
-    case 2: ret = KyoshinHeap_GetBaseTbl(subtype) + KyoshinHeap_GetPtrTblB(param, 2); break;
-    case 3: ret = KyoshinHeap_GetBaseTbl(subtype) + KyoshinHeap_GetPtrTblB(param, 3); break;
-    case 4: ret = KyoshinHeap_GetBaseTbl(subtype) + KyoshinHeap_GetPtrTblB(param, 4); break;
-    case 5: ret = KyoshinHeap_GetBaseTblOff(subtype); break;
-    case 6: if (v34 < 3) ret = KyoshinHeap_GetBlk90Off32(v34); break;
-    case 7: if (v34 < 3) ret = KyoshinHeap_GetBlk90(v34); break;
-    case 8: if (v34 < 3) ret = KyoshinHeap_GetBlk90OffFA(v34); break;
+    case 0: ret = KyoshinHeap_GetBaseTblRaw(subtype) + KyoshinHeap_GetPtrTblB(param, 0); break;
+    case 1: ret = KyoshinHeap_GetBaseTblRaw(subtype) + KyoshinHeap_GetPtrTblB(param, 1); break;
+    case 2: ret = KyoshinHeap_GetBaseTblRaw(subtype) + KyoshinHeap_GetPtrTblB(param, 2); break;
+    case 3: ret = KyoshinHeap_GetBaseTblRaw(subtype) + KyoshinHeap_GetPtrTblB(param, 3); break;
+    case 4: ret = KyoshinHeap_GetBaseTblRaw(subtype) + KyoshinHeap_GetPtrTblB(param, 4); break;
+    case 5: ret = KyoshinHeap_GetBaseTblPlus96k(subtype); break;
+    case 6: if (v34 < 3) ret = KyoshinHeap_GetBlk90Plus32k(v34); break;
+    case 7: if (v34 < 3) ret = KyoshinHeap_GetBlk90Raw(v34); break;
+    case 8: if (v34 < 3) ret = KyoshinHeap_GetBlk90PlusFA(v34); break;
     case 9: if (v34 < 3) ret = KyoshinHeap_GetBlk94(v34); break;
     case 10: if (v34 < 3) ret = KyoshinHeap_GetBlk98(v34); break;
     }

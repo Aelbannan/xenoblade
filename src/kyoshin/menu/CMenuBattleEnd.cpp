@@ -119,13 +119,13 @@ void CMenuBattleEnd::Init() {
         ->createRegion((int)handle, 0x4000, lbl_eu_8050E6F8, 0);
     Class_8045F858 regionGuard(reinterpret_cast<UnkClass_8045F564*>(mMemRegion));
 
-    accessor = func_801355F4();
+    accessor = CUICfManager_getArcResourceAccessor();
     buildLayout(&mLayout, accessor, &lbl_eu_8050E6F8[0xf]);
 
-    accessor = func_801355F4();
+    accessor = CUICfManager_getArcResourceAccessor();
     bindLayoutAnimTransform(mLayout, &mAnim88, accessor, (char*)&lbl_eu_8050E6F8[0x28]);
 
-    accessor = func_801355F4();
+    accessor = CUICfManager_getArcResourceAccessor();
     bindLayoutAnimTransform(mLayout, &mAnim8C, accessor, (char*)&lbl_eu_8050E6F8[0x48]);
 
     nw4r::lyt::Pane* rootPane = mLayout->GetRootPane();

@@ -12,8 +12,8 @@ extern "C" void ModelDispEquip_StepIdleBuildOrTick(CModelDispEquip*);
 extern "C" void ModelDispEquip_StepFadeIn(CModelDispEquip*);
 extern "C" void ModelDispEquip_StartFadeOut(CModelDispEquip*);
 extern "C" __declspec(noinline) void ModelDispEquip_ClearFileSlot(u8* ptr);
-extern "C" int func_80200C20(CModelDispEquip* self, u32 param);
-extern "C" void func_80200388(void* self, u32 val);
+extern "C" int ModelDispEquip_LoadModelArc(CModelDispEquip* self, u32 param);
+extern "C" void ModelDispEquip_SetActParamParent(void* self, u32 val);
 extern "C" void ModelDispEquip_TeardownHolder(CModelDispEquip*, CActParamHolder*);
 extern "C" __declspec(noinline) void ModelDispEquip_StoreFloat4(float* dest, float a, float b, float c, float d);
 
@@ -129,7 +129,7 @@ extern "C" void ModelDispEquip_SyncScalePose(CModelDispEquip* self) {
     };
     *(V3*)self->scale1 = *(const V3*)lbl_eu_80576550;
     *(V3*)self->scale2 = *(const V3*)lbl_eu_8057655C;
-    func_8049EFF8(func_80496264(reinterpret_cast<void*>(self->somePtr), -1), lbl_eu_80668274, self->scale1, self->scale2);
+    func_8049EFF8(Scn_FindCamItem(reinterpret_cast<void*>(self->somePtr), -1), lbl_eu_80668274, self->scale1, self->scale2);
 }
 
 // ============================================================
@@ -341,21 +341,21 @@ extern "C" void ModelDispEquip_TeardownHolder(CModelDispEquip* self, CActParamHo
             reinterpret_cast<CActParamAnim*>(&holder->actParams[i])->func_8004B114();
         }
     }
-    func_80495E60(holder->unk_55C);
+    Scn_IsAnimActiveOrNull(holder->unk_55C);
     holder->unk_55C = 0;
     for (u8 i = 0; i < 2; i++) {
         CModelDispObj* m = reinterpret_cast<CModelDispObj*>(holder->animModelPtrs[i]);
         if (m != 0) {
-            func_80495E60(m);
+            Scn_IsAnimActiveOrNull(m);
             holder->animModelPtrs[i] = 0;
         }
     }
     releaseAnimObj(&holder->actParam, holder->field_0x04);
     releaseAnimObj(&holder->actParam, holder->field_0x08);
     reinterpret_cast<CActParamAnim*>(&holder->actParam)->func_8004B114();
-    func_80495E60(holder->field_0x04);
-    func_80495E60(holder->field_0x08);
-    func_80495E60(reinterpret_cast<CModelDispObj*>(holder->field_0x00));
+    Scn_IsAnimActiveOrNull(holder->field_0x04);
+    Scn_IsAnimActiveOrNull(holder->field_0x08);
+    Scn_IsAnimActiveOrNull(reinterpret_cast<CModelDispObj*>(holder->field_0x00));
     holder->field_0x00 = 0;
     // Direct member indexing: MWCC CSEs the &fileSlots[i] temp into the same
     // scratch color the earlier anim-slot walks used (retail r28).
@@ -417,12 +417,12 @@ extern "C" void ModelDispEquip_BuildPartyModel(CModelDispEquip* self) {
                 m = actor->field_3F2C;
                 if (m == 0) ready = 0;
                 if (reinterpret_cast<cf::CfObject*>(&actor->move)->CfObject_isMoveActiveNow() == 0) ready = 0;
-                if (func_80200C20(self, actor->field_3F28) == 0) ready = 0;
+                if (ModelDispEquip_LoadModelArc(self, actor->field_3F28) == 0) ready = 0;
             }
             if (holder->field_0x00 == 0 && ready != 0) {
                 // ---- build the display model (retail statement order) ----
                 ((CActParamHolderTail*)holder)->currentModelPtr = (u32)actor;
-                holder->field_0x00 = func_80495E8C(self->somePtr, m, -1, 1);
+                holder->field_0x00 = Scn_SetupAnim(self->somePtr, m, -1, 1);
                 reinterpret_cast<CScnItemModel*>(holder->field_0x00)->vfunc64(0);
                 ((CActParamHolderTail*)holder)->equipPtrs[1] =
 ((u32)reinterpret_cast<cf::CfObject*>(&actor->move)->CfObject_getSlotBits(1) >> 10) & 0x3FF;
@@ -457,7 +457,7 @@ if (reinterpret_cast<cf::CfObject*>(&actor->move)->CfObject_getSlotBits(idx) != 
                 u32 parentArg = reinterpret_cast<u32>(self);
                 if (self != 0)
                     parentArg = reinterpret_cast<u32>(reinterpret_cast<u8*>(self) + 4);
-                func_80200388(&holder->actParam, parentArg);
+                ModelDispEquip_SetActParamParent(&holder->actParam, parentArg);
                 writeVec3f(tmpA, lbl_eu_8066827C, lbl_eu_80668274, lbl_eu_80668274);
                 // Word-copy gives retail's lwz/stw schedule (a float copy would
                 // emit lfs/stfs).
@@ -468,7 +468,7 @@ if (reinterpret_cast<cf::CfObject*>(&actor->move)->CfObject_getSlotBits(idx) != 
                 self->colorA = lbl_eu_80668274;
                 CModelDispParamSlot* mainSlot = CfRes_getArrayElem18Idx(be);
                 if ((actor->field_3F08 & 0x1000) != 0) {
-                    holder->animModelPtrs[0] = func_80495E94(self->somePtr,
+                    holder->animModelPtrs[0] = Scn_SetupAnimDefault(self->somePtr,
                         reinterpret_cast<CModelDispNameParam*>(mainSlot->field_2C->getResourceBase(mainSlot, 0)));
                     if (holder->animModelPtrs[0] != 0) {
                         reinterpret_cast<CScnItemModel*>(holder->field_0x00)->vfuncC4(
@@ -477,7 +477,7 @@ if (reinterpret_cast<cf::CfObject*>(&actor->move)->CfObject_getSlotBits(idx) != 
                     }
                 }
                 if ((actor->field_3F08 & 0x2000) != 0) {
-                    holder->animModelPtrs[1] = func_80495E94(self->somePtr,
+                    holder->animModelPtrs[1] = Scn_SetupAnimDefault(self->somePtr,
                         reinterpret_cast<CModelDispNameParam*>(mainSlot->field_2C->getResourceBase(mainSlot, 0)));
                     if (holder->animModelPtrs[1] != 0) {
                         reinterpret_cast<CScnItemModel*>(holder->field_0x00)->vfuncC4(
@@ -490,7 +490,7 @@ if (reinterpret_cast<cf::CfObject*>(&actor->move)->CfObject_getSlotBits(idx) != 
                 if ((actor->field_3F08 & 0x20000) != 0) {
                     if (reinterpret_cast<cf::CfObjectModel*>(&actor->move)->CfObjectModel_getAnimFlags() != 0) {
                         __ct__CMcaFile(&mca, reinterpret_cast<cf::CfObjectModel*>(&actor->move)->CfObjectModel_getAnimFlags());
-                        holder->unk_55C = func_80495EAC(self->somePtr, mca.mDataAdj, &lbl_eu_80507FF8[8]);
+                        holder->unk_55C = Scn_InitGlobalA(self->somePtr, mca.mDataAdj, &lbl_eu_80507FF8[8]);
                         for (u8 i = 0; i < 2; i++) {
                             CScnItemModel* am =
                                 reinterpret_cast<CScnItemModel*>(holder->animModelPtrs[i]);
@@ -526,19 +526,19 @@ if (reinterpret_cast<cf::CfObject*>(&actor->move)->CfObject_getSlotBits(idx) != 
 }
 
 // ============================================================
-// us-80202078 | func_80200388
+// us-80202078 | ModelDispEquip_SetActParamParent
 // ============================================================
 // Retail always calls this (never inlines it) - keep the noinline.
-extern "C" __declspec(noinline) void func_80200388(void* self, u32 val) { *(u32*)((u8*)self + 4) = val; *(u32*)((u8*)self + 0x34) = val; }
+extern "C" __declspec(noinline) void ModelDispEquip_SetActParamParent(void* self, u32 val) { *(u32*)((u8*)self + 4) = val; *(u32*)((u8*)self + 0x34) = val; }
 
 // ============================================================
-// us-80202084 | func_80200394
+// us-80202084 | ModelDispEquip_BuildEquipModel
 // ============================================================
 // Build the equipment display for the 4th+ equip slot (equipSlot >= 3,
 // dispatched from ModelDispEquip_BuildDisplay): resolve the character record, load the 3
 // shared equip files + 5 per-slot model files, then construct the display
 // model and wire up the anim models (mirror of ModelDispEquip_BuildPartyModel's build tail).
-extern "C" void func_80200394(CModelDispEquip* self) {
+extern "C" void ModelDispEquip_BuildEquipModel(CModelDispEquip* self) {
     CActParamHolder* holder = &self->actParamHolder;
     u32 outType;
     CModelDispFileCtx ctx;
@@ -548,7 +548,7 @@ extern "C" void func_80200394(CModelDispEquip* self) {
     char buf1[0x20];
     char buf2[0x20];
     char buf3[0x20];
-    func_801F981C(&ctx);
+    PartyStateWin_InitMemCounters(&ctx);
     if (holder->field_0x00 != 0) return;
 
     func_8009ECB0();
@@ -578,7 +578,7 @@ extern "C" void func_80200394(CModelDispEquip* self) {
                 sprintf(buf1, &lbl_eu_80507FF8[0x11], charId, 0, 0xa);
             }
             int size = getFileSize__11CDeviceFileFPCc(buf1, 1);
-            u32 alloc = func_801F9894(&ctx, (u32)size);
+            u32 alloc = PartyStateWin_PickAllocHandle(&ctx, (u32)size);
             CFileHandle* fh = (CFileHandle*)readFile__11CDeviceFileFUlPCcP10IWorkEventii(alloc, buf1, self, 0, 0);
             self->fileSlots[6].handle = fh;
             setHandleFlag1__11CDeviceFileFP11CFileHandle(fh);
@@ -594,7 +594,7 @@ extern "C" void func_80200394(CModelDispEquip* self) {
                 sprintf(buf2, &lbl_eu_80507FF8[0x11], charId, 0, 0x14);
             }
             int size = getFileSize__11CDeviceFileFPCc(buf2, 1);
-            u32 alloc = func_801F9894(&ctx, (u32)size);
+            u32 alloc = PartyStateWin_PickAllocHandle(&ctx, (u32)size);
             CFileHandle* fh = (CFileHandle*)readFile__11CDeviceFileFUlPCcP10IWorkEventii(alloc, buf2, self, 0, 0);
             self->fileSlots[7].handle = fh;
             setHandleFlag1__11CDeviceFileFP11CFileHandle(fh);
@@ -616,7 +616,7 @@ extern "C" void func_80200394(CModelDispEquip* self) {
             }
             int size = getFileSize__11CDeviceFileFPCc(buf3, 1);
             if (size >= 0) {
-                u32 alloc = func_801F9894(&ctx, (u32)size);
+                u32 alloc = PartyStateWin_PickAllocHandle(&ctx, (u32)size);
                 CFileHandle* fh = (CFileHandle*)readFile__11CDeviceFileFUlPCcP10IWorkEventii(alloc, buf3, self, 0, 0);
                 self->fileSlots[8].handle = fh;
                 setHandleFlag1__11CDeviceFileFP11CFileHandle(fh);
@@ -647,7 +647,7 @@ extern "C" void func_80200394(CModelDispEquip* self) {
         if (charId > 8) {
             if (fs->handle != 0) continue;
             int size = getFileSize__11CDeviceFileFPCc(buf.mString, 1);
-            u32 alloc = func_801F9894(&ctx, (u32)size);
+            u32 alloc = PartyStateWin_PickAllocHandle(&ctx, (u32)size);
             CFileHandle* fh = (CFileHandle*)readFile__11CDeviceFileFUlPCcP10IWorkEventii(alloc, buf.mString, self, 0, 0);
             fs->handle = fh;
             setHandleFlag1__11CDeviceFileFP11CFileHandle(fh);
@@ -660,13 +660,13 @@ extern "C" void func_80200394(CModelDispEquip* self) {
         }
     }
 
-    if (func_80200C20(self, charId) == 0) allLoaded = 0;
+    if (ModelDispEquip_LoadModelArc(self, charId) == 0) allLoaded = 0;
     if (allLoaded == 0) return;
 
     // ---- build the display model ----
     // No cached model local: retail reloads holder->field_0x00 (r30-based
     // lwz) before every use; an extra live value shifts the saved-reg pool.
-    holder->field_0x00 = func_80495E8C(self->somePtr, (u32)self->fileSlots[0].data, -1, 1);
+    holder->field_0x00 = Scn_SetupAnim(self->somePtr, (u32)self->fileSlots[0].data, -1, 1);
     reinterpret_cast<CScnItemModel*>(holder->field_0x00)->vfunc64(0);
     simSetLeafFlag4000(reinterpret_cast<CModelDispObj*>(holder->field_0x00), 1);
     func_80482DF4(reinterpret_cast<CModelDispObj*>(holder->field_0x00), 1);
@@ -687,17 +687,17 @@ extern "C" void func_80200394(CModelDispEquip* self) {
     CModelDispNameParam* f5 = reinterpret_cast<CModelDispNameParam*>(self->fileSlots[5].data);
     u8 wtype = (u8)BdatGetU8ByTableKey(&lbl_eu_80507FF8[0x2F], &lbl_eu_80507FF8[0x58], rec->weaponId);
     if (wtype == 8) {
-        holder->animModelPtrs[0] = func_80495E94(self->somePtr, f5);
-        holder->animModelPtrs[1] = func_80495E94(self->somePtr, f5);
+        holder->animModelPtrs[0] = Scn_SetupAnimDefault(self->somePtr, f5);
+        holder->animModelPtrs[1] = Scn_SetupAnimDefault(self->somePtr, f5);
     } else {
         wtype = (u8)BdatGetU8ByTableKey(&lbl_eu_80507FF8[0x2F], &lbl_eu_80507FF8[0x62], rec->weaponId);
         if (wtype == 3) {
-            holder->animModelPtrs[0] = func_80495E94(self->somePtr, reinterpret_cast<CModelDispNameParam*>(f5));
-            holder->animModelPtrs[1] = func_80495E94(self->somePtr, reinterpret_cast<CModelDispNameParam*>(f5));
+            holder->animModelPtrs[0] = Scn_SetupAnimDefault(self->somePtr, reinterpret_cast<CModelDispNameParam*>(f5));
+            holder->animModelPtrs[1] = Scn_SetupAnimDefault(self->somePtr, reinterpret_cast<CModelDispNameParam*>(f5));
         } else if (wtype == 2) {
-            holder->animModelPtrs[0] = func_80495E94(self->somePtr, f5);
+            holder->animModelPtrs[0] = Scn_SetupAnimDefault(self->somePtr, f5);
         } else {
-            holder->animModelPtrs[1] = func_80495E94(self->somePtr, f5);
+            holder->animModelPtrs[1] = Scn_SetupAnimDefault(self->somePtr, f5);
         }
     }
 
@@ -736,7 +736,7 @@ extern "C" void func_80200394(CModelDispEquip* self) {
     u32 parentArg = reinterpret_cast<u32>(self);
     if (self != 0)
         parentArg = reinterpret_cast<u32>(reinterpret_cast<u8*>(self) + 4);
-    func_80200388(&holder->actParam, parentArg);
+    ModelDispEquip_SetActParamParent(&holder->actParam, parentArg);
     writeVec3f(tmpA, lbl_eu_8066827C, lbl_eu_80668274, lbl_eu_80668274);
     // Word-copy gives retail's lwz/stw color schedule (float assigns would
     // emit lfs/stfs). f8 is interleaved mid-copy like retail.
@@ -748,7 +748,7 @@ extern "C" void func_80200394(CModelDispEquip* self) {
 
     u32 f8 = (u32)self->fileSlots[8].data;
     __ct__CMcaFile(&mca, f8);
-    holder->unk_55C = func_80495EAC(self->somePtr, mca.mDataAdj, &lbl_eu_80507FF8[8]);
+    holder->unk_55C = Scn_InitGlobalA(self->somePtr, mca.mDataAdj, &lbl_eu_80507FF8[8]);
 
     // Wire both anim-model slots into the act-param array and start their anims.
     for (u8 i = 0; i < 2; i++) {
@@ -776,16 +776,16 @@ extern "C" void func_80200394(CModelDispEquip* self) {
 }
 
 // ============================================================
-// us-80202914 | func_80200C20
+// us-80202914 | ModelDispEquip_LoadModelArc
 // ============================================================
 // Load the equip model arc: build the packed path token from `param` and
 // the manager handle, size the file, pick an alloc handle for the buffer
-// (func_801F9894), and kick the async read into modelFileHandle.
+// (PartyStateWin_PickAllocHandle), and kick the async read into modelFileHandle.
 // Path token: param<<20 | 0x78000000 | (rotl(handle,22) into bits 15..21) -
 // retail emits slwi + oris + rlwimi for exactly this expression form.
-extern "C" int func_80200C20(CModelDispEquip* self, u32 param) {
+extern "C" int ModelDispEquip_LoadModelArc(CModelDispEquip* self, u32 param) {
     CModelDispFileCtx ctx;
-    func_801F981C(&ctx);
+    PartyStateWin_InitMemCounters(&ctx);
     if (self->modelData != 0)
         return 1;
     // Positive-condition nesting: retail branches OVER the body to the shared
@@ -805,7 +805,7 @@ extern "C" int func_80200C20(CModelDispEquip* self, u32 param) {
                       1, 1);
         int size = getFileSize__11CDeviceFileFPCc(buf.mString, 1);
         if (size >= 0) {
-            u32 alloc = func_801F9894(&ctx, (u32)size);
+            u32 alloc = PartyStateWin_PickAllocHandle(&ctx, (u32)size);
             CFileHandle* fh =
                 (CFileHandle*)readFile__11CDeviceFileFUlPCcP10IWorkEventii(alloc, buf.mString, self, 0, 0);
             self->modelFileHandle = fh;
@@ -816,13 +816,13 @@ extern "C" int func_80200C20(CModelDispEquip* self, u32 param) {
 }
 
 // ============================================================
-// us-802029e0 | func_80200CE8
+// us-802029e0 | ModelDispEquip_TickAnim
 // ============================================================
 // Per-frame tick for the equip display: while the holder is live, a countdown
 // timer periodically rolls a random sign that picks one of three anim ids; for
 // the two ids with matching anim state the animation is replayed. Then the
 // act-param object and both occupied animation-model slots are ticked.
-void func_80200CE8(CModelDispEquip* self) {
+void ModelDispEquip_TickAnim(CModelDispEquip* self) {
     int i;
     CActParamHolder* holder = &self->actParamHolder;
     if (self->actParamHolder.field_0x00 == 0)
@@ -884,11 +884,11 @@ int CModelDispEquip::OnFileEvent(CEventFile* event) {
 }
 
 // ============================================================
-// us-80202b8c | func_80200E94
+// us-80202b8c | ModelDispEquip_RearmAnimSlot
 // ============================================================
 // Per-slot model hooks: if the animation model slot is occupied, stop the old
 // model via vtable+0xC8 then re-arm it via vtable+0xC4 with (model, arg, 0).
-extern "C" void func_80200E94(CModelDispEquip* self, void* arg, int index) {
+extern "C" void ModelDispEquip_RearmAnimSlot(CModelDispEquip* self, void* arg, int index) {
     CActParamHolder* holder = &self->actParamHolder;
     if (holder->animModelPtrs[index] != 0) {
         reinterpret_cast<CScnItemModel*>(holder->field_0x00)->vfuncC8(
@@ -899,12 +899,12 @@ extern "C" void func_80200E94(CModelDispEquip* self, void* arg, int index) {
     }
 }
 
-extern "C" void func_80200F08(CModelDispEquip* self, void* move, void* arg, int index) {
+extern "C" void ModelDispEquip_RearmAnimSlotChecked(CModelDispEquip* self, void* move, void* arg, int index) {
     if (move == 0) return;
     if (func_800BBC04(arg) <= 0) return;
     CActParamHolder* holder = &self->actParamHolder;
     if (holder->animModelPtrs[index] == 0) return;
-    // Stop + re-arm the animation-model slot (same shape as func_80200E94),
+    // Stop + re-arm the animation-model slot (same shape as ModelDispEquip_RearmAnimSlot),
     // guarded on the move pointer and the name lookup.
     reinterpret_cast<CScnItemModel*>(holder->field_0x00)->vfuncC8(
         reinterpret_cast<CScnItemModel*>(holder->animModelPtrs[index]));
@@ -914,12 +914,12 @@ extern "C" void func_80200F08(CModelDispEquip* self, void* move, void* arg, int 
 }
 
 // ============================================================
-// us-80202ca8 | func_80200FB0
+// us-80202ca8 | ModelDispEquip_SwapPartyEquip
 // ============================================================
 // Stop the previous equipment model and hand the picked name record to
-// func_80200F08: `kind` 0 uses the anim slot (CfObjectMove_getBdatNameCol11), `kind` 1 the
+// ModelDispEquip_RearmAnimSlotChecked: `kind` 0 uses the anim slot (CfObjectMove_getBdatNameCol11), `kind` 1 the
 // equipment slot (CfObjectMove_getBdatNameCol7); `subKind` picks the slot index.
-extern "C" void func_80200FB0(CModelDispEquip* self, CModelDispParent* parent,
+extern "C" void ModelDispEquip_SwapPartyEquip(CModelDispEquip* self, CModelDispParent* parent,
                               int kind, int subKind) {
     CActParamHolder* holder = &self->actParamHolder;
     if (holder->field_0x00 != parent->field_0x3A0) return;
@@ -953,7 +953,7 @@ extern "C" void func_80200FB0(CModelDispEquip* self, CModelDispParent* parent,
                     res = CfObjectMove_getBdatNameCol11(reinterpret_cast<cf::CfObjectMove*>(&actor->move), idx);
                     break;
                 }
-                if (res != 0) func_80200F08(self, actor, res, idx);
+                if (res != 0) ModelDispEquip_RearmAnimSlotChecked(self, actor, res, idx);
                 break;
             case 1:
                 switch (subKind) {
@@ -966,7 +966,7 @@ extern "C" void func_80200FB0(CModelDispEquip* self, CModelDispParent* parent,
                     res = CfObjectMove_getBdatNameCol7(reinterpret_cast<cf::CfObjectMove*>(&actor->move), idx);
                     break;
                 }
-                if (res != 0) func_80200F08(self, actor, res, idx);
+                if (res != 0) ModelDispEquip_RearmAnimSlotChecked(self, actor, res, idx);
                 break;
             }
         }
@@ -975,12 +975,12 @@ extern "C" void func_80200FB0(CModelDispEquip* self, CModelDispParent* parent,
 }
 
 // ============================================================
-// us-80202e40 | func_80201148
+// us-80202e40 | ModelDispEquip_SwapWeaponEquip
 // ============================================================
 // Swap the equipment display model for `kind` (0/1) and `subKind` (0/1):
 // look up the weapon's name record via the Bdat column (string table at
-// lbl_eu_80507FF8 + 0x58/0x62) and hand it to func_80200E94.
-extern "C" void func_80201148(CModelDispEquip* self, u32 unused,
+// lbl_eu_80507FF8 + 0x58/0x62) and hand it to ModelDispEquip_RearmAnimSlot.
+extern "C" void ModelDispEquip_SwapWeaponEquip(CModelDispEquip* self, u32 unused,
                               int kind, int subKind) {
     getPlayer__Q22cf13CfGameManagerFi(0);
     // arg declared before index so MWCC colors arg=r4, index=r31 like retail.
@@ -1001,7 +1001,7 @@ extern "C" void func_80201148(CModelDispEquip* self, u32 unused,
             break;
         }
         if (arg != 0)
-            func_80200E94(self, arg, index);
+            ModelDispEquip_RearmAnimSlot(self, arg, index);
         break;
     case 1:
         switch (subKind) {
@@ -1015,7 +1015,7 @@ extern "C" void func_80201148(CModelDispEquip* self, u32 unused,
             break;
         }
         if (arg != 0)
-            func_80200E94(self, arg, index);
+            ModelDispEquip_RearmAnimSlot(self, arg, index);
         break;
     }
 }
@@ -1027,17 +1027,17 @@ extern "C" void ModelDispEquip_BuildDisplay(CModelDispEquip* self) {
     if (self->equipSlot < 3)
         ((void(*)(CModelDispEquip*))ModelDispEquip_BuildPartyModel)(self);
     else
-        ((void(*)(CModelDispEquip*))func_80200394)(self);
+        ((void(*)(CModelDispEquip*))ModelDispEquip_BuildEquipModel)(self);
 }
 
 // ============================================================
-// us-80202c94 | func_80200F9C
+// us-80202c94 | ModelDispEquip_RefreshEquipRef
 // ============================================================
-extern "C" void func_80200F9C(CModelDispEquip* self) {
+extern "C" void ModelDispEquip_RefreshEquipRef(CModelDispEquip* self) {
     if (self->equipSlot < 3)
-        ((void(*)(CModelDispEquip*))func_80200FB0)(self);
+        ((void(*)(CModelDispEquip*))ModelDispEquip_SwapPartyEquip)(self);
     else
-        ((void(*)(CModelDispEquip*))func_80201148)(self);
+        ((void(*)(CModelDispEquip*))ModelDispEquip_SwapWeaponEquip)(self);
 }
 
 // ============================================================
@@ -1047,15 +1047,15 @@ extern "C" void ModelDispEquip_StepIdleBuildOrTick(CModelDispEquip* self) {
     if (self->state21 == 0)
         ((u32(*)(CModelDispEquip*))ModelDispEquip_BuildDisplay)(self);
     else
-        ((void(*)(CModelDispEquip*))func_80200CE8)(self);
+        ((void(*)(CModelDispEquip*))ModelDispEquip_TickAnim)(self);
 }
 
 // ============================================================
-// us-80202f90 | func_80201298
+// us-80202f90 | ModelDispEquip_ReplaySlotAnims
 // ============================================================
 // For each occupied animation-model slot: pull the next chain object off the
 // act-param, cache it at actParams[i]+0x4B4, and replay animation `arg`.
-extern "C" void func_80201298(CModelDispEquip* self, u32 unused, void* arg) {
+extern "C" void ModelDispEquip_ReplaySlotAnims(CModelDispEquip* self, u32 unused, void* arg) {
     CActParamHolder* holder = &self->actParamHolder;
     for (u8 i = 0; i < 2; i++) {
         if (holder->animModelPtrs[i] != 0) {
@@ -1067,12 +1067,12 @@ extern "C" void func_80201298(CModelDispEquip* self, u32 unused, void* arg) {
 }
 
 // ============================================================
-// us-80203010 | func_80201318 (empty)
+// us-80203010 | ModelDispEquip_Noop1318 (empty)
 // ============================================================
-extern "C" void func_80201318() {}
+extern "C" void ModelDispEquip_Noop1318() {}
 
 // ============================================================
-// us-80203014 | func_8020131C
+// us-80203014 | ModelDispEquip_HandleSlotCmd
 // ============================================================
 // Handle a model-slot command: cmd 2 loads the anim model into the first free
 // slot (creating an effect from the model arc, wiring it via the second-base
@@ -1081,7 +1081,7 @@ extern "C" void func_80201318() {}
 // Retail passes the command buffer in r5: the vtable entry forwards
 // (this, unused, cmd), so the middle parameter is part of the signature.
 // Retail symbol is unmangled (global), so the free function has C linkage.
-extern "C" void func_8020131C(CModelDispEquip* self, u32 unused,
+extern "C" void ModelDispEquip_HandleSlotCmd(CModelDispEquip* self, u32 unused,
                               const CModelDispEquipCmd* cmd) {
     CActParamHolder* holder = &self->actParamHolder;
     if (cmd->field_0x0A == 2) {
@@ -1126,14 +1126,14 @@ extern "C" void func_8020131C(CModelDispEquip* self, u32 unused,
 }
 
 // ============================================================
-// us-80203138 | func_80201440 (empty)
+// us-80203138 | ModelDispEquip_Noop1440 (empty)
 // ============================================================
-extern "C" void func_80201440() {}
+extern "C" void ModelDispEquip_Noop1440() {}
 
 // ============================================================
-// us-8020313c | func_80201444
+// us-8020313c | ModelDispEquip_ClearAnimPtr
 // ============================================================
-extern "C" void func_80201444(CModelDispEquip* self, u32 val) {
+extern "C" void ModelDispEquip_ClearAnimPtr(CModelDispEquip* self, u32 val) {
     // Holder-base addressing (addi r6,r3,16 + 0xff4(rX) like retail) plus
     // scoped optimize_for_size to keep the 2-iteration loop rolled as the
     // mtlr/bdnz countdown (plain -O4,p unrolls it).
@@ -1150,9 +1150,9 @@ extern "C" void func_80201444(CModelDispEquip* self, u32 val) {
 }
 
 // ============================================================
-// us-80203174 | func_8020147C
+// us-80203174 | ModelDispEquip_SetEquipSlot
 // ============================================================
-extern "C" void func_8020147C(CModelDispEquip* self, s32 val) {
+extern "C" void ModelDispEquip_SetEquipSlot(CModelDispEquip* self, s32 val) {
     // Calls through a cast pointer to keep MWCC from inlining the empty stub
     ((void(*)(CModelDispEquip*, s32))ModelDispEquip_ResetDisplay)(self, val);
     if (val >= 0)
@@ -1161,9 +1161,9 @@ extern "C" void func_8020147C(CModelDispEquip* self, s32 val) {
 }
 
 // ============================================================
-// us-802031b8 | func_802014C0
+// us-802031b8 | ModelDispEquip_NextEquipSlot
 // ============================================================
-extern "C" void func_802014C0(CModelDispEquip* self) {
+extern "C" void ModelDispEquip_NextEquipSlot(CModelDispEquip* self) {
     ((void (*)(CModelDispEquip*))ModelDispEquip_ResetDisplay)(self);
     self->equipSlot += 1;
     if (self->equipSlot >= code80135FDC_getByte_64077())
@@ -1172,9 +1172,9 @@ extern "C" void func_802014C0(CModelDispEquip* self) {
 }
 
 // ============================================================
-// us-80203214 | func_8020151C
+// us-80203214 | ModelDispEquip_PrevEquipSlot
 // ============================================================
-extern "C" void func_8020151C(CModelDispEquip* self) {
+extern "C" void ModelDispEquip_PrevEquipSlot(CModelDispEquip* self) {
     ((void (*)(CModelDispEquip*))ModelDispEquip_ResetDisplay)(self);
     if (--self->equipSlot < 0)
         self->equipSlot = code80135FDC_getByte_64077() - 1;
@@ -1182,11 +1182,11 @@ extern "C" void func_8020151C(CModelDispEquip* self) {
 }
 
 // ============================================================
-// us-80203268 | func_80201570
+// us-80203268 | ModelDispEquip_FadeAlphaUp
 // ============================================================
 // Fade alpha up while the act-param sub-object is live; bit 0x20 of the
 // act-param flags guards the setTurnScale call.
-extern "C" void func_80201570(CModelDispEquip* self) {
+extern "C" void ModelDispEquip_FadeAlphaUp(CModelDispEquip* self) {
     if (self->actParamHolder.field_0x00 != 0) {
         self->colorA += lbl_eu_80668280;
         self->actParamHolder.actParam.field_0x0C &= ~0x20;
@@ -1196,10 +1196,10 @@ extern "C" void func_80201570(CModelDispEquip* self) {
 }
 
 // ============================================================
-// us-802032cc | func_802015D4
+// us-802032cc | ModelDispEquip_FadeAlphaDown
 // ============================================================
-// Fade alpha down (mirror of func_80201570).
-extern "C" void func_802015D4(CModelDispEquip* self) {
+// Fade alpha down (mirror of ModelDispEquip_FadeAlphaUp).
+extern "C" void ModelDispEquip_FadeAlphaDown(CModelDispEquip* self) {
     if (self->actParamHolder.field_0x00 != 0) {
         self->colorA -= lbl_eu_80668280;
         self->actParamHolder.actParam.field_0x0C &= ~0x20;
@@ -1209,63 +1209,63 @@ extern "C" void func_802015D4(CModelDispEquip* self) {
 }
 
 // ============================================================
-// us-80203330 | func_80201638
+// us-80203330 | ModelDispEquip_ScaleHeightUp
 // ============================================================
 // Ramp scale1[1]/scale2[1] up by the step, clamped at the upper bounds.
-extern "C" void func_80201638(CModelDispEquip* self) {
+extern "C" void ModelDispEquip_ScaleHeightUp(CModelDispEquip* self) {
     self->scale1[1] += lbl_eu_80668280;
     if (self->scale1[1] > lbl_eu_80668284)
         self->scale1[1] = lbl_eu_80668284;
     self->scale2[1] += lbl_eu_80668280;
     if (self->scale2[1] > lbl_eu_80668288)
         self->scale2[1] = lbl_eu_80668288;
-    func_8049EFF8(func_80496264(reinterpret_cast<void*>(self->somePtr), -1), lbl_eu_80668274, self->scale1, self->scale2);
+    func_8049EFF8(Scn_FindCamItem(reinterpret_cast<void*>(self->somePtr), -1), lbl_eu_80668274, self->scale1, self->scale2);
 }
 
 // ============================================================
-// us-802033b4 | func_802016BC
+// us-802033b4 | ModelDispEquip_ScaleHeightDown
 // ============================================================
 // Ramp scale1[1]/scale2[1] down by the step, clamped at the lower bounds.
-extern "C" void func_802016BC(CModelDispEquip* self) {
+extern "C" void ModelDispEquip_ScaleHeightDown(CModelDispEquip* self) {
     self->scale1[1] -= lbl_eu_80668280;
     if (self->scale1[1] < lbl_eu_8066828C)
         self->scale1[1] = lbl_eu_8066828C;
     self->scale2[1] -= lbl_eu_80668280;
     if (self->scale2[1] < lbl_eu_80668290)
         self->scale2[1] = lbl_eu_80668290;
-    func_8049EFF8(func_80496264(reinterpret_cast<void*>(self->somePtr), -1), lbl_eu_80668274, self->scale1, self->scale2);
+    func_8049EFF8(Scn_FindCamItem(reinterpret_cast<void*>(self->somePtr), -1), lbl_eu_80668274, self->scale1, self->scale2);
 }
 
 // ============================================================
-// us-80203438 | func_80201740
+// us-80203438 | ModelDispEquip_ScaleDepthDown
 // ============================================================
 // Decrement scale1[2] toward lbl_eu_80668294, then sync pose + scales.
-extern "C" void func_80201740(CModelDispEquip* self) {
+extern "C" void ModelDispEquip_ScaleDepthDown(CModelDispEquip* self) {
     self->scale1[2] -= lbl_eu_80668280;
     if (self->scale1[2] < lbl_eu_80668294)
         self->scale1[2] = lbl_eu_80668294;
-    func_8049EFF8(func_80496264(reinterpret_cast<void*>(self->somePtr), -1), lbl_eu_80668274, self->scale1, self->scale2);
+    func_8049EFF8(Scn_FindCamItem(reinterpret_cast<void*>(self->somePtr), -1), lbl_eu_80668274, self->scale1, self->scale2);
 }
 
 // ============================================================
-// us-8020349c | func_802017A4
+// us-8020349c | ModelDispEquip_ScaleDepthUp
 // ============================================================
-// Increment scale1[2] toward lbl_eu_80668298 (mirror of func_80201740).
-extern "C" void func_802017A4(CModelDispEquip* self) {
+// Increment scale1[2] toward lbl_eu_80668298 (mirror of ModelDispEquip_ScaleDepthDown).
+extern "C" void ModelDispEquip_ScaleDepthUp(CModelDispEquip* self) {
     self->scale1[2] += lbl_eu_80668280;
     if (self->scale1[2] > lbl_eu_80668298)
         self->scale1[2] = lbl_eu_80668298;
-    func_8049EFF8(func_80496264(reinterpret_cast<void*>(self->somePtr), -1), lbl_eu_80668274, self->scale1, self->scale2);
+    func_8049EFF8(Scn_FindCamItem(reinterpret_cast<void*>(self->somePtr), -1), lbl_eu_80668274, self->scale1, self->scale2);
 }
 
 // ============================================================
-// us-80203500 | func_80201808
+// us-80203500 | ModelDispEquip_ResetColorStep
 // ============================================================
 // Re-arm the display: while the holder is live, rebuild the color quad from
 // the (step, 1, 1) vector, poke the act-param object with colorA, and push
 // the new colors through setAnimSubPos. Then snap scale1/scale2 to the
 // sinit-built globals and sync pose + scales (same tail as ModelDispEquip_SyncScalePose).
-void func_80201808(CModelDispEquip* self) {
+void ModelDispEquip_ResetColorStep(CModelDispEquip* self) {
     if (self->actParamHolder.field_0x00 != 0) {
         struct V3 {
             u32 w[3];
@@ -1285,15 +1285,15 @@ void func_80201808(CModelDispEquip* self) {
     };
     *(V3*)self->scale1 = *(const V3*)lbl_eu_80576550;
     *(V3*)self->scale2 = *(const V3*)lbl_eu_8057655C;
-    func_8049EFF8(func_80496264(reinterpret_cast<void*>(self->somePtr), -1), lbl_eu_80668274, self->scale1, self->scale2);
+    func_8049EFF8(Scn_FindCamItem(reinterpret_cast<void*>(self->somePtr), -1), lbl_eu_80668274, self->scale1, self->scale2);
 }
 
 // ============================================================
-// us-802035f8 | func_80201900
+// us-802035f8 | ModelDispEquip_ResetColorWhite
 // ============================================================
-// Same as func_80201808 but the color quad is built from (1, 1, 1) - used to
+// Same as ModelDispEquip_ResetColorStep but the color quad is built from (1, 1, 1) - used to
 // reset the display colors to neutral white.
-void func_80201900(CModelDispEquip* self) {
+void ModelDispEquip_ResetColorWhite(CModelDispEquip* self) {
     if (self->actParamHolder.field_0x00 != 0) {
         struct V3 {
             u32 w[3];
@@ -1313,7 +1313,7 @@ void func_80201900(CModelDispEquip* self) {
     };
     *(V3*)self->scale1 = *(const V3*)lbl_eu_80576550;
     *(V3*)self->scale2 = *(const V3*)lbl_eu_8057655C;
-    func_8049EFF8(func_80496264(reinterpret_cast<void*>(self->somePtr), -1), lbl_eu_80668274, self->scale1, self->scale2);
+    func_8049EFF8(Scn_FindCamItem(reinterpret_cast<void*>(self->somePtr), -1), lbl_eu_80668274, self->scale1, self->scale2);
 }
 
 // ============================================================
@@ -1333,13 +1333,13 @@ void CModelDispEquip::resetBase() {
     ((unsigned char*)this)[8] = 0;
 }
 
-void CModelDispEquip::func_80201298() {}
+void CModelDispEquip::ModelDispEquip_ReplaySlotAnims() {}
 void CModelDispEquip::vfunc18() {}
-void CModelDispEquip::func_8020131C() {}
+void CModelDispEquip::ModelDispEquip_HandleSlotCmd() {}
 void CModelDispEquip::vfunc40() {}
 
 void CModelDispEquip::thunk4_1298() {
-    reinterpret_cast<CModelDispEquip*>(reinterpret_cast<char*>(this) - 4)->func_80201298();
+    reinterpret_cast<CModelDispEquip*>(reinterpret_cast<char*>(this) - 4)->ModelDispEquip_ReplaySlotAnims();
 }
 
 void CModelDispEquip::thunk4_1440() {
@@ -1347,7 +1347,7 @@ void CModelDispEquip::thunk4_1440() {
 }
 
 void CModelDispEquip::thunk4_131C() {
-    reinterpret_cast<CModelDispEquip*>(reinterpret_cast<char*>(this) - 4)->func_8020131C();
+    reinterpret_cast<CModelDispEquip*>(reinterpret_cast<char*>(this) - 4)->ModelDispEquip_HandleSlotCmd();
 }
 
 void CModelDispEquip::thunk4_1318() {
@@ -1355,7 +1355,7 @@ void CModelDispEquip::thunk4_1318() {
 }
 
 void CModelDispEquip::thunk4_F9C() {
-    func_80200F9C(reinterpret_cast<CModelDispEquip*>(reinterpret_cast<char*>(this) - 4));
+    ModelDispEquip_RefreshEquipRef(reinterpret_cast<CModelDispEquip*>(reinterpret_cast<char*>(this) - 4));
 }
 
 void CModelDispEquip::thunk4_dtor() {
@@ -1363,7 +1363,7 @@ void CModelDispEquip::thunk4_dtor() {
 }
 
 void CModelDispEquip::thunk8_1444() {
-    func_80201444(reinterpret_cast<CModelDispEquip*>(reinterpret_cast<char*>(this) - 8), 0);
+    ModelDispEquip_ClearAnimPtr(reinterpret_cast<CModelDispEquip*>(reinterpret_cast<char*>(this) - 8), 0);
 }
 
 void CModelDispEquip::thunk8_dtor() {
@@ -1372,8 +1372,8 @@ void CModelDispEquip::thunk8_dtor() {
 // Retail: subi r3,r3,-4; b <target> (extern "C" free thunks, unmangled).
 // The tail-call only adjusts r3; the callee's other params are left as-is,
 // so the callees are cast to single-argument function pointers.
-extern "C" void func_80201A44(void* self) { ((void(*)(void*))func_80201298)((char*)self - 4); }
-extern "C" void func_80201A54(void* self) { ((void(*)(void*))func_8020131C)((char*)self - 4); }
-extern "C" void func_80201A64(void* self) { ((void(*)(void*))func_80200F9C)((char*)self - 4); }
-// Retail: subi r3,r3,-8; b func_80201444
-extern "C" void func_80201A74(void* self) { ((void(*)(void*))func_80201444)((char*)self - 8); }
+extern "C" void ModelDispEquip_ThunkReplayAnims(void* self) { ((void(*)(void*))ModelDispEquip_ReplaySlotAnims)((char*)self - 4); }
+extern "C" void ModelDispEquip_ThunkSlotCmd(void* self) { ((void(*)(void*))ModelDispEquip_HandleSlotCmd)((char*)self - 4); }
+extern "C" void ModelDispEquip_ThunkRefreshRef(void* self) { ((void(*)(void*))ModelDispEquip_RefreshEquipRef)((char*)self - 4); }
+// Retail: subi r3,r3,-8; b ModelDispEquip_ClearAnimPtr
+extern "C" void ModelDispEquip_ThunkClearAnimPtr(void* self) { ((void(*)(void*))ModelDispEquip_ClearAnimPtr)((char*)self - 8); }

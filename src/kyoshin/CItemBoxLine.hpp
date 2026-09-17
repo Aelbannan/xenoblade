@@ -75,7 +75,7 @@ struct CIBLTab {
     u8 field93;               // +0x93 (armed by func_801EF518 when field390 == 2)
 };
 
-/* Tab holder with a trailing FixStr<32> name buffer at +0x94 (func_801EC3D0). */
+/* Tab holder with a trailing FixStr<32> name buffer at +0x94 (ItemBoxLine_FormatTabEntryName). */
 struct CIBLTabFormat {
     CIBLTabEntry entries[12]; // +0x00..0x8F
     u16 count;                // +0x90
@@ -110,7 +110,7 @@ public:
 
 /* Vtable view of the CSysWin sub-object at +0x350. MWCC prefixes its vtables
  * with offset-to-top + RTTI, so virtual index N sits at vtable+(N+2)*4; the
- * file-load init (func_801ED31C) dispatches through the LAST CSysWin virtual
+ * file-load init (ItemBoxLine_LoadFiles) dispatches through the LAST CSysWin virtual
  * (index 32 -> vtable+0x88) with the syswin buffer. */
 class CSysWinVtblView {
 public:
@@ -146,7 +146,7 @@ public:
     virtual void vf29() = 0;        // index 29 -> +0x7C
     virtual void vf30() = 0;        // index 30 -> +0x80
     virtual void vf31() = 0;        // index 31 -> +0x84
-    virtual void vf32() = 0;        // index 32 -> +0x88 - func_801ED31C tail dispatch
+    virtual void vf32() = 0;        // index 32 -> +0x88 - ItemBoxLine_LoadFiles tail dispatch
 };
 
 /* Vtable view for the texture-resource objects at +0x38/+0x3C: the tab-pane
@@ -358,8 +358,8 @@ extern "C" void* __ct__CTagProcessor(void*);               // tag-processor ctor
 extern "C" void* getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32, nw4r::lyt::Layout*);
 extern "C" void func_8013676C(nw4r::lyt::Pane*, void*);   // bind font pane data to root
 void setLayoutTextBoxFont(nw4r::lyt::Layout*, char*, u32);         // pane text bind (mangled retail name)
-extern "C" char* func_801355BC(void);                      // line text string
-extern "C" nw4r::lyt::ArcResourceAccessor* func_801355F4();  // cursor accessor (CCur unit)
+extern "C" char* CUICfManager_getPackedFont9C(void);                      // line text string
+extern "C" nw4r::lyt::ArcResourceAccessor* CUICfManager_getArcResourceAccessor();  // cursor accessor (CCur unit)
 extern "C" CBaseCur* __ct__CCur18(void*, void*);           // CCur18 ctor (cursor, accessor)
 extern "C" CBaseCur* __ct__CSubCur(CBaseCur*, nw4r::lyt::ArcResourceAccessor*);
 extern "C" void func_8018B0FC(void*, void*);               // copy stack cursor temp into member
@@ -396,7 +396,7 @@ extern "C" void func_801EB0D4(void*);
 extern "C" void* getHandleMEM2__Q23mtl10MemManagerFv(void);
 extern "C" void* readFile__11CDeviceFileFUlPCcP10IWorkEventii(unsigned long, const char*, void*, int, int);
 extern "C" void* readCommonArchiveFile__11CDeviceFileFUlPCcP10IWorkEventii(unsigned long, const char*, void*, int, int);
-extern "C" int func_800A9D90(void);
+extern "C" int KyoshinHeap_GetField44(void);
 extern "C" void func_801E12E0(void*);
 extern "C" void func_801EAE8C(void*);
 extern "C" void func_801F34F4(void*);
@@ -415,8 +415,8 @@ extern "C" void func_801E1498(void*);                // info2 state open
 extern "C" void func_801E14DC(void*, unsigned short, void*, unsigned short, unsigned int); // info2 tab-data push
 extern "C" void func_801E16F0(void*, char*, char*);  // info2 tab-name set
 extern "C" void func_801F08B4(void*, unsigned int);  // active-tab dispatch
-extern "C" u8 func_801EC23C(void*, unsigned int);   // tab entry byte accessor (external overload)
-extern "C" u8 func_801EC8B4(void*, unsigned int);    // tab entry byte accessor (external overload)
+extern "C" u8 ItemBoxLine_GetTabEntryLock(void*, unsigned int);   // tab entry byte accessor (external overload)
+extern "C" u8 ItemBoxLine_GetTabEntryReady(void*, unsigned int);    // tab entry byte accessor (external overload)
 extern "C" int func_801EC8D8(void*, unsigned int);   // name-dispatch lookup (external overload)
 // nav-state dispatch helpers (external overloads of the C++ bodies in this TU)
 extern "C" void func_801EF1E4(void*);
@@ -495,8 +495,8 @@ extern "C" u32 func_801EC9E0(void*, unsigned int);
 // (their mangled names map to the retail symbols); these C-linkage
 // declarations keep the cross-.o calls (retail external relocs) external
 // instead of inlining the local body.
-extern "C" void* func_801EC3D0(void*, unsigned int);
-extern "C" u32 func_801EC260(void*, unsigned int);
+extern "C" void* ItemBoxLine_FormatTabEntryName(void*, unsigned int);
+extern "C" u32 ItemBoxLine_GetTabEntryValue(void*, unsigned int);
 extern "C" u16 ItemBoxLine_GetTabEntryItem(CIBLTab*, unsigned int);
 extern "C" u8 func_801EC284(void*, unsigned int);
 

@@ -336,7 +336,7 @@ void cfCam_copyBlock16(void* dst, void* src);            // retail 0x8007215C (1
 void cfCam_applyRelPos(cf::CfCamFollow* self, void* a, void* b, int c, float f1, float f2); // in-TU stub (defined below its first use)
 __declspec(noinline) void func_800707C0(void* self, void* a, void* b); // in-TU stub, same signature (mixed linkage keeps the unmangled bl)
 int CfRes_getD80Flag();                              // scene flag gate (CUIErrMesWin.hpp)
-// func_8049603C: declared once in libs/monolib/src/scn/CScn_8049603C.hpp
+// Scn_QueryUnk80State: declared once in libs/monolib/src/scn/CScn_8049603C.hpp
 // (ellipsis form - this TU calls it with no args).
 
 void cfCam_tuneZoomDist(cf::CfCamFollow* self);           // in-TU def (defined below its first use), same signature (mixed linkage)
@@ -410,7 +410,7 @@ extern CamDefTable lbl_eu_80527160;
 extern const char* lbl_eu_805271FC[];                // .data bdat-table-name entries (retail 0x805271FC)
 void* cfCam_loadPlus4(void* obj);                      // CfCam sibling (retail 0x8006D400)
 float cfCam_getFloat1E0F(void* pose);                     // CfCam sibling (retail 0x8006D408)
-void* func_80496264(void* scene, int index);         // scene pose/xform block lookup
+void* Scn_FindCamItem(void* scene, int index);         // scene pose/xform block lookup
 void cfCam_setBit9_04(void* self);                      // CfCam sibling (retail 0x8006D440)
 // Call-through-overload views of in-TU bodies (differing signatures keep the
 // retail flat-name bl instead of a C++-mangled reloc).

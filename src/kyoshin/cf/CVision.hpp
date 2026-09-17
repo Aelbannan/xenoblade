@@ -594,7 +594,7 @@ extern "C" void func_801537F0(void* obj);
 extern "C" int findObjectById__Fi(int id);
 extern "C" float func_800F42AC(void* obj);
 extern "C" void func_800F449C(void* obj);
-extern "C" int func_80133F48(int id, float f);
+extern "C" int CUICfManager_queueFactoryMenu(int id, float f);
 // Character-data lookup + row predicate pair used by CVision.cpp's
 // movie-gate checks (defined in CtrlObjectParam.cpp). Declared here because
 // sibling TUs declare the same retail symbols with different signatures or
@@ -694,7 +694,7 @@ extern "C" void* __RTTI__Q22cf13CfObjectActor;
 extern "C" void func_8009D018(u32 a, u32 b);
 // Return type must match CfGameManager.hpp's declaration (u32), or MWCC
 // rejects the redeclaration when both headers are included in one TU.
-// func_801412D0 is owned by kyoshin/CUIWindowManager.hpp.
+// UIWin_BuildFlagBuf is owned by kyoshin/CUIWindowManager.hpp.
 
 extern "C" void func_8016FF14(void* obj, void* dst);
 extern "C" void func_801C01A8(u32 a, u32 b, f32 c);

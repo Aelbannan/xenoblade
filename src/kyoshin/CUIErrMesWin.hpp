@@ -273,7 +273,7 @@ struct CErrMesWinCtorView {
 // names; C linkage stops MWCC appending a __F<argtypes> suffix).
 extern "C" {
 int CfRes_getD80Flag();
-void* func_80496264(void* scene, int index);
+void* Scn_FindCamItem(void* scene, int index);
 void* func_8016FE34(void* source);
 int func_802A77E8(void* handle);
 void __ct__8CProcessFv(CProcess* self);

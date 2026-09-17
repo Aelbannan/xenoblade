@@ -18,19 +18,19 @@ extern "C" {
     void deactivateLOD__8CTaskLODFv(s16 taskID);
     void attachLODObject__8CTaskLODFv(s16 taskID, int flag);
     int getStaticFileData__14CLibStaticDataFPCcP16StaticDataHandlePUl(const char*, u8**, u32*);
-    CScnItemModel* func_80495E8C(u32 global, u8* handle, int flag, int flag2);
-    void func_80495E60(void* ptr);
-    void* func_80495EAC(void* mgr, void* param, int flag);
+    CScnItemModel* Scn_SetupAnim(u32 global, u8* handle, int flag, int flag2);
+    void Scn_IsAnimActiveOrNull(void* ptr);
+    void* Scn_InitGlobalA(void* mgr, void* param, int flag);
     void func_8049EB60();
     void func_8049F774(CREvtCamObj* camObj, const f32 mtx[3][4]);
-    CREvtCamObj* func_80496264(u32 mgr, int a);
+    CREvtCamObj* Scn_FindCamItem(u32 mgr, int a);
     void simSetFlag2000Chain(CScnItemModel* obj, int flag);
     void simSetLeafDist7B0(CScnItemModel* obj, float val);
     float simGetLeafAnimDist2(void* obj);
     nw4r::g3d::ChrAnmResult* scnImN4AnimFn(CScnItemModel* model, const char* name, f32 time);
     int func_8016A35C();
     void* func_801644B4();
-    void func_8016841C();
+    void EvtSeqPublishIdHalfwords();
     void func_8016AF4C(void* obj, const char* name, u32* out);
     int func_8016B5A4(void* obj, const char* name, void* out);
     int func_8016B164(void* obj, const char* name, void* out1, void* out2);
@@ -94,7 +94,7 @@ extern "C" unsigned long func_80180990() {
 // ============================================================================
 extern "C" void func_80180620(CREvtCamera* self) {
     if (self->mField24) {
-        func_80495E60((void*)self->mField24);
+        Scn_IsAnimActiveOrNull((void*)self->mField24);
         self->mField24 = 0;
     }
 }
@@ -222,11 +222,11 @@ extern "C" CREvtCamera* __ct__80180088(CREvtCamera* self, int deleteFlag) {
         ((cf::CREvtObj*)self)->vfunc_10();
 
         if (self->mField20) {
-            if (lbl_eu_80663E14) func_80495E60((void*)self->mField20);
+            if (lbl_eu_80663E14) Scn_IsAnimActiveOrNull((void*)self->mField20);
             self->mField20 = 0;
         }
         if (self->mField1C) {
-            if (lbl_eu_80663E14) func_80495E60((void*)self->mField1C);
+            if (lbl_eu_80663E14) Scn_IsAnimActiveOrNull((void*)self->mField1C);
             self->mField1C = 0;
         }
 
@@ -292,7 +292,7 @@ extern "C" void func_80180414(CREvtCamera* self) {
     u8* handle;
     getStaticFileData__14CLibStaticDataFPCcP16StaticDataHandlePUl(lbl_eu_805036D8, &handle, 0);
     if (handle) {
-        CScnItemModel* obj = func_80495E8C((u32)lbl_eu_80663E14, handle, -1, 1);
+        CScnItemModel* obj = Scn_SetupAnim((u32)lbl_eu_80663E14, handle, -1, 1);
         self->mField1C = (u32)obj;
         simSetFlag2000Chain(obj, 1);
         simSetLeafDist7B0((CScnItemModel*)self->mField1C, lbl_eu_806678B0);
@@ -337,7 +337,7 @@ extern "C" void func_801804CC(CREvtCamera* self) {
     result = scnImN4AnimFn(sceneObj, lbl_eu_80662448, ConvU32ToTime((u32)func_8016A35C()));
     result->GetRotTrans((nw4r::math::MTX34*)self->mMatrix28);
 
-    CREvtCamObj* camObj = func_80496264((u32)lbl_eu_80663E14, -1);
+    CREvtCamObj* camObj = Scn_FindCamItem((u32)lbl_eu_80663E14, -1);
     if (!camObj) return;
 
     if (getCameraDataBlock__Q22cf13CfGameManagerFv()) {
@@ -377,7 +377,7 @@ extern "C" void func_80180664(CREvtCamera* self, void* eventData, void* somePara
             self->mField20 = 0;
         }
         if (eventData) {
-            void* taskObj = func_80495EAC((void*)lbl_eu_80663E14, eventData, 0);
+            void* taskObj = Scn_InitGlobalA((void*)lbl_eu_80663E14, eventData, 0);
             self->mField20 = (u32)taskObj;
             func_804839D4((void*)self->mField1C, taskObj, 0, 0, 0, 1, -1);
             self->mField43C = (s32)(u32)simGetLeafAnimDist2((void*)self->mField1C);
@@ -397,7 +397,7 @@ extern "C" void func_80180664(CREvtCamera* self, void* eventData, void* somePara
                 int val = atoi(timeStr);
                 u16 v = (u16)val;
                 if ((u32)(u16)(v / 100) == 99 && (u32)(u16)(v % 100) == 99) {
-                    func_8016841C();
+                    EvtSeqPublishIdHalfwords();
                 } else {
                     func_80086B5C__Q22cf13CfGameManagerFv((u32)(u16)(v / 100), (u32)(u16)(v % 100), 0);
                     func_800599E0(getGlobalSda(), (u32)(u16)(v / 100), (u32)(u16)(v % 100), 0);

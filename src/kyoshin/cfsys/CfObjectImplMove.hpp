@@ -866,7 +866,7 @@ void func_804E3CDC(void* effect, f32 f1, f32 f2);
 void simRemoveWordFromBuf(void* handler, void* source);
 void func_8015BD94(void* effect);
 void func_802A0FE8(void* self);
-void* func_80496264(void* scene, int index);  // scene pose lookup (func_800CD460)
+void* Scn_FindCamItem(void* scene, int index);  // scene pose lookup (func_800CD460)
 void func_8007B044(void* shake, int flag);    // camera-shake dispatch (func_800CD460)
 }
 
@@ -921,7 +921,7 @@ struct CfMoveCd460Target {
     CfMoveVec3f pos;                // 0x3a8
 };
 
-// Scene pose block returned by func_80496264(scene, -1) (position at +0x10c).
+// Scene pose block returned by Scn_FindCamItem(scene, -1) (position at +0x10c).
 struct CfMoveCd460Pose {
     u8 _00_10B[0x10c];
     CfMoveVec3f pos;                // 0x10c
@@ -996,7 +996,7 @@ extern "C" void func_80174C24(void* actor, u32 mask);
 // func_800F477C: TU-local no-arg view now in CfObjectImplMove.cpp (only caller).
 extern "C" void func_8014AC38(void* buf, void* req); // canonical void* form (CVision.hpp/CtrlPc.hpp)
 #include <string.h>
-// func_8049603C is declared once in libs/monolib/src/scn/CScn_8049603C.hpp;
+// Scn_QueryUnk80State is declared once in libs/monolib/src/scn/CScn_8049603C.hpp;
 // do not redeclare it here.
 // Single shared flat-name form (CfGimmickEne/CfGimmickObject/CVision/
 // CfMapMineManager/CPartsChange convention).

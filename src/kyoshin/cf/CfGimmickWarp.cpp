@@ -88,22 +88,22 @@ extern const f32 lbl_eu_8066A210;
 extern f32 lbl_eu_8066AF20;
 
 void __ct__cf_CfGimmick(WarpData*);
-void func_8020938C(WarpData*, WarpVec3*, void*, u32*, int);
-void func_802095D8(WarpData*, WarpVec3*, void*, u32*, int);
-void func_80209488(WarpData*, WarpVec3*, void*, u32*, int);
+void CfGimmick_LoadBdatAreaPosIndexed(WarpData*, WarpVec3*, void*, u32*, int);
+void CfGimmick_LoadBdatAreaRotationIndexed(WarpData*, WarpVec3*, void*, u32*, int);
+void CfGimmick_LoadBdatAreaExtentsIndexed(WarpData*, WarpVec3*, void*, u32*, int);
 void func_802089BC(WarpVec3*, const WarpVec3*, const WarpVec3*);
-void func_80208EE4(WarpData*);
+void CfGimmick_ClearManagerBinding(WarpData*);
 void func_8020A434(WarpObject*);
 void func_8020A6B0(WarpObject**, WarpVec3*, u16, f32, int, int);
 int func_8020A5DC(WarpData*);
 int func_8020A87C(WarpData*, WarpObject*);
 void func_8020A484(u16);
-int func_8020971C(int);
-int func_80209754(int, WarpVec3*, WarpVec3*, WarpVec3*, WarpObject*);
+int CfGimmick_CheckStateFlag2CC8(int);
+int CfGimmick_CheckTriggerGated(int, WarpVec3*, WarpVec3*, WarpVec3*, WarpObject*);
 u32 getResourceFromTable__Q22cf13CfGameManagerFv(u32 resourceId);
-void func_80209F5C();
-void func_80209FB8();
-void func_80209FE4();
+void CfGimmick_SetGlobalFlagC0002();
+void CfGimmick_SetGlobalFlagD0000();
+void CfGimmick_SetGlobalFlag40000();
 void func_8020A124(f32);
 void func_8020A1DC(u32 flags);
 void func_801BFED0(int, u16, int);
@@ -112,7 +112,7 @@ void cfCam_syncFollowD();
 void setChildB59__(WarpObject*, int);
 extern "C" int func_804BE398(void* vec, int a, int b, int c, f32 d, f32 e);
 extern "C" void func_804BE4B4(void* out, int a);
-u16 func_80208C48(u16, const WarpVec3*);
+u16 CfGimmick_PlaySoundAtPos(u16, const WarpVec3*);
 void func_8008566C__Q22cf13CfGameManagerFv(int, WarpVec4*, int);
 void func_80198710(WarpVec3*, const WarpVec3*, f32, int, int, f32, f32);
 int CPartsChange_ProcessPartyInfo(WarpVec3*, WarpVec3*);
@@ -170,12 +170,12 @@ extern "C" void __ct__cf_CfGimmickWarp(WarpData* self, u16 rowId) {
     self->unkE8 = (u16)valueE8;
     u32 value6A = getBdatStringColumnValue((void*)tableValue, lbl_eu_805357E8.c30, rowId);
 
-    func_8020938C(self, &self->position, manager, &tableValue, 0);
-    func_802095D8(self, &self->rotation, manager, &tableValue, 0);
-    func_80209488(self, &self->scale, manager, &tableValue, 0);
-    func_8020938C(self, &self->destination, manager, &tableValue, 1);
-    func_802095D8(self, &self->destination2, manager, &tableValue, 1);
-    func_80209488(self, &self->destination3, manager, &tableValue, 1);
+    CfGimmick_LoadBdatAreaPosIndexed(self, &self->position, manager, &tableValue, 0);
+    CfGimmick_LoadBdatAreaRotationIndexed(self, &self->rotation, manager, &tableValue, 0);
+    CfGimmick_LoadBdatAreaExtentsIndexed(self, &self->scale, manager, &tableValue, 0);
+    CfGimmick_LoadBdatAreaPosIndexed(self, &self->destination, manager, &tableValue, 1);
+    CfGimmick_LoadBdatAreaRotationIndexed(self, &self->destination2, manager, &tableValue, 1);
+    CfGimmick_LoadBdatAreaExtentsIndexed(self, &self->destination3, manager, &tableValue, 1);
 
     char* changingColumn = lbl_eu_805357E8.c28;
     *changingColumn = 0x41;
@@ -219,7 +219,7 @@ extern "C" void __ct__cf_CfGimmickWarp(WarpData* self, u16 rowId) {
 extern "C" void* __dt__Q22cf13CfGimmickWarpFv(WarpData* self, int deleteFlag) {
     if (self != 0) {
         *(void**)self = (void*)lbl_eu_805359B0;
-        func_80208EE4(self);
+        CfGimmick_ClearManagerBinding(self);
         func_8020A434((WarpObject*)((u8*)self + 0x7c));
         func_8020A434((WarpObject*)((u8*)self + 0x108));
         __dt__Q22cf9CfGimmickFv(self, 0);
@@ -299,7 +299,7 @@ extern "C" void func_8020D824(WarpData* self) {
         getResourceFromTable__Q22cf13CfGameManagerFv(self->unkEE) < self->unkF0) {
         return;
     }
-    if (self->unkE4 != 0 && func_8020971C(self->unkE4) == 0) {
+    if (self->unkE4 != 0 && CfGimmick_CheckStateFlag2CC8(self->unkE4) == 0) {
         return;
     }
     if (objectReady != 0) {
@@ -312,12 +312,12 @@ extern "C" void func_8020D824(WarpData* self) {
 extern "C" void func_8020D998(WarpData* self) {
     self->flags |= 0x10;
     if ((self->flags & 0x40) != 0 &&
-        func_80209754(self->configFlags, &self->scale, &self->position,
+        CfGimmick_CheckTriggerGated(self->configFlags, &self->scale, &self->position,
                       &self->rotation, self->object7cState) != 0) {
         self->phase = 0;
         if ((self->configFlags & 1) != 0) {
-            func_80209F5C();
-            func_80209FB8();
+            CfGimmick_SetGlobalFlagC0002();
+            CfGimmick_SetGlobalFlagD0000();
             cf::CfObject* player = playerFromRaw(cf::CfGameManager::getPlayer(0));
             if (player != 0) {
                 cf::CObjectState* sub = *reinterpret_cast<cf::CObjectState**>(reinterpret_cast<u8*>(player) + 4);
@@ -382,7 +382,7 @@ extern "C" void func_8020D998(WarpData* self) {
                     self->object104->owner = self;
                 }
                 if (self->unkE8 != 0) {
-                    self->soundHandle = func_80208C48(self->unkE8, &lbl_eu_805765A0);
+                    self->soundHandle = CfGimmick_PlaySoundAtPos(self->unkE8, &lbl_eu_805765A0);
                 }
                 self->flags |= 1;
             }
@@ -392,12 +392,12 @@ extern "C" void func_8020D998(WarpData* self) {
             self->timer = lbl_eu_806683D4;
         }
     } else if ((self->flags & 0x80) != 0 &&
-               func_80209754(self->flagE6, &self->destination3, &self->destination,
+               CfGimmick_CheckTriggerGated(self->flagE6, &self->destination3, &self->destination,
                              &self->destination2, self->object108) != 0) {
         self->phase = 1;
         if ((self->flagE6 & 1) != 0) {
-            func_80209F5C();
-            func_80209FB8();
+            CfGimmick_SetGlobalFlagC0002();
+            CfGimmick_SetGlobalFlagD0000();
             cf::CfObject* player = playerFromRaw(cf::CfGameManager::getPlayer(0));
             if (player != 0) {
                 cf::CObjectState* sub = *reinterpret_cast<cf::CObjectState**>(reinterpret_cast<u8*>(player) + 4);
@@ -463,7 +463,7 @@ extern "C" void func_8020D998(WarpData* self) {
                     self->object104->owner = self;
                 }
                 if (self->unkE8 != 0) {
-                    self->soundHandle = func_80208C48(self->unkE8, &lbl_eu_805765A0);
+                    self->soundHandle = CfGimmick_PlaySoundAtPos(self->unkE8, &lbl_eu_805765A0);
                 }
                 self->flags |= 1;
             }
@@ -503,14 +503,14 @@ extern "C" void func_8020DF04(WarpData* self) {
         return;
     }
 
-    func_80209FE4();
-    self->timer -= func_80496288(lbl_eu_80663E14);
+    CfGimmick_SetGlobalFlag40000();
+    self->timer -= Scn_GetFrameDelta(lbl_eu_80663E14);
     if (self->timer > lbl_eu_806683C8) {
         return;
     }
 
-    func_80209F5C();
-    func_80209FB8();
+    CfGimmick_SetGlobalFlagC0002();
+    CfGimmick_SetGlobalFlagD0000();
     cf::CfObject* player = playerFromRaw(cf::CfGameManager::getPlayer(0));
     if (player != 0) {
         cf::CObjectState* sub = *reinterpret_cast<cf::CObjectState**>(reinterpret_cast<u8*>(player) + 4);
@@ -575,7 +575,7 @@ extern "C" void func_8020DF04(WarpData* self) {
             self->object104->owner = self;
         }
         if (self->unkE8 != 0) {
-            self->soundHandle = func_80208C48(self->unkE8, &lbl_eu_805765A0);
+            self->soundHandle = CfGimmick_PlaySoundAtPos(self->unkE8, &lbl_eu_805765A0);
         }
         self->flags |= 1;
     }
@@ -634,11 +634,11 @@ extern "C" void func_8020E3F0(WarpData* self) {
         break;
     }
 
-    self->timer += func_80496288(lbl_eu_80663E14);
+    self->timer += Scn_GetFrameDelta(lbl_eu_80663E14);
     if (lbl_eu_806683D8 <= self->timer ||
         (allReady && lbl_eu_806683D0 <= self->timer)) {
-        func_80209F5C();
-        func_80209FB8();
+        CfGimmick_SetGlobalFlagC0002();
+        CfGimmick_SetGlobalFlagD0000();
         self->state = 5;
         if (self->flagE7 != 0) {
             if (self->object7c != 0) {
@@ -685,30 +685,30 @@ extern "C" void func_8020E3F0(WarpData* self) {
                 self->object104->owner = self;
             }
             if (self->unkE8 != 0) {
-                self->soundHandle = func_80208C48(self->unkE8, &lbl_eu_805765A0);
+                self->soundHandle = CfGimmick_PlaySoundAtPos(self->unkE8, &lbl_eu_805765A0);
             }
             self->flags |= 1;
         }
         func_8020A124(lbl_eu_806683D0);
     } else {
-        func_80209F5C();
-        func_80209FB8();
+        CfGimmick_SetGlobalFlagC0002();
+        CfGimmick_SetGlobalFlagD0000();
     }
 }
 
 extern "C" void func_8020E6C0(WarpData* self) {
-    func_80209F5C();
-    func_80209FB8();
+    CfGimmick_SetGlobalFlagC0002();
+    CfGimmick_SetGlobalFlagD0000();
     if ((self->flags & 1) == 0) {
         self->state = 6;
     }
 }
 
 extern "C" void func_8020E704(WarpData* self) {
-    func_80209F5C();
-    func_80209FB8();
+    CfGimmick_SetGlobalFlagC0002();
+    CfGimmick_SetGlobalFlagD0000();
     if ((self->flags & 2) != 0) {
-        self->timer -= func_80496288(lbl_eu_80663E14);
+        self->timer -= Scn_GetFrameDelta(lbl_eu_80663E14);
         if (self->timer > lbl_eu_806683C8) {
             return;
         }
@@ -783,13 +783,13 @@ extern "C" void func_8020E704(WarpData* self) {
 }
 
 extern "C" void func_8020EA2C(WarpData* self) {
-    func_80209F5C();
-    func_80209FB8();
+    CfGimmick_SetGlobalFlagC0002();
+    CfGimmick_SetGlobalFlagD0000();
 
     u32 flags = self->flags;
     if ((flags & 2) == 0) {
         f32 limit = lbl_eu_806683C8;
-        self->timer -= func_80496288(lbl_eu_80663E14);
+        self->timer -= Scn_GetFrameDelta(lbl_eu_80663E14);
         if (self->timer <= limit) {
             self->flags = flags | 2;
             self->timer = lbl_eu_806683F8;
@@ -803,7 +803,7 @@ extern "C" void func_8020EA2C(WarpData* self) {
         return;
     }
 
-    f32 t = self->timer - func_80496288(lbl_eu_80663E14);
+    f32 t = self->timer - Scn_GetFrameDelta(lbl_eu_80663E14);
     self->timer = t;
     if ((flags & 4) == 0) {
         if (t > lbl_eu_806683CC) {
@@ -842,7 +842,7 @@ extern "C" void func_8020EA2C(WarpData* self) {
                         self->object104->owner = self;
                     }
                     if (self->unkE8 != 0) {
-                        self->soundHandle = func_80208C48(self->unkE8, &lbl_eu_805765A0);
+                        self->soundHandle = CfGimmick_PlaySoundAtPos(self->unkE8, &lbl_eu_805765A0);
                     }
                     self->flags |= 1;
                 }

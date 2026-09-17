@@ -169,7 +169,7 @@ extern "C" void __declspec(noinline) func_801C41E8(CTitleAHelp* self, u8 arg) {
             u16 keyVal = BdatGetU16ByTableKey(lbl_eu_805054BC + 0x49, fileID, tableVal);
             char* texName = MakeTplNameSysFile(keyVal);
 
-            nw4r::lyt::ArcResourceAccessor* accessor = ::func_801355F4();
+            nw4r::lyt::ArcResourceAccessor* accessor = ::CUICfManager_getArcResourceAccessor();
             void* resource = accessor->GetResource(
                 nw4r::lyt::ArcResourceAccessor::RES_TYPE_TEXTURE, texName, NULL);
 

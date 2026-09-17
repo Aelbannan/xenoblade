@@ -295,7 +295,7 @@ void cf::CfObjectEne::updateEnemyBattleState() {
     CScn* sceneTimeSrc = lbl_eu_80663E14;
     f32 sub = ((cf::CfObjectAt3E9C*)this)->CfObject_getMoveSpeedRate();
     // retail multiplies as time * sub (fmuls f1,f1,f31 with f31=sub)
-    f32 t = func_80496288(sceneTimeSrc);
+    f32 t = Scn_GetFrameDelta(sceneTimeSrc);
     f32 f = t * sub;
     func_801765A4((u8*)this, f, 1);
     getInstance__Q22cf13CfGameManagerFv();
@@ -847,7 +847,7 @@ bmCheck:
         // the SDA load above the bctrl (retail keeps it in a saved reg)
         CScn* sceneSrc = lbl_eu_80663E14;
         f32 sub = ((cf::CfObjectAt3E9C*)self)->CfObject_getMoveSpeedRate();
-        f32 t = func_80496288(sceneSrc);
+        f32 t = Scn_GetFrameDelta(sceneSrc);
         f32 now = t * sub + ((cf::CfEneTailView*)self)->field_0x45CC;
         // retail stores the accumulated time back BEFORE the threshold compare
         ((cf::CfEneTailView*)self)->field_0x45CC = now;

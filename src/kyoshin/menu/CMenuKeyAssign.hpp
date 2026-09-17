@@ -197,7 +197,7 @@ extern "C" int GetSysStateFlag20();
 // plain global-scope free functions with a __F suffix, so the declarations
 // must sit under extern "C" to emit the retail reloc names).
 extern "C" {
-nw4r::lyt::ArcResourceAccessor* func_801355F4();
+nw4r::lyt::ArcResourceAccessor* CUICfManager_getArcResourceAccessor();
 void func_80137F88(void* pane, void* tex);
 u16 BdatGetU16ByTableKey(const void*, const void*, u32);
 char* BdatTouchStringCell(const void*, const void*, int);

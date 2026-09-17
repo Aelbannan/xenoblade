@@ -142,8 +142,8 @@ extern "C" void func_802516DC(CMenuMapSelectSC* self);
 // ---------------------------------------------------------------------------
 // CScn-side helpers: scene enable flag + render-callback management.
 // int return (mismatched vs the (void*, u8) definition) blocks -ipa inlining
-// of the 1-line body, keeping the retail `bl func_804962A0` call site.
-extern "C" int func_804962A0(CScn* scn, int flag);
+// of the 1-line body, keeping the retail `bl Scn_SetPauseFlag` call site.
+extern "C" int Scn_SetPauseFlag(CScn* scn, int flag);
 // CFloorMap helpers (retail unmangles these member helpers).
 extern "C" void func_8024F1FC(CFloorMap* self, u8 mapIdx);
 extern "C" void func_8024C104(CFloorMap* self);

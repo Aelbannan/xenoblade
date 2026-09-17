@@ -171,11 +171,11 @@ extern u8 lbl_eu_80535900[];
 // CfGimmick base ctor/dtor + TU helpers (defined in CfGimmick.cpp).
 extern "C" void __ct__cf_CfGimmick(void* self);
 extern "C" void __dt__Q22cf9CfGimmickFv(void* self, int flag);
-extern "C" void func_80208EE4(cf::CfGimmickLock* self);
+extern "C" void CfGimmick_ClearManagerBinding(cf::CfGimmickLock* self);
 extern "C" void func_802089BC(void* matrix, const f32* basis, const CfGimmickVec3* point);
-extern "C" void func_80208F34(void* self, void* out, void* bdat, void** holder);
-extern "C" void func_80209020(void* self, void* out, void* bdat, void** holder);
-extern "C" void func_80209288(void* self, void* out, void* bdat, void** holder);
+extern "C" void CfGimmick_LoadBdatAreaPos(void* self, void* out, void* bdat, void** holder);
+extern "C" void CfGimmick_LoadBdatAreaExtents(void* self, void* out, void* bdat, void** holder);
+extern "C" void CfGimmick_LoadBdatAreaRotation(void* self, void* out, void* bdat, void** holder);
 
 // 0x804B0xxx region-object library (not decompiled here).
 extern "C" void ColiNodeInit(void* region);
@@ -197,10 +197,10 @@ extern "C" void* getPlayer__Q22cf13CfGameManagerFi(int index);
 extern "C" int func_8020A294();
 extern "C" void func_8020A484(u16 resourceId);
 extern "C" unsigned int func_8020A5DC();
-extern "C" void func_80209F8C();
+extern "C" void CfGimmick_SetGlobalFlag8008();
 
 // Scene / frame-time helpers.
-extern "C" void* func_8049626C(void* a, void* b);
+extern "C" void* Scn_HasCamItem(void* a, void* b);
 extern "C" void setChild34Sc_(void* obj, const void* src);
 extern "C" void func_8008B95C(void* target);
 

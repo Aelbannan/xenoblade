@@ -150,8 +150,8 @@ extern "C" void simSetFlag2000Chain(void* model, int val);
 extern "C" void func_804839D4(void* model, void* animData, int, int, int, int, int);
 
 // Memory
-extern "C" void func_80495E60(void* ptr);
-extern "C" void* func_80495EAC(void* global, void* bdat, int val);
+extern "C" void Scn_IsAnimActiveOrNull(void* ptr);
+extern "C" void* Scn_InitGlobalA(void* global, void* bdat, int val);
 
 // Random
 

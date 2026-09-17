@@ -50,7 +50,7 @@ u32 advanceAnimTransform(nw4r::lyt::AnimTransform*, float); // advanceAnimTransf
 // (offset+type) only, not names.
 extern "C" void func_80136A1C(nw4r::lyt::Layout*, char*, char*, u32);  // retail reloc is unmangled
 void drawLayout(nw4r::lyt::Layout*, nw4r::lyt::DrawInfo*, int, int);
-extern "C" int  func_800A9D90();   // retail reloc is unmangled
+extern "C" int  KyoshinHeap_GetField44();   // retail reloc is unmangled
 extern "C" void func_801D4054(CItemBoxInfo*);   // retail reloc is unmangled
 extern "C" void func_801D4154(CItemBoxInfo*);   // retail reloc is unmangled
 extern "C" void func_801D40C4(CItemBoxInfo*);   // retail reloc is unmangled
@@ -496,7 +496,7 @@ void func_80297928(CMCGetItemBox* self) {
                                               &lbl_eu_8050FF8C[0xae], (IWorkEvent*)self, 0, 0);
     self->fileHandle2 = CDeviceFile::readFile(mtl::MemManager::getHandleMEM2(),
                                               &lbl_eu_8050FF8C[0xc7], (IWorkEvent*)self, 0, 0);
-    self->fileHandle3 = CDeviceFile::readCommonArchiveFile((mtl::ALLOC_HANDLE)func_800A9D90(),
+    self->fileHandle3 = CDeviceFile::readCommonArchiveFile((mtl::ALLOC_HANDLE)KyoshinHeap_GetField44(),
                                                           &lbl_eu_8050FF8C[0xe0], (IWorkEvent*)self, 0, 0);
     self->fileHandle4 = CDeviceFile::readFile(mtl::MemManager::getHandleMEM2(),
                                               &lbl_eu_8050FF8C[0xfd], (IWorkEvent*)self, 0, 0);
@@ -1442,7 +1442,7 @@ bool CMCGetItemBox::OnFileEvent(CEventFile* pEventFile) {
         setLayoutTextBoxFont__FPQ34nw4r3lyt6LayoutPcUl(this->layout40, &lbl_eu_8050FF8C[0x17b], w);
 
         // Stamp every item-slot text pane with the loaded character set.
-        u32 sh = (u32)func_801355BC();
+        u32 sh = (u32)CUICfManager_getPackedFont9C();
         for (u8 i = 1; i <= 0x1e; i++) {
             char buf[0x20];
             sprintf(buf, &lbl_eu_8050FF8C[0x16e], i);
@@ -1501,7 +1501,7 @@ bool CMCGetItemBox::OnFileEvent(CEventFile* pEventFile) {
         ((CBaseCur*)&this->subObj_88)->initLayout();
 
         u8 cur18Buf[0x18];
-        __ct__CCur18(cur18Buf, func_801355F4());
+        __ct__CCur18(cur18Buf, CUICfManager_getArcResourceAccessor());
         func_8018B0FC(&this->subObj_A0, cur18Buf);
         __dt__6CCur18Fv(cur18Buf, -1);
         ((CBaseCur*)&this->subObj_A0)->initLayout();

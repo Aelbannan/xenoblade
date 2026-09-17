@@ -29,7 +29,7 @@
 // versions already in scope from CfObjectMove.hpp / IResInfo.hpp
 // (MWCC forbids overloading an extern "C"
 // function). Rename CfObjectMap.hpp's copies out of the way; this TU uses the
-// properly-typed declarations from those headers. (func_80496288 now has a
+// properly-typed declarations from those headers. (Scn_GetFrameDelta now has a
 // single unified decl.)
 #define func_800AA33C cfObjectMapFunc_800AA33C
 #include "kyoshin/cf/object/CfObjectMap.hpp"
@@ -104,7 +104,7 @@ extern "C" void setGimmickActive(void* obj, bool enable);
 extern "C" void refreshGimmickObject(void* obj);
 extern "C" void setVoiceActionActive(void* act, bool enable);
 
-// Local complete type for func_8049603C's result (canonical name per
+// Local complete type for Scn_QueryUnk80State's result (canonical name per
 // CfGameManager.hpp's fwd-decl; layout matches CTaskGame.hpp's view;
 // local def avoids pulling CTaskGame.hpp into this TU).
 struct CTaskGameCamView {
@@ -153,7 +153,7 @@ extern "C" void func_8013D26C(u32 value);
 extern "C" void func_80068C38();
 extern "C" void func_80164DB8();
 extern "C" void func_801896A8(s32 index, float f1, float f2);
-extern "C" void func_eu_8049AB50(void* scene, u32 value);
+extern "C" void Scn_SetPalFixFlag(void* scene, u32 value);
 // 1-arg placement ctor form used by UnkClass_8007DAE0::init.
 extern "C" void* __ct__Q22cf17UnkClass_8018EF3CFv(void* self);
 extern "C" void func_8007DCB8__Q22cf13CfGameManagerFv();
@@ -468,7 +468,7 @@ extern const float lbl_eu_80666544;
 #define setPresentationFlag__Q22cf13CfGameManagerFv unityHelpersWrapFunc_8008294C
 #include "kyoshin/cf/CfGameManagerUnityHelpers.hpp"
 #include "libs/monolib/src/scn/CScn_8049603C.hpp"
-extern "C" void func_8049602C(void*, u32, const void*);
+extern "C" void Scn_ReleaseUnk80(void*, u32, const void*);
 #undef queueSceneEventA__Q22cf13CfGameManagerFv
 #undef flushEventQueue__Q22cf13CfGameManagerFv
 #undef syncBdatDataCache__Q22cf13CfGameManagerFv
@@ -515,10 +515,10 @@ extern "C" void setPresentationFlag__Q22cf13CfGameManagerFv(bool enable) {
     cf::CfGameManager::getInstance();
     if (enable) {
         enableGameFlag__Q22cf13CfGameManagerFv(0x40000000);
-        func_80496294(lbl_eu_80663E14, lbl_eu_80666498);
+        Scn_SetTimeScale(lbl_eu_80663E14, lbl_eu_80666498);
     } else {
         clearGameFlagMask__Q22cf13CfGameManagerFv(0x40000000);
-        func_80496294(lbl_eu_80663E14, lbl_eu_8066649C);
+        Scn_SetTimeScale(lbl_eu_80663E14, lbl_eu_8066649C);
     }
     func_801C011C(enable, 10);
 }
@@ -693,7 +693,7 @@ bool cf::CfGameManager::isManagerInitialized() {
 void cf::CfGameManager::teardownGameManager() {
     lbl_eu_80663E28 |= 0x200000;
     func_8012F87C(0);
-    func_80135568(0);
+    CUICfManager_setFlagState(0);
     CCharVoiceMan_DestroySingleton();
     getBattleStateB__Q22cf14CBattleManagerFv();
     func_80295924();
@@ -946,14 +946,14 @@ bool cf::CfGameManager::isSceneReadyForInput() {
     if (lbl_eu_80663E14 == nullptr) {
         return true;
     }
-    return func_80496044(lbl_eu_80663E14);
+    return Scn_IsDefaultScale(lbl_eu_80663E14);
 }
 
 bool cf::CfGameManager::isSceneActive() {
     if (lbl_eu_80663E14 == nullptr) {
         return false;
     }
-    return func_804960A8(lbl_eu_80663E14);
+    return Scn_IsScaleAtLeastOne(lbl_eu_80663E14);
 }
 
 bool cf::CfGameManager::isFieldTransitionReady() {
@@ -983,7 +983,7 @@ bool cf::CfGameManager::isSceneLoading() {
     }
 
     getInstance();
-    return func_80496288(lbl_eu_80663E14) <= lbl_eu_8066A208;
+    return Scn_GetFrameDelta(lbl_eu_80663E14) <= lbl_eu_8066A208;
 }
 #pragma dont_inline reset
 
@@ -1088,12 +1088,12 @@ void cf::CfGameManager::tickGameManager() {
 }
 
 // cf::CfGameManager::func_8007C8C8 - per-frame scene/presentation tick and
-// the scene-load / object-queue dump. Returns the func_80190840 result.
+// the scene-load / object-queue dump. Returns the CfCmd_PumpRingBuf result.
 // Flag bits use the local convention (value bit = 31 - PPC bit): E24 0x80,
 // 0x1000, 0x400000, 0x40000|0x8000, 0x2000000|0x400; E28 0x1000000, 0x200,
 // 0x8000000.
 void* cf::CfGameManager::func_8007C8C8() {
-    void* ret = func_80190840(this->unkAC, &lbl_eu_80663E04);
+    void* ret = CfCmd_PumpRingBuf(this->unkAC, &lbl_eu_80663E04);
     if (lbl_eu_80663E60 != 0) {
         func_801889D0(lbl_eu_80663E60);
     }
@@ -1106,7 +1106,7 @@ void* cf::CfGameManager::func_8007C8C8() {
     }
     func_802A1610();
     if (lbl_eu_80663E14 != nullptr &&
-        func_80496288(lbl_eu_80663E14) > lbl_eu_80666498) {
+        Scn_GetFrameDelta(lbl_eu_80663E14) > lbl_eu_80666498) {
         ++lbl_eu_80663D90;
     }
     if (!(lbl_eu_80663E28 & 0x1000000)) {
@@ -1168,7 +1168,7 @@ void* cf::CfGameManager::func_8007C8C8() {
                 cf::CfPadTask::isInputDisabled() == 0) {
                 int sceneReady = lbl_eu_80663E14 == nullptr
                                      ? 1
-                                     : func_80496044(lbl_eu_80663E14);
+                                     : Scn_IsDefaultScale(lbl_eu_80663E14);
                 if (sceneReady != 0 &&
                     (lbl_eu_80663E24 & 0x400000) == 0 &&
                     (lbl_eu_80663E24 & 0xAFA40000) == 0 &&
@@ -1373,7 +1373,7 @@ void cf::CfGameManager::func_8007D84C() {
     func_801C028C(0, 0);
     func_801C028C(1, 0);
     func_8012F87C(0);
-    func_80135568(0);
+    CUICfManager_setFlagState(0);
     if ((lbl_eu_80663EE0 & 0x40) != 0) {
         lbl_eu_80663EE0 &= ~0x40;
     }
@@ -1411,7 +1411,7 @@ void cf::CfGameManager::func_8007D84C() {
         func_800754C0(camManager);
     }
     unkB0 = nullptr;
-    func_8018EFB4(unkAC);
+    CfResPcFileHost_clear(unkAC);
     gmResetSubMgrs();
     gmCallInit1954();
     void* resetObject = lbl_eu_8065FC18;
@@ -1595,7 +1595,7 @@ void cf::CfGameManager::setGlobalByte64298(u32 value) { lbl_eu_80664298 = value;
 
 extern "C" void* getDataArray219C__Q22cf13CfGameManagerFv(u8* data) { return data + 0x219C; }
 
-void cf::CfGameManager::resetCameraManager() { func_80496034(lbl_eu_80663E14); }
+void cf::CfGameManager::resetCameraManager() { Scn_GetUnk80Handle(lbl_eu_80663E14); }
 
 // Slot +0x130 base: retail Fv returns the shared float const. Forced-name
 // keeps the Unk linker spelling for hand-built vtables; virtual is
@@ -1738,7 +1738,7 @@ cf::CfGameManager* UnkClass_8007DAE0::init(CScnNw4r* scene, CView* view,
         mgr->unkAC = static_cast<UnkClass_80085334*>(object);
         static_cast<UnkClass_8018EF3CObj*>(object)->field_0x408 = mgr;
     } else {
-        func_8018EFB4(mgr->unkAC);
+        CfResPcFileHost_clear(mgr->unkAC);
     }
     if (!lbl_eu_80663E70) {
         __ct__Q22cf13CfGameManagerFv(&lbl_eu_80571758);
@@ -1786,9 +1786,9 @@ extern "C" void func_8008566C__Q22cf13CfGameManagerFv(u32 first,
     if ((lbl_eu_80663E28 & 0x1000000) != 0) {
         return;
     }
-    if (mode != 0 && func_80496034(lbl_eu_80663E14) != false && first != 0) {
+    if (mode != 0 && Scn_GetUnk80Handle(lbl_eu_80663E14) != false && first != 0) {
         CTaskGameCamView* res =
-            (CTaskGameCamView*)func_8049603C(lbl_eu_80663E14); // cast: CfObjectMove.hpp's void* form is also in scope
+            (CTaskGameCamView*)Scn_QueryUnk80State(lbl_eu_80663E14); // cast: CfObjectMove.hpp's void* form is also in scope
         if (res->field_C <= lbl_eu_8066A208) {
             float temp[4];
             temp[0] = vec->field_0x0;
@@ -1796,11 +1796,11 @@ extern "C" void func_8008566C__Q22cf13CfGameManagerFv(u32 first,
             temp[2] = vec->field_0x8;
             temp[3] = vec->field_0xC;
             temp[3] = lbl_eu_80666498;
-            func_8049602C(lbl_eu_80663E14, 0, temp);
+            Scn_ReleaseUnk80(lbl_eu_80663E14, 0, temp);
         }
     }
     if (first == 0 || mode != 0) {
-        func_8049602C(lbl_eu_80663E14, first,
+        Scn_ReleaseUnk80(lbl_eu_80663E14, first,
                       const_cast<float*>(&vec->field_0x0));
         return;
     }
@@ -2238,7 +2238,7 @@ extern "C" void func_8007F1FC__Q22cf13CfGameManagerFv(void* inList, s32 mode) {
             if (x == 8) {
                 UnkClass_8009EC9C* obj3 =
                     reinterpret_cast<UnkClass_8009EC9C*>(func_8009EC9C(3));
-                func_8025EE7C(&obj->itemCounts_0x3534,
+                KizunagramSetActiveSlot(&obj->itemCounts_0x3534,
                               *reinterpret_cast<u32*>(
                                   reinterpret_cast<u8*>(obj3) + 0x3DD0));
                 // Slot owner: CActorParam is embedded at +0x17C (vtable) -
@@ -2406,7 +2406,7 @@ extern "C" void func_800853C8__Q22cf13CfGameManagerFv() {
         if (lbl_eu_80571758.unkAC != nullptr) {
             func_80061870(reinterpret_cast<u32>(lbl_eu_80571758.unkAC), 0x12, 0, 0, 0, 0);
         }
-        func_eu_8049AB50(lbl_eu_80663E14, 0);
+        Scn_SetPalFixFlag(lbl_eu_80663E14, 0);
     } else if ((lbl_eu_80663E24 & 0x2000000) != 0 ||
                (lbl_eu_80663E24 & 0x400) != 0) {
         func_80164DB8();
@@ -2909,7 +2909,7 @@ extern "C" void func_800838F4__Q22cf13CfGameManagerFv(u32 mode, u32 first,
                     reinterpret_cast<u8*>(getInstance__Q22cf14CBattleManagerFv())));
             sub->vt_20(1);
             CfRes_getE14();
-            func_80496294(reinterpret_cast<CScn*>(CfRes_getE14()), lbl_eu_8066649C);
+            Scn_SetTimeScale(reinterpret_cast<CScn*>(CfRes_getE14()), lbl_eu_8066649C);
         }
     }
     cf::CfGameManager::enablePadFlags(0x1FE01EFF, false);
@@ -2920,7 +2920,7 @@ extern "C" void func_800838F4__Q22cf13CfGameManagerFv(u32 mode, u32 first,
         UnkFloat4 hit;
         UnkFloat4 miss;
         CfRes_getE14();
-        cfCam_copyBlock16(&bufA, func_8049603C(reinterpret_cast<CScn*>(CfRes_getE14())));
+        cfCam_copyBlock16(&bufA, Scn_QueryUnk80State(reinterpret_cast<CScn*>(CfRes_getE14())));
         CTaskGame_setVec4(reinterpret_cast<Unk407C8Color*>(&cand), lbl_eu_8066649C,
                       lbl_eu_8066649C, lbl_eu_8066649C, lbl_eu_8066649C);
         if (compareFloatVectors__Q22cf13CfGameManagerFv(&bufA, &cand)) {
@@ -2939,7 +2939,7 @@ extern "C" void func_800838F4__Q22cf13CfGameManagerFv(u32 mode, u32 first,
         UnkFloat4 hit;
         UnkFloat4 miss;
         CfRes_getE14();
-        cfCam_copyBlock16(&bufA, func_8049603C(reinterpret_cast<CScn*>(CfRes_getE14())));
+        cfCam_copyBlock16(&bufA, Scn_QueryUnk80State(reinterpret_cast<CScn*>(CfRes_getE14())));
         CTaskGame_setVec4(reinterpret_cast<Unk407C8Color*>(&cand), lbl_eu_8066649C,
                       lbl_eu_8066649C, lbl_eu_8066649C, lbl_eu_8066649C);
         if (compareFloatVectors__Q22cf13CfGameManagerFv(&bufA, &cand)) {

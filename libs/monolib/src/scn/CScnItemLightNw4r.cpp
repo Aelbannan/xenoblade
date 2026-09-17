@@ -14,7 +14,7 @@ extern "C" {
     extern char lbl_eu_80523ECC[];  // "Global(%d)" format string
     extern char lbl_eu_8056DD38[];  // CScnItemLightNw4r vtable
     extern u32 func_8048C5B8(u8* pool, s32 kind);
-    extern u32 func_80496018(CScnLightItemHost* scene);
+    extern u32 Scn_CallUnk8C_V8(CScnLightItemHost* scene);
     extern void* allocate__Q23mtl10MemManagerFUlUl(u32 size, u32 handle);
     extern void __ct__CScnItemLight(CScnItemLightNw4rAlloc* ths, CScnLightItemHost* pHost,
                                     ml::FixStr<32>* name, void* a2, void* a3);
@@ -29,7 +29,7 @@ extern "C" CScnItemLightNw4rAlloc* __ct__CScnItemLightNw4r(CScnLightItemHost* th
     ml::FixStr<32> str(true);
     str.format(lbl_eu_80523ECC, param2);
     CScnItemLightNw4rAlloc* light = static_cast<CScnItemLightNw4rAlloc*>(
-        allocate__Q23mtl10MemManagerFUlUl(0x1224, func_80496018(ths)));
+        allocate__Q23mtl10MemManagerFUlUl(0x1224, Scn_CallUnk8C_V8(ths)));
     if (light != 0) {
         __ct__CScnItemLight(light, ths, &str, (void*)param2, param3);
         *(u32**)light = (u32*)lbl_eu_8056DD38;

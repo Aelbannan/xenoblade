@@ -25,7 +25,7 @@ union BdatCol {
 
 cf::CfGimmickItem::~CfGimmickItem() {
     this->vtable = (u32*)lbl_eu_80535A98;
-    func_80208EE4((cf::CfGimmick*)this);
+    CfGimmick_ClearManagerBinding((cf::CfGimmick*)this);
     func_8020A434(&this->field_7C);
     __dt__Q22cf9CfGimmickFv((cf::CfGimmick*)this, 0);
     // MWCC appends the deleting-dtor prologue (null guard) and epilogue
@@ -51,9 +51,9 @@ extern "C" cf::CfGimmickItem* __ct__cf_CfGimmickItem(cf::CfGimmickItem* self,
     self->field_64 = rowId;
 
     // Init the three sub-objects (placement vec, pad10, vobj).
-    func_80208F34((cf::CfGimmick*)self, &self->vvec04.x, mgr, &bdat);
-    func_80209020((cf::CfGimmick*)self, (cf::CfGimmick*)&self->vobj, mgr, &bdat);
-    func_80209288((cf::CfGimmick*)self, (f32*)self->pad10, mgr, &bdat);
+    CfGimmick_LoadBdatAreaPos((cf::CfGimmick*)self, &self->vvec04.x, mgr, &bdat);
+    CfGimmick_LoadBdatAreaExtents((cf::CfGimmick*)self, (cf::CfGimmick*)&self->vobj, mgr, &bdat);
+    CfGimmick_LoadBdatAreaRotation((cf::CfGimmick*)self, (f32*)self->pad10, mgr, &bdat);
 
     // Column name buffers "A_Item"/"A_Lost" get the slot letter written in
     // (the table pointer holds them at lbl_eu_806627B8[0]/[1]).
@@ -136,7 +136,7 @@ extern "C" cf::CfGimmickItem* __ct__cf_CfGimmickItem(cf::CfGimmickItem* self,
         removeLODEntry__8CTaskLODFv(self->field_70, lbl_eu_80668448);
     }
 
-    if (func_8020971C((u8*)(u32)self->field_64) != 0 && self->field_9C == 3) {
+    if (CfGimmick_CheckStateFlag2CC8((u8*)(u32)self->field_64) != 0 && self->field_9C == 3) {
         self->field_9E = 5;
     }
     return self;
@@ -173,7 +173,7 @@ void func_80210668(cf::CfGimmickItem* self) {
 // ---------------------------------------------------------------------------
 
 void func_80210844(cf::CfGimmickItem* self) {
-    func_80209F2C();
+    CfGimmick_SetGlobalFlagC0042();
 
     // a busy actor only stays when func_8020A5DC still reports work, and an
     // idle one is (re)spawned via func_8020A484 + busy bit.  The two fail
@@ -230,7 +230,7 @@ void func_80210AD0(cf::CfGimmickItem* self) {
     }
 
     if (self->field_64 != 0) {
-        func_8020974C(self->field_64, 1);
+        CfGimmick_TriggerSound2CC8(self->field_64, 1);
     }
 }
 
@@ -268,7 +268,7 @@ void func_802106F8(cf::CfGimmickItem* self) {
     }
 
     self->field_74 |= 0x10;
-    if (func_80209754((u32)self->field_66, (cf::CfGimmick*)&self->vobj, &self->vvec04,
+    if (CfGimmick_CheckTriggerGated((u32)self->field_66, (cf::CfGimmick*)&self->vobj, &self->vvec04,
                       (const f32*)self->pad10, (u32)self->field_7C.field_00) == 0)
         return;
 
@@ -287,7 +287,7 @@ void func_802106F8(cf::CfGimmickItem* self) {
     // While toggled-on, fire the per-frame effect at the placement point.
     if (self->field_66 & 1) {
         if (self->field_8E != 0) {
-            func_80208C48((u32)self->field_8E, &self->vvec04);
+            CfGimmick_PlaySoundAtPos((u32)self->field_8E, &self->vvec04);
         }
     }
 
@@ -303,7 +303,7 @@ void func_802106F8(cf::CfGimmickItem* self) {
 // ---------------------------------------------------------------------------
 
 void func_802108D8(cf::CfGimmickItem* self) {
-    func_80209F2C();
+    CfGimmick_SetGlobalFlagC0042();
 
     // While the 0x8 busy flag is clear, run the per-frame LOD filters, fire
     // the field_90 effect, link the area manager and play the field_92 sound.
@@ -337,7 +337,7 @@ void func_802108D8(cf::CfGimmickItem* self) {
 
         self->field_74 |= 8;
         if (self->field_90 != 0) {
-            func_80208C48((u32)self->field_90, &self->vvec04);
+            CfGimmick_PlaySoundAtPos((u32)self->field_90, &self->vvec04);
         }
 
         if (self->field_9B != 0) {
@@ -434,7 +434,7 @@ extern u32 lbl_eu_80535A3C[5];   // defined below (.data)
 extern char lbl_eu_80661BE0[];
 extern char lbl_eu_80662708[];
 extern "C" {
-void func_8020896C(void);
+void CfGimmick_DetachManager(void);
 void func_8020F484(void);
 void func_801F4B64(void);
 void func_801F4BF8(void);
@@ -446,7 +446,7 @@ __declspec(section ".data") __attribute__((used, aligned(8)))
 u32 lbl_eu_80535A18[9] = {
     (u32)lbl_eu_806627B0, 0,
     (u32)__dt__Q22cf13CfGimmickJumpFv,
-    (u32)func_8020896C, (u32)func_8020F484,
+    (u32)CfGimmick_DetachManager, (u32)func_8020F484,
     (u32)func_801F4B64, (u32)func_801F4BF8,
     (u32)func_801F4C8C, (u32)func_8020F38C,
 };

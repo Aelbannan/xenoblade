@@ -37,10 +37,10 @@ void CMenuPause::Init() {
     __ct__14Class_8045F858FP17UnkClass_8045F564(regionBuf, &mMemRegion);
     mtl::MemManager::setMemInitFlag(false);
 
-    buildLayout(&mLayout, func_801355F4(), &lbl_eu_8050C5C8[0xb]);
+    buildLayout(&mLayout, CUICfManager_getArcResourceAccessor(), &lbl_eu_8050C5C8[0xb]);
     bindLayoutAnimTransform(mLayout,
                   reinterpret_cast<nw4r::lyt::AnimTransform**>(&mField80),
-                  func_801355F4(), &lbl_eu_8050C5C8[0x24]);
+                  CUICfManager_getArcResourceAccessor(), &lbl_eu_8050C5C8[0x24]);
 
     // Bind the font and hand the loaded font object over to the root pane.
     nw4r::lyt::Pane* rootPane = mLayout->GetRootPane();
@@ -73,7 +73,7 @@ void CMenuPause::Init() {
                                                       : &lbl_eu_8050C5C8[0x86],
             0x6b);
         char* handle = MakeTplNameSysFile(msg);
-        void* tex = func_801355F4()->GetResource(0x74696D67, handle, NULL);
+        void* tex = CUICfManager_getArcResourceAccessor()->GetResource(0x74696D67, handle, NULL);
         if (tex != NULL) {
             PaneSetTexPaletteByName(mLayout, (void*)&lbl_eu_8050C5C8[0x8f], tex);
             // u16 -> f32 via MWCC's own 0x43300000 double-trick conversion:
@@ -103,7 +103,7 @@ void CMenuPause::Init() {
                                                       : &lbl_eu_8050C5C8[0x86],
             0x6c);
         char* handle = MakeTplNameSysFile(msg);
-        void* tex = func_801355F4()->GetResource(0x74696D67, handle, NULL);
+        void* tex = CUICfManager_getArcResourceAccessor()->GetResource(0x74696D67, handle, NULL);
         if (tex != NULL) {
             PaneSetTexPaletteByName(mLayout, (void*)&lbl_eu_8050C5C8[0xa6], tex);
             CMenuPauseTexDims* dims =

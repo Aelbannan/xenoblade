@@ -24,7 +24,7 @@ extern float lbl_eu_80668C64;
 extern "C" {
     void  func_800AA318(u32, float*, u32*, float*, float*);  // packed-token decode
     s32   func_80189A04(const char*);                        // archive-voice busy check
-    CVoicePoseBlock* func_80496264(CVoiceSndMgr*, s32);      // scene pose/xform block lookup
+    CVoicePoseBlock* Scn_FindCamItem(CVoiceSndMgr*, s32);      // scene pose/xform block lookup
     s32   func_801897A0(const char*, float, s32);            // start archive voice
     void  func_8018986C(const char*, float);                 // stop archive voice
     void  func_80189C40(s32, CVoicePos*, CVoicePoseBlock*, float, float, float); // update archive voice
@@ -115,7 +115,7 @@ void CCharVoice::func_802A0E08()
             return;
         }
 
-        CVoicePoseBlock* ch = func_80496264(lbl_eu_80663E14, -1);
+        CVoicePoseBlock* ch = Scn_FindCamItem(lbl_eu_80663E14, -1);
 
         // Model position fetch: getModelPos is called twice by retail
         // (once for the null test, once in the body) -- mirror that.

@@ -97,8 +97,8 @@ extern const f32 lbl_eu_80666FC8; // HP gauge width multiplier
 
 extern "C" {
 extern nw4r::lyt::ArcResourceAccessor* func_8012FDBC();
-extern u32 func_801355BC();
-extern u32 func_801355D8();
+extern u32 CUICfManager_getPackedFont9C();
+extern u32 CUICfManager_getPackedFontD8();
 }
 
 extern void playUISound(u32);
@@ -185,20 +185,20 @@ void CMenuBattlePlayerState::Init() {
         for (u8 i = 0; i < 3; i++) {
             CMenuBattlePlayerStateSlot& slot = mSlots[i];
 
-            accessor = CUICfManager::func_801355F4();
+            accessor = CUICfManager::CUICfManager_getArcResourceAccessor();
             buildLayout(&slot.unk00, accessor, tbl + 0x10E);
 
-            accessor = CUICfManager::func_801355F4();
+            accessor = CUICfManager::CUICfManager_getArcResourceAccessor();
             bindLayoutAnimTransform(slot.unk00, &slot.unk04, accessor, tbl + 0x12E);
 
             slot.unk00->SetAnimationEnable(slot.unk04, true);
             slot.unk04->SetFrame(0.0f);
             slot.unk00->Animate(0);
 
-            accessor = CUICfManager::func_801355F4();
+            accessor = CUICfManager::CUICfManager_getArcResourceAccessor();
             buildLayout(&slot.unk08, accessor, tbl + 0x151);
 
-            accessor = CUICfManager::func_801355F4();
+            accessor = CUICfManager::CUICfManager_getArcResourceAccessor();
             bindLayoutAnimTransform(slot.unk08, &slot.unk0C, accessor, tbl + 0x174);
             bindLayoutAnimTransform(slot.unk08, &slot.unk10, accessor, tbl + 0x19A);
             bindLayoutAnimTransform(slot.unk08, &slot.unk14, accessor, tbl + 0x1C5);
@@ -209,19 +209,19 @@ void CMenuBattlePlayerState::Init() {
             slot.unk0C->SetFrame(0.0f);
             slot.unk08->Animate(0);
 
-            accessor = CUICfManager::func_801355F4();
+            accessor = CUICfManager::CUICfManager_getArcResourceAccessor();
             buildLayout(&slot.unk18, accessor, tbl + 0x1F0);
 
-            accessor = CUICfManager::func_801355F4();
+            accessor = CUICfManager::CUICfManager_getArcResourceAccessor();
             bindLayoutAnimTransform(slot.unk18, &slot.unk1C, accessor, tbl + 0x210);
 
             {
                 nw4r::lyt::Pane* rootPane = slot.unk18->GetRootPane();
-                u32 fontHandle = func_801355BC();
+                u32 fontHandle = CUICfManager_getPackedFont9C();
                 func_8013676C(rootPane, fontHandle);
             }
             {
-                u32 fontAccessor = func_801355D8();
+                u32 fontAccessor = CUICfManager_getPackedFontD8();
                 setLayoutTextBoxFont(slot.unk18, tbl + 0x233, fontAccessor);
                 setLayoutTextBoxFont(slot.unk18, tbl + 0x23C, fontAccessor);
             }
@@ -260,20 +260,20 @@ void CMenuBattlePlayerState::Init() {
 
             slot.unk25C = 7;
 
-            accessor = CUICfManager::func_801355F4();
+            accessor = CUICfManager::CUICfManager_getArcResourceAccessor();
             buildLayout(&slot.unk20, accessor, tbl + 0x2BB);
 
-            accessor = CUICfManager::func_801355F4();
+            accessor = CUICfManager::CUICfManager_getArcResourceAccessor();
             bindLayoutAnimTransform(slot.unk20, &slot.unk24, accessor, tbl + 0x2DE);
 
             slot.unk20->SetAnimationEnable(slot.unk24, true);
             slot.unk24->SetFrame(0.0f);
             slot.unk20->Animate(0);
 
-            accessor = CUICfManager::func_801355F4();
+            accessor = CUICfManager::CUICfManager_getArcResourceAccessor();
             buildLayout(&slot.unk28, accessor, tbl + 0x304);
 
-            accessor = CUICfManager::func_801355F4();
+            accessor = CUICfManager::CUICfManager_getArcResourceAccessor();
             bindLayoutAnimTransform(slot.unk28, &slot.unk2C, accessor, tbl + 0x323);
             bindLayoutAnimTransform(slot.unk28, &slot.unk30, accessor, tbl + 0x347);
             bindLayoutAnimTransform(slot.unk28, &slot.unk34, accessor, tbl + 0x36D);
@@ -292,7 +292,7 @@ void CMenuBattlePlayerState::Init() {
                 // assign it over slot+0x74..0x204 (same clear shape as
                 // func_8010B324: 0x60-stride body then 0xC-stride remainder).
                 MenuBpsSlotInit init;
-                init.unk74 = CUICfManager::func_801355F4();
+                init.unk74 = CUICfManager::CUICfManager_getArcResourceAccessor();
                 init.unk78 = NULL;
                 init.unk7C = NULL;
                 init.unk80 = 0;
@@ -374,7 +374,7 @@ void CMenuBattlePlayerState::Init() {
 
             {
                 nw4r::lyt::Pane* subRoot = slot.unk78->GetRootPane();
-                u32 fontHandle = func_801355BC();
+                u32 fontHandle = CUICfManager_getPackedFont9C();
                 func_8013676C(subRoot, fontHandle);
             }
 
@@ -440,7 +440,7 @@ void CMenuBattlePlayerState::Init() {
             unk7F8 = f8b;
         }
 
-        accessor = CUICfManager::func_801355F4();
+        accessor = CUICfManager::CUICfManager_getArcResourceAccessor();
         unk7E0 = accessor;
 
         handle = mtl::MemManager::getHandleMEM2();
@@ -1363,7 +1363,7 @@ void func_8010D1B4(CMenuBattlePlayerState* self,
                     char* tex = MakeTplNameSysFile(nameId);
                     u32 bound = reinterpret_cast<u32>(
                         reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(
-                            func_801355F4())
+                            CUICfManager_getArcResourceAccessor())
                             ->GetResource(texKey, tex, NULL));
                     if (bound != 0) {
                         starPane->flagsBB =
@@ -1413,7 +1413,7 @@ void func_8010D1B4(CMenuBattlePlayerState* self,
                     char* tex = MakeTplNameSysFile(0x13D);
                     u32 bound = reinterpret_cast<u32>(
                         reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(
-                            func_801355F4())
+                            CUICfManager_getArcResourceAccessor())
                             ->GetResource(texKey2, tex, NULL));
                     if (bound != 0) {
                         starPane->flagsBB =
@@ -1432,7 +1432,7 @@ void func_8010D1B4(CMenuBattlePlayerState* self,
                         char* tex = MakeTplNameSysFile(nameId);
                         u32 bound = reinterpret_cast<u32>(
                             reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(
-                                func_801355F4())
+                                CUICfManager_getArcResourceAccessor())
                                 ->GetResource(texKey2, tex, NULL));
                         if (bound != 0) {
                             starPane->flagsBB =

@@ -273,7 +273,7 @@ struct PcEmbedLayout {
 
 struct RLayout;
 
-// Pose data returned by func_80496264(unk60, -1).
+// Pose data returned by Scn_FindCamItem(unk60, -1).
 // Matrix at +0x9C (VEC3TransformNormal), two Vec3f clusters at +0x10C and
 // +0x138, and a scale vec at +0x118.
 struct PoseLayout {
@@ -572,7 +572,7 @@ public:
 };
 
 // Minimal cf::CfGameManager (full header kyoshin/cf/CfGameManager.hpp, which
-// is not includable here: its extern "C" bool func_804960A8 clashes with the
+// is not includable here: its extern "C" bool Scn_IsScaleAtLeastOne clashes with the
 // int form in CTaskGame.hpp under MWCC 10505). Only the statics this TU uses
 // are declared.
 class CfGameManager {
@@ -583,7 +583,7 @@ public:
 }
 
 // Minimal CTaskGame (full header kyoshin/CTaskGame.hpp is not includable here
-// while its extern "C" func_8049603C/func_804960A8 caller-shape imports clash
+// while its extern "C" Scn_QueryUnk80State/Scn_IsScaleAtLeastOne caller-shape imports clash
 // with code_80135FDC.hpp / CfGameManager.hpp under MWCC 10197/10505). Only
 // the statics this TU uses are declared.
 class CTaskGame {
@@ -598,7 +598,7 @@ public:
 extern void* findObjectById(int);
 extern cf::CfObjectPc* getCfObjectPc(cf::CfObjectMove* objMove);
 // Last-selected actor id source (was declared in kyoshin/CTaskGame.hpp, which
-// is not includable here due to the concurrent func_8049603C/A8 conflict).
+// is not includable here due to the concurrent Scn_QueryUnk80State/A8 conflict).
 extern "C" void* func_800FE68C();
 
 // Unit functions whose retail linker symbols are UNMANGLED: declare them
@@ -672,7 +672,7 @@ int func_8013A4B4(void* a, void* b, void* c);
 // Retail leaves f1=vt+0x128 and f2=vt+0x12C live into these calls.
 
 
-void* func_80496264(void* obj, int index);
+void* Scn_FindCamItem(void* obj, int index);
 
 // Retail leaves AnimRewindFrame unmangled (declared extern "C" in
 // code_80135FDC.hpp); calls pass the AnimTransform* directly.
@@ -1062,7 +1062,7 @@ after_bit21:
             }
 
             {
-                PoseLayout* pose = static_cast<PoseLayout*>(func_80496264(unk60, -1));
+                PoseLayout* pose = static_cast<PoseLayout*>(Scn_FindCamItem(unk60, -1));
                 Vec3f a;
                 a.x = pose->vec10c_x;
                 a.y = pose->vec10c_y;
@@ -1376,7 +1376,7 @@ extern "C" u32 func_80110A70() { return (u32)lbl_eu_80663F50; }
 // singleton (or 0 when the accessor was missing).
 void* func_801109D8(void* parent, u32 scn, void* arg3) {
     if (lbl_eu_80663F50 == 0) {
-        if (func_801355F4() == 0) {
+        if (CUICfManager_getArcResourceAccessor() == 0) {
             return 0;
         }
         CMenuEnemyState* p = (CMenuEnemyState*)mtl::MemManager::allocate(
@@ -1529,15 +1529,15 @@ extern "C" void func_80110A78(CMenuEnemyState* self, u32 actorId) {
     void* tex = NULL;
     switch (*p258) {
     case 1:
-        tex = static_cast<nw4r::lyt::ArcResourceAccessor*>(func_801355F4())
+        tex = static_cast<nw4r::lyt::ArcResourceAccessor*>(CUICfManager_getArcResourceAccessor())
                   ->GetResource(0x74696D67, &lbl_eu_804FDBF8[0x20e], 0);
         break;
     case 2:
-        tex = static_cast<nw4r::lyt::ArcResourceAccessor*>(func_801355F4())
+        tex = static_cast<nw4r::lyt::ArcResourceAccessor*>(CUICfManager_getArcResourceAccessor())
                   ->GetResource(0x74696D67, &lbl_eu_804FDBF8[0x226], 0);
         break;
     case 3:
-        tex = static_cast<nw4r::lyt::ArcResourceAccessor*>(func_801355F4())
+        tex = static_cast<nw4r::lyt::ArcResourceAccessor*>(CUICfManager_getArcResourceAccessor())
                   ->GetResource(0x74696D67, &lbl_eu_804FDBF8[0x23e], 0);
         break;
     default:
@@ -1704,15 +1704,15 @@ extern "C" void func_801127B0(CMenuEnemyState* self) {
                 void* tex = NULL;
                 switch (*reinterpret_cast<cf::CActorParam*>(actor2)->CActorParam_getMarkKindPtr()) {
                 case 1:
-                    tex = static_cast<nw4r::lyt::ArcResourceAccessor*>(func_801355F4())
+                    tex = static_cast<nw4r::lyt::ArcResourceAccessor*>(CUICfManager_getArcResourceAccessor())
                               ->GetResource(0x74696D67, &lbl_eu_804FDBF8[0x20e], 0);
                     break;
                 case 2:
-                    tex = static_cast<nw4r::lyt::ArcResourceAccessor*>(func_801355F4())
+                    tex = static_cast<nw4r::lyt::ArcResourceAccessor*>(CUICfManager_getArcResourceAccessor())
                               ->GetResource(0x74696D67, &lbl_eu_804FDBF8[0x226], 0);
                     break;
                 case 3:
-                    tex = static_cast<nw4r::lyt::ArcResourceAccessor*>(func_801355F4())
+                    tex = static_cast<nw4r::lyt::ArcResourceAccessor*>(CUICfManager_getArcResourceAccessor())
                               ->GetResource(0x74696D67, &lbl_eu_804FDBF8[0x23e], 0);
                     break;
                 }
@@ -1866,15 +1866,15 @@ extern "C" void func_801127B0(CMenuEnemyState* self) {
                 void* tex2 = NULL;
                 switch (*reinterpret_cast<cf::CActorParam*>(actor2)->CActorParam_getMarkKindPtr()) {
                 case 1:
-                    tex2 = static_cast<nw4r::lyt::ArcResourceAccessor*>(func_801355F4())
+                    tex2 = static_cast<nw4r::lyt::ArcResourceAccessor*>(CUICfManager_getArcResourceAccessor())
                                ->GetResource(0x74696D67, &lbl_eu_804FDBF8[0x20e], 0);
                     break;
                 case 2:
-                    tex2 = static_cast<nw4r::lyt::ArcResourceAccessor*>(func_801355F4())
+                    tex2 = static_cast<nw4r::lyt::ArcResourceAccessor*>(CUICfManager_getArcResourceAccessor())
                                ->GetResource(0x74696D67, &lbl_eu_804FDBF8[0x226], 0);
                     break;
                 case 3:
-                    tex2 = static_cast<nw4r::lyt::ArcResourceAccessor*>(func_801355F4())
+                    tex2 = static_cast<nw4r::lyt::ArcResourceAccessor*>(CUICfManager_getArcResourceAccessor())
                                ->GetResource(0x74696D67, &lbl_eu_804FDBF8[0x23e], 0);
                     break;
                 }
@@ -1983,7 +1983,7 @@ extern "C" void func_8010EE40(CPcSelectCursorLayout* self) {
         pos = *src;
 
         PoseLayout* pose = static_cast<PoseLayout*>(
-            func_80496264(reinterpret_cast<void*>(self->field04), -1));
+            Scn_FindCamItem(reinterpret_cast<void*>(self->field04), -1));
         func_8049B59C(&out, pose, &pos);
 
         arrow->flagBB = (arrow->flagBB & 0xFE) | 1;
@@ -2303,7 +2303,7 @@ tail:
 // root pane (and layout2/unk74 panes when panelType != 0).
 extern "C" void func_80111080(CMenuEnemyState* self, u8* panelData, void* posA, void* posB) {
     MenuEnemyPanel* panel = reinterpret_cast<MenuEnemyPanel*>(panelData);
-    PoseLayout* pose = static_cast<PoseLayout*>(func_80496264(self->unk60, -1));
+    PoseLayout* pose = static_cast<PoseLayout*>(Scn_FindCamItem(self->unk60, -1));
     nw4r::math::VEC3* pa = static_cast<nw4r::math::VEC3*>(posA);
     nw4r::math::VEC3* pb = static_cast<nw4r::math::VEC3*>(posB);
     nw4r::math::VEC3 v;
@@ -2466,7 +2466,7 @@ extern "C" void func_801124C8(CMenuEnemyState* self, Actor2Layout* actor2) {
                 if (id != 0) {
                     char* name = MakeTplNameSysFile(id);
                     nw4r::lyt::ArcResourceAccessor* accessor =
-                        static_cast<nw4r::lyt::ArcResourceAccessor*>(func_801355F4());
+                        static_cast<nw4r::lyt::ArcResourceAccessor*>(CUICfManager_getArcResourceAccessor());
                     void* tex = accessor->GetResource(0x74696D67, name, 0);
                     if (tex != 0) {
                         f94->flagBB = (f94->flagBB & 0xFE) | 1;
@@ -2503,7 +2503,7 @@ extern "C" void func_801124C8(CMenuEnemyState* self, Actor2Layout* actor2) {
                     if (idx2 == 0x20) {
                         char* name = MakeTplNameSysFile(0x13d);
                         nw4r::lyt::ArcResourceAccessor* accessor =
-                            static_cast<nw4r::lyt::ArcResourceAccessor*>(func_801355F4());
+                            static_cast<nw4r::lyt::ArcResourceAccessor*>(CUICfManager_getArcResourceAccessor());
                         void* tex = accessor->GetResource(0x74696D67, name, 0);
                         if (tex != 0) {
                             f98->flagBB = (f98->flagBB & 0xFE) | 1;
@@ -2517,7 +2517,7 @@ extern "C" void func_801124C8(CMenuEnemyState* self, Actor2Layout* actor2) {
                         if (id != 0) {
                             char* name = MakeTplNameSysFile(id);
                             nw4r::lyt::ArcResourceAccessor* accessor =
-                                static_cast<nw4r::lyt::ArcResourceAccessor*>(func_801355F4());
+                                static_cast<nw4r::lyt::ArcResourceAccessor*>(CUICfManager_getArcResourceAccessor());
                             void* tex = accessor->GetResource(0x74696D67, name, 0);
                             if (tex != 0) {
                                 f98->flagBB = (f98->flagBB & 0xFE) | 1;
@@ -2732,7 +2732,7 @@ void func_801132A8(CMenuEnemyState* self, u8* panelData, void* actor) {
             // and the texture index inside the load call.
             if (res->id0C != 0 && res->id0C == *((u8*)&bits + oi)) {
                 nw4r::lyt::ArcResourceAccessor* accessor =
-                    static_cast<nw4r::lyt::ArcResourceAccessor*>(func_801355F4());
+                    static_cast<nw4r::lyt::ArcResourceAccessor*>(CUICfManager_getArcResourceAccessor());
                 void* tex = accessor->GetResource(
                     0x74696D67, reinterpret_cast<const char*>((&tbl32.a)[oi]), 0);
                 if (tex != 0) {
@@ -2878,7 +2878,7 @@ void CMenuEnemyState::Init() {
 
         // ---- layout1 arc + panes ----
         buildLayout(pLayout1,
-                      reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(func_801355F4()),
+                      reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(CUICfManager_getArcResourceAccessor()),
                       &lbl_eu_804FDBF8[0xb8]);
         func_80137B44(*pLayout1, &lbl_eu_804FDBF8[0xd3], colD3);
         func_80137B44(*pLayout1, &lbl_eu_804FDBF8[0xdd], colDD);
@@ -2948,7 +2948,7 @@ void CMenuEnemyState::Init() {
         // ---- layout2 arc + panes ----
         nw4r::lyt::Layout** pLayout2 = &panel->layout2;
         buildLayout(pLayout2,
-                      reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(func_801355F4()),
+                      reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(CUICfManager_getArcResourceAccessor()),
                       &lbl_eu_804FDBF8[0x12e]);
 
         // First pass: pull the four shared colour quads off pane 0x147 and
@@ -2990,10 +2990,10 @@ void CMenuEnemyState::Init() {
 
     // ---- main menu layout ----
     buildLayout(&unk74,
-                  reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(func_801355F4()),
+                  reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(CUICfManager_getArcResourceAccessor()),
                   &lbl_eu_804FDBF8[0x173]);
     bindLayoutAnimTransform(unk74, &unk78,
-                  reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(func_801355F4()),
+                  reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(CUICfManager_getArcResourceAccessor()),
                   &lbl_eu_804FDBF8[0x190]);
 
     // Bind the font: root pane + font object slot 0x24, push back onto root.
@@ -3001,8 +3001,8 @@ void CMenuEnemyState::Init() {
     void* fontObj = CDeviceFont::getFontInfo(1, unk74);
     func_8013676C(rootPane, reinterpret_cast<cf::CObjectState*>(fontObj)->CObjectState_checkStateFlags8(0));
 
-    setLayoutTextBoxFont(unk74, &lbl_eu_804FDBF8[0x1b2], func_801355D8());
-    setLayoutTextBoxFont(unk74, &lbl_eu_804FDBF8[0x1bb], func_801355D8());
+    setLayoutTextBoxFont(unk74, &lbl_eu_804FDBF8[0x1b2], CUICfManager_getPackedFontD8());
+    setLayoutTextBoxFont(unk74, &lbl_eu_804FDBF8[0x1bb], CUICfManager_getPackedFontD8());
 
     unk74->SetAnimationEnable(unk78, true);
     reinterpret_cast<AnimTransformOverlay*>(unk78)->field10 = lbl_eu_80666FEC;
@@ -3021,7 +3021,7 @@ void CMenuEnemyState::Init() {
 
     // Cursor: stash the shared arc accessor + scene, then build the layouts.
     u32 scn = (u32)unk60;
-    selectCursor.field18 = (u32)func_801355F4();
+    selectCursor.field18 = (u32)CUICfManager_getArcResourceAccessor();
     selectCursor.field04 = scn;
     func_8010EB44(&selectCursor);
 

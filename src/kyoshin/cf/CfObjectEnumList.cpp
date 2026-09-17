@@ -426,8 +426,8 @@ extern const float lbl_eu_80666EBC;
 // retail unmangled reloc name matches (same convention as func_800F4B5C).
 extern "C" int func_800FD3FC(cf::CfObjEnumList* list, CfEnumActor* aux,
                              ml::CVec3* spot);
-void* func_80496264(void* scene, int index);   // scene pose/xform block
-void* func_8049627C(void* scene, int flag);    // scene view frame
+void* Scn_FindCamItem(void* scene, int index);   // scene pose/xform block
+void* Scn_SetCamIndex(void* scene, int flag);    // scene view frame
 int func_8049B59C(void* out, void* pose, void* pos); // view-space transform
 void getFrame2ViewOffset__10CViewFrameFR7CRect16PC10CViewFrame(
     void* rect, const void* frame);
@@ -1225,8 +1225,8 @@ extern "C" void func_800F89DC(cf::CfObjEnumList* self) {
         return;
     }
     EnumViewFrameShorts* vf = reinterpret_cast<EnumViewFrameShorts*>(
-        func_8049627C((void*)self->field_303C, 0));
-    void* pose = func_80496264((void*)self->field_303C, 0);
+        Scn_SetCamIndex((void*)self->field_303C, 0));
+    void* pose = Scn_FindCamItem((void*)self->field_303C, 0);
 
     // Pass 1: view-space transform of each entry without the bit-0 mark.
     for (u32 i = 0; i < self->mPtrCount; i++) {
@@ -1321,7 +1321,7 @@ extern "C" void func_800F89DC(cf::CfObjEnumList* self) {
 }
 
 // __ct__800FA9B4: rebuild the list by projecting every object position through
-// the scene's view transform: func_80496264/func_8049627C fetch the pose block
+// the scene's view transform: Scn_FindCamItem/Scn_SetCamIndex fetch the pose block
 // and view frame, func_8049B59C writes the view-space position into info+8 for
 // two probe slots, then a screen-rect gate (getFrame2ViewOffset), the coli
 // probe func_804BE348 on t[k]+border-offset, and the global func_804B5088
@@ -1335,9 +1335,9 @@ void __ct__800FA9B4(cf::CfObjEnumList* list, void* scene, u32 options) {
     if (count == 0) {
         return;
     }
-    void* pose = func_80496264(scene, 0);
+    void* pose = Scn_FindCamItem(scene, 0);
     EnumViewFrameShorts* vf =
-        reinterpret_cast<EnumViewFrameShorts*>(func_8049627C(scene, 0));
+        reinterpret_cast<EnumViewFrameShorts*>(Scn_SetCamIndex(scene, 0));
     s16 border = -20;   // screen-space border, live across the whole loop
 
     // Snapshot context: leading never-written word, array copy, sort descriptor.

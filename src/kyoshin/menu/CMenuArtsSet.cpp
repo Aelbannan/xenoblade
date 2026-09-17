@@ -638,7 +638,7 @@ extern "C" __declspec(noinline) void ArtsCharList_refreshDisplay(SArtsSub8022FA5
             MakeTplNameSysFile(BdatGetU16Direct(lbl_eu_80664090, lbl_eu_8050AC70 + 0xe1,
                                         id) &
                           0xFFFF);
-        void* res = func_801355F4()->GetResource(0x74696D67u, tex, 0);
+        void* res = CUICfManager_getArcResourceAccessor()->GetResource(0x74696D67u, tex, 0);
         if (res != 0) {
             PaneSetTexPaletteByName((nw4r::lyt::Layout*)self->field_0x00,
                           lbl_eu_8050AC70 + 0xea, res);
@@ -656,7 +656,7 @@ extern "C" __declspec(noinline) void ArtsCharList_refreshDisplay(SArtsSub8022FA5
             MakeTplNameSysFile(BdatGetU16Direct(lbl_eu_80664090, lbl_eu_8050AC70 + 0xe1,
                                         id) &
                           0xFFFF);
-        void* res = func_801355F4()->GetResource(0x74696D67u, tex, 0);
+        void* res = CUICfManager_getArcResourceAccessor()->GetResource(0x74696D67u, tex, 0);
         if (res != 0) {
             PaneSetTexPaletteByName((nw4r::lyt::Layout*)self->field_0x00,
                           lbl_eu_8050AC70 + 0xf5, res);
@@ -3265,7 +3265,7 @@ int CArtsList::OnFileEvent(CEventFile* pEventFile) {
                           1, (nw4r::lyt::Layout*)field_0x1C))
                          ->v7();
     func_8013676C(pane, fontHandle);
-    void* text = func_801355BC();
+    void* text = CUICfManager_getPackedFont9C();
     if (text != 0) {
         setLayoutTextBoxFont__FPQ34nw4r3lyt6LayoutPcUl((nw4r::lyt::Layout*)field_0x1C,
                                                 lbl_eu_8050AC70 + 0x6F, (u32)text);

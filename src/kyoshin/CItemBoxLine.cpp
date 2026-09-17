@@ -24,10 +24,10 @@
 // Tab entry accessors (retail symbols are plain func_XXXX names).
 u8 func_801EF034(const CIBLTabCur* self, unsigned int index);
 u16 ItemBoxLine_GetTabEntryItem(const CIBLTab* self, unsigned int index);
-extern "C" void func_801EBB9C(CIBLTabEntry* dest, const CIBLTabEntry* src);
+extern "C" void ItemBoxLine_CopyTabEntry(CIBLTabEntry* dest, const CIBLTabEntry* src);
 extern "C" CIBLTabEntry* ItemBoxLine_InitTabEntry(CIBLTabEntry* self, u16 r4, u32 r5, u8 r6, u8 r7);
-u8 func_801EC23C(const CIBLTab* self, unsigned int index);
-u8 func_801EC8B4(const CIBLTab* self, unsigned int index);
+u8 ItemBoxLine_GetTabEntryLock(const CIBLTab* self, unsigned int index);
+u8 ItemBoxLine_GetTabEntryReady(const CIBLTab* self, unsigned int index);
 void func_801EDA08(CItemBoxLine* self);
 void func_801F1E64(CItemBoxLine* self, u32 itemData);
 void func_801F20F0(CItemBoxLine* self, u32 itemData);
@@ -90,11 +90,11 @@ void func_801EF050(void* self) {
 u8 func_801ED800(void* self) { return static_cast<CItemBoxLine*>(self)->unk59; }
 
 // ============================================================================
-// func_801EBB9C: copy a 12-byte tab entry. extern "C" + noinline: the retail
+// ItemBoxLine_CopyTabEntry: copy a 12-byte tab entry. extern "C" + noinline: the retail
 // name is unmangled and func_801EBAD4's calls are external relocs (see the
 // ItemBoxLine_InitTabEntry stub note).
 // ============================================================================
-extern "C" __declspec(noinline) void func_801EBB9C(CIBLTabEntry* dest, const CIBLTabEntry* src) {
+extern "C" __declspec(noinline) void ItemBoxLine_CopyTabEntry(CIBLTabEntry* dest, const CIBLTabEntry* src) {
     dest->f0 = src->f0;
     dest->f4 = src->f4;
     dest->f8 = src->f8;
@@ -114,7 +114,7 @@ void func_801EBC00(CIBLTab* self, u8 arg2, u16 arg3, u8 arg4) {
     self->field92 = arg2;
     CIBLTabEntry tmp;
     for (u16 i = 0; i < 12; i++) {
-        func_801EBB9C(&self->entries[i], ItemBoxLine_InitTabEntry(&tmp, 0, 0, 0, 0));
+        ItemBoxLine_CopyTabEntry(&self->entries[i], ItemBoxLine_InitTabEntry(&tmp, 0, 0, 0, 0));
     }
     if (self->field93 != 1) {
         // Item-name probe path: per-tab format table, then a 12-entry scan.
@@ -240,16 +240,16 @@ void func_801EBC00(CIBLTab* self, u8 arg2, u16 arg3, u8 arg4) {
 // Tab entry accessors (array of 12-byte CIBLTabEntry behind a halfword count)
 // ============================================================================
 
-// func_801EC23C: u8 at +0x8
-u8 func_801EC23C(const CIBLTab* self, unsigned int index) {
+// ItemBoxLine_GetTabEntryLock: u8 at +0x8
+u8 ItemBoxLine_GetTabEntryLock(const CIBLTab* self, unsigned int index) {
     if (index < self->count) {
         return self->entries[index].f8;
     }
     return 0;
 }
 
-// func_801EC260: u32 at +0x4
-u32 func_801EC260(const CIBLTab* self, unsigned int index) {
+// ItemBoxLine_GetTabEntryValue: u32 at +0x4
+u32 ItemBoxLine_GetTabEntryValue(const CIBLTab* self, unsigned int index) {
     if (index < self->count) {
         return self->entries[index].f4;
     }
@@ -264,10 +264,10 @@ u16 ItemBoxLine_GetTabEntryItem(const CIBLTab* self, unsigned int index) {
     return 0;
 }
 
-// func_801EC8B4: u8 at +0x9 (default 1)
+// ItemBoxLine_GetTabEntryReady: u8 at +0x9 (default 1)
 // noinline: retail calls this accessor out-of-line from func_801ED864/
 // func_801F0488; -ipa file would otherwise fold it into those callers.
-__declspec(noinline) u8 func_801EC8B4(const CIBLTab* self, unsigned int index) {
+__declspec(noinline) u8 ItemBoxLine_GetTabEntryReady(const CIBLTab* self, unsigned int index) {
     if (index < self->count) {
         return self->entries[index].f9;
     }
@@ -330,10 +330,10 @@ void func_801EDA08(CItemBoxLine* self) {
 }
 
 // ============================================================================
-// func_801EC3D0: format the entry index's name into the trailing FixStr<32>
+// ItemBoxLine_FormatTabEntryName: format the entry index's name into the trailing FixStr<32>
 // buffer (pool+0x57 "%s"); null if the index is out of range.
 // ============================================================================
-ml::FixStr<32>* func_801EC3D0(CIBLTabFormat* self, unsigned int index) {
+ml::FixStr<32>* ItemBoxLine_FormatTabEntryName(CIBLTabFormat* self, unsigned int index) {
     if (index < self->count) {
         self->str94.format(&lbl_eu_805071B0[0x57], func_801394D4(self->entries[index].f0));
         return &self->str94;
@@ -581,20 +581,20 @@ CItemBoxLine::~CItemBoxLine() {
 #pragma pop
 
 // ============================================================================
-// func_801ED31C: load the item-box line's four files (MEM2 handle via
+// ItemBoxLine_LoadFiles: load the item-box line's four files (MEM2 handle via
 // getHandleMEM2, the third through the common archive) with this as the load
 // event, then initialise the info2 state, num-select and scroll-bar members,
 // and finally dispatch the syswin's last vtable slot (index 32) to finish.
 // ============================================================================
 #pragma push
 #pragma optimize_for_size on
-void func_801ED31C(CItemBoxLine* self) {
+void ItemBoxLine_LoadFiles(CItemBoxLine* self) {
     self->field24 = (u32)readFile__11CDeviceFileFUlPCcP10IWorkEventii(
         (u32)getHandleMEM2__Q23mtl10MemManagerFv(), &lbl_eu_805071B0[0x171], self, 0, 0);
     self->field28 = (u32)readFile__11CDeviceFileFUlPCcP10IWorkEventii(
         (u32)getHandleMEM2__Q23mtl10MemManagerFv(), &lbl_eu_805071B0[0x189], self, 0, 0);
     self->field2C = (u32)readCommonArchiveFile__11CDeviceFileFUlPCcP10IWorkEventii(
-        (u32)func_800A9D90(), &lbl_eu_805071B0[0x1a2], self, 0, 0);
+        (u32)KyoshinHeap_GetField44(), &lbl_eu_805071B0[0x1a2], self, 0, 0);
     self->field30 = (u32)readFile__11CDeviceFileFUlPCcP10IWorkEventii(
         (u32)getHandleMEM2__Q23mtl10MemManagerFv(), &lbl_eu_805071B0[0x1bf], self, 0, 0);
     func_801E12E0(&self->mInfo2D0[0]);
@@ -604,7 +604,7 @@ void func_801ED31C(CItemBoxLine* self) {
 }
 #pragma pop
 
-void func_801ED3E8(CItemBoxLine* self) {
+void ItemBoxLine_UpdateStates(CItemBoxLine* self) {
     if (self->field4C == 0) return;
     switch (self->field50) {
     case 0: func_801EF1E4((void*)self); break;
@@ -742,9 +742,9 @@ void func_801ED864(CItemBoxLine* self) {
     // retail keeps them in r28..r31 behind a _savegpr_28 prologue.
     CIBLTab* tabs = &self->unk3A4;
     u8 idx = (u8)(self->unk38C + self->unk38E);
-    int f9 = func_801EC8B4((void*)tabs, idx);
+    int f9 = ItemBoxLine_GetTabEntryReady((void*)tabs, idx);
     func_801E14DC(&self->mInfo2D0[0], (u16)ItemBoxLine_GetTabEntryItem(tabs, idx), 0, self->field39F, f9);
-    func_801E16F0(&self->mInfo2D0[0], 0, (char*)func_801EC3D0(tabs, idx));
+    func_801E16F0(&self->mInfo2D0[0], 0, (char*)ItemBoxLine_FormatTabEntryName(tabs, idx));
     func_801F08B4(self, (u16)ItemBoxLine_GetTabEntryItem(tabs, idx));
     float vec[3];
     func_801F3670(&self->mScrollBar310[0],
@@ -874,7 +874,7 @@ void func_801EDC94(CItemBoxLine* self) {
         if (!((u16)self->field392 > lim)) self->field392 = 1;
         func_801EB218(&self->mNumSel);
         func_801EB04C(&self->mNumSel, (u8)self->field392);
-        func_801EB064(&self->mNumSel, self->field392 * func_801EC260((void*)tabs, idx));
+        func_801EB064(&self->mNumSel, self->field392 * ItemBoxLine_GetTabEntryValue((void*)tabs, idx));
     } else {
         if (self->unk38C == 0 && self->unk38E == 0) {
             self->unk38C = -1;
@@ -958,7 +958,7 @@ void func_801EDF40(CItemBoxLine* self) {
         if ((s16)self->field392 < 1) self->field392 = lim;
         func_801EB314(&self->mNumSel);
         func_801EB04C(&self->mNumSel, (u8)self->field392);
-        func_801EB064(&self->mNumSel, self->field392 * func_801EC260((void*)tabs, idx));
+        func_801EB064(&self->mNumSel, self->field392 * ItemBoxLine_GetTabEntryValue((void*)tabs, idx));
     } else {
         u16 count = self->unk3A4.count;
         if (count >= 7) {
@@ -1031,7 +1031,7 @@ void func_801EE228(CItemBoxLine* self) {
             if (self->field392 < 1) self->field392 = 1;
         }
         func_801EB04C(&self->mNumSel, (u8)self->field392);
-        func_801EB064(&self->mNumSel, self->field392 * func_801EC260((void*)tabs, idx));
+        func_801EB064(&self->mNumSel, self->field392 * ItemBoxLine_GetTabEntryValue((void*)tabs, idx));
         playUISound__FUl(1);
     } else {
         if (self->unk38C == -1) {
@@ -1096,7 +1096,7 @@ void func_801EE448(CItemBoxLine* self) {
             if ((u32)self->field392 > (u32)lim) self->field392 = (s16)lim;
         }
         func_801EB04C(&self->mNumSel, (u8)self->field392);
-        func_801EB064(&self->mNumSel, self->field392 * func_801EC260((void*)tabs, idx));
+        func_801EB064(&self->mNumSel, self->field392 * ItemBoxLine_GetTabEntryValue((void*)tabs, idx));
         playUISound__FUl(1);
         return;
     }
@@ -1204,7 +1204,7 @@ void func_801EE788(CItemBoxLine* self) {
         return;
     }
     if (ItemBoxLine_GetTabEntryItem(tabs, key) == 0) return;
-    if (func_801EC23C(tabs, key) != 0) {
+    if (ItemBoxLine_GetTabEntryLock(tabs, key) != 0) {
         playUISound__FUl(5);
         return;
     }
@@ -1297,7 +1297,7 @@ void func_801F0030(CItemBoxLine* self) {
     char* pool = lbl_eu_805071B0;
     for (u8 i = 0; i < 7; i++) {
         u16 idx = (u16)(self->unk38E + i);
-        if (func_801EC23C((void*)tabs, idx) != 0) {
+        if (ItemBoxLine_GetTabEntryLock((void*)tabs, idx) != 0) {
             __as__11_GXColorS10FRC11_GXColorS10(&colors[8], &colors[4]);
             __as__11_GXColorS10FRC11_GXColorS10(&colors[9], &colors[5]);
             __as__11_GXColorS10FRC11_GXColorS10(&colors[10], &colors[6]);
@@ -1311,7 +1311,7 @@ void func_801F0030(CItemBoxLine* self) {
         u16 key = ItemBoxLine_GetTabEntryItem(tabs, idx);
         func_801EF734((void*)self, key, i);
         func_801EF844((void*)self, key, i);
-        u8 vis = func_801EC8B4((void*)tabs, idx);
+        u8 vis = ItemBoxLine_GetTabEntryReady((void*)tabs, idx);
         func_801EFDF4((void*)self, i, vis);
         func_801EF954((void*)self, key, (s8)func_801EC8D8((void*)tabs, idx), i);
         if (key == 0) {
@@ -1324,7 +1324,7 @@ void func_801F0030(CItemBoxLine* self) {
             char nameBuf1[0x20];
             sprintf(nameBuf1, pool + 0x39d, i + 1);
             LayoutSetTextBoxFmtValue(self->field40, nameBuf1,
-                          (char*)func_801EC3D0((void*)tabs, idx), 0);
+                          (char*)ItemBoxLine_FormatTabEntryName((void*)tabs, idx), 0);
             FourShorts fs0 = func_80139658(self->field40, nameBuf1, 0);
             FourShorts fs1 = fs0;
             FourShorts fs2 = func_80139658(self->field40, nameBuf1, 1);
@@ -1333,7 +1333,7 @@ void func_801F0030(CItemBoxLine* self) {
             colors[9].a = fs2.d;
             PaneMatSetTevColorsByName(self->field40, nameBuf1, &colors[8], &colors[9]);
             char* name = BdatTouchStringCell(pool + 0x248, pool + 0x6c, 3);
-            u32 count = func_801EC260((void*)tabs, idx);
+            u32 count = ItemBoxLine_GetTabEntryValue((void*)tabs, idx);
             char buf3[0x20];
             sprintf(buf3, pool + 0x3bb, count, name);
             sprintf(nameBuf1, pool + 0x3aa, i + 1);
@@ -1571,13 +1571,13 @@ void func_801EF45C(CItemBoxLine* self) {
     self->field392 = 1;
     // tabs pointer is CSE'd into one callee-saved register (retail r30). The
     // (u8*) arg type routes both calls through the extern "C" (void*,
-    // unsigned) overloads so MWCC emits external relocs to func_801EC3D0 /
-    // func_801EC260 (retail object boundary) instead of inlining the same-TU
+    // unsigned) overloads so MWCC emits external relocs to ItemBoxLine_FormatTabEntryName /
+    // ItemBoxLine_GetTabEntryValue (retail object boundary) instead of inlining the same-TU
     // definitions.
     u8* tabs = (u8*)&self->unk3A4;
-    func_801EB030(&self->mNumSel, func_801EC3D0(tabs, tabidx));
+    func_801EB030(&self->mNumSel, ItemBoxLine_FormatTabEntryName(tabs, tabidx));
     func_801EB04C(&self->mNumSel, (u8)self->field392);
-    func_801EB064(&self->mNumSel, self->field392 * func_801EC260(tabs, tabidx));
+    func_801EB064(&self->mNumSel, self->field392 * ItemBoxLine_GetTabEntryValue(tabs, tabidx));
     func_801EB0D4(&self->mNumSel);
     self->field50 = 6;
 }
@@ -1857,12 +1857,12 @@ void func_801F0488(CItemBoxLine* self) {
     LayoutSetTextBoxFmtValue(self->field40, &lbl_eu_805071B0[0x3c0], name,
                   reinterpret_cast<u32>(self->field54));
     if (getItemBox2State__FP13CItemBoxInfo2(&self->mInfo2D0[0]) != 0) {
-        u8 f9 = func_801EC8B4(reinterpret_cast<u8*>(tabs), idx);
+        u8 f9 = ItemBoxLine_GetTabEntryReady(reinterpret_cast<u8*>(tabs), idx);
         u16 f0 = ItemBoxLine_GetTabEntryItem(tabs, idx);
         func_801E14DC(reinterpret_cast<u8*>(&self->mInfo2D0[0]), f0, 0,
                       self->field39F, f9);
         char* tabName = reinterpret_cast<char*>(
-            func_801EC3D0(reinterpret_cast<u8*>(tabs), idx));
+            ItemBoxLine_FormatTabEntryName(reinterpret_cast<u8*>(tabs), idx));
         func_801E16F0(reinterpret_cast<u8*>(&self->mInfo2D0[0]), 0, tabName);
         func_801F08B4(reinterpret_cast<u8*>(self),
                       ItemBoxLine_GetTabEntryItem(tabs, idx));
@@ -2551,7 +2551,7 @@ bool CItemBoxLine::OnFileEvent(CEventFile* evt) {
         func_8013676C(root, ((IDeviceFontInfo*)fontObj)->getFont());
 
         // Seed the seven slot-name textboxes with the line text.
-        char* text = func_801355BC();
+        char* text = CUICfManager_getPackedFont9C();
         for (u8 i = 1; i <= 7; i++) {
             char buf[0x20];
             sprintf(buf, &lbl_eu_805071B0[0x3aa], i);
@@ -2579,7 +2579,7 @@ bool CItemBoxLine::OnFileEvent(CEventFile* evt) {
         }
 
         // Bind the line text into the sixteen label panes.
-        char* text2 = func_801355BC();
+        char* text2 = CUICfManager_getPackedFont9C();
         setLayoutTextBoxFont(this->field40, &lbl_eu_805071B0[0x4a6], (u32)text2);
         setLayoutTextBoxFont(this->field40, &lbl_eu_805071B0[0x4ca], (u32)text2);
         setLayoutTextBoxFont(this->field40, &lbl_eu_805071B0[0x4d6], (u32)text2);
@@ -2665,13 +2665,13 @@ bool CItemBoxLine::OnFileEvent(CEventFile* evt) {
 
         // Build the four embedded cursors from stack temps (copy + teardown).
         u8 cur70[0x18];
-        __ct__CCur18((CBaseCur*)cur70, func_801355F4());
+        __ct__CCur18((CBaseCur*)cur70, CUICfManager_getArcResourceAccessor());
         func_8018B0FC(&this->mCur70, cur70);
         __dt__6CCur18Fv((CBaseCur*)cur70, -1);
         ((CBaseCur*)&this->mCur70)->initLayout();
 
         u8 cur88[0x18];
-        __ct__CCur18((CBaseCur*)cur88, func_801355F4());
+        __ct__CCur18((CBaseCur*)cur88, CUICfManager_getArcResourceAccessor());
         func_8018B0FC(&this->mCur88, cur88);
         __dt__6CCur18Fv((CBaseCur*)cur88, -1);
         ((CBaseCur*)&this->mCur88)->initLayout();
@@ -2800,7 +2800,7 @@ void func_801EBAD4(CIBLTabFull* self) {
     CIBLTabEntry tmp;
     for (u16 i = 0; i < 12; i++) {
         CIBLTabEntry* src = ItemBoxLine_InitTabEntry(&tmp, 0, 0, 0, 0);
-        func_801EBB9C(&self->entries[i], src);
+        ItemBoxLine_CopyTabEntry(&self->entries[i], src);
     }
 }
 // ============================================================================

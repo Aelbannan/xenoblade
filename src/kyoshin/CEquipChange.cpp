@@ -48,7 +48,7 @@ extern const float lbl_eu_806682A8;
 extern "C" void playUISound__FUl(u32 op);
 extern "C" u8 GetCollectedFlagByte(u32);
 extern "C" void* func_802052A8(CEquipChange* self);
-extern "C" int func_802031A0(CEquipChange* self);
+extern "C" int EquipChange_MapCursorToSlot(CEquipChange* self);
 
 // Target us-80203cec: destructor. Retail frame uses the stmw/lmw save shape
 // with the null-check cmpwi hoisted above the frame stores; the extern "C"
@@ -179,8 +179,8 @@ extern "C" CEquipChange* __ct__CEquipChange(CEquipChange* self) {
     v->f2f0[1] = eqTmp.f2f0[1];
     v->f2f0[2] = eqTmp.f2f0[2];
     v->f2f0[3] = eqTmp.f2f0[3];
-    func_801FA220(&v->f2f4[0], &eqTmp.f2f4[0]);
-    func_801FA220(&v->f30c[0], &eqTmp.f30c[0]);
+    PartyStateWin_CopySlotRec(&v->f2f4[0], &eqTmp.f2f4[0]);
+    PartyStateWin_CopySlotRec(&v->f30c[0], &eqTmp.f30c[0]);
     func_8018B0FC(&v->f324[0], &eqTmp.f324[0]);
     __ct__UnkClass_8011C974(&v->f340[0], &eqTmp.f340[0]);
     v->f350[0] = eqTmp.f350[0];
@@ -279,7 +279,7 @@ extern "C" CEquipChange* __ct__CEquipChange(CEquipChange* self) {
 // layout (0xA4) and the equip item box (0x2B0).
 // Retail frame is the optimize_for_size stmw/lmw pair.
 #pragma optimize_for_size on
-void func_80202090(CEquipChange* self) {
+void EquipChange_LoadBindFiles(CEquipChange* self) {
     const char* path = lbl_eu_80508168;
     self->field_24 = (u32)CDeviceFile::readFile(mtl::MemManager::getHandleMEM2(),
                                                 path, reinterpret_cast<IWorkEvent*>(self), 0, 0);
@@ -294,25 +294,25 @@ void func_80202090(CEquipChange* self) {
 
 // Forward declarations for functions whose definitions live at the end of this
 // TU. Declaring (not defining) them here prevents MWCC from inlining their
-// bodies into callers like func_80203994 / func_80203FCC, which must emit the
+// bodies into callers like EquipChange_GetLockedState / func_80203FCC, which must emit the
 // retail `bl` (external) calls.
-extern "C" int func_802031A0(CEquipChange* self);
+extern "C" int EquipChange_MapCursorToSlot(CEquipChange* self);
 
-u8 CEquipChange::func_802023C0() { return field_4D; }
+u8 CEquipChange::EquipChange_IsActiveFlag() { return field_4D; }
 
-void CEquipChange::func_802023C8() { getEIBOpenFlag(&mEquipItemBox); }
+void CEquipChange::EquipChange_CheckBoxOpen() { getEIBOpenFlag(&mEquipItemBox); }
 
-void CEquipChange::func_8020247C() { eibMenuBusy(&mEquipItemBox); }
+void CEquipChange::EquipChange_IsMenuBusy() { eibMenuBusy(&mEquipItemBox); }
 
 // Target us-802040c8: is either the sort menu or the sub-page current.
 #pragma optimize_for_size on  // -O4,s keeps the retail stmw r30 frame
-int func_802023D0(CEquipChange* self) {
+int EquipChange_IsSortOrSubPage(CEquipChange* self) {
     return (eibMenuBusy(&self->mEquipItemBox) != 0) || (getEIBNamePane(&self->mEquipItemBox) != 0);
 }
 #pragma optimize_for_size off
 
 // Target us-8020405c: read selection at 0xA4 unless the item box confirm op is busy.
-int func_80202364(CEquipChange* self) {
+int EquipChange_GetSelWhenReady(CEquipChange* self) {
     if (getItemBoxState__FP12CItemBoxInfo((u8*)self + 0xA4) == 0)
         return 0;
     if (eibWindowsReady(&self->mEquipItemBox) != 0)
@@ -321,14 +321,14 @@ int func_80202364(CEquipChange* self) {
 }
 
 // Target us-8020411c: item box ready and current selection is index 3.
-int func_80202424(CEquipChange* self) {
-    if (getEIBOpenFlag(&self->mEquipItemBox) != 0 && (u8)func_80203138(self) == 3)
+int EquipChange_IsWeaponRow(CEquipChange* self) {
+    if (getEIBOpenFlag(&self->mEquipItemBox) != 0 && (u8)EquipChange_MapCursorToCat(self) == 3)
         return 1;
     return 0;
 }
 
 // Target us-8020417c: subcur visible, else rely on the item box.
-int func_80202484(CEquipChange* self) {
+int EquipChange_IsSubcurBusy(CEquipChange* self) {
     if (func_801D2ED8((CBaseCur*)self->field_80) != 0)
         return 1;
     return eibSysWinBusy(&self->mEquipItemBox);
@@ -337,17 +337,17 @@ int func_80202484(CEquipChange* self) {
 // Target us-802041c4: initialise the equip-change screen. When idle (0x48),
 // set state 1, init the item-info window, repack the selection word and play
 // the 0x6D sound. Retail recomputes self+0xA4 per call site (no CSE) and
-// packs the nibbles low-to-high starting from the func_802031A0 result.
+// packs the nibbles low-to-high starting from the EquipChange_MapCursorToSlot result.
 #pragma optimize_for_size on
 void func_802024CC(CEquipChange* self) {
     if (self->field_48 == 0) {
         self->field_48 = 1;
         self->field_4D = 0;
         func_801D421C((CItemBoxInfo*)((u8*)self + 0xA4));
-        func_801D4260((CItemBoxInfo*)((u8*)self + 0xA4), (u8)func_80203138(self));
+        func_801D4260((CItemBoxInfo*)((u8*)self + 0xA4), (u8)EquipChange_MapCursorToCat(self));
         u8 f99 = self->field_99;
-        u32 cur38 = (u32)func_80203138(self);
-        u32 cur3a = (u32)func_802031A0(self);
+        u32 cur38 = (u32)EquipChange_MapCursorToCat(self);
+        u32 cur3a = (u32)EquipChange_MapCursorToSlot(self);
         func_801D47D4((CItemBoxInfo*)self->_padA4,
                       (u16)(((u32)f99 << 8) | ((cur38 & 0xF) << 4) | (cur3a & 0xF)),
                       func_802052A8(self), 1);
@@ -358,7 +358,7 @@ void func_802024CC(CEquipChange* self) {
 // Target us-80204270: close the equip-change screen. From state 3, enter
 // state 4, close the three cursors, advance the item-info window, reset the
 // three layout slot animations and play the 0x6 sound.
-void func_80202578(CEquipChange* self) {
+void EquipChange_CloseScreen(CEquipChange* self) {
     if ((s32)self->field_48 == 3) {
         self->field_48 = 4;
         self->field_4D = 0;
@@ -378,26 +378,26 @@ void func_80202578(CEquipChange* self) {
 // then refresh the equip info window; otherwise (both gates open) hand the
 // input to the item box. Retail frame saves 4 regs via stmw.
 #pragma optimize_for_size on
-void func_80202644(CEquipChange* self) {
+void EquipChange_CursorPrev(CEquipChange* self) {
     if (getEIBOpenFlag(&self->mEquipItemBox) != 0) {
         if (getEIBActiveMark(&self->mEquipItemBox) != 0)
             eibNavLeft(&self->mEquipItemBox);
         return;
     }
-    // Mirrors the fully-matched forward sibling func_80202790: temp-based
+    // Mirrors the fully-matched forward sibling EquipChange_CursorNext: temp-based
     // pre-wrap, one probe outside the rotated loop guarding entry, and a
     // plain decrement at the loop tail.
     u8 v = (u8)(self->field_98 - 1);
     self->field_98 = (s8)v;
     if ((s8)v < 0)
         self->field_98 = 13;
-    u8 idx = (u8)func_802031A0(self);
+    u8 idx = (u8)EquipChange_MapCursorToSlot(self);
     if (idx != 0 && ((u8*)self)[0x99 + idx] == 0) {
         self->field_98 = (s8)(self->field_98 - 1);
         while (true) {
             if (self->field_98 < 0)
                 self->field_98 = 13;
-            idx = (u8)func_802031A0(self);
+            idx = (u8)EquipChange_MapCursorToSlot(self);
             if (idx == 0)
                 break;
             if (((u8*)self)[0x99 + idx] != 0)
@@ -405,17 +405,17 @@ void func_80202644(CEquipChange* self) {
             self->field_98 = (s8)(self->field_98 - 1);
         }
     }
-    func_802040FC(self);
+    EquipChange_RefreshCursorPos(self);
     u8 f99 = self->field_99;
-    u32 cur38 = (u32)func_80203138(self);
-    u32 cur3a = (u32)func_802031A0(self);
+    u32 cur38 = (u32)EquipChange_MapCursorToCat(self);
+    u32 cur3a = (u32)EquipChange_MapCursorToSlot(self);
     void* a8 = func_802052A8(self);
-    // Two-step pack (same shape as matched func_80202790): the shifted term
+    // Two-step pack (same shape as matched EquipChange_CursorNext): the shifted term
     // first makes MWCC fold the unshifted cur3a into the clrlwi base.
     u16 packed = (u16)(((cur38 & 0xF) << 4) | (cur3a & 0xF));
     packed = (u16)(packed | ((u32)f99 << 8));
     func_801D47D4((CItemBoxInfo*)((u8*)self + 0xA4), packed, a8, 1);
-    int v38 = func_80203138(self);
+    int v38 = EquipChange_MapCursorToCat(self);
     func_801D4260((CItemBoxInfo*)self->_padA4, (u8)v38);
     playUISound__FUl(1);
 }
@@ -426,7 +426,7 @@ void func_80202644(CEquipChange* self) {
 // window; otherwise (both gates open) hand the input to the item box. Retail
 // frame saves 4 regs via stmw (opt-space prologue).
 #pragma optimize_for_size on
-void func_80202790(CEquipChange* self) {
+void EquipChange_CursorNext(CEquipChange* self) {
     if (getEIBOpenFlag(&self->mEquipItemBox) != 0) {
         if (getEIBActiveMark(&self->mEquipItemBox) != 0)
             func_802869B4(&self->mEquipItemBox);
@@ -436,13 +436,13 @@ void func_80202790(CEquipChange* self) {
     self->field_98 = (s8)v;
     if ((s8)v > 0xd)
         self->field_98 = 0;
-    u8 idx = (u8)func_802031A0(self);
+    u8 idx = (u8)EquipChange_MapCursorToSlot(self);
     if (idx != 0 && ((u8*)self)[0x99 + idx] == 0) {
         self->field_98 = (s8)(self->field_98 + 1);
         while (true) {
             if (self->field_98 > 0xd)
                 self->field_98 = 0;
-            idx = (u8)func_802031A0(self);
+            idx = (u8)EquipChange_MapCursorToSlot(self);
             if (idx == 0)
                 break;
             if (((u8*)self)[0x99 + idx] != 0)
@@ -450,28 +450,28 @@ void func_80202790(CEquipChange* self) {
             self->field_98 = (s8)(self->field_98 + 1);
         }
     }
-    func_802040FC(self);
+    EquipChange_RefreshCursorPos(self);
     u8 f99 = self->field_99;
-    u32 cur38 = (u32)func_80203138(self);
-    u32 cur3a = (u32)func_802031A0(self);
+    u32 cur38 = (u32)EquipChange_MapCursorToCat(self);
+    u32 cur3a = (u32)EquipChange_MapCursorToSlot(self);
     void* a8 = func_802052A8(self);
-    // Two-step pack (same shape as matched func_80203EE4): the shifted term
+    // Two-step pack (same shape as matched EquipChange_OnAnim40ToSt7): the shifted term
     // first makes MWCC fold the unshifted cur3a into the clrlwi base.
     u16 packed = (u16)(((cur38 & 0xF) << 4) | (cur3a & 0xF));
     packed = (u16)(packed | ((u32)f99 << 8));
     func_801D47D4((CItemBoxInfo*)((u8*)self + 0xA4), packed, a8, 1);
-    int v38 = func_80203138(self);
+    int v38 = EquipChange_MapCursorToCat(self);
     func_801D4260((CItemBoxInfo*)self->_padA4, (u8)v38);
     playUISound__FUl(1);
 }
 #pragma optimize_for_size off
 
 // Target us-802045dc: when both item-box gates are closed, remap the
-// cursor-run flag 0x98 (see func_80203138's 0/2/4/6/8/10/12->... mapping) and
+// cursor-run flag 0x98 (see EquipChange_MapCursorToCat's 0/2/4/6/8/10/12->... mapping) and
 // refresh the equip info window with the compressed selection word. Retail
 // emits one li/stb block per case (14 separate blocks in the jump table).
 #pragma optimize_for_size on
-void func_802028E4(CEquipChange* self) {
+void EquipChange_CursorUpRemap(CEquipChange* self) {
     if (getEIBOpenFlag(&self->mEquipItemBox) != 0) {
         if (getEIBActiveMark(&self->mEquipItemBox) != 0)
             eibNavUp(&self->mEquipItemBox);
@@ -494,26 +494,26 @@ void func_802028E4(CEquipChange* self) {
     case 12: self->field_98 = 10; break;
     case 13: self->field_98 = 12; break;
     }
-    func_802040FC(self);
+    EquipChange_RefreshCursorPos(self);
     u8 f99 = self->field_99;
-    u32 cur38 = (u32)func_80203138(self);
-    u32 cur3a = (u32)func_802031A0(self);
+    u32 cur38 = (u32)EquipChange_MapCursorToCat(self);
+    u32 cur3a = (u32)EquipChange_MapCursorToSlot(self);
     void* a8 = func_802052A8(self);
-    // Two-step pack (same shape as matched func_80203EE4): the shifted term
+    // Two-step pack (same shape as matched EquipChange_OnAnim40ToSt7): the shifted term
     // first makes MWCC fold the unshifted cur3a into the clrlwi base.
     u16 packed = (u16)(((cur38 & 0xF) << 4) | (cur3a & 0xF));
     packed = (u16)(packed | ((u32)f99 << 8));
     func_801D47D4((CItemBoxInfo*)((u8*)self + 0xA4), packed, a8, 1);
-    int v38 = func_80203138(self);
+    int v38 = EquipChange_MapCursorToCat(self);
     func_801D4260((CItemBoxInfo*)self->_padA4, (u8)v38);
     playUISound__FUl(1);
 }
 #pragma optimize_for_size off
 
-// Target us-80204768: sibling of func_802028E4 - same guard/refresh shape
+// Target us-80204768: sibling of EquipChange_CursorUpRemap - same guard/refresh shape
 // but a different remap table for field_98 (also one li/stb block per case).
 #pragma optimize_for_size on
-void func_80202A70(CEquipChange* self) {
+void EquipChange_CursorDownRemap(CEquipChange* self) {
     if (getEIBOpenFlag(&self->mEquipItemBox) != 0) {
         if (getEIBActiveMark(&self->mEquipItemBox) != 0)
             eibNavRight(&self->mEquipItemBox);
@@ -536,22 +536,22 @@ void func_80202A70(CEquipChange* self) {
     case 12: self->field_98 = 0; break;
     case 13: self->field_98 = 0; break;
     }
-    func_802040FC(self);
+    EquipChange_RefreshCursorPos(self);
     u8 f99 = self->field_99;
-    u32 cur38 = (u32)func_80203138(self);
-    u32 cur3a = (u32)func_802031A0(self);
+    u32 cur38 = (u32)EquipChange_MapCursorToCat(self);
+    u32 cur3a = (u32)EquipChange_MapCursorToSlot(self);
     void* a8 = func_802052A8(self);
-    // Two-step pack (same shape as matched func_80203EE4).
+    // Two-step pack (same shape as matched EquipChange_OnAnim40ToSt7).
     u16 packed = (u16)(((cur38 & 0xF) << 4) | (cur3a & 0xF));
     packed = (u16)(packed | ((u32)f99 << 8));
     func_801D47D4((CItemBoxInfo*)((u8*)self + 0xA4), packed, a8, 1);
-    int v38 = func_80203138(self);
+    int v38 = EquipChange_MapCursorToCat(self);
     func_801D4260((CItemBoxInfo*)self->_padA4, (u8)v38);
     playUISound__FUl(1);
 }
 #pragma optimize_for_size off
 
-void func_80202BFC(CEquipChange* self) {
+void EquipChange_ConfirmSort(CEquipChange* self) {
     if (getEIBOpenFlag(&self->mEquipItemBox) != 0 && getEIBActiveMark(&self->mEquipItemBox) != 0)
         eibConfirmSort(&self->mEquipItemBox);
 }
@@ -559,7 +559,7 @@ void func_80202BFC(CEquipChange* self) {
 // Target us-80204944: when both item-box gates are open, either reset the box
 // cursor (eibHandleSubPage) or open the sub-page (finishEIBEntry) depending on
 // eibInputBlocked, entering state 9.
-void func_80202C4C(CEquipChange* self) {
+void EquipChange_OpenSubPage(CEquipChange* self) {
     if (getEIBOpenFlag(&self->mEquipItemBox) == 0)
         return;
     if (getEIBActiveMark(&self->mEquipItemBox) == 0)
@@ -579,7 +579,7 @@ void func_80202C4C(CEquipChange* self) {
 // character is busy or the selection points at an empty / locked slot. Retail
 // frame saves 4 regs via stmw (opt-space prologue).
 #pragma optimize_for_size on
-void func_80202CCC(CEquipChange* self) {
+void EquipChange_ConfirmApply(CEquipChange* self) {
     if (getEIBOpenFlag(&self->mEquipItemBox) != 0) {
         if (getEIBActiveMark(&self->mEquipItemBox) == 0)
             return;
@@ -596,10 +596,10 @@ void func_80202CCC(CEquipChange* self) {
         func_802873D8(&self->mEquipItemBox);
         func_802042C0(self);
         u8 cat = self->field_99;
-        int cur38 = func_80203138(self);
-        int cur3a = func_802031A0(self);
+        int cur38 = EquipChange_MapCursorToCat(self);
+        int cur3a = EquipChange_MapCursorToSlot(self);
         void* a8 = func_802052A8(self);
-        // Two-step pack (same shape as matched func_80203EE4).
+        // Two-step pack (same shape as matched EquipChange_OnAnim40ToSt7).
         u16 packed = (u16)(((cur38 & 0xF) << 4) | (cur3a & 0xF));
         packed = (u16)(packed | ((u32)cat << 8));
         eibApplySelect(&self->mEquipItemBox, packed, a8);
@@ -609,15 +609,15 @@ void func_80202CCC(CEquipChange* self) {
     // gate closed branch (.L_80204A8C)
     CBdatCharData* data = (CBdatCharData*)func_8009EC9C((u8)GetCollectedFlagByte(self->field_99));
     if (data->field_176C == 1) {
-        if ((u8)func_80203138(self) == 3)
+        if ((u8)EquipChange_MapCursorToCat(self) == 3)
             return;
         playUISound__FUl(5);
         return;
     }
-    if ((u8)func_80203138(self) == 3) {
-        if (((u8*)self)[0x99 + (u8)func_802031A0(self)] == 0)
+    if ((u8)EquipChange_MapCursorToCat(self) == 3) {
+        if (((u8*)self)[0x99 + (u8)EquipChange_MapCursorToSlot(self)] == 0)
             return;
-        if ((u8)((u8*)self)[0x99 + (u8)func_802031A0(self)] == 2)
+        if ((u8)((u8*)self)[0x99 + (u8)EquipChange_MapCursorToSlot(self)] == 2)
             return;
     }
     // .L_80204B14: reset the three layout slot animations and close the cursors.
@@ -632,7 +632,7 @@ void func_80202CCC(CEquipChange* self) {
 }
 #pragma optimize_for_size off
 
-// (func_80203138 and func_802031A0 are defined at the END of this TU. Retail
+// (EquipChange_MapCursorToCat and EquipChange_MapCursorToSlot are defined at the END of this TU. Retail
 // calls them externally at every site; the global address-takes at the end of
 // the TU stop MWCC's -inline auto / -ipa file inliner from folding their
 // bodies into callers (the bodies stay emitted as standalone symbols).)
@@ -652,7 +652,7 @@ int func_80203210(CEquipChange* self) {
     }
     if (getEIBOpenFlag(&self->mEquipItemBox) == 0 && self->field_98 == 0)
         return 0;
-    int cat = func_80203138(self);
+    int cat = EquipChange_MapCursorToCat(self);
     if (getEIBOpenFlag(&self->mEquipItemBox) != 0) {
         if (eibRowMatches(&self->mEquipItemBox) == 0)
             return 0;
@@ -787,7 +787,7 @@ int func_80203210(CEquipChange* self) {
     // (u8)cat == 3 - weapon-row path: resolve the sub-cursor, reject
     // empty/locked slots, then equip the row item through the item-impl
     // vtable[0x44] hook.
-    int v = func_802031A0(self);
+    int v = EquipChange_MapCursorToSlot(self);
     if (getEIBOpenFlag(&self->mEquipItemBox) != 0)
         v = findEIBEquipSlot(&self->mEquipItemBox);
     u8 r4 = (u8)v;
@@ -830,12 +830,12 @@ int func_80203210(CEquipChange* self) {
         inst->vf44((CItemData*)r29, (u8)v, -1);
     }
     func_802042C0(self);
-    func_801D4260((CItemBoxInfo*)((u8*)self + 0xA4), (u8)func_80203138(self));
+    func_801D4260((CItemBoxInfo*)((u8*)self + 0xA4), (u8)EquipChange_MapCursorToCat(self));
     // Lifetimes mirror retail: f99 (r28) and cur38 (r29) feed rlwimi inserts
-    // into the packed word based on the fresh func_802031A0 low nibble.
+    // into the packed word based on the fresh EquipChange_MapCursorToSlot low nibble.
     u8 f99 = self->field_99;
-    int cur38 = func_80203138(self);
-    u32 packed = (u32)func_802031A0(self) & 0xF;
+    int cur38 = EquipChange_MapCursorToCat(self);
+    u32 packed = (u32)EquipChange_MapCursorToSlot(self) & 0xF;
     packed |= ((u32)(cur38 & 0xF) << 4);
     packed |= ((u32)f99 << 8);
     func_801D47D4((CItemBoxInfo*)((u8*)self + 0xA4), (u16)packed, func_802052A8(self), 1);
@@ -848,28 +848,28 @@ int func_80203210(CEquipChange* self) {
 
 // Target us-80205624: raw box count, cleared when the current selection is 3.
 #pragma optimize_for_size on  // -O4,s keeps the retail stmw/lmw frame
-int func_8020392C(CEquipChange* self) {
+int EquipChange_GetBoxCount(CEquipChange* self) {
     int result = takeEIBAction(&self->mEquipItemBox);
-    if ((u8)func_80203138(self) == 3)
+    if ((u8)EquipChange_MapCursorToCat(self) == 3)
         result = 0;
     return result;
 }
 #pragma optimize_for_size off
 
 void func_801D2E4C(void* self);
-void CEquipChange::func_8020397C() { func_801D2E4C(field_80); }
+void CEquipChange::EquipChange_HideSubCursor() { func_801D2E4C(field_80); }
 
 void func_80287FE0(void* self);
-void CEquipChange::func_80203984() { func_80287FE0(&mEquipItemBox); }
+void CEquipChange::EquipChange_CloseEquipRow() { func_80287FE0(&mEquipItemBox); }
 
 void eibTryCloseRow(void* self);
-void CEquipChange::func_8020398C() { eibTryCloseRow(&mEquipItemBox); }
+void CEquipChange::EquipChange_TryCloseRow() { eibTryCloseRow(&mEquipItemBox); }
 
 // Target us-8020568c: cursor 3 is selected AND the per-slot byte at
-// self[idx+0x99] (index from func_802031A0) equals 2.
-int func_80203994(CEquipChange* self) {
-    if ((u8)func_80203138(self) == 3) {
-        u8 idx = (u8)func_802031A0(self);
+// self[idx+0x99] (index from EquipChange_MapCursorToSlot) equals 2.
+int EquipChange_GetLockedState(CEquipChange* self) {
+    if ((u8)EquipChange_MapCursorToCat(self) == 3) {
+        u8 idx = (u8)EquipChange_MapCursorToSlot(self);
         if (((u8*)self)[0x99 + idx] == 2)
             return 2;
     }
@@ -881,14 +881,14 @@ int func_80203994(CEquipChange* self) {
 // to eibHudPrompt, gate closed picks a menu id from the cursor state.
 // Retail saves 2 regs via stmw/lmw (opt-space prologue).
 #pragma optimize_for_size on
-extern "C" int func_802039F4(CEquipChange* self) {
+extern "C" int EquipChange_GetMenuId(CEquipChange* self) {
     if (func_801D2ED8((CBaseCur*)self->field_80) != 0)
         return 0x2E;
     u8 b = code80135FDC_getByte_64077();
     int flag = (int)((u32)(1 - b) >> 31);
     if (getEIBOpenFlag(&self->mEquipItemBox) != 0)
         return eibHudPrompt(&self->mEquipItemBox);
-    if ((u8)func_80203138(self) == 2) {
+    if ((u8)EquipChange_MapCursorToCat(self) == 2) {
         if (flag != 0)
             return 0x15;
         return 0x17;
@@ -905,7 +905,7 @@ extern "C" int func_802039F4(CEquipChange* self) {
 // Opt-space merges the callee-saved saves into stmw r30 and copies r3->r30
 // before r4->r31 (retail prologue shape; MWCC_CASES kyoshin leaf patterns).
 #pragma optimize_for_size on
-int func_80203A98(CEquipChange* self, u32 param) {
+int EquipChange_GetEquippedResId(CEquipChange* self, u32 param) {
     if (getEIBOpenFlag(&self->mEquipItemBox) != 0) {
         if (param == 0 && func_80288948(&self->mEquipItemBox) == 0)
             return 0;
@@ -948,7 +948,7 @@ int func_80203A98(CEquipChange* self, u32 param) {
 #pragma optimize_for_size off
 
 // Target us-80205994: lift the last box byte if the box gate is open.
-u8 func_80203C9C(CEquipChange* self) {
+u8 EquipChange_GetBoxTailByte(CEquipChange* self) {
     if (getEIBOpenFlag(&self->mEquipItemBox) != 0)
         return self->mEquipItemBox.unk_37c;
     return 0;
@@ -956,7 +956,7 @@ u8 func_80203C9C(CEquipChange* self) {
 
 // Target us-802059d8: when the 0x38 anim finishes, reset the three layout
 // slot animations via the 0x34 object's vtable[0x2C] hook and enter state 2.
-extern "C" void __declspec(noinline) func_80203CE0(CEquipChange* self) {
+extern "C" void __declspec(noinline) EquipChange_OnAnim38ToSt2(CEquipChange* self) {
     if (advanceAnimTransform(self->field_38, lbl_eu_806682A8) == 0)
         return;
     ((nw4r::lyt::Layout*)self->field_34)->SetAnimationEnable(self->field_40, 0);
@@ -967,8 +967,8 @@ extern "C" void __declspec(noinline) func_80203CE0(CEquipChange* self) {
 
 // Target us-80205a70: when the 0x3C anim finishes, refresh the item info
 // window (func_801D4B3C pack), drive the sub-cursor vtable[0x10] hook with the
-// packed buffer, close the sub-cursor, and reset state via func_802040FC.
-extern "C" void __declspec(noinline) func_80203D78(CEquipChange* self) {
+// packed buffer, close the sub-cursor, and reset state via EquipChange_RefreshCursorPos.
+extern "C" void __declspec(noinline) EquipChange_OnAnim3CToSt3(CEquipChange* self) {
     if (advanceAnimTransform(self->field_3C, lbl_eu_806682A8) == 0)
         return;
     self->field_48 = 3;
@@ -977,13 +977,13 @@ extern "C" void __declspec(noinline) func_80203D78(CEquipChange* self) {
     func_801D4B3C(buf, (CItemBoxInfo*)((u8*)self + 0xA4), self->field_99);
     ((CBaseCur*)self->field_80)->setRootPaneTranslate((const nw4r::math::VEC3*)buf);
     func_801D216C((void*)((u8*)self + 0x80), 1);
-    func_802040FC(self);
+    EquipChange_RefreshCursorPos(self);
 }
 
 // Target us-80205af8: when the 0x3C anim finishes, reset the three layout
 // slot animations via the 0x34 object's vtable[0x2C] hook and enter state 5.
-// Sibling of func_80203CE0 (guard on field_38, state 2).
-extern "C" void __declspec(noinline) func_80203E00(CEquipChange* self) {
+// Sibling of EquipChange_OnAnim38ToSt2 (guard on field_38, state 2).
+extern "C" void __declspec(noinline) EquipChange_OnAnim3CToSt5(CEquipChange* self) {
     if (AnimRewindFrame(self->field_3C, lbl_eu_806682A8) == 0)
         return;
     ((nw4r::lyt::Layout*)self->field_34)->SetAnimationEnable(self->field_3C, 0);
@@ -993,7 +993,7 @@ extern "C" void __declspec(noinline) func_80203E00(CEquipChange* self) {
 }
 
 // Target us-80205b90: when the 0x38 anim finishes, clear state 0x48 and flag 0x4D.
-extern "C" void __declspec(noinline) func_80203E98(CEquipChange* self) {
+extern "C" void __declspec(noinline) EquipChange_OnAnim38ToIdle(CEquipChange* self) {
     if (AnimRewindFrame(self->field_38, lbl_eu_806682A8) != 0) {
         self->field_4D = 1;
         self->field_48 = 0;
@@ -1005,12 +1005,12 @@ extern "C" void __declspec(noinline) func_80203E98(CEquipChange* self) {
 // word) and re-init the box, entering state 7. Retail saves 4 regs via
 // _savegpr_28 (opt-space prologue).
 #pragma optimize_for_size on
-extern "C" void __declspec(noinline) func_80203EE4(CEquipChange* self) {
+extern "C" void __declspec(noinline) EquipChange_OnAnim40ToSt7(CEquipChange* self) {
     if (advanceAnimTransform(self->field_40, lbl_eu_806682A8) == 0)
         return;
     u8 f99 = self->field_99;
-    int cur38 = func_80203138(self);
-    int cur3a = func_802031A0(self);
+    int cur38 = EquipChange_MapCursorToCat(self);
+    int cur3a = EquipChange_MapCursorToSlot(self);
     setEIBBoxInfo(&self->mEquipItemBox, (u32)self->_padA4);
     void* a8 = func_802052A8(self);
     u16 packed = (u16)(((cur38 & 0xF) << 4) | (cur3a & 0xF));
@@ -1022,7 +1022,7 @@ extern "C" void __declspec(noinline) func_80203EE4(CEquipChange* self) {
 #pragma optimize_for_size off
 
 // Target us-80205c7c: when the box sub-page closes, enter state 8.
-extern "C" void __declspec(noinline) func_80203F84(CEquipChange* self) {
+extern "C" void __declspec(noinline) EquipChange_OnSubPageClose(CEquipChange* self) {
     if (getEIBActiveMark(&self->mEquipItemBox) != 0) {
         self->field_48 = 8;
         self->field_4D = 1;
@@ -1039,8 +1039,8 @@ extern "C" void __declspec(noinline) func_80203FCC(CEquipChange* self) {
         return;
     self->field_48 = 0xA;
     u8 f99 = self->field_99;
-    int lo = func_80203138(self);
-    int hi = func_802031A0(self);
+    int lo = EquipChange_MapCursorToCat(self);
+    int hi = EquipChange_MapCursorToSlot(self);
     int packed = (hi & 0xF) | ((lo & 0xF) << 4);
     int m = (int)func_802052A8(self);
     func_801D47D4((CItemBoxInfo*)((u8*)self + 0xA4),
@@ -1049,11 +1049,11 @@ extern "C" void __declspec(noinline) func_80203FCC(CEquipChange* self) {
 #pragma optimize_for_size off
 
 // Target us-80205d44: when the 0x40 anim finishes, enter state 3 and refresh.
-extern "C" void __declspec(noinline) func_8020404C(CEquipChange* self) {
+extern "C" void __declspec(noinline) EquipChange_OnAnim40ToSt3(CEquipChange* self) {
     if (AnimRewindFrame(self->field_40, lbl_eu_806682A8) != 0) {
         self->field_48 = 3;
         self->field_4D = 1;
-        func_802040FC(self);
+        EquipChange_RefreshCursorPos(self);
     }
 }
 
@@ -1085,7 +1085,7 @@ end:
 // Opt-space keeps the palette copy as a retail mtctr/bdnz loop (unrolled
 // under -O4,p); the block-copy form gives the lwzu/stwu update addressing.
 #pragma optimize_for_size on
-extern "C" __declspec(noinline) void func_802040FC(CEquipChange* self) {
+extern "C" __declspec(noinline) void EquipChange_RefreshCursorPos(CEquipChange* self) {
     nw4r::math::VEC3 pos;
     CEquipColorPair palette[7];
     // 0x38-byte block copy (7 pairs of 8 bytes) - the block-copy path emits
@@ -1480,7 +1480,7 @@ void func_80205294(void* dst, void* src) {
 }
 
 // Target us-802073c8: file-load event handler for the two bind files loaded
-// by func_80202090. Handle-1 branch builds the whole equip-change screen:
+// by EquipChange_LoadBindFiles. Handle-1 branch builds the whole equip-change screen:
 // 0xE000 scratch region, arc accessor, main layout + three anim transforms,
 // shared text object seeding six labels, animation enables, cursor palette
 // colours copied into the sdata2 tables, and the three cursors built from
@@ -1516,7 +1516,7 @@ bool CEquipChange::OnFileEvent(CEventFile* file) {
         func_8013676C(root, static_cast<IDeviceFontInfo*>(fontObj)->getFont());
 
         // Seed the label textboxes with the shared text object.
-        char* text = func_801355BC();
+        char* text = CUICfManager_getPackedFont9C();
         if (text != NULL) {
             setLayoutTextBoxFont((nw4r::lyt::Layout*)field_34, &base[0x55], (u32)text);
             setLayoutTextBoxFont((nw4r::lyt::Layout*)field_34, &base[0x60], (u32)text);
@@ -1644,10 +1644,10 @@ void __declspec(noinline) func_80202EB4(CEquipChange* self, u8 cat) {
     ((CBaseCur*)self->field_80)->setRootPaneTranslate((const nw4r::math::VEC3*)buf);
     func_801D2174((CBaseCur*)self->field_80);
     func_802042C0(self);
-    func_801D4260((CItemBoxInfo*)((u8*)self + 0xA4), (u8)func_80203138(self));
+    func_801D4260((CItemBoxInfo*)((u8*)self + 0xA4), (u8)EquipChange_MapCursorToCat(self));
     u8 f99 = self->field_99;
-    int cur38 = func_80203138(self);
-    int cur3a = func_802031A0(self);
+    int cur38 = EquipChange_MapCursorToCat(self);
+    int cur3a = EquipChange_MapCursorToSlot(self);
     if ((u8)cur38 == 3) {
         int flag = 0;
         u8* obj = (u8*)func_8009EC9C((u8)GetCollectedFlagByte(self->field_99));
@@ -1692,11 +1692,11 @@ void __declspec(noinline) func_80202EB4(CEquipChange* self, u8 cat) {
         }
         if (flag == 0) {
             func_802042C0(self);
-            func_801D4260((CItemBoxInfo*)((u8*)self + 0xA4), (u8)func_80203138(self));
-            func_802040FC(self);
+            func_801D4260((CItemBoxInfo*)((u8*)self + 0xA4), (u8)EquipChange_MapCursorToCat(self));
+            EquipChange_RefreshCursorPos(self);
             f99 = self->field_99;
-            cur38 = func_80203138(self);
-            cur3a = func_802031A0(self);
+            cur38 = EquipChange_MapCursorToCat(self);
+            cur3a = EquipChange_MapCursorToSlot(self);
         }
     }
     u16 packed = (u16)(((cur38 & 0xF) << 4) | (cur3a & 0xF));
@@ -1719,7 +1719,7 @@ extern "C" __declspec(noinline) void* func_802052A8(CEquipChange* self) {
     // cat declared first - its home web (shared with mapped) gets priority.
     int cat;
     CBdatCharData* obj = (CBdatCharData*)func_8009EC9C((u8)GetCollectedFlagByte(self->field_99));
-    cat = func_80203138(self);
+    cat = EquipChange_MapCursorToCat(self);
     if ((u8)cat != 3) {
         s16 id = -1;
         switch ((u8)cat) {
@@ -1734,7 +1734,7 @@ extern "C" __declspec(noinline) void* func_802052A8(CEquipChange* self) {
     } else {
     // Weapon-row path: map the sub-cursor index to a category. Indices 1..3
     // collapse to category 2; 4..8 pass through; anything else stays 3.
-    int idx = func_802031A0(self);
+    int idx = EquipChange_MapCursorToSlot(self);
     u8 slot = self->_pad9A[(u8)idx - 1];
     if (slot == 0)
         return 0;
@@ -1815,7 +1815,7 @@ extern "C" __declspec(noinline) void* func_802052A8(CEquipChange* self) {
 // linkage).
 // Retail emits external `bl` calls to this helper at every call site, so
 // __declspec(noinline) keeps the body standalone under -inline auto / -ipa.
-extern "C" __declspec(noinline) int func_80203138(CEquipChange* self) {
+extern "C" __declspec(noinline) int EquipChange_MapCursorToCat(CEquipChange* self) {
     signed char value = self->field_98;
     if (value == 0)
         return 2;
@@ -1834,8 +1834,8 @@ extern "C" __declspec(noinline) int func_80203138(CEquipChange* self) {
 
 // Target us-80204e98: field_98 (s8) maps via a dense jump table to 1..8 for
 // values 0..6 and 13 (real-body case at 13 keeps the table range at 13 so
-// entries 7..12 route to default 0). Same noinline rationale as func_80203138.
-extern "C" __declspec(noinline) int func_802031A0(CEquipChange* self) {
+// entries 7..12 route to default 0). Same noinline rationale as EquipChange_MapCursorToCat.
+extern "C" __declspec(noinline) int EquipChange_MapCursorToSlot(CEquipChange* self) {
     switch (self->field_98) {
     case 0: return 1;
     case 1: return 2;
@@ -1856,21 +1856,21 @@ extern "C" __declspec(noinline) int func_802031A0(CEquipChange* self) {
 // The state handlers are matched targets defined above; their extern "C" +
 // noinline definitions keep -ipa file from folding their bodies into the
 // switch and make the call relocs use the unmangled retail names.
-void func_80202110(CEquipChange* self) {
+void EquipChange_UpdateDispatch(CEquipChange* self) {
     if (self->field_44 == 0)
         return;
     // Retail jumptable_eu_805355B0 routing: states 0/3/8 (and >10) are
     // idle; the eight anim-waiter handlers sit on 1,2,4,5,6,7,9,10. The
     // interleaved no-op rows keep the dense table bound at 10.
     switch (self->field_48) {
-    case 1: func_80203CE0(self); break;
-    case 2: func_80203D78(self); break;
-    case 4: func_80203E00(self); break;
-    case 5: func_80203E98(self); break;
-    case 6: func_80203EE4(self); break;
-    case 7: func_80203F84(self); break;
+    case 1: EquipChange_OnAnim38ToSt2(self); break;
+    case 2: EquipChange_OnAnim3CToSt3(self); break;
+    case 4: EquipChange_OnAnim3CToSt5(self); break;
+    case 5: EquipChange_OnAnim38ToIdle(self); break;
+    case 6: EquipChange_OnAnim40ToSt7(self); break;
+    case 7: EquipChange_OnSubPageClose(self); break;
     case 9: func_80203FCC(self); break;
-    case 10: func_8020404C(self); break;
+    case 10: EquipChange_OnAnim40ToSt3(self); break;
     default:
         goto tail;
     }
@@ -1887,7 +1887,7 @@ tail:
 // the sub-cursor (0x80) is idle, flags the item box (0x62B), and finally the
 // item info window + sub-cursor + item box. Retail frame uses stmw/lmw.
 #pragma optimize_for_size on
-extern "C" void func_802021E4(CEquipChange* self, nw4r::lyt::DrawInfo* drawInfo) {
+extern "C" void EquipChange_DrawLayouts(CEquipChange* self, nw4r::lyt::DrawInfo* drawInfo) {
     if (self->field_44 == 0)
         return;
     drawLayout((nw4r::lyt::Layout*)self->field_34, drawInfo, 0, 1);
@@ -1908,7 +1908,7 @@ extern "C" void func_802021E4(CEquipChange* self, nw4r::lyt::DrawInfo* drawInfo)
 // (guarded double-check), clear the global page flag, release both arc
 // accessors and the 0x04 memory region, reset the three cursors, and close
 // the item info window + box.
-void func_8020228C(CEquipChange* self) {
+void EquipChange_CleanupFiles(CEquipChange* self) {
     closeFileHandle__FPP11CFileHandle(&self->field_24);
     closeFileHandle__FPP11CFileHandle(&self->field_28);
     // Retail hoists the field_34 load above the field_44 store and reuses the

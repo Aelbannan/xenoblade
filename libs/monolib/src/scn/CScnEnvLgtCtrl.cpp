@@ -26,7 +26,7 @@
 #include <revolution/MTX.h>              // PSMTXConcat / PSMTXIdentity / PSVECNormalize
 #include "monolib/math/CVec3.hpp"        // ml::CVec3::zero
 #include "libs/monolib/src/scn/CScnEnvLgtCtrl.hpp"
-#include "libs/monolib/src/scn/CScnItemModelNw4r.hpp"  // func_8048ECD8 / func_80496288 queries
+#include "libs/monolib/src/scn/CScnItemModelNw4r.hpp"  // func_8048ECD8 / Scn_GetFrameDelta queries
 #include "monolib/math/CVec4.hpp"       // ml::CVec4 (scnLgtDispatchEnv slot/walk vecs)
 // The catalog header declares the post-update hook func_804BF940 as (void),
 // which conflicts with the real signature declared in CScnEnvLgtCtrl.hpp
@@ -320,7 +320,7 @@ void* func_804C1BA0(CScnEnvLgtCtrl* self, const u32* data, void* arg) {
     reslist<CScnEnvLgtCtrlListItem*>* list =
         (reslist<CScnEnvLgtCtrlListItem*>*)&self->field_0x08;
     CScnEnvLgtCtrlListItem* obj = (CScnEnvLgtCtrlListItem*)func_804C6A70(
-        func_80496018((CScnItemModelNw4rOwner*)self->field_0x04_ptr), data, arg);
+        Scn_CallUnk8C_V8((CScnItemModelNw4rOwner*)self->field_0x04_ptr), data, arg);
     if (obj != NULL) {
         list->push_back(obj);
         self->flags |= 2;
@@ -1950,7 +1950,7 @@ void* __ct__reslist_IScnEnvCtl(CScnEnvLgtCtrlResList* self,
     self->field_0x3C = 0;
     self->field_0x40 = 0;
     self->base.mList = (CScnEnvLgtCtrlIScnResNode*)mtl::MemManager::allocate_array(
-        0x60, func_80496018(self->mOwner));
+        0x60, Scn_CallUnk8C_V8(self->mOwner));
     for (int i = 0; i < 8; i++) {
         self->base.mList[i].mNext = 0;
     }
@@ -4113,19 +4113,19 @@ void scnLgtSetBlendBloom(CScnEnvLgtCtrl* self, int init) {
     if (init != 0) {
         if (!(self->flags & 0x8)) {
             CScnEnvLgtBlend* blend = (CScnEnvLgtBlend*)mtl::MemManager::allocate(
-                0x6C, func_80496018((CScnItemModelNw4rOwner*)self->field_0x04_ptr));
+                0x6C, Scn_CallUnk8C_V8((CScnItemModelNw4rOwner*)self->field_0x04_ptr));
             if (blend != 0) {
                 blend = __ct__CScnBlend(blend);
             }
             self->field_0x28_blend = blend;
             CScnEnvLgtBloom* bloom = (CScnEnvLgtBloom*)mtl::MemManager::allocate(
-                0x84, func_80496018((CScnItemModelNw4rOwner*)self->field_0x04_ptr));
+                0x84, Scn_CallUnk8C_V8((CScnItemModelNw4rOwner*)self->field_0x04_ptr));
             if (bloom != 0) {
                 bloom = __ct__CScnBloom(bloom);
             }
             self->field_0x2C_bloom = bloom;
             self->field_0x30 =
-                func_8049699C((CScnItemModelNw4rOwner*)self->field_0x04_ptr);
+                Scn_CallUnk8C_V11((CScnItemModelNw4rOwner*)self->field_0x04_ptr);
             // Reload everything from self (retail keeps only r31 alive).
             ScnFilterMan_appendFilter(((CScnEnvLgtOwnerLgt*)self->field_0x04_ptr)->field_0x70,
                           self->field_0x28_blend);
@@ -4192,7 +4192,7 @@ void scnLgtSetParamIdle(void* self, int flag) {
         obj[0x64] &= ~1;
 }
 // func_804C12A4 (us-804c5400): advance every light item's frame delta
-// (func_80496288 on the shared view) and dispatch vtable slot 3 (0x0C).
+// (Scn_GetFrameDelta on the shared view) and dispatch vtable slot 3 (0x0C).
 // Sets +0x00 bit 0x100 when any item was visited, clears it otherwise, and
 // returns whether the ring was non-empty.
 u32 func_804C12A4(CScnEnvLgtCtrl* self) {
@@ -4205,7 +4205,7 @@ u32 func_804C12A4(CScnEnvLgtCtrl* self) {
     // instead, rotating the whole allocation away from retail.
     if (node != sentinel) {
         do {
-            func_80496288((CScnItemModelNw4rOwner*)self->field_0x04_ptr);
+            Scn_GetFrameDelta((CScnItemModelNw4rOwner*)self->field_0x04_ptr);
             node->mItem->v1();
             node = node->mNext;
         } while (node != self->field_0x0C);

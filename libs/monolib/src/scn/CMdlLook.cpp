@@ -2,7 +2,7 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include <harness_catalog.h>
-#include <monolib/core/code_804E36DC.hpp> // func_80496288 frame-delta query (C ABI)
+#include <monolib/core/code_804E36DC.hpp> // Scn_GetFrameDelta frame-delta query (C ABI)
 #include "libs/monolib/src/scn/CMdlAnmEye.hpp" // simGetLeafDist7B0 fade query
 #include <nw4r/math/math_types.h>
 #include <nw4r/math/math_triangular.h>
@@ -146,7 +146,7 @@ extern "C" __declspec(noinline) void func_804E8AAC(CMdlLook* look, u8* unkBytes,
         PSMTXCopy(*outMtx, workMtx.m);
     }
 
-    f32 delta = func_80496288(unk->field_0x04);
+    f32 delta = Scn_GetFrameDelta(unk->field_0x04);
     f32 fade = simGetLeafDist7B0(unk) * delta;
     if (fade == lbl_eu_8066B370) {
         // Faded out: only guard against a fully-degenerate facing vector.
@@ -157,7 +157,7 @@ extern "C" __declspec(noinline) void func_804E8AAC(CMdlLook* look, u8* unkBytes,
             }
         }
     } else {
-        f32 s24 = func_80496288(unk->field_0x04);
+        f32 s24 = Scn_GetFrameDelta(unk->field_0x04);
         if (s24 > lbl_eu_8066B380) {
             s24 = lbl_eu_8066B380;
         }

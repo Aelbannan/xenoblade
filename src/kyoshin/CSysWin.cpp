@@ -399,11 +399,11 @@ case0:
     {
         nw4r::lyt::Pane* pane =
             self->mLayout->GetRootPane()->FindPaneByName(&lbl_eu_8050A478[0x1c], true);
-        // func_80127BF4's retail signature takes opaque view pointers
-        func_80127BF4(self->mTagProcessor, reinterpret_cast<CTagMsgView*>(pane),
+        // TagProcCalcPageLayout's retail signature takes opaque view pointers
+        TagProcCalcPageLayout(self->mTagProcessor, reinterpret_cast<CTagMsgView*>(pane),
                       reinterpret_cast<CTagOutView*>(pane0));
         f32 size[2];
-        func_80127BC4(size, reinterpret_cast<CSysWinPaneOverlay*>(pane0)->size);
+        TagCopyVec2f(size, reinterpret_cast<CSysWinPaneOverlay*>(pane0)->size);
         f32 h = size[1];
         if (h >= lbl_eu_80668598) {
             nw4r::math::VEC3 v;
@@ -444,18 +444,18 @@ case1:
     {
         nw4r::lyt::Pane* paneA =
             self->mLayout->GetRootPane()->FindPaneByName(&lbl_eu_8050A478[0x3a], true);
-        func_80127BF4(self->mTagProcessor, reinterpret_cast<CTagMsgView*>(paneA),
+        TagProcCalcPageLayout(self->mTagProcessor, reinterpret_cast<CTagMsgView*>(paneA),
                       reinterpret_cast<CTagOutView*>(pane0));
         f32 posA[2];
-        func_80127BC4(posA, reinterpret_cast<CSysWinPaneOverlay*>(pane0)->size);
+        TagCopyVec2f(posA, reinterpret_cast<CSysWinPaneOverlay*>(pane0)->size);
         nw4r::lyt::Pane* paneB =
             self->mLayout->GetRootPane()->FindPaneByName(&lbl_eu_8050A478[0x29], true);
-        func_80127BF4(self->mTagProcessor, reinterpret_cast<CTagMsgView*>(paneB),
+        TagProcCalcPageLayout(self->mTagProcessor, reinterpret_cast<CTagMsgView*>(paneB),
                       reinterpret_cast<CTagOutView*>(pane0));
         f32 posB[2];
-        func_80127BC4(posB, reinterpret_cast<CSysWinPaneOverlay*>(pane0)->size);
+        TagCopyVec2f(posB, reinterpret_cast<CSysWinPaneOverlay*>(pane0)->size);
         f32 pick[2];
-        func_80127BC4(pick, posA[0] > posB[0] ? posA : posB);
+        TagCopyVec2f(pick, posA[0] > posB[0] ? posA : posB);
         pick[1] = lbl_eu_806685BC;
         func_80124288(pane0, pick);
         nw4r::math::VEC3 v;
@@ -474,11 +474,11 @@ case2:
     {
         nw4r::lyt::Pane* pane =
             self->mLayout->GetRootPane()->FindPaneByName(&lbl_eu_8050A478[0x4a], true);
-        // func_80127BF4's retail signature takes opaque view pointers
-        func_80127BF4(self->mTagProcessor, reinterpret_cast<CTagMsgView*>(pane),
+        // TagProcCalcPageLayout's retail signature takes opaque view pointers
+        TagProcCalcPageLayout(self->mTagProcessor, reinterpret_cast<CTagMsgView*>(pane),
                       reinterpret_cast<CTagOutView*>(pane0));
         f32 size[2];
-        func_80127BC4(size, reinterpret_cast<CSysWinPaneOverlay*>(pane0)->size);
+        TagCopyVec2f(size, reinterpret_cast<CSysWinPaneOverlay*>(pane0)->size);
         f32 h = size[1];
         if (h >= lbl_eu_806685AC) {
             nw4r::math::VEC3 v;
@@ -511,18 +511,18 @@ case3:
     {
         nw4r::lyt::Pane* paneA =
             self->mLayout->GetRootPane()->FindPaneByName(&lbl_eu_8050A478[0x67], true);
-        func_80127BF4(self->mTagProcessor, reinterpret_cast<CTagMsgView*>(paneA),
+        TagProcCalcPageLayout(self->mTagProcessor, reinterpret_cast<CTagMsgView*>(paneA),
                       reinterpret_cast<CTagOutView*>(pane0));
         f32 posA[2];
-        func_80127BC4(posA, reinterpret_cast<CSysWinPaneOverlay*>(pane0)->size);
+        TagCopyVec2f(posA, reinterpret_cast<CSysWinPaneOverlay*>(pane0)->size);
         nw4r::lyt::Pane* paneB =
             self->mLayout->GetRootPane()->FindPaneByName(&lbl_eu_8050A478[0x57], true);
-        func_80127BF4(self->mTagProcessor, reinterpret_cast<CTagMsgView*>(paneB),
+        TagProcCalcPageLayout(self->mTagProcessor, reinterpret_cast<CTagMsgView*>(paneB),
                       reinterpret_cast<CTagOutView*>(pane0));
         f32 posB[2];
-        func_80127BC4(posB, reinterpret_cast<CSysWinPaneOverlay*>(pane0)->size);
+        TagCopyVec2f(posB, reinterpret_cast<CSysWinPaneOverlay*>(pane0)->size);
         f32 pick[2];
-        func_80127BC4(pick, posA[0] > posB[0] ? posA : posB);
+        TagCopyVec2f(pick, posA[0] > posB[0] ? posA : posB);
         pick[1] = lbl_eu_806685D8;
         func_80124288(pane0, pick);
         nw4r::math::VEC3 v;

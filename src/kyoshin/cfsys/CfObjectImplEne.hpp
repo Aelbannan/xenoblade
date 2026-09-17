@@ -739,7 +739,7 @@ void func_800E9B54(void* mgr, void* obj, int a, int b);
 void func_800D9CA0(void* mgr, void* target);
 void CPartsChange_ResetBattleEntry(void* obj, int a, int b);
 void func_80140E00(u32 a, u32 b, u32 c);
-void func_8013E2E0(u32 a1, u32 a2, u32 a3, u32 a4, u32 a5, u32 a6, u32 a7, u32 a8, u32 a9);
+void UIWin_CreateItemMulti(u32 a1, u32 a2, u32 a3, u32 a4, u32 a5, u32 a6, u32 a7, u32 a8, u32 a9);
 void CTaskGame_enumListCtor(void* holder);
 void* CTaskGame_enumListGet(void* holder);
 void func_800F4A98(void* list, u32 type, u32 filter);

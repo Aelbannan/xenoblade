@@ -124,7 +124,7 @@ case studies of that contract.
   first. MWCC assigns f0 to the first decl and reorders stores (f0's store
   first). The `return x` trick fixes regs but not store order; struct copies
   interleave single-reg. The store-order difference is SMT-proved NOT
-  equivalent (observable under aliasing). func_80127BC4/80231848/80219D10/
+  equivalent (observable under aliasing). TagCopyVec2f/80231848/80219D10/
   80270AD8/800BC510 are open items.
 - **Range-test normalization:** `if (v < 1 || v > 0xb) return X;` normalizes to
   `subi r0,v,1; cmplwi r0,0xa` (retail keeps two `cmplwi` + shared epilogue).
@@ -357,7 +357,7 @@ case studies of that contract.
   come from the class overlay; use the file's own `VoiceLayoutList` typedef
   (LinkList<VoiceLayout, 0x11C>).
 - **Hybrid nested-if shape reproduces retail's round-robin register rotation
-  and bottom ret-blocks in an unrolled pointer-chain walk (`func_8025F290`,
+  and bottom ret-blocks in an unrolled pointer-chain walk (`KizunaEntryFindListHead`,
   kyoshin/CPcKizunagram, -O4,s, 0x58, 100%):** a 5-level unrolled
   `prev`-pointer walk with a self tail-call. Retail rotates regs
   (n1=r4, n2=r5, n3=r3, n4=r4, n5=r3) and emits bottom ret-blocks
@@ -389,7 +389,7 @@ case studies of that contract.
   call count, arg casts, or `if` guard shape (all probed).
 
 - **`#pragma optimize_for_size on` also suppresses `-O4,p` loop unrolling —
-  keeps the rolled `mtlr`/`bdnz` countdown form:** `func_801F9864`
+  keeps the rolled `mtlr`/`bdnz` countdown form:** `PartyStateWin_InitGaugeRecord`
   (kyoshin/CPartyStateWin, US, Wii/1.1 `-O4,p`, 0x30) fills a 10-entry
   `u16[10]` gauge array with a constant-bound `for (i=0;i<10;i++)` loop.
   Retail is ROLLED (`li r0,10; mtlr r0; add r5,r3,r4; addi r4,r4,2;
@@ -1517,7 +1517,7 @@ code (0.0%).
 
 ## kyoshin CModelDispEquip — fake-interface vtable slots: filler-count math + re-read-per-call (Wii/1.1 `-O4,s`)
 
-`func_80200E94` (us-80202b8c) + `func_80200F08` (us-80202c00) went 86.2%/89.2% → both **100.0% FULL_MATCH**. The retail dispatches `lwz r12,0(r3); lwz r12,0xC8(r12); mtctr; bcctrl` (real r12 ABI dispatch) while the manual `(*(void***)obj)[50](...)` cast emits `lwz r6,0(r3); lwz r12,200(r6)` scratch loads (4 reg_swaps). The fix: a fake SI interface (`CModelDispModelVt`) with real virtuals and **empirical filler-count math** — MWCC reserves **8 hidden vtable slots** for these fake interfaces (not 2 as the header comments claim): mC4 landed at slot 55 (0xDC) with 47 declared virtuals before it, so the correct count is **41 virtuals before mC4** (41+8 = slot 49 = byte 0xC4; mC8 = 0xC8). Two call-site rules: (1) **re-read `holder->field_0x00` per call** — an `obj` local forces MWCC to keep the object in a callee-saved reg (`lwz r30,0(r3); or r3,r30,r30`); the retail re-loads `lwz r3,0(r30)` per call; (2) a 2-arg interface call leaves the leftover 3rd param in r5 (retail relies on it — don't add the arg to the signature).
+`ModelDispEquip_RearmAnimSlot` (us-80202b8c) + `ModelDispEquip_RearmAnimSlotChecked` (us-80202c00) went 86.2%/89.2% → both **100.0% FULL_MATCH**. The retail dispatches `lwz r12,0(r3); lwz r12,0xC8(r12); mtctr; bcctrl` (real r12 ABI dispatch) while the manual `(*(void***)obj)[50](...)` cast emits `lwz r6,0(r3); lwz r12,200(r6)` scratch loads (4 reg_swaps). The fix: a fake SI interface (`CModelDispModelVt`) with real virtuals and **empirical filler-count math** — MWCC reserves **8 hidden vtable slots** for these fake interfaces (not 2 as the header comments claim): mC4 landed at slot 55 (0xDC) with 47 declared virtuals before it, so the correct count is **41 virtuals before mC4** (41+8 = slot 49 = byte 0xC4; mC8 = 0xC8). Two call-site rules: (1) **re-read `holder->field_0x00` per call** — an `obj` local forces MWCC to keep the object in a callee-saved reg (`lwz r30,0(r3); or r3,r30,r30`); the retail re-loads `lwz r3,0(r30)` per call; (2) a 2-arg interface call leaves the leftover 3rd param in r5 (retail relies on it — don't add the arg to the signature).
 
 ## kyoshin CfObjectActor — two identical secondary-base virtual calls: call through `this` directly, not casts (Wii/1.1 `-O4,p`)
 
@@ -9155,7 +9155,7 @@ store:
 
 The `return;` inside the `exit:` block (its epilogue merges with the function end) prevents MWCC from collapsing `bne store; b exit; store` into `beqlr; stores`, reproducing the retail `bne store; blr; store: …` layout byte-for-byte. Same principle as the sjrbf_PutChunk `goto body; goto exit; exit: return; body:` gate. Also note the middle guard loads here are **SDA21 globals** (`lbl_eu_80664508/0C/10`, type-109 relocs at +0x18/+0x24/+0x30), NOT pointer derefs — reading the DOL bytes (`lwz r0, …(r13)`) instead of the placeholder disassembly is what reveals that.
 
-## CScnItemPool func_8048C524 — ring-push walk: sentinel-last + explicit byteOff + comma-init (FULL_MATCH 100%)
+## CScnItemPool CScnItemPool_pushItemToList — ring-push walk: sentinel-last + explicit byteOff + comma-init (FULL_MATCH 100%)
 
 A `for`-loop reslist push was stuck at 64.7%/12 reg_swap (documented open item: "register rotation {i,byteOff,sentinel}: retail (r6,r7,r9) vs MWCC (r9,r6,r7)"). Three levers together reached 100%:
 
@@ -9167,7 +9167,7 @@ Each lever alone was insufficient (declaration orders gave 5-8 reg_swap; the der
 
 ## reslist push_back walk (CDeviceVI entryCb) — invariants declared last + sentinel-assigned-first (FULL_MATCH 100%)
 
-Same ring-push family as func_8048C524, applied to an inlined `reslist::push_back`. The template's inlined walk (sentinel first, derived byteOff) rotated to 10 reg_swap. Manual inline with the refined lever set reached 100%:
+Same ring-push family as CScnItemPool_pushItemToList, applied to an inlined `reslist::push_back`. The template's inlined walk (sentinel first, derived byteOff) rotated to 10 reg_swap. Manual inline with the refined lever set reached 100%:
 
 ```c
 reslist<T>* list = &spInstance->mCallbackList;
@@ -9180,7 +9180,7 @@ capacity = list->mCapacity;
 for (i = 0, byteOff = 0; i < capacity; i++) { ... byteOff += 12; }
 ```
 
-Key refinement over the func_8048C524 entry: **declare-then-assign separates the vreg birth order from the load emission order** — the loop invariants (capacity, sentinel) are declared last so they win the high scratch registers, while their loads are emitted in the retail's source order (sentinel load before capacity load). Declaring them with initializers in either order could not get both the birth order AND the emission order right (2 reg_swap). The explicit `byteOff` local + `for (i = 0, byteOff = 0; ...)` comma-init (from the func_8048C524 entry) remain required.
+Key refinement over the CScnItemPool_pushItemToList entry: **declare-then-assign separates the vreg birth order from the load emission order** — the loop invariants (capacity, sentinel) are declared last so they win the high scratch registers, while their loads are emitted in the retail's source order (sentinel load before capacity load). Declaring them with initializers in either order could not get both the birth order AND the emission order right (2 reg_swap). The explicit `byteOff` local + `for (i = 0, byteOff = 0; ...)` comma-init (from the CScnItemPool_pushItemToList entry) remain required.
 
 ## kyoshin stmw/lmw frame: `#pragma optimize_for_size` forces the block save (CItemBoxGrid func_801C5158)
 
@@ -9343,7 +9343,7 @@ Batch of small-function FULL_MATCHes across kyoshin/monolib with reusable levers
 
 `us-80288590` (0x9c). Two levers: (1) a plain C++ `__dt__80285C44` helper whose body is `if (self && mode > 0) __dl__FPv(self)` was being -ipa-inlined at the dtor's `__dt__80285C44(&pagecur[0], -1)` call site and **constant-folded to nothing** (mode -1 → the body dead → the whole call elided, dtor 0x98 with 6 sub-calls). `extern "C" __declspec(noinline)` keeps the retail `bl` (7 sub-calls). (2) `#pragma optimize_for_size` inside the member dtor merges the 2-register frame to stmw/lmw.
 
-## -O4,s keeps base+offset induction; index-declared-first flips the colors (CTagProcessor func_80125AB8/25B08, FULL_MATCH)
+## -O4,s keeps base+offset induction; index-declared-first flips the colors (CTagProcessor TagProcDispatchProcess/25B08, FULL_MATCH)
 
 Table-walk dispatch loops (`for (u32 o = 0; ; o += 12) { TagEntry* e = (const u8*)tbl + o; ... }`) get strength-reduced by `-O4,p` into a walked pointer (`addi rX,rX,0xC`), but the retail keeps the base+offset form (`lis rB; li rI,0; add rE,rB,rI; addi rI,rI,0xC`). `#pragma optimize_for_size on` (-O4,s) reproduces the retail induction byte-for-byte. Remaining base↔index register swap: declare the byte index FIRST (`u32 o = 0; const u8* base = ...; for (;; o += 12)`), before the base local, to get retail's base→r7 / index→r6 (declaring base first swaps them).
 
@@ -9370,7 +9370,7 @@ Table-walk dispatch loops (`for (u32 o = 0; ; o += 12) { TagEntry* e = (const u8
   `lbl_eu_8066AE88` instead of `0.0f` avoids the anonymous `@9552` literal reloc.
 - **Phantom first params place the real object in the retail's register** when the retail
   reads the object from r4 (2-arg convention with the first arg unused): func_801B218C,
-  CfRes_checkEntryReady, func_80128AB8.
+  CfRes_checkEntryReady, TagWriterCode8Target.
 - **Dead reads as call args**: the retail's "unused" loads (func_80208760's m10 and m8->m10)
   are the LAST TWO ARGS of the call — MWCC drops standalone dead/volatile reads, so route
   them through the call itself.
@@ -10063,7 +10063,7 @@ WARNING (operational): these rules are SINGLE-application — re-running postpro
 - **Addendum (same session):** `isInitialized` reached FULL_MATCH with the CLibG3d inline-scan recipe verbatim (`CMsgQueueData` overlay at 0x1A4-0x1B0, goto-done loop, `return !busy && (state==LOGIN||state==RUN)`; certified us-804630a4). Also: **DECOMP_FORCEACTIVE is NOT needed for zero-init .sbss/.bss tail symbols under `-ipa file`** -- MWCC keeps unreferenced u32 definitions in this TU's sbss without a stub (verified: removing the 4-symbol stub left .sbss at 0x10 and data diff raw-MATCH). Since -ipa file also costs .text (each stub entry emits a real vararg setup), try deleting the stub before assuming tails need force-active; re-check the owning TU's data gate after.
 
 ## Same-TU helper auto-inlined where retail CALLS it — __declspec(noinline) on the helper, not inline-into-caller (func_8048C5B8 → FULL_MATCH)
-- Symptom:   `hexdiff func_8048C5B8` stuck at 17.4% / 19 structural / 0x5c vs retail 0x54: decomp showed an inlined sentinel-count WALK (lwz r4,4(r3); li r31,0; loop…) while retail showed three `bl`s (func_8048C6F4 → func_8048C60C → func_8048C478). Rewriting the caller's source call-vs-loop did NOTHING — the diff was byte-identical across three different source shapes.
+- Symptom:   `hexdiff func_8048C5B8` stuck at 17.4% / 19 structural / 0x5c vs retail 0x54: decomp showed an inlined sentinel-count WALK (lwz r4,4(r3); li r31,0; loop…) while retail showed three `bl`s (func_8048C6F4 → func_8048C60C → CScnItemPool_getListCapacity). Rewriting the caller's source call-vs-loop did NOTHING — the diff was byte-identical across three different source shapes.
 - Cause:     MWCC (-O4,p, -ipa on) auto-inlines same-TU extern "C" helpers at call sites regardless of source form. Retail keeps `func_8048C60C` out-of-line AND calls it; the TU already emits the standalone 100%-matched copy, so only the caller's inlining decision differed. Diagnostic tell: the caller's codegen is IDENTICAL whether the source spells a helper call or the inlined body — MWCC's inliner erases the source distinction.
 - Fix:       `__declspec(noinline)` on the HELPER (`func_8048C60C`), not restructuring the caller. Caller now emits the exact retail bl chain and returns to 0x54/0x54 100%; the helper's own body is unchanged (still 100%, 0x24/0x24). Unit goes 32/44 → 33/44 FULL_MATCH.
 - Result:    FULL_MATCH 100% (0 structural, 0 reg_swap); data gate still MATCH; split PASS 0xE74/0x1290.
@@ -10109,7 +10109,7 @@ the register_mapping.md scheduler-driven coloring soft-cap; witness run hit its
 cfg-exploration deadline (inconclusive), recorded near-miss.
 Confidence: repo_proven.
 
-**Second instance (func_8048C630 → FULL_MATCH):** the forwarder `func_8048C4F8` (which tail-wraps `func_8048C524`) was auto-inlined into its caller `func_8048C630`. Diagnostic signature: a decomp-only reloc to the WRAPPER'S CALLEE (`bl func_8048C524` present in decomp where retail calls `func_8048C4F8`), plus `stw arg,(sp); addi rX,sp,…` address-of spill from the wrapper's `&slot` local appearing in the caller. Same fix — `__declspec(noinline)` on the wrapper — restored retail's exact three-bl chain; naming the `u16 kind` intermediate is compatible. Unit at 34/44 FULL_MATCH. When a caller's diff shows calls to the helper's CALLEE instead of the helper, suspect auto-inlining of the middle function before touching expression shapes.
+**Second instance (func_8048C630 → FULL_MATCH):** the forwarder `CScnItemPool_pushOtherToList` (which tail-wraps `CScnItemPool_pushItemToList`) was auto-inlined into its caller `func_8048C630`. Diagnostic signature: a decomp-only reloc to the WRAPPER'S CALLEE (`bl CScnItemPool_pushItemToList` present in decomp where retail calls `CScnItemPool_pushOtherToList`), plus `stw arg,(sp); addi rX,sp,…` address-of spill from the wrapper's `&slot` local appearing in the caller. Same fix — `__declspec(noinline)` on the wrapper — restored retail's exact three-bl chain; naming the `u16 kind` intermediate is compatible. Unit at 34/44 FULL_MATCH. When a caller's diff shows calls to the helper's CALLEE instead of the helper, suspect auto-inlining of the middle function before touching expression shapes.
 
 ## monolib coli bounds-expansion family (code_804B2FF0) — final-check load order + three-way pointer-color residual (Wii/1.1, -O4,p, OPEN at 93.9% ×3)
 
@@ -10517,9 +10517,9 @@ us-80115a2c (r6→r7).
 - Applies to/a.k.a.: any monolib/nw4r TU whose accepted rows silently regress to low % with inflated decomp sizes — first hypothesis should be IPA re-inlining, check for missing noinline markers before touching bodies; cf. CScnFilterMan case (noinline helpers) and MWCC_PATTERNS folded-template-ctor entry.
 
 ## code_802405F4.cpp — extern "C" decl clashes blocked the whole TU → macro-rename legacy imports (Wii/1.1, unblock)
-- Symptom:   unit failed to compile: (10505) illegal overloading between CFloorMap.hpp's stale `extern "C" u32 BdatGetU16ByTableKey(...)` and code_80135FDC.hpp's canonical u16 decl; then CTaskGame.hpp's typed `CTaskGameCamView* func_8049603C(CScn*)` vs the canonical void* decls.
+- Symptom:   unit failed to compile: (10505) illegal overloading between CFloorMap.hpp's stale `extern "C" u32 BdatGetU16ByTableKey(...)` and code_80135FDC.hpp's canonical u16 decl; then CTaskGame.hpp's typed `CTaskGameCamView* Scn_QueryUnk80State(CScn*)` vs the canonical void* decls.
 - Cause:     transitive header pulls of conflicting pseudo-import declarations (the real definitions return u16 / void*).
-- Fix:       same rename-away pattern already used in this TU for lbl_eu_8066A208 and across CGame.cpp/CMiniMap.cpp etc.: `#define BdatGetU16ByTableKey menuMapSelMsgLookupU32Unused` before including code_802405F4.hpp (which pulls CFloorMap.hpp), `#undef` before including code_80135FDC.hpp; `#define/#undef func_8049603C` around the CTaskGame.hpp include only. Scope macros to exactly one include or they leak into the canonical declaration.
+- Fix:       same rename-away pattern already used in this TU for lbl_eu_8066A208 and across CGame.cpp/CMiniMap.cpp etc.: `#define BdatGetU16ByTableKey menuMapSelMsgLookupU32Unused` before including code_802405F4.hpp (which pulls CFloorMap.hpp), `#undef` before including code_80135FDC.hpp; `#define/#undef Scn_QueryUnk80State` around the CTaskGame.hpp include only. Scope macros to exactly one include or they leak into the canonical declaration.
 - Result:    TU compiles; Init__14CMenuMapSelectFv and Move__14CMenuMapSelectFv confirmed 100% (us-802436c8, us-80243ff4).
 - Confidence: repo_proven
 - Applies to/a.k.a.: scaffolded catalog TUs that transitively include multiple headers declaring the same extern "C" helper with different signatures.
@@ -10655,7 +10655,7 @@ emits `add r3,r3,r0; addi r29,r3,16880`. Cycle `equivalence: full_match`.
 ## CUIWindowManager window-creator family — push_back scan rotation / whole-function register shift → volatile savedRet + manual-inline push_back (Wii/1.1, -O4,p, FULL_MATCH ×6)
 - Symptom:   window creators that call a factory then `mWindowList1.push_back(window)` matched only ~81% with a pure 3-cycle scratch rotation of {startNode, byteOff, capacity} inside the inlined reslist scan; freshly written creators showed a uniform +1 register shift on every value after the factory call.
 - Cause:     two compounding issues. (1) The template `push_back(window)` shape lets the compiler keep the result in a register and color the scan webs differently from retail. (2) A missing final `return` statement changes the allocator's exit-value web — retail materializes the return value with `lwz r3,8(r31)` before the epilogue even when callers ignore it.
-- Fix:       write the factory result into a `volatile u32 savedRet` inside a scope (with explicit `if (tempRet == 0) return NULL;`), reload the singleton (`inst = lbl_eu_80664088;`), hand-inline the push_back (find-first-empty-slot scan + setItem via try/catch-expanded guard reading savedRet + splice), and end with `return savedRet;` (or `(IUIWindow*)savedRet`). Verified byte-exact on func_8013D8A0/E030/DD94/DE6C/E9D8/E204.
+- Fix:       write the factory result into a `volatile u32 savedRet` inside a scope (with explicit `if (tempRet == 0) return NULL;`), reload the singleton (`inst = lbl_eu_80664088;`), hand-inline the push_back (find-first-empty-slot scan + setItem via try/catch-expanded guard reading savedRet + splice), and end with `return savedRet;` (or `(IUIWindow*)savedRet`). Verified byte-exact on UIWin_CreateExtraWin/E030/DD94/DE6C/E9D8/E204.
 - Result:    FULL_MATCH ×6 (was 24–82% near-misses recorded as scheduler soft-caps — they were not; the source shape was wrong).
 - Confidence: repo_proven
 - Applies to/a.k.a.: any creator of this family; also related: empty stubs need `__declspec(noinline)` or IPA deletes their call sites; int-returning fns whose retail body never sets r3 on success still need the source-level return.
@@ -10674,7 +10674,7 @@ emits `add r3,r3,r0; addi r29,r3,16880`. Cycle `equivalence: full_match`.
 - Fix:       unify on `int func_8017FD44(void)` in all three headers, delete the fake args at every call site, remove the guards + the TU-local re-decl. Byte-identical: CChainActorList func_8027C33C stayed 100% PASS; CMenuKeyAssign::Move identical counts (3.3%/726 structural) before vs after.
 - Result:    guards gone; CSuddenCommu verification deferred (unit transiently broken by unrelated concurrent CVision.hpp overload edit); its arg-taking sites were liveness-neutral by the same argument.
 - Confidence: repo_proven
-- Applies to/a.k.a.: any "dual-arity residual": first check retail asm for r3 setup at EVERY call site of the symbol. If none materialize r3, it is ONE abi with wrong decls — convert fake-arg sites and unify the headers instead of keeping remaps. Second case (same symbol family): CItem_initItemImplInstances retail callers genuinely split (stale-r3 helpers in CfGameManager/pluginCfs vs real-arg sites in CfMapMineManager/CCol6System/makecrystal) — still unifiable on the owner ABI void* f(void*): stale-r3 TUs pass their register-live value (zero codegen) or keep a TU-local no-arg decl behind a rename-guard (func_8049603C pattern); see attempts.jsonl GUARDS-REMOVED entry.
+- Applies to/a.k.a.: any "dual-arity residual": first check retail asm for r3 setup at EVERY call site of the symbol. If none materialize r3, it is ONE abi with wrong decls — convert fake-arg sites and unify the headers instead of keeping remaps. Second case (same symbol family): CItem_initItemImplInstances retail callers genuinely split (stale-r3 helpers in CfGameManager/pluginCfs vs real-arg sites in CfMapMineManager/CCol6System/makecrystal) — still unifiable on the owner ABI void* f(void*): stale-r3 TUs pass their register-live value (zero codegen) or keep a TU-local no-arg decl behind a rename-guard (Scn_QueryUnk80State pattern); see attempts.jsonl GUARDS-REMOVED entry.
 
 ## g3d dcc trio (g3d_maya/g3d_xsi/g3d_3dsmax) — DECOMP_FORCEACTIVE retired: in-TU dispatch-table definitions + extern_data_sections (GC/3.0a5.2, -ipa file)
 - Symptom:   each TU's 14 anon-namespace MakeTexSrtMtx_*/ProductTexSrtMtx_* functions are retail-present only via nw4r_data.s dispatch tables (maya lbl_eu_8051D6C0/D6DC, xsi lbl_eu_8051D6F8/D714, 3dsmax lbl_eu_8051D730/D74C); deleting the emitter dead-strips all of them at compile time, and the emitter itself costs retail-absent .text (+0xFC/+0x140/+0x100 split overflow).
@@ -11108,9 +11108,9 @@ emits `add r3,r3,r0; addi r29,r3,16880`. Cycle `equivalence: full_match`.
 - Evidence:  us-8023c100 / us-8023c1c8 / us-8023c350 / us-8023beb4 / us-8023cd8c / us-8023c5dc / us-8023c964 / us-8023c290 / us-8023c8b4 / us-8023ca2c / us-8023cadc / us-8023991c / src/kyoshin/CArtsInfo.cpp
 
 ## CPartsChange_UpdateElemSpeeds / CPartsChange — no-arg frame clock (US, Wii/1.1 -O4,p, FULL_MATCH)
-- Symptom:   Empty stub vs 0x138 retail (0%). Porting the ctx body with `func_80496288(lbl_eu_80663E14)` was 17.7%: extra SDA load before the `bl` and a 4-byte size overrun.
-- Cause:     Retail calls the scene frame-clock as a **no-arg** C ABI (`bl func_80496288` immediately after `CfRes_getD80Flag`). Passing the scene pointer is a different overload/shape.
-- Fix:       `extern "C" f32 func_80496288(void);` then `f32 step = func_80496288();`
+- Symptom:   Empty stub vs 0x138 retail (0%). Porting the ctx body with `Scn_GetFrameDelta(lbl_eu_80663E14)` was 17.7%: extra SDA load before the `bl` and a 4-byte size overrun.
+- Cause:     Retail calls the scene frame-clock as a **no-arg** C ABI (`bl Scn_GetFrameDelta` immediately after `CfRes_getD80Flag`). Passing the scene pointer is a different overload/shape.
+- Fix:       `extern "C" f32 Scn_GetFrameDelta(void);` then `f32 step = Scn_GetFrameDelta();`
 - Result:    FULL_MATCH (0x138/0x138)
 - Evidence:  us-80196868 / src/kyoshin/cf/CPartsChange.cpp
 
@@ -11172,12 +11172,12 @@ emits `add r3,r3,r0; addi r29,r3,16880`. Cycle `equivalence: full_match`.
 
 ## kyoshin/menu/CMenuVision func_801AD504 — lwzu image-table + silent slot-5 begin (HIGH_MATCH 71.3%, +8)
 - Symptom:   First ~0x1CC8 is opcode-aligned (reg_swap only). Then retail `lis; lwzu; stw [0]; addi &images; lwz 4/8/12 interleaved with &ids and i=0; lis r21,0x7469; stw [1..3]`. Decomp rematerializes `lis+addi 0x74696D67` inside the GetResource loop. Extra `playUISound` on flags&0x10 slot 5.
-- Cause:     Aggregate `images[4]={tbl[i]}` emits `lis/addi/lwz` not `lwzu`. `0x74696D67` is rematerializable so MWCC will not keep HA in a saved reg across `func_801355F4`. Slot 5 in flags&0x10 starts anims but does not play 0x1C3 (retail has 5 sounds, not 6).
+- Cause:     Aggregate `images[4]={tbl[i]}` emits `lis/addi/lwz` not `lwzu`. `0x74696D67` is rematerializable so MWCC will not keep HA in a saved reg across `CUICfManager_getArcResourceAccessor`. Slot 5 in flags&0x10 starts anims but does not play 0x1C3 (retail has 5 sounds, not 6).
 - Fix:       `const char** src = tbl; w0=*src++; images[0]=w0; imageList=images; images[1]=src[0]; idList=ids; images[2]=src[1]; i=0; images[3]=src[2];` and `GetResource(tagHi+0x6d67, …)` in the loop. `menuVisionBeginSilent` for flags&0x10 slot 5; keep sound on slot 4.
 - Result:    71.3% / 219 structural / 447 reg_swap / 0x2438 vs 0x2430. playUISound count and first three sites match. Residual: hoisted `lis r21` in the copy delay slot (both panic tables).
 - Evidence:  us-801aec38 / src/kyoshin/menu/CMenuVision.cpp
 
-## func_80127E74 / CTagProcessor — IPA inlined callee into 0x8c wrapper → noinline (Wii/1.1 -ipa file, FULL_MATCH)
+## TagProcResetPage / CTagProcessor — IPA inlined callee into 0x8c wrapper → noinline (Wii/1.1 -ipa file, FULL_MATCH)
 - Symptom:   live 0.7% size 0x8c/0x490; decomp emitted memset + 2480-byte frame; retail is a small stmw wrapper that `bl func_80127764`
 - Cause:     `-ipa file` inlined `func_80127764` into the caller. Registry 100% was stale from a prior out-of-line build
 - Fix:       `__declspec(noinline)` on `func_80127764` so the wrapper keeps the retail `bl`

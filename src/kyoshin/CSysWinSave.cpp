@@ -197,7 +197,7 @@ void CSysWinSave::Init() {
 
     // Rebuild the embedded CCur18 cursor the same way (shared arc accessor).
     u8 tempC[0x18];
-    __ct__CCur18(tempC, (void*)func_801355F4());
+    __ct__CCur18(tempC, (void*)CUICfManager_getArcResourceAccessor());
     CCur18Data* mc = reinterpret_cast<CCur18Data*>(&mCur18[0]);
     CCur18Data* tc = reinterpret_cast<CCur18Data*>(tempC);
     mc->f_04 = tc->f_04;
@@ -263,7 +263,7 @@ void CSysWinSave::Move() {
         // Closing transition finished - hand control back to the UI.
         if (CSysWin_isActive(&mSysWin[0])) {
             if (mFlagDD == 0)
-                func_80134B50(1, 1);
+                CUICfManager_queueSaveMenu(1, 1);
             field_67 = 0;
             field_64 = 1;
         }

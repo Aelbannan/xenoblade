@@ -70,7 +70,7 @@ extern "C" CTimeLightGrp_BaseLayout* __ct__CTimeLightGrp(CTimeLightGrp_BaseLayou
     // Allocate and initialise node array
     base->mList = (_reslist_node<CVirtualLightObjPtr>*)
         allocate_array__Q23mtl10MemManagerFUlUl(
-            0x180, (u32)func_80496004(parent));
+            0x180, (u32)Scn_CallUnk8C_V10(parent));
 
     for (i = 0; i < 32; i++) {
         base->mList[i].mNext = nullptr;

@@ -26,7 +26,7 @@ extern "C" void* GetResTex__Q34nw4r3g3d7ResFileCFPCc(void* res, const char* name
 extern "C" void GetTexObjParam__Q34nw4r3g3d6ResTexCFPPvPUsPUsP9_GXTexFmtPfPfPUc(
     void* tex, void** imgPtr, u16* width, u16* height, s32* fmt, float* minLod,
     float* maxLod, u8* lodBias);
-extern "C" void func_80496120(void* self, void* mtx, int id);
+extern "C" void Scn_CopyCamProjMatrix(void* self, void* mtx, int id);
 
 extern const char lbl_eu_80523F94[];  // shadow static-data resource name
 extern const char lbl_eu_8052637C[];  // panic site file
@@ -154,7 +154,7 @@ int func_8048D264(void* self) {
                           125);
         GXLoadTexObj(&texObj, (GXTexMapID)0);
 
-        func_80496120(self, projMtx, -1);
+        Scn_CopyCamProjMatrix(self, projMtx, -1);
         GXSetProjection(projMtx, (GXProjectionType)0);
         GXSetCurrentMtx(0);
         return 1;
@@ -251,7 +251,7 @@ void func_8048D500(CScnMaruShadowNw4r* self, ShadowCtx* ctx) {
 
     bool draw = true;
     if ((self->field_0x28 & 2) != 0) {
-        void* rec = func_804961D4(ctx->field_0x04, -1);
+        void* rec = Scn_GetCamItem9C(ctx->field_0x04, -1);
         float cx = *(float*)((char*)rec + 0xC);
         float cy = *(float*)((char*)rec + 0x1C);
         float cz = *(float*)((char*)rec + 0x2C);
@@ -420,7 +420,7 @@ void func_8048DD18(CScnMaruShadowNw4r* self, ShadowCtx* ctx, float f1, float f2,
         mtx[1][0] = zero; mtx[1][1] = k; mtx[1][2] = zero; mtx[1][3] = ty;
         mtx[2][0] = zero; mtx[2][1] = zero; mtx[2][2] = k; mtx[2][3] = tzOff - lbl_eu_8066A9C0 * f2;
 
-        void* posMtx = func_8049621C(ctx->field_0x04, -1);
+        void* posMtx = Scn_GetCamItemCC(ctx->field_0x04, -1);
         GXLoadPosMtxImm((const float (*)[4])posMtx, GX_PNMTX0);
         GXSetVtxAttrFmt(GX_VTXFMT0, (GXAttr)0xD, GX_TEX_ST, (GXCompType)4, 0);
 
@@ -503,7 +503,7 @@ void func_8048DD18(CScnMaruShadowNw4r* self, ShadowCtx* ctx, float f1, float f2,
     scaled.x += v1[0]; scaled.y += v1[1]; scaled.z += v1[2];
     (void)scaled;
 
-    void* posMtx = func_8049621C(ctx->field_0x04, 0);
+    void* posMtx = Scn_GetCamItemCC(ctx->field_0x04, 0);
     PSMTXConcat(tmp, tmp, (float (*)[4])posMtx);
     GXLoadPosMtxImm((const float (*)[4])posMtx, GX_PNMTX0);
     GXBegin(GX_QUADS, GX_VTXFMT0, 4);
@@ -601,7 +601,7 @@ void func_8048E2F8(CScnMaruShadowNw4r* shadow, ShadowCtx* ctx, float scale) {
     rotPitch.m[1][3] = posY;
     rotPitch.m[2][3] = posZ;
 
-    PSMTXConcat((float (*)[4])func_8049621C(ctx->field_0x04, -1), rotPitch.m,
+    PSMTXConcat((float (*)[4])Scn_GetCamItemCC(ctx->field_0x04, -1), rotPitch.m,
                 concatOut.m);
     copyDst = concatOut;
     GXLoadPosMtxImm(copyDst.m, GX_PNMTX0);

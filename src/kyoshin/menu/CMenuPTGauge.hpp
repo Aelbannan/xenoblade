@@ -76,6 +76,6 @@ struct CMenuPTGaugeFont {
 };
 
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
-extern "C" nw4r::lyt::ArcResourceAccessor* func_801355F4(); // shared ARC accessor (retail unmangled)
+extern "C" nw4r::lyt::ArcResourceAccessor* CUICfManager_getArcResourceAccessor(); // shared ARC accessor (retail unmangled)
 // Global pointer to the active CMenuPTGauge instance (sda21-relative in retail).
 extern CMenuPTGauge* lbl_eu_806642D8;

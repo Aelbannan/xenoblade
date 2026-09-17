@@ -124,7 +124,7 @@ extern void* __ct__cf_CfGimmickEne(cf::CfGimmickEne* self, u16 row);
 extern void __ct__cf_CfGimmick(void* self);
 
 // Base gimmick bdat/position helper (CfGimmick.cpp).
-extern void func_80208F34(cf::CfGimmick* self, float* out, void* bdat,
+extern void CfGimmick_LoadBdatAreaPos(cf::CfGimmick* self, float* out, void* bdat,
                           void** holder);
 
 // Bdat holder seed for this gimmick (sda21 pointer global).
@@ -154,18 +154,18 @@ extern void func_804BCC3C(void* snd, u8 id);
 
 // Gimmick-state setter (CfGimmick.cpp) and sound playback (CfSoundMan, the
 // retail symbol returns the started sound id).
-extern void func_8020A068(int arg0, int flag, u32 value);
+extern void CfGimmick_SetGlobalFlag80AndValue(int arg0, int flag, u32 value);
 // Single shared flat-name form (unmangled retail symbol; see
 // CfObjectImplMove.hpp).
 extern "C" u16 playActorSound__Q22cf10CfSoundManFUlUlUlUlf(
     u32 a, u32 b, u32 c, u32 d, f32 vol);
 
 // Scene / frame helpers (monolib scn).
-extern cf::CfGimmickEneScene* func_8049698C();            // current-scene global
+extern cf::CfGimmickEneScene* Scn_GetCurrentScene();            // current-scene global
 extern cf::CfGimmickEneSceneState* func_8048ECD0(cf::CfGimmickEneScene* scene);  // -> +0x8C
 
 // Base gimmick deactivation helper (CfGimmick.cpp).
-extern void func_80208EE4(cf::CfGimmick* self);
+extern void CfGimmick_ClearManagerBinding(cf::CfGimmick* self);
 
 // Scene root-group accessor (monolib CScnMem): retail symbol is unmangled
 // (C linkage), takes the shared scene pointer and a child index.

@@ -14,7 +14,7 @@
 // Forward declarations for external C-ABI functions (retail unmangled names).
 extern "C" void* scnImN4PoolHasSpc(void* owner, u32 size);
 extern "C" void* scnImN4PoolAlloc(void* owner, u32 size);
-extern "C" u32 func_80496018(u32 handle);
+extern "C" u32 Scn_CallUnk8C_V8(u32 handle);
 
 // Node user-data scanner (retail unmangled symbol; declared with C linkage in
 // CScnItemModelNw4r.hpp, which is not self-contained - mirrored here).
@@ -257,7 +257,7 @@ void CMdlMaterial::func_804E54B8(void* arg) {
         flag_0x10 = 1;
     } else {
         // Fallback: allocate via MemManager (buffer owned by this object).
-        u32 handle = func_80496018(
+        u32 handle = Scn_CallUnk8C_V8(
             *reinterpret_cast<u32*>(reinterpret_cast<u8*>(arg) + 4));
         buffer = mtl::MemManager::allocate_array(
             resMdl.GetResMatNumEntries() * 16, handle);

@@ -175,7 +175,7 @@ void __ct__8009D604() {
                 e->field_350C = 0;
                 e->field_352C = 0;
                 e->field_3530 = 0;
-                func_8025EDC8(reinterpret_cast<CPcKizunagramBig*>(&e->big));
+                KizunagramClearChart(reinterpret_cast<CPcKizunagramBig*>(&e->big));
                 ++e;
             } while (e < eEnd);
             // Reset the freshly built buffer before publishing it (retail

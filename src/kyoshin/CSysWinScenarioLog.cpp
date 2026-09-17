@@ -455,7 +455,7 @@ extern "C" void func_8027EA6C(CSysWinScenarioLog* self) {
                           : &lbl_eu_8050EE24[0x8b];
     u16 msgId = (u16)BdatGetU16ByTableKey(&lbl_eu_8050EE24[0x68], sel, 0x2c);
     void* tex = MakeTplNameSysFile(msgId);
-    nw4r::lyt::ArcResourceAccessor* mgr = func_801355F4();
+    nw4r::lyt::ArcResourceAccessor* mgr = CUICfManager_getArcResourceAccessor();
     void* mat = mgr->GetResource(0x74696d67, (const char*)tex, 0);
     if (mat == 0) {
         return;
@@ -1603,7 +1603,7 @@ void CSysWinScenarioLog::Init() {
         ev78 = reinterpret_cast<IWorkEvent*>(&mWorkEvent);
     }
     mFileHandle78 = CDeviceFile::readCommonArchiveFile(
-        func_800A9D90(), &lbl_eu_8050EE24[0x18], ev78, 0, 0);
+        KyoshinHeap_GetField44(), &lbl_eu_8050EE24[0x18], ev78, 0, 0);
 }
 
 // ---------------------------------------------------------------------------

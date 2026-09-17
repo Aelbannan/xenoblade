@@ -260,7 +260,7 @@ extern const f32 lbl_eu_8066A210;
 // Chain-voice global state (retail .sdata lbl_eu_80662A20): -1 is the
 // "not loaded" sentinel. The func_80276C*/func_8027715* helpers probe it with
 // the unsigned (value + 0x10000) == 0xffff sentinel test (MWCC addis/cmplwi
-// idiom, cf. func_80190394 in code_8018F8D8.cpp).
+// idiom, cf. CfCmd_Fwd16IfItem in code_8018F8D8.cpp).
 extern s32 lbl_eu_80662A20;
 
 // Chain-voice id tables picked by func_80276D30 (.sdata int arrays -> sda21

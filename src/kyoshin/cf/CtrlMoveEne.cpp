@@ -290,7 +290,7 @@ void func_8008A2C8(cf::CCtrlMoveEne* self) {
             }
             // Heading / pursuit gates.
             f32 f29 = reinterpret_cast<cf::CfObject*>(&obj->mSub2)->CfObject_getMoveSpeedRate();
-            f32 f31 = func_80496288(lbl_eu_80663E14) * f29;
+            f32 f31 = Scn_GetFrameDelta(lbl_eu_80663E14) * f29;
             int r27 = 0;
             if (r31 != 0) {
                 obj->field_4550 |= 0x200;
@@ -383,7 +383,7 @@ void func_8008A2C8(cf::CCtrlMoveEne* self) {
             if (b1aa >= 1 && b1aa <= 0x18) return;
             // Battle-state / damage gate.
             f32 f29b = reinterpret_cast<cf::CfObject*>(&obj->mSub2)->CfObject_getMoveSpeedRate();
-            f32 f28 = func_80496288(lbl_eu_80663E14) * f29b;
+            f32 f28 = Scn_GetFrameDelta(lbl_eu_80663E14) * f29b;
             if (f28 == lbl_eu_806665C0) {
                 f28 = lbl_eu_806665E4;
             }
@@ -1201,7 +1201,7 @@ __declspec(noinline) int func_8008D51C(cf::CCtrlMoveEne* self) {
         }
         f32 f31 = reinterpret_cast<cf::CfObject*>(&obj->mSub)->CfObject_getMoveSpeedRate();
         view->field_0x168 =
-            func_80496288(lbl_eu_80663E14) * f31 + view->field_0x168;
+            Scn_GetFrameDelta(lbl_eu_80663E14) * f31 + view->field_0x168;
         if (view->field_0x168 >= lbl_eu_806665EC) {
             view->field_0x17C &= 0xDDFFC7FF;
             D51CZeroSlots(obj);

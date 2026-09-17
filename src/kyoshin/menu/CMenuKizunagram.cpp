@@ -43,7 +43,7 @@ void CMenuKizunagram::Init() {}
 
 void CMenuKizunagram::Term() {
     waitForDrawDone__9CDeviceVIFv();
-    func_804962A0(reinterpret_cast<CScn*>(mParentRef), 1);
+    Scn_SetPauseFlag(reinterpret_cast<CScn*>(mParentRef), 1);
 
     // The `if (this)` is the MWCC idiom that splits mr r4,r31 / beq / addi r4,+0x58.
     IScnRender* renderCB = reinterpret_cast<IScnRender*>(this);
@@ -54,7 +54,7 @@ void CMenuKizunagram::Term() {
 
     func_801C40A0(&mTitleAHelp);
     teardownKizuna(&mSub98);
-    func_8025D9C4(&mPcKizunagram);
+    KizunagramTeardown(&mPcKizunagram);
     func_802AE62C(&mLoad);
     func_8024448C(&mFade);
 
@@ -116,7 +116,7 @@ body:
     }
     func_801C3FF0(&mTitleAHelp);
     tickKizMain(&mSub98);
-    func_8025D8C4(&mPcKizunagram);
+    KizunagramUpdateMainState(&mPcKizunagram);
     func_802AE560(&mLoad);
     func_802443E8(&mFade);
 }
@@ -145,7 +145,7 @@ body:
     __ct__Q34nw4r3lyt8DrawInfoFv((nw4r::lyt::DrawInfo*)&drawInfo[0]);
     func_80137250((nw4r::lyt::DrawInfo*)&drawInfo[0]);
     drawKizLayouts(&mSub98, (nw4r::lyt::DrawInfo*)&drawInfo[0]);
-    func_8025D954(&mPcKizunagram, (nw4r::lyt::DrawInfo*)&drawInfo[0]);
+    KizunagramDraw(&mPcKizunagram, (nw4r::lyt::DrawInfo*)&drawInfo[0]);
     // Draw the title/help bar once the per-character window is past the
     // opening phase (state >= 8) or when its visibility flag is set.
     if (field_0x21D != 0 || field_0x21C >= 8) {
@@ -404,12 +404,12 @@ void func_80257754(CMenuKizunagram* self) {
     // animate it, dismiss the chart and advance to state 8.
     if (isIdle__11CTitleAHelpFv(&self->mTitleAHelp) != 0 &&
         kizChartOpen(&self->mSub98) != 0 &&
-        func_8025DA40(&self->mPcKizunagram) != 0) {
+        KizunagramIsHidden(&self->mPcKizunagram) != 0) {
         char* name = BdatTouchStringCell(lbl_eu_8050CAB8, lbl_eu_8050CAB8 + 0xb, 2);
         func_801C41C0(&self->mTitleAHelp, name);
         func_801C41E8(&self->mTitleAHelp, 0x59);
         func_801C416C(&self->mTitleAHelp);
-        func_8025DA50(&self->mPcKizunagram);
+        KizunagramOpen(&self->mPcKizunagram);
         self->field_0x21C = 8;
     }
 }
@@ -421,7 +421,7 @@ void func_80257754(CMenuKizunagram* self) {
 // ---------------------------------------------------------------------------
 void func_802577F0(CMenuKizunagram* self) {
     if (isIdle__11CTitleAHelpFv(&self->mTitleAHelp) != 0 &&
-        func_8025DA48(&self->mPcKizunagram) != 0) {
+        KizunagramIsOpen(&self->mPcKizunagram) != 0) {
         self->field_0x21C = 9;
     }
 }
@@ -434,7 +434,7 @@ void func_802577F0(CMenuKizunagram* self) {
 // helpers on the PC window.
 // ---------------------------------------------------------------------------
 void func_80257840(CMenuKizunagram* self) {
-    if (func_8025DA48(&self->mPcKizunagram) == 0) {
+    if (KizunagramIsOpen(&self->mPcKizunagram) == 0) {
         return;
     }
     KizunaPadData* pad = getCfPadData__Q22cf13CfGameManagerFv();
@@ -463,16 +463,16 @@ void func_80257840(CMenuKizunagram* self) {
     }
     if (a) {
         func_801C4198(&self->mTitleAHelp);
-        func_8025DA78(&self->mPcKizunagram);
+        KizunagramClose(&self->mPcKizunagram);
         self->field_0x21C = 0xa;
     } else if (f1) {
-        func_8025DAE8(&self->mPcKizunagram);
+        KizunagramCursorUp(&self->mPcKizunagram);
     } else if (f2) {
-        func_8025DB30(&self->mPcKizunagram);
+        KizunagramCursorDown(&self->mPcKizunagram);
     } else if (f3) {
-        func_8025DB78(&self->mPcKizunagram);
+        KizunagramCursorPageUp(&self->mPcKizunagram);
     } else if (f4) {
-        func_8025DBC0(&self->mPcKizunagram);
+        KizunagramCursorPageDown(&self->mPcKizunagram);
     }
 }
 
@@ -483,7 +483,7 @@ void func_80257840(CMenuKizunagram* self) {
 // ---------------------------------------------------------------------------
 void func_80257994(CMenuKizunagram* self) {
     if (isIdle__11CTitleAHelpFv(&self->mTitleAHelp) != 0 &&
-        func_8025DA48(&self->mPcKizunagram) != 0) {
+        KizunagramIsOpen(&self->mPcKizunagram) != 0) {
         char* name = BdatTouchStringCell(lbl_eu_8050CAB8, lbl_eu_8050CAB8 + 0xb, 1);
         func_801C41C0(&self->mTitleAHelp, name);
         func_801C41E8(&self->mTitleAHelp, kizChartStatus(&self->mSub98));

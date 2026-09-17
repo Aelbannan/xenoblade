@@ -17,7 +17,7 @@ extern "C" const float lbl_eu_80667410 = 0.0f;
 extern "C" const float lbl_eu_80667414 = 0.9f;
 
 extern "C" void func_80109784(void* ptr, u32 id, int arg);
-extern "C" void func_8013DB6C(int a, u32 id, int b, int c);
+extern "C" void UIWin_CreateMenuUpdate(int a, u32 id, int b, int c);
 int func_80148778(cf::CBattleState* self, u32 id);
 
 namespace cf {
@@ -1339,7 +1339,7 @@ P1_done:
                 u8* obj = (u8*)this->CBattleState_getOwner();
                 func_80109784(*(void**)(obj + 0x3F10), arg->unk0C, 4);
             }
-            func_8013DB6C(6, arg->unk0C, 0, 0);
+            UIWin_CreateMenuUpdate(6, arg->unk0C, 0, 0);
             goto after_dispatch;
         }
     }
@@ -1353,7 +1353,7 @@ P1_done:
             {
                 u8* obj = (u8*)this->CBattleState_getOwner();
                 func_80109784(*(void**)(obj + 0x3F10), arg->unk0C, 1);
-                func_8013DB6C(6, arg->unk0C, 0, 0);
+                UIWin_CreateMenuUpdate(6, arg->unk0C, 0, 0);
                 goto after_dispatch;
             }
         }
@@ -1371,7 +1371,7 @@ P1_done:
                 u8* obj = (u8*)this->CBattleState_getOwner();
                 func_80109784(*(void**)(obj + 0x3F10), arg->unk0C, 2);
             }
-            func_8013DB6C(6, arg->unk0C, 0, 0);
+            UIWin_CreateMenuUpdate(6, arg->unk0C, 0, 0);
             goto after_dispatch;
         }
     }
@@ -1380,7 +1380,7 @@ P1_done:
         if (!(arg->unk30 & 0x800)) {
             u8* obj = (u8*)this->CBattleState_getOwner();
             func_80109784(*(void**)(obj + 0x3F10), arg->unk0C, 1);
-            func_8013DB6C(6, arg->unk0C, 0, 0);
+            UIWin_CreateMenuUpdate(6, arg->unk0C, 0, 0);
         }
     }
 

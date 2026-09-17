@@ -8,7 +8,7 @@
 // Opaque retail helper functions resolved by the symbol map (C linkage so the
 // emitted relocations keep the exact retail symbol names).
 extern "C" {
-    void* func_80496018(void* r3);
+    void* Scn_CallUnk8C_V8(void* r3);
     void func_804950F4(u8* self, void* r4);
     void __dt__80495200(u8* self, int deleting);
     void func_804936AC(void* a, void* b, void* c);
@@ -49,7 +49,7 @@ CScnItemLight::CScnItemLight(CScnItemLightNw4r* pNw4r, char* name, u16 a2,
     field_0x0 = (void*)lbl_eu_8056DD08;
     field_0xc = a3;
     field_0x10 = a2;
-    func_804950F4(mEnv, func_80496018(pNw4r));
+    func_804950F4(mEnv, Scn_CallUnk8C_V8(pNw4r));
     field_0x1218 = strlen(name);
     strcpy(mName, name);
     field_0x121c = 0;

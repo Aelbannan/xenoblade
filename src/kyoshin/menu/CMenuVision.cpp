@@ -141,7 +141,7 @@ struct MenuVisionActorInfo {
 #pragma inline_max_size(10000)
 
 static inline void* menuVisionResource(const char* name) {
-    return func_801355F4()->GetResource(0x74696D67, name, 0);
+    return CUICfManager_getArcResourceAccessor()->GetResource(0x74696D67, name, 0);
 }
 
 static inline u32 menuVisionActorKind(void* actor) {
@@ -990,7 +990,7 @@ extern "C" void func_801AD504(int flags) {
                     images[3] = src[2];
                     do {
                         if (previous == idList[(u8)i]) {
-                            void* image = func_801355F4()->GetResource(tagHi + 0x6d67, imageList[(u8)i], 0);
+                            void* image = CUICfManager_getArcResourceAccessor()->GetResource(tagHi + 0x6d67, imageList[(u8)i], 0);
                             if (image != 0) {
                                 func_80137F88(panic, image);
                                 panic->SetVisible(true);
@@ -1026,7 +1026,7 @@ extern "C" void func_801AD504(int flags) {
                     images[3] = src[2];
                     do {
                         if (current == idList[(u8)i]) {
-                            void* image = func_801355F4()->GetResource(tagHi + 0x6d67, imageList[(u8)i], 0);
+                            void* image = CUICfManager_getArcResourceAccessor()->GetResource(tagHi + 0x6d67, imageList[(u8)i], 0);
                             if (image != 0) {
                                 func_80137F88(panic, image);
                                 panic->SetVisible(true);
@@ -1301,7 +1301,7 @@ void CMenuVision::Init() {
     paneNames[4] = namePtr[3];
     paneNames[5] = namePtr[4];
 
-    nw4r::lyt::ArcResourceAccessor* accessor = func_801355F4();
+    nw4r::lyt::ArcResourceAccessor* accessor = CUICfManager_getArcResourceAccessor();
 
     for (u8 i = 0; i < 6; i++) {
         CMenuVisionEntry& e = mEntries[i];

@@ -179,7 +179,7 @@ void CMenuTutorial::Term() {
         if (code80135FDC_getByte_64080() == 0) {
             setPresentationFlag__Q22cf13CfGameManagerFv(0);
         }
-        func_80135550();
+        CUICfManager_setTimeout30();
     }
 }
 

@@ -61,7 +61,7 @@ extern "C" void scnImN4SetShadFlg(u8* self) {
     *(u16*)((u8*)self + 0x181A) |= 1;
 }
 
-void scnImN4DynStart(u8* self) { func_804EB798((u8*)self + 0x17a0); }
+void scnImN4DynStart(u8* self) { MdlDyn_MarkAllDynamic((u8*)self + 0x17a0); }
 
 void func_804EB7F8(u8* self);
 void scnImN4DynStop(u8* self) { ((void(*)(void*))func_804EB7F8)((char*)self + 0x17a0); }
@@ -335,7 +335,7 @@ extern "C" void func_80487EE0(CScnItemModelNw4r* self) {
     ((CScnItemModelNw4rScnScale*)self->field_0x147C)->mScale[2] =
         self->field_0x30C;
     if (self->field_0x7A4 & 0x1000) {
-        func_804EBAE8(&self->field_0x17A0);
+        MdlDyn_UpdateAnimSpeed(&self->field_0x17A0);
     }
     if (!(self->field_0x7A4 & 0x1000)) {
         if (((CScnItemModelNw4rV74*)self)->v27() == 0 &&
@@ -346,7 +346,7 @@ extern "C" void func_80487EE0(CScnItemModelNw4r* self) {
             if (self->field_0x7A8 & 0x80) {
                 self->field_0x7A4 &= ~0x10000;
             } else {
-                void* obj = func_80496264(self->field_04, -1);
+                void* obj = Scn_FindCamItem(self->field_04, -1);
                 if (((CScnItemModelNw4rV20*)obj)
                         ->v06(&self->field_0x2DC[0]) == 0) {
                     self->field_0x7A4 |= 0x10000;
@@ -486,7 +486,7 @@ extern "C" void  func_804885FC(CScnItemModelNw4r* self) {
     if (self->member824.field_4 != 0) {
         if (!(self->field_0x7A8 & 0x400)) {
             if (!(self->field_0x7A8 & 0x80)) {
-                if (!((CScnItemModelNw4rV20*)func_80496264(self->field_04, -1))
+                if (!((CScnItemModelNw4rV20*)Scn_FindCamItem(self->field_04, -1))
                           ->v06(&self->field_0x2DC[0])) {
                     self->field_0x7A4 |= 0x10000;
                 } else {
@@ -527,7 +527,7 @@ extern "C" void  func_804885FC(CScnItemModelNw4r* self) {
             self->field_0x7A0 &= ~2;
         }
         if (!(self->field_0x7A8 & 0x1000)) {
-            func_804EB798(self->field_0x17A0);
+            MdlDyn_MarkAllDynamic(self->field_0x17A0);
         }
     }
 }
@@ -613,7 +613,7 @@ store_path:
     return;
 alloc_path:
     self->field_0x1494 = mtl::MemManager::allocate_head(
-        func_80496018(self->field_04), size, 4);
+        Scn_CallUnk8C_V8(self->field_04), size, 4);
 }
 
 // scnImN4LinkGrpB: link `other` into this model's reference list
@@ -660,12 +660,12 @@ store_path:
     return;
 alloc_path:
     self->field_0x1498 = mtl::MemManager::allocate_head(
-        func_80496018(self->field_04), size, 4);
+        Scn_CallUnk8C_V8(self->field_04), size, 4);
 }
 
 // scnImN4UnlinkChain: unlink the +0x7C4 chain model. Notify the material chain
 // (scnImN4NotifyMat), drop the chain model's scene object from the +0x1478
-// group, release the chain model (func_80495E60), clear the link, free the
+// group, release the chain model (Scn_IsAnimActiveOrNull), clear the link, free the
 // +0x1498 node table unless the +0x85C bit-3 pool flag is set, and clear the
 // +0x7A4 bit-0x80 visibility flag. The scnImN4NotifyMat call goes through a cast
 // pointer (C-linkage forward decl above) so the reloc keeps the unmangled
@@ -676,7 +676,7 @@ extern "C" void  scnImN4UnlinkChain(CScnItemModelNw4r* self) {
             self, 1, (CScnItemModelNw4r*)self->field_0x7C4);
         self->field_0x1478->Remove(
             ((CScnItemModelNw4r*)self->field_0x7C4)->field_0x147C);
-        func_80495E60(self->field_0x7C4);
+        Scn_IsAnimActiveOrNull(self->field_0x7C4);
         self->field_0x7C4 = 0;
         if ((self->field_0x85C & 8) == 0) {
             if (self->field_0x1498 != 0) {
@@ -731,7 +731,7 @@ extern "C" void  scnImN4Teardown(CScnItemModelNw4r* self) {
                        CScnItemModelNw4r*))scnImN4NotifyMat)(self, 1,
                                                           self->slots7B4[i]);
             self->field_0x1474->Remove(self->slots7B4[i]->field_0x147C);
-            func_80495E60((CScnItemModel*)self->slots7B4[i]);
+            Scn_IsAnimActiveOrNull((CScnItemModel*)self->slots7B4[i]);
             self->slots7B4[i] = 0;
         }
     }
@@ -1407,7 +1407,7 @@ CScnItemModelNw4r* scnImN4BuildByIdx(CScnItemModelNw4r* self,
     if (enable != 0) {
         flags |= 1;
     }
-    handle = func_80495FF0(self);
+    handle = Scn_CallUnk8C_V9(self);
     if (mtl::MemManager::getMaxAllocSize(handle) < 0x3038) {
         model = (CScnItemModelNw4r*)mtl::MemManager::allocate_ex(
             0x181C, mtl::MemManager::getHandleMEM2(), -0x20);
@@ -1471,7 +1471,7 @@ CScnItemModelNw4r* func_80489C94(CScnItemModelNw4r* self,
     if (resFile.GetResMdl(0).ptr() == 0) {
         return 0;
     }
-    mtl::ALLOC_HANDLE handle = func_80495FF0(self);
+    mtl::ALLOC_HANDLE handle = Scn_CallUnk8C_V9(self);
     if (mtl::MemManager::getMaxAllocSize(handle) < 0x3038) {
         return 0;
     }
@@ -1946,7 +1946,7 @@ extern "C" void  scnImN4SetMaruPtr(u8* self, u32 mode) {
 
 // func_8048AB2C: per-frame shadow-node world-matrix update. Gated on the
 // +0x7A4 bit-28 flag; computes a fade scale (simGetLeafDist7B0 result forced to
-// 1.0 by the +0x7A8 bit-2 flag, times the owner scale func_80496288, capped
+// 1.0 by the +0x7A8 bit-2 flag, times the owner scale Scn_GetFrameDelta, capped
 // at 1.0). For each of the two +0x17DC shadow nodes: resolve the resource
 // node by id and its world-matrix slot; when the entry's flag bit 0 is set,
 // reset the offset vec to zero and store the matrix translation; otherwise
@@ -1963,7 +1963,7 @@ void func_8048AB2C(CScnItemModelNw4r* self, nw4r::math::MTX34* worldMtxBase) {
     if (self->field_0x7A8 & 4) {
         fade = lbl_eu_8066A8FC;
     }
-    f32 scale = fade * func_80496288(self->field_04);
+    f32 scale = fade * Scn_GetFrameDelta(self->field_04);
     if (scale > lbl_eu_8066A8FC) {
         scale = lbl_eu_8066A8FC;
     }
@@ -2935,7 +2935,7 @@ extern "C" CScnItemModelNw4r* __ct__CScnItemModelNw4r(
                 self->field_0x860 += bytes;
             } else {
                 u32 handle =
-                    func_80496018((CScnItemModelNw4rOwner*)pSrc);
+                    Scn_CallUnk8C_V8((CScnItemModelNw4rOwner*)pSrc);
                 self->member824.field_8 = (u8*)(uintptr_t)handle;
                 self->member824.field_0 = (u8*)mtl::MemManager::allocate_head(
                     handle, bytes, 4);
@@ -2948,7 +2948,7 @@ extern "C" CScnItemModelNw4r* __ct__CScnItemModelNw4r(
             list.array = 0;
             list.count = 0;
             u32 handle =
-                func_80496018((CScnItemModelNw4rOwner*)pSrc);
+                Scn_CallUnk8C_V8((CScnItemModelNw4rOwner*)pSrc);
             list.array = (u32*)mtl::MemManager::allocate_head(handle, bytes, 4);
             list.count = 0;
             u32 nodeId = (u32)nodeCount;

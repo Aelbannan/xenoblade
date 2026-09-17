@@ -171,11 +171,11 @@ union CtrlNpcCvtDbl {
 #include "kyoshin/plugin/ocBdat.hpp"  // getBdatStringColumnValue (owner)
 
 // Talk/page controller update helpers (func_80093F28).
-extern "C" int func_801413DC(unsigned int arg0, int arg1);
+extern "C" int UIWin_PackHiLo(unsigned int arg0, int arg1);
 extern "C" u32 func_8009CF8C(u32 resourceId);
 extern "C" void* getFP__FPCc(const char* name);
 extern "C" void* func_8003AA34();
-extern "C" void func_8013D07C(void* self, char* text, int flag);
+extern "C" void UIWin_CreateTalkWin(void* self, char* text, int flag);
 extern "C" void func_8013D1E8(void* self);
 extern "C" u32 getControllerWordA33C__Q22cf13CfGameManagerFv();
 // C++-linkage decl: MWCC mangles the call to findObjectById__Fi (actor id ->

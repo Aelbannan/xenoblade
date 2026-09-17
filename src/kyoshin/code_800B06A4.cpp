@@ -3029,7 +3029,7 @@ extern "C" void func_800B83AC() {
                     chr->m184.unk05(0x35);
                 }
                 CfRes_getD80Flag();
-                func_80496288();
+                Scn_GetFrameDelta();
                 func_801765A4(&chr->m17c, 1);
             }
             it++;
@@ -3648,7 +3648,7 @@ extern "C" u32 func_800B47A8(int modeY, float scale, const B47Vec3* posA,
 extern "C" void func_800B8524(UnkClass_805764CC* self, void* arg, void* other) {
     func_800B66BC(self, arg);
     func_800B6AF4(self);
-    func_80496264(CfRes_getD80Flag(), -1);
+    Scn_FindCamItem(CfRes_getD80Flag(), -1);
     s32 gmActive = getEffectFlagState__Q22cf13CfGameManagerFv();
     maybeNullThenFlag(0);
     CfReslistNode* cur;
@@ -5395,7 +5395,7 @@ extern "C" s32 func_800B7AF0(UnkClass_805764CC* self, IB7Arg* arg) {
                             func_8009D018(0x3f, f9c >> 16);
                         }
                         if (func_800AC470(item) != 0) {
-                            func_8013DCAC(f9c >> 16, 1);
+                            UIWin_Create44EE4Win(f9c >> 16, 1);
                         } else {
                             func_800AC460(item, 1);
                             if ((item->h158 & 0x200) != 0) {

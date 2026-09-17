@@ -167,7 +167,7 @@ int winTalk(VMThread* pThread) {
     int winId = vmArgIntGet(2, arg);
     arg = vmArgPtrGet(pThread, 2);
     const char* str = vmArgStringGet(3, arg);
-    func_8013D07C(winId, str, 1);
+    UIWin_CreateTalkWin(winId, str, 1);
     return 0;
 }
 // pcTalk: start a party-chat line. Args: (member id). The id is passed to
@@ -201,12 +201,12 @@ int winTalkWait(VMThread* pThread) {
 }
 // Talk window without a name plate: open with mode 0.
 int winTalkNoName(VMThread* pThread) {
-    func_8013D448(0, vmArgStringGet(2, vmArgPtrGet(pThread, 1)));
+    UIWin_CreateEveTalkWin(0, vmArgStringGet(2, vmArgPtrGet(pThread, 1)));
     return 0;
 }
 // System message window: text argument, no extra args.
 int winSys(VMThread* pThread) {
-    func_8013D55C(vmArgStringGet(2, vmArgPtrGet(pThread, 1)), 0, 0);
+    UIWin_CreateSysWin0(vmArgStringGet(2, vmArgPtrGet(pThread, 1)), 0, 0);
     return 0;
 }
 
@@ -224,7 +224,7 @@ int fadeIn_1(VMThread* pThread) {
     } else {
         v2 = vmArgIntGet(3, vmArgPtrGet(pThread, 2));
     }
-    func_80135464(2, v2, lbl_eu_80665DB8, lbl_eu_80665DB8, (float)v1);
+    CUICfManager_queueFadeMenu(2, v2, lbl_eu_80665DB8, lbl_eu_80665DB8, (float)v1);
     return 0;
 }
 // Fade-out script command: (duration, count?). The duration is cast to float
@@ -238,7 +238,7 @@ int fadeOut_1(VMThread* pThread) {
     } else {
         v2 = vmArgIntGet(3, vmArgPtrGet(pThread, 2));
     }
-    func_80135464(0, v2, lbl_eu_80665DB8, (float)(s32)v1, lbl_eu_80665DB8);
+    CUICfManager_queueFadeMenu(0, v2, lbl_eu_80665DB8, (float)(s32)v1, lbl_eu_80665DB8);
     return 0;
 }
 // Fade-wait script command: park the thread while a fade is running.
@@ -249,13 +249,13 @@ int fadeWait_1(VMThread* pThread) {
     return 0;
 }
 int createCol6Sys(VMThread* pThread) {
-    extern void func_8013DD94();
-    func_8013DD94();
+    extern void UIWin_Create602F4Win();
+    UIWin_Create602F4Win();
     return 0;
 }
 int createCol6Hint(VMThread* pThread) {
-    extern void func_8013DE6C();
-    func_8013DE6C();
+    extern void UIWin_Create5DCD0Win();
+    UIWin_Create5DCD0Win();
     return 0;
 }
 // Colosseum 6 invite: three int args, narrowed to u16/u8/u8 by the callee
@@ -267,7 +267,7 @@ int createCol6Invite(VMThread* pThread) {
     int b = vmArgIntGet(3, arg);
     arg = vmArgPtrGet(pThread, 3);
     int c = vmArgIntGet(4, arg);
-    func_8013DF44((u16)a, (u8)b, (u8)c);
+    UIWin_CreateCol6Invite((u16)a, (u8)b, (u8)c);
     return 0;
 }
 int createCol6Init(VMThread* pThread) {
@@ -276,8 +276,8 @@ int createCol6Init(VMThread* pThread) {
     return 0;
 }
 int checkCol6Bat(VMThread* pThread) {
-    extern void func_8013E030();
-    func_8013E030();
+    extern void UIWin_CreateCol6Check();
+    UIWin_CreateCol6Check();
     return 0;
 }
 int simpleEventStart(VMThread* pThread) {
@@ -383,7 +383,7 @@ int setTrust(VMThread* pThread) {
     }
 
     if (done >= 2) {
-        func_8013DB6C(5, 0, arg3, arg4);
+        UIWin_CreateMenuUpdate(5, 0, arg3, arg4);
     }
     __dt__80043E88(&holder, -1);
     return 0;
@@ -439,13 +439,13 @@ int setItemMulti(VMThread* pThread) {
         b = vmArgBoolGet(idx, arg);
     }
 
-    func_8013E2E0(v1, v2, v3, v4, 0, 1, 0, 1, b != 0);
+    UIWin_CreateItemMulti(v1, v2, v3, v4, 0, 1, 0, 1, b != 0);
     return 0;
 }
 // Kizuna-talk command: read the script int argument and hand it to the
 // kizuna-talk handler.
 int setKizunaTalk(VMThread* pThread) {
-    func_8013E52C(vmArgIntGet(2, vmArgPtrGet(pThread, 1)));
+    UIWin_CreateKizunaTalk(vmArgIntGet(2, vmArgPtrGet(pThread, 1)));
     return 0;
 }
 // System select window: three string args handed to the window factory.
@@ -456,14 +456,14 @@ int winSysSelect(VMThread* pThread) {
     const char* str2 = vmArgStringGet(3, arg);
     arg = vmArgPtrGet(pThread, 3);
     const char* str3 = vmArgStringGet(4, arg);
-    func_8013D978(str1, str2, str3);
+    UIWin_Create25070Win(str1, str2, str3);
     return 0;
 }
 // Store the select-window's current item index as the script return value.
 int getSelectNum(VMThread* pThread) {
     VMArg arg;
     arg.type = 3;
-    arg.value.uintVal = func_8013EC58();
+    arg.value.uintVal = UIWin_GetTimer();
     vmRetValSet(pThread, &arg);
     return 1;
 }
@@ -472,7 +472,7 @@ int getSelectNum(VMThread* pThread) {
 // caption comes from the fixed string-table entry at +0xD (index 11/12).
 static void mesPTSet(int id, int captionIdx) {
     char* name = BdatGetPtrDirect(lbl_eu_80664090, lbl_eu_804FABF0, id);
-    func_8013D688(name,
+    UIWin_CreateSysWin1(name,
                   BdatTouchStringCell(&lbl_eu_804FABF0[0xd], lbl_eu_804FABF0,
                                 captionIdx),
                   0, 0);
@@ -491,7 +491,7 @@ int mesSubPT(VMThread* pThread) {
 // (entry at offset 13/14) and open a system window with it.
 static int mesVisionSet(int index) {
     // Retail always reads the entry at +0xD; only the table index differs.
-    func_8013D55C(BdatTouchStringCell(&lbl_eu_804FABF0[0xd], lbl_eu_804FABF0, index), 0, 0);
+    UIWin_CreateSysWin0(BdatTouchStringCell(&lbl_eu_804FABF0[0xd], lbl_eu_804FABF0, index), 0, 0);
     return 0;
 }
 int mesVisionON() { return mesVisionSet(0xd); }
@@ -499,11 +499,11 @@ int mesVisionOFF() { return mesVisionSet(0xe); }
 // Monado activation/deactivation messages: pull the string table entry into
 // the scratch area at table+0xd, then open it in a system window.
 int mesMonadoON() {
-    func_8013D55C(BdatTouchStringCell(lbl_eu_804FABF0 + 0xd, lbl_eu_804FABF0, 0xf), 0, 0);
+    UIWin_CreateSysWin0(BdatTouchStringCell(lbl_eu_804FABF0 + 0xd, lbl_eu_804FABF0, 0xf), 0, 0);
     return 0;
 }
 int mesMonadoOFF() {
-    func_8013D55C(BdatTouchStringCell(lbl_eu_804FABF0 + 0xd, lbl_eu_804FABF0, 0x10), 0, 0);
+    UIWin_CreateSysWin0(BdatTouchStringCell(lbl_eu_804FABF0 + 0xd, lbl_eu_804FABF0, 0x10), 0, 0);
     return 0;
 }
 // mesGetArts: build the arts description message. Args: (id, index). The
@@ -523,24 +523,24 @@ int mesGetArts(VMThread* pThread) {
 
     ml::FixStr<64> str;
     str.format(&lbl_eu_804FABF0[0x18], row, sName, sIdx);
-    func_8013D688(str.mString, sFoot, 0, 0);
+    UIWin_CreateSysWin1(str.mString, sFoot, 0, 0);
     return 0;
 }
 
 // Retail symbol is the .Fb form (bool param) though args pass via r4/r5.
 extern "C" void enablePadFlags__Q22cf13CfGameManagerFUlb(int, int);
 // Retail symbol is the unmangled .Fv-registered name (args pass via r4).
-extern "C" void func_8013E8E0(int);
+extern "C" void UIWin_CreatePTChange(int);
 
 int ptChangeNotice(){
     enablePadFlags__Q22cf13CfGameManagerFUlb(-1, 1);
-    func_8013E8E0(0);
+    UIWin_CreatePTChange(0);
     return 0;
 }
 int save() {
     extern u32 lbl_eu_80663E28;
-    extern void func_8013E9D8();
-    if (!(lbl_eu_80663E28 & 0x40000000)) func_8013E9D8();
+    extern void UIWin_CreateSaveWin();
+    if (!(lbl_eu_80663E28 & 0x40000000)) UIWin_CreateSaveWin();
     return 0;
 }
 int kizunaTalkStart() {
@@ -571,8 +571,8 @@ int isPrioReq(VMThread* pThread) {
     return 1;
 }
 int gameClear(VMThread* pThread) {
-    extern void func_8013500C();
-    func_8013500C();
+    extern void CUICfManager_queueGameClearMenu();
+    CUICfManager_queueGameClearMenu();
     return 0;
 }
 // setLastTalkNpc: find the character-table row whose key field (table entry

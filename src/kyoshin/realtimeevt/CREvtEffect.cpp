@@ -118,11 +118,11 @@ extern "C" CREvtEffect* __ct__80184C3C(CREvtEffect* self, int dealloc_flag) {
             func_804CC1D8(&lbl_eu_8065FC18, self->mBdatData);
         }
         if (self->mMaterial != 0) {
-            func_80495E60(self->mMaterial);
+            Scn_IsAnimActiveOrNull(self->mMaterial);
             self->mMaterial = 0;
         }
         if (self->mModel != 0) {
-            func_80495E60(self->mModel);
+            Scn_IsAnimActiveOrNull(self->mModel);
             self->mModel = 0;
         }
 
@@ -142,7 +142,7 @@ extern "C" CREvtEffect* __ct__80184C3C(CREvtEffect* self, int dealloc_flag) {
 // ============================================================================
 extern "C" void func_80184D18(CREvtEffect* self) {
     if (self->mAnim28 != 0) {
-        func_80495E60(self->mAnim28);
+        Scn_IsAnimActiveOrNull(self->mAnim28);
         self->mAnim28 = 0;
     }
 }
@@ -207,8 +207,8 @@ extern "C" void func_80184D90(CREvtEffect* self) {
     // Refresh the spawned effects when the translate.y threshold is crossed
     if (self->mAnm1Translate[1] > lbl_eu_80667948) {
         if (self->mLastFrame != func_8016A35C()) {
-            if (func_80496288(lbl_eu_80663E14) >= lbl_eu_8066794C ||
-                (func_80496288(lbl_eu_80663E14) < lbl_eu_8066794C &&
+            if (Scn_GetFrameDelta(lbl_eu_80663E14) >= lbl_eu_8066794C ||
+                (Scn_GetFrameDelta(lbl_eu_80663E14) < lbl_eu_8066794C &&
                  self->mFlag134 == 0)) {
                 func_80184F90(self);
             }
@@ -381,12 +381,12 @@ extern "C" void func_8018515C(CREvtEffect* self) {
 
         // Random chance to clear the spawn flag.
         if (self->mFlag134 != 0 &&
-            func_80496288(lbl_eu_80663E14) < lbl_eu_8066794C) {
+            Scn_GetFrameDelta(lbl_eu_80663E14) < lbl_eu_8066794C) {
             self->mFlag134 = 0;
         }
 
         // Invalidate the last-frame cache once per new frame.
-        if (func_80496288(lbl_eu_80663E14) < lbl_eu_8066794C &&
+        if (Scn_GetFrameDelta(lbl_eu_80663E14) < lbl_eu_8066794C &&
             self->mLastFrame != func_8016A35C()) {
             self->mLastFrame = -1;
         }
@@ -417,7 +417,7 @@ extern "C" void func_80185378(CREvtEffect* self, void* src, void* bdatEntry) {
 
         // Free the old model when no new source is provided.
         if (src == 0 && self->mModel != 0) {
-            func_80495E60(self->mModel);
+            Scn_IsAnimActiveOrNull(self->mModel);
             self->mModel = 0;
         }
     }
@@ -449,7 +449,7 @@ extern "C" void func_80185378(CREvtEffect* self, void* src, void* bdatEntry) {
         }
 
         // Load the material entry for the source.
-        void* material = func_80495EAC(lbl_eu_80663E14, src, 0);
+        void* material = Scn_InitGlobalA(lbl_eu_80663E14, src, 0);
         self->mMaterial = material;
         if (material != 0) {
             func_804839D4(self->mModel, material, 0, 0, 0, 1, -1);

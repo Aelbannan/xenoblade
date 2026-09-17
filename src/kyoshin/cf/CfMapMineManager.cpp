@@ -672,7 +672,7 @@ extern "C" void func_80206FA8(CfMapMineManager* self, MinePoint* pt) {
     // r27=area, r30=self, r28=sub, r31=pt, f31=dt.
     u32 area = lbl_eu_80663E42;
     u32 sub = lbl_eu_80663E44;
-    f32 dt = func_80496288((void*)CfRes_getD80Flag());
+    f32 dt = Scn_GetFrameDelta((void*)CfRes_getD80Flag());
 
     if (pt->mTimer14 > lbl_eu_806682B0) {
         // Duplicate active point: let time advance (retail branches out
@@ -723,7 +723,7 @@ extern "C" void func_80206FA8(CfMapMineManager* self, MinePoint* pt) {
 // func_802073CC - advance message-ring timers, pop the oldest when expired.
 // ---------------------------------------------------------------------------
 extern "C" void func_802073CC(CfMapMineManager* self) {
-    f32 dt = func_80496288((void*)CfRes_getD80Flag());
+    f32 dt = Scn_GetFrameDelta((void*)CfRes_getD80Flag());
 
     int changed = 0;
     u32 cnt = self->mMsgs.mCount;
@@ -749,7 +749,7 @@ extern "C" void func_802073CC(CfMapMineManager* self) {
         u32 rd = self->mMsgs.mReadIdx;
         MineMsg* oldSlot =
             &self->mMsgs.mBase[-(rd % self->mMsgs.mCapacity)];
-        func_801352A4(oldSlot);
+        CUICfManager_queueGetItemMenuById(oldSlot);
         s32 next = rd + 1;
         self->mMsgs.mCount = self->mMsgs.mCount - 1;
         self->mMsgs.mReadIdx =
@@ -1112,7 +1112,7 @@ extern "C" void func_802074F0(CfMapMineManager* self) {
     if (player == 0) return;
 
     func_802073CC(mgr);
-    f32 dt = func_80496288((void*)CfRes_getD80Flag());
+    f32 dt = Scn_GetFrameDelta((void*)CfRes_getD80Flag());
     const f32 zero = lbl_eu_806682B0;
     const f64 zeroD = lbl_eu_806682D8;
 
@@ -1141,7 +1141,7 @@ extern "C" void func_802074F0(CfMapMineManager* self) {
     }
 
     if (mgr->mTime > zero) {
-        mgr->mTime -= func_80496288((void*)CfRes_getD80Flag());
+        mgr->mTime -= Scn_GetFrameDelta((void*)CfRes_getD80Flag());
         if (mgr->mTime < zero) {
             mgr->mTime = zero;
         }
@@ -1186,7 +1186,7 @@ extern "C" void func_802074F0(CfMapMineManager* self) {
         const char* cols = lbl_eu_80508424;
         u32 msg = getBdatStringColumnValue(
             (BdatFilePointer*)getFP__FPCc(cols + 0x77), cols + 0x4E, 0x1B);
-        func_8013D55C((void*)msg, 0, 0);
+        UIWin_CreateSysWin0((void*)msg, 0, 0);
         return;
     }
 

@@ -329,8 +329,8 @@ extern "C" void func_8003AA34();
 extern "C" void setBdatEntry__5CBdatFUlPv(u32, void*);
 extern "C" void* __ct__CTagProcessor(void*);
 extern "C" void* getAllocHandle__10CLibLayoutFv(void);
-extern "C" u32  func_801355BC();
-extern "C" nw4r::lyt::ArcResourceAccessor* func_801355F4();
+extern "C" u32  CUICfManager_getPackedFont9C();
+extern "C" nw4r::lyt::ArcResourceAccessor* CUICfManager_getArcResourceAccessor();
 extern "C" void* getFP__FPCc(const char*);
 // C++-linkage (Itanium-mangled retail symbol getPackedFont__Fv).
 u32 getPackedFont();

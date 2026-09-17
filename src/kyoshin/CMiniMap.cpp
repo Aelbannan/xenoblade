@@ -148,7 +148,7 @@ u8 func_80138138(u32 id);
 void* func_80138234(void* bdat, u32 row);
 void* func_8013902C(int type);
 void func_80141DC4(ml::CVec3* out, u32 index);
-nw4r::lyt::ArcResourceAccessor* func_801355F4();
+nw4r::lyt::ArcResourceAccessor* CUICfManager_getArcResourceAccessor();
 void PaneSetVtxColorAll(void* pic, s32 arg);
 void func_80116B40(void* self);
 void* func_801167EC(void* self);
@@ -328,7 +328,7 @@ bool CMiniMap::OnFileEvent(CEventFile* pEventFile) {
             pic = 0;
         } else {
             void* texName = func_8013902C(2);
-            if (func_801355F4()->GetResource(0x74696D67, (const char*)texName, 0) == 0) {
+            if (CUICfManager_getArcResourceAccessor()->GetResource(0x74696D67, (const char*)texName, 0) == 0) {
                 pic = 0;
             } else {
                 pic = (nw4r::lyt::Pane*)createPicture__10CLibLayoutFv();
@@ -375,7 +375,7 @@ bool CMiniMap::OnFileEvent(CEventFile* pEventFile) {
             clockPic = 0;
         } else {
             void* texName = func_8013902C(1);
-            if (func_801355F4()->GetResource(0x74696D67, (const char*)texName, 0) == 0) {
+            if (CUICfManager_getArcResourceAccessor()->GetResource(0x74696D67, (const char*)texName, 0) == 0) {
                 clockPic = 0;
             } else {
                 clockPic = (nw4r::lyt::Pane*)createPicture__10CLibLayoutFv();
@@ -828,7 +828,7 @@ extern "C" void func_80118854(MiniMapSelf* self) {
                             } else {
                                 void* pic = 0;
                                 void* texName = func_8013902C(7);
-                                if (func_801355F4()->GetResource(0x74696D67, (const char*)texName, 0)) {
+                                if (CUICfManager_getArcResourceAccessor()->GetResource(0x74696D67, (const char*)texName, 0)) {
                                     pic = createPicture__10CLibLayoutFv();
                                     SetName__Q34nw4r3lyt4PaneFPCc(pic, name1);
                                     convA.w[1] = (u32)gx ^ 0x80000000;
@@ -1096,7 +1096,7 @@ extern "C" void func_80118854(MiniMapSelf* self) {
                             } else {
                                 void* pic = 0;
                                 void* texName = func_8013902C(7);
-                                if (func_801355F4()->GetResource(0x74696D67, (const char*)texName, 0)) {
+                                if (CUICfManager_getArcResourceAccessor()->GetResource(0x74696D67, (const char*)texName, 0)) {
                                     pic = createPicture__10CLibLayoutFv();
                                     SetName__Q34nw4r3lyt4PaneFPCc(pic, name2);
                                     convA.w[1] = (u32)gx ^ 0x80000000;
@@ -1196,7 +1196,7 @@ extern "C" void func_80118854(MiniMapSelf* self) {
                         } else if (o->m91 == 6) {
                             void* pic = 0;
                             void* texName = func_8013902C(15);
-                            if (func_801355F4()->GetResource(0x74696D67, (const char*)texName, 0)) {
+                            if (CUICfManager_getArcResourceAccessor()->GetResource(0x74696D67, (const char*)texName, 0)) {
                                 pic = createPicture__10CLibLayoutFv();
                                 SetName__Q34nw4r3lyt4PaneFPCc(pic, buf3);
                                 convA.w[1] = (u32)gx ^ 0x80000000;
@@ -1297,7 +1297,7 @@ extern "C" void func_80118854(MiniMapSelf* self) {
                             } else {
                                 void* pic = 0;
                                 void* texName = func_8013902C(10);
-                                if (func_801355F4()->GetResource(0x74696D67, (const char*)texName, 0)) {
+                                if (CUICfManager_getArcResourceAccessor()->GetResource(0x74696D67, (const char*)texName, 0)) {
                                     pic = createPicture__10CLibLayoutFv();
                                     SetName__Q34nw4r3lyt4PaneFPCc(pic, buf4);
                                     convA.w[1] = (u32)gx ^ 0x80000000;
@@ -1388,7 +1388,7 @@ extern "C" void func_80118854(MiniMapSelf* self) {
                     } else {
                         void* pic = 0;
                         void* texName = func_8013902C(12);
-                        if (func_801355F4()->GetResource(0x74696D67, (const char*)texName, 0)) {
+                        if (CUICfManager_getArcResourceAccessor()->GetResource(0x74696D67, (const char*)texName, 0)) {
                             pic = createPicture__10CLibLayoutFv();
                             SetName__Q34nw4r3lyt4PaneFPCc(pic, buf5);
                             convA.w[1] = (u32)gx ^ 0x80000000;
@@ -1477,7 +1477,7 @@ extern "C" void func_80118854(MiniMapSelf* self) {
                     } else {
                         void* pic = 0;
                         void* texName = func_8013902C(16);
-                        if (func_801355F4()->GetResource(0x74696D67, (const char*)texName, 0)) {
+                        if (CUICfManager_getArcResourceAccessor()->GetResource(0x74696D67, (const char*)texName, 0)) {
                             pic = createPicture__10CLibLayoutFv();
                             SetName__Q34nw4r3lyt4PaneFPCc(pic, buf6);
                             convA.w[1] = (u32)gx ^ 0x80000000;
@@ -1584,7 +1584,7 @@ extern "C" void func_80118854(MiniMapSelf* self) {
                             void* pic = 0;
                             if (type2 != 0) {
                                 void* texName = func_8013902C(type2);
-                                if (func_801355F4()->GetResource(0x74696D67, (const char*)texName, 0)) {
+                                if (CUICfManager_getArcResourceAccessor()->GetResource(0x74696D67, (const char*)texName, 0)) {
                                     pic = createPicture__10CLibLayoutFv();
                                     SetName__Q34nw4r3lyt4PaneFPCc(pic, buf7);
                                     convA.w[1] = (u32)gx ^ 0x80000000;
@@ -1676,7 +1676,7 @@ extern "C" void func_80118854(MiniMapSelf* self) {
                             } else {
                                 void* pic = 0;
                                 void* texName = func_8013902C(3);
-                                if (func_801355F4()->GetResource(0x74696D67, (const char*)texName, 0)) {
+                                if (CUICfManager_getArcResourceAccessor()->GetResource(0x74696D67, (const char*)texName, 0)) {
                                     pic = createPicture__10CLibLayoutFv();
                                     SetName__Q34nw4r3lyt4PaneFPCc(pic, buf8);
                                     convA.w[1] = (u32)gx ^ 0x80000000;
@@ -2352,7 +2352,7 @@ void CMenuMiniMap2::Move() {
         } else {
             btn = (pad->mPressedButtonFlags >> 6) & 1;
         }
-        if (btn) func_80134538();
+        if (btn) CUICfManager_queueWorldMapMenu();
     }
     func_8013ACFC();
     if (mField55 != 0) mField54 = 1;
@@ -2555,7 +2555,7 @@ void func_801160A8(MiniMapTable* self, void* table, void* layout, f32 scale) {
         void* texName = func_8013902C(0xe);
         nw4r::lyt::Pane* pane;
         ml::CVec3 pos;
-        if (func_801355F4()->GetResource(0x74696D67, (const char*)texName, 0) == 0) {
+        if (CUICfManager_getArcResourceAccessor()->GetResource(0x74696D67, (const char*)texName, 0) == 0) {
             pane = 0;
         } else {
             pane = (nw4r::lyt::Pane*)createPicture__10CLibLayoutFv();
@@ -3110,7 +3110,7 @@ extern "C" void __declspec(noinline) func_80116B40(void* self) {
         f32 zero = lbl_eu_80667090;
         if (kind != 0) {
             char* texName = (char*)func_8013902C(kind);
-            if (func_801355F4()->GetResource(0x74696D67, texName, 0) == NULL) {
+            if (CUICfManager_getArcResourceAccessor()->GetResource(0x74696D67, texName, 0) == NULL) {
                 kind = 0;
             } else {
                 pane = (nw4r::lyt::Pane*)createPicture__10CLibLayoutFv();

@@ -183,9 +183,9 @@ extern "C" void func_800D11B0(CtrlActView* self) {
                     } else {
                         u8 kind = e->mFieldD;
                         if ((u8)(kind + 0xcb) <= 2 || kind == 0x3b) {
-                            f32 h = func_80190938();
+                            f32 h = CfCmd_GetThreshold();
                             if (f30 > h) {
-                                f30 = func_80190938();
+                                f30 = CfCmd_GetThreshold();
                             }
                         }
                     }
@@ -516,8 +516,8 @@ void func_800D1F0C(CtrlActView* self) {
             f32 h = ((CtrlActVoiceHeightIntf*)&self->mPlayer->mSub3E9C)
                         ->getHeight();
             if (h != lbl_eu_80666CF8) {
-                if (func_80496288(lbl_eu_80663E14) != lbl_eu_80666CF8) {
-                    f32 scale = func_80496288(lbl_eu_80663E14);
+                if (Scn_GetFrameDelta(lbl_eu_80663E14) != lbl_eu_80666CF8) {
+                    f32 scale = Scn_GetFrameDelta(lbl_eu_80663E14);
                     f32 h2 = ((CtrlActVoiceHeightIntf*)&self->mPlayer->mSub3E9C)
                                  ->getHeight();
                     func_8014B2EC(&self->mPlayer->mField3380,
@@ -1208,7 +1208,7 @@ extern "C" int func_800D34D4(CtrlActView* self) {
         } else {
             self->mField7A = 0;
             self->mField74 |= 0x10;
-            f32 dt = func_80496288(lbl_eu_80663E14);
+            f32 dt = Scn_GetFrameDelta(lbl_eu_80663E14);
             self->mField54 = self->mField54 + lbl_eu_80666D58 * dt;
             if (self->mField54 >= lbl_eu_80666D04) {
                 memset(&self->mPos30, 0, 0x2c);
@@ -1353,7 +1353,7 @@ extern "C" void func_800D3998(CtrlActView* self) {
     case 1: {
         // Decay the action timer; while live, re-aim at the source and bail
         // out when the heading delta exceeds the facing magnitude.
-        f32 dt = func_80496288(lbl_eu_80663E14);
+        f32 dt = Scn_GetFrameDelta(lbl_eu_80663E14);
         s->mField54 -= lbl_eu_80666D58 * dt;
         if (s->mField54 <= lbl_eu_80666CF8) {
             s->mField14 = lbl_eu_80666CF8;
@@ -1450,7 +1450,7 @@ extern "C" void func_800D3D34(CtrlActView* self) {
         self->mFlags58.mAngleState = 3;
         self->mFlags58.mPhase = self->mFlags58.mPhase + 1;
     } else if (self->mFlags58.mPhase == 1) {
-        f32 dt = func_80496288(lbl_eu_80663E14);
+        f32 dt = Scn_GetFrameDelta(lbl_eu_80663E14);
         self->mField54 -= lbl_eu_80666D58 * dt;
         if (self->mField54 <= lbl_eu_80666CF8) {
             self->mField14 = lbl_eu_80666CF8;
@@ -1597,7 +1597,7 @@ extern "C" void func_800D3FFC(CtrlActView* self) {
     } else {
         PSVECNormalize((Vec*)&dir3, (Vec*)&dir3);
     }
-    f32 dt = func_80496288(lbl_eu_80663E14);
+    f32 dt = Scn_GetFrameDelta(lbl_eu_80663E14);
     self->mField54 -= lbl_eu_80666D58 * dt;
     if (self->mField54 <= lbl_eu_80666CF8) {
         self->mField14 = lbl_eu_80666CF8;
@@ -1664,7 +1664,7 @@ extern "C" void func_800D4834(CtrlActView* self) {
         func_80174C24(self->mPlayer, 0x40);
         return;
     }
-    f32 dt = func_80496288(lbl_eu_80663E14);
+    f32 dt = Scn_GetFrameDelta(lbl_eu_80663E14);
     self->mField54 -= lbl_eu_80666D58 * dt;
     if (self->mField54 > lbl_eu_80666CF8) {
         CVoicePos* p2 =
@@ -1757,7 +1757,7 @@ extern "C" void func_800D49F4(CtrlActView* self) {
             // fallthrough
         }
     case 1: {
-        f32 dt = func_80496288(lbl_eu_80663E14);
+        f32 dt = Scn_GetFrameDelta(lbl_eu_80663E14);
         self->mField54 -= lbl_eu_80666D58 * dt;
         if (self->mField54 <= lbl_eu_80666CF8) {
             self->mField14 = lbl_eu_80666CF8;
@@ -1895,7 +1895,7 @@ extern "C" void func_800D4F30(CtrlActView* self) {
             // fallthrough
         }
     case 1: {
-        f32 dt = func_80496288(lbl_eu_80663E14);
+        f32 dt = Scn_GetFrameDelta(lbl_eu_80663E14);
         self->mField54 -= lbl_eu_80666D58 * dt;
         if (self->mField54 <= lbl_eu_80666CF8) {
             self->mField14 = lbl_eu_80666CF8;
@@ -2041,7 +2041,7 @@ extern "C" void func_800D56F0(CtrlActView* self) {
         memset(&self->mPos30, 0, 0x2c);
         func_80174C24(self->mPlayer, 0x40);
     } else {
-        f32 next = self->mField54 - lbl_eu_80666D58 * func_80496288(lbl_eu_80663E14);
+        f32 next = self->mField54 - lbl_eu_80666D58 * Scn_GetFrameDelta(lbl_eu_80663E14);
         self->mField54 = next;
         if (next > lbl_eu_80666CF8) {
             ml::CVec3 vec;

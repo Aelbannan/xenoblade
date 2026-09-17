@@ -911,7 +911,7 @@ extern "C" char* BdatTouchStringCell(char*, char*, u32);    // format two string
 extern "C" void LayoutSetTextBoxFmtValue(nw4r::lyt::Layout*, const char*, const char*, u32);
 extern "C" void PaneSetTexPaletteByName(nw4r::lyt::Layout*, const char*, void* res);
 extern "C" char* MakeTplNameSysFile(u32);
-extern "C" nw4r::lyt::ArcResourceAccessor* func_801355F4();
+extern "C" nw4r::lyt::ArcResourceAccessor* CUICfManager_getArcResourceAccessor();
 extern "C" void func_8013676C(nw4r::lyt::Pane* rootPane, u32 fontHandle);
 extern "C" void setBdatEntry__5CBdatFUlPv(u32, void*);
 extern "C" void* func_8003AA34();
@@ -956,4 +956,4 @@ extern "C" void __dt__Q34nw4r3lyt8DrawInfoFv(nw4r::lyt::DrawInfo* self, int flag
 void func_80137250(nw4r::lyt::DrawInfo* drawInfo);
 void drawLayout(nw4r::lyt::Layout* layout, nw4r::lyt::DrawInfo* drawInfo,
                    int arg2, int arg3);
-extern "C" u32 func_800A9D90();
+extern "C" u32 KyoshinHeap_GetField44();

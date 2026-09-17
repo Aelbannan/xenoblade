@@ -55,9 +55,9 @@ public:
 // C++ mangled declaration exists; C linkage is the repo-wide pattern for
 // these (see include/functions.hpp, CHelp_ArtsSet.hpp). Signatures match
 // the retail call sites verbatim.
-extern "C" void func_80134D18(u32 param0, UNKWORD param1, UNKWORD param2);
+extern "C" void CUICfManager_queueTutorialMenu(u32 param0, UNKWORD param1, UNKWORD param2);
 extern "C" void func_8009D018(u32, u32);
-extern "C" void* func_8013DB6C(int, u32, s32, s32);
+extern "C" void* UIWin_CreateMenuUpdate(int, u32, s32, s32);
 extern "C" void func_8029A658();
 // US symbols.txt name for __vt__Q22cf5CHelp. Plain extern (not mangled).
 extern cf::CHelpVtbl lbl_eu_8053B3A0;

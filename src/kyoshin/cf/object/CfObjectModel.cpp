@@ -249,7 +249,7 @@ void cf::CfObjectModel::CfObjectModel_teardownModel() {
 // at that slot is releaseModelSub (novtable; dispatch is positional).
 void cf::CfObjectModel::CfObjectModel_UnkVirtualFunc1() {
     if (mSubObj98 != 0) {
-        func_80495E60(mSubObj98);
+        Scn_IsAnimActiveOrNull(mSubObj98);
         mSubObj98 = 0;
     }
 }

@@ -170,7 +170,7 @@ extern "C" u8* simGetLeafActData(CScnEffectActMgr* mgr);
 
 // Cross-TU imports behind the CScnEffectActNw4r vtable thunks and update
 // hooks (unrecovered retail plain-name symbols).
-extern "C" bool func_80495E60(CScnEffectActMgr* mgr);
+extern "C" bool Scn_IsAnimActiveOrNull(CScnEffectActMgr* mgr);
 extern "C" void simSetLeafDist7B0(CScnEffectActMgr* mgr);
 extern "C" void simSetFlag2OnTree(CScnEffectActMgr* mgr);
 extern "C" void simPushWordToBuf(CScnEffectActMgr* mgr);

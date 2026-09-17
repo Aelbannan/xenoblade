@@ -538,7 +538,7 @@ int KyoshinHeap_GetFieldA8() {
     return lbl_eu_80572B94.field_0xA8;
 }
 
-u32 KyoshinHeap_GetBaseTblOff(int index) {
+u32 KyoshinHeap_GetBaseTblPlus96k(int index) {
     if (lbl_eu_80663E98 == 0) {
         // Lazy-init the global singleton once.
         GlobalStruct_80572B94* g = &lbl_eu_80572B94;
@@ -563,7 +563,7 @@ u32 KyoshinHeap_GetBaseTblOff(int index) {
     return lbl_eu_80572B94.field_0x5C[index] + 0x96000;
 }
 
-u32 KyoshinHeap_GetBaseTbl(int index) {
+u32 KyoshinHeap_GetBaseTblRaw(int index) {
     if (lbl_eu_80663E98 == 0) {
         // Lazy-init the global singleton once.
         GlobalStruct_80572B94* g = &lbl_eu_80572B94;
@@ -604,7 +604,7 @@ void* KyoshinHeap_GetPtrTblB(unsigned int param1, unsigned int param2) {
     return table->slots[param1];
 }
 
-u32 KyoshinHeap_GetBlk90(int index) {
+u32 KyoshinHeap_GetBlk90Raw(int index) {
     if (lbl_eu_80663E98 == 0) {
         // Lazy-init the global singleton once.
         GlobalStruct_80572B94* g = &lbl_eu_80572B94;
@@ -629,7 +629,7 @@ u32 KyoshinHeap_GetBlk90(int index) {
     return lbl_eu_80572B94.field_0x90 + index * 0x106800;
 }
 
-u32 KyoshinHeap_GetBlk90Off32(int index) {
+u32 KyoshinHeap_GetBlk90Plus32k(int index) {
     if (lbl_eu_80663E98 == 0) {
         // Lazy-init the global singleton once.
         GlobalStruct_80572B94* g = &lbl_eu_80572B94;
@@ -658,7 +658,7 @@ u32 KyoshinHeap_GetBlk90Off32(int index) {
     return v;
 }
 
-u32 KyoshinHeap_GetBlk90OffFA(int index) {
+u32 KyoshinHeap_GetBlk90PlusFA(int index) {
     if (lbl_eu_80663E98 == 0) {
         // Lazy-init the global singleton once.
         GlobalStruct_80572B94* g = &lbl_eu_80572B94;
@@ -1060,7 +1060,7 @@ void KyoshinHeap_Reset58Stage() {
     g->field_0xB0 = 0;
 }
 
-void func_800A9534(int index) {
+void KyoshinHeap_AllocFld10(int index) {
     if (lbl_eu_80663E98 == 0) {
         // Lazy-init the global singleton once.
         GlobalStruct_80572B94* g = &lbl_eu_80572B94;
@@ -1100,7 +1100,7 @@ void func_800A9534(int index) {
     g->field_0x10 = r;
 }
 
-void func_800A965C(int index) {
+void KyoshinHeap_AllocFld14(int index) {
     if (lbl_eu_80663E98 == 0) {
         // Lazy-init the global singleton once.
         GlobalStruct_80572B94* g = &lbl_eu_80572B94;
@@ -1140,7 +1140,7 @@ void func_800A965C(int index) {
     g->field_0x14 = r;
 }
 
-void func_800A9784(int index) {
+void KyoshinHeap_AllocFld18(int index) {
     if (lbl_eu_80663E98 == 0) {
         // Lazy-init the global singleton once.
         GlobalStruct_80572B94* g = &lbl_eu_80572B94;
@@ -1181,7 +1181,7 @@ void func_800A9784(int index) {
     g->field_0x18 = r;
 }
 
-void func_800A98A8(int index) {
+void KyoshinHeap_AllocFld34(int index) {
     if (lbl_eu_80663E98 == 0) {
         // Lazy-init the global singleton once.
         GlobalStruct_80572B94* g = &lbl_eu_80572B94;
@@ -1223,7 +1223,7 @@ void func_800A98A8(int index) {
     g->field_0xB0 = index;
 }
 
-int func_800A99D0() {
+int KyoshinHeap_GetFieldAC() {
     if (lbl_eu_80663E98 == 0) {
         // Lazy-init the global singleton once.
         GlobalStruct_80572B94* g = &lbl_eu_80572B94;
@@ -1249,7 +1249,7 @@ int func_800A99D0() {
 }
 
 
-int func_800A9A90() {
+int KyoshinHeap_GetField50() {
     if (lbl_eu_80663E98 == 0) {
         // Lazy-init the global singleton once.
         GlobalStruct_80572B94* g = &lbl_eu_80572B94;
@@ -1274,7 +1274,7 @@ int func_800A9A90() {
     return lbl_eu_80572B94.field_0x50;
 }
 
-int func_800A9B50() {
+int KyoshinHeap_GetField38() {
     if (lbl_eu_80663E98 == 0) {
         GlobalStruct_80572B94* g = &lbl_eu_80572B94;
         g->field_0x00 = -1;
@@ -1298,7 +1298,7 @@ int func_800A9B50() {
     return lbl_eu_80572B94.field_0x38;
 }
 
-int func_800A9C10() {
+int KyoshinHeap_GetField3C() {
     if (lbl_eu_80663E98 == 0) {
         GlobalStruct_80572B94* g = &lbl_eu_80572B94;
         g->field_0x00 = -1;
@@ -1322,7 +1322,7 @@ int func_800A9C10() {
     return lbl_eu_80572B94.field_0x3C;
 }
 
-int func_800A9CD0() {
+int KyoshinHeap_GetField40() {
     if (lbl_eu_80663E98 == 0) {
         GlobalStruct_80572B94* g = &lbl_eu_80572B94;
         g->field_0x00 = -1;
@@ -1346,7 +1346,7 @@ int func_800A9CD0() {
     return lbl_eu_80572B94.field_0x40;
 }
 
-int func_800A9D90() {
+int KyoshinHeap_GetField44() {
     if (lbl_eu_80663E98 == 0) {
         GlobalStruct_80572B94* g = &lbl_eu_80572B94;
         g->field_0x00 = -1;
@@ -1370,7 +1370,7 @@ int func_800A9D90() {
     return lbl_eu_80572B94.field_0x44;
 }
 
-int func_800A9E50(int index) {
+int KyoshinHeap_GetField4C(int index) {
     if (lbl_eu_80663E98 == 0) {
         // Lazy-init the global singleton once.
         GlobalStruct_80572B94* g = &lbl_eu_80572B94;

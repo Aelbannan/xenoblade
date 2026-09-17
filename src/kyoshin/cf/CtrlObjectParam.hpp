@@ -116,7 +116,7 @@ struct CPcKizunagramBig;  // defined in src/kyoshin/CPcKizunagram.hpp (only used
 struct CEventDataTable;   // defined in src/kyoshin/cf/CTaskREvent.hpp (global scope; only used through a pointer here)
 
 extern "C" int func_8009E7C8(u8* self);
-extern "C" CPcKizunagramBig* func_8025EDC8(CPcKizunagramBig* self);      // CPcKizunagram.cpp (affinity-slot clear)
+extern "C" CPcKizunagramBig* KizunagramClearChart(CPcKizunagramBig* self);      // CPcKizunagram.cpp (affinity-slot clear)
 extern "C" void func_8016455C(CEventDataTable* self);                    // CTaskREvent.cpp (event data table fill)
 
 namespace cf {
@@ -528,7 +528,7 @@ namespace cf {
     // -- Work-buffer entry (stride 0x3DD4; 14 entries at work+0x41F0) -------
     // Built by __ct__8009D604: shortArr = -1, two blobs memset, CActorParam
     // placement-new at +0x17C, vtable-like word at +0x34FC, and the
-    // CPcKizunagramBig slot storage at +0x3534 (cleared by func_8025EDC8).
+    // CPcKizunagramBig slot storage at +0x3534 (cleared by KizunagramClearChart).
     struct CtrlObjectParamEntry {
         s16  field_00[7];        // 0x00..0x0D
         s16  field_0E[6];        // 0x0E..0x19 (equip slot ids, zeroed by func_8009E974)
@@ -546,7 +546,7 @@ namespace cf {
         u8   pad_350D[0x1F];     // 0x350D..0x352B
         u32  field_352C;         // 0x352C
         u32  field_3530;         // 0x3530
-        u8   big[0x8A0];         // 0x3534..0x3DD3 (CPcKizunagramBig storage, cleared by func_8025EDC8)
+        u8   big[0x8A0];         // 0x3534..0x3DD3 (CPcKizunagramBig storage, cleared by KizunagramClearChart)
     };  // total 0x3DD4
 
     // -- Full work-buffer layout (0x3A38C bytes, allocated by __ct__8009D604) --

@@ -118,7 +118,7 @@ struct SceneMenuTable {
     u32 rowCount9800;
 };
 
-// Scene-bound transform block returned by func_80496264(scene, -1):
+// Scene-bound transform block returned by Scn_FindCamItem(scene, -1):
 // normal-transform matrix at +0x9C and projection rows at +0x118/+0x120.
 struct ScnXformBlock {
     u8 pad00[0x9C];
@@ -359,7 +359,7 @@ void func_8049B59C(nw4r::math::VEC3* out, ScnXformBlock* pose,
 void* func_8003AA34(void);
 u32 func_8003B1EC(u8* bdat);
 }
-// func_80496264 provided by CfObjectMove.hpp as void* func_80496264(void*, int)
+// Scn_FindCamItem provided by CfObjectMove.hpp as void* Scn_FindCamItem(void*, int)
 
 // Naturally mangled retail helpers (global scope: no extern "C" needed).
 void* getFP(const char* name);

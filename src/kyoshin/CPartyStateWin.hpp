@@ -41,7 +41,7 @@ struct CModelDispEquipView {
     u8 data[0x10C0];
 };
 
-// Memory-accounting object used by func_801F9894: two signed counters at
+// Memory-accounting object used by PartyStateWin_PickAllocHandle: two signed counters at
 // +0x00/+0x04 that are decremented by the freed size plus the 0x80 block
 // header, after pinging the MEM1/MEM2 alloc handles.
 struct CPartyStateWinMem {
@@ -50,14 +50,14 @@ struct CPartyStateWinMem {
 };
 
 // Byte view of the u32 window-state word (lbl_eu_806681E4) used by
-// func_801FBC7C: the word is copied to a stack local and indexed by the
+// PartyStateWin_ApplyRowStyle: the word is copied to a stack local and indexed by the
 // party-state selection value (retail: lwz/stw copy + lbzx index).
 union CPartyStateWinWord {
     u32 word;     // 0x00
     u8 bytes[4];  // 0x00
 };
 
-// Copy blob used by func_801F9914: three 0xFF0-byte blocks at +0x08/+0xFF8/
+// Copy blob used by PartyStateWin_CopyWinBlob: three 0xFF0-byte blocks at +0x08/+0xFF8/
 // +0x1FE8 (copied by func_801F9998) plus trailing scalar fields.
 struct CPartyStateWinCopy {
     u8 _pad00[0x4];              // 0x00
@@ -132,7 +132,7 @@ struct CPartyStateWinRing {
  * Deliberately NON-polymorphic in this TU: the retail object carries two
  * vtable-like pointers at +0x00/+0x04 (composite vtable lbl_eu_805352DC
  * written by the factory ctor, owned by another .data unit), and the -4
- * interface thunks func_801FBDB8 / func_801FBDC0 are dispatched through the
+ * interface thunks PartyStateWin_ThunkRenderBefore / PartyStateWin_ThunkDtor are dispatched through the
  * +0x04 vtable slot (they receive obj+4 and rewind to the object base).
  * The dtor is a plain (non-virtual) member so those thunks forward to the
  * retail symbol directly; it is not defined in this TU yet.
@@ -142,7 +142,7 @@ struct CPartyStateWinRing {
  *   0x04  secondary vtable pointer (lbl_eu_805352DC + 0x88)
  *   0x08  ctor arg / 0x0C ctor arg / 0x10 0x14 zeroed words
  *   0x18  CTitleAHelp
- *   0x50  CModelDisp (region 0x444..0x454 copied by func_801F9730)
+ *   0x50  CModelDisp (region 0x444..0x454 copied by PartyStateWin_StoreVec4Quad)
  *   0x3038 CPartyState
  *   0x3090 CModelDispEquip
  *   0x4150 CEquipChange
@@ -164,14 +164,14 @@ public:
     CWorkThread* mWork14;                  // 0x14 child work thread (0 until assigned)
     u8 _pad18[0x38];                       // 0x18..0x50 (CTitleAHelp)
     u8 _pad50[0x444 - 0x50];               // 0x50..0x444 (CModelDisp head)
-    u32 mQuad444[4];                       // 0x444..0x453 (func_801F9730 target)
+    u32 mQuad444[4];                       // 0x444..0x453 (PartyStateWin_StoreVec4Quad target)
     u8 _pad454[0x3038 - 0x454];            // 0x454..0x3038 (CModelDisp tail)
     u8 _pad3038[0x58];                     // 0x3038..0x3090 (CPartyState)
     CModelDispEquipView mModelDispEquip;   // 0x3090 (0x10C0)
     u8 _pad4150[0x2A58];                   // 0x4150..0x6BA8 (CEquipChange)
     u8 _pad6BA8[0x3C];                     // 0x6BA8..0x6BE4 (CSysWin)
     u8 field_6BE4;                         // 0x6BE4
-    u8 field_6BE5;                         // 0x6BE5 (func_801FA4EC getter)
+    u8 field_6BE5;                         // 0x6BE5 (PartyStateWin_GetLatchFlag getter)
     u8 _pad6BE6[2];                        // 0x6BE6..0x6BE8
     f32 field_6BE8;                        // 0x6BE8 (ctor init)
 };
@@ -184,16 +184,16 @@ public:
 extern "C" int ModelDispEquip_GetState20(CModelDispEquipView*);
 extern "C" void ModelDispEquip_StartFadeOut(CModelDispEquipView*);
 extern "C" u32 ModelDispEquip_GetEquipSlot(CModelDispEquipView*);
-extern "C" void func_802014C0(CModelDispEquipView*);
-extern "C" void func_8020151C(CModelDispEquipView*);
-extern "C" void func_80201808(CModelDispEquipView*);
-extern "C" void func_80201900(CModelDispEquipView*);
+extern "C" void ModelDispEquip_NextEquipSlot(CModelDispEquipView*);
+extern "C" void ModelDispEquip_PrevEquipSlot(CModelDispEquipView*);
+extern "C" void ModelDispEquip_ResetColorStep(CModelDispEquipView*);
+extern "C" void ModelDispEquip_ResetColorWhite(CModelDispEquipView*);
 extern "C" void ModelDispEquip_ResetDisplay(CModelDispEquipView*);
 
 // C-linkage import for the embedded CEquipChange sub-object used by
-// func_801FB560 (retail unmangled name; int return so the retail cmpwi
+// PartyStateWin_StateRebuild (retail unmangled name; int return so the retail cmpwi
 // compares r3 directly).
-extern "C" int func_802023C0(CEquipChange*);
+extern "C" int EquipChange_IsActiveFlag(CEquipChange*);
 
 // C-linkage imports for the embedded CPartyState / CModelDisp / CEquipChange
 // sub-objects (retail unmangled names; CModelDisp.cpp / CEquipChange.cpp
@@ -205,9 +205,9 @@ extern "C" void func_801FD194(CPartyState*);
 extern "C" int func_801FC114(CModelDisp*);
 extern "C" void func_801FC11C(CModelDisp*);
 extern "C" void func_80202EB4(CEquipChange*, u8);
-extern "C" int func_80202484(CEquipChange*);
+extern "C" int EquipChange_IsSubcurBusy(CEquipChange*);
 
-// Per-frame party-state input handlers used by func_801FA674's pad chain
+// Per-frame party-state input handlers used by PartyStateWin_StatePadInput's pad chain
 // (retail unmangled; CPartyState.hpp cannot be included here). int returns
 // where the retail cmpwi's the call result directly.
 extern "C" void func_801FD48C(CPartyState*);
@@ -260,12 +260,12 @@ extern "C" int isClassicController__Q22cf13CfGameManagerFv(int arg);
 void playUISound(u32);
 
 // Sibling in this TU (retail unmangled name; extern "C" so the call site in
-// func_801FA59C binds to the retail symbol).
-extern "C" void func_801FBC7C(CPartyStateWin*);
+// PartyStateWin_StateOpen binds to the retail symbol).
+extern "C" void PartyStateWin_ApplyRowStyle(CPartyStateWin*);
 
 // Sibling copy helper in this TU (retail unmangled name; copies a 0xFF0-byte
 // block and returns dst, matching retail's mr r3,r30; extern "C" so the call
-// sites in func_801F9914 emit the retail name).
+// sites in PartyStateWin_CopyWinBlob emit the retail name).
 extern "C" u8* func_801F9998(u8* dst, u8* src);
 
 // State-blob copy helper called by func_801F9998 (retail unmangled; defined
@@ -274,13 +274,13 @@ extern "C" u8* func_801F9998(u8* dst, u8* src);
 extern "C" void func_80191C88(u8* dst, const u8* src);
 
 // C-linkage imports for the embedded CPartyState sub-object used by
-// func_801FA8AC / func_801FBC7C. func_801FD5C4 returns u8 here (the caller
+// PartyStateWin_StateSettle / PartyStateWin_ApplyRowStyle. func_801FD5C4 returns u8 here (the caller
 // masks at use sites, retail has no post-call rlwinm); func_801FD18C returns
 // int (retail cmpwi's the call result directly).
 extern "C" int func_801FD18C(CPartyState*);
 extern "C" u8 func_801FD5C4(CPartyState*);
 
-// Party-state selection getter used by func_801FA92C's equip-display refresh
+// Party-state selection getter used by PartyStateWin_StateRefresh's equip-display refresh
 // (retail unmangled; distinct from func_801FD5C4 above). Returns u8 here
 // (the caller masks the result with clrlwi at the use site).
 extern "C" u8 func_801FD5FC(CPartyState*);
@@ -300,9 +300,9 @@ extern "C" u32 func_8009CF8C(u32);
 
 // Scene object behind the common-archive alloc handle; its alloc-handle
 // getter (retail unmangled, same declarations as CPartyState.hpp).
-extern "C" u32 func_80495FF0(CScn*);
+extern "C" u32 Scn_CallUnk8C_V9(CScn*);
 
-// Window-state word read by func_801FBC7C (.sdata, retail unmangled). const
+// Window-state word read by PartyStateWin_ApplyRowStyle (.sdata, retail unmangled). const
 // lets MWCC hoist the sda21 load above the frame stores (retail shape -
 // MWCC_CASES "extern const float" pattern).
 extern const u32 lbl_eu_806681E4;
@@ -314,7 +314,7 @@ extern u8 lbl_eu_805352DC[];
 // Float written to field_6BE8 by the ctor (.sdata, retail unmangled).
 extern const f32 lbl_eu_806681D8;
 
-// Timer constants used by func_801FAA60: lbl_eu_806681DC is added to
+// Timer constants used by PartyStateWin_StateEquipInput: lbl_eu_806681DC is added to
 // field_6BE8 each frame; lbl_eu_806681E0 clamps it (.sdata, retail
 // unmangled).
 extern const f32 lbl_eu_806681DC;
@@ -341,7 +341,7 @@ extern "C" void __dt__Q34nw4r3lyt8DrawInfoFv(nw4r::lyt::DrawInfo* drawInfo, int 
 
 // Sub-object render helpers taking a DrawInfo (retail unmangled).
 extern "C" void func_801FD0A0(CPartyState*, nw4r::lyt::DrawInfo*);
-extern "C" void func_802021E4(CEquipChange*, nw4r::lyt::DrawInfo*);
+extern "C" void EquipChange_DrawLayouts(CEquipChange*, nw4r::lyt::DrawInfo*);
 extern "C" void func_8022B7C8(CSysWin*, nw4r::lyt::DrawInfo*);
 
 // Embedded sub-object destructors (retail C++-mangled names, defined in the
@@ -366,19 +366,19 @@ extern "C" void __ct__CEquipChange(CEquipChange*);
 extern "C" void __ct__CSysWin(CSysWin*, u32 arg);
 
 // This TU's own dtor symbol under C linkage (the member ~CPartyStateWin emits
-// the same name). func_801FBDC0's r4-passthrough thunk calls it via a 1-arg
+// the same name). PartyStateWin_ThunkDtor's r4-passthrough thunk calls it via a 1-arg
 // function-pointer cast so the incoming delete flag survives.
 extern "C" CPartyStateWin* __dt__14CPartyStateWinFv(CPartyStateWin*, int);
 
-// 2x s16 pair / 4x s16 quad views for func_801F970C (retail lha/sth copy).
+// 2x s16 pair / 4x s16 quad views for PartyStateWin_BuildS16Quad (retail lha/sth copy).
 struct CPartyStateS16Pair { s16 x, y; };
 struct CPartyStateS16Quad { s16 x, y, z, w; };
 
 // C-linkage sibling copy helper (retail unmangled name). Returns dst so the
-// func_801FA338 call site can pass the copied quad straight to setRect
+// PartyStateWin_FrameStep call site can pass the copied quad straight to setRect
 // (retail: mr r4, r3 after the bl). The body keeps dst in r3 throughout, so
 // `return dst` adds no instructions (byte-identical to the void form).
-extern "C" CPartyStateS16Quad* func_801F970C(CPartyStateS16Quad* dst,
+extern "C" CPartyStateS16Quad* PartyStateWin_BuildS16Quad(CPartyStateS16Quad* dst,
                                                const CPartyStateS16Pair* srcA,
                                                const CPartyStateS16Pair* srcB);
 
@@ -399,7 +399,7 @@ struct CPartyStateWinRectSrc {
 extern "C" int isIdle__11CTitleAHelpFv(CTitleAHelp*);
 
 // Byte flags written on the owning scene during window teardown
-// (func_801FA254). The minimal CScn visible in this TU has no fields, so
+// (PartyStateWin_TeardownWindow). The minimal CScn visible in this TU has no fields, so
 // access goes through this layout view (same scheme as CMakeCrystalWin.hpp).
 struct CPartyStateWinScnFlags {
     u8 _00[0x39];
@@ -409,7 +409,7 @@ struct CPartyStateWinScnFlags {
 };
 
 // Byte-offset view of the task-game's +0x6C sub-process slot (pssDetachView
-// target in func_801FA254). CTaskGame itself cannot be defined here (the full
+// target in PartyStateWin_TeardownWindow). CTaskGame itself cannot be defined here (the full
 // kyoshin/CTaskGame.hpp pulls broken monolib umbrella headers and clashes in
 // TUs that include the real CTaskGame.hpp), so the pointer is read through
 // this view cast from the getInstance__9CTaskGameFv() result.
@@ -418,79 +418,79 @@ struct CTaskGameProcView {
     CProc* unk6C;      // +0x6C (task sub-process, pssDetachView target)
 };
 
-// Sub-object teardown helpers used by func_801FA254 (retail unmangled; the
+// Sub-object teardown helpers used by PartyStateWin_TeardownWindow (retail unmangled; the
 // embedded CTitleAHelp/CModelDisp/CPartyState/CEquipChange/CSysWin headers
 // cannot be included here). ModelDispEquip_ResetDisplay is declared above.
 extern "C" void func_801C40A0(CTitleAHelp*);
 extern "C" void func_801FC0C4(CModelDisp*);
 extern "C" void func_801FD0F4(CPartyState*);
-extern "C" void func_8020228C(CEquipChange*);
+extern "C" void EquipChange_CleanupFiles(CEquipChange*);
 extern "C" void func_8022B7F4(CSysWin*);
 
 // Effect-task scene unregister helper (retail unmangled; defined in
-// CTaskGameEff.cpp). func_801FA254 calls it unconditionally with the owning
+// CTaskGameEff.cpp). PartyStateWin_TeardownWindow calls it unconditionally with the owning
 // scene before removing the render callback.
 extern "C" void func_800453EC(CScn*);
 
-// Equip-change / sys-win settle checks used by func_801FA92C's gate (retail
+// Equip-change / sys-win settle checks used by PartyStateWin_StateRefresh's gate (retail
 // unmangled; int returns so the retail cmpwi compares r3 directly).
-extern "C" int func_80202364(CEquipChange*);
+extern "C" int EquipChange_GetSelWhenReady(CEquipChange*);
 extern "C" int CSysWin_isReady(CSysWin*);
 
-// Per-frame sub-object update helpers used by func_801FA338's tail (retail
+// Per-frame sub-object update helpers used by PartyStateWin_FrameStep's tail (retail
 // unmangled; the embedded sub-object headers cannot be included here).
 extern "C" void func_801C3FF0(CTitleAHelp*);
 extern "C" void func_801FC060(CModelDisp*);
 extern "C" void func_801FCFF4(CPartyState*);
 extern "C" void ModelDispEquip_StepStateDispatch(CModelDispEquipView*);
-extern "C" void func_80202110(CEquipChange*);
+extern "C" void EquipChange_UpdateDispatch(CEquipChange*);
 extern "C" void func_8022B748(CSysWin*);
 extern "C" void func_802024CC(CEquipChange*);
 extern "C" int CSysWin_isActive(CSysWin*);
 
 // C-linkage imports for the embedded CEquipChange / CSysWin / CModelDispEquip
-// sub-object handlers used by func_801FAA60's pad-dispatch chains (retail
+// sub-object handlers used by PartyStateWin_StateEquipInput's pad-dispatch chains (retail
 // unmangled; the embedded sub-object headers cannot be included here).
 // u8/u16 returns where the retail masks the call result (clrlwi) before
 // comparing; int returns where the retail cmpwi's the call result directly.
-extern "C" void func_8020397C(CEquipChange*, u32);
-extern "C" int func_802023D0(CEquipChange*);
-extern "C" int func_80202424(CEquipChange*);
-extern "C" int func_802023C8(CEquipChange*);
-extern "C" u8 func_80203138(CEquipChange*);
+extern "C" void EquipChange_HideSubCursor(CEquipChange*, u32);
+extern "C" int EquipChange_IsSortOrSubPage(CEquipChange*);
+extern "C" int EquipChange_IsWeaponRow(CEquipChange*);
+extern "C" int EquipChange_CheckBoxOpen(CEquipChange*);
+extern "C" u8 EquipChange_MapCursorToCat(CEquipChange*);
 extern "C" u8 func_80203210(CEquipChange*);
-extern "C" void func_80202CCC(CEquipChange*);
-extern "C" int func_8020392C(CEquipChange*);
-extern "C" u8 func_80203994(CEquipChange*);
-extern "C" int func_80203C9C(CEquipChange*);
-extern "C" u16 func_80203A98(CEquipChange*, u32);
-extern "C" void func_80202C4C(CEquipChange*);
-extern "C" void func_80202578(CEquipChange*);
-extern "C" void func_80202644(CEquipChange*);
-extern "C" void func_80202790(CEquipChange*);
-extern "C" void func_802028E4(CEquipChange*);
-extern "C" void func_80202A70(CEquipChange*);
-extern "C" void func_80202BFC(CEquipChange*);
-extern "C" int func_8020247C(CEquipChange*);
-extern "C" void func_80203984(CEquipChange*);
-extern "C" void func_8020398C(CEquipChange*);
-extern "C" u32 func_802039F4(CEquipChange*);
+extern "C" void EquipChange_ConfirmApply(CEquipChange*);
+extern "C" int EquipChange_GetBoxCount(CEquipChange*);
+extern "C" u8 EquipChange_GetLockedState(CEquipChange*);
+extern "C" int EquipChange_GetBoxTailByte(CEquipChange*);
+extern "C" u16 EquipChange_GetEquippedResId(CEquipChange*, u32);
+extern "C" void EquipChange_OpenSubPage(CEquipChange*);
+extern "C" void EquipChange_CloseScreen(CEquipChange*);
+extern "C" void EquipChange_CursorPrev(CEquipChange*);
+extern "C" void EquipChange_CursorNext(CEquipChange*);
+extern "C" void EquipChange_CursorUpRemap(CEquipChange*);
+extern "C" void EquipChange_CursorDownRemap(CEquipChange*);
+extern "C" void EquipChange_ConfirmSort(CEquipChange*);
+extern "C" int EquipChange_IsMenuBusy(CEquipChange*);
+extern "C" void EquipChange_CloseEquipRow(CEquipChange*);
+extern "C" void EquipChange_TryCloseRow(CEquipChange*);
+extern "C" u32 EquipChange_GetMenuId(CEquipChange*);
 extern "C" void func_8022B9B4(CSysWin*, char*, u32);
 extern "C" void func_8022BFC8(CSysWin*, u32);
 extern "C" void func_8022B8B8(CSysWin*);
 extern "C" int ModelDispEquip_GetState21(CModelDispEquipView*);
 extern "C" void ModelDispEquip_StartFadeIn(CModelDispEquipView*);
 
-// Shared window object pointer value (.sdata, retail unmangled; func_801F9694
-// returns it, func_801FA338 reads its stored s16 pair at +0x1C8).
+// Shared window object pointer value (.sdata, retail unmangled; PartyStateWin_GetSharedWinObj
+// returns it, PartyStateWin_FrameStep reads its stored s16 pair at +0x1C8).
 extern u32 lbl_eu_80663E10;
 
-// CModelDispEquip select-slot setter used by func_801FA92C (retail unmangled;
+// CModelDispEquip select-slot setter used by PartyStateWin_StateRefresh (retail unmangled;
 // the value is masked to u8 at the call site, but the parameter is int: the
-// func_801FB72C call site passes -1 as a full word).
-extern "C" void func_8020147C(CModelDispEquipView*, int);
+// PartyStateWin_StateEquipRefresh call site passes -1 as a full word).
+extern "C" void ModelDispEquip_SetEquipSlot(CModelDispEquipView*, int);
 
-// Stack-scene holder/list used by func_801FB72C's item-filter block (same
+// Stack-scene holder/list used by PartyStateWin_StateEquipRefresh's item-filter block (same
 // shape as MiniMapEnumHolder/MiniMapEnumList in CMiniMap.cpp; the helpers are
 // the retail-unmangled scene-lookup API).
 struct CPartyStateWinHolder {
@@ -520,12 +520,12 @@ extern "C" void* getCfObjectPc__FPQ22cf12CfObjectMove(void* objMove);
 extern "C" void func_800BFDE0(void* obj, u32 flag);
 extern "C" void __dt__80043E88(void*, int);
 
-// 3-word name-table read by func_801FB72C's item-filter block (.rodata,
+// 3-word name-table read by PartyStateWin_StateEquipRefresh's item-filter block (.rodata,
 // retail unmangled). const so MWCC can keep one base register for the three
 // loads (retail: lis + lwzu + +4/+8 displacements).
 extern const u32 lbl_eu_80507C78[3];
 
-// 0x18-byte cursor-like sub-object embedded at +0x34 of the func_801F9A48
+// 0x18-byte cursor-like sub-object embedded at +0x34 of the PartyStateWin_CopyStateBlob58
 // blob. func_8018B0FC copies its +0x4..+0x15 region (4 words + 2 bytes); the
 // +0x0 word is not copied (same shape as ShopSellCursor18 in
 // CMenuShopSell.hpp, which cannot be included here).
@@ -539,7 +539,7 @@ struct CPartyStateWinCursor {
     u8 field_0x15;    // +0x15
 };
 
-// 0x58-byte menu-state blob copied by func_801F9A48: a 4-word mem region at
+// 0x58-byte menu-state blob copied by PartyStateWin_CopyStateBlob58: a 4-word mem region at
 // +0x04 (copied by the __ct__UnkClass_8011C974 helper), scalar fields
 // +0x14..+0x31, a cursor sub-object at +0x34 (copied by func_8018B0FC) and a
 // packed tail. The tail's +0x4F u32 and +0x53 u16 sit at odd offsets, so the
@@ -616,19 +616,19 @@ struct CPartyStateWinBlob10C0 {
 };
 
 // 4-word mem-region copy helper (retail unmangled; also declared in
-// CSkipTimer.hpp / CQstLogList.hpp / COption.hpp). func_801F9A48 uses it to
+// CSkipTimer.hpp / CQstLogList.hpp / COption.hpp). PartyStateWin_CopyStateBlob58 uses it to
 // copy the +0x04 region of its blob.
 extern "C" void __ct__UnkClass_8011C974(void* dest, const void* src);
 
 // Cursor sub-object copy helper (retail unmangled; also declared in
 // COption.hpp / CItemBoxGrid.hpp). Copies the +0x4..+0x15 region of a
-// 0x18-byte cursor object; func_801F9A48 passes its +0x34 sub-object.
+// 0x18-byte cursor object; PartyStateWin_CopyStateBlob58 passes its +0x34 sub-object.
 extern "C" void func_8018B0FC(void* dst, const void* src);
 
 // Copy helpers used by func_801F9CB4 / func_801F941C (retail unmangled names;
 // owning TU headers cannot be included here).
 extern "C" void func_8018BE74(u8* dst, const u8* src);
-extern "C" void func_801FA220(u8* dst, const u8* src);
+extern "C" void PartyStateWin_CopySlotRec(u8* dst, const u8* src);
 extern "C" void func_8016742C(u8* dst, const u8* src);
 
 // Byte-offset view of the embedded CEquipChange sub-object (retail size
@@ -677,8 +677,8 @@ struct CEquipChangeCopyView {
     u8 f2c4[0x10];       // 0x2c4 (__ct__UnkClass_8011C974)
     u32 f2d4[7];         // 0x2d4..0x2f0
     u8 f2f0[4];          // 0x2f0..0x2f4
-    u8 f2f4[0x18];       // 0x2f4 (func_801FA220)
-    u8 f30c[0x18];       // 0x30c (func_801FA220)
+    u8 f2f4[0x18];       // 0x2f4 (PartyStateWin_CopySlotRec)
+    u8 f30c[0x18];       // 0x30c (PartyStateWin_CopySlotRec)
     u8 f324[0x1c];       // 0x324 (func_8018B0FC)
     u8 f340[0x10];       // 0x340 (__ct__UnkClass_8011C974)
     u32 f350[5];         // 0x350..0x364
@@ -727,7 +727,7 @@ struct CSysWinSlot88 {
     void (*slot88)(CSysWin*);
 };
 
-// 6-argument party-window gauge record filled by func_801F9864 and handed to
+// 6-argument party-window gauge record filled by PartyStateWin_InitGaugeRecord and handed to
 // CScnNw4r::create by the factory.
 struct PartyGaugeRecord {
     u32 field_0;   // 0x00
@@ -745,10 +745,10 @@ extern "C" void func_801BE16C(CTitleAHelp* dest, CTitleAHelp* src);
 extern "C" void func_801FBFD8(CModelDisp* self);
 extern "C" void func_801FCF5C(CPartyState* self);
 extern "C" void ModelDispEquip_SyncScalePose(CModelDispEquipView* self);
-extern "C" void func_80202090(CEquipChange* self);
-extern "C" void func_80496118(CScn* scn, CWorkThread* work, u32 flag);
+extern "C" void EquipChange_LoadBindFiles(CEquipChange* self);
+extern "C" void Scn_GetCamWorkInt(CScn* scn, CWorkThread* work, u32 flag);
 extern "C" void func_801F969C(CPartyStateS16Quad* dst, CPartyStateWinRectSrc* obj);
-extern "C" void func_801F9730(CPartyStateWin* self, const u32* src);
+extern "C" void PartyStateWin_StoreVec4Quad(CPartyStateWin* self, const u32* src);
 // Defined with C++ linkage in CTaskGameEff.cpp; declared here to match.
 void func_800452EC(CScn* scn);
 extern "C" u8* getField5C(CScn* scn);
@@ -759,19 +759,19 @@ extern "C" CScn* create__8CScnNw4rFv(CProcess* parent, char* name,
                                      PartyGaugeRecord* gauge);
 
 // Task-game field readers (retail unmangled; defined in this TU).
-extern "C" u32 func_801F9684(u8* self);
-extern "C" u32 func_801F968C(u8* self);
-extern "C" u32 func_801F9694(void);
+extern "C" u32 PartyStateWin_GetGameProc(u8* self);
+extern "C" u32 PartyStateWin_GetGameWorkThread(u8* self);
+extern "C" u32 PartyStateWin_GetSharedWinObj(void);
 
 // Sibling helpers defined later in this TU (retail unmangled names).
 extern "C" void func_801F9754(CPartyStateWinRing* self, u32 flag);
-extern "C" CPartyStateWinMem* func_801F981C(CPartyStateWinMem* self);
-extern "C" void func_801F9864(PartyGaugeRecord* rec, u32 a, f32 f, u16 b, u16 c,
+extern "C" CPartyStateWinMem* PartyStateWin_InitMemCounters(CPartyStateWinMem* self);
+extern "C" void PartyStateWin_InitGaugeRecord(PartyGaugeRecord* rec, u32 a, f32 f, u16 b, u16 c,
                               u16 d);
-extern "C" mtl::ALLOC_HANDLE func_801F9894(CPartyStateWinMem* self, s32 size);
-extern "C" CPartyStateWinCopy* func_801F9914(CPartyStateWinCopy* dst,
+extern "C" mtl::ALLOC_HANDLE PartyStateWin_PickAllocHandle(CPartyStateWinMem* self, s32 size);
+extern "C" CPartyStateWinCopy* PartyStateWin_CopyWinBlob(CPartyStateWinCopy* dst,
                                              CPartyStateWinCopy* src);
-extern "C" CPartyStateWinBlob58* func_801F9A48(CPartyStateWinBlob58* self,
+extern "C" CPartyStateWinBlob58* PartyStateWin_CopyStateBlob58(CPartyStateWinBlob58* self,
                                                CPartyStateWinBlob58* src);
 extern "C" CPartyStateWinBlob10C0* func_801F9B18(CPartyStateWinBlob10C0* self,
                                                  CPartyStateWinBlob10C0* src);
@@ -780,12 +780,12 @@ extern "C" void func_801F941C(CPartyStateWin* self, u32 arg1, u32 arg2);
 
 // Equip-display pad-chain targets used by func_801FB900 (retail unmangled;
 // the CModelDispEquip header cannot be included here).
-extern "C" void func_80201740(CModelDispEquipView*);
-extern "C" void func_802017A4(CModelDispEquipView*);
-extern "C" void func_802015D4(CModelDispEquipView*);
-extern "C" void func_80201570(CModelDispEquipView*);
-extern "C" void func_80201638(CModelDispEquipView*);
-extern "C" void func_802016BC(CModelDispEquipView*);
+extern "C" void ModelDispEquip_ScaleDepthDown(CModelDispEquipView*);
+extern "C" void ModelDispEquip_ScaleDepthUp(CModelDispEquipView*);
+extern "C" void ModelDispEquip_FadeAlphaDown(CModelDispEquipView*);
+extern "C" void ModelDispEquip_FadeAlphaUp(CModelDispEquipView*);
+extern "C" void ModelDispEquip_ScaleHeightUp(CModelDispEquipView*);
+extern "C" void ModelDispEquip_ScaleHeightDown(CModelDispEquipView*);
 
 // CTitleAHelp idle check distinct from isIdle__11CTitleAHelpFv (retail
 // unmangled; int return so the caller cntlzw/srwi-normalizes it).

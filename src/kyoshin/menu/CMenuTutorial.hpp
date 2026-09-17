@@ -109,7 +109,7 @@ extern "C" void func_8029ADF8(CTutorial* self);
 // CF / ui helpers (retail-unmangled names).
 extern "C" int IsMenuState621F0();
 extern "C" u8 DecMenuCounter64080();
-extern "C" void func_80135550();
+extern "C" void CUICfManager_setTimeout30();
 extern "C" u8 code80135FDC_getByte_64080();
 extern "C" void code80135FDC_postIncByte_64080();
 extern "C" void setPresentationFlag__Q22cf13CfGameManagerFv(u32 enable);

@@ -15,11 +15,11 @@
 // with C linkage (the out-of-line Move specialization below dispatches its
 // callback through it).
 #include "kyoshin/cf/CTaskGameEffAfter.hpp"
-// CfGameManager::func_80086B5C (static) is called by func_8016841C.
+// CfGameManager::func_80086B5C (static) is called by EvtSeqPublishIdHalfwords.
 #include "kyoshin/cf/CfGameManager.hpp"
-// CDeviceFile::readFile (static) is called by func_801686B0.
+// CDeviceFile::readFile (static) is called by EvtSeqBeginFileRead.
 #include "monolib/device/CDeviceFile.hpp"
-// CDeviceVI::getTargetFramerate (static) is called by func_80168F38.
+// CDeviceVI::getTargetFramerate (static) is called by EvtSeqUpdateRealtimeEvents.
 #include "monolib/device/CDeviceVI.hpp"
 // CDeviceSC::getLanguage (static) is called by func_8016ABA8.
 #include "monolib/device/CDeviceSC.hpp"
@@ -27,7 +27,7 @@
 #include "monolib/util/CPathUtil.hpp"
 // CFileHandle::getData (inline) is used by func_8016ABA8.
 #include "monolib/device/CFileHandle.hpp"
-// ml::CCol4::white/black are passed to func_8049602C by func_80169050.
+// ml::CCol4::white/black are passed to Scn_ReleaseUnk80 by func_80169050.
 #include "monolib/math/CCol4.hpp"
 // CGame::setTaskManagerUpdateCount (static) is called by func_8016A480.
 #include "kyoshin/CGame.hpp"
@@ -86,7 +86,7 @@ public:
 #include "revolution/cx/CXStreamingUncompression.h"
 // Scene-window color helper (retail flat name; cf. CTaskGame.hpp canonical
 // decl). Declared here: this TU does not include that header.
-extern "C" void func_8049602C(void* scene, int index, void* vec);
+extern "C" void Scn_ReleaseUnk80(void* scene, int index, void* vec);
 extern "C" void __dt__Q22cf17CTaskREvtSequenceFv(void*, int);
 extern "C" void cbRenderBefore__Q22cf17CTaskREvtSequenceFv(void*);
 
@@ -252,17 +252,17 @@ cf::CTaskREvtSequence::~CTaskREvtSequence() {
     }
 }
 
-extern "C" unsigned long func_801683FC() {
+extern "C" unsigned long EvtSeqGetStateBit14() {
     unsigned long* ptr = (unsigned long*)lbl_eu_80664268;
     return (ptr[0x5c/4] >> 14) & 1;
 }
 
-extern "C" unsigned long func_8016840C() {
+extern "C" unsigned long EvtSeqGetStateBit12() {
     unsigned long* ptr = (unsigned long*)lbl_eu_80664268;
     return (ptr[0x5c/4] >> 12) & 1;
 }
 
-void func_8016841C() {
+void EvtSeqPublishIdHalfwords() {
     // Publish the halfword pair (field_0x116/0x118) to CfGameManager, then to
     // the global-sda consumer; the retail re-reads lbl_eu_80664268 between
     // the two calls (the first call may update it).
@@ -272,13 +272,13 @@ void func_8016841C() {
                   lbl_eu_80664268->field_0x118, 0);
 }
 
-extern "C" u32 func_8016846C(void) {
+extern "C" u32 EvtSeqGetStateBit5(void) {
     void* g = (void*)lbl_eu_80664268;
     return (*(u32*)((u8*)g + 0x5c) >> 5) & 1;
 }
 
-extern "C" u32 func_8016847C() { return (u32)lbl_eu_80664268; }
-extern "C" void func_80168484(int a) {
+extern "C" u32 EvtSeqGetSharedState() { return (u32)lbl_eu_80664268; }
+extern "C" void EvtSeqSetBgmGateFlag(int a) {
     // Toggle the 0x8 / 0x100 bits of the shared state flag word, then fade
     // the BGM volume back in when the gate bit is set. The reassigned local
     // mirrors the retail second load of lbl_eu_80664268 (shared by both
@@ -297,7 +297,7 @@ extern "C" void func_80168484(int a) {
     }
 }
 
-u32 func_801684F4() {
+u32 EvtSeqGetStateBit10() {
     UnkState_80664268* p = lbl_eu_80664268;
     if (p == 0) {
         return 0;
@@ -305,7 +305,7 @@ u32 func_801684F4() {
     return (p->field_0x5C >> 10) & 1;
 }
 
-int func_80168514(UnkObj80168514* self) {
+int EvtSeqCheckEventRunGuard(UnkObj80168514* self) {
     // Event-run guard chain: flag bits 7/8 off, state byte gate + flag bit 16
     // clear, state count >= 5, id word != 0xFFFFFFFF; then compare id+1
     // against state->field_0xF8 (signed). On the high side, dispatch the
@@ -342,7 +342,7 @@ int func_80168514(UnkObj80168514* self) {
     return 1;
 }
 
-extern "C" void func_80168610(cf::CTaskREvtSequence* self) {
+extern "C" void EvtSeqBootSequence(cf::CTaskREvtSequence* self) {
     // Sequence boot: gate on the sequence system + UI state, publish the id
     // halfwords, install the +0x3C move-callback table, and arm the
     // event-sequence flag bits (2, then 40) once the event manager is up.
@@ -371,7 +371,7 @@ extern "C" void func_80168610(cf::CTaskREvtSequence* self) {
     lbl_eu_80663EE0 |= 0x40;
 }
 
-extern "C" void func_801686B0(cf::CTaskREvtSequence* self) {
+extern "C" void EvtSeqBeginFileRead(cf::CTaskREvtSequence* self) {
     // Kick the UI-state flag toggle, then asynchronously read the sequence
     // file: the name lives at +0x60 and the IWorkEvent callback sub-object at
     // +0x54 (null-guarded address-of-member). Finally install the 3-word ptmf
@@ -392,7 +392,7 @@ extern "C" void func_801686B0(cf::CTaskREvtSequence* self) {
     self->field_0x44 = w2;
 }
 
-extern "C" void func_8016872C(cf::CTaskREvtSequence* self) {
+extern "C" void EvtSeqLoadSequenceFile(cf::CTaskREvtSequence* self) {
     // Load the sequence file: read size/flags from the header object, size the
     // arena chunk, free the old header buffer, then async-read into the new
     // buffer and install the +0x3C move-callback table.
@@ -818,7 +818,7 @@ extern "C" void func_80168800(cf::CTaskREvtSequence* self) {
     }
 }
 
-void func_80168F38(cf::CTaskREvtSequence* self) {
+void EvtSeqUpdateRealtimeEvents(cf::CTaskREvtSequence* self) {
     // Walk the realtime-event list once calling vf_0x24 on every entry, then
     // (unless a 60-frame cadence expired) a second walk that aborts the whole
     // function on a vf_0x18()==0 entry; finally reset the voice manager, run
@@ -874,7 +874,7 @@ void func_80168F38(cf::CTaskREvtSequence* self) {
     self->field_0x114 = 0;
 }
 
-int func_80169048(void* self) { return 1; }
+int CREvtObjVfunc10Default(void* self) { return 1; }
 
 void func_80169050(cf::CTaskREvtSequence* self) {
     // CX stream pump + event-state update. While the stream-active flag (bit
@@ -910,10 +910,10 @@ void func_80169050(cf::CTaskREvtSequence* self) {
         EvtSeqC4Buf* buf = reinterpret_cast<EvtSeqC4Buf*>(self->field_0xC4);
         s16 t = buf->field_0x44;
         if (t == 2) {
-            func_8049602C(lbl_eu_80663E14, 0,
+            Scn_ReleaseUnk80(lbl_eu_80663E14, 0,
                           reinterpret_cast<EvtSeqVec4*>(&ml::CCol4::white));
         } else if (t != 3) {
-            func_8049602C(lbl_eu_80663E14, 0,
+            Scn_ReleaseUnk80(lbl_eu_80663E14, 0,
                           reinterpret_cast<EvtSeqVec4*>(&ml::CCol4::black));
         }
         u32* pool = reinterpret_cast<u32*>(lbl_eu_80530A88);
@@ -1017,7 +1017,7 @@ void func_8016925C(cf::CTaskREvtSequence* self) {
         u32 l3 = strlen(tail);
         strcat(buf, tail);
         len = len + l3;
-        u32 handle = func_80495FF0(lbl_eu_80663E14);
+        u32 handle = Scn_CallUnk8C_V9(lbl_eu_80663E14);
         if ((reinterpret_cast<UnkStateC4*>(self->field_0xC4)->field_0x4C &
              1) != 0) {
             handle = static_cast<u32>(mtl::MemManager::getHandleMEM1());
@@ -1173,9 +1173,9 @@ void func_8016925C(cf::CTaskREvtSequence* self) {
     {
         EvtSeqVec4 v = { lbl_eu_80667658, lbl_eu_80667658, lbl_eu_80667658,
                          lbl_eu_80667658 };
-        func_8049602C(lbl_eu_80663E14, 0xF, &v);
+        Scn_ReleaseUnk80(lbl_eu_80663E14, 0xF, &v);
     }
-    func_eu_8049AB50((u8*)lbl_eu_80663E14, 1);
+    Scn_SetPalFixFlag((u8*)lbl_eu_80663E14, 1);
     self->field_0x104 = 0;
     self->field_0x5C |= 0x400;
 }
@@ -1212,10 +1212,10 @@ void func_801696CC(cf::CTaskREvtSequence* self) {
         EvtSeqC4Buf* buf = reinterpret_cast<EvtSeqC4Buf*>(self->field_0xC4);
         s16 t = buf->field_0x44;
         if (t == 2) {
-            func_8049602C(lbl_eu_80663E14, 0,
+            Scn_ReleaseUnk80(lbl_eu_80663E14, 0,
                           reinterpret_cast<EvtSeqVec4*>(&ml::CCol4::white));
         } else if (t != 3) {
-            func_8049602C(lbl_eu_80663E14, 0,
+            Scn_ReleaseUnk80(lbl_eu_80663E14, 0,
                           reinterpret_cast<EvtSeqVec4*>(&ml::CCol4::black));
         }
         // Binding the table slice as an array reference forces MWCC to
@@ -1246,14 +1246,14 @@ void func_801696CC(cf::CTaskREvtSequence* self) {
         flag2 = (g->field_0x5C >> 18) & 1;
     }
     if (flag2 != 0) {
-        func_80496294(lbl_eu_80663E14, lbl_eu_80667668);
+        Scn_SetTimeScale(lbl_eu_80663E14, lbl_eu_80667668);
         cond = 0;
     } else {
-        func_80496294(lbl_eu_80663E14, lbl_eu_8066766C);
+        Scn_SetTimeScale(lbl_eu_80663E14, lbl_eu_8066766C);
         UnkStateTable_D0* d0 = self->field_0xD0;
         entry = reinterpret_cast<UnkStateTable_D0*>(
             reinterpret_cast<u8*>(d0) + d0->field_0x4 * self->field_0xF8);
-        if (func_80496288(lbl_eu_80663E14) > lbl_eu_80667658) {
+        if (Scn_GetFrameDelta(lbl_eu_80663E14) > lbl_eu_80667658) {
             self->field_0x104 += 1;
             self->field_0x100 += 1;
         }
@@ -1262,7 +1262,7 @@ void func_801696CC(cf::CTaskREvtSequence* self) {
     if (cond != 0) {
         if ((self->field_0x5C & 0x4) == 0) {
             // Fade-in path: undo any fade-counter bump and arm the 0x800 bit.
-            func_80496294(lbl_eu_80663E14, lbl_eu_80667668);
+            Scn_SetTimeScale(lbl_eu_80663E14, lbl_eu_80667668);
             self->field_0x104 = snap104;
             self->field_0x5C |= 0x800;
             self->field_0x100 = snap100;
@@ -1271,7 +1271,7 @@ void func_801696CC(cf::CTaskREvtSequence* self) {
             // advance the walk index and dispatch, then swap the ptmf table
             // depending on whether the walk index is exhausted.
             self->field_0x5C &= ~0x1000u;
-            func_80496294(lbl_eu_80663E14, lbl_eu_8066766C);
+            Scn_SetTimeScale(lbl_eu_80663E14, lbl_eu_8066766C);
             for (;;) {
                 s32 n = CXReadUncompLH(
                     reinterpret_cast<CXUncompContextLH*>(self->mCxBuffer),
@@ -1370,10 +1370,10 @@ void func_80169A38(cf::CTaskREvtSequence* self) {
         EvtSeqC4Buf* buf = reinterpret_cast<EvtSeqC4Buf*>(self->field_0xC4);
         s16 t = buf->field_0x44;
         if (t == 2) {
-            func_8049602C(lbl_eu_80663E14, 0,
+            Scn_ReleaseUnk80(lbl_eu_80663E14, 0,
                           reinterpret_cast<EvtSeqVec4*>(&ml::CCol4::white));
         } else if (t != 3) {
-            func_8049602C(lbl_eu_80663E14, 0,
+            Scn_ReleaseUnk80(lbl_eu_80663E14, 0,
                           reinterpret_cast<EvtSeqVec4*>(&ml::CCol4::black));
         }
         u32 w0, w1, w2;
@@ -1403,14 +1403,14 @@ void func_80169A38(cf::CTaskREvtSequence* self) {
     u32 cond;
     UnkStateTable_D0* entry;
     if (flag2 != 0) {
-        func_80496294(lbl_eu_80663E14, lbl_eu_80667668);
+        Scn_SetTimeScale(lbl_eu_80663E14, lbl_eu_80667668);
         cond = 0;
     } else {
-        func_80496294(lbl_eu_80663E14, lbl_eu_8066766C);
+        Scn_SetTimeScale(lbl_eu_80663E14, lbl_eu_8066766C);
         UnkStateTable_D0* d0 = self->field_0xD0;
         entry = reinterpret_cast<UnkStateTable_D0*>(
             reinterpret_cast<u8*>(d0) + d0->field_0x4 * self->field_0xF8);
-        if (func_80496288(lbl_eu_80663E14) > lbl_eu_80667658) {
+        if (Scn_GetFrameDelta(lbl_eu_80663E14) > lbl_eu_80667658) {
             self->field_0x104 += 1;
             self->field_0x100 += 1;
         }
@@ -1464,10 +1464,10 @@ void func_80169A38(cf::CTaskREvtSequence* self) {
                 EvtSeqC4Buf* buf = reinterpret_cast<EvtSeqC4Buf*>(self->field_0xC4);
                 s16 t = buf->field_0x44;
                 if (t == 2) {
-                    func_8049602C(lbl_eu_80663E14, 0xF,
+                    Scn_ReleaseUnk80(lbl_eu_80663E14, 0xF,
                                   reinterpret_cast<EvtSeqVec4*>(&ml::CCol4::white));
                 } else if (t != 3) {
-                    func_8049602C(lbl_eu_80663E14, 0xF,
+                    Scn_ReleaseUnk80(lbl_eu_80663E14, 0xF,
                                   reinterpret_cast<EvtSeqVec4*>(&ml::CCol4::black));
                 }
                 self->field_0x5C |= 0x200000;
@@ -1495,7 +1495,7 @@ void func_80169CD0(cf::CTaskREvtSequence* self) {
     if (isEventPending() != 0 && (lbl_eu_80663E28 & 0x01000000) == 0) {
         EvtSeqVec4 v = { lbl_eu_80667658, lbl_eu_80667658, lbl_eu_80667658,
                          lbl_eu_80667658 };
-        func_8049602C(lbl_eu_80663E14, 0xF, &v);
+        Scn_ReleaseUnk80(lbl_eu_80663E14, 0xF, &v);
     }
     // Cast keeps MWCC from inlining the empty sibling stub (tiny body).
     ((void(*)(void*))func_8016A480)(self);
@@ -1856,7 +1856,7 @@ void cf::CTaskREvtSequence::Term() {
     // Clear the scene's byte flag, then run the sequence teardown callback if
     // the 0x115 gate is clear. func_8016A480's stub body is empty, so call it
     // through a cast to stop MWCC from inlining/eliding the call.
-    func_eu_8049AB50((u8*)lbl_eu_80663E14, 0);
+    Scn_SetPalFixFlag((u8*)lbl_eu_80663E14, 0);
     if (field_0x115 == 0) {
         ((void(*)(void*))func_8016A480)(this);
     }
@@ -2105,7 +2105,7 @@ void func_8016A480(void* selfv) {
     // Push a flat black fade into the scene when no sequence data remains.
     if (isEventPending() == 0 && self->field_0xC4 != 0 &&
         reinterpret_cast<EvtSeqC4Buf*>(self->field_0xC4)->field_0x44 == 3) {
-        func_8049602C(lbl_eu_80663E14, 0,
+        Scn_ReleaseUnk80(lbl_eu_80663E14, 0,
                       reinterpret_cast<EvtSeqVec4*>(&ml::CCol4::black));
     }
     if (self->field_0xC0 != 0) {
@@ -2152,7 +2152,7 @@ void func_8016A480(void* selfv) {
             func_8012F750(0);
         }
         if (func_80110A70() == 0) {
-            func_80133B80();
+            CUICfManager_queueEventMenu();
         }
     }
 }
@@ -2195,7 +2195,7 @@ bool func_8016ABA8(cf::CTaskREvtSequence* self, EvtSeqFileEvent* ev) {
                 // null-guards the adjustment).
                 IScnRender* cb = reinterpret_cast<EvtSeqWithRender*>(self);
                 lbl_eu_80663E14->addRenderCB(cb, 0x12, 0);
-                func_802618D8(func_8049627C(lbl_eu_80663E14, -1));
+                func_802618D8(Scn_SetCamIndex(lbl_eu_80663E14, -1));
                 func_80261944(self->field_0xC4 + v);
             }
         }

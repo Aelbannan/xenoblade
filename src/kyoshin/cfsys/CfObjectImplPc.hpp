@@ -1029,7 +1029,7 @@ void func_800D81A8(int a, void* obj, int c);
 void CCharVoiceMan_EnqueueGaugeResultVoice(void* a, void* b);
 void func_802809C8(void);
 void* func_80149154(void* obj, int id);
-void func_80133F48(int a, float b);
+void CUICfManager_queueFactoryMenu(int a, float b);
 int func_800DA06C(void* mgr, void* obj);
 void func_800451D8(u32 entry, void* sub);
 void* func_8009EC9C(u32 index); // canonical owner-form (void*, u32): CtrlObjectParam.cpp / CfObjectPc.hpp; matches CVS_THREAD.hpp (MWCC 10197)

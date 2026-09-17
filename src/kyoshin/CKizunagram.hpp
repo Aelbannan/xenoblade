@@ -695,9 +695,9 @@ extern "C" void func_8025BA38(UnkKizunaSelf57D90* self, u16 v);
 
 // Shared timg resource accessor (code_80135FDC singleton) and BDAT progress-
 // table globals used by func_8025BA38.
-extern "C" nw4r::lyt::ArcResourceAccessor* func_801355F4();
+extern "C" nw4r::lyt::ArcResourceAccessor* CUICfManager_getArcResourceAccessor();
 
-// View of the func_801355F4 shared accessor: vtable slot 3 (+0x0C) fetches a
+// View of the CUICfManager_getArcResourceAccessor shared accessor: vtable slot 3 (+0x0C) fetches a
 // texture name for a 'timg' tag (declared index 1 -> retail slot 3).
 struct UnkKizunaAccBA38 {
     virtual void v0();
@@ -715,7 +715,7 @@ extern "C" void* lbl_eu_805375FC[];
 extern "C" void* lbl_eu_805375E4[];
 extern "C" void* lbl_eu_805375F0[];
 extern "C" void func_80124270(nw4r::lyt::Pane* pane, u32 a);
-extern "C" void func_80127BC4(float* dst, const float* src); // copy 2 floats
+extern "C" void TagCopyVec2f(float* dst, const float* src); // copy 2 floats
 
 // Position constants used by func_80257B6C (sda2 floats).
 extern const float lbl_eu_8066882C;
@@ -904,10 +904,10 @@ extern GXColorS10 lbl_eu_80664850;
 // result source.
 extern "C" const wchar_t* getContextStr(u8* self);
 extern "C" const wchar_t** getContextStrPtr(u8* self);
-extern "C" void* func_801276E0(const wchar_t** self, u32 arg);
-extern "C" const wchar_t* func_80127670(const wchar_t** self);
+extern "C" void* TagCtxAdvanceHead(const wchar_t** self, u32 arg);
+extern "C" const wchar_t* TagCtxGetNodeHeader(const wchar_t** self);
 extern "C" int func_801276C8(const wchar_t** a, const wchar_t** b);
-extern "C" u32 func_801355BC(void);
+extern "C" u32 CUICfManager_getPackedFont9C(void);
 
 // sprintf for resetKizPaneTags's pane-name formatting.
 extern "C" int sprintf(char* str, const char* fmt, ...);

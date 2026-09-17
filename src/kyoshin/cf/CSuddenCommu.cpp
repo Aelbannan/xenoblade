@@ -4,7 +4,7 @@
 #include "kyoshin/cf/CBattleManagerApi.hpp"
 #include "kyoshin/cf/CfMapItemManager.hpp"
 #include "kyoshin/harness_catalog.hpp"
-#include "libs/monolib/src/scn/CScn_8049603C.hpp" // func_8049603C (single owner decl)
+#include "libs/monolib/src/scn/CScn_8049603C.hpp" // Scn_QueryUnk80State (single owner decl)
 #include "monolib/scn/CScnTimeApi.hpp"
 #include "kyoshin/cf/CSuddenCommu.hpp"
 #include "kyoshin/cf/CfSoundMan.hpp" // cf::CfSoundMan::playActorSound
@@ -862,7 +862,7 @@ int func_801BBCBC(CSuddenCommu* self) {
         // Camera gate: the mask test short-circuits the distance check.
         bool camPass = (lbl_eu_80663E24 & 0xAFA40000) != 0;
         if (!camPass) {
-            f32 dist = ((CSuddenCommuCamView*)func_8049603C(lbl_eu_80663E14))->field_C;
+            f32 dist = ((CSuddenCommuCamView*)Scn_QueryUnk80State(lbl_eu_80663E14))->field_C;
             camPass = !(lbl_eu_80667E38 - dist >= lbl_eu_80667E38);
         }
         if (camPass) {
@@ -893,10 +893,10 @@ int func_801BBCBC(CSuddenCommu* self) {
             if (self->field_20p != 0) {
                 ((cf::CfObject*)self->field_20p)->CfObject_pushRefreshValue(lbl_eu_80667E58);
             }
-            self->field_1C += func_80496288(lbl_eu_80663E14);
+            self->field_1C += Scn_GetFrameDelta(lbl_eu_80663E14);
             if (self->field_1C >= lbl_eu_80667E5C) {
                 self->field_24 &= ~0x8;
-                func_80133F48(2, lbl_eu_80667E60);
+                CUICfManager_queueFactoryMenu(2, lbl_eu_80667E60);
                 self->field_1C = lbl_eu_80667E48;
                 self->field_24 |= 0x8;
             }

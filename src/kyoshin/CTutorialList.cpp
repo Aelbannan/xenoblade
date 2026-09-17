@@ -606,7 +606,7 @@ int CTutorialList::OnFileEvent(CEventFile* event) {
             BdatGetU16ByTableKey(&lbl_eu_80510B78[0x129], sel, 0x61);
         char* texName = MakeTplNameSysFile((u32)msgId);
         CTutorialMsgObj* obj =
-            (CTutorialMsgObj*)func_801355F4()->GetResource(0x74696d67, texName, 0);
+            (CTutorialMsgObj*)CUICfManager_getArcResourceAccessor()->GetResource(0x74696d67, texName, 0);
         if (obj != 0) {
             PaneSetTexPaletteByName(mLayout20, &lbl_eu_80510B78[0x137], obj);
             // Row/col counts are lhz-loaded before the pane lookup; the
@@ -642,7 +642,7 @@ int CTutorialList::OnFileEvent(CEventFile* event) {
         // Build the cursor on the stack, copy its body into +0x2C (skipping
         // the vtable), destroy the temp and run the cursor init virtual.
         u8 tmpCur[0x18];
-        __ct__CCur18(tmpCur, func_801355F4());
+        __ct__CCur18(tmpCur, CUICfManager_getArcResourceAccessor());
         CTutorialCur18Data* curDst =
             reinterpret_cast<CTutorialCur18Data*>(&mGap2C[0]);
         CTutorialCur18Data* curSrc =
@@ -702,7 +702,7 @@ extern "C" void func_802AD060(CTutorialList* self) {
     self->mField14 = readFile__11CDeviceFileFUlPCcP10IWorkEventii(
         (unsigned long)getHandleMEM2__Q23mtl10MemManagerFv(), &lbl_eu_80510B78[0xf], self, 0, 0);
     self->mField18 = readCommonArchiveFile__11CDeviceFileFUlPCcP10IWorkEventii(
-        (unsigned long)func_800A9D90(), &lbl_eu_80510B78[0x28], self, 0, 0);
+        (unsigned long)KyoshinHeap_GetField44(), &lbl_eu_80510B78[0x28], self, 0, 0);
     func_801F34F4(&self->mScrollBar);
     func_801D3064(&self->mSortMenu84[0]);
     self->mField176 = 0;

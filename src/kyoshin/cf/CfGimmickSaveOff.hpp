@@ -18,12 +18,12 @@ extern "C" void __dt__Q22cf9CfGimmickFv(cf::CfGimmick* self, int flag);
 
 // Gimmick work-area registration helpers (register three column blocks with
 // the bdat manager returned by func_8003AA34).
-extern "C" void func_80208F34(cf::CfGimmick* self, float* out, void* unused, void* holder);
-extern "C" void func_80209020(cf::CfGimmick* self, cf::CfGimmick* out, void* unused, void* holder);
-extern "C" void func_80209288(cf::CfGimmick* self, f32* out, void* bdat, void* table);
+extern "C" void CfGimmick_LoadBdatAreaPos(cf::CfGimmick* self, float* out, void* unused, void* holder);
+extern "C" void CfGimmick_LoadBdatAreaExtents(cf::CfGimmick* self, cf::CfGimmick* out, void* unused, void* holder);
+extern "C" void CfGimmick_LoadBdatAreaRotation(cf::CfGimmick* self, f32* out, void* bdat, void* table);
 
 // State-machine side effects shared with CfGimmickObject.
-extern "C" void func_8020A03C();
+extern "C" void CfGimmick_SetGlobalFlag200000();
 extern "C" void func_8020A0CC();
 
 // Poke the object registered at result+0x84 (save-point activation).

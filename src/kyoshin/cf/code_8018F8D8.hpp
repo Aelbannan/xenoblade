@@ -37,14 +37,14 @@ private:
     u8 field_0x6C6C;               // 0x6C6C (Move phase state)
 };
 
-// Container used by the catalog helper functions func_8019017C / func_80190034.
+// Container used by the catalog helper functions CfCmd_Call86778 / CfCmd_Call82C48.
 // The hosting object keeps a cf::CfGameManager* reference at offset 0x408.
 struct CFuncHost {
     u8 _0[0x408];
     cf::CfGameManager* manager;  // 0x408
 };
 
-// Object used by func_eu_80191E88: a raw pointer at offset 0x408 that is
+// Object used by CfCmd_ResolveSlot1E4: a raw pointer at offset 0x408 that is
 // treated as a byte buffer offset by +0x28 when passed to func_8009EB2C.
 struct CFuncHost408 {
     u8 _0[0x408];
@@ -59,7 +59,7 @@ struct UnkFloat4 {
     float field_0xC;
 };
 
-// Result struct returned by func_8009D5FC in func_eu_80191E88.
+// Result struct returned by func_8009D5FC in CfCmd_ResolveSlot1E4.
 struct UnkR31_8019E88 {
     u16 field_0x0;
     u16 field_0x2;
@@ -511,7 +511,7 @@ extern "C" void func_80137250__FPQ34nw4r3lyt8DrawInfo(void*);
 
 // --- imports used by the Move / dispatcher functions ---------------------
 
-// Colour-unpack scale/magic pair (func_801901A4's u8->float ladder).
+// Colour-unpack scale/magic pair (CfCmd_SetSceneColor's u8->float ladder).
 extern const float lbl_eu_80667A78;
 extern const f64 lbl_eu_80667A80;
 
@@ -524,7 +524,7 @@ union PTStateF64Conv {
 extern const float lbl_eu_80667A88;
 extern const float lbl_eu_80667A8C;
 
-// u16 pair tables read at element [1] by func_80190568's cmd-0x19 path.
+// u16 pair tables read at element [1] by CfCmd_PartyMenuDisp's cmd-0x19 path.
 // Sized [2]: MWCC only assumes .sbss small-data addressing (sda21 reloc)
 // for extern arrays whose bounds are visible.
 extern u16 lbl_eu_80663E48[2];
@@ -535,10 +535,10 @@ extern const u16 lbl_eu_80663E40;
 
 // CPartyStateWin sub-object drivers used by CMenuPTState::Move (defined in
 // CPartyStateWin.cpp under their retail unmangled names).
-extern "C" int func_801FA524(CPartyStateWin* self);
-extern "C" void func_801FA4F4(CPartyStateWin* self);
-extern "C" int func_801FA4EC(CPartyStateWin* self);
-extern "C" void func_801FA338(CPartyStateWin* self);
+extern "C" int PartyStateWin_QueryMenuClose(CPartyStateWin* self);
+extern "C" void PartyStateWin_StepPartySub(CPartyStateWin* self);
+extern "C" int PartyStateWin_GetLatchFlag(CPartyStateWin* self);
+extern "C" void PartyStateWin_FrameStep(CPartyStateWin* self);
 
 // CBgTex per-frame helpers - retail dispatches them under plain unmangled
 // names (free functions taking the embedded sub-object), not member calls.
@@ -578,14 +578,14 @@ struct PartySlotList {
 };
 
 // Opaque receiver type for the menu-command handler table dispatched by
-// func_80190840 through member-function pointers.
+// CfCmd_PumpRingBuf through member-function pointers.
 class MenuCmdHost;
 typedef int (MenuCmdHost::*MenuCmdHandler)(u16, u32, u32*, u32);
 
 // 0x29-entry handler table indexed by the popped command byte (lbl_eu_80532838).
 extern MenuCmdHandler lbl_eu_80532838[];
 
-// CfRes ring-buffer pump used by func_801901A4-era dispatchers (defined in
+// CfRes ring-buffer pump used by CfCmd_SetSceneColor-era dispatchers (defined in
 // CfRes.cpp); this TU uses a minimal layout view of the ring object.
 struct MenuCmdRingView {
     u8 ring[0x400];

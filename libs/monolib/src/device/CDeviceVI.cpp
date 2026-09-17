@@ -308,7 +308,7 @@ u32 CDeviceVI::getVisPerFrame(){
 }
 
 bool CDeviceVI::entryCb(CDeviceVICb* entry){
-    // reslist push_back walk inlined with the func_8048C524 levers: the
+    // reslist push_back walk inlined with the CScnItemPool_pushItemToList levers: the
     // loop invariants (capacity then sentinel) declared/assigned last so
     // they win the high scratch registers (retail: sp r5, i r6, byteOff r7,
     // capacity r8, sentinel r9), plus the explicit byteOff + comma-init for

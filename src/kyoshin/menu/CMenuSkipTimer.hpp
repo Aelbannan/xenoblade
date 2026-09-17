@@ -57,8 +57,8 @@ extern "C" void func_8029F048(CMenuSkipTimer* self);
 
 // Retail-unmangled callee names (US strips mangling for these func_ helpers).
 // int returns so the caller's `!= 0` stays a plain cmpwi (retail emits no u8 mask).
-extern "C" int func_8029FF00(CSkipTimer* self);
-extern "C" void func_8029FE30(CSkipTimer* self);
+extern "C" int CSkipTimerGetSkipButton(CSkipTimer* self);
+extern "C" void CSkipTimerTeardown(CSkipTimer* self);
 extern "C" void func_801C3D9C(CBgTex* self);
 extern "C" void func_801C40A0(CTitleAHelp* self);
 extern "C" void setPresentationFlag__Q22cf13CfGameManagerFv(u8 enable);
@@ -76,7 +76,7 @@ extern u32 lbl_eu_80663E28;
 // caller's `!= 0` a plain cmpwi (retail emits no u8 mask; the defining TU's u8
 // return is ABI-compatible, value in r3).
 extern "C" int func_802A01F0(CSkipTimer* self);
-extern "C" void func_8029FCDC(CSkipTimer* self);
+extern "C" void CSkipTimerTick(CSkipTimer* self);
 extern "C" void func_8029FBE0(CSkipTimer* self);
 extern "C" void func_8029EF30(CMenuSkipTimer* self);
 extern "C" void func_801C3D54(CBgTex* self);
@@ -96,16 +96,16 @@ extern "C" void CTitleAHelp_load(CTitleAHelp* self);
 extern "C" void __dt__800FED0C(CProcess* self, int flags);
 // Draw/advance helpers for cbRenderBefore / func_8029EF30 (retail keeps the
 // bare func_ names at these call sites; int returns keep `!= 0` as cmpwi).
-extern "C" int func_8029FEBC(CSkipTimer* self);
-extern "C" void func_802A005C(CSkipTimer* self);
-extern "C" void func_802A0148(CSkipTimer* self);
-extern "C" void func_8029FF24(CSkipTimer* self);
-extern "C" void func_8029FF98(CSkipTimer* self);
-extern "C" void func_802A0028(CSkipTimer* self);
-extern "C" int func_8029FF1C(CSkipTimer* self);
+extern "C" int CSkipTimerIsReady(CSkipTimer* self);
+extern "C" void CSkipTimerConfirmSkip(CSkipTimer* self);
+extern "C" void CSkipTimerEngageSkip(CSkipTimer* self);
+extern "C" void CSkipTimerNextKey(CSkipTimer* self);
+extern "C" void CSkipTimerPrevKey(CSkipTimer* self);
+extern "C" void CSkipTimerLeaveSkip(CSkipTimer* self);
+extern "C" int CSkipTimerGetActive(CSkipTimer* self);
 extern "C" void func_801C414C(CTitleAHelp* self);
 extern "C" void func_801C3D7C(CBgTex* self, nw4r::lyt::DrawInfo* drawInfo);
-extern "C" void func_8029FDBC(CSkipTimer* self, nw4r::lyt::DrawInfo* drawInfo);
+extern "C" void CSkipTimerDraw(CSkipTimer* self, nw4r::lyt::DrawInfo* drawInfo);
 extern "C" void func_801C4080(CTitleAHelp* self, nw4r::lyt::DrawInfo* drawInfo);
 // Raw-storage nw4r DrawInfo build/destroy for cbRenderBefore (pre-mangled names).
 extern "C" void __ct__Q34nw4r3lyt8DrawInfoFv(nw4r::lyt::DrawInfo* drawInfo);

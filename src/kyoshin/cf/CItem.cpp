@@ -3359,7 +3359,7 @@ extern "C" s32 CItem_createBoxContents(u32 id) {
             // emits lis/addi pairs instead of reusing the cached pointer).
             CItemFour* box = &lbl_eu_80573E18;
             func_8015AE9C(box);
-            func_8013E424(box, 0);
+            UIWin_CreateB4790Win(box, 0);
             return block->mCount != 0;
         }
     }

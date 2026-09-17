@@ -67,8 +67,8 @@ extern "C" void WorkEvent29__10IWorkEventFv();
 extern "C" void WorkEvent30__10IWorkEventFv();
 extern "C" void WorkEvent31__10IWorkEventFv();
 extern "C" void func_8048ED1C();
-extern "C" void func_80496970();
-extern "C" void func_8049695C();
+extern "C" void Scn_CallUnk60_V4();
+extern "C" void Scn_CallUnk68_V3();
 extern "C" u32 __RTTI__10IWorkEvent;
 }
 extern "C" u32 lbl_eu_8056E5B8[4] = {
@@ -117,8 +117,8 @@ extern "C" u32 lbl_eu_8056E5C8[45] = {
     (u32)&CScnMemBlob::WorkEvent29__10IWorkEventFv,
     (u32)&CScnMemBlob::WorkEvent30__10IWorkEventFv,
     (u32)&CScnMemBlob::WorkEvent31__10IWorkEventFv,
-    (u32)&CScnMemBlob::func_80496970,
-    (u32)&CScnMemBlob::func_8049695C,
+    (u32)&CScnMemBlob::Scn_CallUnk60_V4,
+    (u32)&CScnMemBlob::Scn_CallUnk68_V3,
 };
 extern "C" u32 lbl_eu_8056E67C[13] = {
     (u32)&CScnMemBlob::__RTTI__10IWorkEvent, 0x00000054,
@@ -158,8 +158,8 @@ extern "C" void* func_8048FE0C(void* self);
 extern "C" void* func_8048FE2C(void* self);
 
 // WorkEvent thunk callees (CScn TU).
-extern "C" void func_80496970(void* self);
-extern "C" void func_8049695C(void* self, void* r4);
+extern "C" void Scn_CallUnk60_V4(void* self);
+extern "C" void Scn_CallUnk68_V3(void* self, void* r4);
 extern "C" void __dt__8CScnNw4rFv(void* self, int deleteFlag);
 
 // Member ctors.
@@ -201,9 +201,9 @@ void* func_8048ECFC(CScn* self) { return func_8048FE0C(self->mUnk8C); }
 
 void* func_8048ED04(CScn* self) { return func_8048FE2C(self->mUnk8C); }
 
-extern "C" void WorkEvent4__4CScnFv(void* self) { ((void(*)(void*))func_80496970)((char*)self - 0x54); }
+extern "C" void WorkEvent4__4CScnFv(void* self) { ((void(*)(void*))Scn_CallUnk60_V4)((char*)self - 0x54); }
 
-extern "C" void WorkEvent3__4CScnFPv(void* self, void* r4) { ((void(*)(void*))func_8049695C)((char*)self - 0x54); }
+extern "C" void WorkEvent3__4CScnFPv(void* self, void* r4) { ((void(*)(void*))Scn_CallUnk68_V3)((char*)self - 0x54); }
 
 void func_8048ED1C(void* self){ ((void(*)(void*))__dt__8CScnNw4rFv)((char*)self - 0x54); }
 

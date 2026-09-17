@@ -134,7 +134,7 @@ extern "C" int func_8029348C(CMenuPTChangeNotice* self, CEventFile* evt) {
                                   : &lbl_eu_8050FC20[0x9e];
         u16 msg = BdatGetU16ByTableKey(&lbl_eu_8050FC20[0x76], msgName, 0x2f);
         char* handle = MakeTplNameSysFile(msg);
-        nw4r::lyt::ArcResourceAccessor* mgr = func_801355F4();
+        nw4r::lyt::ArcResourceAccessor* mgr = CUICfManager_getArcResourceAccessor();
         void* tex = mgr->GetResource(0x74696D67 /* 'timg' */, handle, NULL);
         if (tex != NULL) {
             PaneSetTexPaletteByName(self->mLayout90, &lbl_eu_8050FC20[0xa7], tex);
@@ -177,7 +177,7 @@ extern "C" int func_8029348C(CMenuPTChangeNotice* self, CEventFile* evt) {
                                   : &lbl_eu_8050FC20[0x9e];
         u16 msg = BdatGetU16ByTableKey(&lbl_eu_8050FC20[0x76], msgName, 0x2e);
         char* handle = MakeTplNameSysFile(msg);
-        nw4r::lyt::ArcResourceAccessor* mgr = func_801355F4();
+        nw4r::lyt::ArcResourceAccessor* mgr = CUICfManager_getArcResourceAccessor();
         void* tex = mgr->GetResource(0x74696D67 /* 'timg' */, handle, NULL);
         if (tex != NULL) {
             PaneSetTexPaletteByName(self->mLayout90, &lbl_eu_8050FC20[0xb8], tex);
@@ -243,7 +243,7 @@ extern "C" int func_8029348C(CMenuPTChangeNotice* self, CEventFile* evt) {
                 u16 msg = BdatGetU16Direct(lbl_eu_80664098,
                                         &lbl_eu_8050FC20[0x121], val);
                 char* str = MakeTplNameSysFile(msg);
-                nw4r::lyt::ArcResourceAccessor* mgr = func_801355F4();
+                nw4r::lyt::ArcResourceAccessor* mgr = CUICfManager_getArcResourceAccessor();
                 void* tex = mgr->GetResource(0x74696D67, str, NULL);
                 if (tex != NULL) {
                     PaneSetTexPaletteByName(self->mLayout90, buf, tex);

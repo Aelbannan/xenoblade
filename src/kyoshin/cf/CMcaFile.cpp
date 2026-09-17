@@ -36,10 +36,10 @@ extern "C" void func_800584B8(u8* self, void* data, const char* name) {
     if (hasMagic != 0) {
         u8 buf[68];
         ml::CPathUtil::getNoPathExtName(*(ml::FixStr<64>*)buf, name);
-        func_80495EAC(self, dataAdj, *(ml::FixStr<64>*)buf);
+        Scn_InitGlobalA(self, dataAdj, *(ml::FixStr<64>*)buf);
     } else {
         u8 buf[68];
         ml::CPathUtil::getNoPathExtName(*(ml::FixStr<64>*)buf, name);
-        func_80495EAC(self, data, *(ml::FixStr<64>*)buf);
+        Scn_InitGlobalA(self, data, *(ml::FixStr<64>*)buf);
     }
 }

@@ -24,7 +24,7 @@ extern "C" u32 lbl_eu_805701B0[];
 struct CScnItemModelNw4rOwner;  // full definition in CScnItemModelNw4r.hpp
 struct CMdlOwnerCtx {
     u8    field_0x00[0x4];     // 0x00 vtable pointer region
-    CScnItemModelNw4rOwner* field_04;      // 0x04 owner view (func_80496288 arg)
+    CScnItemModelNw4rOwner* field_04;      // 0x04 owner view (Scn_GetFrameDelta arg)
     u8    field_0x08[0x1464];  // reserved
     nw4r::g3d::ResMdlData* field_0x146C; // 0x146C model resource data
     u8    field_0x1470[0xC];   // reserved
@@ -51,7 +51,7 @@ extern "C" int func_804E68A0(CMdlMouth* ths, u32 arg2, nw4r::g3d::ChrAnmResult* 
         return 1;
     }
     // Integrate mouth-open angle from the owner view's delta.
-    f32 dt = func_80496288(ths->field_0x04->field_04);
+    f32 dt = Scn_GetFrameDelta(ths->field_0x04->field_04);
     ths->field_0x10 = ths->field_0x14 * dt + ths->field_0x10;
     if (ths->field_0x10 > lbl_eu_8066A1F8) {
         // Reset to fully closed, then re-randomize open/close speeds.
@@ -93,7 +93,7 @@ extern "C" void func_804E6A28(CMdlMouth* ths) {
             return;
         }
     }
-    f32 dt = func_80496288(ths->field_0x04->field_04);
+    f32 dt = Scn_GetFrameDelta(ths->field_0x04->field_04);
     ths->field_0x10 = ths->field_0x14 * dt + ths->field_0x10;
     if (ths->field_0x10 > lbl_eu_8066A1F8) {
         // Reset to fully closed, then re-randomize open/close speeds.

@@ -42,7 +42,7 @@ struct UnkKizunaMenuSub98 {
 };
 
 // Opaque slot for the CPcKizunagram sub-object at +0x178 (sizeof 0x4C).
-// CPcKizunagram.hpp is not included here: its extern "C" func_8025DA48
+// CPcKizunagram.hpp is not included here: its extern "C" KizunagramIsOpen
 // declares a u8 return, which makes MWCC emit an rlwinm byte mask at the
 // call site; retail compares r3 directly, so the call-site declaration must
 // return int.
@@ -108,7 +108,7 @@ class CTaskGame;
 // (no byte mask), matching retail.
 extern "C" int isIdle__11CTitleAHelpFv(CTitleAHelp* h);
 extern "C" int kizChartOpen(UnkKizunaMenuSub98* self);
-extern "C" int func_8025DA48(UnkKizunaMenuPcSub* self);
+extern "C" int KizunagramIsOpen(UnkKizunaMenuPcSub* self);
 extern "C" int func_80244508(CFade* self);
 extern "C" void func_80244518(CFade* self);
 
@@ -156,7 +156,7 @@ void playUISound(unsigned long op);
 // Scene/task-system helpers (retail-unmangled callee names).
 extern "C" void waitForDrawDone__9CDeviceVIFv();
 extern "C" void removeRenderCB__4CScnFP10IScnRender(CScn*, IScnRender*);
-extern "C" int func_804962A0(CScn* scn, int flag);
+extern "C" int Scn_SetPauseFlag(CScn* scn, int flag);
 extern "C" CTaskGame* getInstance__9CTaskGameFv();
 extern "C" int isFlag01Set__9CTaskGameFv();
 extern "C" void setPresentationFlag__Q22cf13CfGameManagerFv(bool enable);
@@ -197,15 +197,15 @@ extern "C" void tickKizMove(UnkKizunaMenuSub98* self);
 extern "C" void func_801C414C(CTitleAHelp* self);
 // CPcKizunagram helpers. Return types are int (not u8) so callers compare
 // with cmpwi directly (no byte mask), matching retail.
-extern "C" int func_8025DA40(UnkKizunaMenuPcSub* self);
-extern "C" void func_8025D9C4(UnkKizunaMenuPcSub* self);
-extern "C" void func_8025D954(UnkKizunaMenuPcSub* self, nw4r::lyt::DrawInfo* drawInfo);
-extern "C" void func_8025DA50(UnkKizunaMenuPcSub* self);
-extern "C" void func_8025DA78(UnkKizunaMenuPcSub* self);
-extern "C" void func_8025DAE8(UnkKizunaMenuPcSub* self);
-extern "C" void func_8025DB30(UnkKizunaMenuPcSub* self);
-extern "C" void func_8025DB78(UnkKizunaMenuPcSub* self);
-extern "C" void func_8025DBC0(UnkKizunaMenuPcSub* self);
+extern "C" int KizunagramIsHidden(UnkKizunaMenuPcSub* self);
+extern "C" void KizunagramTeardown(UnkKizunaMenuPcSub* self);
+extern "C" void KizunagramDraw(UnkKizunaMenuPcSub* self, nw4r::lyt::DrawInfo* drawInfo);
+extern "C" void KizunagramOpen(UnkKizunaMenuPcSub* self);
+extern "C" void KizunagramClose(UnkKizunaMenuPcSub* self);
+extern "C" void KizunagramCursorUp(UnkKizunaMenuPcSub* self);
+extern "C" void KizunagramCursorDown(UnkKizunaMenuPcSub* self);
+extern "C" void KizunagramCursorPageUp(UnkKizunaMenuPcSub* self);
+extern "C" void KizunagramCursorPageDown(UnkKizunaMenuPcSub* self);
 
 // Move() state-dispatch helpers (retail-unmangled; defined in this TU).
 // Declared extern "C" so the switch-dispatch call sites in Move() emit the
@@ -225,7 +225,7 @@ extern "C" void func_80257A2C(CMenuKizunagram* self);
 // Move() per-frame sub-object refresh helpers (retail-unmangled).
 extern "C" void func_801C3FF0(CTitleAHelp* self);
 extern "C" void tickKizMain(UnkKizunaMenuSub98* self);
-extern "C" void func_8025D8C4(UnkKizunaMenuPcSub* self);
+extern "C" void KizunagramUpdateMainState(UnkKizunaMenuPcSub* self);
 extern "C" void func_802AE560(CLoad* self);
 extern "C" void func_802443E8(CFade* self);
 

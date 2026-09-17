@@ -40,8 +40,8 @@ extern "C" void* func_8016FE34(void* src);
 extern "C" int func_80148778(void* self, int id);
 extern "C" void* func_80149154(void* self, u32 id);   // aligned with CAIAction.hpp (u32 param, per CBattleState.cpp def)
 extern "C" void func_8009D018(u32 a, u32 b);
-extern "C" void* func_80141270(u32 a);
-// func_801412D0 is owned by kyoshin/CUIWindowManager.hpp.
+extern "C" void* UIWin_QueryPageFlag(u32 a);
+// UIWin_BuildFlagBuf is owned by kyoshin/CUIWindowManager.hpp.
 
 
 // ---------------------------------------------------------------------------

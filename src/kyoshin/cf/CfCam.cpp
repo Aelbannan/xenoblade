@@ -11,10 +11,10 @@
 #include "monolib/math.hpp"
 #include "kyoshin/cf/CfCam_ps.inl"
 #include "monolib/math/FloatUtils.hpp"
-// func_8049603C: retail branches here WITHOUT setting up r3 (stale-register
+// Scn_QueryUnk80State: retail branches here WITHOUT setting up r3 (stale-register
 // call), so this TU keeps a private no-arg declaration and must not include
 // libs/monolib/src/scn/CScn_8049603C.hpp (owner: monolib CScn).
-extern "C" void* func_8049603C();
+extern "C" void* Scn_QueryUnk80State();
 // TEMP unblock: monolib/core/CPadManager.hpp currently fails under MWCC
 // (C++11 static_assert / illegal offsetof constant expressions) and
 // CDeviceRemotePad.hpp pulls it in. This TU only needs CDeviceRemotePad::
@@ -1630,7 +1630,7 @@ func_8006CE24__FPvPviiiii(cf::CfCamFollow* self, void* arg, int a, int b,
         cfCam_yawFromVec(static_cast<const void*>(&l68));
     *reinterpret_cast<f32*>(self->unk168 + 0x14) = lbl_eu_806662DC;
     // Scene pose lookup feeds the default follow distance.
-    tmp.pose = func_80496264(cfCam_loadPlus4(self->unk160), 0);
+    tmp.pose = Scn_FindCamItem(cfCam_loadPlus4(self->unk160), 0);
     if (tmp.pose != 0) {
         self->unk210 = cfCam_getFloat1E0F(tmp.pose);
     } else {
@@ -2310,7 +2310,7 @@ void func_8006E884(cf::CfCamFollow* self, float argF) {
     }
     // Note: retail compares the incoming float (f1) against 0.0 AFTER the two
     // gate calls without spilling it - keep this operand order when iterating.
-    if (CfRes_getD80Flag() != 0 && func_80496288(lbl_eu_80663E14) != 0 && argF == lbl_eu_806662DC) {
+    if (CfRes_getD80Flag() != 0 && Scn_GetFrameDelta(lbl_eu_80663E14) != 0 && argF == lbl_eu_806662DC) {
         // Snap: blend straight from the +0x40 vector into the +0x34 slot.
         cfCam_psAddVec3(&stack50, reinterpret_cast<const nw4r::math::VEC3*>(self->unk10 + 0x30),
                       reinterpret_cast<const nw4r::math::VEC3*>(self->unk188 + 0x40));
@@ -3325,7 +3325,7 @@ void cfCam_updateFrame(cf::CfCamFollow* self) {
     self->unk228 = lbl_eu_806662A0;
     int r31 = 0;
     if (CfRes_getD80Flag() != 0) {
-        cfCam_copyBlock16(&stack68, func_8049603C());
+        cfCam_copyBlock16(&stack68, Scn_QueryUnk80State());
         if (stack68.w >= lbl_eu_8066638C) {
             r31 = 1;
         }

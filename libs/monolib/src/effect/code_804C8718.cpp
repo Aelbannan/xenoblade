@@ -87,7 +87,7 @@ struct EffectListNode {
 struct BoundScene {
     u16 field_0x00;         // 0x00 flags
     u8 pad_0x02[0x10 - 0x02];
-    void* field_0x10;       // 0x10: scene handle passed to func_80496264
+    void* field_0x10;       // 0x10: scene handle passed to Scn_FindCamItem
 };
 
 struct EffObj {
@@ -103,7 +103,7 @@ struct EffObj {
     ml::CVec3 pos;          // 0x128 world position
 };
 
-// Object returned by func_80496264: view matrix at +0xcc, depth scale at +0x1f0.
+// Object returned by Scn_FindCamItem: view matrix at +0xcc, depth scale at +0x1f0.
 struct SceneViewObj {
     u8 pad_0x00[0xcc];
     Mtx field_0xcc;         // 0xcc view matrix
@@ -526,12 +526,12 @@ s32 func_804CB5FC(EffObj* obj) {
     }
 
     // Project through the bound scene's view matrix.
-    SceneViewObj* view = (SceneViewObj*)func_80496264(obj->field_0x08->field_0x10, -1);
+    SceneViewObj* view = (SceneViewObj*)Scn_FindCamItem(obj->field_0x08->field_0x10, -1);
     ml::CVec3 out2;
     PSMTXMultVec(view->field_0xcc, (Vec*)&pos, (Vec*)&out2);
     pos = *(Vec*)&out2;
 
-    SceneViewObj* view2 = (SceneViewObj*)func_80496264(obj->field_0x08->field_0x10, -1);
+    SceneViewObj* view2 = (SceneViewObj*)Scn_FindCamItem(obj->field_0x08->field_0x10, -1);
     // Depth = projected z + priority byte scaled by the scene depth scale.
     f32 depth = s32ToF_b0b0((u32)(s32)obj->field_0x23) * view2->field_0x1f0 + pos.z;
     return (s32)depth;
@@ -1054,7 +1054,7 @@ static inline f32 EffDepthFactor(EffObject* obj, Vec* pos) {
     if (obj->field_0xdc[0] == 0) {
         return factor;
     }
-    SceneViewObj* view = (SceneViewObj*)func_80496264(((EffObj*)obj)->field_0x08->field_0x10, -1);
+    SceneViewObj* view = (SceneViewObj*)Scn_FindCamItem(((EffObj*)obj)->field_0x08->field_0x10, -1);
     ml::CVec3 diff;
     diff.x = pos->x - view->field_0x10c[0];
     diff.y = pos->y - view->field_0x10c[1];

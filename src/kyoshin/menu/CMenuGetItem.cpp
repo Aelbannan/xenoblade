@@ -217,9 +217,9 @@ void CMenuGetItem::Init() {
 
         // Build the layout and its first anim transform from the arc resource.
         buildLayout__FPPQ34nw4r3lyt6LayoutPQ34nw4r3lyt19ArcResourceAccessorPCc(
-            &mLayout, func_801355F4(), &base[0xd]);
+            &mLayout, CUICfManager_getArcResourceAccessor(), &base[0xd]);
         bindLayoutAnimTransform__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(
-            mLayout, &mField_78, func_801355F4(), &base[0x26]);
+            mLayout, &mField_78, CUICfManager_getArcResourceAccessor(), &base[0x26]);
 
         // Bind the font: push the font object's pane back onto the root pane.
         nw4r::lyt::Pane* rootPane = mLayout->GetRootPane();

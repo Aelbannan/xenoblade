@@ -91,14 +91,14 @@ void pluginUiRegist();
 // The last argument is an int->float cast: MWCC's inline expansion emits
 // xoris/0x43300000 word-pair + fsubs against the shared sdata2 magic
 // (renamed to lbl_eu_80665DC0 by the unit's postprocess pool rule).
-void func_80135464(int r3, int r4, float f1, float f2, float f3);
+void CUICfManager_queueFadeMenu(int r3, int r4, float f1, float f2, float f3);
 
 // Item-grant helper: 8 register args + 1 stack arg.
-void func_8013E2E0(u32 a1, u32 a2, u32 a3, u32 a4, u32 a5, u32 a6, u32 a7,
+void UIWin_CreateItemMulti(u32 a1, u32 a2, u32 a3, u32 a4, u32 a5, u32 a6, u32 a7,
                    u32 a8, u32 a9);
 
 // Talk-window factory (window id, text, mode); used by winTalk.
-void func_8013D07C(u32 obj, const char* str, int mode);
+void UIWin_CreateTalkWin(u32 obj, const char* str, int mode);
 
 void CTaskGame_enumListCtor(CfEnumListHolder* holder);
 CfEnumList* CTaskGame_enumListGet(CfEnumListHolder* holder);
@@ -108,7 +108,7 @@ void* func_800F6EC0(void* list, int index);
 void* func_800451D8(u32 cls, void* param);
 u8 code80135FDC_getByte_64059();
 void playUISound__FUl(u32 op);
-void func_8013DB6C(u32 first, u32 second, s32 third, s32 fourth);
+void UIWin_CreateMenuUpdate(u32 first, u32 second, s32 third, s32 fourth);
 int func_8009CF8C(int index);
 void func_8009D018(int index, int value);
 // Copies an entry out of a script string table into the given buffer.
@@ -116,7 +116,7 @@ char* BdatTouchStringCell(char* buf, const char* table, int index);
 // BDAT row-name lookup: resolve key row in the character table.
 char* BdatGetPtrDirect(const void* tbl, const void* key, int id);
 // Open a party-talk window over an existing message box.
-void func_8013D688(char* msg, char* name, int c, int d);
+void UIWin_CreateSysWin1(char* msg, char* name, int c, int d);
 // Talk-state probe (window manager): nonzero when a talk is active.
 int func_8013EB90(int v);
 // SE-talk voice busy probe (code80135FDC split unit).
@@ -125,10 +125,10 @@ int MenuStateCheck64064or30();
 void* getPlayer__Q22cf13CfGameManagerFi(int index);
 // Start/queue a party-chat line on the battle sub-object.
 int func_800C4244(cf::CfObjectImplWalker* sub, u32 id, u32 flag);
-void func_8013E52C(int id);
-void func_8013D448(int mode, const char* str);
+void UIWin_CreateKizunaTalk(int id);
+void UIWin_CreateEveTalkWin(int mode, const char* str);
 // Opens a system window with the given text.
-char* func_8013D55C(const char* str, int r4, int r5);
+char* UIWin_CreateSysWin0(const char* str, int r4, int r5);
 void* __dynamic_cast(void* src, long offset, const void* src_type,
                      const void* dst_type, void* src2dst);
 
@@ -164,7 +164,7 @@ int save();
 int kizunaTalkStart();
 int kizunaTalkEnd();
 // Select-window result probe (window manager): current select item index.
-int func_8013EC58();
+int UIWin_GetTimer();
 // Busy/slot-state probe used by isPrioReq (nonzero when a priority request
 // window is active).
 int func_80135708();
@@ -181,9 +181,9 @@ int func_eu_80046DA0(VMThread* pThread);
 int func_eu_80046DC4(VMThread* pThread);
 
 // Open a system select window from three strings.
-void func_8013D978(const char* a, const char* b, const char* c);
+void UIWin_Create25070Win(const char* a, const char* b, const char* c);
 // Colosseum 6 invite: (u16 mode, u8 a, u8 b).
-void func_8013DF44(int a, int b, int c);
+void UIWin_CreateCol6Invite(int a, int b, int c);
 // Record the last-talk NPC ordinal.
 void func_8009ECD0(int id);
 // Character-table row count / keyed lookup helpers (setLastTalkNpc).

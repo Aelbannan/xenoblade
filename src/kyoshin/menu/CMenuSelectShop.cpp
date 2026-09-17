@@ -162,7 +162,7 @@ void CMenuSelectShop::Init() {
 
     // Same pattern for the CCur18 cursor (payload +0x4..+0x15, slot sp+0x10).
     u8 rawCur[0x18];
-    __ct__CCur18(rawCur, func_801355F4());
+    __ct__CCur18(rawCur, CUICfManager_getArcResourceAccessor());
     // CCur18Data models the payload tail (+0x4..+0x15), so the pointers start
     // 4 bytes into each cursor image (vtable skipped).
     CCur18Data* dst = reinterpret_cast<CCur18Data*>(&mCursor[4]);
@@ -337,11 +337,11 @@ extern "C" __declspec(noinline) void func_8018A2C0(CMenuSelectShop* self) {
         // Confirm: act on the selected shop entry (signed compare like retail).
         switch ((s32)self->mSelIndex) {
         case 0:
-            func_80134024(self->mFieldD0);
+            CUICfManager_queueShopBuyMenu(self->mFieldD0);
             playUISound(3);
             break;
         case 1:
-            func_80134100();
+            CUICfManager_queueShopSellMenu();
             playUISound(3);
             break;
         case 2:

@@ -817,7 +817,7 @@ void* CActParamAnim::getModelObj() {
     return *(void**)((char*)this + 0x27c);
 }
 
-// Position-delta sources on the model objects returned by func_80496264:
+// Position-delta sources on the model objects returned by Scn_FindCamItem:
 // previous position at +0x10C, current at +0x138.
 struct CActParamAnimDeltaSrcA {
     u8 _pad[0x10C];
@@ -881,8 +881,8 @@ void func_8004C608(CActParamAnim* self) {
         if (!finished) {
             // Derive the heading from the sub-object's frame-to-frame move.
             u8* obj = view->object3A0;
-            void* objA = func_80496264(*(void**)(obj + 4), -1);
-            void* objB = func_80496264(*(void**)(obj + 4), -1);
+            void* objA = Scn_FindCamItem(*(void**)(obj + 4), -1);
+            void* objB = Scn_FindCamItem(*(void**)(obj + 4), -1);
             nw4r::math::VEC3 diff;
             diff.x = reinterpret_cast<CActParamAnimDeltaSrcB*>(objB)->x -
                      reinterpret_cast<CActParamAnimDeltaSrcA*>(objA)->x;
@@ -1105,10 +1105,10 @@ extern "C" void tickAnimFrame(CActParamAnim* self) {
         f32 v2 = (f32)(s32)simGetLeafAnimDist(view->object3A0);
         updateParamFloats(reinterpret_cast<CActParamData*>(view->mChildData10), v2, v1);
         f32 rate = view->field388;
-        f32 t = func_80496288(*(void**)(view->object3A0 + 4));
+        f32 t = Scn_GetFrameDelta(*(void**)(view->object3A0 + 4));
         view->field390 = t * rate;
         view->field4B0 = 0;
-        if (func_80496288(*(void**)(view->object3A0 + 4)) > lbl_eu_80665EA0 && view->field4D8 < 10) {
+        if (Scn_GetFrameDelta(*(void**)(view->object3A0 + 4)) > lbl_eu_80665EA0 && view->field4D8 < 10) {
             view->field4D8++;
         }
     }

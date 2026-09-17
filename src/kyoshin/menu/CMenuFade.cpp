@@ -7,7 +7,7 @@ extern int lbl_eu_80663FA0;
 
 extern "C" {
 extern char lbl_eu_804FDEA8[];  // String table: +0xa layout, +0x18 anim, +0x26 pane name
-nw4r::lyt::ArcResourceAccessor* func_801355F4();  // Shared ARC resource accessor
+nw4r::lyt::ArcResourceAccessor* CUICfManager_getArcResourceAccessor();  // Shared ARC resource accessor
 void func_80137B44(nw4r::lyt::Layout*, const char*, u32);  // Pane color setter
 }
 
@@ -53,10 +53,10 @@ void CMenuFade::Init() {
     // Scoped region guard - destructor releases the region when Init finishes
     Class_8045F858 regionGuard(&mLayoutMem);
 
-    nw4r::lyt::ArcResourceAccessor* accessor = func_801355F4();
+    nw4r::lyt::ArcResourceAccessor* accessor = CUICfManager_getArcResourceAccessor();
     buildLayout(&mLayout, accessor, lbl_eu_804FDEA8 + 0xa);
 
-    accessor = func_801355F4();
+    accessor = CUICfManager_getArcResourceAccessor();
     bindLayoutAnimTransform(mLayout, &mAnimDefault, accessor, lbl_eu_804FDEA8 + 0x18);
 
     mLayout->SetAnimationEnable(mAnimDefault, true);

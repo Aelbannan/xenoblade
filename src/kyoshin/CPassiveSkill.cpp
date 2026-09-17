@@ -285,7 +285,7 @@ extern "C" void CPassiveSkillInfo_init(UI_CPassiveSkillInfo* self) {
     nw4r::lyt::Pane* rootPane = self->field_8->GetRootPane();
     CDeviceFontView* font = reinterpret_cast<CDeviceFontView*>(getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1, self->field_8));
     func_8013676C(rootPane, font->vf7());
-    u32 textVal = func_801355BC();
+    u32 textVal = CUICfManager_getPackedFont9C();
     if (textVal != 0) {
         setLayoutTextBoxFont(self->field_8, &lbl_eu_8050DC20[0x12d], textVal);
         setLayoutTextBoxFont(self->field_8, &lbl_eu_8050DC20[0x139], textVal);
@@ -333,7 +333,7 @@ extern "C" void CPassiveSkillInfo_init(UI_CPassiveSkillInfo* self) {
                           : &lbl_eu_8050DC20[0x1bd];
     u16 msgId = BdatGetU16ByTableKey(&lbl_eu_8050DC20[0x196], sel, 0x87);
     char* texName = MakeTplNameSysFile(msgId);
-    void* res = func_801355F4()->GetResource(0x74696d67, texName, 0);
+    void* res = CUICfManager_getArcResourceAccessor()->GetResource(0x74696d67, texName, 0);
     if (res != 0) {
         PaneSetTexPaletteByName(self->field_8, &lbl_eu_8050DC20[0x1c6], res);
         // Hoist the texture dimension reads ahead of the pane lookup so they
@@ -501,12 +501,12 @@ extern "C" __declspec(noinline) void CPassiveSkillInfo_setNameTex(UI::CPassiveSk
     u16 v1 = BdatGetU16Direct(table, &lbl_eu_8050DC20[0x1e8], id1);
     u16 v2 = BdatGetU16Direct(table, &lbl_eu_8050DC20[0x1e8], id2);
     char* text1 = MakeTplNameSysFile(v1);
-    void* res1 = func_801355F4()->GetResource(0x74696d67, text1, 0);
+    void* res1 = CUICfManager_getArcResourceAccessor()->GetResource(0x74696d67, text1, 0);
     if (res1 != 0) {
         PaneSetTexPaletteByName(self->mpLayout, &lbl_eu_8050DC20[0x1f1], res1);
     }
     char* text2 = MakeTplNameSysFile(v2);
-    void* res2 = func_801355F4()->GetResource(0x74696d67, text2, 0);
+    void* res2 = CUICfManager_getArcResourceAccessor()->GetResource(0x74696d67, text2, 0);
     if (res2 != 0) {
         PaneSetTexPaletteByName(self->mpLayout, &lbl_eu_8050DC20[0x1fc], res2);
     }
@@ -1895,7 +1895,7 @@ extern "C" __declspec(noinline) void func_80268594(u8* selfRaw) {
             playUISound(5);
             return;
         }
-        func_8025EE7C(blob, (s8)self->field_F5);
+        KizunagramSetActiveSlot(blob, (s8)self->field_F5);
         func_80269D20(self);
         playUISound(0x12);
         return;
@@ -2769,7 +2769,7 @@ __declspec(noinline) void func_8026AAF4(UI::CPassiveSkillLine* self) {
     self->field_F4 = entry2;
     u16 msgId = BdatGetU16Direct(lbl_eu_80664090, &lbl_eu_8050DC20[0x1e8], entry2);
     char* text = MakeTplNameSysFile(msgId);
-    void* res = func_801355F4()->GetResource(0x74696d67, text, 0);
+    void* res = CUICfManager_getArcResourceAccessor()->GetResource(0x74696d67, text, 0);
     if (res != 0) {
         PaneSetTexPaletteByName(self->field_8, &lbl_eu_8050DC20[0x781], res);
     }
@@ -3026,7 +3026,7 @@ extern "C" __declspec(noinline) void func_8026BB60(UI::CPassiveSkillLine* self) 
         func_80124270(self->field_18->GetRootPane()->FindPaneByName(buf, true), 1);
         u16 msgId = BdatGetU16Direct(lbl_eu_80664090, &lbl_eu_8050DC20[0x1e8], entry);
         char* text = MakeTplNameSysFile(msgId);
-        void* res = func_801355F4()->GetResource(0x74696d67, text, 0);
+        void* res = CUICfManager_getArcResourceAccessor()->GetResource(0x74696d67, text, 0);
         if (res != 0) {
             sprintf(buf, &lbl_eu_8050DC20[0x879], slot);
             PaneSetTexPaletteByName(self->field_18, buf, res);
@@ -3116,7 +3116,7 @@ extern "C" __declspec(noinline) void func_8026BB60(UI::CPassiveSkillLine* self) 
         // 2^52 constant the subtraction consumes.
         CPSkillF64Conv conv;
         f32 pos[2];
-        func_80127BC4(pos, reinterpret_cast<f32*>(reinterpret_cast<u8*>(pane) + 0x4C));
+        TagCopyVec2f(pos, reinterpret_cast<f32*>(reinterpret_cast<u8*>(pane) + 0x4C));
         conv.w[0] = 0x43300000;
         conv.w[1] = learnedCount;
         pos[1] = self->field_100 + scale * (f32)(conv.d - lbl_eu_80668910);
@@ -3604,7 +3604,7 @@ UI::CPassiveSkill::~CPassiveSkill() {}
 // CArtsInfo.hpp / CCollepedia.hpp for their TUs).
 extern "C" void* getHandleMEM2__Q23mtl10MemManagerFv();
 extern "C" void* readFile__11CDeviceFileFUlPCcP10IWorkEventii(u32, const char*, void*, int, int);
-extern "C" u32 func_800A9D90();
+extern "C" u32 KyoshinHeap_GetField44();
 extern "C" void* readCommonArchiveFile__11CDeviceFileFUlPCcP10IWorkEventii(u32, const char*, void*, int, int);
 extern "C" void __dt__7CSysWinFv(void*, int);
 
@@ -3619,7 +3619,7 @@ extern "C" void func_8026D5A8(UI::CPassiveSkill* self) {
         (u32)getHandleMEM2__Q23mtl10MemManagerFv(), &lbl_eu_8050DC20[2525],
         (void*)self, 0, 0);
     self->field_1C = (u32)readCommonArchiveFile__11CDeviceFileFUlPCcP10IWorkEventii(
-        func_800A9D90(), &lbl_eu_8050DC20[2550], (void*)self, 0, 0);
+        KyoshinHeap_GetField44(), &lbl_eu_8050DC20[2550], (void*)self, 0, 0);
 
     u8 tempW[0x3C];
     __ct__CSysWin(reinterpret_cast<CSysWin*>(tempW), 2);

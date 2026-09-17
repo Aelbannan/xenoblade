@@ -68,11 +68,11 @@ public:
 };
 
 // Scene model object stored in CREvtCamera::mField1C (created by
-// func_80495E8C) is a CScnItemModel: slot 0x3C is vfunc3C (animation handle
+// Scn_SetupAnim) is a CScnItemModel: slot 0x3C is vfunc3C (animation handle
 // by name) and +0x7A8 is flags7A8. Call sites use CScnItemModel directly;
 // no TU-local view is emitted.
 
-// Camera object returned by func_80496264 (camera state block).
+// Camera object returned by Scn_FindCamItem (camera state block).
 struct CREvtCamObj {
     u8 field_0x0[0x1E0];
     f32 field_0x1E0;

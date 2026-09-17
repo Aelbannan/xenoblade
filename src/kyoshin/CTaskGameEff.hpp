@@ -244,9 +244,9 @@ public:
 }; // size 0x94
 
 // Render-callback / scene helper imports (retail unmangled symbols - keep
-// extern "C" so the call reloc is func_80495FC8/80495FDC, not mangled).
-extern "C" void func_80495FC8(CScn* scn, IScnRender* cb, u32 prio);
-extern "C" void func_80495FDC(CScn* scn, IScnRender* cb, u32 prio);
+// extern "C" so the call reloc is Scn_CallUnk8C_V6/80495FDC, not mangled).
+extern "C" void Scn_CallUnk8C_V6(CScn* scn, IScnRender* cb, u32 prio);
+extern "C" void Scn_CallUnk8C_V7(CScn* scn, IScnRender* cb, u32 prio);
 
 // Effect-task singleton (set by Init; retail lbl_eu_80663D40).
 extern CTaskGameEff* lbl_eu_80663D40;

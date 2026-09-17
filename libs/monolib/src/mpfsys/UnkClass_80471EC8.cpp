@@ -130,14 +130,14 @@ extern char lbl_eu_80663860[4];
 extern char lbl_eu_80663864[4];
 extern u32 lbl_eu_80665884;
 
-// Retail-named imports. These resolve against retail symbols (func_8049626C is
+// Retail-named imports. These resolve against retail symbols (Scn_HasCamItem is
 // defined in scn/CScn.cpp, func_80477F80 in MPFDrawDisplayList.cpp,
 // func_80474064 is still retail at 0x80474064); extern "C" keeps the call-site
 // relocs verbatim (MWCC would otherwise re-mangle the `__` names with the
 // parameter encoding).
-extern "C" void* func_8049626C(void* camera, void* view);
+extern "C" void* Scn_HasCamItem(void* camera, void* view);
 // Current-scene getter (scn TU) and its env-light controller push.
-extern "C" void* func_8049698C();
+extern "C" void* Scn_GetCurrentScene();
 extern "C" void scnLgtEnterMode20(void* ctrl);
 // nw4r diagnostics / math helpers used by func_804728E8 (retail-named).
 extern "C" void Warning__Q24nw4r2dbFPCciPCce(const char*, int, const char*, ...);
@@ -157,7 +157,7 @@ struct MpfsysDescFCC {
     u32 field_0x10;
 };
 
-// View frame returned by func_8049626C; +0x9C is handed to the layer draws,
+// View frame returned by Scn_HasCamItem; +0x9C is handed to the layer draws,
 // +0x1E0 holds the layer scale (mirrors UnkViewFrame in code_8047BB54.cpp).
 struct MpfsysViewFrame {
     u8 field_0x0[0x9C];
@@ -169,8 +169,8 @@ struct MpfsysViewFrame {
 // func_80471FCC / func_80471EC8). The compiled class header has no fields.
 struct MpfsysResState {
     u8 field_0x0[0x2E08];
-    void* field_0x2E08; // camera (func_8049626C arg)
-    void* field_0x2E0C; // view (func_8049626C arg)
+    void* field_0x2E08; // camera (Scn_HasCamItem arg)
+    void* field_0x2E0C; // view (Scn_HasCamItem arg)
     u8 field_0x2E10;
 };
 
@@ -274,7 +274,7 @@ void submitDraw__Q26mpfsys17UnkClass_80471EC8Fv(mpfsys::UnkClass_80471EC8* self,
     MpfsysDescFCC* d = (MpfsysDescFCC*)a4;
     if (d->field_0x10 != 0) {
         MpfsysViewFrame* vf =
-            (MpfsysViewFrame*)func_8049626C(s->field_0x2E08, s->field_0x2E0C);
+            (MpfsysViewFrame*)Scn_HasCamItem(s->field_0x2E08, s->field_0x2E0C);
         f32 scale = vf->field_0x1E0;
         func_80474064__Q26mpfsys17UnkClass_80471EC8Fv(
             (mpfsys::UnkClass_80471EC8*)a4, (u8*)vf + 0x9C, a5, a6, scale);
@@ -981,7 +981,7 @@ struct MpfsysRandState {
 };
 
 // Scene-side time-step provider (returns a scalar in f1).
-extern "C" f32 func_80496288(void* scene);
+extern "C" f32 Scn_GetFrameDelta(void* scene);
 
 #pragma push
 #pragma auto_inline off
@@ -991,7 +991,7 @@ void mpfsys::UnkClass_80471EC8::updateLayers() {
 
     // Decay the shared scale by the scene-provided step; when it bottoms out,
     // re-randomise both the scale and the wobble amplitude.
-    f32 decay = st->field_0x2DF0 * func_80496288(res->field_0x2E08);
+    f32 decay = st->field_0x2DF0 * Scn_GetFrameDelta(res->field_0x2E08);
     st->field_0x2DEC = decay;
     f32 next = st->field_0x2DF8 - decay;
     st->field_0x2DF8 = next;
@@ -1403,7 +1403,7 @@ void func_80473984__Q26mpfsys17UnkClass_80471EC8Fv(
     }
 
     // Refresh the scene env-light controller, then reload fog state 0x40.
-    scnLgtEnterMode20(((MpfsysSceneCtrl*)func_8049698C())->envLgtCtrl);
+    scnLgtEnterMode20(((MpfsysSceneCtrl*)Scn_GetCurrentScene())->envLgtCtrl);
     lbl_eu_8066585C = 0;
     nw4r::g3d::G3DState::LoadFog(0x40);
 }

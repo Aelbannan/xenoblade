@@ -225,7 +225,7 @@ struct CamEventVecSrcRaw {
 // Re-seat a cam slot. Categorises `first` into a 0/1/2 slot index via
 // func_800755BC; when the slot at that index does not already hold the
 // current cam state the old slot is deleted and a new one constructed from
-// `second` (with the pose returned by func_80496264 as its second ctor
+// `second` (with the pose returned by Scn_FindCamItem as its second ctor
 // arg). Then every slot is handed off to cfCam_andcUnk04 and the freshly
 // seated slot woken via cfCam_setClear04.
 // Category 0 forwards the outgoing slot's vectors through cfCam_recomputeEyeTarget;
@@ -326,7 +326,7 @@ CfCamEventObj* func_800784A0(u32 first, CfCamEventObj* second,
                 g2->slots[idx] = 0;
             }
             g2->field_0x47 = 0;
-            CfCamEventObj* pose = (CfCamEventObj*)func_80496264((void*)CfRes_getD80Flag(), 0);
+            CfCamEventObj* pose = (CfCamEventObj*)Scn_FindCamItem((void*)CfRes_getD80Flag(), 0);
             if (idx == 0) {
                 g2->slots[idx] = (CfCamEventSlot*)cfCam_newFollowCam(second, pose);
             } else if (idx == 2) {
@@ -499,7 +499,7 @@ int func_80074F4C(CfCamShakeState* self, int mode) {
     f32 delta;
     if (CfRes_getD80Flag()) {
         CfRes_getD80Flag();
-        delta = func_80496288(lbl_eu_80663E14);
+        delta = Scn_GetFrameDelta(lbl_eu_80663E14);
     } else {
         delta = lbl_eu_80666428;
     }
@@ -2600,7 +2600,7 @@ int func_80079E04(CfCamEventManager* self) {
     if (dyn->m_field04 & 0x04000000) return 0;
 
     CfRes_getD80Flag();
-    f32 val = func_80496288(lbl_eu_80663E14);
+    f32 val = Scn_GetFrameDelta(lbl_eu_80663E14);
     // cror eq,lt,eq / bne: proceed only when val <= k.
     if (!(val <= lbl_eu_8066641C)) return 0;
 

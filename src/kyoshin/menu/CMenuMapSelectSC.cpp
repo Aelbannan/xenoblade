@@ -259,7 +259,7 @@ extern "C" void func_80251294(S* dst, const S* src) {
 
 void CMenuMapSelectSC::Term() {
     CDeviceVI::waitForDrawDone();
-    func_804962A0(reinterpret_cast<CScn*>(mParentRef), 1);
+    Scn_SetPauseFlag(reinterpret_cast<CScn*>(mParentRef), 1);
 
     // The `if (this)` is the MWCC idiom that splits mr r4,r31 / beq / addi r4,+0x58.
     IScnRender* renderCB = reinterpret_cast<IScnRender*>(this);
@@ -388,7 +388,7 @@ extern "C" void func_80251560(CMenuMapSelectSC* self) {
 // the confirm sound.
 extern "C" void func_802515B8(CMenuMapSelectSC* self) {
     if (func_80244510(&self->mFade) != 0) {
-        func_804962A0(reinterpret_cast<CScn*>(self->mParentRef), 0);
+        Scn_SetPauseFlag(reinterpret_cast<CScn*>(self->mParentRef), 0);
         func_8024F1FC(&self->mFloorMap, (u8)lbl_eu_80664184);
         func_8024C104(&self->mFloorMap);
         self->mState = 2;

@@ -54,12 +54,12 @@ public:
                       // free function __ct__CEquipChange below
     ~CEquipChange();
     bool OnFileEvent(CEventFile*);
-    u8 func_802023C0();
-    void func_802023C8();
-    void func_8020247C();
-    void func_8020397C();
-    void func_80203984();
-    void func_8020398C();
+    u8 EquipChange_IsActiveFlag();
+    void EquipChange_CheckBoxOpen();
+    void EquipChange_IsMenuBusy();
+    void EquipChange_HideSubCursor();
+    void EquipChange_CloseEquipRow();
+    void EquipChange_TryCloseRow();
 
     // 0x04: UnkClass_8045F564 (size 0x10)
     u8 _pad04[0x10];
@@ -97,8 +97,8 @@ public:
 // Retail symbols are unmangled free functions (not class members); MWCC would
 // mangle plain C++ declarations, so they carry C linkage to emit the exact
 // retail symbols.
-extern "C" int func_80203138(CEquipChange* self);
-extern "C" int func_802031A0(CEquipChange* self);
+extern "C" int EquipChange_MapCursorToCat(CEquipChange* self);
+extern "C" int EquipChange_MapCursorToSlot(CEquipChange* self);
 
 // C++ linkage so MWCC mangles to the retail symbol advanceAnimTransform__FPQ34nw4r3lyt13AnimTransformf.
 u32 advanceAnimTransform(nw4r::lyt::AnimTransform*, float);
@@ -129,21 +129,21 @@ struct CBdatCharData {
     s32 field_176C;   // 0x176C - busy flag
 };
 
-// 8-byte colour pair copied from lbl_eu_80508120 by func_802040FC's palette
+// 8-byte colour pair copied from lbl_eu_80508120 by EquipChange_RefreshCursorPos's palette
 // copy loop (the loop writes 8 pairs into the 7-pair local - retail shape).
 struct CEquipColorPair {
     u32 a;   // 0x0
     u32 b;   // 0x4
 };
 
-// 0x38-byte palette block used by func_802040FC's copy (block-copy path
+// 0x38-byte palette block used by EquipChange_RefreshCursorPos's copy (block-copy path
 // emits the retail lwzu/stwu counted loop - 7 pairs of 8 bytes).
 struct CEquipPaletteBlock {
     CEquipColorPair pair[7];   // 0x38
 };
 
 // Cast-only view of nw4r::lyt::Pane exposing the mScale VEC2 at +0x44 as raw
-// words (func_802040FC copies it via the GPR struct-copy path - retail shape).
+// words (EquipChange_RefreshCursorPos copies it via the GPR struct-copy path - retail shape).
 struct CPaneScaleView {
     u8 _pad[0x44];
     CEquipColorPair mScale;    // 0x44 - {x, y} raw words
@@ -278,8 +278,8 @@ struct CEqChEquipTemp {
     u8 f14[0x10];          // 0x14 (__ct__UnkClass_8011C974)
     u32 f24[7];            // 0x24..0x40
     u8 f2f0[4];            // 0x40
-    u8 f2f4[0x18];         // 0x44 (func_801FA220)
-    u8 f30c[0x18];         // 0x5c (func_801FA220)
+    u8 f2f4[0x18];         // 0x44 (PartyStateWin_CopySlotRec)
+    u8 f30c[0x18];         // 0x5c (PartyStateWin_CopySlotRec)
     u8 f324[0x1c];         // 0x74 (func_8018B0FC)
     u8 f340[0x10];         // 0x90 (__ct__UnkClass_8011C974)
     u32 f350[5];           // 0xa0..0xb4
@@ -328,11 +328,11 @@ extern void* lbl_eu_80664680;
 extern void* lbl_eu_80664688;
 extern void* lbl_eu_80664690;
 
-// Global equip-page flag (sdata), cleared by func_8020228C.
+// Global equip-page flag (sdata), cleared by EquipChange_CleanupFiles.
 extern u32 lbl_eu_80664698;
 
-// Palette source (16 u32 colours) and string pool used by func_802040FC and
-// the bind-file loader func_80202090.
+// Palette source (16 u32 colours) and string pool used by EquipChange_RefreshCursorPos and
+// the bind-file loader EquipChange_LoadBindFiles.
 extern u32 lbl_eu_80508120[];
 extern char lbl_eu_80508168[];
 
@@ -399,7 +399,7 @@ extern "C" int eibSysWinBusy(CEquipItemBox* box);
 extern "C" int eibWindowsReady(CEquipItemBox* box);
 extern "C" int takeEIBAction(CEquipItemBox* box);
 extern "C" void eibConfirmSort(CEquipItemBox* box);
-extern "C" void func_802040FC(CEquipChange* self);
+extern "C" void EquipChange_RefreshCursorPos(CEquipChange* self);
 extern "C" void func_801D4054(void* info);
 extern "C" void loadEIBFiles(CEquipItemBox* box);
 extern "C" u8 code80135FDC_getByte_64077();

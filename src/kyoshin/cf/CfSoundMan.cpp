@@ -1,6 +1,6 @@
 #include "kyoshin/cf/CfSoundMan.hpp"
-#include "libs/monolib/src/scn/CScn_8049603C.hpp" // func_8049603C (single owner decl)
-#include "monolib/core/code_804E36DC.hpp" // func_80496264 (single owner decl)
+#include "libs/monolib/src/scn/CScn_8049603C.hpp" // Scn_QueryUnk80State (single owner decl)
+#include "monolib/core/code_804E36DC.hpp" // Scn_FindCamItem (single owner decl)
 #include "monolib/device/CDeviceSC.hpp"
 #include "monolib/util/MemManager.hpp"
 #include <math.h>
@@ -268,7 +268,7 @@ u32 cf::CfSoundMan::playActorSound(u32 idx, u32 a, u32 b, u32 c, float volume) {
                 if (scn == 0) {
                     goto skipScale;
                 }
-                CfSndCamView* view = (CfSndCamView*)func_8049603C((CScn*)scn);
+                CfSndCamView* view = (CfSndCamView*)Scn_QueryUnk80State((CScn*)scn);
                 volume = volume * (lbl_eu_80667E88 - view->field_0x0C);
             }
         skipScale:;
@@ -458,7 +458,7 @@ void func_801C011C(bool pause, int fade) {
 
 // Applies an FX effect to manager FX-slot `idx` and sweeps all 13 records
 // with the new FX-send volume. The work-buffer size comes from
-// func_800A9E50; the whole op is guarded on the sound system being
+// KyoshinHeap_GetField4C; the whole op is guarded on the sound system being
 // initialized (checked twice, around the effect application) and the
 // FX-slot array being present.
 void func_801C01A8(int idx, int fxType, float volume) {
@@ -470,7 +470,7 @@ void func_801C01A8(int idx, int fxType, float volume) {
     if (fxSlots == 0) {
         return;
     }
-    u32 memSize = func_800A9E50(idx);
+    u32 memSize = KyoshinHeap_GetField4C(idx);
     if (func_801C358C(fxSlots, idx, fxType, memSize, 0x20000) == 0) {
         return;
     }
@@ -698,7 +698,7 @@ extern "C" void func_801C055C(CfSoundSlot* slot) {
                     }
                 } else {
                     int scn = CfRes_getD80Flag();
-                    CfSndPoseBlock* pose = (CfSndPoseBlock*)func_80496264((void*)scn, -1);
+                    CfSndPoseBlock* pose = (CfSndPoseBlock*)Scn_FindCamItem((void*)scn, -1);
                     f32 pan;
                     f32 vol;
                     func_8049B834(&pan, &vol, pose,
@@ -713,7 +713,7 @@ extern "C" void func_801C055C(CfSoundSlot* slot) {
                     if (scn != 0) {
                         vol = vol *
                               (lbl_eu_80667E9C -
-                               ((CfSndCamView*)func_8049603C((CScn*)scn))
+                               ((CfSndCamView*)Scn_QueryUnk80State((CScn*)scn))
                                    ->field_0x0C);
                     }
                     if (slot->mSound != 0) {

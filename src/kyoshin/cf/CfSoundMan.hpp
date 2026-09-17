@@ -36,7 +36,7 @@ extern "C" bool func_801C358C(FxSoundSlot* slots, int idx, int fxType, u32 memSi
 // FX work-buffer size query (defined in code_800A75FC.cpp): returns the
 // per-slot allocation for FX slot index 0 or 1 (or 0). extern "C" keeps the
 // call reloc bound to the retail-unmangled name.
-extern "C" int func_800A9E50(int index);
+extern "C" int KyoshinHeap_GetField4C(int index);
 
 // Retail nw4r::snd::SoundArchive::GetSoundCount() - the fork's
 // snd_SoundArchive.h does not declare it (only the detail file-reader
@@ -326,14 +326,14 @@ struct CfSndCamObj {
     nw4r::math::VEC3 mPos; // +0x10C camera position
 };
 
-// Scene camera-view word returned by func_8049603C (float at +0xC is the
+// Scene camera-view word returned by Scn_QueryUnk80State (float at +0xC is the
 // remaining display-time fraction used for volume scaling).
 struct CfSndCamView {
     u8 field_0x00[0xC];
     f32 field_0x0C;
 };
 
-// Opaque pose block returned by func_80496264(scene, -1); passed straight
+// Opaque pose block returned by Scn_FindCamItem(scene, -1); passed straight
 // through to func_8049B834.
 struct CfSndPoseBlock {
     u8 data[0x20];

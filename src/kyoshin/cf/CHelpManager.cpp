@@ -102,7 +102,7 @@ done:
 void func_80295BAC() {
     // One-time "arts learned" hint: fire the popup and mark it seen.
     if (func_8009CF8C((u32)0x3395) == 0) {
-        func_80134D18(0x56, 0, 0);
+        CUICfManager_queueTutorialMenu(0x56, 0, 0);
         func_8009D018(0x3395, 1);
     }
 }

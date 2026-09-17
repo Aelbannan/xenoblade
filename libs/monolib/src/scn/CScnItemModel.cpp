@@ -276,13 +276,13 @@ extern "C" u8* simGetLeafActData(CScnItemModel* self) {
 }
 
 // func_804831C4: when self has no linked model, fetch the model owned by
-// self's scene owner (func_80495E94), notify via the 1-arg virtual at vtable
+// self's scene owner (Scn_SetupAnimDefault), notify via the 1-arg virtual at vtable
 // 0xAC, mark the whole model tree with the 0x80000 flag (func_80482B3C walk
 // shape, recursing func_80482B3C(c, 1) at depth 3), then sync bit 9 of
 // self->flags7A4 onto the model (set 0x40 / clear 0x400000), notify via
 // vtable 0x64 and return 1. extern "C" keeps the call reloc names verbatim.
 extern "C" u32 func_804831C4(CScnItemModel* self) {
-    CScnItemModel* model = func_80495E94(self->field_04);
+    CScnItemModel* model = Scn_SetupAnimDefault(self->field_04);
     if (model == 0) {
         return 0;
     }
@@ -368,7 +368,7 @@ extern "C" u32 func_804831C4(CScnItemModel* self) {
 }
 
 // func_80483448: model-coupling setup. When self has no linked model, create
-// one: fetch the model owned by self's scene owner (func_80495E94), copy
+// one: fetch the model owned by self's scene owner (Scn_SetupAnimDefault), copy
 // self's chain-last 0x7B0 fade distance onto the model's chain-last node
 // (the two 0x7B0 chain walks are inlined - shallow leaves use lfs/stfs,
 // depth-5/4 handles call simGetLeafDist7B0 / simSetLeafDist7B0), notify via the
@@ -382,7 +382,7 @@ extern "C" u32 func_80483448(CScnItemModel* self) {
     if (self->field_0x7C4 != 0) {
         return 1;
     }
-    CScnItemModel* model = func_80495E94(self->field_04);
+    CScnItemModel* model = Scn_SetupAnimDefault(self->field_04);
     if (model == 0) {
         return 0;
     }
@@ -1516,7 +1516,7 @@ extern "C" void simSetFlags7A8_12(u8* self, u32 a, u32 b) {
 // `value` at its 0x7B0 field. Hand-unrolled 4 levels with a self tail-call
 // (MWCC does not auto-unroll pointer-chasing loops; retail is this shape).
 // extern "C" keeps the self tail-call reloc name verbatim (reloc-site gate,
-// same as func_8025F290).
+// same as KizunaEntryFindListHead).
 extern "C" void simSetLeafDist7B0(CScnItemModel* self, float value) {
     CScnItemModel* cur = self;
     CScnItemModel* next = cur->field_0x7C4;

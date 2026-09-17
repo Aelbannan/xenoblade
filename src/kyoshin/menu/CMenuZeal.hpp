@@ -136,7 +136,7 @@ void __ct__17UnkClass_8045F564Fv(u8* mem);
 void Regist__8CProcessFP8CProcessb(CProcess* self, CProcess* parent,
                                    bool insertTop);
 // Shared ARC resource accessor getter (retail unmangled name).
-nw4r::lyt::ArcResourceAccessor* func_801355F4();
+nw4r::lyt::ArcResourceAccessor* CUICfManager_getArcResourceAccessor();
 // Classic-controller detection; the retail callee ignores the arg, but the
 // call site still materialises `li r3,-1` (the CfGameManager.hpp inline
 // wrapper drops it when inlined, so bind the pre-mangled name directly).

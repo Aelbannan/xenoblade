@@ -374,16 +374,16 @@ void* func_804DF2A8(u8* self, int index) {
     return (u8*)base + entries[index].offset;
 }
 
-// Import from monolib/src/scn/CScn.cpp (retail symbol func_80495EA4, C linkage).
-extern "C" int func_80495EA4(int a, int b, int c);
+// Import from monolib/src/scn/CScn.cpp (retail symbol Scn_ResetAnim, C linkage).
+extern "C" int Scn_ResetAnim(int a, int b, int c);
 
-// Look up mTable[index]; a non-zero entry is forwarded to func_80495EA4 along
+// Look up mTable[index]; a non-zero entry is forwarded to Scn_ResetAnim along
 // with the caller's argument. The -1 third argument is dead at the callee
-// (func_80495EA4 hard-codes 8 into r5) but kept for byte-identical codegen.
+// (Scn_ResetAnim hard-codes 8 into r5) but kept for byte-identical codegen.
 int func_804DF2C4(CResLookup* self, int a, int index) {
     u32 entry = self->mTable[index];
     if (entry != 0) {
-        return func_80495EA4(a, entry, -1);
+        return Scn_ResetAnim(a, entry, -1);
     }
     return 0;
 }

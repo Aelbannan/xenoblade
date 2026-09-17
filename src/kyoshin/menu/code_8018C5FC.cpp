@@ -90,7 +90,7 @@ void func_8018C610(UnkClass_8018C5FC* _this) {
     if (cf::CfGameManager::isSceneLoading()) return;
     if (lbl_eu_80663E24 & 0xafa40000) return;
 
-    f32 scale = func_80496288(&lbl_eu_80663E14);
+    f32 scale = Scn_GetFrameDelta(&lbl_eu_80663E14);
     if ((_this->tickAccum += CDeviceVI::getSecPerFrame() * scale) >= lbl_eu_80667A34) {
         _this->tickAccum = lbl_eu_80667A30;
 

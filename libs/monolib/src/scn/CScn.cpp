@@ -247,15 +247,15 @@ void CScn::Draw() {
 
 
 extern "C" bool Scn_IsAnimActiveOrNull(u8* self) {
-    extern bool func_8048C8C4(void*, void*);
+    extern bool CScnItemPool_unlinkAndReleaseItem(void*, void*);
     if (self == 0) {
         return 1;
     }
-    return func_8048C8C4(*(void**)((char*)*(void**)(self + 4) + 0x60), self);
+    return CScnItemPool_unlinkAndReleaseItem(*(void**)((char*)*(void**)(self + 4) + 0x60), self);
 }
 extern "C" bool Scn_HasWorkItem(u8* self) {
-    extern bool func_8048CB14(void*);
-    return func_8048CB14(*(void**)((char*)self + 0x60));
+    extern bool CScnItemPool_releaseItemByKey(void*);
+    return CScnItemPool_releaseItemByKey(*(void**)((char*)self + 0x60));
 }
 extern "C" void* Scn_SetupAnim(void* a, void* b, void* c, void* d) {
     return simFwdAnimSetup102(a, b, c, d, 0);

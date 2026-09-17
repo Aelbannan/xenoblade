@@ -311,11 +311,11 @@ int findObjectById(int id);
 
 // Character-record lookup helpers (func_801B78B4's category-13 display):
 // func_8009EC9C fetches the manager object for a slot id, and
-// func_800A32BC reads the character index from it.
-extern "C" u32 func_800A32BC(void* mgr);
+// CtrlObjectParam_GetCurrentRowKey reads the character index from it.
+extern "C" u32 CtrlObjectParam_GetCurrentRowKey(void* mgr);
 // Active-character id read off the slot-manager object
 // (func_801B6184's equipped-item window scaling).
-extern "C" u32 func_800A082C(void* mgr);
+extern "C" u32 CtrlObjectParam_GetArtsDataWord(void* mgr);
 
 // Per-rank slot record returned by the item impl's getSlot (+0x2C): bit 0
 // of the +4 word marks the slot filled, bits 4-15 hold the slot item id,

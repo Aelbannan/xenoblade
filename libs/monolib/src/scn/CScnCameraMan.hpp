@@ -20,7 +20,7 @@ public:
     u32 mWorkID;    // +0x4C
 };
 
-// Camera item in the scene pool's camera list (pool kind 4 via func_8048C698).
+// Camera item in the scene pool's camera list (pool kind 4 via CScnItemPool_lookupSubPool).
 // Head layout mirrors CScnItemCamera: vtable at +0x00, mIndex (camera id) at +0x0C.
 struct CScnCameraItem {
     virtual void vf0() = 0;   // vtable slot 0 (+0x04)
@@ -44,7 +44,7 @@ struct CScnCameraNode {
     CScnCameraItem* item;   // +0x08
 };
 
-// List handle returned by the scene-item-pool accessor (func_8048C698, kind 4);
+// List handle returned by the scene-item-pool accessor (CScnItemPool_lookupSubPool, kind 4);
 // the circular-list sentinel lives at +0x04.
 struct CScnCameraList {
     u32 _00;                  // +0x00
@@ -105,7 +105,7 @@ struct CScnCameraEvent {
 
 // C-ABI scene-item-pool accessor (defined with C linkage in CScnItemPool.cpp):
 // returns the pool slot (list) for the given item kind (4 = cameras).
-extern "C" CScnCameraList* func_8048C698(u8* pool, int kind);
+extern "C" CScnCameraList* CScnItemPool_lookupSubPool(u8* pool, int kind);
 
 // CView primary-vtable mirror: 32 IWorkEvent + 7 CWorkThread + 11 CView virtual
 // slots. MWCC vtables carry an 8-byte RTTI header, so the virtual declared at

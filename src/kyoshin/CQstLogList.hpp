@@ -144,7 +144,7 @@ extern "C" void QstLogList_DrawRow(CQstLogList* self, const char* name, int ques
                               int index, int mode, u8 a6, u8 a7);
 extern "C" void QstLogList_ClearRows(CQstLogList* self);
 extern "C" void QstLogList_FillSortMenu(CQstLogList* self);
-extern "C" void func_80228C98(CQstLogList* self);
+extern "C" void QstLogList_RefreshHeader(CQstLogList* self);
 extern "C" CQstLogListEntry* QstLogList_CopyEntry(CQstLogListEntry* pDst, const CQstLogListEntry* pSrc);
 
 // Abstract view into the embedded CCur18 cursor vtable (sibling copies live

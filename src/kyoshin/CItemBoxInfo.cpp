@@ -215,8 +215,8 @@ char* BdatTouchStringCell(char*, char*, u32);
 extern "C" char* BdatGetPtrDirect(void*, char*);
 u32 func_801392C0();
 u8 BdatGetU8ByTableKey(const void*, const void*, u32);
-u32 func_800A32BC();
-u32 func_800A082C(void*);
+u32 CtrlObjectParam_GetCurrentRowKey();
+u32 CtrlObjectParam_GetArtsDataWord(void*);
 extern "C" f32 GetFloatTableEntry(u32);
 void func_801D885C(CItemBoxInfo*);
 extern "C" void func_801D5564(void*, void*, void*, void*);
@@ -228,12 +228,12 @@ void func_801D77A4(void*, u32, u16);
 extern "C" void func_801D8E34(CItemBoxInfo*, u32, void*, u32);
 extern "C" void func_801E197C(void*, void*, void*);
 void func_801E1E0C(CItemBoxSlotFlags*, void*, void*);
-extern "C" void* func_8009ECB0();
+extern "C" void* CtrlObjectParam_GetSlotTableBase();
 extern "C" void* findObjB28ById(u32);
-extern "C" void func_800A13C4(void*, u32);
+extern "C" void CtrlObjectParam_SyncParamFromActorEx(void*, u32);
 extern "C" void LayoutSetTextBoxInt(void*, u32);
 extern "C" void func_80136D74(void*, const char*, u32);
-extern "C" void func_8009D7E4(void*, u32);
+extern "C" void CtrlObjectParam_GetArtsStatsRow(void*, u32);
 extern "C" s32 RoundHalfAway0(float);
 extern "C" void PaneMatSetTevColors(void*, void*, void*);
 extern "C" u32 func_801E9774(void*, u16, void*);
@@ -515,9 +515,9 @@ extern "C" void func_801D4E2C(void* out, void* member, void* arg3) {
     rec.s3C = (u8)BdatGetU8Direct((u32)global, base + 0x1c9, v2);
     if (BdatGetU8Direct((u32)global, base + 0x1d2, v2) & 4) {
         void* lookup = func_8009EC9C(1);
-        u32 r = func_800A082C(lookup);
+        u32 r = CtrlObjectParam_GetArtsDataWord(lookup);
         rec.s2C = (s16)(lbl_eu_80668018 * (f32)(rec.s2C * (u16)r));
-        u32 r2 = func_800A082C(lookup);
+        u32 r2 = CtrlObjectParam_GetArtsDataWord(lookup);
         rec.s2E = (s16)(lbl_eu_8066801C * (f32)(rec.s2E * (u16)r2));
         if (rec.s2C >= 999) rec.s2C = 999;
         if (rec.s2E >= 999) rec.s2E = 999;
@@ -866,7 +866,7 @@ void func_801D5AA0(CItemBoxInfo* out, void* unused, void* data) {
     u32 key = BdatGetU8Direct((u32)global, (char*)&lbl_eu_805063BC[0x23f], v2);
     u32 val = BdatGetU8ByTableKey((char*)&lbl_eu_805063BC[0x248], (char*)&lbl_eu_805063BC[0x250], (u8)key);
     void* lookup = func_8009EC9C((u8)count);
-    u8 cat = (u8)func_800A32BC();
+    u8 cat = (u8)CtrlObjectParam_GetCurrentRowKey();
     u8* entry = (u8*)lookup + cat * 0x49 + (u8)val * 2;
     u8 flag2 = 0;
     switch (arr[0]) {
@@ -2331,7 +2331,7 @@ extern "C" void func_801D8E34(CItemBoxInfo* info, u32 arg2, void* arg3, u32 arg4
     // loads (lwz8 before lwz4) and drops exact to ~3%.
     D8EHighFrame highFrame;
     {
-        u32* src = (u32*)((u8*)func_8009ECB0() + 4);
+        u32* src = (u32*)((u8*)CtrlObjectParam_GetSlotTableBase() + 4);
         u32* dst = highFrame.party.w;
         u32 n = 6;
         do {
@@ -2359,7 +2359,7 @@ extern "C" void func_801D8E34(CItemBoxInfo* info, u32 arg2, void* arg3, u32 arg4
     u8 member = (u8)memberTmp;
     void* charObj = func_8009EC9C((u8)memberTmp);
     if (findObjB28ById(member) == NULL) {
-        func_800A13C4(charObj, 1);
+        CtrlObjectParam_SyncParamFromActorEx(charObj, 1);
     }
     cf::CActorParam* stats = (cf::CActorParam*)((u8*)charObj + 0x17C);
 
@@ -2398,7 +2398,7 @@ extern "C" void func_801D8E34(CItemBoxInfo* info, u32 arg2, void* arg3, u32 arg4
     D8EStatA* stA = (D8EStatA*)stats->CActorParam_getBaseStats();
     D8EStatB* stB = (D8EStatB*)stats->CActorParam_getArtsDataBlock();
     D8EStatC* stC = (D8EStatC*)stats->CActorParam_getBonusStats();
-    func_8009D7E4((u8*)charObj + 0x1C, 5);
+    CtrlObjectParam_GetArtsStatsRow((u8*)charObj + 0x1C, 5);
 
     // ---- arts sum ----
     s32 artsSum = (s32)func_801DFE48(info, member, NULL);
@@ -5140,10 +5140,10 @@ void func_801E197C(void* out, void* arg2, void* arg3) {
         rec.s3C = (u8)BdatGetU8Direct((u32)global, base + 0x1c9, (u16)v2);
         if (BdatGetU8Direct((u32)global, base + 0x1d2, (u16)v2) & 4) {
             void* lookup = func_8009EC9C(1);
-            u32 r = func_800A082C(lookup);
+            u32 r = CtrlObjectParam_GetArtsDataWord(lookup);
             u2.w[1] = (u32)((s32)rec.s2C * (s32)r) ^ 0x80000000;
             rec.s2C = (s16)(s32)(lbl_eu_80668018 * (f32)(u2.d - lbl_eu_80668028));
-            u32 r2 = func_800A082C(lookup);
+            u32 r2 = CtrlObjectParam_GetArtsDataWord(lookup);
             u1.w[1] = (u32)((s32)rec.s2E * (s32)r2) ^ 0x80000000;
             rec.s2E = (s16)(s32)(lbl_eu_8066801C * (f32)(u1.d - lbl_eu_80668028));
             if (rec.s2C > 999) rec.s2C = 999;
@@ -5526,7 +5526,7 @@ void func_801E2638(CItemBoxSlotSelTable* out, CItemBoxInfo2* unused, void* data)
     u32 key = BdatGetU8Direct((u32)global, base2 + 0x23f, cat);
     u32 val = BdatGetU8ByTableKey(base2 + 0x248, base2 + 0x250, (u8)key);
     void* lookup = func_8009EC9C((u8)count);
-    u8 category = (u8)func_800A32BC();
+    u8 category = (u8)CtrlObjectParam_GetCurrentRowKey();
     // Per-category item row: stride 0x49, pairs of bytes per entry.
     u8* entry = (u8*)lookup + category * 0x49 + (u8)val * 2;
     flag2 = 0;
@@ -6480,7 +6480,7 @@ extern "C" void func_801E43BC(CItemBoxInfo2* info, u16 arg2, void* arg3, u16 arg
 
     // ---- party-slot ping: 12-word copy of party struct + 2x3 vtable[0xA4] ----
     struct PartyData { u32 w[12]; };
-    PartyData partyData = *(PartyData*)((u8*)func_8009ECB0() + 4);
+    PartyData partyData = *(PartyData*)((u8*)CtrlObjectParam_GetSlotTableBase() + 4);
     for (u32 row = 0; row < 2; row++) {
         for (u32 col = 0; col < 3; col++) {
             u8 id = (u8)partyData.w[col];
@@ -6497,7 +6497,7 @@ extern "C" void func_801E43BC(CItemBoxInfo2* info, u16 arg2, void* arg3, u16 arg
     u8 member = (u8)GetCollectedFlagByte(arg4);
     void* charObj = func_8009EC9C(member);
     if (findObjB28ById(member) == NULL) {
-        func_800A13C4(charObj, 1);
+        CtrlObjectParam_SyncParamFromActorEx(charObj, 1);
     }
     cf::CActorParam* stats = (cf::CActorParam*)((u8*)charObj + 0x17C);
 
@@ -6519,7 +6519,7 @@ setLayoutTextBoxNumber((nw4r::lyt::Layout*)*(void**)((u8*)info + 0x34), &lbl_eu_
     E43StatA* stA = (E43StatA*)stats->CActorParam_getBaseStats();
     E43StatB* stB = (E43StatB*)stats->CActorParam_getArtsDataBlock();
     E43StatC* stC = (E43StatC*)stats->CActorParam_getBonusStats();
-    func_8009D7E4((u8*)charObj + 0x1C, 5);
+    CtrlObjectParam_GetArtsStatsRow((u8*)charObj + 0x1C, 5);
 
     // ---- arts sum ----
     s32 artsSum = (s32)func_801E9774(info, member, NULL);

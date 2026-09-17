@@ -23,7 +23,7 @@ extern "C" {
     extern u8  lbl_eu_806659D0;    // global NAND "busy" flag
     extern s32 lbl_eu_806659D4;    // global NAND result/error latch
 
-    s32 func_804DA4E0(u32 arg1, u32 arg2, u32 arg3); // NAND check primitive
+    s32 CNReqSaveNandCheck(u32 arg1, u32 arg2, u32 arg3); // NAND check primitive
 }
 
 // CNReqtaskCheck task parameter block (the sub-task embedded in CNRequest):
@@ -54,7 +54,7 @@ extern "C" CNReqtaskCheckVtbl** func_804DB348(CNReqtaskCheckData* data, u32 arg1
 // Async state machine for the NAND check task, polled by the CNand completion
 // pump. Advances one step per call; returns 1 when done, 2 on error, 0 while
 // still in progress. Steps:
-//   0 -> run the NAND check (func_804DA4E0) with the stored arguments
+//   0 -> run the NAND check (CNReqSaveNandCheck) with the stored arguments
 //   1 -> mark the request complete (return 1 on the following poll)
 //   2 -> done (return 1)
 extern "C" s32 func_804DB364(CNReqtaskCheckVtbl* vtable_ptr, CNReqtaskCheckData* data) {
@@ -74,7 +74,7 @@ extern "C" s32 func_804DB364(CNReqtaskCheckVtbl* vtable_ptr, CNReqtaskCheckData*
 
     switch ((s8)d->state) {
         case 0: {
-            s32 r = func_804DA4E0(d->field_0x0, d->field_0x4, d->field_0x8);
+            s32 r = CNReqSaveNandCheck(d->field_0x0, d->field_0x4, d->field_0x8);
             if (r != 0) {
                 return 2;
             }
@@ -109,15 +109,15 @@ extern "C" __declspec(noinline) void sinit_804DB420() {
     func_804DB440(&lbl_eu_80665A00);
 }
 // ===== Dissolved monolibdata2 (blob surgery) data owned by this TU =====
-// func_804DB364 is defined in this TU; func_804DA4CC is foreign (CNReqtaskSave).
-extern "C" void func_804DA4CC();
+// func_804DB364 is defined in this TU; CNReqSaveDeallocIfOpen is foreign (CNReqtaskSave).
+extern "C" void CNReqSaveDeallocIfOpen();
 extern "C" u32 lbl_eu_80663B70;   // foreign .sdata
 extern "C" u32 lbl_eu_80663BA8[2]; // this unit's sdata
 
 // [.data] 0x8056FDE8-0x8056FE08 (32B): CNReqtaskCheck vtable pair
 extern "C" u32 lbl_eu_8056FDE8[4] = {
     (u32)&lbl_eu_80663BA8, 0x00000000,
-    (u32)&func_804DB364, (u32)&func_804DA4CC,
+    (u32)&func_804DB364, (u32)&CNReqSaveDeallocIfOpen,
 };
 extern "C" u32 lbl_eu_8056FDF8[4] = {
     (u32)&lbl_eu_80663B70, 0x00000000, 0x00000000, 0x00000000,

@@ -293,7 +293,7 @@ extern "C" void func_801D8930(CItemBoxInfo*);
 extern "C" void func_801D5AA0(CItemBoxInfo* out, void* unused, void* data);
 extern "C" void func_801E37C4(CItemBoxInfo2*, void*, void*);
 extern "C" u8 BdatGetU8ByTableKey(const void*, const void*, u32);
-extern "C" u32 func_800A32BC();
+extern "C" u32 CtrlObjectParam_GetCurrentRowKey();
 extern "C" void func_801D4A2C(void*);
 extern "C" int IsSkillItem(void*);
 extern "C" u32 isItemBoxType9Flagged(void*);

@@ -44,10 +44,10 @@ extern "C" cf::CBattleManager* lbl_eu_80663F00;
 #include "monolib/work.hpp"
 
 // Arts-data row returned by func_8009EC9C: the per-entry table scanned by
-// scanArtsEntries starts at +0x1C (passed to func_8009D7E4). (func_8009EC9C
+// scanArtsEntries starts at +0x1C (passed to CtrlObjectParam_GetArtsStatsRow). (func_8009EC9C
 // itself resolves via the aligned u32 owner-form decls: CfObjectPc.hpp /
 // CVision.hpp; defined in CtrlObjectParam.cpp - no local copy needed.)
-extern void func_8009D7E4(UNKTYPE* r3, u32 r4);
+extern void CtrlObjectParam_GetArtsStatsRow(UNKTYPE* r3, u32 r4);
 
 // Status add/remove helper (retail CfObjectMove_setAnimModeArgs). The shared headers carry
 // two incompatible extern "C" forms ((u8*,...) and (void*,...)); this TU uses
@@ -556,7 +556,7 @@ namespace cf{
                         //likely an inline
                         if(pObjectEne != nullptr && (ene->field_3f00 & 0x2)){
                             void* arts = func_8009EC9C(ene->field_3f28);
-                            func_8009D7E4((u8*)arts + 0x1c, 1);
+                            CtrlObjectParam_GetArtsStatsRow((u8*)arts + 0x1c, 1);
                         }
 
                         if((s32)pObjectEne->CActorParam_getActorType() == 1 ||
@@ -573,7 +573,7 @@ namespace cf{
                         //likely an inline
                         if(pObjectEne != nullptr && (ene->field_3f00 & 0x2)){
                             void* arts = func_8009EC9C(ene->field_3f28);
-                            func_8009D7E4((u8*)arts + 0x1c, 1);
+                            CtrlObjectParam_GetArtsStatsRow((u8*)arts + 0x1c, 1);
                         }
 
                         if((s32)pObjectEne->CActorParam_getActorType() == 1 ||
@@ -877,7 +877,7 @@ extern "C" void func_801BAB94(void*, void*, void*, void*);
 extern "C" void func_801BAD24(void*, void*, void*);
 extern "C" int func_80260A6C(void*, int, u32*, u32*);
 extern "C" int func_80260FB0(void*, int, u32*, u32*, u32*);
-extern "C" int* func_8009ECB0();
+extern "C" int* CtrlObjectParam_GetSlotTableBase();
 extern "C" void func_800E9FE4(void*, void*, s32, s32, s32, s32, void*);
 extern "C" s32 func_800F3734(void*, BattleObjAccessor*, void*, void*);
 extern "C" s32 func_800F37F8(void*, BattleObjAccessor*, void*, void*);
@@ -8915,7 +8915,7 @@ extern "C" void func_800E2A9C(cf::CBattleManager* self, cf::CfObjectActor* attac
                     if (*(u32*)((u8*)list + 0x620) == 2) {
                         r15 = 1;
                     } else {
-                        int* table = func_8009ECB0();
+                        int* table = CtrlObjectParam_GetSlotTableBase();
                         u16 id = *(u16*)((u8*)attacker + 0x3F28);
                         if (id != (u32)table[2]) r15 = 1;
                         else if (id != (u32)table[3]) r15 = 2;
@@ -9364,7 +9364,7 @@ extern "C" void func_800E2A9C(cf::CBattleManager* self, cf::CfObjectActor* attac
                     if (*(u32*)((u8*)list + 0x620) == 2) {
                         r14 = 1;
                     } else {
-                        int* table = func_8009ECB0();
+                        int* table = CtrlObjectParam_GetSlotTableBase();
                         u16 id = *(u16*)((u8*)attacker + 0x3F28);
                         if (id != (u32)table[2]) r14 = 1;
                         else if (id != (u32)table[3]) r14 = 2;

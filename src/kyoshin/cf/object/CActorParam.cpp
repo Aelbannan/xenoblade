@@ -628,11 +628,11 @@ extern "C" void func_801748B8(void*, int); // map-item position update (CfMapIte
 // reads the same lbl_eu_806677EC sdata2 divisor as func_801765A4.
 extern "C" void func_801746B4(u8*, float);
 
-// Arts-stats helpers (unmangled globals). func_8009D7E4 walks the sub-row at
+// Arts-stats helpers (unmangled globals). CtrlObjectParam_GetArtsStatsRow walks the sub-row at
 // +0x1C of the char-data object returned by func_8009EC9C; getAtkParam and
 // func_8015403C resolve the attack-parameter records.
 // func_8009EC9C: extern "C" decl from kyoshin/cf/CVision.hpp (u32 index; call sites pass u16 ids).
-extern "C" void* func_8009D7E4(void* base, u32 idx);
+extern "C" void* CtrlObjectParam_GetArtsStatsRow(void* base, u32 idx);
 extern "C" void* getAtkParam(void* base, int index);
 extern "C" int func_8015403C(int x);
 
@@ -2378,7 +2378,7 @@ extern "C" void CActorParam_resetArtsStatus__Q22cf11CActorParamFv(cf::CActorPara
 }
 // us-8017c700: retail symbol is Fv; the real ABI passes (self, arg). When
 // arg is NULL the actor's own char-data (0x3F28) is used. Adds each of the
-// six arts-stats rows (func_8009D7E4 at +0x1C) into the stat fields, applies
+// six arts-stats rows (CtrlObjectParam_GetArtsStatsRow at +0x1C) into the stat fields, applies
 // the 0x1A-type arts-param blend, then updates 0x181A/0x174E from arts
 // params and refreshes the 6-slot attack-parameter records.
 void CActorParam_UnkVirtualFunc174__Q22cf11CActorParamFv(cf::CActorParam* self, cf::CActorParam174Arg* arg) {
@@ -2398,7 +2398,7 @@ void CActorParam_UnkVirtualFunc174__Q22cf11CActorParamFv(cf::CActorParam* self, 
     float scale = lbl_eu_80667818;
     bool flag = true;
     for (int i = 0; i <= 5; i++) {
-            cf::CActorParamArtsRow* row = (cf::CActorParamArtsRow*)func_8009D7E4(&arg->field_0x1C, i);
+            cf::CActorParamArtsRow* row = (cf::CActorParamArtsRow*)CtrlObjectParam_GetArtsStatsRow(&arg->field_0x1C, i);
         *(float*)((u8*)self + 0x1828) += row->field_0x0;
         u32 masked = *(u32*)((u8*)self + 0x3374) & 0xFFFC0000;
         *(float*)((u8*)self + 0x182C) += row->field_0x4;
@@ -2482,7 +2482,7 @@ void CActorParam_UnkVirtualFunc174__Q22cf11CActorParamFv(cf::CActorParam* self, 
             *(s16*)((u8*)self + 0x181A) = (s16)(*(s16*)((u8*)self + 0x181A) + *(s16*)((u8*)self + 0x3378));
         }
     }
-    cf::CActorParamArtsRow* row5 = (cf::CActorParamArtsRow*)func_8009D7E4(&arg->field_0x1C, 5);
+    cf::CActorParamArtsRow* row5 = (cf::CActorParamArtsRow*)CtrlObjectParam_GetArtsStatsRow(&arg->field_0x1C, 5);
     float def = lbl_eu_806677E4;
     for (int i = 0; i < 6; i++) {
         void* arts = self->CActorParam_getArtsSlotIds();

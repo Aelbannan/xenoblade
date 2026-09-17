@@ -464,7 +464,7 @@ void CMenuBattlePlayerState::Init() {
 
         void* actors[3];
         {
-            int* party = func_8009ECB0();
+            int* party = CtrlObjectParam_GetSlotTableBase();
             actors[0] = findObjB28ById(party[1]);
             actors[1] = findObjB28ById(party[2]);
             actors[2] = findObjB28ById(party[3]);
@@ -592,7 +592,7 @@ after_bit21:
         actors[1] = NULL;
         actors[2] = NULL;
 
-        int* party = func_8009ECB0();
+        int* party = CtrlObjectParam_GetSlotTableBase();
         u8 fi = 0;
         while (fi < 3) {
             // Retail: clrlslwi fi; add party; lwz 4(r3); ... stwx actors,same shift.
@@ -1191,7 +1191,7 @@ void func_8010CE50(int id, u32 a, u32 b, u32 c) {
     struct PartyData {
         u32 w[12];
     };
-    PartyData party = *(PartyData*)((u8*)func_8009ECB0() + 4);
+    PartyData party = *(PartyData*)((u8*)CtrlObjectParam_GetSlotTableBase() + 4);
 
     for (u8 i = 0; i < 3; i++) {
         if (idxByte == static_cast<int>(party.w[i])) {

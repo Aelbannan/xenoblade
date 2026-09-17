@@ -638,7 +638,7 @@ end:
 #include "monolib/device/CDeviceVI.hpp"
 
 // Flat retail symbol (Move calls it by the unmangled name).
-extern "C" u32 CUICfManager_queueBaseMenu();
+extern "C" u32 CUICfManager_queueMoveBaseMenu();
 extern "C" u32 func_801338C8(CUICfManager*);
 extern "C" {
 u32 lbl_eu_80663E24;
@@ -739,7 +739,7 @@ void CUICfManager::Move() {
             volatile u16* fp = &mFlags;
             *fp = (u16)(*fp & ~0x1); // rlwinm ...,16,30
         }
-        CUICfManager_queueBaseMenu();
+        CUICfManager_queueMoveBaseMenu();
         goto after_flags;
     }
     if ((flags & 0x4) != 0) {
@@ -1220,9 +1220,26 @@ extern "C" void CUICfManager_initEventTriplet(CUICfManager* self) {
 }
 extern "C" void CUICfManager_emptyStub() {}
 extern "C" int CUICfManager_prepareMenus() {
-    CUICfManager* m = (CUICfManager*)lbl_eu_80664054;
-    if (m == 0) return 0;
-    return m->prepareMenus();
+    CUICfManagerCreateView* inst = (CUICfManagerCreateView*)lbl_eu_80664054;
+    if (inst == NULL) {
+        return 0;
+    }
+    if (inst->field_0x5C == NULL) {
+        inst->field_0xC90 = (u16)(inst->field_0xC90 | 0x4);
+        return 0;
+    }
+    inst->field_0xC90 = (u16)(inst->field_0xC90 & 0xfffb);
+    inst = (CUICfManagerCreateView*)lbl_eu_80664054;
+    inst->field_0xC90 = (u16)(inst->field_0xC90 | 0x8);
+    inst = (CUICfManagerCreateView*)lbl_eu_80664054;
+    inst->field_0xC90 = (u16)(inst->field_0xC90 | 0x10);
+    inst = (CUICfManagerCreateView*)lbl_eu_80664054;
+    inst->field_0xC90 = (u16)(inst->field_0xC90 | 0x20);
+    inst = (CUICfManagerCreateView*)lbl_eu_80664054;
+    inst->field_0xC90 = (u16)(inst->field_0xC90 | 0x40);
+    inst = (CUICfManagerCreateView*)lbl_eu_80664054;
+    inst->field_0xC90 = (u16)(inst->field_0xC90 | 0x80);
+    return 0;
 }
 extern "C" void CUICfManager_setTimeout30() {
     if (lbl_eu_80664054 != 0) {
@@ -1230,18 +1247,24 @@ extern "C" void CUICfManager_setTimeout30() {
     }
 }
 extern "C" void CUICfManager_setFlagState(int value) {
-    if (lbl_eu_80664054 == 0) return;
-    CUICfManager* manager = static_cast<CUICfManager*>(lbl_eu_80664054);
-    manager->setFlagState(value != 0);
+    u8* base = (u8*)lbl_eu_80664054;
+    u8* reload;
+    if (base == NULL) {
+        return;
+    }
+    if (value != 0) {
+        base[0x149] = 1;
+    } else {
+        base[0x148] = 1;
+    }
+    reload = (u8*)lbl_eu_80664054;
+    *(u16*)(reload + 0xC90) = 0;
 }
 void* getPackedFont__Fv() {
     CUICfManager* m = (CUICfManager*)lbl_eu_80664054;
     return m == 0 ? 0 : (void*)((char*)m + 0x60);
 }
-void* CUICfManager_getPackedFont9C(){
-    CUICfManager* m = (CUICfManager*)lbl_eu_80664054;
-    return m == 0 ? 0 : m->getPackedFont9C();
-}
+extern "C" void* CUICfManager_getPackedFont9C();
 extern "C" void* CUICfManager_getPackedFontD8() {
     CUICfManager* m = (CUICfManager*)lbl_eu_80664054;
     return m == 0 ? 0 : m->getPackedFontD8();
@@ -1366,7 +1389,7 @@ extern "C" void func_8012FFB4(u8* base) {
     CUICfListNode* startNode;
 
     // OR-combined guard: first disjunct emits the direct `bne end`, second
-    // the retail branch-over `beq cont; b end` (MWCC_CASES func_802AE004).
+    // the retail branch-over `beq cont; b end` (MWCC_CASES TutorialList_OpenAfterFilesReady).
     if (isFlag01Set__9CTaskGameFv(getInstance__9CTaskGameFv()) != 0 ||
         (lbl_eu_80663E28 & 0x00200000u) != 0) {
         return;
@@ -2304,12 +2327,12 @@ extern "C" CUICfManager* CUICfManager_createInstance(CProcess* pParent, CScnNw4r
     Regist__8CProcessFP8CProcessb((CProcess*)mem, pParent, 0);
     return (CUICfManager*)lbl_eu_80664054;
 }
-// CUICfManager_queueBaseMenu (us-80134244): teardown/create of the base menu for Move's
+// CUICfManager_queueMoveBaseMenu (us-80134244): teardown/create of the base menu for Move's
 // mFlags bit 0x1. Gates on the singleton + resource accessor, probes the
 // busy chain (with the 0x20-resource / state-2 retry sound), then creates
 // the menu via func_800FF6BC and pushes it onto the event queue (same
 // reslist shape as the CUICfManager_queueQuestLogMenu family).
-extern "C" u32 CUICfManager_queueBaseMenu() {
+extern "C" u32 CUICfManager_queueMoveBaseMenu() {
     CUICfManagerCreateView* inst;
     volatile u32 savedRet;
     int i;
@@ -2849,7 +2872,7 @@ queue_found:                                                                   \
     return savedRet;
 
 // us-80134774: create + queue the CMenuSkipTimer-style menu. Same create+queue
-// body as CUICfManager_queueBaseMenu above; only the factory differs (no gates in retail).
+// body as CUICfManager_queueMoveBaseMenu above; only the factory differs (no gates in retail).
 // Flat-prototype decl makes the definition below emit the retail symbol.
 extern "C" u32 CUICfManager_queueSkipTimerMenu();
 u32 CUICfManager_queueSkipTimerMenu() {
@@ -3903,8 +3926,8 @@ slot_found:
     return savedRet;
 }
 
-// CUICfManager_queueGetItemMenu: create the get-item menu and queue it (id narrowed to u16).
-u32 CUICfManager_queueGetItemMenu(u32 arg) {
+// CUICfManager_queueGetItemMenuNarrowed: create the get-item menu and queue it (id narrowed to u16).
+u32 CUICfManager_queueGetItemMenuNarrowed(u32 arg) {
     CUICfManagerCreateView* inst;
     volatile u32 savedRet;
     int i;

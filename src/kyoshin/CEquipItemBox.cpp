@@ -1196,7 +1196,7 @@ extern "C" double getEIBProgress(CEquipItemBox* self, CItemInstance* item) {
     u32 v2 = BdatGetU8Direct(g, &lbl_eu_8050EFDC[0x92], kind);
     if (v2 & 4) {
         void* obj = func_8009EC9C(1);
-        u16 n = (u16)func_800A082C(obj);
+        u16 n = (u16)CtrlObjectParam_GetArtsDataWord(obj);
         result = (int)(lbl_eu_80668B2C * (f32)(int)((u32)(u16)result * (u32)n));
         if ((u16)result >= 0x3E7) result = 0x3E7;
     }
@@ -3327,8 +3327,8 @@ extern "C" void func_8028AF98(CEquipItemBox* self, int a, int b) {
     u32 flag92 = BdatGetU8Direct(g, base + 0x92, kind2);
     if (flag92 & 4) {
         void* obj = func_8009EC9C(1);
-        rateA = (int)(lbl_eu_80668B4C * (f32)(int)((u32)(u16)rateA * (u32)func_800A082C(obj)));
-        rateB = (int)(lbl_eu_80668B2C * (f32)(int)((u32)(u16)rateB * (u32)func_800A082C(obj)));
+        rateA = (int)(lbl_eu_80668B4C * (f32)(int)((u32)(u16)rateA * (u32)CtrlObjectParam_GetArtsDataWord(obj)));
+        rateB = (int)(lbl_eu_80668B2C * (f32)(int)((u32)(u16)rateB * (u32)CtrlObjectParam_GetArtsDataWord(obj)));
         if ((u32)(u16)rateA >= 0x3e7) rateA = 0x3e7;
         if ((u32)(u16)rateB >= 0x3e7) rateB = 0x3e7;
     }
@@ -3765,14 +3765,14 @@ extern "C" int func_8028CBCC(CEquipItemBox* self) {
                     u8 cat = GetCollectedFlagByte(slot);
                     void* owner = func_8009EC9C(cat);
                     switch (BdatGetItemType(cat)) {
-                    case 2: func_8009E0A8(owner, -1); break;
-                    case 4: func_8009E024(owner, -1); break;
-                    case 5: func_8009E030(owner, -1); break;
-                    case 6: func_8009E03C(owner, -1); break;
-                    case 7: func_8009E048(owner, -1); break;
-                    case 8: func_8009E054(owner, -1); break;
+                    case 2: CtrlObjectParam_SetEquipSlot5(owner, -1); break;
+                    case 4: CtrlObjectParam_SetEquipSlot0(owner, -1); break;
+                    case 5: CtrlObjectParam_SetEquipSlot1(owner, -1); break;
+                    case 6: CtrlObjectParam_SetEquipSlot2(owner, -1); break;
+                    case 7: CtrlObjectParam_SetEquipSlot3(owner, -1); break;
+                    case 8: CtrlObjectParam_SetEquipSlot4(owner, -1); break;
                     }
-                    func_800A1370(owner);
+                    CtrlObjectParam_SyncParamFromActor(owner);
                     func_800BFDE0(moveObj, 0);
                 }
             }

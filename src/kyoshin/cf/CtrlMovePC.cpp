@@ -1299,7 +1299,7 @@ extern "C" int func_801999C0(cf::CCtrlMovePC* self) {
     }
 
     // Detect which party slot holds this character (r28 = mine, r27 = other).
-    cf::CfPartyList* party = (cf::CfPartyList*)func_8009ECB0();
+    cf::CfPartyList* party = (cf::CfPartyList*)CtrlObjectParam_GetSlotTableBase();
     u16 charId = ((cf::CfObjWrap*)self->mObject)->mField3F28;
     int mine = 0;
     int other = 0;

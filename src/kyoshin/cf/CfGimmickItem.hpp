@@ -92,9 +92,9 @@ extern "C" {
 void __ct__cf_CfGimmick(cf::CfGimmick* self);
 void __dt__Q22cf9CfGimmickFv(cf::CfGimmick* self, int mode);  // ABI deleting-dtor twin
 void CfGimmick_ClearManagerBinding(cf::CfGimmick* self);
-void func_8020A434(CfGimmickReg* self);                     // unregister field_7C object
+void CfGimmick_UnregisterSpawnedObject(CfGimmickReg* self);                     // unregister field_7C object
 void func_8020A484(unsigned short id);
-unsigned int func_8020A5DC(void);
+unsigned int CfGimmick_IsMessageSystemBusy(void);
 void CfGimmick_SetGlobalFlagC0042(void);
 void func_8020A6B0(CfGimmickReg* reg, const CfGimmickVec3* point,
                    unsigned short c, float d, int e, int g);

@@ -329,8 +329,8 @@ extern "C" {
     // Frame/timing helpers used by func_801662E8 (global retail names).
     int CTaskGame_playTimeGate();
     int CTaskGame_getStreamPos();
-    int func_8016A3A8();
-    int func_eu_8016DA48(u8* gate);
+    int EvtSeqGetCounter104();
+    int EvtSeqCheckWalkGate(u8* gate);
     // Event-callback unregister helper (retail global taking the IFlagEvent
     // subobject; same signature as CUICfManager.cpp / CUIWindowManager.cpp).
     void func_8009D514(cf::IFlagEvent* flagEvent);
@@ -356,8 +356,8 @@ extern "C" {
     int getFileSize__11CDeviceFileFPCc(const char* path, int flag);
     // Spawns the realtime-event task for `name` under `parent` and returns
     // its gate object (same signature as CTaskREvtSequence.hpp).
-    CEventMgrB0* func_8016AED4(CProcess* parent, const char* name);
-    void func_8016C2C8();
+    CEventMgrB0* EvtSeqCreateTask(CProcess* parent, const char* name);
+    void EvtSeqSetStateBit9();
     // Imports for func_801663A8
     void func_8016C450(u32 a, u32 b, u32 c);
     void func_800AA318(u32 packed, u32* out0, u32* out1, u32* out2, u32* out3);
@@ -379,8 +379,8 @@ extern "C" {
     void activateLOD__8CTaskLODFv(s16 taskID);
     // Imports for cf::CTaskREvent::Move
     int EvtSeqGetStateBit10();
-    void func_8016C6EC(int arg);
-    int func_8016A35C();
+    void EvtSeqSetStateBit18(int arg);
+    int EvtSeqGetCounter100();
     int CTaskGame_isStreamPaused();
     void Scn_SetStopFlag(u8* self, u32 flag);
     u32 func_800EA444(u32 battle);

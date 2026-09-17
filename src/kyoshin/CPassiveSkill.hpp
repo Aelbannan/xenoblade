@@ -653,12 +653,12 @@ struct CPSkillCharData {
 // same flat declarations as CItemBoxInfo.hpp / CEquipChange.hpp).
 extern "C" void* func_80157C4C(u32 index, s16 value);
 extern "C" u16 BdatGetItemId(u32 value);
-extern "C" void func_8009E024(void*, int);
-extern "C" void func_8009E030(void*, int);
-extern "C" void func_8009E03C(void*, int);
-extern "C" void func_8009E048(void*, int);
-extern "C" void func_8009E054(void*, int);
-extern "C" void func_800A1370(void*);
+extern "C" void CtrlObjectParam_SetEquipSlot0(void*, int);
+extern "C" void CtrlObjectParam_SetEquipSlot1(void*, int);
+extern "C" void CtrlObjectParam_SetEquipSlot2(void*, int);
+extern "C" void CtrlObjectParam_SetEquipSlot3(void*, int);
+extern "C" void CtrlObjectParam_SetEquipSlot4(void*, int);
+extern "C" void CtrlObjectParam_SyncParamFromActor(void*);
 
 namespace cf {
 class CfObjectMove;

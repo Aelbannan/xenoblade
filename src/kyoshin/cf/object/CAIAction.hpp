@@ -215,7 +215,7 @@ extern "C" int func_801541B0(void* party, u32 arg);
 extern "C" int func_80153DCC(void* artsSet, int idx);
 extern "C" int func_801B1FFC(int idx);
 extern "C" u16 func_8016DF2C(void);   // canonical u16 form (chapter/episode getter)
-extern "C" u32 func_800A32BC(void* obj);
+extern "C" u32 CtrlObjectParam_GetCurrentRowKey(void* obj);
 extern "C" u32 func_8009CF8C(u32 id);
 extern "C" int CItem_getNameIdFromFam(u32 v);
 extern "C" u32 getBdatStringColumnValue(void* table, const char* col, s32 index = 0); // canonical ocBdat.hpp form; default keeps 2-arg call sites compiling

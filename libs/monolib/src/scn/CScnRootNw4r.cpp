@@ -376,7 +376,7 @@ extern "C" void func_8048F994(CScnRootNw4r* self) {
     func_804C22F0(self->field_0x4->mEnvLgtCtrl);
     func_8048D1B0(self->field_0x4->mLightMan);
     func_8049DE70(self->field_0x4->mFogMan);
-    func_8048CD0C(self->field_0x4->mItemPool);
+    CScnItemPool_forEachCallVfunc14(self->field_0x4->mItemPool);
 
     self->mScnRoot->CalcView();
     self->mScnRoot->GatherDrawScnObj();
@@ -404,7 +404,7 @@ extern "C" void func_8048FAA8(CScnRootNw4r* self, int flag) {
         self->mScnRoot->DrawXlu();
 
         CScnDrawList* list =
-            (CScnDrawList*)func_8048C698(self->field_0x4->mItemPool, 1);
+            (CScnDrawList*)CScnItemPool_lookupSubPool(self->field_0x4->mItemPool, 1);
         resetGXStateA__8CGXCacheFv(CDeviceGX::getCacheInstance());
         updateViewRoot__9CViewRootFv();
 
@@ -423,7 +423,7 @@ extern "C" void func_8048FAA8(CScnRootNw4r* self, int flag) {
         self->field_0x19 = 1;
 
         CScnDrawList* list =
-            (CScnDrawList*)func_8048C698(self->field_0x4->mItemPool, 1);
+            (CScnDrawList*)CScnItemPool_lookupSubPool(self->field_0x4->mItemPool, 1);
         // Collect redraw requests from every item in the draw list.
         int pending = self->field_0x1A;
         self->field_0x1A = 0;

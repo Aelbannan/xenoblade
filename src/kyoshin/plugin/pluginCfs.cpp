@@ -47,7 +47,7 @@ extern "C" {
 
     void func_8004302C(int, int);
     void CTaskGame_callCGameInit();
-    void func_800A3304();
+    void CtrlObjectParam_RefreshAllEquipImpls();
     void CItemBlock_clearSlotCnt();
     void func_8012FAA8();
     int CItemBlock_addSlotCount(int);
@@ -79,10 +79,10 @@ extern "C" {
     // func_8009D018: declared (u32,u32) by CfGameManager.hpp:767 - local
     // (int,int) form conflicts (10197).
     int* func_8009EC9C(int);
-    int* func_8009ECB0();
-    void func_8009E0A8(int*, int);
+    int* CtrlObjectParam_GetSlotTableBase();
+    void CtrlObjectParam_SetEquipSlot5(int*, int);
     int func_8009E284(int*, int);
-    int* func_8009D790(int*, int);
+    int* CtrlObjectParam_ResolveEquipItem(int*, int);
     void func_800B6800(UnkClass_805764CC*, void*, int, float);    void* getInstance__Fv();
     void resetTboxThenMask(void*);
     void queueBdatTextB__Q22cf13CfGameManagerFv(float, int, int);
@@ -1005,7 +1005,7 @@ int isMainParty(VMThread* pThread) {
     int out[2];
     out[0] = 0;
     out[1] = -1;
-    int* data = func_8009ECB0();
+    int* data = CtrlObjectParam_GetSlotTableBase();
     func_8009E344((void*)data, val, &out[0], &out[1]);
     
     int result = out[0];
@@ -1025,7 +1025,7 @@ int isResvParty(VMThread* pThread) {
     int out[2];
     out[0] = 0;
     out[1] = -1;
-    int* data = func_8009ECB0();
+    int* data = CtrlObjectParam_GetSlotTableBase();
     func_8009E344((void*)data, val, &out[0], &out[1]);
     
     int result = out[0];
@@ -1045,12 +1045,12 @@ int addParty(VMThread* pThread) {
     int out[2];
     out[0] = 0;
     out[1] = -1;
-    func_8009E344(func_8009ECB0(), v31, &out[0], &out[1]);
+    func_8009E344(CtrlObjectParam_GetSlotTableBase(), v31, &out[0], &out[1]);
 
     // count==2 (or the folded duplicate test) skips the group bookkeeping
     int isEq = ((unsigned)__cntlzw(out[0] - 2)) >> 5;
     if (isEq != 1 && isEq != 2) {
-        UnkClass_8009ECB0* data2 = (UnkClass_8009ECB0*)func_8009ECB0();
+        UnkClass_8009ECB0* data2 = (UnkClass_8009ECB0*)CtrlObjectParam_GetSlotTableBase();
         int group = 0;
 
         if (v31 == 9)       group = 6;
@@ -1060,10 +1060,10 @@ int addParty(VMThread* pThread) {
         else if (v31 == 12) group = 4;
         else if (v31 == 13) group = 4;
 
-        if (group) func_8009E740((cf::CtrlObjectParamSlots*)data2, group);
+        if (group) CtrlObjectParam_ClearSlotValue((cf::CtrlObjectParamSlots*)data2, group);
 
-        if (!func_8009E56C((cf::CtrlObjectParamSlots*)data2, v31, 1)) {
-            func_8009E56C((cf::CtrlObjectParamSlots*)data2, v31, 2);
+        if (!CtrlObjectParam_InsertSlotValue((cf::CtrlObjectParamSlots*)data2, v31, 1)) {
+            CtrlObjectParam_InsertSlotValue((cf::CtrlObjectParamSlots*)data2, v31, 2);
         }
     }
 
@@ -1179,7 +1179,7 @@ int makeParty(VMThread* pThread) {
     func_8007F1FC__Q22cf13CfGameManagerFv(party, 1);
 
     if (warpFlag != 0) {
-        int* d = func_8009ECB0();
+        int* d = CtrlObjectParam_GetSlotTableBase();
         func_80080888__Q22cf13CfGameManagerFv(d[1] & 0xFFFF, 1);
     }
 
@@ -1220,7 +1220,7 @@ int makeGuestParty(VMThread* pThread) {
     if (vmArgOmitChk(pThread, v31)) { v31 = 0; }
     else { VMArg* arg = vmArgPtrGet(pThread, v31++); v31 = vmArgIntGet(v31, arg); }
     
-    int* data = func_8009ECB0();
+    int* data = CtrlObjectParam_GetSlotTableBase();
     data[0x28 / 4] = v30 & 0xFFFF;
     data[0x2C / 4] = v29 & 0xFFFF;
     data[0x30 / 4] = v31 & 0xFFFF;
@@ -1232,8 +1232,8 @@ int makeGuestParty(VMThread* pThread) {
 int delParty(VMThread* pThread) {
     VMArg* arg = vmArgPtrGet(pThread, 1);
     int v31 = vmArgIntGet(2, arg);
-    int* data = func_8009ECB0();
-    func_8009E740((cf::CtrlObjectParamSlots*)data, v31);
+    int* data = CtrlObjectParam_GetSlotTableBase();
+    CtrlObjectParam_ClearSlotValue((cf::CtrlObjectParamSlots*)data, v31);
     return 0;
 }
 
@@ -1336,14 +1336,14 @@ int equipItem(VMThread* vmThread) {
     slots[4] = idx;
 
     int* charData = func_8009EC9C(charId & 0xFFFF);
-    int* mgrData = func_8009ECB0();
+    int* mgrData = CtrlObjectParam_GetSlotTableBase();
     // Note: full (unmasked) char id passed here, unlike EC9C above.
     // The E284 result reuses the rolling-index variable (retail folds both
     // into r29).
     idx = func_8009E284(mgrData, charId);
 
     for (slot = 0; slot <= 4; slot++) {
-        int* slotRec = func_8009D790(&charData[7], slot);
+        int* slotRec = CtrlObjectParam_ResolveEquipItem(&charData[7], slot);
         int itemId = slots[slot];
         int act = 0;
 
@@ -1371,7 +1371,7 @@ int equipItem(VMThread* vmThread) {
                 func_80158420(itemId & 0xFFFF, &outShort, 1, &outInt);
                 func_8009DBF4(charData, slot, (void*)(s32)outShort);
             } else {
-                func_8009E0C4(charData, slot & 0xFFFF, itemId & 0xFFFF);
+                CtrlObjectParam_WriteU16RowEntry(charData, slot & 0xFFFF, itemId & 0xFFFF);
             }
 
             // Equip-slot index -> item-type id
@@ -1432,7 +1432,7 @@ int equipWeapon(VMThread* pThread) {
     }
 
     charData = func_8009EC9C(charId & 0xFFFF);
-    weaponSlot = func_8009D790(&charData[7], 5);
+    weaponSlot = CtrlObjectParam_ResolveEquipItem(&charData[7], 5);
 
     if (weaponSlot != NULL) {
         // Already equipped with this type: nothing to do
@@ -1444,11 +1444,11 @@ int equipWeapon(VMThread* pThread) {
         short slotVal;
         int unkVal;
         func_80158420(weaponId & 0xFFFF, &slotVal, 1, &unkVal);
-        func_8009E0A8(charData, slotVal);
+        CtrlObjectParam_SetEquipSlot5(charData, slotVal);
         walkListByItemId(charId, 0);
         lbl_eu_80663E28 |= 0x08000000;
     } else {
-        func_8009E0C4(func_8009EC9C(charId & 0xFFFF), 5, weaponId & 0xFFFF);
+        CtrlObjectParam_WriteU16RowEntry(func_8009EC9C(charId & 0xFFFF), 5, weaponId & 0xFFFF);
 
         if (charId >= 1 && charId <= 11) {
             int syncId;
@@ -1486,7 +1486,7 @@ int getWeaponSlot(VMThread* vmThread) {
     charId = vmArgIntGet(2, arg);
     int* charData = func_8009EC9C(charId & 0xFFFF);
     itemId = 0;
-    slotData = func_8009D790(&charData[7], 5);
+    slotData = CtrlObjectParam_ResolveEquipItem(&charData[7], 5);
 
     if (slotData != NULL) {
         CItemImplInstance* inst = (CItemImplInstance*)CItem_initItemImplInstances(slotData);
@@ -1528,7 +1528,7 @@ int setWeaponSlot(VMThread* vmThread) {
     itemId = vmArgIntGet(3, arg);
 
     int* charData = func_8009EC9C(charId & 0xFFFF);
-    slotData = func_8009D790(&charData[7], 5);
+    slotData = CtrlObjectParam_ResolveEquipItem(&charData[7], 5);
 
     if (slotData != NULL) {
         CItemImplInstance* inst = (CItemImplInstance*)CItem_initItemImplInstances(slotData);
@@ -1805,7 +1805,7 @@ int partyMember(VMThread* vmThread) {
         memberIdx = vmArgIntGet(2, arg);
     }
 
-    int* partyData = func_8009ECB0();
+    int* partyData = CtrlObjectParam_GetSlotTableBase();
     int offset = (memberIdx - 1) * 4;
     int memberVal = *(int*)((u8*)partyData + 4 + offset);
     int clz = __cntlzw(memberVal);
@@ -2047,7 +2047,7 @@ int clearItemLimit() {
 }
 
 int clearEquipGem() {
-    func_800A3304();
+    CtrlObjectParam_RefreshAllEquipImpls();
     return 0;
 }
 

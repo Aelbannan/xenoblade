@@ -1939,7 +1939,7 @@ extern "C" void func_8010EE40(CPcSelectCursorLayout* self) {
 
     // Arrow pane; enemy subobject via the byte41 table entry (+4 words).
     ObjBBFlag* arrow = reinterpret_cast<ObjBBFlag*>(self->field28);
-    u8* tbl = reinterpret_cast<u8*>(func_8009ECB0());
+    u8* tbl = reinterpret_cast<u8*>(CtrlObjectParam_GetSlotTableBase());
     void* entry = *reinterpret_cast<void**>(tbl + self->byte41 * 4 + 4);
     void* sub = findObjB28ById(static_cast<s32>(reinterpret_cast<u32>(entry)));
     // Retail copies sub into the target register first, then patches up

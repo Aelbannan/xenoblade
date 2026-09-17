@@ -186,7 +186,7 @@ extern "C" void CSkipTimer2OnFwdReady(CSkipTimer2* self);
 extern "C" void func_8029FBE0(CSkipTimer* self);
 // CSkipTimer2RebuildLayout: post-build hook on the sub-controller (body lives in retail).
 extern "C" void CSkipTimer2RebuildLayout(CSkipTimer2* self);
-extern "C" int func_802A04F0(CSkipTimer* self);
+extern "C" int CSkipTimerMapKeyToAction(CSkipTimer* self);
 extern "C" void CSkipTimer2Start(CSkipTimer2* self, u8 arg);
 // CSkipTimer2Reset: reset the sub-controller (body lives in retail).
 extern "C" void CSkipTimer2Reset(CSkipTimer2* self);
@@ -194,15 +194,15 @@ extern "C" void CSkipTimer2Reset(CSkipTimer2* self);
 // Same-unit siblings DEFINED in this TU whose retail callers emit a direct
 // `bl` (retail keeps them out-of-line). The definitions in CSkipTimer.cpp are
 // guarded with #pragma auto_inline off (MWCC_CASES sec. hbm/seq) so
-// -inline auto does not inline them into CSkipTimer2DriveState / func_802A03AC /
+// -inline auto does not inline them into CSkipTimer2DriveState / CSkipTimerActivateTimer /
 // CSkipTimerNextKey; the extern "C" form binds both the definitions and the call
 // sites to the literal (un)mangled retail names.
 extern "C" void CSkipTimer2OnFwdDone(CSkipTimer2* self);
 extern "C" void CSkipTimer2OnRewindDone(CSkipTimer2* self);
 extern "C" void func_802A041C(CSkipTimer* self);
-extern "C" void func_802A05E4(CSkipTimer* self);
-extern "C" void func_802A055C(CSkipTimer* self);
-extern "C" void func_802A03AC(CSkipTimer* self);
+extern "C" void CSkipTimerBindAnim24(CSkipTimer* self);
+extern "C" void CSkipTimerBindAnim20(CSkipTimer* self);
+extern "C" void CSkipTimerActivateTimer(CSkipTimer* self);
 
 class CSysWin;
 // CSysWin per-frame update (retail symbol is unmangled; defined extern "C" in CSysWin.cpp).

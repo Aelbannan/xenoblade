@@ -343,7 +343,7 @@ void func_8015D3A0();
 void UIWin_CreateCol6Check();
 void UIWin_CreateItemMulti(u32, u32, u32, u32, u32, u32, u32, u32, u32);
 void* func_800451D8(u32 cls, void* param);
-u32 func_800A32BC();
+u32 CtrlObjectParam_GetCurrentRowKey();
 int func_8026178C(void* data, u32 flag);
 u32 func_8025FB10(void* data, u32 flag);
 char* CItemBlock_getPtr20E8();
@@ -366,8 +366,8 @@ u32 BdatGetItemType(u32);
 extern "C" u16 BdatGetItemId(u32);
 u32 func_8013732C(u32);
 void* func_80138DA4(const char*);
-u32 func_8009ECF0();
-void func_8009ECFC(u16);
+u32 CtrlObjectParam_GetWorkField50();
+void CtrlObjectParam_SetWorkField50(u16);
 void UIWin_CreateMenuUpdate(u32, u32, u32, u32);
 
 // Pane visible-bit toggle (clears bit 0 of the pane +0xBB flag byte and ORs

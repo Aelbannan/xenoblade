@@ -179,7 +179,7 @@ int func_80122448();
 u8 GetSysStateFlag21();
 
 // func_801072E0 / func_80107580 imports (unmangled retail names)
-u32 func_800A32BC(void*); // character-data category
+u32 CtrlObjectParam_GetCurrentRowKey(void*); // character-data category
 u16 BdatGetItemId(u32 value);
 void* func_80157C4C(u32 index);
 // CUIBattleManager.hpp only declares this as a friend; re-declare at file scope.
@@ -269,7 +269,7 @@ extern "C" void func_8010A848(void*, u8);
 extern "C" void func_8010A6F0(void*);
 extern "C" int func_80187710();
 extern "C" void func_80187718();
-extern "C" int* func_8009ECB0();
+extern "C" int* CtrlObjectParam_GetSlotTableBase();
 extern "C" char lbl_eu_80661E08[8];  // sdata: empty-name fallback (fixed size keeps @sda21)
 extern "C" u32 lbl_eu_80666F48;  // 4-byte talent table header
 extern "C" u8 lbl_eu_80666F4C;   // 5th byte of talent table
@@ -813,7 +813,7 @@ void CMenuArtsSelect::Term() {
         func_8010A8E4(reinterpret_cast<u8*>(func_8010CE48()) + 0x7cc);
     }
     if (unk334 != 0) {
-        CUICfManager_queueBaseMenu();
+        CUICfManager_queueMoveBaseMenu();
     }
 }
 
@@ -2020,7 +2020,7 @@ extern "C" void func_80104454(CMenuArtsSelect* self) {
         if (self->unk324 != 4 && func_80154168((const u8*)p) != 0) {
             self->unk330 = 0;
             if (func_8015419C((u8*)p) != 0) {
-                int* cfg = func_8009ECB0();
+                int* cfg = CtrlObjectParam_GetSlotTableBase();
                 for (s32 i = 0; i < 3; i++) {
                     if (cfg[i + 1] == (s32)actor->mField3F28) continue;
                     void* obj = findObjB28ById(cfg[i + 1]);
@@ -2294,7 +2294,7 @@ extern "C" void func_80105D54(CMenuArtsSelect* self) {
             self->unk7E = static_cast<u8>(self->unk330);
         } else {
             Scn_FindCamItem(self->mScn, -1);
-            int* cfg = func_8009ECB0();            u32 id = cfg[self->unk330 + 1];
+            int* cfg = CtrlObjectParam_GetSlotTableBase();            u32 id = cfg[self->unk330 + 1];
             BattleActor* cand =
                 static_cast<BattleActor*>(findObjB28ById(id));
             CfObjectMoveArtsView* mv = reinterpret_cast<CfObjectMoveArtsView*>(cand);
@@ -2364,7 +2364,7 @@ extern "C" void func_80105D54(CMenuArtsSelect* self) {
     if (actor == NULL) return;
 
     void* pose = Scn_FindCamItem(self->mScn, -1);
-    int* cfg = func_8009ECB0();
+    int* cfg = CtrlObjectParam_GetSlotTableBase();
 
     s32 listIdx = self->unk324;
     if (listIdx == 4) {
@@ -2874,7 +2874,7 @@ void CMenuArtsSelect::func_801072E0() {
         u16 mode = actor->mField3F28;
         switch (mode) {
         case 1:
-            if (func_800A32BC(func_8009EC9C(1)) == 0) {
+            if (CtrlObjectParam_GetCurrentRowKey(func_8009EC9C(1)) == 0) {
                 code = 1;
             } else {
                 code = 2;
@@ -2889,7 +2889,7 @@ void CMenuArtsSelect::func_801072E0() {
         case 4:
         case 0xc:
             // arg is still the dispatch value here (retail emits no li)
-            if (func_800A32BC(func_8009EC9C(mode)) == 0) {
+            if (CtrlObjectParam_GetCurrentRowKey(func_8009EC9C(mode)) == 0) {
                 code = 0x29;
             } else {
                 code = 0x98;
@@ -2969,7 +2969,7 @@ void CMenuArtsSelect::func_80107580() {
         u32 code = 0;
         switch (mode) {
         case 1:
-            if (func_800A32BC(func_8009EC9C(1)) == 0) {
+            if (CtrlObjectParam_GetCurrentRowKey(func_8009EC9C(1)) == 0) {
                 code = 1;
             } else {
                 code = 2;
@@ -2983,7 +2983,7 @@ void CMenuArtsSelect::func_80107580() {
             break;
         case 4:
         case 0xc:
-            if (func_800A32BC(func_8009EC9C(mode)) == 0) {
+            if (CtrlObjectParam_GetCurrentRowKey(func_8009EC9C(mode)) == 0) {
                 code = 0x29;
             } else {
                 code = 0x98;

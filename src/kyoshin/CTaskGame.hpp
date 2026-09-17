@@ -522,7 +522,7 @@ extern "C" void func_804C8690(int a, int b);
 // Battle/script-time gate (flat retail name; stub body in
 // CTaskREvtSequence.cpp): retail CTaskGame_updateStream ORs its result with
 // isSceneLoading and forwards the boolean to the CRI active-setter.
-extern "C" int func_8016C720();
+extern "C" int EvtSeqGetStateBit19();
 // Vision resource-copy helper (flat retail name; defined in this TU). Retail
 // CTaskGame_updateStream passes the unk18C struct fields and branches on the result.
 extern "C" int CTaskGame_openVision(u32 a, u32 b, u32 c, u32 d, u32 e, f32 f);

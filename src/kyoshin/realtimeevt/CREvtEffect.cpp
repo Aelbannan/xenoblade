@@ -88,7 +88,7 @@ extern "C" CREvtEffect* __ct__CREvtEffect(CREvtEffect* self, CREvtParam* param) 
     self->mType = 0;
 
     // Load the bdat block for the param's effect id and register it
-    void* bdatData = func_8016A24C(param->mBdatId);
+    void* bdatData = EvtSeqResolveListEntryAddr(param->mBdatId);
     self->mBdatData = bdatData;
     if (bdatData != 0) {
         func_804CC1BC(&lbl_eu_8065FC18, bdatData);
@@ -170,13 +170,13 @@ extern "C" void func_80184D90(CREvtEffect* self) {
     // Distinct result locals per anim group: each dies after its Get*
     // trio so model (live across all three) can claim r31 (retail).
     nw4r::g3d::ChrAnmResult* resultEff =
-        scnImN4AnimFn(model, lbl_eu_80662478, (f32)func_8016A35C());
+        scnImN4AnimFn(model, lbl_eu_80662478, (f32)EvtSeqGetCounter100());
     resultEff->GetTranslate((nw4r::math::VEC3*)self->mAnm2Translate);
     resultEff->GetRotateDeg((nw4r::math::VEC3*)self->mAnm2Rotate);
     resultEff->GetScale((nw4r::math::VEC3*)self->mAnm2Scale);
 
     nw4r::g3d::ChrAnmResult* resultAtr =
-        scnImN4AnimFn(model, lbl_eu_80662474, (f32)func_8016A35C());
+        scnImN4AnimFn(model, lbl_eu_80662474, (f32)EvtSeqGetCounter100());
     resultAtr->GetTranslate((nw4r::math::VEC3*)self->mAnm1Translate);
     resultAtr->GetRotateDeg((nw4r::math::VEC3*)self->mAnm1Rotate);
     resultAtr->GetScale((nw4r::math::VEC3*)self->mAnm1Scale);
@@ -201,12 +201,12 @@ extern "C" void func_80184D90(CREvtEffect* self) {
 
     // "effTgt" animation -> mAnm3Translate
     nw4r::g3d::ChrAnmResult* resultTgt =
-        scnImN4AnimFn(model, lbl_eu_80662470, (f32)func_8016A35C());
+        scnImN4AnimFn(model, lbl_eu_80662470, (f32)EvtSeqGetCounter100());
     resultTgt->GetTranslate((nw4r::math::VEC3*)self->mAnm3Translate);
 
     // Refresh the spawned effects when the translate.y threshold is crossed
     if (self->mAnm1Translate[1] > lbl_eu_80667948) {
-        if (self->mLastFrame != func_8016A35C()) {
+        if (self->mLastFrame != EvtSeqGetCounter100()) {
             if (Scn_GetFrameDelta(lbl_eu_80663E14) >= lbl_eu_8066794C ||
                 (Scn_GetFrameDelta(lbl_eu_80663E14) < lbl_eu_8066794C &&
                  self->mFlag134 == 0)) {
@@ -267,7 +267,7 @@ extern "C" bool func_80184F90(CREvtEffect* self) {
     }
 
     // Culling mode forces effect state 7
-    if (func_8016C410()) {
+    if (EvtSeqIsSlotIndexFour()) {
         effect->mField59 = 7;
     }
 
@@ -279,7 +279,7 @@ extern "C" bool func_80184F90(CREvtEffect* self) {
     }
 
     // Copy the entry's name into a local buffer
-    void* nameObj = func_8016A27C(((CBdatEntry*)self->mBdatEntry)->mNameData);
+    void* nameObj = EvtSeqFindEventByNameData(((CBdatEntry*)self->mBdatEntry)->mNameData);
     char nameBuf[32];
     u32 nameLen;
     nameBuf[0] = 0;
@@ -293,7 +293,7 @@ extern "C" bool func_80184F90(CREvtEffect* self) {
 
     // Mark the effect as spawned this frame
     self->mFlag134 = 1;
-    self->mLastFrame = func_8016A35C();
+    self->mLastFrame = EvtSeqGetCounter100();
 
     // Per-type duration mode
     if (self->mTime == 1) {
@@ -325,7 +325,7 @@ extern "C" void func_8018515C(CREvtEffect* self) {
         void* nameObj = 0;
         void* nameData = ((CBdatEntry*)self->mBdatEntry)->mNameData;
         if ((s32)nameData >= 0) {
-            nameObj = func_8016A27C(nameData);
+            nameObj = EvtSeqFindEventByNameData(nameData);
         }
 
         f32 fpsDiv = lbl_eu_8066A1F8 / lbl_eu_8066795C;
@@ -387,7 +387,7 @@ extern "C" void func_8018515C(CREvtEffect* self) {
 
         // Invalidate the last-frame cache once per new frame.
         if (Scn_GetFrameDelta(lbl_eu_80663E14) < lbl_eu_8066794C &&
-            self->mLastFrame != func_8016A35C()) {
+            self->mLastFrame != EvtSeqGetCounter100()) {
             self->mLastFrame = -1;
         }
     }

@@ -205,7 +205,7 @@ public:
 };
 
 // Retail-unmangled callee names (US strips mangling for these func_ helpers).
-// isIdle/func_801C3E34/func_801C4114/func_801ED800/func_801ED774 are declared
+// isIdle/func_801C3E34/func_801C4114/ItemBoxLine_IsReadyFlag/ItemBoxLine_GetSelectReady are declared
 // int (not u8) so callers compare with cmpwi directly (no byte mask), matching
 // retail.
 extern "C" int isIdle__11CTitleAHelpFv(CTitleAHelp* h);
@@ -214,33 +214,33 @@ extern "C" int func_801C4114(CTitleAHelp* self);
 extern "C" void func_801C412C(CTitleAHelp* self);
 extern "C" void func_801C40A0(CTitleAHelp* self);
 extern "C" void func_801C3D9C(CBgTex* self);
-extern "C" int func_801ED800(CItemBoxLine* self);
+extern "C" int ItemBoxLine_IsReadyFlag(CItemBoxLine* self);
 extern "C" u8 code80135FDC_getByte_64077();
-extern "C" int func_801ED774(CItemBoxLine* self);
-extern "C" void func_801ED618(CItemBoxLine* self);
+extern "C" int ItemBoxLine_GetSelectReady(CItemBoxLine* self);
+extern "C" void ItemBoxLine_UnloadFiles(CItemBoxLine* self);
 extern "C" void func_801ED864(CItemBoxLine* self);
 
-// func_8018C258 pad/flag callees (retail unmangled names). func_801ED808 is
+// func_8018C258 pad/flag callees (retail unmangled names). ItemBoxLine_IsBusy is
 // declared int (not u8) so the caller compares with cmpwi directly.
 extern "C" int func_8029A658();
 extern "C" ShopBuyPadData* getCfPadData__Q22cf13CfGameManagerFv();
 extern "C" int isClassicController__Q22cf13CfGameManagerFv(int arg);
-extern "C" int func_801ED808(CItemBoxLine* self);
-extern "C" void func_801EECE0(CItemBoxLine* self, u32 arg);
-extern "C" void func_801EECE8(CItemBoxLine* self);
-extern "C" void func_801EED6C(CItemBoxLine* self);
+extern "C" int ItemBoxLine_IsBusy(CItemBoxLine* self);
+extern "C" void ItemBoxLine_ResetCursorB8(CItemBoxLine* self, u32 arg);
+extern "C" void ItemBoxLine_Info2SelectPrev(CItemBoxLine* self);
+extern "C" void ItemBoxLine_Info2SelectNext(CItemBoxLine* self);
 extern "C" void func_801EE788(CItemBoxLine* self);
-extern "C" void func_801EE684(CItemBoxLine* self);
-extern "C" void func_801ED97C(CItemBoxLine* self);
+extern "C" void ItemBoxLine_ConfirmOverlayOrHint(CItemBoxLine* self);
+extern "C" void ItemBoxLine_LeaveState3(CItemBoxLine* self);
 extern "C" void func_801EDC94(CItemBoxLine* self);
-extern "C" void func_801EDF40(CItemBoxLine* self);
-extern "C" void func_801EE228(CItemBoxLine* self);
-extern "C" void func_801EE448(CItemBoxLine* self);
+extern "C" void ItemBoxLine_CursorPageDown(CItemBoxLine* self);
+extern "C" void ItemBoxLine_CursorPageUp(CItemBoxLine* self);
+extern "C" void ItemBoxLine_CursorPageDownRow(CItemBoxLine* self);
 extern "C" void func_801EEDF8(CItemBoxLine* self);
-extern "C" void func_801EF050(CItemBoxLine* self);
-extern "C" u8 func_801EF0EC(CItemBoxLine* self);
-extern "C" void func_801EDA08(CItemBoxLine* self);
-extern "C" void func_801EDA4C(CItemBoxLine* self, u8 val);
+extern "C" void ItemBoxLine_RefreshTabSelect(CItemBoxLine* self);
+extern "C" u8 ItemBoxLine_ResolveFocusId(CItemBoxLine* self);
+extern "C" void ItemBoxLine_ResetTabBytes(CItemBoxLine* self);
+extern "C" void ItemBoxLine_PushTabByte(CItemBoxLine* self, u8 val);
 extern "C" void ItemBoxLine_LoadFiles(CItemBoxLine* self);
 extern "C" void func_8018B0FC(void* dest, void* src);
 extern "C" void __ct__UnkClass_8011C974(void* dest, void* src);
@@ -272,7 +272,7 @@ extern "C" void func_801C3D7C(CBgTex* self, nw4r::lyt::DrawInfo* drawInfo);
 extern "C" void func_801C3FF0(CTitleAHelp* self);
 extern "C" void func_801C4080(CTitleAHelp* self, nw4r::lyt::DrawInfo* drawInfo);
 extern "C" void ItemBoxLine_UpdateStates(CItemBoxLine* self);
-extern "C" void func_801ED4FC(CItemBoxLine* self, nw4r::lyt::DrawInfo* drawInfo);
+extern "C" void ItemBoxLine_DrawLayout(CItemBoxLine* self, nw4r::lyt::DrawInfo* drawInfo);
 
 // DrawInfo raw-storage ct/dt (C-ABI so the scope-exit dtor is not
 // virtual-dispatched) and the DrawInfo setup helper (C++ mangled name).

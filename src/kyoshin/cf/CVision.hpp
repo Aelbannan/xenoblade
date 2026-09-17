@@ -601,7 +601,7 @@ extern "C" int CUICfManager_queueFactoryMenu(int id, float f);
 // define empty stubs; the variants in other TU-local headers are never
 // included together with this one.
 extern "C" bool func_8009E344(int* a, u32 b, int* outA, int* outB);
-extern "C" u8 func_800A32C4(void* row);
+extern "C" u8 CtrlObjectParam_GetRowColumnByte(void* row);
 extern "C" void* func_8009EC9C(u32 index);
 extern "C" void* getPlayer__Q22cf13CfGameManagerFi(int idx);
 extern "C" void func_801BFE8C(u32 a, u32 b, u32 c);

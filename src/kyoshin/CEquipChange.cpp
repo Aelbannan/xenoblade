@@ -579,7 +579,7 @@ void EquipChange_OpenSubPage(CEquipChange* self) {
 // character is busy or the selection points at an empty / locked slot. Retail
 // frame saves 4 regs via stmw (opt-space prologue).
 #pragma optimize_for_size on
-void EquipChange_ConfirmApply(CEquipChange* self) {
+void func_80202CCC(CEquipChange* self) {
     if (getEIBOpenFlag(&self->mEquipItemBox) != 0) {
         if (getEIBActiveMark(&self->mEquipItemBox) == 0)
             return;
@@ -673,7 +673,7 @@ int func_80203210(CEquipChange* self) {
             if (isOne && func_8009CF8C(0x3508) == 0)
                 return 0;
         }
-        func_8009E0A8(obj, -1);
+        CtrlObjectParam_SetEquipSlot5(obj, -1);
         break;
     }
     case 4: {
@@ -689,7 +689,7 @@ int func_80203210(CEquipChange* self) {
             if (isOne && func_8009CF8C(0x3508) == 0)
                 return 0;
         }
-        func_8009E024(obj, -1);
+        CtrlObjectParam_SetEquipSlot0(obj, -1);
         break;
     }
     case 5: {
@@ -705,7 +705,7 @@ int func_80203210(CEquipChange* self) {
             if (isOne && func_8009CF8C(0x3508) == 0)
                 return 0;
         }
-        func_8009E030(obj, -1);
+        CtrlObjectParam_SetEquipSlot1(obj, -1);
         break;
     }
     case 6: {
@@ -721,7 +721,7 @@ int func_80203210(CEquipChange* self) {
             if (isOne && func_8009CF8C(0x3508) == 0)
                 return 0;
         }
-        func_8009E03C(obj, -1);
+        CtrlObjectParam_SetEquipSlot2(obj, -1);
         break;
     }
     case 7: {
@@ -737,7 +737,7 @@ int func_80203210(CEquipChange* self) {
             if (isOne && func_8009CF8C(0x3508) == 0)
                 return 0;
         }
-        func_8009E048(obj, -1);
+        CtrlObjectParam_SetEquipSlot3(obj, -1);
         break;
     }
     case 8: {
@@ -753,7 +753,7 @@ int func_80203210(CEquipChange* self) {
             if (isOne && func_8009CF8C(0x3508) == 0)
                 return 0;
         }
-        func_8009E054(obj, -1);
+        CtrlObjectParam_SetEquipSlot4(obj, -1);
         break;
     }
     default:
@@ -761,7 +761,7 @@ int func_80203210(CEquipChange* self) {
     }
     // shared refresh: wake the bdat row, filter the scene's enemy list and
     // play the 0x76 sound.
-    func_800A1370(obj);
+    CtrlObjectParam_SyncParamFromActor(obj);
     if (self->field_99 < 3) {
         CEquipEnumHolder holder;
         u32 names[3];
@@ -1173,12 +1173,12 @@ extern "C" void func_802042C0(CEquipChange* self) {
     int nRecs = 0;
 
     CBdatCharData* cd = (CBdatCharData*)func_8009EC9C(GetCollectedFlagByte(self->field_99));
-    func_800A13C4(cd, 1);
+    CtrlObjectParam_SyncParamFromActorEx(cd, 1);
     // Stats sub-object at +0x17C is an embedded cf::CActorParam; refresh it
     // through its real +0x224 slot (CActorParam_getBattleParams), not a
     // manual vtable-word call (CfNandManager subSlot precedent).
     ((cf::CActorParam*)((u8*)cd + 0x17C))->CActorParam_getBattleParams();
-    func_8009D7E4(&cd->field_1C, 5);
+    CtrlObjectParam_GetArtsStatsRow(&cd->field_1C, 5);
 
     s16 w4 = cd->field_1C;
     s16 w5 = cd->field_1E;

@@ -362,7 +362,7 @@ public:
     /* 0x04 */ CScnItemModelNw4rOwner* field_04;     // owner (same slot as CScnItemModel::field_04)
     /* 0x08 */ u8 _pad_0x08[0x4];                    // to 0x0C
     /* 0x0C */ u8 field_0xC[0x54];                   // CScn80496B0C anim sub-object prefix (owner ptr at +0x0)
-    /* 0x60 */ u8* field_0x60;                       // scene-item pool (func_8048C5B8/8C630 arg, func_80489C94)
+    /* 0x60 */ u8* field_0x60;                       // scene-item pool (CScnItemPool_hasFreeSlot/8C630 arg, func_80489C94)
     /* 0x64 */ u8 field_0x64[0x194];                 // rest of the anim sub-object (to 0x1F8)
     /* 0x1F8 */ u8 _pad_0x1F8[0x48];                 // to 0x240
     /* 0x240 */ nw4r::math::MTX34 field_0x240;       // matrix pushed to the g3d scene object (SetMtx)
@@ -688,8 +688,8 @@ extern "C" nw4r::g3d::ResNode func_80490AF4(void* self, const char* name);
 extern "C" void simNotifyVfunc9C(CScnItemModelNw4r* self, u32 a, u32 b);
 extern "C" void simNotifyVfuncB4(CScnItemModel* self, u32 param);
 extern "C" u32 Scn_CallUnk8C_V9(CScnItemModelNw4r* self);
-extern "C" u32 func_8048C5B8(u8* pool, s32 kind);
-extern "C" u32 func_8048C630(u8* pool, CScnItemModelNw4r* model, u32 flag);
+extern "C" u32 CScnItemPool_hasFreeSlot(u8* pool, s32 kind);
+extern "C" u32 CScnItemPool_registerOtherList(u8* pool, CScnItemModelNw4r* model, u32 flag);
 
 // g3d free-function accessors bound to the retail mangled symbols (defined
 // in g3d_scnmdl.cpp / g3d_scnmdlexpand.cpp; the shared g3d_scnmdl.h does not

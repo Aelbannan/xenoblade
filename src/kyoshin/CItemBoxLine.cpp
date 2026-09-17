@@ -28,7 +28,7 @@ extern "C" void ItemBoxLine_CopyTabEntry(CIBLTabEntry* dest, const CIBLTabEntry*
 extern "C" CIBLTabEntry* ItemBoxLine_InitTabEntry(CIBLTabEntry* self, u16 r4, u32 r5, u8 r6, u8 r7);
 u8 ItemBoxLine_GetTabEntryLock(const CIBLTab* self, unsigned int index);
 u8 ItemBoxLine_GetTabEntryReady(const CIBLTab* self, unsigned int index);
-void func_801EDA08(CItemBoxLine* self);
+void ItemBoxLine_ResetTabBytes(CItemBoxLine* self);
 void func_801F1E64(CItemBoxLine* self, u32 itemData);
 void func_801F20F0(CItemBoxLine* self, u32 itemData);
 void func_801F2298(CItemBoxLine* self, u32 itemData);
@@ -40,10 +40,10 @@ extern "C" void setLayoutTextBoxNumber__FPQ34nw4r3lyt6LayoutPcUc(nw4r::lyt::Layo
 extern "C" void func_801375A0(nw4r::math::VEC3* output, nw4r::lyt::Pane* pane);
 
 // ============================================================================
-// func_801ED774: busy-guard chain - only read the selector byte when every
+// ItemBoxLine_GetSelectReady: busy-guard chain - only read the selector byte when every
 // sub-system (info2 state, num-select, scrollbar, syswin) reports active/ready.
 // ============================================================================
-u8 func_801ED774(void* self) {
+u8 ItemBoxLine_GetSelectReady(void* self) {
     unsigned char* p = (unsigned char*)self;
     if (getItemBox2State__FP13CItemBoxInfo2(p + 0xd0) == 0) return 0;
     if (func_801EB018(p + 0x2dc) == 0) return 0;
@@ -53,10 +53,10 @@ u8 func_801ED774(void* self) {
 }
 
 // ============================================================================
-// func_801ED97C: leave state-3 - store 4, reset byte flag, quiet cursors,
+// ItemBoxLine_LeaveState3: leave state-3 - store 4, reset byte flag, quiet cursors,
 // advance the item-box state machine, refresh scrollbar, and beep if armed.
 // ============================================================================
-void func_801ED97C(void* self) {
+void ItemBoxLine_LeaveState3(void* self) {
     unsigned char* p = (unsigned char*)self;
     if (*(int*)(p + 0x50) != 3) return;
     *(unsigned int*)(p + 0x50) = 4;
@@ -70,9 +70,9 @@ void func_801ED97C(void* self) {
 }
 
 // ============================================================================
-// func_801EF050: invoke the tab-left selection refresh if nothing is busy.
+// ItemBoxLine_RefreshTabSelect: invoke the tab-left selection refresh if nothing is busy.
 // ============================================================================
-void func_801EF050(void* self) {
+void ItemBoxLine_RefreshTabSelect(void* self) {
     unsigned char* p = (unsigned char*)self;
     if (*(short*)(p + 0x38c) == -1) return;
     if (func_801EB020(p + 0x2dc)) return;
@@ -87,7 +87,7 @@ void func_801EF050(void* self) {
     playUISound__FUl(2);
 }
 
-u8 func_801ED800(void* self) { return static_cast<CItemBoxLine*>(self)->unk59; }
+u8 ItemBoxLine_IsReadyFlag(void* self) { return static_cast<CItemBoxLine*>(self)->unk59; }
 
 // ============================================================================
 // ItemBoxLine_CopyTabEntry: copy a 12-byte tab entry. extern "C" + noinline: the retail
@@ -321,9 +321,9 @@ u8 func_801EF034(const CIBLTabCur* self, unsigned int index) {
 }
 
 // ============================================================================
-// func_801EDA08: reset tab byte entries + two counters
+// ItemBoxLine_ResetTabBytes: reset tab byte entries + two counters
 // ============================================================================
-void func_801EDA08(CItemBoxLine* self) {
+void ItemBoxLine_ResetTabBytes(CItemBoxLine* self) {
     memset(self->tabEntries, 0, 9);
     self->tabCount = 0;
     self->field6D = 0;
@@ -607,10 +607,10 @@ void ItemBoxLine_LoadFiles(CItemBoxLine* self) {
 void ItemBoxLine_UpdateStates(CItemBoxLine* self) {
     if (self->field4C == 0) return;
     switch (self->field50) {
-    case 0: func_801EF1E4((void*)self); break;
-    case 1: func_801EF260((void*)self); break;
-    case 2: func_801EF2FC((void*)self); break;
-    case 3: func_801EF378((void*)self); break;
+    case 0: ItemBoxLine_EnterState0((void*)self); break;
+    case 1: ItemBoxLine_EnterState1((void*)self); break;
+    case 2: ItemBoxLine_EnterState2((void*)self); break;
+    case 3: ItemBoxLine_EnterState3((void*)self); break;
     case 4:
         if (func_801EB028(&self->mNumSel)) {
             self->field50 = 7;
@@ -621,7 +621,7 @@ void ItemBoxLine_UpdateStates(CItemBoxLine* self) {
             self->field50 = 3;
         }
         break;
-    case 6: func_801EF3E8((void*)self); break;
+    case 6: ItemBoxLine_PushSyswinCursor((void*)self); break;
     // states 7..0xB share the syswin-commit body and then fall through into
     // the per-frame tail (the switch exit is the tail start in retail).
     case 7:
@@ -629,7 +629,7 @@ void ItemBoxLine_UpdateStates(CItemBoxLine* self) {
     case 9:
     case 10:
     case 11:
-        func_801EF45C((void*)self);
+        ItemBoxLine_CommitOverlayState((void*)self);
     }
     self->field40->Animate(0);
     func_801D202C(&self->mCur70);
@@ -644,7 +644,7 @@ void ItemBoxLine_UpdateStates(CItemBoxLine* self) {
 
 #pragma push
 #pragma optimize_for_size on
-void func_801ED4FC(CItemBoxLine* self, nw4r::lyt::DrawInfo* drawInfo) {
+void ItemBoxLine_DrawLayout(CItemBoxLine* self, nw4r::lyt::DrawInfo* drawInfo) {
     if (self->field4C == 0) return;
     drawItemBox2Layout__FP13CItemBoxInfo2PQ34nw4r3lyt8DrawInfo(&self->mInfo2D0[0], drawInfo);
     drawLayout(self->field40, drawInfo, 0, 1);    // "line not busy" flag: both the tab-name cursor and the num-select idle.
@@ -670,7 +670,7 @@ void func_801ED4FC(CItemBoxLine* self, nw4r::lyt::DrawInfo* drawInfo) {
 #pragma pop
 
 // ============================================================================
-// func_801ED618: teardown of the loaded item-box line. Stop the two UI sounds,
+// ItemBoxLine_UnloadFiles: teardown of the loaded item-box line. Stop the two UI sounds,
 // release the four file handles, free the scratch buffer and the two heap
 // objects (virtual deleting-dtor, double-null-checked), destroy the two arc
 // resource accessors and the two 16-byte mem regions at +0x04/+0x14, silence
@@ -678,7 +678,7 @@ void func_801ED4FC(CItemBoxLine* self, nw4r::lyt::DrawInfo* drawInfo) {
 // ============================================================================
 #pragma push
 #pragma optimize_for_size on
-void func_801ED618(CItemBoxLine* self) {
+void ItemBoxLine_UnloadFiles(CItemBoxLine* self) {
     CBdat::getEntry(2);
     CBdat::getEntry(5);
     func_801390E0(reinterpret_cast<CFileHandle**>(&self->field24));
@@ -717,9 +717,9 @@ void func_801ED618(CItemBoxLine* self) {
 
 
 // ============================================================================
-// func_801ED808: busy-check - a CSysWin or num-select member is active, else return byte.
+// ItemBoxLine_IsBusy: busy-check - a CSysWin or num-select member is active, else return byte.
 // ============================================================================
-u8 func_801ED808(CItemBoxLine* self) {
+u8 ItemBoxLine_IsBusy(CItemBoxLine* self) {
     if (CSysWin_getUnk34(&self->mSysWin)) {
         return 1;
     }
@@ -754,7 +754,7 @@ void func_801ED864(CItemBoxLine* self) {
 }
 #pragma pop
 
-void CItemBoxLine::func_801EDA4C(unsigned char val) {
+void CItemBoxLine::ItemBoxLine_PushTabByte(unsigned char val) {
     unsigned char n = reinterpret_cast<unsigned char*>(this)[0x63];
     if (n >= 9) {
         return;
@@ -763,7 +763,7 @@ void CItemBoxLine::func_801EDA4C(unsigned char val) {
     reinterpret_cast<unsigned char*>(this)[0x63] = n + 1;
 }
 
-void func_801EDA6C(CItemBoxLine* self) {
+void ItemBoxLine_TabNext(CItemBoxLine* self) {
     if (func_801EB020(&self->mNumSel)) return;
     self->field6D = self->field6D + 1;
     if ((s8)self->field6D >= (int)self->tabCount) {
@@ -823,7 +823,7 @@ void func_801EDB80(CItemBoxLine* self) {
 
 // ============================================================================
 // func_801EDC94: tab page-up / cursor-back interaction - the mirror of
-// func_801EDF40. Syswin overlay open (and nav state 9, active): step the
+// ItemBoxLine_CursorPageDown. Syswin overlay open (and nav state 9, active): step the
 // overlay selection byte down (wrapping 0 -> 1) and push the syswin selection
 // buffer through the line cursor's vtable[2]; tab cursor active: scan the
 // page list backward for the previous occupied slot (wrap at 4) and push its
@@ -908,7 +908,7 @@ void func_801EDC94(CItemBoxLine* self) {
 #pragma pop
 
 // ============================================================================
-// func_801EDF40: tab page-down / tab-cursor interaction. When the syswin
+// ItemBoxLine_CursorPageDown: tab page-down / tab-cursor interaction. When the syswin
 // overlay is open and the nav state is in the overlay region (>= 9), advance
 // the overlay selection byte (wrapping at 2) and push the syswin selection
 // buffer through the cursor's vtable[2]; when the tab cursor is active, scan
@@ -919,7 +919,7 @@ void func_801EDC94(CItemBoxLine* self) {
 // ============================================================================
 #pragma push
 #pragma optimize_for_size on
-void func_801EDF40(CItemBoxLine* self) {
+void ItemBoxLine_CursorPageDown(CItemBoxLine* self) {
     if (CSysWin_getUnk34(&self->mSysWin) != 0) {
         if (self->field50 >= 9) {
             if (CSysWin_isActive(&self->mSysWin) != 0) {
@@ -996,14 +996,14 @@ void func_801EDF40(CItemBoxLine* self) {
 #pragma pop
 
 // ============================================================================
-// func_801EE228: per-frame tab/cursor interaction. When the tab cursor is
+// ItemBoxLine_CursorPageUp: per-frame tab/cursor interaction. When the tab cursor is
 // active, scan the page list for the next non-empty slot and push its VEC3
 // to the cursor; when the num-select is busy, step its page position;
 // otherwise handle the tab page up/down wrap and refresh the line.
 // ============================================================================
 #pragma push
 #pragma optimize_for_size on
-void func_801EE228(CItemBoxLine* self) {
+void ItemBoxLine_CursorPageUp(CItemBoxLine* self) {
     if (CSysWin_getUnk34(&self->mSysWin) != 0) return;
     if (self->field3A0 != 0) {
         CIBLPageData* page = reinterpret_cast<CIBLPageData*>(&self->mInfo2D0[0xB0]);
@@ -1059,7 +1059,7 @@ void func_801EE228(CItemBoxLine* self) {
 #pragma pop
 
 // ============================================================================
-// func_801EE448: page-up mirror of func_801EE228. When the tab cursor is
+// ItemBoxLine_CursorPageDownRow: page-up mirror of ItemBoxLine_CursorPageUp. When the tab cursor is
 // active, scan the page list for the next non-empty slot in the up direction
 // (wrap >= 3 back to 0) and push its VEC3 to the cursor; when the num-select
 // is busy, step its page position up by 10 clamped to the page's capacity;
@@ -1067,7 +1067,7 @@ void func_801EE228(CItemBoxLine* self) {
 // ============================================================================
 #pragma push
 #pragma optimize_for_size on
-void func_801EE448(CItemBoxLine* self) {
+void ItemBoxLine_CursorPageDownRow(CItemBoxLine* self) {
     if (CSysWin_getUnk34(&self->mSysWin) != 0) return;
     if (self->field3A0 != 0) {
         CIBLPageData* page = reinterpret_cast<CIBLPageData*>(&self->mInfo2D0[0xB0]);
@@ -1101,7 +1101,7 @@ void func_801EE448(CItemBoxLine* self) {
         return;
     }
     if (self->unk38C == -1) {
-        func_801EDA6C((void*)self);
+        ItemBoxLine_TabNext((void*)self);
         return;
     }
     u16 count = self->unk3A4.count;
@@ -1127,10 +1127,10 @@ void func_801EE448(CItemBoxLine* self) {
 #pragma pop
 
 // ============================================================================
-// func_801EE684: item-box line update. When the syswin overlay is armed the
+// ItemBoxLine_ConfirmOverlayOrHint: item-box line update. When the syswin overlay is armed the
 // active tab is committed; otherwise a tab/cursor hint is advanced.
 // ============================================================================
-void func_801EE684(CItemBoxLine* self) {
+void ItemBoxLine_ConfirmOverlayOrHint(CItemBoxLine* self) {
     if (CSysWin_getUnk34(&self->mSysWin)) {
         if (CSysWin_isActive(&self->mSysWin)) {
             func_8022B8E4(&self->mSysWin);
@@ -1195,7 +1195,7 @@ void func_801EE788(CItemBoxLine* self) {
         u32 v = GetCollectedFlagByte(self->field39F);
         func_801EBC00(tabs, self->tabEntries[(s8)self->field6D], self->field394, (u8)v);
         func_801EFFC4(self);
-        func_801EFE6C(self);
+        ItemBoxLine_RebuildTabList(self);
         func_801F0030(self);
         func_801F0488(self);
         func_801EB178(&self->mNumSel);
@@ -1309,8 +1309,8 @@ void func_801F0030(CItemBoxLine* self) {
             __as__11_GXColorS10FRC11_GXColorS10(&colors[11], &colors[3]);
         }
         u16 key = ItemBoxLine_GetTabEntryItem(tabs, idx);
-        func_801EF734((void*)self, key, i);
-        func_801EF844((void*)self, key, i);
+        ItemBoxLine_DrawTabRowText((void*)self, key, i);
+        ItemBoxLine_DrawTabRowIcon((void*)self, key, i);
         u8 vis = ItemBoxLine_GetTabEntryReady((void*)tabs, idx);
         func_801EFDF4((void*)self, i, vis);
         func_801EF954((void*)self, key, (s8)func_801EC8D8((void*)tabs, idx), i);
@@ -1349,19 +1349,19 @@ void func_801F0030(CItemBoxLine* self) {
     }
 }
 
-u8 func_801EECC0(void* self) { return static_cast<CItemBoxLine*>(self)->unk39E; }
+u8 ItemBoxLine_GetArmedFlag(void* self) { return static_cast<CItemBoxLine*>(self)->unk39E; }
 
-void CItemBoxLine::func_801EECC8() {
+void CItemBoxLine::ItemBoxLine_TouchTabEntryItem() {
     ItemBoxLine_GetTabEntryItem(&unk3A4, (unsigned char)(unk38C + unk38E));
 }
 
-void func_801EECE0(void* self) { ((void(*)(void*))func_801D2E4C)((char*)self + 0xb8); }
+void ItemBoxLine_ResetCursorB8(void* self) { ((void(*)(void*))func_801D2E4C)((char*)self + 0xb8); }
 
 // ============================================================================
-// func_801EECE8: step the tab cursor down one slot (wrap to count-1 when it
+// ItemBoxLine_Info2SelectPrev: step the tab cursor down one slot (wrap to count-1 when it
 // underflows), re-format the tab name overlay, then refresh the whole line.
 // ============================================================================
-void func_801EECE8(CItemBoxLine* self) {
+void ItemBoxLine_Info2SelectPrev(CItemBoxLine* self) {
     u8 b = code80135FDC_getByte_64077();
     u8 n = self->field39F - 1;
     self->field39F = n;
@@ -1376,11 +1376,11 @@ void func_801EECE8(CItemBoxLine* self) {
 }
 
 // ============================================================================
-// func_801EED6C: bump a cursor-position counter, format the tab name into a
+// ItemBoxLine_Info2SelectNext: bump a cursor-position counter, format the tab name into a
 // temp buffer, push it to the item-box-info2 overlay (via its vtable[4]), then
 // refresh the whole line and beep.
 // ============================================================================
-void func_801EED6C(void* self) {
+void ItemBoxLine_Info2SelectNext(void* self) {
     unsigned char* p = (unsigned char*)self;
     unsigned char maxPos = code80135FDC_getByte_64077();
     unsigned char n = (unsigned char)(p[0x39f] + 1);
@@ -1463,10 +1463,10 @@ void func_801EEDF8(CItemBoxLine* self) {
 #pragma pop
 
 // ============================================================================
-// func_801EF0EC: item-box focus resolver. Returns a cursor/focus id based on
+// ItemBoxLine_ResolveFocusId: item-box focus resolver. Returns a cursor/focus id based on
 // the current navigation state and tab position.
 // ============================================================================
-u8 func_801EF0EC(CItemBoxLine* self) {
+u8 ItemBoxLine_ResolveFocusId(CItemBoxLine* self) {
     if (self->field50 >= 6) return 0;
     if (func_801EB020((char*)self + 0x2dc)) return 0;
     if (CSysWin_getUnk34((char*)self + 0x350)) return 0;
@@ -1487,10 +1487,10 @@ u8 func_801EF0EC(CItemBoxLine* self) {
 }
 
 // ============================================================================
-// func_801EF1E4: when the animation transform at +0x44 has finished, disable
+// ItemBoxLine_EnterState0: when the animation transform at +0x44 has finished, disable
 // animation on it and enable it on +0x48 (intro -> loop), entering state 2.
 // ============================================================================
-void func_801EF1E4(CItemBoxLine* self) {
+void ItemBoxLine_EnterState0(CItemBoxLine* self) {
     if (advanceAnimTransform__FPQ34nw4r3lyt13AnimTransformf(self->field44, lbl_eu_80668114) != 0) {
         self->field40->SetAnimationEnable(self->field44, false);
         self->field40->SetAnimationEnable(self->field48, true);
@@ -1499,10 +1499,10 @@ void func_801EF1E4(CItemBoxLine* self) {
 }
 
 // ============================================================================
-// func_801EF260: animate the item-box intro (0x48), store state 3, prime cursors
+// ItemBoxLine_EnterState1: animate the item-box intro (0x48), store state 3, prime cursors
 // and re-format/push the tab name overlay.
 // ============================================================================
-void func_801EF260(CItemBoxLine* self) {
+void ItemBoxLine_EnterState1(CItemBoxLine* self) {
     if (advanceAnimTransform__FPQ34nw4r3lyt13AnimTransformf(self->field48, lbl_eu_80668114) == 0) return;
     self->field50 = 3;
     self->unk59 = 1;
@@ -1516,10 +1516,10 @@ void func_801EF260(CItemBoxLine* self) {
 }
 
 // ============================================================================
-// func_801EF2FC: when the animation transform at +0x48 has finished, disable
+// ItemBoxLine_EnterState2: when the animation transform at +0x48 has finished, disable
 // animation on it and re-enable it on +0x44 (outro -> intro), entering state 5.
 // ============================================================================
-void func_801EF2FC(CItemBoxLine* self) {
+void ItemBoxLine_EnterState2(CItemBoxLine* self) {
     if (AnimRewindFrame(self->field48, lbl_eu_80668114) != 0) {
         self->field40->SetAnimationEnable(self->field48, false);
         self->field40->SetAnimationEnable(self->field44, true);
@@ -1528,11 +1528,11 @@ void func_801EF2FC(CItemBoxLine* self) {
 }
 
 // ============================================================================
-// func_801EF378: on animation (+0x44) completion, set the busy byte, clear the
+// ItemBoxLine_EnterState3: on animation (+0x44) completion, set the busy byte, clear the
 // navigation state, silence both cursors (+0x70/+0xA0) and clear the visible
 // flag so the line stops rendering.
 // ============================================================================
-void func_801EF378(CItemBoxLine* self) {
+void ItemBoxLine_EnterState3(CItemBoxLine* self) {
     if (AnimRewindFrame(self->field44, lbl_eu_80668114) != 0) {
         self->unk59 = 1;
         self->field50 = 0;
@@ -1543,11 +1543,11 @@ void func_801EF378(CItemBoxLine* self) {
 }
 
 // ============================================================================
-// func_801EF3E8: when the syswin overlay is active, enter state 10, prime the
+// ItemBoxLine_PushSyswinCursor: when the syswin overlay is active, enter state 10, prime the
 // cursor at +0x70, build the syswin selection buffer and push it through the
 // cursor's vtable[2] virtual.
 // ============================================================================
-void func_801EF3E8(CItemBoxLine* self) {
+void ItemBoxLine_PushSyswinCursor(CItemBoxLine* self) {
     if (CSysWin_isActive(&self->mSysWin)) {
         self->field50 = 0xa;
         func_801D216C(&self->mCur70, 1);
@@ -1558,12 +1558,12 @@ void func_801EF3E8(CItemBoxLine* self) {
 }
 
 // ============================================================================
-// func_801EF45C: refresh the active tab - select from num-select, set the name,
+// ItemBoxLine_CommitOverlayState: refresh the active tab - select from num-select, set the name,
 // and advance to state 6. csvtab index = (0x38c + 0x38e) & 0xFF.
 // ============================================================================
 #pragma push
 #pragma optimize_for_size on
-void func_801EF45C(CItemBoxLine* self) {
+void ItemBoxLine_CommitOverlayState(CItemBoxLine* self) {
     if (!CSysWin_isActive(&self->mSysWin)) return;
     self->field50 = 3;
     if ((s8)self->field3A3 != 0) return;
@@ -1630,19 +1630,19 @@ extern "C" __declspec(noinline) void func_801EF518(CItemBoxLine* self) {
         i++;
     }
     func_801EFFC4((void*)self);
-    func_801EFE6C((void*)self);
+    ItemBoxLine_RebuildTabList((void*)self);
     self->field58 = 1;
 }
 #pragma pop
 
 // ============================================================================
-// func_801EF734: refresh a tab pane's texture. When a key id is given, resolve
+// ItemBoxLine_DrawTabRowText: refresh a tab pane's texture. When a key id is given, resolve
 // its texture name via the shared table (lbl_eu_806640EC), try object A
 // (+0x3C) first and fall back to object B (+0x38) with the default name; with
 // no key id, B is used directly. If a resource was found, format the pane
 // name from arg3 and bind the resource to the active layout.
 // ============================================================================
-void func_801EF734(CItemBoxLine* self, u32 arg2, u32 arg3) {
+void ItemBoxLine_DrawTabRowText(CItemBoxLine* self, u32 arg2, u32 arg3) {
     u32 result;
     if (arg2 != 0) {
         u32 v = BdatGetU16Direct((u32)lbl_eu_806640EC, &lbl_eu_805071B0[0x1ff], arg2);
@@ -1660,7 +1660,7 @@ void func_801EF734(CItemBoxLine* self, u32 arg2, u32 arg3) {
     }
 }
 
-void func_801EF844(CItemBoxLine* self, u32 arg2, u32 arg3) {
+void ItemBoxLine_DrawTabRowIcon(CItemBoxLine* self, u32 arg2, u32 arg3) {
     u32 result;
     if (arg2 != 0) {
         u32 v = BdatGetU16Direct((u32)lbl_eu_806640EC, &lbl_eu_805071B0[0x22a], arg2);
@@ -1731,12 +1731,12 @@ void func_801EFDF4(CItemBoxLine* self, const char* str, bool visible) {
 }
 
 // ============================================================================
-// func_801EFE6C: refresh the seven tab-slot panes (same shape as
+// ItemBoxLine_RebuildTabList: refresh the seven tab-slot panes (same shape as
 // func_801F061C), then, when the slot is unoccupied, bind a texture resource
 // (object A fallback path) onto the slot's pane name; finally dispatch the
 // slot entry through func_801EFB24. r25 keeps tabEntries[i] across the calls.
 // ============================================================================
-void func_801EFE6C(CItemBoxLine* self) {
+void ItemBoxLine_RebuildTabList(CItemBoxLine* self) {
     for (u8 i = 0; i < 7; i++) {
         char nameA[0x20];
         char nameB[0x20];
@@ -1773,7 +1773,7 @@ void func_801EFE6C(CItemBoxLine* self) {
 // through resource object A (falling back to B), bind it to the pane named
 // "%d"-style by index+1, and - unless the slot's occupancy byte is set -
 // push the default nameplate colour through the pane's colour-source virtual.
-// noinline: retail func_801EFE6C calls func_801EFB24 as an EXTERNAL reloc; the
+// noinline: retail ItemBoxLine_RebuildTabList calls func_801EFB24 as an EXTERNAL reloc; the
 // body would otherwise be inlined away, dropping the call from the .o.
 // ============================================================================
 extern "C" __declspec(noinline) void func_801EFB24(CItemBoxLine* self, u8 kind, u32 index) {
@@ -2056,10 +2056,10 @@ void func_801F107C(CItemBoxLine* self, u32 itemData) {
     int v23;
     int v22;
     if (BdatGetU8Direct(table, &lbl_eu_805071B0[0x5c5], kind) & 4) {
-        // retail reuses func_8009EC9C's r3 as the arg to func_800A082C
-        u16 c1 = func_800A082C(func_8009EC9C(1));
+        // retail reuses func_8009EC9C's r3 as the arg to CtrlObjectParam_GetArtsDataWord
+        u16 c1 = CtrlObjectParam_GetArtsDataWord(func_8009EC9C(1));
         v23 = (int)(lbl_eu_8066812C * (float)(a * c1));
-        u16 c2 = func_800A082C(func_8009EC9C(1));
+        u16 c2 = CtrlObjectParam_GetArtsDataWord(func_8009EC9C(1));
         v22 = (int)(lbl_eu_80668130 * (float)(b * c2));
         if ((u16)v23 >= 0x3e7) v23 = 0x3e7;
         if ((u16)v22 >= 0x3e7) v22 = 0x3e7;
@@ -2359,7 +2359,7 @@ void func_801F2298(CItemBoxLine* self, u32 itemData) {
     u8 vC = BdatGetU8Direct(owner, &lbl_eu_805071B0[0x622], cat);
     u8 defName = BdatGetU8ByTableKey(&lbl_eu_805071B0[0x5e1], &lbl_eu_805071B0[0x62b], vC);
     void* tbl = func_8009EC9C(vB);
-    u8 idx = (u8)func_800A32BC();
+    u8 idx = (u8)CtrlObjectParam_GetCurrentRowKey();
     const u8* entry = (const u8*)tbl + idx * 73 + (defName << 1);
     char* str = BdatTouchStringCell(&lbl_eu_805071B0[0x248], &lbl_eu_805071B0[0x6c], 44);
     switch (vA) {
@@ -2492,7 +2492,7 @@ int func_801F2880(u32 unused, u32 key) {
     u8 c = BdatGetU8Direct(table, &lbl_eu_805071B0[0x622], v);
     u8 d = BdatGetU8ByTableKey(&lbl_eu_805071B0[0x5e1], &lbl_eu_805071B0[0x62b], c);
     u8* base = (u8*)func_8009EC9C(b);
-    u32 f = (u8)func_800A32BC();
+    u32 f = (u8)CtrlObjectParam_GetCurrentRowKey();
     u32 d2 = (u32)d << 1;
     u32 prod = f * 0x49;
     u8* p = base + prod + d2;

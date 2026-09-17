@@ -8,7 +8,7 @@ extern "C" {
     extern u32 lbl_eu_8056EC80[];   // CScnIdMan vtable (defined below in this TU)
     extern void addRenderCB__4CScnFP10IScnRenderUlUl(void* r3, u32 r4, u32 r5, u32 r6);
     extern void removeRenderCB__4CScnFP10IScnRender(void* r3, u32 r4);
-    extern CScnIdPoolSlot* func_8048C698(void* r3, int r4);
+    extern CScnIdPoolSlot* CScnItemPool_lookupSubPool(void* r3, int r4);
     extern void* Scn_FindCamItem(void* r3, u32 r4);
     extern void* Scn_GetCamItem9C(void* r3, u32 r4);
     extern void func_8049B764(void* r3, void* r4);
@@ -36,7 +36,7 @@ extern "C" int func_8049E51C(const CScnIdMan* self) {
     CScnIdNode* node;
     u32 count;
     CScnIdNode* anchor;
-    CScnIdPoolSlot* slot = func_8048C698(self->mParam->mPool, 5);
+    CScnIdPoolSlot* slot = CScnItemPool_lookupSubPool(self->mParam->mPool, 5);
 
     anchor = slot->mAnchor;
     count = 0;

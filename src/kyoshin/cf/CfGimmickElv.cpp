@@ -238,10 +238,10 @@ extern "C" void* __dt__Q22cf12CfGimmickElvFv(CfGimmickElvData* self, int mode) {
     if (self != NULL) {
         self->vtable = (void*)lbl_eu_805358C8;
         CfGimmick_ClearManagerBinding(self);
-        func_8020A434((void*)&self->unk7C);
-        func_8020A434((void*)&self->unk1A4);
-        func_8020A434((void*)&self->unk1A8);
-        func_8020A434((void*)&self->unk1AC);
+        CfGimmick_UnregisterSpawnedObject((void*)&self->unk7C);
+        CfGimmick_UnregisterSpawnedObject((void*)&self->unk1A4);
+        CfGimmick_UnregisterSpawnedObject((void*)&self->unk1A8);
+        CfGimmick_UnregisterSpawnedObject((void*)&self->unk1AC);
         __dt__Q22cf9CfGimmickFv(self, 0);
         if (mode > 0) {
             __dl__FPv(self);
@@ -295,12 +295,12 @@ extern "C" void func_8020B2E4(CfGimmickElvData* self) {
 extern "C" void func_8020B34C(CfGimmickElvData* self) {
     // Init unk7C if needed
     if ((self->unk66 & 1) && self->unk7C == 0) {
-        self->unk7C = (u32)func_8020A35C((void*)func_8020A608(self->unk6A, 0), 0xF, &self->vec0);
+        self->unk7C = (u32)CfGimmick_SpawnNamedObject((void*)CfGimmick_LookupBdatGimmickName(self->unk6A, 0), 0xF, &self->vec0);
     }
 
     // Init unk1A4 if needed
     if ((self->flag1B0 & 1) && self->unk1A4 == 0) {
-        self->unk1A4 = (u32)func_8020A35C((void*)func_8020A608(self->unk6A, 0), 0xF, &self->elvVec0);
+        self->unk1A4 = (u32)CfGimmick_SpawnNamedObject((void*)CfGimmick_LookupBdatGimmickName(self->unk6A, 0), 0xF, &self->elvVec0);
     }
 
     // Check flags bit 8 (0x100)
@@ -312,8 +312,8 @@ extern "C" void func_8020B34C(CfGimmickElvData* self) {
         if ((self->flag1B2 & 1) && (self->flags & 0x01000000)) {
         }
     } else {
-        func_8020A434((void*)&self->unk1A8);
-        func_8020A434((void*)&self->unk1AC);
+        CfGimmick_UnregisterSpawnedObject((void*)&self->unk1A8);
+        CfGimmick_UnregisterSpawnedObject((void*)&self->unk1AC);
     }
 
     // Clear transient flags
@@ -330,7 +330,7 @@ extern "C" void func_8020B474(CfGimmickElvData* self) {
         if (self->flags & 0x200) {
             // Proximity gate active: if the player is NOT near, abort quietly;
             // otherwise drop the gate bit and fall through to sub-object checks
-            if (func_8020A5DC(self) != 0) {
+            if (CfGimmick_IsMessageSystemBusy(self) != 0) {
                 return;
             }
             self->flags &= ~0x200u;
@@ -338,16 +338,16 @@ extern "C" void func_8020B474(CfGimmickElvData* self) {
             // All configured effects must report ready
             bool ready = false;
             if (self->unk66 & 1) {
-                ready = func_8020A87C(self, self->unk7C);
+                ready = CfGimmick_CheckPartyIdLoaded(self, self->unk7C);
             }
             if (self->flag1B0 & 1) {
-                ready = ready | func_8020A87C(self, self->unk1A4);
+                ready = ready | CfGimmick_CheckPartyIdLoaded(self, self->unk1A4);
             }
             if (self->flag1B1 & 1) {
-                ready = ready | func_8020A87C(self, self->unk1A8);
+                ready = ready | CfGimmick_CheckPartyIdLoaded(self, self->unk1A8);
             }
             if (self->flag1B2 & 1) {
-                ready = ready | func_8020A87C(self, self->unk1AC);
+                ready = ready | CfGimmick_CheckPartyIdLoaded(self, self->unk1AC);
             }
 
             if (ready) {

@@ -459,7 +459,7 @@ extern "C" int EquipChange_IsWeaponRow(CEquipChange*);
 extern "C" int EquipChange_CheckBoxOpen(CEquipChange*);
 extern "C" u8 EquipChange_MapCursorToCat(CEquipChange*);
 extern "C" u8 func_80203210(CEquipChange*);
-extern "C" void EquipChange_ConfirmApply(CEquipChange*);
+extern "C" void func_80202CCC(CEquipChange*);
 extern "C" int EquipChange_GetBoxCount(CEquipChange*);
 extern "C" u8 EquipChange_GetLockedState(CEquipChange*);
 extern "C" int EquipChange_GetBoxTailByte(CEquipChange*);

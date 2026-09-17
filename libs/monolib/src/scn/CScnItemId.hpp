@@ -21,16 +21,16 @@ int func_804BC9F4(void* outStruct, u32 data);
 
 // Host scene-object accessors (unmangled C-linkage retail names).
 extern "C" u32 Scn_CallUnk8C_V8(void* self);            // scene allocation handle
-extern "C" u32 func_8048C5B8(void* pool, s32 kind);  // sub-pool capacity check
-extern "C" void* func_8048C698(void* pool, int kind);  // sub-pool slot accessor
-extern "C" void func_8048C630(void* pool, void* item, u32 value);  // register item
+extern "C" u32 CScnItemPool_hasFreeSlot(void* pool, s32 kind);  // sub-pool capacity check
+extern "C" void* CScnItemPool_lookupSubPool(void* pool, int kind);  // sub-pool slot accessor
+extern "C" void CScnItemPool_registerOtherList(void* pool, void* item, u32 value);  // register item
 
 // Node in the scene-id circular list (single link at +0x00).
 struct CScnItemIdNode {
     CScnItemIdNode* next;   // +0x00
 };
 
-// Sub-pool slot returned by func_8048C698(kind 5): circular-list sentinel at
+// Sub-pool slot returned by CScnItemPool_lookupSubPool(kind 5): circular-list sentinel at
 // +0x04.
 struct CScnItemIdListSlot {
     u32 field_0x0;              // +0x00

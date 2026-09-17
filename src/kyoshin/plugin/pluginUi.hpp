@@ -185,7 +185,7 @@ void UIWin_Create25070Win(const char* a, const char* b, const char* c);
 // Colosseum 6 invite: (u16 mode, u8 a, u8 b).
 void UIWin_CreateCol6Invite(int a, int b, int c);
 // Record the last-talk NPC ordinal.
-void func_8009ECD0(int id);
+void CtrlObjectParam_SetWorkTailValue(int id);
 // Character-table row count / keyed lookup helpers (setLastTalkNpc).
 int func_8003B1EC(char* tbl);
 u32 BdatGetU16Direct(char* tbl, const char* key, int idx);

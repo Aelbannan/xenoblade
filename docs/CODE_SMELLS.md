@@ -11,12 +11,12 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 
 | metric | count |
 |---|---|
-| extern "C" (total lines) | 17063 |
-| extern "C" declarations (non-lbl_*, imports) | 7664 |
-| extern "C" definitions (forced names) | 4390 |
+| extern "C" (total lines) | 17065 |
+| extern "C" declarations (non-lbl_*, imports) | 7665 |
+| extern "C" definitions (forced names) | 4391 |
 | `self`/register-style params | 13626 |
 | `void*` (params + locals) | 7658 |
-| raw pointer offset arithmetic | 7894 |
+| raw pointer offset arithmetic | 7895 |
 | deref-through-cast arithmetic | 3303 |
 | inline asm / `register` | 127 |
 | rN-named params | 464 |
@@ -337,7 +337,7 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 | src/kyoshin/CPcKizunagram.cpp | 3 | 28 | 74 | 8 | 16 | 0 | 0 | 4 | 30 | 0 | 0 | 0 |
 | src/kyoshin/CPresentWin.cpp | 1 | 14 | 40 | 14 | 8 | 1 | 0 | 1 | 1 | 0 | 0 | 0 |
 | src/kyoshin/CQstLogInfo.cpp | 4 | 13 | 38 | 6 | 0 | 0 | 0 | 2 | 0 | 0 | 0 | 0 |
-| src/kyoshin/CQstLogList.cpp | 6 | 18 | 62 | 2 | 0 | 0 | 0 | 0 | 4 | 0 | 0 | 0 |
+| src/kyoshin/CQstLogList.cpp | 6 | 19 | 62 | 2 | 0 | 0 | 0 | 0 | 4 | 0 | 0 | 0 |
 | src/kyoshin/CQuestWindow.cpp | 3 | 4 | 37 | 11 | 6 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/CSaveLoad.cpp | 5 | 52 | 66 | 33 | 103 | 16 | 0 | 5 | 48 | 0 | 0 | 0 |
 | src/kyoshin/CScrollBar.cpp | 0 | 0 | 11 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
@@ -362,7 +362,7 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 | src/kyoshin/CTutorial.cpp | 0 | 3 | 3 | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/CTutorialList.cpp | 9 | 30 | 66 | 7 | 3 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/CUIBattleManager.cpp | 16 | 14 | 37 | 44 | 3 | 3 | 0 | 1 | 0 | 0 | 0 | 0 |
-| src/kyoshin/CUICfManager.cpp | 67 | 28 | 12 | 48 | 28 | 38 | 0 | 0 | 203 | 0 | 0 | 0 |
+| src/kyoshin/CUICfManager.cpp | 68 | 28 | 12 | 48 | 29 | 38 | 0 | 0 | 203 | 0 | 0 | 0 |
 | src/kyoshin/CUIErrMesWin.cpp | 6 | 5 | 27 | 11 | 2 | 2 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/CUIWindowManager.cpp | 20 | 40 | 28 | 27 | 0 | 28 | 0 | 0 | 103 | 0 | 0 | 0 |
 | src/kyoshin/action/CActParamAnim.cpp | 4 | 71 | 298 | 46 | 131 | 66 | 0 | 0 | 17 | 0 | 0 | 0 |
@@ -3611,7 +3611,7 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
  "src/kyoshin/CQstLogList.cpp": {
   "asm_insn_shim": 0,
   "extern_c_nonlbl_decl": 6,
-  "extern_c_nonlbl_def": 18,
+  "extern_c_nonlbl_def": 19,
   "goto_count": 4,
   "init_side_effect": 0,
   "schedule_pragma": 0,
@@ -3870,11 +3870,11 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
  "src/kyoshin/CUICfManager.cpp": {
   "asm_insn_shim": 0,
   "deref_arith": 38,
-  "extern_c_nonlbl_decl": 67,
+  "extern_c_nonlbl_decl": 68,
   "extern_c_nonlbl_def": 28,
   "goto_count": 203,
   "init_side_effect": 0,
-  "ptr_arith": 28,
+  "ptr_arith": 29,
   "schedule_pragma": 0,
   "self_params": 12,
   "void_ptr": 48

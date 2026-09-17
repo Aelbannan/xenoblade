@@ -126,10 +126,10 @@ extern "C" void __dt__Q22cf8CREvtObjFv(cf::CREvtObj* self, int dealloc_flag);
 extern "C" void __dt__80185754(void* ptr);
 
 // Bdat / data loading
-extern "C" void* func_8016A24C(u32 arg);
-extern "C" void* func_8016A27C(void* ptr);
-extern "C" int func_8016A35C();
-extern "C" bool func_8016C410();
+extern "C" void* EvtSeqResolveListEntryAddr(u32 arg);
+extern "C" void* EvtSeqFindEventByNameData(void* ptr);
+extern "C" int EvtSeqGetCounter100();
+extern "C" bool EvtSeqIsSlotIndexFour();
 extern "C" bool func_80180954();
 extern "C" void func_8016AF4C(void* obj, const char* name, s32* out);
 

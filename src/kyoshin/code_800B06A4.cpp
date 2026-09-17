@@ -3011,7 +3011,7 @@ extern "C" void func_800B83AC() {
         return;
     }
     if (isTimerActive__Q22cf13CfGameManagerFv() == 0) {
-        void* party = func_8009ECB0();
+        void* party = CtrlObjectParam_GetSlotTableBase();
         const float threshold = lbl_eu_806669D8;
         // Retail walks a cursor based at party+4 and reads the slot at +0xc
         // from it (member words start at base+0x10).

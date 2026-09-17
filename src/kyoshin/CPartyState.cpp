@@ -316,10 +316,10 @@ extern "C" void func_801FD220(CPartyState* self) {
 // Selection confirm: swap the party member at the highlight slot (0x4D) with
 // the selected member (0x4C), reset the highlight, refresh, and mark ready.
 extern "C" __declspec(noinline) void func_801FE0C8(CPartyState* self) {
-    int* party = func_8009ECB0();
+    int* party = CtrlObjectParam_GetSlotTableBase();
     // (u8) result cast instead of `& 0xFF` — same mask, different VR birth.
     u8 slotA = (u8)GetCollectedFlagByte((u8)self->field_0x4D);
-    func_8009E168(party, slotA, GetCollectedFlagByte(self->field_0x4C));
+    CtrlObjectParam_SwapSlotValues(party, slotA, GetCollectedFlagByte(self->field_0x4C));
     func_80139198(0);
     func_80080888__Q22cf13CfGameManagerFv(GetCollectedFlagByte(0), 0);
     func_801FDA7C(self);

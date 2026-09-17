@@ -85,7 +85,7 @@ static CScnCameraItem* findCamByViewId(CScnCameraMan* cam, CView* view) {
     CScnCameraParam* p = cam->mParam;
     u8* pool = p->mPool;
     CScnCameraNode* node;
-    CScnCameraNode* sentinel = func_8048C698(pool, 4)->sentinel;
+    CScnCameraNode* sentinel = CScnItemPool_lookupSubPool(pool, 4)->sentinel;
     node = sentinel->next;
     while (node != sentinel) {
         CScnCameraItem* item = node->item;
@@ -147,7 +147,7 @@ void func_8049B024(CScnCameraMan* cam) {
         id = cam->mCamId;
     }
 
-    CScnCameraList* list = func_8048C698(cam->mParam->mPool, 4);
+    CScnCameraList* list = CScnItemPool_lookupSubPool(cam->mParam->mPool, 4);
     CScnCameraItem* item = findCamById(list->sentinel, id);
     item->vf3();
 }
@@ -171,7 +171,7 @@ CWorkThread* func_8049B0A0(CScnCameraMan* cam, s32 id) {
         id = (s16)cam->mCamId;
     }
 
-    CScnCameraList* list = func_8048C698(cam->mParam->mPool, 4);
+    CScnCameraList* list = CScnItemPool_lookupSubPool(cam->mParam->mPool, 4);
     CScnCameraNode* node;
     CScnCameraNode* sentinel = list->sentinel;
     node = sentinel->next;
@@ -207,7 +207,7 @@ CScnCameraItem* func_8049B158(CScnCameraMan* cam, s32 id) {
         id = cam->mCamId;
     }
 
-    CScnCameraList* list = func_8048C698(cam->mParam->mPool, 4);
+    CScnCameraList* list = CScnItemPool_lookupSubPool(cam->mParam->mPool, 4);
     CScnCameraNode* sentinel = list->sentinel;
     CScnCameraNode* node = sentinel->next;
     while (node != sentinel) {
@@ -226,7 +226,7 @@ CScnCameraItem* func_8049B1CC(CScnCameraMan* cam, s32 id) {
         id = cam->mCamId;
     }
 
-    CScnCameraList* list = func_8048C698(cam->mParam->mPool, 4);
+    CScnCameraList* list = CScnItemPool_lookupSubPool(cam->mParam->mPool, 4);
     CScnCameraNode* node;
     CScnCameraNode* sentinel = list->sentinel;
     node = sentinel->next;
@@ -249,7 +249,7 @@ CScnCameraItem* func_8049B1CC(CScnCameraMan* cam, s32 id) {
 CScnCameraItem* func_8049B240(CScnCameraMan* cam, CScnCameraParam* param) {
     CScnCameraParam* p = cam->mParam;
     u8* pool = p->mPool;
-    CScnCameraNode* sentinel = func_8048C698(pool, 4)->sentinel;
+    CScnCameraNode* sentinel = CScnItemPool_lookupSubPool(pool, 4)->sentinel;
     CScnCameraNode* node = sentinel->next;
     while (node != sentinel) {
         CScnCameraItem* item = node->item;
@@ -270,7 +270,7 @@ CScnCameraItem* func_8049B240(CScnCameraMan* cam, CScnCameraParam* param) {
 // Instruction sequence, control flow, size and relocs match exactly.
 CScnCameraItem* func_8049B2C4(CScnCameraMan* cam, CScnCameraParam* param) {
     CScnCameraParam* p = cam->mParam;
-    CScnCameraList* list = func_8048C698(p->mPool, 4);
+    CScnCameraList* list = CScnItemPool_lookupSubPool(p->mPool, 4);
     CScnCameraNode* node = list->sentinel->next;
     CScnCameraNode* sentinel = list->sentinel;
     while (node != sentinel) {
@@ -297,7 +297,7 @@ bool CScnCameraMan::WorkEvent3(UNKTYPE* r4) {
             camId = mCamId;
         }
 
-        CScnCameraItem* item = findCamById2(camId, func_8048C698(mParam->mPool, 4));
+        CScnCameraItem* item = findCamById2(camId, CScnItemPool_lookupSubPool(mParam->mPool, 4));
         if (item != NULL) {
             func_8043A1DC__11CScriptCodeFv(this, (u8*)ev->pData, ev->dataSize);
             return true;
@@ -331,7 +331,7 @@ bool CScnCameraMan::WorkEvent1(UNKTYPE* payload, const char* r5) {
 
     s32 camId = mCamId;
 
-    CScnCameraList* list = func_8048C698(mParam->mPool, 4);
+    CScnCameraList* list = CScnItemPool_lookupSubPool(mParam->mPool, 4);
     CScnItemCamera* item = NULL;
     for (CScnCameraNode* node = list->sentinel->next; node != list->sentinel;
          node = node->next) {

@@ -28,10 +28,10 @@ extern "C" {
     // stripped retail placeholder names, so they need C linkage to emit the same
     // unmangled reloc. `strcpy` comes from <string.h> and `DCFlushRange` from
     // <revolution/os/OSCache.h> (both already included above).
-    s32 func_804DA9C4(CNReqtaskLoadData* data, u8 arg);  // NAND open primitive
-    s32 func_804DA540(u8* ptr, u32 arg);  // NAND set-buffer primitive
-    s32 func_804DA5B4(u32 arg1, u32 arg2);  // NAND read primitive
-    s32 func_804DA69C(void);                // NAND close primitive
+    s32 CNReqSaveFormatTempPath(CNReqtaskLoadData* data, u8 arg);  // NAND open primitive
+    s32 CNReqSaveNandOpen(u8* ptr, u32 arg);  // NAND set-buffer primitive
+    s32 CNReqSaveNandRead(u32 arg1, u32 arg2);  // NAND read primitive
+    s32 CNReqSaveNandClose(void);                // NAND close primitive
 }
 
 // ===== Dissolved monolibdata2 (blob surgery) data owned by this TU =====
@@ -41,13 +41,13 @@ extern "C" {
 // sibling .data block lbl_eu_8056FD98 (pointing at CNRequest's RTTI locator
 // lbl_eu_80663B70, owned by the CNReqtaskSave unit).
 extern "C" u32 lbl_eu_80663B70;     // CNRequest RTTI locator (foreign sdata)
-extern "C" void func_804DA4CC();    // CNRequest base vtable func (foreign TU)
+extern "C" void CNReqSaveDeallocIfOpen();    // CNRequest base vtable func (foreign TU)
 extern "C" s32 func_804DAFB8(CNReqtaskLoadVtbl*, CNReqtaskLoadData*); // defined below
 extern "C" u32 lbl_eu_80663B90[2];  // this unit's .sdata RTTI locator pair
 extern "C" u32* lbl_eu_806659E8[2] = { 0, 0 }; // [.sbss] 0x806659E8 (8B) task vtable slot
 
 extern "C" u32 lbl_eu_8056FD88[4] = {
-    (u32)&lbl_eu_80663B90, 0x00000000, (u32)&func_804DAFB8, (u32)&func_804DA4CC,
+    (u32)&lbl_eu_80663B90, 0x00000000, (u32)&func_804DAFB8, (u32)&CNReqSaveDeallocIfOpen,
 };
 extern "C" u32 lbl_eu_8056FD98[4] = {
     (u32)&lbl_eu_80663B70, 0x00000000, 0x00000000, 0x00000000,
@@ -98,9 +98,9 @@ extern "C" CNReqtaskLoadVtbl** func_804DAF70(CNReqtaskLoadData* data, const char
 // Async NAND load state machine, polled by the CNand completion pump.
 // Advancing one step per call; returns 1 when fully loaded, 2 on error,
 // 0 while still in progress. Steps:
-//   0 -> open the file (func_804DA9C4 + func_804DA540)
-//   1 -> read into mBuffer (func_804DA5B4)
-//   2 -> close the file (func_804DA69C)
+//   0 -> open the file (CNReqSaveFormatTempPath + CNReqSaveNandOpen)
+//   1 -> read into mBuffer (CNReqSaveNandRead)
+//   2 -> close the file (CNReqSaveNandClose)
 //   3 -> flush dcache on the read buffer (DCFlushRange)
 //   4 -> done (return 1)
 extern "C" s32 func_804DAFB8(CNReqtaskLoadVtbl* vtable_ptr, CNReqtaskLoadData* data) {
@@ -120,8 +120,8 @@ extern "C" s32 func_804DAFB8(CNReqtaskLoadVtbl* vtable_ptr, CNReqtaskLoadData* d
 
     switch ((s8)d->mState) {
         case 0: {
-            s32 ret = func_804DA9C4(d, d->mFlag);
-            s32 r = func_804DA540((u8*)(u32)ret, 1);
+            s32 ret = CNReqSaveFormatTempPath(d, d->mFlag);
+            s32 r = CNReqSaveNandOpen((u8*)(u32)ret, 1);
             if (r != 0) {
                 return 2;
             }
@@ -129,7 +129,7 @@ extern "C" s32 func_804DAFB8(CNReqtaskLoadVtbl* vtable_ptr, CNReqtaskLoadData* d
             goto ret0;
         }
         case 1: {
-            s32 r = func_804DA5B4(d->mBuffer, d->mSize);
+            s32 r = CNReqSaveNandRead(d->mBuffer, d->mSize);
             if (r != 0) {
                 return 2;
             }
@@ -137,7 +137,7 @@ extern "C" s32 func_804DAFB8(CNReqtaskLoadVtbl* vtable_ptr, CNReqtaskLoadData* d
             goto ret0;
         }
         case 2: {
-            s32 r = func_804DA69C();
+            s32 r = CNReqSaveNandClose();
             if (r != 0) {
                 return 2;
             }

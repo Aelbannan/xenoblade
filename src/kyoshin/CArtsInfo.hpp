@@ -215,10 +215,10 @@ extern "C" void func_801C4B60(void*, s16, s16, s16, s16); // colour init
 extern "C" void PaneMatSetTevColorsByName(void*, void*, void*, void*);
 extern "C" void func_80137924(void*, void*, void*, void*);
 extern "C" void* func_8009EC9C(u32);
-extern "C" u32 func_800A32BC(void*); // character-data category
+extern "C" u32 CtrlObjectParam_GetCurrentRowKey(void*); // character-data category
 // Shared retail declaration (same signature as CItemBoxGrid.hpp - MWCC
 // rejects differing extern "C" redeclarations as illegal overloading).
-extern "C" u32 func_800A082C(void*);
+extern "C" u32 CtrlObjectParam_GetArtsDataWord(void*);
 extern "C" u16 BdatGetItemId(u32);
 // Full-width return: retail callers keep the raw result in a register and
 // narrow explicitly ((u16) casts); a u16 decl forces an early clrlwi.

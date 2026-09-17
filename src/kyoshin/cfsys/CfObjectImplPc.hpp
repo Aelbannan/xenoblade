@@ -1033,7 +1033,7 @@ void CUICfManager_queueFactoryMenu(int a, float b);
 int func_800DA06C(void* mgr, void* obj);
 void func_800451D8(u32 entry, void* sub);
 void* func_8009EC9C(u32 index); // canonical owner-form (void*, u32): CtrlObjectParam.cpp / CfObjectPc.hpp; matches CVS_THREAD.hpp (MWCC 10197)
-u8* func_8009D7E4(u8* info, int a);
+u8* CtrlObjectParam_GetArtsStatsRow(u8* info, int a);
 }
 
 // C++-mangled imports (plain declarations let MWCC append the retail

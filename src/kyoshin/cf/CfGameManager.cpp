@@ -115,10 +115,10 @@ struct CTaskGameCamView {
 };
 
 extern "C" void gmFileObject(void* object);
-// TU-local decl: loadBdatGroupData is a tail-call thunk (addi r3,r3,0x1c; b func_8009D790)
+// TU-local decl: loadBdatGroupData is a tail-call thunk (addi r3,r3,0x1c; b CtrlObjectParam_ResolveEquipItem)
 // that passes r4 through, so the 1-arg form is intentional here. The retail
 // 2-arg form (data + index) is declared in pluginCfs.cpp.
-extern "C" void func_8009D790(CfGameManagerData1C* data);
+extern "C" void CtrlObjectParam_ResolveEquipItem(CfGameManagerData1C* data);
 
 // --- imports for the func_8007xxxx / func_8008xxxx target bodies ---
 // (retail C-linkage names; signature params are informational, the emitted
@@ -1242,7 +1242,7 @@ u32 cf::CfGameManager::getMapEffectManager() {
 }
 
 void cf::CfGameManager::loadBdatGroupData() {
-    func_8009D790(&field_0x1C);
+    CtrlObjectParam_ResolveEquipItem(&field_0x1C);
 }
 
 bool cf::CfObjectMap::isObjectMapReady() {
@@ -1768,7 +1768,7 @@ cf::CfGameManager* UnkClass_8007DAE0::init(CScnNw4r* scene, CView* view,
     lbl_eu_80663E40 = arg;
     // Bare Fv-name call: retail leaves r3 untouched here.
     func_8007DCB8__Q22cf13CfGameManagerFv();
-    func_8009E474(func_8009ECB0(), lbl_eu_80663E40);
+    CtrlObjectParam_MoveValueToHead(CtrlObjectParam_GetSlotTableBase(), lbl_eu_80663E40);
     s32 fallback = -1;
     syncBdatDataCache__Q22cf13CfGameManagerFv(lbl_eu_80663E40, &fallback, 4);
     CfRes_tryRefreshSlot220(0x70100000, 4);
@@ -2061,13 +2061,13 @@ void cf::CfGameManager::func_8007DCB8() {
             s32 active = 0;
             if (value != 0 && lbl_eu_80663E40 != 0 && dataId <= 7) {
                 func_80158420(value, &result, 1, &extra);
-                func_8009E0C4(data, col, value);
+                CtrlObjectParam_WriteU16RowEntry(data, col, value);
                 func_8009DBF4(data, col, reinterpret_cast<void*>(static_cast<s32>(result)));
                 active = 1;
             }
             if (active == 0) {
                 func_8009DBF4(data, col, reinterpret_cast<void*>(-1));
-                func_8009E0C4(data, col, value);
+                CtrlObjectParam_WriteU16RowEntry(data, col, value);
             }
         }
         func_8009EF9C(data, 0);
@@ -2087,7 +2087,7 @@ extern "C" void func_8007E9CC__Q22cf13CfGameManagerFv(u16 value, u32 mode) {}
 // each input row through the item-instance factory.
 extern "C" void func_8007F1FC__Q22cf13CfGameManagerFv(void* inList, s32 mode) {
     cf::CtrlObjectParamSlots* party =
-        reinterpret_cast<cf::CtrlObjectParamSlots*>(func_8009ECB0());
+        reinterpret_cast<cf::CtrlObjectParamSlots*>(CtrlObjectParam_GetSlotTableBase());
     func_8009E3C0();
     u16 match[9];
     const u32* slotWords = reinterpret_cast<const u32*>(party);
@@ -2146,7 +2146,7 @@ extern "C" void func_8007F1FC__Q22cf13CfGameManagerFv(void* inList, s32 mode) {
             }
             if (!listed) {
                 func_8007E9CC__Q22cf13CfGameManagerFv(static_cast<u16>(x), 0);
-                func_8009E740(party, x);
+                CtrlObjectParam_ClearSlotValue(party, x);
             }
         }
     }
@@ -2168,8 +2168,8 @@ extern "C" void func_8007F1FC__Q22cf13CfGameManagerFv(void* inList, s32 mode) {
                 func_8015720C(x, 1);
                 func_8007E9CC__Q22cf13CfGameManagerFv(static_cast<u16>(x), 1);
                 if (mode) {
-                    if (!func_8009E56C(party, x, 1)) {
-                        func_8009E56C(party, x, 2);
+                    if (!CtrlObjectParam_InsertSlotValue(party, x, 1)) {
+                        CtrlObjectParam_InsertSlotValue(party, x, 2);
                     }
                 } else if (i < 3) {
                     func_8009E574(party, x, 1, i);
@@ -2186,7 +2186,7 @@ extern "C" void func_8007F1FC__Q22cf13CfGameManagerFv(void* inList, s32 mode) {
     for (int i = 1; i <= 8; ++i) {
         if (i != 3 && isResourceFlagSet__Q22cf13CfGameManagerFv(i)) {
             u16 c = static_cast<u16>(
-                func_800A082C(func_8009EC9C(static_cast<u16>(i))));
+                CtrlObjectParam_GetArtsDataWord(func_8009EC9C(static_cast<u16>(i))));
             ++count;
             total += U16ToF32(c);
         }
@@ -2216,16 +2216,16 @@ extern "C" void func_8007F1FC__Q22cf13CfGameManagerFv(void* inList, s32 mode) {
                 func_8009EF9C(obj, 0);
                 func_800A21F8(obj, 0, lbl_eu_805276F0[static_cast<u16>(x)], 0);
                 if (x >= 3 && x <= 8) {
-                    u16 c = static_cast<u16>(func_800A082C(obj));
+                    u16 c = static_cast<u16>(CtrlObjectParam_GetArtsDataWord(obj));
                     func_800A2974(obj,
                                   static_cast<u16>(c + seed + itembase - 1));
                 }
             } else {
-                u16 c = static_cast<u16>(func_800A082C(obj));
+                u16 c = static_cast<u16>(CtrlObjectParam_GetArtsDataWord(obj));
                 if (x == 3) {
                     UnkClass_8009EC9C* obj8 =
                         reinterpret_cast<UnkClass_8009EC9C*>(func_8009EC9C(8));
-                    u16 c8 = static_cast<u16>(func_800A082C(obj8));
+                    u16 c8 = static_cast<u16>(CtrlObjectParam_GetArtsDataWord(obj8));
                     if (c < c8) {
                         c = c8;
                     }
@@ -2272,7 +2272,7 @@ void cf::CfGameManager::func_80084654() {}
 // E24 bit-16 "title/battle setup" flag, resets the battle manager
 // (party-gauge + 0x94 payload), clears the presentation masks, reloads the
 // bdat event table, then either kicks the event-video UI or re-populates the
-// file-event table through func_8009ECB0 / func_8009D5FC.
+// file-event table through CtrlObjectParam_GetSlotTableBase / func_8009D5FC.
 void cf::CfGameManager::resetBattlePresentation() {
     if (!lbl_eu_80663E70) {
         __ct__Q22cf13CfGameManagerFv(&lbl_eu_80571758);
@@ -2323,7 +2323,7 @@ void cf::CfGameManager::resetBattlePresentation() {
         }
     } else {
         for (s32 i = 1; i <= 13; ++i) {
-            func_8009F6D4(func_8009EC9C(static_cast<u16>(i)));
+            CtrlObjectParam_ActivateCharRow(func_8009EC9C(static_cast<u16>(i)));
         }
         __dt__8023E448();
         CItem_rerankAllKinds();
@@ -2342,8 +2342,8 @@ void cf::CfGameManager::resetBattlePresentation() {
             }
         }
         UnkC1B4Data* video = reinterpret_cast<UnkC1B4Data*>(func_8023C1B4());
-        lbl_eu_80663E40 = (u16)func_8009ECB0()[1];
-        func_8009E474(func_8009ECB0(), lbl_eu_80663E40);
+        lbl_eu_80663E40 = (u16)CtrlObjectParam_GetSlotTableBase()[1];
+        CtrlObjectParam_MoveValueToHead(CtrlObjectParam_GetSlotTableBase(), lbl_eu_80663E40);
         CfFileEventIdsView* ids = func_8009D5FC();
         queueSceneEventA__Q22cf13CfGameManagerFv(
             ids->field_0x2, ids->field_0x0, reinterpret_cast<u32>(video),
@@ -2564,7 +2564,7 @@ extern "C" void func_80085978__Q22cf13CfGameManagerFv(int param) {
             lbl_eu_80663E28 &= ~0x800;
         }
         for (s32 i = 1; i <= 13; ++i) {
-            func_8009F6D4(func_8009EC9C(static_cast<u16>(i)));
+            CtrlObjectParam_ActivateCharRow(func_8009EC9C(static_cast<u16>(i)));
         }
 
         // Item-list sweep through func_800AD860's flag view. Retail table

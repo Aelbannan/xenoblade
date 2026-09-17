@@ -135,7 +135,7 @@ struct CfBattleState {
     s16 mField20C8;           // 0x20C8
 };
 
-// Party-slot list returned by func_8009ECB0: two character ids.
+// Party-slot list returned by CtrlObjectParam_GetSlotTableBase: two character ids.
 struct CfPartyList {
     u8 pad_00[0x8];
     u32 mField08;             // 0x08 first slot character id
@@ -163,7 +163,7 @@ void func_800898D4(cf::CCtrlMovePC* self, ml::CVec3* v);
 int  func_804BE5A4(int a, int b);
 
 // Additional engine helpers (retail C names).
-void* func_8009ECB0();
+void* CtrlObjectParam_GetSlotTableBase();
 cf::CfGlobalSettings* getUnk80664658();
 int  func_801F4ED8(void* a, void* b);
 void func_800D59FC(void* a);

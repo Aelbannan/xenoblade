@@ -56,7 +56,7 @@ extern "C" {
     extern float lbl_eu_80667A74;
     extern u16 lbl_eu_80663E3C;
     extern u8  lbl_eu_8066476D;
-    int*  func_8009ECB0();
+    int*  CtrlObjectParam_GetSlotTableBase();
     void* func_8023C1B4();
     void CfRes_tryRefreshSlot298(u32 a, u32 b);
     void func_8008064C__Q22cf13CfGameManagerFv(void* element0, int idx, float* stk);
@@ -204,7 +204,7 @@ int func_8018FA2C(CFuncHost* self, u32 p1, u32 p2, u32 p3, u32 p4) {
 
     // Refresh every occupied party slot: resolve its character data, reset
     // the two display sub-object modes (+0x17C slots 0xA4/0xA8) and sync.
-    PartySlotList* slotList = reinterpret_cast<PartySlotList*>(func_8009ECB0());
+    PartySlotList* slotList = reinterpret_cast<PartySlotList*>(CtrlObjectParam_GetSlotTableBase());
     for (int i = 0; i < 9; i++) {
         u32 entry = slotList->slots[i];
         if (entry == 0) continue;
@@ -213,7 +213,7 @@ int func_8018FA2C(CFuncHost* self, u32 p1, u32 p2, u32 p3, u32 p4) {
         cf::CActorParam* cdParam = reinterpret_cast<cf::CActorParam*>(reinterpret_cast<u8*>(data) + 0x17c);
         cdParam->CActorParam_resetArtsStatus(NULL);
         cdParam->CActorParam_commitArtsStatus(1);
-        func_800A1370(data);
+        CtrlObjectParam_SyncParamFromActor(data);
     }
 
     if (found != 0) {
@@ -241,7 +241,7 @@ int func_8018FCA8(CFuncHost* self, u32 a, u32 b, u32 c, u32 d) {
     // use site; retail reloads it each time rather than caching it in one
     // register, which is what fixes the callee-saved register allocation.
     if (self->manager->unk94[0] != 0) {
-        func_8009ECB0();
+        CtrlObjectParam_GetSlotTableBase();
         if (lbl_eu_80663E24 & 0x100000) {
             // Fixed setup: force players 0..2 into-or-out-of "command" mode
             // (bit 4 at +0x68) and move them by an offset vector before the

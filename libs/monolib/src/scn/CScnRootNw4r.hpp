@@ -52,7 +52,7 @@ struct CScnItemPool;
 // slots this TU passes to the per-manager update/draw helpers.
 struct CScnMgrLayout {
     u8 pad_0x0[0x60];                 // +0x00
-    CScnItemPool* mItemPool;          // +0x60 (arg of func_8048CD0C)
+    CScnItemPool* mItemPool;          // +0x60 (arg of CScnItemPool_forEachCallVfunc14)
     CScnLightMan* mLightMan;          // +0x64 (arg of func_8048D1B0)
     CScnCameraMan* mCamWork;          // +0x68 (arg of func_8049B024)
     u8 pad_0x6C[0x78 - 0x6C];         // +0x6C
@@ -119,7 +119,7 @@ extern "C" void scnLgtEnterMode20(CScnEnvLgtCtrl* ctrl);
 extern "C" void func_8049B024(CScnCameraMan* cam);
 extern "C" void func_8048D1B0(CScnLightMan* man);
 extern "C" void func_8049DE70(CScnFogMan* man);
-extern "C" void func_8048CD0C(CScnItemPool* pool);
+extern "C" void CScnItemPool_forEachCallVfunc14(CScnItemPool* pool);
 extern "C" void func_8048FAA8(CScnRootNw4r* self, int flag);
 extern "C" void resetGXStateA__8CGXCacheFv(CGXCache* cache);
 extern "C" void updateViewRoot__9CViewRootFv();
@@ -140,7 +140,7 @@ class CScnItemModel;
 extern "C" int simSyncBuf824Flags(CScnItemModel* item, int param);
 
 // Kind-1 sub-pool list returned by the scene-item-pool accessor.
-extern "C" void* func_8048C698(void* pool, int kind);
+extern "C" void* CScnItemPool_lookupSubPool(void* pool, int kind);
 extern "C" int func_8048D264(void* scene);
 
 // Per-model draw hook object stored at CScnItemModel+0x7EC. Dispatched at

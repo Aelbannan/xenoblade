@@ -27,8 +27,8 @@ Of 299 demoted FULL_MATCH rows, 107 were re-matched to byte-identical by source 
 | us-801678a8 | kyoshin/cf/CTaskREvent | `func_801666EC` |
 | us-801678b8 | kyoshin/cf/CTaskREvent | `func_801666FC` |
 | us-80169678 | kyoshin/cf/CTaskREvtSequence | `EvtSeqGetSharedState` |
-| us-8016db34 | kyoshin/cf/CTaskREvtSequence | `func_8016C7D8` |
-| us-8016db3c | kyoshin/cf/CTaskREvtSequence | `func_8016C7E0` |
+| us-8016db34 | kyoshin/cf/CTaskREvtSequence | `EvtSeqDtorThunk54` |
+| us-8016db3c | kyoshin/cf/CTaskREvtSequence | `EvtSeqRenderThunk58` |
 | us-8020acbc | kyoshin/cf/CfGimmick | `CfGimmick_SetGlobalB8Value` |
 | us-80174c98 | kyoshin/cf/CfMapItemManager | `func_8017389C` |
 | us-80174ca0 | kyoshin/cf/CfMapItemManager | `func_801738A4` |

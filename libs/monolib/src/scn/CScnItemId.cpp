@@ -54,12 +54,12 @@ CScnItemId::~CScnItemId() {
 // ===========================================================================
 CScnItemId* __ct__804820F8(CScnItemIdHost* self, u32 value, const char* name) {
     CScnItemId* item = NULL;
-    if (func_8048C5B8(self->mPool, 5) == 0) {
+    if (CScnItemPool_hasFreeSlot(self->mPool, 5) == 0) {
         return 0;
     }
 
     // The id list (kind 5) must be empty before a new id item can be created.
-    CScnItemIdListSlot* slot = (CScnItemIdListSlot*)func_8048C698(self->mPool, 5);
+    CScnItemIdListSlot* slot = (CScnItemIdListSlot*)CScnItemPool_lookupSubPool(self->mPool, 5);
     CScnItemIdNode* node;
     u32 count;
     CScnItemIdNode* anchor;
@@ -107,7 +107,7 @@ CScnItemId* __ct__804820F8(CScnItemIdHost* self, u32 value, const char* name) {
         }
     }
 
-    func_8048C630(self->mPool, item, value);
+    CScnItemPool_registerOtherList(self->mPool, item, value);
     return item;
 }
 

@@ -231,7 +231,7 @@ void CMenuSkipTimer::Move() {
     }
 
     if (pressed) {
-        if (func_802A01F0(&mTimerData) == 0) {
+        if (CSkipTimerIsEngaged(&mTimerData) == 0) {
             if (func_800FEDF8() != 0) {
                 func_800FF914();
                 playUISound__FUl(6);

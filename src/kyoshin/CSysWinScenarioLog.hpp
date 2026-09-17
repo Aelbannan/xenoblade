@@ -897,7 +897,7 @@ extern "C" f32 lbl_eu_80668AE4;
 // Scenario-log unit imports (func_80280640 / func_8027F148 / func_8027EC80 /
 // func_8027EA6C / func_80280F44). Retail-unmangled C-ABI symbols.
 extern "C" void* func_8009EC9C(u32 index);            // character-data lookup
-extern "C" u32 func_800A32BC();                       // character-data category
+extern "C" u32 CtrlObjectParam_GetCurrentRowKey();                       // character-data category
 extern "C" u32 func_8003B1EC(void* fp);               // BDAT row count
 extern "C" u32 func_8009CF8C(u32 resourceId);         // message-count lookup
 extern "C" u32 BdatGetU16ByTableKey(const void*, const void*, u32);   // msg-id lookup

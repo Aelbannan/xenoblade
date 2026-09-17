@@ -10,7 +10,7 @@ struct CScnLightNode {
     struct CScnItemLight* item;    // +0x08
 };
 
-// List handle returned by the scene-item-pool accessor (func_8048C698).
+// List handle returned by the scene-item-pool accessor (CScnItemPool_lookupSubPool).
 // +0x04 holds the circular-list sentinel.
 struct CScnLightList {
     u32 _00;                       // +0x00

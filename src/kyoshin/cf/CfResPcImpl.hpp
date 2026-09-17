@@ -130,7 +130,7 @@ struct CfResPcParent {
 /* 0x38 */ void* field_38;  // object with vtable slot +0xB0 (dispatched by func_8018E7E4) -> CfObject_getPosTriple
     u8 field_3C[0x64 - 0x3C];
     /* 0x64 */ u32 field_64;       // flags (bit 1 = 0x2 tested by CfResPcImpl_teardownLookupEntry, bit 31 = 0x80000000 tested by CfResPcImpl_euReregisterOnFlag)
-    /* 0x68 */ u32 field_68;       // flags (bit 21 = 0x200000 tested by CfResPcImpl_notifyReload/CF90)
+    /* 0x68 */ u32 field_68;       // flags (bit 21 = 0x200000 tested by CfResPcImpl_notifyReloadEvent/CF90)
     /* 0x6C */ u32 field_6C;       // flags (bit 17 = 0x20000 set by CfResPcImpl_probeAndCapHandler on query success)
     u8 field_70[0x74 - 0x70];      // 0x70..0x73
     /* 0x74 */ u8* field_74;       // sound-related pointer passed to func_801BFE20 (same offset as CfResReloadParent)
@@ -278,7 +278,7 @@ public:
     virtual int CfResPcImpl_probeAndCapHandler(int arg2);    // 0x50
     virtual void CfResPcImpl_notifySound(int arg2, int arg3, int arg4, float f1, float f2); // 0x54
     virtual void CfResPcImpl_notifyReloadSimple(int arg2, int arg3); // 0x58
-    virtual void CfResPcImpl_notifyReload(int arg2, int arg3, int arg4); // 0x5C
+    virtual void CfResPcImpl_notifyReloadEvent(int arg2, int arg3, int arg4); // 0x5C
     virtual int CfResPcImpl_getLiveStateId();            // 0x60
     virtual int func_8016CD54();            // 0x64
     virtual int CfResObj_true68();            // 0x68
@@ -446,7 +446,7 @@ extern "C" void CfRes_cancelPendingRead(CResLookup* child, cf::CfResPcLookupEntr
 extern "C" void CfRes_releaseCachedBase(cf::CfResPcLookupEntry* entry, bool cleanup);
 extern "C" ::CfFileEventIdsView* func_8009D5FC();
 extern "C" void func_8009EB2C(int a, int b, u8* c);
-extern "C" void func_8009F6D4(void* object);
+extern "C" void CtrlObjectParam_ActivateCharRow(void* object);
 extern "C" void* func_8009EC9C(u32 idx);  // canonical owner-form (void*) shared by all TUs; callers cast to cf::CfResPcCharData*
 extern "C" void func_80068AEC(u8* name);
 extern "C" void func_8008413C__Q22cf13CfGameManagerFv(u16 a, u32 b);

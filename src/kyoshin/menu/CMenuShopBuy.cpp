@@ -264,14 +264,14 @@ void CMenuShopBuy::Init() {
 
     // Reset the real member and register the render callback (same
     // `if (this)` IScnRender idiom as Term).
-    func_801EDA08(reinterpret_cast<CItemBoxLine*>(mItemBoxLine));
-    func_801EDA4C(reinterpret_cast<CItemBoxLine*>(mItemBoxLine), 2);
-    func_801EDA4C(reinterpret_cast<CItemBoxLine*>(mItemBoxLine), 4);
-    func_801EDA4C(reinterpret_cast<CItemBoxLine*>(mItemBoxLine), 5);
-    func_801EDA4C(reinterpret_cast<CItemBoxLine*>(mItemBoxLine), 6);
-    func_801EDA4C(reinterpret_cast<CItemBoxLine*>(mItemBoxLine), 7);
-    func_801EDA4C(reinterpret_cast<CItemBoxLine*>(mItemBoxLine), 8);
-    func_801EDA4C(reinterpret_cast<CItemBoxLine*>(mItemBoxLine), 0xd);
+    ItemBoxLine_ResetTabBytes(reinterpret_cast<CItemBoxLine*>(mItemBoxLine));
+    ItemBoxLine_PushTabByte(reinterpret_cast<CItemBoxLine*>(mItemBoxLine), 2);
+    ItemBoxLine_PushTabByte(reinterpret_cast<CItemBoxLine*>(mItemBoxLine), 4);
+    ItemBoxLine_PushTabByte(reinterpret_cast<CItemBoxLine*>(mItemBoxLine), 5);
+    ItemBoxLine_PushTabByte(reinterpret_cast<CItemBoxLine*>(mItemBoxLine), 6);
+    ItemBoxLine_PushTabByte(reinterpret_cast<CItemBoxLine*>(mItemBoxLine), 7);
+    ItemBoxLine_PushTabByte(reinterpret_cast<CItemBoxLine*>(mItemBoxLine), 8);
+    ItemBoxLine_PushTabByte(reinterpret_cast<CItemBoxLine*>(mItemBoxLine), 0xd);
     ItemBoxLine_LoadFiles(reinterpret_cast<CItemBoxLine*>(mItemBoxLine));
 
     IScnRender* cb = reinterpret_cast<IScnRender*>(this);
@@ -296,7 +296,7 @@ void CMenuShopBuy::Term() {
 
     func_801C3D9C(&mBgTex);
     func_801C40A0(&mTitleAHelp);
-    func_801ED618(reinterpret_cast<CItemBoxLine*>(mItemBoxLine));
+    ItemBoxLine_UnloadFiles(reinterpret_cast<CItemBoxLine*>(mItemBoxLine));
 
     lbl_eu_806642F8 = 0;
     setPresentationFlag__Q22cf13CfGameManagerFv(0);
@@ -345,7 +345,7 @@ void CMenuShopBuy::cbRenderBefore() {
     __ct__Q34nw4r3lyt8DrawInfoFv(&drawInfo[0]);
     func_80137250((nw4r::lyt::DrawInfo*)&drawInfo[0]);
     func_801C3D7C(&mBgTex, (nw4r::lyt::DrawInfo*)&drawInfo[0]);
-    func_801ED4FC(reinterpret_cast<CItemBoxLine*>(mItemBoxLine), (nw4r::lyt::DrawInfo*)&drawInfo[0]);
+    ItemBoxLine_DrawLayout(reinterpret_cast<CItemBoxLine*>(mItemBoxLine), (nw4r::lyt::DrawInfo*)&drawInfo[0]);
     func_801C4080(&mTitleAHelp, (nw4r::lyt::DrawInfo*)&drawInfo[0]);
     __dt__Q34nw4r3lyt8DrawInfoFv(&drawInfo[0], -1);
 }
@@ -398,7 +398,7 @@ extern "C" bool func_8018C180() { return lbl_eu_806642F8 != 0; }
 extern "C" __declspec(noinline) void func_8018C190(CMenuShopBuy* self) {
     if (func_801C3E34(&self->mBgTex) != 0) {
         if (func_801C4114(&self->mTitleAHelp) != 0) {
-            if (func_801ED774(reinterpret_cast<CItemBoxLine*>(self->mItemBoxLine)) != 0) {
+            if (ItemBoxLine_GetSelectReady(reinterpret_cast<CItemBoxLine*>(self->mItemBoxLine)) != 0) {
                 func_801C412C(&self->mTitleAHelp);
                 func_801ED864(reinterpret_cast<CItemBoxLine*>(self->mItemBoxLine));
                 self->mState = 1;
@@ -412,7 +412,7 @@ extern "C" __declspec(noinline) void func_8018C190(CMenuShopBuy* self) {
 // is ready, move to the next phase.
 extern "C" __declspec(noinline) void func_8018C208(CMenuShopBuy* self) {
     if (isIdle__11CTitleAHelpFv(&self->mTitleAHelp) != 0) {
-        if (func_801ED800(reinterpret_cast<CItemBoxLine*>(self->mItemBoxLine)) != 0) {
+        if (ItemBoxLine_IsReadyFlag(reinterpret_cast<CItemBoxLine*>(self->mItemBoxLine)) != 0) {
             self->mState = 2;
         }
     }
@@ -433,86 +433,86 @@ extern "C" __declspec(noinline) void func_8018C258(CMenuShopBuy* self) {
         // Pointer input enabled: turbo flags move the cursor, pressed flags
         // run the confirm/cancel flow. The item-box pointer is recomputed per
         // call (addi r3,r31,0xbc) exactly like retail - no cached local.
-        func_801EECE0(reinterpret_cast<CItemBoxLine*>(self->mItemBoxLine), 0);
+        ItemBoxLine_ResetCursorB8(reinterpret_cast<CItemBoxLine*>(self->mItemBoxLine), 0);
         if ((pad->mTurboFlags & 0x02000000) &&
-            func_801ED808(reinterpret_cast<CItemBoxLine*>(self->mItemBoxLine)) == 0 &&
+            ItemBoxLine_IsBusy(reinterpret_cast<CItemBoxLine*>(self->mItemBoxLine)) == 0 &&
             code80135FDC_getByte_64077() > 1) {
-            func_801EECE8(reinterpret_cast<CItemBoxLine*>(self->mItemBoxLine));
+            ItemBoxLine_Info2SelectPrev(reinterpret_cast<CItemBoxLine*>(self->mItemBoxLine));
         } else if ((pad->mTurboFlags & 0x04000000) &&
-                   func_801ED808(reinterpret_cast<CItemBoxLine*>(self->mItemBoxLine)) == 0 &&
+                   ItemBoxLine_IsBusy(reinterpret_cast<CItemBoxLine*>(self->mItemBoxLine)) == 0 &&
                    code80135FDC_getByte_64077() > 1) {
-            func_801EED6C(reinterpret_cast<CItemBoxLine*>(self->mItemBoxLine));
+            ItemBoxLine_Info2SelectNext(reinterpret_cast<CItemBoxLine*>(self->mItemBoxLine));
         } else if (pad->mPressedFlags & 0x00200000) {
             func_801EE788(reinterpret_cast<CItemBoxLine*>(self->mItemBoxLine));
         } else if (pad->mPressedFlags & 0x00400000) {
-            if (func_801ED808(reinterpret_cast<CItemBoxLine*>(self->mItemBoxLine)) != 0) {
-                func_801EE684(reinterpret_cast<CItemBoxLine*>(self->mItemBoxLine));
+            if (ItemBoxLine_IsBusy(reinterpret_cast<CItemBoxLine*>(self->mItemBoxLine)) != 0) {
+                ItemBoxLine_ConfirmOverlayOrHint(reinterpret_cast<CItemBoxLine*>(self->mItemBoxLine));
             } else {
                 func_801C414C(&self->mTitleAHelp);
-                func_801ED97C(reinterpret_cast<CItemBoxLine*>(self->mItemBoxLine));
+                ItemBoxLine_LeaveState3(reinterpret_cast<CItemBoxLine*>(self->mItemBoxLine));
                 self->mState = 3;
             }
         } else if (pad->mTurboFlags & 0x8004) {
             func_801EDC94(reinterpret_cast<CItemBoxLine*>(self->mItemBoxLine));
         } else if ((pad->mTurboFlags & 0x10000) != 0 || (pad->mTurboFlags & 0x8) != 0) {
-            func_801EDF40(reinterpret_cast<CItemBoxLine*>(self->mItemBoxLine));
+            ItemBoxLine_CursorPageDown(reinterpret_cast<CItemBoxLine*>(self->mItemBoxLine));
         } else if (pad->mTurboFlags & 0x2001) {
-            func_801EE228(reinterpret_cast<CItemBoxLine*>(self->mItemBoxLine));
+            ItemBoxLine_CursorPageUp(reinterpret_cast<CItemBoxLine*>(self->mItemBoxLine));
         } else if (pad->mTurboFlags & 0x4002) {
-            func_801EE448(reinterpret_cast<CItemBoxLine*>(self->mItemBoxLine));
+            ItemBoxLine_CursorPageDownRow(reinterpret_cast<CItemBoxLine*>(self->mItemBoxLine));
         } else if (pad->mPressedFlags & 0x200) {
             func_801EEDF8(reinterpret_cast<CItemBoxLine*>(self->mItemBoxLine));
         } else if (pad->mPressedFlags & 0x400) {
-            func_801EF050(reinterpret_cast<CItemBoxLine*>(self->mItemBoxLine));
+            ItemBoxLine_RefreshTabSelect(reinterpret_cast<CItemBoxLine*>(self->mItemBoxLine));
         }
     } else {
         // Pointer input disabled: pad-held/pressed bits drive the flow, and
         // the inner A/B chain exits straight to the shared refresh.
-        func_801EECE0(reinterpret_cast<CItemBoxLine*>(self->mItemBoxLine), 0);
+        ItemBoxLine_ResetCursorB8(reinterpret_cast<CItemBoxLine*>(self->mItemBoxLine), 0);
         if ((pad->mHeldFlags & 0x1000) &&
-            func_801ED808(reinterpret_cast<CItemBoxLine*>(self->mItemBoxLine)) == 0 &&
+            ItemBoxLine_IsBusy(reinterpret_cast<CItemBoxLine*>(self->mItemBoxLine)) == 0 &&
             code80135FDC_getByte_64077() > 1) {
             if (self->mFloat6FC > lbl_eu_80667A24) playUISound__FUl(2);
             self->mFloat6FC = lbl_eu_80667A20;
-            func_801EECE0(reinterpret_cast<CItemBoxLine*>(self->mItemBoxLine), 1);
+            ItemBoxLine_ResetCursorB8(reinterpret_cast<CItemBoxLine*>(self->mItemBoxLine), 1);
             if (pad->mTurboFlags & 0x2001) {
-                func_801EECE8(reinterpret_cast<CItemBoxLine*>(self->mItemBoxLine));
+                ItemBoxLine_Info2SelectPrev(reinterpret_cast<CItemBoxLine*>(self->mItemBoxLine));
             } else if (pad->mTurboFlags & 0x4002) {
-                func_801EED6C(reinterpret_cast<CItemBoxLine*>(self->mItemBoxLine));
+                ItemBoxLine_Info2SelectNext(reinterpret_cast<CItemBoxLine*>(self->mItemBoxLine));
             }
         } else if (pad->mPressedFlags & 0x10) {
             func_801EE788(reinterpret_cast<CItemBoxLine*>(self->mItemBoxLine));
         } else if (pad->mPressedFlags & 0x20) {
-            if (func_801ED808(reinterpret_cast<CItemBoxLine*>(self->mItemBoxLine)) != 0) {
-                func_801EE684(reinterpret_cast<CItemBoxLine*>(self->mItemBoxLine));
+            if (ItemBoxLine_IsBusy(reinterpret_cast<CItemBoxLine*>(self->mItemBoxLine)) != 0) {
+                ItemBoxLine_ConfirmOverlayOrHint(reinterpret_cast<CItemBoxLine*>(self->mItemBoxLine));
             } else {
                 func_801C414C(&self->mTitleAHelp);
-                func_801ED97C(reinterpret_cast<CItemBoxLine*>(self->mItemBoxLine));
+                ItemBoxLine_LeaveState3(reinterpret_cast<CItemBoxLine*>(self->mItemBoxLine));
                 self->mState = 3;
             }
         } else if (pad->mTurboFlags & 0x8004) {
             func_801EDC94(reinterpret_cast<CItemBoxLine*>(self->mItemBoxLine));
         } else if ((pad->mTurboFlags & 0x10000) != 0 || (pad->mTurboFlags & 0x8) != 0) {
-            func_801EDF40(reinterpret_cast<CItemBoxLine*>(self->mItemBoxLine));
+            ItemBoxLine_CursorPageDown(reinterpret_cast<CItemBoxLine*>(self->mItemBoxLine));
         } else if (pad->mTurboFlags & 0x2001) {
-            func_801EE228(reinterpret_cast<CItemBoxLine*>(self->mItemBoxLine));
+            ItemBoxLine_CursorPageUp(reinterpret_cast<CItemBoxLine*>(self->mItemBoxLine));
         } else if (pad->mTurboFlags & 0x4002) {
-            func_801EE448(reinterpret_cast<CItemBoxLine*>(self->mItemBoxLine));
+            ItemBoxLine_CursorPageDownRow(reinterpret_cast<CItemBoxLine*>(self->mItemBoxLine));
         } else if (pad->mPressedFlags & 0x200) {
             func_801EEDF8(reinterpret_cast<CItemBoxLine*>(self->mItemBoxLine));
         } else if (pad->mPressedFlags & 0x40) {
-            func_801EF050(reinterpret_cast<CItemBoxLine*>(self->mItemBoxLine));
+            ItemBoxLine_RefreshTabSelect(reinterpret_cast<CItemBoxLine*>(self->mItemBoxLine));
         }
     }
     func_801C41E8(&self->mTitleAHelp,
-                  func_801EF0EC(reinterpret_cast<CItemBoxLine*>(self->mItemBoxLine)));
+                  ItemBoxLine_ResolveFocusId(reinterpret_cast<CItemBoxLine*>(self->mItemBoxLine)));
 }
 
 // Close: same idle+ready guard as func_8018C208, but marks the closing state
 // byte at 0x54 instead of advancing the phase byte.
 extern "C" __declspec(noinline) void func_8018C59C(CMenuShopBuy* self) {
     if (isIdle__11CTitleAHelpFv(&self->mTitleAHelp) != 0) {
-        if (func_801ED800(reinterpret_cast<CItemBoxLine*>(self->mItemBoxLine)) != 0) {
+        if (ItemBoxLine_IsReadyFlag(reinterpret_cast<CItemBoxLine*>(self->mItemBoxLine)) != 0) {
             self->mField54 = 1;
         }
     }

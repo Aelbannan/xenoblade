@@ -200,7 +200,7 @@ extern "C" cf::CSoundNode* __ct__802A86CC();
 extern "C" cf::CSoundNode* __ct__802A6E84();
 extern "C" cf::CSoundNode* func_802B9064();
 extern "C" cf::CSoundNode* func_802A4798();
-extern "C" cf::CSoundNode* func_802AE38C();
+extern "C" cf::CSoundNode* TutorialList_PlayTutorialVoice();
 extern "C" cf::CSoundNode* func_802A7674();
 extern "C" cf::CSoundNode* func_802A8AC8();
 extern "C" cf::CSoundNode* func_802A7744();

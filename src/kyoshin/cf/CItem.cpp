@@ -2192,7 +2192,7 @@ void CItemParty_refreshSlots(CItemPartySlots* self) {
         for (s32 s = 0; s <= 5; s++, cdc += 2) {
             *sc = -1;
             if (*(const s16*)(cdc + 0x1c) > -1) {
-                rec = (CItemData*)func_8009D790((s16*)(cd + 0x1c), (u32)s);
+                rec = (CItemData*)CtrlObjectParam_ResolveEquipItem((s16*)(cd + 0x1c), (u32)s);
                 if (rec->field_00 == 0) {
                     func_8009DBF4(cd, (u32)s, (void*)-1);
                 } else {
@@ -2214,10 +2214,10 @@ void CItemParty_refreshSlots(CItemPartySlots* self) {
                 CItem_initItemImplInstances(rec)->vf48(rec);
             }
             t = *(u16*)(cd + (u16)s * 2 + 2);
-            *sc = (s16)func_8009E0B4(cd, (u32)s,
+            *sc = (s16)CtrlObjectParam_ReadItemDataU16(cd, (u32)s,
                                      (void*)((unsigned long)cd + (unsigned long)((u16)s * 2)));
             func_8009DBF4(cd, (u32)s, (void*)-1);
-            func_8009E0C4(cd, (u16)s, t);
+            CtrlObjectParam_WriteU16RowEntry(cd, (u16)s, t);
             sc++;
         }
         p += 8;
@@ -2337,7 +2337,7 @@ extern "C" s32 func_80159524() {
                 slotVal = buf[0x258 / 2 + id2];
             }
             func_8009DBF4(cd, (u32)i, (void*)(s32)slotVal);
-            CItemData* rec = (CItemData*)func_8009D790((s16*)&cd[0x1c], (u32)i);
+            CItemData* rec = (CItemData*)CtrlObjectParam_ResolveEquipItem((s16*)&cd[0x1c], (u32)i);
             for (s32 j = 0; j < 8; j++) {
                 if (pb[0xb6 + j] == (s16)i) {
                     s16 slot2 = pb[0x4e + j];

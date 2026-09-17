@@ -249,12 +249,12 @@ extern char lbl_eu_80573C30[];
 extern nw4r::math::VEC3 zero__Q22ml5CVec3;
 
 // helpers
-// (func_8003B1EC / func_8009ECB0 / func_8009D018 stay inline in
+// (func_8003B1EC / CtrlObjectParam_GetSlotTableBase / func_8009D018 stay inline in
 //  code_80135FDC.cpp - functions.hpp / CChainActorPc.hpp / CKizunaTalkList.hpp
 //  declare them with different signatures and are co-included by callers)
 extern "C" void* func_8009EC9C(u32 idx);
-extern "C" int func_8009EBE8(u32 idx);
-extern "C" void func_8009EB94(u32 idx, u32 value);
+extern "C" int CtrlObjectParam_GetItemBitFlag(u32 idx);
+extern "C" void CtrlObjectParam_SetItemBitFlag(u32 idx, u32 value);
 extern "C" void CItemBlock_setFlag120EC(u8, u32);
 
 extern "C" void activateLOD__8CTaskLODFv(s8);

@@ -112,7 +112,7 @@ cf::CfObjectPc* __dt__Q22cf10CfObjectPcFv(cf::CfObjectPc* self, s32 deleteFlag) 
 // Per-frame PC setup: refreshes the CfResPcImpl resource object and runs
 // slots 0x5EC/0x330/0x5F4; when this is the active player's move sub-object
 // also resets the screen. For arts row 4, copies four bdat string bytes into
-// +0x1629..+0x162C using the row from func_800A32BC (the column getter
+// +0x1629..+0x162C using the row from CtrlObjectParam_GetCurrentRowKey (the column getter
 // returns a string pointer; only its first byte is consumed).
 void func_800BFDE0(cf::CfObjectPc* obj) {
     CfObjectPcSubFields* f = (CfObjectPcSubFields*)obj;
@@ -142,7 +142,7 @@ void func_800BFDE0(cf::CfObjectPc* obj) {
         file = lbl_eu_80664090;
         col = 4;
         // Signed compare (cmpi) in retail.
-        if ((int)func_800A32BC(data) == 1) {
+        if ((int)CtrlObjectParam_GetCurrentRowKey(data) == 1) {
             col = 0xC;
         }
         // Union memory round-trip (same shape as CBattleState): MWCC homes
@@ -157,7 +157,7 @@ void func_800BFDE0(cf::CfObjectPc* obj) {
         f->field_0x162B = u2.b;
         u3.w = getBdatStringColumnValue(file, names + 0x19, col);
         f->field_0x162C = u3.b;
-        func_800A13C4((u8*)data, 1);
+        CtrlObjectParam_SyncParamFromActorEx((u8*)data, 1);
     }
 }
 
@@ -266,7 +266,7 @@ void cf::CfObjectPc::scanArtsEntries() {
     CfObjectPcArtsData* data = (CfObjectPcArtsData*)func_8009EC9C(
         ((CfObjectPcSubFields*)this)->field_0x3F28);
     for (int i = 0; i <= 5; i++) {
-        if (func_8009D7E4(&data->mEntries, i)->field_0x1A != 0) break;
+        if (CtrlObjectParam_GetArtsStatsRow(&data->mEntries, i)->field_0x1A != 0) break;
     }
 }
 
@@ -567,7 +567,7 @@ void CActorParam_UnkVirtualFunc88__Q22cf10CfObjectPcFv(
         }
     actedDone:;
     }
-    func_800A13C4((u8*)arts, 0);
+    CtrlObjectParam_SyncParamFromActorEx((u8*)arts, 0);
     func_801A891C((u8*)self, 0);
 }
 

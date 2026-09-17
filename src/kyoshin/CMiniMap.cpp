@@ -3084,7 +3084,7 @@ extern "C" void __declspec(noinline) func_80116B40(void* self) {
         u32 cnt = view->field_0x6A4;
         u32 kind = 9;
         view->field_0x4C8[cnt] = 0;
-        if ((u16)nameId == func_8009ECF0()) {
+        if ((u16)nameId == CtrlObjectParam_GetWorkField50()) {
             kind = 8;
             view->field_0x4C8[cnt] = 1;
         }

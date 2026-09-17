@@ -294,7 +294,7 @@ struct CMdlDynHolder {
     CMdlDynSub* field_0x0; // 0x0
 };
 
-extern "C" __declspec(noinline) u32 MdlDyn_HasDictEntry(u8* self) { return *(u32*)self != 0; }
+extern "C" __declspec(noinline) u32 MdlDyn_HasDictEntry(void* self) { return *(u32*)self != 0; }
 
 // 0x98-stride dynamic-model element driven by func_804ECAC4.
 struct CMdlDynElem98 {

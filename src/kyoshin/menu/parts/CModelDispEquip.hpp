@@ -397,7 +397,7 @@ extern "C" CModelDispNameParam* CfObjectMove_getBdatNameCol7(cf::CfObjectMove* m
 extern "C" CModelDispNameParam* func_800BBC08(u8 value);
 extern "C" u32 func_8014235C(u32 param1, const char* column, u32 param3);
 extern "C" int sprintf(char* str, const char* fmt, ...);
-extern "C" int* func_8009ECB0();
+extern "C" int* CtrlObjectParam_GetSlotTableBase();
 extern "C" u8 BdatGetU8ByTableKey(const void*, const void*, u32);
 extern "C" u32 func_80141E90(u32 param1, s16 param2, u32 param3, u32 param4);
 extern "C" u32 func_80141FE0(int index);

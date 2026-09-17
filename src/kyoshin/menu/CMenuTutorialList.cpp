@@ -93,7 +93,7 @@ void CMenuTutorialList::Term() {
 
     func_801C3D9C(&mBgTex);
     func_801C40A0(&mTitleAHelp);
-    func_802AD1F4(reinterpret_cast<CTutorialList*>(mTutorialList));
+    TutorialList_ReleaseResources(reinterpret_cast<CTutorialList*>(mTutorialList));
     func_8029ABD8(reinterpret_cast<CTutorial*>(mTutorial));
 
     lbl_eu_80664BE8 = 0;
@@ -166,7 +166,7 @@ body:
 
     func_801C3D54(&mBgTex);
     func_801C3FF0(&mTitleAHelp);
-    func_802AD0E0(reinterpret_cast<CTutorialList*>(mTutorialList));
+    TutorialList_UpdatePerFrame(reinterpret_cast<CTutorialList*>(mTutorialList));
     func_8029AB28(reinterpret_cast<CTutorial*>(mTutorial));
 }
 
@@ -192,7 +192,7 @@ body:
     nw4r::lyt::DrawInfo drawInfo;
     func_80137250(&drawInfo);
     func_801C3D7C(&mBgTex, &drawInfo);
-    func_802AD188(reinterpret_cast<CTutorialList*>(mTutorialList), &drawInfo);
+    TutorialList_DrawVisible(reinterpret_cast<CTutorialList*>(mTutorialList), &drawInfo);
     func_8029ABB8(reinterpret_cast<CTutorial*>(mTutorial), &drawInfo);
     func_801C4080(&mTitleAHelp, &drawInfo);
 }
@@ -220,9 +220,9 @@ extern "C" CMenuTutorialList* func_802AC494(CProcess* self, CProcess* parent, u3
 void func_802AC520(CMenuTutorialList* self) {
     if (func_801C3E34(&self->mBgTex) != 0) {
         if (func_801C4114(&self->mTitleAHelp) != 0) {
-            if (func_802AD2A4((CTutorialList*)self->mTutorialList) != 0) {
+            if (TutorialList_IsListVisible((CTutorialList*)self->mTutorialList) != 0) {
                 func_801C412C(&self->mTitleAHelp);
-                func_802AD308((CTutorialList*)self->mTutorialList);
+                TutorialList_OpenListInit((CTutorialList*)self->mTutorialList);
                 self->mFlag = 1;
                 playUISound(0x6d);
             }
@@ -234,7 +234,7 @@ void func_802AC520(CMenuTutorialList* self) {
 // ready, move to the next phase.
 void func_802AC598(CMenuTutorialList* self) {
     if (isIdle__11CTitleAHelpFv(&self->mTitleAHelp) != 0) {
-        if (func_802AD300((CTutorialList*)self->mTutorialList) != 0) {
+        if (TutorialList_IsInitialized((CTutorialList*)self->mTutorialList) != 0) {
             self->mFlag = 2;
         }
     }
@@ -246,7 +246,7 @@ void func_802AC5E8(CMenuTutorialList* self) {}
 // byte at 0x54 instead of advancing the phase byte.
 void func_802AC8A4(CMenuTutorialList* self) {
     if (isIdle__11CTitleAHelpFv(&self->mTitleAHelp) != 0) {
-        if (func_802AD300((CTutorialList*)self->mTutorialList) != 0) {
+        if (TutorialList_IsInitialized((CTutorialList*)self->mTutorialList) != 0) {
             self->mField54 = 1;
         }
     }
@@ -261,7 +261,7 @@ void func_802AC8F4(CMenuTutorialList* self) {
         func_801C4760(&self->mTitleAHelp);
         func_801C41C0(&self->mTitleAHelp,
             BdatTouchStringCell(lbl_eu_80510B44 + 0xe, lbl_eu_80510B44 + 0x17,
-                func_802AD838(reinterpret_cast<CTutorialList*>(self->mTutorialList))));
+                TutorialList_GetSelectedEntryId(reinterpret_cast<CTutorialList*>(self->mTutorialList))));
         func_8029ACC4(reinterpret_cast<CTutorial*>(self->mTutorial));
     }
 }
@@ -289,8 +289,8 @@ void func_802AC970(CMenuTutorialList* self) {
             func_801C41E8(&self->mTitleAHelp, 0x72);
             break;
         }
-        func_8009D018(0x33bf + func_802AD838(reinterpret_cast<CTutorialList*>(self->mTutorialList)), 1);
-        func_802AD854(reinterpret_cast<CTutorialList*>(self->mTutorialList));
+        func_8009D018(0x33bf + TutorialList_GetSelectedEntryId(reinterpret_cast<CTutorialList*>(self->mTutorialList)), 1);
+        TutorialList_RefreshRowTexts(reinterpret_cast<CTutorialList*>(self->mTutorialList));
     }
 }
 

@@ -94,8 +94,7 @@ class UnitRules:
     # compares section size + bytes, so the pad restores the retail section
     # exactly. Only grows; drops use drop_data_tail/drop_data_range.
     pad_data_section: tuple[tuple[str, int], ...] = ()
-    patch_data: tuple[tuple[str, int, bytes], ...] = ()
-
+    # Set sh_addralign on named sections. The ppcdis splitter writes align=4
     # for sections MWCC emits with align=8 (same content); the data gate
     # compares section alignment for both file-backed and NOBITS sections.
     set_data_align: tuple[tuple[str, int], ...] = ()
@@ -6862,7 +6861,6 @@ UNIT_RULES: dict[str, UnitRules] = {
             (struct.pack(">II", 0x43300000, 0x00000000), "lbl_eu_80669C08"),
         ),
         pad_data_section=((".sdata", 0x8),),
-        patch_data=((".sdata", 0, b"\xFF\xFF\xFF\xFF"),),
         inject_relocs=((".sdata", 4, "lbl_eu_8061FA20"),),
         drop_nobits_range=((".sbss", 0x20, 0x28),),
         extern_data_sections=(".sdata2",),
@@ -7254,11 +7252,12 @@ UNIT_RULES: dict[str, UnitRules] = {
     # literal 0.0f) must be retargeted onto the named pool/tables (or the
     # conversions/switches reshaped) before the final link; retail carries
     # neither MWCC trailing table nor pool.
-    # patch_data zeroes the jumptable canary (MWCC cannot emit an all-zero
-    # .data object: it routes those to .bss despite the section attribute).
+    # .data[0] is a 1-byte jumptable canary (retail 0x00; MWCC emits 0x01
+    # and routes an all-zero .data object to .bss despite the section
+    # attribute). Left as a source-level data residual: patch_data was a
+    # forbidden byte-patch shim, removed under PLAN.md §17.6.
     "code_80135FDC.o": UnitRules(
         drop_data_tail=((".sdata2", 0x90), (".data", 0x118)),
-        patch_data=((".data", 0x00, b"\x00"),),
     ),
 
     "CCol6Invite.o": UnitRules(
@@ -9990,36 +9989,6 @@ def pad_sdata2_section(path: Path, new_size: int) -> bool:
     return pad_data_section_func(path, ".sdata2", new_size)
 
 
-def patch_data_func(path: Path, section: str, offset: int, data_bytes: bytes) -> bool:
-    data = bytearray(path.read_bytes())
-    if data[:4] != b"\x7fELF" or data[5] != 2:
-        raise ValueError(f"expected big-endian ELF32: {path}")
-    e_shoff = struct.unpack_from(">I", data, 32)[0]
-    e_shentsize = struct.unpack_from(">H", data, 46)[0]
-    e_shnum = struct.unpack_from(">H", data, 48)[0]
-    e_shstrndx = struct.unpack_from(">H", data, 50)[0]
-    shstr_off = struct.unpack_from(">I", data, e_shoff + e_shstrndx * e_shentsize + 16)[0]
-    sec_idx = None
-    for i in range(e_shnum):
-        hoff = e_shoff + i * e_shentsize
-        sh_name = struct.unpack_from(">I", data, hoff)[0]
-        end = data.index(0, shstr_off + sh_name)
-        name = data[shstr_off + sh_name : end].decode("ascii")
-        if name == section:
-            sec_idx = i
-            break
-    if sec_idx is None:
-        return False
-    sec_hoff = e_shoff + sec_idx * e_shentsize
-    sec_off = struct.unpack_from(">I", data, sec_hoff + 16)[0]
-    sec_size = struct.unpack_from(">I", data, sec_hoff + 20)[0]
-    if offset + len(data_bytes) > sec_size:
-        return False
-        data[sec_off + offset : sec_off + offset + len(data_bytes)] = data_bytes
-    path.write_bytes(data)
-    return True
-
-
 def set_section_align(path: Path, section: str, align: int) -> bool:
     """Set sh_addralign on *section*.
 
@@ -11370,9 +11339,7 @@ def postprocess_object(path: Path, rules: UnitRules | None = None) -> bool:
         changed = drop_data_tail(path, sec, keep) or changed
     for sec, target in rules.pad_data_section:
         changed = pad_data_section_func(path, sec, target) or changed
-    for sec, off, data_bytes in rules.patch_data:
-        changed = patch_data_func(path, sec, off, data_bytes) or changed
-
+    for sec, align in rules.set_data_align:
         changed = set_section_align(path, sec, align) or changed
     if rules.permute_sdata2_words:
         changed = permute_sdata2_words(path, rules.permute_sdata2_words) or changed

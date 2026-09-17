@@ -126,22 +126,22 @@ extern "C" void func_8020C640(cf::CfGimmickLock* self) {
                     if (self->lockId[1] != 0) {
                         flag = 1;
                         if ((self->flags & 0x400) != 0) {
-                            if (func_8020A294() == 0) {
+                            if (CfGimmick_CheckFightListPlayerAlive() == 0) {
                                 self->flags &= ~0x600;
                                 flag = 0;
                             }
-                        } else if (func_8020A294() == 0) {
+                        } else if (CfGimmick_CheckFightListPlayerAlive() == 0) {
                             self->flags |= 0x400;
                         }
                     }
-                } else if (self->lockId[0] != 0 && func_8020A294() == 0) {
+                } else if (self->lockId[0] != 0 && CfGimmick_CheckFightListPlayerAlive() == 0) {
                     self->flags = (self->flags & ~0x400) | 0x200;
                     flag = 1;
                 }
             } else {
                 flag = 0;
                 for (int i = 0; i < 4; ++i) {
-                    if (self->lockId[i] != 0 && func_8020A294() == 0) {
+                    if (self->lockId[i] != 0 && CfGimmick_CheckFightListPlayerAlive() == 0) {
                         flag = 1;
                         break;
                     }
@@ -190,7 +190,7 @@ extern "C" void func_8020C640(cf::CfGimmickLock* self) {
                 (cf::CfGimmickLockPlayer*)getPlayer__Q22cf13CfGameManagerFi(0);
             if (player != 0) {
                 if ((self->flags & 0x4) != 0) {
-                    if (func_8020A5DC() == 0) {
+                    if (CfGimmick_IsMessageSystemBusy() == 0) {
                         self->flags &= ~0x4;
                     }
                 } else if (self->field_1F8 <= 0) {

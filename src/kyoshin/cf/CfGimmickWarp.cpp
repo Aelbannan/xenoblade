@@ -93,10 +93,10 @@ void CfGimmick_LoadBdatAreaRotationIndexed(WarpData*, WarpVec3*, void*, u32*, in
 void CfGimmick_LoadBdatAreaExtentsIndexed(WarpData*, WarpVec3*, void*, u32*, int);
 void func_802089BC(WarpVec3*, const WarpVec3*, const WarpVec3*);
 void CfGimmick_ClearManagerBinding(WarpData*);
-void func_8020A434(WarpObject*);
+void CfGimmick_UnregisterSpawnedObject(WarpObject*);
 void func_8020A6B0(WarpObject**, WarpVec3*, u16, f32, int, int);
-int func_8020A5DC(WarpData*);
-int func_8020A87C(WarpData*, WarpObject*);
+int CfGimmick_IsMessageSystemBusy(WarpData*);
+int CfGimmick_CheckPartyIdLoaded(WarpData*, WarpObject*);
 void func_8020A484(u16);
 int CfGimmick_CheckStateFlag2CC8(int);
 int CfGimmick_CheckTriggerGated(int, WarpVec3*, WarpVec3*, WarpVec3*, WarpObject*);
@@ -104,8 +104,8 @@ u32 getResourceFromTable__Q22cf13CfGameManagerFv(u32 resourceId);
 void CfGimmick_SetGlobalFlagC0002();
 void CfGimmick_SetGlobalFlagD0000();
 void CfGimmick_SetGlobalFlag40000();
-void func_8020A124(f32);
-void func_8020A1DC(u32 flags);
+void CfGimmick_ApplyPartyMoveSpeed(f32);
+void CfGimmick_ApplyPartyMoveSpeedGated(u32 flags);
 void func_801BFED0(int, u16, int);
 extern "C" void* createBattleActor__Q22cf13CfGameManagerFv(u32 value, u32 unused);
 void cfCam_syncFollowD();
@@ -220,8 +220,8 @@ extern "C" void* __dt__Q22cf13CfGimmickWarpFv(WarpData* self, int deleteFlag) {
     if (self != 0) {
         *(void**)self = (void*)lbl_eu_805359B0;
         CfGimmick_ClearManagerBinding(self);
-        func_8020A434((WarpObject*)((u8*)self + 0x7c));
-        func_8020A434((WarpObject*)((u8*)self + 0x108));
+        CfGimmick_UnregisterSpawnedObject((WarpObject*)((u8*)self + 0x7c));
+        CfGimmick_UnregisterSpawnedObject((WarpObject*)((u8*)self + 0x108));
         __dt__Q22cf9CfGimmickFv(self, 0);
         if (deleteFlag > 0) {
             __dl__FPv(self);
@@ -243,8 +243,8 @@ extern "C" void func_8020D6FC(WarpData* self) {
         }
         self->flags &= ~0x10u;
     } else {
-        func_8020A434((WarpObject*)(&self->object7cState));
-        func_8020A434((WarpObject*)(&self->object108));
+        CfGimmick_UnregisterSpawnedObject((WarpObject*)(&self->object7cState));
+        CfGimmick_UnregisterSpawnedObject((WarpObject*)(&self->object108));
     }
 }
 
@@ -269,17 +269,17 @@ extern "C" void func_8020D824(WarpData* self) {
     bool objectReady = (self->flags >> 8) & 1;
     self->flags = (*(volatile u32*)&self->flags) & ~0x100u;
     if ((self->flags & 0x20) != 0) {
-        if (func_8020A5DC(self) != 0) {
+        if (CfGimmick_IsMessageSystemBusy(self) != 0) {
             return;
         }
         self->flags &= ~0x20u;
     } else {
         int allReady = 0;
         if ((self->configFlags & 1) != 0) {
-            allReady = (allReady | func_8020A87C(self, self->object7cState)) != 0;
+            allReady = (allReady | CfGimmick_CheckPartyIdLoaded(self, self->object7cState)) != 0;
         }
         if ((self->flagE6 & 1) != 0) {
-            allReady = (allReady | func_8020A87C(self, self->object108)) != 0;
+            allReady = (allReady | CfGimmick_CheckPartyIdLoaded(self, self->object108)) != 0;
         }
         if (allReady != 0) {
             func_8020A484(self->resourceId);
@@ -386,7 +386,7 @@ extern "C" void func_8020D998(WarpData* self) {
                 }
                 self->flags |= 1;
             }
-            func_8020A124(lbl_eu_806683D0);
+            CfGimmick_ApplyPartyMoveSpeed(lbl_eu_806683D0);
         } else {
             self->state = 2;
             self->timer = lbl_eu_806683D4;
@@ -467,7 +467,7 @@ extern "C" void func_8020D998(WarpData* self) {
                 }
                 self->flags |= 1;
             }
-            func_8020A124(lbl_eu_806683D0);
+            CfGimmick_ApplyPartyMoveSpeed(lbl_eu_806683D0);
         } else {
             self->state = 2;
             self->timer = lbl_eu_806683D4;
@@ -579,7 +579,7 @@ extern "C" void func_8020DF04(WarpData* self) {
         }
         self->flags |= 1;
     }
-    func_8020A124(lbl_eu_806683D0);
+    CfGimmick_ApplyPartyMoveSpeed(lbl_eu_806683D0);
 }
 
 extern "C" void func_8020E27C(WarpData* self) {
@@ -689,7 +689,7 @@ extern "C" void func_8020E3F0(WarpData* self) {
             }
             self->flags |= 1;
         }
-        func_8020A124(lbl_eu_806683D0);
+        CfGimmick_ApplyPartyMoveSpeed(lbl_eu_806683D0);
     } else {
         CfGimmick_SetGlobalFlagC0002();
         CfGimmick_SetGlobalFlagD0000();
@@ -851,7 +851,7 @@ extern "C" void func_8020EA2C(WarpData* self) {
         } else {
             u32 cur = self->flags;
             self->flags = cur | 4;
-            func_8020A1DC(cur);
+            CfGimmick_ApplyPartyMoveSpeedGated(cur);
         }
         for (int i = 0; i < 3; ++i) {
             cf::CfObject* player = reinterpret_cast<cf::CfObject*>(cf::CfGameManager::getPlayer(i));

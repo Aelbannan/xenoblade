@@ -256,7 +256,7 @@ extern "C" __declspec(noinline) void func_802580CC(UnkKizunaLineBuild* self) {
 
     u16 id;
     if (self->field3D == 0) {
-        id = (u16)func_8009ECE0();
+        id = (u16)CtrlObjectParam_GetWorkTailValue();
     } else {
         id = 0;
     }
@@ -963,7 +963,7 @@ extern "C" __declspec(noinline) bool func_80259DE8(UnkKizunaSelf59DE8* self) {
             return true;
         }
         u16 id = cnt + 0x65;
-        u16 curId = (self->field3D == 0) ? (u16)func_8009ECE0() : 0;
+        u16 curId = (self->field3D == 0) ? (u16)CtrlObjectParam_GetWorkTailValue() : 0;
         if (curId == id) {
             goto next;
         }
@@ -2067,7 +2067,7 @@ bool CKizunagram::OnFileEvent(CEventFile* pEventFile) {
         rw->w18 = t18; rw->w14 = t14; }
         buildRadarLayout((UnkKizunaSelfAFC*)&mRadar);
 
-        if (func_8009ECE0() == 0 || fieldDE != 0) {
+        if (CtrlObjectParam_GetWorkTailValue() == 0 || fieldDE != 0) {
             fieldDC = 4;
         }
         rebuildKizLine((UnkKizunaSelfCF40*)this);

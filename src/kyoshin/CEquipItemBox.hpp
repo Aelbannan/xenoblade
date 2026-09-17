@@ -588,7 +588,7 @@ extern "C" int IsSkillItem(void*);
 extern "C" void* func_8009EC9C(u32);
 // Item randomizer: reads the low 16 bits of the first word of the object
 // returned by func_8009EC9C (cf/CtrlObjectParam TU; callers pass that obj).
-extern "C" u32 func_800A082C(void*);
+extern "C" u32 CtrlObjectParam_GetArtsDataWord(void*);
 // Item drop-rate helpers (code_80135FDC TU): name-table float probe and the
 // (rateA + rateB) clamp divisor shared by the equip-box/line stat displays.
 extern "C" f32 GetFloatTableEntry(u32 idx);
@@ -806,13 +806,13 @@ extern "C" void __dt__80043E88(void*, int);
 
 // Equipment-slot clear helpers (retail plain names; declared here instead of
 // pulling in the big cf/CtrlObjectParam headers).
-extern "C" void func_8009E0A8(void*, int);
-extern "C" void func_8009E024(void*, int);
-extern "C" void func_8009E030(void*, int);
-extern "C" void func_8009E03C(void*, int);
-extern "C" void func_8009E048(void*, int);
-extern "C" void func_8009E054(void*, int);
-extern "C" void func_800A1370(void*);
+extern "C" void CtrlObjectParam_SetEquipSlot5(void*, int);
+extern "C" void CtrlObjectParam_SetEquipSlot0(void*, int);
+extern "C" void CtrlObjectParam_SetEquipSlot1(void*, int);
+extern "C" void CtrlObjectParam_SetEquipSlot2(void*, int);
+extern "C" void CtrlObjectParam_SetEquipSlot3(void*, int);
+extern "C" void CtrlObjectParam_SetEquipSlot4(void*, int);
+extern "C" void CtrlObjectParam_SyncParamFromActor(void*);
 
 // Item-count / category-base readers (cf/CItem TU, retail plain names).
 extern "C" u32 CItemBlock_countKindSlots(u8);

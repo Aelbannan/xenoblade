@@ -99,13 +99,13 @@ struct CIBLTabFull {
 
 /* Minimal vtable view of the embedded cursor object at +0x70. MWCC's vtable
  * prefix (offset-to-top + RTTI) shifts virtual index N to vtable+(N+2)*4, so
- * the 3rd virtual (index 2) sits at vtable+0x10 - the slot func_801EF3E8
+ * the 3rd virtual (index 2) sits at vtable+0x10 - the slot ItemBoxLine_PushSyswinCursor
  * dispatches through with the syswin-selection buffer. */
 class CIBLCur70View {
 public:
     virtual void vf00() = 0;        // index 0 -> +0x08
     virtual void vf01() = 0;        // index 1 -> +0x0C
-    virtual void vf02(void* data) = 0; // index 2 -> +0x10 - func_801EF3E8
+    virtual void vf02(void* data) = 0; // index 2 -> +0x10 - ItemBoxLine_PushSyswinCursor
 };
 
 /* Vtable view of the CSysWin sub-object at +0x350. MWCC prefixes its vtables
@@ -150,7 +150,7 @@ public:
 };
 
 /* Vtable view for the texture-resource objects at +0x38/+0x3C: the tab-pane
- * refresh (func_801EF734) dispatches through virtual index 1 (vtable+0x0C)
+ * refresh (ItemBoxLine_DrawTabRowText) dispatches through virtual index 1 (vtable+0x0C)
  * with a 'timg' fourcc, a texture name/handle and a flag. */
 class CItemBoxLineResView {
 public:
@@ -174,7 +174,7 @@ struct CIBLVec3 {
     float z;   // +0x8
 };
 
-/* Minimal vtable view of the owned heap objects deleted by func_801ED618
+/* Minimal vtable view of the owned heap objects deleted by ItemBoxLine_UnloadFiles
  * (deleting dtor at vtable+0x08, virtual index 0). */
 class CItemBoxLineDtorView {
 public:
@@ -239,8 +239,8 @@ class CItemBoxLine {public:
     ~CItemBoxLine();
     bool OnFileEvent(CEventFile* evt);
 
-    void func_801EDA4C(unsigned char val);
-    void func_801EECC8();
+    void ItemBoxLine_PushTabByte(unsigned char val);
+    void ItemBoxLine_TouchTabEntryItem();
 
     // Tab storage (byte entries + count) + unknown byte fields.
     // The retail class stores its vtable manually (like CSysWin): the dtor
@@ -266,12 +266,12 @@ class CItemBoxLine {public:
     u8 field4C;                         // +0x4C
     u8 pad_4D[0x50 - 0x4D];             // 0x4D..0x4F
     int field50;                        // +0x50: navigation state machine
-    CItemBoxLineDtorView* field54;      // +0x54: owned object (deleted by func_801ED618)
+    CItemBoxLineDtorView* field54;      // +0x54: owned object (deleted by ItemBoxLine_UnloadFiles)
     u8 field58;                 // +0x58
-    u8 unk59;               // +0x59: read by func_801ED800
-    u8 tabEntries[9];           // 0x5A..0x62: entry bytes, cleared by func_801EDA08
+    u8 unk59;               // +0x59: read by ItemBoxLine_IsReadyFlag
+    u8 tabEntries[9];           // 0x5A..0x62: entry bytes, cleared by ItemBoxLine_ResetTabBytes
     u8 tabCount;                // +0x63: count
-    u8 unk64[9];                // 0x64..0x6C: per-slot occupancy bytes (func_801EDA6C/DB80 scan)
+    u8 unk64[9];                // 0x64..0x6C: per-slot occupancy bytes (ItemBoxLine_TabNext/DB80 scan)
     u8 field6D;                 // +0x6D
     u8 pad_6E[0x70 - 0x6E];             // 0x6E..0x6F
     CBaseCur mCur70;                    // +0x70: embedded cursor (CBaseCur-sized)
@@ -279,24 +279,24 @@ class CItemBoxLine {public:
     CBaseCur mCurA0;                    // +0xA0: embedded cursor
     CBaseCur mCurB8;                    // +0xB8: embedded cursor (vtable[2] tab-name dispatcher)
     u8 mInfo2D0[0x2DC - 0xD0];          // +0xD0..0x2DB: item-box info2 state region
-    CNumSelectFull mNumSel;     // +0x2DC: member of func_801ED808
+    CNumSelectFull mNumSel;     // +0x2DC: member of ItemBoxLine_IsBusy
     u8 pad_30B[0x310 - 0x30B];  // 0x30B..0x30F (CNumSelectFull is 0x2F bytes)
     u8 mScrollBar310[0x350 - 0x310]; // +0x310: scroll-bar object region (0x40)
-    CSysWinFull mSysWin;        // +0x350: member of func_801ED808
+    CSysWinFull mSysWin;        // +0x350: member of ItemBoxLine_IsBusy
     u8 pad_387[0x38C - 0x387];  // 0x387..0x38B
-    s16 unk38C;                 // +0x38C: read by func_801EECC8
-    s16 unk38E;                 // +0x38E: read by func_801EECC8
+    s16 unk38C;                 // +0x38C: read by ItemBoxLine_TouchTabEntryItem
+    s16 unk38E;                 // +0x38E: read by ItemBoxLine_TouchTabEntryItem
     u8 field390;                // +0x390: read by func_801EF518 (== 2 arms unk3A4.field93)
     u8 pad_391;                 // +0x391
-    s16 field392;               // +0x392: tab page counter (written by func_801EF45C)
+    s16 field392;               // +0x392: tab page counter (written by ItemBoxLine_CommitOverlayState)
     u16 field394;               // +0x394: page id read by func_801EFFC4
     GXColorS10 field396;        // +0x396..0x39D: nameplate colour (set by OnFileEvent)
-    u8 unk39E;                  // +0x39E: read by func_801EECC0
-    u8 field39F;                // +0x39F: current cursor position (func_801EED6C)
-    u8 field3A0;                // +0x3A0: returned by func_801ED808
-    u8 field3A1;                // +0x3A1: tab-cursor scan index (func_801EE228)
-    u8 field3A2;                // +0x3A2: tab-cursor scan base (func_801EE228)
-    u8 field3A3;                // +0x3A3: wrote by func_801EE684
+    u8 unk39E;                  // +0x39E: read by ItemBoxLine_GetArmedFlag
+    u8 field39F;                // +0x39F: current cursor position (ItemBoxLine_Info2SelectNext)
+    u8 field3A0;                // +0x3A0: returned by ItemBoxLine_IsBusy
+    u8 field3A1;                // +0x3A1: tab-cursor scan index (ItemBoxLine_CursorPageUp)
+    u8 field3A2;                // +0x3A2: tab-cursor scan base (ItemBoxLine_CursorPageUp)
+    u8 field3A3;                // +0x3A3: wrote by ItemBoxLine_ConfirmOverlayOrHint
     CIBLTab unk3A4;             // +0x3A4: tab entries (0x94 bytes, ends +0x437)
     ml::FixStr<32> str438;      // +0x438: tab name buffer (mLength at +0x458)
     ml::FixStr<128> str45C;     // +0x45C: second tab name buffer (mLength at +0x4DC)
@@ -364,7 +364,7 @@ extern "C" CBaseCur* __ct__CCur18(void*, void*);           // CCur18 ctor (curso
 extern "C" CBaseCur* __ct__CSubCur(CBaseCur*, nw4r::lyt::ArcResourceAccessor*);
 extern "C" void func_8018B0FC(void*, void*);               // copy stack cursor temp into member
 // func_801D2E4C (subcur pane visibility) - 2-arg form used by OnFileEvent;
-// func_801EECE0 still calls it through a 1-arg cast to keep the 8-byte tail.
+// ItemBoxLine_ResetCursorB8 still calls it through a 1-arg cast to keep the 8-byte tail.
 extern "C" void func_801D2E4C(void*, u32);
 extern "C" FourShorts func_801397AC(void*, u32);                   // pane colour getter (r3:r4 pair)
 extern "C" u32 getItemBox2State__FP13CItemBoxInfo2(void*);
@@ -419,12 +419,12 @@ extern "C" u8 ItemBoxLine_GetTabEntryLock(void*, unsigned int);   // tab entry b
 extern "C" u8 ItemBoxLine_GetTabEntryReady(void*, unsigned int);    // tab entry byte accessor (external overload)
 extern "C" int func_801EC8D8(void*, unsigned int);   // name-dispatch lookup (external overload)
 // nav-state dispatch helpers (external overloads of the C++ bodies in this TU)
-extern "C" void func_801EF1E4(void*);
-extern "C" void func_801EF260(void*);
-extern "C" void func_801EF2FC(void*);
-extern "C" void func_801EF378(void*);
-extern "C" void func_801EF3E8(void*);
-extern "C" void func_801EF45C(void*);
+extern "C" void ItemBoxLine_EnterState0(void*);
+extern "C" void ItemBoxLine_EnterState1(void*);
+extern "C" void ItemBoxLine_EnterState2(void*);
+extern "C" void ItemBoxLine_EnterState3(void*);
+extern "C" void ItemBoxLine_PushSyswinCursor(void*);
+extern "C" void ItemBoxLine_CommitOverlayState(void*);
 extern "C" u8 BdatGetU8Direct(u32, const char*, unsigned int);
 extern "C" void* lbl_eu_80664104;
 extern "C" void* lbl_eu_806640A8;
@@ -473,7 +473,7 @@ extern const double lbl_eu_80668108;
 extern const double lbl_eu_80668100;
 
 // func_801F107C: character-data / item helpers (C-ABI).
-extern "C" u32 func_800A082C(void*);
+extern "C" u32 CtrlObjectParam_GetArtsDataWord(void*);
 extern "C" float GetFloatTableEntry(unsigned int);
 extern "C" void BlendFloatAvgScale(u16, u16, u32, float);
 
@@ -508,8 +508,8 @@ extern "C" void func_801F1E64(void*, unsigned int);
 extern "C" void func_801F20F0(void*, unsigned int);
 extern "C" void func_801F2298(void*, unsigned int);
 extern "C" void func_801F2434(void*, unsigned int);
-extern "C" void func_801EFE6C(void*);
-extern "C" void func_801EDA6C(void*);
+extern "C" void ItemBoxLine_RebuildTabList(void*);
+extern "C" void ItemBoxLine_TabNext(void*);
 extern "C" void func_801EDB80(void*);
 extern "C" void func_80139198(unsigned int);
 extern "C" void PaneMatSetTevColorsByName(nw4r::lyt::Layout*, char*, void*, void*);
@@ -539,7 +539,7 @@ extern "C" int func_801EB028(void*);
 extern "C" void func_801EB314(CNumSelectFull* self); // num-select display step
 extern "C" void func_801EB178(void*);
 
-// --- teardown helpers called by func_801ED618 (retail plain names) ---
+// --- teardown helpers called by ItemBoxLine_UnloadFiles (retail plain names) ---
 extern "C" void func_801EAF9C(CNumSelectFull*);          // num-select destroy
 // C++ mangling reproduces the retail names closeFileHandle__FPP11CFileHandle /
 // releaseArcResourceAccessor__FPQ34nw4r3lyt19ArcResourceAccessor.
@@ -574,12 +574,12 @@ extern "C" u32 CItem_sumFamilyByte6(unsigned int);
 // func_801F2880: string/kind-table helpers (C-ABI).
 extern "C" u8 BdatGetU8ByTableKey(const void*, const void*, u32);
 extern "C" void* func_8009EC9C(u32);
-extern "C" u32 func_800A32BC();
+extern "C" u32 CtrlObjectParam_GetCurrentRowKey();
 
 // sinit_801F32EC: static color-object ctor helpers (C-ABI).
 extern "C" void SplitU32ToS16s(void*, u32);
-extern "C" void func_801EF734(void*, u32, u32);   // pane texture refresh (external overload)
-extern "C" void func_801EF844(void*, u32, u32);   // pane texture refresh (external overload)
+extern "C" void ItemBoxLine_DrawTabRowText(void*, u32, u32);   // pane texture refresh (external overload)
+extern "C" void ItemBoxLine_DrawTabRowIcon(void*, u32, u32);   // pane texture refresh (external overload)
 extern "C" void func_801EF954(void*, u32, s8, u32); // item-slot name format (external overload)
 extern "C" void func_801EFDF4(void*, u32, u8);    // pane visibility toggle (external overload)
 extern "C" FourShorts func_80139658(void*, void*, u32);  // animation color fetch
@@ -610,5 +610,5 @@ extern u8 lbl_eu_80664630[8];
 extern u8 lbl_eu_80664638[8];
 extern u8 lbl_eu_80664640[8];
 
-// func_801EFE6C: per-slot tab dispatch (C-ABI; defined in this TU).
+// ItemBoxLine_RebuildTabList: per-slot tab dispatch (C-ABI; defined in this TU).
 extern "C" void func_801EFB24(CItemBoxLine*, u8, u32);

@@ -78,7 +78,7 @@ extern "C" void func_801D3258(void*);
 // CBdat index-free helper (retail symbol is the pre-mangled __5CBdatFUl form).
 extern "C" void getEntry__5CBdatFUl(u32);
 
-// Global term/active flag cleared by func_802AD1F4 (.sbss word, sda21).
+// Global term/active flag cleared by TutorialList_ReleaseResources (.sbss word, sda21).
 extern u32 lbl_eu_80664BF0;
 
 // Embedded sub-object destructors used by ~CTutorialList (retail unmangled
@@ -176,16 +176,16 @@ struct CTutorialCur18Data {
 // Same-TU widget helpers. Retail strips the C++ mangling for these (bare
 // func_ names), so they are defined under C linkage and call sites bind the
 // literal retail symbols.
-extern "C" void func_802ADAE8(CTutorialList*);
-extern "C" void func_802ADB3C(CTutorialList*);
-extern "C" void func_802ADB90(CTutorialList*);
-extern "C" void func_802ADBDC(CTutorialList*);
-extern "C" void func_802ADC28(CTutorialList*);
-extern "C" void func_802ADC88(CTutorialList*);
+extern "C" void TutorialList_OnOpenAnimDone(CTutorialList*);
+extern "C" void TutorialList_OnIdleAnimDone(CTutorialList*);
+extern "C" void TutorialList_OnCloseAnimRewind(CTutorialList*);
+extern "C" void TutorialList_OnShutdownAnimRewind(CTutorialList*);
+extern "C" void TutorialList_EnableOpenAnims(CTutorialList*);
+extern "C" void TutorialList_EnableCloseAnims(CTutorialList*);
 extern "C" void func_802ADCE8(CTutorialList*);
-extern "C" void func_802ADFA8(CTutorialList*);
-extern "C" void func_802ADE18(CTutorialList*);
-extern "C" void func_802ADEE4(CTutorialList*);
+extern "C" void TutorialList_UpdateTitleText(CTutorialList*);
+extern "C" void TutorialList_MoveCursorToRow(CTutorialList*);
+extern "C" void TutorialList_RebuildSortEntries(CTutorialList*);
 extern "C" void func_802ACC30(u8*, u16, int);
 
 class CTutorialList {
@@ -193,12 +193,12 @@ public:
     CTutorialList(u16 count);
     int OnFileEvent(CEventFile* event);
 
-    u8 func_802AD300();
-    int func_802AD984();
-    u8 func_802AD2A4();
+    u8 TutorialList_IsInitialized();
+    int TutorialList_IsSortMenuActive();
+    u8 TutorialList_IsListVisible();
 
     // Fields are public: the retail widget functions are C-linkage free
-    // functions (func_802AD308 etc.) that need raw member access.
+    // functions (TutorialList_OpenListInit etc.) that need raw member access.
     // Retail stores the vtable label explicitly (non-polymorphic view),
     // matching CQstLogList.
     void* mVtbl;                          // 0x00 vtable (lbl_eu_8053A2A8)

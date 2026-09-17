@@ -157,6 +157,6 @@ extern "C" void func_802ABCB4(cf::CfGimmickSaveOff* self) {
     } else if ((s32)self->mType == 1) {
         CfGimmick_SetGlobalFlag200000();
     } else {
-        func_8020A0CC();
+        CfGimmick_SetGlobalFlag8();
     }
 }

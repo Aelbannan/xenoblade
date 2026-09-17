@@ -195,7 +195,7 @@ void func_8027D478(cf::CChainState* self, cf::CChainBattleObj* obj) {
         }
         action->field_58 += rate2;
 
-        if (func_8009ECB0()[1] == 1) {
+        if (CtrlObjectParam_GetSlotTableBase()[1] == 1) {
             f32 sum2 = action->field_5C + action->field_60;
             int count2;
             if (sum2 < lbl_eu_80668AA8) {

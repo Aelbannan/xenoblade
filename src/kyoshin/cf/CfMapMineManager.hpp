@@ -73,7 +73,7 @@ extern "C" void* CItem_initItemImplInstances(void* item);
 extern "C" void CItemData_enableFamFlag(void* item);
 extern "C" void CItemData_callVf0C(void* item, u16 v);
 extern "C" void CItem_resolveFamilyBdat(u16 v, void* outA, void* outB);
-extern "C" int* func_8009ECB0();
+extern "C" int* CtrlObjectParam_GetSlotTableBase();
 extern "C" void* func_8009EC9C(u32 index);
 extern "C" u32 func_8009CF8C(u32 v);
 extern "C" int func_8026178C(void* data, u32 flag);

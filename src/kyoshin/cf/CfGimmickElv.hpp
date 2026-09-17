@@ -25,13 +25,13 @@ int CfGimmick_CheckStateFlag2CC8(u16 id);
 int CfGimmick_CheckTriggerGated(u8 flag, void* a, void* b, void* c, u32 d);
 // Retail evidence: called with no visible argument setup (r3 left as-is)
 void CfGimmick_SetGlobalFlagC0002(void);
-void* func_8020A35C(void* self, int a, void* b);
-void func_8020A434(void* ptr);
+void* CfGimmick_SpawnNamedObject(void* self, int a, void* b);
+void CfGimmick_UnregisterSpawnedObject(void* ptr);
 void func_8020A484(u16 id);
-int func_8020A5DC(void* self);
-int func_8020A608(u16 id, int mode);
+int CfGimmick_IsMessageSystemBusy(void* self);
+int CfGimmick_LookupBdatGimmickName(u16 id, int mode);
 void func_8020A6B0(void* a, void* b, u16 c, f32 d, int e, int g);
-int func_8020A87C(void* self, u32 ptr);
+int CfGimmick_CheckPartyIdLoaded(void* self, u32 ptr);
 void updateLODObject__8CTaskLODFv(u8 lod, f32 f);
 void removeLODEntry__8CTaskLODFv(u8 lod, f32 f);
 void attachLODObject__8CTaskLODFv(u8 lod, int mode);

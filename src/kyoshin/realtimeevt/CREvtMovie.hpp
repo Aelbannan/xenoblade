@@ -15,7 +15,7 @@
  *   vfunc 3: inherited (func_80185758 -- returns 0)
  *   vfunc 4: inherited (CREvtObjVfunc10Default)
  *   vfunc 5: inherited (func_801809A8)
- *   vfunc 6: inherited (func_801696C4)
+ *   vfunc 6: inherited (CREvtObjIsBusyDefault)
  *
  * The class constructs SFD movie file paths by concatenating
  *   "/ev/realtime/" + scriptName + ".sfd"
@@ -78,14 +78,14 @@ int func_80164FE8(void);
 int func_80164FB4(void);
 void func_80165014(void);
 void func_80164ED0(const char* path, int flag, void* handle);
-void* func_8016C3DC(void);
+void* EvtSeqGetC4FlagBit1(void);
 
 // Counter/timing functions.
-// func_8016A3C4 is an unsigned tick counter; 8016A378/8016A35C return
+// EvtSeqGetWalkIndex is an unsigned tick counter; 8016A378/8016A35C return
 // signed timestamps (compared with a signed `cmpi` in retail).
-u32 func_8016A3C4(void);
-int func_8016A378(void);
-int func_8016A35C(void);
+u32 EvtSeqGetWalkIndex(void);
+int EvtSeqGetEntryLimit(void);
+int EvtSeqGetCounter100(void);
 
 // Memory availability probe (CLibCri member, defined in the CLibCri TU).
 void* getMovieWorkSize__7CLibCriFv(void);

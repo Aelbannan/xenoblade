@@ -722,7 +722,7 @@ extern "C" int func_8014CE78(cf::CAIAction* self, const u8* e, cf::CAIActionSlot
         case 0x3E: {
             // Character category must match.
             void* ch = func_8009EC9C(party->unk3F28);
-            if (func_800A32BC(ch) != b[i])
+            if (CtrlObjectParam_GetCurrentRowKey(ch) != b[i])
                 return 0;
             break;
         }

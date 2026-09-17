@@ -24,7 +24,7 @@ extern "C" void CfGimmick_LoadBdatAreaRotation(cf::CfGimmick* self, f32* out, vo
 
 // State-machine side effects shared with CfGimmickObject.
 extern "C" void CfGimmick_SetGlobalFlag200000();
-extern "C" void func_8020A0CC();
+extern "C" void CfGimmick_SetGlobalFlag8();
 
 // Poke the object registered at result+0x84 (save-point activation).
 extern "C" void func_8008B95C(u8* target);

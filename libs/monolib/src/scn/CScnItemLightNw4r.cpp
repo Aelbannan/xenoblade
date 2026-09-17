@@ -13,17 +13,17 @@ struct CScnItemLightNw4rAlloc {
 extern "C" {
     extern char lbl_eu_80523ECC[];  // "Global(%d)" format string
     extern char lbl_eu_8056DD38[];  // CScnItemLightNw4r vtable
-    extern u32 func_8048C5B8(u8* pool, s32 kind);
+    extern u32 CScnItemPool_hasFreeSlot(u8* pool, s32 kind);
     extern u32 Scn_CallUnk8C_V8(CScnLightItemHost* scene);
     extern void* allocate__Q23mtl10MemManagerFUlUl(u32 size, u32 handle);
     extern void __ct__CScnItemLight(CScnItemLightNw4rAlloc* ths, CScnLightItemHost* pHost,
                                     ml::FixStr<32>* name, void* a2, void* a3);
-    extern void func_8048C630(u8* pool, CScnItemLightNw4rAlloc* item, u32 value);
+    extern void CScnItemPool_registerOtherList(u8* pool, CScnItemLightNw4rAlloc* item, u32 value);
 }
 
 extern "C" CScnItemLightNw4rAlloc* __ct__CScnItemLightNw4r(CScnLightItemHost* ths,
                                                            int param2, void* param3) {
-    if (func_8048C5B8(ths->mPool, 3) == 0) {
+    if (CScnItemPool_hasFreeSlot(ths->mPool, 3) == 0) {
         return 0;
     }
     ml::FixStr<32> str(true);
@@ -35,6 +35,6 @@ extern "C" CScnItemLightNw4rAlloc* __ct__CScnItemLightNw4r(CScnLightItemHost* th
         *(u32**)light = (u32*)lbl_eu_8056DD38;
         light->mpScnRoot = ths->mRoot->mScnRoot;
     }
-    func_8048C630(ths->mPool, light, 0);
+    CScnItemPool_registerOtherList(ths->mPool, light, 0);
     return light;
 }

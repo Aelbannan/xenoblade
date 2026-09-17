@@ -194,5 +194,5 @@ extern "C" void* func_80110A70();
 extern "C" void* func_8010CE48();
 extern "C" void func_8010EDE4(void*);
 extern "C" void func_8010A8E4(void*);
-extern "C" void CUICfManager_queueBaseMenu();
+extern "C" void CUICfManager_queueMoveBaseMenu();
 extern "C" void* func_8016FE34(void* r3);

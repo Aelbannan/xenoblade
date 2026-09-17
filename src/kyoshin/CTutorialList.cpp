@@ -19,9 +19,9 @@
 
 // Same-TU helper (defined below): zeroes the three summary halfwords at
 // +0x100/+0x102/+0x104 of the given table base.
-extern "C" void func_802ACBDC(u8* self);
+extern "C" void TutorialList_ClearSummaryCounts(u8* self);
 
-u8 CTutorialList::func_802AD300() { return ((u8*)this)[0x177]; }
+u8 CTutorialList::TutorialList_IsInitialized() { return ((u8*)this)[0x177]; }
 
 
 // Tutorial list constructor (retail __ct__CTutorialList). Constructs the
@@ -58,7 +58,7 @@ CTutorialList::CTutorialList(u16 count) {
     mField17E = 0;
     // Zero-seed the member table's summary halfwords (+0x280..). Retail
     // hoists the addi into the flag-store run.
-    func_802ACBDC(&mSubObj180[0]);
+    TutorialList_ClearSummaryCounts(&mSubObj180[0]);
 
     // Build a temp CScrollBar (flag 1) and copy its body into the member.
     __ct__CScrollBar(&tmpSb, 1);
@@ -97,7 +97,7 @@ CTutorialList::CTutorialList(u16 count) {
 
     // Zero-seed the temp id table summary halfwords, copy the table into the
     // member sub-object at +0x180, then latch the three summary halfwords.
-    func_802ACBDC(&tmpMenu.mTable[0]);
+    TutorialList_ClearSummaryCounts(&tmpMenu.mTable[0]);
     {
         struct TableBlock {
             u32 words[64];
@@ -121,14 +121,14 @@ extern "C" void* __dt__802ACBF0(void* self, int mode) {
 }
 
 
-// func_802AD308 - initialise the list widget: latch the state byte, clear the
+// TutorialList_OpenListInit - initialise the list widget: latch the state byte, clear the
 // initialised flag, seed the scrollbar fade colours and sizes, then run the
 // two per-frame helpers.
-extern "C" void func_802AD308(CTutorialList* self) {
+extern "C" void TutorialList_OpenListInit(CTutorialList* self) {
     if (self->mState175 != 0) return;
     self->mState175 = 1;
     self->mInitialized = 0;
-    func_802ADC28(self);
+    TutorialList_EnableOpenAnims(self);
 
     f32 v[3];
     v[0] = lbl_eu_80668DD8;
@@ -138,27 +138,27 @@ extern "C" void func_802AD308(CTutorialList* self) {
     func_801F36BC(&self->mScrollBar, 0xa, self->mField280);
     func_801F3850(&self->mScrollBar, self->mField17A);
     func_802ADCE8(self);
-    func_802ADE18(self);
+    TutorialList_MoveCursorToRow(self);
 }
 
-// func_802AD3A0 - start closing the list once anim state 3 is reached:
+// TutorialList_BeginClose - start closing the list once anim state 3 is reached:
 // latch state 4, clear the initialised flag, swap the anim transforms,
 // park the cursor, request the scrollbar scroll-out and play sound 6.
-extern "C" void func_802AD3A0(CTutorialList* self) {
+extern "C" void TutorialList_BeginClose(CTutorialList* self) {
     if (self->mState175 == 3) {
         self->mState175 = 4;
         self->mInitialized = 0;
-        func_802ADC88(self);
+        TutorialList_EnableCloseAnims(self);
         func_801D216C(&self->mGap2C[0], 0);
         func_801F369C(&self->mScrollBar);
         playUISound(6);
     }
 }
 
-// func_802AD404 - page up: wheel the sort menu back one page when idle; when
+// TutorialList_PageUpIdle - page up: wheel the sort menu back one page when idle; when
 // the menu is still animating, decrement the page byte and wrap to the
 // previous 10-row block of the content.
-extern "C" void func_802AD404(CTutorialList* self) {
+extern "C" void TutorialList_PageUpIdle(CTutorialList* self) {
     if (func_801D3320(&self->mSortMenu84[0]) != 0) {
         if (func_801D3328(&self->mSortMenu84[0]) == 0)
             return;
@@ -191,15 +191,15 @@ extern "C" void func_802AD404(CTutorialList* self) {
             }
         }
         func_802ADCE8(self);
-        func_802ADE18(self);
+        TutorialList_MoveCursorToRow(self);
         func_801F3850(&self->mScrollBar, self->mField17A);
     }
     playUISound(1);
 }
 
-// func_802AD514 - page up (alt): same gate shape as func_802AD404 but with
+// TutorialList_PageUpWrap - page up (alt): same gate shape as TutorialList_PageUpIdle but with
 // different wrap arithmetic on the page/selection bytes.
-extern "C" void func_802AD514(CTutorialList* self) {
+extern "C" void TutorialList_PageUpWrap(CTutorialList* self) {
     if (func_801D3320(&self->mSortMenu84[0]) != 0) {
         if (func_801D3328(&self->mSortMenu84[0]) == 0)
             return;
@@ -229,15 +229,15 @@ extern "C" void func_802AD514(CTutorialList* self) {
             }
         }
         func_802ADCE8(self);
-        func_802ADE18(self);
+        TutorialList_MoveCursorToRow(self);
         func_801F3850(&self->mScrollBar, self->mField17A);
     }
     playUISound(1);
 }
 
-// func_802AD638 - page down: advance one page while the sort menu is busy;
+// TutorialList_PageDownStep - page down: advance one page while the sort menu is busy;
 // otherwise wheel it forward and move the cursor onto the new entry.
-extern "C" void func_802AD638(CTutorialList* self) {
+extern "C" void TutorialList_PageDownStep(CTutorialList* self) {
     if (func_801D3320(&self->mSortMenu84[0]) != 0) {
         if (func_801D3328(&self->mSortMenu84[0]) == 0)
             return;
@@ -264,15 +264,15 @@ extern "C" void func_802AD638(CTutorialList* self) {
         self->mField17A = 0;
     }
     func_802ADCE8(self);
-    func_802ADE18(self);
+    TutorialList_MoveCursorToRow(self);
     func_801F3850(&self->mScrollBar, self->mField17A);
     }
     playUISound(1);
 }
 
-// func_802AD728 - page down (alt): busy path wheels the menu forward; idle
+// TutorialList_PageDownBlock - page down (alt): busy path wheels the menu forward; idle
 // path advances the selection by 10 and re-derives the page byte.
-extern "C" void func_802AD728(CTutorialList* self) {
+extern "C" void TutorialList_PageDownBlock(CTutorialList* self) {
     if (func_801D3320(&self->mSortMenu84[0]) != 0) {
         if (func_801D3328(&self->mSortMenu84[0]) == 0)
             return;
@@ -304,17 +304,17 @@ extern "C" void func_802AD728(CTutorialList* self) {
                 self->mField178 = 0;
         }
         func_802ADCE8(self);
-        func_802ADE18(self);
+        TutorialList_MoveCursorToRow(self);
         func_801F3850(&self->mScrollBar, self->mField17A);
     }
     playUISound(1);
 }
 
 struct CTutorialWindowIds;
-extern "C" u16 func_802ACE04(CTutorialWindowIds* self, u16 index);
+extern "C" u16 TutorialList_GetEntryIdAt(CTutorialWindowIds* self, u16 index);
 
-extern "C" u16 func_802AD838(CTutorialList* self) {
-    return func_802ACE04((CTutorialWindowIds*)self->mSubObj180,
+extern "C" u16 TutorialList_GetSelectedEntryId(CTutorialList* self) {
+    return TutorialList_GetEntryIdAt((CTutorialWindowIds*)self->mSubObj180,
                          (u16)((s8)self->mField178 + (s16)self->mField17A));
 }
 
@@ -337,7 +337,7 @@ extern "C" __declspec(noinline) void func_802ADCE8(CTutorialList* self) {
         nw4r::lyt::Pane* text = pane->FindPaneByName(buf, true);
         func_80124270(text, 0);
         sprintf(buf, &lbl_eu_80510B78[0x6a], (u8)i + 1);
-        u16 sel = func_802ACE04((CTutorialWindowIds*)self->mSubObj180, idx);
+        u16 sel = TutorialList_GetEntryIdAt((CTutorialWindowIds*)self->mSubObj180, idx);
         if (sel == 0) {
             LayoutSetTextBoxFmtValue(self->mLayout20, buf, &lbl_eu_80510B78[0x76], 0);
         } else {
@@ -355,20 +355,20 @@ extern "C" __declspec(noinline) void func_802ADCE8(CTutorialList* self) {
         }
     }
 }
-extern "C" void func_802AD854(void* self) { func_802ADCE8((CTutorialList*)self); }
+extern "C" void TutorialList_RefreshRowTexts(void* self) { func_802ADCE8((CTutorialList*)self); }
 
-// func_802AD858 - confirm/open: while the sort menu is animating just refresh
+// TutorialList_ConfirmOpenMenu - confirm/open: while the sort menu is animating just refresh
 // cursor/page text; on first open resolve the two anchor panes around the
 // scrollbar, place the sort menu there, rebuild its entries and move the
 // cursor onto the selected row.
-extern "C" void func_802AD858(CTutorialList* self) {
+extern "C" void TutorialList_ConfirmOpenMenu(CTutorialList* self) {
     if (func_801D3320(&self->mSortMenu84[0]) != 0) {
         if (func_801D3328(&self->mSortMenu84[0]) == 0)
             return;
         func_801D216C(&self->mGap2C[0], 1);
         func_801D3408(&self->mSortMenu84[0]);
-        func_802ADFA8(self);
-        func_802ADE18(self);
+        TutorialList_UpdateTitleText(self);
+        TutorialList_MoveCursorToRow(self);
         playUISound(6);
         return;
     }
@@ -381,7 +381,7 @@ extern "C" void func_802AD858(CTutorialList* self) {
                   root->FindPaneByName(&lbl_eu_80510B78[0x4e], true),
                   root);
     func_801D3430(&self->mSortMenu84[0], &pos);
-    func_802ADEE4(self);
+    TutorialList_RebuildSortEntries(self);
     func_801D216C(&self->mGap2C[0], 1);
     func_801D3330(&self->mSortMenu84[0]);
     nw4r::math::VEC3 curPos;
@@ -391,28 +391,28 @@ extern "C" void func_802AD858(CTutorialList* self) {
 }
 
 // Tail-calls CSortMenu::func_801D3320 on the embedded sort menu (+0x84).
-int CTutorialList::func_802AD984() { return func_801D3320(&mSortMenu84[0]); }
+int CTutorialList::TutorialList_IsSortMenuActive() { return func_801D3320(&mSortMenu84[0]); }
 
-// func_802AD98C - advance the list: gate on the sort-menu active/button flags,
+// TutorialList_AdvanceSelection - advance the list: gate on the sort-menu active/button flags,
 // move the cursor, refresh the sort menu, run the per-frame helpers and (when
 // requested) play the confirm sound.
-extern "C" __declspec(noinline) void func_802AD98C(CTutorialList* self, int arg) {
+extern "C" __declspec(noinline) void TutorialList_AdvanceSelection(CTutorialList* self, int arg) {
     if (func_801D3320(&self->mSortMenu84[0]) == 0) return;
     if (func_801D3328(&self->mSortMenu84[0]) == 0) return;
     func_801D216C(&self->mGap2C[0], 1);
     func_801D3408(&self->mSortMenu84[0]);
-    func_802ADFA8(self);
-    func_802ADE18(self);
+    TutorialList_UpdateTitleText(self);
+    TutorialList_MoveCursorToRow(self);
     if (arg == 0) {
         playUISound(6);
     }
 }
 
-// func_802ADA0C - rebuild the list content once the sort menu finished
+// TutorialList_RebuildAfterLoad - rebuild the list content once the sort menu finished
 // loading: gate on the sort-menu active/button flags, latch the page byte,
 // seed the sub-object at +0x180, reset the page/selection ids, size the
 // scrollbar to the content and play the confirm sound.
-extern "C" void func_802ADA0C(CTutorialList* self) {
+extern "C" void TutorialList_RebuildAfterLoad(CTutorialList* self) {
     if (func_801D3320(&self->mSortMenu84[0]) == 0) return;
     if (func_801D3328(&self->mSortMenu84[0]) == 0) return;
     s32 page = func_801D3808(&self->mSortMenu84[0]);
@@ -422,42 +422,42 @@ extern "C" void func_802ADA0C(CTutorialList* self) {
     self->mField17A = 0;
     func_801F36BC(&self->mScrollBar, 0xa, self->mField280);
     func_801F3850(&self->mScrollBar, self->mField17A);
-    func_802AD98C(self, 1);
+    TutorialList_AdvanceSelection(self, 1);
     func_802ADCE8(self);
     playUISound(3);
 }
 
-extern "C" int func_802ADAB8(void* self) {
+extern "C" int TutorialList_GetMenuStateCode(void* self) {
     // existing decl: extern "C" unsigned char func_801D3320(void*)
     return (func_801D3320((u8*)self + 0x84) != 0) + 0x73;
 }
 
 // Animation-finish handlers: the +0x24/+0x28 anim transform reached its end
 // frame (bound in .sdata2) -> latch the state byte and run the follow-up.
-extern "C" __declspec(noinline) void func_802ADAE8(CTutorialList* self) {
+extern "C" __declspec(noinline) void TutorialList_OnOpenAnimDone(CTutorialList* self) {
     if (advanceAnimTransform(self->mAnim24, lbl_eu_80668DE4) != 0) {
         self->mState175 = 2;
-        func_802ADC88(self);
+        TutorialList_EnableCloseAnims(self);
         func_801F367C(&self->mScrollBar);
     }
 }
 
-extern "C" __declspec(noinline) void func_802ADB3C(CTutorialList* self) {
+extern "C" __declspec(noinline) void TutorialList_OnIdleAnimDone(CTutorialList* self) {
     if (advanceAnimTransform(self->mAnim28, lbl_eu_80668DE4) != 0) {
         self->mState175 = 3;
-        func_802ADE18(self);
+        TutorialList_MoveCursorToRow(self);
         self->mInitialized = 1;
     }
 }
 
-extern "C" __declspec(noinline) void func_802ADB90(CTutorialList* self) {
+extern "C" __declspec(noinline) void TutorialList_OnCloseAnimRewind(CTutorialList* self) {
     if (AnimRewindFrame(self->mAnim28, lbl_eu_80668DE4) != 0) {
         self->mState175 = 5;
-        func_802ADC28(self);
+        TutorialList_EnableOpenAnims(self);
     }
 }
 
-extern "C" __declspec(noinline) void func_802ADBDC(CTutorialList* self) {
+extern "C" __declspec(noinline) void TutorialList_OnShutdownAnimRewind(CTutorialList* self) {
     if (AnimRewindFrame(self->mAnim24, lbl_eu_80668DE4) != 0) {
         self->mState175 = 0;
         self->mInitialized = 1;
@@ -466,23 +466,23 @@ extern "C" __declspec(noinline) void func_802ADBDC(CTutorialList* self) {
 
 // Disable the +0x28 anim transform and enable the +0x24 one
 // (SetAnimationEnable, vtable slot at +0x2C).
-extern "C" __declspec(noinline) void func_802ADC28(CTutorialList* self) {
+extern "C" __declspec(noinline) void TutorialList_EnableOpenAnims(CTutorialList* self) {
     self->mLayout20->SetAnimationEnable(self->mAnim28, false);
     self->mLayout20->SetAnimationEnable(self->mAnim24, true);
 }
 
 // Re-enable the two anim transforms on the layout (SetAnimationEnable,
 // vtable slot 11 = 0x2C): mAnim24 disabled, mAnim28 enabled.
-extern "C" __declspec(noinline) void func_802ADC88(CTutorialList* self) {
+extern "C" __declspec(noinline) void TutorialList_EnableCloseAnims(CTutorialList* self) {
     self->mLayout20->SetAnimationEnable(self->mAnim24, false);
     self->mLayout20->SetAnimationEnable(self->mAnim28, true);
 }
 
-// func_802ADE18 - move the cursor onto the current tutorial row: format the
+// TutorialList_MoveCursorToRow - move the cursor onto the current tutorial row: format the
 // page number, resolve the root pane, find the page-name pane and the
 // scrollbar thumb pane, ask func_80137924 for the position between them and
 // feed it to the cursor's Move virtual (vtable +0x10).
-extern "C" __declspec(noinline) void func_802ADE18(CTutorialList* self) {
+extern "C" __declspec(noinline) void TutorialList_MoveCursorToRow(CTutorialList* self) {
     // Retail frame: pos at sp+0x08 (16-byte slot), name buffer at sp+0x18.
     char name[0x28];
     f32 pos[4];
@@ -496,10 +496,10 @@ extern "C" __declspec(noinline) void func_802ADE18(CTutorialList* self) {
     ((CBaseCur*)self->mGap2C)->setRootPaneTranslate((const nw4r::math::VEC3*)pos);
 }
 
-// func_802ADEE4 - rebuild the sort menu entries: reset the menu, push the
+// TutorialList_RebuildSortEntries - rebuild the sort menu entries: reset the menu, push the
 // four tutorial-row labels (text ids 0x25-0x28) and select the current page.
-// noinline: retail calls this from func_802AD858 rather than inlining.
-extern "C" __declspec(noinline) void func_802ADEE4(CTutorialList* self) {
+// noinline: retail calls this from TutorialList_ConfirmOpenMenu rather than inlining.
+extern "C" __declspec(noinline) void TutorialList_RebuildSortEntries(CTutorialList* self) {
     if (func_801D3320(&self->mSortMenu84[0]) != 0) return;
     func_801D350C(&self->mSortMenu84[0]);
     func_801D3518(&self->mSortMenu84[0],
@@ -513,16 +513,16 @@ extern "C" __declspec(noinline) void func_802ADEE4(CTutorialList* self) {
     func_801D353C(&self->mSortMenu84[0], self->mField17E);
 }
 
-extern "C" __declspec(noinline) void func_802ADFA8(CTutorialList* self) {
+extern "C" __declspec(noinline) void TutorialList_UpdateTitleText(CTutorialList* self) {
     char* text = BdatTouchStringCell(&lbl_eu_80510B78[0x8e], &lbl_eu_80510B78[0x97], self->mField17E + 0x25);
     LayoutSetTextBoxFmtValue(self->mLayout20, &lbl_eu_80510B78[0x9c], text, 0);
 }
 
-// func_802AE004 - open the tutorial list once the layout resource finished
+// TutorialList_OpenAfterFilesReady - open the tutorial list once the layout resource finished
 // loading: flag the visible selection, seed the sub-object at +0x180, copy the
 // row/selection ids and run the per-frame helper.
 // noinline: retail calls this out-of-line from OnFileEvent.
-extern "C" __declspec(noinline) void func_802AE004(CTutorialList* self) {
+extern "C" __declspec(noinline) void TutorialList_OpenAfterFilesReady(CTutorialList* self) {
     if (self->mField1C == 0 || self->mField18 != 0) return;
     self->mField176 = 1;
     self->mField174 = 1;
@@ -591,7 +591,7 @@ int CTutorialList::OnFileEvent(CEventFile* event) {
             CDeviceFont::getFontInfo(1, mLayout20))->getFont();
         func_8013676C(rootPane, fontResult);
 
-        func_802ADC28(this);
+        TutorialList_EnableOpenAnims(this);
         mLayout20->Animate(0);
 
         char* title =
@@ -637,7 +637,7 @@ int CTutorialList::OnFileEvent(CEventFile* event) {
             }
         }
 
-        func_802ADFA8(this);
+        TutorialList_UpdateTitleText(this);
 
         // Build the cursor on the stack, copy its body into +0x2C (skipping
         // the vtable), destroy the temp and run the cursor init virtual.
@@ -656,7 +656,7 @@ int CTutorialList::OnFileEvent(CEventFile* event) {
         __dt__6CCur18Fv(tmpCur, -1);
         ((CBaseCur*)mGap2C)->cleanup();
 
-        func_802AE004(this);
+        TutorialList_OpenAfterFilesReady(this);
         mField14 = 0;
         validateHeap__17UnkClass_8045F564Fv(&mGap04[0]);
         __dt__14Class_8045F858Fv(regionBuf, -1);
@@ -669,17 +669,17 @@ int CTutorialList::OnFileEvent(CEventFile* event) {
         func_8003AA34();
         lbl_eu_80664BF0 = (u32)getFP__FPCc(&lbl_eu_80510B78[0x143]);
         mField18 = 0;
-        func_802AE004(this);
+        TutorialList_OpenAfterFilesReady(this);
         return 1;
     }
     return 0;
 }
 
-// func_802AE38C - play the tutorial voice: gate on the handle's +0x3F00
+// TutorialList_PlayTutorialVoice - play the tutorial voice: gate on the handle's +0x3F00
 // bit-1 flag, the voice-idle virtual (vtable slot 0x2BC), the battle-state
 // mapping and a 0xA0 handle-buffer allocation, then play voice 0xDD2 through
 // the embedded +0x3E9C sub-object. Always returns 0.
-extern "C" int func_802AE38C(CVoiceHandle* self) {
+extern "C" int TutorialList_PlayTutorialVoice(CVoiceHandle* self) {
     if ((self->field_0x3F00 & 0x2) == 0) return 0;
     if (((CVoiceHandleVTV*)self)->isActive() != 0) return 0;
     if (func_802A77E8(self) != 5) return 0;
@@ -690,15 +690,15 @@ extern "C" int func_802AE38C(CVoiceHandle* self) {
     return 0;
 }
 
-extern "C" __declspec(noinline) void func_802ACBDC(u8* self) {
+extern "C" __declspec(noinline) void TutorialList_ClearSummaryCounts(u8* self) {
     *(unsigned short*)(self + 0x100) = 0;
     *(unsigned short*)(self + 0x102) = 0;
     *(unsigned short*)(self + 0x104) = 0;
 }
 
-// func_802AD060 - file loading: request the list file and the common archive
+// TutorialList_LoadLayoutFiles - file loading: request the list file and the common archive
 // file, then initialise the scrollbar and the sort-menu sub-object.
-extern "C" void func_802AD060(CTutorialList* self) {
+extern "C" void TutorialList_LoadLayoutFiles(CTutorialList* self) {
     self->mField14 = readFile__11CDeviceFileFUlPCcP10IWorkEventii(
         (unsigned long)getHandleMEM2__Q23mtl10MemManagerFv(), &lbl_eu_80510B78[0xf], self, 0, 0);
     self->mField18 = readCommonArchiveFile__11CDeviceFileFUlPCcP10IWorkEventii(
@@ -708,22 +708,22 @@ extern "C" void func_802AD060(CTutorialList* self) {
     self->mField176 = 0;
 }
 
-// func_802AD0E0 - per-frame update: dispatch on the anim state byte, animate
+// TutorialList_UpdatePerFrame - per-frame update: dispatch on the anim state byte, animate
 // the layout, then move the cursor, scrollbar and sort-menu sub-object.
-extern "C" void func_802AD0E0(CTutorialList* self) {
+extern "C" void TutorialList_UpdatePerFrame(CTutorialList* self) {
     if (self->mField174 == 0) return;
     switch (self->mState175) {
     case 1:
-        func_802ADAE8(self);
+        TutorialList_OnOpenAnimDone(self);
         break;
     case 2:
-        func_802ADB3C(self);
+        TutorialList_OnIdleAnimDone(self);
         break;
     case 4:
-        func_802ADB90(self);
+        TutorialList_OnCloseAnimRewind(self);
         break;
     case 5:
-        func_802ADBDC(self);
+        TutorialList_OnShutdownAnimRewind(self);
         break;
     }
     self->mLayout20->Animate(0);
@@ -739,7 +739,7 @@ extern "C" void func_801D20B0(void*, nw4r::lyt::DrawInfo*);
 // Render the tutorial list when the visible gate byte is set: draw the
 // layout, scrollbar, sort menu and cursor with the given draw info.
 #pragma optimize_for_size on
-extern "C" void func_802AD188(CTutorialList* self,
+extern "C" void TutorialList_DrawVisible(CTutorialList* self,
                               nw4r::lyt::DrawInfo* drawInfo) {
     if (self->mField174 != 0) {
         drawLayout(self->mLayout20, drawInfo, 0, 1);
@@ -749,10 +749,10 @@ extern "C" void func_802AD188(CTutorialList* self,
     }
 }
 #pragma optimize_for_size off
-// func_802AD1F4 - release the list widget: free the CBdat index, close the
+// TutorialList_ReleaseResources - release the list widget: free the CBdat index, close the
 // two file handles, release the bound layout and resource accessor, then run
 // the cursor/scrollbar/sort-menu/region teardown helpers.
-extern "C" void func_802AD1F4(CTutorialList* self) {
+extern "C" void TutorialList_ReleaseResources(CTutorialList* self) {
     getEntry__5CBdatFUl(4);
     func_801390E0((CFileHandle**)&self->mField14);
     func_801390E0((CFileHandle**)&self->mField18);
@@ -842,13 +842,13 @@ __declspec(noinline) void func_802ACC30(u8* self, u16 target, int filter) {
 #pragma optimize_for_size off
 #pragma pop
 
-extern "C" __declspec(noinline) u16 func_802ACE04(CTutorialWindowIds* self, u16 index) {
+extern "C" __declspec(noinline) u16 TutorialList_GetEntryIdAt(CTutorialWindowIds* self, u16 index) {
     if (index >= self->mCount)
         return 0;
     return self->mIds[index];
 }
 
-u8 CTutorialList::func_802AD2A4() {
+u8 CTutorialList::TutorialList_IsListVisible() {
     // Inner test written as != so MWCC emits beq-forward + li-tail like retail.
     if (CScrollBar_isVisible(&mScrollBar) == 0)
         return 0;

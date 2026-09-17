@@ -249,7 +249,7 @@ struct CScnVirtualLightSrc;
 struct CScnVirtualLightSub;
 
 // Pool getters (CScnItemPool.cpp / retail 0x80058E58 / 0x80059F74).
-extern "C" u32 func_8048C8BC(CScnVirtualLightSrc* self);
+extern "C" u32 CScnItemPool_resolveScene(CScnVirtualLightSrc* self);
 extern "C" CScnVirtualLightSub* getSubField7C(CScnVirtualLightSrc* self);
 extern "C" u32 checkBitFlag(CScnVirtualLightSub* self);
 
@@ -353,7 +353,7 @@ public:
     virtual ml::CVec3 GetPosition() = 0;    // +0x0C
 };
 
-// Virtual-dispatch view of the allocation-source object behind func_8048C8BC
+// Virtual-dispatch view of the allocation-source object behind CScnItemPool_resolveScene
 // (the pool's +0x8C): slot +0x2C returns the ALLOC_HANDLE the ctor passes to
 // mtl::MemManager::create. Declared-only / abstract; never instantiated.
 // dtor + 8 filler virtuals place GetHandle at +0x2C (after the two header

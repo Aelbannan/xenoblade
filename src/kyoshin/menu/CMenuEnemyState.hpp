@@ -210,7 +210,7 @@ extern "C" void func_80137F88(void* a, void* palette);
 extern "C" u16 BdatGetU16Direct(const void* a, const char* b, int c);
 extern "C" char* MakeTplNameSysFile(u32 id);
 // Enemy-menu helpers used by the panel/cursor functions (retail unmangled).
-// (func_8009ECB0 is declared in include/functions.hpp as `extern "C" int*`.)
+// (CtrlObjectParam_GetSlotTableBase is declared in include/functions.hpp as `extern "C" int*`.)
 extern "C" void* findObjB28ById(s32 a);
 // Unprototyped-style import shared by two callers in this TU.
 extern "C" void* func_800EA444(void* mgr);

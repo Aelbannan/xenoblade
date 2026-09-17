@@ -427,7 +427,7 @@ extern "C" __declspec(noinline) void func_801BD630(CMenuKizunaTalk* self) {
             if ((u8)talk == 3) talk = 8;
             if ((u8)talk2 == 3) talk2 = 8;
         }
-        int* list = func_8009ECB0();
+        int* list = CtrlObjectParam_GetSlotTableBase();
         for (u32 i = 0; i < 3; i++) {
             u32 v = (u32)list[i + 1];
             if ((u8)talk == v) {

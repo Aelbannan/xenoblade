@@ -452,7 +452,7 @@ int func_80164954() {
 
 // Event-load kick (returns 0 always): validates the manager/sequence state,
 // refreshes the CInfoCf settings, checks the file exists, then stores the
-// gate object returned by func_8016AED4 and marks the manager busy. When the
+// gate object returned by EvtSeqCreateTask and marks the manager busy. When the
 // optional arg2 is set the CRI controller is consulted first. Finally the
 // path's file extension is trimmed off and the resulting name is matched
 // against the 32-entry event-name table, forwarding the index to
@@ -473,12 +473,12 @@ int func_80164A50(const char* path, int arg1, int arg2) {
     }
     lbl_eu_80664240->field_0x1BC = 0;
     lbl_eu_80664240->field_0xB0 =
-        func_8016AED4(reinterpret_cast<CProcess*>(lbl_eu_80664240), path);
+        EvtSeqCreateTask(reinterpret_cast<CProcess*>(lbl_eu_80664240), path);
     // Remainder nested under the positive gate test: retail branches beq
     // straight to the shared return-0 block when the spawn failed.
     if (lbl_eu_80664240->field_0xB0 != 0) {
         if (arg2 != 0) {
-            func_8016C2C8();
+            EvtSeqSetStateBit9();
         }
         lbl_eu_80664240->field_0x6C |= 1;
         const char* file = ml::CPathUtil::getFilePtrFromPath(path);
@@ -676,8 +676,8 @@ void func_80165014() {
     cri->clearMoviePause();
 }
 
-extern "C" void func_8016C2E4();
-extern "C" void func_80165038() { func_8016C2E4(); }
+extern "C" void EvtSeqClearStateBit9();
+extern "C" void func_80165038() { EvtSeqClearStateBit9(); }
 
 // Tears down the active event sequence. Runs only while the manager is
 // present and its +0x6C bit0 flag is raised (the `mgr &&` test materializes
@@ -956,7 +956,7 @@ void cf::CTaskREvent::Move() {
 
     // Frame-time tracking: watch for stalls while the game manager idles.
     s32 cur = CTaskGame_getStreamPos();
-    func_8016C6EC(0);
+    EvtSeqSetStateBit18(0);
     if (cur >= 0) {
         if (CTaskGame_isStreamPaused() == 0 && (this->field_0x6C & 0x100) == 0 &&
             (lbl_eu_80663E28 & 0x01000000) == 0 &&
@@ -966,13 +966,13 @@ void cf::CTaskREvent::Move() {
             } else {
                 this->field_0x1F4 = 0;
             }
-            if (func_8016A35C() >= 5) {
+            if (EvtSeqGetCounter100() >= 5) {
                 if (this->field_0x1F4 >= 2) {
                     this->field_0x6C |= 0x200;
-                    func_8016C6EC(1);
+                    EvtSeqSetStateBit18(1);
                 } else if ((this->field_0x6C & 0x200) != 0) {
-                    if (func_8016A3A8() > cur) {
-                        func_8016C6EC(1);
+                    if (EvtSeqGetCounter104() > cur) {
+                        EvtSeqSetStateBit18(1);
                     } else {
                         this->field_0x6C &= ~0x200;
                     }
@@ -1275,9 +1275,9 @@ end:
 body:
     int v = CTaskGame_getStreamPos();
     if (CDeviceVI::isTvFormatPal()) v += 2;
-    if (func_8016A3A8() < v) {
-        if (func_eu_8016DA48(self->field_0xB0) != 0) {
-            int d = v - func_8016A3A8();
+    if (EvtSeqGetCounter104() < v) {
+        if (EvtSeqCheckWalkGate(self->field_0xB0) != 0) {
+            int d = v - EvtSeqGetCounter104();
             if (d > 0x3c) d = 0x3c;
             CGame::setTaskManagerUpdateCount((u32)d);
             self->field_0x6C |= 0x100;

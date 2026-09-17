@@ -1054,7 +1054,7 @@ extern "C" void func_8025CD40(void* self);
 // BDAT/layout-manager helpers (unmangled retail symbols).
 extern "C" u32 func_8003B1EC(void* fp);              // BDAT row count
 extern "C" u32 func_8009CF8C(u32 idx);               // game-progress getter
-extern "C" u32 func_8009ECE0();                      // current kizuna id
+extern "C" u32 CtrlObjectParam_GetWorkTailValue();                      // current kizuna id
 extern "C" char* BdatGetU16Direct(const void* mgr, const void* name, int id);
 extern "C" int BdatGetS16Direct(const void* mgr, const void* name, int id);
 extern "C" int BdatGetSexFlag(int id);

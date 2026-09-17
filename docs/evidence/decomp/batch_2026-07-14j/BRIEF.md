@@ -62,7 +62,7 @@ Retail asm for each symbol is in this directory (`asm_*.s`).
 
 ### `CUICfManager::Move` (`asm_Move_CUICfManager.s`)
 - Frame `-0x120`; bitflag-driven create/teardown of UI children via `lbl_eu_80664054`
-- Calls `func_801338C8`, `CUICfManager_queueBaseMenu`, `__ct__CMenuKeyAssign`, `func_801109D8`, etc.
+- Calls `func_801338C8`, `CUICfManager_queueMoveBaseMenu`, `__ct__CMenuKeyAssign`, `func_801109D8`, etc.
 - Bit tests on `r4` early look like **fake-`Fv` with flags in r4** — verify from callers; may be reading `this` fields into r4
 - **Leave `Init` (asm), `Term`, and `func_80133324` alone** — append `Move` only
 - SDA: `lbl_eu_80664054` / `lbl_eu_80663E28` only

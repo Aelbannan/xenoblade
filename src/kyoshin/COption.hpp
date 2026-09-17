@@ -27,7 +27,7 @@ public:
     // 0x16 ... derived fields
 };
 
-// Object used by func_8029C734: embedded CScrollBar at +0x38 and CSysWin at
+// Object used by COptionIsWindowReady: embedded CScrollBar at +0x38 and CSysWin at
 // +0xA8 with a visibility/state byte at +0x2A.
 struct COptionWindow {
     u8 _00[0x2A];                 // 0x00-0x29
@@ -49,7 +49,7 @@ struct COptionFull {
 };
 
 // Option sub-object referenced at +0x1C. Virtual dispatch used by the
-// func_8029E144 / func_8029E1CC animation-configurators (vtable offsets
+// COptionSetupSubAnim20 / COptionSetupSubAnim24 animation-configurators (vtable offsets
 // 0x1C/0x24/0x2C/0x38 = v5/v7/v9/v12 after MWCC's 2 implicit vtable entries).
 class COptionSub {
 public:
@@ -84,7 +84,7 @@ struct COptionMem {
 
 // Abstract view into the embedded CCur18 cursor vtable (MWCC prepends 2
 // entries, so the second declared virtual lands at vtable +0x0C - the cursor
-// teardown virtual invoked by func_8029C66C). Same scheme as CSysWinSave.hpp.
+// teardown virtual invoked by COptionTeardown). Same scheme as CSysWinSave.hpp.
 class CCursor18 {
 public:
     virtual void vf2(int) = 0;  // slot 2 (+0x08)
@@ -99,7 +99,7 @@ public:
     virtual void vf0() = 0;  // +0x08 - cursor teardown
 };
 
-// Full cursor vtable view for func_8029E254: vf04 is declared index 2, which
+// Full cursor vtable view for COptionRefreshCursorPanes: vf04 is declared index 2, which
 // lands at vtable +0x10 after MWCC's 2-entry RTTI prefix - the "apply window
 // data" virtual dispatched on the sub-cursors. Same scheme as CCur18View.
 class COptionCurView {
@@ -112,7 +112,7 @@ public:
 // Vtable view for the +0x1C sub-object's message source (the pointer at
 // +0x10 of the sub-object): v0D is declared index 13, which lands at vtable
 // +0x3C (slot 15) - the "resolve message text to a pane" virtual used by
-// func_8029E254.
+// COptionRefreshCursorPanes.
 class COptionMsgObj {
 public:
     virtual void v0() = 0;                             // +0x08
@@ -138,7 +138,7 @@ struct COptionSubData {
 };
 
 // CSysWin vtable view exposing the layout-build virtual at +0x88 (slot 34 =
-// declared index 32 after the RTTI prefix) invoked by func_8029C35C.
+// declared index 32 after the RTTI prefix) invoked by COptionRebuildWidgets.
 class COptionSysWinView {
 public:
     virtual void v00() = 0;
@@ -207,7 +207,7 @@ public:
     u8 mActive;                                    // 0x14
     u8 mVisible;                                   // 0x15
     u8 _16[2];                                     // 0x16-0x17
-    void* field_18;                                // 0x18 (null-checked in func_8029D3C0)
+    void* field_18;                                // 0x18 (null-checked in COptionSyncConfigAndRefresh)
     COptionSub* mSubObj;                           // 0x1C
     nw4r::lyt::AnimTransform* mAnimTransform20;   // 0x20
     nw4r::lyt::AnimTransform* mAnimTransform24;   // 0x24
@@ -237,7 +237,7 @@ public:
 
 // Global data imports (MWCC does not mangle global-scope data names).
 extern u32 lbl_eu_80663E28;   // .sbss mode flag; bit 0x01000000 gates the config re-sync lists
-// .sbss last-synced config byte (written by func_8029D278)
+// .sbss last-synced config byte (written by COptionTickConfigSync)
 extern u8 lbl_eu_80664A40[8];
 // .data option text tables (size 0x154): u16 enable table at +0x00, u16 name
 // table at +0x2C, 12-byte-row u16 value table at +0x58, u8 label table at
@@ -261,7 +261,7 @@ extern "C" void __ct__CScrollBar(CScrollBar* self, int arg);
 extern "C" void __ct__CSysWin(CSysWin* self, int arg);
 extern "C" Class_80296898 lbl_eu_80577308;
 extern "C" u8 lbl_eu_8053948C[0x30];
-// updateConfig retail symbol (1-arg mangling); func_8029D278 calls it with a
+// updateConfig retail symbol (1-arg mangling); COptionTickConfigSync calls it with a
 // dead second argument (retail emits li r4,1), so declare the literal
 // mangled identifier under C linkage with both args.
 extern "C" void updateConfig__FPUc(u8* src, int mode);
@@ -300,13 +300,13 @@ extern "C" void func_8022B7F4(void*);
 extern "C" void func_801D216C(void*, u8);
 extern "C" void func_801D2174(CBaseCur*);
 extern "C" void func_801D21CC(void*);
-extern "C" void func_8029E254(COption*);
+extern "C" void COptionRefreshCursorPanes(COption*);
 extern "C" int func_8029E3F8(COption*);
-extern "C" void func_8029E1CC(COption*);
-extern "C" void func_8029E144(COption*);
+extern "C" void COptionSetupSubAnim24(COption*);
+extern "C" void COptionSetupSubAnim20(COption*);
 extern "C" void func_8029D420(COption*);
-extern "C" u8 func_8029D634(COption*, u8);
-extern "C" u8 func_8029D7E8(COption* self);
+extern "C" u8 COptionReadConfigCell(COption*, u8);
+extern "C" u8 COptionReadCurrentConfigCell(COption* self);
 extern "C" void func_8029DD6C(COption* self);
 extern "C" void func_8022B8E4(void*);
 extern "C" void func_8022B748(void*);

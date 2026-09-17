@@ -2629,7 +2629,7 @@ extern "C" __declspec(noinline) char* CTaskGame_strAppend(ml::FixStr<32>* str, c
 // unkE8 handle is similarly reset. Then, when the play-time gate
 // (CTaskGame_playTimeGate) and the CfGameManager reset gate are open and unk68 bit
 // 0x40 is clear, forward (unkD8, bool) to the CRI active-setter with the OR
-// of the func_8016C720 / isSceneLoading gates. Finally, when the unk18C
+// of the EvtSeqGetStateBit19 / isSceneLoading gates. Finally, when the unk18C
 // struct's +0x18 word is non-zero and the CTaskGame_openVision vision helper
 // succeeds, re-seed the unk18C struct (CTaskGame_setVisionParam with the float
 // constant); when the scene pointer is gone, disable the Hbm state.
@@ -2664,12 +2664,12 @@ extern "C" void CTaskGame_updateStream(CTaskGame* self) {
         if (cf::CfGameManager::isManagerInitialized() != 0) {
             if ((lbl_eu_80663D18->unk68 & 0x40) == 0) {
                 // Right-to-left arg evaluation: write the CfGameManager gate
-                // first so func_8016C720 runs first into r30 (retail
+                // first so EvtSeqGetStateBit19 runs first into r30 (retail
                 // mr r30, r3), then the gate returns in r3 and the OR is
                 // r3 | r30 (retail or r4, r3, r30) before the subic/subfe
                 // bool conversion (size-opt idiom).
                 setStreamPause__7CLibCriFv(self->unkD8,
-                                          (cf::CfGameManager::isSceneLoading() | func_8016C720()) != 0);
+                                          (cf::CfGameManager::isSceneLoading() | EvtSeqGetStateBit19()) != 0);
             }
         }
     }

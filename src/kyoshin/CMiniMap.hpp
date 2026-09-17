@@ -123,7 +123,7 @@ extern "C" void* getFP__FPCc(const char* name);
 extern "C" u32 CheckState2CC8Active(u16 id);
 struct CMMGimmickPos { f32 x; f32 y; f32 z; };
 extern "C" CMMGimmickPos* func_801F4E68(CMMGlobalGimmick* mgr, u16 id);
-extern "C" unsigned long func_8009ECF0();
+extern "C" unsigned long CtrlObjectParam_GetWorkField50();
 extern "C" int GetSysStateFlag10();
 extern "C" int func_801AC124();
 // Move() gate/state helpers (unmangled retail symbols - C linkage).

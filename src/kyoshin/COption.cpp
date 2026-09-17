@@ -192,7 +192,7 @@ void CMenuOption::Init() {
     *(u32*)((u8*)this + 0x1b8) = *(u32*)(tempOption + 0x100);
     __dt__7COptionFv(reinterpret_cast<COption*>(tempOption), -1);
 
-    func_8029C35C((COption*)mOption);
+    COptionRebuildWidgets((COption*)mOption);
 
     // Register the widget as an IScnRender render callback on its parent scene.
     IScnRender* renderCB = reinterpret_cast<IScnRender*>(this);
@@ -214,7 +214,7 @@ void CMenuOption::Term() {
 
     func_801C3D9C((CBgTex*)mBgTex);
     func_801C40A0((CTitleAHelp*)mTitleAHelp);
-    func_8029C66C((COption*)mOption);
+    COptionTeardown((COption*)mOption);
 
     lbl_eu_80664A38 = 0;
     setPresentationFlag__Q22cf13CfGameManagerFv(0);
@@ -233,7 +233,7 @@ void CMenuOption::Move() {
 
     func_801C3D54((CBgTex*)mBgTex);
     func_801C3FF0((CTitleAHelp*)mTitleAHelp);
-    func_8029C4F4((COption*)mOption);
+    COptionTickState((COption*)mOption);
 }
 
 void CMenuOption::cbRenderBefore() {
@@ -250,7 +250,7 @@ void CMenuOption::cbRenderBefore() {
     __ct__Q34nw4r3lyt8DrawInfoFv((nw4r::lyt::DrawInfo*)&drawInfo[0]);
     func_80137250((nw4r::lyt::DrawInfo*)&drawInfo[0]);
     func_801C3D7C((CBgTex*)mBgTex, (nw4r::lyt::DrawInfo*)&drawInfo[0]);
-    func_8029C5C8((COption*)mOption, (nw4r::lyt::DrawInfo*)&drawInfo[0]);
+    COptionDraw((COption*)mOption, (nw4r::lyt::DrawInfo*)&drawInfo[0]);
     func_801C4080((CTitleAHelp*)mTitleAHelp, (nw4r::lyt::DrawInfo*)&drawInfo[0]);
     __dt__Q34nw4r3lyt8DrawInfoFv((nw4r::lyt::DrawInfo*)&drawInfo[0], -1);
 }
@@ -277,9 +277,9 @@ CMenuOption* func_8029BB24(CProcess* registParent, CProcess* parent, u32 arg) {
  * play the confirm sound effect (writes the state byte at 0x1BC). */
 void func_8029BBB0(CMenuOption* self) {
     if (func_801C3E34((CBgTex*)self->mBgTex) != 0 && func_801C4114((CTitleAHelp*)self->mTitleAHelp) != 0 &&
-        func_8029C734((COption*)self->mOption) != 0) {
+        COptionIsWindowReady((COption*)self->mOption) != 0) {
         func_801C412C((CTitleAHelp*)self->mTitleAHelp);
-        func_8029CB9C((COption*)self->mOption);
+        COptionBeginScrollSetup((COption*)self->mOption);
         self->mState = 1;
         playUISound__FUl(0x6d);
     }
@@ -288,7 +288,7 @@ void func_8029BBB0(CMenuOption* self) {
 /* Advance the option menu to phase 2 once the title bar is idle and the
  * option panel has finished its intro (writes the state byte at 0x1BC). */
 void func_8029BC28(CMenuOption* self) {
-    if (isIdle__11CTitleAHelpFv((CTitleAHelp*)self->mTitleAHelp) != 0 && func_8029C790((COption*)self->mOption) != 0) {
+    if (isIdle__11CTitleAHelpFv((CTitleAHelp*)self->mTitleAHelp) != 0 && COptionGetLiveFlag((COption*)self->mOption) != 0) {
         self->mState = 2;
     }
 }
@@ -299,7 +299,7 @@ void func_8029BC28(CMenuOption* self) {
  * title/help bar with the option's current index and advances the phase state
  * machine (mState / mField54). */
 void func_8029BC78(CMenuOption* self) {
-    if (func_8029C734((COption*)self->mOption) == 0) {
+    if (COptionIsWindowReady((COption*)self->mOption) == 0) {
         return;
     }
 
@@ -341,27 +341,27 @@ void func_8029BC78(CMenuOption* self) {
     }
 
     if (left) {
-        func_8029CC9C((COption*)self->mOption);
+        COptionHandleLeft((COption*)self->mOption);
     } else if (right) {
-        func_8029CDB0((COption*)self->mOption, 0);
+        COptionHandleRightAccept((COption*)self->mOption, 0);
     } else if (up) {
-        func_8029C7A8((COption*)self->mOption);
+        COptionCursorUp((COption*)self->mOption);
     } else if (down) {
-        func_8029C8C4((COption*)self->mOption);
+        COptionCursorDown((COption*)self->mOption);
     } else if (pageUp) {
-        func_8029C9E8((COption*)self->mOption);
+        COptionPageUp((COption*)self->mOption);
     } else if (pageDown) {
-        func_8029CABC((COption*)self->mOption);
+        COptionPageDown((COption*)self->mOption);
     } else if (pageLeft) {
-        func_8029CF7C((COption*)self->mOption);
+        COptionOpenConfigDialog((COption*)self->mOption);
     } else if (pageRight) {
-        func_8029CDB0((COption*)self->mOption, 1);
+        COptionHandleRightAccept((COption*)self->mOption, 1);
     }
 
-    func_801C41E8((CTitleAHelp*)self->mTitleAHelp, (u8)func_8029D054((COption*)self->mOption));
+    func_801C41E8((CTitleAHelp*)self->mTitleAHelp, (u8)COptionGetNavCode((COption*)self->mOption));
 
-    if (func_8029C798((COption*)self->mOption) != 0) {
-        if (func_8029C7A0((COption*)self->mOption) != 0) {
+    if (COptionGetConfirmGate((COption*)self->mOption) != 0) {
+        if (COptionGetSecondConfirm((COption*)self->mOption) != 0) {
             if (func_800FEDF8() != 0) {
                 func_800FF914();
             }
@@ -369,7 +369,7 @@ void func_8029BC78(CMenuOption* self) {
             self->mField54 = 1;
         } else {
             func_801C414C((CTitleAHelp*)self->mTitleAHelp);
-            func_8029CC30((COption*)self->mOption);
+            COptionConfirmSelection((COption*)self->mOption);
             self->mState = 3;
         }
     }
@@ -378,7 +378,7 @@ void func_8029BC78(CMenuOption* self) {
 /* Same idle+advance check as func_8029BC28, but advances the option menu to
  * phase 1 (writes the state byte at offset 0x54). */
 void func_8029BE7C(CMenuOption* self) {
-    if (isIdle__11CTitleAHelpFv((CTitleAHelp*)self->mTitleAHelp) != 0 && func_8029C790((COption*)self->mOption) != 0) {
+    if (isIdle__11CTitleAHelpFv((CTitleAHelp*)self->mTitleAHelp) != 0 && COptionGetLiveFlag((COption*)self->mOption) != 0) {
         self->mField54 = 1;
     }
 }

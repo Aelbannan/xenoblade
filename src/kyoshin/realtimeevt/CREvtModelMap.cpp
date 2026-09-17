@@ -87,7 +87,7 @@ void func_800AA33C(ml::FixStr<64>& buf, u32 packed, int prefixFlag, int suffixFl
 bool func_80181988(CREvtModelMap* self, CEventFile* ev);
 void func_8016BC1C(CREvtModelMap* self);
 bool func_8016BDA8(void* self, s32* pId);
-u32 func_8016A35C();
+u32 EvtSeqGetCounter100();
 u32 EvtSeqGetStateBit5();
 void EvtSeqCheckEventRunGuard(CREvtModelMap* self);
 u32 func_80180960();
@@ -110,13 +110,13 @@ mtl::ALLOC_HANDLE getScnCounter__Fv();
 void* getGlobalSda();
 void __dt__80185754(CREvtModelMap* self);
 void __ct__80172668(CREvtModelMap* self, int dealloc);
-void func_8016A354();
+void getField20();
 void func_801729F0();
 void func_80172768(CREvtModelMap* self, int r4);
 void func_801727DC();
 void func_801728F8();
 void func_8017298C();
-void func_80169F24();
+void CREvtObjVfunc24Default();
 void func_801731A0();
 void func_80173194();
 void func_801731AC();
@@ -522,7 +522,7 @@ void func_8018140C(CREvtModelMap* self)
 void func_8018152C(CREvtModelMap* self)
 {
     if (self->mEmoteModel) {
-        f32 fTime = (f32)(s32)func_8016A35C();
+        f32 fTime = (f32)(s32)EvtSeqGetCounter100();
         simRefreshFlag8(self->mEmoteModel, fTime);
     }
     reinterpret_cast<CREvtModel*>(self)->setVisible(func_80180960());

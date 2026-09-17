@@ -10,7 +10,7 @@
 // Cross-unit pool iterator (retail C-ABI, unmangled symbol; defined in
 // CScnItemPool.cpp). Iterates the pool's reslist and clears matching
 // references on every item via simClearNodeRefs.
-extern "C" void func_8048CC40(CScnItemPool* pool, CScnItemModel* item);
+extern "C" void CScnItemPool_forEachClearNodeRefs(CScnItemPool* pool, CScnItemModel* item);
 
 // Tail-called from simGetLeafAnimDist / simGetLeafAnimDist2 (retail C-ABI, unmangled
 // symbols; defined in CScn_80496B0C.cpp; declared in CScnItemModel.hpp so
@@ -227,7 +227,7 @@ extern "C" void func_80482DF4(CScnItemModel* self, u32 param) {
 // simRemoveFromPool: remove `self` from every item in the pool owned by the
 // scene object at self->field_04. Tail-calls the pool iterator.
 void simRemoveFromPool(CScnItemModel* self) {
-    func_8048CC40(self->field_04->pool, self);
+    CScnItemPool_forEachClearNodeRefs(self->field_04->pool, self);
 }
 
 void simSetFlag200000(){}

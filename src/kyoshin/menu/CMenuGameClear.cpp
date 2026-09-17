@@ -68,7 +68,7 @@ extern "C" CMenuGameClear* __ct__CMenuGameClear(CProcess* registParent, CScn* sc
         cf::CtrlObjectParamInit* p = &obj->mParams[0];
         cf::CtrlObjectParamInit* end = &obj->mParams[14];
         do {
-            func_8009D764(p);
+            CtrlObjectParam_InitEquipSlots(p);
             p++;
         } while (p < end);
     }

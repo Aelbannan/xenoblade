@@ -52,9 +52,9 @@ public:
 
 // Scene-item pool helpers (retail reloc names are unmangled short forms, so
 // C-linkage declarations reproduce them; the retail map resolves the symbols).
-extern "C" void func_8048CBC0(void* self, void* arg);
+extern "C" void CScnItemPool_forEachSetLeafAnimTag(void* self, void* arg);
 extern "C" CScnItemAnim* CScnItemPool_allocSmallSlot(void* self);
-extern "C" u32 func_8048C630(void* pool, void* item, u32 flag);
+extern "C" u32 CScnItemPool_registerOtherList(void* pool, void* item, u32 flag);
 
 // Runtime throw helper (NMWException.h is not included: it drags in
 // __ppc_eabi_linker.h which conflicts with __ppc_eabi_init.h's _stack_addr).

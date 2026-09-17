@@ -20,8 +20,8 @@ extern "C" {
     extern u8  lbl_eu_806659D0;            // global NAND "busy" flag
     extern s32 lbl_eu_806659D4;            // global NAND result/error latch
 
-    u32* func_804DA98C(u8 arg);                               // NAND entry-buffer primitive
-    s32  func_804DA898(u32* entries, u32* dir, u32* result);  // NAND readdir primitive
+    u32* CNReqSaveBuildTempPath(u8 arg);                               // NAND entry-buffer primitive
+    s32  CNReqSaveNandReadDir(u32* entries, u32* dir, u32* result);  // NAND readdir primitive
 }
 
 // CNReqtaskReaddir task payload (the sub-task embedded in CNRequest):
@@ -46,7 +46,7 @@ extern "C" __declspec(align(8)) const char lbl_eu_80524620[24] = {
 
 // Foreign labels referenced by the task vtable / RTTI locator.
 extern "C" u32 lbl_eu_80663B70;   // .sdata foreign base-list (CWorkSystemCache)
-extern "C" void func_804DA4CC(); // foreign task helper
+extern "C" void CNReqSaveDeallocIfOpen(); // foreign task helper
 // In-TU helper forward decl (defined below).
 extern "C" s32 func_804DB114(CNReqtaskReaddirVtbl* vtable_ptr, CNReqtaskReaddirData* d);
 
@@ -58,7 +58,7 @@ extern "C" u32 lbl_eu_80663B98[2] = { (u32)&lbl_eu_80524620, (u32)&lbl_eu_8056FD
 // === .data size=0x20 align=8 ===
 // Task vtable (16B).
 extern "C" u32 lbl_eu_8056FDA8[4] = {
-    (u32)&lbl_eu_80663B98, 0x00000000, (u32)&func_804DB114, (u32)&func_804DA4CC,
+    (u32)&lbl_eu_80663B98, 0x00000000, (u32)&func_804DB114, (u32)&CNReqSaveDeallocIfOpen,
 };
 // Base-list tail (16B).
 extern "C" u32 lbl_eu_8056FDB8[4] = {
@@ -87,8 +87,8 @@ extern "C" CNReqtaskReaddirVtbl** func_804DB0F0(CNReqtaskReaddirData* d, u32* en
 // Async NAND readdir state machine, polled by the CNand completion pump.
 // Advancing one step per call; returns 1 when finished, 2 on error, and 0 while
 // still in progress. Steps:
-//   0 -> begin listing the directory (func_804DA898)
-//   1 -> read entries into mBuf (func_804DA898)
+//   0 -> begin listing the directory (CNReqSaveNandReadDir)
+//   1 -> read entries into mBuf (CNReqSaveNandReadDir)
 //   2..3 -> finish the listing and report the result
 extern "C" s32 func_804DB114(CNReqtaskReaddirVtbl* vtable_ptr, CNReqtaskReaddirData* d) {
     if (lbl_eu_806659D0 != 0) { // NAND subsystem busy
@@ -117,8 +117,8 @@ extern "C" s32 func_804DB114(CNReqtaskReaddirVtbl* vtable_ptr, CNReqtaskReaddirD
 
     switch ((s8)d->mState) {
         case 0: {
-            u32* r = func_804DA98C(d->mType);
-            s32 res = func_804DA898(0, d->mDir, (u32*)(u32)r);
+            u32* r = CNReqSaveBuildTempPath(d->mType);
+            s32 res = CNReqSaveNandReadDir(0, d->mDir, (u32*)(u32)r);
             if (res != 0) {
                 return 2;
             }
@@ -126,8 +126,8 @@ extern "C" s32 func_804DB114(CNReqtaskReaddirVtbl* vtable_ptr, CNReqtaskReaddirD
             goto ret0;
         }
         case 1: {
-            u32* r = func_804DA98C(d->mType);
-            s32 res = func_804DA898(d->mBuf, d->mDir, (u32*)(u32)r);
+            u32* r = CNReqSaveBuildTempPath(d->mType);
+            s32 res = CNReqSaveNandReadDir(d->mBuf, d->mDir, (u32*)(u32)r);
             if (res != 0) {
                 return 2;
             }

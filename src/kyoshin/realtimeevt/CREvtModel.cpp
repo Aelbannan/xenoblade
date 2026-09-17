@@ -18,11 +18,11 @@ extern void* func_80185748(u32 size);
 extern u32 Scn_IsAnimActiveOrNull(void* ptr);
 extern void* Scn_InitGlobalA(void* global, void* data, int param);
 extern void func_8016AF4C(void* data, const char* name, int* outValue);
-extern void func_8016B384(void* data, const char* name, void* outValue);
-extern int  func_8016B788(void* data);
+extern void EvtSeqFindResFloat(void* data, const char* name, void* outValue);
+extern int  EvtSeqCheckRegionStatus(void* data);
 extern u32  func_80180954(void);
 extern u32  func_80180960(void);
-extern int func_8016A3A8(void);
+extern int EvtSeqGetCounter104(void);
 extern void func_804C0254(void* ptr, int flag);
 extern void* simGetLeafActData(void* model);
 extern void simSetFlag2OnTree(void* model, int flag);
@@ -144,7 +144,7 @@ void func_801727DC(void* self) {
     if (counter < 4) {
         u16 val = *(u16*)((char*)FLD(void*, self, 0x1C) + counter * 2 + 0x6C);
         if (val != 0) {
-            int result = func_8016A3A8();
+            int result = EvtSeqGetCounter104();
             if (result == (int)val) {
                 u32 flags = FLD(u32, self, 0x18);
                 if (flags & 0x400) { flags &= ~0x400; }
@@ -242,7 +242,7 @@ void func_801729F0(void* self, void* pData, void* pModelData) {
     if (sv2 != 0) { FLD(u32, model, 0x7A0) |= 0x8; }
     else { FLD(u32, model, 0x7A0) &= ~0x8; }
     if (func_80180954() == 0) { func_80172EA4(self, newData, model, 0); }
-    int result = func_8016B788(newData);
+    int result = EvtSeqCheckRegionStatus(newData);
     static_cast<CScnItemModel*>(model)->vfunc84(result);
 }
 
@@ -261,8 +261,8 @@ void func_80172CE4(void* self, void* model) {
     func_8016AF4C(FLD(void*, self, 0x24), &strBase[0x24], &stackVal);
     if (stackVal > 0) {
         stackVal--;
-        func_8016B384(FLD(void*, self, 0x24), &strBase[0x2C], &stackF1);
-        func_8016B384(FLD(void*, self, 0x24), &strBase[0x36], &stackF0);
+        EvtSeqFindResFloat(FLD(void*, self, 0x24), &strBase[0x2C], &stackF1);
+        EvtSeqFindResFloat(FLD(void*, self, 0x24), &strBase[0x36], &stackF0);
     } else { stackVal = 1; }
     static_cast<CScnItemModel*>(model)->vfunc50(stackVal == 0 ? 0 : 1);
     void* shadow = __dynamic_cast(FLD(void*, model, 0x7EC), 0, (void*)&lbl_eu_806623F8, (void*)&lbl_eu_80662400, 0);
@@ -342,7 +342,7 @@ int func_801731AC(void* self) {
 extern "C" {
 extern void* __RTTI__Q22cf13CfObjectActor;
 extern const void* lbl_eu_80662408[2];  // defined with the .sdata below
-extern void func_8016A354(), func_801696C4(), func_80169F24();  // cross-TU slots of the 0x44 table
+extern void getField20(), CREvtObjIsBusyDefault(), CREvtObjVfunc24Default();  // cross-TU slots of the 0x44 table
 extern void CActorState_setObjStateBit3__Q22cf11CActorStateFv(), CBattleState_getOwner__Q22cf13CfObjectActorFv(), CBattleState_callOwnerObject__Q22cf13CfObjectActorFv(), CBattleState_getParamPtrName__Q22cf13CfObjectActorFv(), CBattleState_UnkVirtualFunc4__Q22cf12CBattleStateFv(), CBattleState_enterStatusEntry__Q22cf12CBattleStateFPQ22cf17CBattleStateEntry();
 extern void CBattleState_addStagingEntry__Q22cf12CBattleStateFPQ22cf17CBattleStateEntry(), CBattleState_clearStatusId__Q22cf12CBattleStateFv(), CBattleState_applyEventEntry__Q22cf12CBattleStateFPQ22cf17CBattleStateEntry(), CBattleState_UnkVirtualFunc9__Q22cf12CBattleStateFv(), CBattleState_removeKeyedEntries__Q22cf12CBattleStateFPQ22cf17CBattleStateEntry(), CBattleState_clearEntriesByMask__Q22cf12CBattleStateFUl();
 extern void CBattleState_UnkVirtualFunc12__Q22cf12CBattleStateFv(), CBattleState_getStatusSlot__Q22cf12CBattleStateFi(), CBattleState_UnkVirtualFunc14__Q22cf12CBattleStateFv(), CBattleState_UnkVirtualFunc15__Q22cf12CBattleStateFv(), CBattleState_UnkVirtualFunc16__Q22cf12CBattleStateFv(), CBattleState_notifyEntryUpdated__Q22cf13CfObjectActorFv();
@@ -516,8 +516,8 @@ void* lbl_eu_80531670[3] = {
 __declspec(section ".data") __attribute__((used))
 const void* lbl_eu_8053167C[17] = {
     (void*)lbl_eu_80662408, 0, (void*)__ct__80172668, (void*)func_801728F8, // +0x0
-    (void*)func_8017298C, (void*)func_8016A354, (void*)func_801731A0, (void*)func_80173194, // +0x10
-    (void*)func_801696C4, (void*)func_801727DC, (void*)func_801731AC, (void*)func_80169F24, // +0x20
+    (void*)func_8017298C, (void*)getField20, (void*)func_801731A0, (void*)func_80173194, // +0x10
+    (void*)CREvtObjIsBusyDefault, (void*)func_801727DC, (void*)func_801731AC, (void*)CREvtObjVfunc24Default, // +0x20
     (void*)func_80172CC4, (void*)func_801729F0, (void*)func_80172CC0, (void*)func_801726DC, // +0x30
     (void*)func_80172768, // +0x40
 };

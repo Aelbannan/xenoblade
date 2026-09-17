@@ -75,7 +75,7 @@ extern u32 lbl_eu_80663E28;
 // symbol (US strips mangling for these func_ names). int returns keep the
 // caller's `!= 0` a plain cmpwi (retail emits no u8 mask; the defining TU's u8
 // return is ABI-compatible, value in r3).
-extern "C" int func_802A01F0(CSkipTimer* self);
+extern "C" int CSkipTimerIsEngaged(CSkipTimer* self);
 extern "C" void CSkipTimerTick(CSkipTimer* self);
 extern "C" void func_8029FBE0(CSkipTimer* self);
 extern "C" void func_8029EF30(CMenuSkipTimer* self);

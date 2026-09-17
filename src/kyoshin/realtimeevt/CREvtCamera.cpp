@@ -28,11 +28,11 @@ extern "C" {
     void simSetLeafDist7B0(CScnItemModel* obj, float val);
     float simGetLeafAnimDist2(void* obj);
     nw4r::g3d::ChrAnmResult* scnImN4AnimFn(CScnItemModel* model, const char* name, f32 time);
-    int func_8016A35C();
+    int EvtSeqGetCounter100();
     void* func_801644B4();
     void EvtSeqPublishIdHalfwords();
     void func_8016AF4C(void* obj, const char* name, u32* out);
-    int func_8016B5A4(void* obj, const char* name, void* out);
+    int EvtSeqFindResAddr(void* obj, const char* name, void* out);
     int func_8016B164(void* obj, const char* name, void* out1, void* out2);
     void func_804839D4(void* obj, void* param, int a, int b, int c, int d, int e);
     float simGetLeafAnimDist2(void* obj);
@@ -331,10 +331,10 @@ extern "C" void func_801804CC(CREvtCamera* self) {
 
     CScnItemModel* sceneObj = (CScnItemModel*)self->mField1C;
     nw4r::g3d::ChrAnmResult* result =
-        scnImN4AnimFn(sceneObj, lbl_eu_8066244C, ConvU32ToTime((u32)func_8016A35C()));
+        scnImN4AnimFn(sceneObj, lbl_eu_8066244C, ConvU32ToTime((u32)EvtSeqGetCounter100()));
     result->GetRotTrans((nw4r::math::MTX34*)self->mMatrix58);
     self->mFieldA4 = 1;
-    result = scnImN4AnimFn(sceneObj, lbl_eu_80662448, ConvU32ToTime((u32)func_8016A35C()));
+    result = scnImN4AnimFn(sceneObj, lbl_eu_80662448, ConvU32ToTime((u32)EvtSeqGetCounter100()));
     result->GetRotTrans((nw4r::math::MTX34*)self->mMatrix28);
 
     CREvtCamObj* camObj = Scn_FindCamItem((u32)lbl_eu_80663E14, -1);
@@ -393,7 +393,7 @@ extern "C" void func_80180664(CREvtCamera* self, void* eventData, void* somePara
             const char* timeStr;
             u32* taskBuf;
             s32 taskCount;
-            if (func_8016B5A4((void*)self->mField20, lbl_eu_805036D8 + 38, &timeStr)) {
+            if (EvtSeqFindResAddr((void*)self->mField20, lbl_eu_805036D8 + 38, &timeStr)) {
                 int val = atoi(timeStr);
                 u16 v = (u16)val;
                 if ((u32)(u16)(v / 100) == 99 && (u32)(u16)(v % 100) == 99) {

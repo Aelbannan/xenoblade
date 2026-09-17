@@ -7,7 +7,7 @@
 extern u32 lbl_eu_8056E568[];   // CScnLightMan vtable
 // Flat retail helpers (C linkage keeps the exact retail symbol names).
 extern "C" CScnItemLight* func_80482398(u8* param, int val);
-extern "C" CScnLightList* func_8048C698(u8* pool, int kind);  // scene-pool list accessor
+extern "C" CScnLightList* CScnItemPool_lookupSubPool(u8* pool, int kind);  // scene-pool list accessor
 extern "C" void func_804954AC(u8* ths, int val);
 extern "C" void func_804959E8(u8* ths, int val);
 // Retail references this helper under its unmangled C name.
@@ -36,7 +36,7 @@ extern "C" CScnLightMan* __ct__CScnLightMan(CScnLightMan* ths, CScnLightParam* p
 
     // Walk the scene pool's light-item list; keep the last item whose id is
     // zero as the active light (the one that gets armed by func_804954AC).
-    CScnLightList* list = func_8048C698(ths->mParam->mPool, 3);
+    CScnLightList* list = CScnItemPool_lookupSubPool(ths->mParam->mPool, 3);
     CScnLightNode* node = list->sentinel->next;
     while (node != list->sentinel) {
         item = node->item;

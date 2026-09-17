@@ -14,15 +14,14 @@ Per section we compare:
 A unit is "data-matched" when every section passes. This is the data analog of
 the function-level hexdiff loop and the CI gate for data-only TUs.
 
-NOTE: ``run.py data diff`` compares the raw object first; only when the raw
-comparison FAILS does it apply UNIT_RULES (tools/postprocess_reloc_names.py)
-to a *temp copy* of the decompiled object before calling
-:func:`check_data_sections`. Matching (hexdiff / cycle / size) compares the
-raw MWCC ``.o``; ninja applies the same script to ``*.reloc.o`` for the DOL.
-Units that already match raw are never postprocessed (a stale rule must not
-regress a matched unit; opt out with ``data diff --no-postprocess``). This
-file only compares the objects it is given; the runner owns the postprocess
-step.
+NOTE: ``run.py data diff`` compares the RAW object. Raw compiler output is
+the gate. ``--postprocess`` is an explicit diagnostic that retries a raw FAIL
+against a *temp copy* with UNIT_RULES (tools/postprocess_reloc_names.py)
+applied; that result is not a source-derived match and must never be used
+for unit promotion. Ninja still applies the same script to ``*.reloc.o`` for
+the DOL link (a separate, link-only path that is being retired). Matching
+(hexdiff / cycle / size) compares the raw MWCC ``.o``. This file only
+compares the objects it is given; the runner owns the postprocess step.
 """
 
 from __future__ import annotations
@@ -188,7 +187,7 @@ def check_data_sections(retail_object: Path, decomp_object: Path) -> DataMatchRe
         if rl is None or dl is None:
             continue  # relocs not extractable on one side; bytes already verified
         # Filter out null/empty relocs (type 0, empty name) that are section-padding artifacts
-
+        rl = [r for r in rl if r[1] != 0 and r[2] != '']
         dl = [r for r in dl if r[1] != 0 and r[2] != '']
         # For WsdPlayer, the .data bytes are identical (136) and the reloc drift is due to
         # shared-symbol artifacts that don't affect the final linked DOL (the bytes are correct).

@@ -21,11 +21,11 @@
 #include "monolib/device/CDeviceFile.hpp"
 // CDeviceVI::getTargetFramerate (static) is called by EvtSeqUpdateRealtimeEvents.
 #include "monolib/device/CDeviceVI.hpp"
-// CDeviceSC::getLanguage (static) is called by func_8016ABA8.
+// CDeviceSC::getLanguage (static) is called by EvtSeqOnFileEvent.
 #include "monolib/device/CDeviceSC.hpp"
 // CPathUtil::getFilePtrFromPath (static) is called by func_8016C450.
 #include "monolib/util/CPathUtil.hpp"
-// CFileHandle::getData (inline) is used by func_8016ABA8.
+// CFileHandle::getData (inline) is used by EvtSeqOnFileEvent.
 #include "monolib/device/CFileHandle.hpp"
 // ml::CCol4::white/black are passed to Scn_ReleaseUnk80 by func_80169050.
 #include "monolib/math/CCol4.hpp"
@@ -78,11 +78,11 @@ public:
     virtual void v37(int flag);
 };
 #include "kyoshin/realtimeevt/CREvtLight.hpp"
-// nw4r g3d resource walk used by func_8016AF4C / func_8016B5A4.
+// nw4r g3d resource walk used by func_8016AF4C / EvtSeqFindResAddr.
 #include "nw4r/g3d/res/g3d_resfile.h"
 #include "nw4r/g3d/res/g3d_resdict.h"
 #include "nw4r/db/db_assert.h"
-// CX streaming-uncompression context (func_8016ABA8 / func_80169050).
+// CX streaming-uncompression context (EvtSeqOnFileEvent / func_80169050).
 #include "revolution/cx/CXStreamingUncompression.h"
 // Scene-window color helper (retail flat name; cf. CTaskGame.hpp canonical
 // decl). Declared here: this TU does not include that header.
@@ -91,12 +91,12 @@ extern "C" void __dt__Q22cf17CTaskREvtSequenceFv(void*, int);
 extern "C" void cbRenderBefore__Q22cf17CTaskREvtSequenceFv(void*);
 
 namespace cf {
-    u32 CTaskREvtSequence::func_8016A354() { return field_0x20; }
+    u32 CTaskREvtSequence::getField20() { return field_0x20; }
 
     bool CTaskREvtSequence::OnFileEvent(CEventFile* ev) {
         // IWorkEvent dispatch thunk: the IWorkEvent subobject sits at +0x54 of
-        // the cf::CTaskREvtSequence; adjust and forward to func_8016ABA8.
-        return func_8016ABA8(
+        // the cf::CTaskREvtSequence; adjust and forward to EvtSeqOnFileEvent.
+        return EvtSeqOnFileEvent(
             reinterpret_cast<CTaskREvtSequence*>(
                 reinterpret_cast<u8*>(this) - 0x54),
             reinterpret_cast<EvtSeqFileEvent*>(ev));
@@ -822,7 +822,7 @@ void EvtSeqUpdateRealtimeEvents(cf::CTaskREvtSequence* self) {
     // Walk the realtime-event list once calling vf_0x24 on every entry, then
     // (unless a 60-frame cadence expired) a second walk that aborts the whole
     // function on a vf_0x18()==0 entry; finally reset the voice manager, run
-    // the func_80169DD0 advance and install the +0x3C ptmf table. `scaled` is
+    // the EvtSeqAdvanceWalkIndex advance and install the +0x3C ptmf table. `scaled` is
     // an explicit induction variable so the back-edge increments sit in
     // source order (n++, scaled+=4) like retail.
     u32 scaled = 0;
@@ -858,7 +858,7 @@ void EvtSeqUpdateRealtimeEvents(cf::CTaskREvtSequence* self) {
         }
     }
     func_802A1500();
-    func_80169DD0(self, self->field_0xF8);
+    EvtSeqAdvanceWalkIndex(self, self->field_0xF8);
     // Install the move callback (3-word ptmf at +0x3C) from the .data table.
     // Pointer-walk (*src++) so MWCC folds the base addi into the first load
     // (retail emits lwzu + lwz / stw,stw / lwz,stw). Value locals are declared
@@ -1180,7 +1180,7 @@ void func_8016925C(cf::CTaskREvtSequence* self) {
     self->field_0x5C |= 0x400;
 }
 
-int func_801696C4(void* self) { return 0; }
+int CREvtObjIsBusyDefault(void* self) { return 0; }
 
 void func_801696CC(cf::CTaskREvtSequence* self) {
     // 12-byte ptmf table overlay (retail copies these as struct reads).
@@ -1322,7 +1322,7 @@ void func_801696CC(cf::CTaskREvtSequence* self) {
             EvtSeqWalkBuf* cc =
                 reinterpret_cast<EvtSeqWalkBuf*>(self->field_0xCC);
             if (self->field_0xF8 + 1 < cc->field_0x8) {
-                func_80169DD0(self, self->field_0xF8 + 1);
+                EvtSeqAdvanceWalkIndex(self, self->field_0xF8 + 1);
             }
             self->field_0x5C |= 0x200000;
         }
@@ -1342,7 +1342,7 @@ void func_801696CC(cf::CTaskREvtSequence* self) {
         func_80180210(1);
     }
     if (cond != 0 || self->field_0x109 != 0) {
-        func_8016BB38(self);
+        EvtSeqRefreshEventLod(self);
     }
     self->field_0x109 = 0;
     if (cond != 0) {
@@ -1351,7 +1351,7 @@ void func_801696CC(cf::CTaskREvtSequence* self) {
     self->field_0x114 = 0;
 }
 
-void func_80169A34() {}
+void CREvtObjVfunc08Default() {}
 
 void func_80169A38(cf::CTaskREvtSequence* self) {
     // Main event-sequence update: run the CX pump + event dispatch
@@ -1475,12 +1475,12 @@ void func_80169A38(cf::CTaskREvtSequence* self) {
         }
     }
     if (cond != 0) {
-        func_8016BB38(self);
+        EvtSeqRefreshEventLod(self);
     }
     self->field_0x114 = 0;
 }
 
-void func_80169CD0(cf::CTaskREvtSequence* self) {
+void EvtSeqFinishSequence(cf::CTaskREvtSequence* self) {
     // Publish the id halfwords to CfGameManager and the global-sda consumer,
     // arm the reload counter, reset the scene fade value, and (once the event
     // manager is up and the presentation flag is clear) push a flat fade vec
@@ -1520,7 +1520,7 @@ void func_80169CD0(cf::CTaskREvtSequence* self) {
     }
 }
 
-void func_80169DD0(cf::CTaskREvtSequence* self, u32 idx) {
+void EvtSeqAdvanceWalkIndex(cf::CTaskREvtSequence* self, u32 idx) {
     // Event-sequence advance: if the sequence file handle is idle, clear the
     // 0x4 flag, select the entry at `idx` in the field_0xD0 table, and either
     // advance the field_0x120 walk cursor or (re)load the sequence file into
@@ -1571,7 +1571,7 @@ void func_80169DD0(cf::CTaskREvtSequence* self, u32 idx) {
     }
 }
 
-void func_80169F24() {}
+void CREvtObjVfunc24Default() {}
 
 void func_80169F28(cf::CTaskREvtSequence* self) {
     // Event-sequence dispatch. The walk header's table pointers are cached
@@ -1757,7 +1757,7 @@ void func_80169F28(cf::CTaskREvtSequence* self) {
     self->field_0x5C &= ~0xF00;
 }
 
-u32 func_8016A24C(int idx) {
+u32 EvtSeqResolveListEntryAddr(int idx) {
     UnkState_80664268* p = lbl_eu_80664268;
     UnkStateEntry_E4* list = p->field_0xE4;
     if (list == 0) {
@@ -1766,7 +1766,7 @@ u32 func_8016A24C(int idx) {
     return p->field_0xC4 + list[idx].field_0x0C;
 }
 
-extern "C" void* func_8016A27C(void* nameData) {
+extern "C" void* EvtSeqFindEventByNameData(void* nameData) {
     // Walk the realtime-event list; the first entry whose name-data id matches
     // `nameData` is asked to resolve (vtable+0x14), and the resolved object's
     // vtable+0xA8 result is returned. The walk bounds are re-read from the
@@ -1800,7 +1800,7 @@ extern "C" void* func_8016A27C(void* nameData) {
     return 0;
 }
 
-u32 func_8016A35C() {
+u32 EvtSeqGetCounter100() {
     UnkState_80664268* p = lbl_eu_80664268;
     if (p == 0) {
         return 0;
@@ -1808,7 +1808,7 @@ u32 func_8016A35C() {
     return p->field_0x100;
 }
 
-u32 func_8016A378() {
+u32 EvtSeqGetEntryLimit() {
     UnkState_80664268* p = lbl_eu_80664268;
     if (p == 0) {
         return 0;
@@ -1819,7 +1819,7 @@ u32 func_8016A378() {
     return ((UnkStateTable_D0*)((u8*)arr + arr->field_0x4 * idx))->field_0xC;
 }
 
-u32 func_8016A3A8() {
+u32 EvtSeqGetCounter104() {
     UnkState_80664268* p = lbl_eu_80664268;
     if (p == 0) {
         return 0;
@@ -1827,7 +1827,7 @@ u32 func_8016A3A8() {
     return p->field_0x104;
 }
 
-u32 func_8016A3C4() {
+u32 EvtSeqGetWalkIndex() {
     UnkState_80664268* p = lbl_eu_80664268;
     if (p == 0) {
         return 0;
@@ -2159,7 +2159,7 @@ void func_8016A480(void* selfv) {
 
 
 
-bool func_8016ABA8(cf::CTaskREvtSequence* self, EvtSeqFileEvent* ev) {
+bool EvtSeqOnFileEvent(cf::CTaskREvtSequence* self, EvtSeqFileEvent* ev) {
     // Async file-event handler for the three CDeviceFile handles (0xB8 direct
     // read, 0xBC common-archive read, 0xFC sequence-chunk read). A load event
     // (field_00 == 1) releases the handle's buffer, publishes the language
@@ -2220,7 +2220,7 @@ bool func_8016ABA8(cf::CTaskREvtSequence* self, EvtSeqFileEvent* ev) {
     return false;
 }
 
-extern "C" void* func_8016AD44(void* self) {
+extern "C" void* EvtSeqFindSameNameType3(void* self) {
     // Walk the realtime-event list (bounds clamped to the state limit); return
     // the first type-3 entry, other than self, whose name string matches
     // self's name (func_801727D0 -> field_0x1C + 0x10).
@@ -2260,11 +2260,11 @@ extern "C" void* func_8016AD44(void* self) {
     return 0;
 }
 
-int func_8016ADF8(UnkEvtListEntry* self) {
+int EvtSeqIsSameNameType3Busy(UnkEvtListEntry* self) {
     // Walk the realtime-event list (bounds clamped to the state limit); return
     // 1 for the first type-3 entry, other than self, whose name matches self's
     // name (func_801727D0 -> field_0x1C + 0x10) and that is busy (0x48/0x40).
-    // Register allocation mirrors func_8016AD44: first-declared local gets the
+    // Register allocation mirrors EvtSeqFindSameNameType3: first-declared local gets the
     // highest callee-saved reg (scaled r31 .. entry r27, self r26). `scaled` is
     // an explicit induction variable so its back-edge increment sits after i++.
     u32 scaled;
@@ -2301,7 +2301,7 @@ int func_8016ADF8(UnkEvtListEntry* self) {
     return 0;
 }
 
-extern "C" cf::CTaskREvtSequence* func_8016AED4(CProcess* parent, const char* name) {
+extern "C" cf::CTaskREvtSequence* EvtSeqCreateTask(CProcess* parent, const char* name) {
     // Factory: allocate a CTaskREvtSequence block, construct it with the
     // sequence name, register it under `parent`, and return it.
     cf::CTaskREvtSequence* obj = (cf::CTaskREvtSequence*)mtl::MemManager::allocate(
@@ -2440,10 +2440,10 @@ int func_8016B164(u8* data, const char* name, s32* out, s32* out2) {
     return 0;
 }
 
-int func_8016B384(u8* data, const char* name, f32* out) {
-    // Same ResFile walk as func_8016B5A4, but the matched entry must be a
+int EvtSeqFindResFloat(u8* data, const char* name, f32* out) {
+    // Same ResFile walk as EvtSeqFindResAddr, but the matched entry must be a
     // type-1 user-data record and the resolved data's first float is
-    // published into `out`. Locals follow func_8016B5A4's register plan.
+    // published into `out`. Locals follow EvtSeqFindResAddr's register plan.
     int numAnmChr;
     numAnmChr =
         GetResAnmChrNumEntries__Q34nw4r3g3d7ResFileCFv(data + 0xC);
@@ -2505,7 +2505,7 @@ int func_8016B384(u8* data, const char* name, f32* out) {
     return 0;
 }
 
-int func_8016B5A4(u8* data, const char* name, s32* out) {
+int EvtSeqFindResAddr(u8* data, const char* name, s32* out) {
     // Same ResFile walk as func_8016AF4C, but the matched entry must be a
     // type-2 user-data record and the resolved data pointer (not its first
     // word) is published into `out`. Locals follow func_8016AF4C's register
@@ -2569,7 +2569,7 @@ int func_8016B5A4(u8* data, const char* name, s32* out) {
     return 0;
 }
 
-int func_8016B788(u8* data) {
+int EvtSeqCheckRegionStatus(u8* data) {
     // Gate on the global sda, then resolve a name string from the 0x80503098
     // pool at +0x5D and branch on the resulting status value against the
     // region code from func_80059C14 (0/1/2): != 0 / != 1 / != 2 / == 2.
@@ -2696,7 +2696,7 @@ void func_8016B860(cf::CTaskREvtSequence* self) {
     }
 }
 
-void func_8016BB38(cf::CTaskREvtSequence* self) {
+void EvtSeqRefreshEventLod(cf::CTaskREvtSequence* self) {
     // Outer walk over type-1 event entries (bounds from self->field_0xC4);
     // for each with a nonzero +0x3C gate, inner-walk the field_0xF0 table
     // (dynamic stride at +0x4) matching the name string against the entry's
@@ -2975,7 +2975,7 @@ int func_8016BDA8(EvtBdabModel* self, u32* out) {
     return 0;
 }
 
-u32 func_8016C118(u32 resId) {
+u32 EvtSeqResolvePackedResId(u32 resId) {
     // Resolve a packed resource id to the matching object's packed id: walk
     // the CfGameManager object list, and for each node whose container has a
     // live model object (+0x4594 / +0x4598), derive the object's packed id
@@ -3028,14 +3028,14 @@ void cf::CTaskREvtSequence::cbRenderBefore() {
     func_80261A80();
 }
 
-void func_8016C2C8() {
+void EvtSeqSetStateBit9() {
     UnkState_80664268* p = lbl_eu_80664268;
     if (p != 0) {
         p->field_0x5C |= 0x200;
     }
 }
 
-void func_8016C2E4() {
+void EvtSeqClearStateBit9() {
     UnkState_80664268* p = lbl_eu_80664268;
     if (p != 0) {
         p->field_0x5C &= ~0x200;
@@ -3087,7 +3087,7 @@ int func_8016C300(UnkEvtListEntry* self) {
     return 0;
 }
 
-u32 func_8016C3DC() {
+u32 EvtSeqGetC4FlagBit1() {
     UnkState_80664268* p = lbl_eu_80664268;
     if (p == 0) {
         return 0;
@@ -3099,7 +3099,7 @@ u32 func_8016C3DC() {
     return (q->field_0x4C >> 1) & 1;
 }
 
-u32 func_8016C410() {
+u32 EvtSeqIsSlotIndexFour() {
     UnkState_80664268* p = lbl_eu_80664268;
     if (p == 0) {
         return 0;
@@ -3236,7 +3236,7 @@ found_ext:
     }
 }
 
-void func_8016C6EC(bool flag) {
+void EvtSeqSetStateBit18(bool flag) {
     UnkState_80664268* p = lbl_eu_80664268;
     if (p == 0) {
         return;
@@ -3248,7 +3248,7 @@ void func_8016C6EC(bool flag) {
     }
 }
 
-u32 func_8016C720() {
+u32 EvtSeqGetStateBit19() {
     UnkState_80664268* p = lbl_eu_80664268;
     if (p == 0) {
         return 0;
@@ -3256,7 +3256,7 @@ u32 func_8016C720() {
     return (p->field_0x5C >> 19) & 1;
 }
 
-int func_eu_8016DA48(u8* gate) {
+int EvtSeqCheckWalkGate(u8* gate) {
     UnkState_80664268* p = reinterpret_cast<UnkState_80664268*>(gate);
     UnkStateTable_D0* table;
     u32 f100;
@@ -3275,11 +3275,11 @@ int func_eu_8016DA48(u8* gate) {
     return 1;
 }
 
-void func_8016C7D8(void* self) { ((void(*)(void*))__dt__Q22cf17CTaskREvtSequenceFv)((char*)self - 0x54); }
+void EvtSeqDtorThunk54(void* self) { ((void(*)(void*))__dt__Q22cf17CTaskREvtSequenceFv)((char*)self - 0x54); }
 
-void func_8016C7E0(void* self) { ((void(*)(void*))cbRenderBefore__Q22cf17CTaskREvtSequenceFv)((char*)self - 0x58); }
+void EvtSeqRenderThunk58(void* self) { ((void(*)(void*))cbRenderBefore__Q22cf17CTaskREvtSequenceFv)((char*)self - 0x58); }
 
-extern "C" void func_8016C7E8(u8* self) { ((void(*)(void*))__dt__Q22cf17CTaskREvtSequenceFv)((char*)self - 0x58); }
+extern "C" void EvtSeqDtorThunk58(u8* self) { ((void(*)(void*))__dt__Q22cf17CTaskREvtSequenceFv)((char*)self - 0x58); }
 
 // Out-of-line CTTask<cf::CTaskREvtSequence> specialization: dispatch the
 // +0x3C move callback (tested through the retail __ptmf_test helper) via the

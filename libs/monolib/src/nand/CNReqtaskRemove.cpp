@@ -28,10 +28,10 @@ extern "C" {
     extern u32 lbl_eu_80663BA0[2];  // .sdata typeinfo (defined below)
     extern u32 lbl_eu_80663B70;     // foreign .sdata typeinfo
     extern const char lbl_eu_80524638[0x10];
-    void func_804DA4CC();           // foreign vtable slot
+    void CNReqSaveDeallocIfOpen();           // foreign vtable slot
 
-    s32 func_804DA9C4(CNReqtaskRemoveData* data, u8 arg);  // NAND remove request setup primitive
-    s32 func_804DA76C(u8* ptr);                            // NAND remove request execute primitive
+    s32 CNReqSaveFormatTempPath(CNReqtaskRemoveData* data, u8 arg);  // NAND remove request setup primitive
+    s32 CNReqSaveNandDelete(u8* ptr);                            // NAND remove request execute primitive
 }
 
 // CNReqtaskRemove task parameter block (the sub-task embedded in CNRequest):
@@ -71,7 +71,7 @@ extern "C" CNReqtaskRemoveVtbl** func_804DB240(u8* data, const char* path, u8 ar
 // Async state machine for the NAND remove task, polled by the CNand completion
 // pump. Advances one step per call; returns 1 when the removal is done, 2 on
 // error, 0 while still in progress. Steps:
-//   0 -> start the removal (func_804DA9C4 + func_804DA76C)
+//   0 -> start the removal (CNReqSaveFormatTempPath + CNReqSaveNandDelete)
 //   1 -> mark the request done (return 1 on the following poll)
 //   2 -> done (return 1)
 extern "C" s32 func_804DB278(CNReqtaskRemoveVtbl* vtable_ptr, CNReqtaskRemoveData* d) {
@@ -89,7 +89,7 @@ extern "C" s32 func_804DB278(CNReqtaskRemoveVtbl* vtable_ptr, CNReqtaskRemoveDat
 
     switch (d->state) {
         case kRemoveIdle: {           // start the removal
-            s32 r = func_804DA76C((u8*)(u32)func_804DA9C4(d, d->field_E));
+            s32 r = CNReqSaveNandDelete((u8*)(u32)CNReqSaveFormatTempPath(d, d->field_E));
             if (r != 0) {
                 return 2;
             }
@@ -126,7 +126,7 @@ extern "C" __declspec(noinline) void sinit_804DB330() {
 
 // ===== Dissolved monolibdata2 (blob surgery) data owned by this TU =====
 // [.data] 0x8056FDC8-0x8056FDE8 (32 bytes) — two vtables.
-extern "C" u32 lbl_eu_8056FDC8[4] = { (u32)&lbl_eu_80663BA0, 0x00000000, (u32)&func_804DB278, (u32)&func_804DA4CC };
+extern "C" u32 lbl_eu_8056FDC8[4] = { (u32)&lbl_eu_80663BA0, 0x00000000, (u32)&func_804DB278, (u32)&CNReqSaveDeallocIfOpen };
 extern "C" u32 lbl_eu_8056FDD8[4] = { (u32)&lbl_eu_80663B70, 0x00000000, 0x00000000, 0x00000000 };
 
 // [.sdata] 0x80663BA0-0x80663BA8 (8 bytes) typeinfo {name,parent}.

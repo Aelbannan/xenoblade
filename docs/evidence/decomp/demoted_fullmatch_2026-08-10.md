@@ -60,7 +60,7 @@ Demoted 299 rows from FULL_MATCH -> NOT_STARTED (non-byte-identical bodies).
 | us-801d043c | kyoshin/CItemBoxGrid | `FinishExchange` | FinishExchange | 0x801D043C |
 | us-801d053c | kyoshin/CItemBoxGrid | `OnSysWinOpen` | OnSysWinOpen | 0x801D053C |
 | us-801d0644 | kyoshin/CItemBoxGrid | `FinishSysWin` | FinishSysWin | 0x801D0644 |
-| us-801f0984 | kyoshin/CItemBoxLine | `func_801EECC8` | func_801EECC8 | 0x801F0984 |
+| us-801f0984 | kyoshin/CItemBoxLine | `ItemBoxLine_TouchTabEntryItem` | ItemBoxLine_TouchTabEntryItem | 0x801F0984 |
 | us-80102ae8 | kyoshin/CMainMenu | `OnFileEvent__9CMainMenuFP10CEventFile` | CMainMenu::OnFileEvent(...*, 1, 0, C, E, v, e, n, t, int, long, e) | 0x80102AE8 |
 | us-8011cf10 | kyoshin/CMiniMap | `func_8011C434` | func_8011C434 | 0x8011CF10 |
 | us-801fee3c | kyoshin/CPartyState | `func_801FD17C` | func_801FD17C | 0x801FEE3C |
@@ -106,8 +106,8 @@ Demoted 299 rows from FULL_MATCH -> NOT_STARTED (non-byte-identical bodies).
 | us-801678a8 | kyoshin/cf/CTaskREvent | `func_801666EC` | func_801666EC | 0x801678A8 |
 | us-801678b8 | kyoshin/cf/CTaskREvent | `func_801666FC` | func_801666FC | 0x801678B8 |
 | us-80169678 | kyoshin/cf/CTaskREvtSequence | `EvtSeqGetSharedState` | EvtSeqGetSharedState | 0x80169678 |
-| us-8016db34 | kyoshin/cf/CTaskREvtSequence | `func_8016C7D8` | func_8016C7D8 | 0x8016DB34 |
-| us-8016db3c | kyoshin/cf/CTaskREvtSequence | `func_8016C7E0` | func_8016C7E0 | 0x8016DB3C |
+| us-8016db34 | kyoshin/cf/CTaskREvtSequence | `EvtSeqDtorThunk54` | EvtSeqDtorThunk54 | 0x8016DB34 |
+| us-8016db3c | kyoshin/cf/CTaskREvtSequence | `EvtSeqRenderThunk58` | EvtSeqRenderThunk58 | 0x8016DB3C |
 | us-801a9830 | kyoshin/cf/CVision | `func_801A80FC` | func_801A80FC | 0x801A9830 |
 | us-800ab8dc | kyoshin/cf/CfCollCylinderImpl | `func_800AB010` | func_800AB010 | 0x800AB8DC |
 | us-8020acbc | kyoshin/cf/CfGimmick | `CfGimmick_SetGlobalB8Value` | CfGimmick_SetGlobalB8Value | 0x8020ACBC |

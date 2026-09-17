@@ -785,7 +785,7 @@ extern "C" __declspec(noinline) void PartyStateWin_StateEquipInput(CPartyStateWi
             goto tail;
         }
         if ((cfPad->mPad.mPressedButtonFlags & 0x00200000) != 0) {
-            EquipChange_ConfirmApply(reinterpret_cast<CEquipChange*>(&self->_pad4150));
+            func_80202CCC(reinterpret_cast<CEquipChange*>(&self->_pad4150));
             if (EquipChange_GetBoxCount(reinterpret_cast<CEquipChange*>(&self->_pad4150)) != 0) {
                 ModelDispEquip_StartFadeIn(&self->mModelDispEquip);
                 self->field_6BE4 = 0xC;
@@ -955,7 +955,7 @@ extern "C" __declspec(noinline) void PartyStateWin_StateEquipInput(CPartyStateWi
             goto tail;
         }
         if ((cfPad->mPad.mPressedButtonFlags & 0x10) != 0) {
-            EquipChange_ConfirmApply(reinterpret_cast<CEquipChange*>(&self->_pad4150));
+            func_80202CCC(reinterpret_cast<CEquipChange*>(&self->_pad4150));
             if (EquipChange_GetBoxCount(reinterpret_cast<CEquipChange*>(&self->_pad4150)) != 0) {
                 ModelDispEquip_StartFadeIn(&self->mModelDispEquip);
                 self->field_6BE4 = 0xC;

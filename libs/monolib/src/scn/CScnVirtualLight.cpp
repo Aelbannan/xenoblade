@@ -43,7 +43,7 @@ extern "C" __declspec(noinline) CScnVirtualLightReslist* __ct__80492074(CScnVirt
 // installs the vtable, stores the scene pool, seeds the allocation handle to
 // INVALID, default-constructs the four reslists (__ct__80492074) and the
 // three blend vec4s (scnVlInitVec4), arms the enabled byte, then fetches the
-// pool's ALLOC_HANDLE through func_8048C8BC + the vtable+0x2C virtual and
+// pool's ALLOC_HANDLE through CScnItemPool_resolveScene + the vtable+0x2C virtual and
 // creates the manager region. The reslists reserve 8/8/8/2 nodes, the
 // CLight[0x80] / LightObj[0x80] arrays are built with __construct_new_array
 // and cross-linked via func_804C0398, the 128-slot allocation is created,
@@ -63,7 +63,7 @@ extern "C" CScnVirtualLight* __ct__CScnVirtualLight(CScnVirtualLight* self,
     f32 d4 = lbl_eu_8066AA10;
     // comma sequencing pins the byte store ahead of the float store
     self->enabled = 1, self->valueD4 = d4;
-    u32 handle = ((CScnVirtualLightHandleSrc*)func_8048C8BC(src))->GetHandle();
+    u32 handle = ((CScnVirtualLightHandleSrc*)CScnItemPool_resolveScene(src))->GetHandle();
     self->value08 = mtl::MemManager::create(handle, 0x10000, lbl_eu_80524044);
     scnVlReserve(&self->res_0C, self->value08, 8);
     scnVlReserve(&self->res_2C, self->value08, 8);

@@ -926,7 +926,7 @@ int CArtsInfo_CalcDmg52(CArtsInfo* self) {
     u8 b = (u8)BdatGetU8Direct((u32)lbl_eu_806640F4, lbl_eu_8050B00C + 0x200, id);
     if ((b & 4) != 0) {
         // u16 local: retail masks the scale at definition (clrlwi in r3).
-        u16 base = (u16)func_800A082C(obj);
+        u16 base = (u16)CtrlObjectParam_GetArtsDataWord(obj);
         hp = (int)(lbl_eu_80668690 * (float)((hp & 0xffff) * base));
         if ((hp & 0xffffu) >= 0x3e7u) hp = 0x3e7;  // unsigned cmpli, clamp 999
     }
@@ -953,7 +953,7 @@ int CArtsInfo_CalcDmg53(CArtsInfo* self) {
     u8 b = (u8)BdatGetU8Direct((u32)lbl_eu_806640F4, lbl_eu_8050B00C + 0x200, id);
     if ((b & 4) != 0) {
         // u16 local: retail masks the scale at definition (clrlwi in r3).
-        u16 base = (u16)func_800A082C(obj);
+        u16 base = (u16)CtrlObjectParam_GetArtsDataWord(obj);
         hp = (int)(lbl_eu_806686A0 * (float)((hp & 0xffff) * base));
         if ((hp & 0xffffu) >= 0x3e7u) hp = 0x3e7;  // unsigned cmpli, clamp 999
     }
@@ -1140,7 +1140,7 @@ void func_80237A0C(CArtsInfo* self, u32 arg2, int arg3) {
 }
 
 // func_80237B88 - arts info text update. Reads the character-data category
-// (func_800A32BC), discards a 0x24c-keyed lookup, then formats
+// (CtrlObjectParam_GetCurrentRowKey), discards a 0x24c-keyed lookup, then formats
 // v - 0.5 * (level-1) * v * w (float arithmetic via MWCC's u32/s32
 // conversion magics: clrlwi + 2^52 for the u8 lookups, xoris + 2^52+2^31
 // for the signed (level-1)) into buf1, post-processes it, pushes it onto
@@ -1153,7 +1153,7 @@ void func_80237B88(CArtsInfo* self, u32 arg2, int arg3) {
     char buf3[32]; // sprintf at +0x8
     char* s1 = func_802374F0(self, arg2);
     char* s2 = CArtsInfo_GetSkillStr(self, arg2);
-    func_800A32BC(func_8009EC9C(self->field_0x54));
+    CtrlObjectParam_GetCurrentRowKey(func_8009EC9C(self->field_0x54));
     BdatGetU8ByTableKey(lbl_eu_8050B00C + 0x18b, lbl_eu_8050B00C + 0x24c, self->field_0x55);
     u8 v = BdatGetU8ByTableKey(lbl_eu_8050B00C + 0x18b, lbl_eu_8050B00C + 0x250, self->field_0x55);
     u8 w = BdatGetU8ByTableKey(lbl_eu_8050B00C + 0x18b, lbl_eu_8050B00C + 0x257, self->field_0x55);

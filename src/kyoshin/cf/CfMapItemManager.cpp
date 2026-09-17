@@ -162,7 +162,7 @@ int isSceneActive__Q22cf13CfGameManagerFv();
 int isSceneReadyForInput__Q22cf13CfGameManagerFv();
 void func_802808AC(int v);
 void* CItem_thunkAllocRecord(int v);
-void CUICfManager_queueGetItemMenu(int v);
+void CUICfManager_queueGetItemMenuNarrowed(int v);
 int func_80140E00(int a, int b, int c, int d);
 void setInputMaskByAmount__Q22cf13CfGameManagerFv(u32 v);
 void CfRes_getD80Flag();
@@ -923,7 +923,7 @@ void func_801742D4(CfMapItemManager* self) {
     playActorSound__Q22cf10CfSoundManFUlUlUlUlf(0, 0x45, 0, 0, lbl_eu_806677D4);
     if (self->func_801737CC()) {
         // No event: wipe the record and bump the flag-table reset counter.
-        CUICfManager_queueGetItemMenu(kind);
+        CUICfManager_queueGetItemMenuNarrowed(kind);
         func_8009D018((rec->field_18 >> 20) + 0x2b9c, 1);
         rec->field_14 = 0;
         rec->handle = 0;
@@ -932,7 +932,7 @@ void func_801742D4(CfMapItemManager* self) {
         rec->field_18 = (rec->field_18 & 0xFFFF) & ~0x2000;
     } else {
         // Event-driven respawn: read the timer column and arm the record.
-        CUICfManager_queueGetItemMenu(kind);
+        CUICfManager_queueGetItemMenuNarrowed(kind);
         u8 secs = (u8)getBdatStringColumnValue((void*)lbl_eu_806640A8, &lbl_eu_805033C0[0x6a], lbl_eu_80664184);
         if (secs != 0) {
             // u32->double via the 0x43300000 scratch double.

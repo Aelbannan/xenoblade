@@ -999,7 +999,7 @@ extern "C" int func_802067E4(CfMapMineManager* self, MinePoint* pt,
     u8 kind = getBdatStringColumnValue(file, cols + 0x53, colB);
 
     // Sum lottery weights over the active inventory categories (1-8).
-    u32* entry = (u32*)((u8*)func_8009ECB0() + 0x4);
+    u32* entry = (u32*)((u8*)CtrlObjectParam_GetSlotTableBase() + 0x4);
     u32 total = 0;
     for (int i = 0; i < 9; i++, entry++) {
         u32 v = *entry;

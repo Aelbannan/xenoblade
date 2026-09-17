@@ -26,7 +26,7 @@ union BdatCol {
 cf::CfGimmickItem::~CfGimmickItem() {
     this->vtable = (u32*)lbl_eu_80535A98;
     CfGimmick_ClearManagerBinding((cf::CfGimmick*)this);
-    func_8020A434(&this->field_7C);
+    CfGimmick_UnregisterSpawnedObject(&this->field_7C);
     __dt__Q22cf9CfGimmickFv((cf::CfGimmick*)this, 0);
     // MWCC appends the deleting-dtor prologue (null guard) and epilogue
     // (delete-flag ? operator delete(this) : skip) automatically.
@@ -164,7 +164,7 @@ void func_80210668(cf::CfGimmickItem* self) {
         }
         self->field_74 &= ~kItemFlagWork;
     } else {
-        func_8020A434(&self->field_7C);
+        CfGimmick_UnregisterSpawnedObject(&self->field_7C);
     }
 }
 
@@ -175,7 +175,7 @@ void func_80210668(cf::CfGimmickItem* self) {
 void func_80210844(cf::CfGimmickItem* self) {
     CfGimmick_SetGlobalFlagC0042();
 
-    // a busy actor only stays when func_8020A5DC still reports work, and an
+    // a busy actor only stays when CfGimmick_IsMessageSystemBusy still reports work, and an
     // idle one is (re)spawned via func_8020A484 + busy bit.  The two fail
     // paths branch to the shared `zero` merge (single `li r3,0`); the ready
     // paths set ok=1 and jump straight to the test.
@@ -184,7 +184,7 @@ void func_80210844(cf::CfGimmickItem* self) {
         goto st4;
     }
     if (self->field_74 & kItemFlagBusy) {
-        if (func_8020A5DC() != 0) {
+        if (CfGimmick_IsMessageSystemBusy() != 0) {
             ok = 1;
         } else {
             self->field_74 &= ~kItemFlagBusy;
@@ -365,7 +365,7 @@ void func_802108D8(cf::CfGimmickItem* self) {
             goto rst;
         }
         if (self->field_74 & kItemFlagBusy) {
-            if (func_8020A5DC() != 0) {
+            if (CfGimmick_IsMessageSystemBusy() != 0) {
                 ok = 1;
             } else {
                 self->field_74 &= ~kItemFlagBusy;

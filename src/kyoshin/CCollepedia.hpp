@@ -197,7 +197,7 @@ extern "C" void UIWin_CreateItemMulti(u32, u32, u32, u32, u32, u32, u32, u32, u3
 extern "C" void func_80137924(nw4r::math::VEC3*, nw4r::lyt::Pane*, nw4r::lyt::Pane*, nw4r::lyt::Pane*);
 extern "C" char* lbl_eu_806647DC;
 extern "C" void* lbl_eu_806647D8;
-extern "C" u32 func_8009EC6C(u16);
+extern "C" u32 CtrlObjectParam_GetStateBitFlag(u16);
 extern "C" u16 lbl_eu_8050C6A0[];
 extern "C" void func_801D216C(void*, u8);
 extern "C" void func_801D202C(void*); // CCur per-frame update
@@ -215,7 +215,7 @@ extern "C" void func_8022B7F4(void*);
 extern "C" void getEntry__5CBdatFUl(u32);
 extern "C" void closeFileHandle__FPP11CFileHandle(void*);
 extern "C" void deleteRegion__17UnkClass_8045F564Fv(void*);
-extern "C" void func_8009EC18(u16, u32);
+extern "C" void CtrlObjectParam_SetStateBitFlag(u16, u32);
 extern "C" u32 CItem_findRecByFamily(u16);
 extern "C" void CItemData_initFromFamily(void*, u16, u32);
 extern "C" void incrementEventCounter__FUl(u32);

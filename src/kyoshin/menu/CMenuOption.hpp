@@ -87,8 +87,8 @@ extern "C" void func_8029BC78(CMenuOption* self);
 // Move()/cbRenderBefore() callees.
 extern "C" void func_801C3D54(CBgTex* self);
 extern "C" void func_801C3FF0(CTitleAHelp* self);
-extern "C" void func_8029C4F4(COption* self);
-extern "C" void func_8029C5C8(COption* self, nw4r::lyt::DrawInfo* drawInfo);
+extern "C" void COptionTickState(COption* self);
+extern "C" void COptionDraw(COption* self, nw4r::lyt::DrawInfo* drawInfo);
 extern "C" void func_801C3D7C(CBgTex* self, nw4r::lyt::DrawInfo* drawInfo);
 extern "C" void func_801C4080(CTitleAHelp* self, nw4r::lyt::DrawInfo* drawInfo);
 extern "C" int IsMenuState621F0();
@@ -105,8 +105,8 @@ extern "C" void Regist__8CProcessFP8CProcessb(CProcess* self, CProcess* parent, 
 extern "C" int func_801C3E34(CBgTex* self);
 extern "C" int func_801C4114(CTitleAHelp* self);
 extern "C" void func_801C412C(CTitleAHelp* self);
-extern "C" int func_8029C734(COption* self);
-extern "C" void func_8029CB9C(COption* self);
+extern "C" int COptionIsWindowReady(COption* self);
+extern "C" void COptionBeginScrollSetup(COption* self);
 extern "C" void playUISound__FUl(u32 op);
 
 // Ctor/Init re-init helpers (retail-unmangled callee names - US strips
@@ -118,20 +118,20 @@ extern "C" void __ct__COption(COption* self, u8 arg);
 // __ct__UnkClass_8011C974 is declared by COption.hpp; BdatTouchStringCell by CFloorMap.hpp.
 extern "C" void func_801C3C14(CBgTex* self);
 extern "C" void CTitleAHelp_load(CTitleAHelp* self);
-extern "C" void func_8029C35C(COption* self);
+extern "C" void COptionRebuildWidgets(COption* self);
 
 // Option-menu input-handler callees (retail-unmangled func_ names).
-extern "C" void func_8029CC9C(COption* self);
-extern "C" void func_8029CDB0(COption* self, int arg);
-extern "C" void func_8029C7A8(COption* self);
-extern "C" void func_8029C8C4(COption* self);
-extern "C" void func_8029C9E8(COption* self);
-extern "C" void func_8029CABC(COption* self);
-extern "C" void func_8029CF7C(COption* self);
-extern "C" int func_8029D054(COption* self);
-extern "C" int func_8029C798(COption* self);
-extern "C" int func_8029C7A0(COption* self);
-extern "C" void func_8029CC30(COption* self);
+extern "C" void COptionHandleLeft(COption* self);
+extern "C" void COptionHandleRightAccept(COption* self, int arg);
+extern "C" void COptionCursorUp(COption* self);
+extern "C" void COptionCursorDown(COption* self);
+extern "C" void COptionPageUp(COption* self);
+extern "C" void COptionPageDown(COption* self);
+extern "C" void COptionOpenConfigDialog(COption* self);
+extern "C" int COptionGetNavCode(COption* self);
+extern "C" int COptionGetConfirmGate(COption* self);
+extern "C" int COptionGetSecondConfirm(COption* self);
+extern "C" void COptionConfirmSelection(COption* self);
 extern "C" void func_801C41E8(CTitleAHelp* self, u8 arg);
 extern "C" void func_801C414C(CTitleAHelp* self);
 extern "C" int func_800FEDF8();
@@ -139,11 +139,11 @@ extern "C" void func_800FF914();
 extern "C" int isClassicController__Q22cf13CfGameManagerFv(int arg);
 
 // Retail-unmangled callee names (US strips mangling for these func_ helpers).
-// isIdle/func_8029C790 are declared int (not u8) so callers compare with
+// isIdle/COptionGetLiveFlag are declared int (not u8) so callers compare with
 // cmpwi directly (no byte mask), matching retail.
 extern "C" int isIdle__11CTitleAHelpFv(CTitleAHelp* h);
-extern "C" int func_8029C790(COption* self);
-extern "C" void func_8029C66C(COption* self);
+extern "C" int COptionGetLiveFlag(COption* self);
+extern "C" void COptionTeardown(COption* self);
 extern "C" void setPresentationFlag__Q22cf13CfGameManagerFv(bool enable);
 // CBgTex / CTitleAHelp helpers (retail unmangles these member helpers).
 extern "C" void func_801C3D9C(CBgTex* self);

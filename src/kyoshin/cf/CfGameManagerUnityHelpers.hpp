@@ -1454,7 +1454,7 @@ extern "C" void checkFlagEquality__Q22cf13CfGameManagerFv(
 }
 #pragma dont_inline reset
 extern "C" u16 lbl_eu_80663E40;
-extern "C" int* func_8009ECB0();
+extern "C" int* CtrlObjectParam_GetSlotTableBase();
 extern "C" s32* getField04Ptr__Q22cf13CfGameManagerFv(
     UnkClass_8009ECB0* data);
 extern "C" void processFieldEffects__Q22cf13CfGameManagerFv() {
@@ -1464,7 +1464,7 @@ extern "C" void processFieldEffects__Q22cf13CfGameManagerFv() {
     oldPlayers[0] = *getPlayerSlotPtr__Q22cf13CfGameManagerFv(manager->unk94, 0);
     oldPlayers[1] = *getPlayerSlotPtr__Q22cf13CfGameManagerFv(manager->unk94, 1);
     oldPlayers[2] = *getPlayerSlotPtr__Q22cf13CfGameManagerFv(manager->unk94, 2);
-    UnkClass_8009ECB0* data = (UnkClass_8009ECB0*)func_8009ECB0();
+    UnkClass_8009ECB0* data = (UnkClass_8009ECB0*)CtrlObjectParam_GetSlotTableBase();
     s32* requestedIds = getField04Ptr__Q22cf13CfGameManagerFv(data);
     for (s32 destination = 0; destination < 3; ++destination) {
         if (requestedIds[destination] != 0) {
@@ -1498,7 +1498,7 @@ extern "C" void func_8008360C__Q22cf13CfGameManagerFv() {
     cf::CfGameManager::getInstance();
     if (!testResInfoFlag(0x400)) {
         s32 byteOffset;
-        UnkClass_8009ECB0* data = (UnkClass_8009ECB0*)func_8009ECB0();
+        UnkClass_8009ECB0* data = (UnkClass_8009ECB0*)CtrlObjectParam_GetSlotTableBase();
         volatile s32* values = getField04Ptr__Q22cf13CfGameManagerFv(data);
         CfRes_getInstanceField();
         byteOffset = 0;
@@ -1878,7 +1878,7 @@ extern "C" u32 getBdatIndexMapping__Q22cf13CfGameManagerFv(u32 value) {
 }
 #pragma dont_inline reset
 
-extern "C" int* func_8009ECB0();
+extern "C" int* CtrlObjectParam_GetSlotTableBase();
 extern "C" s32 func_80063560(s32 value, u32 second, u32 third);
 extern "C" void CfRes_tryResolveByBits(s32 destination, const void* source, u32 size);
 extern "C" const void* func_801422A8__Q22cf6CfBdatFUl(u32 textId);
@@ -1918,7 +1918,7 @@ extern "C" bool syncBdatDataCache__Q22cf13CfGameManagerFv(s32 value, s32* curren
 }
 extern "C" u32 syncFieldData__Q22cf13CfGameManagerFv(u32 value, bool searchEntries) {
     if (searchEntries) {
-        UnkClass_8009ECB0* data = (UnkClass_8009ECB0*)func_8009ECB0();
+        UnkClass_8009ECB0* data = (UnkClass_8009ECB0*)CtrlObjectParam_GetSlotTableBase();
         s32* entry = &data->entries_0x4[0];
         for (u32 i = 0; i < 7; ++i, ++entry) {
             if (*entry == static_cast<s32>(value)) {
@@ -1937,7 +1937,7 @@ extern "C" u32 syncFieldData__Q22cf13CfGameManagerFv(u32 value, bool searchEntri
 
 extern "C" u32 getQueuedFileEventCount__Q22cf13CfGameManagerFv();
 extern "C" void recoverFieldState__Q22cf13CfGameManagerFv(bool alternate) {
-    UnkClass_8009ECB0* data = (UnkClass_8009ECB0*)func_8009ECB0();
+    UnkClass_8009ECB0* data = (UnkClass_8009ECB0*)CtrlObjectParam_GetSlotTableBase();
     s32* entry = &data->entries_0x4[0];
     s32 start = 0;
     u32 size = 4;
@@ -1972,7 +1972,7 @@ extern "C" bool func_8009E344(UnkClass_8009ECB0* object, u32 value, s32* firstOu
 extern "C" bool initParticleSystem__Q22cf13CfGameManagerFv(u32 value) {
     s32 firstOut;
     s32 secondOut;
-    UnkClass_8009ECB0* object = (UnkClass_8009ECB0*)func_8009ECB0();
+    UnkClass_8009ECB0* object = (UnkClass_8009ECB0*)CtrlObjectParam_GetSlotTableBase();
     bool found = func_8009E344(object, value, &firstOut, &secondOut);
     bool result = false;
     if (found && firstOut == 1) result = true;
@@ -2796,7 +2796,7 @@ extern "C" void* func_800FE68C();
 extern "C" void func_800FDE4C(void* first, void* second, void* third);
 extern "C" void CfObjectMove_setModelListLock(void* object, u32 value);
 extern "C" void func_800FE694(float value);
-extern "C" void* func_8009E474(void* object, u16 value);
+extern "C" void* CtrlObjectParam_MoveValueToHead(void* object, u16 value);
 extern const float lbl_eu_80666558;
 extern "C" void func_80082C48__Q22cf13CfGameManagerFv(
     cf::CfObjectMove* player) {
@@ -2815,11 +2815,11 @@ extern "C" void func_80082C48__Q22cf13CfGameManagerFv(
         CfObjectMove_setModelListLock(reinterpret_cast<u8*>(object) + 0x3E9C, 1);
         func_800FE68C();
         func_800FE694(lbl_eu_80666558);
-        void* data = func_8009ECB0();
+        void* data = CtrlObjectParam_GetSlotTableBase();
         u16 value = getItemId__Q22cf13CfGameManagerFv(
             reinterpret_cast<ItemListSubobject*>(
                 reinterpret_cast<u8*>(object) + 0x3E9C));
-        func_8009E474(data, value);
+        CtrlObjectParam_MoveValueToHead(data, value);
         object->tbl[0x600 / 4](object);
         if (previous != nullptr) {
             Unk82C48Object* previousObject =

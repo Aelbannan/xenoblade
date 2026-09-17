@@ -1188,7 +1188,7 @@ void CCharVoiceMan_EnqueueFreqAndLevelVoice(void* self) {
 void CCharVoiceMan_EnqueuePcStateVoice() {
     if (lbl_eu_80663E24 & 0x00400000)
         return;
-    cf::CSoundNode* node = func_802AE38C();
+    cf::CSoundNode* node = TutorialList_PlayTutorialVoice();
     cf::CCharVoiceMan* m = lbl_eu_80664A58;
     if (node != 0) {
         cf::CSoundNode* tail = m->nodeTail;

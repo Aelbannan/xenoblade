@@ -398,7 +398,7 @@ extern "C" __declspec(noinline) void func_8022FAD0(SArtsSub8022FA58* selfRaw) {
     for (u8 i = 0; i < code80135FDC_getByte_64077(); i++) {
         u8 v = GetCollectedFlagByte(i);
         if (v != 0) {
-            func_800A13C4(func_8009EC9C(v), 1);
+            CtrlObjectParam_SyncParamFromActorEx(func_8009EC9C(v), 1);
         }
     }
 
@@ -586,7 +586,7 @@ __declspec(noinline) void ArtsCharList_build(SArtsSub8022FA58* self) {
     for (u8 i = 0; i < count; i++) {
         u8 v = GetCollectedFlagByte(i);
         if (v > 8) continue;
-        if (v == 4 && func_800A32BC(func_8009EC9C(v)) != 0) continue;
+        if (v == 4 && CtrlObjectParam_GetCurrentRowKey(func_8009EC9C(v)) != 0) continue;
         u8 idx = self->field_0x21;
         self->field_0x19[idx] = v;
         self->field_0x21 = idx + 1;
@@ -896,7 +896,7 @@ extern "C" __declspec(noinline) void func_802308B0(SArts308B0View* self, u8 v) {
         case 0:
             break;
         case 1:
-            if (func_800A32BC(func_8009EC9C(1)) == 0) {
+            if (CtrlObjectParam_GetCurrentRowKey(func_8009EC9C(1)) == 0) {
                 msg = 1;
             } else {
                 msg = 2;
@@ -1023,7 +1023,7 @@ void ArtsElem_setDataByte(SArtsSubDElem* self, u8 val, u32 idx, u32 sub, u32 off
 // refresh virtual (vtable +0x32C) and re-apply the slot view.
 #define ARTS_D74_TAIL(self, root)                                              \
     do {                                                                       \
-        func_800A13C4((root), 1);                                              \
+        CtrlObjectParam_SyncParamFromActorEx((root), 1);                                              \
         __ct__8009F8B8((root));                                                \
         void* player = getPlayer__Q22cf13CfGameManagerFi(0);                   \
         if (player != 0) {                                                     \
@@ -1068,7 +1068,7 @@ extern "C" __declspec(noinline) void func_80230D74(SArtsSub8022FA58* self,
         // value back into the cursor-0x20 slot (clearing both entries).
         root = (SArtsManagerRoot*)func_8009EC9C(self->field_0x26);
         elems = &root->mElemsE8[0];
-        arts = (u8)func_800A32BC(root);
+        arts = (u8)CtrlObjectParam_GetCurrentRowKey(root);
         flag = (lbl_eu_806628A8[0] != 0) || (self->field_0x26 != 1);
         c20 = self->field_0x20;
         sel = (flag == 0);
@@ -1089,7 +1089,7 @@ extern "C" __declspec(noinline) void func_80230D74(SArtsSub8022FA58* self,
         // 0x20), clear the previous owner when it held a smaller value.
         root = (SArtsManagerRoot*)func_8009EC9C(self->field_0x26);
         elems = &root->mElemsE8[0];
-        arts = (u8)func_800A32BC(root);
+        arts = (u8)CtrlObjectParam_GetCurrentRowKey(root);
         if (self->field_0x27 != 0) {
             cur = self->field_0x21;
         } else {
@@ -1138,14 +1138,14 @@ extern "C" __declspec(noinline) u8 func_80231014(SArtsSub8022FA58* self) {
     SArtsManagerRoot* root = (SArtsManagerRoot*)func_8009EC9C(self->field_0x26);
     root->mObj17C.v157();
     SArtsSubDElem* elems = &root->mElemsE8[0];
-    u8 arts = (u8)func_800A32BC(root);
+    u8 arts = (u8)CtrlObjectParam_GetCurrentRowKey(root);
     u8 result = 0;
     u8 mode = self->field_0x20;
     if ((s32)mode == 4) {
         switch (self->field_0x26) {
         case 1:
             // Branchy form: retail emits cmpwi/bne around two constant arms.
-            if (func_800A32BC(func_8009EC9C(1)) == 0) {
+            if (CtrlObjectParam_GetCurrentRowKey(func_8009EC9C(1)) == 0) {
                 result = 1;
             } else {
                 result = 2;
@@ -1223,7 +1223,7 @@ extern "C" __declspec(noinline) u8 func_80231220(SArtsSub8022FA58* self) {
     SArtsManagerRoot* root = (SArtsManagerRoot*)func_8009EC9C(self->field_0x26);
     root->mObj17C.v157();
     SArtsSubDElem* elems = &root->mElemsE8[0];
-    u8 arts = (u8)func_800A32BC(root);
+    u8 arts = (u8)CtrlObjectParam_GetCurrentRowKey(root);
     u8 result = 0;
     u8 idx = self->field_0x20;
     if ((s32)idx != 4) {
@@ -1257,7 +1257,7 @@ extern "C" __declspec(noinline) u32 ArtsSlot_isWindowEmpty(SArtsSub8022FA58* sel
     SArtsManagerRoot* root = (SArtsManagerRoot*)func_8009EC9C(self->field_0x26);
     root->mObj17C.v157();
     SArtsSubDElem* base = &root->mElemsE8[0];
-    u8 arts = (u8)func_800A32BC(root);
+    u8 arts = (u8)CtrlObjectParam_GetCurrentRowKey(root);
     u8 b = 0;
     if (lbl_eu_806628A8[0] != 0 || self->field_0x26 != 1) {
         b = 1;
@@ -1696,7 +1696,7 @@ extern "C" __declspec(noinline) void func_802320C0(SArts322BC* self, u8 arg) {
     SArtsSubDElem* elems = &root->mElemsE8[0];
     SArts320C0Block tmp;
     tmp = lbl_eu_8050ABFC;
-    u32 charIdx = func_800A32BC(root);
+    u32 charIdx = CtrlObjectParam_GetCurrentRowKey(root);
     SArts320C0Entry* p = (SArts320C0Entry*)&tmp + arg;
     // Demo/default override: first character gets a fixed starting art.
     if (lbl_eu_806628A8[0] == 0 && arg == 1) {
@@ -1821,7 +1821,7 @@ extern "C" __declspec(noinline) void ArtsTable_bumpUsage(SArts322BC* self, int k
         SArtsManagerRoot* root = (SArtsManagerRoot*)func_8009EC9C(self->field_0x26);
         root->mObj17C.v157();
         base = &root->mElemsE8[0];
-        u8 arts = (u8)func_800A32BC(root);
+        u8 arts = (u8)CtrlObjectParam_GetCurrentRowKey(root);
         u8* row = &self->mTable[((int)self->field_0x21 + (int)self->field_0x20) << 4];
         // Usage counters live as byte pairs inside the arts element block,
         // indexed by arts*0x49 + row-slot*2; low byte mirrors into the row.
@@ -1829,7 +1829,7 @@ extern "C" __declspec(noinline) void ArtsTable_bumpUsage(SArts322BC* self, int k
         *p += 1;
         row[2] = *p;
         func_80280DBC((u8*)base);
-        func_800A1370(root);
+        CtrlObjectParam_SyncParamFromActor(root);
         func_80232C78((SArts327B0*)self);
         ArtsTableCursor_refresh((SArts327B0*)self);
     } else {
@@ -1840,7 +1840,7 @@ extern "C" __declspec(noinline) void ArtsTable_bumpUsage(SArts322BC* self, int k
         base = &root->mElemsE8[0];
         // Call first, truncate after reading count: retail emits the count
         // load ahead of the arts clrlwi.
-        int raw = func_800A32BC(root);
+        int raw = CtrlObjectParam_GetCurrentRowKey(root);
         u8 count = self->field_0x12C;
         u8 arts = (u8)raw;
         u8* row = 0;
@@ -1855,7 +1855,7 @@ extern "C" __declspec(noinline) void ArtsTable_bumpUsage(SArts322BC* self, int k
         *p += 1;
         row[2] = *p;
         func_80280DBC((u8*)base);
-        func_800A1370(root);
+        CtrlObjectParam_SyncParamFromActor(root);
         func_80232C78((SArts327B0*)self);
         ArtsTableCursor_refresh((SArts327B0*)self);
     }
@@ -2923,7 +2923,7 @@ void CMenuArtsSet_confirmLockedArt(CMenuArtsSet* self) {
     if (self->mSubObj148.field_0x27 != 0) return;
     u8 v = ArtsCharList_getId((SArtsSub8022FA58*)&self->mSubObj124, self->mSubObj124.field_0x14);
     if (v != 1) return;
-    if (func_800A32BC(func_8009EC9C(1)) != 0) return;
+    if (CtrlObjectParam_GetCurrentRowKey(func_8009EC9C(1)) != 0) return;
     if (ArtsSlot_isWindowEmpty(&self->mSubObj148) != 0) {
         CMenuArtsSet_armSysWin(self);
         return;
@@ -3064,7 +3064,7 @@ int CMenuArtsSet_isLockedArtOpen(SArts34D14* self) {
     if ((int)self->field_0x168 != 4) return 0;
     u8 v = ArtsCharList_getId(&self->mSubObj124, self->mSubObj124.field_0x14);
     if (v != 1) return 0;
-    return func_800A32BC((void*)func_8009EC9C(v)) == 0;
+    return CtrlObjectParam_GetCurrentRowKey((void*)func_8009EC9C(v)) == 0;
 }
 
 int CMenuArtsSet_isDemoLockedArt(SArts34D14* self) {

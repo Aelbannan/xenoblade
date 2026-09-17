@@ -2269,7 +2269,7 @@ L_tail:
     cf::CfObjectImplPc298Res* res = bt->v298();
     bt = self->field_18;
     cf::CfObjectImplPc2A4Sub* sub = res->field_50;
-    u8* info = func_8009D7E4((u8*)func_8009EC9C(bt->field_3F28) + 0x1c, 5);
+    u8* info = CtrlObjectParam_GetArtsStatsRow((u8*)func_8009EC9C(bt->field_3F28) + 0x1c, 5);
     if (info[0x1c] != 0) {
         return;
     }

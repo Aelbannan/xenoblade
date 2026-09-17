@@ -165,7 +165,7 @@ struct CMIExPadData {
 // `!= 0` as a plain cmpwi (no u8 mask) like retail. These names ARE the
 // retail linker symbols - do not rename or "fix" the mangled forms.
 extern "C" int isIdle__11CTitleAHelpFv(CTitleAHelp* self);
-extern "C" int func_801ED800(CItemBoxLine* self);
+extern "C" int ItemBoxLine_IsReadyFlag(CItemBoxLine* self);
 extern "C" int GetField61(CItemBoxGrid* self);
 
 // 0x10-byte region copy helper used by the CBgTex copy routine (and the other
@@ -195,8 +195,8 @@ extern "C" void func_801C4198(CTitleAHelp* self);
 extern "C" void func_801C41E8(CTitleAHelp* self, u8 mode);
 extern "C" void __ct__CItemBoxLine(CItemBoxLine* self, u32 a, u32 b);
 extern "C" void __dt__12CItemBoxLineFv(CItemBoxLine* self, int flags);
-extern "C" void func_801EDA08(CItemBoxLine* self);
-extern "C" void func_801EDA4C(CItemBoxLine* self, u8 val);
+extern "C" void ItemBoxLine_ResetTabBytes(CItemBoxLine* self);
+extern "C" void ItemBoxLine_PushTabByte(CItemBoxLine* self, u8 val);
 extern "C" void ItemBoxLine_LoadFiles(CItemBoxLine* self);
 extern "C" void __ct__CItemBoxGrid(CItemBoxGrid* self, u32 a, u32 b, u32 c, u32 d);
 extern "C" void __dt__12CItemBoxGridFv(CItemBoxGrid* self, int flags);
@@ -208,7 +208,7 @@ extern "C" int func_801C3E34(CBgTex* self);            // bg layout load-done qu
 extern "C" void func_801C416C(CTitleAHelp* self);      // stop help-bar animation
 extern "C" int func_801C4114(CTitleAHelp* self);       // help-bar ready query
 extern "C" void func_801C412C(CTitleAHelp* self);      // hide prompt
-extern "C" int func_801ED774(CItemBoxLine* self);      // line ready query
+extern "C" int ItemBoxLine_GetSelectReady(CItemBoxLine* self);      // line ready query
 extern "C" void func_801ED864(CItemBoxLine* self);     // finish line load
 extern "C" void LoadItemBoxFiles(CItemBoxGrid* self);     // finish grid setup
 extern "C" void playUISound__FUl(u32 op);            // global menu-op kicker
@@ -234,7 +234,7 @@ extern "C" void __ct__Q34nw4r3lyt8DrawInfoFv(nw4r::lyt::DrawInfo* self);
 extern "C" void __dt__Q34nw4r3lyt8DrawInfoFv(nw4r::lyt::DrawInfo* self, int flags);
 void func_80137250(nw4r::lyt::DrawInfo* drawInfo);  // C++ linkage (mangled retail symbol)
 extern "C" void func_801C3D7C(CBgTex* self, nw4r::lyt::DrawInfo* di);
-extern "C" void func_801ED4FC(CItemBoxLine* self, nw4r::lyt::DrawInfo* di);
+extern "C" void ItemBoxLine_DrawLayout(CItemBoxLine* self, nw4r::lyt::DrawInfo* di);
 extern "C" void DrawItemBoxGrid(CItemBoxGrid* self, nw4r::lyt::DrawInfo* di);
 extern "C" void func_801C4080(CTitleAHelp* self, nw4r::lyt::DrawInfo* di);
 extern u32 lbl_eu_80663E28;   // cbRenderBefore mode-flag word (.sbss)
@@ -244,22 +244,22 @@ extern u32 lbl_eu_80663E28;   // cbRenderBefore mode-flag word (.sbss)
 extern "C" CMIExPadData* getCfPadData__Q22cf13CfGameManagerFv();
 extern "C" void setPresentationFlag__Q22cf13CfGameManagerFv(u8 enable);
 extern "C" int func_8029A658();
-extern "C" int func_801ED808(CItemBoxLine* self);
-extern "C" void func_801EECE0(CItemBoxLine* self, u32 arg);
-extern "C" void func_801EECE8(CItemBoxLine* self);
-extern "C" void func_801EED6C(CItemBoxLine* self);
+extern "C" int ItemBoxLine_IsBusy(CItemBoxLine* self);
+extern "C" void ItemBoxLine_ResetCursorB8(CItemBoxLine* self, u32 arg);
+extern "C" void ItemBoxLine_Info2SelectPrev(CItemBoxLine* self);
+extern "C" void ItemBoxLine_Info2SelectNext(CItemBoxLine* self);
 extern "C" void func_801EE788(CItemBoxLine* self);
-extern "C" int func_801EECC0(CItemBoxLine* self);
-extern "C" u16 func_801EECC8(CItemBoxLine* self);     // selected line entry
-extern "C" void func_801ED97C(CItemBoxLine* self);
-extern "C" void func_801EE684(CItemBoxLine* self);
+extern "C" int ItemBoxLine_GetArmedFlag(CItemBoxLine* self);
+extern "C" u16 ItemBoxLine_TouchTabEntryItem(CItemBoxLine* self);     // selected line entry
+extern "C" void ItemBoxLine_LeaveState3(CItemBoxLine* self);
+extern "C" void ItemBoxLine_ConfirmOverlayOrHint(CItemBoxLine* self);
 extern "C" void func_801EDC94(CItemBoxLine* self);
-extern "C" void func_801EDF40(CItemBoxLine* self);
-extern "C" void func_801EE228(CItemBoxLine* self);
-extern "C" void func_801EE448(CItemBoxLine* self);
+extern "C" void ItemBoxLine_CursorPageDown(CItemBoxLine* self);
+extern "C" void ItemBoxLine_CursorPageUp(CItemBoxLine* self);
+extern "C" void ItemBoxLine_CursorPageDownRow(CItemBoxLine* self);
 extern "C" void func_801EEDF8(CItemBoxLine* self);
-extern "C" void func_801EF050(CItemBoxLine* self);
-extern "C" u8 func_801EF0EC(CItemBoxLine* self);
+extern "C" void ItemBoxLine_RefreshTabSelect(CItemBoxLine* self);
+extern "C" u8 ItemBoxLine_ResolveFocusId(CItemBoxLine* self);
 extern "C" int func_801CCAF0(CItemBoxGrid* self);
 extern "C" int IsItemBoxActive(CItemBoxGrid* self);
 extern "C" void HandleCancelBtn(CItemBoxGrid* self, int arg);

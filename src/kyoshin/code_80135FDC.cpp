@@ -170,10 +170,10 @@ extern u8 lbl_eu_8052E590[];
 // func_8003B1EC stays inline: CKizunaTalkList.hpp declares it as (void*) - a
 // move into code_80135FDC.hpp would clash in CKizunaTalkList.cpp.
 extern "C" u32 func_8003B1EC(void*);
-// func_8009ECB0 stays inline: include/functions.hpp and CChainActorPc.hpp
+// CtrlObjectParam_GetSlotTableBase stays inline: include/functions.hpp and CChainActorPc.hpp
 // declare it as int* - a move into code_80135FDC.hpp would clash in
 // CGame / CMenu* units that pull those headers transitively.
-extern "C" void* func_8009ECB0(void);
+extern "C" void* CtrlObjectParam_GetSlotTableBase(void);
 // func_8009D018 stays inline: include/functions.hpp declares it as
 // void func_8009D018(int, int) - a move into code_80135FDC.hpp would clash in
 // CGame / CMenu* units that pull functions.hpp via monolib/scn.hpp.
@@ -1631,7 +1631,7 @@ struct CDataObj {
     s32 field_0x176C;
 };
 
-// List blob returned by func_8009ECB0() (+4): 7 words (listA[3] + listB[4],
+// List blob returned by CtrlObjectParam_GetSlotTableBase() (+4): 7 words (listA[3] + listB[4],
 // contiguous so listB[i-3] aliases listA[i]) then a gap and 3 trailing
 // words (listC).
 struct ListData {
@@ -1648,7 +1648,7 @@ struct ListData {
 void func_80139198(void* arg) {
     lbl_eu_80664077 = 0;
     lbl_eu_8066407E = 0;
-    ListData* list = (ListData*)((u8*)func_8009ECB0() + 4);
+    ListData* list = (ListData*)((u8*)CtrlObjectParam_GetSlotTableBase() + 4);
     for (u8 i = 0; i < 7; i++) {
         u32 v;
         if (i < 3) {
@@ -2457,7 +2457,7 @@ extern "C" int func_8013AC3C(u8 max, u8 count, u32 off) {
         }
     }
     sum += (count - 1) * 0x240;
-    return func_8009EBE8(sum + off);
+    return CtrlObjectParam_GetItemBitFlag(sum + off);
 }
 
 extern "C" void func_8013ACFC() {
@@ -2556,7 +2556,7 @@ extern "C" void func_8013ACFC() {
             }
             sum += baseOff;
             u32 addr = sum + i2 + 1;
-            if (func_8009EBE8(addr) == 0) {
+            if (CtrlObjectParam_GetItemBitFlag(addr) == 0) {
                 XBMapTable3 t3 = *(const XBMapTable3*)t3src;
                 func_8003AA34((const char*)t3.w[32]);
                 u32 sum2 = 0;
@@ -2568,7 +2568,7 @@ extern "C" void func_8013ACFC() {
                     }
                 }
                 sum2 += baseOff;
-                func_8009EB94(sum2 + i2 + 1, 1);
+                CtrlObjectParam_SetItemBitFlag(sum2 + i2 + 1, 1);
             }
         }
     }
@@ -2599,7 +2599,7 @@ extern "C" void func_8013B1C4(u32 v) {
     for (int j = 0; j < n; j++) {
         u32 base = sum + (u32)j * 0x240;
         for (u16 k = 0; k < 0x240; k++) {
-            func_8009EB94(base + k, 1);
+            CtrlObjectParam_SetItemBitFlag(base + k, 1);
         }
     }
     }

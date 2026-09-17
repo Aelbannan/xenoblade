@@ -4,7 +4,7 @@
 
 // CNandTask: the active sub-task object installed at CNRequest::field_0x0.
 // Only vtable slots 2 and 3 are exercised by the retail code in this unit
-// (func_804DAAF8): with -RTTI on, MWCC places two RTTI entries at vtable
+// (CNReqSavePollTask): with -RTTI on, MWCC places two RTTI entries at vtable
 // offsets +0/+4, so the first declared virtual lands at +8 and the second at
 // +0xC - exactly the retail offsets. The class is never constructed in this
 // TU, so MWCC emits no vtable for it.
@@ -34,7 +34,7 @@ struct CNReqtaskCheckData {
     u8  state;     // +0x0C
 };
 
-// CNReqtaskSave sub-task parameter block (see func_804DACE8): +0x00 NAND path,
+// CNReqtaskSave sub-task parameter block (see CNReqSaveConfigSave): +0x00 NAND path,
 // +0x10/+0x14 write arguments, +0x18/+0x19 flags, +0x1A async state.
 struct CNReqtaskSaveData {
     char path[0x10]; // +0x00
@@ -69,4 +69,4 @@ extern s32  lbl_eu_806659D4;   // last NAND result / callback argument latch
 struct NANDCommandBlock;      // revolution/nand/nand.h (opaque here)
 extern NANDCommandBlock lbl_eu_8065FE30; // shared async command block (.bss)
 struct NANDFileInfo;          // revolution/nand/nand.h (opaque here)
-extern NANDFileInfo lbl_eu_8065FEEC;    // fixed save file-info used by the NAND write wrapper (func_804DA628)
+extern NANDFileInfo lbl_eu_8065FEEC;    // fixed save file-info used by the NAND write wrapper (CNReqSaveNandWrite)

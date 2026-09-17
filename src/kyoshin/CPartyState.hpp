@@ -162,8 +162,8 @@ extern "C" void func_801D2BFC(CBaseCur*, u8);
 extern "C" u8 code80135FDC_getByte_64077();
 
 // Party-select helpers (unmangled retail symbols).
-extern "C" int* func_8009ECB0();
-extern "C" void func_8009E168(int*, u8, u8);
+extern "C" int* CtrlObjectParam_GetSlotTableBase();
+extern "C" void CtrlObjectParam_SwapSlotValues(int*, u8, u8);
 extern "C" u8 GetCollectedFlagWord8(u32);
 extern "C" u32 func_8009CF8C(u32);
 extern "C" u16 BdatGetU16Direct(const void*, const void*, int);

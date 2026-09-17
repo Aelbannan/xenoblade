@@ -1003,7 +1003,7 @@ void func_80280640(CSysWinDevice* self) {
             }
         } else if (h == 4) {
             func_8009EC9C(4);
-            result = (func_800A32BC() == 1);
+            result = (CtrlObjectParam_GetCurrentRowKey() == 1);
         } else {
             result = 0;
         }

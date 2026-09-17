@@ -881,7 +881,7 @@ L3C68:
                     func_80140E00(3, ((cf::CfWalkTalkSrc*)actor)->field_8C,
                                   v5);
                 }
-                func_8009ECD0(mgr->field_8C);
+                CtrlObjectParam_SetWorkTailValue(mgr->field_8C);
             } else {
                 u32 f64 = ((cf::CfWalkActorObj*)actor)->field_64;
                 if ((f64 & 0x20000) != 0 || (f64 & 0x10000) != 0) {
@@ -1143,7 +1143,7 @@ void func_800C4888(cf::CfObjectImplWalker* self) {
         }
         // Scan the 9-slot weapon/arts table; flag the entry-0x8F marker.
         u32 found = 0;
-        u32* p = (u32*)func_8009ECB0() + 1;
+        u32* p = (u32*)CtrlObjectParam_GetSlotTableBase() + 1;
         for (u32 j = 0; j < 9; j++, p++) {
             if (*p != 0 &&
                 func_8026178C(func_8009EC9C((u16)*p) + 0x3534, 0x8f) != 0) {

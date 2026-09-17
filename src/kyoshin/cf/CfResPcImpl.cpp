@@ -182,7 +182,7 @@ void CfResPcImpl_notifySound(cf::CfResPcImpl* self, int arg2, int arg3, int arg4
     }
 }
 
-// CfResPcImpl_notifyReloadSimple - same dispatch shape as CfResPcImpl_notifyReload but forwards state+2
+// CfResPcImpl_notifyReloadSimple - same dispatch shape as CfResPcImpl_notifyReloadEvent but forwards state+2
 // with only two caller args to func_801BFE8C.
 void CfResPcImpl_notifyReloadSimple(cf::CfResPcImpl* self, int arg2, int arg3) {
     s16 state = self->field_0E;
@@ -201,11 +201,11 @@ void CfResPcImpl_notifyReloadSimple(cf::CfResPcImpl* self, int arg2, int arg3) {
     }
 }
 
-// CfResPcImpl_notifyReload - dispatch a reload-type message when the state at field_0E
+// CfResPcImpl_notifyReloadEvent - dispatch a reload-type message when the state at field_0E
 // is valid and the parent's +0x68 flag bit 21 (0x200000) is set and its
 // vtable slot +0x74 reports the resource live; forwards state+2 with the
 // three caller args to func_801BFF04.
-void CfResPcImpl_notifyReload(cf::CfResPcImpl* self, int arg2, int arg3, int arg4) {
+void CfResPcImpl_notifyReloadEvent(cf::CfResPcImpl* self, int arg2, int arg3, int arg4) {
     // ok declared first so MWCC assigns it r31 (retail keeps state in r30);
     // the zero-init stays after the parent load to match retail ordering.
     int ok;
@@ -229,7 +229,7 @@ void CfResPcImpl_notifyReload(cf::CfResPcImpl* self, int arg2, int arg3, int arg
 // the parent's +0x68 flag bit 21 is set and its vtable slot +0x74 reports
 // the resource live; otherwise -1.
 int CfResPcImpl_getLiveStateId(cf::CfResPcImpl* self) {
-    // Same regalloc shape as CfResPcImpl_notifyReload (ok in r31, state in r30); the
+    // Same regalloc shape as CfResPcImpl_notifyReloadEvent (ok in r31, state in r30); the
     // nested-success / single-fail-exit layout makes MWCC share one
     // `li r3,-1` tail like retail.
     int ok;
@@ -291,13 +291,13 @@ void CfResPcImpl_teardownLookupEntry(cf::CfResPcImpl* self) {
     self->field_00->field_6E0 = 0;
 }
 
-// CfResPcImpl_requestResource - PC resource request: when arg2 != 0 and the state at
+// CfResPcImpl_requestResourceByBits - PC resource request: when arg2 != 0 and the state at
 // field_0A is valid, queries the resource table with (state, arg2, 3); on
 // success dispatches the secondary vtable slot +0x30 with (arg3, arg2) and
 // sets parent flag bits 0x20/0x40/0x80/0x100/0x200 for arg3 == 1..5, then
 // resets the handler index field_08 to 1. Returns whether the query
 // succeeded (retail neg/or/srwi normalize reused for branch+return).
-extern "C" __declspec(noinline) int CfResPcImpl_requestResource(cf::CfResPcImpl* self, u32 arg2, u32 arg3) {
+extern "C" __declspec(noinline) int CfResPcImpl_requestResourceByBits(cf::CfResPcImpl* self, u32 arg2, u32 arg3) {
     if (arg2 == 0) {
         return 0;
     }
@@ -325,9 +325,9 @@ extern "C" __declspec(noinline) int CfResPcImpl_requestResource(cf::CfResPcImpl*
     return ok;
 }
 
-// retail: clrlwi r5, r4, 22; b CfResPcImpl_requestResource (r5 = arg2 & 0x3FF)
+// retail: clrlwi r5, r4, 22; b CfResPcImpl_requestResourceByBits (r5 = arg2 & 0x3FF)
 extern "C" void CfResPcImpl_requestResourceMasked(void* self, u32 a, u32 b){
-    CfResPcImpl_requestResource((cf::CfResPcImpl*)self, a, a & 0x3FF);
+    CfResPcImpl_requestResourceByBits((cf::CfResPcImpl*)self, a, a & 0x3FF);
 }
 
 // CfResPcImpl_probeAndDispatch0 - PC lookup probe: when the state at field_0A is valid,
@@ -640,7 +640,7 @@ void func_8018D79C(cf::CfResPcImpl* self) {
             v = (int)r5;
             (self)->CfResPcImpl_setSlotTableEntry(i, r5);
         }
-        CfResPcImpl_requestResource((cf::CfResPcImpl*)self, (u32)v, (u32)i);
+        CfResPcImpl_requestResourceByBits((cf::CfResPcImpl*)self, (u32)v, (u32)i);
     }
     if (self->field_00->field_64 & 0x2) {
         CfObjectMove_setModelListLock(self->field_00, 1);
@@ -1003,10 +1003,10 @@ void func_8018E7E4(cf::CfResPcImpl* self) {
                         reinterpret_cast<cf::CfObject*>(self->field_00)->CfObject_getProgressLow();
                         reinterpret_cast<CScnItemModel*>(self->field_00->field_6F8[0])->vfunc48(0.0f);
                     }
-                    if ((obj98)->vfuncC4((u8*)self->field_00->field_6F8[0], (u32)CfBdat::func_801424A8(self->field_00->field_70C[0]), 0) == 0) {
+                    if ((obj98)->vfuncC4((u8*)self->field_00->field_6F8[0], (u32)cf::CfBdat::getBdatStringEntry(self->field_00->field_70C[0]), 0) == 0) {
                         reinterpret_cast<cf::CfObjectMove*>(self->field_00)->CfObjectMove_releaseSlotById(0);
                     } else {
-                        u32 bdat = (u32)CfBdat::func_801424A8(self->field_00->field_70C[0]);
+u32 bdat = (u32)cf::CfBdat::getBdatStringEntry(self->field_00->field_70C[0]);
                         scnImN4SetShadowNd(obj98, bdat, 1);
                         if (slot <= 10) {
                             scnImN4StampShadNd(obj98, bdat, table[slot].field_00, table[slot].field_04);
@@ -1030,10 +1030,10 @@ void func_8018E7E4(cf::CfResPcImpl* self) {
                         reinterpret_cast<cf::CfObject*>(self->field_00)->CfObject_getProgressLow();
                         reinterpret_cast<CScnItemModel*>(self->field_00->field_6F8[1])->vfunc48(0.0f);
                     }
-                    if ((obj98)->vfuncC4((u8*)self->field_00->field_6F8[1], (u32)CfBdat::func_801424A8(self->field_00->field_70C[1]), 0) == 0) {
+                    if ((obj98)->vfuncC4((u8*)self->field_00->field_6F8[1], (u32)cf::CfBdat::getBdatStringEntry(self->field_00->field_70C[1]), 0) == 0) {
                         reinterpret_cast<cf::CfObjectMove*>(self->field_00)->CfObjectMove_releaseSlotById(1);
                     } else {
-                        u32 bdat2 = (u32)CfBdat::func_801424A8(self->field_00->field_70C[1]);
+u32 bdat2 = (u32)cf::CfBdat::getBdatStringEntry(self->field_00->field_70C[1]);
                         scnImN4SetShadowNd(obj98, bdat2, 1);
                         if (slot <= 10) {
                             scnImN4StampShadNd(obj98, bdat2, table[slot].field_00, table[slot].field_04);
@@ -1250,7 +1250,7 @@ int CfResPcImpl_handleMapChangeEvent(u32 arg1, u16 arg2) {
     }
     processMapChange__Q22cf13CfGameManagerFv(4);
     for (int i = 1; i <= 13; i++) {
-        func_8009F6D4(func_8009EC9C((u16)i));
+        CtrlObjectParam_ActivateCharRow(func_8009EC9C((u16)i));
     }
     return 0;
 }
@@ -1369,11 +1369,11 @@ __declspec(noinline) void CfResPcImpl_refreshMapAreaEvents(void* self) {
     func_8007B0A0(0);
     func_800B06C8();
     if (lbl_eu_80663E24 & 0x80000) {
-        CfRes_tryRefreshByBits(((u32)lbl_eu_80663E44 << 10) | (((u32)lbl_eu_80663E42 << 20) | 0x98000000), 4);
+CfRes_tryRefreshByBits((int)(((u32)lbl_eu_80663E44 << 10) | (((u32)lbl_eu_80663E42 << 20) | 0x98000000)), 4);
         func_80061870((u32)self, 0x1b, 0,
                       ((u32)lbl_eu_80663E44 << 10) | (((u32)lbl_eu_80663E42 << 20) | 0x98000000), 0, 0);
     } else {
-        CfRes_tryRefreshByBits(((u32)lbl_eu_80663E44 << 10) | (((u32)lbl_eu_80663E42 << 20) | 0x98000000), 5);
+CfRes_tryRefreshByBits((int)(((u32)lbl_eu_80663E44 << 10) | (((u32)lbl_eu_80663E42 << 20) | 0x98000000)), 5);
     }
     if (!(lbl_eu_80663E28 & 0x2000000)) {
         func_80068B9C();
@@ -1480,7 +1480,7 @@ void* lbl_eu_80532774[27] = {
     (void*)CfResPcImpl_probeAndCapHandler,
     (void*)CfResPcImpl_notifySound,
     (void*)CfResPcImpl_notifyReloadSimple,
-    (void*)CfResPcImpl_notifyReload,
+    (void*)CfResPcImpl_notifyReloadEvent,
     (void*)CfResPcImpl_getLiveStateId,
     (void*)func_8016CD54,
     (void*)CfResObj_true68,

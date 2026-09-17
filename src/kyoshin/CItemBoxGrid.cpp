@@ -2395,7 +2395,7 @@ void GroupByKindName(CItemBoxGridFull* self, u32 target) {
 
 // Item sort value for an entry: look up the kind's index in the owner table
 // (lbl_eu_806640F4); when the kind's flag entry has bit 2 set, scale the
-// index by party member 1's func_800A082C value, then scale by the 0x67F80
+// index by party member 1's CtrlObjectParam_GetArtsDataWord value, then scale by the 0x67F80
 // factor, clamp to 999 and return as a float.
 // optimize_for_size: retail uses the bl _savegpr_28/_restgpr_28 helper-call
 // prologue, which only size-opt emits on this unit.
@@ -2416,7 +2416,7 @@ float func_801C9F88(void* self, void* entry) {
             u32 u;
             int i;
         } prod;
-        prod.u = (idx & 0xFFFF) * (u16)func_800A082C(charData);
+        prod.u = (idx & 0xFFFF) * (u16)CtrlObjectParam_GetArtsDataWord(charData);
         idx = (u32)(u16)(s32)((float)prod.i * lbl_eu_80667F80);
     }
     if ((u32)(u16)idx > 999) idx = 999;
@@ -3715,7 +3715,7 @@ void func_801CCAF0(void* self) {
             u8* listRow = p + (s8)p[0x6f];
             if (listRow[0x62] == 0xa) {
                 s32 count2 = 0;
-                void* ec = func_8009ECB0();
+                void* ec = CtrlObjectParam_GetSlotTableBase();
                 u32* ptr = (u32*)((u8*)ec + 4);
                 for (u8 k = 0; k < 7; k++) {
                     u32 val;
@@ -4351,7 +4351,7 @@ __declspec(noinline) void func_801CE524(void* self) { // noinline: dispatch tabl
 
         if (isResourceFlagSet__Q22cf13CfGameManagerFv(nameIdx & 0xFF)) {
             u8* save = (u8*)func_8009EC9C(nameIdx & 0xFF);
-            u32 cnt = func_800A32BC() & 0xFF;
+            u32 cnt = CtrlObjectParam_GetCurrentRowKey() & 0xFF;
             // Per-(character, slot) record in the collection-save area.
             u8* rec = save + cnt * 0x49 + (tbl & 0xFF) * 2;
             u32 seenNew = 0;
@@ -5337,44 +5337,44 @@ void func_801D0E88(void* self, int kind, int id) {
             case 2: {
                 int v = *(s16*)((u8*)obj + 0x26);
                 if (v == -1 || v != id) continue;
-                func_8009E0A8(obj, -1);
+                CtrlObjectParam_SetEquipSlot5(obj, -1);
                 break;
             }
             case 4: {
                 int v = *(s16*)((u8*)obj + 0x1c);
                 if (v == -1 || v != id) continue;
-                func_8009E024(obj, -1);
+                CtrlObjectParam_SetEquipSlot0(obj, -1);
                 break;
             }
             case 5: {
                 int v = *(s16*)((u8*)obj + 0x1e);
                 if (v == -1 || v != id) continue;
-                func_8009E030(obj, -1);
+                CtrlObjectParam_SetEquipSlot1(obj, -1);
                 break;
             }
             case 6: {
                 int v = *(s16*)((u8*)obj + 0x20);
                 if (v == -1 || v != id) continue;
-                func_8009E03C(obj, -1);
+                CtrlObjectParam_SetEquipSlot2(obj, -1);
                 break;
             }
             case 7: {
                 int v = *(s16*)((u8*)obj + 0x22);
                 if (v == -1 || v != id) continue;
-                func_8009E048(obj, -1);
+                CtrlObjectParam_SetEquipSlot3(obj, -1);
                 break;
             }
             case 8: {
                 int v = *(s16*)((u8*)obj + 0x24);
                 if (v == -1 || v != id) continue;
-                func_8009E054(obj, -1);
+                CtrlObjectParam_SetEquipSlot4(obj, -1);
                 break;
             }
             }
         }
         // Camera pass: filter the scene enum list by this player and detach
         // its move object when the player index matches.
-        func_800A1370((void*)found);
+        CtrlObjectParam_SyncParamFromActor((void*)found);
         CItemBoxGridEnumHolder holder;
         const u32* src = (const u32*)lbl_eu_80505628;
         holder.names[0] = *src++;
@@ -5460,7 +5460,7 @@ u32 func_801D12D4(void* self, u32 kind) {
     u32 unk = BdatGetU8Direct(bdat, (const char*)&lbl_eu_8050566C[0x11d], (u16)shortKind);
     v = BdatGetU8ByTableKey((void*)&lbl_eu_8050566C[0x126], (const char*)&lbl_eu_8050566C[0x12e], unk & 0xFF);
     void* charData = (void*)func_8009EC9C(charId & 0xFF);
-    u8* ptr = (u8*)charData + (func_800A32BC() & 0xFF) * 0x49 + ((v & 0xFF) << 1);
+    u8* ptr = (u8*)charData + (CtrlObjectParam_GetCurrentRowKey() & 0xFF) * 0x49 + ((v & 0xFF) << 1);
     switch (flag & 0xFF) {
     case 1:
         if (ptr[0xe8]) return 0;
@@ -5654,7 +5654,7 @@ void func_801C53D8(void* self) {
         // Reuse the charId slot for the character-data pointer (retail
         // recycles its register); then add the party stride and sub offset.
         charId = (u32)func_8009EC9C((u8)charId);
-        u8* cell = (u8*)charId + (u8)func_800A32BC() * 0x49;
+        u8* cell = (u8*)charId + (u8)CtrlObjectParam_GetCurrentRowKey() * 0x49;
         cell = cell + (u8)sub * 2;
         switch ((u8)flag) {
         case 1:

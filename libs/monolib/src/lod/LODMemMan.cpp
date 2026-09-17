@@ -160,7 +160,7 @@ extern void* lbl_eu_806624C0;   // RTTI locator (static/source class)
 extern void* lbl_eu_806624D8;   // RTTI locator (target class)
 
 // Scene-item pool sub-list accessor (scn/CScnItemPool.cpp).
-extern "C" void* func_8048C698(void* pool, int kind);
+extern "C" void* CScnItemPool_lookupSubPool(void* pool, int kind);
 
 // TU-internal callees defined later in this file.
 extern "C" void initSceneGroup__Q23LOD9LODMemManFv(
@@ -2411,7 +2411,7 @@ void LOD::LODMemMan::func_8046FC04() {
     bool notFound = true;
     // The item-pool sub-list lives behind the scene's +0x60 pointer.
     LODSceneNode* anchor =
-        ((LODSceneList*)func_8048C698(
+        ((LODSceneList*)CScnItemPool_lookupSubPool(
              ((LODScenePoolView*)l->mView_1C)->mPoolList, 1))->mAnchor;
     for (LODSceneNode* n = anchor->mNext; n != anchor; n = n->mNext) {
         if ((u8*)n->mObj != l->field_0xB4) continue;

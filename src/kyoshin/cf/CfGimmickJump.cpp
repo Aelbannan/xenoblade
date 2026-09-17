@@ -72,7 +72,7 @@ extern const float lbl_eu_8066A210;
 extern void __ct__cf_CfGimmick(void* self);
 extern void __dt__Q22cf9CfGimmickFv(void* self, int deleting);
 extern void CfGimmick_ClearManagerBinding(void* self);
-extern void func_8020A434(void* value);
+extern void CfGimmick_UnregisterSpawnedObject(void* value);
 extern void func_802089BC(void* destination, void* position, void* rotation);
 extern void CfGimmick_LoadBdatAreaPos(void* self, void* destination, void* bdat, void* table);
 extern void CfGimmick_LoadBdatAreaExtents(void* self, void* destination, void* bdat, void* table);
@@ -82,8 +82,8 @@ extern void func_8020A6B0(void* effect, void* position, u16 resourceId, f32 scal
                           int arg5, int arg6);
 extern void func_8020F540(CfGimmickJump* self);
 extern void func_8020A484(u16 resourceId);
-extern int func_8020A5DC(void* self);
-extern int func_8020A87C(void* self, void* effect);
+extern int CfGimmick_IsMessageSystemBusy(void* self);
+extern int CfGimmick_CheckPartyIdLoaded(void* self, void* effect);
 extern int CfGimmick_CheckStateFlag2CC8(u16 duration);
 extern int CfGimmick_CheckTriggerGated(u16 flags, void* first, void* second, void* third,
                          void* effect);
@@ -258,7 +258,7 @@ extern "C" CfGimmickJump* __ct__cf_CfGimmickJump(CfGimmickJump* self,
 CfGimmickJump::~CfGimmickJump() {
     *(void**)this = lbl_eu_80535A18;
     CfGimmick_ClearManagerBinding(this);
-    func_8020A434(&effect);
+    CfGimmick_UnregisterSpawnedObject(&effect);
     __dt__Q22cf9CfGimmickFv(this, 0);
 }
 
@@ -286,7 +286,7 @@ extern "C" void func_8020F484(CfGimmickJump* self) {
         }
         self->flags &= ~0x400u;
     } else {
-        func_8020A434(&self->effect);
+        CfGimmick_UnregisterSpawnedObject(&self->effect);
     }
 }
 
@@ -298,11 +298,11 @@ extern "C" void func_8020F8C4(CfGimmickJump* self) {
     self->timer = lbl_eu_80668404;
     if ((self->flags66 & 1) != 0) {
         if ((self->flags & 0x800) != 0) {
-            if (func_8020A5DC(self) != 0) {
+            if (CfGimmick_IsMessageSystemBusy(self) != 0) {
                 return;
             }
             self->flags &= ~0x800u;
-        } else if (func_8020A87C(self, self->effect) != 0) {
+        } else if (CfGimmick_CheckPartyIdLoaded(self, self->effect) != 0) {
             func_8020A484(self->resourceId);
             self->flags |= 0x800;
             return;

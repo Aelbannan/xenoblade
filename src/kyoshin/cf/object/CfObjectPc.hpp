@@ -24,7 +24,7 @@ extern "C" void* allocate__Q23mtl10MemManagerFUlUl(u32 size, u32 heap);
 
 
 // Arts data object returned by func_8009EC9C: the per-entry table scanned by
-// scanArtsEntries starts at +0x1C (passed to func_8009D7E4).
+// scanArtsEntries starts at +0x1C (passed to CtrlObjectParam_GetArtsStatsRow).
 struct CfObjectPcArtsData {
     u8 _0[0xC];
     u16 field_0xC;    // +0xC: u16 index read by setupActionTable
@@ -34,7 +34,7 @@ struct CfObjectPcArtsData {
     u8 field_0x17C;   // +0x17C: write target of func_80175A50 (syncArtsEntry)
 };
 
-// Return layout of func_8009D7E4 (indexed entry within the arts data object):
+// Return layout of CtrlObjectParam_GetArtsStatsRow (indexed entry within the arts data object):
 // the u16 flag at +0x1A is the "occupied" mark checked by scanArtsEntries.
 struct UnkStruct_8009D7E4_Ret {
     u8 _0[0x1A];
@@ -49,7 +49,7 @@ extern "C" void func_800A03F4(u8* obj);    // CtrlObjectParam.cpp
 extern "C" void func_800A145C(u8* obj);    // CtrlObjectParam.cpp
 extern "C" void func_800CA42C(u8* obj);    // CfObjectImplPc.cpp
 extern "C" void func_800A18A4(u8* obj, int value);      // CtrlObjectParam.cpp
-extern "C" UnkStruct_8009D7E4_Ret* func_8009D7E4(u8* obj, int index);  // arts data lookup
+extern "C" UnkStruct_8009D7E4_Ret* CtrlObjectParam_GetArtsStatsRow(u8* obj, int index);  // arts data lookup
 extern "C" void func_8014B7B0(u8* obj);                  // CAIAction.cpp
 extern "C" void func_8015396C(u8* obj, u32 a, u32 b);    // CAIAction.cpp
 
@@ -74,7 +74,7 @@ extern "C" void CActorParam_UnkVirtualFunc176__Q22cf11CActorParamFv(
     cf::CActorParam* self, float value);   // CActorParam virtual 0x354 (Fv name, float in f1)
 extern "C" void func_800A11A4(u8* obj, int flag);         // CtrlObjectParam.cpp
 extern "C" void* func_8009EC9C(u32 index);   // CtrlObjectParam.cpp (character-data lookup; owner canonical u32 form)
-extern "C" void func_800A13C4(u8* obj, int flag);         // CtrlObjectParam.cpp
+extern "C" void CtrlObjectParam_SyncParamFromActorEx(u8* obj, int flag);         // CtrlObjectParam.cpp
 extern "C" void CfResPcImpl_loadPcState(u8* obj);                   // CfResPcImpl.cpp
 extern "C" void func_8012FAA8();                          // camera/screen reset
 extern "C" void func_801765A4(void* actor, f32 value, u32 arg); // CActorParam.cpp

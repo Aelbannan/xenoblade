@@ -404,8 +404,8 @@ extern "C" void func_801D4054(void* info);
 extern "C" void loadEIBFiles(CEquipItemBox* box);
 extern "C" u8 code80135FDC_getByte_64077();
 extern "C" void func_802042C0(CEquipChange* self);
-extern "C" void func_800A13C4(void* charObj, u32 flag);
-extern "C" void func_8009D7E4(void* rows, u32 count);
+extern "C" void CtrlObjectParam_SyncParamFromActorEx(void* charObj, u32 flag);
+extern "C" void CtrlObjectParam_GetArtsStatsRow(void* rows, u32 count);
 extern "C" void* func_8009EC9C(u32);
 extern "C" void* func_80157C4C(u32 index, s16 value);
 extern "C" void setEIBBoxInfo(CEquipItemBox* box, u32 val);
@@ -432,13 +432,13 @@ extern u32 lbl_eu_806640EC;
 extern "C" u32 func_8009CF8C(u32 resourceId);
 
 // Per-category equipped-item row setters (func_80203210 case tails).
-extern "C" void func_8009E0A8(void*, int);
-extern "C" void func_8009E024(void*, int);
-extern "C" void func_8009E030(void*, int);
-extern "C" void func_8009E03C(void*, int);
-extern "C" void func_8009E048(void*, int);
-extern "C" void func_8009E054(void*, int);
-extern "C" void func_800A1370(void*);
+extern "C" void CtrlObjectParam_SetEquipSlot5(void*, int);
+extern "C" void CtrlObjectParam_SetEquipSlot0(void*, int);
+extern "C" void CtrlObjectParam_SetEquipSlot1(void*, int);
+extern "C" void CtrlObjectParam_SetEquipSlot2(void*, int);
+extern "C" void CtrlObjectParam_SetEquipSlot3(void*, int);
+extern "C" void CtrlObjectParam_SetEquipSlot4(void*, int);
+extern "C" void CtrlObjectParam_SyncParamFromActor(void*);
 
 // 3-word scene-name table read by func_80203210's refresh block (.rodata).
 extern u32 lbl_eu_80508068[3];

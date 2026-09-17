@@ -248,13 +248,13 @@ extern "C" void simSetFlag2OnTree(CScnItem* item, u32 arg);
 
 extern "C" __declspec(noinline) u32 CScnItemPool_getListCapacity(u8* self) { return ((CScnItemPoolState*)self)->value18; }
 // volatile load: keeps the body byte-identical (lhz) while making it impure to
-// -ipa, so func_8048C750's three kind checks stay three real calls (retail
+// -ipa, so CScnItemPool_releaseItemByKind's three kind checks stay three real calls (retail
 // never merges them across the TU boundary).
-extern "C" __declspec(noinline) u16 func_8048C690(u8* self) { return *(volatile u16*)&((CScnItemPoolState*)self)->value08; }
-// noinline: retail CALLS this from func_8048C750's kind-1 branch; without it
+extern "C" __declspec(noinline) u16 CScnItemPool_getItemKind(u8* self) { return *(volatile u16*)&((CScnItemPoolState*)self)->value08; }
+// noinline: retail CALLS this from CScnItemPool_releaseItemByKind's kind-1 branch; without it
 // MWCC auto-inlines the field load into the caller.
-extern "C" __declspec(noinline) u32 func_8048C8BC(u8* self) { return ((CScnItemPoolState*)self)->value8C; }
-extern "C" __declspec(noinline) u32 func_8048C9F4(u8* self) { return ((CScnItemPoolState*)self)->value00 + 8; }
+extern "C" __declspec(noinline) u32 CScnItemPool_resolveScene(u8* self) { return ((CScnItemPoolState*)self)->value8C; }
+extern "C" __declspec(noinline) u32 CScnItemPool_getItemPtr(u8* self) { return ((CScnItemPoolState*)self)->value00 + 8; }
 // CScnItemPool_pushItemToList: push an item pointer onto the reslist ring. Finds the first
 // free slot (a node whose mNext is null), stores the item through the guarded
 // setItem pattern, and links the node onto the ring. The setItem try/catch
@@ -292,7 +292,7 @@ extern "C" __declspec(noinline) void CScnItemPool_pushItemToList(u32 a, u32* b) 
     sentinel->mPrev = temp;
 }
 extern "C" __declspec(noinline) void CScnItemPool_getStartNode(int* dst, const void* src) { *(u32*)dst = *(const u32*)((const u8*)src + 4); }
-extern "C" __declspec(noinline) void* func_8048C698(u8* self, int kind) {
+extern "C" __declspec(noinline) void* CScnItemPool_lookupSubPool(u8* self, int kind) {
     switch (kind) {
     case 1:
         return (void*)((char*)self + 0x0C);
@@ -308,7 +308,7 @@ extern "C" __declspec(noinline) void* func_8048C698(u8* self, int kind) {
         return nullptr;
     }
 }
-extern "C" __declspec(noinline) void* func_8048C6F4(u8* self, s32 kind) {
+extern "C" __declspec(noinline) void* CScnItemPool_getSubPoolForKind(u8* self, s32 kind) {
     switch (kind) {
     case 1: return (u8*)self + 0xC;
     case 2: return (u8*)self + 0x2C;
@@ -318,32 +318,32 @@ extern "C" __declspec(noinline) void* func_8048C6F4(u8* self, s32 kind) {
     default: return 0;
     }
 }
-// Scene-side receiver for func_8048C750's kind-1 branch: opaque object whose
+// Scene-side receiver for CScnItemPool_releaseItemByKind's kind-1 branch: opaque object whose
 // second declared virtual (vtable+0x0C under -RTTI on) takes the item.
 struct CScnPoolSceneIf {
     virtual void pad08();
     virtual void apply(CScnItem* item);
 };
 
-// func_8048C750: releases `item` from the pool per its kind.
-//  kind 1: scene = pool->id resolved via func_8048C8BC; scene->apply(item);
+// CScnItemPool_releaseItemByKind: releases `item` from the pool per its kind.
+//  kind 1: scene = pool->id resolved via CScnItemPool_resolveScene; scene->apply(item);
 //          item->vfuncCC(); simSetFlag2OnTree(item, 0); recycle onto sub-pool 0xAC
 //          via CScnItemPool_pushItemToList.
 //  kind 2: item->vfunc08(-1); clear small-slot flag at (item-mSlotsD0)/0x58.
 //  kind 4: item->vfunc08(-1); clear big-slot flag at (item-mSlotsD8)/0x3A8
 //          (signed division — retail emits the add-back correction form).
 //  other:  double-checked-null item->vfunc08(1).
-extern "C" __declspec(noinline) void func_8048C750(CScnItemPool* self, CScnItem* item) {
-    if (func_8048C690((u8*)item) == 1) {
-        CScnPoolSceneIf* scene = (CScnPoolSceneIf*)func_8048C8BC(*(u8**)((char*)self + 8));
+extern "C" __declspec(noinline) void CScnItemPool_releaseItemByKind(CScnItemPool* self, CScnItem* item) {
+    if (CScnItemPool_getItemKind((u8*)item) == 1) {
+        CScnPoolSceneIf* scene = (CScnPoolSceneIf*)CScnItemPool_resolveScene(*(u8**)((char*)self + 8));
         scene->apply(item);
         item->vfuncCC();
         simSetFlag2OnTree(item, 0);
         CScnItemPool_pushItemToList((u32)((char*)self + 0xAC), (u32*)&item);
-    } else if (func_8048C690((u8*)item) == 2) {
+    } else if (CScnItemPool_getItemKind((u8*)item) == 2) {
         item->vfunc08(-1);
         self->mFlagsCC[((u32)item - (u32)self->mSlotsD0) / 0x58] = 0;
-    } else if (func_8048C690((u8*)item) == 4) {
+    } else if (CScnItemPool_getItemKind((u8*)item) == 4) {
         item->vfunc08(-1);
         self->mFlagsD4[((u32)item - (u32)self->mSlotsD8) / 0x3A8] = 0;
     } else {
@@ -356,7 +356,7 @@ extern "C" __declspec(noinline) void func_8048C750(CScnItemPool* self, CScnItem*
 }
 // us-80490a08: walks the singly-linked list, advancing *list until a node
 // equals **target or its field_0x08 matches *key; returns it via *out.
-extern "C" __declspec(noinline) void func_8048C994(CScnItemPoolNode** out, CScnItemPoolNode** list,
+extern "C" __declspec(noinline) void CScnItemPool_findNodeByKey(CScnItemPoolNode** out, CScnItemPoolNode** list,
                    CScnItemPoolNode** target, u32* key) {
     CScnItemPoolNode* node;
     while ((node = *list) != *target && node->field_0x08 != *key) {
@@ -364,14 +364,14 @@ extern "C" __declspec(noinline) void func_8048C994(CScnItemPoolNode** out, CScnI
     }
     *out = node;
 }
-extern "C" __declspec(noinline) void func_8048C9C8(int* self) { *(u32*)self = *(u32*)(*(u32**)self); }
-extern "C" __declspec(noinline) u32 func_8048C9D8(u32* a, u32* b) { return *a != *b; }
-extern "C" __declspec(noinline) void func_8048CA00(u32* dst, const void* src) { *(u32*)dst = *(u32*)(*(u32**)((const u8*)src + 4)); }
-extern "C" __declspec(noinline) u32 func_8048CA10(u32* a, u32* b) { return *a == *b; }
-extern "C" __declspec(noinline) int* func_8048CA28(int* dst, int* src) { *dst = *src; return dst; }
+extern "C" __declspec(noinline) void CScnItemPool_advanceIter(int* self) { *(u32*)self = *(u32*)(*(u32**)self); }
+extern "C" __declspec(noinline) u32 CScnItemPool_nodesNotEqual(u32* a, u32* b) { return *a != *b; }
+extern "C" __declspec(noinline) void CScnItemPool_getHeadNode(u32* dst, const void* src) { *(u32*)dst = *(u32*)(*(u32**)((const u8*)src + 4)); }
+extern "C" __declspec(noinline) u32 CScnItemPool_nodesEqual(u32* a, u32* b) { return *a == *b; }
+extern "C" __declspec(noinline) int* CScnItemPool_copyNodePtr(int* dst, int* src) { *dst = *src; return dst; }
 // us-80490aa8: unlinks the node at *list from a doubly-linked list, clears its
 // field_0x00, and returns the original field_0x00 via *out.
-extern "C" __declspec(noinline) void func_8048CA34(CScnItemPoolLink** out, u32 unused, CScnItemPoolLink** list) {
+extern "C" __declspec(noinline) void CScnItemPool_unlinkNode(CScnItemPoolLink** out, u32 unused, CScnItemPoolLink** list) {
     CScnItemPoolLink* node = *list;
     CScnItemPoolLink* b = node->field_0x00;
     CScnItemPoolLink* a = node->field_0x04;
@@ -381,14 +381,14 @@ extern "C" __declspec(noinline) void func_8048CA34(CScnItemPoolLink** out, u32 u
     node->field_0x00 = 0;
     *out = b;
 }
-// func_8048C8C4: unlinks the node holding `item` from the sub-pool selected by
-// the item's id (offset 8), then hands (self, item) to func_8048C750.
+// CScnItemPool_unlinkAndReleaseItem: unlinks the node holding `item` from the sub-pool selected by
+// the item's id (offset 8), then hands (self, item) to CScnItemPool_releaseItemByKind.
 // Returns 1 when the item was found and unlinked, 0 otherwise.
-// noinline: retail CALLS this from func_8048CB14; without it MWCC auto-inlines
+// noinline: retail CALLS this from CScnItemPool_releaseItemByKey; without it MWCC auto-inlines
 // the whole sub-pool walk (C690/C698/CA34/C750 cascade) into the caller.
-extern "C" __declspec(noinline) int func_8048C8C4(CScnItemPool* self, CScnItem* item) {
-    u16 kind = func_8048C690((u8*)item);
-    _reslist_base<CScnItem*>* list = (_reslist_base<CScnItem*>*)func_8048C698((u8*)self, kind);
+extern "C" __declspec(noinline) int CScnItemPool_unlinkAndReleaseItem(CScnItemPool* self, CScnItem* item) {
+    u16 kind = CScnItemPool_getItemKind((u8*)item);
+    _reslist_base<CScnItem*>* list = (_reslist_base<CScnItem*>*)CScnItemPool_lookupSubPool((u8*)self, kind);
     _reslist_node<CScnItem*>* found;     // sp+0x20
     _reslist_node<CScnItem*>* node;      // sp+0x1c
     _reslist_node<CScnItem*>* sentinel;  // sp+0x18
@@ -396,116 +396,116 @@ extern "C" __declspec(noinline) int func_8048C8C4(CScnItemPool* self, CScnItem* 
     _reslist_node<CScnItem*>* out;       // sp+0x10
     _reslist_node<CScnItem*>* tmp;       // sp+0x0c
     CScnItemPool_getStartNode((int*)&sentinel, list);
-    func_8048CA00((u32*)&node, list);
-    func_8048C994((CScnItemPoolNode**)&found, (CScnItemPoolNode**)&node,
+    CScnItemPool_getHeadNode((u32*)&node, list);
+    CScnItemPool_findNodeByKey((CScnItemPoolNode**)&found, (CScnItemPoolNode**)&node,
                   (CScnItemPoolNode**)&sentinel, (u32*)&item);
     CScnItemPool_getStartNode((int*)&sentinel2, list);
-    if (func_8048CA10((u32*)&found, (u32*)&sentinel2) != 0) {
+    if (CScnItemPool_nodesEqual((u32*)&found, (u32*)&sentinel2) != 0) {
         return 0;
     }
-    func_8048CA34((CScnItemPoolLink**)&out, (u32)list,
-                  (CScnItemPoolLink**)func_8048CA28((int*)&tmp, (int*)&found));
-    func_8048C750(self, item);
+    CScnItemPool_unlinkNode((CScnItemPoolLink**)&out, (u32)list,
+                  (CScnItemPoolLink**)CScnItemPool_copyNodePtr((int*)&tmp, (int*)&found));
+    CScnItemPool_releaseItemByKind(self, item);
     return 1;
 }
-// func_8048CA5C: drains the sub-pool selected by `kind` (0 = none), unlinking
-// the head node and handing each item to func_8048C750.
-extern "C" __declspec(noinline) void func_8048CA5C(u8* self, int kind) {
+// CScnItemPool_drainSubPool: drains the sub-pool selected by `kind` (0 = none), unlinking
+// the head node and handing each item to CScnItemPool_releaseItemByKind.
+extern "C" __declspec(noinline) void CScnItemPool_drainSubPool(u8* self, int kind) {
     if (kind != 0) {
-        _reslist_base<CScnItem*>* list = (_reslist_base<CScnItem*>*)func_8048C698(self, kind);
+        _reslist_base<CScnItem*>* list = (_reslist_base<CScnItem*>*)CScnItemPool_lookupSubPool(self, kind);
         _reslist_node<CScnItem*>* itemNode;  // sp+0x18
         _reslist_node<CScnItem*>* out;       // sp+0x14
         _reslist_node<CScnItem*>* unlink;    // sp+0x10
         _reslist_node<CScnItem*>* node;      // sp+0x0c
         _reslist_node<CScnItem*>* sentinel;  // sp+0x08
         while ((CScnItemPool_getStartNode((int*)&sentinel, list),
-                func_8048CA00((u32*)&node, list),
-                func_8048C9D8((u32*)&node, (u32*)&sentinel)) != 0) {
-            func_8048CA00((u32*)&itemNode, list);
-            CScnItem* item = *(CScnItem**)func_8048C9F4((u8*)&itemNode);
-            func_8048CA00((u32*)&unlink, list);
-            func_8048CA34((CScnItemPoolLink**)&out, (u32)list, (CScnItemPoolLink**)&unlink);
-            func_8048C750((CScnItemPool*)self, item);
+                CScnItemPool_getHeadNode((u32*)&node, list),
+                CScnItemPool_nodesNotEqual((u32*)&node, (u32*)&sentinel)) != 0) {
+            CScnItemPool_getHeadNode((u32*)&itemNode, list);
+            CScnItem* item = *(CScnItem**)CScnItemPool_getItemPtr((u8*)&itemNode);
+            CScnItemPool_getHeadNode((u32*)&unlink, list);
+            CScnItemPool_unlinkNode((CScnItemPoolLink**)&out, (u32)list, (CScnItemPoolLink**)&unlink);
+            CScnItemPool_releaseItemByKind((CScnItemPool*)self, item);
         }
     }
 }
-// func_8048CB14: walks the reslist at self+0xC calling vfuncA8 on each item;
-// when the returned key matches `key`, hands (self, item) to func_8048C8C4
+// CScnItemPool_releaseItemByKey: walks the reslist at self+0xC calling vfuncA8 on each item;
+// when the returned key matches `key`, hands (self, item) to CScnItemPool_unlinkAndReleaseItem
 // and stops; otherwise advances to the next node.
-void func_8048CB14(CScnItemPool* self, u32 key) {
+void CScnItemPool_releaseItemByKey(CScnItemPool* self, u32 key) {
     _reslist_node<CScnItem*>* node;
     _reslist_node<CScnItem*>* sentinel;
-    func_8048CA00((u32*)&node, &self->mList0C);
+    CScnItemPool_getHeadNode((u32*)&node, &self->mList0C);
     while ((CScnItemPool_getStartNode((int*)&sentinel, &self->mList0C),
-            func_8048C9D8((u32*)&node, (u32*)&sentinel)) != 0) {
-        CScnItem* item = *(CScnItem**)func_8048C9F4((u8*)&node);
+            CScnItemPool_nodesNotEqual((u32*)&node, (u32*)&sentinel)) != 0) {
+        CScnItem* item = *(CScnItem**)CScnItemPool_getItemPtr((u8*)&node);
         u32 itemId = item->vfuncA8();
         if (itemId == key) {
-            func_8048C8C4(self, *(CScnItem**)func_8048C9F4((u8*)&node));
+            CScnItemPool_unlinkAndReleaseItem(self, *(CScnItem**)CScnItemPool_getItemPtr((u8*)&node));
             break;
         }
-        func_8048C9C8((int*)&node);
+        CScnItemPool_advanceIter((int*)&node);
     }
 }
-// func_8048CBC0: iterates the reslist at 0xC and calls simSetLeafAnimTag on each
+// CScnItemPool_forEachSetLeafAnimTag: iterates the reslist at 0xC and calls simSetLeafAnimTag on each
 // item, forwarding `arg`.
-extern "C" void func_8048CBC0(CScnItemPool* self, u32 arg) {
+extern "C" void CScnItemPool_forEachSetLeafAnimTag(CScnItemPool* self, u32 arg) {
     CScnItemPoolNode* iter;
     CScnItemPoolNode* sentinel;
-    func_8048CA00((u32*)&iter, &self->mList0C);
+    CScnItemPool_getHeadNode((u32*)&iter, &self->mList0C);
     while ((CScnItemPool_getStartNode((int*)&sentinel, &self->mList0C),
-            func_8048C9D8((u32*)&iter, (u32*)&sentinel)) != 0) {
-        CScnItem* item = *(CScnItem**)func_8048C9F4((u8*)&iter);
+            CScnItemPool_nodesNotEqual((u32*)&iter, (u32*)&sentinel)) != 0) {
+        CScnItem* item = *(CScnItem**)CScnItemPool_getItemPtr((u8*)&iter);
         simSetLeafAnimTag(item, arg);
-        func_8048C9C8((int*)&iter);
+        CScnItemPool_advanceIter((int*)&iter);
     }
 }
-// func_8048CC40: iterates the reslist at 0xC and calls simClearNodeRefs on each
+// CScnItemPool_forEachClearNodeRefs: iterates the reslist at 0xC and calls simClearNodeRefs on each
 // item, forwarding `arg`.
-extern "C" void func_8048CC40(CScnItemPool* self, u32 arg) {
+extern "C" void CScnItemPool_forEachClearNodeRefs(CScnItemPool* self, u32 arg) {
     CScnItemPoolNode* iter;
     CScnItemPoolNode* sentinel;
-    func_8048CA00((u32*)&iter, &self->mList0C);
+    CScnItemPool_getHeadNode((u32*)&iter, &self->mList0C);
     while ((CScnItemPool_getStartNode((int*)&sentinel, &self->mList0C),
-            func_8048C9D8((u32*)&iter, (u32*)&sentinel)) != 0) {
-        CScnItem* item = *(CScnItem**)func_8048C9F4((u8*)&iter);
+            CScnItemPool_nodesNotEqual((u32*)&iter, (u32*)&sentinel)) != 0) {
+        CScnItem* item = *(CScnItem**)CScnItemPool_getItemPtr((u8*)&iter);
         simClearNodeRefs(item, arg);
-        func_8048C9C8((int*)&iter);
+        CScnItemPool_advanceIter((int*)&iter);
     }
 }
-// func_8048CCC0: initializes the six sub-pools (kind 0..5).
+// CScnItemPool_drainAllSubPools: initializes the six sub-pools (kind 0..5).
 // noinline: retail CALLS this from __dt__12CScnItemPoolFv; without it -ipa
 // flattens its drain loop into the dtor.
-extern "C" __declspec(noinline) void func_8048CCC0(u8* self) {
+extern "C" __declspec(noinline) void CScnItemPool_drainAllSubPools(u8* self) {
     for (int i = 0; i < 6; i++) {
-        func_8048CA5C(self, (u16)i);
+        CScnItemPool_drainSubPool(self, (u16)i);
     }
 }
-// func_8048CDA8: iterator default-construct helper (empty in retail).
+// CScnItemPool_initIter: iterator default-construct helper (empty in retail).
 // noinline: retail CALLS this empty function; without it MWCC folds it away.
-extern "C" __declspec(noinline) void func_8048CDA8(_reslist_node<CScnItem*>** iter) {}
-// func_8048CDAC: copy a node pointer through a stack slot.
-// noinline: retail CALLS this from func_8048CD0C (twice); without it MWCC
+extern "C" __declspec(noinline) void CScnItemPool_initIter(_reslist_node<CScnItem*>** iter) {}
+// CScnItemPool_copyIter: copy a node pointer through a stack slot.
+// noinline: retail CALLS this from CScnItemPool_forEachCallVfunc14 (twice); without it MWCC
 // auto-inlines the load/store body into the caller.
-extern "C" __declspec(noinline) void func_8048CDAC(int* dst, int* src) { *dst = *src; }
+extern "C" __declspec(noinline) void CScnItemPool_copyIter(int* dst, int* src) { *dst = *src; }
 
-// func_8048CD0C: walks the reslist at self+0xC and calls vfunc14 on each
+// CScnItemPool_forEachCallVfunc14: walks the reslist at self+0xC and calls vfunc14 on each
 // item. The walk advances through a copied iterator so the item is read from
 // the pre-advance node; the sentinel refresh stays in the loop condition
 // (comma-operator form) to match the retail test-at-bottom shape.
-void func_8048CD0C(CScnItemPool* self) {
+void CScnItemPool_forEachCallVfunc14(CScnItemPool* self) {
     _reslist_node<CScnItem*>* iter;
     _reslist_node<CScnItem*>* node;
     _reslist_node<CScnItem*>* sentinel;
-    func_8048CDA8(&iter);
-    func_8048CA00((u32*)&node, &self->mList0C);
+    CScnItemPool_initIter(&iter);
+    CScnItemPool_getHeadNode((u32*)&node, &self->mList0C);
     while ((CScnItemPool_getStartNode((int*)&sentinel, &self->mList0C),
-            func_8048C9D8((u32*)&node, (u32*)&sentinel)) != 0) {
-        func_8048CDAC((int*)&iter, (int*)&node);
-        func_8048C9C8((int*)&iter);
-        CScnItem* item = *(CScnItem**)func_8048C9F4((u8*)&node);
+            CScnItemPool_nodesNotEqual((u32*)&node, (u32*)&sentinel)) != 0) {
+        CScnItemPool_copyIter((int*)&iter, (int*)&node);
+        CScnItemPool_advanceIter((int*)&iter);
+        CScnItem* item = *(CScnItem**)CScnItemPool_getItemPtr((u8*)&node);
         item->vfunc14();
-        func_8048CDAC((int*)&node, (int*)&iter);
+        CScnItemPool_copyIter((int*)&node, (int*)&iter);
     }
 }
 
@@ -546,18 +546,18 @@ extern "C" __declspec(noinline) void func_8048C0EC(CScnItemPoolNodeArray* self, 
 // us-8049056c: forwards (arg1, &slot) to CScnItemPool_pushItemToList with arg2 stored in a
 // stack slot; the slot result is discarded. The first argument is unused
 // (retail copies r4 into r3 for the call).
-// noinline: retail CALLS this forwarder from func_8048C630; without it MWCC
+// noinline: retail CALLS this forwarder from CScnItemPool_registerOtherList; without it MWCC
 // auto-inlines the body (and its CScnItemPool_pushItemToList tail call) into the caller.
 extern "C" __declspec(noinline) void CScnItemPool_pushOtherToList(u32 unused, u32 arg1, u32 arg2) {
     u32 slot = arg2;
     CScnItemPool_pushItemToList(arg1, &slot);
 }
-// func_8048C60C: node count of the reslist at self (sentinel walk).
+// CScnItemPool_countListNodes: node count of the reslist at self (sentinel walk).
 // Declare cur BEFORE end so end's vreg is born after cur's — the
 // loop-invariant end takes the higher scratch r5 (retail lwz r5,4(r3)).
-// noinline: retail CALLS this helper from func_8048C5B8; without it MWCC
+// noinline: retail CALLS this helper from CScnItemPool_hasFreeSlot; without it MWCC
 // auto-inlines the same-TU body into the caller (19-structural residual).
-extern "C" __declspec(noinline) u32 func_8048C60C(u8* self) {
+extern "C" __declspec(noinline) u32 CScnItemPool_countListNodes(u8* self) {
     CScnItemPoolState* pool = (CScnItemPoolState*)self;
     CScnItemPoolLink* cur;
     CScnItemPoolLink* end = pool->field_0x04;
@@ -569,20 +569,20 @@ extern "C" __declspec(noinline) u32 func_8048C60C(u8* self) {
     }
     return count;
 }
-// func_8048C5B8: returns 1 when the sub-pool selected by `kind` still has
+// CScnItemPool_hasFreeSlot: returns 1 when the sub-pool selected by `kind` still has
 // free slots (mCapacity > current size). The comparison result is returned
 // directly, so MWCC emits the branchless xor/cntlzw/slw/srwi test.
-u32 func_8048C5B8(u8* self, s32 kind) {
-    u8* list = (u8*)func_8048C6F4(self, kind);
-    u32 size = func_8048C60C(list);
+u32 CScnItemPool_hasFreeSlot(u8* self, s32 kind) {
+    u8* list = (u8*)CScnItemPool_getSubPoolForKind(self, kind);
+    u32 size = CScnItemPool_countListNodes(list);
     u32 cap = CScnItemPool_getListCapacity(list);
     return cap > size;
 }
-// func_8048C630: registers `other`'s list into the sub-pool selected by
+// CScnItemPool_registerOtherList: registers `other`'s list into the sub-pool selected by
 // other->value08, then reports success.
-u32 func_8048C630(u8* self, u8* other) {
-    u16 kind = func_8048C690(other);
-    void* slot = func_8048C698(self, kind);
+u32 CScnItemPool_registerOtherList(u8* self, u8* other) {
+    u16 kind = CScnItemPool_getItemKind(other);
+    void* slot = CScnItemPool_lookupSubPool(self, kind);
     CScnItemPool_pushOtherToList((u32)self, (u32)slot, (u32)other);
     return 1;
 }
@@ -617,17 +617,17 @@ CScnItem* CScnItemPool_allocSmallSlot(u8* self) {
 }
 // CScnItemPool::updateItemD0 - iterates the reslist at 0xC and calls the
 // item's vtable slot at offset 0xD0 on each item. The comma-condition keeps
-// the sentinel refresh (CScnItemPool_getStartNode) before the loop test (func_8048C9D8)
+// the sentinel refresh (CScnItemPool_getStartNode) before the loop test (CScnItemPool_nodesNotEqual)
 // at the bottom of the loop, matching the retail test-at-bottom shape.
 void CScnItemPool::updateItemD0() {
     CScnItemPoolNode* iter;
     CScnItemPoolNode* sentinel;
-    func_8048CA00((u32*)&iter, &mList0C);
+    CScnItemPool_getHeadNode((u32*)&iter, &mList0C);
     while ((CScnItemPool_getStartNode((int*)&sentinel, &mList0C),
-            func_8048C9D8((u32*)&iter, (u32*)&sentinel)) != 0) {
-        CScnItem* item = *(CScnItem**)func_8048C9F4((u8*)&iter);
+            CScnItemPool_nodesNotEqual((u32*)&iter, (u32*)&sentinel)) != 0) {
+        CScnItem* item = *(CScnItem**)CScnItemPool_getItemPtr((u8*)&iter);
         item->vfuncD0();
-        func_8048C9C8((int*)&iter);
+        CScnItemPool_advanceIter((int*)&iter);
     }
 }
 
@@ -640,26 +640,26 @@ void CScnItemPool::update() {
     CScnItemPoolNode* sentinel1;  // sp+0x10
     CScnItemPoolNode* sentinel2;  // sp+0x0c
     CScnItemPoolNode* sentinel3;  // sp+0x08
-    func_8048CA00((u32*)&node1, &mList6C);
+    CScnItemPool_getHeadNode((u32*)&node1, &mList6C);
     while ((CScnItemPool_getStartNode((int*)&sentinel1, &mList6C),
-            func_8048C9D8((u32*)&node1, (u32*)&sentinel1)) != 0) {
-        CScnItem* item = *(CScnItem**)func_8048C9F4((u8*)&node1);
+            CScnItemPool_nodesNotEqual((u32*)&node1, (u32*)&sentinel1)) != 0) {
+        CScnItem* item = *(CScnItem**)CScnItemPool_getItemPtr((u8*)&node1);
         item->vfunc0C();
-        func_8048C9C8((int*)&node1);
+        CScnItemPool_advanceIter((int*)&node1);
     }
-    func_8048CA00((u32*)&node2, &mList4C);
+    CScnItemPool_getHeadNode((u32*)&node2, &mList4C);
     while ((CScnItemPool_getStartNode((int*)&sentinel2, &mList4C),
-            func_8048C9D8((u32*)&node2, (u32*)&sentinel2)) != 0) {
-        CScnItem* item = *(CScnItem**)func_8048C9F4((u8*)&node2);
+            CScnItemPool_nodesNotEqual((u32*)&node2, (u32*)&sentinel2)) != 0) {
+        CScnItem* item = *(CScnItem**)CScnItemPool_getItemPtr((u8*)&node2);
         item->vfunc0C();
-        func_8048C9C8((int*)&node2);
+        CScnItemPool_advanceIter((int*)&node2);
     }
-    func_8048CA00((u32*)&node3, &mList0C);
+    CScnItemPool_getHeadNode((u32*)&node3, &mList0C);
     while ((CScnItemPool_getStartNode((int*)&sentinel3, &mList0C),
-            func_8048C9D8((u32*)&node3, (u32*)&sentinel3)) != 0) {
-        CScnItem* item = *(CScnItem**)func_8048C9F4((u8*)&node3);
+            CScnItemPool_nodesNotEqual((u32*)&node3, (u32*)&sentinel3)) != 0) {
+        CScnItem* item = *(CScnItem**)CScnItemPool_getItemPtr((u8*)&node3);
         item->vfunc0C();
-        func_8048C9C8((int*)&node3);
+        CScnItemPool_advanceIter((int*)&node3);
     }
 }
 
@@ -685,9 +685,9 @@ extern "C" __declspec(noinline) void __dt__8048C378(CScnItemPoolListData* self) 
     }
     self->field_0x18 = 0;
 }
-// cleanupACPool: 4-byte tail-call wrapper to func_8048CF5C (retail: b func_8048CF5C)
-extern "C" void func_8048CF5C(CScnItemPool* self);
-__declspec(noinline) void CScnItemPool::cleanupACPool() { func_8048CF5C(this); }
+// cleanupACPool: 4-byte tail-call wrapper to CScnItemPool_cleanupACList (retail: b CScnItemPool_cleanupACList)
+extern "C" void CScnItemPool_cleanupACList(CScnItemPool* self);
+__declspec(noinline) void CScnItemPool::cleanupACPool() { CScnItemPool_cleanupACList(this); }
 // CDeviceVICb-subobject thunks: adjust this from the +4 secondary base back to
 // the primary and tail-call the implementation.
 extern "C" CScnItemPool* __dt__12CScnItemPoolFv(CScnItemPool* self, int flags);
@@ -750,8 +750,8 @@ extern "C" __declspec(noinline) CScnItemPool* __dt__12CScnItemPoolFv(CScnItemPoo
         u32* words = (u32*)self;
         words[0] = vt;
         words[1] = vt + 0x88;
-        func_8048CCC0((u8*)self);
-        func_8048CF5C(self);
+        CScnItemPool_drainAllSubPools((u8*)self);
+        CScnItemPool_cleanupACList(self);
         __dt__8048C378((CScnItemPoolListData*)self->mList0C);
         __dt__8048C378((CScnItemPoolListData*)self->mList2C);
         __dt__8048C378((CScnItemPoolListData*)self->mList4C);
@@ -788,7 +788,7 @@ extern "C" __declspec(noinline) CScnItemPool* __dt__12CScnItemPoolFv(CScnItemPoo
     }
     return self;
 }
-// func_8048CF5C: drains the sub-pool at 0xAC, unlinking each node and calling
+// CScnItemPool_cleanupACList: drains the sub-pool at 0xAC, unlinking each node and calling
 // the item's vtable slot at 0x08 with argument 1 (non-null items only).
 // ===== Dissolved monolibdata2 data owned by this TU (retail .data
 // 0x8056E488-0x8056E568, .rodata 0x80523F18-0x80523F58) =====
@@ -858,7 +858,7 @@ extern "C" u32 lbl_eu_8056E52C[5] = {
 
 #pragma push
 #pragma auto_inline off
-extern "C" void func_8048CF5C(CScnItemPool* self) {
+extern "C" void CScnItemPool_cleanupACList(CScnItemPool* self) {
     _reslist_base<CScnItem*>* list = (_reslist_base<CScnItem*>*)&self->mListAC;
     _reslist_node<CScnItem*>* itemNode;  // sp+0x18
     _reslist_node<CScnItem*>* out;       // sp+0x14
@@ -866,12 +866,12 @@ extern "C" void func_8048CF5C(CScnItemPool* self) {
     _reslist_node<CScnItem*>* node;      // sp+0x0c
     _reslist_node<CScnItem*>* sentinel;  // sp+0x08
     while ((CScnItemPool_getStartNode((int*)&sentinel, list),
-            func_8048CA00((u32*)&node, list),
-            func_8048C9D8((u32*)&node, (u32*)&sentinel)) != 0) {
-        func_8048CA00((u32*)&itemNode, list);
-        CScnItem* item = *(CScnItem**)func_8048C9F4((u8*)&itemNode);
-        func_8048CA00((u32*)&unlink, list);
-        func_8048CA34((CScnItemPoolLink**)&out, (u32)list, (CScnItemPoolLink**)&unlink);
+            CScnItemPool_getHeadNode((u32*)&node, list),
+            CScnItemPool_nodesNotEqual((u32*)&node, (u32*)&sentinel)) != 0) {
+        CScnItemPool_getHeadNode((u32*)&itemNode, list);
+        CScnItem* item = *(CScnItem**)CScnItemPool_getItemPtr((u8*)&itemNode);
+        CScnItemPool_getHeadNode((u32*)&unlink, list);
+        CScnItemPool_unlinkNode((CScnItemPoolLink**)&out, (u32)list, (CScnItemPoolLink**)&unlink);
         if (item != 0) {
             if (item != 0) {
                 item->vfunc08(1);

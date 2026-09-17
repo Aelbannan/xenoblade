@@ -42,7 +42,7 @@ public:
 
     void CfGimmick_DetachManager(CfGameManager* other);
     void CfGimmick_UpdateColliderMatrix();
-    int func_8020A8AC();
+    int CfGimmick_CheckerKind0Always();
 };
 
 } // namespace cf
@@ -70,7 +70,7 @@ struct CfGimmickVec3u {
 };
 
 // Container whose first member (0x00) is a registered-object pointer used by
-// func_8020A434 to unregister from the global resource manager.
+// CfGimmick_UnregisterSpawnedObject to unregister from the global resource manager.
 struct CfGimmickObject;  // defined below
 struct CfGimmickReg {
     CfGimmickObject* field_00;
@@ -91,7 +91,7 @@ struct CfGimmickObject : public cf::CfObject {
     // Slot 0x158 (base setPointEnabled): records the spawned/active flag.
     void setPointEnabled(int flag) override { field_90 = (u8)flag; }
     void setPos(const CfGimmickVec3* pos) { CfObject_setMoveTargetVec((const ml::CVec3*)pos); }
-    // Retail func_8020A35C/8020A6B0 reach slot 0x158 through a virtual
+    // Retail CfGimmick_SpawnNamedObject/8020A6B0 reach slot 0x158 through a virtual
     // dispatch (lwz 0x158 + bctrl); spelling that here as setPointEnabled()
     // grows this TU by +0x14 per spawner and blows the +0x24 split budget,
     // so activate keeps the baseline direct store (same bytes as before)
@@ -125,7 +125,7 @@ struct CfPlayerSub3F60 {
 struct CfPlayerSpot {
     void** vtable;              // 0x00 (object at player+0x3E9C; slot 0xAC yields the target)
 };
-// Player base object scanned by func_8020A294.  HP is CActorParam::CActorParam_getHp at +0x128.
+// Player base object scanned by CfGimmick_CheckFightListPlayerAlive.  HP is CActorParam::CActorParam_getHp at +0x128.
 struct CfPlayerBase {
     u8 pad[0x3E9C];
     CfPlayerSpot spot;          // 0x3E9C - object handed to the jumptable checkers
@@ -133,7 +133,7 @@ struct CfPlayerBase {
     void* subField3F60;         // 0x3F60
 };
 
-// View of the player base object scanned by func_8020A294: the u16 id at
+// View of the player base object scanned by CfGimmick_CheckFightListPlayerAlive: the u16 id at
 // +0x456C is compared ((id >> 4) == playerId) against the caller's id.
 struct CfPlayerIdView {
     u8 pad[0x456C];
@@ -177,10 +177,10 @@ extern "C" const f32 lbl_eu_80668360;
 // Shared singleton accessor; refs resolve to the unmangled retail name.
 extern "C" CfGimmickGlobal* getUnk80664658();
 
-// Bdat table data used by func_8020A608 / CfGimmick_LoadBdatAreaPos columns.
+// Bdat table data used by CfGimmick_LookupBdatGimmickName / CfGimmick_LoadBdatAreaPos columns.
 extern "C" const void* lbl_eu_805357E8[];
 extern "C" void* lbl_eu_80664148;   // .sbss - current bdat file pointer
-// Returned when func_8020A608 cannot fetch a column row.
+// Returned when CfGimmick_LookupBdatGimmickName cannot fetch a column row.
 extern "C" const void* lbl_eu_80662788[2];
 
 // Column-capacity helpers (CBdat row begin/count).
@@ -202,7 +202,7 @@ extern const float lbl_eu_8066A210;
 extern "C" const double lbl_eu_80668370;
 // Base of the +0, +0xA, +0x15, +0x20 column-name string block.
 extern "C" const char lbl_eu_80508634[];
-// Sentinel used by the player loops (func_8020A124 / func_8020A1DC) and the
+// Sentinel used by the player loops (CfGimmick_ApplyPartyMoveSpeed / CfGimmick_ApplyPartyMoveSpeedGated) and the
 // gimmick extent checks.  Const so MWCC treats the SDA load as read-only and
 // schedules it at retail's position (CfObjectMove.hpp pattern).
 extern "C" const float lbl_eu_80668350;

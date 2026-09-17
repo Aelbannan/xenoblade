@@ -19,7 +19,7 @@
 // ===========================================================================
 CScnItemAnim::~CScnItemAnim() {
     *(void**)this = (void*)lbl_eu_8056EC90;
-    func_8048CBC0(this->mParent->mPool, this);
+    CScnItemPool_forEachSetLeafAnimTag(this->mParent->mPool, this);
 }
 
 // ===========================================================================
@@ -113,7 +113,7 @@ CScnItemAnim* __ct__8049E710(CScnItemAnimHost* self,
         }
     }
 
-    func_8048C630(self->mPool, item, param);
+    CScnItemPool_registerOtherList(self->mPool, item, param);
     return item;
 }
 

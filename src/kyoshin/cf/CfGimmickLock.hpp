@@ -194,9 +194,9 @@ extern "C" u32 getQueuedFileEventCount__Q22cf13CfGameManagerFv(void);  // u32 (n
 extern "C" void* getPlayer__Q22cf13CfGameManagerFi(int index);
 
 // CfGimmick-TU helpers (CfGimmick.cpp).
-extern "C" int func_8020A294();
+extern "C" int CfGimmick_CheckFightListPlayerAlive();
 extern "C" void func_8020A484(u16 resourceId);
-extern "C" unsigned int func_8020A5DC();
+extern "C" unsigned int CfGimmick_IsMessageSystemBusy();
 extern "C" void CfGimmick_SetGlobalFlag8008();
 
 // Scene / frame-time helpers.

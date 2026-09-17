@@ -216,9 +216,9 @@ extern "C" void func_8044BB20__8CGXCacheFv(CGXCache* cache, f32* projOut,
 // Scene-item pool helpers (retail reloc names are unmangled short forms, so
 // C-linkage declarations reproduce them; the retail map resolves the symbols).
 struct CScnCameraItemHost;
-extern "C" u32 func_8048C5B8(u8* self, s32 kind);
+extern "C" u32 CScnItemPool_hasFreeSlot(u8* self, s32 kind);
 extern "C" u8* CScnItemPool_allocBigSlot(u8* self);
-extern "C" u32 func_8048C630(u8* self, u8* other, u32 flag);
+extern "C" u32 CScnItemPool_registerOtherList(u8* self, u8* other, u32 flag);
 // Runtime throw helper (NMWException.h is not included: it drags in
 // __ppc_eabi_linker.h which conflicts with __ppc_eabi_init.h's _stack_addr).
 // noreturn: MWCC elides the __end__catch epilogue of a catch handler that
@@ -813,7 +813,7 @@ void func_8049F204(CScnItemCamera* self, const ml::CVec3* delta) {
 // the pool is full).
 // ============================================================
 CScnItemCamera* func_8049F9A8(CScnCameraItemHost* self, int arg2) {
-    if (func_8048C5B8(self->mPool, 4) == 0) {
+    if (CScnItemPool_hasFreeSlot(self->mPool, 4) == 0) {
         return 0;
     }
 
@@ -899,7 +899,7 @@ CScnItemCamera* func_8049F9A8(CScnCameraItemHost* self, int arg2) {
     lay->mDepthFarNear = lay->mDepthNear * lay->mAspectRatio;
     lay->mDepthFar = lay->mDepthMid * lay->mAspectRatio;
 
-    func_8048C630(self->mPool, alloc, 0);
+    CScnItemPool_registerOtherList(self->mPool, alloc, 0);
     return cam;
 }
 

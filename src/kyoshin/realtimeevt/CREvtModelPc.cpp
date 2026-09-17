@@ -51,8 +51,8 @@ extern "C" {
     extern void* func_80167F6C(void* ptr, u32 alignment, int useMEM1);
 
     // Task helpers
-    extern int func_8016A3C4();
-    extern int func_8016A35C();
+    extern int EvtSeqGetWalkIndex();
+    extern int EvtSeqGetCounter100();
     extern void func_8016BC1C(void* self);
     extern int func_8016BDA8(void* self, void* pId);
     extern void* func_8016C300(void* self);
@@ -179,7 +179,7 @@ extern "C" int func_801838D8(void* self) {
     int result;
 
     // Ready only if the task counter matches the current one.
-    if (FLD(s32, s, 0xB0) != func_8016A3C4() + 1) {
+    if (FLD(s32, s, 0xB0) != EvtSeqGetWalkIndex() + 1) {
         return 0;
     }
 
@@ -696,7 +696,7 @@ extern "C" void func_801846C4(void* self) {
     char* s = (char*)self;
 
     if (FLD(void*, s, 0x20) != 0) {
-        int time = func_8016A35C();
+        int time = EvtSeqGetCounter100();
         float ft = (float)time;
         simRefreshFlag8(FLD(void*, s, 0x20), ft);
     }

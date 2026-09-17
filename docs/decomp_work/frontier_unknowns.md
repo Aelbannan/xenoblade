@@ -40,7 +40,7 @@ distinct frontier functions that reference them.
 | 8 | `copyVec3Words` | 0x8004B3F0 | 26 | 5 | CfCam |
 | 9 | `func_80063278` | 0x80063278 | 13 | 5 | CfRes |
 | 10 | `func_80063284` | 0x80063284 | 5 | 5 | CfRes |
-| 11 | `func_801ED800` | 0x801ED800 | 5 | 5 | CMenuItemExchange, CMenuShopBuy |
+| 11 | `ItemBoxLine_IsReadyFlag` | 0x801ED800 | 5 | 5 | CMenuItemExchange, CMenuShopBuy |
 | 12 | `func_8022B8B0` | 0x8022B8B0 | 5 | 5 | CSkipTimer, CUIErrMesWin, CModelDispMakeCrystal |
 | 13 | `func_800822F4` | 0x800822F4 | 5 | 5 | CVS_THREAD_HP |
 | 14 | `testFlagMask` | 0x8004B3D8 | 5 | 5 | CScnFilterMan, CScnVirtualLight |
@@ -68,7 +68,7 @@ distinct frontier functions that reference them.
 | 36 | `cfCam_vec3AtIndex` | 0x8006BF14 | 3 | 2 | CfCam |
 | 37 | `UIWin_GetTimer` | 0x8013EC58 | 2 | 2 | ocUnit, pluginUi |
 | 38 | `func_800442DC` | 0x800442DC | 2 | 2 | CTaskGame |
-| 39 | `func_8009ECB0` | 0x8009ECB0 | 2 | 2 | CChainActorPc, pluginCfs |
+| 39 | `CtrlObjectParam_GetSlotTableBase` | 0x8009ECB0 | 2 | 2 | CChainActorPc, pluginCfs |
 | 40 | `func_8006348C` | 0x8006348C | 2 | 2 | CfRes |
 | 41 | `func_80063494` | 0x80063494 | 2 | 2 | CfRes |
 | 42 | `func_8006354C` | 0x8006354C | 2 | 2 | CfRes |

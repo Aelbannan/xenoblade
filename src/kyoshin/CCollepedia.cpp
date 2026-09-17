@@ -522,7 +522,7 @@ extern "C" __declspec(noinline) void func_80253F3C(u8* self, u32 row, u32 col) {
     if (row >= 6) return;
     if (col >= 5) return;
 
-    func_8009EC18(*(u16*)&(self + (s8)self[1] * 0x140 + row * 0x34)[0x10 + col * 0xA], 1);
+    CtrlObjectParam_SetStateBitFlag(*(u16*)&(self + (s8)self[1] * 0x140 + row * 0x34)[0x10 + col * 0xA], 1);
 
     (self + (s8)self[1] * 0x140 + row * 0x34)[0x16 - 4 + col * 0xA] = 3;
 
@@ -651,7 +651,7 @@ extern "C" __declspec(noinline) char* func_802542D0(u8* self, u32 arg1, u32 arg2
 }
 
 // us-8025658c
-// Look up an entry in the sub-array, check if item is unlocked (via func_8009EC6C), format its name
+// Look up an entry in the sub-array, check if item is unlocked (via CtrlObjectParam_GetStateBitFlag), format its name
 // Returns nullptr if the entry is invalid or locked
 extern "C" char* func_80254350(u8* self, u32 arg2, u32 arg3) {
     if (lbl_eu_806647D8 == NULL) return NULL;
@@ -665,7 +665,7 @@ extern "C" char* func_80254350(u8* self, u32 arg2, u32 arg3) {
     if (val == 0) return NULL;
 
     u16 check = *(u16*)(entry + 0x10);
-    if (func_8009EC6C(check) != 0) {
+    if (CtrlObjectParam_GetStateBitFlag(check) != 0) {
         return (char*)BdatGetPtrDirect(lbl_eu_806647D8, &lbl_eu_8050C6E8[0x18f], val);
     }
     return NULL;
@@ -721,7 +721,7 @@ extern "C" void func_8025449C(u8* self, int a, int b, int c, u16 itemId) {
     // and wall class 11 (uncontrollable CSE).
     if (kind == 0) {
         *(self + a * 0x140 + b * 0x34 + c * 0xA + 0x16) = 0;
-    } else if (func_8009EC6C(kind) != 0) {
+    } else if (CtrlObjectParam_GetStateBitFlag(kind) != 0) {
         *(self + a * 0x140 + b * 0x34 + c * 0xA + 0x16) = 3;
     } else if (CItem_findRecByFamily(itemId) != 0) {
         *(self + a * 0x140 + b * 0x34 + c * 0xA + 0x16) = 2;

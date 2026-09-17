@@ -112,4 +112,4 @@ extern "C" CVoiceHandle* func_802A330C(int size, int align);
 
 // Equipment-category table lookup + category check used by func_802A4120.
 extern "C" void* func_8009EC9C(u32 index);
-extern "C" u32 func_800A32BC(void* mgr);
+extern "C" u32 CtrlObjectParam_GetCurrentRowKey(void* mgr);

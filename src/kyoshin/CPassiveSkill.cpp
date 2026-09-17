@@ -3397,24 +3397,24 @@ __declspec(noinline) void func_8026CE30(UI::CPassiveSkillLine* self) {
         if (flag != 0) {
             switch (b) {
             case 4:
-                func_8009E024(data, -1);
+                CtrlObjectParam_SetEquipSlot0(data, -1);
                 break;
             case 5:
-                func_8009E030(data, -1);
+                CtrlObjectParam_SetEquipSlot1(data, -1);
                 break;
             case 6:
-                func_8009E03C(data, -1);
+                CtrlObjectParam_SetEquipSlot2(data, -1);
                 break;
             case 7:
-                func_8009E048(data, -1);
+                CtrlObjectParam_SetEquipSlot3(data, -1);
                 break;
             case 8:
-                func_8009E054(data, -1);
+                CtrlObjectParam_SetEquipSlot4(data, -1);
                 break;
             }
         }
     }
-    func_800A1370(data);
+    CtrlObjectParam_SyncParamFromActor(data);
     if ((s8)self->field_F3 < 3) {
         CPSkillEnumListHolder holder;
         u32 names[3];
@@ -3762,7 +3762,7 @@ extern "C" void getEntry__5CBdatFUl(u32);
 extern "C" void closeFileHandle__FPP11CFileHandle(void*);
 extern "C" void releaseArcResourceAccessor__FPQ34nw4r3lyt19ArcResourceAccessor(void*);
 extern "C" void deleteRegion__17UnkClass_8045F564Fv(void*);
-extern "C" void func_800A13C4(void*, u32);
+extern "C" void CtrlObjectParam_SyncParamFromActorEx(void*, u32);
 extern "C" void func_8022B7F4(void*);
 #pragma optimize_for_size on
 // UI::CPassiveSkill teardown (retail CPassiveSkill_teardown): close the shared bdat
@@ -3780,7 +3780,7 @@ extern "C" void CPassiveSkill_teardown(UI::CPassiveSkill* self) {
     self->field_20 = 0;
     deleteRegion__17UnkClass_8045F564Fv(&self->mUnk8);
     for (u8 i = 1; i <= 8; i++) {
-        func_800A13C4(func_8009EC9C(i), 1);
+        CtrlObjectParam_SyncParamFromActorEx(func_8009EC9C(i), 1);
     }
 }
 #pragma optimize_for_size off

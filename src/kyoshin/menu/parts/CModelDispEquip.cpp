@@ -551,7 +551,7 @@ extern "C" void ModelDispEquip_BuildEquipModel(CModelDispEquip* self) {
     PartyStateWin_InitMemCounters(&ctx);
     if (holder->field_0x00 != 0) return;
 
-    func_8009ECB0();
+    CtrlObjectParam_GetSlotTableBase();
     u8 charId = (u8)GetCollectedFlagByte((u8)self->equipSlot);
     if (charId == 0) return;
 

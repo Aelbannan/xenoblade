@@ -66,8 +66,8 @@ extern "C" int func_eu_804F9EE0(u8* unused, MonoRequestState* req) {  // polls l
 
     switch (req->state) {
         case 0: {  // kick off the request
-            s32 result = func_804DA9C4(req, req->field_0xE);
-            if (func_eu_804DEB4C(result, req->field_0xD, 0) != 0) return 2;
+            s32 result = CNReqSaveFormatTempPath(req, req->field_0xE);
+            if (CNReqSaveNandCreateDir(result, req->field_0xD, 0) != 0) return 2;
             req->state = 1;
             break;
         }

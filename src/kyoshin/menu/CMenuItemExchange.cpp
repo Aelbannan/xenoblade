@@ -133,16 +133,16 @@ void CMenuItemExchange::Init() {
                   reinterpret_cast<CItemBoxLine*>(tmpLineRaw));
     __dt__12CItemBoxLineFv(reinterpret_cast<CItemBoxLine*>(tmpLineRaw), -1);
 
-    func_801EDA08(reinterpret_cast<CItemBoxLine*>(&mItemBoxLine[0]));
-    func_801EDA4C(reinterpret_cast<CItemBoxLine*>(&mItemBoxLine[0]), 2);
-    func_801EDA4C(reinterpret_cast<CItemBoxLine*>(&mItemBoxLine[0]), 4);
-    func_801EDA4C(reinterpret_cast<CItemBoxLine*>(&mItemBoxLine[0]), 5);
-    func_801EDA4C(reinterpret_cast<CItemBoxLine*>(&mItemBoxLine[0]), 6);
-    func_801EDA4C(reinterpret_cast<CItemBoxLine*>(&mItemBoxLine[0]), 7);
-    func_801EDA4C(reinterpret_cast<CItemBoxLine*>(&mItemBoxLine[0]), 8);
-    func_801EDA4C(reinterpret_cast<CItemBoxLine*>(&mItemBoxLine[0]), 0xb);
-    func_801EDA4C(reinterpret_cast<CItemBoxLine*>(&mItemBoxLine[0]), 3);
-    func_801EDA4C(reinterpret_cast<CItemBoxLine*>(&mItemBoxLine[0]), 0xa);
+    ItemBoxLine_ResetTabBytes(reinterpret_cast<CItemBoxLine*>(&mItemBoxLine[0]));
+    ItemBoxLine_PushTabByte(reinterpret_cast<CItemBoxLine*>(&mItemBoxLine[0]), 2);
+    ItemBoxLine_PushTabByte(reinterpret_cast<CItemBoxLine*>(&mItemBoxLine[0]), 4);
+    ItemBoxLine_PushTabByte(reinterpret_cast<CItemBoxLine*>(&mItemBoxLine[0]), 5);
+    ItemBoxLine_PushTabByte(reinterpret_cast<CItemBoxLine*>(&mItemBoxLine[0]), 6);
+    ItemBoxLine_PushTabByte(reinterpret_cast<CItemBoxLine*>(&mItemBoxLine[0]), 7);
+    ItemBoxLine_PushTabByte(reinterpret_cast<CItemBoxLine*>(&mItemBoxLine[0]), 8);
+    ItemBoxLine_PushTabByte(reinterpret_cast<CItemBoxLine*>(&mItemBoxLine[0]), 0xb);
+    ItemBoxLine_PushTabByte(reinterpret_cast<CItemBoxLine*>(&mItemBoxLine[0]), 3);
+    ItemBoxLine_PushTabByte(reinterpret_cast<CItemBoxLine*>(&mItemBoxLine[0]), 0xa);
     ItemBoxLine_LoadFiles(reinterpret_cast<CItemBoxLine*>(&mItemBoxLine[0]));
 
     // Item-box grid: temp CItemBoxGrid -> copy -> destroy, then register the
@@ -292,7 +292,7 @@ extern "C" __declspec(noinline) void func_801BE590(CItemBoxGrid* dest, CItemBoxG
 extern "C" void waitForDrawDone__9CDeviceVIFv();
 extern "C" void func_801C3D9C(void*);
 extern "C" void func_801C40A0(void*);
-extern "C" void func_801ED618(void*);
+extern "C" void ItemBoxLine_UnloadFiles(void*);
 extern "C" void UnloadItemBox(void*);
 extern u32 lbl_eu_80664428;
 
@@ -305,7 +305,7 @@ void CMenuItemExchange::Term() {
     mScene->removeRenderCB(render);
     func_801C3D9C(&mBgTex);
     func_801C40A0(&mTitleAHelp);
-    func_801ED618(&mItemBoxLine[0]);
+    ItemBoxLine_UnloadFiles(&mItemBoxLine[0]);
     UnloadItemBox(&mItemBoxGrid);
     lbl_eu_80664428 = 0;
     setPresentationFlag__Q22cf13CfGameManagerFv(0);
@@ -382,7 +382,7 @@ body:
         __ct__Q34nw4r3lyt8DrawInfoFv(reinterpret_cast<nw4r::lyt::DrawInfo*>(&drawInfo[0]));
         func_80137250(reinterpret_cast<nw4r::lyt::DrawInfo*>(&drawInfo[0]));
         func_801C3D7C(&mBgTex, reinterpret_cast<nw4r::lyt::DrawInfo*>(&drawInfo[0]));
-        func_801ED4FC(reinterpret_cast<CItemBoxLine*>(mItemBoxLine),
+        ItemBoxLine_DrawLayout(reinterpret_cast<CItemBoxLine*>(mItemBoxLine),
                       reinterpret_cast<nw4r::lyt::DrawInfo*>(&drawInfo[0]));
         DrawItemBoxGrid(&mItemBoxGrid, reinterpret_cast<nw4r::lyt::DrawInfo*>(&drawInfo[0]));
         func_801C4080(&mTitleAHelp, reinterpret_cast<nw4r::lyt::DrawInfo*>(&drawInfo[0]));
@@ -422,7 +422,7 @@ u8 func_801BEE6C() { return lbl_eu_8066442C; }
 __declspec(noinline) void func_801BEE74(CMenuItemExchange* self) {
     if (func_801C3E34(&self->mBgTex) != 0 &&
         func_801C4114(&self->mTitleAHelp) != 0 &&
-        func_801ED774(reinterpret_cast<CItemBoxLine*>(self->mItemBoxLine)) != 0) {
+        ItemBoxLine_GetSelectReady(reinterpret_cast<CItemBoxLine*>(self->mItemBoxLine)) != 0) {
         func_801C412C(&self->mTitleAHelp);
         func_801ED864(reinterpret_cast<CItemBoxLine*>(self->mItemBoxLine));
         LoadItemBoxFiles(&self->mItemBoxGrid);
@@ -435,7 +435,7 @@ __declspec(noinline) void func_801BEE74(CMenuItemExchange* self) {
  * line is ready, advance the menu to phase 2 (field_5118). */
 __declspec(noinline) void func_801BEEF4(CMenuItemExchange* self) {
     if (isIdle__11CTitleAHelpFv(&self->mTitleAHelp) != 0 &&
-        func_801ED800(reinterpret_cast<CItemBoxLine*>(self->mItemBoxLine)) != 0) {
+        ItemBoxLine_IsReadyFlag(reinterpret_cast<CItemBoxLine*>(self->mItemBoxLine)) != 0) {
         self->field_5118 = 2;
     }
 }
@@ -446,7 +446,7 @@ __declspec(noinline) void func_801BEF44(CMenuItemExchange* self){}
  * advances the menu to phase 1 (field_5118). */
 __declspec(noinline) void func_801BF2E8(CMenuItemExchange* self) {
     if (isIdle__11CTitleAHelpFv(&self->mTitleAHelp) != 0 &&
-        func_801ED800(reinterpret_cast<CItemBoxLine*>(self->mItemBoxLine)) != 0 &&
+        ItemBoxLine_IsReadyFlag(reinterpret_cast<CItemBoxLine*>(self->mItemBoxLine)) != 0 &&
         GetField61(&self->mItemBoxGrid) != 0) {
         self->field_64 = 1;
     }
@@ -457,14 +457,14 @@ __declspec(noinline) void func_801BF2E8(CMenuItemExchange* self) {
  * advance to phase 5, kicking menu-op 0x6d. */
 __declspec(noinline) void func_801BF348(CMenuItemExchange* self) {
     if (isIdle__11CTitleAHelpFv(&self->mTitleAHelp) != 0 &&
-        func_801ED800(reinterpret_cast<CItemBoxLine*>(self->mItemBoxLine)) != 0 &&
+        ItemBoxLine_IsReadyFlag(reinterpret_cast<CItemBoxLine*>(self->mItemBoxLine)) != 0 &&
         IsItemBoxReady(&self->mItemBoxGrid) != 0) {
         self->mFloat5120 = self->mFloat5120 + lbl_eu_80667E7C;
         if (!(self->mFloat5120 <= lbl_eu_80667E7C)) {
             self->mFloat5120 = lbl_eu_80667E78;
             func_801C41E8(&self->mTitleAHelp, GetPromptState(&self->mItemBoxGrid));
             SetInfoMsgId(&self->mItemBoxGrid,
-                          func_801EECC8(reinterpret_cast<CItemBoxLine*>(self->mItemBoxLine)));
+                          ItemBoxLine_TouchTabEntryItem(reinterpret_cast<CItemBoxLine*>(self->mItemBoxLine)));
             func_801C416C(&self->mTitleAHelp);
             func_801CB28C(&self->mItemBoxGrid);
             self->field_5118 = 5;
@@ -561,7 +561,7 @@ __declspec(noinline) void func_801BF6A0(CMenuItemExchange* self) {
  * item-box line) advancing the menu to phase 2. */
 __declspec(noinline) void func_801BF70C(CMenuItemExchange* self) {
     if (isIdle__11CTitleAHelpFv(&self->mTitleAHelp) != 0 &&
-        func_801ED800(reinterpret_cast<CItemBoxLine*>(self->mItemBoxLine)) != 0) {
+        ItemBoxLine_IsReadyFlag(reinterpret_cast<CItemBoxLine*>(self->mItemBoxLine)) != 0) {
         self->field_5118 = 2;
     }
 }

@@ -3105,6 +3105,23 @@ def _prove_bytes(
     return probe
 
 
+def _unit_has_unit_rules(obj: Path | None) -> bool:
+    """True when the unit's object basename is rewritten by UNIT_RULES.
+
+    ``tools/project.py`` routes those objects through ``link_reloc_postprocess``
+    into ``*.reloc.o`` before they enter ``main.elf``, so linked-byte
+    extraction would read bytes the source never produced. Fail closed.
+    """
+    if obj is None:
+        return False
+    try:
+        from tools.postprocess_reloc_names import UNIT_RULES  # type: ignore[import-not-found]
+    except Exception:
+        return False
+    name = Path(obj).name
+    return any(key.partition("#")[0] == name for key in UNIT_RULES)
+
+
 def prove_unit_symbol(
     project: Project,
     unit: ObjdiffUnit,
@@ -3136,7 +3153,10 @@ def prove_unit_symbol(
 
     Supported unresolved ELF relocations are proved symbolically.  With
     ``linked=True``, an unsupported symbolic-relocation case retries once using
-    bytes extracted from the retail DOL and linked decomp ELF.
+    bytes extracted from the retail DOL and linked decomp ELF — except for
+    units in ``UNIT_RULES``, whose ``main.elf`` bytes come from postprocessed
+    ``*.reloc.o`` objects; for those the fallback fails closed (the unlinked
+    witness is the only acceptance path).
     """
     retail = unit.target_path
     decomp = unit.base_path
@@ -3258,12 +3278,16 @@ def prove_unit_symbol(
                 canonical_symbols=canonical_symbols,
             )
 
+        # main.elf is built from postprocessed *.reloc.o objects for units in
+        # UNIT_RULES; for those the linked bytes are not source-derived, so
+        # the linked fallback fails closed (PLAN.md §17.6).
+        linked_fallback_ok = linked and not _unit_has_unit_rules(decomp)
         try:
             probe = _run_prove("off" if two_phase else "auto")
             if two_phase and probe.status in _OBJECT_BASE_RETRY_STATUSES:
                 probe = _run_prove("retry")
             if (
-                linked
+                linked_fallback_ok
                 and probe.status == ProofStatus.NOT_EQUIVALENT
                 and (left.relocations or right.relocations)
             ):
@@ -3284,7 +3308,7 @@ def prove_unit_symbol(
                 )
             return probe
         except (DecodeError, UnsupportedInstruction, ExecutionInconclusive, ValueError):
-            if not linked or not (left.relocations or right.relocations):
+            if not linked_fallback_ok or not (left.relocations or right.relocations):
                 raise
             return _run_linked_fallback(
                 project, symbol, candidate_symbol, contract,

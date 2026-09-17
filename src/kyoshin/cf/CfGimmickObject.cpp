@@ -352,7 +352,7 @@ void func_801F7930(cf::CfGimmickObject* self) {
 cf::CfGimmickObject::~CfGimmickObject() {
     *(void**)this = (void*)lbl_eu_80534F70;
     CfGimmick_ClearManagerBinding((void*)this);
-    func_8020A434(&this->field_7C);
+    CfGimmick_UnregisterSpawnedObject(&this->field_7C);
     __dt__Q22cf9CfGimmickFv((void*)this, 0);
     // MWCC appends the deleting-dtor prologue (null guard) and epilogue
     // (delete-flag ? operator delete(this) : skip) automatically.
@@ -361,7 +361,7 @@ cf::CfGimmickObject::~CfGimmickObject() {
 // func_801F5B00 - step-machine driver. While the step index stays below 6,
 // promote the 0x80000 busy flag to 0x40000000, then dispatch through the
 // field_74 0x400 gate: the lbl_eu_80534EB8 pmf table when set, otherwise the
-// func_801F634C helper (which may clear work via func_8020A0CC) or the
+// func_801F634C helper (which may clear work via CfGimmick_SetGlobalFlag8) or the
 // lbl_eu_80534E70 pmf table. Stop on a 0 return and run the cleanup hook.
 void func_801F5B00(cf::CfGimmickObject* self) {
     while (self->field_188 < 6) {
@@ -375,7 +375,7 @@ void func_801F5B00(cf::CfGimmickObject* self) {
         } else {
             if (func_801F634C(self) != 0) {
                 if ((self->field_74 & 0x200) != 0)
-                    func_8020A0CC();
+                    CfGimmick_SetGlobalFlag8();
                 break;
             }
             if ((self->*lbl_eu_80534E70[self->field_188].p)() != 0)
@@ -837,13 +837,13 @@ int func_801F6D8C(cf::CfGimmickObject* self) {
         if ((flags & 0x8000) != 0) {
             for (int i = 0; i < 15; i++) {
                 if ((self->field_152 & (1 << i)) != 0 &&
-                    func_8009E284(func_8009ECB0(), i + 1) != 0)
+                    func_8009E284(CtrlObjectParam_GetSlotTableBase(), i + 1) != 0)
                     return 1;
             }
         } else {
             for (int i = 0; i < 15; i++) {
                 if ((self->field_152 & (1 << i)) != 0 &&
-                    func_8009E284(func_8009ECB0(), i + 1) == 0)
+                    func_8009E284(CtrlObjectParam_GetSlotTableBase(), i + 1) == 0)
                     return 1;
             }
         }
@@ -1114,7 +1114,7 @@ int func_801F75CC(cf::CfGimmickObject* self) {
 }
 
 // func_801F76A8 - step-machine cleanup: resolves the +0x6A area registration
-// (func_8020A6B0 / func_8020A434), runs the +0x180 effect countdown
+// (func_8020A6B0 / CfGimmick_UnregisterSpawnedObject), runs the +0x180 effect countdown
 // (Scn_GetFrameDelta delta; on expiry notify CfGimmick_ClearManagerBinding, otherwise scale the
 // remaining time into setChildV40__'s position vector), and plays / refreshes
 // the step sound selected by field_192 (playActorSound for kind 3,
@@ -1141,7 +1141,7 @@ int func_801F7B44(cf::CfGimmickObject* self) {
 // +0x6C..0x6E and per-area +0x04/0x06 sequence windows must contain the
 // current scenario sequence. The +0x66 flags then drive the spawn/effect
 // gate (func_802098EC) and, on the fail path, the +0x6A area registration
-// retry (func_8020A5DC / func_8020A87C).
+// retry (CfGimmick_IsMessageSystemBusy / CfGimmick_CheckPartyIdLoaded).
 int func_801F7D38(cf::CfGimmickObject* self) {
     return 0;
 }
@@ -1184,7 +1184,7 @@ int func_801F8658(cf::CfGimmickObject* self) {
 
 // func_801F879C - per-frame gimmick update. The +0x15C value seeds a
 // countdown in +0x17C (0x80 flag raised while it runs); the 0x200 gate
-// funnels busy objects through func_8020A0CC. Afterwards the +0x66 0x20 gate
+// funnels busy objects through CfGimmick_SetGlobalFlag8. Afterwards the +0x66 0x20 gate
 // runs func_801F75CC, the +0x163 id refreshes the LOD registration
 // (func_801F6E60), the field_161 0x40 / global 0x4 combo resets the step
 // machine (func_801F5C2C), and func_801F6780 drives the step table. The
@@ -1197,7 +1197,7 @@ int func_801F879C(cf::CfGimmickObject* self) {
 
 // func_801F89B8 - per-frame gimmick update (sibling of func_801F879C). The
 // +0x150 field seeds a short countdown in +0x18E (0x40 flag raised while it
-// runs; 0x200 funnels busy objects into func_8020A0CC). Then the +0x64 map
+// runs; 0x200 funnels busy objects into CfGimmick_SetGlobalFlag8). Then the +0x64 map
 // object is (re)spawned if missing, func_801F6780 drives the step table, and
 // the +0x188 step counter advances (down while the 0x08000000 busy flag is
 // set, up otherwise, clamped 0..6). The 0x200/0x400/0x8000/0x10000 work

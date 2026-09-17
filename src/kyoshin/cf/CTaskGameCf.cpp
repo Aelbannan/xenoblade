@@ -223,12 +223,12 @@ void CTaskGameCf::func_800444FC(){
         func_801665A4(CTaskManager::GetRootProcRealTime(), pTaskGame->getScene(), pTaskGame->unk70);
 
         if(newCampaign){
-            func_8009ECB0();
-            func_8009ECB0();
+            CtrlObjectParam_GetSlotTableBase();
+            CtrlObjectParam_GetSlotTableBase();
             func_eu_8006B238();
         } else {
-            cf::CtrlObjectParamSlots* party = reinterpret_cast<cf::CtrlObjectParamSlots*>(func_8009ECB0());
-            func_8009ECB0();
+            cf::CtrlObjectParamSlots* party = reinterpret_cast<cf::CtrlObjectParamSlots*>(CtrlObjectParam_GetSlotTableBase());
+            CtrlObjectParam_GetSlotTableBase();
 
             if((lbl_eu_80663E28 & 0x01000000) == 0){
                 func_8009E574(party, 2, 1, 1);

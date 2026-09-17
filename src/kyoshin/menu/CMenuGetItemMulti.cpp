@@ -1961,12 +1961,12 @@ __declspec(noinline) void func_801B6184(CMenuGetItemMulti* self, int arg2,
         // Scale the name/level window by the active character's id-derived
         // factors, clamped to 999.
         void* mgr = func_8009EC9C(1);
-        u32 cid = func_800A082C(mgr);
+        u32 cid = CtrlObjectParam_GetArtsDataWord(mgr);
         w1 = (s32)(lbl_eu_80667E24 * (f64)((u16)w1 * (u16)cid));
         if ((u16)w1 >= 999) {
             w1 = 999;
         }
-        cid = func_800A082C(mgr);
+        cid = CtrlObjectParam_GetArtsDataWord(mgr);
         w2 = (s32)(lbl_eu_80667E28 * (f64)((u16)w2 * (u16)cid));
         if ((u16)w2 >= 999) {
             w2 = 999;
@@ -2410,7 +2410,7 @@ __declspec(noinline) void func_801B78B4(CMenuGetItemMulti* self, int arg2) {
     // Record address: per-character stride 0x49 plus the doubled selector,
     // kept in u32 locals to match MWCC's register allocation.
     u32 recBase = reinterpret_cast<u32>(mgr) +
-                  (u8)func_800A32BC(mgr) * 0x49;
+                  (u8)CtrlObjectParam_GetCurrentRowKey(mgr) * 0x49;
     selIdx = (u8)selIdx * 2 + recBase;
     CMenuGetItemCat13Record* rec =
         reinterpret_cast<CMenuGetItemCat13Record*>(selIdx);

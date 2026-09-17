@@ -570,7 +570,7 @@ extern "C" void triggerPlayerEffects__Q22cf13CfGameManagerFv(u32 objectValue, u3
 // now dispatch through real cf::CActorParam virtuals Func4/Func5.
 // See code_8018F8D8.cpp.)
 
-// Slot list returned by func_8009ECB0 (arr1[3] + arr2[6] packed at +4;
+// Slot list returned by CtrlObjectParam_GetSlotTableBase (arr1[3] + arr2[6] packed at +4;
 // func_8018FA2C walks nine u32 slots).
 struct PartySlotList {
     u8 _0[4];
@@ -598,4 +598,4 @@ extern "C" int CfResBuf_popRecord(MenuCmdRingView* buffer, u32* headerOut,
 // Party-slot character-data lookups used by func_8018FA2C.
 extern "C" void* func_8009EC9C(u32 index);  // matches CAIAction.hpp declaration
 extern "C" void func_800A30E4(void* data);
-extern "C" void func_800A1370(void* data);
+extern "C" void CtrlObjectParam_SyncParamFromActor(void* data);

@@ -123,7 +123,7 @@ extern "C" void func_800A76EC(GlobalStruct_80572B94* g) {
         u8* dst = blk + 0x10;
         u32 objectAligned = object + 0x100;
         if (objectAligned & 0x1F) objectAligned = (objectAligned + 0x20) - (objectAligned & 0x1F);
-        func_800A3520(dst, objectAligned, 0x003B1C00, 0);
+        CtrlObjectParam_InitArtsListEntry(dst, objectAligned, 0x003B1C00, 0);
     }
 
     if ((u32)g->field_0x04 == 0xFFFFFFFF) {
@@ -134,7 +134,7 @@ extern "C" void func_800A76EC(GlobalStruct_80572B94* g) {
         u8* dst = blk + 0x30;
         u32 objectAligned = object + 0x100;
         if (objectAligned & 0x1F) objectAligned = (objectAligned + 0x20) - (objectAligned & 0x1F);
-        func_800A3520(dst, objectAligned, 0x2872000, 1);
+        CtrlObjectParam_InitArtsListEntry(dst, objectAligned, 0x2872000, 1);
     }
 
     if ((u32)g->field_0x08 == 0xFFFFFFFF) {
@@ -145,7 +145,7 @@ extern "C" void func_800A76EC(GlobalStruct_80572B94* g) {
         u8* dst = blk + 0x50;
         u32 objectAligned = object + 0x100;
         if (objectAligned & 0x1F) objectAligned = (objectAligned + 0x20) - (objectAligned & 0x1F);
-        func_800A3520(dst, objectAligned, 0x48900, 1);
+        CtrlObjectParam_InitArtsListEntry(dst, objectAligned, 0x48900, 1);
     }
 
     // --- Sub-allocations from the three regions ---
@@ -204,7 +204,7 @@ extern "C" void func_800A76EC(GlobalStruct_80572B94* g) {
         lbl_eu_80663E98 = 1;
     }
 
-    func_800A3520(blk + 0x70, gbl->field_0x9C, 0x5F8800, 3);
+    CtrlObjectParam_InitArtsListEntry(blk + 0x70, gbl->field_0x9C, 0x5F8800, 3);
 
     if (lbl_eu_80663E98 == 0) {
         gbl->field_0x00 = -1;
@@ -226,7 +226,7 @@ extern "C" void func_800A76EC(GlobalStruct_80572B94* g) {
         lbl_eu_80663E98 = 1;
     }
 
-    func_800A3520(blk + 0xb0, gbl->field_0x28, 0x718800, 4);
+    CtrlObjectParam_InitArtsListEntry(blk + 0xb0, gbl->field_0x28, 0x718800, 4);
     gbl->field_0x54 = 0;
     gbl->field_0x58 = 0;
 
@@ -250,7 +250,7 @@ extern "C" void func_800A76EC(GlobalStruct_80572B94* g) {
         lbl_eu_80663E98 = 1;
     }
 
-    func_800A3520(blk + 0x90, gbl->field_0x24, 0xD00800, 5);
+    CtrlObjectParam_InitArtsListEntry(blk + 0x90, gbl->field_0x24, 0xD00800, 5);
     gbl->field_0x10 = zero;
     gbl->field_0x14 = zero;
     gbl->field_0x18 = zero;
@@ -774,15 +774,15 @@ int KyoshinHeap_Register38(void* p1, void* p2, void* p3) {
 
 void KyoshinHeap_Free38(void* p) {
     if (p == 0) return;
-    func_800A37CC((void*)lbl_eu_80572B38, p);
+    CtrlObjectParam_MergeArtsListNode((void*)lbl_eu_80572B38, p);
 }
 
 void KyoshinHeap_Reset38(void) {
-    func_800A3940(reinterpret_cast<cf::CtrlObjectParamArtsList*>(lbl_eu_80572B38));
+    CtrlObjectParam_GetArtsListMaxSize(reinterpret_cast<cf::CtrlObjectParamArtsList*>(lbl_eu_80572B38));
 }
 
 u32 KyoshinHeap_GetCount38() {
-    return func_800A3998((void*)lbl_eu_80572B38) / 774144;
+    return CtrlObjectParam_GetArtsListTotalSize((void*)lbl_eu_80572B38) / 774144;
 }
 
 int KyoshinHeap_GetActive54() {
@@ -864,7 +864,7 @@ int func_800A8E6C(int size, int arg2) {
     GlobalStruct_80572B94* g = &lbl_eu_80572B94;
     if (g->field_0x54 != 0) {
         if (g->field_0x54 != 0) {
-            func_800A37CC((void*)lbl_eu_80572B78, (void*)g->field_0x54);
+            CtrlObjectParam_MergeArtsListNode((void*)lbl_eu_80572B78, (void*)g->field_0x54);
         }
         g->field_0x54 = 0;
     }
@@ -884,7 +884,7 @@ int func_800A8E6C(int size, int arg2) {
     if (arg2 != 0) {
         if (r != 0) {
             if (r != 0) {
-                func_800A37CC((void*)lbl_eu_80572B78, (void*)r);
+                CtrlObjectParam_MergeArtsListNode((void*)lbl_eu_80572B78, (void*)r);
             }
         }
     }
@@ -976,7 +976,7 @@ int func_800A9134() {
         __register_global_object(g2, (void*)__dt__800A75FC, (void*)lbl_eu_80572B88);
         lbl_eu_80663E98 = 1;
     }
-    func_800A3520((void*)lbl_eu_80572B78, g->field_0x28, 0x70E800, 4);
+    CtrlObjectParam_InitArtsListEntry((void*)lbl_eu_80572B78, g->field_0x28, 0x70E800, 4);
     g->field_0x54 = 0;
     g->field_0x58 = 0;
     int h = func_800A3594((void*)lbl_eu_80572B78, 0x700000, 0);
@@ -997,7 +997,7 @@ int KyoshinHeap_Register78(void* p1, void* p2, void* p3) {
 void KyoshinHeap_Free78(void* p)
 {
     if (p != 0) {
-        func_800A37CC(lbl_eu_80572B78, p);
+        CtrlObjectParam_MergeArtsListNode(lbl_eu_80572B78, p);
     }
 }
 
@@ -1024,7 +1024,7 @@ void KyoshinHeap_Reset78Stage() {
         lbl_eu_80663E98 = 1;
     }
     GlobalStruct_80572B94* g = &lbl_eu_80572B94;
-    func_800A3520((void*)lbl_eu_80572B78, g->field_0x28, 0x70E800, 4);
+    CtrlObjectParam_InitArtsListEntry((void*)lbl_eu_80572B78, g->field_0x28, 0x70E800, 4);
     g->field_0x54 = 0;
     g->field_0x58 = 0;
 }
@@ -1052,7 +1052,7 @@ void KyoshinHeap_Reset58Stage() {
         lbl_eu_80663E98 = 1;
     }
     GlobalStruct_80572B94* g = &lbl_eu_80572B94;
-    func_800A3520((void*)lbl_eu_80572B58, g->field_0x24, 0xD00800, 5);
+    CtrlObjectParam_InitArtsListEntry((void*)lbl_eu_80572B58, g->field_0x24, 0xD00800, 5);
     g->field_0x10 = 0;
     g->field_0x14 = 0;
     g->field_0x18 = 0;
@@ -1086,7 +1086,7 @@ void KyoshinHeap_AllocFld10(int index) {
     // Retail reproduces this guard twice (MWCC CSEs the repeated null-test).
     if (g->field_0x10 != 0) {
         if (g->field_0x10 != 0) {
-            func_800A37CC((void*)lbl_eu_80572B58, (void*)g->field_0x10);
+            CtrlObjectParam_MergeArtsListNode((void*)lbl_eu_80572B58, (void*)g->field_0x10);
         }
     }
     u32 r;
@@ -1126,7 +1126,7 @@ void KyoshinHeap_AllocFld14(int index) {
     // Retail reproduces this guard twice (MWCC CSEs the repeated null-test).
     if (g->field_0x14 != 0) {
         if (g->field_0x14 != 0) {
-            func_800A37CC((void*)lbl_eu_80572B58, (void*)g->field_0x14);
+            CtrlObjectParam_MergeArtsListNode((void*)lbl_eu_80572B58, (void*)g->field_0x14);
         }
     }
     u32 r;
@@ -1166,7 +1166,7 @@ void KyoshinHeap_AllocFld18(int index) {
     // Retail reproduces this guard twice (MWCC CSEs the repeated null-test).
     if (g->field_0x18 != 0) {
         if (g->field_0x18 != 0) {
-            func_800A37CC((void*)lbl_eu_80572B58, (void*)g->field_0x18);
+            CtrlObjectParam_MergeArtsListNode((void*)lbl_eu_80572B58, (void*)g->field_0x18);
         }
     }
     u32 r;
@@ -1207,7 +1207,7 @@ void KyoshinHeap_AllocFld34(int index) {
     // Retail reproduces this guard twice (MWCC CSEs the repeated null-test).
     if (g->field_0x34 != 0) {
         if (g->field_0x34 != 0) {
-            func_800A37CC((void*)lbl_eu_80572B58, (void*)g->field_0x34);
+            CtrlObjectParam_MergeArtsListNode((void*)lbl_eu_80572B58, (void*)g->field_0x34);
         }
     }
     u32 r;
@@ -1405,22 +1405,22 @@ int KyoshinHeap_GetField4C(int index) {
 // --- hard-symbol stubs (scaffold_hard_symbols) ---
 // Static-initializer for the array of 6 registered objects at lbl_eu_80572AC8.
 // Each 0x20-wide entry holds a registration node at +0x0 and object data at
-// +0x10; func_800A34C8 constructs the object and __register_global_object
+// +0x10; CtrlObjectParam_InitListElement constructs the object and __register_global_object
 // attaches the destructor (__dt__800A34E0).
 extern char lbl_eu_80572AC8[];
 
 void sinit_800A9F40() {
     char* base = lbl_eu_80572AC8;
-    func_800A34C8(base + 0x10);
+    CtrlObjectParam_InitListElement(base + 0x10);
     __register_global_object(base + 0x10, (void*)__dt__800A34E0, base);
-    func_800A34C8(base + 0x30);
+    CtrlObjectParam_InitListElement(base + 0x30);
     __register_global_object((void*)(base + 0x30), (void*)__dt__800A34E0, (void*)(base + 0x20));
-    func_800A34C8(base + 0x50);
+    CtrlObjectParam_InitListElement(base + 0x50);
     __register_global_object((void*)(base + 0x50), (void*)__dt__800A34E0, (void*)(base + 0x40));
-    func_800A34C8(base + 0x70);
+    CtrlObjectParam_InitListElement(base + 0x70);
     __register_global_object((void*)(base + 0x70), (void*)__dt__800A34E0, (void*)(base + 0x60));
-    func_800A34C8(base + 0x90);
+    CtrlObjectParam_InitListElement(base + 0x90);
     __register_global_object((void*)(base + 0x90), (void*)__dt__800A34E0, (void*)(base + 0x80));
-    func_800A34C8(base + 0xB0);
+    CtrlObjectParam_InitListElement(base + 0xB0);
     __register_global_object((void*)(base + 0xB0), (void*)__dt__800A34E0, (void*)(base + 0xA0));
 }

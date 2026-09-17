@@ -582,7 +582,7 @@ int setLastTalkNpc(VMThread* pThread) {
     VMArg* arg = vmArgPtrGet(pThread, 1);
     int id = vmArgIntGet(2, arg);
     if (id <= 0) {
-        func_8009ECD0(0);
+        CtrlObjectParam_SetWorkTailValue(0);
         return 0;
     }
     char* tbl = lbl_eu_80664098;
@@ -590,7 +590,7 @@ int setLastTalkNpc(VMThread* pThread) {
     for (int i = 1; i <= count; i++) {
         // Key compare is on the low 16 bits only.
         if ((u16)BdatGetU16Direct(tbl, &lbl_eu_804FABF0[0x1f], i) == id) {
-            func_8009ECD0(i);
+            CtrlObjectParam_SetWorkTailValue(i);
             break;
         }
     }

@@ -356,7 +356,7 @@ void CUIBattleManager::Move() {
                     mHeap, lbl_eu_804FFF2C + 0x24, battleWorkEvent(), 0, 0);
             }
             for (i = 0; i < 3; i++) {
-                partyId = func_8009ECB0()[i + 1];
+                partyId = CtrlObjectParam_GetSlotTableBase()[i + 1];
                 if (partyId > 0) {
                     if (mFileArtsPcBusy[i] == NULL) {
                         faceId = (u8)partyId;
@@ -883,7 +883,7 @@ int func_8012F2C0(CUIBattleManager* self, CUIBattleFileEvt* evt) {
         // Pointer-arithmetic spelling: reduces to retail's bare i*4
         // induction (add r3,base,i*4 / lwz r0,4(r3)) instead of an indexed
         // load.
-        partyId = *(func_8009ECB0() + 1 + i);
+        partyId = *(CtrlObjectParam_GetSlotTableBase() + 1 + i);
         partyId &= 0xFF;
         if (partyId == 0) {
             continue;

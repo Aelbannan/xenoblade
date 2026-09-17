@@ -41,11 +41,11 @@ extern "C" {
     extern void func_80172768(void* self);
     extern void func_8016BC1C(void* self);
     extern int func_8016BDA8(void* self, void* r4);
-    extern int func_8016ADF8(void* self);
-    extern void* func_8016AD44(void* self);
-    extern int func_8016A35C(void* self);
-    extern int func_8016A3A8(void);
-    extern int func_8016A3C4(void);
+    extern int EvtSeqIsSameNameType3Busy(void* self);
+    extern void* EvtSeqFindSameNameType3(void* self);
+    extern int EvtSeqGetCounter100(void* self);
+    extern int EvtSeqGetCounter104(void);
+    extern int EvtSeqGetWalkIndex(void);
     extern void EvtSeqCheckEventRunGuard(void* self);
     extern void func_801832D4(void* self);
     extern void func_801836CC(void* self, unsigned long value);
@@ -74,7 +74,7 @@ extern "C" {
     extern void* isVisionPackLoaded__Q22cf13CfGameManagerFv(void);
     extern void* CLibLayout_getAllocHandle(void);
     extern int __ptmf_cmpr(void* a, void* b);
-    extern void* func_8016C118(void*);
+    extern void* EvtSeqResolvePackedResId(void*);
     extern void* func_80164838(void*, int);
     extern int func_800AA33C(const char*, u32, int, int);
     extern int tryUpdateJobPriority__11CDeviceFileFP11CFileHandlei(void*, int);
@@ -487,7 +487,7 @@ extern "C" void func_80182178(void* self) {
 
     if (r18 == 5) {
         u32 resId = FLD(u32, s, 0x5C);
-        u32 newResId = (u32)func_8016C118((void*)resId);
+        u32 newResId = (u32)EvtSeqResolvePackedResId((void*)resId);
         if (newResId != resId) {
             FLD(u32, s, 0x5C) = newResId;
         }
@@ -557,7 +557,7 @@ extern "C" void func_80182B2C(void* self) {
 
     if (flags & 0x2) {
         if (flags & 0x200) {
-            if (func_8016ADF8(self) == 0) {
+            if (EvtSeqIsSameNameType3Busy(self) == 0) {
                 FLD(u32, s, 0x18) &= ~0x100;
                 u32* base = (u32*)((char*)lbl_eu_80531EF8 + 0x78);
                 FLD(u32, s, 0x0C) = base[1];
@@ -567,7 +567,7 @@ extern "C" void func_80182B2C(void* self) {
             return;
         }
 
-        void* parentModel = func_8016AD44(self);
+        void* parentModel = EvtSeqFindSameNameType3(self);
         void* parentModelData = 0;
         if (parentModel != 0) {
             parentModelData = FLD(void*, parentModel, 0x48);
@@ -762,7 +762,7 @@ extern "C" void func_80183268(void* self) {
     char* s = (char*)self;
 
     if (FLD(u32, s, 0x20) != 0) {
-        int val = func_8016A35C(self);
+        int val = EvtSeqGetCounter100(self);
         // Builtin i2f is required: instructions come out byte-identical to
         // retail incl. schedule. Residual (open item): MWCC pools the
         // 0x4330000080000000 magic TU-locally (@N) where retail lfds the
@@ -793,7 +793,7 @@ extern "C" void func_801832D4(void* self) {
         for (int i = 0; i < 4; i++) {
             char* entry = *(char**)(s + 0x1C) + i * 4;
             short v = *(s16*)(entry + 0x5C);
-            if (v < 0 && labs(v) == func_8016A3A8() + 1) {
+            if (v < 0 && labs(v) == EvtSeqGetCounter104() + 1) {
                 CFileHandle* h = FLD(CFileHandle*, s, 0x7C);
                 FLD(u32, s, 0x84) = 2;
                 if (h == 0) return;
@@ -819,12 +819,12 @@ extern "C" void func_801832D4(void* self) {
         char* entry = *(char**)(s + 0x1C) + i * 4;
         short v = *(s16*)(entry + 0x5C);
         if (v > 0) {
-            if (v <= func_8016A3A8() + 1) {
+            if (v <= EvtSeqGetCounter104() + 1) {
                 found = 1;
                 foundId = *(s16*)(*(char**)(s + 0x1C) + i * 4 + 0x5E);
             }
         } else if (v < 0) {
-            if (labs(v) <= func_8016A3A8() + 1) {
+            if (labs(v) <= EvtSeqGetCounter104() + 1) {
                 found = 0;
             }
         }
@@ -864,7 +864,7 @@ extern "C" void func_801832D4(void* self) {
 // func_8018351C (us-80184938) - Event handler check
 // ============================================================
 extern "C" int func_8018351C(CREvtModelObj* self) {
-    if (self->mField74 != func_8016A3C4() + 1) {
+    if (self->mField74 != EvtSeqGetWalkIndex() + 1) {
         return 0;
     }
 

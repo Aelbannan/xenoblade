@@ -200,13 +200,13 @@ void* findObjectById(int id);
 // C-ABI imports used by func_8013CBB4.
 extern "C" {
 void* getPlayer__Q22cf13CfGameManagerFi(int index);
-void func_8009ECD0(u32 id);
+void CtrlObjectParam_SetWorkTailValue(u32 id);
 u8 BdatGetU8ByTableKey(const void* tbl, const void* key, u32 idx);
 void func_8013B88C(u8 v);
 }
 
 // findObjectById result view used by the 0x608 window path: +0x64 flags word
-// (bit 28 = show-talk-target) and +0x8C id handed to func_8009ECD0.
+// (bit 28 = show-talk-target) and +0x8C id handed to CtrlObjectParam_SetWorkTailValue.
 struct CActorFlagsView {
     u8 _00[0x64];
     u32 mFlags64;              //+0x64

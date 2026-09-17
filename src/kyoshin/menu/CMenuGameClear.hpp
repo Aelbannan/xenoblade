@@ -128,7 +128,7 @@ void __dt__7CSysWinFv(void* syswin, int flags);
 void __ct__CCur18(void* cursor, void* accessor);
 void __dt__6CCur18Fv(void* cursor, int flags);
 void deleteRegion__17UnkClass_8045F564Fv(void* region);
-void* func_8009D764(cf::CtrlObjectParamInit* p);
+void* CtrlObjectParam_InitEquipSlots(cf::CtrlObjectParamInit* p);
 void func_8022B7F4(void* syswin);
 void func_8022B7C8(void* syswin, nw4r::lyt::DrawInfo* drawInfo);
 void func_801D20B0(void* cursor, nw4r::lyt::DrawInfo* drawInfo);

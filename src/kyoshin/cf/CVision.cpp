@@ -126,7 +126,7 @@ extern "C" void func_802A1DF0(u32 a);              // CCharVoiceMan.cpp defines 
 extern "C" int func_80260264(void* self, int id, void* result); // matches CSuddenCommu.hpp / CBattleManager.cpp
 
 // Kept inline (not moved to CVision.hpp): sibling TUs declare/stub these.
-// func_8009ECB0 / func_8009E344 / func_800A32C4 / func_8009EC9C are declared
+// CtrlObjectParam_GetSlotTableBase / func_8009E344 / CtrlObjectParam_GetRowColumnByte / func_8009EC9C are declared
 // in the imports section of kyoshin/cf/CVision.hpp -- sibling TUs use those
 // symbols with different signatures or define stubs, so the shared decls live
 // in the common header instead of being repeated inline here.
@@ -2354,12 +2354,12 @@ int func_801A6BCC(CVision* self, CVisionObjV* obj, CVisionObjV* r5) {
         s32 mode = func_8009CF8C(0x20);
         f32 outDamage;
         u32 outCount;
-        s32 ok = func_8009E344(func_8009ECB0(), 1, (int*)&outDamage, (int*)&outCount);
+        s32 ok = func_8009E344(CtrlObjectParam_GetSlotTableBase(), 1, (int*)&outDamage, (int*)&outCount);
         if (ok == 0 && mode != 0x166) {
             return 0;
         }
         void* row = func_8009EC9C(1);
-        if (func_800A32C4(row) != 0) {
+        if (CtrlObjectParam_GetRowColumnByte(row) != 0) {
             return 0;
         }
         if (mode <= 0x1f) {

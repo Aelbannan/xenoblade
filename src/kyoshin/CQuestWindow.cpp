@@ -438,7 +438,7 @@ __attribute__((noinline)) void func_80122EF8(QuestWinObj* self) {
         for (int i = 1; i <= 8; i++) {
             void* obj = func_8009EC9C((u16)i);
             if (isResourceFlagSet__Q22cf13CfGameManagerFv(i) != 0 ||
-                (i == 4 && func_800A32BC() != 0)) {
+                (i == 4 && CtrlObjectParam_GetCurrentRowKey() != 0)) {
                 char* p = (char*)obj + 0x3534;
                 int v = 0x64;
                 if (func_8026178C(p, 0x89) != 0) {
@@ -589,8 +589,8 @@ void func_801231C4(CQuestWindow* self) {
     LayoutSetTextBoxFmtValue(self->mpLayout, &base[0x1c5], &base[0x1c4], 0);
     LayoutSetTextBoxFmtValue(self->mpLayout, &base[0x1d2], &base[0x1c4], 0);
     if (self->field_0xC8 != 0) {
-        if (func_8009ECF0() == questId) {
-            func_8009ECFC(0);
+        if (CtrlObjectParam_GetWorkField50() == questId) {
+            CtrlObjectParam_SetWorkField50(0);
         }
         u8 vcd = BdatGetU8Direct(questRow, &base[0xcd], questId);
         if (vcd == 1) {

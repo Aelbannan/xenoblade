@@ -981,11 +981,11 @@ extern "C" u32 CSysWin_isReady(void*);
 extern "C" u32 CScrollBar_isVisible(void*);
 extern "C" void playUISound__FUl(u32);
 extern "C" void* func_8009EC9C(u32);
-extern "C" u32 func_800A32BC(void*);
+extern "C" u32 CtrlObjectParam_GetCurrentRowKey(void*);
 // Arts-slot re-arm ctor (CtrlObjectParam.cpp; plain-C retail symbol).
 extern "C" void __ct__8009F8B8(void* self);
 // Actor-param refresh + player resolution tail of func_80230D74.
-extern "C" void func_800A13C4(void* self, u32 flag);
+extern "C" void CtrlObjectParam_SyncParamFromActorEx(void* self, u32 flag);
 extern "C" void* getPlayer__Q22cf13CfGameManagerFi(int index);
 extern "C" void* getCfObjectPc__FPQ22cf12CfObjectMove(void* objMove);
 
@@ -1281,7 +1281,7 @@ extern "C" void CArtsInfo_SetLevel58(CArtsInfo* self, u16 val);
 extern "C" void CArtsInfo_RefreshIfReady(CArtsInfo* self);
 // Arts-element scan / character-data refresh (C symbols).
 extern "C" void func_80280DBC(u8* self);
-extern "C" void func_800A1370(void*);
+extern "C" void CtrlObjectParam_SyncParamFromActor(void*);
 // BDAT string -> u16 (code_80135FDC.cpp). u32 3rd arg: retail passes the
 // raw int (no clrlwi at the call site).
 extern "C" u16 BdatGetU16ByTableKey(const void*, const void*, u32);

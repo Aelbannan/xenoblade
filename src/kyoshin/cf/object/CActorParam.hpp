@@ -326,7 +326,7 @@ namespace cf {
         u8 field_0x3354;
     };
 
-    // Row returned by func_8009D7E4 (the arts-stats sub-row at +0x1C of the
+    // Row returned by CtrlObjectParam_GetArtsStatsRow (the arts-stats sub-row at +0x1C of the
     // char-data object); consumed by CActorParam_applyArtsStats.
     struct CActorParamArtsRow {
         float field_0x0;
@@ -347,7 +347,7 @@ namespace cf {
 
     // Char-data object passed to CActorParam_applyArtsStats (retail ABI r4)
     // or returned by func_8009EC9C: arts-stats sub-row at +0x1C fed to
-    // func_8009D7E4.
+    // CtrlObjectParam_GetArtsStatsRow.
     struct CActorParam174Arg {
         u8 _pad1C[0x1C];
         u8 field_0x1C[0x40]; // +0x1C: arts-stats sub-row base

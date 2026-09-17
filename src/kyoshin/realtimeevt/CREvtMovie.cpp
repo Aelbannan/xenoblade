@@ -51,7 +51,7 @@ CREvtMovie* __ct__802948D0(CREvtMovie* self, int dealloc_flag) {
 // If scriptData->counter == currentTick + 1, calls func_80164F6C()
 // ============================================================================
 void func_8029493C(CREvtMovie* self) {
-    if (self->mScriptData->mCounter == func_8016A3C4() + 1) {
+    if (self->mScriptData->mCounter == EvtSeqGetWalkIndex() + 1) {
         func_80164F6C();
     }
 }
@@ -66,7 +66,7 @@ void func_8029493C(CREvtMovie* self) {
 #pragma push
 #pragma opt_propagation off
 void func_80294980(CREvtMovie* self) {
-    if (self->mScriptData->mCounter != func_8016A3C4()) return;
+    if (self->mScriptData->mCounter != EvtSeqGetWalkIndex()) return;
 
     // Check if already playing or finished
     if (func_80164FE8() != 0) return;
@@ -90,7 +90,7 @@ void func_80294980(CREvtMovie* self) {
     std::strcat(buf.mPath, name);
     buf.mLength += eLen;
 
-    func_80164ED0(buf.mPath, 1, func_8016C3DC());
+    func_80164ED0(buf.mPath, 1, EvtSeqGetC4FlagBit1());
     self->mFlag19 = 0;
 }
 #pragma pop
@@ -104,13 +104,13 @@ void func_80294980(CREvtMovie* self) {
 #pragma push
 #pragma opt_propagation off
 void func_80294A70(CREvtMovie* self) {
-    if (self->mScriptData->mCounter != func_8016A3C4() + 1) return;
+    if (self->mScriptData->mCounter != EvtSeqGetWalkIndex() + 1) return;
 
     // Check if already playing or finished
     if (func_80164FE8() != 0) return;
 
     // Check timing: elapsed time since last event
-    if (func_8016A378() - func_8016A35C() >= 25) return;  // too early
+    if (EvtSeqGetEntryLimit() - EvtSeqGetCounter100() >= 25) return;  // too early
 
     // Check memory availability
     u32 criSize = (u32)getMovieWorkSize__7CLibCriFv();
@@ -137,7 +137,7 @@ void func_80294A70(CREvtMovie* self) {
     std::strcat(buf.mPath, name);
     buf.mLength += eLen;
 
-    func_80164ED0(buf.mPath, 1, func_8016C3DC());
+    func_80164ED0(buf.mPath, 1, EvtSeqGetC4FlagBit1());
     self->mFlag19 = 0;
 }
 #pragma pop
@@ -151,7 +151,7 @@ void func_80294A70(CREvtMovie* self) {
 #pragma push
 #pragma opt_propagation off
 void func_80294BA4(CREvtMovie* self) {
-    if (self->mScriptData->mCounter != func_8016A3C4()) return;
+    if (self->mScriptData->mCounter != EvtSeqGetWalkIndex()) return;
 
     // If currently playing, stop
     if (func_80164FB4() != 0) {
@@ -176,7 +176,7 @@ void func_80294BA4(CREvtMovie* self) {
         std::strcat(buf.mPath, name);
         buf.mLength += eLen;
 
-        func_80164ED0(buf.mPath, 0, func_8016C3DC());
+        func_80164ED0(buf.mPath, 0, EvtSeqGetC4FlagBit1());
         self->mFlag19 = 1;
     }
     self->mFlag19 = 1;

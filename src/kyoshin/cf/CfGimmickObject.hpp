@@ -219,7 +219,7 @@ extern u32 lbl_eu_80663E28;
 extern "C" {
 void func_802089BC(void* matrix, const f32* basis, const CfGimmickVec3* point);
 void CfGimmick_ClearManagerBinding(void* self);
-void func_8020A434(void* self);
+void CfGimmick_UnregisterSpawnedObject(void* self);
 void __dt__Q22cf9CfGimmickFv(void* self, int mode);
 void setLODEnable__8CTaskLODFv(u8 lod, int mode);
 void* getScnHandle__Fv(void);
@@ -257,15 +257,15 @@ void attachLODObject__8CTaskLODFv(u8 lod, int mode);
 void detachLODObject__8CTaskLODFv(u8 lod, int mode);
 void addLODEntry__8CTaskLODFv(u8 lod, int mode);
 void setLODObject__8CTaskLODFv(u8 lod, u16 id);
-int* func_8009ECB0();
+int* CtrlObjectParam_GetSlotTableBase();
 int func_8009E284(int* data, int id);
 void CfGimmick_SetGlobalFlag80000();
 void CfGimmick_SetGlobalFlagC0042();
-void func_8020A0CC();
+void CfGimmick_SetGlobalFlag8();
 void CfGimmick_SetGlobalFlagC0002();
 void CfGimmick_SetGlobalFlag80AndValue(int arg0, int flag, u32 value);
-unsigned int func_8020A5DC();
-int func_8020A87C(void* self, u32 arg);
+unsigned int CfGimmick_IsMessageSystemBusy();
+int CfGimmick_CheckPartyIdLoaded(void* self, u32 arg);
 void func_8020A484(u16 id);
 int CfGimmick_CheckStateFlag2CC8(void* obj);
 int CfGimmick_CheckStateFlag1D44(void* obj);
@@ -295,7 +295,7 @@ void func_801BFF78(int a, u16 b, int c);
 CfGimmickSoundSlot* func_801BFAE4(u16 handle);
 int CPartsChange_SpawnById(int id);
 void func_8007B0C8(int idx);
-void func_8020A0F8();
+void CfGimmick_SetGlobalFlag400000();
 extern "C" void* createBattleActor__Q22cf13CfGameManagerFv(u32 id, u32 mode);  // void* form matches CTaskGameEff.hpp (return-type unity pending repo-wide)
 void* getPlayer__Q22cf13CfGameManagerFi(int index);
 void func_80199678(void* ctrl, int flag);  // CCtrlMovePC helper (CtrlMoveBase)

@@ -146,7 +146,7 @@ void QstLogList_PageDown(CQstLogList* self) {
     playUISound(1);
 }
 
-extern "C" void func_80228C98(CQstLogList* self);
+extern "C" void QstLogList_RefreshHeader(CQstLogList* self);
 extern "C" void QstLogList_FillSortMenu(CQstLogList* self);
 
 // Quest-log sort toggle. With the sort menu active, closing the menu (current
@@ -163,7 +163,7 @@ void QstLogList_ToggleSort(CQstLogList* self) {
         func_801D216C(&self->mCur18[0], 1);
         func_801D3408(&self->mSortMenuData);
         self->mSortDescending = 0;
-        func_80228C98(self);
+        QstLogList_RefreshHeader(self);
         QstLogList_MoveCursor(self);
         playUISound(6);
     } else {
@@ -188,7 +188,7 @@ void QstLogList_ToggleSort(CQstLogList* self) {
 }
 #pragma pop
 
-// Sort-menu confirm/select: rebuilds the quest list (func_80228C98) and
+// Sort-menu confirm/select: rebuilds the quest list (QstLogList_RefreshHeader) and
 // re-sorts (QstLogList_MoveCursor) when the sort menu reports an active button.
 // noinline: retail keeps this an out-of-line call from QstLogList_ApplySortSelection.
 // pragma optimize_for_size: retail saves r30-r31 via stmw/lmw.
@@ -199,7 +199,7 @@ __declspec(noinline) void QstLogList_ConfirmSort(CQstLogList* self, int flag) {
         func_801D216C(&self->mCur18[0], 1);
         func_801D3408(&self->mSortMenuData);
         self->mSortDescending = 0;
-        func_80228C98(self);
+        QstLogList_RefreshHeader(self);
         QstLogList_MoveCursor(self);
         if (flag == 0) {
             playUISound(6);
@@ -456,7 +456,7 @@ __declspec(noinline) void QstLogList_FillSortMenu(CQstLogList* self) {
 
 // Rebuild the quest list display from the sort-menu/quest state: formats the
 // quest text pane name and loads the entry text (func_80136A1C).
-extern "C" __declspec(noinline) void func_80228C98(CQstLogList* self) {
+extern "C" __declspec(noinline) void QstLogList_RefreshHeader(CQstLogList* self) {
     func_80136A1C(self->mpLayout, &lbl_eu_80509AB4[0x107],
                   &lbl_eu_80576670[(self->field_0x17B + self->field_0x17C) * 0x22] + 2, 0);
 }
@@ -467,7 +467,7 @@ extern "C" void OnFileEvent__12CQstLogListFv() {}
 // element ctor by sinit_80229378 via __construct_array. Retail symbol is
 // unmangled (C linkage) - extern "C" keeps the sinit reloc bound to the
 // retail name, and the entry ctor returns self (retail `mr r3, r31`).
-extern "C" CQstLogListEntry* func_80229398(CQstLogListEntry* self) {
+extern "C" CQstLogListEntry* QstLogList_InitEntry(CQstLogListEntry* self) {
     self->mField0 = -1;  // retail li r5,-1 (signed constant); 0xFF would emit li r5,255
     self->mField1 = 0x00;
     // "%s" (lbl_eu_80509AB4 + 0x10) with a null pointer - clears the text.
@@ -478,7 +478,7 @@ extern "C" CQstLogListEntry* func_80229398(CQstLogListEntry* self) {
 // --- hard-symbol stubs (scaffold_hard_symbols) ---
 void __construct_array(void*, void*, int, int, int);
 extern "C" void sinit_80229378() {
-    __construct_array(lbl_eu_80576670, (void*)func_80229398, 0, 0x22, 0x20);
+    __construct_array(lbl_eu_80576670, (void*)QstLogList_InitEntry, 0, 0x22, 0x20);
 }
 
 // Loads the quest-log arc file (lbl_eu_80509AB4+0x13) into the mem2 handle,
@@ -650,7 +650,7 @@ int CQstLogList::OnFileEvent(CEventFile* event) {
     // Refresh the sort-menu header text and rebuild the list display.
     char* t = BdatTouchStringCell(&s[0x166], &s[0x76], 2);
     LayoutSetTextBoxFmtValue(mpLayout, &s[0x179], t, 0);
-    func_80228C98(this);
+    QstLogList_RefreshHeader(this);
 
     // Look up the quest-log message texture ('timg') and size the panes from
     // its row/column counts.
@@ -706,7 +706,7 @@ int CQstLogList::OnFileEvent(CEventFile* event) {
 // pragma optimize_for_size: retail saves r30-r31 via stmw/lmw.
 #pragma push
 #pragma optimize_for_size on
-void QstLogList_Draw(CQstLogList* self, nw4r::lyt::DrawInfo* drawInfo) {
+extern "C" void QstLogList_Draw(CQstLogList* self, nw4r::lyt::DrawInfo* drawInfo) {
     if (self->field_0x170 != 0) {
         drawLayout(self->mpLayout, drawInfo, 0, 1);
         func_801F35B0(&self->mScrollBar, drawInfo);

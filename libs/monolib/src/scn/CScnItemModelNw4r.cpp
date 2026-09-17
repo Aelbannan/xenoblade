@@ -1383,7 +1383,7 @@ CScnItemModelNw4r* scnImN4BuildByIdx(CScnItemModelNw4r* self,
     if (self->field_0x31C.field_0x3E4 != 0) {
         return 0;
     }
-    if (func_8048C5B8(self->field_0x60, 1) == 0) {
+    if (CScnItemPool_hasFreeSlot(self->field_0x60, 1) == 0) {
         return 0;
     }
     nw4r::g3d::ResFile resFile(resFileData);
@@ -1429,7 +1429,7 @@ CScnItemModelNw4r* scnImN4BuildByIdx(CScnItemModelNw4r* self,
     }
     pool = self->field_0x60;  // retail loads the pool before the vtable call
     u32 listId = ((CScnItemModelNw4rVtbl*)model)->v04();
-    func_8048C630(pool, model, listId);
+    CScnItemPool_registerOtherList(pool, model, listId);
     if (!bound) {
         model->field_0x7A4 |= 0x800000;
     } else {
@@ -1450,7 +1450,7 @@ CScnItemModelNw4r* func_80489C94(CScnItemModelNw4r* self,
     if (self->field_0x31C.field_0x3E4 != 0) {
         return 0;
     }
-    if (func_8048C5B8(self->field_0x60, 1) == 0) {
+    if (CScnItemPool_hasFreeSlot(self->field_0x60, 1) == 0) {
         return 0;
     }
     nw4r::g3d::ResFile resFile(resFileData);
@@ -1486,7 +1486,7 @@ CScnItemModelNw4r* func_80489C94(CScnItemModelNw4r* self,
     }
     u8* pool = self->field_0x60;  // retail loads the pool before the vtable call
     u32 listId = ((CScnItemModelNw4rVtbl*)model)->v04();
-    func_8048C630(pool, model, listId);
+    CScnItemPool_registerOtherList(pool, model, listId);
     if (!bound) {
         model->field_0x7A4 |= 0x800000;
     } else {

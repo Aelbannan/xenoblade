@@ -247,7 +247,7 @@ void* CfRes_getPcGridEntry(short, int);
 int CfRes_isGridLoadIdle();
 void* CfRes_tryResolveToken(u32, void*);
 short CfObjectMove_getSubB0FieldA(void*);
-void func_8009ECB0();
+void CtrlObjectParam_GetSlotTableBase();
 u32 func_80141E90(u32, s16, u32, u32);
 int func_800AA33C(void*, u32, int, int);
 void syncFieldData__Q22cf13CfGameManagerFv(u32, bool);
@@ -3440,7 +3440,7 @@ void func_802211CC(CModelDispMakeCrystal* self, u8* subp)
 {
     CMCrystalDispSub* sub = reinterpret_cast<CMCrystalDispSub*>(subp);
     if (sub->field_00 != 0) return;
-    func_8009ECB0();
+    CtrlObjectParam_GetSlotTableBase();
     u8 ch = (u8)GetCollectedFlagByte((u8)sub->field_5ac);
     if (ch == 0) return;
     u8* data = reinterpret_cast<u8*>(func_8009EC9C(ch));

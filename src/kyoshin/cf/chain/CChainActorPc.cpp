@@ -190,7 +190,7 @@ extern "C" void func_80281CB8(cf::CChainActorPc* self) {
 }
 // External declarations specific to func_80281CF0
 extern void* func_8009EC9C(u32 index);
-extern int func_800A32BC(void*);
+extern int CtrlObjectParam_GetCurrentRowKey(void*);
 extern u32 func_8025FB10(u8*, u32);
 extern u8* getListB28();
 extern float func_800D81A8(int, u8*, int);
@@ -218,7 +218,7 @@ void func_80281CF0(cf::CChainActorPc* self, int arg) {
     cond = 0;
     goto check_cond;
 state4:
-    cond = (func_800A32BC(func_8009EC9C(4)) == 1);
+    cond = (CtrlObjectParam_GetCurrentRowKey(func_8009EC9C(4)) == 1);
 check_cond:
     if (cond) {
         u8** vt = *(u8***)big;
@@ -340,11 +340,11 @@ extern "C" void func_802820D4() {
     func_8018C8F4((u8*)getInstance__Q22cf14CBattleManagerFv() + 0x194, 0);
 }
 // Compares the halfword at this->unk0 + 0x3f28 against the result of
-// func_8009ECB0() (a global config struct). Returns 0, 1, or 2 if the
+// CtrlObjectParam_GetSlotTableBase() (a global config struct). Returns 0, 1, or 2 if the
 // value matches fields at offsets 4, 8, or 12 respectively; returns 3
 // otherwise.
 extern "C" int func_80282100(cf::CChainActorPc* self) {
-    int* config = func_8009ECB0();
+    int* config = CtrlObjectParam_GetSlotTableBase();
     u16 value = *(u16*)(self->unk0 + 0x3f28);
     if (value == config[1]) return 0;
     if (value == config[2]) return 1;

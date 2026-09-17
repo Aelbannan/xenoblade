@@ -45,7 +45,7 @@ __declspec(section ".sdata2") __attribute__((used)) const char lbl_eu_80668348[0
 // .sdata2 symbol so MWCC emits SDA21 loads through the small-data base.
 // The previous single-struct pool forced absolute addressing (li + lfs via a
 // dedicated GPR), which grew every float user's frame by one saved register
-// (func_8020A124/A1DC: 0x30 -> 0x40) and drifted reloc names. Order and
+// (CfGimmick_ApplyPartyMoveSpeed/A1DC: 0x30 -> 0x40) and drifted reloc names. Order and
 // addresses match retail: 68350..68364 floats, 68368/68370 doubles,
 // 68378 float pair. Total 0x30 bytes, same as the struct.
 extern "C" {
@@ -123,7 +123,7 @@ namespace cf {
                       (const CfGimmickVec3*)((char*)this + 0x10));
     }
 
-    int CfGimmick::func_8020A8AC() { return 1; }
+    int CfGimmick::CfGimmick_CheckerKind0Always() { return 1; }
 }
 
 // Constructor.  The retail symbol __ct__cf_CfGimmick is a C-linkage name (no
@@ -706,15 +706,15 @@ void CfGimmick_SetGlobalFlag80AndValue(int arg0, int flag, u32 value) {
     getUnk80664658()->field_210 = value;
 }
 
-void func_8020A0CC() {
+void CfGimmick_SetGlobalFlag8() {
     getUnk80664658()->field_214 |= 0x8;
 }
 
-void func_8020A0F8() {
+void CfGimmick_SetGlobalFlag400000() {
     getUnk80664658()->field_214 |= 0x400000;
 }
 
-void func_8020A124(float value) {
+void CfGimmick_ApplyPartyMoveSpeed(float value) {
     // Sentinel 0.0 is hoisted into a callee-saved FPR (f31) at entry and
     // reused for both the equality test and the +0x168 dispatch argument.
     float zero = lbl_eu_80668350;
@@ -733,13 +733,13 @@ void func_8020A124(float value) {
     }
 }
 
-void func_8020A1DC(float value) {
+void CfGimmick_ApplyPartyMoveSpeedGated(float value) {
     float zero = lbl_eu_80668350;
     for (s32 i = 0; i < 3; ++i) {
         CfObjectMove* player = CfGameManager::getPlayer(i);
         if (player != nullptr) {
             if (value != zero) {
-                // Same +0x168 slot as func_8020A124 (no view cast needed).
+                // Same +0x168 slot as CfGimmick_ApplyPartyMoveSpeed (no view cast needed).
                 player->CfObject_syncModelRate(lbl_eu_80668358);
                 CfObjectMove_setMoveSpeedGated(player, value);
             } else {
@@ -751,7 +751,7 @@ void func_8020A1DC(float value) {
 
 // Scans the fight list for a player whose (id >> 4) matches playerId and is
 // still alive (vtable +0x128 HP query > 0); returns 0 in that case.
-int func_8020A294(u32 playerId) {
+int CfGimmick_CheckFightListPlayerAlive(u32 playerId) {
     CfGimmickList* list = getReslistB48();
     CfGimmickListNode* node = list->head->next;
     int result = 1;
@@ -778,7 +778,7 @@ int func_8020A294(u32 playerId) {
 // Spawn a gimmick object, name it (truncating over-long names into a fixed
 // 0x20 buffer), activate it, reposition it above the given point, and return
 // it.  Returns 0 if allocation fails.
-CfGimmickObject* func_8020A35C(const char* name, int other, const CfGimmickVec3* point) {
+CfGimmickObject* CfGimmick_SpawnNamedObject(const char* name, int other, const CfGimmickVec3* point) {
     CfGimmickVec3 pos;
     char buf[0x40];
     CfGimmickObject* obj = func_800B20B4(getInstance(), 0x4000, 0, 0);
@@ -809,7 +809,7 @@ CfGimmickObject* func_8020A35C(const char* name, int other, const CfGimmickVec3*
     return 0;
 }
 
-void func_8020A434(CfGimmickReg* self) {
+void CfGimmick_UnregisterSpawnedObject(CfGimmickReg* self) {
     if (self->field_00) {
         func_800B3A88(getInstance(), self->field_00);
         self->field_00 = 0;
@@ -817,13 +817,13 @@ void func_8020A434(CfGimmickReg* self) {
 }
 
 // Message-format gate shared by func_8020A484 / func_8020A6B0.
-unsigned int func_8020A5DC();
+unsigned int CfGimmick_IsMessageSystemBusy();
 
 // Look up a gimmick name from the bdat table: resolve the column for the
 // requested row (prefixing the column string with '3'), format it into the
 // shared message buffer and post the message.  The write-format path is
 // gated on UIWin_GetInstance() (message system loaded) and func_80124B78() being
-// zero (via the inlined func_8020A5DC boolean).  When the row is out of range
+// zero (via the inlined CfGimmick_IsMessageSystemBusy boolean).  When the row is out of range
 // (or the bdat file isn't loaded), the fallback name lbl_eu_80662788 is used.
 int func_8020A484(int index) {
     // One reused `name` local: retail colors the bdat/column-string web and
@@ -836,7 +836,7 @@ int func_8020A484(int index) {
         if (lbl_eu_80664148 != 0) {
             bdat = (u8*)lbl_eu_80664148;
             func_8003AA34();
-            // Named cap/cnt like the matched func_8020A608: B41C's result
+            // Named cap/cnt like the matched CfGimmick_LookupBdatGimmickName: B41C's result
             // stays callee-saved across the B1EC call.
             cap = func_8003B41C(bdat);
             cnt = func_8003B1EC(bdat);
@@ -845,9 +845,9 @@ int func_8020A484(int index) {
                 col[4] = 0x33;
                 name = (const char*)getBdatStringColumnValue(
                     bdat, *(char**)(lbl_eu_805357E8 + 0x44), index);
-                // Retail inlines the func_8020A5DC boolean (neg/or/srwi) here.
+                // Retail inlines the CfGimmick_IsMessageSystemBusy boolean (neg/or/srwi) here.
                 if (UIWin_GetInstance() != 0) {
-                    if (func_8020A5DC() == 0) {
+                    if (CfGimmick_IsMessageSystemBusy() == 0) {
                         sprintf(lbl_eu_805765D8, lbl_eu_80508634 + 0x2A, name);
                         UIWin_CreateSysWin0(lbl_eu_805765D8, 0, 0);
                         return 1;
@@ -858,7 +858,7 @@ int func_8020A484(int index) {
         }
     }
     name = (const char*)lbl_eu_80662788;
-    if (UIWin_GetInstance() != 0 && func_8020A5DC() == 0) {
+    if (UIWin_GetInstance() != 0 && CfGimmick_IsMessageSystemBusy() == 0) {
         sprintf(lbl_eu_805765D8, lbl_eu_80508634 + 0x2A, name);
         UIWin_CreateSysWin0(lbl_eu_805765D8, 0, 0);
         return 1;
@@ -867,13 +867,13 @@ int func_8020A484(int index) {
 }
 
 // Returns 1 if func_80124B78() is non-zero, else 0 (retail: neg/or/srwi 31 idiom).
-unsigned int func_8020A5DC() {
+unsigned int CfGimmick_IsMessageSystemBusy() {
     unsigned int x = func_80124B78();
     /* (-x | x) >> 31: nonzero => 1, zero => 0 */
     return ((unsigned int)-(int)x | x) >> 31;
 }
 
-void* func_8020A608(int index, int mod) {
+void* CfGimmick_LookupBdatGimmickName(int index, int mod) {
     if (index != 0) {
         u8* bdat = (u8*)lbl_eu_80664148;
         if (bdat != 0) {
@@ -967,7 +967,7 @@ resolvedName:;
             }
 
             // Activate, then reposition the object above the requested point.
-            // FPR temp order mirrors matched func_8020A35C's tail exactly.
+            // FPR temp order mirrors matched CfGimmick_SpawnNamedObject's tail exactly.
             obj->activate(1);
             CfGimmickVec3 pos;
             f32 x, y, z;
@@ -985,10 +985,10 @@ resolvedName:;
     }
 }
 
-// func_8020A87C(dirID-cached check) - takes (this, arg); retail keeps the loaded
+// CfGimmick_CheckPartyIdLoaded(dirID-cached check) - takes (this, arg); retail keeps the loaded
 // party-id table value in r3 and the caller arg in r4, and shares one return-0
 // epilogue for both guard failures (beq to a common block).
-int func_8020A87C(CfGimmick* self, u32 arg) {
+int CfGimmick_CheckPartyIdLoaded(CfGimmick* self, u32 arg) {
     (void)self;
     u32 a = lbl_eu_806646B4;
     if (a != 0 && (lbl_eu_806646BC & 1u) != 0) {
@@ -997,7 +997,7 @@ int func_8020A87C(CfGimmick* self, u32 arg) {
     return 0;
 }
 
-int func_8020A8B4(CfGimmick* self, const CfGimmickVec3* point, const CfGimmickVec3* center) {
+int CfGimmick_CheckerCylinderXZ(CfGimmick* self, const CfGimmickVec3* point, const CfGimmickVec3* center) {
     float dz = center->z - point->z;
     float dx = center->x - point->x;
     // MWCC evaluates the right addend first: keep the dz diff declared first
@@ -1034,7 +1034,7 @@ int func_8020A928(CfGimmick* self, const CfGimmickVec3* point, const CfGimmickVe
     return 0;
 }
 
-int func_8020A9F4(CfGimmick* self, const CfGimmickVec3* point, const CfGimmickVec3* center) {
+int CfGimmick_CheckerBoxExtent(CfGimmick* self, const CfGimmickVec3* point, const CfGimmickVec3* center) {
     if (center->x + self->field_30 >= point->x &&
         center->x - self->field_30 <= point->x &&
         center->z + self->field_3C >= point->z &&
@@ -1091,10 +1091,10 @@ void CfGimmick_PushRefreshValue(cf::CfGimmick* self, float value) {
 
 
 // Retail free-function checker for placement kind 0 (always passes). The
-// CfGimmick::func_8020A8AC method above is its C++-linkage twin kept for
+// CfGimmick::CfGimmick_CheckerKind0Always method above is its C++-linkage twin kept for
 // header compat; this C-linkage twin owns the retail jumptable slot
-// (retail .data jumptable_eu_80535830[0] = func_8020A8AC).
-extern "C" int func_8020A8AC(cf::CfGimmick* self, const CfGimmickVec3* point, const CfGimmickVec3* center) {
+// (retail .data jumptable_eu_80535830[0] = CfGimmick_CheckerKind0Always).
+extern "C" int CfGimmick_CheckerKind0Always(cf::CfGimmick* self, const CfGimmickVec3* point, const CfGimmickVec3* center) {
     (void)self; (void)point; (void)center;
     return 1;
 }
@@ -1118,10 +1118,10 @@ const void* lbl_eu_805357E8[18] = {
 };
 __declspec(section ".data") __attribute__((used))
 CfGimmickChecker jumptable_eu_80535830[5] = {
-    (CfGimmickChecker)func_8020A8AC,
-    (CfGimmickChecker)func_8020A8B4,
+    (CfGimmickChecker)CfGimmick_CheckerKind0Always,
+    (CfGimmickChecker)CfGimmick_CheckerCylinderXZ,
     (CfGimmickChecker)func_8020A928,
-    (CfGimmickChecker)func_8020A9F4,
+    (CfGimmickChecker)CfGimmick_CheckerBoxExtent,
     (CfGimmickChecker)func_8020AA8C,
 };
 }

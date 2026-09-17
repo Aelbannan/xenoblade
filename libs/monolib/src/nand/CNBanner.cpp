@@ -362,7 +362,7 @@ extern "C" __declspec(section ".rodata") const char lbl_eu_805248C0[0x13] = "CNR
 
 // Foreign free functions referenced from the probe-vtable blob.
 extern "C" void func_eu_804F9EE0();
-extern "C" void func_804DA4CC();
+extern "C" void CNReqSaveDeallocIfOpen();
 // forward decls for cross-referencing blobs below
 extern "C" u32 lbl_eu_80663CE8[2];
 extern "C" u32 lbl_eu_80570410[4];
@@ -387,5 +387,5 @@ char* lbl_eu_80665A98;  // kept alive by refs from monolib_eu_804F9E98.cpp
 
 // [.data] probe vtable + tail of the foreign class (defined here so their
 // .data placement follows the compiler-emitted vtable / base list).
-extern "C" u32 lbl_eu_80570410[4] = { (u32)&lbl_eu_80663CE8, 0, (u32)&func_eu_804F9EE0, (u32)&func_804DA4CC };
+extern "C" u32 lbl_eu_80570410[4] = { (u32)&lbl_eu_80663CE8, 0, (u32)&func_eu_804F9EE0, (u32)&CNReqSaveDeallocIfOpen };
 extern "C" u32 lbl_eu_80570420[3] = { (u32)&lbl_eu_80663B70, 0, 0 };

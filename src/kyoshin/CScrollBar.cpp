@@ -14,17 +14,17 @@
 
 // Cross-TU layout helpers (kyoshin .text). Declared as plain C++ like their
 // matched call sites (CItemBoxGridSubMenu.cpp) so the reloc binds correctly.
-void func_801D2150(nw4r::lyt::Pane*, const nw4r::math::VEC3*);
-void func_80124288(nw4r::lyt::Pane*, float*);
+void Cur_SetPaneTranslate(nw4r::lyt::Pane*, const nw4r::math::VEC3*);
+void writePanePos(nw4r::lyt::Pane*, float*);
 void func_801390E0(CFileHandle**);
 // Retail code80135FDC_setVec3 leaves its first arg (a pointer) in r3, so
-// callers (func_801F36BC) reuse it as the returned pointer for func_801D2150.
+// callers (CScrollBar_UpdateThumb) reuse it as the returned pointer for Cur_SetPaneTranslate.
 float* code80135FDC_setVec3(float*, float, float, float);
 
 // Defined at the bottom of this file (declaration NOT yet visible, plus
 // noinline) so OnFileEvent emits a direct `bl` to the retail symbol instead
 // of inlining the body into the call site (retail calls it out-of-line).
-__attribute__((noinline)) void func_801F39B4(CScrollBar* bar);
+__attribute__((noinline)) void CScrollBar_MarkLayoutReady(CScrollBar* bar);
 
 // The scroll-bar drag pane carries a small data block at +0x2C..+0x50 (thumb
 // dimensions / track position). The nw4r Pane layout doesn't model these
@@ -40,23 +40,23 @@ struct CScrollBarPane {
 u8 CScrollBar::isVisible() { return mVisible; }
 
 
-u8 CScrollBar::func_801F3668() { return mActive; }
+u8 CScrollBar::isActive() { return mActive; }
 
 // Mark the widget ready once its layout has been built.
-// Single-arg overload: retail's func_801D2150 leaves its second
+// Single-arg overload: retail's Cur_SetPaneTranslate leaves its second
 // (VEC3*) argument untouched at this call site, so it is not materialized.
-void func_801D2150(nw4r::lyt::Pane* pane);
-void func_801F3670(CScrollBar* self) {
-    func_801D2150(self->mLayout->GetRootPane());
+void Cur_SetPaneTranslate(nw4r::lyt::Pane* pane);
+void CScrollBar_InitRootPane(CScrollBar* self) {
+    Cur_SetPaneTranslate(self->mLayout->GetRootPane());
 }
 
-void func_801F3850(CScrollBar* self, u32 count) {
+void CScrollBar_PlaceThumb(CScrollBar* self, u32 count) {
     nw4r::lyt::Pane* pane =
         self->mLayout->GetRootPane()->FindPaneByName(lbl_eu_80534DC0[self->mDirection], true);
     nw4r::math::VEC3 vec;
     // Place the drag thumb on the track: X is the thumb height, Y pinned so
     // the thumb stays inside the content as the scroll ratio advances.
-    func_801D2150(pane,
+    Cur_SetPaneTranslate(pane,
                   reinterpret_cast<nw4r::math::VEC3*>(code80135FDC_setVec3(
                       &vec.x, self->mThumbHeight,
                       -self->mScrollRatio * (f32)count + self->mContentHeight,
@@ -64,19 +64,19 @@ void func_801F3850(CScrollBar* self, u32 count) {
 }
 
 /* Per-frame update dispatch helpers (defined below). */
-__attribute__((noinline)) void func_801F38FC(CScrollBar* self);
-__attribute__((noinline)) void func_801F3960(CScrollBar* self);
+__attribute__((noinline)) void CScrollBar_StepScrollIn(CScrollBar* self);
+__attribute__((noinline)) void CScrollBar_StepScrollOut(CScrollBar* self);
 
 /* Per-frame update dispatch: while the bar is ready, step the entering/leaving
 animations and always call the layout's Animate. */
-void func_801F3540(CScrollBar* self) {
+void CScrollBar_UpdateDispatch(CScrollBar* self) {
     if (self->mReady == 0) return;
     switch (self->mState) {
     case 1:
-        func_801F38FC(self);
+        CScrollBar_StepScrollIn(self);
         break;
     case 3:
-        func_801F3960(self);
+        CScrollBar_StepScrollOut(self);
         break;
     }
     self->mLayout->Animate(0);
@@ -84,7 +84,7 @@ void func_801F3540(CScrollBar* self) {
 
 /* Entering state: advance the scroll-in animation offset by a frame step; once
 it passes the threshold, finish the animation and become visible/idle. */
-__attribute__((noinline)) void func_801F38FC(CScrollBar* self) {
+__attribute__((noinline)) void CScrollBar_StepScrollIn(CScrollBar* self) {
     float step = lbl_eu_80668150;
     self->mAnimOffset += step;
     if (self->mAnimOffset < lbl_eu_80668154) return;
@@ -95,7 +95,7 @@ __attribute__((noinline)) void func_801F38FC(CScrollBar* self) {
 }
 
 /* Leaving/shutdown: when the scroll-out animation is done, hide the bar. */
-__attribute__((noinline)) void func_801F3960(CScrollBar* self) {
+__attribute__((noinline)) void CScrollBar_StepScrollOut(CScrollBar* self) {
     float frame = lbl_eu_80668150;
     if (AnimRewindFrame(self->mAnimTransform, frame)) {
         self->mState = 0;
@@ -141,13 +141,13 @@ bool CScrollBar::OnFileEvent(CEventFile* pEventFile) {
         for (u8 i = 0; i < 6; i++) {
             nw4r::lyt::Pane* hidePane =
             mLayout->GetRootPane()->FindPaneByName(lbl_eu_80534DA8[i], true);
-            func_80124270(hidePane, 0);
+            setPaneVisible(hidePane, 0);
         }
         nw4r::lyt::Pane* showPane =
             mLayout->GetRootPane()->FindPaneByName(lbl_eu_80534DA8[mDirection], true);
-        func_80124270(showPane, 1);
+        setPaneVisible(showPane, 1);
 
-        func_801F39B4(this);
+        CScrollBar_MarkLayoutReady(this);
         mFileHandle = nullptr;
         mMemRegion.func_8045F810();
         return true;
@@ -156,7 +156,7 @@ bool CScrollBar::OnFileEvent(CEventFile* pEventFile) {
 }
 
 /* Read the scroll-bar layout arc; keep the file handle for the load event. */
-void CScrollBar::func_801F34F4() {
+void CScrollBar::loadLayoutArc() {
     u32 handle = mtl::MemManager::getHandleMEM2();
     mFileHandle = CDeviceFile::readFile(
         handle, lbl_eu_80507A4C, reinterpret_cast<IWorkEvent*>(this), 0, 0);
@@ -164,7 +164,7 @@ void CScrollBar::func_801F34F4() {
 }
 
 /* Draw the layout once it is ready and the scroll bar is active. */
-void CScrollBar::func_801F35B0(nw4r::lyt::DrawInfo* drawInfo) {
+void CScrollBar::draw(nw4r::lyt::DrawInfo* drawInfo) {
     if (mReady != 0 && mState != 0) {
         drawLayout(mLayout, drawInfo, 0, 1);
     }
@@ -172,7 +172,7 @@ void CScrollBar::func_801F35B0(nw4r::lyt::DrawInfo* drawInfo) {
 
 /* Teardown: release the file handle, destroy the layout/accessor/scratch region,
 and reset the widget to its blank state. */
-void func_801F35DC(CScrollBar* self) {
+void CScrollBar_Teardown(CScrollBar* self) {
     func_801390E0(&self->mFileHandle);
     self->mReady = 0;
     self->mAnimTransform = 0;
@@ -187,7 +187,7 @@ void func_801F35DC(CScrollBar* self) {
 }
 
 /* Request scroll-in: if hidden, transition to entering and mark inactive. */
-void CScrollBar::func_801F367C() {
+void CScrollBar::requestScrollIn() {
     if (mState == 0) {
         mState = 1;
         mActive = 0;
@@ -195,14 +195,14 @@ void CScrollBar::func_801F367C() {
 }
 
 /* Request scroll-out: if visible, transition to leaving and mark inactive. */
-void CScrollBar::func_801F369C() {
+void CScrollBar::requestScrollOut() {
     if (mState == 2) {
         mState = 3;
         mActive = 0;
     }
 }
 
-void func_801F36BC(CScrollBar* self, u32 scrollFrom, u32 scrollTo) {
+void CScrollBar_UpdateThumb(CScrollBar* self, u32 scrollFrom, u32 scrollTo) {
     nw4r::lyt::Pane* pane =
         self->mLayout->GetRootPane()->FindPaneByName(lbl_eu_80534DC0[self->mDirection], true);
     CScrollBarPane* pdata = reinterpret_cast<CScrollBarPane*>(pane);
@@ -212,14 +212,14 @@ void func_801F36BC(CScrollBar* self, u32 scrollFrom, u32 scrollTo) {
         float tmp[2];
         TagCopyVec2f(tmp, pdata->mDrag);
         tmp[1] = self->mScrollPosY;
-        func_80124288(pane, tmp);
+        writePanePos(pane, tmp);
         self->mScrollRatio = lbl_eu_80668138;
         nw4r::math::VEC3 vec;
-        func_801D2150(pane,
+        Cur_SetPaneTranslate(pane,
                       reinterpret_cast<nw4r::math::VEC3*>(code80135FDC_setVec3(
                           &vec.x, self->mThumbHeight, self->mContentHeight,
                           lbl_eu_80668138)));
-        func_80124270(pane, 0);
+        setPaneVisible(pane, 0);
     } else {
         // Map the current scroll position onto the thumb track; the stick
         // ratio is the fraction clamped through the lower bound.
@@ -231,14 +231,14 @@ void func_801F36BC(CScrollBar* self, u32 scrollFrom, u32 scrollTo) {
         float tmp[2];
         TagCopyVec2f(tmp, pdata->mDrag);
         tmp[1] = ratio;
-        func_80124288(pane, tmp);
+        writePanePos(pane, tmp);
         self->mScrollRatio = (self->mScrollPosY - ratio) / (f32)delta;
         nw4r::math::VEC3 vec;
-        func_801D2150(pane,
+        Cur_SetPaneTranslate(pane,
                       reinterpret_cast<nw4r::math::VEC3*>(code80135FDC_setVec3(
                           &vec.x, self->mThumbHeight, self->mContentHeight,
                           lbl_eu_80668138)));
-        func_80124270(pane, 1);
+        setPaneVisible(pane, 1);
     }
 }
 
@@ -271,7 +271,7 @@ CScrollBar::CScrollBar(u8 direction) : CScrollBarVtblBase(), mMemRegion() {
 /* Defined last in the TU (declaration at the top) so callers emit a direct
 `bl` rather than an inlined copy - retail calls it out-of-line. */
 // Layout built successfully: mark the bar ready and visible.
-__attribute__((noinline)) void func_801F39B4(CScrollBar* bar) {
+__attribute__((noinline)) void CScrollBar_MarkLayoutReady(CScrollBar* bar) {
     if (bar->mLayout != 0) {
         bar->mVisible = 1;
         bar->mReady = 1;

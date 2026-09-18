@@ -114,37 +114,55 @@ void CCol6Invite::Draw() {}
 // CCol6System TU). Retail "this" lands at an embedded subobject offset; back
 // it off to the CProcess/CCol6Hint/CCol6System base and forward.
 
-// func_801640E0: CCol6Hint dtor at subobject +0x6c.
-void func_801640E0(u8* self) {
+// Col6HintDtorThunk6C: CCol6Hint dtor at subobject +0x6c.
+void Col6HintDtorThunk6C(u8* self) {
     typedef void* (*DtorFn)(CCol6Hint*);
     ((DtorFn)__dt__9CCol6HintFv)(reinterpret_cast<CCol6Hint*>(self - 0x6c));
 }
 
-// func_801640E8: CCol6Hint::cbRenderBefore at subobject +0x70.
-void func_801640E8(u8* self) {
+// Col6HintRenderThunk70: CCol6Hint::cbRenderBefore at subobject +0x70.
+void Col6HintRenderThunk70(u8* self) {
     reinterpret_cast<CCol6Hint*>(self - 0x70)->cbRenderBefore();
 }
 
-// func_80164100: CCol6System dtor at subobject +0x6c.
-void func_80164100(u8* self) {
+// Col6SystemDtorThunk6C: CCol6System dtor at subobject +0x6c.
+void Col6SystemDtorThunk6C(u8* self) {
     typedef void* (*DtorFn)(CCol6System*);
     ((DtorFn)__dt__11CCol6SystemFv)(reinterpret_cast<CCol6System*>(self - 0x6c));
 }
 
-// func_80164108: CCol6System::cbRenderBefore at subobject +0x70.
-void func_80164108(u8* self) {
+// Col6SystemRenderThunk70: CCol6System::cbRenderBefore at subobject +0x70.
+void Col6SystemRenderThunk70(u8* self) {
     reinterpret_cast<CCol6System*>(self - 0x70)->cbRenderBefore();
 }
 
-// func_80164110: CCol6System dtor at subobject +0x70.
-void func_80164110(u8* self) {
+// Col6SystemDtorThunk70: CCol6System dtor at subobject +0x70.
+void Col6SystemDtorThunk70(u8* self) {
     typedef void* (*DtorFn)(CCol6System*);
     ((DtorFn)__dt__11CCol6SystemFv)(reinterpret_cast<CCol6System*>(self - 0x70));
 }
 
-// func_80164118: CCol6Invite dtor at subobject +0x6c. Backs `this` off to the
+// Col6CheckBatDtorThunk6C (retail func_801640D0): CCol6CheckBat dtor at
+// subobject +0x6c. Backs `this` off and tail-calls the non-deleting destructor.
+void Col6CheckBatDtorThunk6C(u8* self) {
+    // Retail thunk: subi r3,r3,0x6c; b __dt__13CCol6CheckBatFv — r4 (flags)
+    // passes through untouched, so call through a 1-arg pointer view.
+    typedef void* (*DtorFn)(CCol6CheckBat*);
+    ((DtorFn)__dt__13CCol6CheckBatFv)(reinterpret_cast<CCol6CheckBat*>(self - 0x6c));
+}
+
+// Col6HintDtorThunk70 (retail func_801640F0): CCol6Hint dtor at subobject
+// +0x70. Backs `this` off and tail-calls the non-deleting destructor.
+void Col6HintDtorThunk70(u8* self) {
+    // Retail thunk: subi r3,r3,0x70; b __dt__9CCol6HintFv — r4 (flags)
+    // passes through untouched, so call through a 1-arg pointer view.
+    typedef void* (*DtorFn)(CCol6Hint*);
+    ((DtorFn)__dt__9CCol6HintFv)(reinterpret_cast<CCol6Hint*>(self - 0x70));
+}
+
+// Col6InviteDtorThunk6C: CCol6Invite dtor at subobject +0x6c. Backs `this` off to the
 // CCol6Invite embedded subobject and tail-calls the non-deleting destructor.
-void func_80164118(u8* self) {
+void Col6InviteDtorThunk6C(u8* self) {
     // Retail thunk: subi r3,r3,0x6c; b __dt__11CCol6InviteFv — r4 (flags)
     // passes through untouched, so call through a 1-arg pointer view.
     typedef void* (*DtorFn)(CCol6Invite*);
@@ -153,8 +171,8 @@ void func_80164118(u8* self) {
 
 // Standalone string formatting helper.
 // Formats a string into buffer, stores length at buffer+0x100.
-// Retail symbol is unmangled (func_eu_801651A0), so this has C linkage.
-extern "C" void func_eu_801651A0(char* buffer, const char* format, ...) {
+// Retail symbol is unmangled (Col6FormatBufferString), so this has C linkage.
+extern "C" void Col6FormatBufferString(char* buffer, const char* format, ...) {
     char buf[0x100];
     va_list va;
     va_start(va, format);

@@ -13,7 +13,7 @@ struct UiFlags {
     u32 _04; // 0x4
     u32 flags; // 0x8
 
-    bool func_800459FC(u32 mask) const;
+    bool hasAnyFlags(u32 mask) const;
 };
 
 // ---------------------------------------------------------------------------
@@ -33,7 +33,7 @@ struct CfEnumList {
     u32 count;  // 0x620
 };
 
-// Item returned by func_800F6EC0; the object pointer for __dynamic_cast sits
+// Item returned by getEntryAt; the object pointer for __dynamic_cast sits
 // at +0x4.
 struct CfEnumListItem {
     u8 _00[0x4];
@@ -103,14 +103,14 @@ void UIWin_CreateTalkWin(u32 obj, const char* str, int mode);
 void CTaskGame_enumListCtor(CfEnumListHolder* holder);
 CfEnumList* CTaskGame_enumListGet(CfEnumListHolder* holder);
 void __dt__80043E88(CfEnumListHolder* holder, int tags);
-void func_800F4A98(void* list, int type, int value);
-void* func_800F6EC0(void* list, int index);
-void* func_800451D8(u32 cls, void* param);
+void startEnumObjects(void* list, int type, int value);
+void* getEntryAt(void* list, int index);
+void* bindIndexedEffect(u32 cls, void* param);
 u8 code80135FDC_getByte_64059();
 void playUISound__FUl(u32 op);
 void UIWin_CreateMenuUpdate(u32 first, u32 second, s32 third, s32 fourth);
-int func_8009CF8C(int index);
-void func_8009D018(int index, int value);
+int CtrlRemote_TouchBitByArg(int index);
+void CtrlRemote_SetSharedBit(int index, int value);
 // Copies an entry out of a script string table into the given buffer.
 char* BdatTouchStringCell(char* buf, const char* table, int index);
 // BDAT row-name lookup: resolve key row in the character table.
@@ -169,8 +169,8 @@ int UIWin_GetTimer();
 // window is active).
 int func_80135708();
 // Fade-state probes: 1 when a fade is in progress / fade-wait pending.
-BOOL func_80113E1C();
-BOOL func_80113E24();
+BOOL getFadeMenu();
+BOOL isFadeActive();
 int isPrioReq(VMThread* pThread);
 int gameClear(VMThread* pThread);
 // Set the last-talked NPC by script index: find the row whose key equals
@@ -178,7 +178,7 @@ int gameClear(VMThread* pThread);
 int setLastTalkNpc(VMThread* pThread);
 int isSETalkVoiceWait(VMThread* pThread);
 int func_eu_80046DA0(VMThread* pThread);
-int func_eu_80046DC4(VMThread* pThread);
+int uiClearSETalkVoiceWait(VMThread* pThread);
 
 // Open a system select window from three strings.
 void UIWin_Create25070Win(const char* a, const char* b, const char* c);
@@ -187,7 +187,7 @@ void UIWin_CreateCol6Invite(int a, int b, int c);
 // Record the last-talk NPC ordinal.
 void CtrlObjectParam_SetWorkTailValue(int id);
 // Character-table row count / keyed lookup helpers (setLastTalkNpc).
-int func_8003B1EC(char* tbl);
+int Bdat_GetMaxRow_B1EC(char* tbl);
 u32 BdatGetU16Direct(char* tbl, const char* key, int idx);
 // Character-table object used by setLastTalkNpc (.sbss pointer).
 extern char* lbl_eu_80664098;

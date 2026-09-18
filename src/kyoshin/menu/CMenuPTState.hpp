@@ -50,8 +50,8 @@ public:
     void cbRenderBefore();
 
     // IScnRender vtable this-adjusting thunks.
-    void func_80192BE4();
-    void func_80192BEC();
+    void menuPTStateRenderBeforeThunk58();
+    void menuPTStateDtorThunk58();
 
     // +0x3C-0x57: compiler-managed vtable/ptmf data
     // +0x58: IScnRender vtable (implicit)

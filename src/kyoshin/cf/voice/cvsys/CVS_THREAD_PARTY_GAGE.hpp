@@ -48,7 +48,7 @@ extern "C" {
     int           func_802A3D54(CCharVoice* voicePtr, int voiceId, int arg);
     CVoiceHandle* func_802A330C(int size, int align);
     u8*           CCharVoiceMan_AllocVoiceArena(int size);
-    int           func_802A790C(CVoiceHandle* exclude);
+    int           HpVoice_CountActiveVoices(CVoiceHandle* exclude);
     CVoiceHandle* func_802A7998(CVoiceHandle* exclude);
     int           func_802A7DF8(CVoiceHandle* handle);
     int           func_802A77E8(CVoiceHandle* handle);

@@ -43,13 +43,13 @@ extern "C" CfSoundRecord* CfSoundMan_CtorRecord(CfSoundRecord* _this);
 extern "C" void* __dt__801BF80C(CfSoundRecord* _this, int flags);
 
 // Constructor for the sound-manager singleton (retail __ct__801BF76C): zeroes
-// the header word, constructs the two FX slots (func_801C32E8), constructs the
+// the header word, constructs the two FX slots (FxPair_Init), constructs the
 // 13-record array (CfSoundMan_CtorRecord / __dt__801BF80C), publishes the pointer, and
 // initializes the nw4r sound system on first use (output mode depends on the
 // console's sound mode).
 CfSoundManGlobal* __ct__801BF76C(CfSoundManGlobal* self) {
     self->field_0x00 = 0;
-    func_801C32E8(self->mFxSlots);
+    FxPair_Init(self->mFxSlots);
     __construct_array(self->mRecords, (void*)CfSoundMan_CtorRecord,
                       (void*)__dt__801BF80C, 0x268, 0xD);
     lbl_eu_80664430 = self;
@@ -200,8 +200,8 @@ u32 CfSoundMan_PlayRequest(u32 a, u32 b, u32 c, float volume) {
     // branch layout).
     if ((lbl_eu_80663E24 & 0x400000) != 0 &&
         isSceneActive__Q22cf13CfGameManagerFv() != 0) {
-        if (func_80294624() != 0 || func_8028E440() != 0 ||
-            func_802B22E0() != 0 || isInitialized__10CMenuPauseFv() != 0) {
+        if (SysWinSaveIsCreated() != 0 || isSaveMenuActive() != 0 ||
+            ClearMenu_IsPresent() != 0 || isInitialized__10CMenuPauseFv() != 0) {
             goto lookup;
         }
         return 0xFFFF;
@@ -244,8 +244,8 @@ u32 cf::CfSoundMan::playActorSound(u32 idx, u32 a, u32 b, u32 c, float volume) {
             isSceneActive__Q22cf13CfGameManagerFv() != 0) {
             // During an event, any active UI layer (movie wipe, talk window,
             // staff roll, pause menu) cancels the request.
-            if (func_80294624() == 0 && func_8028E440() == 0 &&
-                func_802B22E0() == 0 && !isInitialized__10CMenuPauseFv()) {
+            if (SysWinSaveIsCreated() == 0 && isSaveMenuActive() == 0 &&
+                ClearMenu_IsPresent() == 0 && !isInitialized__10CMenuPauseFv()) {
                 return 0xFFFF;
             }
         } else if ((lbl_eu_80663E28 & 0x1000000) == 0) {
@@ -255,7 +255,7 @@ u32 cf::CfSoundMan::playActorSound(u32 idx, u32 a, u32 b, u32 c, float volume) {
             // Scale the volume by the scene's remaining display time unless
             // the pause overlay covers record 0.
             int covered = 0;
-            if (func_80252538() != 0 && idx == 0) {
+            if (Pause_IsActive() != 0 && idx == 0) {
                 covered = 1;
             }
             // Skip-chain mirrors the retail branch layout: guards jump to

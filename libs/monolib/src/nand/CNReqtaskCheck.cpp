@@ -38,10 +38,10 @@ struct CNReqtaskCheckData {
     u8  state;      // +0x0C
 };
 
-// us-804df660: func_804DB348
+// us-804df660: NandCheck_InitTaskData
 // Initializes the check task data block (three check arguments and resets the
 // state to step 0), then returns the task vtable pointer.
-extern "C" CNReqtaskCheckVtbl** func_804DB348(CNReqtaskCheckData* data, u32 arg1, u32 arg2, u32 arg3) {
+extern "C" CNReqtaskCheckVtbl** NandCheck_InitTaskData(CNReqtaskCheckData* data, u32 arg1, u32 arg2, u32 arg3) {
     CNReqtaskCheckData* d = data;
     d->field_0x0 = arg1;
     d->field_0x4 = arg2;
@@ -50,14 +50,14 @@ extern "C" CNReqtaskCheckVtbl** func_804DB348(CNReqtaskCheckData* data, u32 arg1
     return &lbl_eu_80665A00;
 }
 
-// us-804df67c: func_804DB364
+// us-804df67c: NandCheck_PollTaskState
 // Async state machine for the NAND check task, polled by the CNand completion
 // pump. Advances one step per call; returns 1 when done, 2 on error, 0 while
 // still in progress. Steps:
 //   0 -> run the NAND check (CNReqSaveNandCheck) with the stored arguments
 //   1 -> mark the request complete (return 1 on the following poll)
 //   2 -> done (return 1)
-extern "C" s32 func_804DB364(CNReqtaskCheckVtbl* vtable_ptr, CNReqtaskCheckData* data) {
+extern "C" s32 NandCheck_PollTaskState(CNReqtaskCheckVtbl* vtable_ptr, CNReqtaskCheckData* data) {
     CNReqtaskCheckData* d = data;
 
     if (lbl_eu_806659D0 != 0) { // NAND subsystem busy
@@ -109,7 +109,7 @@ extern "C" __declspec(noinline) void sinit_804DB420() {
     func_804DB440(&lbl_eu_80665A00);
 }
 // ===== Dissolved monolibdata2 (blob surgery) data owned by this TU =====
-// func_804DB364 is defined in this TU; CNReqSaveDeallocIfOpen is foreign (CNReqtaskSave).
+// NandCheck_PollTaskState is defined in this TU; CNReqSaveDeallocIfOpen is foreign (CNReqtaskSave).
 extern "C" void CNReqSaveDeallocIfOpen();
 extern "C" u32 lbl_eu_80663B70;   // foreign .sdata
 extern "C" u32 lbl_eu_80663BA8[2]; // this unit's sdata
@@ -117,7 +117,7 @@ extern "C" u32 lbl_eu_80663BA8[2]; // this unit's sdata
 // [.data] 0x8056FDE8-0x8056FE08 (32B): CNReqtaskCheck vtable pair
 extern "C" u32 lbl_eu_8056FDE8[4] = {
     (u32)&lbl_eu_80663BA8, 0x00000000,
-    (u32)&func_804DB364, (u32)&CNReqSaveDeallocIfOpen,
+    (u32)&NandCheck_PollTaskState, (u32)&CNReqSaveDeallocIfOpen,
 };
 extern "C" u32 lbl_eu_8056FDF8[4] = {
     (u32)&lbl_eu_80663B70, 0x00000000, 0x00000000, 0x00000000,

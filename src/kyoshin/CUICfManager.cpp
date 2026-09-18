@@ -77,9 +77,9 @@ u32 __ptmf_null[3];
 void __ct__8CProcessFv(CProcess*);
 void __dt__8CProcessFv(CProcess*, int);
 void CItem_copyRecMasked(CUICfInitBlock*, const CUICfInitBlock*);
-void func_8009D0B4();
-void func_8009D514(cf::IFlagEvent*);
-void func_8009D414(cf::IFlagEvent*);
+void CtrlRemote_FetchSharedBufPtr();
+void CtrlRemote_ResetSlotArrayByIndex(cf::IFlagEvent*);
+void CtrlRemote_ResetSlotArrayObj(cf::IFlagEvent*);
 void closeFileHandle__FPP11CFileHandle(CFileHandle**);
 void releaseArcResourceAccessor__FPQ34nw4r3lyt19ArcResourceAccessor(nw4r::lyt::ArcResourceAccessor*);
 // Deleting dtor (C-ABI import): the secondary-subobject thunks tail-call it
@@ -135,7 +135,7 @@ void CUICfManager::Init() {
     u8 i;
 
     mFileHandle = CDeviceFile::readFile(unk118, lbl_eu_806621A8, cfWorkEvent(), 0, 0);
-    CDeviceFile::func_8044F154(mFileHandle, 3);
+    CDeviceFile::tryUpdateJobPriority(mFileHandle, 3);
 
     process = static_cast<CUICfInitProcess*>(
         mtl::MemManager::allocate(0x54, CWorkThreadSystem::getWorkMem()));
@@ -229,8 +229,8 @@ void CUICfManager::Term() {
     unk118 = -1;
 
     cf::IFlagEvent* flagEvent = this;
-    func_8009D0B4();
-    func_8009D514(flagEvent);
+    CtrlRemote_FetchSharedBufPtr();
+    CtrlRemote_ResetSlotArrayByIndex(flagEvent);
 
     unk144->unk39 = 1;
     lbl_eu_80664054 = NULL;
@@ -253,12 +253,12 @@ extern "C" {
 int lbl_eu_80664050;
 int func_80138138(int);
 u32 code80135FDC_setByte_6407F(u8);
-int func_8014A1D4(void*, u32, u8, int);
+int CMenuGetItem_CreateMulti(void*, u32, u8, int);
 // Menu factories used by the CUICfManager_queueQuestLogMenu-family create helpers below.
 u32 func_8029BB24(CUICfUnk144*, u32, u32);
-u32 func_8014A11C(CUICfUnk144*, u32, u32);
-u32 func_8011CCE0(CUICfUnk144*, u32, u32);
-u32 func_802AC494(CUICfUnk144*, u32, u32);
+u32 CMenuGetItem_CreateVariant(CUICfUnk144*, u32, u32);
+u32 createQuestLogMenu(CUICfUnk144*, u32, u32);
+u32 CMenuTutorialList_Create(CUICfUnk144*, u32, u32);
 u32 __ct__CMenuItem(CUICfUnk144*, u32, u32, u32);
 // Additional menu factories used by the CUICfManager_queueQuestLogMenu-family create helpers.
 u32 __ct__CMenuPause(CUICfUnk144*, u32);
@@ -271,7 +271,7 @@ u32 func_802514D4(CUICfUnk144*, u32);
 // CMenuSkipTimer.hpp / CMenuShopSell.hpp / CMenuPTState.cpp /
 // CMenuMakeCrystal.cpp); including those headers here would pull
 // conflicting flat decls into this TU.
-u32 func_8029EDE4(u32, u32);
+u32 SkipTimer_CreateInstance(u32, u32);
 u32 func_8018B324(u32, u32);
 u32 func_8018C104(u32, u32, u32);
 void* __ct__CMenuPTState(u32, u32);
@@ -280,21 +280,21 @@ void* __ct__CMenuArtsSet(u32, u32);
 // Factories for the remaining queue helpers (CUICfManager_queueMapSelectMenu family); same
 // caller-shape as the defining TUs' flat decls.
 u32 __ct__CMenuMapSelect(CUICfUnk144*, u32);
-u32 func_8025728C(CUICfUnk144*, u32, u32);
+u32 KizunagramCreateSingleton(CUICfUnk144*, u32, u32);
 u32 func_80252C60(CUICfUnk144*, u32);
-u32 func_802638D0(CUICfUnk144*, u32);
+u32 createPassiveSkillMenu(CUICfUnk144*, u32);
 u32 PlayAward_CreateMenu(CUICfUnk144*, u32);
-u32 func_80272414(CUICfUnk144*, u32);
+u32 KizunaList_Create(CUICfUnk144*, u32);
 // cpp-only imports: declared here rather than in the .hpp because other
 // headers declare these same flat symbols with different signatures
-// (func_80124B78: CMenuQstCnt.hpp int vs CMainMenu.hpp u32; func_8029A5DC:
+// (SysWinGetSingleton: CMenuQstCnt.hpp int vs CMainMenu.hpp u32; MenuTutorialCreate:
 // CMenuTutorial.hpp C++ member; Scn_QueryUnk80State: CTaskGame.hpp/code_80135FDC.hpp
 // CScn* arg; getUnk80664658: CfGimmick.hpp vs CMainMenu.hpp already differ;
 // lbl_eu_80663E14: CScn* in CTaskGame.hpp/code_80135FDC.hpp), so a header
 // declaration would break TUs that co-include those headers.
 extern "C" {
-u32 func_80124B78();
-void* func_8029A5DC(void* self, u32 parent, u32 arg2);
+u32 SysWinGetSingleton();
+void* MenuTutorialCreate(void* self, u32 parent, u32 arg2);
 // Local complete type for Scn_QueryUnk80State's result (canonical name per
 // CfGameManager.hpp fwd-decl; layout matches CTaskGame.hpp's view exactly).
 struct CTaskGameCamView {
@@ -328,19 +328,19 @@ int __declspec(noinline) func_80135D04(CUICfManagerCreateView* singleton) {
         }
         return 1;
     }
-    if (func_800FF738() != 0) {
+    if (CMainMenu_IsOpen() != 0) {
         return 1;
     }
-    if (func_80124B78() != 0) {
+    if (SysWinGetSingleton() != 0) {
         return 1;
     }
-    if (func_801B481C() != 0) {
+    if (GetItemMulti_IsActiveFlag() != 0) {
         return 1;
     }
-    if (func_80293C10() != 0) {
+    if (PTNotice_IsActive_3C10() != 0) {
         return 1;
     }
-    if (func_8029A658() != 0) {
+    if (MenuTutorialIsCreated() != 0) {
         return 1;
     }
     if (getInstance__11CSysWinBuffFv() != 0) {
@@ -360,8 +360,8 @@ int __declspec(noinline) func_80135D04(CUICfManagerCreateView* singleton) {
 }
 // Additional menu factories (CMenuGCItem / CMenuGetItem / CMenuSave TUs).
 u32 __ct__CMenuGCItem(CUICfUnk144*, u32, u8);
-u32 func_8014A064(CUICfUnk144*, u32, u16);
-u32 func_8028E3B4(CUICfUnk144*, u32, u32, u32, u32);
+u32 CMenuGetItem_CreateSingle(CUICfUnk144*, u32, u16);
+u32 createSaveMenu(CUICfUnk144*, u32, u32, u32, u32);
 void UIWin_CreateQuestWin(int, int, int);
 void* func_8009EC9C(u16);
 // Same caller-shape as the decl in include/kyoshin/cf/CfGameManager.hpp
@@ -492,7 +492,7 @@ range_312c_31f3: {
 
     CUICfManager* inst = (CUICfManager*)lbl_eu_80664054;
     if (inst != NULL) {
-        int tempRet = (int)func_8014A1D4(inst->unk144, inst->unk11C, codePersist, 1);
+        int tempRet = (int)CMenuGetItem_CreateMulti(inst->unk144, inst->unk11C, codePersist, 1);
         savedRet = tempRet;
         if (tempRet != 0) {
             inst = (CUICfManager*)lbl_eu_80664054;
@@ -647,8 +647,8 @@ f32 lbl_eu_806672CC;
 
 
 void* __ct__CMenuKeyAssign(void*, u32);
-void* func_801109D8(void*, u32, void*); // create menu; r5=0 or enum object*
-void* func_8011E4C4(void*, u32);
+void* EneSt_Create(void*, u32, void*); // create menu; r5=0 or enum object*
+void* SymMark_Create(void*, u32);
 void* __ct__CMenuBattleMode(void*, u32);
 void* __ct__CMenuLvUp(void*, u32);
 void* __ct__CMenuGameClear(void*, u32); // game-clear screen factory (CMenuGameClear.cpp)
@@ -663,11 +663,11 @@ void CTaskGame_enumListCtor(CUICfEnumListHolder*);
 void CTaskGame_enumListFill(CUICfEnumListHolder*, int, int); // holder init (r4=0x20, r5=0x800)
 void* CTaskGame_enumListGet(CUICfEnumListHolder*); // returns holder->list
 void __dt__80043E88(CUICfEnumListHolder*, s16);
-void func_800F4A98(void* list, int type, int);
+void startEnumObjects(void* list, int type, int);
 void* __ct__800FB044(void* list, f32, void* obj, int);
 void* Scn_FindCamItem(void* obj, int index);
-void* func_800F6EC0(void* list, int index); // &slot -> has +0x4 object ptr
-void* func_800F6E98(void* list, int index); // *slot -> object*
+void* getEntryAt(void* list, int index); // &slot -> has +0x4 object ptr
+void* getObjectIdAt(void* list, int index); // *slot -> object*
 int lookupWorkAtAddr(void*);
 int func_8013A4B4(void* a, void* b, void* c);
  // &mInitSlots[0].unk04
@@ -832,7 +832,7 @@ void CUICfManager::Move() {
         }
         inst->mFlags = (u16)(inst->mFlags & 0xffef);
         inst = (CUICfManager*)lbl_eu_80664054;
-        *home14 = func_801109D8(inst->unk144, inst->unk11C, NULL);
+        *home14 = EneSt_Create(inst->unk144, inst->unk11C, NULL);
         if (*home14 != NULL) {
             inst = (CUICfManager*)lbl_eu_80664054;
             i = 0;
@@ -878,7 +878,7 @@ void CUICfManager::Move() {
         }
         inst->mFlags = (u16)(inst->mFlags & 0xffdf);
         inst = (CUICfManager*)lbl_eu_80664054;
-        *home10 = func_8011E4C4(inst->unk144, inst->unk11C);
+        *home10 = SymMark_Create(inst->unk144, inst->unk11C);
         if (*home10 != NULL) {
             inst = (CUICfManager*)lbl_eu_80664054;
             i = 0;
@@ -1019,7 +1019,7 @@ after_flags:
 
     CTaskGame_enumListCtor(&holder);
     list = CTaskGame_enumListGet(&holder);
-    func_800F4A98(list, 0x130, 0);
+    startEnumObjects(list, 0x130, 0);
     party = cf::CfGameManager::getPlayer(0);
     {
         void** vt = *reinterpret_cast<void***>(party);
@@ -1040,7 +1040,7 @@ after_flags:
     goto enum_check;
 enum_body:
     list = CTaskGame_enumListGet(&holder);
-    slot = func_800F6EC0(list, enumIdx);
+    slot = getEntryAt(list, enumIdx);
     partyHandle = *(void**)((u8*)slot + 4);
     if (partyHandle == NULL) {
         goto enum_next;
@@ -1055,7 +1055,7 @@ enum_body:
         goto enum_next;
     }
     list = CTaskGame_enumListGet(&holder);
-    slot = func_800F6EC0(list, enumIdx);
+    slot = getEntryAt(list, enumIdx);
     partyHandle = *(void**)((u8*)slot + 4);
     {
         void** vt = *reinterpret_cast<void***>(partyHandle);
@@ -1068,8 +1068,8 @@ enum_body:
         goto enum_next;
     }
     list = CTaskGame_enumListGet(&holder);
-    createdArg = func_800F6E98(list, enumIdx);
-    func_801109D8(unk144, unk11C, createdArg);
+    createdArg = getObjectIdAt(list, enumIdx);
+    EneSt_Create(unk144, unk11C, createdArg);
 enum_next:
     enumIdx++;
 enum_check:
@@ -1418,16 +1418,16 @@ extern "C" void func_8012FFB4(u8* base) {
             return;
         }
         int busy;
-        if (func_80293C10() != 0) {
+        if (PTNotice_IsActive_3C10() != 0) {
             busy = 1;
-        } else if (func_8029A658() != 0) {
+        } else if (MenuTutorialIsCreated() != 0) {
             busy = 1;
-        } else if (func_801B481C() != 0) {
+        } else if (GetItemMulti_IsActiveFlag() != 0) {
             busy = 1;
-        } else if (func_80122450() != 0) {
+        } else if (hasQuestWindow() != 0) {
             busy = 1;
         } else {
-            busy = func_80124B78() != 0;
+            busy = SysWinGetSingleton() != 0;
         }
         if (busy != 0) {
             return;
@@ -1445,7 +1445,7 @@ extern "C" void func_8012FFB4(u8* base) {
         inst = (CUICfManagerCreateView*)lbl_eu_80664054;
         u8 idx = slot->field_0x01;
         if (inst != NULL) {
-            u32 tempRet = (u32)func_8029A5DC(inst->field_0x144, inst->field_0x11C, idx);
+            u32 tempRet = (u32)MenuTutorialCreate(inst->field_0x144, inst->field_0x11C, idx);
             savedRet = tempRet;
             if (tempRet != 0) {
                 inst = (CUICfManagerCreateView*)lbl_eu_80664054;
@@ -1517,17 +1517,17 @@ extern "C" void func_8012FFB4(u8* base) {
 // the slot list (func_801311B8) unless the 0xb40 byte is set.
 extern "C" int CUICfManager_tryResetFreeSlot(u8* base) {
     int flag;
-    if (func_80293C10() != 0) {
+    if (PTNotice_IsActive_3C10() != 0) {
         flag = 1;
-    } else if (func_8029A658() != 0) {
+    } else if (MenuTutorialIsCreated() != 0) {
         flag = 1;
-    } else if (func_801B481C() != 0) {
+    } else if (GetItemMulti_IsActiveFlag() != 0) {
         flag = 1;
-    } else if (func_80122450() != 0) {
+    } else if (hasQuestWindow() != 0) {
         flag = 1;
     } else {
         // Branchless booleanize of the last gate (neg/or/srwi in retail).
-        u32 v = func_80124B78();
+        u32 v = SysWinGetSingleton();
         flag = (-v | v) >> 31;
     }
     if (flag != 0) {
@@ -1571,8 +1571,8 @@ extern "C" int func_8013042C(u8* base, u8 index) {
     int changed;
 
     // Gate chain + all-slots-free check share one r0-colored result.
-    if (func_80293C10() != 0 || func_8029A658() != 0 || func_801B481C() != 0 ||
-        func_80122450() != 0 || func_80124B78() != 0) {
+    if (PTNotice_IsActive_3C10() != 0 || MenuTutorialIsCreated() != 0 || GetItemMulti_IsActiveFlag() != 0 ||
+        hasQuestWindow() != 0 || SysWinGetSingleton() != 0) {
         ret = 1;
     } else if (base[0 * 0x168] != 7 || base[1 * 0x168] != 7 || base[2 * 0x168] != 7 ||
                base[3 * 0x168] != 7 || base[4 * 0x168] != 7 || base[5 * 0x168] != 7 ||
@@ -1631,16 +1631,16 @@ extern "C" int func_8013042C(u8* base, u8 index) {
 // word (src +0xD0 -> slot +0xD4) via the block-copy helper.
 int func_80130720(u8* base, CUICfSrcCopyView* src) {
     int gateBusy;
-    if (func_80293C10() != 0) {
+    if (PTNotice_IsActive_3C10() != 0) {
         gateBusy = 1;
-    } else if (func_8029A658() != 0) {
+    } else if (MenuTutorialIsCreated() != 0) {
         gateBusy = 1;
-    } else if (func_801B481C() != 0) {
+    } else if (GetItemMulti_IsActiveFlag() != 0) {
         gateBusy = 1;
-    } else if (func_80122450() != 0) {
+    } else if (hasQuestWindow() != 0) {
         gateBusy = 1;
     } else {
-        gateBusy = func_80124B78() != 0;
+        gateBusy = SysWinGetSingleton() != 0;
     }
     int flag;
     if (gateBusy != 0) {
@@ -1688,17 +1688,17 @@ int func_80130960(u8* base, u16 a1, u16 a2, u16 a3, u16 a4, u16 a5) {
     // shared flag-set instead (12B-spaced gates vs retail's 20B).
     int flag;
     int gateBusy;
-    if (func_80293C10() != 0) {
+    if (PTNotice_IsActive_3C10() != 0) {
         gateBusy = 1;
-    } else if (func_8029A658() != 0) {
+    } else if (MenuTutorialIsCreated() != 0) {
         gateBusy = 1;
-    } else if (func_801B481C() != 0) {
+    } else if (GetItemMulti_IsActiveFlag() != 0) {
         gateBusy = 1;
-    } else if (func_80122450() != 0) {
+    } else if (hasQuestWindow() != 0) {
         gateBusy = 1;
     } else {
         // Branchless booleanize of the last gate (retail: neg/or/srwi).
-        u32 v = func_80124B78();
+        u32 v = SysWinGetSingleton();
         gateBusy = (-v | v) >> 31;
     }
     if (gateBusy != 0) {
@@ -1748,16 +1748,16 @@ int func_80130B74(u8* base, u16 id, u8 state) {
     // so the flag must not be const-folded per path.
     int flag;
     int gateBusy;
-    if (func_80293C10() != 0) {
+    if (PTNotice_IsActive_3C10() != 0) {
         gateBusy = 1;
-    } else if (func_8029A658() != 0) {
+    } else if (MenuTutorialIsCreated() != 0) {
         gateBusy = 1;
-    } else if (func_801B481C() != 0) {
+    } else if (GetItemMulti_IsActiveFlag() != 0) {
         gateBusy = 1;
-    } else if (func_80122450() != 0) {
+    } else if (hasQuestWindow() != 0) {
         gateBusy = 1;
     } else {
-        gateBusy = func_80124B78() != 0;
+        gateBusy = SysWinGetSingleton() != 0;
     }
     if (gateBusy != 0) {
         flag = 1;
@@ -1796,16 +1796,16 @@ int func_80130B74(u8* base, u16 id, u8 state) {
 // changed (live across the sprintf, hence a saved register).
 int func_80130D80(u8* base, u16 arg1) {
     int gateBusy;
-    if (func_80293C10() != 0) {
+    if (PTNotice_IsActive_3C10() != 0) {
         gateBusy = 1;
-    } else if (func_8029A658() != 0) {
+    } else if (MenuTutorialIsCreated() != 0) {
         gateBusy = 1;
-    } else if (func_801B481C() != 0) {
+    } else if (GetItemMulti_IsActiveFlag() != 0) {
         gateBusy = 1;
-    } else if (func_80122450() != 0) {
+    } else if (hasQuestWindow() != 0) {
         gateBusy = 1;
     } else {
-        gateBusy = func_80124B78() != 0;
+        gateBusy = SysWinGetSingleton() != 0;
     }
     int flag;
     if (gateBusy != 0) {
@@ -1847,16 +1847,16 @@ int func_80130F98(u8* base, u16 a1, u16 a2) {
     // Busy gates as a nested if/else chain: each site shares one merge block
     // (retail keeps the result in r0).
     int flag;
-    if (func_80293C10() != 0) {
+    if (PTNotice_IsActive_3C10() != 0) {
         flag = 1;
-    } else if (func_8029A658() != 0) {
+    } else if (MenuTutorialIsCreated() != 0) {
         flag = 1;
-    } else if (func_801B481C() != 0) {
+    } else if (GetItemMulti_IsActiveFlag() != 0) {
         flag = 1;
-    } else if (func_80122450() != 0) {
+    } else if (hasQuestWindow() != 0) {
         flag = 1;
     } else {
-        flag = func_80124B78() != 0;
+        flag = SysWinGetSingleton() != 0;
     }
     if (flag == 0) {
         for (u8 i = 0; i < 8; i++) {
@@ -2330,7 +2330,7 @@ extern "C" CUICfManager* CUICfManager_createInstance(CProcess* pParent, CScnNw4r
 // CUICfManager_queueMoveBaseMenu (us-80134244): teardown/create of the base menu for Move's
 // mFlags bit 0x1. Gates on the singleton + resource accessor, probes the
 // busy chain (with the 0x20-resource / state-2 retry sound), then creates
-// the menu via func_800FF6BC and pushes it onto the event queue (same
+// the menu via CMainMenu_Create and pushes it onto the event queue (same
 // reslist shape as the CUICfManager_queueQuestLogMenu family).
 extern "C" u32 CUICfManager_queueMoveBaseMenu() {
     CUICfManagerCreateView* inst;
@@ -2353,7 +2353,7 @@ extern "C" u32 CUICfManager_queueMoveBaseMenu() {
         int st = func_801359AC((u8*)lbl_eu_80664054);
         if (st != 0) {
             if ((lbl_eu_80663E24 & 0x40000000u) == 0) {
-                if (func_8009CF8C(0x20) > 4 && st == 2) {
+                if (CtrlRemote_TouchBitByArg(0x20) > 4 && st == 2) {
                     playUISound(5);
                 }
             }
@@ -2362,7 +2362,7 @@ extern "C" u32 CUICfManager_queueMoveBaseMenu() {
     }
     inst = (CUICfManagerCreateView*)lbl_eu_80664054;
     {
-        u32 tempRet = (u32)func_800FF6BC((u8*)inst->field_0x144, inst->field_0x11C);
+        u32 tempRet = (u32)CMainMenu_Create((u8*)inst->field_0x144, inst->field_0x11C);
         savedRet = tempRet;
         if (tempRet == 0) {
             return 0;
@@ -2557,7 +2557,7 @@ u32 CUICfManager_queueGetItemMenuById(u32 arg) {
         return 0;
     }
     {
-        u32 tempRet = func_8014A11C(inst->field_0x144, inst->field_0x11C, arg);
+        u32 tempRet = CMenuGetItem_CreateVariant(inst->field_0x144, inst->field_0x11C, arg);
         savedRet = tempRet;
         if (tempRet == 0) {
             return 0;
@@ -2612,7 +2612,7 @@ u32 CUICfManager_queueQuestLogMenu(u32 arg) {
         return 0;
     }
     {
-        u32 tempRet = func_8011CCE0(inst->field_0x144, inst->field_0x11C, (u16)arg);
+        u32 tempRet = createQuestLogMenu(inst->field_0x144, inst->field_0x11C, (u16)arg);
         savedRet = tempRet;
         if (tempRet == 0) {
             return 0;
@@ -2722,7 +2722,7 @@ u32 CUICfManager_queueTutorialListMenu(u32 arg) {
         return 0;
     }
     {
-        u32 tempRet = func_802AC494(inst->field_0x144, inst->field_0x11C, (u16)arg);
+        u32 tempRet = CMenuTutorialList_Create(inst->field_0x144, inst->field_0x11C, (u16)arg);
         savedRet = tempRet;
         if (tempRet == 0) {
             return 0;
@@ -2763,7 +2763,7 @@ slot_found:
     return savedRet;
 }
 
-// CUICfManager_queueEventMenu: create the event menu via func_801109D8 and queue it
+// CUICfManager_queueEventMenu: create the event menu via EneSt_Create and queue it
 // (mFlags bit 0x10; busy-bit and accessor gates, same as Move's flag path).
 extern "C" u32 CUICfManager_queueEventMenu() {
     CUICfManagerCreateView* inst;
@@ -2787,7 +2787,7 @@ extern "C" u32 CUICfManager_queueEventMenu() {
     inst->field_0xC90 = (u16)(inst->field_0xC90 & 0xffef);
     inst = (CUICfManagerCreateView*)lbl_eu_80664054;
     {
-        u32 tempRet = (u32)func_801109D8(inst->field_0x144, inst->field_0x11C, 0);
+        u32 tempRet = (u32)EneSt_Create(inst->field_0x144, inst->field_0x11C, 0);
         savedRet = tempRet;
         if (tempRet == 0) {
             return 0;
@@ -2888,7 +2888,7 @@ u32 CUICfManager_queueSkipTimerMenu() {
         return 0;
     }
     {
-        u32 tempRet = (u32)func_8029EDE4(inst->field_144, inst->field_11C);
+        u32 tempRet = (u32)SkipTimer_CreateInstance(inst->field_144, inst->field_11C);
         savedRet = tempRet;
         if (tempRet == 0) {
             return 0;
@@ -2986,10 +2986,10 @@ slot_found:
     }
     return savedRet;
 }
-// us-80134a1c: create + queue a menu via func_8017FC88; the function's own
+// us-80134a1c: create + queue a menu via ZealMenuCreateSingleton; the function's own
 // u32 param passes straight through as the factory's 3rd arg (kept live in
 // r5 across the singleton loads). Same shape as CUICfManager_queueMapSelectMenu otherwise.
-extern "C" void* func_8017FC88(u32, u32, u32);
+extern "C" void* ZealMenuCreateSingleton(u32, u32, u32);
 u32 CUICfManager_queueFactoryMenu(u32 param) {
     CUICfManagerCreateView* inst;
     volatile u32 savedRet;
@@ -3005,7 +3005,7 @@ u32 CUICfManager_queueFactoryMenu(u32 param) {
     }
     {
         u32 tempRet =
-            (u32)func_8017FC88((u32)inst->field_0x144, inst->field_0x11C, param);
+            (u32)ZealMenuCreateSingleton((u32)inst->field_0x144, inst->field_0x11C, param);
         savedRet = tempRet;
         if (tempRet == 0) {
             return 0;
@@ -3585,7 +3585,7 @@ u32 CUICfManager_queueKizunagramMenu(u32 arg) {
         return 0;
     }
     {
-        u32 tempRet = func_8025728C(inst->field_0x144, inst->field_0x11C, arg);
+        u32 tempRet = KizunagramCreateSingleton(inst->field_0x144, inst->field_0x11C, arg);
         savedRet = tempRet;
         if (tempRet == 0) {
             return 0;
@@ -3627,11 +3627,11 @@ slot_found:
     return savedRet;
 }
 // us-8013539c: create + queue the CMenuPassiveSkill-style menu.
-u32 CUICfManager_queuePassiveSkillMenu() { CF_QUEUE_EXPLICIT(func_802638D0) }
+u32 CUICfManager_queuePassiveSkillMenu() { CF_QUEUE_EXPLICIT(createPassiveSkillMenu) }
 // us-80135474: create + queue the CMenuPlayAward-style menu.
 u32 CUICfManager_queuePlayAwardMenu() { CF_QUEUE_EXPLICIT(PlayAward_CreateMenu) }
 // us-8013554c: create + queue the CMenuKizunaTalkList-style menu.
-u32 CUICfManager_queueKizunaTalkMenu() { CF_QUEUE_EXPLICIT(func_80272414) }
+u32 CUICfManager_queueKizunaTalkMenu() { CF_QUEUE_EXPLICIT(KizunaList_Create) }
 // CUICfManager_queueSaveMenu: create the save menu and queue it, forwarding both own args
 // (retail keeps them in r6/r7 across the singleton check for the call).
 u32 CUICfManager_queueSaveMenu(u32 arg0, u32 arg1) {
@@ -3647,7 +3647,7 @@ u32 CUICfManager_queueSaveMenu(u32 arg0, u32 arg1) {
         return 0;
     }
     {
-        u32 tempRet = func_8028E3B4(inst->field_0x144, inst->field_0x11C, 0, arg0, arg1);
+        u32 tempRet = createSaveMenu(inst->field_0x144, inst->field_0x11C, 0, arg0, arg1);
         savedRet = tempRet;
         if (tempRet == 0) {
             return 0;
@@ -3702,7 +3702,7 @@ u32 func_80134C34() {
         return 0;
     }
     {
-        u32 tempRet = func_8028E3B4(inst->field_0x144, inst->field_0x11C, 1, 0, 1);
+        u32 tempRet = createSaveMenu(inst->field_0x144, inst->field_0x11C, 1, 0, 1);
         savedRet = tempRet;
         if (tempRet == 0) {
             return 0;
@@ -3743,7 +3743,7 @@ slot_found:
     return savedRet;
 }
 
-// CUICfManager_queueTutorialMenu: create the tutorial menu via func_8029A5DC and queue it.
+// CUICfManager_queueTutorialMenu: create the tutorial menu via MenuTutorialCreate and queue it.
 // arg0 = slot index (u8), arg1 = scene id (or the manager's own when 0),
 // arg2 = skip-reset flag (0 resets the slot via func_8013042C first).
 extern "C" u32 CUICfManager_queueTutorialMenu(u32 a0, u32 a1, u32 a2) {
@@ -3774,7 +3774,7 @@ extern "C" u32 CUICfManager_queueTutorialMenu(u32 a0, u32 a1, u32 a2) {
     inst = (CUICfManagerCreateView*)lbl_eu_80664054;
     {
         u32 tempRet =
-            (u32)func_8029A5DC(inst->field_0x144, a1 != 0 ? a1 : inst->field_0x11C, (u8)a0);
+            (u32)MenuTutorialCreate(inst->field_0x144, a1 != 0 ? a1 : inst->field_0x11C, (u8)a0);
         savedRet = tempRet;
         if (tempRet == 0) {
             return 0;
@@ -3940,7 +3940,7 @@ u32 CUICfManager_queueGetItemMenuNarrowed(u32 arg) {
         return 0;
     }
     {
-        u32 tempRet = func_8014A064(inst->field_0x144, inst->field_0x11C, (u16)arg);
+        u32 tempRet = CMenuGetItem_CreateSingle(inst->field_0x144, inst->field_0x11C, (u16)arg);
         savedRet = tempRet;
         if (tempRet == 0) {
             return 0;
@@ -3995,7 +3995,7 @@ u32 CUICfManager_queueMultiGetItemMenu(u32 arg) {
         return 0;
     }
     {
-        u32 tempRet = func_8014A1D4(inst->field_0x144, inst->field_0x11C, (u8)arg, 0);
+        u32 tempRet = CMenuGetItem_CreateMulti(inst->field_0x144, inst->field_0x11C, (u8)arg, 0);
         savedRet = tempRet;
         if (tempRet == 0) {
             return 0;
@@ -4103,15 +4103,15 @@ int func_80135708() {
     // Retail holds the slot-array base (inst+0x14C) in r31 across the gates.
     u8* volatile base = (u8*)inst + 0x14c;
     int flag;
-    if (func_80293C10() != 0) {
+    if (PTNotice_IsActive_3C10() != 0) {
         flag = 1;
-    } else if (func_8029A658() != 0) {
+    } else if (MenuTutorialIsCreated() != 0) {
         flag = 1;
-    } else if (func_801B481C() != 0) {
+    } else if (GetItemMulti_IsActiveFlag() != 0) {
         flag = 1;
-    } else if (func_80122450() != 0) {
+    } else if (hasQuestWindow() != 0) {
         flag = 1;
-    } else if (func_80124B78() != 0) {
+    } else if (SysWinGetSingleton() != 0) {
         // Booleanizing assignment: retail emits neg/or/srwi here.
         flag = 1;
     } else {
@@ -4161,7 +4161,7 @@ extern "C" int func_801359AC(u8* singleton) {
     if (isSceneActive__Q22cf13CfGameManagerFv() != 0) {
         return 1;
     }
-    if (func_8009CF8C(0x3508) != 0 && func_8009CF8C(0x20) <= 4) {
+    if (CtrlRemote_TouchBitByArg(0x3508) != 0 && CtrlRemote_TouchBitByArg(0x20) <= 4) {
         return 1;
     }
     {
@@ -4231,19 +4231,19 @@ extern "C" int func_801359AC(u8* singleton) {
     if ((lbl_eu_80663E24 & 0x00000200u) != 0) {
         return 1;
     }
-    if (func_8009CF8C(0x334b) == 0) {
+    if (CtrlRemote_TouchBitByArg(0x334b) == 0) {
         return 1;
     }
-    if (func_8029A658() != 0) {
+    if (MenuTutorialIsCreated() != 0) {
         return 1;
     }
-    if (func_8011CD5C() != 0) {
+    if (isQuestLogMenuActive() != 0) {
         return 1;
     }
     if (CMenuArtsSelect_isCreated() != 0) {
         return 1;
     }
-    if (func_80122450() != 0) {
+    if (hasQuestWindow() != 0) {
         return 1;
     }
     {
@@ -4357,11 +4357,11 @@ extern "C" bool OnFileEvent__12CUICfManagerFv(CUICfManager* self, CEventFile* ev
 #undef UICF_FONT_BLOCK
 
     // Best-known tail shape: the null-guarded +0x58 IFlagEvent adjust is
-    // computed inside the call (retail hoists it before func_8009D0B4 by
+    // computed inside the call (retail hoists it before CtrlRemote_FetchSharedBufPtr by
     // destroying its self copy - not reproducible without extra liveness).
     self->mFileHandle = NULL;
-    func_8009D0B4();
-    func_8009D414(static_cast<cf::IFlagEvent*>(self));
+    CtrlRemote_FetchSharedBufPtr();
+    CtrlRemote_ResetSlotArrayObj(static_cast<cf::IFlagEvent*>(self));
     return true;
     }
     return false;

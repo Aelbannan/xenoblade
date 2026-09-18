@@ -85,15 +85,15 @@ namespace cf {
         CfSelectorObjEnumList mList; // 0x04
     };
 
-    void* CfObjEnumList::func_800F6E98(int index) {
+    void* CfObjEnumList::getObjectIdAt(int index) {
         return reinterpret_cast<void*>(mPtrArray[index]->objectId);
     }
 
-    void* CfObjEnumList::func_800F6EAC(unsigned long idx) {
+    void* CfObjEnumList::getObjectAt(unsigned long idx) {
         return mPtrArray[idx]->object;
     }
 
-    void* CfObjEnumList::func_800F6EC0(int index) {
+    void* CfObjEnumList::getEntryAt(int index) {
         return mPtrArray[index];
     }
 }
@@ -190,11 +190,11 @@ void func_800F49F8(cf::CfObjEnumList* self, cf::CfObjEnumList* src) {
 // (unmangled), so the definition below is extern "C" to match reloc names.
 extern "C" void func_800F4B5C(cf::CfObjEnumList* self, int flags, u32 options);
 
-// func_800F4A98: reset the list counts, then normalize the flags/options pair
+// startEnumObjects: reset the list counts, then normalize the flags/options pair
 // (param - 0x80000000 selects one of five presets) and hand off to the main
 // enumerator func_800F4B5C as a tail call.  An unset param (0) just clears the
 // lists.  The default case passes the raw (param, param2) pair through.
-void func_800F4A98(cf::CfObjEnumList* self, u32 param, u32 param2) {
+void startEnumObjects(cf::CfObjEnumList* self, u32 param, u32 param2) {
     self->mPtrCount = 0;
     self->mObjInfoCount = 0;
     if (param == 0) {
@@ -412,12 +412,12 @@ CfEnumActor* func_8016FE34(CfEnumObject*);
 CfEnumActor* func_800BBC0C(CfEnumObject*);
 int func_80148778(void*, int);
 int isSpeedAbove(CfEnumActorAux*);
-int func_8009CF8C(int);
-CfEnumKind* func_800AB3D0(CfEnumObject*);
+int CtrlRemote_TouchBitByArg(int);
+CfEnumKind* CollObjHasFlag64Bit15(CfEnumObject*);
 int CBattleMan_ListHasValue(void*, CfEnumActor*);
 CfEnumActor* CBattleMan_NextListItem(void*);
 CfEnumActor* CBattleMan_FindNextActorRef(void*, CfEnumObject*);
-CfEnumObject* func_800FE68C();
+CfEnumObject* Selector_GetInstance();
 CfEnumObject* findObjectById__Fi(int);
 CfEnumObject* getPlayer__Q22cf13CfGameManagerFi(int);
 extern const float lbl_eu_80666EB8;
@@ -579,7 +579,7 @@ extern "C" void func_800F4B5C(cf::CfObjEnumList* self, int flags, u32 options) {
         }
         return;
     } else if (flags & 4) {
-        CfEnumObject* selector = func_800FE68C();
+        CfEnumObject* selector = Selector_GetInstance();
         CfEnumObject* object = *(CfEnumObject**)((u8*)selector + 0x90E4);
         if (object != 0) {
             object = findObjectById__Fi((int)object);
@@ -893,9 +893,9 @@ extern "C" void func_800F4B5C(cf::CfObjEnumList* self, int flags, u32 options) {
                 rejected = true;
             }
             if (!rejected) {
-                bool unavailable = func_8009CF8C(0x3354) == 0;
+                bool unavailable = CtrlRemote_TouchBitByArg(0x3354) == 0;
                 if (unavailable) {
-                    CfEnumKind* kind = func_800AB3D0(object);
+                    CfEnumKind* kind = CollObjHasFlag64Bit15(object);
                     if (kind != 0 && kind->kind91 == 6) {
                         rejected = true;
                     }
@@ -1040,11 +1040,11 @@ extern "C" void func_800F4B5C(cf::CfObjEnumList* self, int flags, u32 options) {
 #undef ENUM_BASIC_FILTERS
 #undef ENUM_ADD_OBJECT
 
-// func_800F6D50: resolve an object by id and append it to this list.  The
+// appendObjectById: resolve an object by id and append it to this list.  The
 // local sObjInfo is only partially initialized (field_18/objectId/object);
 // the remaining fields are copied as-is from the local's stack slot, matching
 // the retail garbage-field copy.
-void func_800F6D50(cf::CfObjEnumList* self, int param) {
+void appendObjectById(cf::CfObjEnumList* self, int param) {
     CfEnumObject* obj = findObjectById__Fi(param);
     if (obj == 0) {
         return;
@@ -1058,10 +1058,10 @@ void func_800F6D50(cf::CfObjEnumList* self, int param) {
         &self->mObjInfo[self->mObjInfoCount - 1];
 }
 
-// func_800F6E08: find the first entry (cycling from index 0 through
+// findFirstCleanObjectId: find the first entry (cycling from index 0 through
 // count-1) whose field_18 has none of the 0x70 flag bits set; return its
 // objectId, or 0 if every entry is flagged.
-void* func_800F6E08(cf::CfObjEnumList* self) {
+void* findFirstCleanObjectId(cf::CfObjEnumList* self) {
     volatile u32* countPtr = &self->mPtrCount;
     u32 count = *countPtr;
     if (count == 0) {
@@ -1083,23 +1083,23 @@ void* func_800F6E08(cf::CfObjEnumList* self) {
     return (void*)obj->objectId;
 }
 
-// func_800F8794: quicksort pivot pick.  Scan (lo, hi] for the first index
+// findSortPivot: quicksort pivot pick.  Scan (lo, hi] for the first index
 // whose sort value differs from value(lo); return that index, or lo when
 // value(lo) >= value(p) (descending tie-break), or -1 when the whole range
 // is equal to value(lo).  Retail symbols are unmangled globals.
-extern "C" int func_800F8794(CfSortableList* self, int lo, int hi);
+extern "C" int findSortPivot(CfSortableList* self, int lo, int hi);
 
-// func_800F8890: Hoare partition (defined below).
-extern "C" int func_800F8890(CfSortableList* self, int lo, int hi, int pivot);
+// partitionSortList: Hoare partition (defined below).
+extern "C" int partitionSortList(CfSortableList* self, int lo, int hi, int pivot);
 
 // func_800F7DEC: quicksort recursion over the sortable list.  With the unit's
-// -inline auto, MWCC expands func_800F8794/func_800F8890 at every call site,
+// -inline auto, MWCC expands findSortPivot/partitionSortList at every call site,
 // producing the retail multi-stage inline blob.
 extern "C" void func_800F7DEC(CfSortableList* self, int lo, int hi) {
     if (lo != hi) {
-        int p = func_800F8794(self, lo, hi);
+        int p = findSortPivot(self, lo, hi);
         if (p != -1) {
-            int m = func_800F8890(self, lo, hi, p);
+            int m = partitionSortList(self, lo, hi, p);
             if (lo != m - 1) {
                 func_800F7DEC(self, lo, m - 1);
             }
@@ -1110,7 +1110,7 @@ extern "C" void func_800F7DEC(CfSortableList* self, int lo, int hi) {
     }
 }
 
-extern "C" int func_800F8794(CfSortableList* self, int lo, int hi) {
+extern "C" int findSortPivot(CfSortableList* self, int lo, int hi) {
     int p = lo + 1;
     while (p <= hi && self->value(lo) == self->value(p)) {
         p++;
@@ -1126,11 +1126,11 @@ extern "C" int func_800F8794(CfSortableList* self, int lo, int hi) {
 
 // (func_800F7DEC is defined above, before its callees.)
 
-// func_800F8890: Hoare partition of the sortable list.  The pivot value is
+// partitionSortList: Hoare partition of the sortable list.  The pivot value is
 // read via value(pivot), then the list is scanned from both ends (value(i) <
 // pivot on the left, value(j) >= pivot on the right) and out-of-place
 // elements are swapped through the get() accessor.  Returns the split index.
-extern "C" int func_800F8890(CfSortableList* self, int lo, int hi, int pivot) {
+extern "C" int partitionSortList(CfSortableList* self, int lo, int hi, int pivot) {
     int i = lo;
     int j = hi;
     float pivotValue = self->value(pivot);
@@ -1154,7 +1154,7 @@ extern "C" int func_800F8890(CfSortableList* self, int lo, int hi, int pivot) {
     return i;
 }
 
-// func_800F8890: Hoare partition of the sortable list.  The pivot value is
+// partitionSortList: Hoare partition of the sortable list.  The pivot value is
 // read via value(pivot), then the list is scanned from both ends (value(i) <
 // pivot on the left, value(j) >= pivot on the right) and out-of-place
 // elements are swapped through the get() accessor.  Returns the split index.
@@ -1324,7 +1324,7 @@ extern "C" void func_800F89DC(cf::CfObjEnumList* self) {
 // the scene's view transform: Scn_FindCamItem/Scn_SetCamIndex fetch the pose block
 // and view frame, func_8049B59C writes the view-space position into info+8 for
 // two probe slots, then a screen-rect gate (getFrame2ViewOffset), the coli
-// probe func_804BE348 on t[k]+border-offset, and the global func_804B5088
+// probe ScnRes_SegQueryForward_E348 on t[k]+border-offset, and the global func_804B5088
 // probe decide acceptance.  Accepted entries get the 0x10 mark bit; every
 // entry is re-appended.
 void __ct__800FA9B4(cf::CfObjEnumList* list, void* scene, u32 options) {
@@ -1439,7 +1439,7 @@ void __ct__800FA9B4(cf::CfObjEnumList* list, void* scene, u32 options) {
                         (nw4r::math::VEC3*)&sum, (nw4r::math::VEC3*)&t[k],
                         (nw4r::math::VEC3*)&base);
                     ml::CVec3 probe = sum;
-                    if (func_804BE348((u8*)pose + 0x10C, &probe, 0x44A45, 0,
+                    if (ScnRes_SegQueryForward_E348((u8*)pose + 0x10C, &probe, 0x44A45, 0,
                                       0) != 0) {
                         keep = false;
                     }
@@ -1469,7 +1469,7 @@ void __ct__800FA9B4(cf::CfObjEnumList* list, void* scene, u32 options) {
 }
 
 // __ct__800FAE3C: rebuild the object list keeping only entries whose position
-// is NOT accepted by the collision probe: func_804BE348(arg1, pos, 0x44A45,
+// is NOT accepted by the collision probe: ScnRes_SegQueryForward_E348(arg1, pos, 0x44A45,
 // 0, 0), falling back to func_804B5088(globalProbe, pos, arg1, 1, 0).  The
 // position comes from vtable 0x12C(0x64)/0x128 (floats at +0xC/+0x1C/+0x2C)
 // or, if those return null, vtable 0xAC (plain vec3).  Mark bit 0x10.
@@ -1524,7 +1524,7 @@ void __ct__800FAE3C(cf::CfObjEnumList* list, ml::CVec3* arg1, u32 options) {
         vec.y = src->y;
         vec.z = src->z;
         bool flag = false;
-        if (func_804BE348(arg1, &vec, 0x44A45, 0, 0) != 0) {
+        if (ScnRes_SegQueryForward_E348(arg1, &vec, 0x44A45, 0, 0) != 0) {
             flag = true;
         }
         if (!flag) {
@@ -2795,10 +2795,10 @@ void __ct__800FD250(cf::CfObjEnumList* self) {
     }
 }
 
-// func_800FD2FC: search forward from (index + 1) mod count for the first
+// findNextCleanObjectId: search forward from (index + 1) mod count for the first
 // entry whose field_18 has none of the 0x70 flag bits set; return its
 // objectId, or 0 if the whole cycle is flagged.
-void* func_800FD2FC(cf::CfObjEnumList* self, int index) {
+void* findNextCleanObjectId(cf::CfObjEnumList* self, int index) {
     volatile u32* countPtr = &self->mPtrCount;
     int i = (index + 1) % *countPtr;
     while (index != i) {
@@ -2815,10 +2815,10 @@ void* func_800FD2FC(cf::CfObjEnumList* self, int index) {
     return (void*)obj->objectId;
 }
 
-// func_800FD378: search backward from (index + count - 1) mod count for the
+// findPrevCleanObjectId: search backward from (index + count - 1) mod count for the
 // first entry whose field_18 has none of the 0x70 flag bits set; return its
 // objectId, or 0 if the whole cycle is flagged.
-void* func_800FD378(cf::CfObjEnumList* self, int index) {
+void* findPrevCleanObjectId(cf::CfObjEnumList* self, int index) {
     volatile u32* countPtr = &self->mPtrCount;
     u32 count = *countPtr;
     int i = (index + count - 1) % count;
@@ -2841,7 +2841,7 @@ void* func_800FD378(cf::CfObjEnumList* self, int index) {
 // is unused (retail never reads r3); aux's position comes from vtable 0x128
 // (CfEnumPosBlock, floats at +0xC/+0x1C/+0x2C) or, if null, vtable 0xAC (plain
 // vec3).  The two Ys are nudged by lbl_eu_80666ECC and ordered so the first
-// arg to func_804BE348 has the larger Y.  A lazy-initialized 12-float probe
+// arg to ScnRes_SegQueryForward_E348 has the larger Y.  A lazy-initialized 12-float probe
 // table (4 diagonal offsets) is added to both corners; any probe hit returns 1.
 extern "C" int func_800FD3FC(cf::CfObjEnumList* list, CfEnumActor* aux,
                              ml::CVec3* spot) {
@@ -2890,7 +2890,7 @@ extern "C" int func_800FD3FC(cf::CfObjEnumList* list, CfEnumActor* aux,
         low = &objPos;
         high = &spotCopy;
     }
-    if (func_804BE348(high, low, 0x44A45, 0, 0) == 0) {
+    if (ScnRes_SegQueryForward_E348(high, low, 0x44A45, 0, 0) == 0) {
         return 1;
     }
     // ps_sub zeroing: ml::CVec3::sub does { temp; VEC3Sub(temp, lhs, rhs);
@@ -2922,18 +2922,18 @@ extern "C" int func_800FD3FC(cf::CfObjEnumList* list, CfEnumActor* aux,
         // into v1/v2 (0x38/0x2C), exactly the retail's loop body.
         ml::CVec3::add(v1, *high, tbl);
         ml::CVec3::add(v2, *low, tbl);
-        if (func_804BE348(&v1, &v2, 0x44A45, 0, 0) == 0) {
+        if (ScnRes_SegQueryForward_E348(&v1, &v2, 0x44A45, 0, 0) == 0) {
             return 1;
         }
     }
     return 0;
 }
 
-extern "C" void* func_800FD68C(void* self, int index) { return (char*)self + index * 4; }
+extern "C" void* u32ArrayElemPtr(void* self, int index) { return (char*)self + index * 4; }
 
-void func_800FD698(void* self) { ((void(*)(void*))func_800FD68C)((char*)self - 0x604); }
+void u32ArrayElemPtrAdj604(void* self) { ((void(*)(void*))u32ArrayElemPtr)((char*)self - 0x604); }
 
-extern "C" void func_800FD6A0(u8* self) { ((void(*)(void*))func_800F4798)((char*)self - 0x604); }
+extern "C" void getScItemValueAdj604(u8* self) { ((void(*)(void*))Sc4798_GetSignedItemValue)((char*)self - 0x604); }
 
 // Retail dtor: implicit this-guard, then the inlined member-list destruction
 // chain (3 null-guards on this+4 + base body), then the delete-this epilogue

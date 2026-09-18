@@ -11,6 +11,9 @@ struct CItemData;
 struct CItemParam;
 struct CItemExt;
 
+extern "C" u32 CtrlRemote_TouchBitByArg(u32);
+extern "C" void UIWin_CreateB4790Win(void* box, int flags);
+
 // Sum the party inventory counts for two item kinds, read six BDAT
 // probability/entry columns, weight-adjust them, then roll a weighted
 // random item index (3..1) for the box contents. Returns the rolled index
@@ -984,7 +987,7 @@ void CItemBlock_setCount(u32 value) {
 // Add value to the shared item-count word, saturating at 999999999.
 // 64-bit arithmetic keeps the retail addc/addze + two-stage compare
 // (high-word subfe chain, then low-word cmplw).
-void func_801571A8(u32 value) {
+void CItem_AddBlockCountClamped(u32 value) {
     CItemBlockCounters* blk = (CItemBlockCounters*)lbl_eu_806641B8;
     u32* w = &blk->mCountE8;
     unsigned long long sum = (unsigned long long)*w + value;
@@ -1243,7 +1246,7 @@ static inline u32 slotFlag08(u32 v) {
 extern "C" void* CItemBlock_getKindList(u32 arg, s32* out1, s32* out2) {
     void* result = 0;
 
-    func_8009CF8C(0x80c);
+    CtrlRemote_TouchBitByArg(0x80c);
 
     *out1 = 0;
 
@@ -3331,8 +3334,8 @@ extern "C" s32 CItem_createBoxContents(u32 id) {
     scratch.field_00 = 0;
     memset(&scratch, 0, 0x34);
     void* handle = lbl_eu_806640E8;
-    s32 base = (s32)func_8003B41C(handle);
-    s32 total = (s32)func_8003B1EC(handle);
+    s32 base = (s32)Bdat_GetRowBase_B41C(handle);
+    s32 total = (s32)Bdat_GetMaxRow_B1EC(handle);
     for (s32 i = 0; i < total; i++) {
         s32 row = i + base;
         t.v = getBdatStringColumnValue(handle, lbl_eu_80501C58 + 0x13a, row);

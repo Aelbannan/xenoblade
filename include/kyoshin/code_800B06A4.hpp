@@ -1210,7 +1210,7 @@ extern "C" void* __ct__cf_CfObjectObj(void* self);
 extern "C" void* __ct__cf_CfObjectEne(void* self);
 extern "C" void* __ct__Q22cf12CfObjectTboxFv(void* self);
 extern "C" void __ct__Q22cf11CfObjectEffFv(void* self);
-extern "C" void func_800BFAB0(void* obj, u32 w04, u32 w00);
+extern "C" void ObjObj_ReleaseModels_FAB0(void* obj, u32 w04, u32 w00);
 extern "C" void* func_800B20B4(UnkClass_805764CC* self, u32 mask,
                                 const B20B4Payload* payload, u32 arg);
 

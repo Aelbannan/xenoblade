@@ -97,13 +97,13 @@ void func_8015BD94(CCharEffect* self) {
     }
 }
 
-// func_8015BF04: remove a slot object from the effect lists. Clears the
+// CharEffRemoveSlot: remove a slot object from the effect lists. Clears the
 // owner back-pointer at slot+0xB0 first, then scans the 44 primary slots
 // (mSlots[1..44]): on a match the twin entry and the slot pointer are
 // cleared, and unless the slot's removal-guard byte (+0xB4) is set (or the
 // index is above 9) the matching bit is set in the 0x2A8/0x2BC word. Falls
 // back to the 8-entry list at 0x2CC.
-void func_8015BF04(CCharEffect* self, CCharEffectSlot* p) {
+void CharEffRemoveSlot(CCharEffect* self, CCharEffectSlot* p) {
     p->field_B0 = NULL;
     for (u32 i = 0; i < 0x2c; i++) {
         if (self->mSlots[i + 1] == p) {
@@ -129,12 +129,12 @@ void func_8015BF04(CCharEffect* self, CCharEffectSlot* p) {
     }
 }
 
-// func_8015BFCC: register a slot value at index idx. Sets the bitmap bit
+// CharEffRegisterSlot: register a slot value at index idx. Sets the bitmap bit
 // (OR into 0x2AC/0x2C0) while clearing the two mirror words
 // (0x2B0/0x2B4 or 0x2C4/0x2C8), defaulting a NULL value to
 // lbl_eu_80664228. Also stores the per-slot u16/u8 data and latches
 // mFlags bit 1.
-void func_8015BFCC(CCharEffect* self, u32 idx, CCharEffectSlot* value, u16 a, u16 b, u8 c) {
+void CharEffRegisterSlot(CCharEffect* self, u32 idx, CCharEffectSlot* value, u16 a, u16 b, u8 c) {
     u32 bit = 1u << idx;
     u32* dstOr = &self->mField2AC;
     u32* dstClr1 = &self->mField2B0;
@@ -172,10 +172,10 @@ void func_8015C074(CCharEffect* self, u32 idx) {
     self->mFlags |= 2;
 }
 
-// func_8015C0B0: clear a bit in one word and set it in another. For
+// CharEffMoveBit: clear a bit in one word and set it in another. For
 // idx < 32 the clear/set words are at 0x2AC/0x2B0, for idx >= 32 at
 // 0x2C0/0x2C4; mFlags bit1 is latched.
-void func_8015C0B0(CCharEffect* self, u32 idx) {
+void CharEffMoveBit(CCharEffect* self, u32 idx) {
     u32 bit = 1u << idx;
     u32* set = &self->mField2B0;
     u32* clr = &self->mField2AC;
@@ -190,13 +190,13 @@ void func_8015C0B0(CCharEffect* self, u32 idx) {
     self->mFlags |= 2;
 }
 
-// func_8015C100: release the effect slots 0x0A..0x10. For each index the
+// CharEffReleaseSlots0A10: release the effect slots 0x0A..0x10. For each index the
 // slot is detached (clear back-pointer, set flag 0x40, NULL the slot), the
 // twin entry and per-slot s16/u8 tables are reset (0xFFFF/-1 for the first
 // two s16 tables, 0 for the third and the u8 table), and the five bitmap
 // words (0x2A4/0x2B4/0x2A8/0x2AC/0x2B0 or the 0x2B8/0x2C8/0x2BC/0x2C0/
 // 0x2C4 mirror set) have the bit cleared.
-void func_8015C100(CCharEffect* self) {
+void CharEffReleaseSlots0A10(CCharEffect* self) {
     for (u32 idx = 0xa; idx < 0x11; idx++) {
         u32 bit = 1u << idx;
         u32* w2 = &self->mField2B4;
@@ -267,9 +267,9 @@ void func_eu_8015D258(CCharEffect* self, f32 f1) {
     }
 }
 
-// func_8015C214: remove p from the 44-slot list (clearing the matching
+// CharEffRemoveByPtr: remove p from the 44-slot list (clearing the matching
 // twin entry), else from the 8-slot list at 0x2CC.
-void func_8015C214(CCharEffect* self, void* p) {
+void CharEffRemoveByPtr(CCharEffect* self, void* p) {
     for (u32 i = 0; i < 0x2c; i++) {
         if (self->mSlots[i + 1] == p) {
             self->mSlots[i + 1] = NULL;
@@ -289,14 +289,14 @@ bool func_8015C294(unsigned int* param1, int param2) {
     return param1[param2 + 1] != 0;
 }
 
-// func_8015C2B0: apply an effect to a target object. Resolves the effect
+// CharEffApplyToTarget: apply an effect to a target object. Resolves the effect
 // data source from the manager, ORs the (flags>>7)&1 bit with the result
 // of hasParamByteVal (data holder + 0x10, type&0xFF) to get a boolean flag,
 // then attaches the target to the manager, drives its setEffLockFg_ method
 // with the flag, and dispatches a per-type handler (byte table
 // lbl_eu_80501DF8: 1 = copy the data string into the target, 2 = scale
 // the target via CfObject_setObjScale by lbl_eu_80667530 * data->field_2E8).
-void func_8015C2B0(CCharEffect* self, cf::CfObjectEff* eff, u32 type, u32 flags) {
+void CharEffApplyToTarget(CCharEffect* self, cf::CfObjectEff* eff, u32 type, u32 flags) {
     CCharEffectData* data = (CCharEffectData*)((CCharEffectMgr*)self->mManager)->field_98;
     if (data == NULL) return;
 
@@ -327,11 +327,11 @@ void func_8015C2B0(CCharEffect* self, cf::CfObjectEff* eff, u32 type, u32 flags)
 
 void func_8015C404(){}
 
-// func_8015C8F4: detach every effect slot whose sub-object id (+0x14)
+// CharEffDetachBySubId: detach every effect slot whose sub-object id (+0x14)
 // matches the manager's vtable-0xA8 result. Each match clears the slot
 // back-pointer and sub-object id, sets slot flag 0x40, and NULLs the slot
 // pointer. Returns early when no manager is given.
-void func_8015C8F4(CCharEffect* self, CScnItemModel* manager) {
+void CharEffDetachBySubId(CCharEffect* self, CScnItemModel* manager) {
     u32 id;
     if (manager == NULL) return;
     void** p = (void**)self;
@@ -355,22 +355,22 @@ void func_8015C8F4(CCharEffect* self, CScnItemModel* manager) {
 
 void func_8015C9A0(){}
 
-int func_8015CB88() { return 1; }
+int CharEffAlwaysTrue() { return 1; }
 
-// func_8015CB90: 1 when the current game time is not 4.
-int func_8015CB90() {
+// CharEffIsTimeNot4: 1 when the current game time is not 4.
+int CharEffIsTimeNot4() {
     return cf::CfGameManager::getCurrentSlotIndex() != 4;
 }
 
-// func_8015CBC0: 1 when the current game time is 4.
-int func_8015CBC0() {
+// CharEffIsTime4: 1 when the current game time is 4.
+int CharEffIsTime4() {
     return cf::CfGameManager::getCurrentSlotIndex() == 4;
 }
 
-// func_8015CBEC: resolve the current actor id from the battle object's
+// CharEffGetBattleActorId: resolve the current actor id from the battle object's
 // sub-object (vtable 0x30) and query its flags via func_80174C98
 // (selector 0x802). Returns 1 when no battle object is present.
-int func_8015CBEC(CCharEffect* self) {
+int CharEffGetBattleActorId(CCharEffect* self) {
     cf::CCharEffectBattleObj* battleObj = self->mBattleObj;
     if (battleObj != NULL) {
         int id = *battleObj->field_04->vf30();
@@ -379,9 +379,9 @@ int func_8015CBEC(CCharEffect* self) {
     return 1;
 }
 
-// func_8015CC50: like func_8015CBEC but queries selector 0x803 and returns
+// CharEffGetActorId803: like CharEffGetBattleActorId but queries selector 0x803 and returns
 // 0 when no battle object is present.
-int func_8015CC50(CCharEffect* self) {
+int CharEffGetActorId803(CCharEffect* self) {
     cf::CCharEffectBattleObj* battleObj = self->mBattleObj;
     if (battleObj != NULL) {
         int id = *battleObj->field_04->vf30();
@@ -390,4 +390,4 @@ int func_8015CC50(CCharEffect* self) {
     return 0;
 }
 
-int func_8015CCB4() { return 0; }
+int CharEffAlwaysFalse() { return 0; }

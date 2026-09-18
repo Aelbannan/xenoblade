@@ -14,7 +14,7 @@
 #include "kyoshin/cf/object/CfObjectMove.hpp"
 #include "kyoshin/cf/CfGameManager.hpp"
 
-// Forward decls for func_800AB580's signature (defined in
+// Forward decls for CollObjLoadResourceTimed's signature (defined in
 // kyoshin/cf/object/CfObjectColl.cpp); that header cannot be included here
 // because it carries its own cf::CfObject declaration.
 namespace cf {
@@ -36,16 +36,16 @@ extern const double lbl_eu_80665C38; // sdata2: int->double magic (2^52 + 2^31)
 // buffer by execNpcAction before indexing.
 extern const u32 lbl_eu_804FA4C0[6];
 
-// .sdata2 float constant passed by chkEventRange to func_800AB580.
+// .sdata2 float constant passed by chkEventRange to CollObjLoadResourceTimed.
 extern const float lbl_eu_80665D44;
 
 // Defined in kyoshin/cf/object/CfObjectColl.cpp (declaration kept here so
 // plugin call sites see one consistent signature).
-extern "C" int func_800AB580(cf::CfObjectColl* self, cf::CfObject* obj, ml::CVec3* out, float f1);
+extern "C" int CollObjLoadResourceTimed(cf::CfObjectColl* self, cf::CfObject* obj, ml::CVec3* out, float f1);
 
 // Moves an object to pos with the given angle, relative to its move object.
 // Also defined in CfObjectColl.cpp.
-extern "C" void func_800ABFC4(cf::CfObject* obj, void* moveObj, ml::CVec3* pos, float angle);
+extern "C" void CollObjSetupRotBoxState5(cf::CfObject* obj, void* moveObj, ml::CVec3* pos, float angle);
 
 // Fake vtables removed - all slots folded onto owning classes
 // cf::CfObject / cf::CfObjectMove / cf::CActorParam etc. See headers for real virtuals.
@@ -54,10 +54,10 @@ extern "C" void func_800ABFC4(cf::CfObject* obj, void* moveObj, ml::CVec3* pos, 
 // instead of including code_801862C0.hpp to keep this header light;
 // getBdatStringColumnValue has a single canonical declaration on
 // kyoshin/plugin/ocBdat.hpp.
-extern "C" void* func_801862C0(void);
+extern "C" void* ArtsSelect_GetContainer(void);
 extern "C" void* func_801862E0(void* p);
 extern "C" void* func_801863F4(void* p, void* obj);
-extern "C" void* func_80186460(void* dst, void* src);
+extern "C" void* ArtsSelect_CacheEntry(void* dst, void* src);
 extern "C" void* func_801864DC(void* pObj, int slot);
 
 struct Vec3f {
@@ -118,7 +118,7 @@ void* createItemObjectWrapper__Q22cf13CfGameManagerFv(const char* name, u16 inde
 void* func_80081A40__Q22cf13CfGameManagerFv(const char* name, u16 index, int flag1, int flag2);
 void* createMapObjectInstance__Q22cf13CfGameManagerFv(const char* name, u16 index, int flag1, int flag2);
 void* createPlayerEffectInstance__Q22cf13CfGameManagerFv(u32 modelId, u32 motionId);
-void* func_8003AA34(void);
+void* Bdat_GetTable_AA34(void);
 const char* getFP__FPCc(const char* name);
 unsigned int UIWin_GetTimer();
 void* getPlayerContainerForCam__Q22cf13CfGameManagerFv();

@@ -9,21 +9,21 @@ extern "C" {
 // without C linkage there, but the retail TU exports the plain linker name;
 // this C linkage in the importing TU preserves the plain-symbol reloc).
 void func_eu_802B12DC();
-void func_eu_802B11C0();
-const char* func_eu_802B14D4();
-const char* func_eu_802B14E0();
-const char* func_eu_802B14EC();
-const wchar_t* func_eu_802B133C();
-const wchar_t* func_eu_802B1354();
-const wchar_t* func_eu_802B136C();
-const wchar_t* func_eu_802B13E4();
-const wchar_t* func_eu_802B13FC();
-const wchar_t* func_eu_802B1414();
-void func_eu_802B1334();
+void NandData_SetupBanner_11C0();
+const char* getErrMesLangTable0();
+const char* getErrMesLangTable1();
+const char* getErrMesLangTable2();
+const wchar_t* getErrMesText01();
+const wchar_t* getErrMesText02();
+const wchar_t* getErrMesText03();
+const wchar_t* getErrMesText08();
+const wchar_t* getErrMesText09();
+const wchar_t* getErrMesText10();
+void touchErrMesEntry();
 
 // Device path/flag helpers (plain symbols exported by monolib device TUs).
 void func_eu_804520B0(const void* p);
-void func_eu_80457318(const wchar_t* msg);
+void CDeviceFont_SetSharedText(const wchar_t* msg);
 
 // §17.6 asm backend reference - mangled CDesktop::entryTable bl target
 // (defined as a member in libs/monolib/src/core/CDesktop.hpp).

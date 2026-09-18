@@ -214,7 +214,7 @@ extern "C" char* MakeTplNameSysFile(u32 id);
 extern "C" void* findObjB28ById(s32 a);
 // Unprototyped-style import shared by two callers in this TU.
 extern "C" void* CBattleMan_FetchVisionObj(void* mgr);
-extern "C" int func_800F4648(void* self);
+extern "C" int ScMain_GetSummedInt(void* self);
 extern "C" void func_8049B59C(void* out, void* pose, const void* in);
 extern "C" void PaneSetVtxColorPairs(void* a, u32 b, u32 c);
 extern "C" char* func_80138DA4(const char* s);
@@ -226,7 +226,7 @@ int sprintf(char*, const char*, ...);
 extern "C" void* getEffOwner____FPv(void* obj);
 void* func_800AD860(void* obj);
 
-// Retail .sdata singleton (created by func_801109D8, cleared by Term).
+// Retail .sdata singleton (created by EneSt_Create, cleared by Term).
 extern u32 lbl_eu_80663F50;
 // CPcSelectCursor vtable (.data; the retail ctor stores its address at +0x00).
 // (Mini-vtable decl lives in the .cpp: MWCC rejects an hpp extern for it.)

@@ -18,35 +18,35 @@ void func_eu_802B12DC() {
     lbl_eu_80664BF8 = (u32)CBdat::getFP((const char*)lbl_eu_80513420);
 }
 
-void func_eu_802B1334() { CBdat::getEntry(6); }
+extern "C" void touchErrMesEntry() { CBdat::getEntry(6); }
 
 // Error-screen bdat string getters: forward the column index to the shared
 // bdat helper (bdat data from lbl_eu_80664BF8, column "???" at +9 of 0x80513420).
-void func_eu_802B1354() {
+extern "C" void getErrMesText02() {
     getBdatStringColumnValue((void*)lbl_eu_80664BF8, (char*)lbl_eu_80513420 + 9, 2);
 }
 
-void func_eu_802B136C() {
+extern "C" void getErrMesText03() {
     getBdatStringColumnValue((void*)lbl_eu_80664BF8, (char*)lbl_eu_80513420 + 9, 3);
 }
 
-void func_eu_802B1384() {
+extern "C" void getErrMesText04() {
     getBdatStringColumnValue((void*)lbl_eu_80664BF8, (char*)lbl_eu_80513420 + 9, 4);
 }
 
-void func_eu_802B139C() {
+extern "C" void getErrMesText05() {
     getBdatStringColumnValue((void*)lbl_eu_80664BF8, (char*)lbl_eu_80513420 + 9, 5);
 }
 
-void func_eu_802B13B4() {
+extern "C" void getErrMesText06() {
     getBdatStringColumnValue((void*)lbl_eu_80664BF8, (char*)lbl_eu_80513420 + 9, 6);
 }
 
-void func_eu_802B13CC() {
+extern "C" void getErrMesText07() {
     getBdatStringColumnValue((void*)lbl_eu_80664BF8, (char*)lbl_eu_80513420 + 9, 7);
 }
 
-void func_eu_802B13E4() {
+extern "C" void getErrMesText08() {
     getBdatStringColumnValue((void*)lbl_eu_80664BF8, (char*)lbl_eu_80513420 + 9, 8);
 }
 
@@ -58,47 +58,47 @@ void func_eu_802B13E4() {
 
 
 
-void func_eu_802B13FC() {
+extern "C" void getErrMesText09() {
     getBdatStringColumnValue((void*)lbl_eu_80664BF8, (char*)lbl_eu_80513420 + 9, 9);
 }
 
-void func_eu_802B1414() {
+extern "C" void getErrMesText10() {
     getBdatStringColumnValue((void*)lbl_eu_80664BF8, (char*)lbl_eu_80513420 + 9, 10);
 }
 
-void func_eu_802B142C() {
+extern "C" void getErrMesText12() {
     getBdatStringColumnValue((void*)lbl_eu_80664BF8, (char*)lbl_eu_80513420 + 9, 12);
 }
 
-void func_eu_802B1444() {
+extern "C" void getErrMesText13() {
     getBdatStringColumnValue((void*)lbl_eu_80664BF8, (char*)lbl_eu_80513420 + 9, 13);
 }
 
-void func_eu_802B145C() {
+extern "C" void getErrMesText14() {
     getBdatStringColumnValue((void*)lbl_eu_80664BF8, (char*)lbl_eu_80513420 + 9, 14);
 }
 
-void func_eu_802B1474() {
+extern "C" void getErrMesText15() {
     getBdatStringColumnValue((void*)lbl_eu_80664BF8, (char*)lbl_eu_80513420 + 9, 15);
 }
 
-void func_eu_802B148C() {
+extern "C" void getErrMesText16() {
     getBdatStringColumnValue((void*)lbl_eu_80664BF8, (char*)lbl_eu_80513420 + 9, 16);
 }
 
-void func_eu_802B14A4() {
+extern "C" void getErrMesText19() {
     getBdatStringColumnValue((void*)lbl_eu_80664BF8, (char*)lbl_eu_80513420 + 9, 19);
 }
 
-void func_eu_802B14BC() {
+extern "C" void getErrMesText20() {
     getBdatStringColumnValue((void*)lbl_eu_80664BF8, (char*)lbl_eu_80513420 + 9, 20);
 }
 
-void* func_eu_802B14D4(void) { return (void*)lbl_eu_8053A438; }
+extern "C" void* getErrMesLangTable0(void) { return (void*)lbl_eu_8053A438; }
 
-extern "C" void* func_eu_802B14E0(void) { return (void*)lbl_eu_8053A458; }
+extern "C" void* getErrMesLangTable1(void) { return (void*)lbl_eu_8053A458; }
 
-extern "C" void* func_eu_802B14EC(void) { return (void*)lbl_eu_8053A478; }
+extern "C" void* getErrMesLangTable2(void) { return (void*)lbl_eu_8053A478; }
 
 // Language codes patched into the extended language-entry tables.
 extern "C" void func_eu_804E2340(char* pStr);
@@ -145,6 +145,6 @@ void func_eu_802B14F8(s32 lang) {
     }
 }
 
-extern "C" void func_eu_802B133C() {
+extern "C" void getErrMesText01() {
     getBdatStringColumnValue((void*)lbl_eu_80664BF8, (char*)lbl_eu_80513420 + 9, 1);
 }

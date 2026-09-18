@@ -299,7 +299,7 @@ extern "C" void* __dt__801C2F2C(FxSoundSlot* this_, int flag) {
 //    (IsFinished() false) - the retail returns 0 in that case.
 // 3. Pushes the stored parameter block into the chosen DPL2 sub-object, then
 //    starts it with (memSize, size) and appends it to the bus effect chain.
-bool func_801C30BC(FxSoundSlot* self, u32 fxType, u32 memSize, u32 size) {
+extern "C" bool func_801C30BC(FxSoundSlot* self, u32 fxType, u32 memSize, u32 size) {
     // The retail builds a {&mReverb, &mChorus, &mDelay} address array on the
     // stack and indexes it by fxType (lwzx); kept as an explicit local array
     // to reproduce that shape.  `pFx` is the pointer handed to AppendEffect.
@@ -362,10 +362,10 @@ struct FxSoundPair {
     FxSoundSlot mSlot[2];
 };
 
-// Two-slot holder constructor (retail func_801C32E8): constructs the slot
+// Two-slot holder constructor (retail FxPair_Init): constructs the slot
 // array via __construct_array(func_801C2C14, __dt__801C2F2C, 0x4FC, 2), then
 // assigns the two bus ids (0 and 1).  Returns this (retail mr r3, r31).
-FxSoundPair* func_801C32E8(FxSoundPair* self) {
+FxSoundPair* FxPair_Init(FxSoundPair* self) {
     __construct_array(self, (void*)func_801C2C14, (void*)__dt__801C2F2C, 0x4FC, 2);
     self->mSlot[0].mBusId = 0;
     self->mSlot[1].mBusId = 1;

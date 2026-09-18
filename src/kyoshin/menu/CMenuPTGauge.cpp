@@ -6,12 +6,12 @@
 
 #include "kyoshin/cf/object/CAIAction.hpp"
 // Owner headers (single winning decls):
-// - getArtsSlotRC / getArtsParamRC2 / func_8025FB10 -> CChainActorList.hpp
+// - getArtsSlotRC / getArtsParamRC2 / IdTable_SumValues -> CChainActorList.hpp
 //   (int/const void* arts-query forms match the CActorParam.cpp definitions;
-//   func_8025FB10 extern "C" int form is the single winning decl).
+//   IdTable_SumValues extern "C" int form is the single winning decl).
 // - func_800F3970 -> single shared import on CBattleManagerApi.hpp (pulled in
 //   via CBattleManager.hpp below; CChain.hpp's copy is gone).
-// - func_8016DF2C -> canonical extern "C" u16() form (CAIAction.hpp,
+// - getReloadParam0 -> canonical extern "C" u16() form (CAIAction.hpp,
 //   matching CfMapEffectManager.hpp / code_80135FDC.hpp).
 #include "kyoshin/cf/chain/CChainActorList.hpp"
 // (MWCC -ipa file quirk: keep at least one line between the two includes -
@@ -335,7 +335,7 @@ done:
     ;
 }
 
-extern "C" int func_80187710() {
+extern "C" int getPTGaugeWord() {
     return (int)lbl_eu_806642D8;
 }
 // Complete-object destructor (retail __dt__12CMenuPTGaugeFv). Written as the
@@ -362,14 +362,14 @@ CMenuPTGauge::~CMenuPTGauge() {
 }
 // IWorkEvent dtor this-adjusting thunk (retail: subi r3,-0x58; b __dt__12CMenuPTGaugeFv;
 // resolves to the member dtor's mangled symbol above)
-extern "C" void func_80187EFC(void* self){
+extern "C" void CMenuPTGauge_dtorAdj58(void* self){
     __dt__12CMenuPTGaugeFv((char*)self - 0x58);
 }
-extern "C" void func_80187F04(void* self) {
+extern "C" void CMenuPTGauge_renderBeforeAdj5C(void* self) {
     extern void cbRenderBefore__12CMenuPTGaugeFv(void*);
     cbRenderBefore__12CMenuPTGaugeFv((char*)self - 0x5c);
 }
-void func_80187F0C(void* p) {
+void CMenuPTGauge_dtorAdj5C(void* p) {
     // Adjust from IScnRender subobject (+0x5c) back to CMenuPTGauge
     __dt__12CMenuPTGaugeFv(static_cast<char*>(p) - 0x5c);
 }

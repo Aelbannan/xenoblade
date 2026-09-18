@@ -36,7 +36,7 @@ public:
 extern u32 getPackedFont();
 
 void func_801AFAD0(CMenuVision*, CMenuVisionEntry*);
-extern "C" f32 func_800F4424(void*);
+extern "C" f32 ScMain_GetRatio(void*);
 
 // Read-only view of the current frame stored at AnimTransform+0x10.
 struct AnimFrameAccess {
@@ -47,10 +47,10 @@ struct AnimFrameAccess {
 extern "C" {
 void* findObjectById__Fi(int);
 void* CBattleMan_FetchVisionObj(cf::CBattleManager*);
-u32 func_800F4784(void*);
-void* func_800F477C(void*);
-int func_800F4648(void*);
-f32 func_800F42AC(void*);
+u32 CfCode_GetOptPtr0C(void*);
+void* CfCode_GetSubObject(void*);
+int ScMain_GetSummedInt(void*);
+f32 ScMain_GetRoundedMetric(void*);
 void playUISound__FUl(u32);
 void PaneSetColorFieldSingle(void*, const char*, u32);
 void PaneSetColorFieldPair(void*, const char*, u32, u32);
@@ -228,7 +228,7 @@ static inline void menuVisionReplacePaneImage(nw4r::lyt::Pane* pane, void* image
 struct PtmfWords;
 
 // Retail ctor symbol is unmangled (`__ct__CMenuVision`, C-ABI); kept as a
-// C-linkage out-of-line helper so the factory (func_801ACCE0) emits a real bl
+// C-linkage out-of-line helper so the factory (createVisionMenu) emits a real bl
 // to it, returning `this` in r3 like a real constructor (retail relies on it).
 extern "C" __declspec(noinline) CMenuVision* __ct__CMenuVision(CMenuVision* self, CProcess* parent) {
     __ct__8CProcessFv(reinterpret_cast<CProcess*>(self));
@@ -337,13 +337,13 @@ extern "C" void* __dt__11CMenuVisionFv(void* self, int flag) {
     return self;
 }
 
-extern "C" unsigned long func_801AC088() {
+extern "C" unsigned long isVisionMenuActive() {
     return lbl_eu_80664388 != 0;
 }
 
 // Bitmask -> vision-slot lookup; returns true when the selected slot is
 // currently animating (mState != 0). Bits: 1->0, 2->1, 4->2, 8->3, 0x10->5.
-extern "C" bool func_801AC09C(u32 flags) {
+extern "C" bool isVisionSlotAnimating(u32 flags) {
     int index;
     if (flags & 1) {
         index = 0;
@@ -379,7 +379,7 @@ extern "C" bool func_801AC124() {
 }
 // Mark the vision screen active (set flag byte at 0x54) when the singleton
 // instance exists.
-extern "C" void func_801AC1F8() {
+extern "C" void activateVisionMenu() {
     if (lbl_eu_80664388 != 0) {
         lbl_eu_80664388->field_0x54 = 1;
     }
@@ -455,7 +455,7 @@ void CMenuVision::cbRenderBefore() {
 // Lazy singleton factory: allocate a CMenuVision from the work-thread heap,
 // construct it with the given parent, register it on `self`, and stash the
 // result in the global singleton slot. Only the first call sticks.
-extern "C" CMenuVision* func_801ACCE0(CProcess* self, CProcess* parent) {
+extern "C" CMenuVision* createVisionMenu(CProcess* self, CProcess* parent) {
     if (lbl_eu_80664388 != 0) {
         return 0;
     }
@@ -500,7 +500,7 @@ static inline void menuVisionResetAnims(CMenuVisionEntry& e) {
 // (bit 0x10 also restarts slot 4). Slots idle (0) or bar-sustaining (4)
 // abort the whole call. Each restarted slot gets a timer weighted by how many
 // lower slots are also in state 5.
-void func_801ACD5C(int flags) {
+extern "C" void restartVisionSlots(int flags) {
     if (lbl_eu_80664388 == 0) {
         return;
     }
@@ -698,7 +698,7 @@ extern "C" void func_801AD504(int flags) {
     if (flags & 2) {
         CMenuVision* menu = lbl_eu_80664388;
         CMenuVisionEntry& entry = menu->mEntries[1];
-        u32 font = func_800F4784(battle);
+        u32 font = CfCode_GetOptPtr0C(battle);
         LayoutSetTextBoxFmtValue(entry.mLayout, lbl_eu_80504268 + 0x1AB, (char*)font, 0);
         LayoutSetTextBoxFmtValue(entry.mLayout, lbl_eu_80504268 + 0x1B8, (char*)font, 0);
         LayoutSetTextBoxFmtValue(entry.mLayout, lbl_eu_80504268 + 0x1C5, (char*)font, 0);
@@ -753,7 +753,7 @@ extern "C" void func_801AD504(int flags) {
         PaneSetColorFieldSingle(entry.mLayout, lbl_eu_80504268 + 0x1D2, color1);
         PaneSetColorFieldPair(entry.mLayout, lbl_eu_80504268 + 0x1ED, color2, color3);
 
-        u16 range = *(u16*)((u8*)func_800F477C(battle) + 0x5E);
+        u16 range = *(u16*)((u8*)CfCode_GetSubObject(battle) + 0x5E);
         void* image;
         switch (range) {
         case 4:
@@ -888,9 +888,9 @@ extern "C" void func_801AD504(int flags) {
             entry.mLayout->GetRootPane()->FindPaneByName(lbl_eu_80504268 + 0x550, true)->SetVisible(true);
         } else {
             entry.mLayout->GetRootPane()->FindPaneByName(lbl_eu_80504268 + 0x1FB, true)->SetVisible(true);
-            if ((battle->flags84 & 1) || (battle->flags88 & 0x100) || func_800F4648(battle) > 0) {
+            if ((battle->flags84 & 1) || (battle->flags88 & 0x100) || ScMain_GetSummedInt(battle) > 0) {
                 ((MenuVisionSetDamageText)setLayoutTextBoxNumber__FPQ34nw4r3lyt6LayoutPcUc)(
-                    entry.mLayout, (char*)(lbl_eu_80504268 + 0x1FB), func_800F4648(battle));
+                    entry.mLayout, (char*)(lbl_eu_80504268 + 0x1FB), ScMain_GetSummedInt(battle));
                 nw4r::math::VEC2 scale;
                 scale.x = lbl_eu_80667DD4;
                 scale.y = lbl_eu_80667DD4;
@@ -1066,7 +1066,7 @@ extern "C" void func_801AD504(int flags) {
     if (flags & 0x10) {
         CMenuVision* menu = lbl_eu_80664388;
         CMenuVisionEntry& entry = menu->mEntries[5];
-        int value = (int)func_800F42AC(battle);
+        int value = (int)ScMain_GetRoundedMetric(battle);
         if (value > 999) {
             value = 999;
         } else if (value < 0) {
@@ -1082,7 +1082,7 @@ extern "C" void func_801AD504(int flags) {
         nw4r::math::VEC2 position;
         position.x = trans->transX;
         position.y = trans->transY;
-        position.x = lbl_eu_80667DC8 * func_800F4424(battle);
+        position.x = lbl_eu_80667DC8 * ScMain_GetRatio(battle);
         bar = barEntry.mLayout->GetRootPane()->FindPaneByName(lbl_eu_80504268 + 0x215, true);
         trans = reinterpret_cast<PaneTransAccess*>(bar);
         trans->transX = position.x;
@@ -1131,11 +1131,11 @@ void func_801AF934(int sel) {
 
 // Mangled linker names used by adjustor thunks below
 
-void func_801AFE04(void* self) { ((void(*)(void*))__dt__11CMenuVisionFv)((char*)self - 0x58); }
+extern "C" void fwdVisionDtor58(void* self) { ((void(*)(void*))__dt__11CMenuVisionFv)((char*)self - 0x58); }
 
-void func_801AFE0C(void* self) { ((void(*)(void*))cbRenderBefore__11CMenuVisionFv)((char*)self - 0x5c); }
+extern "C" void fwdVisionCbRender5C(void* self) { ((void(*)(void*))cbRenderBefore__11CMenuVisionFv)((char*)self - 0x5c); }
 
-void func_801AFE14(void* self) { ((void(*)(void*))__dt__11CMenuVisionFv)((char*)self - 0x5c); }
+extern "C" void fwdVisionDtor5C(void* self) { ((void(*)(void*))__dt__11CMenuVisionFv)((char*)self - 0x5c); }
 
 // Static initializer: seed the ten .sbss colour quads above.
 void sinit_801AFCE8() {
@@ -1238,7 +1238,7 @@ L_continue:
                     nw4r::math::VEC2 position;
                     position.x = trans->transX;
                     position.y = trans->transY;
-                    position.x = lbl_eu_80667DC8 * func_800F4424(bmObj);
+                    position.x = lbl_eu_80667DC8 * ScMain_GetRatio(bmObj);
                     posPane = e->mLayout->GetRootPane()->FindPaneByName(lbl_eu_80504268 + 0x215, true);
                     trans = reinterpret_cast<PaneTransAccess*>(posPane);
                     trans->transX = position.x;

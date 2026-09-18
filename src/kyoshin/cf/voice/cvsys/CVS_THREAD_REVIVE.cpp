@@ -57,12 +57,12 @@ CVS_THREAD_REVIVE* __ct__802A86CC(CVoiceHandle* owner1, CVoiceHandle* owner2) {
     return self;
 }
 
-// us-802aaf08 (func_802A87D4)
+// us-802aaf08 (ReviveVxPlaySlot1)
 // Advance/play function. Copies init data from lbl_eu_80539CA4, then if both
 // voice slots are populated and slot 1 is inactive, plays a state-based voice
 // (slot-2 iterator + 0x204) or a fallback voice (0x21E) depending on iterator
 // validity, slot conflict, and a random gate.
-void func_802A87D4(CVS_THREAD_REVIVE* self) {
+void ReviveVxPlaySlot1(CVS_THREAD_REVIVE* self) {
     // Copy init data using pointer increment to force lwzu pattern
     u32 v0;
     const u32* p = lbl_eu_80539CA4;
@@ -108,12 +108,12 @@ void func_802A87D4(CVS_THREAD_REVIVE* self) {
     }
 }
 
-// us-802ab038 (func_802A8904)
+// us-802ab038 (ReviveVxPlaySlot2)
 // Advance/play function for voice slot 2 (field_0x24). Copies init data from
 // lbl_eu_80539CB0, checks the slot-2 voice state (vtable method at 0x308);
 // if >= 3 plays 0x711, otherwise a random voice (0x714 when mtRand==0, else
 // 0x710).
-void func_802A8904(CVS_THREAD_REVIVE* self) {
+void ReviveVxPlaySlot2(CVS_THREAD_REVIVE* self) {
     if (func_802A3E88(self) != 0) {
         return;
     }
@@ -156,17 +156,17 @@ void func_802A8904(CVS_THREAD_REVIVE* self) {
     }
 }
 
-// us-802ab134 (func_802A8A00)
+// us-802ab134 (ReviveVxOnComplete)
 // Completion callback: if no active voice, call the playback-start virtual.
-void func_802A8A00(CVS_THREAD_REVIVE* self) {
+void ReviveVxOnComplete(CVS_THREAD_REVIVE* self) {
     if (func_802A3E88(self) == 0) {
         self->func_802A3B50();
     }
 }
 
-// us-802ab17c (func_802A8A48)
+// us-802ab17c (ReviveVxRemoveVoice)
 // Remove a voice from the slots by matching its embedded CCharVoice pointer.
-void func_802A8A48(CVS_THREAD_REVIVE* self, CCharVoice* voicePtr) {
+void ReviveVxRemoveVoice(CVS_THREAD_REVIVE* self, CCharVoice* voicePtr) {
     func_802A3BEC(self, voicePtr);
 
     // Slot 0x20: load handle, bias if non-null, compare with voicePtr
@@ -196,10 +196,10 @@ int CVS_THREAD_REVIVE::blank1() {
     return BUFFER_SIZE;
 }
 
-// us-802ab1fc (func_802A8AC8)
+// us-802ab1fc (ReviveVxInitVoice6E)
 // Voice-ID init helper: if the handle is active-gated, allocate a 0x6E-byte
 // handle buffer, then play voice (arg + 0x1005) via func_802A3D54.
-int func_802A8AC8(CVoiceHandle* self, int arg) {
+int ReviveVxInitVoice6E(CVoiceHandle* self, int arg) {
     // Handle must have its 0x3F00 field's bit 1 set
     if (!(self->field_0x3F00 & 2)) return 0;
 
@@ -217,10 +217,10 @@ int func_802A8AC8(CVoiceHandle* self, int arg) {
     return 0;
 }
 
-// us-802ab2a0 (func_802A8B6C)
+// us-802ab2a0 (ReviveVxInitVoice3C)
 // Voice-ID init helper: if the handle is active-gated, allocate a 0x3C-byte
 // handle buffer, then play voice 0x100E via func_802A3D54.
-int func_802A8B6C(CVoiceHandle* self) {
+int ReviveVxInitVoice3C(CVoiceHandle* self) {
     // Handle must have its 0x3F00 field's bit 1 set
     if (!(self->field_0x3F00 & 2)) return 0;
 

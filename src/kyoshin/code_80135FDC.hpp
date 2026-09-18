@@ -142,9 +142,9 @@ extern void PSVECNormalize(const Vec*, Vec*);
 extern void* getCurrentView__5CViewFv();
 extern void* Scn_HasCamItem(void*, void*);
 extern void SetFont__Q34nw4r3lyt7TextBoxFPCQ34nw4r2ut4Font(nw4r::lyt::TextBox*, const nw4r::ut::Font*);
-extern void func_8006A234(u16*, u16*);
+extern void CfT_PlayClockSnapshot(u16*, u16*);
 extern int func_8006A6D0();
-extern u16 func_8016DF2C();
+extern u16 getReloadParam0();
 extern void Panic__Q24nw4r2dbFPCciPCce(const char*, int, const char*, ...);
 extern u8 lbl_eu_8052E524[];
 extern u8 lbl_eu_8052E4F0[];
@@ -249,7 +249,7 @@ extern char lbl_eu_80573C30[];
 extern ml::CVec3 zero__Q22ml5CVec3;
 
 // helpers
-// (func_8003B1EC / CtrlObjectParam_GetSlotTableBase / func_8009D018 stay inline in
+// (Bdat_GetMaxRow_B1EC / CtrlObjectParam_GetSlotTableBase / CtrlRemote_SetSharedBit stay inline in
 //  code_80135FDC.cpp - functions.hpp / CChainActorPc.hpp / CKizunaTalkList.hpp
 //  declare them with different signatures and are co-included by callers)
 extern "C" void* func_8009EC9C(u32 idx);
@@ -261,8 +261,8 @@ extern "C" void activateLOD__8CTaskLODFv(s8);
 extern "C" void deactivateLOD__8CTaskLODFv(u8);
 extern "C" int getLODData__8CTaskLODFv(u8);
 extern "C" void* getScnHandle__Fv(void);
-extern "C" void func_804BCC30(void*, s8);
-extern "C" void func_804BCC3C(void*, u8);
+extern "C" void ScnData_FwdB7D9C(void*, s8);
+extern "C" void ScnData_FwdB7DD4(void*, u8);
 extern "C" void forwardMpfCallB__17UnkClass_8047BB54Fv(void*, s8);
 extern "C" void forwardMpfCallC__17UnkClass_8047BB54Fv(void*, u8);
 extern "C" void Warning__Q24nw4r2dbFPCciPCce(const char*, int, const char*, ...);

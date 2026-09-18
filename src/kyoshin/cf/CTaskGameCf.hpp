@@ -68,7 +68,7 @@ namespace cf{
 // Cross-unit imports used by func_800447B4 (retail unmangled symbols).
 extern "C" u8* getGlobalSda();
 extern "C" u32 UIWin_GetInstance();
-extern "C" u32 func_801644B4();
+extern "C" u32 evtGetManagerAddr();
 extern u32 lbl_eu_80663E28;   // .sbss mode bitfield (bit 0x01000000)
 extern const f32 lbl_eu_80665D88; // .sdata2 float
 extern const f32 lbl_eu_80665D8C; // .sdata2 float
@@ -88,13 +88,13 @@ extern "C" void setPauseMode__Q22cf13CfGameManagerFv(bool arg);
 extern "C" void UIWin_CreateManager(void* self, CScnNw4r* pScene, u32 memHandle);
 extern "C" void func_8012F558(void* self, CScnNw4r* pScene, s32 memHandle);
 extern "C" void CUICfManager_createInstance(CProcess* pParent, CScnNw4r* pScene, s32 memHandle);
-extern "C" void func_801665A4(CProcess* pParent, CScnNw4r* pScene, CView* pView);
-extern "C" void func_eu_8006B238();
+extern "C" void evtCreateTaskRegister(CProcess* pParent, CScnNw4r* pScene, CView* pView);
+extern "C" void CfT_ResetEventState();
 extern "C" void func_80086B5C__Q22cf13CfGameManagerFv(int arg1, int arg2, int arg3);
 extern "C" u32 func_8024005C();
 extern "C" void func_8007E514__Q22cf13CfGameManagerFv(int arg1, int arg2, const char* str, int arg4, u32 arg5);
 extern "C" void func_80059C58(CProcess* pParent, CScnNw4r* pScene);
-extern "C" u32 func_8009CF8C(u32 id);
+extern "C" u32 CtrlRemote_TouchBitByArg(u32 id);
 extern "C" void func_8004302C(int a, int b);
 
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)

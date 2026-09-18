@@ -5,33 +5,35 @@
 
 #include "kyoshin/cfsys/CfObjectImplObj.hpp"
 
-// us-800caf20: per-frame prep - init via func_800CA948, dispatch the
+extern "C" void MoveImplRunEffectVirtuals(void* self);
+
+// us-800caf20: per-frame prep - init via MoveImplInitFields, dispatch the
 // vtable 0xE4 query and feed its result + the +0x14/+0x18 sub-objects
 // into func_8015BB3C.
-void func_800CA4EC(cf::CfObjectImplObj* self) {
-    func_800CA948(self);
+void ObjImplPrepFrame(cf::CfObjectImplObj* self) {
+    MoveImplInitFields(self);
     func_8015BB3C(self->vfE4(), (u8*)self->field_14, (u8*)self->field_18);
 }
 
-void* func_800CA538(void* self) { return (void*)((u8*)self + 0x68); }
+void* ObjImplGetUnk68(void* self) { return (void*)((u8*)self + 0x68); }
 
-// us-800caf74: dispatch the embedded event id via func_800CAB00, then point
+// us-800caf74: dispatch the embedded event id via MoveImplPushEventId, then point
 // the +0x368 CPartsChange at the driver sub-object's +0x98 event id.
-void func_800CA540(cf::CfObjectImplObj* self) {
-    func_800CAB00((CfObjectImplMoveObj*)self);
+void ObjImplPushEventResolve(cf::CfObjectImplObj* self) {
+    MoveImplPushEventId((CfObjectImplMoveObj*)self);
     CPartsChange_ResolveSlotNames(reinterpret_cast<cf::CPartsChange*>(self->mPartsChange), 0,
                   (PartsChangeIf*)self->field_14->field_0x98);
 }
 
 extern "C" void CPartsChange_SyncSlotState(void* a, void* b, int c);
-extern "C" void func_800CA580(void* self, void* b) { CPartsChange_SyncSlotState((char*)self + 0x368, b, 1); }
+extern "C" void ObjImplSyncSlotState(void* self, void* b) { CPartsChange_SyncSlotState((char*)self + 0x368, b, 1); }
 
-void func_800CA58C(void) {}
+void ObjImplNoop(void) {}
 
 // us-800cafc4: command dispatch - when the driver's +0xC4 id matches, parse
 // the param's digit char (modes 0x10/0x11; atoi when '0'-'9') and issue the
 // driver's vtable 0x204 command (0x23, 0, parsed-value, 0, 0).
-void func_800CA590(cf::CfObjectImplObj* self, u32 id, cf::CfObjCmdParam* param) {
+void ObjImplDispatchCmd(cf::CfObjectImplObj* self, u32 id, cf::CfObjCmdParam* param) {
     if (id != self->field_14->field_0xC4) {
         return;
     }
@@ -65,12 +67,11 @@ cf::CfObjectImplObj::~CfObjectImplObj() {
     __dt__Q22cf12CPartsChangeFv(reinterpret_cast<cf::CPartsChange*>(mPartsChange), -1);
 }
 
-void func_800CEE28(void* self);
-void func_800CA6CC(void* self) { ((void(*)(void*))func_800CEE28)((char*)self - 0xc); }
+void ObjImplEffectThunkC(void* self) { ((void(*)(void*))MoveImplRunEffectVirtuals)((char*)self - 0xc); }
 
 // Adjusted-this destructor thunks (retail: addi + tail-call the dtor).
 extern "C" void __dt__Q22cf15CfObjectImplObjFv(cf::CfObjectImplObj* self);
 
-extern "C" void func_800CA6D4(void* self) { ((void(*)(void*))__dt__Q22cf15CfObjectImplObjFv)((char*)self - 0xc); }
+extern "C" void ObjImplDtorThunkC(void* self) { ((void(*)(void*))__dt__Q22cf15CfObjectImplObjFv)((char*)self - 0xc); }
 
-extern "C" void func_800CA6DC(void* self) { ((void(*)(void*))__dt__Q22cf15CfObjectImplObjFv)((char*)self - 0x10); }
+extern "C" void ObjImplDtorThunk10(void* self) { ((void(*)(void*))__dt__Q22cf15CfObjectImplObjFv)((char*)self - 0x10); }

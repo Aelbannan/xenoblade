@@ -70,11 +70,11 @@ struct ColiObj {
 // Collision walk helpers in the sibling coli unit (code_804B59C8): take the
 // processing object plus a pointer into its u16 index array. C linkage so the
 // bl relocs carry the retail names.
-extern "C" void func_804B791C(ColiObj* self, const u16* list, u16 value);
+extern "C" void Coli_DispatchRegCb_791C(ColiObj* self, const u16* list, u16 value);
 extern "C" void func_804B7ACC(ColiObj* self, const u16* list, int count);
 extern "C" bool func_804B7B6C(ColiObj* self, const u16* list, int count);
 
-extern "C" void func_804BAE10(void* self) { *(u32*)self = 0; }
+extern "C" void ColiQuery_Reset(void* self) { *(u32*)self = 0; }
 
 // Clamp the query box (a = max corner, b = min corner) to the shared world
 // AABB origin per-axis, then test the squared distance of the clamped point
@@ -172,7 +172,7 @@ bool func_804BB0C8(const f32* a, const f32* b) {
     return true;
 }
 
-bool func_804BB1A0(const Vec3* a, const Vec3* b) {
+bool Coli_PointInSlab(const Vec3* a, const Vec3* b) {
     if (b->x <= lbl_eu_8065F3F0.x && lbl_eu_8065F3F0.x <= a->x &&
         b->z <= lbl_eu_8065F3F0.z && lbl_eu_8065F3F0.z <= a->z &&
         a->y >= lbl_eu_8065F3F0.y && lbl_eu_80665960 >= b->y) {
@@ -181,7 +181,7 @@ bool func_804BB1A0(const Vec3* a, const Vec3* b) {
     return false;
 }
 
-bool func_804BB228(const Vec3* a, const Vec3* b) {
+bool Coli_PointInBox(const Vec3* a, const Vec3* b) {
     if (b->x <= lbl_eu_8065F3F0.x && lbl_eu_8065F3FC.x <= a->x &&
         b->z <= lbl_eu_8065F3F0.z && lbl_eu_8065F3FC.z <= a->z &&
         b->y <= lbl_eu_8065F3F0.y && lbl_eu_8065F3FC.y <= a->y) {
@@ -215,7 +215,7 @@ void func_804BB2C0(ColiObj* self, ColiTri* tri) {
         if ((tri->field_0x0 & 6) != 0) {
             u32 idx;
             if ((tri->field_0x0 & 2) != 0) {
-                func_804B791C(self, &self->indices[tri->field_0x8 + 1],
+                Coli_DispatchRegCb_791C(self, &self->indices[tri->field_0x8 + 1],
                               self->indices[tri->field_0x8]);
                 idx = tri->field_0x8 + self->indices[tri->field_0x8] + 1;
             } else {
@@ -273,7 +273,7 @@ void func_804BB4EC(ColiObj* self, ColiTri* tri) {
     if ((tri->field_0x0 & 6) != 0) {
         u32 idx;
         if ((tri->field_0x0 & 2) != 0) {
-            func_804B791C(self, &self->indices[tri->field_0x8 + 1],
+            Coli_DispatchRegCb_791C(self, &self->indices[tri->field_0x8 + 1],
                           self->indices[tri->field_0x8]);
             idx = tri->field_0x8 + self->indices[tri->field_0x8] + 1;
         } else {
@@ -311,7 +311,7 @@ void func_804BB768(ColiObj* self, ColiTri* tri) {
         if ((tri->field_0x0 & 6) != 0) {
             u32 idx;
             if ((tri->field_0x0 & 2) != 0) {
-                func_804B791C(self, &self->indices[tri->field_0x8 + 1],
+                Coli_DispatchRegCb_791C(self, &self->indices[tri->field_0x8 + 1],
                               self->indices[tri->field_0x8]);
                 idx = tri->field_0x8 + self->indices[tri->field_0x8] + 1;
             } else {
@@ -348,7 +348,7 @@ void func_804BB904(ColiObj* self, ColiTri* tri) {
         if ((tri->field_0x0 & 6) != 0) {
             u32 idx;
             if ((tri->field_0x0 & 2) != 0) {
-                func_804B791C(self, &self->indices[tri->field_0x8 + 1],
+                Coli_DispatchRegCb_791C(self, &self->indices[tri->field_0x8 + 1],
                               self->indices[tri->field_0x8]);
                 idx = tri->field_0x8 + self->indices[tri->field_0x8] + 1;
             } else {
@@ -722,15 +722,15 @@ bool func_804BC494(ColiObj* self, const Vec3* minSrc, const Vec3* maxSrc) {
     return func_804BBAB0(self, &self->tris2[self->indices2[child->field_0x0 + 1]]);
 }
 
-extern "C" u32 func_804BC9A0(u32* self) { return *(u32*)self != 0; }
+extern "C" u32 Coli_CheckFlag(u32* self) { return *(u32*)self != 0; }
 
-void func_804BC9B4(int *dest, int offset, int *src) {
+void Coli_RebiasIndices(int *dest, int offset, int *src) {
     dest[0] = offset + src[1];
     dest[1] = offset + src[2];
     dest[2] = offset + src[3];
 }
 
-extern "C" void func_804BC9DC(void* self, u32 a, u32 b) { *(u32*)((u8*)self + 0xC) = a; *(u32*)((u8*)self + 0x10) = b; }
+extern "C" void Coli_StoreRange(void* self, u32 a, u32 b) { *(u32*)((u8*)self + 0xC) = a; *(u32*)((u8*)self + 0x10) = b; }
 
 // --- hard-symbol stubs (scaffold_hard_symbols) ---
 extern "C" void sinit_804BC9E8(void) {}

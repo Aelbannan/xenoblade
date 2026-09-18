@@ -26,7 +26,7 @@ struct CREvtCamFile {
     u32 field_04;
 };
 
-// Minimal view of cf::CTaskREvent (instance returned by func_801644B4) --
+// Minimal view of cf::CTaskREvent (instance returned by evtGetManagerAddr) --
 // only the 0x1B8 flag word is accessed from this TU.
 struct CREvtCamTaskEvent {
     u8 pad[0x1B8];
@@ -39,7 +39,7 @@ struct CREvtCamTaskEvent {
 // dispatched from this TU; sibling pluginCam.cpp drives the same object
 // (setPosition/setLookAt/setDirection/setRotation/setFov/setTarget/offset
 // setters). Slot 0x10 is a CREvtCamera-side virtual (retail word:
-// func_80180620); self-calls go through cf::CREvtObj::vfunc_10, not here.
+// REvtCam_ClearAnimHandle); self-calls go through cf::CREvtObj::vfunc_10, not here.
 class CREvtCamManager {
 public:
     virtual void v08();
@@ -105,11 +105,11 @@ public:
     u32 mField14;
     // +0x18: constructor parameter (stores the second arg)
     u32 mField18;
-    // +0x1C: pointer to a scene/model object (loaded by func_80180414)
+    // +0x1C: pointer to a scene/model object (loaded by REvtCam_SetupSceneModel)
     u32 mField1C;
     // +0x20: pointer to something (freed in destructor)
     u32 mField20;
-    // +0x24: pointer to something (freed in func_80180620)
+    // +0x24: pointer to something (freed in REvtCam_ClearAnimHandle)
     u32 mField24;
 
     // +0x28: first 3x4 matrix (MTX34)
@@ -121,9 +121,9 @@ public:
     CREvtCamFile* mField88;
     // +0x8C: float (default from lbl_eu_806678A4, updated from game manager)
     f32 mField8C;
-    // +0x90: scene-item handle (set by func_80180414)
+    // +0x90: scene-item handle (set by REvtCam_SetupSceneModel)
     u32 mField90;
-    // +0x94: scene-item handle (set by func_80180414)
+    // +0x94: scene-item handle (set by REvtCam_SetupSceneModel)
     u32 mField94;
     // +0x98: task-related counter/flag
     u32 mField98;
@@ -167,8 +167,8 @@ public:
     f32 mField444;
 
     // Inline helpers (already FULL_MATCH)
-    int func_801809A8() const { return 1; }
-    u32 func_801809B0() const { return mField1C; }
+    int REvtCam_AlwaysTrue1() const { return 1; }
+    u32 REvtCam_GetField1CValue() const { return mField1C; }
 };
 
 // Retail data symbols referenced by this TU (imports; global-scope externs are

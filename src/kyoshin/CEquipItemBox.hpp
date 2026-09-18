@@ -222,7 +222,7 @@ struct CEquipItemBoxEventFileView {
     void* handle;   // 0x4
 };
 
-/* CFileHandle object read by OnFileEvent (r3 passed to func_8003AA34). */
+/* CFileHandle object read by OnFileEvent (r3 passed to Bdat_GetTable_AA34). */
 struct CEquipItemBoxFileHandleView {
     void* vtable;   // 0x0
     void* field_4;  // 0x4
@@ -306,7 +306,7 @@ extern "C" void func_80137F88(void*, u32);
 extern "C" char* BdatGetPtrDirect(const void*, const void*, int);
 extern "C" void PartyStateWin_CopySlotRec(u8*, const u8*);
 extern "C" void __ct__CCur18(void*, void*);
-extern "C" void* func_8003AA34();  // bdat manager reset (no args; retail caller leaves r3 stale)
+extern "C" void* Bdat_GetTable_AA34();  // bdat manager reset (no args; retail caller leaves r3 stale)
 extern "C" void* getFP__FPCc(const char*);
 extern "C" void setBdatEntry__5CBdatFUlPv(u32, void*);
 extern "C" void validateHeap__17UnkClass_8045F564Fv(void*);
@@ -523,7 +523,7 @@ struct CEquipItemBoxEnumList {
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
 extern "C" void __dl__FPv(void*);
 extern "C" int CSysWin_isActive(void*);
-extern "C" void func_801D216C(void*, int);
+extern "C" void Cur_SetVisible(void*, int);
 extern "C" u32 func_801D32DC(u8*);
 extern "C" u32 CSysWin_isReady(void*);
 extern "C" void func_80139198(void*);
@@ -546,7 +546,7 @@ extern "C" void func_80289CC0(CEquipItemBox* self);
 extern "C" void eibPagePrev(CEquipItemBox* self);
 extern "C" void eibSortPagePrev(CEquipItemBox* self);
 extern "C" void idleEIBCur(CEIBCur* self);
-extern "C" void func_8022B8E4(void*);
+extern "C" void sysWinAdvancePhase3(void*);
 extern "C" void fillEIBSortMenu(CEquipItemBox*);
 // Same-TU helpers (defined as extern "C" free functions in CEquipItemBox.cpp;
 // the retail symbols are unmangled, so calls must reference the plain names).
@@ -578,8 +578,8 @@ extern "C" void getEntry__5CBdatFUl(u32);
 extern "C" void closeFileHandle__FPP11CFileHandle(void*);
 extern "C" void releaseArcResourceAccessor__FPQ34nw4r3lyt19ArcResourceAccessor(void*);
 extern "C" void deleteRegion__17UnkClass_8045F564Fv(void*);
-extern "C" void func_801D3258(void*);
-extern "C" void func_8022B7F4(void*);
+extern "C" void sortMenuTermCleanup(void*);
+extern "C" void sysWinTermLayout(void*);
 extern "C" u16 BdatGetItemId(u32);
 // Texture-name lookup (retail C-ABI; u16 arg, returns the resource name).
 extern "C" char* MakeTplNameSysFile(u32);
@@ -601,13 +601,13 @@ void* CItem_initItemImplInstances(void*);
 extern u32 lbl_eu_806640D8;
 extern u32 lbl_eu_806640F8;
 extern "C" int CSysWin_getUnk34(void*);
-extern "C" int func_801D3320(void*);
-extern "C" int func_801D3328(void*);
-extern "C" void func_801D377C(void*);
-extern "C" void func_80124270(void*, u32);
+extern "C" int sortMenuIsVisible28(void*);
+extern "C" int sortMenuGetFlag2B(void*);
+extern "C" void sortMenuPageDownStep(void*);
+extern "C" void setPaneVisible(void*, u32);
 // Pane-visibility query (C-ABI retail symbol; extern "C" so call sites emit
 // the plain name, matching eibHandleSubPage's reloc site).
-extern "C" bool func_801C4648(nw4r::lyt::Pane*);
+extern "C" bool isPaneVisible(nw4r::lyt::Pane*);
 
 // Item-box object type for the unk_20c pointer (forward decl; full layout in
 // CItemBoxInfo.hpp, which is included by TUs that also include this header).
@@ -665,37 +665,37 @@ extern "C" void sortEIBByVf90(CEquipItemGrid* grid);
 extern "C" void* getEIBItemObj(CEquipItemGrid* grid, u16 idx);
 extern "C" char* fmtEIBItemName(CEquipItemGrid* grid, u32 param);
 extern "C" void dispatchEIBKind(CEquipItemBox* self, int a, int b);
-extern "C" void func_801D3330(void*);
+extern "C" void sortMenuOpenInit(void*);
 extern "C" void func_801D3620(void*);
-extern "C" void func_801D3408(void*);
-extern "C" void func_801D3430(void*, const nw4r::math::VEC3*);
-extern "C" void func_801D3454(void*, void*);
+extern "C" void sortMenuToState4Page(void*);
+extern "C" void sortMenuSetLayoutPos(void*, const nw4r::math::VEC3*);
+extern "C" void sortMenuFormatPaneText(void*, void*);
 extern "C" void func_801D353C(void*, u8);
 // Sort-menu page-list helpers (CSortMenu TU, retail plain names).
 // func_801D3818(menu, page, &outCount, &outRemain): writes CItemBlock_getFlag120EC(page)
 // (clamped to >= 4) into outCount and (0 or count-4) into outRemain.
 extern "C" void func_801D3818(void*, u8, u8*, u8*);
-extern "C" void func_801D350C(void*);
+extern "C" void sortMenuResetCount(void*);
 extern "C" void func_801D3518(void*, void*);
 extern "C" u16 CItemBlock_getFlag120EC(int);
 extern "C" void LayoutSetTextBoxFmtValue(nw4r::lyt::Layout*, const char*, const char*, u32);
 extern "C" void func_80137924(void*, void*, void*, void*);
 // Per-frame update helpers (retail plain names, defined in sibling TUs).
-extern "C" void func_801D3064(void*);
+extern "C" void sortMenuInitFileRead(void*);
 extern "C" int KyoshinHeap_GetField44(void);
 extern "C" void func_801D202C(void*);
-extern "C" void func_801D3160(void*);
-extern "C" void func_8022B748(void*);
+extern "C" void sortMenuDispatchState(void*);
+extern "C" void sysWinDispatchPhase(void*);
 // Sub-window / cursor / sort-menu draw helpers (retail plain names).
 extern "C" void func_801D31F8(void*, nw4r::lyt::DrawInfo*);
-extern "C" void func_8022B7C8(void*, nw4r::lyt::DrawInfo*);
-extern "C" void func_801D20B0(void*, void*);
+extern "C" void sysWinDrawLayout(void*, nw4r::lyt::DrawInfo*);
+extern "C" void Cur_DrawLayout(void*, void*);
 // Layout text/colour setter used by the sort-menu page rebuild (refreshEIBSortTabs);
 // the 3rd/4th args are .sbss colour-table pairs referenced via sda21.
 extern "C" void PaneMatSetTevColorsByName(nw4r::lyt::Layout*, char*, void*, void*);
 // .sbss colour-table initialisers used by sinit_8028DAB0 (retail plain names).
 extern "C" void SplitU32ToS16s(void*, u32);
-extern "C" void func_801C4B60(void*, u32, u32, u32, u32);
+extern "C" void setGXColorS10(void*, u32, u32, u32, u32);
 extern s16 lbl_eu_80664920[4];
 extern s16 lbl_eu_80664928[4];
 extern s16 lbl_eu_80664930[4];
@@ -734,11 +734,11 @@ extern "C" u32 getEIBItemKind(CEquipItemGrid* grid, u16 idx);
 // equip-slot checks (same .sbss block as lbl_eu_806640F4).
 extern u32 lbl_eu_806640EC;
 // Resource/flag helper: 0 when the named resource id is absent (CQuestLog).
-extern "C" u32 func_8009CF8C(u32);
+extern "C" u32 CtrlRemote_TouchBitByArg(u32);
 // Sort-menu commit helpers + name-table pointer globals (func_802873D8).
-extern "C" int func_801D37F4(void*);
-extern "C" u8 func_801D3808(void*);
-extern "C" u8 func_801D3810(void*);
+extern "C" int sortMenuGetPageSum(void*);
+extern "C" u8 sortMenuGetPageIdx(void*);
+extern "C" u8 sortMenuGetSubPageIdx(void*);
 extern "C" void incrementEventCounter(u32);
 extern u32 lbl_eu_80668B3C;
 extern u16 lbl_eu_80668B40;
@@ -748,11 +748,11 @@ extern u8 lbl_eu_8050EF84;
 extern "C" void func_801D3698(void*);
 extern "C" void func_801D3724(void*);
 // SysWin sub-window text setters used by func_80287FE0's name-pane confirm.
-extern "C" void func_8022B90C(void*, u32);
+extern "C" void sysWinSwitchKindPane(void*, u32);
 extern "C" void func_8022B9B4(void*, void*, u32);
-extern "C" void func_8022BF6C(void*, void*, void*);
+extern "C" void sysWinSetTwoTextValues(void*, void*, void*);
 extern "C" void func_8022BFC8(void*, u32);
-extern "C" void func_8022B8B8(void*);
+extern "C" void sysWinOpenPhase1(void*);
 // Per-slot detail-text builder (func_80287FE0's ==3 lookup path).
 extern "C" void* func_801D3C74(void*, u32);
 extern const float lbl_eu_80668B24;
@@ -770,8 +770,8 @@ union CEquipItemBoxF32Record {
 extern CEquipItemBoxF32Record lbl_eu_8050EF68;
 
 // Item-name string providers (CErrMes TU, current hint/error strings).
-extern "C" char* func_eu_802B148C(void);
-extern "C" char* func_eu_802B1474(void);
+extern "C" char* getErrMesText16(void);
+extern "C" char* getErrMesText15(void);
 // Layout text bind (code_80135FDC unit): (layout, pane name, text, 0).
 extern "C" void func_80136A1C(nw4r::lyt::Layout*, char*, char*, u32);
 // Page-slot word-table accessors used by the grid-cursor scans.
@@ -798,8 +798,8 @@ extern const float lbl_eu_80668B08;
 // CItemBoxGrid.hpp / CfObjectImplMove.hpp).
 extern "C" void CTaskGame_enumListCtor(void*);
 extern "C" void* CTaskGame_enumListGet(void*);
-extern "C" void func_800F4A98(void*, u32, u32);
-extern "C" void* func_800F6EC0(void*, u32);
+extern "C" void startEnumObjects(void*, u32, u32);
+extern "C" void* getEntryAt(void*, u32);
 extern "C" void func_800BFDE0(void* obj, u32 arg);
 extern "C" void* getCfObjectPc__FPQ22cf12CfObjectMove(void* obj);
 extern "C" void __dt__80043E88(void*, int);
@@ -819,7 +819,7 @@ extern "C" u32 CItemBlock_countKindSlots(u8);
 extern "C" u32 func_801576C8(u8);
 
 // Char-data status lookup (code_8025FB10 TU): tests a flag at obj+0x3534.
-extern "C" int func_8026178C(void*, u32);
+extern "C" int Counter_TestBit(void*, u32);
 
 // .sdata2 float/double constants used by the equip-box helpers (sda21
 // relocs). 80668B10/80668B18 are the int->float conversion magics (0x4330

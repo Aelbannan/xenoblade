@@ -83,7 +83,7 @@ body:
 
 extern "C" void drawLayout__FPQ34nw4r3lyt6LayoutPQ34nw4r3lyt8DrawInfoii(void* layout, void* info, int a, int b);
 
-extern "C" void func_801D20B0(void*, void*);
+extern "C" void Cur_DrawLayout(void*, void*);
 extern "C" __declspec(noinline) void CTitleLogo_draw(void* self, void* drawInfo) {  // noinline: retail keeps bl from CTitle_draw
     CTitleLogo* logo = (CTitleLogo*)self;
     if (logo->mLayout != 0 && logo->field_0x18 != 0) {
@@ -236,8 +236,8 @@ extern "C" __declspec(noinline) void CTitleMenu_build(CTitleMenu* self, nw4r::ly
     if ((lbl_eu_80663E28 & 0x40000000) != 0) {
         // MWCC evaluates args right-to-left: colorA is built first.
         PaneMatSetTevColorsByName(self->mLayout, &strs[0x109],
-                      func_801C4B60(&colorB, 0x80, 0x80, 0x80, 0x00),
-                      func_801C4B60(&colorA, 0x80, 0x80, 0x80, 0xff));
+                      setGXColorS10(&colorB, 0x80, 0x80, 0x80, 0x00),
+                      setGXColorS10(&colorA, 0x80, 0x80, 0x80, 0xff));
     }
 }
 #pragma optimize_for_size off
@@ -528,7 +528,7 @@ extern "C" void CTitle_update(CTitle* self) {
 extern "C" void CTitle_draw(void* self, void* drawInfo) {
     CTitleLogo_draw((u8*)self + 0x2C, drawInfo);
     CTitleMenu_draw((u8*)self + 0x48, drawInfo);
-    func_801D20B0((u8*)self + 0x70, drawInfo);
+    Cur_DrawLayout((u8*)self + 0x70, drawInfo);
 }
 #pragma optimize_for_size off
 
@@ -576,13 +576,13 @@ extern "C" void CTitle_showMenu(CTitle* self) {
 // and the +0x70 layout with a zero flag.
 extern "C" void __declspec(noinline) CTitleLogo_beginOutro(CTitleLogo*);
 extern "C" void __declspec(noinline) CTitleMenu_beginFinal(CTitleMenu*);
-extern "C" void func_801D216C(void*, u8);
+extern "C" void Cur_SetVisible(void*, u8);
 extern "C" void CTitle_beginLogoOutro(void* self) {
     if (*(u8*)((u8*)self + 0x24) == 5) {
         *((u8*)self + 0x24) = 6;
         CTitleLogo_beginOutro((CTitleLogo*)((u8*)self + 0x2C));
         CTitleMenu_beginFinal((CTitleMenu*)((u8*)self + 0x48));
-        func_801D216C((u8*)self + 0x70, 0);
+        Cur_SetVisible((u8*)self + 0x70, 0);
     }
 }
 
@@ -674,7 +674,7 @@ extern "C" void CTitle_showTitle(CTitleMenu* self) {
 extern "C" void CTitle_enterSelection(CTitle* self) {
     if (self->mLogo.field_0x19 != 0 && self->mMenu.field_0x25 != 0) {
         self->field_0x24 = 5;
-        func_801D216C(&self->mCur[0], 1);
+        Cur_SetVisible(&self->mCur[0], 1);
         nw4r::math::VEC3 pos;
         CTitleMenu_calcCursorPos(&pos, &self->mMenu, self->field_0x25);
         reinterpret_cast<CCur18View*>(&self->mCur[0])->vf04(&pos);

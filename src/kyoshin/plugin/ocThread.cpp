@@ -67,11 +67,11 @@ void ocThreadRegist() {
     vmOCRegist(&lbl_eu_80524C60);
 }
 
-OcThreadListHdr* func_8003A4E0() {
+extern "C" OcThreadListHdr* getOcMsgList() {
     return &lbl_eu_805704C8;
 }
 
-OcThreadListHdr* func_8003A4EC() {
+extern "C" OcThreadListHdr* getOcLogList() {
     return &lbl_eu_80570538;
 }
 

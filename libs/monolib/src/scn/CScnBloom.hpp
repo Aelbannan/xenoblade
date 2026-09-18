@@ -41,7 +41,7 @@ struct CScnBloomBase {
     u8 mBlendMode;          // 0x10
     u8 mFilterType;         // 0x11
     u8 pad_12[2];
-    u32 mTexFormat;         // 0x14 - texture format id passed to func_80490208
+    u32 mTexFormat;         // 0x14 - texture format id passed to TexMan_AllocBuffer_0208
     u32 mUnk18;             // 0x18
     u32 mUnk1C;             // 0x1C
     u8 mEnabled;            // 0x20

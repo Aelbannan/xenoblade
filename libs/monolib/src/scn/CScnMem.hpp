@@ -8,7 +8,7 @@
 // properly-typed imports; no local extern "C" needed at global scope).
 // lbl_eu_80523F98: MemManager region name passed to MemManager::create.
 extern const char lbl_eu_80523F98[];
-// Panic file path / format string for func_8048EC14's bounds check.
+// Panic file path / format string for getScnGroupChild's bounds check.
 extern char lbl_eu_8056E720[];
 extern char lbl_eu_8056E6F8[];
 
@@ -72,5 +72,5 @@ public:
 };
 
 // Free functions in this TU (retail kept plain unmangled names).
-void func_8048EB30(CScnMem* self, u32 a, u32 b, u32 c);
-nw4r::g3d::ScnObj* func_8048EC14(CScn* self, u32 idx);
+extern "C" void allocScnMem(CScnMem* self, u32 a, u32 b, u32 c);
+extern "C" nw4r::g3d::ScnObj* getScnGroupChild(CScn* self, u32 idx);

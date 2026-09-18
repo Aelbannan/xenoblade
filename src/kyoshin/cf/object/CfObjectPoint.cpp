@@ -231,7 +231,7 @@ public:
 // (no __Q2 class qualifier), so it must be defined with C linkage. Other TUs
 // (CfGimmick, CfMapMineManager) call it through their own C-linkage
 // declarations; the first parameter is the object pointer.
-extern "C" void func_800C13FC(cf::CfObjectPoint* ths, u32 a, u8 val) {
+extern "C" void ObjPoint_SetName_13FC(cf::CfObjectPoint* ths, u32 a, u8 val) {
     ths->setObjectName(reinterpret_cast<const char*>(a));
     ths->mFlag91 = val;
 }
@@ -245,7 +245,7 @@ CfObjectPoint::~CfObjectPoint() {
     u32 flags = mFlags68;
     *reinterpret_cast<u32**>(this) = lbl_eu_8052A3B0;
     if (flags & 0x40000000) {
-        ((void* (*)(void*, void*))func_80186474)(func_801862C0(), this);
+        ((void* (*)(void*, void*))func_80186474)(ArtsSelect_GetContainer(), this);
     }
     releasePointLink();
     // D2 phase (base class): the base dtor is inline-empty so MWCC emits no
@@ -265,7 +265,7 @@ void CfObjectPoint::resetPointFlags() {
 }
 
 void CfObjectPoint::loadPointData() {
-    func_8003AA34();
+    Bdat_GetTable_AA34();
     u8* fp = (u8*)getFP(mName);
     u32 name = getBdatStringColumnValue(fp, lbl_eu_804FC648, mIndex8C);
     this->setObjectName(reinterpret_cast<const char*>(name));
@@ -387,7 +387,7 @@ extern "C" void setPointPosition__Q22cf13CfObjectPointFv(
     if (lbl_eu_80663E14 == nullptr) {
         u8* source = *(u8**)((u8*)lbl_eu_80663E14 + 0x74);
         if (func_8049E51C(source) != 0) {
-            if (func_804BE398(pos, 0, 0, 0,
+            if (ScnRes_VertRayForward_E398(pos, 0, 0, 0,
                               lbl_eu_80666B50, lbl_eu_80666B48) != nullptr) {
                 func_804BE4B4(first, 0);
                 func_804BE4E0(second, 0);

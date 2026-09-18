@@ -7,7 +7,7 @@
 class CBgTex;
 class CMakeCrystalWin;
 
-// Data block copied by func_80211CB8 (fields +0x4..+0x14 only; +0x0 is not
+// Data block copied by MakeCrystalCopyParamBlock (fields +0x4..+0x14 only; +0x0 is not
 // part of the copy). Two bytes, three words, one byte - meaning unknown.
 struct CMakeCrystalCopyBlock {
     u32 field_0x0;   // +0x00 (not copied)
@@ -33,6 +33,6 @@ public:
     void cbRenderBefore();
 
     // IScnRender vtable this-adjusting thunks
-    void func_802124F4();
-    void func_802124FC();
+    void MakeCrystalRenderThunk58();
+    void MakeCrystalDtorThunk58();
 };

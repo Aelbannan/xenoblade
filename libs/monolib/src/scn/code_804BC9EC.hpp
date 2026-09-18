@@ -4,11 +4,11 @@
 
 // Resource data parsed by func_804BC9F4 from chunked file data.
 // Fields are populated based on entry type in the top-level chunk list.
-// Offsets 0x60 and 0x78 are used by func_804B80A4 / func_804B8078.
+// Offsets 0x60 and 0x78 are used by Coli_GetOutMatrix_80A4 / Coli_ClearOutFlag_8078.
 struct ScnResData {
-    u8* field_0x00;  // set by func_804BC9B4 (base + src[1])
-    u8* field_0x04;  // set by func_804BC9B4 (base + src[2])
-    u8* field_0x08;  // set by func_804BC9B4 (base + src[3])
+    u8* field_0x00;  // set by Coli_RebiasIndices (base + src[1])
+    u8* field_0x04;  // set by Coli_RebiasIndices (base + src[2])
+    u8* field_0x08;  // set by Coli_RebiasIndices (base + src[3])
     u8 field_0x0C[0x14 - 0x0C];
     u8* field_0x14;  // base pointer to parsed data
     u8* field_0x18;  // entry type 1
@@ -44,14 +44,14 @@ struct ScnResEntry {
 };
 
 extern "C" {
-ScnResData* func_804B80A4(ScnResData* self, int index);
-void func_804B8078(ScnResData* self, int index);
+ScnResData* Coli_GetOutMatrix_80A4(ScnResData* self, int index);
+void Coli_ClearOutFlag_8078(ScnResData* self, int index);
 void func_804B80CC(ScnResData* self);
 void func_804B7804(ScnResData* self);
-void func_804BC9A0(ScnResData*);
+void Coli_CheckFlag(ScnResData*);
 void func_804B7D9C(int, int);
 void func_804B7DD4(ScnResData*);
-void func_804BC9B4(int* dest, int baseOffset, int* src);
-void func_804B74F0(ScnResData* res, u8* data);
+void Coli_RebiasIndices(int* dest, int baseOffset, int* src);
+void Coli_InstallDataPtrs_74F0(ScnResData* res, u8* data);
 void func_804B7540(ScnResData* res, u8* data, u16 param);
 }

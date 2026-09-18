@@ -502,7 +502,7 @@ extern const f32 lbl_eu_8066A844;  // billboard probe color scale
 // units).
 void bindTexture__Q26mpfsys17UnkClass_80471EC8Fif(s16 texIdx, f32 texScale);
 void* getLayerRecord__Q26mpfsys17UnkClass_80471EC8FUc(mpfsys::UnkClass_80471EC8* self, u8 layer);
-void* func_804B5A68(void);
+void* Coli_GetBitTable_5A68(void);
 void setupGfxMode5__Q26mpfsys17UnkClass_80471EC8Fv(void);
 void enableAlphaBlend__Q26mpfsys17UnkClass_80471EC8Fv(void);
 void disableAlphaBlend__Q26mpfsys17UnkClass_80471EC8Fv(void);
@@ -1249,7 +1249,7 @@ void func_80478C94__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* 
     // volatile: retail spills the item base to the stack (sp+0x3c) and
     // reloads it every outer iteration.
     volatile MPFBillItem* itemBase = (MPFBillItem*)(lbl_eu_80665840 + node->field_0x0);
-    Vec* arena = (Vec*)func_804B5A68();
+    Vec* arena = (Vec*)Coli_GetBitTable_5A68();
     s32 countB = 0;
     s32 countA = 8;
     Vec diff;
@@ -1603,7 +1603,7 @@ bool func_80476344__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* 
     f32 f23 = s32ToF32_a808(r4, &cvtA);
 
     // Bit array of grid positions claimed by surviving slots.
-    u32* bits = (u32*)func_804B5A68();
+    u32* bits = (u32*)Coli_GetBitTable_5A68();
     DCZeroRange((void*)bits, (((r22 * r22) >> 5) + 1) * 4);
 
     // Claim every in-range slot's grid position, then deactivate the slots
@@ -1849,7 +1849,7 @@ bool func_80476E50__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* 
     s32 r19b = iz % 10;
 
     // Bit array of already-placed quads (size in bytes, rounded up to a word).
-    u32* bits = (u32*)func_804B5A68();
+    u32* bits = (u32*)Coli_GetBitTable_5A68();
     s32 bitBytes = (((r22 * r23 * r23) >> 5) + 1) * 4;
     DCZeroRange((void*)bits, bitBytes);
     // Scatter stride/count for the index chain below.

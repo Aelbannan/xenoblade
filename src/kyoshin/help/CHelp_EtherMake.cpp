@@ -3,7 +3,7 @@
 namespace cf {
 bool CHelp_EtherMake::isEtherReady() {
     u32 result = 0;
-    if (func_80212480() != 0) {
+    if (MakeCrystalIsCreated() != 0) {
         if (func_80212490() != 0) {
             result = 1;
         }

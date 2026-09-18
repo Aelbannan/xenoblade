@@ -127,14 +127,14 @@ void func_802A7464(CVS_THREAD_HP* self) {
     }
 }
 
-// us-802a9c3c (func_802A7508)
+// us-802a9c3c (HpVoice_PlayChange)
 // Retail saves/restores r30/r31 individually; unit-level -O4,s merges them
-// into stmw/lmw, so size-opt must be off here (same as func_802A7614).
+// into stmw/lmw, so size-opt must be off here (same as HpVoice_RemoveVoice).
 #pragma optimize_for_size off
 // Advance/play: restore the base state triple from the init table, then pick
 // a random idle voice handle (excluding this thread's own slot) and play the
 // HP-change voice; on failure fire the playback-start virtual (blank1).
-void func_802A7508(CVS_THREAD_HP* self) {
+void HpVoice_PlayChange(CVS_THREAD_HP* self) {
     if (func_802A3E88(self) != 0) {
         return;
     }
@@ -169,7 +169,7 @@ void func_802A7508(CVS_THREAD_HP* self) {
 
 // Completion callback: if no active voice, invoke the playback-start virtual
 // (CVS_THREAD::func_802A3B50, vtable slot 1).
-void func_802A75CC(CVS_THREAD* self) {
+void HpVoice_NotifyComplete(CVS_THREAD* self) {
     if (func_802A3E88(self) == 0) {
         self->func_802A3B50();
     }
@@ -182,7 +182,7 @@ void func_802A75CC(CVS_THREAD* self) {
 // must be off for this function (the unit-level -O4,s merges the pair into
 // stmw/lmw, which retail does not use here).
 #pragma optimize_for_size off
-void func_802A7614(CVS_THREAD_HP* self, CCharVoice* voicePtr) {
+void HpVoice_RemoveVoice(CVS_THREAD_HP* self, CCharVoice* voicePtr) {
     func_802A3BEC(self, voicePtr);
 
     CVoiceHandle* handle = self->field_0x20;
@@ -198,19 +198,22 @@ void func_802A7614(CVS_THREAD_HP* self, CCharVoice* voicePtr) {
 
 
 // Matches CVS_THREAD::blank1 slot in vtable; HP subclass returns 0xD2 (210).
-// Virtual method override: returns the buffer size for this thread type.
-int CVS_THREAD_HP::blank1() {
-    return BUFFER_SIZE;
+// Retail exports the override body under the bare symbol HpVoice_GetBufSize, so
+// the definition keeps the retail name (CVS_THREAD_BATTLE_END_SP precedent:
+// CVSBattleEndSPGetBufSize); the blank1() member decl still satisfies the
+// class interface. Returns the buffer size for this thread type.
+extern "C" int HpVoice_GetBufSize() {
+    return CVS_THREAD_HP::BUFFER_SIZE;
 }
 
-// us-802a9da8 (func_802A7674)
+// us-802a9da8 (HpVoice_InitPlayerVoice)
 // Retail saves/restores r30/r31 individually; unit-level -O4,s merges them
-// into stmw/lmw, so size-opt must be off here (same as func_802A7508).
+// into stmw/lmw, so size-opt must be off here (same as HpVoice_PlayChange).
 #pragma optimize_for_size off
 // Player-voice init: only when the handle's voice is the first player's and
 // the handle is idle, allocate a voice buffer and play a random HP-change
 // voice (base 0xED9). Always returns 0.
-int func_802A7674(CVoiceHandle* self) {
+int HpVoice_InitPlayerVoice(CVoiceHandle* self) {
     if (self == NULL) {
         return 0;
     }
@@ -330,10 +333,10 @@ int func_802A7870(CVoiceHandle** out, int capacity, CVoiceHandle* exclude) {
     return count;
 }
 
-// us-802aa040 (func_802A790C)
+// us-802aa040 (HpVoice_CountActiveVoices)
 // Count idle voice handles in the voice-manager circular list, excluding one
 // handle (used by the party-gauge factory to check the free-voice pool).
-int func_802A790C(CVoiceHandle* exclude) {
+int HpVoice_CountActiveVoices(CVoiceHandle* exclude) {
     int count;
     CVoiceHandle* handle;
     CVoiceListNode* node;
@@ -594,11 +597,11 @@ int func_802A7DF8(CVoiceHandle* handle) {
     return result;
 }
 
-// us-802aa5e4 (func_802A7EB0)
+// us-802aa5e4 (HpVoice_CheckPairGate)
 // Battle-state gate: map both handles' sub-state indexes to voice-iterator
 // values; the HP-change voice may fire only when the pair is (7, 1) and the
 // cf sequence counter is below 0x85.
-int func_802A7EB0(CVoiceHandle* a, CVoiceHandle* b) {
+int HpVoice_CheckPairGate(CVoiceHandle* a, CVoiceHandle* b) {
     if (a == NULL) {
         return 0;
     }
@@ -649,7 +652,7 @@ int func_802A7EB0(CVoiceHandle* a, CVoiceHandle* b) {
 
 // us-802aa718 (func_802A7FE4)
 // Retail saves r28-r31 individually; unit-level -O4,s merges them into
-// stmw/lmw, so size-opt must be off here (same as func_802A7508).
+// stmw/lmw, so size-opt must be off here (same as HpVoice_PlayChange).
 #pragma optimize_for_size off
 // Count idle voice handles in the voice-manager circular list; when the
 // source handle's sub-state maps to one of the iterator values {1, 3, 7},

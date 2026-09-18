@@ -784,7 +784,7 @@ __declspec(noinline) int func_8012615C(nw4r::lyt::AnimTransform* tag,
                             MenuStateClear6405A();
                         }
                     } else {
-                        int val = (int)func_8009CF8C(v4 + 0x29) + v28;
+                        int val = (int)CtrlRemote_TouchBitByArg(v4 + 0x29) + v28;
                         if (val < 0)
                             val = 0;
                         s32 r21;
@@ -802,20 +802,20 @@ __declspec(noinline) int func_8012615C(nw4r::lyt::AnimTransform* tag,
                 }
                 u32 v24 = 0;
                 if (type == 1) {
-                    if (v7 != func_8009CF8C(v6 + 0x608)) {
+                    if (v7 != CtrlRemote_TouchBitByArg(v6 + 0x608)) {
                         s32 r21 = v4 + 0x21;
-                        int val = (int)func_8009CF8C(r21) + v28;
+                        int val = (int)CtrlRemote_TouchBitByArg(r21) + v28;
                         if (val < 0)
                             val = 0;
                         if (val > 0x2710)
                             val = 0x2710;
-                        func_8009D018(r21, val);
+                        CtrlRemote_SetSharedBit(r21, val);
                     } else {
                         v24 = 1;
                     }
                 } else if (type == 2) {
                     s32 r21 = v4 + 0x29;
-                    int val = (int)func_8009CF8C(r21) + v28;
+                    int val = (int)CtrlRemote_TouchBitByArg(r21) + v28;
                     if (val < 0)
                         val = 0;
                     if (val > 0x1388) {
@@ -825,7 +825,7 @@ __declspec(noinline) int func_8012615C(nw4r::lyt::AnimTransform* tag,
                             v28 = 0;
                         val = 0x1388;
                     }
-                    func_8009D018(r21, val);
+                    CtrlRemote_SetSharedBit(r21, val);
                 }
                 if (v26 != 0)
                     v28 = v26;
@@ -841,9 +841,9 @@ __declspec(noinline) int func_8012615C(nw4r::lyt::AnimTransform* tag,
                         playUISound(0x36);
                     }
                     if (tsrc != 0)
-                        func_800451D8(sound, tsrc);
+                        bindIndexedEffect(sound, tsrc);
                     if (player != 0)
-                        func_800451D8(sound, player);
+                        bindIndexedEffect(sound, player);
                 }
                 if (type == 1) {
                     if (player != 0)

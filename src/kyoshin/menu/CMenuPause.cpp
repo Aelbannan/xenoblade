@@ -23,12 +23,12 @@ extern "C" void cbRenderBefore__10CMenuPauseFv(void*);
 extern u32 lbl_eu_80663E28;
 
 // Forward declaration for the pause-exit input handler (defined below). Retail
-// emits this under C linkage (`func_80252564`), so it must stay unmangled.
-extern "C" void func_80252564(CMenuPause* p);
+// emits this under C linkage (`Pause_HandleExitInput`), so it must stay unmangled.
+extern "C" void Pause_HandleExitInput(CMenuPause* p);
 
 void CMenuPause::Init() {
     setPresentationFlag__Q22cf13CfGameManagerFv(true);
-    func_80188890(1);
+    MenuSnd_SetSlotsPause_8890(1);
 
     // Scoped MEM2 region guard, then build the layout + animations.
     mMemRegion.createRegion((int)mtl::MemManager::getHandleMEM2(), 0x2000,
@@ -157,7 +157,7 @@ void CMenuPause::Term() {
     mMemRegion.func_8045F778();
 
     lbl_eu_806647C8 = NULL;
-    func_80188890(0);
+    MenuSnd_SetSlotsPause_8890(0);
     setPresentationFlag__Q22cf13CfGameManagerFv(false);
 }
 
@@ -190,7 +190,7 @@ body:
         break;
     case 2:
         // Wait for a cancel/confirm input to leave the pause menu.
-        func_80252564(this);
+        Pause_HandleExitInput(this);
         break;
     case 3:
         // Closing animation: when it finishes, reset to state 0 / clear flag.
@@ -343,7 +343,7 @@ extern "C" void* __dt__10CMenuPauseFv(void* self, int flags) {
     return self;
 }
 
-unsigned long func_80252538() {
+unsigned long Pause_IsActive() {
     CMenuPause* p = lbl_eu_806647C8;
     if (p == NULL) {
         return 0;
@@ -351,7 +351,7 @@ unsigned long func_80252538() {
     return p->mState != 3;
 }
 
-extern "C" void func_80252564(CMenuPause* p) {
+extern "C" void Pause_HandleExitInput(CMenuPause* p) {
     CPad* pad = cf::CfGameManager::getCurrentPad();
     u32 first;
     u32 second;
@@ -377,6 +377,6 @@ extern "C" void func_80252564(CMenuPause* p) {
 }
 
 // IScnRender / IWorkEvent adjuster thunks (subobjects embedded in CMenuPause).
-void func_80252628(void* self) { ((void(*)(void*))__dt__10CMenuPauseFv)((char*)self - 0x58); }
-void func_80252630(void* self) { ((void(*)(void*))cbRenderBefore__10CMenuPauseFv)((char*)self - 0x5c); }
-void func_80252638(void* self) { ((void(*)(void*))__dt__10CMenuPauseFv)((char*)self - 0x5c); }
+void Pause_ThunkDtor58(void* self) { ((void(*)(void*))__dt__10CMenuPauseFv)((char*)self - 0x58); }
+void Pause_ThunkRender5C(void* self) { ((void(*)(void*))cbRenderBefore__10CMenuPauseFv)((char*)self - 0x5c); }
+void Pause_ThunkDtor5C(void* self) { ((void(*)(void*))__dt__10CMenuPauseFv)((char*)self - 0x5c); }

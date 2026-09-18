@@ -63,24 +63,24 @@ extern "C" {
     void func_8008064C__Q22cf13CfGameManagerFv(void* element0, int idx, float* stk);
     void stubEmptyC__Q22cf13CfGameManagerFv(int flag);
     bool isGlobalCamFlagSet__Fi(int mask);
-    u32  func_8009CF8C(u32 resource);
+    u32  CtrlRemote_TouchBitByArg(u32 resource);
     int  func_80148778(void* obj, int id);
     int  func_8027E018(volatile s16* obj, FuncActorRef* arg);
     void __dt__80043E88(void* holder, int flag);
     int func_80061A80(u32 a, u32 b, u32 c, u32 d, u32 e, u32 f);
     int func_80061870(u32 a, u32 b, u32 c, u32 d, u32 e, u32 f);
-    void func_80068DAC();
+    void CfScript_ClearReq2();
     void func_800B98C8(int);
-    void func_8012F860();
+    void UIBattleMarkFlags82();
     void func_801338C8();
     void CUICfManager_prepareMenus();
-    s32 func_8011C2E8();
+    s32 MiniMapHasGlobalData();
     void lookupResourceByKeys__Q22cf13CfGameManagerFv(void* this_, u32 second, u32 third);
 
     void func_801AAC78(int arg);
     int  func_800B8FC4();
     int  func_8023C1C0();
-    int  func_8012FA5C();
+    int  UIBattleGetFlagE8();
     void func_8012FAA8();
     int  CfRes_lookupLocalIndex(s32 arg);
     int  func_802A3748(u32 value);
@@ -89,7 +89,7 @@ extern "C" {
     void func_8009EB2C(int a, int b, u8* c);
     int  CfRes_tryResolveSlot1E4(u16 a, u16 b, int c);
     bool func_80061D2C(UnkClass_80085334* obj, u32 mode);
-    void func_801C3D9C(u8* obj);
+    void BgTex_Release_3D9C(u8* obj);
     void PartyStateWin_TeardownWindow(u8* obj);
     void func_8008566C__Q22cf13CfGameManagerFv(u32 mode, const UnkFloat4* value, u32 third);
     void cleanupMapEffects__Q22cf13CfGameManagerFv();
@@ -107,7 +107,7 @@ extern "C" {
     void CTaskGame_enumListFill(CfEnumListHolder90940* holder, int cap, int mode);
     // CTaskGame_enumListGet: canonical void*(void*) decl comes from CPartyStateWin.hpp
     // (included via code_8018F8D8.hpp); call sites cast to CfEnumList90940*.
-    u8* func_800F6EAC(CfEnumList90940* list, int idx);
+    u8* getObjectAt(CfEnumList90940* list, int idx);
 }
 
 namespace cf {}
@@ -354,7 +354,7 @@ int CfCmd_FwdCmd6(u32 p0, int p1, u32 p2, u32 p3, u32 p4) {
 
 int CfCmd_RefreshUI(void* p0, int a, int b) {
     if (a != 0) {
-        func_8012F860();
+        UIBattleMarkFlags82();
     }
     if (b != 0) {
         func_801338C8();
@@ -365,7 +365,7 @@ int CfCmd_RefreshUI(void* p0, int a, int b) {
 
 int CfCmd_Fwd1FOrFlush(u32 p0, u32 p1, u32 p2, u32 p3, u32 p4) {
     int r = 0;
-    if (func_8012FA5C() != 0) {
+    if (UIBattleGetFlagE8() != 0) {
         func_8012FAA8();
     } else {
         func_80061A80(p0, 0x1f, p1, p2, p3, p4);
@@ -421,7 +421,7 @@ int CfCmd_OpenMenu12(CFuncHost* self, u32 p1, u32 p2, u32 p3, u32 p4) {
     lbl_eu_80663E24 &= ~0x100;
     // Retail invokes the reset hook with a null this pointer.
     ((cf::CfGameManager*)NULL)->func_80085FB8();
-    func_80068DAC();
+    CfScript_ClearReq2();
     func_800B98C8(0);
     return 0;
 }
@@ -534,14 +534,14 @@ extern "C" unsigned long CfCmd_Clear80000() {
 }
 
 int CfCmd_FlushUI() {
-    func_8012F860();
+    UIBattleMarkFlags82();
     func_801338C8();
     CUICfManager_prepareMenus();
     return 0;
 }
 
 int CfCmd_Cond338C8() {
-    if (func_8011C2E8() == 0) {
+    if (MiniMapHasGlobalData() == 0) {
         func_801338C8();
     }
     return 0;
@@ -572,9 +572,9 @@ int CfCmd_FadeClear() {
 }
 
 int CfCmd_ResolveSlot1E4(CFuncHost408* self, u32 arg1, u32 arg2) {
-    // func_8009D5FC is declared in CfGameManager.hpp (CfFileEventIdsView*);
+    // CtrlRemote_GetFileEventIds is declared in CfGameManager.hpp (CfFileEventIdsView*);
     // retail treats the result as this 4-byte pair.
-    UnkR31_8019E88* p = reinterpret_cast<UnkR31_8019E88*>(func_8009D5FC());
+    UnkR31_8019E88* p = reinterpret_cast<UnkR31_8019E88*>(CtrlRemote_GetFileEventIds());
     func_8009EB2C((arg2 >> 20) & 0x7f, (arg2 >> 10) & 0x3ff, self->field_0x408 + 0x28);
     if (CfRes_tryResolveSlot1E4(p->field_0x2, p->field_0x0, 3) == 0) {
         func_80061D2C(reinterpret_cast<UnkClass_80085334*>(self), 0x28);
@@ -651,7 +651,7 @@ int func_80190940(FuncResultRef* self, FuncActorRef* actor, int mode,
     if (probeGate90940(actor, 1) == 0) return 0;
     cf::CfGameManager::getInstance();
     if (!isGlobalCamFlagSet__Fi(0x100)) return 0;
-    if (func_8009CF8C(0x335f) != 0) return 0;
+    if (CtrlRemote_TouchBitByArg(0x335f) != 0) return 0;
     if (func_8017FD44() != 0) return 0;
     if (!isGlobalCamFlagSet__Fi(0x400)) return 0;
     if (!isGlobalCamFlagSet__Fi(0x1000)) return 0;
@@ -715,9 +715,9 @@ int func_80190940(FuncResultRef* self, FuncActorRef* actor, int mode,
     for (int i = 0; i < (int)((CfEnumList90940*)CTaskGame_enumListGet(&holder))->count; i++) {
         u8* basePos = actor ? reinterpret_cast<u8*>(&actor->field_3e9c)
                             : reinterpret_cast<u8*>(NULL);
-        u8* data = func_800F6EAC((CfEnumList90940*)CTaskGame_enumListGet(&holder), i);
+        u8* data = getObjectAt((CfEnumList90940*)CTaskGame_enumListGet(&holder), i);
         if (data == basePos) continue;
-        data = func_800F6EAC((CfEnumList90940*)CTaskGame_enumListGet(&holder), i);
+        data = getObjectAt((CfEnumList90940*)CTaskGame_enumListGet(&holder), i);
         FuncActorRef* cand = (data != NULL)
             ? reinterpret_cast<FuncActorRef*>(data - 0x3e9c)
             : static_cast<FuncActorRef*>(NULL);
@@ -901,7 +901,7 @@ void CMenuPTState::Init() {
         __dt__6CBgTexFv(bgTemp, -1);
 #undef bgTemp
     }
-    func_801C3C14(&field_0x60);
+    BgTex_Acquire_3C14(&field_0x60);
 
     u32 winStore[sizeof(CPartyStateWin) / 4];
 #define winTmp reinterpret_cast<CPartyStateWin*>(winStore)
@@ -1490,7 +1490,7 @@ void CMenuPTState::Term() {
     CDeviceVI::waitForDrawDone();
     Scn_SetPauseFlag(field_0x5C, 1);
     field_0x5C->removeRenderCB(this);
-    func_801C3D9C((u8*)&field_0x60);
+    BgTex_Release_3D9C((u8*)&field_0x60);
     PartyStateWin_TeardownWindow((u8*)&field_0x80);
     lbl_eu_80664300 = 0;
     processEventList__Q22cf13CfGameManagerFv();
@@ -1528,8 +1528,8 @@ void CMenuPTState::Move() {
                 }
                 if (accept != 0) {
                     PartyStateWin_StepPartySub(&field_0x80);
-                    if (func_800FEDF8() != 0) {
-                        func_800FF914();
+                    if (CMainMenu_GetInstancePtr() != 0) {
+                        ArtsInfo_SetReadyFlag();
                         playUISound(6);
                     }
                     field_0x6C6C = 3;
@@ -1539,7 +1539,7 @@ void CMenuPTState::Move() {
         switch (field_0x6C6C) {
         case 0:
             // Background layout finished loading -> start the window open-in.
-            if (func_801C3E34(&field_0x60) != 0) {
+            if (BgTex_IsLoaded_3E34(&field_0x60) != 0) {
                 // Retail leaves arg2/arg3 (r4/r5) unset at this call site.
                 func_801F941C(&field_0x80);
                 field_0x6C6C = 1;
@@ -1555,12 +1555,12 @@ void CMenuPTState::Move() {
             break;
         case 3:
             // System window opened over us: flag completion on the owner.
-            if (func_8012FA5C() != 0) {
+            if (UIBattleGetFlagE8() != 0) {
                 field_0x54 = 1;
             }
             break;
         }
-        func_801C3D54(&field_0x60);
+        BgTex_Tick_3D54(&field_0x60);
         if (field_0x6C6C != 3) {
             PartyStateWin_FrameStep(&field_0x80);
         }
@@ -1580,5 +1580,5 @@ void CMenuPTState::cbRenderBefore() {
     GXSetZMode(GX_FALSE, GX_NEVER, GX_FALSE);
     nw4r::lyt::DrawInfo drawInfo;
     func_80137250__FPQ34nw4r3lyt8DrawInfo(&drawInfo);
-    func_801C3D7C(&field_0x60, &drawInfo);
+    BgTex_Draw_3D7C(&field_0x60, &drawInfo);
 }

@@ -64,12 +64,12 @@ public:
     CSortMenu();
     virtual ~CSortMenu();
     void func_801D3518(int value);
-    u8 func_801D3320();
-    u8 func_801D3328();
+    u8 sortMenuIsVisible28();
+    u8 sortMenuGetFlag2B();
     int OnFileEvent(CEventFile* event);
-    u8 func_801D37F4();
-    u8 func_801D3808();
-    u8 func_801D3810();
+    u8 sortMenuGetPageSum();
+    u8 sortMenuGetPageIdx();
+    u8 sortMenuGetSubPageIdx();
 
     // Layout (from retail ASM):
     // +0x00: vtable (IWorkEvent / CSortMenu shared)
@@ -131,14 +131,14 @@ extern "C" u32 CItemBlock_getFlag120EC(int);
 // CScrollBar functions
 extern "C" void __ct__CScrollBar(void*, int);
 extern "C" void __dt__10CScrollBarFv(void*, int);
-extern "C" void func_801F34F4(void*);
-extern "C" void func_801F3540(void*);
-extern "C" void func_801F35B0(void*, void*);
-extern "C" void func_801F35DC(void*);
+extern "C" void CScrollBar_loadLayoutArc(void*);
+extern "C" void CScrollBar_UpdateDispatch(void*);
+extern "C" void CScrollBar_draw(void*, void*);
+extern "C" void CScrollBar_Teardown(void*);
 extern "C" int CScrollBar_isVisible(void*);
-extern "C" void func_801F3670(void*, void*);
-extern "C" void func_801F36BC(void*, int, int);
-extern "C" void func_801F367C(void*);
-extern "C" void func_801F369C(void*);
-extern "C" void func_801F3850(void*, int);
+extern "C" void CScrollBar_InitRootPane(void*, void*);
+extern "C" void CScrollBar_UpdateThumb(void*, int, int);
+extern "C" void CScrollBar_requestScrollIn(void*);
+extern "C" void CScrollBar_requestScrollOut(void*);
+extern "C" void CScrollBar_PlaceThumb(void*, int);
 extern "C" void func_80137924(void*, void*, void*, void*);

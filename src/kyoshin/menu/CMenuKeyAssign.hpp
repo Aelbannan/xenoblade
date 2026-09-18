@@ -5,7 +5,11 @@
 #include "monolib/scn/IScnRender.hpp"
 #include "monolib/lib/UnkClass_8045F564.hpp"
 #include "monolib/device/CDeviceVI.hpp"
+// Shield CSystemWindow.hpp's C++-linkage SysWinGetSingleton decl: this TU
+// uses CfGimmick.hpp's extern "C" flat form (retail symbol is unmangled).
+#define SysWinGetSingleton SysWinGetSingleton_cxx_hidden
 #include "kyoshin/CSystemWindow.hpp"
+#undef SysWinGetSingleton
 #include "kyoshin/cf/CfGimmick.hpp"
 #include "kyoshin/cf/CfGameManager.hpp"
 #include <nw4r/lyt/lyt_layout.h>
@@ -208,10 +212,10 @@ void func_8013676C(void*, u32);
 void __ct__17UnkClass_8045F564Fv(u8* self);
 // Move's gate helpers (retail unmangled; declared in their own TUs but not by
 // any included header).
-int func_801042C8();
-int func_801B0F8C();
+int CMenuArtsSelect_IsAvailable();
+int battleCommuIsActive();
 int func_8017FD44(void);
-int func_800FF738();
+int CMainMenu_IsOpen();
 // Arts-state gate helpers used by Move (retail unmangled; declared in their
 // own TUs but not by any included header).
 void* CfObjectMove_getSelfIfActive(void* objParam);

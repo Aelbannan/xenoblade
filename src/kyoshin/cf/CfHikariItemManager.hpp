@@ -26,7 +26,7 @@ public:
     /* 0x104 */ u8 unk104[0x1104 - 0x104];
     /* 0x1104 */ u8 unk1104[0x10];                  // zeroed by memset in reset/dtor
     /* 0x1114 */ u8 unk1114[0x1194 - 0x1114];
-    /* 0x1194 */ u32 field_1194;                    // flag word (bit0 toggle, bit1 func_802B2A08)
+    /* 0x1194 */ u32 field_1194;                    // flag word (bit0 toggle, bit1 hikariSetFlagBit1)
     /* 0x1198 */ u32 field_1198;                    // active record count
     /* 0x119C */ u32 field_119C;
     /* 0x11A0 */ u32 field_11A0;
@@ -39,7 +39,7 @@ public:
 // field_0xNN names.
 // ---------------------------------------------------------------------------
 
-// sdata2 float constant loaded by func_802B37F4 (lfs with r0 zero-base).
+// sdata2 float constant loaded by hikariInitRecordTimers (lfs with r0 zero-base).
 // const so MWCC treats the load as a constant and schedules it early.
 extern const float lbl_eu_80668EF8;
 // sdata2 random-velocity scale (func_802B3568) - NON-const so MWCC reloads
@@ -117,10 +117,10 @@ extern float lbl_eu_805135A8[4];
 extern f32 lbl_eu_80577750[0x40 / 4];
 // sdata2 1.0f constant for func_802B41E4's gradient lerp (1.0f - blend).
 extern const float lbl_eu_80668F54;
-// sdata2 scale constants for func_802B4358's random velocity setup.
+// sdata2 scale constants for hikariInitRandomEntry's random velocity setup.
 extern const float lbl_eu_80668F58;
 extern const float lbl_eu_80668F5C;
-// sdata2 limit for func_802B4470's +0x18 accumulator check.
+// sdata2 limit for hikariUpdateSlotRecord's +0x18 accumulator check.
 // const so MWCC treats the load as a constant and schedules it early.
 extern const float lbl_eu_80668F60;
 // sdata2 LOD constant for the ctor's four GXInitTexObjLOD calls (all three
@@ -138,8 +138,8 @@ extern CView* lbl_eu_80663E10;
 
 // Scene/camera helpers (retail C-linkage symbols).
 extern "C" void* Scn_HasCamItem(void* scene, void* view);
-// Manager singleton getter (retail func_802B262C, defined in CMenuGameClear).
-extern "C" cf::CfHikariItemManager* func_802B262C();
+// Manager singleton getter (retail ClearMenu_GetGlobal10, defined in CMenuGameClear).
+extern "C" cf::CfHikariItemManager* ClearMenu_GetGlobal10();
 
 // .rodata static-archive file path passed to CLibStaticData::getStaticFileData
 // by the ctor (retail lis/addi, so a plain extern array - no sdata).
@@ -149,7 +149,7 @@ extern char lbl_eu_80526354[];
 extern char lbl_eu_8052637C[];
 
 // sbss counter block; the four words are zeroed together by func_802B371C,
-// func_802B4460/4470 bump +0x24.  (unsigned long matches func_802B4460's
+// hikariUpdateFadeRecord/4470 bump +0x24.  (unsigned long matches hikariUpdateFadeRecord's
 // local extern so the matched function stays untouched.)
 extern unsigned long lbl_eu_80664C18;
 extern unsigned long lbl_eu_80664C1C;
@@ -180,7 +180,7 @@ union Convert64 {
 };
 
 // Hikari item record.  +0x00..+0x14 hold two VEC3s (f32 views via cast in
-// func_802B4470; +0x00..+0x08 are also copied as u32 words by func_802B371C).
+// hikariUpdateSlotRecord; +0x00..+0x08 are also copied as u32 words by func_802B371C).
 // Four 3-float corner offsets (12 consecutive floats) passed to the GX FIFO
 // quad emitters func_802B3E04 / func_802B3F20.
 struct CfHikariQuadCorners {
@@ -203,10 +203,10 @@ struct CfHikariItemRecord {
     /* 0x0C */ f32 field_0C; // vector B x (gradient progress value)
     /* 0x10 */ f32 field_10; // vector B y (gradient progress value)
     /* 0x14 */ f32 field_14; // vector B z
-    /* 0x18 */ f32 field_18; // accumulator (func_802B4470)
+    /* 0x18 */ f32 field_18; // accumulator (hikariUpdateSlotRecord)
     union {
-        /* 0x1C */ f32 field_1C; // float view (func_802B37F4)
-        /* 0x1C */ u16 field_1C_h[2]; // halfword view (func_802B4358)
+        /* 0x1C */ f32 field_1C; // float view (hikariInitRecordTimers)
+        /* 0x1C */ u16 field_1C_h[2]; // halfword view (hikariInitRandomEntry)
     };
     /* 0x20 */ f32 field_20;
     /* 0x24 */ f32 field_24;
@@ -223,9 +223,9 @@ struct CfHikariItemRecord {
         /* 0x30 */ u32 colors[4];
     };
     /* 0x40 */ u16 field_40;
-    /* 0x42 */ u16 field_42; // flag word (0x40 set by func_802B37F4)
+    /* 0x42 */ u16 field_42; // flag word (0x40 set by hikariInitRecordTimers)
     /* 0x44 */ u8 field_44[0x1194 - 0x44];
-    /* 0x1194 */ u32 field_1194; // flag word (bit0 toggle, bit1 func_802B2A08)
+    /* 0x1194 */ u32 field_1194; // flag word (bit0 toggle, bit1 hikariSetFlagBit1)
 };
 
 // Hikari item update / emitter functions (retail symbols).  extern "C" so the
@@ -235,15 +235,15 @@ extern "C" void func_802B3CA0(CfHikariItemRecord* self);
 extern "C" void func_802B3E04(CfHikariItemRecord* self, const CfHikariQuadCorners* corners);
 extern "C" void func_802B3F20(CfHikariItemRecord* self, const CfHikariQuadCorners* corners);
 extern "C" u32 func_802B41E4(f32* self, const f32* rows, const f32* table, int count);
-extern "C" void func_802B4358(CfHikariItemRecord* self, const u32* src, u16 val, f32 scale);
+extern "C" void hikariInitRandomEntry(CfHikariItemRecord* self, const u32* src, u16 val, f32 scale);
 
 // Initializes a freshly allocated 0x44-byte Hikari item record (us-802b61c0):
 // zeroes the vector/accumulator floats, sets the color words and the u16 at
 // +0x40.  Declared here so func_802B2894 (defined earlier in the TU) can call it.
-extern "C" void func_802B3750(CfHikariItemRecord* self, u16 value);
+extern "C" void hikariInitFreshRecord(CfHikariItemRecord* self, u16 value);
 
 // Record deleting-destructor helper (retail __dt__802B37B4, already matched in
-// this TU).  Declared here for func_802B2938 / func_802B2A18 / the manager dtor.
+// this TU).  Declared here for hikariRemoveRecordTarget / hikariResetManagerRecords / the manager dtor.
 extern "C" void* __dt__802B37B4(void* self, int flag);
 
 // Per-frame update entry points (defined in this TU; extern "C" so
@@ -251,8 +251,8 @@ extern "C" void* __dt__802B37B4(void* self, int flag);
 extern "C" void func_802B371C(const CfHikariItemRecord* self);
 extern "C" s32 func_802B3810(CfHikariItemRecord* self, f32 delta);
 extern "C" void func_802B403C(CfHikariItemRecord* self, const CfHikariQuadCorners* corners);
-extern "C" void func_802B4460(CfHikariItemRecord* self);
-extern "C" s32 func_802B4470(CfHikariItemRecord* self, f32 delta);
+extern "C" void hikariUpdateFadeRecord(CfHikariItemRecord* self);
+extern "C" s32 hikariUpdateSlotRecord(CfHikariItemRecord* self, f32 delta);
 extern "C" void func_802B44C8(CfHikariItemRecord* self, const CfHikariQuadCorners* corners);
 
 // Minimal view of the frame object returned by Scn_HasCamItem (retail field

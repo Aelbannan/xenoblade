@@ -240,7 +240,7 @@ int findActiveEntryID(int index)
 // Counts how many slots match the given id (or, for index 0, how many slots
 // are active - retail walks the pointer backwards with a countdown that never
 // terminates by the counter; reproduced verbatim).
-u32 func_801B1DCC(u32 index) {
+extern "C" u32 countPcEffectSlots(u32 index) {
     PcEffectData* data = lbl_eu_80664398;
     if (data == 0) return 0;
 
@@ -351,7 +351,7 @@ int countActiveSlots() {
 // Fetch the schedule holder for a slot: id 0 for the non-negative selector,
 // or the id looked up in the wstring table for negative selectors. When a
 // positive amount is given and a schedule is attached, drive its fixed
-// timestep via func_804E3CDC.
+// timestep via schedSetStepIntervals.
 PcEffectSchedHolder* func_801B20C8(CPcEffect07* self, s32 id, s32 sel, s32 amount) {
     PcEffectSchedHolder* result;
     if (sel >= 0) {
@@ -369,7 +369,7 @@ PcEffectSchedHolder* func_801B20C8(CPcEffect07* self, s32 id, s32 sel, s32 amoun
         conv.w[0] = 0x43300000;
         // No explicit f32 cast: MWCC folds the double subtraction straight
         // into the f32 parameter register (retail emits a lone fsubs).
-        func_804E3CDC(result->mSched, conv.d - lbl_eu_80667DF8, lbl_eu_80667DF4);
+        schedSetStepIntervals(result->mSched, conv.d - lbl_eu_80667DF8, lbl_eu_80667DF4);
     }
     return result;
 }
@@ -523,10 +523,34 @@ void func_801B248C(PcEffectData* data) {
     data->entries[2].mField06 = 0;
 }
 
-void thunk_adj4_reset(void* self) { ((void(*)(void*))func_801B21E0)((char*)self - 0x4); }
+// This-adjusting forwarders (retail func_801B2544 / func_801B254C): re-base
+// `this` onto the embedded CPcEffect07 (-0x4) and tail-jump to the per-frame
+// tick (func_801B21E0) / update (func_801B2318). C linkage like the fwdPcEffect*
+// siblings so the emitted symbols keep their retail unmangled names.
+extern "C" void thunk_adj4_reset(void* self) { ((void(*)(void*))func_801B21E0)((char*)self - 0x4); }
 
-void thunk_adj4_update(void* self) { ((void(*)(void*))func_801B2318)((char*)self - 0x4); }
+extern "C" void thunk_adj4_update(void* self) { ((void(*)(void*))func_801B2318)((char*)self - 0x4); }
 
-extern "C" void func_801B2554(u8* self) { ((void(*)(void*))func_801B20C8)((char*)self - 0x4); }
+// Effect-bank byte, zero default (retail func_801B1CB0): 0 when the global
+// bank is absent, else the bank byte at +0x58. Simpler sibling of
+// func_801B1C5C (which returns -1 on lookup failure); CArtsParam treats 0
+// as "no bank".
+extern "C" int getEffectBankByte() {
+    if (lbl_eu_80664398 == 0)
+        return 0;
+    return *(u8*)((u8*)lbl_eu_80664398 + 0x58);
+}
 
-extern "C" void func_801B255C(u8* self) { ((void(*)(void*))__dt__Q22cf11CPcEffect07Fv)((char*)self - 0x4); }
+// Slot-active query (retail func_801B1FFC): 1 when the global bank exists
+// and slot `index`'s active flag (s16 at entry+0x04, read via the +0x14
+// scan-record view) equals 1, else 0. CAIAction polls slots 0/1/2 with it.
+extern "C" int isPcEffectSlotActive(int index) {
+    PcEffectData* data = lbl_eu_80664398;
+    if (data == 0)
+        return 0;
+    return data->entries[index].mActive == 1;
+}
+
+extern "C" void fwdPcEffect20C8(u8* self) { ((void(*)(void*))func_801B20C8)((char*)self - 0x4); }
+
+extern "C" void fwdPcEffectDtor(u8* self) { ((void(*)(void*))__dt__Q22cf11CPcEffect07Fv)((char*)self - 0x4); }

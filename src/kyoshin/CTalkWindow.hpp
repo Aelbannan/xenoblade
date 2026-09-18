@@ -10,7 +10,7 @@
 #include <nw4r/ut/ut_TagProcessorBase.h>
 
 /*
- * CTalkWindow - talk-window process (created by func_8012CC78 on the work
+ * CTalkWindow - talk-window process (created by TalkWin_Create_CC78 on the work
  * heap, registered as a CProcess under the caller's parent; sizeof 0xB8).
  *
  * Field layout (from the ctor / Term / cbRenderBefore ASM):
@@ -320,7 +320,7 @@ void playUISound(unsigned long id);
 
 // The CTalkWindow ctor is a C-ABI global (retail `__ct__CTalkWindow`, no
 // class-length mangling); defined in CTalkWindow.cpp - the factory
-// func_8012CC78 forwards into it by this name.
+// TalkWin_Create_CC78 forwards into it by this name.
 extern "C" CTalkWindow* __ct__CTalkWindow(CTalkWindow* self, u32 arg1,
                                           u32 arg2, u8* buf, u32 arg3,
                                           u32 arg4, u32 arg5);

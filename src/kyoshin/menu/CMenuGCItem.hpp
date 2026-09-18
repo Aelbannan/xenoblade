@@ -42,8 +42,8 @@ public:
     void cbRenderBefore();
 
     // IScnRender vtable this-adjusting thunks
-    void func_802B0F08();
-    void func_802B0F10();
+    void CMenuGCItem_RenderThunk58();
+    void CMenuGCItem_DtorThunk58();
 
     // Fields (partial -- enough for known accessors)
     // Inherited: CProcess (0x00-0x3B)
@@ -75,15 +75,15 @@ extern u32 __ptmf_null[3];             // null pointer-to-member-function consta
 // Retail-unmangled C-linkage callees (US strips the member manglings for the
 // func_ helpers; isIdle keeps its C++ mangling). int returns keep the caller's
 // `!= 0` as a plain cmpwi (no u8 mask) like retail.
-extern "C" int func_801C3E34(CBgTex* self);
-extern "C" void func_801C3D9C(CBgTex* self);
-extern "C" void func_801C3D54(CBgTex* self);
-extern "C" void func_801C3D7C(CBgTex* self, nw4r::lyt::DrawInfo* drawInfo);
-extern "C" int func_801C4114(CTitleAHelp* self);
-extern "C" void func_801C40A0(CTitleAHelp* self);
+extern "C" int BgTex_IsLoaded_3E34(CBgTex* self);
+extern "C" void BgTex_Release_3D9C(CBgTex* self);
+extern "C" void BgTex_Tick_3D54(CBgTex* self);
+extern "C" void BgTex_Draw_3D7C(CBgTex* self, nw4r::lyt::DrawInfo* drawInfo);
+extern "C" int isInitialized(CTitleAHelp* self);
+extern "C" void teardown(CTitleAHelp* self);
 extern "C" void func_801C412C(CTitleAHelp* self);
-extern "C" void func_801C3FF0(CTitleAHelp* self);
-extern "C" void func_801C4080(CTitleAHelp* self, nw4r::lyt::DrawInfo* drawInfo);
+extern "C" void updateHelp(CTitleAHelp* self);
+extern "C" void drawHelp(CTitleAHelp* self, nw4r::lyt::DrawInfo* drawInfo);
 extern "C" int isIdle__11CTitleAHelpFv(CTitleAHelp* self);
 extern "C" int IsItemBoxReady(CItemBoxGrid* self);
 extern "C" void func_801CB28C(CItemBoxGrid* self);

@@ -13,7 +13,7 @@ extern "C" void* __ct__cf_CfGimmickSaveOff(cf::CfGimmickSaveOff* self, s32 param
     *(u32**)self = (u32*)lbl_eu_8053A1E0;
     self->mFlag = 8;
 
-    UnkClass_8003AA34* mgr = (UnkClass_8003AA34*)func_8003AA34();
+    UnkClass_8003AA34* mgr = (UnkClass_8003AA34*)Bdat_GetTable_AA34();
     void* holder = (void*)lbl_eu_80664140;
     self->mParam = (u16)param;
 
@@ -150,7 +150,7 @@ extern "C" void func_802ABCB4(cf::CfGimmickSaveOff* self) {
             IUnkVt110* obj = (IUnkVt110*)entry->object;
             SaveOffPoke84* result = obj->getObjAt84();
             if (result != NULL) {
-                func_8008B95C(&result->at84);
+                CtrlMoveEne_MarkActiveSteady(&result->at84);
             }
             entry = entry->next;
         }

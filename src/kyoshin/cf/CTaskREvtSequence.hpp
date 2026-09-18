@@ -4,17 +4,17 @@
 #include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
 
 // C-linkage runtime imports (retail symbol names - keep linkage/signatures verbatim)
-extern "C" void func_80261A80();
-extern "C" float func_8048EA40();
+extern "C" void TextState_DrawStaged();
+extern "C" float MaruShadowLoadGlobalFloat();
 extern "C" u8* getGlobalSda(void);
 extern "C" void func_800599E0(void* sda, u32 a, u32 b, u32 c);
 extern "C" void Scn_SetPalFixFlag(u8* self, unsigned char byte);
-extern "C" void func_8048EA38(float v);
+extern "C" void MaruShadowStoreGlobalFloat(float v);
 // Sibling in this TU: CTaskREvtSequence::Term forwards `this` (retail name
 // func_8016A480, unmangled -> C linkage).
 extern "C" void func_8016A480(void* self);
 // UI-state flag toggle used by EvtSeqBeginFileRead (defined in CInfoCf.cpp).
-extern "C" void func_80166788();
+extern "C" void InfoCfSetBit2ClearBit1();
 // Sibling ctor in this TU (retail __ct__cf_CTaskREvtSequence, 0x218-byte
 // body): takes (self, sequence-name string), returns self. The retail symbol
 // is the pre-mangled name (a global function, not a cf::CTaskREvtSequence
@@ -27,8 +27,8 @@ extern "C" cf::CTaskREvtSequence* __ct__cf_CTaskREvtSequence(
     cf::CTaskREvtSequence* self, const char* name);
 // EvtSeqSetBgmGateFlag (this unit) toggles a flag and fades BGM (menu sound system).
 extern "C" void EvtSeqSetBgmGateFlag(int a);
-extern "C" void func_80189318(s32 clearName, float fadeTime);
-extern "C" void func_80189424(float vol);
+extern "C" void MenuSnd_StopSlot0Clear_9318(s32 clearName, float fadeTime);
+extern "C" void MenuSnd_StopSlot1_9424(float vol);
 
 // Imports for EvtSeqBootSequence (event-sequence boot): sequence-system / UI gates
 // (C-linkage, retail unmangled names), CfGameManager helpers, the id getter
@@ -37,7 +37,7 @@ extern "C" bool func_8012E6DC();
 extern "C" int CfRes_isGridLoadIdle();
 extern "C" void handleBattleEnd__Q22cf13CfGameManagerFv();
 extern "C" void getControllerValues__Q22cf13CfGameManagerFv(u16* first, u16* second);
-extern "C" u32 func_8016E08C();
+extern "C" u32 getReloadParam2();
 extern "C" void gmWalkByMask(void* arg);
 // Event-manager readiness check (defined at global scope in CTaskREvent.cpp,
 // so C++ linkage mangles it back to the retail isEventPending__Fv).
@@ -45,7 +45,7 @@ u32 isEventPending();
 
 // Name-string helper for realtime-event entries (CREvtModel.cpp): returns
 // entry->field_0x1C + 0x10 as a C string.
-extern "C" void* func_801727D0(void* self);
+extern "C" void* evtModelDataPtr(void* self);
 // CProcess base destructor (retail __dt__8CProcessFv).
 class CProcess;
 extern "C" void __dt__8CProcessFv(CProcess* self, int flag);
@@ -64,7 +64,7 @@ extern f32 lbl_eu_80667658;
 
 #include "monolib/scn/CScn.hpp"
 #include "monolib/scn/IScnRender.hpp"
-// ResAnmChr is returned by value (single pointer word) by func_8049E708.
+// ResAnmChr is returned by value (single pointer word) by ItemAnim_GetChr_E708.
 #include "nw4r/g3d/res/g3d_resanmchr.h"
 
 // Move-callback ptmf table copied into CTaskREvtSequence::field_0x3C by Init
@@ -104,11 +104,11 @@ extern "C" void func_8016DF4C(u32 type);
 // (flat retail name); TUs here reach it via that header.
 
 // (CREvtCamera.cpp / CTaskREvent.cpp).
-extern "C" u32 func_801644B4();
-extern "C" void func_80164CFC();
-// func_80168028: realtime-event arena slot lookup (CREvtMem.cpp) - returns an
+extern "C" u32 evtGetManagerAddr();
+extern "C" void evtTeardownActive();
+// getEvtMemSlot: realtime-event arena slot lookup (CREvtMem.cpp) - returns an
 // arena address used as a plain integer by func_80169DD0.
-extern "C" u32 func_80168028(u32 idx);
+extern "C" u32 getEvtMemSlot(u32 idx);
 // func_802A1500: voice-event manager reset (CCharVoiceMan.cpp).
 extern "C" void func_802A1500();
 // CfGameManager helpers with the caller shape (same scheme as CTaskREvent.hpp).
@@ -137,33 +137,33 @@ struct CREvtParam;
 extern "C" void func_80180664(CREvtCamera* self, void* eventData,
                               void* elemAddr);
 extern "C" void func_80185378(CREvtEffect* self, void* src, void* elemAddr);
-extern "C" void func_801C36C4(CREvtLight* self, const char* resourceName,
+extern "C" void CREvtLight_SetResource(CREvtLight* self, const char* resourceName,
                               u32 elemAddr);
 extern "C" void func_80294BA4(CREvtMovie* self);
 // Imports for func_80168800 (event-sequence setup): realtime-event arena
 // allocator + object ctors (kyoshin/realtimeevt/*.cpp), the name-matching
 // helper (CREvtModel.cpp), CfGameManager gates and the vision-arm pair
 // (CMenuVision.cpp).
-extern "C" void* func_80185748(void* size);
+extern "C" void* EvtObj_AllocBlock(void* size);
 extern "C" CREvtCamera* __ct__CREvtCamera(CREvtCamera* self, u32 param);
 extern "C" CREvtEffect* __ct__CREvtEffect(CREvtEffect* self,
                                           CREvtParam* param);
 extern "C" CREvtLight* __ct__CREvtLight(CREvtLight* self, u32 arg);
 extern "C" CREvtMovie* __ct__CREvtMovie(CREvtMovie* self,
                                         CREvtMovieScript* scriptData);
-extern "C" void* func_801730D0(void* self);
+extern "C" void* createEvtModelObj(void* self);
 extern "C" bool isVisionPackLoaded__Q22cf13CfGameManagerFv();
 extern "C" void updatePresentationTick__Q22cf13CfGameManagerFv();
-extern "C" u32 func_801AC088();
-extern "C" void func_801AC1F8();
+extern "C" u32 isVisionMenuActive();
+extern "C" void activateVisionMenu();
 extern "C" void func_80294980(CREvtMovie* self);
 
 // Imports for EvtSeqOnFileEvent (async file-event handler): scene dim helper
 // (CfObjectImplWalker.cpp) and the menu tag-processor (re)init pair
 // (code_8025FB10.cpp).
 extern "C" u8* Scn_SetCamIndex(CScn* scene, int flag);
-extern "C" void func_802618D8(u8* arg);
-extern "C" void func_80261944(int arg);
+extern "C" void TextState_Init(u8* arg);
+extern "C" void TextState_Reset(int arg);
 // Imports for func_80169050 (fade/arm sequence state): CfGameManager helpers
 // (caller shape - retail symbols are Fv) and the voice/UI-system arm helper
 // (code_801A929C.cpp).
@@ -172,11 +172,11 @@ extern "C" void stubEmptyD__Q22cf13CfGameManagerFv(int a, int b);
 extern "C" void func_801AAC78(int v);
 // Imports for the ctor: menu/event-system singleton gate + arm
 // (CMenuEnemyState.cpp).
-extern "C" void* func_80110A70();
-extern "C" void func_80111074();
+extern "C" void* EneSt_GetSingleton();
+extern "C" void EneSt_MarkUnk54();
 // Character-anim resource lookup (CScnItemAnim.cpp): returns a single-word
 // ResAnmChr wrapper; func_8016AF4C / EvtSeqFindResAddr walk it.
-extern "C" nw4r::g3d::ResAnmChr func_8049E708(u8* data, int index);
+extern "C" nw4r::g3d::ResAnmChr ItemAnim_GetChr_E708(u8* data, int index);
 // ResFile entry-count getter called on the raw file base + 0xC (retail emits
 // addi+bl with no ResFile object spill; CREvtModel precedent).
 extern "C" u32 GetResAnmChrNumEntries__Q34nw4r3g3d7ResFileCFv(u8* resFile);
@@ -427,8 +427,8 @@ struct EvtBdabModel {
 };
 
 // Readiness probe called by func_8016BDA8 (retail resolves it as the flat
-// symbol func_801729D0).
-extern "C" int func_801729D0(EvtBdabModel* self);
+// symbol isEvtDataFlagSet).
+extern "C" int isEvtDataFlagSet(EvtBdabModel* self);
 
 // View of the buffer at UnkState_80664268::field_0xC4 exposing the slot
 // table base word at +0x80 (func_8016BDA8 compares slot ids against it).
@@ -472,7 +472,7 @@ struct UnkStateC4Obj {
 
 // Name-data block at UnkEvtListEntry::field_0x1C: id word at +0x0C (compared
 // against CBdatEntry mNameData by EvtSeqFindEventByNameData), name string at +0x10
-// (func_801727D0 returns field_0x1C + 0x10).
+// (evtModelDataPtr returns field_0x1C + 0x10).
 struct UnkEvtNameData {
     u8 gap00[0x0C];      // 0x00
     u32 field_0x0C;      // 0x0C
@@ -583,7 +583,7 @@ struct UnkBB38Table {
 };  // size 0x4C
 
 // Type-2 event entry name object (UnkEvtListEntry::field_0x1C): packed
-// token word at +0x20 passed to func_800AA318 by func_8016C300.
+// token word at +0x20 passed to Tok_Unpack by func_8016C300.
 struct UnkEvtName2 {
     u8 gap00[0x20];    // 0x00
     u32 field_0x20;    // 0x20
@@ -807,13 +807,13 @@ public:
     u16 field_0x116;  // 0x116 (id halfword pair published by EvtSeqBootSequence)
     u16 field_0x118;  // 0x118
     u8 gap11A[0x02];  // 0x11A-0x11B
-    u32 field_0x11C;  // 0x11C (func_80168028 arena pointer)
+    u32 field_0x11C;  // 0x11C (getEvtMemSlot arena pointer)
     UnkSeq120* field_0x120;    // 0x120 (walk cursor advanced by func_80169DD0)
     u32 field_0x124;  // 0x124 (CX stream position written by EvtSeqOnFileEvent)
     u32 field_0x128;  // 0x128 (arena chunk size from func_80167D40)
-    f32 field_0x12C;  // 0x12C (Init stores func_8048EA40() here)
+    f32 field_0x12C;  // 0x12C (Init stores MaruShadowLoadGlobalFloat() here)
     u32 field_0x130;  // 0x130 (zero-check by func_80169DD0)
-    u16 field_0x134;  // 0x134 (sequence id halfword from func_8016E08C)
+    u16 field_0x134;  // 0x134 (sequence id halfword from getReloadParam2)
     u8 gap136[0x02];  // 0x136-0x137
     u32 field_0x138;  // 0x138 (frame counter incremented by EvtSeqUpdateRealtimeEvents)
     u8 mBuf13C[0x100]; // 0x13C-0x23B (zeroed by the ctor)
@@ -847,10 +847,10 @@ extern "C" void EvtSeqBeginFileRead(cf::CTaskREvtSequence* self);
 extern "C" int func_8016AF4C(u8* data, const char* name, s32* out);
 // Region-code helper (CTaskEnvironment.cpp): 0/1/2 region code from the
 // global sda. C linkage (retail unmangled name).
-extern "C" int func_80059C14(u8* sda);
+extern "C" int Env_RegionCode(u8* sda);
 // Token unpacker (code_800AA008.cpp): splits a packed word into four outputs.
 // C linkage (retail unmangled name).
-extern "C" void func_800AA318(u32 packed, u32* out0, u32* out1, u32* out2,
+extern "C" void Tok_Unpack(u32 packed, u32* out0, u32* out1, u32* out2,
                               u32* out3);
 // CTaskLOD helpers (code_80135FDC.cpp): task id -> active flag. s16 id so the
 // call site passes the halfword directly (retail emits lha, no u8 conversion).
@@ -884,13 +884,13 @@ extern "C" void func_8016C450(const char* path, EvtC450Buf* buf, s32 limit);
 // Imports for func_8016B860 (event-sequence update): minimap/event gates
 // (CMiniMap.cpp / CMenuKizunagram.cpp), tag-processor notify (code_8025FB10.cpp)
 // and the menu BGM/voice helpers (code_80187F14.cpp / code_801A929C.cpp).
-extern "C" s32 func_8011C2E8();
-extern "C" void func_8011C400();
+extern "C" s32 MiniMapHasGlobalData();
+extern "C" void MiniMapSetActiveFlag();
 extern "C" void func_80261960(int index);
 extern "C" void func_80189034(const char* name, int flag, float f1, float f2);
 extern "C" void func_80188D34(const char* name, int flag, float f1, float f2);
-extern "C" void func_8018896C(int index, u32 type, float f1, float f2);
-extern "C" void func_801AACA8(u8 v);
+extern "C" void MenuSnd_PushSlotVolume_896C(int index, u32 type, float f1, float f2);
+extern "C" void BattleWork_StoreFlagByte1B(u8 v);
 
 // Imports for func_80169A38 (event-sequence update): scene fade helpers
 // (CfObjectImplWalker.cpp).
@@ -907,23 +907,23 @@ extern u32 lbl_eu_80530AE8[3];
 // Realtime-event camera task helpers (CREvtCamera.cpp) called by
 // func_801696CC's tail.
 extern "C" void func_80180210(int flag);
-extern "C" void func_80180394();
+extern "C" void REvtCam_ActivateLodTasks();
 
 // ---- Imports for func_8016925C (event-sequence start) ----
 // Base event-name string getter (CTaskREvent.cpp; retail returns the pointer
 // as a u32).
-extern "C" const char* func_801644AC();
+extern "C" const char* evtGetBaseNameAddr();
 // Scene alloc-handle getter (CTaskGame.cpp).
 extern "C" u32 Scn_CallUnk8C_V9(CScn* scene);
 // BGM stream starter (CTaskGame.cpp): volume arrives in f1.
 extern "C" void func_80043738(u32 a1, const char* path, u32 handle, u32 a4,
                               u32 a5, u32 a6, float volume);
 // Fade-volume scale source (CTaskREvent.cpp): returns a float in f1.
-extern "C" f32 func_80164478();
+extern "C" f32 evtCalcStreamVolume();
 // Minimap/system reset (CREvtModelMap.cpp).
-extern "C" void func_8016FC0C(int val);
+extern "C" void MapFx_SetPointEnabled(int val);
 // Guest-mode-off reset (CREvtModelMap.cpp).
-extern "C" void func_80180DCC();
+extern "C" void MapModel_DisablePoints();
 // Second/third CfGameManager object-list getters (same scheme as
 // getGimmickListHead above).
 extern "C" EvtSeqMgrView* getGimmickList__Q22cf13CfGameManagerFv();
@@ -1156,14 +1156,14 @@ extern "C" void activateLOD__8CTaskLODFv(s16 taskId);
 extern "C" void CTaskGame_resetStream();
 // Static shutdown for the shared menu-text state (code_8025FB10.cpp).
 extern "C" void __dt__80261B1C();
-extern "C" void func_80167EF8();
+extern "C" void freeEvtMemAll();
 extern "C" void finalizeGameState__Q22cf13CfGameManagerFv();
 extern "C" void func_801338C8();
 extern "C" void CUICfManager_queueEventMenu();
 extern "C" void func_8012F750(u32 arg);
 extern "C" void updateScnCounter__FUl(u32 arg);
 
-// Event-task object behind func_801644B4(): teardown-arm word at +0x1B8.
+// Event-task object behind evtGetManagerAddr(): teardown-arm word at +0x1B8.
 struct EvtSeqMgrTaskView {
     u8 gap00[0x1B8];
     u32 field_0x1B8;

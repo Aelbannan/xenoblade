@@ -74,7 +74,7 @@ extern "C" void __ct__804BF5A0(CScnEnvLgtData* self);
 // Used by sinit_804BF540 to construct an array of 32 objects (0x24 bytes each)
 // at lbl_eu_8065F428. Since BSS zero-init suffices, the constructor body is empty.
 // ---------------------------------------------------------------------------
-extern "C" void func_804BF59C(void);
+extern "C" void ScnEnvLgt_noopF59C(void);
 
 // Copy-assignment-like operation: disables all FLAG_ENABLE_LIGHT bits on
 // 'this', then compacts enabled CLight entries from 'rhs' into 'this' (up
@@ -88,7 +88,7 @@ extern "C" void func_804BF774(CScnEnvLgtData* self, const CScnEnvLgtData* rhs);
 // intended to be overridden by derived classes for post-processing.
 // Called from CScnEnvLgtCtrl (0x804C573C) and CVirtualLightObj (0x80499C80).
 // ---------------------------------------------------------------------------
-extern "C" void func_804BF940(void);
+extern "C" void ScnEnvLgt_noopF940(void);
 
 // Light-state update routine. Scans mFlags bit 0 to pick a directional
 // color (mDirColor[0] vs mDirColor[1]) and the matching curve table index,
@@ -111,8 +111,8 @@ extern "C" void func_804BFA70(CScnEnvLgtData* self, const ml::CVec3* vec, int mo
 
 // Sets bit 0x80 of mFlags when 'enable' is non-zero, and clears bit 0x100
 // either way.
-extern "C" void func_804C0228(CScnEnvLgtData* self, int enable);
+extern "C" void ScnEnvLgt_EnableFlag80(CScnEnvLgtData* self, int enable);
 
 // Sets bit 0x100 of mFlags when 'enable' is non-zero, and clears bit 0x80
 // either way.
-extern "C" void func_804C0254(CScnEnvLgtData* self, int enable);
+extern "C" void ScnEnvLgt_EnableFlag100(CScnEnvLgtData* self, int enable);

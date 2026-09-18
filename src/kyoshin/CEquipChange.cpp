@@ -329,7 +329,7 @@ int EquipChange_IsWeaponRow(CEquipChange* self) {
 
 // Target us-8020417c: subcur visible, else rely on the item box.
 int EquipChange_IsSubcurBusy(CEquipChange* self) {
-    if (func_801D2ED8((CBaseCur*)self->field_80) != 0)
+    if (Cur_BothSubPanesOn((CBaseCur*)self->field_80) != 0)
         return 1;
     return eibSysWinBusy(&self->mEquipItemBox);
 }
@@ -362,9 +362,9 @@ void EquipChange_CloseScreen(CEquipChange* self) {
     if ((s32)self->field_48 == 3) {
         self->field_48 = 4;
         self->field_4D = 0;
-        func_801D216C((void*)((u8*)self + 0x50), 0);
-        func_801D216C((void*)((u8*)self + 0x68), 0);
-        func_801D216C((void*)self->field_80, 0);
+        Cur_SetVisible((void*)((u8*)self + 0x50), 0);
+        Cur_SetVisible((void*)((u8*)self + 0x68), 0);
+        Cur_SetVisible((void*)self->field_80, 0);
         advanceItemBoxState((CItemBoxInfo*)((u8*)self + 0xA4));
         ((nw4r::lyt::Layout*)self->field_34)->SetAnimationEnable(self->field_3C, 0);
         ((nw4r::lyt::Layout*)self->field_34)->SetAnimationEnable(self->field_40, 0);
@@ -626,8 +626,8 @@ void func_80202CCC(CEquipChange* self) {
     ((nw4r::lyt::Layout*)self->field_34)->SetAnimationEnable(self->field_40, 1);
     self->field_48 = 6;
     self->field_4D = 0;
-    func_801D216C(self->_pad50, 0);
-    func_801D216C(self->_pad68, 0);
+    Cur_SetVisible(self->_pad50, 0);
+    Cur_SetVisible(self->_pad68, 0);
     playUISound__FUl(3);
 }
 #pragma optimize_for_size off
@@ -670,7 +670,7 @@ int func_80203210(CEquipChange* self) {
             u8 v = (u8)BdatGetU8Direct(lbl_eu_806640EC, &lbl_eu_80508168[0x34], word >> 20);
             u32 isOne = v - 1;
             isOne = (isOne == 0) ? 1u : 0u;
-            if (isOne && func_8009CF8C(0x3508) == 0)
+            if (isOne && CtrlRemote_TouchBitByArg(0x3508) == 0)
                 return 0;
         }
         CtrlObjectParam_SetEquipSlot5(obj, -1);
@@ -686,7 +686,7 @@ int func_80203210(CEquipChange* self) {
             u8 v = (u8)BdatGetU8Direct(lbl_eu_806640EC, &lbl_eu_80508168[0x34], word >> 20);
             u32 isOne = v - 1;
             isOne = (isOne == 0) ? 1u : 0u;
-            if (isOne && func_8009CF8C(0x3508) == 0)
+            if (isOne && CtrlRemote_TouchBitByArg(0x3508) == 0)
                 return 0;
         }
         CtrlObjectParam_SetEquipSlot0(obj, -1);
@@ -702,7 +702,7 @@ int func_80203210(CEquipChange* self) {
             u8 v = (u8)BdatGetU8Direct(lbl_eu_806640EC, &lbl_eu_80508168[0x34], word >> 20);
             u32 isOne = v - 1;
             isOne = (isOne == 0) ? 1u : 0u;
-            if (isOne && func_8009CF8C(0x3508) == 0)
+            if (isOne && CtrlRemote_TouchBitByArg(0x3508) == 0)
                 return 0;
         }
         CtrlObjectParam_SetEquipSlot1(obj, -1);
@@ -718,7 +718,7 @@ int func_80203210(CEquipChange* self) {
             u8 v = (u8)BdatGetU8Direct(lbl_eu_806640EC, &lbl_eu_80508168[0x34], word >> 20);
             u32 isOne = v - 1;
             isOne = (isOne == 0) ? 1u : 0u;
-            if (isOne && func_8009CF8C(0x3508) == 0)
+            if (isOne && CtrlRemote_TouchBitByArg(0x3508) == 0)
                 return 0;
         }
         CtrlObjectParam_SetEquipSlot2(obj, -1);
@@ -734,7 +734,7 @@ int func_80203210(CEquipChange* self) {
             u8 v = (u8)BdatGetU8Direct(lbl_eu_806640EC, &lbl_eu_80508168[0x34], word >> 20);
             u32 isOne = v - 1;
             isOne = (isOne == 0) ? 1u : 0u;
-            if (isOne && func_8009CF8C(0x3508) == 0)
+            if (isOne && CtrlRemote_TouchBitByArg(0x3508) == 0)
                 return 0;
         }
         CtrlObjectParam_SetEquipSlot3(obj, -1);
@@ -750,7 +750,7 @@ int func_80203210(CEquipChange* self) {
             u8 v = (u8)BdatGetU8Direct(lbl_eu_806640EC, &lbl_eu_80508168[0x34], word >> 20);
             u32 isOne = v - 1;
             isOne = (isOne == 0) ? 1u : 0u;
-            if (isOne && func_8009CF8C(0x3508) == 0)
+            if (isOne && CtrlRemote_TouchBitByArg(0x3508) == 0)
                 return 0;
         }
         CtrlObjectParam_SetEquipSlot4(obj, -1);
@@ -772,9 +772,9 @@ int func_80203210(CEquipChange* self) {
         names[1] = *src++;
         names[2] = *src++;
         CTaskGame_enumListCtor(&holder);
-        func_800F4A98(CTaskGame_enumListGet(&holder), names[self->field_99], 0);
+        startEnumObjects(CTaskGame_enumListGet(&holder), names[self->field_99], 0);
         if (((CEquipEnumList*)CTaskGame_enumListGet(&holder))->field_0x620 >= 1) {
-            CEquipEnumListSlot* slot = (CEquipEnumListSlot*)func_800F6EC0(CTaskGame_enumListGet(&holder), 0);
+            CEquipEnumListSlot* slot = (CEquipEnumListSlot*)getEntryAt(CTaskGame_enumListGet(&holder), 0);
             if (slot->field_0x4 != 0) {
                 func_800BFDE0(getCfObjectPc__FPQ22cf12CfObjectMove(slot->field_0x4), 0);
             }
@@ -856,8 +856,8 @@ int EquipChange_GetBoxCount(CEquipChange* self) {
 }
 #pragma optimize_for_size off
 
-void func_801D2E4C(void* self);
-void CEquipChange::func_8020397C() { func_801D2E4C(field_80); }
+void Cur_ShowTwoSubPanes(void* self);
+void CEquipChange::func_8020397C() { Cur_ShowTwoSubPanes(field_80); }
 
 void func_80287FE0(void* self);
 void CEquipChange::func_80203984() { func_80287FE0(&mEquipItemBox); }
@@ -882,7 +882,7 @@ int EquipChange_GetLockedState(CEquipChange* self) {
 // Retail saves 2 regs via stmw/lmw (opt-space prologue).
 #pragma optimize_for_size on
 extern "C" int EquipChange_GetMenuId(CEquipChange* self) {
-    if (func_801D2ED8((CBaseCur*)self->field_80) != 0)
+    if (Cur_BothSubPanesOn((CBaseCur*)self->field_80) != 0)
         return 0x2E;
     u8 b = code80135FDC_getByte_64077();
     int flag = (int)((u32)(1 - b) >> 31);
@@ -976,7 +976,7 @@ extern "C" void __declspec(noinline) EquipChange_OnAnim3CToSt3(CEquipChange* sel
     char buf[0x10];
     calcItemBoxPaneVec(buf, (CItemBoxInfo*)((u8*)self + 0xA4), self->field_99);
     ((CBaseCur*)self->field_80)->setRootPaneTranslate((const nw4r::math::VEC3*)buf);
-    func_801D216C((void*)((u8*)self + 0x80), 1);
+    Cur_SetVisible((void*)((u8*)self + 0x80), 1);
     EquipChange_RefreshCursorPos(self);
 }
 
@@ -1113,12 +1113,12 @@ extern "C" __declspec(noinline) void EquipChange_RefreshCursorPos(CEquipChange* 
     if (self->field_98 == 0 || self->field_98 == 4 || self->field_98 == 6 ||
         self->field_98 == 8 || self->field_98 == 10 || self->field_98 == 12) {
         ((CBaseCur*)self->_pad50)->setRootPaneTranslate(&pos);
-        func_801D216C(self->_pad50, 1);
-        func_801D216C(self->_pad68, 0);
+        Cur_SetVisible(self->_pad50, 1);
+        Cur_SetVisible(self->_pad68, 0);
     } else {
         ((CBaseCur*)self->_pad68)->setRootPaneTranslate(&pos);
-        func_801D216C(self->_pad68, 1);
-        func_801D216C(self->_pad50, 0);
+        Cur_SetVisible(self->_pad68, 1);
+        Cur_SetVisible(self->_pad50, 0);
     }
 }
 #pragma optimize_for_size off
@@ -1210,7 +1210,7 @@ extern "C" void func_802042C0(CEquipChange* self) {
                       CItem_initItemImplInstances((CItemData*)weaponItem)->vf20((CItemData*)weaponItem), 0);
         u8 equipped = CItem_initItemImplInstances((CItemData*)weaponItem)->vf30((CItemData*)weaponItem);
         if (equipped != 0) {
-            LayoutSetTextBoxFmtValue(layout, &base[0x55], func_eu_802B148C(), 0);
+            LayoutSetTextBoxFmtValue(layout, &base[0x55], getErrMesText16(), 0);
             PaneMatSetTevColorsByName(layout, &base[0x55], &lbl_eu_80664678, &lbl_eu_80664680);
         }
 
@@ -1222,7 +1222,7 @@ extern "C" void func_802042C0(CEquipChange* self) {
             sprintf(paneName1, &base[0xdf], i);
             nw4r::lyt::Pane* pane =
                 ((nw4r::lyt::Layout*)self->field_34)->GetRootPane()->FindPaneByName(paneName1, true);
-            func_80124270(pane, 1);
+            setPaneVisible(pane, 1);
             texRes = self->field_2C->GetResource(0x74696D67, &base[0xec], NULL);
             if ((u8)i < equipped) {
                 int slot = (s16)CItem_initItemImplInstances((CItemData*)weaponItem)->vf40((CItemData*)weaponItem, (u8)i);
@@ -1268,7 +1268,7 @@ extern "C" void func_802042C0(CEquipChange* self) {
                         default:
                             break;
                         }
-                        LayoutSetTextBoxFmtValue(layout, &base[0x55], func_eu_802B1474(), 0);
+                        LayoutSetTextBoxFmtValue(layout, &base[0x55], getErrMesText15(), 0);
                         PaneMatSetTevColorsByName(layout, &base[0x55], &lbl_eu_80664688, &lbl_eu_80664690);
                     } else {
                         marks[count++] = 1;
@@ -1322,7 +1322,7 @@ extern "C" void func_802042C0(CEquipChange* self) {
                 marks[count++] = 0;
                 char* lbl = BdatTouchStringCell(&base[0xff], &base[0x108], 0x6d);
                 sprintf(textBuf1, &base[0x1b5], lbl);
-                func_80124270(pane, 0);
+                setPaneVisible(pane, 0);
             }
             func_80136A1C(layout, iconName1, textBuf1, 0);
             func_80136A1C(layout, labelName1, textBuf1, 0);
@@ -1342,7 +1342,7 @@ extern "C" void func_802042C0(CEquipChange* self) {
         sprintf(paneName3, &base[0xdf], i + 3);
         nw4r::lyt::Pane* pane =
             ((nw4r::lyt::Layout*)self->field_34)->GetRootPane()->FindPaneByName(paneName3, true);
-        func_80124270(pane, 1);
+        setPaneVisible(pane, 1);
         texRes = self->field_2C->GetResource(0x74696D67, &base[0xec], NULL);
         void* item = catItems[i];
         if (item == NULL) {
@@ -1351,7 +1351,7 @@ extern "C" void func_802042C0(CEquipChange* self) {
             LayoutSetTextBoxFmtValue(layout, labelName2, lbl, 0);
             marks[count++] = 0;
             sprintf(textBuf2, &base[0x1b5], lbl);
-            func_80124270(pane, 0);
+            setPaneVisible(pane, 0);
         } else {
             LayoutSetTextBoxFmtValue(layout, iconName2,
                           CItem_initItemImplInstances((CItemData*)item)->vf20((CItemData*)item), 0);
@@ -1359,7 +1359,7 @@ extern "C" void func_802042C0(CEquipChange* self) {
                           CItem_initItemImplInstances((CItemData*)item)->vf20((CItemData*)item), 0);
             if (CItem_initItemImplInstances((CItemData*)item)->vf30((CItemData*)item) != 0) {
                 sprintf(rebuildName, &base[0x1d8], i + 1);
-                LayoutSetTextBoxFmtValue(layout, rebuildName, func_eu_802B148C(), 0);
+                LayoutSetTextBoxFmtValue(layout, rebuildName, getErrMesText16(), 0);
                 PaneMatSetTevColorsByName(layout, rebuildName, &lbl_eu_80664678, &lbl_eu_80664680);
                 int slot =
                     (s16)CItem_initItemImplInstances((CItemData*)item)->vf40((CItemData*)item, 0);
@@ -1403,7 +1403,7 @@ extern "C" void func_802042C0(CEquipChange* self) {
                         default:
                             break;
                         }
-                        LayoutSetTextBoxFmtValue(layout, rebuildName, func_eu_802B1474(), 0);
+                        LayoutSetTextBoxFmtValue(layout, rebuildName, getErrMesText15(), 0);
                         PaneMatSetTevColorsByName(layout, rebuildName, &lbl_eu_80664688, &lbl_eu_80664690);
                     } else {
                         marks[count++] = 1;
@@ -1453,7 +1453,7 @@ extern "C" void func_802042C0(CEquipChange* self) {
                         default:
                             break;
                         }
-                        LayoutSetTextBoxFmtValue(layout, rebuildName, func_eu_802B1474(), 0);
+                        LayoutSetTextBoxFmtValue(layout, rebuildName, getErrMesText15(), 0);
                         PaneMatSetTevColorsByName(layout, rebuildName, &lbl_eu_80664688, &lbl_eu_80664690);
                     }
                 }
@@ -1461,7 +1461,7 @@ extern "C" void func_802042C0(CEquipChange* self) {
                 marks[count++] = 0;
                 char* lbl = BdatTouchStringCell(&base[0xff], &base[0x108], 0x6d);
                 sprintf(textBuf2, &base[0x1b5], lbl);
-                func_80124270(pane, 0);
+                setPaneVisible(pane, 0);
             }
         }
         func_80136A1C(layout, paneName2, textBuf2, 0);
@@ -1577,7 +1577,7 @@ bool CEquipChange::OnFileEvent(CEventFile* file) {
         __dt__7CSubCurFv((CBaseCur*)tmpSub, -1);
         ((CBaseCur*)field_80)->initLayout();
 
-        func_801D2E4C(field_80, 0);
+        Cur_ShowTwoSubPanes(field_80, 0);
         func_802040A0(this);
         field_24 = 0;
         validateHeap__17UnkClass_8045F564Fv(&_pad04[0]);
@@ -1615,10 +1615,10 @@ bool CEquipChange::OnFileEvent(CEventFile* file) {
 void sinit_802059E8() {
     SplitU32ToS16s(&lbl_eu_80664668, 0);
     SplitU32ToS16s(&lbl_eu_80664670, 0);
-    func_801C4B60(&lbl_eu_80664678, 0x12, 0xa3, 0xe7, 0);
-    func_801C4B60(&lbl_eu_80664680, 0xff, 0xff, 0xff, 0);
-    func_801C4B60(&lbl_eu_80664688, 0xb3, 0x9, 0xc0, 0);
-    func_801C4B60(&lbl_eu_80664690, 0xff, 0xff, 0xff, 0);
+    setGXColorS10(&lbl_eu_80664678, 0x12, 0xa3, 0xe7, 0);
+    setGXColorS10(&lbl_eu_80664680, 0xff, 0xff, 0xff, 0);
+    setGXColorS10(&lbl_eu_80664688, 0xb3, 0x9, 0xc0, 0);
+    setGXColorS10(&lbl_eu_80664690, 0xff, 0xff, 0xff, 0);
 }
 
 // --- function definitions kept at end of TU so earlier callers emit `bl` ----
@@ -1642,7 +1642,7 @@ void __declspec(noinline) func_80202EB4(CEquipChange* self, u8 cat) {
     s16 ids[5];
     calcItemBoxPaneVec(buf, (CItemBoxInfo*)((u8*)self + 0xA4), cat);
     ((CBaseCur*)self->field_80)->setRootPaneTranslate((const nw4r::math::VEC3*)buf);
-    func_801D2174((CBaseCur*)self->field_80);
+    Cur_SetActive((CBaseCur*)self->field_80);
     func_802042C0(self);
     func_801D4260((CItemBoxInfo*)((u8*)self + 0xA4), (u8)EquipChange_MapCursorToCat(self));
     u8 f99 = self->field_99;
@@ -1792,7 +1792,7 @@ extern "C" __declspec(noinline) void* func_802052A8(CEquipChange* self) {
         lbl_eu_8066469C = 1;
     }
     void* table = (void*)lbl_eu_806640EC;
-    u32 cnt = func_8003B1EC(table);
+    u32 cnt = Bdat_GetMaxRow_B1EC(table);
     u16 row = (u16)(cnt - 1);
     while (row != 0) {
         u32 val = getBdatStringColumnValue(table, &lbl_eu_80508168[0x1E4], (s32)row);
@@ -1891,15 +1891,15 @@ extern "C" void EquipChange_DrawLayouts(CEquipChange* self, nw4r::lyt::DrawInfo*
     if (self->field_44 == 0)
         return;
     drawLayout((nw4r::lyt::Layout*)self->field_34, drawInfo, 0, 1);
-    if (func_801D2ED8((CBaseCur*)self->field_80) == 0) {
-        func_801D20B0((CBaseCur*)self->_pad50, drawInfo);
-        func_801D20B0((CBaseCur*)self->_pad68, drawInfo);
+    if (Cur_BothSubPanesOn((CBaseCur*)self->field_80) == 0) {
+        Cur_DrawLayout((CBaseCur*)self->_pad50, drawInfo);
+        Cur_DrawLayout((CBaseCur*)self->_pad68, drawInfo);
         self->mEquipItemBox.unk_37b = 1;
     } else {
         self->mEquipItemBox.unk_37b = 0;
     }
     renderItemBox((CItemBoxInfo*)self->_padA4, drawInfo);
-    func_801D20B0((CBaseCur*)self->field_80, drawInfo);
+    Cur_DrawLayout((CBaseCur*)self->field_80, drawInfo);
     drawEIBBox(&self->mEquipItemBox, drawInfo);
 }
 #pragma optimize_for_size off

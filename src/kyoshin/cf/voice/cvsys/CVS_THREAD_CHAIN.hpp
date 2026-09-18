@@ -15,7 +15,7 @@ class CVS_THREAD_CHAIN : public CVS_THREAD {
 public:
     CVoiceHandle* field_0x20;  // 0x20: voice handle slot
 
-    int func_802A5A0C() { return 1; }
+    int chainVoiceAlwaysOne() { return 1; }
 };
 
 } // namespace cf

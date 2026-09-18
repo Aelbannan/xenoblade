@@ -10,17 +10,17 @@
 // ---------------------------------------------------------------------------
 
 // OC constructor: returns the shared OcMsg list header as a VM object value.
-int func_8003A53C(VMThread* pThread, void*, s16 argType) {
+int OcMsgMakeListValue(VMThread* pThread, void*, s16 argType) {
     VMArg args;
     args.type = 9;
     // VMArg::unk2 carries the caller's package index.
     args.unk2 = static_cast<u16>(argType);
-    args.value.pointerVal = func_8003A4E0();
+    args.value.pointerVal = getOcMsgList();
     vmRetValSet(pThread, &args);
     return 1;
 }
 
-int func_8003A588(VMThread* pThread, OcMsgTwoValueObj* target) {
+int OcMsgGetValue0(VMThread* pThread, OcMsgTwoValueObj* target) {
     VMArg args;
     args.type = 3;
     args.value.uintVal = target->value0;
@@ -28,7 +28,7 @@ int func_8003A588(VMThread* pThread, OcMsgTwoValueObj* target) {
     return 1;
 }
 
-int func_8003A5C0(VMThread* pThread, OcMsgTwoValueObj* target) {
+int OcMsgGetValue1(VMThread* pThread, OcMsgTwoValueObj* target) {
     VMArg args;
     args.type = 3;
     args.value.uintVal = target->value1;
@@ -36,20 +36,20 @@ int func_8003A5C0(VMThread* pThread, OcMsgTwoValueObj* target) {
     return 1;
 }
 
-int func_8003A5F8(VMThread* pThread, OcMsgTwoValueObj* target) {
+int OcMsgSetValue0(VMThread* pThread, OcMsgTwoValueObj* target) {
     VMArg* prop = (VMArg*)vmOCPropertyGet(pThread);
     target->value0 = prop->value.uintVal;
     return 0;
 }
 
-int func_8003A630(VMThread* pThread, OcMsgTwoValueObj* target) {
+int OcMsgSetValue1(VMThread* pThread, OcMsgTwoValueObj* target) {
     VMArg* prop = (VMArg*)vmOCPropertyGet(pThread);
     target->value1 = prop->value.uintVal;
     return 0;
 }
 
 // Ring reset: clears indices and sets capacity = 9.
-s32 func_8003A668(void*, OcMsgRingHdr* list) {
+s32 OcMsgRingReset(void*, OcMsgRingHdr* list) {
     list->count = 0;
     list->wrap = 0;
     list->writeIdx = 0;
@@ -99,7 +99,7 @@ int func_8003A68C(VMThread* pThread, OcMsgRingHdr* target) {
 // type = 1 when count has exactly one bit set (power of two), else 0:
 // bit31(-count & ~count) is set iff count is not a power of two... inverted
 // by the +1 borrow trick; matches retail's nand/neg/srawi sequence.
-int func_8003A6D4(VMThread* pThread, OcMsgRingHdr* target) {
+int OcMsgRingProbeIsPow2(VMThread* pThread, OcMsgRingHdr* target) {
     int count = (int)target->count;
     VMArg args;
     *(u8*)&args.type = 1 + ((u32)((-count) & ~count) >> 31);
@@ -112,7 +112,7 @@ int func_8003A6D4(VMThread* pThread, OcMsgRingHdr* target) {
 // ---------------------------------------------------------------------------
 
 // Push obj+0x64/0x68 into the next ring slot.
-s32 func_8003A714(s32 ret, OcMsgRingHdr* list) {
+s32 OcMsgRingPushTwo(s32 ret, OcMsgRingHdr* list) {
     // Reuse `ret` for writeIdx then count so +1 lands in a distinct reg (retail addi r5,r3,1).
     // Signed compare → cmpw (u32 > emits cmplw).
     ret = list->writeIdx;
@@ -133,7 +133,7 @@ s32 func_8003A714(s32 ret, OcMsgRingHdr* list) {
 }
 
 // Pop the current ring slot into obj+0x64/0x68.
-s32 func_8003A764(s32 ret, OcMsgRingHdr* list) {
+s32 OcMsgRingPopTwo(s32 ret, OcMsgRingHdr* list) {
     ret = list->readIdx;
     s32 capacity = list->capacity;
     s32 newReadIdx = ret + 1;
@@ -156,17 +156,17 @@ s32 func_8003A764(s32 ret, OcMsgRingHdr* list) {
 // ---------------------------------------------------------------------------
 
 // OC constructor: returns the shared OcLog list header as a VM object value.
-int func_8003A7B4(VMThread* pThread, void*, s16 argType) {
+int OcLogMakeListValue(VMThread* pThread, void*, s16 argType) {
     VMArg args;
     args.type = 9;
     // VMArg::unk2 carries the caller's package index.
     args.unk2 = static_cast<u16>(argType);
-    args.value.pointerVal = func_8003A4EC();
+    args.value.pointerVal = getOcLogList();
     vmRetValSet(pThread, &args);
     return 1;
 }
 
-int func_8003A800(VMThread* pThread, OcMsgThreeValueObj* target) {
+int OcLogGetValue0(VMThread* pThread, OcMsgThreeValueObj* target) {
     VMArg args;
     args.type = 3;
     args.value.uintVal = target->value0;
@@ -174,7 +174,7 @@ int func_8003A800(VMThread* pThread, OcMsgThreeValueObj* target) {
     return 1;
 }
 
-int func_8003A838(VMThread* pThread, OcMsgThreeValueObj* target) {
+int OcLogGetValue1(VMThread* pThread, OcMsgThreeValueObj* target) {
     VMArg args;
     args.type = 3;
     args.value.uintVal = target->value1;
@@ -182,7 +182,7 @@ int func_8003A838(VMThread* pThread, OcMsgThreeValueObj* target) {
     return 1;
 }
 
-int func_8003A870(VMThread* pThread, OcMsgThreeValueObj* target) {
+int OcLogGetValue2(VMThread* pThread, OcMsgThreeValueObj* target) {
     VMArg args;
     args.type = 3;
     args.value.uintVal = target->value2;
@@ -190,26 +190,26 @@ int func_8003A870(VMThread* pThread, OcMsgThreeValueObj* target) {
     return 1;
 }
 
-int func_8003A8A8(VMThread* pThread, OcMsgThreeValueObj* target) {
+int OcLogSetValue0(VMThread* pThread, OcMsgThreeValueObj* target) {
     VMArg* prop = (VMArg*)vmOCPropertyGet(pThread);
     target->value0 = prop->value.uintVal;
     return 0;
 }
 
-int func_8003A8E0(VMThread* pThread, OcMsgThreeValueObj* target) {
+int OcLogSetValue1(VMThread* pThread, OcMsgThreeValueObj* target) {
     VMArg* prop = (VMArg*)vmOCPropertyGet(pThread);
     target->value1 = prop->value.uintVal;
     return 0;
 }
 
-int func_8003A918(VMThread* pThread, OcMsgThreeValueObj* target) {
+int OcLogSetValue2(VMThread* pThread, OcMsgThreeValueObj* target) {
     VMArg* prop = (VMArg*)vmOCPropertyGet(pThread);
     target->value2 = prop->value.uintVal;
     return 0;
 }
 
 // Push obj+0x8c/0x90/0x94 into the next 12-byte ring slot.
-s32 func_8003A950(s32 ret, OcMsgRingHdr* list) {
+s32 OcLogRingPushThree(s32 ret, OcMsgRingHdr* list) {
     ret = list->writeIdx;
     s32 capacity = list->capacity;
     s32 newWriteIdx = ret + 1;
@@ -229,7 +229,7 @@ s32 func_8003A950(s32 ret, OcMsgRingHdr* list) {
 }
 
 // Pop the current 12-byte ring slot into obj+0x8c/0x90/0x94.
-s32 func_8003A9A8(s32 ret, OcMsgRingHdr* list) {
+s32 OcLogRingPopThree(s32 ret, OcMsgRingHdr* list) {
     ret = list->readIdx;
     s32 capacity = list->capacity;
     s32 newReadIdx = ret + 1;

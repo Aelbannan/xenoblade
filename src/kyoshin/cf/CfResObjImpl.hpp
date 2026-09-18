@@ -3,7 +3,7 @@
 #include <types.h>
 #include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
 
-// Minimal nw4r sound-object interface used by func_8016C888 (sound slot +0x00
+// Minimal nw4r sound-object interface used by ResObj_NotifySound_C888 (sound slot +0x00
 // dereferenced to call SetPlayerPriority). Declared here at global scope
 // rather than via snd_BasicSound.h; MWCC mangles the member call to the
 // retail name SetPlayerPriority__Q44nw4r3snd6detail10BasicSoundFi (same
@@ -29,7 +29,7 @@ class CScn;              // fwd; shared scene (CfObjectMove.hpp declares lbl_eu_
 struct CfResObjImpl;     // fwd
 
 // Slot entry returned by CfSoundMan_TouchSlotById (CfSoundMan slot lookup); +0x00 holds
-// the active sound object, which func_8016C888 calls SetPlayerPriority on.
+// the active sound object, which ResObj_NotifySound_C888 calls SetPlayerPriority on.
 struct SoundSlotEntry {
     /* 0x00 */ nw4r::snd::detail::BasicSound* field_00;
 };
@@ -50,7 +50,7 @@ struct CfResObjParent {
     /* 0x90 */ u8* field_90;                 // resource handle (CfRes_findEntryById result)
     /* 0x94 */ u8* field_94;                 // resource handle
     /* 0x98 */ ::CScnItemModel* field_98;  // model object (vtable slots 0x78(void*)/0x88(int) -> CScnItemModel::vfunc78/88)
-    /* 0x9C */ u8* field_9C;                 // model handle (func_800584B8 result)
+    /* 0x9C */ u8* field_9C;                 // model handle (initMcaFile result)
     u8 field_A0[0x60C - 0xA0];
     /* 0x60C */ u8 field_60C[0x8];           // sub-object passed to ColiNodeSetWord0Rebuild
     u8 field_614[0x6B4 - 0x614];
@@ -69,7 +69,7 @@ struct CfResObjParent {
 // now owned by CScnItemModel header (hot header, widened to retail arity).
 
 // Non-virtual data view of the +0x98 sub-object: the +0x7A4 flag word is
-// read by func_8016C98C.
+// read by ResObj_ReleaseModels_C98C.
 struct CfResObjModel98Data {
     u8 field_00[0x7A4];
     /* 0x7A4 */ u32 field_7A4;
@@ -106,17 +106,17 @@ class __declspec(novtable) CfResObjImpl : public CfResObjImplPrefix {
 public:
     CfResObjImpl(CfResObjParent* parent);
     virtual ~CfResObjImpl();                // 0x08
-    virtual void func_8016CCE0();           // 0x0C
+    virtual void ResObj_DispatchState_CCE0();           // 0x0C
     virtual void CfResObj_noop10();           // 0x10
-    virtual int func_8016C860();            // 0x14
+    virtual int ResObj_IsInUse_C860();            // 0x14
     virtual void CfObjectMove_relaySubB0Slot14();           // 0x18
-    virtual void func_8016CD64();           // 0x1C
-    virtual int func_8016C880();            // 0x20
+    virtual void ResObj_Noop_CD64();           // 0x1C
+    virtual int ResObj_DefaultParam_C880();            // 0x20
     virtual void CfResObj_noop24();           // 0x24
     virtual void CfResObj_noop28();           // 0x28
     virtual void CfResObj_noop2C();        // 0x2C
-    virtual void func_8016CD68(int idx, int value); // 0x30
-    virtual u32 func_8016CCBC(int idx);     // 0x34
+    virtual void ResObj_SetWork_CD68(int idx, int value); // 0x30
+    virtual u32 ResObj_GetWork_CCBC(int idx);     // 0x34
     virtual int CfResObj_false38();            // 0x38
     // Widened: Move UVF39/40/42/43 leave r4/r5 live into this slot.
     virtual void CfResObj_unk3C(u32 a, u32 b); // 0x3C
@@ -125,12 +125,12 @@ public:
     virtual void CfResObj_unk48();           // 0x48
     // Widened: Move UVF38 leaves r4 live into this slot.
     virtual void CfResObj_unk4C(u32 arg);    // 0x4C
-    virtual int func_8016CD5C();            // 0x50
-    virtual void func_8016C888(int arg2, int arg3, int arg4, float f1, float f2); // 0x54
+    virtual int ResObj_ZeroStubB_CD5C();            // 0x50
+    virtual void ResObj_NotifySound_C888(int arg2, int arg3, int arg4, float f1, float f2); // 0x54
     virtual void CfResObj_noop58();           // 0x58
     virtual void CfResObj_unk5C();           // 0x5C
-    virtual int func_8016C950();            // 0x60
-    virtual int func_8016CD54();            // 0x64
+    virtual int ResObj_PollActive_C950();            // 0x60
+    virtual int ResObj_ZeroStubA_CD54();            // 0x64
     virtual int CfResObj_true68();            // 0x68
 
     CfResObjImplVtbl*& vtbl() {
@@ -143,7 +143,7 @@ public:
 } // namespace cf
 
 // 3-word (12-byte) member-function-pointer storage view used for the
-// word-wise __ptmf_null copy in func_8016CCE0 (struct copy so MWCC emits the
+// word-wise __ptmf_null copy in ResObj_DispatchState_CCE0 (struct copy so MWCC emits the
 // inline lwzu/stwu sequence).
 struct CfPmf3 {
     u32 w0;
@@ -152,7 +152,7 @@ struct CfPmf3 {
 };
 
 // PMTF dispatch table (3 x 12-byte entries) selected by field_08 in
-// func_8016CCE0. Stored as CfPmf3 words ({0,0,0} + two {0,-1,func} rows:
+// ResObj_DispatchState_CCE0. Stored as CfPmf3 words ({0,0,0} + two {0,-1,func} rows:
 // the free-function targets are not expressible as PMFs in C++); the
 // dispatch site casts back to CfResObjImplPMF so the call still lowers to
 // `bl __ptmf_scall`. Declared at global scope so MWCC keeps the retail
@@ -193,8 +193,8 @@ struct ResInfoEntry;     // fwd; full def in kyoshin/cf/IResInfo.hpp (global sco
 extern "C" char* CfRes_getInstPtr170();
 extern "C" u8* CfRes_findEntryById(ResInfoEntry* entry, u32 id);
 extern "C" u8* scnImN4BuildByIdx(u8* global, u8* handle, int a, int b, int c, int d);
-extern "C" void func_800BBADC(cf::CfResObjParent* parent, u8* handle);
-extern "C" u8* func_800584B8(u32 global, u32 id, const char* name);
+extern "C" void CfModel_InstallSub(cf::CfResObjParent* parent, u8* handle);
+extern "C" u8* initMcaFile(u32 global, u32 id, const char* name);
 extern "C" int CfRes_getD80Flag();
 extern "C" void func_800BCFA0(cf::CfObjectMove* self);
 extern "C" void CfObjectMove_setRegionAttached(cf::CfResObjParent* parent, int flag);

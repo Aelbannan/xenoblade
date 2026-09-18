@@ -7,19 +7,19 @@
 #include "kyoshin/cf/CfGameManager.hpp"
 
 // Effect-singleton utilities with retail-unmangled C linkage (referenced from
-// cbRenderBefore/func_80045284; operate on the effect singleton lbl_eu_8065FC18).
-extern "C" void func_804CBB60(void*);
+// cbRenderBefore/runEffectPassB; operate on the effect singleton lbl_eu_8065FC18).
+extern "C" void EffSys_StepSchedules(void*);
 extern "C" void func_804CBB84(void*, void*);
-extern "C" void func_804CBE48(void*);
-extern "C" void func_804CC104(void*);
-extern "C" void func_804CBEE8(void*);
+extern "C" void EffRender_PassFilteredB(void*);
+extern "C" void EffSys_ResetAlpha(void*);
+extern "C" void EffSys_Thunk8688(void*);
 // Per-frame effect update helpers (func_80045044) and singleton teardown
 // (Term) - retail unmangled C linkage like the others.
-extern "C" void func_804CBB14(void*, f32);
-extern "C" void func_804CBC90(void*);
-extern "C" void func_804CBD14(void*);
-extern "C" void func_804CBDB4(void*);
-extern "C" void func_804CC154(void*);
+extern "C" void EffSys_DriveRandom(void*, f32);
+extern "C" void EffRender_PassFirst(void*);
+extern "C" void EffRender_PassFilteredA(void*);
+extern "C" void EffRender_PassSecond(void*);
+extern "C" void EffSys_Teardown(void*);
 
 // Default effect time constant used by setEffectEnabled when the caller does not
 // supply an explicit time (retail sdata2 float).
@@ -38,11 +38,11 @@ struct CTaskGameEffPtmf {
 void* __ct__CTaskGameEffAfter(CProcess* parent);
 
 // Effect-singleton setup helpers (retail unmangled; operate on lbl_eu_8065FC18).
-// func_804CB9F4 queries the effect resource size; func_804CBA00/804CBAA8 bind
+// EffSys_GetConstBase queries the effect resource size; EffSys_Startup/804CBAA8 bind
 // the effect buffer and attach the scene to the singleton.
-extern "C" void* func_804CB9F4(void);
-extern "C" void func_804CBA00(void*, void*, void*);
-extern "C" void func_804CBAA8(void*, void*, int);
+extern "C" void* EffSys_GetConstBase(void);
+extern "C" void EffSys_Startup(void*, void*, void*);
+extern "C" void EffSys_InitScene(void*, void*, int);
 
 // Raw CProcess constructor + global null pointer-to-member-function constant
 // (used by the raw-init style ctor, mirroring CTaskGameEffAfter).
@@ -122,7 +122,7 @@ extern "C" const void* lbl_eu_80661970;
 extern "C" const void* lbl_eu_806618F0;
 
 // Minimal CScn declaration local to this TU set: only the render-callback
-// members used by Init/Term/func_800452EC/func_800453EC. Declared with the
+// members used by Init/Term/func_800452EC/unregisterEffectScene. Declared with the
 // real class tag so member calls emit the retail mangled symbols
 // addRenderCB__4CScnFP10IScnRenderUlUl / removeRenderCB__4CScnFP10IScnRender.
 // Guarded so the kyoshin task headers can be included together in one TU

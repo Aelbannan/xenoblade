@@ -67,7 +67,7 @@ bool CHelp_Talk::func_802B86F0() {
 
     // If state is still set and field_0x14 is set, check a global flag.
     if (field_0x16 != 0 && field_0x14 != 0) {
-        field_0x16 = (func_8009CF8C(0x7D0) != 0) ? 1 : 0;
+        field_0x16 = (CtrlRemote_TouchBitByArg(0x7D0) != 0) ? 1 : 0;
     }
 
     // If state is still set and field_0x15 is set, check the actor's state id.

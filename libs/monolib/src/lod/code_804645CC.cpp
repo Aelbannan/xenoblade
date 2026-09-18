@@ -100,7 +100,7 @@ extern "C" void func_8046339C__Q23LOD17CLODCacheManagerSFv(s32* outA,
 extern "C" void func_80465BC0__Q23LOD17UnkClass_804645CCFv(void* rec);
 
 class CScnEnvLgtCtrl;  // scene env-light controller (scnLgtEnterMode20 target)
-extern "C" void* func_8048ECD8(void* self);
+extern "C" void* getScnRootSlot10(void* self);
 extern "C" void scnLgtEnterMode20(CScnEnvLgtCtrl* ctrl);
 
 typedef void (*LodCallFn)();  // no-arg dispatch-table entry
@@ -228,7 +228,7 @@ extern "C" void func_8046513C__Q23LOD17UnkClass_804645CCFv(LodSceneItem* item,
     GXLoadTexMtxImm(*mtxBlock, 0x40, GX_MTX_3x4);
 
     nw4r::g3d::Camera cam =
-        ((nw4r::g3d::ScnRoot*)func_8048ECD8(item))->GetCurrentCamera();
+        ((nw4r::g3d::ScnRoot*)getScnRootSlot10(item))->GetCurrentCamera();
     cam.GetProjectionTexMtx(
         (nw4r::math::MTX34*)(void*)((u8*)lbl_eu_80658348 + 0x68));
 

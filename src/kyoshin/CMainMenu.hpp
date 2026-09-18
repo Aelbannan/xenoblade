@@ -160,16 +160,16 @@ public:
 
 // Gameplay-input gate for the menu-frame dispatch (defined in this TU).
 // Takes the owner like retail (the caller emits mr r3,r31 before the call).
-extern "C" int func_80101A88(CMainMenu* self);
+extern "C" int CMainMenu_IsInputBlocked(CMainMenu* self);
 
 // Per-frame menu handlers (defined in this TU). extern "C" so every
 // referencing reloc carries the exact retail (unmangled) symbol.
-extern "C" void func_80101BF8(CMainMenu* self);
-extern "C" void func_800FF920(CMainMenu* self);
+extern "C" void CMainMenu_RefreshFlags(CMainMenu* self);
+extern "C" void CMainMenu_DispatchState(CMainMenu* self);
 extern "C" void func_801010B8(CMainMenu* self);
 extern "C" void func_80100E14(CMainMenu* self);
-extern "C" void func_801018F4(CMainMenu* self);
-extern "C" void func_800FEF4C(CMainMenu* self);
+extern "C" void CMainMenu_DispatchMenuState(CMainMenu* self);
+extern "C" void CMainMenu_Update(CMainMenu* self);
 
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
 extern "C" void cbRenderBefore__9CMainMenuFv();
@@ -184,22 +184,22 @@ extern "C" bool isMenuOpen__9CMainMenuFv();
 extern "C" bool isAnyMenuOpen__9CMainMenuFv();
 
 // Menu singleton/state guards (defined in their owning menu TUs)
-extern "C" u32 func_80167A18();   // item menu active (CMenuItem.cpp)
-extern "C" u32 func_80242354();   // map-select menu active (CMenuMapSelect.cpp)
-extern "C" u32 func_80252CD4();   // collepedia active (CMenuCollepedia.cpp)
-extern "C" u32 func_80257308();   // kizunagram active (CMenuKizunagram.cpp)
+extern "C" u32 ItemMenu_IsPresent();   // item menu active (CMenuItem.cpp)
+extern "C" u32 isMapSelectActive();   // map-select menu active (CMenuMapSelect.cpp)
+extern "C" u32 Colle_HasInstance();   // collepedia active (CMenuCollepedia.cpp)
+extern "C" u32 KizunagramIsCreated();   // kizunagram active (CMenuKizunagram.cpp)
 extern "C" u32 PlayAward_IsActive();   // play-award active (CMenuPlayAward.cpp)
-extern "C" u32 func_80272488();   // kizuna-talk-list active (CMenuKizunaTalkList.cpp)
-extern "C" u32 func_8029BBA0();   // option menu active (CMenuOption.cpp)
-extern "C" u32 func_802AC510();   // tutorial-list active (CMenuTutorialList.cpp)
-extern "C" u32 func_8011CD5C();   // quest-log active (CMenuQuestLog.cpp)
-extern "C" u32 func_80124B78();   // close-system-menu gate (CHelp_CloseSysMenu.cpp)
-extern "C" u32 func_8028E440();   // save-menu active (CMenuSave.cpp)
-extern "C" u32 func_8029EE58();   // update menu active (CMenuUpdate.cpp)
-extern "C" u32 func_80122450();   // close-quest-menu gate (CHelp_CloseQuestMenu.cpp)
+extern "C" u32 KizunaList_IsPresent();   // kizuna-talk-list active (CMenuKizunaTalkList.cpp)
+extern "C" u32 hasOptionMenu();   // option menu active (CMenuOption.cpp)
+extern "C" u32 CMenuTutorialList_IsActive();   // tutorial-list active (CMenuTutorialList.cpp)
+extern "C" u32 isQuestLogMenuActive();   // quest-log active (CMenuQuestLog.cpp)
+extern "C" u32 SysWinGetSingleton();   // close-system-menu gate (CHelp_CloseSysMenu.cpp)
+extern "C" u32 isSaveMenuActive();   // save-menu active (CMenuSave.cpp)
+extern "C" u32 SkipTimer_IsActiveFlag();   // update menu active (CMenuUpdate.cpp)
+extern "C" u32 hasQuestWindow();   // close-quest-menu gate (CHelp_CloseQuestMenu.cpp)
 extern "C" int CUICfManager_hasInUseSlot();   // menu-system close (CUICfManager.cpp)
-extern "C" u32 func_80192BD0();   // party-state screen active (CMenuPTState.cpp)
-extern "C" u32 func_80212480();   // make-crystal menu active (CMenuMakeCrystal.cpp)
+extern "C" u32 menuPTStateIsActive();   // party-state screen active (CMenuPTState.cpp)
+extern "C" u32 MakeCrystalIsCreated();   // make-crystal menu active (CMenuMakeCrystal.cpp)
 extern "C" u32 CMenuArtsSet_isCreated();   // arts-set menu active (CMenuArtsSet.cpp)
 
 // Gameplay-input gate helpers (cf::CfGameManager / cf::CBattleManager)
@@ -216,7 +216,7 @@ extern f32 lbl_eu_80666F1C;   // 0x80666F1C - HP death threshold (0.0f)
 extern u32 lbl_eu_80663E28;
 
 // Resource/flag getter (resource id -> value; defined in CMiniMap.cpp).
-extern "C" u32 func_8009CF8C(u32 resourceId);
+extern "C" u32 CtrlRemote_TouchBitByArg(u32 resourceId);
 
 // UnkClass_8045F564 embedded-object lifecycle (defined in split1; normally
 // declared via kyoshin/CArtsInfo.hpp, which this TU cannot include).
@@ -228,7 +228,7 @@ extern "C" void deleteRegion__17UnkClass_8045F564Fv(void* _this);
 // Mangled-identifier call forms previously supplied by CArtsInfo.hpp.
 extern "C" int advanceAnimTransform__FPQ34nw4r3lyt13AnimTransformf(nw4r::lyt::AnimTransform*, float);
 extern "C" void playUISound__FUl(u32);
-extern "C" void func_801D216C(void* cur, u8 flag);
+extern "C" void Cur_SetVisible(void* cur, u8 flag);
 extern "C" void func_80137924(nw4r::math::VEC3* out, nw4r::lyt::Pane*, nw4r::lyt::Pane*, nw4r::lyt::Pane*);
 
 // Cursor constructors (defined in kyoshin/CCur.cpp)
@@ -245,9 +245,9 @@ extern "C" void func_80139198(u32 arg);
 // System-window busy gate (defined in code_80135FDC.cpp).
 extern "C" int IsMenuState621F0();
 // Another menu-open gate (kizuna-talk-list / message-log family).
-extern "C" u32 func_80263944();
+extern "C" u32 hasPassiveSkillMenu();
 // Message-log busy gate (CSysWinMsgLog.cpp).
-extern "C" u32 func_8027EA64();
+extern "C" u32 SysWinLog_IsBusy();
 // System window buffer singleton gate (CSysWinBuff.cpp).
 class CSysWinBuff;
 extern "C" CSysWinBuff* getInstance__11CSysWinBuffFv();
@@ -267,9 +267,9 @@ struct CMainMenuPad {
 extern "C" CMainMenuPad* getCurrentPad__Q22cf13CfGameManagerFv();
 
 // Cursor activate helper (defined in CCur.cpp).
-extern "C" void func_801D2174(CBaseCur* cur);
+extern "C" void Cur_SetActive(CBaseCur* cur);
 // Cursor draw helper (defined in CCur.cpp; retail symbol is unmangled C linkage).
-extern "C" void func_801D20B0(void* cur, nw4r::lyt::DrawInfo* drawInfo);
+extern "C" void Cur_DrawLayout(void* cur, nw4r::lyt::DrawInfo* drawInfo);
 
 // Minimal CTaskGame decl (retail symbols getInstance__9CTaskGameFv /
 // isFlag01Set__9CTaskGameFv). The full CTaskGame.hpp pulls monolib headers
@@ -301,7 +301,7 @@ extern u32 __ptmf_null[3];      // null pointer-to-member-function constant
 // CProcess base constructor (abstract class, out-of-line in retail).
 extern "C" void __ct__8CProcessFv(CProcess* self);
 
-// Player view structs for func_80101A88 (mirror CfGimmick.hpp layouts).
+// Player view structs for CMainMenu_IsInputBlocked (mirror CfGimmick.hpp layouts).
 // getPlayer returns the +0x3E9C embedded spot object; the player base is the
 // de-biased pointer (base = spot - 0x3E9C).
 struct CMainMenuPlayerSub {
@@ -345,7 +345,7 @@ extern "C" CMainMenuGimmickGlobal* getUnk80664658();
 // the vtable+0x10 dispatch (setRootPaneTranslate, takes a translate VEC3).
 
 // Menu dispatch handlers (defined in CUICfManager.cpp / menu TUs)
-extern "C" int func_8029A658();            // party-change notice gate
+extern "C" int MenuTutorialIsCreated();            // party-change notice gate
 extern "C" void CUICfManager_queueBaseMenuItem();
 extern "C" void CUICfManager_queueMakeCrystalMenu();
 extern "C" void CUICfManager_queueCollepediaMenu();

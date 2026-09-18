@@ -12,7 +12,7 @@ namespace ml {
 extern "C" void setCol__7CDrawGXFRCQ22ml5CCol4(void* self, const ml::CCol4* col);
 extern "C" void setMatrix__7CDrawGXFRCQ22ml6CMat34(void* self, const ml::CMat34* mat);
 extern "C" void renderCube__7CDrawGXFRCQ22ml5CVec3RCQ22ml5CVec3(void* self, const ml::CVec3* min, const ml::CVec3* max);
-extern "C" void func_8049034C(void* a, void* b, int c);
+extern "C" void TexMan_ApplyCamPersp_034C(void* a, void* b, int c);
 extern "C" void func_800A5FE8(void* a, void* b, void* c, void* d, void* e);
 
 // Debug color / scale constants from .sdata2.
@@ -28,7 +28,7 @@ namespace cf {
 
 // Collision AABB shape implementation.
 // Retail __vt__ is lbl_eu_805287E0 (US) / __vt__Q22cf14CfCollAABBImpl (JP)
-//   0x10 bytes: RTTI lbl_eu_80661C90 "cf::CfCollAABBImpl", 0, func_800AAE24, func_800AAFF4
+//   0x10 bytes: RTTI lbl_eu_80661C90 "cf::CfCollAABBImpl", 0, func_800AAE24, CollAABB_RenderQuery
 //   Two virtuals at +0x08/+0x0C (CfCollImpl base). TU has no .data
 //   (build/us/asm/kyoshin/cf/CfCollAABBImpl.s), so no compiler __vt__ is emitted.
 //   The world-position getter at +0xAC is cf::CfObject::GetPosition

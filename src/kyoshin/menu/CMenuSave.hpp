@@ -17,7 +17,7 @@ class CSaveLoad;
  *
  * Layout (constructor / destructor / Term):
  *   0x00: CProcess          -- task-system base (0x3C) + vtable PMF data
- *   0x54: u8                -- phase/state flag (written by func_8028E768)
+ *   0x54: u8                -- phase/state flag (written by flagSaveMenuReady)
  *   0x58: IScnRender        -- render-callback subobject (member, vptr)
  *   0x5C: CProcess*         -- parent process reference
  *   0x60: CBgTex            -- background layout widget
@@ -28,7 +28,7 @@ class CSaveLoad;
  *  0x208: u8 mField208
  *  0x20A: u8 mField20A
  *  0x20B: u8 mState
- *  total: 0x20C             -- sizeof(CMenuSave) (allocate literal in func_8028E3B4)
+ *  total: 0x20C             -- sizeof(CMenuSave) (allocate literal in createSaveMenu)
  */
 class CMenuSave : public CProcess {
 public:
@@ -65,10 +65,10 @@ struct MenuSavePadData {
 };
 
 // IScnRender vtable this-adjusting thunks (retail: subi r3, r3, 0x58; b ...).
-extern "C" void func_8028E7B8(void* self);
-extern "C" void func_8028E7C0(void* self);
+extern "C" void fwdSaveMenuCbRender(void* self);
+extern "C" void fwdSaveMenuDtor(void* self);
 
-// Shared singleton state flag (cleared by Term, set by func_8028E3B4).
+// Shared singleton state flag (cleared by Term, set by createSaveMenu).
 extern unsigned long lbl_eu_806649E8;
 
 // Render-gate mode bitfield (.sbss; bit 21 = realtime event busy).
@@ -82,13 +82,13 @@ extern char lbl_eu_80538710[];   // CMenuSave composite vtable
 extern char lbl_eu_8050F7B0[];
 
 // Retail-unmangled callee names (US strips mangling for these func_ helpers).
-// isIdle/func_801C3E34/... are declared int (not u8) so callers compare with
+// isIdle/BgTex_IsLoaded_3E34/... are declared int (not u8) so callers compare with
 // cmpwi directly (no byte mask), matching retail.
 extern "C" int isIdle__11CTitleAHelpFv(CTitleAHelp* h);
-extern "C" int func_801C3E34(CBgTex* self);
-extern "C" void func_801C3D9C(CBgTex* self);
-extern "C" int func_801C4114(CTitleAHelp* self);
-extern "C" void func_801C40A0(CTitleAHelp* self);
+extern "C" int BgTex_IsLoaded_3E34(CBgTex* self);
+extern "C" void BgTex_Release_3D9C(CBgTex* self);
+extern "C" int isInitialized(CTitleAHelp* self);
+extern "C" void teardown(CTitleAHelp* self);
 extern "C" void func_801C412C(CTitleAHelp* self);
 extern "C" void func_801C41E8(CTitleAHelp* self, u8 arg);
 extern "C" int CSaveLoad_getIdle(CSaveLoad* self);
@@ -103,16 +103,16 @@ extern "C" void playUISound__FUl(u32 op);
 // Additional C-ABI imports used by the Move/cbRenderBefore/Init handlers
 // (retail symbols are unmangled / non-namespace, so C linkage is required).
 extern "C" int IsMenuState621F0();
-extern "C" void func_8028E450(CMenuSave* self);
-extern "C" void func_8028E4E0(CMenuSave* self);
+extern "C" void openSaveMenu(CMenuSave* self);
+extern "C" void advanceSaveMenuPhase(CMenuSave* self);
 extern "C" void func_8028E530(CMenuSave* self);
-extern "C" void func_8028E768(CMenuSave* self);
-extern "C" void func_801C3D54(CBgTex* self);
-extern "C" void func_801C3C14(CBgTex* self);
-extern "C" void func_801C3D7C(CBgTex* self, nw4r::lyt::DrawInfo* drawInfo);
-extern "C" void func_801C3FF0(CTitleAHelp* self);
-extern "C" void func_801C414C(CTitleAHelp* self);
-extern "C" void func_801C4080(CTitleAHelp* self, nw4r::lyt::DrawInfo* drawInfo);
+extern "C" void flagSaveMenuReady(CMenuSave* self);
+extern "C" void BgTex_Tick_3D54(CBgTex* self);
+extern "C" void BgTex_Acquire_3C14(CBgTex* self);
+extern "C" void BgTex_Draw_3D7C(CBgTex* self, nw4r::lyt::DrawInfo* drawInfo);
+extern "C" void updateHelp(CTitleAHelp* self);
+extern "C" void beginClose(CTitleAHelp* self);
+extern "C" void drawHelp(CTitleAHelp* self, nw4r::lyt::DrawInfo* drawInfo);
 extern "C" void CTitleAHelp_load(CTitleAHelp* self);
 extern "C" void CSaveLoad_update(CSaveLoad* self);
 extern "C" void CSaveLoad_draw(CSaveLoad* self, nw4r::lyt::DrawInfo* drawInfo);
@@ -127,8 +127,8 @@ extern "C" void CSaveLoad_curDown(CSaveLoad* self);
 extern "C" void CSaveLoad_pageUp(CSaveLoad* self);
 extern "C" void CSaveLoad_pageDown(CSaveLoad* self);
 extern "C" void loadSaveData__9CSaveLoadFv(CSaveLoad* self);
-extern "C" int func_800FEDF8();
-extern "C" void func_800FF914();
+extern "C" int CMainMenu_GetInstancePtr();
+extern "C" void ArtsInfo_SetReadyFlag();
 extern "C" int isClassicController__Q22cf13CfGameManagerFv(int arg);
 extern "C" void __ct__8CProcessFv(CProcess* self);
 extern "C" void __ct__CBgTex(void* self, int arg);
@@ -140,7 +140,8 @@ extern "C" char* BdatTouchStringCell(char* a, char* b, int id);
 extern "C" void func_8016742C(void* dest, void* src);
 extern "C" void __ct__Q34nw4r3lyt8DrawInfoFv(void* self);
 extern "C" void __dt__Q34nw4r3lyt8DrawInfoFv(void* self, int dealloc);
-extern "C" void addRenderCB__4CScnFP10IScnRenderUlUl(CScn* self, IScnRender* cb, u32 prio, u32 flag);
+extern "C" void addRenderCB__4CScnFP10IScnRenderUlUl(void* scn, void* cb, u32 a,
+                                                      u32 b);
 
 // DrawInfo helper - retail emits the mangled nw4r form
 // (func_80137250__FPQ34nw4r3lyt8DrawInfo), so it is declared as a normal C++

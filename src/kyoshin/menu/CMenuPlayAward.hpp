@@ -173,7 +173,7 @@ public:
     // 0x20:      Layout* render target (drawn by PlayAward_DrawList)
     // 0x24:      AnimTransform* reverse-advance target (PlayAward_FinishCloseAnimB/80271480)
     // 0x28:      AnimTransform* reverse-advance target (PlayAward_FinishCloseAnimA)
-    // 0x30-0x47: cursor region (drawn via func_801D20B0)
+    // 0x30-0x47: cursor region (drawn via Cur_DrawLayout)
     // 0x48-0x87: CScrollBar region (0x40, opaque)
     // 0x88:      render gate (nonzero enables PlayAward_DrawList) | 0x89: state byte
     // 0x8A/0x8B: flag bytes
@@ -186,7 +186,7 @@ public:
     nw4r::lyt::AnimTransform* mAnimTrans24; // 0x24
     nw4r::lyt::AnimTransform* mAnimTrans28; // 0x28
     u32 field_0x2C;                         // 0x2C: second award text color/attr (PlayAward_RefreshEntryPanes)
-    u8 mCursor[0x18];                       // 0x30-0x47: cursor region (func_801D20B0)
+    u8 mCursor[0x18];                       // 0x30-0x47: cursor region (Cur_DrawLayout)
     u8 mScrollBar[0x40];                    // 0x48-0x87 (CScrollBar region)
     u8 field_0x88;                          // 0x88: render gate checked by PlayAward_DrawList
     u8 field_0x89;                          // 0x89: state byte (5/0/2 on transitions)
@@ -367,27 +367,27 @@ extern "C" int isIdle__11CTitleAHelpFv(CTitleAHelp* h);
 // CBgTex/CTitleAHelp widget helpers (retail-unmangled callee names; US retail
 // strips the mangling for these widget helpers, cf. CMenuTutorialList.hpp).
 // Return types are int (not u8) so callers compare with cmpwi directly.
-extern "C" void func_801C3D9C(CBgTex* self);
-extern "C" void func_801C40A0(CTitleAHelp* self);
-extern "C" int func_801C3E34(CBgTex* self);
-extern "C" int func_801C4114(CTitleAHelp* self);
+extern "C" void BgTex_Release_3D9C(CBgTex* self);
+extern "C" void teardown(CTitleAHelp* self);
+extern "C" int BgTex_IsLoaded_3E34(CBgTex* self);
+extern "C" int isInitialized(CTitleAHelp* self);
 extern "C" void func_801C412C(CTitleAHelp* self);
-extern "C" void func_801C3D7C(CBgTex* self, nw4r::lyt::DrawInfo* drawInfo);
-extern "C" void func_801C4080(CTitleAHelp* self, nw4r::lyt::DrawInfo* drawInfo);
+extern "C" void BgTex_Draw_3D7C(CBgTex* self, nw4r::lyt::DrawInfo* drawInfo);
+extern "C" void drawHelp(CTitleAHelp* self, nw4r::lyt::DrawInfo* drawInfo);
 
 // Per-frame widget updates (retail-unmangled; called by CMenuPlayAward::Move).
-extern "C" void func_801C3D54(CBgTex* self);
-extern "C" void func_801C3FF0(CTitleAHelp* self);
+extern "C" void BgTex_Tick_3D54(CBgTex* self);
+extern "C" void updateHelp(CTitleAHelp* self);
 
 // Title/help bar close + mode-set helpers (func_80270454).
-extern "C" void func_801C414C(CTitleAHelp* self);
+extern "C" void beginClose(CTitleAHelp* self);
 extern "C" void func_801C41E8(CTitleAHelp* self, u8 mode);
 
 // CfGameManager controller-type query + save/skip busy queries (retail
 // pre-mangled / unmangled C symbols; same scheme as CMenuTutorialList.hpp).
 extern "C" int isClassicController__Q22cf13CfGameManagerFv(int arg);
-extern "C" int func_800FEDF8();
-extern "C" void func_800FF914();
+extern "C" int CMainMenu_GetInstancePtr();
+extern "C" void ArtsInfo_SetReadyFlag();
 
 // Shared layout-arc resource manager (retail-unmangled; ArcResourceAccessor
 // with GetResource at vtable +0x0C, used by PlayAward_RefreshPageTitles).
@@ -398,26 +398,26 @@ extern "C" nw4r::lyt::ArcResourceAccessor* CUICfManager_getArcResourceAccessor()
 extern "C" void setPresentationFlag__Q22cf13CfGameManagerFv(u8 enable);
 
 // CScrollBar show request (retail-unmangled import). The member declaration in
-// CScrollBar.hpp would mangle the call reloc (func_801F367C__10CScrollBarFv),
+// CScrollBar.hpp would mangle the call reloc (CScrollBar_requestScrollIn__10CScrollBarFv),
 // and CSortMenu.hpp cannot be co-included with CTitleAHelp.hpp (its extern
 // UnkClass_8045F564 ctor conflicts with the member ctor CTitleAHelp pulls in).
-extern "C" void func_801F367C(u8* scrollBar);
+extern "C" void CScrollBar_requestScrollIn(u8* scrollBar);
 
 // Scroll-bar init (retail-unmangled; 2nd arg is a 3-float vector, cf. CMapSel).
-extern "C" void func_801F3670(u8* scrollBar, const float* vec);
+extern "C" void CScrollBar_InitRootPane(u8* scrollBar, const float* vec);
 
 // CScrollBar / CCur18 embedded-widget ctors (retail-unmangled names).
 extern "C" void __ct__CScrollBar(u8* scrollBar, int arg);
 extern "C" void __ct__CCur18(u8* cursor, void* arg);
 
 // CScrollBar draw + cursor draw imports (retail-unmangled names; same reason
-// as func_801F367C -- the CScrollBar.hpp member decl would mangle them).
-extern "C" void func_801F35B0(u8* scrollBar, nw4r::lyt::DrawInfo* drawInfo);
-extern "C" void func_801D20B0(u8* cursor, nw4r::lyt::DrawInfo* drawInfo);
+// as CScrollBar_requestScrollIn -- the CScrollBar.hpp member decl would mangle them).
+extern "C" void CScrollBar_draw(u8* scrollBar, nw4r::lyt::DrawInfo* drawInfo);
+extern "C" void Cur_DrawLayout(u8* cursor, nw4r::lyt::DrawInfo* drawInfo);
 
 // Cursor/scrollbar helpers used by the close sequence (PlayAward_RequestClose).
-extern "C" void func_801D216C(u8* cursor, u8 val);
-extern "C" void func_801F369C(u8* scrollBar);
+extern "C" void Cur_SetVisible(u8* cursor, u8 val);
+extern "C" void CScrollBar_requestScrollOut(u8* scrollBar);
 
 // Layout text-binding helper (retail-unmangled; 3rd arg is the raw text word).
 extern "C" void LayoutSetTextBoxFmtValue(nw4r::lyt::Layout*, char*, char*, u32);
@@ -428,11 +428,11 @@ extern "C" void func_80137924(nw4r::math::VEC3*, nw4r::lyt::Pane*, nw4r::lyt::Pa
 
 // Scroll-bar layout load + per-frame update/draw helpers, and the cursor
 // update helper (retail-unmangled names; CScrollBar.hpp cannot be included).
-extern "C" void func_801F34F4(u8* scrollBar);
-extern "C" void func_801F35DC(u8* scrollBar);
-extern "C" void func_801F3540(u8* scrollBar);
-extern "C" void func_801F36BC(u8* scrollBar, int, int);
-extern "C" void func_801F3850(u8* scrollBar, u16 val);
+extern "C" void CScrollBar_loadLayoutArc(u8* scrollBar);
+extern "C" void CScrollBar_Teardown(u8* scrollBar);
+extern "C" void CScrollBar_UpdateDispatch(u8* scrollBar);
+extern "C" void CScrollBar_UpdateThumb(u8* scrollBar, int, int);
+extern "C" void CScrollBar_PlaceThumb(u8* scrollBar, u16 val);
 extern "C" void func_801D202C(u8* cursor);
 
 // Embedded-widget destructors (retail mangled __dt__ names; the widget
@@ -457,11 +457,11 @@ extern "C" void* __ct__CTagProcessor(void*);
 extern "C" void* getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32, nw4r::lyt::Layout*);
 extern "C" u32 CUICfManager_getPackedFont9C();
 extern "C" void setBdatEntry__5CBdatFUlPv(u32, void*);
-extern "C" u32 func_8003B1EC(void*);
-extern "C" u32 func_8009CF8C(u32);
+extern "C" u32 Bdat_GetMaxRow_B1EC(void*);
+extern "C" u32 CtrlRemote_TouchBitByArg(u32);
 extern "C" u16 BdatGetU16Direct(const void*, const void*, int);
 extern "C" u8 code80135FDC_getByte_6407F();
-extern "C" void func_801C3C14(CBgTex* self);
+extern "C" void BgTex_Acquire_3C14(CBgTex* self);
 extern "C" void CTitleAHelp_load(CTitleAHelp* self);
 
 // Award-list array element ctor/dtor + MWCC array helpers (retail-unmangled

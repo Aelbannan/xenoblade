@@ -725,11 +725,11 @@ extern "C" void func_801F4D50(void* obj, void* actor);
 
 // C-ABI imports used by initEnemyBdatParams / updateEnemyBattleState / func_800AF870
 // (retail symbols are unmangled).
-// func_8003B41C / func_8003B1EC: canonical form per ocBdat.cpp definitions
+// Bdat_GetRowBase_B41C / Bdat_GetMaxRow_B1EC: canonical form per ocBdat.cpp definitions
 // (u32(void*)); CfObjectPc.hpp's block uses the same spelling.
-extern "C" void* func_8003AA34();
-extern "C" u32 func_8003B41C(void* bdat);   // bdat first row (must match CfObjectPc.hpp)
-extern "C" u32 func_8003B1EC(void* bdat);   // bdat row count (must match CfObjectPc.hpp)
+extern "C" void* Bdat_GetTable_AA34();
+extern "C" u32 Bdat_GetRowBase_B41C(void* bdat);   // bdat first row (must match CfObjectPc.hpp)
+extern "C" u32 Bdat_GetMaxRow_B1EC(void* bdat);   // bdat row count (must match CfObjectPc.hpp)
 extern "C" void func_8014B7B0(u8* obj);
 extern "C" void func_8015396C(u8* obj, u32 a, u32 b);
 // func_80174C98 / func_80174B4C are owned by kyoshin/cf/CfMapItemManager.hpp.

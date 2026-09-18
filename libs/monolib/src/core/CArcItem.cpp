@@ -59,7 +59,7 @@ extern "C" void* __dt__8CArcItemFv(CArcItem* self, int mode) {
 }
 #pragma optimize_for_size off
 
-void CArcItem::func_804DEC30(){
+void CArcItem::updateLoadState(){
     if(unk2C == 0){
         //Won't match with ||. Why do it like this?
         if(unk30 != 0) unk2C = 2;
@@ -69,7 +69,7 @@ void CArcItem::func_804DEC30(){
 
 // optimize_for_size on: retail saves r29-r31 via stmw, not stw.
 #pragma optimize_for_size on
-bool CArcItem::func_804DEC6C(const char* pPath, void** pOutStartAddr, u32* pOutLength){
+bool CArcItem::findFileEntry(const char* pPath, void** pOutStartAddr, u32* pOutLength){
     if(unk38 == 0 || unk30 != 0) return false;
     s32 entryNum = ARCConvertPathToEntrynum(&mArcHandle, pPath);
     //Return if the entry number is invalid

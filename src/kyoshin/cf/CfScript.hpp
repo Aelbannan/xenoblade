@@ -106,20 +106,20 @@ public:
     // prevents MWCC -inline auto from inlining them into the wrappers (REF §8616).
     void __declspec(noinline) loadSlotZero(const char* name);  // load slot 0 (this == &mScripts[0])
     void func_80068B20(const char* n) { loadSlotZero(n); } // compat
-    void __declspec(noinline) func_80068B94(const char* name);  // load slot 2 (offset 0xB0)
+    void __declspec(noinline) CfScript_PutSlot2(const char* name);  // load slot 2 (offset 0xB0)
 
     // Set "ready" flag on each slot
-    void func_80068BC0();  // set flag on slot 0
-    void func_80068BF4();  // set flag on slot 1
-    void func_80068C28();  // set flag on slot 2
+    void CfScript_SetFlag0();  // set flag on slot 0
+    void CfScript_SetFlag1();  // set flag on slot 1
+    void CfScript_SetFlag2();  // set flag on slot 2
 
     // Sleep VM thread for slot 2 if flag set
-    void func_80068C5C();
+    void CfScript_SleepSlot2();
 
     // Reset/cleanup functions for each slot
-    void func_80068CA0();  // reset slot 0
-    void func_80068D38();  // reset slot 1
-    void func_80068DD0();  // reset slot 2
+    void CfScript_ClearSlot0();  // reset slot 0
+    void CfScript_ClearSlot1();  // reset slot 1
+    void CfScript_ClearSlot2();  // reset slot 2
 
     // Main update and exec
     void __declspec(noinline) updateScript();
@@ -147,5 +147,5 @@ extern CfScriptPMF lbl_eu_80526DD0[2];
 // symbol names match the retail split verbatim).
 extern "C" {
     bool func_80068ECC(cf::CfScript* script, const char* name);
-    u32 func_80068E7C(cf::CfScriptManager* mgr, int index, int mask);
+    u32 CfScript_TestFlags(cf::CfScriptManager* mgr, int index, int mask);
 }

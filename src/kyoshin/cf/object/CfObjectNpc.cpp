@@ -145,7 +145,7 @@ void CfObjectNpc::updateNpcDialog() {
 // BDAT column-name table; numeric columns are converted with the classic
 // 0x4330 integer-to-double bias constant.
 void CfObjectNpc::func_800BF764() {
-    func_8003AA34();
+    Bdat_GetTable_AA34();
     void* fp = getFP__FPCc((const char*)this + 0x78);
 
     // Length-probe the name column: if it exceeds 0x1F chars, fall back to
@@ -185,7 +185,7 @@ void CfObjectNpc::func_800BF764() {
 
 // 0x800C0314
 void CfObjectNpc::loadIconType() {
-    func_8003AA34();
+    Bdat_GetTable_AA34();
     void* fp = getFP__FPCc((const char*)this + 0x78);
     u16 row = unk8C_3;
     // Read the icon_type column value (return value's low byte holds it).
@@ -196,7 +196,7 @@ void CfObjectNpc::loadIconType() {
 // 0x800C0368
 s16 CfObjectNpc::getRltMeet() {
     if (mRltMeet == -1) {
-        func_8003AA34();
+        Bdat_GetTable_AA34();
         void* fp = getFP__FPCc((const char*)this + 0x78);
         u16 row = unk8C_3;
         // Lazily load the rlt_meet value from the BDAT column on first access.

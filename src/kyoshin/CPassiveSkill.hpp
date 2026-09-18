@@ -60,7 +60,7 @@ public:
      * call), so the vptr is a plain member here. The step functions
      * (CPassiveSkillCur_stepToState2/CPassiveSkillCur_stepToState3/CPassiveSkillCur_stepToState5) write the state byte at
      * +0x18; CPassiveSkillCur_setRootPos uses the second layout at +0x24 (its root pane is
-     * the func_801D2150 target). */
+     * the Cur_SetPaneTranslate target). */
     void* mVtbl;                                // +0x00
     nw4r::lyt::ArcResourceAccessor* mArcResAcc; // +0x04
     nw4r::lyt::Layout* mpLayout;                // +0x08
@@ -308,7 +308,7 @@ extern "C" void CPassiveSkillCur_setNameMsg135(UI::CPassiveSkillCur* self);
  * at +0x0, zeroed words, and byte flags (+0x19 starts at 1). The +0x8/+0xC/
  * +0x10/+0x14 words are pointers: +0x8/+0xC are anim transforms (frames at
  * +0x10 enabled/set by CPassiveSkillInit_stepMode1), and +0x10/+0x14 are panes shown via
- * func_80124270. */
+ * setPaneVisible. */
 struct UI_PassiveSkillInit {
     u32 field_0;                     // +0x00 - caller pointer
     nw4r::lyt::Layout* field_4;      // +0x04 - layout animated via vtbl 0x38 by CPassiveSkillInit_step
@@ -440,23 +440,23 @@ extern "C" int CSysWin_isActive(CSysWin* syswin);
 
 // Cursor-position builder for the syswin (CSysWin.cpp, retail symbol
 // unmangled); writes a VEC3 that the CCur18 "Move" virtual consumes.
-extern "C" void func_8022C1B4(nw4r::math::VEC3* out, CSysWin* syswin, int idx);
+extern "C" void sysWinGetPaneScreenPos(nw4r::math::VEC3* out, CSysWin* syswin, int idx);
 
 // Cursor quiet helper (CCur.cpp, takes the embedded CCur18 cursor). Retail
 // symbol unmangled.
-extern "C" void func_801D216C(CCur18* cursor, u8 flag);
+extern "C" void Cur_SetVisible(CCur18* cursor, u8 flag);
 
 // Cursor per-frame update (CCur.cpp; retail symbol unmangled).
 extern "C" void func_801D202C(void* cursor);
 
 // CSysWin window advance/close helper (CSysWin.cpp). Retail symbol unmangled.
-extern "C" void func_8022B8E4(CSysWin* syswin);
+extern "C" void sysWinAdvancePhase3(CSysWin* syswin);
 
 // CSysWin draw helper (CSysWin.cpp). Retail symbol unmangled.
-extern "C" void func_8022B7C8(CSysWin* syswin, nw4r::lyt::DrawInfo* drawInfo);
+extern "C" void sysWinDrawLayout(CSysWin* syswin, nw4r::lyt::DrawInfo* drawInfo);
 
 // CSysWin advance helper (CSysWin.cpp; retail symbol unmangled).
-extern "C" void func_8022B748(void* syswin);
+extern "C" void sysWinDispatchPhase(void* syswin);
 
 // +0x1B8 sub-object state query (retail UI_CPassiveSkill_thunk1b8_CSysWin_getUnk34).
 // Defined as an extern "C" global so call sites emit the plain retail reloc
@@ -519,7 +519,7 @@ struct CPSkillTexRes {
 };
 
 // Cursor draw helper (CCur.cpp; retail symbol unmangled).
-extern "C" void func_801D20B0(void*, void*);
+extern "C" void Cur_DrawLayout(void*, void*);
 
 // 8-byte animation-colour vector (4 s16 channels) returned by func_80139658
 // in r3:r4 (same layout as CItemBoxLine.hpp's FourShorts; the .d channel is
@@ -528,7 +528,7 @@ struct CPSkillFourShorts {
     s16 a, b, c, d;
 };
 
-// 8-byte colour record filled by func_801C4B60 (retail GXColorS10 layout);
+// 8-byte colour record filled by setGXColorS10 (retail GXColorS10 layout);
 // the helper returns the record pointer.
 struct CPSkillColorS10 {
     s16 r, g, b, a;
@@ -541,7 +541,7 @@ extern "C" CPSkillFourShorts func_80139658(void*, const char*, u32);
 // RGB-colour builder (retail symbol unmangled): fills the record with the
 // four s16 channels and returns the record pointer (CTitle.hpp /
 // CKizunagram.hpp convention).
-extern "C" CPSkillColorS10* func_801C4B60(CPSkillColorS10* color, s16 r,
+extern "C" CPSkillColorS10* setGXColorS10(CPSkillColorS10* color, s16 r,
                                             s16 g, s16 b, s16 a);
 
 // Bind a texture resource to a pane (retail symbol unmangled).
@@ -559,10 +559,10 @@ struct CPSkillPaneB8 {
 };
 
 // Cursor/skill-pane visibility helpers (retail symbols unmangled).
-// func_80124270 (declared in CSysWin.hpp) sets a pane's visible flag;
-// func_801C4648 queries it. C linkage so call relocs are the plain retail
+// setPaneVisible (declared in CSysWin.hpp) sets a pane's visible flag;
+// isPaneVisible queries it. C linkage so call relocs are the plain retail
 // name (CTitleAHelp.hpp's C++ declaration would mangle it).
-extern "C" bool func_801C4648(nw4r::lyt::Pane*);
+extern "C" bool isPaneVisible(nw4r::lyt::Pane*);
 
 // Message-table lookup used by func_80266950 (retail symbol unmangled):
 // returns the u16 id for (table, label, category).
@@ -570,7 +570,7 @@ extern "C" u16 BdatGetU16Direct(const void*, const void*, int);
 
 // Character-data lookup by id (retail symbol unmangled; also declared in
 // CMapSel.hpp / CItemBoxGrid.hpp).
-extern "C" u32 func_8009CF8C(u32);
+extern "C" u32 CtrlRemote_TouchBitByArg(u32);
 
 // Character index splitter used by CPassiveSkill_learnAllSkills (retail symbol unmangled;
 // 3-arg form also declared in CPcKizunagram.hpp).
@@ -673,7 +673,7 @@ struct CPSkillEnumListHolder {
     u32 handle;                // +0x04
 };
 
-// One slot of the CfObjEnumList element array (func_800F6EC0 result): the
+// One slot of the CfObjEnumList element array (getEntryAt result): the
 // CfObjectMove pointer sits at +0x04.
 struct CPSkillEnumListSlot {
     u8 _pad0[0x4];             // +0x00..0x03
@@ -692,8 +692,8 @@ struct CPSkillEnumListCount {
 extern "C" void CTaskGame_enumListCtor(void*);
 extern "C" void* CTaskGame_enumListGet(void*);
 extern "C" void __dt__80043E88(void*, int);
-extern "C" void func_800F4A98(void*, u32, u32);
-extern "C" CPSkillEnumListSlot* func_800F6EC0(void*, u32);
+extern "C" void startEnumObjects(void*, u32, u32);
+extern "C" CPSkillEnumListSlot* getEntryAt(void*, u32);
 extern "C" cf::CfObjectMove* getCfObjectPc__FPQ22cf12CfObjectMove(cf::CfObjectMove* move);
 extern "C" void func_800BFDE0(cf::CfObjectMove* move, u32 flag);
 

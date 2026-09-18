@@ -5,7 +5,7 @@
 
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
 extern "C" void* func_8016FE34(void* source);
-extern "C" u32 func_8009CF8C(u32 resourceId);
+extern "C" u32 CtrlRemote_TouchBitByArg(u32 resourceId);
 extern "C" void* CfObjectMove_getSelfIfActive(void* objParam);
 
 namespace cf {
@@ -109,7 +109,7 @@ public:
     bool func_802B86F0();
 
     s32 field_0x10;  // 0x10 - compared (signed cmp) against a u16 from another object
-    u8 field_0x14;   // 0x14 - flag checked before func_8009CF8C call
+    u8 field_0x14;   // 0x14 - flag checked before CtrlRemote_TouchBitByArg call
     u8 field_0x15;   // 0x15 - flag checked before final block
     u8 field_0x16;   // 0x16 - main state/result byte, read and written throughout
 };

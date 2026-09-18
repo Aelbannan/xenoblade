@@ -45,7 +45,7 @@ struct CrystalItemImpl {
     virtual void vf08() = 0;
 };
 
-// sdata2 constants used by func_80213570's ceil(count / scale) computation.
+// sdata2 constants used by MakeCrystal_CollectByTarget's ceil(count / scale) computation.
 extern f32 lbl_eu_80668458; // 30.0f scale
 // lbl_eu_8066845C is the 0.0f used for the fractional-part comparison.
 extern f32 lbl_eu_8066845C;
@@ -61,11 +61,11 @@ extern "C" void sortCrystalKeyOrder(MakeCrystalTable* d);
 
 // 4-byte {s16, u8} crystal-entry copy helper (defined below the callers so
 // MWCC treats it out-of-line, matching retail's bl).
-extern "C" __declspec(noinline) void func_8021351C(MakeCrystalEntry* dst,
+extern "C" __declspec(noinline) void MakeCrystal_CopyEntry(MakeCrystalEntry* dst,
                                                   const MakeCrystalEntry* src);
 
 // Returns the table pointer (retail mr r3,r28 on the way out).
-MakeCrystalTable* func_80213488(MakeCrystalTable* d) {
+MakeCrystalTable* MakeCrystal_ResetTable(MakeCrystalTable* d) {
     // Rolled do-while pointer walk (sth/stb per entry); bound kept inline in
     // the condition.
     MakeCrystalEntry* p = d->entries;
@@ -84,7 +84,7 @@ MakeCrystalTable* func_80213488(MakeCrystalTable* d) {
         MakeCrystalEntry tmp;
         tmp.id = -1;
         tmp.flag = 0;
-        func_8021351C(&d->entries[i], &tmp);
+        MakeCrystal_CopyEntry(&d->entries[i], &tmp);
     }
     return d;
 }
@@ -92,7 +92,7 @@ MakeCrystalTable* func_80213488(MakeCrystalTable* d) {
 // Copy a 4-byte {s16, u8} crystal entry (id + flag). Retail calls it
 // out-of-line (bl) from the second reset loop; noinline keeps MWCC from
 // folding the body into the callers.
-extern "C" __declspec(noinline) void func_8021351C(MakeCrystalEntry* dst,
+extern "C" __declspec(noinline) void MakeCrystal_CopyEntry(MakeCrystalEntry* dst,
                                                   const MakeCrystalEntry* src) {
     // Retail 0x80215374: 0x14-byte {s16,u8} copy (lha/sth + lbz/stb).
     // A struct assignment would also copy pad3 and change the emitted code.
@@ -111,13 +111,13 @@ MakeCrystalTable* __dt__80213530(MakeCrystalTable* self, int flags) {
 // Retail 0x80213570: rebuild the crystal table. Resets every entry, walks the
 // item category and keeps the rows whose item id matches `target`, computes
 // the row count (limit) as ceil(filled-count / 30), then refreshes/sorts.
-void func_80213570(MakeCrystalTable* d, u8 target) {
+void MakeCrystal_CollectByTarget(MakeCrystalTable* d, u8 target) {
     d->count = 0;
     for (u16 i = 0; i < 0x400; ++i) {
         MakeCrystalEntry tmp;
         tmp.id = -1;
         tmp.flag = 0;
-        func_8021351C(&d->entries[i], &tmp);
+        MakeCrystal_CopyEntry(&d->entries[i], &tmp);
     }
     int total = (int)CItemBlock_countKindSlots(d->byte_1002);
     u16 i = 0;
@@ -161,7 +161,7 @@ void func_802136E0(MakeCrystalTable* d, int idx, unsigned char val) {
 
 // Retail 0x80213710: return the flag of the entry at the adjusted index
 // (0 when out of range).
-u8 func_80213710(MakeCrystalTable* d, u8 idx) {
+u8 MakeCrystal_GetFlag(MakeCrystalTable* d, u8 idx) {
     u16 adj = (u16)(idx + (s8)d->current * 30);
     if (adj < d->count)
         return d->entries[adj].flag;
@@ -169,10 +169,10 @@ u8 func_80213710(MakeCrystalTable* d, u8 idx) {
 }
 
 // Retail 0x80213748: return 1 iff every entry's flag is non-zero.
-// NOTE: retail exports an unmangled `func_80213748`; the mangled definition
+// NOTE: retail exports an unmangled `MakeCrystal_AllFlagsSet`; the mangled definition
 // here is mapped back to the retail name by the symbol-recovery tooling
-// (same mechanism as copyCrystalEntry -> func_8021351C).
-int func_80213748_allFlagsSet(MakeCrystalTable* d) {
+// (same mechanism as copyCrystalEntry -> MakeCrystal_CopyEntry).
+int MakeCrystal_AllFlagsSet(MakeCrystalTable* d) {
     // Retail caches count before the loop (read once into a register).
     u16 count = d->count;
     for (u16 i = 0; i < count; ++i) {
@@ -185,7 +185,7 @@ int func_80213748_allFlagsSet(MakeCrystalTable* d) {
 
 // Retail 0x80213788: advance the current row cursor, wrapping to 0 when it
 // reaches the row limit.
-void func_80213788(MakeCrystalTable* d) {
+void MakeCrystal_AdvanceCursor(MakeCrystalTable* d) {
     u8 v = d->current + 1;
     d->current = v;
     if ((s8)v < d->limit) return;
@@ -201,7 +201,7 @@ void func_802137B4(MakeCrystalTable* d) {
 
 // Retail 0x802137DC: resolve the item at the adjusted index, return its
 // sub-category (bits 20..31) or 0 when out of range / unresolvable.
-u32 func_802137DC(MakeCrystalTable* d, u8 idx) {
+u32 MakeCrystal_GetSubCategory(MakeCrystalTable* d, u8 idx) {
     u16 adj = (u16)(idx + (s8)d->current * 30);
     if (adj < d->count) {
         MakeCrystalItemObj* obj =
@@ -216,7 +216,7 @@ u32 func_802137DC(MakeCrystalTable* d, u8 idx) {
 
 // Retail 0x8021384C: resolve the item at the adjusted index and return the
 // object pointer (0 when out of range or unresolvable).
-MakeCrystalItemObj* func_8021384C(MakeCrystalTable* d, u8 idx) {
+MakeCrystalItemObj* MakeCrystal_GetItemObject(MakeCrystalTable* d, u8 idx) {
     u16 adj = (u16)(idx + (s8)d->current * 30);
     if (adj < d->count) {
         MakeCrystalItemObj* obj =

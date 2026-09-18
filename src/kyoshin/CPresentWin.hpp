@@ -31,7 +31,7 @@ void* mVtable;                              // +0x00
     u8 mField36;                               // 0x36
     u8 mField37;                               // 0x37
     u8 mField38;                               // 0x38
-    u8 mDataArray[8];                          // 0x39-0x40 (indexed by func_8022E868)
+    u8 mDataArray[8];                          // 0x39-0x40 (indexed by lookupPresentRank)
     u8 mDataCount;                             // 0x41
 };
 
@@ -101,8 +101,8 @@ extern "C" {
 void waitForDrawDone__9CDeviceVIFv();
 void func_801375A0(nw4r::math::VEC3* out, nw4r::lyt::Pane* pane);
 nw4r::lyt::ArcResourceAccessor* CUICfManager_getArcResourceAccessor();
-void func_80124270(nw4r::lyt::Pane*, u32);
-void func_80124288(nw4r::lyt::Pane*, float*);
+void setPaneVisible(nw4r::lyt::Pane*, u32);
+void writePanePos(nw4r::lyt::Pane*, float*);
 u32 BdatGetItemId(u32);
 int BdatGetS8Direct(const char*, const char*, const char*);
 char* BdatGetPtrDirect(const void*, const void*, int);
@@ -111,6 +111,6 @@ void func_8013A95C(u16, u16, s8);
 void func_8022E698(CPresentWin* self);
 void func_8022E744(CPresentWin* self);
 void func_8022E254(CPresentWin* self);
-u8 func_8022E868(CPresentWin* self, u32 r4);
+u8 lookupPresentRank(CPresentWin* self, u32 r4);
 }
 void playUISound(u32); // mangles to playUISound__FUl

@@ -52,20 +52,23 @@ extern "C" {
     void func_8012FAA8();
     int CItemBlock_addSlotCount(int);
     void CItemBlock_setCount(int);
-    void func_801571A8(int);
+    void CItem_AddBlockCountClamped(int);
     // CItemBlock_setKindFlag / CItemBlock_getKindSlot / CItemBlock_getSlotU16 / CItem_initItemImplInstances /
-    // func_80199678: declared by kyoshin/cf/CfGameManager.hpp above - local
+    // movePcCondFullReset: declared by kyoshin/cf/CfGameManager.hpp above - local
     // re-declarations with different types trip MWCC 10197.
+    // (Header decl moved to kyoshin/cf/CtrlMovePC.hpp by a concurrent
+    // rename; spell the canonical (void*, int) form locally.)
+    void movePcCondFullReset(void*, int);
     void CItem_clearCharSubSlot(int, int, void*);
     void CItemData_initFromFamily(void*, int, int);
     void func_80155A00(void*);
-    void func_8016DF34(int);
+    void updateReloadFloat(int);
     void func_8016DF4C(int);
 
-    void func_801F4AD4(int, int);
-    void func_801F4B68(int, int);
-    void func_801F4BFC(int, int);
-    void func_801F4C90(int, int, int);
+    void GimDispatch14ByRow(int, int);
+    void GimDispatch18ByRow(int, int);
+    void GimDispatch1CType1(int, int);
+    void GimToggleElevatorLod(int, int, int);
     void Scn_SetPalFixFlag(int, int);
     int getUnk80664658();
     int isTvFormatPal__9CDeviceVIFv();
@@ -75,9 +78,15 @@ extern "C" {
     void walkListByItemId(int, int);
     int func_800B8D5C();
     void CfObjectMove_forwardNpcSignal(int, bool);
-    bool func_8009CF8C(int);
-    // func_8009D018: declared (u32,u32) by CfGameManager.hpp:767 - local
-    // (int,int) form conflicts (10197).
+    bool CtrlRemote_TouchBitByArg(int);
+    // Flat retail symbol (config/us/symbols.txt); C linkage keeps the
+    // call-site reloc unmangled like retail.
+    void PartyGaugeSetClamped(void*, int);
+    // CtrlRemote_SetSharedBit: declared (u32,u32) by CfGameManager.hpp:767 - local
+    // (int,int) form conflicts (10197). The header decl was removed by a
+    // concurrent rename, so spell the (u32,u32) form locally (identical
+    // redeclaration is harmless even if a header provides it again).
+    void CtrlRemote_SetSharedBit(u32, u32);
     int* func_8009EC9C(int);
     int* CtrlObjectParam_GetSlotTableBase();
     void CtrlObjectParam_SetEquipSlot5(int*, int);
@@ -97,12 +106,12 @@ extern "C" {
     void func_800AB7F8(void*, float, void*, void*, int, int, int, int);
     void func_800ABD44(void*, float*, float*, float);
     void func_800ABDE4(void*, float*, float*, float);
-    void func_800AC3F4(void*, const char*, const char*);
+    void CollObjSetResIdPathName(void*, const char*, const char*);
     void func_800ABE84(void*, float*, float*, float);
-    void func_800AC378(void*, const char*, int);
+    void CollObjSetNameSlot(void*, const char*, int);
     void func_800AB8CC(void*, float, void*, void*);
-    void func_800ABA18(float, float*, float*);
-    void func_800AC30C(void*, int, int, const char*);
+    void CollObjSetupRotBoxFromAVec(float, float*, float*);
+    void CollObjSetResIdPairName(void*, int, int, const char*);
     void resetFieldState__Q22cf13CfGameManagerFv();
     void resetControllerState__Q22cf13CfGameManagerFv();
     void syncFieldAndBattle__Q22cf13CfGameManagerFv();
@@ -125,8 +134,8 @@ extern "C" {
     void activateLOD__8CTaskLODFv(int);
     void deactivateLOD__8CTaskLODFv(int);
     void* getScnHandle__Fv();
-    void func_804BCC30(void*, int);
-    void func_804BCC3C(void*, int);
+    void ScnData_FwdB7D9C(void*, int);
+    void ScnData_FwdB7DD4(void*, int);
     void forwardMpfCallB__17UnkClass_8047BB54Fv(void*, int);
     void forwardMpfCallC__17UnkClass_8047BB54Fv(void*, int);
 }
@@ -270,7 +279,7 @@ int setMapJumpArea(VMThread* pThread) {
         // Party-position dispatch through CfGameManager vtable slot 0x9C.
         ((cf::CfGameManagerVt158*)mgr)->setPos(&scaledCopy);
 
-        func_800AC30C(mgr, idA, idB, name);
+        CollObjSetResIdPairName(mgr, idA, idB, name);
 
         // Preload notifier dispatch through CfGameManager vtable slot 0x158.
         ((cf::CfGameManagerVt158*)mgr)->notifyPreload(flag != 0);
@@ -283,7 +292,7 @@ int setMapJumpArea(VMThread* pThread) {
     return 0;
 }
 
-void func_80047814__Q22cf13CfObjectPointFv(void* self, void* src) {
+void CfObjectPoint_CopyPosWords(void* self, void* src) {
     u32 a = *(u32*)((u8*)src + 0);
     u32 b = *(u32*)((u8*)src + 4);
     u32 c = *(u32*)((u8*)src + 8);
@@ -391,8 +400,8 @@ int setMapJumpAreaBox(VMThread* pThread) {
         (cf::CfGameManager*)createBdatCollisionObj__Q22cf13CfGameManagerFv();
     if (mgr != NULL) {
         func_800AB978(mgr, lbl_eu_80665E48, lbl_eu_80665E34, &corners[3], &corners[3]);
-        func_800ABA18(lbl_eu_80665E4C, &corners[6], &corners[0]);
-        func_800AC30C(mgr, ids[1], ids[0], name);
+        CollObjSetupRotBoxFromAVec(lbl_eu_80665E4C, &corners[6], &corners[0]);
+        CollObjSetResIdPairName(mgr, ids[1], ids[0], name);
 
         // Preload notifier dispatch through CfGameManager vtable slot 0x158.
         ((cf::CfGameManagerVt158*)mgr)->notifyPreload(flag != 0);
@@ -535,7 +544,7 @@ int setWarpArea(VMThread* pThread) {
         scaledV.z = centerCopy.z * lbl_80665E38__Q23mtl10MemManager;
         scaledCopy = scaledV;
 
-        func_800AC30C(mgr, id0, id1, name);
+        CollObjSetResIdPairName(mgr, id0, id1, name);
 
         // Preload notifier dispatch through CfGameManager vtable slot 0x158.
         ((cf::CfGameManagerVt158*)mgr)->notifyPreload(flag != 0);
@@ -588,7 +597,7 @@ int setMapPreloadArea(VMThread* pThread) {
         (cf::CfGameManager*)createBdatCollisionObj__Q22cf13CfGameManagerFv();
     if (mgr != NULL) {
         func_800ABD44(mgr, boxMax, boxMin, scale);
-        func_800AC30C(mgr, argA, argB, 0);
+        CollObjSetResIdPairName(mgr, argA, argB, 0);
 
         // Preload notifier dispatch through CfGameManager vtable slot 0x158.
         ((cf::CfGameManagerVt158*)mgr)->notifyPreload(flag != 0);
@@ -707,7 +716,7 @@ int setEventArea(VMThread* pThread) {
         pt.y = box[1] + bottom;
         pt.z = box[2];
         func_800ABDE4(mgr, (float*)&pt, box, top);
-        func_800AC3F4(mgr, eventName, tag);
+        CollObjSetResIdPathName(mgr, eventName, tag);
 
         // Preload notifier dispatch through CfGameManager vtable slot 0x158.
         ((cf::CfGameManagerVt158*)mgr)->notifyPreload(flag != 0);
@@ -824,7 +833,7 @@ int setTownArea(VMThread* pThread) {
             b.len += extLen;
             d.len = strlen(b.buf);
             strcpy(d.buf, b.buf);
-            func_800AC378(mgr, d.buf, 0);
+            CollObjSetNameSlot(mgr, d.buf, 0);
 
             // Second tag: name + (ext + 3)
             ext += 3;
@@ -835,10 +844,10 @@ int setTownArea(VMThread* pThread) {
             a.len += extLen;
             d.len = strlen(a.buf);
             strcpy(d.buf, a.buf);
-            func_800AC378(mgr, d.buf, 1);
+            CollObjSetNameSlot(mgr, d.buf, 1);
         } else {
-            func_800AC378(mgr, name, 0);
-            func_800AC378(mgr, name, 1);
+            CollObjSetNameSlot(mgr, name, 0);
+            CollObjSetNameSlot(mgr, name, 1);
         }
 
         // Preload notifier dispatch through CfGameManager vtable slot 0x158.
@@ -969,11 +978,11 @@ int setMapDispID(VMThread* pThread) {
     if (gm) {
         if (v27) {
             if (v28) activateLOD__8CTaskLODFv(v26);
-            if (v29) { func_804BCC30(getScnHandle__Fv(), v26); }
+            if (v29) { ScnData_FwdB7D9C(getScnHandle__Fv(), v26); }
             if (v30) forwardMpfCallB__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, v26);
         } else {
             if (v28) deactivateLOD__8CTaskLODFv(v26);
-            if (v29) { func_804BCC3C(getScnHandle__Fv(), v26); }
+            if (v29) { ScnData_FwdB7DD4(getScnHandle__Fv(), v26); }
             if (v30) forwardMpfCallC__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, v26);
         }
     }
@@ -1292,7 +1301,7 @@ int totalItem(VMThread* pThread) {
 // Reads a character id plus five optional slot ids (rolling omitted-index,
 // defaults -1), then for each equip slot 0..4 syncs the character record and
 // (for party characters 1-11) the inventory entry.
-// The five optionals stay in scalars until after the func_8009CF8C gate;
+// The five optionals stay in scalars until after the CtrlRemote_TouchBitByArg gate;
 // only then are they spilled into the stack array (retail stores the block
 // at sp+0x10 right before func_8009EC9C).
 int equipItem(VMThread* vmThread) {
@@ -1323,7 +1332,7 @@ int equipItem(VMThread* vmThread) {
     if (vmArgOmitChk(vmThread, idx)) { idx = -1; }
     else { VMArg* a = vmArgPtrGet(vmThread, idx++); idx = vmArgIntGet(idx, a); }
 
-    if (func_8009CF8C(0x3508)) {
+    if (CtrlRemote_TouchBitByArg(0x3508)) {
         return 0;
     }
 
@@ -1427,7 +1436,7 @@ int equipWeapon(VMThread* pThread) {
         weaponId = vmArgIntGet(3, arg);
     }
 
-    if (func_8009CF8C(0x3508)) {
+    if (CtrlRemote_TouchBitByArg(0x3508)) {
         return 0;
     }
 
@@ -1612,7 +1621,7 @@ int applyPcPrm(VMThread* vmThread) {
         param = vmArgIntGet(3, arg);
     }
 
-    if (func_8009CF8C(0x3508)) {
+    if (CtrlRemote_TouchBitByArg(0x3508)) {
         return 0;
     }
 
@@ -1631,7 +1640,7 @@ int setDispOffArea(VMThread* vmThread) {
     arg = vmArgPtrGet(vmThread, 2);
     int areaId = vmArgFixedGet(3, arg);
 
-    void* obj = func_801864DC(func_801862C0(), *(int*)((u8*)ocObj + 4));
+    void* obj = func_801864DC(ArtsSelect_GetContainer(), *(int*)((u8*)ocObj + 4));
 
     if (obj != NULL) {
         // The singleton from getInstance__Fv is passed as the callee's self.
@@ -1660,7 +1669,7 @@ int setScheduleType(VMThread* vmThread) {
         enable = vmArgBoolGet(3, arg);
     }
 
-    void* obj = func_801864DC(func_801862C0(), *(int*)((u8*)ocObj + 4));
+    void* obj = func_801864DC(ArtsSelect_GetContainer(), *(int*)((u8*)ocObj + 4));
 
     if (obj != NULL) {
         int flags = *(int*)((u8*)obj + 0x64);
@@ -1681,7 +1690,7 @@ extern "C" int setWeather(VMThread* vmThread) {
         weatherId = vmArgIntGet(2, arg);
     }
 
-    func_8016DF34(weatherId);
+    updateReloadFloat(weatherId);
     return 0;
 }
 
@@ -1716,11 +1725,11 @@ int setGimmick(VMThread* vmThread) {
     int unk = getUnk80664658();
     if (unk) {
         if (state == 0)
-            func_801F4AD4(unk, gimmickId);
+            GimDispatch14ByRow(unk, gimmickId);
         else if (state == 1)
-            func_801F4B68(unk, gimmickId);
+            GimDispatch18ByRow(unk, gimmickId);
         else if (state == 2)
-            func_801F4BFC(unk, gimmickId);
+            GimDispatch1CType1(unk, gimmickId);
     }
 
     return 0;
@@ -1743,7 +1752,7 @@ int setElvGim(VMThread* vmThread) {
 
     int unk = getUnk80664658();
     if (unk) {
-        func_801F4C90(unk, gimmickId, value);
+        GimToggleElevatorLod(unk, gimmickId, value);
     }
 
     return 0;
@@ -1821,7 +1830,7 @@ int clearPartyGauge(VMThread* vmThread) {
     void* battleMgr = getInstance__Q22cf14CBattleManagerFv();
     if (battleMgr != NULL) {
         void* gauge = getInstance__Q22cf14CBattleManagerFv();
-        func_8018C8F4((u8*)gauge + 0x194, 0);
+        PartyGaugeSetClamped((u8*)gauge + 0x194, 0);
     }
     return 0;
 }
@@ -1849,7 +1858,7 @@ int partyWarp(VMThread* vmThread) {
         if (player != NULL) {
             void* task = player->getTask();
             if (task != NULL) {
-                func_80199678((u8*)task + 0x8C, 1);
+                movePcCondFullReset((u8*)task + 0x8C, 1);
             }
         }
     }
@@ -1878,7 +1887,7 @@ int addMoney(VMThread* vmThread) {
         amount = vmArgIntGet(2, arg);
     }
 
-    func_801571A8(amount);
+    CItem_AddBlockCountClamped(amount);
     return 0;
 }
 
@@ -1967,8 +1976,8 @@ int setPcCtrl(VMThread* vmThread) {
 // --- saveNamedCount (us-8004b4fc) ---
 int saveNamedCount(VMThread* vmThread) {
     int count = countCollepedia();
-    int total = count + func_8009CF8C(0x10A);
-    func_8009D018(0x10A, total < 0 ? 0 : (total > 0x3E7 ? 0x3E7 : total));
+    int total = count + CtrlRemote_TouchBitByArg(0x10A);
+    CtrlRemote_SetSharedBit(0x10A, total < 0 ? 0 : (total > 0x3E7 ? 0x3E7 : total));
     return 0;
 }
 
@@ -2009,11 +2018,11 @@ int isVoiceJP(VMThread* vmThread) {
 // Already-matched functions (kept as-is)
 // ============================================================================
 
-bool func_8004A2E8() {
+bool Cfs_AlwaysFalse_A2E8() {
     return false;
 }
 
-void func_8004A400() {
+void Cfs_Noop_A400() {
     // Intentionally empty
 }
 

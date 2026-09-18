@@ -54,16 +54,16 @@ extern "C" {
     extern void* func_80167F6C(int, int, int);
     extern void* func_800A8E6C(int, int);
     extern void KyoshinHeap_Free78(void*, int);
-    extern void func_800AA318(void* r3, void* r4, void* r5, void* r6, void* r7);
+    extern void Tok_Unpack(void* r3, void* r4, void* r5, void* r6, void* r7);
     extern char* func_800AA5C0(void* r3);
     extern void CfRes_tryResolveToken(void* r3, void* r4);
     extern int CfRes_tryDelegateLoad1(void* r3, int);
-    extern void func_804E3CCC(void*);
-    extern void func_804E3D0C(void*, void*);
-    extern void func_804E3CDC(void*, float, float);
+    extern void schedClearFlag15Update(void*);
+    extern void schedAttachChildSlot(void*, void*);
+    extern void schedSetStepIntervals(void*, float, float);
     extern "C" void* func_804CC1F4(void*, u32, u32, int, int, int);
-    extern void func_804CC1BC(void*);
-    extern void func_804CC1D8(void* mgr, void* key);
+    extern void EffSched_LookupA(void*);
+    extern void EffSched_LookupB(void* mgr, void* key);
     extern void* Scn_CallUnk8C_V9(u32);
     extern void* Scn_SetupAnim(u32, void*, int, int);
     extern void simSetLeafDist7B0(void*, float);
@@ -187,7 +187,7 @@ extern "C" void* __ct__80181B74(CREvtModelObj* self, int flag) {
         self->mOtherVtbl = vt + 0xCC;
 
         if (oldHandle != 0) {
-            func_804E3CCC(oldHandle);
+            schedClearFlag15Update(oldHandle);
             self->mFileHandle3 = 0;
         }
 
@@ -204,7 +204,7 @@ extern "C" void* __ct__80181B74(CREvtModelObj* self, int flag) {
                 // Decrement the shared-buffer refcount; release on reaching zero
                 if (--lbl_eu_806642C0 == 0) {
                     if (lbl_eu_806642B8 != 0) {
-                        func_804CC1D8(&lbl_eu_8065FC18, lbl_eu_806642B8);
+                        EffSched_LookupB(&lbl_eu_8065FC18, lbl_eu_806642B8);
                         if (lbl_eu_806642B8 != 0) {
                             mtl::MemManager::deallocate(lbl_eu_806642B8);
                             lbl_eu_806642B8 = 0;
@@ -230,7 +230,7 @@ extern "C" void* __ct__80181B74(CREvtModelObj* self, int flag) {
 // ============================================================
 extern "C" void func_80181C90(CREvtModelObj* self, void* r4, void* r5) {
     if (self->mFileHandle3 != 0) {
-        func_804E3CCC(self->mFileHandle3);
+        schedClearFlag15Update(self->mFileHandle3);
         self->mFileHandle3 = 0;
     }
 
@@ -245,7 +245,7 @@ extern "C" void func_80181C90(CREvtModelObj* self, void* r4, void* r5) {
             self->mFileHandle3 = handle;
 
             if (handle != 0) {
-                func_804E3D0C(handle, self != 0 ? (void*)&self->mOtherVtbl : 0);
+                schedAttachChildSlot(handle, self != 0 ? (void*)&self->mOtherVtbl : 0);
 
                 // Pull the current position value from the model (vtable 0xA8)
                 void* model = self->mModel;
@@ -253,7 +253,7 @@ extern "C" void func_80181C90(CREvtModelObj* self, void* r4, void* r5) {
                 u32 val = ((u32 (*)(void*))modelVtbl[0xA8 / 4])(model);
                 handle->unk14 = val;
 
-                func_804E3CDC(handle, lbl_eu_80667904, lbl_eu_80667908);
+                schedSetStepIntervals(handle, lbl_eu_80667904, lbl_eu_80667908);
             }
         }
     }
@@ -278,7 +278,7 @@ extern "C" int func_80181DDC(CREvtModelObj* self) {
     }
 
     if (self->mFileHandle3 != 0) {
-        func_804E3CCC(self->mFileHandle3);
+        schedClearFlag15Update(self->mFileHandle3);
         self->mFileHandle3 = 0;
     }
 
@@ -348,7 +348,7 @@ extern "C" void func_80181F28(void* self) {
     *(volatile u32*)(s + 0x18) |= 0x100;
 
     if (handle != 0) {
-        func_804E3CCC(handle);
+        schedClearFlag15Update(handle);
         FLD(u32, s, 0x7C) = 0;
     }
 
@@ -356,7 +356,7 @@ extern "C" void func_80181F28(void* self) {
 
     // Free the loaded/archived data depending on the file state. The
     // status-3 path carries the duplicated null check (two consecutive beq)
-    // like the matched func_80183978.
+    // like the matched EvtModelPc_Cancel.
     s32 fileState = FLD(s32, s, 0x44);
     if (fileState == 3) {
         void* data = FLD(void*, s, 0x48);
@@ -412,9 +412,9 @@ extern "C" void func_80181F28(void* self) {
 }
 
 // ============================================================
-// func_80182084 (us-8018348c) - Reset function 2
+// EvtObj_ResetStateB (us-8018348c) - Reset function 2
 // ============================================================
-extern "C" void func_80182084(void* self) {
+extern "C" void EvtObj_ResetStateB(void* self) {
     char* s = (char*)self;
 
     func_801832D4(self);
@@ -437,9 +437,9 @@ extern "C" void func_80182084(void* self) {
 }
 
 // ============================================================
-// func_80182100 (us-80183508) - Event handler check
+// EvtObj_CheckEvtHandler (us-80183508) - Event handler check
 // ============================================================
-extern "C" int func_80182100(void* self) {
+extern "C" int EvtObj_CheckEvtHandler(void* self) {
     char* s = (char*)self;
     int result = 0;
 
@@ -474,7 +474,7 @@ extern "C" void func_80182178(void* self) {
     // Parse resource info
     u32 resourceId = FLD(u32, s, 0x5C);
     int r18, r14, r10, r0c;
-    func_800AA318((void*)resourceId, &r18, &r14, &r10, &r0c);
+    Tok_Unpack((void*)resourceId, &r18, &r14, &r10, &r0c);
 
     if (r18 == 3) {
         if (r0c == 9) {
@@ -694,7 +694,7 @@ extern "C" void func_80182B2C(void* self) {
             // Parse resource info
             u32 resId = FLD(u32, s, 0x5C);
             int r18b, r14b, r10b, r0cb;
-            func_800AA318((void*)resId, &r18b, &r14b, &r10b, &r0cb);
+            Tok_Unpack((void*)resId, &r18b, &r14b, &r10b, &r0cb);
 
             u32 r18u = (u32)r18b;
             if (r18u == 2 || r18u == 3) {
@@ -733,7 +733,7 @@ extern "C" void func_80182B2C(void* self) {
         // Other path: parse resource info and handle
         u32 resId = FLD(u32, s, 0x5C);
         int r18c, r14c, r10c, r0cc;
-        func_800AA318((void*)resId, &r18c, &r14c, &r10c, &r0cc);
+        Tok_Unpack((void*)resId, &r18c, &r14c, &r10c, &r0cc);
         int r0cVal = r0cc;
 
         if (r0cVal == -1) {
@@ -756,9 +756,9 @@ extern "C" void func_80182B2C(void* self) {
 }
 
 // ============================================================
-// func_80183268 (us-80184684) - Update function
+// EvtObj_TickUpdate (us-80184684) - Update function
 // ============================================================
-extern "C" void func_80183268(void* self) {
+extern "C" void EvtObj_TickUpdate(void* self) {
     char* s = (char*)self;
 
     if (FLD(u32, s, 0x20) != 0) {
@@ -802,7 +802,7 @@ extern "C" void func_801832D4(void* self) {
                     // Keep the handle but flag the peer slot
                     *(u8*)((char*)h + 0x59) = 1;
                 } else {
-                    func_804E3CCC(h);
+                    schedClearFlag15Update(h);
                     FLD(u32, s, 0x7C) = 0;
                 }
                 return;
@@ -842,7 +842,7 @@ extern "C" void func_801832D4(void* self) {
     FLD(u32, s, 0x7C) = (u32)h;
     if (h == 0) return;
 
-    func_804E3D0C(h, (self != 0) ? (void*)(s + 0x3C) : 0);
+    schedAttachChildSlot(h, (self != 0) ? (void*)(s + 0x3C) : 0);
 
     // Signed-int -> float via the manual 0x4330000080000000 bit pattern so
     // the scale subtract references the retail pool symbol lbl_eu_80667910
@@ -851,7 +851,7 @@ extern "C" void func_801832D4(void* self) {
     conv.w[1] = (u32)foundId ^ 0x80000000;
     conv.w[0] = 0x43300000;
     if (conv.d - lbl_eu_80667910 > lbl_eu_80667908) {
-        func_804E3CDC((void*)h, (float)(conv.d - lbl_eu_80667910),
+        schedSetStepIntervals((void*)h, (float)(conv.d - lbl_eu_80667910),
                       (float)lbl_eu_80667908);
     }
 
@@ -880,9 +880,9 @@ extern "C" int func_8018351C(CREvtModelObj* self) {
 }
 
 // ============================================================
-// func_801835D4 (us-801849f0) - OnFileEvent handler
+// EvtObj_OnFileEvent (us-801849f0) - OnFileEvent handler
 // ============================================================
-extern "C" int func_801835D4(void* self, CEventFile* ev) {
+extern "C" int EvtObj_OnFileEvent(void* self, CEventFile* ev) {
     char* s = (char*)self;
 
     CFileHandle* fh = FLD(CFileHandle*, s, 0x40);
@@ -914,7 +914,7 @@ extern "C" int func_801835D4(void* self, CEventFile* ev) {
         if (ev->unk0 == 1) {
             void* data = ((CFileHandle*)lbl_eu_806642BC)->getData();
             lbl_eu_806642B8 = data;
-            func_804CC1BC(&lbl_eu_8065FC18);
+            EffSched_LookupA(&lbl_eu_8065FC18);
         }
         lbl_eu_806642BC = 0;
     }
@@ -923,9 +923,9 @@ extern "C" int func_801835D4(void* self, CEventFile* ev) {
 }
 
 // ============================================================
-// func_801836E4 (us-80184b00) - Check function
+// EvtObj_CheckFlags140 (us-80184b00) - Check function
 // ============================================================
-extern "C" int func_801836E4(void* self) {
+extern "C" int EvtObj_CheckFlags140(void* self) {
     char* s = (char*)self;
     u32 flags = *(u32*)(s + 0x18);
     int result = 0;
@@ -938,22 +938,45 @@ extern "C" int func_801836E4(void* self) {
 }
 
 // ============================================================
+// func_80183264 (us-80184680) - empty lifecycle hook (retail: blr only).
+// ============================================================
+extern "C" void func_80183264() {}
+
+// ============================================================
+// func_801835C4 (us-801849e0) - clear bit 0x20 of mFlags (+0x18).
+// Retail: lwz / rlwinm (strip bit 26) / stw.
+// ============================================================
+extern "C" void func_801835C4(CREvtModelObj* self) {
+    self->mFlags &= ~0x20u;
+}
+
+// ============================================================
+// func_801836CC (us-80184ae8) - clear the +0x7C word when it holds `value`.
+// Retail: lwz / cmplw-bnelr / li / stw.
+// ============================================================
+extern "C" void func_801836CC(void* self, unsigned long value) {
+    u32* slot = (u32*)((char*)self + 0x7C);
+    if (*slot == (u32)value)
+        *slot = 0;
+}
+
+// ============================================================
 // Thunks
 // ============================================================
 extern "C" void OnFileEvent__13CREvtModelObjFP10CEventFile(void* self) {
-    ((void(*)(void*))func_801835D4)((char*)self - 0x38);
+    ((void(*)(void*))EvtObj_OnFileEvent)((char*)self - 0x38);
 }
 
-extern "C" void func_8018370C(void* self) {
+extern "C" void EvtObj_ThunkCtor38(void* self) {
     ((void(*)(void*))__ct__80181B74)((char*)self - 0x38);
 }
 
-extern "C" void func_80183714(void* self) {
+extern "C" void EvtObj_ThunkInit3C(void* self) {
     ((void(*)(void*))func_801836CC)((char*)self - 0x3C);
 }
 
-extern "C" void func_8018371C(void* self) {
+extern "C" void EvtObj_ThunkCtor3C(void* self) {
     ((void(*)(void*))__ct__80181B74)((char*)self - 0x3C);
 }
 // retail: li r3,1; blr — returns true
-extern "C" bool func_801835BC(void* self) { return true; }
+extern "C" bool EvtObj_AlwaysTrue(void* self) { return true; }

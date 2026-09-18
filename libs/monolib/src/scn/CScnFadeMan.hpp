@@ -7,7 +7,7 @@
 
 // Minimal CScn surface used by CScnFadeMan (inherits CTTask + IWorkEvent).
 // Not the full include/monolib/scn/CScn.hpp (that header re-declares the
-// func_8049C7B0/C72C/C794 primitives of THIS TU, which would conflict).
+// isFadeSettled/C72C/C794 primitives of THIS TU, which would conflict).
 class CScn {
 public:
     void addRenderCB(IScnRender* cb, u32 prio, u32 flag);

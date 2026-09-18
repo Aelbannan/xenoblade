@@ -9,7 +9,7 @@ class CScn;
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
 // func_80496288 is owned by monolib/src/scn/CScn (decl: monolib/scn/CScnTimeApi.hpp).
 extern "C" u32 func_8049E51C(u8* idMan);
-extern "C" u8* func_804BE398(float*, u32, u32, u32, float, float);
+extern "C" u8* ScnRes_VertRayForward_E398(float*, u32, u32, u32, float, float);
 extern "C" void func_804BE4B4(float*, u32);
 extern "C" void func_804BE4E0(float*, u32);
 extern "C" int func_8013EB90(int v);
@@ -23,7 +23,7 @@ extern const float lbl_eu_80666B50;
 extern const char lbl_eu_804FC648[];
 
 // BDAT manager reset/init (retail symbol unmangled; result discarded here).
-extern "C" void* func_8003AA34(void);
+extern "C" void* Bdat_GetTable_AA34(void);
 
 extern u32 lbl_eu_8052A3B0[];
 extern u32 lbl_eu_805294E0[];

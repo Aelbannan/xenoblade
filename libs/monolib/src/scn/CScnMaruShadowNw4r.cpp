@@ -6,7 +6,7 @@
 //   - Static initializer registered in .ctors
 //
 // FULL_MATCH functions:
-//   func_8048EA9C -- returns 1 (capability check / stub)
+//   MaruShadowStubTrue -- returns 1 (capability check / stub)
 //   sinit_8048EAA4 -- static initializer (empty, .ctors registration)
 
 #include <harness_catalog.h>
@@ -18,7 +18,7 @@
 
 void func_8048DD18(CScnMaruShadowNw4r* self, ShadowCtx* ctx, float f1, float f2, u32 unk);
 
-// func_8048D264 support: static-data loader + nw4r g3d texture accessors.
+// MaruShadowSetupTexturePipe support: static-data loader + nw4r g3d texture accessors.
 extern "C" int getStaticFileData__14CLibStaticDataFPCcP16StaticDataHandlePUl(
     const char* name, void* handle, u32* size);
 extern "C" void Init__Q34nw4r3g3d7ResFileFv(void* res);
@@ -33,7 +33,7 @@ extern const char lbl_eu_8052637C[];  // panic site file
 extern const char lbl_eu_80526354[];  // panic site fmt
 extern const char* lbl_eu_80663958;   // texture resource name
 
-// func_8048D264 local storage: StaticDataHandle is the CLibStaticData handle
+// MaruShadowSetupTexturePipe local storage: StaticDataHandle is the CLibStaticData handle
 // (first word = loaded data pointer).
 struct ShadowStaticDataHandle {
     void* data;
@@ -85,11 +85,11 @@ extern "C" CScn* __dt__4CScnFvMaruShadowNw4r(CScn* self, int flags) {
     return self;
 }
 
-// us-804912d8: func_8048D264 (0x29C bytes)
+// us-804912d8: MaruShadowSetupTexturePipe (0x29C bytes)
 // Shadow-texture GX pipeline setup: loads the shadow texture from static data,
 // builds a GXTexObj, configures the fixed-function pipeline (1 TEV stage,
 // alpha blend, texcoord gen), and returns 1 when the path is ready.
-int func_8048D264(void* self) {
+int MaruShadowSetupTexturePipe(void* self) {
     // NOTE: MWCC allocates stack homes per size-class in REVERSE declaration
     // order; this order reproduces the retail frame layout
     // (bias@8, w@10, h@12, resTex@16, img@20, minLod@24, maxLod@28,
@@ -171,7 +171,7 @@ void func_8048D500(CScnMaruShadowNw4r* self, ShadowCtx* ctx) {
         return;
     }
     getScnHandle();
-    if (func_804BCC10() == 0 || ctx == NULL) {
+    if (ScnData_FwdBC9A0() == 0 || ctx == NULL) {
         return;
     }
 
@@ -205,10 +205,10 @@ void func_8048D500(CScnMaruShadowNw4r* self, ShadowCtx* ctx) {
             }
             pos.y += lbl_eu_8066A994;
         } else {
-            if (!func_804BE398(&pos, -fscale, lbl_eu_8066A948, 0, 0)) {
+            if (!ScnRes_VertRayForward_E398(&pos, -fscale, lbl_eu_8066A948, 0, 0)) {
                 return;
             }
-            void* hit = func_804BE50C(0);
+            void* hit = ScnRes_GetEntryPtr_E50C(0);
             anchorY = *(float*)((char*)hit + 4);
         }
     }
@@ -328,14 +328,14 @@ void func_8048D500(CScnMaruShadowNw4r* self, ShadowCtx* ctx) {
     }
 }
 
-// us-80491bcc: func_8048DB58 (0x18 bytes)
-extern "C" void func_8048DB58(u8* self, const void* other) {
+// us-80491bcc: MaruShadowSetFlag40Store (0x18 bytes)
+extern "C" void MaruShadowSetFlag40Store(u8* self, const void* other) {
     *(u16*)((u8*)self + 0x28) |= 0x40;
     *(float*)((u8*)self + 0x14) = *(float*)((u8*)other + 4);
 }
 
 // us-80491be4: func_8048DB70 (0x1A8 bytes)
-// Collision-callback vertex streamer (registered via func_804BE3E0): the
+// Collision-callback vertex streamer (registered via ScnRes_Notify4Word_E3E0): the
 // collision query pass invokes this with scene-head extent words, a vertex
 // entry count and a centre offset. It opens a GX triangle batch and streams
 // `count` vertices - pairs from 24-byte-stride entries, then a remainder
@@ -428,7 +428,7 @@ void func_8048DD18(CScnMaruShadowNw4r* self, ShadowCtx* ctx, float f1, float f2,
         smtx[0][0] = k; smtx[0][1] = zero; smtx[0][2] = zero;
         smtx[1][0] = zero; smtx[1][1] = k; smtx[1][2] = zero;
         smtx[2][0] = zero; smtx[2][1] = zero; smtx[2][2] = k;
-        func_804BE3E0(&func_8048DB70, smtx, 0x00044A05, 0);
+        ScnRes_Notify4Word_E3E0(&func_8048DB70, smtx, 0x00044A05, 0);
         GXSetVtxAttrFmt(GX_VTXFMT0, (GXAttr)0xD, GX_TEX_ST, (GXCompType)0, 0);
         return;
     }
@@ -450,7 +450,7 @@ void func_8048DD18(CScnMaruShadowNw4r* self, ShadowCtx* ctx, float f1, float f2,
     } else {
         mlCVec3 vv;
         vv.x = v2[0]; vv.y = v2[1]; vv.z = v2[2];
-        if (!func_804BE398(&vv, -f1, lbl_eu_8066A948, 0, 0)) {
+        if (!ScnRes_VertRayForward_E398(&vv, -f1, lbl_eu_8066A948, 0, 0)) {
             return;
         }
         func_804BE4E0(&up, 0);
@@ -736,19 +736,19 @@ done:
     }
 }
 
-// us-80492aac: func_8048EA38 (0x8 bytes) -- stores float to sda21 global
-extern "C" void func_8048EA38(float v){
+// us-80492aac: MaruShadowStoreGlobalFloat (0x8 bytes) -- stores float to sda21 global
+extern "C" void MaruShadowStoreGlobalFloat(float v){
     lbl_eu_80663964 = v;
 }
 
-// us-80492ab4: func_8048EA40 (0x8 bytes) -- loads float from sda21 global
-float func_8048EA40()
+// us-80492ab4: MaruShadowLoadGlobalFloat (0x8 bytes) -- loads float from sda21 global
+float MaruShadowLoadGlobalFloat()
 {
     return lbl_eu_80663964;
 }
 
-// us-80492abc: func_8048EA48 (0x2C bytes) -- sets/clears flag 0x80 in halfword + stores float
-extern "C" void func_8048EA48(u8* self, u32 enable, float v) {
+// us-80492abc: MaruShadowSetFlag80Store (0x2C bytes) -- sets/clears flag 0x80 in halfword + stores float
+extern "C" void MaruShadowSetFlag80Store(u8* self, u32 enable, float v) {
     if (enable != 0) {
         *(u16*)((u8*)self + 0x28) |= 0x80;
     } else {
@@ -757,8 +757,8 @@ extern "C" void func_8048EA48(u8* self, u32 enable, float v) {
     *(float*)((u8*)self + 0x24) = v;
 }
 
-// us-80492ae8: func_8048EA74 (0x28 bytes) -- sets/clears flag 0x100 in halfword
-extern "C" void func_8048EA74(u8* self, u32 enable) {
+// us-80492ae8: MaruShadowSetFlag100 (0x28 bytes) -- sets/clears flag 0x100 in halfword
+extern "C" void MaruShadowSetFlag100(u8* self, u32 enable) {
     if (enable != 0) {
         *(u16*)((u8*)self + 0x28) |= 0x100;
     } else {
@@ -768,9 +768,9 @@ extern "C" void func_8048EA74(u8* self, u32 enable) {
 
 // --- FULL_MATCH functions ---
 
-// func_8048EA9C -- capability check stub, always returns true.
+// MaruShadowStubTrue -- capability check stub, always returns true.
 // Retail: li r3, 1; blr  (8 bytes)
-extern "C" int func_8048EA9C() { return 1; }
+extern "C" int MaruShadowStubTrue() { return 1; }
 
 // --- hard-symbol stubs (scaffold_hard_symbols) ---
 
@@ -782,11 +782,11 @@ extern "C" void sinit_8048EAA4() {}
 // ===== Dissolved monolibdata2 (blob surgery) data owned by this TU =====
 namespace MSBlob {
 extern "C" void func_8048E67C();
-extern "C" void func_8048EA9C();
+extern "C" void MaruShadowStubTrue();
 extern "C" void func_8048D500();
-extern "C" void func_8048DB58();
-extern "C" void func_8048EA74();
-extern "C" void func_8048EA48();
+extern "C" void MaruShadowSetFlag40Store();
+extern "C" void MaruShadowSetFlag100();
+extern "C" void MaruShadowSetFlag80Store();
 }
 extern "C" u32 lbl_eu_806623F8;   // foreign .sdata
 
@@ -794,9 +794,9 @@ extern "C" u32 lbl_eu_806623F8;   // foreign .sdata
 extern "C" u32 lbl_eu_8056E598[8] = {
     (u32)&lbl_eu_806623F8, 0x00000000,
     (u32)&MSBlob::func_8048E67C,
-    (u32)&MSBlob::func_8048EA9C,
+    (u32)&MSBlob::MaruShadowStubTrue,
     (u32)&MSBlob::func_8048D500,
-    (u32)&MSBlob::func_8048DB58,
-    (u32)&MSBlob::func_8048EA74,
-    (u32)&MSBlob::func_8048EA48,
+    (u32)&MSBlob::MaruShadowSetFlag40Store,
+    (u32)&MSBlob::MaruShadowSetFlag100,
+    (u32)&MSBlob::MaruShadowSetFlag80Store,
 };

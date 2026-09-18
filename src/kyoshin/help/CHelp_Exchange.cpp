@@ -2,6 +2,6 @@
 
 namespace cf {
 void CHelp_Exchange::checkExchangeState() {
-    func_801BEE5C();
+    ItemEx_HasInstance();
 }
 } // namespace cf

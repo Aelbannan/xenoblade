@@ -24,13 +24,13 @@ static inline f32 roundf_to_f32(f32 v) {
 /// Computes an on-screen status ratio. When there is no sub-object, returns
 /// 1.0f; otherwise prefers a combination from an entity-derived object, then
 /// a game-manager flag driven constant, then the sub-object's own value.
-float func_800F42AC(ScMain* self) {
+float ScMain_GetRoundedMetric(ScMain* self) {
     if (self->sub == NULL)
         return lbl_eu_80666E90;
 
     cf::Sc48778* node = (cf::Sc48778*)func_8016FE34((void*)findObjectById__Fi((int)self->field_00));
     if (func_80148778(node->data_08, 0x10) != 0) {
-        cf::Sc149154Ret* obj = (cf::Sc149154Ret*)func_80149154(node->data_08, 0x10);
+        cf::Sc149154Ret* obj = (cf::Sc149154Ret*)findBattleStatusEntry(node->data_08, 0x10);
         double round;
         f32 a = obj->field_20;
         f32 b = self->sub->field_7C;
@@ -50,7 +50,7 @@ float func_800F42AC(ScMain* self) {
 /// Returns a normalized ratio depending on status flags:
 /// bit 20 of field_824 -> 1.0f; if mask 0x400 is active in the game
 /// manager -> constant A; no sub-object -> 1.0f; else sub->field_7C / field_830.
-float func_800F4424(ScMain* self) {
+float ScMain_GetRatio(ScMain* self) {
     if (self->flags_824 & 0x100000)
         return lbl_eu_80666E90;
     getInstance__Q22cf13CfGameManagerFv();
@@ -67,7 +67,7 @@ float func_800F4424(ScMain* self) {
 void func_800F449C(ScMain* self) {
     if (self->flags_824 & 0x20000) {
         if (UIWin_QueryPageFlag(0x375) == 0) {
-            func_8009D018(0x30e3, 0);
+            CtrlRemote_SetSharedBit(0x30e3, 0);
             UIWin_BuildFlagBuf(0x375);
             UIWin_FlagBufClear();
         }
@@ -132,7 +132,7 @@ void func_800F449C(ScMain* self) {
 /// Applies status-flag priority to a combined size value, rounding to int.
 /// bit 17 of field_824 -> 99999; sum(f_6C+f_70) < 1.0 -> 0; bit 7 of field_84
 /// -> 0; otherwise round the sum to nearest integer (half-up / half-down).
-int func_800F4648(ScMain* self) {
+int ScMain_GetSummedInt(ScMain* self) {
     if (self->flags_824 & 0x20000)
         return 99999;
     f32 sum = self->f_6C + self->f_70;
@@ -150,7 +150,7 @@ int func_800F4648(ScMain* self) {
 
 /// Returns whether `self`'s polymorphic query (vtable slot 19) and its
 /// 0x3F10 pointer both differ from `other->field_04`.
-int func_800F46C0(ScMain* other, Sc46C0Other* self) {
+int ScMain_IsDistinctFrom(ScMain* other, Sc46C0Other* self) {
     void* f = other->field_04;
     int result = 0;
     if (self->mSub.v17() != f && self->field_3F10 != f)
@@ -160,7 +160,7 @@ int func_800F46C0(ScMain* other, Sc46C0Other* self) {
 
 /// Decodes low 5 bits of field_824: returns 5/4/3/2 for the top-priority bit
 /// that is set, else the value of bit 4.
-u32 func_800F4730(ScMain* self) {
+u32 ScMain_DecodeFlagPriority(ScMain* self) {
     u32 flags = self->flags_824;
     if (flags & 1)
         return 5;
@@ -174,17 +174,17 @@ u32 func_800F4730(ScMain* self) {
 }
 
 /// Returns the sub-object pointer at offset 0x0C (field subObject).
-cf::CfUnknownSub* func_800F477C(cf::CfCode800F42AC* self) {
+cf::CfUnknownSub* CfCode_GetSubObject(cf::CfCode800F42AC* self) {
     return self->subObject;
 }
 
-void* func_800F4784(void* self) {
+void* CfCode_GetOptPtr0C(void* self) {
     void* v = *(void**)((char*)self + 0xc);
     return v ? v : 0;
 }
 
 /// Returns items[idx]->v_14, negated when field_60C == 1.
-float func_800F4798(Sc4798* self, int idx) {
+float Sc4798_GetSignedItemValue(Sc4798* self, int idx) {
     if (self->field_60C == 1)
         return -self->items[idx]->v_14;
     return self->items[idx]->v_14;

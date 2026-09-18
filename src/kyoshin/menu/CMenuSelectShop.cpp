@@ -18,7 +18,7 @@
 #include "kyoshin/menu/CMenuSelectShop.hpp"
 
 // ---------------------------------------------------------------------------
-// func_8018A58C  (us-8018bb40)
+// ShopSel_CreateSingleton  (us-8018bb40)
 // Factory: allocate the CMenuSelectShop singleton from work memory, run its
 // ctor, store it in the .sbss global and register it as a CProcess child of
 // `parent`. Returns 0 when the singleton already exists.
@@ -26,7 +26,7 @@
 // ---------------------------------------------------------------------------
 #pragma push
 #pragma optimize_for_size on
-extern "C" CMenuSelectShop* func_8018A58C(CProcess* parent, void* a2,
+extern "C" CMenuSelectShop* ShopSel_CreateSingleton(CProcess* parent, void* a2,
                                           void* a3) {
     if (lbl_eu_806642E8 != 0)
         return 0;
@@ -158,7 +158,7 @@ void CMenuSelectShop::Init() {
     mSelShop.mAnimActive = tempShop->mAnimActive;
     __dt__11CSelShopWinFv(rawShop, -1);
 
-    func_8022C770(&mSelShop);
+    loadShopWinArc(&mSelShop);
 
     // Same pattern for the CCur18 cursor (payload +0x4..+0x15, slot sp+0x10).
     u8 rawCur[0x18];
@@ -200,7 +200,7 @@ void CMenuSelectShop::Term() {
     if (this) render = &mOcc70;
     removeRenderCB__4CScnFP10IScnRender(mScene, render);
 
-    func_8022C85C(&mSelShop);
+    teardownShopWin(&mSelShop);
     reinterpret_cast<CCursor18*>(&mCursor[0])->vf3();
     mMemRegion.func_8045F778();
     lbl_eu_806642E8 = 0;
@@ -219,57 +219,57 @@ void CMenuSelectShop::Move() {
         (lbl_eu_80663E28 & 0x200000))
         return;
     if (IsMenuState621F0() == 0) return;
-    if (func_8018C180() || func_8018B398())
+    if (ShopBuy_HasInstance() || MenuShopSellIsCreated())
         return;
 
     // Compare-chain switch (retail groups all tests, then the case bodies).
     switch (mState) {
     case 0:
-        func_8018A200(this);
+        ShopSel_State0Show(this);
         break;
     case 1:
-        func_8018A248(this);
+        ShopSel_State1Cursor(this);
         break;
     case 2:
-        func_8018A2C0(this);
+        ShopSel_State2Input(this);
         break;
     case 3:
-        func_8018A4A0(this);
+        ShopSel_State3Done(this);
         break;
     }
 
-    func_8022C7C0(&mSelShop);
+    driveShopWinAnim(&mSelShop);
     func_801D202C(&mCursor[0]);
 }
 
 // ---------------------------------------------------------------------------
-// func_8018A200  (us-8018b7b4)
+// ShopSel_State0Show  (us-8018b7b4)
 // When the shop window has finished loading, start its show animation and flag
 // the menu state. auto_inline off keeps retail's out-of-line `bl` from Move.
 // ---------------------------------------------------------------------------
 #pragma push
 #pragma auto_inline off
-extern "C" void func_8018A200(CMenuSelectShop* self) {
-    if (func_8022C8D0(&self->mSelShop) != 0) {
-        func_8022C8E0(&self->mSelShop);
+extern "C" void ShopSel_State0Show(CMenuSelectShop* self) {
+    if (isShopWinLoaded(&self->mSelShop) != 0) {
+        showShopWin(&self->mSelShop);
         self->mState = 1;
     }
 }
 #pragma pop
 
 // ---------------------------------------------------------------------------
-// func_8018A248  (us-8018b7fc)
+// ShopSel_State1Cursor  (us-8018b7fc)
 // When the shop window animation is running: activate the cursor, resolve the
-// selected item's screen position into a stack VEC3 (func_8022C930), hand it to
+// selected item's screen position into a stack VEC3 (getShopWinPanePos), hand it to
 // the cursor move virtual, and advance the menu state.
 // ---------------------------------------------------------------------------
 #pragma push
 #pragma auto_inline off
-extern "C" void func_8018A248(CMenuSelectShop* self) {
-    if (func_8022C8D8(&self->mSelShop) != 0) {
-        func_801D216C(&self->mCursor[0], 1);
+extern "C" void ShopSel_State1Cursor(CMenuSelectShop* self) {
+    if (isShopWinAnimActive(&self->mSelShop) != 0) {
+        Cur_SetVisible(&self->mCursor[0], 1);
         nw4r::math::VEC3 out;
-        func_8022C930(&out, &self->mSelShop, (u8)self->mSelIndex);
+        getShopWinPanePos(&out, &self->mSelShop, (u8)self->mSelIndex);
         reinterpret_cast<CCur18View*>(&self->mCursor[0])->vf04(&out);
         self->mState = 2;
     }
@@ -277,7 +277,7 @@ extern "C" void func_8018A248(CMenuSelectShop* self) {
 #pragma pop
 
 // ---------------------------------------------------------------------------
-// func_8018A2C0  (us-8018b874)
+// ShopSel_State2Input  (us-8018b874)
 // Select-shop input state 2 (interactive). Reads the current CfPadData once;
 // which dpad bit positions to test depends on the controller type (retail
 // re-runs the extraction per type). Dispatch order: dir button (turbo & 0x8004)
@@ -290,7 +290,7 @@ extern "C" void func_8018A248(CMenuSelectShop* self) {
 #pragma push
 #pragma auto_inline off
 #pragma optimize_for_size on
-extern "C" __declspec(noinline) void func_8018A2C0(CMenuSelectShop* self) {
+extern "C" __declspec(noinline) void ShopSel_State2Input(CMenuSelectShop* self) {
     cf::CfPadData* pad = cf::CfGameManager::getCfPadData();
 
     u32 dirButton, cancelButton, okButton, closeButton;
@@ -322,7 +322,7 @@ extern "C" __declspec(noinline) void func_8018A2C0(CMenuSelectShop* self) {
         self->mSelIndex = (u32)v;
         if (v < 0) self->mSelIndex = 2;
         playUISound(1);
-        func_8022C930(&out, &self->mSelShop, (u8)self->mSelIndex);
+        getShopWinPanePos(&out, &self->mSelShop, (u8)self->mSelIndex);
         reinterpret_cast<CCur18View*>(&self->mCursor[0])->vf04(&out);
     } else if (cancelButton != 0) {
         // DPAD right: increase the selection, wrapping 2 -> 0.
@@ -331,7 +331,7 @@ extern "C" __declspec(noinline) void func_8018A2C0(CMenuSelectShop* self) {
         self->mSelIndex = (u32)v;
         if (v > 2) self->mSelIndex = 0;
         playUISound(1);
-        func_8022C930(&out, &self->mSelShop, (u8)self->mSelIndex);
+        getShopWinPanePos(&out, &self->mSelShop, (u8)self->mSelIndex);
         reinterpret_cast<CCur18View*>(&self->mCursor[0])->vf04(&out);
     } else if (okButton != 0) {
         // Confirm: act on the selected shop entry (signed compare like retail).
@@ -346,28 +346,28 @@ extern "C" __declspec(noinline) void func_8018A2C0(CMenuSelectShop* self) {
             break;
         case 2:
             self->mState = 3;
-            func_8022C908(&self->mSelShop);
-            func_801D216C(&self->mCursor[0], 0);
+            hideShopWin(&self->mSelShop);
+            Cur_SetVisible(&self->mCursor[0], 0);
             break;
         }
     } else if (closeButton != 0) {
         // Other dpad direction: close the shop window and leave this state.
         self->mState = 3;
-        func_8022C908(&self->mSelShop);
-        func_801D216C(&self->mCursor[0], 0);
+        hideShopWin(&self->mSelShop);
+        Cur_SetVisible(&self->mCursor[0], 0);
     }
 }
 #pragma pop
 
 // ---------------------------------------------------------------------------
-// func_8018A4A0  (us-8018ba54)
+// ShopSel_State3Done  (us-8018ba54)
 // When the shop window animation is running, mark the menu state and the field
 // 0x64 busy flag.
 // ---------------------------------------------------------------------------
 #pragma push
 #pragma auto_inline off
-extern "C" void func_8018A4A0(CMenuSelectShop* self) {
-    if (func_8022C8D8(&self->mSelShop) != 0) {
+extern "C" void ShopSel_State3Done(CMenuSelectShop* self) {
+    if (isShopWinAnimActive(&self->mSelShop) != 0) {
         self->mState = 4;
         self->mField64 = 1;
     }
@@ -393,24 +393,24 @@ void CMenuSelectShop::cbRenderBefore() {
     u8 drawInfo[0x54];
     __ct__Q34nw4r3lyt8DrawInfoFv(&drawInfo[0]);
     func_80137250__FPQ34nw4r3lyt8DrawInfo(&drawInfo[0]);
-    func_8022C830(&mSelShop, (nw4r::lyt::DrawInfo*)&drawInfo[0]);
+    drawShopWin(&mSelShop, (nw4r::lyt::DrawInfo*)&drawInfo[0]);
     if ((s32)mSelIndex >= 0)
-        func_801D20B0(&mCursor[0], (nw4r::lyt::DrawInfo*)&drawInfo[0]);
+        Cur_DrawLayout(&mCursor[0], (nw4r::lyt::DrawInfo*)&drawInfo[0]);
     __dt__Q34nw4r3lyt8DrawInfoFv(&drawInfo[0], -1);
 }
 
-extern "C" u32 func_8018A608() { return (u32)lbl_eu_806642E8; }
+extern "C" u32 ShopSel_GetSingleton() { return (u32)lbl_eu_806642E8; }
 
 // OC/render subobject this-adjusting thunks (not match targets). The IScnRender
 // subobject sits at +0x70, the IWorkEvent/OC subobject at +0x6C.
-void func_8018A610(void* sub) {
+void ShopSel_ThunkDtor6C(void* sub) {
     ((void(*)(void*))__dt__15CMenuSelectShopFv)((char*)sub - 0x6c);
 }
 
-void func_8018A618(void* sub) {
+void ShopSel_ThunkRender70(void* sub) {
     ((void(*)(void*))cbRenderBefore__15CMenuSelectShopFv)((char*)sub - 0x70);
 }
 
-extern "C" void func_8018A620(void* sub) {
+extern "C" void ShopSel_ThunkDtor70(void* sub) {
     ((void(*)(void*))__dt__15CMenuSelectShopFv)((char*)sub - 0x70);
 }

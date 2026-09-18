@@ -5,22 +5,23 @@
 #include "kyoshin/cf/CfMapItemManager.hpp"
 #include "monolib/scn/CScnTimeApi.hpp"
 #include "monolib/math/CVec3.hpp"
-#include "kyoshin/realtimeevt/CREvtEffect.hpp"
-#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
+#include "kyoshin/cf/CfGameManagerData.hpp"
 #include "monolib/math/FloatUtils.hpp"  // H3 label-owner decl (lbl_eu_8066A208)
 
-void __dt__Q22cf15CfObjectImplEneFv();
+extern "C" void __dt__Q22cf15CfObjectImplEneFv();
 
 extern "C" int func_800D0C2C(cf::CfObjectImplEneObj* self, int flag);
+extern "C" int MoveImplEne_RunSharedUpdate0(void* self);
+extern "C" void MoveImplEne_MatchTokenRelease(cf::CfObjectImplEneObj* self, u32 arg);
 
-// Runs the per-frame update: prepares via func_800CA948, dispatches vtable
+// Runs the per-frame update: prepares via MoveImplInitFields, dispatches vtable
 // slot 0xe4, feeds the result + sub-fields into func_8015BB3C, pushes the
-// +0x28 sub-object into func_802A0B8C, and finally triggers vtable slot 0x30
+// +0x28 sub-object into attachOwner, and finally triggers vtable slot 0x30
 // when the +0x14 object's +0x70 token formats to the lbl_eu_80661D48 name.
-void func_800CFFCC(cf::CfObjectImplEneObj* self) {
-    func_800CA948(self);
+void MoveImplEne_InitFieldsToken(cf::CfObjectImplEneObj* self) {
+    MoveImplInitFields(self);
     func_8015BB3C(self->vfE4(), self->field_14, self->field_18);
-    func_802A0B8C(self->field_28, self->field_14);
+    attachOwner(self->field_28, self->field_14);
 
     cf::CfObjectImplEneToken* p = (cf::CfObjectImplEneToken*)self->field_14;
     if (p != 0) {
@@ -33,27 +34,27 @@ void func_800CFFCC(cf::CfObjectImplEneObj* self) {
     }
 }
 
-void* func_800D0088(void* self) { return (void*)((u8*)self + 0x6c); }
+void* MoveImplEne_GetField6CPtr(void* self) { return (void*)((u8*)self + 0x6c); }
 
 // Releases the effect token at +0x36C (if set) and clears it, then forwards
-// to func_800CAA44.
-void func_800D0090(cf::CfObjectImplEneObj* self) {
+// to MoveImplResetFull.
+void MoveImplEne_ReleaseTokenReset(cf::CfObjectImplEneObj* self) {
     u32 v = self->field_36C;
     if (v != 0) {
-        func_804E3CCC((void*)v);
+        schedClearFlag15Update((void*)v);
         self->field_36C = 0;
     }
-    func_800CAA44(self);
+    MoveImplResetFull(self);
 }
 
 // Per-frame AI update: checks the battle-actor flag at +0x45CA (bit 1), then
 // walks a 4-step guard chain (actor id / enemy state / sub-object / battle
-// flag) into a "sync" flag passed to func_800CED64. Manages the effect token
+// flag) into a "sync" flag passed to MoveImplSyncEffectState. Manages the effect token
 // at +0x36C, mirrors the enemy angle into field_C4->+0x50C, dispatches the
 // self vtable slots 0xe4/0x40, and finally runs the shared func_800D0C2C
 // update with the player-controlled flag set.
-void func_800D00DC(cf::CfObjectImplEneObj* self) {
-    func_800CA964(self);
+void MoveImplEne_TickBattleAI(cf::CfObjectImplEneObj* self) {
+    MoveImplUpdateState(self);
     if (self->field_14 == 0) return;
 
     cf::CfImplEneBattleObj* battleObj;
@@ -61,7 +62,7 @@ void func_800D00DC(cf::CfObjectImplEneObj* self) {
     int r28 = 0;
     int r27 = 0;
     int r26 = 0;
-    cf::CfObjectImplEneFlag* flags = (cf::CfObjectImplEneFlag*)func_800AD860(self->field_14);
+    cf::CfObjectImplEneFlag* flags = (cf::CfObjectImplEneFlag*)getEffOwner____FPv(self->field_14);
     if ((flags->field_45CA & 2) == 0) {
         battleObj = (cf::CfImplEneBattleObj*)self->field_18;
         int id = *(int*)battleObj->field_04->bf30();
@@ -80,10 +81,10 @@ void func_800D00DC(cf::CfObjectImplEneObj* self) {
         if (!(battleObj->field_3374 & 0x08000000)) r29 = 1;
     }
 
-    func_800CED64(self, r29);
+    MoveImplSyncEffectState(self, r29);
     if (r29 != 0 || ((cf::CfObjectImplEne14*)self->field_14)->field_C4 == 0) {
         if (self->field_36C != 0) {
-            func_804E3CCC((void*)self->field_36C);
+            schedClearFlag15Update((void*)self->field_36C);
             self->field_36C = 0;
         }
     }
@@ -94,7 +95,7 @@ void func_800D00DC(cf::CfObjectImplEneObj* self) {
     }
     cf::CfObjectImplEneE4* e4 = (cf::CfObjectImplEneE4*)self->vfE4();
     e4->e10();
-    func_802A0E08(self->field_28);
+    updatePosition(self->field_28);
     if (((cf::CfObjectImplEne14*)self->field_14)->field_90 != 0) {
         if (self->vf40(0x400) != 0) {
             ((cf::CfObjectImplEne98*)((cf::CfObjectImplEne14*)self->field_14)->field_98)->n5C(
@@ -109,7 +110,7 @@ void func_800D00DC(cf::CfObjectImplEneObj* self) {
 // cmd removals (func_80174B4C) and action triggers, and performs the 0x968
 // death handling by iterating the enum list and refreshing every unit.
 void func_800D02D4(cf::CfObjectImplEneObj* self) {
-    func_800CAB2C(self);
+    MoveImplNoopA(self);
     cf::CfImplEneBattleObj* battleObj = (cf::CfImplEneBattleObj*)self->field_18;
 
     int r31 = 0;
@@ -196,12 +197,12 @@ void func_800D02D4(cf::CfObjectImplEneObj* self) {
     if (func_80174C98(battleObj, &idG, 0x1a) != 0) return;
     if (func_80174C98(battleObj, &idH, 0x19) != 0) return;
     if (func_80174C98(battleObj, &idI, 0x04000000) != 0) {
-        CfObjectMove_setAnimModeArgs(&battleObj->mSub, 5, 0, -1, 1);
+        CfObjectMove_setAnimModeArgs((u8*)&battleObj->mSub, 5, 0, -1, 1);
         if (battleObj->field_3F60 == 0) func_80174B4C(battleObj, 0x1c);
         return;
     }
     func_80174B4C(battleObj, 0x04000000);
-    CfObjectMove_setAnimModeArgs(&battleObj->mSub, 5, 0, -1, 1);
+    CfObjectMove_setAnimModeArgs((u8*)&battleObj->mSub, 5, 0, -1, 1);
     if (battleObj->field_3F60 == 0) func_80174B4C(battleObj, 0x1c);
 
     // If a live vision target matches, run the removal sequence.
@@ -221,9 +222,9 @@ void func_800D02D4(cf::CfObjectImplEneObj* self) {
     if (battleObj->field_3F28 == 0x968) {
         u8 holder[8];
         CTaskGame_enumListCtor(holder);
-        func_800F4A98(CTaskGame_enumListGet(holder), 0x80000000, 0);
+        startEnumObjects(CTaskGame_enumListGet(holder), 0x80000000, 0);
         for (u32 i = 0; i < ((cf::CfEnumList*)CTaskGame_enumListGet(holder))->field_620; i++) {
-            void* obj = func_8016FE34(func_800F6EAC(CTaskGame_enumListGet(holder), i));
+            void* obj = func_8016FE34(getObjectAt(CTaskGame_enumListGet(holder), i));
             if (obj != 0) {
                 ((cf::CfImplEneBattleObj*)obj)->bg18(lbl_eu_80666CE4);
             }
@@ -232,12 +233,12 @@ void func_800D02D4(cf::CfObjectImplEneObj* self) {
     }
 }
 
-int func_800D0A58(void* self) { return func_800D0C2C((cf::CfObjectImplEneObj*)self, 0); }
+int MoveImplEne_RunSharedUpdate0(void* self) { return func_800D0C2C((cf::CfObjectImplEneObj*)self, 0); }
 
 // Plays a sound based on `kind` when the battle object's +0x3F60 id matches.
 // Extra params p4/p5/p6 are live-in from the virtual call site; func_800CD5DC
 // forwards them (all still in their argument registers).
-void func_800D0A60(cf::CfObjectImplEneObj* self, u32 id, u32 kind, u32 p4, u32 p5, u32 p6) {
+void MoveImplEne_PlayKindSound(cf::CfObjectImplEneObj* self, u32 id, u32 kind, u32 p4, u32 p5, u32 p6) {
     if (id != ((cf::CfImplEneBattleObj*)self->field_18)->field_3F60) return;
     func_800CD5DC(self, id, kind, p4, p5, p6);
     switch (kind) {
@@ -254,18 +255,18 @@ void func_800D0A60(cf::CfObjectImplEneObj* self, u32 id, u32 kind, u32 p4, u32 p
     }
 }
 
-extern "C" void func_800CE544(void* self);
-extern "C" void func_800CEA34(void* self);
-extern "C" void func_800D0AFC(void* self) { func_800CE544(self); }
-extern "C" void func_800D0B00(void* self) { func_800CEA34(self); }
+extern "C" void MoveImplSweepReposition(void* self);
+extern "C" void MoveImplSyncBattleRoster(void* self);
+extern "C" void MoveImplEne_SweepReposition(void* self) { MoveImplSweepReposition(self); }
+extern "C" void MoveImplEne_SyncBattleRoster(void* self) { MoveImplSyncBattleRoster(self); }
 
 // Scans the battle actor's up-to-16 timeline entries; for each entry not
 // already tracked by the battle manager, applies the shared action from
 // vtable[0x4C] of the own sub-object and counts it.
-int func_800D0B04(cf::CfObjectImplEneObj* self) {
+int MoveImplEne_ScanTimelineCount(cf::CfObjectImplEneObj* self) {
     void* base = self->field_18;
     if (base != 0) base = (u8*)base + 0x3e9c;
-    void* obj = func_800AD860(base);
+    void* obj = getEffOwner____FPv(base);
 
     cf::CfObjectImplEneActor* actor = (cf::CfObjectImplEneActor*)lookupCA0By45C0(obj);
     int count = 0;
@@ -274,10 +275,10 @@ int func_800D0B04(cf::CfObjectImplEneObj* self) {
         void* src = func_8016FE34(findObjectById((int)v));
         for (int i = 0; i < 0x10; i++) {
             cf::CfImplEneBattleObj* p =
-                (cf::CfImplEneBattleObj*)func_800AD860((void*)findObjectById((int)CPartsChange_GetSlotEntryAt(actor, i)));
+                (cf::CfImplEneBattleObj*)getEffOwner____FPv((void*)findObjectById((int)CPartsChange_GetSlotEntryAt(actor, i)));
             if (p == 0) continue;
             if (p == (cf::CfImplEneBattleObj*)self->field_18) continue;
-            if (CBattleMan_ListHasValue(cf::CBattleManager::getInstance(), (unsigned int)p) != 0) continue;
+            if (CBattleMan_ListHasValue(cf::CBattleManager::getInstance(), (void*)p) != 0) continue;
             if (p->field_3F34 == 0) continue;
             if (p->field_3F60 == 0) continue;
             func_800D9978(cf::CBattleManager::getInstance(), p);
@@ -288,7 +289,7 @@ int func_800D0B04(cf::CfObjectImplEneObj* self) {
     return count;
 }
 
-// Shared battle-object update driven by func_800D00DC: guards on the battle
+// Shared battle-object update driven by MoveImplEne_TickBattleAI: guards on the battle
 // manager state and the enemy sub-object, builds a horizontal direction
 // toward the current target, and spawns/updates an arrow effect token at
 // +0x36C. Returns 1 while engaged, 0 when the guard chain fails.
@@ -298,7 +299,7 @@ int func_800D0C2C(cf::CfObjectImplEneObj* self, int flag) {
     cf::CfImplEneBattleObj* battleObj = (cf::CfImplEneBattleObj*)self->field_18;
     if (battleObj->bhBC() != 0) goto fail;
     if (battleObj->field_3374 & 0x800) goto fail;
-    if (CBattleMan_ListHasValue(cf::CBattleManager::getInstance(), (unsigned int)battleObj) == 0) goto fail;
+    if (CBattleMan_ListHasValue(cf::CBattleManager::getInstance(), (void*)battleObj) == 0) goto fail;
 
     cf::CfImplEneBattleObj* enemy = (cf::CfImplEneBattleObj*)func_8016FE34(
         findObjectById((int)battleObj->mSub.sf4C()));
@@ -351,7 +352,7 @@ int func_800D0C2C(cf::CfObjectImplEneObj* self, int flag) {
         if (effect != 0) {
             void* parent = (u8*)self;
             if (self != 0) parent = (u8*)self + 0x68;
-            func_804E3D0C(effect, parent);
+            schedAttachChildSlot(effect, parent);
         }
     }
 
@@ -369,36 +370,36 @@ int func_800D0C2C(cf::CfObjectImplEneObj* self, int flag) {
         effect->mRotScaled[2] = *(s32*)&rotScaled[2];
         f32 dt = simGetLeafDist7B0((void*)battleObj->field_3F34);
         func_804E36DC((CSchedule*)effect, dt);
-        func_804E3B08(effect);
+        schedReleaseAllItems(effect);
     }
     return 1;
 
 fail:
     if (self->field_36C != 0) {
-        func_804E3CCC((void*)self->field_36C);
+        schedClearFlag15Update((void*)self->field_36C);
         self->field_36C = 0;
     }
     return 0;
 }
 
-void func_800D1020(cf::CfObjectImplEneObj* self, u32 arg) {
+void MoveImplEne_MatchTokenRelease(cf::CfObjectImplEneObj* self, u32 arg) {
     u32 v = self->field_36C;
     if (v == arg) {
         void* p = (u8*)self;
         if (self != 0) p = (u8*)self + 0x68;
-        func_804E3D48((void*)v, p);
+        schedDetachChildSlot((void*)v, p);
         self->field_36C = 0;
     }
 }
 
 cf::CfObjectImplEne::~CfObjectImplEne() {}
 
-void func_800D10B4(void* self) { ((void(*)(void*))func_800D0A58)((char*)self - 0xc); }
+void MoveImplEne_Thunk0A58mC(void* self) { ((void(*)(void*))MoveImplEne_RunSharedUpdate0)((char*)self - 0xc); }
 
-void func_800D10BC(void* self) { ((void(*)(void*))__dt__Q22cf15CfObjectImplEneFv)((char*)self - 0xc); }
+void MoveImplEne_ThunkDtormC(void* self) { ((void(*)(void*))__dt__Q22cf15CfObjectImplEneFv)((char*)self - 0xc); }
 
-void func_800D10C4(void* self) { ((void(*)(void*))__dt__Q22cf15CfObjectImplEneFv)((char*)self - 0x10); }
+void MoveImplEne_ThunkDtorm10(void* self) { ((void(*)(void*))__dt__Q22cf15CfObjectImplEneFv)((char*)self - 0x10); }
 
-void func_800D10CC(void* self) { ((void(*)(void*))func_800D1020)((char*)self - 0x68); }
+void MoveImplEne_Thunk1020m68(void* self) { ((void(*)(void*))MoveImplEne_MatchTokenRelease)((char*)self - 0x68); }
 
-void func_800D10D4(void* self) { ((void(*)(void*))__dt__Q22cf15CfObjectImplEneFv)((char*)self - 0x68); }
+void MoveImplEne_ThunkDtorm68(void* self) { ((void(*)(void*))__dt__Q22cf15CfObjectImplEneFv)((char*)self - 0x68); }

@@ -5,16 +5,16 @@
 #include <PowerPC_EABI_Support/Runtime/MWCPlusLib.h>
 #include <string.h>
 #include "libs/monolib/src/scn/CVirtualLightObj.hpp"
-// The catalog header declares the post-update hook func_804BF940 as (void),
+// The catalog header declares the post-update hook ScnEnvLgt_noopF940 as (void),
 // which conflicts with the real signature declared in CVirtualLightObj.hpp
 // (the retail call site passes the data pointer in r3). Rename the catalog's
 // declaration out of the way so only the correct one is visible.
-#define func_804BF940 func_804BF940_catalog_unused
+#define ScnEnvLgt_noopF940 ScnEnvLgt_noopF940_catalog_unused
 #include "monolib/scn/code_804BF59C.hpp"
-#undef func_804BF940
+#undef ScnEnvLgt_noopF940
 
 // Sets byte at offset 0x1174.
-extern "C" void func_804954AC(CVirtualLightObj* self, u8 val) {
+extern "C" void setLightEnvEnable(CVirtualLightObj* self, u8 val) {
     self->mUnk1174 = val;
 }
 
@@ -46,7 +46,7 @@ CVirtualLightObj::CVirtualLightObj() {
 // Returns the "default" sentinel while the color fields are untouched, and
 // the "white" sentinel once any field has been customized.
 // ---------------------------------------------------------------------------
-extern "C" f32 func_8049488C(CVirtualLightObj* self) {
+extern "C" f32 getVirtualLightSentinel(CVirtualLightObj* self) {
     if (self->mField14 <= lbl_eu_8066AA8C) {
         return lbl_eu_8066AA8C;
     }
@@ -114,7 +114,7 @@ extern "C" void func_804952C4(CLightEnv* self, const f32 color[3]) {
 }
 
 // Post-construction light-environment setup (retail 0x190-byte function, not
-// yet matched; kept out-of-line so func_804950F4 emits the retail call).
+// yet matched; kept out-of-line so constructLightEnv emits the retail call).
 // ---------------------------------------------------------------------------
 // func_804954B4: post-construction light-environment setup.
 // Initializes the four slot colors (white rgb, 0.5 alpha), wires the slot
@@ -149,7 +149,7 @@ extern "C" __declspec(noinline) void func_804954B4(CLightEnv* self) {
         for (u32 i = 0; i < self->mSlotCounts[slot]; i++) {
             lightSet.SelectLightObj(i, lightIdx);
             lightSet.GetLightObj(i)->Clear();
-            func_804C0398(light, lightSet.GetLightObj(i));
+            LightCtlSetObj(light, lightSet.GetLightObj(i));
             lightIdx++;
             light++;
         }
@@ -180,22 +180,22 @@ extern "C" void func_80495644(CLightEnv* self, u32 idx) {
     self->mField117C = idx;
 }
 
-extern "C" void func_804956F8(void* self) { *(u32*)((u8*)self + 0x117C) = -1; }
+extern "C" void resetLightSlotIndex(void* self) { *(u32*)((u8*)self + 0x117C) = -1; }
 
 // ---------------------------------------------------------------------------
-// func_80495704: bind the slot's next light, orient it and arm slot 0.
+// bindOrientedLight: bind the slot's next light, orient it and arm slot 0.
 // Resets the current slot's next light (func_804C03A0 with 1), binds a
 // color, orients it from two Euler angles, applies the slot enable byte,
 // then (for slot 0 with no armed light) records the light index in
 // mField1170 and bumps the slot's field counter.
 // ---------------------------------------------------------------------------
-extern "C" void func_80495704(CLightEnv* self, u32 a, f32 f1, f32 f2) {
+extern "C" void bindOrientedLight(CLightEnv* self, u32 a, f32 f1, f32 f2) {
     u32 n = self->mSlotFields[self->mField117C];
     CLight* light = self->mSlotPtrs[self->mField117C] + n;
     func_804C03A0(reinterpret_cast<u8*>(light), 1);
     func_804C07F0(reinterpret_cast<u8*>(light), a);
     func_804C0570(light, f1, f2);
-    func_804C08C8(light, self->mByte1174);
+    LightCtlSetEnable(light, self->mByte1174);
     if (self->mField117C == 0 && self->mField1170 < 0) {
         self->mField1170 = n;
     }
@@ -203,27 +203,27 @@ extern "C" void func_80495704(CLightEnv* self, u32 a, f32 f1, f32 f2) {
 }
 
 // ---------------------------------------------------------------------------
-// func_804957E4: bind the slot's next light, color it and enable it.
+// bindAttenuatedLight: bind the slot's next light, color it and enable it.
 // Resets the light (func_804C03A0 with 3), binds a color, binds a second
 // color, sets distance attenuation with the given brightness, applies the
 // slot enable byte and bumps the slot's field counter.
 // ---------------------------------------------------------------------------
-extern "C" void func_804957E4(CLightEnv* self, u32 a, u32 b, f32 f) {
+extern "C" void bindAttenuatedLight(CLightEnv* self, u32 a, u32 b, f32 f) {
     u32 n = self->mSlotFields[self->mField117C];
     CLight* light = self->mSlotPtrs[self->mField117C] + n;
     func_804C03A0(reinterpret_cast<u8*>(light), 3);
     func_804C07F0(reinterpret_cast<u8*>(light), a);
     func_804C0454(reinterpret_cast<u8*>(light), b);
-    func_804C09E0(reinterpret_cast<u8*>(light), f, lbl_eu_8066AAAC, 2);
-    func_804C08C8(light, self->mByte1174);
+    LightCtlInitDistAttn(reinterpret_cast<u8*>(light), f, lbl_eu_8066AAAC, 2);
+    LightCtlSetEnable(light, self->mByte1174);
     self->mSlotFields[self->mField117C]++;
 }
 
 // ---------------------------------------------------------------------------
-// func_804958B8: full light setup for the slot's next light: reset, color,
+// bindSpotLight: full light setup for the slot's next light: reset, color,
 // direction, second color, distance attenuation, spot cutoff and enable.
 // ---------------------------------------------------------------------------
-extern "C" void func_804958B8(CLightEnv* self, u32 a, u32 b, f32 f1, f32 f2,
+extern "C" void bindSpotLight(CLightEnv* self, u32 a, u32 b, f32 f1, f32 f2,
                               f32 f3, f32 f4) {
     u32 n = self->mSlotFields[self->mField117C];
     CLight* light = self->mSlotPtrs[self->mField117C] + n;
@@ -231,21 +231,21 @@ extern "C" void func_804958B8(CLightEnv* self, u32 a, u32 b, f32 f1, f32 f2,
     func_804C07F0(reinterpret_cast<u8*>(light), a);
     func_804C0570(light, f1, f2);
     func_804C0454(reinterpret_cast<u8*>(light), b);
-    func_804C09E0(reinterpret_cast<u8*>(light), f3, lbl_eu_8066AAAC, 2);
-    func_804C0920(light, f4, (_GXSpotFn)2);
-    func_804C08C8(light, self->mByte1174);
+    LightCtlInitDistAttn(reinterpret_cast<u8*>(light), f3, lbl_eu_8066AAAC, 2);
+    LightCtlInitSpot(light, f4, (_GXSpotFn)2);
+    LightCtlSetEnable(light, self->mByte1174);
     self->mSlotFields[self->mField117C]++;
 }
 
 // ---------------------------------------------------------------------------
-// func_804959E8: push this light set's lights into G3DState.
+// uploadLightEnv: push this light set's lights into G3DState.
 // The per-slot light range starts at the sum of the slot counts below `idx`
 // (constant-trip loop, unrolled by MWCC into the retail flat beq chain); each
 // light in the range is uploaded with G3DState::SetLightObj, then the ambient
 // light selected by `idx` (via the LightSetting's LightSet) is uploaded with
 // SetAmbLightObj.
 // ---------------------------------------------------------------------------
-extern "C" void func_804959E8(CLightEnv* self, int idx) {
+extern "C" void uploadLightEnv(CLightEnv* self, int idx) {
     nw4r::g3d::LightObj* pLight;
     u32 bound = self->mSlotCounts[idx];
     u32 count = 0;
@@ -278,7 +278,7 @@ extern "C" void func_804959E8(CLightEnv* self, int idx) {
 // enables it. The number of enabled lights is recorded in mActiveLightCount.
 // ---------------------------------------------------------------------------
 extern "C" void func_80495AF4(CLightEnv* env, CScnEnvLgtData* data, int slot) {
-    func_804BF8A8(data);
+    ScnEnvLgt_ClearLights(data);
     data->mAmbColorBase[0] = env->mSlotColors[slot].x;
     data->mAmbColorBase[1] = env->mSlotColors[slot].y;
     data->mAmbColorBase[2] = env->mSlotColors[slot].z;
@@ -293,21 +293,21 @@ extern "C" void func_80495AF4(CLightEnv* env, CScnEnvLgtData* data, int slot) {
             func_804C07F0(reinterpret_cast<u8*>(dst), reinterpret_cast<int>(&src->unk10));
             func_804C0928(dst, src->unk38);
             func_804C0484(dst, &src->unk20);
-            func_804C08C8(dst, 1);
+            LightCtlSetEnable(dst, 1);
             dst++;
             count++;
         }
     }
-    func_804BF940(data);
+    ScnEnvLgt_noopF940(data);
     data->mActiveLightCount = count;
 }
 
 // ---------------------------------------------------------------------------
-// func_804948F4: configure the GX vertex description / attribute formats for
+// setupLightVtxFormat: configure the GX vertex description / attribute formats for
 // the given vertex format. Always enables POS and CLR0 as direct data; mode 1
 // additionally enables TEX0, mode 2 additionally enables TEX0 and TEX1.
 // ---------------------------------------------------------------------------
-extern "C" void func_804948F4(GXVtxFmt fmt, int mode) {
+extern "C" void setupLightVtxFormat(GXVtxFmt fmt, int mode) {
     GXClearVtxDesc();
     GXSetVtxDesc(GX_VA_POS, GX_DIRECT);
     GXSetVtxDesc(GX_VA_CLR0, GX_DIRECT);
@@ -333,11 +333,11 @@ extern "C" void func_804948F4(GXVtxFmt fmt, int mode) {
     }
 }
 // ---------------------------------------------------------------------------
-// func_80494A64: configure a TEV stage's color combine op and inputs for one
+// setupLightTevColor: configure a TEV stage's color combine op and inputs for one
 // of seven blend modes. All modes use ADD with zero bias/scale, clamped; only
 // the color input register combination differs per mode.
 // ---------------------------------------------------------------------------
-extern "C" void func_80494A64(GXTevStageID stage, int mode, GXTevRegID reg) {
+extern "C" void setupLightTevColor(GXTevStageID stage, int mode, GXTevRegID reg) {
     switch (mode) {
     case 0:
         GXSetTevColorOp(stage, GX_TEV_ADD, GX_TB_ZERO, GX_CS_SCALE_1, GX_TRUE, reg);
@@ -370,11 +370,11 @@ extern "C" void func_80494A64(GXTevStageID stage, int mode, GXTevRegID reg) {
     }
 }
 // ---------------------------------------------------------------------------
-// func_80494C30: configure a TEV stage's alpha combine op and inputs for one
+// setupLightTevAlpha: configure a TEV stage's alpha combine op and inputs for one
 // of five blend modes. All modes use ADD with zero bias/scale, clamped; only
 // the alpha input register combination differs per mode.
 // ---------------------------------------------------------------------------
-extern "C" void func_80494C30(GXTevStageID stage, int mode, GXTevRegID reg) {
+extern "C" void setupLightTevAlpha(GXTevStageID stage, int mode, GXTevRegID reg) {
     switch (mode) {
     case 0:
         GXSetTevAlphaOp(stage, GX_TEV_ADD, GX_TB_ZERO, GX_CS_SCALE_1, GX_TRUE, reg);
@@ -458,12 +458,12 @@ extern "C" void func_80494F10(const ml::CRect16* rect, const ml::CCol4* color, c
     GXTexCoord2f32(uv[6], uv[7]);
 }
 // ---------------------------------------------------------------------------
-// func_804950F4: light-environment constructor.
+// constructLightEnv: light-environment constructor.
 // In-place construction of the 0x20 LightObj array (0x44 each), the
 // LightSetting over the ambient/light-set-data arrays, and the four CLight[8]
 // banks, then per-slot bookkeeping and func_804954B4 post-init.
 // ---------------------------------------------------------------------------
-extern "C" CLightEnv* func_804950F4(CLightEnv* self, u32 param) {
+extern "C" CLightEnv* constructLightEnv(CLightEnv* self, u32 param) {
     extern void __ct__Q34nw4r3g3d8LightObjFv(void*, int);
     extern void __dt__Q34nw4r3g3d8LightObjFv(void*, int);
     extern void __ct__6CLightFv(void*, int);

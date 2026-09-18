@@ -28,8 +28,8 @@ extern "C" {
     void* CfRes_getInstPtr170();
     void* CfRes_findEntryById(void* self, u32 id);
     void* CfRes_findKypEntryA(void* self);
-    void* func_800BB340(void* obj);
-    void* func_804E3CFC(void* effect);
+    void* CfModel_GetEffOwner(void* obj);
+    void* schedFindEntryByKey(void* effect);
     int CfRes_getD80Flag();
 }
 

@@ -234,7 +234,7 @@ extern "C" void func_8004431C(cf::CTaskGameCf* instance);
 extern "C" void func_8004433C(cf::CTaskGameCf* instance);
 // Sound-state reset helper (flat retail name; defined in code_80187F14.cpp).
 // Retail CTaskGame_resetStream calls it behind the unk68 bit 0x80 gate.
-extern "C" void func_80189C7C();
+extern "C" void MenuSnd_ResetFadeTargetB_9C7C();
 
 // NAND state-check helpers (flat retail names; defined in CfNandManager.cpp).
 // Retail call sites (CTaskGame_moveNandChk690 / CTaskGame_moveNandChkBA0 / CTaskGame_moveNandChkCCC) pass the
@@ -256,8 +256,8 @@ extern "C" void CTaskGame_nandCallback(u32 mode, u32 a, u32 b, u32 c);
 extern "C" u32 CTaskGame_windowGate(CTaskGame* self);
 // Menu-state gates (flat retail names; defined in CMenuSave.cpp /
 // CMenuOption.cpp). CTaskGame_moveAfterSave / CTaskGame_moveAfterOpt branch on them.
-extern "C" u32 func_8028E440();
-extern "C" u32 func_8029BBA0();
+extern "C" u32 isSaveMenuActive();
+extern "C" u32 hasOptionMenu();
 // NAND state-check helpers (flat retail names; defined in CfNandManager.cpp).
 // func_8023FC18 is called with the CTaskGame_nandCallback callback and branched on
 // (CTaskGame_moveNandReset); func_8023FD4C takes a single int mode.
@@ -277,10 +277,10 @@ extern "C" void* Scn_GetUnk80Handle(CScn* scene);
 
 // Hbm state toggle (flat retail names; defined in CLibHbm.cpp). Retail
 // CTaskGame_moveNandReset disables via setHbmActiveFlag then re-enables via setHbmStopFlag.
-extern "C" void func_eu_804521BC(int value);
+extern "C" void DevFile_SetByteA9(int value);
 // CTaskGameEvt event-helper import (retail flat name; stub body in
 // CTaskGameEvt.cpp): setLoadingCaption passes the unkD4 object.
-extern "C" void func_802956A8(void*);
+extern "C" void EvtTask_Relay64CFC(void*);
 // Per-mode dispatch helpers for the CTaskGame_nandCallback callback (flat retail
 // names; stub bodies in this TU). Retail CTaskGame_nandCallback tail-calls them.
 extern "C" void CTaskGame_setFlag200(CTaskGame* inst, u32 a, u32 b);
@@ -390,7 +390,7 @@ extern "C" void* CTaskGame_allocObjSlot();
 extern "C" void CTaskGame_freeObjSlot(void* obj);
 
 // Enum-list message-fill helper (flat retail name; defined in CUICfManager.cpp).
-extern "C" void func_800F4A98(void*, u32, u32);
+extern "C" void startEnumObjects(void*, u32, u32);
 
 // Error-window factory ctor (retail stripped name; defined in CUIErrMesWin.cpp
 // with the same C-ABI shape). extern "C": the call-site reloc must carry the
@@ -416,9 +416,9 @@ extern u32 lbl_eu_80664C28;
 // Unmangled callee imports for the CTaskGame_moveResetFx reset sequence. The retail
 // relocs carry these flat names; the defining TUs (CTaskGameEff.cpp /
 // CfObjectSelectorObj.cpp / code_800B06A4.cpp) emit C-linkage symbols.
-extern "C" u32 func_80044DF4();
-extern "C" void func_800450C8();
-extern "C" void* func_800FE68C();
+extern "C" u32 getEffectTask();
+extern "C" void noopGameEffTask();
+extern "C" void* Selector_GetInstance();
 extern "C" void __dt__800FDEF8(void* obj);
 extern "C" void teardownGameMgr(void* obj);
 // Object-factory singleton accessor (C++ linkage -> retail getInstance__Fv).
@@ -518,7 +518,7 @@ extern "C" int CTaskGame_padConfirm(CTaskGame* self);
 // Effect/particle reset helpers (flat retail names; defined in
 // CfResPcImpl.cpp / code_804C8684.cpp). func_8004302C is declared before the
 // monolib includes above (functions.hpp declares it plain C++).
-extern "C" void func_804C8690(int a, int b);
+extern "C" void EffCtl_StoreFlagAndParams(int a, int b);
 // Battle/script-time gate (flat retail name; stub body in
 // CTaskREvtSequence.cpp): retail CTaskGame_updateStream ORs its result with
 // isSceneLoading and forwards the boolean to the CRI active-setter.
@@ -535,7 +535,7 @@ extern "C" int CTaskGame_playTimeGate();
 extern "C" void CTaskGame_setStreamVol(float volume);
 // CTaskGameEvt event helper (flat retail name; stub body in CTaskGameEvt.cpp):
 // func_80041BC0 passes the unkD4 object.
-extern "C" void func_802956A4(void* obj);
+extern "C" void EvtTask_Relay65038(void* obj);
 // Window/error-message reset (flat retail name; declared in
 // CMenuKizunagram.hpp): func_80041BC0 runs it before the title-menu ctor.
 extern "C" void CTaskGame_deleteLoad();
@@ -566,10 +566,10 @@ extern "C" u32 calcStreamBufferSize__7CLibCriFv(int arg);
 extern "C" int func_804DE010();
 extern "C" int func_804DDD54(const char* ext, const char* path, u32* v0, u32* v1, u32* v2, u32* v3);
 extern "C" int getFileSize__11CDeviceFileFPCc(const char* path, int arg1);
-extern "C" void func_80189C70();
+extern "C" void MenuSnd_ResetFadeTargetA_9C70();
 // Canonical C-linkage form, matching CDeviceFileCri.hpp's extern "C" block
 // (int(const char*)); a single spelling so both headers coexist in one TU.
-extern "C" int func_eu_804520D0(const char* str);
+extern "C" int DevFile_SubstLangPath(const char* str);
 // cf::CTaskGameCf::create defined with the retail flat name (retail call
 // sites pass the parent + 0; the defining TU emits the Fv symbol).
 extern "C" cf::CTaskGameCf* create__Q22cf11CTaskGameCfFv(CProcess* pParent, int arg2);
@@ -641,7 +641,7 @@ extern "C" void CfRes_setD80Flag(void* scene);
 // Global actor-param work-buffer builder (defined in CtrlObjectParam.cpp).
 extern "C" void __ct__8009D604();
 // Effect-task factory (defined in CTaskGameEff.cpp with the flat name).
-extern "C" void func_800450CC(CProcess* parent, CScn* scene);
+extern "C" void createGameEffTask(CProcess* parent, CScn* scene);
 extern "C" void* create__8CTaskLODFv(void* parent, void* p1, void* p2, u32 handle,
                                      u32 size);
 extern "C" void* create__16CTaskColiManagerFv(CProcess* parent, void* scene,
@@ -652,7 +652,7 @@ extern "C" void* create__Q22cf13CfNandManagerFv(CProcess* parent, void* scene);
 extern "C" void addRenderCB__4CScnFP10IScnRenderUlUl(void* scn, void* cb, u32 a,
                                                       u32 b);
 extern "C" u8 getLanguage__9CDeviceSCFv();
-extern "C" void func_80294EC0(CTaskGamePic* self, const char* path);
+extern "C" void GamePicStartFileLoad(CTaskGamePic* self, const char* path);
 extern "C" CTaskGamePic* create__12CTaskGamePicFv(CProcess* parent, int arg);
 extern "C" CTaskGameEvt* create__12CTaskGameEvtFv(CProcess* parent, int arg);
 // Scene-create name pointer (.sdata; points into .sdata2 string space).
@@ -660,8 +660,8 @@ extern char* lbl_eu_80661908;
 extern const f32 lbl_eu_80665D70;
 // Move-hook ptmf pool entry used by Init (lbl_eu_80525568 + 0xC).
 extern u32 lbl_eu_80525574[3];
-extern "C" int func_802B0D10();
-extern "C" int func_800FF738();
+extern "C" int CMenuGCItem_IsActive();
+extern "C" int CMainMenu_IsOpen();
 extern "C" bool CMenuArtsSelect_isCreated();
 // cf::CfPadTask::getWiimoteBattery() static (retail verbatim mangle).
 // Signed return: retail call sites compare with cmpwi/ble (battery > 1),

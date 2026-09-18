@@ -191,5 +191,5 @@ public:
 
 // Import from monolib/src/scn/CScnTexWorkMan.cpp (target us-80494b68).
 // Returns nonzero when the manager has a ready act for the given id.
-// extern "C": the retail call-site reloc name is the plain func_80490AF4.
-extern "C" int func_80490AF4(CScnEffectActMgr* mgr, u32 idx);
+// extern "C": the retail call-site reloc name is the plain TexMan_FindNode_0AF4.
+extern "C" int TexMan_FindNode_0AF4(CScnEffectActMgr* mgr, u32 idx);

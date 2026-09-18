@@ -42,12 +42,12 @@ extern "C" {
 // lbl_eu_80663B70, owned by the CNReqtaskSave unit).
 extern "C" u32 lbl_eu_80663B70;     // CNRequest RTTI locator (foreign sdata)
 extern "C" void CNReqSaveDeallocIfOpen();    // CNRequest base vtable func (foreign TU)
-extern "C" s32 func_804DAFB8(CNReqtaskLoadVtbl*, CNReqtaskLoadData*); // defined below
+extern "C" s32 stepNandLoadTask(CNReqtaskLoadVtbl*, CNReqtaskLoadData*); // defined below
 extern "C" u32 lbl_eu_80663B90[2];  // this unit's .sdata RTTI locator pair
 extern "C" u32* lbl_eu_806659E8[2] = { 0, 0 }; // [.sbss] 0x806659E8 (8B) task vtable slot
 
 extern "C" u32 lbl_eu_8056FD88[4] = {
-    (u32)&lbl_eu_80663B90, 0x00000000, (u32)&func_804DAFB8, (u32)&CNReqSaveDeallocIfOpen,
+    (u32)&lbl_eu_80663B90, 0x00000000, (u32)&stepNandLoadTask, (u32)&CNReqSaveDeallocIfOpen,
 };
 extern "C" u32 lbl_eu_8056FD98[4] = {
     (u32)&lbl_eu_80663B70, 0x00000000, 0x00000000, 0x00000000,
@@ -94,7 +94,7 @@ extern "C" CNReqtaskLoadVtbl** func_804DAF70(CNReqtaskLoadData* data, const char
     return (CNReqtaskLoadVtbl**)lbl_eu_806659E8;
 }
 
-// us-804df27c: func_804DAFB8
+// us-804df27c: stepNandLoadTask
 // Async NAND load state machine, polled by the CNand completion pump.
 // Advancing one step per call; returns 1 when fully loaded, 2 on error,
 // 0 while still in progress. Steps:
@@ -103,7 +103,7 @@ extern "C" CNReqtaskLoadVtbl** func_804DAF70(CNReqtaskLoadData* data, const char
 //   2 -> close the file (CNReqSaveNandClose)
 //   3 -> flush dcache on the read buffer (DCFlushRange)
 //   4 -> done (return 1)
-extern "C" s32 func_804DAFB8(CNReqtaskLoadVtbl* vtable_ptr, CNReqtaskLoadData* data) {
+extern "C" s32 stepNandLoadTask(CNReqtaskLoadVtbl* vtable_ptr, CNReqtaskLoadData* data) {
     CNReqtaskLoadData* d = data;
 
     if (lbl_eu_806659D0 != 0) { // NAND subsystem busy

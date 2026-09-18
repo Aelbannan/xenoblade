@@ -6,7 +6,7 @@
 // ---------------------------------------------------------------------------
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
 // ---------------------------------------------------------------------------
-extern "C" void func_8018B398();
+extern "C" void MenuShopSellIsCreated();
 
 namespace cf {
 class __declspec(novtable) CHelp_ShopSel : public CHelp {

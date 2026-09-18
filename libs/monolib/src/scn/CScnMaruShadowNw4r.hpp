@@ -69,12 +69,12 @@ extern void Warning__Q24nw4r2dbFPCciPCce(const char* file, int line, const char*
 extern void* Scn_GetCamItemCC(u32 unk, int id);
 extern void* Scn_GetCamItem9C(u32 unk, int id);
 extern void getScnHandle();
-extern int func_804BCC10();
-extern bool func_804BE398(mlCVec3* out, float x, float y, int a, int b);
-extern void func_804BE3E0(const void* cb, void* mtx, u32 unk, int flag);
+extern int ScnData_FwdBC9A0();
+extern bool ScnRes_VertRayForward_E398(mlCVec3* out, float x, float y, int a, int b);
+extern void ScnRes_Notify4Word_E3E0(const void* cb, void* mtx, u32 unk, int flag);
 extern bool func_804BE4B4(mlCVec3* v, int flag);
 extern bool func_804BE4E0(mlCVec3* v, int flag);
-extern void* func_804BE50C(int idx);
+extern void* ScnRes_GetEntryPtr_E50C(int idx);
 extern void* simGetLeafActData(ShadowCtx* ctx);
 extern void func_8048E2F8(CScnMaruShadowNw4r* shadow, ShadowCtx* ctx, float scale);
 } // extern "C"

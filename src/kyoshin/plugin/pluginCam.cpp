@@ -237,7 +237,7 @@ extern "C" int setPosOfs(VMThread* pThread) {
     pos.z = (f32)fixedZ / lbl_eu_80666168;
 
     UnkCamIntf* cam = getCameraDataBlock__Q22cf13CfGameManagerFv();
-    void* obj = func_801862C0();
+    void* obj = ArtsSelect_GetContainer();
     void* slot = func_801864DC(obj, oc->field_0x04);
     cam->setPositionOfs(slot, &pos, -flags);
     return 0;
@@ -262,7 +262,7 @@ extern "C" int setLookatOfs(VMThread* pThread) {
     lookat.z = (f32)fixedZ / lbl_eu_80666168;
 
     UnkCamIntf* cam = getCameraDataBlock__Q22cf13CfGameManagerFv();
-    void* obj = func_801862C0();
+    void* obj = ArtsSelect_GetContainer();
     void* slot = func_801864DC(obj, oc->field_0x04);
     cam->setLookAtOfs(slot, &lookat, -flags);
     func_8016FD84(lbl_eu_80666178, lbl_eu_8066617C);
@@ -353,7 +353,7 @@ extern "C" int keyBegin(VMThread* pThread) {
     // Resolve the OC instance to a camera key id (0 when omitted/invalid).
     u32 ocId = 0;
     if (oc != nullptr) {
-        ocId = (u32)func_801864DC(func_801862C0(), oc->field_0x04);
+        ocId = (u32)func_801864DC(ArtsSelect_GetContainer(), oc->field_0x04);
     }
 
     notifyBattleSystem__Q22cf13CfGameManagerFv(

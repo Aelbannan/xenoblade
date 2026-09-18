@@ -48,7 +48,7 @@ extern u8 lbl_eu_8053109C[];
 // NOTE: func_80174B4C is declared here in its LOCAL 5-arg form inside
 // CfObjectActor.cpp (the shared headers carry the common 2-arg form;
 // the two extern "C" signatures cannot coexist - error 10197).
-extern "C" void func_8014AA10(void* obj, unsigned int value);
+extern "C" void aiActionStoreWordB14(void* obj, unsigned int value);
 
 // C-linkage imports (retail symbols are unmangled).
 extern "C" int getParamSelS16(u8* obj, int arg);   // CActParamData short-value helper
@@ -64,23 +64,23 @@ extern "C" void CActorParam_UnkVirtualFunc179__Q22cf11CActorParamFv(cf::CActorPa
 extern "C" void CActorParam_UnkVirtualFunc180__Q22cf11CActorParamFv(cf::CActorParam* self, void* arg);
 
 // C-ABI imports (retail symbols unmangled).
-extern "C" void func_801A891C(void* obj, int arg);   // vision slot release
+extern "C" void releaseVisionSlot(void* obj, int arg);   // vision slot release
 
-extern "C" int func_8027990C(void* battleSub, void* actor);  // battle sub-object query
+extern "C" int CChain_ProbeActorReady(void* battleSub, void* actor);  // battle sub-object query
 
-extern "C" void func_8010975C(u8);
+extern "C" void BtlDmg_SetDamageType(u8);
 
-extern "C" void func_80109770(u8);
+extern "C" void BtlDmg_SetDamageDir(u8);
 
-extern "C" void func_80109734(void* obj, u32 value);
+extern "C" void BtlDmg_NotifyDamage(void* obj, u32 value);
 
-extern "C" void func_80109784(void* obj, u32 a, int b);
+extern "C" void BtlDmg_FilterNotifyDamage(void* obj, u32 a, int b);
 
-extern "C" void func_8010989C(u8);
+extern "C" void BtlDmg_SetField779(u8);
 
-extern "C" void func_80109888(u8);
+extern "C" void BtlDmg_SetByte778(u8);
 
-extern "C" void func_80109874(u8);
+extern "C" void BtlDmg_SetByte777(u8);
 
 extern "C" bool isGlobalCamFlagSet__Fi(int mask);
 
@@ -88,11 +88,11 @@ extern "C" void* getInstance__Q22cf13CfGameManagerFv(void);
 
 extern "C" float func_800D81A8(void* obj, void* target, void* source);
 
-extern "C" void func_8018C820(void* obj, int value);   // party-gauge add
+extern "C" void PartyGaugeAddClamped(void* obj, int value);   // party-gauge add
 
 extern "C" void CBattleMan_ClearEventNotify(void* battleMgr, void* actor, int flag);
 
-extern "C" void func_80277A7C(void* battleSub, void* actor, float value);
+extern "C" void CChain_AccumGaugeDelta(void* battleSub, void* actor, float value);
 
 extern "C" int __ptmf_cmpr(void* a, void* b);
 
@@ -148,7 +148,7 @@ namespace cf {
     float CActorParam_getSubScale() { return CActorParam_getScale(); }
     };
 
-    // Status-entry view for the func_80149154 results used by
+    // Status-entry view for the findBattleStatusEntry results used by
     // CActorParam_applyDamage: u32 marker at +0x8, s32 value at +0x10,
     // s16 gauge at +0x14.
     struct CfStatusEntry {

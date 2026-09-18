@@ -26,8 +26,8 @@ class CfImplEneBattleObj;  // forward decl for the typed member below
 // typeinfo), so the virtual at declared index N sits at vtable offset (N+2)*4.
 // ---------------------------------------------------------------------------
 
-// Self object of func_800CFFCC / func_800D0090 / func_800D1020 /
-// func_800D0A60 / func_800D0B04: vtable slots 0x30 and 0xe4 are called;
+// Self object of MoveImplEne_InitFieldsToken / MoveImplEne_ReleaseTokenReset / MoveImplEne_MatchTokenRelease /
+// MoveImplEne_PlayKindSound / MoveImplEne_ScanTimelineCount: vtable slots 0x30 and 0xe4 are called;
 // fields at +0x14 (ptr), +0x18 (ptr), +0x28 (opaque buffer), +0x36C (u32).
 class CfObjectImplEneObj {
 public:
@@ -103,20 +103,20 @@ public:
     u32 field_36C;                           // 0x36C
 };
 
-// Object with a u32 token at +0x70 (read by func_800CFFCC).
+// Object with a u32 token at +0x70 (read by MoveImplEne_InitFieldsToken).
 struct CfObjectImplEneToken {
     u8 _pad00[0x70];                         // 0x00-0x6F
     u32 field_70;                            // 0x70
 };
 
 // Battle-actor result of lookupCA0By45C0: u16 flag word at +0xA0 (bit 0 tested
-// by func_800D0B04).
+// by MoveImplEne_ScanTimelineCount).
 struct CfObjectImplEneActor {
     u8 _pad00[0xA0];                         // 0x00-0x9F
     u16 field_A0;                            // 0xA0
 };
 
-// Result of self->vfE4(): its vtable slot 0x10 is invoked by func_800D00DC.
+// Result of self->vfE4(): its vtable slot 0x10 is invoked by MoveImplEne_TickBattleAI.
 class CfObjectImplEneE4 {
 public:
     virtual void e00() = 0;                  // index 0
@@ -335,7 +335,7 @@ public:
 };
 
 // Sub-object rooted at +0x3E9C of the battle object: its own vtable, slot
-// 0x4C called by func_800D0B04. Declared as a member of CfImplEneBattleObj,
+// 0x4C called by MoveImplEne_ScanTimelineCount. Declared as a member of CfImplEneBattleObj,
 // so the virtuals are non-pure (like CHelp_EnemyEnableSub) - the class is
 // never instantiated, so no out-of-line definitions or vtable are emitted.
 class CfImplEneSub {
@@ -473,7 +473,7 @@ public:
     virtual int sh10(u32 a);                 // index 130 -> vtable offset 0x210
 };
 
-// Battle object (target of self->field_18 / func_800D0B04 loop): vtable slot
+// Battle object (target of self->field_18 / MoveImplEne_ScanTimelineCount loop): vtable slot
 // 0x2C4 called with (int, float, float, float); sub-object at +0x3E9C;
 // u32 flags at +0x3F34 and +0x3F60.
 class CfImplEneBattleObj {
@@ -710,27 +710,50 @@ public:
 // C-ABI imports (retail symbols are unmangled).
 // ---------------------------------------------------------------------------
 extern "C" {
-void func_800CA948(void* self);
-void func_800CAA44(void* self);
+void MoveImplInitFields(void* self);
+void MoveImplResetFull(void* self);
 void func_800CD5DC(void* self, u32 id, u32 kind, u32 x, u32 y, u32 z);
 void func_8015BB3C(void* a, void* b, void* c);
-void func_802A0B8C(void* self, void* owner);
+void attachOwner(void* self, void* owner);
 void* lookupCA0By45C0(void* self);
 void* func_8016FE34(void* src);
 void* CPartsChange_GetSlotEntryAt(void* self, unsigned long idx);
-int CBattleMan_ListHasValue(void* self, unsigned int value);
 void func_800D9978(void* mgr, void* obj);
 int func_800AA33C(ml::FixStr<64>& buf, u32 packed, int prefixFlag, int suffixFlag);
 void CfSoundMan_StopSlotByMode(u32 a, u32 b, u32 c);
-void func_804E3CCC(void* effect);
-void func_804E3D48(void* effect, void* parent);
-void func_800CA964(void* self);
-void func_800CAB2C(void* self);
-void func_800CED64(void* self, int flag);
-void func_802A0E08(void* self);
+void schedClearFlag15Update(void* effect);
+void schedAttachChildSlot(void* effect, void* parent);
+void schedDetachChildSlot(void* effect, void* parent);
+void MoveImplUpdateState(void* self);
+void MoveImplNoopA(void* self);
+void MoveImplSyncEffectState(void* self, int flag);
+void updatePosition(void* self);
 void* CfRes_getInstPtr224();
 void* CfRes_findEntryById(void* self, u32 id);
-void func_804E3B08(void* effect);
+extern u32 lbl_eu_8065FC18[];
+extern "C" void* func_804CC1F4(void* mgr, void* bdat, void* global, int r6, int r7, int r8);
+void schedReleaseAllItems(void* effect);
+
+// TU-local view of CREvtEffect.hpp's CEffectInst (only fields touched here).
+// Copied verbatim for layout; CREvtEffect.hpp itself is not includable here
+// (its __ptmf_null clashes with CVision.hpp's when co-visible).
+struct CEffectInst {
+    /* 0x00 */ u16 mFlags;
+    /* 0x02 */ u8 mPad2[0x12];
+    /* 0x14 */ void* mParent;
+    /* 0x18 */ u8 mPad18[0x4];
+    /* 0x1C */ s32 mRot[3];
+    /* 0x28 */ s32 mRotScaled[3];
+    /* 0x34 */ s32 mScale[3];
+    /* 0x40 */ s32 mScale2[3];
+    /* 0x4C */ s32 mFloat4C;
+    /* 0x50 */ f32 mPosX;
+    /* 0x54 */ u8 mPad54[0x4];
+    /* 0x58 */ u8 mPriority;
+    /* 0x59 */ u8 mField59;
+    /* 0x5A */ u8 mPad5A[0x2];
+    /* 0x5C */ s32 mMode;
+};
 float simGetLeafDist7B0(void* obj);
 void CfObjectMove_setMoveSpeed(void* player, float value);
 void CfObjectMove_setRegionAttached(void* obj, int flag);
@@ -742,13 +765,13 @@ void func_80140E00(u32 a, u32 b, u32 c);
 void UIWin_CreateItemMulti(u32 a1, u32 a2, u32 a3, u32 a4, u32 a5, u32 a6, u32 a7, u32 a8, u32 a9);
 void CTaskGame_enumListCtor(void* holder);
 void* CTaskGame_enumListGet(void* holder);
-void func_800F4A98(void* list, u32 type, u32 filter);
-void* func_800F6EAC(void* list, u32 idx);
+void startEnumObjects(void* list, u32 type, u32 filter);
+void* getObjectAt(void* list, u32 idx);
 void __dt__80043E88(void* holder, int);
 }
 
 // C++-mangled imports (declared so MWCC emits the retail mangled names).
-void* func_800AD860(void* obj);   // getEffOwner____FPv
+extern "C" void* getEffOwner____FPv(void* obj);
 bool isGlobalCamFlagSet(int mask);     // isGlobalCamFlagSet__Fi
 // findObjectById__Fi is declared (void* return) by code_802B8A3C.hpp via
 // CBattleManager.hpp - same mangled name, do not redeclare here.

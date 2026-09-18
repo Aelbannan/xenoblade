@@ -111,10 +111,10 @@ extern "C" int simFwdAnimReset(int, int, int);
 extern "C" void __ct__8049E710();
 extern "C" void __ct__804820F8();
 extern "C" void func_8049C72C(int);
-extern "C" void* func_8049C794(void*);
-extern "C" void* func_8049C7B0(void*);
-extern "C" int func_8049AED4(int);
-extern "C" int func_8049B158(int);
+extern "C" void* isFadeIdle(void*);
+extern "C" void* isFadeSettled(void*);
+extern "C" int CamMan_SwapViewParam_AED4(int);
+extern "C" int CamMan_FindItemA_B158(int);
 extern "C" bool func_8049B240(int);
 extern "C" void* func_8049B2C4(void*);
 
@@ -124,7 +124,7 @@ struct ScnCamParams {
     u32 w[16]; // 0x00..0x3C
 };
 
-// View of the camera item returned by func_8049B158, exposing the +0x194
+// View of the camera item returned by CamMan_FindItemA_B158, exposing the +0x194
 // parameter block (projection matrix).
 struct ScnCamItemView {
     u8 pad00[0x194]; //0x00

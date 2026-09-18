@@ -37,7 +37,7 @@ public:
     static CDeviceFont* getInstance();
 
     //todo: when true return type is found clean :
-    // CMCEffCrystal::func_80224CE4
+    // CMCEffCrystal::MCCrystal_BuildLayouts
     // CTitleAHelp::OnFileEvent
     static void* getFontInfo(u32, nw4r::lyt::Layout*);
     /// Flush font rendering state.

@@ -103,23 +103,23 @@ int func_800AA1B4(const char* str, int digitCount, int* out) {
     return 1;
 }
 
-u32 func_800AA2BC(u32 a, u32 b) {
+u32 Tok_Pack08(u32 a, u32 b) {
     return (b << 10) | ((a << 20) | 0x08000000);
 }
 
-u32 func_800AA2D0(u32 a, u32 b, u32 c) {
+u32 Tok_PackE0(u32 a, u32 b, u32 c) {
     u32 t = ((a & 0xFFF) << 20) | 0xE0000000;
     u32 u = c | (b << 10);
     return u | t;
 }
 
-u32 func_800AA2E8(u32 a, u32 b, u32 c) {
+u32 Tok_Pack10(u32 a, u32 b, u32 c) {
     u32 t = ((a & 0xFFF) << 20) | 0x10000000;
     u32 u = c | (b << 10);
     return u | t;
 }
 
-u32 func_800AA300(u32 a, u32 b, u32 c) {
+u32 Tok_Pack20(u32 a, u32 b, u32 c) {
     u32 t = ((a & 0xFFF) << 20) | 0x20000000;
     u32 u = c | (b << 10);
     return u | t;
@@ -127,7 +127,7 @@ u32 func_800AA300(u32 a, u32 b, u32 c) {
 
 // Unpack a packed token into entry ID and up to three parameters.
 // Bits: [31:27]=entryId, [26:20]=param1(7bit), [19:10]=param2(10bit), [9:0]=param3(10bit)
-void func_800AA318(u32 packedToken, u32* outEntryId, u32* outParam1, u32* outParam2, u32* outParam3) {
+void Tok_Unpack(u32 packedToken, u32* outEntryId, u32* outParam1, u32* outParam2, u32* outParam3) {
     *outEntryId = packedToken >> 27;
     *outParam1 = (packedToken >> 20) & 0x7F;
     *outParam2 = (packedToken >> 10) & 0x3FF;

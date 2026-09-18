@@ -40,14 +40,14 @@
 #define func_80137924 func_80137924_csys_dup
 #define code80135FDC_setVec3 code80135FDC_setVec3_csys_dup
 #define func_8022BFC8 func_8022BFC8_csys_dup
-#define func_8022B90C func_8022B90C_csys_dup
+#define sysWinSwitchKindPane sysWinSwitchKindPane_csys_dup
 #include "kyoshin/CSysWin.hpp"
 #undef __dt__17UnkClass_8045F564Fv
 #undef __ct__17UnkClass_8045F564Fv
 #undef func_80137924
 #undef code80135FDC_setVec3
 #undef func_8022BFC8
-#undef func_8022B90C
+#undef sysWinSwitchKindPane
 #include "monolib/device/CDeviceFont.hpp"
 #include <nw4r/ut/ut_TagProcessorBase.h>
 #include <stdio.h>
@@ -109,7 +109,7 @@ void getEntry__5CBdatFUl(u32);
 void closeFileHandle__FPP11CFileHandle(void**);
 void releaseArcResourceAccessor__FPQ34nw4r3lyt19ArcResourceAccessor(void*);
 void deleteRegion__17UnkClass_8045F564Fv(void*);
-void func_8022B7F4(void*);
+void sysWinTermLayout(void*);
 extern "C" void ShowCellIcon(CItemBoxGridFull* self, u32 kind, void* item, u16 idx, u32 bt);
 extern "C" void ShowCellBadge(CItemBoxGridFull* self, u32 kind, void* item, u16 idx);
 extern "C" void SetCellCaption(void* self, s8 kind, void* item, u16 idx);
@@ -599,8 +599,8 @@ extern "C" __declspec(noinline) u32 func_801C5FC0(CItemBoxGridFull* self, u16 id
         u32 member = GetCollectedFlagByte((u8)i);
         void* charData = (void*)func_8009EC9C((u32)(u8)member);
         void* ptr = (void*)((u8*)charData + 0x3534);
-        if (func_8026178C(ptr, 0x93)) {
-            basePrice += func_8025FB10(ptr, 0x93);
+        if (Counter_TestBit(ptr, 0x93)) {
+            basePrice += IdTable_SumValues(ptr, 0x93);
         }
     }
 
@@ -637,8 +637,8 @@ u32 func_801C618C(void* self, u32 id, void* item, int r6) {
             u8 member = (u8)GetCollectedFlagByte(i);
             void* charData = (void*)func_8009EC9C(member);
             void* ptr = (void*)((u8*)charData + 0x3534);
-            if (func_8026178C(ptr, 0x8f)) {
-                base += func_8025FB10(ptr, 0x8f);
+            if (Counter_TestBit(ptr, 0x8f)) {
+                base += IdTable_SumValues(ptr, 0x8f);
             }
         }
         result = (u32)RoundHalfAway0((float)(result * base) * 0.01f);
@@ -2654,7 +2654,7 @@ extern "C" void LoadItemBoxFiles(void* self, int r4) {
     const char* strs;
     void* allocHandle = getHandleMEM2__Q23mtl10MemManagerFv();
 
-    if (func_80212480()) {
+    if (MakeCrystalIsCreated()) {
         if (getMaxAllocSize__Q23mtl10MemManagerFUl((u32)getHandleMEM1__Q23mtl10MemManagerFv()) >= 0x38000) {
             allocHandle = (void*)getHandleMEM1__Q23mtl10MemManagerFv();
         }
@@ -2680,12 +2680,12 @@ extern "C" void LoadItemBoxFiles(void* self, int r4) {
         lbl_eu_80664510 = (u32)getFP__FPCc(strs + 0x2ee);
     }
 
-    func_801D3064(p + 0xe8);
+    sortMenuInitFileRead(p + 0xe8);
     loadItemBoxFiles(p + 0x1d8);
-    func_801EAE8C(p + 0x3e4);
+    NumSel_LoadArchive_AE8C(p + 0x3e4);
 
     if (p[0x527] == 2) {
-        func_8022CF2C(p + 0x440);
+        ExWin_LoadFile(p + 0x440);
     }
 
     ((CSysWin*)(p + 0x4ac))->loadSystemArc();
@@ -2722,7 +2722,7 @@ extern "C" void UpdateItemBox(void* self, int r4) {
             FinishCloseAnim(self);
             break;
         case 6:
-            if (func_801EB028(p + 0x3e4)) {
+            if (NumSel_GetField2E_B028(p + 0x3e4)) {
                 *(u32*)(p + 0x58) = 0x19;
             }
             break;
@@ -2736,12 +2736,12 @@ extern "C" void UpdateItemBox(void* self, int r4) {
             func_801CE524(self);
             break;
         case 12:
-            if (func_801EB028(p + 0x3e4)) {
+            if (NumSel_GetField2E_B028(p + 0x3e4)) {
                 *(u32*)(p + 0x58) = 0xA;
             }
             break;
         case 14:
-            if (func_801EB028(p + 0x3e4)) {
+            if (NumSel_GetField2E_B028(p + 0x3e4)) {
                 *(u32*)(p + 0x58) = 0x3;
             }
             break;
@@ -2783,14 +2783,14 @@ extern "C" void UpdateItemBox(void* self, int r4) {
     func_801D202C(p + 0xa0);
     func_801D202C(p + 0xb8);
     func_801D202C(p + 0xd0);
-    func_801D3160(p + 0xe8);
+    sortMenuDispatchState(p + 0xe8);
     updateItemBoxAnims(p + 0x1d8);
-    func_801EAED4(p + 0x3e4);
+    NumSel_DispatchState_AED4(p + 0x3e4);
     func_80208260(p + 0x418);
-    func_8022CF7C(p + 0x440);
+    ExWin_TickUpdate(p + 0x440);
     func_8022DA58(p + 0x468);
-    func_8022B748(p + 0x4ac);
-    func_8022B748(p + 0x4e8);
+    sysWinDispatchPhase(p + 0x4ac);
+    sysWinDispatchPhase(p + 0x4e8);
 }
 
 // Draw callback: update the exchange/num-select widgets, then draw the
@@ -2808,20 +2808,20 @@ extern "C" void DrawItemBoxGrid(void* self, int r4) {
     u8 r = p[0x2d4f];
     u8 v = (r != 0) ? r : 1;
     if ((u32)v > 1) {
-        func_801D20B0(p + 0x88, (void*)r4);
+        Cur_DrawLayout(p + 0x88, (void*)r4);
     }
 
     func_801D31F8(p + 0xe8, (void*)r4);
-    func_802082D0(p + 0x418, r4);
-    func_8022CFEC(p + 0x440, r4);
-    func_8022B7C8(p + 0x4ac, (void*)r4);
-    func_8022B7C8(p + 0x4e8, (void*)r4);
-    func_8022DAD8(p + 0x468, r4);
-    func_801D20B0(p + 0xd0, (void*)r4);
-    func_801D20B0(p + 0x70, (void*)r4);
-    func_801D20B0(p + 0xa0, (void*)r4);
-    func_801D20B0(p + 0xb8, (void*)r4);
-    func_801EAF7C(p + 0x3e4, (void*)r4);
+    GridSubMenu_DrawLayoutGated(p + 0x418, r4);
+    ExWin_DrawLayout(p + 0x440, r4);
+    sysWinDrawLayout(p + 0x4ac, (void*)r4);
+    sysWinDrawLayout(p + 0x4e8, (void*)r4);
+    drawPresentWin(p + 0x468, r4);
+    Cur_DrawLayout(p + 0xd0, (void*)r4);
+    Cur_DrawLayout(p + 0x70, (void*)r4);
+    Cur_DrawLayout(p + 0xa0, (void*)r4);
+    Cur_DrawLayout(p + 0xb8, (void*)r4);
+    NumSel_DrawLayout_AF7C(p + 0x3e4, (void*)r4);
 }
 #pragma optimize_for_size off
 
@@ -2879,14 +2879,14 @@ extern "C" void UnloadItemBox(void* self, int r4) {
     ((CBaseCur*)(p + 0xb8))->cleanup();
     ((CBaseCur*)(p + 0xd0))->cleanup();
 
-    func_801D3258(p + 0xe8);
+    sortMenuTermCleanup(p + 0xe8);
     func_801D4174(p + 0x1d8);
-    func_801EAF9C(p + 0x3e4);
+    NumSel_Teardown_AF9C(p + 0x3e4);
     func_802082F0(p + 0x418);
-    func_8022D018(p + 0x440);
+    ExWin_Teardown(p + 0x440);
     func_8022DB04(p + 0x468);
-    func_8022B7F4(p + 0x4ac);
-    func_8022B7F4(p + 0x4e8);
+    sysWinTermLayout(p + 0x4ac);
+    sysWinTermLayout(p + 0x4e8);
 }
 #pragma optimize_for_size off
 
@@ -2895,7 +2895,7 @@ extern "C" u32 IsItemBoxReady(void* self) {
     u8* p = (u8*)self;
     if (!func_801D32DC(p + 0xe8)) return 0;
     if (!getItemBoxState__FP12CItemBoxInfo(p + 0x1d8)) return 0;
-    if (!func_801EB018(p + 0x3e4)) return 0;
+    if (!NumSel_GetField2D_B018(p + 0x3e4)) return 0;
     if (!((CExchangeWin*)(p + 0x440))->getField25()) return 0;
     if (!CSysWin_isReady(p + 0x4ac)) return 0;
     if (CSysWin_isReady(p + 0x4e8)) return p[0x60];
@@ -2910,7 +2910,7 @@ extern "C" u32 IsItemBoxActive(void* self) {
     if (CSysWin_getUnk34(p + 0x4ac)) return 1;
     if (CSysWin_getUnk34(p + 0x4e8)) return 1;
     if (p[0x544]) return 1;
-    return func_801D3320(p + 0xe8);
+    return sortMenuIsVisible28(p + 0xe8);
 }
 
 // Get field depending on window state.
@@ -2926,10 +2926,10 @@ u8 CItemBoxGrid::GetField549() { return reinterpret_cast<CItemBoxGridFull*>(this
 // Check if any sub-system is active.
 extern "C" u32 IsSubWinActive(void* self) {
     u8* p = (u8*)self;
-    if (func_801EB020(p + 0x3e4)) return 1;
-    if (func_80208358(p + 0x418)) return 1;
+    if (NumSel_GetActiveFlag_B020(p + 0x3e4)) return 1;
+    if (GridSubMenu_IsVisibleFlag(p + 0x418)) return 1;
     if (((CExchangeWin*)(p + 0x440))->getField24()) return 1;
-    if (func_8022DB6C(p + 0x468)) return 1;
+    if (isPresentActive(p + 0x468)) return 1;
     if (CSysWin_getUnk34(p + 0x4ac)) return 1;
     return CSysWin_getUnk34(p + 0x4e8);
 }
@@ -2955,7 +2955,7 @@ void func_801CB28C(void* self) {
     func_801D47D4(p + 0x1D8, r2 & 0xFFFF, item, 1);
     u32 v = FormatCellName(sub, entry_idx);
     setItemBoxNamedText((void*)(p + 0x1D8), 1, (void*)v);
-    func_801D216C(p + 0xB8, 0);
+    Cur_SetVisible(p + 0xB8, 0);
     p[0x549] = 0;
     if (p[0x527] == 4) setItemBoxResultPane(p + 0x1D8, 1);
 }
@@ -2964,16 +2964,16 @@ void func_801CB28C(void* self) {
 extern "C" void AdvanceBoxState(void* self) {
     u8* p = (u8*)self;
     if (*(s32*)(p + 0x58) != 3) return;
-    if (func_801D3320(p + 0xe8)) return;
+    if (sortMenuIsVisible28(p + 0xe8)) return;
     *(u32*)(p + 0x58) = 4;
     ((nw4r::lyt::Layout*)(void*)*(u32*)(p + 0x44))->SetAnimationEnable((nw4r::lyt::AnimTransform*)(void*)*(u32*)(p + 0x50), 0);
     ((nw4r::lyt::Layout*)(void*)*(u32*)(p + 0x44))->SetAnimationEnable((nw4r::lyt::AnimTransform*)(void*)*(u32*)(p + 0x48), 0);
     ((nw4r::lyt::Layout*)(void*)*(u32*)(p + 0x44))->SetAnimationEnable((nw4r::lyt::AnimTransform*)(void*)*(u32*)(p + 0x4c), 1);
     p[0x61] = 0;
-    func_801D216C(p + 0x70, 0);
-    func_801D216C(p + 0x88, 0);
-    func_801D216C(p + 0xd0, 0);
-    func_801D216C(p + 0xb8, 0);
+    Cur_SetVisible(p + 0x70, 0);
+    Cur_SetVisible(p + 0x88, 0);
+    Cur_SetVisible(p + 0xd0, 0);
+    Cur_SetVisible(p + 0xb8, 0);
     advanceItemBoxState__FP12CItemBoxInfo(p + 0x1d8);
     if (!p[0x52c]) playUISound__FUl(6);
 }
@@ -3000,7 +3000,7 @@ void CItemBoxGrid::PushToList(unsigned char val) {
 // Increment list counter with wrap.
 extern "C" __declspec(noinline) void IncListIndex(void* self) {
     u8* p = (u8*)self;
-    if (func_801D3320(p + 0xe8)) return;
+    if (sortMenuIsVisible28(p + 0xe8)) return;
     if (p[0x528]) return;
     u8 idx = p[0x6f] + 1;
     p[0x6f] = idx;
@@ -3015,7 +3015,7 @@ extern "C" __declspec(noinline) void IncListIndex(void* self) {
 // Decrement a list counter with wrap.
 extern "C" __declspec(noinline) void DecListIndex(void* self) {
     u8* p = (u8*)self;
-    if (func_801D3320(p + 0xe8)) return;
+    if (sortMenuIsVisible28(p + 0xe8)) return;
     if (p[0x528]) return;
     u8 idx = p[0x6f] - 1;
     p[0x6f] = idx;
@@ -3045,9 +3045,9 @@ void func_801CB5F0(void* self) {
         return;
     }
     if (CSysWin_getUnk34(p + 0x4e8)) return;
-    if (func_80208358(p + 0x418)) {
-        if (func_80208360(p + 0x418)) {
-            func_802083CC(p + 0x418);
+    if (GridSubMenu_IsVisibleFlag(p + 0x418)) {
+        if (GridSubMenu_IsOpenedFlag(p + 0x418)) {
+            GridSubMenu_MoveSelectionPrev(p + 0x418);
             u8 temp[12];
             func_80208760(temp, p + 0x418);
             ((CBaseCur*)(p + 0xa0))->setRootPaneTranslate((const nw4r::math::VEC3*)(temp));
@@ -3055,10 +3055,10 @@ void func_801CB5F0(void* self) {
         }
         return;
     }
-    if (func_8022DB6C(p + 0x468)) return;
+    if (isPresentActive(p + 0x468)) return;
     // Negated so the p544/p528/p527 chain nests in the false arm (retail
     // branches forward past the D3328 block instead of jumping to a shared end).
-    if (!func_801D3320(p + 0xe8)) {
+    if (!sortMenuIsVisible28(p + 0xe8)) {
     if (p[0x544]) {
         void* arr = p + 0x288;
         // Retail scans candidate indices downward from p546-1 (wrapping to 3)
@@ -3080,7 +3080,7 @@ void func_801CB5F0(void* self) {
     }
     if (p[0x528]) {
         if (p[0x527] == 1) {
-            if (func_801EB028(p + 0x3e4)) {
+            if (NumSel_GetField2E_B028(p + 0x3e4)) {
                 u8* sub = p + 0x54c;
                 u8 entry = (u8)(p[0x525] * 10 + p[0x524]);
                 u32 kind = GetCellKind((CItemBoxGridFull*)sub, (u16)entry);
@@ -3090,11 +3090,11 @@ void func_801CB5F0(void* self) {
                     p[0x529] += 1;
                     if ((s8)p[0x529] > (s8)count) p[0x529] = 1;
                 }
-                func_801EB218(p + 0x3e4);
-                func_801EB04C((void*)(p + 0x3e4), (u32)p[0x529]);
+                NumSel_ShowPaneA_B218(p + 0x3e4);
+                NumSel_SetCaptionNum_B04C((void*)(p + 0x3e4), (u32)p[0x529]);
                 u32 cost = func_801C5FC0((CItemBoxGridFull*)sub, entry);
                 u32 total = (s8)p[0x529] * cost;
-                func_801EB064((void*)(p + 0x3e4), total);
+                NumSel_FormatPicName_B064((void*)(p + 0x3e4), total);
                 goto sound_and_return;
             }
             return;
@@ -3103,7 +3103,7 @@ void func_801CB5F0(void* self) {
                 p[0x529] -= 1;
                 if ((s8)p[0x529] < 0) p[0x529] = 1;
                 u8 temp[12];
-                func_8022D0F8(temp, p + 0x440, p[0x529]);
+                ExWin_CopyPanePair(temp, p + 0x440, p[0x529]);
                 ((CBaseCur*)(p + 0xa0))->setRootPaneTranslate((const nw4r::math::VEC3*)(temp));
                 goto sound_and_return;
             }
@@ -3131,10 +3131,10 @@ void func_801CB5F0(void* self) {
         func_801D0328(self);
     }
     } else {
-        if (func_801D3328(p + 0xe8)) {
+        if (sortMenuGetFlag2B(p + 0xe8)) {
             func_801D3620(p + 0xe8);
             u8 temp[12];
-            func_801D3454(temp, p + 0xe8);
+            sortMenuFormatPaneText(temp, p + 0xe8);
             ((CBaseCur*)(p + 0xa0))->setRootPaneTranslate((const nw4r::math::VEC3*)(temp));
             goto sound_and_return;
         }
@@ -3195,9 +3195,9 @@ void func_801CBA04(void* self) {
         return;
     }
     if (CSysWin_getUnk34(p + 0x4e8)) return;
-    if (func_80208358(p + 0x418)) {
-        if (func_80208360(p + 0x418)) {
-            func_8020844C(p + 0x418);
+    if (GridSubMenu_IsVisibleFlag(p + 0x418)) {
+        if (GridSubMenu_IsOpenedFlag(p + 0x418)) {
+            GridSubMenu_MoveSelectionNext(p + 0x418);
             u32 buf2c[3];
             func_80208760(buf2c, p + 0x418);
             ((CBaseCur*)(p + 0xa0))->setRootPaneTranslate((const nw4r::math::VEC3*)(buf2c));
@@ -3205,12 +3205,12 @@ void func_801CBA04(void* self) {
         }
         return;
     }
-    if (func_8022DB6C(p + 0x468)) return;
-    if (func_801D3320(p + 0xe8)) {
-        if (func_801D3328(p + 0xe8)) {
+    if (isPresentActive(p + 0x468)) return;
+    if (sortMenuIsVisible28(p + 0xe8)) {
+        if (sortMenuGetFlag2B(p + 0xe8)) {
             func_801D3698(p + 0xe8);
             u32 buf20[3];
-            func_801D3454(buf20, p + 0xe8);
+            sortMenuFormatPaneText(buf20, p + 0xe8);
             ((CBaseCur*)(p + 0xa0))->setRootPaneTranslate((const nw4r::math::VEC3*)(buf20));
             goto sound_and_return2;
         }
@@ -3237,7 +3237,7 @@ void func_801CBA04(void* self) {
         }
         if (p[0x528]) {
             if (p[0x527] == 1) {
-                if (!func_801EB028(p + 0x3e4)) return;
+                if (!NumSel_GetField2E_B028(p + 0x3e4)) return;
                 sub = p + 0x54c;
                 entry = (u8)(p[0x525] * 10 + p[0x524]);
                 BdatGetItemType(GetCellKind((CItemBoxGridFull*)sub, (u16)entry) & 0xFFFF);
@@ -3247,9 +3247,9 @@ void func_801CBA04(void* self) {
                     p[0x529] = val;
                     if ((s8)val < 1) p[0x529] = (u8)count;
                 }
-                func_801EB314(p + 0x3e4);
-                func_801EB04C(p + 0x3e4, p[0x529]);
-                func_801EB064(p + 0x3e4,
+                NumSel_ShowPaneB_B314(p + 0x3e4);
+                NumSel_SetCaptionNum_B04C(p + 0x3e4, p[0x529]);
+                NumSel_FormatPicName_B064(p + 0x3e4,
                               func_801C5FC0((CItemBoxGridFull*)sub, (u16)entry) * (s8)p[0x529]);
                 goto sound_and_return2;
             } else if (p[0x527] == 2) {
@@ -3258,7 +3258,7 @@ void func_801CBA04(void* self) {
                 p[0x529] = val;
                 if ((s8)val > 1) p[0x529] = 0;
                 u32 buf08[3];
-                func_8022D0F8(buf08, p + 0x440, p[0x529]);
+                ExWin_CopyPanePair(buf08, p + 0x440, p[0x529]);
                 ((CBaseCur*)(p + 0xa0))->setRootPaneTranslate((const nw4r::math::VEC3*)(buf08));
                 goto sound_and_return2;
             }
@@ -3306,17 +3306,17 @@ void func_801CBDE8(void* self) {
     if (p[0x542]) return;
     if (CSysWin_getUnk34(p + 0x4ac)) return;
     if (CSysWin_getUnk34(p + 0x4e8)) return;
-    if (func_80208358(p + 0x418)) return;
-    if (func_8022DB6C(p + 0x468)) {
-        if (!func_8022DB74(p + 0x468)) return;
-        if (func_8022E490(p + 0x468)) return;
-        func_8022E3A8(p + 0x468);
+    if (GridSubMenu_IsVisibleFlag(p + 0x418)) return;
+    if (isPresentActive(p + 0x468)) {
+        if (!isPresentSettled(p + 0x468)) return;
+        if (isPresentBusy(p + 0x468)) return;
+        dispatchCounterStepBack(p + 0x468);
         playUISound__FUl(1);
         return;
     }
     if (p[0x528]) {
         if (p[0x527] != 1) return;
-        if (!func_801EB028(p + 0x3e4)) return;
+        if (!NumSel_GetField2E_B028(p + 0x3e4)) return;
         sub = p + 0x54c;
         entry = (u8)(p[0x524] + p[0x525] * 10);
         BdatGetItemType(GetCellKind((CItemBoxGridFull*)sub, (u16)entry) & 0xFFFF);
@@ -3328,17 +3328,17 @@ void func_801CBDE8(void* self) {
             p[0x529] = (u8)cnt;
             if ((s8)(u8)cnt < 1) p[0x529] = 1;
         }
-        func_801EB04C(p + 0x3e4, p[0x529]);
+        NumSel_SetCaptionNum_B04C(p + 0x3e4, p[0x529]);
         u32 v = func_801C5FC0((CItemBoxGridFull*)sub, entry);
         s32 total = (s8)p[0x529] * v;
-        func_801EB064(p + 0x3e4, total);
+        NumSel_FormatPicName_B064(p + 0x3e4, total);
         playUISound__FUl(1);
         return;
     }
-    if (func_801D3320(p + 0xe8)) {
-        if (!func_801D3328(p + 0xe8)) return;
+    if (sortMenuIsVisible28(p + 0xe8)) {
+        if (!sortMenuGetFlag2B(p + 0xe8)) return;
         func_801D3724(p + 0xe8);
-        func_801D3454(sbuf + 3, p + 0xe8);
+        sortMenuFormatPaneText(sbuf + 3, p + 0xe8);
         ((CBaseCur*)(p + 0xa0))->setRootPaneTranslate((const nw4r::math::VEC3*)(sbuf + 3));
         playUISound__FUl(1);
         return;
@@ -3394,17 +3394,17 @@ void func_801CC0EC(void* self) {
     if (p[0x542]) return;
     if (CSysWin_getUnk34(p + 0x4ac)) return;
     if (CSysWin_getUnk34(p + 0x4e8)) return;
-    if (func_80208358(p + 0x418)) return;
-    if (func_8022DB6C(p + 0x468)) {
-        if (!func_8022DB74(p + 0x468)) return;
-        if (func_8022E490(p + 0x468)) return;
-        func_8022E2F8(p + 0x468);
+    if (GridSubMenu_IsVisibleFlag(p + 0x418)) return;
+    if (isPresentActive(p + 0x468)) {
+        if (!isPresentSettled(p + 0x468)) return;
+        if (isPresentBusy(p + 0x468)) return;
+        stepPresentCounter(p + 0x468);
         playUISound__FUl(1);
         return;
     }
     if (p[0x528]) {
         if (p[0x527] != 1u) return;
-        if (!func_801EB028(p + 0x3e4)) return;
+        if (!NumSel_GetField2E_B028(p + 0x3e4)) return;
         entry = (u8)(p[0x524] + p[0x525] * 10);
         sub = p + 0x54c;
         BdatGetItemType(GetCellKind((CItemBoxGridFull*)sub, (u16)entry) & 0xFFFF);
@@ -3416,16 +3416,16 @@ void func_801CC0EC(void* self) {
             p[0x529] = (u8)cnt;
             if ((s8)(u8)cnt > chk) p[0x529] = (u8)chk;
         }
-        func_801EB04C(p + 0x3e4, p[0x529]);
+        NumSel_SetCaptionNum_B04C(p + 0x3e4, p[0x529]);
         s32 total = (s8)p[0x529] * func_801C5FC0((CItemBoxGridFull*)sub, entry);
-        func_801EB064(p + 0x3e4, total);
+        NumSel_FormatPicName_B064(p + 0x3e4, total);
         playUISound__FUl(1);
         return;
     }
-    if (func_801D3320(p + 0xe8)) {
-        if (!func_801D3328(p + 0xe8)) return;
-        func_801D377C(p + 0xe8);
-        func_801D3454(tmp, p + 0xe8);
+    if (sortMenuIsVisible28(p + 0xe8)) {
+        if (!sortMenuGetFlag2B(p + 0xe8)) return;
+        sortMenuPageDownStep(p + 0xe8);
+        sortMenuFormatPaneText(tmp, p + 0xe8);
         ((CBaseCur*)(p + 0xa0))->setRootPaneTranslate((const nw4r::math::VEC3*)tmp);
         playUISound__FUl(1);
         return;
@@ -3474,12 +3474,12 @@ void func_801CC0EC(void* self) {
 __declspec(noinline) void NextGridPage(void* self) {
     u8* sub;
     u8* p = (u8*)self;
-    if (func_801D3320(p + 0xe8)) return;
+    if (sortMenuIsVisible28(p + 0xe8)) return;
     if (p[0x528]) return;
     if (CSysWin_getUnk34(p + 0x4ac)) return;
     if (CSysWin_getUnk34(p + 0x4e8)) return;
-    if (func_80208358(p + 0x418)) return;
-    if (func_8022DB6C(p + 0x468)) return;
+    if (GridSubMenu_IsVisibleFlag(p + 0x418)) return;
+    if (isPresentActive(p + 0x468)) return;
     sub = p + 0x54c;
     IncGridPageIndex((CItemBoxGridFull*)sub);
     // Retail calls LookupIndexedByte twice: once for the compare, once for
@@ -3500,12 +3500,12 @@ __declspec(noinline) void NextGridPage(void* self) {
 __declspec(noinline) void PrevGridPage(void* self) {
     u8* sub;
     u8* p = (u8*)self;
-    if (func_801D3320(p + 0xe8)) return;
+    if (sortMenuIsVisible28(p + 0xe8)) return;
     if (p[0x528]) return;
     if (CSysWin_getUnk34(p + 0x4ac)) return;
     if (CSysWin_getUnk34(p + 0x4e8)) return;
-    if (func_80208358(p + 0x418)) return;
-    if (func_8022DB6C(p + 0x468)) return;
+    if (GridSubMenu_IsVisibleFlag(p + 0x418)) return;
+    if (isPresentActive(p + 0x468)) return;
     sub = p + 0x54c;
     DecGridPageIndex((CItemBoxGridFull*)sub);
     // retail branches over the store when a < b (bc 12,0), so negate
@@ -3525,23 +3525,23 @@ __declspec(noinline) void PrevGridPage(void* self) {
 void OpenSortMenu(void* self) {
     u8* p = (u8*)self;
     // one shared stack buffer: the merge result lands in words [3] and is
-    // consumed before func_801D3454 overwrites the whole array (retail
+    // consumed before sortMenuFormatPaneText overwrites the whole array (retail
     // reuses the same frame slots).
     u32 buf[5];
     if (!p[0x542] && !p[0x528] && !CSysWin_getUnk34(p + 0x4ac) &&
-        !CSysWin_getUnk34(p + 0x4e8) && !func_80208358(p + 0x418) &&
-        !func_8022DB6C(p + 0x468) && !p[0x544]) {
-        if (func_801D3320(p + 0xe8)) {
-            if (!func_801D3328(p + 0xe8)) return;
+        !CSysWin_getUnk34(p + 0x4e8) && !GridSubMenu_IsVisibleFlag(p + 0x418) &&
+        !isPresentActive(p + 0x468) && !p[0x544]) {
+        if (sortMenuIsVisible28(p + 0xe8)) {
+            if (!sortMenuGetFlag2B(p + 0xe8)) return;
             UpdateCursors(self);
-            func_801D216C(p + 0xa0, 0);
-            func_801D3408(p + 0xe8);
+            Cur_SetVisible(p + 0xa0, 0);
+            sortMenuToState4Page(p + 0xe8);
             playUISound__FUl(6);
             return;
         }
         // state word is compared signed (retail cmpwi)
         if (*(s32*)(p + 0x58) != 3) return;
-        if (!func_801D3328(p + 0xe8)) return;
+        if (!sortMenuGetFlag2B(p + 0xe8)) return;
         // fetch the layout pane and resolve two tag strings through its
         // vtable+0x3C accessor, then merge them back into the window text.
         void* obj = *(void**)(p + 0x44);
@@ -3551,14 +3551,14 @@ void OpenSortMenu(void* self) {
         // the third argument makes it execute first, matching retail.
         func_80137924(&buf[3], ((nw4r::lyt::Pane*)pane)->FindPaneByName((char*)strs + 0x2f8, 1),
                       ((nw4r::lyt::Pane*)pane)->FindPaneByName((char*)strs + 0x301, 1), pane);
-        func_801D3430(p + 0xe8, &buf[3]);
+        sortMenuSetLayoutPos(p + 0xe8, &buf[3]);
         func_801D353C(p + 0xe8, (u8)(p[0x547] + p[0x548]));
-        func_801D3454(buf, p + 0xe8);
+        sortMenuFormatPaneText(buf, p + 0xe8);
         ((CBaseCur*)(p + 0xa0))->setRootPaneTranslate((const nw4r::math::VEC3*)(buf));
-        func_801D216C(p + 0xa0, 1);
-        func_801D216C(p + 0x70, 0);
-        func_801D216C(p + 0xb8, 0);
-        func_801D3330(p + 0xe8);
+        Cur_SetVisible(p + 0xa0, 1);
+        Cur_SetVisible(p + 0x70, 0);
+        Cur_SetVisible(p + 0xb8, 0);
+        sortMenuOpenInit(p + 0xe8);
         p[0x526] = 0;
         playUISound__FUl(2);
     }
@@ -3575,51 +3575,51 @@ void HandleCancelBtn(void* self, int r4) {
     u8* p = (u8*)self;
     if (CSysWin_getUnk34(p + 0x4ac)) {
         if (!CSysWin_isActive(p + 0x4ac)) goto exit;
-        func_8022B8E4(p + 0x4ac);
-        func_801D216C(p + 0xa0, 0);
+        sysWinAdvancePhase3(p + 0x4ac);
+        Cur_SetVisible(p + 0xa0, 0);
         p[0x540] = 1;
         *(u32*)(p + 0x58) = 0x17;
         goto exit;
     }
     if (CSysWin_getUnk34(p + 0x4e8)) {
         if (!CSysWin_isActive(p + 0x4e8)) goto exit;
-        func_8022B8E4(p + 0x4e8);
-        func_801D216C(p + 0x70, 0);
+        sysWinAdvancePhase3(p + 0x4e8);
+        Cur_SetVisible(p + 0x70, 0);
         *(u32*)(p + 0x58) = 0x14;
         goto exit;
     }
-    if (func_80208358(p + 0x418)) {
-        if (!func_80208360(p + 0x418)) goto exit;
+    if (GridSubMenu_IsVisibleFlag(p + 0x418)) {
+        if (!GridSubMenu_IsOpenedFlag(p + 0x418)) goto exit;
         UpdateCursors(self);
-        func_801D216C(p + 0x70, 1);
-        func_801D216C(p + 0xa0, 0);
-        func_80208838(p + 0x418);
-        func_802083A4(p + 0x418);
+        Cur_SetVisible(p + 0x70, 1);
+        Cur_SetVisible(p + 0xa0, 0);
+        GridSubMenu_ClearSelection(p + 0x418);
+        GridSubMenu_AdvanceState2To3(p + 0x418);
         *(u32*)(p + 0x58) = 8;
         p[0x528] = 0;
         // retail inlines the r4-check tail here (copy 1 of 3)
         if (!r4) playUISound__FUl(6);
         goto exit;
     }
-    if (func_8022DB6C(p + 0x468)) {
-        if (!func_8022DB74(p + 0x468)) goto exit;
-        if (func_8022E490(p + 0x468)) {
-            func_8022DD68(p + 0x468);
+    if (isPresentActive(p + 0x468)) {
+        if (!isPresentSettled(p + 0x468)) goto exit;
+        if (isPresentBusy(p + 0x468)) {
+            advancePresentState(p + 0x468);
             *(u32*)(p + 0x58) = 0x11;
             UpdateCursors(self);
-            func_801D216C(p + 0x70, 1);
-            func_801D216C(p + 0xd0, 0);
-        } else if (func_8022E488(p + 0x468)) {
+            Cur_SetVisible(p + 0x70, 1);
+            Cur_SetVisible(p + 0xd0, 0);
+        } else if (getPresentPath(p + 0x468)) {
             func_8022E3AC(p + 0x468);
             u32 buf[4];
             func_8022E498(buf, p + 0x468);
             ((CBaseCur*)(p + 0xd0))->setRootPaneTranslate((const nw4r::math::VEC3*)(buf));
         } else {
-            func_8022DD68(p + 0x468);
+            advancePresentState(p + 0x468);
             *(u32*)(p + 0x58) = 0x11;
             UpdateCursors(self);
-            func_801D216C(p + 0x70, 1);
-            func_801D216C(p + 0xd0, 0);
+            Cur_SetVisible(p + 0x70, 1);
+            Cur_SetVisible(p + 0xd0, 0);
         }
         // tail copy 2
         if (!r4) playUISound__FUl(6);
@@ -3627,31 +3627,31 @@ void HandleCancelBtn(void* self, int r4) {
     }
     if (p[0x528]) {
         if (p[0x527] == 1) {
-            if (!func_801EB028(p + 0x3e4)) goto exit;
+            if (!NumSel_GetField2E_B028(p + 0x3e4)) goto exit;
             if (*(s32*)(p + 0x58) != 0x19) goto exit;
-            func_801EB178(p + 0x3e4);
+            NumSel_EnterState3Open_B178(p + 0x3e4);
             *(u32*)(p + 0x58) = 0x1a;
         } else if (p[0x527] == 2) {
             if (!((CExchangeWin*)(p + 0x440))->getField27()) goto exit;
-            func_8022D0D0(p + 0x440);
+            ExWin_RequestClose(p + 0x440);
             *(u32*)(p + 0x58) = 0x0e;
-            func_801D216C(p + 0x70, 1);
-            func_801D216C(p + 0xa0, 0);
+            Cur_SetVisible(p + 0x70, 1);
+            Cur_SetVisible(p + 0xa0, 0);
             UpdateCursors(self);
         }
         goto check_tail;
     }
     if (p[0x544]) {
         p[0x544] = 0;
-        func_801D216C(p + 0x70, 1);
-        func_801D216C(p + 0xa0, 0);
+        Cur_SetVisible(p + 0x70, 1);
+        Cur_SetVisible(p + 0xa0, 0);
         goto check_tail;
     }
-    if (func_801D3320(p + 0xe8)) {
-        if (!func_801D3328(p + 0xe8)) goto exit;
+    if (sortMenuIsVisible28(p + 0xe8)) {
+        if (!sortMenuGetFlag2B(p + 0xe8)) goto exit;
         UpdateCursors(self);
-        func_801D216C(p + 0xa0, 0);
-        func_801D3408(p + 0xe8);
+        Cur_SetVisible(p + 0xa0, 0);
+        sortMenuToState4Page(p + 0xe8);
     } else if (p[0x527] == 4) {
         ((s8*)p)[0x525] = -2;
         UpdateCursors(self);
@@ -3675,22 +3675,22 @@ void func_801CCAF0(void* self) {
     u8* p = (u8*)self;
     if (CSysWin_getUnk34(p + 0x4ac)) {
         if (CSysWin_isActive(p + 0x4ac)) {
-            func_8022B8E4(p + 0x4ac);
-            func_801D216C(p + 0xa0, 0);
+            sysWinAdvancePhase3(p + 0x4ac);
+            Cur_SetVisible(p + 0xa0, 0);
             *(u32*)(p + 0x58) = 0x17;
         }
         return;
     }
     if (CSysWin_getUnk34(p + 0x4e8)) {
         if (CSysWin_isActive(p + 0x4e8)) {
-            func_8022B8E4(p + 0x4e8);
-            func_801D216C(p + 0x70, 0);
+            sysWinAdvancePhase3(p + 0x4e8);
+            Cur_SetVisible(p + 0x70, 0);
             *(u32*)(p + 0x58) = 0x14;
         }
         return;
     }
-    if (func_80208358(p + 0x418)) {
-        if (!func_80208360(p + 0x418)) return;
+    if (GridSubMenu_IsVisibleFlag(p + 0x418)) {
+        if (!GridSubMenu_IsOpenedFlag(p + 0x418)) return;
         if ((func_802087B8(p + 0x418) & 0xFF) == 1) {
             sub = (CItemBoxGridFull*)(p + 0x54c);
             entry = (u8)(p[0x524] + p[0x525] * 10);
@@ -3736,20 +3736,20 @@ void func_801CCAF0(void* self) {
             }
             playUISound__FUl(3);
         }
-        func_801D216C(p + 0xa0, 0);
-        func_802083A4(p + 0x418);
+        Cur_SetVisible(p + 0xa0, 0);
+        GridSubMenu_AdvanceState2To3(p + 0x418);
         *(u32*)(p + 0x58) = 8;
         return;
     }
-    if (func_8022DB6C(p + 0x468)) {
-        if (!func_8022DB74(p + 0x468)) return;
-        if (func_8022E488(p + 0x468)) {
-            if (func_8022E490(p + 0x468)) {
-                func_8022DD68(p + 0x468);
+    if (isPresentActive(p + 0x468)) {
+        if (!isPresentSettled(p + 0x468)) return;
+        if (getPresentPath(p + 0x468)) {
+            if (isPresentBusy(p + 0x468)) {
+                advancePresentState(p + 0x468);
                 *(u32*)(p + 0x58) = 0x11;
                 UpdateCursors(p);
-                func_801D216C(p + 0x70, 1);
-                func_801D216C(p + 0xd0, 0);
+                Cur_SetVisible(p + 0x70, 1);
+                Cur_SetVisible(p + 0xd0, 0);
             } else {
                 sub = (CItemBoxGridFull*)(p + 0x54c);
                 entry = (u8)(p[0x524] + p[0x525] * 10);
@@ -3757,9 +3757,9 @@ void func_801CCAF0(void* self) {
                 u32 kind = GetCellKind((CItemBoxGridFull*)sub, (u16)entry);
                 s32 count = CheckCellState(sub, entry);
                 func_8022DD90(p + 0x468);
-                func_801D216C(p + 0xd0, 0);
-                u32 teachType = func_8022E4FC(p + 0x468);
-                u32 teachState = func_8022E504(p + 0x468);
+                Cur_SetVisible(p + 0xd0, 0);
+                u32 teachType = getPresentRankA(p + 0x468);
+                u32 teachState = getPresentRankB(p + 0x468);
                 if ((u8)teachState == 1) {
                     u32 table = lbl_eu_80664104;
                     if ((BdatGetU8Direct(table, (const char*)&lbl_eu_8050566C[0x212],
@@ -3801,12 +3801,12 @@ void func_801CCAF0(void* self) {
         playUISound__FUl(3);
         return;
     }
-    if (func_801D3320(p + 0xe8)) {
-        if (func_801D3328(p + 0xe8)) {
-            u32 val = func_801D37F4(p + 0xe8);
+    if (sortMenuIsVisible28(p + 0xe8)) {
+        if (sortMenuGetFlag2B(p + 0xe8)) {
+            u32 val = sortMenuGetPageSum(p + 0xe8);
             CItemBlock_setFlag120EC((p + (s8)p[0x6f])[0x62], val & 0xFF);
-            p[0x547] = (u8)func_801D3808(p + 0xe8);
-            p[0x548] = (u8)func_801D3810(p + 0xe8);
+            p[0x547] = (u8)sortMenuGetPageIdx(p + 0xe8);
+            p[0x548] = (u8)sortMenuGetSubPageIdx(p + 0xe8);
             HandleCancelBtn(p, 1);
             p[0x524] = 0;
             if ((s8)p[0x525] > 0) p[0x525] = 0;
@@ -3843,11 +3843,11 @@ void func_801CCAF0(void* self) {
             if (!(GetCellKind((CItemBoxGridFull*)sub, (u16)entry) & 0xFFFF)) return;
             *(u32*)(p + 0x58) = 0x12;
             u32 msg = (u32)BdatTouchStringCell((void*)&lbl_eu_8050566C[0x14f], &lbl_eu_8050566C[0x158], 0xa1);
-            func_8022B90C(p + 0x4e8, 0);
+            sysWinSwitchKindPane(p + 0x4e8, 0);
             func_8022B9B4(p + 0x4e8, msg, 0);
             func_8022BFC8(p + 0x4e8, 1);
-            func_8022B8B8(p + 0x4e8);
-            func_801D216C(p + 0x70, 0);
+            sysWinOpenPhase1(p + 0x4e8);
+            Cur_SetVisible(p + 0x70, 0);
             playUISound__FUl(5);
             return;
         }
@@ -3866,7 +3866,7 @@ void func_801CCAF0(void* self) {
     }
     if (mode == 1) {
         if (p[0x528]) {
-            if (!func_801EB028(p + 0x3e4)) return;
+            if (!NumSel_GetField2E_B028(p + 0x3e4)) return;
             if (*(s32*)(p + 0x58) != 0x19) return;
             sub = (CItemBoxGridFull*)(p + 0x54c);
             entry = (u8)(p[0x524] + p[0x525] * 10);
@@ -3891,12 +3891,12 @@ void func_801CCAF0(void* self) {
             CItemBlock_setCount((s32)((u32)CItemBlock_getPtr20E8() + add));
             DispatchItemEvt(p, item, (s8)count - (s8)p[0x529]);
             RebuildGridCat(p);
-            func_801EB178(p + 0x3e4);
+            NumSel_EnterState3Open_B178(p + 0x3e4);
             *(u32*)(p + 0x58) = 0x1a;
             playUISound__FUl(0x2f);
             return;
         }
-        if (!func_801EB028(p + 0x3e4)) return;
+        if (!NumSel_GetField2E_B028(p + 0x3e4)) return;
         if (*(s32*)(p + 0x58) != 3) return;
         {
             sub = (CItemBoxGridFull*)(p + 0x54c);
@@ -3904,37 +3904,37 @@ void func_801CCAF0(void* self) {
             u32 kindSell = GetCellKind((CItemBoxGridFull*)sub, (u16)entry);
             if (!(kindSell & 0xFFFF)) return;
             p[0x529] = 1;
-            func_801EB030(p + 0x3e4, (void*)FormatCellName(sub, entry));
-            func_801EB04C(p + 0x3e4, p[0x529]);
-            func_801EB064(p + 0x3e4, (s8)p[0x529] * func_801C5FC0(sub, entry));
+            NumSel_SetCaption_B030(p + 0x3e4, (void*)FormatCellName(sub, entry));
+            NumSel_SetCaptionNum_B04C(p + 0x3e4, p[0x529]);
+            NumSel_FormatPicName_B064(p + 0x3e4, (s8)p[0x529] * func_801C5FC0(sub, entry));
             if (((int (*)(CItemBoxGridFull*, u16))GetCellFlag1)(sub, entry)) {
                 *(u32*)(p + 0x58) = 0x12;
                 u32 msg2 = (u32)BdatTouchStringCell((void*)&lbl_eu_8050566C[0x310], &lbl_eu_8050566C[0x158], 0x17);
-                func_8022B90C(p + 0x4e8, 0);
+                sysWinSwitchKindPane(p + 0x4e8, 0);
                 func_8022B9B4(p + 0x4e8, msg2, 0);
                 func_8022BFC8(p + 0x4e8, 1);
-                func_8022B8B8(p + 0x4e8);
-                func_801D216C(p + 0x70, 0);
+                sysWinOpenPhase1(p + 0x4e8);
+                Cur_SetVisible(p + 0x70, 0);
             } else if ((u8)GetCellFlag0(sub, entry)) {
                 void* item2 = GetCellItemPtr((CItemBoxGridFull*)sub, (u16)entry);
                 if (((*(u32*)item2 >> 16) & 0xF) == 2) {
                     *(u32*)(p + 0x58) = 0x12;
                     u32 msg3 = (u32)BdatTouchStringCell((void*)&lbl_eu_8050566C[0x310], &lbl_eu_8050566C[0x158], 0x16);
-                    func_8022B90C(p + 0x4e8, 0);
+                    sysWinSwitchKindPane(p + 0x4e8, 0);
                     func_8022B9B4(p + 0x4e8, msg3, 0);
                     func_8022BFC8(p + 0x4e8, 1);
-                    func_8022B8B8(p + 0x4e8);
-                    func_801D216C(p + 0x70, 0);
+                    sysWinOpenPhase1(p + 0x4e8);
+                    Cur_SetVisible(p + 0x70, 0);
                 } else {
                     *(u32*)(p + 0x58) = 0x15;
                     u32 msg4 = (u32)BdatTouchStringCell((void*)&lbl_eu_8050566C[0x310], &lbl_eu_8050566C[0x158], 0x13);
                     u32 msg5 = (u32)BdatTouchStringCell((void*)&lbl_eu_8050566C[0x310], &lbl_eu_8050566C[0x158], 0x14);
                     u32 msg6 = (u32)BdatTouchStringCell((void*)&lbl_eu_8050566C[0x310], &lbl_eu_8050566C[0x158], 0x15);
                     func_8022B9B4(p + 0x4ac, msg4, 0);
-                    func_8022BF6C(p + 0x4ac, msg5, msg6);
+                    sysWinSetTwoTextValues(p + 0x4ac, msg5, msg6);
                     func_8022BFC8(p + 0x4ac, 0);
-                    func_8022B8B8(p + 0x4ac);
-                    func_801D216C(p + 0x70, 0);
+                    sysWinOpenPhase1(p + 0x4ac);
+                    Cur_SetVisible(p + 0x70, 0);
                     p[0x540] = 1;
                 }
             } else {
@@ -3947,10 +3947,10 @@ void func_801CCAF0(void* self) {
                         u32 msg8 = (u32)BdatTouchStringCell((void*)&lbl_eu_8050566C[0x310], &lbl_eu_8050566C[0x158], 0x14);
                         u32 msg9 = (u32)BdatTouchStringCell((void*)&lbl_eu_8050566C[0x310], &lbl_eu_8050566C[0x158], 0x15);
                         func_8022B9B4(p + 0x4ac, msg7, 0);
-                        func_8022BF6C(p + 0x4ac, msg8, msg9);
+                        sysWinSetTwoTextValues(p + 0x4ac, msg8, msg9);
                         func_8022BFC8(p + 0x4ac, 0);
-                        func_8022B8B8(p + 0x4ac);
-                        func_801D216C(p + 0x70, 0);
+                        sysWinOpenPhase1(p + 0x4ac);
+                        Cur_SetVisible(p + 0x70, 0);
                         p[0x540] = 1;
                     } else {
                         goto sell_qty;
@@ -3959,14 +3959,14 @@ void func_801CCAF0(void* self) {
                 sell_qty:
                     u32 lv = (p + (s8)p[0x6f])[0x62];
                     if (lv - 2 <= 7) {
-                        func_801EB410(p + 0x3e4, 0);
+                        NumSel_ApplyPaneVis_B410(p + 0x3e4, 0);
                     } else {
-                        func_801EB410(p + 0x3e4, 1);
+                        NumSel_ApplyPaneVis_B410(p + 0x3e4, 1);
                     }
-                    func_801EB0D4(p + 0x3e4);
+                    NumSel_EnterState1Close_B0D4(p + 0x3e4);
                     *(u32*)(p + 0x58) = 0x18;
                     p[0x528] = 1;
-                    func_801D216C(p + 0x70, 0);
+                    Cur_SetVisible(p + 0x70, 0);
                     playUISound__FUl(3);
                     return;
                 }
@@ -4012,10 +4012,10 @@ void func_801CCAF0(void* self) {
                 case 0x836: incrementEventCounter__FUl(0xc2); break;
                 }
             }
-            func_8022D0D0(p + 0x440);
+            ExWin_RequestClose(p + 0x440);
             *(u32*)(p + 0x58) = 0xe;
-            func_801D216C(p + 0x70, 1);
-            func_801D216C(p + 0xa0, 0);
+            Cur_SetVisible(p + 0x70, 1);
+            Cur_SetVisible(p + 0xa0, 0);
             UpdateCursors(p);
             if ((s8)p[0x529] == 0) playUISound__FUl(0x31);
             else playUISound__FUl(3);
@@ -4029,19 +4029,19 @@ void func_801CCAF0(void* self) {
             if (!(kind & 0xFFFF)) return;
             char fmtBuf[0x28];
             sprintf(fmtBuf, (const char*)&lbl_eu_8050566C[0x14c], func_801394D4(*(u16*)(p + 0x52e)));
-            func_8022D19C(p + 0x440, fmtBuf, (u32)func_801394D4(kind & 0xFFFF));
-            func_8022D0A4(p + 0x440);
+            ExWin_SetTwoTexts(p + 0x440, fmtBuf, (u32)func_801394D4(kind & 0xFFFF));
+            ExWin_RequestOpen(p + 0x440);
             p[0x528] = 1;
             *(u32*)(p + 0x58) = 0xc;
             p[0x529] = 1;
-            func_801D216C(p + 0x70, 0);
+            Cur_SetVisible(p + 0x70, 0);
             playUISound__FUl(3);
             return;
         }
     }
     if (p[0x528]) return;
-    if (!func_80208360(p + 0x418)) return;
-    if (!func_8022DB74(p + 0x468)) return;
+    if (!GridSubMenu_IsOpenedFlag(p + 0x418)) return;
+    if (!isPresentSettled(p + 0x468)) return;
     {
         sub = (CItemBoxGridFull*)(p + 0x54c);
         entry = (u8)((s8)p[0x524] + (s8)p[0x525] * 10);
@@ -4065,8 +4065,8 @@ void func_801CCAF0(void* self) {
         u32 sendVal = 0xFF;
         if (p[0x527] != 3) sendVal = listVal3;
         func_802084D4(p + 0x418, sendVal & 0xFF);
-        func_801D216C(p + 0x70, 0);
-        func_80208368(p + 0x418);
+        Cur_SetVisible(p + 0x70, 0);
+        GridSubMenu_BeginOpenAnim(p + 0x418);
         *(u32*)(p + 0x58) = 6;
         p[0x528] = 1;
         playUISound__FUl(3);
@@ -4102,14 +4102,14 @@ void func_801CDC40(void* self) {
     u8* p = (u8*)self;
     if (p[0x528]) return;
     if (CSysWin_getUnk34(p + 0x4ac)) return;
-    if (func_80208358(p + 0x418)) return;
-    if (func_8022DB6C(p + 0x468)) return;
-    if (func_801D3320(p + 0xe8)) return;
+    if (GridSubMenu_IsVisibleFlag(p + 0x418)) return;
+    if (isPresentActive(p + 0x468)) return;
+    if (sortMenuIsVisible28(p + 0xe8)) return;
     if (p[0x544]) {
         if (CSysWin_getUnk34(p + 0x4e8)) {
             if (!CSysWin_isActive(p + 0x4e8)) return;
-            func_8022B8E4(p + 0x4e8);
-            func_801D216C(p + 0x70, 0);
+            sysWinAdvancePhase3(p + 0x4e8);
+            Cur_SetVisible(p + 0x70, 0);
             *(u32*)(p + 0x58) = 0x14;
             return;
         }
@@ -4125,11 +4125,11 @@ void func_801CDC40(void* self) {
         } else {
             obj = (void*)BdatGetPtrDirect((const void*)*(u32*)(lbl_eu_80664510), &lbl_eu_8050566C[0x321], val & 0xFFFF);
         }
-        func_8022B90C(p + 0x4e8, 0);
+        sysWinSwitchKindPane(p + 0x4e8, 0);
         func_8022B9B4(p + 0x4e8, (u32)obj, 0);
         func_8022BFC8(p + 0x4e8, 1);
-        func_8022B8B8(p + 0x4e8);
-        func_801D216C(p + 0xa0, 0);
+        sysWinOpenPhase1(p + 0x4e8);
+        Cur_SetVisible(p + 0xa0, 0);
         return;
     }
     if (*(u32*)(p + 0x58) != 3) return;
@@ -4153,8 +4153,8 @@ void func_801CDC40(void* self) {
         int n = (int)(lbl_eu_80667F74 * (float)v);
         p[0x545] = (u8)n;
         p[0x546] = (u8)(v - (s8)(u8)n * 4);
-        func_801D216C(p + 0x70, 0);
-        func_801D216C(p + 0xa0, 1);
+        Cur_SetVisible(p + 0x70, 0);
+        Cur_SetVisible(p + 0xa0, 1);
         u32 buf[3];
         CopyTabSlotVec(buf, list, (u32)v);
         ((CBaseCur*)(p + 0xa0))->setRootPaneTranslate((const nw4r::math::VEC3*)(buf));
@@ -4173,9 +4173,9 @@ extern "C" void SelectCatRow(void* self) {
     if (((s8*)p)[0x525] == -1) return;
     if (CSysWin_getUnk34(p + 0x4ac)) return;
     if (CSysWin_getUnk34(p + 0x4e8)) return;
-    if (func_80208358(p + 0x418)) return;
-    if (func_8022DB6C(p + 0x468)) return;
-    if (func_801D3320(p + 0xe8)) return;
+    if (GridSubMenu_IsVisibleFlag(p + 0x418)) return;
+    if (isPresentActive(p + 0x468)) return;
+    if (sortMenuIsVisible28(p + 0xe8)) return;
     if (p[0x544]) return;
     ((s8*)p)[0x525] = -1;
     UpdateCursors(self);
@@ -4190,13 +4190,13 @@ extern "C" void SelectCatRow(void* self) {
 extern "C" u32 GetPromptState(void* self) {
     u8* p = (u8*)self;
     if (*(s32*)(p + 0x58) != 3) return 0;
-    if (func_801EB020(p + 0x3e4)) return 0;
-    if (func_80208358(p + 0x418)) return 0;
+    if (NumSel_GetActiveFlag_B020(p + 0x3e4)) return 0;
+    if (GridSubMenu_IsVisibleFlag(p + 0x418)) return 0;
     if (((CExchangeWin*)(p + 0x440))->getField24()) return 0;
-    if (func_8022DB6C(p + 0x468)) return 0;
+    if (isPresentActive(p + 0x468)) return 0;
     if (CSysWin_getUnk34(p + 0x4ac)) return 0;
     if (CSysWin_getUnk34(p + 0x4e8)) return 0;
-    if (func_801D3320(p + 0xe8)) return 2;
+    if (sortMenuIsVisible28(p + 0xe8)) return 2;
     if (p[0x544]) return 5;
     u32 cat = p[0x527];
     if (cat == 4) return 0x76;
@@ -4229,18 +4229,18 @@ extern "C" __declspec(noinline) void FinishOpenAnim(void* self) { // noinline: d
         ((nw4r::lyt::Layout*)(void*)*(u32*)(p + 0x44))->SetAnimationEnable((nw4r::lyt::AnimTransform*)(void*)*(u32*)(p + 0x50), 1);
         p[0x61] = 1;
         func_801D0328(self);
-        func_801D216C((void*)(p + 0x70), 1);
-        func_801D216C((void*)(p + 0x88), 1);
+        Cur_SetVisible((void*)(p + 0x70), 1);
+        Cur_SetVisible((void*)(p + 0x88), 1);
         UpdateCursors(self);
         if (p[0x542]) {
             *(u32*)(p + 0x58) = 0x12;
             {
                 u32 msg = (u32)BdatTouchStringCell((void*)&lbl_eu_8050566C[0x310], &lbl_eu_8050566C[0x158], 0x27);
-                func_8022B90C((void*)(p + 0x4e8), 0);
+                sysWinSwitchKindPane((void*)(p + 0x4e8), 0);
                 func_8022B9B4((void*)(p + 0x4e8), msg, 0);
                 func_8022BFC8((void*)(p + 0x4e8), 1);
-                func_8022B8B8((void*)(p + 0x4e8));
-                func_801D216C((void*)(p + 0x70), 0);
+                sysWinOpenPhase1((void*)(p + 0x4e8));
+                Cur_SetVisible((void*)(p + 0x70), 0);
             }
         }
     }
@@ -4275,27 +4275,27 @@ __declspec(noinline) void FinishCloseAnim(void* self) { // noinline: dispatch ta
     if (AnimRewindFrame((nw4r::lyt::AnimTransform*)obj, f)) {
         p[0x61] = 1;
         *(u32*)(p + 0x58) = 0;
-        func_801D216C(p + 0x70, 0);
+        Cur_SetVisible(p + 0x70, 0);
     }
 }
 #pragma optimize_for_size on
 extern "C" __declspec(noinline) void FinishNumSelect(void* self) { // noinline: dispatch table calls keep `bl`
     u8* p = (u8*)self;
-    if (func_801EB028((void*)(p + 0x3e4))) {
+    if (NumSel_GetField2E_B028((void*)(p + 0x3e4))) {
         *(u32*)(p + 0x58) = 3;
         p[0x528] = 0;
-        func_801D216C((void*)(p + 0x70), 1);
+        Cur_SetVisible((void*)(p + 0x70), 1);
         UpdateCursors(self);
         if (p[0x541]) {
             p[0x541] = 0;
             *(u32*)(p + 0x58) = 0x12;
             {
                 u32 msg = (u32)BdatTouchStringCell((void*)&lbl_eu_8050566C[0x310], &lbl_eu_8050566C[0x158], 0x10);
-                func_8022B90C((void*)(p + 0x4e8), 0);
+                sysWinSwitchKindPane((void*)(p + 0x4e8), 0);
                 func_8022B9B4((void*)(p + 0x4e8), msg, 0);
                 func_8022BFC8((void*)(p + 0x4e8), 1);
-                func_8022B8B8((void*)(p + 0x4e8));
-                func_801D216C((void*)(p + 0x70), 0);
+                sysWinOpenPhase1((void*)(p + 0x4e8));
+                Cur_SetVisible((void*)(p + 0x70), 0);
             }
         }
     }
@@ -4304,18 +4304,18 @@ extern "C" __declspec(noinline) void FinishNumSelect(void* self) { // noinline: 
 // Handle sub-object activation.
 __declspec(noinline) void ShowSubMenuCur(void* self) { // noinline: dispatch table calls keep `bl`
     u8* p = (u8*)self;
-    if (!func_80208360(p + 0x418)) return;
+    if (!GridSubMenu_IsOpenedFlag(p + 0x418)) return;
     *(u32*)(p + 0x58) = 7;
     u8 temp[16];
     func_80208760(temp, p + 0x418);
     ((CBaseCur*)(p + 0xa0))->setRootPaneTranslate((const nw4r::math::VEC3*)(temp));
-    func_801D216C(p + 0xa0, 1);
+    Cur_SetVisible(p + 0xa0, 1);
 }
 
 
 __declspec(noinline) void func_801CE524(void* self) { // noinline: dispatch table calls keep `bl`
     u8* p = (u8*)self;
-    if (!func_80208360(p + 0x418)) return;
+    if (!GridSubMenu_IsOpenedFlag(p + 0x418)) return;
     *(u32*)(p + 0x58) = 3;
     if ((func_802087B8(p + 0x418) & 0xFF) == 2) {
         // Confirmed: dispatch on the selected cell's category byte.
@@ -4410,16 +4410,16 @@ __declspec(noinline) void func_801CE524(void* self) { // noinline: dispatch tabl
             msg = (char*)BdatTouchStringCell(&lbl_eu_8050566C[0x326], &lbl_eu_8050566C[0x158], 0x42);
         }
 
-        func_8022B90C(p + 0x4e8, showDetail);
+        sysWinSwitchKindPane(p + 0x4e8, showDetail);
         func_8022B9B4(p + 0x4e8, (u32)msg, (u32)subMsg);
         func_8022BFC8(p + 0x4e8, 1);
-        func_8022B8B8(p + 0x4e8);
+        sysWinOpenPhase1(p + 0x4e8);
         *(u32*)(p + 0x58) = 0x12;
         p[0x528] = 0;
         return;
         }
         // Other categories: nothing to confirm.
-        func_801D216C(p + 0x70, 1);
+        Cur_SetVisible(p + 0x70, 1);
         p[0x528] = 0;
         return;
     }
@@ -4428,13 +4428,13 @@ __declspec(noinline) void func_801CE524(void* self) { // noinline: dispatch tabl
         p[0x541] = 0;
         *(u32*)(p + 0x58) = 0x12;
         void* msg = BdatTouchStringCell(&lbl_eu_8050566C[0x310], &lbl_eu_8050566C[0x158], 0x10);
-        func_8022B90C(p + 0x4e8, 0);
+        sysWinSwitchKindPane(p + 0x4e8, 0);
         func_8022B9B4(p + 0x4e8, (u32)msg, 0);
         func_8022BFC8(p + 0x4e8, 1);
-        func_8022B8B8(p + 0x4e8);
-        func_801D216C(p + 0x70, 0);
+        sysWinOpenPhase1(p + 0x4e8);
+        Cur_SetVisible(p + 0x70, 0);
     } else {
-        func_801D216C(p + 0x70, 1);
+        Cur_SetVisible(p + 0x70, 1);
     }
     p[0x528] = 0;
 }
@@ -4444,10 +4444,10 @@ __declspec(noinline) void ShowExchangeCur(void* self) { // noinline: dispatch ta
     u8* p = (u8*)self;
     if (!((CExchangeWin*)(p + 0x440))->getField27()) return;
     *(u32*)(p + 0x58) = 0xd;
-    func_801D216C(p + 0xa0, 1);
+    Cur_SetVisible(p + 0xa0, 1);
     u8 temp[16];
     u8 val529 = p[0x529];
-    func_8022D0F8(temp, p + 0x440, val529);
+    ExWin_CopyPanePair(temp, p + 0x440, val529);
     reinterpret_cast<CBaseCur*>(p + 0xa0)->setRootPaneTranslate((const nw4r::math::VEC3*)(temp));
 }
 
@@ -4463,18 +4463,18 @@ __declspec(noinline) void FinishExchange(void* self) { // noinline: dispatch tab
 // Handle sub-object activation (variant).
 __declspec(noinline) void ShowPresentCur(void* self) { // noinline: dispatch table calls keep `bl`
     u8* p = (u8*)self;
-    if (!func_8022DB74(p + 0x468)) return;
+    if (!isPresentSettled(p + 0x468)) return;
     *(u32*)(p + 0x58) = 0x10;
     u8 temp[16];
     func_8022E498(temp, p + 0x468);
     ((CBaseCur*)(p + 0xd0))->setRootPaneTranslate((const nw4r::math::VEC3*)(temp));
-    func_801D216C(p + 0xd0, 1);
+    Cur_SetVisible(p + 0xd0, 1);
 }
 
 // Check if sub-obj is active; set state to 3 and clear flag.
 __declspec(noinline) void FinishPresent(void* self) { // noinline: dispatch table calls keep `bl`
     u8* p = (u8*)self;
-    if (func_8022DB74(p + 0x468)) {
+    if (isPresentSettled(p + 0x468)) {
         *(u32*)(p + 0x58) = 3;
         p[0x528] = 0;
     }
@@ -4485,7 +4485,7 @@ __declspec(noinline) void OnSysWinOpen(void* self) { // noinline: dispatch table
     u8* p = (u8*)self;
     if (CSysWin_isActive(p + 0x4ac)) {
         *(u32*)(p + 0x58) = 0x16;
-        func_801D216C(p + 0xa0, 1);
+        Cur_SetVisible(p + 0xa0, 1);
         UpdateCursors(self);
     }
 }
@@ -4499,16 +4499,16 @@ void HandleSysWinOK(void* self) {
         u8 cat = *(u8*)((u8*)self + (s8)idx + 0x62);
         u32 diff = cat - 2;
         if (diff <= 7) {
-            func_801EB410(p + 0x3e4, 0);
+            NumSel_ApplyPaneVis_B410(p + 0x3e4, 0);
         } else {
-            func_801EB410(p + 0x3e4, 1);
+            NumSel_ApplyPaneVis_B410(p + 0x3e4, 1);
         }
-        func_801EB0D4(p + 0x3e4);
+        NumSel_EnterState1Close_B0D4(p + 0x3e4);
         *(u32*)(p + 0x58) = 0x18;
         p[0x528] = 1;
     } else {
         *(u32*)(p + 0x58) = 3;
-        func_801D216C(p + 0x70, 1);
+        Cur_SetVisible(p + 0x70, 1);
         UpdateCursors(self);
     }
 }
@@ -4519,13 +4519,13 @@ __declspec(noinline) void FinishSysWin(void* self) { // noinline: dispatch table
     if (!CSysWin_isActive(p + 0x4e8)) return;
     *(u32*)(p + 0x58) = 3;
     if (!p[0x542] && !p[0x544]) {
-        func_801D216C(p + 0x70, 1);
+        Cur_SetVisible(p + 0x70, 1);
     }
     if (!p[0x544]) {
         UpdateCursors(self);
     }
     if (p[0x544]) {
-        func_801D216C(p + 0xa0, 1);
+        Cur_SetVisible(p + 0xa0, 1);
     }
 }
 
@@ -4781,7 +4781,7 @@ done_item:
 // - category > 0: sprintf with the raw category value.
 // - category == 0 / unlisted negatives: plain default string.
 // - category -2/-3: language-specific strings returned by
-//   func_eu_802B148C/func_eu_802B1474 are used AS the format string, and the
+//   getErrMesText16/getErrMesText15 are used AS the format string, and the
 //   matching pane-colour tag pair goes through PaneMatSetTevColorsByName.
 // optimize_for_size: retail keeps a stmw r29 block save.
 #pragma push
@@ -4814,10 +4814,10 @@ extern "C" void SetCellCaption(void* self, s8 kind, void* item, u16 idx) {
     } else if (kind == 0) {
         sprintf(msgBuf, (const char*)&lbl_eu_8050566C[0x3af]);
     } else if (kind == -2) {
-        sprintf(msgBuf, func_eu_802B148C());
+        sprintf(msgBuf, getErrMesText16());
         PaneMatSetTevColorsByName(*(void**)(p + 0x44), nameBuf, (void*)&lbl_eu_806644E8, (void*)&lbl_eu_806644F0);
     } else if (kind == -3) {
-        sprintf(msgBuf, func_eu_802B1474());
+        sprintf(msgBuf, getErrMesText15());
         PaneMatSetTevColorsByName(*(void**)(p + 0x44), nameBuf, (void*)&lbl_eu_806644F8, (void*)&lbl_eu_80664500);
     } else {
         sprintf(msgBuf, (const char*)&lbl_eu_8050566C[0x3af]);
@@ -4915,7 +4915,7 @@ extern "C" void SetCellMarkVis(void* self, u32 val, u32 idx) {
     u32 obj = *(u32*)(p + 0x44);
     u32 sub = *(u32*)(obj + 0x10);
     void* ret = ((nw4r::lyt::Pane*)sub)->FindPaneByName(buf, 1);
-    func_80124270(ret, val);
+    setPaneVisible(ret, val);
 }
 #pragma optimize_for_size off
 
@@ -4955,10 +4955,10 @@ extern "C" void func_801CFD2C(void* self) {
         }
         void* pane = *(void**)(*(u32*)(p + 0x44) + 0x10);
         void* t1 = ((nw4r::lyt::Pane*)pane)->FindPaneByName(buf1, 1);
-        func_80124270(t1, isCurTab);
+        setPaneVisible(t1, isCurTab);
         pane = *(void**)(*(u32*)(p + 0x44) + 0x10);
         void* t2 = ((nw4r::lyt::Pane*)pane)->FindPaneByName(buf2, 1);
-        func_80124270(t2, isOtherTab);
+        setPaneVisible(t2, isOtherTab);
         SetTabHeader(self, cat, (u8)i);
     }
     func_801D05D4(self, 0);
@@ -5012,7 +5012,7 @@ void func_801CFFEC(void* self) {
     if ((u8)rows > 1) {
         void* pane = *(void**)(*(u32**)(p + 0x44) + 4);
         void* ret = ((nw4r::lyt::Pane*)pane)->FindPaneByName((char*)&lbl_eu_8050566C[0x547], 1);
-        func_80124270(ret, 1);
+        setPaneVisible(ret, 1);
         u32 visRows = rows & 0xFF;
         u8 i;
         for (i = 0; i < 10; i++) {
@@ -5021,7 +5021,7 @@ void func_801CFFEC(void* self) {
             void* pane2 = *(void**)(*(u32**)(p + 0x44) + 4);
             void* ret2 = ((nw4r::lyt::Pane*)pane2)->FindPaneByName(buf, 1);
             // visible while i < visRows (borrow trick)
-            func_80124270(ret2, ((u32)i - visRows) >> 31);
+            setPaneVisible(ret2, ((u32)i - visRows) >> 31);
         }
         u8 pageDisp = (u8)(sub->field_2804 + 1);
         setLayoutTextBoxNumber(*(nw4r::lyt::Layout**)(p + 0x44), (char*)&lbl_eu_8050566C[0x55d], pageDisp);
@@ -5052,7 +5052,7 @@ void func_801CFFEC(void* self) {
     } else {
         void* pane = *(void**)(*(u32**)(p + 0x44) + 4);
         void* ret = ((nw4r::lyt::Pane*)pane)->FindPaneByName((char*)&lbl_eu_8050566C[0x547], 1);
-        func_80124270(ret, 0);
+        setPaneVisible(ret, 0);
     }
     u8 i;
     for (i = 0; i < 3; i++) {
@@ -5062,7 +5062,7 @@ void func_801CFFEC(void* self) {
         void* ret = ((nw4r::lyt::Pane*)pane)->FindPaneByName(buf, 1);
         if (ret) {
             u8 max = (u8)LookupIndexedByte((char*)sub);
-            func_80124270(ret, ((u32)i - (u32)max) >> 31);
+            setPaneVisible(ret, ((u32)i - (u32)max) >> 31);
         }
     }
     u8 idx;
@@ -5181,8 +5181,8 @@ extern "C" void func_801D05D4(void* self, int val) {
                     isCurTab = 0;
                     isOtherTab = 1;
                 }
-                func_80124270(((nw4r::lyt::Pane*)*(void**)(*(u32*)(p + 0x44) + 0x10))->FindPaneByName(pane1, 1), isCurTab);
-                func_80124270(((nw4r::lyt::Pane*)*(void**)(*(u32*)(p + 0x44) + 0x10))->FindPaneByName(pane2, 1), isOtherTab);
+                setPaneVisible(((nw4r::lyt::Pane*)*(void**)(*(u32*)(p + 0x44) + 0x10))->FindPaneByName(pane1, 1), isCurTab);
+                setPaneVisible(((nw4r::lyt::Pane*)*(void**)(*(u32*)(p + 0x44) + 0x10))->FindPaneByName(pane2, 1), isOtherTab);
             }
             i++;
         } while (i < 2);
@@ -5235,7 +5235,7 @@ extern "C" __declspec(noinline) void UpdateCursors(void* self) {
     nw4r::math::VEC3 posDef;
     nw4r::math::VEC3 posWin;
     if (CSysWin_getUnk34(p + 0x4ac)) {
-        func_8022C1B4(&posWin, (void*)(p + 0x4ac), p[0x540]);
+        sysWinGetPaneScreenPos(&posWin, (void*)(p + 0x4ac), p[0x540]);
         ((CBaseCur*)(p + 0xa0))->setRootPaneTranslate((const nw4r::math::VEC3*)(&posWin));
         return;
     }
@@ -5246,8 +5246,8 @@ extern "C" __declspec(noinline) void UpdateCursors(void* self) {
         void* t2 = ((nw4r::lyt::Pane*)*(void**)(*(u32*)(p + 0x44) + 0x10))->FindPaneByName((char*)&lbl_eu_8050566C[0x301], 1);
         posT2.x = posT2.x * *(float*)((u8*)t2 + 0x44);
         ((CBaseCur*)(p + 0xb8))->setRootPaneTranslate((const nw4r::math::VEC3*)(&posT2));
-        func_801D216C(p + 0x70, 0);
-        func_801D216C(p + 0xb8, 1);
+        Cur_SetVisible(p + 0x70, 0);
+        Cur_SetVisible(p + 0xb8, 1);
         return;
     }
     if (idx == -1) {
@@ -5258,8 +5258,8 @@ extern "C" __declspec(noinline) void UpdateCursors(void* self) {
         void* t2 = ((nw4r::lyt::Pane*)*(void**)(*(u32*)(p + 0x44) + 0x10))->FindPaneByName((char*)&lbl_eu_8050566C[0x301], 1);
         posT1.x = posT1.x * *(float*)((u8*)t2 + 0x44);
         ((CBaseCur*)(p + 0x70))->setRootPaneTranslate((const nw4r::math::VEC3*)(&posT1));
-        func_801D216C(p + 0x70, 1);
-        func_801D216C(p + 0xb8, 0);
+        Cur_SetVisible(p + 0x70, 1);
+        Cur_SetVisible(p + 0xb8, 0);
         return;
     }
     {
@@ -5270,8 +5270,8 @@ extern "C" __declspec(noinline) void UpdateCursors(void* self) {
         void* t2 = ((nw4r::lyt::Pane*)*(void**)(*(u32*)(p + 0x44) + 0x10))->FindPaneByName((char*)&lbl_eu_8050566C[0x301], 1);
         posDef.x = posDef.x * *(float*)((u8*)t2 + 0x44);
         ((CBaseCur*)(p + 0x70))->setRootPaneTranslate((const nw4r::math::VEC3*)(&posDef));
-        func_801D216C(p + 0x70, 1);
-        func_801D216C(p + 0xb8, 0);
+        Cur_SetVisible(p + 0x70, 1);
+        Cur_SetVisible(p + 0xb8, 0);
     }
 }
 
@@ -5383,12 +5383,12 @@ void func_801D0E88(void* self, int kind, int id) {
         CTaskGame_enumListCtor(&holder);
         u8 i;
         for (i = 0; i < 3; i++) {
-            func_800F4A98(CTaskGame_enumListGet(&holder), holder.names[i], 0);
+            startEnumObjects(CTaskGame_enumListGet(&holder), holder.names[i], 0);
             CItemBoxGridEnumList* list = (CItemBoxGridEnumList*)CTaskGame_enumListGet(&holder);
             if (list->field_620 >= 1) {
                 list = (CItemBoxGridEnumList*)CTaskGame_enumListGet(&holder);
                 CItemBoxGridEnumSlot* slot =
-                    (CItemBoxGridEnumSlot*)func_800F6EC0(list, 0);
+                    (CItemBoxGridEnumSlot*)getEntryAt(list, 0);
                 if (slot->field_04) {
                     CItemBoxGridMoveObj* mv = (CItemBoxGridMoveObj*)
                         getCfObjectPc__FPQ22cf12CfObjectMove(slot->field_04);
@@ -5533,7 +5533,7 @@ void func_801C4BB4(void* self) {
         if ((u16)start == 0) continue;
         end = func_801380A0((u16)(cat + 1));
         for (id = start; (u16)id < end; id++) {
-            tp = func_8009CF8C((u16)id + 0x220);
+            tp = CtrlRemote_TouchBitByArg((u16)id + 0x220);
             if (tp >= 0xFE || tp == 0 || tp == 0xC8) continue;
             tbl = (void*)XB_TABLES[func_80138138((u16)id)];
             if ((u8)BdatGetU8Direct((u32)tbl, &XB_K[0], (u16)id)) {
@@ -5612,21 +5612,21 @@ void func_801C5254(void* self) {
     void* bdat = getFP__FPCc(&lbl_eu_8050566C[0xd5]);
     if (!bdat) return;
 
-    u16 count = (u16)func_8003B1EC(bdat);
+    u16 count = (u16)Bdat_GetMaxRow_B1EC(bdat);
     u16 i;
     for (i = 1; i <= count; i++) {
-        if (!func_8009CF8C((u32)(i + 0x2596))) continue;
+        if (!CtrlRemote_TouchBitByArg((u32)(i + 0x2596))) continue;
 
         u32 flag1 = BdatGetU16Direct(bdat, (const char*)&lbl_eu_8050566C[0xe2], (u32)i);
         if (flag1 & 0xFFFF) {
-            u8 val = (u8)func_8009CF8C((flag1 & 0xFFFF) + 0x220);
+            u8 val = (u8)CtrlRemote_TouchBitByArg((flag1 & 0xFFFF) + 0x220);
             if (val >= 0xFE) continue;
             if (val > (u8)BdatGetU8Direct((u32)bdat, (const char*)&lbl_eu_8050566C[0xea], (u32)i)) continue;
         } else {
             u32 hasVal = BdatGetU8Direct((u32)bdat, (const char*)&lbl_eu_8050566C[0xf3], (u32)i);
             if (hasVal & 0xFF) {
                 if ((u8)BdatGetU8Direct((u32)bdat, (const char*)&lbl_eu_8050566C[0xfa], (u32)i)
-                    <= (u8)func_8009CF8C((hasVal & 0xFF) + 0x7fc)) continue;
+                    <= (u8)CtrlRemote_TouchBitByArg((hasVal & 0xFF) + 0x7fc)) continue;
             }
         }
 
@@ -5643,7 +5643,7 @@ void func_801C5254(void* self) {
 // dialogType * 2; bits at +0xE8/+0xE9 select the check by category.
 void func_801C53D8(void* self) {
     u32 bdat = lbl_eu_80664110;
-    s32 count = (s32)func_8003B1EC((void*)bdat);
+    s32 count = (s32)Bdat_GetMaxRow_B1EC((void*)bdat);
     u8 i;
     for (i = 1; i <= count; i++) {
         u32 flag = BdatGetU8Direct(bdat, (const char*)&lbl_eu_8050566C[0x109], (u32)i);
@@ -5761,10 +5761,10 @@ extern "C" int OnFileEvent__12CItemBoxGridFP10CEventFile(void* self, void* event
     // Hide the icons that do not apply to this box mode.
     if (p[0x527] != 1) {
         void* iconPane = paneHost->FindPaneByName((char*)&lbl_eu_8050566C[0x6c2], 1);
-        func_80124270(iconPane, 0);
+        setPaneVisible(iconPane, 0);
         if (p[0x527] != 2) {
             void* iconPane2 = paneHost->FindPaneByName((char*)&lbl_eu_8050566C[0x59b], 1);
-            func_80124270(iconPane2, 0);
+            setPaneVisible(iconPane2, 0);
         }
     }
     // Snapshot the cursor pane's initial translation.
@@ -5802,7 +5802,7 @@ extern "C" int OnFileEvent__12CItemBoxGridFP10CEventFile(void* self, void* event
     code80135FDC_setVec3((float*)&vecMin, lbl_eu_80667F90, lbl_eu_80667F94, lbl_eu_80667F34);
     CibgVec3 vecMax;
     code80135FDC_setVec3((float*)&vecMax, lbl_eu_80667F98, lbl_eu_80667F94, lbl_eu_80667F34);
-    func_801D24E8(p + 0x88, vecMax, vecMin);
+    Cur_SetTwoPanes09(p + 0x88, vecMax, vecMin);
     u8 cur18Buf[0x18];
     __ct__CCur18(cur18Buf, CUICfManager_getArcResourceAccessor());
     func_8018B0FC(p + 0xa0, cur18Buf);
@@ -5838,7 +5838,7 @@ extern "C" int OnFileEvent__12CItemBoxGridFP10CEventFile(void* self, void* event
     LayoutSetTextBoxFmtValue(layout, (char*)&lbl_eu_8050566C[0x72d], msgD, 0);
     if (p[0x527] != 4) {
         void* iconPane3 = paneHost->FindPaneByName((char*)&lbl_eu_8050566C[0x637], 1);
-        func_80124270(iconPane3, 0);
+        setPaneVisible(iconPane3, 0);
         LayoutSetTextBoxFmtValue(layout, (char*)&lbl_eu_8050566C[0x72d], (char*)&lbl_eu_8050566C[0x3af], 0);
     }
     // Mode 2 (party members): the first member with the relevant skill gets
@@ -5848,7 +5848,7 @@ extern "C" int OnFileEvent__12CItemBoxGridFP10CEventFile(void* self, void* event
         u8 j;
         for (j = 0; j < cnt; j++) {
             void* chp = (u8*)func_8009EC9C(GetCollectedFlagByte(j)) + 0x3534;
-            if (!func_8026178C(chp, 0x8f) && !func_8026178C(chp, 0x93)) continue;
+            if (!Counter_TestBit(chp, 0x8f) && !Counter_TestBit(chp, 0x93)) continue;
             CEquipBoxFourShorts cA = func_80139658(layout, &lbl_eu_8050566C[0x59b], 0);
             CEquipBoxFourShorts cB = func_80139658(layout, &lbl_eu_8050566C[0x59b], 1);
             struct FadeRefBlk {
@@ -5902,7 +5902,7 @@ extern "C" int OnFileEvent__12CItemBoxGridFP10CEventFile(void* self, void* event
         u32* fileData = *(u32**)(p + 0x30);
         void* data = (void*)fileData[1];
         fileData[1] = 0;
-        func_8003AA34();
+        Bdat_GetTable_AA34();
         if (getFP__FPCc(&lbl_eu_8050566C[0x2d0]) == NULL)
             setBdatEntry__5CBdatFUlPv(2, data);
         lbl_eu_80664508 = (u32)getFP__FPCc(&lbl_eu_8050566C[0x2d0]);
@@ -5916,7 +5916,7 @@ extern "C" int OnFileEvent__12CItemBoxGridFP10CEventFile(void* self, void* event
         void* data = (void*)fileData[1];
         fileData[1] = 0;
         *(void**)(p + 0x38) = data;
-        func_8003AA34();
+        Bdat_GetTable_AA34();
         if (getFP__FPCc(&lbl_eu_8050566C[0x2ee]) == NULL)
             setBdatEntry__5CBdatFUlPv(5, *(void**)(p + 0x38));
         lbl_eu_80664510 = (u32)getFP__FPCc(&lbl_eu_8050566C[0x2ee]);
@@ -5930,20 +5930,20 @@ extern "C" int OnFileEvent__12CItemBoxGridFP10CEventFile(void* self, void* event
 void sinit_801D1E30(void) {
     SplitU32ToS16s((short*)&lbl_eu_80664488, 0);
     SplitU32ToS16s((short*)&lbl_eu_80664490, 0);
-    func_801C4B60((void*)&lbl_eu_80664498, 0x79, 0x49, 0x07, 0x00);
-    func_801C4B60((void*)&lbl_eu_806644A0, 0xED, 0xCD, 0x83, 0x00);
-    func_801C4B60((void*)&lbl_eu_806644A8, 0x1A, 0x43, 0x53, 0x00);
-    func_801C4B60((void*)&lbl_eu_806644B0, 0xC4, 0xE8, 0xEB, 0x00);
-    func_801C4B60((void*)&lbl_eu_806644B8, 0x74, 0x54, 0x1D, 0x00);
-    func_801C4B60((void*)&lbl_eu_806644C0, 0xD5, 0xB9, 0x78, 0x00);
-    func_801C4B60((void*)&lbl_eu_806644C8, 0x3D, 0x68, 0x78, 0x00);
-    func_801C4B60((void*)&lbl_eu_806644D0, 0xC4, 0xE8, 0xEB, 0x00);
+    setGXColorS10((void*)&lbl_eu_80664498, 0x79, 0x49, 0x07, 0x00);
+    setGXColorS10((void*)&lbl_eu_806644A0, 0xED, 0xCD, 0x83, 0x00);
+    setGXColorS10((void*)&lbl_eu_806644A8, 0x1A, 0x43, 0x53, 0x00);
+    setGXColorS10((void*)&lbl_eu_806644B0, 0xC4, 0xE8, 0xEB, 0x00);
+    setGXColorS10((void*)&lbl_eu_806644B8, 0x74, 0x54, 0x1D, 0x00);
+    setGXColorS10((void*)&lbl_eu_806644C0, 0xD5, 0xB9, 0x78, 0x00);
+    setGXColorS10((void*)&lbl_eu_806644C8, 0x3D, 0x68, 0x78, 0x00);
+    setGXColorS10((void*)&lbl_eu_806644D0, 0xC4, 0xE8, 0xEB, 0x00);
     SplitU32ToS16s((short*)&lbl_eu_806644D8, 0);
     SplitU32ToS16s((short*)&lbl_eu_806644E0, 0);
-    func_801C4B60((void*)&lbl_eu_806644E8, 0x12, 0xA3, 0xE7, 0x00);
-    func_801C4B60((void*)&lbl_eu_806644F0, 0xFF, 0xFF, 0xFF, 0x00);
-    func_801C4B60((void*)&lbl_eu_806644F8, 0xB3, 0x09, 0xC0, 0x00);
-    func_801C4B60((void*)&lbl_eu_80664500, 0xFF, 0xFF, 0xFF, 0x00);
+    setGXColorS10((void*)&lbl_eu_806644E8, 0x12, 0xA3, 0xE7, 0x00);
+    setGXColorS10((void*)&lbl_eu_806644F0, 0xFF, 0xFF, 0xFF, 0x00);
+    setGXColorS10((void*)&lbl_eu_806644F8, 0xB3, 0x09, 0xC0, 0x00);
+    setGXColorS10((void*)&lbl_eu_80664500, 0xFF, 0xFF, 0xFF, 0x00);
 }
 
 extern u8 lbl_eu_805347F8[];

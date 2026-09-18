@@ -20,14 +20,14 @@ extern "C" void func_8049C868();   // CScnBloom (foreign TU)
 
 // Opaque render-work object (CScnTexWorkMan instance), only forwarded.
 struct CTexWorkObj;
-extern "C" GXTexObj* func_80490208(CTexWorkObj* obj, u16 w, u16 h, u32 fmt);
-extern "C" void func_804902D8(CTexWorkObj* obj, GXTexObj* tex);
+extern "C" GXTexObj* TexMan_AllocBuffer_0208(CTexWorkObj* obj, u16 w, u16 h, u32 fmt);
+extern "C" void TexMan_ReleaseArg_02D8(CTexWorkObj* obj, GXTexObj* tex);
 extern "C" void func_8043E928__5CViewFRQ22ml5CRectP5CView(ml::CRect* rect,
                                                            CView* view);
-extern "C" void func_804948F4(int fmt, int mode);
-extern "C" void func_80494A64(int a, int b, int c);
-extern "C" void func_80494C30(int a, int b, int c);
-extern "C" void func_804943E0(GXTexObj* tex, int p2, int p3);
+extern "C" void setupLightVtxFormat(int fmt, int mode);
+extern "C" void setupLightTevColor(int a, int b, int c);
+extern "C" void setupLightTevAlpha(int a, int b, int c);
+extern "C" void TexObj_BlitViewRect(GXTexObj* tex, int p2, int p3);
 struct RectRegion;
 extern "C" void func_80494F10(ml::CRect* rect, RectRegion* region,
                               ml::CCol4* col);
@@ -77,7 +77,7 @@ struct CScnBlendView {
     CTexWorkObj* mTexWork;
 };
 
-extern "C" void func_80498DE8(CScnBlend* ths, CScnBlendView* param);  // defined below
+extern "C" void Blend_DrawFilter(CScnBlend* ths, CScnBlendView* param);  // defined below
 
 extern "C" CScnBlend* __dt__9CScnBlendFv(CScnBlend* ths, int flag); // defined below
 
@@ -88,7 +88,7 @@ extern "C" CScnBlend* __dt__9CScnBlendFv(CScnBlend* ths, int flag); // defined b
 // RTTI locators lbl_eu_806639E8/lbl_eu_806639F0 live in the CScnItemCamera TU).
 u32 lbl_eu_8056E9E8[5] = {
     (u32)&lbl_eu_806639E8, 0x00000000, (u32)&__dt__9CScnBlendFv,
-    (u32)&func_8049C868, (u32)&func_80498DE8,
+    (u32)&func_8049C868, (u32)&Blend_DrawFilter,
 };
 u32 lbl_eu_8056E9FC[3] = {
     (u32)&lbl_eu_806639F0, 0x00000000, 0x00000000,
@@ -152,7 +152,7 @@ void func_80498D98(CScnBlend* blend, int enable) {
     }
 }
 
-extern "C" void func_80498DC0(CScnBlend* ths, u32 enable) {
+extern "C" void Blend_SetFlag2(CScnBlend* ths, u32 enable) {
     if (enable != 0) {
         ths->mFlags |= 2;
     } else {
@@ -162,13 +162,13 @@ extern "C" void func_80498DC0(CScnBlend* ths, u32 enable) {
 
 
 // ============================================================================
-// func_80498DE8 - full-screen blend filter draw (CScnBlend vtable slot).
+// Blend_DrawFilter - full-screen blend filter draw (CScnBlend vtable slot).
 // Skips when the region height (= tint alpha) matches the pool constant.
 // With flag bit0 clear the quad is drawn straight into the frame; with bit0
 // set the current view is first rendered into a texture (halved when bit1 is
 // set) and drawn back with a TEV stage modulated by the negated tint color.
 // ============================================================================
-extern "C" void func_80498DE8(CScnBlend* ths, CScnBlendView* param) {
+extern "C" void Blend_DrawFilter(CScnBlend* ths, CScnBlendView* param) {
     ml::CRect rect;
     func_8043E928__5CViewFRQ22ml5CRectP5CView(&rect, CView::getCurrentView());
 
@@ -182,7 +182,7 @@ extern "C" void func_80498DE8(CScnBlend* ths, CScnBlendView* param) {
 
         if (!(ths->mFlags & 1)) {
             // Direct path: no texture, no texture matrix.
-            func_804948F4(0, 0);
+            setupLightVtxFormat(0, 0);
             func_8044A7F8__8CGXCacheFv(CDeviceGX::getCacheInstance(),
                                        ths->field_0x5C,
                                        ths->field_0x60, ths->field_0x64,
@@ -192,11 +192,11 @@ extern "C" void func_80498DE8(CScnBlend* ths, CScnBlendView* param) {
             GXSetTevOrder(GX_TEVSTAGE0, GX_TEXCOORD_NULL, GX_TEXMAP_NULL,
                           GX_COLOR0A0);
             if (ths->field_0x5C != 3) {
-                func_80494A64(0, 0, 0);
-                func_80494C30(0, 0, 0);
+                setupLightTevColor(0, 0, 0);
+                setupLightTevAlpha(0, 0, 0);
             } else {
-                func_80494A64(0, 3, 0);
-                func_80494C30(0, 0, 0);
+                setupLightTevColor(0, 3, 0);
+                setupLightTevAlpha(0, 0, 0);
             }
             func_80494D84(&rect, &ths->mRect);
         } else {
@@ -214,13 +214,13 @@ extern "C" void func_80498DE8(CScnBlend* ths, CScnBlendView* param) {
                 tw = (u16)rect.mSize.x;
                 th = (u16)rect.mSize.y;
             }
-            GXTexObj* tex = func_80490208(texWork, tw, th, ths->field_0x58);
+            GXTexObj* tex = TexMan_AllocBuffer_0208(texWork, tw, th, ths->field_0x58);
             if (tex == NULL) {
                 // Allocation failure: retail exits without the cache restore.
                 return;
             }
-            func_804943E0(tex, (ths->mFlags >> 1) & 1, 0);
-            func_804948F4(0, 1);
+            TexObj_BlitViewRect(tex, (ths->mFlags >> 1) & 1, 0);
+            setupLightVtxFormat(0, 1);
             func_8044A7F8__8CGXCacheFv(CDeviceGX::getCacheInstance(),
                                        ths->field_0x5C,
                                        ths->field_0x60,
@@ -244,24 +244,24 @@ extern "C" void func_80498DE8(CScnBlend* ths, CScnBlendView* param) {
                                 GX_CS_SCALE_1, GX_TRUE, GX_TEVPREV);
                 GXSetTevColorIn(GX_TEVSTAGE0, GX_CC_ZERO, GX_CC_RASC,
                                 GX_CC_TEXC, GX_CC_C2);
-                func_80494C30(0, 0, 0);
+                setupLightTevAlpha(0, 0, 0);
             } else {
                 GXSetNumTevStages(2);
                 GXSetTevOrder(GX_TEVSTAGE0, GX_TEXCOORD0, GX_TEXMAP0,
                               GX_COLOR0A0);
                 GXSetTevOrder(GX_TEVSTAGE1, GX_TEXCOORD0, GX_TEXMAP0,
                               GX_COLOR0A0);
-                func_80494A64(0, 2, 1);
-                func_80494A64(1, 4, 0);
-                func_80494C30(0, 0, 0);
-                func_80494C30(1, 0, 0);
+                setupLightTevColor(0, 2, 1);
+                setupLightTevColor(1, 4, 0);
+                setupLightTevAlpha(0, 0, 0);
+                setupLightTevAlpha(1, 0, 0);
             }
             GXInitTexObjFilter(tex, GX_LINEAR, GX_LINEAR);
             GXLoadTexObj(tex, GX_TEXMAP0);
             ml::CCol4 blendColor(lbl_eu_8066AAE8, lbl_eu_8066AAE8,
                                  lbl_eu_8066AAE0, lbl_eu_8066AAE0);
             func_80494F10(&rect, &ths->mRect, &blendColor);
-            func_804902D8(texWork, tex);
+            TexMan_ReleaseArg_02D8(texWork, tex);
         }
 
         CDeviceGX::getCacheInstance()->setZCompareMD(1, 0);

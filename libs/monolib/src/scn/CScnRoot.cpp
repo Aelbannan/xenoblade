@@ -51,7 +51,7 @@ static inline f32 s32ToF32_8066A9F8(s32 v) {
 // --- CScnRoot helpers ---
 
 // Allocates a 0x4EC-byte CScnRootNw4r and constructs it in place.
-CScnRootNw4r* func_8048ED80(void* mgr, u32 allocHandle, void* param) {
+extern "C" CScnRootNw4r* createScnRootNw4r(void* mgr, u32 allocHandle, void* param) {
     CScnRootNw4r* obj =
         (CScnRootNw4r*)mtl::MemManager::allocate(0x4EC, allocHandle);
     if (obj != NULL) {
@@ -64,17 +64,17 @@ CScnRootNw4r* func_8048ED80(void* mgr, u32 allocHandle, void* param) {
 // These are C-linkage functions referenced from the CScnRoot vtable.
 // They unconditionally return -1 (no-op stubs for unused virtual slots).
 
-extern "C" int func_8048EDD0()
+extern "C" int scnRootStub30()
 {
     return -1;
 }
 
-extern "C" int func_8048EDD8()
+extern "C" int scnRootStub2C()
 {
     return -1;
 }
 
-extern "C" int func_8048EDE0()
+extern "C" int scnRootStub28()
 {
     return -1;
 }
@@ -152,7 +152,7 @@ CScnRootNw4r* __ct__CScnRootNw4r(CScnRootNw4r* obj, void* mgr, void* param) {
         s->mGroup[0].mHandle = mtl::MemManager::getHandleMEM2();
     }
     s->mGroup[0].mFuncs.allocFunc = (MEMAllocatorAllocFunc)func_8048FE34;
-    s->mGroup[0].mFuncs.freeFunc = (MEMAllocatorFreeFunc)func_8048FEC4;
+    s->mGroup[0].mFuncs.freeFunc = (MEMAllocatorFreeFunc)RootNw4r_FreeBuf;
     s->mAlloc[0].funcs = &s->mGroup[0].mFuncs;
     s->mAlloc[0].heap = NULL;
     s->mAlloc[0].heapParam1 = (u32)(uintptr_t)obj;
@@ -167,7 +167,7 @@ CScnRootNw4r* __ct__CScnRootNw4r(CScnRootNw4r* obj, void* mgr, void* param) {
         s->mGroup[1].mHandle = mtl::MemManager::getHandleMEM2();
     }
     s->mGroup[1].mFuncs.allocFunc = (MEMAllocatorAllocFunc)func_8048FE34;
-    s->mGroup[1].mFuncs.freeFunc = (MEMAllocatorFreeFunc)func_8048FEC4;
+    s->mGroup[1].mFuncs.freeFunc = (MEMAllocatorFreeFunc)RootNw4r_FreeBuf;
     s->mAlloc[1].funcs = &s->mGroup[1].mFuncs;
     s->mAlloc[1].heap = NULL;
     s->mAlloc[1].heapParam1 = (u32)(uintptr_t)obj;
@@ -182,7 +182,7 @@ CScnRootNw4r* __ct__CScnRootNw4r(CScnRootNw4r* obj, void* mgr, void* param) {
         s->mGroup[2].mHandle = mtl::MemManager::getHandleMEM2();
     }
     s->mGroup[2].mFuncs.allocFunc = (MEMAllocatorAllocFunc)func_8048FE34;
-    s->mGroup[2].mFuncs.freeFunc = (MEMAllocatorFreeFunc)func_8048FEC4;
+    s->mGroup[2].mFuncs.freeFunc = (MEMAllocatorFreeFunc)RootNw4r_FreeBuf;
     s->mAlloc[2].funcs = &s->mGroup[2].mFuncs;
     s->mAlloc[2].heap = NULL;
     s->mAlloc[2].heapParam1 = (u32)(uintptr_t)obj;
@@ -197,7 +197,7 @@ CScnRootNw4r* __ct__CScnRootNw4r(CScnRootNw4r* obj, void* mgr, void* param) {
         s->mGroup[3].mHandle = mtl::MemManager::getHandleMEM2();
     }
     s->mGroup[3].mFuncs.allocFunc = (MEMAllocatorAllocFunc)func_8048FE34;
-    s->mGroup[3].mFuncs.freeFunc = (MEMAllocatorFreeFunc)func_8048FEC4;
+    s->mGroup[3].mFuncs.freeFunc = (MEMAllocatorFreeFunc)RootNw4r_FreeBuf;
     s->mAlloc[3].funcs = &s->mGroup[3].mFuncs;
     s->mAlloc[3].heap = NULL;
     s->mAlloc[3].heapParam1 = (u32)(uintptr_t)obj;
@@ -205,14 +205,14 @@ CScnRootNw4r* __ct__CScnRootNw4r(CScnRootNw4r* obj, void* mgr, void* param) {
 
     // MEM1 / MEM2 allocators (no per-slot handle).
     s->mFuncs[0].allocFunc = (MEMAllocatorAllocFunc)func_8048FE34;
-    s->mFuncs[0].freeFunc = (MEMAllocatorFreeFunc)func_8048FEC4;
+    s->mFuncs[0].freeFunc = (MEMAllocatorFreeFunc)RootNw4r_FreeBuf;
     s->mAlloc[4].funcs = &s->mFuncs[0];
     s->mAlloc[4].heap = NULL;
     s->mAlloc[4].heapParam1 = (u32)(uintptr_t)obj;
     s->mAlloc[4].heapParam2 = mtl::MemManager::getHandleMEM1();
 
     s->mFuncs[1].allocFunc = (MEMAllocatorAllocFunc)func_8048FE34;
-    s->mFuncs[1].freeFunc = (MEMAllocatorFreeFunc)func_8048FEC4;
+    s->mFuncs[1].freeFunc = (MEMAllocatorFreeFunc)RootNw4r_FreeBuf;
     s->mAlloc[5].funcs = &s->mFuncs[1];
     s->mAlloc[5].heap = NULL;
     s->mAlloc[5].heapParam1 = (u32)(uintptr_t)obj;
@@ -254,7 +254,7 @@ CScnRootNw4r* __ct__CScnRootNw4r(CScnRootNw4r* obj, void* mgr, void* param) {
 // Returns the scene-group alloc handle, resolving it lazily through vf9 when
 // the stored handle is still invalid (-1). The (+ 0x10000) == 0xFFFF test is
 // the invalid-handle check retail emits as addis/cmplwi.
-u32 func_8048F2F0(CScnRootNw4r* self) {
+extern "C" u32 getScnRootGroupHandle(CScnRootNw4r* self) {
     CScnRootNw4rLayout* s = (CScnRootNw4rLayout*)self;
     u32 handle = s->mGroup[2].mHandle;
     u32 result;
@@ -286,5 +286,5 @@ extern "C" u32 lbl_eu_8056E730[14] = {
     (u32)&lbl_eu_80663998, 0x00000000,
     (u32)&__dt__8CScnRootFv, 0x00000000, 0x00000000, 0x00000000,
     0x00000000, 0x00000000, 0x00000000, 0x00000000,
-    (u32)&func_8048EDE0, (u32)&func_8048EDD8, (u32)&func_8048EDD0, 0x00000000,
+    (u32)&scnRootStub28, (u32)&scnRootStub2C, (u32)&scnRootStub30, 0x00000000,
 };

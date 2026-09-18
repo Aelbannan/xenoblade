@@ -23,11 +23,11 @@ CScnItemAnim::~CScnItemAnim() {
 }
 
 // ===========================================================================
-// func_8049E648 - find the index of the chr-anm entry whose embedded name
+// ItemAnim_FindIndex_E648 - find the index of the chr-anm entry whose embedded name
 // matches `name`. Returns the index, or -1 when no entry matches. A null
 // entry is a data assert (Panic, retail line 0x27).
 // ===========================================================================
-int func_8049E648(CScnItemAnim* self, const char* name) {
+int ItemAnim_FindIndex_E648(CScnItemAnim* self, const char* name) {
     int count = (int)self->mResFile.GetResAnmChrNumEntries();
     for (int i = 0; i < count; i++) {
         nw4r::g3d::ResAnmChr chr = self->mResFile.GetResAnmChr(i);
@@ -50,7 +50,7 @@ int func_8049E648(CScnItemAnim* self, const char* name) {
  * nw4r::g3d::ResFile::GetResAnmChr(int).  Implemented as a tail
  * call in the original binary.
  */
-extern "C" nw4r::g3d::ResAnmChr func_8049E708(CScnItemAnim* self, int index) {
+extern "C" nw4r::g3d::ResAnmChr ItemAnim_GetChr_E708(CScnItemAnim* self, int index) {
     return self->mResFile.GetResAnmChr(index);
 }
 
@@ -123,7 +123,7 @@ CScnItemAnim* __ct__8049E710(CScnItemAnimHost* self,
  * The name is a C-string copied from the first animation entry
  * during construction.  The buffer is 0x40 bytes.
  */
-extern "C" char* func_8049E8B4(CScnItemAnim* self) {
+extern "C" char* ItemAnim_GetName_E8B4(CScnItemAnim* self) {
     return self->mName;
 }
 
@@ -133,18 +133,18 @@ extern "C" char* func_8049E8B4(CScnItemAnim* self) {
  * This field is initialised to the same value as mResFile during
  * construction and may serve as a cached identifier.
  */
-extern "C" nw4r::g3d::ResFile func_8049E8BC(CScnItemAnim* self) {
+extern "C" nw4r::g3d::ResFile ItemAnim_GetResFile_E8BC(CScnItemAnim* self) {
     return self->mResFileCopy;
 }
 
 // ===== Dissolved monolibdata2 (blob surgery) data owned by this TU =====
 namespace SIABlob {
 extern "C" void __dt__12CScnItemAnimFv();
-extern "C" void func_8048228C();
-extern "C" void func_80482048();
-extern "C" void func_80482288();
-extern "C" void func_8049E8B4();
-extern "C" void func_8049E8BC();
+extern "C" void scnItemIdNoopB();
+extern "C" void ScnCamNw4r_EmptyHook48();
+extern "C" void scnItemIdNoopA();
+extern "C" void ItemAnim_GetName_E8B4();
+extern "C" void ItemAnim_GetResFile_E8BC();
 }
 extern "C" u32 lbl_eu_80663A80;   // foreign .sdata
 extern "C" u32 lbl_eu_806624D8;   // foreign .sdata
@@ -153,11 +153,11 @@ extern "C" u32 lbl_eu_806624D8;   // foreign .sdata
 extern "C" u32 lbl_eu_8056EC90[12] = {
     (u32)&lbl_eu_80663A80, 0x00000000,
     (u32)&SIABlob::__dt__12CScnItemAnimFv,
-    (u32)&SIABlob::func_8048228C,
-    (u32)&SIABlob::func_80482048,
-    (u32)&SIABlob::func_80482288,
-    (u32)&SIABlob::func_8049E8B4,
-    (u32)&SIABlob::func_8049E8BC,
+    (u32)&SIABlob::scnItemIdNoopB,
+    (u32)&SIABlob::ScnCamNw4r_EmptyHook48,
+    (u32)&SIABlob::scnItemIdNoopA,
+    (u32)&SIABlob::ItemAnim_GetName_E8B4,
+    (u32)&SIABlob::ItemAnim_GetResFile_E8BC,
     (u32)&lbl_eu_806624D8, 0x00000000, 0x00000000, 0x00000000,
 };
 

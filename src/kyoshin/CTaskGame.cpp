@@ -8,8 +8,8 @@
 // (non-mangled) symbol names, so they must carry C linkage. Declaring C
 // linkage first makes CLoad.hpp's plain redeclarations inherit it.
 class CLoad;
-extern "C" void func_802AE508(CLoad* self);
-extern "C" void func_802AE62C(CLoad* self);
+extern "C" void CLoadBeginFileRequest(CLoad* self);
+extern "C" void CLoadTeardownLayout(CLoad* self);
 #include "kyoshin/CLoad.hpp"
 
 // --- CTTask<CTaskGame> out-of-line specializations ---
@@ -204,7 +204,7 @@ void CTaskGame::Init(){
     Scn_GetCamWorkInt(unk74, unk70, 0);
     CfRes_setD80Flag(unk74);
     __ct__8009D604();
-    func_800450CC(this, unk74);
+    createGameEffTask(this, unk74);
     mtl::ALLOC_HANDLE mem2 = mtl::MemManager::getHandleMEM2();
     create__8CTaskLODFv(this, unk74, unk70, mem2, 0);
     create__16CTaskColiManagerFv(CTaskManager::GetRootProcGame(), unk74,
@@ -219,7 +219,7 @@ void CTaskGame::Init(){
     }
     addRenderCB__4CScnFP10IScnRenderUlUl(unk74, render, 0x14, 1);
 
-    func_804C8690(0, 0);
+    EffCtl_StoreFlagAndParams(0, 0);
 
     unk7C = 0;
     CTaskGame_setVec4_tmp buf;
@@ -258,7 +258,7 @@ void CTaskGame::Init(){
         } else {
             path1 = &lbl_eu_804FA890[0x21];
         }
-        func_80294EC0(reinterpret_cast<CTaskGamePic*>(unkCC), path1);
+        GamePicStartFileLoad(reinterpret_cast<CTaskGamePic*>(unkCC), path1);
 
         CTaskGamePic* pic2 = create__12CTaskGamePicFv(this, (int)unk74);
         unkD0 = reinterpret_cast<u32>(pic2);
@@ -268,7 +268,7 @@ void CTaskGame::Init(){
         } else {
             path2 = &lbl_eu_804FA890[0x55];
         }
-        func_80294EC0(reinterpret_cast<CTaskGamePic*>(unkD0), path2);
+        GamePicStartFileLoad(reinterpret_cast<CTaskGamePic*>(unkD0), path2);
 
         // Switch the move-hook ptmf from pool lbl_eu_80525574.
         u32* pool = lbl_eu_80525574;
@@ -317,7 +317,7 @@ extern "C" void CTaskGame_moveWaitReady(CTaskGame* self) {
         *(u32*)((u8*)self + 0x44) = p[2];
     }
 }
-extern "C" void func_80294E58(void* self, u32 index, const u32* src);
+extern "C" void GamePicShiftTexParams(void* self, u32 index, const u32* src);
 
 // Target us-800413bc: bump the frame counter; when the window-state gate
 // (CTaskGame_windowGate) is clear: store fps*5 into unk78, switch the move-hook
@@ -339,11 +339,11 @@ extern "C" void CTaskGame_movePrepDual(CTaskGame* self) {
         words->field_0x44 = pool[2];
         reinterpret_cast<CTaskGameFlag8C*>(self->unkCC)->field_0x8C = 0;
         CTaskGame_setVec4_tmp buf1;
-        func_80294E58(reinterpret_cast<void*>(self->unkCC), 0,
+        GamePicShiftTexParams(reinterpret_cast<void*>(self->unkCC), 0,
                       reinterpret_cast<const u32*>(CTaskGame_setVec4(&buf1, lbl_eu_80665D74, lbl_eu_80665D74, lbl_eu_80665D74, lbl_eu_80665D74)));
         reinterpret_cast<CTaskGameFlag8C*>(self->unkD0)->field_0x8C = 1;
         CTaskGame_setVec4_tmp buf2;
-        func_80294E58(reinterpret_cast<void*>(self->unkD0), 0,
+        GamePicShiftTexParams(reinterpret_cast<void*>(self->unkD0), 0,
                       reinterpret_cast<const u32*>(CTaskGame_setVec4(&buf2, lbl_eu_80665D74, lbl_eu_80665D74, lbl_eu_80665D74, lbl_eu_80665D74)));
     }
 }
@@ -612,7 +612,7 @@ extern "C" __declspec(noinline) void CTaskGame_setFlag800000(CTaskGame* self, in
 // CTaskGame singleton is live, tail-calls the per-mode helper with the saved
 // arguments (the 4-arg helpers take (inst, b, c, a) - a is preserved across
 // the b/c moves). Each case is an explicit early return so MWCC emits the
-// retail tail-call `b` instead of bl+blr (cf. func_804EE60C).
+// retail tail-call `b` instead of bl+blr (cf. lytBindRefreshPlayer).
 extern "C" void CTaskGame_nandCallback(u32 mode, u32 a, u32 b, u32 c) {
     CTaskGame* inst = lbl_eu_80663D18;
     if (inst == nullptr) {
@@ -753,23 +753,23 @@ extern "C" void cbRenderBefore__9CTaskGameFv(CTaskGame* self, CScn* scene) {
         // Pure if/else-if chain (no gotos): MWCC compiles each failed test
         // as a direct branch to the next test label, matching retail.
         if (lbl_eu_80663D24 == 0) {
-            if (func_802AE6B4(lbl_eu_80663D1C) != 0) {
+            if (CLoadIsLoaded(lbl_eu_80663D1C) != 0) {
                 lbl_eu_80663D24++;
-                func_802AE6C4(lbl_eu_80663D1C);
+                CLoadStartFadeInStep(lbl_eu_80663D1C);
             }
         } else if (lbl_eu_80663D24 == 1) {
-            if (func_802AE6BC(lbl_eu_80663D1C) != 0) {
+            if (CLoadIsAnimSettled(lbl_eu_80663D1C) != 0) {
                 if (((CTaskGameCamView*)Scn_QueryUnk80State(scene))->field_C < lbl_eu_80665D78) {
                     lbl_eu_80663D24++;
-                    func_802AE758(lbl_eu_80663D1C);
+                    CLoadStartRetryStep(lbl_eu_80663D1C);
                 }
             }
         } else if (lbl_eu_80663D24 == 2) {
-            if (func_802AE6BC(lbl_eu_80663D1C) != 0) {
+            if (CLoadIsAnimSettled(lbl_eu_80663D1C) != 0) {
                 lbl_eu_80663D24++;
             }
         } else if (lbl_eu_80663D24 == 3) {
-            func_802AE62C(lbl_eu_80663D1C);
+            CLoadTeardownLayout(lbl_eu_80663D1C);
             lbl_eu_80663D24++;
         } else if (lbl_eu_80663D24 == 4) {
             if (lbl_eu_80663D1C != 0) {
@@ -818,14 +818,14 @@ extern "C" void cbRenderBefore__9CTaskGameFv(CTaskGame* self, CScn* scene) {
         if (EvtSeqGetStateBit10() != 0) {
             goto L_8004316C;
         }
-        if (func_802B0D10() != 0) {
+        if (CMenuGCItem_IsActive() != 0) {
             goto L_8004316C;
         }
         {
             u8 drawInfo[0x54];
             __ct__Q34nw4r3lyt8DrawInfoFv((nw4r::lyt::DrawInfo*)&drawInfo[0]);
             func_80137250((nw4r::lyt::DrawInfo*)&drawInfo[0]);
-            func_802AE5F0(lbl_eu_80663D1C, (nw4r::lyt::DrawInfo*)&drawInfo[0]);
+            CLoadDrawIfVisible(lbl_eu_80663D1C, (nw4r::lyt::DrawInfo*)&drawInfo[0]);
             lbl_eu_80663D28 = 1;
             __dt__Q34nw4r3lyt8DrawInfoFv((nw4r::lyt::DrawInfo*)&drawInfo[0], -1);
         }
@@ -887,7 +887,7 @@ L_8004321C:
         if (lbl_eu_80663D34 == 0 && lbl_eu_80663D1C == 0) {
             u32 fps3 = getTargetFramerate__9CDeviceVIFv() * 3;
             lbl_eu_80663D28++;
-            if (lbl_eu_80663D28 >= fps3 || func_800FF738() != 0 || CMenuArtsSelect_isCreated() != 0) {
+            if (lbl_eu_80663D28 >= fps3 || CMainMenu_IsOpen() != 0 || CMenuArtsSelect_isCreated() != 0) {
                 lbl_eu_80663D28 = 0;
                 if (lbl_eu_80663D20 != 0) {
                     lbl_eu_80663D20->releaseLayout();
@@ -917,7 +917,7 @@ L_8004321C:
             if (EvtSeqGetStateBit10() != 0) {
                 goto L_80043454;
             }
-            if (func_802B0D10() != 0) {
+            if (CMenuGCItem_IsActive() != 0) {
                 goto L_80043454;
             }
             goto L_80043460;
@@ -1000,7 +1000,7 @@ void CTaskGame::Term() {
         }
     }
     if (lbl_eu_80663D1C != nullptr) {
-        func_802AE62C(lbl_eu_80663D1C);
+        CLoadTeardownLayout(lbl_eu_80663D1C);
         if (lbl_eu_80663D1C != nullptr) {
             delete reinterpret_cast<CLoadVtView*>(lbl_eu_80663D1C);
             lbl_eu_80663D1C = nullptr;
@@ -1036,7 +1036,7 @@ __declspec(noinline) void CTaskGame::setLoadingCaption(u16 r4, u16 r5, const cha
     unk68 |= 2;
     unk128 = 3;
     if (unkD4 != nullptr) {
-        func_802956A8(reinterpret_cast<void*>(unkD4));
+        EvtTask_Relay64CFC(reinterpret_cast<void*>(unkD4));
         reinterpret_cast<CTaskGameUnkD4Obj*>(unkD4)->field_0x60 &= ~2;
     }
 }
@@ -1072,10 +1072,10 @@ extern "C" void CTaskGame_moveFadeOut(CTaskGame* self) {
     }
     reinterpret_cast<CTaskGameFlag8C*>(self->unkCC)->field_0x8C = 1;
     CTaskGame_setVec4_tmp buf1;
-    func_80294E58(reinterpret_cast<void*>(self->unkCC), 0,
+    GamePicShiftTexParams(reinterpret_cast<void*>(self->unkCC), 0,
                   reinterpret_cast<const u32*>(CTaskGame_setVec4(&buf1, lbl_eu_80665D74, lbl_eu_80665D74, lbl_eu_80665D74, lbl_eu_80665D6C)));
     CTaskGame_setVec4_tmp buf2;
-    func_80294E58(reinterpret_cast<void*>(self->unkCC),
+    GamePicShiftTexParams(reinterpret_cast<void*>(self->unkCC),
                   getTargetFramerate__9CDeviceVIFv() >> 1,
                   reinterpret_cast<const u32*>(CTaskGame_setVec4(&buf2, lbl_eu_80665D74, lbl_eu_80665D74, lbl_eu_80665D74, lbl_eu_80665D74)));
     CTaskGame_setVec4_tmp buf3;
@@ -1141,7 +1141,7 @@ extern "C" void CTaskGame_moveFadeTick(CTaskGame* self) {
             if (CTaskGame_padConfirm(self) != 0) {
                 self->unk78 = getTargetFramerate__9CDeviceVIFv() >> 1;
                 CTaskGame_setVec4_tmp buf;
-                func_80294E58(reinterpret_cast<void*>(self->unkCC),
+                GamePicShiftTexParams(reinterpret_cast<void*>(self->unkCC),
                               getTargetFramerate__9CDeviceVIFv() >> 1,
                               reinterpret_cast<const u32*>(CTaskGame_setVec4(&buf, lbl_eu_80665D74, lbl_eu_80665D74, lbl_eu_80665D74, lbl_eu_80665D6C)));
                 func_8004302C(1, 1);
@@ -1191,7 +1191,7 @@ void func_80040EB4(CTaskGame* self) {
         if (CTaskGame_padConfirm(self) != 0) {
             self->unk78 = getTargetFramerate__9CDeviceVIFv() >> 1;
             CTaskGame_setVec4_tmp buf1;
-            func_80294E58(reinterpret_cast<void*>(self->unkD0),
+            GamePicShiftTexParams(reinterpret_cast<void*>(self->unkD0),
                           getTargetFramerate__9CDeviceVIFv() >> 1,
                           reinterpret_cast<const u32*>(CTaskGame_setVec4(&buf1, lbl_eu_80665D74, lbl_eu_80665D74, lbl_eu_80665D74, lbl_eu_80665D6C)));
             func_8004302C(1, 1);
@@ -1210,7 +1210,7 @@ void func_80040EB4(CTaskGame* self) {
         if ((s32)self->unk7C >= 2) {
             self->unk78 = getTargetFramerate__9CDeviceVIFv() >> 1;
             CTaskGame_setVec4_tmp buf2;
-            func_80294E58(reinterpret_cast<void*>(self->unkD0),
+            GamePicShiftTexParams(reinterpret_cast<void*>(self->unkD0),
                           getTargetFramerate__9CDeviceVIFv() >> 1,
                           reinterpret_cast<const u32*>(CTaskGame_setVec4(&buf2, lbl_eu_80665D74, lbl_eu_80665D74, lbl_eu_80665D74, lbl_eu_80665D6C)));
             func_8004302C(1, 1);
@@ -1251,12 +1251,12 @@ extern "C" void CTaskGame_moveTeardown(CTaskGame* self) {
     }
     if (self->unkCC != 0) {
         CTaskGame_setVec4_tmp buf1;
-        func_80294E58(reinterpret_cast<void*>(self->unkCC), 0,
+        GamePicShiftTexParams(reinterpret_cast<void*>(self->unkCC), 0,
                       reinterpret_cast<const u32*>(CTaskGame_setVec4(&buf1, lbl_eu_80665D74, lbl_eu_80665D74, lbl_eu_80665D74, lbl_eu_80665D6C)));
     }
     if (self->unkD0 != 0) {
         CTaskGame_setVec4_tmp buf2;
-        func_80294E58(reinterpret_cast<void*>(self->unkD0), 0,
+        GamePicShiftTexParams(reinterpret_cast<void*>(self->unkD0), 0,
                       reinterpret_cast<const u32*>(CTaskGame_setVec4(&buf2, lbl_eu_80665D74, lbl_eu_80665D74, lbl_eu_80665D74, lbl_eu_80665D6C)));
     }
     CTaskGame_setVec4_tmp buf3;
@@ -1301,7 +1301,7 @@ extern "C" void CTaskGame_moveNandReset(CTaskGame* self) {
     CWorkSystem::setSaveLoadInvalidReset(true);
     CLibHbm::setHbmActiveFlag(false);
     CLibHbm::setHbmStopFlag(true);
-    func_eu_804521BC(0);
+    DevFile_SetByteA9(0);
     self->unk68 = (self->unk68 | 0x200000) & 0xFE6030FF;
     func_8023FD4C(0);
     if (func_8023FC18(&CTaskGame_nandCallback) != 0) {
@@ -1750,7 +1750,7 @@ void func_80041BC0(CTaskGame* self) {
     CWorkSystem::setSaveLoadInvalidReset(false);
     CLibHbm::setHbmStopFlag(false);
     CLibHbm::setHbmActiveFlag(false);
-    func_eu_804521BC(1);
+    DevFile_SetByteA9(1);
     self->unk68 &= 0xFFDFFFFF;
     lbl_eu_80663D2C = 1;
     if (CTaskGame_windowGate(self) == 0) {
@@ -1768,7 +1768,7 @@ void func_80041BC0(CTaskGame* self) {
         }
         self->unkF0 = reinterpret_cast<u32>(__ct__CMenuTitle(self, self->unk74, static_cast<ITitleMenu*>(self)));
         if (self->unkD4 != 0) {
-            func_802956A4(reinterpret_cast<void*>(self->unkD4));
+            EvtTask_Relay65038(reinterpret_cast<void*>(self->unkD4));
         }
         self->unk78 = 0;
         u32 v0;
@@ -1800,7 +1800,7 @@ extern "C" void CTaskGame_moveTitleTick(CTaskGame* self) {
             func_80043738(0, &lbl_eu_804FA890[0x6E], Scn_CallUnk8C_V9(self->unk74), 0, 1, 0, lbl_eu_80665D6C);
         }
         if (self->unkD4 != 0) {
-            func_802956A4(reinterpret_cast<void*>(self->unkD4));
+            EvtTask_Relay65038(reinterpret_cast<void*>(self->unkD4));
         }
         if ((self->unk68 & 0x1000) != 0) {
             // Retail loads unkF4 first and clears the tested 0x1000 bit
@@ -1886,7 +1886,7 @@ void func_80041E54(CTaskGame* self) {
 #pragma optimize_for_size off
 void CTaskGame_stub_80041F54(){}
 // Target us-800424cc: window/save-menu gates then move-hook switch. When the
-// window-state gate (CTaskGame_windowGate) and the save-menu gate (func_8028E440)
+// window-state gate (CTaskGame_windowGate) and the save-menu gate (isSaveMenuActive)
 // are both clear: switch the move-hook ptmf to pool lbl_eu_805257C0, then
 // depending on the unk188 flag run the scene empty-per-frame stub with a vec4
 // (trailing lbl_eu_80665D6C constant when unk188 is set, else all
@@ -1896,7 +1896,7 @@ extern "C" void CTaskGame_moveAfterSave(CTaskGame* self) {
     if (CTaskGame_windowGate(self) != 0) {
         return;
     }
-    if (func_8028E440() != 0) {
+    if (isSaveMenuActive() != 0) {
         return;
     }
     u32 v0;
@@ -1922,13 +1922,13 @@ extern "C" void CTaskGame_moveAfterSave(CTaskGame* self) {
     self->unk68 &= ~0x1000;
 }
 // Target us-800425c0: window/option-menu gates then move-hook switch. Same
-// shape as CTaskGame_moveAfterSave but gated on func_8029BBA0 and pool
+// shape as CTaskGame_moveAfterSave but gated on hasOptionMenu and pool
 // lbl_eu_805257CC.
 extern "C" void CTaskGame_moveAfterOpt(CTaskGame* self) {
     if (CTaskGame_windowGate(self) != 0) {
         return;
     }
-    if (func_8029BBA0() != 0) {
+    if (hasOptionMenu() != 0) {
         return;
     }
     u32 v0;
@@ -1954,7 +1954,7 @@ extern "C" void CTaskGame_moveAfterOpt(CTaskGame* self) {
     self->unk68 &= ~0x1000;
 }
 // Target us-800426b4: clear the +0x39 busy bytes and null the unkCC/unkD0/
-// unkF0 objects, run the func_804C8690 reset pair, then when the
+// unkF0 objects, run the EffCtl_StoreFlagAndParams reset pair, then when the
 // cf::CTaskGameCf singleton is live raise unk68 bit 0x8, request its exit and
 // switch the move-hook ptmf to pool lbl_eu_805257D8; otherwise halve the
 // unk78 budget, run the CRI ramp (CTaskGame_fadeStream), push the float constants
@@ -1973,7 +1973,7 @@ extern "C" void CTaskGame_moveExitFade(CTaskGame* self) {
         reinterpret_cast<CTaskGameFlag39*>(self->unkF0)->field_0x39 = 1;
         self->unkF0 = 0;
     }
-    func_804C8690(1, 0);
+    EffCtl_StoreFlagAndParams(1, 0);
     if (cf::CTaskGameCf::getInstance() != nullptr) {
         self->unk68 |= 0x8;
         cf::CTaskGameCf::getInstance()->reqExit();
@@ -2148,11 +2148,11 @@ extern "C" void CTaskGame_moveSetCaption(CTaskGame* self) {
 // (fetch + dtor-style reset), free via the CfObj singleton teardown, set the
 // move-hook ptmf from pool lbl_eu_80525820, and raise bit 0x10 of unk68.
 extern "C" void CTaskGame_moveResetFx(CTaskGame* self) {
-    if (func_80044DF4() != 0) {
-        func_80044DF4();
-        func_800450C8();
+    if (getEffectTask() != 0) {
+        getEffectTask();
+        noopGameEffTask();
     }
-    __dt__800FDEF8(func_800FE68C());
+    __dt__800FDEF8(Selector_GetInstance());
     teardownGameMgr(getInstance());
     u32 v0;
     u32* pool = reinterpret_cast<u32*>(lbl_eu_80525820);
@@ -2182,7 +2182,7 @@ void CTaskGame_stub_80042784(){}
 extern "C" u32 CTaskGame_windowGate(CTaskGame* self) {
     if (CTaskGame::isFlag01Set() != 0) {
         if (self->unkD4 != 0) {
-            func_802956A8(reinterpret_cast<void*>(self->unkD4));
+            EvtTask_Relay64CFC(reinterpret_cast<void*>(self->unkD4));
             reinterpret_cast<CTaskGameUnkD4Obj*>(self->unkD4)->field_0x60 &= ~2;
         }
         if (cf::CTaskGameCf::getInstance() != 0) {
@@ -2199,7 +2199,7 @@ extern "C" u32 CTaskGame_windowGate(CTaskGame* self) {
     }
     if ((self->unk68 & 0x2) != 0) {
         if (self->unkD4 != 0) {
-            func_802956A8(reinterpret_cast<void*>(self->unkD4));
+            EvtTask_Relay64CFC(reinterpret_cast<void*>(self->unkD4));
             reinterpret_cast<CTaskGameUnkD4Obj*>(self->unkD4)->field_0x60 &= ~2;
         }
         u32 v0;
@@ -2221,7 +2221,7 @@ extern "C" u32 CTaskGame_windowGate(CTaskGame* self) {
 extern "C" void DECOMP_DONT_INLINE CTaskGame_deleteLoad() {
     if (lbl_eu_80663D1C != nullptr) {
         lbl_eu_80663D24 = 0;
-        func_802AE62C(lbl_eu_80663D1C);
+        CLoadTeardownLayout(lbl_eu_80663D1C);
         // Virtual deleting-dtor dispatch (vt+8, flag 1); the delete expansion
         // supplies the redundant pointer test (two beq).
         if (lbl_eu_80663D1C != nullptr) {
@@ -2268,13 +2268,13 @@ void func_8004302C(int a, int b) {
                 }
                 lbl_eu_80663D1C = load;
             }
-            func_802AE508(load);
+            CLoadBeginFileRequest(load);
             lbl_eu_80663D24 = 0;
         }
     } else {
         // Teardown path.
         if (lbl_eu_80663D1C != nullptr) {
-            func_802AE62C(lbl_eu_80663D1C);
+            CLoadTeardownLayout(lbl_eu_80663D1C);
             // The clearing store stays inside the recheck: if the stop
             // helper released the loader itself, nothing is stored (retail
             // branches straight to the epilogue).
@@ -2332,12 +2332,12 @@ s32 CTaskGame::isMoveFuncActive() {
 // size check is skipped; otherwise getFileSize(path, 1) must be >= 0. Then
 // run the shared reset (CTaskGame_resetStream), pick the alloc handle (Scn_CallUnk8C_V9
 // on lbl_eu_80663E14 when the caller passed -1), copy the path into a local
-// FixStr<256> (mLength + strcpy; func_eu_804520D0 path fix-up for the
+// FixStr<256> (mLength + strcpy; DevFile_SubstLangPath path fix-up for the
 // non-archive case), open the CRI stream (dispatchFilePlayback) into unkD8, set the
 // unk68 0x40/0x80 flags from the a5/a6 args, and when the play-time gate
 // re-opens: re-seed the +0x130 caption FixStr<64> with the path, store the
 // unkDC budget, and behind the CfGameManager reset gate forward the stream
-// active state (setStreamPause) / run the func_80189C70 sound reset and
+// active state (setStreamPause) / run the MenuSnd_ResetFadeTargetA_9C70 sound reset and
 // store the unk8E ticker. Finally ramp the CRI volume (CTaskGame_setStreamVol).
 void func_80043738(u32 a1, const char* path, u32 a3, u32 a4, u32 a5, u32 a6, float volume) {
     if (lbl_eu_80663D18 == 0) {
@@ -2372,7 +2372,7 @@ void func_80043738(u32 a1, const char* path, u32 a3, u32 a4, u32 a5, u32 a6, flo
     filename.mLength = static_cast<int>(strlen(path));
     strcpy(filename.mString, path);
     if (found == 0) {
-        func_eu_804520D0(filename.mString);
+        DevFile_SubstLangPath(filename.mString);
     }
     lbl_eu_80663D18->unkD8 = dispatchFilePlayback__7CLibCriFPCcUli(filename.mString, a3, a1);
     // Single textual read of the flag word: retail hoists the global-pointer
@@ -2399,7 +2399,7 @@ void func_80043738(u32 a1, const char* path, u32 a3, u32 a4, u32 a5, u32 a6, flo
             setStreamPause__7CLibCriFv(lbl_eu_80663D18->unkD8, cf::CfGameManager::isSceneLoading());
         }
         if ((lbl_eu_80663D18->unk68 & 0x80) != 0) {
-            func_80189C70();
+            MenuSnd_ResetFadeTargetA_9C70();
             lbl_eu_80663D18->unk8E = static_cast<s16>(a6);
         }
     }
@@ -2504,7 +2504,7 @@ extern "C" __declspec(noinline) void CTaskGame_resetStream() {
         }
         if (cf::CfGameManager::isManagerInitialized() != 0) {
             if ((lbl_eu_80663D18->unk68 & 0x80) != 0) {
-                func_80189C7C();
+                MenuSnd_ResetFadeTargetB_9C7C();
             }
         }
         lbl_eu_80663D18->unkDC = 2;
@@ -2591,7 +2591,7 @@ void CTaskGame_stub_80043E08(){}
 // from the CTaskGame object registry (CTaskGame_allocObjSlot); when no slot is free,
 // allocates a fresh CfObjEnumList from the MEM2 region. Unlike CTaskGame_enumListCtor
 // the count fields are NOT zeroed here; the list is passed straight to
-// func_800F4A98 with the caller's type/filter and the holder is returned.
+// startEnumObjects with the caller's type/filter and the holder is returned.
 #pragma optimize_for_size on
 extern "C" CfEnumListHolder* CTaskGame_enumListFill(CfEnumListHolder* self, u32 type, u32 filter) {
     self->handle = -1;
@@ -2605,7 +2605,7 @@ extern "C" CfEnumListHolder* CTaskGame_enumListFill(CfEnumListHolder* self, u32 
         }
         self->list = list;
     }
-    func_800F4A98(self->list, type, filter);
+    startEnumObjects(self->list, type, filter);
     return self;
 }
 #pragma optimize_for_size off
@@ -2647,7 +2647,7 @@ extern "C" void CTaskGame_updateStream(CTaskGame* self) {
                 if ((self->unk68 & 0x80) != 0) {
                     self->unk8E--;
                     if (self->unk8E <= 0) {
-                        func_80189C7C();
+                        MenuSnd_ResetFadeTargetB_9C7C();
                         self->unk68 &= ~0x80;
                     }
                 }

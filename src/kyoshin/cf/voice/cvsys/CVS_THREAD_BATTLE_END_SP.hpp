@@ -27,7 +27,7 @@ public:
     s32 count;               // 0x2C: number of active slots
     char* cmdString;         // 0x30: current command string
 
-    int blank1() override;   // vtable[2], returns 0x46 (body is the unmangled retail symbol func_802ABB38)
+    int blank1() override;   // vtable[2], returns 0x46 (body is the unmangled retail symbol CVSBattleEndSPGetBufSize)
 };
 
 // Phantom vtable view over CVoiceHandle so the is-active check is emitted as a
@@ -126,8 +126,8 @@ CVoiceManager* getListB28();
 // lis/addi (ADDR16_HA/LO) accesses retail uses for these symbols; the scalar
 // lbl_eu_80668DB0 stays small-data (retail references it via @sda21).
 extern u32 lbl_eu_8053A194[];   // final init-state triple
-extern u32 lbl_eu_8053A1A0[3];  // reset init-state triple (func_802AB900)
-extern u32 lbl_eu_8053A1AC[3];  // init-state triple (func_802ABA70)
+extern u32 lbl_eu_8053A1A0[3];  // reset init-state triple (CVSBattleEndSPResetAndSweep)
+extern u32 lbl_eu_8053A1AC[3];  // init-state triple (CVSBattleEndSPResetState)
 extern u32 lbl_eu_8053A100[];   // command-list table for the constructor
 extern char lbl_eu_8053A1B8[];   // CVS_THREAD_BATTLE_END_SP vtable
 extern u8 lbl_eu_80668DB0;       // sentinel command string

@@ -61,7 +61,7 @@ struct CUIBattleAction {
 
 // Battle-UI helpers. Retail binds these by their plain (unmangled) names.
 extern "C" bool CMenuArtsSelect_isFinished();
-extern "C" void func_8012E630(CUIBattleManager* self);
+extern "C" void UIBattleCancelPendingLoads(CUIBattleManager* self);
 extern "C" CUIBattleManager* __ct__CUIBattleManager(
     CUIBattleManager* self, CScnNw4r* pScene, mtl::ALLOC_HANDLE handle);
 extern "C" CUIBattleChild* func_8012F5F8();
@@ -92,9 +92,9 @@ struct ResListIUIBattle {
 // CUIBattleManager.cpp, which accesses private members via friend decls
 // inside the class) - declared BEFORE the class with C linkage so the
 // friend declarations refer to these same C-linkage functions.
-extern "C" void* func_8012FD04(const char* name);
-extern "C" void* func_8012FD60(const char* name);
-extern "C" void* func_8012FC74(const char* name);
+extern "C" void* UIBattleFindSysTimg(const char* name);
+extern "C" void* UIBattleFindElemTimg(const char* name);
+extern "C" void* UIBattleFindPartyTimg(const char* name);
 
 class CUIBattleManager : public CTTask<CUIBattleManager>, public IWorkEvent {
 public:
@@ -104,7 +104,7 @@ public:
 
     void Init();
     void Move();
-    void func_8012F29C();
+    void parkMoveHandler();
     IWorkEvent* battleWorkEvent() { return static_cast<IWorkEvent*>(this); }
 
     // Battle-UI child task type (retail nested class). The CTTask<CTest>
@@ -140,15 +140,15 @@ private:
     u8 unkEA[0xEC - 0xEA];                 // 0xEA
     mtl::ALLOC_HANDLE mHeap;               // 0xEC
 
-    // Retail free functions func_8012FD04 / func_8012FD60 / func_8012FC74
+    // Retail free functions UIBattleFindSysTimg / UIBattleFindElemTimg / UIBattleFindPartyTimg
     // (texture lookup helpers over the private arc-accessor fields) are
     // declared with C linkage at global scope above; these friends grant
     // them member access.
-    friend void* func_8012FD04(const char* name);
-    friend void* func_8012FD60(const char* name);
-    friend void* func_8012FC74(const char* name);
+    friend void* UIBattleFindSysTimg(const char* name);
+    friend void* UIBattleFindElemTimg(const char* name);
+    friend void* UIBattleFindPartyTimg(const char* name);
     // Retail file-cancel / busy-flag free functions over the private handles.
-    friend void func_8012E630(CUIBattleManager* self);
+    friend void UIBattleCancelPendingLoads(CUIBattleManager* self);
     friend int func_8012E6DC();
     // Teardown / create-bind / release helpers over the private fields.
     friend void __dt__8012E534(CUIBattleManager* self);
@@ -168,7 +168,7 @@ private:
 }; // size = 0xF0
 
 // 3-word member-function-pointer pool in retail .data (split1 unit).
-// func_8012F29C copies this pmf ({0, -1, func_8012F2BC}) into mMoveFunc.
+// parkMoveHandler copies this pmf ({0, -1, UIBattleMoveNoop}) into mMoveFunc.
 extern CUIBattleManager::MoveFunc lbl_eu_8052E0B4;
 
 // Array-delete / delete helpers (C-ABI imports).

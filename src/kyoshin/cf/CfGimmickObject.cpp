@@ -138,7 +138,7 @@ extern "C" cf::CfGimmickObject* __ct__cf_CfGimmickObject(
     self->field_82 = 1;
     self->field_194 = 0;
 
-    void* mgr = func_8003AA34();
+    void* mgr = Bdat_GetTable_AA34();
     void* holder = ((CfGimmickTableSet*)mgr)->lbl_eu_80664128;
     char* colBase = lbl_eu_80507B60;
     self->field_64 = row;
@@ -252,10 +252,10 @@ extern "C" cf::CfGimmickObject* __ct__cf_CfGimmickObject(
             continue;
         if ((self->field_161 & 0x2) != 0) {
             setLODEnable__8CTaskLODFv(lod, 0);
-            func_804BCC3C(getScnHandle__Fv(), lod);
+            ScnData_FwdB7DD4(getScnHandle__Fv(), lod);
         } else if (self->field_162 != 0 || self->field_163 != 0) {
             setLODEnable__8CTaskLODFv(lod, 1);
-            func_804BCC30(getScnHandle__Fv(), lod);
+            ScnData_FwdB7D9C(getScnHandle__Fv(), lod);
         }
         attachLODObject__8CTaskLODFv(lod, 0);
         *word |= bit;
@@ -344,7 +344,7 @@ extern "C" cf::CfGimmickObject* __ct__cf_CfGimmickObject(
 
 // Rebuild both collider matrices from the object's basis (+0x04) and the
 // reference point (+0x10); collider A lives at +0x1C, collider B at +0xF4.
-void func_801F7930(cf::CfGimmickObject* self) {
+void GimObjRebuildColliders(cf::CfGimmickObject* self) {
     func_802089BC(self->field_1C, self->field_04, &self->field_10);
     func_802089BC(self->field_F4, self->field_04, &self->field_10);
 }
@@ -387,15 +387,15 @@ void func_801F5B00(cf::CfGimmickObject* self) {
     func_801F76A8(self);
 }
 
-void func_801F5BF8(void* self) {
+void GimObjSetBusyBit(void* self) {
     *(unsigned long*)((char*)self + 0x74) |= 0x10000;
 }
 
-extern "C" void func_801F5C08(u8* self) {
+extern "C" void GimObjClearStepBits(u8* self) {
     *(unsigned long*)((char*)self + 0x74) &= ~0x18000;
 }
 
-extern "C" void func_801F5C18(u8* self) {
+extern "C" void GimObjFinishStep(u8* self) {
     *(unsigned short*)((char*)self + 0x188) = 6;
     *(unsigned long*)((char*)self + 0x74) = 0;
 }
@@ -613,9 +613,9 @@ void func_801F61B0(cf::CfGimmickObject* self, int mode) {
         if (self->field_70[i] != 0) {
             setLODEnable__8CTaskLODFv(self->field_70[i], mode);
             if (mode != 0) {
-                func_804BCC30(getScnHandle__Fv(), self->field_70[i]);
+                ScnData_FwdB7D9C(getScnHandle__Fv(), self->field_70[i]);
             } else {
-                func_804BCC3C(getScnHandle__Fv(), self->field_70[i]);
+                ScnData_FwdB7DD4(getScnHandle__Fv(), self->field_70[i]);
             }
         }
     }
@@ -630,12 +630,12 @@ void func_801F61B0(cf::CfGimmickObject* self, int mode) {
     }
 }
 
-// func_801F627C - LOD timer refresh. While the object is busy (flag
+// GimObjRefreshLodTimer - LOD timer refresh. While the object is busy (flag
 // 0x10000000) or the step is 2/3 behind the field_66 0x20 gate, update the
 // +0x178 LOD diff (mode != 0: countdown from the second LOD timer; mode == 0:
 // snapshot the first) and raise the 0x10 working bit. Separate if-statements
 // keep MWCC from folding the ==2/==3 tests into a subi range check.
-void func_801F627C(cf::CfGimmickObject* self, u8 lod, int mode) {
+void GimObjRefreshLodTimer(cf::CfGimmickObject* self, u8 lod, int mode) {
     if ((self->field_74 & 0x10000000) != 0)
         goto refresh;
     if ((self->field_66 & 0x20) == 0)
@@ -759,7 +759,7 @@ int func_801F634C(cf::CfGimmickObject* self) {
 // field_188, 16 bytes per entry) drives: a +0x170 activation countdown,
 // camera events (func_8007B0C8), per-LOD frame updates (func_801F6B98), the
 // +0x68 map-object status (CfObjectMove_setAnimModeArgs), a player-control reset (getPlayer
-// slot 0x110 -> func_80199678), the area-manager attach (createBattleActor with
+// slot 0x110 -> movePcCondFullReset), the area-manager attach (createBattleActor with
 // vtable slots 0x9C/0xC4) and the step sound (CfSoundMan_ApplySlotStop / playActorSound /
 // CfGimmick_PlaySoundAtPosScaled / CfGimmick_PlaySoundAtPos, plus the CfSoundMan_TouchSlotById volume slot).
 #endif
@@ -790,11 +790,11 @@ void func_801F6B98(cf::CfGimmickObject* self, u8 lod,
         } else if ((flags & 0x1) != 0) {
             detachLODObject__8CTaskLODFv(lod, 0);
             attachLODObject__8CTaskLODFv(lod, 1);
-            func_801F627C(self, lod, 1);
+            GimObjRefreshLodTimer(self, lod, 1);
         } else if ((flags & 0x2) != 0) {
             detachLODObject__8CTaskLODFv(lod, 1);
             attachLODObject__8CTaskLODFv(lod, 1);
-            func_801F627C(self, lod, 0);
+            GimObjRefreshLodTimer(self, lod, 0);
         } else if ((flags & 0x30) != 0) {
             attachLODObject__8CTaskLODFv(lod, 0);
             if ((flags & 0x20) != 0) {
@@ -826,12 +826,12 @@ void func_801F6B98(cf::CfGimmickObject* self, u8 lod,
     }
 }
 
-// func_801F6D8C - party-membership gate. With the 0x8000 flag of +0x152 set,
+// GimObjProbePartySlots - party-membership gate. With the 0x8000 flag of +0x152 set,
 // returns 1 when any flagged character slot (bits 0..14) IS registered in the
 // party (func_8009E284 != 0); otherwise returns 1 when any flagged slot is
 // NOT registered. field_152 is re-read every iteration because the party
 // queries may mutate it.
-int func_801F6D8C(cf::CfGimmickObject* self) {
+int GimObjProbePartySlots(cf::CfGimmickObject* self) {
     u16 flags = self->field_152;
     if (flags != 0) {
         if ((flags & 0x8000) != 0) {
@@ -1136,7 +1136,7 @@ int func_801F7B44(cf::CfGimmickObject* self) {
     return 0;
 }
 
-// func_801F7D38 - per-frame update. Party membership (func_801F6D8C) puts
+// func_801F7D38 - per-frame update. Party membership (GimObjProbePartySlots) puts
 // the step machine into state 1; while the +0x15E mode byte is active the
 // +0x6C..0x6E and per-area +0x04/0x06 sequence windows must contain the
 // current scenario sequence. The +0x66 flags then drive the spawn/effect
@@ -1157,7 +1157,7 @@ int func_801F7F24(cf::CfGimmickObject* self) {
 }
 
 int func_801F8564() {
-    return 0;
+    return 1;
 }
 
 // Busy-gate: an object flagged busy in field_74 (bit 12) with the global

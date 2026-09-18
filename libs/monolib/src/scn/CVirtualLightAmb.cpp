@@ -28,12 +28,12 @@ extern "C" u32 lbl_eu_806639C8;
 extern "C" u32 lbl_eu_806639D0;
 extern "C" void __dt__16CVirtualLightAmbFv();
 extern "C" void func_804947EC();
-extern "C" void func_8049488C();
+extern "C" void getVirtualLightSentinel();
 extern "C" u32 lbl_eu_8056E878[8] = {
     (u32)&lbl_eu_806639C8, 0x00000000,
     (u32)&__dt__16CVirtualLightAmbFv,
     (u32)&func_804947EC,
-    (u32)&func_8049488C,
+    (u32)&getVirtualLightSentinel,
     (u32)&lbl_eu_806639D0,
     0x00000000, 0x00000000,
 };

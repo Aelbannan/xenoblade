@@ -6,7 +6,7 @@
 struct CVoiceHandle;
 
 // CVS_THREAD_EHP: Voice thread for EHP (Emergency HP recovery) sequences.
-// Object size 0x48 (72 bytes). The buffer-size virtual (func_802A6818, the
+// Object size 0x48 (72 bytes). The buffer-size virtual (getEhpBufferSize, the
 // CVS_THREAD::blank1 slot) returns 0xB4 (180). The EHP vtable
 // (lbl_eu_80539B2C) is assigned manually by the factory __ct__802A5ED4.
 //
@@ -132,7 +132,7 @@ int func_802A7B90(CVoiceHandle* handle1, CVoiceHandle* handle2);
 int func_802A7870(CVoiceHandle** slots, int count, CVoiceHandle* exclude);
 }
 
-// Slot-state triples used by the EHP playback selector (func_802A617C).
+// Slot-state triples used by the EHP playback selector (selectEhpVoiceByHp).
 extern u32 lbl_eu_80539AC4[3]; // {0, -1, func_802A8B3C} - low-gauge slot state
 extern u32 lbl_eu_80539AD0[3]; // {0, -1, func_802A8D84} - high-gauge slot state
 
@@ -158,5 +158,5 @@ extern float lbl_eu_80668C94;  // 0.3
 
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
 extern "C" u32 lbl_eu_80539ADC[3]; // {0, -1, func_802A6718} - EHP start-request slot state
-extern "C" u32 lbl_eu_80539B14[3]; // {0, -1, func_802A6408}
+extern "C" u32 lbl_eu_80539B14[3]; // {0, -1, startEhpVoice}
 extern "C" u32 lbl_eu_80539B20[3]; // {0, -1, func_802A6718}

@@ -72,7 +72,7 @@ struct CScnRootNw4rParam {
 // dispatches through are typed.
 struct CScnRootNw4rVtbl {
     void* mSlots0[0x28 / 4];        // +0x00..+0x24
-    u32 (*mVf8)(CScnRootNw4r*);     // +0x28 (func_8048F2F0)
+    u32 (*mVf8)(CScnRootNw4r*);     // +0x28 (getScnRootGroupHandle)
     u32 (*mVf9)(CScnRootNw4r*);     // +0x2C (scnImN4GetWord4AC)
 };
 
@@ -115,7 +115,7 @@ struct CScnGroupTailLayout {
 // Custom allocator callbacks for the nw4r MEMAllocator instances (defined in
 // CScnRootNw4r.cpp; plain global-scope names).
 void* func_8048FE34(CScnRootNw4r* allocator, u32 size);
-void func_8048FEC4(CScnRootNw4r* allocator, void* block);
+void RootNw4r_FreeBuf(CScnRootNw4r* allocator, void* block);
 
 // Second-stage bloom constructor (defined in CScnBloom.cpp).
 #include "libs/monolib/src/scn/CScnBloom.hpp"

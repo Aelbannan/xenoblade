@@ -80,30 +80,30 @@ extern "C" void __ct__Q34nw4r3lyt8DrawInfoFv(nw4r::lyt::DrawInfo* self);
 extern "C" void __dt__Q34nw4r3lyt8DrawInfoFv(nw4r::lyt::DrawInfo* self, int flags);
 
 // CTitleAHelp widget callees (retail-unmangled func_ names).
-extern "C" void func_801C3FF0(CTitleAHelp* self);
-extern "C" void func_801C40A0(CTitleAHelp* self);
-extern "C" int func_801C4114(CTitleAHelp* self);
+extern "C" void updateHelp(CTitleAHelp* self);
+extern "C" void teardown(CTitleAHelp* self);
+extern "C" int isInitialized(CTitleAHelp* self);
 extern "C" void func_801C412C(CTitleAHelp* self);
-extern "C" void func_801C41C0(CTitleAHelp* self, char* str);
+extern "C" void setNameText(CTitleAHelp* self, char* str);
 extern "C" void func_801C41E8(CTitleAHelp* self, u8 mode);
-extern "C" void func_801C4760(CTitleAHelp* self);
-extern "C" void func_801C4080(CTitleAHelp* self, nw4r::lyt::DrawInfo* drawInfo);
-extern "C" void func_801C414C(CTitleAHelp* self);
+extern "C" void applyPaneTevColorsAlt(CTitleAHelp* self);
+extern "C" void drawHelp(CTitleAHelp* self, nw4r::lyt::DrawInfo* drawInfo);
+extern "C" void beginClose(CTitleAHelp* self);
 // isIdle declared int (not u8) so callers compare with cmpwi directly.
 extern "C" int isIdle__11CTitleAHelpFv(CTitleAHelp* h);
 
 // CTutorial widget callees (retail-unmangled func_ names).
-extern "C" void func_8029ABB8(CTutorial* self, nw4r::lyt::DrawInfo* drawInfo);
+extern "C" void Tutorial_DrawLayoutGated(CTutorial* self, nw4r::lyt::DrawInfo* drawInfo);
 extern "C" void func_8029AB28(CTutorial* self);
-extern "C" void func_8029ABD8(CTutorial* self);
-extern "C" void func_8029AA34(CTutorial* self);
-extern "C" void func_8029ACC4(CTutorial* self);
+extern "C" void Tutorial_TeardownTutorial(CTutorial* self);
+extern "C" void Tutorial_LoadTutorialFiles(CTutorial* self);
+extern "C" void Tutorial_StartIfIdle(CTutorial* self);
 extern "C" u8 func_8029AE5C(CTutorial* self);
-extern "C" int func_8029ACAC(CTutorial* self);
-extern "C" int func_8029ACB4(CTutorial* self);
-extern "C" int func_8029ACBC(CTutorial* self);
+extern "C" int Tutorial_GetField46Mark(CTutorial* self);
+extern "C" int Tutorial_GetField47Mark(CTutorial* self);
+extern "C" int Tutorial_GetField52Mark(CTutorial* self);
 extern "C" void func_8029AD88(CTutorial* self);
-extern "C" void func_8029ACEC(CTutorial* self);
+extern "C" void Tutorial_AdvanceState3To4(CTutorial* self);
 extern "C" void func_8029ADF8(CTutorial* self);
 
 // CF / ui helpers (retail-unmangled names).
@@ -124,17 +124,17 @@ void func_80137250(nw4r::lyt::DrawInfo* drawInfo);
 
 // This-unit phase handlers (retail-unmangled func_ names). extern "C" keeps
 // the call relocs bare (retail keeps the unmangled names at these call sites).
-extern "C" void func_8029A668(CMenuTutorial* self);
-extern "C" void func_8029A764(CMenuTutorial* self);
-extern "C" void func_8029A7B4(CMenuTutorial* self);
-extern "C" void func_8029A8D4(CMenuTutorial* self);
+extern "C" void MenuTutorialHandlePhase0(CMenuTutorial* self);
+extern "C" void MenuTutorialHandlePhase1(CMenuTutorial* self);
+extern "C" void MenuTutorialHandlePhase2(CMenuTutorial* self);
+extern "C" void MenuTutorialHandlePhase3(CMenuTutorial* self);
 
 // IScnRender vtable this-adjusting thunks (retail: subi r3, r3, 0x58; b ...).
-void func_8029A924(IScnRender* sub);
-void func_8029A92C(IScnRender* sub);
+void MenuTutorialRenderThunk58(IScnRender* sub);
+void MenuTutorialDtorThunk58(IScnRender* sub);
 
 // Global (unmangled retail) accessors for the CMenuTutorial object.
-CMenuTutorial* func_8029A5DC(CProcess* self, CProcess* parent, u32 arg2);
+CMenuTutorial* MenuTutorialCreate(CProcess* self, CProcess* parent, u32 arg2);
 
 // CTaskGame statics (retail-mangled names). Imported flat because including
 // CTaskGame.hpp would pull monolib/scn.hpp and clash with the body-less

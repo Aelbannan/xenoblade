@@ -21,8 +21,8 @@ struct CfMapEffectObject {
     u32 field_0xB0; // 0xB0
 };
 
-// Layout recovered from __ct__cf_CfMapEffectManager / func_8016F9D4 /
-// func_8016FC0C / func_8016FBA8. The vtable pointer at 0x00 is stored
+// Layout recovered from __ct__cf_CfMapEffectManager / MapFx_ReloadFromBdat /
+// MapFx_SetPointEnabled / MapFx_SetSlotFlag. The vtable pointer at 0x00 is stored
 // manually (lbl_eu_80531080) so the ctor emits the exact retail reloc name
 // instead of an MWCC auto-generated __vt__ label.
 class CfMapEffectManager {
@@ -171,7 +171,7 @@ public:
 // ---------------------------------------------------------------------------
 extern "C" {
 void setChild5CFl_(char* obj, int flag); // CfObjectEff flag setter
-u16 func_8016DF2C();                     // play-time seconds getter
+u16 getReloadParam0();                     // play-time seconds getter
 // Sibling functions of this unit (retail 0x801702E0 / 0x801706A0). Kept as
 // declared-only externs so calls from matched functions emit a real bl - a
 // same-TU stub definition would be inlined by MWCC (-O4).
@@ -180,7 +180,7 @@ void func_8016F2A4(cf::CfMapEffectManager* pSelf, int index, u8* bdat);
 void setChildScl__(cf::CfObject* object, float first, float second);
 // CfGameManager phase/counter getters (same signatures as CfGimmickItem.hpp;
 // CfGimmickItem.hpp itself cannot be included here - its CfGimmick.hpp
-// re-declares func_8009CF8C with a conflicting signature).
+// re-declares CtrlRemote_TouchBitByArg with a conflicting signature).
 u32 getQueuedFileEventCount__Q22cf13CfGameManagerFv(void);
 u32 getResourceFromTable__Q22cf13CfGameManagerFv(u32 a);
 int func_8016EFD8(int unused, int index);
@@ -195,7 +195,7 @@ void* createBattleActor__Q22cf13CfGameManagerFv(u32 value, u32 unused);
 extern u8 lbl_eu_80531080[];                  // data: vtable
 extern cf::CfMapEffectManager* lbl_eu_80664290; // sbss: singleton instance
 extern u8* lbl_eu_806640AC;                   // sbss: bdat file pointer
-extern float lbl_eu_806623E8;                 // sdata: global float (set by func_8016FE2C)
+extern float lbl_eu_806623E8;                 // sdata: global float (set by MapFx_SetGlobalFloat)
 extern const float lbl_eu_80667730;           // sdata2: clamp threshold
 // rodata: BDAT column-name string table (7 strings at 0x00/0x08/0x11/0x1A/0x20/0x26/0x2C)
 extern char lbl_eu_80503248[];

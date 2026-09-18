@@ -49,10 +49,10 @@ void __ct__800FB044(void* list, void* spot, u32 options, f32 threshold);
 void __ct__800FD250(void* list);
 void __ct__800FA9B4(void* list, void* obj, u32 options);
 void func_800F89DC(void* list);
-void* func_800F6EC0(void* list, s32 index);
-void* func_800F6E98(void* list, s32 index);
-void* func_800FD2FC(void* list, s32 index);
-void* func_800FD378(void* list, s32 index);
+void* getEntryAt(void* list, s32 index);
+void* getObjectIdAt(void* list, s32 index);
+void* findNextCleanObjectId(void* list, s32 index);
+void* findPrevCleanObjectId(void* list, s32 index);
 // func_80174C98 / findObjectById come from the kyoshin headers (CChainTimer.hpp
 // / CTalkWindow.hpp) already on the include chain.
 void func_800FB270(void* self, void* pos, u32 flags, f32 a, f32 b, f32 c);
@@ -272,7 +272,7 @@ struct CfSelectorLayout {
     u32 field_0xC174; // flags; bit0 = clear pending
     struct CfSelectorTarget {
         u8 _pad_00[0x3068];
-        u32 field_0x3068; // flags; bits 2/3 toggled by func_800FE920/938
+        u32 field_0x3068; // flags; bits 2/3 toggled by setTargetFlag04/938
     };
     CfSelectorTarget* field_0xC178;
     u32 field_0xC17C;
@@ -396,28 +396,28 @@ public:
     u32 fieldC184;               // 0xC184
 };
 
-void CfObjectSelectorObj::func_800FE694(float val) {
+void CfObjectSelectorObj::setFloatPair(float val) {
     CfSelectorLayout* self = reinterpret_cast<CfSelectorLayout*>(this);
     self->field_0x90F8 = val;
     self->field_0xC164 = val;
 }
 
-unsigned long CfObjectSelectorObj::func_800FE910() {
+unsigned long CfObjectSelectorObj::testFlagBit10() {
     CfSelectorLayout* self = reinterpret_cast<CfSelectorLayout*>(this);
     return (self->field_0xC180 >> 10) & 1;
 }
 
-void CfObjectSelectorObj::func_800FE920() {
+void CfObjectSelectorObj::setTargetFlag04() {
     CfSelectorLayout* self = reinterpret_cast<CfSelectorLayout*>(this);
     self->field_0xC178->field_0x3068 |= 4;
 }
 
-void CfObjectSelectorObj::func_800FE938() {
+void CfObjectSelectorObj::setTargetFlag08() {
     CfSelectorLayout* self = reinterpret_cast<CfSelectorLayout*>(this);
     self->field_0xC178->field_0x3068 |= 8;
 }
 
-void CfObjectSelectorObj::func_800FE950(unsigned int a, unsigned int b, unsigned int c) {
+void CfObjectSelectorObj::setRequestParams(unsigned int a, unsigned int b, unsigned int c) {
     CfSelectorLayout* self = reinterpret_cast<CfSelectorLayout*>(this);
     self->field_0x608C = a;
     self->field_0x6094 = b;
@@ -430,7 +430,7 @@ void CfObjectSelectorObj::func_800FE950(unsigned int a, unsigned int b, unsigned
 
 extern cf::CfObjectSelectorData* lbl_eu_80663F14;
 
-cf::CfObjectSelectorObj* func_800FE68C() {
+cf::CfObjectSelectorObj* Selector_GetInstance() {
     return (cf::CfObjectSelectorObj*)lbl_eu_80663F14;
 }
 
@@ -553,7 +553,7 @@ extern "C" void func_800FD774(cf::CfSelectorUnit* self) {
     if (!(self->w3068 & 1)) {
         return;
     }
-    func_800F4A98(reinterpret_cast<CfMoveEnumList*>(&self->mList), self->w3048,
+    startEnumObjects(reinterpret_cast<CfMoveEnumList*>(&self->mList), self->w3048,
                   self->w304C);
     if (lbl_eu_80666EF8 != self->f3058) {
         void* spot = ((SelPosDispatch*)self->w3054)->vAC();
@@ -573,7 +573,7 @@ extern "C" void func_800FD774(cf::CfSelectorUnit* self) {
         for (u32 i = 0; i < self->mCount; i++) {
             SelEnumSlotView* info =
                 reinterpret_cast<SelEnumSlotView*>(
-                    func_800F6EC0(&self->mList, i));
+                    getEntryAt(&self->mList, i));
             if (reinterpret_cast<SelObjFlagsView*>(info->object)->flags64 & 4) {
                 continue;
             }
@@ -629,7 +629,7 @@ extern "C" void func_800FD774(cf::CfSelectorUnit* self) {
         func_800F6ED0(reinterpret_cast<CfMoveEnumList*>(&self->mList),
                       spot);
         u32 got =
-            (u32)func_800F6E08(reinterpret_cast<CfMoveEnumList*>(&self->mList));
+            (u32)findFirstCleanObjectId(reinterpret_cast<CfMoveEnumList*>(&self->mList));
         self->w3044 = got;
         self->w3068 &= ~0x30000000u;
         if (got == 0) {
@@ -640,7 +640,7 @@ extern "C" void func_800FD774(cf::CfSelectorUnit* self) {
         // Find the current result entry's index in the rebuilt list.
         u32 idx = 0;
         do {
-            if (func_800F6E98(&self->mList, idx) == (void*)self->w3044) {
+            if (getObjectIdAt(&self->mList, idx) == (void*)self->w3044) {
                 break;
             }
             idx++;
@@ -654,9 +654,9 @@ extern "C" void func_800FD774(cf::CfSelectorUnit* self) {
         u32 flags = self->w3068;
         if (!(flags & 0x20) && !(flags & 0x40)) {
             if (flags & 4) {
-                self->w3044 = (u32)func_800FD2FC(&self->mList, idx);
+                self->w3044 = (u32)findNextCleanObjectId(&self->mList, idx);
             } else if (flags & 8) {
-                self->w3044 = (u32)func_800FD378(&self->mList, idx);
+                self->w3044 = (u32)findPrevCleanObjectId(&self->mList, idx);
             }
         }
         self->w3068 &= ~0x30000000u;
@@ -664,10 +664,10 @@ extern "C" void func_800FD774(cf::CfSelectorUnit* self) {
 }
 
 // ---------------------------------------------------------------------
-// func_800FDE4C (retail 0x800FE934, size 0xAC).
+// Selector_ReinitState (retail 0x800FE934, size 0xAC).
 // Re-initialises the selector state when the singleton exists.
 // ---------------------------------------------------------------------
-void func_800FDE4C(cf::CfObjectSelectorData* obj, u32 a4, u32 a5) {
+void Selector_ReinitState(cf::CfObjectSelectorData* obj, u32 a4, u32 a5) {
     if (lbl_eu_80663F14 == NULL) return;
 
     u32 zero = 0;
@@ -938,8 +938,8 @@ void func_800FE104(cf::CfObjectSelectorData* self) {
             goto l_ff0dc;
         }
 
-        func_800F4A98(reinterpret_cast<CfMoveEnumList*>(self), 0xB00, 0x8802);
-        func_800F4A98(reinterpret_cast<CfMoveEnumList*>(&self->mList2), 0x1000, 2);
+        startEnumObjects(reinterpret_cast<CfMoveEnumList*>(self), 0xB00, 0x8802);
+        startEnumObjects(reinterpret_cast<CfMoveEnumList*>(&self->mList2), 0x1000, 2);
         void* pos = reinterpret_cast<SelPosDispatch*>(
                         reinterpret_cast<u8*>(reinterpret_cast<SelOwnerView*>(self->fieldC17C)) + 0x3E9C)->vAC();
         f32 facing = reinterpret_cast<SelFacingDispatch*>(
@@ -968,7 +968,7 @@ l_fee90:
     // Current selection lost or invalid.
     {
         u32 fl = reinterpret_cast<SelObjFlagsView*>(
-            findObjectById((int)(u32)func_800F6E98(self, 0)))->flags64;
+            findObjectById((int)(u32)getObjectIdAt(self, 0)))->flags64;
         if ((fl & (0x8 | 0x100 | 0x4000)) || (fl & 0x8000)) {
             // Tear down pending request state on the singleton.
             cf::CfObjectSelectorData* s = lbl_eu_80663F14;
@@ -991,7 +991,7 @@ l_fee90:
                 }
             }
             // Reissue a fresh request on the primary inner list.
-            void* cur = func_800F6E98(self, 0);
+            void* cur = getObjectIdAt(self, 0);
             s->fieldC180 = (s->fieldC180 & 0xFFFFFF00) | 2;
             s->fieldC178 = (u8*)&s->mInner1;
             // 0xC17C holds a rebased handle; adjust back into real addresses.
@@ -1016,7 +1016,7 @@ l_ffeff4:
         u32 found = 0;
         for (u32 i = 0; i < self->field620; i++) {
             SelObjFlagsView* o = reinterpret_cast<SelObjFlagsView*>(
-                findObjectById((int)(u32)func_800F6E98(self, i)));
+                findObjectById((int)(u32)getObjectIdAt(self, i)));
             if ((void*)o == target) {
                 u32 fl = o->flags64;
                 if ((fl & (0x8 | 0x100 | 0x4000)) || (fl & 0x8000)) {

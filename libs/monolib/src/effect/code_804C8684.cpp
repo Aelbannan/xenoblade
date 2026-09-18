@@ -5,12 +5,12 @@
 
 #include <harness_catalog.h>
 
-void func_804C8684(void) {}
-void func_804C8688(void) {}
-extern "C" void func_804C868C(void) {}
+void EffCtl_EmptyStub84(void) {}
+void EffCtl_EmptyStub88(void) {}
+extern "C" void EffCtl_EmptyStub8C(void) {}
 
 // ---------------------------------------------------------------------------
-// func_804C8690: unconditionally store the flag byte (stb - the destination
+// EffCtl_StoreFlagAndParams: unconditionally store the flag byte (stb - the destination
 // lbl_eu_806659A0 is a single u8) into lbl_eu_806659A0, then (when the source
 // pointer is non-null) copy its 12-byte parameter block into the global
 // lbl_eu_8065FC08. The retail copies the first 8 bytes as a 2-word pair
@@ -18,7 +18,7 @@ extern "C" void func_804C868C(void) {}
 // that 2+1 split in the struct shape.
 // ---------------------------------------------------------------------------
 
-// func_804C8690's 12-byte copy block: an 8-byte pair chunk + one word.
+// EffCtl_StoreFlagAndParams's 12-byte copy block: an 8-byte pair chunk + one word.
 // Sibling matched code (func_804CC808) shows MWCC emits per-pair lwz/stw
 // chunks (hi-before-lo) for u64 member copies.
 struct CEffectParam {
@@ -29,7 +29,7 @@ struct CEffectParam {
 extern u8 lbl_eu_806659A0;
 extern CEffectParam lbl_eu_8065FC08;
 
-void func_804C8690(u8 flag, const CEffectParam* src) {
+void EffCtl_StoreFlagAndParams(u8 flag, const CEffectParam* src) {
     lbl_eu_806659A0 = flag;
     if (src) {
         // 2+1 word split: load both pair words before the dst base addi and

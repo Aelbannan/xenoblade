@@ -2,15 +2,15 @@
 #include "kyoshin/cf/CfCollSphereImpl.hpp"
 #include "kyoshin/cf/object/CfObjectColl.hpp"
 
-// func_800AAD28: debug draw for sphere collision shape (single call).
-extern "C" void func_800AAD28(void* context, cf::CfObjectColl* shape) {
+// CfCollSphere_DebugDrawSimple: debug draw for sphere collision shape (single call).
+extern "C" void CfCollSphere_DebugDrawSimple(void* context, cf::CfObjectColl* shape) {
     u32 uval = static_cast<u32>(shape->field_0xB8);
     ml::CVec3* pos = shape->CfObject_getPosVector();
     renderSphere__Q22cf18CfDebugDrawManagerFv(reinterpret_cast<void*>(pos), static_cast<float>(uval));
 }
 
-// func_800AAD94: debug draw for sphere with extra transform params.
-extern "C" void func_800AAD94(void* context, cf::CfObjectColl* shape, void* a, void* b) {
+// CfCollSphere_DebugDrawXform: debug draw for sphere with extra transform params.
+extern "C" void CfCollSphere_DebugDrawXform(void* context, cf::CfObjectColl* shape, void* a, void* b) {
     u32 uval = static_cast<u32>(shape->field_0xB8);
     ml::CVec3* pos = shape->CfObject_getPosVector();
     func_800A5738(a, pos, static_cast<float>(uval), b);
@@ -77,7 +77,7 @@ extern void CfObject_getMoveSpeedRate__Q22cf8CfObjectFv();
 extern void CfObject_pushRefreshExtra__Q22cf8CfObjectFv();
 extern void CfObject_readRefreshValue__Q22cf8CfObjectFv();
 extern void CfObject_checkTargetState__Q22cf8CfObjectFv();
-extern void func_80047814__Q22cf13CfObjectPointFv();
+extern void CfObjectPoint_CopyPosWords();
 extern void setPointPosition__Q22cf13CfObjectPointFv();
 extern void CfObject_UnkVirtualFunc21__Q22cf8CfObjectFv();
 extern void syncCollVectors__Q22cf12CfObjectCollFv();
@@ -133,11 +133,11 @@ extern void CfObject_UnkVirtualFunc71__Q22cf8CfObjectFv();
 extern void CfObject_UnkVirtualFunc72__Q22cf8CfObjectFv();
 extern void CfObject_UnkVirtualFunc73__Q22cf8CfObjectFv();
 extern void func_800AB2E4();
-extern void func_800AB3B8();
+extern void collCapsuleQueryOffset();
 extern void func_800AB010();
 extern void func_800AB248();
 extern void func_800AAE24();
-extern void func_800AAFF4();
+extern void CollAABB_RenderQuery();
 }
 __declspec(section ".data") __attribute__((aligned(8), used)) const void* __data_CfCollSphereImpl[136] = {
     &lbl_eu_80661C78, (void*)0,
@@ -178,7 +178,7 @@ __declspec(section ".data") __attribute__((aligned(8), used)) const void* __data
     &CfObject_pushRefreshExtra__Q22cf8CfObjectFv,
     &CfObject_readRefreshValue__Q22cf8CfObjectFv,
     &CfObject_checkTargetState__Q22cf8CfObjectFv,
-    &func_80047814__Q22cf13CfObjectPointFv,
+    &CfObjectPoint_CopyPosWords,
     &setPointPosition__Q22cf13CfObjectPointFv,
     &CfObject_UnkVirtualFunc21__Q22cf8CfObjectFv,
     &syncCollVectors__Q22cf12CfObjectCollFv,
@@ -237,13 +237,13 @@ __declspec(section ".data") __attribute__((aligned(8), used)) const void* __data
     &lbl_eu_806618F8, (void*)0,
     &lbl_eu_806618F0, (void*)0,
     &lbl_eu_80661CB0, (void*)0, (void*)0, (void*)0,
-    &lbl_eu_80661C80, (void*)0, &func_800AB2E4, &func_800AB3B8,
+    &lbl_eu_80661C80, (void*)0, &func_800AB2E4, &collCapsuleQueryOffset,
     &lbl_eu_80661CA8, (void*)0, (void*)0, (void*)0,
     &lbl_eu_80661C88, (void*)0, &func_800AB010, &func_800AB248,
     &lbl_eu_80661CA8, (void*)0, (void*)0, (void*)0,
-    &lbl_eu_80661C90, (void*)0, &func_800AAE24, &func_800AAFF4,
+    &lbl_eu_80661C90, (void*)0, &func_800AAE24, &CollAABB_RenderQuery,
     &lbl_eu_80661CA8, (void*)0, (void*)0, (void*)0,
-    &lbl_eu_80661C98, (void*)0, &func_800AAD28, &func_800AAD94,
+    &lbl_eu_80661C98, (void*)0, &CfCollSphere_DebugDrawSimple, &CfCollSphere_DebugDrawXform,
     &lbl_eu_80661CA8, (void*)0, (void*)0, (void*)0,
 };
 

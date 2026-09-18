@@ -494,7 +494,7 @@ public:
         u32 flags;                          // +0x00 flags view
     };
     // +0x04: control flags (0x800/0x1000 light bits, scnLgtSetSlotBits) and the
-    // scene-view pointer handed to Scn_GetFrameDelta / func_8048ECD8.
+    // scene-view pointer handed to Scn_GetFrameDelta / getScnRootSlot10.
     union {
         u32 field_0x04;                     // +0x04 control flags
         void* field_0x04_ptr;               // +0x04 view/owner pointer
@@ -700,7 +700,7 @@ struct CScnEnvLgtCtrlCamView {
 
 // Camera-work blob at the scene view +0x68 (the CScn mCamWork slot);
 // scnLgtBindCamera resolves the active camera through it: the id at +0x34 is
-// passed to func_8049B158 together with the blob.
+// passed to CamMan_FindItemA_B158 together with the blob.
 struct CScnEnvLgtCtrlCamWork {
     u8 _00[0x34];   // +0x00
     s32 mCamId;     // +0x34
@@ -718,7 +718,7 @@ struct CScnEnvLgtCtrlOwnerLight {
 };
 
 // Owner view for func_804C172C: the +0x64 light-manager slot handed to
-// func_8048D160 (which deactivates the active light).
+// LightManDeactivateArmedLight (which deactivates the active light).
 struct CScnEnvLgtCtrlOwnerLightMan {
     u8 _00[0x64];                 // +0x00
     CScnLightMan* field_0x64;     // +0x64
@@ -726,8 +726,8 @@ struct CScnEnvLgtCtrlOwnerLightMan {
 
 // Scene light-manager refresh (defined in CScnLightMan.cpp; flat retail
 // name). extern "C" keeps the flat name on the call-site reloc (the retail
-// call is `bl func_8048D160`).
-extern "C" void func_8048D160(CScnLightMan* self);
+// call is `bl LightManDeactivateArmedLight`).
+extern "C" void LightManDeactivateArmedLight(CScnLightMan* self);
 
 // Count-control blob at CScnEnvLgtCtrl+0x48: entry count at +0x04, consulted
 // by func_804C58D8 / func_804C5990 before walking the +0x14 entry array.
@@ -1103,7 +1103,7 @@ struct CScnEnvLgtCtrlLgtTarget {
     u32 field_0x48;   // +0x48
     u32 field_0x4C;   // +0x4C
     u32 field_0x50;   // +0x50 (bit 1 toggled by func_804C5A48)
-    u32 field_0x54;   // +0x54 (bit 1 toggled by func_80498DC0)
+    u32 field_0x54;   // +0x54 (bit 1 toggled by Blend_SetFlag2)
     u32 field_0x58;   // +0x58 (func_804C6D64)
     u32 field_0x5C;   // +0x5C (switch config, func_804C6D64)
     u32 field_0x60;   // +0x60
@@ -1241,13 +1241,13 @@ struct CScnEnvLgtCtrlLgtRow50 {
 };
 
 // Cross-TU imports used by func_804C22F0 / func_804C64A8.
-extern "C" void func_8049DE68(u8* fogMan, int flag);
+extern "C" void FogManSetValue08(u8* fogMan, int flag);
 extern "C" void scnVlBlendStep(CScnVirtualLight* mgr, int flag);
 // Retail ABI here passes four GPRs plus one FP arg (f1); f2 is left unset
 // at this call site.
-extern "C" int func_804BE398(ml::CVec3* req, u32 a, u32 b, u32 c, f32 d);
-extern "C" int func_804BE5AC();
-extern "C" int func_804BE5A0(int flag);
+extern "C" int ScnRes_VertRayForward_E398(ml::CVec3* req, u32 a, u32 b, u32 c, f32 d);
+extern "C" int ScnRes_HasHighFlagEntry_E5AC();
+extern "C" int ScnRes_HasFlaggedEntry_E5A0(int flag);
 
 // Shared .sdata2 constants and .data assert strings for the light-refresh
 // helpers (func_804C3C9C / func_804C64A8 / func_804C678C).
@@ -1269,19 +1269,19 @@ extern "C" __declspec(noinline) void func_804C34A0(CScnEnvLgtCtrl* self,
 extern "C" void func_804C22F0(CScnEnvLgtCtrl* self);
 
 // Camera-item lookup (defined in CScnCameraMan.cpp under the retail flat
-// name func_8049B158). CScn.hpp only declares a 1-arg stub; the retail call
+// name CamMan_FindItemA_B158). CScn.hpp only declares a 1-arg stub; the retail call
 // site in scnLgtBindCamera passes the (camera-work blob, id) pair, so the full
 // signature is declared here. extern "C" keeps the flat retail name
 // (typed-param globals get C++-mangled; cf. CScnVirtualLight.hpp).
 struct CScnCameraItem;  // CScnCameraMan.hpp
-extern "C" CScnCameraItem* func_8049B158(CScnEnvLgtCtrlCamWork* cam, s32 id);
+extern "C" CScnCameraItem* CamMan_FindItemA_B158(CScnEnvLgtCtrlCamWork* cam, s32 id);
 
 // Cross-TU light-env helpers used by scnLgtDispatchEnv. The full declarations
 // live in CScnVirtualLight.hpp, which cannot be included here (its
 // func_804C03A0 signature differs from this header's); these identical
 // redeclarations keep the call relocs flat.
 extern "C" void func_80495644(CLightEnv* self, u32 idx);
-extern "C" void func_804956F8(void* self);
+extern "C" void resetLightSlotIndex(void* self);
 extern "C" void func_804952C4(CLightEnv* self, const ml::CVec3* v);
 extern "C" void scnVlApplyDir4C(CScnVirtualLight* self, const ml::CVec4* src, f32 value);
 extern "C" void scnVlApplyDir6C(CScnVirtualLight* self, const ml::CVec4* src, f32 value);
@@ -1321,7 +1321,7 @@ extern float lbl_eu_8066AFE8;
 
 // Light-target flag byte toggle (defined in CScnBlend.cpp as a flat C-name
 // function; toggles bit 1 of the target's +0x54 flags word).
-extern "C" void func_80498DC0(u8* self, u32 enable);
+extern "C" void Blend_SetFlag2(u8* self, u32 enable);
 
 // Same-TU entry-walkers dispatched by the type-scan functions (separate
 // targets). extern "C" keeps the flat retail name on the call-site reloc
@@ -1452,9 +1452,9 @@ extern "C" void func_804C03A0(CScnEnvLgtLightView* view, u32 flag);
 extern "C" void func_804C0454(CScnEnvLgtLightView* view, const u8* p);
 extern "C" void func_804C0484(CScnEnvLgtLightView* view, const u8* p);
 extern "C" void func_804C07F0(CScnEnvLgtLightView* view, CScnEnvLgtCtrlLgtVec4* out);
-extern "C" void func_804C08C8(CScnEnvLgtLightView* view, u32 flag);
-extern "C" void func_804C09E0(CScnEnvLgtLightView* view, u32 a, f32 b, f32 c);
-extern "C" void func_804C0920(CScnEnvLgtLightView* view, u32 a, f32 b);
+extern "C" void LightCtlSetEnable(CScnEnvLgtLightView* view, u32 flag);
+extern "C" void LightCtlInitDistAttn(CScnEnvLgtLightView* view, u32 a, f32 b, f32 c);
+extern "C" void LightCtlInitSpot(CScnEnvLgtLightView* view, u32 a, f32 b);
 
 // 16-byte light-data block copied by func_804C5198 (self+0x54 -> out).
 // Kept as a named struct so the copy sites use typed pointers: MWCC only

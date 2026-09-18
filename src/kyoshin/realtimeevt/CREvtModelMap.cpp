@@ -90,10 +90,10 @@ bool func_8016BDA8(void* self, s32* pId);
 u32 EvtSeqGetCounter100();
 u32 EvtSeqGetStateBit5();
 void EvtSeqCheckEventRunGuard(CREvtModelMap* self);
-u32 func_80180960();
-s32 func_80180978();
-s32 func_80180990();
-void func_8016FC0C(int val);
+u32 REvtCam_IsField98Set();
+s32 REvtCam_IsMode2B0Eq1();
+s32 REvtCam_IsMode2B0Eq2();
+void MapFx_SetPointEnabled(int val);
 void enableLOD__8CTaskLODFv();
 void restorePrimaryLOD__8CTaskLODFv();
 void disableLOD__8CTaskLODFv();
@@ -115,16 +115,16 @@ void func_801729F0();
 void func_80172768(CREvtModelMap* self, int r4);
 void func_801727DC();
 void func_801728F8();
-void func_8017298C();
+void releaseEvtAnim28();
 void CREvtObjVfunc24Default();
-void func_801731A0();
-void func_80173194();
-void func_801731AC();
-void func_80172CC0();
+void isEvtFlagBit4Set();
+void isEvtFlagBit0Set();
+void zeroEvtModelHook();
+void emptyEvtModelHook();
 void func_80172CC4();
 void func_801726DC(CREvtModelMap* self);
 void func_80172668();
-void func_80181A54(void* self, int dealloc);
+void MapModel_ThunkCtor38(void* self, int dealloc);
 extern CREvtModelMap* lbl_eu_806642B0;
 extern CREvtModelMap* lbl_eu_806642B4;
 extern float lbl_eu_806678C0;
@@ -133,7 +133,7 @@ extern void* spawnGimmickEntity__Q22cf13CfGameManagerFv();
 extern void* getMapEffectManager__Q22cf13CfGameManagerFv();
 extern void addAllocHandle__11CDeviceFileFP11CFileHandleUl(CFileHandle*, u32);
 extern void __ct__CREvtModel(void* self, void* pData, int pArg);
-extern void func_800AA318(u32 packed, u32* out0, u32* out1, u32* out2, u32* out3);
+extern void Tok_Unpack(u32 packed, u32* out0, u32* out1, u32* out2, u32* out3);
 extern u8 lbl_eu_80531D80[];
 }
 
@@ -202,7 +202,7 @@ CREvtModelMap* __ct__CREvtModelMap(CREvtModelMap* self, void* parent)
     self->mCreatureId = -1;
     memset(self->mModelName, 0, sizeof(self->mModelName));
     u32 out0, out1, out2, out3;
-    func_800AA318(*(u32*)((char*)self->mPtr1C + 0x20), &out0, &out1, &out2, &out3);
+    Tok_Unpack(*(u32*)((char*)self->mPtr1C + 0x20), &out0, &out1, &out2, &out3);
     if (out0 == 1) {
         self->mIsGuest = 1;
         u32 w1, w2, w0;
@@ -257,7 +257,7 @@ CREvtModelMap* __ct__80180B00(CREvtModelMap* self, int dealloc)
             lbl_eu_806642B0 = 0;
             if (getMapEffectManager__Q22cf13CfGameManagerFv()) {
                 getMapEffectManager__Q22cf13CfGameManagerFv();
-                func_8016FC0C(1);
+                MapFx_SetPointEnabled(1);
             }
         }
         reinterpret_cast<CREvtModel*>(self)->reset();
@@ -270,7 +270,7 @@ CREvtModelMap* __ct__80180B00(CREvtModelMap* self, int dealloc)
     return self;
 }
 
-int func_80180C60(void* self) {
+int MapModel_CheckMagicMA(void* self) {
     s8* info = *(s8**)((char*)self + 0x1C);
     return (info[0x10] == 0x6D && info[0x11] == 0x61) ? 1 : 0;
 }
@@ -330,7 +330,7 @@ bool func_80180CBC(CREvtModelMap* self)
     return 1;
 }
 
-void func_80180DCC(CREvtModelMap* self)
+void MapModel_DisablePoints(CREvtModelMap* self)
 {
     if (lbl_eu_806642B0) {
         return;
@@ -525,7 +525,7 @@ void func_8018152C(CREvtModelMap* self)
         f32 fTime = (f32)(s32)EvtSeqGetCounter100();
         simRefreshFlag8(self->mEmoteModel, fTime);
     }
-    reinterpret_cast<CREvtModel*>(self)->setVisible(func_80180960());
+    reinterpret_cast<CREvtModel*>(self)->setVisible(REvtCam_IsField98Set());
     EvtSeqCheckEventRunGuard(self);
 }
 
@@ -534,7 +534,7 @@ void func_801815AC(CREvtModelMap* self, unsigned int visible)
     if (self->mIsGuest) {
         cf::CfGameManager* mgr = (cf::CfGameManager*)cf::CfGameManager::getGameSubManager();
         if (mgr) {
-            if (func_80180978()) {
+            if (REvtCam_IsMode2B0Eq1()) {
                 cf::CfGameManager::getGameSubManager()->field_0x100 &= ~4;
             } else if (visible) {
                 cf::CfGameManager::getGameSubManager()->field_0x100 |= 4;
@@ -560,7 +560,7 @@ void func_801815AC(CREvtModelMap* self, unsigned int visible)
         }
         if (getMapEffectManager__Q22cf13CfGameManagerFv()) {
             getMapEffectManager__Q22cf13CfGameManagerFv();
-            func_8016FC0C(visible);
+            MapFx_SetPointEnabled(visible);
         }
         s32 i = 0;
         CCreatureNode* head = (CCreatureNode*)((cf::CfGameManager*)spawnGimmickEntity__Q22cf13CfGameManagerFv())->field_0x4;
@@ -618,7 +618,7 @@ visible_store:
     self->mVisible = (u8)visible;
 set_guest_flags:
     if (self->mIsGuest) {
-        s32 isZero = (func_80180990() == 0);
+        s32 isZero = (REvtCam_IsMode2B0Eq2() == 0);
         UnkClass_80083298* m3 = cf::CfGameManager::getGameSubManager();
         if (isZero) {
             m3->field_0x100 |= 0x10;
@@ -641,11 +641,11 @@ void func_801818BC(CREvtModelMap* self, int visible)
         u8* taskState = (u8*)(*(void**)((u8*)lbl_eu_80663E14 + 0x78));
         taskState[0x28] = visible;
     } else if (self->mEmoteModel) {
-        reinterpret_cast<CScnItemModel*>(self->mEmoteModel)->vfuncB4(func_80180960());
+        reinterpret_cast<CScnItemModel*>(self->mEmoteModel)->vfuncB4(REvtCam_IsField98Set());
     }
 }
 
-int func_8018196C(void* self) { return (*(u8*)((char*)self + 0x3D) != 0) ? 0 : 3; }
+int MapModel_VisFlag3(void* self) { return (*(u8*)((char*)self + 0x3D) != 0) ? 0 : 3; }
 
 bool func_80181988(CREvtModelMap* self, CEventFile* pEvent)
 {
@@ -680,7 +680,7 @@ bool OnFileEvent__13CREvtModelMapFP10CEventFile(IWorkEvent* self, CEventFile* ev
     return func_80181988(reinterpret_cast<CREvtModelMap*>(reinterpret_cast<char*>(self) - 0x38), ev);
 }
 
-void func_80181A54(void* self, int dealloc) {
+void MapModel_ThunkCtor38(void* self, int dealloc) {
     __ct__80180B00((CREvtModelMap*)((char*)self - 0x38), dealloc);
 }
 

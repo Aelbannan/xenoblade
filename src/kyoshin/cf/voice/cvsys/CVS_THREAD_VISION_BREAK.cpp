@@ -17,20 +17,20 @@
 // func_802A3D54, func_802A330C, CCharVoiceMan_AllocVoiceArena, func_802A7A54,
 // func_8016FE34, CfObjectMove_releaseVoiceHandle) and the base constructor
 // __ct__cf_CVS_THREAD are declared in CVS_THREAD_VISION_BREAK.hpp.
-// us-802abc94 (func_802A955C)
+// us-802abc94 (VisBreak_TryRunSlotAction)
 // Completion callback: if no active voice is playing, invoke the playback
 // virtual (CVS_THREAD::func_802A3B50, vtable slot 1).
-void func_802A955C(CVS_THREAD_VISION_BREAK* self) {
+void VisBreak_TryRunSlotAction(CVS_THREAD_VISION_BREAK* self) {
     if (func_802A3E88(self) == 0) {
         self->func_802A3B50();
     }
 }
 
-// us-802abcdc (func_802A95A4)
+// us-802abcdc (VisBreak_RemoveVoiceSlot)
 // Remove a voice from the field_0x20 slot by matching its embedded CCharVoice.
 // A CVoiceHandle stores the CCharVoice at offset 0x3E9C, so a non-null handle
 // is biased by 0x3E9C before comparing against the incoming voice pointer.
-void func_802A95A4(CVS_THREAD_VISION_BREAK* self, CCharVoice* voicePtr) {
+void VisBreak_RemoveVoiceSlot(CVS_THREAD_VISION_BREAK* self, CCharVoice* voicePtr) {
     // Direct call to the free function at 0x802A3BEC.
     func_802A3BEC(self, voicePtr);
 
@@ -44,11 +44,11 @@ void func_802A95A4(CVS_THREAD_VISION_BREAK* self, CCharVoice* voicePtr) {
     }
 }
 
-// us-802abd3c (func_802A9604)
+// us-802abd3c (VisBreak_AllocVoiceHandle)
 // Standalone voice selector for vision-break. Finds a free voice handle via
 // func_802A7A54(1), allocates a 0x32-byte buffer, and plays a voice ID chosen
 // based on the current game-manager frame count. Always returns 0.
-int func_802A9604() {
+int VisBreak_AllocVoiceHandle() {
     CVoiceHandle* handle = func_802A7A54(1);
     if (handle == NULL) {
         return 0;
@@ -164,9 +164,10 @@ void func_802A93FC(CVS_THREAD_VISION_BREAK* self) {
     const u32* reset = lbl_eu_80539D7C;
     v0 = *reset++;
     CVoiceHandle* handle = self->field_0x20;
-    self->unk4 = *reset++;
-    self->unk0 = (u32*)v0;
-    self->unk8 = *reset;
+    CVS_THREAD_VISION_BREAK_raw* raw = (CVS_THREAD_VISION_BREAK_raw*)self;
+    raw->state1 = *reset++;
+    raw->state0 = (u32*)v0;
+    raw->state2 = *reset;
 
     if (handle == NULL) {
         return;
@@ -223,6 +224,6 @@ void func_802A93FC(CVS_THREAD_VISION_BREAK* self) {
         }
     }
 }
-// Buffer-size getter recorded under the flat retail map name func_802A95FC:
+// Buffer-size getter recorded under the flat retail map name VisBreak_GetSizeConstF:
 // returns 0xF (the thread's buffer size). Retail body: li r3,0xF; blr.
-u32 func_802A95FC(CVS_THREAD_VISION_BREAK* self) { return 0xF; }
+u32 VisBreak_GetSizeConstF(CVS_THREAD_VISION_BREAK* self) { return 0xF; }

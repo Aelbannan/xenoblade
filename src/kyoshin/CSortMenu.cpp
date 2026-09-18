@@ -14,12 +14,12 @@ void func_801390E0(CFileHandle**);
 
 // Intra-TU forward declarations (definitions in this file; pre-existing missing
 // declarations - required for the TU to compile under -lang=c++)
-// noinline: retail calls the state handlers via bl from func_801D3160;
+// noinline: retail calls the state handlers via bl from sortMenuDispatchState;
 // without it MWCC -inline auto inlines them there and bloats the TU.
-extern "C" __declspec(noinline) void func_801D3878(CSortMenu*);
-extern "C" __declspec(noinline) void func_801D390C(CSortMenu*);
-extern "C" __declspec(noinline) void func_801D3958(CSortMenu*);
-extern "C" __declspec(noinline) void func_801D39EC(CSortMenu*);
+extern "C" __declspec(noinline) void sortMenuState1Opening(CSortMenu*);
+extern "C" __declspec(noinline) void sortMenuState2WaitAnim(CSortMenu*);
+extern "C" __declspec(noinline) void sortMenuState4Scroll(CSortMenu*);
+extern "C" __declspec(noinline) void sortMenuState5Closing(CSortMenu*);
 // noinline: retail calls func_801D3A3C via bl from every caller; without it MWCC
 // -inline auto inlines the loop body into each caller and bloats the TU.
 extern "C" __declspec(noinline) void func_801D3A3C(CSortMenu*);
@@ -67,9 +67,9 @@ extern "C" CSortMenu* __dt__9CSortMenuFv(CSortMenu* _this, int flags) {
 }
 
 // ============================================================================
-// func_801D3064: Init sort menu - read file, create scrollbar data
+// sortMenuInitFileRead: Init sort menu - read file, create scrollbar data
 // ============================================================================
-extern "C" void func_801D3064(CSortMenu* _this) {
+extern "C" void sortMenuInitFileRead(CSortMenu* _this) {
     void* handle = getHandleMEM2__Q23mtl10MemManagerFv();
     _this->mFileHandle = (CFileHandle*)readFile__11CDeviceFileFUlPCcP10IWorkEventii(
         (unsigned long)handle, lbl_eu_8050624C + 0x00, _this, 0, 0);
@@ -100,32 +100,32 @@ extern "C" void func_801D3064(CSortMenu* _this) {
     _this->mScrollBar.mDirection = temp.mDirection;
 
     __dt__10CScrollBarFv(&temp, -1);
-    func_801F34F4(&_this->mScrollBar);
+    CScrollBar_loadLayoutArc(&_this->mScrollBar);
 }
 
 // ============================================================================
-// func_801D3160: Move - state machine dispatch
+// sortMenuDispatchState: Move - state machine dispatch
 // ============================================================================
-extern "C" void func_801D3160(CSortMenu* _this) {
+extern "C" void sortMenuDispatchState(CSortMenu* _this) {
     if (_this->field_0x28 == 0) return;
 
     switch (_this->field_0x2A) {
     case 1:
-        func_801D3878(_this);
+        sortMenuState1Opening(_this);
         break;
     case 2:
-        func_801D390C(_this);
+        sortMenuState2WaitAnim(_this);
         break;
     case 4:
-        func_801D3958(_this);
+        sortMenuState4Scroll(_this);
         break;
     case 5:
-        func_801D39EC(_this);
+        sortMenuState5Closing(_this);
         break;
     }
 
     _this->mpLayout->Animate(0);
-    func_801F3540((u8*)_this + 0x2C);
+    CScrollBar_UpdateDispatch((u8*)_this + 0x2C);
 }
 
 // ============================================================================
@@ -135,14 +135,14 @@ extern "C" void func_801D31F8(CSortMenu* _this, nw4r::lyt::DrawInfo* drawInfo) {
     if (_this->field_0x28 == 0) return;
     drawLayout(_this->mpLayout, drawInfo, 0, 1);
     if (_this->mCount > 5) {
-        func_801F35B0((u8*)_this + 0x2C, drawInfo);
+        CScrollBar_draw((u8*)_this + 0x2C, drawInfo);
     }
 }
 
 // ============================================================================
-// func_801D3258: Term - cleanup
+// sortMenuTermCleanup: Term - cleanup
 // ============================================================================
-extern "C" void func_801D3258(CSortMenu* _this) {
+extern "C" void sortMenuTermCleanup(CSortMenu* _this) {
     func_801390E0(&_this->mFileHandle);
     _this->field_0x28 = 0;
     if (_this->mpLayout != NULL) {
@@ -153,7 +153,7 @@ extern "C" void func_801D3258(CSortMenu* _this) {
     releaseArcResourceAccessor(_this->mArcResAcc);
     _this->mArcResAcc = NULL;
     deleteRegion__17UnkClass_8045F564Fv((u8*)_this + 0x04);
-    func_801F35DC((u8*)_this + 0x2C);
+    CScrollBar_Teardown((u8*)_this + 0x2C);
 }
 
 // ============================================================================
@@ -167,25 +167,25 @@ extern "C" u8 func_801D32DC(CSortMenu* _this) {
 }
 
 // ============================================================================
-// func_801D3320: Get field_0x28
+// sortMenuIsVisible28: Get field_0x28
 // ============================================================================
-extern "C" u8 func_801D3320(CSortMenu* _this) {
+extern "C" u8 sortMenuIsVisible28(CSortMenu* _this) {
     return _this->field_0x28;
 }
 
 // ============================================================================
-// func_801D3328: Get field_0x2B
+// sortMenuGetFlag2B: Get field_0x2B
 // ============================================================================
-extern "C" u8 func_801D3328(CSortMenu* _this) {
+extern "C" u8 sortMenuGetFlag2B(CSortMenu* _this) {
     return _this->field_0x2B;
 }
 
 // ============================================================================
-// func_801D3330: Open / initialize sort menu
+// sortMenuOpenInit: Open / initialize sort menu
 // Each GetRootPane() is spelled out fresh - retail reloads mpLayout from the
 // object before every use instead of caching the root pane.
 // ============================================================================
-extern "C" void func_801D3330(CSortMenu* _this) {
+extern "C" void sortMenuOpenInit(CSortMenu* _this) {
     if (_this->field_0x2A != 0) return;
 
     _this->field_0x2A = 1;
@@ -198,38 +198,38 @@ extern "C" void func_801D3330(CSortMenu* _this) {
     f32 textBuf[3];
     func_80137924(textBuf, paneTxt1, paneTxt2, _this->mpLayout->GetRootPane());
 
-    func_801F3670(&_this->mScrollBar, &textBuf);
-    func_801F36BC(&_this->mScrollBar, 5, _this->mCount);
-    func_801F367C(&_this->mScrollBar);
+    CScrollBar_InitRootPane(&_this->mScrollBar, &textBuf);
+    CScrollBar_UpdateThumb(&_this->mScrollBar, 5, _this->mCount);
+    CScrollBar_requestScrollIn(&_this->mScrollBar);
 
     func_801D3A3C(_this);
 }
 
 // ============================================================================
-// func_801D3408: Set state to 4 (scroll down page)
+// sortMenuToState4Page: Set state to 4 (scroll down page)
 // ============================================================================
-extern "C" void func_801D3408(CSortMenu* _this) {
+extern "C" void sortMenuToState4Page(CSortMenu* _this) {
     if (_this->field_0x2A != 3) return;
     _this->field_0x2A = 4;
     _this->field_0x2B = 0;
-    func_801F369C((u8*)_this + 0x2C);
+    CScrollBar_requestScrollOut((u8*)_this + 0x2C);
 }
 
 // ============================================================================
-// func_801D3430: Set layout position
+// sortMenuSetLayoutPos: Set layout position
 // ============================================================================
-extern "C" void func_801D3430(CSortMenu* _this, const nw4r::math::VEC3* pos) {
+extern "C" void sortMenuSetLayoutPos(CSortMenu* _this, const nw4r::math::VEC3* pos) {
     nw4r::lyt::Pane* rootPane = _this->mpLayout->GetRootPane();
     rootPane->SetTranslate(*pos);
 }
 
 // ============================================================================
-// func_801D3454: Update pane text with formatted string
+// sortMenuFormatPaneText: Update pane text with formatted string
 // Declare-then-assign keeps the lis/addi pairs in retail order (strTable ->
 // r4, string base -> r31); the first rootPane stays live as the 4th arg while
 // the second FindPaneByName reloads it fresh.
 // ============================================================================
-extern "C" void func_801D3454(u8* textObj, CSortMenu* _this) {
+extern "C" void sortMenuFormatPaneText(u8* textObj, CSortMenu* _this) {
     char buf[0x1c];
     void** strTable;
     char* s;
@@ -246,9 +246,9 @@ extern "C" void func_801D3454(u8* textObj, CSortMenu* _this) {
 }
 
 // ============================================================================
-// func_801D350C: Reset count to 0
+// sortMenuResetCount: Reset count to 0
 // ============================================================================
-extern "C" void func_801D350C(CSortMenu* _this) {
+extern "C" void sortMenuResetCount(CSortMenu* _this) {
     _this->mCount = 0;
 }
 
@@ -381,9 +381,9 @@ extern "C" void func_801D3724(CSortMenu* _this) {
 }
 
 // ============================================================================
-// func_801D377C: Page down
+// sortMenuPageDownStep: Page down
 // ============================================================================
-extern "C" void func_801D377C(CSortMenu* _this) {
+extern "C" void sortMenuPageDownStep(CSortMenu* _this) {
     u8 count = _this->mCount;
     if (count >= 5) {
         s32 maxSub = (s32)(count - 5);
@@ -410,23 +410,23 @@ extern "C" void func_801D377C(CSortMenu* _this) {
 }
 
 // ============================================================================
-// func_801D37F4: Get page + subPage
+// sortMenuGetPageSum: Get page + subPage
 // ============================================================================
-extern "C" u8 func_801D37F4(CSortMenu* _this) {
+extern "C" u8 sortMenuGetPageSum(CSortMenu* _this) {
     return _this->mPage + _this->mSubPage;
 }
 
 // ============================================================================
-// func_801D3808: Get page
+// sortMenuGetPageIdx: Get page
 // ============================================================================
-extern "C" u8 func_801D3808(CSortMenu* _this) {
+extern "C" u8 sortMenuGetPageIdx(CSortMenu* _this) {
     return _this->mPage;
 }
 
 // ============================================================================
-// func_801D3810: Get subPage
+// sortMenuGetSubPageIdx: Get subPage
 // ============================================================================
-extern "C" u8 func_801D3810(CSortMenu* _this) {
+extern "C" u8 sortMenuGetSubPageIdx(CSortMenu* _this) {
     return _this->mSubPage;
 }
 
@@ -445,9 +445,9 @@ extern "C" void func_801D3818(CSortMenu* _this, int value, u8* outPage, u8* outS
 #pragma optimize_for_size off
 
 // ============================================================================
-// func_801D3878: State 1 handler - opening animation
+// sortMenuState1Opening: State 1 handler - opening animation
 // ============================================================================
-extern "C" __declspec(noinline) void func_801D3878(CSortMenu* _this) {
+extern "C" __declspec(noinline) void sortMenuState1Opening(CSortMenu* _this) {
     if (advanceAnimTransform(_this->mpAnimTrans0, lbl_eu_80668000) != 0) {
         _this->field_0x2A = 2;
         _this->mpLayout->SetAnimationEnable(_this->mpAnimTrans0, false);
@@ -457,9 +457,9 @@ extern "C" __declspec(noinline) void func_801D3878(CSortMenu* _this) {
 }
 
 // ============================================================================
-// func_801D390C: State 2 handler - wait for anim1
+// sortMenuState2WaitAnim: State 2 handler - wait for anim1
 // ============================================================================
-extern "C" __declspec(noinline) void func_801D390C(CSortMenu* _this) {
+extern "C" __declspec(noinline) void sortMenuState2WaitAnim(CSortMenu* _this) {
     if (advanceAnimTransform(_this->mpAnimTrans1, 1.0f) != 0) {
         _this->field_0x2A = 3;
         _this->field_0x2B = 1;
@@ -467,9 +467,9 @@ extern "C" __declspec(noinline) void func_801D390C(CSortMenu* _this) {
 }
 
 // ============================================================================
-// func_801D3958: State 4 handler - scroll animation
+// sortMenuState4Scroll: State 4 handler - scroll animation
 // ============================================================================
-extern "C" __declspec(noinline) void func_801D3958(CSortMenu* _this) {
+extern "C" __declspec(noinline) void sortMenuState4Scroll(CSortMenu* _this) {
     if (AnimRewindFrame(_this->mpAnimTrans1, lbl_eu_80668000) != 0) {
         _this->field_0x2A = 5;
         _this->mpLayout->SetAnimationEnable(_this->mpAnimTrans1, false);
@@ -479,9 +479,9 @@ extern "C" __declspec(noinline) void func_801D3958(CSortMenu* _this) {
 }
 
 // ============================================================================
-// func_801D39EC: State 5 handler - closing animation
+// sortMenuState5Closing: State 5 handler - closing animation
 // ============================================================================
-extern "C" __declspec(noinline) void func_801D39EC(CSortMenu* _this) {
+extern "C" __declspec(noinline) void sortMenuState5Closing(CSortMenu* _this) {
     if (AnimRewindFrame(_this->mpAnimTrans0, 1.0f) != 0) {
         _this->field_0x2A = 0;
         _this->field_0x2B = 1;
@@ -516,7 +516,7 @@ extern "C" __declspec(noinline) void func_801D3A3C(CSortMenu* _this) {
     // has the same split. Convert-in-arg + u32 prototype were neutral.
     u32 subPage = (u16)(s8)_this->mSubPage;
     CScrollBarData* scrollBar = &_this->mScrollBar;
-    func_801F3850(scrollBar, subPage);
+    CScrollBar_PlaceThumb(scrollBar, subPage);
 }
 #pragma optimize_for_size off
 

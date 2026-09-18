@@ -1,11 +1,12 @@
 // kyoshin/CSysWinSave - system window "save" process (singleton).
 
 #include "kyoshin/CSysWinSave.hpp"
-// (BA0/BA4 names alias the anchored pair below; code text unchanged.)
-#define lbl_eu_80668BA0 (lbl_eu_80668BA04[0])
-#define lbl_eu_80668BA4 (lbl_eu_80668BA04[1])
-extern f32 lbl_eu_80668BA04[2];
-extern f64 lbl_eu_80668BA8;
+// sdata2 scalars, defined HERE (not in the absorb block below) so MWCC
+// sees the section at the use sites and emits sda21 addressing like retail.
+// Retail labels are three separate scalars (0.0f, 1.0f, 2.0), not an array.
+__declspec(section ".sdata2") f32 lbl_eu_80668BA0 = 0.0f;
+__declspec(section ".sdata2") f32 lbl_eu_80668BA4 = 1.0f;
+__declspec(section ".sdata2") f64 lbl_eu_80668BA8 = 2.0;
 extern void* lbl_eu_80538A60[16];
 extern void* lbl_eu_80662B08[2];
 extern void* lbl_eu_80662B10[2];
@@ -24,8 +25,7 @@ extern char lbl_eu_8050FD60[];
 extern char lbl_eu_8050FD50[];
 extern "C" {
     int func_8008294C__Q22cf13CfGameManagerFv(int);
-    int func_80086F9C__Q22cf13CfGameManagerFv(int);
-    int func_80138078__FUl(unsigned long);
+
 }
 #include "monolib/util/MemManager.hpp"
 #include "monolib/work/CWorkThreadSystem.hpp"
@@ -42,11 +42,11 @@ void cbRenderBefore__11CSysWinSaveFv(void* self);
 // emits these as offset-adjusted dispatch stubs: only r3 is re-based, then a
 // tail jump into the right subobject trampoline). Preserved from the scaffold.
 // ---------------------------------------------------------------------------
-void func_8029480C(void* self) { ((void(*)(void*))__dt__11CSysWinSaveFv)((char*)self - 0x6c); }
+void SysWinSaveDtorThunk6C(void* self) { ((void(*)(void*))__dt__11CSysWinSaveFv)((char*)self - 0x6c); }
 
 void func_80294814(void* self) { ((void(*)(void*))cbRenderBefore__11CSysWinSaveFv)((char*)self - 0x70); }
 
-void func_8029481C(void* self) { ((void(*)(void*))__dt__11CSysWinSaveFv)((char*)self - 0x70); }
+void SysWinSaveDtorThunk70(void* self) { ((void(*)(void*))__dt__11CSysWinSaveFv)((char*)self - 0x70); }
 
 extern "C" void func_80294824__FPv(float* self) {
     float v = lbl_eu_80668BA0;
@@ -61,20 +61,25 @@ extern "C" void func_80294834__FPv(float* self) {
 }
 
 // ---------------------------------------------------------------------------
-// Target 1: func_80294844 (us-80296e40)
+// Target 1: setChainGauge (us-80296e40)
 // Write a base value to [out+0] and [out+4]. If the incoming parameter is
 // below the threshold A, additionally store a corrected value:
 //   corrected = C * (param - A) - A
 // to both slots (the whole point: clamp/recentre toward a target).
 // ---------------------------------------------------------------------------
-extern "C" void func_80294844(float* self, float param) {
-    float b = lbl_eu_80668BA0;
-    float a = lbl_eu_80668BA4;
+extern "C" void setChainGauge(float* self, float param) {
+    // Birth order b,a (Rule A: first-declared volatile takes the lowest
+    // FPR, so b lands f0 and a lands f2); assignment order keeps retail's
+    // load sequence (BA4 into f2 before BA0 into f0).
+    float b, a;
+    a = lbl_eu_80668BA4;
+    b = lbl_eu_80668BA0;
     self[0] = b;
     self[1] = b;
     if (a < param) {
         param -= a;
-        float c = lbl_eu_80668BA8;
+        // Multiplier read as a single (retail lfs off the double's address).
+        float c = *(f32*)&lbl_eu_80668BA8;
         float r = (c * param) - a;
         self[1] = r;
         self[0] = r;
@@ -85,7 +90,7 @@ extern "C" void func_80294844(float* self, float param) {
 // Producers of the save-window singleton. Kept as scaffold stubs (not matching
 // targets in this batch); must still emit their retail symbols.
 // ---------------------------------------------------------------------------
-extern "C" unsigned long func_80294624() {
+extern "C" unsigned long SysWinSaveIsCreated() {
     return lbl_eu_80664A08 != 0;
 }
 
@@ -97,54 +102,58 @@ extern "C" unsigned long func_80294624() {
 // ---------------------------------------------------------------------------
 // C-linkage (retail symbol is unmangled func_80294638), so the definition
 // carries extern "C" and the call site in Move emits the retail reloc name
-// (same convention as func_801250FC in CSysWinSelect.cpp).
+// (same convention as SysWinSelectHandleInput in CSysWinSelect.cpp).
 extern "C" void func_80294638(CSysWinSave* self);
 
 extern "C" void func_80294638(CSysWinSave* self) {
     CSysPadData* pad = (CSysPadData*)getCfPadData__Q22cf13CfGameManagerFv();
     int in1, in2;
     int sels, confirm;
-    if (func_80086F9C__Q22cf13CfGameManagerFv(-1) != 0) {
-        in1     = (pad->field_04 >> 10) & 1;
-        in2     = (pad->field_04 >> 9) & 1;
-        confirm = ((pad->field_104 >> 16) & 1) != 0 || ((pad->field_104 >> 3) & 1) != 0;
+    if (isClassicController__Q22cf13CfGameManagerFv(-1) != 0) {
+        in1     = (pad->field_04 >> 21) & 1;
+        in2     = (pad->field_04 >> 22) & 1;
         sels    = (pad->field_104 & 0x8004) != 0;
+        confirm = (pad->field_104 >> 16) & 1;
+        confirm |= (pad->field_104 >> 3) & 1;
+        confirm = confirm != 0;
     } else {
-        in1     = (pad->field_04 >> 27) & 1;
-        in2     = (pad->field_04 >> 26) & 1;
-        confirm = ((pad->field_104 >> 16) & 1) != 0 || ((pad->field_104 >> 3) & 1) != 0;
+        in1     = (pad->field_04 >> 4) & 1;
+        in2     = (pad->field_04 >> 5) & 1;
         sels    = (pad->field_104 & 0x8004) != 0;
+        confirm = (pad->field_104 >> 16) & 1;
+        confirm |= (pad->field_104 >> 3) & 1;
+        confirm = confirm != 0;
     }
 
     if (in1) {
         // Close the dialog without advancing the save slot.
         self->mFlagDC = 3;
-        func_8022B8E4(&self->mSysWin[0]);
-        func_801D216C(&self->mCur18[0], 0);
-        func_80138078__FUl(3);
+        sysWinAdvancePhase3(&self->mSysWin[0]);
+        Cur_SetVisible(&self->mCur18[0], 0);
+        playUISound__FUl(3);
     } else if (in2) {
         // Close the dialog, marking the save slot as re-selected.
         self->mFlagDC = 3;
-        func_8022B8E4(&self->mSysWin[0]);
-        func_801D216C(&self->mCur18[0], 0);
+        sysWinAdvancePhase3(&self->mSysWin[0]);
+        Cur_SetVisible(&self->mCur18[0], 0);
         self->mFlagDD = 1;
-        func_80138078__FUl(6);
+        playUISound__FUl(6);
     } else if (sels) {
         // Cursor up: decrement the slot index, wrapping to 1 when below 0.
         self->mFlagDD = self->mFlagDD - 1;
         if (self->mFlagDD < 0) self->mFlagDD = 1;
         u8 tmp[0x18];
-        func_8022C1B4(tmp, &self->mSysWin[0], self->mFlagDD);
+        sysWinGetPaneScreenPos(tmp, &self->mSysWin[0], self->mFlagDD);
         reinterpret_cast<CCur18View*>(&self->mCur18[0])->vf04(tmp);
-        func_80138078__FUl(1);
+        playUISound__FUl(1);
     } else if (confirm) {
         // Cursor down: increment the slot index, wrapping over 1 to 0.
         self->mFlagDD = self->mFlagDD + 1;
         if (self->mFlagDD > 1) self->mFlagDD = 0;
         u8 tmp[0x18];
-        func_8022C1B4(tmp, &self->mSysWin[0], self->mFlagDD);
+        sysWinGetPaneScreenPos(tmp, &self->mSysWin[0], self->mFlagDD);
         reinterpret_cast<CCur18View*>(&self->mCur18[0])->vf04(tmp);
-        func_80138078__FUl(1);
+        playUISound__FUl(1);
     }
 }
 
@@ -239,9 +248,9 @@ void CSysWinSave::Move() {
             s2 = BdatTouchStringCell(base + 0xc, base + 0x17, 0x4f);
             const char* s3 = BdatTouchStringCell(base + 0xc, base + 0x17, 0x50);
             func_8022B9B4(&mSysWin[0], (void*)s1, 0);
-            func_8022BF6C(&mSysWin[0], (void*)s2, (void*)s3);
+            sysWinSetTwoTextValues(&mSysWin[0], (void*)s2, (void*)s3);
             func_8022BFC8(&mSysWin[0], 0);
-            func_8022B8B8(&mSysWin[0]);
+            sysWinOpenPhase1(&mSysWin[0]);
         }
         break;
     }
@@ -249,9 +258,9 @@ void CSysWinSave::Move() {
         // Window active: update the cursor from the stored slot flag.
         if (CSysWin_isActive(&mSysWin[0])) {
             mFlagDC = 2;
-            func_801D216C(&mCur18[0], 1);
+            Cur_SetVisible(&mCur18[0], 1);
             u8 tmp[0x18];
-            func_8022C1B4(tmp, &mSysWin[0], mFlagDD);
+            sysWinGetPaneScreenPos(tmp, &mSysWin[0], mFlagDD);
             reinterpret_cast<CCur18View*>(&mCur18[0])->vf04(tmp);
         }
         break;
@@ -270,7 +279,7 @@ void CSysWinSave::Move() {
         break;
     }
 
-    func_8022B748(&mSysWin[0]);
+    sysWinDispatchPhase(&mSysWin[0]);
     func_801D202C(&mCur18[0]);
 }
 
@@ -282,7 +291,7 @@ void CSysWinSave::Move() {
 // ---------------------------------------------------------------------------
 void CSysWinSave::Term() {
     CDeviceVI::waitForDrawDone();
-    func_8022B7F4(&mSysWin[0]);
+    sysWinTermLayout(&mSysWin[0]);
     reinterpret_cast<CCursor18*>(&mCur18[0])->vf3();
     mMemRegion.func_8045F778();
     lbl_eu_80664A08 = 0;
@@ -348,8 +357,8 @@ body:
     u8 drawInfo[0x60];
     __ct__Q34nw4r3lyt8DrawInfoFv(reinterpret_cast<nw4r::lyt::DrawInfo*>(&drawInfo[0]));
     func_80137250(reinterpret_cast<nw4r::lyt::DrawInfo*>(&drawInfo[0]));
-    func_8022B7C8(&mSysWin[0], reinterpret_cast<nw4r::lyt::DrawInfo*>(&drawInfo[0]));
-    func_801D20B0(&mCur18[0], reinterpret_cast<nw4r::lyt::DrawInfo*>(&drawInfo[0]));
+    sysWinDrawLayout(&mSysWin[0], reinterpret_cast<nw4r::lyt::DrawInfo*>(&drawInfo[0]));
+    Cur_DrawLayout(&mCur18[0], reinterpret_cast<nw4r::lyt::DrawInfo*>(&drawInfo[0]));
     __dt__Q34nw4r3lyt8DrawInfoFv(reinterpret_cast<nw4r::lyt::DrawInfo*>(&drawInfo[0]), -1);
 }
 
@@ -427,13 +436,11 @@ __declspec(section ".rodata") char lbl_eu_8050FD60[0xc] = {0x43, 0x53, 0x79, 0x7
 __declspec(section ".rodata") char lbl_eu_8050FD6C[0x1c] = {0x43, 0x53, 0x79, 0x73, 0x57, 0x69, 0x6e, 0x53, 0x61, 0x76, 0x65, 0x00, 0x4d, 0x4e, 0x55, 0x5f, 0x73, 0x79, 0x73, 0x6d, 0x65, 0x73, 0x00, 0x6e, 0x61, 0x6d, 0x65, 0x00};
 struct SaveDataA { void* h[3]; void* v[48]; void* t[16]; };
 __declspec(section ".data") __attribute__((used))
-struct SaveDataA lbl_eu_80538994 = { { (void*)lbl_eu_80662B08, (void*)lbl_eu_80662B08, (void*)lbl_eu_80662B10 }, { (void*)lbl_eu_80662B08, (void*)lbl_eu_80662B10, (void*)lbl_eu_80662B10, (void*)lbl_eu_80662B10, (void*)lbl_eu_80662B10, (void*)lbl_eu_80662B10, (void*)lbl_eu_80662B10, (void*)lbl_eu_80662B10, (void*)lbl_eu_80662B10, (void*)lbl_eu_80662B10, (void*)0xFFFFFF94, (void*)func_8029480C, (void*)lbl_eu_80662B10, (void*)lbl_eu_80662B10, (void*)lbl_eu_80662B10, (void*)lbl_eu_80662B10, (void*)lbl_eu_80662B10, (void*)lbl_eu_80662B10, (void*)lbl_eu_80662B10, (void*)lbl_eu_80662B10, (void*)lbl_eu_80662B10, (void*)lbl_eu_80662B10, (void*)lbl_eu_80662B10, (void*)lbl_eu_80662B10, (void*)lbl_eu_80662B10, (void*)lbl_eu_80662B10, (void*)lbl_eu_80662B10, (void*)lbl_eu_80662B10, (void*)lbl_eu_80662B10, (void*)lbl_eu_80662B10, (void*)lbl_eu_80662B10, (void*)lbl_eu_80662B10, (void*)lbl_eu_80662B10, (void*)lbl_eu_80662B10, (void*)lbl_eu_80662B10, (void*)lbl_eu_80662B10, (void*)lbl_eu_80662B10, (void*)lbl_eu_80662B10, (void*)lbl_eu_80662B10, (void*)lbl_eu_80662B10, (void*)lbl_eu_80662B10, (void*)lbl_eu_80662B10, (void*)lbl_eu_80662B10, (void*)lbl_eu_80662B10, (void*)0xFFFFFF90, (void*)func_8029481C, (void*)func_80294814, (void*)lbl_eu_80662B10 }, { (void*)lbl_eu_80661940, (void*)0x70, (void*)lbl_eu_80662B10, (void*)0x6c, (void*)lbl_eu_80661958, 0, (void*)lbl_eu_80661950, 0, (void*)lbl_eu_80661948, 0, (void*)lbl_eu_80661ED0, 0, (void*)lbl_eu_80661EC8, 0, 0, 0 } };
+struct SaveDataA lbl_eu_80538994 = { { (void*)lbl_eu_80662B08, (void*)lbl_eu_80662B08, (void*)lbl_eu_80662B10 }, { (void*)lbl_eu_80662B08, (void*)lbl_eu_80662B10, (void*)lbl_eu_80662B10, (void*)lbl_eu_80662B10, (void*)lbl_eu_80662B10, (void*)lbl_eu_80662B10, (void*)lbl_eu_80662B10, (void*)lbl_eu_80662B10, (void*)lbl_eu_80662B10, (void*)lbl_eu_80662B10, (void*)0xFFFFFF94, (void*)SysWinSaveDtorThunk6C, (void*)lbl_eu_80662B10, (void*)lbl_eu_80662B10, (void*)lbl_eu_80662B10, (void*)lbl_eu_80662B10, (void*)lbl_eu_80662B10, (void*)lbl_eu_80662B10, (void*)lbl_eu_80662B10, (void*)lbl_eu_80662B10, (void*)lbl_eu_80662B10, (void*)lbl_eu_80662B10, (void*)lbl_eu_80662B10, (void*)lbl_eu_80662B10, (void*)lbl_eu_80662B10, (void*)lbl_eu_80662B10, (void*)lbl_eu_80662B10, (void*)lbl_eu_80662B10, (void*)lbl_eu_80662B10, (void*)lbl_eu_80662B10, (void*)lbl_eu_80662B10, (void*)lbl_eu_80662B10, (void*)lbl_eu_80662B10, (void*)lbl_eu_80662B10, (void*)lbl_eu_80662B10, (void*)lbl_eu_80662B10, (void*)lbl_eu_80662B10, (void*)lbl_eu_80662B10, (void*)lbl_eu_80662B10, (void*)lbl_eu_80662B10, (void*)lbl_eu_80662B10, (void*)lbl_eu_80662B10, (void*)lbl_eu_80662B10, (void*)lbl_eu_80662B10, (void*)0xFFFFFF90, (void*)SysWinSaveDtorThunk70, (void*)func_80294814, (void*)lbl_eu_80662B10 }, { (void*)lbl_eu_80661940, (void*)0x70, (void*)lbl_eu_80662B10, (void*)0x6c, (void*)lbl_eu_80661958, 0, (void*)lbl_eu_80661950, 0, (void*)lbl_eu_80661948, 0, (void*)lbl_eu_80661ED0, 0, (void*)lbl_eu_80661EC8, 0, 0, 0 } };
 __declspec(section ".sdata") __attribute__((aligned(8))) __attribute__((used))
 void* lbl_eu_80662B08[2] = { (void*)lbl_eu_8050FD50, (void*)lbl_eu_8050FD50 };
 __declspec(section ".sdata") __attribute__((aligned(8))) __attribute__((used))
 void* lbl_eu_80662B10[2] = { (void*)lbl_eu_8050FD60, (void*)lbl_eu_80538A60 };
-__declspec(section ".sdata2") f32 lbl_eu_80668BA04[2] = { 0.0f, 1.0f };
-__declspec(section ".sdata2") f64 lbl_eu_80668BA8 = 2.0;
 CSysWinSave* lbl_eu_80664A08 = 0;
 u32 save_sbss_padA0C = 0; // (retail .sbss is 8B; content ignored by gate)
  u32 _pad_80664A0C;

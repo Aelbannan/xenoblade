@@ -50,7 +50,7 @@ extern "C" void func_800AAE24(void* /*ctx*/, cf::CfObjectColl* coll) {
     }
 
     CDrawGX gx;
-    func_8049034C(lbl_eu_80663E14, &gx, 0);
+    TexMan_ApplyCamPersp_034C(lbl_eu_80663E14, &gx, 0);
 
     ml::CCol4 col(lbl_eu_80666910, lbl_eu_80666914, lbl_eu_80666914, lbl_eu_80666918);
     gx.setCol(col);
@@ -62,7 +62,7 @@ extern "C" void func_800AAE24(void* /*ctx*/, cf::CfObjectColl* coll) {
 // Render AABB collision shape into a collision query context.
 // r4 is the CfObjectColl carrying AABB data; r3 (unused, the CfCollImpl this)
 // is ignored. Tail-calls func_800A5FE8.
-extern "C" void func_800AAFF4(void* /*ctx*/, cf::CfObjectColl* coll, void* query, void* result) {
+extern "C" void CollAABB_RenderQuery(void* /*ctx*/, cf::CfObjectColl* coll, void* query, void* result) {
     cf::CfCollAABBImpl* aabb = reinterpret_cast<cf::CfCollAABBImpl*>(coll);
     func_800A5FE8(query, &aabb->mMin, &aabb->mMax, &aabb->mCenter, result);
 }

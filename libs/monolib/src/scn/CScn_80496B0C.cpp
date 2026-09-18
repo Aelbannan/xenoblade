@@ -84,7 +84,7 @@ extern const char lbl_eu_80530EE0[];   // fmt
 // tail is restored by pad_data_section.
 extern "C" void __dt__16CVirtualLightObjFv();
 extern "C" void func_804947EC();
-extern "C" void func_8049488C();
+extern "C" void getVirtualLightSentinel();
 extern "C" void __dt__4CScnFv();
 extern "C" void Reset__14CChildListNodeFv();
 extern "C" void Init__4CScnFv();
@@ -134,7 +134,7 @@ extern "C" u32 lbl_eu_8056E8B8[6] = {
     (u32)&lbl_eu_806639D0, 0x00000000,
     (u32)&__dt__16CVirtualLightObjFv,
     (u32)&func_804947EC,
-    (u32)&func_8049488C,
+    (u32)&getVirtualLightSentinel,
     0x00000000,
 };
 extern "C" u32 lbl_eu_8056E8D0[45] = {
@@ -351,12 +351,12 @@ extern "C" __declspec(noinline) u32 func_80497544(
 
 // Imports from other monolib TUs (retail free functions). C linkage keeps the
 // retail reloc names verbatim (MWCC would otherwise mangle them).
-extern "C" void* func_8048ECFC(CScn* scn);
-extern "C" __declspec(noinline) void func_804980E4(CScnChild80496B0C* child, u32 tag);
+extern "C" void* getScnRootSel47C(CScn* scn);
+extern "C" __declspec(noinline) void scn80496RefreshChildTag(CScnChild80496B0C* child, u32 tag);
 
 // Character-animation resource lookup by index (retail free function in
 // CScnItemAnim.cpp; C linkage keeps the plain global reloc name).
-extern "C" nw4r::g3d::ResAnmChr func_8049E708(CScnItemAnim* self, int index);
+extern "C" nw4r::g3d::ResAnmChr ItemAnim_GetChr_E708(CScnItemAnim* self, int index);
 
 // nw4r AnmObjChrBlend::Construct is a private static in g3d_anmchr.h, so it
 // is re-declared under its retail mangled linker name (extern "C" keeps the
@@ -366,13 +366,13 @@ Construct__Q34nw4r3g3d14AnmObjChrBlendFP12MEMAllocatorPUlQ34nw4r3g3d6ResMdli(
     MEMAllocator* pAllocator, u32* pSize, nw4r::g3d::ResMdl mdl,
     int numChildren);
 
-void func_8049771C(u8* self, float val) { *(float*)((u8*)self + 0x178) = val; }
+void scn80496SetFloat178(u8* self, float val) { *(float*)((u8*)self + 0x178) = val; }
 
 
 // Returns the virtual value at vtable offset 0x20 of the object at
 // self->field_0x8->field_0x84->field_0x10, or the default constant when
 // that chain is missing.
-f32 func_80497724(CScn80496B0C* self) {
+f32 scn80496GetChild1V6(CScn80496B0C* self) {
     CScnChild80496B0C* child = self->field_0x8;
     if (child == 0) return lbl_eu_8066AAC0;
     CScnNode80496B0C* node = child->field_0x84[0];
@@ -383,7 +383,7 @@ f32 func_80497724(CScn80496B0C* self) {
 // Virtual dispatch target: v_i at vtable offset 8+4*i (MWCC RTTI header).
 // (type definitions live at the top of the file)
 
-extern "C" void func_80497760(u8* self) {
+extern "C" void scn80496CallChild1V5(u8* self) {
     void* p = *(void**)((u8*)self + 8);
     if (p == 0) return;
     p = *(void**)((u8*)p + 0x84);
@@ -391,7 +391,7 @@ extern "C" void func_80497760(u8* self) {
     ((VTarget*)*(void**)((u8*)p + 0x10))->v5();
 }
 
-extern "C" float func_80497790(u8* self) {
+extern "C" float scn80496GetChild1Float(u8* self) {
     void* p = *(void**)((u8*)self + 8);
     if (p == 0) return lbl_eu_8066AAC0;
     p = *(void**)((u8*)p + 0x84);
@@ -399,7 +399,7 @@ extern "C" float func_80497790(u8* self) {
     return lbl_eu_8066AAC0;
 }
 
-extern "C" float func_804977C0(u8* self) {
+extern "C" float scn80496GetChild2Float(u8* self) {
     void* p = *(void**)((u8*)self + 0xC);
     if (p == 0) return lbl_eu_8066AAC0;
     p = *(void**)((u8*)p + 0x84);
@@ -407,8 +407,8 @@ extern "C" float func_804977C0(u8* self) {
     return lbl_eu_8066AAC0;
 }
 
-// Same as func_80497724 but walks the second child (self->field_0xC).
-f32 func_804977F0(CScn80496B0C* self) {
+// Same as scn80496GetChild1V6 but walks the second child (self->field_0xC).
+f32 scn80496GetChild2V6(CScn80496B0C* self) {
     CScnChild80496B0C* child = self->field_0xC;
     if (child == 0) return lbl_eu_8066AAC0;
     CScnNode80496B0C* node = child->field_0x84[0];
@@ -419,10 +419,10 @@ f32 func_804977F0(CScn80496B0C* self) {
 // Refreshes both child chains, then, when the first chain is unbound and an
 // animation object is present, resets the pending-blend flag and asks the
 // animation object to pick up the blend (virtual, vtable +0x38).
-void func_8049782C(CScn80496B0C* self, u32 tag) {
+void scn80496RefreshBlendTag(CScn80496B0C* self, u32 tag) {
     if (self->field_0x8 != 0) {
-        func_804980E4(self->field_0x8, tag);
-        func_804980E4(self->field_0xC, tag);
+        scn80496RefreshChildTag(self->field_0x8, tag);
+        scn80496RefreshChildTag(self->field_0xC, tag);
         if (self->field_0x1D4 != 0 && self->field_0x8->field_0x84[0] == 0) {
             self->field_0x17E = 0;
             self->field_0x1D4->v12(self->field_0x1CC);
@@ -430,11 +430,11 @@ void func_8049782C(CScn80496B0C* self, u32 tag) {
     }
 }
 
-extern "C" u32 func_804978B8(u8* self) { return *(u32*)(*(u32*)((u8*)self + 8) + 0x84) != 0; }
+extern "C" u32 scn80496HasChild1Node(u8* self) { return *(u32*)(*(u32*)((u8*)self + 8) + 0x84) != 0; }
 
 // Returns whether the +0x14 ids of the two chains' nodes differ, or 0 when
 // either chain is missing.
-u32 func_804978D0(CScn80496B0C* self) {
+u32 scn80496ChildIdsDiffer(CScn80496B0C* self) {
     // Sign bit of (na_id - nb_id) OR'd both ways: set iff the two ids differ.
     CScnChild80496B0C* a = self->field_0x8;
     CScnChild80496B0C* b = self->field_0xC;
@@ -460,7 +460,7 @@ u32 func_80497914(CScn80496B0C* self) {
     return !(nb->field_0x14 - na->field_0x14);
 }
 
-extern "C" u32 func_8049798C(u8* self) { return *(u32*)(*(u32*)((u8*)self + 0xC) + 0x84) != 0; }
+extern "C" u32 scn80496HasChild2Node(u8* self) { return *(u32*)(*(u32*)((u8*)self + 0xC) + 0x84) != 0; }
 
 // Refreshes the child's TRS outputs from the model node selected by nodeIdx:
 // the translate output receives the node's position (or zero when the node is
@@ -663,7 +663,7 @@ void func_80497AA8(CScn80496B0C* self) {
 // Child-object initializer: zeroes the three node-binding slots and the
 // anim/scale state, then stamps the per-slot ids 0/1/2. C linkage keeps the
 // retail reloc name verbatim (the ctor call sites use the unmangled name).
-extern "C" CScnChild80496B0C* func_80497F34(CScnChild80496B0C* self) {
+extern "C" CScnChild80496B0C* scn80496ResetChildElems(CScnChild80496B0C* self) {
     // Pointer-walk do-while with the increment inside the condition: the
     // SDK loop shape MWCC emits without unrolling (MWCC_CASES).
     CScnNode80496B0C* it = self->elems;
@@ -730,7 +730,7 @@ CScnChild80496B0C* __dt__80497FEC(CScnChild80496B0C* self, int flags) {
 // object, then shifts the remaining slots down and zeroes the tail. On a
 // match the cursor does NOT advance -- the shift pulls the next binding into
 // the current slot, so it is re-examined on the next pass.
-extern "C" __declspec(noinline) void func_804980E4(CScnChild80496B0C* child, u32 tag) {
+extern "C" __declspec(noinline) void scn80496RefreshChildTag(CScnChild80496B0C* child, u32 tag) {
     CScnChild80496B0C* walk;
     CScnNode80496B0C* node;
     u32 i;
@@ -1184,7 +1184,7 @@ inline void ScnReleaseChild(CScnChild80496B0C* self, CScnChild80496B0C* walk,
 // Tears down both children's node bindings (same release sequence as the child
 // destructor, inlined for the two embedded children) and destroys the shared
 // chr-blend object.
-void func_80496D74(CScn80496B0C* self) {
+void scn80496ReleaseChildren(CScn80496B0C* self) {
     // Locals declared so MWCC allocates node/walk/counter to r26/r27/r28.
     CScnNode80496B0C* node;
     CScn80496B0C* walk;
@@ -1211,7 +1211,7 @@ void func_80496D74(CScn80496B0C* self) {
 // and returns it. The ResAnmChr resource is fetched from the bound node's
 // animation object (+0x2C); the node-name dictionary is resolved through the
 // resource's toChrDataDic offset (asserted 4-aligned).
-nw4r::g3d::ChrAnmResult* func_80496FC4(CScn80496B0C* self, const char* name,
+nw4r::g3d::ChrAnmResult* scn80496FindChrAnm(CScn80496B0C* self, const char* name,
                                        f32 frame) {
     CScnChild80496B0C* child = self->field_0x8;
     if (child == 0) {
@@ -1249,7 +1249,7 @@ nw4r::g3d::ChrAnmResult* func_80496FC4(CScn80496B0C* self, const char* name,
 }
 // Returns bit 1 of the +0x02 flag word on the node reached via
 // self->field_0x8->field_0x84, or 0 when that chain is absent.
-u32 func_8049715C(CScn80496B0C* self) {
+u32 scn80496IsNodeFlagBit(CScn80496B0C* self) {
     CScnChild80496B0C* child = self->field_0x8;
     if (child == 0) return 0;
     CScnNode80496B0C* node = child->field_0x84[0];
@@ -1304,7 +1304,7 @@ extern "C" __declspec(noinline) u32 func_80497544(
     u32 size;
     nw4r::g3d::AnmObjChrRes* anmObj =
         Construct__Q34nw4r3g3d12AnmObjChrResFP12MEMAllocatorPUlQ34nw4r3g3d9ResAnmChrQ34nw4r3g3d6ResMdlb(
-            (MEMAllocator*)func_8048ECFC(self->field_0x0), &size, &chr,
+            (MEMAllocator*)getScnRootSel47C(self->field_0x0), &size, &chr,
             &mdl, 0);
 
     if (child->field_0x90 != 0) {
@@ -1350,15 +1350,15 @@ extern "C" __declspec(noinline) u32 func_80497544(
     return result;
 }
 
-u32 func_80497190(CScn80496B0C* self, CScnItemAnim* anim, int index, u32 c,
+u32 scn80496BindChrAnmPack(CScn80496B0C* self, CScnItemAnim* anim, int index, u32 c,
                   u32 d, u32 e, u32 f) {
     u32 result = 0;
     if (self->field_0x1D8 != 0xFFFFFFFF && self->field_0xC->field_0x84[0] != 0 &&
         e != 0) {
-        nw4r::g3d::ResAnmChr t = func_8049E708(anim, index);
+        nw4r::g3d::ResAnmChr t = ItemAnim_GetChr_E708(anim, index);
         result = func_80497544(self, self->field_0xC, anim, &t, c, 0, f) << 16;
     }
-    nw4r::g3d::ResAnmChr t2 = func_8049E708(anim, index);
+    nw4r::g3d::ResAnmChr t2 = ItemAnim_GetChr_E708(anim, index);
     result |= func_80497544(self, self->field_0x8, anim, &t2, c, d, f) & 0xFFFF;
     if (self->field_0xC->field_0x84[0] != 0) {
         CScnChild80496B0C* child = self->field_0x8;
@@ -1385,8 +1385,8 @@ CScn80496B0C* __ct__80496B0C(CScn80496B0C* obj) {
     obj->field_0x4 = 0;
     obj->field_0x8 = 0;
     obj->field_0xC = 0;
-    func_80497F34(&obj->field_0x10);
-    func_80497F34(&obj->field_0xC0);
+    scn80496ResetChildElems(&obj->field_0x10);
+    scn80496ResetChildElems(&obj->field_0xC0);
     obj->field_0x170 = lbl_eu_8066AAC0;
     obj->field_0x174 = lbl_eu_8066AAC0;
     obj->field_0x178 = lbl_eu_8066AAC4;
@@ -1406,7 +1406,7 @@ CScn80496B0C* __ct__80496B0C(CScn80496B0C* obj) {
 
 // Binds the model's named ResNode id into the root (or -1 when the name is
 // NULL, 0 when the node is absent).
-void func_804970D0(CScn80496B0C* self, const char* name) {
+void scn80496SetNodeIdByName(CScn80496B0C* self, const char* name) {
     if (name != 0) {
         nw4r::g3d::ResNode node = self->field_0x1D0.GetResNode(name);
         if (!node.IsValid()) {
@@ -1431,7 +1431,7 @@ void func_80496F14(CScn80496B0C* self, CScn* scn, CScnModel80496B0C* model,
     u32 size;
     nw4r::g3d::AnmObjChrBlend* blend =
         Construct__Q34nw4r3g3d14AnmObjChrBlendFP12MEMAllocatorPUlQ34nw4r3g3d6ResMdli(
-            (MEMAllocator*)func_8048ECFC(scn), &size, resMdl, 6);
+            (MEMAllocator*)getScnRootSel47C(scn), &size, resMdl, 6);
     self->field_0x1CC = blend;
     nw4r::g3d::ResMdlData* resData = self->field_0x1D0.ptr();
     CScnChild80496B0C* a = self->field_0x8;
@@ -1518,7 +1518,7 @@ u32 func_804972E8(CScn80496B0C* self, CScnItemAnim* anim, int index,
     // (sp+0x10 for the child1 path, sp+0x14 for the child2 path).
     CScnNode80496B0C* node = self->field_0x8->field_0x84[0];
     if ((node != 0 ? ((node->field_0x2 >> 2) & 1) : 0) != 0) {
-        nw4r::g3d::ResAnmChr t2 = func_8049E708(anim, index);
+        nw4r::g3d::ResAnmChr t2 = ItemAnim_GetChr_E708(anim, index);
         result |=
             func_80497544(self, self->field_0x8, anim, &t2, frame, 0, g) &
             0xFFFF;
@@ -1528,7 +1528,7 @@ u32 func_804972E8(CScn80496B0C* self, CScnItemAnim* anim, int index,
             hit->field_0x2 |= 4;
         }
     } else {
-        nw4r::g3d::ResAnmChr t = func_8049E708(anim, index);
+        nw4r::g3d::ResAnmChr t = ItemAnim_GetChr_E708(anim, index);
         result = func_80497544(self, self->field_0xC, anim, &t, frame, 0, g)
                  << 16;
     }

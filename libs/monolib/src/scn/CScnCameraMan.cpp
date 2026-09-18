@@ -57,7 +57,7 @@ CScnCameraMan::~CScnCameraMan() {
 // Registers `view` at mViews[idx]: first releases the previously registered
 // view (vtable+0xB8 with the param block) when it is still valid and differs
 // from the new one, then hands the new view the param block and stores its id.
-void func_8049AED4(CScnCameraMan* cam, CView* view, u32 idx) {
+void CamMan_SwapViewParam_AED4(CScnCameraMan* cam, CView* view, u32 idx) {
     u32 vid = cam->mViews[idx];
     if (vid != 0xFFFFFFFF && vid != view->mWorkID) {
         CView* v = CViewRoot::getView(vid);
@@ -202,7 +202,7 @@ keep:
 
 // Searches the scene pool's camera list for the item whose camera id equals
 // `id` (falling back to the current camera id when `id` is negative).
-CScnCameraItem* func_8049B158(CScnCameraMan* cam, s32 id) {
+CScnCameraItem* CamMan_FindItemA_B158(CScnCameraMan* cam, s32 id) {
     if (id < 0) {
         id = cam->mCamId;
     }
@@ -220,8 +220,8 @@ CScnCameraItem* func_8049B158(CScnCameraMan* cam, s32 id) {
     return NULL;
 }
 
-// Same camera-id lookup as func_8049B158.
-CScnCameraItem* func_8049B1CC(CScnCameraMan* cam, s32 id) {
+// Same camera-id lookup as CamMan_FindItemA_B158.
+CScnCameraItem* CamMan_FindItemB_B1CC(CScnCameraMan* cam, s32 id) {
     if (id < 0) {
         id = cam->mCamId;
     }
@@ -385,7 +385,7 @@ bool CScnCameraMan::WorkEvent1(UNKTYPE* payload, const char* r5) {
 
 extern u32 lbl_eu_80663A08;
 extern "C" void func_8043A70C__11CScriptCodeFv(void* a, void* b);
-extern "C" void func_8049B3FC() { func_8043A70C__11CScriptCodeFv((void*)lbl_eu_80663A08, 0); }
+extern "C" void CamMan_EvalScript0_B3FC() { func_8043A70C__11CScriptCodeFv((void*)lbl_eu_80663A08, 0); }
 
 // Retail s16->f32 magic double (2^52 + 2^31 = 0x4330000080000000; owned by
 // CGXCache.cpp's pool range). Plain (f32) casts below expand to the same
@@ -393,7 +393,7 @@ extern "C" void func_8049B3FC() { func_8043A70C__11CScriptCodeFv((void*)lbl_eu_8
 extern const double lbl_eu_8066AB60;
 
 extern "C" void func_8043A57C__11CScriptCodeFv(void* self);
-extern "C" void func_8049B408() { func_8043A57C__11CScriptCodeFv((void*)lbl_eu_80663A08); }
+extern "C" void CamMan_EvalScript_B408() { func_8043A57C__11CScriptCodeFv((void*)lbl_eu_80663A08); }
 
 // MWCC's built-in (f32)(s16) cast pools the 0x4330000080000000 magic constant
 // anonymously; assembling the double by hand keeps the retail reference to

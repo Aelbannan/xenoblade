@@ -47,7 +47,7 @@ Retail asm for each symbol is in this directory (`asm_*.s`).
 
 ### `CUIBattleManager::Move` (`asm_Move_CUIBattleManager.s`)
 - Frame `-0x220` + `stmw r25`; early gates: `CTaskGame::getInstance` / `isFlag01Set` / `lbl_eu_80663E28` bit10 / MEM2
-- Repeated create/bind patterns via `func_801355A0`, `CUICfManager_getArcResourceAccessor`, `lbl_eu_80664048`, `func_801096B8`, `func_801ACCE0`
+- Repeated create/bind patterns via `func_801355A0`, `CUICfManager_getArcResourceAccessor`, `lbl_eu_80664048`, `BtlDmg_Create`, `createVisionMenu`
 - Bit tests on manager flags; allocate/register child UI objects
 - Extend `CUIBattleManager.hpp` fields `Move` needs; **leave `Init` untouched**
 - SDA names: `lbl_eu_*` only
@@ -55,14 +55,14 @@ Retail asm for each symbol is in this directory (`asm_*.s`).
 ### `CMenuArtsSelect::Move` (`asm_Move_CMenuArtsSelect.s`)
 - Frame `-0x70` + `_savegpr_20`; same HUD gate family as `cbRenderBefore` / PTGauge:
   - `CTaskGame` / `lbl_eu_80663E28` bit10 / `IsMenuState621F0` / mask
-  - then `lbl_eu_80663E24`, `CfGameManager`, `func_8018A608`, `func_80122448`, buffs, etc.
+  - then `lbl_eu_80663E24`, `CfGameManager`, `ShopSel_GetSingleton`, `getQuestWindow`, buffs, etc.
 - Large state machine after gates — follow full asm
 - Extend hpp fields for `Move`; **do not** edit `Term` or `cbRenderBefore`
 - Prefer §17.6 single-insn `b done` if MWCC collapses gate `rlwinm.`/`beq`/`b`
 
 ### `CUICfManager::Move` (`asm_Move_CUICfManager.s`)
 - Frame `-0x120`; bitflag-driven create/teardown of UI children via `lbl_eu_80664054`
-- Calls `func_801338C8`, `CUICfManager_queueMoveBaseMenu`, `__ct__CMenuKeyAssign`, `func_801109D8`, etc.
+- Calls `func_801338C8`, `CUICfManager_queueMoveBaseMenu`, `__ct__CMenuKeyAssign`, `EneSt_Create`, etc.
 - Bit tests on `r4` early look like **fake-`Fv` with flags in r4** — verify from callers; may be reading `this` fields into r4
 - **Leave `Init` (asm), `Term`, and `func_80133324` alone** — append `Move` only
 - SDA: `lbl_eu_80664054` / `lbl_eu_80663E28` only

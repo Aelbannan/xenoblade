@@ -43,31 +43,31 @@ void waitForDrawDone__9CDeviceVIFv();
 void func_801338C8();
 void func_80137250__FPQ34nw4r3lyt8DrawInfo(nw4r::lyt::DrawInfo* di);
 int  IsMenuState621F0();
-void func_801C3D7C(void* self, nw4r::lyt::DrawInfo* di);   // CBgTex layout draw
-void func_801C3D54(void* self);                            // CBgTex animate
-int  func_80212B68(void* self);                            // CMakeCrystalWin query
-int  func_80212B70(void* self);                            // CMakeCrystalWin query
+void BgTex_Draw_3D7C(void* self, nw4r::lyt::DrawInfo* di);   // CBgTex layout draw
+void BgTex_Tick_3D54(void* self);                            // CBgTex animate
+int  mkCrystalGetFlag4361(void* self);                            // CMakeCrystalWin query
+int  mkCrystalIsBusyState(void* self);                            // CMakeCrystalWin query
 void func_80212A68(void* self);                            // CMakeCrystalWin tick
-int  func_800FEDF8();
-void func_800FF914();
+int  CMainMenu_GetInstancePtr();
+void ArtsInfo_SetReadyFlag();
 void __ct__CBgTex(void* self, int arg);
 void __ct__UnkClass_8011C974(void* self, const void* src);
 void Scn_SetPauseFlag(void*, int);
-void func_801C3D9C(void*);
+void BgTex_Release_3D9C(void*);
 void func_8021299C(void*);
 void setPresentationFlag__Q22cf13CfGameManagerFv(int);
 // Retail symbol keeps its Fv mangling even though it takes the pad index.
 extern "C" int isClassicController__Q22cf13CfGameManagerFv(int arg);
 // Unmangled local helper (bound literally).
 extern "C" void func_802124AC(void* self);
-void func_801C3C14(void* self);                            // CBgTex init
+void BgTex_Acquire_3C14(void* self);                            // CBgTex init
 void func_80210E9C(void* dst, const void* src);            // big state copy
 void func_80211CEC(void* dst, const void* src);            // big state copy
 void func_801BE16C(void* dst, void* src);                  // win data post-ctor
 void func_80212158(void* dst, const void* src);            // state record copy
 void addRenderCB__4CScnFP10IScnRenderUlUl(void* scn, void* render, u32 a, u32 b);
-int  func_8009CF8C(int id);
-void func_8011C400();
+int  CtrlRemote_TouchBitByArg(int id);
+void MiniMapSetActiveFlag();
 void func_802A1500();
 void func_80189C88();
 void CTaskGame_stopVision();
@@ -193,7 +193,7 @@ void CMenuMakeCrystal::Init() {
     reinterpret_cast<MCTailState*>(this)->field_0x7E = bg.field_0x1E;
     __dt__6CBgTexFv(&bg, -1);
 
-    func_801C3C14(reinterpret_cast<u8*>(this) + 0x60);
+    BgTex_Acquire_3C14(reinterpret_cast<u8*>(this) + 0x60);
 
     // Build a temporary CMakeCrystalWin seeded from this object, harvest its
     // four words into this+0x88..+0x94, hand the rest to func_801BE16C, then
@@ -236,8 +236,8 @@ void CMenuMakeCrystal::Init() {
     Scn_SetPauseFlag(*reinterpret_cast<void**>(reinterpret_cast<u8*>(this) + 0x5C),
                   0);
 
-    reinterpret_cast<MCTailState*>(this)->gate = (func_8009CF8C(0x3386) != 0);
-    func_8011C400();
+    reinterpret_cast<MCTailState*>(this)->gate = (CtrlRemote_TouchBitByArg(0x3386) != 0);
+    MiniMapSetActiveFlag();
 }
 
 void func_80210E9C(){}
@@ -245,7 +245,7 @@ void func_80210E9C(){}
 void func_802116D4(){}
 
 // Copy fields +0x4..+0x14 from src to dst (byte/word/byte copy).
-void func_80211CB8(CMakeCrystalCopyBlock* dst, const CMakeCrystalCopyBlock* src) {
+void MakeCrystalCopyParamBlock(CMakeCrystalCopyBlock* dst, const CMakeCrystalCopyBlock* src) {
     dst->field_0x4 = src->field_0x4;
     dst->field_0x5 = src->field_0x5;
     dst->field_0x8 = src->field_0x8;
@@ -313,7 +313,7 @@ void CMenuMakeCrystal::Term() {
     void* render = this;
     if (this) render = (u8*)this + 0x58;
     ((CScn*)*(void**)((u8*)this + 0x5C))->removeRenderCB((IScnRender*)render);
-    func_801C3D9C((u8*)this + 0x60);
+    BgTex_Release_3D9C((u8*)this + 0x60);
     func_8021299C((u8*)this + 0x80);
     lbl_eu_806646C8 = 0;
     setPresentationFlag__Q22cf13CfGameManagerFv(0);
@@ -339,7 +339,7 @@ void CMenuMakeCrystal::Move() {
     MCStateBytes* st = reinterpret_cast<MCStateBytes*>(this);
     MCDoneFlag* done = reinterpret_cast<MCDoneFlag*>(this);
 
-    if (func_80212B70(self + 0x80) == 0) {
+    if (mkCrystalIsBusyState(self + 0x80) == 0) {
         CPad* pad = cf::CfGameManager::getCurrentPad();
         u32 btn;
         // Button bit depends on the controller type (classic vs Wii).
@@ -349,8 +349,8 @@ void CMenuMakeCrystal::Move() {
             btn = (pad->mPressedButtonFlags >> 10) & 1;
         }
         if (btn != 0) {
-            if (func_800FEDF8() != 0) {
-                func_800FF914();
+            if (CMainMenu_GetInstancePtr() != 0) {
+                ArtsInfo_SetReadyFlag();
                 playUISound(6);
             }
             st->state = 3;
@@ -365,7 +365,7 @@ void CMenuMakeCrystal::Move() {
         st->state = 2;
         break;
     case 2:
-        if (func_80212B68(self + 0x80) != 0) {
+        if (mkCrystalGetFlag4361(self + 0x80) != 0) {
             st->state = 3;
         }
         break;
@@ -374,7 +374,7 @@ void CMenuMakeCrystal::Move() {
         break;
     }
 
-    func_801C3D54(self + 0x60);
+    BgTex_Tick_3D54(self + 0x60);
     func_80212A68(self + 0x80);
 }
 
@@ -386,7 +386,7 @@ void CMenuMakeCrystal::cbRenderBefore() {
     GXSetZMode(GX_DISABLE, GX_NEVER, GX_DISABLE);
     nw4r::lyt::DrawInfo drawInfo;
     func_80137250__FPQ34nw4r3lyt8DrawInfo(&drawInfo);
-    func_801C3D7C(reinterpret_cast<u8*>(this) + 0x60, &drawInfo);
+    BgTex_Draw_3D7C(reinterpret_cast<u8*>(this) + 0x60, &drawInfo);
 }
 
 // Constructor (retail unmangled `__ct__CMenuMakeCrystal`; written as a C-ABI
@@ -436,25 +436,25 @@ extern "C" CMenuMakeCrystal* __ct__CMenuMakeCrystal(CMenuMakeCrystal* pThis, voi
 }
 
 // (lbl_eu_806646C8 != 0)
-bool func_80212480() { return lbl_eu_806646C8 != 0; }
+bool MakeCrystalIsCreated() { return lbl_eu_806646C8 != 0; }
 
 void* lbl_eu_806646C8;
-void* func_80212BE0(void*);
+void* mkCrystalGetWord10(void*);
 
 void* func_80212490() {
     unsigned char* p = static_cast<unsigned char*>(lbl_eu_806646C8);
     if (p != 0) {
-        return func_80212BE0(p + 0x80);
+        return mkCrystalGetWord10(p + 0x80);
     }
     return 0;
 }
 
-extern "C" int func_801C3E34(void*);
+extern "C" int BgTex_IsLoaded_3E34(void*);
 extern "C" void func_8021260C(void*);
 
 // Init the +0x60 sub-object when it reports active, then set the +0x43E4 flag.
 extern "C" void func_802124AC(void* self) {
-    if (func_801C3E34((u8*)self + 0x60) != 0) {
+    if (BgTex_IsLoaded_3E34((u8*)self + 0x60) != 0) {
         func_8021260C((u8*)self + 0x80);
         *(u8*)((u8*)self + 0x43E4) = 1;
     }
@@ -462,11 +462,11 @@ extern "C" void func_802124AC(void* self) {
 
 // IScnRender vtable this-adjusting thunk for cbRenderBefore.
 // IScnRender is a non-primary base at offset 0x58 within CMenuMakeCrystal.
-extern "C" void func_802124F4(void* self) {
+extern "C" void MakeCrystalRenderThunk58(void* self) {
     ((void(*)(void*))cbRenderBefore__16CMenuMakeCrystalFv)((char*)self - 0x58);
 }
 
 // IScnRender vtable this-adjusting thunk for destructor.
-extern "C" void func_802124FC(void* self) {
+extern "C" void MakeCrystalDtorThunk58(void* self) {
     ((void(*)(void*))__dt__16CMenuMakeCrystalFv)((char*)self - 0x58);
 }

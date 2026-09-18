@@ -39,13 +39,13 @@ extern "C" const f32 lbl_eu_8066AEA8;
 extern "C" void func_804B2AA4();
 extern "C" void __ct__CColiProc(CColiProc* self);
 
-extern "C" void func_804B2590(CColiProc* self, CColiProcTarget* r4, u32 r5) {
+extern "C" void ColiProc_InitTriple(CColiProc* self, CColiProcTarget* r4, u32 r5) {
     self->field_0x0 = r4;
     self->field_0x4 = r5;
     self->field_0xC = 0;
 }
 
-extern "C" void func_804B25A4(CColiProc* self, CColiProcTarget* r4, u32 r5, u32 r6) {
+extern "C" void ColiProc_InitQuad(CColiProc* self, CColiProcTarget* r4, u32 r5, u32 r6) {
     self->field_0x0 = r4;
     self->field_0x4 = r5;
     self->field_0x8 = r6;
@@ -54,7 +54,7 @@ extern "C" void func_804B25A4(CColiProc* self, CColiProcTarget* r4, u32 r5, u32 
 
 // Returns true if field_0x0 is non-null and bit 0 of its u16 at offset 6 is set.
 // Both failure paths share a single return-0 tail to match retail branch layout.
-extern "C" bool func_804B2F80(CColiProc* self) {
+extern "C" bool ColiProc_IsTargetFlagged(CColiProc* self) {
     if (self->field_0x0 != nullptr && (self->field_0x0->field_0x6 & 1)) {
         return true;
     }
@@ -62,7 +62,7 @@ extern "C" bool func_804B2F80(CColiProc* self) {
 }
 
 // Returns bit 18 of field_0xC (extrwi extraction).
-extern "C" bool func_804B2FA8(CColiProc* self) {
+extern "C" bool ColiProc_TestBit18State(CColiProc* self) {
     return ((self->field_0xC >> 18) & 1) != 0;
 }
 
@@ -189,7 +189,7 @@ extern "C" int func_804B25BC(CColiWork* work, u16* outIndex, void** outBuf,
 extern "C" void func_804B27EC(){}
 // Prepare the shared CColiProc instance against a work object, pass it to the
 // generic position update, then (on success) add the instance's offet vector.
-extern "C" u32 func_804B29EC(CColiProc* self, nw4r::math::VEC3* pVec,
+extern "C" u32 ColiProc_RunCollideScan(CColiProc* self, nw4r::math::VEC3* pVec,
                              CColiLinkObj* pLink, s32 flag) {
     CColiProc* pColi = (CColiProc*)lbl_eu_8065D0E8;
     f32 zero = lbl_eu_8066AEA8;

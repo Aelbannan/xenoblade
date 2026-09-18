@@ -21,7 +21,7 @@
 #include "monolib/work/CTTask.hpp"
 #include "monolib/work/CWorkThreadSystem.hpp"
 
-// (func_8012FD60/func_8012FC74: single extern "C" decls now live on
+// (UIBattleFindElemTimg/UIBattleFindPartyTimg: single extern "C" decls now live on
 // CUIBattleManager.hpp - no guard needed.)
 #include "kyoshin/CUIBattleManager.hpp"
 #include <nw4r/math.h>
@@ -155,7 +155,7 @@ struct ArtsEnumList {
     u32 mCount620;  // +0x620
 };
 
-// One enum-list slot (func_800F6EC0 result): +0x4 object, compared by +0x8C.
+// One enum-list slot (getEntryAt result): +0x4 object, compared by +0x8C.
 struct ArtsEnumSlot {
     u8 _pad00[4];
     CfObjectMoveArtsView* mObj;  // +0x04
@@ -173,8 +173,8 @@ struct ArtsSelModeTbl {
 // the CBattleManager.hpp include pulls in (C++ linkage, volatile for E24).
 // Declaring them again inside this extern "C" block would conflict.
 // Unmangled retail names; int (not u8) avoids clrlwi before cmpwi.
-int func_8018A608();
-int func_80122448();
+int ShopSel_GetSingleton();
+int getQuestWindow();
 
 u8 GetSysStateFlag21();
 
@@ -183,14 +183,14 @@ u32 CtrlObjectParam_GetCurrentRowKey(void*); // character-data category
 u16 BdatGetItemId(u32 value);
 void* func_80157C4C(u32 index);
 // CUIBattleManager.hpp only declares this as a friend; re-declare at file scope.
-void* func_8012FD04(const char* name);
+void* UIBattleFindSysTimg(const char* name);
 
-int func_8012FA5C();
+int UIBattleGetFlagE8();
 void func_80138078__FUl(u32);
 void playUISound__FUl(u32); // retail sound callee in func_80104454 (cf code_80135FDC owns 38078)
 nw4r::lyt::ArcResourceAccessor* CUICfManager_getArcResourceAccessor();
-int func_8010EDD4(void*);
-int func_8010A840(void*);
+int EneSt_CursorGetFlag(void*);
+int BtlDmg_CursorGetFlag(void*);
 // Layout/anim helpers defined in code_80135FDC.cpp with mangled C-linkage
 // names (retail reloc targets); no header declares them, so declare locally.
 void func_80136E84__FPPQ34nw4r3lyt6LayoutPQ34nw4r3lyt19ArcResourceAccessorPCc(nw4r::lyt::Layout**, nw4r::lyt::ArcResourceAccessor*, const char*);
@@ -198,9 +198,9 @@ void func_80136F08__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt
 void func_80137038__FPQ34nw4r3lyt6LayoutPQ34nw4r3lyt8DrawInfoii(nw4r::lyt::Layout*, nw4r::lyt::DrawInfo*, int, int);
 u32 func_80137444__FPQ34nw4r3lyt13AnimTransformf(nw4r::lyt::AnimTransform*, float);
 
-// func_8010433C arts-ref allocator: CfGameManager creates the ref object.
+// CMenuArtsSelect_CreateArtsRef arts-ref allocator: CfGameManager creates the ref object.
 extern "C" void* createNpcActor__Q22cf13CfGameManagerFv(u32 index);
-// func_801088CC player gate: converts a CfObjectMove to its actor container.
+// CMenuArtsSelect_CheckTalentUse player gate: converts a CfObjectMove to its actor container.
 extern "C" BattleActor* func_800BFC68__FPQ22cf12CfObjectMove(cf::CfObjectMove* objMove);
 extern "C" int func_801B2084();
 extern "C" bool func_80060290(void*);
@@ -212,10 +212,10 @@ extern u8 lbl_eu_804FD0D0[];
 // func_80104454 (retail symbol is UNMANGLED; header member decl is a
 // decompiler guess). Retail table: posX s16[9] @+0x00, posY @+0x14,
 // scale f32[9] @+0x28, selTab s16[5] @+0x4C of lbl_eu_804FD0D0.
-extern "C" int func_8029A658();
-extern "C" int func_8010784C(CMenuArtsSelect*);
+extern "C" int MenuTutorialIsCreated();
+extern "C" int CMenuArtsSelect_ShouldStayOpen(CMenuArtsSelect*);
 extern "C" int func_801086D0(CMenuArtsSelect*);
-extern "C" int func_801088CC(CMenuArtsSelect*);
+extern "C" int CMenuArtsSelect_CheckTalentUse(CMenuArtsSelect*);
 extern "C" void func_80104454(CMenuArtsSelect* self);
 extern "C" void func_80107580(CMenuArtsSelect*);
 extern "C" void func_801072E0(CMenuArtsSelect*);
@@ -225,28 +225,28 @@ extern "C" int func_80107C54(void*, int);   // aligned with CChain.hpp's form
 // reloc targets are the C-linkage names, not the mangled member names).
 extern "C" void func_80105A34(CMenuArtsSelect* self);
 extern "C" void func_80105D54(CMenuArtsSelect* self);
-extern "C" void func_80106450(CMenuArtsSelect* self);
+extern "C" void advanceConfirmState(CMenuArtsSelect* self);
 extern "C" void func_801065E4(CMenuArtsSelect* self);
 extern "C" void func_80106900(CMenuArtsSelect* self);
-extern "C" void func_80106C30(CMenuArtsSelect*, s32);
+extern "C" void updateSlotGauge(CMenuArtsSelect*, s32);
 extern "C" void func_80106EC8(CMenuArtsSelect*, s32);
-extern "C" void func_801071B8(CMenuArtsSelect*, s32);
+extern "C" void advanceSlotToggle(CMenuArtsSelect*, s32);
 extern "C" void func_801080F8(CMenuArtsSelect*);
-extern "C" int func_80154168(const u8*);
-extern "C" int func_8015419C(u8*);
+extern "C" int isArtsSpecialKind(const u8*);
+extern "C" int hasArtsGauge(u8*);
 // func_80105D54 imports (unmangled retail names)
-void func_8010ED38(void*);
-void func_8010ED58(void*);
-void func_8010A710(void*);
-void func_8010A7A8(void*);
+void EneSt_CursorToState3(void*);
+void EneSt_CursorToState4(void*);
+void BtlDmg_CursorToState3(void*);
+void BtlDmg_CursorToState4(void*);
 void* findObjB28ById(s32 id);                 // actor-container lookup by id
 void* Scn_FindCamItem(void* scn, int index);   // matches CfCam.hpp decl
 void func_8049B59C(f32* out, void* pose, nw4r::math::VEC3* pos);
 void CTaskGame_enumListCtor(void* holder);
 void* CTaskGame_enumListGet(void* holder);
 void __dt__80043E88(void* holder, int flag);
-void func_800F4A98(void* list, u32 type, u32 filter);
-void* func_800F6EC0(void* list, u32 index);
+void startEnumObjects(void* list, u32 type, u32 filter);
+void* getEntryAt(void* list, u32 index);
 extern const u32 lbl_eu_80666F54;  // mode-table word
 extern const u8 lbl_eu_80666F58;   // mode-table extra byte
 extern const ArtsSelEnumIds lbl_eu_804FD128;
@@ -256,18 +256,18 @@ extern "C" FourShorts func_80139658(nw4r::lyt::Layout*, const char*, int);
 extern "C" void func_801398A4(nw4r::lyt::Layout*, const char*, s16*, int);
 extern "C" int CChain_isValidChain(u8* a1, u8* a2, int a3);
 extern "C" int func_8027DF38(u8* self, u8* actor, int flag, int index);
-extern "C" int func_802795D4(u8* self, int param);
-// (func_8012FD60/func_8012FC74: declared on CUIBattleManager.hpp, void*
+extern "C" int CChain_CheckActivateReady(u8* self, int param);
+// (UIBattleFindElemTimg/UIBattleFindPartyTimg: declared on CUIBattleManager.hpp, void*
 // return - the old local u8* copies are gone; call sites cast.)
 extern "C" void func_80137F88(void* pane, void* tex);   // pane texture setter
 
 extern s16 lbl_eu_804FD11C[];  // rodata selTab (s16[5]) - same table as lbl_eu_804FD0D0+0x4c
 extern "C" int CBattleMan_ListHasValue(void*, void*);
-extern "C" void func_8010EDDC(void*, u8);
-extern "C" void func_8010ED18(void*);
+extern "C" void EneSt_CursorSet41(void*, u8);
+extern "C" void EneSt_CursorActivate(void*);
 extern "C" void func_8010A848(void*, u8);
-extern "C" void func_8010A6F0(void*);
-extern "C" int func_80187710();
+extern "C" void BtlDmg_CursorActivate(void*);
+extern "C" int getPTGaugeWord();
 extern "C" void func_80187718();
 extern "C" int* CtrlObjectParam_GetSlotTableBase();
 extern "C" char lbl_eu_80661E08[8];  // sdata: empty-name fallback (fixed size keeps @sda21)
@@ -290,7 +290,7 @@ extern const f32 lbl_eu_80666F44; // -1.0f
 extern const f32 lbl_eu_80666F60; // talent-target distance limit A
 extern const f32 lbl_eu_80666F64; // talent-target distance limit B
 extern const f32 lbl_eu_80666F50; // 100.0f (talent-gauge gate)
-extern const f32 lbl_eu_80666F5C; // frame-count limit (func_80106450 unk344 cap)
+extern const f32 lbl_eu_80666F5C; // frame-count limit (advanceConfirmState unk344 cap)
 
 // Process + MI vtable / PTMF labels for ctor (retail __ct__CMenuArtsSelect).
 // Extern refs to retail rodata/sdata symbols (NOT local definitions:
@@ -720,7 +720,7 @@ void CMenuArtsSelect::Init() {
     unk30C = 0;
     unk308 = 4;
 
-    func_80108994();
+    bindEntryPanes();
     func_80139198(0);
     unk31C = code80135FDC_getByte_64077();
 #undef arc
@@ -806,11 +806,11 @@ void CMenuArtsSelect::Term() {
     lbl_eu_80663F20 = NULL;
 
     // Retail calls each getter twice when non-null.
-    if (func_80110A70() != NULL) {
-        func_8010EDE4(reinterpret_cast<u8*>(func_80110A70()) + 0x7e4);
+    if (EneSt_GetSingleton() != NULL) {
+        func_8010EDE4(reinterpret_cast<u8*>(EneSt_GetSingleton()) + 0x7e4);
     }
-    if (func_8010CE48() != NULL) {
-        func_8010A8E4(reinterpret_cast<u8*>(func_8010CE48()) + 0x7cc);
+    if (BpsStateSingletonToInt() != NULL) {
+        BtlDmg_CursorReset(reinterpret_cast<u8*>(BpsStateSingletonToInt()) + 0x7cc);
     }
     if (unk334 != 0) {
         CUICfManager_queueMoveBaseMenu();
@@ -843,19 +843,19 @@ void CMenuArtsSelect::Move() {
     if (cf::CfGameManager::isSceneLoading()) {
         goto done;
     }
-    if (func_8018A608()) {
+    if (ShopSel_GetSingleton()) {
         goto done;
     }
-    if (func_80122448()) {
+    if (getQuestWindow()) {
         goto done;
     }
     if (getInstance__11CSysWinBuffFv() != NULL) {
         goto done;
     }
-    if (func_80110A70() == NULL) {
+    if (EneSt_GetSingleton() == NULL) {
         goto done;
     }
-    if (func_8010CE48() == NULL) {
+    if (BpsStateSingletonToInt() == NULL) {
         goto done;
     }
 
@@ -910,7 +910,7 @@ void CMenuArtsSelect::Move() {
     switch (static_cast<s32>(unk298)) {
     case 0:
         unk308 |= 0x10u;
-        if (func_8012FA5C() != 0) {
+        if (UIBattleGetFlagE8() != 0) {
             ::func_80107580(this);
             func_80138078__FUl(0x42);
             unk298 = 1;
@@ -951,11 +951,11 @@ void CMenuArtsSelect::Move() {
         ::func_80105A34(this);
         break;
     case 5:
-        if (func_80110A70() != NULL) {
-            if (func_8010CE48() != NULL) {
-                if (func_8010EDD4(reinterpret_cast<u8*>(func_80110A70()) + 0x7e4) !=
+        if (EneSt_GetSingleton() != NULL) {
+            if (BpsStateSingletonToInt() != NULL) {
+                if (EneSt_CursorGetFlag(reinterpret_cast<u8*>(EneSt_GetSingleton()) + 0x7e4) !=
                     0) {
-                    if (func_8010A840(reinterpret_cast<u8*>(func_8010CE48()) +
+                    if (BtlDmg_CursorGetFlag(reinterpret_cast<u8*>(BpsStateSingletonToInt()) +
                                       0x7cc) != 0) {
                         unk298 = 6;
                     }
@@ -967,11 +967,11 @@ void CMenuArtsSelect::Move() {
         ::func_80105D54(this);
         break;
     case 7:
-        if (func_80110A70() != NULL) {
-            if (func_8010CE48() != NULL) {
-                if (func_8010EDD4(reinterpret_cast<u8*>(func_80110A70()) + 0x7e4) !=
+        if (EneSt_GetSingleton() != NULL) {
+            if (BpsStateSingletonToInt() != NULL) {
+                if (EneSt_CursorGetFlag(reinterpret_cast<u8*>(EneSt_GetSingleton()) + 0x7e4) !=
                     0) {
-                    if (func_8010A840(reinterpret_cast<u8*>(func_8010CE48()) +
+                    if (BtlDmg_CursorGetFlag(reinterpret_cast<u8*>(BpsStateSingletonToInt()) +
                                       0x7cc) != 0) {
                         unk8C->GetRootPane()->SetVisible(true);
                         unk298 = 2;
@@ -981,7 +981,7 @@ void CMenuArtsSelect::Move() {
         }
         break;
     case 8:
-        ::func_80106450(this);
+        ::advanceConfirmState(this);
         break;
     default:
         break;
@@ -1019,7 +1019,7 @@ void CMenuArtsSelect::Move() {
                 for (s32 i = 0; i < 8; i++) {
                     switch (static_cast<s32>(unk2A0[i])) {
                     case 9:
-                        ::func_80106C30(this, i);
+                        ::updateSlotGauge(this, i);
                         break;
                     case 10: {
                         unk318 |= (one << i) | (one << (i + 9));
@@ -1124,7 +1124,7 @@ void CMenuArtsSelect::Move() {
                     break;
                 }
                 case 0xe:
-                    ::func_801071B8(this, i);
+                    ::advanceSlotToggle(this, i);
                     break;
                 case 0xf:
                     unk310 |= (one << i) | (one << (i + 9));
@@ -1232,10 +1232,10 @@ void CMenuArtsSelect::cbRenderBefore() {
     if (lbl_eu_80663E24 & 0xAFA40000u) {
         goto done;
     }
-    if (func_8018A608()) {
+    if (ShopSel_GetSingleton()) {
         goto done;
     }
-    if (func_80122448()) {
+    if (getQuestWindow()) {
         goto done;
     }
 
@@ -1347,10 +1347,10 @@ extern "C" void CMenuArtsSelect_setDisabled() { if (lbl_eu_80663F20 != 0) lbl_eu
 extern "C" bool CMenuArtsSelect_isFinished() { return false; }
 extern "C" CMenuArtsSelect* CMenuArtsSelect_getInstance() { return lbl_eu_80663F20; }
 extern "C" bool CMenuArtsSelect_isCreated() { return lbl_eu_80663F20 != 0; }
-// func_801042C8 (us-80104db0): arts-select availability gate.
+// CMenuArtsSelect_IsAvailable (us-80104db0): arts-select availability gate.
 // Returns 1 once the menu instance exists and its main FSM (unk298) has
 // advanced past the pre-open states (< 5), else 0.
-int func_801042C8() {
+int CMenuArtsSelect_IsAvailable() {
     if (lbl_eu_80663F20 != NULL && lbl_eu_80663F20->unk298 >= 5) {
         return 1;
     }
@@ -1361,7 +1361,7 @@ extern "C" CMenuArtsSelect* CMenuArtsSelect_getSelectState() { if (lbl_eu_80663F
 extern "C" int CMenuArtsSelect_isNotReady() { return lbl_eu_80663F20 == 0 ? 1 : lbl_eu_80663F24 == 0; }
 void __dt__15CMenuArtsSelectFv(void*);
 // IWorkEvent dtor this-adjusting thunk (retail: subi r3,-0x58; b __dt__)
-extern "C" void func_80108C30(void* self){
+extern "C" void CMenuArtsSelect_DtorThunk58(void* self){
     __dt__15CMenuArtsSelectFv((char*)self - 0x58);
 }
 extern "C" void CMenuArtsSelect_workEventDraw(void* self) {
@@ -1378,11 +1378,11 @@ extern "C" void CMenuArtsSelect_scnRenderDtor(CMenuArtsSelect* self) {
 }
 
 // ---------------------------------------------------------------------------
-// func_80104210 (us-80104cf8) -- lazy factory: create + register the menu.
+// CMenuArtsSelect_CreateMenu (us-80104cf8) -- lazy factory: create + register the menu.
 // Returns NULL if the singleton already exists. Regist(NULL, parent, false)
 // is called even when allocation fails (retail has no guard).
 // ---------------------------------------------------------------------------
-extern "C" CMenuArtsSelect* func_80104210(CProcess* parent, CScn* scn) {
+extern "C" CMenuArtsSelect* CMenuArtsSelect_CreateMenu(CProcess* parent, CScn* scn) {
     if (lbl_eu_80663F20 != NULL) {
         return NULL;
     }
@@ -1397,11 +1397,11 @@ extern "C" CMenuArtsSelect* func_80104210(CProcess* parent, CScn* scn) {
 }
 
 // ---------------------------------------------------------------------------
-// func_8010433C (us-80104e24) -- create the arts-select ref object.
+// CMenuArtsSelect_CreateArtsRef (us-80104e24) -- create the arts-select ref object.
 // Only runs while the menu exists but the ref does not; the ref's +0xb0 is
 // bound to the menu's IObjectInfo slot (+0x60), NULL-safe.
 // ---------------------------------------------------------------------------
-extern "C" void func_8010433C() {
+extern "C" void CMenuArtsSelect_CreateArtsRef() {
     if (lbl_eu_80663F20 != NULL && lbl_eu_80663F24 == NULL) {
         UnkArtsSelectRef* ref =
             (UnkArtsSelectRef*)createNpcActor__Q22cf13CfGameManagerFv(0xb5);
@@ -1419,11 +1419,11 @@ extern "C" void func_8010433C() {
 }
 
 // ---------------------------------------------------------------------------
-// func_801043BC (us-80104ea4) -- reset all art-slot anim frames to 0.0f.
+// CMenuArtsSelect_ResetSlotAnims (us-80104ea4) -- reset all art-slot anim frames to 0.0f.
 // Each slot whose availability probe (func_80107970 / func_80107C54) passes
 // gets its unk1DC anim rewound; then a 0x9e SE plays.
 // ---------------------------------------------------------------------------
-extern "C" void func_801043BC() {
+extern "C" void CMenuArtsSelect_ResetSlotAnims() {
     if (lbl_eu_80663F20 == NULL) return;
     f32 zero = lbl_eu_80666F28;
     for (u32 i = 0; i < 9; i++) {
@@ -1447,9 +1447,9 @@ extern "C" void func_80104454(CMenuArtsSelect* self) {
 
     self->unk308 &= ~0x10u;
 
-    if (func_8029A658() != 0) return;
+    if (MenuTutorialIsCreated() != 0) return;
 
-    if (func_8010784C(self) != 0) {
+    if (CMenuArtsSelect_ShouldStayOpen(self) != 0) {
         self->unk80->SetAnimationEnable(self->unk84, false);
         self->unk80->SetAnimationEnable(self->unk88, true);
         self->unk8C->GetRootPane()->SetVisible(false);
@@ -1987,16 +1987,16 @@ extern "C" void func_80104454(CMenuArtsSelect* self) {
                 goto useFail;
             }
         }
-        if (func_801088CC(self) != 0) goto useFail;
+        if (CMenuArtsSelect_CheckTalentUse(self) != 0) goto useFail;
 
         void* arts = reinterpret_cast<cf::CActorParam*>(actor)->CActorParam_getArtsSetBlock();
         s32 q3 = self->unk324;
         if (q3 > 4) q3--;
         ArtsParamInfo* p =
             reinterpret_cast<ArtsParamInfo*>(getArtsParamAtCnt(arts, q3));
-        if (self->unk324 != 4 && func_80154168((const u8*)p) != 0) {
+        if (self->unk324 != 4 && isArtsSpecialKind((const u8*)p) != 0) {
             self->unk330 = 0;
-            if (func_8015419C((u8*)p) != 0) {
+            if (hasArtsGauge((u8*)p) != 0) {
                 int* cfg = CtrlObjectParam_GetSlotTableBase();
                 for (s32 i = 0; i < 3; i++) {
                     if (cfg[i + 1] == (s32)actor->mField3F28) continue;
@@ -2010,13 +2010,13 @@ extern "C" void func_80104454(CMenuArtsSelect* self) {
             self->unk8C->GetRootPane()->SetVisible(false);
             playUISound__FUl(95);
             self->unk298 = 5;
-            if (func_80110A70() != NULL) {
-                func_8010EDDC((u8*)func_80110A70() + 0x7E4, (u8)self->unk330);
-                func_8010ED18((u8*)func_80110A70() + 0x7E4);
+            if (EneSt_GetSingleton() != NULL) {
+                EneSt_CursorSet41((u8*)EneSt_GetSingleton() + 0x7E4, (u8)self->unk330);
+                EneSt_CursorActivate((u8*)EneSt_GetSingleton() + 0x7E4);
             }
-            if (func_8010CE48() != NULL) {
-                func_8010A848((u8*)func_8010CE48() + 0x7CC, (u8)self->unk330);
-                func_8010A6F0((u8*)func_8010CE48() + 0x7CC);
+            if (BpsStateSingletonToInt() != NULL) {
+                func_8010A848((u8*)BpsStateSingletonToInt() + 0x7CC, (u8)self->unk330);
+                BtlDmg_CursorActivate((u8*)BpsStateSingletonToInt() + 0x7CC);
             }
             goto end_body;
         }
@@ -2031,7 +2031,7 @@ extern "C" void func_80104454(CMenuArtsSelect* self) {
             self->unk7E = -1;
             self->unk320 = 0;
             if (sv == 6) {
-                if (func_80187710() != 0) func_80187718();
+                if (getPTGaugeWord() != 0) func_80187718();
             }
             if (self->unk328 == 2) self->unk348 = 1;
             if (self->unk328 == 4) {
@@ -2184,17 +2184,17 @@ extern "C" void func_80105D54(CMenuArtsSelect* self) {
     f32 d;                  // distance temp (retail +0x2c)
     f32 dist[3];            // candidate distances (retail +0x38)
 
-    if (func_8010784C(self) != 0) {
+    if (CMenuArtsSelect_ShouldStayOpen(self) != 0) {
         UnkArtsSelectEntry* e =
             reinterpret_cast<UnkArtsSelectEntry*>(self->unk8C->GetRootPane());
         e->unkBB = static_cast<u8>((e->unkBB & 0xFEu) | 1);
         func_80138078__FUl(6);
         self->unk298 = 7;
-        if (func_80110A70() != NULL) {
-            func_8010ED38(reinterpret_cast<u8*>(func_80110A70()) + 0x7e4);
+        if (EneSt_GetSingleton() != NULL) {
+            EneSt_CursorToState3(reinterpret_cast<u8*>(EneSt_GetSingleton()) + 0x7e4);
         }
-        if (func_8010CE48() != NULL) {
-            func_8010A710(reinterpret_cast<u8*>(func_8010CE48()) + 0x7cc);
+        if (BpsStateSingletonToInt() != NULL) {
+            BtlDmg_CursorToState3(reinterpret_cast<u8*>(BpsStateSingletonToInt()) + 0x7cc);
         }
     }
 
@@ -2210,11 +2210,11 @@ extern "C" void func_80105D54(CMenuArtsSelect* self) {
         e->unkBB = static_cast<u8>((e->unkBB & 0xFEu) | 1);
         func_80138078__FUl(6);
         self->unk298 = 7;
-        if (func_80110A70() != NULL) {
-            func_8010ED38(reinterpret_cast<u8*>(func_80110A70()) + 0x7e4);
+        if (EneSt_GetSingleton() != NULL) {
+            EneSt_CursorToState3(reinterpret_cast<u8*>(EneSt_GetSingleton()) + 0x7e4);
         }
-        if (func_8010CE48() != NULL) {
-            func_8010A710(reinterpret_cast<u8*>(func_8010CE48()) + 0x7cc);
+        if (BpsStateSingletonToInt() != NULL) {
+            BtlDmg_CursorToState3(reinterpret_cast<u8*>(BpsStateSingletonToInt()) + 0x7cc);
         }
     }
 
@@ -2253,11 +2253,11 @@ extern "C" void func_80105D54(CMenuArtsSelect* self) {
             if (func_8017FD44() != 0) return;
             func_80138078__FUl(6);
             self->unk298 = 7;
-            if (func_80110A70() != NULL) {
-                func_8010ED38(reinterpret_cast<u8*>(func_80110A70()) + 0x7e4);
+            if (EneSt_GetSingleton() != NULL) {
+                EneSt_CursorToState3(reinterpret_cast<u8*>(EneSt_GetSingleton()) + 0x7e4);
             }
-            if (func_8010CE48() != NULL) {
-                func_8010A710(reinterpret_cast<u8*>(func_8010CE48()) + 0x7cc);
+            if (BpsStateSingletonToInt() != NULL) {
+                BtlDmg_CursorToState3(reinterpret_cast<u8*>(BpsStateSingletonToInt()) + 0x7cc);
             }
             return;
         }
@@ -2289,12 +2289,12 @@ extern "C" void func_80105D54(CMenuArtsSelect* self) {
                 for (s32 k = 0; k < 3; k++) {
                     ArtsEnumList* list =
                         static_cast<ArtsEnumList*>(CTaskGame_enumListGet(&holder));
-                    func_800F4A98(list, ids.id[k], 0);
+                    startEnumObjects(list, ids.id[k], 0);
                     list = static_cast<ArtsEnumList*>(CTaskGame_enumListGet(&holder));
                     if (list->mCount620 == 0) continue;
                     list = static_cast<ArtsEnumList*>(CTaskGame_enumListGet(&holder));
                     ArtsEnumSlot* slot =
-                        static_cast<ArtsEnumSlot*>(func_800F6EC0(list, 0));
+                        static_cast<ArtsEnumSlot*>(getEntryAt(list, 0));
                     if (slot->mObj == NULL) continue;
                     if (mv->field_8C == slot->mObj->field_8C) {
                         matchIdx = k;
@@ -2312,7 +2312,7 @@ extern "C" void func_80105D54(CMenuArtsSelect* self) {
 
         bool skipState = false;
         if (self->unk324 == 4 && self->unk328 == 7) {
-            if (func_802795D4(
+            if (CChain_CheckActivateReady(
                     reinterpret_cast<u8*>(cf::CBattleManager::getInstance()) + 0x1a8,
                     0) == 0) {
                 skipState = true;
@@ -2320,11 +2320,11 @@ extern "C" void func_80105D54(CMenuArtsSelect* self) {
         }
         if (!skipState) {
             self->unk298 = 8;
-            if (func_80110A70() != NULL) {
-                func_8010ED58(reinterpret_cast<u8*>(func_80110A70()) + 0x7e4);
+            if (EneSt_GetSingleton() != NULL) {
+                EneSt_CursorToState4(reinterpret_cast<u8*>(EneSt_GetSingleton()) + 0x7e4);
             }
-            if (func_8010CE48() != NULL) {
-                func_8010A7A8(reinterpret_cast<u8*>(func_8010CE48()) + 0x7cc);
+            if (BpsStateSingletonToInt() != NULL) {
+                BtlDmg_CursorToState4(reinterpret_cast<u8*>(BpsStateSingletonToInt()) + 0x7cc);
             }
             func_80138078__FUl(0x5f);
         }
@@ -2355,7 +2355,7 @@ extern "C" void func_80105D54(CMenuArtsSelect* self) {
         void* arts = reinterpret_cast<cf::CActorParam*>(actor)->CActorParam_getArtsSetBlock();
         ArtsParamInfo* p =
             reinterpret_cast<ArtsParamInfo*>(getArtsParamAtCnt(arts, listIdx));
-        if (func_8015419C(reinterpret_cast<u8*>(p)) != 0) hasGauge = true;
+        if (hasArtsGauge(reinterpret_cast<u8*>(p)) != 0) hasGauge = true;
     }
 
     f32 zeroF = lbl_eu_80666F28;
@@ -2427,23 +2427,23 @@ extern "C" void func_80105D54(CMenuArtsSelect* self) {
         }
     }
     if (changed) {
-        if (func_80110A70() != NULL) {
-            func_8010EDDC((u8*)func_80110A70() + 0x7e4, (u8)self->unk330);
+        if (EneSt_GetSingleton() != NULL) {
+            EneSt_CursorSet41((u8*)EneSt_GetSingleton() + 0x7e4, (u8)self->unk330);
         }
-        if (func_8010CE48() != NULL) {
-            func_8010A848((u8*)func_8010CE48() + 0x7cc, (u8)self->unk330);
+        if (BpsStateSingletonToInt() != NULL) {
+            func_8010A848((u8*)BpsStateSingletonToInt() + 0x7cc, (u8)self->unk330);
         }
         func_80138078__FUl(0x54);
     }
 }
 // ---------------------------------------------------------------------------
-// func_80106450 (us-80106f38) -- arts-select open frame timer + auto-open.
+// advanceConfirmState (us-80106f38) -- arts-select open frame timer + auto-open.
 // unk344 counts up by 1.0f per frame; when it passes the cap the menu jumps
 // to state 7 and the frame resets. While the party is battle-capable the
 // menu re-opens: page mode is forced to 4 and the target-arts name/help text
 // (or the full layout, for mode 2) is refreshed.
 // ---------------------------------------------------------------------------
-void CMenuArtsSelect::func_80106450() {
+void CMenuArtsSelect::advanceConfirmState() {
     typedef void* (*GetPtrFn)(void*);
 
     f32 v = unk344 + lbl_eu_80666F2C;
@@ -2547,7 +2547,7 @@ void CMenuArtsSelect::func_801065E4() {
             2, 0));
         if (rc->mCheckFlag != 0) {
             if (func_80154280(rc, actor, 0) & 0x80) flag = 1;
-            if (actor->mField3F28 == 7 && flag != 0 && func_801088CC(this) == 0) {
+            if (actor->mField3F28 == 7 && flag != 0 && CMenuArtsSelect_CheckTalentUse(this) == 0) {
                 flag = 0;
             }
         }
@@ -2629,7 +2629,7 @@ void CMenuArtsSelect::func_80106900() {
             ArtsParamInfo* rc = reinterpret_cast<ArtsParamInfo*>(getArtsParamRC(arts, 2, 0));
             if (rc->mCheckFlag != 0) {
                 if (func_80154280(rc, actor, 0) & 0x80) flag = 1;
-                if (actor->mField3F28 == 7 && flag != 0 && func_801088CC(this) == 0) {
+                if (actor->mField3F28 == 7 && flag != 0 && CMenuArtsSelect_CheckTalentUse(this) == 0) {
                     flag = 0;
                 }
             }
@@ -2658,7 +2658,7 @@ void CMenuArtsSelect::func_80106900() {
     }
 }
 // ---------------------------------------------------------------------------
-// func_80106C30 (us-80107718) -- per-slot arts gauge animation driver.
+// updateSlotGauge (us-80107718) -- per-slot arts gauge animation driver.
 // Clears the slot's latch bits, then when the slot's art has a gauge
 // (mCheckFlag) computes the target frame from the gauge ratio: ratio > 0
 // rewinds the anim (stopping it if it was playing), ratio <= 0 starts the
@@ -2667,7 +2667,7 @@ void CMenuArtsSelect::func_80106900() {
 // depending on where the target frame lands vs the frame size / current
 // frame.
 // ---------------------------------------------------------------------------
-void CMenuArtsSelect::func_80106C30(s32 index) {
+void CMenuArtsSelect::updateSlotGauge(s32 index) {
     u32 bitB = 1u << (index + 9);
     u32 bitA = 1u << index;
     u32 mask = bitA | bitB;
@@ -2807,12 +2807,12 @@ void CMenuArtsSelect::func_80106EC8(s32 index) {
     }
 }
 // ---------------------------------------------------------------------------
-// func_801071B8 (us-80107ca0) -- per-slot art-availability update.
+// advanceSlotToggle (us-80107ca0) -- per-slot art-availability update.
 // nextIdx wraps (i+1)%9; when the next slot's pane is available the slot's
 // anims are rewound (SetAnimationEnable + frame reset) and unk310 bits are
 // latched; otherwise the slot is disabled back to mode 0xc.
 // ---------------------------------------------------------------------------
-void CMenuArtsSelect::func_801071B8(s32 index) {
+void CMenuArtsSelect::advanceSlotToggle(s32 index) {
     s32 nextIdx = (index == 8) ? 0 : (index + 1);
     if (unk200[nextIdx]->unkBB & 1) {
         // Compound form makes MWCC reuse r0 for the final andc + store.
@@ -3005,7 +3005,7 @@ void CMenuArtsSelect::func_80107580() {
     }
 
     if (nameId != 0) {
-        void* tex = func_8012FD60(MakeTplNameSysFile(nameId));
+        void* tex = UIBattleFindElemTimg(MakeTplNameSysFile(nameId));
         if (tex != NULL) {
             PaneSetTexPaletteByName(unk80, lbl_eu_804FD1E0 + 0x2ae, tex);
         }
@@ -3013,9 +3013,9 @@ void CMenuArtsSelect::func_80107580() {
     if (gaugeId != 0) {
         void* tex;
         if (unk328 == 4) {
-            tex = func_8012FC74(MakeTplNameSysFile(gaugeId));
+            tex = UIBattleFindPartyTimg(MakeTplNameSysFile(gaugeId));
         } else {
-            tex = func_8012FD04(MakeTplNameSysFile(gaugeId));
+            tex = UIBattleFindSysTimg(MakeTplNameSysFile(gaugeId));
         }
         if (tex != NULL) {
             PaneSetTexPaletteByName(unk80, lbl_eu_804FD1E0 + 0x2b9, tex);
@@ -3023,13 +3023,13 @@ void CMenuArtsSelect::func_80107580() {
     }
 }
 // ---------------------------------------------------------------------------
-// func_8010784C (us-80108334) -- arts-select open gate.
+// CMenuArtsSelect_ShouldStayOpen (us-80108334) -- arts-select open gate.
 // Returns 1 while the menu may stay open: the event-flag probe returns 0, the
 // party is not in a battle-commit state, and the current actor's arts/move
 // sub-state has not finished animating out. Otherwise falls back to the
 // unk334/unk336 latch bytes.
 // ---------------------------------------------------------------------------
-extern "C" int func_8010784C(CMenuArtsSelect* self) {
+extern "C" int CMenuArtsSelect_ShouldStayOpen(CMenuArtsSelect* self) {
     typedef void* (*GetPtrFn)(void*);
 
     cf::CfGameManager::getInstance();
@@ -3076,7 +3076,7 @@ int CMenuArtsSelect::func_80107970(s32 index) {
         }
     }
     // Pending battle-manager action + party-move bit also block.
-    if (func_801BA2C8(reinterpret_cast<u8*>(cf::CBattleManager::getInstance()) + 0x216c) != 0 &&
+    if (SuddenCommuIsStateActive(reinterpret_cast<u8*>(cf::CBattleManager::getInstance()) + 0x216c) != 0 &&
         (actor->mField3388 & 0x2) != 0) {
         return 1;
     }
@@ -3134,7 +3134,7 @@ int CMenuArtsSelect::func_80107970(s32 index) {
         ArtsParamInfo* rc = reinterpret_cast<ArtsParamInfo*>(getArtsParamRC(arts, 2, 0));
         if (rc->mCheckFlag == 0) return 0;
         if ((func_80154280(rc, actor, 0) & 0x20) == 0) {
-            if (actor->mField3F28 == 7 && func_801088CC(this) == 0) return 1;
+            if (actor->mField3F28 == 7 && CMenuArtsSelect_CheckTalentUse(this) == 0) return 1;
             return 0;
         }
         return 1;
@@ -3164,7 +3164,7 @@ int CMenuArtsSelect::func_80107C54(s32 index) {
             u32 f = *reinterpret_cast<u32*>(reinterpret_cast<u8*>(actor->mField3F60) + 0x4ec);
             if ((f & 0x2) != 0 || (f & 0x100000) != 0) return 1;
         }
-        if (unk31C == 1 && func_8015419C(reinterpret_cast<u8*>(p)) != 0) return 1;
+        if (unk31C == 1 && hasArtsGauge(reinterpret_cast<u8*>(p)) != 0) return 1;
         if (CChain_isValidChain(
                 reinterpret_cast<u8*>(cf::CBattleManager::getInstance()) + 0x1a8,
                 reinterpret_cast<u8*>(actor), 0) != 0) {
@@ -3242,9 +3242,9 @@ int CMenuArtsSelect::func_80107C54(s32 index) {
                 }
             }
             if (unk328 == 2) {
-                if (func_8009CF8C(0x3359) == 0) return 1;
+                if (CtrlRemote_TouchBitByArg(0x3359) == 0) return 1;
             } else if (unk328 == 3) {
-                if (func_8009CF8C(0x3357) == 0) return 1;
+                if (CtrlRemote_TouchBitByArg(0x3357) == 0) return 1;
                 u32* pVal = reinterpret_cast<u32*>(
                     reinterpret_cast<cf::CObjectState*>(actor->mSecondaryVtable)->CObjectState_getStateData());
                 int localVal = pVal[0];
@@ -3259,7 +3259,7 @@ int CMenuArtsSelect::func_80107C54(s32 index) {
         u8* chain = reinterpret_cast<u8*>(cf::CBattleManager::getInstance()) + 0x1a8;
         cf::CBattleManager* bm = cf::CBattleManager::getInstance();
         if (*reinterpret_cast<s32*>(reinterpret_cast<u8*>(bm) + 0x194) != 0x12c ||
-            func_802795D4(chain, 0) == 0) {
+            CChain_CheckActivateReady(chain, 0) == 0) {
             return 1;
         }
     }
@@ -3326,11 +3326,11 @@ void CMenuArtsSelect::func_801080F8() {
                                           reinterpret_cast<u32>(unk294));
                         }
                     }
-                    if (func_80110A70() != NULL) {
-                        func_8010EDE4(reinterpret_cast<u8*>(func_80110A70()) + 0x7e4);
+                    if (EneSt_GetSingleton() != NULL) {
+                        func_8010EDE4(reinterpret_cast<u8*>(EneSt_GetSingleton()) + 0x7e4);
                     }
-                    if (func_8010CE48() != NULL) {
-                        func_8010A8E4(reinterpret_cast<u8*>(func_8010CE48()) + 0x7cc);
+                    if (BpsStateSingletonToInt() != NULL) {
+                        BtlDmg_CursorReset(reinterpret_cast<u8*>(BpsStateSingletonToInt()) + 0x7cc);
                     }
                     reinterpret_cast<UnkArtsSelectEntry*>(unk8C->GetRootPane())->unkBB =
                         static_cast<u8>((reinterpret_cast<UnkArtsSelectEntry*>(unk8C->GetRootPane())->unkBB & 0xFEu) | 1);
@@ -3341,11 +3341,11 @@ void CMenuArtsSelect::func_801080F8() {
                     unk8C->Animate(0);
                 }
             } else if (artId < 3 || artId > 10) {
-                if (func_80110A70() != NULL) {
-                    func_8010EDE4(reinterpret_cast<u8*>(func_80110A70()) + 0x7e4);
+                if (EneSt_GetSingleton() != NULL) {
+                    func_8010EDE4(reinterpret_cast<u8*>(EneSt_GetSingleton()) + 0x7e4);
                 }
-                if (func_8010CE48() != NULL) {
-                    func_8010A8E4(reinterpret_cast<u8*>(func_8010CE48()) + 0x7cc);
+                if (BpsStateSingletonToInt() != NULL) {
+                    BtlDmg_CursorReset(reinterpret_cast<u8*>(BpsStateSingletonToInt()) + 0x7cc);
                 }
                 reinterpret_cast<UnkArtsSelectEntry*>(unk8C->GetRootPane())->unkBB =
                     static_cast<u8>((reinterpret_cast<UnkArtsSelectEntry*>(unk8C->GetRootPane())->unkBB & 0xFEu) | 1);
@@ -3407,12 +3407,12 @@ void CMenuArtsSelect::func_801080F8() {
                 unk308 = (unk308 | mask) | 0x20;
             }
             char* tex = MakeTplNameSysFile(param->mCheckFlag);
-            u8* res = static_cast<u8*>(func_8012FD60(tex));
+            u8* res = static_cast<u8*>(UIBattleFindElemTimg(tex));
             if (res != NULL) {
                 func_80137F88(reinterpret_cast<nw4r::lyt::Pane*>(unk200[i]), res);
             }
             tex = MakeTplNameSysFile(param->mField72);
-            res = static_cast<u8*>(func_8012FC74(tex));
+            res = static_cast<u8*>(UIBattleFindPartyTimg(tex));
             if (res != NULL) {
                 func_80137F88(reinterpret_cast<nw4r::lyt::Pane*>(unk224[i]), res);
             }
@@ -3508,11 +3508,11 @@ extern "C" int func_801086D0(CMenuArtsSelect* self) {
 }
 
 // ---------------------------------------------------------------------------
-// func_801088CC (us-801093b4) -- use/confirm gate for the talent-art slot.
+// CMenuArtsSelect_CheckTalentUse (us-801093b4) -- use/confirm gate for the talent-art slot.
 // Allowed only when both the main FSM (unk324) and the talent page (unk328)
 // select slot 4, the player's art-id is 7, and its sub-object state passes.
 // ---------------------------------------------------------------------------
-extern "C" int func_801088CC(CMenuArtsSelect* self) {
+extern "C" int CMenuArtsSelect_CheckTalentUse(CMenuArtsSelect* self) {
     // Retail shares one return-1 block for the two opening guards (bne into
     // it, beq over it) and one return-0 block (.L_80109460) for the NULL and
     // sub-state paths; the sub==NULL and !=7 returns stay inline.
@@ -3539,12 +3539,12 @@ ret0:
     return 0;
 }
 // ---------------------------------------------------------------------------
-// func_80108994 (us-8010947c) -- bind per-slot panes.
+// bindEntryPanes (us-8010947c) -- bind per-slot panes.
 // The 9 slot triples (unk200/unk224/unk248) come from printf-formatted pane
 // names (formats at +0x2c4/+0x2d1/+0x2de); the 7 visibility-flag group panes
 // (unk26C) use the fixed names at +0x2ea..+0x322 and the two text panes.
 // ---------------------------------------------------------------------------
-void CMenuArtsSelect::func_80108994() {
+void CMenuArtsSelect::bindEntryPanes() {
     char buf[0x28];
     for (s32 i = 0; i < 9; i++) {
         sprintf(buf, lbl_eu_804FD1E0 + 0x2c4, i);

@@ -25,7 +25,7 @@ class CScn;
 // Local render-callback interface WITHOUT a virtual destructor (CMenuFade /
 // CMenuSkipTimer idiom): retail fills the dtor slot of the +0x5C sub-vtable
 // (composite block lbl_eu_8052C858+0xAC) with the manual adjuster
-// func_8011C444, and a virtual dtor here would make MWCC emit an extra @88@
+// MiniMap2DtorThunk5C, and a virtual dtor here would make MWCC emit an extra @88@
 // thunk that retail does not have.
 class IScnRender {
 public:
@@ -115,20 +115,20 @@ void func_80137250(nw4r::lyt::DrawInfo* pDrawInfo);
 void releaseArcResourceAccessor(nw4r::lyt::ArcResourceAccessor* accessor);
 void func_801390E0(CFileHandle**);
 // BDAT/string helpers with unmangled retail symbols: extern "C" keeps the
-// emitted call relocs matching retail (func_8003AA34 / getFP__FPCc).
-extern "C" void* func_8003AA34();   // matches code_801862C0.hpp's declaration
+// emitted call relocs matching retail (Bdat_GetTable_AA34 / getFP__FPCc).
+extern "C" void* Bdat_GetTable_AA34();   // matches code_801862C0.hpp's declaration
 extern "C" void* getFP__FPCc(const char* name);
 // Gimmick-row helpers used by func_80116B40 (unmangled retail symbols;
 // same declaration scheme as CFloorMap.hpp).
 extern "C" u32 CheckState2CC8Active(u16 id);
 struct CMMGimmickPos { f32 x; f32 y; f32 z; };
-extern "C" CMMGimmickPos* func_801F4E68(CMMGlobalGimmick* mgr, u16 id);
+extern "C" CMMGimmickPos* GimFindPosByRow(CMMGlobalGimmick* mgr, u16 id);
 extern "C" unsigned long CtrlObjectParam_GetWorkField50();
 extern "C" int GetSysStateFlag10();
 extern "C" int func_801AC124();
 // Move() gate/state helpers (unmangled retail symbols - C linkage).
-extern "C" u32 func_80242354();
-extern "C" bool func_80251550();
+extern "C" u32 isMapSelectActive();
+extern "C" bool MapSelectSCIsCreated();
 bool isGlobalCamFlagSet(int mask);   // isGlobalCamFlagSet__Fi (mangled C++)
 extern "C" u32 CUICfManager_queueWorldMapMenu();
 extern "C" void func_8013ACFC();
@@ -317,7 +317,7 @@ struct CMenuMiniMap2CreateView {
     u8 mField8D4;                 // 0x8D4
 };
 
-// Table object initialized by func_80115FD0: BDAT table pointer plus 3x5
+// Table object initialized by MiniMapInitTable3x5: BDAT table pointer plus 3x5
 // element columns (row strides 0xA/0x5/0x5/0x14).
 struct MiniMapTable {
     u32 field_00;                 // 0x00
@@ -344,7 +344,7 @@ struct CMMMapEntry {
     u8 field_BB;
 };
 
-// Gimmick/marker view tables used by func_801165EC / func_801167EC /
+// Gimmick/marker view tables used by func_801165EC / MiniMapFillMarkerEntry /
 // func_801168A0 (subobject of the minimap object at +0x17C).
 struct CMiniMapGimmickView {
     const char* field_0x00;            // 0x00 - bdat table pointer
@@ -384,7 +384,7 @@ struct CMiniMapGimmickView {
 // (func_80118058 / __ct__CMiniMap) instead of re-deriving mangled names.
 extern "C" void func_80118058(CMiniMap* self);
 extern "C" void __ct__CMiniMap(CMiniMap* self);
-MiniMapTable* func_80115FD0(MiniMapTable* self);
+MiniMapTable* MiniMapInitTable3x5(MiniMapTable* self);
 void func_801165EC(CMiniMapGimmickView* self);
 // Per-frame gimmick-view updater (retail unmangled symbol).
 extern "C" void func_801168A0(CMiniMapGimmickView* self);

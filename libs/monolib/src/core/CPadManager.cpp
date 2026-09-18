@@ -591,4 +591,4 @@ CPad* CPadManager::getMainGCPad(){
     return lbl_eu_80665630[0]->mMainGCPad;
 }
 
-extern "C" u8* func_eu_80449F30(int index) { return (u8*)lbl_eu_80665630[0] + index * 0xf8 + 0x24; }
+extern "C" u8* CPadManager_GetPadSlot(int index) { return (u8*)lbl_eu_80665630[0] + index * 0xf8 + 0x24; }

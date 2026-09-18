@@ -68,7 +68,7 @@ void setLayoutTextBoxFont(nw4r::lyt::Layout*, char*, u32);
 // Retail-unmangled C-ABI imports used by OnFileEvent.
 extern "C" void* getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32, nw4r::lyt::Layout*);
 extern "C" void func_8013676C(nw4r::lyt::Pane*, void*);
-extern "C" void func_80124288(nw4r::lyt::Pane*, float*);
+extern "C" void writePanePos(nw4r::lyt::Pane*, float*);
 extern "C" char* CUICfManager_getPackedFont9C();
 extern "C" nw4r::lyt::ArcResourceAccessor* CUICfManager_getArcResourceAccessor();
 extern "C" char* MakeTplNameSysFile(u32);
@@ -84,13 +84,13 @@ void drawLayout(nw4r::lyt::Layout*, nw4r::lyt::DrawInfo*, int, int);
 void setLayoutTextBoxNumber(nw4r::lyt::Layout*, char*, u8);
 
 // Resource release / anim helpers (C++-mangled imports; see CItemBoxInfo.hpp).
-void func_801390E0(CFileHandle**);
+void closeFileHandle(CFileHandle**);
 void releaseArcResourceAccessor(nw4r::lyt::ArcResourceAccessor*);
 u32 advanceAnimTransform(nw4r::lyt::AnimTransform*, float);
 // Retail symbol is unmangled (plain AnimRewindFrame), so keep C linkage.
 extern "C" u32 AnimRewindFrame(nw4r::lyt::AnimTransform*, float);
-// Retail symbol is unmangled (plain func_80124270), so keep C linkage.
-extern "C" void func_80124270(nw4r::lyt::Pane*, u32);
+// Retail symbol is unmangled (plain setPaneVisible), so keep C linkage.
+extern "C" void setPaneVisible(nw4r::lyt::Pane*, u32);
 void playUISound(u32);
 extern const f32 lbl_eu_80668088;
 extern const f32 lbl_eu_8066808C;
@@ -115,10 +115,10 @@ public:
     ~CNumSelect();
     bool OnFileEvent(CEventFile* evt);
 
-    void func_801EAE8C();
-    void func_801EAF7C(nw4r::lyt::DrawInfo* drawInfo);
-    void func_801EB030(char* str);
-    void func_801EB064(int value);
+    void NumSel_LoadArchive_AE8C();
+    void NumSel_DrawLayout_AF7C(nw4r::lyt::DrawInfo* drawInfo);
+    void NumSel_SetCaption_B030(char* str);
+    void NumSel_FormatPicName_B064(int value);
 
     /* 0x04 */ UnkClass_8045F564 mMemRegion;
     /* 0x14 */ CFileHandle* field_14;

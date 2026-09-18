@@ -136,8 +136,8 @@ __attribute__((never_inline)) void func_804DDADC(PackItemList* list) {
     list->mStartNodePtr->mNext = list->mStartNodePtr;
 }
 
-// _reslist_base<CArcItem*>::clearList() (retail func_804DDBD8).
-__attribute__((never_inline)) void func_804DDBD8(ArcItemList* list) {
+// _reslist_base<CArcItem*>::clearList() (retail clearArcItemList).
+__attribute__((never_inline)) void clearArcItemList(ArcItemList* list) {
     ArcItemListNode* r5 = list->mStartNodePtr->mNext;
     while (r5 != list->mStartNodePtr) {
         ArcItemListNode* r4 = r5;
@@ -147,8 +147,8 @@ __attribute__((never_inline)) void func_804DDBD8(ArcItemList* list) {
     list->mStartNodePtr->mNext = list->mStartNodePtr;
 }
 
-// CArcItem::func_804DEC30() - C-linkage in the retail binary.
-void func_804DEC30(CArcItem* self);
+// CArcItem::updateLoadState() - C-linkage in the retail binary.
+void updateLoadState(CArcItem* self);
 
 // _reslist_base<CPackItem*>::~_reslist_base(int deleting)
 // optimize_for_size matches retail's stmw/lmw frame for the 2 saved regs.
@@ -194,7 +194,7 @@ void* __dt__reslist_CPackItem(PackItemList* self, int deleting) {
 __attribute__((never_inline)) void* __dt___reslist_base_CArcItem(ArcItemList* self, int deleting) {
     if (self != 0) {
         self->m_vtable = (u32)lbl_eu_8056FF24;
-        func_804DDBD8(self);
+        clearArcItemList(self);
         if (self->unk1C == 0) {
             if (self->mList != 0) {
                 delete[] self->mList;
@@ -224,18 +224,18 @@ void* __dt__reslist_CArcItem(ArcItemList* self, int deleting) {
 }
 #pragma pop
 
-// func_eu_804520D0 is extern "C" in CDeviceFileCri.hpp, but including that
+// DevFile_SubstLangPath is extern "C" in CDeviceFileCri.hpp, but including that
 // header would clash with this TU's C++ definition of func_804DDCD4.
-int func_eu_804520D0(const char*);
+int DevFile_SubstLangPath(const char*);
 
-// Register one static arc filename: normalize the path through func_eu_804520D0,
+// Register one static arc filename: normalize the path through DevFile_SubstLangPath,
 // construct a CArcItem from the work region, and push it onto the singleton's
 // arc list (first free slot of the node array). The setItem try/catch shape
 // reproduces the retail frame marker (stw r1, 0x1c) from the reslist template.
 #pragma optimize_for_size on
 __attribute__((never_inline)) void func_804DDF00(const char* pPath) {
     ml::FixStr<0x100> str = pPath;
-    func_eu_804520D0(str.mString);
+    DevFile_SubstLangPath(str.mString);
 
     // Named pointer web parks &str in a callee-saved reg across the two
     // calls (retail shape); the allocation result feeds placement-new
@@ -467,8 +467,8 @@ extern "C" __declspec(noinline) bool func_804DDD54(const char* pName, const char
 // item search (returns the file id << 11). Returns -1 if neither matched.
 // Static lookup: walk the singleton's circular pack-item list (head at
 // +0x1E8, nodes link via +0, item pointer at +8) and forward to the first
-// item's func_804DEC6C when the list is non-empty (retail unmangled reloc).
-extern "C" bool func_804DEC6C(void* item, const char* pPath, void** pOutStartAddr, u32* pOutLength);
+// item's findFileEntry when the list is non-empty (retail unmangled reloc).
+extern "C" bool findFileEntry(void* item, const char* pPath, void** pOutStartAddr, u32* pOutLength);
 
 #pragma push
 #pragma optimize_for_size on
@@ -493,7 +493,7 @@ s32 func_804DDCD4(const char* pName, const char* pPath) {
 
 // Static lookup: walk the singleton's circular pack-item list (head at
 // +0x1E8, nodes link via +0, item pointer at +8) and forward to the first
-// item's func_804DEC6C when the list is non-empty.
+// item's findFileEntry when the list is non-empty.
 // __declspec(noinline) keeps retail's out-of-line bl - without it -inline auto
 // folds this small helper into func_804DDCD4 below.
 __declspec(noinline) bool CWorkSystemPack::findPackResource(const char* pName, void* pOut, u32* pFileId) {
@@ -501,7 +501,7 @@ __declspec(noinline) bool CWorkSystemPack::findPackResource(const char* pName, v
     u8* head = *(u8**)((u8*)sys + 0x1E8);
     u8* first = *(u8**)head;
     if (first != head) {
-        return func_804DEC6C(*(void**)(first + 8), pName, (void**)pOut, pFileId);
+        return findFileEntry(*(void**)(first + 8), pName, (void**)pOut, pFileId);
     }
     return false;
 }
@@ -520,7 +520,7 @@ bool CWorkSystemPack::areArcsReady() {
 }
 
 // Login gate: every arc item must be in load-state 2 (ready); if one isn't,
-// try to advance it (func_804DEC30) and abort the login. Then ensure the pack
+// try to advance it (updateLoadState) and abort the login. Then ensure the pack
 // work-memory region exists, and make sure every pack item is loaded
 // (advancing with update() if not).
 #pragma optimize_for_size on
@@ -530,7 +530,7 @@ bool CWorkSystemPack::wkStandbyLogin() {
     while (node != sentinel) {
         CArcItem* item = node->mItem;
         if (item->unk2C != 2) {
-            func_804DEC30(item);
+            updateLoadState(item);
             return false;
         }
         node = node->mNext;
@@ -582,7 +582,7 @@ bool CWorkSystemPack::wkStandbyLogout() {
         anode = anode->mNext;
     }
 
-    func_804DDBD8(&mArcList);
+    clearArcItemList(&mArcList);
     if (mArcList.unk1C == 0 && mArcList.mList != 0) {
         delete[] mArcList.mList;
         mArcList.mList = 0;
@@ -699,7 +699,7 @@ bool CWorkSystemPack::arePacksLoaded() {
 void CWorkSystemPack::wkUpdate() {
     ArcItemListNode* node = lbl_eu_80665A10->mArcList.mStartNodePtr->mNext;
     while (node != lbl_eu_80665A10->mArcList.mStartNodePtr) {
-        func_804DEC30(node->mItem);
+        updateLoadState(node->mItem);
         node = node->mNext;
     }
     PackItemListNode* pnode = lbl_eu_80665A10->mPackList.mStartNodePtr->mNext;

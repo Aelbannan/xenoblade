@@ -180,7 +180,7 @@ extern "C" void CfGimmick_LoadBdatAreaRotation(void* self, void* out, void* bdat
 // 0x804B0xxx region-object library (not decompiled here).
 extern "C" void ColiNodeInit(void* region);
 extern "C" void func_804B4BDC(void* manager, void* region);
-extern "C" void func_804B4C7C(void* manager, void* region);
+extern "C" void Coli_ListRemoveNode(void* manager, void* region);
 extern "C" int ColiCheckMoveRadius(void* region, void* target, int arg2, int arg3, f32 dist);
 extern "C" void __dt__804B095C(void* self, int flag);
 extern "C" void ColiSetMoveVecFlagged(void* region, const f32* vec);
@@ -202,7 +202,7 @@ extern "C" void CfGimmick_SetGlobalFlag8008();
 // Scene / frame-time helpers.
 extern "C" void* Scn_HasCamItem(void* a, void* b);
 extern "C" void setChild34Sc_(void* obj, const void* src);
-extern "C" void func_8008B95C(void* target);
+extern "C" void CtrlMoveEne_MarkActiveSteady(void* target);
 
 // Same-TU functions (C-linkage names, defined in CfGimmickLock.cpp).
 extern "C" void* __ct__cf_CfGimmickLock(cf::CfGimmickLock* self, u16 row);

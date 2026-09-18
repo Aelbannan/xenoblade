@@ -37,7 +37,7 @@ CLight::CLight(){
 void func_804C02E4(u8* self, int value){
     *(int*)((char*)self + 0x2c) = value;
 }
-void func_804C0398(CLight* self, int lightObjPtr) {
+void LightCtlSetObj(CLight* self, int lightObjPtr) {
     self->mpLightObj = (nw4r::g3d::LightObj*)lightObjPtr;
 }
 void func_804C03A0(u8* self, int value){
@@ -118,7 +118,7 @@ void func_804C07F0(u8* self, int value){
 }
 // Toggles a light-enable flag (bit 16 of unk30) and propagates it
 // to the GX LightObj's enable bit (bit 2 of its internal flag).
-void func_804C08C8(CLight* self, int enable) {
+void LightCtlSetEnable(CLight* self, int enable) {
     if (enable)
         self->unk30 |= 0x10000;
     else
@@ -129,13 +129,13 @@ void func_804C08C8(CLight* self, int enable) {
     else
         self->mpLightObj->Disable();
 }
-void func_804C0920(CLight* self, float cutoff, _GXSpotFn spotFn) {
+void LightCtlInitSpot(CLight* self, float cutoff, _GXSpotFn spotFn) {
     self->mpLightObj->InitLightSpot(cutoff, spotFn);
 }
 void func_804C0928(){}
-extern void InitLightDistAttn__Q34nw4r3g3d8LightObjFff13_GXDistAttnFn(void*, float, float, int);
+extern "C" void InitLightDistAttn__Q34nw4r3g3d8LightObjFff13_GXDistAttnFn(void*, float, float, int);
 // retail: lwz r3,0x2c(r3); b InitLightDistAttn__... (args pass through)
-extern "C" void func_804C09E0(u8* self, float a, float b, int c) {
+extern "C" void LightCtlInitDistAttn(u8* self, float a, float b, int c) {
     InitLightDistAttn__Q34nw4r3g3d8LightObjFff13_GXDistAttnFn(*(void**)((char*)self + 0x2c), a, b, c);
 }
 void func_804C09E8(){}

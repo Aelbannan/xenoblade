@@ -43,7 +43,7 @@
 #define lbl_eu_805262F0 lbl_eu_805262F0_constchar_hidden
 #define lbl_eu_805262C8 lbl_eu_805262C8_constchar_hidden
 #define lbl_eu_8066A200 lbl_eu_8066A200_float_hidden
-#define func_8022B90C func_8022B90C_typed_hidden
+#define sysWinSwitchKindPane sysWinSwitchKindPane_typed_hidden
 #define func_8022BFC8 func_8022BFC8_typed_hidden
 #define __ct__17UnkClass_8045F564Fv __ct__17UnkClass_8045F564Fv_typed_hidden
 #define __dt__17UnkClass_8045F564Fv __dt__17UnkClass_8045F564Fv_typed_hidden
@@ -60,7 +60,7 @@
 #undef lbl_eu_805262F0
 #undef lbl_eu_805262C8
 #undef lbl_eu_8066A200
-#undef func_8022B90C
+#undef sysWinSwitchKindPane
 #undef func_8022BFC8
 #undef __ct__17UnkClass_8045F564Fv
 #undef __dt__17UnkClass_8045F564Fv
@@ -148,29 +148,29 @@ int CSysWin_isReady(void* self);
 int CScrollBar_isVisible(void* self);
 extern "C" void closeFileHandle__FPP11CFileHandle(void*);
 int isMCGetItemBoxActive(void* self);
-int func_80222A50(void* self);
-void func_80222AF0(void* self);
-void func_801F369C(void* self);
-void func_80222964(void*, void*);
+int crystalListGetDataFlag(void* self);
+void crystalListState3To4(void* self);
+void CScrollBar_requestScrollOut(void* self);
+void crystalListDrawIfActive(void*, void*);
 void func_802228B8(void* self);
-void func_8022E988(void* self);
-void func_8022EA04(void* self);
-void func_8022E9E4(void*, void*);
-void func_801D20B0(void*, void*);
-void func_801F35B0(void*, void*);
+void CrySupTickAnim(void* self);
+void CrySupUnloadLayout(void* self);
+void CrySupDrawLayout(void*, void*);
+void Cur_DrawLayout(void*, void*);
+void CScrollBar_draw(void*, void*);
 void drawMCGetItemBox(void*, void*);
-void func_8022B7C8(void*, void*);
+void sysWinDrawLayout(void*, void*);
 void updateMCGetItemBox(void* self);
 void func_801D202C(void* self);
-void func_801F3540(void* self);
-void func_801F35DC(void* self);
-void func_8022B748(void* self);
-void func_801D216C(void*, u8);
-void func_8022C1B4(void* out, void* csyswin, u8);
+void CScrollBar_UpdateDispatch(void* self);
+void CScrollBar_Teardown(void* self);
+void sysWinDispatchPhase(void* self);
+void Cur_SetVisible(void*, u8);
+void sysWinGetPaneScreenPos(void* out, void* csyswin, u8);
 void func_80297B68(void*);
 void confirmMCGetItemBox(void*);
-void func_8022B7F4(void*);
-int func_80222A58(void*);
+void sysWinTermLayout(void*);
+int crystalListIsActive(void*);
 void tickAnimFrame(void*);
 void func_8021FEDC(void*);
 int isClassicController__Q22cf13CfGameManagerFv(int arg);
@@ -181,9 +181,9 @@ void simSetLeafFlag4000(void*, int);
 void func_80482DF4(void*, int);
 void* simGetLeafActData(void*);
 void func_804831C4(void*, void*);
-void func_804E3CCC(void*);
-void func_804E3D0C(void*, void*);
-void func_804CC1D8(void*, void*);
+void schedClearFlag15Update(void*);
+void schedAttachChildSlot(void*, void*);
+void EffSched_LookupB(void*, void*);
 void* func_804CC1F4(void*, void*, void*, int, int, int);
 // Retail member-return types are int (callers `cmpwi r3,0` the raw reg).
 // Mangled-name refs let us call them as int-returning without re-mangling.
@@ -193,8 +193,8 @@ int isFinished__14CMCEffCylinderFv(void*);
 int isReady__16CMCCylinderGaugeFv(void*);
 void func_802203D8(void*);
 void func_8022077C(void*);
-void func_8022EA88(void*, u8);
-void func_8022EA64(void*);
+void CrySupSetTexByIndex(void*, u8);
+void CrySupStartState(void*);
 void incrementEventCounter__FUl(u32);
 void func_802A1500(void);
 void func_80189C88(void);
@@ -203,7 +203,7 @@ void CUICfManager_queuePauseItemMenu(u32, u32, u32);
 void playUISound__FUl(u32);
 void deleteRegion__17UnkClass_8045F564Fv(void* self);
 // --- target callees (retail C-linkage / mangled-name symbols) ---
-void func_804E3D48(void*, void*);
+void schedDetachChildSlot(void*, void*);
 int CSysWin_getUnk34(void*);
 int getMCGetItemBoxKeyCode(void*);
 void func_8004B9D4(void*, int, int, int, int);
@@ -212,13 +212,13 @@ void openMCGetItemBox(void*, int, void*, u8);
 void func_80222F64(void*, void*, u8);
 void func_80223334(void*);
 void func_80222848(void*);
-void func_8022B90C(void*, int);
+void sysWinSwitchKindPane(void*, int);
 void func_8022B9B4(void*, void*, int);
-void func_8022BF6C(void*, void*, void*);
+void sysWinSetTwoTextValues(void*, void*, void*);
 void func_8022BFC8(void*, int);
-void func_8022B8B8(void*);
-void func_8022B8E4(void*);
-void func_801F34F4(void*);
+void sysWinOpenPhase1(void*);
+void sysWinAdvancePhase3(void*);
+void CScrollBar_loadLayoutArc(void*);
 void* readFile__11CDeviceFileFUlPCcP10IWorkEventii(u32, const char*, void*, int, int);
 u32 getHandleMEM2__Q23mtl10MemManagerFv();
 int isFinished__FPv(void*);
@@ -240,8 +240,8 @@ int sprintf(char*, const char*, ...);
 void CTaskGame_enumListCtor(CMCryListHolder*);
 void* CTaskGame_enumListGet(CMCryListHolder*); // returns holder->list
 void __dt__80043E88(CMCryListHolder*, int);
-void func_800F4A98(void*, unsigned int, unsigned int);
-void* func_800F6EC0(void*, unsigned int); // &slot -> +0x4 holds the move ptr
+void startEnumObjects(void*, unsigned int, unsigned int);
+void* getEntryAt(void*, unsigned int); // &slot -> +0x4 holds the move ptr
 void* getCfObjectPc__FPQ22cf12CfObjectMove(void*);
 void* CfRes_getPcGridEntry(short, int);
 int CfRes_isGridLoadIdle();
@@ -251,9 +251,9 @@ void CtrlObjectParam_GetSlotTableBase();
 u32 func_80141E90(u32, s16, u32, u32);
 int func_800AA33C(void*, u32, int, int);
 void syncFieldData__Q22cf13CfGameManagerFv(u32, bool);
-int func_8003B1EC(void*);
+int Bdat_GetMaxRow_B1EC(void*);
 void func_80159F6C(void*, u16, u16, u8);
-void func_802232E4(void*);
+void crystalListResetAnim4Play(void*);
 // OnFileEvent constructor/helper imports (retail reloc names)
 void __ct__16CMCCylinderGaugeFPQ34nw4r3lyt19ArcResourceAccessor(void*, nw4r::lyt::ArcResourceAccessor*);
 void __ct__CMCCrystalSupport(void*, nw4r::lyt::ArcResourceAccessor*);
@@ -276,14 +276,14 @@ void* createArcResourceAccessor__10CLibLayoutFv();
 void Attach__Q34nw4r3lyt19ArcResourceAccessorFPvPCc(void*, void*, const char*);
 void init__16CMCCylinderGaugeFv(void*);
 void func_8022E8F8(void*);
-void func_80211CB8(void*, void*);
+void MakeCrystalCopyParamBlock(void*, void*);
 void init__11CMCEffUpPrmFv(void*);
 void* CUICfManager_getArcResourceAccessor();
 void func_8018B0FC(void*, void*);
 void validateHeap__17UnkClass_8045F564Fv(void*);
 void __dt__14Class_8045F858Fv(void*, int);
-void func_804CC1BC(void*);
-void* func_800584B8(void*, unsigned int, const char*);
+void EffSched_LookupA(void*);
+void* initMcaFile(void*, unsigned int, const char*);
 void attachAnimObj(void*, void*, void*, unsigned int);
 void ModelDispEquip_SetActParamParent(void*, void*);
 void func_8021E8E4(void*);
@@ -293,10 +293,10 @@ void func_80222D9C(void*, u8);
 void __dt__80222984(void*);
 void func_80222B14(void*, u8, u16, u16);
 void func_80223004(void*, u8, u16, u8);
-void func_80222A60(void*);
-void func_80222A84(void*);
-void func_80222AA8(void*);
-void func_80222ACC(void*);
+void crystalListState0To1(void*);
+void crystalListState3To6(void*);
+void crystalListState3To7(void*);
+void crystalListState3To8(void*);
 // CMCEffUpPrm::setNumber called with a u16 second arg: retail passes the raw
 // halfword as the u8 param (callee reads only the low byte), so declaring the
 // param as u16 here avoids MWCC's truncation mask at the call site.
@@ -304,17 +304,17 @@ void setNumber__11CMCEffUpPrmFUlUc(CMCEffUpPrm*, u32, u16);
 void loadMCGetItemBoxFiles(void*);
 void* Scn_FindCamItem(void*, int);
 void func_8049EFF8(void*, void*, void*);
-void func_801F3670(void*, void*);
-void func_801F36BC(void*, u8, u8);
-void func_801F367C(void*);
+void CScrollBar_InitRootPane(void*, void*);
+void CScrollBar_UpdateThumb(void*, u8, u8);
+void CScrollBar_requestScrollIn(void*);
 s32 getInstance__Q22ml6MTRandFv();
 s32 rand31__Q22ml6MTRandFv();
 u16 func_8013A7D0(u8, u8);
 void* func_8009EC9C(u32);
-int func_8026178C(void*, int);
-u8 func_8025FB10(void*, int);
+int Counter_TestBit(void*, int);
+u8 IdTable_SumValues(void*, int);
 void func_80220128(void*);
-// func_8009D018 comes from CfGameManager.hpp (u32,u32) - no local decl.
+// CtrlRemote_SetSharedBit comes from CfGameManager.hpp (u32,u32) - no local decl.
 void __destroy_arr(void*, void*, int, int);
 void __dt__13CMCGetItemBoxFv(void*, int);
 void __dt__6CCur18Fv(void*, int);
@@ -473,7 +473,7 @@ __attribute__((aligned(8))) __attribute__((used)) u8 lbl_eu_80664718[8];
 
 // (was CMCSysWinFn: virtual dispatch at vtable offset +0x88, the CSysWin call
 // in func_8021C6E4 on this+0xe78. Retail table lbl_eu_80536510 word 34 is
-// CSysWin::loadSystemArc (def: func_8022B6F4); the call site now uses the
+// CSysWin::loadSystemArc (def: sysWinInitFileRead); the call site now uses the
 // owning class directly.)
 
 // Entry at this+0x13c0 (stride 0x34); a 4-bit type at bits 12-15.
@@ -940,7 +940,7 @@ void func_8021C6E4(CModelDispMakeCrystal* self)
         readFile__11CDeviceFileFUlPCcP10IWorkEventii(
             getHandleMEM2__Q23mtl10MemManagerFv(), &lbl_eu_805090FC[0x25], self, 0, 0);
     func_80222848(base + 0xc18);
-    func_801F34F4(base + 0xe38);
+    CScrollBar_loadLayoutArc(base + 0xe38);
     reinterpret_cast<CSysWin*>(base + 0xe78)->loadSystemArc();
     base[0xbe9] = 0;
     base[0xbdd] = 0;
@@ -970,7 +970,7 @@ void MakeCrystal_TickAll(CModelDispMakeCrystal* self)
     }
     reinterpret_cast<CMCCylinderGauge*>(base + 0xbec)->update();
     func_802228B8(base + 0xc18);
-    func_8022E988(base + 0xc70);
+    CrySupTickAnim(base + 0xc70);
     reinterpret_cast<CMCEffStart*>(base + 0xc8c)->update();
     reinterpret_cast<CMCEffStart*>(base + 0xca4)->update();
     reinterpret_cast<CMCEffStart*>(base + 0xcbc)->update();
@@ -983,8 +983,8 @@ void MakeCrystal_TickAll(CModelDispMakeCrystal* self)
     reinterpret_cast<CMCEffStart*>(base + 0xde4)->update();
     reinterpret_cast<CMCEffCylinder*>(base + 0xdfc)->update();
     func_801D202C(base + 0xe20);
-    func_801F3540(base + 0xe38);
-    func_8022B748(base + 0xe78);
+    CScrollBar_UpdateDispatch(base + 0xe38);
+    sysWinDispatchPhase(base + 0xe78);
     func_801D202C(base + 0xeb4);
     updateMCGetItemBox(base + 0xecc);
 }
@@ -993,7 +993,7 @@ void MakeCrystal_CleanupFiles(CModelDispMakeCrystal* self) {
     u8* base = reinterpret_cast<u8*>(self);
     CDeviceVI::waitForDrawDone();
     func_8022077C(self);
-    func_8022B7F4(base + 0xe78);
+    sysWinTermLayout(base + 0xe78);
     reinterpret_cast<CBaseCur*>(base + 0xeb4)->cleanup();
     func_80297B68(base + 0xecc);
     closeFileHandle__FPP11CFileHandle(reinterpret_cast<CFileHandle**>(base + 0x3c));
@@ -1009,9 +1009,9 @@ void MakeCrystal_CleanupFiles(CModelDispMakeCrystal* self) {
 void MakeCrystal_DrawAll(CModelDispMakeCrystal* self, nw4r::lyt::DrawInfo* drawInfo)
 {
     u8* base = reinterpret_cast<u8*>(self);
-    func_80222964(base + 0xc18, drawInfo);
+    crystalListDrawIfActive(base + 0xc18, drawInfo);
     reinterpret_cast<CMCCylinderGauge*>(base + 0xbec)->draw(drawInfo);
-    func_8022E9E4(base + 0xc70, drawInfo);
+    CrySupDrawLayout(base + 0xc70, drawInfo);
     draw(reinterpret_cast<CMCEffStart*>(base + 0xc8c), drawInfo);
     draw(reinterpret_cast<CMCEffStart*>(base + 0xca4), drawInfo);
     draw(reinterpret_cast<CMCEffStart*>(base + 0xcbc), drawInfo);
@@ -1023,11 +1023,11 @@ void MakeCrystal_DrawAll(CModelDispMakeCrystal* self, nw4r::lyt::DrawInfo* drawI
     draw(reinterpret_cast<CMCEffStart*>(base + 0xdcc), drawInfo);
     draw(reinterpret_cast<CMCEffStart*>(base + 0xde4), drawInfo);
     reinterpret_cast<CMCEffCylinder*>(base + 0xdfc)->draw(drawInfo);
-    func_801D20B0(base + 0xe20, drawInfo);
-    func_801F35B0(base + 0xe38, drawInfo);
+    Cur_DrawLayout(base + 0xe20, drawInfo);
+    CScrollBar_draw(base + 0xe38, drawInfo);
     drawMCGetItemBox(base + 0xecc, drawInfo);
-    func_8022B7C8(base + 0xe78, drawInfo);
-    func_801D20B0(base + 0xeb4, drawInfo);
+    sysWinDrawLayout(base + 0xe78, drawInfo);
+    Cur_DrawLayout(base + 0xeb4, drawInfo);
 }
 #pragma optimize_for_size off
 
@@ -1046,7 +1046,7 @@ int func_8021CA3C(CModelDispMakeCrystal* self)
     }
     if (base[0xbe9] == 0) return 0;
     if (*reinterpret_cast<u32*>(base + 0x40) == 0) return 0;
-    if (func_80222A50(base + 0xc18) == 0) return 0;
+    if (crystalListGetDataFlag(base + 0xc18) == 0) return 0;
     if (CScrollBar_isVisible(base + 0xe38) == 0) return 0;
     if (CSysWin_isReady(base + 0xe78) == 0) return 0;
     return isMCGetItemBoxActive(base + 0xecc);
@@ -1074,15 +1074,15 @@ void func_8021CB20(CModelDispMakeCrystal* self)
         reinterpret_cast<CMCCylinderGauge*>(base + 0xbec)->setLevel(1);
     }
     reinterpret_cast<CMCCylinderGauge*>(base + 0xbec)->start();
-    func_80222A60(base + 0xc18);
+    crystalListState0To1(base + 0xc18);
     u8* entries = *reinterpret_cast<u8**>(base + 0xe1c);
     nw4r::math::VEC3 v;
     v.x = lbl_eu_806684C4;
     v.y = lbl_eu_806684C8;
     v.z = lbl_eu_806684A4;
-    func_801F3670(base + 0xe38, &v);
-    func_801F36BC(base + 0xe38, 8, entries[0]);
-    func_801F367C(base + 0xe38);
+    CScrollBar_InitRootPane(base + 0xe38, &v);
+    CScrollBar_UpdateThumb(base + 0xe38, 8, entries[0]);
+    CScrollBar_requestScrollIn(base + 0xe38);
     MakeCrystal_ResetSlotList(reinterpret_cast<CModelDispMakeCrystal*>(base), 0);
     u8 bbc = base[0xbbc];
     GetCollectedFlagByte(base[0x5f0]);
@@ -1334,7 +1334,7 @@ void __declspec(noinline) func_8021D200(CModelDispMakeCrystal* self)
         void* arc = &lbl_eu_8065FC18[0];
         if (arc != nullptr) {
             if (*reinterpret_cast<u32*>(base + 0x14) != 0) {
-                func_804E3CCC(*reinterpret_cast<void**>(base + 0x14));
+                schedClearFlag15Update(*reinterpret_cast<void**>(base + 0x14));
             }
             void* e = func_804CC1F4(arc, *reinterpret_cast<void**>(base + 0x1c),
                                     *reinterpret_cast<void**>(base + 0xc), 1, 1, 1);
@@ -1344,7 +1344,7 @@ void __declspec(noinline) func_8021D200(CModelDispMakeCrystal* self)
                 if (self != nullptr) {
                     arg = reinterpret_cast<void*>(base + 0x8);
                 }
-                func_804E3D0C(e, arg);
+                schedAttachChildSlot(e, arg);
                 u32 r = reinterpret_cast<CScnItemModel*>(*reinterpret_cast<void**>(base + 0x20))->vfuncA8();
                 *reinterpret_cast<u32*>(reinterpret_cast<u8*>(*reinterpret_cast<void**>(base + 0x14)) + 0x14) = r;
             }
@@ -1452,7 +1452,7 @@ void __declspec(noinline) MakeCrystal_StateChargeLoop(CModelDispMakeCrystal* sel
     }
     base[0xbdd] = 8;
     MakeCrystal_ResetSlotList(self, 0);
-    func_80222A84(base + 0xc18);
+    crystalListState3To6(base + 0xc18);
     if (*reinterpret_cast<u32*>(base + 0x10)) {
         reinterpret_cast<u8*>(*reinterpret_cast<u32*>(base + 0x10))[0x59] = 7;
     }
@@ -1525,8 +1525,8 @@ extern "C" void func_8021D6B4(void* selfp)
             } while (m < (u8)n);
             MakeCrystal_AdvanceSlotEntries(selfp);
             MakeCrystal_ResetSlotList((CModelDispMakeCrystal*)selfp, 0);
-            func_8022EA88(base + 0xc70, base[0x13b8 + i]);
-            func_8022EA64(base + 0xc70);
+            CrySupSetTexByIndex(base + 0xc70, base[0x13b8 + i]);
+            CrySupStartState(base + 0xc70);
             incrementEventCounter__FUl(0x7e);
             incrementEventCounter__FUl(0x7f);
             playUISound__FUl(0x8e);
@@ -1560,7 +1560,7 @@ extern "C" void __declspec(noinline) setCrystalPosEntry(
 void __declspec(noinline) MakeCrystal_StateCrystalFull(CModelDispMakeCrystal* self)
 {
     u8* base = reinterpret_cast<u8*>(self);
-    if (!func_80222A58(base + 0xc18)) return;
+    if (!crystalListIsActive(base + 0xc18)) return;
     u16 r31 = *reinterpret_cast<u16*>(*reinterpret_cast<u8**>(base + 0xe1c) + 4);
     if (r31 >= 0x64) {
         // Success: full crystal count reached.
@@ -1606,7 +1606,7 @@ void __declspec(noinline) MakeCrystal_StatePlacedDone(CModelDispMakeCrystal* sel
     // and switch the crystal list to its final state.
     if (isFinished__FPv(base + 0xd5c)) {
         base[0xbdd] = 0xb;
-        func_80222ACC(base + 0xc18);
+        crystalListState3To8(base + 0xc18);
     }
 }
 
@@ -1627,7 +1627,7 @@ void __declspec(noinline) MakeCrystal_StateFailWait(CModelDispMakeCrystal* self)
 void __declspec(noinline) MakeCrystal_StateDivideSel(CModelDispMakeCrystal* self)
 {
     u8* base = reinterpret_cast<u8*>(self);
-    if (func_80222A58(base + 0xc18)) {
+    if (crystalListIsActive(base + 0xc18)) {
         if (lbl_eu_806684D4 == *reinterpret_cast<f32*>(base + 0x2dcc)) {
             base[0xbdd] = 0xf;
         } else {
@@ -1734,7 +1734,7 @@ void __declspec(noinline) MakeCrystal_StateCrystalDone(CModelDispMakeCrystal* se
         u16 count = *reinterpret_cast<u16*>(*reinterpret_cast<u8**>(base + 0xe1c) + 4);
         if (count >= 0x64) {
             base[0xbdd] = 0xb;
-            func_80222ACC(base + 0xc18);
+            crystalListState3To8(base + 0xc18);
         } else {
             *reinterpret_cast<f32*>(base + 0x2dcc) = lbl_eu_806684A4;
             base[0xbdd] = 0x10;
@@ -1771,7 +1771,7 @@ void __declspec(noinline) func_8021DF84(CModelDispMakeCrystal* self)
     // bne when the gauge is ready and skips it with b otherwise.
     if (reinterpret_cast<CMCCylinderGauge*>(base + 0xbec)->isReady() != 0) {
         base[0xbdd] = 0x12;
-        func_801D216C(base + 0xe20, 1);
+        Cur_SetVisible(base + 0xe20, 1);
         u8 buf[16];
         func_80222F64(buf, base + 0xc18, base[0x2dc1]);
         reinterpret_cast<CBaseCur*>(base + 0xe20)->setRootPaneTranslate(reinterpret_cast<const nw4r::math::VEC3*>(buf));
@@ -1825,8 +1825,8 @@ void __declspec(noinline) func_8021E014(CModelDispMakeCrystal* self)
     if (trigger1) {
         if (CSysWin_getUnk34(base + 0xe78) != 0) {
             if (CSysWin_isActive(base + 0xe78)) {
-                func_8022B8E4(base + 0xe78);
-                func_801D216C(base + 0xe20, 1);
+                sysWinAdvancePhase3(base + 0xe78);
+                Cur_SetVisible(base + 0xe20, 1);
             }
         } else {
             base[0xbdd] = 0x13;
@@ -1836,8 +1836,8 @@ void __declspec(noinline) func_8021E014(CModelDispMakeCrystal* self)
     } else if (trigger2) {
         if (CSysWin_getUnk34(base + 0xe78) != 0) {
             if (CSysWin_isActive(base + 0xe78)) {
-                func_8022B8E4(base + 0xe78);
-                func_801D216C(base + 0xe20, 1);
+                sysWinAdvancePhase3(base + 0xe78);
+                Cur_SetVisible(base + 0xe20, 1);
             }
         }
     } else if (bCancel) {
@@ -1867,7 +1867,7 @@ void __declspec(noinline) func_8021E014(CModelDispMakeCrystal* self)
             func_80222F64(local, base + 0xc18, base[0x2dc1]);
             reinterpret_cast<CBaseCur*>(base + 0xe20)->setRootPaneTranslate(reinterpret_cast<const nw4r::math::VEC3*>(local));
             MakeCrystal_ResetSlotList(self, 1);
-            func_801F3850(base + 0xe38, (u16)(s8)base[0x2dc2]);
+            CScrollBar_PlaceThumb(base + 0xe38, (u16)(s8)base[0x2dc2]);
             playUISound__FUl(1);
         }
     } else if (bDir) {
@@ -1899,7 +1899,7 @@ void __declspec(noinline) func_8021E014(CModelDispMakeCrystal* self)
             func_80222F64(local, base + 0xc18, base[0x2dc1]);
             reinterpret_cast<CBaseCur*>(base + 0xe20)->setRootPaneTranslate(reinterpret_cast<const nw4r::math::VEC3*>(local));
             MakeCrystal_ResetSlotList(self, 1);
-            func_801F3850(base + 0xe38, (u16)(s8)base[0x2dc2]);
+            CScrollBar_PlaceThumb(base + 0xe38, (u16)(s8)base[0x2dc2]);
             playUISound__FUl(1);
         }
     } else if (bConfirm) {
@@ -1924,7 +1924,7 @@ void __declspec(noinline) func_8021E014(CModelDispMakeCrystal* self)
             func_80222F64(local, base + 0xc18, base[0x2dc1]);
             reinterpret_cast<CBaseCur*>(base + 0xe20)->setRootPaneTranslate(reinterpret_cast<const nw4r::math::VEC3*>(local));
             MakeCrystal_ResetSlotList(self, 1);
-            func_801F3850(base + 0xe38, (u16)(s8)base[0x2dc2]);
+            CScrollBar_PlaceThumb(base + 0xe38, (u16)(s8)base[0x2dc2]);
             playUISound__FUl(1);
         }
     } else if (bMenu) {
@@ -1951,14 +1951,14 @@ void __declspec(noinline) func_8021E014(CModelDispMakeCrystal* self)
             func_80222F64(local, base + 0xc18, base[0x2dc1]);
             reinterpret_cast<CBaseCur*>(base + 0xe20)->setRootPaneTranslate(reinterpret_cast<const nw4r::math::VEC3*>(local));
             MakeCrystal_ResetSlotList(self, 1);
-            func_801F3850(base + 0xe38, (u16)(s8)base[0x2dc2]);
+            CScrollBar_PlaceThumb(base + 0xe38, (u16)(s8)base[0x2dc2]);
             playUISound__FUl(1);
         }
     } else if (trigger3) {
         if (CSysWin_getUnk34(base + 0xe78) != 0) {
             if (CSysWin_isActive(base + 0xe78)) {
-                func_8022B8E4(base + 0xe78);
-                func_801D216C(base + 0xe20, 1);
+                sysWinAdvancePhase3(base + 0xe78);
+                Cur_SetVisible(base + 0xe20, 1);
             }
         } else {
             // Selection key: resolve the cursor-sum index to an entry's
@@ -1967,11 +1967,11 @@ void __declspec(noinline) func_8021E014(CModelDispMakeCrystal* self)
             u8* entries = *reinterpret_cast<u8**>(base + 0xe1c);
             u16 ev = *(u16*)(entries + ((u32)((u16)idx << 3)) + 2);
             char* s = BdatTouchStringCell(&lbl_eu_805090FC[0x38], &lbl_eu_805090FC[0x42], ev);
-            func_8022B90C(base + 0xe78, 0);
+            sysWinSwitchKindPane(base + 0xe78, 0);
             func_8022B9B4(base + 0xe78, s, 0);
             func_8022BFC8(base + 0xe78, 1);
-            func_8022B8B8(base + 0xe78);
-            func_801D216C(base + 0xe20, 0);
+            sysWinOpenPhase1(base + 0xe78);
+            Cur_SetVisible(base + 0xe20, 0);
         }
     }
 }
@@ -2076,8 +2076,8 @@ void __declspec(noinline) func_8021E5C0(CModelDispMakeCrystal* self)
     func_80222F64(buf, (u8*)self + 0xc18, 0);
     reinterpret_cast<CBaseCur*>((u8*)self + 0xe20)->setRootPaneTranslate(reinterpret_cast<const nw4r::math::VEC3*>(buf));
     MakeCrystal_ResetSlotList(self, 1);
-    func_801F36BC((u8*)self + 0xe38, 8, entries[0]);
-    func_801F3850((u8*)self + 0xe38, (u16)(s8)((u8*)self)[0x2dc2]);
+    CScrollBar_UpdateThumb((u8*)self + 0xe38, 8, entries[0]);
+    CScrollBar_PlaceThumb((u8*)self + 0xe38, (u16)(s8)((u8*)self)[0x2dc2]);
     playUISound__FUl(0xb1);
     if (entries[0] != 0 &&
         reinterpret_cast<CMCCylinderGauge*>((u8*)self + 0xbec)->getLevel() != 0) {
@@ -2182,7 +2182,7 @@ void __declspec(noinline) MakeCrystal_StateCylDone(CModelDispMakeCrystal* self)
     // advance the crystal list state.
     if (isFinished__14CMCEffCylinderFv(base + 0xdfc)) {
         base[0xbdd] = 0x15;
-        func_80222AA8(base + 0xc18);
+        crystalListState3To7(base + 0xc18);
     }
 }
 
@@ -2211,11 +2211,11 @@ void __declspec(noinline) MakeCrystal_StateChargeFinal(CModelDispMakeCrystal* se
         }
     }
     if (!(*fbe0 < lbl_eu_806684A0)) {
-        if (func_80222A58(base + 0xc18)) {
+        if (crystalListIsActive(base + 0xc18)) {
             base[0xbdd] = 0x16;
-            func_80222AF0(base + 0xc18);
-            func_801F369C(base + 0xe38);
-            func_801D216C(base + 0xe20, 0);
+            crystalListState3To4(base + 0xc18);
+            CScrollBar_requestScrollOut(base + 0xe38);
+            Cur_SetVisible(base + 0xe20, 0);
         }
     }
 }
@@ -2226,7 +2226,7 @@ void __declspec(noinline) MakeCrystal_StateChargeFinal(CModelDispMakeCrystal* se
 void func_8021EC04(CModelDispMakeCrystal* self)
 {
     u8* base = reinterpret_cast<u8*>(self);
-    if (func_80222A58(base + 0xc18) == 0) return;
+    if (crystalListIsActive(base + 0xc18) == 0) return;
     func_8022077C(self);
     u8 count = base[0x2dc0];
     int found = 0;
@@ -2292,11 +2292,11 @@ void __declspec(noinline) func_8021ECD4(CModelDispMakeCrystal* self)
                 char* a = (char*)BdatTouchStringCell(&lbl_eu_805090FC[0x47], &lbl_eu_805090FC[0x52], 2);
                 char* b = (char*)BdatTouchStringCell(&lbl_eu_805090FC[0x47], &lbl_eu_805090FC[0x52], 4);
                 char* c = (char*)BdatTouchStringCell(&lbl_eu_805090FC[0x47], &lbl_eu_805090FC[0x52], 5);
-                func_8022B90C(base + 0xe78, 2);
+                sysWinSwitchKindPane(base + 0xe78, 2);
                 func_8022B9B4(base + 0xe78, a, 0);
-                func_8022BF6C(base + 0xe78, b, c);
+                sysWinSetTwoTextValues(base + 0xe78, b, c);
                 func_8022BFC8(base + 0xe78, 0);
-                func_8022B8B8(base + 0xe78);
+                sysWinOpenPhase1(base + 0xe78);
                 forwardMCSubObj88(base + 0xecc, 0);
                 playUISound__FUl(5);
             }
@@ -2346,10 +2346,10 @@ void __declspec(noinline) MakeCrystal_StateSysWinPrompt(CModelDispMakeCrystal* s
     u8* base = reinterpret_cast<u8*>(self);
     if (!CSysWin_isActive(base + 0xe78)) return;
     base[0xbdd] = 0x1b;
-    func_801D216C(base + 0xeb4, 1);
+    Cur_SetVisible(base + 0xeb4, 1);
     u8 param = base[0x2dd1];
     u8 buf[16];
-    func_8022C1B4(buf, base + 0xe78, param);
+    sysWinGetPaneScreenPos(buf, base + 0xe78, param);
     reinterpret_cast<CBaseCur*>(base + 0xeb4)->setRootPaneTranslate(reinterpret_cast<const nw4r::math::VEC3*>(buf));
 }
 
@@ -2382,15 +2382,15 @@ void __declspec(noinline) func_8021F058(CModelDispMakeCrystal* self)
     if (trigger1) {
         // Fast cursor advance button.
         base[0xbdd] = 0x1c;
-        func_801D216C(base + 0xeb4, 0);
-        func_8022B8E4(base + 0xe78);
+        Cur_SetVisible(base + 0xeb4, 0);
+        sysWinAdvancePhase3(base + 0xe78);
         playUISound__FUl(3);
     } else if (trigger2) {
         // Forward cursor button: reset step and play forward sound.
         base[0xbdd] = 0x1c;
         base[0x2dd1] = 1;
-        func_801D216C(base + 0xeb4, 0);
-        func_8022B8E4(base + 0xe78);
+        Cur_SetVisible(base + 0xeb4, 0);
+        sysWinAdvancePhase3(base + 0xe78);
         playUISound__FUl(6);
     } else if (cancel) {
         // Cursor back: decrement step (wrapping to 1).
@@ -2399,7 +2399,7 @@ void __declspec(noinline) func_8021F058(CModelDispMakeCrystal* self)
         if ((s8)v < 0) base[0x2dd1] = 1;
         u8 param = base[0x2dd1];
         u8 buf[12];
-        func_8022C1B4(buf, base + 0xe78, param);
+        sysWinGetPaneScreenPos(buf, base + 0xe78, param);
         reinterpret_cast<CBaseCur*>(base + 0xeb4)->setRootPaneTranslate(reinterpret_cast<const nw4r::math::VEC3*>(buf));
         playUISound__FUl(1);
     } else if (dir) {
@@ -2409,7 +2409,7 @@ void __declspec(noinline) func_8021F058(CModelDispMakeCrystal* self)
         if ((s8)v > 1) base[0x2dd1] = 0;
         u8 param = base[0x2dd1];
         u8 buf[12];
-        func_8022C1B4(buf, base + 0xe78, param);
+        sysWinGetPaneScreenPos(buf, base + 0xe78, param);
         reinterpret_cast<CBaseCur*>(base + 0xeb4)->setRootPaneTranslate(reinterpret_cast<const nw4r::math::VEC3*>(buf));
         playUISound__FUl(1);
     }
@@ -2440,7 +2440,7 @@ void __declspec(noinline) MakeCrystal_StateItemMenuWait(CModelDispMakeCrystal* s
     u8* base = reinterpret_cast<u8*>(self);
     // While the item menu is not open, move to the pass/fail tuning state
     // and reset the crystal box file state machine.
-    if (func_80167A18() == 0) {
+    if (ItemMenu_IsPresent() == 0) {
         base[0xbdd] = 0x18;
         forwardMCSubObj88(base + 0xecc, 1);
     }
@@ -2500,11 +2500,11 @@ void __declspec(noinline) func_8021F2D8(CModelDispMakeCrystal* self)
                 char* a = BdatTouchStringCell(&lbl_eu_805090FC[0x47], &lbl_eu_805090FC[0x52], 2);
                 char* b = BdatTouchStringCell(&lbl_eu_805090FC[0x47], &lbl_eu_805090FC[0x52], 4);
                 char* c = BdatTouchStringCell(&lbl_eu_805090FC[0x47], &lbl_eu_805090FC[0x52], 5);
-                func_8022B90C((u8*)self + 0xe78, 2);
+                sysWinSwitchKindPane((u8*)self + 0xe78, 2);
                 func_8022B9B4((u8*)self + 0xe78, a, 0);
-                func_8022BF6C((u8*)self + 0xe78, b, c);
+                sysWinSetTwoTextValues((u8*)self + 0xe78, b, c);
                 func_8022BFC8((u8*)self + 0xe78, 0);
-                func_8022B8B8((u8*)self + 0xe78);
+                sysWinOpenPhase1((u8*)self + 0xe78);
                 forwardMCSubObj88((u8*)self + 0xecc, 0);
                 playUISound__FUl(5);
             }
@@ -2528,10 +2528,10 @@ void __declspec(noinline) MakeCrystal_StateConfirmPrompt(CModelDispMakeCrystal* 
     u8* base = reinterpret_cast<u8*>(self);
     if (!CSysWin_isActive(base + 0xe78)) return;
     base[0xbdd] = 0x22;
-    func_801D216C(base + 0xeb4, 1);
+    Cur_SetVisible(base + 0xeb4, 1);
     u8 param = base[0x2dd1];
     u8 buf[16];
-    func_8022C1B4(buf, base + 0xe78, param);
+    sysWinGetPaneScreenPos(buf, base + 0xe78, param);
     reinterpret_cast<CBaseCur*>(base + 0xeb4)->setRootPaneTranslate(reinterpret_cast<const nw4r::math::VEC3*>(buf));
 }
 
@@ -2560,14 +2560,14 @@ void __declspec(noinline) func_8021F5A8(CModelDispMakeCrystal* self)
 
     if (trigger1) {
         base[0xbdd] = 0x23;
-        func_801D216C(base + 0xeb4, 0);
-        func_8022B8E4(base + 0xe78);
+        Cur_SetVisible(base + 0xeb4, 0);
+        sysWinAdvancePhase3(base + 0xe78);
         playUISound__FUl(3);
     } else if (trigger2) {
         base[0xbdd] = 0x23;
         base[0x2dd1] = 1;
-        func_801D216C(base + 0xeb4, 0);
-        func_8022B8E4(base + 0xe78);
+        Cur_SetVisible(base + 0xeb4, 0);
+        sysWinAdvancePhase3(base + 0xe78);
         playUISound__FUl(6);
     } else if (cancel) {
         u8 v = base[0x2dd1] - 1;
@@ -2575,7 +2575,7 @@ void __declspec(noinline) func_8021F5A8(CModelDispMakeCrystal* self)
         if ((s8)v < 0) base[0x2dd1] = 1;
         u8 param = base[0x2dd1];
         u8 buf[12];
-        func_8022C1B4(buf, base + 0xe78, param);
+        sysWinGetPaneScreenPos(buf, base + 0xe78, param);
         reinterpret_cast<CBaseCur*>(base + 0xeb4)->setRootPaneTranslate(reinterpret_cast<const nw4r::math::VEC3*>(buf));
         playUISound__FUl(1);
     } else if (dir) {
@@ -2584,7 +2584,7 @@ void __declspec(noinline) func_8021F5A8(CModelDispMakeCrystal* self)
         if ((s8)v > 1) base[0x2dd1] = 0;
         u8 param = base[0x2dd1];
         u8 buf[12];
-        func_8022C1B4(buf, base + 0xe78, param);
+        sysWinGetPaneScreenPos(buf, base + 0xe78, param);
         reinterpret_cast<CBaseCur*>(base + 0xeb4)->setRootPaneTranslate(reinterpret_cast<const nw4r::math::VEC3*>(buf));
         playUISound__FUl(1);
     }
@@ -2614,7 +2614,7 @@ void __declspec(noinline) MakeCrystal_StateSuccessWait(CModelDispMakeCrystal* se
 {
     u8* base = reinterpret_cast<u8*>(self);
     // Same item-menu gate as MakeCrystal_StateItemMenuWait, but for the success state (0x1f).
-    if (func_80167A18() == 0) {
+    if (ItemMenu_IsPresent() == 0) {
         base[0xbdd] = 0x1f;
         forwardMCSubObj88(base + 0xecc, 1);
     }
@@ -2628,21 +2628,21 @@ void __declspec(noinline) func_8021F828(CModelDispMakeCrystal* self)
     char* a = (char*)BdatTouchStringCell(&lbl_eu_805090FC[0x57], &lbl_eu_805090FC[0x63], 0x3d);
     char* b = (char*)BdatTouchStringCell(&lbl_eu_805090FC[0x57], &lbl_eu_805090FC[0x63], 0x3e);
     char* c = (char*)BdatTouchStringCell(&lbl_eu_805090FC[0x57], &lbl_eu_805090FC[0x63], 0x3f);
-    func_8022B90C(base + 0xe78, 2);
+    sysWinSwitchKindPane(base + 0xe78, 2);
     func_8022B9B4(base + 0xe78, a, 0);
-    func_8022BF6C(base + 0xe78, b, c);
+    sysWinSetTwoTextValues(base + 0xe78, b, c);
     func_8022BFC8(base + 0xe78, 0);
-    func_8022B8B8(base + 0xe78);
+    sysWinOpenPhase1(base + 0xe78);
 }
 
 void __declspec(noinline) MakeCrystal_StateResultPrompt(CModelDispMakeCrystal* self) {
     u8* base = reinterpret_cast<u8*>(self);
     if (!CSysWin_isActive(base + 0xe78)) return;
     base[0xbdd] = 0x27;
-    func_801D216C(base + 0xeb4, 1);
+    Cur_SetVisible(base + 0xeb4, 1);
     u8 param = base[0x2dd1];
     u8 buf[16];
-    func_8022C1B4(buf, base + 0xe78, param);
+    sysWinGetPaneScreenPos(buf, base + 0xe78, param);
     reinterpret_cast<CBaseCur*>(base + 0xeb4)->setRootPaneTranslate(reinterpret_cast<const nw4r::math::VEC3*>(buf));
 }
 
@@ -2670,14 +2670,14 @@ void __declspec(noinline) func_8021F958(CModelDispMakeCrystal* self)
 
     if (trigger1) {
         base[0xbdd] = 0x28;
-        func_801D216C(base + 0xeb4, 0);
-        func_8022B8E4(base + 0xe78);
+        Cur_SetVisible(base + 0xeb4, 0);
+        sysWinAdvancePhase3(base + 0xe78);
         playUISound__FUl(3);
     } else if (trigger2) {
         base[0xbdd] = 0x28;
         base[0x2dd1] = 1;
-        func_801D216C(base + 0xeb4, 0);
-        func_8022B8E4(base + 0xe78);
+        Cur_SetVisible(base + 0xeb4, 0);
+        sysWinAdvancePhase3(base + 0xe78);
         playUISound__FUl(6);
     } else if (cancel) {
         u8 v = base[0x2dd1] - 1;
@@ -2685,7 +2685,7 @@ void __declspec(noinline) func_8021F958(CModelDispMakeCrystal* self)
         if ((s8)v < 0) base[0x2dd1] = 1;
         u8 param = base[0x2dd1];
         u8 buf[16];
-        func_8022C1B4(buf, base + 0xe78, param);
+        sysWinGetPaneScreenPos(buf, base + 0xe78, param);
         reinterpret_cast<CBaseCur*>(base + 0xeb4)->setRootPaneTranslate(reinterpret_cast<const nw4r::math::VEC3*>(buf));
         playUISound__FUl(1);
     } else if (dir) {
@@ -2694,7 +2694,7 @@ void __declspec(noinline) func_8021F958(CModelDispMakeCrystal* self)
         if ((s8)v > 1) base[0x2dd1] = 0;
         u8 param = base[0x2dd1];
         u8 buf[16];
-        func_8022C1B4(buf, base + 0xe78, param);
+        sysWinGetPaneScreenPos(buf, base + 0xe78, param);
         reinterpret_cast<CBaseCur*>(base + 0xeb4)->setRootPaneTranslate(reinterpret_cast<const nw4r::math::VEC3*>(buf));
         playUISound__FUl(1);
     }
@@ -2799,13 +2799,13 @@ extern "C" void func_8021FD44(CModelDispMakeCrystal* self)
     base[0x2dd3] = 0;
     u8* a = reinterpret_cast<u8*>(func_8009EC9C(r31));
     u8* b = a + 0x3534;
-    if (func_8026178C(b, 0x90)) {
-        base[0x2dd3] = (u8)(base[0x2dd3] + func_8025FB10(b, 0x90));
+    if (Counter_TestBit(b, 0x90)) {
+        base[0x2dd3] = (u8)(base[0x2dd3] + IdTable_SumValues(b, 0x90));
     }
     u8* a2 = reinterpret_cast<u8*>(func_8009EC9C(r30));
     u8* b2 = a2 + 0x3534;
-    if (func_8026178C(b2, 0x90)) {
-        base[0x2dd3] = (u8)(base[0x2dd3] + func_8025FB10(b2, 0x90));
+    if (Counter_TestBit(b2, 0x90)) {
+        base[0x2dd3] = (u8)(base[0x2dd3] + IdTable_SumValues(b2, 0x90));
     }
 }
 
@@ -3003,7 +3003,7 @@ void func_802203D8(void* selfp)
     u8 ch = entries[1];
     // Walk the bdat enum rows backwards to find the row whose column 3
     // value is 3 (the row key for this item source).
-    u16 idx = (u16)(func_8003B1EC(g1) - 1);
+    u16 idx = (u16)(Bdat_GetMaxRow_B1EC(g1) - 1);
     while (idx != 0) {
         // Row-index variant of the bdat column lookup (CUIWindowManager.hpp
         // declares the int third arg; the const char* variant is another TU's).
@@ -3094,8 +3094,8 @@ void func_802203D8(void* selfp)
     MakeCrystal_ClearSlotParam(entries, 0);
     func_8021E888(entries);
     MakeCrystal_ResetSlotList(reinterpret_cast<CModelDispMakeCrystal*>(selfp), 0);
-    func_801F36BC(base + 0xe38, 8, entries[0]);
-    func_802232E4(base + 0xc18);
+    CScrollBar_UpdateThumb(base + 0xe38, 8, entries[0]);
+    crystalListResetAnim4Play(base + 0xc18);
 }
 
 // Retail 0x802225D4: teardown of the make-crystal UI state. Waits for the
@@ -3113,13 +3113,13 @@ void func_8022077C(CModelDispMakeCrystal* self)
         if (arc != nullptr) {
             // Release the file-state machine's object references.
             if (*reinterpret_cast<u32*>(base + 0x10) != 0) {
-                func_804E3CCC(*reinterpret_cast<void**>(base + 0x10));
+                schedClearFlag15Update(*reinterpret_cast<void**>(base + 0x10));
             }
             if (*reinterpret_cast<u32*>(base + 0x14) != 0) {
-                func_804E3CCC(*reinterpret_cast<void**>(base + 0x14));
+                schedClearFlag15Update(*reinterpret_cast<void**>(base + 0x14));
             }
             if (*reinterpret_cast<u32*>(base + 0x1c) != 0) {
-                func_804CC1D8(arc, *reinterpret_cast<void**>(base + 0x1c));
+                EffSched_LookupB(arc, *reinterpret_cast<void**>(base + 0x1c));
             }
         }
         base[0x10] = 0;
@@ -3150,7 +3150,7 @@ void func_8022077C(CModelDispMakeCrystal* self)
         // Destroy the gauge, list, support, and every effect sub-object.
         reinterpret_cast<CMCCylinderGauge*>(base + 0xbec)->destroy();
         __dt__80222984(base + 0xc18);
-        func_8022EA04(base + 0xc70);
+        CrySupUnloadLayout(base + 0xc70);
         reinterpret_cast<CMCEffStart*>(base + 0xc8c)->destroy();
         reinterpret_cast<CMCEffStart*>(base + 0xca4)->destroy();
         reinterpret_cast<CMCEffStart*>(base + 0xcbc)->destroy();
@@ -3163,7 +3163,7 @@ void func_8022077C(CModelDispMakeCrystal* self)
         reinterpret_cast<CMCEffStart*>(base + 0xde4)->destroy();
         reinterpret_cast<CMCEffCylinder*>(base + 0xdfc)->destroy();
         reinterpret_cast<CBaseCur*>(base + 0xe20)->cleanup();
-        func_801F35DC(base + 0xe38);
+        CScrollBar_Teardown(base + 0xe38);
         base[0x2dd4] = 1;
     }
 }
@@ -3297,7 +3297,7 @@ void func_80220C34(CModelDispMakeCrystal* self)
                                     *reinterpret_cast<void**>(base + 0xc), 0, 1, 1);
             *reinterpret_cast<void**>(base + 0x10) = e;
             if (e != nullptr) {
-                func_804E3D0C(e, self ? reinterpret_cast<void*>(base + 0x8) : nullptr);
+                schedAttachChildSlot(e, self ? reinterpret_cast<void*>(base + 0x8) : nullptr);
                 u32 r = reinterpret_cast<CScnItemModel*>(*reinterpret_cast<void**>(base + 0x20))->vfuncA8();
                 *reinterpret_cast<u32*>(reinterpret_cast<u8*>(*reinterpret_cast<void**>(base + 0x10)) + 0x14) = r;
             }
@@ -3341,7 +3341,7 @@ void func_80220E14(CModelDispMakeCrystal* self, CMCrystalDispSub* sub)
     CTaskGame_enumListCtor(&holder);
 
     // Select the crystal list for the current char state and check it's loaded.
-    func_800F4A98(CTaskGame_enumListGet(&holder), filters[(s8)sub->field_5ac], 0);
+    startEnumObjects(CTaskGame_enumListGet(&holder), filters[(s8)sub->field_5ac], 0);
     if (*reinterpret_cast<u32*>(reinterpret_cast<u8*>(CTaskGame_enumListGet(&holder)) + 0x620) == 0) {
         func_8021FB68(self, reinterpret_cast<u8*>(sub));
         __dt__80043E88(&holder, -1);
@@ -3350,7 +3350,7 @@ void func_80220E14(CModelDispMakeCrystal* self, CMCrystalDispSub* sub)
 
     // Grab the first crystal object from the enum list.
     void* cfMove = *reinterpret_cast<void**>(
-        reinterpret_cast<u8*>(func_800F6EC0(CTaskGame_enumListGet(&holder), 0)) + 4);
+        reinterpret_cast<u8*>(getEntryAt(CTaskGame_enumListGet(&holder), 0)) + 4);
     if (cfMove == nullptr) {
         func_8021FB68(self, reinterpret_cast<u8*>(sub));
         __dt__80043E88(&holder, -1);
@@ -3404,7 +3404,7 @@ void func_80220E14(CModelDispMakeCrystal* self, CMCrystalDispSub* sub)
             }
         } while (++idx <= 5);
         u32 handle = sub->field_5a4;
-        sub->field_04 = func_800584B8(objs->field_0c, handle, &lbl_eu_805090FC[0xef]);
+        sub->field_04 = initMcaFile(objs->field_0c, handle, &lbl_eu_805090FC[0xef]);
         reinterpret_cast<CActParamAnim*>(reinterpret_cast<u8*>(sub) + 0x8)->func_8004B114();
         attachAnimObj(reinterpret_cast<u8*>(sub) + 0x8, sub->field_00, sub->field_04, handle);
         sub->field_14 |= 0x160;
@@ -3503,7 +3503,7 @@ void func_802211CC(CModelDispMakeCrystal* self, u8* subp)
         func_804831C4(sub->field_00, *reinterpret_cast<void**>(subp + 0x58c));
         func_804831C4(sub->field_00, *reinterpret_cast<void**>(subp + 0x598));
         u32 f5a4 = sub->field_5a4;
-        sub->field_04 = func_800584B8(
+        sub->field_04 = initMcaFile(
             *reinterpret_cast<void**>(reinterpret_cast<u8*>(self) + 0xc), f5a4,
             &lbl_eu_805090FC[0xef]);
         reinterpret_cast<CActParamAnim*>(subp + 0x8)->func_8004B114();
@@ -3562,7 +3562,7 @@ int CModelDispMakeCrystal::OnFileEvent(CEventFile* ev)
         void* arc = &lbl_eu_8065FC18[0];
         *reinterpret_cast<void**>(reinterpret_cast<u8*>(f18) + 4) = 0;
         *reinterpret_cast<void**>(base + 0x1c) = nxt;
-        if (arc != nullptr) func_804CC1BC(arc);
+        if (arc != nullptr) EffSched_LookupA(arc);
         *reinterpret_cast<void**>(base + 0x18) = 0;
         return 1;
     }
@@ -3634,29 +3634,29 @@ int CModelDispMakeCrystal::OnFileEvent(CEventFile* ev)
         base[0xc89] = crySupport[0x19];
         __dt__17CMCCrystalSupportFv(crySupport, -1);
         func_8022E8F8(base + 0xc70);
-        // Effect objects: build on stack, install via func_80211CB8, destroy.
+        // Effect objects: build on stack, install via MakeCrystalCopyParamBlock, destroy.
         __ct__CMCEffStart(
             effStart,
             *reinterpret_cast<nw4r::lyt::ArcResourceAccessor**>(base + 0x40));
-        func_80211CB8(base + 0xc8c, effStart);
+        MakeCrystalCopyParamBlock(base + 0xc8c, effStart);
         __dt__11CMCEffStartFv(effStart, -1);
         reinterpret_cast<CMCEffStart*>(base + 0xc8c)->init();
         __ct__CMCEffUpRed(
             effUpRed,
             *reinterpret_cast<nw4r::lyt::ArcResourceAccessor**>(base + 0x40));
-        func_80211CB8(base + 0xca4, effUpRed);
+        MakeCrystalCopyParamBlock(base + 0xca4, effUpRed);
         __dt__11CMCEffUpRedFv(effUpRed, -1);
         reinterpret_cast<CMCEffUpRed*>(base + 0xca4)->init();
         __ct__CMCEffUpBlue(
             effUpBlue,
             *reinterpret_cast<nw4r::lyt::ArcResourceAccessor**>(base + 0x40));
-        func_80211CB8(base + 0xcbc, effUpBlue);
+        MakeCrystalCopyParamBlock(base + 0xcbc, effUpBlue);
         __dt__12CMCEffUpBlueFv(effUpBlue, -1);
         reinterpret_cast<CMCEffUpBlue*>(base + 0xcbc)->init();
         __ct__CMCEffUpGreen(
             effUpGreen,
             *reinterpret_cast<nw4r::lyt::ArcResourceAccessor**>(base + 0x40));
-        func_80211CB8(base + 0xcd4, effUpGreen);
+        MakeCrystalCopyParamBlock(base + 0xcd4, effUpGreen);
         __dt__13CMCEffUpGreenFv(effUpGreen, -1);
         reinterpret_cast<CMCEffUpGreen*>(base + 0xcd4)->init();
         // UpPrm: larger copy with an 8-byte-per-iteration counted loop
@@ -3697,7 +3697,7 @@ int CModelDispMakeCrystal::OnFileEvent(CEventFile* ev)
         __ct__CMCEffFailure(
             effFailure,
             *reinterpret_cast<nw4r::lyt::ArcResourceAccessor**>(base + 0x40));
-        func_80211CB8(base + 0xd78, effFailure);
+        MakeCrystalCopyParamBlock(base + 0xd78, effFailure);
         __dt__13CMCEffFailureFv(effFailure, -1);
         reinterpret_cast<CMCEffFailure*>(base + 0xd78)->init();
         __ct__CMCEffCrystal(
@@ -3720,17 +3720,17 @@ int CModelDispMakeCrystal::OnFileEvent(CEventFile* ev)
         *(u16*)(base + 0xdc6) = *(u16*)(effCrystal + 0x36);
         base[0xdc8] = effCrystal[0x38];
         __dt__13CMCEffCrystalFv(effCrystal, -1);
-        reinterpret_cast<CMCEffCrystal*>(base + 0xd90)->func_80224CE4();
+        reinterpret_cast<CMCEffCrystal*>(base + 0xd90)->MCCrystal_BuildLayouts();
         __ct__CMCEffUpRank(
             effUpRank,
             *reinterpret_cast<nw4r::lyt::ArcResourceAccessor**>(base + 0x40));
-        func_80211CB8(base + 0xdcc, effUpRank);
+        MakeCrystalCopyParamBlock(base + 0xdcc, effUpRank);
         __dt__12CMCEffUpRankFv(effUpRank, -1);
         reinterpret_cast<CMCEffUpRank*>(base + 0xdcc)->init();
         __ct__CMCEffDivide(
             effDivide,
             *reinterpret_cast<nw4r::lyt::ArcResourceAccessor**>(base + 0x40));
-        func_80211CB8(base + 0xde4, effDivide);
+        MakeCrystalCopyParamBlock(base + 0xde4, effDivide);
         __dt__12CMCEffDivideFv(effDivide, -1);
         reinterpret_cast<CMCEffDivide*>(base + 0xde4)->init();
         __ct__CMCEffCylinder(
@@ -3811,8 +3811,8 @@ void func_80221B90(CModelDispMakeCrystal* self, u8 r4, u8 r5)
     base[0xbd8] = 0;
     GetCollectedFlagByte(r4);
     GetCollectedFlagByte(r5);
-    func_8009D018(0xbd, 0);
-    func_8009D018(0xbf, 0);
+    CtrlRemote_SetSharedBit(0xbd, 0);
+    CtrlRemote_SetSharedBit(0xbf, 0);
 }
 #pragma optimize_for_size off
 
@@ -3838,14 +3838,14 @@ void MakeCrystal_ClearAnimSlot(void* obj, u32 id)
     if (id == e1) {
         void* arg = obj;
         if (obj) arg = (u8*)obj + 8;
-        func_804E3D48(reinterpret_cast<void*>(e1), arg);
+        schedDetachChildSlot(reinterpret_cast<void*>(e1), arg);
         *reinterpret_cast<u32*>((u8*)obj + 0x10) = 0;
     } else {
         u32 e2 = *reinterpret_cast<u32*>((u8*)obj + 0x14);
         if (id == e2) {
             void* arg = obj;
             if (obj) arg = (u8*)obj + 8;
-            func_804E3D48(reinterpret_cast<void*>(e2), arg);
+            schedDetachChildSlot(reinterpret_cast<void*>(e2), arg);
             *reinterpret_cast<u32*>((u8*)obj + 0x14) = 0;
         }
     }

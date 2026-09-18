@@ -42,7 +42,7 @@ struct CTaskREventPtms {
 }
 
 // Object pointed at by CEventMgr::field_0xB0; only byte +0x39 is touched
-// (func_80164CFC clears it to 1 while tearing an event down).
+// (evtTeardownActive clears it to 1 while tearing an event down).
 struct CEventMgrB0 {
     u8 field_0x00[0x39];
     u8 field_0x39;          // +0x39 byte flag
@@ -54,13 +54,13 @@ struct CEventMgr {
     u8 field_0x00[0x6C];
     volatile u32 field_0x6C;   // +0x6C flag word (bit0/bit6 read by this TU)
     u8 field_0x70[0x74 - 0x70]; // +0x70 CInfoCf subobject storage (shared with the task's mInfoCf)
-    u32 field_0x74;          // +0x74 flag word (bit0 read by func_80164C48)
+    u32 field_0x74;          // +0x74 flag word (bit0 read by evtIsFullyIdle)
     u8 field_0x78[0xB0 - 0x78];
-    CEventMgrB0* field_0xB0; // +0xB0 gate object (null-checked by func_80164410 / func_80164DB8 / func_80164C48)
+    CEventMgrB0* field_0xB0; // +0xB0 gate object (null-checked by evtIsActiveSeq / evtUpdateSequenceKick / evtIsFullyIdle)
     u8 field_0xB4[0x1BC - 0xB4];
     u8 field_0x1BC;          // +0x1BC byte flag
     u8 field_0x1BD[0x1D0 - 0x1BD];
-    u32 field_0x1D0;         // +0x1D0 word cleared to zero by func_80164DB8
+    u32 field_0x1D0;         // +0x1D0 word cleared to zero by evtUpdateSequenceKick
     s32 field_0x1D4;         // +0x1D4 signed counter/index
     u8 field_0x1D8[0x1E0 - 0x1D8];
     CLibCri* mCri;           // +0x1E0 CRI movie-play controller, or (CLibCri*)-1
@@ -108,7 +108,7 @@ struct CTaskREventDataEntry {
     s32 field_0x0;          // +0x00 record id
     u32 field_0x4;          // +0x04 size (advance to next)
     u8 field_0x8[0x20 - 0x8];
-    u32 field_0x20;         // +0x20 packed word passed to func_800AA318
+    u32 field_0x20;         // +0x20 packed word passed to Tok_Unpack
     u8 field_0x24[0x28 - 0x24];
     u32 field_0x28;         // +0x28 parse flag (1 = parse)
 };
@@ -128,7 +128,7 @@ struct UnkClass_800821F8 {
     CfEvtCamPlayerObj* field_0xC; // +0x0C
 };
 
-// Character/party data blob behind func_8009D5FC (recovered layout; only the
+// Character/party data blob behind CtrlRemote_GetFileEventIds (recovered layout; only the
 // regions this TU reads are declared). Byte rows at +0x388B are flat (the
 // retail indexes them as index*0x28 + row*5 + col with row 1..7), word rows
 // at +0x3D8C are [index][row], then per-index byte flags and halfwords.
@@ -142,11 +142,11 @@ struct CEventCharBlob {
     u16 mHalfSlots[32];       // +0x41B0
 };
 
-// The shared CfGameManager.hpp types func_8009D5FC's return as the
+// The shared CfGameManager.hpp types CtrlRemote_GetFileEventIds's return as the
 // 0xC-byte CfFileEventIdsView; this TU walks the full blob through this
 // offset view, so funnel every access through one cast helper.
 inline CEventCharBlob* evtCharBlob() {
-    return reinterpret_cast<CEventCharBlob*>(func_8009D5FC());
+    return reinterpret_cast<CEventCharBlob*>(CtrlRemote_GetFileEventIds());
 }
 
 // View over the vtable-pointer slots the dtor resets before destruction.
@@ -212,7 +212,7 @@ struct REvtActor {
     u8 _0000[0x3E9C];
     REvtMoveSub mSub;                       // +0x3E9C (own vtable)
     u8 _3EA0[0x3F0C - 0x3EA0];
-    u32 field_0x3F0C;                       // packed word for func_800AA318
+    u32 field_0x3F0C;                       // packed word for Tok_Unpack
     u8 _3F10[0x3F34 - 0x3F10];
     REvtGateObj* field_0x3F34;
 };
@@ -231,7 +231,7 @@ struct REvtMgrView {
 };
 
 // Data symbols (retail linker names - global scope, no extern "C" needed)
-extern const char* lbl_eu_80662380; // base event-name string (func_801644AC returns it as u32)
+extern const char* lbl_eu_80662380; // base event-name string (evtGetBaseNameAddr returns it as u32)
 extern u32 lbl_eu_80662384;
 extern f32 lbl_eu_8066762C;
 extern f32 lbl_eu_80667628; // ctor float initializer (field_0x1E4/0x1E8)
@@ -246,16 +246,16 @@ extern u16 lbl_eu_80663E44; // func_801663A8 expected event-id halfword
 extern u8 lbl_eu_80530300[];
 extern CEventMgr* lbl_eu_80664240;
 extern u32 lbl_eu_80664244; // auto-sleep/dimming state word written by the ctor + siblings
-// Frame-target word: getTargetFramerate() * 300 (ctor + func_80166050/80166150).
+// Frame-target word: getTargetFramerate() * 300 (ctor + evtSyncBusyDimming/80166150).
 extern u32 lbl_eu_80664248;
 extern u32 lbl_eu_80663E28; // event flag word (bit7 tested by isEventPending)
-extern s16 lbl_eu_80502F90[]; // event-id table walked by func_801644D8 (32 entries)
+extern s16 lbl_eu_80502F90[]; // event-id table walked by evtFillCharRange (32 entries)
 extern const char lbl_eu_80503008[];  // Init: base string copied into each entry
 // Init: 0xAE suffix strings appended to each entry (walked by pointer).
 extern const char* lbl_eu_80530458[];
 // Event-name suffix table walked by func_80164838 (32 const char* entries).
 extern const char* lbl_eu_80530710[];
-// 0x26-byte array shuffled by func_80164954 (retail .data:0x80530430).
+// 0x26-byte array shuffled by evtBeginShuffledSeq (retail .data:0x80530430).
 extern u8 lbl_eu_80530430[];
 // CTaskREvent vtable (retail .data:0x80530790; five sub-vtables: primary at
 // +0x00, then +0x24 / +0x3C / +0x4C / +0x5C for the 0x54/0x58/0x5C/0x60
@@ -270,28 +270,28 @@ extern u32 __ptmf_null[3];
 
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
 extern "C" {
-    int func_80164C28();
-    void func_80165014();
-    float func_80164478();
-    int func_80164FB4();
-    void func_80166150(CEventMgr* self, u32 arg);
+    int evtIsBusyBitSet();
+    void evtClearMoviePause();
+    float evtCalcStreamVolume();
+    int evtIsMoviePaused();
+    void evtSetAutoSleepFlag(CEventMgr* self, u32 arg);
     // Value-returning tail call through the CRI movie controller: CLibCri.hpp
-    // declares isMovieGlobalPaused as void, but retail func_80164FB4 performs a
+    // declares isMovieGlobalPaused as void, but retail evtIsMoviePaused performs a
     // value tail call through it, so import the mangled symbol with an
     // explicit value signature.
     u32 isMovieGlobalPaused__7CLibCriFv(CLibCri* self);
-    void func_80164F6C();
+    void evtStopMoviePlayback();
     void func_80165DF4(cf::CTaskREvent* self, int arg);
-    void func_80166050(cf::CTaskREvent* self, int arg);
+    void evtSyncBusyDimming(cf::CTaskREvent* self, int arg);
     void func_8016462C(u32 index);
-    // CRI movie-player setup: retail func_80164ED0 passes 4 extra words even
+    // CRI movie-player setup: retail evtStartMoviePlayback passes 4 extra words even
     // though the retail symbol is Fv; declared here with the caller's shape.
     CLibCri* startMovie__7CLibCriFv(const char* self, u32 memHandle, u32 buffer, int flag, int zero);
     u32 EvtSeqGetSharedState();
     u32 Scn_CallUnk8C_V9(CScn* scene);
-    void func_80164ED0(const char* path, int flag, u8* handle);
-    int func_80164C48();
-    void func_80164CFC();
+    void evtStartMoviePlayback(const char* path, int flag, u8* handle);
+    int evtIsFullyIdle();
+    void evtTeardownActive();
     void func_8016455C(CEventDataTable* self);
     u32 func_80164724(const char* key, u32 type, u32 slot);
     // Retail ctor symbol is the pre-mangled name __ct__cf_CTaskREvent (a
@@ -300,19 +300,19 @@ extern "C" {
     cf::CTaskREvent* __ct__cf_CTaskREvent(cf::CTaskREvent* pMem, CScnNw4r* pScene, CView* pView);
     // Targets defined in this TU (declared here so the definitions keep C
     // linkage and emit the retail unmangled symbol names).
-    int func_80164410();
-    void func_80164DB8();
-    void func_801644D8(cf::CTaskREvent* self, int type, int upper, int lower);
-    cf::CTaskREvent* func_801665A4(CProcess* pParent, CScnNw4r* pScene, CView* pView);
+    int evtIsActiveSeq();
+    void evtUpdateSequenceKick();
+    void evtFillCharRange(cf::CTaskREvent* self, int type, int upper, int lower);
+    cf::CTaskREvent* evtCreateTaskRegister(CProcess* pParent, CScnNw4r* pScene, CView* pView);
     int func_80164838(const char* key, int slot);
-    void func_801662E8(cf::CTaskREvent* self);
-    int func_80164954();
+    void evtThrottleTaskUpdates(cf::CTaskREvent* self);
+    int evtBeginShuffledSeq();
     // Targets defined in this TU: func_80164A50 (event-file load kick) and
     // func_801663A8 (async OnFileEvent handler) emit the retail unmangled
     // symbols through these C-linkage declarations.
     int func_80164A50(const char* path, int arg1, int arg2);
     int func_801663A8(cf::CTaskREvent* self, CTaskREventFileEvent* ev);
-    // Imports for func_80164DB8
+    // Imports for evtUpdateSequenceKick
     void EvtSeqSetBgmGateFlag(int arg);
     void CTaskGame_resetStream();
     // Imports for cf::CTaskREvent::cbRenderBefore
@@ -325,15 +325,15 @@ extern "C" {
     u32 getBdatEntryColumn__Q22cf13CfGameManagerFv(u32 index, u32 value);
     void getControllerValues__Q22cf13CfGameManagerFv(u16* first, u16* second);
     // Play-time seconds getter (same signature as CfMapEffectManager.hpp).
-    u16 func_8016DF2C();
-    // Frame/timing helpers used by func_801662E8 (global retail names).
+    u16 getReloadParam0();
+    // Frame/timing helpers used by evtThrottleTaskUpdates (global retail names).
     int CTaskGame_playTimeGate();
     int CTaskGame_getStreamPos();
     int EvtSeqGetCounter104();
     int EvtSeqCheckWalkGate(u8* gate);
     // Event-callback unregister helper (retail global taking the IFlagEvent
     // subobject; same signature as CUICfManager.cpp / CUIWindowManager.cpp).
-    void func_8009D514(cf::IFlagEvent* flagEvent);
+    void CtrlRemote_ResetSlotArrayByIndex(cf::IFlagEvent* flagEvent);
     // Embedded subobject dtors driven by ~CTaskREvent (retail CW names).
     void __dt__Q22cf8CREvtMemFv(cf::CREvtMem* self, int flag);
     void __dt__Q22cf7CInfoCfFv(cf::CInfoCf* self, int flag);
@@ -347,12 +347,12 @@ extern "C" {
     void __ct__11CDeviceVICbFv(CDeviceVICb* p);
     cf::CInfoCf* __ct__cf_CInfoCf(cf::CInfoCf* p);
     void __ct__cf_CREvtMem(cf::CREvtMem* p);
-    // IFlagEvent registration helper (mirror of func_8009D514 used by the
+    // IFlagEvent registration helper (mirror of CtrlRemote_ResetSlotArrayByIndex used by the
     // dtor; retail C-ABI name).
-    cf::IFlagEvent* func_8009D414(cf::IFlagEvent* p);
+    cf::IFlagEvent* CtrlRemote_ResetSlotArrayObj(cf::IFlagEvent* p);
     // Imports for func_80164A50
-    void func_801667AC(cf::CInfoCf* self);
-    void func_80166784(cf::CInfoCf* p);
+    void InfoCfRefreshSettings(cf::CInfoCf* self);
+    void InfoCfNoopVirt(cf::CInfoCf* p);
     int getFileSize__11CDeviceFileFPCc(const char* path, int flag);
     // Spawns the realtime-event task for `name` under `parent` and returns
     // its gate object (same signature as CTaskREvtSequence.hpp).
@@ -360,11 +360,11 @@ extern "C" {
     void EvtSeqSetStateBit9();
     // Imports for func_801663A8
     void func_8016C450(u32 a, u32 b, u32 c);
-    void func_800AA318(u32 packed, u32* out0, u32* out1, u32* out2, u32* out3);
+    void Tok_Unpack(u32 packed, u32* out0, u32* out1, u32* out2, u32* out3);
     // Imports for func_80165DF4
     s32 isMoveFuncActive__9CTaskGameFv();
     Class_80296898* getInstance__14Class_80296898Fv();
-    bool func_8012CD24();
+    bool TalkWin_IsActive_CD24();
     UnkClass_800821F8* getCameraDataBlock__Q22cf13CfGameManagerFv();
     void func_8049EB60();
     // Imports for Move (CRI player state / frame timing / object lists)
@@ -407,10 +407,10 @@ namespace cf{
     void* mVtbl60;              //0x060 secondary vtable (unknown base subobject)
     u32 field_0x64;             //0x064
     u32 field_0x68;             //0x068
-    volatile u32 field_0x6C;    //0x06C flag word (|= / &= ~0x100 by func_801662E8)
+    volatile u32 field_0x6C;    //0x06C flag word (|= / &= ~0x100 by evtThrottleTaskUpdates)
     u8 mInfoCf[0x14];           //0x070 cf::CInfoCf storage (vtable + 0x10 bytes)
     CREvtMem mEvtMem;           //0x084 realtime-event memory subobject (0x2C bytes)
-    u8* field_0xB0;             //0x0B0 gate object pointer (null-checked by func_801662E8)
+    u8* field_0xB0;             //0x0B0 gate object pointer (null-checked by evtThrottleTaskUpdates)
     char mNameBuf[0x100];       //0x0B4 event-name string buffer (length in field_0x1B4)
     u32 field_0x1B4;            //0x1B4
     u32 field_0x1B8;            //0x1B8

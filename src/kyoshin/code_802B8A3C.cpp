@@ -1,5 +1,5 @@
 // code_802B8A3C: CVS_THREAD_ORDER methods and voice-thread playback stubs.
-// FULL_MATCH: func_802B8D44 -- buffer-size getter (virtual method override).
+// FULL_MATCH: getOrderThreadBufferSize -- buffer-size getter (virtual method override).
 
 #include "kyoshin/cf/voice/cvsys/CVS_THREAD_ORDER.hpp"
 #include "kyoshin/cf/CfMapItemManager.hpp"
@@ -7,10 +7,10 @@
 
 #include "kyoshin/code_802B8A3C.hpp"
 
-// us-802bb76c (func_802B8CFC)
+// us-802bb76c (completeOrderThreadVoice)
 // Completion callback: if no active voice is playing, invoke the playback
 // virtual (blank1, vtable slot 3 / offset 0x8).
-void func_802B8CFC(CVS_THREAD_ORDER* self) {
+void completeOrderThreadVoice(CVS_THREAD_ORDER* self) {
     if (func_802A3E88(self) == 0) {
         self->func_802A3B50();
     }
@@ -57,11 +57,11 @@ CVS_THREAD_ORDER* __ct__CVS_THREAD_ORDER(CVoiceHandle* owner) {
     return self;
 }
 
-// us-802bb57c (func_802B8B0C)
+// us-802bb57c (startOrderThreadPlayback)
 // (Re)initialise the thread and start playback. If a battle is active, or
 // the player's voice is idle and the per-slot voice id allows it, plays the
 // configured voice for this thread's slot.
-void func_802B8B0C(CVS_THREAD_ORDER* self) {
+void startOrderThreadPlayback(CVS_THREAD_ORDER* self) {
     // Copy init-state triple. First element read via post-increment (lwzu);
     // words 1 and 2 are indexed off the base pointer.
     u32 v0;
@@ -104,12 +104,12 @@ void func_802B8B0C(CVS_THREAD_ORDER* self) {
     }
 }
 
-// us-802bb670 (func_802B8C00)
+// us-802bb670 (dispatchOrderThreadPlayback)
 // Playback dispatcher. If the voice is already active or a battle is in
 // progress, completes early; otherwise copies the init triple, enumerates the
 // player's battle-voice list and plays a random voice (mtRand(2)+0x9C9) for
 // each idle entry.
-void func_802B8C00(CVS_THREAD_ORDER* self) {
+void dispatchOrderThreadPlayback(CVS_THREAD_ORDER* self) {
     u32 v0;
     u32* src;
     CVoiceHandle* handle;
@@ -159,7 +159,7 @@ void func_802B8C00(CVS_THREAD_ORDER* self) {
 
 // Virtual method override: returns the buffer size for this thread type.
 // Matches CVS_THREAD::blank1 slot in vtable; ORDER subclass returns 0x78 (120).
-int func_802B8D44(CVS_THREAD_ORDER* self) {
+int getOrderThreadBufferSize(CVS_THREAD_ORDER* self) {
     return CVS_THREAD_ORDER::BUFFER_SIZE;
 }
 

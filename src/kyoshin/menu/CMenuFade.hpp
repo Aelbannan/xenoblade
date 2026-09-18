@@ -50,7 +50,7 @@ public:
     float field_0x88;                           // 0x88 - third speed param (frame_size / field_0x88 if >= 0, else 1.0)
     u8 pad8C[4];                                // 0x8c
     s32 field_0x90;                             // 0x90 - initial frame state (0/1 = start at frame 0; 2 = start at frame_size-1)
-    u8 field_0x94;                              // 0x94 - fade flag (read by func_80113E24)
+    u8 field_0x94;                              // 0x94 - fade flag (read by isFadeActive)
     u8 pad95[3];                                // 0x95-0x97
     s32 field_0x98;                             // 0x98 - fade direction (0 = one-shot 0xff, 1 = -1)
 };

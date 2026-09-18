@@ -1,8 +1,8 @@
 // Effect random-vector helpers (monolib). Retail symbol names are unknown;
 // these functions generate randomized directions/positions for the effect
 // system:
-//   func_804D9274 - tail-call wrapper: rotate a matrix +90 deg about X
-//   func_804D927C - transpose the matrix embedded at obj+0xCC
+//   cerandRotateX90Wrapper - tail-call wrapper: rotate a matrix +90 deg about X
+//   cerandTransposeObjCC - transpose the matrix embedded at obj+0xCC
 //   func_804D928C - build an orientation matrix from a direction vector
 //   func_804D9364 - random direction (yaw/pitch angle ranges) scaled by a
 //                   rejection-sampled radius
@@ -79,13 +79,13 @@ static inline f32 cosTbl(f32 rad) {
     return entry->value + (deg - (f32)i) * entry->slope;
 }
 
-// func_804D9274: load pi/2 and tail-call the X-axis rotation helper.
-void func_804D9274(Mtx mtx) {
+// cerandRotateX90Wrapper: load pi/2 and tail-call the X-axis rotation helper.
+void cerandRotateX90Wrapper(Mtx mtx) {
     func_804DD388(mtx, lbl_eu_8066B1E8);
 }
 
-// func_804D927C: transpose the matrix stored at obj+0xCC into mtx.
-void func_804D927C(Mtx mtx, const void* obj) {
+// cerandTransposeObjCC: transpose the matrix stored at obj+0xCC into mtx.
+void cerandTransposeObjCC(Mtx mtx, const void* obj) {
     PSMTXTranspose((const f32(*)[4])((const u8*)obj + 0xCC), mtx);
 }
 

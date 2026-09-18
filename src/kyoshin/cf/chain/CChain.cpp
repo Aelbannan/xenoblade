@@ -9,7 +9,7 @@
 #include "kyoshin/cf/CArtsSet.hpp" // cf::CAttackParam (arts param +0x5e probe)
 #include "monolib/math/Random.hpp"
 extern "C" CChainGimmickList* getReslistB48();
-extern "C" int func_801537E0(void* self);
+extern "C" int aiActionClearBits0006(void* self);
 // CfObjectMove_setAnimModeArgs is also declared locally (with different arg spellings) by
 // CBattleManager.cpp / CVision.cpp, which include CChain.hpp via
 // CBattleManager.hpp - keep it out of the header like the trio above.
@@ -29,7 +29,7 @@ namespace cf {
         // combo (retail interleaves the inlined vptr-store ctors of member,
         // timers and chance between the out-of-line actor-list, time and
         // combo ctors). The body mirrors the retail reset block.
-        func_802AB3D0((CBattleChainMenuState*)&unk1F0C[0]);
+        trackChainPlayer((CBattleChainMenuState*)&unk1F0C[0]);
         unk1F0C[0x11] = 0;
         ((CChainHeadView*)this)->field_2 = 0;
         // Retail keeps this branch: the condition is forwarded to the constant
@@ -45,15 +45,15 @@ namespace cf {
         ((CChainHeadView*)this)->field_1 = -1;
         mChainTime.resetChainTime();
         func_8027B164(&mChainActorList);
-        func_8027C45C((cf::CChainList*)&mChainMember);
+        ChainList_Clear((cf::CChainList*)&mChainMember);
         mChainCombo.func1();
-        func_802AB3D0((CBattleChainMenuState*)&unk1F0C[0]);
-        func_8027711C(func_802B48A0((CErrMesEntry*)&unk1F0C[8]));
+        trackChainPlayer((CBattleChainMenuState*)&unk1F0C[0]);
+        CChain_DiscardVoiceId(func_802B48A0((CErrMesEntry*)&unk1F0C[8]));
     }
 
     bool CChain::chkActorList() {
-        extern bool func_8027B770(void*);
-        return func_8027B770((char*)this + 0x18);
+        extern bool Chain_FindOrCreateActor(void*);
+        return Chain_FindOrCreateActor((char*)this + 0x18);
     }
 
     // Retail plain empty+delete dtor: no base/member dtor calls (the actor's
@@ -87,14 +87,14 @@ bool CChain_isValidChain(unsigned char* a1, unsigned char* a2, int a3) {
 
 // Returns the chain-voice state: 0 when the global voice id is the -1
 // sentinel, otherwise the voice-node lookup result for that id.
-int func_80277154() {
+int CChain_QueryVoiceNode() {
     if ((u32)lbl_eu_80662A20 + 0x10000 == 0xffff) return 0;
     return func_802A3748((u32)lbl_eu_80662A20);
 }
 // Chain-gauge accumulation: when the chain is active (type byte set and the
 // battle-object flag bit 2 set), add the frame delta to the gauge at 0x1EF0,
 // clamped to 0x98967F. Only chain types 0xA..0xC and 0x14..0x15 accumulate.
-void func_80277A7C(cf::CChain* self, cf::CChainFlag* flag, float f1) {
+void CChain_AccumGaugeDelta(cf::CChain* self, cf::CChainFlag* flag, float f1) {
     if (self->unk0[8] != 0 && (flag->field_0x3F00 & 4) != 0) {
         if ((int)f1 > 0) {
             int flag = 1;
@@ -115,43 +115,43 @@ void func_80277A7C(cf::CChain* self, cf::CChainFlag* flag, float f1) {
         }
     }
 }
-extern "C" void func_8027711C(void* self);
-extern "C" void func_80277B34(void* self) { func_8027711C(self); }
+extern "C" void CChain_DiscardVoiceId(void* self);
+extern "C" void CChain_ForwardVoiceClear(void* self) { CChain_DiscardVoiceId(self); }
 extern "C" void CChain_noop_78E00() {}
 // cf::CChainActor manual-vtable slot +0x6C (base lbl_eu_80538290 and Ene
 // lbl_eu_80538458 store this; Pc lbl_eu_805384E0 overrides with
 // func_802822F8): forward the caller's run key (incoming r4, passed
 // through untouched - retail tail-calls with bctr) to the battle object's
 // embedded voice sub-object (+0x3E9C) slot +0x50.
-extern "C" void func_80278F5C(u8* self, u32 key) {
+extern "C" void CChainActor_FwdRunKey(u8* self, u32 key) {
     ((cf::CChainBattleObj*)*(void**)self)->mSub.v18(key);
 }
 // cf::CChainActor manual-vtable slot +0x68 (all three retail tables store
-// func_80278F70 here): query the battle object's embedded voice
+// CChainActor_FetchRunKey here): query the battle object's embedded voice
 // sub-object (+0x3E9C) slot +0x4C - the run-key getter the chain state
 // machine reads back through the v024 dispatches. The CChainVoiceSub
 // mirror declares the slot void (CChainTimer.hpp is not this fork's file
 // to retype), so the result is dropped exactly as before.
-extern "C" void func_80278F70(u8* self) { ((cf::CChainBattleObj*)*(void**)self)->mSub.v17(); }
+extern "C" void CChainActor_FetchRunKey(u8* self) { ((cf::CChainBattleObj*)*(void**)self)->mSub.v17(); }
 extern "C" void CChain_noop_795D0() {}
 extern "C" void CChain_noop_79768() {}
 // cf::CChainActor manual-vtable slot +0x70 (base lbl_eu_80538290 and Ene
 // lbl_eu_80538458 store this; Pc lbl_eu_805384E0 overrides with
 // func_802821E0): notify the battle object itself through its base-vtable
 // slot +0x2BC (cf::CChainBattleObj::v173).
-extern "C" void func_8027A324(u8* self) { ((cf::CChainBattleObj*)*(void**)self)->v173(); }
+extern "C" void CChainActor_NotifyBattleObj(u8* self) { ((cf::CChainBattleObj*)*(void**)self)->v173(); }
 extern "C" void CChain_noop_A9E8() {}
 extern "C" void CChain_noop_AA0C() {}
 
 // Reset the chain-voice manager and clear the global voice id back to the
 // -1 (not loaded) sentinel. noinline: retail func_80277B38 emits a real bl.
-__declspec(noinline) void func_80276C30() {
+__declspec(noinline) void CChain_ResetVoiceMgr() {
     func_802A1500();
     lbl_eu_80662A20 = -1;
 }
 // If a voice id is loaded, retire it (func_802A35B8) and clear the global
-// back to the -1 sentinel. noinline: retail func_8027732C emits a real bl.
-__declspec(noinline) void func_80276C58() {
+// back to the -1 sentinel. noinline: retail CChain_UpdatePerFrame emits a real bl.
+__declspec(noinline) void CChain_RetireVoiceId() {
     if ((u32)lbl_eu_80662A20 + 0x10000 != 0xffff) {
         if (func_802A3748((u32)lbl_eu_80662A20) == 0) {
             if ((u32)lbl_eu_80662A20 + 0x10000 != 0xffff) {
@@ -164,7 +164,7 @@ __declspec(noinline) void func_80276C58() {
 // Reload the chain voice: retire any currently loaded voice id, allocate a
 // new voice node, and dispatch it against the battle-object sub-object.
 // @p c (unused) mirrors the retail three-arg call shape.
-void func_80276CAC(u8* a, CChainBattleObjTail* b, int c) {
+void CChain_ReloadVoiceDispatch(u8* a, CChainBattleObjTail* b, int c) {
     int ret = func_80276D30((int)a, reinterpret_cast<cf::CChainBattleObj*>(b), reinterpret_cast<cf::CChainBattleObj*>(c));
     if ((u32)lbl_eu_80662A20 + 0x10000 != 0xffff) {
         func_802A35B8((u32)lbl_eu_80662A20);
@@ -272,8 +272,8 @@ int func_80276D30(int mode, cf::CChainBattleObj* p1, cf::CChainBattleObj* p2) {
 #pragma push
 #pragma auto_inline off
 // If a voice id is loaded, retire it and clear the global back to the -1
-// sentinel (auto_inline off keeps func_80277B34's call a real bl).
-extern "C" void func_8027711C(void* self) {
+// sentinel (auto_inline off keeps CChain_ForwardVoiceClear's call a real bl).
+extern "C" void CChain_DiscardVoiceId(void* self) {
     if ((u32)lbl_eu_80662A20 + 0x10000 != 0xffff) {
         func_802A35B8((u32)lbl_eu_80662A20);
         lbl_eu_80662A20 = -1;
@@ -283,7 +283,7 @@ extern "C" void func_8027711C(void* self) {
 // Full chain-state reset: seed the chain timer when the chain type is set,
 // clear the type/actor bytes, then reset every sub-object (time, actor list,
 // member list, combo, chain-menu state, error-message record, voice).
-void cf::CChain::func_8027728C() {
+void cf::CChain::CChain_ResetChainState() {
     if (unk0[2] != 0) {
         mChainTime.mTimer = lbl_eu_80668A18;
         mChainTime.mEnabled = 0;
@@ -295,31 +295,31 @@ void cf::CChain::func_8027728C() {
     ((CChainHeadView*)this)->field_1 = -1;
     mChainTime.resetChainTime();
     func_8027B164(&mChainActorList);
-    func_8027C45C((cf::CChainList*)&mChainMember);
+    ChainList_Clear((cf::CChainList*)&mChainMember);
     mChainCombo.func1();
-    func_802AB3D0(reinterpret_cast<CBattleChainMenuState*>(&unk1F0C[0]));
-    func_8027711C(func_802B48A0(reinterpret_cast<CErrMesEntry*>(&unk1F0C[8])));
+    trackChainPlayer(reinterpret_cast<CBattleChainMenuState*>(&unk1F0C[0]));
+    CChain_DiscardVoiceId(func_802B48A0(reinterpret_cast<CErrMesEntry*>(&unk1F0C[8])));
 }
 // Per-frame chain update: after the battle-manager / mode-flag gates, sweep
 // the actor list (dead-actor removal, member rebuild, run-linkage), then when
 // a chain type is active decrement both chain timers and advance the chance /
 // voice / time / menu sub-objects; finally forward the err-mes record.
-void func_8027732C(cf::CChain* self) {
+void CChain_UpdatePerFrame(cf::CChain* self) {
     if (cf::CfGameManager::isSceneLoading() != 0) return;
     // rlwinm r0,r0,0,12,12: bit 19 (0x80000) of the mode-flag word.
     if ((lbl_eu_80663E28 & 0x80000) != 0) return;
-    func_8027B200(&self->mChainActorList);
-    func_8027C49C((cf::CChainList*)&self->mChainMember);
+    Chain_SweepDeadActors(&self->mChainActorList);
+    ChainList_SweepDead((cf::CChainList*)&self->mChainMember);
     func_8027B2CC((cf::CChainActorList*)((u8*)self + 0x18));
     if (self->unk0[2] != 0) {
-        func_8027C560((cf::CChainList*)&self->mChainMember);
+        ChainList_UpdateAll((cf::CChainList*)&self->mChainMember);
         if (self->mChainTimer1.unk0 > 0) self->mChainTimer1.unk0--;
         if (self->mChainTimer2.unk0 > 0) self->mChainTimer2.unk0--;
         func_8027C0B0((cf::CChainChanceS*)&self->mChainChance);
         func_80277B38(self);
-        func_8027CF3C(&self->mChainTime);
-        func_802AB410((CBattleChainMenuState*)&self->unk1F0C[0]);
-        func_80276C58();
+        tickChainTimer(&self->mChainTime);
+        consumeChainToggles((CBattleChainMenuState*)&self->unk1F0C[0]);
+        CChain_RetireVoiceId();
     }
     func_802B48B8((CErrMesEntry*)&self->unk1F0C[8]);
 }
@@ -369,14 +369,14 @@ void func_802773EC(cf::CChain* chain, cf::CChainBattleObj* target) {
     if (self->unk0[8] == 0) return;
     ::CChainCombo_ArtsCategoryHolder* holder = (::CChainCombo_ArtsCategoryHolder*)target->v167();
     cf::CChainArtsId* arts = (cf::CChainArtsId*)holder->mArtsCategory;
-    self->unk0[9] = (u8)(func_80146300(arts->field_48, 1) == 0);
+    self->unk0[9] = (u8)(isArtsUsable(arts->field_48, 1) == 0);
 }
 // us-80279990: apply an arts-combo hit to the chain gauge. Validates the
 // chain type range (0xA..0xC / 0x14..0x15) and that the current member owns
 // the hit battle object, then runs one or two gauge-delta rounds against the
 // object's gauge sub-object and refreshes the combo / next-actor state.
 // One round: truncate the accumulated gauge (+0x5c + +0x60) unless flagged,
-// scale it by the slot-0x290-gated func_8025FB10 delta and add it into
+// scale it by the slot-0x290-gated IdTable_SumValues delta and add it into
 // +0x5c, then add the raw delta into +0x58.
 #define CHAIN_GAUGE_ROUND(g, tgt, id) \
     do { \
@@ -390,13 +390,13 @@ void func_802773EC(cf::CChain* chain, cf::CChainBattleObj* target) {
             amt = 0; \
         } \
         if ((tgt)->v162() != 0) { \
-            mul = lbl_eu_80668A30 * (float)func_8025FB10((void*)(tgt)->v162(), id); \
+            mul = lbl_eu_80668A30 * (float)IdTable_SumValues((void*)(tgt)->v162(), id); \
         } else { \
             mul = lbl_eu_80668A1C; \
         } \
         (g)->field_5C += (float)amt * mul; \
         if ((tgt)->v162() != 0) { \
-            mul = lbl_eu_80668A30 * (float)func_8025FB10((void*)(tgt)->v162(), id); \
+            mul = lbl_eu_80668A30 * (float)IdTable_SumValues((void*)(tgt)->v162(), id); \
         } else { \
             mul = lbl_eu_80668A1C; \
         } \
@@ -434,7 +434,7 @@ void func_8027750C(cf::CChain* self, cf::CChainBattleObj* target) {
         // sub-object.
         if (h->field_9 != 0) {
             CHAIN_GAUGE_ROUND(g, target, 0x4a);
-            if (func_8027CA0C((cf::CChainList*)&self->mChainMember, 1) != 0) {
+            if (ChainList_HasCount((cf::CChainList*)&self->mChainMember, 1) != 0) {
                 CHAIN_GAUGE_ROUND(g, target, 0x4b);
             }
         } else {
@@ -493,7 +493,7 @@ __declspec(noinline) void func_80277B38(cf::CChain* self) {
             } else {
                 actor = 0;
             }
-            if (actor->func_80278F70() == 0) {
+            if (actor->CChainActor_FetchRunKey() == 0) {
                 flag = 1;
             } else {
                 flag = ((cf::CChainMemberListMirror*)self)->mChainMember.mFlag;
@@ -506,27 +506,27 @@ __declspec(noinline) void func_80277B38(cf::CChain* self) {
         // reslist and the menu / err-mes / combo records before state 0x1a.
         if (((cf::CChainHeadView*)self)->field_2 < 3 &&
             ((cf::CChainHeadView*)self)->field_8 != 0)
-            func_802818F8();
+            ChainEne_TouchBattle194_18F8();
         func_8027C6B4((cf::CChainList*)&self->mChainMember, 0, -1);
         self->mChainTime.mTimer = lbl_eu_80668A18;
         self->mChainTime.mEnabled = 0;
         self->mChainTime.mPaused = 1;
         lbl_eu_80663DA0 &= 0xFE;
-        func_8027C924((cf::CChainList*)&self->mChainMember, 0);
+        ChainList_StepTargets((cf::CChainList*)&self->mChainMember, 0);
         _reslist_node<cf::CChainActor*>* node =
             self->mChainActorList.mChainActorList.mStartNodePtr->mNext;
         while (node != self->mChainActorList.mChainActorList.mStartNodePtr) {
-            node->mItem->func_80279F6C(0);
+            node->mItem->CChainActor_ToggleMoveFlag(0);
             node = node->mNext;
         }
         self->mChainActorList.unk1DA8[0] = 0;
         processFieldEffects__Q22cf13CfGameManagerFv();
-        func_802B4B84((CErrMesEntry*)&self->unk1F0C[8]);
+        ErrWin_ResetRecord_4B84((CErrMesEntry*)&self->unk1F0C[8]);
         if (((cf::CChainHeadView*)self)->field_8 != 0) {
-            func_8027CBE8((cf::CChainCounter*)&self->mChainChance.field_14);
+            ChainCounter_Drain((cf::CChainCounter*)&self->mChainChance.field_14);
         }
         self->mChainCombo.func1();
-        func_802AB4B8((CBattleChainMenuState*)&self->unk1F0C[0]);
+        updateChainPlayer((CBattleChainMenuState*)&self->unk1F0C[0]);
         ((cf::CChainHeadView*)self)->field_2 = 0x1a;
     }
     switch (((cf::CChainHeadView*)self)->field_2) {
@@ -550,10 +550,10 @@ __declspec(noinline) void func_80277B38(cf::CChain* self) {
         } else {
             actor = 0;
         }
-        int runKey = actor->func_80278F70();
+        int runKey = actor->CChainActor_FetchRunKey();
         void* src = func_8016FE34(findObjectById(runKey));
         if (src != 0) {
-            func_8027B770(&self->mChainActorList, (u32)src);
+            Chain_FindOrCreateActor(&self->mChainActorList, (u32)src);
         }
         if ((int)(s8)((cf::CChainHeadView*)self)->field_0 <
             (int)((cf::CChainMemberListMirror*)self)->mChainMember.mCount) {
@@ -562,13 +562,13 @@ __declspec(noinline) void func_80277B38(cf::CChain* self) {
         } else {
             actor = 0;
         }
-        int runKey2 = actor->func_80278F70();
+        int runKey2 = actor->CChainActor_FetchRunKey();
         for (int i = 0; i < (int)((cf::CChainMemberListMirror*)self)->mChainMember.mCount;
              i++) {
-            ((cf::CChainMemberListMirror*)self)->mChainMember.mActors[i]->func_80278F5C(runKey2);
+            ((cf::CChainMemberListMirror*)self)->mChainMember.mActors[i]->CChainActor_FwdRunKey(runKey2);
         }
         lbl_eu_80663DA0 |= 1;
-        func_802AB590((CBattleChainMenuState*)&self->unk1F0C[0]);
+        requestArtsRef((CBattleChainMenuState*)&self->unk1F0C[0]);
         if ((int)(s8)((cf::CChainHeadView*)self)->field_0 <
             (int)((cf::CChainMemberListMirror*)self)->mChainMember.mCount) {
             actor = ((cf::CChainMemberListMirror*)self)
@@ -587,8 +587,8 @@ __declspec(noinline) void func_80277B38(cf::CChain* self) {
         }
         func_800F3970(getInstance__Q22cf14CBattleManagerFv(), (void*)actor->unk0,
                       0, 0, 0);
-        func_8027C098((cf::CChainChance*)&self->mChainChance);
-        func_80276C30();
+        ChainChance_Reset((cf::CChainChance*)&self->mChainChance);
+        CChain_ResetVoiceMgr();
         actor0->CChain_noop_78E00(0, 0);
         cf::CfSoundMan::playActorSound(0, 0x69, 0, 0, lbl_eu_80668A40);
         ((cf::CChainHeadView*)self)->field_7 = 1;
@@ -609,11 +609,11 @@ __declspec(noinline) void func_80277B38(cf::CChain* self) {
         } else {
             actor = 0;
         }
-        if (func_802AB59C((CBattleChainMenuState*)&self->unk1F0C[0]) == 0) break;
+        if (isChainMenuBusy((CBattleChainMenuState*)&self->unk1F0C[0]) == 0) break;
         if (actor->CChain_getZero_78E04() != 0) break;
-        if (func_8027CAE0((cf::CChainList*)&self->mChainMember, 6, 1) == 0) break;
-        if (func_8027CAE0((cf::CChainList*)&self->mChainMember, 0x1f, 0) != 0) break;
-        if (func_8027BE84(&self->mChainActorList) != 0) break;
+        if (ChainList_CheckCondition((cf::CChainList*)&self->mChainMember, 6, 1) == 0) break;
+        if (ChainList_CheckCondition((cf::CChainList*)&self->mChainMember, 0x1f, 0) != 0) break;
+        if (Chain_HasValidTarget(&self->mChainActorList) != 0) break;
         for (int i = 0; i < (int)((cf::CChainMemberListMirror*)self)->mChainMember.mCount;
              i++) {
             cf::CChainActor* actor2 =
@@ -634,7 +634,7 @@ __declspec(noinline) void func_80277B38(cf::CChain* self) {
         break;
     }
     case 3:
-        func_80278E0C(self);
+        CChain_AdvanceChainLink(self);
         break;
     case 4:
         func_80278F84(self);
@@ -655,10 +655,10 @@ __declspec(noinline) void func_80277B38(cf::CChain* self) {
         ((cf::CChainHeadView*)self)->field_4 = 0;
         ((cf::CChainHeadView*)self)->field_6 = 1;
         int i;
-        int runKey = actor->func_80278F70();
+        int runKey = actor->CChainActor_FetchRunKey();
         for (i = 0; i < (int)((cf::CChainMemberListMirror*)self)->mChainMember.mCount;
              i++) {
-            ((cf::CChainMemberListMirror*)self)->mChainMember.mActors[i]->func_80278F5C(runKey);
+            ((cf::CChainMemberListMirror*)self)->mChainMember.mActors[i]->CChainActor_FwdRunKey(runKey);
         }
         cf::CChainScratch20 scratchB;
         memset(&scratchB.mScratch, 0, 0xe);
@@ -701,7 +701,7 @@ __declspec(noinline) void func_80277B38(cf::CChain* self) {
         int local14 = *(int*)battleObj->field_04->f30();
         if (func_80174C98(battleObj, &local14, 0xa) == 0) {
             if (((cf::CChainHeadView*)self)->field_6 != 0) {
-                func_802B48E4((CErrMesEntry*)&self->unk1F0C[8],
+                ErrWin_RegEntryS1_48E4((CErrMesEntry*)&self->unk1F0C[8],
                               (CErrMesOwner*)actor->unk0);
                 ((cf::CChainHeadView*)self)->field_6 = 0;
             }
@@ -714,7 +714,7 @@ __declspec(noinline) void func_80277B38(cf::CChain* self) {
             }
             ((cf::CChainHeadView*)self)->field_2 = 0xd;
         } else {
-            func_802B4A68((CErrMesEntry*)&self->unk1F0C[8],
+            ErrWin_RegEntryS3_4A68((CErrMesEntry*)&self->unk1F0C[8],
                           (CErrMesOwner*)actor->unk0);
             self->mChainTimer1.unk0 = 5;
             ((cf::CChainHeadView*)self)->field_2++;
@@ -745,7 +745,7 @@ __declspec(noinline) void func_80277B38(cf::CChain* self) {
         break;
     }
     case 0xa:
-        func_80279214(self);
+        CChain_DriveChainExtend(self);
         break;
     case 0xb: {
         if (self->mChainTimer1.unk0 > 0) break;
@@ -920,7 +920,7 @@ __declspec(noinline) void func_80277B38(cf::CChain* self) {
         } else {
             nextActor = 0;
         }
-        if (func_8027C154((cf::CChainChance*)&self->mChainChance, (cf::CChainBattleObj*)actor->unk0,
+        if (Chain_RollActivation((cf::CChainChance*)&self->mChainChance, (cf::CChainBattleObj*)actor->unk0,
                           (cf::CChainBattleObj*)nextActor->unk0) != 0) {
             u8 newState = (u8)(((cf::CChainHeadView*)self)->field_2 + 1);
             self->mChainTime.mTimer = lbl_eu_80668A48;
@@ -936,7 +936,7 @@ __declspec(noinline) void func_80277B38(cf::CChain* self) {
         // Chain action select: the pad-action helper writes the chosen action;
         // 0xe when a real action came back, 0x16 otherwise.
         u8 actionOut;
-        if (func_8027C33C((cf::CChainAction*)&self->mChainChance, &actionOut) != 0) {
+        if (Chain_ReadPadAction((cf::CChainAction*)&self->mChainChance, &actionOut) != 0) {
             if (actionOut != 0) {
                 ((cf::CChainHeadView*)self)->field_2 = 0xe;
             } else {
@@ -1031,7 +1031,7 @@ __declspec(noinline) void func_80277B38(cf::CChain* self) {
     }
     case 0x15: {
         if (((cf::CChainHeadView*)self)->field_8 != 0) {
-            func_8027CBE8((cf::CChainCounter*)&self->mChainChance.field_14);
+            ChainCounter_Drain((cf::CChainCounter*)&self->mChainChance.field_14);
         }
         u8 newState = (u8)(((cf::CChainHeadView*)self)->field_2 + 1);
         self->mChainTime.mTimer = lbl_eu_80668A18;
@@ -1045,7 +1045,7 @@ __declspec(noinline) void func_80277B38(cf::CChain* self) {
         // move direction and re-link (randomized); otherwise reset the whole
         // chain state (member list, time, actor reslist, records) and drop to
         // state 0x1a.
-        if (func_8027CAE0((cf::CChainList*)&self->mChainMember, 6, 1) == 0) break;
+        if (ChainList_CheckCondition((cf::CChainList*)&self->mChainMember, 6, 1) == 0) break;
         if (((cf::CChainHeadView*)self)->field_8 != 0) {
             s8 j;
             for (j = 0; (s8)j < (s16)((cf::CChainMemberListMirror*)self)->mChainMember.mCount;
@@ -1094,21 +1094,21 @@ __declspec(noinline) void func_80277B38(cf::CChain* self) {
             self->mChainTime.mEnabled = 0;
             self->mChainTime.mPaused = 1;
             lbl_eu_80663DA0 &= 0xFE;
-            func_8027C924((cf::CChainList*)&self->mChainMember, 0);
+            ChainList_StepTargets((cf::CChainList*)&self->mChainMember, 0);
             _reslist_node<cf::CChainActor*>* node =
                 self->mChainActorList.mChainActorList.mStartNodePtr->mNext;
             while (node != self->mChainActorList.mChainActorList.mStartNodePtr) {
-                node->mItem->func_80279F6C(0);
+                node->mItem->CChainActor_ToggleMoveFlag(0);
                 node = node->mNext;
             }
             self->mChainActorList.unk1DA8[0] = 0;
             processFieldEffects__Q22cf13CfGameManagerFv();
-            func_802B4B84((CErrMesEntry*)&self->unk1F0C[8]);
+            ErrWin_ResetRecord_4B84((CErrMesEntry*)&self->unk1F0C[8]);
             if (((cf::CChainHeadView*)self)->field_8 != 0) {
-                func_8027CBE8((cf::CChainCounter*)&self->mChainChance.field_14);
+                ChainCounter_Drain((cf::CChainCounter*)&self->mChainChance.field_14);
             }
             self->mChainCombo.func1();
-            func_802AB4B8((CBattleChainMenuState*)&self->unk1F0C[0]);
+            updateChainPlayer((CBattleChainMenuState*)&self->unk1F0C[0]);
             ((cf::CChainHeadView*)self)->field_2 = 0x1a;
         }
         break;
@@ -1152,27 +1152,27 @@ __declspec(noinline) void func_80277B38(cf::CChain* self) {
                 ((cf::CChainHeadView*)self)->field_0 = newIdx;
             }
         }
-        if (func_8027CAE0((cf::CChainList*)&self->mChainMember, 6, 1) == 0) break;
+        if (ChainList_CheckCondition((cf::CChainList*)&self->mChainMember, 6, 1) == 0) break;
         func_8027C6B4((cf::CChainList*)&self->mChainMember, 0, -1);
         self->mChainTime.mTimer = lbl_eu_80668A18;
         self->mChainTime.mEnabled = 0;
         self->mChainTime.mPaused = 1;
         lbl_eu_80663DA0 &= 0xFE;
-        func_8027C924((cf::CChainList*)&self->mChainMember, 0);
+        ChainList_StepTargets((cf::CChainList*)&self->mChainMember, 0);
         _reslist_node<cf::CChainActor*>* node =
             self->mChainActorList.mChainActorList.mStartNodePtr->mNext;
         while (node != self->mChainActorList.mChainActorList.mStartNodePtr) {
-            node->mItem->func_80279F6C(0);
+            node->mItem->CChainActor_ToggleMoveFlag(0);
             node = node->mNext;
         }
         self->mChainActorList.unk1DA8[0] = 0;
         processFieldEffects__Q22cf13CfGameManagerFv();
-        func_802B4B84((CErrMesEntry*)&self->unk1F0C[8]);
+        ErrWin_ResetRecord_4B84((CErrMesEntry*)&self->unk1F0C[8]);
         if (((cf::CChainHeadView*)self)->field_8 != 0) {
-            func_8027CBE8((cf::CChainCounter*)&self->mChainChance.field_14);
+            ChainCounter_Drain((cf::CChainCounter*)&self->mChainChance.field_14);
         }
         self->mChainCombo.func1();
-        func_802AB4B8((CBattleChainMenuState*)&self->unk1F0C[0]);
+        updateChainPlayer((CBattleChainMenuState*)&self->unk1F0C[0]);
         ((cf::CChainHeadView*)self)->field_2++;
         break;
     }
@@ -1233,7 +1233,7 @@ __declspec(noinline) void func_80277B38(cf::CChain* self) {
         ((cf::CChainHeadView*)self)->field_0 = 0;
         ((cf::CChainHeadView*)self)->field_1 = -1;
         func_8027BB4C(&self->mChainActorList, (cf::CChainList*)&self->mChainMember);
-        func_8027711C(self);
+        CChain_DiscardVoiceId(self);
         ((cf::CChainHeadView*)self)->field_2 = 0;
         break;
     }
@@ -1251,7 +1251,7 @@ __declspec(noinline) void func_80277B38(cf::CChain* self) {
 // battle-object slot 0x5b4 query, then fan the run key out to every member
 // (slot 0x6c), arm the arts-select voice (sub8 slot 0x20), refresh the
 // tracked player, and only when a voice is loaded re-arm the chain menu.
-void func_80278E0C(cf::CChain* self) {
+void CChain_AdvanceChainLink(cf::CChain* self) {
     cf::CChainMemberListMirror* v = (cf::CChainMemberListMirror*)self;
     s8 idx = (s8)self->unk0[0];
     int runKey;
@@ -1270,20 +1270,20 @@ void func_80278E0C(cf::CChain* self) {
     self->unk0[0x10] = 0;
     *(f32*)&self->unk0[0x14] = ((cf::CChainBattleObj*)actor->unk0)->v363();
     self->mChainTimer1.unk0 = 0x96;
-    runKey = actor->func_80278F70();
+    runKey = actor->CChainActor_FetchRunKey();
     for (i = 0, p = (cf::CChainActor**)self; i < (int)v->mChainMember.mCount;
          p++, i++) {
         // mActors sits at CChain+0x1DC8 (0x772 pointer slots from self).
-        p[0x772]->func_80278F5C(runKey);
+        p[0x772]->CChainActor_FwdRunKey(runKey);
     }
     ((cf::CChainBattleObj*)actor->unk0)->mSub8.s06(0xeb);
     u8* spot = (u8*)actor->unk0;
     if (spot != 0) spot += 0x3e9c;
     syncBattleState__Q22cf13CfGameManagerFv(spot);
     if ((s8)self->unk0[1] != -1) {
-        func_802AB474((CBattleChainMenuState*)&self->unk1F0C[0]);
+        reinitChainPlayer((CBattleChainMenuState*)&self->unk1F0C[0]);
         actor->CChain_noop_78E00(2, 0);
-        func_8027C040((cf::CChainFlag*)actor->unk0);
+        Chain_EmitCountEvents((cf::CChainFlag*)actor->unk0);
     }
     self->unk0[2]++;
 }
@@ -1324,9 +1324,9 @@ void func_80278F84(cf::CChain* self) {
         resetExt:
             // Timer expired / gauge did not move / actor inactive: reset the
             // extension state.
-            func_802B4968((CErrMesEntry*)&self->unk1F0C[8],
+            ErrWin_RegEntryS2_4968((CErrMesEntry*)&self->unk1F0C[8],
                           (CErrMesOwner*)actor->unk0);
-            func_802AB5E4((CBattleChainMenuState*)&self->unk1F0C[0]);
+            requestAnimReset((CBattleChainMenuState*)&self->unk1F0C[0]);
             self->mChainTimer2.unk0 = 0x2d;
             self->unk0[6] = 0;
         }
@@ -1369,7 +1369,7 @@ void func_80278F84(cf::CChain* self) {
             cond = (flags & 0x4000) != 0 || (flags & 0x8000) != 0;
         }
         if (cond != 0) {
-            func_802B4968((CErrMesEntry*)&self->unk1F0C[8],
+            ErrWin_RegEntryS2_4968((CErrMesEntry*)&self->unk1F0C[8],
                           (CErrMesOwner*)actor->unk0);
             self->unk0[2] = 0x12;
             return;
@@ -1377,13 +1377,13 @@ void func_80278F84(cf::CChain* self) {
     }
     if (local != 0) {
         if (actor->CChain_getChainCount() == 4) {
-            func_802B4A68((CErrMesEntry*)&self->unk1F0C[8],
+            ErrWin_RegEntryS3_4A68((CErrMesEntry*)&self->unk1F0C[8],
                           (CErrMesOwner*)actor->unk0);
             self->unk0[2] = 0x14;
             return;
         }
     }
-    func_802B4A68((CErrMesEntry*)&self->unk1F0C[8],
+    ErrWin_RegEntryS3_4A68((CErrMesEntry*)&self->unk1F0C[8],
                   (CErrMesOwner*)actor->unk0);
     self->unk0[2] = 0xa;
 }
@@ -1393,7 +1393,7 @@ void func_80278F84(cf::CChain* self) {
 // the actor-id checks (func_80174C98 with 0xA/0xB masks) decide whether to
 // re-arm the chain timer; otherwise the chain just continues while the
 // second timer is still running.
-void func_80279214(cf::CChain* self) {
+void CChain_DriveChainExtend(cf::CChain* self) {
     cf::CChainMemberListMirror* v = (cf::CChainMemberListMirror*)self;
     s8 idx = (s8)self->unk0[0];
     cf::CChainActor* actor;
@@ -1447,7 +1447,7 @@ setTimer:
 // key and once for the activation target), activate the member actors
 // (slot 0x6c fan-out), re-arm the actor reslist (slot 0x1c), and initialize
 // every chain sub-object. Returns 1 on success.
-int func_8027936C(cf::CChain* self, u32 param) {
+int CChain_TryActivateChain(cf::CChain* self, u32 param) {
     cf::CfGameManager::getInstance();
     if (isGlobalCamFlagSet__Fi(0x4000000)) return 0;
     if (param != 0 && (((cf::CChainFlag*)param)->field_0x3F00 & 4) != 0) {
@@ -1475,7 +1475,7 @@ int func_8027936C(cf::CChain* self, u32 param) {
             result = 0;
         } else {
             bm = (cf::CBattleManagerTail*)getInstance__Q22cf14CBattleManagerFv();
-            if (func_801BA2C8(&bm->field_0x216C[0]) != 0) {
+            if (SuddenCommuIsStateActive(&bm->field_0x216C[0]) != 0) {
                 result = 0;
             } else if (self->unk0[2] != 0) {
                 result = 0;
@@ -1495,29 +1495,29 @@ int func_8027936C(cf::CChain* self, u32 param) {
     for (i = 0, p = (cf::CChainActor**)self; i < (int)v->mChainMember.mCount;
          p++, i++) {
         // mActors sits at CChain+0x1DC8 (0x772 pointer slots from self).
-        p[0x772]->func_80278F5C(moveSub);
+        p[0x772]->CChainActor_FwdRunKey(moveSub);
     }
-    func_8027C924((cf::CChainList*)&self->mChainMember, 1);
+    ChainList_StepTargets((cf::CChainList*)&self->mChainMember, 1);
     _reslist_node<cf::CChainActor*>* node =
         self->mChainActorList.mChainActorList.mStartNodePtr->mNext;
     while (node != self->mChainActorList.mChainActorList.mStartNodePtr) {
-        node->mItem->func_80279F6C(1);
+        node->mItem->CChainActor_ToggleMoveFlag(1);
         node = node->mNext;
     }
     self->mChainActorList.unk1DA8[0] = 1;
-    func_8027CEB0(&self->mChainTime,
+    startChainTimer(&self->mChainTime,
                   (u8)((((cf::CChainFlag*)param)->field_0x3F00 >> 1) & 1));
     func_8027C6B4((cf::CChainList*)&self->mChainMember, 0, -1);
-    cf::CChainActor* actor = func_8027CA98((cf::CChainList*)&self->mChainMember, param);
+    cf::CChainActor* actor = ChainList_FindKey((cf::CChainList*)&self->mChainMember, param);
     actor->CChain_noop_795D0();
     ((s8*)self->unk0)[1] = -1;
     self->unk0[0] = 0;
     self->unk0[8] = (u8)((((cf::CChainFlag*)param)->field_0x3F00 >> 1) & 1);
     self->mChainChance.field_14 = 0;
     self->mChainCombo.func1();
-    func_802AB3D0((CBattleChainMenuState*)&self->unk1F0C[0]);
+    trackChainPlayer((CBattleChainMenuState*)&self->unk1F0C[0]);
     func_802B48A0((CErrMesEntry*)&self->unk1F0C[8]);
-    func_8027BF58((cf::CChainFlag*)param);
+    Chain_EmitThresholdEvents((cf::CChainFlag*)param);
     self->unk0[2] = 1;
     return 1;
 }
@@ -1525,7 +1525,7 @@ int func_8027936C(cf::CChain* self, u32 param) {
 // the first player's embedded spot minus 0x3E9C), then gates on battle state
 // (chain-state word, sudden-commu pause) and the chain-type byte before
 // running the actor-list activation check.
-int func_802795D4(cf::CChain* self, u32 param) {
+int CChain_CheckActivateReady(cf::CChain* self, u32 param) {
     if (param == 0) {
         void* player = cf::CfGameManager::getPlayer(0);
         if (player != 0) player = (u8*)player - 0x3e9c;
@@ -1535,7 +1535,7 @@ int func_802795D4(cf::CChain* self, u32 param) {
     cf::CBattleManagerTail* bm = (cf::CBattleManagerTail*)getInstance__Q22cf14CBattleManagerFv();
     if (bm->field_0x20C8 != 0) return 0;
     bm = (cf::CBattleManagerTail*)getInstance__Q22cf14CBattleManagerFv();
-    if (func_801BA2C8(&bm->field_0x216C[0]) != 0) return 0;
+    if (SuddenCommuIsStateActive(&bm->field_0x216C[0]) != 0) return 0;
     if (self->unk0[2] != 0) return 0;
     return func_8027BC14((cf::CChainActorList*)((u8*)self + 0x18), param);
 }
@@ -1557,10 +1557,10 @@ void func_80279694(cf::CChain* self, u32 param) {
         v->mChainMember.mActors[i]->CChain_noop_79768(param);
     }
     // Retail keeps the second helper's compare as a dead instruction: the
-    // original source nested `if (func_8027C5E4(...) == 0) return;` inside
+    // original source nested `if (ChainList_RemoveKey(...) == 0) return;` inside
     // the outer gate (the trailing branch folds, the compare stays).
-    if (func_8027B814((cf::CChainActorList*)((u8*)self + 0x18), param) == 0) {
-        if (func_8027C5E4((cf::CChainList*)&self->mChainMember, param) == 0) {
+    if (Chain_RemoveActor((cf::CChainActorList*)((u8*)self + 0x18), param) == 0) {
+        if (ChainList_RemoveKey((cf::CChainList*)&self->mChainMember, param) == 0) {
             return;
         }
     }
@@ -1571,8 +1571,8 @@ void func_80279694(cf::CChain* self, u32 param) {
 // validated through the word-holder / arts-category checks and returns
 // whether its arts category byte equals 4.
 // Retail passes the chain object in r3 at every call site (e.g.
-// func_8027990C's `mr r3, r28; bl func_80279A4C`); the body ignores it.
-extern "C" int func_80279A4C(cf::CChain* self) {
+// CChain_ProbeActorReady's `mr r3, r28; bl CChain_ScanGimmickArts`); the body ignores it.
+extern "C" int CChain_ScanGimmickArts(cf::CChain* self) {
     CChainGimmickList* list = getReslistB48();
     CChainGimmickListNode* head = list->head;
     CChainGimmickListNode* node;
@@ -1606,7 +1606,7 @@ int func_80279778(cf::CChain* self, CChainBattleObjTail* target) {
     int ret = 0;
     if (1 <= self->unk0[2] && self->unk0[2] <= 0x18) ret = 1;
     if (ret == 0) return 0;
-    if ((actor = func_8027CA98((cf::CChainList*)&self->mChainMember,
+    if ((actor = ChainList_FindKey((cf::CChainList*)&self->mChainMember,
                                (u32)target)) == 0)
         return 0;
     // Gauge-range chain types report ready. Each unsigned constant compare
@@ -1638,9 +1638,9 @@ int func_80279778(cf::CChain* self, CChainBattleObjTail* target) {
 
 // Chain-actor availability probe: valid only for chain types 1..0x18, then
 // resolves the member-list entry for the target battle object and gates on
-// the chain battle-object availability (func_80279A4C) plus the target's
+// the chain battle-object availability (CChain_ScanGimmickArts) plus the target's
 // +0x3F60 flag word bit 16 (0x10000).
-int func_8027990C(cf::CChain* self, CChainBattleObjTail* target) {
+int CChain_ProbeActorReady(cf::CChain* self, CChainBattleObjTail* target) {
     u32 v = self->unk0[2];
     int ok = 0;
     if (1 <= v && v <= 0x18) ok = 1;
@@ -1650,12 +1650,12 @@ int func_8027990C(cf::CChain* self, CChainBattleObjTail* target) {
     if (ok == 0) {
         ok = 0;
     } else {
-        ok = func_8027CA98((cf::CChainList*)&self->mChainMember, (u32)target) != 0;
+        ok = ChainList_FindKey((cf::CChainList*)&self->mChainMember, (u32)target) != 0;
     }
     int result = 0;
     int memberOk = 0;
     if (ok != 0) {
-        if (func_80279A4C(self) == 0) memberOk = 1;
+        if (CChain_ScanGimmickArts(self) == 0) memberOk = 1;
     }
     if (memberOk != 0) {
         cf::CChainField3F60* f = (cf::CChainField3F60*)target->field_0x3F60;
@@ -1672,12 +1672,12 @@ int func_8027990C(cf::CChain* self, CChainBattleObjTail* target) {
 // whether the member list holds an entry whose unk0 equals @p target.
 // u32 v + `1 <= v` (constant first): both defeat MWCC's range fold (which
 // would emit a single (v-1)<=23 instead of retail's two cmplwi).
-bool func_802799F0(cf::CChain* self, CChainBattleObjTail* target) {
+bool CChain_HasMemberEntry(cf::CChain* self, CChainBattleObjTail* target) {
     u32 v = self->unk0[2];
     int valid = 0;
     if (1 <= v && v <= 0x18) valid = 1;
     if (valid == 0) return false;
-    return func_8027CA98((cf::CChainList*)&self->mChainMember, (u32)target) != 0;
+    return ChainList_FindKey((cf::CChainList*)&self->mChainMember, (u32)target) != 0;
 }
 // Chain-end voice cleanup: when the chain-cancel voice path is enabled
 // (unk6C bit 0) silence every registered arts voice id on the battle
@@ -1685,7 +1685,7 @@ bool func_802799F0(cf::CChain* self, CChainBattleObjTail* target) {
 // flag path is enabled (unk6C bit 1) set the +0x3388 bit-1 flag, drop the
 // 0x4000 move flag (actor-id check), re-arm the voice-act marker, and clear
 // the flag again at the end.
-void func_80279B34(cf::CChainActor* self) {
+void CChainActor_CleanupVoiceEnd(cf::CChainActor* self) {
     if (self->unk6C & 1) {
         if (func_80148778(&((cf::CChainBattleObj*)self->unk0)->mSub8, 0x6) != 0)
             ((cf::CChainBattleObj*)self->unk0)->mSub8.s06(0x6);
@@ -1731,7 +1731,7 @@ void func_80279B34(cf::CChainActor* self) {
 // Chain-end cleanup: run the actor's begin/end hooks (vtable slots 6/7) on
 // the target's embedded sub-object when a target is set, then clear the
 // target pointer and its flag word.
-void func_80279DC0(cf::CChainActor* self) {
+void CChainActor_ClearTargetRef(cf::CChainActor* self) {
     CChainBattleObjTail* p = (CChainBattleObjTail*)self->unk0;
     if (p != NULL) {
         // Dead second null-check keeps the retail duplicated-branch shape
@@ -1740,8 +1740,8 @@ void func_80279DC0(cf::CChainActor* self) {
             p = (CChainBattleObjTail*)((u8*)p + 0x3e9c);
         }
         if (lookupWorkAtAddr(p) != 0) {
-            self->func_80279E48(0);
-            self->func_80279F6C(0);
+            self->CChainActor_ToggleCancelVoice(0);
+            self->CChainActor_ToggleMoveFlag(0);
         }
     }
     self->unk0 = 0;
@@ -1752,10 +1752,10 @@ void func_80279DC0(cf::CChainActor* self) {
 // voice (vtable slots 0x14/0x20 on the +0x8 sub-object); the disabled side
 // clears the voice-act sub-object. Skips when the requested state already
 // matches unk6C bit 1.
-void func_80279E48(cf::CChainActor* self, u32 param) {
+void CChainActor_ToggleCancelVoice(cf::CChainActor* self, u32 param) {
     if (param != (self->unk6C & 1)) {
         if (param != 0) {
-            func_8027CC3C(&self->mChainTemp, (void*)self->unk0);
+            ChainMusic_SaveSlots(&self->mChainTemp, (void*)self->unk0);
             ((cf::CChainBattleObj*)self->unk0)->mSub8.s03(0x2e);
             if (func_80148778(&((cf::CChainBattleObj*)self->unk0)->mSub8, 0x11) != 0) {
                 ((cf::CChainBattleObj*)self->unk0)->mSub8.s06(0x11);
@@ -1763,9 +1763,9 @@ void func_80279E48(cf::CChainActor* self, u32 param) {
             func_801537F0(&((cf::CChainBattleObj*)self->unk0)->mField3380);
             ((cf::CChainBattleObj*)self->unk0)->v042();
         } else {
-            func_8027CD08(&self->mChainTemp, (void*)self->unk0);
+            ChainMusic_RestoreSlots(&self->mChainTemp, (void*)self->unk0);
             func_8014AE00(&((cf::CChainBattleObj*)self->unk0)->mField3380);
-            func_801537E0(&((cf::CChainBattleObj*)self->unk0)->mField3380);
+            aiActionClearBits0006(&((cf::CChainBattleObj*)self->unk0)->mField3380);
             ((cf::CChainBattleObj*)self->unk0)->mSub8.s06(0x2e);
         }
         if (param != 0) {
@@ -1779,13 +1779,13 @@ void func_80279E48(cf::CChainActor* self, u32 param) {
 // enabled side ORs bit 2 into the +0x3388 flag word and disables the voice
 // manager; the disabled side resets the voice-act sub-object and its move
 // flag. Skips when the requested state already matches unk6C bit 1.
-void func_80279F6C(cf::CChainActor* self, u32 param) {
+void CChainActor_ToggleMoveFlag(cf::CChainActor* self, u32 param) {
     if (param != ((self->unk6C >> 1) & 1)) {
         if (param != 0) {
             ((cf::CChainBattleObj*)self->unk0)->field_0x3388 |= 2;
             func_80174B4C((void*)self->unk0, 0x4000);
         } else {
-            func_801537E0(&((cf::CChainBattleObj*)self->unk0)->mField3380);
+            aiActionClearBits0006(&((cf::CChainBattleObj*)self->unk0)->mField3380);
             ((cf::CChainBattleObj*)self->unk0)->field_04->f06(0x4000);
         }
         if (param != 0) {
@@ -1802,10 +1802,10 @@ void func_80279F6C(cf::CChainActor* self, u32 param) {
 int func_8027A024(cf::CChainActor* self, int param) {
     int ret;
     // Materialized bool temp reproduces retail's cntlzw/srwi. booleanize.
-    bool gated = !func_8009CF8C((u32)0x3357);
+    bool gated = !CtrlRemote_TouchBitByArg((u32)0x3357);
     if (gated) {
         ret = 0;
-    } else if (self->func_8027A324() != 0) {
+    } else if (self->CChainActor_NotifyBattleObj() != 0) {
         ret = 0;
     } else {
         cf::CChainBattleObj* battleObj = (cf::CChainBattleObj*)self->unk0;
@@ -1962,7 +1962,7 @@ int func_8027A338(cf::CChainActor* self, int param) {
 // both usage checks (func_80154280 flags -2 and -0x21), else the chain is
 // unavailable. Slot 8 uses the RC arts param and an extra menu-up check.
 int func_8027A58C(cf::CChainActor* self) {
-    int runKey = self->func_80278F70();
+    int runKey = self->CChainActor_FetchRunKey();
     void* src = func_8016FE34(findObjectById(runKey));
     if (src != 0) {
         f32 gauge = ((cf::CChainBattleObj*)self->unk0)->v363();

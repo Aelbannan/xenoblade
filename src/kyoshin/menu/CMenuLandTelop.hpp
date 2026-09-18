@@ -42,7 +42,7 @@ struct CLandTelopEntry {
  *   0x78 UnkClass_8045F564 embedded region (0x10 bytes)
  *   0x88..0xE0 layout-anim / control fields (0x8C u16, 0x8E u8 set from the
  *             ctor args; 0x9A..0xDA the 16-entry scan table)
- *   0xE0 bool flag (restored from func_80226B94 in Init)
+ *   0xE0 bool flag (restored from QstCnt_HasInstance_6B94 in Init)
  */
 struct CMenuLandTelop {
     u8  mPad0[0x10];                     // 0x00 link-list nodes
@@ -147,19 +147,19 @@ void __ct__8CProcessFv(CProcess* _this);
 void __dt__8CProcessFv(CProcess* _this, int flags);
 CMenuLandTelop* __dt__14CMenuLandTelopFv(CMenuLandTelop* _this, int flags);
 void cbRenderBefore__14CMenuLandTelopFv(void* _this);
-int func_80226B94();
+int QstCnt_HasInstance_6B94();
 int IsMenuState621F0();
 // getBdatStringColumnValue / getInstance__Q22cf14CBattleManagerFv come from
 // their canonical headers via the include chain (u32 / void* from
 // kyoshin/cf/CBattleManagerApi.hpp).
-int func_80144FC8();
-int func_80144FF0();
-void func_80145018();
-unsigned char func_80145030(void);
+int isLandTelopActive();
+int isLandTelopIdle();
+void requestLandTelop();
+unsigned char getLandTelopE0(void);
 void func_8014548C(CMenuLandTelop* self);
-void func_80145A90(void* _this);
-void func_80145A98(void* _this);
-void func_80145AA0(void* _this);
+void CMenuLandTelop_dtorAdj6C(void* _this);
+void CMenuLandTelop_renderBeforeAdj70(void* _this);
+void CMenuLandTelop_dtorAdj70(void* _this);
 const char* func_80145AA8(int index);
 }
 
@@ -195,22 +195,22 @@ extern f64 lbl_eu_806673F8;       // u32->double conversion bias
 extern "C" {
 nw4r::lyt::ArcResourceAccessor* CUICfManager_getArcResourceAccessor();
 u8 BdatGetU8ByTableKey(const void*, const void*, u32);
-void* func_8010CE48();                    // system menu open gate
-unsigned char func_8014A2A0();
-unsigned char func_8014A2B4();
-f32 func_801895EC();                      // scene BGM volume
+void* BpsStateSingletonToInt();                    // system menu open gate
+unsigned char CMenuGetItem_IsActive();
+unsigned char CMenuGetItem_GetField90();
+f32 MenuSnd_GetMasterVol_95EC();                      // scene BGM volume
 u32 Scn_CallUnk8C_V9(CScn* scene);           // scene audio handle
 void func_80043738(u32, const char*, u32, u32, u32, u32, f32);
 u32 isResourceFlagSet__Q22cf13CfGameManagerFv(u32);
 void* getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32,
                                                          nw4r::lyt::Layout*);
-int func_8026178C(void* data, u32 flag);
-u32 func_8025FB10(void* data, u32 flag);
-u32 func_80293C10();                      // party-change notice gate
-s32 func_8029A658();                      // party-change notice gate
-u32 func_801B481C();                      // block-condition gate
-u32 func_80122450();                      // quest-menu gate
-unsigned int func_80124B78();             // system-menu gate
+int Counter_TestBit(void* data, u32 flag);
+u32 IdTable_SumValues(void* data, u32 flag);
+u32 PTNotice_IsActive_3C10();                      // party-change notice gate
+s32 MenuTutorialIsCreated();                      // party-change notice gate
+u32 GetItemMulti_IsActiveFlag();                      // block-condition gate
+u32 hasQuestWindow();                      // quest-menu gate
+unsigned int SysWinGetSingleton();             // system-menu gate
 }
 
 // C++-linkage import (retail symbol is the mangled playUISound__FUl).

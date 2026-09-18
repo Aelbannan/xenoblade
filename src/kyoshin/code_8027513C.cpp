@@ -33,7 +33,7 @@ class CScn;
 // with retail arity - UVF23 at +0xAC returns the position vector, UVF19 at
 // +0x9C takes it by const pointer - so both sites call this->method(...).)
 
-int func_802759A8(void* self) { return 0; }
+int CfObjectImplTbox_noop59A8(void* self) { return 0; }
 
 // ---------------------------------------------------------------------------
 // Camera-control registration helpers: fetch the shared camera-control
@@ -107,14 +107,14 @@ void* initCamControlInstances() {
     return lbl_eu_80537EC0[index];
 }
 
-void func_802751F8(void* self) { static_cast<cf::ICamControl*>(initCamControlInstances())->func_80274C68(reinterpret_cast<int>(self)); }
-void func_80275238(void* self) { static_cast<cf::ICamControl*>(initCamControlInstances())->func_80274B2C(reinterpret_cast<int>(self)); }
-void func_80275278(void* self) { static_cast<cf::ICamControl*>(initCamControlInstances())->func_80274BA4(reinterpret_cast<int>(self)); }
-void func_802752B8(void* self) { static_cast<cf::ICamControl*>(initCamControlInstances())->func_80274CD4(reinterpret_cast<int>(self)); }
-void func_802752F8(void* self) { static_cast<cf::ICamControl*>(initCamControlInstances())->func_80274D08(reinterpret_cast<int>(self)); }
-void func_80275338(void* self) { static_cast<cf::ICamControl*>(initCamControlInstances())->func_80274D3C(reinterpret_cast<int>(self)); }
-void func_80275378(void* self) { static_cast<cf::ICamControl*>(initCamControlInstances())->func_80274D70(reinterpret_cast<int>(self)); }
-void func_802753B8(void* self) { static_cast<cf::ICamControl*>(initCamControlInstances())->func_80274DA4(reinterpret_cast<int>(self)); }
+void func_802751F8(void* self) { static_cast<cf::ICamControl*>(initCamControlInstances())->isPressed12(reinterpret_cast<int>(self)); }
+void func_80275238(void* self) { static_cast<cf::ICamControl*>(initCamControlInstances())->isPadBit4(reinterpret_cast<int>(self)); }
+void func_80275278(void* self) { static_cast<cf::ICamControl*>(initCamControlInstances())->isPadBit5(reinterpret_cast<int>(self)); }
+void func_802752B8(void* self) { static_cast<cf::ICamControl*>(initCamControlInstances())->isHeld2(reinterpret_cast<int>(self)); }
+void func_802752F8(void* self) { static_cast<cf::ICamControl*>(initCamControlInstances())->isHeld3(reinterpret_cast<int>(self)); }
+void func_80275338(void* self) { static_cast<cf::ICamControl*>(initCamControlInstances())->isHeld0(reinterpret_cast<int>(self)); }
+void func_80275378(void* self) { static_cast<cf::ICamControl*>(initCamControlInstances())->isHeld1(reinterpret_cast<int>(self)); }
+void func_802753B8(void* self) { static_cast<cf::ICamControl*>(initCamControlInstances())->isLongHold11(reinterpret_cast<int>(self)); }
 
 
 
@@ -296,7 +296,7 @@ void func_802756F0(UnkCode8027513C* self) {
     setChildV40__(eff, posVec);
 }
 
-void func_80275808(UnkCode8027513C* ptr) {
+void CfObjectImplTbox_Reset(UnkCode8027513C* ptr) {
     ptr->field_0x20 = -1;
     ptr->field_0x1C = 0;
     ptr->field_0x74 = nullptr;
@@ -364,14 +364,14 @@ void func_80275850(UnkCode8027513C* self) {
     }
 }
 
-// retail: if (self->ptr74 == other) { other->b0 = 0; self->ptr74 = 0; } then tail-call func_800CFFA0
-extern "C" void func_800CFFA0();
-extern "C" void func_8027594C(void* self, void* other) {
+// retail: if (self->ptr74 == other) { other->b0 = 0; self->ptr74 = 0; } then tail-call CfObjectImplMoveClearLinkIfMatch
+extern "C" void CfObjectImplMoveClearLinkIfMatch();
+extern "C" void CfObjectImplTbox_ReleaseLink(void* self, void* other) {
     if ((u32)(uintptr_t)other == *(u32*)((char*)self + 0x74)) {
         *(u32*)((char*)other + 0xB0) = 0;
         *(u32*)((char*)self + 0x74) = 0;
     }
-    func_800CFFA0();
+    CfObjectImplMoveClearLinkIfMatch();
 }
 
 // If field_0x74 is set and field_0x78 differs from arg, notify the child
@@ -390,8 +390,8 @@ cf::CfObjectImplTbox::~CfObjectImplTbox() {}
 
 extern "C" void __dt__Q22cf16CfObjectImplTboxFv(void*, int);
 
-void func_802759B0(void* self) { ((void(*)(void*))__dt__Q22cf16CfObjectImplTboxFv)((u8*)self - 0xc); }
+void CfObjectImplTboxDtorThunkC(void* self) { ((void(*)(void*))__dt__Q22cf16CfObjectImplTboxFv)((u8*)self - 0xc); }
 
-void func_802759B8(void* self) { ((void(*)(void*))func_8027594C)((u8*)self - 0x10); }
+void CfObjectImplTboxUnlinkThunk10(void* self) { ((void(*)(void*))CfObjectImplTbox_ReleaseLink)((u8*)self - 0x10); }
 
-void func_802759C0(void* self) { ((void(*)(void*))__dt__Q22cf16CfObjectImplTboxFv)((u8*)self - 0x10); }
+void CfObjectImplTboxDtorThunk10(void* self) { ((void(*)(void*))__dt__Q22cf16CfObjectImplTboxFv)((u8*)self - 0x10); }

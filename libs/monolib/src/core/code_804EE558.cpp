@@ -46,18 +46,18 @@ extern GXRenderModeObj* getRenderModeObj__9CDeviceVIFv();
 extern void* cacheInstance__9CDeviceGX;
 extern u32 getAdjustFlag__8CGXCacheFv(void* cache);
 extern void* Scn_FindCamItem(void* rsrc, int idx);
-extern void func_804D8B28(void* desktop);
-extern void func_804D8B30(void* desktop);
-extern void func_804D8B38(void* draw);
-extern int func_804D8B4C(void* draw, void* desktop, void* material);
-extern void func_804D8C18(void* draw);
-extern void func_804D8C68(void* draw, int a, int b);
+extern void snapTexCursor(void* desktop);
+extern void restoreTexCursor(void* desktop);
+extern void initEffectDrawCtx(void* draw);
+extern int setupEffectDrawCtx(void* draw, void* desktop, void* material);
+extern void releaseEffectDrawTex(void* draw);
+extern void blitEffectViewRect(void* draw, int a, int b);
 extern void func_804DCA88(void* dst, void* src);
 extern void func_804DCD94(void* dst, void* src);
 extern void func_804DD440(void* dst, void* src, float f);
 extern void func_804DD4F8(void* mtx, float angle);
 extern void func_804DF164(void* a, int b, int c, void* d);
-extern void func_804F2AA0(void* player, void* anim, u32 id);
+extern void DbgBindAnimPlayer(void* player, void* anim, u32 id);
 extern void func_804F2B20(void* player, void* anim);
 extern void func_804F2C04(void* player, void* mtx);
 extern void func_804F2DF0(void* player, void* vec);
@@ -177,7 +177,7 @@ struct CAnimPlayerRef {
     u32 mId;       // 0x4
     void* mPlayer; // 0x8
 
-    void init(void* anim, u32 id) { func_804F2AA0(this, anim, id); }
+    void init(void* anim, u32 id) { DbgBindAnimPlayer(this, anim, id); }
     void update(void* anim) { func_804F2B20(this, anim); }
     void getMtx(ml::CMat34* mtx) { func_804F2C04(this, mtx); }
     void getPos(ml::CVec3* pos) { func_804F2DF0(this, pos); }
@@ -193,7 +193,7 @@ struct CLytBind {
     ml::CMat34 mMtx;       // 0x18
 };
 
-// Draw context built on the stack by func_804D8B38/func_804D8B4C.
+// Draw context built on the stack by initEffectDrawCtx/setupEffectDrawCtx.
 struct CDrawCtx {
     u32 mField00;
     GXTexObj* mTexObj; // 0x04
@@ -221,8 +221,8 @@ struct CFanColor {
 
 } // namespace
 
-// func_804EE558: set up the bind object for a pane.
-extern "C" void func_804EE558(CLytBind* self, CBindPane* pane, s32 type, u32 id, u8 flag) {
+// lytBindSetupForPane: set up the bind object for a pane.
+extern "C" void lytBindSetupForPane(CLytBind* self, CBindPane* pane, s32 type, u32 id, u8 flag) {
     self->mType = type;
     self->mPane = pane;
     self->mFlag = flag;
@@ -240,8 +240,8 @@ extern "C" void func_804EE558(CLytBind* self, CBindPane* pane, s32 type, u32 id,
     }
 }
 
-// func_804EE60C: refresh the animation player binding.
-extern "C" void func_804EE60C(CLytBind* self) {
+// lytBindRefreshPlayer: refresh the animation player binding.
+extern "C" void lytBindRefreshPlayer(CLytBind* self) {
     switch (self->mType) {
     case 0x1A:
         if (self->mPane->mAnimA == NULL) {
@@ -371,8 +371,8 @@ extern "C" void func_804EE8FC(CLytBind* self, CBindSource* src) {
     self->mMtx.m[2][3] = pos.z;
 }
 
-// func_804EEACC: check whether the bind object can resolve a target.
-extern "C" u32 func_804EEACC(CLytBind* self) {
+// lytBindCanResolveTarget: check whether the bind object can resolve a target.
+extern "C" u32 lytBindCanResolveTarget(CLytBind* self) {
     switch (self->mType) {
     case 0x1A:
         if (self->mPane->mAnimA != NULL && self->mPlayer.mPlayer == NULL) {
@@ -781,25 +781,25 @@ extern "C" void func_804EEB40(void* desktop, const ml::CVec3* pos, const float* 
         return;
     }
 
-    func_804D8B28(desktop);
+    snapTexCursor(desktop);
     CDrawCtx draw;
-    func_804D8B38(&draw);
-    if (func_804D8B4C(&draw, desktop, material) != 0) {
+    initEffectDrawCtx(&draw);
+    if (setupEffectDrawCtx(&draw, desktop, material) != 0) {
         if (mtxSrc == NULL || mtxSrc->mTex == NULL || mtxSrc->mIndex < 0) {
-            func_804D8C68(&draw, 0, 0);
+            blitEffectViewRect(&draw, 0, 0);
             func_804EECB0(0, &draw, pos, color, size, clampInfo, -1, NULL, angleDeg, alpha,
                           vertRot);
         } else {
-            func_804D8C68(&draw, 0, 0);
+            blitEffectViewRect(&draw, 0, 0);
             if (mtxSrc->mTex != NULL) {
                 func_804DF164(mtxSrc->mTex, mtxSrc->mIndex, 1, mtxSrc->mField08);
             }
             func_804EECB0(0, &draw, pos, color, size, clampInfo, 1, mtxSrc, angleDeg, alpha,
                           vertRot);
         }
-        func_804D8C18(&draw);
+        releaseEffectDrawTex(&draw);
     }
-    func_804D8B30(desktop);
+    restoreTexCursor(desktop);
 }
 
 // sinit_804F01C8: static initializer for the per-vertex color table.

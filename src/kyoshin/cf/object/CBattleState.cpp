@@ -16,7 +16,7 @@ extern "C" const double lbl_eu_80667408 = 1.5;
 extern "C" const float lbl_eu_80667410 = 0.0f;
 extern "C" const float lbl_eu_80667414 = 0.9f;
 
-extern "C" void func_80109784(void* ptr, u32 id, int arg);
+extern "C" void BtlDmg_FilterNotifyDamage(void* ptr, u32 id, int arg);
 extern "C" void UIWin_CreateMenuUpdate(int a, u32 id, int b, int c);
 int func_80148778(cf::CBattleState* self, u32 id);
 
@@ -1070,7 +1070,7 @@ void cf::CBattleState::CBattleState_removeKeyedEntries(cf::CBattleStateEntry* ar
 // init, kind-based routing through vfunc1/2 helpers + sound/event dispatch,
 // then slot scan + copy/accumulate for entries sharing the same id/keys.
 //
-// getEnterStatusKind is the same cmpwi/beq/bge tree as func_80145C00, returning
+// getEnterStatusKind is the same cmpwi/beq/bge tree as isBattleEventKind3, returning
 // the raw kind (0/1/2/3). Force-inlined so r3 stays the id at each site
 // (auto-inline refuses the tree as too large).
 #pragma inline_max_size(10000)
@@ -1331,13 +1331,13 @@ P1_done:
         if (!(arg->unk30 & 0x800)) {
             if (getEnterStatusKind(arg->unk0C) == 0) {
                 u8* obj = (u8*)this->CBattleState_getOwner();
-                func_80109784(*(void**)(obj + 0x3F10), arg->unk0C, 5);
+                BtlDmg_FilterNotifyDamage(*(void**)(obj + 0x3F10), arg->unk0C, 5);
             } else if (getEnterStatusKind(arg->unk0C) == 1) {
                 u8* obj = (u8*)this->CBattleState_getOwner();
-                func_80109784(*(void**)(obj + 0x3F10), arg->unk0C, 6);
+                BtlDmg_FilterNotifyDamage(*(void**)(obj + 0x3F10), arg->unk0C, 6);
             } else {
                 u8* obj = (u8*)this->CBattleState_getOwner();
-                func_80109784(*(void**)(obj + 0x3F10), arg->unk0C, 4);
+                BtlDmg_FilterNotifyDamage(*(void**)(obj + 0x3F10), arg->unk0C, 4);
             }
             UIWin_CreateMenuUpdate(6, arg->unk0C, 0, 0);
             goto after_dispatch;
@@ -1352,7 +1352,7 @@ P1_done:
             }
             {
                 u8* obj = (u8*)this->CBattleState_getOwner();
-                func_80109784(*(void**)(obj + 0x3F10), arg->unk0C, 1);
+                BtlDmg_FilterNotifyDamage(*(void**)(obj + 0x3F10), arg->unk0C, 1);
                 UIWin_CreateMenuUpdate(6, arg->unk0C, 0, 0);
                 goto after_dispatch;
             }
@@ -1366,10 +1366,10 @@ P1_done:
             }
             if (arg->unk30 & 0x20000) {
                 u8* obj = (u8*)this->CBattleState_getOwner();
-                func_80109784(*(void**)(obj + 0x3F10), arg->unk0C, 0x20);
+                BtlDmg_FilterNotifyDamage(*(void**)(obj + 0x3F10), arg->unk0C, 0x20);
             } else {
                 u8* obj = (u8*)this->CBattleState_getOwner();
-                func_80109784(*(void**)(obj + 0x3F10), arg->unk0C, 2);
+                BtlDmg_FilterNotifyDamage(*(void**)(obj + 0x3F10), arg->unk0C, 2);
             }
             UIWin_CreateMenuUpdate(6, arg->unk0C, 0, 0);
             goto after_dispatch;
@@ -1379,7 +1379,7 @@ P1_done:
     if (getEnterStatusKind(arg->unk0C) == 3) {
         if (!(arg->unk30 & 0x800)) {
             u8* obj = (u8*)this->CBattleState_getOwner();
-            func_80109784(*(void**)(obj + 0x3F10), arg->unk0C, 1);
+            BtlDmg_FilterNotifyDamage(*(void**)(obj + 0x3F10), arg->unk0C, 1);
             UIWin_CreateMenuUpdate(6, arg->unk0C, 0, 0);
         }
     }
@@ -1592,12 +1592,12 @@ F_skip_scan:
 #pragma inline_max_total_size(800)
 #pragma auto_inline on
 
-// func_80145C00: r3 = status id. Classifies the id through the same
+// isBattleEventKind3: r3 = status id. Classifies the id through the same
 // cmpwi/beq/bge decision tree as CBattleState_applyEventEntry (kind 0/1/2/3)
 // and returns (kind == 3) via the branchless subi/cntlzw/srwi boolify.
 // Flat if+goto mirrors retail's tree 1:1; shared kind leaves keep the
 // single merge at the end (retail 0x801467B0).
-extern "C" bool func_80145C00(int value) {
+extern "C" bool isBattleEventKind3(int value) {
     int kind;
 
     if (value >= 0xd4)
@@ -1754,13 +1754,13 @@ kind_done:
 
     return kind == 3;
 }
-extern "C" bool func_80145DBC(int value) { int result; switch (value) { case 2: case 3: case 39: case 51: case 52: case 54: case 68: case 69: case 88: case 89: case 90: case 91: case 92: case 95: case 147: case 206: case 207: case 208: case 209: case 210: case 211: case 236: case 247: case 286: case 301: result = 0; break; case 4: case 5: case 6: case 7: case 8: case 9: case 10: case 11: case 12: case 13: case 14: case 15: case 16: case 17: case 18: case 19: case 42: case 43: case 60: case 61: case 82: case 83: case 84: case 85: case 86: case 87: case 101: case 102: case 103: case 104: case 105: case 220: case 223: case 224: case 225: case 226: case 279: result = 1; break; case 234: case 237: case 238: case 239: case 240: case 241: case 242: case 243: case 244: case 245: case 246: case 248: case 249: case 250: case 251: case 252: case 253: case 254: case 256: case 257: case 258: case 262: case 265: case 266: case 267: case 268: case 273: case 274: case 275: case 276: case 277: case 278: result = 3; break; default: result = 2; break; } return result == 1; }
-// func_80145F78: r3 = status id. Ids 0xf/0x10 return 0 immediately (retail
+extern "C" bool isBattleStatusKind1(int value) { int result; switch (value) { case 2: case 3: case 39: case 51: case 52: case 54: case 68: case 69: case 88: case 89: case 90: case 91: case 92: case 95: case 147: case 206: case 207: case 208: case 209: case 210: case 211: case 236: case 247: case 286: case 301: result = 0; break; case 4: case 5: case 6: case 7: case 8: case 9: case 10: case 11: case 12: case 13: case 14: case 15: case 16: case 17: case 18: case 19: case 42: case 43: case 60: case 61: case 82: case 83: case 84: case 85: case 86: case 87: case 101: case 102: case 103: case 104: case 105: case 220: case 223: case 224: case 225: case 226: case 279: result = 1; break; case 234: case 237: case 238: case 239: case 240: case 241: case 242: case 243: case 244: case 245: case 246: case 248: case 249: case 250: case 251: case 252: case 253: case 254: case 256: case 257: case 258: case 262: case 265: case 266: case 267: case 268: case 273: case 274: case 275: case 276: case 277: case 278: result = 3; break; default: result = 2; break; } return result == 1; }
+// isBattleEventKind1: r3 = status id. Ids 0xf/0x10 return 0 immediately (retail
 // subi/cmplwi/bgt guard); everything else is classified through the same
-// cmpwi/beq/bge decision tree as func_80145C00 (kind 0/1/2/3) and the result
+// cmpwi/beq/bge decision tree as isBattleEventKind3 (kind 0/1/2/3) and the result
 // is (kind == 1) via the branchless subi/cntlzw/srwi boolify. Flat if+goto
-// mirrors retail's tree 1:1 (same convention as func_80145C00).
-extern "C" bool func_80145F78(int value) {
+// mirrors retail's tree 1:1 (same convention as isBattleEventKind3).
+extern "C" bool isBattleEventKind1(int value) {
     int kind;
 
     if (value - 0xf <= 1u) {
@@ -1921,8 +1921,8 @@ kind_done:
 
     return kind == 1;
 }
-extern "C" bool func_80146148(int value) { int result; switch (value) { case 2: case 3: case 0x27: case 0x33: case 0x34: case 0x36: case 0x44: case 0x45: case 0x58: case 0x59: case 0x5a: case 0x5b: case 0x5c: case 0x5f: case 0x93: case 0xce: case 0xcf: case 0xd0: case 0xd1: case 0xd2: case 0xd3: case 0xec: case 0xf7: case 0x11e: case 0x12d: result = 0; break; case 4: case 5: case 6: case 7: case 8: case 9: case 10: case 11: case 12: case 13: case 14: case 15: case 16: case 17: case 18: case 19: case 0x2a: case 0x2b: case 0x3c: case 0x3d: case 0x52: case 0x53: case 0x54: case 0x55: case 0x56: case 0x57: case 0x65: case 0x66: case 0x67: case 0x68: case 0x69: case 0xdc: case 0xdf: case 0xe0: case 0xe1: case 0xe2: case 0x117: result = 1; break; case 0xea: case 0xed: case 0xee: case 0xef: case 0xf0: case 0xf1: case 0xf2: case 0xf3: case 0xf4: case 0xf5: case 0xf6: case 0xf8: case 0xf9: case 0xfa: case 0xfb: case 0xfc: case 0xfd: case 0xfe: case 0x100: case 0x101: case 0x102: case 0x106: case 0x109: case 0x10a: case 0x10b: case 0x10c: case 0x111: case 0x112: case 0x113: case 0x114: case 0x115: case 0x116: result = 3; break; default: result = 2; break; } return result == 0; }
-extern "C" bool func_80146384(unsigned int value) { return value - 0x125u <= 5u; }
+extern "C" bool isBattleStatusKind0(int value) { int result; switch (value) { case 2: case 3: case 0x27: case 0x33: case 0x34: case 0x36: case 0x44: case 0x45: case 0x58: case 0x59: case 0x5a: case 0x5b: case 0x5c: case 0x5f: case 0x93: case 0xce: case 0xcf: case 0xd0: case 0xd1: case 0xd2: case 0xd3: case 0xec: case 0xf7: case 0x11e: case 0x12d: result = 0; break; case 4: case 5: case 6: case 7: case 8: case 9: case 10: case 11: case 12: case 13: case 14: case 15: case 16: case 17: case 18: case 19: case 0x2a: case 0x2b: case 0x3c: case 0x3d: case 0x52: case 0x53: case 0x54: case 0x55: case 0x56: case 0x57: case 0x65: case 0x66: case 0x67: case 0x68: case 0x69: case 0xdc: case 0xdf: case 0xe0: case 0xe1: case 0xe2: case 0x117: result = 1; break; case 0xea: case 0xed: case 0xee: case 0xef: case 0xf0: case 0xf1: case 0xf2: case 0xf3: case 0xf4: case 0xf5: case 0xf6: case 0xf8: case 0xf9: case 0xfa: case 0xfb: case 0xfc: case 0xfd: case 0xfe: case 0x100: case 0x101: case 0x102: case 0x106: case 0x109: case 0x10a: case 0x10b: case 0x10c: case 0x111: case 0x112: case 0x113: case 0x114: case 0x115: case 0x116: result = 3; break; default: result = 2; break; } return result == 0; }
+extern "C" bool isBattleStatusValid(unsigned int value) { return value - 0x125u <= 5u; }
 extern "C" void CBattleState_UnkVirtualFunc19__Q22cf12CBattleStateFv() {}
 extern "C" int CBattleState_UnkVirtualFunc1__Q22cf12CBattleStateFv() { return 0; }
 extern "C" void CBattleState_UnkVirtualFunc17__Q22cf12CBattleStateFv() {}
@@ -1967,7 +1967,7 @@ extern "C" void* CBattleState_UnkVirtualFunc15__Q22cf12CBattleStateFv(cf::CBattl
 extern "C" void* CBattleState_UnkVirtualFunc16__Q22cf12CBattleStateFv(void* self, int idx) {
     return (char*)self + idx * 0x34 + 0xd08;
 }
-// func_801490A0: r3 = self, r4 = id. Counts the 0x68 status slots at
+// countBattleStatusEntries: r3 = self, r4 = id. Counts the 0x68 status slots at
 // self+0x8 (stride 0x34) whose unk0C halfword equals id; ids >= 0x12f
 // return 0 immediately. Retail keeps the count as a 13x8 unrolled
 // mtctr/bdnz loop with a dead +7 trip counter.
@@ -1987,7 +1987,7 @@ static int countBattleEntries(cf::CBattleState* self, u32 id) {
     return count;
 }
 
-int func_801490A0(cf::CBattleState* self, u32 id) {
+extern "C" int countBattleStatusEntries(cf::CBattleState* self, u32 id) {
     int count;
 
     if (id >= 0x12f) {
@@ -1998,14 +1998,14 @@ int func_801490A0(cf::CBattleState* self, u32 id) {
     return count;
 }
 
-// Batch 2026-08: battlestate-idx-find owns func_80149154 / func_801491A4
+// Batch 2026-08: battlestate-idx-find owns findBattleStatusEntry / lookupBattleStatusEntry
 // (byte-identical siblings). Bare retail symbols -> extern "C" free
 // functions. The caller leaves the status id in r4; this scans the 0x68
 // entry slots at self+8 (stride 0x34) and returns &slot whose unk0C id
 // matches, else 0. Retail keeps a compact mtctr/bdnz loop with the return
 // recomputed from the index (`mulli`/`add`/`addi`), so the body indexes
 // base[i] rather than walking a pointer.
-extern "C" cf::CBattleStateEntry* func_80149154(cf::CBattleState* self, unsigned int id) {
+extern "C" cf::CBattleStateEntry* findBattleStatusEntry(cf::CBattleState* self, unsigned int id) {
     if (id >= 0x12f) {
         return 0;
     }
@@ -2018,7 +2018,7 @@ extern "C" cf::CBattleStateEntry* func_80149154(cf::CBattleState* self, unsigned
     }
     return 0;
 }
-extern "C" cf::CBattleStateEntry* func_801491A4(cf::CBattleState* self, unsigned int id) {
+extern "C" cf::CBattleStateEntry* lookupBattleStatusEntry(cf::CBattleState* self, unsigned int id) {
     if (id >= 0x12f) {
         return 0;
     }
@@ -2031,13 +2031,13 @@ extern "C" cf::CBattleStateEntry* func_801491A4(cf::CBattleState* self, unsigned
     }
     return 0;
 }
-// func_801491F4: r3 = self, r4 = id. Walks the 0x68 status slots at
+// findTopBattleStatusEntry: r3 = self, r4 = id. Walks the 0x68 status slots at
 // self+0x8 (stride 0x34) and returns the slot whose unk0C halfword equals
 // id with the MAXIMUM unk10 (s32). ids >= 0x12f return 0 immediately;
 // no match also returns 0. Retail keeps the scan as an mtctr/bdnz loop
 // (26 groups x 4 entries) with the return recomputed from the running
-// index (mulli/add/addi -- same convention as func_80149154).
-extern "C" cf::CBattleStateEntry* func_801491F4(cf::CBattleState* self, unsigned int id) {
+// index (mulli/add/addi -- same convention as findBattleStatusEntry).
+extern "C" cf::CBattleStateEntry* findTopBattleStatusEntry(cf::CBattleState* self, unsigned int id) {
     int best;
     unsigned int i;
 
@@ -2064,13 +2064,13 @@ extern "C" cf::CBattleStateEntry* func_801491F4(cf::CBattleState* self, unsigned
     }
     return 0;
 }
-// func_80149330: r3 = self, r4 = id, r5 = a, r6 = b, r7 = c. Scans the
+// matchBattleStatusEntry: r3 = self, r4 = id, r5 = a, r6 = b, r7 = c. Scans the
 // 0x68 status slots at self+0x8 (stride 0x34) for the first slot whose
 // unk0C == id, unk00 == a, unk04 == b and (c == 0 || unk08 == c); returns
 // &slot or 0. ids >= 0x12f return 0. Retail keeps an mtctr/bdnz loop
 // (26 groups x 4 entries) with a running entry index recomputed via
 // mulli/add/addi on success.
-extern "C" cf::CBattleStateEntry* func_80149330(cf::CBattleState* self, unsigned int id, unsigned int a, unsigned int b, unsigned int c) {
+extern "C" cf::CBattleStateEntry* matchBattleStatusEntry(cf::CBattleState* self, unsigned int id, unsigned int a, unsigned int b, unsigned int c) {
     unsigned int i;
 
     if (id >= 0x12f) {
@@ -2102,7 +2102,7 @@ extern "C" int CBattleState_UnkVirtualFunc2__Q22cf12CBattleStateFv() { return 0;
 // Builds a zeroed CBattleStateEntry on the stack with
 // unk0C = id and unk30 bit 0 set, then dispatches through vt+0x18
 // (enterStatusEntry) to enter the new status.
-extern "C" u8 func_80145BC4(int index) {
+extern "C" u8 classifyBattleCommand(int index) {
     // Low-byte of the bdat column value: retail truncates via stw/lbz (a
     // memory round-trip), which MWCC only emits for a union member read -
     // a plain (u8) cast compiles to rlwinm instead.
@@ -2127,14 +2127,14 @@ extern "C" void CBattleState_UnkVirtualFunc4__Q22cf12CBattleStateFv(cf::CBattleS
     entry.unk30 |= 1;
     self->CBattleState_enterStatusEntry(&entry);
 }
-// func_80146300: r3 = id, r4 = flag. When flag != 0 the three always-on ids
+// isArtsUsable: r3 = id, r4 = flag. When flag != 0 the three always-on ids
 // 0xd5/0x107/0xdd return true. When flag == 0, ids in [0xd5, 0x107] are
 // checked against a 64-bit bitmask: (1ULL << (id - 0xd5)) must land on bit
 // 0, 8, 10, 11, 12 or 50 (mask 0x0004000000001D01 -- lo word andi 0x1D01,
 // hi word bit 18 folded into retail's rlwimi r0,r3,0,13,13). Two separate
 // result locals so the no-call path stays in r0 while the __shl2i path
 // uses r31 (live across bl).
-int func_80146300(u32 id, u32 flag) {
+extern "C" int isArtsUsable(u32 id, u32 flag) {
     if (flag != 0) {
         int r = 0;
 
@@ -2220,9 +2220,9 @@ extern "C" void CBattleState_clearStatusId__Q22cf12CBattleStateFv(
 //   id in [0x139,0x13e] -> kind(i) == 0 and bdat match (id - 0x139)
 //   id in [0x13f,0x144] -> kind(i) == 1 and bdat match (id - 0x13f)
 //   else                -> 0
-// (kind = the same 0/1/2/3 decision tree as func_80145F78, inlined once per
+// (kind = the same 0/1/2/3 decision tree as isBattleEventKind1, inlined once per
 // loop; bdat column-value low-byte truncation is the stw/lbz union trick
-// from func_80145BC4.)
+// from classifyBattleCommand.)
 int func_80148778(cf::CBattleState* self, u32 id) {
     int i;
     u32 one;

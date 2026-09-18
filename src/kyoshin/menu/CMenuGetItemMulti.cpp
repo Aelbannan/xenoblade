@@ -158,8 +158,8 @@ u32 CItem_sumFamilyByte6(u32);
 // Retail passes the raw id to BdatGetItemType without a halfword mask (mr r3,
 // r4 directly), so the visible param is u32 here.
 u32 BdatGetItemType(u32);
-char* func_eu_802B1474();
-char* func_eu_802B148C();
+char* getErrMesText15();
+char* getErrMesText16();
 u16 BdatGetU16Direct(const void*, const char*, u16);
 void func_80137B44(nw4r::lyt::Layout*, char*, u32);
 void* getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32, nw4r::lyt::Layout*);
@@ -172,17 +172,17 @@ void __dt__14Class_8045F858Fv(Class_8045F858*, int);
 void func_801B59F4(CMenuGetItemMulti*);
 void func_801B5860(CMenuGetItemMulti*, int, CMenuGetItemMultiEntry*);
 void func_801B6184(CMenuGetItemMulti*, int, CMenuGetItemMultiEntry*);
-void func_801B69F4(CMenuGetItemMulti*, int, CMenuGetItemMultiEntry*);
+void GetItemMulti_ShowEntryDetailPanes(CMenuGetItemMulti*, int, CMenuGetItemMultiEntry*);
 void func_801B70BC(CMenuGetItemMulti*, int, CMenuGetItemMultiEntry*);
-void func_801B7440(CMenuGetItemMulti*, CMenuGetItemMultiEntry*);
-void func_801B76CC(CMenuGetItemMulti*, int);
+void GetItemMulti_FillEntryRankPane(CMenuGetItemMulti*, CMenuGetItemMultiEntry*);
+void GetItemMulti_ShowIdCategoryPanes(CMenuGetItemMulti*, int);
 void func_801B78B4(CMenuGetItemMulti*, int);
 void func_801B4830(CMenuGetItemMulti*);
 void func_801B7A58(CMenuGetItemMulti*, int, CMenuGetItemMultiEntry*);
 void func_801B82E8(CMenuGetItemMulti*);
 void func_801B8E2C(CMenuGetItemMulti*);
-void func_801B9864(CMenuGetItemMulti*);
-void func_801B9C1C(CMenuGetItemMulti*);
+void GetItemMulti_HandleWindowPadOnce(CMenuGetItemMulti*);
+void GetItemMulti_HandleWindowPadAuto(CMenuGetItemMulti*);
 void func_801B5630(CMenuGetItemMulti*);
 void __dt__8CProcessFv(CProcess*, int);
 u8* __ct__801B2794(u8*, u32, u32);
@@ -351,7 +351,7 @@ CMenuGetItemMulti::~CMenuGetItemMulti() {
 }
 
 extern u32 lbl_eu_80664418;
-extern "C" void func_801B29E0() { lbl_eu_80664418 = 0; }
+extern "C" void GetItemMulti_ClearDoneLatch() { lbl_eu_80664418 = 0; }
 
 void CMenuGetItemMulti::Init() {
     int memHandle = (int)mtl::MemManager::getHandleMEM2();
@@ -641,7 +641,7 @@ void CMenuGetItemMulti::Init() {
                         // reg (r19); a u8 local truncates to r0 then mr.
                         u32 slotCount = (u8)CItem_initItemImplInstances(entry)->hasSlot(entry);
                         if (slotCount != 0) {
-                            LayoutSetTextBoxFmtValue(mLayout, itemPaneName, func_eu_802B148C(), 0);
+                            LayoutSetTextBoxFmtValue(mLayout, itemPaneName, getErrMesText16(), 0);
                             PaneMatSetTevColorsByName(mLayout, itemPaneName, &lbl_eu_806643F0,
                                          &lbl_eu_806643F8);
                             for (u8 slot = 0; slot < slotCount; ++slot) {
@@ -649,7 +649,7 @@ void CMenuGetItemMulti::Init() {
                                     u16* slotData = reinterpret_cast<u16*>(
                                         CItem_initItemImplInstances(entry)->getSlot(entry, slot));
                                     if (slotData != NULL && (slotData[2] & 1) != 0) {
-                                        LayoutSetTextBoxFmtValue(mLayout, itemPaneName, func_eu_802B1474(), 0);
+                                        LayoutSetTextBoxFmtValue(mLayout, itemPaneName, getErrMesText15(), 0);
                                         PaneMatSetTevColorsByName(mLayout, itemPaneName, &lbl_eu_80664400,
                                                      &lbl_eu_80664408);
                                         break;
@@ -893,7 +893,7 @@ void CMenuGetItemMulti::Init() {
                     u32 slotCount = BdatGetU8Direct(
                         (u32)itemTable, &lbl_eu_80504A3C[0x39e], (u16)tableId);
                     if ((u8)slotCount != 0) {
-                        LayoutSetTextBoxFmtValue(mLayout, initialItemPaneName, func_eu_802B148C(), 0);
+                        LayoutSetTextBoxFmtValue(mLayout, initialItemPaneName, getErrMesText16(), 0);
                         PaneMatSetTevColorsByName(mLayout, initialItemPaneName, &lbl_eu_806643F0,
                                      &lbl_eu_806643F8);
                         for (u8 slot = 0; slot < (u8)slotCount; ++slot) {
@@ -901,7 +901,7 @@ void CMenuGetItemMulti::Init() {
                             if (BdatGetU16Direct(itemTable, slotPaneName,
                                               (u16)tableId) != 0) {
                                 LayoutSetTextBoxFmtValue(mLayout, initialItemPaneName,
-                                               func_eu_802B1474(), 0);
+                                               getErrMesText15(), 0);
                                 PaneMatSetTevColorsByName(mLayout, initialItemPaneName,
                                              &lbl_eu_80664400, &lbl_eu_80664408);
                                 break;
@@ -1024,7 +1024,7 @@ void CMenuGetItemMulti::Term() {
         field_208 = 0;
     }
     reinterpret_cast<CMenuGetItemMultiCur*>(&mCursor)->checkDeactivate();
-    func_8022B7F4(&mSystemWindow[0]);
+    sysWinTermLayout(&mSystemWindow[0]);
     if (mLayout != 0) {
         delete mLayout;
         mLayout = 0;
@@ -1080,7 +1080,7 @@ body:
         break;
     case 1:  // opening animation: position the cursor on the active item
         if (advanceAnimTransform(mAnim, lbl_eu_80667E10) == 0) break;
-        func_801D216C(&mCursor, 1);
+        Cur_SetVisible(&mCursor, 1);
         {
             char buf[32];
             s8 n = (s8)mMaxVisibleItems;
@@ -1112,16 +1112,16 @@ body:
         break;
     case 5:  // window active: cursor follows the slot selection
         if (CSysWin_isActive(&mSystemWindow[0]) == 0) break;
-        func_801D216C(&mCursor, 1);
+        Cur_SetVisible(&mCursor, 1);
         {
             nw4r::math::VEC3 pos;
-            func_8022C1B4(&pos, &mSystemWindow[0], field_1F4);
+            sysWinGetPaneScreenPos(&pos, &mSystemWindow[0], field_1F4);
             reinterpret_cast<CMenuGetItemMultiCur*>(&mCursor)->vfn4(&pos);
         }
         field_1F8 = 6;
         break;
     case 6:  // window selection: pad-input handler
-        func_801B9864(this);
+        GetItemMulti_HandleWindowPadOnce(this);
         break;
     case 7:  // confirm selection: open the item menu for the active item
         if (CSysWin_isActive(&mSystemWindow[0]) == 0) break;
@@ -1136,22 +1136,22 @@ body:
             field_1F8 = 0xb;
             field_1F5 = 0;
         } else {
-            func_801D216C(&mCursor, 1);
+            Cur_SetVisible(&mCursor, 1);
             field_1F8 = 2;
         }
         break;
     case 8:  // window active (alt): cursor follows the slot selection
         if (CSysWin_isActive(&mSystemWindow[0]) == 0) break;
-        func_801D216C(&mCursor, 1);
+        Cur_SetVisible(&mCursor, 1);
         {
             nw4r::math::VEC3 pos;
-            func_8022C1B4(&pos, &mSystemWindow[0], field_1F4);
+            sysWinGetPaneScreenPos(&pos, &mSystemWindow[0], field_1F4);
             reinterpret_cast<CMenuGetItemMultiCur*>(&mCursor)->vfn4(&pos);
         }
         field_1F8 = 9;
         break;
     case 9:  // window selection (alt): pad-input handler
-        func_801B9C1C(this);
+        GetItemMulti_HandleWindowPadAuto(this);
         break;
     case 10: // confirm from slot state: reopen or confirm
         if (CSysWin_isActive(&mSystemWindow[0]) == 0) break;
@@ -1159,13 +1159,13 @@ body:
             field_1F8 = 3;
             playUISound__FUl(0x89);
         } else {
-            func_801D216C(&mCursor, 1);
+            Cur_SetVisible(&mCursor, 1);
             field_1F8 = 2;
         }
         break;
     case 11: // menu closing: reposition the cursor on the active item
-        if (func_80167A18() != 0) break;
-        func_801D216C(&mCursor, 1);
+        if (ItemMenu_IsPresent() != 0) break;
+        Cur_SetVisible(&mCursor, 1);
         func_801B4830(this);
         {
             char buf[32];
@@ -1191,7 +1191,7 @@ body:
     // Per-frame update tail (all states fall through to here).
     mLayout->Animate(0);
     func_801D202C(&mCursor);
-    func_8022B748(&mSystemWindow[0]);
+    sysWinDispatchPhase(&mSystemWindow[0]);
 }
 
 // Adjust the item-multi pane layout for the visible-item count: each hidden
@@ -1244,12 +1244,12 @@ extern "C" void func_801B5630(CMenuGetItemMulti* self) {
 // here once the owning CFileHandle matches (event->mFileHandle == this->mFileHandle).
 // Steals the loaded buffer, publishes it to field_208, then re-reads the
 // BDAT file pointer and clears the handle. Returns 1 on success.
-int func_801B45A0(CMenuGetItemMulti* self, CEventFile* event) {
+int GetItemMulti_OnFileEvent(CMenuGetItemMulti* self, CEventFile* event) {
     if (self->mFileHandle == event->mFileHandle) {
         u8* data = self->mFileHandle->mData;
         self->mFileHandle->mData = 0;
         self->field_208 = reinterpret_cast<u32>(data);
-        func_8003AA34();
+        Bdat_GetTable_AA34();
         if (getFP__FPCc(&lbl_eu_80504A3C[0x3e5]) == 0) {
             setBdatEntry__5CBdatFUlPv(5, reinterpret_cast<u8*>(self->field_208));
         }
@@ -1283,8 +1283,8 @@ body:
         nw4r::lyt::DrawInfo drawInfo;
         func_80137250(&drawInfo);
         drawLayout(mLayout, &drawInfo, 0, 1);
-        func_8022B7C8(&mSystemWindow[0], &drawInfo);
-        func_801D20B0(&mCursor, &drawInfo);
+        sysWinDrawLayout(&mSystemWindow[0], &drawInfo);
+        Cur_DrawLayout(&mCursor, &drawInfo);
     }
 }
 
@@ -1292,7 +1292,7 @@ body:
 // (retail SDA slot lbl_eu_80664414) under the given parent process and
 // returns it, or 0 when one already exists. The 8 ctor arguments are
 // forwarded verbatim (last is a byte flag on the stack).
-IUIWindow* func_801B46E4(CProcess* pParent, CScn* pScene, u32 a, u32 b, u32 c,
+IUIWindow* GetItemMulti_CreateInstance(CProcess* pParent, CScn* pScene, u32 a, u32 b, u32 c,
                          u32 d, u32 e, u32 f, u8 g) {
     if (lbl_eu_80664414 != 0) {
         return 0;
@@ -1312,7 +1312,7 @@ IUIWindow* func_801B46E4(CProcess* pParent, CScn* pScene, u32 a, u32 b, u32 c,
 // Create the single get-item-multi task object (retail SDA slot
 // lbl_eu_80664414) under the given parent process. Returns the instance
 // pointer, or 0 when one already exists.
-u8* func_801B4790(CProcess* parent, u32 arg2, u32 arg3) {
+u8* GetItemMulti_CreateSimple(CProcess* parent, u32 arg2, u32 arg3) {
     if (lbl_eu_80664414 != 0) {
         return 0;
     }
@@ -1327,7 +1327,7 @@ u8* func_801B4790(CProcess* parent, u32 arg2, u32 arg3) {
     return (u8*)lbl_eu_80664414;
 }
 
-extern "C" unsigned long func_801B481C() { return lbl_eu_80664414 != 0; }
+extern "C" unsigned long GetItemMulti_IsActiveFlag() { return lbl_eu_80664414 != 0; }
 
 // Refresh the get-item-multi display after a sweep: re-compact the visible
 // item list (packed entries or plain ids), rebuild every item pane (name,
@@ -1483,7 +1483,7 @@ void func_801B4830(CMenuGetItemMulti* self) {
             if ((cat3 >= 4 && cat3 <= 8) || cat3 == 2) {
                 u8 slotCount = CItem_initItemImplInstances(entry)->hasSlot(entry);
                 if (slotCount != 0) {
-                    LayoutSetTextBoxFmtValue(self->mLayout, paneName, func_eu_802B148C(), 0);
+                    LayoutSetTextBoxFmtValue(self->mLayout, paneName, getErrMesText16(), 0);
                     PaneMatSetTevColorsByName(self->mLayout, paneName, &lbl_eu_806643F0,
                                  &lbl_eu_806643F8);
                     for (u8 slot = 0; slot < slotCount; ++slot) {
@@ -1491,7 +1491,7 @@ void func_801B4830(CMenuGetItemMulti* self) {
                             u16* slotData = reinterpret_cast<u16*>(
                                 CItem_initItemImplInstances(entry)->getSlot(entry, slot));
                             if (slotData != NULL && (slotData[2] & 1) != 0) {
-                                LayoutSetTextBoxFmtValue(self->mLayout, paneName, func_eu_802B1474(), 0);
+                                LayoutSetTextBoxFmtValue(self->mLayout, paneName, getErrMesText15(), 0);
                                 PaneMatSetTevColorsByName(self->mLayout, paneName, &lbl_eu_80664400,
                                              &lbl_eu_80664408);
                                 break;
@@ -1616,14 +1616,14 @@ void func_801B4830(CMenuGetItemMulti* self) {
                 u8 slotCount = BdatGetU8Direct((u32)itemTable, &lbl_eu_80504A3C[0x39e],
                                              tableId);
                 if (slotCount != 0) {
-                    LayoutSetTextBoxFmtValue(self->mLayout, paneName, func_eu_802B148C(), 0);
+                    LayoutSetTextBoxFmtValue(self->mLayout, paneName, getErrMesText16(), 0);
                     PaneMatSetTevColorsByName(self->mLayout, paneName, &lbl_eu_806643F0,
                                  &lbl_eu_806643F8);
                     for (u8 slot = 0; slot < slotCount; ++slot) {
                         char slotPaneName[32];
                         sprintf(slotPaneName, &lbl_eu_80504A3C[0x3a7], slot + 1);
                         if (BdatGetU16Direct(itemTable, slotPaneName, tableId) != 0) {
-                            LayoutSetTextBoxFmtValue(self->mLayout, paneName, func_eu_802B1474(), 0);
+                            LayoutSetTextBoxFmtValue(self->mLayout, paneName, getErrMesText15(), 0);
                             PaneMatSetTevColorsByName(self->mLayout, paneName, &lbl_eu_80664400,
                                          &lbl_eu_80664408);
                             break;
@@ -1840,16 +1840,16 @@ void func_801B5860(CMenuGetItemMulti* self, int arg2, CMenuGetItemMultiEntry* ar
         func_801B6184(self, arg2, arg3);
         goto done;
     case4_8:
-        func_801B69F4(self, arg2, arg3);
+        GetItemMulti_ShowEntryDetailPanes(self, arg2, arg3);
         goto done;
     case3:
         func_801B70BC(self, arg2, arg3);
         goto done;
     case9:
-        func_801B7440(self, arg3);
+        GetItemMulti_FillEntryRankPane(self, arg3);
         goto done;
     case10:
-        func_801B76CC(self, arg2);
+        GetItemMulti_ShowIdCategoryPanes(self, arg2);
         goto done;
     case13:
         func_801B78B4(self, arg2);
@@ -2024,7 +2024,7 @@ __declspec(noinline) void func_801B6184(CMenuGetItemMulti* self, int arg2,
 // push the per-slot values into the item-text panes, then refresh the
 // rank-window slots via func_801B7A58. arg3 is the packed entry; with no
 // entry the id comes from arg2.
-__declspec(noinline) void func_801B69F4(CMenuGetItemMulti* self, int arg2, CMenuGetItemMultiEntry* arg3) {
+__declspec(noinline) void GetItemMulti_ShowEntryDetailPanes(CMenuGetItemMulti* self, int arg2, CMenuGetItemMultiEntry* arg3) {
     nw4r::lyt::Pane* pane;
     pane = self->mLayout->GetRootPane()->FindPaneByName(&lbl_eu_80504A3C[0x40c], true);
     reinterpret_cast<CMenuGetItemPaneView*>(pane)->flags =
@@ -2261,7 +2261,7 @@ void func_801B70BC(CMenuGetItemMulti* self, int arg2, CMenuGetItemMultiEntry* ar
     self->mRankSlotPos[8] = posCopy;
 }
 
-__declspec(noinline) void func_801B76CC(CMenuGetItemMulti* self, int arg2) {
+__declspec(noinline) void GetItemMulti_ShowIdCategoryPanes(CMenuGetItemMulti* self, int arg2) {
     // Show the five panes this category touches.
     nw4r::lyt::Pane* pane = self->mLayout->GetRootPane()->FindPaneByName(
         &lbl_eu_80504A3C[0x430], true);
@@ -2309,7 +2309,7 @@ __declspec(noinline) void func_801B76CC(CMenuGetItemMulti* self, int arg2) {
 // Category-9 (rank item) display update: show the rank pane, render the rank
 // name, and populate the per-slot id/position/flag arrays for the four slots.
 // Guarded by arg3 != 0 (dispatch from func_801B5860).
-void func_801B7440(CMenuGetItemMulti* self, CMenuGetItemMultiEntry* arg3) {
+void GetItemMulti_FillEntryRankPane(CMenuGetItemMulti* self, CMenuGetItemMultiEntry* arg3) {
     if (arg3 == 0) {
         return;
     }
@@ -2710,8 +2710,8 @@ __declspec(noinline) void func_801B82E8(CMenuGetItemMulti* self) {
             if (CSysWin_isActive(&self->mSystemWindow[0]) == 0) {
                 return;
             }
-            func_8022B8E4(&self->mSystemWindow[0]);
-            func_801D216C(&self->mCursor, 1);
+            sysWinAdvancePhase3(&self->mSystemWindow[0]);
+            Cur_SetVisible(&self->mCursor, 1);
             return;
         }
         if (self->field_20C != 0) {
@@ -2729,12 +2729,12 @@ __declspec(noinline) void func_801B82E8(CMenuGetItemMulti* self) {
             char* n1 = BdatTouchStringCell(base + 0x177, base + 0x182, 0x1c);
             char* n2 = BdatTouchStringCell(base + 0x177, base + 0x182, 0x1d);
             char* n3 = BdatTouchStringCell(base + 0x177, base + 0x182, 0x1e);
-            func_8022B90C(reinterpret_cast<CSysWin*>(&self->mSystemWindow[0]), 2);
+            sysWinSwitchKindPane(reinterpret_cast<CSysWin*>(&self->mSystemWindow[0]), 2);
             func_8022B9B4(&self->mSystemWindow[0], n1, 0);
-            func_8022BF6C(&self->mSystemWindow[0], n2, n3);
+            sysWinSetTwoTextValues(&self->mSystemWindow[0], n2, n3);
             func_8022BFC8(reinterpret_cast<CSysWin*>(&self->mSystemWindow[0]), 0);
-            func_8022B8B8(&self->mSystemWindow[0]);
-            func_801D216C(&self->mCursor, 0);
+            sysWinOpenPhase1(&self->mSystemWindow[0]);
+            Cur_SetVisible(&self->mCursor, 0);
             self->field_1F4 = 1;
             return;
         }
@@ -2753,8 +2753,8 @@ __declspec(noinline) void func_801B82E8(CMenuGetItemMulti* self) {
             if (CSysWin_isActive(&self->mSystemWindow[0]) == 0) {
                 return;
             }
-            func_8022B8E4(&self->mSystemWindow[0]);
-            func_801D216C(&self->mCursor, 1);
+            sysWinAdvancePhase3(&self->mSystemWindow[0]);
+            Cur_SetVisible(&self->mCursor, 1);
             return;
         }
         u8 mv = self->mMaxVisibleItems;
@@ -2942,8 +2942,8 @@ __declspec(noinline) void func_801B82E8(CMenuGetItemMulti* self) {
                     if (CSysWin_isActive(&self->mSystemWindow[0]) == 0) {
                         return;
                     }
-                    func_8022B8E4(&self->mSystemWindow[0]);
-                    func_801D216C(&self->mCursor, 1);
+                    sysWinAdvancePhase3(&self->mSystemWindow[0]);
+                    Cur_SetVisible(&self->mCursor, 1);
                     return;
                 }
                 u8 idx = (u8)((s8)self->field_20D * 4 + self->field_20E);
@@ -2959,11 +2959,11 @@ __declspec(noinline) void func_801B82E8(CMenuGetItemMulti* self) {
                     text = BdatGetPtrDirect(reinterpret_cast<const void*>(lbl_eu_80664418),
                                          &lbl_eu_80504A3C[0x141], slotId);
                 }
-                func_8022B90C(reinterpret_cast<CSysWin*>(&self->mSystemWindow[0]), 0);
+                sysWinSwitchKindPane(reinterpret_cast<CSysWin*>(&self->mSystemWindow[0]), 0);
                 func_8022B9B4(&self->mSystemWindow[0], text, 0);
                 func_8022BFC8(reinterpret_cast<CSysWin*>(&self->mSystemWindow[0]), 1);
-                func_8022B8B8(&self->mSystemWindow[0]);
-                func_801D216C(&self->mCursor, 0);
+                sysWinOpenPhase1(&self->mSystemWindow[0]);
+                Cur_SetVisible(&self->mCursor, 0);
                 return;
             }
 
@@ -3114,7 +3114,7 @@ __declspec(noinline) void func_801B8E2C(CMenuGetItemMulti* self) {
             reinterpret_cast<CMenuGetItemMultiCur*>(&self->mCursor)->vfn4(&pos);
         }
         if (self->mVisibleItemCount == 0) {
-            func_801D216C(&self->mCursor, 0);
+            Cur_SetVisible(&self->mCursor, 0);
             self->field_1F8 = 3;
             playUISound__FUl(0x89);
         } else {
@@ -3154,7 +3154,7 @@ __declspec(noinline) void func_801B8E2C(CMenuGetItemMulti* self) {
                 reinterpret_cast<CMenuGetItemMultiCur*>(&self->mCursor)->vfn4(&pos);
             }
             if (self->mVisibleItemCount == 0) {
-                func_801D216C(&self->mCursor, 0);
+                Cur_SetVisible(&self->mCursor, 0);
                 self->field_1F8 = 3;
                 playUISound__FUl(0x89);
             } else {
@@ -3173,11 +3173,11 @@ __declspec(noinline) void func_801B8E2C(CMenuGetItemMulti* self) {
                 self->field_1F8 = 2;
                 char* name = BdatTouchStringCell(&lbl_eu_80504A3C[0x177],
                                            &lbl_eu_80504A3C[0x182], 3);
-                func_8022B90C(reinterpret_cast<CSysWin*>(&self->mSystemWindow[0]), 0);
+                sysWinSwitchKindPane(reinterpret_cast<CSysWin*>(&self->mSystemWindow[0]), 0);
                 func_8022B9B4(&self->mSystemWindow[0], name, 0);
                 func_8022BFC8(reinterpret_cast<CSysWin*>(&self->mSystemWindow[0]), 1);
-                func_8022B8B8(&self->mSystemWindow[0]);
-                func_801D216C(&self->mCursor, 0);
+                sysWinOpenPhase1(&self->mSystemWindow[0]);
+                Cur_SetVisible(&self->mCursor, 0);
             } else {
                 self->field_1F8 = 5;
                 char* n2 = BdatTouchStringCell(&lbl_eu_80504A3C[0x177],
@@ -3186,12 +3186,12 @@ __declspec(noinline) void func_801B8E2C(CMenuGetItemMulti* self) {
                                          &lbl_eu_80504A3C[0x182], 4);
                 char* n5 = BdatTouchStringCell(&lbl_eu_80504A3C[0x177],
                                          &lbl_eu_80504A3C[0x182], 5);
-                func_8022B90C(reinterpret_cast<CSysWin*>(&self->mSystemWindow[0]), 2);
+                sysWinSwitchKindPane(reinterpret_cast<CSysWin*>(&self->mSystemWindow[0]), 2);
                 func_8022B9B4(&self->mSystemWindow[0], n2, 0);
-                func_8022BF6C(&self->mSystemWindow[0], n4, n5);
+                sysWinSetTwoTextValues(&self->mSystemWindow[0], n4, n5);
                 func_8022BFC8(reinterpret_cast<CSysWin*>(&self->mSystemWindow[0]), 0);
-                func_8022B8B8(&self->mSystemWindow[0]);
-                func_801D216C(&self->mCursor, 0);
+                sysWinOpenPhase1(&self->mSystemWindow[0]);
+                Cur_SetVisible(&self->mCursor, 0);
                 self->field_1F4 = 1;
             }
         } else {
@@ -3202,12 +3202,12 @@ __declspec(noinline) void func_801B8E2C(CMenuGetItemMulti* self) {
                                      &lbl_eu_80504A3C[0x182], 4);
             char* n5 = BdatTouchStringCell(&lbl_eu_80504A3C[0x177],
                                      &lbl_eu_80504A3C[0x182], 5);
-            func_8022B90C(reinterpret_cast<CSysWin*>(&self->mSystemWindow[0]), 2);
+            sysWinSwitchKindPane(reinterpret_cast<CSysWin*>(&self->mSystemWindow[0]), 2);
             func_8022B9B4(&self->mSystemWindow[0], n2, 0);
-            func_8022BF6C(&self->mSystemWindow[0], n4, n5);
+            sysWinSetTwoTextValues(&self->mSystemWindow[0], n4, n5);
             func_8022BFC8(reinterpret_cast<CSysWin*>(&self->mSystemWindow[0]), 0);
-            func_8022B8B8(&self->mSystemWindow[0]);
-            func_801D216C(&self->mCursor, 0);
+            sysWinOpenPhase1(&self->mSystemWindow[0]);
+            Cur_SetVisible(&self->mCursor, 0);
             self->field_1F4 = 1;
         }
         return;
@@ -3240,7 +3240,7 @@ __declspec(noinline) void func_801B8E2C(CMenuGetItemMulti* self) {
             reinterpret_cast<CMenuGetItemMultiCur*>(&self->mCursor)->vfn4(&pos);
         }
         if (self->mVisibleItemCount == 0) {
-            func_801D216C(&self->mCursor, 0);
+            Cur_SetVisible(&self->mCursor, 0);
             self->field_1F8 = 3;
             playUISound__FUl(0x89);
         } else {
@@ -3254,11 +3254,11 @@ __declspec(noinline) void func_801B8E2C(CMenuGetItemMulti* self) {
             self->field_1F8 = 2;
             char* name = BdatTouchStringCell(&lbl_eu_80504A3C[0x177],
                                        &lbl_eu_80504A3C[0x182], 3);
-            func_8022B90C(reinterpret_cast<CSysWin*>(&self->mSystemWindow[0]), 0);
+            sysWinSwitchKindPane(reinterpret_cast<CSysWin*>(&self->mSystemWindow[0]), 0);
             func_8022B9B4(&self->mSystemWindow[0], name, 0);
             func_8022BFC8(reinterpret_cast<CSysWin*>(&self->mSystemWindow[0]), 1);
-            func_8022B8B8(&self->mSystemWindow[0]);
-            func_801D216C(&self->mCursor, 0);
+            sysWinOpenPhase1(&self->mSystemWindow[0]);
+            Cur_SetVisible(&self->mCursor, 0);
         } else {
             self->field_1F8 = 5;
             char* n2 = BdatTouchStringCell(&lbl_eu_80504A3C[0x177],
@@ -3267,12 +3267,12 @@ __declspec(noinline) void func_801B8E2C(CMenuGetItemMulti* self) {
                                      &lbl_eu_80504A3C[0x182], 4);
             char* n5 = BdatTouchStringCell(&lbl_eu_80504A3C[0x177],
                                      &lbl_eu_80504A3C[0x182], 5);
-            func_8022B90C(reinterpret_cast<CSysWin*>(&self->mSystemWindow[0]), 2);
+            sysWinSwitchKindPane(reinterpret_cast<CSysWin*>(&self->mSystemWindow[0]), 2);
             func_8022B9B4(&self->mSystemWindow[0], n2, 0);
-            func_8022BF6C(&self->mSystemWindow[0], n4, n5);
+            sysWinSetTwoTextValues(&self->mSystemWindow[0], n4, n5);
             func_8022BFC8(reinterpret_cast<CSysWin*>(&self->mSystemWindow[0]), 0);
-            func_8022B8B8(&self->mSystemWindow[0]);
-            func_801D216C(&self->mCursor, 0);
+            sysWinOpenPhase1(&self->mSystemWindow[0]);
+            Cur_SetVisible(&self->mCursor, 0);
             self->field_1F4 = 1;
         }
     } else {
@@ -3283,12 +3283,12 @@ __declspec(noinline) void func_801B8E2C(CMenuGetItemMulti* self) {
                                  &lbl_eu_80504A3C[0x182], 4);
         char* n5 = BdatTouchStringCell(&lbl_eu_80504A3C[0x177],
                                  &lbl_eu_80504A3C[0x182], 5);
-        func_8022B90C(reinterpret_cast<CSysWin*>(&self->mSystemWindow[0]), 2);
+        sysWinSwitchKindPane(reinterpret_cast<CSysWin*>(&self->mSystemWindow[0]), 2);
         func_8022B9B4(&self->mSystemWindow[0], n2, 0);
-        func_8022BF6C(&self->mSystemWindow[0], n4, n5);
+        sysWinSetTwoTextValues(&self->mSystemWindow[0], n4, n5);
         func_8022BFC8(reinterpret_cast<CSysWin*>(&self->mSystemWindow[0]), 0);
-        func_8022B8B8(&self->mSystemWindow[0]);
-        func_801D216C(&self->mCursor, 0);
+        sysWinOpenPhase1(&self->mSystemWindow[0]);
+        Cur_SetVisible(&self->mCursor, 0);
         self->field_1F4 = 1;
     }
 }
@@ -3297,7 +3297,7 @@ __declspec(noinline) void func_801B8E2C(CMenuGetItemMulti* self) {
 // the selection and play a sound; the held-state branches auto-repeat the
 // selection while the cursor tracks a window slot. The pad bit layout
 // depends on whether a Classic controller is attached.
-void func_801B9C1C(CMenuGetItemMulti* self) {
+void GetItemMulti_HandleWindowPadAuto(CMenuGetItemMulti* self) {
     cf::CfPadData* pad = cf::CfGameManager::getCfPadData();
 
     u32 up, down, curHeld, maskHeld;
@@ -3317,8 +3317,8 @@ void func_801B9C1C(CMenuGetItemMulti* self) {
 
     if (up) {
         self->field_1F8 = 0xa;
-        func_8022B8E4(&self->mSystemWindow[0]);
-        func_801D216C(&self->mCursor, 0);
+        sysWinAdvancePhase3(&self->mSystemWindow[0]);
+        Cur_SetVisible(&self->mCursor, 0);
         char buf[32];
         s8 n = (s8)self->mMaxVisibleItems;
         if (n == 5) {
@@ -3337,8 +3337,8 @@ void func_801B9C1C(CMenuGetItemMulti* self) {
         playUISound__FUl(3);
     } else if (down) {
         self->field_1F8 = 0xa;
-        func_8022B8E4(&self->mSystemWindow[0]);
-        func_801D216C(&self->mCursor, 0);
+        sysWinAdvancePhase3(&self->mSystemWindow[0]);
+        Cur_SetVisible(&self->mCursor, 0);
         char buf[32];
         s8 n = (s8)self->mMaxVisibleItems;
         if (n == 5) {
@@ -3362,7 +3362,7 @@ void func_801B9C1C(CMenuGetItemMulti* self) {
             self->field_1F4 = 1;
         }
         nw4r::math::VEC3 out;
-        func_8022C1B4(&out, &self->mSystemWindow[0], self->field_1F4);
+        sysWinGetPaneScreenPos(&out, &self->mSystemWindow[0], self->field_1F4);
         reinterpret_cast<CMenuGetItemMultiCur*>(&self->mCursor)->vfn4(&out);
         playUISound__FUl(1);
     } else if (curHeld) {
@@ -3371,16 +3371,16 @@ void func_801B9C1C(CMenuGetItemMulti* self) {
             self->field_1F4 = 0;
         }
         nw4r::math::VEC3 out;
-        func_8022C1B4(&out, &self->mSystemWindow[0], self->field_1F4);
+        sysWinGetPaneScreenPos(&out, &self->mSystemWindow[0], self->field_1F4);
         reinterpret_cast<CMenuGetItemMultiCur*>(&self->mCursor)->vfn4(&out);
         playUISound__FUl(1);
     }
 }
 
 // Pad-input handler for the get-item-multi window (alternate variant). Same
-// shape as func_801B9C1C; the up branch additionally flags the auto-repeat
+// shape as GetItemMulti_HandleWindowPadAuto; the up branch additionally flags the auto-repeat
 // state and uses a different selection count.
-void func_801B9864(CMenuGetItemMulti* self) {
+void GetItemMulti_HandleWindowPadOnce(CMenuGetItemMulti* self) {
     cf::CfPadData* pad = cf::CfGameManager::getCfPadData();
 
     u32 up, down, curHeld, maskHeld;
@@ -3403,8 +3403,8 @@ void func_801B9864(CMenuGetItemMulti* self) {
             self->field_1F5 = 1;
         }
         self->field_1F8 = 0x7;
-        func_8022B8E4(&self->mSystemWindow[0]);
-        func_801D216C(&self->mCursor, 0);
+        sysWinAdvancePhase3(&self->mSystemWindow[0]);
+        Cur_SetVisible(&self->mCursor, 0);
         char buf[32];
         s8 n = (s8)self->mMaxVisibleItems;
         if (n == 5) {
@@ -3423,8 +3423,8 @@ void func_801B9864(CMenuGetItemMulti* self) {
         playUISound__FUl(3);
     } else if (down) {
         self->field_1F8 = 0x7;
-        func_8022B8E4(&self->mSystemWindow[0]);
-        func_801D216C(&self->mCursor, 0);
+        sysWinAdvancePhase3(&self->mSystemWindow[0]);
+        Cur_SetVisible(&self->mCursor, 0);
         char buf[32];
         s8 n = (s8)self->mMaxVisibleItems;
         if (n == 5) {
@@ -3447,7 +3447,7 @@ void func_801B9864(CMenuGetItemMulti* self) {
             self->field_1F4 = 1;
         }
         nw4r::math::VEC3 out;
-        func_8022C1B4(&out, &self->mSystemWindow[0], self->field_1F4);
+        sysWinGetPaneScreenPos(&out, &self->mSystemWindow[0], self->field_1F4);
         reinterpret_cast<CMenuGetItemMultiCur*>(&self->mCursor)->vfn4(&out);
         playUISound__FUl(1);
     } else if (curHeld) {
@@ -3456,19 +3456,19 @@ void func_801B9864(CMenuGetItemMulti* self) {
             self->field_1F4 = 0;
         }
         nw4r::math::VEC3 out;
-        func_8022C1B4(&out, &self->mSystemWindow[0], self->field_1F4);
+        sysWinGetPaneScreenPos(&out, &self->mSystemWindow[0], self->field_1F4);
         reinterpret_cast<CMenuGetItemMultiCur*>(&self->mCursor)->vfn4(&out);
         playUISound__FUl(1);
     }
 }
 
-void OnFileEvent__17CMenuGetItemMultiFP10CEventFile(u8* self) { ((void (*)(char*))func_801B45A0)((char*)self - 0x6c); }
+void OnFileEvent__17CMenuGetItemMultiFP10CEventFile(u8* self) { ((void (*)(char*))GetItemMulti_OnFileEvent)((char*)self - 0x6c); }
 
-void func_801BA134(void* self) { ((void(*)(void*))__dt__17CMenuGetItemMultiFv)((char*)self - 0x6c); }
+void GetItemMulti_ThunkDtor6C(void* self) { ((void(*)(void*))__dt__17CMenuGetItemMultiFv)((char*)self - 0x6c); }
 
-void func_801BA13C(void* self) { ((void(*)(void*))cbRenderBefore__17CMenuGetItemMultiFv)((char*)self - 0x70); }
+void GetItemMulti_ThunkRender70(void* self) { ((void(*)(void*))cbRenderBefore__17CMenuGetItemMultiFv)((char*)self - 0x70); }
 
-void func_801BA144(void* self) { ((void(*)(void*))__dt__17CMenuGetItemMultiFv)((char*)self - 0x70); }
+void GetItemMulti_ThunkDtor70(void* self) { ((void(*)(void*))__dt__17CMenuGetItemMultiFv)((char*)self - 0x70); }
 
 // --- hard-symbol stubs (scaffold_hard_symbols) ---
 // Static constructor: initialise the get-item-multi pane colour/position

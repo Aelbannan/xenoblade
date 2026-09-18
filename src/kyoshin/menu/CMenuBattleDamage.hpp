@@ -47,14 +47,14 @@ struct CMenuBattleDamageEntry {
 };
 
 // 0xc-byte queued digit triple (stride of the 0x20-element array at +0x10 of
-// CMenuBattleDamageQueue). func_8010A940 appends, func_8010ACC4 draws one.
+// CMenuBattleDamageQueue). func_8010A940 appends, BtlDmg_QueueDraw draws one.
 struct CMenuBattleDamageSlot {
     u32 mVal0; // 0x00
     u32 mVal1; // 0x04
     u32 mVal2; // 0x08
 };
 
-// Damage-number queue backing func_8010ACC4: layout + busy flag + digit slots.
+// Damage-number queue backing BtlDmg_QueueDraw: layout + busy flag + digit slots.
 struct CMenuBattleDamageQueue {
     u32 field_00;                        // 0x00
     nw4r::lyt::Layout* mLayout;          // 0x04
@@ -88,7 +88,7 @@ struct CMenuBattleDamageLayout {
  *   0x58/0x5C IWorkEvent / IScnRender subobject vtable slots
  *   0x60  CScn* mScn (owning scene)
  *   0x64  UnkClass_8045F564 scratch region (0x10 bytes)
- *   0x774/0x775 byte fields (func_8010975C / func_80109770 setters)
+ *   0x774/0x775 byte fields (BtlDmg_SetDamageType / BtlDmg_SetDamageDir setters)
  */
 class CMenuBattleDamage {
 public:
@@ -119,10 +119,10 @@ public:
     CScn* mScn;                   // 0x60 owning scene
     UnkClass_8045F564 mMemRegion; // 0x64 UnkClass_8045F564 storage (manual dtor)
     CMenuBattleDamageEntry mEntries[0x20]; // 0x74..0x773 damage entries
-    u8 mDamageType;               // 0x774 (func_8010975C setter)
-    u8 mDamageDir;                // 0x775 (func_80109770 setter)
+    u8 mDamageType;               // 0x774 (BtlDmg_SetDamageType setter)
+    u8 mDamageDir;                // 0x775 (BtlDmg_SetDamageDir setter)
     u8 _pad776[0x779 - 0x776];    // 0x776..0x778
-    u8 field_0x779;               // 0x779 (func_8010989C setter)
+    u8 field_0x779;               // 0x779 (BtlDmg_SetField779 setter)
 };
 
 /*
@@ -324,9 +324,9 @@ void func_8049B59C(nw4r::math::VEC3* out, CMenuBattleDamagePose* pose,
 char* BdatTouchStringCell(const void*, const void*, int);
 void LayoutSetTextBoxFmtValue(nw4r::lyt::Layout*, const char*, const char*, u32);
 void PaneSetTexPaletteByName(nw4r::lyt::Layout*, const char*);
-const char* func_eu_802B142C();
-const char* func_eu_802B1444();
-const char* func_eu_802B145C();
+const char* getErrMesText12();
+const char* getErrMesText13();
+const char* getErrMesText14();
 }
 
 // C++-linkage imports (retail symbols are the Itanium-mangled forms).

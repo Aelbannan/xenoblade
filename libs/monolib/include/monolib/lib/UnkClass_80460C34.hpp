@@ -117,7 +117,7 @@ extern const z_ushort lbl_eu_80523D20[]; // dext
 
 // adler32 / inflate_fast live in the sibling TU UnkClass_80460308.
 z_ulong processData__17UnkClass_80460308Fv(z_ulong adler, const z_uchar* buf, z_uint len);
-void    func_80460728__17UnkClass_80460308Fv(z_stream* strm, z_uint out);
+void    ZlibInflateFastCore(z_stream* strm, z_uint out);
 }
 
 // C-linkage imports

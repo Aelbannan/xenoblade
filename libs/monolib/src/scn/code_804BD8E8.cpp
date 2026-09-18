@@ -28,7 +28,7 @@ extern "C" CVec3 zero__Q22ml5CVec3;
 
 // Cross-TU imports (monolib/coli code_804B59C8). C linkage keeps the retail
 // plain symbol names (MWCC would mangle C++-linkage declarations).
-extern "C" u32 func_804BADA0(const char* self);
+extern "C" u32 Coli_IsSlotActive_ADA0(const char* self);
 extern "C" void func_804BA7BC(const char* self, u32 a, u32 b);
 extern "C" void func_804BA26C(const char* self, u32 a, u32 b, u32 c, u32 d);
 
@@ -46,8 +46,10 @@ void func_804B8C2C(void* state, const void* a1, const void* a2,
 void func_804B91E0(void* state, const void* pos, u32 filterA,
                    u32 mode, u32 flag);
 void func_804B9818(char* state);
-void func_804BF59C(void* obj, void* other);
+void ScnEnvLgt_noopF59C(void* obj, void* other);
 void noopAnimVec3(void* obj);
+void func_804BA8B4(void* state, void* a1, void* a2, void* a3, void* a4,
+                   void* a5);
 }
 extern u8 lbl_eu_8066597F;
 
@@ -92,7 +94,7 @@ extern u32 lbl_eu_80665984;
 
 // Defined later in this TU.
 s32 func_804BF3EC(f32* v, f32* outLen, s32 flag, f32 scale);
-void func_804BEEEC();
+void ScnRes_DispatchCrossCb_EEEC();
 
 // nw4r math/db helpers (retail plain symbols; C linkage keeps them unmangled).
 extern "C" float FrSqrt__Q24nw4r4mathFf(float);
@@ -153,7 +155,7 @@ s32 func_804BD94C(ml::CVec3* pos, ml::CVec3* anchor, f32 t1, f32 t2, f32 t3,
     WorkL* w = (WorkL*)lbl_eu_8065F428;
     // Retail calls this helper with the entry index; the TU-local definition
     // is declared without parameters, so go through a typed pointer.
-    s32 (*recordCrossing)(s32) = (s32 (*)(s32))&func_804BEEEC;
+    s32 (*recordCrossing)(s32) = (s32 (*)(s32))&ScnRes_DispatchCrossCb_EEEC;
 
     // Publish the anchor and thresholds into the shared state block.
     w->anchor[0] = anchor->x;
@@ -312,7 +314,7 @@ s32 func_804BD94C(ml::CVec3* pos, ml::CVec3* anchor, f32 t1, f32 t2, f32 t3,
 }
 
 // Begin a registration pass over the scene resources.
-s32 func_804BE2E8(const f32* offset, u32 flags, int mode, int select) {
+s32 ScnRes_RegPassSelect_E2E8(const f32* offset, u32 flags, int mode, int select) {
     if (select != 0) {
         func_804B9E14(lbl_eu_8065F32C, offset, flags, mode);
     } else {
@@ -323,19 +325,19 @@ s32 func_804BE2E8(const f32* offset, u32 flags, int mode, int select) {
 
 // Forward the segment-query pass to the collision manager and surface the
 // shared entry count.
-u32 func_804BE348(const void* a1, const void* a2, u32 a3, u32 a4,
+u32 ScnRes_SegQueryForward_E348(const void* a1, const void* a2, u32 a3, u32 a4,
                   u32 a5) {
     func_804B8C2C((void*)lbl_eu_8065F32C, a1, a2, a3, a4, a5);
     return lbl_eu_80665988;
 }
 
 // Forward the vertical ray registration pass to the collision manager.
-u32 func_804BE398(const void* a1, u32 a2, u32 a3, u32 a4) {
+u32 ScnRes_VertRayForward_E398(const void* a1, u32 a2, u32 a3, u32 a4) {
     func_804B91E0((void*)lbl_eu_8065F32C, a1, a2, a3, a4);
     return lbl_eu_80665988;
 }
 
-void func_804BE3E0(u32 a1, u32 a2, u32 a3, u32 a4) {
+void ScnRes_Notify4Word_E3E0(u32 a1, u32 a2, u32 a3, u32 a4) {
     func_804BA26C(lbl_eu_8065F32C, a1, a2, a3, a4);
 }
 
@@ -389,21 +391,20 @@ struct ScnWork {
     Rec12 recs[32];         // 0x498 (lbl_eu_8065F8C0)
 };
 
-void func_804BE458(u32 a1, u32 a2) {
+void ScnRes_Notify2Word_E458(u32 a1, u32 a2) {
     func_804BA7BC(lbl_eu_8065F32C, a1, a2);
 }
 
-void func_804BE470(void* a1, void* a2, void* a3, void* a4, void* a5) {
-    extern void func_804BA8B4(void*, void*, void*, void*, void*, void*);
+void ScnRes_Notify5Ptr_E470(void* a1, void* a2, void* a3, void* a4, void* a5) {
     extern char lbl_eu_8065F32C[];
     func_804BA8B4(lbl_eu_8065F32C, a1, a2, a3, a4, a5);
 }
 
-u32 func_804BE4A0() {
-    return func_804BADA0(lbl_eu_8065F32C);
+u32 ScnRes_IsStateActive_E4A0() {
+    return Coli_IsSlotActive_ADA0(lbl_eu_8065F32C);
 }
 
-u32 func_804BE4AC(void) {
+u32 ScnRes_GetEntryCount_E4AC(void) {
     extern u32 lbl_eu_80665988;
     return lbl_eu_80665988;
 }
@@ -429,18 +430,18 @@ void func_804BE4E0(ScnResHead* dst, int index) {
 }
 
 extern "C" { extern unsigned char lbl_eu_8065F428[]; }
-extern "C" void* func_804BE50C(u32 idx) { return (void*)((char*)lbl_eu_8065F428 + idx * 0x24); }
+extern "C" void* ScnRes_GetEntryPtr_E50C(u32 idx) { return (void*)((char*)lbl_eu_8065F428 + idx * 0x24); }
 
-void* func_804BE520(int index) {
+void* ScnRes_GetEntryHead2_E520(int index) {
     extern unsigned char lbl_eu_8065F428[];
     return (void*)(lbl_eu_8065F428 + index * sizeof(ScnResourceEntry) + 0x0c);
 }
 
 extern "C" s32 func_804BE62C(ml::CVec3* out);
-extern "C" void func_804BE538(void) { ((s32 (*)())&func_804BE62C)(); }
+extern "C" void ScnRes_ProjThunk_E538(void) { ((s32 (*)())&func_804BE62C)(); }
 
 // Fetch the scale/pair table row referenced by resource entry [index].
-s32 func_804BE53C(f32* dst, s32 index) {
+s32 ScnRes_FetchScaleRow_E53C(f32* dst, s32 index) {
     s32 ofs = index * 0x24;
     const u8* info = *(const u8* const*)(lbl_eu_8065F428 + ofs + 0x18);
     u8 code = info[0x0F];
@@ -454,27 +455,27 @@ s32 func_804BE53C(f32* dst, s32 index) {
     return 0;
 }
 
-extern "C" int func_804BEE54(u32 flags);
-extern "C" int func_804BE5A0(u32 flags) { return func_804BEE54(flags); }
+extern "C" int ScnRes_ScanFlaggedEntry_EE54(u32 flags);
+extern "C" int ScnRes_HasFlaggedEntry_E5A0(u32 flags) { return ScnRes_ScanFlaggedEntry_EE54(flags); }
 
-extern "C" int func_804BEEAC(u32 flags, u32 index);
-extern "C" void func_804BE5A4(void) { ((int (*)())&func_804BEEAC)(); }
+extern "C" int ScnRes_IsEntryFlagged_EEAC(u32 flags, u32 index);
+extern "C" void ScnRes_EntryFlagThunk_E5A4(void) { ((int (*)())&ScnRes_IsEntryFlagged_EEAC)(); }
 
-extern "C" s32 func_804BEDFC(u32* dst, u32 mask, u32 index, u32 offset);
-extern "C" void func_804BE5A8(void) { ((s32 (*)())&func_804BEDFC)(); }
+extern "C" s32 ScnRes_ReadTableByte_EDFC(u32* dst, u32 mask, u32 index, u32 offset);
+extern "C" void ScnRes_TableByteThunk_E5A8(void) { ((s32 (*)())&ScnRes_ReadTableByte_EDFC)(); }
 
-int func_804BE5AC() {
-    return func_804BEE54(0x8000);
+int ScnRes_HasHighFlagEntry_E5AC() {
+    return ScnRes_ScanFlaggedEntry_EE54(0x8000);
 }
 
 extern u8 lbl_eu_8066597C;
 extern u8 lbl_eu_8066597D;
-u8 func_804BE5B8() { return lbl_eu_8066597C; }
+u8 ScnRes_GetCrossFlagA_E5B8() { return lbl_eu_8066597C; }
 
-u8 func_804BE5C0() { return lbl_eu_8066597D; }
+u8 ScnRes_GetCrossFlagB_E5C0() { return lbl_eu_8066597D; }
 
 // Scan the resource entries for one whose info selects an enabled mask bit.
-s32 func_804BE5C8() {
+s32 ScnRes_AnyEntryValued_E5C8() {
     extern unsigned char lbl_eu_8065F428[];
     s32 count = lbl_eu_80665988;
     ScnResourceEntry* entries = (ScnResourceEntry*)lbl_eu_8065F428;
@@ -487,14 +488,14 @@ s32 func_804BE5C8() {
     return 0;
 }
 
-int func_804BE604(int index) {
+int ScnRes_IsEntryValued_E604(int index) {
     extern unsigned char lbl_eu_8065F428[];
     ScnResourceEntry* entries = (ScnResourceEntry*)lbl_eu_8065F428;
     return entries[index].value != 0;
 }
 
-extern "C" void func_804BF3B4(s32 flag);
-extern "C" void func_804BE628(void) { ((void (*)())&func_804BF3B4)(); }
+extern "C" void ScnRes_InstallCrossCb_F3B4(s32 flag);
+extern "C" void ScnRes_XCrossCbThunk_E628(void) { ((void (*)())&ScnRes_InstallCrossCb_F3B4)(); }
 
 // Triangle descriptor referenced by the resource-entry header words.
 struct ScnTriInfo {
@@ -687,7 +688,7 @@ s32 func_804BE62C(ml::CVec3* out) {
 #pragma auto_inline off
 // Report whether resource entry [index]'s info selects a mask bit enabled by
 // 'mask', and store the following table record's byte at 'offset' into *dst.
-extern "C" s32 func_804BEDFC(u32* dst, u32 mask, u32 index, u32 offset) {
+extern "C" s32 ScnRes_ReadTableByte_EDFC(u32* dst, u32 mask, u32 index, u32 offset) {
     extern unsigned char lbl_eu_8065F428[];
     ScnResourceEntry* entries = (ScnResourceEntry*)lbl_eu_8065F428;
     u32* table = *(u32**)(lbl_eu_8065F32C + 40);
@@ -704,7 +705,7 @@ extern "C" s32 func_804BEDFC(u32* dst, u32 mask, u32 index, u32 offset) {
 #pragma auto_inline off
 // Scan every active resource entry; report 1 when any entry's info selects a
 // mask bit enabled by 'flags'.
-extern "C" int func_804BEE54(u32 flags) {
+extern "C" int ScnRes_ScanFlaggedEntry_EE54(u32 flags) {
     extern unsigned char lbl_eu_8065F428[];
     s32 count = lbl_eu_80665988;
     if (count != 0) {
@@ -726,7 +727,7 @@ extern "C" int func_804BEE54(u32 flags) {
 #pragma auto_inline off
 // Report whether resource entry [index]'s info selects a mask bit enabled by
 // 'flags' (result shifted left by one like retail).
-extern "C" int func_804BEEAC(u32 flags, u32 index) {
+extern "C" int ScnRes_IsEntryFlagged_EEAC(u32 flags, u32 index) {
     extern unsigned char lbl_eu_8065F428[];
     ScnResourceEntry* entries = (ScnResourceEntry*)lbl_eu_8065F428;
     u32* table = *(u32**)(lbl_eu_8065F32C + 40);
@@ -736,11 +737,11 @@ extern "C" int func_804BEEAC(u32 flags, u32 index) {
 #pragma pop
 
 // Dissolved monolibdata2 sdata slot: word 0 is the func_804BF274 pointer
-// called by func_804BEEEC (retail loads the data word, not the address).
+// called by ScnRes_DispatchCrossCb_EEEC (retail loads the data word, not the address).
 extern "C" u32 lbl_eu_80663AD8[2];
 extern "C" u32 lbl_eu_80663AE0[2];
 
-void func_804BEEEC() {
+void ScnRes_DispatchCrossCb_EEEC() {
     ((void (*)())*(u32*)&lbl_eu_80663AD8)();
 }
 
@@ -908,7 +909,7 @@ s32 func_804BF274(s32 index) {
 #pragma auto_inline off
 // Install the active crossing-record callback (func_804BEEF8 when enabled,
 // func_804BF274 otherwise) and its enabled flag.
-extern "C" void func_804BF3B4(s32 flag) {
+extern "C" void ScnRes_InstallCrossCb_F3B4(s32 flag) {
     if (flag != 0) {
         lbl_eu_80663AD8[0] = (u32)&func_804BEEF8;
         lbl_eu_8066597F = 1;
@@ -958,7 +959,7 @@ s32 func_804BF3EC(f32* v, f32* outLen, s32 flag, f32 scale) {
 // Construct the 32 resource-entry records and the 32 history slots.
 extern u8 lbl_eu_8065F8C0[384];
 void sinit_804BF540() {
-    __construct_array(lbl_eu_8065F428, (ConstructorDestructor)func_804BF59C,
+    __construct_array(lbl_eu_8065F428, (ConstructorDestructor)ScnEnvLgt_noopF59C,
                       NULL, 0x24, 32);
     __construct_array(lbl_eu_8065F8C0, (ConstructorDestructor)noopAnimVec3,
                       NULL, 12, 32);

@@ -361,13 +361,13 @@ extern CEquipWorkItem lbl_eu_80576568;
 extern s8 lbl_eu_8066469C;
 
 // bdat helpers used by func_802052A8's rebuild path.
-extern "C" u32 func_8003B1EC(void* file);
+extern "C" u32 Bdat_GetMaxRow_B1EC(void* file);
 extern "C" void func_80159F6C(void* self, u32 family, u32 row, u16 kind);
 
 
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
 // Retail emits these as C-style (unmangled) symbols, so reference them with C
-// linkage. func_801D2ED8/CEquipItemBox gates take the object and return status.
+// linkage. Cur_BothSubPanesOn/CEquipItemBox gates take the object and return status.
 extern "C" u32 AnimRewindFrame(nw4r::lyt::AnimTransform*, float);
 
 // CItemBoxInfo helpers used by the equip-change screen (C-ABI retail names).
@@ -383,10 +383,10 @@ void advanceItemBoxState(CItemBoxInfo* info);
 
 extern "C" void updateEIBBox(CEquipItemBox* box);
 // 2-arg subcur visibility setter (retail unmangled symbol; see CCur.cpp).
-extern "C" void func_801D2E4C(void*, u32);
+extern "C" void Cur_ShowTwoSubPanes(void*, u32);
 extern "C" void closeEIBBox(CEquipItemBox* box);
 extern "C" void eibNavLeft(CEquipItemBox* box);
-extern "C" int func_801D2ED8(CBaseCur*);
+extern "C" int Cur_BothSubPanesOn(CBaseCur*);
 extern "C" int getEIBOpenFlag(CEquipItemBox* box);
 extern "C" int getEIBActiveMark(CEquipItemBox* box);
 extern "C" int eibInputBlocked(CEquipItemBox* box);
@@ -414,7 +414,7 @@ extern "C" void openEIBBox(CEquipItemBox* box);
 extern "C" int eibHudPrompt(CEquipItemBox* box);
 extern "C" void drawEIBBox(CEquipItemBox* box, nw4r::lyt::DrawInfo* drawInfo);
 extern "C" void* func_802052A8(CEquipChange* self);
-extern "C" void func_801D20B0(void*, void*);
+extern "C" void Cur_DrawLayout(void*, void*);
 extern "C" void renderItemBox(CItemBoxInfo* info, nw4r::lyt::DrawInfo* drawInfo);
 
 // CEquipItemBox gate/handler imports used by the equip-change handlers.
@@ -429,7 +429,7 @@ extern "C" int findEIBEquipSlot(CEquipItemBox* box);
 // bdat item-name table (sdata pointer) and message-count lookup used by
 // func_80203210's category equip checks.
 extern u32 lbl_eu_806640EC;
-extern "C" u32 func_8009CF8C(u32 resourceId);
+extern "C" u32 CtrlRemote_TouchBitByArg(u32 resourceId);
 
 // Per-category equipped-item row setters (func_80203210 case tails).
 extern "C" void CtrlObjectParam_SetEquipSlot5(void*, int);
@@ -451,8 +451,8 @@ struct CEquipEnumList { u8 _00[0x620]; u32 field_0x620; };
 struct CEquipEnumListSlot { u8 _00[0x4]; void* field_0x4; };
 extern "C" void CTaskGame_enumListCtor(void*);
 extern "C" void* CTaskGame_enumListGet(void*);
-extern "C" void func_800F4A98(void*, u32, u32);
-extern "C" void* func_800F6EC0(void*, u32);
+extern "C" void startEnumObjects(void*, u32, u32);
+extern "C" void* getEntryAt(void*, u32);
 extern "C" void* getCfObjectPc__FPQ22cf12CfObjectMove(void* objMove);
 extern "C" void func_800BFDE0(void* obj, u32 flag);
 extern "C" void __dt__80043E88(void*, int);
@@ -463,7 +463,7 @@ extern "C" void eibApplySelect(CEquipItemBox* box, u16 arg2, void* arg3);
 extern "C" void func_80202EB4(CEquipChange* self, u8 cat);
 
 // Sub-cursor activate (defined in CCur.cpp).
-extern "C" void func_801D2174(CBaseCur* cur);
+extern "C" void Cur_SetActive(CBaseCur* cur);
 
 // Accumulate a pane's translate into output (CPartyState.hpp also declares
 // this C-ABI helper).

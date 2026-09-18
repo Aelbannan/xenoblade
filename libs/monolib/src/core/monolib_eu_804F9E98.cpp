@@ -4,7 +4,7 @@
 // Both helpers operate on a small "request" record: a fixed inline string
 // payload (0x00-0x0c) followed by two byte flags (0x0d, 0x0e) and a signed
 // lifecycle-state byte (0x0f). func_eu_804F9E98 builds such a record and
-// returns a module-global string pointer; func_eu_804F9EE0 polls the record's
+// returns a module-global string pointer; MonoReqPollLifecycle polls the record's
 // lifecycle state.
 //
 // sinit_eu_804F9FA4 installs the module-global string pointer via a retail
@@ -58,10 +58,10 @@ extern "C" char** func_eu_804F9E98(MonoRequestState* req, const char* src,  // r
     return &lbl_eu_80665A98;
 }
 
-// us-804f9ee0: func_eu_804F9EE0  size=0xC4
+// us-804f9ee0: MonoReqPollLifecycle  size=0xC4
 // Lifecycle poll. The record's signed state byte drives a small state machine:
 //   returns 0 = still busy, 1 = done, 2 = error.
-extern "C" int func_eu_804F9EE0(u8* unused, MonoRequestState* req) {  // polls lbl_eu_806659D0/D4
+extern "C" int MonoReqPollLifecycle(u8* unused, MonoRequestState* req) {  // polls lbl_eu_806659D0/D4
     if (lbl_eu_806659D0 != 0) return 0;
 
     switch (req->state) {

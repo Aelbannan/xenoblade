@@ -73,9 +73,9 @@ void func_8006CC68(); void cfCam_getPlus1C(); void cfCam_copyToPlus28(); void cf
 void cfCam_nestedPlus118(); void func_8006E884(); void cfCam_nopVirt24(); void func_8006BFDC();
 void cfCam_copyToPlus10(); void cfCam_getPlus10(); void cfCam_getPlus40(); void cfCam_initFollowS();
 void cfCam_setFollowD(); void cfCam_storeUnk08(); void cfCam_returnZero(); void cfCam_copyCamState();
-void func_800606AC(); void func_80060738(); void func_800607C4(); void cfCam_get1E0Again();
-void cfCam_setFollowTg(); void cfCam_loadUnk164(); void func_800605D0(); void func_80073D8C();
-void func_80060B84(); void cfCam_getActivePad(); void func_80074AA4(); void func_80060A08();
+void camPluginNoopV4C(); void camPluginNoopV50(); void camPluginNoopV54(); void cfCam_get1E0Again();
+void cfCam_setFollowTg(); void cfCam_loadUnk164(); void camPluginNoopV64(); void func_80073D8C();
+void camPluginNoopV6C(); void cfCam_getActivePad(); void func_80074AA4(); void camPluginNoopV68();
 }
 __declspec(section ".data") __attribute__((aligned(8))) __attribute__((used)) const void* lbl_eu_80527260[34] = {
     lbl_eu_80661B28, 0,
@@ -85,10 +85,10 @@ __declspec(section ".data") __attribute__((aligned(8))) __attribute__((used)) co
     (const void*)cfCam_nopVirt24, (const void*)func_8006BFDC, (const void*)cfCam_copyToPlus10,
     (const void*)cfCam_getPlus10, (const void*)cfCam_getPlus40, (const void*)cfCam_initFollowS,
     (const void*)cfCam_setFollowD, (const void*)cfCam_storeUnk08, (const void*)cfCam_returnZero,
-    (const void*)cfCam_copyCamState, (const void*)func_800606AC, (const void*)func_80060738,
-    (const void*)func_800607C4, (const void*)cfCam_get1E0Again, (const void*)cfCam_setFollowTg,
-    (const void*)cfCam_loadUnk164, (const void*)func_800605D0, (const void*)func_80073D8C,
-    (const void*)func_80060B84, (const void*)cfCam_getActivePad, (const void*)func_80074AA4,
+    (const void*)cfCam_copyCamState, (const void*)camPluginNoopV4C, (const void*)camPluginNoopV50,
+    (const void*)camPluginNoopV54, (const void*)cfCam_get1E0Again, (const void*)cfCam_setFollowTg,
+    (const void*)cfCam_loadUnk164, (const void*)camPluginNoopV64, (const void*)func_80073D8C,
+    (const void*)camPluginNoopV6C, (const void*)cfCam_getActivePad, (const void*)func_80074AA4,
     &lbl_eu_80661B30, 0, 0, 0
 };
 DECOMP_FORCEACTIVE(kyoshin_cf_CfCamEvent_1_vt1, lbl_eu_80527260);
@@ -102,9 +102,9 @@ __declspec(section ".data") __attribute__((aligned(8))) __attribute__((used)) co
     0, 0, 0,
     (const void*)cfCam_storeUnk08, (const void*)cfCam_returnZero,
     0,
-    (const void*)func_800606AC, (const void*)func_80060738, (const void*)func_800607C4,
+    (const void*)camPluginNoopV4C, (const void*)camPluginNoopV50, (const void*)camPluginNoopV54,
     0, 0, 0,
-    (const void*)func_800605D0, (const void*)func_80060A08, (const void*)func_80060B84
+    (const void*)camPluginNoopV64, (const void*)camPluginNoopV68, (const void*)camPluginNoopV6C
 };
 DECOMP_FORCEACTIVE(kyoshin_cf_CfCamEvent_1_vt2, lbl_eu_805272E8vt);
 __declspec(section ".data") __attribute__((aligned(8))) __attribute__((used)) const char lbl_eu_805272E8str[0x70] =
@@ -428,8 +428,8 @@ CfCamEventObj* func_800784A0(u32 first, CfCamEventObj* second,
                         player = (CfCamEventObj*)getPlayer__Q22cf13CfGameManagerFi(1);
                 }
 
-                u16 c1 = (u16)func_80078400(sixth->h0A, sixth->h0C);
-                u16 c2 = (u16)func_80078400(sixth->h0E, sixth->h10);
+                u16 c1 = (u16)CamEvtMapActionToCampaign(sixth->h0A, sixth->h0C);
+                u16 c2 = (u16)CamEvtMapActionToCampaign(sixth->h0E, sixth->h10);
                 func_80077F20(&toutA, second, player, c1,
                               sixth->h0A, &sixth->f1C);
                 tbl.f1C = toutA.x;
@@ -609,7 +609,7 @@ void lookupEffectForResource__Q22cf13CfGameManagerFv(int a, int b, int c){}
 // Vector-normalize helper; the body is provided by this TU (declared in
 // CfCamEvent_1.hpp). Callers pass raw triplet/element storage, so the
 // call sites region it through the CVec3 parameter type.
-extern void func_800A3F8C(ml::CVec3*) {}
+extern void VecMath_WrapAnglesPi(ml::CVec3*) {}
 void func_800B24B0(){}
 
 // CfCamEventManager constructor. Clears the field/flag words, walks the two
@@ -668,7 +668,7 @@ CfCamEventManager::CfCamEventManager() {
             func_80240878(p);
             p += 0x188;
         } while (p < end);
-        func_80240A64(mem);
+        MenuFx_ClearSlotFlags(mem);
     }
     field_0x38 = (u32)mem;
 }
@@ -702,7 +702,7 @@ CfCamEventManager::~CfCamEventManager() {
 // Release all three effect slots:
 // the pointer. The redundant second pointer test mirrors MWCC's `delete`
 // expansion (retail emits three beq against one cmpwi).
-void func_800754C0(CfCamEventManager* self) {
+void CamEvtReleaseAllSlots(CfCamEventManager* self) {
     for (int i = 0; i < 3; i++) {
         CfCamEventSlot* p = self->slots[i];
         if (p) {
@@ -715,7 +715,7 @@ void func_800754C0(CfCamEventManager* self) {
     }
 }
 
-void func_80075540(CfCamEventManager* self, u32 idx) {
+void CamEvtReleaseMappedSlot(CfCamEventManager* self, u32 idx) {
     u32 n = func_800755BC(self, idx);
     CfCamEventSlot* p = self->slots[n];
     if (p) {
@@ -727,7 +727,7 @@ void func_80075540(CfCamEventManager* self, u32 idx) {
     }
 }
 
-void* func_800755B0(void* self, unsigned long idx) {
+void* CamEvtFetchSlotPtr(void* self, unsigned long idx) {
     return *(void**)((char*)self + (idx << 2));
 }
 
@@ -864,7 +864,7 @@ void func_800756D0(ml::CVec3* out, CinemCamSrc* src) {
         ((u32*)out)[2] = ((u32*)&pos)[2];
 
         if (anchor != nullptr && (src->field_0x64 & 4) &&
-            src->field_0x70 == func_800AA300(5, 4, 1)) {
+            src->field_0x70 == Tok_Pack20(5, 4, 1)) {
             CamTripletLocals av;
             f32 az = anchor->z;
             f32 ay = anchor->y;
@@ -1124,15 +1124,15 @@ void func_80075934(ml::CVec3* out1, ml::CVec3* out2, CamCamSrc* a, CamCamSrc* b,
     if (s0 != 0) out2->y = out1->y;
 
     // Demo-mode pitch correction between the two voices' current positions.
-    if (c1 == 1 && c2 == 1 && func_800FE68C() != 0) {
-        void* sel = func_800FE68C();
+    if (c1 == 1 && c2 == 1 && Selector_GetInstance() != 0) {
+        void* sel = Selector_GetInstance();
         void* handle = findObjectById__Fi((int)*(u32*)((u8*)sel + 0x90E4));
         if (handle != 0) {
             f32 ya = ((CinemVecOut*)((CamEventVoice*)&a->voice)->getVecOut())->v.y;
             CinemVecOut* vb = (CinemVecOut*)((CamEventVoice*)handle)
                                   ->getVecOut();
             if (vb->v.y - ya >= lbl_eu_80666428) {
-                if (((CamGroundQueryFn)func_804BE398)(
+                if (((CamGroundQueryFn)ScnRes_VertRayForward_E398)(
                         (float*)out2, 0x4044a05, 0, 0,
                         lbl_eu_80666448, lbl_eu_8066641C)) {
                     CamTripletLocals t; // retail 0x1B8
@@ -1144,7 +1144,7 @@ void func_80075934(ml::CVec3* out1, ml::CVec3* out2, CamCamSrc* a, CamCamSrc* b,
             }
         }
     }
-    if (func_804BE348(out2, out1, 0x4044a03, 0)) {
+    if (ScnRes_SegQueryForward_E348(out2, out1, 0x4044a03, 0)) {
         out1->y = out1->y + lbl_eu_80666428;
     }
 }
@@ -1175,7 +1175,7 @@ static inline void camEventAnglePair(ml::CVec3* o1, ml::CVec3* o2,
         dst2->x0 = lbl_eu_80666454 * Atan2FIdx__Q24nw4r4mathFff(d.y, len);
         dst2->x4 = lbl_eu_80666454 * Atan2FIdx__Q24nw4r4mathFff(d.z, d.x);
         dst2->x8 = lbl_eu_8066641C;
-        func_800A3F8C((ml::CVec3*)dst2);
+        VecMath_WrapAnglesPi((ml::CVec3*)dst2);
         // Second stack copy of the difference: PSVECMag takes its address,
         // so the epsilon checks below read back through memory.
         ml::CVec3 dm;
@@ -1291,7 +1291,7 @@ int func_800762A0(CfCamEventManager* self) {
 
 // Bitmask capability check: returns 1 iff 'flags' grants the given capability.
 // extern "C": retail symbol is the bare name.
-extern "C" int func_80076C08(int type_, int state, int flags) {
+extern "C" int CamEvtCheckCapability(int type_, int state, int flags) {
     if (flags == 0) return 1;
     if ((flags & 1) && type_ == 0 && state != 0) return 1;
     if ((flags & 2) && type_ == 0 && state == 0) return 1;
@@ -1305,7 +1305,7 @@ extern "C" int func_80076C08(int type_, int state, int flags) {
 
 // Returns 1 when 'flags' bit n pairs with 'type_' == n+1.
 // extern "C": retail symbol is the bare name.
-extern "C" int func_80076CE4(int type_, int flags) {
+extern "C" int CamEvtMatchTypeFlag(int type_, int flags) {
     if (flags == 0) return 1;
     if ((flags & 1) && type_ == 1) return 1;
     if ((flags & 2) && type_ == 2) return 1;
@@ -1336,7 +1336,7 @@ int func_80076D8C(int unused, int type_, CamEventSrc* src, CamEventTargetInfo* o
     int row;
     u8 c0, c1, c2, w, w2;                   // per-row column bytes
 
-    func_8003AA34();
+    Bdat_GetTable_AA34();
     g = lbl_eu_80664164;
     *outRow = 0;
     *outCol = 0;
@@ -1354,8 +1354,8 @@ int func_80076D8C(int unused, int type_, CamEventSrc* src, CamEventTargetInfo* o
         typeA = other->field_0x15E4;
     }
 
-    row = (int)func_8003B41C(g);
-    rowEnd = row + (int)func_8003B1EC(g);
+    row = (int)Bdat_GetRowBase_B41C(g);
+    rowEnd = row + (int)Bdat_GetMaxRow_B1EC(g);
     buf2 = (char*)lbl_eu_80527638;
     colBase = (const char*)lbl_eu_804FB5D0;
     digitBuf = lbl_eu_80661BB8;
@@ -1363,9 +1363,9 @@ int func_80076D8C(int unused, int type_, CamEventSrc* src, CamEventTargetInfo* o
         c0 = getBdatStringColumnValue(g, (const char*)lbl_eu_804FB5D0, row);
         if (type_ != c0) continue;
         c1 = getBdatStringColumnValue(g, colBase + 8, row);
-        if (func_80076CE4((int)typeA, c1) == 0) continue;
+        if (CamEvtMatchTypeFlag((int)typeA, c1) == 0) continue;
         c2 = getBdatStringColumnValue(g, colBase + 0x13, row);
-        if (func_80076C08((int)typeB, state, c2) == 0) continue;
+        if (CamEvtCheckCapability((int)typeB, state, c2) == 0) continue;
 
         u32 rem = (u32)ml::math::mtRand(100);
         for (int i = 1; i <= 4; i++) {
@@ -1556,7 +1556,7 @@ void* func_80076F88(CfCamEventManager* self, int unk34,
     void* blk = ((CfCamEventSlot*)self->slots[0])->field_0x0C;
     void* va = ((CamEventVoice*)followObj)->getVecOut();
     void* vb = ((cf::CfObject*)&src->voice)->CfObject_getPosVector();
-    if (func_800A4050((u8*)blk + 0x10C, vb, va) != 0 &&
+    if (VecMath_IsTurnLeftXZ((u8*)blk + 0x10C, vb, va) != 0 &&
         (self->field_0x48 & 0x10) == 0) {
         self->field_0x48 |= 0x10000;
     }
@@ -1889,7 +1889,7 @@ void func_80077F20(void* out, void* a,
 
 // Maps an (action, parameter) pair to a campaign-state id; default 5.
 #pragma dont_inline on
-int func_80078400(int action, int param) {
+int CamEvtMapActionToCampaign(int action, int param) {
     int result = 5;
     if (action == 1 && param == 1) { result = 1; goto done; }
     if (action == 2 && param == 2) { result = 2; goto done; }
@@ -1903,7 +1903,7 @@ done:
 }
 #pragma dont_inline reset
 
-void func_80078B60(CfCamEventManager* self, u32 idx, u32 param) {
+void CamEvtReleaseThenFire(CfCamEventManager* self, u32 idx, u32 param) {
     u32 n = (u32)func_800755BC(self, idx);
     CfCamEventSlot* p = self->slots[n];
     if (p) {
@@ -2073,7 +2073,7 @@ void func_80078D08(CfCamEventManager* self, int add, ml::CVec3* p5, ml::CVec3* r
         sv.x = sx;
         sv.y = sy;
         sv.z = sz;
-        func_800A3F8C((ml::CVec3*)&sv);
+        VecMath_WrapAnglesPi((ml::CVec3*)&sv);
 
         // table0 (0x7C) - elements start at the table base; count at 0x1E2.
         // Retail stores the raw p5 words here; the scaled vector goes to
@@ -2213,7 +2213,7 @@ void func_80078D08(CfCamEventManager* self, int add, ml::CVec3* p5, ml::CVec3* r
             out.x = lbl_eu_80666454 * Atan2FIdx__Q24nw4r4mathFff(d.y, len);
             out.y = lbl_eu_80666454 * Atan2FIdx__Q24nw4r4mathFff(d.x, d.z);
             out.z = lbl_eu_8066641C;
-            func_800A3F8C((ml::CVec3*)&out);
+            VecMath_WrapAnglesPi((ml::CVec3*)&out);
             if ((f32)__fabs((f64)d.x) <= lbl_eu_8066A208 &&
                 (f32)__fabs((f64)d.y) <= lbl_eu_8066A208 &&
                 (f32)__fabs((f64)d.z) <= lbl_eu_8066A208)
@@ -2291,7 +2291,7 @@ void func_80078D08(CfCamEventManager* self, int add, ml::CVec3* p5, ml::CVec3* r
         out.x = lbl_eu_80666454 * Atan2FIdx__Q24nw4r4mathFff(d.y, len);
         out.y = lbl_eu_80666454 * Atan2FIdx__Q24nw4r4mathFff(d.x, d.z);
         out.z = lbl_eu_8066641C;
-        func_800A3F8C((ml::CVec3*)&out);
+        VecMath_WrapAnglesPi((ml::CVec3*)&out);
         if ((f32)__fabs((f64)d.x) <= lbl_eu_8066A208 &&
             (f32)__fabs((f64)d.y) <= lbl_eu_8066A208 &&
             (f32)__fabs((f64)d.z) <= lbl_eu_8066A208)
@@ -2379,7 +2379,7 @@ void func_80078D08(CfCamEventManager* self, int add, ml::CVec3* p5, ml::CVec3* r
                 t1.x = lbl_eu_80666454 * Atan2FIdx__Q24nw4r4mathFff(d.y, len);
                 t1.y = lbl_eu_80666454 * Atan2FIdx__Q24nw4r4mathFff(d.x, d.z);
                 t1.z = lbl_eu_8066641C;
-                func_800A3F8C((ml::CVec3*)&t1);
+                VecMath_WrapAnglesPi((ml::CVec3*)&t1);
                 if ((f32)__fabs((f64)d.x) <= lbl_eu_8066A208 &&
                     (f32)__fabs((f64)d.y) <= lbl_eu_8066A208 &&
                     (f32)__fabs((f64)d.z) <= lbl_eu_8066A208)
@@ -2650,7 +2650,7 @@ int func_80079E04(CfCamEventManager* self) {
         v.x = u0->u.tab.baseX;
         v.y = u0->u.tab.baseY;
         v.z = u0->u.tab.baseZ;
-        func_800A3F8C((ml::CVec3*)&v);
+        VecMath_WrapAnglesPi((ml::CVec3*)&v);
         adv->unk14(&self->tab0.baseX);
         adv->unk4C(&v);
     } else if (state == 8) {
@@ -2917,7 +2917,7 @@ int func_8007AA4C(CfCamEventManager* self) {
     return (self->tab0.flag_finish != 0) || (self->shake[0].field_0x164 != 0);
 }
 
-extern void func_8007B030(u8* self) {
+extern void CamEvtClearSlotBytes(u8* self) {
     *(u8*)((u8*)self + 0x1de) = 0;
     *(u8*)((u8*)self + 0x356) = 0;
     *(u8*)((u8*)self + 0x4ce) = 0;
@@ -2985,7 +2985,7 @@ void func_8007B0C8(int idx) {
     if (lbl_eu_80663DF0 == 0) return;
     void* mgr = lbl_eu_806640BC;
     if (idx < 1) return;
-    if (idx > func_8003B1EC(mgr)) return;
+    if (idx > Bdat_GetMaxRow_B1EC(mgr)) return;
 
     const char* colBase = (const char*)lbl_eu_804FB5D0;
 

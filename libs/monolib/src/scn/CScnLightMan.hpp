@@ -17,8 +17,8 @@ struct CScnLightList {
     CScnLightNode* sentinel;       // +0x04
 };
 
-// A light item walked by the constructor and consulted by func_8048D160.
-// id10 is a signed id; the flag at +0x121c gates func_8048D160.
+// A light item walked by the constructor and consulted by LightManDeactivateArmedLight.
+// id10 is a signed id; the flag at +0x121c gates LightManDeactivateArmedLight.
 struct CScnItemLight {
     u8 _00[0x10];
     s16 id10;          // +0x10

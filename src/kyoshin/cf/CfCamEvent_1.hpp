@@ -1345,10 +1345,10 @@ extern "C" f32   lbl_eu_80666454;
 extern const float lbl_eu_8066A210;
 extern "C" void* lbl_eu_806640BC;
 extern "C" const char lbl_eu_804FB5D0[0x1E0];
-extern "C" u32   func_8003B1EC(void* self);
-extern "C" void* func_8003AA34(void);
-extern "C" u32   func_8003B41C(void* bdat);
-extern void* lbl_eu_80664164;      // sbss bdat-table pointer (set by func_8003AA34)
+extern "C" u32   Bdat_GetMaxRow_B1EC(void* self);
+extern "C" void* Bdat_GetTable_AA34(void);
+extern "C" u32   Bdat_GetRowBase_B41C(void* bdat);
+extern void* lbl_eu_80664164;      // sbss bdat-table pointer (set by Bdat_GetTable_AA34)
 extern char  lbl_eu_80661BB8[8];   // sdata column-name buffer (digit at +4)
 extern char  lbl_eu_80527638[0xA]; // data column-name buffer (digit at +8)
 extern f32   lbl_eu_8066645C;      // sdata2 compare constant
@@ -1360,9 +1360,9 @@ extern "C" int func_80079E04(CfCamEventManager* self);
 extern "C" int func_800755BC(CfCamEventManager* mgr, u32 idx);
 extern "C" int func_80076D8C(int unused, int type_, CamEventSrc* src,
                              CamEventTargetInfo* other, u32* outRow, u32* outCol);
-extern "C" void func_8007B030(u8* self);
+extern "C" void CamEvtClearSlotBytes(u8* self);
 // Vector-normalize helper (body provided by this TU).
-extern "C" void func_800A3F8C(ml::CVec3* v);
+extern "C" void VecMath_WrapAnglesPi(ml::CVec3* v);
 extern "C" f32 lbl_eu_8066642C;
 extern "C" f32 lbl_eu_80666430;
 extern "C" f32 lbl_eu_80666440;
@@ -1407,23 +1407,23 @@ extern "C" void func_80077F20(void* out, void* a,
                                                        void* e);
 extern "C" void* func_800778E4(CfCamEventManager* self, int unk34,
                                                       void* srcArg, u32 rowOverride);
-extern "C" int func_80078400(int action, int param);
+extern "C" int CamEvtMapActionToCampaign(int action, int param);
 extern "C" void* Scn_FindCamItem(void* obj, int index);
 extern "C" void* func_80076F88(CfCamEventManager* self, int unk34,
                                 void* srcArg, CfCamDataTable* cam);
-extern "C" int func_800A4050(void* dst, void* b, void* c);
+extern "C" int VecMath_IsTurnLeftXZ(void* dst, void* b, void* c);
 // Pose-solver helper called by func_80075934.
 extern "C" void cfCam_applyBasis(void* out, void* in, f32 f, void* vec);
 extern "C" f32 lbl_eu_80666450;   // sdata2 damping factor
-extern "C" void* func_800FE68C(void);
-extern "C" int func_804BE348(void* a, void* b, u32 c, u32 d);
+extern "C" void* Selector_GetInstance(void);
+extern "C" int ScnRes_SegQueryForward_E348(void* a, void* b, u32 c, u32 d);
 extern "C" void func_80075934(ml::CVec3* out1, ml::CVec3* out2, CamCamSrc* a,
                                CamCamSrc* b, ml::CVec3* v1, ml::CVec3* v2,
                                u16 c1, u16 c2, u8 s0, u8 s1);
 extern "C" UnkClass_800821F8* getCameraDataBlock__Q22cf13CfGameManagerFv(void);
 extern "C" u32   CfRes_getAllocHandle(void);
 extern "C" void  func_80240878(u8* p);
-extern "C" void  func_80240A64(u8* base);
+extern "C" void  MenuFx_ClearSlotFlags(u8* base);
 extern const f32 lbl_eu_8066A200;
 extern "C" f32 SinFIdx__Q24nw4r4mathFf(f32);
 extern "C" void func_800A41BC(f32* out, CfCamEventElem* a, CfCamEventElem* b,
@@ -1433,4 +1433,4 @@ extern "C" void func_800A40E8(f32* out, CfCamEventElem* a, CfCamEventElem* b,
 extern "C" int func_8024125C(int state, int val);
 extern "C" int func_80241344(int state, int val);
 extern "C" int func_80240C98(int state, int arg0, int arg1);
-extern "C" u32 func_800AA300(int a, int b, int c);
+extern "C" u32 Tok_Pack20(int a, int b, int c);

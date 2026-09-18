@@ -20,7 +20,7 @@ extern "C" void* __ct__cf_CfGimmickLock(cf::CfGimmickLock* self, u16 row) {
     ColiNodeInit(&self->subB);
     self->typeId = 2;
 
-    void* bdat = func_8003AA34();
+    void* bdat = Bdat_GetTable_AA34();
     void* holder = lbl_eu_8066412C;
     self->rowId = row;
 
@@ -83,7 +83,7 @@ cf::CfGimmickLock::~CfGimmickLock() {
     // Inner region (0x8C) was registered with the global manager.
     if (this->flags & 1) {
         if (lbl_eu_80665958 != 0) {
-            func_804B4C7C(lbl_eu_80665958, &this->subA);
+            Coli_ListRemoveNode(lbl_eu_80665958, &this->subA);
             this->flags &= ~0x801;
         }
     }
@@ -91,7 +91,7 @@ cf::CfGimmickLock::~CfGimmickLock() {
     // Outer region (0x140) was registered; reset its radius timer.
     if (this->flags & 0x1000) {
         if (lbl_eu_80665958 != 0) {
-            func_804B4C7C(lbl_eu_80665958, &this->subB);
+            Coli_ListRemoveNode(lbl_eu_80665958, &this->subB);
         }
         this->flags &= ~0x1000;
         this->field_1F4 = lbl_eu_806683B0;
@@ -169,7 +169,7 @@ extern "C" void func_8020C640(cf::CfGimmickLock* self) {
                     CfGimmick_ClearManagerBinding(self);
                     if ((self->flags & 0x1000) != 0) {
                         if (lbl_eu_80665958 != 0) {
-                            func_804B4C7C(lbl_eu_80665958, &self->subB);
+                            Coli_ListRemoveNode(lbl_eu_80665958, &self->subB);
                         }
                         self->flags &= ~0x1000;
                         self->field_1F4 = lbl_eu_806683B0;
@@ -221,13 +221,13 @@ cleanup:
     // Deactivation path: release the registered regions.
     if ((self->flags & 1) != 0) {
         if (lbl_eu_80665958 != 0) {
-            func_804B4C7C(lbl_eu_80665958, &self->subA);
+            Coli_ListRemoveNode(lbl_eu_80665958, &self->subA);
         }
         self->flags &= ~0x802;
     }
     if ((self->flags & 0x1000) != 0) {
         if (lbl_eu_80665958 != 0) {
-            func_804B4C7C(lbl_eu_80665958, &self->subB);
+            Coli_ListRemoveNode(lbl_eu_80665958, &self->subB);
         }
         self->flags &= ~0x1000;
         self->field_1F4 = lbl_eu_806683B0;
@@ -237,7 +237,7 @@ cleanup:
         CfGimmick_ClearManagerBinding(self);
         if ((self->flags & 0x1000) != 0) {
             if (lbl_eu_80665958 != 0) {
-                func_804B4C7C(lbl_eu_80665958, &self->subB);
+                Coli_ListRemoveNode(lbl_eu_80665958, &self->subB);
             }
             self->flags &= ~0x1000;
             self->field_1F4 = lbl_eu_806683B0;
@@ -251,7 +251,7 @@ cleanup:
 
 // Deactivate the lock: clear the active/linked flags, detach the manager,
 // release the outer region if it was registered, and reset the radius.
-void func_8020CAAC(cf::CfGimmickLock* self) {
+void gimmickLockClearBinding(cf::CfGimmickLock* self) {
     if (self->flags & 2) {
         // volatile re-read forces the retail lwz (MWCC would otherwise CSE
         // the two adjacent flag reads into one register).
@@ -259,7 +259,7 @@ void func_8020CAAC(cf::CfGimmickLock* self) {
         CfGimmick_ClearManagerBinding(self);
         if (self->flags & 0x1000) {
             if (lbl_eu_80665958 != 0) {
-                func_804B4C7C(lbl_eu_80665958, &self->subB);
+                Coli_ListRemoveNode(lbl_eu_80665958, &self->subB);
             }
             self->flags &= ~0x1000;
             self->field_1F4 = lbl_eu_806683B0;
@@ -363,7 +363,7 @@ extern "C" void func_8020CC9C(cf::CfGimmickLock* self) {
         self->flags |= 0x800;
         if ((self->flags & 0x1000) != 0) {
             if (lbl_eu_80665958 != 0) {
-                func_804B4C7C(lbl_eu_80665958, &self->subB);
+                Coli_ListRemoveNode(lbl_eu_80665958, &self->subB);
             }
             self->flags &= ~0x1000;
             self->field_1F4 = lbl_eu_806683B0;
@@ -449,7 +449,7 @@ extern "C" void func_8020CFD0(cf::CfGimmickLock* self) {
                 CfGimmickLockObj* entry = (CfGimmickLockObj*)node->object;
                 void* target = entry->getTarget();
                 if (target != 0) {
-                    func_8008B95C((u8*)target + 0x84);
+                    CtrlMoveEne_MarkActiveSteady((u8*)target + 0x84);
                 }
                 node = node->next;
             }
@@ -520,7 +520,7 @@ extern "C" void func_8020D204(cf::CfGimmickLock* self, int flag) {
 
 // Active-lock probe: tail-call the placement checker for the lock's kind,
 // passing the scale matrix, the caller's target and the position vector.
-int func_8020D368(cf::CfGimmickLock* self, void* target) {
+int gimmickLockDispatchState(cf::CfGimmickLock* self, void* target) {
     if (self->flags & 2) {
         return jumptable_eu_80535830[self->stateIndex]((cf::CfGimmick*)&self->scale, (const CfGimmickVec3*)target, &self->position);
     }

@@ -26,7 +26,7 @@ struct CQstLogListQstInfo {
     u8  f7;              // 0x7
 };
 
-// Quest-info buffer maintained by func_80226FAC (mirror of QstData in
+// Quest-info buffer maintained by QstCnt_InitRecords_6FAC (mirror of QstData in
 // CMenuQstCnt.cpp): an 8x0x400 array whose elements are destroyed via
 // __dt__80227030, plus a 6-byte tail.
 struct CQstLogListQstData {
@@ -162,30 +162,30 @@ public:
 extern "C" void func_801D3620(CSortMenu* _this);  // scroll up
 extern "C" void func_801D3698(CSortMenu* _this);  // scroll down
 extern "C" void func_801D3724(CSortMenu* _this);  // page up
-extern "C" void func_801D377C(CSortMenu* _this);  // page down
-extern "C" void func_801D3454(nw4r::math::VEC3* out, CSortMenu* _this);  // copy sort-menu state
+extern "C" void sortMenuPageDownStep(CSortMenu* _this);  // page down
+extern "C" void sortMenuFormatPaneText(nw4r::math::VEC3* out, CSortMenu* _this);  // copy sort-menu state
 
 // Imports with unmangled retail names (defined in CSortMenu.cpp / cursor TUs).
 extern "C" int func_801D32DC(CSortMenu* _this);
-extern "C" void func_801D350C(void*);                  // sort-menu array reset
+extern "C" void sortMenuResetCount(void*);                  // sort-menu array reset
 extern "C" void func_801D3518(void*, void*);            // sort-menu array append
 extern "C" void func_801D353C(void*, u8);               // sort-menu page set
-extern "C" void func_801D216C(void*, u8);
-extern "C" void func_801D3430(CQstLogListSortMenuData*, const nw4r::math::VEC3*);
-extern "C" void func_801D3330(CQstLogListSortMenuData*);
+extern "C" void Cur_SetVisible(void*, u8);
+extern "C" void sortMenuSetLayoutPos(CQstLogListSortMenuData*, const nw4r::math::VEC3*);
+extern "C" void sortMenuOpenInit(CQstLogListSortMenuData*);
 extern "C" void func_801D202C(void*);                 // CCur18 per-frame update
-extern "C" void func_801D3160(void*);                 // CSortMenu per-frame update
-extern "C" void func_801D3258(void*);                 // CSortMenu destroy
-extern "C" u8 func_801D3808(void*);                   // sort-menu selected page
-extern "C" u8 func_801D3810(void*);                   // sort-menu selected entry
+extern "C" void sortMenuDispatchState(void*);                 // CSortMenu per-frame update
+extern "C" void sortMenuTermCleanup(void*);                 // CSortMenu destroy
+extern "C" u8 sortMenuGetPageIdx(void*);                   // sort-menu selected page
+extern "C" u8 sortMenuGetSubPageIdx(void*);                   // sort-menu selected entry
 
 // Imports with retail names spelled verbatim (C linkage; MWCC would mangle
 // plain declarations - the bl reloc must bind to the unmangled retail name).
-extern "C" void func_801D3064(void*);
+extern "C" void sortMenuInitFileRead(void*);
 extern "C" void func_801D31F8(void*, void*);
-extern "C" void func_801D20B0(void*, void*);
-extern "C" void func_801D3408(void*);
-extern "C" int func_801D3328(void*);
+extern "C" void Cur_DrawLayout(void*, void*);
+extern "C" void sortMenuToState4Page(void*);
+extern "C" int sortMenuGetFlag2B(void*);
 extern "C" void __dt__9CSortMenuFv(void*, int);
 extern "C" void __dt__6CCur18Fv(void*, int);
 extern "C" void __destroy_arr(void*, void*, int, int);
@@ -197,21 +197,21 @@ extern "C" void __ct__CCur18(u8*, nw4r::lyt::ArcResourceAccessor*);
 extern "C" void __ct__CScrollBar(void*, int);
 extern "C" void __ct__CSortMenu(CQstLogListSortMenuData*);
 extern "C" void __ct__UnkClass_8011C974(void* self, const u32* src);   // 4-word mem-region copy
-extern "C" void func_8011C998(CScrollBarData*, const CScrollBarData*);  // CScrollBar copy
+extern "C" void copyScrollBarData(CScrollBarData*, const CScrollBarData*);  // CScrollBar copy
 
 // Quest-info buffer helpers (defined in CMenuQstCnt.cpp).
-extern "C" void func_80226FAC(u8*);               // QstData construct (8x0x400)
+extern "C" void QstCnt_InitRecords_6FAC(u8*);               // QstData construct (8x0x400)
 extern "C" void copyQstInfo(u8*, const u8*);      // 8-byte QstInfo copy
 extern "C" void func_80227260(u8*, u32, u32);
 extern "C" u16 selectQstIndex(const u8*);
-extern "C" CQstLogListQstInfo* func_802276F4(u8*, u16);
+extern "C" CQstLogListQstInfo* QstCnt_GetInfoAt_76F4(u8*, u16);
 extern "C" u32 func_80138138(u16);
 extern "C" void func_802270CC(u8*);               // QstData refresh
 // Quest-list row count for the given quest-log list id (returns u16).
 extern "C" u16 func_80227710(u8*, u16);
 
 // BDAT helpers / msg-manager imports (C-ABI retail symbols).
-extern "C" u32 func_8003B1EC(void*);              // BDAT row count
+extern "C" u32 Bdat_GetMaxRow_B1EC(void*);              // BDAT row count
 extern "C" nw4r::lyt::ArcResourceAccessor* CUICfManager_getArcResourceAccessor();
 extern "C" int isClassicController__Q22cf13CfGameManagerFv(int);
 extern void* lbl_eu_806640A0;                      // BDAT table pointer (.sbss)
@@ -222,8 +222,8 @@ extern "C" u16 BdatGetU16Direct(const void*, const void*, int);
 extern "C" u8 BdatGetU8ByTableKey(const void*, const void*, u32);
 extern "C" void func_80137B44(nw4r::lyt::Layout*, const char*, u32);
 extern "C" void func_80137F88(nw4r::lyt::Pane*, const char*);
-extern "C" void func_80124270(nw4r::lyt::Pane*, u32);
-extern "C" u32 func_8009CF8C(u32);
+extern "C" void setPaneVisible(nw4r::lyt::Pane*, u32);
+extern "C" u32 CtrlRemote_TouchBitByArg(u32);
 
 // C++ free functions - MWCC mangles these to the retail names
 // (drawLayout__FPQ34nw4r3lyt6LayoutPQ34nw4r3lyt8DrawInfoii,

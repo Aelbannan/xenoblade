@@ -14,7 +14,7 @@ void UnkClass_800B0AD8::clearCounters() {
 }
 DECOMP_DONT_INLINE UnkClass_805764CC* getInstance();
 #pragma inline
-u32 func_800AA2BC(u32 a, u32 b);
+u32 Tok_Pack08(u32 a, u32 b);
 extern "C" void func_80193810(unsigned long a, void* b);
 extern "C" void func_801F3CCC(unsigned long a, void* b);
 extern "C" void func_801F45B4(unsigned long a, void* b);
@@ -273,8 +273,8 @@ void spawnObjFromRes(cf::CfObject* obj) {
 // optional sub-object (each null-guarded) with its own teardown entry point.
 extern "C" void CPartsChange_DispatchChangeList(u32 obj);
 extern "C" void func_80173338(u32 obj);
-extern "C" void func_801F4504(u32 obj);
-extern "C" void func_802B2A18(u32 obj);
+extern "C" void GimTeardownAll(u32 obj);
+extern "C" void hikariResetManagerRecords(u32 obj);
 extern "C" void func_80206388(u32 obj);
 extern "C" int reslistIsBusy(void* self);
 extern "C" void tboxIterBegin(void* iter, void* list);
@@ -298,10 +298,10 @@ void resetSubManagers(UnkClass_805764CC* self) {
         func_80173338(self->field_0xCA8);
     }
     if (self->field_0xCFC != 0) {
-        func_801F4504(self->field_0xCFC);
+        GimTeardownAll(self->field_0xCFC);
     }
     if (self->field_0xD00 != 0) {
-        func_802B2A18(self->field_0xD00);
+        hikariResetManagerRecords(self->field_0xD00);
     }
     if (self->field_0xCAC != 0) {
         func_80206388(self->field_0xCAC);
@@ -548,7 +548,7 @@ extern "C" void setMgrFixStrName(const char* name) {
     UnkClass_805764CC* obj = getInstance();
     resetSubManagers(obj);
     if (name != 0) {
-        func_80068A30(&obj->field_0xCB0, name);
+        CfScript_CopyName(&obj->field_0xCB0, name);
         gflagClearMask(2);
         if (strcmp(name, lbl_eu_804FC4D8 + 0x35) == 0) {
             // Retail emits this call without materializing r3 (the argument
@@ -616,7 +616,7 @@ void tickPadSubobjects(UnkClass_805764CC* self) {
 }
 #pragma pop
 // us-800b28a4: release the three optional sub-objects (0xCA4/0xCA8 via
-// func_801742D4, 0xD00 via func_802B2A08), each null-guarded.
+// func_801742D4, 0xD00 via hikariSetFlagBit1), each null-guarded.
 #pragma push
 #pragma auto_inline off
 extern "C" void releasePadObjects(UnkClass_805764CC* self) {
@@ -627,7 +627,7 @@ extern "C" void releasePadObjects(UnkClass_805764CC* self) {
         func_801742D4((void*)self->field_0xCA8);
     }
     if (self->field_0xD00 != 0) {
-        func_802B2A08((void*)self->field_0xD00);
+        hikariSetFlagBit1((void*)self->field_0xD00);
     }
 }
 #pragma pop
@@ -1515,7 +1515,7 @@ extern "C" void func_800B5994(UnkClass_805764CC* self, IB8FC4Player* anchor,
                               void* list, const F8C0ListSource* buf, float f);
 extern "C" void func_800B4D84(void* self, void* buf);
 extern "C" int CfRes_getE24Bit22();
-extern "C" float func_80069EA0();
+extern "C" float CfT_PlayRateGet();
 extern "C" int isSceneLoading__Q22cf13CfGameManagerFv();
 extern float lbl_eu_80663ED8;
 extern float lbl_eu_80663EC8;
@@ -1527,7 +1527,7 @@ extern "C" void func_800B66BC(UnkClass_805764CC* self, void* arg) {
         func_800B655C(self, (const F8C0ListSource*)((u8*)self + 0xb48));
     }
     if (lbl_eu_80663ED8 > lbl_eu_806669D8) {
-        float dt = func_80069EA0();
+        float dt = CfT_PlayRateGet();
         lbl_eu_80663ED8 -= dt;
         float updated = lbl_eu_80663ED8;
         if (updated < lbl_eu_806669D8) {
@@ -1753,7 +1753,7 @@ void init_9438(){}
 void init_946C(){}
 void init_94A0(){}
 void init_dispatchTarget_7(){}
-void sub_dispatchWithArgs(u32 a, u32 b){func_800AA2BC(a, b); ((void(*)())init_dispatchTarget_7)();}
+void sub_dispatchWithArgs(u32 a, u32 b){Tok_Pack08(a, b); ((void(*)())init_dispatchTarget_7)();}
 void init_9548(){}
 void init_957C(){}
 void UnkClass_805764CC::set_u32_734(u32 val){*(u32*)((u8*)this + 0x734) = val;}
@@ -2885,7 +2885,7 @@ void func_800B655C(UnkClass_805764CC* self, const F8C0ListSource* list) {
         }
         linkItemNode__Q22cf13CfGameManagerFv(&mid, &outer, 0);
         if (testObj68bit6((u8*)p + 0x3e9c) == 0) {
-            u8 matched = (u8)func_800AF7E4(p, lbl_eu_804FC4D8 + 0x47);
+            u8 matched = (u8)getEneBdatColumn(p, lbl_eu_804FC4D8 + 0x47);
             if (matched != 0 && func_801949E0(ctx) == 0 &&
                 cfCam_queryVoxArts(p, 0x802) != 0) {
                 CfObjectMove_setRegionAttached((u8*)p + 0x3e9c, 0);
@@ -3763,7 +3763,7 @@ extern "C" void func_800B3A88(UnkClass_805764CC* self, void* objv) {
     void* base = cfCam_getEventMgr();
     if (base != 0) {
         for (int i = 0; i < 3; i++) {
-            IDispB3A88Mgr* m = (IDispB3A88Mgr*)func_800755B0(base, i);
+            IDispB3A88Mgr* m = (IDispB3A88Mgr*)CamEvtFetchSlotPtr(base, i);
             if (m != 0 && m->unk18() == obj) {
                 m->unk17(0);
             }
@@ -4223,7 +4223,7 @@ extern "C" void func_800B4FAC(void** firstV, void** lastV, int (*cmp)(const void
 // Timer accumulator + world scan. Lapses to 1 once the shared accumulator
 // passes its threshold; otherwise walks the object list: objects near the
 // player (or failing their status gates with <4 processed) return 0.
-extern "C" float func_80069EA0();
+extern "C" float CfT_PlayRateGet();
 extern "C" s32 gflagGateMask8();
 extern "C" s32 func_800B8FC4() {
     extern float lbl_eu_80663EC8;
@@ -4240,7 +4240,7 @@ extern "C" s32 func_800B8FC4() {
     if ((lbl_eu_80663E28 & 0x40) != 0 && mgr == 0 && (s16)self->field_0xD10 == 0) {
         return 1;
     }
-    float dt = func_80069EA0();
+    float dt = CfT_PlayRateGet();
     float accum = lbl_eu_80663EDC + dt;
     lbl_eu_80663EDC = accum;
     if (accum > lbl_eu_80666A28) {
@@ -4563,7 +4563,7 @@ void* func_800B20B4(UnkClass_805764CC* self, u32 mask,
             } else {
                 slot = func_80063560(sel, 1, 0);
                 if (slot < 0) {
-                    func_8006398C(0);
+                    cfResNopValueSink(0);
                 }
             }
 
@@ -4697,7 +4697,7 @@ void* func_800B20B4(UnkClass_805764CC* self, u32 mask,
         if (obj == 0) {
             break;
         }
-        func_800BFAB0(obj, w04, w00);
+        ObjObj_ReleaseModels_FAB0(obj, w04, w00);
         B20B4_BUMP(obj);
         break;
     }
@@ -4713,7 +4713,7 @@ void* func_800B20B4(UnkClass_805764CC* self, u32 mask,
         if (obj == 0) {
             break;
         }
-        func_800BFAB0(obj, w04, w00);
+        ObjObj_ReleaseModels_FAB0(obj, w04, w00);
         B20B4_BUMP(obj);
         break;
     }
@@ -5010,7 +5010,7 @@ void func_800B5994(UnkClass_805764CC* self, IB8FC4Player* anchor, void* listv,
                 // Name-probe on the embedded controller view (obj-0x3e9c);
                 // bits 4/3/1 of the result select the per-object branches.
                 u8* minus = (obj != 0) ? (u8*)obj - 0x3e9c : 0;
-                u8 b18 = (u8)func_800AF7E4(minus, lbl_eu_804FC4D8 + 0x3e);
+                u8 b18 = (u8)getEneBdatColumn(minus, lbl_eu_804FC4D8 + 0x3e);
                 if (r22 == 0) {
                     f22 = f17;
                     if ((b18 & 0x10) != 0) {
@@ -5341,13 +5341,13 @@ extern "C" s32 func_800B7AF0(UnkClass_805764CC* self, IB7Arg* arg) {
             } else if (t == 5) {
                 keep = 0;
                 if ((u16)item->field9C == 1) {
-                    if (func_800AB580(item, arg, 0, lbl_eu_806669D8)) {
+                    if (CollObjLoadResourceTimed(item, arg, 0, lbl_eu_806669D8)) {
                         minDistSq = lbl_eu_806669D8;
                         bestObj = item;
                         r17 = 1;
                         flagR19 = 1;
                     } else {
-                        if (r23 == 0 && func_800AB580(item, arg, 0, lbl_eu_80666A18)) {
+                        if (r23 == 0 && CollObjLoadResourceTimed(item, arg, 0, lbl_eu_80666A18)) {
                             B47Vec3 pa = *obj->unk2B();
                             B47Vec3 pb = *arg->unk2A();
                             float dx = pa.x - pb.x;
@@ -5363,7 +5363,7 @@ extern "C" s32 func_800B7AF0(UnkClass_805764CC* self, IB7Arg* arg) {
                                 bestObj = item;
                             }
                         }
-                        if (r23 == 0 && func_800AB580(item, arg, 0, lbl_eu_806669F4)) {
+                        if (r23 == 0 && CollObjLoadResourceTimed(item, arg, 0, lbl_eu_806669F4)) {
                             if (r24 == 0 && sp6C != 0) {
                                 flagR19 = 1;
                             }
@@ -5375,7 +5375,7 @@ extern "C" s32 func_800B7AF0(UnkClass_805764CC* self, IB7Arg* arg) {
                 keep = 0;
             }
             // Retail issues this probe even when the candidate is rejected.
-            int ab = func_800AB580(item, arg, 0, lbl_eu_806669D8);
+            int ab = CollObjLoadResourceTimed(item, arg, 0, lbl_eu_806669D8);
             if (keep != 0 && ab != 0) {
                 b64 = 1;
                 u32 f9c = item->field9C;
@@ -5392,9 +5392,9 @@ extern "C" s32 func_800B7AF0(UnkClass_805764CC* self, IB7Arg* arg) {
                     if ((item->flags68 & 0x80000) == 0) {
                         item->flags68 |= 0x80000;
                         if ((item->h158 & 0x300) == 0) {
-                            func_8009D018(0x3f, f9c >> 16);
+                            CtrlRemote_SetSharedBit(0x3f, f9c >> 16);
                         }
-                        if (func_800AC470(item) != 0) {
+                        if (CollObjTestResIdReady(item) != 0) {
                             UIWin_Create44EE4Win(f9c >> 16, 1);
                         } else {
                             func_800AC460(item, 1);
@@ -5461,7 +5461,7 @@ extern "C" s32 func_800B7AF0(UnkClass_805764CC* self, IB7Arg* arg) {
                             // Quirk: retail passes each node's payload as the
                             // probe's second argument on this path.
                             for (CfReslistNode* n2 = sn->mNext; n2 != sn; n2 = n2->mNext) {
-                                if (func_800AB580(item, n2->mItem, 0, lbl_eu_806669D8)) {
+                                if (CollObjLoadResourceTimed(item, n2->mItem, 0, lbl_eu_806669D8)) {
                                     found = 1;
                                     break;
                                 }

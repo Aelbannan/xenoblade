@@ -83,7 +83,7 @@ void CPackItem::update(){
             setupHashTable();
         }else{
             if((s32)field_0x68 >= 0){
-                func_eu_804521A8(field_0x68);
+                DevFile_SetLangOverride(field_0x68);
             }
             
             mFileHandle = CDeviceFile::readFile(lbl_eu_80663BC8, mFilePath, this, 0, 0);
@@ -122,7 +122,7 @@ void CPackItem::update(){
         }
 
         mPkbFilename += lbl_eu_80524714 + 0x10;
-        func_eu_804520D0(mPkbFilename.mString);
+        DevFile_SubstLangPath(mPkbFilename.mString);
 
         mLoadState = LOAD_STATE_OPENED_PKH_FILE;
     }else if(mLoadState == LOAD_STATE_OPENED_PKH_FILE){

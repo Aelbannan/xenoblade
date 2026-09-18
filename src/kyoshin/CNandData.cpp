@@ -18,12 +18,12 @@ CNandData CNandData::sInstance;
 //  - title / description fetched from BDAT,
 //  - banner image filename and the icon filenames + frame counts,
 //  - then clears the banner's graphic-layout bit (unkC & ~0x10).
-void func_eu_802B11C0()
+void NandData_SetupBanner_11C0()
 {
-    const char* title = func_eu_802B14A4();
+    const char* title = getErrMesText19();
     CNandData::sInstance.mNandBanner.setTitle(title);
 
-    const char* desc = func_eu_802B14BC();
+    const char* desc = getErrMesText20();
     CNandData::sInstance.mNandBanner.setSubtitle(desc);
 
     CNandData::sInstance.mNandBanner.setBannerPath(lbl_eu_80662E00);

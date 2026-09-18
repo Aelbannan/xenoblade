@@ -8,7 +8,7 @@
 #include "kyoshin/cf/CfGameManagerData.hpp"
 namespace cf {
 
-// Word-triple input for func_80094DF4 (raw word copy into field_C8..field_D0);
+// Word-triple input for CtrlNpcStoreTargetActivate (raw word copy into field_C8..field_D0);
 // also the return shape of CCtrlNpcChar's position getter at vtable +0xac.
 struct CtrlNpcVec3W {
     u32 x;   // 0x00
@@ -81,7 +81,7 @@ public:
     u32 field_2C;                  // 0x2C
     u8 _sub30[0xAC - 0x30];        // 0x30..0xAB (CCtrlMoveNpc sub-object at 0x30)
     // Raw-word / float views of the movement-target words (ctor stores floats,
-    // func_80094E44 / func_80094EDC copy the position getter's raw words).
+    // func_80094E44 / CtrlNpcArmMoveTarget5 copy the position getter's raw words).
     union { f32 f; u32 u; } field_AC;  // 0xAC
     union { f32 f; u32 u; } field_B0;  // 0xB0
     union { f32 f; u32 u; } field_B4;  // 0xB4
@@ -103,7 +103,7 @@ public:
     s16 field_DE;                  // 0xDE
     // Movement target array at 0xE0..0xF7 (8 x 12-byte vec-word triples).
     // Written as raw words by some helpers, copied element-wise by
-    // func_800948F8; readers needing floats reinterpret_cast to ml::CVec3.
+    // CtrlNpcInitMoveWindow; readers needing floats reinterpret_cast to ml::CVec3.
     struct NpcTargetPos {
         u32 x;
         u32 y;
@@ -144,8 +144,8 @@ namespace cf { class CCtrlMoveNpc; }
 // in code_800A3B24.cpp); signature must match the definition's mangling.
 bool func_800A49E4(const nw4r::math::VEC3& a, const nw4r::math::VEC3& b,
                    const nw4r::math::VEC3& c, float r2);
-// FSqrt-style sqrt with nw4r assert (retail func_800A3EF4).
-extern "C" float func_800A3EF4(float x);
+// FSqrt-style sqrt with nw4r assert (retail VecMath_SafeSqrtF).
+extern "C" float VecMath_SafeSqrtF(float x);
 // XZ-plane segment length helper (code_800A3B24.cpp).
 extern "C" f32 func_800A3DF8(const ml::CVec3& v);
 // Ground-probe walk helper (code_800A3B24.cpp); third arg is a packed flag word.
@@ -172,9 +172,9 @@ union CtrlNpcCvtDbl {
 
 // Talk/page controller update helpers (func_80093F28).
 extern "C" int UIWin_PackHiLo(unsigned int arg0, int arg1);
-extern "C" u32 func_8009CF8C(u32 resourceId);
+extern "C" u32 CtrlRemote_TouchBitByArg(u32 resourceId);
 extern "C" void* getFP__FPCc(const char* name);
-extern "C" void* func_8003AA34();
+extern "C" void* Bdat_GetTable_AA34();
 extern "C" void UIWin_CreateTalkWin(void* self, char* text, int flag);
 extern "C" void func_8013D1E8(void* self);
 extern "C" u32 getControllerWordA33C__Q22cf13CfGameManagerFv();
@@ -216,11 +216,11 @@ extern "C" void __ct__cf_CtrlMoveNpc(cf::CCtrlMoveNpc* self, cf::CtrlNpc* parent
 extern "C" u32 getAnimModelId(void* arg);
 
 extern "C" void func_8019F6E8(cf::CCtrlMoveNpc* self, const ml::CVec3* vec, f32 scale, f32 paramB);
-extern "C" int func_8019F8E0(cf::CCtrlMoveNpc* self);
-extern "C" void func_80094A9C(cf::CtrlNpc* self, const ml::CVec3* vec,
+extern "C" int NpcMove_DispatchState(cf::CCtrlMoveNpc* self);
+extern "C" void CtrlNpcSetupMoveAction(cf::CtrlNpc* self, const ml::CVec3* vec,
                               f32 scale, f32 paramB);
 extern "C" int func_800A5038(const ml::CVec3* sub, const ml::CVec3* v, f32 f1, f32 f2);
-// Same-TU forward decl: keeps the call reloc from func_800966E8 flat.
+// Same-TU forward decl: keeps the call reloc from CtrlNpcAdvanceBehavior flat.
 extern "C" int func_800964EC(cf::CtrlNpc* self);
 // CfGameManager helpers: the retail symbols keep the Fv suffix but the real
 // call sites pass arguments / read the return (same scheme as CTaskREvent.hpp),
@@ -231,7 +231,7 @@ extern "C" u32 clearControllerState__Q22cf13CfGameManagerFv();
 // extern "C" free function returning lbl_eu_80663D90).
 extern "C" u32 getFieldD90Value__Q22cf13CfGameManagerFv();
 // Movement-timer helper defined in this TU (retail name unmangled); C linkage
-// keeps the call reloc from func_80096488 matching retail.
+// keeps the call reloc from CtrlNpcRestartTimerGated matching retail.
 extern "C" void func_8009565C(cf::CtrlNpc* self);
 
 // Retail float constants (sdata2) referenced by the CtrlNpc unit.
@@ -271,7 +271,7 @@ extern const f32 lbl_eu_8066A210;
 // nw4r FSqrt warning strings (rodata).
 extern const char lbl_eu_80526324[];
 extern const char lbl_eu_80526300[];
-// Global flags word (sbss) read by func_80094D1C.
+// Global flags word (sbss) read by CtrlNpcCanAdvanceAction.
 extern u32 lbl_eu_80663E28;
 // Retail vtables stored by the free-function ctor (data lives in another TU).
 extern const u32 lbl_eu_80527BB0[];

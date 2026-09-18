@@ -42,7 +42,7 @@ extern "C" u32 getBdatStringColumnValue(void* bdat, const char* col, s32 index) 
     char* dataPtr = base + dataOff;
     dataPtr += rowBytes;
     dataPtr += colDataOff;
-    return func_8003B6A0(hdr, dataPtr, elemType);
+    return Bdat_DecodeValue_B6A0(hdr, dataPtr, elemType);
 }
 
 #pragma dont_inline on
@@ -129,7 +129,7 @@ extern "C" void func_eu_8003B720(void* tblVoid) {
 #pragma dont_inline reset
 
 
-extern "C" void* func_8003AA34() {
+extern "C" void* Bdat_GetTable_AA34() {
     if (!lbl_eu_80663D10) {
         lbl_eu_80663D10 = 1;
     }
@@ -201,9 +201,9 @@ void* getFP(const char* pName) {
 #pragma dont_inline reset
 
 #pragma dont_inline on
-// func_8003B6A0: read one BDAT column element of the given type from data,
+// Bdat_DecodeValue_B6A0: read one BDAT column element of the given type from data,
 // widening to u32. Type 6 is an offset resolved against the BDAT base.
-extern "C" u32 func_8003B6A0(void* bdat, void* data, u32 elemType) {
+extern "C" u32 Bdat_DecodeValue_B6A0(void* bdat, void* data, u32 elemType) {
     u32 val = 0;
     switch (elemType) {
     case 0:
@@ -289,7 +289,7 @@ extern "C" void* func_8003B4B0(void* bdat, const char* col){
 #pragma dont_inline reset
 
 #pragma dont_inline on
-extern "C" u32 func_8003AD98(void* bdat, const char* col, s32 row, s32 index){
+extern "C" u32 Bdat_QueryCell_AD98(void* bdat, const char* col, s32 row, s32 index){
     const char* colArg;
     s32 rowArg;
     s32 indexArg;
@@ -330,7 +330,7 @@ extern "C" u32 func_8003AD98(void* bdat, const char* col, s32 row, s32 index){
 #pragma dont_inline reset
 
 #pragma dont_inline on
-extern "C" u32 func_8003AFC0(void* bdat, const char* col) {
+extern "C" u32 Bdat_FindColumn_AFC0(void* bdat, const char* col) {
     const char* colArg;
     void* colEntry;
     char* colHdr;
@@ -357,7 +357,7 @@ extern "C" u32 func_8003AFC0(void* bdat, const char* col) {
 }
 #pragma dont_inline reset
 
-extern "C" u32 func_8003B1EC(void* p) {
+extern "C" u32 Bdat_GetMaxRow_B1EC(void* p) {
     if (p == 0) {
         return 0;
     }
@@ -365,7 +365,7 @@ extern "C" u32 func_8003B1EC(void* p) {
 }
 
 #pragma dont_inline on
-extern "C" u32 func_8003B434(void* table, void*, void* col, s32 row) {
+extern "C" u32 Bdat_ReadCell_B434(void* table, void*, void* col, s32 row) {
     void* colArg;
     s32 rowArg;
     s32 rowIdx;
@@ -417,12 +417,12 @@ bounds_check:
     elemType = static_cast<u8>(colHdr[1]);
     dataBase += rowBytes;
     dataPtr = dataBase + colDataOff;
-    return func_8003B6A0(hdr, dataPtr, elemType);
+    return Bdat_DecodeValue_B6A0(hdr, dataPtr, elemType);
 }
 #pragma dont_inline reset
 
 #pragma dont_inline on
-extern "C" u32 func_8003B204(void* bdat, const char* col) {
+extern "C" u32 Bdat_FindColumnAlt_B204(void* bdat, const char* col) {
     const char* colArg;
     void* colEntry;
     char* colHdr;
@@ -446,7 +446,7 @@ extern "C" u32 func_8003B204(void* bdat, const char* col) {
 }
 #pragma dont_inline reset
 
-extern "C" u32 func_8003B41C(void* p) {
+extern "C" u32 Bdat_GetRowBase_B41C(void* p) {
     if (p == 0) {
         return 0;
     }
@@ -517,7 +517,7 @@ extern "C" u32 func_eu_8003B488(void* bdat, const char* col1, s32 row, const cha
         u16 colDataOff = *reinterpret_cast<u16*>(col1Hdr + 0x2);
         u32 elemType = static_cast<u8>(col1Hdr[1]);
         char* dataPtr = base + dataOff + rowBytes + colDataOff;
-        val = func_8003B6A0(hdr, dataPtr, elemType);
+        val = Bdat_DecodeValue_B6A0(hdr, dataPtr, elemType);
     }
     mask = flagHdr->mask;
     shift = flagHdr->shift;
@@ -569,12 +569,12 @@ extern "C" u32 func_8003B748(void* table, void* col, s32 row, s32 index){
     scale4:
         dataBase += index * 4;
     }
-    return func_8003B6A0(table, dataBase, elemType);
+    return Bdat_DecodeValue_B6A0(table, dataBase, elemType);
 }
 
 
 #pragma dont_inline on
-extern "C" void func_8003B800(VMArg* out, void* data, u32 type){
+extern "C" void Bdat_WriteVmArg_B800(VMArg* out, void* data, u32 type){
     VMArg* outArg;
     void* dataArg;
     s32 typeArg;
@@ -658,9 +658,9 @@ extern "C" int getVal(VMThread* t, void* bdat){
     col = vmArgStringGet(2, vmArgPtrGet(thread, 1));
     idx = vmArgIntGet(3, vmArgPtrGet(thread, 2));
     dataSlot = getBdatStringColumnValue(bdatTbl, col, idx);
-    type = func_8003B204(bdatTbl, col);
+    type = Bdat_FindColumnAlt_B204(bdatTbl, col);
     value = dataSlot;
-    func_8003B800(&result, &value, type);
+    Bdat_WriteVmArg_B800(&result, &value, type);
     vmRetValSet(thread, &result);
     return 1;
 }
@@ -683,10 +683,10 @@ extern "C" int getArrayVal(VMThread* t, void* bdat){
     col = vmArgStringGet(2, vmArgPtrGet(thread, 1));
     row = vmArgIntGet(3, vmArgPtrGet(thread, 2));
     index = vmArgIntGet(4, vmArgPtrGet(thread, 3));
-    dataSlot = func_8003AD98(bdatTbl, col, row, index);
-    type = func_8003B204(bdatTbl, col);
+    dataSlot = Bdat_QueryCell_AD98(bdatTbl, col, row, index);
+    type = Bdat_FindColumnAlt_B204(bdatTbl, col);
     value = dataSlot;
-    func_8003B800(&result, &value, type);
+    Bdat_WriteVmArg_B800(&result, &value, type);
     vmRetValSet(thread, &result);
     return 1;
 }
@@ -703,7 +703,7 @@ extern "C" int getArrayCount(VMThread* t, void* bdat) {
     bdatTbl = bdat;
     col = vmArgStringGet(2, vmArgPtrGet(thread, 1));
     result.type = VM_TYPE_INT;
-    result.value.uintVal = func_8003AFC0(bdatTbl, col);
+    result.value.uintVal = Bdat_FindColumn_AFC0(bdatTbl, col);
     vmRetValSet(thread, &result);
     return 1;
 }
@@ -720,7 +720,7 @@ extern "C" int getVarType(VMThread* t, void* bdat) {
     bdatTbl = bdat;
     col = vmArgStringGet(2, vmArgPtrGet(thread, 1));
     result.type = VM_TYPE_INT;
-    result.value.uintVal = func_8003B204(bdatTbl, col);
+    result.value.uintVal = Bdat_FindColumnAlt_B204(bdatTbl, col);
     vmRetValSet(thread, &result);
     return 1;
 }
@@ -731,7 +731,7 @@ extern "C" int getIdCount(VMThread* t, void* bdat) {
     VMArg result;
 
     result.type = VM_TYPE_INT;
-    result.value.uintVal = func_8003B1EC(bdat);
+    result.value.uintVal = Bdat_GetMaxRow_B1EC(bdat);
     vmRetValSet(t, &result);
     return 1;
 }
@@ -742,7 +742,7 @@ extern "C" int getIdTop(VMThread* t, void* bdat) {
     VMArg result;
 
     result.type = VM_TYPE_INT;
-    result.value.uintVal = func_8003B41C(bdat);
+    result.value.uintVal = Bdat_GetRowBase_B41C(bdat);
     vmRetValSet(t, &result);
     return 1;
 }

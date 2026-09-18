@@ -411,8 +411,8 @@ char* func_800621F4(char* self, int index, u32* outType, u32* outFieldC, u32* ou
 }
 
 extern "C" void CfRes_delegateOp2(void* a, void* b, void* c) {
-    extern void func_8009CE14(void*, void*, unsigned long, void*);
-    func_8009CE14(a, b, 2, c);
+    extern void CtrlRemote_DispatchBufOp(void*, void*, unsigned long, void*);
+    CtrlRemote_DispatchBufOp(a, b, 2, c);
 }
 
 // CfRes_getPackedFileSize: resolve a resource via the CfRes manager; returns the
@@ -1094,7 +1094,7 @@ extern "C" int func_80063560(int id, int incRef, int incCount) {
                     CfRes_clearField4((u8*)CfRes_getResEntry((u8*)(inst + 0x1efc), (u32)idx));
                     CfResEntry_clearField8((u8*)CfRes_getResEntry((u8*)(inst + 0x1efc), (u32)idx));
                     CfResEntry_setHandle((u8*)CfRes_getResEntry((u8*)(inst + 0x1efc), (u32)idx), uid);
-                    func_8006398C(0);
+                    cfResNopValueSink(0);
                 }
                 break;
             case 8:
@@ -1106,7 +1106,7 @@ extern "C" int func_80063560(int id, int incRef, int incCount) {
                     CfRes_clearField4((u8*)CfRes_getResEntry((u8*)(inst + 0x1efc), (u32)idx));
                     CfResEntry_clearField8((u8*)CfRes_getResEntry((u8*)(inst + 0x1efc), (u32)idx));
                     CfResEntry_setHandle((u8*)CfRes_getResEntry((u8*)(inst + 0x1efc), (u32)idx), uid);
-                    func_8006398C(0);
+                    cfResNopValueSink(0);
                 }
                 break;
             default:
@@ -1219,9 +1219,9 @@ void CfRes_decResRefByHandle(int handle) {
 
 #pragma push
 #pragma auto_inline off
-// func_8006398C: retail signature takes a value (called with 0 by the
+// cfResNopValueSink: retail signature takes a value (called with 0 by the
 // acquire path); body owned by its own matching target.
-extern "C" __declspec(noinline) void func_8006398C(u32 value) { (void)value; }
+extern "C" __declspec(noinline) void cfResNopValueSink(u32 value) { (void)value; }
 #pragma pop
 
 extern "C" void CfRes_stub_63990() {}
@@ -1259,7 +1259,7 @@ extern "C" __declspec(noinline) ml::FixStr<64>* CfRes_stub_63ACC(ml::FixStr<64>*
 // `b` (then flushed to memory), the entry `e` is initialized and 1 is
 // returned. 0 when the cache is empty or no entry matches.
 extern "C" int __declspec(noinline) CfRes_tryLoadFromCache(void* a, void* b, u32 c, void* d, int size, void* e) {
-    int count = func_804D8FB4();
+    int count = SysCacheCountListNodes();
     if (count > 0) {
         const char* filePtr = ml::CPathUtil::getFilePtrFromPath((const char*)d);
         ml::FixStr<64> str;
@@ -1268,7 +1268,7 @@ extern "C" int __declspec(noinline) CfRes_tryLoadFromCache(void* a, void* b, u32
             u32 field40;
             unsigned long dataPtr;
             char* namePtr;
-            if (func_804D8FDC(i, &dataPtr, &namePtr, &field40) != 0 &&
+            if (SysCacheFetchIndexedEntry(i, &dataPtr, &namePtr, &field40) != 0 &&
                 CfRes_streq(str.mString, namePtr) != 0) {
                 CfRes_initFields4((u8*)e, (int)c, 0, (int)(uintptr_t)b, size);
                 CfRes_setBits1_2((u8*)e);
@@ -1387,7 +1387,7 @@ int __declspec(noinline) CfRes_dispatchArchiveRead(void* a, void* b, u32 c, void
         (mtl::ALLOC_HANDLE)(uintptr_t)b, (const char*)d, (IWorkEvent*)a, 0, 0);
     if (handle != 0) {
         if (f != 4) {
-            CDeviceFile::func_8044F154(handle, f);
+            CDeviceFile::tryUpdateJobPriority(handle, f);
         }
         CfRes_initFields4((u8*)e, (int)c, (int)(uintptr_t)handle, (int)(uintptr_t)b, size);
         CfRes_setBits1_2((u8*)e);
@@ -1990,7 +1990,7 @@ void __declspec(noinline) CfRes_reregisterTableEntry(int inst, int index, u8* pt
     }
     CfRes_delegateCleanup(entry);
     u32 out0, out1, out2, out3;
-    func_800AA318((u32)(uintptr_t)ptr, &out0, &out1, &out2, &out3);
+    Tok_Unpack((u32)(uintptr_t)ptr, &out0, &out1, &out2, &out3);
     entry->field_0x04 = CfRes_packFourFields(out0, out1, out2, 0x63);
 }
 
@@ -2061,7 +2061,7 @@ int __declspec(noinline) CfRes_resolveAndLinkB8(int inst, int a, int b, int c) {
 // KyoshinHeap_GetActive54) and dispatch the archive read (CfRes_buildPathAndRead), zeroing the
 // token on failure.
 extern "C" int __declspec(noinline) CfRes_resolveSlotB8(int inst, int a, int b, int c) {
-    int result = (int)func_800AA2BC((u32)a, (u32)b);
+    int result = (int)Tok_Pack08((u32)a, (u32)b);
     u8* slot = (u8*)CfRes_ptrPlusB8((u8*)(inst + 4));
     if (result == 0) {
         return result;
@@ -2086,7 +2086,7 @@ extern "C" int __declspec(noinline) CfRes_resolveSlotB8(int inst, int a, int b, 
 // into a path (packed-name + rodata suffix) and run the archive-read
 // pipeline (CfRes_dispatchArchiveRead), zeroing the token on failure.
 extern "C" int __declspec(noinline) CfRes_resolveSlotF4(int inst, int a, int b, int c) {
-    u32 packed = func_800AA2BC((u32)a, (u32)b);
+    u32 packed = Tok_Pack08((u32)a, (u32)b);
     u8* slot = (u8*)CfRes_ptrPlusF4((u8*)(inst + 4));
     if (((ResInfoEntry*)slot)->field_0x2C->cmpField4Eq(slot, (u32)(uintptr_t)packed) != 0) {
         return (int)packed;
@@ -2112,7 +2112,7 @@ extern "C" int __declspec(noinline) CfRes_resolveSlotF4(int inst, int a, int b, 
 // into a path (packed-name + rodata suffix) and run the archive-read
 // pipeline (CfRes_dispatchArchiveRead), zeroing the token on failure.
 extern "C" int __declspec(noinline) CfRes_resolveSlot130(int inst, int a, int b, int c, int d) {
-    u32 packed = func_800AA2BC((u32)b, (u32)c);
+    u32 packed = Tok_Pack08((u32)b, (u32)c);
     u8* slot = (u8*)CfRes_ptrPlus130((u8*)(inst + 4));
     if (((ResInfoEntry*)slot)->field_0x2C->cmpField4Eq(slot, (u32)(uintptr_t)packed) != 0) {
         return (int)packed;
@@ -2183,7 +2183,7 @@ int __declspec(noinline) CfRes_resolveSlot16C(int inst, int a, int b) {
 // string (rodata base +0x23 formatted with the two indices) and run the
 // archive-read pipeline (CfRes_dispatchArchiveRead), zeroing the token on failure.
 extern "C" int __declspec(noinline) CfRes_resolveSlot1E4(int inst, int a, int b, int c) {
-    int result = (int)func_800AA2BC((u32)a, (u32)b);
+    int result = (int)Tok_Pack08((u32)a, (u32)b);
     u8* slot = (u8*)CfRes_ptrPlus1E4((u8*)(inst + 4));
     if (((ResInfoEntry*)slot)->field_0x2C->cmpField4Eq(slot, (u32)(uintptr_t)result) != 0) {
         CfRes_setE28Mask(0x2000);
@@ -2558,7 +2558,7 @@ extern "C" void CfRes_stub_65D8C() {}
 
 // CfRes_cacheEffectBase: lazily resolve the resource base of a ResInfoEntry through
 // its +0x2C lookup object, cache it in field_0x10, and register it with the
-// effect-singleton list (func_804CC1BC). The retail first arg (r3) is
+// effect-singleton list (EffSched_LookupA). The retail first arg (r3) is
 // unused (same convention as CfRes_acquireSoundEntry in IResInfo.cpp).
 void CfRes_cacheEffectBase(int unused, ResInfoEntry* self) {
     if (self->field_0x10 == 0) {
@@ -2567,7 +2567,7 @@ void CfRes_cacheEffectBase(int unused, ResInfoEntry* self) {
             u32* fc18 = lbl_eu_8065FC18;
             if (fc18 != 0) {
                 self->field_0x10 = (u32)r;
-                func_804CC1BC(fc18, r);
+                EffSched_LookupA(fc18, r);
             }
         }
     }

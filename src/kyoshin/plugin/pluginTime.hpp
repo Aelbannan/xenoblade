@@ -6,8 +6,8 @@
 extern "C" {
 #endif
 
-int func_80185760(VMThread* pThread);
-int func_801857A8(VMThread* pThread);
+int PlugTime_GetCurrentSlot(VMThread* pThread);
+int PlugTime_GetControllerWord(VMThread* pThread);
 void pluginTimeRegist();
 
 #ifdef __cplusplus

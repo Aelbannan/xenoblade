@@ -36,7 +36,7 @@ struct SceneResMgrView {
 // const char* (CREvtLight) and void* (CfObjectMap) call sites.
 extern "C" void scnLgtRemoveLgtItem(void* mgr, void* handle);
 extern "C" void* func_804C1BA0(void* mgr, const void* name, int flag);
-extern "C" u32   func_80180940(void);
+extern "C" u32   REvtCam_IsTaskListEmpty(void);
 
 // Own vtable and math constants / helpers.
 extern "C" void* lbl_eu_80533D90[];
@@ -109,12 +109,12 @@ CREvtLight* __ct__801C3604(CREvtLight* self, int dealloc_flag) {
 }
 
 // ============================================================================
-// func_801C36C4: Set resource
+// CREvtLight_SetResource: Set resource
 // r3 = this, r4 = resource_name, r5 = field_value
 // Releases old resource if present, loads new resource if name != null,
 // stores field_value at +0x1C.
 // ============================================================================
-void func_801C36C4(CREvtLight* self, const char* resourceName, u32 fieldValue) {
+void CREvtLight_SetResource(CREvtLight* self, const char* resourceName, u32 fieldValue) {
     // Release old resource
     if (self->field_20 != nullptr) {
         void* mgr = reinterpret_cast<SceneResMgrView*>(lbl_eu_80663E14)->resMgr;
@@ -142,7 +142,7 @@ void func_801C36C4(CREvtLight* self, const char* resourceName, u32 fieldValue) {
                     cf::CfGameManager::getGameSubManager())->mapFx != nullptr) {
                 CScnEnvLgtCtrlListItem* fx = reinterpret_cast<GameSubMapFxView*>(
                     cf::CfGameManager::getGameSubManager())->mapFx;
-                fx->v24(func_80180940());
+                fx->v24(REvtCam_IsTaskListEmpty());
             }
         }
     }
@@ -151,22 +151,22 @@ void func_801C36C4(CREvtLight* self, const char* resourceName, u32 fieldValue) {
 }
 
 // ============================================================================
-// func_801C37C4: Empty virtual function
+// CREvtLight_noop7C4: Empty virtual function
 // ============================================================================
-void func_801C37C4(void) {}
+void CREvtLight_noop7C4(void) {}
 
 // ============================================================================
-// func_801C37C8: Empty virtual function
+// CREvtLight_noop7C8: Empty virtual function
 // ============================================================================
-void func_801C37C8(void) {}
+void CREvtLight_noop7C8(void) {}
 
 // ============================================================================
-// func_801C37CC: Vector distance to target
+// CREvtLight_DistToTarget: Vector distance to target
 // r3 = this, r4 = target object
 // Calls vfunc 0xAC on target to get position, computes distance from
 // this->mPos (0x3C), returns PSVECMag of the difference.
 // ============================================================================
-f32 func_801C37CC(CREvtLight* self, cf::CfObject* target) {
+f32 CREvtLight_DistToTarget(CREvtLight* self, cf::CfObject* target) {
     // Get target position via CfObject vtable slot 0xAC (CfObject_getPosVector)
     ml::CVec3* rawPos = target->CfObject_getPosVector();
     nw4r::math::VEC3* pos = reinterpret_cast<nw4r::math::VEC3*>(rawPos);
@@ -183,12 +183,12 @@ f32 func_801C37CC(CREvtLight* self, cf::CfObject* target) {
 }
 
 // ============================================================================
-// func_801C3850: Angle-based state check
+// CREvtLight_AngleState: Angle-based state check
 // r3 = this, r4 = target object
 // Computes horizontal angle from this to target, returns state (1, 2, or 4)
 // based on angle thresholds.
 // ============================================================================
-int func_801C3850(CREvtLight* self, cf::CfObject* target) {
+int CREvtLight_AngleState(CREvtLight* self, cf::CfObject* target) {
     // Get target position via CfObject vtable slot 0xAC (CfObject_getPosVector)
     ml::CVec3* rawPos = target->CfObject_getPosVector();
     nw4r::math::VEC3* pos = reinterpret_cast<nw4r::math::VEC3*>(rawPos);

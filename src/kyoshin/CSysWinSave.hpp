@@ -200,9 +200,9 @@ struct CSysWinSaveVtShim {
 // is declared below as a normal C++ function to let MWCC mangle it.)
 extern "C" {
 void deleteRegion__17UnkClass_8045F564Fv(UnkClass_8045F564* region);
-void func_8022B7F4(void* syswin);
-void func_8022B7C8(void* syswin, nw4r::lyt::DrawInfo* drawInfo);
-void func_801D20B0(void*, void*);
+void sysWinTermLayout(void* syswin);
+void sysWinDrawLayout(void* syswin, nw4r::lyt::DrawInfo* drawInfo);
+void Cur_DrawLayout(void*, void*);
 int IsMenuState621F0();
 void __ct__Q34nw4r3lyt8DrawInfoFv(nw4r::lyt::DrawInfo* self);
 void __dt__Q34nw4r3lyt8DrawInfoFv(nw4r::lyt::DrawInfo* self, int flags);
@@ -226,13 +226,13 @@ void playUISound__FUl(u32 op);
 u32 CSysWin_isReady(void* syswin);
 int CSysWin_isActive(void* syswin);
 void func_8022B9B4(void* syswin, void* str1, void* str2);
-void func_8022BF6C(void* syswin, void* a, void* b);
+void sysWinSetTwoTextValues(void* syswin, void* a, void* b);
 void func_8022BFC8(void* syswin, int kind);
-void func_8022B8B8(void* syswin);
-void func_8022B8E4(void* syswin);
-void func_8022B748(void* syswin);
-void func_8022C1B4(void* out, void* syswin, u8 sel);
-void func_801D216C(void* cur, int val);
+void sysWinOpenPhase1(void* syswin);
+void sysWinAdvancePhase3(void* syswin);
+void sysWinDispatchPhase(void* syswin);
+void sysWinGetPaneScreenPos(void* out, void* syswin, u8 sel);
+void Cur_SetVisible(void* cur, int val);
 void func_801D202C(void* cur);
 char* BdatTouchStringCell(const void* a, const void* b, int id);
 void CUICfManager_queueSaveMenu(int a, int b);
@@ -255,7 +255,7 @@ extern char lbl_eu_8052D238[];
 // in Move (read-only .rodata). MWCC does not mangle global-scope data names.
 extern char lbl_eu_8050FD6C[];
 
-// Float literals used by func_80294844 (.sdata2). Mutable (const would give
+// Float literals used by setChainGauge (.sdata2). Mutable (const would give
 // internal linkage and clash with the definitions in CSysWinSave.cpp).
 // (BA0+BA4 share one nonzero-anchored pair; single-float zeros exile to .sbss2.)
 extern f32 lbl_eu_80668BA04[2];

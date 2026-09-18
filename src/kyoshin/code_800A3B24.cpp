@@ -34,7 +34,7 @@ extern const float lbl_eu_806667F8;
 // radians -> FIdx conversion factor (lbl_eu_806667D4)
  extern const float lbl_eu_806667D4;
 // s32->f32 conversion magic double (0x4330000080000000), referenced by the
-// builtin (float) cast in func_800A3B24. MWCC pools that magic as a TU-local
+// builtin (float) cast in VecMath_RandomAngleOffset. MWCC pools that magic as a TU-local
 // @N label while retail references the shared .sdata2 blob, so the reloc name
 // drifts (MWCC_CASES §7i); the extern documents the retail symbol and is
 // the anchor a manual bit-pattern conversion would subtract (union + extern
@@ -94,9 +94,9 @@ extern ColiProbeObj* lbl_eu_80665958;
 // parameters: the retail call site in func_800A7094 only sets r3-r6 and f1
 // (r4 = the second pointer argument), and the callee reads only the four GPR
 // arguments (the trailing float is ignored).
-extern "C" int func_804BE398(void* vec, int a, int b, int c, f32 d, f32 e);
+extern "C" int ScnRes_VertRayForward_E398(void* vec, int a, int b, int c, f32 d, f32 e);
 // Debug-draw setup: binds a CDrawGX to the scene + view (r5 = view, 0 = current).
-extern "C" void func_8049034C(void* a, void* b, CView* c);
+extern "C" void TexMan_ApplyCamPersp_034C(void* a, void* b, CView* c);
 // Copy the 12-byte header / info block of scene-resource entry [index].
 extern "C" void func_804BE4B4(void* dst, int index);
 extern "C" void func_804BE4E0(void* dst, int index);
@@ -119,7 +119,7 @@ public:
 };
 } // namespace cf
 
-void func_800A3B24(ml::CVec3* out, int seed) {
+void VecMath_RandomAngleOffset(ml::CVec3* out, int seed) {
     // Lazily fill the random-angle offset table (element 0 stays untouched).
     if (lbl_eu_80663E91 == 0) {
         lbl_eu_80572AA0[1] = lbl_eu_8066A1F8;
@@ -140,7 +140,7 @@ void func_800A3B24(ml::CVec3* out, int seed) {
     out->y = lbl_eu_806667D8;
 }
 
-ml::CVec3* func_800A3C48(ml::CVec3* v) {
+ml::CVec3* VecMath_NormalizeInPlace(ml::CVec3* v) {
     // Normalize v in place and return it. If v is (near-)zero it is left as-is;
     // if the squared length is exactly zero it is set to ml::CVec3::zero,
     // otherwise PSVECNormalize runs in place.
@@ -201,7 +201,7 @@ float func_800A3DF8(const ml::CVec3& v) {
     return len2 <= lbl_eu_806667D8 ? lbl_eu_806667D8 : len2 * nw4r::math::FrSqrt(len2);
 }
 
-float func_800A3EF4(float x) {
+float VecMath_SafeSqrtF(float x) {
     // Sqrt for positive inputs; warns on negatives (nw4r FSqrt assert) and
     // returns 0 for non-positive or near-zero inputs.
     if (ml::math::abs(x) > lbl_eu_8066A208) {
@@ -213,7 +213,7 @@ float func_800A3EF4(float x) {
     return lbl_eu_806667D8;
 }
 
-void func_800A3F8C(ml::CVec3* v) {
+void VecMath_WrapAnglesPi(ml::CVec3* v) {
     // Wrap each component into (-pi, pi] using the pi / 2*pi constants.
     float x = v->x;
     while (lbl_eu_8066A1F8 <= x) x -= lbl_eu_8066A1FC;
@@ -229,7 +229,7 @@ void func_800A3F8C(ml::CVec3* v) {
     v->z = z;
 }
 
-bool func_800A4050(const ml::CVec3& a, const ml::CVec3& b, const ml::CVec3& c) {
+bool VecMath_IsTurnLeftXZ(const ml::CVec3& a, const ml::CVec3& b, const ml::CVec3& c) {
     // True when the Y component of (b-a) x (c-a) is positive.
     ml::CVec3 ab = b - a;
     ml::CVec3 ac = c - a;
@@ -300,7 +300,7 @@ void func_800A41BC(ml::CVec3* out, const ml::CVec3& p0, const ml::CVec3& p1,
     *out = res;
 }
 
-extern "C" void func_800A44CC(ml::CMat34* out, const ml::CVec3* src, const ml::CVec3* trans) {
+extern "C" void VecMath_BuildFacingMatrix(ml::CMat34* out, const ml::CVec3* src, const ml::CVec3* trans) {
     // Build a facing matrix whose Z axis is the (normalized) src direction:
     // X/Y bases are derived from cross products with a reference direction.
     ml::CVec3 xAxis;
@@ -872,7 +872,7 @@ extern "C" int func_800A5B18(cf::CfObject* self, const ml::CVec3& point, ml::CVe
     return cond1 && cond2;
 }
 
-extern "C" void func_800A5F54(const ml::CVec3* src, const ml::CVec3* min, const ml::CVec3* max, ml::CVec3* dst) {
+extern "C" void VecMath_ClampVecAABB(const ml::CVec3* src, const ml::CVec3* min, const ml::CVec3* max, ml::CVec3* dst) {
     // Clamp a copy of src component-wise into the [min, max] AABB.
     *dst = *src;
     if (dst->x < min->x) {
@@ -929,7 +929,7 @@ extern "C" int func_800A5FE8(cf::CfObject* self, const ml::CVec3& a, const ml::C
         PSMTXMultVec(mat, d, tA);
         d = tA;
     }
-    func_800A5F54(&d, &min, &max, &clamped);
+    VecMath_ClampVecAABB(&d, &min, &max, &clamped);
     // Inside the box iff the clamp left d unchanged (squared distance 0).
     nw4r::math::VEC3Sub(tB, clamped, d);
     diff.x = tB.x;
@@ -974,7 +974,7 @@ extern "C" int func_800A5FE8(cf::CfObject* self, const ml::CVec3& a, const ml::C
 
 extern "C" void renderSphere__Q22cf18CfDebugDrawManagerFv(cf::CfDebugDrawManager* self, float radius) {
     CDrawGX draw;
-    func_8049034C(lbl_eu_80663E14, &draw, lbl_eu_80663E10);
+    TexMan_ApplyCamPersp_034C(lbl_eu_80663E14, &draw, lbl_eu_80663E10);
 
     // Inline temporary: the setCol argument setup interleaves between the
     // constant loads exactly like retail.
@@ -1048,7 +1048,7 @@ int func_800A7094(ml::CVec3* a, ml::CVec3* b, ml::CVec3* c, float f, float g) {
     ml::CVec3 d2c;
     ml::CVec3 d1;      // b - tmp68
     ml::CVec3 d1c;
-    int result = func_804BE398(b, (int)(uintptr_t)c, 0, 0, -f, g);
+    int result = ScnRes_VertRayForward_E398(b, (int)(uintptr_t)c, 0, 0, -f, g);
     if (result != 0) {
         func_804BE4B4(&tmp68, 0);
         func_804BE4E0(&tmp74, 0);
@@ -1097,12 +1097,12 @@ int func_800A72E0(const ml::CVec3* self, ml::CVec3* arg2, ml::CVec3* arg3, float
     ml::CVec3 d2c;
     ml::CVec3 d1;
     ml::CVec3 d1c;
-    int result1 = func_804BE398(arg2, (int)(uintptr_t)arg3, 0, 0, f1, f2);
+    int result1 = ScnRes_VertRayForward_E398(arg2, (int)(uintptr_t)arg3, 0, 0, f1, f2);
     if (result1 != 0) {
         func_804BE4B4(&tmp74, 0);
         func_804BE4E0(&tmp80, 0);
     }
-    int result2 = func_804BE398(arg2, (int)(uintptr_t)arg3, 0, 0, -f1, f2);
+    int result2 = ScnRes_VertRayForward_E398(arg2, (int)(uintptr_t)arg3, 0, 0, -f1, f2);
     if (result2 != 0) {
         func_804BE4B4(&tmp68, 0);
         func_804BE4E0(&tmp80, 0);
@@ -1167,14 +1167,14 @@ extern "C" void renderCylinder__Q22cf18CfDebugDrawManagerFb(
 
     // Facing matrix along the axis, translated to the cylinder base.
     ml::CMat34 mat;
-    func_800A44CC(&mat, &dir, &self->mPos);
+    VecMath_BuildFacingMatrix(&mat, &dir, &self->mPos);
 
     if (mode == false) {
         radius = radius * lbl_eu_80666810;
     }
 
     CDrawGX draw;
-    func_8049034C(lbl_eu_80663E14, &draw, lbl_eu_80663E10);
+    TexMan_ApplyCamPersp_034C(lbl_eu_80663E14, &draw, lbl_eu_80663E10);
     draw.setCol(*col);
 
     // Cylinder wall drawn as two 18-vertex triangle strips. Every angle is

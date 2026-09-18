@@ -208,7 +208,7 @@ void CMenuGetItem::Init() {
         (int)mtl::MemManager::getHandleMEM2(), 0x1000, lbl_eu_805018D0, 0);
     Class_8045F858 memHost(reinterpret_cast<UnkClass_8045F564*>(&mUnkClass[0]));
 
-    mField_90 = func_80144FC8();
+    mField_90 = isLandTelopActive();
 
     {
         // String base kept in a block-scoped local for the build-up phase;
@@ -347,13 +347,13 @@ void CMenuGetItem::cbRenderBefore() {
 }
 
 /*
- * Single get-item factory (func_8014A064). If an instance already exists and
+ * Single get-item factory (CMenuGetItem_CreateSingle). If an instance already exists and
  * is not marked for removal, clear its +0x54 flag, forward the arg to
  * func_8014A2E8 and return 0; otherwise allocate a 0x2B4 block from work
  * memory, construct it, store it in the singleton and register it under
  * `registParent`, returning the stored instance.
  */
-CMenuGetItem* func_8014A064(CProcess* registParent, CScn* parent, u32 arg) {
+CMenuGetItem* CMenuGetItem_CreateSingle(CProcess* registParent, CScn* parent, u32 arg) {
     CMenuGetItem* inst = lbl_eu_806641A8;
     if (inst != 0 && inst->mIsRemove == 0) {
         if (inst->mField_54 != 0) {
@@ -376,11 +376,11 @@ CMenuGetItem* func_8014A064(CProcess* registParent, CScn* parent, u32 arg) {
 }
 
 /*
- * Second get-item variant factory (func_8014A11C) - same shape as
- * func_8014A064 but constructs via __ct__80149878 and forwards to
+ * Second get-item variant factory (CMenuGetItem_CreateVariant) - same shape as
+ * CMenuGetItem_CreateSingle but constructs via __ct__80149878 and forwards to
  * func_8014A430.
  */
-CMenuGetItem* func_8014A11C(CProcess* registParent, CScn* parent, u32 arg) {
+CMenuGetItem* CMenuGetItem_CreateVariant(CProcess* registParent, CScn* parent, u32 arg) {
     CMenuGetItem* inst = lbl_eu_806641A8;
     if (inst != 0 && inst->mIsRemove == 0) {
         if (inst->mField_54 != 0) {
@@ -401,10 +401,10 @@ CMenuGetItem* func_8014A11C(CProcess* registParent, CScn* parent, u32 arg) {
 }
 
 /*
- * Multi get-item variant factory (func_8014A1D4) - same shape with one extra
+ * Multi get-item variant factory (CMenuGetItem_CreateMulti) - same shape with one extra
  * arg; constructs via __ct__80149970 and forwards both args to func_8014A570.
  */
-CMenuGetItem* func_8014A1D4(CProcess* registParent, CScn* parent, u32 arg0,
+CMenuGetItem* CMenuGetItem_CreateMulti(CProcess* registParent, CScn* parent, u32 arg0,
                             u32 arg1) {
     CMenuGetItem* inst = lbl_eu_806641A8;
     if (inst != 0 && inst->mIsRemove == 0) {
@@ -425,16 +425,16 @@ CMenuGetItem* func_8014A1D4(CProcess* registParent, CScn* parent, u32 arg0,
     return lbl_eu_806641A8;
 }
 
-extern "C" unsigned long func_8014A2A0(void) { return lbl_eu_806641A8 != 0; }
+extern "C" unsigned long CMenuGetItem_IsActive(void) { return lbl_eu_806641A8 != 0; }
 
-u8 func_8014A2B4() {
+u8 CMenuGetItem_GetField90() {
     if (lbl_eu_806641A8 != NULL) {
         return lbl_eu_806641A8->mField_90;
     }
     return 0;
 }
 
-void func_8014A2D0() {
+void CMenuGetItem_SetField54() {
     if (lbl_eu_806641A8 != NULL) {
         lbl_eu_806641A8->mField_54 = 1;
     }
@@ -498,8 +498,8 @@ extern "C" void func_8014A570(CMenuGetItem* self, int arg0, int arg1) {
 
 void func_8014A6F8(){}
 
-void func_8014A854(void* self) { ((void(*)(void*))__dt__12CMenuGetItemFv)((char*)self - 0x58); }
+void CMenuGetItem_DtorThunk58(void* self) { ((void(*)(void*))__dt__12CMenuGetItemFv)((char*)self - 0x58); }
 
-void func_8014A85C(void* self) { ((void(*)(void*))cbRenderBefore__12CMenuGetItemFv)((char*)self - 0x5c); }
+void CMenuGetItem_RenderThunk5C(void* self) { ((void(*)(void*))cbRenderBefore__12CMenuGetItemFv)((char*)self - 0x5c); }
 
-void func_8014A864(void* self) { ((void(*)(void*))__dt__12CMenuGetItemFv)((char*)self - 0x5c); }
+void CMenuGetItem_DtorThunk5C(void* self) { ((void(*)(void*))__dt__12CMenuGetItemFv)((char*)self - 0x5c); }

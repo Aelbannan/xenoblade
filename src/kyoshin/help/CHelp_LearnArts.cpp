@@ -28,12 +28,12 @@ bool CHelp_LearnArts::func_802B8398() {
     if (lbl_eu_80664A10->mLearnArtsFlag == 0) {
         return false;
     }
-    if (func_80122450() != 0) {
+    if (hasQuestWindow() != 0) {
         // Arts-state helper; copy its result byte into our flag.
-        mLearnArtsFlag = func_8012246C();
+        mLearnArtsFlag = isQuestWindowOpen();
         return false;
     }
-    if (func_801B481C() != 0) {
+    if (GetItemMulti_IsActiveFlag() != 0) {
         mLearnArtsFlag = 0;
         return false;
     }
@@ -54,7 +54,7 @@ bool CHelp_LearnArts::func_802B8398() {
         bound = ((s16)character == 1) ? 8 : 16;
         counter = 0;
         for (int j = 0; j < bound; ++j) {
-            if (func_801F9268(artsBase, byteVal, j)) {
+            if (ResTbox_IsCellBitSet(artsBase, byteVal, j)) {
                 ++counter;
             }
         }

@@ -88,7 +88,7 @@ extern int CfGimmick_CheckStateFlag2CC8(u16 duration);
 extern int CfGimmick_CheckTriggerGated(u16 flags, void* first, void* second, void* third,
                          void* effect);
 extern void CfGimmick_SetGlobalFlagC0002();
-extern void* func_8003AA34();
+extern void* Bdat_GetTable_AA34();
 extern int getBdatStringColumnValue(void* bdat, const char* column, u16 row);
 extern CfGimmickWork* createBattleActor__Q22cf13CfGameManagerFv(u16 id, int mode);
 extern int CfSoundMan_TouchSlotById(u16 handle);
@@ -195,7 +195,7 @@ extern "C" CfGimmickJump* __ct__cf_CfGimmickJump(CfGimmickJump* self,
     *(void**)self = lbl_eu_80535A18;
     self->gimmickType = 5;
 
-    void* bdat = func_8003AA34();
+    void* bdat = Bdat_GetTable_AA34();
     void* table = lbl_eu_80664138;
     self->bdatRow = row;
 

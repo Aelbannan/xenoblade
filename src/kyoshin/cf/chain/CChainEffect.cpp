@@ -12,30 +12,30 @@ cf::CChainEffect::~CChainEffect() {}
 // Look up an effect linkage object by (class-id, member pointer). The member
 // pointer stores the object offset as a run-time pointer; when non-null it is
 // rebased by 0x3E9C before the lookup (target 1).
-void* func_802A07F4(u32 cls, int mem) {
+void* chainResolveMemberPtr(u32 cls, int mem) {
     if (mem != 0) {
         mem += 0x3E9C;
     }
-    return func_800451D8(cls, mem);
+    return bindIndexedEffect(cls, mem);
 }
 
-// Same as func_802A07F4, but the member pointer is loaded from src->field_00
+// Same as chainResolveMemberPtr, but the member pointer is loaded from src->field_00
 // first (target 2).
-void* func_802A0804(u32 cls, u32* src) {
+void* chainResolveMemberFromSrc(u32 cls, u32* src) {
     int mem = *src;
     if (mem != 0) {
         mem += 0x3E9C;
     }
-    return func_800451D8(cls, mem);
+    return bindIndexedEffect(cls, mem);
 }
 
 // Bind a chain effect (target 8). When `a` is non-zero, unlink the previous
 // owner (if any) and link `self` to the resolved object; when `a` is zero,
 // tear down the current link and clear.
-extern "C" void func_802A0950(cf::CChainEffect* self, int a, int b, int c, int d, int e) {
+extern "C" void chainBindEffectLink(cf::CChainEffect* self, int a, int b, int c, int d, int e) {
     if (a != 0) {
         if (self->unk8 != (u32)d) {
-            func_802A0950(self, 0, 0, 0, 0, 0);
+            chainBindEffectLink(self, 0, 0, 0, 0, 0);
         }
         if (self->unk4 != 0) {
             return;
@@ -45,7 +45,7 @@ extern "C" void func_802A0950(cf::CChainEffect* self, int a, int b, int c, int d
         if (member != 0) {
             member += 0x3E9C;
         }
-        CChainObj* obj = (CChainObj*)func_800451D8((u32)b, (int)member);
+        CChainObj* obj = (CChainObj*)bindIndexedEffect((u32)b, (int)member);
         self->unk4 = (u32)obj;
         if (obj != 0) {
             obj->field_b0 = self;
@@ -79,7 +79,7 @@ extern "C" void func_802A0950(cf::CChainEffect* self, int a, int b, int c, int d
 }
 
 // Release helper wrappers (targets 4-6).
-void func_802A0AE0(cf::CChainEffect* self, u32 obj) {
+void chainClearLinkOnObjMatch(cf::CChainEffect* self, u32 obj) {
     if (obj != self->unk4) {
         return;
     }
@@ -87,7 +87,7 @@ void func_802A0AE0(cf::CChainEffect* self, u32 obj) {
     self->unk8 = 0;
 }
 
-void func_802A0AA0(cf::CChainEffect* self, u32 obj) {
+void chainUnlinkOnOwnerMatch(cf::CChainEffect* self, u32 obj) {
     if (self->unk4 == 0) {
         return;
     }
@@ -97,16 +97,16 @@ void func_802A0AA0(cf::CChainEffect* self, u32 obj) {
     if (*(u32*)(self->unk8) != obj) {
         return;
     }
-    func_802A0950(self, 0, 0, 0, 0, 0);
+    chainBindEffectLink(self, 0, 0, 0, 0, 0);
 }
 
-void func_802A0904(cf::CChainEffect* self) {
-    func_802A0950(self, 0, 0, 0, 0, 0);
+void chainTeardownLinkClear(cf::CChainEffect* self) {
+    chainBindEffectLink(self, 0, 0, 0, 0, 0);
     self->unk4 = 0;
     self->unk8 = 0;
 }
 
-void func_802A08F4(void* self) {
+void chainClearTwoWords(void* self) {
     *(unsigned long*)((char*)self + 4) = 0;
     *(unsigned long*)((char*)self + 8) = 0;
 }
@@ -114,7 +114,7 @@ void func_802A08F4(void* self) {
 // Scan the manager's circular object list and bind-remove every object matching
 // (id, p2). The scan repeats until a pass finds nothing; the return flags
 // whether any object was matched (target 7).
-int func_802A0818(s32 id, u32 p2) {
+int chainUnbindMatchingObjects(s32 id, u32 p2) {
     CChainManager* mgr;
     CChainItem* item;
     CChainNode* node;
@@ -128,7 +128,7 @@ scan:
         mgr = getReslistBE8();
         node = mgr->field_04->field_00;
         while (node != mgr->field_04) {
-            item = (CChainItem*)func_800AC610(node->field_08);
+            item = (CChainItem*)CollObjHasFlag64Bit5(node->field_08);
             if (item != 0 && id == item->field_8C) {
                 if (p2 != 0) {
                     // Member pointer is stored rebased by 0x3E9C; the rebase

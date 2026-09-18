@@ -448,7 +448,7 @@ extern "C" void setSnapFlags(CActParamAnim* self, u32 param1, u32 param2, f32 va
 
 int func_8004B8F8(CActParamAnim* self, int param) {
     // First read feeds the null check; the second read through self exists
-    // because func_8049798C clobbers r5, forcing a reload (retail keeps no
+    // because scn80496HasChild2Node clobbers r5, forcing a reload (retail keeps no
     // spill home for obj). Byte-invariant residual: retail interleaves the
     // first load with the prologue spills; every source shape tried emits
     // them grouped (scheduler tie-break wall, MWCC_CASES near-miss trio).
@@ -457,7 +457,7 @@ int func_8004B8F8(CActParamAnim* self, int param) {
     if (param == 0) {
         return simGetLeafAnimDist(obj) <= lbl_eu_80665E9C;
     }
-    if (func_8049798C(obj + 0xC) != 0) {
+    if (scn80496HasChild2Node(obj + 0xC) != 0) {
         u8* obj2 = *(u8**)((char*)self + 0x3A0);
         return simGetLeafAnimDist4(obj2) <= lbl_eu_80665E9C;
     }
@@ -800,7 +800,7 @@ void func_8004BDCC(CActParamAnim* self, u32 param, u32 sel, u32 resId,
     view->field4BF = 0;
     view->field4C0 = 0;
     if (sel == 0) {
-        if (func_804978D0(view->object3A0 + 0xC) == 0)
+        if (scn80496ChildIdsDiffer(view->object3A0 + 0xC) == 0)
             flushParamPair(view->mChildData10, 0);
     } else {
         if (func_80497914(view->object3A0 + 0xC) == 0)
@@ -4161,7 +4161,7 @@ void CActParamAnim::func_80052934(const ml::CVec3* /*v*/) {
             p.z -= s->field3D4;
         }
         getScnHandle();
-        if (func_804BCC10() != 0) {
+        if (ScnData_FwdBC9A0() != 0) {
             if ((s->field0C & 0x00400000) != 0) {
                 func_80053198(reinterpret_cast<CActParamAnim*>(s),
                               reinterpret_cast<ml::CVec3*>(&p));
@@ -4256,7 +4256,7 @@ extern "C" int func_80053490(CActParamAnim* self, const ml::CVec3* dirParam) {  
         off.z = lbl_eu_80665EA0;
         ml::CVec3 sum = *reinterpret_cast<ml::CVec3*>(&view->field3A8) + off;
         ml::CVec3 v = sum;
-        if (func_804BE398(&v, view->field4A8, 0, 0, lbl_eu_80665F40,
+        if (ScnRes_VertRayForward_E398(&v, view->field4A8, 0, 0, lbl_eu_80665F40,
                           lbl_eu_80665EA0) != 0) {
             ml::CVec3 a;
             ml::CVec3 b;

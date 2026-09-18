@@ -49,9 +49,9 @@ CTTask<CUIWindowManager::CTest>::~CTTask() {}
 // Batch 2026-07-14g: window-mgr-move owns Move() exclusively in this TU.
 
 extern "C" {
-void func_8009D0B4();
-void func_8009D514(cf::IFlagEvent*);
-cf::IFlagEvent* func_8009D414(cf::IFlagEvent*);
+void CtrlRemote_FetchSharedBufPtr();
+void CtrlRemote_ResetSlotArrayByIndex(cf::IFlagEvent*);
+cf::IFlagEvent* CtrlRemote_ResetSlotArrayObj(cf::IFlagEvent*);
 extern void __ct__8CProcessFv(void* self);
 extern u32 __ptmf_null[3];
 extern const u8 lbl_eu_8052E670[0x10];
@@ -155,14 +155,14 @@ void CUIWindowManager::Init() {
     }
     unk9C = (IUIWindow*)inst;
     Regist__8CProcessFP8CProcessb(this, lbl_eu_80664088, false);
-    func_8009D0B4();
-    func_8009D414(this);
+    CtrlRemote_FetchSharedBufPtr();
+    CtrlRemote_ResetSlotArrayObj(this);
 }
 
 void CUIWindowManager::Term() {
     cf::IFlagEvent* flagEvent = this; // implicit MI conversion -- do not static_cast / ternary / if
-    func_8009D0B4();
-    func_8009D514(flagEvent);
+    CtrlRemote_FetchSharedBufPtr();
+    CtrlRemote_ResetSlotArrayByIndex(flagEvent);
 
     unk9C->SetRemove();
     lbl_eu_80664088 = NULL;
@@ -467,10 +467,10 @@ CUIWindowManager::CUIWindowManager(CScn* pScene, mtl::ALLOC_HANDLE mHandle)
     mWindowList1.reserve(Scn_CallUnk8C_V10(pScene), 8);
     mWindowList2.reserve(Scn_CallUnk8C_V10(pScene), 8);
 
-    func_8015D0B8();
+    Col6_ClearGlobals_D0B8();
     func_80122460();
-    func_801B29E0();
-    func_8012BDD0();
+    GetItemMulti_ClearDoneLatch();
+    TalkWin_ClearFlag_BDD0();
     lbl_eu_8066408C = 0;
 }
 // Retail dtor of the CTTask<CUIWindowManager> base (flat retail mangling):
@@ -486,7 +486,7 @@ extern "C" void* __dt__CTTask_CUIWindowManager(void* self, s32 flags) {
     return self;
 }
 // Window-creation dispatcher keyed on the request id. Each accepted range
-// creates a CMenuUpdate window via func_80142B4C / func_80144EE4 and queues
+// creates a CMenuUpdate window via MenuUpdate_SpawnProcessForMode / func_80144EE4 and queues
 // it on the primary window list; the quest path (0x221..0x607) additionally
 // gates on flag-memory resources, the talk-event bit and the player's
 // current target.
@@ -512,10 +512,10 @@ extern "C" void func_8013CBB4(u32 arg0, int id, int arg2, int arg3) {
         if (arg2 == 0 || arg2 == 0xc8 || arg2 == 0xfe || arg2 == 0xff) {
             return;
         }
-        if (func_8009CF8C(0x334b) == 0) {
+        if (CtrlRemote_TouchBitByArg(0x334b) == 0) {
             return;
         }
-        if (func_8009CF8C(0x337f) == 0) {
+        if (CtrlRemote_TouchBitByArg(0x337f) == 0) {
             return;
         }
         // Null-check the singleton, but do not keep it live across the
@@ -528,7 +528,7 @@ extern "C" void func_8013CBB4(u32 arg0, int id, int arg2, int arg3) {
                 lbl_eu_8050097C, id - 0x220) == 2) {
             return;
         }
-        u32 winRet = (u32)func_80142B4C((CProcess*)lbl_eu_80664088->unk9C,
+        u32 winRet = (u32)MenuUpdate_SpawnProcessForMode((CProcess*)lbl_eu_80664088->unk9C,
                                         lbl_eu_80664088->unk58, 1, 0, 0, 0);
         questWin = winRet;
         if (winRet == 0) {
@@ -581,7 +581,7 @@ extern "C" void func_8013CBB4(u32 arg0, int id, int arg2, int arg3) {
         if (inst == NULL) {
             return;
         }
-        u32 winRet = (u32)func_80142B4C((CProcess*)inst->unk9C,
+        u32 winRet = (u32)MenuUpdate_SpawnProcessForMode((CProcess*)inst->unk9C,
                                         inst->unk58, 2, 0, 0, 0);
         plainWin = winRet;
         if (winRet == 0) {
@@ -647,7 +647,7 @@ extern "C" void func_8013CBB4(u32 arg0, int id, int arg2, int arg3) {
         if (inst == NULL) {
             return;
         }
-        u32 winRet = (u32)func_80142B4C((CProcess*)inst->unk9C,
+        u32 winRet = (u32)MenuUpdate_SpawnProcessForMode((CProcess*)inst->unk9C,
                                         inst->unk58, 2, 0, 0, 0);
         talkWin = winRet;
         if (winRet == 0) {
@@ -907,7 +907,7 @@ extern "C" IUIWindow* UIWin_CreateTalkWin(u32 id, const u8* msgSrc, u32 a3) {
     {
         // NOTE: retail does NOT null-check the factory result here - the
         // window (or 0) is queued regardless.
-        u32 tempRet = (u32)func_8012CC78((CProcess*)lbl_eu_80664088->unk9C,
+        u32 tempRet = (u32)TalkWin_Create_CC78((CProcess*)lbl_eu_80664088->unk9C,
                                          (u32)lbl_eu_80664088->unk58, id,
                                          msgSrc, found, 0, a3);
         savedRet = tempRet;
@@ -989,7 +989,7 @@ extern "C" IUIWindow* UIWin_CreateEveTalkWin(u32 text, const u8* msgSrc) {
     {
         // Retail reloads the singleton for the factory args (its live range
         // ends at the guard check) instead of keeping it in a saved register.
-        u32 tempRet = (u32)func_801A20DC((CProcess*)lbl_eu_80664088->unk9C,
+        u32 tempRet = (u32)eveTalkWinCreateRegister((CProcess*)lbl_eu_80664088->unk9C,
                                          lbl_eu_80664088->unk58, text, msgSrc,
                                          0);
         savedRet = tempRet;
@@ -1055,7 +1055,7 @@ extern "C" IUIWindow* UIWin_CreateSysWin0(const char* str, void* arg1, u32 arg2)
     {
         // Volatile stack-homed result: the store lands between the compare
         // and the branch, as in retail.
-        u32 tempRet = (u32)func_80124AEC(
+        u32 tempRet = (u32)SysWinCreateSingleton(
             (CProcess*)lbl_eu_80664088->unk9C,
             arg1 != NULL ? arg1 : lbl_eu_80664088->unk58, 0, (u32)str, 0);
         savedRet = tempRet;
@@ -1115,7 +1115,7 @@ extern "C" IUIWindow* UIWin_CreateSysWin1(u32 arg0, void* arg1, void* arg2, u32 
         return NULL;
     }
     {
-        u32 tempRet = (u32)func_80124AEC((CProcess*)lbl_eu_80664088->unk9C,
+        u32 tempRet = (u32)SysWinCreateSingleton((CProcess*)lbl_eu_80664088->unk9C,
                                          arg2 != NULL ? arg2
                                                       : lbl_eu_80664088->unk58,
                                          1, arg0, (u32)arg1);
@@ -1221,10 +1221,10 @@ queue_found:
     return (IUIWindow*)savedRet;
 }
 
-// Window creator (void): create through func_8027E9E8 and queue on the
+// Window creator (void): create through SysWinLog_Create and queue on the
 // primary window list. Retail spills the result to the frame across the
 // inlined push_back scan.
-extern "C" IUIWindow* func_8027E9E8(CProcess* pProc, CScn* pScene);
+extern "C" IUIWindow* SysWinLog_Create(CProcess* pProc, CScn* pScene);
 int UIWin_CreateExtraWin() {
     volatile u32 savedRet;
     CUIWindowManager* inst = lbl_eu_80664088;
@@ -1232,7 +1232,7 @@ int UIWin_CreateExtraWin() {
         return 0;
     }
     {
-        u32 tempRet = (u32)func_8027E9E8((CProcess*)inst->unk9C, inst->unk58);
+        u32 tempRet = (u32)SysWinLog_Create((CProcess*)inst->unk9C, inst->unk58);
         savedRet = tempRet;
         if (tempRet == 0) {
             return 0;
@@ -1283,7 +1283,7 @@ extern "C" IUIWindow* UIWin_Create25070Win(u32 a1, u32 a2, u32 a3) {
         return NULL;
     }
     {
-        u32 tempRet = (u32)func_80125070((CProcess*)inst->unk9C, inst->unk58,
+        u32 tempRet = (u32)SysWinSelectCreate((CProcess*)inst->unk9C, inst->unk58,
                                          a1, a2, a3);
         savedRet = tempRet;
         if (tempRet == 0) {
@@ -1342,7 +1342,7 @@ extern "C" IUIWindow* UIWin_CreateQuestWin(u32 id, void* arg1, u32 arg2) {
     {
         // Note this creator does NOT null-check the factory result before
         // queueing - retail stores it and walks the list unconditionally.
-        u32 tempRet = (u32)func_80122B2C((CProcess*)lbl_eu_80664088->unk9C,
+        u32 tempRet = (u32)createQuestWindow((CProcess*)lbl_eu_80664088->unk9C,
                                          lbl_eu_80664088->unk58, id,
                                          (u32)arg1);
         savedRet = tempRet;
@@ -1405,7 +1405,7 @@ extern "C" IUIWindow* UIWin_CreateMenuUpdate(int first, u32 second, s32 third,
         }
     }
     {
-        u32 tempRet = (u32)func_80142B4C(
+        u32 tempRet = (u32)MenuUpdate_SpawnProcessForMode(
             (CProcess*)lbl_eu_80664088->unk9C, lbl_eu_80664088->unk58,
             (int)first, (int)second, (int)third, (int)fourth);
         savedRet = tempRet;
@@ -1741,11 +1741,11 @@ extern "C" IUIWindow* UIWin_CreateShopWin(u32 id) {
     if (lbl_eu_80664088 == NULL) {
         return NULL;
     }
-    if (func_80226B94()) {
+    if (QstCnt_HasInstance_6B94()) {
         return NULL;
     }
     CUIWindowManager* inst = lbl_eu_80664088;
-    u32 tempRet = (u32)func_8018A58C((CProcess*)inst->unk9C, inst->unk58, id);
+    u32 tempRet = (u32)ShopSel_CreateSingleton((CProcess*)inst->unk9C, inst->unk58, id);
     savedRet = tempRet;
     if (tempRet == 0) {
         return NULL;
@@ -1863,7 +1863,7 @@ extern "C" IUIWindow* UIWin_CreateItemMulti(u32 a1, u32 a2, u32 a3, u32 a4, u32 
         return NULL;
     }
     {
-        u32 tempRet = (u32)func_801B46E4((CProcess*)lbl_eu_80664088->unk9C,
+        u32 tempRet = (u32)GetItemMulti_CreateInstance((CProcess*)lbl_eu_80664088->unk9C,
                                          lbl_eu_80664088->unk58, a1, a2, a3,
                                          a4, a6, a8, flag);
         savedRet = tempRet;
@@ -1921,7 +1921,7 @@ extern "C" IUIWindow* UIWin_CreateB4790Win(u32 arg1, u32 arg2) {
         return NULL;
     }
     {
-        u32 tempRet = (u32)func_801B4790((CProcess*)lbl_eu_80664088->unk9C,
+        u32 tempRet = (u32)GetItemMulti_CreateSimple((CProcess*)lbl_eu_80664088->unk9C,
                                          lbl_eu_80664088->unk58, arg1);
         savedRet = tempRet;
         if (tempRet == 0) {
@@ -2147,7 +2147,7 @@ extern "C" IUIWindow* UIWin_Create6F8B0Win(u32 id) {
     }
     {
         u32 tempRet =
-            (u32)func_8026F8B0((CProcess*)inst->unk9C, inst->unk58, 2, id);
+            (u32)createBattleEndMenu((CProcess*)inst->unk9C, inst->unk58, 2, id);
         savedRet = tempRet;
         if (tempRet == 0) {
             return NULL;
@@ -2205,7 +2205,7 @@ extern "C" IUIWindow* UIWin_CreatePTChange(u32 flag) {
         return NULL;
     }
     {
-        u32 tempRet = (u32)func_80293B9C(
+        u32 tempRet = (u32)PTNotice_Create_3B9C(
             (CProcess*)lbl_eu_80664088->unk9C, lbl_eu_80664088->unk58);
         savedRet = tempRet;
         if (tempRet == 0) {
@@ -2361,9 +2361,9 @@ queue_found:
 // Pending-update query: returns 1 when any window on either queue has its
 // 0x67 pending flag set, or when one of the external activity guards reports
 // nonzero.
-extern "C" int func_80113E1C();
-extern "C" int func_80113E24();
-extern "C" int func_801BEE5C();
+extern "C" int getFadeMenu();
+extern "C" int isFadeActive();
+extern "C" int ItemEx_HasInstance();
 int func_8013EB90() {
     WindowNode* node;
     CUIWindowManager* inst = lbl_eu_80664088;
@@ -2382,12 +2382,12 @@ int func_8013EB90() {
             return 1;
         }
     }
-    if (func_80113E1C() != 0) {
-        if (func_80113E24() != 0) {
+    if (getFadeMenu() != 0) {
+        if (isFadeActive() != 0) {
             return 1;
         }
     }
-    if (func_801BEE5C() != 0) {
+    if (ItemEx_HasInstance() != 0) {
         return 1;
     }
     return 0;
@@ -2413,7 +2413,7 @@ extern "C" void UIWin_FlagBufClear(void* self) {
     u16 page = buf->field_0x52;
     int idx = ((s32)page < 1000) ? page + 544 : -1;
     if (idx != -1) {
-        func_8009D018(idx, 0);
+        CtrlRemote_SetSharedBit(idx, 0);
         memset(buf->field_0xC4, 0, 8);
     }
 }
@@ -2431,10 +2431,10 @@ void UIWin_FlagBufCommit(CFlagBuffer* self) {
     }
     int state = self->field_0x04;
     if (state == 0xFC) {
-        func_8009D018(id, 0xFE);
+        CtrlRemote_SetSharedBit(id, 0xFE);
         self->field_0x04 = 0xFE;
     } else if (state == 0xFD) {
-        func_8009D018(id, 0xFF);
+        CtrlRemote_SetSharedBit(id, 0xFF);
         self->field_0x04 = 0xFF;
     }
 }
@@ -2449,7 +2449,7 @@ void UIWin_FlagBufReset(CFlagBuffer* self) {
     if (id == -1) {
         return;
     }
-    func_8009D018(id, 1);
+    CtrlRemote_SetSharedBit(id, 1);
     memset(self->field_0xC4, 0, 8);
 
     int v68 = self->field_0x68;
@@ -2461,7 +2461,7 @@ void UIWin_FlagBufReset(CFlagBuffer* self) {
         if (id == -1) {
             return;
         }
-        func_8009D018(id, 0xC8);
+        CtrlRemote_SetSharedBit(id, 0xC8);
     }
 
     int v6A = self->field_0x6A;
@@ -2473,7 +2473,7 @@ void UIWin_FlagBufReset(CFlagBuffer* self) {
         if (id == -1) {
             return;
         }
-        func_8009D018(id, 0xC8);
+        CtrlRemote_SetSharedBit(id, 0xC8);
     }
 }
 // Flag-buffer availability check (retail UIWin_FlagBufCanShow): returns 1 when the
@@ -2494,7 +2494,7 @@ int UIWin_FlagBufCanShow(CFlagBuffer* flagBuf) {
     if (id == -1) {
         return 0;
     }
-    int res = (int)func_8009CF8C((u32)id);
+    int res = (int)CtrlRemote_TouchBitByArg((u32)id);
     if (res == 1) {
         return 0;
     }
@@ -2515,7 +2515,7 @@ int UIWin_FlagBufCanShow(CFlagBuffer* flagBuf) {
         flagBuf->field_0x64 == 0) {
         return 0;
     }
-    if (v58 != 0 && (int)func_8009CF8C(0x20) < flagBuf->field_0x58) {
+    if (v58 != 0 && (int)CtrlRemote_TouchBitByArg(0x20) < flagBuf->field_0x58) {
         return 0;
     }
 
@@ -2528,7 +2528,7 @@ int UIWin_FlagBufCanShow(CFlagBuffer* flagBuf) {
         if (id == -1) {
             return 0;
         }
-        int res = (int)func_8009CF8C((u32)id);
+        int res = (int)CtrlRemote_TouchBitByArg((u32)id);
         if (res != 0xFE && res != 0xFF) {
             return 0;
         }
@@ -2543,7 +2543,7 @@ int UIWin_FlagBufCanShow(CFlagBuffer* flagBuf) {
         if (id == -1) {
             return 0;
         }
-        int res = (int)func_8009CF8C((u32)id);
+        int res = (int)CtrlRemote_TouchBitByArg((u32)id);
         if (res < (int)flagBuf->field_0x5E) {
             return 0;
         }
@@ -2569,7 +2569,7 @@ int UIWin_FlagBufCanShow(CFlagBuffer* flagBuf) {
         if (id == -1) {
             return 0;
         }
-        if ((int)func_8009CF8C((u32)id) == 0) {
+        if ((int)CtrlRemote_TouchBitByArg((u32)id) == 0) {
             return 0;
         }
     }
@@ -2585,7 +2585,7 @@ int UIWin_FlagBufCanShow(CFlagBuffer* flagBuf) {
         if (id == -1) {
             return 0;
         }
-        if ((int)func_8009CF8C((u32)id) == 0) {
+        if ((int)CtrlRemote_TouchBitByArg((u32)id) == 0) {
             return 0;
         }
     }
@@ -2599,7 +2599,7 @@ int UIWin_FlagBufCanShow(CFlagBuffer* flagBuf) {
         if (id == -1) {
             return 0;
         }
-        int res = (int)func_8009CF8C((u32)id);
+        int res = (int)CtrlRemote_TouchBitByArg((u32)id);
         if (res != (int)flagBuf->field_0x66) {
             return 0;
         }
@@ -2926,10 +2926,10 @@ int func_8013F6C4(CFlagBuffer* self, u32 arg1, u32 arg2, u32 arg3, u32 arg4) {
                     }
                     if (id != -1) {
                         if (self->field_0x04 == 0xFC) {
-                            func_8009D018(id, 0xFE);
+                            CtrlRemote_SetSharedBit(id, 0xFE);
                             self->field_0x04 = 0xFE;
                         } else if (self->field_0x04 == 0xFD) {
-                            func_8009D018(id, 0xFF);
+                            CtrlRemote_SetSharedBit(id, 0xFF);
                             self->field_0x04 = 0xFF;
                         }
                     }
@@ -3040,7 +3040,7 @@ int func_80140854(CItemQuery* self, u32 arg1, u32 arg2) {
             return 0;
         }
         // Accept unless the flag-memory byte is 0xFE or 0xFF.
-        u32 res = func_8009CF8C((u32)flagId);
+        u32 res = CtrlRemote_TouchBitByArg((u32)flagId);
         return res != 0xFE && res != 0xFF;
     }
     return (s8)self->field_0xC4[arg1 * 4 + arg2] >=
@@ -3067,7 +3067,7 @@ u8* func_80140AFC(u32 target) {
 
     memset(lbl_eu_80573C50, 0, 0xC8);
     lbl_eu_80573C50[0] |= 1;
-    func_8003AA34();
+    Bdat_GetTable_AA34();
 
     table = lbl_eu_80573D18;
     off = tmp.v;
@@ -3078,7 +3078,7 @@ u8* func_80140AFC(u32 target) {
         // Advance the table cursor as we read so the entry pointer cannot be
         // re-derived inside the row loop (retail keeps it in a register).
         entry = (u8*)*table++;
-        int count = (int)func_8003B1EC(entry);
+        int count = (int)Bdat_GetMaxRow_B1EC(entry);
         for (int j = 0; j < count; ++j) {
             tmp = work;
             int v = j + (int)*off;
@@ -3095,7 +3095,7 @@ u8* func_80140AFC(u32 target) {
                     if (id == -1) {
                         return NULL;
                     }
-                    u32 res = func_8009CF8C((u32)id);
+                    u32 res = CtrlRemote_TouchBitByArg((u32)id);
                     ((CFlagBuffer*)lbl_eu_80573C50)->field_0x04 = res;
                     if (res == 1) {
                         return (u8*)lbl_eu_80573C50;
@@ -3126,7 +3126,7 @@ extern "C" u8* func_80140CA4(u32 target) {
     u8* flagBuf = lbl_eu_80573C50;
     memset(flagBuf, 0, 0xC8);
     flagBuf[0] |= 1;
-    func_8003AA34();
+    Bdat_GetTable_AA34();
 
     // Working copy of the 28 per-table base offsets (14 x 8-byte chunks).
     u32 work[28];
@@ -3136,7 +3136,7 @@ extern "C" u8* func_80140CA4(u32 target) {
 
     for (int i = 0; i < 28; i++) {
         u8* entry = (u8*)lbl_eu_80573D18[i];
-        int count = (int)func_8003B1EC(entry);
+        int count = (int)Bdat_GetMaxRow_B1EC(entry);
         for (int j = 0; j < count; j++) {
             u32 tmp[28];
             for (int k = 0; k < 14; k++) {
@@ -3168,11 +3168,11 @@ extern "C" int UIWin_QueryPageFlag(s32 page) {
     if (id == -1) {
         return 0;
     }
-    u32 res = func_8009CF8C((u32)id);
+    u32 res = CtrlRemote_TouchBitByArg((u32)id);
     return ((u32)(res - 0xFE) <= 1);
 }
 // Flag-buffer build: zero the 0xC8-byte flag buffer, mark it active, refresh
-// the per-table entry pointers (func_8003AA34), then scan every table's rows
+// the per-table entry pointers (Bdat_GetTable_AA34), then scan every table's rows
 // for `row + baseOffset[i] == target`; on a hit set the flag for that table
 // (func_8013FFF8) and return the buffer, otherwise 0.
 // The 28 base offsets live in a 112-byte block; retail copies it wholesale
@@ -3190,7 +3190,7 @@ extern "C" u8* UIWin_BuildFlagBuf(u32 target) {
 
     memset(lbl_eu_80573C50, 0, 0xC8);
     lbl_eu_80573C50[0] |= 1;
-    func_8003AA34();
+    Bdat_GetTable_AA34();
 
     table = lbl_eu_80573D18;
     off = tmp.v;
@@ -3199,7 +3199,7 @@ extern "C" u8* UIWin_BuildFlagBuf(u32 target) {
 
     for (; i < 28; ++table, ++off) {
         entry = (u8*)*table;
-        int count = (int)func_8003B1EC(entry);
+        int count = (int)Bdat_GetMaxRow_B1EC(entry);
         for (int j = 0; j < count; ++j) {
             tmp = work;
             int v = j + (int)*off;

@@ -4,19 +4,19 @@
 #include "kyoshin/cf/voice/cvsys/CVS_THREAD_PARTY_GAGE.hpp"
 #include "monolib/math/Random.hpp"
 
-// us-802aac94 (func_802A8560)
+// us-802aac94 (PartyGage_NotifyDone_8560)
 // Completion callback: if the thread is not currently busy, fire the
 // playback-start virtual (blank1 slot, vtable offset 0x08).
-void func_802A8560(CVS_THREAD_PARTY_GAGE* self) {
+void PartyGage_NotifyDone_8560(CVS_THREAD_PARTY_GAGE* self) {
     if (func_802A3E88(self) == 0) {
         self->func_802A3B50();
     }
 }
 
-// us-802aacdc (func_802A85A8)
+// us-802aacdc (PartyGage_RemoveVoice_85A8)
 // Remove a released voice from the two slots (partyMember, gaugeData) by
 // matching the handle's embedded CCharVoice pointer against the freed voice.
-void func_802A85A8(CVS_THREAD_PARTY_GAGE* self, CCharVoice* voicePtr) {
+void PartyGage_RemoveVoice_85A8(CVS_THREAD_PARTY_GAGE* self, CCharVoice* voicePtr) {
     func_802A3BEC(self, voicePtr);
 
     // Slots 0x20/0x24: bias handle to its embedded voice, compare with voicePtr.
@@ -39,11 +39,11 @@ void func_802A85A8(CVS_THREAD_PARTY_GAGE* self, CCharVoice* voicePtr) {
     }
 }
 
-// us-802aad5c (func_802A8628)
+// us-802aad5c (PartyGage_InitVoiceId_8628)
 // Voice-ID init helper.  If the handle has its manager flag set, is not
 // actively playing, and a handle buffer can be allocated, play a random
 // party-gauge voice (base 0x385) through the sound system.
-int func_802A8628(CVoiceHandle* self) {
+int PartyGage_InitVoiceId_8628(CVoiceHandle* self) {
     if ((self->field_0x3F00 & 2) == 0) return 0;
     if (((CVoiceVTV*)self)->idle() != 0) return 0;
     if (func_802A330C(0xc8, 1) == NULL) return 0;
@@ -56,11 +56,11 @@ int func_802A8628(CVoiceHandle* self) {
     return 0;
 }
 
-// us-802aaa08 (func_802A82D4)
+// us-802aaa08 (PartyGage_AdvanceA_82D4)
 // Advance/play function.  Copies init data into the base fields, then if the
 // party-member handle is present and idle, plays a threshold-dependent voice;
 // otherwise fires the playback-start virtual (blank1).
-void func_802A82D4(CVS_THREAD_PARTY_GAGE* self) {
+void PartyGage_AdvanceA_82D4(CVS_THREAD_PARTY_GAGE* self) {
     u32 v0;
     const u32* p = lbl_eu_80539C54;
     v0 = *p++;
@@ -95,13 +95,13 @@ void func_802A82D4(CVS_THREAD_PARTY_GAGE* self) {
     self->func_802A3B50();
 }
 
-// us-802aab00 (func_802A83CC)
+// us-802aab00 (PartyGage_AdvanceB_83CC)
 // Advance/play function.  If the thread is free, copies init data into the
 // base fields, then (when both parties are present and the gauge is idle)
 // selects a threshold-dependent voice ID, applies correction clauses for
 // specific IDs, plays through func_802A3C44, and otherwise fires the
 // playback-start virtual (blank1 slot, vtable offset 0x08).
-void func_802A83CC(CVS_THREAD_PARTY_GAGE* self) {
+void PartyGage_AdvanceB_83CC(CVS_THREAD_PARTY_GAGE* self) {
     if (func_802A3E88(self) != 0) return;
 
     // Copy init data -- index 0 first (lwzu pointer-increment) so the retail
@@ -168,9 +168,9 @@ fire:
 
 // Buffer-size getter recorded in the PARTY_GAGE vtable (the CVS_THREAD::blank2
 // slot): this thread type uses a 0x8C (140) byte voice buffer.
-// Retail exports this under the flat map name func_802A8620 (not a mangled
+// Retail exports this under the flat map name PartyGage_GetBufSize_8620 (not a mangled
 // member), so it stays a C-linkage free function.
-int func_802A8620() {
+int PartyGage_GetBufSize_8620() {
     return CVS_THREAD_PARTY_GAGE::BUFFER_SIZE;
 }
 
@@ -180,7 +180,7 @@ int func_802A8620() {
 // the base constructor, sets vtable/owner fields, and copies init data.
 CVS_THREAD_PARTY_GAGE* __ct__CVS_THREAD_PARTY_GAGE(int owner1, int owner2) {
     if (owner1 <= owner2) return NULL;
-    if (func_802A790C(NULL) < 2) return NULL;
+    if (HpVoice_CountActiveVoices(NULL) < 2) return NULL;
 
     int level;
     if (owner1 >= 0x12c) {

@@ -171,7 +171,7 @@ public:
 };
 
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
-extern "C" u32 lbl_eu_805090D8[]; // 3 state filter values for func_800F4A98
+extern "C" u32 lbl_eu_805090D8[]; // 3 state filter values for startEnumObjects
 extern "C" u8 lbl_eu_80664718[0x8]; // makecrystal crystal-probability state (sbss, 8 bytes)
 // Color table: rows of 3 bytes, indexed by character state - 1.
 struct CMCryColorRow { u8 c[3]; };
@@ -194,7 +194,7 @@ extern "C" void func_80158300(void* item, int mode);
 extern "C" void CItemData_callVf0C(void* item, u8 flag);
 extern "C" void CItem_copyRecMasked(void* dst, const void* src);
 extern "C" void* CItem_initItemImplInstances(void* item);
-extern "C" void func_801F3850(void* scrollbar, u16 index);
+extern "C" void CScrollBar_PlaceThumb(void* scrollbar, u16 index);
 extern "C" void MakeCrystal_ClearSlotParam(void* entries, u16 idx);
 extern "C" void func_8021E888(void* entries);
 
@@ -211,7 +211,7 @@ extern "C" void __ct__UnkClass_8011C974(void* dest, void* src);
 extern "C" void func_8016742C(void* dest, void* src);
 extern "C" size_t strlen(const char* s);
 extern "C" char* strcpy(char* dst, const char* src);
-extern "C" int func_80167A18();   // item-menu active gate (CMainMenu.cpp)
+extern "C" int ItemMenu_IsPresent();   // item-menu active gate (CMainMenu.cpp)
 
 // Constructor data imports.
 extern "C" const void* lbl_eu_80535E70[];   // CModelDispMakeCrystal vtable (+0x88/+0xb4 sub-vtables)

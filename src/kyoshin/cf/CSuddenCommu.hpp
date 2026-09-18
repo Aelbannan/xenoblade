@@ -74,9 +74,9 @@ struct CSuddenCommuActor {
     void** vtable;                  // 0x00 (slots 0x88/0xE0/0x128 used here)
     CSuddenCommuSub4* field_4;      // 0x04 (sub-object, vtable slot 0x30)
     u8 pad_08[0x15E0 - 0x08];
-    void* field_15E0;               // 0x15E0 (battle-object handle probed via func_80260518)
+    void* field_15E0;               // 0x15E0 (battle-object handle probed via IdTable_QuerySumFloat)
     u8 pad_15E4[0x3380 - 0x15E4];
-    CSuddenCommuVoiceAct voiceAct;  // 0x3380 (handed to func_801537E0)
+    CSuddenCommuVoiceAct voiceAct;  // 0x3380 (handed to aiActionClearBits0006)
     u8 pad_338A[0x3E9C - 0x338A];
     void* moveSpot;                 // 0x3E9C (getPlayer() points here)
     u8 pad_3EA0[0x3ED4 - 0x3EA0];
@@ -99,7 +99,7 @@ struct CSuddenCommuMoveData {
     u32 field_78;    // 0x78
 };
 
-// Effect/cue object produced by func_800451D8 for the sudden-commu voice cue.
+// Effect/cue object produced by bindIndexedEffect for the sudden-commu voice cue.
 struct CSuddenCommuVoiceCue {
     void** vtable;          // 0x00 (slot 0x88 takes a float)
     u8 pad_04[0xB0 - 0x04];
@@ -169,7 +169,7 @@ union CSuddenCommuF64Conv {
     u32 w[2];
     f64 d;
 };
-// CBattleManager sub-object at +0x194 (party gauge), handed to func_8018C820.
+// CBattleManager sub-object at +0x194 (party gauge), handed to PartyGaugeAddClamped.
 struct CSuddenCommuBmGauge {
     u8 pad_00[0x194];
     u32 field_194;                  // 0x194
@@ -187,19 +187,19 @@ class CBattleManagerView;
 // so the object emits the exact retail symbol names).
 extern "C" {
     void func_801BA490(cf::CSuddenCommu* self);
-    void func_801BA978(cf::CSuddenCommu* self);
+    void SuddenCommuResolvePhaseState(cf::CSuddenCommu* self);
     void func_801BC6A4(cf::CSuddenCommu* self, int val, int num);
     // Imported voice-node lookup (defined in voice/CCharVoiceMan.cpp): returns
     // 0 when no voice node is registered for the given voice id.
     int func_802A3748(u32 arg);
     // Same-TU siblings (defined in CSuddenCommu.cpp; C linkage so the call
     // relocs and definitions keep the unmangled retail names).
-    int func_801BA2DC(cf::CSuddenCommu* self);
+    int SuddenCommuCanStart(cf::CSuddenCommu* self);
     void func_801BB464(cf::CSuddenCommu* self, int playerIdx, int mode, CSuddenCommuActor* player, int arg5);
-    void func_801BC474(cf::CSuddenCommu* self);
-    void func_801BC590(cf::CSuddenCommu* self);
+    void SuddenCommuMarkCommuVoices(cf::CSuddenCommu* self);
+    void SuddenCommuClearCommuVoices(cf::CSuddenCommu* self);
     // Same-TU init/reset (clears the commu state and retires any voice id).
-    void func_801BA1DC(cf::CSuddenCommu* self);
+    void SuddenCommuResetPairingState(cf::CSuddenCommu* self);
     // Voice-manager imports (defined in voice/CCharVoiceMan.cpp): retire/next
     // voice id. C linkage keeps the call relocs at the unmangled retail names.
     void func_802A35B8(u32 arg);
@@ -213,7 +213,7 @@ extern "C" {
     // kyoshin/cf/CBattleManagerApi.hpp (included at the top of this header).
     // Voice/help imports used by the sudden-commu triggers (unmangled retail
     // names - C linkage keeps the call relocs verbatim).
-    u32 func_8009CF8C(u32 resourceId);
+    u32 CtrlRemote_TouchBitByArg(u32 resourceId);
     // No-arg form: retail callers never materialize r3 before this call
     // (stale-r3 pattern - the callee ignores any incoming argument).
     int func_8017FD44(void);
@@ -232,7 +232,7 @@ namespace cf { class CBattleManager; }
 extern "C" void func_800EA484(cf::CBattleManager*, f32, int);
 
 // Effect-linkage allocator (CTaskGameEff.cpp owner).
-extern "C" void* func_800451D8(u32 cls, int param);
+extern "C" void* bindIndexedEffect(u32 cls, int param);
 
 // Retail sdata2 float constants (values live in the retail binary). Non-const:
 // MWCC must reload them after calls, so loop uses stay at the use site (retail
@@ -257,12 +257,12 @@ extern u32 lbl_eu_806625E0;
 // unmangled global func_* names - declared here rather than TU-locally).
 extern "C" {
     // Battle-object stat / event-flag probes (code_8025FB10.cpp).
-    int func_80260518(void* self, int id, u32* outVal, f32* outF);
+    int IdTable_QuerySumFloat(void* self, int id, u32* outVal, f32* outF);
     int func_80260264(void* self, int id, void* outVal);
     // Battle-command dispatch and battle-move accessor (CBattleManager.cpp).
     void CBattleMan_FireActorEvent918(void* bm, void* actor, CSuddenCommuCmd* cmd, int size, int flag);
     float func_800D81A8(void* obj, void* target, void* source);
-    void func_8018C820(void* obj, int value);
+    void PartyGaugeAddClamped(void* obj, int value);
     // Voice/battle-manager helpers.
     void func_80280BF0();
     void addTableValueWithClamp__Q22cf13CfGameManagerFv(int a, int b, int c);
@@ -307,11 +307,11 @@ extern u16 lbl_eu_80662608[1];
 extern const u8 lbl_eu_805050B0[];
 extern u32 lbl_eu_80575870[];   // .bss: state-handler PMF table (12-byte ptmf stride)
 extern "C" int CUICfManager_queueFactoryMenu(int id, float f);   // camera/trigger helper (CVision.hpp owner)
-extern "C" void func_801537E0(void* voiceAct);   // voice-act reset (CVision.hpp owner)
+extern "C" void aiActionClearBits0006(void* voiceAct);   // voice-act reset (CVision.hpp owner)
 // Battle-actor enum-list helpers are declared by CfObjectImplMove.hpp
 // (owner: code_800B06A4.hpp); this TU picks them up through the include chain.
 // Retail aliases the CfGameManager singleton getter under its raw symbol
 // name; CSuddenCommu's driver calls that alias.
 extern "C" bool isSceneLoading__Q22cf13CfGameManagerFv(); // canonical bool form (CfObjectMove.hpp owner)
-extern "C" void func_801BADE4(cf::CSuddenCommu* self);   // re-arm scan (plain retail symbol)
+extern "C" void SuddenCommuRearmTimer(cf::CSuddenCommu* self);   // re-arm scan (plain retail symbol)
 extern "C" int func_801BBCBC(cf::CSuddenCommu* self);    // per-frame tick (plain retail symbol)

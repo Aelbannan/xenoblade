@@ -7,7 +7,7 @@
 class CFileHandle;
 class CEventFile;
 
-// Accessor view of the trailing CLoad flag bytes used by func_802AE8E0.
+// Accessor view of the trailing CLoad flag bytes used by CLoadMarkFileArrived.
 struct CLoadFull {
     u8 _00[0x1C];
     u32 field_1C; // CLoad::mLayout
@@ -52,15 +52,15 @@ public:
     /* 0x2D */ u8 field_2D;    // selects the language-specific resource names
 };
 
-void func_802AE508(CLoad* self);
+void CLoadBeginFileRequest(CLoad* self);
 void func_802AE560(CLoad* self);
-void func_802AE5F0(CLoad* self, nw4r::lyt::DrawInfo* drawInfo);
-void func_802AE62C(CLoad* self);
-u8 func_802AE6AC(CLoad* self);
-u8 func_802AE6B4(CLoad* self);
-u8 func_802AE6BC(CLoad* self);
-void func_802AE6C4(CLoad* self);
-void func_802AE758(CLoad* self);
-void func_802AE7EC(CLoad* self);
-void func_802AE894(CLoad* self);
-void func_802AE8E0(CLoadFull* self);
+void CLoadDrawIfVisible(CLoad* self, nw4r::lyt::DrawInfo* drawInfo);
+void CLoadTeardownLayout(CLoad* self);
+u8 CLoadIsLoadReady(CLoad* self);
+u8 CLoadIsLoaded(CLoad* self);
+u8 CLoadIsAnimSettled(CLoad* self);
+void CLoadStartFadeInStep(CLoad* self);
+void CLoadStartRetryStep(CLoad* self);
+void CLoadAdvanceFadeHold(CLoad* self);
+void CLoadFinishRetryIdle(CLoad* self);
+void CLoadMarkFileArrived(CLoadFull* self);

@@ -621,7 +621,7 @@ extern "C" void logExceptionMessage__10CExceptionFv(const char* message) {
 }
 
 // Add to global array
-void CException::func_804591BC(IException* pException) {
+void CException::AddToGlobalArray(IException* pException) {
     u32 idx = lbl_eu_806656C4;
     lbl_eu_80657B50[idx] = this;
     lbl_eu_806656C4 = idx + 1;

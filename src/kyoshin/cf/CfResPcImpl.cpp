@@ -80,13 +80,13 @@ int CfResPcImpl_isHandlerActive(void* p)
 int CfResPcImpl_getHandlerLimit() { return 2; }
 
 // func_8018CB3C - PC resource teardown: dispatches the parent's vtable slots
-// +0x1CC/+0x17C/+0x178 around func_800BBB50, zeroes the parent's
+// +0x1CC/+0x17C/+0x178 around CfModel_ReattachTrg, zeroes the parent's
 // +0x90/+0x94/+0x704 words, runs CfObjectMove_resetAnimModeArgs, then invalidates the three
 // state halfwords (+0x38/+0x3A/+0x3C) and clears the +0x34 slot.
 void func_8018CB3C(cf::CfResPcImpl* self) {
     reinterpret_cast<cf::CfObjectMove*>(self->field_00)->CfObjectMove_detachModelList();
     reinterpret_cast<cf::CfObjectModel*>(self->field_00)->CfObjectModel_releaseModelList();
-    func_800BBB50(self->field_00);
+    CfModel_ReattachTrg(self->field_00);
     reinterpret_cast<cf::CfObjectModel*>(self->field_00)->CfObjectModel_releaseModelSub();
     self->field_00->field_90 = 0;
     self->field_00->field_94 = 0;
@@ -465,7 +465,7 @@ void CfResPcImpl_cleanupStateCounters(cf::CfResPcImpl* self) {
 }
 
 // CfResPcImpl_setResourceOpen - PC resource open/close: when arg2 != 0, dispatches the
-// parent vtable slots +0x1CC/+0x17C/+0x178 around func_800BBB50, clears the
+// parent vtable slots +0x1CC/+0x17C/+0x178 around CfModel_ReattachTrg, clears the
 // parent +0x90/+0x94/+0x704 words and the three state halfwords, folds the
 // parent +0x6C flag word (mask 0xFFD88C0C, then set bit 0x4), zeroes the
 // handler index, latches field_3E = 3 and, when the state at field_0E is
@@ -477,7 +477,7 @@ void CfResPcImpl_setResourceOpen(cf::CfResPcImpl* self, int arg2) {
     if (arg2 != 0) {
         reinterpret_cast<cf::CfObjectMove*>(self->field_00)->CfObjectMove_detachModelList();
         reinterpret_cast<cf::CfObjectModel*>(self->field_00)->CfObjectModel_releaseModelList();
-        func_800BBB50(self->field_00);
+        CfModel_ReattachTrg(self->field_00);
         reinterpret_cast<cf::CfObjectModel*>(self->field_00)->CfObjectModel_releaseModelSub();
         self->field_00->field_90 = 0;
         self->field_00->field_94 = 0;
@@ -515,7 +515,7 @@ void CfResPcImpl_setResourceOpen(cf::CfResPcImpl* self, int arg2) {
 void func_8018D79C(cf::CfResPcImpl* self) {
     reinterpret_cast<cf::CfObjectMove*>(self->field_00)->CfObjectMove_detachModelList();
     reinterpret_cast<cf::CfObjectModel*>(self->field_00)->CfObjectModel_releaseModelList();
-    func_800BBB50(self->field_00);
+    CfModel_ReattachTrg(self->field_00);
     reinterpret_cast<cf::CfObjectModel*>(self->field_00)->CfObjectModel_releaseModelSub();
     reinterpret_cast<cf::CfObjectMove*>(self->field_00)->CfObjectMove_releaseSlotById(0);
     reinterpret_cast<cf::CfObjectMove*>(self->field_00)->CfObjectMove_releaseSlotById(1);
@@ -744,7 +744,7 @@ void func_8018DE8C(cf::CfResPcImpl* self) {
     if ((cf::CfObjectMove*)self->field_00 == cf::CfGameManager::getPlayer(0) &&
         (lbl_eu_80663E24 & 0x4000)) {
         // Position the player: add a fixed offset to its current position,
-        // optionally corrected by func_804BE470, then place it (slot +0xB8).
+        // optionally corrected by ScnRes_Notify5Ptr_E470, then place it (slot +0xB8).
         nw4r::math::VEC3* p = reinterpret_cast<nw4r::math::VEC3*>(reinterpret_cast<cf::CfObject*>(self->field_00)->CfObject_getPosVector());
         nw4r::math::VEC3 pos = *p;
         nw4r::math::VEC3 off;
@@ -754,7 +754,7 @@ void func_8018DE8C(cf::CfResPcImpl* self) {
         nw4r::math::VEC3 sum = pos + off;
         nw4r::math::VEC3 work = sum;
         nw4r::math::VEC3 scratch;
-        if (func_804BE470(&work, &scratch, 0, 0, 0) != 0) {
+        if (ScnRes_Notify5Ptr_E470(&work, &scratch, 0, 0, 0) != 0) {
             pos = work;
         }
         nw4r::math::VEC3 zero;
@@ -822,7 +822,7 @@ void func_8018DE8C(cf::CfResPcImpl* self) {
         self->field_00->field_90 = (u32)h;
         void* hnd = Scn_SetupAnim(CfRes_getD80Flag(), (u32)self->field_00->field_90, -1, 1);
         u8* d = (u8*)__dynamic_cast(hnd, 0, &lbl_eu_806624C0, &lbl_eu_806624D0, 0);
-        func_800BBADC(self->field_00, d);
+        CfModel_InstallSub(self->field_00, d);
         simResetAnimAtC(self->field_00->field_98, lbl_eu_80503BC4 + 7);
         ((cf::CfResPcResObj*)self->field_00->field_98)->field_7A4 |= 0x400000;
         if (self->field_00->field_98 != 0) {
@@ -848,7 +848,7 @@ void func_8018DE8C(cf::CfResPcImpl* self) {
         if (self->field_00->field_9C == 0) {
             func_800AA33C(name, (u32)b->field_04, 1, 0);
             self->field_00->field_94 = (u32)(b->field_2C)->getResourceBase(b, slot);
-            self->field_00->field_9C = (u32)func_800584B8(CfRes_getD80Flag(),
+            self->field_00->field_9C = (u32)initMcaFile(CfRes_getD80Flag(),
                                                          (u32)self->field_00->field_94,
                                                          (const char*)&name);
         }
@@ -856,7 +856,7 @@ void func_8018DE8C(cf::CfResPcImpl* self) {
             if (self->field_00->field_6D4 == 0) {
                 func_800AA33C(name, (u32)f->field_04, 1, 0);
                 self->field_00->field_708 = (u32)(f->field_2C)->getResourceBase(f, slot);
-                self->field_00->field_6D4 = (u32)func_800584B8(CfRes_getD80Flag(),
+                self->field_00->field_6D4 = (u32)initMcaFile(CfRes_getD80Flag(),
                                                               (u32)self->field_00->field_708,
                                                               (const char*)&name);
             }
@@ -871,7 +871,7 @@ void func_8018DE8C(cf::CfResPcImpl* self) {
     u32 f68 = self->field_00->field_68;
     int b20 = (f68 >> 11) & 1;
     if (f68 & 0x100000) {
-        func_800BB618((cf::CfObjectModel*)self->field_00, 0);
+        CfModel_SyncVisFlag((cf::CfObjectModel*)self->field_00, 0);
 reinterpret_cast<cf::CfObject*>(self->field_00)->CfObject_syncModelRate(lbl_eu_80667A60);
         if (!(self->field_00->field_68 & 0x10000000)) {
             CfObjectMove_setMoveSpeedGated((cf::CfObjectMove*)self->field_00, lbl_eu_80667A64);
@@ -1070,7 +1070,7 @@ reinterpret_cast<cf::CfObject*>(self->field_00->field_38)->CfObject_getPosTriple
 // set, asks the player object (parent minus 0x3E9C) via its vtable slot
 // +0x2BC whether the resource is still in use; when it is not, clears that
 // flag bit. With bit 0 clear and bit 1 set, invalidates the three state
-// halfwords, notifies func_800BAB64, clears the +0x6C flag bits and resets
+// halfwords, notifies CfModel_ReleaseAll, clears the +0x6C flag bits and resets
 // the handler index.
 void CfResPcImpl_reloadStateMachine(cf::CfResPcImpl* self) {
     cf::CfResPcParent* parent = self->field_00;
@@ -1095,7 +1095,7 @@ void CfResPcImpl_reloadStateMachine(cf::CfResPcImpl* self) {
         self->field_38 = -1;
         self->field_3A = -1;
         self->field_3C = -1;
-        func_800BAB64(parent);
+        CfModel_ReleaseAll(parent);
         self->field_00->field_6C &= 0xFFD88C0D;
         self->field_08 = 0;
     }
@@ -1145,14 +1145,14 @@ int CfResPcImpl_loadFileEventArchive(cf::UnkClass_8018EF3C* self, int flag, u32 
     } else {
         file = self->field_408->field_00;
     }
-    func_80069ACC(file, param);
+    CfTFile_LoadEventArchive(file, param);
     return 1;
 }
 
 // CfResPcImpl_handleFileEventLoad - PC file-event load: picks the archive from the +0x408 pair
 // by arg2 (field_04 when arg2 != 0, field_00 otherwise) and, depending on the
-// archive state (func_80069C14), either clears the event flags and cancels
-// the archive (func_800699B0), runs the 9-event, the 0xa-event or the
+// archive state (CfTFile_TestField828), either clears the event flags and cancels
+// the archive (CfTFile_CancelResetNibble), runs the 9-event, the 0xa-event or the
 // 0x26-event.
 int CfResPcImpl_handleFileEventLoad(cf::CfResPcFileHost* self, u32 arg2, u32 arg3, u32 arg4, u32 arg5) {
     cf::CfTFile* file;
@@ -1162,14 +1162,14 @@ int CfResPcImpl_handleFileEventLoad(cf::CfResPcFileHost* self, u32 arg2, u32 arg
         file = self->field_408->field_00;
     }
     int result = 0;
-    if (func_80069C14((u8*)file) == 0) {
+    if (CfTFile_TestField828((u8*)file) == 0) {
         if ((lbl_eu_80663E24 & 0x2) != 0) {
             // Retail reloads the flag word for the mask store even though the
             // test read it moments earlier; the volatile load keeps MWCC from
             // CSE-eliminating the second read (same pattern as func_8016E854).
             *(volatile u32*)&lbl_eu_80663E24 &= ~0x2;
             lbl_eu_80663E28 &= ~0x10000;
-            func_800699B0(file);
+            CfTFile_CancelResetNibble(file);
         } else {
             func_80061A80((u32)self, 9, arg2, arg3, arg4, arg5);
             result = 1;
@@ -1222,7 +1222,7 @@ int CfResPcImpl_reloadMapSection(cf::CfResPcHostGM* self, u32 arg2, u32 arg3) {
     v &= ~0x1800;
     lbl_eu_80663E44 = arg3;
     lbl_eu_80663E24 = v;
-    func_8016EEB0(self->field_408->unkA0);
+    MapFx_ReleaseHandle(self->field_408->unkA0);
     func_80186664(self->field_408->field_0xA4);
     cf::CfBdat::resetMapBdatFileDataPointers();
     cf::CfResPcLookupEntry* entry = (cf::CfResPcLookupEntry*)CfRes_getInstPtr170();
@@ -1231,7 +1231,7 @@ int CfResPcImpl_reloadMapSection(cf::CfResPcHostGM* self, u32 arg2, u32 arg3) {
     syncGameTime__Q22cf13CfGameManagerFv(self->field_408, arg2, (u16)arg3);
     self->field_408->clearPartyMaskFlag();
     cf::CfGameManager::enablePadFlags(0x1FE01EFF, true);
-    if (func_8018892C(1) != 0) {
+    if (MenuSnd_IsSlotLive_892C(1) != 0) {
         resetGameFlags__Q22cf13CfGameManagerFv(1);
     }
     func_8004302C(1, 0);
@@ -1326,7 +1326,7 @@ extern "C" void CfResPcImpl_dispatchSlotCleanup(void* self, unsigned long cond, 
 }
 
 // CfResPcImpl_loadFileEventTable - file-event loader: queries the file-event table
-// (func_8009D5FC), loads the archive selected by arg2's packed bit fields
+// (CtrlRemote_GetFileEventIds), loads the archive selected by arg2's packed bit fields
 // into the manager name buffer at +0x28 (func_8009EB2C), re-opens it
 // (loadBdatTableCache) with the result's two u16 ids, runs the script slot and
 // latches the game-manager event flag bit 13 (0x2000).
@@ -1334,10 +1334,10 @@ int CfResPcImpl_loadFileEventTable(cf::CfResPcHost408* self, u32 arg1, u32 arg2)
     // Local layout view of the CfGameManager.hpp CfFileEventIdsView result
     // (two leading u16 ids); avoids pulling that header into this TU.
     struct LocalEventIds { u16 field_0x0; u16 field_0x2; };
-    LocalEventIds* p = (LocalEventIds*)func_8009D5FC();
+    LocalEventIds* p = (LocalEventIds*)CtrlRemote_GetFileEventIds();
     func_8009EB2C((arg2 >> 20) & 0x7f, (arg2 >> 10) & 0x3ff, self->field_408 + 0x28);
     loadBdatTableCache__Q22cf13CfGameManagerFv(self->field_408, p->field_0x2, p->field_0x0);
-    func_80068AEC(self->field_408 + 0x28);
+    CfScript_LoadSlot0(self->field_408 + 0x28);
     lbl_eu_80663E24 |= 0x2000;
     return 0;
 }
@@ -1376,11 +1376,11 @@ CfRes_tryRefreshByBits(((u32)lbl_eu_80663E44 << 10) | (((u32)lbl_eu_80663E42 << 
 CfRes_tryRefreshByBits(((u32)lbl_eu_80663E44 << 10) | (((u32)lbl_eu_80663E42 << 20) | 0x98000000), (u32)5);
     }
     if (!(lbl_eu_80663E28 & 0x2000000)) {
-        func_80068B9C();
+        CfScript_FlagSlot0();
         func_80061870((u32)self, 6, 2, 0, 0, 0);
         func_80061870((u32)self, 0x19, 0, 0, 0, 0);
         func_80061870((u32)self, 0x1a, 0, 0, 0, 0);
-        if (func_8009CF8C(0x3520) != 0) {
+        if (CtrlRemote_TouchBitByArg(0x3520) != 0) {
             lbl_eu_80663E28 |= 0x2;
         } else if (lbl_eu_80663E28 & 0x8000) {
             // Retail reloads the flag word for the mask store (test read it
@@ -1389,7 +1389,7 @@ CfRes_tryRefreshByBits(((u32)lbl_eu_80663E44 << 10) | (((u32)lbl_eu_80663E42 << 
             *(volatile u32*)&lbl_eu_80663E28 |= 0x2;
         } else if ((u32)cf::CfGameManager::getQueuedFileEventCount() == 0x11 &&
                    lbl_eu_80663E42 == 2 && lbl_eu_80663E44 == 1 &&
-                   func_8009CF8C(0x1e85) == 0) {
+                   CtrlRemote_TouchBitByArg(0x1e85) == 0) {
             lbl_eu_80663E28 |= 0x2;
         } else if ((u32)cf::CfGameManager::getQueuedFileEventCount() == 0x53 &&
                    lbl_eu_80663E42 == 4 && lbl_eu_80663E44 == 1 &&
@@ -1408,10 +1408,10 @@ CfRes_tryRefreshByBits(((u32)lbl_eu_80663E44 << 10) | (((u32)lbl_eu_80663E42 << 
         }
     }
     lbl_eu_80663E24 |= 0x800;
-    func_80069A78(((cf::CfResPcMgrFileHost*)self)->field_408->field_08,
+    CfTFile_CopyPayload(((cf::CfResPcMgrFileHost*)self)->field_408->field_08,
                   ((cf::CfResPcMgrFileHost*)self)->field_408->field_00);
     if (((lbl_eu_80663E24 & 0x100000) | (lbl_eu_80663E24 & 0x200)) == 0) {
-        func_8016E164(lbl_eu_80663E42, lbl_eu_80663E44);
+        updateReloadTypeState(lbl_eu_80663E42, lbl_eu_80663E44);
     }
     if (!(lbl_eu_80663E28 & 0x2000000)) {
         scanTboxByXY();
@@ -1464,7 +1464,7 @@ void* lbl_eu_80532774[27] = {
     (void*)CfResPcImpl_cleanupStateCounters,
     (void*)CfResPcImpl_isHandlerActive,
     (void*)CfObjectMove_relaySubB0Slot14,
-    (void*)func_8016CD64,
+    (void*)ResObj_Noop_CD64,
     (void*)CfResPcImpl_getHandlerLimit,
     (void*)CfResPcImpl_detachResources,
     (void*)func_8018CB3C,
@@ -1482,7 +1482,7 @@ void* lbl_eu_80532774[27] = {
     (void*)CfResPcImpl_notifyReloadSimple,
     (void*)CfResPcImpl_notifyReloadEvent,
     (void*)CfResPcImpl_getLiveStateId,
-    (void*)func_8016CD54,
+    (void*)ResObj_ZeroStubA_CD54,
     (void*)CfResObj_true68,
 };
 // .data 0x0C + 0x0C: RTTI descriptors.

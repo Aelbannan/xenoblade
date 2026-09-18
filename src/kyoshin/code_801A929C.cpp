@@ -30,7 +30,7 @@ extern "C" int func_8007BAE4();
 
 extern "C" void __dl__FPv(void*);
 
-void func_801A9338(void* self) {
+void BattleWork_MarkSlotFFFF(void* self) {
     *(unsigned short*)((char*)self + 0x2c) = 0xFFFF;
 }
 
@@ -504,7 +504,7 @@ void* __dt__801A9F78(void* self, int dealloc) {
 }
 
 // ----------------------------------------------------------------------------
-// func_801A9FC0 - run the shared member-function callback over all 128 work
+// BattleWork_InitCtrlWork - run the shared member-function callback over all 128 work
 // entries and reset the entry-count/flag header fields.
 // ----------------------------------------------------------------------------
 struct CtrlEntry {
@@ -532,7 +532,7 @@ union CtrlEntryFnBits {
     u32 raw[3];
 };
 
-void func_801A9FC0(CtrlWork* work) {
+void BattleWork_InitCtrlWork(CtrlWork* work) {
     work->mField1C = 1;
     work->mField18 = 0;
     CtrlEntryFnBits cb;
@@ -608,8 +608,8 @@ void func_801AA04C(void* param) {
     BdatConv convB;
     convA.w[0] = 0x43300000;
     convB.w[0] = 0x43300000;
-    s32 i = func_8003B41C(tbl);   // first row of the range
-    s32 end = i + func_8003B1EC(tbl); // number of rows
+    s32 i = Bdat_GetRowBase_B41C(tbl);   // first row of the range
+    s32 end = i + Bdat_GetMaxRow_B1EC(tbl); // number of rows
     const char* cols = lbl_eu_80503FA0;
 
     CtrlRecHead* rec = (CtrlRecHead*)((u8*)param + i * 0x38);
@@ -674,7 +674,7 @@ extern "C" u32 getControllerWordA33C__Q22cf13CfGameManagerFv();
 extern "C" void getControllerWordA37C__Q22cf13CfGameManagerFv();
 extern "C" u32 isSceneActive__Q22cf13CfGameManagerFv();
 extern "C" u8 getGlobalFlag34__Q22cf13CfGameManagerFv();
-extern "C" u16 func_8016DF2C(void); // chapter/episode clock (CAIAction.hpp canonical form)
+extern "C" u16 getReloadParam0(void); // chapter/episode clock (CAIAction.hpp canonical form)
 extern "C" u32 getResourceFromTable__Q22cf13CfGameManagerFv(u32 resourceId);
 
 // One 0x38-byte ctrl-state entry (fields touched by the update driver).
@@ -699,7 +699,7 @@ public:
 
 // Shared bdat column reader with per-entry context (defining TU: ocBdat.cpp;
 // retail call passes an extra entry-base argument).
-extern "C" u32 func_8003B434(void* table, const char* col, u32 colHandle,
+extern "C" u32 Bdat_ReadCell_B434(void* table, const char* col, u32 colHandle,
                               s32 row, void* entryBase);
 extern "C" int CfSoundMan_IsRecordActive(int a);
 
@@ -730,9 +730,9 @@ void func_801AA2A8(UpdWork* self) {
     u16 area = (u16)getControllerWordA33C__Q22cf13CfGameManagerFv();
     getControllerWordA37C__Q22cf13CfGameManagerFv(); // result discarded (retail calls it)
 
-    s32 row = func_8003B41C(tbl);          // first row of the range
-    s32 endRow = row + func_8003B1EC(tbl); // one past the last row
-    u16 secs = func_8016DF2C();            // chapter/episode clock
+    s32 row = Bdat_GetRowBase_B41C(tbl);          // first row of the range
+    s32 endRow = row + Bdat_GetMaxRow_B1EC(tbl); // one past the last row
+    u16 secs = getReloadParam0();            // chapter/episode clock
     u16 counter = (u16)getQueuedFileEventCount__Q22cf13CfGameManagerFv();
 
     // Key scans: is any entry keyed 0x65 (else 0x66) present in the singleton?
@@ -741,8 +741,8 @@ void func_801AA2A8(UpdWork* self) {
         CtrlStateWork* work = *(CtrlStateWork**)(&lbl_eu_80664330);
         BdatTable* table = lbl_eu_806640B8;
         if (work != NULL && table != NULL) {
-            s32 r = func_8003B41C(table);
-            s32 e = r + func_8003B1EC(table);
+            s32 r = Bdat_GetRowBase_B41C(table);
+            s32 e = r + Bdat_GetMaxRow_B1EC(table);
             ScanEntry* it = (ScanEntry*)((char*)work + 0x20 + r * 0x38);
             for (; r < e; r++) {
                 if (it->m2E == 0x65) {
@@ -757,8 +757,8 @@ void func_801AA2A8(UpdWork* self) {
         CtrlStateWork* work = *(CtrlStateWork**)(&lbl_eu_80664330);
         BdatTable* table = lbl_eu_806640B8;
         if (work != NULL && table != NULL) {
-            s32 r = func_8003B41C(table);
-            s32 e = r + func_8003B1EC(table);
+            s32 r = Bdat_GetRowBase_B41C(table);
+            s32 e = r + Bdat_GetMaxRow_B1EC(table);
             ScanEntry* it = (ScanEntry*)((char*)work + 0x20 + r * 0x38);
             for (; r < e; r++) {
                 if (it->m2E == 0x66) {
@@ -827,7 +827,7 @@ void func_801AA2A8(UpdWork* self) {
 
         // Gate column + clock/phase checks decide whether the entry plays.
         ColVal t5f;
-        t5f.v = func_8003B434(tbl, cols + 0x5f, colH[11], idx, entry);
+        t5f.v = Bdat_ReadCell_B434(tbl, cols + 0x5f, colH[11], idx, entry);
         int gate = 0;
         if (t5f.b[0] == 0 || (u32)t5f.b[0] == (u32)secs) {
             gate = 1;
@@ -838,7 +838,7 @@ void func_801AA2A8(UpdWork* self) {
 
         u8 farGate = getGlobalFlag34__Q22cf13CfGameManagerFv();
         ColVal t49;
-        t49.v = func_8003B434(tbl, cols + 0x49, colH[10], idx, entry);
+        t49.v = Bdat_ReadCell_B434(tbl, cols + 0x49, colH[10], idx, entry);
         int volOk = 1;
         if (t49.b[0] == 1) {
             if (farGate == 0) {
@@ -859,11 +859,11 @@ void func_801AA2A8(UpdWork* self) {
             ColVal t71;
             ColVal t7b;
             u16 modes[3];
-            t67.v = func_8003B434(tbl, cols + 0x67, colH[9], idx, entry);
+            t67.v = Bdat_ReadCell_B434(tbl, cols + 0x67, colH[9], idx, entry);
             modes[0] = t67.b[0];
-            t71.v = func_8003B434(tbl, cols + 0x71, colH[8], idx, entry);
+            t71.v = Bdat_ReadCell_B434(tbl, cols + 0x71, colH[8], idx, entry);
             modes[1] = t71.b[0];
-            t7b.v = func_8003B434(tbl, cols + 0x7b, colH[7], idx, entry);
+            t7b.v = Bdat_ReadCell_B434(tbl, cols + 0x7b, colH[7], idx, entry);
             modes[2] = t7b.b[0];
             // When a later slot is zero it is skipped and the previous
             // selector result stays live (retail reuses the register).
@@ -887,11 +887,11 @@ void func_801AA2A8(UpdWork* self) {
             ColVal t85;
             ColVal t91;
             ColVal t9e;
-            t85.v = func_8003B434(tbl, cols + 0x85, colH[6], idx, entry);
+            t85.v = Bdat_ReadCell_B434(tbl, cols + 0x85, colH[6], idx, entry);
             u16 resId = t85.h[0];
-            t91.v = func_8003B434(tbl, cols + 0x91, colH[5], idx, entry);
+            t91.v = Bdat_ReadCell_B434(tbl, cols + 0x91, colH[5], idx, entry);
             u8 loCnt = t91.b[0];
-            t9e.v = func_8003B434(tbl, cols + 0x9e, colH[4], idx, entry);
+            t9e.v = Bdat_ReadCell_B434(tbl, cols + 0x9e, colH[4], idx, entry);
             u8 hiCnt = t9e.b[0];
             int rangeOk = 1;
             if (resId != 0) {
@@ -906,13 +906,13 @@ void func_801AA2A8(UpdWork* self) {
                 ColVal tbb;
                 ColVal tbf;
                 ColVal tc92;
-                tab.v = func_8003B434(tbl, cols + 0xab, colH[3], idx, entry);
+                tab.v = Bdat_ReadCell_B434(tbl, cols + 0xab, colH[3], idx, entry);
                 u16 loA = tab.h[0];
-                tbb.v = func_8003B434(tbl, cols + 0xb5, colH[2], idx, entry);
+                tbb.v = Bdat_ReadCell_B434(tbl, cols + 0xb5, colH[2], idx, entry);
                 u16 hiB = tbb.h[0];
-                tbf.v = func_8003B434(tbl, cols + 0xbf, colH[1], idx, entry);
+                tbf.v = Bdat_ReadCell_B434(tbl, cols + 0xbf, colH[1], idx, entry);
                 u16 loC = tbf.h[0];
-                tc92.v = func_8003B434(tbl, cols + 0xc9, colH[0], idx, entry);
+                tc92.v = Bdat_ReadCell_B434(tbl, cols + 0xc9, colH[0], idx, entry);
                 u16 hiD = tc92.h[0];
                 int ok = 0;
                 if ((u16)counter >= loA && (u16)counter <= hiB && hiB != 0) {
@@ -978,8 +978,8 @@ extern "C" int func_801AA960(int self, int b, int c, int d) {
 
 // Bdat row queries; canonical extern "C" decls live in CfObjectEne.hpp /
 // CItem.hpp, whose full include closure clashes with this TU.
-extern "C" u32 func_8003B41C(void* bdat);   // bdat first row
-extern "C" u32 func_8003B1EC(void* bdat);   // bdat row count
+extern "C" u32 Bdat_GetRowBase_B41C(void* bdat);   // bdat first row
+extern "C" u32 Bdat_GetMaxRow_B1EC(void* bdat);   // bdat row count
 // Game-manager active gate; canonical member is cf::CfGameManager::getEffectFlagState.
 extern "C" u32 getEffectFlagState__Q22cf13CfGameManagerFv();
 // Sound-slot play entry (defined in CfSoundMan.cpp); C linkage so the call
@@ -991,11 +991,11 @@ struct BdatTable;
 extern BdatTable* lbl_eu_806640B8;
 
 // ----------------------------------------------------------------------------
-// func_801AAAA0 - scan the shared ctrl-state singleton's entry table starting
+// BattleWork_CheckEffectTableReady - scan the shared ctrl-state singleton's entry table starting
 // at the bdat table's first-row index for the table's row count, returning
 // whether any entry's key (+0x2E) equals id.
 // ----------------------------------------------------------------------------
-bool func_801AAAA0(u32 id) {
+bool BattleWork_CheckEffectTableReady(u32 id) {
     if (getEffectFlagState__Q22cf13CfGameManagerFv() == 0) {
         return false;
     }
@@ -1004,8 +1004,8 @@ bool func_801AAAA0(u32 id) {
     if (*(void**)(&lbl_eu_80664330) == nullptr || table == nullptr) {
         return false;
     }
-    s32 row = func_8003B41C(table);   // first row of the range
-    s32 count = func_8003B1EC(table); // number of rows
+    s32 row = Bdat_GetRowBase_B41C(table);   // first row of the range
+    s32 count = Bdat_GetMaxRow_B1EC(table); // number of rows
     // Re-read the singleton: scan its entry table from 'row' for 'count' rows.
     CtrlStateWork* work2 = *(CtrlStateWork**)(&lbl_eu_80664330);
     s32 endRow = row + count;
@@ -1027,7 +1027,7 @@ bool func_801AAAA0(u32 id) {
 // store is set, persist scale and kind into the entry.
 // The singleton global is re-read before each access, matching retail.
 // ----------------------------------------------------------------------------
-void func_801AAB64(u32 id, u32 kind, int store, float scale) {
+extern "C" void func_801AAB64(u32 id, u32 kind, int store, float scale) {
     extern unsigned char lbl_eu_80664330;
     if (getEffectFlagState__Q22cf13CfGameManagerFv() == 0) {
         return;
@@ -1036,8 +1036,8 @@ void func_801AAB64(u32 id, u32 kind, int store, float scale) {
     if (*(void**)(&lbl_eu_80664330) == nullptr || table == nullptr) {
         return;
     }
-    s32 row = func_8003B41C(table);   // first row of the range
-    s32 endRow = row + func_8003B1EC(table); // number of rows
+    s32 row = Bdat_GetRowBase_B41C(table);   // first row of the range
+    s32 endRow = row + Bdat_GetMaxRow_B1EC(table); // number of rows
     for (; row < endRow; row++) {
         // The singleton global is re-read for every statement (retail never
         // caches it across statements).
@@ -1058,7 +1058,9 @@ void func_801AAB64(u32 id, u32 kind, int store, float scale) {
     }
 }
 
-void func_801AAC70(void* self){ float dummy; func_801AAB64(0, (u32)self, 1, dummy); }
+// Retail 0x8 thunk: pass r3/r4/f1 through, force r5 (store) = 1, tail-call
+// func_801AAB64. Three-param + float pass-through emits just li r5,1; b.
+extern "C" void func_801AAC70(u32 a, u32 b, float s){ func_801AAB64(a, b, 1, s); }
 
 extern "C" void func_801AAC78(u8 v) {
     extern unsigned char lbl_eu_80664330;
@@ -1069,7 +1071,7 @@ extern "C" void func_801AAC78(u8 v) {
     func_801AAB64(0, 0, 0, lbl_eu_80667D64);
 }
 
-extern "C" void func_801AACA8(unsigned char v) {
+extern "C" void BattleWork_StoreFlagByte1B(unsigned char v) {
     extern unsigned char lbl_eu_80664330;
     void* p = *(void**)(&lbl_eu_80664330);
     if (p) *(unsigned char*)((u8*)p + 0x1b) = v;

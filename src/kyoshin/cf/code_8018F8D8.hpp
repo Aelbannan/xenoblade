@@ -59,7 +59,7 @@ struct UnkFloat4 {
     float field_0xC;
 };
 
-// Result struct returned by func_8009D5FC in CfCmd_ResolveSlot1E4.
+// Result struct returned by CtrlRemote_GetFileEventIds in CfCmd_ResolveSlot1E4.
 struct UnkR31_8019E88 {
     u16 field_0x0;
     u16 field_0x2;
@@ -296,8 +296,8 @@ struct CMenuPTBlob41F4 {
 extern "C" void func_80166F80(CMenuPTBlob41F4* dst, const CMenuPTBlob41F4* src);
 
 // CBgTex layout-load query called by Init (retail unmangled free-function
-// form; same convention as func_801C3D54 below).
-extern "C" bool func_801C3C14(CBgTex* self);
+// form; same convention as BgTex_Tick_3D54 below).
+extern "C" bool BgTex_Acquire_3C14(CBgTex* self);
 
 // Retail ctor/dtor symbols for the stack temporaries built by Init are the
 // unmangled slice names (not the C++-mangled member forms), so Init calls
@@ -542,16 +542,16 @@ extern "C" void PartyStateWin_FrameStep(CPartyStateWin* self);
 
 // CBgTex per-frame helpers - retail dispatches them under plain unmangled
 // names (free functions taking the embedded sub-object), not member calls.
-extern "C" int func_801C3E34(CBgTex* self);
-extern "C" void func_801C3D54(CBgTex* self);
+extern "C" int BgTex_IsLoaded_3E34(CBgTex* self);
+extern "C" void BgTex_Tick_3D54(CBgTex* self);
 
-// Retail draws the background via the unmangled free symbol func_801C3D7C
+// Retail draws the background via the unmangled free symbol BgTex_Draw_3D7C
 // (not the CBgTex member mangling).
-extern "C" void func_801C3D7C(CBgTex* self, nw4r::lyt::DrawInfo* drawInfo);
+extern "C" void BgTex_Draw_3D7C(CBgTex* self, nw4r::lyt::DrawInfo* drawInfo);
 
 // System-window open query + sound helpers (Move, state 3).
-extern "C" int func_800FEDF8();
-extern "C" void func_800FF914();
+extern "C" int CMainMenu_GetInstancePtr();
+extern "C" void ArtsInfo_SetReadyFlag();
 void playUISound(u32 id); // UI sound (C++-mangled retail name)
 
 // CfGameManager pre-mangled imports (same convention as CPartyStateWin.hpp:

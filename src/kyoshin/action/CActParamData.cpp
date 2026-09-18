@@ -1683,7 +1683,7 @@ func_800555EC(CActParamLinkTable* table, CScnItemAnim* anim, ActParamStackNode* 
         u16 type = rec->mType2;
         if (type == 0) {
             if ((s8)rec->mByte14 != 0) {
-                rec->mField10 = func_8049E648(anim, reinterpret_cast<const char*>(&rec->mByte14));
+                rec->mField10 = ItemAnim_FindIndex_E648(anim, reinterpret_cast<const char*>(&rec->mByte14));
             }
             u32 sel = rec->mSel8;
             if (sel != 0) {

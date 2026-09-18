@@ -17,7 +17,7 @@ class CScn;
  *
  * Layout (constructor + Term):
  *   0x00: CProcess        -- task-system base (0x3C) + vtable PMF data
- *   0x54: u8              -- phase/state flag (written by func_8025306C etc.)
+ *   0x54: u8              -- phase/state flag (written by Colle_MarkClosing etc.)
  *   0x58: IScnRender      -- render-callback subobject (member, vptr)
  *   0x5C: CScn*           -- owning scene (removeRenderCB target in Term)
  *   0x60: CBgTex          -- background layout widget
@@ -39,8 +39,8 @@ public:
     void cbRenderBefore();
 
     // IScnRender vtable this-adjusting thunks
-    void func_80253188();
-    void func_80253190();
+    void Colle_ThunkRender();
+    void Colle_ThunkDtor();
 
     u32 ptmf0[3];                 // 0x3C-0x47: null PMF callback slot group 1
     u32 ptmf1[3];                 // 0x48-0x53: null PMF callback slot group 2
@@ -62,12 +62,12 @@ extern "C" void waitForDrawDone__9CDeviceVIFv();
 extern "C" void removeRenderCB__4CScnFP10IScnRender(CScn*, IScnRender*);
 extern "C" void addRenderCB__4CScnFP10IScnRenderUlUl(CScn*, IScnRender*, u32, u32);
 extern "C" void setPresentationFlag__Q22cf13CfGameManagerFv(u32 enable);
-extern "C" int func_800FEDF8();
-extern "C" void func_800FF914();
+extern "C" int CMainMenu_GetInstancePtr();
+extern "C" void ArtsInfo_SetReadyFlag();
 extern "C" void playUISound__FUl(u32 op);
-extern "C" void func_801C3D9C(CBgTex* self);
-extern "C" void func_801C40A0(CTitleAHelp* self);
-extern "C" void func_801C414C(CTitleAHelp* self);
+extern "C" void BgTex_Release_3D9C(CBgTex* self);
+extern "C" void teardown(CTitleAHelp* self);
+extern "C" void beginClose(CTitleAHelp* self);
 // isIdle declared int (not u8) so callers compare with cmpwi directly (no byte mask).
 extern "C" int isIdle__11CTitleAHelpFv(CTitleAHelp* h);
 
@@ -89,7 +89,7 @@ extern "C" void __dt__11CTitleAHelpFv(CTitleAHelp* self, int dealloc);
 extern "C" void __dt__11CCollepediaFv(CCollepedia* self, int dealloc);
 extern "C" void __ct__UnkClass_8011C974(void* dst, void* src);
 extern "C" void CTitleAHelp_load(CTitleAHelp* self);
-extern "C" int func_801C3C14(CBgTex* self);
+extern "C" int BgTex_Acquire_3C14(CBgTex* self);
 extern "C" char* BdatTouchStringCell(const void* a, const void* b, int id);
 extern "C" void func_8018B0FC(void* dst, void* src);
 extern "C" void clpStartLoads(CCollepedia* self);

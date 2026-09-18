@@ -84,7 +84,7 @@ extern "C" void __ct__cf_CfGimmickElv(CfGimmickElvData* self, u16 rowId) {
     self->vtable = (void*)lbl_eu_805358C8;
     self->typeId = 3;
 
-    void* mgr = func_8003AA34();
+    void* mgr = Bdat_GetTable_AA34();
     void* table = *(void**)((u8*)mgr + (u32)&lbl_eu_80664130);
     u8* colBase = (u8*)lbl_eu_805357E8;
 
@@ -177,7 +177,7 @@ extern "C" void __ct__cf_CfGimmickElv(CfGimmickElvData* self, u16 rowId) {
         if (self->flag1B1 & 0x10) {
             mode = 1;
             void* snd = getScnHandle__Fv();
-            func_804BCC30(snd, self->lod1);
+            ScnData_FwdB7D9C(snd, self->lod1);
             activateLOD__8CTaskLODFv(self->lod1);
         }
         attachLODObject__8CTaskLODFv(self->lod1, mode);
@@ -190,7 +190,7 @@ extern "C" void __ct__cf_CfGimmickElv(CfGimmickElvData* self, u16 rowId) {
         if (self->flag1B2 & 0x10) {
             mode = 1;
             void* snd = getScnHandle__Fv();
-            func_804BCC30(snd, self->lod2);
+            ScnData_FwdB7D9C(snd, self->lod2);
             activateLOD__8CTaskLODFv(self->lod2);
         }
         attachLODObject__8CTaskLODFv(self->lod2, mode);
@@ -251,20 +251,20 @@ extern "C" void* __dt__Q22cf12CfGimmickElvFv(CfGimmickElvData* self, int mode) {
 }
 
 // ============================================================
-// func_8020B20C (0x58 bytes) - state dispatch + update
+// GimmickElv_Update (0x58 bytes) - state dispatch + update
 // ============================================================
-extern "C" void func_8020B20C(CfGimmickElvData* self) {
+extern "C" void GimmickElv_Update(CfGimmickElvData* self) {
     if (*(u32*)lbl_eu_806646BC & 2) {
         // PTMF call through state table
         typedef void (CfGimmickElvData::*PMF)(); PMF* tbl = (PMF*)lbl_eu_80535868; (self->*tbl[self->state])();
-        func_8020B34C(self);
+        GimmickElv_InitSubObjects(self);
     }
 }
 
 // ============================================================
-// func_8020B264 (0x80 bytes) - LOD visibility toggle
+// GimmickElv_SetLodVisible (0x80 bytes) - LOD visibility toggle
 // ============================================================
-extern "C" void func_8020B264(CfGimmickElvData* self, int show) {
+extern "C" void GimmickElv_SetLodVisible(CfGimmickElvData* self, int show) {
     u8 lod = self->lod0;
     if (lod != 0) {
         // Clear visibility/mode bits once, then set the appropriate one
@@ -280,9 +280,9 @@ extern "C" void func_8020B264(CfGimmickElvData* self, int show) {
     }
 }
 // ============================================================
-// func_8020B2E4 (0x68 bytes) - copy sub-objects
+// GimmickElv_CopyVectors (0x68 bytes) - copy sub-objects
 // ============================================================
-extern "C" void func_8020B2E4(CfGimmickElvData* self) {
+extern "C" void GimmickElv_CopyVectors(CfGimmickElvData* self) {
     func_802089BC(&self->vec2, &self->vec0, &self->vec1);
     func_802089BC(&self->elvVec6, &self->elvVec0, &self->elvVec3);
     func_802089BC(&self->elvVec7, &self->elvVec1, &self->elvVec4);
@@ -290,9 +290,9 @@ extern "C" void func_8020B2E4(CfGimmickElvData* self) {
 }
 
 // ============================================================
-// func_8020B34C (0x128 bytes) - init sub-objects on demand
+// GimmickElv_InitSubObjects (0x128 bytes) - init sub-objects on demand
 // ============================================================
-extern "C" void func_8020B34C(CfGimmickElvData* self) {
+extern "C" void GimmickElv_InitSubObjects(CfGimmickElvData* self) {
     // Init unk7C if needed
     if ((self->unk66 & 1) && self->unk7C == 0) {
         self->unk7C = (u32)CfGimmick_SpawnNamedObject((void*)CfGimmick_LookupBdatGimmickName(self->unk6A, 0), 0xF, &self->vec0);
@@ -457,9 +457,9 @@ extern "C" void func_8020B5C4(CfGimmickElvData* self) {
 }
 
 // ============================================================
-// func_8020B844 (0x2C bytes) - set direction 0
+// GimmickElv_SetDir0 (0x2C bytes) - set direction 0
 // ============================================================
-extern "C" void func_8020B844(CfGimmickElvData* self) {
+extern "C" void GimmickElv_SetDir0(CfGimmickElvData* self) {
     self->direction = 0;
     if (self->flags & 0x20) {
         self->state = 4;
@@ -469,9 +469,9 @@ extern "C" void func_8020B844(CfGimmickElvData* self) {
 }
 
 // ============================================================
-// func_8020B870 (0x2C bytes) - set direction 1
+// GimmickElv_SetDir1 (0x2C bytes) - set direction 1
 // ============================================================
-extern "C" void func_8020B870(CfGimmickElvData* self) {
+extern "C" void GimmickElv_SetDir1(CfGimmickElvData* self) {
     self->direction = 1;
     if (self->flags & 0x40) {
         self->state = 4;
@@ -511,7 +511,7 @@ extern "C" void func_8020B89C(CfGimmickElvData* self) {
                 // Complete
                 deactivateLOD__8CTaskLODFv(lod);
                 void* snd = getScnHandle__Fv();
-                func_804BCC3C(snd, lod);
+                ScnData_FwdB7DD4(snd, lod);
                 u32 d = self->direction;
                 u32 lb = 8 << d;
                 u32 db = 2 << d;
@@ -580,7 +580,7 @@ extern "C" void func_8020BA98(CfGimmickElvData* self) {
             if (flag & 0x10) {
                 if (self->val1C8 >= lbl_eu_80668384) {
                     void* snd = getScnHandle__Fv();
-                    func_804BCC30(snd, lod);
+                    ScnData_FwdB7D9C(snd, lod);
                     self->flags = self->flags & ~lodBit & ~dirBit;
                 } else {
                     refreshLOD__8CTaskLODFv(lod, self->val1C8 / lbl_eu_80668384);
@@ -641,11 +641,11 @@ extern "C" void func_8020BCA8(CfGimmickElvData* self) {
 }
 
 // ============================================================
-// func_8020C274 (0xC0 bytes) - completion check
+// GimmickElv_CheckComplete (0xC0 bytes) - completion check
 #endif
 
 // ============================================================
-extern "C" void func_8020C274(CfGimmickElvData* self) {
+extern "C" void GimmickElv_CheckComplete(CfGimmickElvData* self) {
     if (self->flags & 0x20) {
         if (!(self->flag1B1 & 5)) {
             u32 idx = self->unk158;

@@ -4,8 +4,8 @@
 #include "kyoshin/CBaseCur.hpp"
 // NOTE: kyoshin/CSysWin.hpp, kyoshin/CNumSelect.hpp and kyoshin/CScrollBar.hpp
 // are deliberately NOT included here: CSysWin/CScrollBar declare
-// extern "C" func_80124270(void*, u32) while CNumSelect.hpp declares
-// extern "C" func_80124270(nw4r::lyt::Pane*, u32); including any two of them
+// extern "C" setPaneVisible(void*, u32) while CNumSelect.hpp declares
+// extern "C" setPaneVisible(nw4r::lyt::Pane*, u32); including any two of them
 // together is an illegal function overloading in MWCC. This TU only needs the
 // full-layout structs (duplicated below) and the class names.
 #include "monolib/lib/UnkClass_8045F564.hpp"
@@ -23,12 +23,12 @@ class CNumSelect;   // full layout in kyoshin/CNumSelect.hpp (not included, see 
 struct CScrollBar;  // full layout in kyoshin/CScrollBar.hpp (not included, see above)
 class CFileHandle;
 
-extern "C" void func_80124270(void* pane, u32 a); // set pane visible flag (C-ABI)
+extern "C" void setPaneVisible(void* pane, u32 a); // set pane visible flag (C-ABI)
 extern "C" void __dt__17UnkClass_8045F564Fv(UnkClass_8045F564*, int); // typed dtor (CSysWin.hpp form)
 // Retail code80135FDC_setVec3 leaves its first arg (a pointer) in r3.
 extern "C" nw4r::math::VEC3* code80135FDC_setVec3(float* out, float x, float y, float z);
 extern "C" void func_80137924(nw4r::math::VEC3* out, nw4r::lyt::Pane*, nw4r::lyt::Pane*, nw4r::lyt::Pane*);
-extern "C" void func_8022B90C(void* syswin, int kind);   // syswin pane switch (CSysWin.cpp)
+extern "C" void sysWinSwitchKindPane(void* syswin, int kind);   // syswin pane switch (CSysWin.cpp)
 extern "C" void func_8022BFC8(void* syswin, int kind);   // window-kind advance (CSysWin.cpp)
 
 /* 8-byte r3:r4 copy unit (mirrored from CEquipItemBox.hpp; see include note). */
@@ -351,7 +351,7 @@ extern "C" void __dt__6CCur18Fv(CBaseCur*, int);
 
 // --- external retail helpers (C-linkage or literal mangled symbols) ---
 // OnFileEvent helpers (external retail symbols, plain C-ABI names).
-extern "C" void* func_8003AA34();                           // bdat manager reset (no args)
+extern "C" void* Bdat_GetTable_AA34();                           // bdat manager reset (no args)
 extern "C" mtl::ALLOC_HANDLE getAllocHandle__10CLibLayoutFv(void);
 extern "C" nw4r::lyt::ArcResourceAccessor* createArcResourceAccessor__10CLibLayoutFv();
 extern "C" void* __ct__CTagProcessor(void*);               // tag-processor ctor (self)
@@ -363,21 +363,21 @@ extern "C" nw4r::lyt::ArcResourceAccessor* CUICfManager_getArcResourceAccessor()
 extern "C" CBaseCur* __ct__CCur18(void*, void*);           // CCur18 ctor (cursor, accessor)
 extern "C" CBaseCur* __ct__CSubCur(CBaseCur*, nw4r::lyt::ArcResourceAccessor*);
 extern "C" void func_8018B0FC(void*, void*);               // copy stack cursor temp into member
-// func_801D2E4C (subcur pane visibility) - 2-arg form used by OnFileEvent;
+// Cur_ShowTwoSubPanes (subcur pane visibility) - 2-arg form used by OnFileEvent;
 // ItemBoxLine_ResetCursorB8 still calls it through a 1-arg cast to keep the 8-byte tail.
-extern "C" void func_801D2E4C(void*, u32);
+extern "C" void Cur_ShowTwoSubPanes(void*, u32);
 extern "C" FourShorts func_801397AC(void*, u32);                   // pane colour getter (r3:r4 pair)
 extern "C" u32 getItemBox2State__FP13CItemBoxInfo2(void*);
-extern "C" u32 func_801EB020(void*);          // num-select busy flag (+0x2C)
-extern "C" u32 func_801EB018(void*);          // num-select busy flag (+0x2D)
+extern "C" u32 NumSel_GetActiveFlag_B020(void*);          // num-select busy flag (+0x2C)
+extern "C" u32 NumSel_GetField2D_B018(void*);          // num-select busy flag (+0x2D)
 extern "C" int CSysWin_getUnk34(void*);
 extern "C" void advanceItemBox2State__FP13CItemBoxInfo2(void*);
 extern "C" int CScrollBar_isVisible(void*);
 extern "C" u32 CSysWin_isReady(void*);
 extern "C" int CSysWin_isActive(void*);
-extern "C" void func_801D216C(void*, u8);
-extern "C" void func_8022C1B4(void*, void*, u8);
-extern "C" void func_801F369C(void*);
+extern "C" void Cur_SetVisible(void*, u8);
+extern "C" void sysWinGetPaneScreenPos(void*, void*, u8);
+extern "C" void CScrollBar_requestScrollOut(void*);
 extern "C" void playUISound__FUl(unsigned int);
 extern "C" u8 code80135FDC_getByte_64077();
 extern "C" void calcItemBox2PaneVec(void*, void*, unsigned int);
@@ -389,28 +389,28 @@ extern "C" u16 BdatGetItemId(u32);
 extern "C" void CItem_thunkAllocRecord(u32, u32);
 extern "C" void* CItemBlock_getPtr20E8(void);
 extern "C" void CItemBlock_setCount(s32);
-extern "C" void func_801EB030(void*, void*);
-extern "C" void func_801EB04C(void*, u8);
-extern "C" void func_801EB064(void*, unsigned int);
-extern "C" void func_801EB0D4(void*);
+extern "C" void NumSel_SetCaption_B030(void*, void*);
+extern "C" void NumSel_SetCaptionNum_B04C(void*, u8);
+extern "C" void NumSel_FormatPicName_B064(void*, unsigned int);
+extern "C" void NumSel_EnterState1Close_B0D4(void*);
 extern "C" void* getHandleMEM2__Q23mtl10MemManagerFv(void);
 extern "C" void* readFile__11CDeviceFileFUlPCcP10IWorkEventii(unsigned long, const char*, void*, int, int);
 extern "C" void* readCommonArchiveFile__11CDeviceFileFUlPCcP10IWorkEventii(unsigned long, const char*, void*, int, int);
 extern "C" int KyoshinHeap_GetField44(void);
 extern "C" void loadItemBox2Files(void*);
-extern "C" void func_801EAE8C(void*);
-extern "C" void func_801F34F4(void*);
-extern "C" void func_801F3850(void*, u32);
+extern "C" void NumSel_LoadArchive_AE8C(void*);
+extern "C" void CScrollBar_loadLayoutArc(void*);
+extern "C" void CScrollBar_PlaceThumb(void*, u32);
 // per-frame update helpers (external retail symbols, same merged unit)
 extern "C" void func_801D202C(void*);            // cursor per-frame update (CCur)
 extern "C" void updateItemBox2Anims(void*);            // item-box info2 per-frame update
-extern "C" void func_801EAED4(void*);            // num-select per-frame update
-extern "C" void func_801F3540(void*);            // scrollbar per-frame update
-extern "C" void func_8022B748(void*);            // syswin per-frame update
+extern "C" void NumSel_DispatchState_AED4(void*);            // num-select per-frame update
+extern "C" void CScrollBar_UpdateDispatch(void*);            // scrollbar per-frame update
+extern "C" void sysWinDispatchPhase(void*);            // syswin per-frame update
 extern "C" void ItemBoxLine_RefreshTabLabels(void*, unsigned int); // tab-pane refresh (2-arg caller overload)
-extern "C" void func_801F36BC(void*, int, int);      // scrollbar range setup
-extern "C" void func_801F3670(void*, const float*);  // scrollbar init (3-float vec)
-extern "C" void func_801F367C(void*);                // scrollbar show
+extern "C" void CScrollBar_UpdateThumb(void*, int, int);      // scrollbar range setup
+extern "C" void CScrollBar_InitRootPane(void*, const float*);  // scrollbar init (3-float vec)
+extern "C" void CScrollBar_requestScrollIn(void*);                // scrollbar show
 extern "C" void startItemBox2Open(void*);                // info2 state open
 extern "C" void func_801E14DC(void*, unsigned short, void*, unsigned short, unsigned int); // info2 tab-data push
 extern "C" void setItemBox2NamedText(void*, char*, char*);  // info2 tab-name set
@@ -431,11 +431,11 @@ extern "C" void* lbl_eu_806640A8;
 extern "C" void* lbl_eu_806640EC;
 extern "C" void* lbl_eu_806640D8;
 extern "C" void drawItemBox2Layout__FP13CItemBoxInfo2PQ34nw4r3lyt8DrawInfo(void*, void*);
-extern "C" void func_801D20B0(void*, void*);
-extern "C" void func_801F35B0(void*, void*);
-extern "C" void func_801EAF7C(void*, void*);
-extern "C" void func_8022B7C8(void*, void*);
-extern "C" int func_801D2ED8(CBaseCur*);
+extern "C" void Cur_DrawLayout(void*, void*);
+extern "C" void CScrollBar_draw(void*, void*);
+extern "C" void NumSel_DrawLayout_AF7C(void*, void*);
+extern "C" void sysWinDrawLayout(void*, void*);
+extern "C" int Cur_BothSubPanesOn(CBaseCur*);
 
 // Forward declarations for sibling functions resolved at link via the symbol map
 // (retail treats these as external relocs, not same-TU symbols). The C++
@@ -453,7 +453,7 @@ extern "C" void ItemBoxLine_RefreshLineRows(void*);
 void buildLayout(nw4r::lyt::Layout**, nw4r::lyt::ArcResourceAccessor*, const char*);
 void bindLayoutAnimTransform(nw4r::lyt::Layout*, nw4r::lyt::AnimTransform**, nw4r::lyt::ArcResourceAccessor*, char*);
 // Cursor deactivation tail handler (CCur unit) - genuine C-ABI helper.
-extern "C" void func_801D21CC(void*);
+extern "C" void Cur_DeactivateTail(void*);
 
 extern "C" void* func_801394D4(u32);
 extern "C" char lbl_eu_805071B0[]; // rodata string pool
@@ -487,8 +487,8 @@ extern "C" u16 BdatGetU16ByTableKey(const void*, const void*, u16);
 
 extern "C" void* getFP__FPCc(const char*);
 extern "C" u32 MapValueToRank6(unsigned int);
-extern "C" u16 func_8009CF8C(u32);
-extern "C" int func_8026178C(u32, u32);
+extern "C" u16 CtrlRemote_TouchBitByArg(u32);
+extern "C" int Counter_TestBit(u32, u32);
 extern "C" u32 func_801EC9E0(void*, unsigned int);
 
 // Tab-accessor C-linkage overloads: the typed C++ bodies live in this TU
@@ -513,12 +513,12 @@ extern "C" void ItemBoxLine_TabNext(void*);
 extern "C" void func_801EDB80(void*);
 extern "C" void func_80139198(unsigned int);
 extern "C" void PaneMatSetTevColorsByName(nw4r::lyt::Layout*, char*, void*, void*);
-extern "C" char* func_eu_802B148C(void);
-extern "C" char* func_eu_802B1474(void);
+extern "C" char* getErrMesText16(void);
+extern "C" char* getErrMesText15(void);
 // Syswin content-setter helpers (defined in CSysWin.cpp) + item-name provider
 // (defined in CItemBoxInfo.cpp): C-linkage so calls bind to the retail names.
 extern "C" void func_8022B9B4(void*, u32, int);
-extern "C" void func_8022B8B8(void*);
+extern "C" void sysWinOpenPhase1(void*);
 extern "C" u32 func_801D3C74(void*, u32);
 
 // Layout/anim builders + text/table helpers declared by the code_80135FDC unit.
@@ -534,20 +534,20 @@ extern "C" void func_80137F88(void*, u32);  // bind texture resource to pane
 extern "C" void func_801EBC00(CIBLTab*, unsigned char, unsigned short, unsigned char);
 extern "C" u32 GetCollectedFlagByte(u32);
 
-extern "C" void func_8022B8E4(void*);
-extern "C" int func_801EB028(void*);
-extern "C" void func_801EB314(CNumSelectFull* self); // num-select display step
-extern "C" void func_801EB178(void*);
+extern "C" void sysWinAdvancePhase3(void*);
+extern "C" int NumSel_GetField2E_B028(void*);
+extern "C" void NumSel_ShowPaneB_B314(CNumSelectFull* self); // num-select display step
+extern "C" void NumSel_EnterState3Open_B178(void*);
 
 // --- teardown helpers called by ItemBoxLine_UnloadFiles (retail plain names) ---
-extern "C" void func_801EAF9C(CNumSelectFull*);          // num-select destroy
+extern "C" void NumSel_Teardown_AF9C(CNumSelectFull*);          // num-select destroy
 // C++ mangling reproduces the retail names closeFileHandle__FPP11CFileHandle /
 // releaseArcResourceAccessor__FPQ34nw4r3lyt19ArcResourceAccessor.
 void func_801390E0(CFileHandle**);
 void releaseArcResourceAccessor(nw4r::lyt::ArcResourceAccessor*);
 extern "C" void func_801E13F8(CItemBoxInfo2*);           // info2 destroy
-extern "C" void func_801F35DC(CScrollBar*);              // scrollbar destroy
-extern "C" void func_8022B7F4(CSysWinFull*);             // syswin destroy
+extern "C" void CScrollBar_Teardown(CScrollBar*);              // scrollbar destroy
+extern "C" void sysWinTermLayout(CSysWinFull*);             // syswin destroy
 // Tab-page helpers used by func_801F0488 (retail plain names).
 extern "C" void CopyTabSlotVec(CIBLVec3*, const u16*, u32);
 extern "C" void copyVEC3(void*, const void*);
@@ -586,7 +586,7 @@ extern "C" FourShorts func_80139658(void*, void*, u32);  // animation color fetc
 // GXColorS10 copy (retail __as__11_GXColorS10FRC11_GXColorS10)
 extern "C" GXColorS10* __as__11_GXColorS10FRC11_GXColorS10(GXColorS10* self, const GXColorS10* src);
 extern "C" void func_80136A1C(nw4r::lyt::Layout*, char*, char*, u32); // layout text bind
-extern "C" void func_801C4B60(void*, u32, u32, u32, u32); // RGB color builder
+extern "C" void setGXColorS10(void*, u32, u32, u32, u32); // RGB color builder
 
 // func_801EF518: .sbss item-box guard words (SDA-accessed, compared to 0).
 extern u32 lbl_eu_80664648;
@@ -594,7 +594,7 @@ extern u32 lbl_eu_8066464C;
 extern u32 lbl_eu_80664650;
 
 // sinit_801F32EC: the fourteen 8-byte .sbss color objects, constructed in
-// retail call order (SplitU32ToS16s resets, func_801C4B60 sets RGBA).
+// retail call order (SplitU32ToS16s resets, setGXColorS10 sets RGBA).
 extern u8 lbl_eu_806645D8[8];
 extern u8 lbl_eu_806645E0[8];
 extern u8 lbl_eu_806645E8[8];

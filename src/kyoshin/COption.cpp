@@ -1,4 +1,4 @@
-// FULL_MATCH: func_8029BECC, func_8029BED4
+// FULL_MATCH: CMenuOption_renderBeforeAdj58, CMenuOption_dtorAdj58
 
 #include "kyoshin/menu/CMenuOption.hpp"
 
@@ -103,7 +103,7 @@ void CMenuOption::Init() {
     *(u8*)((u8*)this + 0x7e) = *(u8*)(tempBgTex + 0x1e);
     __dt__6CBgTexFv(reinterpret_cast<CBgTex*>(tempBgTex), -1);
 
-    func_801C3C14((CBgTex*)mBgTex);
+    BgTex_Acquire_3C14((CBgTex*)mBgTex);
 
     // --- Re-initialise the embedded CTitleAHelp via a temporary ---
     char* name = BdatTouchStringCell(lbl_eu_805103C4, lbl_eu_805103C4 + 9, 0x3b);
@@ -212,8 +212,8 @@ void CMenuOption::Term() {
     }
     reinterpret_cast<CScn*>(mParentRef)->removeRenderCB(renderCB);
 
-    func_801C3D9C((CBgTex*)mBgTex);
-    func_801C40A0((CTitleAHelp*)mTitleAHelp);
+    BgTex_Release_3D9C((CBgTex*)mBgTex);
+    teardown((CTitleAHelp*)mTitleAHelp);
     COptionTeardown((COption*)mOption);
 
     lbl_eu_80664A38 = 0;
@@ -225,14 +225,14 @@ void CMenuOption::Move() {
         return;
 
     switch (mState) {
-    case 0: func_8029BBB0(this); break;
-    case 1: func_8029BC28(this); break;
+    case 0: advanceOptionPhase1(this); break;
+    case 1: advanceOptionPhase2(this); break;
     case 2: func_8029BC78(this); break;
-    case 3: func_8029BE7C(this); break;
+    case 3: flagOptionPhase1(this); break;
     }
 
-    func_801C3D54((CBgTex*)mBgTex);
-    func_801C3FF0((CTitleAHelp*)mTitleAHelp);
+    BgTex_Tick_3D54((CBgTex*)mBgTex);
+    updateHelp((CTitleAHelp*)mTitleAHelp);
     COptionTickState((COption*)mOption);
 }
 
@@ -249,9 +249,9 @@ void CMenuOption::cbRenderBefore() {
     u8 drawInfo[0x54];
     __ct__Q34nw4r3lyt8DrawInfoFv((nw4r::lyt::DrawInfo*)&drawInfo[0]);
     func_80137250((nw4r::lyt::DrawInfo*)&drawInfo[0]);
-    func_801C3D7C((CBgTex*)mBgTex, (nw4r::lyt::DrawInfo*)&drawInfo[0]);
+    BgTex_Draw_3D7C((CBgTex*)mBgTex, (nw4r::lyt::DrawInfo*)&drawInfo[0]);
     COptionDraw((COption*)mOption, (nw4r::lyt::DrawInfo*)&drawInfo[0]);
-    func_801C4080((CTitleAHelp*)mTitleAHelp, (nw4r::lyt::DrawInfo*)&drawInfo[0]);
+    drawHelp((CTitleAHelp*)mTitleAHelp, (nw4r::lyt::DrawInfo*)&drawInfo[0]);
     __dt__Q34nw4r3lyt8DrawInfoFv((nw4r::lyt::DrawInfo*)&drawInfo[0], -1);
 }
 
@@ -275,8 +275,8 @@ CMenuOption* func_8029BB24(CProcess* registParent, CProcess* parent, u32 arg) {
 /* Advance the option menu to phase 1 once the background texture, title bar
  * and option panel are all ready, then start the panel intro animations and
  * play the confirm sound effect (writes the state byte at 0x1BC). */
-void func_8029BBB0(CMenuOption* self) {
-    if (func_801C3E34((CBgTex*)self->mBgTex) != 0 && func_801C4114((CTitleAHelp*)self->mTitleAHelp) != 0 &&
+void advanceOptionPhase1(CMenuOption* self) {
+    if (BgTex_IsLoaded_3E34((CBgTex*)self->mBgTex) != 0 && isInitialized((CTitleAHelp*)self->mTitleAHelp) != 0 &&
         COptionIsWindowReady((COption*)self->mOption) != 0) {
         func_801C412C((CTitleAHelp*)self->mTitleAHelp);
         COptionBeginScrollSetup((COption*)self->mOption);
@@ -287,7 +287,7 @@ void func_8029BBB0(CMenuOption* self) {
 
 /* Advance the option menu to phase 2 once the title bar is idle and the
  * option panel has finished its intro (writes the state byte at 0x1BC). */
-void func_8029BC28(CMenuOption* self) {
+void advanceOptionPhase2(CMenuOption* self) {
     if (isIdle__11CTitleAHelpFv((CTitleAHelp*)self->mTitleAHelp) != 0 && COptionGetLiveFlag((COption*)self->mOption) != 0) {
         self->mState = 2;
     }
@@ -362,22 +362,22 @@ void func_8029BC78(CMenuOption* self) {
 
     if (COptionGetConfirmGate((COption*)self->mOption) != 0) {
         if (COptionGetSecondConfirm((COption*)self->mOption) != 0) {
-            if (func_800FEDF8() != 0) {
-                func_800FF914();
+            if (CMainMenu_GetInstancePtr() != 0) {
+                ArtsInfo_SetReadyFlag();
             }
             self->mState = 4;
             self->mField54 = 1;
         } else {
-            func_801C414C((CTitleAHelp*)self->mTitleAHelp);
+            beginClose((CTitleAHelp*)self->mTitleAHelp);
             COptionConfirmSelection((COption*)self->mOption);
             self->mState = 3;
         }
     }
 }
 
-/* Same idle+advance check as func_8029BC28, but advances the option menu to
+/* Same idle+advance check as advanceOptionPhase2, but advances the option menu to
  * phase 1 (writes the state byte at offset 0x54). */
-void func_8029BE7C(CMenuOption* self) {
+void flagOptionPhase1(CMenuOption* self) {
     if (isIdle__11CTitleAHelpFv((CTitleAHelp*)self->mTitleAHelp) != 0 && COptionGetLiveFlag((COption*)self->mOption) != 0) {
         self->mField54 = 1;
     }
@@ -392,20 +392,20 @@ void func_8029BE7C(CMenuOption* self) {
  *
  * Retail: subi r3, r3, 0x58; b cbRenderBefore__11CMenuOptionFv
  */
-void func_8029BECC(void* self) {
+void CMenuOption_renderBeforeAdj58(void* self) {
     reinterpret_cast<CMenuOption*>(static_cast<char*>(self) - 0x58)->cbRenderBefore();
 }
 
 /**
  * IScnRender vtable this-adjusting thunk for ~CMenuOption.
  *
- * Same adjustment as func_8029BECC but forwards to the destructor, leaving
+ * Same adjustment as CMenuOption_renderBeforeAdj58 but forwards to the destructor, leaving
  * r4 (delete flag) as caller leftover.
  *
  * Retail: subi r3, r3, 0x58; b __dt__11CMenuOptionFv
  */
-void func_8029BED4(void* self) {
+void CMenuOption_dtorAdj58(void* self) {
     ((void(*)(void*))__dt__11CMenuOptionFv)((char*)self - 0x58);
 }
 
-unsigned long func_8029BBA0(void) { return lbl_eu_80664A38 != 0; }
+unsigned long hasOptionMenu(void) { return lbl_eu_80664A38 != 0; }

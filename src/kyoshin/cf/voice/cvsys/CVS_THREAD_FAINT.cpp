@@ -6,17 +6,17 @@
 #include "kyoshin/cf/voice/cvsys/CVS_THREAD_CHAIN.hpp"
 #include "monolib/math/Random.hpp"
 
-// us-802a9460 (func_802A6D2C)
+// us-802a9460 (triggerFaintPlayback)
 // Completion callback: if no active voice, call the playback-start virtual.
-void func_802A6D2C(CVS_THREAD_FAINT* self) {
+extern "C" void triggerFaintPlayback(CVS_THREAD_FAINT* self) {
     if (func_802A3E88(self) == 0) {
         self->func_802A3B50();
     }
 }
 
-// us-802a94a8 (func_802A6D74)
+// us-802a94a8 (removeFaintVoice)
 // Remove a voice from the slots by matching its embedded CCharVoice pointer.
-void func_802A6D74(CVS_THREAD_FAINT* self, CCharVoice* voicePtr) {
+extern "C" void removeFaintVoice(CVS_THREAD_FAINT* self, CCharVoice* voicePtr) {
     func_802A3BEC(self, voicePtr);
 
     // Slot 1 (0x20): load handle, bias to its embedded CCharVoice if non-null,
@@ -41,11 +41,11 @@ void func_802A6D74(CVS_THREAD_FAINT* self, CCharVoice* voicePtr) {
     }
 }
 
-// us-802a9528 (func_802A6DF4)
+// us-802a9528 (playFaintVoice)
 // Owner-level voice play: requires factory flags set, allocates a throwaway
 // handle, bails if the owner voice is already the current one (0xA), and
 // otherwise plays the 0x2BF line.
-int func_802A6DF4(CVoiceHandle* self) {
+extern "C" int playFaintVoice(CVoiceHandle* self) {
     if (!(self->field_0x3F00 & 2)) return 0;
     if (func_802A330C(0xa, 1) == NULL) return 0;
     if (func_800BE8F4(&self->voice) == 0xa) return 0;
@@ -58,20 +58,20 @@ int func_802A6DF4(CVoiceHandle* self) {
     return 0;
 }
 
-// us-802a92e4 (func_802A6BB0)
+// us-802a92e4 (advanceFaintSlot1)
 // Advance/play function for voice slot 1 (field_0x20).
 // Copies init data from lbl_eu_80539B64 to fields 0x00-0x08, checks if
 // the voice is still active (vtable method at offset 0x2BC), and if
 // inactive, plays a random voice ID (mtRand(2) + 0x709).
-void func_802A6BB0(CVS_THREAD_FAINT* self) {
+extern "C" void advanceFaintSlot1(CVS_THREAD_FAINT* self) {
     // Restore the base state triple via the lwzu/spread load-with-update
     // pattern (v0 declared first so the lwzu destination colours low).
     u32 v0;
     const u32* src = lbl_eu_80539B64;
     v0 = *src++;
-    self->unk4 = *src++;
-    self->unk0 = (u32*)v0;
-    self->unk8 = *src;
+    ((CVS_THREAD_FAINT_raw*)self)->state1 = *src++;
+    ((CVS_THREAD_FAINT_raw*)self)->state0 = (u32*)v0;
+    ((CVS_THREAD_FAINT_raw*)self)->state2 = *src;
 
     CVoiceHandle* handle20 = self->slot1;
     if (handle20 != NULL) {
@@ -91,12 +91,12 @@ void func_802A6BB0(CVS_THREAD_FAINT* self) {
     }
 }
 
-// us-802a93a0 (func_802A6C6C)
+// us-802a93a0 (advanceFaintSlot2)
 // Advance/play function for voice slot 2 (field_0x24).
 // Copies init data from lbl_eu_80539B70 to fields 0x00-0x08, checks if
 // the voice is still active, and if inactive, plays a voice ID chosen by
 // mtRand(2): 0x712 when rand==0, otherwise 0x70B.
-void func_802A6C6C(CVS_THREAD_FAINT* self) {
+extern "C" void advanceFaintSlot2(CVS_THREAD_FAINT* self) {
     if (func_802A3E88(self) != 0) {
         return;
     }
@@ -104,9 +104,9 @@ void func_802A6C6C(CVS_THREAD_FAINT* self) {
     u32 v0;
     const u32* src = lbl_eu_80539B70;
     v0 = *src++;
-    self->unk4 = *src++;
-    self->unk0 = (u32*)v0;
-    self->unk8 = *src;
+    ((CVS_THREAD_FAINT_raw*)self)->state1 = *src++;
+    ((CVS_THREAD_FAINT_raw*)self)->state0 = (u32*)v0;
+    ((CVS_THREAD_FAINT_raw*)self)->state2 = *src;
 
     CVoiceHandle* handle24 = self->slot2;
     if (handle24 != NULL) {
@@ -176,8 +176,8 @@ CVS_THREAD_FAINT* __ct__802A6AA8(CVoiceHandle* owner1, CVoiceHandle* owner2) {
     // Store word 1 through the raw layout view (offset 0 == base::unk0) to
     // avoid the placeholder field name; same `stw` as retail.
     ((CVS_THREAD_FAINT_raw*)self)->state0 = p0;
-    self->unk4 = v1;
-    self->unk8 = base[2];
+    ((CVS_THREAD_FAINT_raw*)self)->state1 = v1;
+    ((CVS_THREAD_FAINT_raw*)self)->state2 = base[2];
 
     return self;
 }

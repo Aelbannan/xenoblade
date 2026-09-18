@@ -1,5 +1,5 @@
 // CVS_THREAD_TENSION_UP: Voice thread for tension-up audio events.
-// FULL_MATCH: func_802A92D0 -- buffer-size getter (virtual method override).
+// FULL_MATCH: TensUp_GetBufferSizeValue -- buffer-size getter (virtual method override).
 // 5 matched functions: completion callback, voice removal, constructor,
 // update function, and voice-select + play function.
 
@@ -58,10 +58,10 @@ struct CVS_THREAD_TENSION_UP_ptmf {
     VoiceCb cb;                 // 0x00-0x0B
 };
 
-// us-802ab968 (func_802A9230)
+// us-802ab968 (TensUp_TryRunSlotAction)
 // Completion callback: if no active voice is playing, invoke the
 // playback-start virtual (CVS_THREAD::func_802A3B50, vtable slot 2).
-void func_802A9230(CVS_THREAD_TENSION_UP* self) {
+void TensUp_TryRunSlotAction(CVS_THREAD_TENSION_UP* self) {
     if (func_802A3E88(self) == 0) {
         self->func_802A3B50();
     }

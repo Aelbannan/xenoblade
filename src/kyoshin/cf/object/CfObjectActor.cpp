@@ -55,7 +55,7 @@ namespace cf {
         *(void**)((u8*)this + 0x3380) = (void*)(grp + 0x36C);
         *(void**)((u8*)this + 0x3E9C) = (void*)(grp + 0x37C);
         func_80174B4C(this, 3, grp + 0x36C, grp + 0xC, grp);
-        func_8014AA10(reinterpret_cast<u8*>(this) + 0x3380, reinterpret_cast<unsigned int>(this));
+        aiActionStoreWordB14(reinterpret_cast<u8*>(this) + 0x3380, reinterpret_cast<unsigned int>(this));
         CfActorField45B8* tail = reinterpret_cast<CfActorField45B8*>(this);
         tail->field_0x45B8 = 0;
         tail->field_0x45BC = -1;
@@ -271,12 +271,12 @@ extern "C" void CActorParam_setHp__Q22cf13CfObjectActorFv(cf::CfObjectActor* sel
     if ((lbl_eu_80663E24 & 0x10000000) == 0 && (lbl_eu_80663E28 & 0x800) == 0) {
         if (f < lbl_eu_80667740) {
             void* bm = getInstance__Q22cf14CBattleManagerFv();
-            if (func_8027990C((u8*)bm + 0x1A8, self) != 0) {
+            if (CChain_ProbeActorReady((u8*)bm + 0x1A8, self) != 0) {
                 f = lbl_eu_80667740;
             }
         }
         reinterpret_cast<cf::CfActorParamFields*>(self)->field_0x17E8 = f;
-        func_801A891C(self, 0);
+        releaseVisionSlot(self, 0);
     }
 }
 // Retail symbol is Fv; the real ABI passes (self, delta). Adds a signed
@@ -418,18 +418,18 @@ extern "C" void CActorParam_applyDamage__Q22cf13CfObjectActorFv(cf::CfObjectActo
 
     c &= ~3;   // low 2 flag bits are cleared in place (retail clrlwi r31, r31, 2)
     if (f > lbl_eu_80667738) {
-        func_8010989C((c & (0x80000000 | 0x200)) != 0);
-        func_80109888(0);
-        func_80109874(0);
+        BtlDmg_SetField779((c & (0x80000000 | 0x200)) != 0);
+        BtlDmg_SetByte778(0);
+        BtlDmg_SetByte777(0);
     } else {
-        func_8010989C((c & (0x80000000 | 0x100)) != 0);
-        func_80109888((c & (0x80000000 | 0x400)) != 0);
+        BtlDmg_SetField779((c & (0x80000000 | 0x100)) != 0);
+        BtlDmg_SetByte778((c & (0x80000000 | 0x400)) != 0);
         if ((c & 0x80500000) != 0) {
-            func_80109874(1);
+            BtlDmg_SetByte777(1);
         } else if ((c & 0x80A00000) != 0) {
-            func_80109874(2);
+            BtlDmg_SetByte777(2);
         } else {
-            func_80109874(0);
+            BtlDmg_SetByte777(0);
         }
     }
     if (f < lbl_eu_80667738 && func_80148778((u8*)self + 8, 1) != 0) {
@@ -441,13 +441,13 @@ extern "C" void CActorParam_applyDamage__Q22cf13CfObjectActorFv(cf::CfObjectActo
     cf::CfStatusEntry* ep = 0;
     if (func_80148778((u8*)self + 8, 0x33) != 0) {
         if ((c & 0x90000000) == 0) {
-            ep = (cf::CfStatusEntry*)func_80149154((u8*)self + 8, 0x33);
+            ep = (cf::CfStatusEntry*)findBattleStatusEntry((u8*)self + 8, 0x33);
             if (ep != 0) {
                 if ((c & (0x80000000 | 0x8000)) != 0) {
-                    func_80109784((void*)reinterpret_cast<cf::CfActorField3F10*>(self)->field_0x3F10, 3, 0x10);
+                    BtlDmg_FilterNotifyDamage((void*)reinterpret_cast<cf::CfActorField3F10*>(self)->field_0x3F10, 3, 0x10);
                     if (f > lbl_eu_80667738) {
                         ep->field_0x14 = (s16)(s32)f;
-                        func_801A891C(self, 0);
+                        releaseVisionSlot(self, 0);
                         return;
                     }
                     static_cast<cf::CBattleState*>((cf::CBattleState*)((u8*)self + 8))->CBattleState_applyEventEntry((cf::CBattleStateEntry*)ep);
@@ -455,9 +455,9 @@ extern "C" void CActorParam_applyDamage__Q22cf13CfObjectActorFv(cf::CfObjectActo
                 } else {
                     if (f <= lbl_eu_80667738) {
                         ep->field_0x14 = (s16)((float)(s16)ep->field_0x14 + f);
-                        func_80109784((void*)reinterpret_cast<cf::CfActorField3F10*>(self)->field_0x3F10, 3, 0x10);
+                        BtlDmg_FilterNotifyDamage((void*)reinterpret_cast<cf::CfActorField3F10*>(self)->field_0x3F10, 3, 0x10);
                         if ((s16)ep->field_0x14 > 0) {
-                            func_801A891C(self, 0);
+                            releaseVisionSlot(self, 0);
                             return;
                         }
                         f = (float)(s16)ep->field_0x14;
@@ -489,18 +489,18 @@ extern "C" void CActorParam_applyDamage__Q22cf13CfObjectActorFv(cf::CfObjectActo
     } else if (v > reinterpret_cast<cf::CfActorParamFields*>(self)->field_0x17F4) {
         reinterpret_cast<cf::CfActorParamFields*>(self)->field_0x17E8 = reinterpret_cast<cf::CfActorParamFields*>(self)->field_0x17F4;
     }
-    func_8010975C((u8)a);
-    func_80109770((u8)b);
+    BtlDmg_SetDamageType((u8)a);
+    BtlDmg_SetDamageDir((u8)b);
     if (f <= lbl_eu_80667738) {
-        func_80109734((void*)reinterpret_cast<cf::CfActorField3F10*>(self)->field_0x3F10, (u32)(s32)-f);
-        func_80277A7C((u8*)getInstance__Q22cf14CBattleManagerFv() + 0x1A8, self, -f);
+        BtlDmg_NotifyDamage((void*)reinterpret_cast<cf::CfActorField3F10*>(self)->field_0x3F10, (u32)(s32)-f);
+        CChain_AccumGaugeDelta((u8*)getInstance__Q22cf14CBattleManagerFv() + 0x1A8, self, -f);
     } else {
-        func_80109734((void*)reinterpret_cast<cf::CfActorField3F10*>(self)->field_0x3F10, (u32)(s32)f);
+        BtlDmg_NotifyDamage((void*)reinterpret_cast<cf::CfActorField3F10*>(self)->field_0x3F10, (u32)(s32)f);
     }
     if (f <= lbl_eu_80667738) {
         // Status 0xC3: scale a ratio from the entry value.
         if (func_80148778((u8*)self + 8, 0xC3) != 0) {
-            ep = (cf::CfStatusEntry*)func_80149154((u8*)self + 8, 0xC3);
+            ep = (cf::CfStatusEntry*)findBattleStatusEntry((u8*)self + 8, 0xC3);
             if (ep != 0) {
                 f = lbl_eu_80667740;
                 if (ep->field_0x10 != 0) {
@@ -525,9 +525,9 @@ extern "C" void CActorParam_applyDamage__Q22cf13CfObjectActorFv(cf::CfObjectActo
             if (count != 0) {
                 int v27b = 0;
                 if (func_80148778((u8*)self + 8, 0xA1) != 0) {
-                    v27b = ((cf::CfStatusEntry*)func_80149154((u8*)self + 8, 0xA1))->field_0x10;
+                    v27b = ((cf::CfStatusEntry*)findBattleStatusEntry((u8*)self + 8, 0xA1))->field_0x10;
                 }
-                ep = (cf::CfStatusEntry*)func_80149154((u8*)self + 8, 0x92);
+                ep = (cf::CfStatusEntry*)findBattleStatusEntry((u8*)self + 8, 0x92);
                 if (ep != 0) {
                     if (self->CActorParam_getHp() < lbl_eu_80667740) {
                         s32 val = ep->field_0x10;
@@ -543,7 +543,7 @@ extern "C" void CActorParam_applyDamage__Q22cf13CfObjectActorFv(cf::CfObjectActo
         }
         // Status 0xFC: gauge drain block.
         if (func_80148778((u8*)self + 8, 0xFC) != 0) {
-            ep = (cf::CfStatusEntry*)func_80149154((u8*)self + 8, 0xFC);
+            ep = (cf::CfStatusEntry*)findBattleStatusEntry((u8*)self + 8, 0xFC);
             if (ep != 0) {
                 if (self->CActorParam_getHp() < lbl_eu_80667740) {
                     float g = self->CActorParam_getDamageScale();
@@ -552,13 +552,13 @@ extern "C" void CActorParam_applyDamage__Q22cf13CfObjectActorFv(cf::CfObjectActo
                     f *= func_800D81A8(0, self, 0);
                     self->CActorParam_addHp(f);
                     static_cast<cf::CBattleState*>((cf::CBattleState*)((u8*)self + 8))->CBattleState_clearStatusId(0xFC);
-                    func_8018C820((u8*)getInstance__Q22cf14CBattleManagerFv() + 0x194, 0x32);
+                    PartyGaugeAddClamped((u8*)getInstance__Q22cf14CBattleManagerFv() + 0x194, 0x32);
                 }
             }
         }
         // Status 0x100: same drain block plus a decay add and flag.
         if (func_80148778((u8*)self + 8, 0x100) != 0) {
-            ep = (cf::CfStatusEntry*)func_80149154((u8*)self + 8, 0x100);
+            ep = (cf::CfStatusEntry*)findBattleStatusEntry((u8*)self + 8, 0x100);
             if (ep != 0) {
                 if (self->CActorParam_getHp() < lbl_eu_80667740) {
                     float g = self->CActorParam_getDamageScale();
@@ -574,11 +574,11 @@ extern "C" void CActorParam_applyDamage__Q22cf13CfObjectActorFv(cf::CfObjectActo
         }
     }
     if (self->CActorParam_getHp() < lbl_eu_80667740) {
-        if (func_8027990C((u8*)getInstance__Q22cf14CBattleManagerFv() + 0x1A8, self) != 0) {
+        if (CChain_ProbeActorReady((u8*)getInstance__Q22cf14CBattleManagerFv() + 0x1A8, self) != 0) {
             self->CActorParam_setHp(lbl_eu_80667740);
         }
     }
-    func_801A891C(self, 0);
+    releaseVisionSlot(self, 0);
 }
 
 // CfObjectActor's override of the CActorParam virtual (slot 0xA4): queries

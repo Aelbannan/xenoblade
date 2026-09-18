@@ -11,7 +11,7 @@
 
 // C-ABI imports used by func_800A18A4 (bdat file lookup / bdat init hook).
 extern "C" void* getFP__FPCc(const char* name);
-extern "C" void* func_8003AA34();
+extern "C" void* Bdat_GetTable_AA34();
 
 // Global data imports (MWCC does not mangle global-scope variable names).
 extern u32 lbl_eu_80663E88;    // work-buffer pointer (.sbss, sda21)
@@ -94,13 +94,13 @@ extern "C" void* getAtkParam(void* base, int index);                           /
 extern "C" void CItem_resolveFamilyBdat(u16 v, void* outA, void* outB);                  // CItemBoxInfo.cpp (item family resolver)
 
 extern "C" u32 isResourceFlagSet__Q22cf13CfGameManagerFv(u32 bit);               // CfGameManager.cpp (flag-bit test)
-extern "C" u32 func_8009CF8C(u32 resourceId);                                // CfGameManager.cpp (resource lookup)
+extern "C" u32 CtrlRemote_TouchBitByArg(u32 resourceId);                                // CfGameManager.cpp (resource lookup)
 
-extern "C" int func_8026178C(void* data, u32 flag);                          // code_8025FB10.cpp (status lookup)
-extern "C" u32 func_8025FB10(void* data, u32 flag);                          // code_8025FB10.cpp (status value)
-extern "C" void func_802618AC(u8* obj, int value);                           // code_8025FB10.cpp (clamped counter set)
-extern "C" void func_802617B8(u8* obj, u32 value, int flag);                // code_8025FB10.cpp (arts-slot write)
-extern "C" void func_8026187C(u8* obj, int value);                          // code_8025FB10.cpp (arts-change gate)
+extern "C" int Counter_TestBit(void* data, u32 flag);                          // code_8025FB10.cpp (status lookup)
+extern "C" u32 IdTable_SumValues(void* data, u32 flag);                          // code_8025FB10.cpp (status value)
+extern "C" void Counter884_SetClamped(u8* obj, int value);                           // code_8025FB10.cpp (clamped counter set)
+extern "C" void Counter_AddClamped(u8* obj, u32 value, int flag);                // code_8025FB10.cpp (arts-slot write)
+extern "C" void Counter884_AddClamped(u8* obj, int value);                          // code_8025FB10.cpp (arts-change gate)
 
 // func_800A2AF0 helpers (code_8025F2E8.cpp / code_80280F44.cpp).
 extern "C" void func_eu_80263A24(void* dst, void* artsSet);                  // arts-set copy hook
@@ -110,7 +110,7 @@ extern "C" void func_8025EE94(void* artsSet);                               // a
 extern "C" void func_80280F44();                                            // post-scan tick
 
 extern "C" void func_80174AE8(void* self);                                  // CfMapItemManager.cpp (row-sync helper)
-extern "C" void func_80174B3C(void* self, u8 a, u8 b, u8 c);               // CfMapItemManager.cpp (row-sync helper)
+extern "C" void MapItemStoreBytes567(void* self, u8 a, u8 b, u8 c);               // CfMapItemManager.cpp (row-sync helper)
 
 struct CPcKizunagramBig;  // defined in src/kyoshin/CPcKizunagram.hpp (only used through a pointer here)
 struct CEventDataTable;   // defined in src/kyoshin/cf/CTaskREvent.hpp (global scope; only used through a pointer here)
@@ -402,7 +402,7 @@ namespace cf {
     // Full character-entry layout: u16 type id at +0, equip slot ids at
     // +0x1C, the s16 display fields at +0xD4/+0xD6, the u16 flag at +0xE6,
     // the embedded CActorParam at +0x17C, and the arts-slot area at +0x3534
-    // (handed to func_802618AC / func_802617B8).
+    // (handed to Counter884_SetClamped / Counter_AddClamped).
     struct CtrlObjectParamTypeView {
         u16 field_00;           // +0x00: type id
         u8  pad_02[0x1A];       // +0x02..0x1B

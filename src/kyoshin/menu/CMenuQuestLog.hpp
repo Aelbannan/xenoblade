@@ -65,14 +65,14 @@ public:
 // mangling, so declare them with C linkage so calls bind the literal retail
 // symbols; definitions live in CMenuQuestLog.cpp.
 extern "C" void func_8011CDF4(CMenuQuestLog* self);
-extern "C" void func_8011CD6C(CMenuQuestLog* self);
-extern "C" void func_8011CE44(CMenuQuestLog* self);
+extern "C" void openQuestLogMenu(CMenuQuestLog* self);
+extern "C" void handleQuestLogInput(CMenuQuestLog* self);
 extern "C" void func_8011D03C(CMenuQuestLog* self);
-extern "C" void func_8011D08C(CMenuQuestLog* self);
+extern "C" void selectQuestLogEntry(CMenuQuestLog* self);
 extern "C" void func_8011D0FC(CMenuQuestLog* self);
 extern "C" void func_8011D158(CMenuQuestLog* self);
-extern "C" void func_8011D1A8(CMenuQuestLog* self);
-extern "C" void func_8011D22C(CMenuQuestLog* self);
+extern "C" void closeQuestLogMenu(CMenuQuestLog* self);
+extern "C" void resortQuestLogList(CMenuQuestLog* self);
 extern "C" void func_8011D298(CMenuQuestLog* self);
 
 class UnkClass_8011C974 {
@@ -93,9 +93,9 @@ extern "C" void QstLogList_ScrollDown(CQstLogList* self);
 extern "C" void QstLogList_PageUp(CQstLogList* self);
 extern "C" void QstLogList_PageDown(CQstLogList* self);
 extern "C" void QstLogList_ToggleSort(CQstLogList* self);
-extern "C" void func_801C414C(CTitleAHelp* self);
-extern "C" bool func_802296D0(CQstLogInfo* self);
-extern "C" bool func_802296D8(CQstLogInfo* self);
+extern "C" void beginClose(CTitleAHelp* self);
+extern "C" bool QstLogInfo_GetLoadedMark(CQstLogInfo* self);
+extern "C" bool QstLogInfo_GetReadyMark(CQstLogInfo* self);
 
 // cf::CfPadData view for getCfPadData: pressed-button flags at +0x04 and
 // short-press turbo flags at +0x104 (cf::CfPadData itself is incomplete).
@@ -108,26 +108,26 @@ struct CQuestLogPadData {
 extern "C" void func_802296E0(CQstLogInfo* self);
 extern "C" void QstLogList_BeginSortOpen(CQstLogList* self);
 extern "C" void func_801C41E8(CTitleAHelp* self, u8 mode);
-extern "C" void func_801C416C(CTitleAHelp* self);
-extern "C" void func_801C4198(CTitleAHelp* self);
+extern "C" void reopenFromClose(CTitleAHelp* self);
+extern "C" void markReplayClose(CTitleAHelp* self);
 extern "C" void func_80229724(CQstLogInfo* self);
 
 // Init() imports (retail unmangled names).
 extern char lbl_eu_804FE518[];   // menu text string pool (split1 .rodata)
-extern "C" bool func_801C3C14(CBgTex* self);
+extern "C" bool BgTex_Acquire_3C14(CBgTex* self);
 extern "C" void CTitleAHelp_load(CTitleAHelp* self);
 extern "C" void QstLogList_LoadArc(CQstLogList* self);
-extern "C" void func_802294C0(CQstLogInfo* self);
+extern "C" void QstLogInfo_LoadArcHandle(CQstLogInfo* self);
 extern "C" void __dt__6CBgTexFv(CBgTex* self, int flags);
 extern "C" void __dt__11CTitleAHelpFv(CTitleAHelp* self, int flags);
 extern "C" void __dt__11CQstLogListFv(CQstLogList* self, int flags);
 extern "C" void __dt__11CQstLogInfoFv(CQstLogInfo* self, int flags);
 
 // Widget teardown helpers called by Term (retail unmangled names).
-extern "C" void func_801C3D9C(CBgTex* self);
-extern "C" void func_801C40A0(CTitleAHelp* self);
+extern "C" void BgTex_Release_3D9C(CBgTex* self);
+extern "C" void teardown(CTitleAHelp* self);
 extern "C" void func_80227BD8(CQstLogList* self);
-extern "C" void func_80229620(CQstLogInfo* self);
+extern "C" void QstLogInfo_TeardownLayout(CQstLogInfo* self);
 
 // Term tail helpers.
 extern "C" u8 DecMenuCounter64080();
@@ -135,7 +135,7 @@ extern "C" void CUICfManager_setTimeout30();
 extern "C" u8 code80135FDC_getByte_64080();
 
 // Retail constructor symbol (unmangled global, 2 args after `this`). The
-// factory (func_8011CCE0) calls it out-of-line; the stub definition in the
+// factory (createQuestLogMenu) calls it out-of-line; the stub definition in the
 // .cpp inherits C linkage from this declaration.
 extern "C" CMenuQuestLog* __ct__CMenuQuestLog(CMenuQuestLog* _this, CProcess* parent, u32 arg2);
 
@@ -151,24 +151,24 @@ extern u32 lbl_eu_80663E28;
 extern "C" bool isIdle__11CTitleAHelpFv(void*);
 extern "C" bool QstLogList_IsSortEnabled(void*);
 extern "C" unsigned int QstLogList_GetSelectedQuestLo(void*);
-extern "C" void func_80229768(void*, unsigned short);
-extern "C" void func_80229510(void*);
+extern "C" void QstLogInfo_SetQuestIdSlot(void*, unsigned short);
+extern "C" void QstLogInfo_LoadCommonArchive(void*);
 
 // Widget/base helpers with retail-unmangled names (US retail strips these
 // member manglings) - C linkage so calls bind the literal retail symbols.
 // Queries return int so callers compare with cmpwi directly.
-extern "C" int func_801C3E34(CBgTex* self);
-extern "C" int func_801C4114(CTitleAHelp* self);
+extern "C" int BgTex_IsLoaded_3E34(CBgTex* self);
+extern "C" int isInitialized(CTitleAHelp* self);
 extern "C" void func_801C412C(CTitleAHelp* self);
 extern "C" int func_80227C70(CQstLogList* self);
-extern "C" void func_801C3D54(CBgTex* self);
-extern "C" void func_801C3FF0(CTitleAHelp* self);
-extern "C" void func_801C3D7C(CBgTex* self, nw4r::lyt::DrawInfo* drawInfo);
-extern "C" void func_801C4080(CTitleAHelp* self, nw4r::lyt::DrawInfo* drawInfo);
+extern "C" void BgTex_Tick_3D54(CBgTex* self);
+extern "C" void updateHelp(CTitleAHelp* self);
+extern "C" void BgTex_Draw_3D7C(CBgTex* self, nw4r::lyt::DrawInfo* drawInfo);
+extern "C" void drawHelp(CTitleAHelp* self, nw4r::lyt::DrawInfo* drawInfo);
 extern "C" void QstLogList_FrameUpdate(CQstLogList* self);
 extern "C" void QstLogList_Draw(CQstLogList* self, nw4r::lyt::DrawInfo* drawInfo);
-extern "C" void func_80229600(CQstLogInfo* self, nw4r::lyt::DrawInfo* drawInfo);
-extern "C" void func_80229570(CQstLogInfo* self);
+extern "C" void QstLogInfo_DrawLayoutTail(CQstLogInfo* self, nw4r::lyt::DrawInfo* drawInfo);
+extern "C" void QstLogInfo_StepStateMachine(CQstLogInfo* self);
 
 // Embedded-widget ctors called by the member constructor (US retail strips
 // these manglings; C-ABI wrappers for the opaque embedded storages).
@@ -182,8 +182,8 @@ extern "C" void __ct__CQstLogInfo(CQstLogInfo* self);
 extern "C" void setPresentationFlag__Q22cf13CfGameManagerFv(u8 enable);
 extern "C" int isClassicController__Q22cf13CfGameManagerFv(int arg);
 // Save/skip system busy queries (retail unmangled).
-extern "C" int func_800FEDF8();
-extern "C" void func_800FF914();
+extern "C" int CMainMenu_GetInstancePtr();
+extern "C" void ArtsInfo_SetReadyFlag();
 // Frame counter post-increment helper (code_80135FDC.cpp).
 extern "C" void code80135FDC_postIncByte_64080();
 

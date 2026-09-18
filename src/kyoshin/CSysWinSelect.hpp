@@ -6,7 +6,7 @@
 #include "monolib/scn/IScnRender.hpp"
 #include <nw4r/lyt/lyt_drawInfo.h>
 
-// Minimal view of cf::CfPadData for func_801250FC (offsets match retail).
+// Minimal view of cf::CfPadData for SysWinSelectHandleInput (offsets match retail).
 struct CSysPadData {
     u8  _00[0x4];
     u32 field_04;       // +0x4 CPad::mPressedButtonFlags
@@ -15,7 +15,7 @@ struct CSysPadData {
 };
 
 /*
- * System window "select" process (singleton, created by func_80125070).
+ * System window "select" process (singleton, created by SysWinSelectCreate).
  *
  * A CProcess subclass whose layout mirrors CSystemWindow's Move/UI region,
  * with an embedded CSysWin and a CCur18 cursor:
@@ -91,7 +91,7 @@ public:
     virtual void vf3() = 0;     // slot 3 (0x0C)
 };
 
-// Full CCur18 vtable view invoked by Init/Move/func_801250FC so MWCC emits a
+// Full CCur18 vtable view invoked by Init/Move/SysWinSelectHandleInput so MWCC emits a
 // genuine `lwz r12, slot(r12)` virtual dispatch (FULL_MATCH regalloc). MWCC
 // inserts an offset-to-top + RTTI prefix (2 entries), so vtable offset =
 // (virtual index + 2) * 4.
@@ -99,7 +99,7 @@ class CCur18View {
 public:
     virtual void vf02() = 0;       // index 0 -> +0x08 - Init
     virtual void vf03(void*) = 0;  // index 1 -> +0x0C (unused here)
-    virtual void vf04(void*) = 0;  // index 2 -> +0x10 - Move, func_801250FC
+    virtual void vf04(void*) = 0;  // index 2 -> +0x10 - Move, SysWinSelectHandleInput
 };
 
 // CSysWin vtable view exposing the layout-build virtual at +0x88 (slot 34)
@@ -149,10 +149,10 @@ extern "C" {
 CSysWinSelect* __ct__CSysWinSelect(CSysWinSelect* self, void* a2, void* a3,
                                    void* a4, void* a5);
 CSysWinSelect* __dt__13CSysWinSelectFv(CSysWinSelect* _this, int flags);
-void func_801250FC(CSysWinSelect* self);  // C-linkage: retail symbol is unmangled
-void func_8022B7F4(void* syswin);
-void func_8022B7C8(void* syswin, nw4r::lyt::DrawInfo* drawInfo);
-void func_801D20B0(void*, void*);
+void SysWinSelectHandleInput(CSysWinSelect* self);  // C-linkage: retail symbol is unmangled
+void sysWinTermLayout(void* syswin);
+void sysWinDrawLayout(void* syswin, nw4r::lyt::DrawInfo* drawInfo);
+void Cur_DrawLayout(void*, void*);
 void func_80137250__FPQ34nw4r3lyt8DrawInfo(nw4r::lyt::DrawInfo* drawInfo);
 void __ct__Q34nw4r3lyt8DrawInfoFv(nw4r::lyt::DrawInfo* self);
 void __dt__Q34nw4r3lyt8DrawInfoFv(nw4r::lyt::DrawInfo* self, int flags);
@@ -170,15 +170,15 @@ void cbRenderBefore__13CSystemWindowFv(u8* win);
 void cbRenderBefore__13CSysWinSelectFv(u8* win);
 u32 CSysWin_isReady(void* syswin);
 int CSysWin_isActive(void* syswin);
-void func_8022B90C(void* syswin, int arg);
+void sysWinSwitchKindPane(void* syswin, int arg);
 void func_8022B9B4(u8* syswin, char* str1, char* str2);
-void func_8022BF6C(u8* syswin, char* a, char* b);
+void sysWinSetTwoTextValues(u8* syswin, char* a, char* b);
 void func_8022BFC8(void* syswin, int kind);
-void func_8022B8B8(void* syswin);
-void func_8022B8E4(void* syswin);
-void func_8022B748(void* syswin);
-void func_8022C1B4(u8* out, u8* syswin, u8 sel);
-void func_801D216C(void* cur, int val);
+void sysWinOpenPhase1(void* syswin);
+void sysWinAdvancePhase3(void* syswin);
+void sysWinDispatchPhase(void* syswin);
+void sysWinGetPaneScreenPos(u8* out, u8* syswin, u8 sel);
+void Cur_SetVisible(void* cur, int val);
 void func_801D202C(void* cur);
 void __ct__CSysWin(void* syswin, int arg);
 void __ct__8CProcessFv(CProcess* self);

@@ -24,7 +24,7 @@ extern "C" void* __ct__Q22cf12CHelpManagerFv(void* ignored) {
         p = &self->mListA;
         end = &self->mListB + 1;
         do {
-            func_802968A8(p);
+            clearHelpListHolder(p);
             p++;
         } while (p < end);
         self->mField10 = -1;
@@ -37,7 +37,7 @@ extern "C" void* __ct__Q22cf12CHelpManagerFv(void* ignored) {
     lbl_eu_80664A10 = (cf::CHelpManager*)self;
 }
 
-void func_80295924() {
+void destroyHelpManager() {
     // Reset the help-manager singleton: destroy it and clear the global.
     if (lbl_eu_80664A10 != NULL) {
         delete lbl_eu_80664A10;
@@ -52,18 +52,18 @@ void func_802959AC(cf::CHelpManager* self) {
     self->mLearnArtsFlag = 0;
     self->mField17 = 0;
     self->mField18 = 0;
-    func_802968B8(&self->mListA, NULL, 0);
-    func_802968B8(&self->mListB, NULL, 0);
+    bindHelpListItems(&self->mListA, NULL, 0);
+    bindHelpListItems(&self->mListB, NULL, 0);
     self->mField10 = getQueuedFileEventCount__Q22cf13CfGameManagerFv();
-    func_802968B8(&self->mListB, lbl_eu_80538E30, 1);
+    bindHelpListItems(&self->mListB, lbl_eu_80538E30, 1);
     // Pick the item array whose key matches the current scenario sequence.
     for (int i = 0; lbl_eu_80538E90[i].mKey != 0; i++) {
         if (self->mField10 == lbl_eu_80538E90[i].mKey) {
-            func_802968B8(&self->mListA, lbl_eu_80538E90[i].mItems, 0);
+            bindHelpListItems(&self->mListA, lbl_eu_80538E90[i].mItems, 0);
             return;
         }
     }
-    func_802968B8(&self->mListA, NULL, 0);
+    bindHelpListItems(&self->mListA, NULL, 0);
 }
 
 void func_80295A88(cf::CHelpManager* self) {
@@ -71,18 +71,18 @@ void func_80295A88(cf::CHelpManager* self) {
     // Re-sync the list when the scenario sequence moved on.
     if (self->mField10 != (s32)getQueuedFileEventCount__Q22cf13CfGameManagerFv()) {
         self->mField10 = (s32)getQueuedFileEventCount__Q22cf13CfGameManagerFv();
-        func_802968B8(&self->mListB, lbl_eu_80538E30, 1);
+        bindHelpListItems(&self->mListB, lbl_eu_80538E30, 1);
         for (int i = 0; lbl_eu_80538E90[i].mKey != 0; i++) {
             if (self->mField10 == lbl_eu_80538E90[i].mKey) {
-                func_802968B8(&self->mListA, lbl_eu_80538E90[i].mItems, 0);
+                bindHelpListItems(&self->mListA, lbl_eu_80538E90[i].mItems, 0);
                 goto done;
             }
         }
-        func_802968B8(&self->mListA, NULL, 0);
+        bindHelpListItems(&self->mListA, NULL, 0);
     }
 done:
-    func_80296924(&self->mListA);
-    func_80296924(&self->mListB);
+    clearHelpList(&self->mListA);
+    clearHelpList(&self->mListB);
     // Refresh the "learned arts" popup state (mirrors func_80295D30).
     self->mField14 = 0;
     self->mField15 = 0;
@@ -99,11 +99,11 @@ done:
     }
 }
 
-void func_80295BAC() {
+void fireArtsLearnedHint() {
     // One-time "arts learned" hint: fire the popup and mark it seen.
-    if (func_8009CF8C((u32)0x3395) == 0) {
+    if (CtrlRemote_TouchBitByArg((u32)0x3395) == 0) {
         CUICfManager_queueTutorialMenu(0x56, 0, 0);
-        func_8009D018(0x3395, 1);
+        CtrlRemote_SetSharedBit(0x3395, 1);
     }
 }
 
@@ -112,17 +112,17 @@ void func_80295BF4(cf::CHelpManager* self) {
     cf::CHelpManagerTbl* tbl = &lbl_eu_80576D08;
     if (self->mField10 == 3) {
         // bool local: MWCC's -O4,p idiom for the != 0 check (neg/or/srwi).
-        bool isActive = func_8009CF8C((u32)tbl->mHelp1.mOwner) != 0;
+        bool isActive = CtrlRemote_TouchBitByArg((u32)tbl->mHelp1.mOwner) != 0;
         if (!isActive) {
             tbl->mHelp1.dispatchHelp();
         }
     }
     if (self->mField10 == 5) {
-        bool isActive = func_8009CF8C((u32)tbl->mHelp2.mOwner) != 0;
+        bool isActive = CtrlRemote_TouchBitByArg((u32)tbl->mHelp2.mOwner) != 0;
         if (!isActive) {
             tbl->mHelp2.dispatchHelp();
         }
-        bool isActive2 = func_8009CF8C((u32)tbl->mHelp3.mOwner) != 0;
+        bool isActive2 = CtrlRemote_TouchBitByArg((u32)tbl->mHelp3.mOwner) != 0;
         if (!isActive2) {
             tbl->mHelp3.dispatchHelp();
         }
@@ -154,32 +154,32 @@ int CHelp_UnkVirtualFunc5__Q22cf5CHelpFv(void* self) { return 0; }
 // under its retail symbol name so this TU still emits the vtable target.
 void CHelp_UnkVirtualFunc1__Q22cf5CHelpFv() {}
 
-extern "C" void func_802B7C68(cf::CHelp* self);
-void cf::CHelp_EtherMakeTIPS::dispatchEtherTips(void) { ::func_802B7C68(this); }
+extern "C" void CHelp_refreshPartyMenu(cf::CHelp* self);
+void cf::CHelp_EtherMakeTIPS::dispatchEtherTips(void) { ::CHelp_refreshPartyMenu(this); }
 
 int CHelp_UnkVirtualFunc4__Q22cf5CHelpFv(void* self) { return 0; }
 
-void cf::CHelp_TalkTIPS::dispatchTalkTips(void) { ::func_802B7C68(this); }
+void cf::CHelp_TalkTIPS::dispatchTalkTips(void) { ::CHelp_refreshPartyMenu(this); }
 
-void cf::CHelp_KizunaTIPS::dispatchKizunaTips(void) { ::func_802B7C68(this); }
+void cf::CHelp_KizunaTIPS::dispatchKizunaTips(void) { ::CHelp_refreshPartyMenu(this); }
 
-void cf::CHelp_EndEventTIPS::dispatchEndEventTips(void) { ::func_802B7C68(this); }
+void cf::CHelp_EndEventTIPS::dispatchEndEventTips(void) { ::CHelp_refreshPartyMenu(this); }
 
 int isHelpAlwaysEnabled__Q22cf12CHelp_AlwaysFv(void* self) { return 1; }
 
-void cf::CHelp_AlwaysTIPS::dispatchAlwaysTips(void) { ::func_802B7C68(this); }
+void cf::CHelp_AlwaysTIPS::dispatchAlwaysTips(void) { ::CHelp_refreshPartyMenu(this); }
 
 void clearHelpToAttackFlags__Q22cf14CHelp_ToAttackFv(void* self) {
     ((unsigned char*)self)[0xc] = 0;
     ((unsigned char*)self)[0xd] = 0;
 }
 
-extern "C" DECOMP_DONT_INLINE void func_802968A8(cf::CHelpListHolder* self) {
+extern "C" DECOMP_DONT_INLINE void clearHelpListHolder(cf::CHelpListHolder* self) {
     *(unsigned long*)self = 0;
     ((unsigned char*)self)[4] = 0;
 }
 
-extern "C" DECOMP_DONT_INLINE void func_802968B8(cf::CHelpListHolder* self, void** items, u8 flag) {
+extern "C" DECOMP_DONT_INLINE void bindHelpListItems(cf::CHelpListHolder* self, void** items, u8 flag) {
     self->mItems = items;
     self->mFlag = flag;
     if (items != NULL) {
@@ -194,17 +194,19 @@ extern "C" DECOMP_DONT_INLINE void func_802968B8(cf::CHelpListHolder* self, void
 // DECOMP_DONT_INLINE: retail calls this through real `bl`s from
 // DECOMP_DONT_INLINE: retail calls this through real `bl`s from
 // func_80295A88 / the sinit; MWCC would otherwise inline the body.
-extern "C" DECOMP_DONT_INLINE void func_80296924(cf::CHelpListHolder* self) {
+extern "C" DECOMP_DONT_INLINE void clearHelpList(cf::CHelpListHolder* self) {
     if (self->mItems == NULL) return;
-    if (func_802B7C64() != 0) return;
+    if (CHelp_ForwardPartyNotice() != 0) return;
     int keep = 1;
     for (int i = 0; self->mItems[i] != NULL; i++) {
+        // No item local: retail reloads self->mItems[i] at every use (the
+        // virtual calls block CSE), so each access re-indexes (r29/r30/r31
+        // coloring with no extra saved reg).
         // bool local: MWCC's -O4,p idiom for the != 0 check (neg/or/srwi).
-        cf::CHelp* item = (cf::CHelp*)self->mItems[i];
-        bool isActive = func_8009CF8C((u32)item->mOwner) != 0;
+        bool isActive = CtrlRemote_TouchBitByArg((u32)((cf::CHelp*)self->mItems[i])->mOwner) != 0;
         if (!isActive) {
-            if (item->f10() != 0) {
-                item->dispatchHelp();
+            if (((cf::CHelp*)self->mItems[i])->f10() != 0) {
+                ((cf::CHelp*)self->mItems[i])->dispatchHelp();
             }
             if (self->mFlag == 0) {
                 return;

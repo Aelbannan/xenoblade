@@ -25,13 +25,13 @@ void releaseArcResourceAccessor(nw4r::lyt::ArcResourceAccessor*);
 void buildLayout(nw4r::lyt::Layout**, nw4r::lyt::ArcResourceAccessor*, const char*);
 void bindLayoutAnimTransform(nw4r::lyt::Layout*, nw4r::lyt::AnimTransform**, nw4r::lyt::ArcResourceAccessor*, char*);
 
-u8 func_802AE6AC(CLoad* self) { return self->field_2B; }
+u8 CLoadIsLoadReady(CLoad* self) { return self->field_2B; }
 
-u8 func_802AE6B4(CLoad* self) { return self->mIsLoaded; }
+u8 CLoadIsLoaded(CLoad* self) { return self->mIsLoaded; }
 
-u8 func_802AE6BC(CLoad* self) { return self->field_2C; }
+u8 CLoadIsAnimSettled(CLoad* self) { return self->field_2C; }
 
-__attribute__((noinline)) void func_802AE8E0(CLoadFull* self) {
+__attribute__((noinline)) void CLoadMarkFileArrived(CLoadFull* self) {
     if (self->field_1C != 0) {
         self->field_2B = 1;
         self->field_28 = 1;
@@ -71,7 +71,7 @@ bool CLoad::OnFileEvent(CEventFile* pEventFile) {
         mLayout->SetAnimationEnable(mAnimTrans0, true);
         mLayout->Animate(0);
 
-        func_802AE8E0(reinterpret_cast<CLoadFull*>(this));
+        CLoadMarkFileArrived(reinterpret_cast<CLoadFull*>(this));
 
         mFileHandle = nullptr;
         mMemRegion.func_8045F810();
@@ -107,11 +107,11 @@ CLoad::~CLoad() {
 #pragma pop
 
 // Begin the file load request.
-void func_802AE508(CLoad* self) {
+void CLoadBeginFileRequest(CLoad* self) {
     mtl::ALLOC_HANDLE handle = mtl::MemManager::getHandleMEM2();
     self->mFileHandle = CDeviceFile::readFile(
         handle, lbl_eu_80510CC8, reinterpret_cast<IWorkEvent*>(self), 0, 0);
-    CDeviceFile::func_8044F154(self->mFileHandle, 3);
+    CDeviceFile::tryUpdateJobPriority(self->mFileHandle, 3);
     CDeviceFile::setHandleFlag2(self->mFileHandle);
 }
 
@@ -121,13 +121,13 @@ __attribute__((noinline)) void func_802AE560(CLoad* self) {
     if (self->mIsLoaded != 0 && self->mAnimStep != 0) {
         switch (self->mAnimStep) {
         case 1:
-            func_802AE7EC(self);
+            CLoadAdvanceFadeHold(self);
             break;
         case 2:
             advanceAnimTransform(self->mAnimTrans1, lbl_eu_80668DF0);
             break;
         case 3:
-            func_802AE894(self);
+            CLoadFinishRetryIdle(self);
             break;
         }
         self->mLayout->Animate(0);
@@ -135,7 +135,7 @@ __attribute__((noinline)) void func_802AE560(CLoad* self) {
 }
 
 // Draw the loading layout when loaded and visible.
-void func_802AE5F0(CLoad* self, nw4r::lyt::DrawInfo* drawInfo) {
+void CLoadDrawIfVisible(CLoad* self, nw4r::lyt::DrawInfo* drawInfo) {
     // short-circuit || lowers as test-return + branch-over-return (retail shape)
     if (self->mIsLoaded == 0 || self->field_29 == 0)
         return;
@@ -144,7 +144,7 @@ void func_802AE5F0(CLoad* self, nw4r::lyt::DrawInfo* drawInfo) {
 }
 
 // Tear down the loaded layout, accessor and mem region.
-void func_802AE62C(CLoad* self) {
+void CLoadTeardownLayout(CLoad* self) {
     CDeviceVI::waitForDrawDone();
     func_801390E0(&self->mFileHandle);
     self->mIsLoaded = 0;
@@ -160,7 +160,7 @@ void func_802AE62C(CLoad* self) {
 }
 
 // Begin the fade-in animation (step 1).
-void func_802AE6C4(CLoad* self) {
+void CLoadStartFadeInStep(CLoad* self) {
     if (self->mAnimStep == 0) {
         self->mAnimStep = 1;
         self->mLayout->SetAnimationEnable(self->mAnimTrans1, 0);
@@ -171,7 +171,7 @@ void func_802AE6C4(CLoad* self) {
 }
 
 // Restart as the retry animation (step 3).
-void func_802AE758(CLoad* self) {
+void CLoadStartRetryStep(CLoad* self) {
     if (self->mAnimStep == 2) {
         self->mAnimStep = 3;
         self->mLayout->SetAnimationEnable(self->mAnimTrans1, 0);
@@ -182,7 +182,7 @@ void func_802AE758(CLoad* self) {
 }
 
 // Step 1 -> 2: fade-in finished; swap to mAnimTrans1 held on its last frame.
-void func_802AE7EC(CLoad* self) {
+void CLoadAdvanceFadeHold(CLoad* self) {
     if (advanceAnimTransform(self->mAnimTrans0, lbl_eu_80668DF0) == 0) {
         return;
     }
@@ -195,7 +195,7 @@ void func_802AE7EC(CLoad* self) {
 }
 
 // Step 3 -> idle: retry animation finished.
-__attribute__((noinline)) void func_802AE894(CLoad* self) {
+__attribute__((noinline)) void CLoadFinishRetryIdle(CLoad* self) {
     if (AnimRewindFrame(self->mAnimTrans0, lbl_eu_80668DF0) != 0) {
         self->mAnimStep = 0;
         self->field_2C = 1;

@@ -6,7 +6,7 @@
 class CScn;
 
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
-extern "C" void func_8049034C(void* a, void* b, int c);
+extern "C" void TexMan_ApplyCamPersp_034C(void* a, void* b, int c);
 extern "C" void func_800A50AC(void* a, void* b, float c, void* d);
 // Global CScn instance (defined CScn* in kyoshin/cf/CfGameManager.cpp)
 

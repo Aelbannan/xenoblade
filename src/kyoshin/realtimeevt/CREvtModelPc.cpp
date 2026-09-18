@@ -71,9 +71,9 @@ extern "C" {
     extern void KyoshinHeap_Free78(void* p, int type);
     // Packed-token helpers (retail C-symbol names)
     extern char* func_800AA5C0(void* handle);
-    extern void func_800AA318(u32 packed, u32* out0, u32* out1, u32* out2, u32* out3);
+    extern void Tok_Unpack(u32 packed, u32* out0, u32* out1, u32* out2, u32* out3);
     extern int func_800AA33C(ml::FixStr<64>& buf, u32 packed, int prefixFlag, int suffixFlag);
-    extern u32 func_800AA2E8(u32 a, u32 b, u32 c);
+    extern u32 Tok_Pack10(u32 a, u32 b, u32 c);
     // Archive
     extern int func_800A8E6C(u32 value, int enable);
 
@@ -172,9 +172,9 @@ extern "C" __declspec(noinline) void* __ct__8018385C(void* self, int flag) {
 }
 
 // ============================================================================
-// func_801838D8 (us-80184cf4) - Check if ready
+// EvtModelPc_IsReady (us-80184cf4) - Check if ready
 // ============================================================================
-extern "C" int func_801838D8(void* self) {
+extern "C" int EvtModelPc_IsReady(void* self) {
     char* s = (char*)self;
     int result;
 
@@ -201,9 +201,9 @@ extern "C" int func_801838D8(void* self) {
 }
 
 // ============================================================================
-// func_80183978 (us-80184d94) - Cleanup / cancellation
+// EvtModelPc_Cancel (us-80184d94) - Cleanup / cancellation
 // ============================================================================
-extern "C" int func_80183978(void* self) {
+extern "C" int EvtModelPc_Cancel(void* self) {
     char* s = (char*)self;
 
     // Bail out early if the "in use" flag bit is already set.
@@ -290,7 +290,7 @@ void func_80183A3C(void* self) {
     // Free any loaded/archived slot data. Status 3 = loaded into MEM2 via
     // MemManager, status 2 = archived. Retail carries a duplicated null
     // check in the status-3 path (two consecutive beq), reproduced by the
-    // nested if (same shape as func_80183978).
+    // nested if (same shape as EvtModelPc_Cancel).
     u32 zero = 0;
     for (int i = 0; i < 6; i++) {
         int status = (int)pc.mStatus[i];
@@ -333,9 +333,9 @@ void func_80183A3C(void* self) {
 }
 
 // ============================================================================
-// func_80183C1C (us-80185038) - Init counter
+// EvtModelPc_InitCounter (us-80185038) - Init counter
 // ============================================================================
-extern "C" void func_80183C1C(void* self) {
+extern "C" void EvtModelPc_InitCounter(void* self) {
     char* s = (char*)self;
 
     FLD(s32, s, 0xB0) = -1;
@@ -400,7 +400,7 @@ extern "C" void func_80183C90(void* self) {
 
     // Decode the parent scene's packed token.
     parent = FLD(void*, s, 0x1C);
-    func_800AA318(FLD(u32, parent, 0x20), &decA, &decB, &decC, &decD);
+    Tok_Unpack(FLD(u32, parent, 0x20), &decA, &decB, &decC, &decD);
 
     // If the request is for character 3 or 8, check whether such a character
     // is already being loaded by another model object.
@@ -432,7 +432,7 @@ extern "C" void func_80183C90(void* self) {
         obj = FLD(void*, objList, 0x00);
         while (obj != objList) {
             objPtr = FLD(void*, obj, 0x08);
-            func_800AA318(FLD(u32, objPtr, 0x70), &objA, &objB, &objC, &objD);
+            Tok_Unpack(FLD(u32, objPtr, 0x70), &objA, &objB, &objC, &objD);
             if (decB == objB && decC == 1) {
                 matchChr = FLD(void*, obj, 0x08);
                 if (matchChr != 0) {
@@ -581,7 +581,7 @@ handles_done:
 
     // Slot 5 loads only for special id 9.
     if (decD == 9) {
-        handle = (u32)func_800AA2E8(decB, 1, 0);
+        handle = (u32)Tok_Pack10(decB, 1, 0);
         FLD(u32, s, 0x50) = handle;
         FLD(u8, fix3, 0x00) = 0;
         FLD(u32, fix3, 0x40) = 0;
@@ -690,9 +690,9 @@ extern "C" void func_801845F0(void* self) {
 }
 
 // ============================================================================
-// func_801846C4 (us-80185aec) - Update model position
+// EvtModelPc_UpdatePos (us-80185aec) - Update model position
 // ============================================================================
-extern "C" void func_801846C4(void* self) {
+extern "C" void EvtModelPc_UpdatePos(void* self) {
     char* s = (char*)self;
 
     if (FLD(void*, s, 0x20) != 0) {
@@ -707,9 +707,9 @@ extern "C" void func_801846C4(void* self) {
 }
 
 // ============================================================================
-// func_80184728 (us-80185b5c) - Get model pointer (already implemented)
+// EvtModelPc_GetModel (us-80185b5c) - Get model pointer (already implemented)
 // ============================================================================
-// u32 func_80184728(void* self) { return FLD(u32, self, 0x20); }
+// u32 EvtModelPc_GetModel(void* self) { return FLD(u32, self, 0x20); }
 
 // ============================================================================
 // func_80184730 (us-80185b64) - Create model from loaded data
@@ -790,10 +790,10 @@ extern "C" void func_80184730(void* self) {
 }
 
 // ============================================================================
-// func_801848EC (us-80185d2c) - Dispatch function
+// EvtModelPc_Dispatch (us-80185d2c) - Dispatch function
 // this(r3), r4, r5
 // ============================================================================
-extern "C" void func_801848EC(void* self, int r4, int r5) {
+extern "C" void EvtModelPc_Dispatch(void* self, int r4, int r5) {
     char* s = (char*)self;
 
     if (FLD(void*, s, 0x3C) == 0) return;
@@ -808,23 +808,23 @@ extern "C" void func_801848EC(void* self, int r4, int r5) {
 }
 
 // ============================================================================
-// func_8018496C (us-80185dac) - Clear flag bit (already implemented)
+// EvtModelPc_ClearFlagBit (us-80185dac) - Clear flag bit (already implemented)
 // ============================================================================
 
 // ============================================================================
-// func_8018497C (us-80185dbc) - Check if file is already loaded
+// EvtModelPc_IsFileLoaded (us-80185dbc) - Check if file is already loaded
 // ============================================================================
-extern "C" int func_8018497C(void* self) {
+extern "C" int EvtModelPc_IsFileLoaded(void* self) {
     char* s = (char*)self;
 
     u32 entryId, param1, param2, param3;
-    func_800AA318(FLD(u32, FLD(void*, s, 0x1C), 0x20), &entryId, &param1, &param2, &param3);
+    Tok_Unpack(FLD(u32, FLD(void*, s, 0x1C), 0x20), &entryId, &param1, &param2, &param3);
 
     // Walk the circular list of objects; the condition re-fetches the head.
     void* obj = FLD(void*, FLD(void*, getGimmickListHead__Q22cf13CfGameManagerFv(), 0x04), 0x00);
     while (obj != FLD(void*, getGimmickListHead__Q22cf13CfGameManagerFv(), 0x04)) {
         u32 objEntryId, objParam1, objParam2, objParam3;
-        func_800AA318(FLD(u32, FLD(void*, obj, 0x08), 0x70), &objEntryId, &objParam1, &objParam2, &objParam3);
+        Tok_Unpack(FLD(u32, FLD(void*, obj, 0x08), 0x70), &objEntryId, &objParam1, &objParam2, &objParam3);
 
         // Already loaded if a live character object matches this request.
         if (param1 == objParam1 && param2 == 1) {
@@ -867,8 +867,23 @@ extern "C" void OnFileEvent__12CREvtModelPcFP10CEventFile(void* self) {
 }
 
 // ============================================================================
-// func_80184B0C - Thunk to __ct__8018385C
+// EvtModelPc_CtorThunk38 - Thunk to __ct__8018385C
 // ============================================================================
-extern "C" void func_80184B0C(void* self, int flags) {
+extern "C" void EvtModelPc_CtorThunk38(void* self, int flags) {
     __ct__8018385C((char*)self - 0x38, flags);
+}
+// ============================================================================
+// func_80184AE4 (us-80185f24) - true when mFlags (+0x18) has both the active
+// bit (0x1) and the ready bit (0x40) set. Same idiom as EvtObj_CheckFlags140
+// in CREvtModelObj.cpp (retail: lwz / li / clrlwi.-beqlr / rlwinm.-beqlr / li).
+// ============================================================================
+extern "C" int func_80184AE4(CREvtModelPc* self) {
+    u32 flags = self->mFlags;
+    int result = 0;
+    if (flags & 1) {
+        if (flags & 0x40) {
+            result = 1;
+        }
+    }
+    return result;
 }

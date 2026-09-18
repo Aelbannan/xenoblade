@@ -16,7 +16,7 @@ namespace cf {
 // Collision sphere shape implementation.
 // Layout offsets derived from CfCollSphereImpl.s.
 // Retail __vt__ for CfCollSphereImpl is lbl_eu_80528800 (0x10 bytes:
-// RTTI 80661C98 "cf::CfCollSphereImpl", 0, func_800AAD28, func_800AAD94)
+// RTTI 80661C98 "cf::CfCollSphereImpl", 0, CfCollSphere_DebugDrawSimple, CfCollSphere_DebugDrawXform)
 // -- two virtuals at +0x08/+0x0C (CfCollImpl base).  TU has no .data
 // (build/us/asm/kyoshin/cf/CfCollSphereImpl.s), so no compiler __vt__ is
 // emitted.  The position getter at +0xAC is cf::CfObject::GetPosition

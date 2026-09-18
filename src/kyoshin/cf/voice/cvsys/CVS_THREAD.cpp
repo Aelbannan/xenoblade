@@ -29,8 +29,8 @@ namespace cf { class CfObjectMove; }
 void* findObjectById(int id);
 void* getCfObjectPc(cf::CfObjectMove* objMove);
 // Battle-state helpers (retail unmangled C-ABI symbols).
-extern "C" int func_80146148(int value);
-extern "C" int func_80146300(u32 id, u32 flag);
+extern "C" int isBattleStatusKind0(int value);
+extern "C" int isArtsUsable(u32 id, u32 flag);
 
 struct CVoiceVTV {
 #define CVTV_N(n) virtual void s##n();
@@ -85,3 +85,12 @@ public:
 } // namespace cf
 
 // ── Extern symbols ────────────────────────────────────────────────────────
+extern "C" void CfObjectMove_releaseVoiceHandle(void* voice);
+
+// Stop the thread's voice handle via the sound system call (ported from the
+// ctx draft; gives this TU its .text anchor for the retail symbol).
+extern "C" void releaseThreadVoice(CVS_THREAD* thread) {
+    if (thread->unk10 != 0) {
+        CfObjectMove_releaseVoiceHandle((void*)thread->unk10);
+    }
+}

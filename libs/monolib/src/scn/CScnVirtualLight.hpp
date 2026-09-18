@@ -117,7 +117,7 @@ class CScnCameraMan;
 // Camera-item lookup (defined in CScnCameraMan.cpp under the retail flat
 // symbol). CScn.hpp only declares the 1-arg stub; this TU's scnVlGetCamId
 // passes the real (cam, id) ABI pair, so the full signature is declared here.
-extern "C" int func_8049B158(CScnCameraMan* cam, s32 id);
+extern "C" int CamMan_FindItemA_B158(CScnCameraMan* cam, s32 id);
 
 // Light reset (defined in CLight.cpp): writes `value` to the light's +0x2C
 // field. Flat-name import; declared here (CScnVirtualLight.hpp) because the
@@ -145,7 +145,7 @@ extern "C" CVirtualLightDir* __ct__CVirtualLightDir(CVirtualLightDir* self);
 
 // Two-float setter on the dir light (CVirtualLightDir.cpp, flat-name symbol):
 // writes the +0x34/+0x38 fields.
-extern "C" void func_8049474C(CVirtualLightDir* self, float a, float b);
+extern "C" void VirtLight_SetPair(CVirtualLightDir* self, float a, float b);
 
 // Word-array copy helper (kyoshin CTaskEnvironment.cpp, flat-name symbol).
 extern "C" void copyWord4Offset(u32* dst, const u32* src);
@@ -258,7 +258,7 @@ extern "C" u32 checkBitFlag(CScnVirtualLightSub* self);
 // imports). scnLgtDispatchEnv's definition is a no-arg catalog stub; the retail
 // call site passes (sub, env), so the full ABI pair is declared here.
 extern "C" void func_80495644(CLightEnv* self, u32 idx);
-extern "C" void func_804956F8(void* self);
+extern "C" void resetLightSlotIndex(void* self);
 extern "C" void scnLgtDispatchEnv(CScnVirtualLightSub* sub, CLightEnv* env);
 
 // Runtime array constructor (retail __construct_new_array; block layout
@@ -270,15 +270,15 @@ extern "C" void* __construct_new_array(void* block, ConstructorDestructor ctor,
                                        u32 count);
 
 // Light-setup imports (CLight.cpp / CVirtualLightObj.cpp / CScnEnvLgtCtrl.cpp).
-extern "C" void func_804C0398(CLight* self, nw4r::g3d::LightObj* lightObj);
+extern "C" void LightCtlSetObj(CLight* self, nw4r::g3d::LightObj* lightObj);
 extern "C" void func_804C02E4(CLight* self, u32 value);
 extern "C" void func_804C0928(CLight* self, f32 intensity);
 extern "C" void scnLgtGatherLights(CScnVirtualLightSub* self, f32 f, CScnEnvLgtData* data,
                                const ml::CVec3* vec);
 extern "C" void func_804952C4(CLightEnv* self, const ml::CVec3* v);
-extern "C" void func_80495704(CLightEnv* self, u32 a, f32 f1, f32 f2);
-extern "C" void func_804957E4(CLightEnv* self, u32 a, u32 b, f32 f);
-extern "C" void func_804958B8(CLightEnv* self, f32 a, f32 b, void* c, void* d,
+extern "C" void bindOrientedLight(CLightEnv* self, u32 a, f32 f1, f32 f2);
+extern "C" void bindAttenuatedLight(CLightEnv* self, u32 a, u32 b, f32 f);
+extern "C" void bindSpotLight(CLightEnv* self, f32 a, f32 b, void* c, void* d,
                                f32 e, f32 f);
 extern "C" void func_80495AF4(CLightEnv* env, CScnEnvLgtData* data, int slot);
 

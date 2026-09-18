@@ -10,8 +10,8 @@ namespace cf {
     public:
         CChainActorEne();
         virtual ~CChainActorEne();
-        void func_802818D4();
-        s32 func_802818DC();
+        void ChainEne_ReleaseEffect_18D4();
+        s32 ChainEne_AlwaysTrue_18DC();
     };
 }
 

@@ -166,7 +166,7 @@ cf::CfHikariItemManager::~CfHikariItemManager() {
 }
 
 // (us-802b5304): allocate a 0x44-byte Hikari item record, initialize
-// it with func_802B3750, copy the caller's 12-byte vector into +0x00..+0x08
+// it with hikariInitFreshRecord, copy the caller's 12-byte vector into +0x00..+0x08
 // and append it to the manager's record array.  Returns the record (or NULL
 // when the array is full).  Count compares signed (retail cmpwi).
 CfHikariItemRecord* func_802B2894(cf::CfHikariItemManager* self, const u32* src,
@@ -178,7 +178,7 @@ CfHikariItemRecord* func_802B2894(cf::CfHikariItemManager* self, const u32* src,
     CfHikariItemRecord* rec = (CfHikariItemRecord*)allocate__Q23mtl10MemManagerFUlUl(
         0x44, CfRes_getAllocHandle());
     if (rec != NULL) {
-        func_802B3750(rec, value);
+        hikariInitFreshRecord(rec, value);
     }
 
     rec->field_00 = src[0];
@@ -194,7 +194,7 @@ CfHikariItemRecord* func_802B2894(cf::CfHikariItemManager* self, const u32* src,
 // (us-802b53a8): remove `target` from the manager's record array.
 // Searches for the pointer, deletes it, then shifts the tail of the array
 // down by one and clears the vacated last slot.
-void func_802B2938(cf::CfHikariItemManager* self, CfHikariItemRecord* target) {
+void hikariRemoveRecordTarget(cf::CfHikariItemManager* self, CfHikariItemRecord* target) {
     u32 count = self->field_1198;
     if (count == 0) {
         return;
@@ -221,13 +221,13 @@ void func_802B2938(cf::CfHikariItemManager* self, CfHikariItemRecord* target) {
     self->records[self->field_1198] = NULL;
 }
 
-void func_802B2A08(void* self) {
+void hikariSetFlagBit1(void* self) {
     *(unsigned long*)((char*)self + 0x1194) |= 2;
 }
 // (us-802b5488): reset the manager - delete every record, clear the
 // +0x1104 scratch region and zero the counter block.  Same cleanup tail as the
 // destructor; the nested `if` replicates the MWCC double-null-check shape.
-void func_802B2A18(cf::CfHikariItemManager* self) {
+void hikariResetManagerRecords(cf::CfHikariItemManager* self) {
     for (int i = 0; i < 0x40; i++) {
         if (self->records[i] != NULL) {
             if (self->records[i] != NULL) {
@@ -247,7 +247,7 @@ void func_802B2A18(cf::CfHikariItemManager* self) {
 
 // (us-802b5528): toggle flag bit 0 of +0x1194 - nonzero arg clears
 // the bit, zero sets it.
-void func_802B2AB8(CfHikariItemRecord* self, u32 enable) {
+void hikariSetEnableBit0(CfHikariItemRecord* self, u32 enable) {
     if (enable != 0) {
         self->field_1194 &= ~1u;
     } else {
@@ -393,7 +393,7 @@ void cf::CfHikariItemManager::cbRenderBefore() {
             }
             u32 bit = 1u << (slot & 0x1F);
             if (((u32*)&this->unk1104[0])[slot >> 5] & bit) {
-                func_802B4460((CfHikariItemRecord*)&this->unk104[slot * 0x20]);
+                hikariUpdateFadeRecord((CfHikariItemRecord*)&this->unk104[slot * 0x20]);
             }
             slot++;
             if (slot >= 0x80) {
@@ -424,7 +424,7 @@ void cf::CfHikariItemManager::cbRenderBefore() {
             }
             u32 bit = 1u << (slot & 0x1F);
             if (((u32*)&this->unk1104[0])[slot >> 5] & bit) {
-                if (func_802B4470((CfHikariItemRecord*)&this->unk104[slot * 0x20],
+                if (hikariUpdateSlotRecord((CfHikariItemRecord*)&this->unk104[slot * 0x20],
                                   fade) != 0) {
                     ((u32*)&this->unk1104[0])[slot >> 5] &= ~bit;
                     this->field_11A0++;
@@ -539,7 +539,7 @@ static inline f32 hikariS32ToF32(Convert64& c, s32 v) {
 // (us-802b5fd8): claim the next slot in the inline 0x80-entry
 // record pool (bitfield at +0x1104, 0x20-byte entries at +0x104), bail if it
 // is already active, else perturb the spawn position by scaled random offsets
-// (each component gets its own random draw) and init the entry via func_802B4358.
+// (each component gets its own random draw) and init the entry via hikariInitRandomEntry.
 extern "C" void func_802B3568(cf::CfHikariItemManager* self, const f32* src,
                               s16 val, f32 scaleX, f32 scaleY) {
     // Signed count so MWCC emits the retail srawi/clrlwi/slwi bit-math run.
@@ -574,7 +574,7 @@ extern "C" void func_802B3568(cf::CfHikariItemManager* self, const f32* src,
     out[1] += rnd[1] * scaleX;
     out[2] += rnd[2] * scaleX;
 
-    func_802B4358((CfHikariItemRecord*)&self->unk104[self->field_119C * 0x20],
+    hikariInitRandomEntry((CfHikariItemRecord*)&self->unk104[self->field_119C * 0x20],
                   (const u32*)out, val, scaleY);
 
     // Retail reloads and stores the incremented count, then wraps.
@@ -607,7 +607,7 @@ extern "C" void func_802B371C(const CfHikariItemRecord* self) {
 // item record - zero the vector/accumulator floats, set the four color words
 // and the caller-supplied u16 at +0x40.  Field order mirrors the retail
 // store sequence (0x42 is written before 0x20/0x24).
-extern "C" void func_802B3750(CfHikariItemRecord* self, u16 value) {
+extern "C" void hikariInitFreshRecord(CfHikariItemRecord* self, u16 value) {
     f32 zero = lbl_eu_80668EF8; // const sdata2 float: schedules the lfs early
     *(f32*)&self->field_00 = zero;
     *(f32*)&self->field_04 = zero;
@@ -637,7 +637,7 @@ extern "C" __declspec(noinline) void* __dt__802B37B4(void* self, int flag) {
 
 // (us-802b6264): flag the u16 at +0x42 with 0x40 and write the
 // sdata2 float constant to +0x1C and +0x14.
-extern "C" void func_802B37F4(CfHikariItemRecord* self) {
+extern "C" void hikariInitRecordTimers(CfHikariItemRecord* self) {
     u16 val = self->field_42 | 0x40;    // lhz, ori
     self->field_42 = val;               // sth
     f32 f = lbl_eu_80668EF8;            // lfs
@@ -667,7 +667,7 @@ extern "C" s32 func_802B3810(CfHikariItemRecord* self, f32 delta) {
         // Spawn trail: burst a fan of 8 particles when the 0x1C timer resets.
         if (rec->field_1C == lbl_eu_80668EF8) {
             for (int i = 0; i < 8; i++) {
-                cf::CfHikariItemManager* mgr = func_802B262C();
+                cf::CfHikariItemManager* mgr = ClearMenu_GetGlobal10();
                 func_802B3568(mgr, (const f32*)rec, rec->field_40,
                               lbl_eu_80668EFC, lbl_eu_80668F00);
             }
@@ -680,7 +680,7 @@ extern "C" s32 func_802B3810(CfHikariItemRecord* self, f32 delta) {
             rec->field_14 += delta;
             if (rec->field_14 < lbl_eu_80668F0C) {
                 rec->field_14 = lbl_eu_80668EF8;
-                cf::CfHikariItemManager* mgr = func_802B262C();
+                cf::CfHikariItemManager* mgr = ClearMenu_GetGlobal10();
                 func_802B3568(mgr, (const f32*)rec, rec->field_40,
                               lbl_eu_80668EFC, lbl_eu_80668F00);
             }
@@ -752,7 +752,7 @@ extern "C" s32 func_802B3810(CfHikariItemRecord* self, f32 delta) {
                 rec->field_14 += delta;
                 if (rec->field_14 >= lbl_eu_80668F04) {
                     rec->field_14 = lbl_eu_80668EF8;
-                    cf::CfHikariItemManager* mgr = func_802B262C();
+                    cf::CfHikariItemManager* mgr = ClearMenu_GetGlobal10();
                     func_802B3568(mgr, (const f32*)rec, rec->field_40,
                                   lbl_eu_80668F34, lbl_eu_80668F0C);
                 }
@@ -1050,7 +1050,7 @@ extern "C" __declspec(noinline) u32 func_802B41E4(f32* self, const f32* rows, co
 // (retail order: call, conversion, 0x18 store, 0x14 store).
 // noinline: retail calls this (bl from func_802B3568 / func_802B3810); leaving
 // it inlineable makes MWCC absorb it into the spawn caller.
-extern "C" __declspec(noinline) void func_802B4358(CfHikariItemRecord* self, const u32* src, u16 val, f32 scale) {
+extern "C" __declspec(noinline) void hikariInitRandomEntry(CfHikariItemRecord* self, const u32* src, u16 val, f32 scale) {
     self->field_1C_h[0] = 0;
     self->field_1C_h[1] = val;
     self->field_00 = src[0];
@@ -1063,7 +1063,7 @@ extern "C" __declspec(noinline) void func_802B4358(CfHikariItemRecord* self, con
     self->field_18 = lbl_eu_80668EF8;
 }
 
-extern "C" void func_802B4460(CfHikariItemRecord* self) {
+extern "C" void hikariUpdateFadeRecord(CfHikariItemRecord* self) {
     extern char lbl_eu_80664C24[];
     ++lbl_eu_80664C24;
 }
@@ -1072,7 +1072,7 @@ extern "C" void func_802B4460(CfHikariItemRecord* self) {
 // sdata2 limit return 1, otherwise advance the +0x00 vector by the +0x0C
 // vector (retail paired-single via the nw4r VEC3Add inline), bump the sbss
 // counter and return 0.
-extern "C" __declspec(noinline) s32 func_802B4470(CfHikariItemRecord* self,
+extern "C" __declspec(noinline) s32 hikariUpdateSlotRecord(CfHikariItemRecord* self,
                                                    f32 delta) {
     f32 acc = self->field_18 + delta;
     self->field_18 = acc;

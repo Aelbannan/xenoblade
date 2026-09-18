@@ -80,18 +80,18 @@ public:
     void func_80104454();
     void func_80105A34();
     void func_80105D54();
-    void func_80106450();
+    void advanceConfirmState();
     void func_801065E4();
     void func_80106900();
-    void func_80106C30(s32 index);
+    void updateSlotGauge(s32 index);
     void func_80106EC8(s32 index);
-    void func_801071B8(s32 index);
+    void advanceSlotToggle(s32 index);
     void func_801072E0();
     void func_80107580();
     int func_80107970(s32 index);
     int func_80107C54(s32 index);
     void func_801080F8();
-    void func_80108994();
+    void bindEntryPanes();
 
     // Process base (CProcess): CDoubleListNode + vtable@0x10 + child list + flags@0x38.
     u8 unk00[0x10];
@@ -190,9 +190,9 @@ extern "C" void CMenuArtsSelect_workEventDraw(void* self);
 extern "C" void CMenuArtsSelect_workEventDtor(void* p);
 extern "C" void CMenuArtsSelect_scnRenderRelease(void* ptr);
 extern "C" void CMenuArtsSelect_scnRenderDtor(CMenuArtsSelect* self);
-extern "C" void* func_80110A70();
-extern "C" void* func_8010CE48();
+extern "C" void* EneSt_GetSingleton();
+extern "C" void* BpsStateSingletonToInt();
 extern "C" void func_8010EDE4(void*);
-extern "C" void func_8010A8E4(void*);
+extern "C" void BtlDmg_CursorReset(void*);
 extern "C" void CUICfManager_queueMoveBaseMenu();
 extern "C" void* func_8016FE34(void* r3);

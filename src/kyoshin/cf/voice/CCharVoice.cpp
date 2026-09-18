@@ -22,12 +22,12 @@ extern float lbl_eu_80668C64;
 // linkage to resolve against the existing objects.
 // ---------------------------------------------------------------
 extern "C" {
-    void  func_800AA318(u32, float*, u32*, float*, float*);  // packed-token decode
+    void  Tok_Unpack(u32, float*, u32*, float*, float*);  // packed-token decode
     s32   func_80189A04(const char*);                        // archive-voice busy check
-    CVoicePoseBlock* Scn_FindCamItem(CVoiceSndMgr*, s32);      // scene pose/xform block lookup
-    s32   func_801897A0(const char*, float, s32);            // start archive voice
+    CVoicePoseBlock* Scn_FindCamItem(CScn*, s32);      // scene pose/xform block lookup
+    s32   MenuSnd_TryPlayGated_97A0(const char*, float, s32);            // start archive voice
     void  func_8018986C(const char*, float);                 // stop archive voice
-    void  func_80189C40(s32, CVoicePos*, CVoicePoseBlock*, float, float, float); // update archive voice
+    void  MenuSnd_SetSlotPan_9C40(s32, CVoicePos*, CVoicePoseBlock*, float, float, float); // update archive voice
     CVoiceBattleSndMgr* CfObjectMove_relaySubB0Slot60(CVoiceOwnerIntf*);     // battle sound manager from owner
     s32   CfSoundMan_TouchSlotById(u16);                                // battle sound busy check
     void  CfSoundMan_WriteSlotParam(u16, CVoicePos*);                    // update battle sound position
@@ -61,8 +61,8 @@ extern "C" CCharVoice* __ct__CCharVoice(CCharVoice* self)
     return self;
 }
 
-// func_802A0B8C (0x802A32C0)
-void CCharVoice::func_802A0B8C(CVoiceOwnerIntf* owner)
+// attachOwner (0x802A32C0)
+void CCharVoice::attachOwner(CVoiceOwnerIntf* owner)
 {
     if (owner == nullptr) return;
 
@@ -76,7 +76,7 @@ void CCharVoice::func_802A0B8C(CVoiceOwnerIntf* owner)
         float px;
         u32   posType;
         float pz;
-        func_800AA318(*(u32*)((char*)owner + 0x70),
+        Tok_Unpack(*(u32*)((char*)owner + 0x70),
                       &pz, &posType, &px, &py);
 
         if (posType == 8) posType = 3;
@@ -99,8 +99,8 @@ void CCharVoice::func_802A0B8C(CVoiceOwnerIntf* owner)
     }
 }
 
-// func_802A0E08 (0x802A353C)
-void CCharVoice::func_802A0E08()
+// updatePosition (0x802A353C)
+void CCharVoice::updatePosition()
 {
     if (mOwner == nullptr) return;
 
@@ -133,7 +133,7 @@ void CCharVoice::func_802A0E08()
             pos = *mOwner->getPosition();
         }
 
-        func_80189C40(mSoundHandle, &pos, ch,
+        MenuSnd_SetSlotPan_9C40(mSoundHandle, &pos, ch,
                       lbl_eu_80668C58, lbl_eu_80668C5C, lbl_eu_80668C60);
 
     } else if (flags & 4) {
@@ -163,8 +163,8 @@ void CCharVoice::func_802A0E08()
     }
 }
 
-// func_802A0FE8 (0x802A371C)
-void CCharVoice::func_802A0FE8()
+// stopVoiceA (0x802A371C)
+void CCharVoice::stopVoiceA()
 {
     if (mOwner == nullptr) return;
 
@@ -187,8 +187,8 @@ void CCharVoice::func_802A0FE8()
     }
 }
 
-// func_802A109C (0x802A37D0)
-bool CCharVoice::func_802A109C(float volume,
+// playGated (0x802A37D0)
+bool CCharVoice::playGated(float volume,
                                 int voiceId, int priority)
 {
     if (mOwner == nullptr) return false;
@@ -228,7 +228,7 @@ bool CCharVoice::func_802A109C(float volume,
         // Format the voice id (0..9999) into the file name as four digits at
         // indices mField34+{0,1,3,4} (skipping the separator at +2).  Retail
         // reloads mField34 for each store, so reference the member raw, and
-        // hoists the func_801897A0 volume arg load to the top of the block.
+        // hoists the MenuSnd_TryPlayGated_97A0 volume arg load to the top of the block.
         float sndLevel = lbl_eu_80668C64;
         int v100 = voiceId / 100;
         int rem  = voiceId % 100;
@@ -247,7 +247,7 @@ bool CCharVoice::func_802A109C(float volume,
         *((char*)((u32)mField34 + (u32)this) + 0x13) = '0' + c;
         *((char*)((u32)mField34 + (u32)this) + 0x14) = '0' + d;
 
-        s32 h = func_801897A0(mFileName, sndLevel, 1);
+        s32 h = MenuSnd_TryPlayGated_97A0(mFileName, sndLevel, 1);
         mSoundHandle = h;
 
         if (h != -1) {
@@ -276,8 +276,8 @@ bool CCharVoice::func_802A109C(float volume,
     return false;
 }
 
-// func_802A1304 (0x802A3A38)
-void CCharVoice::func_802A1304()
+// stopVoiceB (0x802A3A38)
+void CCharVoice::stopVoiceB()
 {
     if (mOwner == nullptr) return;
 
@@ -300,8 +300,8 @@ void CCharVoice::func_802A1304()
     }
 }
 
-// func_802A13B8 (0x802A3AEC) -- no-op callback
-extern "C" void func_802A13B8()
+// voiceNoop (0x802A3AEC) -- no-op callback
+extern "C" void voiceNoop()
 {
 }
 

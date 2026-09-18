@@ -330,7 +330,7 @@ struct CtrlEnemySubFlag {
     u16 field_530;                   // 0x530
 };
 
-// Arts-info object returned by func_80149154: word at +0x10.
+// Arts-info object returned by findBattleStatusEntry: word at +0x10.
 struct CtrlEnemyArtsInfo {
     u8 _pad00[0x10];                 // 0x00-0x0F
     u32 field_10;                    // 0x10
@@ -456,7 +456,7 @@ void func_80089F68(void* self);  // one-arg delegate form
 void __ct__800D10DC(void* self, void* parent);  // CtrlEnemy base ctor
 void __ct__8008A104(void* self, void* parent);  // +0x84 sub-object ctor
 void* func_8016FE34(void* source);              // voice/battle-list resolve
-void func_8008B930(void* self);                 // +0x84 sub-object dtor (blr)
+void CtrlMoveEne_ForwardBaseRefresh(void* self);                 // +0x84 sub-object dtor (blr)
 void func_80089398(cf::CCtrlMoveBase* self, ml::CVec3* dst,
                    const ml::CVec3* src, int flag);
 int func_800890A8(cf::CCtrlMoveBase* self, ml::CVec3* out, u8* outFlag,
@@ -468,8 +468,8 @@ void* getPlayer__Q22cf13CfGameManagerFi(int idx);
 int isSceneReadyForInput__Q22cf13CfGameManagerFv(void);
 void CTaskGame_enumListCtor(cf::CtrlEnemyEnumHolder* holder);
 cf::CtrlEnemyEnumList* CTaskGame_enumListGet(cf::CtrlEnemyEnumHolder* holder);
-void func_800F4A98(cf::CtrlEnemyEnumList* list, u32 a, u32 b);
-void* func_800F6E98(cf::CtrlEnemyEnumList* list, int idx);
+void startEnumObjects(cf::CtrlEnemyEnumList* list, u32 a, u32 b);
+void* getObjectIdAt(cf::CtrlEnemyEnumList* list, int idx);
 void __dt__80043E88(cf::CtrlEnemyEnumHolder* holder, int flags);
 void* __ct__800FB044(cf::CtrlEnemyEnumList* list, f32 f, void* obj, int a);
 void* __ct__800FAE3C(cf::CtrlEnemyEnumList* list, void* vec, int a);
@@ -478,12 +478,12 @@ void* __ct__800FC4FC(cf::CtrlEnemyEnumList* list, f32 f, int a);
 void func_800FB270(cf::CtrlEnemyEnumList* list, void* obj, f32 a, f32 b,
                    f32 c, int d);
 int func_80148778(void* obj, int id);
-void* func_80149154(void* obj, u32 id);   // aligned with CAIAction.hpp (u32 param, per CBattleState.cpp def)
+void* findBattleStatusEntry(void* obj, u32 id);   // aligned with CAIAction.hpp (u32 param, per CBattleState.cpp def)
 void func_800D9CA0(void* mgr, void* target);
-void func_8008B580(void* sub);
-void func_8008A23C(void* sub);
+void CtrlMoveEne_UpdateBattleMove(void* sub);
+void CtrlMoveEne_DispatchMoveHook(void* sub);
 void func_8008A2C8(void* sub);
-int func_8008B934(void* sub, void* obj);
-int func_8008B974(void* sub);
+int CtrlMoveEne_TryLatchTargetActor(void* sub, void* obj);
+int CtrlMoveEne_ConsumeTargetResolve(void* sub);
 void* getUnk80664658(void);
 }

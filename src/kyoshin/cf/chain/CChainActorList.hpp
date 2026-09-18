@@ -91,19 +91,19 @@ namespace cf {
         //0x10: vtable
     };
 
-    // Minimal object manipulated by func_8027C154 (u16 field at 0x0).
+    // Minimal object manipulated by Chain_RollActivation (u16 field at 0x0).
     class CChainMsg {
     public:
         u16 field_0x0; //0x0
     };
 
-    // Minimal object manipulated by func_8027CBE8 (s32 field at 0x0).
+    // Minimal object manipulated by ChainCounter_Drain (s32 field at 0x0).
     class CChainCounter {
     public:
         s32 field_0x0; //0x0
     };
 
-    // Large object manipulated by func_8027C040 (u32 flag at 0x3F00).
+    // Large object manipulated by Chain_EmitCountEvents (u32 flag at 0x3F00).
     class CChainFlag {
     public:
         u8 field_0[0x3F00]; //0x0
@@ -111,14 +111,14 @@ namespace cf {
     };
 
     // 3x8 float table mirroring arts-param tuning values plus an enable flag
-    // (manipulated by func_8027CC3C / func_8027CD08).
+    // (manipulated by ChainMusic_SaveSlots / ChainMusic_RestoreSlots).
     class CChainMusic {
     public:
         float mSlots[3][8]; //0x0
         u8 mEnabled;        //0x60
     };
 
-    // State object manipulated by func_8027C33C (s16 at 0x0, u8 at 0xC).
+    // State object manipulated by Chain_ReadPadAction (s16 at 0x0, u8 at 0xC).
     class CChainAction {
     public:
         s16 field_0;  //0x0
@@ -128,7 +128,7 @@ namespace cf {
 }
 
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
-extern "C" void func_802A07F4(int, void*);
+extern "C" void chainResolveMemberPtr(int, void*);
 extern "C" u32 UIWin_GetInstance();
 extern "C" void UIWin_Create6F8B0Win(int);
 extern "C" int lbl_eu_80662A80;
@@ -152,14 +152,14 @@ extern "C" void addTableValueWithClamp__Q22cf13CfGameManagerFv(int, int, int);
 // CChainTimer.hpp so both headers co-exist without rename guards.
 namespace cf { class CChainBattleObj; }
 extern "C" s32 getTableValueByPair__Q22cf13CfGameManagerFv(s32 firstId, s32 secondId);
-extern "C" int func_8025FB10(void* data, u32 flag);
+extern "C" int IdTable_SumValues(void* data, u32 flag);
 extern "C" int func_8017FD44(void);
 extern "C" int func_8017FD4C(int);
 extern "C" int isClassicController__Q22cf13CfGameManagerFv(int arg);
 extern "C" int getArtsSlotRC(const void* arts, short index, short subindex);
 extern "C" void* getArtsParamRC2(const void* arts, int index, int subindex);
-extern "C" void func_8027EEF4(int);
-extern "C" u32 func_8027EE88(int, int);
+extern "C" void SysWinLog_QueueEvent(int);
+extern "C" u32 SysWinLog_BumpEventValue(int, int);
 // Chain-activation dice roll (defined in this TU). Retail callers emit a
 // real bl to the unmangled label func_8027C1A8 (MWCC_CASES CBattleMan_OnActorsEmpty
 // record), so it keeps C linkage here like the other imports above; the
@@ -167,7 +167,7 @@ extern "C" u32 func_8027EE88(int, int);
 extern "C" int func_8027C1A8(cf::CChainChanceS* self,
                              cf::CChainBattleObj* objA,
                              cf::CChainBattleObj* objB);
-extern "C" __declspec(noinline) void func_802811FC(cf::CChainActorList* self);
+extern "C" __declspec(noinline) void ScnLog_ClearStateWords(cf::CChainActorList* self);
 extern "C" cf::CChainActor* func_8028120C(cf::CChainActorList* self);
 extern "C" void func_8027B8C8(cf::CChainActorList* self, cf::CChainActor* actor);
 extern "C" u32 getAnimModelId(void* battleObj);
@@ -184,14 +184,14 @@ public:
     u32 field_0x3F60;    //0x3F60
 };
 
-// (Former CChainSub4/CChainVoiceSub pad removed: slots are on the owning objects –
+// (Former CChainSub4/CChainVoiceSub pad removed: slots are on the owning objects -
 // +0x30 is cf::CChainSub4::f30(), +0x4C is cf::CChainVoiceSub::v17()
 // in CChainTimer.hpp. Call sites in CChainActorList.cpp now use those.)
 
 // Manual vtable objects stored by the Pc/Ene constructors (retail .data).
 // Declared at their full retail sizes (0x78 / 0x10) so MWCC emits the
 // lis/addi HA-LO address form; a small (<8B) extern type would otherwise
-// use sda21 addressing and break the reloc match (MWCC_CASES §833).
+// use sda21 addressing and break the reloc match (MWCC_CASES sec 833).
 struct CChainVtblActor {
     u8 bytes[0x78];
 };

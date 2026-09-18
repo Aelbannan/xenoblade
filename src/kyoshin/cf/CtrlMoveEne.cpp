@@ -24,7 +24,7 @@ extern "C" float CfObjectActor_readFacingAngle__Q22cf13CfObjectActorFv(
     cf::CfObjectActor* self);
 
 // In-TU forward declarations (definitions below).
-void func_8008D444(cf::CCtrlMoveEne* self, cf::CFunc8008D444Obj* obj, int flag);
+void CtrlMoveEne_ResetMoveState(cf::CCtrlMoveEne* self, cf::CFunc8008D444Obj* obj, int flag);
 
 // Enemy move-controller constructor (retail __ct__8008A104): runs the base
 // ctor, installs the +0x48 vtable and the null move hook, zeroes the flags /
@@ -51,7 +51,7 @@ cf::CCtrlMoveEne* __ct__8008A104(cf::CCtrlMoveEne* self) {
     self->field_0x164 = lbl_eu_806665C0;
     self->field_0x19C = lbl_eu_806665C0;
     self->field_0x18A = (u16)ml::math::mtRand(0x3c);
-    func_80089684(self);
+    maskMoveBaseFlags(self);
     self->mMoveHook = lbl_eu_805278E4;
     self->field_0x4C = self->field_0x34->field_0x28->CfObject_getMoveHeadAngle();
     self->field_0x180 |= 0x800;
@@ -63,10 +63,10 @@ cf::CCtrlMoveEne* __ct__8008A104(cf::CCtrlMoveEne* self) {
 
 // Dispatches the +0x12C move hook when the movement sub-object's +0x8C slot
 // reports a nonzero rate, the +0x12C hook is set, and func_8008D51C accepts.
-void func_8008A23C(cf::CCtrlMoveEne* self) {
+void CtrlMoveEne_DispatchMoveHook(cf::CCtrlMoveEne* self) {
     if (self->field_0x34->field_0x28->CfObject_getMoveSpeedRate() != lbl_eu_806665C0) {
         func_800895A8(self);
-        func_8008C4F0(self);
+        CtrlMoveEne_TickMoveControl(self);
         if (__ptmf_test(&self->mMoveHook) != 0) {
             if (func_8008D51C(self) != 0) {
                 (self->*self->mMoveHook)();
@@ -217,21 +217,21 @@ void func_8008A2C8(cf::CCtrlMoveEne* self) {
                                         vec;
                                     typedef int (*BE398GroundProbe)(
                                         void*, u32, u32, u32, f32, f32);
-                                    if (((BE398GroundProbe)func_804BE398)(
+                                    if (((BE398GroundProbe)ScnRes_VertRayForward_E398)(
                                             &probe, 0x4A11, 0, 1,
                                             lbl_eu_806665DC,
                                             lbl_eu_806665DC) != 0) {
                                         int r24 = 0;
                                         for (int i = 0;
-                                             i < func_804BE4AC(); i++) {
-                                            if (((ml::CVec3*)func_804BE520(
+                                             i < ScnRes_GetEntryCount_E4AC(); i++) {
+                                            if (((ml::CVec3*)ScnRes_GetEntryHead2_E520(
                                                      i))
                                                     ->y <
                                                 lbl_eu_806665C0) {
                                                 continue;
                                             }
                                             ml::CVec3* c =
-                                                (ml::CVec3*)func_804BE50C(i);
+                                                (ml::CVec3*)ScnRes_GetEntryPtr_E50C(i);
                                             f32 py = reinterpret_cast<cf::CfObject*>(&obj->mSub2)->CfObject_getPosVector()
                                                          ->y;
                                             if (c->y > py &&
@@ -240,15 +240,15 @@ void func_8008A2C8(cf::CCtrlMoveEne* self) {
                                             }
                                         }
                                         for (int i = 0;
-                                             i < func_804BE4AC(); i++) {
-                                            if (((ml::CVec3*)func_804BE520(
+                                             i < ScnRes_GetEntryCount_E4AC(); i++) {
+                                            if (((ml::CVec3*)ScnRes_GetEntryHead2_E520(
                                                      i))
                                                     ->y <=
                                                 lbl_eu_806665C0) {
                                                 continue;
                                             }
                                             f32 cy =
-                                                ((ml::CVec3*)func_804BE50C(i))
+                                                ((ml::CVec3*)ScnRes_GetEntryPtr_E50C(i))
                                                     ->y;
                                             if (cy > f30 && cy < f28) {
                                                 r24 = 1;
@@ -274,7 +274,7 @@ void func_8008A2C8(cf::CCtrlMoveEne* self) {
                             }
                             setSnapFlags(f60, 1, 0, f31);
                         }
-                        func_800899AC(self, lbl_eu_806665E0);
+                        writeMoveSlotFloat(self, lbl_eu_806665E0);
                     }
                 }
             }
@@ -666,7 +666,7 @@ void func_8008A2C8(cf::CCtrlMoveEne* self) {
                     }
                 }
             }
-            func_8008D444(self, (cf::CFunc8008D444Obj*)obj, 1);
+            CtrlMoveEne_ResetMoveState(self, (cf::CFunc8008D444Obj*)obj, 1);
             if (f60 != 0) {
                 u32 w = ((cf::CFunc8008B580Word*)obj->field_04->CObjectState_getStateData())->field_0;
                 if (func_80174C98(obj, &w, 0x10) != 0 ||
@@ -699,7 +699,7 @@ void func_8008A2C8(cf::CCtrlMoveEne* self) {
 
 void* CActorParam_getMoveRecord__Q22cf11CActorParamFv(void* self) { return (void*)((u8*)self + 0x3298); }
 
-void func_8008B580(cf::CCtrlMoveEne* self) {
+void CtrlMoveEne_UpdateBattleMove(cf::CCtrlMoveEne* self) {
     cf::CfObjectMoveView9* v = (cf::CfObjectMoveView9*)self;
     func_800895A8(self);
     u32 flags = self->field_0x17C & 0x7F613E7Fu;
@@ -783,15 +783,15 @@ void func_8008B580(cf::CCtrlMoveEne* self) {
     self->field_0x3C = lbl_eu_806665F0;
 }
 
-// Trampoline: func_8008B930 forwards to the base refresh helper (retail
+// Trampoline: CtrlMoveEne_ForwardBaseRefresh forwards to the base refresh helper (retail
 // references the unmangled C-ABI name, hence the extern "C" decl).
 struct CCtrlMoveNpc;
 extern "C" void func_8008962C(CCtrlMoveNpc* self);
-void func_8008B930(CCtrlMoveNpc* self) { func_8008962C(self); }
+void CtrlMoveEne_ForwardBaseRefresh(CCtrlMoveNpc* self) { func_8008962C(self); }
 
 // Flag-guarded set of the +0x8000 flag bit and the +0x15C actor id; returns
 // 0 when the +0x2 bit is set (1 otherwise).
-int func_8008B934(cf::CCtrlMoveEneView* self, int arg) {
+int CtrlMoveEne_TryLatchTargetActor(cf::CCtrlMoveEneView* self, int arg) {
     u32 flags = self->field_0x17C;
     if (flags & 0x2u) {
         self->field_0x17C = flags | 0x8000u;
@@ -802,7 +802,7 @@ int func_8008B934(cf::CCtrlMoveEneView* self, int arg) {
 }
 
 // Sets the +0x04000000 flag bit when the +0x08000000 bit is already set.
-void func_8008B95C(cf::CCtrlMoveEneView* self) {
+void CtrlMoveEne_MarkActiveSteady(cf::CCtrlMoveEneView* self) {
     if (self->field_0x17C & 0x08000000u) {
         self->field_0x17C |= 0x04000000u;
     }
@@ -810,7 +810,7 @@ void func_8008B95C(cf::CCtrlMoveEneView* self) {
 
 // Clears the +0x4000 flag bit and resolves the +0x15C actor id; returns 1
 // only when the id resolves to a live action source.
-int func_8008B974(cf::CCtrlMoveEneView* self) {
+int CtrlMoveEne_ConsumeTargetResolve(cf::CCtrlMoveEneView* self) {
     u32 flags = self->field_0x17C;
     if (flags & 0x4000u) {
         self->field_0x17C = flags & ~0x4000u;
@@ -879,7 +879,7 @@ __declspec(noinline) int func_8008B9C0(cf::CCtrlMoveEne* self,
         // Ground probe at the candidate point.
         pos.y += lbl_eu_806665C4;
         typedef int (*BE398GroundProbe2)(void*, u32, u32, u32, f32, f32);
-        if (((BE398GroundProbe2)func_804BE398)(&pos, 0x4a11, 0, 1,
+        if (((BE398GroundProbe2)ScnRes_VertRayForward_E398)(&pos, 0x4a11, 0, 1,
                                                lbl_eu_80666614,
                                                lbl_eu_806665DC) == 0) {
             return 0;
@@ -892,31 +892,31 @@ __declspec(noinline) int func_8008B9C0(cf::CCtrlMoveEne* self,
         f32 best = _lbl_eu_80666604;
         int sel;
         u32 i;
-        for (i = 0; i < (u32)func_804BE4AC(); i++) {
-            if (((ml::CVec3*)func_804BE520(i))->y >= lbl_eu_806665C0) {
+        for (i = 0; i < (u32)ScnRes_GetEntryCount_E4AC(); i++) {
+            if (((ml::CVec3*)ScnRes_GetEntryHead2_E520(i))->y >= lbl_eu_806665C0) {
                 any = 1;
-                if (func_804BE5A4(0x40000, (int)i) != 0) {
-                    if (hi >= ((ml::CVec3*)func_804BE50C(i))->y) {
+                if (ScnRes_EntryFlagThunk_E5A4(0x40000, (int)i) != 0) {
+                    if (hi >= ((ml::CVec3*)ScnRes_GetEntryPtr_E50C(i))->y) {
                         sel = (int)i;
                         found = 1;
-                        hi = ((ml::CVec3*)func_804BE50C(i))->y;
+                        hi = ((ml::CVec3*)ScnRes_GetEntryPtr_E50C(i))->y;
                     }
                 } else {
-                    f32 y = ((ml::CVec3*)func_804BE50C(i))->y;
+                    f32 y = ((ml::CVec3*)ScnRes_GetEntryPtr_E50C(i))->y;
                     f32 d = ml::math::abs(y - ((ml::CVec3*)other)->y);
                     if (best >= d) {
                         best = d;
-                        lo = ((ml::CVec3*)func_804BE50C(i))->y;
+                        lo = ((ml::CVec3*)ScnRes_GetEntryPtr_E50C(i))->y;
                     }
                 }
             }
         }
         if (found && hi >= lo) {
             f32 low = hi - lbl_eu_80666618;
-            for (int j = 0; j < func_804BE4AC(); j++) {
-                if (sel != j && hi > ((ml::CVec3*)func_804BE50C((u32)j))->y
-                    && low < ((ml::CVec3*)func_804BE50C((u32)j))->y) {
-                    low = ((ml::CVec3*)func_804BE50C((u32)j))->y;
+            for (int j = 0; j < ScnRes_GetEntryCount_E4AC(); j++) {
+                if (sel != j && hi > ((ml::CVec3*)ScnRes_GetEntryPtr_E50C((u32)j))->y
+                    && low < ((ml::CVec3*)ScnRes_GetEntryPtr_E50C((u32)j))->y) {
+                    low = ((ml::CVec3*)ScnRes_GetEntryPtr_E50C((u32)j))->y;
                 }
             }
             f32 span = hi - low;
@@ -957,15 +957,15 @@ extern "C" __declspec(noinline) void func_8008BEEC(
     cf::CCtrlMoveEne* self, void* obj, int arg2, u32 arg3) {
 }
 
-// Enemy movement-controller per-frame update (retail func_8008C4F0): recovers
+// Enemy movement-controller per-frame update (retail CtrlMoveEne_TickMoveControl): recovers
 // the battle object from the move data's +0x28 sub-object, stores the +0x3C
-// target constant, dispatches func_8008D444 while the +0x198 timer is at/over
+// target constant, dispatches CtrlMoveEne_ResetMoveState while the +0x198 timer is at/over
 // 90 with the +0x08000000 flag set and the +0x1000 / +0x2 bits clear, clears
 // the +0x40000000/+0x10000000/+0x08000000/+0x04000000/+0x400 flag bits,
 // forwards the +0x1000 bit to func_8008BEEC and mirrors the +0x180 flag bits
 // into the +0x3F60 sub-object.
-// noinline keeps func_8008A23C's call site an opaque bl (retail has one).
-__declspec(noinline) void func_8008C4F0(cf::CCtrlMoveEne* self) {
+// noinline keeps CtrlMoveEne_DispatchMoveHook's call site an opaque bl (retail has one).
+__declspec(noinline) void CtrlMoveEne_TickMoveControl(cf::CCtrlMoveEne* self) {
     cf::CFunc8008D444Obj* obj =
         (cf::CFunc8008D444Obj*)self->field_0x34->field_0x28;
     if (obj != 0) obj = (cf::CFunc8008D444Obj*)((u8*)obj - 0x3E9C);
@@ -973,7 +973,7 @@ __declspec(noinline) void func_8008C4F0(cf::CCtrlMoveEne* self) {
     if ((self->field_0x17C & 0x08000000u) != 0 &&
         (self->field_0x17C & 0x1000u) == 0 &&
         self->field_0x198 >= 90 && (self->field_0x180 & 0x2u) == 0) {
-        func_8008D444(self, obj, 0);
+        CtrlMoveEne_ResetMoveState(self, obj, 0);
     }
     // Reload after the opaque call: retail re-reads +0x17C from memory.
     u32 newFlags = self->field_0x17C & ~0x5C000000u & ~0x400u;
@@ -987,7 +987,7 @@ __declspec(noinline) void func_8008C4F0(cf::CCtrlMoveEne* self) {
             if ((self->field_0x180 & 0x8u) != 0) {
                 if ((self->field_0x17C & 0x10000u) == 0) {
                     setSnapFlags(f60, 1, 1, self->field_0x160);
-                    func_800899AC(self, lbl_eu_806665E0);
+                    writeMoveSlotFloat(self, lbl_eu_806665E0);
                 } else {
                     setSnapFlags(f60, 0, 1, lbl_eu_806665C0);
                 }
@@ -1124,7 +1124,7 @@ void func_8008CDE8(cf::CCtrlMoveEne* self, ml::CVec3* out, f32 f1) {
 // object's embedded move sub-object (or sets +0x2000), then raises the
 // +0x08000000 battle flag, clears +0x200 of the +0x4550 word and refreshes the
 // movement data block.
-void func_8008D444(cf::CCtrlMoveEne* self, cf::CFunc8008D444Obj* obj, int flag) {
+void CtrlMoveEne_ResetMoveState(cf::CCtrlMoveEne* self, cf::CFunc8008D444Obj* obj, int flag) {
     f32 zero = lbl_eu_806665C0;
     u32 flags = self->field_0x17C;
     self->field_0x168 = zero;
@@ -1135,7 +1135,7 @@ void func_8008D444(cf::CCtrlMoveEne* self, cf::CFunc8008D444Obj* obj, int flag) 
     self->field_0x190 = 0;
     self->field_0x192 = 0;
     self->field_0x196 = 0;
-    func_80089990(self);
+    maskMoveChildFlags(self);
     if (flag != 0) {
         reinterpret_cast<cf::CObjectState*>(&obj->mSub)->CObjectState_setStateBitMask(0x200);
     } else {
@@ -1143,8 +1143,8 @@ void func_8008D444(cf::CCtrlMoveEne* self, cf::CFunc8008D444Obj* obj, int flag) 
     }
     obj->field_3374 |= 0x08000000;
     obj->field_4550 &= ~0x200u;
-    func_800D581C(self->field_0x34);
-    func_800D59FC(self->field_0x34);
+    ctrlActClearState30(self->field_0x34);
+    ctrlActUpdateData70(self->field_0x34);
 }
 
 // Zeroes the +0x1928 move-data slots of the battle object (retail emits the
@@ -1210,7 +1210,7 @@ __declspec(noinline) int func_8008D51C(cf::CCtrlMoveEne* self) {
                 func_80174B4C(obj, 3);
             }
             view->field_0x168 = lbl_eu_806665C0;
-            func_80089990(self);
+            maskMoveChildFlags(self);
             view->field_0x19C = lbl_eu_806665C0;
             view->field_0x184 = 0;
             func_80193710(obj);
@@ -1398,7 +1398,7 @@ void func_8008E06C(cf::CCtrlMoveEne* self) {
         u32 w;
         u8 b;
     } row;
-    row.w = func_800AF7E4(obj, lbl_eu_804FB9E8);
+    row.w = getEneBdatColumn(obj, lbl_eu_804FB9E8);
     u8 state = row.b;
     if (state >= 0xf) {
         state = state - 0xf;
@@ -1406,11 +1406,11 @@ void func_8008E06C(cf::CCtrlMoveEne* self) {
             state = 0;
         }
         self->field_0x50 = state;
-        func_80089684(self);
+        maskMoveBaseFlags(self);
         self->mMoveHook = lbl_eu_80527830.hook118;
         self->field_0x18C = 2;
     } else {
-        func_80089684(self);
+        maskMoveBaseFlags(self);
         self->mMoveHook = lbl_eu_80527830.hook124;
         self->field_0x50 = state;
         if (state != 0) {
@@ -1419,7 +1419,7 @@ void func_8008E06C(cf::CCtrlMoveEne* self) {
             reinterpret_cast<cf::CfObject*>(&obj->mSub)->CfObject_setMoveHeadAngle(angle);
             ((cf::CfObjectMove4CView*)self)->field_4C |= 4;
         } else {
-            func_80089684(self);
+            maskMoveBaseFlags(self);
             self->mMoveHook = lbl_eu_80527830.hook130;
             self->field_0x4C = self->field_0x34->field_0x28->CfObject_getMoveHeadAngle();
             self->field_0x180 |= 0x800;
@@ -1438,7 +1438,7 @@ void func_8008E06C(cf::CCtrlMoveEne* self) {
         u32 w;
         u16 h;
     } row2;
-    row2.w = func_800AF7E4(obj, lbl_eu_804FB9E8 + 0xA);
+    row2.w = getEneBdatColumn(obj, lbl_eu_804FB9E8 + 0xA);
     u16 level = row2.h;
     if (level != 0) {
         self->field_0x5C = (f32)(u32)level;
@@ -1462,14 +1462,14 @@ void func_8008E2D4(cf::CCtrlMoveEne* self) {
     if (subView != 0) {
         obj = (cf::CFunc8008D444Obj*)((u8*)subView - 0x3E9C);
     }
-    func_80089684(self);
+    maskMoveBaseFlags(self);
     self->mMoveHook = hooks->hook13C;
     const char* table = lbl_eu_804FB9E8;
     union {
         u32 w;
         u16 h;
     } match;
-    match.w = func_800AF7E4(obj, table + 0x13);
+    match.w = getEneBdatColumn(obj, table + 0x13);
     u16 matchId = match.h;
     view->field_0x58 = 0;
     view->field_0x5A = 0;
@@ -1480,7 +1480,7 @@ void func_8008E2D4(cf::CCtrlMoveEne* self) {
         u32 w;
         u8 b;
     } row;
-    row.w = func_800AF7E4(obj, table);
+    row.w = getEneBdatColumn(obj, table);
     u8 state = row.b;
     if (state >= 0xF) {
         state = 0;
@@ -1505,13 +1505,13 @@ void func_8008E2D4(cf::CCtrlMoveEne* self) {
             u32 w;
             u16 h;
         } c13;
-        c13.w = func_800AF82C(obj, table + 0x13, i);
+        c13.w = getEneBdatByIndex(obj, table + 0x13, i);
         if (c13.h == matchId && idx < 8) {
             union {
                 u32 w;
                 u16 h;
             } c1b;
-            c1b.w = func_800AF82C(obj, table + 0x1b, i);
+            c1b.w = getEneBdatByIndex(obj, table + 0x1b, i);
             u16 flags = c1b.h;
             if ((flags & 0x200u) != 0) {
                 // Flag row: direct target fields instead of a move-list entry.
@@ -1519,19 +1519,19 @@ void func_8008E2D4(cf::CCtrlMoveEne* self) {
                     u32 w;
                     s16 h;
                 } c22;
-                c22.w = func_800AF82C(obj, table + 0x22, i);
+                c22.w = getEneBdatByIndex(obj, table + 0x22, i);
                 view->field_0x4C = (f32)c22.h;
                 union {
                     u32 w;
                     s16 h;
                 } c27;
-                c27.w = func_800AF82C(obj, table + 0x27, i);
+                c27.w = getEneBdatByIndex(obj, table + 0x27, i);
                 view->field_0x50 = (f32)c27.h;
                 union {
                     u32 w;
                     s16 h;
                 } c2c;
-                c2c.w = func_800AF82C(obj, table + 0x2c, i);
+                c2c.w = getEneBdatByIndex(obj, table + 0x2c, i);
                 view->field_0x54 = (f32)c2c.h;
                 view->field_0x17C |= 0x2;
                 view->field_0x70 |= 0x8;
@@ -1548,19 +1548,19 @@ void func_8008E2D4(cf::CCtrlMoveEne* self) {
                     u32 w;
                     s16 h;
                 } c22;
-                c22.w = func_800AF82C(obj, table + 0x22, i);
+                c22.w = getEneBdatByIndex(obj, table + 0x22, i);
                 entry->field_0x0 = (f32)c22.h;
                 union {
                     u32 w;
                     s16 h;
                 } c27;
-                c27.w = func_800AF82C(obj, table + 0x27, i);
+                c27.w = getEneBdatByIndex(obj, table + 0x27, i);
                 entry->field_0x4 = (f32)c27.h;
                 union {
                     u32 w;
                     s16 h;
                 } c2c;
-                c2c.w = func_800AF82C(obj, table + 0x2c, i);
+                c2c.w = getEneBdatByIndex(obj, table + 0x2c, i);
                 entry->field_0x8 = (f32)c2c.h;
                 // Column +0x31 is a byte gate: any nonzero value marks the
                 // entry's flags halfword with bit 0x8000.
@@ -1568,7 +1568,7 @@ void func_8008E2D4(cf::CCtrlMoveEne* self) {
                     u32 w;
                     u8 b;
                 } c31;
-                c31.w = func_800AF82C(obj, table + 0x31, i);
+                c31.w = getEneBdatByIndex(obj, table + 0x31, i);
                 if (c31.b != 0) {
                     entry->field_0xC |= 0x8000;
                 }
@@ -1576,19 +1576,19 @@ void func_8008E2D4(cf::CCtrlMoveEne* self) {
                     u32 w;
                     u8 b;
                 } c3b;
-                c3b.w = func_800AF82C(obj, table + 0x3b, i);
+                c3b.w = getEneBdatByIndex(obj, table + 0x3b, i);
                 entry->field_0xE = c3b.b;
                 union {
                     u32 w;
                     u8 b;
                 } c45;
-                c45.w = func_800AF82C(obj, table + 0x45, i);
+                c45.w = getEneBdatByIndex(obj, table + 0x45, i);
                 entry->field_0xF = c45.b;
                 union {
                     u32 w;
                     u8 b;
                 } c4e;
-                c4e.w = func_800AF82C(obj, table + 0x4e, i);
+                c4e.w = getEneBdatByIndex(obj, table + 0x4e, i);
                 entry->field_0x10 = (f32)c4e.b;
                 idx++;
                 entry++;
@@ -1601,7 +1601,7 @@ void func_8008E2D4(cf::CCtrlMoveEne* self) {
     if (idx == 0 || view->field_0x5C == 0) {
         // No matching row: fall back to the +0x148 hook and the +0xCC heading.
         view->field_0x6C = lbl_eu_806665C0;
-        func_80089684(self);
+        maskMoveBaseFlags(self);
         self->mMoveHook = hooks->hook148;
         view->field_0x4C = self->field_0x34->field_0x28->CfObject_getMoveHeadAngle();
         self->field_0x180 |= 0x800;
@@ -1655,14 +1655,14 @@ void func_8008E760(cf::CCtrlMoveEne* self) {
         u32 w;
         u8 b;
     } row53;
-    row53.w = func_800AF7E4(obj, lbl_eu_804FB9E8 + 0x53);
+    row53.w = getEneBdatColumn(obj, lbl_eu_804FB9E8 + 0x53);
     if (row53.b == 0) {
         self->field_0x180 |= 1;
     }
     if (active != 0) {
         // Battle state active: pick the hook / init path from the flags.
         if ((view->field_0x17C & 0x40u) != 0) {
-            func_80089684(self);
+            maskMoveBaseFlags(self);
             self->mMoveHook = hooks->hook154;
             self->field_0x4C = self->field_0x34->field_0x28->CfObject_getMoveHeadAngle();
             self->field_0x180 = (self->field_0x180 | 0x800) & ~0x80000u;
@@ -1671,14 +1671,14 @@ void func_8008E760(cf::CCtrlMoveEne* self) {
                 u32 w;
                 u8 b;
             } row58;
-            row58.w = func_800AF7E4(obj, lbl_eu_804FB9E8 + 0x58);
+            row58.w = getEneBdatColumn(obj, lbl_eu_804FB9E8 + 0x58);
             u8 v58 = row58.b;
             if ((v58 & 1) != 0) {
                 func_8008E06C(self);
             } else if ((v58 & 4) != 0) {
                 func_8008E2D4(self);
             } else {
-                func_80089684(self);
+                maskMoveBaseFlags(self);
                 self->mMoveHook = hooks->hook160;
                 self->field_0x4C = self->field_0x34->field_0x28->CfObject_getMoveHeadAngle();
                 self->field_0x180 |= 0x800;
@@ -1686,7 +1686,7 @@ void func_8008E760(cf::CCtrlMoveEne* self) {
         }
     } else {
         // Inactive: seed the counters and run the party-position probe.
-        func_80089684(self);
+        maskMoveBaseFlags(self);
         self->mMoveHook = hooks->hook16C;
         view->field_0x58 = 0;
         view->field_0x5A = (u16)(ml::math::mtRand() & 0xF);
@@ -1757,7 +1757,7 @@ void func_8008E760(cf::CCtrlMoveEne* self) {
         u32 w;
         u8 b;
     } row61;
-    row61.w = func_800AF7E4(obj, lbl_eu_804FB9E8 + 0x61);
+    row61.w = getEneBdatColumn(obj, lbl_eu_804FB9E8 + 0x61);
     u8 mode = row61.b;
     if ((obj->field_3374 & 0x100u) != 0) {
         self->field_0x180 |= 0x8;
@@ -1776,7 +1776,7 @@ void func_8008E760(cf::CCtrlMoveEne* self) {
             u32 w;
             s16 h;
         } conv160;
-        conv160.w = func_800AF7E4(obj, lbl_eu_804FB9E8 + 0x27);
+        conv160.w = getEneBdatColumn(obj, lbl_eu_804FB9E8 + 0x27);
         f32 f160 = (f32)conv160.h;
         view->field_0x160 = f160;
         if (mode == 1) view->field_0x160 = f160 * lbl_eu_806665F0;
@@ -1819,7 +1819,7 @@ void func_8008E760(cf::CCtrlMoveEne* self) {
             u32 w;
             s16 h;
         } conv4;
-        conv4.w = func_800AF7E4(obj, lbl_eu_804FB9E8 + 0x27);
+        conv4.w = getEneBdatColumn(obj, lbl_eu_804FB9E8 + 0x27);
         f32 f4 = (f32)conv4.h;
         *(f32*)&view->mPos0W.y = f4;
         if (mode == 1) *(f32*)&view->mPos0W.y = f4 * lbl_eu_806665F0;
@@ -2381,7 +2381,7 @@ void func_8008FE8C(cf::CCtrlMoveEne* self) {
         cf::CfMoveSubEntry* entry5 =
             &view->field_0x78[(s16)view->field_0x5A];
         if ((entry5->field_0xC & 0x80u) != 0) {
-            func_80089684(self);
+            maskMoveBaseFlags(self);
             self->mMoveHook = lbl_eu_80527830.hook190;
             view->field_0x4C = self->field_0x34->field_0x28->CfObject_getMoveHeadAngle();
             self->field_0x180 |= 0x800;
@@ -2986,7 +2986,7 @@ void func_80091864(cf::CCtrlMoveEne* selfRaw) {
                              ->CfObject_getPosVector() +
                         lift;
                     ml::CVec3 to = goal + lift;
-                    if (func_804BE348(&from, &to, 0x44A11, 0, 0) != 0) {
+                    if (ScnRes_SegQueryForward_E348(&from, &to, 0x44A11, 0, 0) != 0) {
                         accept = 0;
                     }
                 }
@@ -3383,7 +3383,7 @@ void func_80091864(cf::CCtrlMoveEne* selfRaw) {
 
 void* CfObjectMove_getMovementRate__Q22cf12CfObjectMoveFv(void* self) { return (void*)((u8*)self + 0x6e8); }
 
-void func_80092CB0(void* a, void* b, void* c) {
+void CtrlMoveEne_RateZeroFlat(void* a, void* b, void* c) {
     *(unsigned long*)b = 0;
     *(float*)c = lbl_eu_806665C0;
 }
@@ -3391,7 +3391,7 @@ void func_80092CB0(void* a, void* b, void* c) {
 // Stores the movement-rate divisor into *out2: the +0x1D8 slot's value over
 // the +0x138 slot's value, falling back to 0.0f when +0x138 reads 0. *out1
 // receives 0.
-void func_80092CC4(cf::CCtrlMoveEne* self, u32* out1, f32* out2) {
+void CtrlMoveEne_RateDivisorSlot0(cf::CCtrlMoveEne* self, u32* out1, f32* out2) {
     *out1 = 0;
     f32 scale = *(float*)self->field_0x34->field_0x28->CfObject_getMoveRateScale();
     f32 result;
@@ -3405,7 +3405,7 @@ void func_80092CC4(cf::CCtrlMoveEne* self, u32* out1, f32* out2) {
     *out2 = result;
 }
 
-void func_80092D78(cf::CCtrlMoveEne* self, u32* out1, f32* out2) {
+void CtrlMoveEne_RateDivisorSlot12C(cf::CCtrlMoveEne* self, u32* out1, f32* out2) {
     *out1 = 0x12C;
     f32 scale = *(float*)self->field_0x34->field_0x28->CfObject_getMoveRateScale();
     f32 result;
@@ -3419,7 +3419,7 @@ void func_80092D78(cf::CCtrlMoveEne* self, u32* out1, f32* out2) {
     *out2 = result;
 }
 
-void func_80092E2C(cf::CCtrlMoveEne* self, u32* out1, f32* out2) {
+void CtrlMoveEne_RateDivisorSlot258(cf::CCtrlMoveEne* self, u32* out1, f32* out2) {
     *out1 = 0x258;
     f32 scale = *(float*)self->field_0x34->field_0x28->CfObject_getMoveRateScale();
     f32 result;
@@ -3433,7 +3433,7 @@ void func_80092E2C(cf::CCtrlMoveEne* self, u32* out1, f32* out2) {
     *out2 = result;
 }
 
-void func_80092EE0(cf::CCtrlMoveEne* self, u32* out1, f32* out2) {
+void CtrlMoveEne_RateDivisorSlot384(cf::CCtrlMoveEne* self, u32* out1, f32* out2) {
     *out1 = 0x384;
     f32 scale = *(float*)self->field_0x34->field_0x28->CfObject_getMoveRateScale();
     f32 result;
@@ -3447,22 +3447,22 @@ void func_80092EE0(cf::CCtrlMoveEne* self, u32* out1, f32* out2) {
     *out2 = result;
 }
 
-void func_80092F94(void* a, void* b, void* c) {
+void CtrlMoveEne_RateUnitFlat(void* a, void* b, void* c) {
     *(unsigned long*)b = 0;
     *(float*)c = lbl_eu_806665E4;
 }
 
-void func_80092FA8(void* u, u32* a, f32* b) {
+void CtrlMoveEne_RateUnitSlot12C(void* u, u32* a, f32* b) {
     *a = 0x12C;
     *b = lbl_eu_806665E4;
 }
 
-void func_80092FBC(void* u, u32* a, f32* b) {
+void CtrlMoveEne_RateUnitSlot258(void* u, u32* a, f32* b) {
     *a = 0x258;
     *b = lbl_eu_806665E4;
 }
 
-void func_80092FD0(void* u, u32* a, f32* b) {
+void CtrlMoveEne_RateUnitSlot384(void* u, u32* a, f32* b) {
     *a = 0x384;
     *b = lbl_eu_806665E4;
 }
@@ -3471,7 +3471,7 @@ void func_80092FD0(void* u, u32* a, f32* b) {
 // the 1.0f fallback to *out2; otherwise writes the movement-rate divisor
 // (*out2 = +0x1D8 rate over +0x138 divisor, 0.0f when the divisor reads 0).
 // *out1 receives 0.
-void func_80092FE4(cf::CCtrlMoveEne* self, u32* out1, f32* out2) {
+void CtrlMoveEne_RateRandGate50Slot0(cf::CCtrlMoveEne* self, u32* out1, f32* out2) {
     if (ml::math::mtRand(100) >= 0x50) {
         *out2 = lbl_eu_806665E4;
     } else {
@@ -3489,8 +3489,8 @@ void func_80092FE4(cf::CCtrlMoveEne* self, u32* out1, f32* out2) {
     *out1 = 0;
 }
 
-// Same as func_80092FE4 with threshold 70 and *out1 = 0x12C.
-void func_800930C0(cf::CCtrlMoveEne* self, u32* out1, f32* out2) {
+// Same as CtrlMoveEne_RateRandGate50Slot0 with threshold 70 and *out1 = 0x12C.
+void CtrlMoveEne_RateRandGate46Slot12C(cf::CCtrlMoveEne* self, u32* out1, f32* out2) {
     if (ml::math::mtRand(100) >= 0x46) {
         *out2 = lbl_eu_806665E4;
     } else {
@@ -3508,8 +3508,8 @@ void func_800930C0(cf::CCtrlMoveEne* self, u32* out1, f32* out2) {
     *out1 = 0x12C;
 }
 
-// Same as func_80092FE4 with threshold 60 and *out1 = 0x258.
-void func_8009319C(cf::CCtrlMoveEne* self, u32* out1, f32* out2) {
+// Same as CtrlMoveEne_RateRandGate50Slot0 with threshold 60 and *out1 = 0x258.
+void CtrlMoveEne_RateRandGate3CSlot258(cf::CCtrlMoveEne* self, u32* out1, f32* out2) {
     if (ml::math::mtRand(100) >= 0x3C) {
         *out2 = lbl_eu_806665E4;
     } else {
@@ -3527,8 +3527,8 @@ void func_8009319C(cf::CCtrlMoveEne* self, u32* out1, f32* out2) {
     *out1 = 0x258;
 }
 
-// Same as func_80092FE4 with threshold 50 and *out1 = 0x384.
-void func_80093278(cf::CCtrlMoveEne* self, u32* out1, f32* out2) {
+// Same as CtrlMoveEne_RateRandGate50Slot0 with threshold 50 and *out1 = 0x384.
+void CtrlMoveEne_RateRandGate32Slot384(cf::CCtrlMoveEne* self, u32* out1, f32* out2) {
     if (ml::math::mtRand(100) >= 0x32) {
         *out2 = lbl_eu_806665E4;
     } else {
@@ -3546,11 +3546,11 @@ void func_80093278(cf::CCtrlMoveEne* self, u32* out1, f32* out2) {
     *out1 = 0x384;
 }
 
-// Rand-gated movement-rate setter (retail func_80093354): when mtRand(100) is
+// Rand-gated movement-rate setter (retail CtrlMoveEne_RateSelectDuel50): when mtRand(100) is
 // at/above 0x50, writes the movement-rate divisor into *out2, *out1 = 0x3C and
 // raises the +0x80 flag; otherwise the same rate with *out1 = 0x12C. The rate
 // is +0x1D8 over +0x138 (0.0f fallback when the divisor reads 0).
-void func_80093354(cf::CCtrlMoveEne* self, u32* out1, f32* out2) {
+void CtrlMoveEne_RateSelectDuel50(cf::CCtrlMoveEne* self, u32* out1, f32* out2) {
     if (ml::math::mtRand(100) >= 0x50) {
         f32 result;
         f32 div = *(float*)self->field_0x34->field_0x28->CfObject_getMoveRateScale();
@@ -3581,11 +3581,11 @@ void func_80093354(cf::CCtrlMoveEne* self, u32* out1, f32* out2) {
     }
 }
 
-// Three-way rand-gated movement-rate setter (retail func_800934AC): mtRand(100)
-// at/above 0x5A behaves like func_80093354's high path (*out1 = 0x3C + flag);
+// Three-way rand-gated movement-rate setter (retail CtrlMoveEne_RateSelectTriple5A3C): mtRand(100)
+// at/above 0x5A behaves like CtrlMoveEne_RateSelectDuel50's high path (*out1 = 0x3C + flag);
 // in [0x3C, 0x5A) writes the 1.0f fallback; below 0x3C writes the rate with
 // *out1 = 0x12C.
-void func_800934AC(cf::CCtrlMoveEne* self, u32* out1, f32* out2) {
+void CtrlMoveEne_RateSelectTriple5A3C(cf::CCtrlMoveEne* self, u32* out1, f32* out2) {
     int r = ml::math::mtRand(100);
     if (r >= 0x5A) {
         f32 result;
@@ -3624,7 +3624,7 @@ void func_800934AC(cf::CCtrlMoveEne* self, u32* out1, f32* out2) {
 // Stores a heading value, forwards it to the movement sub-object's vtable
 // +0xC4 slot, and raises the battle-state event while the +0x74 slot reports
 // active.
-void func_80093618(cf::CNpcBaseDataView* self, f32 f) {
+void CtrlMoveEne_CommitHeadAngle(cf::CNpcBaseDataView* self, f32 f) {
     self->field_0xC = f;
     cf::CfObject* sub = self->field_0x28;
     if (sub) {

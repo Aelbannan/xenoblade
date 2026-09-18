@@ -17,8 +17,8 @@ extern void* lbl_eu_80535750[];
 // Forward declarations for functions not in included headers
 void func_80136D74(char*, const char*, int);
 void TagCopyVec2f(char*, const char*);
-void func_80124288(char*, char*);
-void func_801D2150(nw4r::lyt::Pane* pane, const nw4r::math::VEC3* trans);
+void writePanePos(char*, char*);
+void Cur_SetPaneTranslate(nw4r::lyt::Pane* pane, const nw4r::math::VEC3* trans);
 void code80135FDC_setVec3(float*, float, float, float);
 
 void* __ct__CItemBoxGridSubMenu(void* self) {
@@ -42,15 +42,15 @@ void* __ct__CItemBoxGridSubMenu(void* self) {
 CItemBoxGridSubMenu::~CItemBoxGridSubMenu() {
 }
 
-u8 CItemBoxGridSubMenu::func_80208358() {
+u8 CItemBoxGridSubMenu::GridSubMenu_IsVisibleFlag() {
     return mIsVisible;
 }
 
-u8 CItemBoxGridSubMenu::func_80208360() {
+u8 CItemBoxGridSubMenu::GridSubMenu_IsOpenedFlag() {
     return mIsOpened;
 }
 
-void CItemBoxGridSubMenu::func_802083CC() {
+void CItemBoxGridSubMenu::GridSubMenu_MoveSelectionPrev() {
     if (mAnimState != 2)
         return;
 
@@ -71,7 +71,7 @@ void CItemBoxGridSubMenu::func_802083CC() {
     }
 }
 
-void CItemBoxGridSubMenu::func_80208368() {
+void CItemBoxGridSubMenu::GridSubMenu_BeginOpenAnim() {
     if (mAnimState != 0)
         return;
     if (mSubState == 0)
@@ -84,7 +84,7 @@ void CItemBoxGridSubMenu::func_80208368() {
     playUISound__FUl(13);
 }
 
-void CItemBoxGridSubMenu::func_8020844C() {
+void CItemBoxGridSubMenu::GridSubMenu_MoveSelectionNext() {
     if (mAnimState != 2)
         return;
 
@@ -142,7 +142,7 @@ void CItemBoxGridSubMenu::func_802084D4(int arg) {
         v.x = lbl_eu_80668304;
         v.y = lbl_eu_80668308;
         v.z = lbl_eu_80668304;
-        func_801D2150(pane2, &v);
+        Cur_SetPaneTranslate(pane2, &v);
         break;
     }
     case 2: {
@@ -154,7 +154,7 @@ void CItemBoxGridSubMenu::func_802084D4(int arg) {
         v.x = lbl_eu_80668304;
         v.y = lbl_eu_80668310;
         v.z = lbl_eu_80668304;
-        func_801D2150(pane2, &v);
+        Cur_SetPaneTranslate(pane2, &v);
         break;
     }
     case 3: {
@@ -166,7 +166,7 @@ void CItemBoxGridSubMenu::func_802084D4(int arg) {
         v.x = lbl_eu_80668304;
         v.y = lbl_eu_80668318;
         v.z = lbl_eu_80668304;
-        func_801D2150(pane2, &v);
+        Cur_SetPaneTranslate(pane2, &v);
         break;
     }
     }
@@ -237,7 +237,7 @@ extern "C" void func_80208760(void* self, void* src) {
 
 void func_802087B8(){}
 
-void func_80208838(CItemBoxGridSubMenu* self) {
+void GridSubMenu_ClearSelection(CItemBoxGridSubMenu* self) {
     self->mSelectedIdx = -1;
 }
 
@@ -259,7 +259,7 @@ extern "C" void func_80208890(void* self) {
     }
 }
 // retail: if (field_22 == 2) { field_22 = 3; field_21 = 0; tail playUISound(0xE) }
-extern "C" void func_802083A4(void* self) {
+extern "C" void GridSubMenu_AdvanceState2To3(void* self) {
     if (*(u8*)((char*)self + 0x22) == 2) {
         *(u8*)((char*)self + 0x22) = 3;
         *(u8*)((char*)self + 0x21) = 0;
@@ -268,7 +268,7 @@ extern "C" void func_802083A4(void* self) {
 }
 
 // retail: if (field_20) tail drawLayout(*(self+8), drawInfo passthrough, 0, 1)
-extern "C" void func_802082D0(u8* self, void* drawInfo){
+extern "C" void GridSubMenu_DrawLayoutGated(u8* self, void* drawInfo){
     if (self[0x20] == 0) return;
     drawLayout__FPQ34nw4r3lyt6LayoutPQ34nw4r3lyt8DrawInfoii(*(void**)(self + 8), drawInfo, 0, 1);
 }

@@ -17,8 +17,9 @@
 
 #include "kyoshin/menu/CMenuPTChangeNotice.hpp"
 
-// forward declaration for scaffold thunk reference
-void cbRenderBefore__19CMenuPTChangeNoticeFv(void*);
+// forward declaration for scaffold thunk reference (retail calls it by its
+// flat name, so C linkage keeps the thunk's reloc unmangled like retail).
+extern "C" void cbRenderBefore__19CMenuPTChangeNoticeFv(void*);
 
 // ---------------------------------------------------------------------------
 // Constructor (unmangled retail symbol). Not yet matched (us-8029573c) -
@@ -149,23 +150,23 @@ extern "C" int func_8029348C(CMenuPTChangeNotice* self, CEventFile* evt) {
             if (res != NULL) {
                 srcA[0] = (float)(u32)h;
                 srcA[1] = (float)(u32)w;
-                func_80124288((nw4r::lyt::Pane*)res, srcA);
+                writePanePos((nw4r::lyt::Pane*)res, srcA);
             }
         }
     }
 
-    if (!func_8009CF8C(0x334b)) {
+    if (!CtrlRemote_TouchBitByArg(0x334b)) {
         // Party icons unavailable: hide the two member panes.
         nw4r::lyt::Pane* pane = self->mLayout90->GetRootPane()
                                      ->FindPaneByName(&lbl_eu_8050FC20[0xb1],
                                                       true);
         if (pane != NULL) {
-            func_80124270(pane, 0);
+            setPaneVisible(pane, 0);
         }
         pane = self->mLayout90->GetRootPane()
                    ->FindPaneByName(&lbl_eu_8050FC20[0xb8], true);
         if (pane != NULL) {
-            func_80124270(pane, 0);
+            setPaneVisible(pane, 0);
         }
     } else {
         LayoutSetTextBoxFmtValue(self->mLayout90, &lbl_eu_8050FC20[0xb1],
@@ -191,7 +192,7 @@ extern "C" int func_8029348C(CMenuPTChangeNotice* self, CEventFile* evt) {
             if (res != NULL) {
                 srcB[0] = (float)(u32)h;
                 srcB[1] = (float)(u32)w;
-                func_80124288((nw4r::lyt::Pane*)res, srcB);
+                writePanePos((nw4r::lyt::Pane*)res, srcB);
             }
         }
     }
@@ -226,7 +227,7 @@ extern "C" int func_8029348C(CMenuPTChangeNotice* self, CEventFile* evt) {
                 nw4r::lyt::Pane* pane =
                     self->mLayout90->GetRootPane()->FindPaneByName(buf, true);
                 if (pane != NULL) {
-                    func_80124270(pane, 0);
+                    setPaneVisible(pane, 0);
                 }
             }
         }
@@ -253,7 +254,7 @@ extern "C" int func_8029348C(CMenuPTChangeNotice* self, CEventFile* evt) {
                 nw4r::lyt::Pane* pane =
                     self->mLayout90->GetRootPane()->FindPaneByName(buf, true);
                 if (pane != NULL) {
-                    func_80124270(pane, 0);
+                    setPaneVisible(pane, 0);
                 }
             }
         }
@@ -276,11 +277,11 @@ extern "C" int func_8029348C(CMenuPTChangeNotice* self, CEventFile* evt) {
 void CMenuPTChangeNotice::cbRenderBefore() {}
 
 // ---------------------------------------------------------------------------
-// func_80293B9C - task entry: if the notice singleton already exists return 0,
+// PTNotice_Create_3B9C - task entry: if the notice singleton already exists return 0,
 // otherwise allocate 0x9c bytes from work memory, construct the notice, store
 // it in the .sbss global and register it as a CProcess child of `parent`.
 // ---------------------------------------------------------------------------
-extern "C" CMenuPTChangeNotice* func_80293B9C(CProcess* parent, void* arg) {
+extern "C" CMenuPTChangeNotice* PTNotice_Create_3B9C(CProcess* parent, void* arg) {
     if (lbl_eu_80664A00 != 0) {
         return 0;
     }
@@ -297,10 +298,10 @@ extern "C" CMenuPTChangeNotice* func_80293B9C(CProcess* parent, void* arg) {
 void stub_us_8029620c() {}
 
 // ---------------------------------------------------------------------------
-// func_80293C20 - advance the notice animation; once it reaches its target
+// PTNotice_Advance_3C20 - advance the notice animation; once it reaches its target
 // frame, switch the notice state to 2 (party-change applied).
 // ---------------------------------------------------------------------------
-extern "C" void func_80293C20(CMenuPTChangeNotice* self) {
+extern "C" void PTNotice_Advance_3C20(CMenuPTChangeNotice* self) {
     if (advanceAnimTransform(self->mAnim94, lbl_eu_80668B90) != 0) {
         self->mField98 = 2;
     }
@@ -309,10 +310,10 @@ extern "C" void func_80293C20(CMenuPTChangeNotice* self) {
 void func_80293C64(){}
 
 // ---------------------------------------------------------------------------
-// func_80293D2C - advance the notice animation; once it reaches its target
+// PTNotice_Rewind_3D2C - advance the notice animation; once it reaches its target
 // frame, raise the party-change trigger flag at +0x64.
 // ---------------------------------------------------------------------------
-extern "C" void func_80293D2C(CMenuPTChangeNotice* self) {
+extern "C" void PTNotice_Rewind_3D2C(CMenuPTChangeNotice* self) {
     if (AnimRewindFrame(self->mAnim94, lbl_eu_80668B90) != 0) {
         self->mField64 = 1;
     }
@@ -320,10 +321,10 @@ extern "C" void func_80293D2C(CMenuPTChangeNotice* self) {
 
 void OnFileEvent__19CMenuPTChangeNoticeFP10CEventFile(void* self) { ((void(*)(void*))func_8029348C)((char*)self - 0x6c); }
 
-void func_80293D78(void* self) { ((void(*)(void*))__dt__19CMenuPTChangeNoticeFv)((char*)self - 0x6c); }
+void PTNotice_DtorThunkA_3D78(void* self) { ((void(*)(void*))__dt__19CMenuPTChangeNoticeFv)((char*)self - 0x6c); }
 
-void func_80293D80(void* self) { ((void(*)(void*))cbRenderBefore__19CMenuPTChangeNoticeFv)((char*)self - 0x70); }
+void PTNotice_RenderThunk_3D80(void* self) { ((void(*)(void*))cbRenderBefore__19CMenuPTChangeNoticeFv)((char*)self - 0x70); }
 
-extern "C" void func_80293D88(void* self) { ((void(*)(void*))__dt__19CMenuPTChangeNoticeFv)((char*)self - 0x70); }
+extern "C" void PTNotice_DtorThunkB_3D88(void* self) { ((void(*)(void*))__dt__19CMenuPTChangeNoticeFv)((char*)self - 0x70); }
 
-extern "C" unsigned long func_80293C10(void) { return lbl_eu_80664A00 != 0; }
+extern "C" unsigned long PTNotice_IsActive_3C10(void) { return lbl_eu_80664A00 != 0; }

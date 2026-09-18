@@ -42,28 +42,28 @@ extern const f32 lbl_eu_80668730; // timer cap
 // Callee helpers (retail-unmangled names).
 // Use the C++ member — a local extern "C" Fv(s16) overload conflicts with
 // CfGameManager.hpp's bool isClassicController().
-int func_800FEDF8();
-void func_800FF914();
-int func_80244510(CFade* self);
-void func_80244518(CFade* self);
+int CMainMenu_GetInstancePtr();
+void ArtsInfo_SetReadyFlag();
+int CFade_IsVisible(CFade* self);
+void CFade_FadeIn(CFade* self);
 void func_8024371C(CMapSel* self);
 void func_80243768(CMapSel* self);
-void func_80243838(CMapSel* self);
+void moveMapSelSelection(CMapSel* self);
 void func_8024391C(CMapSel* self);
 void func_802439CC(CMapSel* self);
-u8 func_80243A9C(CMapSel* self);
+u8 getMapGridCell(CMapSel* self);
 void func_8024F1FC(CFloorMap* self, u8 mapIdx);
 void func_8024C104(CFloorMap* self);
 
-int func_8024F538(CFloorMap* self);
-int func_8024F6E0(CFloorMap* self);
-u8 func_8024F630(CFloorMap* self);
-u8 func_8024F6D8(CFloorMap* self);
-u8 func_8024F6BC(CFloorMap* self);
+int FloorMap_ClassifyByte41(CFloorMap* self);
+int FloorMap_CheckRowVisited(CFloorMap* self);
+u8 FloorMap_GetBdatMaxRow(CFloorMap* self);
+u8 FloorMap_GetField208Plain(CFloorMap* self);
+u8 FloorMap_GetField208Gated(CFloorMap* self);
 int func_8024F784(CFloorMap* self);
 void func_8024F5C4(CFloorMap* self, u32 arg);
-u16 func_8024F54C(CFloorMap* self);
-u8 func_8024F554(CFloorMap* self);
+u16 FloorMap_GetU16Field5A(CFloorMap* self);
+u8 FloorMap_GetActiveFlag58(CFloorMap* self);
 void func_8024F55C(CFloorMap* self);
 void func_8024CE68(CFloorMap* self);
 void func_8024D23C(CFloorMap* self);
@@ -85,7 +85,7 @@ void func_801C41E8(CTitleAHelp* self, u8 arg);
 }
 
 // CTitleAHelp help-bar text reset (retail-unmangled name).
-extern "C" void func_801C414C(CTitleAHelp* self);
+extern "C" void beginClose(CTitleAHelp* self);
 
 // C++-linkage helper (retail emits the mangled form playUISound__FUl).
 void playUISound(unsigned long op);
@@ -172,9 +172,9 @@ extern "C" CMenuMapSelect* __ct__CMenuMapSelect(CProcess* parent, CProcess* pare
 }
 
 // ---------------------------------------------------------------------------
-// func_80242354 -- singleton guard
+// isMapSelectActive -- singleton guard
 // ---------------------------------------------------------------------------
-extern "C" u32 func_80242354() {
+extern "C" u32 isMapSelectActive() {
     return lbl_eu_80664790 != 0;
 }
 
@@ -230,26 +230,26 @@ void CMenuMapSelect::func_80242368() {
 
     if (triggerBit1 != 0) {
         // Cancel/back: fade out and leave the world map.
-        func_80244518(&this->mFade);
+        CFade_FadeIn(&this->mFade);
         this->mState = 4;
         playUISound(3);
     } else if (triggerBit2 != 0) {
         // Show help overlay.
-        func_801C414C(&this->mTitleAHelp);
+        beginClose(&this->mTitleAHelp);
         func_8024371C(&this->mMapSel);
         this->mState = 3;
     } else if (cancel != 0) {
         func_80243768(&this->mMapSel);
     } else if (stickDir != 0) {
-        func_80243838(&this->mMapSel);
+        moveMapSelSelection(&this->mMapSel);
     } else if (confirm != 0) {
         func_8024391C(&this->mMapSel);
     } else if (menu != 0) {
         func_802439CC(&this->mMapSel);
     } else if (triggerBit3 != 0) {
         // Confirm selection.
-        if (func_800FEDF8() != 0) {
-            func_800FF914();
+        if (CMainMenu_GetInstancePtr() != 0) {
+            ArtsInfo_SetReadyFlag();
             playUISound(6);
         }
         this->mState = 11;
@@ -263,10 +263,10 @@ void CMenuMapSelect::func_80242368() {
 // current map and advance to phase 5.
 // ---------------------------------------------------------------------------
 void func_80242524(CMenuMapSelect* self) {
-    if (func_80244510(&self->mFade) != 0) {
+    if (CFade_IsVisible(&self->mFade) != 0) {
         self->mFloorMap = CFloorMap();
 
-        u8 sel = func_80243A9C(&self->mMapSel);
+        u8 sel = getMapGridCell(&self->mMapSel);
         func_8024F1FC(&self->mFloorMap, sel);
         func_8024C104(&self->mFloorMap);
         self->mState = 5;
@@ -279,7 +279,7 @@ void func_80242524(CMenuMapSelect* self) {
 // zoom / cursor / selection actions based on the active controller layout.
 // ---------------------------------------------------------------------------
 void func_80242A28(CMenuMapSelect* self) {
-    if (func_8024F538(&self->mFloorMap) != 0) {
+    if (FloorMap_ClassifyByte41(&self->mFloorMap) != 0) {
         return;
     }
 
@@ -290,14 +290,14 @@ void func_80242A28(CMenuMapSelect* self) {
 
     if (cf::CfGameManager::isClassicController(-1) != 0) {
         // Classic controller layout.
-        if (func_8024F6E0(&self->mFloorMap) != 0) {
-            if (func_8024F630(&self->mFloorMap) > 1 && func_8024F6D8(&self->mFloorMap) != 0) {
+        if (FloorMap_CheckRowVisited(&self->mFloorMap) != 0) {
+            if (FloorMap_GetBdatMaxRow(&self->mFloorMap) > 1 && FloorMap_GetField208Plain(&self->mFloorMap) != 0) {
                 func_801C41E8(&self->mTitleAHelp, 0x4b);
             } else {
                 func_801C41E8(&self->mTitleAHelp, 0x4c);
             }
         } else {
-            if (func_8024F630(&self->mFloorMap) > 1 && func_8024F6D8(&self->mFloorMap) != 0) {
+            if (FloorMap_GetBdatMaxRow(&self->mFloorMap) > 1 && FloorMap_GetField208Plain(&self->mFloorMap) != 0) {
                 func_801C41E8(&self->mTitleAHelp, 0x4d);
             } else {
                 func_801C41E8(&self->mTitleAHelp, 0x4e);
@@ -307,7 +307,7 @@ void func_80242A28(CMenuMapSelect* self) {
         // Zoom is only allowed while the floor map is fully shown and idle.
         u32 zoomReady = 0;
         u32 zooming = 0;
-        if (func_8024F630(&self->mFloorMap) > 1 && func_8024F6BC(&self->mFloorMap) != 0) {
+        if (FloorMap_GetBdatMaxRow(&self->mFloorMap) > 1 && FloorMap_GetField208Gated(&self->mFloorMap) != 0) {
             zooming = 1;
         }
         if (zooming != 0 && func_8024F784(&self->mFloorMap) == 0) {
@@ -329,15 +329,15 @@ void func_80242A28(CMenuMapSelect* self) {
         u32 pressed = pad->mPressedButtonFlags;
         if ((pressed & 0x00200000) != 0) {
             func_8024EE50(&self->mFloorMap);
-            if (func_8024F54C(&self->mFloorMap) != 0) {
-                func_80244518(&self->mFade);
+            if (FloorMap_GetU16Field5A(&self->mFloorMap) != 0) {
+                CFade_FadeIn(&self->mFade);
                 self->mState = 10;
             }
         } else if ((pressed & 0x00400000) != 0) {
-            if (func_8024F554(&self->mFloorMap) != 0) {
+            if (FloorMap_GetActiveFlag58(&self->mFloorMap) != 0) {
                 func_8024F55C(&self->mFloorMap);
             } else if (func_8024F784(&self->mFloorMap) == 0) {
-                func_80244518(&self->mFade);
+                CFade_FadeIn(&self->mFade);
                 self->mState = 8;
                 playUISound(6);
             } else {
@@ -357,8 +357,8 @@ void func_80242A28(CMenuMapSelect* self) {
             func_8024F72C(&self->mFloorMap);
         } else if ((pressed & 0x800000) != 0) {
             if (func_8024F784(&self->mFloorMap) == 0) {
-                if (func_800FEDF8() != 0) {
-                    func_800FF914();
+                if (CMainMenu_GetInstancePtr() != 0) {
+                    ArtsInfo_SetReadyFlag();
                     playUISound(6);
                 }
                 self->mState = 11;
@@ -368,14 +368,14 @@ void func_80242A28(CMenuMapSelect* self) {
         }
     } else {
         // Wiimote/Nunchuk layout.
-        if (func_8024F6E0(&self->mFloorMap) != 0) {
-            if (func_8024F630(&self->mFloorMap) > 1 && func_8024F6D8(&self->mFloorMap) != 0) {
+        if (FloorMap_CheckRowVisited(&self->mFloorMap) != 0) {
+            if (FloorMap_GetBdatMaxRow(&self->mFloorMap) > 1 && FloorMap_GetField208Plain(&self->mFloorMap) != 0) {
                 func_801C41E8(&self->mTitleAHelp, 0x4b);
             } else {
                 func_801C41E8(&self->mTitleAHelp, 0x4c);
             }
         } else {
-            if (func_8024F630(&self->mFloorMap) > 1 && func_8024F6D8(&self->mFloorMap) != 0) {
+            if (FloorMap_GetBdatMaxRow(&self->mFloorMap) > 1 && FloorMap_GetField208Plain(&self->mFloorMap) != 0) {
                 func_801C41E8(&self->mTitleAHelp, 0x4d);
             } else {
                 func_801C41E8(&self->mTitleAHelp, 0x4e);
@@ -384,7 +384,7 @@ void func_80242A28(CMenuMapSelect* self) {
 
         u32 zooming = 0;
         u32 zoomReady = 0;
-        if (func_8024F630(&self->mFloorMap) > 1 && func_8024F6BC(&self->mFloorMap) != 0) {
+        if (FloorMap_GetBdatMaxRow(&self->mFloorMap) > 1 && FloorMap_GetField208Gated(&self->mFloorMap) != 0) {
             zooming = 1;
         }
         if (zooming != 0 && func_8024F784(&self->mFloorMap) == 0) {
@@ -397,15 +397,15 @@ void func_80242A28(CMenuMapSelect* self) {
         u32 pressed = pad->mPressedButtonFlags;
         if ((pressed & 0x10) != 0) {
             func_8024EE50(&self->mFloorMap);
-            if (func_8024F54C(&self->mFloorMap) != 0) {
-                func_80244518(&self->mFade);
+            if (FloorMap_GetU16Field5A(&self->mFloorMap) != 0) {
+                CFade_FadeIn(&self->mFade);
                 self->mState = 10;
             }
         } else if ((pressed & 0x20) != 0) {
-            if (func_8024F554(&self->mFloorMap) != 0) {
+            if (FloorMap_GetActiveFlag58(&self->mFloorMap) != 0) {
                 func_8024F55C(&self->mFloorMap);
             } else if (func_8024F784(&self->mFloorMap) == 0) {
-                func_80244518(&self->mFade);
+                CFade_FadeIn(&self->mFade);
                 self->mState = 8;
                 playUISound(6);
             } else {
@@ -426,8 +426,8 @@ void func_80242A28(CMenuMapSelect* self) {
             }
         } else if ((pressed & 0x400) != 0) {
             if (func_8024F784(&self->mFloorMap) == 0) {
-                if (func_800FEDF8() != 0) {
-                    func_800FF914();
+                if (CMainMenu_GetInstancePtr() != 0) {
+                    ArtsInfo_SetReadyFlag();
                     playUISound(6);
                 }
                 self->mState = 11;
@@ -482,7 +482,7 @@ void func_80242A28(CMenuMapSelect* self) {
 //
 // Retail: subi r3, r3, 0x58; b cbRenderBefore__14CMenuMapSelectFv
 // ---------------------------------------------------------------------------
-void func_8024309C(CMenuMapSelect* self) {
+extern "C" void fwdMapSelectCbRender(CMenuMapSelect* self) {
     CMenuMapSelect* base = (CMenuMapSelect*)((u8*)self - 0x58);
     // Static dispatch (cbRenderBefore is virtual via IScnRender); the retargeted
     // receiver is the CMenuMapSelect base where the real body lives.
@@ -498,7 +498,7 @@ void func_8024309C(CMenuMapSelect* self) {
 // Retail: subi r3, r3, 0x58; b __dt__14CMenuMapSelectFv
 // ---------------------------------------------------------------------------
 extern "C" void __dt__14CMenuMapSelectFv(CMenuMapSelect* self);
-void CMenuMapSelect::func_802430A4() {
+void CMenuMapSelect::fwdMapSelectDtor() {
     // Single-arg call leaves the delete-flag register untouched (retail thunk
     // does not set r4), producing a plain this-adjusting tail-call.
     __dt__14CMenuMapSelectFv((CMenuMapSelect*)((u8*)this - 0x58));

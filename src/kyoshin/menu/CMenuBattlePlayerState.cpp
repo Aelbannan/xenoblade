@@ -96,7 +96,7 @@ extern const f32 lbl_eu_80666FC8; // HP gauge width multiplier
 }
 
 extern "C" {
-extern nw4r::lyt::ArcResourceAccessor* func_8012FDBC();
+extern nw4r::lyt::ArcResourceAccessor* UIBattleGetWordEC();
 extern u32 CUICfManager_getPackedFont9C();
 extern u32 CUICfManager_getPackedFontD8();
 }
@@ -166,7 +166,7 @@ static inline u32 menuBpsActorListSize(const reslist<cf::CfObjectActor*>* list) 
 
 void CMenuBattlePlayerState::Init() {
     mtl::ALLOC_HANDLE handle = mtl::MemManager::getHandleMEM2();
-    nw4r::lyt::ArcResourceAccessor* accessor = func_8012FDBC();
+    nw4r::lyt::ArcResourceAccessor* accessor = UIBattleGetWordEC();
     unk64.createRegion(reinterpret_cast<int>(accessor), 0xE00,
                        lbl_eu_804FD720 + 0xF7, 0);
 
@@ -1015,27 +1015,27 @@ void func_8010B324(CMenuBattlePlayerStateSlot* slot){
         }
     }
 }
-extern "C" int func_8010CE48() { return (int)lbl_eu_80663F48; }
-extern "C" void func_8010CF5C(CMenuBattlePlayerState* p) {
+extern "C" int BpsStateSingletonToInt() { return (int)lbl_eu_80663F48; }
+extern "C" void BpsStateFlag7C9Set(CMenuBattlePlayerState* p) {
     p->unk7C9 = 1;
 }
 extern "C" void sinit_8010E9F8() { lbl_eu_80663F30[3] = 0xff; lbl_eu_80663F30[2] = 0xff; lbl_eu_80663F30[1] = 0xff; lbl_eu_80663F30[0] = 0xff; lbl_eu_80663F38[3] = 0xff; lbl_eu_80663F38[2] = 0x5c; lbl_eu_80663F38[1] = 0x92; lbl_eu_80663F38[0] = 0xb9; lbl_eu_80663F40[3] = 0xff; lbl_eu_80663F40[2] = 0x50; lbl_eu_80663F40[1] = 0x50; lbl_eu_80663F40[0] = 0x50; }
 // This-adjusting deleting-dtor thunk (secondary base at +0x58):
 // retail emits `subi r3, r3, 0x58; b __dt__22CMenuBattlePlayerStateFv`.
 // Forwarding deleteFlag untouched keeps the tail call (no bl).
-extern "C" void* func_8010EA4C(void* self, int deleteFlag) {
+extern "C" void* BpsStateDtorThunk58(void* self, int deleteFlag) {
     return __dt__22CMenuBattlePlayerStateFv(
         reinterpret_cast<CMenuBattlePlayerState*>((char*)self - 0x58),
         deleteFlag);
 }
 // IScnRender cbRenderBefore this-adjusting thunk (retail: subi r3,-0x5c; b cbRenderBefore__22CMenuBattlePlayerStateFv)
-extern "C" void func_8010EA54(void* self) {
+extern "C" void BpsStateRenderThunk5C(void* self) {
     reinterpret_cast<CMenuBattlePlayerState*>((char*)self - 0x5c)->cbRenderBefore();
 }
 // This-adjusting deleting-dtor thunk (IScnRender base at +0x5c):
 // retail emits `subi r3, r3, 0x5c; b __dt__22CMenuBattlePlayerStateFv`.
 // Forwarding deleteFlag untouched keeps the tail call (no li/bl).
-extern "C" void* func_8010EA5C(void* self, int deleteFlag) {
+extern "C" void* BpsStateDtorThunk5C(void* self, int deleteFlag) {
     return __dt__22CMenuBattlePlayerStateFv(
         reinterpret_cast<CMenuBattlePlayerState*>((char*)self - 0x5c),
         deleteFlag);
@@ -1046,7 +1046,7 @@ extern "C" void __destroy_arr(void* ptr, void* dtor, u32 size, u32 count);
 
 // Battle-menu imports (retail unmangled names; see CUIBattleManager.hpp for
 // func_8012FAA8 semantics - pane/material helpers shared by menu TUs).
-extern "C" void* func_8012FA78();
+extern "C" void* UIBattleGetTableB8();
 extern "C" void func_8012FAA8();
 extern "C" void func_80137F88(void* pane, u32 value);
 extern "C" void func_8010A940(void* obj, u32 a, u32 b, u32 c);
@@ -1059,7 +1059,7 @@ extern "C" void* __ct__CMenuBattlePlayerState(void* self, CScn* scn);
 // registers it as a child of `parent` (registration happens even when the
 // allocation failed, matching retail). Returns NULL when already created.
 // ---------------------------------------------------------------------------
-CMenuBattlePlayerState* func_8010CDCC(CProcess* parent, CScn* scn) {
+CMenuBattlePlayerState* BpsStateCreateSingleton(CProcess* parent, CScn* scn) {
     if (lbl_eu_80663F48 != NULL) {
         return NULL;
     }
@@ -1120,10 +1120,10 @@ struct MenuBpsModeEntry {
 
 // Default mode: the func_8010D8D4 caller passes no third argument (retail
 // leaves r5 stale from an earlier callee), so the parameter defaults.
-extern "C" void func_8010D0D4(CMenuBattlePlayerState* self,
+extern "C" void BpsStateSelectSlotAnim(CMenuBattlePlayerState* self,
                               CMenuBattlePlayerStateSlot* slot, s32 mode = 0) {
     MenuBpsModeEntry* table =
-        reinterpret_cast<MenuBpsModeEntry*>(func_8012FA78());
+        reinterpret_cast<MenuBpsModeEntry*>(UIBattleGetTableB8());
     if (table != NULL) {
         // Retail lowers this as a switch: range tests 0/1 and 3/4 unsigned
         // with deferred case bodies in source order, equality test 2 last.
@@ -1513,7 +1513,7 @@ void func_8010D4B0(CMenuBattlePlayerState* self,
 
     slot->unk234 = slot->unk230;
     slot->unk23C = slot->unk238;
-    func_8010D0D4(self, slot, slot->unk230);
+    BpsStateSelectSlotAnim(self, slot, slot->unk230);
 
     // Star-pane visibility follows the smoothed HP ratio.
     if (slot->unk220 == lbl_eu_80666F94) {
@@ -1721,7 +1721,7 @@ extern "C" void func_8010D8D4(CMenuBattlePlayerState* self,
         u32 curMode = slot->unk230;
         u32 prevMode = slot->unk234;
         if (curMode != prevMode || slot->unk238 != slot->unk23C) {
-            func_8010D0D4(self, slot);
+            BpsStateSelectSlotAnim(self, slot);
 
             if (slot->unk260 == 0) {
                 void* player = cf::CfGameManager::getPlayer(0);
@@ -2054,7 +2054,7 @@ extern "C" void func_8010D8D4(CMenuBattlePlayerState* self,
                     lbl_eu_80666F94;
             }
         } else if (slot->unk80 == 2) {
-            func_8010ACC4(
+            BtlDmg_QueueDraw(
                 reinterpret_cast<CMenuBattleDamageQueue*>(&slot->unk74));
         }
         slot->unk78->Animate(0);

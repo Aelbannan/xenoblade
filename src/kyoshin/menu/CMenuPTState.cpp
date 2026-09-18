@@ -1,5 +1,5 @@
 // kyoshin/menu/CMenuPTState -- PT (photo/theater?) state menu TU.
-// FULL_MATCH: func_80192BD0, func_80192BE4/BEC (vtable adjustor thunks),
+// FULL_MATCH: menuPTStateIsActive, menuPTStateRenderBeforeThunk58/BEC (vtable adjustor thunks),
 // __ct__80192C10, func_80192C2C, func_80192CB0.
 // __ct__CMenuPTState: 94.3% static, residual = 4 pure r6/r7 reg-swaps
 // (register-color ceiling; witness-certified equivalent).
@@ -8,7 +8,7 @@
 #include <cstddef>
 #include "monolib/scn/CScnTimeApi.hpp"
 #include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
-#include "kyoshin/cf/object/CAIAction.hpp"   // battle-list helpers (func_800F6EAC / func_80148778)
+#include "kyoshin/cf/object/CAIAction.hpp"   // battle-list helpers (getObjectAt / func_80148778)
 
 // Retail CProcess / mem-manager / win-ctor imports (defined in other TUs).
 // Retail exports these under their verbatim-mangled spellings, so C linkage is
@@ -100,19 +100,19 @@ extern "C" CMenuPTState* __ct__CMenuPTState(CProcess* _this, CProcess* storedPar
 }
 
 // Singleton-existence query (retail-unmangled symbol; see func_80192C2C).
-extern "C" unsigned long func_80192BD0() { return lbl_eu_80664300 != 0; }
+extern "C" unsigned long menuPTStateIsActive() { return lbl_eu_80664300 != 0; }
 // FULL_MATCH: vtable adjustor thunks (IScnRender secondary base at offset +0x58).
 // Called through the IScnRender subobject vtable slot, `this` points at
 // CMenuPTState + 0x58, so subtract 0x58 before forwarding to the full-object
 // member. The retail emits exactly subi r3,r3,0x58; b <member>.
-void CMenuPTState::func_80192BE4() {
+void CMenuPTState::menuPTStateRenderBeforeThunk58() {
     // this is the +0x58 IScnRender subobject (shim->iscnVtbl).
     CMenuPTStateCtorShim* full =
         (CMenuPTStateCtorShim*)((char*)this - offsetof(CMenuPTStateCtorShim, iscnVtbl));
     cbRenderBefore__12CMenuPTStateFv((CMenuPTState*)full);
 }
 
-void CMenuPTState::func_80192BEC() {
+void CMenuPTState::menuPTStateDtorThunk58() {
     CMenuPTStateCtorShim* full =
         (CMenuPTStateCtorShim*)((char*)this - offsetof(CMenuPTStateCtorShim, iscnVtbl));
     __dt__12CMenuPTStateFv((CMenuPTState*)full);
@@ -193,7 +193,7 @@ extern "C" void func_80192CB0(cf::UnkClass_80192BF4* self) {
     if (self->field_0x04 > lbl_eu_80667A98) {
         CEnumListHolder holder;
         CTaskGame_enumListCtor(&holder);
-        func_800F4A98(CTaskGame_enumListGet(&holder), 0x80000000, 0);
+        startEnumObjects(CTaskGame_enumListGet(&holder), 0x80000000, 0);
 
         int found;
         u32 i = 0;
@@ -202,7 +202,7 @@ extern "C" void func_80192CB0(cf::UnkClass_80192BF4* self) {
         while (((CEnumList*)CTaskGame_enumListGet(&holder))->count > i) {
             // Test-before-copy shape: retail tests r3 straight from the call,
             // copies it, then subtracts the record offset when non-null.
-            u8* actor = (u8*)func_800F6EAC(CTaskGame_enumListGet(&holder), i);
+            u8* actor = (u8*)getObjectAt(CTaskGame_enumListGet(&holder), i);
             if (actor != nullptr) {
                 actor -= 0x3e9c;
             }

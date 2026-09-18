@@ -11,9 +11,9 @@
  * Field layout (MWCC big-endian 32-bit):
  *   0x00  void* vtable     - set to externally-defined lbl_eu_805309B0
  *   0x04  u32   mFlags     - bitfield of state flags
- *   0x08  u32   mField08   - cached setting value (set by func_801667AC)
- *   0x0C  u32   mField0C   - runtime value 1 (set by func_801667AC)
- *   0x10  u32   mField10   - runtime value 2 (set by func_801667AC)
+ *   0x08  u32   mField08   - cached setting value (set by InfoCfRefreshSettings)
+ *   0x0C  u32   mField0C   - runtime value 1 (set by InfoCfRefreshSettings)
+ *   0x10  u32   mField10   - runtime value 2 (set by InfoCfRefreshSettings)
  */
 
 #include <types.h>
@@ -105,13 +105,13 @@ public:
 // retail reloc names verbatim (same scheme as CfTFile.hpp / code_800A75FC.hpp).
 extern "C" {
 void setPresentationFlag__Q22cf13CfGameManagerFv(u32 enable);
-void func_801C3D9C(CBgTex* self);
-void func_801C40A0(CTitleAHelp* self);
+void BgTex_Release_3D9C(CBgTex* self);
+void teardown(CTitleAHelp* self);
 void UnloadItemBox(CItemBoxGrid* self);
 void CfRes_getInstPtrBC();
 int KyoshinHeap_GetActive54();
 u32 KyoshinHeap_GetSize500000();
-u32 func_80166830();
+u32 InfoCfGetUiFlags();
 void __dt__8CProcessFv(CProcess* self, int flags);
 // CMenuItem dtor (retail D1, manual member/base destruction - see the cpp)
 // and the embedded widget dtors it drives, all with the retail CW names.
@@ -124,8 +124,8 @@ void __dt__6CBgTexFv(CBgTex* self, int flags);
 void __ct__CBgTex(CBgTex* self, u8 arg);
 void __ct__CTitleAHelp(CTitleAHelp* self, char* arg1, u8 arg2);
 void __ct__CItemBoxGrid(CItemBoxGrid* self, u32 type, u32 unk, u32 scene, u32 flag);
-int func_801C3C14(CBgTex* self);
-void func_801C3A24(CBgTex* self);
+int BgTex_Acquire_3C14(CBgTex* self);
+void BgTex_SetupRegion_3A24(CBgTex* self);
 void CTitleAHelp_load(CTitleAHelp* self);
 void ClearListSlots(CItemBoxGrid* self);
 void LoadItemBoxFiles(CItemBoxGrid* self);
@@ -145,7 +145,7 @@ extern char lbl_eu_8050303C[];
 /*
  * Body-copy view for the C-ABI copy helpers in this TU. Each helper copies a
  * fixed slice of a larger object, skipping the member vtable at +0x00.
- * Layouts recovered from the retail copy ASM (func_80167260 / 801672E4 /
+ * Layouts recovered from the retail copy ASM (InfoCfCopyObj60 / 801672E4 /
  * 801671D4 / 8016742C all emit load-all-then-store-all word/byte copies).
  * The container structs let the copy be written as a member struct assignment
  * (dst->body = src->body), which reproduces the retail register allocation;
@@ -255,7 +255,7 @@ __declspec(align(4)) struct CInfoCfE48Entry {
 };
 
 /*
- * Body-copy view for func_80166E48 (0x04..0xEF). Split around the 0x2C..0x2F
+ * Body-copy view for InfoCfCopyObjE48 (0x04..0xEF). Split around the 0x2C..0x2F
  * hole retail does not copy. Head is +0x04..+0x2B; tail is +0x30..+0xEE
  * with a 16-entry 8-byte table at +0x6C (lwzu/stwu base at 0x68 = 0x6C-4).
  */
@@ -539,11 +539,11 @@ struct CItemBoxGridTail524 {
 struct CItemBoxGridBodyView {
     CItemBoxGridHead head;        // 0x04..0x6F (inline)
     u8 _70[0xE8 - 0x70];          // 0x70..0xE7 (not copied directly)
-    CInfoCfObjE48 objE8;          // 0xE8  func_80166E48
+    CInfoCfObjE48 objE8;          // 0xE8  InfoCfCopyObjE48
     CInfoCfObjF80 obj1D8;         // 0x1D8 func_80166F80
-    CInfoCfObjD4 obj3E4;          // 0x3E4 func_801671D4
-    CInfoCfObj60 obj418;          // 0x418 func_80167260
-    CInfoCfObjE4 obj440;          // 0x440 func_801672E4
+    CInfoCfObjD4 obj3E4;          // 0x3E4 InfoCfCopyObjD4
+    CInfoCfObj60 obj418;          // 0x418 InfoCfCopyObj60
+    CInfoCfObjE4 obj440;          // 0x440 InfoCfCopyObjE4
     CInfoCfObj368 obj468;         // 0x468 func_80167368
     CInfoCfObjSysWin obj4AC;      // 0x4AC func_8016742C
     CInfoCfObjSysWin obj4E8;      // 0x4E8 func_8016742C
@@ -566,6 +566,6 @@ extern u32 lbl_eu_80663E28;
 
 // Menu/task-flow imports previously pulled in via CSkipTimer.hpp (that header
 // carries a conflicting __ct__CSysWin declaration, so they are declared here).
-extern u32 func_800FEDF8();
-extern void func_800FF914();
+extern u32 CMainMenu_GetInstancePtr();
+extern void ArtsInfo_SetReadyFlag();
 extern void playUISound__FUl(u32);

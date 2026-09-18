@@ -52,24 +52,24 @@ public:
 
     // Draw the tutorial layout when the active flag is set (tail-calls
     // drawLayout).
-    void func_8029ABB8(nw4r::lyt::DrawInfo* drawInfo);
+    void Tutorial_DrawLayoutGated(nw4r::lyt::DrawInfo* drawInfo);
     // Idempotent start: mark state 1 and fire the 0x8 UI event once.
-    void func_8029ACC4();
+    void Tutorial_StartIfIdle();
     // Current tutorial phase (0-3) derived from the page counters at 0x50/0x51.
     u8 func_8029AE5C();
     // Advance-animation completion: state 3, visible.
-    void func_8029AF30();
+    void Tutorial_FinishAdvanceAnim();
     // Rewind-animation completion: state 0, visible.
-    void func_8029B010();
+    void Tutorial_FinishRewindAnim();
 
-    u8 func_8029ACAC();
-    u8 func_8029ACB4();
-    u8 func_8029ACBC();
+    u8 Tutorial_GetField46Mark();
+    u8 Tutorial_GetField47Mark();
+    u8 Tutorial_GetField52Mark();
 
-    // Load / unload the three tutorial data files (retail func_8029AA34 /
-    // func_8029ABD8).
-    void func_8029AA34();
-    void func_8029ABD8();
+    // Load / unload the three tutorial data files (retail Tutorial_LoadTutorialFiles /
+    // Tutorial_TeardownTutorial).
+    void Tutorial_LoadTutorialFiles();
+    void Tutorial_TeardownTutorial();
     void func_8029B124();
     // Page-navigation tick (retail func_8029AD88).
     void func_8029AD88();
@@ -77,8 +77,8 @@ public:
     void func_8029AE9C();
     // Rewind-anim start handler (retail func_8029AF7C).
     void func_8029AF7C();
-    // Advance-anim fully finished (retail func_8029ACEC).
-    void func_8029ACEC();
+    // Advance-anim fully finished (retail Tutorial_AdvanceState3To4).
+    void Tutorial_AdvanceState3To4();
     // Reset the 0x3340..0x33BE UI flag block (retail func_8029B498).
     void func_8029B498();
 
@@ -136,14 +136,15 @@ extern "C" void setLayoutTextBoxNumber__FPQ34nw4r3lyt6LayoutPcUc(nw4r::lyt::Layo
 // as code_80135FDC.hpp so the mangled/unmangled reloc names are unchanged).
 u32 advanceAnimTransform(nw4r::lyt::AnimTransform*, float);
 extern "C" u32 AnimRewindFrame(nw4r::lyt::AnimTransform*, float);
-void func_801390E0(CFileHandle**);
+extern "C" void closeFileHandle__FPP11CFileHandle(CFileHandle**);
+extern "C" void CtrlRemote_SetSharedBit(u32 destination, u32 value);
 void releaseArcResourceAccessor(nw4r::lyt::ArcResourceAccessor*);
 extern "C" void PaneSetTexPaletteByName(void*, void*, void*);
 
 // Unmangled retail callees - C ABI. The retail reloc names for these are the
 // literal unmangled identifiers, so they must be declared with C linkage.
-extern "C" void* func_8003AA34();
-extern "C" void func_8029B05C(CTutorial* pTutorial);
+extern "C" void* Bdat_GetTable_AA34();
+extern "C" void Tutorial_ReloadTutorialData(CTutorial* pTutorial);
 
 
 // Layout build helpers (retail relocs are the mangled C++ names).

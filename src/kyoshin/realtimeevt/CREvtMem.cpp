@@ -67,8 +67,8 @@ cf::CREvtMem::~CREvtMem() {
 // ============================================================================
 u32 func_80167D40(u32 size, u32 offset) {
     // Establish the arena bounds from the realtime event region.
-    lbl_eu_80664260->field_08 = func_8016676C();
-    lbl_eu_80664260->field_0C = func_80166778();
+    lbl_eu_80664260->field_08 = InfoCfGetUnk0C();
+    lbl_eu_80664260->field_0C = InfoCfGetUnk10();
     lbl_eu_80664260->arenaStart = lbl_eu_80664260->field_08;
     lbl_eu_80664260->arenaEnd = lbl_eu_80664260->field_08 + lbl_eu_80664260->field_0C;
     lbl_eu_80664260->arenaSize = lbl_eu_80664260->arenaEnd - lbl_eu_80664260->arenaStart;
@@ -126,9 +126,9 @@ u32 func_80167D40(u32 size, u32 offset) {
 }
 
 // ============================================================================
-// func_80167EF8: Deallocate both MEM2 allocations
+// freeEvtMemAll: Deallocate both MEM2 allocations
 // ============================================================================
-void func_80167EF8(void) {
+void freeEvtMemAll(void) {
     // Check flag bit 1 (0x2)
     if (lbl_eu_80664260->flags & 0x2) {
         if (lbl_eu_80664260->ptr1 != nullptr) {
@@ -176,10 +176,10 @@ u8* func_80167F6C(u32 size, u32 alignment, int useMEM1) {
 }
 
 // ============================================================================
-// func_80167FFC: Bounds-checked deallocation
+// freeEvtMemPtr: Bounds-checked deallocation
 // If ptr is within the arena, do nothing. Otherwise, deallocate from heap.
 // ============================================================================
-void func_80167FFC(u8* ptr) {
+void freeEvtMemPtr(u8* ptr) {
     cf::CREvtMem* mem = lbl_eu_80664260;
 
     // If ptr lies inside the arena, it was arena-allocated - do nothing.
@@ -194,9 +194,9 @@ void func_80167FFC(u8* ptr) {
 }
 
 // ============================================================================
-// func_80168028: Get pointer from indexed slot
+// getEvtMemSlot: Get pointer from indexed slot
 // ============================================================================
-u8* func_80168028(u32 idx) {
+u8* getEvtMemSlot(u32 idx) {
     // Reads slot [idx] from the pointer array that begins at ptr1 (+0x10).
     return ((u8**)&lbl_eu_80664260->ptr1)[idx];
 }

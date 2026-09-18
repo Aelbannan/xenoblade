@@ -78,7 +78,7 @@ struct CVoiceHandleState {
 // Init-state triple for this thread variant.
 extern u32 lbl_eu_80539C04[3];
 
-// Init-state triple restored by the advance/play function func_802A7508.
+// Init-state triple restored by the advance/play function HpVoice_PlayChange.
 extern u32 lbl_eu_80539C10[3];
 
 // Init-state triple copied by the factory __ct__802A7254.

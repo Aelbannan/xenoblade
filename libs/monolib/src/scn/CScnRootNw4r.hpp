@@ -53,10 +53,10 @@ struct CScnItemPool;
 struct CScnMgrLayout {
     u8 pad_0x0[0x60];                 // +0x00
     CScnItemPool* mItemPool;          // +0x60 (arg of CScnItemPool_forEachCallVfunc14)
-    CScnLightMan* mLightMan;          // +0x64 (arg of func_8048D1B0)
+    CScnLightMan* mLightMan;          // +0x64 (arg of LightManInvokeLightV3)
     CScnCameraMan* mCamWork;          // +0x68 (arg of func_8049B024)
     u8 pad_0x6C[0x78 - 0x6C];         // +0x6C
-    CScnFogMan* mFogMan;              // +0x78 (arg of func_8049DE70)
+    CScnFogMan* mFogMan;              // +0x78 (arg of FogManIsFogEnabled)
     CScnEnvLgtCtrl* mEnvLgtCtrl;      // +0x7C (arg of scnLgtBindCamera / 22F0 / 19B8)
     u8 pad_0x80[0xB4 - 0x80];         // +0x80
     ICulling* mCulling;               // +0xB4 (slot +0xC dispatch)
@@ -117,8 +117,8 @@ extern "C" void scnLgtBindCamera(CScnEnvLgtCtrl* ctrl);
 extern "C" void func_804C22F0(CScnEnvLgtCtrl* ctrl);
 extern "C" void scnLgtEnterMode20(CScnEnvLgtCtrl* ctrl);
 extern "C" void func_8049B024(CScnCameraMan* cam);
-extern "C" void func_8048D1B0(CScnLightMan* man);
-extern "C" void func_8049DE70(CScnFogMan* man);
+extern "C" void LightManInvokeLightV3(CScnLightMan* man);
+extern "C" void FogManIsFogEnabled(CScnFogMan* man);
 extern "C" void CScnItemPool_forEachCallVfunc14(CScnItemPool* pool);
 extern "C" void func_8048FAA8(CScnRootNw4r* self, int flag);
 extern "C" void resetGXStateA__8CGXCacheFv(CGXCache* cache);
@@ -141,7 +141,7 @@ extern "C" int simSyncBuf824Flags(CScnItemModel* item, int param);
 
 // Kind-1 sub-pool list returned by the scene-item-pool accessor.
 extern "C" void* CScnItemPool_lookupSubPool(void* pool, int kind);
-extern "C" int func_8048D264(void* scene);
+extern "C" int MaruShadowSetupTexturePipe(void* scene);
 
 // Per-model draw hook object stored at CScnItemModel+0x7EC. Dispatched at
 // vtable offset 0x10 during the opaque-draw pass.
@@ -176,15 +176,15 @@ public:
     virtual ~CScnRootNw4r();          // vf0 (+0x08)
     virtual void vf1(u32 value);      // vf1 (+0x0C) func_8048F5C8
     virtual void vf2();               // vf2 (+0x10) func_8048F4D0
-    virtual void vf3();               // vf3 (+0x14) func_8048F8E8
+    virtual void vf3();               // vf3 (+0x14) RootNw4r_UpdateFrame
     virtual void vf4();               // vf4 (+0x18) func_8048F994
     virtual void vf5();               // vf5 (+0x1C) func_8048FC68
     virtual void vf6(u32 a, u32 b);   // vf6 (+0x20) func_8048FF90
     virtual void vf7(u32 a, u32 b);   // vf7 (+0x24) func_8048FFBC
-    virtual void vf8();               // vf8 (+0x28) func_8048F2F0
+    virtual void vf8();               // vf8 (+0x28) getScnRootGroupHandle
     virtual u32 vf9();                // vf9 (+0x2C) scnImN4GetWord4AC
     virtual u32 vf10();               // vf10 (+0x30) func_80490040
-    virtual u32 vf11();               // vf11 (+0x34) func_80490038
+    virtual u32 vf11();               // vf11 (+0x34) RootNw4r_GetField14
 
     // Fields (offsets verified against retail accessors).
     CScnMgrLayout* field_0x4;         // +0x04 (owning scene object, retail CScn)

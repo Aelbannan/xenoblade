@@ -40,10 +40,10 @@ namespace cf {
         // +0x64 noop_79768 (Ene 818D4 / Pc 8245C), +0x68 78F70 (shared),
         // +0x6C 78F5C (same / Pc 822F8), +0x70 7A324 (shared), +0x74 getZero_A9D0 (same / Pc 821E0).
         virtual void CChain_setFieldAndClear(int val);
-        virtual void func_80279B34();
-        virtual void func_80279DC0();
-        virtual void func_80279E48(int val);
-        virtual void func_80279F6C(int val);
+        virtual void CChainActor_CleanupVoiceEnd();
+        virtual void CChainActor_ClearTargetRef();
+        virtual void CChainActor_ToggleCancelVoice(int val);
+        virtual void CChainActor_ToggleMoveFlag(int val);
         virtual int func_8027A024(int arg);
         virtual int func_8027A338(int arg);
         virtual int func_8027A58C();
@@ -62,9 +62,9 @@ namespace cf {
         virtual int CChain_getZero_A584();
         virtual int CChain_getZero_A9D8();
         virtual void CChain_noop_79768(int key);
-        virtual int func_80278F70();
-        virtual void func_80278F5C(int val);
-        virtual int func_8027A324();
+        virtual int CChainActor_FetchRunKey();
+        virtual void CChainActor_FwdRunKey(int val);
+        virtual int CChainActor_NotifyBattleObj();
         virtual int CChain_getZero_A9D0();
 
         u8 mChainEffectRaw[0xC]; // 0x74

@@ -272,7 +272,7 @@ struct CColiQuery {
     char pad1[0x8]; //0x10
 };
 
-int func_804B4E10(CColiQueryResult* self, CColiQueryNode* owner, const Vec* a,
+int Coli_WalkQuery(CColiQueryResult* self, CColiQueryNode* owner, const Vec* a,
                   u32 mask, int arg, int isFirst, f32 val) {
     // val survives every helper call in an FP saved register.
     const f32 v = val;
@@ -569,9 +569,9 @@ struct CColiEllipsoid {
     f32 radiusY;   //0x14
 };
 
-extern "C" void func_804B4478(CColiEllipsoid*);
+extern "C" void Coli_ExpandEllipsoid(CColiEllipsoid*);
 
-void func_804B4478(CColiEllipsoid* p) {
+void Coli_ExpandEllipsoid(CColiEllipsoid* p) {
     if (lbl_eu_80665944->max[0] < p->x + p->radiusXZ) {
         lbl_eu_80665944->max[0] = p->x + p->radiusXZ;
     }
@@ -649,9 +649,9 @@ struct CColiBoundsPoint {
     f32 radius;         //0x70
 };
 
-extern "C" void func_804B45E4(CColiBoundsPoint*);
+extern "C" void Coli_ExpandPoint(CColiBoundsPoint*);
 
-void func_804B45E4(CColiBoundsPoint* p) {
+void Coli_ExpandPoint(CColiBoundsPoint* p) {
     // Per-check radius temp: retail reloads it at the top of every check.
     // Retail unrolls a 3-axis loop (max check then min check per axis).
     for (int i = 0; i < 3; i++) {
@@ -682,7 +682,7 @@ struct CColiBoundsPoint2 {
 };
 
 extern "C" void func_804B46A8(CColiBoundsPoint2*);
-extern "C" void func_804B476C();
+extern "C" void Coli_ExpandGlobalBox();
 
 void func_804B46A8(CColiBoundsPoint2* p) {
     // Per-sub-block radius temp: retail reloads it at the top of every check
@@ -801,19 +801,19 @@ struct CColiSphereOb {
 };
 
 // Dispatch-table participants (node lookup + transform/bounds family).
-extern "C" void func_804B30CC(CColiHead*, const char*, const CModelRes*);
+extern "C" void Coli_FindNodeByName(CColiHead*, const char*, const CModelRes*);
 extern "C" void func_804B34F4(CColiSphereOb*, const CColiMgr*, const Vec*);
 extern "C" void func_804B4020(CColiMtxNode*, const CColiMgr*,
                               const CColiSphereOb*);
 extern "C" void func_804B3EA8(CColiNode*, const CColiMgr*, const CColiRigid*);
 
 // ---------------------------------------------------------------------------
-// func_804B30CC: scan the model's node table for the node named `name` and
+// Coli_FindNodeByName: scan the model's node table for the node named `name` and
 // store its matrix id as the collision node's bone index. On failure, clear
 // the index and set flag bit 1 so the matrix-source selectors fall back to
 // the root matrix.
 // ---------------------------------------------------------------------------
-void func_804B30CC(CColiHead* self, const char* name, const CModelRes* model) {
+void Coli_FindNodeByName(CColiHead* self, const char* name, const CModelRes* model) {
     self->flags = 0;
     int num = (int)nw4r::g3d::ResMdl(model->resMdl).GetResNodeNumEntries();
     for (int i = 0; i < num; i++) {
@@ -970,18 +970,18 @@ struct CColiPosVec {
 };
 
 // Dispatch-table participants (ellipsoid family).
-extern "C" void func_804B33C8(CColiHead*, const char*, const CModelRes*,
+extern "C" void Coli_FindNodeRecord(CColiHead*, const char*, const CModelRes*,
                               const CColiPosVec*);
 extern "C" void func_804B37E4(CColiEllipsoidOb*, const CColiMgr*, const Vec*);
 extern "C" void func_804B3970(CColiEllipsoidOb*, const CColiMgr*,
                               const CColiPosVec*);
 
 // ---------------------------------------------------------------------------
-// func_804B33C8: node-lookup sibling of func_804B30CC - records the matched
+// Coli_FindNodeRecord: node-lookup sibling of Coli_FindNodeByName - records the matched
 // node's matrix id into the shared master-node index and folds a source
 // vector's x/y/z into the shared half-extent (ay = y - z).
 // ---------------------------------------------------------------------------
-void func_804B33C8(CColiHead* self, const char* name, const CModelRes* model,
+void Coli_FindNodeRecord(CColiHead* self, const char* name, const CModelRes* model,
                    const CColiPosVec* v) {
     int num = (int)nw4r::g3d::ResMdl(model->resMdl).GetResNodeNumEntries();
     for (int i = 0; i < num; i++) {
@@ -1003,7 +1003,7 @@ void func_804B33C8(CColiHead* self, const char* name, const CModelRes* model,
     }
 }
 
-// Matrix output object (func_804B4854 / func_804B49B8): a matrix pair at
+// Matrix output object (Coli_ShiftMtxHist / Coli_CopyBoneMtx): a matrix pair at
 // +0x0 (m0 + inverse m1), duplicated up by one pair into the history slots
 // at +0x60. CObjMtx members keep the copies as word loads/stores.
 struct CColiMtxPair {
@@ -1017,10 +1017,10 @@ struct CColiMtxOut {
 };
 
 // ---------------------------------------------------------------------------
-// func_804B4854: shift the previous matrix pair up into the history slots,
+// Coli_ShiftMtxHist: shift the previous matrix pair up into the history slots,
 // then copy the bone matrix into m0 and derive its inverse into m1.
 // ---------------------------------------------------------------------------
-void func_804B4854(CColiHead* hd, CColiMtxOut* dst, CColiMgr* mgr) {
+void Coli_ShiftMtxHist(CColiHead* hd, CColiMtxOut* dst, CColiMgr* mgr) {
     dst->old = dst->cur;
     const CObjMtx* src = (const CObjMtx*)mgr->mesh->boneTable[hd->index];
     dst->cur.m0 = *src;
@@ -1165,7 +1165,7 @@ void func_804B41FC(const CColiNode* unused, const CColiMgr* mgr,
         lbl_eu_80665944->min[1] = lbl_eu_80665948->qy;
 }
 
-void func_804B476C() {
+void Coli_ExpandGlobalBox() {
     if (lbl_eu_80665944->max[0] < lbl_eu_80665948->qx + lbl_eu_8066594C->ax) {
         lbl_eu_80665944->max[0] = lbl_eu_8066594C->ax + lbl_eu_80665948->qx;
     }
@@ -1513,11 +1513,11 @@ void func_804B3D1C(CColiCapsuleNode* self, const CColiMgr* mgr, const Vec* other
 }
 
 // ---------------------------------------------------------------------------
-// func_804B49B8: copy the bone matrix from the manager table into m0,
+// Coli_CopyBoneMtx: copy the bone matrix from the manager table into m0,
 // derive its inverse into m1, then duplicate both up by one pair into the
 // history slots.
 // ---------------------------------------------------------------------------
-void func_804B49B8(CColiHead* hd, CColiMtxOut* dst, CColiMgr* mgr) {
+void Coli_CopyBoneMtx(CColiHead* hd, CColiMtxOut* dst, CColiMgr* mgr) {
     const s16 idx = hd->index;
     const CObjMtx* src = (const CObjMtx*)mgr->mesh->boneTable[idx];
     dst->cur.m0 = *src;
@@ -1580,7 +1580,7 @@ void func_804B4BDC(CColiList* self, CColiListItem* node) {
 // fixing the head when the removed node was the head. Goto-shaped to match
 // the retail control flow: pre-check on the head value, entry jump to the
 // tail condition, and the found path falling out to the common epilogue.
-void func_804B4C7C(CColiList* self, CColiListItem* findNode) {
+void Coli_ListRemoveNode(CColiList* self, CColiListItem* findNode) {
     ColiSetMoveEnableFlag(findNode, 0);
     // Declared at function top so the allocator colours prev/next before the
     // loop variable: retail keeps cur in r4 with prev/next sharing r3.
@@ -1813,7 +1813,7 @@ struct CColiSeg {
 // while the segment start is past each node's max bound, then backward from
 // self->prev while the segment end is before each node's min bound. A node
 // that survives the filter/bounds/level checks and both query tests wins.
-int func_804B54D4(u32 unused, CColiQueryNode* self, const CColiSeg* src,
+int Coli_SweepSegNodes(u32 unused, CColiQueryNode* self, const CColiSeg* src,
                   u32 mask, void* arg) {
     if (!(self->flags & 4) || !(self->flags & 2)) return 0;
 
@@ -1859,11 +1859,11 @@ struct CColiWalkOwner {
 };
 
 // ---------------------------------------------------------------------------
-// func_804B5658: gate on the owner's walk-enable flag, reject degenerate
+// Coli_WalkReport: gate on the owner's walk-enable flag, reject degenerate
 // (equal) vectors, then run the shared segment query over the node list and
 // report the accumulated AABB through out1 (min) / out2 (max).
 // ---------------------------------------------------------------------------
-int func_804B5658(CColiWalkOwner* self, Vec* out1, Vec* out2,
+int Coli_WalkReport(CColiWalkOwner* self, Vec* out1, Vec* out2,
                   Vec* a, Vec* b) {
     // Single-exit shape: every zero path breaks to one shared return block
     // (retail merges all li r3,0 sites), success falls out of the block.
@@ -2085,9 +2085,9 @@ extern __declspec(section ".sdata") __attribute__((aligned(8))) u32 lbl_eu_80663
 // .data 0x8056F3FC..0x8056F508: shape-dispatch tables, task vtables and
 // monolib RTTI hierarchy tables.
 u32 lbl_eu_8056F3FC[9] = {
-    (u32)&func_804B30CC, (u32)&func_804B30CC, (u32)&func_804B30CC,
-    (u32)&func_804B30CC, (u32)&func_804B30CC, (u32)&func_804B31EC,
-    (u32)&func_804B30CC, (u32)&func_804B30CC, (u32)&func_804B33C8,
+    (u32)&Coli_FindNodeByName, (u32)&Coli_FindNodeByName, (u32)&Coli_FindNodeByName,
+    (u32)&Coli_FindNodeByName, (u32)&Coli_FindNodeByName, (u32)&func_804B31EC,
+    (u32)&Coli_FindNodeByName, (u32)&Coli_FindNodeByName, (u32)&Coli_FindNodeRecord,
 };
 u32 lbl_eu_8056F420[9] = {
     (u32)&func_804B34F4, (u32)&func_804B3658, (u32)&func_804B37E4,
@@ -2095,9 +2095,9 @@ u32 lbl_eu_8056F420[9] = {
     (u32)&func_804B3EA8, (u32)&func_804B4020, (u32)&func_804B41FC,
 };
 u32 lbl_eu_8056F444[9] = {
-    (u32)&func_804B43B4, (u32)&func_804B43B4, (u32)&func_804B4478,
-    (u32)&func_804B4478, (u32)&func_804B453C, (u32)&func_804B453C,
-    (u32)&func_804B45E4, (u32)&func_804B46A8, (u32)&func_804B476C,
+    (u32)&func_804B43B4, (u32)&func_804B43B4, (u32)&Coli_ExpandEllipsoid,
+    (u32)&Coli_ExpandEllipsoid, (u32)&func_804B453C, (u32)&func_804B453C,
+    (u32)&Coli_ExpandPoint, (u32)&func_804B46A8, (u32)&Coli_ExpandGlobalBox,
 };
 u32 lbl_eu_8056F468[9] = {
     (u32)&lbl_eu_80663AB0, 0,

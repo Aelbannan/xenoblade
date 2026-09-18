@@ -15,7 +15,7 @@ extern "C" { void closeFileHandle__FPP11CFileHandle(void*); void func_80139124(v
 // .sdata2 float constant used as the "animation reached frame" bound.
 extern const float lbl_eu_80668C30;
 // (AnimRewindFrame stays as declared in code_80135FDC.hpp - read-only header)
-// func_8006A234 is declared extern "C" in code_80135FDC.hpp.
+// CfT_PlayClockSnapshot is declared extern "C" in code_80135FDC.hpp.
 // CSkipTimer2OnFwdDone / CSkipTimer2OnRewindDone / func_802A041C / CSkipTimerBindAnim24 /
 // CSkipTimerBindAnim20 / CSkipTimer2Start are declared extern "C" in CSkipTimer.hpp.
 // Retail keeps CSkipTimerStampSlotText out-of-line (func_802A041C emits a real `bl`);
@@ -88,60 +88,60 @@ void CSkipTimer2Reset(CSkipTimer2* self) {
 #pragma push
 #pragma optimize_for_size on
 __declspec(noinline) void CSkipTimer2SelectSlotPane(CSkipTimer2* self, u8 arg) {
-    func_80124270(reinterpret_cast<nw4r::lyt::Layout*>(self->mField18)
+    setPaneVisible(reinterpret_cast<nw4r::lyt::Layout*>(self->mField18)
                       ->GetRootPane()->FindPaneByName(&lbl_eu_80510568[0x5a], true),
                   0);
-    func_80124270(reinterpret_cast<nw4r::lyt::Layout*>(self->mField18)
+    setPaneVisible(reinterpret_cast<nw4r::lyt::Layout*>(self->mField18)
                       ->GetRootPane()->FindPaneByName(&lbl_eu_80510568[0x63], true),
                   0);
-    func_80124270(reinterpret_cast<nw4r::lyt::Layout*>(self->mField18)
+    setPaneVisible(reinterpret_cast<nw4r::lyt::Layout*>(self->mField18)
                       ->GetRootPane()->FindPaneByName(&lbl_eu_80510568[0x6c], true),
                   0);
-    func_80124270(reinterpret_cast<nw4r::lyt::Layout*>(self->mField18)
+    setPaneVisible(reinterpret_cast<nw4r::lyt::Layout*>(self->mField18)
                       ->GetRootPane()->FindPaneByName(&lbl_eu_80510568[0x75], true),
                   0);
-    func_80124270(reinterpret_cast<nw4r::lyt::Layout*>(self->mField18)
+    setPaneVisible(reinterpret_cast<nw4r::lyt::Layout*>(self->mField18)
                       ->GetRootPane()->FindPaneByName(&lbl_eu_80510568[0x7e], true),
                   0);
-    func_80124270(reinterpret_cast<nw4r::lyt::Layout*>(self->mField18)
+    setPaneVisible(reinterpret_cast<nw4r::lyt::Layout*>(self->mField18)
                       ->GetRootPane()->FindPaneByName(&lbl_eu_80510568[0x87], true),
                   0);
-    func_80124270(reinterpret_cast<nw4r::lyt::Layout*>(self->mField18)
+    setPaneVisible(reinterpret_cast<nw4r::lyt::Layout*>(self->mField18)
                       ->GetRootPane()->FindPaneByName(&lbl_eu_80510568[0x90], true),
                   0);
     switch (arg) {
     case 1:
-        func_80124270(reinterpret_cast<nw4r::lyt::Layout*>(self->mField18)
+        setPaneVisible(reinterpret_cast<nw4r::lyt::Layout*>(self->mField18)
                           ->GetRootPane()->FindPaneByName(&lbl_eu_80510568[0x5a], true),
                       1);
         break;
     case 2:
-        func_80124270(reinterpret_cast<nw4r::lyt::Layout*>(self->mField18)
+        setPaneVisible(reinterpret_cast<nw4r::lyt::Layout*>(self->mField18)
                           ->GetRootPane()->FindPaneByName(&lbl_eu_80510568[0x63], true),
                       1);
         break;
     case 3:
-        func_80124270(reinterpret_cast<nw4r::lyt::Layout*>(self->mField18)
+        setPaneVisible(reinterpret_cast<nw4r::lyt::Layout*>(self->mField18)
                           ->GetRootPane()->FindPaneByName(&lbl_eu_80510568[0x6c], true),
                       1);
         break;
     case 4:
-        func_80124270(reinterpret_cast<nw4r::lyt::Layout*>(self->mField18)
+        setPaneVisible(reinterpret_cast<nw4r::lyt::Layout*>(self->mField18)
                           ->GetRootPane()->FindPaneByName(&lbl_eu_80510568[0x75], true),
                       1);
         break;
     case 5:
-        func_80124270(reinterpret_cast<nw4r::lyt::Layout*>(self->mField18)
+        setPaneVisible(reinterpret_cast<nw4r::lyt::Layout*>(self->mField18)
                           ->GetRootPane()->FindPaneByName(&lbl_eu_80510568[0x7e], true),
                       1);
         break;
     case 6:
-        func_80124270(reinterpret_cast<nw4r::lyt::Layout*>(self->mField18)
+        setPaneVisible(reinterpret_cast<nw4r::lyt::Layout*>(self->mField18)
                           ->GetRootPane()->FindPaneByName(&lbl_eu_80510568[0x87], true),
                       1);
         break;
     case 7:
-        func_80124270(reinterpret_cast<nw4r::lyt::Layout*>(self->mField18)
+        setPaneVisible(reinterpret_cast<nw4r::lyt::Layout*>(self->mField18)
                           ->GetRootPane()->FindPaneByName(&lbl_eu_80510568[0x90], true),
                       1);
         break;
@@ -185,7 +185,7 @@ void CSkipTimer2OnRewindDone(CSkipTimer2* self) {
     if (AnimRewindFrame(self->mAnimTransform, lbl_eu_80668C30) != 0) {
         self->mField21 = 0;
         self->mField23 = 1;
-        func_80124270(reinterpret_cast<nw4r::lyt::Layout*>(self->mField18)
+        setPaneVisible(reinterpret_cast<nw4r::lyt::Layout*>(self->mField18)
                           ->GetRootPane()->FindPaneByName(&lbl_eu_80510568[0x41], true),
                       0);
     }
@@ -344,7 +344,7 @@ void CSkipTimer2Start(CSkipTimer2* self, u8 arg) {
     self->mField23 = 0;
     nw4r::lyt::Layout* layout = reinterpret_cast<nw4r::lyt::Layout*>(self->mField18);
     nw4r::lyt::Pane* pane = layout->GetRootPane()->FindPaneByName(&lbl_eu_80510568[0x41], true);
-    func_80124270(pane, 1);
+    setPaneVisible(pane, 1);
     CSkipTimer2SelectSlotPane(self, self->mField24);
 }
 #pragma pop
@@ -523,7 +523,7 @@ void CSkipTimerTick(CSkipTimer* self) {
     }
     self->mLayout2->Animate(0);
     CSkipTimer2DriveState(reinterpret_cast<CSkipTimer2*>(&self->mSkipTimer2Data[0]));
-    func_8022B748(reinterpret_cast<CSysWin*>(&self->mSysWinData[0]));
+    sysWinDispatchPhase(reinterpret_cast<CSysWin*>(&self->mSysWinData[0]));
 }
 
 // CSkipTimerDraw (CSkipTimer): draw helper - render both layouts + syswin.
@@ -542,7 +542,7 @@ void CSkipTimerDraw(CSkipTimer* self, nw4r::lyt::DrawInfo* drawInfo) {
                 reinterpret_cast<CSkipTimer2*>(&self->mSkipTimer2Data[0])->mField18),
             drawInfo, 0, 1);
     }
-    func_8022B7C8(&self->mSysWinData[0], drawInfo);
+    sysWinDrawLayout(&self->mSysWinData[0], drawInfo);
 }
 #pragma pop
 
@@ -558,7 +558,7 @@ void CSkipTimerTeardown(CSkipTimer* self) {
     CSkipTimer2Reset(reinterpret_cast<CSkipTimer2*>(&self->mSkipTimer2Data[0]));
     releaseArcResourceAccessor(reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mLayout));
     self->mLayout = 0;
-    func_8022B7F4(&self->mSysWinData[0]);
+    sysWinTermLayout(&self->mSysWinData[0]);
     self->mMemRegion.deleteRegion();
 }
 
@@ -631,11 +631,11 @@ extern "C" void CSkipTimerConfirmSkip(CSkipTimer* self) {
         if (CSysWin_isActive(&self->mSysWinData[0]) == 0) return;
         self->mField29 = 7;
         self->mField2B = 0;
-        func_8022B8E4(&self->mSysWinData[0]);
+        sysWinAdvancePhase3(&self->mSysWinData[0]);
         func_80086B5C__Q22cf13CfGameManagerFv((u32)(u16)self->mField2C,
                                               (u32)(u16)self->mField2E, 1);
-        if (func_800FEDF8() != 0) {
-            func_800FF914();
+        if (CMainMenu_GetInstancePtr() != 0) {
+            ArtsInfo_SetReadyFlag();
         }
         playUISound__FUl(3);
     } else {
@@ -644,7 +644,7 @@ extern "C" void CSkipTimerConfirmSkip(CSkipTimer* self) {
         char* msg = BdatTouchStringCell(&lbl_eu_80510568[0xaf], &lbl_eu_80510568[0xb8], 0x3a);
         func_8022B9B4(&self->mSysWinData[0], msg, 0);
         func_8022BFC8(reinterpret_cast<CSysWin*>(&self->mSysWinData[0]), 1);
-        func_8022B8B8(&self->mSysWinData[0]);
+        sysWinOpenPhase1(&self->mSysWinData[0]);
         playUISound__FUl(3);
     }
 }
@@ -658,11 +658,11 @@ void CSkipTimerEngageSkip(CSkipTimer* self) {
         if (CSysWin_isActive(&self->mSysWinData[0]) == 0) return;
         self->mField29 = 7;
         self->mField2B = 0;
-        func_8022B8E4(&self->mSysWinData[0]);
+        sysWinAdvancePhase3(&self->mSysWinData[0]);
         func_80086B5C__Q22cf13CfGameManagerFv((u32)(u16)self->mField2C,
                                               (u32)(u16)self->mField2E, 1);
-        if (func_800FEDF8() != 0) {
-            func_800FF914();
+        if (CMainMenu_GetInstancePtr() != 0) {
+            ArtsInfo_SetReadyFlag();
         }
         playUISound__FUl(3);
     } else {
@@ -750,7 +750,7 @@ __declspec(noinline) void CSkipTimerActivateTimer(CSkipTimer* self) {
     CSkipTimerBindAnim24(self);
     self->mField2C = 0;
     self->mField2E = 0;
-    func_8006A234(reinterpret_cast<u16*>(&self->mField2C), &self->mField2E);
+    CfT_PlayClockSnapshot(reinterpret_cast<u16*>(&self->mField2C), &self->mField2E);
     self->mField2E = 0;
     func_802A041C(self);
     CSkipTimerBindAnim20(self);
@@ -872,7 +872,7 @@ __declspec(noinline) void CSkipTimer2RebuildLayout(CSkipTimer2* self) {
     nw4r::lyt::Pane* pane = reinterpret_cast<nw4r::lyt::Layout*>(self->mField18)
                                 ->GetRootPane()
                                 ->FindPaneByName(&lbl_eu_80510568[0x41], true);
-    func_80124270(pane, 0);
+    setPaneVisible(pane, 0);
     CSkipTimer2MarkActive(reinterpret_cast<u8*>(self));
     self->mMemRegion.validateHeap();
 }

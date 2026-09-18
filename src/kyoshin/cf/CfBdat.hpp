@@ -15,13 +15,13 @@ extern "C" const char* lbl_eu_8052E6F0[];
 // C-linkage imports for the bdat helpers.  These are retail-unmangled globals;
 // the CBdat static-member forms in ocBdat.hpp mangle the reloc name, so the
 // free-function forms are used here where reloc-name-exact codegen is needed.
-extern "C" void* func_8003AA34();
-extern "C" u32 func_8003B41C(void* bdat);
-extern "C" u32 func_8003B1EC(void* bdat);
-extern "C" u32 func_800AA2BC(u32 a, u32 b);
+extern "C" void* Bdat_GetTable_AA34();
+extern "C" u32 Bdat_GetRowBase_B41C(void* bdat);
+extern "C" u32 Bdat_GetMaxRow_B1EC(void* bdat);
+extern "C" u32 Tok_Pack08(u32 a, u32 b);
 extern "C" int func_800AA33C(ml::FixStr<64>& buf, u32 packed, int prefixFlag, int suffixFlag);
 extern "C" u32 func_800AA714(const char* path);
-extern "C" u32 func_800AA2E8(u32 a, u32 b, u32 c);
+extern "C" u32 Tok_Pack10(u32 a, u32 b, u32 c);
 extern "C" u32 getGlobalWord640F4__Q22cf13CfGameManagerFv();
 
 // Retail sbss bdat file-pointer globals (anonymous lbl_eu_* labels in retail).

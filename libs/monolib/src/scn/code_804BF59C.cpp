@@ -19,7 +19,7 @@
 // to initialize a BSS array of 32 objects (0x24 bytes each) at lbl_eu_8065F428.
 // Since BSS provides zero-initialization, runtime construction is a no-op.
 // ---------------------------------------------------------------------------
-void func_804BF59C(void) {}
+void ScnEnvLgt_noopF59C(void) {}
 
 void __ct__804BF5A0(){}
 
@@ -79,7 +79,7 @@ void func_804BF774(){}
 // declare this method; the catalog retains the original retail address
 // 0x804C3A04 and only its body is reconstructed.
 // ---------------------------------------------------------------------------
-extern "C" void func_804BF8A8(CScnEnvLgtData* self) {
+extern "C" void ScnEnvLgt_ClearLights(CScnEnvLgtData* self) {
     // Walk each of the 8 LightObj entries: call Clear() on the cursor and
     // mask FLAG_ENABLE_LIGHT (LSB bit 2) out of mFlag. The retail codegen
     // keeps three pointers live (r28 = this, r30 = LightObj for the Clear()
@@ -118,7 +118,7 @@ extern "C" void func_804BF8A8(CScnEnvLgtData* self) {
 // Currently a no-op in the base implementation; likely overridden in derived
 // classes for post-processing after light parameter updates.
 // ---------------------------------------------------------------------------
-void func_804BF940(void) {}
+void ScnEnvLgt_noopF940(void) {}
 
 void func_804BF944(){}
 
@@ -130,7 +130,7 @@ void func_804BFFB8(){}
 
 // Sets bit 0x80 of mFlags when 'enable' is non-zero, and clears bit 0x100
 // either way.
-extern "C" void func_804C0228(CScnEnvLgtData* self, int enable) {
+extern "C" void ScnEnvLgt_EnableFlag80(CScnEnvLgtData* self, int enable) {
     if (enable != 0) {
         self->mFlags = (self->mFlags & ~0x100) | 0x80;
     } else {
@@ -140,7 +140,7 @@ extern "C" void func_804C0228(CScnEnvLgtData* self, int enable) {
 
 // Sets bit 0x100 of mFlags when 'enable' is non-zero, and clears bit 0x80
 // either way.
-extern "C" void func_804C0254(CScnEnvLgtData* self, int enable) {
+extern "C" void ScnEnvLgt_EnableFlag100(CScnEnvLgtData* self, int enable) {
     if (enable != 0) {
         self->mFlags = (self->mFlags & ~0x80) | 0x100;
     } else {

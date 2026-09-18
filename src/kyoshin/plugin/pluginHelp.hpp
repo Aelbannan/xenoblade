@@ -6,9 +6,9 @@
 extern "C" {
 #endif
 
-int func_802AEBC4(VMThread* pThread);
-int func_802AEC30(VMThread* pThread);
-int func_802AEC9C(VMThread* pThread);
+int PlugHelp_QueueTutorial1(VMThread* pThread);
+int PlugHelp_QueueTutorial3E(VMThread* pThread);
+int PlugHelp_OpenPTChangeMenu(VMThread* pThread);
 
 #ifdef __cplusplus
 }

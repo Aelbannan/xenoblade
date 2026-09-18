@@ -282,7 +282,7 @@ extern "C" u32 lbl_eu_80663C80 = 0x72656600;
 extern "C" u32 lbl_eu_80663C84 = 0x72656600;
 
 // retail: lwz r3, lbl_eu_80663C74; blr
-extern "C" u32 func_804E6C78() { return lbl_eu_80663C74; }
+extern "C" u32 mdlAnmUVGetGlobal74() { return lbl_eu_80663C74; }
 
 // [.data] 0x805701C0-0x805701D0 (16B): CMdlAnmUV vtable
 extern "C" u32 lbl_eu_805701C0[4] = {

@@ -114,15 +114,15 @@ extern "C" s32 func_80187F14(SoundSlot* slot, SoundPlayParams* params, s32 flag)
 // MATCHED FUNCTIONS
 // ============================================================
 
-float func_801895EC() { return lbl_eu_80662490; }
-float func_801896A0() { return lbl_eu_80662498; }
+float MenuSnd_GetMasterVol_95EC() { return lbl_eu_80662490; }
+float MenuSnd_GetSeVol_96A0() { return lbl_eu_80662498; }
 
-s32* func_80189C34() { return lbl_eu_805757BC; }
+s32* MenuSnd_GetNameBufB_9C34() { return lbl_eu_805757BC; }
 
-void func_80189C70() { lbl_eu_806642E4 = lbl_eu_80667A14; }
-void func_80189C7C() { lbl_eu_806642E4 = lbl_eu_80667A18; }
+void MenuSnd_ResetFadeTargetA_9C70() { lbl_eu_806642E4 = lbl_eu_80667A14; }
+void MenuSnd_ResetFadeTargetB_9C7C() { lbl_eu_806642E4 = lbl_eu_80667A18; }
 
-s32 func_80189BF4(s32 index) {
+s32 MenuSnd_IsSlotFree_9BF4(s32 index) {
     s32* b = lbl_eu_80663E60;
     SoundSlot* s;
     if (b != nullptr) s = (SoundSlot*)((u8*)b + index * 0xB8);
@@ -134,7 +134,7 @@ s32 func_80189BF4(s32 index) {
     return 1;
 }
 
-s32 func_8018892C(s32 index) {
+s32 MenuSnd_IsSlotLive_892C(s32 index) {
     s32* b = lbl_eu_80663E60;
     SoundSlot* s;
     if (b != nullptr) s = (SoundSlot*)((u8*)b + index * 0xB8);
@@ -149,7 +149,7 @@ s32 func_8018892C(s32 index) {
 // Callers pass a position pointer (r4), a value (r5) and three floats; they
 // are forwarded unchanged to setStreamPanVolume, so the extra params stay live in
 // r4/r5/f1-f3 and the slot base lands in r6 (retail allocation).
-s32 func_80189C40(s32 index, f32* pos, s32 val, float f1, float f2, float f3) {
+s32 MenuSnd_SetSlotPan_9C40(s32 index, f32* pos, s32 val, float f1, float f2, float f3) {
     SoundSlot* s;
     s32* b = lbl_eu_80663E60;
     if (b != nullptr) s = (SoundSlot*)((u8*)b + index * 0xB8);
@@ -160,7 +160,7 @@ s32 func_80189C40(s32 index, f32* pos, s32 val, float f1, float f2, float f3) {
 
 // vol arrives in f1 from the caller and is passed straight through to
 // func_801882AC - retail never reloads it (no lfs in the body).
-void func_80189424(float vol) {
+void MenuSnd_StopSlot1_9424(float vol) {
     s32* b = lbl_eu_80663E60;
     SoundSlot* s;
     if (b != nullptr) s = (SoundSlot*)((u8*)b + 0xB8);
@@ -168,7 +168,7 @@ void func_80189424(float vol) {
     if (s != nullptr) func_801882AC(s, vol, 2);
 }
 
-void func_80188774(SoundSlot* slot) {
+void MenuSnd_StopAllSlots_8774(SoundSlot* slot) {
     SoundSlot* s = slot;  // local copy declared before the counter -> r31, counter -> r30 (retail order)
     for (s32 i = 0; i < 5u; i++) {
         // Volume is the global (reloaded every iteration - the call may
@@ -178,7 +178,7 @@ void func_80188774(SoundSlot* slot) {
     }
 }
 
-void func_80188890(s32 active) {
+void MenuSnd_SetSlotsPause_8890(s32 active) {
     SoundSlot* s;
     s32 off;
     s32 i;
@@ -201,7 +201,7 @@ void func_80188890(s32 active) {
 
 // vol arrives in f1 from the caller and is passed straight through to
 // func_801882AC - retail never reloads it (no lfs before the call).
-void func_80189318(s32 clearName, float vol) {
+void MenuSnd_StopSlot0Clear_9318(s32 clearName, float vol) {
     s32* b = lbl_eu_80663E60;
     SoundSlot* s;
     if (b != nullptr) s = (SoundSlot*)b;
@@ -215,7 +215,7 @@ void func_80189318(s32 clearName, float vol) {
     }
 }
 
-void func_80189390(const char* name) {
+void MenuSnd_StopSlot0Store_9390(const char* name) {
     s32* b = lbl_eu_80663E60;
     SoundSlot* s;
     if (b != nullptr) s = (SoundSlot*)b;
@@ -263,7 +263,7 @@ extern "C" void func_80188488(SoundSlot* slot, u32 type, float f1, float f2, flo
     }
 }
 
-void func_801896A8(s32 index, float f1, float f2) {
+void MenuSnd_SetBalancePush_96A8(s32 index, float f1, float f2) {
     lbl_eu_80662494 = f1;
     if (index != 0) return;
     // Offset cursor declared before the counter -> off gets r31, i gets r30.
@@ -293,7 +293,7 @@ void func_801896A8(s32 index, float f1, float f2) {
     }
 }
 
-void func_80189510(float f1) {
+void MenuSnd_SetMasterAndPush_9510(float f1) {
     lbl_eu_80662490 = f1;
     // Offset cursor declared before the counter -> off gets r31, i gets r30
     // (retail allocation, 0x10 frame - no other callee-saved saves).
@@ -329,7 +329,7 @@ void func_80189510(float f1) {
     }
 }
 
-void func_801895F4(float f1) {
+void MenuSnd_SetSeVolPush_95F4(float f1) {
     lbl_eu_80662498 = f1;
     // Offset cursor declared before the counter -> off gets r31, i gets r30.
     s32 off = 0x170;
@@ -1025,7 +1025,7 @@ void func_8018986C(const char* name, float vol) {
     }
 }
 // C linkage: retail's call-site reloc uses the unmangled name.
-extern "C" s32 func_801887C8(u32 wantId, s32 startIdx, s32 endIdx) {
+extern "C" s32 MenuSnd_FindFreeSlot_87C8(u32 wantId, s32 startIdx, s32 endIdx) {
     // Declaration order fixes retail's allocation: pass-1 cursor -> r7,
     // pass-2 cursor -> r8, cached base -> r9.
     SoundSlot* p;
@@ -1054,7 +1054,7 @@ extern "C" s32 func_801887C8(u32 wantId, s32 startIdx, s32 endIdx) {
 }
 // Slot index 0..1 plays the master-volume product, 2..4 use the backup
 // volume. type and the two floats are forwarded from the caller.
-void func_8018896C(s32 index, u32 type, float f1, float f2) {
+void MenuSnd_PushSlotVolume_896C(s32 index, u32 type, float f1, float f2) {
     float vol;
     // Swapped-operand range guards (see docs/MWCC_PATTERNS.md): `const OP v`
     // order keeps two signed cmpi compares instead of the cmplwi fusion.
@@ -1074,7 +1074,7 @@ void func_8018896C(s32 index, u32 type, float f1, float f2) {
     if (s != nullptr) func_80188488(s, type, f1, vol, f2);
 }
 
-extern "C" s32 func_801897A0(s32 wantId, s32 type, float f1) {
+extern "C" s32 MenuSnd_TryPlayGated_97A0(s32 wantId, s32 type, float f1) {
     if (isSceneActive__Q22cf13CfGameManagerFv()) return 0;
     // Two explicit volatile loads (retail emits both up front).
     // Bit 22 (0x400000) set and bit 18 (0x40000) clear -> refuse.
@@ -1082,7 +1082,7 @@ extern "C" s32 func_801897A0(s32 wantId, s32 type, float f1) {
     u32 flagsB = lbl_eu_80663E24;
     if ((flagsA & 0x400000) != 0 && (flagsB & 0x40000) == 0) return 0;
     if (func_80189A04(wantId) == 0) return 0;
-    s32 slot = func_801887C8(type, 2, 4);
+    s32 slot = MenuSnd_FindFreeSlot_87C8(type, 2, 4);
     if (func_80188B80(slot, (const char*)wantId, f1, lbl_eu_80667A0C, 0) != 0) return slot;
     return -1;
 }
@@ -1102,7 +1102,7 @@ void func_8018B224() {}
 void func_8018B230() {}
 void func_8018B23C() {}
 
-extern "C" s32 func_80189450() {
+extern "C" s32 MenuSnd_CanPlayGate_9450() {
     // When the flag bit is set, refuse (return 0) if any of the two name
     // buffers (slot 0 / slot 1) lacks the substring at 80503AB0+0x1A while
     // its slot still holds a live handle; otherwise clear the flag and allow.

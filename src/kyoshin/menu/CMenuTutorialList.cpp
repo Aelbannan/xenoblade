@@ -16,7 +16,7 @@
 #include <types.h>
 
 /* Retail constructor symbol (unmangled global in US). Kept out-of-line so the
- * factory (func_802AC494) emits a real bl to it, and returns `this` in r3
+ * factory (CMenuTutorialList_Create) emits a real bl to it, and returns `this` in r3
  * like a real constructor (retail relies on it). */
 extern "C" __declspec(noinline) CMenuTutorialList* __ct__CMenuTutorialList(
     CMenuTutorialList* self, CProcess* parent, u32 arg2) {
@@ -91,10 +91,10 @@ void CMenuTutorialList::Term() {
     }
     mScene->removeRenderCB(renderCB);
 
-    func_801C3D9C(&mBgTex);
-    func_801C40A0(&mTitleAHelp);
+    BgTex_Release_3D9C(&mBgTex);
+    teardown(&mTitleAHelp);
     TutorialList_ReleaseResources(reinterpret_cast<CTutorialList*>(mTutorialList));
-    func_8029ABD8(reinterpret_cast<CTutorial*>(mTutorial));
+    Tutorial_TeardownTutorial(reinterpret_cast<CTutorial*>(mTutorial));
 
     lbl_eu_80664BE8 = 0;
 
@@ -128,8 +128,8 @@ body:
         close = (pad->mPressedButtonFlags >> 10) & 1;
     }
     if (close != 0) {
-        if (func_800FEDF8() != 0) {
-            func_800FF914();
+        if (CMainMenu_GetInstancePtr() != 0) {
+            ArtsInfo_SetReadyFlag();
         }
         playUISound(6);
         mFlag = 4;
@@ -139,33 +139,33 @@ body:
     // Phase state machine (jumptable dispatch on the phase byte).
     switch (mFlag) {
     case 0:
-        func_802AC520(this);
+        CMenuTutorialList_PhaseOpenList(this);
         break;
     case 1:
-        func_802AC598(this);
+        CMenuTutorialList_PhaseAdvance(this);
         break;
     case 2:
         func_802AC5E8(this);
         break;
     case 3:
-        func_802AC8A4(this);
+        CMenuTutorialList_PhaseClose(this);
         break;
     case 4:
-        func_802AC8F4(this);
+        CMenuTutorialList_PhaseOpenSeq(this);
         break;
     case 5:
-        func_802AC970(this);
+        CMenuTutorialList_PhaseTurnPage(this);
         break;
     case 6:
-        func_802ACA38(this);
+        CMenuTutorialList_PhaseHandleInput(this);
         break;
     case 7:
-        func_802ACB50(this);
+        CMenuTutorialList_PhaseIntroDone(this);
         break;
     }
 
-    func_801C3D54(&mBgTex);
-    func_801C3FF0(&mTitleAHelp);
+    BgTex_Tick_3D54(&mBgTex);
+    updateHelp(&mTitleAHelp);
     TutorialList_UpdatePerFrame(reinterpret_cast<CTutorialList*>(mTutorialList));
     func_8029AB28(reinterpret_cast<CTutorial*>(mTutorial));
 }
@@ -191,16 +191,16 @@ body:
     GXSetZMode(GX_FALSE, GX_NEVER, GX_FALSE);
     nw4r::lyt::DrawInfo drawInfo;
     func_80137250(&drawInfo);
-    func_801C3D7C(&mBgTex, &drawInfo);
+    BgTex_Draw_3D7C(&mBgTex, &drawInfo);
     TutorialList_DrawVisible(reinterpret_cast<CTutorialList*>(mTutorialList), &drawInfo);
-    func_8029ABB8(reinterpret_cast<CTutorial*>(mTutorial), &drawInfo);
-    func_801C4080(&mTitleAHelp, &drawInfo);
+    Tutorial_DrawLayoutGated(reinterpret_cast<CTutorial*>(mTutorial), &drawInfo);
+    drawHelp(&mTitleAHelp, &drawInfo);
 }
 
 /* Factory: lazily allocate + construct the single tutorial-list menu instance
  * and register it as a child of `self`. Returns the stored instance (or 0 if
  * it already exists). */
-extern "C" CMenuTutorialList* func_802AC494(CProcess* self, CProcess* parent, u32 arg2) {
+extern "C" CMenuTutorialList* CMenuTutorialList_Create(CProcess* self, CProcess* parent, u32 arg2) {
     if (lbl_eu_80664BE8 != 0) {
         return 0;
     }
@@ -217,9 +217,9 @@ extern "C" CMenuTutorialList* func_802AC494(CProcess* self, CProcess* parent, u3
 // Phase 0 -> 1 (open): once the background, title bar and list data are all
 // ready, run the list open sequence (title bar + list) and play the open
 // sound, then advance the phase byte.
-void func_802AC520(CMenuTutorialList* self) {
-    if (func_801C3E34(&self->mBgTex) != 0) {
-        if (func_801C4114(&self->mTitleAHelp) != 0) {
+void CMenuTutorialList_PhaseOpenList(CMenuTutorialList* self) {
+    if (BgTex_IsLoaded_3E34(&self->mBgTex) != 0) {
+        if (isInitialized(&self->mTitleAHelp) != 0) {
             if (TutorialList_IsListVisible((CTutorialList*)self->mTutorialList) != 0) {
                 func_801C412C(&self->mTitleAHelp);
                 TutorialList_OpenListInit((CTutorialList*)self->mTutorialList);
@@ -232,7 +232,7 @@ void func_802AC520(CMenuTutorialList* self) {
 
 // Phase 1 -> 2 (advance): once the title bar is idle and the list data is
 // ready, move to the next phase.
-void func_802AC598(CMenuTutorialList* self) {
+void CMenuTutorialList_PhaseAdvance(CMenuTutorialList* self) {
     if (isIdle__11CTitleAHelpFv(&self->mTitleAHelp) != 0) {
         if (TutorialList_IsInitialized((CTutorialList*)self->mTutorialList) != 0) {
             self->mFlag = 2;
@@ -242,9 +242,9 @@ void func_802AC598(CMenuTutorialList* self) {
 
 void func_802AC5E8(CMenuTutorialList* self) {}
 
-// Close: same idle+ready guard as func_802AC598, but marks the closing state
+// Close: same idle+ready guard as CMenuTutorialList_PhaseAdvance, but marks the closing state
 // byte at 0x54 instead of advancing the phase byte.
-void func_802AC8A4(CMenuTutorialList* self) {
+void CMenuTutorialList_PhaseClose(CMenuTutorialList* self) {
     if (isIdle__11CTitleAHelpFv(&self->mTitleAHelp) != 0) {
         if (TutorialList_IsInitialized((CTutorialList*)self->mTutorialList) != 0) {
             self->mField54 = 1;
@@ -252,25 +252,25 @@ void func_802AC8A4(CMenuTutorialList* self) {
     }
 }
 
-// Phase handler (retail func_802AC8F4): once the tutorial data is loaded,
+// Phase handler (retail CMenuTutorialList_PhaseOpenSeq): once the tutorial data is loaded,
 // mark phase 5, play the title/help intro, label the current page via the
 // list's page counter, then run the tutorial open sequence.
-void func_802AC8F4(CMenuTutorialList* self) {
-    if (func_8029ACAC(reinterpret_cast<CTutorial*>(self->mTutorial)) != 0) {
+void CMenuTutorialList_PhaseOpenSeq(CMenuTutorialList* self) {
+    if (Tutorial_GetField46Mark(reinterpret_cast<CTutorial*>(self->mTutorial)) != 0) {
         self->mFlag = 5;
-        func_801C4760(&self->mTitleAHelp);
-        func_801C41C0(&self->mTitleAHelp,
+        applyPaneTevColorsAlt(&self->mTitleAHelp);
+        setNameText(&self->mTitleAHelp,
             BdatTouchStringCell(lbl_eu_80510B44 + 0xe, lbl_eu_80510B44 + 0x17,
                 TutorialList_GetSelectedEntryId(reinterpret_cast<CTutorialList*>(self->mTutorialList))));
-        func_8029ACC4(reinterpret_cast<CTutorial*>(self->mTutorial));
+        Tutorial_StartIfIdle(reinterpret_cast<CTutorial*>(self->mTutorial));
     }
 }
 
 // Phase 5: once the tutorial data is ready, mark phase 6 and repaint the
 // title/help labels for the current tutorial phase, then play the page-flip
 // sound and advance the list page counter.
-void func_802AC970(CMenuTutorialList* self) {
-    if (func_8029ACB4(reinterpret_cast<CTutorial*>(self->mTutorial)) != 0) {
+void CMenuTutorialList_PhaseTurnPage(CMenuTutorialList* self) {
+    if (Tutorial_GetField47Mark(reinterpret_cast<CTutorial*>(self->mTutorial)) != 0) {
         self->mFlag = 6;
         u8 phase = func_8029AE5C(reinterpret_cast<CTutorial*>(self->mTutorial));
         switch (phase) {
@@ -289,15 +289,15 @@ void func_802AC970(CMenuTutorialList* self) {
             func_801C41E8(&self->mTitleAHelp, 0x72);
             break;
         }
-        func_8009D018(0x33bf + TutorialList_GetSelectedEntryId(reinterpret_cast<CTutorialList*>(self->mTutorialList)), 1);
+        CtrlRemote_SetSharedBit(0x33bf + TutorialList_GetSelectedEntryId(reinterpret_cast<CTutorialList*>(self->mTutorialList)), 1);
         TutorialList_RefreshRowTexts(reinterpret_cast<CTutorialList*>(self->mTutorialList));
     }
 }
 
 // Phase 6: react to confirm/cancel input on the tutorial widget, then repaint
 // the title/help labels according to the widget's current phase.
-void func_802ACA38(CMenuTutorialList* self) {
-    if (func_8029ACAC(reinterpret_cast<CTutorial*>(self->mTutorial)) != 0) {
+void CMenuTutorialList_PhaseHandleInput(CMenuTutorialList* self) {
+    if (Tutorial_GetField46Mark(reinterpret_cast<CTutorial*>(self->mTutorial)) != 0) {
         CPad* pad = cf::CfGameManager::getCurrentPad();
         u32 first;
         u32 second;
@@ -310,8 +310,8 @@ void func_802ACA38(CMenuTutorialList* self) {
         }
         if (first) {
             func_8029AD88(reinterpret_cast<CTutorial*>(self->mTutorial));
-            if (func_8029ACBC(reinterpret_cast<CTutorial*>(self->mTutorial)) != 0) {
-                func_8029ACEC(reinterpret_cast<CTutorial*>(self->mTutorial));
+            if (Tutorial_GetField52Mark(reinterpret_cast<CTutorial*>(self->mTutorial)) != 0) {
+                Tutorial_AdvanceState3To4(reinterpret_cast<CTutorial*>(self->mTutorial));
                 self->mFlag = 7;
             }
         } else if (second) {
@@ -338,16 +338,16 @@ void func_802ACA38(CMenuTutorialList* self) {
     }
 }
 
-// Phase handler (retail func_802ACB50): once the tutorial list has finished
+// Phase handler (retail CMenuTutorialList_PhaseIntroDone): once the tutorial list has finished
 // its intro, mark phase 2, repaint the title/help labels, start the tutorial
 // and set the help-bar display mode.
-void func_802ACB50(CMenuTutorialList* self) {
-    if (func_8029ACB4(reinterpret_cast<CTutorial*>(self->mTutorial)) != 0) {
+void CMenuTutorialList_PhaseIntroDone(CMenuTutorialList* self) {
+    if (Tutorial_GetField47Mark(reinterpret_cast<CTutorial*>(self->mTutorial)) != 0) {
         self->mFlag = 2;
-        func_801C4744(&self->mTitleAHelp);
-        func_801C41C0(&self->mTitleAHelp,
+        applyPaneTevColors(&self->mTitleAHelp);
+        setNameText(&self->mTitleAHelp,
             BdatTouchStringCell(lbl_eu_80510B44, lbl_eu_80510B44 + 0x9, 0x23));
-        func_8029ABD8(reinterpret_cast<CTutorial*>(self->mTutorial));
+        Tutorial_TeardownTutorial(reinterpret_cast<CTutorial*>(self->mTutorial));
         func_801C41E8(&self->mTitleAHelp, 0x73);
     }
 }
@@ -359,14 +359,14 @@ void func_802ACB50(CMenuTutorialList* self) {
 // adjusts 'this' back by -0x58 so the real CMenuTutorialList implementation
 // receives the correct pointer.
 
-void func_802ACBCC(IScnRender* sub) {
+void CMenuTutorialList_RenderThunk58(IScnRender* sub) {
     cbRenderBefore__17CMenuTutorialListFv((CMenuTutorialList*)((char*)sub - 0x58));
 }
 
-void func_802ACBD4(IScnRender* sub) {
+void CMenuTutorialList_DtorThunk58(IScnRender* sub) {
     // Cast to a one-arg pointer so the call emits only the this-adjustment
     // (subi r3, r3, 0x58; b __dt__...) and leaves r4 as caller leftover.
     ((void(*)(void*))__dt__17CMenuTutorialListFv)((CMenuTutorialList*)((char*)sub - 0x58));
 }
 
-extern "C" unsigned long func_802AC510(void) { return lbl_eu_80664BE8 != 0; }
+extern "C" unsigned long CMenuTutorialList_IsActive(void) { return lbl_eu_80664BE8 != 0; }

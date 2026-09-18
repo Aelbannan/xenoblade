@@ -5,7 +5,7 @@
 #include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
 #include "monolib/math/FloatUtils.hpp"  // H3 label-owner decl (lbl_eu_8066A208)
 
-// Minimal nw4r sound-object interface used by func_8016CFDC (slot entry +0x00
+// Minimal nw4r sound-object interface used by playReloadSound (slot entry +0x00
 // dereferenced to call SetPlayerPriority). Declared here rather than via
 // snd_BasicSound.h to keep this catalog TU's include graph light; MWCC mangles
 // the member call to the retail name
@@ -31,7 +31,7 @@ struct CfResReloadImpl;
 struct CfResLookupEntry;
 
 // Sub-object at parent +0xC4 (CfObject-derived); the flag words at +0x0C and
-// +0x4EC are read by func_8016DAF8.
+// +0x4EC are read by tickReloadState.
 struct CfResReloadParentSub {
     u8 field_00[0x0C];
     /* 0x0C */ u32 field_0C;    // flags (bits 1 / 6 / 16 tested)
@@ -41,16 +41,16 @@ struct CfResReloadParentSub {
 
 // Minimal CfGameManager view note: the shared CfGameManager.hpp is already
 // pulled in transitively (harness_catalog.hpp -> CTaskGameEff.hpp), so the
-// cf::CfGameManager methods used by this unit come from there. func_80069EA0
+// cf::CfGameManager methods used by this unit come from there. CfT_PlayRateGet
 // is declared void by that header but really returns float - call it through
 // a cast at the use site.
 // Parent object referenced at +0x00 of CfResReloadImpl; the flag words at
 // +0x68/+0x6C and the resource pointer at +0x70 are read/written here.
 struct CfResReloadParent {
     u8 field_00[0x64];
-    /* 0x64 */ u32 field_64;  // flags (bit 16 = 0x10000 tested by func_8016D2FC)
-    /* 0x68 */ u32 field_68;  // flags (bit 26 = 0x04000000 tested by func_8016D390)
-    /* 0x6C */ u32 field_6C;  // flags (bit 2 tested by func_8016DE68)
+    /* 0x64 */ u32 field_64;  // flags (bit 16 = 0x10000 tested by tryResolveReloadSlot30)
+    /* 0x68 */ u32 field_68;  // flags (bit 26 = 0x04000000 tested by tryResolveReloadSlot10)
+    /* 0x6C */ u32 field_6C;  // flags (bit 2 tested by resetReloadIfFlagged)
     /* 0x70 */ u8* field_70;  // resource pointer passed to CfRes_tryReregisterSlot
     /* 0x74 */ u8* field_74;  // sound-related pointer passed to CfSoundMan_PlayActorParam
     u8 field_78[0x18];        // 0x78..0x8F
@@ -98,29 +98,29 @@ class __declspec(novtable) CfResReloadImpl : public CfResReloadImplPrefix {
 public:
     // 25 virtuals in retail order (offset 0x08 .. 0x68)
     virtual ~CfResReloadImpl();                 // 0x08
-    virtual void func_8016DE8C();               // 0x0C - PMTF dispatch
-    virtual void func_8016D240();               // 0x10
+    virtual void dispatchReloadState();               // 0x0C - PMTF dispatch
+    virtual void bumpReloadDeviceCounts();               // 0x10
     virtual void func_8016CE3C();               // 0x14
     virtual int func_8016CE5C();                // 0x18 - in-use test
-    virtual void func_8016DCE4();               // 0x1C
-    virtual int func_8016CF1C();                // 0x20 - type id (12)
+    virtual void syncReloadObjectNameScale();               // 0x1C
+    virtual int getTypeId();                // 0x20 - type id (12)
     virtual void CfResObj_noop24();               // 0x24 - base CfResImpl slot
-    virtual void func_8016DDE8();               // 0x28 - reset
-    virtual void func_eu_8016F1C4();            // 0x2C
-    virtual void func_8016DED4();               // 0x30
-    virtual u32 func_8016CFBC(int index);       // 0x34 - work word getter
+    virtual void resetReloadState();               // 0x28 - reset
+    virtual void reregisterAndResetReload();            // 0x2C
+    virtual void setWorkValue();               // 0x30
+    virtual u32 getWorkValue(int index);       // 0x34 - work word getter
     virtual void CfResObj_false38();               // 0x38
     virtual void CfResObj_unk3C();               // 0x3C
     virtual void CfResObj_noop40();               // 0x40
     virtual void CfResObj_noop44();               // 0x44
-    virtual int func_8016D2FC(int arg2);        // 0x48
-    virtual int func_8016D390(int arg2);        // 0x4C
-    virtual void func_8016CD5C();               // 0x50
-    virtual void func_8016CFDC(int arg2, int arg3, float f1, float f2, int priority); // 0x54
-    virtual void func_8016D0C0(int arg2, int arg3); // 0x58
-    virtual void func_8016D144(int arg2, int arg3, int arg4); // 0x5C
-    virtual int func_8016D1D8();                // 0x60
-    virtual int func_8016DECC();                // 0x64 - sub-type id (1)
+    virtual int tryResolveReloadSlot30(int arg2);        // 0x48
+    virtual int tryResolveReloadSlot10(int arg2);        // 0x4C
+    virtual void ResObj_ZeroStubB_CD5C();               // 0x50
+    virtual void playReloadSound(int arg2, int arg3, float f1, float f2, int priority); // 0x54
+    virtual void stopReloadSound(int arg2, int arg3); // 0x58
+    virtual void pauseReloadSound(int arg2, int arg3, int arg4); // 0x5C
+    virtual int getReloadAttrId();                // 0x60
+    virtual int getSubTypeId();                // 0x64 - sub-type id (1)
     virtual int func_8016CF24();                // 0x68 - random byte
 
     void*& vtbl() {
@@ -146,7 +146,7 @@ struct CfResLookupEntry {
 };
 
 // Enemy-object flag view returned by func_800AD860: the u16 flag word at
-// +0x45CA and the u32 at +0x3374 are read/written by func_8016DAF8.
+// +0x45CA and the u32 at +0x3374 are read/written by tickReloadState.
 struct CfResEneObj {
     u8 field_00[0x3374];
     /* 0x3374 */ u32 field_3374;
@@ -154,7 +154,7 @@ struct CfResEneObj {
     /* 0x45CA */ u16 field_45CA;
 };
 
-// Entry returned by func_80068928 (device search); func_8016D240 increments
+// Entry returned by func_80068928 (device search); bumpReloadDeviceCounts increments
 // the s16 counters at +0x38/+0x3A.
 struct DeviceSearchEntry {
     u8 field_00[0x38];
@@ -171,7 +171,7 @@ struct SoundSlotEntry {
 };
 
 // 0x10-byte reload-info struct written by initReloadInfoStruct and read back
-// by func_8016E100.
+// by loadReloadInfo.
 struct ReloadInfo {
     /* 0x00 */ f32 field_00;
     /* 0x04 */ u16 field_04;
@@ -192,7 +192,7 @@ struct ResReloadFindEntry {
 } // namespace cf
 
 // PMTF dispatch table (4 x 12-byte member pointers) selected by field_08 in
-// func_8016DE8C. Declared at global scope so MWCC keeps the retail name
+// dispatchReloadState. Declared at global scope so MWCC keeps the retail name
 // unmangled; the (this->*table[idx])() call lowers to `bl __ptmf_scall`.
 typedef void (cf::CfResReloadImpl::*CfResReloadImplPMF)();
 extern CfResReloadImplPMF lbl_eu_80530FC0[4];
@@ -212,11 +212,11 @@ extern "C" u16 func_8016E854(cf::CfResReloadImpl* self, u16* out1, u16* counter,
 extern "C" int func_8016E578(u32 type, int sub);
 extern "C" void func_8016EA68(cf::CfResReloadImpl* self);
 
-// func_800AD860 (retail mangled C++ symbol getEffOwner____FPv, single void*
+// getEffOwner__ (retail C++ symbol getEffOwner____FPv, single void*
 // parameter): a plain C++ declaration (not extern "C") yields the matching
 // linker name. Return type is void* to match CfObjectPc.hpp (the same
 // function is declared there first; C++ rejects differing return types).
-extern void* func_800AD860(void* obj);
+extern void* getEffOwner__(void* obj);
 
 // Forward decl for the C-ABI player helpers declared above.
 namespace cf { class CfObjectMove; }
@@ -233,17 +233,17 @@ extern "C" cf::ResReloadFindEntry* findResEntry(u8* self, u32 id, u32* outIndex,
 extern "C" cf::ResReloadFindEntry* CfRes_findLowEntryOrMark(u8* self, u32 id, u32* outIndex, u32* outValue);
 extern "C" int evtTypeSlot7E(cf::CfResReloadParent* parent);
 extern "C" void maybeNullThenFlag(int arg);
-extern "C" void func_800BBB50(cf::CfObjectModel* self);
+extern "C" void CfModel_ReattachTrg(cf::CfObjectModel* self);
 // Imports used by func_8016D688 (defined in CfTFile.cpp / CfRes.cpp /
 // CfGameManager.cpp / object/CfObjectModel.cpp).
 extern "C" void setMemInitFlag__Q23mtl10MemManagerFb(bool value);
 extern "C" u8* scnImN4BuildByIdx(u8* global, u8* handle, int a, int b, int c, int d);
-extern "C" void func_800BBADC(cf::CfResReloadParent* parent, u8* handle);
+extern "C" void CfModel_InstallSub(cf::CfResReloadParent* parent, u8* handle);
 // func_800AA33C is declared in IResInfo.hpp (ml::FixStr version)
-extern "C" u8* func_800584B8(u32 global, u32 id, const char* name);
+extern "C" u8* initMcaFile(u32 global, u32 id, const char* name);
 extern "C" int CfRes_getD80Flag();
 extern "C" void CfRes_stub_63990();
-// func_800BB618/func_800BCFA0 are owned by kyoshin/cf/object/CfObjectMove.hpp
+// CfModel_SyncVisFlag/func_800BCFA0 are owned by kyoshin/cf/object/CfObjectMove.hpp
 // (single extern "C" decl; overloading C-ABI functions is illegal).
 extern "C" void CfObjectMove_setRegionAttached(cf::CfResReloadParent* parent, int flag);
 extern "C" void ColiNodeSetWord0Rebuild(u8* subObj, u8* handle);
@@ -259,39 +259,39 @@ extern const double lbl_eu_806676D0;
 extern "C" cf::CfResLookupEntry* CfRes_getEntryPtrCol0(int);
 extern "C" int CfRes_tryResolveType0(int, int, int);
 extern "C" void CfRes_tryReregisterSlot(int, u8*);
-extern "C" void func_800BAB64(cf::CfResReloadParent*);
+extern "C" void CfModel_ReleaseAll(cf::CfResReloadParent*);
 // More C-ABI imports (defined in CfSoundMan.cpp / CfRes.cpp /
 // code_801A929C.cpp); same extern "C" convention as above.
 extern "C" void CfSoundMan_StopSlotByMode(u32 a, u32 b, u32 c);
 extern "C" void CfSoundMan_PauseSlotByMode(int a, int b, int c, int d);
 extern "C" int CfRes_getResFileSize(int a);
-extern "C" int func_801AAAA0(int a);
+extern "C" int BattleWork_CheckEffectTableReady(int a);
 // More C-ABI imports used by this unit's functions.
 extern "C" cf::DeviceSearchEntry* func_80068928(u8* self, u32 id, int start, int end);
 extern "C" int CfSoundMan_PlayActorParam(int a, int b, u8* c, float f1, float f2);
 extern "C" cf::SoundSlotEntry* CfSoundMan_TouchSlotById(u16 handle);
 extern "C" u16 func_8006A6D0();
 extern "C" void* CfRes_getInstanceField();
-// More C-ABI imports used by func_8016DF4C / func_8016DAF8 / func_8016EA68.
-extern "C" void func_8018896C(int index, unsigned int type, float f1, float f2);
+// More C-ABI imports used by func_8016DF4C / tickReloadState / func_8016EA68.
+extern "C" void MenuSnd_PushSlotVolume_896C(int index, unsigned int type, float f1, float f2);
 extern "C" float func_80069EE4();
 extern "C" void CfObjectMove_setMoveSpeedGated(cf::CfObjectMove* player, float value);
 extern "C" void CfObjectMove_resetMoveSpeed(cf::CfObjectMove* player);
 
-// Flag words defined in CUICfManager.cpp (.sbss); read by func_8016D2FC /
-// func_8016E9CC.
+// Flag words defined in CUICfManager.cpp (.sbss); read by tryResolveReloadSlot30 /
+// getReloadDelay.
 extern u32 lbl_eu_80663E28;
-// Delay/timer floats (.sdata2) selected by func_8016E9CC.
+// Delay/timer floats (.sdata2) selected by getReloadDelay.
 extern float lbl_eu_806676B4;
 extern float lbl_eu_806676B8;
-// More .sdata2 constants used by func_8016DAF8 / func_8016DF4C / func_8016EA68.
+// More .sdata2 constants used by tickReloadState / func_8016DF4C / func_8016EA68.
 extern float lbl_eu_806676A4;    // vtable-slot-0x168 float arg
 extern float lbl_eu_806676A8;    // CfObjectMove_setMoveSpeedGated restore-heal float
 // 2^52 conversion constant: u16 -> float via the double-magic trick (retail
 // references the named .sdata2 double; a direct (f32) cast would pool a
 // TU-local constant instead). const -> readonly sdata2 pool.
 extern const double lbl_eu_806676C0;
-extern float lbl_eu_806676BC;    // func_8018896C second float arg
+extern float lbl_eu_806676BC;    // MenuSnd_PushSlotVolume_896C second float arg
 
 // Secondary-interface vtable stored at +0x10 by the constructor (.data).
 // Typed-object declaration (CHelp pattern): the ctor stores &symbol.

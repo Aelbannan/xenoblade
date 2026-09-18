@@ -80,9 +80,9 @@ extern "C" IUIWindow* __ct__802944D8(CProcess* pParent, CScn* pScene);
 extern "C" IUIWindow* func_801BEDE0(CProcess* pParent, CScn* pScene, u32 id);
 extern "C" IUIWindow* func_801BCEBC(CProcess* pParent, CScn* pScene, u32 charId);
 extern "C" IUIWindow* create__11CSysWinBuffFv(CProcess* pParent, CScn* pScene, u16 id);
-extern "C" IUIWindow* func_8026F8B0(CProcess* pParent, CScn* pScene, u32 type, u32 id);
+extern "C" IUIWindow* createBattleEndMenu(CProcess* pParent, CScn* pScene, u32 type, u32 id);
 extern "C" IUIWindow* func_802AA2A0(CProcess* pParent, CScn* pScene, u8 id);
-extern "C" IUIWindow* func_80125070(CProcess* pParent, CScn* pScene, u32 a2, u32 a3, u32 a4);
+extern "C" IUIWindow* SysWinSelectCreate(CProcess* pParent, CScn* pScene, u32 a2, u32 a3, u32 a4);
 extern "C" IUIWindow* func_80144EE4(CProcess* pParent, CScn* pScene, u16 a3, u8 a4);
 
 // C-ABI factory/guard imports used by the remaining window creators in this
@@ -90,16 +90,16 @@ extern "C" IUIWindow* func_80144EE4(CProcess* pParent, CScn* pScene, u16 a3, u8 
 // CSimpleEveTalkWin / code_80135FDC). C linkage so call relocs bind to the
 // literal retail names.
 extern "C" {
-IUIWindow* func_80122B2C(CProcess* pParent, CScn* pScene, u32 a2, u32 a3);
-IUIWindow* func_801A20DC(CProcess* pParent, CScn* pScene, u32 text, const u8* msgSrc, u8 flag);
-IUIWindow* func_80124AEC(CProcess* pParent, void* pSceneOrWin, u32 flag, u32 a3, u32 a4);
+IUIWindow* createQuestWindow(CProcess* pParent, CScn* pScene, u32 a2, u32 a3);
+IUIWindow* eveTalkWinCreateRegister(CProcess* pParent, CScn* pScene, u32 text, const u8* msgSrc, u8 flag);
+IUIWindow* SysWinCreateSingleton(CProcess* pParent, void* pSceneOrWin, u32 flag, u32 a3, u32 a4);
 int CUICfManager_claimSlotByIdState(u16 arg);
 int CUICfManager_claimSlotFormatted();
 int CUICfManager_claimSlotByTwoIds();
 namespace nw4r { namespace lyt { class ArcResourceAccessor; } }
 nw4r::lyt::ArcResourceAccessor* CUICfManager_getArcResourceAccessor();
-void* func_8003AA34();
-u32 func_8003B1EC(void* fp);
+void* Bdat_GetTable_AA34();
+u32 Bdat_GetMaxRow_B1EC(void* fp);
 
 // Quest-entry index lookup (owning TU: CUICfManager). Full-width arg/result
 // (retail passes/returns the register unmasked).
@@ -114,7 +114,7 @@ int CUICfManager_tryResetSlots();
 int CUICfManager_claimSlotByTemplate();
 
 // Party-change-notice factory (owning TU: CMenuPTChangeNotice).
-IUIWindow* func_80293B9C(CProcess* pParent, CScn* pScene);
+IUIWindow* PTNotice_Create_3B9C(CProcess* pParent, CScn* pScene);
 
 // Quest-log menu factory (owning TU: CMenuQstCnt). The trailing entry bytes
 // come from the caller's (masked) args plus a literal.
@@ -122,10 +122,10 @@ IUIWindow* func_802269D8(CProcess* pParent, CScn* pScene, u16 a3, u16 a4,
                           u8 a5, u8 a6, u8 a7);
 
 // Quest-menu open guard (owning TU: CMenuQstCnt): nonzero blocks creation.
-int func_80226B94();
+int QstCnt_HasInstance_6B94();
 
 // Shop window factory (owning TU: CMenuSelectShop).
-IUIWindow* func_8018A58C(CProcess* pParent, CScn* pScene, u32 a4);
+IUIWindow* ShopSel_CreateSingleton(CProcess* pParent, CScn* pScene, u32 a4);
 
 // CCol6Invite constructor (owning TU: CCol6System; unmangled retail symbol).
 CCol6Invite* __ct__CCol6Invite(CCol6Invite* self, u16 arg2, u8 arg3, u8 arg4);
@@ -133,19 +133,19 @@ CCol6Invite* __ct__CCol6Invite(CCol6Invite* self, u16 arg2, u8 arg3, u8 arg4);
 // Item-multi window factory (owning TU: CMenuGetItemMulti). 8 reg args + a
 // byte flag on the stack (the caller forwards the 9th arg's low byte
 // unmasked; declared u32 so no re-mask is emitted at the call site).
-IUIWindow* func_801B46E4(CProcess* pParent, CScn* pScene, u32 a, u32 b, u32 c,
+IUIWindow* GetItemMulti_CreateInstance(CProcess* pParent, CScn* pScene, u32 a, u32 b, u32 c,
                           u32 d, u32 e, u32 f, u32 g);
 
 // Related item-multi window factory (owning TU: CMenuGetItemMulti).
-IUIWindow* func_801B4790(CProcess* pParent, CScn* pScene, u32 a2);
+IUIWindow* GetItemMulti_CreateSimple(CProcess* pParent, CScn* pScene, u32 a2);
 
 // Talk-window factory (owning TU: CTalkWindow) - creates the window under
 // the caller's parent and registers it.
-CTalkWindow* func_8012CC78(CProcess* parent, u32 arg1, u32 arg2,
+CTalkWindow* TalkWin_Create_CC78(CProcess* parent, u32 arg1, u32 arg2,
                             const u8* msgSrc, u32 arg3, u32 arg4, u32 arg5);
 
 // CMenuUpdate window factory (owning TU: kyoshin/menu/CMenuUpdate).
-IUIWindow* func_80142B4C(CProcess* self, CScn* pScene, int r5, int r6, int r7,
+IUIWindow* MenuUpdate_SpawnProcessForMode(CProcess* self, CScn* pScene, int r5, int r6, int r7,
                           int r8);
 
 // Quest text lookup: returns a byte value for the entry/text/row.
@@ -163,16 +163,16 @@ void func_8013FFF8(void* flagBuf, void* entry, u32 value);
 // CTalkWindow / code_8003B148 family). C linkage so call relocs bind to the
 // literal retail names.
 mtl::ALLOC_HANDLE Scn_CallUnk8C_V10(void* ptr); // void* param: must match CUIBattleManager.hpp (10197)
-void func_8015D0B8();
+void Col6_ClearGlobals_D0B8();
 void func_80122460();
-void func_801B29E0();
-void func_8012BDD0();
-u32 func_8009CF8C(u32 resourceId);
+void GetItemMulti_ClearDoneLatch();
+void TalkWin_ClearFlag_BDD0();
+u32 CtrlRemote_TouchBitByArg(u32 resourceId);
 u32 CItem_sumFamilyByte6(u16 value);
 
 // Flag-memory setter (owning TU outside this unit): writes `val` into the
 // flag-memory slot for page id `idx`.
-void func_8009D018(u32 idx, u32 val); // (u32,u32) form: must match CfGameManager.hpp:767 (10197)
+void CtrlRemote_SetSharedBit(u32 idx, u32 val); // (u32,u32) form: must match CfGameManager.hpp:767 (10197)
 
 // Consumable-count absorb helper (owning TU: kyoshin/cf/CItem; retail
 // unmangled symbol).

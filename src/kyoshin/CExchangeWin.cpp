@@ -16,7 +16,8 @@
 extern "C" void func_80137924(void*, void*, void*, void*);
 extern void playUISound(u32);
 extern const float lbl_eu_80668610;
-void func_801390E0(CFileHandle**);
+extern "C" void closeFileHandle__FPP11CFileHandle(CFileHandle**);
+extern "C" void deleteRegion__17UnkClass_8045F564Fv(void* region);
 
 
 
@@ -48,7 +49,7 @@ int CExchangeWin::getField24() { return field_24; }
 int CExchangeWin::getField27() { return field_27; }
 
 // If _26 is already non-zero, do nothing; otherwise initialize state and fire event 0xd
-extern "C" void func_8022D0A4(CExchangeWin* self) {
+extern "C" void ExWin_RequestOpen(CExchangeWin* self) {
     if (self->_26 != 0) {
         return;
     }
@@ -58,7 +59,7 @@ extern "C" void func_8022D0A4(CExchangeWin* self) {
     playUISound(0xd);
 }
 
-extern "C" __attribute__((noinline)) void func_8022D1F8(CExchangeWin* self) {
+extern "C" __attribute__((noinline)) void ExWin_AdvanceEnter(CExchangeWin* self) {
     float f = lbl_eu_80668610;
     if (advanceAnimTransform(self->mAnimTransform, f)) {
         self->_26 = 2;
@@ -66,7 +67,7 @@ extern "C" __attribute__((noinline)) void func_8022D1F8(CExchangeWin* self) {
     }
 }
 
-extern "C" void func_8022D244(CExchangeWin* self) {
+extern "C" void ExWin_AdvanceExit(CExchangeWin* self) {
     float f = lbl_eu_80668610;
     if (AnimRewindFrame(self->mAnimTransform, f)) {
         self->_26 = 0;
@@ -176,7 +177,7 @@ bool CExchangeWin::OnFileEvent(CEventFile* pEventFile) {
 }
 
 // Stub functions needed by CItemBoxGrid
-extern "C" void func_8022D0D0(CExchangeWin* self) {
+extern "C" void ExWin_RequestClose(CExchangeWin* self) {
     CExchangeWin* s = self;
     if (s->_26 != 2) {
         return;
@@ -185,12 +186,12 @@ extern "C" void func_8022D0D0(CExchangeWin* self) {
     s->field_27 = 0;
     playUISound(0xe);
 }
-extern "C" void func_8022D19C(CExchangeWin* self, char* text1, char* text2) {
+extern "C" void ExWin_SetTwoTexts(CExchangeWin* self, char* text1, char* text2) {
     LayoutSetTextBoxFmtValue(self->mLayout, (char*)&lbl_eu_8050A740[0x34], text1, 0);
     LayoutSetTextBoxFmtValue(self->mLayout, (char*)&lbl_eu_8050A740[0x41], text2, 0);
 }
 
-extern "C" void func_8022D0F8(void* dst, CExchangeWin* src, u8 val) {
+extern "C" void ExWin_CopyPanePair(void* dst, CExchangeWin* src, u8 val) {
     char buf[40];
     CExchangeWin* win;
     nw4r::lyt::Pane* pane1;
@@ -202,7 +203,7 @@ extern "C" void func_8022D0F8(void* dst, CExchangeWin* src, u8 val) {
     pane2 = win->mLayout->GetRootPane()->FindPaneByName(&lbl_eu_8050A740[0x25], true);
     func_80137924(dst, pane1, pane2, win->mLayout->GetRootPane());
 }
-extern "C" void func_8022CF2C(CExchangeWin* self) {
+extern "C" void ExWin_LoadFile(CExchangeWin* self) {
     self->mFileHandle = CDeviceFile::readFile(
         mtl::MemManager::getHandleMEM2(),
         lbl_eu_8050A740,
@@ -213,25 +214,25 @@ extern "C" void func_8022CF2C(CExchangeWin* self) {
     self->field_25 = 0;
 }
 
-// func_8022CF7C - update loop: drives animation state machine and calls
-// mLayout->Animate(0) when field_24 is set. Dispatches to func_8022D1F8
-// for _26==1 (entering) and func_8022D244 for _26==3 (exiting).
-extern "C" void func_8022CF7C(CExchangeWin* self) {
+// ExWin_TickUpdate - update loop: drives animation state machine and calls
+// mLayout->Animate(0) when field_24 is set. Dispatches to ExWin_AdvanceEnter
+// for _26==1 (entering) and ExWin_AdvanceExit for _26==3 (exiting).
+extern "C" void ExWin_TickUpdate(CExchangeWin* self) {
     if (self->field_24 == 0) {
         return;
     }
     switch (self->_26) {
     case 1:
-        func_8022D1F8(self);
+        ExWin_AdvanceEnter(self);
         break;
     case 3:
-        func_8022D244(self);
+        ExWin_AdvanceExit(self);
         break;
     }
     self->mLayout->Animate(0);
 }
 
-extern "C" void func_8022CFEC(CExchangeWin* self, nw4r::lyt::DrawInfo* drawInfo) {
+extern "C" void ExWin_DrawLayout(CExchangeWin* self, nw4r::lyt::DrawInfo* drawInfo) {
     CExchangeWin* s = self;
     if (s->field_24 == 0) {
         return;
@@ -242,15 +243,15 @@ extern "C" void func_8022CFEC(CExchangeWin* self, nw4r::lyt::DrawInfo* drawInfo)
     drawLayout(s->mLayout, drawInfo, 0, 1);
 }
 
-// func_8022D018 - teardown: releases file handle, destroys the layout,
+// ExWin_Teardown - teardown: releases file handle, destroys the layout,
 // releases the arc resource accessor, and cleans up the memory region.
-extern "C" void func_8022D018(CExchangeWin* self) {
-    func_801390E0(&self->mFileHandle);
+extern "C" void ExWin_Teardown(CExchangeWin* self) {
+    closeFileHandle__FPP11CFileHandle(&self->mFileHandle);
     self->field_24 = 0;
     if (self->mLayout != NULL) {
         delete self->mLayout;
         self->mLayout = NULL;
     }
     releaseArcResourceAccessor(self->mAccessor);
-    self->mMemRegion.func_8045F778();
+    deleteRegion__17UnkClass_8045F564Fv(&self->mMemRegion);
 }

@@ -14,7 +14,7 @@
 extern "C" {
 #endif
 
-void* func_801862C0(void);
+void* ArtsSelect_GetContainer(void);
 void* func_801862E0(void* p);
 
 // CArtsSelectSlot: one (arts id, source ptr) entry.
@@ -39,7 +39,7 @@ public:
 };
 class MapProxy;
 void* func_801863F4(void* self, void* src);
-void* func_80186460(void* dst, void* src);
+void* ArtsSelect_CacheEntry(void* dst, void* src);
 void* func_80186474(void* self, void* src);
 void* func_801864DC(void* pObj, int slot);
 void func_80186664(u8* self);
@@ -68,7 +68,7 @@ extern "C" int func_80186A70(void* p, s32 row, const char* c1, const char* c2,
 extern "C" u32 lbl_eu_806642D0; // SDA singleton pointer for the arts select object (opaque pointer)
 extern "C" void* memset(void*, int, unsigned long);
 
-// Imported data symbols (other splits) referenced by func_801862C0
+// Imported data symbols (other splits) referenced by ArtsSelect_GetContainer
 // One-time init guard flag in SDA.
 extern s8 lbl_eu_806642C8;
 
@@ -162,18 +162,18 @@ class Unk80EE4Data;
 extern "C" Unk80EE4Data* createPlayerEffectInstance__Q22cf13CfGameManagerFv(u32 modelId, u32 motionId);
 
 // bdat column reader: canonical decl comes from plugin/ocBdat.hpp (above).
-// NOTE: do NOT declare func_8003AA34 here - member TUs
+// NOTE: do NOT declare Bdat_GetTable_AA34 here - member TUs
 // declare it with conflicting signatures (void() vs void(void*)) and an
 // extern-"C" overload here breaks every TU that includes both chains.
 
 // Matches the CfGimmick.hpp declaration verbatim so TUs including both see
 // one consistent signature.
-extern "C" void* func_8003AA34();
+extern "C" void* Bdat_GetTable_AA34();
 
 // BDAT row base / row count helpers (retail unmangled C symbols; canonical
 // definitions live in plugin/ocBdat.cpp).
-extern "C" u32 func_8003B41C(void* bdat);
-extern "C" u32 func_8003B1EC(void* bdat);
+extern "C" u32 Bdat_GetRowBase_B41C(void* bdat);
+extern "C" u32 Bdat_GetMaxRow_B1EC(void* bdat);
 
 // C++-linkage import: retail symbol is the mangled findObjectById__Fi.
 void* findObjectById(int id);

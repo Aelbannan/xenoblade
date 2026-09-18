@@ -6,7 +6,7 @@
 
 // Retail data labels referenced by this unit.
 extern const float lbl_eu_80666A68;   // CfObject_UnkVirtualFunc20 constant / CfObject_UnkVirtualFunc56 fallback
-extern float lbl_eu_80666A6C;   // func_800BBA08 position constant (stack-vector fill)
+extern float lbl_eu_80666A6C;   // CfModel_NotifyReady position constant (stack-vector fill)
 extern const float lbl_eu_80666A70;   // UnkVirtualFunc25 first probe FP arg
 extern const float lbl_eu_80666A74;   // UnkVirtualFunc25 probe second FP arg
 extern const float lbl_eu_80666A78;   // UnkVirtualFunc25 lift-offset Y element
@@ -52,24 +52,24 @@ class __declspec(novtable) CScnEffectActNw4r {
 public:
     CScnEffectActNw4r();
     virtual ~CScnEffectActNw4r();
-    virtual void func_8049BEA4();                        // +0x0C release manager
-    virtual void func_8049BA44();                        // +0x10 manager v4 notify
-    virtual void func_8049BEAC();                        // +0x14 manager detach
-    virtual void func_8049BEB4();                        // +0x18 manager visibility
-    virtual void func_8049BEBC();                        // +0x1C manager v43 notify
-    virtual void func_8049BED0();                        // +0x20 manager v16 query
-    virtual u8* func_8049BEE4();                         // +0x24 manager act-data base
-    virtual void func_8049BEEC(const void* other);       // +0x28 copy position triplet
+    virtual void EffectActNw4rProbeAnimActive();                        // +0x0C release manager
+    virtual void EffectActNw4rMgrCallV04();                        // +0x10 manager v4 notify
+    virtual void EffectActNw4rSetLeafDist();                        // +0x14 manager detach
+    virtual void EffectActNw4rSetTreeFlag2();                        // +0x18 manager visibility
+    virtual void EffectActNw4rCallMgrV43();                        // +0x1C manager v43 notify
+    virtual void EffectActNw4rCallMgrV16();                        // +0x20 manager v16 query
+    virtual u8* EffectActNw4rGetLeafActData();                         // +0x24 manager act-data base
+    virtual void EffectActNw4rStoreMgrScalePos(const void* other);       // +0x28 copy position triplet
     virtual u8* func_8049BF0C() const;                   // +0x2C act slot +0x48
     virtual u8* func_8049BF34() const;                   // +0x30 act slot +0x78
     virtual u8* func_8049BF5C() const;                   // +0x34 act slot +0xb8
     virtual u8* func_8049BF84() const;                   // +0x38 act slot +0xc4
-    virtual CScnEffectAct* func_8049BFAC(u32 idx) const; // +0x3C act lookup (flag-gated)
-    // +0x40 pin: the slot holds free-function func_8049C060 whose retail
+    virtual CScnEffectAct* EffectActNw4rFindActGated(u32 idx) const; // +0x3C act lookup (flag-gated)
+    // +0x40 pin: the slot holds free-function EffectActNw4rGetActPosOut whose retail
     // convention is (out, self, idx), not thiscall; this shape only
     // reserves the position (nothing dispatches +0x40 via it).
-    virtual void func_8049C060(ml::CVec3* out, u32 idx) const; // +0x40 act position triplet
-    virtual CScnEffectAct* func_8049C18C(u32 idx) const; // +0x44 id-table act lookup
+    virtual void EffectActNw4rGetActPosOut(ml::CVec3* out, u32 idx) const; // +0x40 act position triplet
+    virtual CScnEffectAct* EffectActNw4rFindActById(u32 idx) const; // +0x44 id-table act lookup
 
     /* 0x04 */ void* mpMgr;
     /* 0x08 */ CScnEffectAct* mActs[64];
@@ -78,7 +78,7 @@ public:
 };
 
 namespace cf {
-    // Sub-object at CfObjectModel+0x98: flag words read by func_800BB934
+    // Sub-object at CfObjectModel+0x98: flag words read by CfModel_GetFlag7A8
     // (bit 0 of field_7A8) and CfObject_UnkVirtualFunc69 (bit 1 of field_7A4).
     // Per-node matrix table reached through CfObjectModelSub98+0x147C: its
     // +0xEC word is the base of 0x30-byte matrix slots (CfObject_UnkVirtualFunc52/53).
@@ -212,7 +212,7 @@ namespace cf {
     };
 }
 
-// Output vector pair filled by func_80490A44 (monolib scene helper used by
+// Output vector pair filled by TexMan_GetDefaultXf_0A44 (monolib scene helper used by
 // CfObject_UnkVirtualFunc56: the two positions' Y difference is returned).
 struct CfObjectModelVec3 {
     float x;  // 0x00
@@ -226,14 +226,14 @@ struct CfObjectModelVec3 {
 extern "C" void Scn_IsAnimActiveOrNull(void* ptr);
 // Fills the two output vectors for the model sub-object (used by
 // CfObject_UnkVirtualFunc56).
-extern "C" void func_80490A44(cf::CfObjectModelSub98* obj, CfObjectModelVec3* outA, CfObjectModelVec3* outB);
+extern "C" void TexMan_GetDefaultXf_0A44(cf::CfObjectModelSub98* obj, CfObjectModelVec3* outA, CfObjectModelVec3* outB);
 
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
 // Function is defined in CfBdat.cpp with C linkage (retail uses unmangled name)
 extern "C" void func_80142428();
 
 // C-linkage import from libs/monolib/src/scn/CScnItemModel.cpp (retail uses
-// the unmangled name); tail-called by func_800BB618 with the model sub-object.
+// the unmangled name); tail-called by CfModel_SyncVisFlag with the model sub-object.
 extern "C" void simSetFlag2OnTree(cf::CfObjectModelSub98* model, int flag);
 
 // operator delete (retail symbol __dl__FPv is the unmangled C name; declare
@@ -241,7 +241,7 @@ extern "C" void simSetFlag2OnTree(cf::CfObjectModelSub98* model, int flag);
 extern "C" void __dl__FPv(void* object);
 
 // Imports for CfObjectModel_UnkVirtualFunc13 (sets sub-object +0x7A8 flag
-// bits; defined in libs/monolib CScnItemModel.cpp) and func_800BBADC
+// bits; defined in libs/monolib CScnItemModel.cpp) and CfModel_InstallSub
 // (reattaches a detached effect target; defined in CfObjectEff.cpp).
 // extern "C" so the bl relocs reference the unmangled retail names (a plain
 // C++ header declaration makes MWCC emit a mangled __F<params> name).

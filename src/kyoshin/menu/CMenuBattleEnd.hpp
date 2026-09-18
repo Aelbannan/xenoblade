@@ -95,7 +95,7 @@ extern "C" {
 CMenuBattleEnd* __ct__CMenuBattleEnd(CMenuBattleEnd* obj, CScn* scene, u8 mode,
                                      u32 param);
 CMenuBattleEnd* __dt__14CMenuBattleEndFv(CMenuBattleEnd* obj, int flags);
-CMenuBattleEnd* func_8026F8B0(CProcess* parent, CScn* scene, u8 mode, u32 param);
+CMenuBattleEnd* createBattleEndMenu(CProcess* parent, CScn* scene, u8 mode, u32 param);
 void func_8026F95C(CMenuBattleEnd* obj);
 void func_8026FB0C(CMenuBattleEnd* obj, u8 flag, u32 param);
 void cbRenderBefore__14CMenuBattleEndFv(void* sub);

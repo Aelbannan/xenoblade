@@ -91,7 +91,7 @@ extern "C" CREvtEffect* __ct__CREvtEffect(CREvtEffect* self, CREvtParam* param) 
     void* bdatData = EvtSeqResolveListEntryAddr(param->mBdatId);
     self->mBdatData = bdatData;
     if (bdatData != 0) {
-        func_804CC1BC(&lbl_eu_8065FC18, bdatData);
+        EffSched_LookupA(&lbl_eu_8065FC18, bdatData);
     }
 
     return self;
@@ -103,19 +103,19 @@ extern "C" CREvtEffect* __ct__CREvtEffect(CREvtEffect* self, CREvtParam* param) 
 // ============================================================================
 extern "C" CREvtEffect* __ct__80184C3C(CREvtEffect* self, int dealloc_flag) {
     if (self != 0) {
-        // Restore the vtables, then dispatch func_80184D18 through the main vtable
+        // Restore the vtables, then dispatch EvtFx_FreeAnim through the main vtable
         self->vtable = (void*)lbl_eu_805322D8;
         self->mSecondaryVtable = (char*)lbl_eu_805322D8 + 0x28;
         ((void (**)(CREvtEffect*))lbl_eu_805322D8)[4](self);
 
         // Wait for the effect system to release all running effects
         while (self->mEffectCount != 0) {
-            func_804E3CCC(self->mEffects[0]);
+            schedClearFlag15Update(self->mEffects[0]);
         }
 
         // Release the bdat block, material and model
         if (self->mBdatData != 0) {
-            func_804CC1D8(&lbl_eu_8065FC18, self->mBdatData);
+            EffSched_LookupB(&lbl_eu_8065FC18, self->mBdatData);
         }
         if (self->mMaterial != 0) {
             Scn_IsAnimActiveOrNull(self->mMaterial);
@@ -137,10 +137,10 @@ extern "C" CREvtEffect* __ct__80184C3C(CREvtEffect* self, int dealloc_flag) {
 }
 
 // ============================================================================
-// func_80184D18 (0x80186158)
+// EvtFx_FreeAnim (0x80186158)
 // Frees mAnim28 resource
 // ============================================================================
-extern "C" void func_80184D18(CREvtEffect* self) {
+extern "C" void EvtFx_FreeAnim(CREvtEffect* self) {
     if (self->mAnim28 != 0) {
         Scn_IsAnimActiveOrNull(self->mAnim28);
         self->mAnim28 = 0;
@@ -148,19 +148,19 @@ extern "C" void func_80184D18(CREvtEffect* self) {
 }
 
 // ============================================================================
-// func_80184D5C (0x8018619C)
-// Calls func_80184D90 then func_8018515C
+// EvtFx_StepAnims (0x8018619C)
+// Calls EvtFx_RefreshChrAnim then func_8018515C
 // ============================================================================
-extern "C" void func_80184D5C(CREvtEffect* self) {
-    func_80184D90(self);
+extern "C" void EvtFx_StepAnims(CREvtEffect* self) {
+    EvtFx_RefreshChrAnim(self);
     func_8018515C(self);
 }
 
 // ============================================================================
-// func_80184D90 (0x801861D0)
+// EvtFx_RefreshChrAnim (0x801861D0)
 // Updates animation from model's chr results
 // ============================================================================
-extern "C" void func_80184D90(CREvtEffect* self) {
+extern "C" void EvtFx_RefreshChrAnim(CREvtEffect* self) {
     if (self->mMaterial == 0) {
         return;
     }
@@ -258,7 +258,7 @@ extern "C" bool func_80184F90(CREvtEffect* self) {
     if (self != 0) {
         parent = (char*)self + 0x14;
     }
-    func_804E3D0C(effect, parent);
+    schedAttachChildSlot(effect, parent);
 
     // Scale: mAnm1Scale.y clamped below -1.0 to 0.0
     f32 scale = self->mAnm1Scale[1];
@@ -271,7 +271,7 @@ extern "C" bool func_80184F90(CREvtEffect* self) {
         effect->mField59 = 7;
     }
 
-    func_804E3CDC(effect, self->mAnm1Scale[0], scale);
+    schedSetStepIntervals(effect, self->mAnm1Scale[0], scale);
 
     // Priority from the bdat entry
     if (((CBdatEntry*)self->mBdatEntry)->mPriority >= 0) {
@@ -407,9 +407,9 @@ extern "C" void func_80185378(CREvtEffect* self, void* src, void* bdatEntry) {
         self->mMaterial = 0;
 
         // Drain remaining effects unless the event system is already doing so.
-        if (!func_80180954()) {
+        if (!REvtCam_GetFieldA5Flag()) {
             while (self->mEffectCount != 0) {
-                func_804E3CCC(self->mEffects[0]);
+                schedClearFlag15Update(self->mEffects[0]);
             }
         }
 
@@ -467,11 +467,11 @@ extern "C" void func_80185378(CREvtEffect* self, void* src, void* bdatEntry) {
 }
 
 // ============================================================================
-// func_801855C4 (0x80186A4C)
+// EvtFx_DetachEffect (0x80186A4C)
 // Removes an effect by pointer from the array
 // r3 = this, r4 = effect pointer
 // ============================================================================
-extern "C" void func_801855C4(CREvtEffect* self, void* effect) {
+extern "C" void EvtFx_DetachEffect(CREvtEffect* self, void* effect) {
     for (int i = 0; i < self->mEffectCount; i++) {
         if (self->mEffects[i] == effect) {
             // Detach from the callback sub-object (self+0x14), null-guarded like retail
@@ -479,7 +479,7 @@ extern "C" void func_801855C4(CREvtEffect* self, void* effect) {
             if (self != 0) {
                 parent = (char*)self + 0x14;
             }
-            func_804E3D48(effect, parent);
+            schedDetachChildSlot(effect, parent);
 
             // Shift the remaining effects down and drop the count
             for (; i < self->mEffectCount - 1; i++) {
@@ -492,28 +492,28 @@ extern "C" void func_801855C4(CREvtEffect* self, void* effect) {
 }
 
 // ============================================================================
-// func_80185674 (0x80186AFC)
+// EvtFx_GetModel (0x80186AFC)
 // Returns mModel
 // ============================================================================
-extern "C" u32 func_80185674(CREvtEffect* self) {
+extern "C" u32 EvtFx_GetModel(CREvtEffect* self) {
     return (u32)self->mModel;
 }
 
 // ============================================================================
-// func_8018567C (0x80186B04)
+// EvtFx_Noop (0x80186B04)
 // Empty function
 // ============================================================================
-extern "C" void func_8018567C() {
+extern "C" void EvtFx_Noop() {
 }
 
 // ============================================================================
-// func_80185680 (0x80186B08)
-// Adjustor thunk: adjusts this by -0x14 and calls func_801855C4
+// EvtFx_ThunkDetach (0x80186B08)
+// Adjustor thunk: adjusts this by -0x14 and calls EvtFx_DetachEffect
 // ============================================================================
-extern "C" void func_80185680(void* self) { ((void(*)(void*))func_801855C4)((char*)self - 0x14); }
+extern "C" void EvtFx_ThunkDetach(void* self) { ((void(*)(void*))EvtFx_DetachEffect)((char*)self - 0x14); }
 
 // ============================================================================
-// func_80185688 (0x80186B10)
+// EvtFx_ThunkDtor (0x80186B10)
 // Adjustor thunk: adjusts this by -0x14 and calls __ct__80184C3C (destructor)
 // ============================================================================
-extern "C" void func_80185688(void* self) { ((void(*)(void*))__ct__80184C3C)((char*)self - 0x14); }
+extern "C" void EvtFx_ThunkDtor(void* self) { ((void(*)(void*))__ct__80184C3C)((char*)self - 0x14); }

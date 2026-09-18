@@ -32,7 +32,7 @@ namespace cf {
     };
 
     // View of the 0x68-slot status-entry array at object+0x8 (stride 0x34),
-    // used by func_80149154 / func_801491A4 (retail keeps the entry offsets
+    // used by findBattleStatusEntry / lookupBattleStatusEntry (retail keeps the entry offsets
     // as load/return displacements instead of materializing a base pointer).
     struct CBattleStateEntryArray {
         u8 pad8[0x8]; // +0x0..+0x7

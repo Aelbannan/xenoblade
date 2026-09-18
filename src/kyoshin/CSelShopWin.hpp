@@ -17,7 +17,7 @@ extern "C" void* lbl_eu_805365A8[];
 
 // Retail imports (defined outside this TU). Animation frame constant.
 // `const` routes it into the readonly sdata2 pool so MWCC hoists the lfs above
-// the frame stores (CExchangeWin func_8022D1F8/D244 pattern, MWCC_CASES).
+// the frame stores (CExchangeWin ExWin_AdvanceEnter/D244 pattern, MWCC_CASES).
 extern const float lbl_eu_80668600;
 // u32->float cast-magic constant (2^52) shared with the retail sdata2 pool.
 extern const double lbl_eu_80668608;
@@ -41,7 +41,7 @@ extern "C" void func_80137924(nw4r::math::VEC3*, nw4r::lyt::Pane*, nw4r::lyt::Pa
 extern "C" {
 nw4r::lyt::ArcResourceAccessor* CUICfManager_getArcResourceAccessor();
 void* func_80138DA4(const char*);
-void func_80124288(nw4r::lyt::Pane*, float*);
+void writePanePos(nw4r::lyt::Pane*, float*);
 void* getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32, nw4r::lyt::Layout*);
 void* getPlayer__Q22cf13CfGameManagerFi(int);
 int isClassicController__Q22cf13CfGameManagerFv(int);
@@ -66,18 +66,18 @@ class CSelShopWin : public CSelShopWinVtblBase {
 public:
     CSelShopWin();
     ~CSelShopWin();
-    void func_8022C770();
-    void func_8022C7C0();
-    void func_8022C830(nw4r::lyt::DrawInfo* drawInfo);
-    void func_8022C85C();
-    void func_8022C8E0();
-    void func_8022C908();
-    void func_8022C930(int);
-    void func_8022CA6C();
+    void loadShopWinArc();
+    void driveShopWinAnim();
+    void drawShopWin(nw4r::lyt::DrawInfo* drawInfo);
+    void teardownShopWin();
+    void showShopWin();
+    void hideShopWin();
+    void getShopWinPanePos(int);
+    void markShopWinBuilt();
     bool OnFileEvent(CEventFile* pEventFile);
 
-    u8 func_8022C8D0();
-    u8 func_8022C8D8();
+    u8 isShopWinLoaded();
+    u8 isShopWinAnimActive();
 
     // +0x00: vtable (lbl_eu_805365A8 via CSelShopWinVtblBase)
     // +0x04: layout memory region

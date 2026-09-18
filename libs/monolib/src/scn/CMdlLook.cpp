@@ -96,7 +96,7 @@ void func_804E8220(CMdlLook* look, const ml::CVec3* vec) {
     look->field_0x34 = *vec;
 }
 
-void func_804E8284(u8* self, float a, float b) { *(float*)(self + 0x58) = a; *(float*)(self + 0x5C) = b; }
+extern "C" void setMdlLookAngles(u8* self, float a, float b) { *(float*)(self + 0x58) = a; *(float*)(self + 0x5C) = b; }
 
 // Re-syncs the model-look slots: when either slot index matches the given
 // index, refresh that slot's transform/vector state.

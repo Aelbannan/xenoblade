@@ -13,7 +13,7 @@
 #include <revolution/GX.h>
 
 // Retail constructor symbol (unmangled global in US). Kept as a free function
-// so the factory (func_8028E3B4) emits a real bl to it, and returns `this` in
+// so the factory (createSaveMenu) emits a real bl to it, and returns `this` in
 // r3 like a real constructor (retail relies on it).
 extern "C" __declspec(noinline) CMenuSave* __ct__CMenuSave(
     CMenuSave* self, CProcess* parent, u32 arg208, u32 arg209, u32 arg20A) {
@@ -100,7 +100,7 @@ void CMenuSave::Init() {
     *(u8*)((u8*)this + 0x7e)  = *(u8*)(tempBgTex + 0x1e);
     __dt__6CBgTexFv(reinterpret_cast<CBgTex*>(tempBgTex), -1);
 
-    func_801C3C14(&mBgTex);
+    BgTex_Acquire_3C14(&mBgTex);
 
     // --- Re-initialise the embedded CTitleAHelp ---
     char* name = BdatTouchStringCell(lbl_eu_8050F7B0, lbl_eu_8050F7B0 + 0xb,
@@ -223,8 +223,8 @@ void CMenuSave::Term() {
     }
     reinterpret_cast<CScn*>(mParentRef)->removeRenderCB(renderCB);
 
-    func_801C3D9C(&mBgTex);
-    func_801C40A0(&mTitleAHelp);
+    BgTex_Release_3D9C(&mBgTex);
+    teardown(&mTitleAHelp);
     CSaveLoad_reset(reinterpret_cast<CSaveLoad*>(mSaveLoad));
 
     lbl_eu_806649E8 = 0;
@@ -238,7 +238,7 @@ void CMenuSave::Term() {
 }
 
 // Per-frame update: gate on the task/busy flags, drive the 4-state FSM
-// (phase handlers func_8028E450/E4E0/E530/E768), then refresh the background,
+// (phase handlers openSaveMenu/E4E0/E530/E768), then refresh the background,
 // title/help bar and save-load panel each frame.
 void CMenuSave::Move() {
     CTaskGame::getInstance();
@@ -247,21 +247,21 @@ void CMenuSave::Move() {
 
     switch (mState) {
     case 0:
-        func_8028E450(this);
+        openSaveMenu(this);
         break;
     case 1:
-        func_8028E4E0(this);
+        advanceSaveMenuPhase(this);
         break;
     case 2:
         func_8028E530(this);
         break;
     case 3:
-        func_8028E768(this);
+        flagSaveMenuReady(this);
         break;
     }
 
-    func_801C3D54(&mBgTex);
-    func_801C3FF0(&mTitleAHelp);
+    BgTex_Tick_3D54(&mBgTex);
+    updateHelp(&mTitleAHelp);
     CSaveLoad_update(reinterpret_cast<CSaveLoad*>(mSaveLoad));
 }
 
@@ -280,10 +280,10 @@ void CMenuSave::cbRenderBefore() {
     u8 drawInfo[0x54];
     __ct__Q34nw4r3lyt8DrawInfoFv(&drawInfo[0]);
     func_80137250((nw4r::lyt::DrawInfo*)&drawInfo[0]);
-    func_801C3D7C(&mBgTex, (nw4r::lyt::DrawInfo*)&drawInfo[0]);
+    BgTex_Draw_3D7C(&mBgTex, (nw4r::lyt::DrawInfo*)&drawInfo[0]);
     CSaveLoad_draw(reinterpret_cast<CSaveLoad*>(mSaveLoad),
                   (nw4r::lyt::DrawInfo*)&drawInfo[0]);
-    func_801C4080(&mTitleAHelp, (nw4r::lyt::DrawInfo*)&drawInfo[0]);
+    drawHelp(&mTitleAHelp, (nw4r::lyt::DrawInfo*)&drawInfo[0]);
     __dt__Q34nw4r3lyt8DrawInfoFv(&drawInfo[0], -1);
 }
 
@@ -292,7 +292,7 @@ void CMenuSave::cbRenderBefore() {
  * register it as a child of `parent`. Returns the stored instance (or 0 if it
  * already exists). The 4 extra args are forwarded to the CMenuSave ctor.
  */
-extern "C" CMenuSave* func_8028E3B4(CProcess* parent, CProcess* arg2, u32 arg3, u32 arg4, u32 arg5) {
+extern "C" CMenuSave* createSaveMenu(CProcess* parent, CProcess* arg2, u32 arg3, u32 arg4, u32 arg5) {
     if (lbl_eu_806649E8 != 0) {
         return 0;
     }
@@ -310,7 +310,7 @@ void stub_us_802908bc() {}
 
 /* Advance the save menu to phase 2 once the title bar is idle and the
  * save-load panel has finished its intro (writes the state byte at 0x20B). */
-extern "C" void func_8028E4E0(CMenuSave* self) {
+extern "C" void advanceSaveMenuPhase(CMenuSave* self) {
     if (isIdle__11CTitleAHelpFv(&self->mTitleAHelp) != 0 &&
         CSaveLoad_getIdle(reinterpret_cast<CSaveLoad*>(self->mSaveLoad)) != 0) {
         self->mState = 2;
@@ -330,8 +330,8 @@ extern "C" void func_8028E530(CMenuSave* self) {
     }
 
     if (CSaveLoad_getDone(reinterpret_cast<CSaveLoad*>(self->mSaveLoad)) != 0) {
-        if (func_800FEDF8() != 0) {
-            func_800FF914();
+        if (CMainMenu_GetInstancePtr() != 0) {
+            ArtsInfo_SetReadyFlag();
         }
         self->mState = 4;
         self->mField54 = 1;
@@ -346,7 +346,7 @@ extern "C" void func_8028E530(CMenuSave* self) {
             CSaveLoad_confirm(reinterpret_cast<CSaveLoad*>(self->mSaveLoad));
         } else if ((pressed >> 22) & 1) {
             if (CSaveLoad_isBusy(reinterpret_cast<CSaveLoad*>(self->mSaveLoad)) == 0) {
-                func_801C414C(&self->mTitleAHelp);
+                beginClose(&self->mTitleAHelp);
                 CSaveLoad_close(reinterpret_cast<CSaveLoad*>(self->mSaveLoad));
                 self->mState = 3;
             } else {
@@ -365,8 +365,8 @@ extern "C" void func_8028E530(CMenuSave* self) {
         } else if ((pressed >> 23) & 1) {
             if (self->mField209 == 0 &&
                 CSaveLoad_isBusy(reinterpret_cast<CSaveLoad*>(self->mSaveLoad)) == 0) {
-                if (func_800FEDF8() != 0) {
-                    func_800FF914();
+                if (CMainMenu_GetInstancePtr() != 0) {
+                    ArtsInfo_SetReadyFlag();
                 }
                 playUISound__FUl(6);
                 self->mState = 4;
@@ -381,7 +381,7 @@ extern "C" void func_8028E530(CMenuSave* self) {
             CSaveLoad_confirm(reinterpret_cast<CSaveLoad*>(self->mSaveLoad));
         } else if ((pressed >> 5) & 1) {
             if (CSaveLoad_isBusy(reinterpret_cast<CSaveLoad*>(self->mSaveLoad)) == 0) {
-                func_801C414C(&self->mTitleAHelp);
+                beginClose(&self->mTitleAHelp);
                 CSaveLoad_close(reinterpret_cast<CSaveLoad*>(self->mSaveLoad));
                 self->mState = 3;
             } else {
@@ -400,8 +400,8 @@ extern "C" void func_8028E530(CMenuSave* self) {
         } else if ((pressed >> 10) & 1) {
             if (self->mField209 == 0 &&
                 CSaveLoad_isBusy(reinterpret_cast<CSaveLoad*>(self->mSaveLoad)) == 0) {
-                if (func_800FEDF8() != 0) {
-                    func_800FF914();
+                if (CMainMenu_GetInstancePtr() != 0) {
+                    ArtsInfo_SetReadyFlag();
                 }
                 playUISound__FUl(6);
                 self->mState = 4;
@@ -413,9 +413,9 @@ extern "C" void func_8028E530(CMenuSave* self) {
     func_801C41E8(&self->mTitleAHelp, func_8028FFD4(reinterpret_cast<CSaveLoad*>(self->mSaveLoad)));
 }
 
-/* Same idle+advance check as func_8028E4E0, but advances the phase flag at
+/* Same idle+advance check as advanceSaveMenuPhase, but advances the phase flag at
  * 0x54 instead of the state byte. */
-extern "C" void func_8028E768(CMenuSave* self) {
+extern "C" void flagSaveMenuReady(CMenuSave* self) {
     if (isIdle__11CTitleAHelpFv(&self->mTitleAHelp) != 0 &&
         CSaveLoad_getIdle(reinterpret_cast<CSaveLoad*>(self->mSaveLoad)) != 0) {
         self->mField54 = 1;
@@ -431,29 +431,29 @@ extern "C" void func_8028E768(CMenuSave* self) {
  *
  * Retail: subi r3, r3, 0x58; b cbRenderBefore__9CMenuSaveFv
  */
-extern "C" void func_8028E7B8(void* self) {
+extern "C" void fwdSaveMenuCbRender(void* self) {
     cbRenderBefore__9CMenuSaveFv((char*)self - 0x58);
 }
 
 /*
  * IScnRender vtable this-adjusting thunk for ~CMenuSave.
  *
- * Same adjustment as func_8028E7B8 but forwards to the destructor, leaving
+ * Same adjustment as fwdSaveMenuCbRender but forwards to the destructor, leaving
  * r4 (delete flag) as caller leftover.
  *
  * Retail: subi r3, r3, 0x58; b __dt__9CMenuSaveFv
  */
-extern "C" void func_8028E7C0(void* self) {
+extern "C" void fwdSaveMenuDtor(void* self) {
     ((void(*)(void*))__dt__9CMenuSaveFv)((char*)self - 0x58);
 }
 
-extern "C" unsigned long func_8028E440(void) { return lbl_eu_806649E8 != 0; }
+extern "C" unsigned long isSaveMenuActive(void) { return lbl_eu_806649E8 != 0; }
 
 /* Once the background, title bar and save-load panel are all ready, pull the
  * save-slot data, update the title bar, and play the open sound. */
-extern "C" void func_8028E450(CMenuSave* self) {
-    if (func_801C3E34(&self->mBgTex) != 0 &&
-        func_801C4114(&self->mTitleAHelp) != 0 &&
+extern "C" void openSaveMenu(CMenuSave* self) {
+    if (BgTex_IsLoaded_3E34(&self->mBgTex) != 0 &&
+        isInitialized(&self->mTitleAHelp) != 0 &&
         CSaveLoad_isReady(reinterpret_cast<CSaveLoad*>(self->mSaveLoad)) != 0) {
         u8 slot = func_8028FFD4(reinterpret_cast<CSaveLoad*>(self->mSaveLoad));
         func_801C41E8(&self->mTitleAHelp, slot);

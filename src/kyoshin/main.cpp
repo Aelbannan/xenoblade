@@ -210,20 +210,20 @@ int main(){
     lbl_eu_8065FD00[0x125] = 0;
     CBdat::clearEntries();
     func_eu_802B12DC();
-    func_eu_802B11C0();
-    func_eu_804520B0(func_eu_802B14D4());
-    func_eu_804520B0(func_eu_802B14E0());
-    func_eu_804520B0(func_eu_802B14EC());
+    NandData_SetupBanner_11C0();
+    func_eu_804520B0(getErrMesLangTable0());
+    func_eu_804520B0(getErrMesLangTable1());
+    func_eu_804520B0(getErrMesLangTable2());
 #if !defined(VERSION_JP)
     func_eu_804520B0(dataBase + 0x10);
     func_eu_804520B0(dataBase + 0x30);
 #endif
-    CDeviceFileCri::setCriFilePathA(func_eu_802B133C());
-    CDeviceFileCri::setCriFilePathB(func_eu_802B1354());
-    CDeviceFileCri::setCriFilePathC(func_eu_802B136C());
-    setGeneralNandErrorMessage(func_eu_802B13E4());
-    setSaveNandErrorMessage(func_eu_802B13FC());
-    setExtraNandErrorMessage(func_eu_802B1414());
+    CDeviceFileCri::setCriFilePathA(getErrMesText01());
+    CDeviceFileCri::setCriFilePathB(getErrMesText02());
+    CDeviceFileCri::setCriFilePathC(getErrMesText03());
+    setGeneralNandErrorMessage(getErrMesText08());
+    setSaveNandErrorMessage(getErrMesText09());
+    setExtraNandErrorMessage(getErrMesText10());
     lbl_eu_80663B18 = 0;
     mtl::MemManager::MemRegion::setRegionMaxSize(0x686000, 0);
     CDeviceVI::setUseStaticHandle(true);
@@ -235,8 +235,8 @@ int main(){
     CWorkSystemPack::SavePkhFilenamesArrayPtr(sPkhFilenames);
     CActParamData::func_80057CDC();
     CLibHbm::setHbmActiveFlag(true);
-    func_eu_80457318(func_eu_802B136C());
+    CDeviceFont_SetSharedText(getErrMesText03());
     CWorkRoot::run();
-    func_eu_802B1334();
+    touchErrMesEntry();
 }
 #pragma optimize_for_size off

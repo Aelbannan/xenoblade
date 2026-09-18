@@ -193,10 +193,10 @@ __declspec(noinline) cf::CTaskREvtSequence* __ct__cf_CTaskREvtSequence(
     if (strstr(name, lbl_eu_80503098) != 0) {
         self->field_0x5C |= 0x1000;
     }
-    if (func_80110A70() != 0 && isEventPending() == 0 &&
+    if (EneSt_GetSingleton() != 0 && isEventPending() == 0 &&
         strstr(name, &lbl_eu_80503098[0xB]) != 0) {
-        func_80110A70();
-        func_80111074();
+        EneSt_GetSingleton();
+        EneSt_MarkUnk54();
     }
     if (strstr(name, &lbl_eu_80503098[0x16]) != 0) {
         self->field_0x5C |= 0xA000;
@@ -292,8 +292,8 @@ extern "C" void EvtSeqSetBgmGateFlag(int a) {
         p->field_0x5C &= ~0x100;
     }
     if (a != 0) {
-        func_80189318(0, lbl_eu_80667658);
-        func_80189424(lbl_eu_80667658);
+        MenuSnd_StopSlot0Clear_9318(0, lbl_eu_80667658);
+        MenuSnd_StopSlot1_9424(lbl_eu_80667658);
     }
 }
 
@@ -354,7 +354,7 @@ extern "C" void EvtSeqBootSequence(cf::CTaskREvtSequence* self) {
     }
     handleBattleEnd__Q22cf13CfGameManagerFv();
     getControllerValues__Q22cf13CfGameManagerFv(&self->field_0x116, &self->field_0x118);
-    self->field_0x134 = (u16)func_8016E08C();
+    self->field_0x134 = (u16)getReloadParam2();
     u32 w1, w0, w2;
     const u32* src = &lbl_eu_80530A40[0];
     w0 = *src++;
@@ -376,7 +376,7 @@ extern "C" void EvtSeqBeginFileRead(cf::CTaskREvtSequence* self) {
     // file: the name lives at +0x60 and the IWorkEvent callback sub-object at
     // +0x54 (null-guarded address-of-member). Finally install the 3-word ptmf
     // table with the same store order as Init (0x40, 0x3C, 0x44).
-    func_80166788();
+    InfoCfSetBit2ClearBit1();
     // Upcast to the +0x54 IWorkEvent secondary base; MWCC null-guards the
     // adjustment (retail: cmpwi/mr/beq/addi).
     IWorkEvent* evt = reinterpret_cast<EvtSeqWithEvt*>(self);
@@ -411,7 +411,7 @@ extern "C" void func_8016872C(cf::CTaskREvtSequence* self) {
     IWorkEvent* evt = reinterpret_cast<EvtSeqWithEvt*>(self);
     self->field_0xBC = (u32)CDeviceFile::readCommonArchiveFile(
         self->field_0xC4, self->mPath, evt, 0, (int)size);
-    CDeviceFile::func_8044F154(
+    CDeviceFile::tryUpdateJobPriority(
         reinterpret_cast<CFileHandle*>(self->field_0xBC), 3);
     u32 w1, w0, w2;
     const u32* src = &lbl_eu_80530A58[0];
@@ -632,7 +632,7 @@ extern "C" void func_80168800(cf::CTaskREvtSequence* self) {
                         ->field_0x4 *
                     i);
             CREvtCamera* obj = reinterpret_cast<CREvtCamera*>(
-                func_80185748(reinterpret_cast<void*>(0x448)));
+                EvtObj_AllocBlock(reinterpret_cast<void*>(0x448)));
             if (obj != 0) {
                 __ct__CREvtCamera(obj, reinterpret_cast<u32>(entry));
             }
@@ -679,7 +679,7 @@ extern "C" void func_80168800(cf::CTaskREvtSequence* self) {
             }
             u32 idx = self->field_0xA8;
             self->field_0xA4[idx] = reinterpret_cast<UnkEvtListEntry*>(
-                func_801730D0(entry));
+                createEvtModelObj(entry));
             self->field_0xA8 = idx + 1;
             i++;
         }
@@ -696,7 +696,7 @@ extern "C" void func_80168800(cf::CTaskREvtSequence* self) {
                         ->field_0x4 *
                     i);
             CREvtEffect* obj = reinterpret_cast<CREvtEffect*>(
-                func_80185748(reinterpret_cast<void*>(0x144)));
+                EvtObj_AllocBlock(reinterpret_cast<void*>(0x144)));
             if (obj != 0) {
                 __ct__CREvtEffect(obj, reinterpret_cast<CREvtParam*>(entry));
             }
@@ -718,7 +718,7 @@ extern "C" void func_80168800(cf::CTaskREvtSequence* self) {
                         ->field_0x4 *
                     i);
             CREvtLight* obj = reinterpret_cast<CREvtLight*>(
-                func_80185748(reinterpret_cast<void*>(0x24)));
+                EvtObj_AllocBlock(reinterpret_cast<void*>(0x24)));
             if (obj != 0) {
                 __ct__CREvtLight(obj, reinterpret_cast<u32>(entry));
             }
@@ -740,7 +740,7 @@ extern "C" void func_80168800(cf::CTaskREvtSequence* self) {
                         ->field_0x4 *
                     i);
             CREvtMovie* obj = reinterpret_cast<CREvtMovie*>(
-                func_80185748(reinterpret_cast<void*>(0x1C)));
+                EvtObj_AllocBlock(reinterpret_cast<void*>(0x1C)));
             if (obj != 0) {
                 __ct__CREvtMovie(obj,
                                  reinterpret_cast<CREvtMovieScript*>(entry));
@@ -784,16 +784,16 @@ extern "C" void func_80168800(cf::CTaskREvtSequence* self) {
         w2 = *src++;
         self->field_0x44 = w2;
     }
-    if (func_8011C2E8() != 0) {
-        func_8011C400();
+    if (MiniMapHasGlobalData() != 0) {
+        MiniMapSetActiveFlag();
     }
     if (self->field_0x5C & 0x2000) {
-        if (func_801AC088() != 0) {
-            func_801AC1F8();
+        if (isVisionMenuActive() != 0) {
+            activateVisionMenu();
         }
-        if (func_80110A70() != 0) {
-            func_80110A70();
-            func_80111074();
+        if (EneSt_GetSingleton() != 0) {
+            EneSt_GetSingleton();
+            EneSt_MarkUnk54();
         }
     }
     // Play the movie entries (list slots [total2, total2+movieCount)).
@@ -814,7 +814,7 @@ extern "C" void func_80168800(cf::CTaskREvtSequence* self) {
     // Restore the BGM fade volume unless the sequence already uses it.
     EvtSeqCC* cc = reinterpret_cast<EvtSeqCC*>(self->field_0xCC);
     if (lbl_eu_80667658 != cc->field_0x10) {
-        func_8048EA38(cc->field_0x10);
+        MaruShadowStoreGlobalFloat(cc->field_0x10);
     }
 }
 
@@ -964,8 +964,8 @@ void func_80169050(cf::CTaskREvtSequence* self) {
     // Fade the BGM back in unless both walk flags were raised while the
     // event manager was already ready.
     if (flag1 == 0 || flag2 == 0 || isEventPending() != 0) {
-        func_80189318(0, lbl_eu_8066765C);
-        func_80189424(lbl_eu_8066765C);
+        MenuSnd_StopSlot0Clear_9318(0, lbl_eu_8066765C);
+        MenuSnd_StopSlot1_9424(lbl_eu_8066765C);
         clearBdatTextEntries__Q22cf13CfGameManagerFv();
     }
     if (isEventPending() != 0) {
@@ -1006,7 +1006,7 @@ void func_8016925C(cf::CTaskREvtSequence* self) {
         // Build "<base><suffix 0x45><subtitle name>" and stream it as BGM at
         // the sequence's volume scale, picking the alloc handle from the
         // buffer's memory-bank flag bits.
-        const char* base = (const char*)func_801644AC();
+        const char* base = (const char*)evtGetBaseNameAddr();
         len = strlen(base);
         strcpy(buf, base);
         const char* sfx = &lbl_eu_80503098[0x45];
@@ -1026,7 +1026,7 @@ void func_8016925C(cf::CTaskREvtSequence* self) {
              0x20) != 0) {
             handle = static_cast<u32>(mtl::MemManager::getHandleMEM2());
         }
-        f32 vol = func_80164478() * lbl_eu_80667660;
+        f32 vol = evtCalcStreamVolume() * lbl_eu_80667660;
         func_80043738(1, buf, handle, 1, 0, 0, vol);
     }
     // Publish the scene fade value, then the id halfword pair (only when
@@ -1118,7 +1118,7 @@ void func_8016925C(cf::CTaskREvtSequence* self) {
                 }
                 node = node->field_0x0;
             }
-            func_8016FC0C(0);
+            MapFx_SetPointEnabled(0);
         }
     }
     if (isEventPending() != 0) {
@@ -1137,7 +1137,7 @@ void func_8016925C(cf::CTaskREvtSequence* self) {
             scaled += 4;
         }
     }
-    func_80180DCC();
+    MapModel_DisablePoints();
     func_80169F28(self);
     {
         u32 scaled = 0;
@@ -1151,7 +1151,7 @@ void func_8016925C(cf::CTaskREvtSequence* self) {
         }
     }
     func_80180210(1);
-    func_80180394();
+    REvtCam_ActivateLodTasks();
     // Select the move-callback table by whether the walk continues past this
     // sequence step, tint the scene window to the BGM volume, mark the scene
     // render-active, and clear the frame counter / arm the 0x400 gate.
@@ -1346,7 +1346,7 @@ void func_801696CC(cf::CTaskREvtSequence* self) {
     }
     self->field_0x109 = 0;
     if (cond != 0) {
-        func_80180394();
+        REvtCam_ActivateLodTasks();
     }
     self->field_0x114 = 0;
 }
@@ -1499,8 +1499,8 @@ void EvtSeqFinishSequence(cf::CTaskREvtSequence* self) {
     }
     // Cast keeps MWCC from inlining the empty sibling stub (tiny body).
     ((void(*)(void*))func_8016A480)(self);
-    func_801644B4();
-    func_80164CFC();
+    evtGetManagerAddr();
+    evtTeardownActive();
     // The retail re-fetches the camera manager between each gate; keep the
     // calls separate so MWCC emits the four real bl's.
     CfEvtCamManager* mgr = (CfEvtCamManager*)getCameraDataBlock__Q22cf13CfGameManagerFv();
@@ -1540,7 +1540,7 @@ void func_80169DD0(cf::CTaskREvtSequence* self, u32 idx) {
         self->field_0x120 = (UnkSeq120*)((u8*)adv + adv->field_0x28);
         self->field_0x5C = flags | 0x4;
     } else {
-        u32 alloc = func_80168028(self->field_0x130 == 0);
+        u32 alloc = getEvtMemSlot(self->field_0x130 == 0);
         self->field_0x11C = alloc;
         s32 size = entry->field_0x10;
         s32 rem = size % 0x800;
@@ -1553,7 +1553,7 @@ void func_80169DD0(cf::CTaskREvtSequence* self, u32 idx) {
         self->field_0xFC = (u32)CDeviceFile::readCommonArchiveFile(
             endAddr, self->mPath, evt, entry->field_0x14,
             entry->field_0x10);
-        CDeviceFile::func_8044F154(
+        CDeviceFile::tryUpdateJobPriority(
             reinterpret_cast<CFileHandle*>(self->field_0xFC), 2);
     }
     if (idx != 0) {
@@ -1719,7 +1719,7 @@ void func_80169F28(cf::CTaskREvtSequence* self) {
                 *(UnkEvtListEntry**)((u8*)self->field_0xA4 + k4);
             n++;
             k4 += 4;
-            func_801C36C4(
+            CREvtLight_SetResource(
                 reinterpret_cast<CREvtLight*>(e),
                 reinterpret_cast<const char*>(arg),
                 reinterpret_cast<u32>((u8*)self->field_0x248 + off4));
@@ -1751,7 +1751,7 @@ void func_80169F28(cf::CTaskREvtSequence* self) {
         reinterpret_cast<EvtSeqScn7C*>(lbl_eu_80663E14)->field_0x7C[0] &= ~4u;
     }
     if (lbl_eu_80667658 != entry->field_0x3C) {
-        func_8048EA38(entry->field_0x3C);
+        MaruShadowStoreGlobalFloat(entry->field_0x3C);
     }
     cf::CTaskCulling::setOccDisabled((entry->field_0x38 >> 3) & 1);
     self->field_0x5C &= ~0xF00;
@@ -1836,7 +1836,7 @@ u32 EvtSeqGetWalkIndex() {
 }
 
 void cf::CTaskREvtSequence::Init() {
-    field_0x12C = func_8048EA40();
+    field_0x12C = MaruShadowLoadGlobalFloat();
     // Install the move callback (3-word ptmf at +0x3C) from the .data table.
     // Pointer-walk (*src++) so MWCC folds the base addi into the first load
     // (retail emits lwzu + lwz / stw,stw / lwz,stw). Value locals are declared
@@ -1862,7 +1862,7 @@ void cf::CTaskREvtSequence::Term() {
     }
     CTaskCulling::setOccDisabled(0);
     lbl_eu_80663EE0 &= ~0x40;
-    func_8048EA38(field_0x12C);
+    MaruShadowStoreGlobalFloat(field_0x12C);
 }
 
 // Event-sequence teardown (retail func_8016A480, the body behind
@@ -1885,7 +1885,7 @@ void func_8016A480(void* selfv) {
             reinterpret_cast<void*>(self->field_0x10C));
         self->field_0x10C = 0;
     }
-    reinterpret_cast<EvtSeqMgrTaskView*>(func_801644B4())->field_0x1B8 = 1;
+    reinterpret_cast<EvtSeqMgrTaskView*>(evtGetManagerAddr())->field_0x1B8 = 1;
     // Walk 1: full two-step reset + flags-object arm over the manager's
     // object list. Container base is node->field_0x8 - 0x3E9C (null maps to
     // 0 so dispatch still happens through the fixed page).
@@ -1932,7 +1932,7 @@ void func_8016A480(void* selfv) {
             }
             node = node->field_0x0;
         }
-        func_8016FC0C(1);
+        MapFx_SetPointEnabled(1);
     }
     if (isEventPending() != 0) {
         bindPadSubobjects(1);
@@ -2095,8 +2095,8 @@ void func_8016A480(void* selfv) {
         if ((lbl_eu_80663E28 & 0x01000000) == 0) {
             CTaskGame_resetStream();
         }
-        func_80189318(0, lbl_eu_80667658);
-        func_80189424(lbl_eu_80667658);
+        MenuSnd_StopSlot0Clear_9318(0, lbl_eu_80667658);
+        MenuSnd_StopSlot1_9424(lbl_eu_80667658);
     } else {
         if (isEventPending() != 0 && (lbl_eu_80663E28 & 0x01000000) == 0) {
             CTaskGame_resetStream();
@@ -2122,7 +2122,7 @@ void func_8016A480(void* selfv) {
         }
         __dt__80261B1C();
     }
-    func_80167EF8();
+    freeEvtMemAll();
     finalizeGameState__Q22cf13CfGameManagerFv();
     if (cf::CfGameManager::getGameSubManager() != nullptr) {
         if (*(void**)((u8*)cf::CfGameManager::getGameSubManager() + 0x2F3C) !=
@@ -2135,23 +2135,23 @@ void func_8016A480(void* selfv) {
     if (isEventPending() != 0) {
         func_801AAC78(0);
     }
-    func_801AACA8(0);
+    BattleWork_StoreFlagByte1B(0);
     CGame::setTaskManagerUpdateCount(1);
     self->field_0xC4 = 0;
     if ((self->field_0x5C & 0x04000000) != 0) {
         updateScnCounter__FUl(0);
     }
-    if (func_8011C2E8() == 0) {
+    if (MiniMapHasGlobalData() == 0) {
         if (isEventPending() == 0 &&
             strstr(self->mPath, &lbl_eu_80503098[0x49]) == 0) {
             func_801338C8();
         }
     }
     if ((self->field_0x5C & 0x00040000) != 0) {
-        if (func_801AC088() == 0) {
+        if (isVisionMenuActive() == 0) {
             func_8012F750(0);
         }
-        if (func_80110A70() == 0) {
+        if (EneSt_GetSingleton() == 0) {
             CUICfManager_queueEventMenu();
         }
     }
@@ -2195,8 +2195,8 @@ bool EvtSeqOnFileEvent(cf::CTaskREvtSequence* self, EvtSeqFileEvent* ev) {
                 // null-guards the adjustment).
                 IScnRender* cb = reinterpret_cast<EvtSeqWithRender*>(self);
                 lbl_eu_80663E14->addRenderCB(cb, 0x12, 0);
-                func_802618D8(Scn_SetCamIndex(lbl_eu_80663E14, -1));
-                func_80261944(self->field_0xC4 + v);
+                TextState_Init(Scn_SetCamIndex(lbl_eu_80663E14, -1));
+                TextState_Reset(self->field_0xC4 + v);
             }
         }
         self->field_0xBC = 0;
@@ -2223,7 +2223,7 @@ bool EvtSeqOnFileEvent(cf::CTaskREvtSequence* self, EvtSeqFileEvent* ev) {
 extern "C" void* EvtSeqFindSameNameType3(void* self) {
     // Walk the realtime-event list (bounds clamped to the state limit); return
     // the first type-3 entry, other than self, whose name string matches
-    // self's name (func_801727D0 -> field_0x1C + 0x10).
+    // self's name (evtModelDataPtr -> field_0x1C + 0x10).
     UnkState_80664268* st = lbl_eu_80664268;
     UnkStateC4Obj* obj = reinterpret_cast<UnkStateC4Obj*>(st->field_0xC4);
     u32 limit = st->field_0xA8;
@@ -2249,8 +2249,8 @@ extern "C" void* EvtSeqFindSameNameType3(void* self) {
             *(u32*)((u8*)cur->field_0xA4 + scaled));
         if (entry->field_0x14 == 3 &&
             entry != reinterpret_cast<UnkEvtListEntry*>(self)) {
-            nameEntry = (const char*)func_801727D0(entry);
-            if (strcmp((const char*)func_801727D0(self), nameEntry) == 0) {
+            nameEntry = (const char*)evtModelDataPtr(entry);
+            if (strcmp((const char*)evtModelDataPtr(self), nameEntry) == 0) {
                 return entry;
             }
         }
@@ -2263,7 +2263,7 @@ extern "C" void* EvtSeqFindSameNameType3(void* self) {
 int EvtSeqIsSameNameType3Busy(UnkEvtListEntry* self) {
     // Walk the realtime-event list (bounds clamped to the state limit); return
     // 1 for the first type-3 entry, other than self, whose name matches self's
-    // name (func_801727D0 -> field_0x1C + 0x10) and that is busy (0x48/0x40).
+    // name (evtModelDataPtr -> field_0x1C + 0x10) and that is busy (0x48/0x40).
     // Register allocation mirrors EvtSeqFindSameNameType3: first-declared local gets the
     // highest callee-saved reg (scaled r31 .. entry r27, self r26). `scaled` is
     // an explicit induction variable so its back-edge increment sits after i++.
@@ -2286,8 +2286,8 @@ int EvtSeqIsSameNameType3Busy(UnkEvtListEntry* self) {
         entry = reinterpret_cast<UnkEvtListEntry*>(
             *(u32*)((u8*)cur->field_0xA4 + scaled));
         if (entry->field_0x14 == 3 && entry != self) {
-            nameEntry = (const char*)func_801727D0(entry);
-            if (strcmp((const char*)func_801727D0(self), nameEntry) == 0) {
+            nameEntry = (const char*)evtModelDataPtr(entry);
+            if (strcmp((const char*)evtModelDataPtr(self), nameEntry) == 0) {
                 int busy =
                     entry->field_0x48 != 0 || entry->field_0x40 != 0;
                 if (busy) {
@@ -2326,7 +2326,7 @@ int func_8016AF4C(u8* data, const char* name, s32* out) {
     numAnmChr =
         GetResAnmChrNumEntries__Q34nw4r3g3d7ResFileCFv(data + 0xC);
     for (i = 0; i < numAnmChr; i++) {
-        nw4r::g3d::ResAnmChr anmChr(func_8049E708(data, i));
+        nw4r::g3d::ResAnmChr anmChr(ItemAnim_GetChr_E708(data, i));
         u8* userData = reinterpret_cast<u8*>(anmChr.GetResUserData());
         if (userData == 0) {
             continue;
@@ -2391,7 +2391,7 @@ int func_8016B164(u8* data, const char* name, s32* out, s32* out2) {
     numAnmChr =
         GetResAnmChrNumEntries__Q34nw4r3g3d7ResFileCFv(data + 0xC);
     for (i = 0; i < numAnmChr; i++) {
-        nw4r::g3d::ResAnmChr anmChr(func_8049E708(data, i));
+        nw4r::g3d::ResAnmChr anmChr(ItemAnim_GetChr_E708(data, i));
         userData = reinterpret_cast<u8*>(anmChr.GetResUserData());
         if (userData == 0) {
             continue;
@@ -2448,7 +2448,7 @@ int EvtSeqFindResFloat(u8* data, const char* name, f32* out) {
     numAnmChr =
         GetResAnmChrNumEntries__Q34nw4r3g3d7ResFileCFv(data + 0xC);
     for (int i = 0; i < numAnmChr; i++) {
-        nw4r::g3d::ResAnmChr anmChr(func_8049E708(data, i));
+        nw4r::g3d::ResAnmChr anmChr(ItemAnim_GetChr_E708(data, i));
         u8* userData = reinterpret_cast<u8*>(anmChr.GetResUserData());
         if (userData == 0) {
             continue;
@@ -2516,7 +2516,7 @@ int EvtSeqFindResAddr(u8* data, const char* name, s32* out) {
     numAnmChr =
         GetResAnmChrNumEntries__Q34nw4r3g3d7ResFileCFv(data + 0xC);
     for (int i = 0; i < numAnmChr; i++) {
-        nw4r::g3d::ResAnmChr anmChr(func_8049E708(data, i));
+        nw4r::g3d::ResAnmChr anmChr(ItemAnim_GetChr_E708(data, i));
         u8* userData = reinterpret_cast<u8*>(anmChr.GetResUserData());
         if (userData == 0) {
             continue;
@@ -2572,7 +2572,7 @@ int EvtSeqFindResAddr(u8* data, const char* name, s32* out) {
 int EvtSeqCheckRegionStatus(u8* data) {
     // Gate on the global sda, then resolve a name string from the 0x80503098
     // pool at +0x5D and branch on the resulting status value against the
-    // region code from func_80059C14 (0/1/2): != 0 / != 1 / != 2 / == 2.
+    // region code from Env_RegionCode (0/1/2): != 0 / != 1 / != 2 / == 2.
     if (getGlobalSda() == 0) {
         return 0;
     }
@@ -2580,7 +2580,7 @@ int EvtSeqCheckRegionStatus(u8* data) {
     const char* name = (const char*)lbl_eu_80503098;
     // Cast keeps MWCC from inlining the empty sibling stub (tiny body).
     ((void(*)(u8*, const char*, s32*))func_8016AF4C)(data, name + 0x5D, &out);
-    int v = func_80059C14(getGlobalSda());
+    int v = Env_RegionCode(getGlobalSda());
     switch (out) {
     case 1:
         return v != 0;
@@ -2600,8 +2600,8 @@ void func_8016B860(cf::CTaskREvtSequence* self) {
     // dispatch its type (1/2/3/5/7) to the menu sound/BGM helpers. The frame
     // duration is scaled by getSecPerFrame when non-negative; the int->float
     // conversions go through the 2^52 magic constant (lbl_eu_80667680).
-    if (func_8011C2E8() != 0) {
-        func_8011C400();
+    if (MiniMapHasGlobalData() != 0) {
+        MiniMapSetActiveFlag();
     }
     if (isEventPending() != 0) {
         stubEmptyD__Q22cf13CfGameManagerFv(0x1000, 1);
@@ -2681,16 +2681,16 @@ void func_8016B860(cf::CTaskREvtSequence* self) {
             self->field_0x108 = 1;
             break;
         case 3:
-            func_80189318(0, dur);
+            MenuSnd_StopSlot0Clear_9318(0, dur);
             break;
         case 5:
-            func_8018896C(0, 0, lbl_eu_80667688 * (f32)(s32)entry->field_0x10,
+            MenuSnd_PushSlotVolume_896C(0, 0, lbl_eu_80667688 * (f32)(s32)entry->field_0x10,
                           dur);
-            func_8018896C(1, 0, lbl_eu_80667688 * (f32)(s32)entry->field_0x10,
+            MenuSnd_PushSlotVolume_896C(1, 0, lbl_eu_80667688 * (f32)(s32)entry->field_0x10,
                           dur);
             break;
         case 7:
-            func_801AACA8(1);
+            BattleWork_StoreFlagByte1B(1);
             break;
         }
     }
@@ -2729,7 +2729,7 @@ void EvtSeqRefreshEventLod(cf::CTaskREvtSequence* self) {
                     (u8*)self->field_0xF0 +
                     self->field_0xF0->field_0x4 * j);
                 if (strcmp(&e->mName[0],
-                           (const char*)func_801727D0(entry)) == 0) {
+                           (const char*)evtModelDataPtr(entry)) == 0) {
                     if (e->field_0x9 == 0xFF) {
                         e->field_0x9 =
                             (u8)getLODData__8CTaskLODFv(e->field_0xA);
@@ -2909,7 +2909,7 @@ int func_8016BDA8(EvtBdabModel* self, u32* out) {
     // live (< 8) counter byte triggers the advance. Then a second, unweighted
     // backward scan accepts any live counter byte.
     sum = 0;
-    if (func_801729D0(self) == 0) {
+    if (isEvtDataFlagSet(self) == 0) {
         // Re-read the shared state and this model's slot object after the
         // probe call - neither is kept live across the call.
         UnkState_80664268* post = lbl_eu_80664268;
@@ -2983,7 +2983,7 @@ u32 EvtSeqResolvePackedResId(u32 resId) {
     // request's; return the first match. Fall back to
     // getBdatEntryColumn(..., 5) and return the original id if that does not match.
     u32 a0, a1, a2, a3;
-    func_800AA318(resId, &a0, &a1, &a2, &a3);
+    Tok_Unpack(resId, &a0, &a1, &a2, &a3);
     u32 b0, b1, b2, b3;
     EvtSeqMgrView* mgr = getGimmickListHead__Q22cf13CfGameManagerFv();
     UnkNode4594* node = mgr->field_0x4->field_0x0;
@@ -2995,7 +2995,7 @@ u32 EvtSeqResolvePackedResId(u32 resId) {
         UnkObj4594* obj = container->field_0x4594;
         if (obj != 0) {
             u32 packed = func_800AA714(obj->vf_0x18());
-            func_800AA318(packed, &b0, &b1, &b2, &b3);
+            Tok_Unpack(packed, &b0, &b1, &b2, &b3);
             if (b1 / 10 == a1 / 10) {
                 return packed;
             }
@@ -3003,7 +3003,7 @@ u32 EvtSeqResolvePackedResId(u32 resId) {
         obj = container->field_0x4598;
         if (obj != 0) {
             u32 packed = func_800AA714(obj->vf_0x18());
-            func_800AA318(packed, &b0, &b1, &b2, &b3);
+            Tok_Unpack(packed, &b0, &b1, &b2, &b3);
             if (b1 / 10 == a1 / 10) {
                 return packed;
             }
@@ -3013,7 +3013,7 @@ u32 EvtSeqResolvePackedResId(u32 resId) {
     // Reuse the b outputs so the frame matches retail (one shared out-buffer
     // for both post-walk unpacks).
     u32 fallback = getBdatEntryColumn__Q22cf13CfGameManagerFv(a1 / 10, 5);
-    func_800AA318(fallback, &b0, &b1, &b2, &b3);
+    Tok_Unpack(fallback, &b0, &b1, &b2, &b3);
     u32 result = resId;
     if (b1 / 10 == a1 / 10) {
         result = fallback;
@@ -3025,7 +3025,7 @@ void cf::CTaskREvtSequence::cbRenderBefore() {
     if (lbl_eu_80663E28 & 0x01000000) {
         return;
     }
-    func_80261A80();
+    TextState_DrawStaged();
 }
 
 void EvtSeqSetStateBit9() {
@@ -3072,7 +3072,7 @@ int func_8016C300(UnkEvtListEntry* self) {
             reinterpret_cast<UnkEvtListEntry*>(st->field_0xA4[i]);
         if (entry->field_0x14 == 2 && entry != self) {
             u32 out0, out1, out2, out3;
-            func_800AA318(
+            Tok_Unpack(
                 reinterpret_cast<UnkEvtName2*>(entry->field_0x1C)->field_0x20,
                 &out0, &out1, &out2, &out3);
             if (out1 == 3 || out1 == 8) {

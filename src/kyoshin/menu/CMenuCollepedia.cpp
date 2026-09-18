@@ -1,5 +1,5 @@
 // Catalog TU for kyoshin/menu/CMenuCollepedia
-// FULL_MATCH: func_80253188, func_80253190
+// FULL_MATCH: Colle_ThunkRender, Colle_ThunkDtor
 
 #include "kyoshin/menu/CMenuCollepedia.hpp"
 
@@ -11,15 +11,15 @@ extern "C" void cbRenderBefore__15CMenuCollepediaFv(void*);
 // This-unit phase handlers (retail-unmangled func_ names), referenced by
 // func_80252DD8 before their definitions below. extern "C" keeps the call
 // relocs bare (retail keeps the unmangled names at these call sites).
-extern "C" void func_802530BC(CMenuCollepedia* self);
-extern "C" void func_80253128(CMenuCollepedia* self);
+extern "C" void Colle_NavigateBack(CMenuCollepedia* self);
+extern "C" void Colle_CloseMenu(CMenuCollepedia* self);
 extern "C" void func_80252CE4(CMenuCollepedia* self);
-extern "C" void func_80252D88(CMenuCollepedia* self);
+extern "C" void Colle_OpenMenu(CMenuCollepedia* self);
 extern "C" void func_80252DD8(CMenuCollepedia* self);
-extern "C" void func_8025306C(CMenuCollepedia* self);
+extern "C" void Colle_MarkClosing(CMenuCollepedia* self);
 extern "C" void clpDoFrameUpd(CCollepedia* self);
-extern "C" void func_801C3D54(CBgTex* self);
-extern "C" void func_801C3FF0(CTitleAHelp* self);
+extern "C" void BgTex_Tick_3D54(CBgTex* self);
+extern "C" void updateHelp(CTitleAHelp* self);
 
 // Complete-object dtor (us-8025494c). Free-function D2 form so the base
 // call reloc is retail __dt__800FED0C (game D2), not library __dt__8CProcessFv.
@@ -97,7 +97,7 @@ void CMenuCollepedia::Init() {
     mBgTex.mPtmMode = *(u8*)(tempBgTex + 0x1e);
     __dt__6CBgTexFv((CBgTex*)tempBgTex, -1);
 
-    func_801C3C14(&mBgTex);
+    BgTex_Acquire_3C14(&mBgTex);
 
     // --- Re-initialise the embedded CTitleAHelp ---
     char* name = BdatTouchStringCell(lbl_eu_8050C688, lbl_eu_8050C688 + 0xc, 0x9);
@@ -224,8 +224,8 @@ void CMenuCollepedia::Term() {
     }
     removeRenderCB__4CScnFP10IScnRender(mScene, cb);
 
-    func_801C3D9C(&mBgTex);
-    func_801C40A0(&mTitleAHelp);
+    BgTex_Release_3D9C(&mBgTex);
+    teardown(&mTitleAHelp);
     clpFreeAllRes(&mCollepedia);
 
     lbl_eu_806647D0 = 0;
@@ -238,19 +238,19 @@ void CMenuCollepedia::Move() {
         func_80252CE4(this);
         break;
     case 1:
-        func_80252D88(this);
+        Colle_OpenMenu(this);
         break;
     case 2:
         func_80252DD8(this);
         break;
     case 3:
-        func_8025306C(this);
+        Colle_MarkClosing(this);
         break;
     default:
         break;
     }
-    func_801C3D54(&mBgTex);
-    func_801C3FF0(&mTitleAHelp);
+    BgTex_Tick_3D54(&mBgTex);
+    updateHelp(&mTitleAHelp);
     clpDoFrameUpd(&mCollepedia);
 }
 
@@ -264,7 +264,7 @@ void func_80252CE4(){}
 
 // Advance the collepedia menu: once the title bar is idle and the collepedia
 // core is ready, open the menu (state 2).
-void func_80252D88(CMenuCollepedia* self) {
+void Colle_OpenMenu(CMenuCollepedia* self) {
     if (isIdle__11CTitleAHelpFv(&self->mTitleAHelp) != 0) {
         if (clpGetInputOk(&self->mCollepedia) != 0) {
             self->mState = 2;
@@ -277,7 +277,7 @@ void func_80252D88(CMenuCollepedia* self) {
 // to the collepedia core / menu handlers. Classic-controller (co-op) and
 // Wiimote pad layouts map the same actions to different button bits.
 extern "C" void func_80252DD8(CMenuCollepedia* self) {
-    if (func_801B481C() != 0) {
+    if (GetItemMulti_IsActiveFlag() != 0) {
         return;
     }
     self->mTimer += lbl_eu_806687E4;
@@ -309,7 +309,7 @@ extern "C" void func_80252DD8(CMenuCollepedia* self) {
             return;
         }
         if ((pressed >> 9) & 1) {
-            func_802530BC(self);
+            Colle_NavigateBack(self);
             return;
         }
         if (turbo & 0x8004) {
@@ -329,7 +329,7 @@ extern "C" void func_80252DD8(CMenuCollepedia* self) {
             return;
         }
         if ((pressed >> 8) & 1) {
-            func_80253128(self);
+            Colle_CloseMenu(self);
             return;
         }
     } else {
@@ -365,7 +365,7 @@ extern "C" void func_80252DD8(CMenuCollepedia* self) {
             return;
         }
         if ((pressed >> 26) & 1) {
-            func_802530BC(self);
+            Colle_NavigateBack(self);
             return;
         }
         if (turbo & 0x8004) {
@@ -385,14 +385,14 @@ extern "C" void func_80252DD8(CMenuCollepedia* self) {
             return;
         }
         if ((pressed >> 21) & 1) {
-            func_80253128(self);
+            Colle_CloseMenu(self);
         }
     }
 }
 
-// Same idle+advance check as func_80252D88, but marks the menu as closing
+// Same idle+advance check as Colle_OpenMenu, but marks the menu as closing
 // (mField54 = 1) instead of opening.
-void func_8025306C(CMenuCollepedia* self) {
+void Colle_MarkClosing(CMenuCollepedia* self) {
     if (isIdle__11CTitleAHelpFv(&self->mTitleAHelp) != 0) {
         if (clpGetInputOk(&self->mCollepedia) != 0) {
             self->mField54 = 1;
@@ -402,10 +402,10 @@ void func_8025306C(CMenuCollepedia* self) {
 
 // Close the collepedia menu: when the core is not blocking, run the close
 // sequence (save prompt + close sound) and set state 4.
-void func_80253128(CMenuCollepedia* self) {
+void Colle_CloseMenu(CMenuCollepedia* self) {
     if (clpIsBusy(&self->mCollepedia) == 0) {
-        if (func_800FEDF8() != 0) {
-            func_800FF914();
+        if (CMainMenu_GetInstancePtr() != 0) {
+            ArtsInfo_SetReadyFlag();
             playUISound__FUl(6);
         }
         self->mState = 4;
@@ -415,12 +415,12 @@ void func_80253128(CMenuCollepedia* self) {
 
 // Navigate the collepedia menu: forward input to the core, or close the
 // detail view and return to the list (state 3).
-void func_802530BC(CMenuCollepedia* self) {
+void Colle_NavigateBack(CMenuCollepedia* self) {
     if (clpIsOverlay(&self->mCollepedia) != 0) {
         clpOnCancel(&self->mCollepedia);
     } else {
         if (clpIsBusy(&self->mCollepedia) == 0) {
-            func_801C414C(&self->mTitleAHelp);
+            beginClose(&self->mTitleAHelp);
             clpReqCloseVw(&self->mCollepedia);
             self->mState = 3;
         }
@@ -434,20 +434,20 @@ void func_802530BC(CMenuCollepedia* self) {
  *
  * Retail: subi r3, r3, 0x58; b cbRenderBefore__15CMenuCollepediaFv
  */
-extern "C" void func_80253188(void* self) {
+extern "C" void Colle_ThunkRender(void* self) {
     ((void(*)(void*))cbRenderBefore__15CMenuCollepediaFv)((char*)self - 0x58);
 }
 
 /**
  * IScnRender vtable this-adjusting thunk for destructor.
  *
- * Same adjustment as func_80253188.
+ * Same adjustment as Colle_ThunkRender.
  *
  * Retail: subi r3, r3, 0x58; b __dt__15CMenuCollepediaFv
  */
-extern "C" void func_80253190(void* self) {
+extern "C" void Colle_ThunkDtor(void* self) {
     ((void (*)(CMenuCollepedia*))__dt__15CMenuCollepediaFv)(
         (CMenuCollepedia*)((char*)self - 0x58));
 }
 
-extern "C" int func_80252CD4(void) { return lbl_eu_806647D0 != 0; }
+extern "C" int Colle_HasInstance(void) { return lbl_eu_806647D0 != 0; }

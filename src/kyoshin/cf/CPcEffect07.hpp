@@ -72,7 +72,7 @@ union PcEffectF64Conv {
 };
 
 // Holder returned by the schedule sub-object's slot fetch; +0x94 points at the
-// fixed-timestep CSchedule driven by func_804E3CDC.
+// fixed-timestep CSchedule driven by schedSetStepIntervals.
 struct PcEffectSchedHolder {
     u8 _00[0x94];
     CSchedule* mSched;   // 0x94

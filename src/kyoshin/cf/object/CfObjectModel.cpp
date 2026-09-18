@@ -165,7 +165,7 @@ extern "C" __declspec(noinline) cf::CfObjectModel* __dt__Q22cf13CfObjectModelFv(
     flags = self->mFlags68;
         *(void**)self = (void*)lbl_eu_80529318;
         if (flags & 0x40000000) {
-            func_80186474(func_801862C0(), self);
+            func_80186474(ArtsSelect_GetContainer(), self);
         }
         // Real virtual dispatch through the installed CfObject vtable
         // (slot +0x68 = CfObject_releaseMoveTargets, the Wave-39 alias for
@@ -256,7 +256,7 @@ void cf::CfObjectModel::CfObjectModel_UnkVirtualFunc1() {
 
 void CfObjectModel_releaseModelList__Q22cf13CfObjectModelFv() {}
 
-void func_800BAB64(cf::CfObjectModel* self) {
+void CfModel_ReleaseAll(cf::CfObjectModel* self) {
     self->CfObjectModel_releaseModelList();  // vtable +0x17C
     self->CfObjectModel_releaseModelSub();  // vtable +0x178
     // Zero the two words at +0x90/+0x94 (the header exposes them as the
@@ -385,22 +385,22 @@ u32 CfObject_UnkVirtualFunc63__Q22cf13CfObjectModelFv(cf::CfObjectModel* self) {
 
 // Call the cf-chain vtable slot +0x14C (retail CfObject_readKindFlagWord
 // returns a flag word) and return bit 1 of it.
-u32 func_800BAD98(cf::CfObject* obj) {
+u32 CfObj_KindBit1(cf::CfObject* obj) {
     return (obj->CfObject_readKindFlagWord() >> 1) & 1;
 }
 
-// Same as func_800BAD98 but returns bit 2 of the flag word.
-u32 func_800BADC8(cf::CfObject* obj) {
+// Same as CfObj_KindBit1 but returns bit 2 of the flag word.
+u32 CfObj_KindBit2(cf::CfObject* obj) {
     return (obj->CfObject_readKindFlagWord() >> 2) & 1;
 }
 
-// Same as func_800BAD98 but returns bit 3 of the flag word.
-u32 func_800BADF8(cf::CfObject* obj) {
+// Same as CfObj_KindBit1 but returns bit 3 of the flag word.
+u32 CfObj_KindBit3(cf::CfObject* obj) {
     return (obj->CfObject_readKindFlagWord() >> 3) & 1;
 }
 
 // Call the cf-chain vtable slot +0x14C and return bit 7 of the flag word.
-u32 func_800BAE28(cf::CfObject* obj) {
+u32 CfObj_KindBit7(cf::CfObject* obj) {
     return (obj->CfObject_readKindFlagWord() >> 7) & 1;
 }
 
@@ -431,9 +431,9 @@ void CfObject_UnkVirtualFunc22__Q22cf13CfObjectModelFv(cf::CfObjectModel* self, 
 }
 
 // Collision/ground-query helpers used by UnkVirtualFunc25 below (retail ABI:
-// func_804BE398 takes four GPR args plus two FP args; func_800A7094 takes a
+// ScnRes_VertRayForward_E398 takes four GPR args plus two FP args; func_800A7094 takes a
 // probe vector, result vector, filter word and two floats).
-// func_804BE398/BE4B4/BE4E0 come from CActParamAnim.hpp (retail ABI: four
+// ScnRes_VertRayForward_E398/BE4B4/BE4E0 come from CActParamAnim.hpp (retail ABI: four
 // GPR args plus two FP args on the probe).
 extern "C" int func_800A7094(ml::CVec3* pos, ml::CVec3* out, int filter,
                              float f, float g);
@@ -469,7 +469,7 @@ extern "C" void CfObject_UnkVirtualFunc25__Q22cf8CfObjectFv(
         func_800A7094(pos, &probe, filter, scale, lbl_eu_80666A68);
 
         // Probe down from the hit point...
-        int found = func_804BE398(&probe, 0, 0x40000, 0, lbl_eu_80666A70,
+        int found = ScnRes_VertRayForward_E398(&probe, 0, 0x40000, 0, lbl_eu_80666A70,
                                   lbl_eu_80666A74);
         if (found != 0) {
             func_804BE4B4(&hitPos, 0);
@@ -478,7 +478,7 @@ extern "C" void CfObject_UnkVirtualFunc25__Q22cf8CfObjectFv(
             ml::CVec3 offset(lbl_eu_80666A68, lbl_eu_80666A78, lbl_eu_80666A68);
             ml::CVec3 sum = probe + offset;
             lifted.set(sum);
-            if (func_804BE398(&lifted, 0x44a05, 0, 0, lbl_eu_80666A7C,
+            if (ScnRes_VertRayForward_E398(&lifted, 0x44a05, 0, 0, lbl_eu_80666A7C,
                               lbl_eu_80666A74)) {
                 found = 0;
             }
@@ -599,7 +599,7 @@ void CfObject_UnkVirtualFunc35__Q22cf13CfObjectModelFv(void* self, float f) {
 float CfObject_UnkVirtualFunc36__Q22cf13CfObjectModelFv(void* self) { return *(float*)((u8*)self + 0x60); }
 
 // Returns bit 4 of the sub-object's +0x7A4 flag word (0 when no sub-object).
-u32 func_800BB340(cf::CfObjectModel* self) {
+u32 CfModel_GetEffOwner(cf::CfObjectModel* self) {
     cf::CfObjectModelSub98* sub = self->mSubObj98;
     if (sub != 0) {
         // Retail dispatches to the sub-object's vtable slot +0xA8 and returns
@@ -620,7 +620,7 @@ extern "C" float CfObject_UnkVirtualFunc56__Q22cf13CfObjectModelFv(const cf::CfO
         return lbl_eu_80666A68;
     }
     CfObjectModelVec3 outA, outB;
-    func_80490A44(self->mSubObj98, &outA, &outB);
+    TexMan_GetDefaultXf_0A44(self->mSubObj98, &outA, &outB);
     return outB.y - outA.y;
 }
 
@@ -683,7 +683,7 @@ u32 CfObject_UnkVirtualFunc54__Q22cf13CfObjectModelFv(cf::CfObjectModel* self) {
 // body reads r4). The +0xA8 call takes no args: on the Nw4r scene model it
 // dispatches scnImN4GetEffAct, which ignores r4 and returns the embedded
 // CScnEffectActNw4r (+0x14C4); retail keeps r4 live across that bctrl and
-// restores it into the +0x44 bctrl, whose callee is func_8049C18C
+// restores it into the +0x44 bctrl, whose callee is EffectActNw4rFindActById
 // (CScnEffectAct* (u32 idx)). Both dispatches go through the real owning
 // classes - no proxy.
 u32 CfObject_UnkVirtualFunc55__Q22cf13CfObjectModelFv(const cf::CfObjectModel* self, int arg) {
@@ -693,7 +693,7 @@ u32 CfObject_UnkVirtualFunc55__Q22cf13CfObjectModelFv(const cf::CfObjectModel* s
     }
     CScnEffectActNw4r* acts = reinterpret_cast<CScnEffectActNw4r*>(
         reinterpret_cast<CScnItemModel*>(sub)->getEffectActOwner());
-    return (u32)acts->func_8049C18C((u32)arg);
+    return (u32)acts->EffectActNw4rFindActById((u32)arg);
 }
 
 // Returns this+0x10 when the vtable+0x44 flag is set, else the vtable+0x180
@@ -716,7 +716,7 @@ extern "C" void* CfObjectModel_UnkVirtualFunc3__Q22cf13CfObjectModelFv(cf::CfObj
 
 // If the sub-object's +0x7A4 bit-1 flag differs from the requested flag,
 // forward (sub, flag) to the model visibility helper as a tail call.
-void func_800BB618(cf::CfObjectModel* self, u32 flag) {
+void CfModel_SyncVisFlag(cf::CfObjectModel* self, u32 flag) {
     cf::CfObjectModelSub98* sub = self->mSubObj98;
     if (sub != 0 && ((sub->field_7A4 >> 1) & 1) != flag) {
         simSetFlag2OnTree(sub, flag);
@@ -847,7 +847,7 @@ extern "C" void CfObjectModel_UnkVirtualFunc15__Q22cf13CfObjectModelFv(cf::CfObj
     self->CfObjectModel_bindModelTo(other, name);
 }
 
-extern "C" u32 func_800BB934(cf::CfObjectModel* self) {
+extern "C" u32 CfModel_GetFlag7A8(cf::CfObjectModel* self) {
     // Return bit 0 of the sub-object's +0x7A8 flag word (0 when no sub-object).
     cf::CfObjectModelSub98* sub = self->mSubObj98;
     if (sub != 0) {
@@ -891,7 +891,7 @@ extern "C" int CfObject_UnkVirtualFunc68__Q22cf13CfObjectModelFv(cf::CfObjectMod
 // with the global position constant and forwards it (with 0 flags) to the
 // sub-object's vtable +0x90 slot. mSubObj98 is read fresh for each call
 // (retail reloads +0x98 after the first bctrl).
-void func_800BBA08(cf::CfObjectModel* self) {
+void CfModel_NotifyReady(cf::CfObjectModel* self) {
     if (self->mSubObj98 != 0) {
         reinterpret_cast<CScnItemModel*>(self->mSubObj98)->notifyModelReady();
         float vec[3];
@@ -904,7 +904,7 @@ void func_800BBA08(cf::CfObjectModel* self) {
 
 // Tail-call the sub-object's vtable slot 0x8C (CfObject_getMoveSpeedRate
 // in the base vtable layout); the 2nd argument rides along untouched in r4.
-void func_800BBA7C(cf::CfObjectModel* self, f32* vec) {
+void CfModel_GetSpeedRate(cf::CfObjectModel* self, f32* vec) {
     if (self->mSubObj98 != 0) {
         ((cf::CfObject*)self->mSubObj98)->CfObject_getMoveSpeedRate();
     }
@@ -944,7 +944,7 @@ void CfObjectModel_UnkVirtualFunc7__Q22cf13CfObjectModelFv(
 // declared CfObjectModel end (0xBD), so it is accessed through a local
 // overlay struct (CfObjectMap/CfObjectMove derive from CfObjectModel, so
 // the shared class layout must not grow).
-void func_800BBADC(cf::CfObjectModel* self, cf::CfObjectModelSub98* arg) {
+void CfModel_InstallSub(cf::CfObjectModel* self, cf::CfObjectModelSub98* arg) {
     struct ModelC0 {
         u8 _pad00[0xC0];
         void* field_C0;  // 0xC0
@@ -962,7 +962,7 @@ void func_800BBADC(cf::CfObjectModel* self, cf::CfObjectModelSub98* arg) {
 // word is empty, re-query the +0xA8 value (sub-object read fresh), install it
 // at +0xC0 and notify the effect reattachment helper. The `c0 == v` re-check
 // is dead (c0 is 0 there) but present in retail.
-void func_800BBB50(cf::CfObjectModel* self) {
+void CfModel_ReattachTrg(cf::CfObjectModel* self) {
     struct ModelC0 {
         u8 _pad00[0xC0];
         void* field_C0;  // 0xC0
@@ -998,11 +998,11 @@ extern "C" void CfObject_setPosXZ__Q22cf8CfObjectFv(cf::CfObject* self, float a,
     self->mPos40 = c;
 }
 
-void func_800BBC04() {
+void CfModel_UpdateBdat() {
     func_80142428();
 }
 
-const char* func_800BBC08(u16 index) {
+const char* CfModel_GetBdatString(u16 index) {
     return cf::CfBdat::getBdatStringEntry(index);
 }
 

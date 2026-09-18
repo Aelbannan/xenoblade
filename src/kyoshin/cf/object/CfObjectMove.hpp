@@ -25,21 +25,21 @@ class CScn;  // monolib scene (CfGameManager owns the shared lbl_eu_80663E14 glo
 void CfObject_setMoveTargetVec__Q22cf13CfObjectModelFv(cf::CfObjectModel* self, const ml::CVec3* vec);
 
 // Cross-TU dispatch targets for the CfObjectMove mTarget6C0 wrappers (defined
-// in kyoshin/cf/CtrlNpc.cpp, retail func_800948F8 family). extern "C" keeps
+// in kyoshin/cf/CtrlNpc.cpp, retail CtrlNpcInitMoveWindow family). extern "C" keeps
 // the call relocs unmangled - plain C++ global decls get __F-suffix mangled
 // at call sites (same scheme as CtrlNpc.hpp's CfObjectMove_setAnimModeArgs declarations).
-extern "C" void func_800948F8(cf::CtrlNpc* self);
-extern "C" void func_80094CE8(cf::CtrlNpc* self);
-extern "C" void func_80094DF4(cf::CtrlNpc* self);
+extern "C" void CtrlNpcInitMoveWindow(cf::CtrlNpc* self);
+extern "C" void CtrlNpcSetupAction(cf::CtrlNpc* self);
+extern "C" void CtrlNpcStoreTargetActivate(cf::CtrlNpc* self);
 extern "C" void func_80094E44(cf::CtrlNpc* self);
-extern "C" void func_80094EDC(cf::CtrlNpc* self);
-extern "C" void func_80094FC8(cf::CtrlNpc* self);
+extern "C" void CtrlNpcArmMoveTarget5(cf::CtrlNpc* self);
+extern "C" void CtrlNpcSetFlagActivate(cf::CtrlNpc* self);
 // NPC movement-target action setter (CtrlNpc.cpp, retail func_8009377C):
 // CfObject_forwardNpcAction tail-dispatches the incoming action id.
 extern "C" void func_8009377C(cf::CtrlNpc* self, u32 param);
 // Action-advance query on the NPC movement target (CtrlNpc.cpp, retail
-// func_80094D1C / US 0x800956F4): whether the NPC may advance.
-extern "C" int func_80094D1C(const cf::CtrlNpc* self);
+// CtrlNpcCanAdvanceAction / US 0x800956F4): whether the NPC may advance.
+extern "C" int CtrlNpcCanAdvanceAction(const cf::CtrlNpc* self);
 // Region-library helpers (0x804B0xxx): attach/detach a region object to the
 // shared manager global below. CfGimmickLock.hpp also declares these but is
 // not included here (its func_800817BC return type conflicts with the
@@ -47,7 +47,7 @@ extern "C" int func_80094D1C(const cf::CtrlNpc* self);
 // sub-object ctor called from the CfObjectMove ctor.
 extern "C" void ColiNodeInit(void* region);
 extern "C" void func_804B4BDC(void* manager, void* region);
-extern "C" void func_804B4C7C(void* manager, void* region);
+extern "C" void Coli_ListRemoveNode(void* manager, void* region);
 extern void* lbl_eu_80665958;   // region-library manager (sbss)
 // CfObjectMove vtable (data TU; the destructor stores it explicitly, same
 // scheme as CfGimmickLock.hpp's lbl_eu_80535900).
@@ -165,10 +165,10 @@ extern "C" void CfObjectModel_UnkVirtualFunc1__Q22cf13CfObjectModelFv(cf::CfObje
 extern "C" void CfObjectModel_UnkVirtualFunc2__Q22cf13CfObjectModelFv(cf::CfObjectModel* self);
 // Region-library helpers (retail unmangled names, defined outside this unit):
 // ColiNodeReleaseBuffer is the +0x60C region sub-object release called from
-// CfObjectModel_UnkVirtualFunc1 (CfObjectMove); func_800BB618 forwards a
+// CfObjectModel_UnkVirtualFunc1 (CfObjectMove); CfModel_SyncVisFlag forwards a
 // visibility flag to the +0x98 sub-object (CfObjectModel.cpp).
 extern "C" void ColiNodeReleaseBuffer(u8* region);
-extern "C" void func_800BB618(cf::CfObjectModel* self, u32 flag);
+extern "C" void CfModel_SyncVisFlag(cf::CfObjectModel* self, u32 flag);
 // Movement-position update (defined in this TU below; forward-declared here
 // because CfObject_UnkVirtualFunc5 calls it). extern "C" keeps the call-site
 // reloc at the unmangled retail name.
@@ -198,7 +198,7 @@ extern "C" void* getPlayer__Q22cf13CfGameManagerFi(int index);
 extern "C" int ColiCheckMoveRadius(void* region, void* target, int arg2, int arg3, f32 dist);
 // +0x98 sub-object flag query (CfObjectModel.cpp, retail unmangled name) used
 // by CfObject_UnkVirtualFunc4.
-extern "C" u32 func_800BB934(cf::CfObjectModel* self);
+extern "C" u32 CfModel_GetFlag7A8(cf::CfObjectModel* self);
 // CActParamAnim helpers (defined in kyoshin/cf/CActParamAnimGame.cpp,
 // retail unmangled names). tickAnimFrame releases a +0xC8 target;
 // pushAnimNode / attachAnimObj attach model lists to the +0xC4 target;
@@ -218,7 +218,7 @@ extern "C" u32 func_804BD94C(void* a, void* b, u32 c, u32 d, u32 e, u32 f,
                               f32 g, f32 h, f32 i, f32 j, f32 k);
 // Model sub-object flag setter (defined in realtimeevt/CREvtModel.cpp) used
 // by func_800BCFA0's bdat-flag tail.
-extern "C" void func_804C0254(void* self, int flag);
+extern "C" void ScnEnvLgt_EnableFlag100(void* self, int flag);
 // Region position sync + model sub-object helpers used by func_800BCD04 /
 // func_800BC9EC (ColiSetAxisBlockInverse) and func_800BCFA0 (simSetLeafDist7B0).
 extern "C" void ColiSetAxisBlockInverse(void* region, const float* vec);
@@ -233,10 +233,10 @@ void* func_800AD860(void* obj);
 // vtable +0x14C flag-word bit queries (defined in CfObjectModel.cpp as plain
 // global C++ functions) used by func_800BCFA0's dispatch tail. extern "C":
 // the retail symbols are the unmangled names.
-extern "C" u32 func_800BAD98(cf::CfObject* obj);
-extern "C" u32 func_800BADF8(cf::CfObject* obj);
-extern "C" u32 func_800BADC8(cf::CfObject* obj);
-extern "C" u32 func_800BAE28(cf::CfObject* obj);
+extern "C" u32 CfObj_KindBit1(cf::CfObject* obj);
+extern "C" u32 CfObj_KindBit3(cf::CfObject* obj);
+extern "C" u32 CfObj_KindBit2(cf::CfObject* obj);
+extern "C" u32 CfObj_KindBit7(cf::CfObject* obj);
 // CtrlEnemy/CtrlNpc/CtrlPc/CtrlRemote/CtrlPad retail constructors (plain
 // free functions in their own TUs; the symbol map links the unmangled names).
 // Declared here because the owning headers are not included in this TU.
@@ -257,7 +257,7 @@ extern "C" u32 func_8014235C(u32 param1, const char* column, u32 param3);
 // declaration takes three args; retail func_800BE898 forwards only `this`
 // (addi r3,+0x28; b), so a one-arg C-ABI form is declared here to
 // reproduce the call site exactly.
-extern "C" bool func_802A109C(void* self);
+extern "C" bool playGated(void* self);
 // One-arg call form of the CActParamAnim translation helper (defined 2-arg
 // in kyoshin/action/CActParamAnim.cpp). Retail CfObject_UnkVirtualFunc22
 // calls it with only r3 set - r4 is left as the incoming vec, which the
@@ -277,36 +277,36 @@ extern "C" void func_eu_8015D258(void* self, float value);
 // kyoshin/cf/CCharEffect.cpp with a self param). Retail
 // CfObjectMove_flushEffectSlots calls it with the vtable query result
 // leftover in r3 - the call site passes no argument.
-extern "C" void func_8015C100();
+extern "C" void CharEffReleaseSlots0A10();
 // Two-arg call forms of the CCharEffect slot helpers (defined in
 // kyoshin/cf/CCharEffect.cpp with (CCharEffect*, u32)). Retail
 // CfObjectMove_setEffectSlotBit/18/20 pass the +0x38 sub-object's vtable
 // +0xE4 query result leftover in r3 and the incoming r4 as the index; C
 // linkage keeps the call relocs at the unmangled retail names (same scheme
-// as the func_8015C100 no-arg form).
+// as the CharEffReleaseSlots0A10 no-arg form).
 extern "C" void func_8015C074(void* self, u32 idx);
-extern "C" void func_8015C0B0(void* self, u32 idx);
+extern "C" void CharEffMoveBit(void* self, u32 idx);
 extern "C" void func_8015BD24(void* self, u32 param);
 // Two-arg call forms of the CCharEffect slot helpers (defined in
-// kyoshin/cf/CCharEffect.cpp). func_8015C214 removes a pointer from the
+// kyoshin/cf/CCharEffect.cpp). CharEffRemoveByPtr removes a pointer from the
 // effect slot lists; func_8015C294 returns whether a slot is occupied.
 // Retail CfObjectModel_UnkVirtualFunc18 / CfObjectMove_isEffectSlotUsed
 // forward the +0x38 sub-object's vtable +0xE4 query result leftover in r3
 // plus the incoming r4 (same scheme as the func_8015C074 family above).
-extern "C" void func_8015C214(void* self, void* p);
+extern "C" void CharEffRemoveByPtr(void* self, void* p);
 extern "C" bool func_8015C294(unsigned int* param1, int param2);
 // CCharEffect slot-detach helper (defined in kyoshin/cf/CCharEffect.cpp
 // with (CCharEffect*, CCharEffectvtable*); CCharEffect.hpp is not
 // included here, so the canonical typed form is not visible). C linkage
 // keeps the call-site reloc at the plain retail name (same scheme as the
 // func_8015C074 family above).
-extern "C" void func_8015C8F4(void* self, void* manager);
+extern "C" void CharEffDetachBySubId(void* self, void* manager);
 // Six-arg call form of the CCharEffect slot-register helper (defined in
 // kyoshin/cf/CCharEffect.cpp with (CCharEffect*, u32, CCharEffectSlot*,
 // u16, u16, u8); the call site only forwards register values, so the arg
 // types below reproduce the retail call exactly - the s16 fourth arg emits
 // the retail extsh at the call site).
-extern "C" void func_8015BFCC(void* self, u32 a, u32 b, s16 c, u32 d, u32 e);
+extern "C" void CharEffRegisterSlot(void* self, u32 a, u32 b, s16 c, u32 d, u32 e);
 // CActParamAnim helpers (defined in kyoshin/action/CActParamAnim.cpp,
 // retail unmangled names). setTurnScale is the float-taking translation
 // helper. func_8004B9D4 is called at the retail CfObjectMove_setAnimModeArgs site with
@@ -321,10 +321,10 @@ extern "C" void func_8004B9D4(void* self, u32 a, u32 b, u32 c);
 // unmangled names; the canonical CModelDispEquip.hpp declarations take
 // CActParamAnimView* which is not visible here - CfObjectMove.hpp's
 // Scn_IsAnimActiveOrNull C-linkage form conflicts with that header).
-// func_8005A594 advances the view's animation model; attachAnimObj
+// AnimGame_SetStateFlags advances the view's animation model; attachAnimObj
 // attaches a model list + state with a vtable-query parameter;
 // getAnimModelId returns the C4 target's page id.
-extern "C" void func_8005A594(void* self);
+extern "C" void AnimGame_SetStateFlags(void* self);
 extern "C" void attachAnimObj(void* self, void* object, void* state, u32 param);
 extern "C" u32 getAnimModelId(void* self);
 // Heap query + MemManager allocate used by CfObjectMove_ensureAnimTargets's +0xC8 target
@@ -433,7 +433,7 @@ namespace cf {
         // Wave-61: Unk primary flipped. Fv body
         // CfObjectMove_UnkVirtualFunc15__Q22cf12CfObjectMoveFv (code_800B06A4)
         // keeps the Unk mangled name; Unk alias below.
-        virtual int CfObjectMove_hasActorScale(); //0x200 (retail returns int: tested != 0 in func_8016DCE4)
+        virtual int CfObjectMove_hasActorScale(); //0x200 (retail returns int: tested != 0 in syncReloadObjectNameScale)
         int CfObjectMove_UnkVirtualFunc15() { return CfObjectMove_hasActorScale(); } //0x200
         virtual void CfObjectMove_attachEffectSlot(u32 a, u32 b, u32 c, u32 d, u32 e); //0x204
         virtual void CfObjectMove_setEffectSlotBit(u32 arg); //0x208

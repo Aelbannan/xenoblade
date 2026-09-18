@@ -27,8 +27,8 @@ extern "C" void __dt__8CProcessFv(void* self, int flags);
 extern "C" void __dt__10CScrollBarFv(void* self, int flags);
 
 // Forward decls for the layout-build helpers defined below (extern "C" so the
-// call sites in func_8015DB08 / func_80160118 bind to the unmangled retail
-// symbols). func_8015DB08 is the CCol6Hint file-load completion handler (its
+// call sites in Col6_HintOnFile_DB08 / Col6_SysOnFile_0118 bind to the unmangled retail
+// symbols). Col6_HintOnFile_DB08 is the CCol6Hint file-load completion handler (its
 // layout build func_8015DD4C operates on hint offsets 0x9C/0x11C/0x124).
 extern "C" void func_8015DD4C(CCol6Hint* self);
 extern "C" void func_80160370(CCol6System* self);
@@ -37,13 +37,13 @@ extern "C" void func_80160A6C(CCol6System* self, s32 playerIdx);
 extern "C" void func_80161178(CCol6System* self);
 extern "C" void func_8016169C(CCol6System* self);
 extern "C" void func_80161C5C(CCol6System* self);
-extern "C" void func_80160EE4(u32 unused, s32 arg);
+extern "C" void Col6_SyncBoxSlot_0EE4(u32 unused, s32 arg);
 extern "C" void func_80162000(CCol6System* self);
 extern "C" void func_80162C40(CCol6System* self);
-extern "C" void func_80162DB4(CCol6System* self);
+extern "C" void Col6_OpenBox_2DB4(CCol6System* self);
 extern "C" void func_80162EF8(CCol6System* self);
-extern "C" void func_80163614(CCol6System* self);
-extern "C" void func_8016378C(CCol6System* self);
+extern "C" void Col6_Win2CountLadder_3614(CCol6System* self);
+extern "C" void Col6_Win2Interact_378C(CCol6System* self);
 extern "C" void func_801638C0(CCol6System* self);
 extern "C" void func_80163AF4(CCol6System* self);
 extern "C" void func_8015E0BC(CCol6Hint* self);
@@ -62,7 +62,7 @@ char lbl_eu_8053011C[0xC4];
 char lbl_eu_8053021C[0xAC];
 char* lbl_eu_80662358; // .sdata arc-path pointer
 
-void func_8015D0B8() {
+void Col6_ClearGlobals_D0B8() {
     lbl_eu_80664230 = 0;
     lbl_eu_80664234 = 0;
     lbl_eu_80664238 = 0;
@@ -212,7 +212,7 @@ CCol6CheckBat* __ct__CCol6CheckBat(CProcess* parent) {
     return (CCol6CheckBat*)(uintptr_t)lbl_eu_80664230;
 }
 
-int func_8015D310() {
+int Col6_ScanItemSlots_D310() {
     union {
         struct {
             u32 w;
@@ -223,22 +223,22 @@ int func_8015D310() {
     data.w = lbl_eu_80667540;
     data.b = lbl_eu_80667544;
 
-    u8 result = func_8009CF8C(0x7fc);
+    u8 result = CtrlRemote_TouchBitByArg(0x7fc);
 
     for (u32 i = 0; i < 5; i++) {
         u8 idx = (u8)i;
-        if (result >= data.bytes[idx] && func_8009CF8C(idx + 0x804) == 0) {
+        if (result >= data.bytes[idx] && CtrlRemote_TouchBitByArg(idx + 0x804) == 0) {
             return 1;
         }
     }
     return 0;
 }
 
-// func_8015D3A0 - reserve the first free item-box slot whose owned-count
+// Col6_ReserveBoxSlot_D3A0 - reserve the first free item-box slot whose owned-count
 // threshold is met: for each of 5 slots, if the shared counter (id 0x7fc)
 // covers the slot's threshold byte and the slot count (id 0x804+i) is zero,
 // queue the window index and increment both counters by one/threshold delta.
-void func_8015D3A0() {
+void Col6_ReserveBoxSlot_D3A0() {
     // Retail stack layout: t2 (7548/754C) at +0x10 (r31), t1 (7550/7554) at
     // +0x08 (r30); declaring t2 first gives it the higher address.
     union {
@@ -255,16 +255,16 @@ void func_8015D3A0() {
 
     // Retail keeps the running count as a 16-bit variable (re-extended via
     // extsh on every read).
-    s16 total = func_8009CF8C(0x7fc);
+    s16 total = CtrlRemote_TouchBitByArg(0x7fc);
     for (s32 i = 0; i < 5; i++) {
         u8 need = t2.bytes[i];
-        if (total >= need && func_8009CF8C(i + 0x804) == 0) {
+        if (total >= need && CtrlRemote_TouchBitByArg(i + 0x804) == 0) {
             lbl_eu_8066235C = i;
-            func_8009D018(i + 0x804, 1);
+            CtrlRemote_SetSharedBit(i + 0x804, 1);
             // Retail sign-extends the t1 byte before adding to the running
             // total, then re-sign-extends the halfword argument.
             total += (s8)t1.bytes[i];
-            func_8009D018(0x7fc, total);
+            CtrlRemote_SetSharedBit(0x7fc, total);
         }
     }
 }
@@ -432,7 +432,7 @@ void CCol6Hint::Init() {
     mScrollBar.mDirection = reinterpret_cast<CScrollBar*>(sbStorage)->mDirection;
     reinterpret_cast<CScrollBar*>(sbStorage)->~CScrollBar();
 
-    func_801F34F4(&mScrollBar);
+    CScrollBar_loadLayoutArc(&mScrollBar);
 }
 
 void CCol6Hint::Term() {
@@ -447,7 +447,7 @@ void CCol6Hint::Term() {
     reinterpret_cast<CScn*>(mParentPtr)->removeRenderCB(render);
 
     mFlag98 = 0;
-    func_801F35DC(&mScrollBar);
+    CScrollBar_Teardown(&mScrollBar);
     reinterpret_cast<CCol6CursorView*>(&mCur18)->vf3();
 
     // D2-inlined double null-check artifact around the anim-host release:
@@ -491,20 +491,20 @@ void CCol6Hint::Move() {
             mState = 2;
             {
                 ml::CVec3 vec3(lbl_eu_8066755C, lbl_eu_80667560, lbl_eu_80667564);
-                func_801F3670(&mScrollBar, &vec3);
+                CScrollBar_InitRootPane(&mScrollBar, &vec3);
             }
-            func_801F36BC(&mScrollBar, 5, (u16)mField11C);
-            func_801F367C(&mScrollBar);
-            func_801F367C(&mScrollBar);
+            CScrollBar_UpdateThumb(&mScrollBar, 5, (u16)mField11C);
+            CScrollBar_requestScrollIn(&mScrollBar);
+            CScrollBar_requestScrollIn(&mScrollBar);
             break;
 
         case 2:
             // Scroll bar fully in: label the pane with the player index and
             // position the cursor between the label panes.
             if (advanceAnimTransform(mField94, lbl_eu_80667558) == 0) break;
-            if (func_801F3668(&mScrollBar) == 0) break;
+            if (CScrollBar_isActive(&mScrollBar) == 0) break;
             mState = 3;
-            func_801D216C(&mCur18, 1);
+            Cur_SetVisible(&mCur18, 1);
             {
                 char buf[0x20];
                 sprintf(buf, &lbl_eu_80502050[0xe], (s8)mField120 + 1);
@@ -527,7 +527,7 @@ void CCol6Hint::Move() {
         case 4:
             // Scroll bar sliding out: swap the anims back and wait for done.
             if (AnimRewindFrame(mField94, lbl_eu_80667558) == 0) break;
-            if (func_801F3668(&mScrollBar) == 0) break;
+            if (CScrollBar_isActive(&mScrollBar) == 0) break;
             mAnimHost->setAnim(mField94, 0);
             mAnimHost->setAnim(mField90, 1);
             mState = 5;
@@ -557,14 +557,14 @@ void CCol6Hint::Move() {
         // Common tail: per-frame updates.
         mAnimHost->update(0);
         func_801D202C(&mCur18);
-        func_801F3540(&mScrollBar);
+        CScrollBar_UpdateDispatch(&mScrollBar);
 }
 
-// func_8015DB08 - CCol6Hint file-load completion handler: create the scratch
+// Col6_HintOnFile_DB08 - CCol6Hint file-load completion handler: create the scratch
 // region + host, detach the arc buffer into a fresh accessor, build the hint
 // layout (func_8015DD4C), flag it ready and register the render callback with
 // the parent scene (the +0x84 slot holds the stored parent pointer).
-extern "C" int func_8015DB08(CCol6Hint* self, CEventFile* event) {
+extern "C" int Col6_HintOnFile_DB08(CCol6Hint* self, CEventFile* event) {
     // Retail branches to a late failure label (bne) rather than skipping the
     // body with a forward beq.
     if (self->mField88 != event->mFileHandle) goto fail;
@@ -604,7 +604,7 @@ extern "C" int func_8015DB08(CCol6Hint* self, CEventFile* event) {
 
         self->mField88 = 0;
         reinterpret_cast<UnkClass_8045F564*>(&self->mMemRegion)
-            ->func_8045F810();
+            ->validateHeap();
     }
     return 1;
 fail:
@@ -648,8 +648,8 @@ draw:
     func_80137250(reinterpret_cast<nw4r::lyt::DrawInfo*>(&drawInfo[0]));
     drawLayout(reinterpret_cast<nw4r::lyt::Layout*>(mAnimHost),
                   reinterpret_cast<nw4r::lyt::DrawInfo*>(&drawInfo[0]), 0, 1);
-    func_801F35B0(&mScrollBar, reinterpret_cast<nw4r::lyt::DrawInfo*>(&drawInfo[0]));
-    func_801D20B0(&mCur18, reinterpret_cast<nw4r::lyt::DrawInfo*>(&drawInfo[0]));
+    CScrollBar_draw(&mScrollBar, reinterpret_cast<nw4r::lyt::DrawInfo*>(&drawInfo[0]));
+    Cur_DrawLayout(&mCur18, reinterpret_cast<nw4r::lyt::DrawInfo*>(&drawInfo[0]));
     __dt__Q34nw4r3lyt8DrawInfoFv(reinterpret_cast<nw4r::lyt::DrawInfo*>(&drawInfo[0]), -1);
 }
 
@@ -746,9 +746,9 @@ extern "C" void func_8015DD4C(CCol6Hint* self) {
         ->setText(&lbl_eu_80502050[0x94], 1);
     reinterpret_cast<CCol6PaneFlagView*>(pane)->mFlag &= 0xFE;
 
-    func_8003AA34();
+    Bdat_GetTable_AA34();
     void* fp = getFP__FPCc(&lbl_eu_80502050[0x26]);
-    func_8003B1EC(fp);
+    Bdat_GetMaxRow_B1EC(fp);
 
     // Two 7-byte threshold tables (u32 + u16 + u8, read as byte arrays).
     struct {
@@ -773,7 +773,7 @@ extern "C" void func_8015DD4C(CCol6Hint* self) {
         u8 val2 = ((u8*)&tbl2)[(u8)i];
         while (val1 >= val2) {
             s32 c = BdatGetU8Direct(fp, &lbl_eu_80502050[0x9e], val1);
-            if ((c & 0xff) <= (s32)func_8009CF8C(rid)) {
+            if ((c & 0xff) <= (s32)CtrlRemote_TouchBitByArg(rid)) {
                 self->mUnk9C[self->mField11C] = val1;
                 self->mField11C++;
                 break;
@@ -784,7 +784,7 @@ extern "C" void func_8015DD4C(CCol6Hint* self) {
 
     // Reserved-slot entries (0x804 count == 1).
     for (u32 i = 0; i < 5; i++) {
-        if (func_8009CF8C((u8)i + 0x804) == 1) {
+        if (CtrlRemote_TouchBitByArg((u8)i + 0x804) == 1) {
             self->mUnk9C[self->mField11C] = i + 0x2e;
             self->mField11C++;
         }
@@ -837,13 +837,13 @@ extern "C" void func_8015E0BC(CCol6Hint* self) {
 
     if (up) {
         self->mState = 4;
-        func_801D216C(&self->mCur18, 0);
-        func_801F369C(&self->mScrollBar);
+        Cur_SetVisible(&self->mCur18, 0);
+        CScrollBar_requestScrollOut(&self->mScrollBar);
         playUISound(3);
     } else if (down) {
         self->mState = 4;
-        func_801D216C(&self->mCur18, 0);
-        func_801F369C(&self->mScrollBar);
+        Cur_SetVisible(&self->mCur18, 0);
+        CScrollBar_requestScrollOut(&self->mScrollBar);
         if (self->mField11C >= 5) {
             self->mField120 = 4;
             self->mField121 = (u8)(self->mField11C - 5);
@@ -904,7 +904,7 @@ extern "C" void func_8015E0BC(CCol6Hint* self) {
                       reinterpret_cast<CCol6LayoutView*>(self->mAnimHost)
                           ->mpRootPane);
         reinterpret_cast<CCol6Cur18View*>(self->mCur18)->vf04(&vec);
-        func_801F3850(&self->mScrollBar, (u16)(s8)self->mField121);
+        CScrollBar_PlaceThumb(&self->mScrollBar, (u16)(s8)self->mField121);
         playUISound(1);
     } else if (down2) {
         // Row up with wrap: increment the row pair, resetting to 0/0 when the
@@ -956,7 +956,7 @@ extern "C" void func_8015E0BC(CCol6Hint* self) {
                       reinterpret_cast<CCol6LayoutView*>(self->mAnimHost)
                           ->mpRootPane);
         reinterpret_cast<CCol6Cur18View*>(self->mCur18)->vf04(&vec);
-        func_801F3850(&self->mScrollBar, (u16)(s8)self->mField121);
+        CScrollBar_PlaceThumb(&self->mScrollBar, (u16)(s8)self->mField121);
         playUISound(1);
     } else if (confirm) {
         // Page down: jump one page back with wrap.
@@ -1004,7 +1004,7 @@ extern "C" void func_8015E0BC(CCol6Hint* self) {
                       reinterpret_cast<CCol6LayoutView*>(self->mAnimHost)
                           ->mpRootPane);
         reinterpret_cast<CCol6Cur18View*>(self->mCur18)->vf04(&vec);
-        func_801F3850(&self->mScrollBar, (u16)(s8)self->mField121);
+        CScrollBar_PlaceThumb(&self->mScrollBar, (u16)(s8)self->mField121);
         playUISound(1);
     } else if (up2) {
         // Page up: jump one page forward with wrap.
@@ -1056,7 +1056,7 @@ extern "C" void func_8015E0BC(CCol6Hint* self) {
                       reinterpret_cast<CCol6LayoutView*>(self->mAnimHost)
                           ->mpRootPane);
         reinterpret_cast<CCol6Cur18View*>(self->mCur18)->vf04(&vec);
-        func_801F3850(&self->mScrollBar, (u16)(s8)self->mField121);
+        CScrollBar_PlaceThumb(&self->mScrollBar, (u16)(s8)self->mField121);
         playUISound(1);
     }
 }
@@ -1292,8 +1292,8 @@ void CCol6System::Term() {
     mFlagA0 = 0;
     reinterpret_cast<CCol6CursorView*>(&mCur1)->vf3();
     reinterpret_cast<CCol6CursorView*>(&mCur2)->vf3();
-    func_8022B7F4(&mSysWin1);
-    func_8022B7F4(&mSysWin2);
+    sysWinTermLayout(&mSysWin1);
+    sysWinTermLayout(&mSysWin2);
 
     // The outer guard plus delete's own null-check reproduce retail's two beq's
     // on the same CR0 test (MWCC D2-inlined-into-D1 artifact).
@@ -1314,7 +1314,7 @@ void CCol6System::Term() {
 inline void CCol6System::updateCursorPos() {
     if (CSysWin_getUnk34(&mSysWin1) != 0) {
         nw4r::math::VEC3 pos;
-        func_8022C1B4(reinterpret_cast<u8*>(&pos), &mSysWin1, mPadA5[1]);
+        sysWinGetPaneScreenPos(reinterpret_cast<u8*>(&pos), &mSysWin1, mPadA5[1]);
         reinterpret_cast<CCol6Cur18View*>(mCur2)->vf04(&pos);
     } else {
         char buf[0x20];
@@ -1459,7 +1459,7 @@ body:
             mFieldA4 = 0xd;
             CUICfManager_queueFadeMenu(0, 0, lbl_eu_80667578, lbl_eu_80667578,
                           lbl_eu_80667578);
-            func_80160EE4((u32)(uintptr_t)this, (s8)mPadA5[0]);
+            Col6_SyncBoxSlot_0EE4((u32)(uintptr_t)this, (s8)mPadA5[0]);
         } else {
             mFieldA4 = 7;
             updateCursorPos();
@@ -1472,7 +1472,7 @@ body:
 
     case 0xe:
         // Fade idle: resolve target and flag.
-        if (func_80113E1C() != 0) break;
+        if (getFadeMenu() != 0) break;
         mIndex = 0xff;
         mFlag64 = 1;
         break;
@@ -1500,7 +1500,7 @@ body:
         break;
 
     case 0x11:
-        if (func_80113E1C() != 0) break;
+        if (getFadeMenu() != 0) break;
         mFieldA4 = 0x12;
         break;
 
@@ -1530,8 +1530,8 @@ body:
 
     case 0x15:
         // Fade idle: fade out and clear the block flags.
-        if (func_80113E1C() == 0) break;
-        if (func_80113E24(func_80113E1C()) != 0) break;
+        if (getFadeMenu() == 0) break;
+        if (isFadeActive(getFadeMenu()) != 0) break;
         mFieldA4 = 0xe;
         CUICfManager_queueFadeMenu(2, 0, lbl_eu_80667578, lbl_eu_80667578,
                       lbl_eu_80667578);
@@ -1539,7 +1539,7 @@ body:
         break;
 
     case 0x16:
-        func_80162DB4(this);
+        Col6_OpenBox_2DB4(this);
         break;
 
     case 0x17:
@@ -1553,7 +1553,7 @@ body:
         break;
 
     case 0x18:
-        if (func_80113E1C() != 0) break;
+        if (getFadeMenu() != 0) break;
         mFieldA4 = 0x19;
         break;
 
@@ -1582,7 +1582,7 @@ body:
         if (isCameraReady__Q22cf13CfGameManagerFv() != 0) break;
         mFieldA4 = 0x20;
         {
-            u8 cnt = (u8)func_8009CF8C(0x802);
+            u8 cnt = (u8)CtrlRemote_TouchBitByArg(0x802);
             char* s1 = BdatTouchStringCell(lbl_eu_80502050, &lbl_eu_80502050[0x9],
                                      cnt + 0x67);
             char* s2 = BdatTouchStringCell(lbl_eu_80502050, &lbl_eu_80502050[0x9],
@@ -1590,7 +1590,7 @@ body:
             ml::FixStr<128> buf;
             buf.format(&lbl_eu_80502050[0xb5], s1, s2);
             func_8022B9B4(&mSysWin2, buf.mString, 0);
-            func_8022B8B8(&mSysWin2);
+            sysWinOpenPhase1(&mSysWin2);
             playActorSound__Q22cf10CfSoundManFUlUlUlUlf(
                 1, 0x134, 0, 0, lbl_eu_80667558);
         }
@@ -1611,7 +1611,7 @@ body:
                 } else {
                     cond = (pad->mPressedButtonFlags & 0x10) != 0;
                 }
-                if (cond != 0) func_8022B8E4(&mSysWin2);
+                if (cond != 0) sysWinAdvancePhase3(&mSysWin2);
             }
         } else {
             mFieldA4 = 7;
@@ -1619,11 +1619,11 @@ body:
         break;
 
     case 0x1e:
-        func_80163614(this);
+        Col6_Win2CountLadder_3614(this);
         break;
 
     case 0x1f:
-        func_8016378C(this);
+        Col6_Win2Interact_378C(this);
         break;
 
     case 0x20:
@@ -1640,7 +1640,7 @@ body:
                 } else {
                     cond = (pad->mPressedButtonFlags & 0x10) != 0;
                 }
-                if (cond != 0) func_8022B8E4(&mSysWin2);
+                if (cond != 0) sysWinAdvancePhase3(&mSysWin2);
             }
         } else {
             mFieldA4 = 0x24;
@@ -1667,7 +1667,7 @@ body:
                 } else {
                     cond = (pad->mPressedButtonFlags & 0x10) != 0;
                 }
-                if (cond != 0) func_8022B8E4(&mSysWin2);
+                if (cond != 0) sysWinAdvancePhase3(&mSysWin2);
             }
         } else {
             mFieldA4 = 0x26;
@@ -1681,7 +1681,7 @@ body:
 
     case 0x24:
         // Per-slot threshold scan (same shape as CCol6Invite::Move).
-        if (func_801B481C() != 0) break;
+        if (GetItemMulti_IsActiveFlag() != 0) break;
         {
             union {
                 struct {
@@ -1693,13 +1693,13 @@ body:
             data.w = lbl_eu_80667540;
             data.b = lbl_eu_80667544;
 
-            u8 result = (u8)func_8009CF8C(0x7fc);
+            u8 result = (u8)CtrlRemote_TouchBitByArg(0x7fc);
 
             u8 found = 0;
             for (u32 i = 0; i < 5; i++) {
                 u8 idx = (u8)i;
                 if (result >= data.bytes[idx] &&
-                    func_8009CF8C(idx + 0x804) == 0) {
+                    CtrlRemote_TouchBitByArg(idx + 0x804) == 0) {
                     found = 1;
                     break;
                 }
@@ -1725,14 +1725,14 @@ body:
                 data3.w = lbl_eu_80667550;
                 data3.b = lbl_eu_80667554;
 
-                s16 val = (s16)func_8009CF8C(0x7fc);
+                s16 val = (s16)CtrlRemote_TouchBitByArg(0x7fc);
                 for (u32 i = 0; i < 5; i++) {
                     if (val >= data2.bytes[i] &&
-                        func_8009CF8C(i + 0x804) == 0) {
+                        CtrlRemote_TouchBitByArg(i + 0x804) == 0) {
                         lbl_eu_8066235C = (s32)i;
-                        func_8009D018(i + 0x804, 1);
+                        CtrlRemote_SetSharedBit(i + 0x804, 1);
                         val = (s16)(val + (s8)data3.bytes[i]);
-                        func_8009D018(0x7fc, val);
+                        CtrlRemote_SetSharedBit(0x7fc, val);
                     }
                 }
             }
@@ -1752,14 +1752,14 @@ body:
                 } else {
                     cond = (pad->mPressedButtonFlags & 0x10) != 0;
                 }
-                if (cond != 0) func_8022B8E4(&mSysWin2);
+                if (cond != 0) sysWinAdvancePhase3(&mSysWin2);
             }
         } else {
             mFieldA4 = 0x28;
             char* s = BdatTouchStringCell(lbl_eu_80502050, &lbl_eu_80502050[0x9],
                                      0x80);
             func_8022B9B4(&mSysWin2, s, 0);
-            func_8022B8B8(&mSysWin2);
+            sysWinOpenPhase1(&mSysWin2);
         }
         break;
 
@@ -1776,7 +1776,7 @@ body:
                 } else {
                     cond = (pad->mPressedButtonFlags & 0x10) != 0;
                 }
-                if (cond != 0) func_8022B8E4(&mSysWin2);
+                if (cond != 0) sysWinAdvancePhase3(&mSysWin2);
             }
         } else {
             mFieldA4 = 0x15;
@@ -1793,15 +1793,15 @@ body:
     reinterpret_cast<CCol6AnimHostView*>(mpLayout)->update(0);
     func_801D202C(&mCur1);
     func_801D202C(&mCur2);
-    func_8022B748(&mSysWin1);
-    func_8022B748(&mSysWin2);
+    sysWinDispatchPhase(&mSysWin1);
+    sysWinDispatchPhase(&mSysWin2);
 }
 
-// func_80160118 - second layout file-load completion handler: create the
+// Col6_SysOnFile_0118 - second layout file-load completion handler: create the
 // scratch region + host, detach the arc buffer into a fresh accessor, build
 // the layout (func_80160370), flag it ready and register the render callback.
-extern "C" int func_80160118(CCol6System* self, CEventFile* event) {
-    // Same shape as func_8015DB08: late failure label (no dtor on that
+extern "C" int Col6_SysOnFile_0118(CCol6System* self, CEventFile* event) {
+    // Same shape as Col6_HintOnFile_DB08: late failure label (no dtor on that
     // path), host scoped to the success block, pool base materialized after
     // getHandleMEM2.
     if (self->mFileHandle != event->mFileHandle) goto fail;
@@ -1834,7 +1834,7 @@ extern "C" int func_80160118(CCol6System* self, CEventFile* event) {
 
         self->mFileHandle = 0;
         reinterpret_cast<UnkClass_8045F564*>(&self->mMemRegion)
-            ->func_8045F810();
+            ->validateHeap();
     }
     return 1;
 fail:
@@ -1859,11 +1859,11 @@ draw:
     func_80137250(&drawInfo);
     if (mFlagA1 == 0) {
         drawLayout(mpLayout, &drawInfo, 0, 1);
-        func_801D20B0(&mCur1, &drawInfo);
-        func_8022B7C8(&mSysWin1, &drawInfo);
-        func_801D20B0(&mCur2, &drawInfo);
+        Cur_DrawLayout(&mCur1, &drawInfo);
+        sysWinDrawLayout(&mSysWin1, &drawInfo);
+        Cur_DrawLayout(&mCur2, &drawInfo);
     }
-    func_8022B7C8(&mSysWin2, &drawInfo);
+    sysWinDrawLayout(&mSysWin2, &drawInfo);
 }
 
 // func_801602F4 - item-box system-window factory (same shape as
@@ -2018,7 +2018,7 @@ extern "C" void func_80160370(CCol6System* self) {
     // Four player-count rows: count pane + two sub-labels per row.
     for (s32 i = 0; i < 4; i++) {
         u8 idx = (u8)(i + 1);
-        u32 c = func_8009CF8C(i + 0x7fe);
+        u32 c = CtrlRemote_TouchBitByArg(i + 0x7fe);
         char buf[0x20];
         sprintf(buf, &lbl_eu_80502050[0x25e], idx);
         setLayoutTextBoxNumber__FPQ34nw4r3lyt6LayoutPcUc(self->mpLayout, buf, c);
@@ -2058,16 +2058,16 @@ extern "C" void func_80160370(CCol6System* self) {
     // Player counts on the two slots.
     setLayoutTextBoxNumber__FPQ34nw4r3lyt6LayoutPcUc(self->mpLayout,
                                             &lbl_eu_80502050[0x10f],
-                                            func_8009CF8C(0x7fc));
+                                            CtrlRemote_TouchBitByArg(0x7fc));
     setLayoutTextBoxNumber__FPQ34nw4r3lyt6LayoutPcUc(self->mpLayout,
                                             &lbl_eu_80502050[0x11d],
-                                            func_8009CF8C(0x7fd));
+                                            CtrlRemote_TouchBitByArg(0x7fd));
 
     // Reserved-slot count string: 0x19 if any reserved slot is populated.
     s32 cnt = 0x1a;
     for (u32 i = 0; i < 5; i++) {
         u8 idx = (u8)i;
-        if (func_8009CF8C(idx + 0x804) == 1) {
+        if (CtrlRemote_TouchBitByArg(idx + 0x804) == 1) {
             cnt = 0x19;
             break;
         }
@@ -2086,11 +2086,11 @@ extern "C" void func_80160A6C(CCol6System* self, s32 playerIdx) {
         char buf[0x20];
         sprintf(buf, &lbl_eu_80502050[0x25e], i + 1);
         setLayoutTextBoxNumber__FPQ34nw4r3lyt6LayoutPcUc(self->mpLayout, buf,
-                                                func_8009CF8C(i + 0x7fe));
+                                                CtrlRemote_TouchBitByArg(i + 0x7fe));
     }
 
     if (playerIdx < 4) {
-        s32 f = (s32)func_8009CF8C((u32)(playerIdx + 0x7fe));
+        s32 f = (s32)CtrlRemote_TouchBitByArg((u32)(playerIdx + 0x7fe));
         char* str = BdatTouchStringCell(lbl_eu_80502050, &lbl_eu_80502050[0x293],
                                   f + playerIdx * 6 + 0x1f);
         LayoutSetTextBoxFmtValue(self->mpLayout, &lbl_eu_80502050[0x2c0], str, 0);
@@ -2196,14 +2196,14 @@ extern "C" void func_80160A6C(CCol6System* self, s32 playerIdx) {
     }
 }
 
-// func_80160EE4 - item-box sync ladder: for a given item slot (<4) with a
+// Col6_SyncBoxSlot_0EE4 - item-box sync ladder: for a given item slot (<4) with a
 // populated table row, format per-slot sub-ids, resolve the item instances and
 // reconcile counts, calling the instance-sync virtual or the delta adjuster
 // when the counted stack differs from the table value. The first parameter
 // (r3) is unused by the retail body - the slot index arrives in r4.
-void func_80160EE4(u32 unused, s32 arg) {
+void Col6_SyncBoxSlot_0EE4(u32 unused, s32 arg) {
     if (arg >= 4) return;
-    s32 f = (s32)func_8009CF8C((u32)(arg + 0x7fe));
+    s32 f = (s32)CtrlRemote_TouchBitByArg((u32)(arg + 0x7fe));
     if (f >= 5) return;
     // Retail accumulates arg*4 into a temp (compound +=), then forms
     // n = f + temp + 1 so the adds land in n's callee-saved home register.
@@ -2240,11 +2240,11 @@ void func_80160EE4(u32 unused, s32 arg) {
     }
 }
 
-// func_80161024 - validate the item box for the player index at +0xA5: the
+// Col6_ValidateBox_1024 - validate the item box for the player index at +0xA5: the
 // total owned count must cover the needed quantity (table id * 100), and each
 // of the five sub-slots must have its item present with a sufficient count.
-extern "C" int func_80161024(CCol6System* self) {
-    u8 f = (u8)func_8009CF8C((u32)((s8)self->mPadA5[0] + 0x7fe));
+extern "C" int Col6_ValidateBox_1024(CCol6System* self) {
+    u8 f = (u8)CtrlRemote_TouchBitByArg((u32)((s8)self->mPadA5[0] + 0x7fe));
     u16 id = BdatGetU16ByTableKey(
         &lbl_eu_80502050[0x2cc], &lbl_eu_80502050[0x2dd],
         (u32)((s32)f + (s8)self->mPadA5[0] * 5 + 1));
@@ -2316,7 +2316,7 @@ void func_80161178(CCol6System* self) {
             reinterpret_cast<CCol6AnimHostView*>(self->mpLayout)
                 ->setAnim(self->mAnim94, 1);
         }
-        func_801D216C(&self->mCur1, 0);
+        Cur_SetVisible(&self->mCur1, 0);
         if (self->mPadA5[0] == 2) self->mPadA5[0] = 3;
         playUISound(3);
     } else if (down) {
@@ -2329,7 +2329,7 @@ void func_80161178(CCol6System* self) {
             ->setAnim(self->mAnim90, 0);
         reinterpret_cast<CCol6AnimHostView*>(self->mpLayout)
             ->setAnim(self->mAnim94, 1);
-        func_801D216C(&self->mCur1, 0);
+        Cur_SetVisible(&self->mCur1, 0);
         self->mPadA5[0] = 3;
         playUISound(6);
     } else if (sels) {
@@ -2338,7 +2338,7 @@ void func_80161178(CCol6System* self) {
         if ((s8)self->mPadA5[0] < 0) self->mPadA5[0] = 2;
         if (CSysWin_getUnk34(&self->mSysWin1) != 0) {
             u8 tmp[0x18];
-            func_8022C1B4(tmp, &self->mSysWin1, self->mPadA5[1]);
+            sysWinGetPaneScreenPos(tmp, &self->mSysWin1, self->mPadA5[1]);
             reinterpret_cast<CCol6Cur18View*>(&self->mCur2)->vf04(
                 reinterpret_cast<nw4r::math::VEC3*>(tmp));
         } else {
@@ -2370,7 +2370,7 @@ void func_80161178(CCol6System* self) {
         if ((s8)self->mPadA5[0] > 2) self->mPadA5[0] = 0;
         if (CSysWin_getUnk34(&self->mSysWin1) != 0) {
             u8 tmp[0x18];
-            func_8022C1B4(tmp, &self->mSysWin1, self->mPadA5[1]);
+            sysWinGetPaneScreenPos(tmp, &self->mSysWin1, self->mPadA5[1]);
             reinterpret_cast<CCol6Cur18View*>(&self->mCur2)->vf04(
                 reinterpret_cast<nw4r::math::VEC3*>(tmp));
         } else {
@@ -2430,10 +2430,10 @@ void func_8016169C(CCol6System* self) {
                 ->setAnim(self->mAnim9C, 0);
             reinterpret_cast<CCol6AnimHostView*>(self->mpLayout)
                 ->setAnim(self->mAnim98, 1);
-            func_801D216C(&self->mCur1, 0);
+            Cur_SetVisible(&self->mCur1, 0);
             playUISound(3);
-        } else if (func_8009CF8C(pid + 0x7fe) < 5) {
-            if (func_80161024(self) != 0) {
+        } else if (CtrlRemote_TouchBitByArg(pid + 0x7fe) < 5) {
+            if (Col6_ValidateBox_1024(self) != 0) {
                 // Fill window 1 with the player's box name and open it.
                 char* str1 = BdatTouchStringCell(lbl_eu_80502050,
                                            &lbl_eu_80502050[0x9],
@@ -2443,10 +2443,10 @@ void func_8016169C(CCol6System* self) {
                 char* str3 = BdatTouchStringCell(lbl_eu_80502050,
                                            &lbl_eu_80502050[0x9], 8);
                 func_8022B9B4(&self->mSysWin1, str1, 0);
-                func_8022BF6C(&self->mSysWin1, str2, str3);
+                sysWinSetTwoTextValues(&self->mSysWin1, str2, str3);
                 func_8022BFC8(&self->mSysWin1, 0);
-                func_8022B8B8(&self->mSysWin1);
-                func_801D216C(&self->mCur1, 1);
+                sysWinOpenPhase1(&self->mSysWin1);
+                Cur_SetVisible(&self->mCur1, 1);
                 self->mFieldA4 = 0xa;
                 playUISound(3);
             } else {
@@ -2458,7 +2458,7 @@ void func_8016169C(CCol6System* self) {
                                       0xc);
             func_8022B9B4(&self->mSysWin2, str, 0);
             func_8022BFC8(&self->mSysWin2, 1);
-            func_8022B8B8(&self->mSysWin2);
+            sysWinOpenPhase1(&self->mSysWin2);
             self->mFieldA4 = 0x1d;
             playUISound(5);
         }
@@ -2472,7 +2472,7 @@ void func_8016169C(CCol6System* self) {
             ->setAnim(self->mAnim9C, 0);
         reinterpret_cast<CCol6AnimHostView*>(self->mpLayout)
             ->setAnim(self->mAnim98, 1);
-        func_801D216C(&self->mCur1, 0);
+        Cur_SetVisible(&self->mCur1, 0);
         playUISound(6);
     } else if (sels) {
         // Player index down (wrap to 4) and refresh the box.
@@ -2481,7 +2481,7 @@ void func_8016169C(CCol6System* self) {
         func_80160A6C(self, (s8)self->mPadA5[0]);
         if (CSysWin_getUnk34(&self->mSysWin1) != 0) {
             u8 tmp[0x18];
-            func_8022C1B4(tmp, &self->mSysWin1, self->mPadA5[1]);
+            sysWinGetPaneScreenPos(tmp, &self->mSysWin1, self->mPadA5[1]);
             reinterpret_cast<CCol6Cur18View*>(&self->mCur2)->vf04(
                 reinterpret_cast<nw4r::math::VEC3*>(tmp));
         } else {
@@ -2514,7 +2514,7 @@ void func_8016169C(CCol6System* self) {
         func_80160A6C(self, (s8)self->mPadA5[0]);
         if (CSysWin_getUnk34(&self->mSysWin1) != 0) {
             u8 tmp[0x18];
-            func_8022C1B4(tmp, &self->mSysWin1, self->mPadA5[1]);
+            sysWinGetPaneScreenPos(tmp, &self->mSysWin1, self->mPadA5[1]);
             reinterpret_cast<CCol6Cur18View*>(&self->mCur2)->vf04(
                 reinterpret_cast<nw4r::math::VEC3*>(tmp));
         } else {
@@ -2567,7 +2567,7 @@ void func_80161C5C(CCol6System* self) {
         if ((s8)self->mPadA5[1] < 0) self->mPadA5[1] = 1;
         if (CSysWin_getUnk34(&self->mSysWin1) != 0) {
             u8 tmp[0x18];
-            func_8022C1B4(tmp, &self->mSysWin1, self->mPadA5[1]);
+            sysWinGetPaneScreenPos(tmp, &self->mSysWin1, self->mPadA5[1]);
             reinterpret_cast<CCol6Cur18View*>(&self->mCur2)->vf04(
                 reinterpret_cast<nw4r::math::VEC3*>(tmp));
         } else {
@@ -2599,7 +2599,7 @@ void func_80161C5C(CCol6System* self) {
         if ((s8)self->mPadA5[1] > 1) self->mPadA5[1] = 0;
         if (CSysWin_getUnk34(&self->mSysWin1) != 0) {
             u8 tmp[0x18];
-            func_8022C1B4(tmp, &self->mSysWin1, self->mPadA5[1]);
+            sysWinGetPaneScreenPos(tmp, &self->mSysWin1, self->mPadA5[1]);
             reinterpret_cast<CCol6Cur18View*>(&self->mCur2)->vf04(
                 reinterpret_cast<nw4r::math::VEC3*>(tmp));
         } else {
@@ -2628,14 +2628,14 @@ void func_80161C5C(CCol6System* self) {
     } else if (up) {
         // Open the box for the current player (reset cursor 2).
         self->mFieldA4 = 0xc;
-        func_801D216C(&self->mCur2, 0);
-        func_8022B8E4(&self->mSysWin1);
+        Cur_SetVisible(&self->mCur2, 0);
+        sysWinAdvancePhase3(&self->mSysWin1);
         playUISound(3);
     } else if (down) {
         self->mFieldA4 = 0xc;
         self->mPadA5[1] = 1;
-        func_801D216C(&self->mCur2, 0);
-        func_8022B8E4(&self->mSysWin1);
+        Cur_SetVisible(&self->mCur2, 0);
+        sysWinAdvancePhase3(&self->mSysWin1);
         playUISound(6);
     }
 }
@@ -2646,191 +2646,191 @@ void func_80161C5C(CCol6System* self) {
 /// vector block from the s16-keyed lookup, then refresh the layout labels
 // (0x10f/0x11d/0x2b6) and the item box for the current player.
 extern "C" void func_80162000(CCol6System* self) {
-    CCol6Fade* fade = func_80113E1C();
+    CCol6Fade* fade = getFadeMenu();
     if (fade == 0) return;
-    if (func_80113E24(fade) != 0) return;
+    if (isFadeActive(fade) != 0) return;
 
     // Bump this player's count and the two summary counters.
-    u32 f = func_8009CF8C((u32)((s8)self->mPadA5[0] + 0x7fe));
-    func_8009D018((u32)((s8)self->mPadA5[0] + 0x7fe), f + 1);
+    u32 f = CtrlRemote_TouchBitByArg((u32)((s8)self->mPadA5[0] + 0x7fe));
+    CtrlRemote_SetSharedBit((u32)((s8)self->mPadA5[0] + 0x7fe), f + 1);
     u32 n = f + (s8)self->mPadA5[0] * 5 + 1;
     u8 a = (u8)BdatGetU8ByTableKey(&lbl_eu_80502050[0x334], &lbl_eu_80502050[0x33f], n);
-    func_8009D018(0x7fc, func_8009CF8C(0x7fc) + a);
+    CtrlRemote_SetSharedBit(0x7fc, CtrlRemote_TouchBitByArg(0x7fc) + a);
     u8 b = (u8)BdatGetU8ByTableKey(&lbl_eu_80502050[0x334], &lbl_eu_80502050[0x346], n);
-    func_8009D018(0x7fd, func_8009CF8C(0x7fd) + b);
+    CtrlRemote_SetSharedBit(0x7fd, CtrlRemote_TouchBitByArg(0x7fd) + b);
 
     // Seed the TaskLOD/audio slots for this player's three id ranges.
     UnkClass_80083298View* gm = getGameSubManager__Q22cf13CfGameManagerFv();
     if (gm != 0) {
         u8 v1 = (u8)(((s8)self->mPadA5[0] + 1) * 10 + f + 1);
         activateLOD__8CTaskLODFv(v1);
-        func_804BCC30(getScnHandle__Fv(), v1);
+        ScnData_FwdB7D9C(getScnHandle__Fv(), v1);
         forwardMpfCallB__17UnkClass_8047BB54Fv(&gm->field_0xF0, v1);
 
         u8 v2 = (u8)(f + 0x3d);
         activateLOD__8CTaskLODFv(v2);
-        func_804BCC30(getScnHandle__Fv(), v2);
+        ScnData_FwdB7D9C(getScnHandle__Fv(), v2);
         forwardMpfCallB__17UnkClass_8047BB54Fv(&gm->field_0xF0, v2);
 
         u8 v3 = (u8)(f + 0x47);
         deactivateLOD__8CTaskLODFv(v3);
-        func_804BCC3C(getScnHandle__Fv(), v3);
+        ScnData_FwdB7DD4(getScnHandle__Fv(), v3);
         forwardMpfCallC__17UnkClass_8047BB54Fv(&gm->field_0xF0, v3);
 
         if (v2 == 0x3d) {
             activateLOD__8CTaskLODFv(0x55);
-            func_804BCC30(getScnHandle__Fv(), 0x55);
+            ScnData_FwdB7D9C(getScnHandle__Fv(), 0x55);
             forwardMpfCallB__17UnkClass_8047BB54Fv(&gm->field_0xF0, 0x55);
         }
         if (v2 == 0x3e) {
             activateLOD__8CTaskLODFv(0x56);
-            func_804BCC30(getScnHandle__Fv(), 0x56);
+            ScnData_FwdB7D9C(getScnHandle__Fv(), 0x56);
             forwardMpfCallB__17UnkClass_8047BB54Fv(&gm->field_0xF0, 0x56);
         }
         if (v2 == 0x3d) {
             activateLOD__8CTaskLODFv(0x57);
-            func_804BCC30(getScnHandle__Fv(), 0x57);
+            ScnData_FwdB7D9C(getScnHandle__Fv(), 0x57);
             forwardMpfCallB__17UnkClass_8047BB54Fv(&gm->field_0xF0, 0x57);
         }
         if (v2 == 0x3d) {
             activateLOD__8CTaskLODFv(0x58);
-            func_804BCC30(getScnHandle__Fv(), 0x58);
+            ScnData_FwdB7D9C(getScnHandle__Fv(), 0x58);
             forwardMpfCallB__17UnkClass_8047BB54Fv(&gm->field_0xF0, 0x58);
         }
-        if (func_8009CF8C(0x20) >= 0x16e) {
+        if (CtrlRemote_TouchBitByArg(0x20) >= 0x16e) {
             activateLOD__8CTaskLODFv(0x59);
-            func_804BCC30(getScnHandle__Fv(), 0x59);
+            ScnData_FwdB7D9C(getScnHandle__Fv(), 0x59);
             forwardMpfCallB__17UnkClass_8047BB54Fv(&gm->field_0xF0, 0x59);
             if (v1 == 0xe) {
                 activateLOD__8CTaskLODFv(0x5a);
-                func_804BCC30(getScnHandle__Fv(), 0x5a);
+                ScnData_FwdB7D9C(getScnHandle__Fv(), 0x5a);
                 forwardMpfCallB__17UnkClass_8047BB54Fv(&gm->field_0xF0, 0x5a);
             }
         }
         if (v2 == 0x3d) {
             activateLOD__8CTaskLODFv(0x5b);
-            func_804BCC30(getScnHandle__Fv(), 0x5b);
+            ScnData_FwdB7D9C(getScnHandle__Fv(), 0x5b);
             forwardMpfCallB__17UnkClass_8047BB54Fv(&gm->field_0xF0, 0x5b);
         }
         if (v2 == 0x3d) {
             activateLOD__8CTaskLODFv(0x5c);
-            func_804BCC30(getScnHandle__Fv(), 0x5c);
+            ScnData_FwdB7D9C(getScnHandle__Fv(), 0x5c);
             forwardMpfCallB__17UnkClass_8047BB54Fv(&gm->field_0xF0, 0x5c);
         }
         if (v2 == 0x3e) {
             activateLOD__8CTaskLODFv(0x5d);
-            func_804BCC30(getScnHandle__Fv(), 0x5d);
+            ScnData_FwdB7D9C(getScnHandle__Fv(), 0x5d);
             forwardMpfCallB__17UnkClass_8047BB54Fv(&gm->field_0xF0, 0x5d);
         }
         if (v2 == 0x3f) {
             activateLOD__8CTaskLODFv(0x5e);
-            func_804BCC30(getScnHandle__Fv(), 0x5e);
+            ScnData_FwdB7D9C(getScnHandle__Fv(), 0x5e);
             forwardMpfCallB__17UnkClass_8047BB54Fv(&gm->field_0xF0, 0x5e);
         }
         if (v2 == 0x40) {
             activateLOD__8CTaskLODFv(0x5f);
-            func_804BCC30(getScnHandle__Fv(), 0x5f);
+            ScnData_FwdB7D9C(getScnHandle__Fv(), 0x5f);
             forwardMpfCallB__17UnkClass_8047BB54Fv(&gm->field_0xF0, 0x5f);
         }
         if (v2 == 0x40) {
             activateLOD__8CTaskLODFv(0x60);
-            func_804BCC30(getScnHandle__Fv(), 0x60);
+            ScnData_FwdB7D9C(getScnHandle__Fv(), 0x60);
             forwardMpfCallB__17UnkClass_8047BB54Fv(&gm->field_0xF0, 0x60);
         }
         if (v2 == 0x41) {
             activateLOD__8CTaskLODFv(0x61);
-            func_804BCC30(getScnHandle__Fv(), 0x61);
+            ScnData_FwdB7D9C(getScnHandle__Fv(), 0x61);
             forwardMpfCallB__17UnkClass_8047BB54Fv(&gm->field_0xF0, 0x61);
         }
         if (v2 == 0x41) {
             activateLOD__8CTaskLODFv(0x62);
-            func_804BCC30(getScnHandle__Fv(), 0x62);
+            ScnData_FwdB7D9C(getScnHandle__Fv(), 0x62);
             forwardMpfCallB__17UnkClass_8047BB54Fv(&gm->field_0xF0, 0x62);
         }
 
         if (getLODData__8CTaskLODFv(0x2d)) {
             deactivateLOD__8CTaskLODFv(0x50);
-            func_804BCC3C(getScnHandle__Fv(), 0x50);
+            ScnData_FwdB7DD4(getScnHandle__Fv(), 0x50);
             forwardMpfCallC__17UnkClass_8047BB54Fv(&gm->field_0xF0, 0x50);
         }
         if (getLODData__8CTaskLODFv(0xe)) {
             deactivateLOD__8CTaskLODFv(0x51);
-            func_804BCC3C(getScnHandle__Fv(), 0x51);
+            ScnData_FwdB7DD4(getScnHandle__Fv(), 0x51);
             forwardMpfCallC__17UnkClass_8047BB54Fv(&gm->field_0xF0, 0x51);
         }
         if (getLODData__8CTaskLODFv(0x2a)) {
             deactivateLOD__8CTaskLODFv(0x52);
-            func_804BCC3C(getScnHandle__Fv(), 0x52);
+            ScnData_FwdB7DD4(getScnHandle__Fv(), 0x52);
             forwardMpfCallC__17UnkClass_8047BB54Fv(&gm->field_0xF0, 0x52);
         }
         if (getLODData__8CTaskLODFv(0x22)) {
             deactivateLOD__8CTaskLODFv(0x53);
-            func_804BCC3C(getScnHandle__Fv(), 0x53);
+            ScnData_FwdB7DD4(getScnHandle__Fv(), 0x53);
             forwardMpfCallC__17UnkClass_8047BB54Fv(&gm->field_0xF0, 0x53);
         }
         if (getLODData__8CTaskLODFv(0x23)) {
             deactivateLOD__8CTaskLODFv(0x54);
-            func_804BCC3C(getScnHandle__Fv(), 0x54);
+            ScnData_FwdB7DD4(getScnHandle__Fv(), 0x54);
             forwardMpfCallC__17UnkClass_8047BB54Fv(&gm->field_0xF0, 0x54);
         }
         if (getLODData__8CTaskLODFv(0x3e)) {
             deactivateLOD__8CTaskLODFv(0x55);
-            func_804BCC3C(getScnHandle__Fv(), 0x55);
+            ScnData_FwdB7DD4(getScnHandle__Fv(), 0x55);
             forwardMpfCallC__17UnkClass_8047BB54Fv(&gm->field_0xF0, 0x55);
         }
         if (getLODData__8CTaskLODFv(0x2d)) {
             deactivateLOD__8CTaskLODFv(0x57);
-            func_804BCC3C(getScnHandle__Fv(), 0x57);
+            ScnData_FwdB7DD4(getScnHandle__Fv(), 0x57);
             forwardMpfCallC__17UnkClass_8047BB54Fv(&gm->field_0xF0, 0x57);
         }
         if (getLODData__8CTaskLODFv(0x2d)) {
             deactivateLOD__8CTaskLODFv(0x58);
-            func_804BCC3C(getScnHandle__Fv(), 0x58);
+            ScnData_FwdB7DD4(getScnHandle__Fv(), 0x58);
             forwardMpfCallC__17UnkClass_8047BB54Fv(&gm->field_0xF0, 0x58);
         }
         if (getLODData__8CTaskLODFv(0xe)) {
             deactivateLOD__8CTaskLODFv(0x59);
-            func_804BCC3C(getScnHandle__Fv(), 0x59);
+            ScnData_FwdB7DD4(getScnHandle__Fv(), 0x59);
             forwardMpfCallC__17UnkClass_8047BB54Fv(&gm->field_0xF0, 0x59);
         }
         if (getLODData__8CTaskLODFv(0xb)) {
             deactivateLOD__8CTaskLODFv(0x5b);
-            func_804BCC3C(getScnHandle__Fv(), 0x5b);
+            ScnData_FwdB7DD4(getScnHandle__Fv(), 0x5b);
             forwardMpfCallC__17UnkClass_8047BB54Fv(&gm->field_0xF0, 0x5b);
         }
         if (getLODData__8CTaskLODFv(0x15)) {
             deactivateLOD__8CTaskLODFv(0x5c);
-            func_804BCC3C(getScnHandle__Fv(), 0x5c);
+            ScnData_FwdB7DD4(getScnHandle__Fv(), 0x5c);
             forwardMpfCallC__17UnkClass_8047BB54Fv(&gm->field_0xF0, 0x5c);
         }
         if (getLODData__8CTaskLODFv(0xc)) {
             deactivateLOD__8CTaskLODFv(0x5d);
-            func_804BCC3C(getScnHandle__Fv(), 0x5d);
+            ScnData_FwdB7DD4(getScnHandle__Fv(), 0x5d);
             forwardMpfCallC__17UnkClass_8047BB54Fv(&gm->field_0xF0, 0x5d);
         }
         if (getLODData__8CTaskLODFv(0xd)) {
             deactivateLOD__8CTaskLODFv(0x5e);
-            func_804BCC3C(getScnHandle__Fv(), 0x5e);
+            ScnData_FwdB7DD4(getScnHandle__Fv(), 0x5e);
             forwardMpfCallC__17UnkClass_8047BB54Fv(&gm->field_0xF0, 0x5e);
         }
         if (getLODData__8CTaskLODFv(0xe)) {
             deactivateLOD__8CTaskLODFv(0x5f);
-            func_804BCC3C(getScnHandle__Fv(), 0x5f);
+            ScnData_FwdB7DD4(getScnHandle__Fv(), 0x5f);
             forwardMpfCallC__17UnkClass_8047BB54Fv(&gm->field_0xF0, 0x5f);
         }
         if (getLODData__8CTaskLODFv(0x2c)) {
             deactivateLOD__8CTaskLODFv(0x60);
-            func_804BCC3C(getScnHandle__Fv(), 0x60);
+            ScnData_FwdB7DD4(getScnHandle__Fv(), 0x60);
             forwardMpfCallC__17UnkClass_8047BB54Fv(&gm->field_0xF0, 0x60);
         }
         if (getLODData__8CTaskLODFv(0xf)) {
             deactivateLOD__8CTaskLODFv(0x61);
-            func_804BCC3C(getScnHandle__Fv(), 0x61);
+            ScnData_FwdB7DD4(getScnHandle__Fv(), 0x61);
             forwardMpfCallC__17UnkClass_8047BB54Fv(&gm->field_0xF0, 0x61);
         }
         if (getLODData__8CTaskLODFv(0x19)) {
             deactivateLOD__8CTaskLODFv(0x62);
-            func_804BCC3C(getScnHandle__Fv(), 0x62);
+            ScnData_FwdB7DD4(getScnHandle__Fv(), 0x62);
             forwardMpfCallC__17UnkClass_8047BB54Fv(&gm->field_0xF0, 0x62);
         }
     }
@@ -2838,10 +2838,10 @@ extern "C" void func_80162000(CCol6System* self) {
     // Remaining audio/quest seeds from the per-player table.
     u8 c1 = (u8)BdatGetU8ByTableKey(&lbl_eu_80502050[0x334], &lbl_eu_80502050[0x351], n);
     u8 c2 = (u8)BdatGetU8ByTableKey(&lbl_eu_80502050[0x334], &lbl_eu_80502050[0x35e], n);
-    if (c1 != 0) func_8009D018(c1 + 0x278a, 1);
-    if (c2 != 0) func_8009D018(c2 + 0x798, 1);
+    if (c1 != 0) CtrlRemote_SetSharedBit(c1 + 0x278a, 1);
+    if (c2 != 0) CtrlRemote_SetSharedBit(c2 + 0x798, 1);
     u16 d = BdatGetU16ByTableKey(&lbl_eu_80502050[0x334], &lbl_eu_80502050[0x36a], n);
-    if (d != 0) func_8009D018(d + 0x220, 0xc8);
+    if (d != 0) CtrlRemote_SetSharedBit(d + 0x220, 0xc8);
     u16 e = BdatGetU16ByTableKey(&lbl_eu_80502050[0x334], &lbl_eu_80502050[0x376], n);
     self->mFieldA2 = playActorSound__Q22cf10CfSoundManFUlUlUlUlf(
         1, e, 0, 0, lbl_eu_80667558);
@@ -2901,16 +2901,16 @@ extern "C" void func_80162000(CCol6System* self) {
     // Player counts on the two slots.
     setLayoutTextBoxNumber__FPQ34nw4r3lyt6LayoutPcUc(self->mpLayout,
                                             &lbl_eu_80502050[0x10f],
-                                            func_8009CF8C(0x7fc));
+                                            CtrlRemote_TouchBitByArg(0x7fc));
     setLayoutTextBoxNumber__FPQ34nw4r3lyt6LayoutPcUc(self->mpLayout,
                                             &lbl_eu_80502050[0x11d],
-                                            func_8009CF8C(0x7fd));
+                                            CtrlRemote_TouchBitByArg(0x7fd));
 
     // Reserved-slot count string: 0x19 if any reserved slot is populated.
     s32 cnt = 0x1a;
     for (u32 i = 0; i < 5; i++) {
         u8 idx = (u8)i;
-        if (func_8009CF8C(idx + 0x804) == 1) {
+        if (CtrlRemote_TouchBitByArg(idx + 0x804) == 1) {
             cnt = 0x19;
             break;
         }
@@ -2935,7 +2935,7 @@ void func_80162C40(CCol6System* self) {
     char* tbl = lbl_eu_80502050;
     // Single expression so MWCC keeps p*5 in a scratch register and folds
     // the count add into the named temp (retail add r28, r0, r3 shape).
-    u32 f = func_8009CF8C((u32)((s8)self->mPadA5[0] + 0x7fe));
+    u32 f = CtrlRemote_TouchBitByArg((u32)((s8)self->mPadA5[0] + 0x7fe));
     u32 n = (s8)self->mPadA5[0] * 5 + f;
     u8 a = (u8)BdatGetU8ByTableKey(&tbl[0x334], &tbl[0x33f], n);
     u8 b = (u8)BdatGetU8ByTableKey(&tbl[0x334], &tbl[0x346], n);
@@ -2947,24 +2947,24 @@ void func_80162C40(CCol6System* self) {
     char* str3 = BdatTouchStringCell(tbl, &tbl[0x9], 0x79);
 
     ml::FixStr<256> buf;
-    func_eu_801651A0(buf.mString, &tbl[0x480], str0, str1, str2, a, str3, b);
+    Col6FormatBufferString(buf.mString, &tbl[0x480], str0, str1, str2, a, str3, b);
     func_8022B9B4(&self->mSysWin2, buf.mString, 0);
     func_8022BFC8(&self->mSysWin2, 1);
-    func_8022B8B8(&self->mSysWin2);
+    sysWinOpenPhase1(&self->mSysWin2);
     playActorSound__Q22cf10CfSoundManFUlUlUlUlf(
         1, 0x134, 0, 0, lbl_eu_80667558);
 }
 
-// func_80162DB4 - "open item box" transition: when the fade is idle, set the
+// Col6_OpenBox_2DB4 - "open item box" transition: when the fade is idle, set the
 // window-2 state byte, play the open sound, move the camera to the stored
 // position/look-at, then post the item-box entry messages for the current
 // player-count bucket (0x802), optionally re-seeding the task/LOD audio.
-void func_80162DB4(CCol6System* self) {
-    CCol6Fade* fade = func_80113E1C();
+void Col6_OpenBox_2DB4(CCol6System* self) {
+    CCol6Fade* fade = getFadeMenu();
     if (fade == 0) {
         return;
     }
-    if (func_80113E24(fade) != 0) {
+    if (isFadeActive(fade) != 0) {
         return;
     }
 
@@ -2977,13 +2977,13 @@ void func_80162DB4(CCol6System* self) {
     notifyCameraManager__Q22cf13CfGameManagerFv();
 
     UnkClass_80083298View* gm;
-    u8 count = (u8)func_8009CF8C(0x802);
+    u8 count = (u8)CtrlRemote_TouchBitByArg(0x802);
     s32 n = (s32)count + 0x14;
     gm = getGameSubManager__Q22cf13CfGameManagerFv();
     if (gm != 0) {
         u8 v = (u8)(count + 0x32);
         activateLOD__8CTaskLODFv(v);
-        func_804BCC30(getScnHandle__Fv(), v);
+        ScnData_FwdB7D9C(getScnHandle__Fv(), v);
         forwardMpfCallB__17UnkClass_8047BB54Fv(&gm->field_0xF0, v);
     }
 
@@ -2992,10 +2992,10 @@ void func_80162DB4(CCol6System* self) {
     u8 b = BdatGetU8ByTableKey(
         &lbl_eu_80502050[0x334], &lbl_eu_80502050[0x35e], (u32)n);
     if (a != 0) {
-        func_8009D018((u32)a + 0x278a, 1);
+        CtrlRemote_SetSharedBit((u32)a + 0x278a, 1);
     }
     if (b != 0) {
-        func_8009D018((u32)b + 0x798, 1);
+        CtrlRemote_SetSharedBit((u32)b + 0x798, 1);
     }
 }
 
@@ -3015,26 +3015,26 @@ extern "C" void func_80162EF8(CCol6System* self) {
                 cond = (pad->mPressedButtonFlags & 0x10) != 0;
             }
             if (cond != 0) {
-                func_8022B8E4(&self->mSysWin2);
+                sysWinAdvancePhase3(&self->mSysWin2);
             }
         }
     } else {
         // Player count for the current slot and the total bucket (0x802).
-        s32 f = (s32)func_8009CF8C((u32)((s8)self->mPadA5[0] + 0x7fe));
+        s32 f = (s32)CtrlRemote_TouchBitByArg((u32)((s8)self->mPadA5[0] + 0x7fe));
         s32 ok = 1;
         s32 big = 0;
-        u8 total = (u8)func_8009CF8C(0x802) + 1;
+        u8 total = (u8)CtrlRemote_TouchBitByArg(0x802) + 1;
 
         // All four player slots must reach the total, else ok = 0.
         for (u32 i = 0; i < 4; i++) {
-            if (func_8009CF8C((u8)i + 0x7fe) < (u32)total) {
+            if (CtrlRemote_TouchBitByArg((u8)i + 0x7fe) < (u32)total) {
                 ok = 0;
                 break;
             }
         }
 
         if (ok != 0) {
-            func_8009D018(0x802, total);
+            CtrlRemote_SetSharedBit(0x802, total);
             // String-pool base held in a register for the whole block (retail
             // materializes it once; the per-pane offsets stay plain addis).
             char* base = lbl_eu_80502050;
@@ -3110,7 +3110,7 @@ extern "C" void func_80162EF8(CCol6System* self) {
             ml::FixStr<128> buf;
             buf.format(&lbl_eu_80502050[0xb5], s1, s2);
             func_8022B9B4(&self->mSysWin2, buf.mString, 0);
-            func_8022B8B8(&self->mSysWin2);
+            sysWinOpenPhase1(&self->mSysWin2);
             playActorSound__Q22cf10CfSoundManFUlUlUlUlf(
                 1, 0x134, 0, 0, lbl_eu_80667558);
         } else {
@@ -3125,13 +3125,13 @@ extern "C" void func_80162EF8(CCol6System* self) {
             data.w = lbl_eu_80667540;
             data.b = lbl_eu_80667544;
 
-            u8 result = (u8)func_8009CF8C(0x7fc);
+            u8 result = (u8)CtrlRemote_TouchBitByArg(0x7fc);
 
             u8 found = 0;
             for (u32 i = 0; i < 5; i++) {
                 u8 idx = (u8)i;
                 if (result >= data.bytes[idx] &&
-                    func_8009CF8C(idx + 0x804) == 0) {
+                    CtrlRemote_TouchBitByArg(idx + 0x804) == 0) {
                     found = 1;
                     break;
                 }
@@ -3157,14 +3157,14 @@ extern "C" void func_80162EF8(CCol6System* self) {
                 data3.w = lbl_eu_80667550;
                 data3.b = lbl_eu_80667554;
 
-                s16 val = (s16)func_8009CF8C(0x7fc);
+                s16 val = (s16)CtrlRemote_TouchBitByArg(0x7fc);
                 for (u32 i = 0; i < 5; i++) {
                     if (val >= data2.bytes[i] &&
-                        func_8009CF8C(i + 0x804) == 0) {
+                        CtrlRemote_TouchBitByArg(i + 0x804) == 0) {
                         lbl_eu_8066235C = (s32)i;
-                        func_8009D018(i + 0x804, 1);
+                        CtrlRemote_SetSharedBit(i + 0x804, 1);
                         val = (s16)(val + (s8)data3.bytes[i]);
-                        func_8009D018(0x7fc, val);
+                        CtrlRemote_SetSharedBit(0x7fc, val);
                     }
                 }
                 self->mFieldA4 = 0x15;
@@ -3179,11 +3179,11 @@ extern "C" void func_80162EF8(CCol6System* self) {
     }
 }
 
-// func_80163614 - window-2 interaction / player-count ladder: while window 2
+// Col6_Win2CountLadder_3614 - window-2 interaction / player-count ladder: while window 2
 // is active, respond to the pad-confirm button (mode-dependent bit), posting
 // the window's close action; otherwise scan the player-count buckets and show
 // the invite banner for the first fully-populated bucket.
-void func_80163614(CCol6System* self) {
+void Col6_Win2CountLadder_3614(CCol6System* self) {
     if (CSysWin_getUnk34(&self->mSysWin2) != 0) {
         if (CSysWin_isActive(&self->mSysWin2) != 0) {
             CCol6Pad* pad = getCurrentPad__Q22cf13CfGameManagerFv();
@@ -3194,7 +3194,7 @@ void func_80163614(CCol6System* self) {
                 cond = (pad->mPressedButtonFlags & 0x10) != 0;
             }
             if (cond != 0) {
-                func_8022B8E4(&self->mSysWin2);
+                sysWinAdvancePhase3(&self->mSysWin2);
             }
         }
     } else {
@@ -3207,7 +3207,7 @@ void func_80163614(CCol6System* self) {
             s32 cand = (s8)i;
             s32 ok = 1;
             for (u32 j = 0; j < 4; j++) {
-                if ((u32)func_8009CF8C((u8)j + 0x7fe) < (u32)cand) {
+                if ((u32)CtrlRemote_TouchBitByArg((u8)j + 0x7fe) < (u32)cand) {
                     ok = 0;
                     break;
                 }
@@ -3225,18 +3225,18 @@ void func_80163614(CCol6System* self) {
             ml::FixStr<128> buf;
             buf.format(&lbl_eu_80502050[0xb5], s76, s77);
             func_8022B9B4(&self->mSysWin2, buf.mString, 0);
-            func_8022B8B8(&self->mSysWin2);
+            sysWinOpenPhase1(&self->mSysWin2);
             playActorSound__Q22cf10CfSoundManFUlUlUlUlf(
                 1, 0x134, 0, 0, lbl_eu_80667558);
         }
     }
 }
 
-// func_8016378C - window 2 interaction: while the second system window is
+// Col6_Win2Interact_378C - window 2 interaction: while the second system window is
 // active, respond to the pad-confirm button (mode-dependent bit), posting the
 // window's close action; otherwise run the player-count ladder scan and post
 // the join message for the first count bucket that is fully populated.
-void func_8016378C(CCol6System* self) {
+void Col6_Win2Interact_378C(CCol6System* self) {
     if (CSysWin_getUnk34(&self->mSysWin2) != 0) {
         if (CSysWin_isActive(&self->mSysWin2) != 0) {
             CCol6Pad* pad = getCurrentPad__Q22cf13CfGameManagerFv();
@@ -3247,7 +3247,7 @@ void func_8016378C(CCol6System* self) {
                 cond = (pad->mPressedButtonFlags & 0x10) != 0;
             }
             if (cond != 0) {
-                func_8022B8E4(&self->mSysWin2);
+                sysWinAdvancePhase3(&self->mSysWin2);
             }
         }
     } else {
@@ -3260,7 +3260,7 @@ void func_8016378C(CCol6System* self) {
             s32 cand = (s8)i;
             s32 ok = 1;
             for (u32 j = 0; j < 4; j++) {
-                if ((u32)func_8009CF8C((u8)j + 0x7fe) < (u32)cand) {
+                if ((u32)CtrlRemote_TouchBitByArg((u8)j + 0x7fe) < (u32)cand) {
                     ok = 0;
                     break;
                 }
@@ -3284,11 +3284,11 @@ void func_8016378C(CCol6System* self) {
 // (player-specific string char); otherwise scan the per-slot threshold tables
 // and (re)assign the join-slot global, then fade the screen.
 void func_801638C0(CCol6System* self) {
-    if (func_801B481C() != 0) {
+    if (GetItemMulti_IsActiveFlag() != 0) {
         return;
     }
 
-    bool ge = (s32)func_8009CF8C((u32)((s8)self->mPadA5[0] + 0x7fe)) >= 5;
+    bool ge = (s32)CtrlRemote_TouchBitByArg((u32)((s8)self->mPadA5[0] + 0x7fe)) >= 5;
     if (ge != 0) {
         // Banner: "player N joined" (char 0x72+N is the player name).
         self->mFieldA4 = 0x23;
@@ -3298,7 +3298,7 @@ void func_801638C0(CCol6System* self) {
         ml::FixStr<128> buf;
         buf.format(&lbl_eu_80502050[0xb5], s1, s2);
         func_8022B9B4(&self->mSysWin2, buf.mString, 0);
-        func_8022B8B8(&self->mSysWin2);
+        sysWinOpenPhase1(&self->mSysWin2);
         playActorSound__Q22cf10CfSoundManFUlUlUlUlf(
             1, 0x134, 0, 0, lbl_eu_80667558);
         return;
@@ -3316,12 +3316,12 @@ void func_801638C0(CCol6System* self) {
     data.w = lbl_eu_80667540;
     data.b = lbl_eu_80667544;
 
-    u8 result = (u8)func_8009CF8C(0x7fc);
+    u8 result = (u8)CtrlRemote_TouchBitByArg(0x7fc);
 
     u8 found = 0;
     for (u32 i = 0; i < 5; i++) {
         u8 idx = (u8)i;
-        if (result >= data.bytes[idx] && func_8009CF8C(idx + 0x804) == 0) {
+        if (result >= data.bytes[idx] && CtrlRemote_TouchBitByArg(idx + 0x804) == 0) {
             found = 1;
             break;
         }
@@ -3349,13 +3349,13 @@ void func_801638C0(CCol6System* self) {
         data3.w = lbl_eu_80667550;
         data3.b = lbl_eu_80667554;
 
-        s16 val = (s16)func_8009CF8C(0x7fc);
+        s16 val = (s16)CtrlRemote_TouchBitByArg(0x7fc);
         for (u32 i = 0; i < 5; i++) {
-            if (val >= data2.bytes[i] && func_8009CF8C(i + 0x804) == 0) {
+            if (val >= data2.bytes[i] && CtrlRemote_TouchBitByArg(i + 0x804) == 0) {
                 lbl_eu_8066235C = (s32)i;
-                func_8009D018(i + 0x804, 1);
+                CtrlRemote_SetSharedBit(i + 0x804, 1);
                 val = (s16)(val + (s8)data3.bytes[i]);
-                func_8009D018(0x7fc, val);
+                CtrlRemote_SetSharedBit(0x7fc, val);
             }
         }
         self->mFieldA4 = 0x15;
@@ -3373,11 +3373,11 @@ void func_801638C0(CCol6System* self) {
 // otherwise scan the per-slot threshold tables and (re)assign the join-slot
 // global, then fade the screen (same scan shape as CCol6Invite::Move).
 void func_80163AF4(CCol6System* self) {
-    if (func_801B481C() != 0) {
+    if (GetItemMulti_IsActiveFlag() != 0) {
         return;
     }
 
-    if ((s32)func_8009CF8C(0x802) >= 5) {
+    if ((s32)CtrlRemote_TouchBitByArg(0x802) >= 5) {
         // Banner: "player N joined" (chars 0x76/0x77 are the slot names).
         self->mFieldA4 = 0x25;
         char* s76 = BdatTouchStringCell(lbl_eu_80502050, &lbl_eu_80502050[0x9], 0x76);
@@ -3385,7 +3385,7 @@ void func_80163AF4(CCol6System* self) {
         ml::FixStr<128> buf;
         buf.format(&lbl_eu_80502050[0xb5], s76, s77);
         func_8022B9B4(&self->mSysWin2, buf.mString, 0);
-        func_8022B8B8(&self->mSysWin2);
+        sysWinOpenPhase1(&self->mSysWin2);
         playActorSound__Q22cf10CfSoundManFUlUlUlUlf(
             1, 0x134, 0, 0, lbl_eu_80667558);
         return;
@@ -3403,7 +3403,7 @@ void func_80163AF4(CCol6System* self) {
     data.w = lbl_eu_80667540;
     data.b = lbl_eu_80667544;
 
-    u8 result = (u8)func_8009CF8C(0x7fc);
+    u8 result = (u8)CtrlRemote_TouchBitByArg(0x7fc);
 
     // Retail keeps the "slot found" latch out of the callee-save pool: single
     // assignment per path via goto, so MWCC colors it into scratch r0.
@@ -3413,7 +3413,7 @@ void func_80163AF4(CCol6System* self) {
         // (u8)index temp blocks MWCC's pointer strength-reduction; retail walks
         // the table base+index via lbzx.
         u8 idx = (u8)i;
-        if (result >= data.bytes[idx] && func_8009CF8C(idx + 0x804) == 0) {
+        if (result >= data.bytes[idx] && CtrlRemote_TouchBitByArg(idx + 0x804) == 0) {
             found = 1;
             goto slotFound;
         }
@@ -3444,13 +3444,13 @@ slotFound:
         data3.w = lbl_eu_80667550;
         data3.b = lbl_eu_80667554;
 
-        s16 val = (s16)func_8009CF8C(0x7fc);
+        s16 val = (s16)CtrlRemote_TouchBitByArg(0x7fc);
         for (u32 j = 0; j < 5; j++) {
-            if (val >= data2.bytes[j] && func_8009CF8C(j + 0x804) == 0) {
+            if (val >= data2.bytes[j] && CtrlRemote_TouchBitByArg(j + 0x804) == 0) {
                 lbl_eu_8066235C = (s32)j;
-                func_8009D018(j + 0x804, 1);
+                CtrlRemote_SetSharedBit(j + 0x804, 1);
                 val = (s16)(val + (s8)data3.bytes[j]);
-                func_8009D018(0x7fc, val);
+                CtrlRemote_SetSharedBit(0x7fc, val);
             }
         }
         self->mFieldA4 = 0x15;
@@ -3490,14 +3490,14 @@ void CCol6Invite::Init() {
 
     // Compound assignment keeps the running value in one register: mask,
     // add the byte flag in place, then mask for the store.
-    u32 val = func_8009CF8C(0x7fc);
+    u32 val = CtrlRemote_TouchBitByArg(0x7fc);
     val &= 0xFF;
     val += mArg3;
-    func_8009D018(0x7fc, (u8)val);
-    val = func_8009CF8C(0x7fd);
+    CtrlRemote_SetSharedBit(0x7fc, (u8)val);
+    val = CtrlRemote_TouchBitByArg(0x7fd);
     val &= 0xFF;
     val += mArg4;
-    func_8009D018(0x7fd, (u8)val);
+    CtrlRemote_SetSharedBit(0x7fd, (u8)val);
 
     char* str1 = BdatTouchStringCell(lbl_eu_80502050, &lbl_eu_80502050[0x9], 0x7e);
     char* str2 = BdatTouchStringCell(lbl_eu_80502050, &lbl_eu_80502050[0x9], 0x78);
@@ -3514,7 +3514,7 @@ void CCol6Invite::Init() {
 // the join-slot global (0x8066235C) and adjust the count by the signed
 // per-slot delta; the 0x64 flag always ends set.
 void CCol6Invite::Move() {
-    if (func_80124B78() != 0) {
+    if (SysWinGetSingleton() != 0) {
         return;
     }
 
@@ -3531,8 +3531,8 @@ void CCol6Invite::Move() {
     t1.b = lbl_eu_80667544;
 
     u8 found;
-    for (u32 cnt = (u8)func_8009CF8C(0x7fc), i = 0; i < 5; i++) {
-        if (cnt >= t1.bytes[(u8)i] && func_8009CF8C((u8)i + 0x804) == 0) {
+    for (u32 cnt = (u8)CtrlRemote_TouchBitByArg(0x7fc), i = 0; i < 5; i++) {
+        if (cnt >= t1.bytes[(u8)i] && CtrlRemote_TouchBitByArg((u8)i + 0x804) == 0) {
             found = 1;
             goto scanned;
         }
@@ -3549,16 +3549,16 @@ scanned:
         // Second scan: signed running total kept as s16 (re-extended on
         // every read); indexed table access (MWCC strength-reduces to
         // incrementing pointers, matching retail - same shape as
-        // func_8015D3A0).
-        s16 total = func_8009CF8C(0x7fc);
+        // Col6_ReserveBoxSlot_D3A0).
+        s16 total = CtrlRemote_TouchBitByArg(0x7fc);
         s32 j;
         u8* p = t2.bytes;
         for (j = 0; j < 5; j++) {
-            if (total >= *p && func_8009CF8C(j + 0x804) == 0) {
+            if (total >= *p && CtrlRemote_TouchBitByArg(j + 0x804) == 0) {
                 lbl_eu_8066235C = j;
-                func_8009D018(j + 0x804, 1);
+                CtrlRemote_SetSharedBit(j + 0x804, 1);
                 total += (s8)t3.bytes[j];
-                func_8009D018(0x7fc, total);
+                CtrlRemote_SetSharedBit(0x7fc, total);
             }
             p++;
         }

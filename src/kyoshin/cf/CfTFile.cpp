@@ -10,6 +10,8 @@
 #include <math.h>
 #include <string.h>
 
+// Auto-scaffolded catalog TU for kyoshin/cf/CfTFile
+
 // The retail ctor symbol __ct__cf_CfTFile is a C-linkage name (no C++ mangling
 // markers), so it is emitted as a global function with a manual vtable store
 // (same convention as __ct__cf_CfGimmick / __ct__cf_CfGimmickSaveOff). The
@@ -27,7 +29,7 @@ CfTFile* __ct__cf_CfTFile(CfTFile* self) {
 
 // Cancel the active file (if any), wipe the payload and reset the file-event
 // flag word down to its top nibble.
-void func_800699B0(CfTFile* self) {
+void CfTFile_CancelResetNibble(CfTFile* self) {
     if (self->mFile != 0) {
         CDeviceFile::cancel(self->mFile);
         self->mFile = 0;
@@ -40,7 +42,7 @@ void func_800699B0(CfTFile* self) {
 }
 
 // Cancel the active file (if any), wipe the payload and reset the counters.
-void func_80069A18(CfTFile* self) {
+void CfTFile_CancelResetFull(CfTFile* self) {
     if (self->mFile != 0) {
         CDeviceFile::cancel(self->mFile);
         self->mFile = 0;
@@ -51,7 +53,7 @@ void func_80069A18(CfTFile* self) {
 }
 
 // Copy the payload block and the current-entry counter from src.
-void func_80069A78(CfTFile* dst, CfTFile* src) {
+void CfTFile_CopyPayload(CfTFile* dst, CfTFile* src) {
     if (src != 0) {
         memcpy(&dst->mData, &src->mData, sizeof(cf::CfTFileData));
         dst->mField830 = src->mField830;
@@ -64,7 +66,7 @@ void func_80069A78(CfTFile* dst, CfTFile* src) {
 // the static format string otherwise), then opens the common archive through
 // the device layer. Returns 1 on success (token recorded in mField830), 0 on
 // failure (flag word gets its bit 2 set).
-int func_80069ACC(CfTFile* self, u32 param) {
+int CfTFile_LoadEventArchive(CfTFile* self, u32 param) {
     if (self->mField830 == param) {
         return 1;
     }
@@ -98,7 +100,7 @@ int func_80069ACC(CfTFile* self, u32 param) {
     self->mFile = CDeviceFile::readCommonArchiveFile(
         (mtl::ALLOC_HANDLE)(u32)self->mDataAligned, buf.mString,
         (IWorkEvent*)self, 0, 0);
-    CDeviceFile::func_8044F154(self->mFile, 3);
+    CDeviceFile::tryUpdateJobPriority(self->mFile, 3);
     if (self->mFile == 0) {
         self->mField82C |= 4;
         return 0;
@@ -107,7 +109,7 @@ int func_80069ACC(CfTFile* self, u32 param) {
     return 1;
 }
 
-extern "C" u32 func_80069C14(u8* self) {
+extern "C" u32 CfTFile_TestField828(u8* self) {
     u32 x = *(u32*)((u8*)self + 0x828);
     return !(0 - x);
 }
@@ -180,7 +182,7 @@ int CfTFile::OnFileEvent(CEventFile* pEventFile) {
         if (pEventFile->unk0 == 1 && pEventFile->field_14 != 0) {
             this->mField82C |= 2;
             this->mDataAligned[pEventFile->field_14] = 0;
-            func_800C1CAC((u32)this->mDataAligned, (u32)&this->mData);
+            CmText_ParseWithStaticProc((u32)this->mDataAligned, (u32)&this->mData);
         }
         this->mFile = 0;
         result = 1;
@@ -196,7 +198,7 @@ CfTFile* __dt__7CfTFileFv(CfTFile* obj, int flag) {
     return obj;
 }
 
-float func_80069EA0() { return lbl_eu_80661AF0; }
+float CfT_PlayRateGet() { return lbl_eu_80661AF0; }
 
 void func_80069EA8(int param) {
     extern float lbl_eu_80666214;
@@ -213,7 +215,7 @@ void func_80069EA8(int param) {
     }
 }
 
-bool func_80069EE0() { return CDeviceVI::isTvFormatPal(); }
+bool CfT_IsTvPal() { return CDeviceVI::isTvFormatPal(); }
 
 // Returns the play time, converting the u16 frame counter through the
 // shared float state (seconds vs frame-count split). The (float) cast of the
@@ -266,7 +268,7 @@ void func_80069F2C() {
     }
 }
 
-extern "C" void func_8006A028(float v) {
+extern "C" void CfT_PlayClockReset(float v) {
     float c = lbl_eu_80666238;
     lbl_eu_80663D94 = v;
     lbl_eu_80663D98 = v;
@@ -321,7 +323,7 @@ void func_8006A1A0(u32 v) {
 // return the truncated frame count of the raw second counter. Mirrors the
 // func_8006A6D0 fmod trio; the caller-supplied pair is written through the
 // out pointers.
-u16 func_8006A234(u16* outA, u16* outB) {
+u16 CfT_PlayClockSnapshot(u16* outA, u16* outB) {
     *outA = (u16)(int)(float)fmod(lbl_eu_80663D94 / lbl_eu_8066623C, lbl_eu_80666240);
     *outB = (u16)(int)(float)fmod(lbl_eu_80663D94 / lbl_eu_80666248, lbl_eu_80666250);
     return (u16)(int)(lbl_eu_80666258 * (float)fmod(lbl_eu_80663D94, lbl_eu_80666230));
@@ -342,28 +344,28 @@ int func_8006A2E0() {
 
 // Play-time -> frame conversions: fmod the shared second counter against a
 // rate constant, round to int (frames).
-int func_8006A33C() {
+int CfT_FrameCountA() {
     return (int)(float)fmod(lbl_eu_80663D94 / lbl_eu_8066623C, lbl_eu_80666240);
 }
 
-int func_8006A37C() {
+int CfT_FrameCountB() {
     return (int)(float)fmod(lbl_eu_80663D94 / lbl_eu_80666248, lbl_eu_80666250);
 }
 
-int func_8006A3BC() {
+int CfT_FrameCountC() {
     return (int)(lbl_eu_80666258 * (float)fmod(lbl_eu_80663D94, lbl_eu_80666260));
 }
 
-u16 func_8006A3FC(u16 val) { lbl_eu_80661AF8 = val; return val; }
+u16 CfT_FrameCounterStore(u16 val) { lbl_eu_80661AF8 = val; return val; }
 
-u16 func_8006A404() { return lbl_eu_80661AF8; }
+u16 CfT_FrameCounterLoad() { return lbl_eu_80661AF8; }
 
 // Resolve the current clock time from the bdat table: the column names for
 // the given mode are picked from the string table, the cells read back as
 // bytes (minutes*60 + seconds). Falls back to the static u16 tables when the
 // bdat file or the column is unavailable.
 int func_8006A40C(int mode) {
-    func_8003AA34();
+    Bdat_GetTable_AA34();
     u32 bdat = getGlobalPtr640A8__Q22cf13CfGameManagerFv();
     int row = (int)getGlobalWord64184Dup__Q22cf13CfGameManagerFv();
     const char* pSec;
@@ -452,7 +454,7 @@ void func_8006A6D0() {
 // Advance the file-event frame timer (60 Hz sub-second / second / minute
 // fields) once the PAL/NTSC frame-count gate is reached. The timer is stored
 // back to the global after each carry stage, mirroring the retail stores.
-void func_8006A75C() {
+void CfT_AdvanceFrameTimer() {
     lbl_eu_80663DA4++;
     int pal = CDeviceVI::isTvFormatPal();
     if (lbl_eu_80663DA4 >= (pal ? 25 : 30)) {
@@ -478,17 +480,17 @@ void func_8006A75C() {
 }
 
 // Read-only getter for the file event frame timer.
-u32 func_8006A80C() {
+u32 CfT_FrameTimerGet() {
     return lbl_eu_80663DA8;
 }
 
-void func_8006A814(u32* self) {
+void CfT_FrameTimerSet(u32* self) {
     lbl_eu_80663DA8 = *self;
 }
 
 // Reset the file-event state: clear the shared counters/flags and restart the
 // frame timer with only the minute counter preserved.
-void func_eu_8006B238() {
+void CfT_ResetEventState() {
     CfFrameTimer timer;
     timer.raw = lbl_eu_80663DA8;
     lbl_eu_80663D90 = 0;

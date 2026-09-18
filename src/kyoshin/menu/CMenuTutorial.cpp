@@ -8,7 +8,11 @@
 #include "monolib/device/CDeviceVI.hpp"
 #include "monolib/scn/CScn.hpp"
 #include "kyoshin/cf/CfGameManager.hpp"
-#include "kyoshin/code_80135FDC.hpp"
+// Forward decl instead of including kyoshin/code_80135FDC.hpp: that header's
+// extern "C" BdatGetU8Direct (u8) overload-clashes with CTutorial.hpp's
+// (u32) (same clash CMenuPlayAward.cpp works around); this TU only needs
+// BdatTouchStringCell.
+extern "C" char* BdatTouchStringCell(const void*, const void*, int);
 #include "monolib/core/CPadManager.hpp"
 
 #include <revolution/GX.h>
@@ -17,7 +21,7 @@
 
 /*
  * Retail constructor symbol (unmangled global in US). Written as a free
- * function so the factory (func_8029A5DC) emits a real bl to the bare retail
+ * function so the factory (MenuTutorialCreate) emits a real bl to the bare retail
  * symbol, and returns `this` in r3 like a real constructor (retail relies on
  * it). Mirrors the CMenuCollepedia ctor pattern: base ctor, temp vtable
  * store, null PMF data copy, then the composite vtable + the IScnRender
@@ -147,7 +151,7 @@ void CMenuTutorial::Init() {
     mTutorial.field_53 = *(u8*)(tempTutorial + 0x53);
     __dt__9CTutorialFv((CTutorial*)tempTutorial, -1);
 
-    func_8029AA34(&mTutorial);
+    Tutorial_LoadTutorialFiles(&mTutorial);
 
     // Register this screen's IScnRender subobject as a render callback on the
     // owning scene (retail null-checks `this`).
@@ -167,8 +171,8 @@ void CMenuTutorial::Term() {
     }
     reinterpret_cast<CScn*>(mParentRef)->removeRenderCB(renderCB);
 
-    func_801C40A0(&mTitleAHelp);
-    func_8029ABD8(&mTutorial);
+    teardown(&mTitleAHelp);
+    Tutorial_TeardownTutorial(&mTutorial);
 
     lbl_eu_80664A28 = 0;
     cf::CfGameManager::enablePadFlags((u32)-1, false);
@@ -196,19 +200,19 @@ void CMenuTutorial::Move() {
 body:
     switch (mIsInitialised) {
     case 0:
-        func_8029A668(this);
+        MenuTutorialHandlePhase0(this);
         break;
     case 1:
-        func_8029A764(this);
+        MenuTutorialHandlePhase1(this);
         break;
     case 2:
-        func_8029A7B4(this);
+        MenuTutorialHandlePhase2(this);
         break;
     case 3:
-        func_8029A8D4(this);
+        MenuTutorialHandlePhase3(this);
         break;
     }
-    func_801C3FF0(&mTitleAHelp);
+    updateHelp(&mTitleAHelp);
     func_8029AB28(&mTutorial);
     return;
 }
@@ -237,8 +241,8 @@ body:
     u8 drawInfo[0x54];
     __ct__Q34nw4r3lyt8DrawInfoFv((nw4r::lyt::DrawInfo*)drawInfo);
     func_80137250((nw4r::lyt::DrawInfo*)drawInfo);
-    func_8029ABB8(&mTutorial, (nw4r::lyt::DrawInfo*)drawInfo);
-    func_801C4080(&mTitleAHelp, (nw4r::lyt::DrawInfo*)drawInfo);
+    Tutorial_DrawLayoutGated(&mTutorial, (nw4r::lyt::DrawInfo*)drawInfo);
+    drawHelp(&mTitleAHelp, (nw4r::lyt::DrawInfo*)drawInfo);
     __dt__Q34nw4r3lyt8DrawInfoFv((nw4r::lyt::DrawInfo*)drawInfo, -1);
     return;
 }
@@ -247,9 +251,9 @@ body:
  * When the title/help bar is idle and the tutorial widget has finished its
  * current animation, mark the tutorial as having reached phase 2.
  */
-void func_8029A764(CMenuTutorial* self) {
+void MenuTutorialHandlePhase1(CMenuTutorial* self) {
     if (isIdle__11CTitleAHelpFv(&self->mTitleAHelp) != 0 &&
-        func_8029ACB4(&self->mTutorial) != 0) {
+        Tutorial_GetField47Mark(&self->mTutorial) != 0) {
         self->mIsInitialised = 2;
     }
 }
@@ -259,7 +263,7 @@ void func_8029A764(CMenuTutorial* self) {
  * register it as a child of `self`. Returns the stored instance (or 0 if it
  * already exists).
  */
-CMenuTutorial* func_8029A5DC(CProcess* self, CProcess* parent, u32 arg2) {
+CMenuTutorial* MenuTutorialCreate(CProcess* self, CProcess* parent, u32 arg2) {
     if (lbl_eu_80664A28 != 0) {
         return 0;
     }
@@ -277,11 +281,11 @@ CMenuTutorial* func_8029A5DC(CProcess* self, CProcess* parent, u32 arg2) {
  * Phase 0 handler: run the opening tutorial intro sequence. Advances the
  * tutorial widget phase and schedules the tutorial menu's next stage.
  */
-void func_8029A668(CMenuTutorial* self) {
-    if (func_801C4114(&self->mTitleAHelp) != 0 &&
-        func_8029ACAC(&self->mTutorial) != 0) {
-        func_801C4760(&self->mTitleAHelp);
-        func_801C41C0(&self->mTitleAHelp,
+void MenuTutorialHandlePhase0(CMenuTutorial* self) {
+    if (isInitialized(&self->mTitleAHelp) != 0 &&
+        Tutorial_GetField46Mark(&self->mTutorial) != 0) {
+        applyPaneTevColorsAlt(&self->mTitleAHelp);
+        setNameText(&self->mTitleAHelp,
             BdatTouchStringCell(lbl_eu_80510260 + 0xe, lbl_eu_80510260 + 0x17,
                 self->mType));
 
@@ -301,7 +305,7 @@ void func_8029A668(CMenuTutorial* self) {
             break;
         }
         func_801C412C(&self->mTitleAHelp);
-        func_8029ACC4(&self->mTutorial);
+        Tutorial_StartIfIdle(&self->mTutorial);
         self->mIsInitialised = 1;
         playUISound(0x6d);
     }
@@ -312,8 +316,8 @@ void func_8029A668(CMenuTutorial* self) {
  * widget, then repaint the title/help bar labels according to the widget's
  * current phase.
  */
-void func_8029A7B4(CMenuTutorial* self) {
-    if (func_8029ACAC(&self->mTutorial) != 0) {
+void MenuTutorialHandlePhase2(CMenuTutorial* self) {
+    if (Tutorial_GetField46Mark(&self->mTutorial) != 0) {
         CPad* pad = cf::CfGameManager::getCurrentPad();
         u32 first;
         u32 second;
@@ -326,9 +330,9 @@ void func_8029A7B4(CMenuTutorial* self) {
         }
         if (first) {
             func_8029AD88(&self->mTutorial);
-            if (func_8029ACBC(&self->mTutorial) != 0) {
-                func_801C414C(&self->mTitleAHelp);
-                func_8029ACEC(&self->mTutorial);
+            if (Tutorial_GetField52Mark(&self->mTutorial) != 0) {
+                beginClose(&self->mTitleAHelp);
+                Tutorial_AdvanceState3To4(&self->mTutorial);
                 self->mIsInitialised = 3;
             }
         } else if (second) {
@@ -356,12 +360,12 @@ void func_8029A7B4(CMenuTutorial* self) {
 }
 
 /*
- * Same idle+advance check as func_8029A764, but advances the tutorial to
+ * Same idle+advance check as MenuTutorialHandlePhase1, but advances the tutorial to
  * phase 1 (writes the state byte at offset 0x54).
  */
-void func_8029A8D4(CMenuTutorial* self) {
+void MenuTutorialHandlePhase3(CMenuTutorial* self) {
     if (isIdle__11CTitleAHelpFv(&self->mTitleAHelp) != 0 &&
-        func_8029ACB4(&self->mTutorial) != 0) {
+        Tutorial_GetField47Mark(&self->mTutorial) != 0) {
         self->field_54 = 1;
     }
 }
@@ -369,7 +373,7 @@ void func_8029A8D4(CMenuTutorial* self) {
 /**
  * IScnRender vtable this-adjusting thunk: subi r3, r3, 0x58; b cbRenderBefore.
  */
-void func_8029A924(IScnRender* sub) {
+void MenuTutorialRenderThunk58(IScnRender* sub) {
     ((CMenuTutorial*)((char*)sub - 0x58))->cbRenderBefore();
 }
 
@@ -377,8 +381,8 @@ void func_8029A924(IScnRender* sub) {
  * IScnRender vtable this-adjusting thunk: subi r3, r3, 0x58; b __dt__.
  * Tail-calls the destructor, leaving r4 (delete flag) as caller leftover.
  */
-void func_8029A92C(IScnRender* sub) {
+void MenuTutorialDtorThunk58(IScnRender* sub) {
     __dt__13CMenuTutorialFv((CMenuTutorial*)((char*)sub - 0x58));
 }
 
-unsigned long func_8029A658(void) { return lbl_eu_80664A28 != 0; }
+unsigned long MenuTutorialIsCreated(void) { return lbl_eu_80664A28 != 0; }

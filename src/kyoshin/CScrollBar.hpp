@@ -30,7 +30,7 @@ extern const float lbl_eu_80668154; // entering-done threshold
 // unmangled C names (US split strips the C++ mangling), so they need C
 // linkage declarations - same convention as CSysWin/CKizunagram/etc.
 extern "C" void TagCopyVec2f(float* dst, float* src); // copy 2 floats (VEC2)
-extern "C" void func_80124270(void* pane, u32 a); // set pane visible flag
+extern "C" void setPaneVisible(void* pane, u32 a); // set pane visible flag
 
 /* Sets mVtbl before UnkClass_8045F564 is constructed (retail ctor order:
 vtable store first, then the member ctor). Same idiom as CBatteryVtblBase. */
@@ -75,10 +75,10 @@ struct CScrollBar : CScrollBarVtblBase {
     bool OnFileEvent(CEventFile* pEventFile);
 
     u8 isVisible();
-    u8 func_801F3668();
+    u8 isActive();
 
-    void func_801F34F4();                              // read layout arc
-    void func_801F35B0(nw4r::lyt::DrawInfo* drawInfo); // draw when ready/active
-    void func_801F367C();                              // request scroll-in
-    void func_801F369C();                              // request scroll-out
+    void loadLayoutArc();
+    void draw(nw4r::lyt::DrawInfo* drawInfo);
+    void requestScrollIn();
+    void requestScrollOut();
 };

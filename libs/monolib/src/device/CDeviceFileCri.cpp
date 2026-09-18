@@ -61,7 +61,7 @@ void CDeviceFileCri::teardownAdxf(unsigned long) {
     }
 }
 
-extern "C" void func_80450B44(void* self, u32 arg) {
+extern "C" void FileCriCheckDriveStatusThunk(void* self, u32 arg) {
     checkDriveStatus__14CDeviceFileCriFv((CDeviceFileCri*)((char*)self - 0x1C4));
 }
 
@@ -76,7 +76,7 @@ extern "C" void* __dl__FPv(void* self);
 
 namespace CDeviceFileCriBlob { extern "C" void* __dt__14CDeviceFileCriFv(); }
 
-extern "C" void func_80450B4C(void* self) {
+extern "C" void FileCriDeleteDtorThunk(void* self) {
     // Direct tail call to the complete-dtor symbol (no deleting flag), like retail.
     ((void (*)(void*)) CDeviceFileCriBlob::__dt__14CDeviceFileCriFv)((char*)self - 0x1C4);
 }
@@ -107,7 +107,7 @@ CDeviceFileCri::CDeviceFileCri(const char* pName, CWorkThread* pParent, int capa
     if (pSelf != nullptr) {
         pSelf = (CException*)((u8*)this + 0x1C4);
     }
-    func_804591BC__10CExceptionFP10IException(pSelf, pExceptionArg);
+    AddToGlobalArray__10CExceptionFP10IException(pSelf, pExceptionArg);
 }
 
 // Member destructor: the compiler restores both vptrs up front, runs the
@@ -166,7 +166,7 @@ inline bool criIsException(CDeviceFileCri* self) {
 
 bool CDeviceFileCri::checkDriveStatus() {
     if (isOff__11CWorkSystemFv()) return true;
-    if (!func_eu_804521C4()) return true;
+    if (!DevFile_GetByteA9()) return true;
     
     int status = DVDGetDriveStatus();
 
@@ -232,7 +232,7 @@ int CDeviceFileCri::getFileSize(const char* pPath, int arg1) {
     strcpy(path.pathBuf, pPath);
 
     if (arg1 != 0) {
-        func_eu_804520D0(path.pathBuf);
+        DevFile_SubstLangPath(path.pathBuf);
     }
 
     // Strip a leading '/' from the name; nameLen is the strlen of the SOURCE
@@ -973,8 +973,8 @@ extern "C" void wkStandbyLogin__14CDeviceFileCriFv();
 extern "C" void wkStandbyLogout__14CDeviceFileCriFv();
 extern "C" void wkStandbyExceptionRetry__14CDeviceFileCriFUl();
 extern "C" void teardownAdxf__14CDeviceFileCriFUl();
-extern "C" void func_80450B4C();
-extern "C" void func_80450B44();
+extern "C" void FileCriDeleteDtorThunk();
+extern "C" void FileCriCheckDriveStatusThunk();
 extern "C" void WorkEvent1__10IWorkEventFPvPCc();
 extern "C" void OnFileEvent__10IWorkEventFP10CEventFile();
 extern "C" void WorkEvent3__10IWorkEventFPv();
@@ -1052,8 +1052,8 @@ extern "C" u32 lbl_eu_8056C354[45] = {
     (u32)&CDeviceFileCriBlob::wkStandbyLogout__14CDeviceFileCriFv,
     (u32)&CDeviceFileCriBlob::wkStandbyExceptionRetry__14CDeviceFileCriFUl,
     (u32)&lbl_eu_806636D8, 0xFFFFFE3C,
-    (u32)&CDeviceFileCriBlob::func_80450B4C,
-    (u32)&CDeviceFileCriBlob::func_80450B44,
+    (u32)&CDeviceFileCriBlob::FileCriDeleteDtorThunk,
+    (u32)&CDeviceFileCriBlob::FileCriCheckDriveStatusThunk,
     (u32)&CDeviceFileCriBlob::teardownAdxf__14CDeviceFileCriFUl,
 };
 extern "C" u32 lbl_eu_8056C408[6] = {

@@ -125,6 +125,6 @@ void* __ct__800697E8(CProcess* parent, u32 field58val) {
 // IWorkEvent dtor adjusting thunk: subtracts 0x54 from IWorkEvent* to recover
 // CfTaskMain*, then tail-calls the complete-object destructor.
 // Retail: subi r3, r3, 0x54; b __dt__Q22cf10CfTaskMainFv
-void func_80069944(void* self) {
+void CfTaskMain_dtorAdj54(void* self) {
     __dt__Q22cf10CfTaskMainFv(static_cast<char*>(self) - 0x54);
 }

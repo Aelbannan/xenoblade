@@ -1,6 +1,6 @@
 // monolib/src/scn/CMdlAnmEye - eye-blink animation state machine for a
 // material pair (two eyes). func_804E75B8 registers the eye materials by
-// name prefix; func_804E77C4 advances the blink state machine and pushes a
+// name prefix; EyeAnm_TickBlink advances the blink state machine and pushes a
 // texture-SRT effect matrix per registered eye every frame.
 #include <harness_catalog.h>
 #include "monolib/scn/CScnTimeApi.hpp"
@@ -76,7 +76,7 @@ void func_804E75B8(CMdlAnmEye* self, CMdlAnmEyeModel* model) {
                             lbl_eu_806638E8, lbl_eu_80663C98);
         }
         const char* nm = mat.ofs_to_ptr<char>(mat.ref().name);
-        if (nm == strstr(nm, func_804E6C78())) {
+        if (nm == strstr(nm, mdlAnmUVGetGlobal74())) {
             if (!mat.IsValid()) {
                 nw4r::db::Panic(lbl_eu_8056E068, 0x26d, lbl_eu_8056E04C,
                                 lbl_eu_806638E8, lbl_eu_80663C98);
@@ -91,7 +91,7 @@ void func_804E75B8(CMdlAnmEye* self, CMdlAnmEyeModel* model) {
 }
 
 // Eye-anim state setter (called from CScnItemModelNw4r.cpp).
-void func_804E77BC(CMdlAnmEye* self, u32 val) {
+void EyeAnm_SetState(CMdlAnmEye* self, u32 val) {
     self->value2C = val;
 }
 
@@ -99,7 +99,7 @@ void func_804E77BC(CMdlAnmEye* self, u32 val) {
 // anim offset, run the blink state machine, then push the resulting eye
 // offset (per-eye angle table indexed by field_20) into each registered
 // eye's texture SRT effect matrix.
-void func_804E77C4(CMdlAnmEye* self) {
+void EyeAnm_TickBlink(CMdlAnmEye* self) {
     if (self->value2C == 4) return;
     if (self->field_1C == 0) return;
     f32 scale = simGetLeafDist7B0(self->field_04);

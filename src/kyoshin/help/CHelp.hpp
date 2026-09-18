@@ -29,7 +29,7 @@ public:
     // (Target, Sp, ArtsSet) stop at +0x18.
 
     CHelp(u32 owner, u32 param);
-    void func_802B7C68();
+    void refreshPartyMenu();
 
     // Overlay on the vptr at +8 so CHelpManager can swap retail tables.
     CHelpVtbl*& vtbl() {
@@ -56,8 +56,8 @@ public:
 // these (see include/functions.hpp, CHelp_ArtsSet.hpp). Signatures match
 // the retail call sites verbatim.
 extern "C" void CUICfManager_queueTutorialMenu(u32 param0, UNKWORD param1, UNKWORD param2);
-extern "C" void func_8009D018(u32, u32);
+extern "C" void CtrlRemote_SetSharedBit(u32, u32);
 extern "C" void* UIWin_CreateMenuUpdate(int, u32, s32, s32);
-extern "C" void func_8029A658();
+extern "C" void MenuTutorialIsCreated();
 // US symbols.txt name for __vt__Q22cf5CHelp. Plain extern (not mangled).
 extern cf::CHelpVtbl lbl_eu_8053B3A0;

@@ -9,7 +9,7 @@
 // emitted relocations keep the exact retail symbol names).
 extern "C" {
     void* Scn_CallUnk8C_V8(void* r3);
-    void func_804950F4(u8* self, void* r4);
+    void constructLightEnv(u8* self, void* r4);
     void __dt__80495200(u8* self, int deleting);
     void func_804936AC(void* a, void* b, void* c);
 }
@@ -19,24 +19,24 @@ extern "C" {
 // with lis+addi exactly like retail.
 extern u32 lbl_eu_8056DD08[];
 
-extern "C" void* func_804823A0(u8* self) { return (void*)((u8*)self + 0x11d8); }
+extern "C" void* getItemLightData(u8* self) { return (void*)((u8*)self + 0x11d8); }
 
 extern "C" void __ct__CScnItemLightNw4r(void*, int);
-extern "C" void func_80482398(u8* self, int val) {
+extern "C" void constructItemLightNw4r(u8* self, int val) {
     __ct__CScnItemLightNw4r(self, (s32)(s16)val);
 }
 
-// func_80482388: tail-call which forwards the owning CScnItemLightNw4r's
+// forwardItemLightEnv: tail-call which forwards the owning CScnItemLightNw4r's
 // light-environment handle (+0x5C), this light item's env (+0x14) and the
 // owner into func_804936AC.
-extern "C" void func_80482388(CScnItemLight* self) {
+extern "C" void forwardItemLightEnv(CScnItemLight* self) {
     func_804936AC(self->mpNw4r->field_0x5c, self->mEnv, self->mpNw4r);
 }
 
-// func_80482400: push this light item's nw4r g3d LightSetting (+0x944) into
+// importItemLightSetting: push this light item's nw4r g3d LightSetting (+0x944) into
 // the scene root's LightSetting (ScnRoot::mLightSetting at +0x2878) via
 // LightSetting::Import, then clear the active flag.
-extern "C" void func_80482400(CScnItemLightNw4r* self) {
+extern "C" void importItemLightSetting(CScnItemLightNw4r* self) {
     self->mpScnRoot->mLightSetting.Import(
         reinterpret_cast<const nw4r::g3d::LightSetting&>(self->mLightSetting));
     self->field_0x121c = 0;
@@ -49,7 +49,7 @@ CScnItemLight::CScnItemLight(CScnItemLightNw4r* pNw4r, char* name, u16 a2,
     field_0x0 = (void*)lbl_eu_8056DD08;
     field_0xc = a3;
     field_0x10 = a2;
-    func_804950F4(mEnv, Scn_CallUnk8C_V8(pNw4r));
+    constructLightEnv(mEnv, Scn_CallUnk8C_V8(pNw4r));
     field_0x1218 = strlen(name);
     strcpy(mName, name);
     field_0x121c = 0;
@@ -76,17 +76,17 @@ extern "C" u32 lbl_eu_806638C8;
 extern "C" u32 lbl_eu_806624D8;
 extern "C" void __dt__13CScnItemLightFv();
 extern "C" void __dt__17CScnItemLightNw4rFv();
-extern "C" void func_80482040();
-extern "C" void func_80482048();
-extern "C" void func_80482288();
+extern "C" void ScnCamNw4r_NullHook40();
+extern "C" void ScnCamNw4r_EmptyHook48();
+extern "C" void scnItemIdNoopA();
 extern "C" u32 lbl_eu_8056DD08[8] = {
     (u32)&lbl_eu_806638C0, 0x00000000,
     (u32)&__dt__13CScnItemLightFv,
-    (u32)&func_80482388,
-    (u32)&func_80482048,
-    (u32)&func_80482288,
-    (u32)&func_804823A0,
-    (u32)&func_80482040,
+    (u32)&forwardItemLightEnv,
+    (u32)&ScnCamNw4r_EmptyHook48,
+    (u32)&scnItemIdNoopA,
+    (u32)&getItemLightData,
+    (u32)&ScnCamNw4r_NullHook40,
 };
 extern "C" u32 lbl_eu_8056DD28[4] = {
     (u32)&lbl_eu_806624D8, 0x00000000, 0x00000000, 0x00000000,
@@ -94,11 +94,11 @@ extern "C" u32 lbl_eu_8056DD28[4] = {
 extern "C" u32 lbl_eu_8056DD38[8] = {
     (u32)&lbl_eu_806638C8, 0x00000000,
     (u32)&__dt__17CScnItemLightNw4rFv,
-    (u32)&func_80482388,
-    (u32)&func_80482048,
-    (u32)&func_80482400,
-    (u32)&func_804823A0,
-    (u32)&func_80482040,
+    (u32)&forwardItemLightEnv,
+    (u32)&ScnCamNw4r_EmptyHook48,
+    (u32)&importItemLightSetting,
+    (u32)&getItemLightData,
+    (u32)&ScnCamNw4r_NullHook40,
 };
 extern "C" u32 lbl_eu_8056DD58[6] = {
     (u32)&lbl_eu_806624D8, 0x00000000,

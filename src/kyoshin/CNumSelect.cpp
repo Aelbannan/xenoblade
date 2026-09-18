@@ -14,10 +14,10 @@
 #include "monolib/device/CDeviceFont.hpp"
 // Forward decls so the dispatch below stays independent of the helper bodies
 // (retail keeps every helper as an out-of-line bl call).
-extern "C" void func_801EB49C(CNumSelect* self);
-extern "C" void func_801EB530(CNumSelect* self);
-extern "C" void func_801EB580(CNumSelect* self);
-extern "C" void func_801EB644(CNumSelect* self);
+extern "C" void NumSel_AdvanceOpen_B49C(CNumSelect* self);
+extern "C" void NumSel_RewindReset_B530(CNumSelect* self);
+extern "C" void NumSel_RestartAnim_B580(CNumSelect* self);
+extern "C" void NumSel_RestartAnimAlt_B644(CNumSelect* self);
 
 // Keep every helper out-of-line: MWCC -inline auto would otherwise fold them
 // into the state dispatcher below (retail keeps all five as bl calls).
@@ -25,17 +25,17 @@ extern "C" void func_801EB644(CNumSelect* self);
 #pragma auto_inline off
 struct CNumSelectFull;
 
-u8 func_801EB018(CNumSelectFull* self) { return self->field_2D; }
+u8 NumSel_GetField2D_B018(CNumSelectFull* self) { return self->field_2D; }
 
 
-u8 func_801EB020(CNumSelectFull* self) { return self->field_2C; }
+u8 NumSel_GetActiveFlag_B020(CNumSelectFull* self) { return self->field_2C; }
 
-u8 func_801EB028(CNumSelectFull* self) { return self->field_2E; }
+u8 NumSel_GetField2E_B028(CNumSelectFull* self) { return self->field_2E; }
 
 
 /* State step 3: rebind the open animation (anim at 0x20) and play cue 0xe.
  * States 1 and 3 leave the widget untouched. */
-extern "C" void func_801EB178(CNumSelect* self) {
+extern "C" void NumSel_EnterState3Open_B178(CNumSelect* self) {
     u8 state = self->field_2F;
     if (state == 1 || state == 3) {
         return;
@@ -50,7 +50,7 @@ extern "C" void func_801EB178(CNumSelect* self) {
 
 /* State step 4: bind the loop animation at +0x28, then reveal both number
  * panes (first pane shown via flag 1, second hidden via flag 0). */
-extern "C" void func_801EB218(CNumSelect* self) {
+extern "C" void NumSel_ShowPaneA_B218(CNumSelect* self) {
     u8 state = self->field_2F;
     if (state == 1 || state == 3) {
         return;
@@ -59,13 +59,13 @@ extern "C" void func_801EB218(CNumSelect* self) {
     self->mpLayout->BindAnimation(self->field_28);
     self->mpLayout->SetAnimationEnable(self->field_28, true);
     self->field_28->SetFrame(lbl_eu_8066808C);
-    func_80124270(self->mpLayout->GetRootPane()->FindPaneByName(&lbl_eu_80506C14[0x47], true), 1);
-    func_80124270(self->mpLayout->GetRootPane()->FindPaneByName(&lbl_eu_80506C14[0x55], true), 0);
+    setPaneVisible(self->mpLayout->GetRootPane()->FindPaneByName(&lbl_eu_80506C14[0x47], true), 1);
+    setPaneVisible(self->mpLayout->GetRootPane()->FindPaneByName(&lbl_eu_80506C14[0x55], true), 0);
     self->field_2F = 4;
 }
 
 /* State step 5: same as step 4 but with the pane visibility flags swapped. */
-extern "C" void func_801EB314(CNumSelect* self) {
+extern "C" void NumSel_ShowPaneB_B314(CNumSelect* self) {
     u8 state = self->field_2F;
     if (state == 1 || state == 3) {
         return;
@@ -74,8 +74,8 @@ extern "C" void func_801EB314(CNumSelect* self) {
     self->mpLayout->BindAnimation(self->field_28);
     self->mpLayout->SetAnimationEnable(self->field_28, true);
     self->field_28->SetFrame(lbl_eu_8066808C);
-    func_80124270(self->mpLayout->GetRootPane()->FindPaneByName(&lbl_eu_80506C14[0x47], true), 0);
-    func_80124270(self->mpLayout->GetRootPane()->FindPaneByName(&lbl_eu_80506C14[0x55], true), 1);
+    setPaneVisible(self->mpLayout->GetRootPane()->FindPaneByName(&lbl_eu_80506C14[0x47], true), 0);
+    setPaneVisible(self->mpLayout->GetRootPane()->FindPaneByName(&lbl_eu_80506C14[0x55], true), 1);
     self->field_2F = 5;
 }
 
@@ -83,16 +83,16 @@ extern "C" void func_801EB314(CNumSelect* self) {
 // Retail frame merges the three callee-saves via stmw/lmw (-O4,s).
 #pragma push
 #pragma optimize_for_size on
-extern "C" void func_801EB410(CNumSelect* self, int value) {
+extern "C" void NumSel_ApplyPaneVis_B410(CNumSelect* self, int value) {
     if (self->mpLayout != NULL) {
-        func_80124270(self->mpLayout->GetRootPane()->FindPaneByName(&lbl_eu_80506C14[0x63], true), value);
-        func_80124270(self->mpLayout->GetRootPane()->FindPaneByName(&lbl_eu_80506C14[0x6a], true), value);
+        setPaneVisible(self->mpLayout->GetRootPane()->FindPaneByName(&lbl_eu_80506C14[0x63], true), value);
+        setPaneVisible(self->mpLayout->GetRootPane()->FindPaneByName(&lbl_eu_80506C14[0x6a], true), value);
     }
 }
 #pragma pop
 
 // Fade-out step: once anim 0x20 reaches 1.0, swap in anim 0x24 and enable it.
-extern "C" void func_801EB49C(CNumSelect* self) {
+extern "C" void NumSel_AdvanceOpen_B49C(CNumSelect* self) {
     if (advanceAnimTransform(self->field_20, lbl_eu_80668088)) {
         self->field_2F = 2;
         self->field_2E = 1;
@@ -104,7 +104,7 @@ extern "C" void func_801EB49C(CNumSelect* self) {
 
 // When the +0x20 animation has finished (AnimRewindFrame with the 1.0 constant),
 // reset the selection state bytes (m2C/m2E/m2F) for a fresh pass.
-void func_801EB530(CNumSelect* self) {
+void NumSel_RewindReset_B530(CNumSelect* self) {
     if (AnimRewindFrame(self->field_20, lbl_eu_80668088)) {
         self->field_2F = 0;
         self->field_2E = 1;
@@ -114,7 +114,7 @@ void func_801EB530(CNumSelect* self) {
 
 /* Restart the +0x28 animation from frame 0: unbind everything, attach anim
  * +0x24, rewind its frame, and advance the state machine to step 2. */
-extern "C" void func_801EB580(CNumSelect* self) {
+extern "C" void NumSel_RestartAnim_B580(CNumSelect* self) {
     if (advanceAnimTransform(self->field_28, lbl_eu_80668088) == 0) {
         return;
     }
@@ -128,8 +128,8 @@ extern "C" void func_801EB580(CNumSelect* self) {
     self->field_2E = 1;
 }
 
-// Identical body to func_801EB580 (retail duplicates it byte for byte).
-extern "C" void func_801EB644(CNumSelect* self) {
+// Identical body to NumSel_RestartAnim_B580 (retail duplicates it byte for byte).
+extern "C" void NumSel_RestartAnimAlt_B644(CNumSelect* self) {
     if (advanceAnimTransform(self->field_28, lbl_eu_80668088) == 0) {
         return;
     }
@@ -174,7 +174,7 @@ bool CNumSelect::OnFileEvent(CEventFile* evt) {
     setLayoutTextBoxFont(mpLayout, &lbl_eu_80506C14[0x3d], (u32)CUICfManager_getPackedFont9C());
 
     mpLayout->UnbindAllAnimation();
-    func_80124270(
+    setPaneVisible(
         mpLayout->GetRootPane()->FindPaneByName(&lbl_eu_80506C14[0xf7], true), 0);
 
     // Digit-count depends on the region flag at +0x30 (11 vs 12 entries).
@@ -223,7 +223,7 @@ bool CNumSelect::OnFileEvent(CEventFile* evt) {
             f32 sz[2];
             sz[0] = static_cast<f32>(timgH);
             sz[1] = static_cast<f32>(timgW);
-            func_80124288(paneA, sz);
+            writePanePos(paneA, sz);
         }
         nw4r::lyt::Pane* paneB =
             mpLayout->GetRootPane()->FindPaneByName(&lbl_eu_80506C14[0x170], true);
@@ -231,7 +231,7 @@ bool CNumSelect::OnFileEvent(CEventFile* evt) {
             f32 sz[2];
             sz[0] = static_cast<f32>(timgH);
             sz[1] = static_cast<f32>(timgW);
-            func_80124288(paneB, sz);
+            writePanePos(paneB, sz);
         }
     }
 
@@ -252,13 +252,13 @@ bool CNumSelect::OnFileEvent(CEventFile* evt) {
 CNumSelect::~CNumSelect() {}
 #pragma optimize_for_size off
 
-extern "C" void func_801EB04C(CNumSelect* self, u8 r4) {
+extern "C" void NumSel_SetCaptionNum_B04C(CNumSelect* self, u8 r4) {
     setLayoutTextBoxNumber(self->mpLayout, &lbl_eu_80506C14[0x20], r4);
 }
 
 // Loads the number-select brlyt archive into the MEM2 scratch region and
 // stores the resulting file handle at +0x14.
-void CNumSelect::func_801EAE8C() {
+void CNumSelect::NumSel_LoadArchive_AE8C() {
     mtl::ALLOC_HANDLE handle = mtl::MemManager::getHandleMEM2();
     field_14 = CDeviceFile::readFile(handle, &lbl_eu_80506C14[0], reinterpret_cast<IWorkEvent*>(this), 0, 0);
 }
@@ -267,25 +267,25 @@ void CNumSelect::func_801EAE8C() {
  * animates the layout while the widget is active (field_2C gate). */
 // Per-state update dispatch; defined before the helper bodies so MWCC cannot
 // inline them into this switch (retail emits five separate bl calls).
-extern "C" void func_801EAED4(CNumSelect* self) {
+extern "C" void NumSel_DispatchState_AED4(CNumSelect* self) {
     if (self->field_2C == 0) {
         return;
     }
     switch (self->field_2F) {
     case 1:
-        func_801EB49C(self);
+        NumSel_AdvanceOpen_B49C(self);
         break;
     case 2:
         advanceAnimTransform(self->field_24, lbl_eu_80668088);
         break;
     case 3:
-        func_801EB530(self);
+        NumSel_RewindReset_B530(self);
         break;
     case 4:
-        func_801EB580(self);
+        NumSel_RestartAnim_B580(self);
         break;
     case 5:
-        func_801EB644(self);
+        NumSel_RestartAnimAlt_B644(self);
         break;
     }
     self->mpLayout->Animate();
@@ -293,7 +293,7 @@ extern "C" void func_801EAED4(CNumSelect* self) {
 
 // Draws the layout once the loaded file has been processed (field_2C gate).
 // Retail forwards its own r4 (drawInfo) through to drawLayout untouched.
-void CNumSelect::func_801EAF7C(nw4r::lyt::DrawInfo* drawInfo) {
+void CNumSelect::NumSel_DrawLayout_AF7C(nw4r::lyt::DrawInfo* drawInfo) {
     if (field_2C == 0) {
         return;
     }
@@ -304,8 +304,8 @@ void CNumSelect::func_801EAF7C(nw4r::lyt::DrawInfo* drawInfo) {
  * deleting-dtor vtable slot, frees the arc accessor, then tears down the
  * memory region. Retail double-checks the non-null layout (nested identical
  * guards), so both are reproduced. */
-extern "C" void func_801EAF9C(CNumSelect* self) {
-    func_801390E0(&self->field_14);
+extern "C" void NumSel_Teardown_AF9C(CNumSelect* self) {
+    closeFileHandle(&self->field_14);
     self->field_2C = 0;
     if (self->mpLayout != NULL) {
         delete self->mpLayout;
@@ -313,11 +313,11 @@ extern "C" void func_801EAF9C(CNumSelect* self) {
     }
     releaseArcResourceAccessor(self->field_18);
     self->field_18 = NULL;
-    self->mMemRegion.func_8045F778();
+    self->mMemRegion.deleteRegion();
 }
 
 // Updates the pane named by lbl_eu_80506C14+0x17 with the given string.
-void CNumSelect::func_801EB030(char* str) {
+void CNumSelect::NumSel_SetCaption_B030(char* str) {
     LayoutSetTextBoxFmtValue(mpLayout, &lbl_eu_80506C14[0x17], str, 0);
 }
 
@@ -326,7 +326,7 @@ void CNumSelect::func_801EB030(char* str) {
 
 // Builds "pic_NN"-style pane text: extracts the digits via BdatTouchStringCell,
 // formats them, and pushes the result into the layout pane.
-void CNumSelect::func_801EB064(int value) {
+void CNumSelect::NumSel_FormatPicName_B064(int value) {
     char buf[0x1C];
     char* digits = BdatTouchStringCell(&lbl_eu_80506C14[0x2A], &lbl_eu_80506C14[0x33], 3);
     sprintf(buf, &lbl_eu_80506C14[0x38], value, digits);
@@ -335,7 +335,7 @@ void CNumSelect::func_801EB064(int value) {
 
 /* State step 1: rebind the close animation (anim at 0x20), mark the pane
  * visible, and play cue 0xd. States 1 and 3 leave the widget untouched. */
-extern "C" void func_801EB0D4(CNumSelect* self) {
+extern "C" void NumSel_EnterState1Close_B0D4(CNumSelect* self) {
     u8 state = self->field_2F;
     if (state == 1 || state == 3) {
         return;

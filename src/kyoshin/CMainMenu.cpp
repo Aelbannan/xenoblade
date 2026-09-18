@@ -22,7 +22,7 @@
 // Real player base/spot types are in CfGimmick.hpp (CfPlayerBase::getHP at 0x128,
 // CfPlayerSpot::partyOpen at 0x9C). Define minimal forward views here to avoid
 // pulling the full CfGimmick header which conflicts on several extern "C" globals
-// (func_8009CF8C/func_80124B78/getUnk80664658) already declared with different
+// (CtrlRemote_TouchBitByArg/SysWinGetSingleton/getUnk80664658) already declared with different
 // view structs in the menu headers.
 class CfPlayerSpotReal {
 public:
@@ -68,7 +68,7 @@ extern "C" void func_801390E0(CFileHandle** handle);
 void releaseArcResourceAccessor(nw4r::lyt::ArcResourceAccessor* acc);
 
 // CBaseCur shared helpers (defined in CCur.cpp)
-extern "C" void func_801D21CC(CBaseCur* cur);
+extern "C" void Cur_DeactivateTail(CBaseCur* cur);
 
 // Destructor for CBaseCur-derived class at vtable 0x800FEA30.
 // Standard MWCC virtual dtor: null-check, call base dtor with flag 0,
@@ -83,7 +83,7 @@ void* __dt__800FEA30(void* _this, int flags) {
     return _this;
 }
 
-void* func_800FEDF8(void) {
+void* CMainMenu_GetInstancePtr(void) {
     extern u32 lbl_eu_80663F18;
     return (void*)(uintptr_t)lbl_eu_80663F18;
 }
@@ -134,7 +134,7 @@ extern u32 lbl_eu_8052BDF4[];
 
 // Copies 3 words from static data lbl_eu_8052BDF4 to fields at 0x3C/0x40/0x44,
 // guarded by field_0x74 to ensure one-shot initialization.
-extern "C" void func_800FEF20(CMainMenu* self) {
+extern "C" void CMainMenu_LoadStateTriplet(CMainMenu* self) {
     if (self->field_0x74 != 0) {
         return;
     }
@@ -146,7 +146,7 @@ extern "C" void func_800FEF20(CMainMenu* self) {
     self->field_0x44 = p[2];
 }
 
-extern "C" void func_800FEF4C(CMainMenu* self) {
+extern "C" void CMainMenu_Update(CMainMenu* self) {
     // Main-menu frame update: gate on the system window, refresh the menu
     // availability flags, then dispatch on the current state.
     if (IsMenuState621F0() == 0) {
@@ -156,26 +156,26 @@ extern "C" void func_800FEF4C(CMainMenu* self) {
         self->field_0x54 = 1;
         return;
     }
-    if (func_8027EA64() != 0) return;
+    if (SysWinLog_IsBusy() != 0) return;
     if (getInstance__11CSysWinBuffFv() != 0) return;
-    if (func_80192BD0() != 0) return;
-    if (func_80167A18() != 0) return;
-    if (func_8011CD5C() != 0) return;
-    if (func_80212480() != 0) return;
+    if (menuPTStateIsActive() != 0) return;
+    if (ItemMenu_IsPresent() != 0) return;
+    if (isQuestLogMenuActive() != 0) return;
+    if (MakeCrystalIsCreated() != 0) return;
     if (CMenuArtsSet_isCreated() != 0) return;
-    if (func_80242354() != 0) return;
-    if (func_80252CD4() != 0) return;
-    if (func_80257308() != 0) return;
-    if (func_80263944() != 0) return;
+    if (isMapSelectActive() != 0) return;
+    if (Colle_HasInstance() != 0) return;
+    if (KizunagramIsCreated() != 0) return;
+    if (hasPassiveSkillMenu() != 0) return;
     if (PlayAward_IsActive() != 0) return;
-    if (func_80272488() != 0) return;
-    if (func_8028E440() != 0) return;
-    if (func_8029BBA0() != 0) return;
-    if (func_8029EE58() != 0) return;
-    if (func_802AC510() != 0) return;
+    if (KizunaList_IsPresent() != 0) return;
+    if (isSaveMenuActive() != 0) return;
+    if (hasOptionMenu() != 0) return;
+    if (SkipTimer_IsActiveFlag() != 0) return;
+    if (CMenuTutorialList_IsActive() != 0) return;
 
     // Refresh cursor/sub-menu availability flags.
-    func_80101BF8(self);
+    CMainMenu_RefreshFlags(self);
 
     switch ((u32)self->field_0xE0) {
     case 0:
@@ -206,13 +206,13 @@ extern "C" void func_800FEF4C(CMainMenu* self) {
                 LayoutSetTextBoxFmtValue(self->field_0x7C, lbl_eu_804FCEBC + 0x7c,
                               lbl_eu_804FCEBC + 0x89, 0);
             }
-            func_801D216C(&self->_90[0], 1);
+            Cur_SetVisible(&self->_90[0], 1);
             self->field_0xE0 = 2;
         }
         break;
     case 2:
         // Cursor-active: run the input handler for the selected menu.
-        func_800FF920(self);
+        CMainMenu_DispatchState(self);
         break;
     case 3:
         // Exit: once the close animation finishes, mark the menu idle.
@@ -224,7 +224,7 @@ extern "C" void func_800FEF4C(CMainMenu* self) {
         break;
     case 4:
         // Screen-open dispatch: act on the cursor while no other window is up.
-        if (func_80101A88(self) == 0 && func_8029A658() == 0) {
+        if (CMainMenu_IsInputBlocked(self) == 0 && MenuTutorialIsCreated() == 0) {
             switch (self->field_0xC0) {
             case 0:
                 CUICfManager_queueMapSelectMenu();
@@ -267,7 +267,7 @@ extern "C" void func_800FEF4C(CMainMenu* self) {
         }
         break;
     case 8:
-        func_801018F4(self);
+        CMainMenu_DispatchMenuState(self);
         break;
     }
 
@@ -351,7 +351,7 @@ extern "C" CMainMenu* __ct__CMainMenu(CMainMenu* _this, CScn* scene) {
     // an update-form first load, then reads words 1/2 relative to the advanced
     // pointer; store order is 0x40, 0x3C, 0x44.
     // v0-before-pointer declaration order: the lwzu result claims r4 and the
-    // base pointer takes r5 (cf. func_802A97A0).
+    // base pointer takes r5 (cf. VisionTell_PlaySlot1).
     u32 h0;
     u32* hook = lbl_eu_8052BDE8;
     _this->field_0xC4 = 0;
@@ -444,7 +444,7 @@ extern "C" bool __ct__800FF300(CMainMenu* self, CEventFile* pEventFile) {
                 ((CBaseCur*)&self->subCur)->initLayout();
             }
 
-            func_80101BF8(self);
+            CMainMenu_RefreshFlags(self);
 
             // Register the render callback slot (+0x5C) with the owning scene; the
             // null-check branch is the standard cross-cast idiom.
@@ -468,13 +468,13 @@ extern "C" bool __ct__800FF300(CMainMenu* self, CEventFile* pEventFile) {
 // offset 0x53: pane name "Param"
 
 // VUpdate() override for the CBaseCur-derived class embedded at CMainMenu+0x90.
-// Loads the layout and two animation transforms, then initializes via func_801D21CC.
-extern "C" void func_800FEA88(CBaseCur* self) {
+// Loads the layout and two animation transforms, then initializes via Cur_DeactivateTail.
+extern "C" void BaseCur_BuildLayout(CBaseCur* self) {
     buildLayout(&self->mpLayout, self->mArcResAcc, &lbl_eu_804FCEBC[0]);
     bindLayoutAnimTransform(self->mpLayout, &self->mpAnimTrans0, self->mArcResAcc, &lbl_eu_804FCEBC[0x19]);
     bindLayoutAnimTransform(self->mpLayout, &self->mpAnimTrans1, self->mArcResAcc, &lbl_eu_804FCEBC[0x37]);
     self->mpLayout->UnbindAllAnimation();
-    func_801D21CC(self);
+    Cur_DeactivateTail(self);
 }
 
 // Render callback: draws the menu layout and its two embedded cursors.
@@ -495,8 +495,8 @@ void CMainMenu::cbRenderBefore() {
     nw4r::lyt::DrawInfo drawInfo;
     func_80137250(&drawInfo);
     drawLayout(field_0x7C, &drawInfo, 0, 1);
-    func_801D20B0((char*)this + 0x90, &drawInfo);
-    func_801D20B0((char*)this + 0xA8, &drawInfo);
+    Cur_DrawLayout((char*)this + 0x90, &drawInfo);
+    Cur_DrawLayout((char*)this + 0xA8, &drawInfo);
 }
 
 // Finds the "Param" pane in the layout's root pane and sets its translate
@@ -517,7 +517,7 @@ extern u32 lbl_eu_80663F18;
 // constructs via the unmangled retail ctor fragment __ct__CMainMenu,
 // stores in lbl_eu_80663F18, and registers as a child of the given CProcess.
 // Returns NULL if already created.
-extern "C" void* func_800FF6BC(void* parent, void* param) {
+extern "C" void* CMainMenu_Create(void* parent, void* param) {
     if (lbl_eu_80663F18) {
         return NULL;
     }
@@ -536,7 +536,7 @@ extern "C" void* func_800FF6BC(void* parent, void* param) {
 extern u32 lbl_eu_80663F18;
 
 // Returns 1 if isMenuOpen() is non-zero, else booleanizes lbl_eu_80663F18.
-extern "C" u32 func_800FF738(CMainMenu* self) {
+extern "C" u32 CMainMenu_IsOpen(CMainMenu* self) {
     if (isAnyMenuOpen__9CMainMenuFv() != 0) {
         return 1;
     }
@@ -546,26 +546,26 @@ extern "C" u32 func_800FF738(CMainMenu* self) {
 int CMainMenu::isAnyMenuOpen() {
     // Menu-open gate: returns 1 while any menu screen is active (each callee
     // is a singleton/state guard), otherwise the tutorial-list state.
-    if (func_80192BD0()) return 1;
-    if (func_80167A18()) return 1;
-    if (func_8011CD5C()) return 1;
-    if (func_80212480()) return 1;
+    if (menuPTStateIsActive()) return 1;
+    if (ItemMenu_IsPresent()) return 1;
+    if (isQuestLogMenuActive()) return 1;
+    if (MakeCrystalIsCreated()) return 1;
     if (CMenuArtsSet_isCreated()) return 1;
-    if (func_80242354()) return 1;
-    if (func_80252CD4()) return 1;
-    if (func_80257308()) return 1;
-    if (func_80263944()) return 1;
+    if (isMapSelectActive()) return 1;
+    if (Colle_HasInstance()) return 1;
+    if (KizunagramIsCreated()) return 1;
+    if (hasPassiveSkillMenu()) return 1;
     if (PlayAward_IsActive()) return 1;
-    if (func_80272488()) return 1;
-    if (func_8028E440()) return 1;
-    if (func_8029BBA0()) return 1;
-    if (func_8029EE58()) return 1;
-    return func_802AC510();
+    if (KizunaList_IsPresent()) return 1;
+    if (isSaveMenuActive()) return 1;
+    if (hasOptionMenu()) return 1;
+    if (SkipTimer_IsActiveFlag()) return 1;
+    return CMenuTutorialList_IsActive();
 }
 
 // Returns 1 if isMenuOpen() is non-zero, else checks the global CMainMenu
 // singleton's field_0xE0 for states 4 or 8 (active/invite).
-extern "C" u32 func_800FF8B0() {
+extern "C" u32 CMainMenu_CheckOpenState() {
     if (isAnyMenuOpen__9CMainMenuFv() != 0) {
         return 1;
     }
@@ -594,7 +594,7 @@ void CMainMenu::Init() {
     field_0x74 = CDeviceFile::readFile(handle, (const char*)lbl_eu_80661DC0, (IWorkEvent*)workEvent, 0, 0);
 }
 
-extern "C" void func_800FF914(CArtsInfo* self) {
+extern "C" void ArtsInfo_SetReadyFlag(CArtsInfo* self) {
     self->field_0x54 = 1;
 }
 
@@ -619,8 +619,8 @@ extern "C" void func_800FF914(CArtsInfo* self) {
 
 // Per-frame main-menu input handler (state 2): scroll the main cursor,
 // open the selected sub-screen, or cancel back to the exit state.
-void func_800FF920(CMainMenu* self) {
-    if (func_80101A88(self) != 0) {
+void CMainMenu_DispatchState(CMainMenu* self) {
+    if (CMainMenu_IsInputBlocked(self) != 0) {
         // Input locked: stop the open animations, run the close animation,
         // clear both number panes and drop to the exit state.
         self->field_0x7C->SetAnimationEnable(self->field_0x88, false);
@@ -631,12 +631,12 @@ void func_800FF920(CMainMenu* self) {
         char* base = lbl_eu_804FCEBC;
         LayoutSetTextBoxFmtValue(self->field_0x7C, base + 0x71, base + 0x89, 0);
         LayoutSetTextBoxFmtValue(self->field_0x7C, base + 0x7c, base + 0x89, 0);
-        func_801D216C(&self->_90[0], 0);
+        Cur_SetVisible(&self->_90[0], 0);
         playUISound__FUl(9);
         self->field_0xE0 = 3;
         return;
     }
-    if (func_8029A658() != 0) {
+    if (MenuTutorialIsCreated() != 0) {
         return;
     }
     CMainMenuPad* pad = getCurrentPad__Q22cf13CfGameManagerFv();
@@ -754,7 +754,7 @@ void func_800FF920(CMainMenu* self) {
         case 0:
         case 3:
             // Header entries: activate the main cursor and enter screen-open state.
-            func_801D2174((CBaseCur*)&self->_90[0]);
+            Cur_SetActive((CBaseCur*)&self->_90[0]);
             self->field_0xE0 = 4;
             playUISound__FUl(0x6b);
             return;
@@ -901,7 +901,7 @@ void func_800FF920(CMainMenu* self) {
         char* base = lbl_eu_804FCEBC;
         LayoutSetTextBoxFmtValue(self->field_0x7C, base + 0x71, base + 0x89, 0);
         LayoutSetTextBoxFmtValue(self->field_0x7C, base + 0x7c, base + 0x89, 0);
-        func_801D216C(&self->_90[0], 0);
+        Cur_SetVisible(&self->_90[0], 0);
         playUISound__FUl(9);
         self->field_0xE0 = 3;
         return;
@@ -947,7 +947,7 @@ extern "C" void func_80100E14(CMainMenu* self) {
             math:
                 // Retail booleanizes this bound check arithmetically
                 // (subi/orc/srwi/subf/srwi idiom for unsigned >=).
-                cond = (func_8009CF8C(0x20) >= 0x18E);
+                cond = (CtrlRemote_TouchBitByArg(0x20) >= 0x18E);
             }
         }
         if (cond != 0) idx = 0x16;
@@ -978,8 +978,8 @@ extern "C" void func_80100E14(CMainMenu* self) {
         LayoutSetTextBoxFmtValue(self->field_0x7C, base + 0x71, base + 0x89, 0);
         LayoutSetTextBoxFmtValue(self->field_0x7C, base + 0x7c, base + 0x89, 0);
     }
-    func_801D216C(&self->_90[0], 0);
-    func_801D216C(&self->subCur, 1);
+    Cur_SetVisible(&self->_90[0], 0);
+    Cur_SetVisible(&self->subCur, 1);
     self->field_0xE0 = 6;
 }
 
@@ -987,20 +987,20 @@ extern "C" void func_801010B8(CMainMenu* self) {
     // Cursor-select sub-menu input: gate on the global input lock, then
     // handle sub-cursor movement / confirmation / cancel.
 
-    if (func_80101A88(self) != 0) {
+    if (CMainMenu_IsInputBlocked(self) != 0) {
         // Input locked: stop the intro animations and move to the exit state.
         self->field_0x7C->SetAnimationEnable(self->field_0x80, false);
         self->field_0x7C->SetAnimationEnable(self->field_0x84, false);
         self->field_0x7C->SetAnimationEnable(self->field_0x88, false);
         self->field_0x7C->SetAnimationEnable(self->field_0x8C, true);
         self->field_0x8C->SetFrame(lbl_eu_80666F1C);
-        func_801D216C(&self->_90[0], 1);
-        func_801D216C(&self->subCur, 0);
+        Cur_SetVisible(&self->_90[0], 1);
+        Cur_SetVisible(&self->subCur, 0);
         playUISound__FUl(6);
         self->field_0xE0 = 7;
         return;
     }
-    if (func_8029A658() != 0) {
+    if (MenuTutorialIsCreated() != 0) {
         return;
     }
 
@@ -1140,7 +1140,7 @@ extern "C" void func_801010B8(CMainMenu* self) {
         }
         playUISound__FUl(0x6b);
         self->field_0xE0 = 8;
-        func_801D2174((CBaseCur*)&self->subCur);
+        Cur_SetActive((CBaseCur*)&self->subCur);
         goto tail;
     }
     if (confirm != 0) {
@@ -1150,8 +1150,8 @@ extern "C" void func_801010B8(CMainMenu* self) {
         self->field_0x7C->SetAnimationEnable(self->field_0x88, false);
         self->field_0x7C->SetAnimationEnable(self->field_0x8C, true);
         self->field_0x8C->SetFrame(lbl_eu_80666F1C);
-        func_801D216C(&self->_90[0], 1);
-        func_801D216C(&self->subCur, 0);
+        Cur_SetVisible(&self->_90[0], 1);
+        Cur_SetVisible(&self->subCur, 0);
         playUISound__FUl(6);
         self->field_0xE0 = 7;
     } else if (bPressed != 0) {
@@ -1184,7 +1184,7 @@ tail:
                     cond = 1;
                 } else {
                 math:
-                    u32 x = func_8009CF8C(0x20);
+                    u32 x = CtrlRemote_TouchBitByArg(0x20);
                     u32 a = x | ~0x18E;
                     u32 b = (x - 0x18E) >> 1;
                     cond = (a - b) >> 31;
@@ -1208,11 +1208,11 @@ tail:
     }
 }
 
-extern "C" void func_801018F4(CMainMenu* self) {
+extern "C" void CMainMenu_DispatchMenuState(CMainMenu* self) {
     // Per-frame menu-state dispatch: while no other screen is open, run the
     // handler for the current (state, sub-state) pair, then park the state
     // at 6 (idle) for the next frame.
-    if (func_80101A88(self) == 0 && func_8029A658() == 0) {
+    if (CMainMenu_IsInputBlocked(self) == 0 && MenuTutorialIsCreated() == 0) {
         switch (self->field_0xC0) {
         case 1:
             switch (self->field_0xC4) {
@@ -1253,7 +1253,7 @@ extern "C" void func_801018F4(CMainMenu* self) {
     self->field_0xE0 = 6;
 }
 
-extern "C" int func_80101A88(CMainMenu* self) {
+extern "C" int CMainMenu_IsInputBlocked(CMainMenu* self) {
     (void)self;
     // Gameplay-input gate: returns 1 while input should be blocked (dead
     // player, active battle list, closing menus, or presentation flags).
@@ -1281,7 +1281,7 @@ extern "C" int func_80101A88(CMainMenu* self) {
     }
 battle:
     // Active battle objects (non-empty manager list). Declaration order
-    // mirrors the matched func_8027F0B8 loop so MWCC colors node r3 /
+    // mirrors the matched SysWinLog_PollBattleStart loop so MWCC colors node r3 /
     // sentinel r5 like retail.
     CMainMenuBattleMgr* bm = (CMainMenuBattleMgr*)getInstance__Q22cf14CBattleManagerFv();
     CMainMenuBattleNode* node;
@@ -1294,8 +1294,8 @@ battle:
         count++;
     }
     if (count != 0) return 1;
-    if (func_80122450()) return 1;
-    if (func_80124B78()) return 1;
+    if (hasQuestWindow()) return 1;
+    if (SysWinGetSingleton()) return 1;
     if (getUnk80664658()->field_214 & 0x80000) return 1;
     // Presentation-flag / close gates share one return-1 tail (L1BC); the
     // volatile reads defeat MWCC's load CSE and keep both loads hoisted
@@ -1311,7 +1311,7 @@ end:
     return CUICfManager_hasInUseSlot();
 }
 
-extern "C" void func_80101BF8(CMainMenu* self) {
+extern "C" void CMainMenu_RefreshFlags(CMainMenu* self) {
     // Menu availability refresh: recompute cursor flags, sub-menu flags and
     // pane positions/colors from the current game state.
     self->field_0xC8[0] = 0;
@@ -1327,7 +1327,7 @@ extern "C" void func_80101BF8(CMainMenu* self) {
     // entry; the 0xFE case consults the shared save flag byte. The boolean is
     // materialized arithmetically (subfic/subi/or/srwi) and both branches
     // feed one store at the merge.
-    u32 saveOk = func_8009CF8C(0x270) != 0xFE;
+    u32 saveOk = CtrlRemote_TouchBitByArg(0x270) != 0xFE;
     u32 d0;
     if (saveOk != 0) {
         d0 = 1;
@@ -1337,12 +1337,12 @@ extern "C" void func_80101BF8(CMainMenu* self) {
     }
     self->field_0xD0 = d0;
 
-    self->field_0xD1 = func_8009CF8C(0x337c) == 0 ? 1 : 0;
-    self->field_0xD2 = func_8009CF8C(0x3355) == 0 ? 1 : 0;
-    self->field_0xD3 = func_8009CF8C(0x3356) == 0 ? 1 : 0;
-    self->field_0xD4 = func_8009CF8C(0x337f) == 0 ? 1 : 0;
-    self->field_0xD5 = func_8009CF8C(0x337a) == 0 ? 1 : 0;
-    self->field_0xD6 = func_8009CF8C(0x3380) == 0 ? 1 : 0;
+    self->field_0xD1 = CtrlRemote_TouchBitByArg(0x337c) == 0 ? 1 : 0;
+    self->field_0xD2 = CtrlRemote_TouchBitByArg(0x3355) == 0 ? 1 : 0;
+    self->field_0xD3 = CtrlRemote_TouchBitByArg(0x3356) == 0 ? 1 : 0;
+    self->field_0xD4 = CtrlRemote_TouchBitByArg(0x337f) == 0 ? 1 : 0;
+    self->field_0xD5 = CtrlRemote_TouchBitByArg(0x337a) == 0 ? 1 : 0;
+    self->field_0xD6 = CtrlRemote_TouchBitByArg(0x3380) == 0 ? 1 : 0;
     self->field_0xD7 = 0;
     self->field_0xD8 = 0;
     self->field_0xD9 = 0;
@@ -1364,7 +1364,7 @@ extern "C" void func_80101BF8(CMainMenu* self) {
         math:
             // Odd free-roam gate computed from the player-state resource
             // (retail bit-twiddling reproduced verbatim: subi/orc/srwi/subf).
-            u32 x = func_8009CF8C(0x20);
+            u32 x = CtrlRemote_TouchBitByArg(0x20);
             cond = (x >= 0x18Eu);
         }
     }
@@ -1420,11 +1420,11 @@ extern "C" void func_80101BF8(CMainMenu* self) {
 
 void OnFileEvent__9CMainMenuFP10CEventFile(void* self) { ((void(*)(void*))__ct__800FF300)((char*)self - 0x58); }
 
-void func_80102008(void* self) { ((void(*)(void*))__dt__9CMainMenuFv)((char*)self - 0x58); }
+void CMainMenu_DtorThunk58(void* self) { ((void(*)(void*))__dt__9CMainMenuFv)((char*)self - 0x58); }
 
-void func_80102010(void* self) { ((void(*)(void*))cbRenderBefore__9CMainMenuFv)((char*)self - 0x5c); }
+void CMainMenu_RenderThunk5C(void* self) { ((void(*)(void*))cbRenderBefore__9CMainMenuFv)((char*)self - 0x5c); }
 
-extern "C" void func_80102018(void* self) { ((void(*)(void*))__dt__9CMainMenuFv)((char*)self - 0x5c); }
+extern "C" void CMainMenu_DtorThunk5C(void* self) { ((void(*)(void*))__dt__9CMainMenuFv)((char*)self - 0x5c); }
 
 
 // CTTask<IUICf>::Move - test PTMF at +0x3C, call if non-null

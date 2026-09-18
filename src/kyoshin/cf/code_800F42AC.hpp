@@ -4,18 +4,18 @@
  * @file code_800F42AC.hpp
  * @brief Class definition for the TU kyoshin/cf/code_800F42AC.
  *
- * This class contains methods from func_800F42AC through func_800F4798,
+ * This class contains methods from ScMain_GetRoundedMetric through Sc4798_GetSignedItemValue,
  * all of which are in the cf namespace and precede CfObjEnumList.
  *
  * FULL_MATCH symbols in this TU:
- *   func_800F477C -- getter for sub-object pointer at offset 0x0C
+ *   CfCode_GetSubObject -- getter for sub-object pointer at offset 0x0C
  */
 
 #include "types.h"
 
 namespace cf {
 
-// Forward declaration for the sub-object type returned by func_800F477C.
+// Forward declaration for the sub-object type returned by CfCode_GetSubObject.
 // The returned object has fields at 0x42 (byte) and 0x78 (word flags).
 struct CfUnknownSub;
 
@@ -38,8 +38,8 @@ extern "C" bool isGlobalCamFlagSet__Fi(int mask);
 extern "C" int findObjectById__Fi(int id);
 extern "C" void* func_8016FE34(void* src);
 extern "C" int func_80148778(void* self, int id);
-extern "C" void* func_80149154(void* self, u32 id);   // aligned with CAIAction.hpp (u32 param, per CBattleState.cpp def)
-extern "C" void func_8009D018(u32 a, u32 b);
+extern "C" void* findBattleStatusEntry(void* self, u32 id);   // aligned with CAIAction.hpp (u32 param, per CBattleState.cpp def)
+extern "C" void CtrlRemote_SetSharedBit(u32 a, u32 b);
 extern "C" void* UIWin_QueryPageFlag(u32 a);
 // UIWin_BuildFlagBuf is owned by kyoshin/CUIWindowManager.hpp.
 
@@ -66,13 +66,13 @@ struct CfUnknownSub {
     f32 field_7C;                // 0x7C - float value
 };
 
-// Object returned by func_80149154 in func_800F42AC; float value at 0x20.
+// Object returned by findBattleStatusEntry in ScMain_GetRoundedMetric; float value at 0x20.
 struct Sc149154Ret {
     u8 pad_00[0x20];             // 0x00
     f32 field_20;                // 0x20
 };
 
-// Node reached at p+8; func_80148778 / func_80149154 operate on &data_08.
+// Node reached at p+8; func_80148778 / findBattleStatusEntry operate on &data_08.
 struct Sc48778 {
     u8 pad_00[0x8];              // 0x00
     u8 data_08[0x8];             // 0x08
@@ -80,8 +80,8 @@ struct Sc48778 {
 } // namespace cf
 
 // ---------------------------------------------------------------------------
-// Object layout shared by func_800F4424 / func_800F4648 / func_800F42AC /
-// func_800F449C / func_800F46C0 (offsets through 0x830).
+// Object layout shared by ScMain_GetRatio / ScMain_GetSummedInt / ScMain_GetRoundedMetric /
+// func_800F449C / ScMain_IsDistinctFrom (offsets through 0x830).
 // ---------------------------------------------------------------------------
 struct ScMain {
     u32 field_00;                // 0x00 - id/slot value
@@ -145,7 +145,7 @@ struct ScMain {
 };
 
 // ---------------------------------------------------------------------------
-// Object for func_800F4798: a pointer table at offset 0x00 (indexed by the
+// Object for Sc4798_GetSignedItemValue: a pointer table at offset 0x00 (indexed by the
 // function's 2nd argument) followed by a count field at 0x60C.
 // ---------------------------------------------------------------------------
 struct Sc4798Item {
@@ -158,7 +158,7 @@ struct Sc4798 {
 };
 
 // ---------------------------------------------------------------------------
-// Object for func_800F46C0. `this` gives a pointer at 0x04; the 2nd argument
+// Object for ScMain_IsDistinctFrom. `this` gives a pointer at 0x04; the 2nd argument
 // is a sub-object with an embedded polymorphic member at 0x3E9C and a pointer
 // field at 0x3F10.
 //

@@ -87,9 +87,9 @@ extern "C" {
 
     // ---- CfGameManager / map-effect helpers ----
     u32 getMapEffectManager__Q22cf13CfGameManagerFv();
-    void func_8016FBA8(u32 manager, void* task);
-    u32 func_8016E08C();
-    u32 func_8016E094();
+    void MapFx_SetSlotFlag(u32 manager, void* task);
+    u32 getReloadParam2();
+    u32 getReloadParam1();
 
     // ---- CTaskCulling statics ----
     void* func_801A2C04__Q22cf12CTaskCullingFv();
@@ -105,7 +105,7 @@ extern "C" {
     void Scn_SetTimeScale(CScn* scene, float value);
     void* Scn_InitGlobalB(void* r3, void* r4, void* r5);
     void* scnImN4BuildByIdx(void* r3, void* r4, u32 r5, u32 r6, u32 r7, u32 r8);
-    void func_800BBADC(void* r3, void* r4);
+    void CfModel_InstallSub(void* r3, void* r4);
     void* getHandleMEM1__Q23mtl10MemManagerFv();
 
     // ---- CfRes helpers ----
@@ -129,7 +129,7 @@ extern "C" {
     void* KyoshinHeap_AllocFld34(void* r3);
     void* KyoshinHeap_GetField40();
     void CfRes_tryUpdateSlot16C(void* r3);
-    u32 func_800AA2BC(u32 a, u32 b);
+    u32 Tok_Pack08(u32 a, u32 b);
     int func_800AA33C(ml::FixStr<64>& buf, u32 packed, int prefixFlag, int suffixFlag);
     void CfRes_delegateOp2(void* r3, void* r4, void* r5);
     void CfSoundMan_ClearFxEffect(u32 r3, u32 r4);

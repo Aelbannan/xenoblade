@@ -107,7 +107,7 @@ void CfGimmick_PlaySoundAtPos(u32 id, const CfGimmickVec3* pos);
 u32 getQueuedFileEventCount__Q22cf13CfGameManagerFv(void);
 u32 getResourceFromTable__Q22cf13CfGameManagerFv(u32 a);
 unsigned int CItem_findRecByFamily(unsigned short id);
-void* func_8003AA34(void);
+void* Bdat_GetTable_AA34(void);
 void CfGimmick_LoadBdatAreaPos(cf::CfGimmick* self, float* out, void* unused, void* holder);
 void CfGimmick_LoadBdatAreaExtents(cf::CfGimmick* self, cf::CfGimmick* out, void* unused, void* holder);
 void CfGimmick_LoadBdatAreaRotation(cf::CfGimmick* self, f32* out, void* bdat, void* table);

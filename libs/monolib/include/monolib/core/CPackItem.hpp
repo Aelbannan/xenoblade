@@ -71,10 +71,10 @@ public:
 // ---------------------------------------------------------------------------
 
 // Device-file helpers (defined in monolib/src/device/CDeviceFile.cpp).
-// func_eu_804520D0 is NOT declared here: its canonical C-linkage declaration
+// DevFile_SubstLangPath is NOT declared here: its canonical C-linkage declaration
 // lives in monolib/device/CDeviceFileCri.hpp (int, const char*) and the
 // inline copy in CPackItem.cpp drifted (void, char*), breaking the build with
 // "illegal function overloading" - it was deleted instead of relocated.
 extern "C" void setHandleParam__11CDeviceFileFP11CFileHandleUl(CFileHandle*, u32);
-extern "C" void func_eu_804521A8(s8);
+extern "C" void DevFile_SetLangOverride(s8);
 extern "C" void func_eu_804521B0();

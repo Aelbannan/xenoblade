@@ -50,20 +50,22 @@ struct PtmfNullWords {
 };
 
 // Forward declarations for the CCol6Hint/CCol6System subobject destructor
-// forwards used by the this-adjusting thunks (func_801640E0 / func_80164100 /
-// func_80164110). These symbols are emitted by the member destructor
+// forwards used by the this-adjusting thunks (Col6HintDtorThunk6C / Col6SystemDtorThunk6C /
+// Col6SystemDtorThunk70). These symbols are emitted by the member destructor
 // definitions in the CCol6System TU; declaring them as C-linkage lets the thunk
 // tail-call the single-arg (non-deleting) destructor with only r3 adjusted.
 class CCol6Hint;
 class CCol6System;
+class CCol6CheckBat;
 extern "C" void* __dt__9CCol6HintFv(CCol6Hint*, int flags);
+extern "C" void* __dt__13CCol6CheckBatFv(CCol6CheckBat*, int flags);
 extern "C" void* __dt__11CCol6SystemFv(CCol6System*, int flags);
 
-// func_80164118 backs `this` off to the CCol6Invite embedded subobject and
+// Col6InviteDtorThunk6C backs `this` off to the CCol6Invite embedded subobject and
 // tail-calls the non-deleting destructor. Avoids a virtual dispatch so the
 // thunk compiles to `subi r3,#-0x6c; b __dt__11CCol6InviteFv`.
 class CCol6Invite;
 extern "C" void* __dt__11CCol6InviteFv(CCol6Invite*, int flags);
 
 // Standalone string formatting helper (unmangled retail symbol, C linkage).
-extern "C" void func_eu_801651A0(char* buffer, const char* format, ...);
+extern "C" void Col6FormatBufferString(char* buffer, const char* format, ...);

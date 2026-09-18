@@ -19,7 +19,7 @@ void cf::CChainTime::resetChainTime() {
     func_800EA484(bm, lbl_eu_80668A88, 0x13);
 
     int effId = (mLoop != 0) ? 0xB4 : 0xBB;
-    func_802A0950(&mChainEffect, 0, effId, 0, 0, 0);
+    chainBindEffectLink(&mChainEffect, 0, effId, 0, 0, 0);
 
     mTimer = lbl_eu_80668A88;
     mEnabled = 0;
@@ -27,12 +27,12 @@ void cf::CChainTime::resetChainTime() {
     mPaused = 1;
 }
 
-extern "C" void func_8027CEB0(cf::CChainTime* self, u8 val) {
+extern "C" void startChainTimer(cf::CChainTime* self, u8 val) {
     cf::CBattleManager* bm = cf::CBattleManager::getInstance();
     func_800EA484(bm, lbl_eu_80668A88, 0x13);
 
     int effId = (self->mLoop != 0) ? 0xB4 : 0xBB;
-    func_802A0950(&self->mChainEffect, 0, effId, 0, 0, 0);
+    chainBindEffectLink(&self->mChainEffect, 0, effId, 0, 0, 0);
 
     self->mTimer = lbl_eu_80668A88;
     self->mEnabled = 0;
@@ -40,7 +40,7 @@ extern "C" void func_8027CEB0(cf::CChainTime* self, u8 val) {
     self->mLoop = val;
 }
 
-extern "C" void func_8027CF3C(cf::CChainTime* self) {
+extern "C" void tickChainTimer(cf::CChainTime* self) {
     f32 timer = self->mTimer;
 
     if (lbl_eu_80668A88 != timer) {
@@ -51,29 +51,29 @@ extern "C" void func_8027CF3C(cf::CChainTime* self) {
             if (timer != lbl_eu_80668A8C || self->mChainEffect.unk4 != 0) {
                 timer = self->mTimer;
                 if (timer <= lbl_eu_80668A8C) {
-                    func_802A0818(0xB8, 0);
-                    func_802A0818(0xC1, 0);
-                    func_802A0818(0xC2, 0);
-                    func_802A0818(0xC9, 0);
-                    func_802A0818(0xCA, 0);
+                    chainUnbindMatchingObjects(0xB8, 0);
+                    chainUnbindMatchingObjects(0xC1, 0);
+                    chainUnbindMatchingObjects(0xC2, 0);
+                    chainUnbindMatchingObjects(0xC9, 0);
+                    chainUnbindMatchingObjects(0xCA, 0);
                 }
                 cf::CBattleManager* bm = cf::CBattleManager::getInstance();
                 func_800EA484(bm, timer, 0x13);
             }
         } else {
             if (timer <= lbl_eu_80668A8C) {
-                func_802A0818(0xB8, 0);
-                func_802A0818(0xC1, 0);
-                func_802A0818(0xC2, 0);
-                func_802A0818(0xC9, 0);
-                func_802A0818(0xCA, 0);
+                chainUnbindMatchingObjects(0xB8, 0);
+                chainUnbindMatchingObjects(0xC1, 0);
+                chainUnbindMatchingObjects(0xC2, 0);
+                chainUnbindMatchingObjects(0xC9, 0);
+                chainUnbindMatchingObjects(0xCA, 0);
             }
             cf::CBattleManager* bm = cf::CBattleManager::getInstance();
             func_800EA484(bm, timer, 0x13);
         }
 
         int effId = (self->mLoop != 0) ? 0xB4 : 0xBB;
-        func_802A0950(&self->mChainEffect, self->mEnabled, effId, 0, 0, 0);
+        chainBindEffectLink(&self->mChainEffect, self->mEnabled, effId, 0, 0, 0);
     } else {
         if (self->mPaused != 0) {
             cf::CBattleManager* bm = cf::CBattleManager::getInstance();
@@ -81,7 +81,7 @@ extern "C" void func_8027CF3C(cf::CChainTime* self) {
         }
 
         int effId = (self->mLoop != 0) ? 0xB4 : 0xBB;
-        func_802A0950(&self->mChainEffect, 0, effId, 0, 0, 0);
+        chainBindEffectLink(&self->mChainEffect, 0, effId, 0, 0, 0);
     }
 
     self->mPaused = 0;

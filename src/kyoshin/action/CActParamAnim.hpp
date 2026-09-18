@@ -299,7 +299,7 @@ struct CActParamAnimSubObjView {
 
 // C-linkage callees in sibling units (retail names, keep verbatim).
 extern "C" float simGetLeafAnimDist(u8* object);
-extern "C" int func_8049798C(u8* object);
+extern "C" int scn80496HasChild2Node(u8* object);
 extern "C" float simGetLeafAnimDist4(u8* object);
 extern "C" int simRefreshFadeDist(u8* object);
 extern "C" int simRefreshFadeDist2(u8* object, u32 param);
@@ -319,7 +319,7 @@ extern "C" void func_8004CC8C(void* self);
 extern "C" void pushParamNode(void* data);
 extern "C" void* Scn_FindCamItem(void* obj, s32 id);
 extern "C" void simSetLeafDist7B0(void* self, f32 value);
-extern "C" int func_804BE398(void* vec, u32 a, u32 b, u32 c, f32 d, f32 e);
+extern "C" int ScnRes_VertRayForward_E398(void* vec, u32 a, u32 b, u32 c, f32 d, f32 e);
 extern "C" void func_804BE4B4(void* out, int a);
 extern "C" void func_804BE4E0(void* out, int a);
 
@@ -468,7 +468,7 @@ extern "C" void simRefreshFlag8(void* obj, f32 value);
 extern "C" void simBindChrAnimChain(void* obj, u32 resId, u32 animIdx, u16 frame, s16 half);
 extern "C" void func_804839D4(void* obj, u32 resId, u32 animIdx, u16 frame, u32 gateBit, u32 flag,
                               s16 half);
-extern "C" int func_804978D0(u8* obj);
+extern "C" int scn80496ChildIdsDiffer(u8* obj);
 extern "C" int func_80497914(u8* obj);
 extern "C" void walkParamBlkB(void* data);
 extern "C" void* getSubObjPlus14(void* param);
@@ -582,7 +582,7 @@ extern "C" void func_80052780(void* self, void* src);
 extern "C" f32 simGetLeafDist7B0(u8* obj);
 // Global-scope C++ declaration: mangles to the retail symbol getScnHandle__Fv.
 int getScnHandle();
-extern "C" int func_804BCC10();
+extern "C" int ScnData_FwdBC9A0();
 
 // Extra sdata2/sdata float constants.
 extern const float lbl_eu_80665F58;

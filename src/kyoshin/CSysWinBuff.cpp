@@ -41,7 +41,7 @@ u32 lbl_eu_806648FC = 0;
 //   cbdatSetBdatEntry                -> setBdatEntry__5CBdatFUlPv
 //   cbdatGetEntry                    -> getEntry__5CBdatFUl
 //   cfGameManagerSetPresentationFlag -> setPresentationFlag__Q22cf13CfGameManagerFv
-extern "C" void cbdatSetBdatEntry(u32 entryIndex, void* data);
+extern "C" void setBdatEntry__5CBdatFUlPv(u32 entryIndex, void* data);
 extern "C" void cbdatGetEntry(u32 entryIndex);
 extern "C" void cfGameManagerSetPresentationFlag(u32 enable);
 // DECOUPLED (IWorkEvent-free TU): CTaskGame/CScn/CDeviceVI/etc. pull
@@ -69,7 +69,7 @@ int func_800426F0();
 // Global-view declarations so the catalog thunks can address the retail-named
 // functions by their verbatim symbols (the definitions below emit them).
 // (plain C++: extern "C" + class params 10322s)
-bool func_80274A84(CSysWinBuff* self, CEventFile* pEventFile);
+bool SysWinBuff_OnFileEventMatch(CSysWinBuff* self, CEventFile* pEventFile);
 extern "C" void* __dt__11CSysWinBuffFv(CSysWinBuff* self, int flags);
 extern "C" void cbRenderBefore__11CSysWinBuffFv(void* self);
 
@@ -78,17 +78,17 @@ extern "C" void cbRenderBefore__11CSysWinBuffFv(void* self);
 // emits these as offset-adjusted dispatch stubs: only r3 is re-based, then a
 // tail jump into the right subobject trampoline). Preserved from the scaffold.
 // ---------------------------------------------------------------------------
-void OnFileEvent__11CSysWinBuffFP10CEventFile(void* self) { ((void(*)(void*))func_80274A84)((char*)self - 0x6c); }
+void OnFileEvent__11CSysWinBuffFP10CEventFile(void* self) { ((void(*)(void*))SysWinBuff_OnFileEventMatch)((char*)self - 0x6c); }
 
-void func_80274B08(void* self) { ((void(*)(void*))__dt__11CSysWinBuffFv)((char*)self - 0x6c); }
+void SysWinBuff_ThunkDtor6C(void* self) { ((void(*)(void*))__dt__11CSysWinBuffFv)((char*)self - 0x6c); }
 
-void func_80274B10(void* self) { ((void(*)(void*))cbRenderBefore__11CSysWinBuffFv)((char*)self - 0x70); }
+void SysWinBuff_ThunkRender70(void* self) { ((void(*)(void*))cbRenderBefore__11CSysWinBuffFv)((char*)self - 0x70); }
 
-extern "C" void func_80274B18(void* self) { ((void(*)(void*))__dt__11CSysWinBuffFv)((char*)self - 0x70); }
+extern "C" void SysWinBuff_ThunkDtor70(void* self) { ((void(*)(void*))__dt__11CSysWinBuffFv)((char*)self - 0x70); }
 
-extern "C" void func_80274B20() {}
+extern "C" void SysWinBuff_EmptyStubB20() {}
 
-extern "C" void func_80274B24() {}
+extern "C" void SysWinBuff_EmptyStubB24() {}
 
 // ---------------------------------------------------------------------------
 // Target 1: CSysWinBuff::~CSysWinBuff (us-80276958)
@@ -113,16 +113,16 @@ extern "C" void* __dt__11CSysWinBuffFv(CSysWinBuff* _this, int flags) {
 }
 
 // ---------------------------------------------------------------------------
-// Target 2: func_80274A84 (us-80276f08) - IWorkEvent::OnFileEvent body.
+// Target 2: SysWinBuff_OnFileEventMatch (us-80276f08) - IWorkEvent::OnFileEvent body.
 // When the loaded arc matches mFileHandle: hand its data buffer to CBdat
 // (releases the archive), re-store the loaded file-pointer (getFP) in the
 // global, clear the handle and return true; otherwise false.
 // ---------------------------------------------------------------------------
-bool func_80274A84(CSysWinBuff* self, CEventFile* pEventFile) {
+bool SysWinBuff_OnFileEventMatch(CSysWinBuff* self, CEventFile* pEventFile) {
     if (self->mFileHandle == pEventFile->mFileHandle) {
         void* data = self->mFileHandle->getData();
-        cbdatSetBdatEntry(2, data);
-        func_8003AA34();
+        setBdatEntry__5CBdatFUlPv(2, data);
+        Bdat_GetTable_AA34();
         lbl_eu_806648E4 = (u32)getFP__FPCc(&lbl_eu_8050EBC4[0x22]);
         self->mFileHandle = 0;
         return true;
@@ -140,7 +140,7 @@ bool func_80274A84(CSysWinBuff* self, CEventFile* pEventFile) {
 void CSysWinBuff::Term() {
     CDeviceVI::waitForDrawDone();
     func_801390E0(&mFileHandle);
-    func_8022B7F4(&mSysWin[0]);
+    sysWinTermLayout(&mSysWin[0]);
     cbdatGetEntry(2);
     lbl_eu_806648E4 = 0;
     lbl_eu_806648E0 = 0;
@@ -162,11 +162,11 @@ void CSysWinBuff::cbRenderBefore() {
     if (CTaskGame::func_800426F0() || (lbl_eu_80663E28 & 0x200000))
         return;
     if (!IsMenuState621F0()) return;
-    if (func_8029A658() != 0) return;
+    if (MenuTutorialIsCreated() != 0) return;
     GXSetZMode(GX_FALSE, GX_NEVER, GX_FALSE);
     nw4r::lyt::DrawInfo drawInfo;
     func_80137250(&drawInfo);
-    func_8022B7C8(&mSysWin[0], &drawInfo);
+    sysWinDrawLayout(&mSysWin[0], &drawInfo);
     // Scope-exit dtor is auto-emitted as the retail direct
     // `bl __dt__Q34nw4r3lyt8DrawInfoFv(drawInfo, -1)`; an explicit
     // `drawInfo.~DrawInfo()` would ALSO emit a virtual-dispatched call.

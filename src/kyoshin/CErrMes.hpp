@@ -9,7 +9,7 @@
 #include <types.h>
 
 // Tail-call trampoline: sets error bdat index 6 and forwards to CBdat.
-void func_eu_802B1334();
+extern "C" void touchErrMesEntry();
 
 // Small language-entry record patched by func_eu_802B14F8. Only bytes +4..+6
 // are written by the retail code (two-char language code then '/' separator);

@@ -66,7 +66,7 @@ extern "C" {
     extern f32 lbl_eu_8066A84C;
     extern f32 lbl_eu_8066A850;
 
-    Vec* func_804B5A68(void);
+    Vec* Coli_GetBitTable_5A68(void);
 
     MPFDrawBillLayer* getLayerRecord__Q26mpfsys17UnkClass_80471EC8FUc(void*, u8);
     void bindTexture__Q26mpfsys17UnkClass_80471EC8Fif(s16, f32);
@@ -298,7 +298,7 @@ extern "C" void func_8047A570(MPFDrawBillData* billboard, Vec* positions, MPFDra
 }
 
 extern "C" void drawIndexed__Q26mpfsys16MPFDrawBillboardFv(mpfsys::MPFDrawBillboard*, MPFDrawBillData* billboard, MPFDrawBillIndexList* list) {
-    Vec* positions = func_804B5A68();
+    Vec* positions = Coli_GetBitTable_5A68();
     if (lbl_eu_80665860 != billboard) {
         setupGfxMode0__Q26mpfsys17UnkClass_80471EC8Fv();
         bindTexture__Q26mpfsys17UnkClass_80471EC8Fif(billboard->texIndex, billboard->texScale);
@@ -321,7 +321,7 @@ extern "C" void drawIndexed__Q26mpfsys16MPFDrawBillboardFv(mpfsys::MPFDrawBillbo
 }
 
 extern "C" void drawPaired__Q26mpfsys16MPFDrawBillboardFv(mpfsys::MPFDrawBillboard*, MPFDrawBillData* billboard, MPFDrawBillPairList* list) {
-    Vec* positions = func_804B5A68();
+    Vec* positions = Coli_GetBitTable_5A68();
     if (lbl_eu_80665860 != billboard) {
         setupGfxMode0__Q26mpfsys17UnkClass_80471EC8Fv();
         bindTexture__Q26mpfsys17UnkClass_80471EC8Fif(billboard->texIndex, billboard->texScale);
@@ -478,7 +478,7 @@ extern "C" void func_8047A918(void*, MPFDrawBillData* billboard, Vec* positions)
 }
 
 extern "C" void func_8047B1E8(void* self, MPFDrawBillData* billboard, MPFDrawBillIndexList* list) {
-    Vec* positions = func_804B5A68();
+    Vec* positions = Coli_GetBitTable_5A68();
     if (lbl_eu_80665860 != billboard) {
         func_8047A918(self, billboard, positions);
         lbl_eu_80665860 = billboard;
@@ -561,7 +561,7 @@ extern "C" void func_8047B1E8(void* self, MPFDrawBillData* billboard, MPFDrawBil
 }
 
 extern "C" void func_8047B528(void* self, MPFDrawBillData* billboard, MPFDrawBillPairList* list) {
-    Vec* positions = func_804B5A68();
+    Vec* positions = Coli_GetBitTable_5A68();
     if (lbl_eu_80665860 != billboard) {
         func_8047A918(self, billboard, positions);
         lbl_eu_80665860 = billboard;
@@ -643,7 +643,7 @@ extern "C" void func_8047B528(void* self, MPFDrawBillData* billboard, MPFDrawBil
 }
 
 extern "C" void drawIndexed__Q26mpfsys17MPFDrawBillLayTexFv(mpfsys::MPFDrawBillLayTex*, MPFDrawBillData* billboard, MPFDrawBillIndexList* list) {
-    Vec* positions = func_804B5A68();
+    Vec* positions = Coli_GetBitTable_5A68();
     if (lbl_eu_80665860 != billboard) {
         func_804737F0__Q26mpfsys17UnkClass_80471EC8Fv(billboard->texIndex, billboard->texScale);
         func_80479F54(billboard, positions);
@@ -677,7 +677,7 @@ extern "C" void drawIndexed__Q26mpfsys17MPFDrawBillLayTexFv(mpfsys::MPFDrawBillL
 }
 
 extern "C" void drawPaired__Q26mpfsys17MPFDrawBillLayTexFv(mpfsys::MPFDrawBillLayTex*, MPFDrawBillData* billboard, MPFDrawBillPairList* list) {
-    Vec* positions = func_804B5A68();
+    Vec* positions = Coli_GetBitTable_5A68();
     if (lbl_eu_80665860 != billboard) {
         func_804737F0__Q26mpfsys17UnkClass_80471EC8Fv(billboard->texIndex, billboard->texScale);
         func_80479F54(billboard, positions);

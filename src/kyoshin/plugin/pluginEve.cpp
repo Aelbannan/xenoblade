@@ -9,7 +9,7 @@
 // Event/presentation flag bitfields (.sbss)
 extern u32 lbl_eu_80663E28; // secondary mode bitfield (fade/skip status bits)
 
-extern "C" u32 func_8009CF8C(u32 addr); // global data/flag memory reader
+extern "C" u32 CtrlRemote_TouchBitByArg(u32 addr); // global data/flag memory reader
 
 extern "C" void checkAvailableValue__Q22cf13CfGameManagerFv(int id);
 extern "C" int processBattleQueue__Q22cf13CfGameManagerFv(u32 mode);
@@ -35,7 +35,7 @@ int getFlag(VMThread* pThread) {
     VMArg ret;
     if (idx < (int)low) {
         ret.type = VM_TYPE_INT;
-        ret.value.uintVal = func_8009CF8C(high + (u32)idx);
+        ret.value.uintVal = CtrlRemote_TouchBitByArg(high + (u32)idx);
     } else {
         ret.type = VM_TYPE_INT;
         ret.value.uintVal = 0;
@@ -72,7 +72,7 @@ int setFlag(VMThread* pThread) {
             }
         }
         if (valid != 0) {
-            func_8009D018(addr, value);
+            CtrlRemote_SetSharedBit(addr, value);
             // Special flags: 0x22:03E8 (sequence) expects a 16-bit value near
             // 0xFF, and 0x0A:212C needs a camera/event reset. Compared via
             // split high/low halves to match retail codegen.

@@ -78,10 +78,10 @@ struct CVoiceVTV {
 // Sibling voice-id selector implemented below; the one-argument view is
 // what retail func_802AF43C calls it through.
 
-int func_802AF02C(BattleMainOwnerView* owner);
+extern "C" int BmVoice_FindEquip(BattleMainOwnerView* owner);
 // Retail exports this selector as an unmangled symbol, so it keeps C linkage
 // (callers' bl relocs target the plain name).
-extern "C" int func_802AF13C(BattleMainOwnerView* owner, int arg);
+extern "C" int BmVoice_FindRatio(BattleMainOwnerView* owner, int arg);
 
 // Import without a declaring header (compile-only scaffolding).
 extern "C" CVoiceHandle* func_802A7998(CVoiceHandle* handle);
@@ -101,7 +101,7 @@ extern u32 lbl_eu_8053AA64[3];
 extern u32 lbl_eu_8053AA70[3];
 extern u32 lbl_eu_8053AA7C[7];
 
-// Float thresholds and the double bias constant used by func_802AF13C.
+// Float thresholds and the double bias constant used by BmVoice_FindRatio.
 // lbl_eu_80668EB8 is the int->float conversion magic (0x4330000080000000);
 // the builtin cast's pooled literal is addend-equal to it.
 extern float lbl_eu_80668EA8;
@@ -202,16 +202,16 @@ struct BmHandleSubView {
 };
 
 int func_802AED0C(BattleMainOwnerView* owner);
-int func_802AEF80(BattleMainOwnerView* owner);
+extern "C" int func_802AEF80(BattleMainOwnerView* owner);
 // C-linkage so the retail unmangled symbol func_802AF2DC is referenced.
 extern "C" int func_802AF2DC(BattleMainOwnerView* owner);
 int func_802AF388(BattleMainOwnerView* owner);
 int func_802AF3DC(CVoiceHandle* self);
 int func_802AF43C(CVoiceHandle* self);
 int func_802AF49C(CVoiceHandle* self);
-int func_802AF4FC(CVoiceHandle* self, int param);
-int func_802AF56C(CVoiceHandle* self);
-int func_802AF9D0(CVoiceHandle* self, int param, int size);
+int BmVoice_PlayReqB4(CVoiceHandle* self, int param);
+int BmVoice_Play32(CVoiceHandle* self);
+int BmVoice_PlayGated(CVoiceHandle* self, int param, int size);
 
 // Scan the 60-stride list at lbl_eu_8053A4B8 for the entry whose id matches
 // the owner's +0x3F28 sub-state, then draw a random voice from pool A.
@@ -265,9 +265,9 @@ int func_802AF49C(CVoiceHandle* self) {
     if (self != NULL) {
         voicePtr = &self->voice;
     }
-    // Block-scope extern declaration hides the in-TU body from MWCC's
-    // -O4 inliner so the call stays a bl (matches retail).
-    extern int func_802AEF80(BattleMainOwnerView* owner);
+    // File-scope extern "C" decl (above) + __declspec(noinline) on the
+    // definition keep this call a bl (matches retail); MWCC rejects
+    // block-scope extern "C", so no local re-declaration here.
     int voiceId = func_802AEF80((BattleMainOwnerView*)self);
     func_802A3D54(voicePtr, voiceId, 0xA);
     return 0;
@@ -319,9 +319,9 @@ wdone:
 
 // Same scan as func_802AED0C, drawing from pool C.
 // __declspec(noinline): retail keeps this selector outlined; without it
-// MWCC's -O4 inliner copies the body into func_802AF56C.
+// MWCC's -O4 inliner copies the body into BmVoice_Play32.
 // __declspec(noinline): retail keeps this selector outlined; without it
-// MWCC's -O4 inliner copies the body into func_802AF56C.
+// MWCC's -O4 inliner copies the body into BmVoice_Play32.
 // Same goto-shaped body as func_802AED0C (pool C at +0x38).
 __declspec(noinline) int func_802AF2DC(BattleMainOwnerView* owner) {
     VoiceIdListEntry* e = lbl_eu_8053A4B8;
@@ -362,7 +362,7 @@ wdone:
     return *(s16*)((char*)e + ml::math::mtRand(n) * 2 + 0x38);
 }
 
-// ── us-802b1a9c (func_802AF02C) ─────────────────────────────────────────────
+// ── us-802b1a9c (BmVoice_FindEquip) ─────────────────────────────────────────────
 // Scan the 60-stride list at lbl_eu_8053A4B8 for the entry matching the
 // owner's +0x3F28 sub-state, validate the 0x3F60 -> 0x08 -> 0x18 chain
 // (value must lie in [0x10,0x18]), fetch the equipment-data pool selected
@@ -382,7 +382,7 @@ static __inline VoiceIdListEntry* bmFindEntry(BattleMainOwnerView* owner) {
     return NULL;
 }
 
-int func_802AF02C(BattleMainOwnerView* owner) {
+int BmVoice_FindEquip(BattleMainOwnerView* owner) {
     VoiceIdListEntry* p = bmFindEntry(owner);
     if (p == NULL)
         return -1;
@@ -472,7 +472,7 @@ int func_802AF3DC(CVoiceHandle* self) {
     if (self != NULL) {
         voicePtr = &self->voice;
     }
-    int voiceId = func_802AF02C((BattleMainOwnerView*)self);
+    int voiceId = BmVoice_FindEquip((BattleMainOwnerView*)self);
     func_802A3D54(voicePtr, voiceId, 0xA0);
     return 0;
 }
@@ -483,19 +483,19 @@ int func_802AF3DC(CVoiceHandle* self) {
 int func_802AF43C(CVoiceHandle* self) {
     // Retail calls the three-parameter selector passing only r3; mirror that
     // with a narrow local declaration so no r4/r5 setup is emitted.
-    extern int func_802AEDB8(BattleMainOwnerView* owner);
+    extern int BmVoice_FindGated(BattleMainOwnerView* owner);
     if (!(self->field_0x3F00 & 4))
         return 0;
     CCharVoice* voicePtr = (CCharVoice*)self;
     if (self != NULL) {
         voicePtr = &self->voice;
     }
-    int voiceId = func_802AEDB8((BattleMainOwnerView*)self);
+    int voiceId = BmVoice_FindGated((BattleMainOwnerView*)self);
     func_802A3D54(voicePtr, voiceId, 0x12C);
     return 0;
 }
 
-// ── us-802b1828 (func_802AEDB8) ─────────────────────────────────────────────
+// ── us-802b1828 (BmVoice_FindGated) ─────────────────────────────────────────────
 // Full retail signature (thread state, voice handle, sub-state id).
 // Scans the 60-stride id table for the thread's +0x3F28 sub-state; on a hit,
 // draws a random voice id from the pool selected by the handle's battle
@@ -503,7 +503,7 @@ int func_802AF43C(CVoiceHandle* self) {
 // passes it probes pool +0x36 (cap 1) and only accepts a positive draw,
 // otherwise it falls through to the id-based pools (+0xA cap 1 for nonzero
 // id, +6 cap 2 for zero id).
-extern "C" int func_802AEDB8(BattleMainOwnerView* thread,
+extern "C" int BmVoice_FindGated(BattleMainOwnerView* thread,
                              BattleMainOwnerView* handle, int id) {
     // Locate the table row whose id equals the thread's +0x3F28 sub-state.
     // Declaration order (table, id copy, handle copy) drives MWCC's prologue
@@ -511,7 +511,7 @@ extern "C" int func_802AEDB8(BattleMainOwnerView* thread,
     // both the terminator test and the match compare.
     // Scan via the shared inline finder: the inlined `return p` lowers to
     // retail's pre-tested layout with the bne-over-increment / b-found
-    // two-way exit (same mechanism as func_802AF02C).
+    // two-way exit (same mechanism as BmVoice_FindEquip).
     VoiceIdListEntry* e = bmFindEntry(thread);
 found:
     if (e == NULL)
@@ -607,7 +607,7 @@ g06done:
 // Playback helper gated on a negative request parameter: only when param < 0
 // and the +0x3F00 bit-2 gate passes is a voice drawn from the local selector
 // and played through the embedded CCharVoice with a 0xB4 buffer.
-int func_802AF4FC(CVoiceHandle* self, int param) {
+int BmVoice_PlayReqB4(CVoiceHandle* self, int param) {
     if (param >= 0)
         return 0;
     if (!(self->field_0x3F00 & 4))
@@ -617,12 +617,12 @@ int func_802AF4FC(CVoiceHandle* self, int param) {
         voicePtr = &self->voice;
     }
     // Retail forwards the request parameter into the selector unchanged.
-    int voiceId = func_802AF13C((BattleMainOwnerView*)self, param);
+    int voiceId = BmVoice_FindRatio((BattleMainOwnerView*)self, param);
     func_802A3D54(voicePtr, voiceId, 0xB4);
     return 0;
 }
 
-int func_802AF56C(CVoiceHandle* self) {
+int BmVoice_Play32(CVoiceHandle* self) {
     if (!(self->field_0x3F00 & 4))
         return 0;
     CCharVoice* voicePtr = (CCharVoice*)self;
@@ -686,11 +686,11 @@ void* __ct__802AF5CC(int arg) {
     return self;
 }
 
-// ── us-802b2194 (func_802AF724) ─────────────────────────────────────────────
+// ── us-802b2194 (BmVoice_RefreshBase) ─────────────────────────────────────────────
 // Periodic battle voice refresh: restore the init-state triple, and while
 // the player's voice handle reports idle, play a random line (range picked
 // by the thread's flag byte) through the embedded voice.
-void func_802AF724(CVS_THREAD_BATTLE_MAIN* self) {
+void BmVoice_RefreshBase(CVS_THREAD_BATTLE_MAIN* self) {
     // Restore the base state triple via the lwzu/spread load-with-update
     // pattern (v0 declared first so the lwzu destination colours low).
     BmStateTriple* st = (BmStateTriple*)&self->unk0;
@@ -725,10 +725,10 @@ void func_802AF724(CVS_THREAD_BATTLE_MAIN* self) {
     }
 }
 
-// ── us-802b22b4 (func_802AF844) ─────────────────────────────────────────────
-// Same refresh shape as func_802AF724 but gated on the thread-blocked check
+// ── us-802b22b4 (BmVoice_RefreshRemap) ─────────────────────────────────────────────
+// Same refresh shape as BmVoice_RefreshBase but gated on the thread-blocked check
 // and an extra handle remap through func_802A7998 before the idle probe.
-void func_802AF844(CVS_THREAD_BATTLE_MAIN* self) {
+void BmVoice_RefreshRemap(CVS_THREAD_BATTLE_MAIN* self) {
     if (func_802A3E88((CVS_THREAD*)self) != 0)
         return;
 
@@ -768,19 +768,19 @@ void func_802AF844(CVS_THREAD_BATTLE_MAIN* self) {
 
 // When the CVS thread is not blocked, dispatch the vtable+8 slot (the
 // battle-main update virtual) through the +0x1C vtable pointer.
-extern "C" void func_802AF980(void* self) {
+extern "C" void BmVoice_DispatchUpdate(void* self) {
     if (func_802A3E88((CVS_THREAD*)self) != 0)
         return;
     ((CVS_THREAD*)self)->func_802A3B50();
 }
 
-int func_802AF9C8() { return 270; }
+int BmVoice_Cap270() { return 270; }
 
 // Bit-1 gate on +0x3F00 plus the handle's idle-check virtual (vtable 0x2BC),
 // then reserve a scratch buffer and play the requested voice through the
 // embedded CCharVoice. Any failure returns 0 without playing.
-// ── us-802b1bac (func_802AF13C) ─────────────────────────────────────────────
-// Scan the table for the owner's sub-state like func_802AF02C, then compute
+// ── us-802b1bac (BmVoice_FindRatio) ─────────────────────────────────────────────
+// Scan the table for the owner's sub-state like BmVoice_FindEquip, then compute
 // the ratio of the live pair of float virtuals (slots 0x12C/0x128) over an
 // argument-biased denominator, fetch a third float virtual (slot 0x130),
 // bucket the ratio against four descending float thresholds (each must also
@@ -799,7 +799,7 @@ static __inline VoiceIdListEntry* bmFindEntryBM(BattleMainOwnerView* owner) {
     return NULL;
 }
 
-extern "C" int func_802AF13C(BattleMainOwnerView* owner, int arg) {
+extern "C" int BmVoice_FindRatio(BattleMainOwnerView* owner, int arg) {
     VoiceIdListEntry* p = bmFindEntryBM(owner);
     if (p == NULL)
         return -1;
@@ -839,7 +839,7 @@ extern "C" int func_802AF13C(BattleMainOwnerView* owner, int arg) {
     return *(s16*)((char*)p + idx * 2 + 0x2E);
 }
 
-int func_802AF9D0(CVoiceHandle* self, int param, int size) {
+int BmVoice_PlayGated(CVoiceHandle* self, int param, int size) {
     if (!(self->field_0x3F00 & 2))
         return 0;
     if (((CVoiceVTV*)self)->idle() != 0)

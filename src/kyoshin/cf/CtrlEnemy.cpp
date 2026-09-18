@@ -54,8 +54,8 @@ cf::CtrlEnemy::~CtrlEnemy() {
     // its own __vt__Q22cf9CtrlEnemy otherwise -> reloc name drift).
     *(void**)this = (void*)lbl_eu_80527738;
     // Destroy the +0x84 enemy move-controller sub-object (retail
-    // func_8008B930, a 4-byte blr stub).
-    func_8008B930(&mSub84);
+    // CtrlMoveEne_ForwardBaseRefresh, a 4-byte blr stub).
+    CtrlMoveEne_ForwardBaseRefresh(&mSub84);
 }
 
 // Retail CtrlEnemy_UnkFunc_8008772C (0x80088104): reset the +0x04 flag word,
@@ -71,7 +71,7 @@ void CtrlEnemy_UnkFunc_8008772C(cf::CtrlEnemy* self) {
 
 // Retail CtrlEnemy_UnkFunc_800877A8 (0x80088180): the enemy's main tick.
 // Early-exit gates (global flag / battle-cmd bits / arts slots) reset the
-// +0x14 counter via func_8008B580; otherwise the battle actor's embedded
+// +0x14 counter via CtrlMoveEne_UpdateBattleMove; otherwise the battle actor's embedded
 // move sub-object and battle-cmd flags drive the follow-up work: swapping
 // the drive target, re-selecting an action (sub slot 0x4C / the UnkFunc
 // helpers / v2E8), then the final arts-category + distance wall checks.
@@ -111,7 +111,7 @@ void CtrlEnemy_UnkFunc_800877A8(cf::CtrlEnemy* self) {
     actor = self->field_0x80;
     if (actor->field_3374 & 0x2000) goto fail;
 fail:
-    func_8008B580(&self->mSub84);
+    CtrlMoveEne_UpdateBattleMove(&self->mSub84);
     self->field_0x14 = lbl_eu_80666570;
     goto end;
 gateOk:
@@ -156,7 +156,7 @@ L_88468:
     if (func_80174C98(actor, &w24, 0x3) == 0) goto L_88600;
     // Action re-selection: keep the current target while a new one resolves.
     kept = 0;
-    if (func_8008B974(&self->mSub84) != 0) {
+    if (CtrlMoveEne_ConsumeTargetResolve(&self->mSub84) != 0) {
         enemy = self->field_0x1E0;
         kept = 1;
         goto L_8854C;
@@ -172,7 +172,7 @@ L_88518:
     enemy = CtrlEnemy_UnkFunc_80088620(self);
 L_8852C:
     if (enemy == 0) goto L_8854C;
-    if (func_8008B934(&self->mSub84, enemy) != 0) kept = 1;
+    if (CtrlMoveEne_TryLatchTargetActor(&self->mSub84, enemy) != 0) kept = 1;
 L_8854C:
         if (lbl_eu_80663E24 & 0x2000) {
             if (isSceneReadyForInput__Q22cf13CfGameManagerFv() == 0) kept = 0;
@@ -187,7 +187,7 @@ L_8854C:
             }
             goto L_886DC;
         }
-        func_8008A23C(&self->mSub84);
+        CtrlMoveEne_DispatchMoveHook(&self->mSub84);
         goto L_886DC;
 L_88600:
     actor = self->field_0x80;
@@ -313,7 +313,7 @@ void* CtrlEnemy_UnkFunc_80087EEC(cf::CtrlEnemy* self) {
     CTaskGame_enumListCtor(&holder);
     switch (*self->field_0x80->v258()) {
     case 1:
-        func_800F4A98(CTaskGame_enumListGet(&holder), 0x20, 0x900);
+        startEnumObjects(CTaskGame_enumListGet(&holder), 0x20, 0x900);
         sub = self->field_0x80->mSub.s0AC();
         powTmp = self->field_0x80->v5B4();
         {
@@ -325,7 +325,7 @@ void* CtrlEnemy_UnkFunc_80087EEC(cf::CtrlEnemy* self) {
         __ct__800FAE3C(CTaskGame_enumListGet(&holder), anchor, 0);
         break;
     case 2:
-        func_800F4A98(CTaskGame_enumListGet(&holder), 0x20, 0xa00);
+        startEnumObjects(CTaskGame_enumListGet(&holder), 0x20, 0xa00);
         sub = self->field_0x80->mSub.s0AC();
         {
             f32 f268 = *self->field_0x80->v268();
@@ -334,7 +334,7 @@ void* CtrlEnemy_UnkFunc_80087EEC(cf::CtrlEnemy* self) {
         __ct__800FAE3C(CTaskGame_enumListGet(&holder), anchor, 0);
         break;
     case 3:
-        func_800F4A98(CTaskGame_enumListGet(&holder), 0x20, 0x800);
+        startEnumObjects(CTaskGame_enumListGet(&holder), 0x20, 0x800);
         sub = self->field_0x80->mSub.s0AC();
         {
             f32 f268 = *self->field_0x80->v268();
@@ -344,7 +344,7 @@ void* CtrlEnemy_UnkFunc_80087EEC(cf::CtrlEnemy* self) {
         __ct__800FAE3C(CTaskGame_enumListGet(&holder), anchor, 0);
         break;
     case 4:
-        func_800F4A98(CTaskGame_enumListGet(&holder), 0x20, 0x800);
+        startEnumObjects(CTaskGame_enumListGet(&holder), 0x20, 0x800);
         sub = self->field_0x80->mSub.s0AC();
         {
             f32 f268 = *self->field_0x80->v268();
@@ -355,7 +355,7 @@ void* CtrlEnemy_UnkFunc_80087EEC(cf::CtrlEnemy* self) {
     }
     // Scan candidates: nearest eligible enemy wins.
     for (i = 0; i < (int)CTaskGame_enumListGet(&holder)->field_620; i++) {
-        id = (int)func_800F6E98(CTaskGame_enumListGet(&holder), i);
+        id = (int)getObjectIdAt(CTaskGame_enumListGet(&holder), i);
         obj = (cf::CtrlEnemyActor*)func_8016FE34(findObjectById(id));
         if (obj->field_3F60 != 0 &&
             (((cf::CtrlEnemySubFlag*)obj->field_3F60)->field_530 & 1) != 0) {
@@ -398,7 +398,7 @@ void* CtrlEnemy_UnkFunc_80087EEC(cf::CtrlEnemy* self) {
                      distSq * distSq;
             if (func_80148778((u8*)obj + 8, artId) != 0) {
                 cf::CtrlEnemyArtsInfo* info =
-                    (cf::CtrlEnemyArtsInfo*)func_80149154((u8*)obj + 8, artId);
+                    (cf::CtrlEnemyArtsInfo*)findBattleStatusEntry((u8*)obj + 8, artId);
                 // Remaining-power ratio, squared, as a double wall.
                 f32 scale = *actor->v268();
                 powTmp = (f64)(0x64 - (s32)info->field_10);
@@ -439,13 +439,13 @@ void* CtrlEnemy_UnkFunc_80088620(cf::CtrlEnemy* self) {
     cf::CtrlEnemyEnumHolder holder;
     CTaskGame_enumListCtor(&holder);
     self->field_0x80->v258();
-    func_800F4A98(CTaskGame_enumListGet(&holder), 0x80000000, 0);
+    startEnumObjects(CTaskGame_enumListGet(&holder), 0x80000000, 0);
     void* pos = self->field_0x80->mSub.s0AC();
     f32 gauge = *self->field_0x80->v268();
     __ct__800FB044(CTaskGame_enumListGet(&holder), gauge, pos, 0);
     for (u32 i = 0; i < CTaskGame_enumListGet(&holder)->field_620; i++) {
         cf::CtrlEnemyActor* obj = (cf::CtrlEnemyActor*)func_8016FE34(
-            findObjectById((int)func_800F6E98(CTaskGame_enumListGet(&holder), i)));
+            findObjectById((int)getObjectIdAt(CTaskGame_enumListGet(&holder), i)));
         if (obj == 0) continue;
         int objId = obj->v0E0();
         int battleId = self->field_0x80->v0E0();

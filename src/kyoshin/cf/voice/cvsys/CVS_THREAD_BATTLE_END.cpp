@@ -6,10 +6,10 @@
 #include "monolib/math/Random.hpp"
 #include <cstring>
 
-// us-802a74fc (func_802A4DC8)
+// us-802a74fc (EndVoice_RemoveVoice)
 // Remove a released voice from the slot array by matching the embedded
 // CCharVoice pointer against the one being freed.
-void func_802A4DC8(CVS_THREAD_BATTLE_END* self, CCharVoice* voicePtr) {
+void EndVoice_RemoveVoice(CVS_THREAD_BATTLE_END* self, CCharVoice* voicePtr) {
     func_802A3BEC(self, voicePtr);
     CVoiceHandle* handle;
     CCharVoice* vp;
@@ -29,11 +29,11 @@ void func_802A4DC8(CVS_THREAD_BATTLE_END* self, CCharVoice* voicePtr) {
     }
 }
 
-// us-802a7438 (func_802A4D04)
+// us-802a7438 (EndVoice_AdvanceSlot)
 // Advance the active-slot counter (up or down depending on field_0x38).
 // When the counter reaches field_0x2c, fire the end virtual; otherwise the
 // init triple is re-copied into the base fields.
-void func_802A4D04(CVS_THREAD_BATTLE_END* self) {
+void EndVoice_AdvanceSlot(CVS_THREAD_BATTLE_END* self) {
     if (func_802A3E88(self) != 0) return;
 
     if (self->field_0x38 == 0) {
@@ -250,6 +250,6 @@ void func_802A4A78(CVS_THREAD_BATTLE_END* self) {
 
 // Virtual method: returns allocation size (0x46 bytes) for CVS_THREAD_BATTLE_END
 // Caller passes this pointer in r3 which is unused by this override
-int func_802A4E40() {
+int EndVoice_AllocSize() {
     return 70;
 }

@@ -42,7 +42,7 @@ Retail asm for each symbol is in this directory (`asm_*.s`).
 - Leave `Term` untouched; extend hpp for `cbRenderBefore` + field `0x7c9` if needed
 
 ### `CMenuArtsSelect::cbRenderBefore` (`asm_cbRenderBefore_CMenuArtsSelect.s`)
-- Same early gates + `func_8018A608` / `func_80122448` nonzero early-outs; mask **`0xAFA40000`**
+- Same early gates + `ShopSel_GetSingleton` / `getQuestWindow` nonzero early-outs; mask **`0xAFA40000`**
 - DrawInfo path; conditional loop over 9 layouts at `+0x1b8` keyed by `this+0x30c` bits; draw `+0x80` with flag-derived arg6 from `+0x308`; more layout draws — follow full asm
 - Leave `Term` untouched; add fields used by render (`0x298`, `0x308`, `0x30c`, …)
 

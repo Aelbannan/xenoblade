@@ -71,7 +71,7 @@ struct CfMenuPadData {
 // Input-handler callees (retail unmangled names).
 extern "C" CfMenuPadData* getCfPadData__Q22cf13CfGameManagerFv();
 extern "C" int isClassicController__Q22cf13CfGameManagerFv(int arg);
-extern "C" void func_801C414C(CTitleAHelp* self);
+extern "C" void beginClose(CTitleAHelp* self);
 extern "C" void func_801C41E8(CTitleAHelp* self, u8 mode);
 extern "C" void func_801CCAF0(CItemBoxGrid* self);
 extern "C" u32 IsItemBoxActive(CItemBoxGrid* self);

@@ -37,7 +37,7 @@ struct CWorkThreadListNode;
 class IWorkEvent;
 
 // Language-substitution helper (defined below in this TU).
-void func_eu_804520D0(char* pPath);
+void DevFile_SubstLangPath(char* pPath);
 
 // Pack-archive queries shared with CWorkSystemPack.
 extern "C" int func_804DE010(const char* pName);
@@ -542,7 +542,7 @@ static inline CFileHandle* readCommon(unsigned long allocHandle, const char* pPa
     // Language-substituted copy of the full path (kept for setup1/setup2).
     pathLen = strlen(pPath);
     strcpy(pathCopy, pPath);
-    func_eu_804520D0(pathCopy);
+    DevFile_SubstLangPath(pathCopy);
 
     if (archiveMode && allocHandle == 0) {
         return NULL;
@@ -627,7 +627,7 @@ static inline CFileHandle* readCommon(unsigned long allocHandle, const char* pPa
     if (pkbPath != NULL) {
         pkbLen = strlen(pkbPath);
         strcpy(pkbBuf, pkbPath);
-        func_eu_804520D0(pkbBuf);
+        DevFile_SubstLangPath(pkbBuf);
         pkbPath = pkbBuf;
     }
     if (pkbPath != NULL) {
@@ -941,11 +941,11 @@ extern "C" void func_eu_804520B0(void* r3) {
 }
 
 // Language-aware filename substitution. Walks the registered filename table
-// (fed by func_eu_804520B0 / func_eu_804521A8) and, when the path contains a
+// (fed by func_eu_804520B0 / DevFile_SetLangOverride) and, when the path contains a
 // table entry's search string, overwrites that substring in place with the
 // language-specific variant (each entry is a NULL-terminated string array
 // where [0] is the search text and [lang] the replacement).
-void func_eu_804520D0(char* pPath) {
+void DevFile_SubstLangPath(char* pPath) {
     char* found;
     const char* const** pTable;
     int count;
@@ -981,7 +981,7 @@ void func_eu_804520D0(char* pPath) {
 // section of monolib/device/CDeviceFile.hpp. They stay declared here too
 // because this catalog TU defines a local `struct CDeviceFile` that conflicts
 // with the class in that header, so this TU cannot include it.
-extern "C" void func_eu_804521A8(s8 val) {
+extern "C" void DevFile_SetLangOverride(s8 val) {
     lbl_eu_806636AA = val;
 }
 
@@ -989,11 +989,11 @@ extern "C" void func_eu_804521B0() {
     lbl_eu_806636AA = -1;
 }
 
-extern "C" void func_eu_804521BC(u8 val) {
+extern "C" void DevFile_SetByteA9(u8 val) {
     lbl_eu_806636A9 = val;
 }
 
-extern "C" u8 func_eu_804521C4() {
+extern "C" u8 DevFile_GetByteA9() {
     return lbl_eu_806636A9;
 }
 

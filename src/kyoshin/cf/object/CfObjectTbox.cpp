@@ -49,7 +49,7 @@ void cf::CfObjectTbox::initTbox() {
     this->func_800BFB90();
 }
 
-extern "C" void func_801F8E20(u8* self) {
+extern "C" void CfObjectTbox_ForwardToImpl(u8* self) {
     extern void func_802753F8(void*);
     void* ptr = *(void**)((char*)self + 0x38);
     if (ptr != 0) func_802753F8(ptr);

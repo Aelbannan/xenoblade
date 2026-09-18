@@ -67,7 +67,7 @@ public:
     u8 unk14[0x28];        // 0x14-0x3B
     PtmfWords cbSlot0;     // 0x3C-0x47 - null-ptmf callback slot
     PtmfWords cbSlot1;     // 0x48-0x53 - null-ptmf callback slot
-    u8 field_0x54;         // 0x54 - screen-active flag byte (set by func_801AC1F8)
+    u8 field_0x54;         // 0x54 - screen-active flag byte (set by activateVisionMenu)
     u8 field_0x55;         // 0x55
     u8 _pad56[2];          // 0x56-0x57
     void* field_0x58;      // 0x58 - secondary vtable slot (+0x24)

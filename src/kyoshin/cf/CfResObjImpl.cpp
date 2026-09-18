@@ -38,21 +38,21 @@ cf::CfResObjImpl::CfResObjImpl(cf::CfResObjParent* parent) {
 // Arithmetic booleanization of the u16 "state >= 2" test on the halfword
 // at +0x08 (MWCC's value-first `>=` idiom: subi(v-2)/orc(v|~2)/srwi(1)/
 // subf/srwi(31)). Also reachable as vtable slot +0x14 of the manual vtable
-// (func_8016C950 dispatches it).
-int func_8016C860(CfResObjImpl* self) {
+// (ResObj_PollActive_C950 dispatches it).
+int ResObj_IsInUse_C860(CfResObjImpl* self) {
     return (u32)self->field_08 >= 2;
 }
 
-int func_8016C880(CfResObjImpl* /*self*/) { return 128; }
+int ResObj_DefaultParam_C880(CfResObjImpl* /*self*/) { return 128; }
 
 // us-8016dbe4 - resource sound-notify: when the +0x14 in-use test passes,
 // fetch the sound id from the +0x60 slot and, when the resolved sound slot
 // holds a live sound object and arg4 is nonzero, set its player priority to
 // arg4. f1/f2 pass through to CfSoundMan_PlayActorParam; arg3 (r5) is an unused
 // register-slot parameter (retail never reads it).
-void func_8016C888(cf::CfResObjImpl* self, int arg2, int arg3, int arg4, f32 f1, f32 f2) {
-    if (self->func_8016C860() != 0) {
-        int id = self->func_8016C950();
+void ResObj_NotifySound_C888(cf::CfResObjImpl* self, int arg2, int arg3, int arg4, f32 f1, f32 f2) {
+    if (self->ResObj_IsInUse_C860() != 0) {
+        int id = self->ResObj_PollActive_C950();
         cf::SoundSlotEntry* slot =
             CfSoundMan_TouchSlotById((u16)CfSoundMan_PlayActorParam(id, arg2, self->field_00->field_74, f1, f2));
         if (slot != 0 && arg4 != 0 && slot->field_00 != 0) {
@@ -64,8 +64,8 @@ void func_8016C888(cf::CfResObjImpl* self, int arg2, int arg3, int arg4, f32 f1,
 // Dispatch the in-use test (vtable slot +0x14 of the manual vtable at +0x10);
 // map the boolean result to -1/1 (retail preloads -1 and skips the 1 on a
 // zero result).
-int func_8016C950(CfResObjImpl* self) {
-    if (self->func_8016C860() != 0) {
+int ResObj_PollActive_C950(CfResObjImpl* self) {
+    if (self->ResObj_IsInUse_C860() != 0) {
         return 1;
     }
     return -1;
@@ -76,7 +76,7 @@ int func_8016C950(CfResObjImpl* self) {
 // builds the model + text resources through the parent's +0x90/+0x94/+0x9C
 // slots (selected by parent flag bits 0x20/0x10), dispatches the +0xDC anim
 // setter and finally runs the +0x38/+0x98 sub-objects.
-void func_8016C98C(cf::CfResObjImpl* self) {
+void ResObj_ReleaseModels_C98C(cf::CfResObjImpl* self) {
     u8 buf64[0x44];    // sp+0x8 (FixStr<64> name buffer)
 
     ((cf::CfObjectModel*)self->field_00)->CfObjectModel_releaseModelList();
@@ -92,11 +92,11 @@ void func_8016C98C(cf::CfResObjImpl* self) {
     self->field_08 = self->field_08 + 1;
     mtl::MemManager::setMemInitFlag(false);
     if ((self->field_00->field_6C & 0x20) && self->field_00->field_98 == 0) {
-        u32 handle1 = self->func_8016CCBC(1);
+        u32 handle1 = self->ResObj_GetWork_CCBC(1);
         self->field_00->field_90 = CfRes_findEntryById(entry, handle1);
 f32 anim = ((cf::CfObject*)self->field_00)->CfObject_getObjScale();
         u8* obj = scnImN4BuildByIdx((u8*)lbl_eu_80663E14, self->field_00->field_90, 6, 1, 0, 0x70);
-        func_800BBADC(self->field_00, obj);
+        CfModel_InstallSub(self->field_00, obj);
         if (self->field_00->field_98 != 0 &&
             (((cf::CfResObjModel98Data*)self->field_00->field_98)->field_7A4 & 0x800000) != 0 &&
             cf::CfGameManager::getGameSubManager() != 0 &&
@@ -112,17 +112,17 @@ f32 anim = ((cf::CfObject*)self->field_00)->CfObject_getObjScale();
         ((ml::FixStr<64>*)buf64)->mString[0] = 0;   // retail stb/stw init (no bl ctor)
         ((ml::FixStr<64>*)buf64)->mLength = 0;
         if (self->field_00->field_9C == 0) {
-            u32 handle0 = self->func_8016CCBC(0);
+            u32 handle0 = self->ResObj_GetWork_CCBC(0);
             func_800AA33C(*(ml::FixStr<64>*)buf64, handle0, 0, 0);
-            u32 handle1 = self->func_8016CCBC(0);
+            u32 handle1 = self->ResObj_GetWork_CCBC(0);
             self->field_00->field_94 = CfRes_findEntryById(entry, handle1);
-            self->field_00->field_9C = (u8*)func_800584B8(
+            self->field_00->field_9C = (u8*)initMcaFile(
                 (u32)CfRes_getD80Flag(), (u32)self->field_00->field_94, (const char*)buf64);
         }
     }
     mtl::MemManager::setMemInitFlag(true);
     func_800BCFA0((cf::CfObjectMove*)self->field_00);
-    u32 handle = self->func_8016CCBC(1);
+    u32 handle = self->ResObj_GetWork_CCBC(1);
     u8* obj = CfRes_findEntryById(entry, (handle & 0x07FFFFFF) | 0xF0000000);
     if (obj != 0) {
         ColiNodeSetWord0Rebuild(self->field_00->field_60C, obj);
@@ -139,18 +139,18 @@ f32 anim = ((cf::CfObject*)self->field_00)->CfObject_getObjScale();
 }
 
 // Indexed read of the 2-word work area at +0x14 (index must be < 2).
-u32 func_8016CCBC(CfResObjImpl* self, int index) {
+u32 ResObj_GetWork_CCBC(CfResObjImpl* self, int index) {
     if (index < 2) {
         return self->field_14[index];
     }
     return 0;
 }
 
-void func_8016CCDC(void) {}
+void ResObj_Noop_CCDC(void) {}
 
 // One-time install of the null PMTF into lbl_eu_80530F20, then dispatch
 // through the state-selected entry (when the state at +0x08 is < 3).
-void func_8016CCE0(CfResObjImpl* self) {
+void ResObj_DispatchState_CCE0(CfResObjImpl* self) {
     if (lbl_eu_80664270 == 0) {
         u32* src = __ptmf_null;
         u32* dst = (u32*)lbl_eu_80530F20;
@@ -165,17 +165,17 @@ void func_8016CCE0(CfResObjImpl* self) {
     }
 }
 
-// Weak-style stubs (retail keeps these symbols unmangled; func_8016CD64 is
+// Weak-style stubs (retail keeps these symbols unmangled; ResObj_Noop_CD64 is
 // empty). Defined here only - no other TU references them.
 
-int func_8016CD54(CfResObjImpl* self) { return 0; }
+int ResObj_ZeroStubA_CD54(CfResObjImpl* self) { return 0; }
 
-int func_8016CD5C(CfResObjImpl* self) { return 0; }
+int ResObj_ZeroStubB_CD5C(CfResObjImpl* self) { return 0; }
 
-void func_8016CD64(void) {}
+void ResObj_Noop_CD64(void) {}
 
 // Indexed write of the 2-word work area at +0x14 (index must be < 2).
-void func_8016CD68(CfResObjImpl* self, int index, int value) {
+void ResObj_SetWork_CD68(CfResObjImpl* self, int index, int value) {
     if (index < 2) {
         self->field_14[index] = value;
     }
@@ -203,8 +203,8 @@ extern const void* lbl_eu_80530FB0[4];
 __declspec(section ".data") __attribute__((used))
 CfPmfEntry lbl_eu_80530F20[3] = {
     { 0, 0, 0 },
-    { 0, 0xFFFFFFFFu, (u32)func_8016C98C },
-    { 0, 0xFFFFFFFFu, (u32)func_8016CCDC },
+    { 0, 0xFFFFFFFFu, (u32)ResObj_ReleaseModels_C98C },
+    { 0, 0xFFFFFFFFu, (u32)ResObj_Noop_CCDC },
 };
 // .data 0x6C: hand-built vtable (RTTI + 0 + dtor + 24 slots).
 __declspec(section ".data") __attribute__((used))
@@ -212,29 +212,29 @@ cf::CfResObjImplVtbl lbl_eu_80530F44 = { {
     (u32)lbl_eu_806623D0,
     0,
     (u32)__dt__Q22cf12CfResObjImplFv,
-    (u32)func_8016CCE0,
+    (u32)ResObj_DispatchState_CCE0,
     (u32)CfResObj_noop10,
-    (u32)func_8016C860,
+    (u32)ResObj_IsInUse_C860,
     (u32)CfObjectMove_relaySubB0Slot14,
-    (u32)func_8016CD64,
-    (u32)func_8016C880,
+    (u32)ResObj_Noop_CD64,
+    (u32)ResObj_DefaultParam_C880,
     (u32)CfResObj_noop24,
     (u32)CfResObj_noop28,
     (u32)CfResObj_noop2C,
-    (u32)func_8016CD68,
-    (u32)func_8016CCBC,
+    (u32)ResObj_SetWork_CD68,
+    (u32)ResObj_GetWork_CCBC,
     (u32)CfResObj_false38,
     (u32)CfResObj_unk3C,
     (u32)CfResObj_noop40,
     (u32)CfResObj_noop44,
     (u32)CfResObj_unk48,
     (u32)CfResObj_unk4C,
-    (u32)func_8016CD5C,
-    (u32)func_8016C888,
+    (u32)ResObj_ZeroStubB_CD5C,
+    (u32)ResObj_NotifySound_C888,
     (u32)CfResObj_noop58,
     (u32)CfResObj_unk5C,
-    (u32)func_8016C950,
-    (u32)func_8016CD54,
+    (u32)ResObj_PollActive_C950,
+    (u32)ResObj_ZeroStubA_CD54,
     (u32)CfResObj_true68,
 } };
 

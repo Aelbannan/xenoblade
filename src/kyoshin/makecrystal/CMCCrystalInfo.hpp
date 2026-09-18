@@ -123,10 +123,10 @@ public:
 // ---------------------------------------------------------------------------
 // Same-TU helpers; retail symbols are unmangled, so C linkage keeps both the
 // definitions and the call relocs bound to the retail names.
-extern "C" void func_8021B52C(CMCCrystalInfo* self);
-extern "C" void func_8021B5B4(CMCCrystalInfo* self);
-extern "C" void func_8021B63C(CMCCrystalInfo* self);
-extern "C" void func_8021B6C4(CMCCrystalInfo* self);
+extern "C" void MCCrystal_BindIntro(CMCCrystalInfo* self);
+extern "C" void MCCrystal_BindMain(CMCCrystalInfo* self);
+extern "C" void MCCrystal_BindAnim3(CMCCrystalInfo* self);
+extern "C" void MCCrystal_BindAnim4(CMCCrystalInfo* self);
 extern "C" void func_8021B42C(CMCCrystalInfo* self);
 extern "C" void func_8021B2E0(CMCCrystalInfo* self, u16 arg2, CMCCItemHandle* item);
 extern char lbl_eu_80508DF8[];

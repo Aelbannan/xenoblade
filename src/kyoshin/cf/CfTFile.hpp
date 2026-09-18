@@ -57,7 +57,7 @@ using ::CfTFile;
 } // namespace cf
 
 // C-ABI helper imports referenced by this TU. func_8006A53C is defined in
-// CfTFile.cpp; func_800C1CAC is defined in the code_800C17DC TU (its C++
+// CfTFile.cpp; CmText_ParseWithStaticProc is defined in the code_800C17DC TU (its C++
 // definition there is emitted under the retail C name via the symbol map).
 // The remaining entries are cross-TU imports: retail-unmangled C names, plus
 // the cf::CfGameManager statics whose identifiers already carry the C++
@@ -69,8 +69,8 @@ __declspec(noinline) int func_8006A53C(u16 a, u16 b);
 int func_8006A40C(int mode);
 int func_800AA33C(ml::FixStr<64>& buf, u32 packed, int prefixFlag, int suffixFlag);
 int getFileSize__11CDeviceFileFPCc(const char* pPath, int flags);
-void func_800C1CAC(u32 arg0, u32 arg1);
-void* func_8003AA34();
+void CmText_ParseWithStaticProc(u32 arg0, u32 arg1);
+void* Bdat_GetTable_AA34();
 int CfRes_getD80Flag();
 u32 getGlobalWord64184Dup__Q22cf13CfGameManagerFv();
 u32 getGlobalPtr640A8__Q22cf13CfGameManagerFv();

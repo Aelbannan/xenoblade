@@ -169,11 +169,11 @@ extern "C" __declspec(noinline) void func_8026440C(UI_PassiveSkillInit* self) {
     if (self->field_1B == 1) {
         self->field_C->SetFrame(lbl_eu_80668904);
         self->field_1A = 1;
-        func_80124270(self->field_14, 1);
+        setPaneVisible(self->field_14, 1);
     } else {
         self->field_19 = 0;
         self->field_1A = 1;
-        func_80124270(self->field_14, 0);
+        setPaneVisible(self->field_14, 0);
     }
 }
 
@@ -184,11 +184,11 @@ __declspec(noinline) void func_80264470(UI_PassiveSkillInit* self) {
     if (self->field_1B == 1) {
         self->field_C->SetFrame(lbl_eu_80668904);
         self->field_1A = 0;
-        func_80124270(self->field_10, 1);
+        setPaneVisible(self->field_10, 1);
     } else {
         self->field_19 = 0;
         self->field_1A = 0;
-        func_80124270(self->field_10, 0);
+        setPaneVisible(self->field_10, 0);
     }
 }
 
@@ -206,9 +206,9 @@ __declspec(noinline) void CPassiveSkillInit_stepMode0(UI_PassiveSkillInit* self)
     self->field_C->SetFrame(lbl_eu_80668904);
     self->field_1B = 1;
     if (self->field_1A != 0) {
-        func_80124270(self->field_14, 1);
+        setPaneVisible(self->field_14, 1);
     } else {
-        func_80124270(self->field_10, 1);
+        setPaneVisible(self->field_10, 1);
     }
 }
 
@@ -223,8 +223,8 @@ __declspec(noinline) void CPassiveSkillInit_stepMode1(UI_PassiveSkillInit* self)
         self->field_8->SetFrame(lbl_eu_80668904);
         self->field_1B = 0;
         self->field_19 = 1;
-        func_80124270(self->field_10, 0);
-        func_80124270(self->field_14, 0);
+        setPaneVisible(self->field_10, 0);
+        setPaneVisible(self->field_14, 0);
     }
 }
 
@@ -311,12 +311,12 @@ extern "C" void CPassiveSkillInfo_init(UI_CPassiveSkillInfo* self) {
     CPassiveSkillInit_copy(&self->sub, &init);
     CPassiveSkillLayoutInit_init(reinterpret_cast<UI_PassiveSkillLayoutInit*>(&self->sub));
     u8 flag = 0;
-    u32 isZero = (func_8009CF8C(0x3372) == 0);
+    u32 isZero = (CtrlRemote_TouchBitByArg(0x3372) == 0);
     if (isZero) {
         // flag stays 0
     } else {
         u8 tmp = 0;
-        if (func_8009CF8C(0x3508) != 0 && func_8009CF8C(0x20) < 0x38) {
+        if (CtrlRemote_TouchBitByArg(0x3508) != 0 && CtrlRemote_TouchBitByArg(0x20) < 0x38) {
             tmp = 1;
         }
         if (tmp == 0) {
@@ -325,7 +325,7 @@ extern "C" void CPassiveSkillInfo_init(UI_CPassiveSkillInfo* self) {
     }
     nw4r::lyt::Pane* pane = self->field_8->GetRootPane()->FindPaneByName(
         &lbl_eu_8050DC20[0x18d], true);
-    func_80124270(pane, flag);
+    setPaneVisible(pane, flag);
     char* text = BdatTouchStringCell(&lbl_eu_8050DC20[0x196], &lbl_eu_8050DC20[0x1a4], 0x87);
     LayoutSetTextBoxFmtValue(self->field_8, &lbl_eu_8050DC20[0x1a9], text, 0);
     const char* sel = isClassicController__Q22cf13CfGameManagerFv(-1) != 0
@@ -348,16 +348,16 @@ extern "C" void CPassiveSkillInfo_init(UI_CPassiveSkillInfo* self) {
         if (pane2 != 0) {
             out[0] = (f32)c2;
             out[1] = (f32)c0;
-            func_80124288(pane2, out);
+            writePanePos(pane2, out);
         }
     }
     if ((u8)code80135FDC_getByte_64077() <= 1) {
         nw4r::lyt::Pane* paneA = self->field_8->GetRootPane()->FindPaneByName(
             &lbl_eu_8050DC20[0x1d2], true);
-        func_80124270(paneA, 0);
+        setPaneVisible(paneA, 0);
         nw4r::lyt::Pane* paneB = self->field_8->GetRootPane()->FindPaneByName(
             &lbl_eu_8050DC20[0x1dd], true);
-        func_80124270(paneB, 0);
+        setPaneVisible(paneB, 0);
     }
 }
 #pragma optimize_for_size off
@@ -673,7 +673,7 @@ extern "C" void func_80264F7C(UI::CPassiveSkillLine* self, int state, int id,
             }
             if (res != 0) {
                 PaneSetTexPaletteByName(self->field_8, &lbl_eu_8050DC20[0x301], res);
-                func_80124270(self->field_8->GetRootPane()->FindPaneByName(&lbl_eu_8050DC20[0x301], true), 1);
+                setPaneVisible(self->field_8->GetRootPane()->FindPaneByName(&lbl_eu_8050DC20[0x301], true), 1);
             }
             LayoutSetTextBoxFmtValue(self->field_8, &lbl_eu_8050DC20[0x178], &lbl_eu_8050DC20[0x182], 0);
         } else if (row != 0) {
@@ -738,7 +738,7 @@ extern "C" void func_80264F7C(UI::CPassiveSkillLine* self, int state, int id,
             LayoutSetTextBoxFmtValue(self->field_8, &lbl_eu_8050DC20[0x178], t17, 0);
         }
         LayoutSetTextBoxFmtValue(self->field_8, &lbl_eu_8050DC20[0x183], &lbl_eu_8050DC20[0x182], 0);
-        func_80124270(self->field_8->GetRootPane()->FindPaneByName(&lbl_eu_8050DC20[0x301], true), 0);
+        setPaneVisible(self->field_8->GetRootPane()->FindPaneByName(&lbl_eu_8050DC20[0x301], true), 0);
         CPassiveSkillLine_refreshSP(self, id);
         func_80266950(self, row);
         break;
@@ -760,8 +760,8 @@ extern "C" __declspec(noinline) void CPassiveSkillInfo_toggleNamePanes(UI::CPass
         self->mpLayout->GetRootPane()->FindPaneByName(&lbl_eu_8050DC20[0x18d], true);
     nw4r::lyt::Pane* pane1 =
         self->mpLayout->GetRootPane()->FindPaneByName(&lbl_eu_8050DC20[0x30d], true);
-    func_80124270(pane0, !func_801C4648(pane0));
-    func_80124270(pane1, !func_801C4648(pane1));
+    setPaneVisible(pane0, !isPaneVisible(pane0));
+    setPaneVisible(pane1, !isPaneVisible(pane1));
     // Retail flips the byte with the `!= 1` idiom (xori/addic/subfe).
     self->field_1B = (u8)((self->field_1B ^ 1) != 0);
 }
@@ -798,7 +798,7 @@ extern "C" __declspec(noinline) void CPassiveSkillCur_setNameMsg136(UI::CPassive
 // otherwise inline this body and grow the caller's frame).
 extern "C" __declspec(noinline) void CPassiveSkillCur_setRootPos(UI::CPassiveSkillCur* self, nw4r::math::VEC3 pos) {
     nw4r::math::VEC3 local = pos;
-    func_801D2150(self->field_24->GetRootPane(), &local);
+    Cur_SetPaneTranslate(self->field_24->GetRootPane(), &local);
 }
 
 // Cursor step (state 2): when the first anim transform's frame check
@@ -1195,7 +1195,7 @@ extern "C" __declspec(noinline) void CPassiveSkillLine_update(u8* selfRaw) {
     CPassiveSkillCur_dispatch(reinterpret_cast<UI::CPassiveSkillCur*>(&self->mInfo));
     CPassiveSkillCur_stepAnim(reinterpret_cast<UI::CPassiveSkillCur*>(&self->mInfo.field_3C));
     if (self->mInfo.field_54 != 0) {
-        func_8022B748(self->mInfo.field_54);
+        sysWinDispatchPhase(self->mInfo.field_54);
     }
     func_801D202C(&self->mCur);
 done:;
@@ -1231,10 +1231,10 @@ extern "C" __declspec(noinline) void CPassiveSkillLine_draw(UI::CPassiveSkillLin
         drawLayout(self->mInfo.field_3C.field_8, drawInfo, 0, 1);
     }
     if (self->mInfo.field_54 != 0) {
-        func_8022B7C8(self->mInfo.field_54, drawInfo);
+        sysWinDrawLayout(self->mInfo.field_54, drawInfo);
         if (CSysWin_getUnk34(self->mInfo.field_54) != 0 &&
             CSysWin_isActive(self->mInfo.field_54) != 0) {
-            func_801D20B0(&self->mCur, drawInfo);
+            Cur_DrawLayout(&self->mCur, drawInfo);
         }
     }
 }
@@ -1467,7 +1467,7 @@ void CPassiveSkillLine_cursorDown(UI::CPassiveSkillLine* self) {
                 self->field_11D = 1;
             }
             nw4r::math::VEC3 pos;
-            func_8022C1B4(&pos, self->mInfo.field_54, self->field_11D);
+            sysWinGetPaneScreenPos(&pos, self->mInfo.field_54, self->field_11D);
             reinterpret_cast<CCur18View*>(&self->mCur)->vf04(&pos);
             playUISound(1);
         }
@@ -1511,7 +1511,7 @@ extern "C" __declspec(noinline) void CPassiveSkillLine_cursorUp(u8* self) {
                 line->field_11D = 0;
             }
             nw4r::math::VEC3 pos;
-            func_8022C1B4(&pos, line->mInfo.field_54, line->field_11D);
+            sysWinGetPaneScreenPos(&pos, line->mInfo.field_54, line->field_11D);
             reinterpret_cast<CCur18View*>(&line->mCur)->vf04(&pos);
             playUISound(1);
         }
@@ -1800,8 +1800,8 @@ extern "C" void func_8025F9AC(void* self);
 extern "C" void func_8025F768(void* self, int a, int b, int value);
 extern "C" void func_80280E9C(u8* self);
 extern "C" void func_8022B9B4(void*, const char*, int);
-extern "C" void func_8022BF6C(void*, void*, void*);
-extern "C" void func_8022B8B8(void*);
+extern "C" void sysWinSetTwoTextValues(void*, void*, void*);
+extern "C" void sysWinOpenPhase1(void*);
 
 // Main input/update handler for the +0x28 skill-line sub-object (retail
 // func_80268594). When the lazily-attached syswin is armed and active it
@@ -1880,8 +1880,8 @@ extern "C" __declspec(noinline) void func_80268594(u8* selfRaw) {
             } else {
                 playUISound(6);
             }
-            func_801D216C(&self->mCur, 0);
-            func_8022B8E4(self->mInfo.field_54);
+            Cur_SetVisible(&self->mCur, 0);
+            sysWinAdvancePhase3(self->mInfo.field_54);
         }
         return;
     }
@@ -1946,10 +1946,10 @@ extern "C" __declspec(noinline) void func_80268594(u8* selfRaw) {
                 char* msgC = BdatTouchStringCell(&lbl_eu_8050DC20[0x21f],
                                            &lbl_eu_8050DC20[0x207], 0x1d);
                 func_8022B9B4(self->mInfo.field_54, msgA, 0);
-                func_8022BF6C(self->mInfo.field_54, msgB, msgC);
+                sysWinSetTwoTextValues(self->mInfo.field_54, msgB, msgC);
                 func_8022BFC8(static_cast<CSysWin*>(self->mInfo.field_54), 0);
-                func_8022B8B8(self->mInfo.field_54);
-                func_801D216C(&self->mCur, 0);
+                sysWinOpenPhase1(self->mInfo.field_54);
+                Cur_SetVisible(&self->mCur, 0);
                 playUISound(3);
                 return;
             }
@@ -1988,8 +1988,8 @@ extern "C" __declspec(noinline) void CPassiveSkillLine_learnedClose(u8* selfRaw)
     if (self->mInfo.field_54 != 0 && CSysWin_getUnk34(self->mInfo.field_54) != 0) {
         if (CSysWin_isActive(self->mInfo.field_54) != 0) {
             playUISound(6);
-            func_801D216C(&self->mCur, 0);
-            func_8022B8E4(self->mInfo.field_54);
+            Cur_SetVisible(&self->mCur, 0);
+            sysWinAdvancePhase3(self->mInfo.field_54);
         }
     } else {
         if (self->field_E8 == 15) {
@@ -2002,8 +2002,8 @@ extern "C" __declspec(noinline) void CPassiveSkillLine_learnedClose(u8* selfRaw)
 // Callee declarations (retail names; also declared in CCol6System.hpp /
 // CCollepedia.hpp / CPcKizunagram.hpp for their TUs).
 extern "C" void func_8022B9B4(void*, const char*, int);
-extern "C" void func_8022BF6C(void*, void*, void*);
-extern "C" void func_8022B8B8(void*);
+extern "C" void sysWinSetTwoTextValues(void*, void*, void*);
+extern "C" void sysWinOpenPhase1(void*);
 u8 CPassiveSkillLine_countSkillId(UI::CPassiveSkillLine* self, int id);
 
 // Skill-acquisition confirm handler (retail func_80268C38): with the syswin
@@ -2018,8 +2018,8 @@ u8 CPassiveSkillLine_countSkillId(UI::CPassiveSkillLine* self, int id);
 // Callee declarations (retail names; also declared in CCol6System.hpp /
 // CCollepedia.hpp / CPcKizunagram.hpp for their TUs).
 extern "C" void func_8022B9B4(void*, const char*, int);
-extern "C" void func_8022BF6C(void*, void*, void*);
-extern "C" void func_8022B8B8(void*);
+extern "C" void sysWinSetTwoTextValues(void*, void*, void*);
+extern "C" void sysWinOpenPhase1(void*);
 u8 CPassiveSkillLine_countSkillId(UI::CPassiveSkillLine* self, int id);
 
 // Skill-acquisition confirm handler (retail func_80268C38): with the syswin
@@ -2098,10 +2098,10 @@ extern "C" __declspec(noinline) void func_80268C38(void* selfRaw) {
             break;
         }
         func_8022B9B4(self->mInfo.field_54, msgA, 0);
-        func_8022BF6C(self->mInfo.field_54, msgB, msgC);
+        sysWinSetTwoTextValues(self->mInfo.field_54, msgB, msgC);
         func_8022BFC8(static_cast<CSysWin*>(self->mInfo.field_54), 0);
-        func_8022B8B8(self->mInfo.field_54);
-        func_801D216C(&self->mCur, 0);
+        sysWinOpenPhase1(self->mInfo.field_54);
+        Cur_SetVisible(&self->mCur, 0);
         break;
     }
 }
@@ -2121,8 +2121,8 @@ extern "C" __declspec(noinline) void CPassiveSkillLine_syswinAdvance(UI::CPassiv
         return;
     }
     playUISound(6);
-    func_801D216C(&self->mCur, 0);
-    func_8022B8E4(self->mInfo.field_54);
+    Cur_SetVisible(&self->mCur, 0);
+    sysWinAdvancePhase3(self->mInfo.field_54);
 }
 
 extern "C" __declspec(noinline) void CPassiveSkillLine_maybeEnterState2(void* self){
@@ -2356,9 +2356,9 @@ extern "C" __declspec(noinline) void CPassiveSkillLine_closeMoveCur(UI::CPassive
         }
         self->field_11D = 1;
         nw4r::math::VEC3 pos;
-        func_8022C1B4(&pos, self->mInfo.field_54, 1);
+        sysWinGetPaneScreenPos(&pos, self->mInfo.field_54, 1);
         reinterpret_cast<CCur18View*>(&self->mCur)->vf04(&pos);
-        func_801D216C(&self->mCur, 1);
+        Cur_SetVisible(&self->mCur, 1);
     }
 }
 
@@ -2524,8 +2524,8 @@ extern "C" __declspec(noinline) void func_80269D20(UI::CPassiveSkillLine* self) 
     convB.w[0] = 0x43300000;
     char bufTab[0x20];
     char buf[0x20];
-    func_80124270(self->field_8->GetRootPane()->FindPaneByName(&lbl_eu_8050DC20[0x48b], true), 0);
-    func_80124270(self->field_8->GetRootPane()->FindPaneByName(&lbl_eu_8050DC20[0x497], true), 1);
+    setPaneVisible(self->field_8->GetRootPane()->FindPaneByName(&lbl_eu_8050DC20[0x48b], true), 0);
+    setPaneVisible(self->field_8->GetRootPane()->FindPaneByName(&lbl_eu_8050DC20[0x497], true), 1);
     u8 id = GetCollectedFlagByte(self->field_F3);
     for (u8 i = 1; i <= 5; i++) {
         sprintf(bufTab, &lbl_eu_8050DC20[0x4e3], id, i);
@@ -2543,45 +2543,45 @@ extern "C" __declspec(noinline) void func_80269D20(UI::CPassiveSkillLine* self) 
     int idxA = (int)(t16 * 5 + 4);
     int idxB = (int)(id * 5);
     u8 v = BdatGetU8Direct((u32)lbl_eu_80664890, &lbl_eu_8050DC20[0x50c], (u8)idxA);
-    if (func_8009CF8C((u8)v + 0x3509) != 0) {
-        func_80124270(self->field_8->GetRootPane()->FindPaneByName(&lbl_eu_8050DC20[0x511], true), 1);
+    if (CtrlRemote_TouchBitByArg((u8)v + 0x3509) != 0) {
+        setPaneVisible(self->field_8->GetRootPane()->FindPaneByName(&lbl_eu_8050DC20[0x511], true), 1);
         void* res = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, &lbl_eu_8050DC20[0x51b], 0);
         if (res != 0) {
             PaneSetTexPaletteByName(self->field_8, &lbl_eu_8050DC20[0x531], res);
         }
         for (u8 i = 0; i < 5; i++) {
-            func_80124270(self->cells[3][i].mpLayout->GetRootPane(), 1);
+            setPaneVisible(self->cells[3][i].mpLayout->GetRootPane(), 1);
         }
         self->field_F9 = 1;
     } else {
-        func_80124270(self->field_8->GetRootPane()->FindPaneByName(&lbl_eu_8050DC20[0x511], true), 0);
+        setPaneVisible(self->field_8->GetRootPane()->FindPaneByName(&lbl_eu_8050DC20[0x511], true), 0);
         void* res = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, &lbl_eu_8050DC20[0x53b], 0);
         if (res != 0) {
             PaneSetTexPaletteByName(self->field_8, &lbl_eu_8050DC20[0x531], res);
         }
         for (u8 i = 0; i < 5; i++) {
-            func_80124270(self->cells[3][i].mpLayout->GetRootPane(), 0);
+            setPaneVisible(self->cells[3][i].mpLayout->GetRootPane(), 0);
         }
     }
     u8 v2 = BdatGetU8Direct((u32)lbl_eu_80664890, &lbl_eu_8050DC20[0x50c], (u8)idxB);
-    if (func_8009CF8C((u8)v2 + 0x3509) != 0) {
-        func_80124270(self->field_8->GetRootPane()->FindPaneByName(&lbl_eu_8050DC20[0x551], true), 1);
+    if (CtrlRemote_TouchBitByArg((u8)v2 + 0x3509) != 0) {
+        setPaneVisible(self->field_8->GetRootPane()->FindPaneByName(&lbl_eu_8050DC20[0x551], true), 1);
         void* res = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, &lbl_eu_8050DC20[0x55b], 0);
         if (res != 0) {
             PaneSetTexPaletteByName(self->field_8, &lbl_eu_8050DC20[0x571], res);
         }
         for (u8 i = 0; i < 5; i++) {
-            func_80124270(self->cells[4][i].mpLayout->GetRootPane(), 1);
+            setPaneVisible(self->cells[4][i].mpLayout->GetRootPane(), 1);
         }
         self->field_FA = 1;
     } else {
-        func_80124270(self->field_8->GetRootPane()->FindPaneByName(&lbl_eu_8050DC20[0x551], true), 0);
+        setPaneVisible(self->field_8->GetRootPane()->FindPaneByName(&lbl_eu_8050DC20[0x551], true), 0);
         void* res = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, &lbl_eu_8050DC20[0x57b], 0);
         if (res != 0) {
             PaneSetTexPaletteByName(self->field_8, &lbl_eu_8050DC20[0x571], res);
         }
         for (u8 i = 0; i < 5; i++) {
-            func_80124270(self->cells[4][i].mpLayout->GetRootPane(), 0);
+            setPaneVisible(self->cells[4][i].mpLayout->GetRootPane(), 0);
         }
     }
     CPSkillCharData3DD0* data = reinterpret_cast<CPSkillCharData3DD0*>(func_8009EC9C(id));
@@ -2593,8 +2593,8 @@ extern "C" __declspec(noinline) void func_80269D20(UI::CPassiveSkillLine* self) 
         sprintf(buf, &lbl_eu_8050DC20[0x59f], row + 1);
         nw4r::lyt::Pane* paneB = self->field_8->GetRootPane()->FindPaneByName(buf, true);
         u32 isCur = (u32)(cur - (u32)row) == 0;
-        func_80124270(paneA, isCur);
-        func_80124270(paneB, isCur);
+        setPaneVisible(paneA, isCur);
+        setPaneVisible(paneB, isCur);
     }
     u32 gridBase = t16 * 25;
     for (u8 row = 0; row < 5; row++) {
@@ -2654,18 +2654,18 @@ extern "C" __declspec(noinline) void func_80269D20(UI::CPassiveSkillLine* self) 
                 // r1+0x10/0x8).
                 if (word == 0) {
                     CPSkillColorS10 c1, c2;
-                    CPSkillColorS10* col1 = func_801C4B60(&c1, 0xf0, 0xf0, 0xeb, fs3.d);
-                    CPSkillColorS10* col2 = func_801C4B60(&c2, 0xf0, 0xf0, 0xeb, fs1.d);
+                    CPSkillColorS10* col1 = setGXColorS10(&c1, 0xf0, 0xf0, 0xeb, fs3.d);
+                    CPSkillColorS10* col2 = setGXColorS10(&c2, 0xf0, 0xf0, 0xeb, fs1.d);
                     PaneMatSetTevColorsByName(self->field_8, buf, col2, col1);
                 } else {
                     CPSkillColorS10 c1, c2;
-                    CPSkillColorS10* col1 = func_801C4B60(&c1, 0x2a, 0x22, 0x18, fs3.d);
-                    CPSkillColorS10* col2 = func_801C4B60(&c2, 0x2a, 0x22, 0x18, fs1.d);
+                    CPSkillColorS10* col1 = setGXColorS10(&c1, 0x2a, 0x22, 0x18, fs3.d);
+                    CPSkillColorS10* col2 = setGXColorS10(&c2, 0x2a, 0x22, 0x18, fs1.d);
                     PaneMatSetTevColorsByName(self->field_8, buf, col2, col1);
                 }
             }
             sprintf(buf, &lbl_eu_8050DC20[0x749], rowP1, i);
-            func_80124270(self->field_8->GetRootPane()->FindPaneByName(buf, true), 0);
+            setPaneVisible(self->field_8->GetRootPane()->FindPaneByName(buf, true), 0);
             nw4r::lyt::Layout* cellLayout = self->cells[row][i - 1].mpLayout;
             nw4r::lyt::AnimTransform* anim = self->cells[row][i - 1].mpAnimTrans;
             anim->SetFrame(lbl_eu_80668904);
@@ -2711,17 +2711,17 @@ extern "C" __declspec(noinline) void func_80269D20(UI::CPassiveSkillLine* self) 
                 anim->SetFrame(f);
                 cellLayout->Animate(0);
             }
-            func_80124270(cellLayout->GetRootPane()->FindPaneByName(&lbl_eu_8050DC20[0x446], true), 0);
-            func_80124270(cellLayout->GetRootPane()->FindPaneByName(&lbl_eu_8050DC20[0x451], true), 0);
-            func_80124270(cellLayout->GetRootPane()->FindPaneByName(&lbl_eu_8050DC20[0x45c], true), 0);
-            func_80124270(cellLayout->GetRootPane()->FindPaneByName(&lbl_eu_8050DC20[0x467], true), 0);
-            func_80124270(cellLayout->GetRootPane()->FindPaneByName(&lbl_eu_8050DC20[0x472], true), 0);
+            setPaneVisible(cellLayout->GetRootPane()->FindPaneByName(&lbl_eu_8050DC20[0x446], true), 0);
+            setPaneVisible(cellLayout->GetRootPane()->FindPaneByName(&lbl_eu_8050DC20[0x451], true), 0);
+            setPaneVisible(cellLayout->GetRootPane()->FindPaneByName(&lbl_eu_8050DC20[0x45c], true), 0);
+            setPaneVisible(cellLayout->GetRootPane()->FindPaneByName(&lbl_eu_8050DC20[0x467], true), 0);
+            setPaneVisible(cellLayout->GetRootPane()->FindPaneByName(&lbl_eu_8050DC20[0x472], true), 0);
             switch (v1) {
-            case 1: func_80124270(cellLayout->GetRootPane()->FindPaneByName(&lbl_eu_8050DC20[0x446], true), 1); break;
-            case 2: func_80124270(cellLayout->GetRootPane()->FindPaneByName(&lbl_eu_8050DC20[0x451], true), 1); break;
-            case 3: func_80124270(cellLayout->GetRootPane()->FindPaneByName(&lbl_eu_8050DC20[0x45c], true), 1); break;
-            case 4: func_80124270(cellLayout->GetRootPane()->FindPaneByName(&lbl_eu_8050DC20[0x467], true), 1); break;
-            case 5: func_80124270(cellLayout->GetRootPane()->FindPaneByName(&lbl_eu_8050DC20[0x472], true), 1); break;
+            case 1: setPaneVisible(cellLayout->GetRootPane()->FindPaneByName(&lbl_eu_8050DC20[0x446], true), 1); break;
+            case 2: setPaneVisible(cellLayout->GetRootPane()->FindPaneByName(&lbl_eu_8050DC20[0x451], true), 1); break;
+            case 3: setPaneVisible(cellLayout->GetRootPane()->FindPaneByName(&lbl_eu_8050DC20[0x45c], true), 1); break;
+            case 4: setPaneVisible(cellLayout->GetRootPane()->FindPaneByName(&lbl_eu_8050DC20[0x467], true), 1); break;
+            case 5: setPaneVisible(cellLayout->GetRootPane()->FindPaneByName(&lbl_eu_8050DC20[0x472], true), 1); break;
             }
         }
     }
@@ -2733,8 +2733,8 @@ extern "C" __declspec(noinline) void func_80269D20(UI::CPassiveSkillLine* self) 
 // cell attach the category icon/name textures and drive the pane visibility
 // from the learned state and the remaining-SP affordability check.
 __declspec(noinline) void func_8026AAF4(UI::CPassiveSkillLine* self) {
-    func_80124270(self->field_8->GetRootPane()->FindPaneByName(&lbl_eu_8050DC20[0x48b], true), 1);
-    func_80124270(self->field_8->GetRootPane()->FindPaneByName(&lbl_eu_8050DC20[0x497], true), 0);
+    setPaneVisible(self->field_8->GetRootPane()->FindPaneByName(&lbl_eu_8050DC20[0x48b], true), 1);
+    setPaneVisible(self->field_8->GetRootPane()->FindPaneByName(&lbl_eu_8050DC20[0x497], true), 0);
     // Buffer size/order and statement order matter: MWCC lays the two 0x20
     // scratch buffers at sp+0xa8/sp+0xc8 inside the 0x140 frame, and the
     // entry2 -> catBase -> v -> cnt sequence fixes the r16/r14/r17/r6 alloc.
@@ -2787,30 +2787,30 @@ __declspec(noinline) void func_8026AAF4(UI::CPassiveSkillLine* self) {
     u8 r0 = (u8)(t16 * 5 + 4);
     u8 r19 = (u8)(entry2 * 5);
     u8 vv = BdatGetU8Direct((u32)lbl_eu_80664890, &lbl_eu_8050DC20[0x50c], r0);
-    if (func_8009CF8C((u8)vv + 0x3509) != 0) {
-        func_80124270(self->field_8->GetRootPane()->FindPaneByName(&lbl_eu_8050DC20[0x511], true), 1);
+    if (CtrlRemote_TouchBitByArg((u8)vv + 0x3509) != 0) {
+        setPaneVisible(self->field_8->GetRootPane()->FindPaneByName(&lbl_eu_8050DC20[0x511], true), 1);
         void* res3 = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, &lbl_eu_8050DC20[0x51b], 0);
         if (res3 != 0) {
             PaneSetTexPaletteByName(self->field_8, &lbl_eu_8050DC20[0x531], res3);
         }
         self->field_FB = 1;
     } else {
-        func_80124270(self->field_8->GetRootPane()->FindPaneByName(&lbl_eu_8050DC20[0x511], true), 0);
+        setPaneVisible(self->field_8->GetRootPane()->FindPaneByName(&lbl_eu_8050DC20[0x511], true), 0);
         void* res3 = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, &lbl_eu_8050DC20[0x53b], 0);
         if (res3 != 0) {
             PaneSetTexPaletteByName(self->field_8, &lbl_eu_8050DC20[0x531], res3);
         }
     }
     u8 vv2 = BdatGetU8Direct((u32)lbl_eu_80664890, &lbl_eu_8050DC20[0x50c], r19);
-    if (func_8009CF8C((u8)vv2 + 0x3509) != 0) {
-        func_80124270(self->field_8->GetRootPane()->FindPaneByName(&lbl_eu_8050DC20[0x551], true), 1);
+    if (CtrlRemote_TouchBitByArg((u8)vv2 + 0x3509) != 0) {
+        setPaneVisible(self->field_8->GetRootPane()->FindPaneByName(&lbl_eu_8050DC20[0x551], true), 1);
         void* res3 = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, &lbl_eu_8050DC20[0x55b], 0);
         if (res3 != 0) {
             PaneSetTexPaletteByName(self->field_8, &lbl_eu_8050DC20[0x571], res3);
         }
         self->field_FC = 1;
     } else {
-        func_80124270(self->field_8->GetRootPane()->FindPaneByName(&lbl_eu_8050DC20[0x551], true), 0);
+        setPaneVisible(self->field_8->GetRootPane()->FindPaneByName(&lbl_eu_8050DC20[0x551], true), 0);
         void* res3 = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, &lbl_eu_8050DC20[0x57b], 0);
         if (res3 != 0) {
             PaneSetTexPaletteByName(self->field_8, &lbl_eu_8050DC20[0x571], res3);
@@ -2823,8 +2823,8 @@ __declspec(noinline) void func_8026AAF4(UI::CPassiveSkillLine* self) {
         nw4r::lyt::Pane* paneA = self->field_8->GetRootPane()->FindPaneByName(bufB, true);
         sprintf(bufB, &lbl_eu_8050DC20[0x59f], row + 1);
         nw4r::lyt::Pane* paneB = self->field_8->GetRootPane()->FindPaneByName(bufB, true);
-        func_80124270(paneA, 0);
-        func_80124270(paneB, 0);
+        setPaneVisible(paneA, 0);
+        setPaneVisible(paneB, 0);
     }
     u32 gridBase = (u32)((u8)entry2 - 1) * 0x19;
     u8 v0 = (u8)v;
@@ -2880,18 +2880,18 @@ __declspec(noinline) void func_8026AAF4(UI::CPassiveSkillLine* self) {
                 CPSkillFourShorts fs3 = fs2;
                 CPSkillColorS10 c1, c2;
                 if (word == 0) {
-                    CPSkillColorS10* col1 = func_801C4B60(&c1, 0xf0, 0xf0, 0xeb, fs3.d);
-                    CPSkillColorS10* col2 = func_801C4B60(&c2, 0xf0, 0xf0, 0xeb, fs1.d);
+                    CPSkillColorS10* col1 = setGXColorS10(&c1, 0xf0, 0xf0, 0xeb, fs3.d);
+                    CPSkillColorS10* col2 = setGXColorS10(&c2, 0xf0, 0xf0, 0xeb, fs1.d);
                     PaneMatSetTevColorsByName(self->field_8, bufB, col2, col1);
                 } else {
-                    CPSkillColorS10* col1 = func_801C4B60(&c1, 0x2a, 0x22, 0x18, fs3.d);
-                    CPSkillColorS10* col2 = func_801C4B60(&c2, 0x2a, 0x22, 0x18, fs1.d);
+                    CPSkillColorS10* col1 = setGXColorS10(&c1, 0x2a, 0x22, 0x18, fs3.d);
+                    CPSkillColorS10* col2 = setGXColorS10(&c2, 0x2a, 0x22, 0x18, fs1.d);
                     PaneMatSetTevColorsByName(self->field_8, bufB, col2, col1);
                 }
             }
             sprintf(bufB, &lbl_eu_8050DC20[0x749], rowP1, i);
             nw4r::lyt::Pane* pane6 = self->field_8->GetRootPane()->FindPaneByName(bufB, true);
-            func_80124270(pane6, (u32)(word == 0));
+            setPaneVisible(pane6, (u32)(word == 0));
             void* res4 = 0;
             switch (v1) {
             case 1: res4 = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, &lbl_eu_8050DC20[0x78d], 0); break;
@@ -2909,15 +2909,15 @@ __declspec(noinline) void func_8026AAF4(UI::CPassiveSkillLine* self) {
                     CPSkillFourShorts fs2 = func_80139658(self->field_8, bufB, 1);
                     CPSkillFourShorts fs3 = fs2;
                     CPSkillColorS10 c1, c2;
-                    CPSkillColorS10* col1 = func_801C4B60(&c1, 0, 0, 0, fs3.d);
-                    CPSkillColorS10* col2 = func_801C4B60(&c2, 0, 0, 0, fs1.d);
+                    CPSkillColorS10* col1 = setGXColorS10(&c1, 0, 0, 0, fs3.d);
+                    CPSkillColorS10* col2 = setGXColorS10(&c2, 0, 0, 0, fs1.d);
                     PaneMatSetTevColors(pane2, col2, col1);
                     reinterpret_cast<CPSkillPaneB8*>(pane2)->field_B8 = 0xa0;
                 }
             }
             sprintf(bufB, &lbl_eu_8050DC20[0x75d], rowP1, i);
             nw4r::lyt::Pane* pane3 = self->field_8->GetRootPane()->FindPaneByName(bufB, true);
-            func_80124270(pane3, (u32)(v0 == v1));
+            setPaneVisible(pane3, (u32)(v0 == v1));
             u8 id3 = GetCollectedFlagByte(self->field_F3);
             u8 id2b = self->field_F4;
             u8* data3 = (u8*)func_8009EC9C(id3);
@@ -2926,13 +2926,13 @@ __declspec(noinline) void func_8026AAF4(UI::CPassiveSkillLine* self) {
             u8 found = 0;
             for (u8 i2 = 1; i2 <= 5; i2++) {
                 if (cellWords[i2 * 8] == gridIdx) {
-                    func_80124270(self->field_8->GetRootPane()->FindPaneByName(bufB, true), 1);
+                    setPaneVisible(self->field_8->GetRootPane()->FindPaneByName(bufB, true), 1);
                     found = 1;
                     break;
                 }
             }
             self->field_104[row * 5 + i - 1] = 0;
-            if (func_801C4648(pane3) != 0) {
+            if (isPaneVisible(pane3) != 0) {
                 sprintf(bufB, &lbl_eu_8050DC20[0x75d], rowP1, i);
                 nw4r::lyt::Pane* pane5 = self->field_8->GetRootPane()->FindPaneByName(bufB, true);
                 if (found != 0) {
@@ -2940,8 +2940,8 @@ __declspec(noinline) void func_8026AAF4(UI::CPassiveSkillLine* self) {
                     if (res5 != 0) {
                         func_80137F88(pane5, reinterpret_cast<u32>(res5));
                         CPSkillColorS10 c1, c2;
-                        CPSkillColorS10* col1 = func_801C4B60(&c1, 0xff, 0xff, 0xfa, 0xff);
-                        CPSkillColorS10* col2 = func_801C4B60(&c2, 0x48, 0x3a, 0x21, 0);
+                        CPSkillColorS10* col1 = setGXColorS10(&c1, 0xff, 0xff, 0xfa, 0xff);
+                        CPSkillColorS10* col2 = setGXColorS10(&c2, 0x48, 0x3a, 0x21, 0);
                         PaneMatSetTevColors(pane5, col2, col1);
                     }
                 } else {
@@ -2966,13 +2966,13 @@ __declspec(noinline) void func_8026AAF4(UI::CPassiveSkillLine* self) {
                     sprintf(bufB, &lbl_eu_8050DC20[0x749], rowP1, i);
                     if (remaining >= (s32)(u16)costId) {
                         nw4r::lyt::Pane* pane6b = self->field_8->GetRootPane()->FindPaneByName(bufB, true);
-                        if (func_801C4648(pane6b) == 0) {
+                        if (isPaneVisible(pane6b) == 0) {
                             void* res6 = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, &lbl_eu_8050DC20[0x80c], 0);
                             if (res6 != 0) {
                                 func_80137F88(pane6b, reinterpret_cast<u32>(res6));
                                 CPSkillColorS10 c1, c2;
-                                CPSkillColorS10* col1 = func_801C4B60(&c1, 0xff, 0xff, 0xfa, 0xff);
-                                CPSkillColorS10* col2 = func_801C4B60(&c2, 0xff, 0xff, 0xfa, 0);
+                                CPSkillColorS10* col1 = setGXColorS10(&c1, 0xff, 0xff, 0xfa, 0xff);
+                                CPSkillColorS10* col2 = setGXColorS10(&c2, 0xff, 0xff, 0xfa, 0);
                                 PaneMatSetTevColors(pane6b, col2, col1);
                             }
                             self->field_104[row * 5 + i - 1] = 1;
@@ -2982,8 +2982,8 @@ __declspec(noinline) void func_8026AAF4(UI::CPassiveSkillLine* self) {
                         if (res7 != 0) {
                             func_80137F88(pane5, reinterpret_cast<u32>(res7));
                             CPSkillColorS10 c1, c2;
-                            CPSkillColorS10* col1 = func_801C4B60(&c1, 0xff, 0xff, 0xfa, 0xff);
-                            CPSkillColorS10* col2 = func_801C4B60(&c2, 0xaa, 0x19, 0x19, 0);
+                            CPSkillColorS10* col1 = setGXColorS10(&c1, 0xff, 0xff, 0xfa, 0xff);
+                            CPSkillColorS10* col2 = setGXColorS10(&c2, 0xaa, 0x19, 0x19, 0);
                             PaneMatSetTevColors(pane5, col2, col1);
                         }
                     }
@@ -3004,12 +3004,12 @@ extern "C" __declspec(noinline) void func_8026BB60(UI::CPassiveSkillLine* self) 
     u8 id = GetCollectedFlagByte(self->field_F3);
     UI::CPSkillBlob* blob = reinterpret_cast<UI::CPSkillBlob*>(
         (u8*)func_8009EC9C((u8)id) + 0x3534);
-    func_80124270(self->field_18->GetRootPane()->FindPaneByName(&lbl_eu_8050DC20[0x838], true), 0);
-    func_80124270(self->field_18->GetRootPane()->FindPaneByName(&lbl_eu_8050DC20[0x841], true), 0);
-    func_80124270(self->field_18->GetRootPane()->FindPaneByName(&lbl_eu_8050DC20[0x84a], true), 0);
-    func_80124270(self->field_18->GetRootPane()->FindPaneByName(&lbl_eu_8050DC20[0x853], true), 0);
-    func_80124270(self->field_18->GetRootPane()->FindPaneByName(&lbl_eu_8050DC20[0x85c], true), 0);
-    func_80124270(self->field_18->GetRootPane()->FindPaneByName(&lbl_eu_8050DC20[0x865], true), 0);
+    setPaneVisible(self->field_18->GetRootPane()->FindPaneByName(&lbl_eu_8050DC20[0x838], true), 0);
+    setPaneVisible(self->field_18->GetRootPane()->FindPaneByName(&lbl_eu_8050DC20[0x841], true), 0);
+    setPaneVisible(self->field_18->GetRootPane()->FindPaneByName(&lbl_eu_8050DC20[0x84a], true), 0);
+    setPaneVisible(self->field_18->GetRootPane()->FindPaneByName(&lbl_eu_8050DC20[0x853], true), 0);
+    setPaneVisible(self->field_18->GetRootPane()->FindPaneByName(&lbl_eu_8050DC20[0x85c], true), 0);
+    setPaneVisible(self->field_18->GetRootPane()->FindPaneByName(&lbl_eu_8050DC20[0x865], true), 0);
     u32 t = id - 1;
     u32 catBase = (t & 0x1F) * 8;
     f32 scale = lbl_eu_80668930[t * 2];
@@ -3023,7 +3023,7 @@ extern "C" __declspec(noinline) void func_8026BB60(UI::CPassiveSkillLine* self) 
         }
         u8 slot = slotCount + 1;
         sprintf(buf, &lbl_eu_8050DC20[0x86e], slot);
-        func_80124270(self->field_18->GetRootPane()->FindPaneByName(buf, true), 1);
+        setPaneVisible(self->field_18->GetRootPane()->FindPaneByName(buf, true), 1);
         u16 msgId = BdatGetU16Direct(lbl_eu_80664090, &lbl_eu_8050DC20[0x1e8], entry);
         char* text = MakeTplNameSysFile(msgId);
         void* res = CUICfManager_getArcResourceAccessor()->GetResource(0x74696d67, text, 0);
@@ -3095,12 +3095,12 @@ extern "C" __declspec(noinline) void func_8026BB60(UI::CPassiveSkillLine* self) 
                 CPSkillFourShorts fs3 = fs2;
                 CPSkillColorS10 c1, c2;
                 if ((slotPtr->byte14 & 1) == 0) {
-                    CPSkillColorS10* col1 = func_801C4B60(&c1, 0xf0, 0xf0, 0xeb, fs3.d);
-                    CPSkillColorS10* col2 = func_801C4B60(&c2, 0xf0, 0xf0, 0xeb, fs1.d);
+                    CPSkillColorS10* col1 = setGXColorS10(&c1, 0xf0, 0xf0, 0xeb, fs3.d);
+                    CPSkillColorS10* col2 = setGXColorS10(&c2, 0xf0, 0xf0, 0xeb, fs1.d);
                     PaneMatSetTevColorsByName(self->field_18, buf, col2, col1);
                 } else {
-                    CPSkillColorS10* col1 = func_801C4B60(&c1, 0x2a, 0x22, 0x18, fs3.d);
-                    CPSkillColorS10* col2 = func_801C4B60(&c2, 0x2a, 0x22, 0x18, fs1.d);
+                    CPSkillColorS10* col1 = setGXColorS10(&c1, 0x2a, 0x22, 0x18, fs3.d);
+                    CPSkillColorS10* col2 = setGXColorS10(&c2, 0x2a, 0x22, 0x18, fs1.d);
                     PaneMatSetTevColorsByName(self->field_18, buf, col2, col1);
                 }
             }
@@ -3120,7 +3120,7 @@ extern "C" __declspec(noinline) void func_8026BB60(UI::CPassiveSkillLine* self) 
         conv.w[0] = 0x43300000;
         conv.w[1] = learnedCount;
         pos[1] = self->field_100 + scale * (f32)(conv.d - lbl_eu_80668910);
-        func_80124288(pane, pos);
+        writePanePos(pane, pos);
         slotCount++;
         if (slotCount >= 6) {
             break;
@@ -3150,7 +3150,7 @@ __declspec(noinline) void func_8026C4A4(UI::CPassiveSkillLine* self) {
         &lbl_eu_8050DC20[0x4a5], true);
     nw4r::math::VEC3 pos =
         passiveSkillVecView::func_80137924(paneE, paneF, self->field_8->GetRootPane());
-    func_801D2150(self->mInfo.field_24->GetRootPane(), &pos);
+    Cur_SetPaneTranslate(self->mInfo.field_24->GetRootPane(), &pos);
     if ((s8)self->field_F6 != 0) {
         u8 chId = GetCollectedFlagByte((s8)self->field_F3);
         func_80264F7C(self, 1, chId, (u8)(chId - 1), (s8)self->field_F5,
@@ -3224,7 +3224,7 @@ nw4r::lyt::Pane* paneD = self->field_8->GetRootPane()->FindPaneByName(
 &lbl_eu_8050DC20[0x4a5], true);
 nw4r::math::VEC3 pos =
 passiveSkillVecView::func_80137924(paneC, paneD, self->field_8->GetRootPane());
-func_801D2150(self->mInfo.field_24->GetRootPane(), &pos);
+Cur_SetPaneTranslate(self->mInfo.field_24->GetRootPane(), &pos);
 u8 ch = GetCollectedFlagByte((s8)self->field_F3);
 func_8009EC9C(ch);
 const u8* rowTab = &lbl_eu_8050DB60[(u8)(ch - 1) * 8];
@@ -3262,7 +3262,7 @@ nw4r::lyt::Pane* paneB = self->field_8->GetRootPane()->FindPaneByName(
     &lbl_eu_8050DC20[0x4a5], true);
 nw4r::math::VEC3 pos =
     passiveSkillVecView::func_80137924(paneA, paneB, self->field_8->GetRootPane());
-    func_801D2150(self->mInfo.field_24->GetRootPane(), &pos);
+    Cur_SetPaneTranslate(self->mInfo.field_24->GetRootPane(), &pos);
 func_80264F7C(self, 2, 0, GetCollectedFlagByte((s8)self->field_F3),
               (s8)self->field_F7, (s8)self->field_F8);
         return;
@@ -3423,9 +3423,9 @@ __declspec(noinline) void func_8026CE30(UI::CPassiveSkillLine* self) {
         names[1] = *src++;
         names[2] = *src++;
         CTaskGame_enumListCtor(&holder);
-        func_800F4A98(CTaskGame_enumListGet(&holder), names[(s8)self->field_F3], 0);
+        startEnumObjects(CTaskGame_enumListGet(&holder), names[(s8)self->field_F3], 0);
         if (((CPSkillEnumListCount*)CTaskGame_enumListGet(&holder))->count >= 1) {
-            CPSkillEnumListSlot* slot = func_800F6EC0(CTaskGame_enumListGet(&holder), 0);
+            CPSkillEnumListSlot* slot = getEntryAt(CTaskGame_enumListGet(&holder), 0);
             cf::CfObjectMove* move = slot->move;
             if (move != 0) {
                 cf::CfObjectMove* m = getCfObjectPc__FPQ22cf12CfObjectMove(move);
@@ -3458,23 +3458,23 @@ __declspec(noinline) void func_8026D080(UI::CPassiveSkillLine* self) {
                 self->field_8->GetRootPane()->FindPaneByName(buf, true);
             nw4r::math::VEC3 pos;
             func_8013775C(&pos, pane);
-            func_801D2150(
+            Cur_SetPaneTranslate(
                 cell->mpLayout->GetRootPane()->FindPaneByName(
                     &lbl_eu_8050DC20[0x446], true),
                 &pos);
-            func_801D2150(
+            Cur_SetPaneTranslate(
                 cell->mpLayout->GetRootPane()->FindPaneByName(
                     &lbl_eu_8050DC20[0x451], true),
                 &pos);
-            func_801D2150(
+            Cur_SetPaneTranslate(
                 cell->mpLayout->GetRootPane()->FindPaneByName(
                     &lbl_eu_8050DC20[0x45c], true),
                 &pos);
-            func_801D2150(
+            Cur_SetPaneTranslate(
                 cell->mpLayout->GetRootPane()->FindPaneByName(
                     &lbl_eu_8050DC20[0x467], true),
                 &pos);
-            func_801D2150(
+            Cur_SetPaneTranslate(
                 cell->mpLayout->GetRootPane()->FindPaneByName(
                     &lbl_eu_8050DC20[0x472], true),
                 &pos);
@@ -3647,7 +3647,7 @@ extern "C" void func_8026D5A8(UI::CPassiveSkill* self) {
     reinterpret_cast<UI_CPassiveSkillSysWinView*>(&self->mSysWin)->v34();
     for (u8 i = 1; i <= 0x15; i++) {
         u8 ch = (u8)(i + 0x28);
-        u16 v = func_8009CF8C(ch);
+        u16 v = CtrlRemote_TouchBitByArg(ch);
         u8 b1 = 0;
         u8 b0 = 0;
         func_8013AB0C(&b1, &b0, ch);
@@ -3763,7 +3763,7 @@ extern "C" void closeFileHandle__FPP11CFileHandle(void*);
 extern "C" void releaseArcResourceAccessor__FPQ34nw4r3lyt19ArcResourceAccessor(void*);
 extern "C" void deleteRegion__17UnkClass_8045F564Fv(void*);
 extern "C" void CtrlObjectParam_SyncParamFromActorEx(void*, u32);
-extern "C" void func_8022B7F4(void*);
+extern "C" void sysWinTermLayout(void*);
 #pragma optimize_for_size on
 // UI::CPassiveSkill teardown (retail CPassiveSkill_teardown): close the shared bdat
 // reader, release the two file handles and the arc resource accessor, tear
@@ -3775,7 +3775,7 @@ extern "C" void CPassiveSkill_teardown(UI::CPassiveSkill* self) {
     closeFileHandle__FPP11CFileHandle(&self->field_1C);
     self->field_24 = 0;
     CPassiveSkillLine_teardown(&self->mLine);
-    func_8022B7F4(&self->mSysWin);
+    sysWinTermLayout(&self->mSysWin);
     releaseArcResourceAccessor__FPQ34nw4r3lyt19ArcResourceAccessor((void*)self->field_20);
     self->field_20 = 0;
     deleteRegion__17UnkClass_8045F564Fv(&self->mUnk8);
@@ -3879,13 +3879,13 @@ s32 CPassiveSkill_pickOpenState(UI_CPassiveSkill* self) {
     }
     u8 b = code80135FDC_getByte_64077();
     int flag = (int)((u32)(1 - b) >> 31);
-    // Retail zero-tests func_8009CF8C(0x3372) via the cntlzw/srwi idiom.
+    // Retail zero-tests CtrlRemote_TouchBitByArg(0x3372) via the cntlzw/srwi idiom.
 #undef __cntlzw
     {
-        u32 cf8cVal = (u32)func_8009CF8C(0x3372);
+        u32 cf8cVal = (u32)CtrlRemote_TouchBitByArg(0x3372);
         u32 cntlz = (u32)__cntlzw(cf8cVal);
         if ((cntlz >> 5) != 0 ||
-            (func_8009CF8C(0x3508) != 0 && func_8009CF8C(0x20) < 0x38)) {
+            (CtrlRemote_TouchBitByArg(0x3508) != 0 && CtrlRemote_TouchBitByArg(0x20) < 0x38)) {
             u8 cell = self->field_104[12];
             if (cell == 0xf) {
                 return 0x62;
@@ -3955,7 +3955,7 @@ __declspec(noinline) void CPassiveSkill_learnAllSkills(UI::CPassiveSkill* self) 
     self->field_24 = 1;
     for (u8 i = 1; i <= 0x15; i++) {
             u8 ch = (u8)(i + 0x28);
-            func_8009CF8C(ch);
+            CtrlRemote_TouchBitByArg(ch);
             u8 b1 = 0;
             u8 b0 = 0;
             func_8013AB0C(&b1, &b0, ch);
@@ -4040,7 +4040,7 @@ extern "C" __declspec(noinline) void func_802640B8(UI::UI_PassiveSkillRegion3C* 
     for (u8 i = 0; i < 2; i++) {
         nw4r::lyt::Pane* pane =
             self->field_8->GetRootPane()->FindPaneByName(names[i], true);
-        func_80124270(pane, i == arg);
+        setPaneVisible(pane, i == arg);
     }
 }
 #pragma optimize_for_size off
@@ -4088,13 +4088,13 @@ __declspec(noinline) void CPassiveSkillLayoutInit_init(UI_PassiveSkillLayoutInit
     self->mpLayout->Animate(0);
     nw4r::lyt::Pane* pane0 =
         self->mpLayout->GetRootPane()->FindPaneByName(&lbl_eu_8050DC20[0xa0], true);
-    func_80124270(pane0, 0);
+    setPaneVisible(pane0, 0);
     self->field_10 =
         self->mpLayout->GetRootPane()->FindPaneByName(&lbl_eu_8050DC20[0xa7], true);
     self->field_14 =
         self->mpLayout->GetRootPane()->FindPaneByName(&lbl_eu_8050DC20[0xb7], true);
-    func_80124270(self->field_10, 0);
-    func_80124270(self->field_14, 0);
+    setPaneVisible(self->field_10, 0);
+    setPaneVisible(self->field_14, 0);
 }
 #pragma optimize_for_size off
 // Release the layout pointer at +0x4 of the second-layout holder (aliases
@@ -4228,17 +4228,17 @@ extern "C" int OnFileEvent__13CPassiveSkillFP10CEventFile(UI::CPassiveSkill* sel
         void* fh2 = (void*)self->field_1C;
         *(void**)((u8*)fh2 + 4) = 0;
         setBdatEntry__5CBdatFUlPv(2, 0);
-        func_8003AA34();
+        Bdat_GetTable_AA34();
         lbl_eu_80664880 = getFP__FPCc(&lbl_eu_8050DC20[0xa24]);
-        func_8003AA34();
+        Bdat_GetTable_AA34();
         lbl_eu_80664884 = getFP__FPCc(&lbl_eu_8050DC20[0xa2f]);
-        func_8003AA34();
+        Bdat_GetTable_AA34();
         lbl_eu_80664888 = getFP__FPCc(&lbl_eu_8050DC20[0xa3a]);
-        func_8003AA34();
+        Bdat_GetTable_AA34();
         lbl_eu_8066488C = getFP__FPCc(&lbl_eu_8050DC20[0xa44]);
-        func_8003AA34();
+        Bdat_GetTable_AA34();
         lbl_eu_80664890 = getFP__FPCc(&lbl_eu_8050DC20[0xa51]);
-        func_8003AA34();
+        Bdat_GetTable_AA34();
         lbl_eu_80664894 = getFP__FPCc(&lbl_eu_8050DC20[0xa5d]);
         self->field_1C = 0;
         CPassiveSkill_learnAllSkills(self);

@@ -1,16 +1,16 @@
 // Auto-scaffolded catalog TU for kyoshin/menu/CMenuQuestLog
 // Replace stubs with high-level C/C++ during decomp.
 
-// Retail func_8011C998 is a copy constructor that returns dst (r3), but the
+// Retail copyScrollBarData is a copy constructor that returns dst (r3), but the
 // shared headers still declare a void-returning scaffold. Rename that
 // declaration aside for this TU only so the real definition below can use the
 // retail signature; other TUs are unaffected (they ignore the return value).
-#define func_8011C998 questlog_scaffold_void_func_8011C998
+#define copyScrollBarData questlog_scaffold_void_copyScrollBarData
 // CQstLogList.hpp declares __ct__UnkClass_8011C974(void*, const u32*); rename
 // that aside so this TU can define the typed u32* dest form without overload clash.
 #define __ct__UnkClass_8011C974 questlog_void_ct_UnkClass_8011C974
 #include "kyoshin/menu/CMenuQuestLog.hpp"
-#undef func_8011C998
+#undef copyScrollBarData
 #undef __ct__UnkClass_8011C974
 
 // Minimal CTaskGame view: the full kyoshin/CTaskGame.hpp pulls in
@@ -43,7 +43,7 @@ struct CProcessPrimaryVptr {
 
 
 // Retail constructor symbol (unmangled global). Out-of-line stub so the
-// factory (func_8011CCE0) emits a real `bl` to it; returns `this` in r3 like
+// factory (createQuestLogMenu) emits a real `bl` to it; returns `this` in r3 like
 // a real constructor (retail relies on it). C linkage inherited from the
 // header declaration.
 __declspec(noinline) CMenuQuestLog* __ct__CMenuQuestLog(CMenuQuestLog* _this, CProcess* parent, u32 arg2) {
@@ -103,7 +103,7 @@ CMenuQuestLog::~CMenuQuestLog() {}
 // ---------------------------------------------------------------------------
 // Retail signature copy helper (the scaffold decl is renamed aside at include
 // time; this prototype serves the Init() call sites).
-extern "C" CScrollBarData* func_8011C998(CScrollBarData* dst, CScrollBarData* src);
+extern "C" CScrollBarData* copyScrollBarData(CScrollBarData* dst, CScrollBarData* src);
 
 void CMenuQuestLog::Init() {
     // Stack temporaries packed into one aggregate so the slot layout matches
@@ -125,7 +125,7 @@ void CMenuQuestLog::Init() {
     mBgTex.mLoaded = tmp.bg[0x1d];
     mBgTex.mPtmMode = tmp.bg[0x1e];
     __dt__6CBgTexFv((CBgTex*)tmp.bg, -1);
-    func_801C3C14(&mBgTex);
+    BgTex_Acquire_3C14(&mBgTex);
 
     // --- CTitleAHelp ---
     char* name = BdatTouchStringCell(lbl_eu_804FE518, lbl_eu_804FE518 + 0xa, 1);
@@ -166,7 +166,7 @@ void CMenuQuestLog::Init() {
         dstCur->field_14 = srcCur->field_14;
         dstCur->field_15 = srcCur->field_15;
     }
-    func_8011C998(&mQstLogList.mScrollBar, (CScrollBarData*)(tmp.list + 0x40));
+    copyScrollBarData(&mQstLogList.mScrollBar, (CScrollBarData*)(tmp.list + 0x40));
     __ct__UnkClass_8011C974(reinterpret_cast<u32*>(&mQstLogList.mSortMenuData.mUnk04[0]), (const u32*)(tmp.list + 0x84));
     mQstLogList.mSortMenuData.mFileHandle = *(u32*)(tmp.list + 0x94);
     mQstLogList.mSortMenuData.mArcResAcc = *(u32*)(tmp.list + 0x98);
@@ -177,7 +177,7 @@ void CMenuQuestLog::Init() {
     mQstLogList.mSortMenuData.field_0x29 = tmp.list[0xa9];
     mQstLogList.mSortMenuData.field_0x2A = tmp.list[0xaa];
     mQstLogList.mSortMenuData.field_0x2B = tmp.list[0xab];
-    func_8011C998(&mQstLogList.mSortMenuData.mScrollBar,
+    copyScrollBarData(&mQstLogList.mSortMenuData.mScrollBar,
                   (CScrollBarData*)(tmp.list + 0xac));
     // Sort-menu entry table + quest-info buffer: aggregate assignments let
     // MWCC emit its canonical copies (paired-update word loop; fieldwise
@@ -243,7 +243,7 @@ void CMenuQuestLog::Init() {
     mQstLogInfo.mField3A = *(u16*)(tmp.info + 0x3a);
     mQstLogInfo.field_0x3C = *(u32*)(tmp.info + 0x3c);
     __dt__11CQstLogInfoFv((CQstLogInfo*)tmp.info, -1);
-    func_802294C0(&mQstLogInfo);
+    QstLogInfo_LoadArcHandle(&mQstLogInfo);
 
     // Register the render callback (this-adjusting IScnRender view at +0x58).
     IScnRender* renderCb = reinterpret_cast<IScnRender*>(this);
@@ -264,7 +264,7 @@ extern "C" void __ct__UnkClass_8011C974(u32* dest, const u32* src) {
 // scalar fields one at a time. Retail keeps `this` in r3, so this is written
 // with a pointer return; src is read through a volatile ref so the compiler
 // cannot hoist the loads (retail reloads the source per field).
-extern "C" CScrollBarData* func_8011C998(CScrollBarData* dst, CScrollBarData* src) {
+extern "C" CScrollBarData* copyScrollBarData(CScrollBarData* dst, CScrollBarData* src) {
     __ct__UnkClass_8011C974(&dst->mMemRegion[0], &src->mMemRegion[0]);
     dst->mFileHandle = src->mFileHandle;
     dst->mAccessor = src->mAccessor;
@@ -294,10 +294,10 @@ void CMenuQuestLog::Term() {
     IScnRender* render = reinterpret_cast<IScnRender*>(this);
     if (this) render = reinterpret_cast<IScnRender*>(&mIScnRender);
     reinterpret_cast<CScn*>(mScene)->removeRenderCB(render);
-    func_801C3D9C(&mBgTex);
-    func_801C40A0(&mTitleAHelp);
+    BgTex_Release_3D9C(&mBgTex);
+    teardown(&mTitleAHelp);
     func_80227BD8(&mQstLogList);
-    func_80229620(&mQstLogInfo);
+    QstLogInfo_TeardownLayout(&mQstLogInfo);
     lbl_eu_80663FC0 = 0;
     DecMenuCounter64080();
     if (code80135FDC_getByte_64080() == 0)
@@ -329,8 +329,8 @@ body:
         close = (pad->mPressedButtonFlags >> 10) & 1;
     }
     if (close != 0) {
-        if (func_800FEDF8()) {
-            func_800FF914();
+        if (CMainMenu_GetInstancePtr()) {
+            ArtsInfo_SetReadyFlag();
         }
         playUISound(6);
         mState = 0xa;
@@ -340,19 +340,19 @@ body:
     // State machine (jumptable dispatch on the state byte).
     switch (mState) {
     case 0:
-        func_8011CD6C(this);
+        openQuestLogMenu(this);
         break;
     case 1:
         func_8011CDF4(this);
         break;
     case 2:
-        func_8011CE44(this);
+        handleQuestLogInput(this);
         break;
     case 3:
         func_8011D03C(this);
         break;
     case 4:
-        func_8011D08C(this);
+        selectQuestLogEntry(this);
         break;
     case 5:
         func_8011D0FC(this);
@@ -361,20 +361,20 @@ body:
         func_8011D158(this);
         break;
     case 7:
-        func_8011D1A8(this);
+        closeQuestLogMenu(this);
         break;
     case 8:
-        func_8011D22C(this);
+        resortQuestLogList(this);
         break;
     case 9:
         func_8011D298(this);
         break;
     }
 
-    func_801C3D54(&mBgTex);
-    func_801C3FF0(&mTitleAHelp);
+    BgTex_Tick_3D54(&mBgTex);
+    updateHelp(&mTitleAHelp);
     QstLogList_FrameUpdate(&mQstLogList);
-    func_80229570(&mQstLogInfo);
+    QstLogInfo_StepStateMachine(&mQstLogInfo);
 }
 
 __declspec(noinline) void CMenuQuestLog::cbRenderBefore() {
@@ -398,15 +398,15 @@ body:
     {
         nw4r::lyt::DrawInfo drawInfo;
         func_80137250(&drawInfo);
-        func_801C3D7C(&mBgTex, &drawInfo);
+        BgTex_Draw_3D7C(&mBgTex, &drawInfo);
         QstLogList_Draw(&mQstLogList, &drawInfo);
-        func_80229600(&mQstLogInfo, &drawInfo);
-        func_801C4080(&mTitleAHelp, &drawInfo);
+        QstLogInfo_DrawLayoutTail(&mQstLogInfo, &drawInfo);
+        drawHelp(&mTitleAHelp, &drawInfo);
     }
 }
 
 // ---------------------------------------------------------------------------
-// ---- func_8011CCE0 (us-8011d7bc) ------------------------------------------
+// ---- createQuestLogMenu (us-8011d7bc) ------------------------------------------
 // Factory: lazily allocate + construct the single quest-log menu instance and
 // register it as a child of `self`. Returns the stored singleton (or 0 if it
 // already exists). Regist is called even when the allocation failed, matching
@@ -414,7 +414,7 @@ body:
 // ---------------------------------------------------------------------------
 extern "C" void Regist__8CProcessFP8CProcessb(CProcess* self, CProcess* parent, bool b);
 
-CMenuQuestLog* func_8011CCE0(CProcess* self, CProcess* parent, u32 arg2) {
+CMenuQuestLog* createQuestLogMenu(CProcess* self, CProcess* parent, u32 arg2) {
     if (lbl_eu_80663FC0 != 0) {
         return 0;
     }
@@ -429,16 +429,16 @@ CMenuQuestLog* func_8011CCE0(CProcess* self, CProcess* parent, u32 arg2) {
 }
 
 // (lbl_eu_80663FC0 != 0) - retail lwz sda21; subic; subfe
-extern "C" bool func_8011CD5C() { return lbl_eu_80663FC0 != 0; }
+extern "C" bool isQuestLogMenuActive() { return lbl_eu_80663FC0 != 0; }
 
 // State-machine step for state 1: once the background layout, title help,
 // list and info widget are all ready, open the title help + list, set state 1
 // and play sound 0x6d.
-extern "C" void func_8011CD6C(CMenuQuestLog* self) {
-    if (func_801C3E34(&self->mBgTex)) {
-        if (func_801C4114(&self->mTitleAHelp)) {
+extern "C" void openQuestLogMenu(CMenuQuestLog* self) {
+    if (BgTex_IsLoaded_3E34(&self->mBgTex)) {
+        if (isInitialized(&self->mTitleAHelp)) {
             if (func_80227C70(&self->mQstLogList)) {
-                if (func_802296D0(&self->mQstLogInfo)) {
+                if (QstLogInfo_GetLoadedMark(&self->mQstLogInfo)) {
                     func_801C412C(&self->mTitleAHelp);
                     QstLogList_BeginSortOpen(&self->mQstLogList);
                     self->mState = 1;
@@ -456,13 +456,13 @@ extern "C" void func_8011CDF4(CMenuQuestLog* self) {
         self->mState = 2;
 }
 
-// Retail func_8011CE44 is a large real handler (us-8011d920); keep this
+// Retail handleQuestLogInput is a large real handler (us-8011d920); keep this
 // placeholder out-of-line so Move's case 2 still emits a real bl.
 // State-2 input handler: decodes the pad (classic vs wiimote bit positions)
 // and drives the list widget: confirm opens the info pane, up/down scroll,
 // cancel/dir/confirm/menu shortcuts, and the sort trigger re-sorts + updates
 // the title-help mode depending on whether sorting is available.
-extern "C" __declspec(noinline) void func_8011CE44(CMenuQuestLog* self) {
+extern "C" __declspec(noinline) void handleQuestLogInput(CMenuQuestLog* self) {
     CQuestLogPadData* pad = (CQuestLogPadData*)cf::CfGameManager::getCfPadData();
     int cancel, trigger3, trigger1, trigger2, confirm, menu, dir;
     // The bit positions differ between Classic Controller and Wiimote.
@@ -491,7 +491,7 @@ extern "C" __declspec(noinline) void func_8011CE44(CMenuQuestLog* self) {
     if (trigger1) {
         QstLogList_ApplySortSelection(&self->mQstLogList);
         if (!QstLogList_IsSortEnabled(&self->mQstLogList)) {
-            func_801C4198(&self->mTitleAHelp);
+            markReplayClose(&self->mTitleAHelp);
             QstLogList_EndSortMode(&self->mQstLogList, 0);
             self->mState = 4;
         } else {
@@ -502,7 +502,7 @@ extern "C" __declspec(noinline) void func_8011CE44(CMenuQuestLog* self) {
             QstLogList_ConfirmSort(&self->mQstLogList, 0);
             func_801C41E8(&self->mTitleAHelp, 0x3c);
         } else {
-            func_801C414C(&self->mTitleAHelp);
+            beginClose(&self->mTitleAHelp);
             QstLogList_EndSortMode(&self->mQstLogList, 1);
             self->mState = 3;
         }
@@ -526,13 +526,13 @@ extern "C" void func_8011D03C(CMenuQuestLog* self) {
         self->mField54 = 1;
 }
 
-void func_8011D08C(CMenuQuestLog* self)
+extern "C" void selectQuestLogEntry(CMenuQuestLog* self)
 {
     CMenuQuestLog* base = self;
     if (isIdle__11CTitleAHelpFv(&base->mTitleAHelp) && QstLogList_IsSortEnabled(&base->mQstLogList)) {
         unsigned int value = QstLogList_GetSelectedQuestLo(&base->mQstLogList);
-        func_80229768(&base->mQstLogInfo, static_cast<unsigned short>(value));
-        func_80229510(&base->mQstLogInfo);
+        QstLogInfo_SetQuestIdSlot(&base->mQstLogInfo, static_cast<unsigned short>(value));
+        QstLogInfo_LoadCommonArchive(&base->mQstLogInfo);
         base->mState = 5;
     }
 }
@@ -543,9 +543,9 @@ void func_8011D08C(CMenuQuestLog* self)
 // title help, finish the log info and advance to state 6.
 // ---------------------------------------------------------------------------
 extern "C" void func_8011D0FC(CMenuQuestLog* self) {
-    if (func_802296D0(&self->mQstLogInfo)) {
+    if (QstLogInfo_GetLoadedMark(&self->mQstLogInfo)) {
         func_801C41E8(&self->mTitleAHelp, 0x3d);
-        func_801C416C(&self->mTitleAHelp);
+        reopenFromClose(&self->mTitleAHelp);
         func_802296E0(&self->mQstLogInfo);
         self->mState = 6;
     }
@@ -557,17 +557,17 @@ extern "C" void func_8011D0FC(CMenuQuestLog* self) {
 // state 7.
 // ---------------------------------------------------------------------------
 extern "C" void func_8011D158(CMenuQuestLog* self) {
-    if (isIdle__11CTitleAHelpFv(&self->mTitleAHelp) && func_802296D8(&self->mQstLogInfo)) {
+    if (isIdle__11CTitleAHelpFv(&self->mTitleAHelp) && QstLogInfo_GetReadyMark(&self->mQstLogInfo)) {
         self->mState = 7;
     }
 }
 
 // ---------------------------------------------------------------------------
-// ---- func_8011D1A8 (us-8011dc84) ------------------------------------------
+// ---- closeQuestLogMenu (us-8011dc84) ------------------------------------------
 // State 7 handler: on a close-button press (classic bit 23 / wii bit 10),
 // close the title help, finish the log info and advance to state 8.
 // ---------------------------------------------------------------------------
-extern "C" void func_8011D1A8(CMenuQuestLog* self) {
+extern "C" void closeQuestLogMenu(CMenuQuestLog* self) {
     CPad* pad = cf::CfGameManager::getCurrentPad();
     // Close-button press: classic-controller bits 22-23 vs wii bits 4-5,
     // normalized to bool (retail's rlwinm + subic/subfe shape).
@@ -578,22 +578,22 @@ extern "C" void func_8011D1A8(CMenuQuestLog* self) {
         close = pad->mPressedButtonFlags & 0x30;
     }
     if (close) {
-        func_801C4198(&self->mTitleAHelp);
+        markReplayClose(&self->mTitleAHelp);
         func_80229724(&self->mQstLogInfo);
         self->mState = 8;
     }
 }
 
 // ---------------------------------------------------------------------------
-// ---- func_8011D22C (us-8011dd08) ------------------------------------------
+// ---- resortQuestLogList (us-8011dd08) ------------------------------------------
 // When the title help is idle and the quest log info is done, set the
 // title-help mode to 0x3c, close the title help, re-sort the list and advance
 // to state 9.
 // ---------------------------------------------------------------------------
-extern "C" void func_8011D22C(CMenuQuestLog* self) {
-    if (isIdle__11CTitleAHelpFv(&self->mTitleAHelp) && func_802296D8(&self->mQstLogInfo)) {
+extern "C" void resortQuestLogList(CMenuQuestLog* self) {
+    if (isIdle__11CTitleAHelpFv(&self->mTitleAHelp) && QstLogInfo_GetReadyMark(&self->mQstLogInfo)) {
         func_801C41E8(&self->mTitleAHelp, 0x3c);
-        func_801C416C(&self->mTitleAHelp);
+        reopenFromClose(&self->mTitleAHelp);
         QstLogList_BeginSortOpen(&self->mQstLogList);
         self->mState = 9;
     }
@@ -611,13 +611,13 @@ extern "C" void func_8011D298(CMenuQuestLog* self) {
 
 // Adjusting thunk: upcasts from a base sub-object (at offset +0x58 within CMenuQuestLog)
 // to the full CMenuQuestLog, then tail-calls cbRenderBefore.
-extern "C" void func_8011D2E8(IScnRender* self) {
+extern "C" void fwdQuestLogCbRender(IScnRender* self) {
     reinterpret_cast<CMenuQuestLog*>(reinterpret_cast<char*>(self) - 0x58)->cbRenderBefore();
 }
 
 // Adjusting thunk: upcasts from a base sub-object (at offset +0x58 within CMenuQuestLog)
 // to the full CMenuQuestLog, then tail-calls the destructor.
-extern "C" void func_8011D2F0(IScnRender* self) {
+extern "C" void fwdQuestLogDtor(IScnRender* self) {
     // Single-arg cast: retail thunk only adjusts this; mode stays in r4.
     ((void (*)(CMenuQuestLog*))__dt__13CMenuQuestLogFv)(
         reinterpret_cast<CMenuQuestLog*>(reinterpret_cast<char*>(self) - 0x58));

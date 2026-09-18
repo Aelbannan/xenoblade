@@ -50,7 +50,7 @@ struct CNReqtaskRemoveData {
     u8   field_E;   // +0x0E remove type / flags
 };
 
-// us-804df54c: func_804DB240
+// us-804df54c: NandRmConfigure
 // Configures the CNReqtaskRemove sub-task: copies the target path, records the
 // remove flags, resets the state to idle, then returns the task vtable pointer.
 //
@@ -58,7 +58,7 @@ struct CNReqtaskRemoveData {
 // `CNReqtaskRemoveData*`) on purpose - keeping it distinct from the typed local
 // `d` preserves the two-register colouring that matches retail; the
 // byte-identical form comes from `u8*` + a typed local.
-extern "C" CNReqtaskRemoveVtbl** func_804DB240(u8* data, const char* path, u8 arg) {
+extern "C" CNReqtaskRemoveVtbl** NandRmConfigure(u8* data, const char* path, u8 arg) {
     CNReqtaskRemoveData* d = (CNReqtaskRemoveData*)data;
     u8 flags = arg;                       // hoisted into r30 before strcpy
     strcpy(d->path, path);
@@ -67,14 +67,14 @@ extern "C" CNReqtaskRemoveVtbl** func_804DB240(u8* data, const char* path, u8 ar
     return &lbl_eu_806659F8;
 }
 
-// us-804df58c: func_804DB278
+// us-804df58c: NandRmPollState
 // Async state machine for the NAND remove task, polled by the CNand completion
 // pump. Advances one step per call; returns 1 when the removal is done, 2 on
 // error, 0 while still in progress. Steps:
 //   0 -> start the removal (CNReqSaveFormatTempPath + CNReqSaveNandDelete)
 //   1 -> mark the request done (return 1 on the following poll)
 //   2 -> done (return 1)
-extern "C" s32 func_804DB278(CNReqtaskRemoveVtbl* vtable_ptr, CNReqtaskRemoveData* d) {
+extern "C" s32 NandRmPollState(CNReqtaskRemoveVtbl* vtable_ptr, CNReqtaskRemoveData* d) {
     if (lbl_eu_806659D0 != 0) { // NAND subsystem busy
         return 0;
     }
@@ -126,7 +126,7 @@ extern "C" __declspec(noinline) void sinit_804DB330() {
 
 // ===== Dissolved monolibdata2 (blob surgery) data owned by this TU =====
 // [.data] 0x8056FDC8-0x8056FDE8 (32 bytes) — two vtables.
-extern "C" u32 lbl_eu_8056FDC8[4] = { (u32)&lbl_eu_80663BA0, 0x00000000, (u32)&func_804DB278, (u32)&CNReqSaveDeallocIfOpen };
+extern "C" u32 lbl_eu_8056FDC8[4] = { (u32)&lbl_eu_80663BA0, 0x00000000, (u32)&NandRmPollState, (u32)&CNReqSaveDeallocIfOpen };
 extern "C" u32 lbl_eu_8056FDD8[4] = { (u32)&lbl_eu_80663B70, 0x00000000, 0x00000000, 0x00000000 };
 
 // [.sdata] 0x80663BA0-0x80663BA8 (8 bytes) typeinfo {name,parent}.

@@ -474,7 +474,7 @@ struct LODViewFrame {
     f32 field_0x1E0;               // 0x1e0 layer scale
 };
 
-// Scene object returned by func_8048ECD0; the byte at +0x19 gates the
+// Scene object returned by getScnRootPtr; the byte at +0x19 gates the
 // per-frame LOD layer update.
 struct LODScnGate {
     u8 mPad_00[0x19];              // 0x00..0x18
@@ -688,7 +688,7 @@ extern "C" void func_8046E1DC__Q23LOD9LODMemManFv(LOD::LODMemMan* self, u8* p, i
 // `__F<params>` to plain C++ declarations at call sites, so C linkage keeps
 // the exact retail names (the Fv suffix is a decompiler guess).  The func_*
 // bodies are the retail-named member stubs / definitions below.
-extern "C" u32 func_804BE4A0();
+extern "C" u32 ScnRes_IsStateActive_E4A0();
 extern "C" LODPoolBlock* findPoolBlockById__Q23LOD9LODMemManFv(LODPoolBlock* self, int id);
 extern "C" u8* getOrCreatePoolData__Q23LOD9LODMemManFv(LOD::LODMemMan* self, int id);
 extern "C" u8* allocatePoolBlock__Q23LOD9LODMemManFv(LODPoolBlock* self, u32 size, int id);
@@ -700,9 +700,9 @@ extern "C" void func_8046F594__Q23LOD9LODMemManFv(LOD::LODMemMan* self);
 // unmangled names; C linkage forces the verbatim names at the call sites.
 extern "C" CScn* Scn_GetCurrentScene();
 extern "C" LODViewFrame* Scn_HasCamItem(CScn* camera, CView* view);
-extern "C" u32 func_8048ECD0(CScn* self);
-extern "C" nw4r::g3d::ScnObj* func_8048EC14(CScn* self, u32 idx);
-extern "C" void* func_8048ECE4(CScn* self);
+extern "C" u32 getScnRootPtr(CScn* self);
+extern "C" nw4r::g3d::ScnObj* getScnGroupChild(CScn* self, u32 idx);
+extern "C" void* getScnRoot44C(CScn* self);
 // CLight::func_804C09E8 (retail keeps the plain unmangled call).  Retail
 // passes the incoming mtx pointer as a third argument; r5 already holds it,
 // so MWCC emits no arg move but keeps r5 live across the body.
@@ -714,10 +714,10 @@ extern "C" void func_804C09E8(u8* outLight, u8* matrix, u8* mtx);
 // args (MWCC_CASES "Fv ABI note").
 extern "C" s32 ColiLodLookupRecordBin(void* rec);
 extern "C" void* getScnHandle__Fv(void);
-extern "C" u8 func_804BCC6C(void* ptr, u16 id);
-extern "C" void func_804BCC30(void* unused, s32 a);
-extern "C" void func_804BCC3C(void* unused, s32 a);
-extern "C" void func_804BCC60(void* unused, s32 a);
+extern "C" u8 ScnData_FwdB80CC(void* ptr, u16 id);
+extern "C" void ScnData_FwdB7D9C(void* unused, s32 a);
+extern "C" void ScnData_FwdB7DD4(void* unused, s32 a);
+extern "C" void ScnData_FwdB8078(void* unused, s32 a);
 extern "C" void func_8046A3B4__Q23LOD17UnkClass_80468434Fv(u32 idx, const f32* srcMtx, u8 arg2);
 
 // TU-internal unlink helper (definition later in this file).
@@ -855,7 +855,7 @@ void* __dt__8046D144(LOD::LODMemMan* self, int flags) {
     if (self != 0) {
     LODMemManLayout* l = (LODMemManLayout*)self;
     if (l->field_0xA8 != 0) {
-        nw4r::g3d::G3dObj* group = func_8048EC14((CScn*)l->mView_1C, 7);
+        nw4r::g3d::G3dObj* group = getScnGroupChild((CScn*)l->mView_1C, 7);
         if (((LODMgrObj*)group)->field_0xE4 != 0) {
             ((LODG3dMgrVt*)group)->vf0D(l->field_0xA8);
         }
@@ -863,7 +863,7 @@ void* __dt__8046D144(LOD::LODMemMan* self, int flags) {
         l->field_0xA8 = 0;
     }
     if (l->field_0xAC != 0) {
-        nw4r::g3d::G3dObj* group = func_8048EC14((CScn*)l->mView_1C, 8);
+        nw4r::g3d::G3dObj* group = getScnGroupChild((CScn*)l->mView_1C, 8);
         if (((LODMgrObj*)group)->field_0xE4 != 0) {
             ((LODG3dMgrVt*)group)->vf0D(l->field_0xAC);
         }
@@ -892,7 +892,7 @@ extern "C" void isLodActive__Q23LOD17UnkClass_8046A530Fv(
     LOD::UnkClass_8046A530* obj, u32 flags, f32 val);
 // Allocator warm-up: takes the scene, returns its MEMAllocator (result feeds
 // ScnGroup::Construct in initSceneGroup).
-extern "C" MEMAllocator* func_8048ECEC(CScn* scene);
+extern "C" MEMAllocator* getScnRoot45C(CScn* scene);
 // Globals published by the element-list walk in updateLodTick.
 extern u32 lbl_eu_80665778;
 extern u32 lbl_eu_80665768;
@@ -948,7 +948,7 @@ extern "C" void func_8046D264__Q23LOD9LODMemManFv(LOD::LODMemMan* self, u32 arg)
 
     // Detach and destroy both g3d objects through their scene groups.
     if (l->field_0xA8 != 0) {
-        nw4r::g3d::G3dObj* group = func_8048EC14((CScn*)l->mView_1C, 7);
+        nw4r::g3d::G3dObj* group = getScnGroupChild((CScn*)l->mView_1C, 7);
         if (((LODMgrObj*)group)->field_0xE4 != 0) {
             ((LODG3dMgrVt*)group)->vf0D(l->field_0xA8);
         }
@@ -956,7 +956,7 @@ extern "C" void func_8046D264__Q23LOD9LODMemManFv(LOD::LODMemMan* self, u32 arg)
         l->field_0xA8 = 0;
     }
     if (l->field_0xAC != 0) {
-        nw4r::g3d::G3dObj* group = func_8048EC14((CScn*)l->mView_1C, 8);
+        nw4r::g3d::G3dObj* group = getScnGroupChild((CScn*)l->mView_1C, 8);
         if (((LODMgrObj*)group)->field_0xE4 != 0) {
             ((LODG3dMgrVt*)group)->vf0D(l->field_0xAC);
         }
@@ -1069,7 +1069,7 @@ extern "C" void func_8046D264__Q23LOD9LODMemManFv(LOD::LODMemMan* self, u32 arg)
             u32 w = l->field_0x98[e->field_0x47].field_0x0;
             if (w & 3) {
                 void* p = getScnHandle__Fv();
-                rec->field_0x1D = func_804BCC6C(p, e->field_0x40);
+                rec->field_0x1D = ScnData_FwdB80CC(p, e->field_0x40);
             }
         }
         rec->field_0x16 = (u16)lbl_eu_80663828[0];
@@ -1133,21 +1133,21 @@ extern "C" void func_8046D264__Q23LOD9LODMemManFv(LOD::LODMemMan* self, u32 arg)
     CScn* scene = (CScn*)l->mView_1C;
     u32 sz1;
     l->field_0xA8 = nw4r::g3d::ScnProc::Construct(
-        (MEMAllocator*)func_8048ECEC(scene), &sz1, 
+        (MEMAllocator*)getScnRoot45C(scene), &sz1, 
         (nw4r::g3d::ScnProc::DrawProc)&dispatchViewUpdate__Q23LOD9LODMemManFv,
         true, false, 0);
     ((LODScnProcUD*)l->field_0xA8)->mUserData = self;
     u32 sz2;
     l->field_0xAC = nw4r::g3d::ScnProc::Construct(
-        (MEMAllocator*)func_8048ECEC(scene), &sz2, 
+        (MEMAllocator*)getScnRoot45C(scene), &sz2, 
         (nw4r::g3d::ScnProc::DrawProc)&handleViewUpdate__Q23LOD9LODMemManFv,
         false, true, 0);
     ((LODScnProcUD*)l->field_0xAC)->mUserData = self;
 
     // Register both procs in the scene groups.
-    nw4r::g3d::G3dObj* grp1 = func_8048EC14(scene, 7);
+    nw4r::g3d::G3dObj* grp1 = getScnGroupChild(scene, 7);
     ((LODG3dMgrVt*)grp1)->vf0B(((LODMgrObj*)grp1)->field_0xE4, l->field_0xA8);
-    nw4r::g3d::G3dObj* grp2 = func_8048EC14(scene, 8);
+    nw4r::g3d::G3dObj* grp2 = getScnGroupChild(scene, 8);
     ((LODG3dMgrVt*)grp2)->vf0B(((LODMgrObj*)grp2)->field_0xE4, l->field_0xAC);
 
     func_8046A5C4__Q23LOD17UnkClass_8046A530Fv(
@@ -1176,7 +1176,7 @@ extern "C" bool func_8046D898__Q23LOD9LODMemManFv(LOD::LODMemMan* self, u32 arg,
     LODMemManLayout* l = (LODMemManLayout*)self;
     if (l->field_0x6C & 4) {
         if (l->field_0xA8 != 0) {
-            nw4r::g3d::G3dObj* group = func_8048EC14((CScn*)l->mView_1C, 7);
+            nw4r::g3d::G3dObj* group = getScnGroupChild((CScn*)l->mView_1C, 7);
             if (((LODMgrObj*)group)->field_0xE4 != 0) {
                 ((LODG3dMgrVt*)group)->vf0D(l->field_0xA8);
             }
@@ -1184,7 +1184,7 @@ extern "C" bool func_8046D898__Q23LOD9LODMemManFv(LOD::LODMemMan* self, u32 arg,
             l->field_0xA8 = 0;
         }
         if (l->field_0xAC != 0) {
-            nw4r::g3d::G3dObj* group = func_8048EC14((CScn*)l->mView_1C, 8);
+            nw4r::g3d::G3dObj* group = getScnGroupChild((CScn*)l->mView_1C, 8);
             if (((LODMgrObj*)group)->field_0xE4 != 0) {
                 ((LODG3dMgrVt*)group)->vf0D(l->field_0xAC);
             }
@@ -1270,7 +1270,7 @@ void clearManagers__Q23LOD9LODMemManFv(LOD::LODMemMan* self) {
 
 // ---------------------------------------------------------------------------
 // func_8046DAC0: release the two g3d objects (+0xA8 / +0xAC), detaching each
-// from the scene's root group (func_8048EC14 index 7/8) first, then tear down
+// from the scene's root group (getScnGroupChild index 7/8) first, then tear down
 // the +0xCC sub-manager and the +0xA44 sub-manager (plus its clearFlagAndResetName
 // pass when `param` is set).  Ends by clearing the view/shared-buffer pointers
 // and toggling flag bits 0x3087 -> 0x8000.
@@ -1278,7 +1278,7 @@ void clearManagers__Q23LOD9LODMemManFv(LOD::LODMemMan* self) {
 void func_8046DAC0__Q23LOD9LODMemManFv(LOD::LODMemMan* self, int param) {
     LODMemManLayout* l = (LODMemManLayout*)self;
     if (l->field_0xA8) {
-        nw4r::g3d::ScnGroup* group = (nw4r::g3d::ScnGroup*)func_8048EC14((CScn*)l->mView_1C, 7);
+        nw4r::g3d::ScnGroup* group = (nw4r::g3d::ScnGroup*)getScnGroupChild((CScn*)l->mView_1C, 7);
         if (group->Size() != 0) {
             group->Remove((nw4r::g3d::ScnObj*)l->field_0xA8);
         }
@@ -1286,7 +1286,7 @@ void func_8046DAC0__Q23LOD9LODMemManFv(LOD::LODMemMan* self, int param) {
         l->field_0xA8 = 0;
     }
     if (l->field_0xAC) {
-        nw4r::g3d::ScnGroup* group = (nw4r::g3d::ScnGroup*)func_8048EC14((CScn*)l->mView_1C, 8);
+        nw4r::g3d::ScnGroup* group = (nw4r::g3d::ScnGroup*)getScnGroupChild((CScn*)l->mView_1C, 8);
         if (group->Size() != 0) {
             group->Remove((nw4r::g3d::ScnObj*)l->field_0xAC);
         }
@@ -1382,7 +1382,7 @@ extern "C" void updateLodTick__Q23LOD9LODMemManFv(LOD::LODMemMan* self) {
 void updateViewLayers__Q23LOD9LODMemManFv(LOD::LODMemMan* self, LODViewDesc* view);
 void func_80470184__Q23LOD9LODMemManFv(LOD::LODMemMan* self, int count);
 void func_8047108C__Q23LOD9LODMemManFv(LOD::LODMemMan* self, LOD::LODMemMan* sub);
-extern "C" u8* func_804B5A68(u8* buf);           // bitmap allocator
+extern "C" u8* Coli_GetBitTable_5A68(u8* buf);           // bitmap allocator
 extern "C" int dispatchLodPick__Q23LOD17UnkClass_8046368CFv(LODTypeDesc18* td);
 extern f32 lbl_eu_8066A6F0;      // direction vector z constant
 extern f32 lbl_eu_8066A6F4;      // angle chain factor
@@ -1507,7 +1507,7 @@ extern "C" void func_8046DD9C__Q23LOD9LODMemManFv(
 
     LOLDBufHdr* bh = (LOLDBufHdr*)buf;
     l->field_0x60 = (LODBoxElem*)(buf + bh->field_0x38);
-    l->field_0x64 = (u32*)func_804B5A68(buf);
+    l->field_0x64 = (u32*)Coli_GetBitTable_5A68(buf);
     memset(l->field_0x64, 0, (((l->mCount_18 >> 5) + 1) << 2));
     memset(l->field_0x8, 0, bh->field_0x1C * 0x18);
     LODResetView* rv = (LODResetView*)self;
@@ -1541,7 +1541,7 @@ extern "C" void func_8046DD9C__Q23LOD9LODMemManFv(
             LODTypeDesc18* td = &l->field_0x94[e->mType18];
             if (dispatchLodPick__Q23LOD17UnkClass_8046368CFv(td) != 0) {
                 LODScnGate* scn =
-                    (LODScnGate*)func_8048ECD0((CScn*)l->mView_1C);
+                    (LODScnGate*)getScnRootPtr((CScn*)l->mView_1C);
                 scn->field_0x19 = 1;
                 break;
             }
@@ -1569,7 +1569,7 @@ void setPauseFlag__Q23LOD9LODMemManFv(LOD::LODMemMan* self, int param) {
 
 // ---------------------------------------------------------------------------
 // attachSceneObjects: when `param` is nonzero, attach both g3d objects (+0xA8/
-// +0xAC) to the scene groups from func_8048EC14 index 7/8 (notifying the
+// +0xAC) to the scene groups from getScnGroupChild index 7/8 (notifying the
 // group's g3d manager and re-attaching the object with its +0xE4 word), then
 // store `param` into +0xB4 and set flag bit 0x800; otherwise clear +0xB4
 // and the flag.
@@ -1578,7 +1578,7 @@ void attachSceneObjects__Q23LOD9LODMemManFv(LOD::LODMemMan* self, u32 param) {
     LODMemManLayout* l = (LODMemManLayout*)self;
     if (param) {
         if (l->field_0xA8) {
-            nw4r::g3d::G3dObj* group = func_8048EC14((CScn*)l->mView_1C, 7);
+            nw4r::g3d::G3dObj* group = getScnGroupChild((CScn*)l->mView_1C, 7);
             LODMgrObj* mgr = (LODMgrObj*)group;
             if (mgr->field_0xE4) {
                 ((LODG3dMgrVt*)group)->vf0D(l->field_0xA8);
@@ -1586,7 +1586,7 @@ void attachSceneObjects__Q23LOD9LODMemManFv(LOD::LODMemMan* self, u32 param) {
             ((LODG3dMgrVt*)group)->vf0B(mgr->field_0xE4, l->field_0xA8);
         }
         if (l->field_0xAC) {
-            nw4r::g3d::G3dObj* group = func_8048EC14((CScn*)l->mView_1C, 8);
+            nw4r::g3d::G3dObj* group = getScnGroupChild((CScn*)l->mView_1C, 8);
             LODMgrObj* mgr = (LODMgrObj*)group;
             if (mgr->field_0xE4) {
                 ((LODG3dMgrVt*)group)->vf0D(l->field_0xAC);
@@ -1605,7 +1605,7 @@ void attachSceneObjects__Q23LOD9LODMemManFv(LOD::LODMemMan* self, u32 param) {
 // setLodScaleAndRefresh: store the scale into +0x1CDC, then - while the +0x5C buffer
 // is present - walk the elements and, for each whose +0x44 has bit 3 set and
 // whose +0x47 descriptor's flag bits are nonzero, refresh the element via
-// getScnHandle/func_804BCC6C and record the result byte at +0x1D.
+// getScnHandle/ScnData_FwdB80CC and record the result byte at +0x1D.
 // ---------------------------------------------------------------------------
 void setLodScaleAndRefresh__Q23LOD9LODMemManFv(LOD::LODMemMan* self, f32 f1) {
     LODMemManLayout* l = (LODMemManLayout*)self;
@@ -1618,7 +1618,7 @@ void setLodScaleAndRefresh__Q23LOD9LODMemManFv(LOD::LODMemMan* self, f32 f1) {
     while (i < buf->mCount_34) {
         if (!(p48->field_0x44 & 8)) goto next;
         if ((l->field_0x98[p48->field_0x47].field_0x0 & 3) == 0) goto next;
-        p20->field_0x1D = func_804BCC6C(getScnHandle__Fv(), p48->field_0x40);
+        p20->field_0x1D = ScnData_FwdB80CC(getScnHandle__Fv(), p48->field_0x40);
     next:
         i++;
         p20++;
@@ -2149,7 +2149,7 @@ void configureFadeMode__Q23LOD9LODMemManFv(LOD::LODMemMan* self, int mode, u16 v
 // ---------------------------------------------------------------------------
 void updateViewLayers__Q23LOD9LODMemManFv(LOD::LODMemMan* self, LODViewDesc* view) {
     LODMemManLayout* l = (LODMemManLayout*)self;
-    if (func_804BE4A0() != 0 && (l->field_0x6C & 0x20) == 0) {
+    if (ScnRes_IsStateActive_E4A0() != 0 && (l->field_0x6C & 0x20) == 0) {
         l->field_0x68 |= 0x10;
     } else {
         l->field_0x68 &= ~0x10;
@@ -2753,10 +2753,10 @@ void func_804702F0__Q23LOD9LODMemManFv(LOD::LODMemMan* self, LODElem20* elem) {
                 if (rec->field_0x0 & 2) {
                     if (ColiLodLookupRecordBin(rec) != 0) {
                         void* p = getScnHandle__Fv();
-                        func_804BCC30(p, desc->field_0x40);
+                        ScnData_FwdB7D9C(p, desc->field_0x40);
                     } else {
                         void* p = getScnHandle__Fv();
-                        func_804BCC3C(p, desc->field_0x40);
+                        ScnData_FwdB7DD4(p, desc->field_0x40);
                     }
                 }
                 if (rec->field_0x0 & 1) {
@@ -2764,13 +2764,13 @@ void func_804702F0__Q23LOD9LODMemManFv(LOD::LODMemMan* self, LODElem20* elem) {
                         rec->field_0x8, (const f32*)desc, elem->field_0x1D);
                     if (changed) {
                         void* p = getScnHandle__Fv();
-                        func_804BCC60(p, elem->field_0x1D);
+                        ScnData_FwdB8078(p, elem->field_0x1D);
                     }
                 }
             } else {
                 if (rec->field_0x0 & 1) {
                     void* p = getScnHandle__Fv();
-                    func_804BCC60(p, elem->field_0x1D);
+                    ScnData_FwdB8078(p, elem->field_0x1D);
                 }
             }
         } else {
@@ -2968,7 +2968,7 @@ void dispatchViewUpdate__Q23LOD9LODMemManFv(LOD::LODMemMan* self, int task) {
     LODViewFrame* frame = Scn_HasCamItem(Scn_GetCurrentScene(), view);
     LOD::LODMemMan* sub = ((LODSubMgrView*)self)->field_0xF0;
     if (task != 0) {
-        if (((LODScnGate*)func_8048ECD0(Scn_GetCurrentScene()))->field_0x19 == 0) {
+        if (((LODScnGate*)getScnRootPtr(Scn_GetCurrentScene()))->field_0x19 == 0) {
             func_8046DD9C__Q23LOD9LODMemManFv(sub, frame->field_0x9C, frame->field_0x1E0);
         }
         func_8046E1DC__Q23LOD9LODMemManFv(sub, frame->field_0x9C, task);
@@ -2983,7 +2983,7 @@ void dispatchViewUpdate__Q23LOD9LODMemManFv(LOD::LODMemMan* self, int task) {
 extern "C" void handleViewUpdate__Q23LOD9LODMemManFv(LOD::LODMemMan* self, int param) {
     if (param == 0) {
         CScn* scn = Scn_GetCurrentScene();
-        CScn* scn2 = (CScn*)func_8048ECD0(scn);
+        CScn* scn2 = (CScn*)getScnRootPtr(scn);
         if (((LODScnGate*)scn2)->field_0x19 != 0) {
             return;
         }
@@ -3005,12 +3005,12 @@ extern "C" void initSceneGroup__Q23LOD9LODMemManFv(
     LOD::LODMemMan* self, u8* resBuf, CScn* scene) {
     LODMemManLayout* l = (LODMemManLayout*)self;
     LODResView* rv = (LODResView*)self;
-    // func_8048ECEC fetches the scene's allocator; its result feeds Construct.
-    MEMAllocator* alloc = func_8048ECEC(scene);
+    // getScnRoot45C fetches the scene's allocator; its result feeds Construct.
+    MEMAllocator* alloc = getScnRoot45C(scene);
     u32 size;
     nw4r::g3d::ScnGroup* grp = nw4r::g3d::ScnGroup::Construct(alloc, &size, 0x10);
     l->field_0x0 = grp;
-    nw4r::g3d::G3dObj* group = func_8048EC14(scene, 7);
+    nw4r::g3d::G3dObj* group = getScnGroupChild(scene, 7);
     ((LODG3dMgrVt*)group)->vf0B(((LODMgrObj*)group)->field_0xE4, grp);
     if (resBuf != 0) {
         // The resource base must be 32-byte aligned.
@@ -3134,7 +3134,7 @@ int bindModelToSlot__Q23LOD9LODMemManFv(
             u32 p;
             nw4r::g3d::ScnMdl* scnMdl = (v->mSlots[i].field_0x0 =
                 nw4r::g3d::ScnMdl::Construct(
-                    (MEMAllocator*)func_8048ECE4(archive), &p, resMdl, 0, 2));
+                    (MEMAllocator*)getScnRoot44C(archive), &p, resMdl, 0, 2));
             ((LODG3dMgrVt*)l->field_0x0)->vf0B(
                 ((LODMgrObj*)l->field_0x0)->field_0xE4, scnMdl);
             nw4r::math::MTX34 mtx;
@@ -3301,7 +3301,7 @@ void notifyG3dManager__Q23LOD9LODMemManFv(LOD::LODMemMan* self, CScn* scene) {
     }
     if (scene != 0) {
         if (l->field_0x0 != 0) {
-            ((nw4r::g3d::ScnGroup*)func_8048EC14(scene, 7))
+            ((nw4r::g3d::ScnGroup*)getScnGroupChild(scene, 7))
                 ->Remove((nw4r::g3d::ScnObj*)l->field_0x0);
         }
     }

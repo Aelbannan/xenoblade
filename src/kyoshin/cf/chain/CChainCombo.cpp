@@ -47,7 +47,7 @@ void func_80293E24(cf::CChainCombo* self, cf::CfObjectActor* actor) {
 
     if (self->mComboCount < 5) {
         self->mComboCount++;
-        func_80294844(&self->mGauge, (float)self->mComboCount);
+        setChainGauge(&self->mGauge, (float)self->mComboCount);
     }
 }
 
@@ -74,7 +74,7 @@ void func_80293EEC(cf::CChainCombo* self, cf::CfObjectActor* actor) {
 
             // Slot +0x184 is CActorParam_addSecondGauge (takes the id).
             vobj->CActorParam_addSecondGauge(value);
-            func_802A07F4(0xbf, vobj);
+            chainResolveMemberPtr(0xbf, vobj);
         }
     }
     // Volatile final store: makes MWCC schedule the epilogue with the LR

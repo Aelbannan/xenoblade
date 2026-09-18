@@ -13,19 +13,19 @@ struct CVS_THREAD_CHAIN_VtblView {
     u32* vtable;  // 0x1C
 };
 
-// us-802a802c (func_802A58F8)
+// us-802a802c (chainVoiceClearIdleSlot)
 // If the thread reports no active voice, clear the voice handle slot.
-void func_802A58F8(cf::CVS_THREAD_CHAIN* self) {
+void chainVoiceClearIdleSlot(cf::CVS_THREAD_CHAIN* self) {
     if (func_802A3E88(self) == 0) {
         self->field_0x20 = nullptr;
     }
 }
 
-// us-802a8068 (func_802A5934)
+// us-802a8068 (chainVoiceRemoveByPtr)
 // Remove a voice by matching its embedded CCharVoice against the slot.
 // A CVoiceHandle stores the CCharVoice at offset 0x3E9C, so a non-null handle
 // is biased by 0x3E9C before comparing against the incoming voice pointer.
-void func_802A5934(cf::CVS_THREAD_CHAIN* self, CCharVoice* voicePtr) {
+void chainVoiceRemoveByPtr(cf::CVS_THREAD_CHAIN* self, CCharVoice* voicePtr) {
     func_802A3BEC(self, voicePtr);
 
     CVoiceHandle* handle = self->field_0x20;
@@ -38,11 +38,11 @@ void func_802A5934(cf::CVS_THREAD_CHAIN* self, CCharVoice* voicePtr) {
     }
 }
 
-// us-802a80c0 (func_802A598C)
+// us-802a80c0 (chainVoicePlayById)
 // Prepare/play a voice: run the completion check (and playback-start helper
 // if busy), store the inverse-biased handle into the slot, re-bias to the
 // embedded CCharVoice and play the given voice ID.
-int func_802A598C(cf::CVS_THREAD_CHAIN* self, CCharVoice* voicePtr, int voiceId) {
+int chainVoicePlayById(cf::CVS_THREAD_CHAIN* self, CCharVoice* voicePtr, int voiceId) {
     if (func_802A3E88(self) != 0) {
         func_802A3E28(self);
     }
@@ -62,12 +62,12 @@ int func_802A598C(cf::CVS_THREAD_CHAIN* self, CCharVoice* voicePtr, int voiceId)
     return func_802A3C44(self, embedded, voiceId);
 }
 
-// us-802a8238 (func_802A5B04)
+// us-802a8238 (chainVoiceActorTrigger)
 // Chain actor voice trigger. The actor handle must have its factory-active
 // flag (bit 1 of the 0x3F00 manager word) set; a thread buffer (0xA) is
 // reserved, then a random chain voice (mtRand(2) + 0x321) is played. Always
 // returns 0.
-int func_802A5B04(CVoiceHandle* self, int flag) {
+int chainVoiceActorTrigger(CVoiceHandle* self, int flag) {
     if ((self->field_0x3F00 & 2) == 0) {
         return 0;
     }
@@ -127,12 +127,12 @@ cf::CVS_THREAD_CHAIN* __ct__802A5830() {
     return self;
 }
 
-// us-802a8148 (func_802A5A14)
+// us-802a8148 (chainVoiceLifetimeHandler)
 // Chain voice lifetime handler. Validates the factory-active flag, that the
 // voice is not already active (vtable[0x2BC/4]), and that the previous sound
 // is not the chain-stop marker; then reserves a 0x12C buffer and plays either
 // a random chain voice (flag==0) or a fixed chain voice (flag!=0). Returns 0.
-int func_802A5A14(CVoiceHandle* self, int flag) {
+int chainVoiceLifetimeHandler(CVoiceHandle* self, int flag) {
     if ((self->field_0x3F00 & 2) == 0) {
         return 0;
     }

@@ -184,7 +184,7 @@ void KizunagramClose(CPcKizunagram* self) {
     if (self->mStateByte2 != 2) return;
     self->mStateByte2 = 3;
     self->mIsOpen = 0;
-    func_80124270(((CPcKizunaCur*)self->mKizunaCur)->mpLayout->GetRootPane()
+    setPaneVisible(((CPcKizunaCur*)self->mKizunaCur)->mpLayout->GetRootPane()
                       ->FindPaneByName(lbl_eu_8050D868 + 0x50, true),
                   0);
     playUISound__FUl(6);
@@ -223,7 +223,7 @@ extern "C" void __declspec(noinline) KizunagramFinishOpening(CPcKizunagram* self
     self->mStateByte2 = 2;
     self->mIsOpen = 1;
     func_8025E4A4(self);
-    func_80124270(((CPcKizunaCur*)self->mKizunaCur)->mpLayout->GetRootPane()
+    setPaneVisible(((CPcKizunaCur*)self->mKizunaCur)->mpLayout->GetRootPane()
                       ->FindPaneByName(lbl_eu_8050D868 + 0x50, true),
                   1);
 }
@@ -263,15 +263,15 @@ extern "C" void __declspec(noinline) KizunagramFinishClosing(CPcKizunagram* self
 // func_8025DCFC: refresh all 6 affinity rows for the current character.
 extern "C" __declspec(noinline) void func_8025DCFC(CPcKizunagram* self) {
     void* table = getFP__FPCc(lbl_eu_8050D868 + 0x7f);
-    u8 count = (u8)func_8003B1EC(table);
-    func_8009CF8C(0x20);
+    u8 count = (u8)Bdat_GetMaxRow_B1EC(table);
+    CtrlRemote_TouchBitByArg(0x20);
 
     for (u8 n = 1; n <= count; n++) {
         char* paneName = BdatGetPtrDirect(table, lbl_eu_8050D868 + 0x90, (u8)n);
         nw4r::lyt::Pane* pane = self->mLayout->GetRootPane()->FindPaneByName(paneName, true);
         if (KizunagramCheckRowAvailable(self, table, (u8)n) != 0) {
             // --- selected row ---
-            if (pane != 0) func_80124270(pane, 1);
+            if (pane != 0) setPaneVisible(pane, 1);
             if (KizunagramCheckRowHighlight(self, table, (u8)n) != 0) {
                 // 64-bit intermediates force MWCC's lis(hi)+addi(lo) synthesis instead
     // of rematerializing the full literal at each use.
@@ -282,7 +282,7 @@ extern "C" __declspec(noinline) void func_8025DCFC(CPcKizunagram* self) {
                 sprintf(buf, lbl_eu_8050D868 + 0x96, (u8)k);
                 u32 e8 = BdatGetU8Direct((u32)table, buf, (u8)n);
                 int rnd = (e8 & 0xff) + 0x29;
-                func_8009CF8C(rnd);
+                CtrlRemote_TouchBitByArg(rnd);
                 u8 lb9;
                 u8 lb8;
                 lb9 = 0;
@@ -295,7 +295,7 @@ extern "C" __declspec(noinline) void func_8025DCFC(CPcKizunagram* self) {
                 int id = (e8 & 0xff) + 1;
                 char* str = (char*)BdatTouchStringCell(lbl_eu_8050D868 + 0xa0, lbl_eu_8050D868 + 0xaf, id);
                 nw4r::lyt::Pane* p = self->mLayout->GetRootPane()->FindPaneByName(str, true);
-                if (p != 0) func_80124270(p, r21);
+                if (p != 0) setPaneVisible(p, r21);
                 if (r21 != 0) {
                     u32 tex = (u32)self->mArcRes->GetResource(
                         (u32)((0x7469ull << 16) + 0x6d67), lbl_eu_8050D868 + 0xb5, 0);
@@ -303,17 +303,17 @@ extern "C" __declspec(noinline) void func_8025DCFC(CPcKizunagram* self) {
                 }
                 char* str2 = (char*)BdatTouchStringCell(lbl_eu_8050D868 + 0xa0, lbl_eu_8050D868 + 0xca, id);
                 nw4r::lyt::Pane* p2 = self->mLayout->GetRootPane()->FindPaneByName(str2, true);
-                if (p2 != 0) func_80124270(p2, 0);
+                if (p2 != 0) setPaneVisible(p2, 0);
                 char* str3 = (char*)BdatTouchStringCell(lbl_eu_8050D868 + 0xa0, lbl_eu_8050D868 + 0xd4, id);
                 nw4r::lyt::Pane* p3 = self->mLayout->GetRootPane()->FindPaneByName(str3, true);
-                if (p3 != 0) func_80124270(p3, 0);
+                if (p3 != 0) setPaneVisible(p3, 0);
             }
         } else {
             // --- deselected row ---
-            if (pane != 0) func_80124270(pane, 0);
+            if (pane != 0) setPaneVisible(pane, 0);
             if ((u8)n == 5) {
                 u16 r25 = (u16)BdatGetU16ByTableKey(lbl_eu_8050D868 + 0x7f, lbl_eu_8050D868 + 0xdd, 5);
-                if (func_8009CF8C(0x20) >= r25) {
+                if (CtrlRemote_TouchBitByArg(0x20) >= r25) {
                     for (u32 k = 1; k <= 6; k++) {
                         char buf[0x20];
                         sprintf(buf, lbl_eu_8050D868 + 0x96, (u8)k);
@@ -321,13 +321,13 @@ extern "C" __declspec(noinline) void func_8025DCFC(CPcKizunagram* self) {
                         int id = (e8 & 0xff) + 1;
                         char* str = (char*)BdatTouchStringCell(lbl_eu_8050D868 + 0xa0, lbl_eu_8050D868 + 0xaf, id);
                         nw4r::lyt::Pane* p = self->mLayout->GetRootPane()->FindPaneByName(str, true);
-                        if (p != 0) func_80124270(p, 0);
+                        if (p != 0) setPaneVisible(p, 0);
                         char* str2 = (char*)BdatTouchStringCell(lbl_eu_8050D868 + 0xa0, lbl_eu_8050D868 + 0xca, id);
                         nw4r::lyt::Pane* p2 = self->mLayout->GetRootPane()->FindPaneByName(str2, true);
-                        if (p2 != 0) func_80124270(p2, 0);
+                        if (p2 != 0) setPaneVisible(p2, 0);
                         char* str3 = (char*)BdatTouchStringCell(lbl_eu_8050D868 + 0xa0, lbl_eu_8050D868 + 0xd4, id);
                         nw4r::lyt::Pane* p3 = self->mLayout->GetRootPane()->FindPaneByName(str3, true);
-                        if (p3 != 0) func_80124270(p3, 0);
+                        if (p3 != 0) setPaneVisible(p3, 0);
                     }
                 }
             }
@@ -347,7 +347,7 @@ void func_8025E0D8(CPcKizunagram* self) {
     void* table = getFP__FPCc(lbl_eu_8050D868 + 0x7f);
     // First pass: build the character-row lookup table (BDAT indexed by row).
     // u8 counter/count drive the retail clrlwi + cmplw (unsigned) loop.
-    count = (u8)func_8003B1EC(table);
+    count = (u8)Bdat_GetMaxRow_B1EC(table);
     for (i = 0; i < count; i++) {
         BdatGetPtrDirect(table, lbl_eu_8050D868 + 0x90, (u8)i + 1);
     }
@@ -360,13 +360,13 @@ void func_8025E0D8(CPcKizunagram* self) {
         // Two distinct mask forms stop MWCC from CSE-ing a single masked
         // temp; retail recomputes the byte after the rand call from a raw
         // copy held in a nonvolatile.
-        u16 val = (u16)func_8009CF8C((e8 & 0xff) + 0x29);
+        u16 val = (u16)CtrlRemote_TouchBitByArg((e8 & 0xff) + 0x29);
         int id = (u8)e8 + 1;
 
         char* str1 = (char*)BdatTouchStringCell(lbl_eu_8050D868 + 0xa0, lbl_eu_8050D868 + 0xaf, id);
         nw4r::lyt::Pane* pane = self->mLayout->GetRootPane()->FindPaneByName(str1, true);
         if (pane == 0) continue;
-        if (func_801C4648() == 0) continue;
+        if (isPaneVisible() == 0) continue;
 
         // Select a resource name for the mood/face texture by affinity value.
         const char* s1;
@@ -395,13 +395,13 @@ void func_8025E0D8(CPcKizunagram* self) {
         if (tex2 != 0) {
             nw4r::lyt::Pane* pane2 = self->mLayout->GetRootPane()->FindPaneByName(str2, true);
             func_80137F88(pane2, tex2);
-            if (pane2 != 0) func_80124270(pane2, 1);
+            if (pane2 != 0) setPaneVisible(pane2, 1);
         }
 
         char* str3 = (char*)BdatTouchStringCell(lbl_eu_8050D868 + 0xa0, lbl_eu_8050D868 + 0xd4, id);
         setLayoutTextBoxNumber__FPQ34nw4r3lyt6LayoutPcUc(self->mLayout, str3, val);
         nw4r::lyt::Pane* pane3 = self->mLayout->GetRootPane()->FindPaneByName(str3, true);
-        if (pane3 != 0) func_80124270(pane3, 1);
+        if (pane3 != 0) setPaneVisible(pane3, 1);
     }
 }
 
@@ -420,9 +420,9 @@ extern "C" void __declspec(noinline) KizunaCurInitLayout(CPcKizunaCur* self) {
     self->mpLayout->SetAnimationEnable(self->mpAnim0, true);
     self->mpLayout->Animate(0);
     nw4r::lyt::Pane* p1 = self->mpLayout->GetRootPane()->FindPaneByName(lbl_eu_8050D868 + 0x50, true);
-    func_80124270(p1, 0);
+    setPaneVisible(p1, 0);
     nw4r::lyt::Pane* p2 = self->mpLayout->GetRootPane()->FindPaneByName(lbl_eu_8050D868 + 0x5b, true);
-    func_80124270(p2, 0);
+    setPaneVisible(p2, 0);
     self->mpLayout->GetRootPane()->SetScale(nw4r::math::VEC2(lbl_eu_80668878, lbl_eu_80668878));
 }
 
@@ -433,9 +433,9 @@ extern "C" void KizunagramStepRow(CPcKizunagram* self, u32 arg) {
     u32 order[2];
     order[0] = lbl_eu_80668888;
     order[1] = lbl_eu_8066888C;
-    func_8003AA34();
+    Bdat_GetTable_AA34();
     void* table = getFP__FPCc(lbl_eu_8050D868 + 0x7f);
-    int count = func_8003B1EC(table);
+    int count = Bdat_GetMaxRow_B1EC(table);
     // Locate the current character row inside the 8-entry order list.
     // Constant-bound for-loop lets MWCC drive the trip count with mtctr/bdnz
     // while keeping the row index in a register like retail (r6).
@@ -513,7 +513,7 @@ extern "C" void func_8025E5E4(CPcKizunagram* self, u32 value) {
     u16 val;
     const void* table;
     table = getFP__FPCc(lbl_eu_8050D868 + 0x7f);
-    count = (u8)func_8003B1EC((void*)table);
+    count = (u8)Bdat_GetMaxRow_B1EC((void*)table);
     for (i = 0; i < count; i++) {
         BdatGetPtrDirect(table, lbl_eu_8050D868 + 0x90, (u8)i + 1);
     }
@@ -524,13 +524,13 @@ extern "C" void func_8025E5E4(CPcKizunagram* self, u32 value) {
         u32 e8 = BdatGetU8Direct((u32)table, buf1, (s8)self->mField28 + 1);
         // Retail evaluates the rand column first (keeping raw e8 live across
         // the call), then derives id from the masked byte.
-        u16 val = (u16)func_8009CF8C((e8 & 0xff) + 0x29);
+        u16 val = (u16)CtrlRemote_TouchBitByArg((e8 & 0xff) + 0x29);
         int id = (u8)e8 + 1;
 
         char* str1 = (char*)BdatTouchStringCell(lbl_eu_8050D868 + 0xa0, lbl_eu_8050D868 + 0xaf, id);
         nw4r::lyt::Pane* pane = self->mLayout->GetRootPane()->FindPaneByName(str1, true);
         if (pane == 0) continue;
-        if (func_801C4648() == 0) continue;
+        if (isPaneVisible() == 0) continue;
 
         // Select a fixed resource-name for the mood texture by affinity value.
         // Default-zero init lets MWCC hoist the li r5,0 above the branch chain
@@ -575,13 +575,13 @@ extern "C" void func_8025E5E4(CPcKizunagram* self, u32 value) {
         if (tex2 != 0) {
             nw4r::lyt::Pane* pane2 = self->mLayout->GetRootPane()->FindPaneByName(str2, true);
             func_80137F88(pane2, tex2);
-            if (pane2 != 0) func_80124270(pane2, 1);
+            if (pane2 != 0) setPaneVisible(pane2, 1);
         }
 
         char* str3 = (char*)BdatTouchStringCell(lbl_eu_8050D868 + 0xa0, lbl_eu_8050D868 + 0xd4, id);
         setLayoutTextBoxNumber__FPQ34nw4r3lyt6LayoutPcUc(self->mLayout, str3, val);
         nw4r::lyt::Pane* pane3 = self->mLayout->GetRootPane()->FindPaneByName(str3, true);
-        if (pane3 != 0) func_80124270(pane3, 1);
+        if (pane3 != 0) setPaneVisible(pane3, 1);
     }
 }
 
@@ -604,7 +604,7 @@ extern "C" int __declspec(noinline) KizunagramCheckRowAvailable(CPcKizunagram* s
     const char* base = lbl_eu_8050D868;
     u16 v1 = BdatGetU16Direct(table, base + 0xdd, id);
     u16 v2 = BdatGetU16Direct(table, base + 0x256, id);
-    u16 check = (u16)func_8009CF8C(0x20);
+    u16 check = (u16)CtrlRemote_TouchBitByArg(0x20);
     int result = 0;
     if ((u32)v1 <= (u32)check && (u32)check <= (u32)v2) result = 1;
     return result;
@@ -613,7 +613,7 @@ extern "C" int __declspec(noinline) KizunagramCheckRowAvailable(CPcKizunagram* s
 extern "C" int KizunagramCheckRowHighlight(CPcKizunagram* self, const void* table, int id) {
     u16 v1 = BdatGetU16Direct(table, lbl_eu_8050D868 + 0x25d, id);
     u16 v2 = BdatGetU16Direct(table, lbl_eu_8050D868 + 0x264, id);
-    u16 check = (u16)func_8009CF8C(0x20);
+    u16 check = (u16)CtrlRemote_TouchBitByArg(0x20);
     int result = 0;
     if ((u32)v1 <= (u32)check && (u32)check <= (u32)v2) result = 1;
     return result;

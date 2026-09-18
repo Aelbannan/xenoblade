@@ -11,7 +11,7 @@ extern "C" float scaleByGlobal(float val);
 extern "C" u32 checkBitFlag(u8* self);
 extern "C" void func_80059920(void* dst, const void* src);
 extern "C" void func_80059944(void* self, const void* src);
-extern "C" void func_80059974(ml::CVec4* out, const ml::CVec4* a,
+extern "C" void Env_AddVec4(ml::CVec4* out, const ml::CVec4* a,
                                const ml::CVec4* b);
 extern "C" void copyWord4Offset(u32* dst, const u32* src);
 
@@ -222,12 +222,12 @@ extern "C" void copyWord4(u32* dst, const u32* src) {
     d[3] = s[3];
 }
 
-extern "C" void* func_8005870C(void* self) { return (char*)self + 0x64; }
+extern "C" void* Env_GetSub64(void* self) { return (char*)self + 0x64; }
 extern "C" u32 getSubField78(void* self) { return *(u32*)((u8*)self + 0x78); }
 
-extern "C" float func_8005871C(void* self) { return *(float*)((char*)self + 0x54); }
+extern "C" float Env_GetFloat54(void* self) { return *(float*)((char*)self + 0x54); }
 
-extern "C" float func_80058724(void* self) { return *(float*)((char*)self + 0x58); }
+extern "C" float Env_GetFloat58(void* self) { return *(float*)((char*)self + 0x58); }
 
 // CTaskEnvironment::~CTaskEnvironment() - extern "C" free-function form
 // (CCol6CheckBat/CCol6Invite precedent): outer null-check covers the delete;
@@ -349,15 +349,15 @@ extern "C" __declspec(noinline) void func_80058844(CTaskEnvironment* self) {
                    sunTable[3]),
         &ml::CVec3(FC4, FC8, FC4));
 
-    func_8005A2F0(static_cast<CTimeLightGrp*>(self->mUnkE0), self->mLgtAC);
-    func_8005A2F0(static_cast<CTimeLightGrp*>(self->mUnkE0), self->mLgtB0);
-    func_8005A2F0(static_cast<CTimeLightGrp*>(self->mUnkE0), self->mLgtB8);
-    func_8005A2F0(static_cast<CTimeLightGrp*>(self->mUnkE0), self->mLgtBC);
-    func_8005A2F0(static_cast<CTimeLightGrp*>(self->mUnkE0), self->mLgtC0);
-    func_8005A2F0(static_cast<CTimeLightGrp*>(self->mUnkE4), self->mLgtC4);
-    func_8005A2F0(static_cast<CTimeLightGrp*>(self->mUnkE4), self->mLgtC8);
-    func_8005A2F0(static_cast<CTimeLightGrp*>(self->mUnkE4), self->mLgtD4);
-    func_8005A2F0(static_cast<CTimeLightGrp*>(self->mUnkE4), self->mLgtD8);
+    TimeLightPushBack(static_cast<CTimeLightGrp*>(self->mUnkE0), self->mLgtAC);
+    TimeLightPushBack(static_cast<CTimeLightGrp*>(self->mUnkE0), self->mLgtB0);
+    TimeLightPushBack(static_cast<CTimeLightGrp*>(self->mUnkE0), self->mLgtB8);
+    TimeLightPushBack(static_cast<CTimeLightGrp*>(self->mUnkE0), self->mLgtBC);
+    TimeLightPushBack(static_cast<CTimeLightGrp*>(self->mUnkE0), self->mLgtC0);
+    TimeLightPushBack(static_cast<CTimeLightGrp*>(self->mUnkE4), self->mLgtC4);
+    TimeLightPushBack(static_cast<CTimeLightGrp*>(self->mUnkE4), self->mLgtC8);
+    TimeLightPushBack(static_cast<CTimeLightGrp*>(self->mUnkE4), self->mLgtD4);
+    TimeLightPushBack(static_cast<CTimeLightGrp*>(self->mUnkE4), self->mLgtD8);
 
     CTaskEnvWorld* world = self->mScene->field_0x78;
     u32 day = world->field_0x64;
@@ -499,10 +499,10 @@ void CTaskEnvironment::Move() {
             func_80059920(mUnkE0, tbl + 0x20);
             func_80059920(mUnkE4, tbl + 0x50);
             copyWord4(&this->field_0x90,
-                      reinterpret_cast<const u32*>(func_8005870C(
+                      reinterpret_cast<const u32*>(Env_GetSub64(
                           (void*)getSubField78(mScene))));
-            field_0xA0 = func_8005871C((void*)getSubField78(mScene));
-            field_0xA4 = func_80058724((void*)getSubField78(mScene));
+            field_0xA0 = Env_GetFloat54((void*)getSubField78(mScene));
+            field_0xA4 = Env_GetFloat58((void*)getSubField78(mScene));
             scnVlApplyDir4C(
                 static_cast<CVirtualLightObj*>(
                     (void*)getField5C(reinterpret_cast<u8*>(mScene))),
@@ -526,7 +526,7 @@ void CTaskEnvironment::Move() {
             func_80058BD8((ml::CVec4*)v210,
                           reinterpret_cast<const ml::CVec4*>(tbl + 0x20),
                           FAC - k);
-            func_80059974((ml::CVec4*)v220, (const ml::CVec4*)v210,
+            Env_AddVec4((ml::CVec4*)v220, (const ml::CVec4*)v210,
                           (const ml::CVec4*)v200);
             func_80059920(mUnkE0, v220);
             func_80059920(mUnkE4, tbl + 0x50);
@@ -534,22 +534,22 @@ void CTaskEnvironment::Move() {
             func_80058BD8((ml::CVec4*)v1d0,
                           reinterpret_cast<const ml::CVec4*>(tbl + 0x60), k);
             func_80058BD8((ml::CVec4*)v1e0,
-                          reinterpret_cast<const ml::CVec4*>(func_8005870C(
+                          reinterpret_cast<const ml::CVec4*>(Env_GetSub64(
                               (void*)getSubField78(mScene))),
                           FAC - k);
-            func_80059974((ml::CVec4*)v1f0, (const ml::CVec4*)v1e0,
+            Env_AddVec4((ml::CVec4*)v1f0, (const ml::CVec4*)v1e0,
                           (const ml::CVec4*)v1d0);
             copyWord4(&this->field_0x90, reinterpret_cast<const u32*>(v1f0));
             field_0xA0 = lbl_eu_80665FE0 * k +
-                         (FAC - k) * func_8005871C((void*)getSubField78(mScene));
+                         (FAC - k) * Env_GetFloat54((void*)getSubField78(mScene));
             field_0xA4 = lbl_eu_80665FE4 * k +
-                         (FAC - k) * func_80058724((void*)getSubField78(mScene));
+                         (FAC - k) * Env_GetFloat58((void*)getSubField78(mScene));
             float va[4], vb[4], vc[4];
             func_80058BD8((ml::CVec4*)va, reinterpret_cast<const ml::CVec4*>(tbl + 0x00),
                           k);
             func_80058BD8((ml::CVec4*)vb, reinterpret_cast<const ml::CVec4*>(tbl + 0x90),
                           FAC - k);
-            func_80059974((ml::CVec4*)vc, (const ml::CVec4*)vb,
+            Env_AddVec4((ml::CVec4*)vc, (const ml::CVec4*)vb,
                           (const ml::CVec4*)va);
             copyWord4Offset(reinterpret_cast<u32*>(mLgtB8),
                             reinterpret_cast<const u32*>(vc));
@@ -588,21 +588,21 @@ void CTaskEnvironment::Move() {
         func_80058BD8((ml::CVec4*)v170, reinterpret_cast<const ml::CVec4*>(tbl + 0x50), k);
         func_80058BD8((ml::CVec4*)v180, reinterpret_cast<const ml::CVec4*>(tbl + 0x00),
                       FAC - k);
-        func_80059974((ml::CVec4*)v190, (const ml::CVec4*)v180,
+        Env_AddVec4((ml::CVec4*)v190, (const ml::CVec4*)v180,
                       (const ml::CVec4*)v170);
         func_80059920(mUnkE0, v190);
         float v140[4], v150[4], v160[4];
         func_80058BD8((ml::CVec4*)v140, reinterpret_cast<const ml::CVec4*>(tbl + 0x40), k);
         func_80058BD8((ml::CVec4*)v150, reinterpret_cast<const ml::CVec4*>(tbl + 0x50),
                       FAC - k);
-        func_80059974((ml::CVec4*)v160, (const ml::CVec4*)v150,
+        Env_AddVec4((ml::CVec4*)v160, (const ml::CVec4*)v150,
                       (const ml::CVec4*)v140);
         func_80059920(mUnkE4, v160);
         float v110[4], v120[4], v130[4];
         func_80058BD8((ml::CVec4*)v110, reinterpret_cast<const ml::CVec4*>(tbl + 0x80), k);
         func_80058BD8((ml::CVec4*)v120, reinterpret_cast<const ml::CVec4*>(tbl + 0x60),
                       FAC - k);
-        func_80059974((ml::CVec4*)v130, (const ml::CVec4*)v120,
+        Env_AddVec4((ml::CVec4*)v130, (const ml::CVec4*)v120,
                       (const ml::CVec4*)v110);
         copyWord4(&this->field_0x90, reinterpret_cast<const u32*>(v130));
         field_0xA0 = lbl_eu_80665FE0 * k + lbl_eu_80665FE0 * (FAC - k);
@@ -611,7 +611,7 @@ void CTaskEnvironment::Move() {
         func_80058BD8((ml::CVec4*)ve0, reinterpret_cast<const ml::CVec4*>(tbl + 0x40), k);
         func_80058BD8((ml::CVec4*)vf0, reinterpret_cast<const ml::CVec4*>(tbl + 0x00),
                       FAC - k);
-        func_80059974((ml::CVec4*)v100, (const ml::CVec4*)vf0,
+        Env_AddVec4((ml::CVec4*)v100, (const ml::CVec4*)vf0,
                       (const ml::CVec4*)ve0);
         copyWord4Offset(reinterpret_cast<u32*>(mLgtB8),
                         reinterpret_cast<const u32*>(v100));
@@ -642,7 +642,7 @@ void CTaskEnvironment::Move() {
             func_80058BD8((ml::CVec4*)vc0,
                           reinterpret_cast<const ml::CVec4*>(tbl + 0x50),
                           FAC - k);
-            func_80059974((ml::CVec4*)vd0, (const ml::CVec4*)vc0,
+            Env_AddVec4((ml::CVec4*)vd0, (const ml::CVec4*)vc0,
                           (const ml::CVec4*)vb0);
             func_80059920(mUnkE0, vd0);
             float v80[4], v90[4], va0[4];
@@ -651,30 +651,30 @@ void CTaskEnvironment::Move() {
             func_80058BD8((ml::CVec4*)v90,
                           reinterpret_cast<const ml::CVec4*>(tbl + 0x40),
                           FAC - k);
-            func_80059974((ml::CVec4*)va0, (const ml::CVec4*)v90,
+            Env_AddVec4((ml::CVec4*)va0, (const ml::CVec4*)v90,
                           (const ml::CVec4*)v80);
             func_80059920(mUnkE4, va0);
             float v50[4], v60[4], v70[4];
             func_80058BD8((ml::CVec4*)v50,
-                          reinterpret_cast<const ml::CVec4*>(func_8005870C(
+                          reinterpret_cast<const ml::CVec4*>(Env_GetSub64(
                               (void*)getSubField78(mScene))),
                           k);
             func_80058BD8((ml::CVec4*)v60, reinterpret_cast<const ml::CVec4*>(tbl + 0x80),
                           FAC - k);
-            func_80059974((ml::CVec4*)v70, (const ml::CVec4*)v60,
+            Env_AddVec4((ml::CVec4*)v70, (const ml::CVec4*)v60,
                           (const ml::CVec4*)v50);
             copyWord4(&this->field_0x90, reinterpret_cast<const u32*>(v70));
             field_0xA0 = lbl_eu_80665FE0 * (FAC - k) +
-                         k * func_8005871C((void*)getSubField78(mScene));
+                         k * Env_GetFloat54((void*)getSubField78(mScene));
             field_0xA4 = lbl_eu_80665FE8 * (FAC - k) +
-                         k * func_80058724((void*)getSubField78(mScene));
+                         k * Env_GetFloat58((void*)getSubField78(mScene));
             float v20b[4], v30b[4], v40b[4];
             func_80058BD8((ml::CVec4*)v20b,
                           reinterpret_cast<const ml::CVec4*>(tbl + 0x90), k);
             func_80058BD8((ml::CVec4*)v30b,
                           reinterpret_cast<const ml::CVec4*>(tbl + 0x40),
                           FAC - k);
-            func_80059974((ml::CVec4*)v40b, (const ml::CVec4*)v30b,
+            Env_AddVec4((ml::CVec4*)v40b, (const ml::CVec4*)v30b,
                           (const ml::CVec4*)v20b);
             copyWord4Offset(reinterpret_cast<u32*>(mLgtB8),
                             reinterpret_cast<const u32*>(v40b));
@@ -683,9 +683,9 @@ void CTaskEnvironment::Move() {
     }
 
 postUpdate:
-    func_8005A374(static_cast<CTimeLightGrp*>(mUnkE0));
-    func_8005A374(static_cast<CTimeLightGrp*>(mUnkE4));
-    func_8049E374(reinterpret_cast<u8*>((void*)getSubField78(mScene)),
+    TimeLightApplyScaledColor(static_cast<CTimeLightGrp*>(mUnkE0));
+    TimeLightApplyScaledColor(static_cast<CTimeLightGrp*>(mUnkE4));
+    FogManSetNearFar(reinterpret_cast<u8*>((void*)getSubField78(mScene)),
                   field_0xA0, field_0xA4);
 
     if (checkBitFlag(reinterpret_cast<u8*>(
@@ -694,10 +694,10 @@ postUpdate:
             CTaskGame_setVec4_tmp tmp;
             void* fogColour = CTaskGame_setVec4(
                 &tmp, field_0x90, field_0x90, field_0x90, field_0x9C);
-            func_8049E350(reinterpret_cast<u8*>((void*)getSubField78(mScene)),
+            FogManCopyFogWords(reinterpret_cast<u8*>((void*)getSubField78(mScene)),
                           fogColour);
         } else {
-            func_8049E350(reinterpret_cast<u8*>((void*)getSubField78(mScene)),
+            FogManCopyFogWords(reinterpret_cast<u8*>((void*)getSubField78(mScene)),
                           &this->field_0x90);
         }
     }
@@ -823,7 +823,7 @@ extern "C" void func_80059944(void* self, const void* src) {
 // Vector add: out = a + b (component-wise). The four sums are computed in
 // w,z,y,x order but stored z,y,x,w; temps are declared z,w,y,x so MWCC
 // allocates z to f4 and w to f5 like retail.
-void func_80059974(ml::CVec4* out, const ml::CVec4* a, const ml::CVec4* b) {
+void Env_AddVec4(ml::CVec4* out, const ml::CVec4* a, const ml::CVec4* b) {
     float z, w, y, x;
     w = a->w + b->w;
     z = a->z + b->z;
@@ -924,7 +924,7 @@ extern "C" void func_80059A48(CTaskEnvTime* time, float delta) {
 // Returns a 0/1/2 region code for the record at (global->field_6C +
 // global->field_68 * 60): 0 for records inside [0x10E, 0x41A), otherwise
 // 1 (within 60 of the 0x41A boundary) or 2.
-u32 func_80059C14() {
+u32 Env_RegionCode() {
     u32 x = (u32)(lbl_eu_80663D58->field_0x6C + lbl_eu_80663D58->field_0x68 * 60);
     if ((u32)(x - 270) <= 779) {
         return 0;

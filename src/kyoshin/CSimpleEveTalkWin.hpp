@@ -14,7 +14,7 @@ class CScn;
 
 /*
  * CSimpleEveTalkWin - simple event-talk window process (singleton factory
- * func_801A20DC).
+ * eveTalkWinCreateRegister).
  *
  * PROBLEM: retail 0x801A29B4/B/C/C4 are 8B thunks
  *   subi r3,r3,-0x6c   ; b __dt__17CSimpleEveTalkWinFv
@@ -46,7 +46,7 @@ class CScn;
  * high-level C++ per   17.6 (`extern "C"` flat name    REL24, no asm/register)
  * and is the repo idiom (CSysWinSave, CCol6Invite, CTaskREvent etc.). With
  * real bases the ideal is:
- *   void func_801A29B4(IWorkEvent* self){ static_cast<CSimpleEveTalkWin*>(self)->~CSimpleEveTalkWin(); }
+ *   void eveTalkWinDtorThunk6C(IWorkEvent* self){ static_cast<CSimpleEveTalkWin*>(self)->~CSimpleEveTalkWin(); }
  * which *would* be `subi; b` if the class were truly polymorphic, but today
  * that lowers to 0x20. Keeping the spoof preserves `100% 0x8/0x8` while the
  * header comment records the faithful layout.
@@ -67,7 +67,7 @@ class CScn;
  *         Term, viewed as AnimTransform* so the delete goes through its vtable
  *         dtor slot like the retail code)
  *   0x8C  3 layout animations (built by Init; page-state machine in Move /
- *         func_801A2624)
+ *         eveTalkWinAdvancePage)
  *   0xA8  message buffer pointer (ctor arg)
  *   0xAC  ctor byte arg
  *   0xAD  window state (1 intro / 2 advance / 3 close; init 1)
@@ -111,7 +111,7 @@ struct CSimpleEveTalkWin {
     void cbRenderBefore();
 };
 
-// --- Local opaque views used by Init / Move / func_801A2624 / func_801A2190.
+// --- Local opaque views used by Init / Move / eveTalkWinAdvancePage / eveTalkWinSetReuseText.
 // The retail objects these describe live in other TUs; only the vtable
 // offsets and fields below are accessed from this one.
 
@@ -208,8 +208,8 @@ void deleteRegion__17UnkClass_8045F564Fv(UnkClass_8045F564* self);
 void func_80136400(const char* src, u16* dst, u32 destLen);
 // arg1 is the singleton pointer left in r3 by the caller's flag test (retail
 // does not set r3 for the call).
-void func_801A2190(CSimpleEveTalkWin* owner, u32 textId, u8* msgBuf);
-void func_801A2624(CSimpleEveTalkWin* self);
+void eveTalkWinSetReuseText(CSimpleEveTalkWin* owner, u32 textId, u8* msgBuf);
+void eveTalkWinAdvancePage(CSimpleEveTalkWin* self);
 void __ct__Q34nw4r3lyt8DrawInfoFv(nw4r::lyt::DrawInfo* drawInfo);
 void __dt__Q34nw4r3lyt8DrawInfoFv(nw4r::lyt::DrawInfo* drawInfo, int flags);
 void* __ct__CTagProcessorSE(void* self);  // returns this (r3 survives)

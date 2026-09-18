@@ -204,7 +204,7 @@ struct ObjFlagBits {
     u32 f30 : 1;     // msb 30  -> panelData[0x1C]
 };
 
-// func_800FE68C() result: last-selected actor id at +0x90E4.
+// Selector_GetInstance() result: last-selected actor id at +0x90E4.
 struct Fe68CView {
     u8 gap00[0x90E4];
     u32 lastId90E4;       // +0x90E4
@@ -599,13 +599,13 @@ extern void* findObjectById(int);
 extern cf::CfObjectPc* getCfObjectPc(cf::CfObjectMove* objMove);
 // Last-selected actor id source (was declared in kyoshin/CTaskGame.hpp, which
 // is not includable here due to the concurrent Scn_QueryUnk80State/A8 conflict).
-extern "C" void* func_800FE68C();
+extern "C" void* Selector_GetInstance();
 
 // Unit functions whose retail linker symbols are UNMANGLED: declare them
 // extern "C" so call sites emit the unmangled reloc names (retail uses C
 // linkage for these menu helpers).
 extern "C" void func_8010EE40(CPcSelectCursorLayout* self);
-extern "C" void func_8010EB44(CPcSelectCursorLayout* self);
+extern "C" void EneSt_CursorBuild(CPcSelectCursorLayout* self);
 extern "C" void func_80111080(CMenuEnemyState* self, u8* panelData, void* posA, void* posB);
 extern "C" void func_801115E8(CMenuEnemyState* self, u8* panelData);
 void func_80111B08(CMenuEnemyState* self, u8* panelData, f32 v128, f32 v12c);
@@ -664,8 +664,8 @@ extern "C" void* func_8016FE34(void* r3);
 #define lbl_eu_80667050 (sdata2_MESPool.f50)
 #define lbl_eu_80667054 (sdata2_MESPool.f54)
 int GetSysStateFlag23();
-void func_800BBA08(void* r3);
-void func_800BBA7C(void* r3);
+void CfModel_NotifyReady(void* r3);
+void CfModel_GetSpeedRate(void* r3);
 int func_8013A4B4(void* a, void* b, void* c);
 
 
@@ -874,9 +874,9 @@ void CMenuEnemyState::Move() {
         int noTarget = 1;
 
         if (cf::CfGameManager::getPlayer(0) != NULL) {
-            // Reading offset 0x90E4 from func_800FE68C().
+            // Reading offset 0x90E4 from Selector_GetInstance().
             u32 lastId = *reinterpret_cast<u32*>(
-                reinterpret_cast<u8*>(func_800FE68C()) + 0x90E4);
+                reinterpret_cast<u8*>(Selector_GetInstance()) + 0x90E4);
 
             if (lastId != 0) {
                 Obj64_91* obj = reinterpret_cast<Obj64_91*>(findObjectById(static_cast<int>(lastId)));
@@ -913,7 +913,7 @@ void CMenuEnemyState::Move() {
                             // Double guard matches retail's paired beq before the call.
                             if (oldObj != NULL) {
                                 if (oldObj != NULL) {
-                                    func_800BBA08(oldObj);
+                                    CfModel_NotifyReady(oldObj);
                                 }
                             }
                             unk830 = lastId;
@@ -930,7 +930,7 @@ void CMenuEnemyState::Move() {
                             lbl_eu_80573A60[0] = s;
                             lbl_eu_80573A60[1] = s;
                             lbl_eu_80573A60[2] = lbl_eu_80666FE8;
-                            func_800BBA7C(obj);
+                            CfModel_GetSpeedRate(obj);
                         }
 
                         noTarget = 0;
@@ -944,7 +944,7 @@ void CMenuEnemyState::Move() {
                 void* h = findObjectById(static_cast<int>(unk830));
                 if (h != NULL) {
                     if (h != NULL) {
-                        func_800BBA08(h);
+                        CfModel_NotifyReady(h);
                     }
                 }
                 unk830 = 0;
@@ -1238,11 +1238,11 @@ done:
     ;
 }
 
-// func_8010EB44 (us-8010f620): CPcSelectCursor layout/anim init. Creates a
+// EneSt_CursorBuild (us-8010f620): CPcSelectCursor layout/anim init. Creates a
 // 0x2000 scratch region, builds the layout + two anims from the shared arc
 // accessor (field18), grabs six named panes off the root pane, then enables
 // anim20. Called after the ctor from the owning menu's file-event path.
-void func_8010EB44(CPcSelectCursor* self) {
+void EneSt_CursorBuild(CPcSelectCursor* self) {
     self->mem08.createRegion(mtl::MemManager::getHandleMEM2(), 0x2000,
                              &lbl_eu_804FDBF8[0x00], 0);
     Class_8045F858 regionGuard(&self->mem08);
@@ -1278,8 +1278,37 @@ void func_8010EB44(CPcSelectCursor* self) {
     self->layout1C->Animate(0);
 }
 
-// func_8010ED58 (us-8010f834): cursor state 2 -> 4; swaps the active anim.
-void func_8010ED58(CPcSelectCursor* self) {
+// Cursor first-activation (retail bare EneSt_CursorActivate): when the state word
+// is clear, set it and clear the flag byte.
+void EneSt_CursorActivate(CPcSelectCursor* self) {
+    if ((s32)self->field44 == 0) {
+        self->field44 = 1;
+        self->byte40 = 0;
+    }
+}
+
+// Cursor state 2 -> 3 (retail bare EneSt_CursorToState3).
+void EneSt_CursorToState3(CPcSelectCursor* self) {
+    if ((s32)self->field44 == 2) {
+        self->field44 = 3;
+        self->byte40 = 0;
+    }
+}
+
+// Cursor flag-byte getter (retail bare EneSt_CursorGetFlag).
+u8 EneSt_CursorGetFlag(CPcSelectCursor* self) {
+    return self->byte40;
+}
+
+// Cursor select setter + per-frame update tail call (retail bare
+// EneSt_CursorSet41: stb + b func_8010EE40).
+void EneSt_CursorSet41(CPcSelectCursor* self, u8 val) {
+    self->byte41 = val;
+    return func_8010EE40((CPcSelectCursorLayout*)self);
+}
+
+// EneSt_CursorToState4 (us-8010f834): cursor state 2 -> 4; swaps the active anim.
+void EneSt_CursorToState4(CPcSelectCursor* self) {
     if ((s32)self->field44 == 2) {
         self->field44 = 4;
         self->byte40 = 0;
@@ -1338,27 +1367,39 @@ void func_80111B08(CMenuEnemyState* self, u8* panelData, f32 v128, f32 v12c) {
 
 // Vtable adjustor thunks: retail "this" lands at the +0x5C subobject; back it
 // off to the CMenuEnemyState base and forward (subi r3,r3,0x5c; b <fn>).
-void func_801135D0(void* self) {
+void EneSt_ThunkRenderBefore(void* self) {
     reinterpret_cast<CMenuEnemyState*>(reinterpret_cast<char*>(self) - 0x5c)->cbRenderBefore();
 }
 
-void func_801135D8(void* self) {
+void EneSt_ThunkRenderDtor(void* self) {
     // r4 (delete flag) passes through untouched, so call through a 1-arg
     // pointer view.
     typedef void* (*DtorFn)(CMenuEnemyState*);
     ((DtorFn)__dt__15CMenuEnemyStateFv)(reinterpret_cast<CMenuEnemyState*>(reinterpret_cast<char*>(self) - 0x5c));
 }
 
-// retail: lwz r3, lbl_eu_80663F50; blr
-extern "C" u32 func_80110A70() { return (u32)lbl_eu_80663F50; }
+// Vtable dtor thunk for the +0x58 subobject (retail func_801135C8):
+// subi r3,r3,0x58; b __dt__15CMenuEnemyStateFv (r4 passes through).
+void EneSt_DtorThunk58(void* self) {
+    typedef void* (*DtorFn)(CMenuEnemyState*);
+    ((DtorFn)__dt__15CMenuEnemyStateFv)(reinterpret_cast<CMenuEnemyState*>(reinterpret_cast<char*>(self) - 0x58));
+}
 
-// func_801109D8 (us-801114b4): create-or-reuse the CMenuEnemyState singleton.
+// retail: lwz r3, lbl_eu_80663F50; blr
+extern "C" u32 EneSt_GetSingleton() { return (u32)lbl_eu_80663F50; }
+
+// CMenuEnemyState +0x54 marker (retail bare EneSt_MarkUnk54).
+void EneSt_MarkUnk54(CMenuEnemyState* self) {
+    self->unk54 = 1;
+}
+
+// EneSt_Create (us-801114b4): create-or-reuse the CMenuEnemyState singleton.
 // When it does not exist yet and the shared arc accessor is available,
 // allocate the object from the work heap, construct it with the scene,
 // register it under the parent process and stash it in lbl_eu_80663F50. If it
 // already exists, forward (existing, arg3) to func_80110A78. Returns the
 // singleton (or 0 when the accessor was missing).
-void* func_801109D8(void* parent, u32 scn, void* arg3) {
+void* EneSt_Create(void* parent, u32 scn, void* arg3) {
     if (lbl_eu_80663F50 == 0) {
         if (CUICfManager_getArcResourceAccessor() == 0) {
             return 0;
@@ -1538,7 +1579,7 @@ extern "C" void func_80110A78(CMenuEnemyState* self, u32 actorId) {
 }
 
 // func_801127B0 (us-8011328c): per-frame enemy-menu refresh driven by the
-// last-selected actor id (func_800FE68C). The 24th panel (panels[23], aka
+// last-selected actor id (Selector_GetInstance). The 24th panel (panels[23], aka
 // panelData at this+0x778) mirrors the current selection; when it is already
 // visible and the selection changed, or when it is hidden, the previous
 // matching panel entry is cleared and the panel is re-registered from the
@@ -1549,7 +1590,7 @@ extern "C" void func_801127B0(CMenuEnemyState* self) {
     u32 lastId;
     MenuEnemyPanel* panel;
     panel = &self->panels[23];
-    lastId = static_cast<Fe68CView*>(func_800FE68C())->lastId90E4;
+    lastId = static_cast<Fe68CView*>(Selector_GetInstance())->lastId90E4;
     u8* panelData = reinterpret_cast<u8*>(panel);
 
     if (panel->visible != 0) {
@@ -2098,7 +2139,7 @@ extern "C" void func_80112170(CMenuEnemyState* self, u8* panelData) {
     // Enemy slot list scan: light unk40 when a slot holds the same actor id.
     // (Retail reloads panel->unk40 for the clear and the set.)
     reinterpret_cast<ObjBBFlag*>(panel->unk40)->flagBB &= 0xFE;
-    u32 lastId = static_cast<Fe68CView*>(func_800FE68C())->lastId90E4;
+    u32 lastId = static_cast<Fe68CView*>(Selector_GetInstance())->lastId90E4;
     Obj64_91* lastObj = reinterpret_cast<Obj64_91*>(
         findObjectById(static_cast<int>(lastId)));
     if (lastObj != NULL) {
@@ -2152,11 +2193,11 @@ extern "C" void func_801115E8(CMenuEnemyState* self, u8* panelData) {
 
     // Retail evaluates actorId first (cmpl r3,r0 operand order).
     if (panel->actorId !=
-        static_cast<Fe68CView*>(func_800FE68C())->lastId90E4) {
+        static_cast<Fe68CView*>(Selector_GetInstance())->lastId90E4) {
         return;
     }
     Obj64_91* lastObj = reinterpret_cast<Obj64_91*>(findObjectById(
-        static_cast<int>(static_cast<Fe68CView*>(func_800FE68C())->lastId90E4)));
+        static_cast<int>(static_cast<Fe68CView*>(Selector_GetInstance())->lastId90E4)));
     if (lastObj == NULL) return;
 
     u32 sub74 = lastObj->word74;
@@ -2643,7 +2684,7 @@ void func_80111E70(CMenuEnemyState* self, u8* panelData, f32 v128, f32 v12c) {
     // The double damage adjustment is formed before the divisor test so the
     // fsubs pair sits between the compare and the branch (retail schedule).
     // hp-adjusted ratio: the double difference is formed before the tests.
-    f64 dmgVal = func_800F4648(bmRes);
+    f64 dmgVal = ScMain_GetSummedInt(bmRes);
     f64 dmgAdj = dmgVal - lbl_eu_80667030;
     f64 hpDiff = v128 - dmgAdj;
     f32 ratio = lbl_eu_80666FEC;
@@ -3007,7 +3048,7 @@ void CMenuEnemyState::Init() {
     u32 scn = (u32)unk60;
     selectCursor.field18 = (u32)CUICfManager_getArcResourceAccessor();
     selectCursor.field04 = scn;
-    func_8010EB44(&selectCursor);
+    EneSt_CursorBuild(&selectCursor);
 
     field7C4 = 1;
 
@@ -3080,7 +3121,8 @@ extern "C" void Init__15CMenuEnemyStateFv(int);
 extern "C" void Term__15CMenuEnemyStateFv(int);
 extern "C" void Move__15CMenuEnemyStateFv(int);
 extern "C" void cbRenderBefore__15CMenuEnemyStateFv(int);
-extern "C" void func_801135C8();
+// (EneSt_DtorThunk58's C++ definition above serves as the address-taken
+// decl for the vtable below; no extern "C" decl (linkage clash).
 extern "C" void Reset__14CChildListNodeFv();
 extern "C" void Tail__8CProcessFv();
 extern "C" void WorkEvent1__10IWorkEventFPvPCc();
@@ -3131,7 +3173,7 @@ void* lbl_eu_8052C438[48] = {
     (void*)Tail__8CProcessFv,
     (void*)lbl_eu_80661E28,
     (void*)0xFFFFFFA8,
-    (void*)func_801135C8,
+    (void*)EneSt_DtorThunk58,
     (void*)WorkEvent1__10IWorkEventFPvPCc,
     (void*)OnFileEvent__10IWorkEventFP10CEventFile,
     (void*)WorkEvent3__10IWorkEventFPv,
@@ -3165,8 +3207,8 @@ void* lbl_eu_8052C438[48] = {
     (void*)WorkEvent31__10IWorkEventFv,
     (void*)lbl_eu_80661E28,
     (void*)0xFFFFFFA4,
-    (void*)func_801135D8,
-    (void*)func_801135D0,
+    (void*)EneSt_ThunkRenderDtor,
+    (void*)EneSt_ThunkRenderBefore,
     (void*)cbRenderBefore__15CMenuEnemyStateFv,
 };
 // .data 0x3C: RTTI descriptor (sdata locators + small offsets).

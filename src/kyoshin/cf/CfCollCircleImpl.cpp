@@ -11,15 +11,15 @@
 // 0.3f is lbl_eu_80666918.
 extern float lbl_eu_80666918;
 
-// func_800AABD4: debug draw for the circle collision shape.
+// CollCircle_DrawDebugShape: debug draw for the circle collision shape.
 // Builds a stack CDrawGX, sets a cyan-ish color, then renders a filled
 // circle at the shape's fetched position with the shape's radius.
 // The shape is a CfObject-family coll object (radius at 0xB8); position
 // comes from the real cf::CfObject virtual at +0xAC
 // (CfObject_getPosVector, cf. CfCollSphereImpl).
-void func_800AABD4(void* context, cf::CfObjectColl* shape){
+void CollCircle_DrawDebugShape(void* context, cf::CfObjectColl* shape){
     CDrawGX gx;
-    func_8049034C(lbl_eu_80663E14, &gx, 0);
+    TexMan_ApplyCamPersp_034C(lbl_eu_80663E14, &gx, 0);
 
     ml::CCol4 col;
     col.r = lbl_eu_80666910;
@@ -33,9 +33,9 @@ void func_800AABD4(void* context, cf::CfObjectColl* shape){
     gx.renderCircle(*pos, 0x24, static_cast<float>(uval));
 }
 
-// func_800AAC98: debug draw helper that forwards position + radius to
+// CollCircle_ForwardDrawCall: debug draw helper that forwards position + radius to
 // func_800A50AC after going through the shape's virtual getter.
-void func_800AAC98(void* context, cf::CfObjectColl* shape, void* c, void* d){
+void CollCircle_ForwardDrawCall(void* context, cf::CfObjectColl* shape, void* c, void* d){
     u32 uval = static_cast<u32>(shape->field_0xB8);
     ml::CVec3* pos = shape->CfObject_getPosVector();
     func_800A50AC(c, pos, static_cast<float>(uval), d);

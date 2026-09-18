@@ -15,7 +15,7 @@
 // Retail __ct__cf_CtrlPad (0x80097274): base-constructs CtrlRemote (passing
 // posObj through, arg5 = 0), stores the CtrlPad vtable manually (novtable),
 // caches the current pad, then copies the 30-entry pad config table via
-// func_80098BD0.
+// setPadConfigEntry.
 cf::CtrlPad* __ct__cf_CtrlPad(cf::CtrlPad* obj, void* posObj) {
     // CtrlPad's retail layout is CtrlRemote's (retail ctor chain
     // __ct__cf_CtrlPad -> __ct__CtrlRemote -> __ct__cf_CtrlPc).
@@ -26,7 +26,7 @@ cf::CtrlPad* __ct__cf_CtrlPad(cf::CtrlPad* obj, void* posObj) {
     u32* tbl;
     int i;
     for (tbl = lbl_eu_80527C08, i = 0; i < 0x1E; i++, tbl++) {
-        func_80098BD0(i, *tbl);
+        setPadConfigEntry(i, *tbl);
     }
     return obj;
 }
@@ -54,7 +54,7 @@ void func_80096974(cf::CtrlPc* self) {
 
     cf::CfGameManager::getInstance();
     gmSub = (UnkClass_800821F8View*)getCameraDataBlock__Q22cf13CfGameManagerFv();
-    CfObj90E4* g = func_800FE68C();
+    CfObj90E4* g = Selector_GetInstance();
     vh = (CtrlVoiceHandle*)(void*)findObjectById__Fi((int)g->mField90E4);
     p = self->mField5C;
     v1 = *p->mField4->vf30();
@@ -71,20 +71,20 @@ void func_80096974(cf::CtrlPc* self) {
     flag27 = 0;
     flag26 = 0;
     self->mField5C->mSub3ED4->vf10(0x400, 1);
-    mask = func_80098B74(0x12);
+    mask = getPadConfigEntry(0x12);
     if ((self->vf37()->mField0 & mask) != 0) {
         if (vh == 0) {
             flag28 = 1;
         } else if ((self->vf37()->mField0 & 3) == 0) {
             flag28 = 1;
-        } else if ((self->vf37()->mField14 & func_80098B74(0x12)) != 0) {
+        } else if ((self->vf37()->mField14 & getPadConfigEntry(0x12)) != 0) {
             lock = 1;
         }
     } else if ((gmSub->mField4 & 0x10) != 0) {
         flag28 = 1;
     }
     // Clear the lock-on request when its mask bit is not set.
-    if ((self->vf37()->mField0 & func_80098B74(0x10)) == 0) {
+    if ((self->vf37()->mField0 & getPadConfigEntry(0x10)) == 0) {
         self->mField5C->mSub3ED4->vf11(0x2000);
     }
     if (flag28 != 0) {
@@ -107,11 +107,11 @@ void func_80096974(cf::CtrlPc* self) {
     if ((gmSub->mField4 & 0x10) != 0) {
         gmSub->vf09(vh->vf41());
     }
-    if ((self->vf37()->mField10 & func_80098B74(0x13)) != 0) {
+    if ((self->vf37()->mField10 & getPadConfigEntry(0x13)) != 0) {
         cfCam_setClear04(gmSub, 0x20, 1);
     }
     cfCam_setClear04(gmSub, 3, self->mField5C->mSub3ED4->vf14(0x400) == 0);
-    if ((self->vf37()->mField4 & func_80098B74(0x14)) != 0) {
+    if ((self->vf37()->mField4 & getPadConfigEntry(0x14)) != 0) {
         v4 = self->mField5C->mSub3ED4->vf14(0x1000);
         if (v4 != 0) {
             flag26 = 1;
@@ -254,7 +254,7 @@ probe100:
             goto tail;
         }
     }
-    func_8019956C((cf::CCtrlMovePC*)(void*)self->mSubObj8C);
+    movePcTopTickDispatch((cf::CCtrlMovePC*)(void*)self->mSubObj8C);
     self->mField10 = self->mFieldC;
     if (func_80148778(&self->mField5C->mField8, 6) != 0 ||
         (cf::CfGameManager::getInstance(), isGlobalCamFlagSet__Fi(0x400000) != 0)) {
@@ -376,7 +376,7 @@ void func_80097A5C(cf::CtrlPc* self) {
     Fd44State* h = func_8017FD44();
     if (h != 0 && h->mFieldB8 == 4) {
         // Battle-menu open: gate the action on the pad bit mask.
-        mask = func_80098B74(0x16);
+        mask = getPadConfigEntry(0x16);
         if ((self->vf38()->mField4 & mask) == 0) {
             return;
         }
@@ -524,7 +524,7 @@ extern "C" int func_80097E00(cf::CtrlPc* self) {
     if ((void*)owner != (void*)cf::CfGameManager::getPlayer(0)) {
         return 0;
     }
-    if (func_800FEDF8() != 0) {
+    if (CMainMenu_GetInstancePtr() != 0) {
         return 0;
     }
     if (self->mField5C->mSub3ED4->vf14(0x400) != 0 && inBattle == 0 &&
@@ -592,24 +592,86 @@ void func_80098194(cf::CtrlPc* self, char arg1, char arg2) {
     }
 }
 
-// Bit testers / getters / delegate helpers (retail stub bodies).
-u32 cf::CtrlPc::testBit20() { return 0; }
-u32 cf::CtrlPc::testBit16() { return 0; }
-u32 cf::CtrlPc::testBit15() { return 0; }
-u32 cf::CtrlPc::testBit14() { return 0; }
-u32 cf::CtrlPc::testBit13() { return 0; }
-u32 cf::CtrlPc::testBit12() { return 0; }
-u32 cf::CtrlPc::testBit11() { return 0; }
-u32 cf::CtrlPc::testBit10() { return 0; }
-u32 cf::CtrlPc::testBit9() { return 0; }
-u32 cf::CtrlPc::testBit8() { return 0; }
+// ---- H5W6 name recovery: pad-flag bit testers (retail 80096EE8..80096F9C).
+// Each isolates one bit of the +0x2C pad-flags word: retail
+// `extrwi r3,r0,1,N` for N=8..23, i.e. LSB (31-N). CtrlPad vtable slots;
+// named after the CtrlRemote_* siblings in the same table
+// (CtrlRemote_TestFlag800, CtrlRemote_Check800Cleared1000, ...).
+// Proven shape pre-clobber (attempts.jsonl): bit extract (x>>K)&1 from +0x2C.
+extern "C" u32 CtrlPad_TestBit08(cf::CtrlPc* self) { return (self->mPadFlags >> 23) & 1; }
+extern "C" u32 CtrlPad_TestBit09(cf::CtrlPc* self) { return (self->mPadFlags >> 22) & 1; }
+extern "C" u32 CtrlPad_TestBit10(cf::CtrlPc* self) { return (self->mPadFlags >> 21) & 1; }
+extern "C" u32 CtrlPad_TestBit11(cf::CtrlPc* self) { return (self->mPadFlags >> 20) & 1; }
+extern "C" u32 CtrlPad_TestBit12(cf::CtrlPc* self) { return (self->mPadFlags >> 19) & 1; }
+extern "C" u32 CtrlPad_TestBit13(cf::CtrlPc* self) { return (self->mPadFlags >> 18) & 1; }
+extern "C" u32 CtrlPad_TestBit14(cf::CtrlPc* self) { return (self->mPadFlags >> 17) & 1; }
+extern "C" u32 CtrlPad_TestBit15(cf::CtrlPc* self) { return (self->mPadFlags >> 16) & 1; }
+extern "C" u32 CtrlPad_TestBit16(cf::CtrlPc* self) { return (self->mPadFlags >> 15) & 1; }
+extern "C" u32 CtrlPad_TestBit17(cf::CtrlPc* self) { return (self->mPadFlags >> 14) & 1; }
+extern "C" u32 CtrlPad_TestBit18(cf::CtrlPc* self) { return (self->mPadFlags >> 13) & 1; }
+extern "C" u32 CtrlPad_TestBit19(cf::CtrlPc* self) { return (self->mPadFlags >> 12) & 1; }
+extern "C" u32 CtrlPad_TestBit20(cf::CtrlPc* self) { return (self->mPadFlags >> 11) & 1; }
+extern "C" u32 CtrlPad_TestBit21(cf::CtrlPc* self) { return (self->mPadFlags >> 10) & 1; }
+extern "C" u32 CtrlPad_TestBit22(cf::CtrlPc* self) { return (self->mPadFlags >> 9) & 1; }
+extern "C" u32 CtrlPad_TestBit23(cf::CtrlPc* self) { return (self->mPadFlags >> 8) & 1; }
 
-u32 cf::CtrlPc::getField1D4() { return mField1D4; }
-int cf::CtrlPc::returnTrue() { return 1; }
+// Walker field-0x380 setter (retail Walker_SetField380): `stw r4,0x380(r3)`.
+// CfObjectImplPc/CfObjectImplNpc vtable slot next to Walker_GetField380
+// (same +0x380 word); byte-offset idiom mirrors that getter.
+extern "C" void Walker_SetField380(void* self, u32 value) {
+    *(u32*)((u8*)self + 0x380) = value;
+}
 
-void cf::CtrlPc::delegateTo899C0() {}
-void cf::CtrlPc::delegateTo89E88() {}
-void cf::CtrlPc::delegateTo89F68() {}
+// Move-base query dispatcher (retail CtrlPad_QueryMoveBase): with the flag word set,
+// clear the caller's flag byte and run func_80089398 on the embedded
+// CCtrlMovePC (+0x8C) reporting success; otherwise tail the func_800890A8
+// query through on the same subobject and return its result.
+extern "C" int CtrlPad_QueryMoveBase(cf::CtrlPc* self, ml::CVec3* dst, u8* flagOut,
+                                       const ml::CVec3* src, int flag, int usePrimary) {
+    if (usePrimary != 0) {
+        *flagOut = 0;
+        func_80089398((cf::CCtrlMoveBase*)&self->mSubObj8C, dst, src, flag);
+        return 1;
+    }
+    return func_800890A8((cf::CCtrlMoveBase*)&self->mSubObj8C, dst, flagOut, src, flag);
+}
+
+// Float-fed move delegate (retail CtrlPad_Delegate899C0): loads the sdata2 constant
+// into f1 and tail-calls func_800899C0 on the embedded CCtrlMovePC (+0x8C).
+// (Pre-clobber stub family name: delegateTo899C0.)
+extern const f32 lbl_eu_80666728;
+extern "C" void func_800899C0(void* self, float value);
+extern "C" int func_80089E88();
+extern "C" void CtrlPad_Delegate899C0(cf::CtrlPc* self) {
+    float c = lbl_eu_80666728;
+    typedef void (*Fn)(void*, float);
+    ((Fn)func_800899C0)((u8*)self + 0x8c, c);
+}
+
+// Move-base tail-call delegates (retail CtrlPad_Delegate89B24 / CtrlPad_Delegate89E88 /
+// CtrlPad_Delegate89F68): re-base `this` onto the embedded CCtrlMovePC (+0x8C) and
+// tail-jump to the matching handler, passing the incoming registers through.
+// (Pre-clobber stub family names: delegateTo89E88 / delegateTo89F68.)
+extern "C" int CtrlPad_Delegate89B24(cf::CtrlPc* self, void* out) {
+    typedef int (*Fn)(void*, void*);
+    return ((Fn)func_80089B24)((u8*)self + 0x8c, out);
+}
+extern "C" int CtrlPad_Delegate89E88(cf::CtrlPc* self, void* out) {
+    typedef int (*Fn)(void*, void*);
+    return ((Fn)func_80089E88)((u8*)self + 0x8c, out);
+}
+extern "C" int CtrlPad_Delegate89F68(cf::CtrlPc* self, void* out) {
+    typedef int (*Fn)(void*, void*);
+    return ((Fn)func_80089F68)((u8*)self + 0x8c, out);
+}
+
+// Cached-pad-handle getter (retail CtrlPad_GetField1D4): the +0x1D4 word
+// (__ct__cf_CtrlPad caches CfGameManager::getCurrentPad() there).
+extern "C" u32 CtrlPad_GetField1D4(cf::CtrlPc* self) { return self->mField1D4; }
+
+// Constant-1 vtable slot (retail CtrlPad_ReturnTrue): `li r3,1; blr`.
+// (Pre-clobber stub guess: returnTrue.)
+extern "C" int CtrlPad_ReturnTrue() { return 1; }
 
 // Retail func_80098A04: writes the tri-state pad state (-1/0/1) into
 // mField24.
@@ -623,16 +685,24 @@ void func_80098A04(cf::CtrlPc* self) {
     self->mField24 = 0;
 }
 
-// REBUILD-STUB: body lost in the accidental clobber (pad bit-mask table
-// lookup); re-derive from retail ASM.
-u32 __declspec(noinline) func_80098B74(int index) {
-    (void)index;
-    return 0;
+// Pad-config mask-table lookup (retail getPadConfigEntry): select the
+// classic-controller table (lbl_eu_80527F10) when a classic controller is
+// attached, else the standard table (lbl_eu_80527E98), and return entry
+// `index`. All pad-handler mask queries in this TU go through here.
+u32 getPadConfigEntry(int index) {
+    // Index stays in a saved register across the controller probe (retail
+    // keeps it in r31); each arm returns straight off its own table base
+    // (retail beq-first: non-classic reads lbl_eu_80527E98).
+    u32 idx = (u32)index;
+    if (isClassicController__Q22cf13CfGameManagerFv(-1) != 0) {
+        return lbl_eu_80527F10[idx];
+    }
+    return lbl_eu_80527E98[idx];
 }
 
-// REBUILD-STUB: body lost in the accidental clobber (pad-config writer used
-// by __ct__cf_CtrlPad); re-derive from retail ASM.
-void func_80098BD0(int index, u32 value) {
-    (void)index;
-    (void)value;
+// Pad-config table writer (retail setPadConfigEntry): store `value` at entry
+// `index` of the standard table. Used by __ct__cf_CtrlPad to copy the 30
+// pad-config entries into place.
+void setPadConfigEntry(int index, u32 value) {
+    lbl_eu_80527E98[index] = value;
 }

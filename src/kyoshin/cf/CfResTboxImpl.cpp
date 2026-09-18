@@ -14,18 +14,18 @@ using namespace cf;
 // us-801faaf0 - constructor: base CfResObjImpl ctor (parent passed through in
 // r4), then store the retail vtable label at +0x10 (manual-vtable scheme).
 cf::CfResTboxImpl* __ct__cf_CfResTboxImpl(CfResTboxImpl* ths, CfResTboxParent* parent) {
-    __ct__cf_CfResObjImpl(ths, parent);
+    __ct__cf_CfResObjImpl((cf::CfResObjImpl*)ths, (void*)parent);
     ths->vtbl() = &lbl_eu_80535204;
     return ths;
 }
 
-int func_801F8E70() { return 256; }
+int ResTbox_GetFixedSize256() { return 256; }
 
 // us-801fab34 - open test: dispatch the +0x14 vtable slot and negate the
 // bool result (retail ends at the raw neg; an int return keeps the setnz
 // off).
-int func_801F8E78(CfResTboxImpl* ths) {
-    return -(int)!ths->func_8016C860();
+int ResTbox_NegInUseState(CfResTboxImpl* ths) {
+    return -(int)!ths->ResObj_IsInUse_C860();
 }
 
 // us-801fab6c - open/activate the textbox resource. Runs the parent's
@@ -34,7 +34,7 @@ int func_801F8E78(CfResTboxImpl* ths) {
 // (selected by parent flag bits 0x20/0x10), clears flag bits 0x4/0x20000000,
 // dispatches the +0x168 anim setter and finally runs the +0x38/+0x98
 // sub-objects.
-void func_801F8EB0(CfResTboxImpl* ths) {
+void ResTbox_OpenResource(CfResTboxImpl* ths) {
     u32 outC;
     u32 out8;
     u8 buf64[0x44];
@@ -54,26 +54,26 @@ void func_801F8EB0(CfResTboxImpl* ths) {
     ths->field_08 = ths->field_08 + 1;
     mtl::MemManager::setMemInitFlag(false);
     if ((ths->field_00->field_6C & 0x20) && ths->field_00->field_98 == 0) {
-        u32 handle1 = ths->func_8016CCBC(1);
+        u32 handle1 = ths->ResObj_GetWork_CCBC(1);
         ths->field_00->field_90 = CfRes_findEntryById(entry, handle1);
         ths->field_00->field_90 =
             CfRes_lookupStrTable((char*)ths->field_00->field_90, 0, (u32**)&outC);
 float anim = ((cf::CfObject*)ths->field_00)->CfObject_getObjScale();
         u8* obj = scnImN4BuildByIdx((u8*)lbl_eu_80663E14, ths->field_00->field_90, 6, 1, 0, 0x70);
-        func_800BBADC(ths->field_00, obj);
+        CfModel_InstallSub(ths->field_00, obj);
 ((cf::CfObject*)ths->field_00)->CfObject_setObjScale(anim);
     }
     if (ths->field_00->field_6C & 0x10) {
         ((ml::FixStr<64>*)buf64)->mString[0] = 0;
         ((ml::FixStr<64>*)buf64)->mLength = 0;
         if (ths->field_00->field_9C == 0) {
-            u32 handle0 = ths->func_8016CCBC(0);
+            u32 handle0 = ths->ResObj_GetWork_CCBC(0);
             func_800AA33C(*(ml::FixStr<64>*)buf64, handle0, 0, 0);
-            u32 handle1 = ths->func_8016CCBC(1);
+            u32 handle1 = ths->ResObj_GetWork_CCBC(1);
             ths->field_00->field_94 = CfRes_findEntryById(entry, handle1);
             ths->field_00->field_94 =
                 CfRes_lookupStrTable((char*)ths->field_00->field_94, 1, (u32**)&out8);
-            ths->field_00->field_9C = (u8*)func_800584B8(
+            ths->field_00->field_9C = (u8*)initMcaFile(
                 (u32)CfRes_getD80Flag(), (u32)ths->field_00->field_94, (const char*)buf64);
         }
     }
@@ -94,9 +94,9 @@ float anim = ((cf::CfObject*)ths->field_00)->CfObject_getObjScale();
     }
 }
 
-void func_801F91B0(void) {}
+void ResTbox_EmptyStub91B0(void) {}
 
-void func_801F91B4(CfResTboxImpl* ths) {
+void ResTbox_CacheNullPtmfOnce(CfResTboxImpl* ths) {
     if (lbl_eu_80664660 == 0) {
         u32* src = __ptmf_null;
         u32* dst = (u32*)lbl_eu_805351E0;
@@ -113,11 +113,11 @@ void func_801F91B4(CfResTboxImpl* ths) {
 
 cf::CfResTboxImpl::~CfResTboxImpl() {}
 
-bool func_801F9268(unsigned char* p, int i, int j) {
+bool ResTbox_IsCellBitSet(unsigned char* p, int i, int j) {
     return p[i * 0x49 + j * 2] != 0;
 }
 
-void func_801F9288(unsigned char* base, int idx1, int idx2, int idx3) {
+void ResTbox_SetCellBit80(unsigned char* base, int idx1, int idx2, int idx3) {
     unsigned char* p = base + idx1 * 73 + idx2 * 16 + idx3 * 2;
     p[1] |= 0x80;
 }

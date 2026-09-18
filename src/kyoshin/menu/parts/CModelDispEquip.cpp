@@ -178,7 +178,7 @@ extern "C" void ModelDispEquip_ResetDisplay(CModelDispEquip* self) {
     closeFileHandle__FPP11CFileHandle(&self->modelFileHandle);
     u8* md = self->modelData;
     if (md != NULL) {
-        func_804CC1D8(lbl_eu_8065FC18, md);
+        EffSched_LookupB(lbl_eu_8065FC18, md);
         u8* md2 = self->modelData;
         if (md2 != NULL) {
             mtl::MemManager::deallocate(md2);
@@ -328,8 +328,8 @@ extern "C" void ModelDispEquip_TeardownHolder(CModelDispEquip* self, CActParamHo
             CModelDispEffectView* parent = reinterpret_cast<CModelDispEffectView*>(self);
             if (self != 0)
                 parent = reinterpret_cast<CModelDispEffectView*>(reinterpret_cast<u8*>(self) + 8);
-            func_804E3D48(e, parent);
-            func_804E3CCC(reinterpret_cast<CModelDispEffectView*>(holder->animPtrs[i]));
+            schedDetachChildSlot(e, parent);
+            schedClearFlag15Update(reinterpret_cast<CModelDispEffectView*>(holder->animPtrs[i]));
             holder->animPtrs[i] = 0;
         }
         CScnItemModel* m = reinterpret_cast<CScnItemModel*>(holder->animModelPtrs[i]);
@@ -371,7 +371,7 @@ extern "C" void ModelDispEquip_TeardownHolder(CModelDispEquip* self, CActParamHo
     closeFileHandle__FPP11CFileHandle(&self->modelFileHandle);
     // Nested re-tests: each condition reloads modelData from memory.
     if (self->modelData != 0) {
-        func_804CC1D8(lbl_eu_8065FC18, self->modelData);
+        EffSched_LookupB(lbl_eu_8065FC18, self->modelData);
         u8* md = self->modelData;
         if (md != 0) {
             mtl::MemManager::deallocate(md);
@@ -405,9 +405,9 @@ extern "C" void ModelDispEquip_BuildPartyModel(CModelDispEquip* self) {
     src[2] = *srcp++;
     CActParamHolder* holder = &self->actParamHolder;
     CTaskGame_enumListCtor(&lh);
-    func_800F4A98(CTaskGame_enumListGet(&lh), src[self->equipSlot], 0);
+    startEnumObjects(CTaskGame_enumListGet(&lh), src[self->equipSlot], 0);
     if (CTaskGame_enumListGet(&lh)->field_620 >= 1) {
-        CModelDispSlot* slot = func_800F6EC0(CTaskGame_enumListGet(&lh), 0);
+        CModelDispSlot* slot = getEntryAt(CTaskGame_enumListGet(&lh), 0);
         cf::CfObjectMove* cfMove = slot->field_04;
         if (cfMove != 0) {
             CModelDispActor* actor = getCfObjectPc(cfMove);
@@ -438,8 +438,8 @@ if (reinterpret_cast<cf::CfObject*>(&actor->move)->CfObject_getSlotBits(idx) != 
 ((u32)reinterpret_cast<cf::CfObject*>(&actor->move)->CfObject_getSlotBits(idx) >> 10) & 0x3FF;
                     }
                 }
-                holder->field_0x04 = func_800584B8(self->somePtr, actor->field_3F30, &lbl_eu_80507FF8[0]);
-                holder->field_0x08 = func_800584B8(self->somePtr,
+                holder->field_0x04 = initMcaFile(self->somePtr, actor->field_3F30, &lbl_eu_80507FF8[0]);
+                holder->field_0x08 = initMcaFile(self->somePtr,
                     reinterpret_cast<u32>(reinterpret_cast<cf::CfObjectModel*>(&actor->move)->CfObjectModel_getAnimState()), &lbl_eu_80507FF8[4]);
                 reinterpret_cast<CActParamAnim*>(&holder->actParam)->func_8004B114();
                 attachAnimObj(&holder->actParam, reinterpret_cast<CScnItemModel*>(holder->field_0x00),
@@ -497,7 +497,7 @@ if (reinterpret_cast<cf::CfObject*>(&actor->move)->CfObject_getSlotBits(idx) != 
                             if (am == 0 || holder->unk_55C == 0)
                                 continue;
                             holder->actParams[i].field_0x378 = i;
-                            func_8005A594(&holder->actParams[i]);
+                            AnimGame_SetStateFlags(&holder->actParams[i]);
                             attachAnimObj(&holder->actParams[i], am, holder->unk_55C,
                                           reinterpret_cast<cf::CfObjectModel*>(&actor->move)->CfObjectModel_getAnimFlags());
                             func_8004B9D4(&holder->actParams[i],
@@ -707,7 +707,7 @@ extern "C" void ModelDispEquip_BuildEquipModel(CModelDispEquip* self) {
         if (sub != 0) {
             reinterpret_cast<CScnItemModel*>(holder->field_0x00)->vfuncC4(
                 reinterpret_cast<CScnItemModel*>(holder->animModelPtrs[0]),
-                reinterpret_cast<u32>(func_800BBC08(sub)), 0);
+                reinterpret_cast<u32>(CfModel_GetBdatString(sub)), 0);
         }
     }
     if (holder->animModelPtrs[1] != 0) {
@@ -715,14 +715,14 @@ extern "C" void ModelDispEquip_BuildEquipModel(CModelDispEquip* self) {
         if (sub != 0) {
             reinterpret_cast<CScnItemModel*>(holder->field_0x00)->vfuncC4(
                 reinterpret_cast<CScnItemModel*>(holder->animModelPtrs[1]),
-                reinterpret_cast<u32>(func_800BBC08(sub)), 0);
+                reinterpret_cast<u32>(CfModel_GetBdatString(sub)), 0);
         }
     }
 
     u32 f7 = (u32)self->fileSlots[7].data;
     u32 f6 = (u32)self->fileSlots[6].data;
-    holder->field_0x04 = func_800584B8(self->somePtr, f7, &lbl_eu_80507FF8[0]);
-    holder->field_0x08 = func_800584B8(self->somePtr, f6, &lbl_eu_80507FF8[4]);
+    holder->field_0x04 = initMcaFile(self->somePtr, f7, &lbl_eu_80507FF8[0]);
+    holder->field_0x08 = initMcaFile(self->somePtr, f6, &lbl_eu_80507FF8[4]);
     reinterpret_cast<CActParamAnim*>(&holder->actParam)->func_8004B114();
     attachAnimObj(&holder->actParam, reinterpret_cast<CScnItemModel*>(holder->field_0x00),
                   holder->field_0x08, f6);
@@ -755,7 +755,7 @@ extern "C" void ModelDispEquip_BuildEquipModel(CModelDispEquip* self) {
         CScnItemModel* am = reinterpret_cast<CScnItemModel*>(holder->animModelPtrs[i]);
         if (am != 0 && holder->unk_55C != 0) {
             holder->actParams[i].field_0x378 = i;
-            func_8005A594(&holder->actParams[i]);
+            AnimGame_SetStateFlags(&holder->actParams[i]);
             attachAnimObj(&holder->actParams[i], am, holder->unk_55C, f8);
             func_8004B9D4(&holder->actParams[i], getAnimModelId(&holder->actParam), 0, -1, 0);
         }
@@ -876,7 +876,7 @@ int CModelDispEquip::OnFileEvent(CEventFile* event) {
             modelData = d;
             // Two-arg register call: retail passes the old buffer (d, r4)
             // alongside the manager.
-            func_804CC1BC(lbl_eu_8065FC18, d);
+            EffSched_LookupA(lbl_eu_8065FC18, d);
         }
         modelFileHandle = 0;
     }
@@ -901,7 +901,7 @@ extern "C" void ModelDispEquip_RearmAnimSlot(CModelDispEquip* self, void* arg, i
 
 extern "C" void ModelDispEquip_RearmAnimSlotChecked(CModelDispEquip* self, void* move, void* arg, int index) {
     if (move == 0) return;
-    if (func_800BBC04(arg) <= 0) return;
+    if (CfModel_UpdateBdat(arg) <= 0) return;
     CActParamHolder* holder = &self->actParamHolder;
     if (holder->animModelPtrs[index] == 0) return;
     // Stop + re-arm the animation-model slot (same shape as ModelDispEquip_RearmAnimSlot),
@@ -928,11 +928,11 @@ extern "C" void ModelDispEquip_SwapPartyEquip(CModelDispEquip* self, CModelDispP
     CModelDispFilterTbl tbl = *(const CModelDispFilterTbl*)lbl_eu_80507FDC;
     CModelDispListHolder lh;
     CTaskGame_enumListCtor(&lh);
-    func_800F4A98(CTaskGame_enumListGet(&lh), tbl.slot[self->equipSlot], 0);
+    startEnumObjects(CTaskGame_enumListGet(&lh), tbl.slot[self->equipSlot], 0);
     // Fresh enum-list walks: the count check and the slot lookup each re-call
     // CTaskGame_enumListGet (retail never reuses the previous result).
     if (CTaskGame_enumListGet(&lh)->field_620 >= 1) {
-        CModelDispSlot* slot = func_800F6EC0(CTaskGame_enumListGet(&lh), 0);
+        CModelDispSlot* slot = getEntryAt(CTaskGame_enumListGet(&lh), 0);
         cf::CfObjectMove* cfMove = slot->field_04;
         if (cfMove != 0) {
             CModelDispActor* actor = getCfObjectPc(cfMove);
@@ -993,11 +993,11 @@ extern "C" void ModelDispEquip_SwapWeaponEquip(CModelDispEquip* self, u32 unused
         switch (subKind) {
         case 0:
             index = 0;
-            arg = func_800BBC08((u8)func_8014235C(self->weaponId, &lbl_eu_80507FF8[0x62], 0));
+            arg = CfModel_GetBdatString((u8)func_8014235C(self->weaponId, &lbl_eu_80507FF8[0x62], 0));
             break;
         case 1:
             index = 1;
-            arg = func_800BBC08((u8)func_8014235C(self->weaponId, &lbl_eu_80507FF8[0x62], 1));
+            arg = CfModel_GetBdatString((u8)func_8014235C(self->weaponId, &lbl_eu_80507FF8[0x62], 1));
             break;
         }
         if (arg != 0)
@@ -1007,11 +1007,11 @@ extern "C" void ModelDispEquip_SwapWeaponEquip(CModelDispEquip* self, u32 unused
         switch (subKind) {
         case 0:
             index = 0;
-            arg = func_800BBC08((u8)func_8014235C(self->weaponId, &lbl_eu_80507FF8[0x58], 0));
+            arg = CfModel_GetBdatString((u8)func_8014235C(self->weaponId, &lbl_eu_80507FF8[0x58], 0));
             break;
         case 1:
             index = 1;
-            arg = func_800BBC08((u8)func_8014235C(self->weaponId, &lbl_eu_80507FF8[0x58], 1));
+            arg = CfModel_GetBdatString((u8)func_8014235C(self->weaponId, &lbl_eu_80507FF8[0x58], 1));
             break;
         }
         if (arg != 0)
@@ -1104,7 +1104,7 @@ extern "C" void ModelDispEquip_HandleSlotCmd(CModelDispEquip* self, u32 unused,
                     if (parent != 0)
                         parent = reinterpret_cast<CModelDispEffectView*>(
                             reinterpret_cast<u8*>(parent) + 8);
-                    func_804E3D0C(effect, parent);
+                    schedAttachChildSlot(effect, parent);
                     void* chain =
                         reinterpret_cast<void*>(reinterpret_cast<CScnItemModel*>(holder->animModelPtrs[i])->vfuncA8());
                     reinterpret_cast<CModelDispEffectView*>(

@@ -1204,7 +1204,7 @@ logout_fail:
     return false;
 }
 
-extern "C" void func_eu_80457318(u32 val) {
+extern "C" void CDeviceFont_SetSharedText(u32 val) {
     extern u32 lbl_eu_80665680; // sdata2: font device config/state value
     lbl_eu_80665680 = val;
 }

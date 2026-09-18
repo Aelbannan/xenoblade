@@ -50,8 +50,8 @@ struct CfMapMineManager;
 
 // External runtime / game functions (retail-unmangled symbols)
 #include "kyoshin/plugin/ocBdat.hpp"  // getBdatStringColumnValue (owner)
-extern "C" u32 func_8003B1EC(void* file);
-extern "C" u32 func_8003B41C(void* file);
+extern "C" u32 Bdat_GetMaxRow_B1EC(void* file);
+extern "C" u32 Bdat_GetRowBase_B41C(void* file);
 extern "C" int CfRes_getD80Flag();
 extern "C" u32 CfRes_getAllocHandle();
 extern "C" const f32 lbl_eu_806682B0;
@@ -65,7 +65,7 @@ extern "C" int mtRand__Q22ml4mathFii(int lo, int hi);
 extern "C" void* lookupWorkAtAddr(void* obj);
 extern "C" void gmFileObject(void* obj);
 extern "C" void* func_80186BC8(int id);
-extern "C" void func_800BFBF4(u16 id, int mode);
+extern "C" void ObjObj_SetMoveId_FBF4(u16 id, int mode);
 extern "C" void setLODParam__8CTaskLODFv(u32 a, u32 b, f64 c);
 extern "C" u16 playActorSound__Q22cf10CfSoundManFUlUlUlUlf(u32 a, u32 b, u32 c,
                                                           u32 d, f32 e);
@@ -75,20 +75,20 @@ extern "C" void CItemData_callVf0C(void* item, u16 v);
 extern "C" void CItem_resolveFamilyBdat(u16 v, void* outA, void* outB);
 extern "C" int* CtrlObjectParam_GetSlotTableBase();
 extern "C" void* func_8009EC9C(u32 index);
-extern "C" u32 func_8009CF8C(u32 v);
-extern "C" int func_8026178C(void* data, u32 flag);
-extern "C" u32 func_8025FB10(void* data, u32 flag);
+extern "C" u32 CtrlRemote_TouchBitByArg(u32 v);
+extern "C" int Counter_TestBit(void* data, u32 flag);
+extern "C" u32 IdTable_SumValues(void* data, u32 flag);
 extern "C" void* CItemData_lookupOrAlloc(void* item, int v);
 extern "C" void CUICfManager_queueGetItemMenuById(void* mgr);
 extern "C" void* getInstance__Fv();
 extern "C" void* func_800B20B4(void* a, u32 b, u32 c, u32 d);
-extern "C" void func_800C13FC(void* obj, void* name, u32 len);
+extern "C" void ObjPoint_SetName_13FC(void* obj, void* name, u32 len);
 extern "C" void setChildB59__(void* obj, int mode);
 extern "C" void bindPartnerO_(void* obj, void* player, u32 v);
 extern "C" int func_8013EB90(int v);
-extern "C" int func_800FF738();
+extern "C" int CMainMenu_IsOpen();
 extern "C" void UIWin_CreateSysWin0(void* a, u32 b, u32 c);
-extern "C" void* func_800FE68C();
+extern "C" void* Selector_GetInstance();
 extern "C" void* createNpcActor__Q22cf13CfGameManagerFv(u32 value);
 extern "C" void* isTimerActive__Q22cf13CfGameManagerFv();
 extern "C" int isAnyFieldFlagSet__Q22cf13CfGameManagerFv();

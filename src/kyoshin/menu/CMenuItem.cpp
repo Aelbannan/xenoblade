@@ -10,7 +10,7 @@
 #include "monolib/util/MemManager.hpp"
 #include "monolib/work/CWorkThreadSystem.hpp"
 
-unsigned long func_80167A18(void) { return *(unsigned long*)(&lbl_eu_80664258) != 0; }
+unsigned long ItemMenu_IsPresent(void) { return *(unsigned long*)(&lbl_eu_80664258) != 0; }
 
 /* Item-menu main input handler. Syncs the help bar to the grid mode, then
  * decodes the pad: turbo/pressed masks for cancel/page-turn/decide, and
@@ -56,7 +56,7 @@ void func_80167A2C(CMenuItem* self) {
         } else {
             // Scroll failed: hide the help prompt, refresh the grid and move
             // to state 3.
-            func_801C414C(reinterpret_cast<CTitleAHelp*>(&self->mTitleAHelp[0]));
+            beginClose(reinterpret_cast<CTitleAHelp*>(&self->mTitleAHelp[0]));
             AdvanceBoxState(reinterpret_cast<CItemBoxGrid*>(&self->mItemBoxGrid[0]));
             self->mState = 3;
         }
@@ -77,10 +77,10 @@ void func_80167A2C(CMenuItem* self) {
     }
 }
 
-void func_80167C30(void* self) { reinterpret_cast<CMenuItem*>((char*)self - 0x58)->cbRenderBefore(); }
+void ItemMenu_ThunkRender58(void* self) { reinterpret_cast<CMenuItem*>((char*)self - 0x58)->cbRenderBefore(); }
 
 extern "C" void __dt__9CMenuItemFv(void*, int);
-void func_80167C38(void* self) { ((void(*)(void*))__dt__9CMenuItemFv)((char*)self - 0x58); }
+void ItemMenu_ThunkDtor58(void* self) { ((void(*)(void*))__dt__9CMenuItemFv)((char*)self - 0x58); }
 
 /*
  * Menu item-screen singleton constructor (retail symbol keeps its unmangled

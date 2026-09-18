@@ -12,7 +12,7 @@ class CScnItemLightNw4r;
 
 // A scene light item. Holds a reference to the owning CScnItemLightNw4r
 // object (+0x04), a small opaque "light env" sub-object (+0x14) constructed
-// by func_804950F4/destroyed by __dt__80495200, an nw4r g3d LightSetting
+// by constructLightEnv/destroyed by __dt__80495200, an nw4r g3d LightSetting
 // (+0x944) used to push lighting into a scene root, and a display name.
 class CScnItemLight {
 public:
@@ -46,5 +46,5 @@ public:
 };
 
 // free functions (retail symbols)
-extern "C" void func_80482388(CScnItemLight* self);
-extern "C" void func_80482400(CScnItemLightNw4r* self);
+extern "C" void forwardItemLightEnv(CScnItemLight* self);
+extern "C" void importItemLightSetting(CScnItemLightNw4r* self);

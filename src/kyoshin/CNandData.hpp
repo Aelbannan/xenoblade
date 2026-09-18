@@ -4,13 +4,16 @@
 #include "monolib/nand/CNBanner.hpp"
 
 // BDAT string getters for the NAND save banner title/description
-// (defined in kyoshin/CErrMes.cpp).
-const char* func_eu_802B14A4();
-const char* func_eu_802B14BC();
+// (defined in kyoshin/CErrMes.cpp with C linkage, matching the retail
+// flat relocs -- keep extern "C" so call sites emit unmangled names).
+extern "C" {
+const char* getErrMesText19();
+const char* getErrMesText20();
+}
 
 // Module init routine that populates the NAND save banner singleton
 // (defined in kyoshin/CNandData.cpp, called from kyoshin/main.cpp).
-void func_eu_802B11C0();
+void NandData_SetupBanner_11C0();
 
 // Banner image file pointer (retail .sdata object, SDA21-referenced).
 extern const char* lbl_eu_80662E00;
@@ -33,7 +36,7 @@ public:
     }
 
     // Allows the module init routine to reach the private statics.
-    friend void func_eu_802B11C0();
+    friend void NandData_SetupBanner_11C0();
 
 private:
     static CNandData sInstance;

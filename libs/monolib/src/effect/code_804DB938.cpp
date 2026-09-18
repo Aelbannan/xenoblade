@@ -58,7 +58,7 @@ static void CERotTrig(Mtx m, f32 rad, char axis) {
 
 // idx-first variant of CERotTrig: identical body, but declaring the %360
 // result before the (float)n cast flips MWCC's scratch coloring for callers
-// whose register context needs mulhw r3 / xoris r0 (func_804DD0A0).
+// whose register context needs mulhw r3 / xoris r0 (CERot_AxisToMatrix).
 static void CERotTrigIdxFirst(Mtx m, f32 rad, char axis) {
     f32 deg = lbl_eu_8066B260 * rad;
     int n = (int)deg;
@@ -231,7 +231,7 @@ void func_804DD5B0(ml::CMat34* mtx, f32 rad) {
 // rotation" (identity). Returns false when the vector is not single-axis.
 // ---------------------------------------------------------------------------
 
-int func_804DD0A0(Mtx mtx, const Vec* v) {
+int CERot_AxisToMatrix(Mtx mtx, const Vec* v) {
     // NOTE: uses the idx-first trig variant (mulhw r3 / xoris r0 like
     // retail); shared CERotTrig stays frac-first for the cardinal builders.
     // func_804DCA88/DCD94 use it too.
@@ -267,7 +267,7 @@ int func_804DD0A0(Mtx mtx, const Vec* v) {
 
 // Order X, Y, Z.
 // NOTE: idx-first trig variant — this caller's register context needs
-// mulhw r3 / xoris r0 like retail (see func_804DD0A0).
+// mulhw r3 / xoris r0 like retail (see CERot_AxisToMatrix).
 void func_804DCA88(ml::CMat34* mtx, const Vec* ang) {
     // Retail frame slots run work(0x98) > rotY(0x68) > work2(0x38) > rotZ(0x8):
     // first-declared local takes the highest slot.
@@ -275,7 +275,7 @@ void func_804DCA88(ml::CMat34* mtx, const Vec* ang) {
     ml::CMat34 rotY;
     ml::CMat34 work2;
     ml::CMat34 rotZ;
-    if (func_804DD0A0(mtx->mtx, ang) != 0) {
+    if (CERot_AxisToMatrix(mtx->mtx, ang) != 0) {
         return;
     }
     CERotTrigIdxFirst(mtx->mtx, ang->x, 'x');
@@ -298,7 +298,7 @@ void func_804DCD94(ml::CMat34* mtx, const Vec* ang) {
     ml::CMat34 rotX;
     ml::CMat34 work2;
     ml::CMat34 rotY;
-    if (func_804DD0A0(mtx->mtx, ang) != 0) {
+    if (CERot_AxisToMatrix(mtx->mtx, ang) != 0) {
         return;
     }
     CERotTrigIdxFirst(mtx->mtx, ang->z, 'z');
@@ -320,7 +320,7 @@ void func_804DCD94(ml::CMat34* mtx, const Vec* ang) {
 void func_804DB980(ml::CMat34* mtx, const Vec* ang, int order) {
     switch (order) {
     case 0: { // X,Y,Z
-        if (func_804DD0A0(mtx->mtx, ang) != 0) {
+        if (CERot_AxisToMatrix(mtx->mtx, ang) != 0) {
             return;
         }
         CERotTrigIdxFirst(mtx->mtx, ang->x, 'x');
@@ -340,7 +340,7 @@ void func_804DB980(ml::CMat34* mtx, const Vec* ang, int order) {
         break;
     }
     case 1: { // X,Z,Y
-        if (func_804DD0A0(mtx->mtx, ang) != 0) {
+        if (CERot_AxisToMatrix(mtx->mtx, ang) != 0) {
             return;
         }
         CERotTrigIdxFirst(mtx->mtx, ang->x, 'x');
@@ -358,7 +358,7 @@ void func_804DB980(ml::CMat34* mtx, const Vec* ang, int order) {
         break;
     }
     case 2: { // Y,X,Z
-        if (func_804DD0A0(mtx->mtx, ang) != 0) {
+        if (CERot_AxisToMatrix(mtx->mtx, ang) != 0) {
             return;
         }
         CERotTrigIdxFirst(mtx->mtx, ang->y, 'y');
@@ -376,7 +376,7 @@ void func_804DB980(ml::CMat34* mtx, const Vec* ang, int order) {
         break;
     }
     case 3: { // Y,Z,X
-        if (func_804DD0A0(mtx->mtx, ang) != 0) {
+        if (CERot_AxisToMatrix(mtx->mtx, ang) != 0) {
             return;
         }
         CERotTrigIdxFirst(mtx->mtx, ang->y, 'y');
@@ -394,7 +394,7 @@ void func_804DB980(ml::CMat34* mtx, const Vec* ang, int order) {
         break;
     }
     case 4: { // Z,X,Y
-        if (func_804DD0A0(mtx->mtx, ang) != 0) {
+        if (CERot_AxisToMatrix(mtx->mtx, ang) != 0) {
             return;
         }
         CERotTrigIdxFirst(mtx->mtx, ang->z, 'z');
@@ -412,7 +412,7 @@ void func_804DB980(ml::CMat34* mtx, const Vec* ang, int order) {
         break;
     }
     case 5: { // Z,Y,X
-        if (func_804DD0A0(mtx->mtx, ang) != 0) {
+        if (CERot_AxisToMatrix(mtx->mtx, ang) != 0) {
             return;
         }
         CERotTrigIdxFirst(mtx->mtx, ang->z, 'z');
@@ -433,7 +433,7 @@ void func_804DB980(ml::CMat34* mtx, const Vec* ang, int order) {
 }
 
 // Axis order remap used by the effect system.
-int func_804DD6E8(int val) {
+int CERot_RemapIndex(int val) {
     switch (val) {
         case 0: return 5;
         case 1: return 3;

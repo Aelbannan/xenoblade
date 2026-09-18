@@ -8,23 +8,23 @@ namespace cf { class CBattleManager; class CfObjectMove; class CfGameManager; cl
 // Forward decl: cf::CfGameManager::getPlayer(int)
 namespace cf { class CfGameManager { public: static cf::CfObjectMove* getPlayer(int); }; }
 
-// retail: func_802A0950(self+0x74, r4, 0xAA, r5, (arg3!=0) ? 0x5F : 0, self)
+// retail: chainBindEffectLink(self+0x74, r4, 0xAA, r5, (arg3!=0) ? 0x5F : 0, self)
 extern "C" void func_80282020(void* self, void* a, void* b, int c, int d) {
     // retail arg order: r3=effect, r4=a, r5=0xAA, r6=self, r7=b, r8=cond
-    func_802A0950((cf::CChainEffect*)((char*)self + 0x74), (int)a, 0xAA, (int)self,
+    chainBindEffectLink((cf::CChainEffect*)((char*)self + 0x74), (int)a, 0xAA, (int)self,
                   (int)b, (c != 0) ? 0x5F : 0);
 }
-int func_802A0804(int, int);
+extern "C" int chainResolveMemberFromSrc(int, int);
 
-int func_80282048(int arg) {
-    return func_802A0804(0xb3, arg);
+extern "C" int forwardChainVoiceB3(int arg) {
+    return chainResolveMemberFromSrc(0xb3, arg);
 }
 struct ChainActorInnerData {
     u8 _pad00[0x3f28];
     unsigned short field_3f28;
 };
 
-int func_80282174(void* self) {
+extern "C" int translateChainActorState(void* self) {
     cf::CChainActor* actor = static_cast<cf::CChainActor*>(self);
     ChainActorInnerData* inner = reinterpret_cast<ChainActorInnerData*>(static_cast<uintptr_t>(actor->unk0));
     int value = inner->field_3f28;
@@ -36,9 +36,9 @@ int func_80282174(void* self) {
     if (value == 13) return 12;
     return value;
 }
-bool func_802A0AA0(void*);
-bool func_8028245C(void* self) { return func_802A0AA0((void*)((char*)self + 0x74)); }
-bool func_80282464() { return true; }
+extern "C" bool chainUnlinkOnOwnerMatch(void*);
+extern "C" bool isChainEffectReady(void* self) { return chainUnlinkOnOwnerMatch((void*)((char*)self + 0x74)); }
+extern "C" bool isChainActorEnabled() { return true; }
 // Real class tree: CChainActorPc is novtable, vptr at +0x70 (0x70 pad), ctor writes lbl_eu_805384E0 (JP __vt__Q22cf13CChainActorPc).
 // Slot +0x48 (index 18 overall, vt offset 0x48) is CChain_getZero_A9FC: int(void* p) - owned by cf::CChainActorPc (leaf override of base A9FC).
 // Thunk at +0x44 (func_8028246C) forwards via this->CChain_getZero_A9FC(*(void**)arg).
@@ -46,10 +46,10 @@ namespace cf {
 CChainActorPc::CChainActorPc() { vtbl() = &lbl_eu_805384E0; }
 CChainActorPc::~CChainActorPc() {}
 void CChainActorPc::CChain_setFieldAndClear(int) {}
-void CChainActorPc::func_80279B34() {}
-void CChainActorPc::func_80279DC0() {}
-void CChainActorPc::func_80279E48(int) {}
-void CChainActorPc::func_80279F6C(int) {}
+void CChainActorPc::CChainActor_CleanupVoiceEnd() {}
+void CChainActorPc::CChainActor_ClearTargetRef() {}
+void CChainActorPc::CChainActor_ToggleCancelVoice(int) {}
+void CChainActorPc::CChainActor_ToggleMoveFlag(int) {}
 int CChainActorPc::func_8027A024(int) { return 0; }
 int CChainActorPc::func_8027A338(int) { return 0; }
 int CChainActorPc::func_8027A58C() { return 0; }
@@ -68,31 +68,31 @@ int CChainActorPc::CChain_getChainCount() { return 0; }
 int CChainActorPc::CChain_getZero_A584() { return 0; }
 int CChainActorPc::CChain_getZero_A9D8() { return 0; }
 void CChainActorPc::CChain_noop_79768(int) {}
-int CChainActorPc::func_80278F70() { return 0; }
-void CChainActorPc::func_80278F5C(int) {}
-int CChainActorPc::func_8027A324() { return 0; }
+int CChainActorPc::CChainActor_FetchRunKey() { return 0; }
+void CChainActorPc::CChainActor_FwdRunKey(int) {}
+int CChainActorPc::CChainActor_NotifyBattleObj() { return 0; }
 int CChainActorPc::CChain_getZero_A9D0() { return 0; }
 }
 extern "C" void func_8028246C(cf::CChainActorPc* self, void* arg) {
     self->CChain_getZero_A9FC(*(void**)arg);
 }
-int func_80282480(void*, void* p) {
+extern "C" int testChainActorBit(void*, void* p) {
     return ((*(int*)((char*)p + 0x3f00) >> 1) & 1);
 }
-void func_80277154();
-void func_8028248C() {
-    func_80277154();
+extern "C" void CChain_QueryVoiceNode();
+extern "C" void queryChainVoice() {
+    CChain_QueryVoiceNode();
 }
-// retail: func_80276CAC(a, *(self), b ? *b : 0)
-extern "C" void func_80276CAC(void* a, void* b, void* c);
-extern "C" void func_80282490(void* self, void* a, void* b) {
-    func_80276CAC(a, *(void**)self, b ? *(void**)b : 0);
+// retail: CChain_ReloadVoiceDispatch(a, *(self), b ? *b : 0)
+extern "C" void CChain_ReloadVoiceDispatch(void* a, void* b, void* c);
+extern "C" void reloadChainVoice(void* self, void* a, void* b) {
+    CChain_ReloadVoiceDispatch(a, *(void**)self, b ? *(void**)b : 0);
 }
 
 // Resets chain state (setFieldAndClear) and clears the chain effect.
-extern "C" void func_80281924(cf::CChainActorPc* self, int val) {
+extern "C" void resetChainActor(cf::CChainActorPc* self, int val) {
     CChain_setFieldAndClear(self, val);
-    func_802A08F4((cf::CChainEffect*)((char*)self + 0x74));
+    chainClearTwoWords((cf::CChainEffect*)((char*)self + 0x74));
 }
 // Local struct for accessing known fields within the large object at self->unk0
 struct CChainBigObj {
@@ -105,10 +105,10 @@ struct CChainBigObj {
 };
 
 // Shared external declarations
-extern void ColiSetMoveEnableFlag(void*, int);
-extern void func_80279B34(cf::CChainActorPc*);
+extern "C" void ColiSetMoveEnableFlag(void*, int);
+extern void CChainActor_CleanupVoiceEnd(cf::CChainActorPc*);
 extern u8* func_80282380(cf::CChainActorPc*);
-extern void func_80279E48(cf::CChainActorPc*, int);
+extern void CChainActor_ToggleCancelVoice(cf::CChainActorPc*, int);
 __declspec(section ".sdata2") __attribute__((aligned(8))) const float lbl_eu_80668AE8 = 1.0f;
 __declspec(section ".sdata2") const float lbl_eu_80668AEC = 0.0f;
 __declspec(section ".sdata2") const float lbl_eu_80668AF0 = 0.01f;
@@ -118,7 +118,7 @@ __declspec(section ".sdata2") __attribute__((aligned(8))) const double lbl_eu_80
 // Uses multi-exit guard pattern to match retail control flow.
 void func_80281958(cf::CChainActorPc* self) {
     CChainBigObj* big = (CChainBigObj*)self->unk0;
-    func_80279B34(self);
+    CChainActor_CleanupVoiceEnd(self);
     if (!(self->unk6C & 1)) goto tail_check;
     if (((int(*)(u8*))((u8**)self->mVTable())[16])((u8*)self) == 0) goto state5_check;
     if (((int(*)(u8*))((u8**)self->mVTable())[26])((u8*)self) != 0) goto state5_check;
@@ -183,21 +183,21 @@ tail_check:
         }
     }
 }
-// Resets the chain effect and calls func_80279DC0 on this actor.
-extern "C" void func_80281CB8(cf::CChainActorPc* self) {
-    func_802A0904((cf::CChainEffect*)((char*)self + 0x74));
-    func_80279DC0(self);
+// Resets the chain effect and calls CChainActor_ClearTargetRef on this actor.
+extern "C" void clearChainTarget(cf::CChainActorPc* self) {
+    chainTeardownLinkClear((cf::CChainEffect*)((char*)self + 0x74));
+    CChainActor_ClearTargetRef(self);
 }
 // External declarations specific to func_80281CF0
 extern void* func_8009EC9C(u32 index);
 extern int CtrlObjectParam_GetCurrentRowKey(void*);
-extern u32 func_8025FB10(u8*, u32);
+extern u32 IdTable_SumValues(u8*, u32);
 extern u8* getListB28();
 extern float func_800D81A8(int, u8*, int);
 
 // Processes chain actor damage/healing based on arg.
 // Multi-exit guard pattern:
-//   arg == bit  -> skip to end (call func_80279E48)
+//   arg == bit  -> skip to end (call CChainActor_ToggleCancelVoice)
 //   arg == 0    -> healing/damage loop over all battle actors
 //   arg != 0    -> check battle-manager flag 0xeb; may trigger chain-end vfunc
 void func_80281CF0(cf::CChainActorPc* self, int arg) {
@@ -234,7 +234,7 @@ arg0:
     float f30;
     if (((int(*)(u8*))(*(u8***)unk0obj)[164])(unk0obj) != 0) {
         u8* param = (u8*)((int(*)(u8*))(*(u8***)unk0obj)[164])(unk0obj);
-        f30 = lbl_eu_80668AF0 * (float)(s16)func_8025FB10(param, 0x44);
+        f30 = lbl_eu_80668AF0 * (float)(s16)IdTable_SumValues(param, 0x44);
     } else {
         f30 = lbl_eu_80668AEC;
     }
@@ -259,19 +259,19 @@ arg0:
         }
     }
 done:
-    func_80279E48(self, arg);
+    CChainActor_ToggleCancelVoice(self, arg);
 }
-// Retail symbol: func_80279F6C
+// Retail symbol: CChainActor_ToggleMoveFlag
 
 // Sets a chain actor flag and optionally resets chain field via ColiSetMoveEnableFlag
 // when arg is 0 and the current bit state differs.
-extern "C" void func_80281F38(cf::CChainActorPc* self, int arg) {
+extern "C" void updateChainMoveFlag(cf::CChainActorPc* self, int arg) {
     // Use u32 compare to force cmpl (unsigned) to match retail
     u32 bit = (self->unk6C >> 1) & 1;
     if ((u32)arg != bit && arg == 0) {
         ColiSetMoveEnableFlag((void*)(self->unk0 + 0x44a8), 1);
     }
-    func_80279F6C(self, arg);
+    CChainActor_ToggleMoveFlag(self, arg);
 }
 // Data pad so the C++ vptr lands at +0x70 (retail lwz r12, 0x70(r3)).
 struct CChainActorPcV70Data {
@@ -314,7 +314,7 @@ struct CChainActorPcV29View : CChainActorPcV70Data {
 // Checks preconditions before calling func_8027A024 to execute chain logic.
 // Returns 0 if the actor is inactive (vtable check) or if a battle-manager
 // flag 0xf8 is set on the unk0 object; otherwise delegates to func_8027A024.
-extern "C" int func_80281FA0(cf::CChainActorPc* self, void* arg) {
+extern "C" int checkChainActorReady(cf::CChainActorPc* self, void* arg) {
     if (static_cast<CChainActorPcV29View*>(static_cast<void*>(self))->v27() != 0) {
         return 0;
     }
@@ -324,7 +324,7 @@ extern "C" int func_80281FA0(cf::CChainActorPc* self, void* arg) {
 }
 // Checks if this actor is the player's current actor.
 // Compares getPlayer(0) against unk0 + 0x3e9c (or 0 if unk0 is null).
-extern "C" int func_80282054(cf::CChainActor* self) {
+extern "C" int isChainActorPlayer(cf::CChainActor* self) {
     u32 addr = self->unk0;
     if (addr != 0) {
         addr += 0x3e9c;
@@ -332,18 +332,18 @@ extern "C" int func_80282054(cf::CChainActor* self) {
     return (void*)addr == cf::CfGameManager::getPlayer(0);
 }
 // Returns true if CBattleManager+0x194 >= 300.
-extern "C" int func_8028209C() {
+extern "C" int isChainMeterFull() {
     return *(int*)((u8*)getInstance__Q22cf14CBattleManagerFv() + 0x194) >= 0x12c;
 }
-extern "C" void func_802820D4() {
-    extern void func_8018C8F4(void* self, int a);
-    func_8018C8F4((u8*)getInstance__Q22cf14CBattleManagerFv() + 0x194, 0);
+extern "C" void resetChainMeter() {
+    extern void PartyGaugeSetClamped(void* self, int a);
+    PartyGaugeSetClamped((u8*)getInstance__Q22cf14CBattleManagerFv() + 0x194, 0);
 }
 // Compares the halfword at this->unk0 + 0x3f28 against the result of
 // CtrlObjectParam_GetSlotTableBase() (a global config struct). Returns 0, 1, or 2 if the
 // value matches fields at offsets 4, 8, or 12 respectively; returns 3
 // otherwise.
-extern "C" int func_80282100(cf::CChainActorPc* self) {
+extern "C" int matchChainActorSlot(cf::CChainActorPc* self) {
     int* config = CtrlObjectParam_GetSlotTableBase();
     u16 value = *(u16*)(self->unk0 + 0x3f28);
     if (value == config[1]) return 0;

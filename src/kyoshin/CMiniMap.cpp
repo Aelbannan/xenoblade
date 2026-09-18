@@ -31,7 +31,7 @@ extern "C" void __dl__FPv(void* p);
 // Offset-adjusted vtable dispatch thunk: the CMenuMiniMap2 subobject sits at
 // self-0x58, so adjust and tail-jump straight to the dtor (retail:
 // subi r3,r3,0x58 / b __dt__13CMenuMiniMap2Fv).
-void func_8011C434(void* self) { ((void(*)(void*))__dt__13CMenuMiniMap2Fv)((char*)self - 0x58); }
+void MiniMap2DtorThunk58(void* self) { ((void(*)(void*))__dt__13CMenuMiniMap2Fv)((char*)self - 0x58); }
 
 // (func_80117734 defined below, after the MiniMapObj view declaration)
 
@@ -124,20 +124,20 @@ extern "C" char lbl_eu_804FE1FC[];       // string pool (columns/formats/names)
 extern "C" {
 void CTaskGame_enumListCtor(void* holder);
 void* CTaskGame_enumListGet(void* holder);
-u32 func_8009CF8C(u32 resourceId);
+u32 CtrlRemote_TouchBitByArg(u32 resourceId);
 u8 BdatGetU8Direct(u32, const char*, u32);
 u16 BdatGetU16Direct(void*, const char*, u32);
 s16 BdatGetS16Direct(void*, const char*, u32);
-u32 func_8003B1EC(void*);
+u32 Bdat_GetMaxRow_B1EC(void*);
 void __dt__80043E88(void* holder, int);
-void func_800F4A98(void* list, u32 type, u32 filter);
+void startEnumObjects(void* list, u32 type, u32 filter);
 void* __ct__800FB044(void* list, f32, void* obj, int);
 void* getCfObjectPc__FPQ22cf12CfObjectMove(void* obj);
 void* prepareReslistArg(int);
 void* getReslistBC8();
 void* getReslistB68();
 void* prepareReslistC28();
-u32 func_800F6E98(void* list, u32 index);
+u32 getObjectIdAt(void* list, u32 index);
 void* CPartsChange_GetLandmarkTable();
 void func_800ABC5C(ml::CVec3* out, void* obj);
 void clearFrmHeap__17UnkClass_8045F564Fv(void* self);
@@ -151,7 +151,7 @@ void func_80141DC4(ml::CVec3* out, u32 index);
 nw4r::lyt::ArcResourceAccessor* CUICfManager_getArcResourceAccessor();
 void PaneSetVtxColorAll(void* pic, s32 arg);
 void func_80116B40(void* self);
-void* func_801167EC(void* self);
+void* MiniMapFillMarkerEntry(void* self);
 void func_8011628C(void* self, u32 row);
 void func_801160A8(void* self, void* table, void* layout, f32 scale);
 void func_80116670(CMiniMapGimmickView* self, u32 arg, void* layout, f32 scale);
@@ -217,7 +217,7 @@ extern "C" void __ct__CMiniMap(CMiniMap* self) {
     sprintf(buf, strings + 0x147, lbl_eu_8052C740[lbl_eu_80664184 - 1]);
     lbl_eu_80663FB8 = getFP__FPCc(buf);
 
-    func_80115FD0((MiniMapTable*)self->mField3C.mW);
+    MiniMapInitTable3x5((MiniMapTable*)self->mField3C.mW);
     func_801165EC((CMiniMapGimmickView*)self->mField17C.mW);
     new (&self->m824) UnkClass_8045F564();
     new (&self->m834) UnkClass_8045F564();
@@ -703,7 +703,7 @@ extern "C" void func_80118854(MiniMapSelf* self) {
     obj = (MiniMapObj*)getCfObjectPc__FPQ22cf12CfObjectMove(cf::CfGameManager::getPlayer(0));
     CTaskGame_enumListCtor(&holder);
     list = (MiniMapEnumList*)CTaskGame_enumListGet(&holder);
-    func_800F4A98(list, 0xB00, 0);
+    startEnumObjects(list, 0xB00, 0);
     {
         void* playerPos = ((MiniMapObj*)cf::CfGameManager::getPlayer(0))->GetPos();
         __ct__800FB044(CTaskGame_enumListGet(&holder), lbl_eu_806670B8 * self->m20, playerPos, 0);
@@ -737,7 +737,7 @@ extern "C" void func_80118854(MiniMapSelf* self) {
         u8 guard[0x10];
         __ct__14Class_8045F858FP17UnkClass_8045F564(guard, (u8*)self + 0x834);
         {
-            u16 row = (u16)func_8009CF8C(32);
+            u16 row = (u16)CtrlRemote_TouchBitByArg(32);
             if (row != 0) {
                 if ((u8)BdatGetU8Direct(self->m24, &lbl_eu_804FE1FC[649], row) ==
                     (u8)lbl_eu_80664184) {
@@ -765,7 +765,7 @@ extern "C" void func_80118854(MiniMapSelf* self) {
                                     ppos.y = pposPtr->y;
                                     ppos.z = pposPtr->z;
                                     f32 playerY = ppos.y;
-                                    u8 count = (u8)func_8003B1EC(lbl_eu_80663FB8);
+                                    u8 count = (u8)Bdat_GetMaxRow_B1EC(lbl_eu_80663FB8);
                                     for (u8 i = 1; i <= count; i++) {
                                         s16 v = BdatGetS16Direct(lbl_eu_80663FB8,
                                                               &lbl_eu_804FE1FC[48], i);
@@ -775,7 +775,7 @@ extern "C" void func_80118854(MiniMapSelf* self) {
                                 }
                                 int found = 0;
                                 {
-                                    u8 count = (u8)func_8003B1EC(lbl_eu_80663FB8);
+                                    u8 count = (u8)Bdat_GetMaxRow_B1EC(lbl_eu_80663FB8);
                                     for (u8 j = 1; j <= count; j++) {
                                         s16 v = BdatGetS16Direct(lbl_eu_80663FB8,
                                                               &lbl_eu_804FE1FC[48], j);
@@ -869,7 +869,7 @@ extern "C" void func_80118854(MiniMapSelf* self) {
                                     ppos.y = pposPtr->y;
                                     ppos.z = pposPtr->z;
                                     f32 playerY = ppos.y;
-                                    u8 count = (u8)func_8003B1EC(lbl_eu_80663FB8);
+                                    u8 count = (u8)Bdat_GetMaxRow_B1EC(lbl_eu_80663FB8);
                                     for (u8 i = 1; i <= count; i++) {
                                         s16 v = BdatGetS16Direct(lbl_eu_80663FB8,
                                                               &lbl_eu_804FE1FC[48], i);
@@ -879,7 +879,7 @@ extern "C" void func_80118854(MiniMapSelf* self) {
                                 }
                                 int found = 0;
                                 {
-                                    u8 count = (u8)func_8003B1EC(lbl_eu_80663FB8);
+                                    u8 count = (u8)Bdat_GetMaxRow_B1EC(lbl_eu_80663FB8);
                                     for (u8 j = 1; j <= count; j++) {
                                         s16 v = BdatGetS16Direct(lbl_eu_80663FB8,
                                                               &lbl_eu_804FE1FC[48], j);
@@ -923,7 +923,7 @@ extern "C" void func_80118854(MiniMapSelf* self) {
                                     ppos.y = pposPtr->y;
                                     ppos.z = pposPtr->z;
                                     f32 playerY = ppos.y;
-                                    u8 count = (u8)func_8003B1EC(lbl_eu_80663FB8);
+                                    u8 count = (u8)Bdat_GetMaxRow_B1EC(lbl_eu_80663FB8);
                                     for (u8 i = 1; i <= count; i++) {
                                         s16 v = BdatGetS16Direct(lbl_eu_80663FB8,
                                                               &lbl_eu_804FE1FC[48], i);
@@ -933,7 +933,7 @@ extern "C" void func_80118854(MiniMapSelf* self) {
                                 }
                                 int found = 0;
                                 {
-                                    u8 count = (u8)func_8003B1EC(lbl_eu_80663FB8);
+                                    u8 count = (u8)Bdat_GetMaxRow_B1EC(lbl_eu_80663FB8);
                                     for (u8 j = 1; j <= count; j++) {
                                         s16 v = BdatGetS16Direct(lbl_eu_80663FB8,
                                                               &lbl_eu_804FE1FC[48], j);
@@ -975,7 +975,7 @@ extern "C" void func_80118854(MiniMapSelf* self) {
                                     ppos.y = pposPtr->y;
                                     ppos.z = pposPtr->z;
                                     f32 playerY = ppos.y;
-                                    u8 count = (u8)func_8003B1EC(lbl_eu_80663FB8);
+                                    u8 count = (u8)Bdat_GetMaxRow_B1EC(lbl_eu_80663FB8);
                                     for (u8 i = 1; i <= count; i++) {
                                         s16 v = BdatGetS16Direct(lbl_eu_80663FB8,
                                                               &lbl_eu_804FE1FC[48], i);
@@ -985,7 +985,7 @@ extern "C" void func_80118854(MiniMapSelf* self) {
                                 }
                                 int found = 0;
                                 {
-                                    u8 count = (u8)func_8003B1EC(lbl_eu_80663FB8);
+                                    u8 count = (u8)Bdat_GetMaxRow_B1EC(lbl_eu_80663FB8);
                                     for (u8 j = 1; j <= count; j++) {
                                         s16 v = BdatGetS16Direct(lbl_eu_80663FB8,
                                                               &lbl_eu_804FE1FC[48], j);
@@ -1027,7 +1027,7 @@ extern "C" void func_80118854(MiniMapSelf* self) {
                                     ppos.y = pposPtr->y;
                                     ppos.z = pposPtr->z;
                                     f32 playerY = ppos.y;
-                                    u8 count = (u8)func_8003B1EC(lbl_eu_80663FB8);
+                                    u8 count = (u8)Bdat_GetMaxRow_B1EC(lbl_eu_80663FB8);
                                     for (u8 i = 1; i <= count; i++) {
                                         s16 v = BdatGetS16Direct(lbl_eu_80663FB8,
                                                               &lbl_eu_804FE1FC[48], i);
@@ -1037,7 +1037,7 @@ extern "C" void func_80118854(MiniMapSelf* self) {
                                 }
                                 int found = 0;
                                 {
-                                    u8 count = (u8)func_8003B1EC(lbl_eu_80663FB8);
+                                    u8 count = (u8)Bdat_GetMaxRow_B1EC(lbl_eu_80663FB8);
                                     for (u8 j = 1; j <= count; j++) {
                                         s16 v = BdatGetS16Direct(lbl_eu_80663FB8,
                                                               &lbl_eu_804FE1FC[48], j);
@@ -1124,15 +1124,15 @@ extern "C" void func_80118854(MiniMapSelf* self) {
         // ---- mode-32 section ----
     mode32:
         {
-            gimmickView = func_801167EC((u8*)self + 0x17C);
+            gimmickView = MiniMapFillMarkerEntry((u8*)self + 0x17C);
             {
 #undef __cntlzw
-                u32 cf8cVal = (u32)func_8009CF8C(0x3334);
+                u32 cf8cVal = (u32)CtrlRemote_TouchBitByArg(0x3334);
                 u32 cntlz = (u32)__cntlzw(cf8cVal);
                 if ((cntlz >> 5) != 0) {
                 for (u32 i = 0;
                      i < ((MiniMapEnumList*)CTaskGame_enumListGet(&holder))->count; i++) {
-                                        u32 id = (u32)func_800F6E98(CTaskGame_enumListGet(&holder), i);
+                                        u32 id = (u32)getObjectIdAt(CTaskGame_enumListGet(&holder), i);
                                         MiniMapObj* o = (MiniMapObj*)findObjectById((s32)id);
                     if (!o) continue;
                     if (!o->v160()) continue;
@@ -1151,7 +1151,7 @@ extern "C" void func_80118854(MiniMapSelf* self) {
                                                 ppos.z = pposPtr->z;
 
                                                 f32 playerY = ppos.y;
-                        u8 count = (u8)func_8003B1EC(lbl_eu_80663FB8);
+                        u8 count = (u8)Bdat_GetMaxRow_B1EC(lbl_eu_80663FB8);
                         for (u8 i = 1; i <= count; i++) {
                             s16 v = BdatGetS16Direct(lbl_eu_80663FB8,
                                                   &lbl_eu_804FE1FC[48], i);
@@ -1161,7 +1161,7 @@ extern "C" void func_80118854(MiniMapSelf* self) {
                     }
                     int found = 0;
                     {
-                        u8 count = (u8)func_8003B1EC(lbl_eu_80663FB8);
+                        u8 count = (u8)Bdat_GetMaxRow_B1EC(lbl_eu_80663FB8);
                         for (u8 j = 1; j <= count; j++) {
                             s16 v = BdatGetS16Direct(lbl_eu_80663FB8,
                                                   &lbl_eu_804FE1FC[48], j);
@@ -1225,11 +1225,11 @@ extern "C" void func_80118854(MiniMapSelf* self) {
             u8 rowB = (u8)lbl_eu_80664184;
             void* bdat2 = (void*)func_801380A0(rowB);
             void* bdatEntry = lbl_eu_80573D18[rowB - 1];
-            u16 rowCount = (u16)func_8003B1EC(bdatEntry);
+            u16 rowCount = (u16)Bdat_GetMaxRow_B1EC(bdatEntry);
             if (gimmickView != 0) {
                 for (u32 i = 0;
                      i < ((MiniMapEnumList*)CTaskGame_enumListGet(&holder))->count; i++) {
-                                        MiniMapObj* o = (MiniMapObj*)findObjectById((s32)func_800F6E98(CTaskGame_enumListGet(&holder), i));
+                                        MiniMapObj* o = (MiniMapObj*)findObjectById((s32)getObjectIdAt(CTaskGame_enumListGet(&holder), i));
                     if (!o) continue;
                     if ((o->m64 & 0x8) == 0) continue;
                     f32 objY = o->GetPos()->y;
@@ -1246,7 +1246,7 @@ extern "C" void func_80118854(MiniMapSelf* self) {
                                                 ppos.z = pposPtr->z;
 
                                                 f32 playerY = ppos.y;
-                        u8 count = (u8)func_8003B1EC(lbl_eu_80663FB8);
+                        u8 count = (u8)Bdat_GetMaxRow_B1EC(lbl_eu_80663FB8);
                         for (u8 i = 1; i <= count; i++) {
                             s16 v = BdatGetS16Direct(lbl_eu_80663FB8,
                                                   &lbl_eu_804FE1FC[48], i);
@@ -1256,7 +1256,7 @@ extern "C" void func_80118854(MiniMapSelf* self) {
                     }
                     int found = 0;
                     {
-                        u8 count = (u8)func_8003B1EC(lbl_eu_80663FB8);
+                        u8 count = (u8)Bdat_GetMaxRow_B1EC(lbl_eu_80663FB8);
                         for (u8 j = 1; j <= count; j++) {
                             s16 v = BdatGetS16Direct(lbl_eu_80663FB8,
                                                   &lbl_eu_804FE1FC[48], j);
@@ -1323,7 +1323,7 @@ extern "C" void func_80118854(MiniMapSelf* self) {
             // ---- sub-actor section (vt228()==3) ----
             for (u32 i = 0;
                  i < ((MiniMapEnumList*)CTaskGame_enumListGet(&holder))->count; i++) {
-                                    u32 id = (u32)func_800F6E98(CTaskGame_enumListGet(&holder), i);
+                                    u32 id = (u32)getObjectIdAt(CTaskGame_enumListGet(&holder), i);
                                     MiniMapObj* o = (MiniMapObj*)findObjectById((s32)id);
                 if (!o) continue;
                 if (!o->v160()) continue;
@@ -1343,7 +1343,7 @@ extern "C" void func_80118854(MiniMapSelf* self) {
                                         ppos.z = pposPtr->z;
 
                                         f32 playerY = ppos.y;
-                    u8 count = (u8)func_8003B1EC(lbl_eu_80663FB8);
+                    u8 count = (u8)Bdat_GetMaxRow_B1EC(lbl_eu_80663FB8);
                     for (u8 i = 1; i <= count; i++) {
                         s16 v = BdatGetS16Direct(lbl_eu_80663FB8,
                                               &lbl_eu_804FE1FC[48], i);
@@ -1353,7 +1353,7 @@ extern "C" void func_80118854(MiniMapSelf* self) {
                 }
                 int found = 0;
                 {
-                    u8 count = (u8)func_8003B1EC(lbl_eu_80663FB8);
+                    u8 count = (u8)Bdat_GetMaxRow_B1EC(lbl_eu_80663FB8);
                     for (u8 j = 1; j <= count; j++) {
                         s16 v = BdatGetS16Direct(lbl_eu_80663FB8,
                                               &lbl_eu_804FE1FC[48], j);
@@ -1412,7 +1412,7 @@ extern "C" void func_80118854(MiniMapSelf* self) {
             // ---- m91==12 section ----
             for (u32 i = 0;
                  i < ((MiniMapEnumList*)CTaskGame_enumListGet(&holder))->count; i++) {
-                                    u32 id = (u32)func_800F6E98(CTaskGame_enumListGet(&holder), i);
+                                    u32 id = (u32)getObjectIdAt(CTaskGame_enumListGet(&holder), i);
                                     MiniMapObj* o = (MiniMapObj*)findObjectById((s32)id);
                 if (!o) continue;
                 if (!o->v160()) continue;
@@ -1432,7 +1432,7 @@ extern "C" void func_80118854(MiniMapSelf* self) {
                                         ppos.z = pposPtr->z;
 
                                         f32 playerY = ppos.y;
-                    u8 count = (u8)func_8003B1EC(lbl_eu_80663FB8);
+                    u8 count = (u8)Bdat_GetMaxRow_B1EC(lbl_eu_80663FB8);
                     for (u8 i = 1; i <= count; i++) {
                         s16 v = BdatGetS16Direct(lbl_eu_80663FB8,
                                               &lbl_eu_804FE1FC[48], i);
@@ -1442,7 +1442,7 @@ extern "C" void func_80118854(MiniMapSelf* self) {
                 }
                 int found = 0;
                 {
-                    u8 count = (u8)func_8003B1EC(lbl_eu_80663FB8);
+                    u8 count = (u8)Bdat_GetMaxRow_B1EC(lbl_eu_80663FB8);
                     for (u8 j = 1; j <= count; j++) {
                         s16 v = BdatGetS16Direct(lbl_eu_80663FB8,
                                               &lbl_eu_804FE1FC[48], j);
@@ -1502,7 +1502,7 @@ extern "C" void func_80118854(MiniMapSelf* self) {
             if (gimmickView != 0) {
                 for (u32 i = 0;
                      i < ((MiniMapEnumList*)CTaskGame_enumListGet(&holder))->count; i++) {
-                                        u32 id = (u32)func_800F6E98(CTaskGame_enumListGet(&holder), i);
+                                        u32 id = (u32)getObjectIdAt(CTaskGame_enumListGet(&holder), i);
                                         MiniMapObj* o = (MiniMapObj*)findObjectById((s32)id);
                     if (!o) continue;
                     if (!o->v160()) continue;
@@ -1520,7 +1520,7 @@ extern "C" void func_80118854(MiniMapSelf* self) {
                                                 ppos.z = pposPtr->z;
 
                                                 f32 playerY = ppos.y;
-                        u8 count = (u8)func_8003B1EC(lbl_eu_80663FB8);
+                        u8 count = (u8)Bdat_GetMaxRow_B1EC(lbl_eu_80663FB8);
                         for (u8 i = 1; i <= count; i++) {
                             s16 v = BdatGetS16Direct(lbl_eu_80663FB8,
                                                   &lbl_eu_804FE1FC[48], i);
@@ -1530,7 +1530,7 @@ extern "C" void func_80118854(MiniMapSelf* self) {
                     }
                     int found = 0;
                     {
-                        u8 count = (u8)func_8003B1EC(lbl_eu_80663FB8);
+                        u8 count = (u8)Bdat_GetMaxRow_B1EC(lbl_eu_80663FB8);
                         for (u8 j = 1; j <= count; j++) {
                             s16 v = BdatGetS16Direct(lbl_eu_80663FB8,
                                                   &lbl_eu_804FE1FC[48], j);
@@ -1627,7 +1627,7 @@ extern "C" void func_80118854(MiniMapSelf* self) {
                                                 ppos.z = pposPtr->z;
 
                                                 f32 playerY = ppos.y;
-                        u8 count = (u8)func_8003B1EC(lbl_eu_80663FB8);
+                        u8 count = (u8)Bdat_GetMaxRow_B1EC(lbl_eu_80663FB8);
                         for (u8 i = 1; i <= count; i++) {
                             s16 v = BdatGetS16Direct(lbl_eu_80663FB8,
                                                   &lbl_eu_804FE1FC[48], i);
@@ -1637,7 +1637,7 @@ extern "C" void func_80118854(MiniMapSelf* self) {
                     }
                     int found = 0;
                     {
-                        u8 count = (u8)func_8003B1EC(lbl_eu_80663FB8);
+                        u8 count = (u8)Bdat_GetMaxRow_B1EC(lbl_eu_80663FB8);
                         for (u8 j = 1; j <= count; j++) {
                             s16 v = BdatGetS16Direct(lbl_eu_80663FB8,
                                                   &lbl_eu_804FE1FC[48], j);
@@ -2100,7 +2100,7 @@ extern "C" void __declspec(noinline) func_80117C30(CMiniMap* self) {
             band = 0;
         } else {
             ml::CVec3 ppos = *player->GetPos();
-            u8 count = (u8)func_8003B1EC(lbl_eu_80663FB8);
+            u8 count = (u8)Bdat_GetMaxRow_B1EC(lbl_eu_80663FB8);
             f32 py = ppos.y;
             for (u8 i = 1; i <= count; i++) {
                 s16 v = BdatGetS16Direct(lbl_eu_80663FB8, &lbl_eu_804FE1FC[0x30], i);
@@ -2133,17 +2133,17 @@ extern "C" void __declspec(noinline) func_80117C30(CMiniMap* self) {
             u8 gateC = (u8)BdatGetU8Direct((u32)lbl_eu_80663FB8,
                                          &lbl_eu_804FE1FC[0x164], curBand);
             u8 newFlag;
-            if (unlockA != 0 && (u32)func_8009CF8C(0x20) >= unlockA) {
+            if (unlockA != 0 && (u32)CtrlRemote_TouchBitByArg(0x20) >= unlockA) {
                 if (unlockB == 0) {
                     newFlag = 1;
-                } else if ((u32)func_8009CF8C(unlockB + 0x220) >= gateC) {
+                } else if ((u32)CtrlRemote_TouchBitByArg(unlockB + 0x220) >= gateC) {
                     newFlag = 2;
                 } else {
                     newFlag = 1;
                 }
             } else if (unlockB == 0) {
                 newFlag = 0;
-            } else if ((u32)func_8009CF8C(unlockB + 0x220) >= gateC) {
+            } else if ((u32)CtrlRemote_TouchBitByArg(unlockB + 0x220) >= gateC) {
                 newFlag = 1;
             } else {
                 newFlag = 0;
@@ -2224,7 +2224,7 @@ void CMenuMiniMap2::Move() {
     // (first test bne-exit, second test beq-continue / b-exit).
     if (CTaskGame::getInstance()->isFlag01Set() ||
         (lbl_eu_80663E28 & 0x200000)) return;
-    if (func_80242354() || func_80251550()) return;
+    if (isMapSelectActive() || MapSelectSCIsCreated()) return;
 
     switch (mField8D4) {
     case 0: {
@@ -2307,7 +2307,7 @@ void CMenuMiniMap2::Move() {
                 mClock.mLayout->Animate(0);
                 a = 0;
                 b = 0;
-                func_8006A234(&a, &b);
+                CfT_PlayClockSnapshot(&a, &b);
                 f32 frame =
                     lbl_eu_80661E48 * (f32)(a * 60 + b) + lbl_eu_80663FB4;
                 f32 maxF = (f32)((u16)mClock.mAnimTrans1->GetFrameSize());
@@ -2321,7 +2321,7 @@ void CMenuMiniMap2::Move() {
             u16 b;
             a = 0;
             b = 0;
-            func_8006A234(&a, &b);
+            CfT_PlayClockSnapshot(&a, &b);
             f32 frame = lbl_eu_80661E48 * (f32)(a * 60 + b) + lbl_eu_80663FB4;
             f32 maxF = (f32)((u16)mClock.mAnimTrans1->GetFrameSize());
             if (frame > maxF) frame -= maxF;
@@ -2435,12 +2435,12 @@ CMenuMiniMap2* __ct__8011C1B8(CProcess* parent, CScn* scene) {
 
 extern u32 lbl_eu_80663F20;
 extern u32 lbl_eu_80663FB0;
-s32 func_8011C2E8() {
+s32 MiniMapHasGlobalData() {
     u32 v = lbl_eu_80663FB0;
     return ((-v) | v) >> 31;
 }
 
-extern "C" void func_8011C2FC(void) {
+extern "C" void MiniMapResetLayoutAnims(void) {
     // Fall-through `if (g != 0)` — an early `return` on this s32 signature
     // keeps r3 live as the pending return and forces `li r4,3`.
     // First virtual call uses a block-local Layout*; later calls reload
@@ -2477,7 +2477,7 @@ extern "C" void func_8011C2FC(void) {
 // nw4r::lyt::Layout virtuals SetAnimationEnable/Animate: layout+0x2C = 0,
 // anim enable at +0x20, animate at +0x38.)
 
-void func_8011C400()
+void MiniMapSetActiveFlag()
 {
     if (lbl_eu_80663FB0 != 0)
     {
@@ -2488,24 +2488,24 @@ void func_8011C400()
 // Offset-adjusted dispatch thunks: the CMenuMiniMap2 subobject sits at self-0x5C.
 void func_8011C43C(void* self) { ((void(*)(void*))cbRenderBefore__13CMenuMiniMap2Fv)((char*)self - 0x5c); }
 
-void func_8011C444(void* self) { ((void(*)(void*))__dt__13CMenuMiniMap2Fv)((char*)self - 0x5c); }
+void MiniMap2DtorThunk5C(void* self) { ((void(*)(void*))__dt__13CMenuMiniMap2Fv)((char*)self - 0x5c); }
 
 // --- hard-symbol stubs (scaffold_hard_symbols) ---
 extern "C" void sinit_8011C418() {
     lbl_eu_80663FB4 = lbl_eu_806670CC * (lbl_eu_806670A0 * lbl_eu_80661E48);
 }
 
-// func_80115FD0 - initialize the 3x5 minimap table object (retail unmangled
+// MiniMapInitTable3x5 - initialize the 3x5 minimap table object (retail unmangled
 // name). Sets the scalar head/tail fields, resolves the BDAT table pointer via
 // getFP, then zeroes the u16/u32/byte columns row by row (inner 5-wide loops
 // fully unrolled by MWCC, outer 3-row loop kept as the counted loop).
-MiniMapTable* func_80115FD0(MiniMapTable* self) {
+MiniMapTable* MiniMapInitTable3x5(MiniMapTable* self) {
     f32 zero = lbl_eu_80667090;
     self->field_00 = 0;
     self->field_08 = 0;
     self->field_0C = zero;
     self->field_13C = 0;
-    func_8003AA34();
+    Bdat_GetTable_AA34();
     self->field_04 = (u32)getFP__FPCc(lbl_eu_804FE1FC);
     // Inner 5-wide sweep: the two flat flag columns share one running byte
     // row offset, so MWCC recomputes their address as base+index with the
@@ -2537,8 +2537,8 @@ void func_801160A8(MiniMapTable* self, void* table, void* layout, f32 scale) {
     // Marker parent pane, looked up once through the layout's pane manager.
     self->field_13C = (nw4r::lyt::Pane*)((MiniMapLayout*)layout)->mgr->FindPaneByName(&lbl_eu_804FE1FC[0xd], true);
 
-    func_8003AA34();
-    u16 count = func_8003B1EC((void*)self->field_04);
+    Bdat_GetTable_AA34();
+    u16 count = Bdat_GetMaxRow_B1EC((void*)self->field_04);
     // Loaded after the row count (retail keeps the constant off the fast path).
     f32 zero = lbl_eu_80667090;
     u8 n = 0;
@@ -2595,7 +2595,7 @@ extern "C" void __declspec(noinline) func_8011628C(void* self, u32 row) {
     if (player == 0) return;
 
     // Find the player's height band (first row whose threshold exceeds it).
-    u8 count = (u8)func_8003B1EC(lbl_eu_80663FB8);
+    u8 count = (u8)Bdat_GetMaxRow_B1EC(lbl_eu_80663FB8);
     u8 best = 0;
     for (u8 i = 1; i <= count; i++) {
         s16 v = BdatGetS16Direct(lbl_eu_80663FB8, &lbl_eu_804FE1FC[0x30], i);
@@ -2610,7 +2610,7 @@ extern "C" void __declspec(noinline) func_8011628C(void* self, u32 row) {
         u16 markerId = table->field_10[0][j];
         if (markerId == 0) return;
         if (table->field_100[0][j] == 0) continue;
-        if (func_8009CF8C(markerId + 0x20c8) == 0) continue;
+        if (CtrlRemote_TouchBitByArg(markerId + 0x20c8) == 0) continue;
 
         // Marker in the player's band -> the pane is shown and positioned.
         bool found = false;
@@ -2668,7 +2668,7 @@ extern "C" void func_80116670(CMiniMapGimmickView* self, u32 table, void* layout
     // Marker parent pane, looked up once through the layout's pane manager.
     self->field_0x14 = (u32)((MiniMapLayout*)layout)->mgr->FindPaneByName(&lbl_eu_804FE1FC[0x37], true);
 
-    self->field_0x0C = (s32)func_8003B1EC((void*)table);
+    self->field_0x0C = (s32)Bdat_GetMaxRow_B1EC((void*)table);
 
     for (s32 i = 0; i < self->field_0x0C; i++) {
         self->field_0x18[i] = BdatGetU8Direct((u32)self->field_0x00,
@@ -2740,7 +2740,7 @@ extern "C" void func_80117734(CMMMapImg* self) {
         best = 0;
     } else {
         ml::CVec3 ppos = *player->GetPos();
-        u8 count = (u8)func_8003B1EC(lbl_eu_80663FB8);
+        u8 count = (u8)Bdat_GetMaxRow_B1EC(lbl_eu_80663FB8);
         f32 py = ppos.y;
         for (u8 i = 1; i <= count; i++) {
             s16 v = BdatGetS16Direct(lbl_eu_80663FB8, &lbl_eu_804FE1FC[0x30], i);
@@ -2766,14 +2766,14 @@ extern "C" void func_80117734(CMMMapImg* self) {
     // Unlock-gated resource variant: 2 needs both progress caps met,
     // 1 only the second, 0 neither.
     s32 mode;
-    if (va != 0 && func_8009CF8C(0x20) >= va) {
-        if (vb == 0 || func_8009CF8C(vb + 0x220) < vc) {
+    if (va != 0 && CtrlRemote_TouchBitByArg(0x20) >= va) {
+        if (vb == 0 || CtrlRemote_TouchBitByArg(vb + 0x220) < vc) {
             mode = 1;
         } else {
             mode = 2;
         }
     } else {
-        if (vb != 0 && func_8009CF8C(vb + 0x220) >= vc) {
+        if (vb != 0 && CtrlRemote_TouchBitByArg(vb + 0x220) >= vc) {
             mode = 1;
         } else {
             mode = 0;
@@ -2893,7 +2893,7 @@ extern "C" void __declspec(noinline) func_80116B40(void* self) {
     }
 
     // Player height band: first row whose threshold exceeds the player's y.
-    u8 rowCount = (u8)func_8003B1EC(lbl_eu_80663FB8);
+    u8 rowCount = (u8)Bdat_GetMaxRow_B1EC(lbl_eu_80663FB8);
     u32 band = 0;
     for (u32 k = 1; k <= rowCount; k++) {
         s16 v = BdatGetS16Direct(lbl_eu_80663FB8, strings + 0x30, k);
@@ -3057,14 +3057,14 @@ extern "C" void __declspec(noinline) func_80116B40(void* self) {
             bool hit = false;
             for (u32 k = 1; k <= rowCount; k++) {
                 s16 v = BdatGetS16Direct(lbl_eu_80663FB8, strings + 0x30, k);
-                CMMGimmickPos* p = func_801F4E68(getUnk80664658(), dispId);
+                CMMGimmickPos* p = GimFindPosByRow(getUnk80664658(), dispId);
                 if ((f64)v - lbl_eu_80667098 > p->y) {
                     if (band == k) hit = true;
                     break;
                 }
             }
             if (!hit) break;
-            CMMGimmickPos* p = func_801F4E68(getUnk80664658(), dispId);
+            CMMGimmickPos* p = GimFindPosByRow(getUnk80664658(), dispId);
             u32 cnt = view->field_0x6A4;
             view->field_0x5D4[cnt].x = p->x;
             view->field_0x5D4[cnt].y = p->y;
@@ -3093,7 +3093,7 @@ extern "C" void __declspec(noinline) func_80116B40(void* self) {
         if (view->field_0x270[i] == 0) {
             // Row inactive: hide the stale pane unless its resource is gone.
             u16 pid = BdatGetU16Direct((void*)view->field_0x00, strings + 0x5f, i + 1);
-            if (pid != 0 && func_8009CF8C(pid + 0x220) == 0) kind = 0xa;
+            if (pid != 0 && CtrlRemote_TouchBitByArg(pid + 0x220) == 0) kind = 0xa;
         } else {
             if (clockPane == NULL) {
                 kind = 5;
@@ -3165,9 +3165,9 @@ void func_801165EC(CMiniMapGimmickView* self) {
     }
 }
 
-// func_801167EC - fill one marker-visibility table entry per call; returns 1
+// MiniMapFillMarkerEntry - fill one marker-visibility table entry per call; returns 1
 // when the row budget ran out (func_80118854 uses the result as a bool).
-u32 func_801167EC(CMiniMapGimmickView* self) {
+u32 MiniMapFillMarkerEntry(CMiniMapGimmickView* self) {
     // Declaration order tuned for MWCC reverse-declaration reg allocation
     // (ret=r30, end=r29, i=r28).
     u32 ret = 0;

@@ -35,8 +35,8 @@ extern "C" void __ct__CSchedule(CSchedule* self) {
     }
 }
 
-// us-804e7ab0: CSchedule::func_804E3614()
-extern "C" int func_804E3614(CSchedule* self) {
+// us-804e7ab0: CSchedule::Sched_RebuildHandles()
+extern "C" int Sched_RebuildHandles(CSchedule* self) {
     self->mEntryCount = 0;
     ScheduleEntry* entry = self->mEntries;
     s16 count = 0;
@@ -87,7 +87,7 @@ CSchedule::~CSchedule() {
             freeSlot = -1;
             for (i = 0; (int)i < 0x20; i++) {
                 if (mHandles[i] >= 0) {
-                    func_804DFB88(mHandles[i]);
+                    SchedItem_ReleaseHandle(mHandles[i]);
                     mHandles[i] = freeSlot;
                 }
             }
@@ -166,5 +166,5 @@ extern "C" int func_804E3434(CSchedule* self, ScheduleEntry* entries, u8* field_
     self->mEntryCount = 0;
     self->field_0xd9 = 0;
 
-    return func_804E3614(self);
+    return Sched_RebuildHandles(self);
 }

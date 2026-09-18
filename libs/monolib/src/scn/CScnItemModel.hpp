@@ -142,7 +142,7 @@ public:
     CScnItemModelOwner* field_04;  // 0x04 owner pointer
     u16 value08;                   // 0x08 (u16 type marker, set to 1 by the ctor)
     u8 _0A[0x2];                   // 0x0A..0x0C
-    u8 field_0xC[0x1EC];           // 0x0C..0x1F8 (sub-object passed to func_80497724/90)
+    u8 field_0xC[0x1EC];           // 0x0C..0x1F8 (sub-object passed to scn80496GetChild1V6/90)
     u8 field_0x1F8[0x5AC];         // 0x1F8..0x7A4 (act-data base returned by simGetLeafActData)
     u32 flags7A4;                  // 0x7A4
     u32 flags7A8;                  // 0x7A8
@@ -184,20 +184,20 @@ struct CScnItemModelEnvLight {
 // Cross-TU imports (retail C-ABI free functions defined in
 // CScn_80496B0C.cpp). extern "C" keeps the call reloc names verbatim
 // (reloc-site gate; MWCC would otherwise mangle C++ linkage names).
-extern "C" float func_80497724(u8* self);
-extern "C" float func_80497790(u8* self);
-extern "C" float func_804977C0(u8* self);
-extern "C" f32 func_804977F0(u8* self);
-extern "C" u32 func_8049715C(u8* self);
-extern "C" void func_80497760(u8* self, float value);
-extern "C" void func_8049782C(u8* self, u32 tag);
-extern "C" void func_8049771C(u8* self, float val);
+extern "C" float scn80496GetChild1V6(u8* self);
+extern "C" float scn80496GetChild1Float(u8* self);
+extern "C" float scn80496GetChild2Float(u8* self);
+extern "C" f32 scn80496GetChild2V6(u8* self);
+extern "C" u32 scn80496IsNodeFlagBit(u8* self);
+extern "C" void scn80496CallChild1V5(u8* self, float value);
+extern "C" void scn80496RefreshBlendTag(u8* self, u32 tag);
+extern "C" void scn80496SetFloat178(u8* self, float val);
 extern "C" void func_80497AA8(u8* self);
 extern "C" u32 func_804972E8(u8* self, CScnItemAnimResFile* anim, int index,
                               u32 c, s32 f);
-extern "C" u32 func_80497190(u8* self, CScnItemAnimResFile* anim, int index,
+extern "C" u32 scn80496BindChrAnmPack(u8* self, CScnItemAnimResFile* anim, int index,
                               u32 c, s32 f, u32 g, u32 h);
-extern "C" u32 func_804978B8(u8* self);
+extern "C" u32 scn80496HasChild1Node(u8* self);
 
 // Cross-TU query: returns the model owned by the given scene owner's pool
 // (called by func_804831C4; defined in CScn_80496B0C.cpp).

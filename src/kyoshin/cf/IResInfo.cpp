@@ -62,8 +62,8 @@ extern "C" {
     void walkReslistBE8vt(void*);
     void triggerObjsByType(void);
     void CfSoundMan_StopSlotByMode(u32, u32, u32);
-    void func_804CC1BC(void*, void*);
-    void func_804CC1D8(void*, void*);
+    void EffSched_LookupA(void*, void*);
+    void EffSched_LookupB(void*, void*);
     s32 gflagGateMask8();
     u32 CfRes_getAllocHandle(void);
     bool processEventQueueB__Q22cf13CfGameManagerFv(void);
@@ -243,7 +243,7 @@ extern "C" void CfRes_resolveEventResource(int unused, ResInfoEntry* param) {
             u32* fc18 = lbl_eu_8065FC18;
             if (fc18 != 0) {
                 param->field_0x10 = result;
-                func_804CC1BC(fc18, (void*)result);
+                EffSched_LookupA(fc18, (void*)result);
             }
         }
     }
@@ -332,7 +332,7 @@ extern "C" void CfRes_cacheOrPublishSound(int unused, ResInfoEntry* self) {
             void* r = self->field_0x2C->getResourceBase(self, 0);
             if (r != 0 && lbl_eu_8065FC18 != 0) {
                 self->field_0x10 = (u32)r;
-                func_804CC1BC(lbl_eu_8065FC18, r);
+                EffSched_LookupA(lbl_eu_8065FC18, r);
             }
         }
     } else if (type == 9 && idx >= 0) {
@@ -354,7 +354,7 @@ extern "C" void CfRes_acquireSoundEntry(int unused, ResInfoEntry* self) {
     void* r = CfRes_findKypEntryA(self);
     if (self->field_0x10 == 0 && r != 0 && lbl_eu_8065FC18 != 0) {
         self->field_0x10 = (u32)r;
-        func_804CC1BC(lbl_eu_8065FC18, r);
+        EffSched_LookupA(lbl_eu_8065FC18, r);
     }
     u32 out;
     void* entry = CfRes_findKypEntryB(self, &out);
@@ -378,7 +378,7 @@ extern "C" void CfRes_releaseCachedBase(ResInfoEntry* self, bool cleanup) {
         if (self->field_0x10 != 0) {
             walkReslistBE8vt((u32*)self->field_0x10);
             if (cleanup) {
-                func_804CC1D8(fc18, (u32*)self->field_0x10);
+                EffSched_LookupB(fc18, (u32*)self->field_0x10);
                 self->field_0x10 = 0;
             }
         }
@@ -649,7 +649,7 @@ bool func_80066788(ResInfoEntry* self, bool paramLoad, bool paramFade, bool para
         // No data attached: just drop any cached resource registration.
         if (self->field_0x10 != 0 && lbl_eu_8065FC18 != 0) {
             walkReslistBE8vt((void*)self->field_0x10);
-            func_804CC1D8(lbl_eu_8065FC18, (void*)self->field_0x10);
+            EffSched_LookupB(lbl_eu_8065FC18, (void*)self->field_0x10);
             self->field_0x10 = 0;
         }
     }
@@ -660,7 +660,7 @@ bool func_80066788(ResInfoEntry* self, bool paramLoad, bool paramFade, bool para
         lbl_eu_80663E28 &= ~0x40;
         if (lbl_eu_8065FC18 != 0 && self->field_0x10 != 0) {
             walkReslistBE8vt((void*)self->field_0x10);
-            func_804CC1D8(lbl_eu_8065FC18, (void*)self->field_0x10);
+            EffSched_LookupB(lbl_eu_8065FC18, (void*)self->field_0x10);
             self->field_0x10 = 0;
         }
         u32 id = self->field_0x30;

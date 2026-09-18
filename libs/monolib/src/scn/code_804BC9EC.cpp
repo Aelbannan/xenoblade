@@ -16,9 +16,9 @@ struct ScnResEntry {
 // Extended ScnResData with named fields for offsets 0x00-0x60.
 // Layout-compatible with ScnResData from the header.
 struct ScnResDataEx {
-    u8* field_0x00;  // set by func_804BC9B4 (base + src[1])
-    u8* field_0x04;  // set by func_804BC9B4 (base + src[2])
-    u8* field_0x08;  // set by func_804BC9B4 (base + src[3])
+    u8* field_0x00;  // set by Coli_RebiasIndices (base + src[1])
+    u8* field_0x04;  // set by Coli_RebiasIndices (base + src[2])
+    u8* field_0x08;  // set by Coli_RebiasIndices (base + src[3])
     u8 field_0x0C[0x14 - 0x0C];
     u8* field_0x14;  // base pointer to parsed data
     u8* field_0x18;  // entry type 1
@@ -47,10 +47,10 @@ struct ScnResDataEx {
 
 // Additional extern function declarations (retail symbols are plain C
 // names - no C++ mangling suffix on the retail reloc targets).
-extern "C" void func_804BC9B4(int* dest, int baseOffset, int* src);
-extern "C" void func_804B74F0(ScnResData* res, u8* data);
+extern "C" void Coli_RebiasIndices(int* dest, int baseOffset, int* src);
+extern "C" void Coli_InstallDataPtrs_74F0(ScnResData* res, u8* data);
 extern "C" void func_804B7540(ScnResData* res, u8* data, u16 param);
-u32* func_804B5A70(void);
+u32* Coli_GetWorkBase_5A70(void);
 
 // Vertex: 12 bytes (3 floats: x, y, z)
 struct SceneVertex {
@@ -206,10 +206,10 @@ int func_804BC9F4(void* outStruct, u32 data) {
                     res->field_0x48 = base + *(u32*)(entryList + off + 4);
                     break;
                 case 0xA:
-                    func_804BC9B4((int*)&lbl_eu_8065F32C, (int)base, (int*)(base + *(u32*)(entryList + off + 4)));
+                    Coli_RebiasIndices((int*)&lbl_eu_8065F32C, (int)base, (int*)(base + *(u32*)(entryList + off + 4)));
                     break;
                 case 0x11:
-                    func_804B74F0(&lbl_eu_8065F32C, base + *(u32*)(entryList + off + 4));
+                    Coli_InstallDataPtrs_74F0(&lbl_eu_8065F32C, base + *(u32*)(entryList + off + 4));
                     break;
                 case 0x12:
                     res->field_0x4C = base + *(u32*)(entryList + off + 4);
@@ -229,25 +229,25 @@ int func_804BC9F4(void* outStruct, u32 data) {
 
 // tail calls with &lbl_eu_8065F32C (retail: lis;addi;b callee); callees are
 // extern "C" in monolib/scn/code_804BC9EC.hpp
-extern "C" void func_804BCC10() { func_804BC9A0(&lbl_eu_8065F32C); }
+extern "C" void ScnData_FwdBC9A0() { Coli_CheckFlag(&lbl_eu_8065F32C); }
 
 void resetScnData(void* p) {
     *(u32*)p = 0;
     func_804B7804(&lbl_eu_8065F32C);
 }
 
-extern "C" void func_804BCC30(void* unused, int a) { func_804B7D9C((int)(uintptr_t)&lbl_eu_8065F32C, a); }
+extern "C" void ScnData_FwdB7D9C(void* unused, int a) { func_804B7D9C((int)(uintptr_t)&lbl_eu_8065F32C, a); }
 
-extern "C" void func_804BCC3C() { func_804B7DD4(&lbl_eu_8065F32C); }
+extern "C" void ScnData_FwdB7DD4() { func_804B7DD4(&lbl_eu_8065F32C); }
 
 extern "C" void func_804B7E0C(ScnResData* res);
-extern "C" void func_804BCC48() { func_804B7E0C(&lbl_eu_8065F32C); }
+extern "C" void ScnData_FwdB7E0C() { func_804B7E0C(&lbl_eu_8065F32C); }
 
-extern "C" void func_804BCC54(void* unused, int a) { func_804B80A4(&lbl_eu_8065F32C, a); }
+extern "C" void ScnData_FwdB80A4(void* unused, int a) { Coli_GetOutMatrix_80A4(&lbl_eu_8065F32C, a); }
 
-extern "C" void func_804BCC60(void* unused, int a) { func_804B8078(&lbl_eu_8065F32C, a); }
+extern "C" void ScnData_FwdB8078(void* unused, int a) { Coli_ClearOutFlag_8078(&lbl_eu_8065F32C, a); }
 
-void func_804BCC6C() {
+void ScnData_FwdB80CC() {
     func_804B80CC(&lbl_eu_8065F32C);
 }
 
@@ -417,7 +417,7 @@ void func_804BCC78(Mtx modelMtx, u8* viewData, u8* renderParams) {
     for (int i = 0; i < visCount; i++) {
         u8* rec = cullBase + visList[i] * 0x80;
         u16 visHdr = *(u16*)(rec + 2);
-        u32* visBits = func_804B5A70();
+        u32* visBits = Coli_GetWorkBase_5A70();
         if (visBits[(visHdr >> 3) & 0x1FFC] & (1 << (visHdr & 0x1F))) {
             continue;
         }
@@ -487,7 +487,7 @@ void func_804BCC78(Mtx modelMtx, u8* viewData, u8* renderParams) {
 
         for (int j = 0; j < subCount; j++) {
             u16 visHdr = *(u16*)(sub + 2);
-            u32* visBits = func_804B5A70();
+            u32* visBits = Coli_GetWorkBase_5A70();
             if (visBits[(visHdr >> 3) & 0x1FFC] & (1 << (visHdr & 0x1F))) {
                 sub += 0x3C;
                 rec += 0xE0;

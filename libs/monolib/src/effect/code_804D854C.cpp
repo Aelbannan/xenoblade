@@ -8,7 +8,7 @@
 #include <monolib/math.hpp>
 #include <monolib/core/CViewFrame.hpp>
 
-// Shared BSS fog descriptor: written by func_804D854C, read by func_804D8AA4.
+// Shared BSS fog descriptor: written by func_804D854C, read by pushEffectFog.
 struct FogDesc {
     u32 type;   // 0x00 GXFogType
     f32 f4;     // 0x04 start
@@ -27,13 +27,13 @@ typedef void (*GXSetFogPtr)(GXFogType, const GXColor*, f32, f32, f32, f32);
 
 // Adjacent helpers in CScnTexWorkMan.
 extern "C" {
-void func_804902D8(const void* p, s32 handle);
-void* func_80490208(void* p, s32 w, s32 h, s32 n);
+void TexMan_ReleaseArg_02D8(const void* p, s32 handle);
+void* TexMan_AllocBuffer_0208(void* p, s32 w, s32 h, s32 n);
 void func_8043E928__5CViewFRQ22ml5CRectP5CView(ml::CRect& rect, void* view);
-void func_804944DC(GXTexObj* self, ml::CRect* rect, u8 p3, u8 p4);
+void TexObj_BlitRect(GXTexObj* self, ml::CRect* rect, u8 p3, u8 p4);
 }
 
-// Fog fade globals shared with CETrail.cpp (func_804D82DC / func_804D83D0).
+// Fog fade globals shared with CETrail.cpp (func_804D82DC / Trail_RestoreFog).
 extern s32 lbl_eu_806659BC;   // frames remaining in the fog fade
 extern u8  lbl_eu_806659C0[8]; // override fog color used while a fog is disabled
 struct CScnRootEnv;
@@ -108,19 +108,19 @@ struct CDrawCtx {
     u8    field_0x08;   // 0x08 copy flag
 };
 
-extern "C" void* func_8048ECD8(void* r3);
+extern "C" void* getScnRootSlot10(void* r3);
 extern "C" void* GetFog__Q34nw4r3g3d7ScnRootFi(void* self, int idx);
 
-// Retail: lwz r3,0x6C(r3); b func_80490314 / func_8049032C — load the
+// Retail: lwz r3,0x6C(r3); b TexMan_SnapCursor_0314 / TexMan_RestoreCursor_032C — load the
 // desktop's tex-work pointer at +0x6C and forward it (callee ignores r3).
-extern "C" void func_80490314(void* x);
-extern "C" void func_8049032C(void* x);
-extern "C" void func_804D8B28(void* desktop) { func_80490314(*(void**)((u8*)desktop + 0x6C)); }
-extern "C" void func_804D8B30(void* desktop) { func_8049032C(*(void**)((u8*)desktop + 0x6C)); }
+extern "C" void TexMan_SnapCursor_0314(void* x);
+extern "C" void TexMan_RestoreCursor_032C(void* x);
+extern "C" void snapTexCursor(void* desktop) { TexMan_SnapCursor_0314(*(void**)((u8*)desktop + 0x6C)); }
+extern "C" void restoreTexCursor(void* desktop) { TexMan_RestoreCursor_032C(*(void**)((u8*)desktop + 0x6C)); }
 
 
-// func_804D8AA4: push fog state (or a cleared/default fog).
-void func_804D8AA4(int p1, int UNUSED_p2) {
+// pushEffectFog: push fog state (or a cleared/default fog).
+void pushEffectFog(int p1, int UNUSED_p2) {
     if (lbl_eu_80663B3C != 0 && p1 != 0) {
         GXColor color;
         *(u32*)&color = lbl_eu_8065FCD0.color;
@@ -135,27 +135,27 @@ void func_804D8AA4(int p1, int UNUSED_p2) {
     }
 }
 
-// func_804D8C18: release the draw-context texture object and clear the owner.
-void func_804D8C18(CDrawCtx* self) {
+// releaseEffectDrawTex: release the draw-context texture object and clear the owner.
+void releaseEffectDrawTex(CDrawCtx* self) {
     if (self->field_0x04 != 0) {
         // handle passed through as a dead 2nd arg; its load is CSE'd with the
         // guard compare, which is what puts the tested value in r4 like retail.
-        func_804902D8(self->field_0x00->field_0x6c, self->field_0x04);
+        TexMan_ReleaseArg_02D8(self->field_0x00->field_0x6c, self->field_0x04);
         self->field_0x04 = 0;
     }
     self->field_0x00 = 0;
 }
 
-// func_804D8B38: init a draw context.
-extern "C" void func_804D8B38(CDrawCtx* self) {
+// initEffectDrawCtx: init a draw context.
+extern "C" void initEffectDrawCtx(CDrawCtx* self) {
     self->field_0x00 = 0;
     self->field_0x04 = 0;
     self->field_0x08 = 0;
 }
 
-// func_804D8B4C: establish the draw context for a desktop/material, computing
+// setupEffectDrawCtx: establish the draw context for a desktop/material, computing
 //       the target texture size from the owning view's rect.
-int func_804D8B4C(CDrawCtx* draw, TexSrc* desktop, void* material) {
+int setupEffectDrawCtx(CDrawCtx* draw, TexSrc* desktop, void* material) {
     ScnObj* obj = Scn_FindCamItem(desktop, -1);
     void* view = Scn_SetCamIndex(desktop, (s32)obj->field_0x0c);
     ml::CRect rect;
@@ -163,11 +163,11 @@ int func_804D8B4C(CDrawCtx* draw, TexSrc* desktop, void* material) {
     draw->field_0x00 = (TexSrc*)desktop;
     draw->field_0x08 = (u8)(u32)material;
     if (material == 0) {
-        draw->field_0x04 = (s32)func_80490208(desktop->field_0x6c,
+        draw->field_0x04 = (s32)TexMan_AllocBuffer_0208(desktop->field_0x6c,
                                                (u16)rect.mSize.x,
                                                (u16)rect.mSize.y, 6);
     } else {
-        draw->field_0x04 = (s32)func_80490208(desktop->field_0x6c,
+        draw->field_0x04 = (s32)TexMan_AllocBuffer_0208(desktop->field_0x6c,
                                                (u16)((u32)(s32)rect.mSize.x >> 1),
                                                (u16)((u32)(s32)rect.mSize.y >> 1), 6);
     }
@@ -177,8 +177,8 @@ int func_804D8B4C(CDrawCtx* draw, TexSrc* desktop, void* material) {
     return 1;
 }
 
-// func_804D8C68: load the draw-context texture and blit the view rect into it.
-extern "C" void func_804D8C68(CDrawCtx* draw, GXTexMapID p2, const ml::CVec2* p3) {
+// blitEffectViewRect: load the draw-context texture and blit the view rect into it.
+extern "C" void blitEffectViewRect(CDrawCtx* draw, GXTexMapID p2, const ml::CVec2* p3) {
     ScnObj* obj = Scn_FindCamItem(draw->field_0x00, -1);
     void* view = Scn_SetCamIndex(draw->field_0x00, (s32)obj->field_0x0c);
     ml::CRect rect;
@@ -197,7 +197,7 @@ extern "C" void func_804D8C68(CDrawCtx* draw, GXTexMapID p2, const ml::CVec2* p3
     local.mPos.y = rect.mPos.y;
     local.mSize.x = (s16)w;
     local.mSize.y = (s16)h;
-    func_804944DC((GXTexObj*)draw->field_0x04, &local, (u8)draw->field_0x08, 0);
+    TexObj_BlitRect((GXTexObj*)draw->field_0x04, &local, (u8)draw->field_0x08, 0);
 }
 
 // func_804D854C: resolve the active fog into lbl_eu_8065FCD0. While a fade is
@@ -205,12 +205,12 @@ extern "C" void func_804D8C68(CDrawCtx* draw, GXTexMapID p2, const ml::CVec2* p3
 // toward the scene fog by the remaining-frame ratio.
 void func_804D854C() {
     if (lbl_eu_806659BC <= 0) {
-        nw4r::g3d::ScnRoot* root = (nw4r::g3d::ScnRoot*)func_8048ECD8(lbl_eu_806659B8);
+        nw4r::g3d::ScnRoot* root = (nw4r::g3d::ScnRoot*)getScnRootSlot10(lbl_eu_806659B8);
         *(FogData*)&lbl_eu_8065FCD0 = *root->GetFog(lbl_eu_80663B38);
         return;
     }
 
-    nw4r::g3d::ScnRoot* root = (nw4r::g3d::ScnRoot*)func_8048ECD8(lbl_eu_806659B8);
+    nw4r::g3d::ScnRoot* root = (nw4r::g3d::ScnRoot*)getScnRootSlot10(lbl_eu_806659B8);
 
     // GetFog only fills the leading 0x18 bytes; widening tmp to a full
     // FogState leaves its tail fields untouched (matching retail).

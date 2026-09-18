@@ -7,8 +7,8 @@
 extern "C" u32 func_8009CF8C(u32 resourceId);
 
 // BDAT row base/count helpers (used by CItem_createBoxContents's item-box scan).
-extern "C" u32 func_8003B41C(void* bdat);
-extern "C" u32 func_8003B1EC(void* bdat);
+extern "C" u32 Bdat_GetRowBase_B41C(void* bdat);
+extern "C" u32 Bdat_GetMaxRow_B1EC(void* bdat);
 
 // Item-box post-processing helper (used by CItem_createBoxContents).
 extern "C" void func_8013E424(void* self, int a);

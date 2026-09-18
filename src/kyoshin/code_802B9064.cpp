@@ -26,10 +26,10 @@ struct BattleManagerLayout {
     s16 field_20C8;                                  // +0x20C8 chain/timer state
 };
 
-// Retail symbol is the unmangled func_802B9064 (C linkage) - CCharVoiceMan
+// Retail symbol is the unmangled BattleGaugeTierVoiceGate (C linkage) - CCharVoiceMan
 // and other TUs reference it via extern "C"; without this the mangled
 // __FP11BattleGaugeff breaks the main.dol link.
-extern "C" bool func_802B9064(BattleGauge* obj, f32 curVal, f32 prevVal) {
+extern "C" bool BattleGaugeTierVoiceGate(BattleGauge* obj, f32 curVal, f32 prevVal) {
     cf::CActorParam* battle = reinterpret_cast<cf::CActorParam*>(obj);
 
     // Gauge must be enabled (flag bit 1) and the value currently rising.

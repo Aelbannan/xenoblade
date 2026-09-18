@@ -23,7 +23,7 @@ struct CNandQueue {
 };
 
 // NAND completion pump (defined in libs/monolib/src/nand/CNand.cpp).
-extern "C" void func_804DA1CC(CNandQueue* self);
+extern "C" void NandMgrPumpCompletion(CNandQueue* self);
 
 // Single event slot of the CfNandManager event ring (0x10 bytes).
 struct CfNandEvent {
@@ -82,7 +82,7 @@ struct CfNandPendingEvent {
     u8  mFlag;    // 0x17F (aliases field_17F)
 };
 
-// Directory-entry count written by the NAND readdir request (func_804DA3E4)
+// Directory-entry count written by the NAND readdir request (NandMgrEnqueueReaddir)
 // and consumed by the name-table scan in __dt__8023E63C.
 extern s32 lbl_eu_80664778;
 // Format argument handed to ml::FixStr<32>::format by the name builders.
@@ -238,12 +238,12 @@ extern u32 lbl_eu_80536B20[3];
 // Null pointer-to-member-function constant (defined in CUICfManager.cpp).
 extern u32 __ptmf_null[3];
 // NAND request helpers (libs/monolib/src/nand/CNand.cpp).
-extern "C" int func_804DA29C(CNandQueue* self, const char* name, u32 a2, u32 a3,
+extern "C" int NandMgrEnqueueSaveFlush(CNandQueue* self, const char* name, u32 a2, u32 a3,
                              void* a4, u32 a5);
-extern "C" int func_804DA34C(CNandQueue* self, const char* name, u32 a2, u32 a3);
-extern "C" int func_804DA3A0(CNandQueue* self, u32 a1);
-extern "C" int func_804DA3E4(CNandQueue* self, u8* path, u32 size, void* outCount);
-extern "C" int func_eu_804DE660(CNandQueue* self, u32 a1, u32 a2);
+extern "C" int NandMgrEnqueueLoad(CNandQueue* self, const char* name, u32 a2, u32 a3);
+extern "C" int NandMgrEnqueueRemove(CNandQueue* self, u32 a1);
+extern "C" int NandMgrEnqueueReaddir(CNandQueue* self, u8* path, u32 size, void* outCount);
+extern "C" int NandMgrEnqueueBannerLoad(CNandQueue* self, u32 a1, u32 a2);
 
 // Party-snapshot fallback data (.bss, 3 words) for missing player slots
 // (func_8023C1F0) and the fallback float (.sbss).
@@ -278,9 +278,9 @@ struct CfNandPartySnapshot {
 
 // --- imports used by the CfNandManager TU (declared here so the .cpp stays
 // free of local extern "C" scaffolding) ---
-extern "C" u32 func_8009CF8C(u32 resourceId);   // message-count lookup - (u32) form must match CUICfManager.hpp (10197)
-extern "C" u32 func_8009CF84();                 // save-region size lookup
-extern "C" u32 func_8006A80C();                 // game-progress bitfield
+extern "C" u32 CtrlRemote_TouchBitByArg(u32 resourceId);   // message-count lookup - (u32) form must match CUICfManager.hpp (10197)
+extern "C" u32 CtrlRemote_GetFixedSize1214();                 // save-region size lookup
+extern "C" u32 CfT_FrameTimerGet();                 // game-progress bitfield
 extern "C" void* func_8009EC9C(u32 index);      // character-data lookup
 extern "C" void resetBattlePresentation__Q22cf13CfGameManagerFv();
 extern char lbl_eu_8050B470[];                  // bdat column-name blob
@@ -560,13 +560,13 @@ struct CfNandWorkBuf {
 };
 
 // --- imports for the save-image builder (func_8023C93C) ---
-extern "C" u8* func_8009CF0C();                     // capture-region source pointer
+extern "C" u8* CtrlRemote_GetSharedBufPtr();                     // capture-region source pointer
 extern "C" void cfCam_pullFollowD(u8* dst, u8* src);    // camera settings fill
-extern "C" void func_8016E09C(struct CfNandWthrBlock* w);
-extern "C" void func_80207C94(u8* dst);             // MINE region builder
+extern "C" void initReloadInfoStruct(struct CfNandWthrBlock* w);
+extern "C" void mineSnapshotActivePoints(u8* dst);             // MINE region builder
 f32 getMasterVolume();                                // mangled __Fv in retail
-extern "C" f32 func_801896A0();
-extern "C" f32 func_801895EC();
+extern "C" f32 MenuSnd_GetSeVol_96A0();
+extern "C" f32 MenuSnd_GetMasterVol_95EC();
 extern "C" struct CfNandNameRoot* getReslistC48(); // save-name directory container
 // Retail symbol is CfGameManager's static member but returns its result in r3.
 extern "C" u32 getEventCounterA__Q22cf13CfGameManagerFv();

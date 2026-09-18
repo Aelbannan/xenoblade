@@ -7,7 +7,7 @@ struct CSchedule;
 struct ScheduleEntry;
 
 // Pool-managed schedule item (0x58 bytes, pool at lbl_eu_80661718, stride 0x58).
-// Allocated/looked up via handles through func_804DFBF4.
+// Allocated/looked up via handles through SchedItem_FetchByHandle.
 struct CScheduleItem {
     u8* mEntryData;   // 0x00: pointer to entry blob (NULL when free)
     u8 mFlags;        // 0x04: bit 0x80 = entries loaded
@@ -21,7 +21,7 @@ struct CScheduleItem {
     u8 _pad52[6];     // 0x52
 };                  // size 0x58
 
-// Entry blob header: {lifetime, offset} pairs resolved by func_804E3EB4.
+// Entry blob header: {lifetime, offset} pairs resolved by schedInitItemFromData.
 struct CScheduleEntryData {
     u16 mLifetime; // 0x00
     u16 mOffset;   // 0x02: offset into entry blob (0 = none)
@@ -36,7 +36,7 @@ struct CItemEntry {
 };                  // size 0x16
 
 // Effect object (pool at lbl_eu_80661728, stride 0x22C), looked up via
-// func_804DFEAC(handle).
+// SchedFx_FetchByHandle(handle).
 struct CEffectObj {
     u8 _pad00[0x1C];
     u16 mFlags1C;   // 0x1C: bit 0x2000 = parent-linked, bit 0x8000 = update flag

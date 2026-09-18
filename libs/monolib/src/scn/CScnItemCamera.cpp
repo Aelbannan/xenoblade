@@ -1,7 +1,7 @@
 // Translation unit: monolib/src/scn/CScnItemCamera
 // Scene item camera class implementation.
 //
-// Status: Only func_8049EA98 and func_8049F9A4 are FULL_MATCH.
+// Status: Only ScnCam_NullCtor and ScnCam_NoopVFunc are FULL_MATCH.
 //         Remaining functions are NOT_STARTED stubs.
 
 #include <monolib/scn/CScnItemCamera.hpp>
@@ -67,14 +67,14 @@ extern SCamDefaultTable lbl_eu_80658658;
 // and mSubObjArray2 at offsets 0x1F8 and 0x258.
 // Equivalent to: CScnItemCameraSubObj::CScnItemCameraSubObj() {}
 // extern "C": the retail reloc name is the unmangled short form
-// func_8049EA98 (a C++ definition would mangle to func_8049EA98__Fv
+// ScnCam_NullCtor (a C++ definition would mangle to ScnCam_NullCtor__Fv
 // and drift at every __construct_array ctor-arg site).
-extern "C" void func_8049EA98() {}
+extern "C" void ScnCam_NullCtor() {}
 
 // Trivial no-op virtual function override at vtable+0x0C.
 // Base class default is overridden with a no-op in this class.
 // Equivalent to: void CScnItemCamera::vfunc_0C() {}
-extern "C" void func_8049F9A4() {}
+extern "C" void ScnCam_NoopVFunc() {}
 
 // Camera fields the draft header does not lay out correctly. This
 // overlay re-describes the retail object with the true offsets: the
@@ -556,10 +556,10 @@ CScnItemCamera* __ct__CScnItemCamera(CScnItemCamera* obj, CScnItemCamera* parent
     cam->mUnk1F4 = lbl_eu_8066AC00;
 
     __construct_array(&cam->mSubObjArray1[0],
-                      (ConstructorDestructor)&func_8049EA98,
+                      (ConstructorDestructor)&ScnCam_NullCtor,
                       (ConstructorDestructor)&__dt__8049EA9C, 0x10, 6);
     __construct_array(&cam->mSubObjArray2[0],
-                      (ConstructorDestructor)&func_8049EA98,
+                      (ConstructorDestructor)&ScnCam_NullCtor,
                       (ConstructorDestructor)&__dt__8049EA9C, 0x10, 6);
 
     // Plain builtin casts: MWCC's u16->f32 conversion emits the retail
@@ -905,9 +905,9 @@ CScnItemCamera* func_8049F9A8(CScnCameraItemHost* self, int arg2) {
 
 // ===== Dissolved monolibdata2 (blob surgery) data owned by this TU =====
 // referenced externs (functions / data labels)
-extern "C" void func_80482040();
-extern "C" void func_80482048();
-extern "C" void func_8048204C();
+extern "C" void ScnCamNw4r_NullHook40();
+extern "C" void ScnCamNw4r_EmptyHook48();
+extern "C" void ScnCamNw4r_GetField10Ptr();
 extern "C" u32 lbl_eu_80523E70;
 extern "C" u32 lbl_eu_80523E84;
 extern "C" u32 lbl_eu_80523E98;
@@ -1086,7 +1086,7 @@ extern "C" u32 lbl_eu_8066AE1C;
 
 // [.data] 0x8056ECC0-0x8056F014 (0x354B)
 extern "C" u32 lbl_eu_8056ECC0[213] = {
-    (u32)&lbl_eu_806638B0, 0x00000000, (u32)&__dt__14CScnItemCameraFv, (u32)&func_8049F9A4, (u32)&func_80482048, (u32)&func_8049F8E4, (u32)&func_8048204C, (u32)&func_80482040,
+    (u32)&lbl_eu_806638B0, 0x00000000, (u32)&__dt__14CScnItemCameraFv, (u32)&ScnCam_NoopVFunc, (u32)&ScnCamNw4r_EmptyHook48, (u32)&func_8049F8E4, (u32)&ScnCamNw4r_GetField10Ptr, (u32)&ScnCamNw4r_NullHook40,
     0x00000000, (u32)&func_8049EBF0, (u32)&lbl_eu_8066AC40, 0x00000000, (u32)&lbl_eu_8066AC48, 0x00000001, (u32)&lbl_eu_8066AC50, 0x00000001,
     (u32)&lbl_eu_8066AC58, 0x00000001, (u32)&lbl_eu_8066AC60, 0x00000001, (u32)&lbl_eu_8066AC68, 0x00000001, (u32)&lbl_eu_8066AC70, 0x00010001,
     (u32)&lbl_eu_80524268, 0x00020001, (u32)&lbl_eu_80524274, 0x00010001, (u32)&lbl_eu_80524280, 0x00020001, (u32)&lbl_eu_8052428C, 0x00010001,

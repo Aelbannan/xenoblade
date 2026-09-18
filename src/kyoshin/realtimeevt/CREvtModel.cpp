@@ -13,17 +13,17 @@ extern "C" {
 extern void __ct__cf_CREvtObj(void* self, int arg);
 extern void* __dt__Q22cf8CREvtObjFv(void* self, int dealloc);
 extern void __dt__80185754(void* self);
-extern void func_80185700(void* self);
-extern void* func_80185748(u32 size);
+extern void EvtObj_RunCallback(void* self);
+extern void* EvtObj_AllocBlock(u32 size);
 extern u32 Scn_IsAnimActiveOrNull(void* ptr);
 extern void* Scn_InitGlobalA(void* global, void* data, int param);
 extern void func_8016AF4C(void* data, const char* name, int* outValue);
 extern void EvtSeqFindResFloat(void* data, const char* name, void* outValue);
 extern int  EvtSeqCheckRegionStatus(void* data);
-extern u32  func_80180954(void);
-extern u32  func_80180960(void);
+extern u32  REvtCam_GetFieldA5Flag(void);
+extern u32  REvtCam_IsField98Set(void);
 extern int EvtSeqGetCounter104(void);
-extern void func_804C0254(void* ptr, int flag);
+extern void ScnEnvLgt_EnableFlag100(void* ptr, int flag);
 extern void* simGetLeafActData(void* model);
 extern void simSetFlag2OnTree(void* model, int flag);
 extern void func_80482DF4(void* model, int flag);
@@ -38,7 +38,7 @@ extern void* __dynamic_cast(void* obj, long offset, const void* srcType, const v
 extern void __ct__CREvtModelMap(void* self, void* parent);
 extern void __ct__CREvtModelObj(void* self, void* parent);
 extern void __ct__CREvtModelPc(void* self, void* parent);
-extern void func_8049E708(void* data, int index);
+extern void ItemAnim_GetChr_E708(void* data, int index);
 extern const void* lbl_eu_8053167C[];
 extern const void* lbl_eu_806623F8[2];
 extern const void* lbl_eu_80662400[2];
@@ -134,12 +134,12 @@ int func_801726DC(void* self) {
     return 1;
 }
 
-void* func_801727D0(void* self) {
+void* evtModelDataPtr(void* self) {
     return (char*)FLD(void*, self, 0x1C) + 0x10;
 }
 
 void func_801727DC(void* self) {
-    func_80185700(self);
+    EvtObj_RunCallback(self);
     s32 counter = FLD(s32, self, 0x34);
     if (counter < 4) {
         u16 val = *(u16*)((char*)FLD(void*, self, 0x1C) + counter * 2 + 0x6C);
@@ -158,8 +158,8 @@ void func_801727DC(void* self) {
     if (model != 0) {
         u32 flags = FLD(u32, self, 0x18);
         int bit = (flags >> 21) & 1;
-        func_804C0254((char*)model + 0x31C, bit);
-        u32 check = func_80180960();
+        ScnEnvLgt_EnableFlag100((char*)model + 0x31C, bit);
+        u32 check = REvtCam_IsField98Set();
         s32 field2C = FLD(s32, self, 0x2C);
         CREvtModel* obj = (CREvtModel*)self;
         if (check == 0) {
@@ -185,12 +185,12 @@ void func_801728F8(void* self) {
     }
 }
 
-void func_8017298C(void* self) {
+void releaseEvtAnim28(void* self) {
     void* p = FLD(void*, self, 0x28);
     if (p != 0) { Scn_IsAnimActiveOrNull(p); FLD(void*, self, 0x28) = 0; }
 }
 
-int func_801729D0(void* self) {
+int isEvtDataFlagSet(void* self) {
     void* p = FLD(void*, self, 0x1C);
     if (p == 0) { return 0; }
     return (FLD(u32, p, 0x58) >> 4) & 1;
@@ -205,7 +205,7 @@ void func_801729F0(void* self, void* pData, void* pModelData) {
     void* p24 = FLD(void*, self, 0x24);
     if (p24 != 0) {
         reinterpret_cast<CREvtModel*>(self)->vfunc_08();
-        if (func_80180954() == 0) { func_80172EA4(self, p24, model, 1); }
+        if (REvtCam_GetFieldA5Flag() == 0) { func_80172EA4(self, p24, model, 1); }
         FLD(void*, self, 0x28) = p24;
         FLD(void*, self, 0x24) = 0;
     }
@@ -219,7 +219,7 @@ void func_801729F0(void* self, void* pData, void* pModelData) {
     }
     void* newData = Scn_InitGlobalA(&lbl_eu_80663E14, pData, 0);
     FLD(void*, self, 0x24) = newData;
-    func_80482DF4(model, func_80180954() == 0 ? 1 : 0);
+    func_80482DF4(model, REvtCam_GetFieldA5Flag() == 0 ? 1 : 0);
     func_804839D4(model, (u32)newData, 0, 0, 0, 1, -1);
     func_80172CE4(self, model);
     static_cast<CScnItemModel*>(model)->vfunc84(0);
@@ -229,7 +229,7 @@ void func_801729F0(void* self, void* pData, void* pModelData) {
     FLD(s32, self, 0x30) = 0;
     { int tmp = 0; func_8016AF4C(newData, &lbl_eu_80503344[0], &tmp); FLD(s32, self, 0x2C) = tmp; }
     { int tmp = 0; func_8016AF4C(newData, &lbl_eu_80503344[0x0B], &tmp); FLD(s32, self, 0x30) = tmp; }
-    u32 check = func_80180960();
+    u32 check = REvtCam_IsField98Set();
     CREvtModel* obj2 = (CREvtModel*)self;
     if (check == 0) {
         obj2->setVisible((FLD(s32, self, 0x2C) - 1) == 0 ? 1 : 0);
@@ -241,12 +241,12 @@ void func_801729F0(void* self, void* pData, void* pModelData) {
     int sv2 = 1; func_8016AF4C(newData, &lbl_eu_80503344[0x1E], &sv2);
     if (sv2 != 0) { FLD(u32, model, 0x7A0) |= 0x8; }
     else { FLD(u32, model, 0x7A0) &= ~0x8; }
-    if (func_80180954() == 0) { func_80172EA4(self, newData, model, 0); }
+    if (REvtCam_GetFieldA5Flag() == 0) { func_80172EA4(self, newData, model, 0); }
     int result = EvtSeqCheckRegionStatus(newData);
     static_cast<CScnItemModel*>(model)->vfunc84(result);
 }
 
-void func_80172CC0(void) {}
+void emptyEvtModelHook(void) {}
 
 void func_80172CC4(void* self, int visible) {
     CScnItemModel* model = (CScnItemModel*)FLD(void*, self, 0x20);
@@ -305,33 +305,33 @@ void func_80172EA4(void* self, void* animData, void* model, int flag) {
     }
 }
 
-void* func_801730D0(void* self) {
+void* createEvtModelObj(void* self) {
     u32 type = FLD(u32, self, 0x28);
     if (type == 1) {
-        void* obj = func_80185748(0x1F0);
+        void* obj = EvtObj_AllocBlock(0x1F0);
         if (obj != 0) { __ct__CREvtModelMap(obj, self); }
         return obj;
     } else if (type == 2) {
         if (FLD(s8, self, 0x16) != 0x30 || FLD(s8, self, 0x17) != 0x30) {
-            void* obj = func_80185748(0xB4);
+            void* obj = EvtObj_AllocBlock(0xB4);
             if (obj != 0) { __ct__CREvtModelPc(obj, self); }
             return obj;
         }
     }
-    void* obj = func_80185748(0x88);
+    void* obj = EvtObj_AllocBlock(0x88);
     if (obj != 0) { __ct__CREvtModelObj(obj, self); }
     return obj;
 }
 
-int func_80173194(void* self) {
+int isEvtFlagBit0Set(void* self) {
     return FLD(u32, self, 0x18) & 1;
 }
 
-u32 func_801731A0(void* self) {
+u32 isEvtFlagBit4Set(void* self) {
     return (FLD(u32, self, 0x18) >> 4) & 1;
 }
 
-int func_801731AC(void* self) {
+int zeroEvtModelHook(void* self) {
     (void)self; return 0;
 }
 
@@ -516,9 +516,9 @@ void* lbl_eu_80531670[3] = {
 __declspec(section ".data") __attribute__((used))
 const void* lbl_eu_8053167C[17] = {
     (void*)lbl_eu_80662408, 0, (void*)__ct__80172668, (void*)func_801728F8, // +0x0
-    (void*)func_8017298C, (void*)getField20, (void*)func_801731A0, (void*)func_80173194, // +0x10
-    (void*)CREvtObjIsBusyDefault, (void*)func_801727DC, (void*)func_801731AC, (void*)CREvtObjVfunc24Default, // +0x20
-    (void*)func_80172CC4, (void*)func_801729F0, (void*)func_80172CC0, (void*)func_801726DC, // +0x30
+    (void*)releaseEvtAnim28, (void*)getField20, (void*)isEvtFlagBit4Set, (void*)isEvtFlagBit0Set, // +0x10
+    (void*)CREvtObjIsBusyDefault, (void*)func_801727DC, (void*)zeroEvtModelHook, (void*)CREvtObjVfunc24Default, // +0x20
+    (void*)func_80172CC4, (void*)func_801729F0, (void*)emptyEvtModelHook, (void*)func_801726DC, // +0x30
     (void*)func_80172768, // +0x40
 };
 } // extern "C"

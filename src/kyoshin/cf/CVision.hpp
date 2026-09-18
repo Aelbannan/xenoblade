@@ -11,7 +11,7 @@ namespace cf{
     class CVisionEffect {
     public:
         u8 unk0[0x68];          // 0x00
-        u32 field_68;           // 0x68 flag (| 0x40 in func_801A80FC)
+        u32 field_68;           // 0x68 flag (| 0x40 in clearVisionEffect)
         u8 unk6C[0x94 - 0x6C];  // 0x6C
         CSchedule* mSchedule;   // 0x94
         u8 unk98[0xB0 - 0x98];  // 0x98
@@ -99,7 +99,7 @@ namespace cf{
         virtual void vf190(u32 a);  // declared index 98 -> vtable 0x190
     };
 
-    // Object list created by CTaskGame_enumListCtor / filled by func_800F4A98; the
+    // Object list created by CTaskGame_enumListCtor / filled by startEnumObjects; the
     // element count lives at +0x620.
     struct CVisionEnumList {
         u8 unk0[0x620];
@@ -517,7 +517,7 @@ namespace cf{
         virtual void vt_18();       //0x18
         virtual void vt_1C();       //0x1C (no-arg state refresh)
         virtual void vt_20(u32 r4); //0x20
-        virtual void func_801A81FC();       //0x24 (retail vtable word)
+        virtual void detachVisionEffect();       //0x24 (retail vtable word)
         virtual s32 func_801A5444(CVisionObjV* obj, CVisionFusionV* target); //0x28 (retail vtable word)
         virtual void vt_2C(u32 r4); //0x2C
         virtual void vt_30(u32 r4);  //0x30
@@ -548,7 +548,7 @@ namespace cf{
 // ---------------------------------------------------------------------------
 extern "C" void setChildF50G_(void* self, float v);
 extern "C" void func_804E36DC(CSchedule* self, f32 dt);
-extern "C" void* func_800451D8(u32 cls, int param);
+extern "C" void* bindIndexedEffect(u32 cls, int param);
 extern "C" void __dl__FPv(void* ptr);
 
 // Same-TU siblings (defined in CVision.cpp; C linkage keeps the call relocs
@@ -556,7 +556,7 @@ extern "C" void __dl__FPv(void* ptr);
 extern "C" void func_801A897C(cf::CVision* self, int slot, int r28);
 extern "C" void func_801A8244(cf::CVision* self, void* r25, int r26, int r27, int r28);
 
-// Class-spec table (8-byte stride, only low word used) for func_801A808C.
+// Class-spec table (8-byte stride, only low word used) for createVisionEffect.
 struct CVisionClassTableEntry { u32 field_00; u32 field_04; };
 extern "C" CVisionClassTableEntry lbl_eu_80503F60[4];
 
@@ -589,10 +589,10 @@ extern "C" void lookupEffectForResource__Q22cf13CfGameManagerFv(u32 a, u32 b, u3
 extern "C" void cfCam_pushStateToActive();
 extern "C" void* getHandleMEM2__Q23mtl10MemManagerFv();
 // CTaskGame_openVision is owned by kyoshin/CTaskGame.hpp (single unified decl).
-extern "C" void func_801537E0(void* obj); // void return: CAIAction.cpp definition
+extern "C" void aiActionClearBits0006(void* obj); // void return: CAIAction.cpp definition
 extern "C" void func_801537F0(void* obj);
 extern "C" int findObjectById__Fi(int id);
-extern "C" float func_800F42AC(void* obj);
+extern "C" float ScMain_GetRoundedMetric(void* obj);
 extern "C" void func_800F449C(void* obj);
 extern "C" int CUICfManager_queueFactoryMenu(int id, float f);
 // Character-data lookup + row predicate pair used by CVision.cpp's
@@ -616,8 +616,8 @@ extern "C" void* __dynamic_cast(void* src, long offset, const void* src_type,
                                 const void* dst_type, void* src2dst);
 
 // Player-list enumeration (CfObjectEnumList).
-extern "C" void func_800F4A98(void* list, u32 type, u32 filter);
-extern "C" void* func_800F6EAC(void* list, u32 idx);
+extern "C" void startEnumObjects(void* list, u32 type, u32 filter);
+extern "C" void* getObjectAt(void* list, u32 idx);
 extern "C" void updateBattleEffectState__Q22cf13CfGameManagerFv(u32 a, u32 b);
 
 // Typeinfo names for __dynamic_cast in the player-list loops.
@@ -626,13 +626,13 @@ extern "C" const void* lbl_eu_806618F0;
 
 extern "C" void func_8014AC38(void* a, void* b);
 extern "C" int func_8014B8BC(void* a, void* b);
-extern "C" bool func_801AC09C(u32 flags);
-extern "C" int func_800F4730(void);
-extern "C" void* func_800F4648(void* self);
-extern "C" int func_800F46C0(void* a, void* b);
+extern "C" bool isVisionSlotAnimating(u32 flags);
+extern "C" int ScMain_DecodeFlagPriority(void);
+extern "C" void* ScMain_GetSummedInt(void* self);
+extern "C" int ScMain_IsDistinctFrom(void* a, void* b);
 extern "C" void* CBattleMan_FetchVisionObj(void* self);
 extern "C" void func_800A26A4(void* a, int b, void* c, int d, int e, int f, int g);
-extern "C" int func_8026178C(void* data, u32 mode);
+extern "C" int Counter_TestBit(void* data, u32 mode);
 extern "C" void func_80170AB0(void* self, void* dst);
 extern "C" void func_80174C24(void* obj, u32 flag);
 extern "C" f64 lbl_eu_80667D18;
@@ -644,13 +644,13 @@ extern "C" f32 lbl_eu_80667D54;
 extern "C" const f64 lbl_eu_80667D58;
 
 // Mode-dispatch helpers used by func_801A8244's per-mode FX setup.
-extern "C" void func_801ACD5C(u32 a);
+extern "C" void restartVisionSlots(u32 a);
 extern "C" void CCharVoiceMan_EnqueuePendingActionVoice(u32 a, u32 b, void* c);
-extern "C" void func_80280D04(u32 a);
+extern "C" void SysWinLog_AdvanceTiers(u32 a);
 
 // Per-slot FX helper used by func_801A897C's loop (func_80174C98 is
-// declared by the chain headers; func_800F477C is declared inline below).
-extern "C" f32 func_800F4424(void* a);
+// declared by the chain headers; CfCode_GetSubObject is declared inline below).
+extern "C" f32 ScMain_GetRatio(void* a);
 
 // 5-word data table copied into a local and handed to CVisionBattleObj::vf1E8.
 extern "C" u32 lbl_eu_80503F80[5];
@@ -691,7 +691,7 @@ extern "C" u32 lbl_eu_80533158[3];
 extern "C" u32 lbl_eu_80533224[3];
 extern "C" f32 lbl_eu_80667CD8;
 extern "C" void* __RTTI__Q22cf13CfObjectActor;
-extern "C" void func_8009D018(u32 a, u32 b);
+extern "C" void CtrlRemote_SetSharedBit(u32 a, u32 b);
 // Return type must match CfGameManager.hpp's declaration (u32), or MWCC
 // rejects the redeclaration when both headers are included in one TU.
 // UIWin_BuildFlagBuf is owned by kyoshin/CUIWindowManager.hpp.
@@ -707,7 +707,7 @@ extern "C" u32 lbl_eu_8053317C[3];
 extern "C" u32 lbl_eu_80533200[3];
 extern "C" int getAnimGate(void);
 extern "C" s32 CfRes_getE24Bit22(void);
-extern "C" u32 func_801B481C(void);
+extern "C" u32 GetItemMulti_IsActiveFlag(void);
 extern "C" void CBattleManager_preCalcTotalDamage(void* self, void* actor, f32* outDamage, u32* outCount);
 extern "C" f32 lbl_eu_80667D4C;
 extern "C" void* getInstance__Q22cf13CfGameManagerFv(void);

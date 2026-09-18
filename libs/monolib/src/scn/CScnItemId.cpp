@@ -9,14 +9,14 @@
 extern "C" u32 lbl_eu_806638B8;
 extern "C" u32 lbl_eu_806624D8;
 // Foreign function referenced by the dispatch table.
-extern "C" void func_80482048();
+extern "C" void ScnCamNw4r_EmptyHook48();
 // Retail destructor mangled name (CScnItemId::~CScnItemId) for the vtable reloc.
 extern "C" void __dt__10CScnItemIdFv();
 // Forward declarations for in-TU extern "C" functions referenced by the vtable.
-extern "C" void func_8048228C();
-extern "C" void func_80482288();
-extern "C" void* func_80482290(u8* self);
-extern "C" u32 func_80482298(u8* self);
+extern "C" void scnItemIdNoopB();
+extern "C" void scnItemIdNoopA();
+extern "C" void* scnItemIdSelfPlusC(u8* self);
+extern "C" u32 scnItemIdGetValue(u8* self);
 
 // === .rodata size=0x10 align=8 ===
 extern "C" __declspec(align(8)) const char lbl_eu_80523E98[16] = {
@@ -26,8 +26,8 @@ extern "C" __declspec(align(8)) const char lbl_eu_80523E98[16] = {
 // === .data size=0x30 align=8 ===
 // CScnItemId vtable (32B).
 extern "C" u32 lbl_eu_8056DCD8[8] = {
-    (u32)&lbl_eu_806638B8, 0x00000000, (u32)&__dt__10CScnItemIdFv, (u32)&func_8048228C,
-    (u32)&func_80482048, (u32)&func_80482288, (u32)&func_80482290, (u32)&func_80482298,
+    (u32)&lbl_eu_806638B8, 0x00000000, (u32)&__dt__10CScnItemIdFv, (u32)&scnItemIdNoopB,
+    (u32)&ScnCamNw4r_EmptyHook48, (u32)&scnItemIdNoopA, (u32)&scnItemIdSelfPlusC, (u32)&scnItemIdGetValue,
 };
 // CScnItemId param block (16B).
 extern "C" u32 lbl_eu_8056DCF8[4] = {
@@ -111,7 +111,7 @@ CScnItemId* __ct__804820F8(CScnItemIdHost* self, u32 value, const char* name) {
     return item;
 }
 
-extern "C" void func_80482288(void) {}
-extern "C" void func_8048228C(void) {}
-extern "C" void* func_80482290(u8* self) { return self + 0xC; }
-extern "C" u32 func_80482298(u8* self) { return ((CScnItemId*)self)->mValue; }
+extern "C" void scnItemIdNoopA(void) {}
+extern "C" void scnItemIdNoopB(void) {}
+extern "C" void* scnItemIdSelfPlusC(u8* self) { return self + 0xC; }
+extern "C" u32 scnItemIdGetValue(u8* self) { return ((CScnItemId*)self)->mValue; }

@@ -155,19 +155,19 @@ struct CfPartyList {
 
 // C-linkage imports used by this TU (retail names, defined in CtrlMoveBase).
 extern "C" {
-int  func_804BE398(void* vec, int a, int b, int c, f32 d, f32 e);
+int  ScnRes_VertRayForward_E398(void* vec, int a, int b, int c, f32 d, f32 e);
 void PSVECNormalize(const Vec* a, Vec* b);
 int  func_80088974(void* self, ml::CVec3* out, ml::CVec3* pos, int a, int b);
 void func_800896F4(cf::CCtrlMovePC* self, ml::CVec3* a, const ml::CVec3* b);
 void func_800898D4(cf::CCtrlMovePC* self, ml::CVec3* v);
-int  func_804BE5A4(int a, int b);
+int  ScnRes_EntryFlagThunk_E5A4(int a, int b);
 
 // Additional engine helpers (retail C names).
 void* CtrlObjectParam_GetSlotTableBase();
 cf::CfGlobalSettings* getUnk80664658();
-int  func_801F4ED8(void* a, void* b);
-void func_800D59FC(void* a);
-void func_80089990(cf::CCtrlMovePC* self);
+int  GimProbeLockAccept(void* a, void* b);
+void ctrlActUpdateData70(void* a);
+void maskMoveChildFlags(cf::CCtrlMovePC* self);
 int  func_80089E88(cf::CCtrlMovePC* self, ml::CVec3* out, int flag);
 void Warning__Q24nw4r2dbFPCciPCce(const char* file, int line, const char* fmt, ...);
 f32  FrSqrt__Q24nw4r4mathFf(f32 x);
@@ -177,15 +177,15 @@ f32  FrSqrt__Q24nw4r4mathFf(f32 x);
 extern "C" {
 int  func_80198710(void* out, void* src, int a, f32 b, f32 c, f32 d, int e);
 int  CPartsChange_ProcessPartyInfo(void* a, void* b);
-int  func_804BE348(void* a, void* b, int c, int d, int e);
+int  ScnRes_SegQueryForward_E348(void* a, void* b, int c, int d, int e);
 void func_804BE4B4(void* out, int a);
 void func_804BE4E0(void* out, int a);
 int  func_804B526C(void* a, void* b, void* c, void* d, int e, int f, void* g);
-int  func_804B54D4(void* a, void* b, void* c, int d, int e);
+int  Coli_SweepSegNodes(void* a, void* b, void* c, int d, int e);
 void* findObjectById__Fi(int id);
 void* setAnimPosVec(void* out, const ml::CVec3* src); // matches CfGameManager.hpp decl
 void CfObjectMove_setMoveSpeedGated(void* a, f32 b);
-void func_80089990(cf::CCtrlMovePC* self);
+void maskMoveChildFlags(cf::CCtrlMovePC* self);
 void* getPlayer__Q22cf13CfGameManagerFi(int idx);
 }
 
@@ -286,23 +286,23 @@ struct CfPartyInfoIn {
 // The 20 retail functions (placeholder symbols). Implemented in CtrlMovePC.cpp.
 extern "C" {
 cf::CCtrlMovePC* __ct__801993C4(cf::CCtrlMovePC* self, void* baseParam, void* obj);
-void func_8019956C(cf::CCtrlMovePC* self);
-void func_80199618(cf::CCtrlMovePC* self);
-void func_80199678(void* ctrl, int flag); // matches CfGameManager.hpp / CfGimmickObject.hpp
-void func_80199810(cf::CCtrlMovePC* self, const Vec* pos);
+void movePcTopTickDispatch(cf::CCtrlMovePC* self);
+void movePcReleaseTaskReset(cf::CCtrlMovePC* self);
+void movePcCondFullReset(void* ctrl, int flag); // matches CfGameManager.hpp / CfGimmickObject.hpp
+void movePcResetAndSetPos(cf::CCtrlMovePC* self, const Vec* pos);
 int  func_801999C0(cf::CCtrlMovePC* self);
 void func_8019A9C4(cf::CCtrlMovePC* self);
 int  func_8019B4F0(cf::CCtrlMovePC* self);
 int  func_8019C0D4(cf::CCtrlMovePC* self);
 int  func_8019C304(cf::CCtrlMovePC* self);
-int  func_8019CCDC(cf::CCtrlMovePC* self);
+int  movePcFacingSinCosUpdate(cf::CCtrlMovePC* self);
 int  func_8019CDA0(cf::CCtrlMovePC* self);
 int  func_8019D9E0(cf::CCtrlMovePC* self);
 int  func_8019DD54(cf::CCtrlMovePC* self);
 void func_8019E710(cf::CCtrlMovePC* self);
-int  func_8019EDAC(cf::CCtrlMovePC* self);
-int  func_8019EE08(cf::CCtrlMovePC* self);
-int  func_8019EEB8(cf::CCtrlMovePC* self);
+int  movePcTickCounterWrap(cf::CCtrlMovePC* self);
+int  movePcFlagTransitionReset(cf::CCtrlMovePC* self);
+int  movePcCounterFacingUpdate(cf::CCtrlMovePC* self);
 f32 func_8019EF90(cf::CCtrlMovePC* self);
 void func_8019F1E0(cf::CCtrlMovePC* self);
 }

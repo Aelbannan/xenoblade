@@ -63,7 +63,7 @@ CVirtualLightDir::CVirtualLightDir() {
 }
 
 // Stores the two f32 fields at 0x34/0x38 (retail symbol is unmangled C).
-extern "C" void func_8049474C(CVirtualLightDir* self, float a, float b) {
+extern "C" void VirtLight_SetPair(CVirtualLightDir* self, float a, float b) {
     self->mField34 = a;
     self->mField38 = b;
 }
@@ -74,7 +74,7 @@ CVirtualLightDir::~CVirtualLightDir() {}
 namespace VLBlob {
 extern "C" void __dt__16CVirtualLightDirFv();
 extern "C" void func_804947EC();
-extern "C" void func_8049488C();
+extern "C" void getVirtualLightSentinel();
 }
 extern "C" u32 lbl_eu_806639D8;   // .sdata (foreign)
 extern "C" u32 lbl_eu_806639D0;   // .sdata (foreign)
@@ -84,7 +84,7 @@ extern "C" u32 lbl_eu_8056E898[8] = {
     (u32)&lbl_eu_806639D8, 0x00000000,
     (u32)&VLBlob::__dt__16CVirtualLightDirFv,
     (u32)&VLBlob::func_804947EC,
-    (u32)&VLBlob::func_8049488C,
+    (u32)&VLBlob::getVirtualLightSentinel,
     (u32)&lbl_eu_806639D0, 0x00000000, 0x00000000,
 };
 

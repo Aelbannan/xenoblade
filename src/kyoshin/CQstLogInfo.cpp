@@ -13,11 +13,11 @@
 
 #include <stdio.h>
 
-void func_801390E0(CFileHandle**);
+extern "C" void closeFileHandle__FPP11CFileHandle(CFileHandle**);
 
-u8 CQstLogInfo::func_802296D0() { return mField38; }
+u8 CQstLogInfo::QstLogInfo_GetLoadedMark() { return mField38; }
 
-u8 CQstLogInfo::func_802296D8() { return mField39; }
+u8 CQstLogInfo::QstLogInfo_GetReadyMark() { return mField39; }
 
 // Start the quest-log state machine: mark busy (+0x34=1), clear the 0x39
 // flag, run the state step and play sound 0x6d. Guarded by the state.
@@ -25,7 +25,7 @@ extern "C" void func_802296E0(CQstLogInfo* self) {
     if (self->field_0x34 == 0) {
         self->field_0x34 = 1;
         self->mField39 = 0;
-        func_802298A0(self);
+        QstLogInfo_SwapAnimEnablePair(self);
         playUISound(0x6d);
     }
 }
@@ -36,12 +36,12 @@ extern "C" void func_80229724(CQstLogInfo* self) {
     if (self->field_0x34 == 3) {
         self->field_0x34 = 4;
         self->mField39 = 0;
-        func_80229900(self);
+        QstLogInfo_SwapAnimEnableDual(self);
         playUISound(6);
     }
 }
 
-void CQstLogInfo::func_80229768(u16 val) { mField3A = val; }
+void CQstLogInfo::QstLogInfo_SetQuestIdSlot(u16 val) { mField3A = val; }
 
 // Destructor: destroys the embedded scratch region, then frees the object
 // when the deleting-dtor flag is set (standard MWCC pattern).
@@ -70,20 +70,20 @@ CQstLogInfo::CQstLogInfo() {
     field_0x3C = 0;
 }
 
-// us-8022b5a8 - func_80229770
+// us-8022b5a8 - QstLogInfo_AdvanceState1To2
 // If the animation at 0x24 finishes, transition to state 2.
-extern "C" __declspec(noinline) void func_80229770(CQstLogInfo* self) {
+extern "C" __declspec(noinline) void QstLogInfo_AdvanceState1To2(CQstLogInfo* self) {
     f32 frame = lbl_eu_80668590;
     nw4r::lyt::AnimTransform* anim = self->field_0x24;
     if (advanceAnimTransform(anim, frame) != 0) {
         self->field_0x34 = 2;
-        func_80229900(self);
+        QstLogInfo_SwapAnimEnableDual(self);
     }
 }
 
-// us-8022b5f4 - func_802297BC
+// us-8022b5f4 - QstLogInfo_AdvanceState2To3
 // If the animation at 0x28 finishes, transition to state 3 and set field 0x39.
-extern "C" __declspec(noinline) void func_802297BC(CQstLogInfo* self) {
+extern "C" __declspec(noinline) void QstLogInfo_AdvanceState2To3(CQstLogInfo* self) {
     f32 frame = lbl_eu_80668590;
     nw4r::lyt::AnimTransform* anim = self->field_0x28;
     if (advanceAnimTransform(anim, frame) != 0) {
@@ -92,39 +92,39 @@ extern "C" __declspec(noinline) void func_802297BC(CQstLogInfo* self) {
     }
 }
 
-// us-8022b640 - func_80229808
+// us-8022b640 - QstLogInfo_RewindState4To5
 // If the animation at 0x28 is done (via AnimRewindFrame), transition to state 5.
-extern "C" __declspec(noinline) void func_80229808(CQstLogInfo* self) {
+extern "C" __declspec(noinline) void QstLogInfo_RewindState4To5(CQstLogInfo* self) {
     if (AnimRewindFrame(self->field_0x28, lbl_eu_80668590) != 0) {
         self->field_0x34 = 5;
-        func_802298A0(self);
+        QstLogInfo_SwapAnimEnablePair(self);
     }
 }
 
-// us-8022b68c - func_80229854
+// us-8022b68c - QstLogInfo_RewindState5To0
 // If the animation at 0x24 is done (via AnimRewindFrame), reset to state 0.
-extern "C" __declspec(noinline) void func_80229854(CQstLogInfo* self) {
+extern "C" __declspec(noinline) void QstLogInfo_RewindState5To0(CQstLogInfo* self) {
     if (AnimRewindFrame(self->field_0x24, lbl_eu_80668590) != 0) {
         self->field_0x34 = 0;
         self->mField39 = 1;
     }
 }
 
-// us-8022b2f8 - func_802294C0
+// us-8022b2f8 - QstLogInfo_LoadArcHandle
 // Load the quest-log arc into a mem2 file handle, then clear the loaded flag.
-void func_802294C0(CQstLogInfo* self) {
+void QstLogInfo_LoadArcHandle(CQstLogInfo* self) {
     self->mFileHandle = CDeviceFile::readFile(mtl::MemManager::getHandleMEM2(),
                                               lbl_eu_8050A0B4, reinterpret_cast<IWorkEvent*>(self), 0, 0);
     self->mField38 = 0;
 }
 
 // Same SetAnimationEnable shape as CQstLogList::QstLogList_ShowOpenAnim (FULL_MATCH).
-extern "C" __declspec(noinline) void func_802298A0(CQstLogInfo* self) {
+extern "C" __declspec(noinline) void QstLogInfo_SwapAnimEnablePair(CQstLogInfo* self) {
     self->mUnk20->SetAnimationEnable(self->field_0x28, false);
     self->mUnk20->SetAnimationEnable(self->field_0x24, true);
 }
 
-extern "C" __declspec(noinline) void func_80229900(CQstLogInfo* self) {
+extern "C" __declspec(noinline) void QstLogInfo_SwapAnimEnableDual(CQstLogInfo* self) {
     self->mUnk20->SetAnimationEnable(self->field_0x24, false);
     self->mUnk20->SetAnimationEnable(self->field_0x28, true);
 }
@@ -132,13 +132,13 @@ extern "C" __declspec(noinline) void func_80229900(CQstLogInfo* self) {
 // State machine driver: while the quest-log info is active, dispatch on the
 // current state (1/2/4/5) to the per-state animation handlers, then advance
 // the layout animation by one frame.
-extern "C" __declspec(noinline) void func_80229570(CQstLogInfo* self) {
+extern "C" __declspec(noinline) void QstLogInfo_StepStateMachine(CQstLogInfo* self) {
     if (self->mUnk30 == 0) return;
     switch (self->field_0x34) {
-    case 1: func_80229770(self); break;
-    case 2: func_802297BC(self); break;
-    case 4: func_80229808(self); break;
-    case 5: func_80229854(self); break;
+    case 1: QstLogInfo_AdvanceState1To2(self); break;
+    case 2: QstLogInfo_AdvanceState2To3(self); break;
+    case 4: QstLogInfo_RewindState4To5(self); break;
+    case 5: QstLogInfo_RewindState5To0(self); break;
     }
     self->mUnk20->Animate(0);
 }
@@ -146,10 +146,10 @@ extern "C" __declspec(noinline) void func_80229570(CQstLogInfo* self) {
 // Quest-log teardown: release the bdat handle, close the two arc handles,
 // delete the layout + tag processor, release the resource accessor and tear
 // down the scratch region.
-extern "C" __declspec(noinline) void func_80229620(CQstLogInfo* self) {
+extern "C" __declspec(noinline) void QstLogInfo_TeardownLayout(CQstLogInfo* self) {
     CBdat::getEntry(2);
-    func_801390E0(&self->mFileHandle);
-    func_801390E0(&self->field_0x18);
+    closeFileHandle__FPP11CFileHandle(&self->mFileHandle);
+    closeFileHandle__FPP11CFileHandle(&self->field_0x18);
     self->mUnk30 = 0;
     if (self->mUnk20 != nullptr) {
         delete self->mUnk20;
@@ -160,14 +160,14 @@ extern "C" __declspec(noinline) void func_80229620(CQstLogInfo* self) {
         self->field_0x2C = 0;
     }
     releaseArcResourceAccessor((nw4r::lyt::ArcResourceAccessor*)self->field_0x1C);
-    self->mMemRegion.func_8045F778();
+    self->mMemRegion.deleteRegion();
 }
 
 // Loads the quest-category arc: maps mField3A through the quest-name table
 // (lbl_eu_80536320) and reads the common archive file into field_0x18,
 // clearing the loaded flag mField38.
 #pragma optimize_for_size on
-void func_80229510(CQstLogInfo* self) {
+void QstLogInfo_LoadCommonArchive(CQstLogInfo* self) {
     self->field_0x18 = CDeviceFile::readCommonArchiveFile(
         KyoshinHeap_GetField44(),
         lbl_eu_80536320[func_80138138(self->mField3A)],
@@ -179,13 +179,13 @@ void func_80229510(CQstLogInfo* self) {
 // Full quest-log refresh: reset the log to the current quest id, then run the
 // name / description / pane-color / icon chain of sub-updates.
 #pragma optimize_for_size on
-extern "C" __declspec(noinline) void func_80229960(CQstLogInfo* self) {
-    func_8022AFF8(self);
-    u8 v = (u8)func_8009CF8C(self->mField3A + 0x220);
+extern "C" __declspec(noinline) void QstLogInfo_RefreshQuestDisplay(CQstLogInfo* self) {
+    QstLogInfo_ClearAllLogPanes(self);
+    u8 v = (u8)CtrlRemote_TouchBitByArg(self->mField3A + 0x220);
     u32 idx = func_80138138(self->mField3A);
-    func_80229A0C(self, (const char*)lbl_eu_80573D18[idx], self->mField3A, v);
-    func_80229B54(self, (const char*)lbl_eu_80573D18[idx], self->mField3A);
-    func_80229CA0(self, (const char*)self->field_0x3C, self->mField3A);
+    QstLogInfo_UpdateNameIconPane(self, (const char*)lbl_eu_80573D18[idx], self->mField3A, v);
+    QstLogInfo_UpdateClearReasonPane(self, (const char*)lbl_eu_80573D18[idx], self->mField3A);
+    QstLogInfo_UpdateExpRewardPane(self, (const char*)self->field_0x3C, self->mField3A);
     func_80229CF0(self, (const char*)lbl_eu_80573D18[idx], self->mField3A, v);
     func_8022A904(self, (const char*)lbl_eu_80573D18[idx], self->mField3A, v);
 }
@@ -194,7 +194,7 @@ extern "C" __declspec(noinline) void func_80229960(CQstLogInfo* self) {
 // Name-pane + icon update for one quest entry: BDAT text lookup into the
 // layout, root-pane icon lookup, then a 'timg' texture resource select by the
 // quest-category column, applied to the icon pane.
-extern "C" __declspec(noinline) void func_80229A0C(CQstLogInfo* self,
+extern "C" __declspec(noinline) void QstLogInfo_UpdateNameIconPane(CQstLogInfo* self,
     const char* table, u32 key, u8 v) {
     char* str = BdatGetPtrDirect(table, &lbl_eu_8050A0B4[0x17], key);
     LayoutSetTextBoxFmtValue(self->mUnk20, &lbl_eu_8050A0B4[0x1d], str, 0);
@@ -218,7 +218,7 @@ extern "C" __declspec(noinline) void func_80229A0C(CQstLogInfo* self,
     }
     if (res != 0) {
         func_80137F88(pane, (const char*)res);
-        func_80124270(pane, 1);
+        setPaneVisible(pane, 1);
     }
 }
 
@@ -228,7 +228,7 @@ extern "C" __declspec(noinline) void func_80229A0C(CQstLogInfo* self,
 // ("cleared"/"uncleared"/level-up variants) by quest state and category and
 // updates the "txt_clear_reason" pane at 0xab.
 #pragma optimize_for_size on
-extern "C" __declspec(noinline) void func_80229B54(CQstLogInfo* self,
+extern "C" __declspec(noinline) void QstLogInfo_UpdateClearReasonPane(CQstLogInfo* self,
     const char* table, u32 key) {
     u16 v = BdatGetU16Direct(table, &lbl_eu_8050A0B4[0x78], key);
     LayoutSetTextBoxFmtValue(self->mUnk20, &lbl_eu_8050A0B4[0x84],
@@ -259,7 +259,7 @@ extern "C" __declspec(noinline) void func_80229B54(CQstLogInfo* self,
 // the "purpose" column of row `key` and writes the result into the layout
 // (field_0x2C selects the pane color/state).
 #pragma optimize_for_size on
-extern "C" __declspec(noinline) void func_80229CA0(CQstLogInfo* self, const char* table, u32 key) {
+extern "C" __declspec(noinline) void QstLogInfo_UpdateExpRewardPane(CQstLogInfo* self, const char* table, u32 key) {
     char* str = BdatGetPtrDirect(table, &lbl_eu_8050A0B4[0xb3], key);
     LayoutSetTextBoxFmtValue(self->mUnk20, &lbl_eu_8050A0B4[0xbb], str, self->field_0x2C);
 }
@@ -286,12 +286,12 @@ extern "C" __declspec(noinline) void func_80229CF0(CQstLogInfo* self,
                                 &lbl_eu_8050A0B4[0xd0], key);
         LayoutSetTextBoxFmtValue(self->mUnk20, &lbl_eu_8050A0B4[0xda], s,
                       self->field_0x2C);
-        func_80124270(self->mUnk20->GetRootPane()->FindPaneByName(
+        setPaneVisible(self->mUnk20->GetRootPane()->FindPaneByName(
                           &lbl_eu_8050A0B4[0xda], true), 1);
-        func_80124270(self->mUnk20->GetRootPane()->FindPaneByName(
+        setPaneVisible(self->mUnk20->GetRootPane()->FindPaneByName(
                           &lbl_eu_8050A0B4[0xe7], true), 1);
         if (v > 1) {
-            func_80124270(self->mUnk20->GetRootPane()->FindPaneByName(
+            setPaneVisible(self->mUnk20->GetRootPane()->FindPaneByName(
                               &lbl_eu_8050A0B4[0xf2], true), 1);
         }
         u32 idx = 1;
@@ -313,14 +313,14 @@ extern "C" __declspec(noinline) void func_80229CF0(CQstLogInfo* self,
                                          bufE8, key);
                 sprintf(bufE8, &lbl_eu_8050A0B4[0x12f], 2);
                 LayoutSetTextBoxFmtValue(self->mUnk20, bufE8, s2, self->field_0x2C);
-                func_80124270(self->mUnk20->GetRootPane()->FindPaneByName(
+                setPaneVisible(self->mUnk20->GetRootPane()->FindPaneByName(
                                   bufE8, true), 1);
                 sprintf(bufE8, &lbl_eu_8050A0B4[0x13e], 2);
-                func_80124270(self->mUnk20->GetRootPane()->FindPaneByName(
+                setPaneVisible(self->mUnk20->GetRootPane()->FindPaneByName(
                                   bufE8, true), 1);
                 if (v >= 0x79) {
                     sprintf(bufE8, &lbl_eu_8050A0B4[0x14b], 2);
-                    func_80124270(self->mUnk20->GetRootPane()->FindPaneByName(
+                    setPaneVisible(self->mUnk20->GetRootPane()->FindPaneByName(
                                       bufE8, true), 1);
                 }
                 idx = 2;
@@ -344,14 +344,14 @@ extern "C" __declspec(noinline) void func_80229CF0(CQstLogInfo* self,
                                          bufC8, key);
                 sprintf(bufC8, &lbl_eu_8050A0B4[0x12f], idx + 1);
                 LayoutSetTextBoxFmtValue(self->mUnk20, bufC8, s2, self->field_0x2C);
-                func_80124270(self->mUnk20->GetRootPane()->FindPaneByName(
+                setPaneVisible(self->mUnk20->GetRootPane()->FindPaneByName(
                                   bufC8, true), 1);
                 sprintf(bufC8, &lbl_eu_8050A0B4[0x13e], idx + 1);
-                func_80124270(self->mUnk20->GetRootPane()->FindPaneByName(
+                setPaneVisible(self->mUnk20->GetRootPane()->FindPaneByName(
                                   bufC8, true), 1);
                 if (v >= 0x83) {
                     sprintf(bufC8, &lbl_eu_8050A0B4[0x14b], idx + 1);
-                    func_80124270(self->mUnk20->GetRootPane()->FindPaneByName(
+                    setPaneVisible(self->mUnk20->GetRootPane()->FindPaneByName(
                                       bufC8, true), 1);
                 }
                 idx++;
@@ -375,14 +375,14 @@ extern "C" __declspec(noinline) void func_80229CF0(CQstLogInfo* self,
                                          bufA8, key);
                 sprintf(bufA8, &lbl_eu_8050A0B4[0x12f], idx + 1);
                 LayoutSetTextBoxFmtValue(self->mUnk20, bufA8, s2, self->field_0x2C);
-                func_80124270(self->mUnk20->GetRootPane()->FindPaneByName(
+                setPaneVisible(self->mUnk20->GetRootPane()->FindPaneByName(
                                   bufA8, true), 1);
                 sprintf(bufA8, &lbl_eu_8050A0B4[0x13e], idx + 1);
-                func_80124270(self->mUnk20->GetRootPane()->FindPaneByName(
+                setPaneVisible(self->mUnk20->GetRootPane()->FindPaneByName(
                                   bufA8, true), 1);
                 if (v >= 0xFC) {
                     sprintf(bufA8, &lbl_eu_8050A0B4[0x14b], idx + 1);
-                    func_80124270(self->mUnk20->GetRootPane()->FindPaneByName(
+                    setPaneVisible(self->mUnk20->GetRootPane()->FindPaneByName(
                                       bufA8, true), 1);
                 }
                 idx++;
@@ -394,14 +394,14 @@ extern "C" __declspec(noinline) void func_80229CF0(CQstLogInfo* self,
                                          &lbl_eu_8050A0B4[0x1c8], key);
                 sprintf(buf88, &lbl_eu_8050A0B4[0x12f], idx + 1);
                 LayoutSetTextBoxFmtValue(self->mUnk20, buf88, s2, self->field_0x2C);
-                func_80124270(self->mUnk20->GetRootPane()->FindPaneByName(
+                setPaneVisible(self->mUnk20->GetRootPane()->FindPaneByName(
                                   buf88, true), 1);
                 sprintf(buf88, &lbl_eu_8050A0B4[0x13e], idx + 1);
-                func_80124270(self->mUnk20->GetRootPane()->FindPaneByName(
+                setPaneVisible(self->mUnk20->GetRootPane()->FindPaneByName(
                                   buf88, true), 1);
                 if (v >= 0xFE) {
                     sprintf(buf88, &lbl_eu_8050A0B4[0x14b], idx + 1);
-                    func_80124270(self->mUnk20->GetRootPane()->FindPaneByName(
+                    setPaneVisible(self->mUnk20->GetRootPane()->FindPaneByName(
                                       buf88, true), 1);
                 }
                 idx++;
@@ -415,7 +415,7 @@ extern "C" __declspec(noinline) void func_80229CF0(CQstLogInfo* self,
                                 &lbl_eu_8050A0B4[0x1df], key);
             sprintf(buf68, &lbl_eu_8050A0B4[0x12f], idx + 1);
             LayoutSetTextBoxFmtValue(self->mUnk20, buf68, s2, self->field_0x2C);
-            func_80124270(self->mUnk20->GetRootPane()->FindPaneByName(
+            setPaneVisible(self->mUnk20->GetRootPane()->FindPaneByName(
                               buf68, true), 1);
         }
     } else {
@@ -423,15 +423,15 @@ extern "C" __declspec(noinline) void func_80229CF0(CQstLogInfo* self,
                                 &lbl_eu_8050A0B4[0xd0], key);
         LayoutSetTextBoxFmtValue(self->mUnk20, &lbl_eu_8050A0B4[0xda], s,
                       self->field_0x2C);
-        func_80124270(self->mUnk20->GetRootPane()->FindPaneByName(
+        setPaneVisible(self->mUnk20->GetRootPane()->FindPaneByName(
                           &lbl_eu_8050A0B4[0xda], true), 1);
-        func_80124270(self->mUnk20->GetRootPane()->FindPaneByName(
+        setPaneVisible(self->mUnk20->GetRootPane()->FindPaneByName(
                           &lbl_eu_8050A0B4[0xe7], true), 1);
         u32 odd = ((s32)v >= 0xFC ? v - 1 : v) & 1;
         void* r28 = UIWin_BuildFlagBuf(key);
         u32 notOdd = !odd;
         if (func_80140854((CItemQuery*)r28, notOdd, 0) != 0) {
-            func_80124270(self->mUnk20->GetRootPane()->FindPaneByName(
+            setPaneVisible(self->mUnk20->GetRootPane()->FindPaneByName(
                               &lbl_eu_8050A0B4[0xf2], true), 1);
         }
         u32 idx = 1;
@@ -452,22 +452,22 @@ extern "C" __declspec(noinline) void func_80229CF0(CQstLogInfo* self,
                                          buf48, key);
                 sprintf(buf48, &lbl_eu_8050A0B4[0x12f], idx + 1);
                 LayoutSetTextBoxFmtValue(self->mUnk20, buf48, s2, self->field_0x2C);
-                func_80124270(self->mUnk20->GetRootPane()->FindPaneByName(
+                setPaneVisible(self->mUnk20->GetRootPane()->FindPaneByName(
                                   buf48, true), 1);
                 sprintf(buf48, &lbl_eu_8050A0B4[0x13e], idx + 1);
-                func_80124270(self->mUnk20->GetRootPane()->FindPaneByName(
+                setPaneVisible(self->mUnk20->GetRootPane()->FindPaneByName(
                                   buf48, true), 1);
                 if (i == 3) {
                     if (v >= 0xFC) {
                         sprintf(buf48, &lbl_eu_8050A0B4[0x14b], idx + 1);
-                        func_80124270(self->mUnk20->GetRootPane()->FindPaneByName(
+                        setPaneVisible(self->mUnk20->GetRootPane()->FindPaneByName(
                                           buf48, true), 1);
                         idx++;
                     }
                 } else {
                     if (func_80140854((CItemQuery*)r28, notOdd, i + 1) != 0) {
                         sprintf(buf48, &lbl_eu_8050A0B4[0x14b], idx + 1);
-                        func_80124270(self->mUnk20->GetRootPane()->FindPaneByName(
+                        setPaneVisible(self->mUnk20->GetRootPane()->FindPaneByName(
                                           buf48, true), 1);
                     }
                     idx++;
@@ -480,14 +480,14 @@ extern "C" __declspec(noinline) void func_80229CF0(CQstLogInfo* self,
                                          &lbl_eu_8050A0B4[0x1c8], key);
                 sprintf(buf28, &lbl_eu_8050A0B4[0x12f], idx + 1);
                 LayoutSetTextBoxFmtValue(self->mUnk20, buf28, s2, self->field_0x2C);
-                func_80124270(self->mUnk20->GetRootPane()->FindPaneByName(
+                setPaneVisible(self->mUnk20->GetRootPane()->FindPaneByName(
                                   buf28, true), 1);
                 sprintf(buf28, &lbl_eu_8050A0B4[0x13e], idx + 1);
-                func_80124270(self->mUnk20->GetRootPane()->FindPaneByName(
+                setPaneVisible(self->mUnk20->GetRootPane()->FindPaneByName(
                                   buf28, true), 1);
                 if (v >= 0xFE) {
                     sprintf(buf28, &lbl_eu_8050A0B4[0x14b], idx + 1);
-                    func_80124270(self->mUnk20->GetRootPane()->FindPaneByName(
+                    setPaneVisible(self->mUnk20->GetRootPane()->FindPaneByName(
                                       buf28, true), 1);
                 }
                 idx++;
@@ -501,7 +501,7 @@ extern "C" __declspec(noinline) void func_80229CF0(CQstLogInfo* self,
                                 &lbl_eu_8050A0B4[0x1df], key);
             sprintf(buf8, &lbl_eu_8050A0B4[0x12f], idx + 1);
             LayoutSetTextBoxFmtValue(self->mUnk20, buf8, s2, self->field_0x2C);
-            func_80124270(self->mUnk20->GetRootPane()->FindPaneByName(
+            setPaneVisible(self->mUnk20->GetRootPane()->FindPaneByName(
                               buf8, true), 1);
         }
     }
@@ -705,12 +705,12 @@ extern "C" __declspec(noinline) void func_8022A904(CQstLogInfo* self,
 // Quest-log reset: clears every quest-name / objective / status pane back to
 // the empty string (pool+0x2a2) and resets the state panes' visibility.
 #pragma optimize_for_size on
-extern "C" __declspec(noinline) void func_8022AFF8(CQstLogInfo* self) {
+extern "C" __declspec(noinline) void QstLogInfo_ClearAllLogPanes(CQstLogInfo* self) {
     LayoutSetTextBoxFmtValue(self->mUnk20, &lbl_eu_8050A0B4[0x1d], &lbl_eu_8050A0B4[0x2a2], 0);
     LayoutSetTextBoxFmtValue(self->mUnk20, &lbl_eu_8050A0B4[0x84], &lbl_eu_8050A0B4[0x2a2], 0);
     LayoutSetTextBoxFmtValue(self->mUnk20, &lbl_eu_8050A0B4[0xab], &lbl_eu_8050A0B4[0x2a2], 0);
     LayoutSetTextBoxFmtValue(self->mUnk20, &lbl_eu_8050A0B4[0xbb], &lbl_eu_8050A0B4[0x2a2], 0);
-    func_80124270(self->mUnk20->GetRootPane()->FindPaneByName(
+    setPaneVisible(self->mUnk20->GetRootPane()->FindPaneByName(
                       &lbl_eu_8050A0B4[0x25], true), 0);
     LayoutSetTextBoxFmtValue(self->mUnk20, &lbl_eu_8050A0B4[0xda], &lbl_eu_8050A0B4[0x2a2], 0);
     LayoutSetTextBoxFmtValue(self->mUnk20, &lbl_eu_8050A0B4[0x2a3], &lbl_eu_8050A0B4[0x2a2], 0);
@@ -718,29 +718,29 @@ extern "C" __declspec(noinline) void func_8022AFF8(CQstLogInfo* self) {
     LayoutSetTextBoxFmtValue(self->mUnk20, &lbl_eu_8050A0B4[0x2bd], &lbl_eu_8050A0B4[0x2a2], 0);
     LayoutSetTextBoxFmtValue(self->mUnk20, &lbl_eu_8050A0B4[0x2ca], &lbl_eu_8050A0B4[0x2a2], 0);
     LayoutSetTextBoxFmtValue(self->mUnk20, &lbl_eu_8050A0B4[0x2d7], &lbl_eu_8050A0B4[0x2a2], 0);
-    func_80124270(self->mUnk20->GetRootPane()->FindPaneByName(
+    setPaneVisible(self->mUnk20->GetRootPane()->FindPaneByName(
                       &lbl_eu_8050A0B4[0xe7], true), 0);
-    func_80124270(self->mUnk20->GetRootPane()->FindPaneByName(
+    setPaneVisible(self->mUnk20->GetRootPane()->FindPaneByName(
                       &lbl_eu_8050A0B4[0x2e4], true), 0);
-    func_80124270(self->mUnk20->GetRootPane()->FindPaneByName(
+    setPaneVisible(self->mUnk20->GetRootPane()->FindPaneByName(
                       &lbl_eu_8050A0B4[0x2ef], true), 0);
-    func_80124270(self->mUnk20->GetRootPane()->FindPaneByName(
+    setPaneVisible(self->mUnk20->GetRootPane()->FindPaneByName(
                       &lbl_eu_8050A0B4[0x2fa], true), 0);
-    func_80124270(self->mUnk20->GetRootPane()->FindPaneByName(
+    setPaneVisible(self->mUnk20->GetRootPane()->FindPaneByName(
                       &lbl_eu_8050A0B4[0x305], true), 0);
-    func_80124270(self->mUnk20->GetRootPane()->FindPaneByName(
+    setPaneVisible(self->mUnk20->GetRootPane()->FindPaneByName(
                       &lbl_eu_8050A0B4[0x310], true), 0);
-    func_80124270(self->mUnk20->GetRootPane()->FindPaneByName(
+    setPaneVisible(self->mUnk20->GetRootPane()->FindPaneByName(
                       &lbl_eu_8050A0B4[0xf2], true), 0);
-    func_80124270(self->mUnk20->GetRootPane()->FindPaneByName(
+    setPaneVisible(self->mUnk20->GetRootPane()->FindPaneByName(
                       &lbl_eu_8050A0B4[0x31b], true), 0);
-    func_80124270(self->mUnk20->GetRootPane()->FindPaneByName(
+    setPaneVisible(self->mUnk20->GetRootPane()->FindPaneByName(
                       &lbl_eu_8050A0B4[0x324], true), 0);
-    func_80124270(self->mUnk20->GetRootPane()->FindPaneByName(
+    setPaneVisible(self->mUnk20->GetRootPane()->FindPaneByName(
                       &lbl_eu_8050A0B4[0x32d], true), 0);
-    func_80124270(self->mUnk20->GetRootPane()->FindPaneByName(
+    setPaneVisible(self->mUnk20->GetRootPane()->FindPaneByName(
                       &lbl_eu_8050A0B4[0x336], true), 0);
-    func_80124270(self->mUnk20->GetRootPane()->FindPaneByName(
+    setPaneVisible(self->mUnk20->GetRootPane()->FindPaneByName(
                       &lbl_eu_8050A0B4[0x33f], true), 0);
     LayoutSetTextBoxFmtValue(self->mUnk20, &lbl_eu_8050A0B4[0x22d], &lbl_eu_8050A0B4[0x2a2], 0);
     LayoutSetTextBoxFmtValue(self->mUnk20, &lbl_eu_8050A0B4[0x348], &lbl_eu_8050A0B4[0x2a2], 0);
@@ -793,7 +793,7 @@ int CQstLogInfo::OnFileEvent(CEventFile* event) {
         LayoutSetTextBoxFmtValue(mUnk20, &lbl_eu_8050A0B4[0x3b2],
                       BdatTouchStringCell(&lbl_eu_8050A0B4[0x291],
                                     &lbl_eu_8050A0B4[0x7f], 3), 0);
-        func_802298A0(this);
+        QstLogInfo_SwapAnimEnablePair(this);
         mUnk20->Animate(0);
         char buf[0x18];
         for (u8 i = 1; i <= 6; i++) {
@@ -813,9 +813,9 @@ int CQstLogInfo::OnFileEvent(CEventFile* event) {
     } else if (field_0x18 == event->mFileHandle) {
         void* fileData = field_0x18->getData();
         CBdat::func_8003AA78(2, fileData);
-        func_8003AA34();
+        Bdat_GetTable_AA34();
         field_0x3C = (u32)getFP__FPCc(lbl_eu_80536398[func_80138138(mField3A)]);
-        func_80229960(this);
+        QstLogInfo_RefreshQuestDisplay(this);
         mField38 = 1;
         field_0x18 = 0;
         return 1;
@@ -825,7 +825,7 @@ int CQstLogInfo::OnFileEvent(CEventFile* event) {
 #pragma optimize_for_size off
 
 // retail: if (mUnk30) tail drawLayout(mUnk20, drawInfo passthrough, 0, 1)
-void func_80229600(CQstLogInfo* self, nw4r::lyt::DrawInfo* drawInfo) {
+void QstLogInfo_DrawLayoutTail(CQstLogInfo* self, nw4r::lyt::DrawInfo* drawInfo) {
     if (self->mUnk30 == 0) return;
     drawLayout(self->mUnk20, drawInfo, 0, 1);
 }

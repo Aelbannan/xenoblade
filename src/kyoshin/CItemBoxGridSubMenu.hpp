@@ -31,11 +31,11 @@ struct CItemBoxGridSubMenu {
 
     ~CItemBoxGridSubMenu();
 
-    u8 func_80208358();
-    u8 func_80208360();
-    void func_802083CC();
-    void func_80208368();
-    void func_8020844C();
+    u8 GridSubMenu_IsVisibleFlag();
+    u8 GridSubMenu_IsOpenedFlag();
+    void GridSubMenu_MoveSelectionPrev();
+    void GridSubMenu_BeginOpenAnim();
+    void GridSubMenu_MoveSelectionNext();
     void func_802084D4(int arg);
 };
 

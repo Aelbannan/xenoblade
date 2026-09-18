@@ -14,30 +14,30 @@
 // signatures; rename CFloorMap's versions while its header is processed.
 #define CCur18View CCur18ViewFloorMap
 #define CCur18Data CCur18DataFloorMap
-#define func_801F3540 func_801F3540FloorMap
+#define CScrollBar_UpdateDispatch CScrollBar_UpdateDispatchFloorMap
 #define func_801D202C func_801D202CFloorMap
-#define func_8022B748 func_8022B748FloorMap
-#define func_801F3850 func_801F3850FloorMap
+#define sysWinDispatchPhase sysWinDispatchPhaseFloorMap
+#define CScrollBar_PlaceThumb CScrollBar_PlaceThumbFloorMap
 #define func_8013676C func_8013676CFloorMap
-#define func_801F367C func_801F367CFloorMap
-#define func_801F3670 func_801F3670FloorMap
-#define func_801F36BC func_801F36BCFloorMap
-#define func_8003B1EC func_8003B1ECFloorMap
+#define CScrollBar_requestScrollIn CScrollBar_requestScrollInFloorMap
+#define CScrollBar_InitRootPane CScrollBar_InitRootPaneFloorMap
+#define CScrollBar_UpdateThumb CScrollBar_UpdateThumbFloorMap
+#define Bdat_GetMaxRow_B1EC Bdat_GetMaxRow_B1ECFloorMap
 #define lbl_eu_806640A8 lbl_eu_806640A8FloorMap
 #define BdatTouchStringCell BdatTouchStringCellFloorMap
 #define PaneSetTexPaletteByName PaneSetTexPaletteByNameFloorMap
 #include "kyoshin/CFloorMap.hpp"
 #undef CCur18View
 #undef CCur18Data
-#undef func_801F3540
+#undef CScrollBar_UpdateDispatch
 #undef func_801D202C
-#undef func_8022B748
-#undef func_801F3850
+#undef sysWinDispatchPhase
+#undef CScrollBar_PlaceThumb
 #undef func_8013676C
-#undef func_801F367C
-#undef func_801F3670
-#undef func_801F36BC
-#undef func_8003B1EC
+#undef CScrollBar_requestScrollIn
+#undef CScrollBar_InitRootPane
+#undef CScrollBar_UpdateThumb
+#undef Bdat_GetMaxRow_B1EC
 #undef lbl_eu_806640A8
 #undef BdatTouchStringCell
 #undef PaneSetTexPaletteByName
@@ -58,47 +58,47 @@ extern const float lbl_eu_8066A210;  // pi/2 variant used by FX init scaling
 
 extern "C" {
 void func_8013EC6C(u32, u32);                       // UI mode switch helper
-u32 func_8009CF8C(u32 resourceId);                  // resource query
-int func_800FF738();                                // scene transition gate
-int func_800FEDF8();
-void func_800FF914();
+u32 CtrlRemote_TouchBitByArg(u32 resourceId);                  // resource query
+int CMainMenu_IsOpen();                                // scene transition gate
+int CMainMenu_GetInstancePtr();
+void ArtsInfo_SetReadyFlag();
 // Static-member helper on cf::CfGameManager (retail keeps the mangled name);
 // called with the map index and a zero second argument.
 void func_8008413C__Q22cf13CfGameManagerFv(u32, u32);
 void func_80242368(class CMenuMapSelect* self);     // world map input handler
 void func_80242524(class CMenuMapSelect* self);     // world map phase 2 setup
 void func_80242A28(class CMenuMapSelect* self);     // floor map input handler
-void func_802434A0(class CMapSel* self);
+void updateMapSel(class CMapSel* self);
 int func_80243680(class CMapSel* self);
 int func_802436C4(class CMapSel* self);
 void func_802436CC(class CMapSel* self);
 // Retail keeps the CTitleAHelp/CBgTex/CFade helpers as unmangled symbols.
-int func_801C3E34(class CBgTex* self);
-void func_801C3D54(class CBgTex* self);
-void func_801C3FF0(class CTitleAHelp* self);
-int func_801C4114(class CTitleAHelp* self);
+int BgTex_IsLoaded_3E34(class CBgTex* self);
+void BgTex_Tick_3D54(class CBgTex* self);
+void updateHelp(class CTitleAHelp* self);
+int isInitialized(class CTitleAHelp* self);
 // Mangled-name form so callers compare with cmpwi directly (no byte mask).
 extern "C" int isIdle__11CTitleAHelpFv(class CTitleAHelp* self);
 void func_801C412C(class CTitleAHelp* self);
 void func_801C41E8(class CTitleAHelp* self, u8 arg);
 void func_801C4654(class CTitleAHelp* self, u32 arg);
-void func_801C46B4(class CTitleAHelp* self, char* text);
+void setInfoText(class CTitleAHelp* self, char* text);
 void func_801C46DC(class CTitleAHelp* self, u32 arg);
-void func_802443E8(class CFade* self);
-int func_80244510(class CFade* self);
-void func_80244538(class CFade* self);
+void CFade_Update(class CFade* self);
+int CFade_IsVisible(class CFade* self);
+void CFade_FadeOut(class CFade* self);
 int func_8024CE1C(class CFloorMap* self);
 void func_8024BE1C(class CFloorMap* self);
 void func_8024CB94(class CFloorMap* self);
-int func_8024CE60(class CFloorMap* self);
+int FloorMap_GetField40Flag(class CFloorMap* self);
 void func_8024C1FC(class CFloorMap* self);
-u16 func_8024F54C(class CFloorMap* self);
+u16 FloorMap_GetU16Field5A(class CFloorMap* self);
 void func_80243560(class CMapSel* self, class nw4r::lyt::DrawInfo* drawInfo);
 void func_8024C8F8(class CFloorMap* self, class nw4r::lyt::DrawInfo* drawInfo);
 // Retail keeps these draw helpers as unmangled free symbols taking sub-object pointers.
-void func_801C3D7C(class CBgTex* self, class nw4r::lyt::DrawInfo* drawInfo);
-void func_801C4080(class CTitleAHelp* self, class nw4r::lyt::DrawInfo* drawInfo);
-void func_80244460(class CFade* self, class nw4r::lyt::DrawInfo* drawInfo);
+void BgTex_Draw_3D7C(class CBgTex* self, class nw4r::lyt::DrawInfo* drawInfo);
+void drawHelp(class CTitleAHelp* self, class nw4r::lyt::DrawInfo* drawInfo);
+void CFade_Draw(class CFade* self, class nw4r::lyt::DrawInfo* drawInfo);
 // Retail emits direct bl to the DrawInfo ctor/dtor symbols.
 void __ct__Q34nw4r3lyt8DrawInfoFv(class nw4r::lyt::DrawInfo* self);
 void __dt__Q34nw4r3lyt8DrawInfoFv(class nw4r::lyt::DrawInfo* self, int flags);

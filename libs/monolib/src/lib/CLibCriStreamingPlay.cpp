@@ -233,7 +233,7 @@ CLibCriStreamingPlay::CLibCriStreamingPlay(const char* pName, CWorkThread* pPare
     lbl_eu_806656EC = allocate_head__Q23mtl10MemManagerFUlUli(mem2, 0xA000, 4);
     
     // Initialize exception handler
-    ((CException*)(base + 0x1C4))->func_804591BC(nullptr);
+    ((CException*)(base + 0x1C4))->AddToGlobalArray(nullptr);
 }
 
 // Destructor (retail deleting-dtor form: null-this guard, flag > 0 frees).

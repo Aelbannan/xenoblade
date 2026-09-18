@@ -76,30 +76,30 @@ CMenuTitle* __ct__CMenuTitle(CMenuTitle* _this, CProcess* parent, u32 arg2) {
 // C symbol (extern "C" stops C++ `__Fi` param mangling). The inline header
 // wrapper drops the -1 argument, so it cannot be used here.
 extern "C" int isClassicController__Q22cf13CfGameManagerFv(int controllerType);
+extern "C" void CTitle_showMenu(CMenuTitleSub*);
 
-extern "C" void func_802B5F0C(void* self) { *(u8*)((u8*)self + 0xE8) = 1; }
+extern "C" void TitleMenuSetFlagE8(void* self) { *(u8*)((u8*)self + 0xE8) = 1; }
 
-void func_802B5F18(CMenuTitleInput* self) {
+void TitleMenuOnLoadDone(CMenuTitleInput* self) {
     // Opening menu: query the +0x60 sub-menu, flag this menu when it opens.
     if (CTitle_isLoadDone(&self->mSub)) {
         self->field_e8 = 0x2;
     }
 }
 
-void func_802B5F58(CMenuTitleInput* self) {
-    extern void CTitle_showMenu(CMenuTitleSub*);
+void TitleMenuShowSub(CMenuTitleInput* self) {
     ((unsigned char*)self)[0xe8] = 3;
     CTitle_showMenu(&self->mSub);
 }
 
-void func_802B5F68(CMenuTitleInput* self) {
+void TitleMenuOnAnimDone4(CMenuTitleInput* self) {
     // Non-zero sub-menu query -> open the sub-menu transition state.
     if (CTitle_isAnimDone(&self->mSub)) {
         self->field_e8 = 0x4;
     }
 }
 
-void func_802B5FA8(CMenuTitleInput* self) {
+void TitleMenuPollPress5(CMenuTitleInput* self) {
     CfPadDataLocal* pad =
         (CfPadDataLocal*)cf::CfGameManager::getCfPadData();
 
@@ -113,7 +113,7 @@ void func_802B5FA8(CMenuTitleInput* self) {
     }
 }
 
-void func_802B6020(CMenuTitleInput* self) {
+void TitleMenuAdvanceProgress(CMenuTitleInput* self) {
     // Sub-menu still closed: poll input and open it on the activation mask.
     if (CTitle_isAnimDone(&self->mSub) == 0) {
         CfPadDataLocal* pad =
@@ -196,26 +196,26 @@ void func_802B60CC(CMenuTitleInput* self) {
     }
 }
 
-void func_802B6200(CMenuTitleInput* self) {
+void TitleMenuOnAnimDone2(CMenuTitleInput* self) {
     // Non-zero sub-menu query -> re-open the sub-menu transition state.
     if (CTitle_isAnimDone(&self->mSub)) {
         self->field_e8 = 0x2;
     }
 }
 
-void func_802B6240(CMenuTitleInput* self) {
+void TitleMenuOnAnimDone9(CMenuTitleInput* self) {
     if (CTitle_isAnimDone(&self->mSub)) {
         self->field_e8 = 0x9;
     }
 }
 
-extern "C" void func_802B6280(void) {}
+extern "C" void TitleMenuNoop(void) {}
 
-extern "C" void func_802B6314(void* self) { ((void(*)(void*))__dt__10CMenuTitleFv)((char*)self - 0x54); }
+extern "C" void TitleMenuDtorThunk54(void* self) { ((void(*)(void*))__dt__10CMenuTitleFv)((char*)self - 0x54); }
 
-extern "C" void func_802B631C(void* self) { ((void(*)(void*))cbRenderBefore__10CMenuTitleFv)((char*)self - 0x58); }
+extern "C" void TitleMenuRenderBeforeThunk58(void* self) { ((void(*)(void*))cbRenderBefore__10CMenuTitleFv)((char*)self - 0x58); }
 
-extern "C" void func_802B6324(void* self) { ((void(*)(void*))__dt__10CMenuTitleFv)((char*)self - 0x58); }
+extern "C" void TitleMenuDtorThunk58(void* self) { ((void(*)(void*))__dt__10CMenuTitleFv)((char*)self - 0x58); }
 
 // --- CTTask<CMenuTitle> out-of-line specializations ---
 // MWCC lowers the PTMF dispatch to the retail __ptmf_test / __ptmf_scall calls

@@ -216,7 +216,7 @@ namespace cf {
         void* CfObject_getPosTriple() { return CfObject_UnkVirtualFunc24(); } //0xB0: position-triplet pointer (base: +0x3C)
         // Wave-48 UnkVirtual mop-up aliases (non-virtual, inline): behavior-derived
         // spellings for the reset-hook slots used by the NPC char reset helper
-        // (func_80093938). Same arity; MWCC inlines them into the identical
+        // (CtrlNpcCharInitState). Same arity; MWCC inlines them into the identical
         // virtual dispatch.
         void CfObject_initEventState() { CfObject_UnkVirtualFunc2(); } //0x58: event-state init step (Model impl: notifyEventDone + raise 0x400000; Obj/Ene/Pc call it from initialize())
         void CfObject_syncEnableState() { CfObject_UnkVirtualFunc3(); } //0x5C: enable-state propagation hook (base: no-op; Pc: enablePcFlag on the move sub-object)

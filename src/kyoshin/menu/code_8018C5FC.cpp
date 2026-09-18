@@ -67,11 +67,11 @@ struct CMB_CfObjEnt_8018C5FC {
 
 extern "C" {
     // C-ABI retail symbol (functions.hpp declares the C++-mangled bool f(int)
-    // which would emit func_8009CF8C__Fi; the cf-namespace extern "C" decl
-    // below shadows it so the unmangled func_8009CF8C reloc is emitted.
-    u32 func_8009CF8C(u32);
+    // which would emit CtrlRemote_TouchBitByArg__Fi; the cf-namespace extern "C" decl
+    // below shadows it so the unmangled CtrlRemote_TouchBitByArg reloc is emitted.
+    u32 CtrlRemote_TouchBitByArg(u32);
     CMB_PartyList_8018C5FC* getListB28__Fv();
-    s32 func_8026178C(s32, u32);
+    s32 Counter_TestBit(s32, u32);
     void CCharVoiceMan_EnqueuePartyGageVoice(s32, s32);
     extern "C" u16 playActorSound__Q22cf10CfSoundManFUlUlUlUlf(u32, u32, u32, u32, f32);
 }
@@ -84,7 +84,7 @@ UnkClass_8018C5FC::UnkClass_8018C5FC() : gaugeValue(0) {
 // When the timer elapses and there are no active battles, the counter
 // decrements by 1 (if a qualifying party member is present) or by 2.
 void func_8018C610(UnkClass_8018C5FC* _this) {
-    u32 cf8cVal = func_8009CF8C(0x3357);
+    u32 cf8cVal = CtrlRemote_TouchBitByArg(0x3357);
     u32 cntlz = (u32)__cntlzw(cf8cVal);
     if ((cntlz >> 5) != 0) return;
     if (cf::CfGameManager::isSceneLoading()) return;
@@ -120,7 +120,7 @@ void func_8018C610(UnkClass_8018C5FC* _this) {
                 }
 
                 ret = ret != 0
-                          ? func_8026178C(node->data->obj.vtable->func_290(&node->data->obj),
+                          ? Counter_TestBit(node->data->obj.vtable->func_290(&node->data->obj),
                                           0x69)
                           : 0;
 
@@ -141,7 +141,7 @@ void func_8018C610(UnkClass_8018C5FC* _this) {
             // gaugeValue+adjust into a reg ahead of the call); oldVal is reloaded
             // only after the guard passes.
             s32 newVal = _this->gaugeValue + adjust;
-            u32 cf8cVal2 = func_8009CF8C(0x3357);
+            u32 cf8cVal2 = CtrlRemote_TouchBitByArg(0x3357);
             u32 cntlz2 = (u32)__cntlzw(cf8cVal2);
             if ((cntlz2 >> 5) != 0) return;
 
@@ -167,10 +167,10 @@ void func_8018C610(UnkClass_8018C5FC* _this) {
 }
 
 // Add a delta to the party gauge counter, clamp to [0, 300], and return the new value.
-s32 func_8018C820(UnkClass_8018C5FC* _this, s32 delta) {
+s32 PartyGaugeAddClamped(UnkClass_8018C5FC* _this, s32 delta) {
     s32 newVal = _this->gaugeValue + delta;
 
-    u32 cf8cVal = func_8009CF8C(0x3357);
+    u32 cf8cVal = CtrlRemote_TouchBitByArg(0x3357);
     u32 cntlz = (u32)__cntlzw(cf8cVal);
     if ((cntlz >> 5) != 0) return _this->gaugeValue;
 
@@ -196,8 +196,8 @@ s32 func_8018C820(UnkClass_8018C5FC* _this, s32 delta) {
 }
 
 // Set the party gauge counter to a value, clamp to [0, 300], and return the new value.
-s32 func_8018C8F4(UnkClass_8018C5FC* _this, s32 val) {
-    u32 cf8cVal = func_8009CF8C(0x3357);
+s32 PartyGaugeSetClamped(UnkClass_8018C5FC* _this, s32 val) {
+    u32 cf8cVal = CtrlRemote_TouchBitByArg(0x3357);
     u32 cntlz = (u32)__cntlzw(cf8cVal);
     if ((cntlz >> 5) != 0) return _this->gaugeValue;
 

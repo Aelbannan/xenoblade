@@ -192,16 +192,16 @@ void __ct__8CProcessFv(CProcess* self);
 void __dt__8CProcessFv(CProcess* self, int flags);
 void __ct__CSysWin(void* syswin, int arg);
 void __dt__7CSysWinFv(void* syswin, int flags);
-void func_8022B7F4(void* syswin);
-void func_8022B7C8(void* syswin, nw4r::lyt::DrawInfo* drawInfo);
+void sysWinTermLayout(void* syswin);
+void sysWinDrawLayout(void* syswin, nw4r::lyt::DrawInfo* drawInfo);
 void getEntry__5CBdatFUl(u32 value);
 void setBdatEntry__5CBdatFUlPv(u32 value, void* data);
-void func_8003AA34();
+void Bdat_GetTable_AA34();
 void* getFP__FPCc(const char* name);
 u8 DecMenuCounter64080();
 u8 code80135FDC_getByte_64080();
 void code80135FDC_postIncByte_64080();
-s32 func_8029A658();
+s32 MenuTutorialIsCreated();
 int IsMenuState621F0();
 void setPresentationFlag__Q22cf13CfGameManagerFv(bool enable);
 
@@ -210,9 +210,9 @@ void setPresentationFlag__Q22cf13CfGameManagerFv(bool enable);
 u32 CSysWin_isReady(void* syswin);
 int CSysWin_isActive(void* syswin);
 void func_8022B9B4(void* syswin, void* str1, void* str2);
-void func_8022B8B8(void* syswin);
-void func_8022B8E4(void* syswin);
-void func_8022B748(void* syswin);
+void sysWinOpenPhase1(void* syswin);
+void sysWinAdvancePhase3(void* syswin);
+void sysWinDispatchPhase(void* syswin);
 
 // CDeviceFile common-archive loader + work-memory handle query (unmangled
 // retail C symbols; declared with C linkage so the call reloc keeps the

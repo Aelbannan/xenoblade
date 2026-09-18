@@ -46,7 +46,7 @@ public:
     char _pad_28[0x3C - 0x28];                          // 0x28-0x3B
     u8 mField3C;                                         // 0x3C
     char _pad_3D[0x58 - 0x3D];                          // 0x3D-0x57
-    u8 mScrollbar[0x98 - 0x58];                          // 0x58-0x97 - scrollbar state (passed to func_801F34F4/func_801F369C)
+    u8 mScrollbar[0x98 - 0x58];                          // 0x58-0x97 - scrollbar state (passed to CScrollBar_loadLayoutArc/CScrollBar_requestScrollOut)
     char mSysWin98[0xD4 - 0x98];                           // 0x98-0xD3 - first CSysWin-like object
     char mSysWinD4[0x11C - 0xD4];                          // 0xD4-0x11B - second CSysWin-like object
     u8 mField11C;                                        // 0x11C
@@ -290,7 +290,7 @@ public:
 struct UnkPtrHolder;
 struct UnkTwoPtr;
 
-extern "C" void func_801D216C(void*, u8);
+extern "C" void Cur_SetVisible(void*, u8);
 extern "C" int CSLCur_isReady(CSLCur* cur);
 extern "C" int CSLCur_getSlot(CSLCur* cur, u8 index);
 extern "C" void CSaveLoad_enAnimB(CSaveLoad* p);
@@ -302,7 +302,7 @@ extern "C" void CSLSub_tickIn(CSLCur* cur);
 extern "C" void CSLSub_tickOut(CSLCur* self);
 extern "C" void* __dt__Q22cf7CfAwardFv(cf::CfAward*, int);
 extern "C" u8 lbl_eu_80538858[];
-extern "C" void func_8009D514(void*);
+extern "C" void CtrlRemote_ResetSlotArrayByIndex(void*);
 extern "C" void* getHandleMEM2__Q23mtl10MemManagerFv();
 extern "C" void* readFile__11CDeviceFileFUlPCcP10IWorkEventii(u32, const char*, void*, int, int);
 extern "C" u8 lbl_eu_8050F7CC[];
@@ -313,27 +313,27 @@ extern "C" u32 lbl_eu_80662ACC;
 extern "C" int CSysWin_isActive(void*);
 extern "C" u32 CSysWin_isReady(void*);
 extern "C" int CScrollBar_isVisible(void*);
-extern "C" void func_80145018();
-extern "C" void func_80142C80();
-extern "C" void func_8014A2D0();
+extern "C" void requestLandTelop();
+extern "C" void MenuUpdate_SignalGlobalField64();
+extern "C" void CMenuGetItem_SetField54();
 extern "C" void invalidateQstFlag();
 extern "C" void* getInstance__9CTaskGameFv();
 extern "C" void CTaskGame_offerLoadCap();
 extern "C" void resetBattlePresentation__Q22cf13CfGameManagerFv();
-extern "C" void func_801F34F4(void*);
-extern "C" void func_801F3670(void*, void*);
-extern "C" void func_801F36BC(void*, int, int);
-extern "C" void func_801F3850(void*, u16);
-extern "C" u32 func_8009CF8C(u32);
+extern "C" void CScrollBar_loadLayoutArc(void*);
+extern "C" void CScrollBar_InitRootPane(void*, void*);
+extern "C" void CScrollBar_UpdateThumb(void*, int, int);
+extern "C" void CScrollBar_PlaceThumb(void*, u16);
+extern "C" u32 CtrlRemote_TouchBitByArg(u32);
 extern "C" void* allocate_head__Q23mtl10MemManagerFUlUli(u32 handle, u32 size, int align);
 extern "C" int CSysWin_getUnk34(void*);
-extern "C" void func_801F3540(void*);   // CScrollBar per-frame update
-extern "C" void func_8022B748(void*);   // CSysWin per-frame update
+extern "C" void CScrollBar_UpdateDispatch(void*);   // CScrollBar per-frame update
+extern "C" void sysWinDispatchPhase(void*);   // CSysWin per-frame update
 extern "C" void func_801D202C(void*);   // CCur per-frame update
-extern "C" void func_801F35B0(void*, void*);
-extern "C" void func_8022B7C8(void*, void*);
-extern "C" void func_801D20B0(void*, void*);
-extern "C" void func_8022C1B4(void*, void*, u8);
+extern "C" void CScrollBar_draw(void*, void*);
+extern "C" void sysWinDrawLayout(void*, void*);
+extern "C" void Cur_DrawLayout(void*, void*);
+extern "C" void sysWinGetPaneScreenPos(void*, void*, u8);
 extern "C" void func_80137924(void*, void*, void*, void*);
 extern "C" void CSaveLoad_draw(CSaveLoad* self, nw4r::lyt::DrawInfo* drawInfo);
 extern "C" void CSaveLoad_pageDown(CSaveLoad* self);
@@ -356,13 +356,13 @@ extern "C" void awardCollectCount(int val);
 extern "C" void awardQuestFlags(void);
 extern "C" u32 chkAwardFlags99(void);
 extern "C" u32 chkAwardFlags9B(void);
-extern "C" void func_8022B8E4(void*);
+extern "C" void sysWinAdvancePhase3(void*);
 extern "C" void __ct__CCur18(void* self, void* param);
 extern "C" void __ct__14Class_8045F858FP17UnkClass_8045F564(void* self, void* base);
 extern "C" void __dt__14Class_8045F858Fv(void* self, int dealloc);
 extern "C" u32 CUICfManager_getPackedFontD8();
 extern "C" void* CUICfManager_getPackedFont9C();
-extern "C" void func_80124270(void* obj, u32 value);
+extern "C" void setPaneVisible(void* obj, u32 value);
 extern "C" u16 BdatGetU16Direct(const void*, const void*, int);
 extern "C" u8 func_80141BA0(u16, u8);
 extern "C" bool Attach__Q34nw4r3lyt19ArcResourceAccessorFPvPCc(nw4r::lyt::ArcResourceAccessor* self, void* data, const char* name);
@@ -371,9 +371,9 @@ extern "C" void validateHeap__17UnkClass_8045F564Fv(void* self);
 extern "C" nw4r::lyt::ArcResourceAccessor* createArcResourceAccessor__10CLibLayoutFv();
 extern "C" nw4r::lyt::ArcResourceAccessor* CUICfManager_getArcResourceAccessor();
 extern "C" void func_8022B9B4(void*, u32, int);
-extern "C" void func_8022BF6C(void*, u32, u32);
+extern "C" void sysWinSetTwoTextValues(void*, u32, u32);
 extern "C" void func_8022BFC8(void*, int);
-extern "C" void func_8022B8B8(void*);
+extern "C" void sysWinOpenPhase1(void*);
 extern "C" int isCollepediaId(int v);
 extern "C" void func_8023FA64(void*, int, void (*)(int, int, u8));
 extern "C" void CSLCur_setFlag(int, int, u8);
@@ -385,16 +385,16 @@ extern "C" void __dt__10CScrollBarFv(void*, int);
 extern "C" void __dt__6CCur18Fv(void*, int);
 extern "C" void __dt__17UnkClass_8045F564Fv(void*, int);
 extern "C" void CSLSub_bindPane(UnkTwoPtr*);
-extern "C" void func_eu_804521BC(int);
-extern "C" void func_801F35DC(void*);
-extern "C" void func_8022B7F4(void*);
+extern "C" void DevFile_SetByteA9(int);
+extern "C" void CScrollBar_Teardown(void*);
+extern "C" void sysWinTermLayout(void*);
 extern "C" void CSaveLoad_onFile(int, int, int, u8);
 extern "C" void func_8023F860(int, void*);
 extern "C" void func_8023FB28(int, void*);
 extern "C" void func_8023F3C0(int, void*, u8);
-extern "C" void func_8009D018(u32, u32);
+extern "C" void CtrlRemote_SetSharedBit(u32, u32);
 extern "C" void clearGlobalState__Q22cf13CfGameManagerFv(int, int, int);
 extern "C" void code80135FDC_thunk_BFE8C(u8*);
-extern "C" void func_8027EEF4(u32);
-extern "C" u32 func_8027EE88(u32, u32);
+extern "C" void SysWinLog_QueueEvent(u32);
+extern "C" u32 SysWinLog_BumpEventValue(u32, u32);
 extern "C" int getTableValueByPair__Q22cf13CfGameManagerFv(int, int);

@@ -11,11 +11,11 @@ namespace cf{
         static void create();
         static void destroy();
 
-        void func_800FE694(float val);
-        unsigned long func_800FE910();
-        void func_800FE920();
-        void func_800FE938();
-        void func_800FE950(unsigned int a, unsigned int b, unsigned int c);
+        void setFloatPair(float val);
+        unsigned long testFlagBit10();
+        void setTargetFlag04();
+        void setTargetFlag08();
+        void setRequestParams(unsigned int a, unsigned int b, unsigned int c);
 
     private:
         static CfObjectSelectorObj* spInstance;

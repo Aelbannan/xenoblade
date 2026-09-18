@@ -536,26 +536,26 @@ struct CfNandWorkBuf {
 };
 
 extern "C" int func_8023CD9C(void* block);
-extern "C" u32 func_8009CF84();
-extern "C" u8* func_8009CF0C();
-extern "C" u8* func_8009D5FC();
+extern "C" u32 CtrlRemote_GetFixedSize1214();
+extern "C" u8* CtrlRemote_GetSharedBufPtr();
+extern "C" u8* CtrlRemote_GetFileEventIds();
 extern "C" void func_8009EF9C(void* data, u32 value);
 extern "C" void func_8025ECE4(void* src, void* dst);
 extern "C" void queueEventId__Q22cf13CfGameManagerFv(u32 value);
-extern "C" void func_8006A814(u32* self);
-extern "C" void func_8006A028(f32 v);
+extern "C" void CfT_FrameTimerSet(u32* self);
+extern "C" void CfT_PlayClockReset(f32 v);
 extern "C" void cfCam_storeFollowD(void* v, f32 f);
-extern "C" void func_8016E100(void* p);
+extern "C" void loadReloadInfo(void* p);
 extern "C" void fadeOutGameEffects__Q22cf13CfGameManagerFv();
 extern "C" void func_80207D2C(u8* rec);
 extern "C" void rebuildTboxPool();
 extern "C" CfNandNameRoot* getReslistC48();
 extern "C" void updateConfig__FPUc(u8* src, int mode);
-extern "C" u32 func_8009CF8C(u32 resourceId);
+extern "C" u32 CtrlRemote_TouchBitByArg(u32 resourceId);
 extern "C" void setEventCounterA__Q22cf13CfGameManagerFv(u32 value);
 extern "C" void setMasterVolume__Fff(f32 a, f32 b);
-extern "C" void func_801895F4(f32 v);
-extern "C" void func_80189510(f32 v);
+extern "C" void MenuSnd_SetSeVolPush_95F4(f32 v);
+extern "C" void MenuSnd_SetMasterAndPush_9510(f32 v);
 extern u16 lbl_eu_80661AF4;
 extern u16 lbl_eu_80661AF6;
 extern char* lbl_eu_806641B8;
@@ -732,10 +732,10 @@ extern "C" int func_8023D3D8(CfNandSaveImage* img) {
         if (valid == 0) {
             return 0;
         }
-        u32 flagLen = func_8009CF84();
-        memcpy(func_8009CF0C(), image->flagData, flagLen);
+        u32 flagLen = CtrlRemote_GetFixedSize1214();
+        memcpy(CtrlRemote_GetSharedBufPtr(), image->flagData, flagLen);
         lbl_eu_80664774 = image->slot[0x66];
-        live = func_8009D5FC();
+        live = CtrlRemote_GetFileEventIds();
         memcpy(live, image->workHead, 0x41F0);
         src = (CfNandWorkEntrySrc*)(live + 0x7FC4);
         dst = &image->workEntry[1];
@@ -758,22 +758,22 @@ extern "C" int func_8023D3D8(CfNandSaveImage* img) {
             n++;
             evCur = ev[0];
         }
-        func_8006A814(&image->progress.field00);
-        func_8006A028(image->progress.f04);
+        CfT_FrameTimerSet(&image->progress.field00);
+        CfT_PlayClockReset(image->progress.f04);
         lbl_eu_80661AF4 = image->progress.f08;
         lbl_eu_80661AF6 = image->progress.f0A;
         CfNandPartySnapshot* snapDst = (CfNandPartySnapshot*)lbl_eu_80576CC0;
         *snapDst = image->snapshot;
         memcpy(lbl_eu_806641B8, image->itemBlob, 0x12120);
         cfCam_storeFollowD(&image->camBlock, image->camBlock.f0C);
-        func_8016E100(&image->wthrBlock);
+        loadReloadInfo(&image->wthrBlock);
         fadeOutGameEffects__Q22cf13CfGameManagerFv();
         func_80207D2C(image->mineRegion);
         restoreNameTable(&image->names);
         if (valid != 0) {
             updateConfig__FPUc(image->optdBlob, 1);
         }
-        u32 cnt = func_8009CF8C(0x3F);
+        u32 cnt = CtrlRemote_TouchBitByArg(0x3F);
         if ((cnt & 0xFFFF) == 0) {
             cnt = image->wthrBlock.f0E;
         }
@@ -784,7 +784,7 @@ extern "C" int func_8023D3D8(CfNandSaveImage* img) {
     }
 
     CfNandSaveImageV1* v1 = (CfNandSaveImageV1*)image;
-    if ((mtl::MemManager::calculateCrc(v1->flagData, func_8009CF84()) & 0xFFFF) != v1->flagTag.crc) {
+    if ((mtl::MemManager::calculateCrc(v1->flagData, CtrlRemote_GetFixedSize1214()) & 0xFFFF) != v1->flagTag.crc) {
         ok = 0;
     }
     if ((mtl::MemManager::calculateCrc(v1->workHead, 0x6C28) & 0xFFFF) != v1->gameTag.crc) {
@@ -838,9 +838,9 @@ extern "C" int func_8023D3D8(CfNandSaveImage* img) {
         ok = 0;
     }
 
-    u32 flagLen = func_8009CF84();
-    memcpy(func_8009CF0C(), v1->flagData, flagLen);
-    live = func_8009D5FC();
+    u32 flagLen = CtrlRemote_GetFixedSize1214();
+    memcpy(CtrlRemote_GetSharedBufPtr(), v1->flagData, flagLen);
+    live = CtrlRemote_GetFileEventIds();
     memcpy(live, v1->workHead, 0x41F0);
     src = (CfNandWorkEntrySrc*)(live + 0x7FC4);
     dst = &v1->workEntry[1];
@@ -849,8 +849,8 @@ extern "C" int func_8023D3D8(CfNandSaveImage* img) {
         src++;
         dst++;
     }
-    func_8006A814(&v1->progress.field00);
-    func_8006A028(v1->progress.f04);
+    CfT_FrameTimerSet(&v1->progress.field00);
+    CfT_PlayClockReset(v1->progress.f04);
     lbl_eu_80661AF4 = v1->progress.f08;
     lbl_eu_80661AF6 = v1->progress.f0A;
     CfNandPartySnapshot* snapDst = (CfNandPartySnapshot*)lbl_eu_80576CC0;
@@ -883,10 +883,10 @@ extern "C" int func_8023D3D8(CfNandSaveImage* img) {
     *(u16*)(item + 0x1211C) = (u16)*(u32*)(blob + 0x157CC);
 
     cfCam_storeFollowD(&v1->camBlock, v1->camBlock.f0C);
-    func_8016E100(&v1->wthrBlock);
+    loadReloadInfo(&v1->wthrBlock);
     setMasterVolume__Fff(v1->sndArea.f00, lbl_eu_806686E0);
-    func_801895F4(v1->sndArea.f04);
-    func_80189510(v1->sndArea.f08);
+    MenuSnd_SetSeVolPush_95F4(v1->sndArea.f04);
+    MenuSnd_SetMasterAndPush_9510(v1->sndArea.f08);
     func_80207D2C(v1->mineRegion);
     restoreNameTable(&v1->names);
     if (ok != 0) {

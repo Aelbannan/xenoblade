@@ -21,7 +21,7 @@ namespace cf {
         void reset();
         int initialize();
         void update();
-        int func_800BFAB0(u32 arg4, u32 arg5);
+        int ObjObj_ReleaseModels_FAB0(u32 arg4, u32 arg5);
 
         // Declared but NOT defined in this fork: retail's CfObjectObj ctor
         // exists under the forced flat name __ct__cf_CfObjectObj (defined as
@@ -66,10 +66,10 @@ extern char lbl_eu_80661D20[8];
 void* __dynamic_cast(void* obj, long offset, const void* src_type,
                      const void* dst_type, void* src2dst);
 
-// C-ABI imports (retail unmangled names): func_800CA580 dispatches a helper
+// C-ABI imports (retail unmangled names): ObjImplSyncSlotState dispatches a helper
 // id on the +0x38 sub-object (ABI void* - shared with CfObjectImplObj stub);
 // __ct__cf_CfResObjImpl constructs the 0x1C-byte resource object in place.
 namespace cf { struct CfResObjImpl; }
-extern "C" void func_800CA580(void* self, u16 id);
+extern "C" void ObjImplSyncSlotState(void* self, u16 id);
 extern "C" cf::CfResObjImpl* __ct__cf_CfResObjImpl(cf::CfResObjImpl* self,
                                                    void* parent);

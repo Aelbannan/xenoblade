@@ -29,7 +29,7 @@ extern "C" {
     float simGetLeafAnimDist2(void* obj);
     nw4r::g3d::ChrAnmResult* scnImN4AnimFn(CScnItemModel* model, const char* name, f32 time);
     int EvtSeqGetCounter100();
-    void* func_801644B4();
+    void* evtGetManagerAddr();
     void EvtSeqPublishIdHalfwords();
     void func_8016AF4C(void* obj, const char* name, u32* out);
     int EvtSeqFindResAddr(void* obj, const char* name, void* out);
@@ -48,9 +48,9 @@ static CREvtCamera* GetCamera() {
 }
 
 // ============================================================================
-// func_80180940 (0x80181D3C, size 0x14) - already implemented
+// REvtCam_IsTaskListEmpty (0x80181D3C, size 0x14) - already implemented
 // ============================================================================
-extern "C" unsigned long func_80180940() {
+extern "C" unsigned long REvtCam_IsTaskListEmpty() {
     extern unsigned long lbl_eu_806642A8;
     unsigned long* ptr = (unsigned long*)lbl_eu_806642A8;
     unsigned long v = ptr[0xa0 / 4];
@@ -58,41 +58,41 @@ extern "C" unsigned long func_80180940() {
 }
 
 // ============================================================================
-// func_80180954 (0x80181D50, size 0xC)
+// REvtCam_GetFieldA5Flag (0x80181D50, size 0xC)
 // ============================================================================
-extern "C" unsigned char func_80180954() {
+extern "C" unsigned char REvtCam_GetFieldA5Flag() {
     extern unsigned long lbl_eu_806642A8;
     return ((CREvtCamera*)lbl_eu_806642A8)->mFieldA5;
 }
 
 // ============================================================================
-// func_80180960 (0x80181D5C, size 0x18)
+// REvtCam_IsField98Set (0x80181D5C, size 0x18)
 // ============================================================================
-extern "C" unsigned long func_80180960() {
+extern "C" unsigned long REvtCam_IsField98Set() {
     extern unsigned long lbl_eu_806642A8;
     return ((CREvtCamera*)lbl_eu_806642A8)->mField98 == 1 ? 1 : 0;
 }
 
 // ============================================================================
-// func_80180978 (0x80181D74, size 0x18)
+// REvtCam_IsMode2B0Eq1 (0x80181D74, size 0x18)
 // ============================================================================
-extern "C" unsigned long func_80180978() {
+extern "C" unsigned long REvtCam_IsMode2B0Eq1() {
     extern unsigned long lbl_eu_806642A8;
     return ((CREvtCamera*)lbl_eu_806642A8)->mField2B0 == 1 ? 1 : 0;
 }
 
 // ============================================================================
-// func_80180990 (0x80181D8C, size 0x18)
+// REvtCam_IsMode2B0Eq2 (0x80181D8C, size 0x18)
 // ============================================================================
-extern "C" unsigned long func_80180990() {
+extern "C" unsigned long REvtCam_IsMode2B0Eq2() {
     extern unsigned long lbl_eu_806642A8;
     return ((CREvtCamera*)lbl_eu_806642A8)->mField2B0 == 2 ? 1 : 0;
 }
 
 // ============================================================================
-// func_80180620 (0x80181A1C, size 0x44)
+// REvtCam_ClearAnimHandle (0x80181A1C, size 0x44)
 // ============================================================================
-extern "C" void func_80180620(CREvtCamera* self) {
+extern "C" void REvtCam_ClearAnimHandle(CREvtCamera* self) {
     if (self->mField24) {
         Scn_IsAnimActiveOrNull((void*)self->mField24);
         self->mField24 = 0;
@@ -100,10 +100,10 @@ extern "C" void func_80180620(CREvtCamera* self) {
 }
 
 // ============================================================================
-// func_80180394 (0x80181790, size 0x80)
+// REvtCam_ActivateLodTasks (0x80181790, size 0x80)
 // Activates every task in the global camera's mTaskArray1A6 list.
 // ============================================================================
-extern "C" void func_80180394(CREvtCamera* self) {
+extern "C" void REvtCam_ActivateLodTasks(CREvtCamera* self) {
     extern unsigned long lbl_eu_806642A8;
     if (!lbl_eu_806642A8) return;
     for (s32 i = 0; i < (s32)((CREvtCamera*)lbl_eu_806642A8)->mTaskCount2AC; i++) {
@@ -216,7 +216,7 @@ extern "C" CREvtCamera* __ct__80180088(CREvtCamera* self, int deleteFlag) {
             }
         }
 
-        // vtable+0x10 on self (retail word: func_80180620) dispatched
+        // vtable+0x10 on self (retail word: REvtCam_ClearAnimHandle) dispatched
         // through the real base so MWCC emits the r12 two-step virtual
         // call matching retail.
         ((cf::CREvtObj*)self)->vfunc_10();
@@ -284,11 +284,11 @@ extern "C" void func_80180210(CREvtCamera* taskData) {
 }
 
 // ============================================================================
-// func_80180414 (0x80181810, size 0xB8)
+// REvtCam_SetupSceneModel (0x80181810, size 0xB8)
 // Loads the camera scene model from static file data and grabs the two
 // animation handles ("Cam" matrices) from it.
 // ============================================================================
-extern "C" void func_80180414(CREvtCamera* self) {
+extern "C" void REvtCam_SetupSceneModel(CREvtCamera* self) {
     u8* handle;
     getStaticFileData__14CLibStaticDataFPCcP16StaticDataHandlePUl(lbl_eu_805036D8, &handle, 0);
     if (handle) {
@@ -370,7 +370,7 @@ extern "C" void func_80180664(CREvtCamera* self, void* eventData, void* somePara
         self->mField9C = 0;
         self->mFieldA0 = 0;
         if (self->mField20) {
-            // vtable+0x10 on self (retail word: func_80180620) dispatched
+            // vtable+0x10 on self (retail word: REvtCam_ClearAnimHandle) dispatched
             // through the real base (r12 two-step).
             ((cf::CREvtObj*)self)->vfunc_10();
             self->mField24 = self->mField20;
@@ -387,7 +387,7 @@ extern "C" void func_80180664(CREvtCamera* self, void* eventData, void* somePara
             func_8016AF4C((void*)self->mField20, lbl_eu_805036D8 + 30, &self->mField2B0);
 
             if (!((CREvtCamera*)lbl_eu_806642A8)->mFieldA5) {
-                ((CREvtCamTaskEvent*)func_801644B4())->field_1B8 = 1;
+                ((CREvtCamTaskEvent*)evtGetManagerAddr())->field_1B8 = 1;
             }
 
             const char* timeStr;

@@ -95,7 +95,7 @@ void CMenuPlayAward::Init() {
     mBgTex.mPtmMode = *(u8*)(tempBgTex + 0x1e);
     __dt__6CBgTexFv((CBgTex*)tempBgTex, -1);
 
-    func_801C3C14(&mBgTex);
+    BgTex_Acquire_3C14(&mBgTex);
 
     // --- Re-initialise the embedded CTitleAHelp ---
     char* name = BdatTouchStringCell(lbl_eu_8050E7A0, lbl_eu_8050E7A0 + 0xb, 0x9);
@@ -216,8 +216,8 @@ void CMenuPlayAward::Term() {
     }
     mScene->removeRenderCB(renderCB);
 
-    func_801C3D9C(&mBgTex);
-    func_801C40A0(&mTitleAHelp);
+    BgTex_Release_3D9C(&mBgTex);
+    teardown(&mTitleAHelp);
     PlayAward_ReleaseList(&mPlayAwardList);
 
     lbl_eu_806648A0 = 0;
@@ -249,8 +249,8 @@ body:
         close = (pad->mPressedButtonFlags >> 10) & 1;
     }
     if (close != 0) {
-        if (func_800FEDF8() != 0) {
-            func_800FF914();
+        if (CMainMenu_GetInstancePtr() != 0) {
+            ArtsInfo_SetReadyFlag();
             playUISound(6);
         }
         mField1160 = 4;
@@ -273,8 +273,8 @@ body:
         break;
     }
 
-    func_801C3D54(&mBgTex);
-    func_801C3FF0(&mTitleAHelp);
+    BgTex_Tick_3D54(&mBgTex);
+    updateHelp(&mTitleAHelp);
     PlayAward_UpdateList(&mPlayAwardList);
 }
 
@@ -301,9 +301,9 @@ body:
     u8 drawInfo[0x60];
     __ct__Q34nw4r3lyt8DrawInfoFv(drawInfo);
     func_80137250(reinterpret_cast<nw4r::lyt::DrawInfo*>(drawInfo));
-    func_801C3D7C(&mBgTex, reinterpret_cast<nw4r::lyt::DrawInfo*>(drawInfo));
+    BgTex_Draw_3D7C(&mBgTex, reinterpret_cast<nw4r::lyt::DrawInfo*>(drawInfo));
     PlayAward_DrawList(&mPlayAwardList, reinterpret_cast<nw4r::lyt::DrawInfo*>(drawInfo));
-    func_801C4080(&mTitleAHelp, reinterpret_cast<nw4r::lyt::DrawInfo*>(drawInfo));
+    drawHelp(&mTitleAHelp, reinterpret_cast<nw4r::lyt::DrawInfo*>(drawInfo));
     __dt__Q34nw4r3lyt8DrawInfoFv(reinterpret_cast<nw4r::lyt::DrawInfo*>(drawInfo), -1);
 }
 
@@ -329,8 +329,8 @@ void stub_us_80272800() {}
 // Help-bar show: when the background, title/help bar and award list are all
 // ready, display the help bar, play its sound, and flag the menu (0x1160 = 1).
 void PlayAward_Phase0_ShowHelp(CMenuPlayAward* self) {
-    if (func_801C3E34(&self->mBgTex) != 0
-        && func_801C4114(&self->mTitleAHelp) != 0
+    if (BgTex_IsLoaded_3E34(&self->mBgTex) != 0
+        && isInitialized(&self->mTitleAHelp) != 0
         && PlayAward_IsListReady(&self->mPlayAwardList) != 0) {
         func_801C412C(&self->mTitleAHelp);
         PlayAward_RequestOpen(&self->mPlayAwardList);
@@ -389,7 +389,7 @@ void func_80270454(CMenuPlayAward* self) {
     if (left) {
         // nothing -- blocks the remaining input handlers
     } else if (right) {
-        func_801C414C(&self->mTitleAHelp);
+        beginClose(&self->mTitleAHelp);
         PlayAward_RequestClose(&self->mPlayAwardList);
         self->mField1160 = 3;
     } else if (up) {
@@ -473,12 +473,12 @@ void func_80270770(CPlayAwardEntryArray* self) {
     char* const s = lbl_eu_8050E7C0;
     void* fp = getFP__FPCc(s);
     void* bdat = lbl_eu_806648A8;
-    self->field_1001 = (u8)func_8003B1EC(fp);
+    self->field_1001 = (u8)Bdat_GetMaxRow_B1EC(fp);
 
     // Count the award types present in the BDAT award table (row 0x312c +
     // (i % 200)); the total goes into field_1000.
     for (u8 i = 1; i <= self->field_1001; i++) {
-        if (func_8009CF8C(0x312c + (u8)(i % 200)) != 0) {
+        if (CtrlRemote_TouchBitByArg(0x312c + (u8)(i % 200)) != 0) {
             self->field_1000++;
         }
     }
@@ -517,12 +517,12 @@ void func_80270770(CPlayAwardEntryArray* self) {
     for (u8 k = 0; k < count; k++) {
         u8 val = buf[k];
         u8 page = (u8)(BdatGetU8Direct((u32)bdat, &s[0x24], val) - 1);
-        int has = func_8009CF8C(0x312c + val % 200) != 0;
+        int has = CtrlRemote_TouchBitByArg(0x312c + val % 200) != 0;
 
         u8 key2 = BdatGetU8Direct((u32)bdat, &s[0x2a], val);
         u16 key3 = BdatGetU16Direct(bdat, &s[0x36], val);
         int flag = 0;
-        if (key2 <= self->field_1000 && key3 <= func_8009CF8C(0x20)) {
+        if (key2 <= self->field_1000 && key3 <= CtrlRemote_TouchBitByArg(0x20)) {
             flag = 1;
         }
 
@@ -650,7 +650,7 @@ void PlayAward_LoadLayouts(CPlayAwardList* self) {
         mtl::MemManager::getHandleMEM2(), &lbl_eu_8050E7C0[0x5a], self, 0, 0);
     self->mFileHandle2 = CDeviceFile::readCommonArchiveFile(
         KyoshinHeap_GetField44(), &lbl_eu_8050E7C0[0x74], self, 0, 0);
-    func_801F34F4(self->mScrollBar);
+    CScrollBar_loadLayoutArc(self->mScrollBar);
     self->field_0x8A = 0;
 }
 
@@ -675,7 +675,7 @@ void PlayAward_UpdateList(CPlayAwardList* self) {
         }
         self->mLayout20->Animate(0);
         func_801D202C(self->mCursor);
-        func_801F3540(self->mScrollBar);
+        CScrollBar_UpdateDispatch(self->mScrollBar);
     }
 }
 
@@ -684,8 +684,8 @@ void PlayAward_UpdateList(CPlayAwardList* self) {
 void PlayAward_DrawList(CPlayAwardList* self, nw4r::lyt::DrawInfo* drawInfo) {
     if (self->field_0x88 != 0) {
         drawLayout(self->mLayout20, drawInfo, 0, 1);
-        func_801F35B0(self->mScrollBar, drawInfo);
-        func_801D20B0(self->mCursor, drawInfo);
+        CScrollBar_draw(self->mScrollBar, drawInfo);
+        Cur_DrawLayout(self->mCursor, drawInfo);
     }
 }
 
@@ -706,7 +706,7 @@ void PlayAward_ReleaseList(CPlayAwardList* self) {
     }
     releaseArcResourceAccessor(self->mArcAccessor1C);
     reinterpret_cast<CCursor18*>(&self->mCursor)->vf3();
-    func_801F35DC(self->mScrollBar);
+    CScrollBar_Teardown(self->mScrollBar);
     self->mMemRegion.deleteRegion();
 }
 
@@ -735,9 +735,9 @@ void PlayAward_RequestOpen(CPlayAwardList* self) {
     vec[0] = lbl_eu_806689B8;
     vec[1] = lbl_eu_806689BC;
     vec[2] = lbl_eu_806689A8;
-    func_801F3670(self->mScrollBar, vec);
+    CScrollBar_InitRootPane(self->mScrollBar, vec);
 
-    func_801F36BC(self->mScrollBar, 9,
+    CScrollBar_UpdateThumb(self->mScrollBar, 9,
                   self->mEntryArray.field_1008[self->mEntryArray.mPageIndex]);
 
     // Restore the scroll position from the entry-array state (reads as u16,
@@ -752,7 +752,7 @@ void PlayAward_RequestOpen(CPlayAwardList* self) {
     if (self->field_0x8E < 0) self->field_0x8E = 0;
 
     self->field_0x90 = self->mEntryArray.mPageIndex;
-    func_801F3850(self->mScrollBar, self->field_0x8E);
+    CScrollBar_PlaceThumb(self->mScrollBar, self->field_0x8E);
     PlayAward_RefreshPageTitles(self);
     PlayAward_RefreshEntryPanes(self);
     PlayAward_RefreshCursor(self);
@@ -766,8 +766,8 @@ void PlayAward_RequestClose(CPlayAwardList* self) {
         self->field_0x89 = 4;
         self->field_0x8B = 0;
         PlayAward_BindOpenAnims(self);
-        func_801D216C(self->mCursor, 0);
-        func_801F369C(self->mScrollBar);
+        Cur_SetVisible(self->mCursor, 0);
+        CScrollBar_requestScrollOut(self->mScrollBar);
         playUISound(6);
     }
 }
@@ -798,7 +798,7 @@ void PlayAward_MoveCursorUp(CPlayAwardList* self) {
     }
     PlayAward_RefreshEntryPanes(self);
     PlayAward_RefreshCursor(self);
-    func_801F3850(self->mScrollBar, self->field_0x8E);
+    CScrollBar_PlaceThumb(self->mScrollBar, self->field_0x8E);
     playUISound(1);
 }
 
@@ -831,7 +831,7 @@ void func_80271190(CPlayAwardList* self) {
     }
     PlayAward_RefreshEntryPanes(self);
     PlayAward_RefreshCursor(self);
-    func_801F3850(self->mScrollBar, self->field_0x8E);
+    CScrollBar_PlaceThumb(self->mScrollBar, self->field_0x8E);
     playUISound(1);
 }
 
@@ -855,7 +855,7 @@ void PlayAward_ScrollPageUp(CPlayAwardList* self) {
     }
     PlayAward_RefreshEntryPanes(self);
     PlayAward_RefreshCursor(self);
-    func_801F3850(self->mScrollBar, self->field_0x8E);
+    CScrollBar_PlaceThumb(self->mScrollBar, self->field_0x8E);
     playUISound(1);
 }
 
@@ -885,7 +885,7 @@ void PlayAward_ScrollPageDown(CPlayAwardList* self) {
     }
     PlayAward_RefreshEntryPanes(self);
     PlayAward_RefreshCursor(self);
-    func_801F3850(self->mScrollBar, self->field_0x8E);
+    CScrollBar_PlaceThumb(self->mScrollBar, self->field_0x8E);
     playUISound(1);
 }
 
@@ -903,8 +903,8 @@ void PlayAward_FlipPage(CPlayAwardList* self) {
         self->mEntryArray.mPageIndex = page;
     }
     u8 count = self->mEntryArray.field_1008[self->mEntryArray.mPageIndex];
-    func_801F36BC(self->mScrollBar, 9, count);
-    func_801F3850(self->mScrollBar, self->field_0x8E);
+    CScrollBar_UpdateThumb(self->mScrollBar, 9, count);
+    CScrollBar_PlaceThumb(self->mScrollBar, self->field_0x8E);
     PlayAward_RefreshPageTitles(self);
     PlayAward_RefreshEntryPanes(self);
     PlayAward_RefreshCursor(self);
@@ -921,7 +921,7 @@ void PlayAward_FinishOpenAnimA(CPlayAwardList* self) {
     if (advanceAnimTransform(self->mAnimTrans24, lbl_eu_806689C0) != 0) {
         self->field_0x89 = 2;
         PlayAward_BindOpenAnims(self);
-        func_801F367C(self->mScrollBar);
+        CScrollBar_requestScrollIn(self->mScrollBar);
     }
 }
 
@@ -991,7 +991,7 @@ void PlayAward_RefreshCursor(CPlayAwardList* self) {
     nw4r::math::VEC3 pos;
     char buf[0x20];
     sprintf(buf, &lbl_eu_8050E7C0[0x93], self->field_0x8C + 1);
-    func_801D216C(self->mCursor, 1);
+    Cur_SetVisible(self->mCursor, 1);
     nw4r::lyt::Pane* pane1 = self->mLayout20->GetRootPane()->FindPaneByName(buf, true);
     nw4r::lyt::Pane* pane2 = self->mLayout20->GetRootPane()->FindPaneByName(&lbl_eu_8050E7C0[0xab], true);
     func_80137924(&pos, pane1, pane2, self->mLayout20->GetRootPane());
@@ -1166,7 +1166,7 @@ bool CPlayAwardList::OnFileEvent(CEventFile* event) {
         // Common archive finished: detach its buffer into the BDAT tables.
         void* fileData2 = mFileHandle2->getData();
         setBdatEntry__5CBdatFUlPv(2, fileData2);
-        func_8003AA34();
+        Bdat_GetTable_AA34();
         lbl_eu_806648A8 = getFP__FPCc(&lbl_eu_8050E7C0[0x183]);
         mFileHandle2 = 0;
         func_802719F8(this);

@@ -5,6 +5,8 @@
 #include "monolib/util/reslist.hpp"
 #include "kyoshin/CTimeLightGrp.hpp"
 
+extern "C" void* Scn_CallUnk8C_V10(void* scene);
+
 // ================== __dt__13CTimeLightGrpFv ==================
 // Complete-object destructor. Installs the derived vtable, clears the light
 // list, then destroys the embedded reslist subobject (restores its base
@@ -169,11 +171,11 @@ CTimeLightGrp::~CTimeLightGrp() {
     // Implicit destruction of mList follows here.
 }
 
-// ================== func_8005A2F0 ==================
+// ================== TimeLightPushBack ==================
 // reslist<CVirtualLightObjPtr>::push_back (inlined). Finds the first empty slot
 // (mList[i].mNext == 0), stores the item (setItem try/catch reproduces the
 // retail EH frame), and links the node before the head sentinel.
-extern "C" void func_8005A2F0(CTimeLightGrp_BaseLayout* self, CVirtualLightObjPtr item) {
+extern "C" void TimeLightPushBack(CTimeLightGrp_BaseLayout* self, CVirtualLightObjPtr item) {
     reslist<CVirtualLightObjPtr>* base =
         (reslist<CVirtualLightObjPtr>*)((u8*)self + 8);
 
@@ -188,8 +190,8 @@ extern "C" void func_8005A2F0(CTimeLightGrp_BaseLayout* self, CVirtualLightObjPt
     startNode->mPrev = temp;
 }
 
-// ================== func_8005A374 ==================
-extern "C" void func_8005A374(CTimeLightGrp_BaseLayout* self) {
+// ================== TimeLightApplyScaledColor ==================
+extern "C" void TimeLightApplyScaledColor(CTimeLightGrp_BaseLayout* self) {
     CTimeLightGrp_BaseLayout* p = self;
 
     // Scaled colour components. Retail keeps mScale in one FPR and computes

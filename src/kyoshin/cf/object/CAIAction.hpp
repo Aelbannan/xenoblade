@@ -26,9 +26,9 @@ struct CAIActionExport {
     u32 unk20C;            // 0x20C - column stride
 };
 
-// 0xC-byte AI action sub-entry (installed via func_8014B804).
+// 0xC-byte AI action sub-entry (installed via aiActionStoreIndexedBytes).
 struct CAIActionSubEntry {
-    u8 b0;   // 0x00 -> func_8014B804 a2
+    u8 b0;   // 0x00 -> aiActionStoreIndexedBytes a2
     u8 b1;   // 0x01 (unused)
     u8 b2;   // 0x02 -> a3
     u8 b3;   // 0x03 -> a4
@@ -211,25 +211,25 @@ struct CBattleMgrAIView {
 
 // Imports used by func_8014CE78 (unmangled retail symbols).
 extern "C" long func_80174C98(void* p, void* out, u32 arg);
-extern "C" int func_801541B0(void* party, u32 arg);
-extern "C" int func_80153DCC(void* artsSet, int idx);
-extern "C" int func_801B1FFC(int idx);
-extern "C" u16 func_8016DF2C(void);   // canonical u16 form (chapter/episode getter)
+extern "C" int canAIUseArts(void* party, u32 arg);
+extern "C" int lookupArtsParamById(void* artsSet, int idx);
+extern "C" int isPcEffectSlotActive(int idx);
+extern "C" u16 getReloadParam0(void);   // canonical u16 form (chapter/episode getter)
 extern "C" u32 CtrlObjectParam_GetCurrentRowKey(void* obj);
-extern "C" u32 func_8009CF8C(u32 id);
+extern "C" u32 CtrlRemote_TouchBitByArg(u32 id);
 extern "C" int CItem_getNameIdFromFam(u32 v);
 extern "C" u32 getBdatStringColumnValue(void* table, const char* col, s32 index = 0); // canonical ocBdat.hpp form; default keeps 2-arg call sites compiling
 extern "C" void* CPartsChange_FindActorById(void* table, u32 id);
 void* func_800AD860(void* obj);   // C++ linkage -> getEffOwner____FPv
 extern "C" void* CPartsChange_GetActorTable(void);
 extern "C" int func_80260264(void* self, int id, void* out);
-extern "C" int func_80145C00(int id);   // canonical int param (CBattleState.cpp definition)
+extern "C" int isBattleEventKind3(int id);   // canonical int param (CBattleState.cpp definition)
 extern "C" int func_801554DC(void* param, void* actor, u32 flags);
 // (getArtsSlotRC / getArtsParamRC2 moved to their single owner decl on
 // kyoshin/cf/chain/CChainActorList.hpp - int/const void* forms matching the
 // CActorParam.cpp definitions; this header's u16/void* copies are gone.)
 extern "C" void* getArtsParamByIdx(void* artsSet, int idx);
-extern "C" u16 func_80153CAC(const void* artsSet, int idx);
+extern "C" u16 getArtsSlotByFlatIdx(const void* artsSet, int idx);
 extern "C" u16 getArtsSlotAtCnt(void* artsSet, u32 idx);
 extern "C" void* getAtkParam(void* artsSet, int idx);
 // BDAT select table + global bdat root (data imports).
@@ -296,11 +296,11 @@ void func_8014B344(cf::CAIAction*, u32);
 
 // CfObjEnumList helper family (retail names unmangled -> extern "C").
 extern "C" void* CTaskGame_enumListGet(void*);
-extern "C" void func_800F4A98(void*, u32, u32);
-extern "C" void func_800F6D50(void*, u32);
-extern "C" void* func_800F6E08(void*);
-extern "C" void* func_800F6EAC(void*, u32);
-extern "C" void* func_800F6EC0(void*, u32);
+extern "C" void startEnumObjects(void*, u32, u32);
+extern "C" void appendObjectById(void*, u32);
+extern "C" void* findFirstCleanObjectId(void*);
+extern "C" void* getObjectAt(void*, u32);
+extern "C" void* getEntryAt(void*, u32);
 extern "C" void func_800F6ED0(void*, void*);
 extern "C" void func_800F9AEC(void*);
 extern "C" void __ct__800FBF08(void*, u32, u32);
@@ -320,12 +320,12 @@ extern "C" void* nextReslistB28(void*, void*);
 extern "C" void* findObjB28ById(s32);
 extern void* getInstance();   // C++ linkage -> getInstance__Fv
 extern "C" int func_80148778(void*, int);
-extern "C" void* func_80149154(void*, u32);
+extern "C" void* findBattleStatusEntry(void*, u32);
 extern "C" void* CBattleMan_FetchVisionObj_CAIAction(void*);
 #define CBattleMan_FetchVisionObj CBattleMan_FetchVisionObj_CAIAction
 
 extern "C" void* getPlayer__Q22cf13CfGameManagerFi(int);
 #include "kyoshin/cf/CBattleManagerApi.hpp"
 extern "C" int rand(void);
-extern "C" f32 func_801C37CC(void*, void*);
-extern "C" int func_801C3850(void*, void*);
+extern "C" f32 CREvtLight_DistToTarget(void*, void*);
+extern "C" int CREvtLight_AngleState(void*, void*);

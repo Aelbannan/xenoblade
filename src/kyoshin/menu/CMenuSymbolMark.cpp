@@ -21,7 +21,7 @@
 
 // Retail helper imports (unmangled retail symbol names).
 extern "C" u32 func_801380A0(u16);
-extern "C" u8 func_8009CF8C(u32);
+extern "C" u8 CtrlRemote_TouchBitByArg(u32);
 extern "C" u32 func_80138138(u16);
 extern "C" u32 BdatGetU8Direct(u32, const char*, u32);
 extern "C" int func_80138574(void*, u32);
@@ -85,7 +85,7 @@ extern "C" int func_8011D338(u32 regionBase) {
         }
         u32 end = (u16)func_801380A0((u16)(rank + 1));
         for (u32 id = start; (u16)id < end; id++) {
-            u32 kind = (u8)func_8009CF8C((u16)id + 0x220);
+            u32 kind = (u8)CtrlRemote_TouchBitByArg((u16)id + 0x220);
             u32 check = 0;
             if (kind != 0 && kind != 0xc8 && kind != 0xfe && kind != 0xff) {
                 check = 1;
@@ -191,14 +191,14 @@ CMenuSymbolMark::CMenuSymbolMark(CScn* scn, u32 idx)
     u32 mapId = lbl_eu_80664184;
     u32 mapIdx = mapId - 1;
     if (lbl_eu_8052CCA8[mapIdx] != 0) {
-        func_8003AA34();
+        Bdat_GetTable_AA34();
         mArchiveFP = (u8*)getFP(S + 0x39);
-        func_8003AA34();
+        Bdat_GetTable_AA34();
         mSomeFP = (u8*)getFP(S + 0x46);
-        mSomeValue2 = func_8003B1EC(mArchiveFP);
+        mSomeValue2 = Bdat_GetMaxRow_B1EC(mArchiveFP);
         mSomeValue3 = func_801380A0((u16)mapId);
         mSomeValue = lbl_eu_80573D18[mapIdx];
-        mSomeValue4 = func_8003B1EC((u8*)mSomeValue) + mSomeValue3;
+        mSomeValue4 = Bdat_GetMaxRow_B1EC((u8*)mSomeValue) + mSomeValue3;
     }
     memset(mBuffer, 0, 0x200);
     // Zero both id arrays row-by-row (outer row pointer advances 0x40).
@@ -327,7 +327,7 @@ void CMenuSymbolMark::Term() {
 }
 
 // Later-file walkers used by Move.
-extern "C" void func_8011EBA8(CMenuSymbolMark* self);
+extern "C" void SymMark_RebuildEntryBuf(CMenuSymbolMark* self);
 extern "C" void func_8011EC94(CMenuSymbolMark* self);
 extern "C" void func_8011EDDC(CMenuSymbolMark* self);
 extern "C" void func_8011EFB0(CMenuSymbolMark* self);
@@ -454,7 +454,7 @@ extern "C" void func_8011E540(CMenuSymbolMark* self, u32 id, Vec* pos,
 // display expires: once the timer passes the threshold every entry pane is
 // hidden again and the id arrays reset. Otherwise the three id-list refresh
 // timers tick; when the main timer passes the threshold all entries are
-// released and nearby markers (func_8009CF8C gate) re-add themselves.
+// released and nearby markers (CtrlRemote_TouchBitByArg gate) re-add themselves.
 void CMenuSymbolMark::Move() {
     if ((lbl_eu_80663E28 & 0x200000) != 0) {
         return;
@@ -485,7 +485,7 @@ void CMenuSymbolMark::Move() {
         }
         return;
     }
-    func_8011EBA8(this);
+    SymMark_RebuildEntryBuf(this);
     func_8011EC94(this);
     func_8011EDDC(this);
     mTimer += lbl_eu_806670E8;
@@ -494,7 +494,7 @@ void CMenuSymbolMark::Move() {
         mEntryCount = 0;
         HIDE_ALL_ENTRY_PANES(junkMain.x, junkMain.y, junkMain.z);
         func_8011EFB0(this);
-        if (func_8009CF8C(0x3354) == 0) {
+        if (CtrlRemote_TouchBitByArg(0x3354) == 0) {
             CMenuSymbolMark* self = this;
             // Nearby special markers (kind 6) from the second id list.
             SCAN_MARKERS(actor->kind91 == 6, 0xF, mArray6A8, mField_8A8, 0);
@@ -548,8 +548,8 @@ cont:
     __dt__Q34nw4r3lyt8DrawInfoFv((nw4r::lyt::DrawInfo*)&drawInfo[0], -1);
 }
 
-// ---------- func_8011E4C4 ----------
-extern "C" void* func_8011E4C4(CProcess* scn, CProcess* parent) {
+// ---------- SymMark_Create ----------
+extern "C" void* SymMark_Create(CProcess* scn, CProcess* parent) {
     if (lbl_eu_80663FC8 != 0) {
         return 0;
     }
@@ -755,10 +755,10 @@ extern "C" void func_8011EA98(CMenuSymbolMark* self) {
     }
 }
 
-// ---------- func_8011EBA8 ----------
+// ---------- SymMark_RebuildEntryBuf ----------
 // Timer tick: accumulates into mField_49C until it passes the threshold,
 // then resets and rebuilds the unlocked-id list in mBuffer from the archive.
-extern "C" void func_8011EBA8(CMenuSymbolMark* self) {
+extern "C" void SymMark_RebuildEntryBuf(CMenuSymbolMark* self) {
     // Increment applied first; body runs only past the threshold.
     self->mField_49C = self->mField_49C + lbl_eu_806670E8;
     if (self->mField_49C < lbl_eu_806670E0) {
@@ -933,7 +933,7 @@ extern "C" void func_8011EFB0(CMenuSymbolMark* self) {
         ->FindPaneByName(S + 0x1C, true)
         ->SetVisible(false);
 
-    int kind = func_8009CF8C(0x20);
+    int kind = CtrlRemote_TouchBitByArg(0x20);
     if (kind <= 0) {
         return;
     }
@@ -1204,7 +1204,7 @@ extern "C" void func_8011F8F8(CMenuSymbolMark* self) {
 extern "C" void func_80141DC4(Vec* out, int id);
 extern "C" s16 BdatGetS16Direct(const void* fp, const char* str, u32 id);
 extern "C" u32 CheckState2CC8Active(u16 id);
-extern "C" void* func_801F4E68(CMenuGimmickGlobal* mgr, u16 id);
+extern "C" void* GimFindPosByRow(CMenuGimmickGlobal* mgr, u16 id);
 
 // Bounds test: build the anchor/extent pair from the scene pose block and
 // query func_8013A4B4 against the world point.
@@ -1300,7 +1300,7 @@ void func_8011FB68(CMenuSymbolMark* self) {
             if ((u16)measB != 0) {
                 kind = (u8)BdatGetU8Direct((u32)row, S + 0x2f, (u16)measB);
                 kindNonzero = kind != 0;
-                if (!kindNonzero && func_8009CF8C((u16)measB + 0x220) == 0) {
+                if (!kindNonzero && CtrlRemote_TouchBitByArg((u16)measB + 0x220) == 0) {
                     kindOk = true;
                 }
             }
@@ -1447,7 +1447,7 @@ void func_8011FB68(CMenuSymbolMark* self) {
             }
             void* fp = getFP(S + 0xc0);
             BdatGetU16Direct(fp, S + 0xcf, id);
-            if (func_8009CF8C(id + 0x2b9c) != 0) {
+            if (CtrlRemote_TouchBitByArg(id + 0x2b9c) != 0) {
                 break;
             }
             Vec rawPos;
@@ -1493,7 +1493,7 @@ void func_8011FB68(CMenuSymbolMark* self) {
             struct FloatTrio {
                 f32 x, y, z;
             };
-            FloatTrio rec = *(FloatTrio*)func_801F4E68(getUnk80664658(), (u16)id);
+            FloatTrio rec = *(FloatTrio*)GimFindPosByRow(getUnk80664658(), (u16)id);
             Vec recPos;
             recPos.x = rec.x;
             recPos.y = rec.y;
@@ -1782,7 +1782,7 @@ void CArrow3D::cbRenderBefore() {
     if (lbl_eu_80663E24 & 0x400000) {
         return;
     }
-    if ((u32)(u8)func_8009CF8C(0x20) <= 4) {
+    if ((u32)(u8)CtrlRemote_TouchBitByArg(0x20) <= 4) {
         return;
     }
     if (IsMenuState621F0() == 0) {
@@ -2257,23 +2257,23 @@ extern "C" void* __dt__15CMenuSymbolMarkFv(CMenuSymbolMark* self, int flags);
 extern "C" void cbRenderBefore__15CMenuSymbolMarkFv(CMenuSymbolMark* self);
 extern "C" void cbRenderBefore__8CArrow3DFv(CArrow3D* self);
 
-extern "C" void func_8012213C(void* self) {
+extern "C" void SymMark_ThunkDtor58(void* self) {
     // One-arg pointer view: retail thunk leaves r4 (delete flag) untouched.
     ((void (*)(CMenuSymbolMark*))__dt__15CMenuSymbolMarkFv)((CMenuSymbolMark*)((char*)self - 0x58));
 }
 
-extern "C" void func_80122144(void* self) {
+extern "C" void SymMark_ThunkRender5C(void* self) {
     cbRenderBefore__15CMenuSymbolMarkFv((CMenuSymbolMark*)((char*)self - 0x5C));
 }
 
-extern "C" void func_8012214C(void* self) {
+extern "C" void SymMark_ThunkDtor5C(void* self) {
     ((void (*)(CMenuSymbolMark*))__dt__15CMenuSymbolMarkFv)((CMenuSymbolMark*)((char*)self - 0x5C));
 }
 
-extern "C" void func_80122154(void* self) {
+extern "C" void SymMark_ArrowRender54(void* self) {
     cbRenderBefore__8CArrow3DFv((CArrow3D*)((char*)self - 0x54));
 }
 
-extern "C" void func_8012215C(void* self) {
+extern "C" void SymMark_ArrowDtor54(void* self) {
     ((void (*)(CArrow3D*))__dt__8CArrow3DFv)((CArrow3D*)((char*)self - 0x54));
 }

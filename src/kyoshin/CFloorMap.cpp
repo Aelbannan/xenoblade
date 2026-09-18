@@ -25,7 +25,7 @@ extern const double lbl_eu_80668788 = 0x4330000000000000ll;
 extern u32 lbl_eu_8066479C;
 extern u32 lbl_eu_80664184;
 extern u16 lbl_eu_8050B798[];
-extern u32 func_8003B1EC(void* bdat);   // matches code_801862C0.hpp canonical decl
+extern u32 Bdat_GetMaxRow_B1EC(void* bdat);   // matches code_801862C0.hpp canonical decl
 extern u32 lbl_eu_8050BDF8[];
 extern s16 BdatGetS16Direct(u32, const char*, u32);
 extern u8 lbl_eu_80664798;
@@ -41,9 +41,9 @@ extern "C" void SetName__Q34nw4r3lyt4PaneFPCc(void*, const char*);
 
 // Draw helpers used by CFloorMap::Draw and related functions
 void drawLayout(nw4r::lyt::Layout*, nw4r::lyt::DrawInfo*, int, int);
-extern "C" void func_801F35B0(void* scrollBar, void* drawInfo);
-extern "C" void func_8022B7C8(void* sysWin, void* drawInfo);
-extern "C" void func_801D20B0(void* cursor, void* drawInfo);
+extern "C" void CScrollBar_draw(void* scrollBar, void* drawInfo);
+extern "C" void sysWinDrawLayout(void* sysWin, void* drawInfo);
+extern "C" void Cur_DrawLayout(void* cursor, void* drawInfo);
 
 extern float lbl_eu_80668764;
 extern float lbl_eu_80668794;
@@ -63,7 +63,7 @@ void* memset(void*, int, unsigned long);
 
 void* func_80248920(void* self, const char* name, f32 x, f32 y, void* arg5, const char* paneName);
 
-u8 func_8024CE60(void* self) { return static_cast<CFloorMapFull*>(self)->field_40; }
+u8 FloorMap_GetField40Flag(void* self) { return static_cast<CFloorMapFull*>(self)->field_40; }
 
 
 // Move the map cursor down one row on the current page, wrapping through
@@ -72,7 +72,7 @@ u8 func_8024CE60(void* self) { return static_cast<CFloorMapFull*>(self)->field_4
 // (name built from the page index) gets its string from the merged marker
 // list, and its color dimmed when the marker is flagged or the region flag
 // at 0x3212 is set.
-void func_80246200(void* self) {
+void FloorMap_RefreshCursorRows(void* self) {
     CFloorMapCursor* cur = (CFloorMapCursor*)self;
     u8* base = (u8*)self + cur->field_09 * 0x30C;
     char buf[0x20];
@@ -92,7 +92,7 @@ void func_80246200(void* self) {
             rec = markers + row * 0x18;
             LayoutSetTextBoxFmtValue(cur->mData, buf, *(char**)(rec + 0x18), 0);
             color = -1;
-            if (rec[0x1C] != 0 || func_8009CF8C(0x3212) != 0)
+            if (rec[0x1C] != 0 || CtrlRemote_TouchBitByArg(0x3212) != 0)
                 color = 0xC85050FF;
             func_80137B44(cur->mData, buf, color);
         }
@@ -119,7 +119,7 @@ void func_80245450(void* self) {
             cur->field_0B = 0;
         }
     }
-    func_80246200(cur);
+    FloorMap_RefreshCursorRows(cur);
 
     // Refresh the cursor position: format the pane name for the current page
     // index, scale its translate by the zoom pane, and move the target pane.
@@ -149,7 +149,7 @@ void func_80245450(void* self) {
             ->pane->SetTranslate(*(nw4r::math::VEC3*)&dest);
     }
 
-    func_801F3850(cur->field_3134, cur->field_0B);
+    CScrollBar_PlaceThumb(cur->field_3134, cur->field_0B);
 }
 
 // Retail keeps this helper's symbol unmangled.
@@ -176,7 +176,7 @@ extern "C" void func_802455F0(void* self) {
         if ((s8)c1 < 0)
             cur->field_0A = 0;
     }
-    func_80246200(cur);
+    FloorMap_RefreshCursorRows(cur);
 
     // Refresh the cursor position: format the pane name for the current page
     // index, scale its translate by the zoom pane, and move the target pane.
@@ -193,7 +193,7 @@ extern "C" void func_802455F0(void* self) {
     pos.x = pos.x * scalePane->GetScale().x;
 
     // Word-wise copy so MWCC keeps the retail integer-register copy instead
-    // of forwarding pos into the inlined SetTranslate (func_8024577C idiom).
+    // of forwarding pos into the inlined SetTranslate (FloorMap_SetCursorState idiom).
     ((u32*)&dest)[0] = ((u32*)&pos)[0];
     ((u32*)&dest)[1] = ((u32*)&pos)[1];
     ((u32*)&dest)[2] = ((u32*)&pos)[2];
@@ -202,13 +202,13 @@ extern "C" void func_802455F0(void* self) {
         target->pane->SetTranslate(dest);
     }
 
-    func_801F3850(cur->field_3134, (u16)cur->field_0B);
+    CScrollBar_PlaceThumb(cur->field_3134, (u16)cur->field_0B);
 }
 
 // Select the floor-map row whose map-row id matches val
 // that row (clamped to a page of 5), reposition the target pane, and notify
 // the UI when the cursor actually moved.
-void func_8024577C(void* self, u16 val) {
+void FloorMap_SetCursorState(void* self, u16 val) {
     CFloorMapCursor* cur = (CFloorMapCursor*)self;
     if (!val) {
         cur->field_0A = -1;
@@ -244,7 +244,7 @@ void func_8024577C(void* self, u16 val) {
                 cur->field_0A = i;
                 cur->field_0B = 0;
             }
-            func_80246200(cur);
+            FloorMap_RefreshCursorRows(cur);
 
             // Refresh the cursor position: format the pane name for the
             // current page index, scale its translate by the zoom pane, and
@@ -272,7 +272,7 @@ void func_8024577C(void* self, u16 val) {
                 target->pane->SetTranslate(dest);
             }
 
-            func_801F3850(cur->field_3134, (u16)cur->field_0B);
+            CScrollBar_PlaceThumb(cur->field_3134, (u16)cur->field_0B);
             break;
         }
         i++;
@@ -287,7 +287,7 @@ void func_8024577C(void* self, u16 val) {
 // panes' flags for the current map.
 void func_80245950(void* self) {
     CFloorMapCursor* cur = (CFloorMapCursor*)self;
-    u8 count = func_8003B1EC((void*)lbl_eu_8066479C);
+    u8 count = Bdat_GetMaxRow_B1EC((void*)lbl_eu_8066479C);
     cur->field_30D0 = count;
 
     char buf2[0x20];
@@ -423,14 +423,14 @@ void func_80245DF8(void* self) {
     char buf[0x20];
     CFloorMapMarkerEntry entries[32];
 
-    func_8003AA34();
+    Bdat_GetTable_AA34();
 
     u32 fp = (u32)getFP__FPCc(&lbl_eu_8050BEA8[0x17F]);
-    u16 count = (u16)func_8003B1EC((void*)fp);
+    u16 count = (u16)Bdat_GetMaxRow_B1EC((void*)fp);
 
     u16 n = 0;
     for (u16 i = 1; i <= count; i++) {
-        if (func_8009CF8C(0x20C8 + i) == 0) continue;
+        if (CtrlRemote_TouchBitByArg(0x20C8 + i) == 0) continue;
         if (lbl_eu_80664798 != (u8)BdatGetU8Direct(fp, &lbl_eu_8050BEA8[0x18C], i)) continue;
         if ((u8)BdatGetU8Direct(fp, &lbl_eu_8050BEA8[0x192], i) == 2) continue;
 
@@ -454,7 +454,7 @@ void func_80245DF8(void* self) {
         } else {
             u16 left = BdatGetU16Direct((const void*)fp, (const void*)&lbl_eu_8050BEA8[0x1AA], i);
             u16 right = BdatGetU16Direct((const void*)fp, (const void*)&lbl_eu_8050BEA8[0x1B5], i);
-            u16 scrollPos = (u16)func_8009CF8C(0x20);
+            u16 scrollPos = (u16)CtrlRemote_TouchBitByArg(0x20);
             flag = (left > scrollPos || scrollPos > right) ? 0 : 1;
         }
         e->flag = flag;
@@ -484,7 +484,7 @@ void func_80245DF8(void* self) {
         }
     }
 
-    func_80246200(cur);
+    FloorMap_RefreshCursorRows(cur);
 
     // Refresh the cursor position: format the pane name for the current page
     // index, scale its translate by the zoom pane, and move the target pane.
@@ -498,7 +498,7 @@ void func_80245DF8(void* self) {
     pos.x *= scalePane->GetScale().x;
 
     // Word-wise copy so MWCC keeps the retail integer-register copy instead
-    // of forwarding pos into the inlined SetTranslate (func_8024577C idiom).
+    // of forwarding pos into the inlined SetTranslate (FloorMap_SetCursorState idiom).
     ((u32*)&dest)[0] = ((u32*)&pos)[0];
     ((u32*)&dest)[1] = ((u32*)&pos)[1];
     ((u32*)&dest)[2] = ((u32*)&pos)[2];
@@ -511,13 +511,13 @@ void func_80245DF8(void* self) {
         vec[0] = lbl_eu_80668768;
         vec[1] = lbl_eu_8066876C;
         vec[2] = lbl_eu_80668764;
-        func_801F3670(cur->field_3134, vec);
+        CScrollBar_InitRootPane(cur->field_3134, vec);
         CFloorMapFloorEntry* entries2 = (CFloorMapFloorEntry*)cur->_0C;
-        func_801F36BC(cur->field_3134, 5,
+        CScrollBar_UpdateThumb(cur->field_3134, 5,
                       reinterpret_cast<CFloorMapFloorEntryView*>(&entries2[cur->field_09])->count);
-        func_801F3850(cur->field_3134, 0);
+        CScrollBar_PlaceThumb(cur->field_3134, 0);
     }
-    func_801F367C(cur->field_3134);
+    CScrollBar_requestScrollIn(cur->field_3134);
 }
 
 // Stub for the floor-map cursor refresh (retail 0x802483B8, not a target).
@@ -599,9 +599,9 @@ void func_80246330(CFloorMapLayoutBlock* self) {
         func_8013676C(lay->GetRootPane(), (u32)((IDeviceFontInfo*)fontObj)->getFont());
     }
 
-    func_8003AA34();
+    Bdat_GetTable_AA34();
     u32 fp = (u32)getFP__FPCc(&tbl[0x17F]);
-    u32 count = func_8003B1EC((void*)fp);
+    u32 count = Bdat_GetMaxRow_B1EC((void*)fp);
 
     self->count = 0;
 
@@ -615,7 +615,7 @@ void func_80246330(CFloorMapLayoutBlock* self) {
     const f32 thrLo = lbl_eu_80668784;
 
     for (u32 i = 1; i <= count; i++) {
-        if (func_8009CF8C(i + 0x20C8) == 0)
+        if (CtrlRemote_TouchBitByArg(i + 0x20C8) == 0)
             continue;
         if (lbl_eu_80664798 != BdatGetU8Direct(fp, tbl + 0x18C, i))
             continue;
@@ -646,10 +646,10 @@ void func_80246330(CFloorMapLayoutBlock* self) {
         } else {
             u16 left = BdatGetU16Direct((const void*)fp, tbl + 0x1AA, i);
             u16 right = BdatGetU16Direct((const void*)fp, tbl + 0x1B5, i);
-            u16 scrollPos = (u16)func_8009CF8C(0x20);
+            u16 scrollPos = (u16)CtrlRemote_TouchBitByArg(0x20);
             vis = (left > scrollPos || scrollPos > right) ? 0 : 1;
         }
-        if (vis || func_8009CF8C(0x3212) != 0)
+        if (vis || CtrlRemote_TouchBitByArg(0x3212) != 0)
             color = colorHi + 0x50FF;
         func_80137B44(e->layout, tbl + 0x1D7, color);
 
@@ -1025,16 +1025,16 @@ void func_8024808C(CFloorMapFull* self, u32 idx) {
     convA.w[0] = 0x43300000;
     convB.w[0] = 0x43300000;
 
-    func_8003AA34();
+    Bdat_GetTable_AA34();
     u32 fp = (u32)getFP__FPCc(&lbl_eu_8050BEA8[0x17F]);
     if (lbl_eu_80664798 != (u8)BdatGetU8Direct(fp, &lbl_eu_8050BEA8[0x18C], idx)) return;
-    if (func_8009CF8C(idx + 0x20C8) == 0) return;
+    if (CtrlRemote_TouchBitByArg(idx + 0x20C8) == 0) return;
 
     func_80141DC4(&tmp.x);
     pos = tmp;
     f32 py = pos.y;
 
-    u8 count = (u8)func_8003B1EC((void*)lbl_eu_8066479C);
+    u8 count = (u8)Bdat_GetMaxRow_B1EC((void*)lbl_eu_8066479C);
     u8 found = 0;
     for (u8 i = 1; i <= count; i++) {
         s16 h = BdatGetS16Direct(lbl_eu_8066479C, &lbl_eu_8050BEA8[0x15A], i);
@@ -1307,7 +1307,7 @@ void func_80248A6C(CFloorMapLayoutSlots* slots) {
     convB.w[0] = 0x43300000;
 
     u32 fp = (u32)getFP__FPCc(&tbl[0x315]);
-    int count = (int)func_8003B1EC((void*)fp);
+    int count = (int)Bdat_GetMaxRow_B1EC((void*)fp);
 
     // Constants hoisted before the walk so MWCC keeps them in f26-f31.
     const f64 convBias = lbl_eu_80668770;
@@ -1319,7 +1319,7 @@ void func_80248A6C(CFloorMapLayoutSlots* slots) {
     for (u16 i = 1; i <= count; i++) {
         if (BdatGetU8Direct(fp, &lbl_eu_8050BEA8[0x322], i) != lbl_eu_80664798) continue;
 
-        u16 rnd = (u16)func_8009CF8C(0x20);
+        u16 rnd = (u16)CtrlRemote_TouchBitByArg(0x20);
         u16 left = (u16)BdatGetU16Direct((const void*)fp, &lbl_eu_8050BEA8[0x329], (int)i);
         if (rnd < left) continue;
         u16 right = (u16)BdatGetU16Direct((const void*)fp, &lbl_eu_8050BEA8[0x32F], (int)i);
@@ -1327,17 +1327,17 @@ void func_80248A6C(CFloorMapLayoutSlots* slots) {
 
         u8 c1 = (u8)BdatGetU8Direct(fp, &lbl_eu_8050BEA8[0x335], i);
         u8 c2 = (u8)BdatGetU8Direct(fp, &lbl_eu_8050BEA8[0x343], i);
-        if (func_8009CF8C((u32)c1 + 0x7FC) < c2) continue;
+        if (CtrlRemote_TouchBitByArg((u32)c1 + 0x7FC) < c2) continue;
 
         u8 c3 = (u8)BdatGetU8Direct(fp, &lbl_eu_8050BEA8[0x34D], i);
         u8 c4 = (u8)BdatGetU8Direct(fp, &lbl_eu_8050BEA8[0x35B], i);
-        if (func_8009CF8C((u32)c3 + 0x7FC) < c4) continue;
+        if (CtrlRemote_TouchBitByArg((u32)c3 + 0x7FC) < c4) continue;
 
         u8 v365 = (u8)BdatGetU8Direct(fp, &lbl_eu_8050BEA8[0x365], i);
-        if (v365 != 0 && func_8009CF8C((u32)v365 + 0x2578) == 0) continue;
+        if (v365 != 0 && CtrlRemote_TouchBitByArg((u32)v365 + 0x2578) == 0) continue;
 
         u16 v373 = (u16)BdatGetU16Direct((const void*)fp, &lbl_eu_8050BEA8[0x373], (int)i);
-        if (v373 != 0 && func_8009CF8C((u32)v373 + 0x220) != 0xFE) continue;
+        if (v373 != 0 && CtrlRemote_TouchBitByArg((u32)v373 + 0x220) != 0xFE) continue;
 
         s16 x = BdatGetS16Direct(fp, &lbl_eu_8050BEA8[0x19B], i);
         s16 y = BdatGetS16Direct(fp, &lbl_eu_8050BEA8[0x1A0], i);
@@ -1354,7 +1354,7 @@ void func_80248A6C(CFloorMapLayoutSlots* slots) {
         // Skip markers whose world y sits below the first map row taller than
         // it, unless that row is exactly the row currently displayed.
         u8 found = 0;
-        u8 count2 = (u8)func_8003B1EC((void*)lbl_eu_8066479C);
+        u8 count2 = (u8)Bdat_GetMaxRow_B1EC((void*)lbl_eu_8066479C);
         for (u8 j = 1; j <= count2; j++) {
             s16 h = BdatGetS16Direct(lbl_eu_8066479C, &lbl_eu_8050BEA8[0x15A], j);
             convB.w[1] = (u32)(s16)h ^ 0x80000000;
@@ -1415,7 +1415,7 @@ void func_80248ED8(CFloorMapLayoutSlots* slots) {
     convB.w[0] = 0x43300000;
 
     u32 fp = (u32)getFP__FPCc(&tbl[0x315]);
-    int count = (int)func_8003B1EC((void*)fp);
+    int count = (int)Bdat_GetMaxRow_B1EC((void*)fp);
 
     // Constants hoisted before the walk so MWCC keeps them in f26-f31.
     const f64 convBias = lbl_eu_80668770;
@@ -1427,7 +1427,7 @@ void func_80248ED8(CFloorMapLayoutSlots* slots) {
     for (u16 i = 1; i <= count; i++) {
         if (BdatGetU8Direct(fp, &lbl_eu_8050BEA8[0x322], i) != lbl_eu_80664798) continue;
 
-        u16 rnd = (u16)func_8009CF8C(0x20);
+        u16 rnd = (u16)CtrlRemote_TouchBitByArg(0x20);
         u16 left = (u16)BdatGetU16Direct((const void*)fp, &lbl_eu_8050BEA8[0x329], (int)i);
         if (rnd < left) continue;
         u16 right = (u16)BdatGetU16Direct((const void*)fp, &lbl_eu_8050BEA8[0x32F], (int)i);
@@ -1435,17 +1435,17 @@ void func_80248ED8(CFloorMapLayoutSlots* slots) {
 
         u8 c1 = (u8)BdatGetU8Direct(fp, &lbl_eu_8050BEA8[0x335], i);
         u8 c2 = (u8)BdatGetU8Direct(fp, &lbl_eu_8050BEA8[0x343], i);
-        if (func_8009CF8C((u32)c1 + 0x7FC) < c2) continue;
+        if (CtrlRemote_TouchBitByArg((u32)c1 + 0x7FC) < c2) continue;
 
         u8 c3 = (u8)BdatGetU8Direct(fp, &lbl_eu_8050BEA8[0x34D], i);
         u8 c4 = (u8)BdatGetU8Direct(fp, &lbl_eu_8050BEA8[0x35B], i);
-        if (func_8009CF8C((u32)c3 + 0x7FC) < c4) continue;
+        if (CtrlRemote_TouchBitByArg((u32)c3 + 0x7FC) < c4) continue;
 
         u8 v365 = (u8)BdatGetU8Direct(fp, &lbl_eu_8050BEA8[0x365], i);
-        if (v365 != 0 && func_8009CF8C((u32)v365 + 0x2578) == 0) continue;
+        if (v365 != 0 && CtrlRemote_TouchBitByArg((u32)v365 + 0x2578) == 0) continue;
 
         u16 v373 = (u16)BdatGetU16Direct((const void*)fp, &lbl_eu_8050BEA8[0x373], (int)i);
-        if (v373 != 0 && func_8009CF8C((u32)v373 + 0x220) != 0xFE) continue;
+        if (v373 != 0 && CtrlRemote_TouchBitByArg((u32)v373 + 0x220) != 0xFE) continue;
 
         s16 x = BdatGetS16Direct(fp, &lbl_eu_8050BEA8[0x19B], i);
         s16 y = BdatGetS16Direct(fp, &lbl_eu_8050BEA8[0x1A0], i);
@@ -1463,7 +1463,7 @@ void func_80248ED8(CFloorMapLayoutSlots* slots) {
         // Skip markers whose world y sits below the first map row taller than
         // it, unless that row is exactly the row currently displayed.
         u8 found = 0;
-        u8 count2 = (u8)func_8003B1EC((void*)lbl_eu_8066479C);
+        u8 count2 = (u8)Bdat_GetMaxRow_B1EC((void*)lbl_eu_8066479C);
         for (u8 j = 1; j <= count2; j++) {
             s16 h = BdatGetS16Direct(lbl_eu_8066479C, &lbl_eu_8050BEA8[0x15A], j);
             convB.w[1] = (u32)(s16)h ^ 0x80000000;
@@ -1521,7 +1521,7 @@ void func_80249344(CFloorMapLayoutSlots* slots) {
     convB.w[0] = 0x43300000;
 
     u32 fp = (u32)getFP__FPCc(&tbl[0x315]);
-    int count = (int)func_8003B1EC((void*)fp);
+    int count = (int)Bdat_GetMaxRow_B1EC((void*)fp);
 
     // Constants hoisted before the walk so MWCC keeps them in f26-f31
     // (declared in reverse of retail's load order).
@@ -1534,7 +1534,7 @@ void func_80249344(CFloorMapLayoutSlots* slots) {
     for (u16 i = 1; (s32)i <= count; i++) {
         if ((u8)BdatGetU8Direct(fp, &lbl_eu_8050BEA8[0x322], i) != lbl_eu_80664798) continue;
 
-        u16 rnd = (u16)func_8009CF8C(0x20);
+        u16 rnd = (u16)CtrlRemote_TouchBitByArg(0x20);
         u16 left = (u16)BdatGetU16Direct((const void*)fp, &lbl_eu_8050BEA8[0x329], (int)i);
         if (rnd < left) continue;
         u16 right = (u16)BdatGetU16Direct((const void*)fp, &lbl_eu_8050BEA8[0x32F], (int)i);
@@ -1542,17 +1542,17 @@ void func_80249344(CFloorMapLayoutSlots* slots) {
 
         u8 c1 = (u8)BdatGetU8Direct(fp, &lbl_eu_8050BEA8[0x335], i);
         u8 c2 = (u8)BdatGetU8Direct(fp, &lbl_eu_8050BEA8[0x343], i);
-        if (func_8009CF8C((u32)c1 + 0x7FC) < c2) continue;
+        if (CtrlRemote_TouchBitByArg((u32)c1 + 0x7FC) < c2) continue;
 
         u8 c3 = (u8)BdatGetU8Direct(fp, &lbl_eu_8050BEA8[0x34D], i);
         u8 c4 = (u8)BdatGetU8Direct(fp, &lbl_eu_8050BEA8[0x35B], i);
-        if (func_8009CF8C((u32)c3 + 0x7FC) < c4) continue;
+        if (CtrlRemote_TouchBitByArg((u32)c3 + 0x7FC) < c4) continue;
 
         u8 v365 = (u8)BdatGetU8Direct(fp, &lbl_eu_8050BEA8[0x365], i);
-        if (v365 != 0 && func_8009CF8C((u32)v365 + 0x2578) == 0) continue;
+        if (v365 != 0 && CtrlRemote_TouchBitByArg((u32)v365 + 0x2578) == 0) continue;
 
         u16 v373 = (u16)BdatGetU16Direct((const void*)fp, &lbl_eu_8050BEA8[0x373], (int)i);
-        if (v373 != 0 && func_8009CF8C((u32)v373 + 0x220) != 0xFE) continue;
+        if (v373 != 0 && CtrlRemote_TouchBitByArg((u32)v373 + 0x220) != 0xFE) continue;
 
         // s16 -> f32 via the shared 0x4330 double-magic idiom; y is cached in
         // a scalar so MWCC dedicates a callee-saved FPR to it across the row
@@ -1572,7 +1572,7 @@ void func_80249344(CFloorMapLayoutSlots* slots) {
         // Skip markers whose world y sits below the first map row taller than
         // it, unless that row is exactly the row currently displayed.
         u8 found = 0;
-        u8 count2 = (u8)func_8003B1EC((void*)lbl_eu_8066479C);
+        u8 count2 = (u8)Bdat_GetMaxRow_B1EC((void*)lbl_eu_8066479C);
         for (u8 j = 1; j <= count2; j++) {
             s16 h = BdatGetS16Direct(lbl_eu_8066479C, &lbl_eu_8050BEA8[0x15A], j);
             convB.w[1] = (u32)(s16)h ^ 0x80000000;
@@ -1651,7 +1651,7 @@ void func_802497B0(void* self) {
     convB.w[0] = 0x43300000;
 
     u32 fp = (u32)getFP__FPCc(&lbl_eu_8050BEA8[0x315]);
-    int count = (int)func_8003B1EC((void*)fp);
+    int count = (int)Bdat_GetMaxRow_B1EC((void*)fp);
 
     // Constants hoisted before the walk so MWCC keeps them in f26-f31
     // (declared in reverse of retail's load order).
@@ -1664,7 +1664,7 @@ void func_802497B0(void* self) {
     for (u16 i = 1; i <= count; i++) {
         if ((u8)BdatGetU8Direct(fp, &lbl_eu_8050BEA8[0x322], i) != lbl_eu_80664798) continue;
 
-        u16 rnd = (u16)func_8009CF8C(0x20);
+        u16 rnd = (u16)CtrlRemote_TouchBitByArg(0x20);
         u16 left = (u16)BdatGetU16Direct((const void*)fp, &lbl_eu_8050BEA8[0x329], (int)i);
         if (rnd < left) continue;
         u16 right = (u16)BdatGetU16Direct((const void*)fp, &lbl_eu_8050BEA8[0x32F], (int)i);
@@ -1672,17 +1672,17 @@ void func_802497B0(void* self) {
 
         u8 c1 = (u8)BdatGetU8Direct(fp, &lbl_eu_8050BEA8[0x335], i);
         u8 c2 = (u8)BdatGetU8Direct(fp, &lbl_eu_8050BEA8[0x343], i);
-        if (func_8009CF8C((u32)c1 + 0x7FC) < c2) continue;
+        if (CtrlRemote_TouchBitByArg((u32)c1 + 0x7FC) < c2) continue;
 
         u8 c3 = (u8)BdatGetU8Direct(fp, &lbl_eu_8050BEA8[0x34D], i);
         u8 c4 = (u8)BdatGetU8Direct(fp, &lbl_eu_8050BEA8[0x35B], i);
-        if (func_8009CF8C((u32)c3 + 0x7FC) < c4) continue;
+        if (CtrlRemote_TouchBitByArg((u32)c3 + 0x7FC) < c4) continue;
 
         u8 v365 = (u8)BdatGetU8Direct(fp, &lbl_eu_8050BEA8[0x365], i);
-        if (v365 != 0 && func_8009CF8C((u32)v365 + 0x2578) == 0) continue;
+        if (v365 != 0 && CtrlRemote_TouchBitByArg((u32)v365 + 0x2578) == 0) continue;
 
         u16 v373 = (u16)BdatGetU16Direct((const void*)fp, &lbl_eu_8050BEA8[0x373], (int)i);
-        if (v373 != 0 && func_8009CF8C((u32)v373 + 0x220) != 0xFE) continue;
+        if (v373 != 0 && CtrlRemote_TouchBitByArg((u32)v373 + 0x220) != 0xFE) continue;
 
         s16 x = BdatGetS16Direct(fp, &lbl_eu_8050BEA8[0x19B], i);
         s16 y = BdatGetS16Direct(fp, &lbl_eu_8050BEA8[0x1A0], i);
@@ -1701,7 +1701,7 @@ void func_802497B0(void* self) {
         // Skip markers whose world y sits below the first map row taller than
         // it, unless that row is exactly the row currently displayed.
         u8 found = 0;
-        u8 count2 = (u8)func_8003B1EC((void*)lbl_eu_8066479C);
+        u8 count2 = (u8)Bdat_GetMaxRow_B1EC((void*)lbl_eu_8066479C);
         for (u8 j = 1; j <= count2; j++) {
             s16 h = BdatGetS16Direct(lbl_eu_8066479C, &lbl_eu_8050BEA8[0x15A], j);
             convB.w[1] = (u32)(s16)h ^ 0x80000000;
@@ -1771,9 +1771,9 @@ void func_80249C1C(CFloorMapLayoutSlots* slots) {
     // Current world id, read fresh after the pane lookup and kept live across
     // the whole marker walk.
     const u8 world = lbl_eu_80664184;
-    func_8003AA34();
+    Bdat_GetTable_AA34();
     u32 fp = (u32)getFP__FPCc(&tbl[0x17F]);
-    u32 count = func_8003B1EC((void*)fp);
+    u32 count = Bdat_GetMaxRow_B1EC((void*)fp);
 
     // Constants kept live across the whole walk (retail f27-f31).
     const f64 convBias = lbl_eu_80668770;
@@ -1816,7 +1816,7 @@ void func_80249C1C(CFloorMapLayoutSlots* slots) {
             u32 fp2 = (u32)getFP__FPCc(&tbl[0x17F]);
             u16 id2 = BdatGetU16ByTableKey(&tbl[0x3C6], &tbl[0x3D2], rowId);
             if ((u8)BdatGetU8Direct(fp2, &tbl[0x18C], id2) != world) break;
-            if (func_8009CF8C(id2 + 0x20C8) == 0) break;
+            if (CtrlRemote_TouchBitByArg(id2 + 0x20C8) == 0) break;
 
             u8 hide;
             if (id2 == 0) {
@@ -1826,10 +1826,10 @@ void func_80249C1C(CFloorMapLayoutSlots* slots) {
             } else {
                 u16 left = BdatGetU16Direct((const void*)fp2, &tbl[0x1AA], id2);
                 u16 right = BdatGetU16Direct((const void*)fp2, &tbl[0x1B5], id2);
-                u16 scrollPos = (u16)func_8009CF8C(0x20);
+                u16 scrollPos = (u16)CtrlRemote_TouchBitByArg(0x20);
                 hide = (left > scrollPos || scrollPos > right) ? 1 : 0;
             }
-            if (hide || func_8009CF8C(0x3212) != 0) break;
+            if (hide || CtrlRemote_TouchBitByArg(0x3212) != 0) break;
 
             f32 tmp[3];
             func_80141DC4(tmp, id2);
@@ -1887,7 +1887,7 @@ void func_80249C1C(CFloorMapLayoutSlots* slots) {
             // shared double-magic idiom into a scratch vector.
             u32 fp2 = (u32)getFP__FPCc(&tbl[0x403]);
             BdatGetU16Direct((const void*)fp2, &tbl[0x412], rowId);
-            if (func_8009CF8C(rowId + 0x2B9C) != 0) break;
+            if (CtrlRemote_TouchBitByArg(rowId + 0x2B9C) != 0) break;
             s16 a = BdatGetS16Direct(fp2, &tbl[0x19B], rowId);
             s16 b = BdatGetS16Direct(fp2, &tbl[0x1A0], rowId);
             s16 c = BdatGetS16Direct(fp2, &tbl[0x1A5], rowId);
@@ -1909,7 +1909,7 @@ void func_80249C1C(CFloorMapLayoutSlots* slots) {
         }
         case 6: {
             if (CheckState2CC8Active(rowId)) continue;
-            foundPos = *(nw4r::math::VEC3*)func_801F4E68(getUnk80664658(), rowId);
+            foundPos = *(nw4r::math::VEC3*)GimFindPosByRow(getUnk80664658(), rowId);
             sprintf(buf, &tbl[0x423], i + 1);
             placed = 1;
             break;
@@ -1922,7 +1922,7 @@ void func_80249C1C(CFloorMapLayoutSlots* slots) {
         // is exactly the currently displayed map row.
         f32 foundY = foundPos.y;
         u8 hit = 0;
-        u8 cntB = (u8)func_8003B1EC((void*)lbl_eu_8066479C);
+        u8 cntB = (u8)Bdat_GetMaxRow_B1EC((void*)lbl_eu_8066479C);
         for (u8 k = 1; k <= cntB; k++) {
             s16 h = BdatGetS16Direct(lbl_eu_8066479C, &tbl[0x15A], k);
             convB.w[1] = (u32)(s16)h ^ 0x80000000;
@@ -1998,7 +1998,7 @@ void func_8024A448(void* self) {
     convA.w[0] = 0x43300000;
     convB.w[0] = 0x43300000;
 
-    if (!func_8009CF8C(0x3354)) return;
+    if (!CtrlRemote_TouchBitByArg(0x3354)) return;
     if ((lbl_eu_80664184 & 0xFF) != lbl_eu_80664798) return;
 
     CFloorMapObjList* glist = (CFloorMapObjList*)getReslistBC8();
@@ -2023,7 +2023,7 @@ void func_8024A448(void* self) {
         f32 py = pv.y;
 
         u8 found = 0;
-        u8 count = (u8)func_8003B1EC((void*)lbl_eu_8066479C);
+        u8 count = (u8)Bdat_GetMaxRow_B1EC((void*)lbl_eu_8066479C);
         for (u8 j = 1; j <= count; j++) {
             s16 h = BdatGetS16Direct(lbl_eu_8066479C, &lbl_eu_8050BEA8[0x15A], j);
             convA.w[1] = (u32)(s16)h ^ 0x80000000;
@@ -2085,7 +2085,7 @@ void func_8024A748(void* self) {
     convB.w[0] = 0x43300000;
     if (worldId != lbl_eu_80664798) return;
 
-    u32 rnd = func_8009CF8C(0x20);
+    u32 rnd = CtrlRemote_TouchBitByArg(0x20);
     if ((s32)rnd <= 0) return;
     if ((BdatGetU8ByTableKey(tbl + 0x44A, tbl + 0x457, rnd) & 0xFF) != worldId) return;
 
@@ -2174,7 +2174,7 @@ void func_8024A748(void* self) {
                 u32 id2 = BdatGetU16ByTableKey(tbl + 0x3C6, tbl + 0x3D2, (u16)type);
                 u32 w = BdatGetU8Direct(fp, tbl + 0x18C, (u16)id2);
                 if (w != lbl_eu_80664184) break;
-                if (func_8009CF8C((u16)id2 + 0x20C8) == 0) break;
+                if (CtrlRemote_TouchBitByArg((u16)id2 + 0x20C8) == 0) break;
 
                 u32 ok;
                 if ((u16)id2 == 0) {
@@ -2184,7 +2184,7 @@ void func_8024A748(void* self) {
                 } else {
                     u32 left = BdatGetU16Direct((const void*)fp, tbl + 0x1AA, (u16)id2);
                     u32 right = BdatGetU16Direct((const void*)fp, tbl + 0x1B5, (u16)id2);
-                    u32 scroll = (u16)func_8009CF8C(0x20);
+                    u32 scroll = (u16)CtrlRemote_TouchBitByArg(0x20);
                     if (left > scroll || scroll > right)
                         ok = 0;
                     else
@@ -2222,7 +2222,7 @@ void func_8024A748(void* self) {
                 u32 id2 = BdatGetU16ByTableKey(tbl + 0x3C6, tbl + 0x3D2, (u16)type);
                 u32 w = BdatGetU8Direct(fp, tbl + 0x18C, (u16)id2);
                 if (w != lbl_eu_80664184) break;
-                if (func_8009CF8C((u16)id2 + 0x20C8) == 0) break;
+                if (CtrlRemote_TouchBitByArg((u16)id2 + 0x20C8) == 0) break;
 
                 u32 ok;
                 if ((u16)id2 == 0) {
@@ -2232,7 +2232,7 @@ void func_8024A748(void* self) {
                 } else {
                     u32 left = BdatGetU16Direct((const void*)fp, tbl + 0x1AA, (u16)id2);
                     u32 right = BdatGetU16Direct((const void*)fp, tbl + 0x1B5, (u16)id2);
-                    u32 scroll = (u16)func_8009CF8C(0x20);
+                    u32 scroll = (u16)CtrlRemote_TouchBitByArg(0x20);
                     if (left > scroll || scroll > right)
                         ok = 0;
                     else
@@ -2257,7 +2257,7 @@ void func_8024A748(void* self) {
     if (buf[0] != 0) {
         const f64 bias = lbl_eu_80668770;
         f32 y = vec.y;
-        u8 count = (u8)func_8003B1EC((void*)lbl_eu_8066479C);
+        u8 count = (u8)Bdat_GetMaxRow_B1EC((void*)lbl_eu_8066479C);
         u32 found = 0;
         for (u32 j = 1; j <= count; j++) {
             s16 h = BdatGetS16Direct(lbl_eu_8066479C, tbl + 0x15A, j);
@@ -2325,7 +2325,7 @@ void func_8024AEEC(void* self) {
     f32 py = ppos.y;
 
     const char* tbl = lbl_eu_8050BEA8;
-    u8 count = (u8)func_8003B1EC((void*)lbl_eu_8066479C);
+    u8 count = (u8)Bdat_GetMaxRow_B1EC((void*)lbl_eu_8066479C);
     const f64 bias = lbl_eu_80668770;
     for (u8 i = 1; i <= count; i++) {
         s16 h = BdatGetS16Direct(lbl_eu_8066479C, &tbl[0x15A], (u32)i);
@@ -2434,7 +2434,7 @@ void func_8024B234(CFloorMapFull* self) {
     ((u32*)&ppos)[2] = ((u32*)pos)[2];
     f32 py = ppos.y;
 
-    u32 count = (u32)(u8)func_8003B1EC((void*)lbl_eu_8066479C);
+    u32 count = (u32)(u8)Bdat_GetMaxRow_B1EC((void*)lbl_eu_8066479C);
     u32 found = 0;
     for (u32 i = 1; i <= count; i++) {
         s16 h = BdatGetS16Direct(lbl_eu_8066479C, &lbl_eu_8050BEA8[0x15A], (u32)i);
@@ -2568,14 +2568,14 @@ void func_8024B6F8(CFloorMapRowList* self, void* arg2, u32 arg3, u32 arg4, u32 a
         nw4r::lyt::Pane* pane =
             self->mData->GetRootPane()->FindPaneByName(&lbl_eu_8050BEA8[0x491], 1);
         if (pane) {
-            u32 v = func_8009CF8C(0x20) ^ 0x166;
+            u32 v = CtrlRemote_TouchBitByArg(0x20) ^ 0x166;
             pane->SetVisible(((0x166 << __cntlzw(v)) & 0x80000000ul) != 0);
         }
     } else if (arg5 == 5) {
         nw4r::lyt::Pane* pane =
             self->mData->GetRootPane()->FindPaneByName(&lbl_eu_8050BEA8[0x491], 1);
         if (pane) {
-            pane->SetVisible(func_8009CF8C(0x20) >= 0x171);
+            pane->SetVisible(CtrlRemote_TouchBitByArg(0x20) >= 0x171);
         }
     }
 }
@@ -2837,16 +2837,16 @@ void func_8024BE1C(CFloorMap* self) {
     // Reuses the table-pointer slot for the third lookup, matching retail.
     tbl = (const char*)(u32)BdatGetU8Direct((u32)lbl_eu_8066479C, tbl + 0x4bc, lang & 0xFF);
 
-    if (v1 != 0 && func_8009CF8C(0x20) >= v1) {
+    if (v1 != 0 && CtrlRemote_TouchBitByArg(0x20) >= v1) {
         if (v2 == 0) {
             sel = 1;
         } else {
-            sel = (func_8009CF8C(v2 + 0x220) < (u8)(u32)tbl) ? 1 : 2;
+            sel = (CtrlRemote_TouchBitByArg(v2 + 0x220) < (u8)(u32)tbl) ? 1 : 2;
         }
     } else if (v2 == 0) {
         sel = 0;
     } else {
-        sel = (func_8009CF8C(v2 + 0x220) < (u8)(u32)tbl) ? 0 : 1;
+        sel = (CtrlRemote_TouchBitByArg(v2 + 0x220) < (u8)(u32)tbl) ? 0 : 1;
     }
 
     switch (sel) {
@@ -2918,10 +2918,10 @@ void func_8024C1FC(void* self) {
         if (t <= lbl_eu_80668764) p->field_41 = 1;
     }
 
-    func_801F3540(&p->mScrollBar);
+    CScrollBar_UpdateDispatch(&p->mScrollBar);
     func_801D202C(&p->mCursor);
-    func_8022B748(&p->mSysWinB8);
-    func_8022B748(&p->mSysWinF4);
+    sysWinDispatchPhase(&p->mSysWinB8);
+    sysWinDispatchPhase(&p->mSysWinF4);
 
     if (p->mLayout130 != 0) ((nw4r::lyt::Layout*)p->mLayout130)->Animate(0);
     if (p->mLayout138 != 0) ((nw4r::lyt::Layout*)p->mLayout138)->Animate(0);
@@ -2936,7 +2936,7 @@ void func_8024C1FC(void* self) {
             conv.w[1] = p->mLayouts150[i].mUnk ^ 0x80000000;
             f32 y = (f32)(conv.d - lbl_eu_80668770);
 
-            u8 count = (u8)func_8003B1EC((void*)lbl_eu_8066479C);
+            u8 count = (u8)Bdat_GetMaxRow_B1EC((void*)lbl_eu_8066479C);
             u8 found = 0;
             for (u8 j = 1; j <= count; j++) {
                 s16 hv = BdatGetS16Direct(lbl_eu_8066479C, &lbl_eu_8050BEA8[0x15A], j);
@@ -3080,13 +3080,13 @@ void func_8024C8F8(void* self, void* drawInfo) {
             drawLayout(reinterpret_cast<nw4r::lyt::Layout*>(p->mLayout331C), reinterpret_cast<nw4r::lyt::DrawInfo*>(drawInfo), 0, 1);
     }
     if (p->field_208)
-        func_801F35B0((void*)&p->mScrollBar, drawInfo);
+        CScrollBar_draw((void*)&p->mScrollBar, drawInfo);
     if (p->field_333C && p->mLayout3334)
         drawLayout(reinterpret_cast<nw4r::lyt::Layout*>(p->mLayout3334), reinterpret_cast<nw4r::lyt::DrawInfo*>(drawInfo), 0, 1);
-    func_8022B7C8((void*)&p->mSysWinB8, drawInfo);
-    func_8022B7C8((void*)&p->mSysWinF4, drawInfo);
+    sysWinDrawLayout((void*)&p->mSysWinB8, drawInfo);
+    sysWinDrawLayout((void*)&p->mSysWinF4, drawInfo);
     if ((s8)p->field_5C >= 0)
-        func_801D20B0((void*)&p->mCursor, drawInfo);
+        Cur_DrawLayout((void*)&p->mCursor, drawInfo);
 }
 
 // Teardown of the floor-map screen (paired with the ctor-time resource
@@ -3120,10 +3120,10 @@ void func_8024CB94(CFloorMapFull* p) {
         reinterpret_cast<UnkClass_8045F564*>((u8*)p + 0x04)->func_8045F778();
         reinterpret_cast<UnkClass_8045F564*>((u8*)p + 0x14)->func_8045F778();
 
-        func_801F35DC((void*)p->mScrollBar);
+        CScrollBar_Teardown((void*)p->mScrollBar);
         ((CBaseCur*)&p->mCursor)->cleanup();
-        func_8022B7F4((void*)&p->mSysWinB8);
-        func_8022B7F4((void*)&p->mSysWinF4);
+        sysWinTermLayout((void*)&p->mSysWinB8);
+        sysWinTermLayout((void*)&p->mSysWinF4);
 
         // Destroy each owned layout (double null check is the retail D2-
         // inlined deleting-dtor shape) and clear the slot.
@@ -3219,15 +3219,15 @@ void func_8024CE68(void* self) {
 
     LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)p->mLayout32D4, &lbl_eu_8050BEA8[0xF8], FM_FLOOR(p)->name_210, 0);
     LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)p->mLayout1FC, &lbl_eu_8050BEA8[0x145], BdatGetPtrDirect((const void*)lbl_eu_806640A8, &lbl_eu_8050BEA8[0x1F], lbl_eu_80664798), 0);
-    func_80246200(&p->mLayout1FC);
+    FloorMap_RefreshCursorRows(&p->mLayout1FC);
 
     if (p->field_3330) {
         scl[0] = lbl_eu_80668768;
         scl[1] = lbl_eu_8066876C;
         scl[2] = lbl_eu_80668764;
-        func_801F3670((void*)p->field_3330, scl);
-        func_801F36BC((void*)p->field_3330, 5, FM_FLOOR(p)->field_514);
-        func_801F3850((void*)p->field_3330, 0);
+        CScrollBar_InitRootPane((void*)p->field_3330, scl);
+        CScrollBar_UpdateThumb((void*)p->field_3330, 5, FM_FLOOR(p)->field_514);
+        CScrollBar_PlaceThumb((void*)p->field_3330, 0);
     }
 
     ((nw4r::lyt::Layout*)p->mLayout32D4)->SetAnimationEnable((nw4r::lyt::AnimTransform*)p->mLayout32DC, false);
@@ -3246,10 +3246,10 @@ void func_8024CE68(void* self) {
     // Pick which map variant to load: weighted by the floor table's three
     // rates (rate1/rate2/rate3) against two random draws.
     int mode;
-    if (rate1 != 0 && func_8009CF8C(0x20) >= rate1) {
+    if (rate1 != 0 && CtrlRemote_TouchBitByArg(0x20) >= rate1) {
         if (rate2 == 0) {
             mode = 1;
-        } else if (func_8009CF8C((u32)rate2 + 0x220) < rate3) {
+        } else if (CtrlRemote_TouchBitByArg((u32)rate2 + 0x220) < rate3) {
             mode = 1;
         } else {
             mode = 2;
@@ -3257,7 +3257,7 @@ void func_8024CE68(void* self) {
     } else {
         if (rate2 == 0) {
             mode = 0;
-        } else if (func_8009CF8C((u32)rate2 + 0x220) < rate3) {
+        } else if (CtrlRemote_TouchBitByArg((u32)rate2 + 0x220) < rate3) {
             mode = 0;
         } else {
             mode = 1;
@@ -3329,14 +3329,14 @@ void func_8024D23C(void* self) {
                   ((CFloorMapFloorBlock*)((u8*)p + (s8)p->field_205 * 0x30C))->name_210, 0);
     LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)p->mLayout1FC, &tbl[0x145],
                   BdatGetPtrDirect((const void*)lbl_eu_806640A8, &tbl[0x1F], lbl_eu_80664798), 0);
-    func_80246200(&p->mLayout1FC);
+    FloorMap_RefreshCursorRows(&p->mLayout1FC);
 
     if (p->field_3330) {
         f32 vec[3] = {lbl_eu_80668768, lbl_eu_8066876C, lbl_eu_80668764};
-        func_801F3670((void*)p->field_3330, vec);
-        func_801F36BC((void*)p->field_3330, 5,
+        CScrollBar_InitRootPane((void*)p->field_3330, vec);
+        CScrollBar_UpdateThumb((void*)p->field_3330, 5,
                       ((CFloorMapFloorBlock*)((u8*)p + (s8)p->field_205 * 0x30C))->field_514);
-        func_801F3850((void*)p->field_3330, 0);
+        CScrollBar_PlaceThumb((void*)p->field_3330, 0);
     }
 
     ((nw4r::lyt::Layout*)p->mLayout32D4)->SetAnimationEnable((nw4r::lyt::AnimTransform*)p->mLayout32DC, false);
@@ -3352,14 +3352,14 @@ void func_8024D23C(void* self) {
     u8 v3 = BdatGetU8Direct(lbl_eu_8066479C, &lbl_eu_8050BEA8[0x4BC], v26);
 
     int mode;
-    if (v1 != 0 && func_8009CF8C(0x20) >= v1) {
-        if (v2 != 0 && func_8009CF8C((u32)v2 + 0x220) >= v3) {
+    if (v1 != 0 && CtrlRemote_TouchBitByArg(0x20) >= v1) {
+        if (v2 != 0 && CtrlRemote_TouchBitByArg((u32)v2 + 0x220) >= v3) {
             mode = 2;
         } else {
             mode = 1;
         }
     } else {
-        if (v2 != 0 && func_8009CF8C((u32)v2 + 0x220) >= v3) {
+        if (v2 != 0 && CtrlRemote_TouchBitByArg((u32)v2 + 0x220) >= v3) {
             mode = 1;
         } else {
             mode = 0;
@@ -3416,7 +3416,7 @@ void func_8024D614(void* self) {
         if ((s8)nc < 0) p->field_5C = 1;
 
         nw4r::math::VEC3 curOut;
-        func_8022C1B4(&curOut, &p->mSysWinB8, p->field_5C);
+        sysWinGetPaneScreenPos(&curOut, &p->mSysWinB8, p->field_5C);
         ((CBaseCur*)&p->mCursor)->setRootPaneTranslate(&curOut);
         playUISound(1);
         return;
@@ -3542,7 +3542,7 @@ void func_8024DA0C(void* self) {
         p->field_5C = p->field_5C + 1;
         if ((s8)p->field_5C >= 2) p->field_5C = 0;
 
-        func_8022C1B4(&cursorOut, &p->mSysWinB8, p->field_5C);
+        sysWinGetPaneScreenPos(&cursorOut, &p->mSysWinB8, p->field_5C);
         ((CBaseCur*)&p->mCursor)->setRootPaneTranslate(&cursorOut);
         playUISound(1);
         return;
@@ -3685,7 +3685,7 @@ void func_8024DE08(CFloorMapFull* p) {
         p->field_207 = 0;
     }
 
-    func_80246200(&p->mLayout1FC);
+    FloorMap_RefreshCursorRows(&p->mLayout1FC);
 
     const char* tbl = lbl_eu_8050BEA8;
     // Refresh the cursor position: format the pane name for the current page
@@ -3709,7 +3709,7 @@ void func_8024DE08(CFloorMapFull* p) {
         ((CFloorMapLayoutHolder*)p->mLayout3304)->pane->SetTranslate(
             *(nw4r::math::VEC3*)&dest);
 
-    func_801F3850((void*)p->field_3330, (u16)(s8)p->field_207);
+    CScrollBar_PlaceThumb((void*)p->field_3330, (u16)(s8)p->field_207);
 
     // Resolve the map-row id under the cursor (0 when the page index wrapped).
     u16 rowId = 0;
@@ -3927,7 +3927,7 @@ void func_8024E650(void* self) {
         }
     }
 
-    func_8024577C(&fm->mLayout1FC, (u16)func_80248558(&fm->mLayout140));
+    FloorMap_SetCursorState(&fm->mLayout1FC, (u16)func_80248558(&fm->mLayout140));
     fm->field_5D = 1;
 }
 
@@ -3956,7 +3956,7 @@ void func_8024E828(void* self) {
         }
     }
 
-    func_8024577C(&fm->mLayout1FC, (u16)func_80248558(&fm->mLayout140));
+    FloorMap_SetCursorState(&fm->mLayout1FC, (u16)func_80248558(&fm->mLayout140));
     fm->field_5D = 1;
 }
 
@@ -4003,7 +4003,7 @@ void func_8024EA00(CFloorMapFull* fm) {
     }
 
     u32 v = func_80248558(&fm->mLayout140);
-    func_8024577C(&fm->mLayout1FC, (u16)v);
+    FloorMap_SetCursorState(&fm->mLayout1FC, (u16)v);
     fm->field_5D = 1;
 }
 
@@ -4042,7 +4042,7 @@ void func_8024EC24(CFloorMapFull* fm) {
     }
 
     u32 v = func_80248558(&fm->mLayout140);
-    func_8024577C(&fm->mLayout1FC, (u16)v);
+    FloorMap_SetCursorState(&fm->mLayout1FC, (u16)v);
     fm->field_5D = 1;
 }
 
@@ -4061,7 +4061,7 @@ void func_8024EE50(void* self) {
     if (CSysWin_getUnk34(&p->mSysWinF4)) {
         // Detail window is up: close it once its own animation finished.
         if (!CSysWin_isActive(&p->mSysWinF4)) return;
-        func_8022B8E4(&p->mSysWinF4);
+        sysWinAdvancePhase3(&p->mSysWinF4);
         return;
     }
 
@@ -4080,8 +4080,8 @@ void func_8024EE50(void* self) {
         } else {
             playUISound(6);
         }
-        func_801D216C(&p->mCursor, 0);
-        func_8022B8E4(&p->mSysWinB8);
+        Cur_SetVisible(&p->mCursor, 0);
+        sysWinAdvancePhase3(&p->mSysWinB8);
         p->field_58 = 0;
         return;
     }
@@ -4105,13 +4105,13 @@ void func_8024EE50(void* self) {
         // Maps 24 and 25 are separate clauses so each rolls its own random.
         u16 nameIdx = 0x16;
         if (lbl_eu_80664798 == 0xD) {
-            u16 rnd = (u16)func_8009CF8C(0x20);
+            u16 rnd = (u16)CtrlRemote_TouchBitByArg(0x20);
             if (rnd >= 0x171 && rnd <= 0x194) nameIdx = 0x15;
         } else if (lbl_eu_80664798 == 0x17) {
-            u16 rnd = (u16)func_8009CF8C(0x20);
+            u16 rnd = (u16)CtrlRemote_TouchBitByArg(0x20);
             if (rnd >= 0x15F && rnd <= 0x16A) nameIdx = 0x15;
         } else if (lbl_eu_80664798 == 0x18) {
-            u16 rnd = (u16)func_8009CF8C(0x20);
+            u16 rnd = (u16)CtrlRemote_TouchBitByArg(0x20);
             if (rnd >= 0x15F && rnd <= 0x16A) nameIdx = 0x15;
         }
         u32 flags = getUnk80664658()->field_214;
@@ -4121,17 +4121,17 @@ void func_8024EE50(void* self) {
         char* name = BdatTouchStringCell(&lbl_eu_8050BEA8[0x519], &lbl_eu_8050BEA8[0x1F], nameIdx);
         func_8022B9B4(&p->mSysWinF4, name, 0);
         func_8022BFC8((CSysWin*)&p->mSysWinF4, 1);
-        func_8022B8B8(&p->mSysWinF4);
+        sysWinOpenPhase1(&p->mSysWinF4);
         playUISound(5);
         return;
     }
 
-    if (func_8009CF8C(0x3212)) {
+    if (CtrlRemote_TouchBitByArg(0x3212)) {
         // Unvisited but already-seen marker id: show the "no data" text.
         char* name = BdatTouchStringCell(&lbl_eu_8050BEA8[0x519], &lbl_eu_8050BEA8[0x1F], 0x15);
         func_8022B9B4(&p->mSysWinF4, name, 0);
         func_8022BFC8((CSysWin*)&p->mSysWinF4, 1);
-        func_8022B8B8(&p->mSysWinF4);
+        sysWinOpenPhase1(&p->mSysWinF4);
         playUISound(5);
         return;
     }
@@ -4143,14 +4143,14 @@ void func_8024EE50(void* self) {
     char* nCap2 = BdatTouchStringCell(&lbl_eu_8050BEA8[0x17], &lbl_eu_8050BEA8[0x1F], 8);
     char* nCap3 = BdatTouchStringCell(&lbl_eu_8050BEA8[0x17], &lbl_eu_8050BEA8[0x1F], 9);
     func_8022B9B4(&p->mSysWinB8, nCap1, nRow);
-    func_8022BF6C(&p->mSysWinB8, nCap2, nCap3);
+    sysWinSetTwoTextValues(&p->mSysWinB8, nCap2, nCap3);
     func_8022BFC8((CSysWin*)&p->mSysWinB8, 0);
-    func_8022B8B8(&p->mSysWinB8);
+    sysWinOpenPhase1(&p->mSysWinB8);
     p->field_5C = 0;
     nw4r::math::VEC3 pos;
-    func_8022C1B4(&pos, &p->mSysWinB8, 0);
+    sysWinGetPaneScreenPos(&pos, &p->mSysWinB8, 0);
         ((CBaseCur*)&p->mCursor)->setRootPaneTranslate(&pos);
-    func_801D216C(&p->mCursor, 1);
+    Cur_SetVisible(&p->mCursor, 1);
     p->field_58 = 1;
     p->field_208 = 1;
     playUISound(3);
@@ -4164,75 +4164,75 @@ void func_8024F1FC(CFloorMap* self, u8 id) {
     (void)self;
     lbl_eu_80664798 = id;
     switch (id) {
-    case 0:  func_8003AA34(); lbl_eu_8066479C = (u32)getFP__FPCc(&lbl_eu_8050BEA8[0x524]); break;
-    case 1:  func_8003AA34(); lbl_eu_8066479C = (u32)getFP__FPCc(&lbl_eu_8050BEA8[0x534]); break;
-    case 2:  func_8003AA34(); lbl_eu_8066479C = (u32)getFP__FPCc(&lbl_eu_8050BEA8[0x544]); break;
-    case 3:  func_8003AA34(); lbl_eu_8066479C = (u32)getFP__FPCc(&lbl_eu_8050BEA8[0x554]); break;
-    case 4:  func_8003AA34(); lbl_eu_8066479C = (u32)getFP__FPCc(&lbl_eu_8050BEA8[0x564]); break;
-    case 5:  func_8003AA34(); lbl_eu_8066479C = (u32)getFP__FPCc(&lbl_eu_8050BEA8[0x574]); break;
-    case 6:  func_8003AA34(); lbl_eu_8066479C = (u32)getFP__FPCc(&lbl_eu_8050BEA8[0x584]); break;
-    case 7:  func_8003AA34(); lbl_eu_8066479C = (u32)getFP__FPCc(&lbl_eu_8050BEA8[0x594]); break;
-    case 8:  func_8003AA34(); lbl_eu_8066479C = (u32)getFP__FPCc(&lbl_eu_8050BEA8[0x5A4]); break;
-    case 9:  func_8003AA34(); lbl_eu_8066479C = (u32)getFP__FPCc(&lbl_eu_8050BEA8[0x5B4]); break;
-    case 10: func_8003AA34(); lbl_eu_8066479C = (u32)getFP__FPCc(&lbl_eu_8050BEA8[0x5C4]); break;
-    case 11: func_8003AA34(); lbl_eu_8066479C = (u32)getFP__FPCc(&lbl_eu_8050BEA8[0x5D4]); break;
-    case 12: func_8003AA34(); lbl_eu_8066479C = (u32)getFP__FPCc(&lbl_eu_8050BEA8[0x5E4]); break;
-    case 13: func_8003AA34(); lbl_eu_8066479C = (u32)getFP__FPCc(&lbl_eu_8050BEA8[0x5F4]); break;
-    case 14: func_8003AA34(); lbl_eu_8066479C = (u32)getFP__FPCc(&lbl_eu_8050BEA8[0x604]); break;
-    case 15: func_8003AA34(); lbl_eu_8066479C = (u32)getFP__FPCc(&lbl_eu_8050BEA8[0x614]); break;
-    case 16: func_8003AA34(); lbl_eu_8066479C = (u32)getFP__FPCc(&lbl_eu_8050BEA8[0x624]); break;
+    case 0:  Bdat_GetTable_AA34(); lbl_eu_8066479C = (u32)getFP__FPCc(&lbl_eu_8050BEA8[0x524]); break;
+    case 1:  Bdat_GetTable_AA34(); lbl_eu_8066479C = (u32)getFP__FPCc(&lbl_eu_8050BEA8[0x534]); break;
+    case 2:  Bdat_GetTable_AA34(); lbl_eu_8066479C = (u32)getFP__FPCc(&lbl_eu_8050BEA8[0x544]); break;
+    case 3:  Bdat_GetTable_AA34(); lbl_eu_8066479C = (u32)getFP__FPCc(&lbl_eu_8050BEA8[0x554]); break;
+    case 4:  Bdat_GetTable_AA34(); lbl_eu_8066479C = (u32)getFP__FPCc(&lbl_eu_8050BEA8[0x564]); break;
+    case 5:  Bdat_GetTable_AA34(); lbl_eu_8066479C = (u32)getFP__FPCc(&lbl_eu_8050BEA8[0x574]); break;
+    case 6:  Bdat_GetTable_AA34(); lbl_eu_8066479C = (u32)getFP__FPCc(&lbl_eu_8050BEA8[0x584]); break;
+    case 7:  Bdat_GetTable_AA34(); lbl_eu_8066479C = (u32)getFP__FPCc(&lbl_eu_8050BEA8[0x594]); break;
+    case 8:  Bdat_GetTable_AA34(); lbl_eu_8066479C = (u32)getFP__FPCc(&lbl_eu_8050BEA8[0x5A4]); break;
+    case 9:  Bdat_GetTable_AA34(); lbl_eu_8066479C = (u32)getFP__FPCc(&lbl_eu_8050BEA8[0x5B4]); break;
+    case 10: Bdat_GetTable_AA34(); lbl_eu_8066479C = (u32)getFP__FPCc(&lbl_eu_8050BEA8[0x5C4]); break;
+    case 11: Bdat_GetTable_AA34(); lbl_eu_8066479C = (u32)getFP__FPCc(&lbl_eu_8050BEA8[0x5D4]); break;
+    case 12: Bdat_GetTable_AA34(); lbl_eu_8066479C = (u32)getFP__FPCc(&lbl_eu_8050BEA8[0x5E4]); break;
+    case 13: Bdat_GetTable_AA34(); lbl_eu_8066479C = (u32)getFP__FPCc(&lbl_eu_8050BEA8[0x5F4]); break;
+    case 14: Bdat_GetTable_AA34(); lbl_eu_8066479C = (u32)getFP__FPCc(&lbl_eu_8050BEA8[0x604]); break;
+    case 15: Bdat_GetTable_AA34(); lbl_eu_8066479C = (u32)getFP__FPCc(&lbl_eu_8050BEA8[0x614]); break;
+    case 16: Bdat_GetTable_AA34(); lbl_eu_8066479C = (u32)getFP__FPCc(&lbl_eu_8050BEA8[0x624]); break;
     // Maps 17 and 18 are written as two clauses sharing one string, so MWCC
     // emits the body twice instead of merging the jump-table entries.
-    case 17: func_8003AA34(); lbl_eu_8066479C = (u32)getFP__FPCc(&lbl_eu_8050BEA8[0x634]); break;
-    case 18: func_8003AA34(); lbl_eu_8066479C = (u32)getFP__FPCc(&lbl_eu_8050BEA8[0x634]); break;
-    case 19: func_8003AA34(); lbl_eu_8066479C = (u32)getFP__FPCc(&lbl_eu_8050BEA8[0x644]); break;
-    case 20: func_8003AA34(); lbl_eu_8066479C = (u32)getFP__FPCc(&lbl_eu_8050BEA8[0x654]); break;
-    case 21: func_8003AA34(); lbl_eu_8066479C = (u32)getFP__FPCc(&lbl_eu_8050BEA8[0x664]); break;
-    case 22: func_8003AA34(); lbl_eu_8066479C = (u32)getFP__FPCc(&lbl_eu_8050BEA8[0x674]); break;
-    case 23: func_8003AA34(); lbl_eu_8066479C = (u32)getFP__FPCc(&lbl_eu_8050BEA8[0x684]); break;
-    case 24: func_8003AA34(); lbl_eu_8066479C = (u32)getFP__FPCc(&lbl_eu_8050BEA8[0x694]); break;
-    case 25: func_8003AA34(); lbl_eu_8066479C = (u32)getFP__FPCc(&lbl_eu_8050BEA8[0x6A4]); break;
+    case 17: Bdat_GetTable_AA34(); lbl_eu_8066479C = (u32)getFP__FPCc(&lbl_eu_8050BEA8[0x634]); break;
+    case 18: Bdat_GetTable_AA34(); lbl_eu_8066479C = (u32)getFP__FPCc(&lbl_eu_8050BEA8[0x634]); break;
+    case 19: Bdat_GetTable_AA34(); lbl_eu_8066479C = (u32)getFP__FPCc(&lbl_eu_8050BEA8[0x644]); break;
+    case 20: Bdat_GetTable_AA34(); lbl_eu_8066479C = (u32)getFP__FPCc(&lbl_eu_8050BEA8[0x654]); break;
+    case 21: Bdat_GetTable_AA34(); lbl_eu_8066479C = (u32)getFP__FPCc(&lbl_eu_8050BEA8[0x664]); break;
+    case 22: Bdat_GetTable_AA34(); lbl_eu_8066479C = (u32)getFP__FPCc(&lbl_eu_8050BEA8[0x674]); break;
+    case 23: Bdat_GetTable_AA34(); lbl_eu_8066479C = (u32)getFP__FPCc(&lbl_eu_8050BEA8[0x684]); break;
+    case 24: Bdat_GetTable_AA34(); lbl_eu_8066479C = (u32)getFP__FPCc(&lbl_eu_8050BEA8[0x694]); break;
+    case 25: Bdat_GetTable_AA34(); lbl_eu_8066479C = (u32)getFP__FPCc(&lbl_eu_8050BEA8[0x6A4]); break;
     case 26:
     case 27:
-    case 28: func_8003AA34(); lbl_eu_8066479C = (u32)getFP__FPCc(&lbl_eu_8050BEA8[0x6B4]); break;
+    case 28: Bdat_GetTable_AA34(); lbl_eu_8066479C = (u32)getFP__FPCc(&lbl_eu_8050BEA8[0x6B4]); break;
     default:
         lbl_eu_8066479C = 0;
         break;
     }
 }
 
-extern "C" u32 func_8024F538(u8* self) {
+extern "C" u32 FloorMap_ClassifyByte41(u8* self) {
     u8 val = *(u8*)(self + 0x41);
     u32 result = __cntlzw(val - 2);
     return result >> 5;
 }
 
-extern "C" u16 func_8024F54C(u8* self) { return *(u16*)(self + 0x5A); }
+extern "C" u16 FloorMap_GetU16Field5A(u8* self) { return *(u16*)(self + 0x5A); }
 
-extern "C" u8 func_8024F554(CFloorMapFull* self) { return self->field_58; }
+extern "C" u8 FloorMap_GetActiveFlag58(CFloorMapFull* self) { return self->field_58; }
 
 void func_8024F55C(void* self) {
     extern int CSysWin_isActive(void*);
-    extern void func_801D216C(void*, int);
-    extern void func_8022B8E4(void*);
+    extern void Cur_SetVisible(void*, int);
+    extern void sysWinAdvancePhase3(void*);
     extern void playUISound(unsigned long);
     u8* p = (u8*)self;
     if (p[0x58] && CSysWin_isActive(p + 0xB8)) {
-        func_801D216C(p + 0xA0, 0);
-        func_8022B8E4(p + 0xB8);
+        Cur_SetVisible(p + 0xA0, 0);
+        sysWinAdvancePhase3(p + 0xB8);
         p[0x58] = 0;
         playUISound(6);
     }
 }
 
 typedef void* (*VFuncPtr)(void*, const char*, u32);
-extern "C" void func_801D216C(void*, int);
-extern "C" void func_8022B8E4(void*);
+extern "C" void Cur_SetVisible(void*, int);
+extern "C" void sysWinAdvancePhase3(void*);
 extern "C" void* getHandleMEM2__Q23mtl10MemManagerFv();
 extern "C" void* readFile__11CDeviceFileFUlPCcP10IWorkEventii(u32, char const*, void*, int, int);
 extern "C" void* readCommonArchiveFile__11CDeviceFileFUlPCcP10IWorkEventii(u32, char const*, void*, int, int);
 extern "C" int KyoshinHeap_GetField44();
-extern "C" void func_801F34F4(void*);
+extern "C" void CScrollBar_loadLayoutArc(void*);
 
 // Size-optimized region: the shared string-table copy below must keep its
 // rolled mtctr/bdnz + lwzu/stwu form (under -O4,p it unrolls).
@@ -4268,7 +4268,7 @@ void func_8024C104(void* self) {
     handle = (u32)getHandleMEM2__Q23mtl10MemManagerFv();
     u8 idx = lbl_eu_80664798;
     *(void**)(p + 0x28) = readFile__11CDeviceFileFUlPCcP10IWorkEventii(handle, namebuf[idx - 1], self, 0, 0);
-    func_801F34F4(p + 0x60);
+    CScrollBar_loadLayoutArc(p + 0x60);
     // Invoke loadSystemArc (vtable +0x88) on each embedded sys-win subobject.
     ((CSysWin*)(p + 0xB8))->loadSystemArc();
     ((CSysWin*)(p + 0xF4))->loadSystemArc();
@@ -4287,8 +4287,8 @@ void func_8024F5C4(void* self, u32 arg2) {
     }
 }
 
-extern "C" unsigned char func_8024F630(void) {
-    return (unsigned char)func_8003B1EC((void*)lbl_eu_8066479C);
+extern "C" unsigned char FloorMap_GetBdatMaxRow(void) {
+    return (unsigned char)Bdat_GetMaxRow_B1EC((void*)lbl_eu_8066479C);
 }
 
 void func_8024F658(void* self) {
@@ -4300,15 +4300,15 @@ void func_8024F658(void* self) {
     p[0x208] = (u32)__cntlzw(p[0x208]) >> 5;
 }
 
-u8 func_8024F6BC(void* self) {
+u8 FloorMap_GetField208Gated(void* self) {
     CFloorMapFull* full = static_cast<CFloorMapFull*>(self);
     if (full->field_58) return 0;
     return full->field_208;
 }
 
-extern "C" u8 func_8024F6D8(CFloorMapFull* self) { return self->field_208; }
+extern "C" u8 FloorMap_GetField208Plain(CFloorMapFull* self) { return self->field_208; }
 
-u32 func_8024F6E0(CFloorMapFull* p) {
+u32 FloorMap_CheckRowVisited(CFloorMapFull* p) {
     // Row id -1 (no selection) reads as "not visited".
     u16 val;
     if ((s8)p->field_206 < 0) {
@@ -4466,7 +4466,7 @@ u32 func_8024FB78(void*) {
         if (lbl_eu_8066479C != 0) {
             void* player = cf::CfGameManager::getPlayer(0);
             if (player != NULL) {
-                int count = func_8003B1EC((void*)lbl_eu_8066479C);
+                int count = Bdat_GetMaxRow_B1EC((void*)lbl_eu_8066479C);
                 for (u8 i = 1; i <= count; i++) {
                     // Compare floor height against player y in double precision.
                     s16 val = BdatGetS16Direct(lbl_eu_8066479C, &lbl_eu_8050BEA8[0x15A], i);
@@ -4487,7 +4487,7 @@ u32 func_8024FB78(void*) {
                 f32 tmp[3];
                 func_80141DC4(tmp, rowId);
                 nw4r::math::VEC3 pos = *(nw4r::math::VEC3*)tmp;
-                int count = func_8003B1EC((void*)lbl_eu_8066479C);
+                int count = Bdat_GetMaxRow_B1EC((void*)lbl_eu_8066479C);
                 for (u8 i = 1; i <= count; i++) {
                     s16 val = BdatGetS16Direct(lbl_eu_8066479C, &lbl_eu_8050BEA8[0x15A], i);
                     conv.w[1] = (u32)(s16)val ^ 0x80000000;
@@ -4629,7 +4629,7 @@ u32 CFloorMap::OnFileEvent(CEventFile* event) {
         this->layout_3334 = 0;
         this->field_3338 = this->field_34;
         this->field_333C = 0;
-        func_80244764((CFloorMapLayoutData0*)&this->layout_3334);
+        FloorMap_BuildLayoutBaseArc((CFloorMapLayoutData0*)&this->layout_3334);
 
         u8 tmpCur[0x18];
         __ct__CCur18(tmpCur, CUICfManager_getArcResourceAccessor());
@@ -4662,7 +4662,7 @@ u32 CFloorMap::OnFileEvent(CEventFile* event) {
                     CFloorMapSetPanePos(((CFloorMapLayoutHolder*)this->layouts_150[i].mPtr)->pane, vec);
                 }
             }
-            func_8024577C(&this->layout_1FC, (u16)func_80248558(&this->layout_140));
+            FloorMap_SetCursorState(&this->layout_1FC, (u16)func_80248558(&this->layout_140));
             this->field_42 = 1;
             this->field_40 = 1;
             this->field_41 = 1;
@@ -4722,7 +4722,7 @@ u32 CFloorMap::OnFileEvent(CEventFile* event) {
                     CFloorMapSetPanePos(((CFloorMapLayoutHolder*)this->layouts_150[i].mPtr)->pane, vec);
                 }
             }
-            func_8024577C(&this->layout_1FC, (u16)func_80248558(&this->layout_140));
+            FloorMap_SetCursorState(&this->layout_1FC, (u16)func_80248558(&this->layout_140));
             this->field_42 = 1;
             this->field_40 = 1;
             this->field_41 = 1;
@@ -4768,7 +4768,7 @@ u32 CFloorMap::OnFileEvent(CEventFile* event) {
             func_8024808C((CFloorMapFull*)&this->layout_140, rowId);
         }
 
-        func_8024577C(&this->layout_1FC, (u16)func_80248558(&this->layout_140));
+        FloorMap_SetCursorState(&this->layout_1FC, (u16)func_80248558(&this->layout_140));
 
         func_8024B6F8((CFloorMapRowList*)&this->layout_138, (void*)this->allocated_buf_3C,
                       ((CFloorMapFloorBlock*)((u8*)this + (s8)this->field_205 * 0x30C))->field_20C,
@@ -4803,7 +4803,7 @@ u32 CFloorMap::OnFileEvent(CEventFile* event) {
                     CFloorMapSetPanePos(((CFloorMapLayoutHolder*)this->layouts_150[i].mPtr)->pane, vec);
                 }
             }
-            func_8024577C(&this->layout_1FC, (u16)func_80248558(&this->layout_140));
+            FloorMap_SetCursorState(&this->layout_1FC, (u16)func_80248558(&this->layout_140));
             this->field_42 = 1;
             this->field_40 = 1;
             this->field_41 = 1;
@@ -4981,7 +4981,7 @@ void sinit_80250CB4() {
 // row panes: each pane name is formatted from the shared prefix string at
 // 0x17/0x1F and the row index (0xB..0x14), and LayoutSetTextBoxFmtValue updates the
 // pane addressed by the string at 0x24 + 9*(row-0xB).
-void func_80244764(CFloorMapLayoutData0* self) {
+void FloorMap_BuildLayoutBaseArc(CFloorMapLayoutData0* self) {
     buildLayout(&self->layout, self->accessor, &lbl_eu_8050BEA8[0]);
 
     nw4r::lyt::Pane* rootPane = self->layout->GetRootPane();
@@ -5013,7 +5013,7 @@ void func_80244764(CFloorMapLayoutData0* self) {
 
 // Load the map layout + animation transforms, bind the font, hide the four
 // decorative panes, and start the two animation transforms.
-void func_80244944(void* self) {
+void FloorMap_BuildLayoutNo100Pane(void* self) {
     CFloorMapLayoutData* obj = (CFloorMapLayoutData*)self;
     buildLayout(&obj->layout, obj->accessor, &lbl_eu_8050BEA8[0x7E]);
     bindLayoutAnimTransform(obj->layout, &obj->anim0C, obj->accessor, &lbl_eu_8050BEA8[0x96]);
@@ -5035,7 +5035,7 @@ void func_80244944(void* self) {
 }
 // Load the map layout + animation transforms, bind the font, hide the three
 // decorative panes (0x100 / 0xCE / 0xD9), and start the two animations.
-void func_80244AE8(void* self) {
+void FloorMap_BuildLayoutNoE4Pane(void* self) {
     CFloorMapLayoutData* obj = (CFloorMapLayoutData*)self;
     buildLayout(&obj->layout, obj->accessor, &lbl_eu_8050BEA8[0x7E]);
     bindLayoutAnimTransform(obj->layout, &obj->anim0C, obj->accessor, &lbl_eu_8050BEA8[0x96]);
@@ -5056,7 +5056,7 @@ void func_80244AE8(void* self) {
 }
 // Load the map layout + animation transforms, bind the font, hide the three
 // decorative panes, and start the two animation transforms.
-void func_80244C60(void* self) {
+void FloorMap_BuildLayoutNoCEPane(void* self) {
     CFloorMapLayoutData* obj = (CFloorMapLayoutData*)self;
     buildLayout(&obj->layout, obj->accessor, &lbl_eu_8050BEA8[0x7E]);
     bindLayoutAnimTransform(obj->layout, &obj->anim0C, obj->accessor, &lbl_eu_8050BEA8[0x96]);
@@ -5076,7 +5076,7 @@ void func_80244C60(void* self) {
     obj->layout->Animate(0);
 }
 
-void func_80244DD8(void* self) {
+void FloorMap_BuildLayoutNoD9Pane(void* self) {
     CFloorMapLayoutData* obj = (CFloorMapLayoutData*)self;
     buildLayout(&obj->layout, obj->accessor, &lbl_eu_8050BEA8[0x7E]);
     bindLayoutAnimTransform(obj->layout, &obj->anim0C, obj->accessor, &lbl_eu_8050BEA8[0x96]);
@@ -5120,7 +5120,7 @@ void func_802452C4(void* self) {
             }
         }
     }
-    func_80246200(cur);
+    FloorMap_RefreshCursorRows(cur);
 
     // Refresh the cursor position: format the pane name for the current page
     // index, scale its translate by the zoom pane, and move the target pane.
@@ -5137,7 +5137,7 @@ void func_802452C4(void* self) {
     apos.x = apos.x * scalePane->GetScale().x;
 
     // Word-wise copy so MWCC keeps the retail integer-register copy instead
-    // of forwarding apos into the inlined SetTranslate (func_8024577C idiom).
+    // of forwarding apos into the inlined SetTranslate (FloorMap_SetCursorState idiom).
     ((u32*)&dest)[0] = ((u32*)&apos)[0];
     ((u32*)&dest)[1] = ((u32*)&apos)[1];
     ((u32*)&dest)[2] = ((u32*)&apos)[2];
@@ -5146,5 +5146,5 @@ void func_802452C4(void* self) {
         target->pane->SetTranslate(dest);
     }
 
-    func_801F3850(cur->field_3134, (u16)cur->field_0B);
+    CScrollBar_PlaceThumb(cur->field_3134, (u16)cur->field_0B);
 }

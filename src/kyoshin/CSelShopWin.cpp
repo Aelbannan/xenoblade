@@ -1,8 +1,8 @@
 // Catalog TU for kyoshin/CSelShopWin.
 //
 // Definitions are ordered to match retail .text layout (ctor, dtor, ...,
-// func_8022C8D0, ..., func_8022C930, func_8022C9D4, func_8022CA20, ...).
-// func_8022C7C0 calls func_8022C9D4/func_8022CA20 which are defined AFTER it,
+// isShopWinLoaded, ..., getShopWinPanePos, advanceShopWinOpen, rewindShopWinClose, ...).
+// driveShopWinAnim calls advanceShopWinOpen/rewindShopWinClose which are defined AFTER it,
 // so -inline auto leaves those as real `bl` calls.
 
 #include "kyoshin/CSelShopWin.hpp"
@@ -14,8 +14,8 @@
 
 // US retail keeps these func_8022* symbols unmangled (C linkage) even though
 // they operate on a CSelShopWin; only ctor/dtor/OnFileEvent stay C++ mangled.
-extern "C" void func_8022C9D4(CSelShopWin* self);
-extern "C" void func_8022CA20(CSelShopWin* self);
+extern "C" void advanceShopWinOpen(CSelShopWin* self);
+extern "C" void rewindShopWinClose(CSelShopWin* self);
 
 // Opaque overlay structs used by OnFileEvent (retail layout unknown).
 struct ShopPaneInfo {  // extends nw4r::lyt::Pane field we touch
@@ -107,7 +107,7 @@ CSelShopWin::~CSelShopWin() {
 #pragma pop
 
 /* Start loading the shop window arc resources. */
-void CSelShopWin::func_8022C770() {
+void CSelShopWin::loadShopWinArc() {
     mFileHandle = CDeviceFile::readFile(
         mtl::MemManager::getHandleMEM2(), lbl_eu_8050A62C,
         reinterpret_cast<IWorkEvent*>(this), 0, 0);
@@ -116,57 +116,57 @@ void CSelShopWin::func_8022C770() {
 
 /* Drive the open/close animation once per frame while the layout is built.
    mLayout->Animate advances the bound animation transforms. */
-void CSelShopWin::func_8022C7C0() {
+void CSelShopWin::driveShopWinAnim() {
     if (mIsLayoutBuilt == 0) return;
     switch (mAnimState) {
         case 1:
-            func_8022C9D4(this);
+            advanceShopWinOpen(this);
             break;
         case 3:
-            func_8022CA20(this);
+            rewindShopWinClose(this);
             break;
     }
     mLayout->Animate(0);
 }
 
-void CSelShopWin::func_8022C830(nw4r::lyt::DrawInfo* drawInfo) {
+void CSelShopWin::drawShopWin(nw4r::lyt::DrawInfo* drawInfo) {
     if (mIsLayoutBuilt == 0) return;
     if (mAnimState == 0) return;
     return drawLayout(mLayout, drawInfo, 0, 1);
 }
 
 /* Tear down the shop window layout and free its resources. */
-void CSelShopWin::func_8022C85C() {
-    func_801390E0(&mFileHandle);
+void CSelShopWin::teardownShopWin() {
+    closeFileHandle(&mFileHandle);
     mIsLayoutBuilt = 0;
     if (mLayout != nullptr) {
         delete mLayout;
         mLayout = nullptr;
     }
     releaseArcResourceAccessor(mAccessor);
-    mMemRegion.func_8045F778();
+    mMemRegion.deleteRegion();
 }
 
 /* Returns whether the shop window has finished loading resources
-   and is ready for interaction. (C-linkage: func_8022C8D0) */
-u8 CSelShopWin::func_8022C8D0() {
+   and is ready for interaction. (C-linkage: isShopWinLoaded) */
+u8 CSelShopWin::isShopWinLoaded() {
     return mIsLoaded;
 }
 
 /* Returns whether a show/hide animation is currently active.
-   (C-linkage: func_8022C8D8) */
-u8 CSelShopWin::func_8022C8D8() {
+   (C-linkage: isShopWinAnimActive) */
+u8 CSelShopWin::isShopWinAnimActive() {
     return mAnimActive;
 }
 
-void CSelShopWin::func_8022C8E0() {
+void CSelShopWin::showShopWin() {
     if (mAnimState != 0) return;
     mAnimState = 1;
     mAnimActive = 0;
     return playUISound(0xd);
 }
 
-void CSelShopWin::func_8022C908() {
+void CSelShopWin::hideShopWin() {
     if (mAnimState != 2) return;
     mAnimState = 3;
     mAnimActive = 0;
@@ -177,9 +177,9 @@ void CSelShopWin::func_8022C908() {
 #pragma optimize_for_size on
 /* Determine the absolute screen position of the two named panes in the shop
    window layout (format a pane-name from idx+1, find both panes, sum ancestor
-translates via func_80137924). C-linkage (retail unmangled func_8022C930).
+translates via func_80137924). C-linkage (retail unmangled getShopWinPanePos).
    Each GetRootPane() is a fresh load, matching retail's per-use reload. */
-extern "C" void func_8022C930(nw4r::math::VEC3* pOutPos, CSelShopWin* window, int idx) {
+extern "C" void getShopWinPanePos(nw4r::math::VEC3* pOutPos, CSelShopWin* window, int idx) {
     char buf[0x28];
     sprintf(buf, &lbl_eu_8050A62C[0x17], idx + 1);
     nw4r::lyt::Pane* pane1 = window->mLayout->GetRootPane()->FindPaneByName(buf, true);
@@ -190,7 +190,7 @@ extern "C" void func_8022C930(nw4r::math::VEC3* pOutPos, CSelShopWin* window, in
 
 #pragma push
 #pragma auto_inline off
-extern "C" void func_8022C9D4(CSelShopWin* self) {
+extern "C" void advanceShopWinOpen(CSelShopWin* self) {
     float f = lbl_eu_80668600;
     if (advanceAnimTransform(self->mAnimTransform, f) != 0) {
         self->mAnimState = 2;
@@ -198,7 +198,7 @@ extern "C" void func_8022C9D4(CSelShopWin* self) {
     }
 }
 
-extern "C" void func_8022CA20(CSelShopWin* self) {
+extern "C" void rewindShopWinClose(CSelShopWin* self) {
     float f = lbl_eu_80668600;
     if (AnimRewindFrame(self->mAnimTransform, f) != 0) {
         self->mAnimState = 0;
@@ -207,7 +207,7 @@ extern "C" void func_8022CA20(CSelShopWin* self) {
 }
 #pragma pop
 
-extern "C" void func_8022CA6C(void* self) {
+extern "C" void markShopWinBuilt(void* self) {
     CSelShopWin* window = static_cast<CSelShopWin*>(self);
     if (window->mLayout != 0) {
         window->mIsLoaded = 1;
@@ -305,7 +305,7 @@ bool CSelShopWin::OnFileEvent(CEventFile* pEventFile) {
                 float src[2];
                 src[0] = dRow - lbl_eu_80668608;
                 src[1] = dCol - lbl_eu_80668608;
-                func_80124288(p1, src);
+                writePanePos(p1, src);
             }
             nw4r::lyt::Pane* p2 = mLayout->GetRootPane()->FindPaneByName(&lbl_eu_8050A62C[0xf5], true);
             if (p2 != NULL) {
@@ -314,11 +314,11 @@ bool CSelShopWin::OnFileEvent(CEventFile* pEventFile) {
                 float src[2];
                 src[0] = dRow - lbl_eu_80668608;
                 src[1] = dCol - lbl_eu_80668608;
-                func_80124288(p2, src);
+                writePanePos(p2, src);
             }
         }
 
-        ::func_8022CA6C(this);
+        ::markShopWinBuilt(this);
         mFileHandle = nullptr;
         mMemRegion.func_8045F810();
         return true;

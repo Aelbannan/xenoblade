@@ -4,7 +4,7 @@
 #include "kyoshin/cf/CBattleManagerApi.hpp"
 #include "kyoshin/cf/CfMapItemManager.hpp"
 // harness_catalog.hpp removed: it pulls CTaskGameEff.hpp ->
-// CfObjectImplMove.hpp, whose func_804BE398 decl clashes with
+// CfObjectImplMove.hpp, whose ScnRes_VertRayForward_E398 decl clashes with
 // CtrlMoveBase.hpp (via CtrlPc.hpp). Nothing in this TU needs it.
 
 #include "kyoshin/cf/CtrlRemote.hpp"
@@ -117,7 +117,7 @@ void func_80098EF8(CtrlPcVf38* self)
     cf::CfGameManager::getInstance();
     UnkClass_800821F8View* gm8 = (UnkClass_800821F8View*)getCameraDataBlock__Q22cf13CfGameManagerFv();
     CtrlVoiceHandle* actionSrc =
-        (CtrlVoiceHandle*)findObjectById(func_800FE68C()->mField90E4);
+        (CtrlVoiceHandle*)findObjectById(Selector_GetInstance()->mField90E4);
 
     u32 v1a;
     u32 v1, v2, v8, v1000, v4000, v8b;
@@ -187,7 +187,7 @@ void func_80098EF8(CtrlPcVf38* self)
         func_80148778(&self->mField5C->mField8, 0xa) != 0 ||
         func_80148778(&self->mField5C->mField8, 0xb) != 0 ||
         (getUnk80664658()->mField214 & 2) != 0 ||
-        func_8029EE58() != 0 ||
+        SkipTimer_IsActiveFlag() != 0 ||
         (lbl_eu_80663E24 & 0x8429A000) != 0 ||
         ((lbl_eu_80663E28 & 0x20000) | (lbl_eu_80663E28 & 0x30)) != 0 ||
         cf::CfPadTask::isInputDisabled() != 0 ||
@@ -480,7 +480,7 @@ a89c:
         self->mField5C->mSub3E9C.v02(4);
     }
 
-    if (func_802799F0(&((CBattleManagerViewPc*)getInstance__Q22cf14CBattleManagerFv())->mField1A8,
+    if (CChain_HasMemberEntry(&((CBattleManagerViewPc*)getInstance__Q22cf14CBattleManagerFv())->mField1A8,
                       self->mField5C) != 0 &&
         probePlayerCtrl((cf::CtrlPc*)self, &v801b, 0x801) != 0) {
         CtrlPlayerSub298Vf4* sub298 =
@@ -526,7 +526,7 @@ static int probePlayerCtrl(cf::CtrlPc* self, u32* out, int gate)
 // word clears, run a battery of player-state probes; if none of them flag a
 // blocking condition, mirror the current menu-state bitmask into self->mField4
 // bit 0 (set when the arts/menu mask is active, clear otherwise).
-void func_8009A1DC(cf::CtrlPc* self)
+void CtrlRemote_PollPadLatchBit(cf::CtrlPc* self)
 {
     bool flag = true;
     cf::CfGameManager::getInstance();
@@ -546,7 +546,7 @@ void func_8009A1DC(cf::CtrlPc* self)
     if (self->mField5C->mSub3ED4->vf14(0x40000) != 0) {
         flag = false;
     }
-    if (func_800FEDF8() != 0) {
+    if (CMainMenu_GetInstancePtr() != 0) {
         flag = false;
     }
     if (self->mField5C->mSub3ED4->vf14(0x400) != 0) {
@@ -558,7 +558,7 @@ void func_8009A1DC(cf::CtrlPc* self)
         probePlayerCtrl(self, &v4, 4) == 0) {
         flag = false;
     }
-    if (func_800FE68C()->mField90E4 != 0) {
+    if (Selector_GetInstance()->mField90E4 != 0) {
         flag = false;
     }
     if (flag) {
@@ -590,12 +590,12 @@ void func_8009A1DC(cf::CtrlPc* self)
 // flagB) and pushes them into the game-manager sub-object via
 // cfCam_andcUnk04 / cfCam_setClear04; the final pass mirrors the 0x400 flag
 // range state into the 0x3 range.
-void func_8009A4AC(CtrlPcVf38* self)
+void CtrlRemote_SweepAimVoiceFlags(CtrlPcVf38* self)
 {
     cf::CfGameManager::getInstance();
     UnkClass_800821F8View* gm8 = (UnkClass_800821F8View*)getCameraDataBlock__Q22cf13CfGameManagerFv();
     CtrlVoiceHandle* actionSrc =
-        (CtrlVoiceHandle*)findObjectById(func_800FE68C()->mField90E4);
+        (CtrlVoiceHandle*)findObjectById(Selector_GetInstance()->mField90E4);
 
     u32 v1;
     u32 v2;
@@ -833,7 +833,7 @@ void func_8009AE80(CtrlPcVf37State* self)
     getCameraDataBlock__Q22cf13CfGameManagerFv();
     CtrlVoiceHandle* actionSrc =
         (CtrlVoiceHandle*)findObjectById(
-            (s32)((CfObjAe80*)func_800FE68C())->mField90E4);
+            (s32)((CfObjAe80*)Selector_GetInstance())->mField90E4);
     cf::CfGameManager::getInstance();
     if (isGlobalCamFlagSet(0x4000000) != 0) {
         return;
@@ -847,7 +847,7 @@ void func_8009AE80(CtrlPcVf37State* self)
         probePlayerCtrl((cf::CtrlPc*)self, &v2, 2) != 0) {
         return;
     }
-    if (func_800FEDF8() != 0) {
+    if (CMainMenu_GetInstancePtr() != 0) {
         return;
     }
     if (self->mField5C->mSub3ED4->vf14(0x400) != 0) {
@@ -945,16 +945,16 @@ void func_8009AE80(CtrlPcVf37State* self)
         self->mField2C = (self->mField2C & ~0x400) | 0x200;
         u32 v803;
         if (probePlayerCtrl((cf::CtrlPc*)self, &v803, 0x803) == 0) {
-            func_800FE950(func_800FE68C(), 0x80000004, 0x4802, 0);
+            setRequestParams(Selector_GetInstance(), 0x80000004, 0x4802, 0);
         } else {
-            func_800FE950(func_800FE68C(), 0x80000003, 0x4802, 0);
+            setRequestParams(Selector_GetInstance(), 0x80000003, 0x4802, 0);
         }
     }
 
-    if ((((CfObjAe80*)func_800FE68C())->mFieldC180 & 1) != 0) {
+    if ((((CfObjAe80*)Selector_GetInstance())->mFieldC180 & 1) != 0) {
         return;
     }
-    if ((((CfObjAe80*)func_800FE68C())->mFieldC180 & 2) == 0) {
+    if ((((CfObjAe80*)Selector_GetInstance())->mFieldC180 & 2) == 0) {
         return;
     }
     if ((self->vf37()->mField0 & PAD_MASK(7)) == 0) {
@@ -964,12 +964,12 @@ void func_8009AE80(CtrlPcVf37State* self)
     if (probePlayerCtrl((cf::CtrlPc*)self, &v805, 0x805) != 0 ||
         func_80148778(&self->mField5C->mField8, 0xf) != 0 ||
         func_80148778(&self->mField5C->mField8, 0x11) != 0) {
-        func_800FE860(func_800FE68C(), 1);
+        func_800FE860(Selector_GetInstance(), 1);
     }
-    if ((((CfObjAe80*)func_800FE68C())->mFieldC180 & 2) == 0) {
+    if ((((CfObjAe80*)Selector_GetInstance())->mFieldC180 & 2) == 0) {
         return;
     }
-    if (func_800FE910(func_800FE68C()) != 0) {
+    if (testFlagBit10(Selector_GetInstance()) != 0) {
         return;
     }
     if (isClassicController__Q22cf13CfGameManagerFv(-1) != 0 &&
@@ -993,11 +993,11 @@ void func_8009AE80(CtrlPcVf37State* self)
 // flag and the embedded voice-owner 0x100/0x200 flags to either trigger the
 // camera enum-list sweep (0x20 mask), request voice-owner state changes, or
 // mirror the menu-word bits into self->mField4 (0x4 camera / 0x8 sudden-commu).
-void func_8009B788(CtrlPcVf38* self)
+void CtrlRemote_PollActionLatchBit8(CtrlPcVf38* self)
 {
     cf::CfGameManager::getInstance();
     getCameraDataBlock__Q22cf13CfGameManagerFv();
-    void* handle = findObjectById(func_800FE68C()->mField90E4);
+    void* handle = findObjectById(Selector_GetInstance()->mField90E4);
     cf::CfGameManager::getInstance();
     if (isGlobalCamFlagSet(0x4000000)) {
         return;
@@ -1010,7 +1010,7 @@ void func_8009B788(CtrlPcVf38* self)
         return;
     }
 
-    if (func_800FEDF8() != 0) {
+    if (CMainMenu_GetInstancePtr() != 0) {
         return;
     }
     if (self->mField5C->mSub3ED4->vf14(0x800) != 0) {
@@ -1036,7 +1036,7 @@ void func_8009B788(CtrlPcVf38* self)
                 if (func_8016FE34(handle) != 0) {
                     CfEnumListHolder holder;
                     CTaskGame_enumListCtor(&holder);
-                    func_800F4A98(CTaskGame_enumListGet(&holder), 0x20, 1);
+                    startEnumObjects(CTaskGame_enumListGet(&holder), 0x20, 1);
                     self->mField4 |= 0x4;
                     __dt__80043E88(&holder, -1);
                 }
@@ -1122,7 +1122,7 @@ void func_8009BD14(CtrlPcVf38* self)
     // Declared at function scope: MWCC creates the pseudo early, which pins
     // the counter's register ahead of the list-walk temps (retail r4).
     s32 count;
-    void* handle = findObjectById(func_800FE68C()->mField90E4);
+    void* handle = findObjectById(Selector_GetInstance()->mField90E4);
     if (handle == 0) {
         return;
     }
@@ -1172,7 +1172,7 @@ void func_8009BD14(CtrlPcVf38* self)
         if (self->mField5C->mSub3ED4->vf14(0x400) != 0) {
             return;
         }
-        if (func_801B0F8C() != 0) {
+        if (battleCommuIsActive() != 0) {
             return;
         }
         if (func_8017FD44() != 0) {
@@ -1192,14 +1192,14 @@ void func_8009BD14(CtrlPcVf38* self)
                 reinterpret_cast<CtrlEnumListSweep*>(CTaskGame_enumListGet(&holder1));
             list->count = 0;
             list->mField3030 = 0;
-            func_800F4A98(CTaskGame_enumListGet(&holder1), 0x20, 0);
+            startEnumObjects(CTaskGame_enumListGet(&holder1), 0x20, 0);
             for (s32 i = 0;
                  i < reinterpret_cast<CtrlEnumListSweep*>(
                          CTaskGame_enumListGet(&holder1))
                          ->count;
                  i++) {
                 CtrlAccSweepView* acc = reinterpret_cast<CtrlAccSweepView*>(
-                    func_8016FE34(func_800F6EAC((CfMoveEnumList*)CTaskGame_enumListGet(&holder1), i)));
+                    func_8016FE34(getObjectAt((CfMoveEnumList*)CTaskGame_enumListGet(&holder1), i)));
                 if (acc->mField3E98 != 0 || (acc->mField3388 & 0x10) != 0) {
                     flag = true;
                 }
@@ -1225,14 +1225,14 @@ void func_8009BD14(CtrlPcVf38* self)
                     reinterpret_cast<CtrlEnumListSweep*>(CTaskGame_enumListGet(&holder2));
                 list2->count = 0;
                 list2->mField3030 = 0;
-                func_800F4A98(CTaskGame_enumListGet(&holder2), 0x20, 0);
+                startEnumObjects(CTaskGame_enumListGet(&holder2), 0x20, 0);
                 for (s32 i = 0;
                      i < reinterpret_cast<CtrlEnumListSweep*>(
                              CTaskGame_enumListGet(&holder2))
                              ->count;
                      i++) {
                     CtrlAccSweepView* acc = reinterpret_cast<CtrlAccSweepView*>(
-                        func_8016FE34(func_800F6EAC((CfMoveEnumList*)CTaskGame_enumListGet(&holder2), i)));
+                        func_8016FE34(getObjectAt((CfMoveEnumList*)CTaskGame_enumListGet(&holder2), i)));
                     // Retail reloads the voice handle id from the handle each
                     // iteration (lwz r4, 0x74(r31) inside the loop body).
                     u32 hv = reinterpret_cast<CtrlVoiceSweepView*>(handle)->mField74;
@@ -1250,7 +1250,7 @@ void func_8009BD14(CtrlPcVf38* self)
                     if (arg != NULL) {
                         arg = reinterpret_cast<CtrlAccSweepView*>(arg)->mOwner3E9C;
                     }
-                    func_800451D8(0xBC, arg);
+                    bindIndexedEffect(0xBC, arg);
                 }
                 __dt__80043E88(&holder2, -1);
             } else {
@@ -1268,14 +1268,14 @@ void func_8009BD14(CtrlPcVf38* self)
                         reinterpret_cast<CtrlEnumListSweep*>(CTaskGame_enumListGet(&holder3));
                     list3->count = 0;
                     list3->mField3030 = 0;
-                    func_800F4A98(CTaskGame_enumListGet(&holder3), 0x20, 0);
+                    startEnumObjects(CTaskGame_enumListGet(&holder3), 0x20, 0);
                     for (s32 i = 0;
                          i < reinterpret_cast<CtrlEnumListSweep*>(
                                  CTaskGame_enumListGet(&holder3))
                                  ->count;
                          i++) {
                         CtrlAccSweepView* acc = reinterpret_cast<CtrlAccSweepView*>(
-                            func_8016FE34(func_800F6EAC((CfMoveEnumList*)CTaskGame_enumListGet(&holder3), i)));
+                            func_8016FE34(getObjectAt((CfMoveEnumList*)CTaskGame_enumListGet(&holder3), i)));
                         acc->mField3E98 = 0;
                         flag3 = true;
                         acc->mField3388 |= 0x10;
@@ -1287,7 +1287,7 @@ void func_8009BD14(CtrlPcVf38* self)
                             arg = reinterpret_cast<CtrlPlayerSweepView*>(arg)
                                       ->mOwner3E9C;
                         }
-                        func_800451D8(0xBC, arg);
+                        bindIndexedEffect(0xBC, arg);
                     }
                     __dt__80043E88(&holder3, -1);
                 }
@@ -1321,7 +1321,7 @@ void func_8009C1BC(CtrlPcVf38State* self)
     mode = func_80190940(&sub->mResult368, sub->mActor18, 0, 0);
     bmFlag = sub->mField370;
 
-    if (func_801BA2C8((u8*)getInstance__Q22cf14CBattleManagerFv() + 0x216c) !=
+    if (SuddenCommuIsStateActive((u8*)getInstance__Q22cf14CBattleManagerFv() + 0x216c) !=
         0) {
         return;
     }
@@ -1465,7 +1465,7 @@ void func_8009C1BC(CtrlPcVf38State* self)
                               chainId) != 0) {
                 CCharVoiceMan_PushChainVoiceNode(self->mField5C, obj374);
                 gaugeBase[0x261a4] = 1;
-                func_8018C820(
+                PartyGaugeAddClamped(
                     (u8*)getInstance__Q22cf14CBattleManagerFv() + 0x194,
                     -100);
             }
@@ -1482,25 +1482,25 @@ void func_8009C1BC(CtrlPcVf38State* self)
         func_8014AC38(&self->mField5C->mField3380, &prm);
     }
     self->mField5C->mSub3E9C.v00(0x800);
-    func_801B0E88();
+    battleCommuDisableAnims();
 }
 
-void func_8009C6B4() {}
+void CtrlRemote_NopStubAlpha() {}
 
-void func_8009C6B8() {}
+void CtrlRemote_NopStubBeta() {}
 
 // Target us-8009d094. Menu/voice state gate: when the global demo flag and
 // the 0x04000000 game-manager flag are clear, mirror three probe results into
 // the high bits of self->mField2C: voice-owner busy (bit 0x20000000), and two
 // menu-state words read through vf37() gated by the 0x40000 actor-flag range
 // (bits 0xA0000000 / 0x40000000).
-void func_8009C6BC(CtrlPcVf38State* self)
+void CtrlRemote_MirrorMenuVoiceBits(CtrlPcVf38State* self)
 {
     cf::CfGameManager::getInstance();
     if (isGlobalCamFlagSet(0x4000000) != 0) {
         return;
     }
-    if (func_800FEDF8() != 0) {
+    if (CMainMenu_GetInstancePtr() != 0) {
         return;
     }
     u32 mask = isClassicController__Q22cf13CfGameManagerFv(-1)
@@ -1536,7 +1536,7 @@ void func_8009C6BC(CtrlPcVf38State* self)
 
 // Tail-call wrapper: report whether the [0x800,0x1000) flag range is set on
 // the player actor's +0x3ED4 flag object (virtual slot 0x40).
-u32 func_8009C860(cf::CtrlRemote* self)
+u32 CtrlRemote_TestFlag800(cf::CtrlRemote* self)
 {
     cf::CtrlPc* pc = reinterpret_cast<cf::CtrlPc*>(self);
     return pc->mField5C->mSub3ED4->vf14(0x800);
@@ -1544,7 +1544,7 @@ u32 func_8009C860(cf::CtrlRemote* self)
 
 // Returns 1 when the 0x800 flag range is set, else 1 when the 0x1000 range is
 // clear (inverse of the second query).
-u32 func_8009C87C(cf::CtrlRemote* self)
+u32 CtrlRemote_Check800Cleared1000(cf::CtrlRemote* self)
 {
     cf::CtrlPc* pc = reinterpret_cast<cf::CtrlPc*>(self);
     if (pc->mField5C->mSub3ED4->vf14(0x800) != 0) {
@@ -1556,7 +1556,7 @@ u32 func_8009C87C(cf::CtrlRemote* self)
 // Allocate a*b bytes (4-aligned) from the default heap, zero the first b
 // bytes, and fall back to the MEM2 heap if the first allocation fails.
 // `self` is unused - the retail function still takes it in r3.
-void* func_8009C8F4(cf::CtrlRemote* self, u32 a, u32 b)
+void* CtrlRemote_AllocZeroed(cf::CtrlRemote* self, u32 a, u32 b)
 {
     u32 total = a * b;
     void* p = mtl::MemManager::allocate_head(CfRes_getHeapHandle(), total, 4);
@@ -1572,7 +1572,7 @@ void* func_8009C8F4(cf::CtrlRemote* self, u32 a, u32 b)
 // Free a heap buffer when non-null. The trailing `self` guard is a no-op
 // (the function returns anyway) but keeps `this` live across the deallocate
 // call, reproducing retail's r31 frame (mr r31, r3 / lwz r31).
-void func_8009C980(cf::CtrlRemote* self, u8* ptr)
+void CtrlRemote_FreeBuffer(cf::CtrlRemote* self, u8* ptr)
 {
     if (ptr != NULL) {
         mtl::MemManager::deallocate(ptr);
@@ -1628,15 +1628,15 @@ u32 func_8009C9B8(cf::CtrlRemote* self, CtrlRemoteBuf* buf, u32 arg)
 // Type-2 control-data parser: build a 0x38-byte UnkClass_80460C34Ctx around
 // the payload, initialize it via the retail stream ctor, then validate the
 // stream state (v==0/1 accepted) before returning the payload size.
-u32 func_8009CAAC(cf::CtrlRemote* self, CtrlRemoteBuf* buf, u32 arg)
+u32 CtrlRemote_RunWithHeapCtx(cf::CtrlRemote* self, CtrlRemoteBuf* buf, u32 arg)
 {
     UnkClass_80460C34Ctx ctx;
     u32 size = buf->mSize;
     ctx.mSize = size;
     ctx.mArg = arg;
     ctx.mSelf = self;
-    ctx.mAlloc = (void*)func_8009C8F4;
-    ctx.mFree = (void*)func_8009C980;
+    ctx.mAlloc = (void*)CtrlRemote_AllocZeroed;
+    ctx.mFree = (void*)CtrlRemote_FreeBuffer;
     ctx.mZero = 0;
     ctx.mPayload = (u8*)buf + 8;
     if (isStateReady__17UnkClass_80460C34Fv(&ctx, lbl_eu_804FBC20, 0x38) != 0) {
@@ -1747,13 +1747,13 @@ u32 func_8009CB80(cf::CtrlRemote* self, CtrlRemoteBuf* buf, u32 arg)
 
 // Parse a serialized control buffer into this: type 1/2/3 dispatch to the
 // typed parsers, otherwise the payload is memcpy'd and its size returned.
-u32 func_8009CE14(cf::CtrlRemote* self, CtrlRemoteBuf* src, s32 type, u32 arg)
+u32 CtrlRemote_DispatchBufOp(cf::CtrlRemote* self, CtrlRemoteBuf* src, s32 type, u32 arg)
 {
     if (type == 1) {
         return func_8009C9B8(self, src, arg);
     }
     if (type == 2) {
-        return func_8009CAAC(self, src, arg);
+        return CtrlRemote_RunWithHeapCtx(self, src, arg);
     }
     if (type == 3) {
         return func_8009CB80(self, src, arg);
@@ -1763,7 +1763,7 @@ u32 func_8009CE14(cf::CtrlRemote* self, CtrlRemoteBuf* src, s32 type, u32 arg)
 }
 
 // Clear the shared control-data buffer (initializing it first if needed).
-void func_8009CE88()
+void CtrlRemote_InitSharedBufVoid()
 {
     s32 flag = (s8)lbl_eu_80663E80;
     if (flag == 0) {
@@ -1776,7 +1776,7 @@ void func_8009CE88()
 }
 
 // Return a pointer to the shared control-data buffer, initializing it once.
-u32* func_8009CF0C()
+u32* CtrlRemote_GetSharedBufPtr()
 {
     s32 flag = (s8)lbl_eu_80663E80;
     if (flag == 0) {
@@ -1788,11 +1788,11 @@ u32* func_8009CF0C()
     return lbl_eu_80571848;
 }
 
-int func_8009CF84(void* self) { return 4628; }
+int CtrlRemote_GetFixedSize1214(void* self) { return 4628; }
 
 u32* func_8009D12C(u32* buffer, s32 index, s32* typeOut, s32* idxOut);
 
-extern "C" void func_8009CF8C(void* arg)
+extern "C" void CtrlRemote_TouchBitByArg(void* arg)
 {
 	s32 flag = (s8)lbl_eu_80663E80;
 	if (flag == 0) {
@@ -1801,12 +1801,12 @@ extern "C" void func_8009CF8C(void* arg)
 		memset(&lbl_eu_80571848[0x1214 / 4], 0, 0x20);
 		lbl_eu_80663E80 = 1;
 	}
-	func_8009D1F8(lbl_eu_80571848, (s32)arg);
+	CtrlRemote_TestSharedBit(lbl_eu_80571848, (s32)arg);
 }
 
 // Set a control-data bit: initialize the shared buffer if needed, then write
 // `value` at index `destination` via the retail bit-setter.
-void func_8009D018(u32 destination, u32 value)
+void CtrlRemote_SetSharedBit(u32 destination, u32 value)
 {
     s32 flag = (s8)lbl_eu_80663E80;
     if (flag == 0) {
@@ -1819,7 +1819,7 @@ void func_8009D018(u32 destination, u32 value)
 }
 
 // Return a pointer to the shared control-data buffer, initializing it once.
-u32* func_8009D0B4()
+u32* CtrlRemote_FetchSharedBufPtr()
 {
     s32 flag = (s8)lbl_eu_80663E80;
     if (flag == 0) {
@@ -1935,7 +1935,7 @@ void func_8009D2C8(u32* buffer, u32 index, u32 value)
     }
 }
 
-extern "C" u32 func_8009D1F8(u32* buffer, s32 index)
+extern "C" u32 CtrlRemote_TestSharedBit(u32* buffer, s32 index)
 {
 	s32 shift;
 	s32 type;
@@ -1978,7 +1978,7 @@ extern "C" u32 func_8009D1F8(u32* buffer, s32 index)
 // `flag` local, so the retail's pre-loop lbz + per-iteration extsb. + the
 // `li r0,1` after the first init all come out naturally. Removing the local
 // or reading it in the guard regresses the bytes.
-void func_8009D414(void* obj)
+void CtrlRemote_ResetSlotArrayObj(void* obj)
 {
     s8 flag = lbl_eu_80663E80;
     for (s32 i = 0; i < 8; i++) {
@@ -2008,7 +2008,7 @@ void func_8009D414(void* obj)
 // guards survive), then find the slot holding `index` and clear it.
 // Each lazy-init block re-reads the buffer base into its own local so the
 // allocator keeps one pointer copy per block, as in retail.
-void func_8009D514(u32 index)
+void CtrlRemote_ResetSlotArrayByIndex(u32 index)
 {
     s32 flag = lbl_eu_80663E80;
     u32* slot = lbl_eu_80571848;
@@ -2035,3 +2035,8 @@ void func_8009D514(u32 index)
         slot += 1;
     }
 }
+
+// Live file-event IDs pointer: retail is a bare 0x8 global getter
+// (lwz r3, lbl_eu_80663E88@sda21; blr). Callers (CfGameManager,
+// CfNandManager, CfResPcImpl) treat the word as the file-event IDs view.
+extern "C" u32 CtrlRemote_GetFileEventIds() { return lbl_eu_80663E88; }

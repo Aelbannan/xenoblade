@@ -133,10 +133,10 @@ static inline u32 ListFindFree(CfMapMineManager* m) {
 }
 
 // ---------------------------------------------------------------------------
-// func_80205F78 - default constructor of a reslist array element (node).
+// mineNodeCtorClear - default constructor of a reslist array element (node).
 // Zeroes the item's runtime fields, preserves mFlags id bits partially.
 // ---------------------------------------------------------------------------
-extern "C" void func_80205F78(MineNode* node) {
+extern "C" void mineNodeCtorClear(MineNode* node) {
     node->mItem.mObj0 = 0;
     node->mItem.mObj4 = 0;
     node->mItem.mTimer14 = lbl_eu_806682B0;
@@ -381,7 +381,7 @@ extern "C" CfMapMineManager* __ct__80205A7C(CfMapMineManager* self) {
     // Allocate the node array (150 nodes x 0x2C).
     u32 handle = CfRes_getAllocHandle();
     void* mem = allocate_array__Q23mtl10MemManagerFUlUl(0x19D8, handle);
-    self->mPoints.mList = (MineNode*)__construct_new_array(mem, (void*)func_80205F78, 0,
+    self->mPoints.mList = (MineNode*)__construct_new_array(mem, (void*)mineNodeCtorClear, 0,
                                                            0x2C, 0x96);
     MineNode* nodes = self->mPoints.mList;
     ClearNodes(nodes, &nodes[150]);
@@ -588,7 +588,7 @@ extern "C" int func_802066A8(CfMapMineManager* self, MinePoint* pt) {
             (BdatFilePointer*)fp, cols + 0x4E, (u16)resId);
         name.mLen = strlen(nm);
         strcpy(name.mText, nm);
-        func_800C13FC(obj, &name, 0xC);
+        ObjPoint_SetName_13FC(obj, &name, 0xC);
         ((cf::CfObject*)obj)->setPointEnabled(1);
         ((cf::CfObject*)obj)->CfObject_setMoveTargetVec((const ml::CVec3*)&pt->mPosX);
         ((MineSceneObjData*)obj)->unk90 = 0;
@@ -598,9 +598,9 @@ extern "C" int func_802066A8(CfMapMineManager* self, MinePoint* pt) {
 }
 
 // ---------------------------------------------------------------------------
-// func_80207C08 - true when no active point matches (id, area, sub).
+// mineHasNoActivePoint - true when no active point matches (id, area, sub).
 // ---------------------------------------------------------------------------
-extern "C" int func_80207C08(u32 pointId, int area, int sub) {
+extern "C" int mineHasNoActivePoint(u32 pointId, int area, int sub) {
     if (lbl_eu_806646A0 == 0 || pointId == 0) {
         return 1;
     }
@@ -619,7 +619,7 @@ extern "C" int func_80207C08(u32 pointId, int area, int sub) {
 }
 
 // ---------------------------------------------------------------------------
-// func_80207C94 - snapshot active points into a 6-byte record array.
+// mineSnapshotActivePoints - snapshot active points into a 6-byte record array.
 // ---------------------------------------------------------------------------
 struct MineSnapshot {
     s16 mTimer;
@@ -629,7 +629,7 @@ struct MineSnapshot {
     u8 mSub;
 };
 
-extern "C" void func_80207C94(u8* out) {
+extern "C" void mineSnapshotActivePoints(u8* out) {
     memset(out, 0, 0x384);
     MineNode* n = lbl_eu_806646A0->mPoints.mStartPtr->mNext;
     while (n != lbl_eu_806646A0->mPoints.mStartPtr) {
@@ -645,9 +645,9 @@ extern "C" void func_80207C94(u8* out) {
 }
 
 // ---------------------------------------------------------------------------
-// func_80207B24 - play a collection sound effect based on drop kind.
+// minePlayCollectSfx - play a collection sound effect based on drop kind.
 // ---------------------------------------------------------------------------
-extern "C" void func_80207B24(CfMapMineManager* self, u32 kind, void* pos) {
+extern "C" void minePlayCollectSfx(CfMapMineManager* self, u32 kind, void* pos) {
     int sfx = 0;
     if (kind == 4) sfx = 0xB;
     else if (kind == 5) sfx = 0xC;
@@ -677,7 +677,7 @@ extern "C" void func_80206FA8(CfMapMineManager* self, MinePoint* pt) {
     if (pt->mTimer14 > lbl_eu_806682B0) {
         // Duplicate active point: let time advance (retail branches out
         // with beq when the scan returns zero).
-        if (func_80207C08(pt->mPointId1C, pt->mArea1E, pt->mAreaSub1F) != 0) {
+        if (mineHasNoActivePoint(pt->mPointId1C, pt->mArea1E, pt->mAreaSub1F) != 0) {
             pt->mTimer14 = pt->mTimer14 - dt;
         }
         return;
@@ -712,7 +712,7 @@ extern "C" void func_80206FA8(CfMapMineManager* self, MinePoint* pt) {
             if (v != 0) {
                 // Retail reuses the func_80186BC8 result register as the
                 // id argument (r3 flows straight through).
-                func_800BFBF4((u16)(u32)v, 1);
+                ObjObj_SetMoveId_FBF4((u16)(u32)v, 1);
             }
         }
     }
@@ -783,8 +783,8 @@ extern "C" void func_8020712C(MineNode** out, CfMapMineManager* mgr,
     playerId &= 0xFFFF;
 
     u32 marker;
-    if (func_800FE68C() != 0) {
-        marker = *(u32*)((u8*)func_800FE68C() + 0x90E4);
+    if (Selector_GetInstance() != 0) {
+        marker = *(u32*)((u8*)Selector_GetInstance() + 0x90E4);
     } else {
         marker = 0;
     }
@@ -849,8 +849,8 @@ extern "C" void func_8020712C(MineNode** out, CfMapMineManager* mgr,
 // ---------------------------------------------------------------------------
 extern "C" void func_80206BD4(CfMapMineManager* self) {
     BdatFilePointer* file = lbl_eu_806640C8;
-    u32 rowBegin = func_8003B41C(file);
-    u32 rowEnd = rowBegin + func_8003B1EC(file);
+    u32 rowBegin = Bdat_GetRowBase_B41C(file);
+    u32 rowEnd = rowBegin + Bdat_GetMaxRow_B1EC(file);
     u16 area = lbl_eu_80663E42;
     u16 sub = lbl_eu_80663E44;
 
@@ -908,12 +908,12 @@ extern "C" void func_80206BD4(CfMapMineManager* self) {
                         (f64)(0xA0 - ((g >> 20) & 1)) - lbl_eu_806682C0);
                 } else {
                     if (func_80186BC8(found->mItem.mPointId1C) != 0) {
-                        func_800BFBF4(found->mItem.mPointId1C, 1);
+                        ObjObj_SetMoveId_FBF4(found->mItem.mPointId1C, 1);
                     }
                 }
             } else if (found->mItem.mArea1E == (u8)area &&
                        found->mItem.mAreaSub1F == (u8)sub) {
-                if (func_80207C08(found->mItem.mPointId1C,
+                if (mineHasNoActivePoint(found->mItem.mPointId1C,
                                   found->mItem.mArea1E,
                                   found->mItem.mAreaSub1F) != 0) {
                     if ((found->mItem.mFlags & 0x00010000) != 0) {
@@ -923,7 +923,7 @@ extern "C" void func_80206BD4(CfMapMineManager* self) {
                             (f64)(0xA0 - ((g >> 20) & 1)) - lbl_eu_806682C0);
                     } else {
                         if (func_80186BC8(found->mItem.mPointId1C) != 0) {
-                            func_800BFBF4(found->mItem.mPointId1C, 2);
+                            ObjObj_SetMoveId_FBF4(found->mItem.mPointId1C, 2);
                         }
                     }
                 }
@@ -1006,8 +1006,8 @@ extern "C" int func_802067E4(CfMapMineManager* self, MinePoint* pt,
         if (v >= 1 && v <= 8) {
             u8* rec = (u8*)func_8009EC9C((u16)v);
             u8* data = rec + 0x3534;
-            if (data != NULL && func_8026178C(data, 0x91) != 0) {
-                total += func_8025FB10(data, 0x91);
+            if (data != NULL && Counter_TestBit(data, 0x91) != 0) {
+                total += IdTable_SumValues(data, 0x91);
             }
         }
     }
@@ -1025,7 +1025,7 @@ extern "C" int func_802067E4(CfMapMineManager* self, MinePoint* pt,
     }
 
     // Area 4 raises the drop kind to a global cap.
-    u16 cap = func_8009CF8C(0x800);
+    u16 cap = CtrlRemote_TouchBitByArg(0x800);
     if (cap > kind && lbl_eu_80663E42 == 4) {
         kind = cap;
     }
@@ -1163,7 +1163,7 @@ extern "C" void func_802074F0(CfMapMineManager* self) {
     }
     if (ready == 0) return;
     if (func_8013EB90(1) != 0) return;
-    if (func_800FF738() != 0) return;
+    if (CMainMenu_IsOpen() != 0) return;
     if ((lbl_eu_80663E24 & 0xAFA40000) != 0) return;
     if (isAnyFieldFlagSet__Q22cf13CfGameManagerFv() != 0) return;
     UnkClass_800821F8* unk = getCameraDataBlock__Q22cf13CfGameManagerFv();
@@ -1207,7 +1207,7 @@ extern "C" void func_802074F0(CfMapMineManager* self) {
             }
             // Rare points only despawn when no duplicate remains active.
             if ((fl2 & 0x00010000) == 0 ||
-                func_80207C08(nearest->mItem.mPointId1C, nearest->mItem.mArea1E,
+                mineHasNoActivePoint(nearest->mItem.mPointId1C, nearest->mItem.mArea1E,
                               nearest->mItem.mAreaSub1F) != 0) {
                 // Dispatcher re-reads the flags fresh from memory.
                 fl2 = nearest->mItem.mFlags;
@@ -1219,7 +1219,7 @@ extern "C" void func_802074F0(CfMapMineManager* self) {
                 } else {
                     void* v = func_80186BC8(nearest->mItem.mPointId1C);
                     if (v != 0) {
-                        func_800BFBF4((u16)(u32)v, 2);
+                        ObjObj_SetMoveId_FBF4((u16)(u32)v, 2);
                     }
                 }
             }
@@ -1236,7 +1236,7 @@ extern "C" void func_802074F0(CfMapMineManager* self) {
     }
 
     mgr->mTime = lbl_eu_806682EC;
-    func_80207B24(mgr, drop.mKind07 & 0x3F, &nearest->mItem.mPosX);
+    minePlayCollectSfx(mgr, drop.mKind07 & 0x3F, &nearest->mItem.mPosX);
     playActorSound__Q22cf10CfSoundManFUlUlUlUlf(0, 0x3C, 0, 0, lbl_eu_806682E4);
 
     // Register a one-shot sound timer in the first free slot.
@@ -1343,7 +1343,7 @@ extern "C" void func_80207D2C(u8* rec) {
 
     // Scratch point template; position/timer fields are overwritten per
     // record below (timer) or left as garbage (position), matching retail.
-    // Flag masks mirror the inlined reslist element ctor (func_80205F78)
+    // Flag masks mirror the inlined reslist element ctor (mineNodeCtorClear)
     // plus one extra bits-10..12 clear.
     MinePoint tmp;
     tmp.mObj0 = 0;

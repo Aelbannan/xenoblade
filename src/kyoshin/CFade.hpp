@@ -47,22 +47,22 @@ public:
     ~CFade();
     bool OnFileEvent(CEventFile* pEventFile);
 
-    void func_8024439C();
-    void func_802443E8();
-    void func_80244460(nw4r::lyt::DrawInfo* drawInfo);
-    void func_8024448C();
-    u8 func_80244508();
-    u8 func_80244510();
-    void func_80244518();
-    void func_80244538();
+    void CFade_StartLoad();
+    void CFade_Update();
+    void CFade_Draw(nw4r::lyt::DrawInfo* drawInfo);
+    void CFade_Unload();
+    u8 CFade_IsReady();
+    u8 CFade_IsVisible();
+    void CFade_FadeIn();
+    void CFade_FadeOut();
 };
 
 // Retail-unmangled fade helpers: the US retail build keeps these as standalone
-// C-linkage-style symbols (verbatim func_80244558/func_802445A4/func_802445F0,
+// C-linkage-style symbols (verbatim CFade_StepFadeIn/CFade_StepFadeOut/CFade_MarkLoaded,
 // PLAN.md §17.6); linkage is provided by code_80135FDC.hpp.
 // Mark the overlay loaded/ready once the layout is attached.
-void func_802445F0(CFade* self);
+void CFade_MarkLoaded(CFade* self);
 // Animation-end handlers: fade-in reached target -> faded-in;
 // fade-out rewound -> idle.
-void func_80244558(CFade* self);
-void func_802445A4(CFade* self);
+void CFade_StepFadeIn(CFade* self);
+void CFade_StepFadeOut(CFade* self);

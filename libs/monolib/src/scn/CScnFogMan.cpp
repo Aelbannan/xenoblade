@@ -17,13 +17,13 @@
 #include "nw4r/math/math_arithmetic.h"
 #include "nw4r/math/math_triangular.h"
 #include "revolution/MTX.h"
-// CScnItemModelNw4r.hpp declares func_8049DE74 with a void*/f32* view of the
+// CScnItemModelNw4r.hpp declares FogManCopyFogParams with a void*/f32* view of the
 // signature; this TU defines it with the typed CScnFogMan*/SWordVec* view.
 // Rename the header's declaration out of the way for this inclusion so only
 // the definition below is visible (same technique as CScnEnvLgtCtrl.cpp).
-#define func_8049DE74 func_8049DE74_header_view
-#include "libs/monolib/src/scn/CScnItemModelNw4r.hpp"  // func_8048ECD8
-#undef func_8049DE74
+#define FogManCopyFogParams FogManCopyFogParams_header_view
+#include "libs/monolib/src/scn/CScnItemModelNw4r.hpp"  // getScnRootSlot10
+#undef FogManCopyFogParams
 #include "libs/monolib/src/scn/CScnFogMan.hpp"
 
 // Retail flash constants (fog default colour/parameters). Referenced directly
@@ -120,18 +120,18 @@ extern "C" void __ct__CScnFogMan(CScnFogMan* self, u32 param) {
     self->field_0x70 = lbl_eu_8066ABB4;
 }
 
-extern "C" void func_8049DE68(u8* self, u32 val) {
+extern "C" void FogManSetValue08(u8* self, u32 val) {
     reinterpret_cast<CScnFogMan*>(self)->value08 = val;
 }
 // Tail-call trampoline over func_8049DEC4 (retail is a single `b`).
 // Retail symbol is unmangled (C linkage); other TUs' relocs target
 // `func_8049DEC4` directly.
 extern "C" bool func_8049DEC4(CScnFogMan* self);
-bool func_8049DE70(CScnFogMan* self) {
+bool FogManIsFogEnabled(CScnFogMan* self) {
     return func_8049DEC4(self);
 }
 
-void func_8049E374(u8* self, float a, float b) {
+void FogManSetNearFar(u8* self, float a, float b) {
     CScnFogMan* fog = reinterpret_cast<CScnFogMan*>(self);
     fog->field_0x20 = a;
     fog->field_0x1c = b;
@@ -148,7 +148,7 @@ extern "C" CScnFogMan* __dt__10CScnFogManFv(CScnFogMan* self, int flag) {
     return self;
 }
 
-extern "C" void func_8049E350(u8* self, const void* src) {
+extern "C" void FogManCopyFogWords(u8* self, const void* src) {
     CScnFogMan* fog = reinterpret_cast<CScnFogMan*>(self);
     const u32* words = static_cast<const u32*>(src);
     *(u32*)&fog->field_0xC = words[0];
@@ -161,7 +161,7 @@ extern "C" void func_8049E350(u8* self, const void* src) {
 // field_0x50, the four floats into 0x54-0x60, and the source word-vector is
 // mirrored into both 0x64-0x70 and 0xc-0x18. The word copies are bit-reinterpreted
 // integer stores so they compile to lwz/stw (retail has no float conversion).
-extern "C" void func_8049DE74(CScnFogMan* self, u32 value, const SWordVec* src,
+extern "C" void FogManCopyFogParams(CScnFogMan* self, u32 value, const SWordVec* src,
                               f32 p0, f32 p1, f32 p2, f32 p3) {
     self->field_0x50 = value;
     self->field_0x54 = p0;
@@ -189,7 +189,7 @@ extern "C" bool func_8049DEC4(CScnFogMan* self) {
     }
 
     nw4r::g3d::ScnRoot* root =
-        (nw4r::g3d::ScnRoot*)func_8048ECD8(self->rootView);
+        (nw4r::g3d::ScnRoot*)getScnRootSlot10(self->rootView);
     nw4r::g3d::Fog fog = root->GetFog(0);
 
     // Comparison order matches the retail branch chain (1, 2, 0, 3).

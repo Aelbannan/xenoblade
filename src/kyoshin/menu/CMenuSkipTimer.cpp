@@ -19,7 +19,7 @@
 
 /* Retail constructor symbol (unmangled global in US). Written as a C-linkage
  * free function (CTaskGameEvt / CQuestWindow idiom) so the factory
- * (func_8029EDE4) emits a real bl to it, and returns `this` in r3 like a
+ * (SkipTimer_CreateInstance) emits a real bl to it, and returns `this` in r3 like a
  * real constructor (retail relies on it). A member constructor would mangle
  * to __ct__14CMenuSkipTimerFPC8CProcess and trigger vtable emission; the
  * free-function form reproduces the retail byte-for-byte store sequence. */
@@ -111,7 +111,7 @@ void CMenuSkipTimer::Init() {
     *(u8*)((u8*)this + 0x7e)  = *(u8*)(tempBgTex + 0x1e);
     __dt__6CBgTexFv(tempBgTex, -1);
 
-    func_801C3C14(&mBgTex);
+    BgTex_Acquire_3C14(&mBgTex);
 
     // --- Re-initialise the embedded CTitleAHelp via a temporary ---
     char* name = BdatTouchStringCell(lbl_eu_80510540, lbl_eu_80510540 + 9, 0x35);
@@ -138,7 +138,7 @@ void CMenuSkipTimer::Init() {
 
     // --- Re-initialise the embedded CSkipTimer via a temporary ---
     u8 tempSkipTimer[0x98];
-    __ct__CSkipTimer(tempSkipTimer);
+    __ct__CSkipTimer((CSkipTimer*)tempSkipTimer);
 
     __ct__UnkClass_8011C974((u8*)this + 0xbc, tempSkipTimer + 0x4);
     *(u32*)((u8*)this + 0xcc) = *(u32*)(tempSkipTimer + 0x14);
@@ -201,8 +201,8 @@ void CMenuSkipTimer::Term() {
     }
     reinterpret_cast<CScn*>(mParentRef)->removeRenderCB(renderCB);
 
-    func_801C3D9C(&mBgTex);
-    func_801C40A0(&mTitleAHelp);
+    BgTex_Release_3D9C(&mBgTex);
+    teardown(&mTitleAHelp);
     CSkipTimerTeardown(&mTimerData);
 
     lbl_eu_80664A48 = 0;
@@ -232,8 +232,8 @@ void CMenuSkipTimer::Move() {
 
     if (pressed) {
         if (CSkipTimerIsEngaged(&mTimerData) == 0) {
-            if (func_800FEDF8() != 0) {
-                func_800FF914();
+            if (CMainMenu_GetInstancePtr() != 0) {
+                ArtsInfo_SetReadyFlag();
                 playUISound__FUl(6);
             }
             mFlag3 = 4;
@@ -242,14 +242,14 @@ void CMenuSkipTimer::Move() {
     }
 
     switch (mFlag3) {
-    case 0: func_8029EE68(this); break;
-    case 1: func_8029EEE0(this); break;
-    case 2: func_8029EF30(this); break;
-    case 3: func_8029F048(this); break;
+    case 0: SkipTimer_Phase0Init(this); break;
+    case 1: SkipTimer_Phase1Mark2(this); break;
+    case 2: SkipTimer_Phase2PollPad(this); break;
+    case 3: SkipTimer_Phase3Handle(this); break;
     }
 
-    func_801C3D54(&mBgTex);
-    func_801C3FF0(&mTitleAHelp);
+    BgTex_Tick_3D54(&mBgTex);
+    updateHelp(&mTitleAHelp);
     CSkipTimerTick(&mTimerData);
 }
 
@@ -265,9 +265,9 @@ void CMenuSkipTimer::cbRenderBefore() {
     u8 drawInfo[0x54];
     __ct__Q34nw4r3lyt8DrawInfoFv((nw4r::lyt::DrawInfo*)&drawInfo[0]);
     func_80137250((nw4r::lyt::DrawInfo*)&drawInfo[0]);
-    func_801C3D7C(&mBgTex, (nw4r::lyt::DrawInfo*)&drawInfo[0]);
+    BgTex_Draw_3D7C(&mBgTex, (nw4r::lyt::DrawInfo*)&drawInfo[0]);
     CSkipTimerDraw(&mTimerData, (nw4r::lyt::DrawInfo*)&drawInfo[0]);
-    func_801C4080(&mTitleAHelp, (nw4r::lyt::DrawInfo*)&drawInfo[0]);
+    drawHelp(&mTitleAHelp, (nw4r::lyt::DrawInfo*)&drawInfo[0]);
     __dt__Q34nw4r3lyt8DrawInfoFv((nw4r::lyt::DrawInfo*)&drawInfo[0], -1);
 }
 
@@ -280,7 +280,7 @@ void CMenuSkipTimer::cbRenderBefore() {
  *   if (obj != 0) obj = __ct__(obj, parent);
  *   lbl_eu_80664A48 = obj; obj->Regist(self, 0); return lbl_eu_80664A48;
  */
-extern "C" CMenuSkipTimer* func_8029EDE4(CProcess* self, CProcess* parent) {
+extern "C" CMenuSkipTimer* SkipTimer_CreateInstance(CProcess* self, CProcess* parent) {
     if (lbl_eu_80664A48 != 0) {
         return 0;
     }
@@ -302,17 +302,17 @@ extern "C" CMenuSkipTimer* func_8029EDE4(CProcess* self, CProcess* parent) {
 // extern "C" here (same pattern as CMenuTutorial.cpp). Return types are int so
 // the `!= 0` tests compile to cmpwi rather than an rlwinm byte-mask.
 extern "C" {
-int func_801C3E34(CBgTex* self);
-int func_801C4114(CTitleAHelp* self);
+int BgTex_IsLoaded_3E34(CBgTex* self);
+int isInitialized(CTitleAHelp* self);
 void func_801C412C(CTitleAHelp* self);
 void CSkipTimerFlagButton(CSkipTimer* self);
 }
 
 // When the bg texture, title/help bar, and skip-timer panel are all ready,
 // engage the skip timer (start anim, flag phase) and play the open sound.
-extern "C" void func_8029EE68(CMenuSkipTimer* self) {
-    if (func_801C3E34(&self->mBgTex) != 0 &&
-        func_801C4114(&self->mTitleAHelp) != 0 &&
+extern "C" void SkipTimer_Phase0Init(CMenuSkipTimer* self) {
+    if (BgTex_IsLoaded_3E34(&self->mBgTex) != 0 &&
+        isInitialized(&self->mTitleAHelp) != 0 &&
         CSkipTimerIsReady(&self->mTimerData) != 0) {
         func_801C412C(&self->mTitleAHelp);
         CSkipTimerFlagButton(&self->mTimerData);
@@ -321,22 +321,22 @@ extern "C" void func_8029EE68(CMenuSkipTimer* self) {
     }
 }
 
-extern "C" unsigned long func_8029EE58(void) { return lbl_eu_80664A48 != 0; }
+extern "C" unsigned long SkipTimer_IsActiveFlag(void) { return lbl_eu_80664A48 != 0; }
 
 // When the title/help bar is idle and the timer widget is mid-anim, mark the
 // widget as having reached phase 2 (mFlag3 at 0x150).
-extern "C" void func_8029EEE0(CMenuSkipTimer* self) {
+extern "C" void SkipTimer_Phase1Mark2(CMenuSkipTimer* self) {
     if (isIdle__11CTitleAHelpFv(&self->mTitleAHelp) != 0 &&
         CSkipTimerGetSkipButton(&self->mTimerData) != 0) {
         self->mFlag3 = 2;
     }
 }
 
-/* Advance the skip FSM (retail func_8029EF30): while the syswin panel is
+/* Advance the skip FSM (retail SkipTimer_Phase2PollPad): while the syswin panel is
  * ready, poll the config-dependent stick/pad bits plus the turbo-button
  * masks and dispatch to the switch-key advance/retreat helpers; if the timer
  * is then active, leave the skip state machine and raise phase 3. */
-extern "C" void func_8029EF30(CMenuSkipTimer* self) {
+extern "C" void SkipTimer_Phase2PollPad(CMenuSkipTimer* self) {
     if (CSkipTimerIsReady(&self->mTimerData) == 0) return;
 
     cf::CfPadData* pad = cf::CfGameManager::getCfPadData();
@@ -369,14 +369,14 @@ extern "C" void func_8029EF30(CMenuSkipTimer* self) {
     }
 
     if (func_8029FF1C(&self->mTimerData) != 0) {
-        func_801C414C(&self->mTitleAHelp);
+        beginClose(&self->mTitleAHelp);
         CSkipTimerLeaveSkip(&self->mTimerData);
         self->mFlag3 = 3;
     }
 }
 
 // Same idle+advance check, but advances to phase 1 (writes mFlag1 at 0x54).
-extern "C" void func_8029F048(CMenuSkipTimer* self) {
+extern "C" void SkipTimer_Phase3Handle(CMenuSkipTimer* self) {
     if (isIdle__11CTitleAHelpFv(&self->mTitleAHelp) != 0 &&
         CSkipTimerGetSkipButton(&self->mTimerData) != 0) {
         self->mFlag1 = 1;
@@ -390,10 +390,10 @@ extern "C" void func_8029F048(CMenuSkipTimer* self) {
  * (@88@cbRenderBefore__14CMenuSkipTimerFv) because cbRenderBefore is virtual
  * in the +0x58 IScnRenderCB subobject.
 
- * Dtor this-adjusting thunk (retail func_8029F0A0): subi r3, r3, 0x58;
+ * Dtor this-adjusting thunk (retail SkipTimer_ThunkDtor58): subi r3, r3, 0x58;
  * b __dt__. Tail-calls the destructor, leaving r4 (delete flag) as caller
- * leftover (same shape as CMenuTutorialList's func_802ACBD4). */
-extern "C" void func_8029F0A0(IScnRenderCB* sub) {
+ * leftover (same shape as CMenuTutorialList's CMenuTutorialList_DtorThunk58). */
+extern "C" void SkipTimer_ThunkDtor58(IScnRenderCB* sub) {
     // Cast to a one-arg pointer so the call emits only the this-adjustment
     // and leaves r4 as caller leftover.
     ((void (*)(void*))__dt__14CMenuSkipTimerFv)((CMenuSkipTimer*)((char*)sub - 0x58));

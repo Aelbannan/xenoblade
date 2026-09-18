@@ -3,19 +3,19 @@
 
 #include "kyoshin/cf/voice/cvsys/CVS_THREAD_SUDDEN.hpp"
 
-// us-802ab400 (func_802A8CCC)
+// us-802ab400 (SuddenVxClearIdleSlot)
 // If no active voice, clear the handle slot.
-void func_802A8CCC(CVS_THREAD_SUDDEN* self) {
+void SuddenVxClearIdleSlot(CVS_THREAD_SUDDEN* self) {
     if (func_802A3E88(self) == 0) {
         self->voiceHandle = NULL;
     }
 }
 
-// us-802ab43c (func_802A8D08)
+// us-802ab43c (SuddenVxRemoveVoice)
 // Remove a voice by matching its embedded CCharVoice pointer against the
 // slot (voiceHandle). A CVoiceHandle stores the CCharVoice at offset 0x3E9C,
 // so a non-null handle is biased by 0x3E9C before comparing.
-void func_802A8D08(CVS_THREAD_SUDDEN* self, CCharVoice* voicePtr) {
+void SuddenVxRemoveVoice(CVS_THREAD_SUDDEN* self, CCharVoice* voicePtr) {
     func_802A3BEC(self, voicePtr);
 
     CVoiceHandle* handle = self->voiceHandle;
@@ -28,11 +28,11 @@ void func_802A8D08(CVS_THREAD_SUDDEN* self, CCharVoice* voicePtr) {
     }
 }
 
-// us-802ab494 (func_802A8D60)
+// us-802ab494 (SuddenVxPlayVoice)
 // Prepare/play a voice. Calls the completion check (and the playback-start
 // helper if busy), stores the inverse-bias of voicePtr (back to the owning
 // CVoiceHandle) into the slot, re-biases to the CCharVoice, then plays.
-void func_802A8D60(CVS_THREAD_SUDDEN* self, CCharVoice* voicePtr, int voiceId) {
+void SuddenVxPlayVoice(CVS_THREAD_SUDDEN* self, CCharVoice* voicePtr, int voiceId) {
     if (func_802A3E88(self) != 0) {
         func_802A3E28(self);
     }
@@ -110,5 +110,6 @@ CVS_THREAD_SUDDEN* __ct__802A8C04() {
     return self;
 }
 
-// Virtual override of blank1(): returns 1 for SUDDEN thread (minimal buffer flag).
-int CVS_THREAD_SUDDEN::blank1() { return 1; }
+// Virtual override of blank1() (retail func_802A8DE0): returns 1 for SUDDEN
+// thread (minimal buffer flag).
+int CVS_THREAD_SUDDEN::SuddenVx_GetBufferSizeValue() { return 1; }

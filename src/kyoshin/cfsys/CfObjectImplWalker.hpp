@@ -27,7 +27,7 @@ struct CfWalkEA444 {
     u32 field_4;                               // 0x04
 };
 
-// Battle-effect spawn record built on the stack by func_800C551C
+// Battle-effect spawn record built on the stack by Walker_FanfareBattleStart
 // (memset to zero over the full 0x34 bytes, then three fields written).
 struct CfWalkSpawnRec {
     u8 _00[0xC];                               // 0x00-0x0B
@@ -349,13 +349,16 @@ public:
     virtual void f164(); virtual void f165(); virtual void f166(); virtual void f167();
     virtual void f168(); virtual void f169(); virtual void f170(); virtual void f171();
     virtual void f172();
-    virtual void f174(); virtual void f175(); virtual void f176(); virtual void f177();
-    virtual void f178(); virtual void f179(); virtual void f180(); virtual void f181();
+    virtual void f173();
+    virtual void f174();
+    virtual void f175(); virtual void f176(); virtual void f177();
+    virtual void f178();
+    virtual void f179(); virtual void f180(); virtual void f181();
     virtual void f182(); virtual void f183(); virtual void f184(); virtual void f185();
-    virtual void f186(); virtual void f187(); virtual void f188(); virtual void f189();
+    virtual void f186(); virtual void f187(); virtual void f188(u32 a); virtual void f189();
     virtual void f190();
     virtual u32 f191(u32 a);                 // index 191 -> vtable 0x304
-    virtual u32 f192(u32 a);                 // index 192 -> vtable 0x308
+    virtual u32 f192();                      // index 192 -> vtable 0x308
     virtual u32 vf80q(u32 a);                // index 30 -> vtable 0x80
     virtual void vf2F8(u32 a);               // index 188 -> vtable 0x2f8
     virtual u32 vf2BC();                     // index 173 -> vtable 0x2BC (battle-active)
@@ -670,7 +673,7 @@ public:
     u32 field_C4;                              // 0xC4
 };
 
-// Object behind func_800FE68C (lbl_eu_80663F14): actor-id word at +0x90E4.
+// Object behind Selector_GetInstance (lbl_eu_80663F14): actor-id word at +0x90E4.
 struct CfWalkGlobal {
     u8 _00[0x90E4];                            // 0x00-0x90E3
     u32 field_90E4;                            // 0x90E4
@@ -688,7 +691,7 @@ struct CfWalkEnumList {
     u32 field_620;                             // 0x620
 };
 
-// Item returned by func_800F6EC0: object pointer at +0x4, position at +0x8,
+// Item returned by getEntryAt: object pointer at +0x4, position at +0x8,
 // type byte at +0x18.
 struct CfWalkEnumItem {
     u8 _pad00[0x04];                           // 0x00-0x03
@@ -919,58 +922,60 @@ extern bool isGlobalCamFlagSet(int mask);
 
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
 extern "C" {
-void func_800C6EC0(void* self);
-void func_800CFFA0(void* self);
+void ObjPc_NotifyVf10_6EC0(void* self);
+void CfObjectImplMoveClearLinkIfMatch(void* self);
 void func_800C969C(void* self);
-void func_800C5998(void* self);
-void func_800C2C90(cf::CfObjectImplWalker* self);
+void ObjPc_InitLink_5998(void* self);
+void Walker_DispatchBattleSub(cf::CfObjectImplWalker* self);
 void func_800C525C(cf::CfObjectImplWalker* self);
 void func_800CC020(void* self);
 void func_800C5B00(void);
-void func_802A0E08(void* self);
+void updatePosition(void* self);
 void func_80140E00(u32 a, u32 b, u32 c);
-bool func_80226B94(void);
+bool QstCnt_HasInstance_6B94(void);
 u32 getControllerWordA33C__Q22cf13CfGameManagerFv();
 u32 getControllerWordA37C__Q22cf13CfGameManagerFv();
-int func_8011CD5C(void);
-int func_80257308(void);
-int func_802AC510(void);
-void func_80142C80(void);
+int isQuestLogMenuActive(void);
+int KizunagramIsCreated(void);
+int CMenuTutorialList_IsActive(void);
+void MenuUpdate_SignalGlobalField64(void);
 void* CtrlObjectParam_GetSlotTableBase(void);
 u32 func_8009EC9C(u32 id);
-int func_8026178C(u32 a, u32 b);
-void func_80109784(u32 a, u32 b, u32 c);
+int Counter_TestBit(u32 a, u32 b);
+void BtlDmg_FilterNotifyDamage(u32 a, u32 b, u32 c);
 void func_800E1B5C(void* mgr, void* battleObj);
-cf::CfWalkGlobal* func_800FE68C();
+cf::CfWalkGlobal* Selector_GetInstance();
 #include "kyoshin/cf/CBattleManagerApi.hpp"
 void* CfObjectMove_getSelfIfActive(void* objParam);
-void CfObjectMove_relaySubB0Slot58(void* sub, u32 a, u32 b); // canonical form (CfObjectImplPc.hpp; def CfObjectMove.cpp)
-// Enum-list helper family: canonical extern "C" void* forms (CVision.hpp).
+void CfObjectMove_relaySubB0Slot58(void* sub, u32 a, u32 b, u32 c); // 4-arg form (this TU passes st; def CfObjectMove.cpp takes void*)
+// Shop-exchange flag (CMenuItemExchange.cpp): bare retail symbol, so C linkage.
+extern "C" u8 ItemEx_GetFlagByte();
+// Enum-list helpers: CTaskGame_enumListGet is the extern "C" void* form
+// from CVision.hpp / CtrlPc.hpp (already in scope); the rest are TU-local.
 void CTaskGame_enumListCtor(void* holder);
-void* CTaskGame_enumListGet(void* holder);
-void func_800F4A98(void* list, u32 type, u32 filter);
-void* func_800F6E98(void* list, int index); // canonical void* form (CtrlPc.hpp owner)
+void startEnumObjects(void* list, u32 type, u32 filter);
+void* getObjectIdAt(void* list, int index);
 void* func_800BBC0C(void* objParam);
 void CfObjectMove_setMoveSpeed(void* player, float value);
 void __dt__80043E88(void* holder, int flags); // canonical void* form (CVision.hpp owner)
 int func_8013EB90(int v);
 void* getPlayer__Q22cf13CfGameManagerFi(int index);
 void* func_8016FE34(void* src);
-void func_801F8E20(void* obj, int flag);
+void CfObjectTbox_ForwardToImpl(void* obj, int flag);
 void func_8013EC6C(u32 a, u32 b);
 void* getInstance__Q22cf13CfGameManagerFv(); // canonical void* form (CBattleManagerApi.hpp owner)
-void func_800FE950(void* obj, u32 a, u32 b, u32 c);
-void func_800FE920(void* obj);
-void func_800FE938(void* obj);
+void setRequestParams(void* obj, u32 a, u32 b, u32 c);
+void setTargetFlag04(void* obj);
+void setTargetFlag08(void* obj);
 u32 func_800FE7D8(void* obj);
 void func_800FE738();
 void func_800C819C();
 void func_800C86E8(void* self);
 void func_800D9978(void* mgr, void* obj);
 void cfCam_setClear04(void* obj, u32 mask, int flag);
-u32 func_8009CF8C(u32 resourceId);
+u32 CtrlRemote_TouchBitByArg(u32 resourceId);
 int CUICfManager_queueFactoryMenu(int id, float f);
-void* func_800451D8(u32 cls, int param);
+void* bindIndexedEffect(u32 cls, int param);
 void simSetLeafAnimTag(void* obj, u32 flags);
 void CItem_openAreaEventBox(u32 a, u32 b);
 void UIWin_CreateB4790Win(void* str, int flags);
@@ -983,17 +988,17 @@ extern "C" void handleFieldTransition__Q22cf13CfGameManagerFv(); // CfGameManage
 void* __dynamic_cast(void* obj, long offset, const void* srcType, const void* dstType, void* tmp);
 
 // Enum-list / selector helpers (CfObjectEnumList + selector subsystem).
-void* func_800F6EAC(void* list, u32 index);
+void* getObjectAt(void* list, u32 index);
 void func_800F6ED0(void* list, void* value);
-void* func_800F6E08(void* list);
-void* func_800F6EC0(void* list, u32 index); // canonical void* form (CAIAction/CItemBoxGrid)
+void* findFirstCleanObjectId(void* list);
+void* getEntryAt(void* list, u32 index); // canonical void* form (CAIAction/CItemBoxGrid)
 int func_800FE6A4(cf::CfWalkGlobal* g, u32 a, u32 b, u32 c);
 int func_80148778(void* obj, int id); // canonical (void*,int) form
 
 // Bdat table helpers.
-void* func_8003AA34(void);
+void* Bdat_GetTable_AA34(void);
 void* getFP__FPCc(const char* path);
-u32 func_8003B1EC(void* bdat);
+u32 Bdat_GetMaxRow_B1EC(void* bdat);
 void UIWin_CreateTalkWin(u32 obj, const char* str, int flag);
 int UIWin_PackHiLo(u32 a, int b);
 void awardCount91(void);
@@ -1003,10 +1008,10 @@ int rand(void);
 // Battle-manager effect/party helpers.
 void CCharVoiceMan_EnqueueBattleBeginVoice(void* obj);
 void CBattleMan_FireActorEvent918(void* mgr, void* item, void* rec, u32 id, u32 flag);
-int func_80260FB0(void* obj, u32 id, u32* outA, u32* outB, f32* outC);
-int func_80260518(void* obj, u32 id, u32* outA, f32* outB);
+int IdTable_QuerySumMaxFloat(void* obj, u32 id, u32* outA, u32* outB, f32* outC);
+int IdTable_QuerySumFloat(void* obj, u32 id, u32* outA, f32* outB);
 int func_80260264(void* obj, u32 id, u32* outA);
-void UIWin_CreateItemMulti(u32 a, u32 b, u32 c, u32 d, u32 e, u32 f, u32 g, u32 h);
+void UIWin_CreateItemMulti(u32 a, u32 b, u32 c, u32 d, u32 e, u32 f, u32 g, u32 h, u32 i);
 u32 func_80084654__Q22cf13CfGameManagerFv(int flag);
 int getNullPtrC__Q22cf13CfGameManagerFv(u32 mask);
 void* CBattleMan_FetchVisionObj(void* mgr);
@@ -1015,19 +1020,20 @@ void* CBattleMan_FetchVisionObj(void* mgr);
 // Action/art play + system helpers.
 void* Scn_SetCamIndex(void* scene, int flag);
 void func_8043E928__5CViewFRQ22ml5CRectP5CView(void* rect, void* view);
-// Scn_IsDefaultScale is declared in kyoshin/cf/CfGameManager.hpp (already in scope).
+// Scn_IsDefaultScale (monolib/src/scn/CScn.cpp): default-scale probe.
+extern "C" bool Scn_IsDefaultScale(class CScn* scene);
 // isAnyFieldFlagSet__Q22cf13CfGameManagerFv (retail mangled C++ name).
 int isAnyFieldFlagSet__Q22cf13CfGameManagerFv(void);
-int func_800967F8(void);
+int CtrlNpcIsActive(void);
 // getInstance__11CSysWinBuffFv is declared in CMainMenu.hpp (already in scope).
 void* getUnk80664658(void);
-int func_804BE398(void* vec, int a, int b, int c, f32 d, f32 e); // canonical int form (CtrlMoveBase.hpp owner)
-void* func_804BE520(int index);
+int ScnRes_VertRayForward_E398(void* vec, int a, int b, int c, f32 d, f32 e); // canonical int form (CtrlMoveBase.hpp owner)
+void* ScnRes_GetEntryHead2_E520(int index);
 void CfObjectMove_relaySubB0Slot54(void* obj, int a, int b, u32 c, f32 d, f32 e);
 void CfObjectMove_setMoveSpeedGated(void* obj, f32 value);
-int func_8012CD24(void);
+int TalkWin_IsActive_CD24(void);
 void func_8013D1E8(void* obj);
-void func_8009D018(u32 destination, u32 value);
+void CtrlRemote_SetSharedBit(u32 destination, u32 value);
 void awardQuestFlags(void);
 void CtrlObjectParam_SetWorkTailValue(u32 id);
 void* func_80140AFC(u32 id);
@@ -1037,7 +1043,7 @@ void UIWin_ThunkFlagBufReset(void* obj);
 void UIWin_FlagBufReset(void* obj);
 int UIWin_GetTimer(void);
 void UIWin_ClearTimer(void);
-int func_80122448(void);
+int getQuestWindow(void);
 
 // Enum-list constructors (decompiler placeholder addresses; same pattern as
 // __dt__80043E88).
@@ -1045,14 +1051,14 @@ void* __ct__800FB044(void* list, f32 a, void* obj, int b);
 void* __ct__800FA9B4(void* list, void* obj, int b);
 
 // Intra-unit callbacks (C linkage so the reloc names match retail).
-void func_800C3AD4(cf::CfObjectImplWalker* self);
+void Walker_ToggleTargetSel(cf::CfObjectImplWalker* self);
 int func_800C4244(cf::CfObjectImplWalker* self, u32 battleId, u32 arg);
 int func_800C4BD4(cf::CfObjectImplWalker* self, u32 a, u32 b);
 }
 
 // sdata2 literals referenced by this unit (global scope: not mangled).
 // const so MWCC treats the load as a constant and hoists it to the top of
-// the store block (retail func_800C1F44 shape; MWCC_CASES §extern const
+// the store block (retail Walker_ResetBattleHook shape; MWCC_CASES §extern const
 // float hoist).
 extern const f32 lbl_eu_80666B84;
 extern f32 lbl_eu_80666BA4;

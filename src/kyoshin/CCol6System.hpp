@@ -3,12 +3,12 @@
 #include <types.h>
 #include "monolib/work/CProcess.hpp"
 #include "kyoshin/CCol6CheckBat.hpp"
-// CCol6Invite.hpp declares func_eu_801651A0 with C++ linkage, which mangles
+// CCol6Invite.hpp declares Col6FormatBufferString with C++ linkage, which mangles
 // the retail-unmangled symbol at call sites (reloc-name drift). Shadow that
 // declaration so this unit's extern "C" decl (below) is the only visible one.
-#define func_eu_801651A0 func_eu_801651A0_cpponly
+#define Col6FormatBufferString Col6FormatBufferString_cpponly
 #include "kyoshin/CCol6Invite.hpp"
-#undef func_eu_801651A0
+#undef Col6FormatBufferString
 #include "kyoshin/CScrollBar.hpp"
 
 #include "monolib/device/CDeviceVI.hpp"
@@ -200,7 +200,7 @@ struct CCol6PaneFlagView {
 
 // Cast-only view of the object returned by CItem_initItemImplInstances: MWCC
 // reserves vtable slots 0/1, so the first user virtuals land at +0x08/+0x0C
-// and slot 4 at +0x10 is the per-item sync callback invoked by func_80160EE4.
+// and slot 4 at +0x10 is the per-item sync callback invoked by Col6_SyncBoxSlot_0EE4.
 class CCol6ItemInstancesView {
 public:
     virtual void vf2(int) = 0;         // vtable + 0x08
@@ -243,7 +243,7 @@ public:
     /* 0xA0 */ u8 mFlagA0;                      // layout-2 ready flag (cleared in Term)
     /* 0xA1 */ u8 mFlagA1;                      // draw-gate flag (cbRenderBefore)
     /* 0xA2 */ u16 mFieldA2;                    // halfword (retail ctor: sth 0)
-    /* 0xA4 */ u8 mFieldA4;                      // byte flag, set 0x22 by func_8016378C
+    /* 0xA4 */ u8 mFieldA4;                      // byte flag, set 0x22 by Col6_Win2Interact_378C
     /* 0xA5 */ u8 mPadA5[3];                     // retail pads to 0xA8
     /* 0xA8 */ u8 mCur1[0x18];                  // CCur18 cursor 1
     /* 0xC0 */ u8 mCur2[0x18];                  // CCur18 cursor 2
@@ -345,7 +345,7 @@ class CTaskGame;
 extern "C" CTaskGame* getInstance__9CTaskGameFv();
 extern "C" bool isFlag01Set__9CTaskGameFv(CTaskGame* self);
 
-// CMenuFade object (opaque here; func_80113E1C/func_80113E24 gate on it).
+// CMenuFade object (opaque here; getFadeMenu/isFadeActive gate on it).
 class CCol6Fade;
 
 // C++-linkage (mangled retail symbols) declared with the unmangled identifier
@@ -361,12 +361,12 @@ extern "C" {
 u32 CSysWin_isReady(void* syswin);                                   // CSysWin.cpp
 int CSysWin_isActive(void* syswin);                                   // CSysWin.cpp
 int CSysWin_getUnk34(void* syswin);                                   // CSysWin.cpp
-void func_8022B7C8(void* syswin, nw4r::lyt::DrawInfo* drawInfo);     // CSysWin.cpp
-void func_8022B7F4(void* syswin);                                    // CSysWin.cpp
-void func_8022B8E4(void* syswin);                                    // CSysWin.cpp
-void func_801D20B0(void*, void*);     // CCur.cpp
+void sysWinDrawLayout(void* syswin, nw4r::lyt::DrawInfo* drawInfo);     // CSysWin.cpp
+void sysWinTermLayout(void* syswin);                                    // CSysWin.cpp
+void sysWinAdvancePhase3(void* syswin);                                    // CSysWin.cpp
+void Cur_DrawLayout(void*, void*);     // CCur.cpp
 void UIWin_CreateSysWin0(char* msg, int a, int b);                         // CUICfManager.cpp
-void func_8009D018(u32 destination, u32 value);                      // CfGameManager.cpp
+void CtrlRemote_SetSharedBit(u32 destination, u32 value);                      // CfGameManager.cpp
 CCol6Pad* getCurrentPad__Q22cf13CfGameManagerFv();                   // cf::CfGameManager
 int isClassicController__Q22cf13CfGameManagerFv(int arg);                  // cf::CfGameManager
 void UIWin_CreateItemMulti(u32, u32, u32, u32, u32, u32, u32, u32, u32);     // CUICfManager.cpp
@@ -379,11 +379,11 @@ void CItemData_initFromFamily(void*, u16, u32);                                 
 // CItem_initItemImplInstances is declared extern "C" by
 // include/kyoshin/cf/CfGameManager.hpp (pulled in via harness_catalog); a
 // local redeclaration here would mangle and trip MWCC 10197.
-u32 func_80124B78();                                                  // CHelp_CloseSysMenu.cpp
-CCol6Fade* func_80113E1C();                                           // CMenuFade.cpp
-int func_80113E24(CCol6Fade* fade);                                    // CMenuFade.cpp (byte result, tested unmasked)
+u32 SysWinGetSingleton();                                                  // CHelp_CloseSysMenu.cpp
+CCol6Fade* getFadeMenu();                                           // CMenuFade.cpp
+int isFadeActive(CCol6Fade* fade);                                    // CMenuFade.cpp (byte result, tested unmasked)
 void CUICfManager_queueFadeMenu(u32 a, u32 b, f32 x, f32 y, f32 z);                // CUICfManager.cpp
-u32 func_801B481C();                                                   // code_80135FDC.cpp (any block condition active)
+u32 GetItemMulti_IsActiveFlag();                                                   // code_80135FDC.cpp (any block condition active)
 u16 BdatGetU16ByTableKey(const void*, const void*, u32);                     // code_80135FDC.cpp
 char* BdatTouchStringCell(const void*, const void*, int);                   // code_80135FDC.cpp
 void notifyBattleSystem__Q22cf13CfGameManagerFv(u32, u32, u32, u32, u32);  // CfGameManager.cpp
@@ -394,23 +394,23 @@ void* CfSoundMan_TouchSlotById(u16 handle);                                     
 void isEffectReady__Q22cf13CfGameManagerFv(u32, ml::CVec3*, ml::CVec3*, u32, f32); // CfGameManager.cpp
 UnkClass_80083298View* getGameSubManager__Q22cf13CfGameManagerFv();       // CfGameManager.cpp
 extern "C" u16 playActorSound__Q22cf10CfSoundManFUlUlUlUlf(u32, u32, u32, u32, f32); // CfSoundMan.cpp (returns sound handle)
-extern "C" void func_eu_801651A0(char* buffer, const char* format, ...); // EU format helper (unmangled retail)
+extern "C" void Col6FormatBufferString(char* buffer, const char* format, ...); // EU format helper (unmangled retail)
 void func_8022B9B4(void* syswin, const char* msg, int flag);          // CSysWin.cpp
 void func_8022BFC8(void* syswin, int flag);                           // CSysWin.cpp
-void func_8022B8B8(void* syswin);                                     // CSysWin.cpp
-void func_8022B748(void* syswin);                                     // CSysWin.cpp (per-frame update)
+void sysWinOpenPhase1(void* syswin);                                     // CSysWin.cpp
+void sysWinDispatchPhase(void* syswin);                                     // CSysWin.cpp (per-frame update)
 char* BdatGetPtrDirect(const void*, const void*, int);                   // code_80135FDC.cpp
 int IsMenuState621F0();                                                  // code_80135FDC.cpp
 // CScrollBar / CCur18 helpers (retail-unmangled C-linkage names).
 int CScrollBar_isVisible(void* scrollbar);                             // CScrollBar.cpp
-int func_801F3668(void* scrollbar);                                    // CScrollBar.cpp
-void func_801F3670(void* scrollbar, ml::CVec3* vec);                 // CScrollBar.cpp
-void func_801F36BC(void* scrollbar, int count, u32 value);           // CScrollBar.cpp
-void func_801F367C(void* scrollbar);                                 // CScrollBar.cpp
-void func_801F3540(void* scrollbar);                                 // CScrollBar.cpp
-void func_801F369C(void* scrollbar);                                 // CScrollBar.cpp (layout rebuild)
-void func_801F3850(void* scrollbar, u16 value);                     // CScrollBar.cpp (thumb position)
-void func_801D216C(void* cursor, int arg);                            // CCur.cpp
+int CScrollBar_isActive(void* scrollbar);                                    // CScrollBar.cpp
+void CScrollBar_InitRootPane(void* scrollbar, ml::CVec3* vec);                 // CScrollBar.cpp
+void CScrollBar_UpdateThumb(void* scrollbar, int count, u32 value);           // CScrollBar.cpp
+void CScrollBar_requestScrollIn(void* scrollbar);                                 // CScrollBar.cpp
+void CScrollBar_UpdateDispatch(void* scrollbar);                                 // CScrollBar.cpp
+void CScrollBar_requestScrollOut(void* scrollbar);                                 // CScrollBar.cpp (layout rebuild)
+void CScrollBar_PlaceThumb(void* scrollbar, u16 value);                     // CScrollBar.cpp (thumb position)
+void Cur_SetVisible(void* cursor, int arg);                            // CCur.cpp
 void func_801D202C(void* cursor);                                     // CCur.cpp
 void* CUICfManager_getArcResourceAccessor();                                                // CCur.cpp (vtable source for __ct__CCur18)
 void* getCfPadData__Q22cf13CfGameManagerFv();                        // cf::CfGameManager
@@ -422,11 +422,11 @@ void func_8013676C(nw4r::lyt::Pane*, u32);                           // code_801
 void BdatGetItemType(u16);                                             // CItemBoxInfo.cpp
 void BdatGetItemId(u16);                                             // CItemBoxInfo.cpp
 char* func_801394D4(u16);                                            // CItemBoxInfo.cpp
-void* func_8003AA34();                                               // bdat manager
+void* Bdat_GetTable_AA34();                                               // bdat manager
 void* getFP__FPCc(const char*);                                      // bdat file pointer
-u32 func_8003B1EC(void*);                                            // bdat row count
-void func_8022C1B4(u8* out, void* syswin, u8 sel);                   // CSysWin.cpp
-void func_8022BF6C(void* syswin, void* a, void* b);                  // CSysWin.cpp
+u32 Bdat_GetMaxRow_B1EC(void*);                                            // bdat row count
+void sysWinGetPaneScreenPos(u8* out, void* syswin, u8 sel);                   // CSysWin.cpp
+void sysWinSetTwoTextValues(void* syswin, void* a, void* b);                  // CSysWin.cpp
 extern "C" void func_80137924(nw4r::math::VEC3* out, nw4r::lyt::Pane* a,
                    nw4r::lyt::Pane* b, nw4r::lyt::Pane* c);          // code_80135FDC.cpp
 // CTaskLOD/audio helpers: u8 params (values are passed unmasked by callers).
@@ -434,15 +434,15 @@ void activateLOD__8CTaskLODFv(u8);                                  // CTaskLOD.
 void deactivateLOD__8CTaskLODFv(u8);                                  // CTaskLOD.cpp
 int getLODData__8CTaskLODFv(u8);                                   // CTaskLOD.cpp
 void* getScnHandle__Fv(void);                                        // code_80135FDC.cpp
-void func_804BCC30(void*, u8);                                        // code_80135FDC.cpp
-void func_804BCC3C(void*, u8);                                        // code_80135FDC.cpp
+void ScnData_FwdB7D9C(void*, u8);                                        // code_80135FDC.cpp
+void ScnData_FwdB7DD4(void*, u8);                                        // code_80135FDC.cpp
 void forwardMpfCallB__17UnkClass_8047BB54Fv(void*, u8);                 // code_80135FDC.cpp
 void forwardMpfCallC__17UnkClass_8047BB54Fv(void*, u8);                 // code_80135FDC.cpp
 void __ct__8CProcessFv(CProcess* self);                              // CProcess ctor
 void __ct__CScrollBar(void* self, u8 direction);                     // CScrollBar ctor (retail short name)
 void __ct__CSysWin(void* self, int arg);                              // CSysWin ctor (retail short name)
 void __ct__CCur18(void* self, void* arg);                            // CCur18 ctor (retail short name)
-void func_801F34F4(CScrollBar* self);                                // CScrollBar arc read (retail short name)
+void CScrollBar_loadLayoutArc(CScrollBar* self);                                // CScrollBar arc read (retail short name)
 int sprintf(char*, const char*, ...);                                // stdio (CRT)
 }
 
@@ -508,15 +508,15 @@ extern "C" const u8 lbl_eu_8066756E;
 extern "C" const u32 lbl_eu_80667570;
 extern "C" const u16 lbl_eu_80667574;
 extern "C" const u8 lbl_eu_80667576;
-extern "C" u32 func_8009CF8C(u32 resourceId);
+extern "C" u32 CtrlRemote_TouchBitByArg(u32 resourceId);
 extern "C" void __dt__7CSysWinFv(void*, int);
 extern "C" void __dt__6CCur18Fv(void*, int);
 extern "C" void __dt__17UnkClass_8045F564Fv(void*, int);
 extern "C" void __ct__17UnkClass_8045F564Fv(void* self);
 extern "C" void __ct__Q34nw4r3lyt8DrawInfoFv(void* drawInfo);
 extern "C" void __dt__Q34nw4r3lyt8DrawInfoFv(void* drawInfo, int flags);
-extern "C" void func_801F35DC(CScrollBar* scrollbar);                    // scrollbar destroy
-extern "C" void func_801F35B0(void* scrollbar, nw4r::lyt::DrawInfo* di); // scrollbar draw
+extern "C" void CScrollBar_Teardown(CScrollBar* scrollbar);                    // scrollbar destroy
+extern "C" void CScrollBar_draw(void* scrollbar, nw4r::lyt::DrawInfo* di); // scrollbar draw
 extern "C" void CUICfManager_setMessageWindowVisible(u8 enable);                                // message-window show/hide
 extern "C" void UIWin_CreateQuestWin(int id, int a, int b);                     // window open request
 extern u32 lbl_eu_80663E28;  // .sbss mode bitfield (bit 0x400000 gates hint draws)

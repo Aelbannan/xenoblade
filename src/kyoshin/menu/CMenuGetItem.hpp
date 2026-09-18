@@ -67,7 +67,7 @@ public:
     u8 mIsDisableDraw;         // 0x3B
     u32 ptmfMove[3];           // 0x3C
     u32 ptmfDraw[3];           // 0x48
-    u8 mField_54;              // 0x54 - set to 1 by func_8014A2D0
+    u8 mField_54;              // 0x54 - set to 1 by CMenuGetItem_SetField54
     u8 mField_55;              // 0x55
     u8 _pad56[2];              // 0x56
     u32 mIWorkEventVt;         // 0x58 - IWorkEvent subobject vtable slot
@@ -82,7 +82,7 @@ public:
     u8 mField_88;              // 0x88
     u8 _pad89[0x8C - 0x89];    // 0x89..0x8B
     f32 mField_8C;             // 0x8C - initialised to lbl_eu_80667418
-    u8 mField_90;              // 0x90 - read by func_8014A2B4
+    u8 mField_90;              // 0x90 - read by CMenuGetItem_GetField90
     u8 _pad91[0x94 - 0x91];    // 0x91..0x93
     u32 mField_94;             // 0x94 - single variant stores the ctor arg
     u32 mField_98;             // 0x98
@@ -115,7 +115,7 @@ extern char lbl_eu_805018D0[];
 // C-linkage imports (retail names are unmangled free functions in this TU;
 // MWCC mangles plain global-scope free functions with a __F suffix, so the
 // declarations must sit under extern "C" to emit the retail reloc names).
-extern "C" u8 func_80144FC8();
+extern "C" u8 isLandTelopActive();
 extern "C" nw4r::lyt::ArcResourceAccessor* CUICfManager_getArcResourceAccessor();
 extern "C" void* func_801394D4(u32);
 // Pre-mangled static member name (CDeviceFont::getFontInfo(u32, Layout*));

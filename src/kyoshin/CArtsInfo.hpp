@@ -211,7 +211,7 @@ extern "C" u16 BdatGetU16ByTableKey(const void*, const void*, u8);
 extern "C" u8 BdatGetU8ByTableKey(const void*, const void*, u32);
 extern "C" s16 BdatGetS16ByTableKey(const void*, const void*, u32); // u32: matches defining TU code_80135FDC.cpp verbatim
 extern "C" void SplitU32ToS16s(void*, u32);
-extern "C" void func_801C4B60(void*, s16, s16, s16, s16); // colour init
+extern "C" void setGXColorS10(void*, s16, s16, s16, s16); // colour init
 extern "C" void PaneMatSetTevColorsByName(void*, void*, void*, void*);
 extern "C" void func_80137924(void*, void*, void*, void*);
 extern "C" void* func_8009EC9C(u32);
@@ -226,20 +226,20 @@ extern "C" u32 BdatGetU16Direct(const void*, const void*, int);
 // (func_80157C4C is declared by kyoshin/cf/CItem.hpp: the real 2-arg
 // CItemExt* form. Call sites pass the slot id that retail leaves in r4.)
 extern "C" void func_801D202C(void*);
-extern "C" void func_801D20B0(void*, void*);
-extern "C" void func_801D216C(void*, int);
+extern "C" void Cur_DrawLayout(void*, void*);
+extern "C" void Cur_SetVisible(void*, int);
 extern "C" int sprintf(char*, const char*, ...);
 
 // Item-implementation object for an entry (real owner: CItemImpl in
 // kyoshin/cf/CItem.hpp; slots +0x2C/+0x30/+0x40/+0x54/+0x90).
 // (CItem_initItemImplInstances is declared by kyoshin/cf/CItem.hpp.)
 
-// Imports from the func_8025FB10 accessor family (code_8025FB10.cpp).
+// Imports from the IdTable_SumValues accessor family (code_8025FB10.cpp).
 // Retail call sites bind to the unmangled names, so keep C linkage
 // (same style as CItemBoxGrid.hpp).
-extern "C" int func_8026178C(void*, u32);
+extern "C" int Counter_TestBit(void*, u32);
 // int-return form: single winning decl shared with chain/CChainActorList.hpp.
-extern "C" int func_8025FB10(void*, u32);
+extern "C" int IdTable_SumValues(void*, u32);
 
 // Float -> s32 conversion helper used by the arts-grid percentage functions
 // (func_8023916C): takes the scaled float in f1 and returns the truncated
@@ -310,9 +310,9 @@ extern "C" int isClassicController__Q22cf13CfGameManagerFv(int);
 extern "C" char* MakeTplNameSysFile(u32);
 extern "C" nw4r::lyt::ArcResourceAccessor* CUICfManager_getArcResourceAccessor();
 extern "C" void PaneSetTexPaletteByName(nw4r::lyt::Layout*, const char*, u32);
-extern "C" void func_80124270(void*, u32);
+extern "C" void setPaneVisible(void*, u32);
 extern "C" void setBdatEntry__5CBdatFUlPv(u32, void*);
-extern "C" void* func_8003AA34();
+extern "C" void* Bdat_GetTable_AA34();
 extern "C" void* getFP__FPCc(const char* name);
 extern "C" void func_8023B430(CArtsInfo* self);
 extern "C" CArtsColorPair func_801397AC(void* pane, int idx);

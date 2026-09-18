@@ -63,9 +63,9 @@ public:
     virtual ~CMCCrystalList();
     virtual bool OnFileEvent(CEventFile* pEventFile);
 
-    u8 func_80222A50();
-    u8 func_80222A58();
-    void func_80222964(nw4r::lyt::DrawInfo* drawInfo);
+    u8 crystalListGetDataFlag();
+    u8 crystalListIsActive();
+    void crystalListDrawIfActive(nw4r::lyt::DrawInfo* drawInfo);
 
     /* 0x00 */ // IWorkEvent base (vptr)
     /* 0x04 */ UnkClass_8045F564 mMemRegion1;

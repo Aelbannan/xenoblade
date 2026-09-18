@@ -6,19 +6,19 @@
 #include "kyoshin/harness_catalog.hpp"
 #include "monolib/math/Random.hpp"
 
-// us-802a8540 (func_802A5E0C)
+// us-802a8540 (downVoiceCompletionKick)
 // Completion callback: if no active voice, call the playback-start virtual.
-void func_802A5E0C(CVS_THREAD_DOWN* self) {
+void downVoiceCompletionKick(CVS_THREAD_DOWN* self) {
     if (func_802A3E88(self) == 0) {
         self->func_802A3B50();
     }
 }
 
-// us-802a8588 (func_802A5E54)
+// us-802a8588 (downVoiceRemoveByPtr)
 // Remove a voice from the slots by matching its embedded CCharVoice pointer.
 // Each slot stores a CVoiceHandle; the comparison target is the CCharVoice
 // embedded at +0x3E9C inside that handle (or NULL when the slot is empty).
-void func_802A5E54(CVS_THREAD_DOWN* self, CCharVoice* voicePtr) {
+void downVoiceRemoveByPtr(CVS_THREAD_DOWN* self, CCharVoice* voicePtr) {
     func_802A3BEC(self, voicePtr);
 
     // Slot 0x20: load handle, bias to its embedded voice if non-null, compare
@@ -42,12 +42,12 @@ void func_802A5E54(CVS_THREAD_DOWN* self, CCharVoice* voicePtr) {
     }
 }
 
-// us-802a83c4 (func_802A5C90)
+// us-802a83c4 (downVoiceAdvanceSlot1)
 // Advance/play function for voice slot 1 (field_0x20).
 // Copies init data from lbl_eu_80539A74 into the base state words 0x00-0x08,
 // checks if the voice is still active (vtable method at offset 0x2BC), and
 // if inactive, plays a random voice ID (mtRand(2) + 0x70C).
-void func_802A5C90(CVS_THREAD_DOWN* self) {
+void downVoiceAdvanceSlot1(CVS_THREAD_DOWN* self) {
     // Init-state triple view over the CVS_THREAD base words at 0x00-0x08.
     // First word is loaded before the slot read and kept in a temp so the
     // load/store schedule matches retail.
@@ -77,12 +77,12 @@ void func_802A5C90(CVS_THREAD_DOWN* self) {
     }
 }
 
-// us-802a8480 (func_802A5D4C)
+// us-802a8480 (downVoiceAdvanceSlot2)
 // Advance/play function for voice slot 2 (field_0x24).
 // Copies init data from lbl_eu_80539A80 into the base state words 0x00-0x08,
 // checks if the voice is still active, and if inactive, plays a voice ID
 // chosen by mtRand(2): 0x713 when rand==0, otherwise 0x70E.
-void func_802A5D4C(CVS_THREAD_DOWN* self) {
+void downVoiceAdvanceSlot2(CVS_THREAD_DOWN* self) {
     if (func_802A3E88(self) != 0) {
         return;
     }

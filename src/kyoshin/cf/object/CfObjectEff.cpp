@@ -95,13 +95,13 @@ extern "C" u32 hasChildEffs___Q22cf11CfObjectEffFv(cf::CfObjectEff* self) { retu
 void CfObjectEff::detachChildEf() {
     if (mChildEff != nullptr) {
         // Parent for the effect detach is this+0x90; retail null-guards the
-        // offset so a null this passes 0 to func_804E3D48.
+        // offset so a null this passes 0 to schedDetachChildSlot.
         u8* parent = reinterpret_cast<u8*>(this);
         if (this != nullptr) {
             parent = reinterpret_cast<u8*>(this) + 0x90;
         }
-        func_804E3D48(mChildEff, parent);
-        func_804E3CCC(mChildEff);
+        schedDetachChildSlot(mChildEff, parent);
+        schedClearFlag15Update(mChildEff);
         mChildEff = nullptr;
     }
 }
@@ -200,7 +200,7 @@ void setChildB59__(void* self, unsigned char val) {
 void setChildScl__(cf::CfObject* self, float first, float second) {
     cf::CfObjectEff* eff = static_cast<cf::CfObjectEff*>(self);
     if (eff->mChildEff != nullptr)
-        return func_804E3CDC(eff->mChildEff, first, second);
+        return schedSetStepIntervals(eff->mChildEff, first, second);
 }
 
 namespace cf {
@@ -398,13 +398,13 @@ extern "C" void setEffLockFg___Q22cf11CfObjectEffFv(cf::CfObjectEff* self, bool 
 
 // r4 = object, r5 = partner. Stores both on the owner, then when a child
 // effect exists and only the object is set, resolves the partner via
-// func_800BB340 (a lookup) before writing it to the child.
+// CfModel_GetEffOwner (a lookup) before writing it to the child.
 void bindPartnerO_(cf::CfObjectEff* self, u8* object, u8* partner) {
     self->mFieldAC = partner;
     self->mField9C = object;
     if (self->mChildEff != nullptr) {
         if (object != nullptr && partner == nullptr) {
-            partner = ((u8* (*)(u8*))func_800BB340)(object);
+            partner = ((u8* (*)(u8*))CfModel_GetEffOwner)(object);
         }
         self->mChildEff->field_14 = partner;
     }
@@ -412,7 +412,7 @@ void bindPartnerO_(cf::CfObjectEff* self, u8* object, u8* partner) {
 void setTargetObj_(cf::CfObjectEff* obj, u8* target) {
     if (obj->mChildEff != nullptr) {
         if (target != nullptr)
-            obj->mChildEff->field_18 = ((u8* (*)(u8*))func_800BB340)(target);
+            obj->mChildEff->field_18 = ((u8* (*)(u8*))CfModel_GetEffOwner)(target);
         else
             obj->mChildEff->field_18 = nullptr;
     }
@@ -495,26 +495,26 @@ void createEffect_(cf::CfObjectEff* self) {
             u8* f9c = self->mField9C;
             if (self->mChildEff != 0) {
                 if (f9c != 0 && partner == 0) {
-                    partner = static_cast<u8*>(func_800BB340(f9c));
+                    partner = static_cast<u8*>(CfModel_GetEffOwner(f9c));
                 }
                 self->mChildEff->field_14 = partner;
             }
             work = reinterpret_cast<u32>(self->mFieldA0);
             if (self->mChildEff != 0) {
                 if (work != 0) {
-                    self->mChildEff->field_18 = static_cast<u8*>(func_800BB340(reinterpret_cast<void*>(work)));
+                    self->mChildEff->field_18 = static_cast<u8*>(CfModel_GetEffOwner(reinterpret_cast<void*>(work)));
                 } else {
                     self->mChildEff->field_18 = 0;
                 }
             }
             self->mFieldA0 = reinterpret_cast<u8*>(work);
-            void* result = func_804E3CFC(self->mChildEff);
+            void* result = schedFindEntryByKey(self->mChildEff);
             self->CObjectParam_setObjectName(
                 reinterpret_cast<const char*>(result));
             self->mFieldB4 = 1;
             u8* parent = reinterpret_cast<u8*>(self);
             if (self != 0) parent = reinterpret_cast<u8*>(self) + 0x90;
-            func_804E3D0C(self->mChildEff, parent);
+            schedAttachChildSlot(self->mChildEff, parent);
         } else {
             self->mFlags68 |= 0x40;
         }
@@ -672,12 +672,12 @@ namespace cf {
 // the live-object check), then drops the child and sets flag 0x40.
 extern "C" void teardownEff____Q22cf11CfObjectEffFv(cf::CfObjectEff* self, u8* arg) {
     // Parent for the effect detach is this+0x90; retail null-guards the
-    // offset so a null this passes 0 to func_804E3D48.
+    // offset so a null this passes 0 to schedDetachChildSlot.
     u8* parent = reinterpret_cast<u8*>(self);
     if (self != nullptr) {
         parent = reinterpret_cast<u8*>(self) + 0x90;
     }
-    func_804E3D48(self->mChildEff, parent);
+    schedDetachChildSlot(self->mChildEff, parent);
     if (self->mFieldB0 != nullptr) {
         reinterpret_cast<cf::CPcEffectBank*>(self->mFieldB0)->release(self);
         self->mFieldB0 = nullptr;

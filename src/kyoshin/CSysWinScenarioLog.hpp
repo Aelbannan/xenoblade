@@ -80,7 +80,7 @@ public:
     virtual void mSlot2(u32 arg);   // index 0 -> vtable 0x8
 };
 
-// func_80280588 vtable view on the device object: with -RTTI, index N sits at
+// SysWinLog_GateDevice vtable view on the device object: with -RTTI, index N sits at
 // vtable offset (N+2)*4, so mAt9C (index 37) lands on 0x9c and mAt2BC (index
 // 173) on 0x2bc. The slab virtuals are padding to reach those indices.
 struct CScenarioLogOwner;
@@ -338,7 +338,7 @@ public:
     virtual CSysWinSubResult* mAt30() = 0;  // index 10 -> vtable 0x30
 };
 
-// func_8027EC80 font-object view: vtable slot 0x24 returns the font handle
+// SysWinLog_BuildLayout font-object view: vtable slot 0x24 returns the font handle
 // handed to func_8013676C (same shape as CTalkWindow's CTalkFontObj).
 class CSysWinFontObjView {
 public:
@@ -352,7 +352,7 @@ public:
     virtual u32 getFontHandle() = 0;  // index 7 -> 0x24
 };
 
-// func_8027EC80 / func_8027EA6C root-pane view: a custom virtual at vtable
+// SysWinLog_BuildLayout / func_8027EA6C root-pane view: a custom virtual at vtable
 // offset 0x3C (name + flag, returns the pane). The trailing region carries
 // the tag-processor pointer (+0xF8) and the texture size floats (+0x4C/+0x50).
 class CSysWinPaneView {
@@ -414,7 +414,7 @@ struct CSysWinCharSlot {
     u8 _A4[0xC4 - 0xA4];
 };
 
-// Battle-manager view used by func_8027EF50: the list sentinel node lives at
+// Battle-manager view used by SysWinLog_PollBattleEnd: the list sentinel node lives at
 // +0x48 and the iteration counts nodes until it reaches the sentinel again.
 struct CSysWinBattleMgrView {
     u8 _0[0x48];
@@ -458,7 +458,7 @@ struct CScenarioLogSub {
     CScenarioLogSubInner* field_0x8;     // +0x8
 };
 
-// func_8027F848 / func_8027F2DC / func_8027FC80 argument view: a big object
+// func_8027F848 / func_8027F2DC / SysWinLog_DriveCounters argument view: a big object
 // with a scenario-flag dword at +0x3F00 (bit 1 = gate), a u16 flag at
 // +0x3E6C (bit 12), and an embedded player object whose address at +0x3E9C is
 // compared against CfGameManager::getPlayer(0). The sub-state tracking fields
@@ -480,20 +480,20 @@ struct CScenarioLogOwner {
     CScenarioLogSub* field_0x3F60;       // +0x3F60 sub-state object
 };
 
-// Type returned by func_8027FC80's per-object virtual calls (vtable offset
+// Type returned by SysWinLog_DriveCounters's per-object virtual calls (vtable offset
 // 0x224): the field_0 scalar drives the 0x5d / 0x5e close comparison.
 struct CSysWinDevEntry {
     u32 field_0;                          // +0x0
 };
 
-// func_8027FC80 arg0 view: the device object. Only the flag word at +0x3374
+// SysWinLog_DriveCounters arg0 view: the device object. Only the flag word at +0x3374
 // is read directly here; the vtable calls are dispatched via the helpers below.
 struct CSysWinDevice {
     u8 _0[0x3374];
     u32 field_0x3374;                     // +0x3374 flags
 };
 
-// func_8027FC80 device-object vtable view: with -RTTI a virtual declared at
+// SysWinLog_DriveCounters device-object vtable view: with -RTTI a virtual declared at
 // index N lands at vtable offset (N+2)*4, so mAtE0 (index 54) sits on 0xE0 and
 // mAt224 (index 135) on 0x224. Genuine virtual calls make MWCC emit retail's
 // `lwz r12, 0(rN) / lwz r12, off(r12) / mtctr / bctrl` dispatch.
@@ -637,7 +637,7 @@ public:
     virtual CSysWinDevEntry* mAt224() = 0;  // index 135 -> vtable 0x224
 };
 
-// func_8027FC80 helper: invoke a virtual at a runtime vtable offset on a raw
+// SysWinLog_DriveCounters helper: invoke a virtual at a runtime vtable offset on a raw
 // object pointer. MWCC cannot express these as member calls without emitting a
 // whole new vtable, so the call goes through the object's stored vtable.
 inline u32 csysWinCallE0(void* self) {
@@ -651,7 +651,7 @@ inline CSysWinDevEntry* csysWinCall224(void* self) {
 }
 
 // Vtable view of the scenario-log owner's virtual table used by
-// func_802807A0 / func_8027FC04: the dispatch target sits at retail vtable
+// SysWinLog_GateOwner / SysWinLog_DrivePair: the dispatch target sits at retail vtable
 // offset 0x28c. With -RTTI on, MWCC inserts a 2-entry (offset-to-top +
 // typeinfo) vtable prefix, so a virtual declared at index N lands at vtable
 // offset (N+2)*4: the 161 slab virtuals below place mAt28C at index 161 ->
@@ -823,9 +823,9 @@ public:
     virtual CSysWinDevice* mAt28C() = 0;   // index 161 -> vtable 0x28c
 };
 
-// func_802807A0 / func_8027FC04 helper: invoke the virtual at vtable offset
+// SysWinLog_GateOwner / SysWinLog_DrivePair helper: invoke the virtual at vtable offset
 // 0x28c on a scenario-log owner object. Retail uses the returned device/window
-// object as an argument to func_8027FC80.
+// object as an argument to SysWinLog_DriveCounters.
 inline CSysWinDevice* csysWinCall28C(CScenarioLogOwner* self) {
     return ((CSysWinOwnerView*)self)->mAt28C();
 }
@@ -856,7 +856,7 @@ extern "C" u32  getQueuedFileEventCount__Q22cf13CfGameManagerFv(); // unsigned c
 extern "C" int   CBattleMan_ListHasValue(void* bm, void* obj); // battle-list membership check
 extern "C" void* func_8016FE34(void* source);
 extern "C" u16  lbl_eu_80664772;          // pause / non-enemy-scene flag
-extern "C" u16  lbl_eu_80663E42;          // current area id (func_8027FC80 gate)
+extern "C" u16  lbl_eu_80663E42;          // current area id (SysWinLog_DriveCounters gate)
 extern "C" u32  lbl_eu_80664908;          // CSysWinScenarioLog singleton
 extern "C" u8   lbl_eu_80664910;
 extern "C" u8   lbl_eu_80664911;
@@ -890,16 +890,16 @@ extern "C" void getEntry__5CBdatFUl(u32);
 void func_801390E0(CFileHandle** handle);
 void releaseArcResourceAccessor(nw4r::lyt::ArcResourceAccessor* accessor);
 
-// Float thresholds used by func_8027EF50's player-range check.
+// Float thresholds used by SysWinLog_PollBattleEnd's player-range check.
 extern "C" f32 lbl_eu_80668AE0;
 extern "C" f32 lbl_eu_80668AE4;
 
-// Scenario-log unit imports (func_80280640 / func_8027F148 / func_8027EC80 /
+// Scenario-log unit imports (func_80280640 / func_8027F148 / SysWinLog_BuildLayout /
 // func_8027EA6C / func_80280F44). Retail-unmangled C-ABI symbols.
 extern "C" void* func_8009EC9C(u32 index);            // character-data lookup
 extern "C" u32 CtrlObjectParam_GetCurrentRowKey();                       // character-data category
-extern "C" u32 func_8003B1EC(void* fp);               // BDAT row count
-extern "C" u32 func_8009CF8C(u32 resourceId);         // message-count lookup
+extern "C" u32 Bdat_GetMaxRow_B1EC(void* fp);               // BDAT row count
+extern "C" u32 CtrlRemote_TouchBitByArg(u32 resourceId);         // message-count lookup
 extern "C" u32 BdatGetU16ByTableKey(const void*, const void*, u32);   // msg-id lookup
 // BdatGetU16Direct / BdatGetPtrDirect return wider-than-u16 values in retail; the
 // call sites truncate with an explicit (u16) cast (see func_8027EA6C).
@@ -914,7 +914,7 @@ extern "C" char* MakeTplNameSysFile(u32);
 extern "C" nw4r::lyt::ArcResourceAccessor* CUICfManager_getArcResourceAccessor();
 extern "C" void func_8013676C(nw4r::lyt::Pane* rootPane, u32 fontHandle);
 extern "C" void setBdatEntry__5CBdatFUlPv(u32, void*);
-extern "C" void* func_8003AA34();
+extern "C" void* Bdat_GetTable_AA34();
 extern "C" void* getFP__FPCc(const char*);
 extern "C" void* __ct__CTagProcessor(void* self);
 extern "C" u32 getAllocHandle__10CLibLayoutFv();
@@ -935,7 +935,7 @@ extern "C" double lbl_eu_80668AD8;
 
 // CSysWinScenarioLog::Move helpers.
 extern "C" int IsMenuState621F0();
-extern "C" s32  func_8029A658();
+extern "C" s32  MenuTutorialIsCreated();
 extern "C" u32  advanceAnimTransform__FPQ34nw4r3lyt13AnimTransformf(nw4r::lyt::AnimTransform*, float);
 extern "C" u32  AnimRewindFrame(nw4r::lyt::AnimTransform*, float);
 extern "C" void playUISound__FUl(u32);
@@ -947,8 +947,8 @@ extern "C" void func_8027EA6C(CSysWinScenarioLog* self);
 // Bottom-of-file helper definitions (see CSysWinScenarioLog.cpp): declared
 // here so callers below emit a direct `bl` to the retail symbol instead of an
 // inline body at each call site (retail calls them out-of-line).
-extern "C" u32 __declspec(noinline) func_8027EE88(u32 self, u32 arg);
-extern "C" void __declspec(noinline) func_8027EEF4(u32 self);
+extern "C" u32 __declspec(noinline) SysWinLog_BumpEventValue(u32 self, u32 arg);
+extern "C" void __declspec(noinline) SysWinLog_QueueEvent(u32 self);
 
 // cbRenderBefore imports (retail emits direct bl to these symbols).
 extern "C" void __ct__Q34nw4r3lyt8DrawInfoFv(u8* self);

@@ -356,8 +356,8 @@ u32 BdatGetU16Direct(const void* table, const char* str, u32 index);
 int func_80138234(const void* table, u32 index);
 void func_8049B59C(nw4r::math::VEC3* out, ScnXformBlock* pose,
                    const nw4r::math::VEC3* in);
-void* func_8003AA34(void);
-u32 func_8003B1EC(u8* bdat);
+void* Bdat_GetTable_AA34(void);
+u32 Bdat_GetMaxRow_B1EC(u8* bdat);
 }
 // Scn_FindCamItem provided by CfObjectMove.hpp as void* Scn_FindCamItem(void*, int)
 

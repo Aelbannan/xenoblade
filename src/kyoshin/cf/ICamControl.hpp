@@ -8,22 +8,22 @@
  *
  *   lbl_eu_80537F58, size 0x30 (RTTI lbl_eu_80662A00 "cf::ICamControlRemote",
  *     parent lbl_eu_80537F88 -> lbl_eu_80662A08 "cf::ICamControl"):
- *     +0x08 func_80274B28  +0x0C func_80274C20  +0x10 func_80274C68
- *     +0x14 func_80274B2C  +0x18 func_80274BA4  +0x1C func_80274CD4
- *     +0x20 func_80274D08  +0x24 func_80274D3C  +0x28 func_80274D70
- *     +0x2C func_80274DA4
+ *     +0x08 fetchPad  +0x0C isShortPress11  +0x10 isPressed12
+ *     +0x14 isPadBit4  +0x18 isPadBit5  +0x1C isHeld2
+ *     +0x20 isHeld3  +0x24 isHeld0  +0x28 isHeld1
+ *     +0x2C isLongHold11
  *   lbl_eu_80537F10, size 0x30 (RTTI lbl_eu_806629F8 "cf::ICamControlGc",
  *     parent lbl_eu_80537F40 -> "cf::ICamControl"):
- *     +0x08 func_80274B28  +0x0C func_80274C20  +0x10 func_80274C68
- *     +0x14 func_80274B2C  +0x18 func_80274BA4  +0x1C func_80274DD8
- *     +0x20 func_80274E0C  +0x24 func_80274E40  +0x28 func_80274E74
- *     +0x2C func_80274DA4
+ *     +0x08 fetchPad  +0x0C isShortPress11  +0x10 isPressed12
+ *     +0x14 isPadBit4  +0x18 isPadBit5  +0x1C CamGc_HeldBit19_DD8
+ *     +0x20 CamGc_HeldBit20_E0C  +0x24 CamGc_HeldBit17_E40  +0x28 CamGc_HeldBit18_E74
+ *     +0x2C isLongHold11
  *   lbl_eu_80537ED0, size 0x30 (RTTI lbl_eu_806629F0 "cf::ICamControlClassic",
  *     parent lbl_eu_80537F00 -> "cf::ICamControl"):
- *     +0x08 func_80274EA8  +0x0C func_80274EB0  +0x10 func_80274EE4
- *     +0x14 func_80274F34  +0x18 func_80274F94  +0x1C func_80274FF4
- *     +0x20 func_80275028  +0x24 func_8027505C  +0x28 func_80275090
- *     +0x2C func_802750C4
+ *     +0x08 camClassicGetMainPad  +0x0C camClassicPressedBit4  +0x10 camClassicHeldPressedCombo
+ *     +0x14 camClassicTriStateA  +0x18 camClassicTriStateB  +0x1C camClassicHeldBit12
+ *     +0x20 camClassicHeldBit11  +0x24 camClassicHeldBit14  +0x28 camClassicHeldBit13
+ *     +0x2C camClassicChainedOrBits
  *
  * Every table is RTTI + 0 + ten virtuals, and every leaf RTTI names
  * cf::ICamControl as its direct parent, so the tree is a flat 10-slot base
@@ -47,46 +47,46 @@ namespace cf {
 
 class __declspec(novtable) ICamControl {
 public:
-    virtual CPad* func_80274B28(); // vtable +0x08 - pad-status provider
-    virtual u32 func_80274C20(); // vtable +0x0C
-    virtual u32 func_80274C68(int controllerId); // vtable +0x10
-    virtual u32 func_80274B2C(int controllerId); // vtable +0x14
-    virtual u32 func_80274BA4(int controllerId); // vtable +0x18
-    virtual u32 func_80274CD4(int) = 0; // vtable +0x1C - per-leaf
-    virtual u32 func_80274D08(int) = 0; // vtable +0x20 - per-leaf
-    virtual u32 func_80274D3C(int) = 0; // vtable +0x24 - per-leaf
-    virtual u32 func_80274D70(int) = 0; // vtable +0x28 - per-leaf
-    virtual u32 func_80274DA4(int); // vtable +0x2C
+    virtual CPad* fetchPad(); // vtable +0x08 - pad-status provider
+    virtual u32 isShortPress11(); // vtable +0x0C
+    virtual u32 isPressed12(int controllerId); // vtable +0x10
+    virtual u32 isPadBit4(int controllerId); // vtable +0x14
+    virtual u32 isPadBit5(int controllerId); // vtable +0x18
+    virtual u32 isHeld2(int) = 0; // vtable +0x1C - per-leaf
+    virtual u32 isHeld3(int) = 0; // vtable +0x20 - per-leaf
+    virtual u32 isHeld0(int) = 0; // vtable +0x24 - per-leaf
+    virtual u32 isHeld1(int) = 0; // vtable +0x28 - per-leaf
+    virtual u32 isLongHold11(int); // vtable +0x2C
 };
 
 class __declspec(novtable) ICamControlRemote : public ICamControl {
 public:
-    virtual u32 func_80274CD4(int); // vtable +0x1C override
-    virtual u32 func_80274D08(int); // vtable +0x20 override
-    virtual u32 func_80274D3C(int); // vtable +0x24 override
-    virtual u32 func_80274D70(int); // vtable +0x28 override
+    virtual u32 isHeld2(int); // vtable +0x1C override
+    virtual u32 isHeld3(int); // vtable +0x20 override
+    virtual u32 isHeld0(int); // vtable +0x24 override
+    virtual u32 isHeld1(int); // vtable +0x28 override
 };
 
 class __declspec(novtable) ICamControlGc : public ICamControl {
 public:
-    virtual u32 func_80274CD4(int); // vtable +0x1C override (retail DD8 body)
-    virtual u32 func_80274D08(int); // vtable +0x20 override (retail E0C body)
-    virtual u32 func_80274D3C(int); // vtable +0x24 override (retail E40 body)
-    virtual u32 func_80274D70(int); // vtable +0x28 override (retail E74 body)
+    virtual u32 isHeld2(int); // vtable +0x1C override (retail DD8 body)
+    virtual u32 isHeld3(int); // vtable +0x20 override (retail E0C body)
+    virtual u32 isHeld0(int); // vtable +0x24 override (retail E40 body)
+    virtual u32 isHeld1(int); // vtable +0x28 override (retail E74 body)
 };
 
 class __declspec(novtable) ICamControlClassic : public ICamControl {
 public:
-    virtual CPad* func_80274B28(); // vtable +0x08 override (retail EA8 body)
-    virtual u32 func_80274C20(); // vtable +0x0C override (retail EB0 body)
-    virtual u32 func_80274C68(int controllerId); // +0x10 (retail EE4 body)
-    virtual u32 func_80274B2C(int controllerId); // +0x14 (retail F34 body)
-    virtual u32 func_80274BA4(int controllerId); // +0x18 (retail F94 body)
-    virtual u32 func_80274CD4(int); // vtable +0x1C override (retail FF4 body)
-    virtual u32 func_80274D08(int); // vtable +0x20 override (retail 5028 body)
-    virtual u32 func_80274D3C(int); // vtable +0x24 override (retail 505C body)
-    virtual u32 func_80274D70(int); // vtable +0x28 override (retail 5090 body)
-    virtual u32 func_80274DA4(int); // vtable +0x2C override (retail 50C4 body)
+    virtual CPad* fetchPad(); // vtable +0x08 override (retail EA8 body)
+    virtual u32 isShortPress11(); // vtable +0x0C override (retail EB0 body)
+    virtual u32 isPressed12(int controllerId); // +0x10 (retail EE4 body)
+    virtual u32 isPadBit4(int controllerId); // +0x14 (retail F34 body)
+    virtual u32 isPadBit5(int controllerId); // +0x18 (retail F94 body)
+    virtual u32 isHeld2(int); // vtable +0x1C override (retail FF4 body)
+    virtual u32 isHeld3(int); // vtable +0x20 override (retail 5028 body)
+    virtual u32 isHeld0(int); // vtable +0x24 override (retail 505C body)
+    virtual u32 isHeld1(int); // vtable +0x28 override (retail 5090 body)
+    virtual u32 isLongHold11(int); // vtable +0x2C override (retail 50C4 body)
 };
 
 } // namespace cf

@@ -57,10 +57,10 @@ char** cf::CfCamEvent::initCamIntfInstances() {
     return result;
 }
 
-extern "C" void func_8006ACB0(u8* self, float value) {
+extern "C" void CfCamEvt_StoreFactor280(u8* self, float value) {
     *(float*)((uintptr_t)self + 0x280) = value;
 }
-extern "C" float func_8006ACB8(u8* self) {
+extern "C" float CfCamEvt_LoadFactor280(u8* self) {
     return *(float*)((char*)self + 0x280);
 }
 
@@ -69,7 +69,7 @@ using namespace cf;
 // Refresh the camera vectors: zero the direction/lookat/pos block, adopt the
 // source position and lookat, recompute the direction via cfCam_vecToAngles, and
 // capture the resulting distance into the speed factor.
-void func_8006A82C(CfCamEvent* self) {
+void CfCamEvt_InitCamVectors(CfCamEvent* self) {
     CfCamBody25C* body = (CfCamBody25C*)&self->unk25C;
     memset(body, 0, 0x34);
     body->pos = self->unk34;
@@ -81,13 +81,13 @@ void func_8006A82C(CfCamEvent* self) {
 
 // Select a cam type id, then refresh the direction vector from the camera's
 // v_05 accessor (which returns the current direction).
-void func_8006A90C(CfCamEvent* self, s32 type) {
+void CfCamEvt_SetCamTypeCopy(CfCamEvent* self, s32 type) {
     self->unk8 = type;
     self->unk25C = *self->virt05();
 }
 
 // Adopt a new lookat target, then hand it to the interface's setLookat.
-void func_8006AA84(CfCamEvent* self, ml::CVec3* lookat) {
+void CfCamEvt_DispatchSetLookat(CfCamEvent* self, ml::CVec3* lookat) {
     self->mLookat = *lookat;
     CfCamDispatch* intf = CfCamEvent_initCamIntfInstances(self);
     intf->setLookat(self, lookat);
@@ -111,7 +111,7 @@ void func_8006AB40(CfCamEvent* self, f32 value) {
 
 // Reset the speed factor, clear the 0x1200 flag bit, adopt the direction
 // vector, then forward it to setDir.
-void func_8006AB94(CfCamEvent* self, ml::CVec3* vec) {
+void CfCamEvt_DispatchSetDir(CfCamEvent* self, ml::CVec3* vec) {
     self->unk288 = lbl_eu_80666268;
     cfCam_andcUnk04(self, 0x1200);
     self->unk25C = *vec;
@@ -121,7 +121,7 @@ void func_8006AB94(CfCamEvent* self, ml::CVec3* vec) {
 
 // Recompute the lookat point from the base position, then hand back the
 // direction vector (used as the camera "get direction" entry).
-ml::CVec3* func_8006A9F8(CfCamEvent* self) {
+ml::CVec3* CfCamEvt_RefreshCamVectors(CfCamEvent* self) {
     ml::CVec3* out = &self->unk25C;
     cfCam_vecToAngles((ml::CVec3*)((u8*)out + 0x18), (ml::CVec3*)((u8*)out + 0xC), out);
     return out;
@@ -129,21 +129,21 @@ ml::CVec3* func_8006A9F8(CfCamEvent* self) {
 
 // Reset the camera event state: run the virtual reset hook, then restore the
 // default factor and clear the flag word.
-void func_8006A8C4(CfCamEvent* self) {
+void CfCamEvt_ResetCamState(CfCamEvent* self) {
     self->reset();
     self->field_0x238 = lbl_eu_80666268;
     self->field_0x1D4 = 0;
 }
 
 // Dispatch a "set position" request to the interface selected by the cam type.
-void func_8006AA34(CfCamEvent* self, ml::CVec3* pos) {
+void CfCamEvt_DispatchSetPos(CfCamEvent* self, ml::CVec3* pos) {
     CfCamDispatch* intf = CfCamEvent_initCamIntfInstances(self);
     intf->setPos(self, pos);
 }
 
 // Conditional "set follow" dispatch: build the follow parameter block and
 // hand it to the follow virtual.
-void func_8006AC10(CfCamEvent* self, s32 cond) {
+void CfCamEvt_RequestFollowStd(CfCamEvent* self, s32 cond) {
     if (cond != 0) {
         ml::CVec3 local;
         func_80074090(&local);
@@ -151,8 +151,8 @@ void func_8006AC10(CfCamEvent* self, s32 cond) {
     }
 }
 
-// Same shape as func_8006AC10 but dispatched through a later vtable slot.
-void func_8006AC60(CfCamEvent* self, s32 cond) {
+// Same shape as CfCamEvt_RequestFollowStd but dispatched through a later vtable slot.
+void CfCamEvt_RequestFollowAlt64(CfCamEvent* self, s32 cond) {
     if (cond != 0) {
         ml::CVec3 local;
         func_80074090(&local);
@@ -250,7 +250,7 @@ void func_8006ACC0(CfCamEvent* self) {
             // Follow path: keep the aim point on-screen by clamping it
             // against the ground-probe results, then forward to the
             // follow hook.
-            if (func_804BE398(&pos, 0, 0x04000000, 0, lbl_eu_8066626C,
+            if (ScnRes_VertRayForward_E398(&pos, 0, 0x04000000, 0, lbl_eu_8066626C,
                               lbl_eu_80666268) != 0) {
                 func_804BE4B4(&probe1, 0);
                 if (pos.y < probe1.y + lbl_eu_80661B58) {
@@ -258,7 +258,7 @@ void func_8006ACC0(CfCamEvent* self) {
                 }
             }
             ml::CVec3 probe2_unused;
-            if (func_804BE398(&aim, 0, 0x04000000, 0, lbl_eu_80666270,
+            if (ScnRes_VertRayForward_E398(&aim, 0, 0x04000000, 0, lbl_eu_80666270,
                               lbl_eu_80666268) != 0) {
                 func_804BE4B4(&probe2, 0);
                 if (aim.y < lbl_eu_80666274 + probe2.y) {

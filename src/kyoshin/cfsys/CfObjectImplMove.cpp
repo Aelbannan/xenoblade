@@ -15,16 +15,16 @@
 #include "monolib/math/CVec3.hpp"
 #include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
 
-// Variant func_804BE398 ABI (r7 ptr + f1 float) for the func_800CF064 /
-// func_800CF810 ground probes; TU-local no-arg view of func_800F477C below.
-extern "C" void* func_800F477C();
+// Variant ScnRes_VertRayForward_E398 ABI (r7 ptr + f1 float) for the func_800CF064 /
+// func_800CF810 ground probes; TU-local no-arg view of CfCode_GetSubObject below.
+extern "C" void* CfCode_GetSubObject();
 typedef int (*BE398PtrF32)(void*, u32, u32, u32, void*, f32);
 
 void func_800CEE80(CfObjectImplMoveObj* self);
 void func_800CF064(CfObjectImplMoveObj* self, CfMoveContact* param);
 void func_800CF810(CfObjectImplMoveObj* self, CfMoveContact* param);
 
-void func_800CA948(CfObjectImplMoveObj* self) {
+void MoveImplInitFields(CfObjectImplMoveObj* self) {
     // Init helper: -1 at 0x20, 0 at 0x1c, shared float constant at 0x24.
     self->field_0x20 = 0xFFFFFFFF;
     self->field_0x1C = 0;
@@ -33,9 +33,9 @@ void func_800CA948(CfObjectImplMoveObj* self) {
 
 // Move-state update: when an actor is bound, run the four dispatch virtuals
 // (0xd4-0xe0); then, if the driver's flag word (bit 0x2 or bit 0x80) is set,
-// chain vfE4 -> slot 0x10; finally run func_802A0E08 on the embedded buffer
+// chain vfE4 -> slot 0x10; finally run updatePosition on the embedded buffer
 // when the status word and flag bit 0x2 are both live.
-void func_800CA964(CfObjectImplMoveObj* self) {
+void MoveImplUpdateState(CfObjectImplMoveObj* self) {
     if (self->field_0x18 != nullptr) {
         self->vfD4();
         self->vfD8();
@@ -47,14 +47,14 @@ void func_800CA964(CfObjectImplMoveObj* self) {
         self->vfE4()->e10();
     }
     if (self->mSubObj->field_0x90 != 0 && (self->mSubObj->field_0x64 & 2) != 0) {
-        func_802A0E08(self->field_0x28);
+        updatePosition(self->field_0x28);
     }
 }
 
 // Full reset: unregister this object's callback source on the bound actor,
 // tear down effects, run the buffer cleanup, and clear the attached
 // flag-word object (+0xb0 word zeroed, bit 0x40 set, pointer released).
-void func_800CAA44(CfObjectImplMoveObj* self) {
+void MoveImplResetFull(CfObjectImplMoveObj* self) {
     CfActorObj* actor = self->field_0x18;
     if (actor != 0 && actor->sub.field_98 != 0) {
         void* src = self;
@@ -66,7 +66,7 @@ void func_800CAA44(CfObjectImplMoveObj* self) {
     if (self->vfE4() != 0) {
         func_8015BD94(self->vfE4());
     }
-    func_802A0FE8(&self->field_0x28[0]);
+    stopVoiceA(&self->field_0x28[0]);
     if (self->field_0x1C != 0) {
         self->field_0x1C->field_0xB0 = 0;
         self->field_0x1C->field_0x68 |= 0x40;
@@ -74,7 +74,7 @@ void func_800CAA44(CfObjectImplMoveObj* self) {
     }
 }
 
-void func_800CAB00(CfObjectImplMoveObj* self) {
+void MoveImplPushEventId(CfObjectImplMoveObj* self) {
     // Dispatch the sub-object's event id to the callback source (this+0xc).
     unsigned int id = self->mSubObj->field_0x98;
     if (id == 0) {
@@ -87,7 +87,7 @@ void func_800CAB00(CfObjectImplMoveObj* self) {
     simPushWordToBuf(id, src);
 }
 
-void func_800CAB2C(void) {}
+void MoveImplNoopA(void) {}
 
 // Move-start dispatcher: plays the entry sound for ids 0x111/0x112, then
 // runs the per-id jump-table body (embedded-handler teardown, driver state
@@ -97,7 +97,7 @@ void func_800CAB2C(void) {}
 // match.
 void func_800CAB30(CfObjectImplMoveObj* self, CfMoveEvtParam* param) {
     u16 id = param->field_C;
-    func_800CB21C(self, id);
+    MoveImplDispatch204(self, id);
     if (id == 0x111) {
         playActorSound__Q22cf10CfSoundManFUlUlUlUlf(0, 0x1c8, 0, 0,
             lbl_eu_80666C64);
@@ -151,7 +151,7 @@ void func_800CAB30(CfObjectImplMoveObj* self, CfMoveEvtParam* param) {
                         CfObjectMove_setAnimModeArgs((u8*)&self->field_0x18->sub, 0x31, 0, -1, 1);
                 }
             } else {
-                func_8014B2DC(self->field_0x18->mst.buf);
+                aiActionClearBlockADC(self->field_0x18->mst.buf);
             }
         }
         // Release handlers 0xee..0x112.
@@ -193,7 +193,7 @@ void func_800CAB30(CfObjectImplMoveObj* self, CfMoveEvtParam* param) {
         // then run the sub-object teardown entry point.
         self->field_0x18->field_3E98 = 0;
         self->field_0x18->mst.field_8 &= ~0x10;
-        func_8014B2DC(self->field_0x18->mst.buf);
+        aiActionClearBlockADC(self->field_0x18->mst.buf);
         self->field_0x18->sub.f03();
         if (id == 0xc) {
             // Bit 1 of the +0x3f00 flag word selects which registration
@@ -234,11 +234,11 @@ void func_800CAB30(CfObjectImplMoveObj* self, CfMoveEvtParam* param) {
     }
     // Presentation tail: forward the param unless both gate bits are set.
     if (param->field_2E == 0 || (param->field_30 & 2) == 0) {
-        func_801A891C(self->field_0x18, (int)param);
+        releaseVisionSlot(self->field_0x18, (int)param);
     }
 }
 
-void func_800CB21C(CfObjectImplMoveObj* self, u32 id) {
+void MoveImplDispatch204(CfObjectImplMoveObj* self, u32 id) {
     // Tail-call dispatch: each case issues an embedded sub-object virtual call
     // (vtable 0x204) and returns; retail compiles each case to a bctr tail call.
     // Case order is retail's body emission order (MWCC emits in source order).
@@ -279,7 +279,7 @@ void func_800CB21C(CfObjectImplMoveObj* self, u32 id) {
     }
 }
 
-// Move-event dispatcher: runs the func_800CB9AC pre-dispatch with the event
+// Move-event dispatcher: runs the MoveImplGateEventCmd pre-dispatch with the event
 // id, then routes per id. Cases 9/0xb-0xe share the battle-gated request
 // build (case 0xb first raises the actor's 0x40 presentation mask); case 0xa
 // only refreshes via vfB4; case 0xf adds the 0x194 sound request and a
@@ -289,7 +289,7 @@ void func_800CB21C(CfObjectImplMoveObj* self, u32 id) {
 void func_800CB454(CfObjectImplMoveObj* self, CfMoveEvtParam* param) {
     // Retail reloads the id halfword from the parameter block for every
     // comparison (param stays cached in r31), so no local copy is kept.
-    func_800CB9AC(self, param->field_C);
+    MoveImplGateEventCmd(self, param->field_C);
     switch (param->field_C) {
     case 0xa:
         self->field_0x18->f43();
@@ -308,7 +308,7 @@ void func_800CB454(CfObjectImplMoveObj* self, CfMoveEvtParam* param) {
         if (bmId == nullptr ||
             self->field_0x18->sub.field_74 != bmId->field_0)
             break;
-        void* src = func_800F477C();
+        void* src = CfCode_GetSubObject();
         CfMoveAcReq req;
         memset(&req.at4.raw, 0, 0xe);
         memset(&req, 0, sizeof(req));
@@ -357,7 +357,7 @@ void func_800CB454(CfObjectImplMoveObj* self, CfMoveEvtParam* param) {
                 getInstance__Q22cf14CBattleManagerFv());
             if (bmId != nullptr &&
                 self->field_0x18->sub.field_74 == bmId->field_0) {
-                void* src = func_800F477C();
+                void* src = CfCode_GetSubObject();
                 CfMoveAcReq req;
                 memset(&req.at4.raw, 0, 0xe);
                 memset(&req, 0, sizeof(req));
@@ -412,19 +412,19 @@ void func_800CB454(CfObjectImplMoveObj* self, CfMoveEvtParam* param) {
     }
     // Presentation tail: forward the param unless both gate bits are set.
     if (param->field_2E == 0 || (param->field_30 & 2) != 0) {
-        func_801A891C(self->field_0x18, (int)param);
+        releaseVisionSlot(self->field_0x18, (int)param);
     }
 }
 
 // Presentation event gate: the embedded handler at actor +0x08 must accept
 // the id before the vf8C presentation virtual is dispatched.
-void func_800CB94C(CfObjectImplMoveObj* self, u32 id) {
+void MoveImplGatePresent(CfObjectImplMoveObj* self, u32 id) {
     if (func_80148778(self->field_0x18->field_08, id) == 0) {
         self->vf94(id);
     }
 }
 
-void func_800CB9AC(void* selfV, u32 id) {
+void MoveImplGateEventCmd(void* selfV, u32 id) {
     CfObjectImplMoveObj* self = (CfObjectImplMoveObj*)selfV;
     // Presentation/event gate: when the 0x04000000 event flag is set, skip all
     // move dispatch. Otherwise map the incoming id to an embedded sub-object
@@ -488,10 +488,10 @@ void func_800CB9AC(void* selfV, u32 id) {
 void func_800CBBD8(CfObjectImplMoveObj* self) {
     getInstance__Q22cf13CfGameManagerFv();
     if (!isGlobalCamFlagSet(0x400) && Scn_GetFrameDelta(lbl_eu_80663E14) != lbl_eu_80666C60) {
-        void* src = self->field_0x18->sub.vfn13();
+        void* src = (void*)self->field_0x18->sub.vfn13();
         if (src == nullptr) {
             // No source bound: only reset when the probe stays empty.
-            if (self->field_0x18->sub.vfn13() == nullptr) {
+            if (self->field_0x18->sub.vfn13() == 0) {
                 func_80174B4C(self->field_0x18, 0x80000);
             }
         } else {
@@ -522,18 +522,18 @@ void func_800CBBD8(CfObjectImplMoveObj* self) {
     CfMoveEnumHolder holder;
     CTaskGame_enumListCtor(&holder);
     CTaskGame_enumListGet(&holder);
-    func_800F4A98(CTaskGame_enumListGet(&holder), 0x20, 0x800);
+    startEnumObjects(CTaskGame_enumListGet(&holder), 0x20, 0x800);
     int handle = self->vf48();
     func_800F6ED0(CTaskGame_enumListGet(&holder), (void*)handle);
     if (((CfMoveEnumList*)CTaskGame_enumListGet(&holder))->field_620 != 0) {
         // Effects exist: clear the driver state and re-register the sub-object.
         self->field_0x18->mst.field_214 = 0;
         self->field_0x18->mst.field_210 = 0;
-        func_8014B2DC(self->field_0x18->mst.buf);
+        aiActionClearBlockADC(self->field_0x18->mst.buf);
         CfObjectMove_setAnimModeArgs((u8*)&self->field_0x18->sub, 0x31, 0, -1, 1);
     } else {
-        self->vf70(func_800F6E08(CTaskGame_enumListGet(&holder)));
-        void* entry = func_800F6EAC(CTaskGame_enumListGet(&holder), 0);
+        self->vf70(findFirstCleanObjectId(CTaskGame_enumListGet(&holder)));
+        void* entry = getObjectAt(CTaskGame_enumListGet(&holder), 0);
         void* arg = entry;
         if (entry != nullptr)
             arg = (u8*)entry - 0x3e9c;
@@ -542,14 +542,14 @@ void func_800CBBD8(CfObjectImplMoveObj* self) {
         CfActorObj* act = self->field_0x18;
         u32 vD = act->field_04->b30()->field_0;
         if (func_80174C98(act, &vD, 0x806) != 0) {
-            func_8014B2DC(act->mst.buf);
+            aiActionClearBlockADC(act->mst.buf);
         } else {
             func_80174B4C(act, 5);
             act->f138();
             int count = ((CfMoveEnumList*)CTaskGame_enumListGet(&holder))->field_620;
             for (int i = 0; i < count; i++) {
                 func_8016FE34(
-                    func_800F6EAC(CTaskGame_enumListGet(&holder), i));
+                    getObjectAt(CTaskGame_enumListGet(&holder), i));
             }
         }
     }
@@ -563,7 +563,7 @@ void func_800CBBD8(CfObjectImplMoveObj* self) {
     }
 }
 
-void func_800CC01C(void) {}
+void MoveImplNoopB(void) {}
 
 // Move-effect update driver. Gates on the bound event object (+0x3F60), the
 // presentation probe, elapsed-time thresholds and global mode bits, then
@@ -590,7 +590,7 @@ void func_800CC020(CfObjectImplMoveObj* self) {
     if (((mode & 0x40) | (mode & 0x200000)) != 0 || !(t > lbl_eu_80666C6C))
         return;
     t = evt->field_4FC;
-    void* pos = actor->sub.f41();                              // slot 0xac
+    void* pos = actor->sub.getPos();
     CfMoveVec3f vec;
     vec.x = *(f32*)&((u32*)pos)[0];
     vec.y = *(f32*)&((u32*)pos)[1];
@@ -615,7 +615,7 @@ void func_800CC020(CfObjectImplMoveObj* self) {
 // Battle-entry hook: when the incoming id matches the bound actor's battle
 // id (+0x3F60), fire the vf64 entry virtual and hand the actor to the battle
 // manager's party-chain helper.
-void func_800CC5DC(CfObjectImplMoveObj* self, u32 battleId) {
+void MoveImplOnBattleEntry(CfObjectImplMoveObj* self, u32 battleId) {
     CfActorObj* actor = self->field_0x18;
     if (actor != 0 && battleId == actor->sub.field_C4) {
         self->vf64();
@@ -706,7 +706,7 @@ void func_800CC638(CfObjectImplMoveObj* self, u32 id, CfMoveParam* param) {
         CfMoveF64Conv conv;
         conv.w[1] = (u32)param->field_0xF;
         conv.w[0] = 0x43300000;
-        func_804E3CDC(obj->field_0x94, (f32)(conv.d - lbl_eu_80666C90), lbl_eu_80666C64);
+        schedSetStepIntervals(obj->field_0x94, (f32)(conv.d - lbl_eu_80666C90), lbl_eu_80666C64);
     }
 }
 
@@ -969,7 +969,7 @@ void func_800CD268(){}
 // if it is within the threshold (param override, or base constant x event
 // scale), fade a shake scale from 1 down to 0 across the threshold band and
 // fire the camera shake with the parameter block's vectors scaled by it.
-void func_800CD460(CfObjectImplMoveObj* self, CfMoveCd460Target* target,
+void MoveImplTriggerCamShake(CfObjectImplMoveObj* self, CfMoveCd460Target* target,
                    CfMoveCd460Arg* param) {
     CfMoveEvt60* evt = (CfMoveEvt60*)self->field_0x18->sub.field_98;
     if (evt == nullptr) {
@@ -1019,9 +1019,9 @@ void func_800CD460(CfObjectImplMoveObj* self, CfMoveCd460Target* target,
     func_8007B044(&shake, 0);
 }
 
-void CfObjectMove_setRegionAttached(void*, unsigned int);
+extern "C" void CfObjectMove_setRegionAttached(void*, unsigned int);
 
-void CfObjectImplMoveData::func_800CD5C0(unsigned int a, unsigned int b) {
+void CfObjectImplMoveData::MoveImplMatchIdSetRegion(unsigned int a, unsigned int b) {
     CfObjectImplMoveSubObj* inner = (CfObjectImplMoveSubObj*)this->mSubObj;
     if (a == inner->mSomeId) {
         CfObjectMove_setRegionAttached(inner, b);
@@ -1063,7 +1063,7 @@ void func_800CD5DC(CfObjectImplMoveObj* self, u32 id, u32 kind, u32,
         }
         if ((actor->vf29C(0)->field_0x78 & 0x400) != 0) {
             if (actor->vf2A8() == nullptr) {
-                func_800CB9AC(
+                MoveImplGateEventCmd(
                     self,
                     (u32)((CfMoveVf29CItem*)actor->vf29C(0)->field_0x50)->field_0x48);
             }
@@ -1415,12 +1415,12 @@ tail:
 // list (type 0x20) bound to this object's vf48 handle, then re-position each
 // listed effect at the shared constant vector and hand the list head to
 // vf70 before tearing the holder down.
-void func_800CE544(CfObjectImplMoveObj* self) {
+void MoveImplSweepReposition(CfObjectImplMoveObj* self) {
     self->field_0x18->field_04->b20(0x400000);
     self->field_0x18->field_04->b20(0x800000);
     CfMoveEnumHolder holder;
     CTaskGame_enumListCtor(&holder);
-    func_800F4A98(CTaskGame_enumListGet(&holder), 0x20, 0);
+    startEnumObjects(CTaskGame_enumListGet(&holder), 0x20, 0);
     u32 handle = self->vf48();
     func_800F6ED0(CTaskGame_enumListGet(&holder), (void*)handle);
     // The count is re-read through CTaskGame_enumListGet on every use (retail makes
@@ -1428,22 +1428,22 @@ void func_800CE544(CfObjectImplMoveObj* self) {
     if (((CfMoveEnumList*)CTaskGame_enumListGet(&holder))->field_620 != 0) {
         for (u32 i = 0; i < ((CfMoveEnumList*)CTaskGame_enumListGet(&holder))->field_620; i++) {
             void* entry =
-                func_8016FE34(func_800F6EAC(CTaskGame_enumListGet(&holder), i));
+                func_8016FE34(getObjectAt(CTaskGame_enumListGet(&holder), i));
             self->field_0x18->vf2C4(entry, lbl_eu_80666C60, lbl_eu_80666C60,
                 lbl_eu_80666C60);
         }
     }
-    self->vf70(func_800F6E08(CTaskGame_enumListGet(&holder)));
+    self->vf70(findFirstCleanObjectId(CTaskGame_enumListGet(&holder)));
     self->vf80();
     __dt__80043E88(&holder, -1);
 }
 
 // Move-state reset driver: probes the actor's vf29C item chain (up to three
 // calls, each gated on the chained item's +0x50 pointer / +0x48 halfword) to
-// raise the presentation virtual or the func_800CB9AC event dispatch, then
+// raise the presentation virtual or the MoveImplGateEventCmd event dispatch, then
 // releases the embedded handlers (0xf via slot 0x20, 0x100 via slot 0x30),
 // clears the move state bits and resets the driver bookkeeping fields.
-void func_800CE6A0(CfObjectImplMoveObj* self) {
+void MoveImplResetStateDriver(CfObjectImplMoveObj* self) {
     CfMoveVf29CItem* item = self->field_0x18->vf29C(0);
     if (item->field_0x50 != nullptr) {
         CfMoveVf29CItem* item2 = self->field_0x18->vf29C(0);
@@ -1458,7 +1458,7 @@ void func_800CE6A0(CfObjectImplMoveObj* self) {
         // Only when the actor's 0x2a8 probe is empty, re-raise the event.
         if (self->field_0x18->vf2A8() == nullptr) {
             CfMoveVf29CItem* item4 = self->field_0x18->vf29C(0);
-            func_800CB9AC(self,
+            MoveImplGateEventCmd(self,
                 ((CfMoveVf29CItem*)item4->field_0x50)->field_0x48);
         }
     }
@@ -1476,14 +1476,14 @@ void func_800CE6A0(CfObjectImplMoveObj* self) {
     CfActorMstBlock* mst = &self->field_0x18->mst;
     mst->field_afc = 1;
     mst->field_4 = 1;
-    func_8014B2DC(mst->buf);
+    aiActionClearBlockADC(mst->buf);
     CfActorObj* actor = self->field_0x18;
     actor->mst.field_214 = 0;
     actor->mst.field_210 = 0;
     self->field_0x18->vf2B0();
 }
 
-void func_800CE8AC(CfObjectImplMoveObj* self) {
+void MoveImplResolveActorRef(CfObjectImplMoveObj* self) {
     // Virtual dispatch on the sub-object embedded at +0x3e9c of the actor
     // object (vtable slot 0x4c), then chain the result through
     // findObjectById (actor id lookup) into func_8016FE34.
@@ -1495,7 +1495,7 @@ void func_800CE8AC(CfObjectImplMoveObj* self) {
 // 0xa/0xb), bail under the game manager presentation mask, then - unless the
 // embedded handler already resolves to param - rebind it via CCharVoiceMan_EnqueueRebindVoice,
 // refresh the handler slots, and forward the parameter to vf84.
-void func_800CE8E4(CfObjectImplMoveObj* self, void* param) {
+void MoveImplRebindHandler(CfObjectImplMoveObj* self, void* param) {
     // Retail reloads self->field_0x18 (actor) from memory before every use.
     CfActorObj* actor = self->field_0x18;
     u32 valA = actor->field_04->b30()->field_0;
@@ -1511,10 +1511,10 @@ void func_800CE8E4(CfObjectImplMoveObj* self, void* param) {
     if (isGlobalCamFlagSet(0x04000000)) {
         return;
     }
-    if (self->field_0x18->sub.vfn13() == param) {
+    if ((void*)self->field_0x18->sub.vfn13() == param) {
         return;
     }
-    CCharVoiceMan_EnqueueRebindVoice(self->field_0x18, self->field_0x18->sub.vfn13(), param);
+    CCharVoiceMan_EnqueueRebindVoice(self->field_0x18, (void*)self->field_0x18->sub.vfn13(), param);
     self->field_0x18->sub.vfn14(param);
     if (param != nullptr) {
         self->field_0x18->sub.vfn00(4);
@@ -1525,7 +1525,7 @@ void func_800CE8E4(CfObjectImplMoveObj* self, void* param) {
 // Battle roster sync: wake both field_04 sub-object channels (0x40/0x80),
 // resolve this object's actor via the id lookup chain, then copy the battle
 // state's per-slot handles into the actor's vf29C item list.
-void func_800CEA34(CfObjectImplMoveObj* self) {
+void MoveImplSyncBattleRoster(CfObjectImplMoveObj* self) {
     self->field_0x18->field_04->b20(0x400000);
     self->field_0x18->field_04->b20(0x800000);
     // The embedded handler probe result feeds straight into the actor-id lookup.
@@ -1555,14 +1555,14 @@ void func_800CEA34(CfObjectImplMoveObj* self) {
     }
     for (int i = 0; i < count; i++) {
         CfMoveVf29CItem* item = ((CfActorObj*)found)->vf29C(i);
-        item->field_0x4 = ((CfActorObj*)self->field_0x18)->sub.vfn13();
+        item->field_0x4 = (void*)((CfActorObj*)self->field_0x18)->sub.vfn13();
     }
 }
 
 // Rebind the driver sub-object: store the request word at +0x04, resolve the
 // source object via func_800BBC0C into +0x14, then derive the actor pointer
 // back from it (source - 0x3e9c) when its slot-0x200 probe succeeds.
-void func_800CEB68(CfObjectImplMoveObj* self, u8* param) {
+void MoveImplBindDriver(CfObjectImplMoveObj* self, u8* param) {
     self->field_0x04 = param;
     CfObjectImplMoveSubObj* src = (CfObjectImplMoveSubObj*)func_800BBC0C(param);
     self->mSubObj = src;
@@ -1580,7 +1580,7 @@ void func_800CEB68(CfObjectImplMoveObj* self, u8* param) {
 // global presentation word has bit 0x40000 set, start with enable=0 instead of
 // 1; then, if an event object is bound, push the resulting active state into
 // its slot-0x88 callback.
-void func_800CEBE0(CfObjectImplMoveObj* self) {
+void MoveImplStartDispatch(CfObjectImplMoveObj* self) {
     if ((self->mSubObj->field_0x64 & 4) != 0 && (lbl_eu_80663E24 & 0x40000) == 0) {
         self->vf30(0x100, 1);
         if (self->mSubObj->field_0x98 == 0) {
@@ -1608,7 +1608,7 @@ void func_800CEBE0(CfObjectImplMoveObj* self) {
 // object is bound, then forward the resolved state to the event object's
 // slot 0x88 - a literal 1 when vf40(0x200) reports active, otherwise the
 // result of the fallback query vf40(0x100).
-void func_800CED64(CfObjectImplMoveObj* self, u32 param) {
+void MoveImplSyncEffectState(CfObjectImplMoveObj* self, u32 param) {
     self->vf30(0x100, param);
     if (self->mSubObj->field_0x98 == 0) {
         return;
@@ -1623,7 +1623,7 @@ void func_800CED64(CfObjectImplMoveObj* self, u32 param) {
 
 // When the +0x18 actor and its +0x3F2C flag are present, run the vfE4 and
 // vf14 virtuals (retail dispatches 0xE4 first, then 0x14).
-void func_800CEE28(CfObjectImplMoveObj* self) {
+extern "C" void MoveImplRunEffectVirtuals(CfObjectImplMoveObj* self) {
     if (self->field_0x18 == 0)
         return;
     if (*(u32*)((u8*)self->field_0x18 + 0x3F2C) == 0)
@@ -1631,7 +1631,7 @@ void func_800CEE28(CfObjectImplMoveObj* self) {
     self->vfE4()->e14();
 }
 
-void func_800CEE7C(void) {}
+void MoveImplNoopC(void) {}
 
 // Impact/land presentation driver: resolves an effect object through the
 // bound move event (slot 0x44 refreshes the cached handle at +0x20 when it is
@@ -1764,7 +1764,7 @@ void func_800CF064(CfObjectImplMoveObj* self, CfMoveContact* param) {
     nw4r::math::VEC3 chk = lifted;
     // Variant ABI (r7 ptr + f1): cast keeps the retail arg marshaling while
     // the header decl stays canonical (CfCam BE398Fn convention).
-    if (((BE398PtrF32)func_804BE398)(&chk, 0, 0, 0, &lifted, lbl_eu_80666CAC) == 0) {
+    if (((BE398PtrF32)ScnRes_VertRayForward_E398)(&chk, 0, 0, 0, &lifted, lbl_eu_80666CAC) == 0) {
         return;
     }
     func_804BE4B4(&world, 0);
@@ -2015,7 +2015,7 @@ void func_800CF810(CfObjectImplMoveObj* self, CfMoveContact* param) {
     probe.x = wpos.x;
     probe.y = wpos.y;
     probe.z = wpos.z;
-    if (((BE398PtrF32)func_804BE398)(&probe, 0, 0, 0, &wpos, lbl_eu_80666CCC) == 0)
+    if (((BE398PtrF32)ScnRes_VertRayForward_E398)(&probe, 0, 0, 0, &wpos, lbl_eu_80666CCC) == 0)
         return;
     func_804BE4B4(&world, 0);
     CfMoveVec3f nrm;
@@ -2205,7 +2205,7 @@ void func_800CF810(CfObjectImplMoveObj* self, CfMoveContact* param) {
                   lbl_eu_80666C98);
 }
 
-void cf::CfObjectImplMove::func_800CFFA0(unsigned int* param) {
+void cf::CfObjectImplMove::CfObjectImplMoveClearLinkIfMatch(unsigned int* param) {
     unsigned int* self = reinterpret_cast<unsigned int*>(this);
     if (param == (unsigned int*)self[7]) {
         param[44] = 0;
@@ -2213,14 +2213,14 @@ void cf::CfObjectImplMove::func_800CFFA0(unsigned int* param) {
     }
 }
 
-void cf::CfObjectImplMove::func_800CFFBC() {
+void cf::CfObjectImplMove::CfObjectImplMoveDtorThunkC() {
     // Adjusted-this destructor thunk: CfObjectImplMove sits at +0xc inside
     // its containing object; retail adjusts this by -0xc and tail-calls the
     // destructor (1-arg form, no delete flag).
     __dt__Q22cf16CfObjectImplMoveFv(reinterpret_cast<u8*>(this) - 0xc);
 }
 
-void cf::CfObjectImplMove::func_800CFFC4() {
+void cf::CfObjectImplMove::CfObjectImplMoveDtorThunk10() {
     // Adjusted-this destructor thunk: CfObjectImplMove sits at +0x10 inside
     // its containing object; retail adjusts this by -0x10 and tail-calls the
     // destructor (1-arg form, no delete flag).

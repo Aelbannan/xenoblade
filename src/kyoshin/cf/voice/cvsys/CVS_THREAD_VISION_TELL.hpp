@@ -91,7 +91,7 @@ extern "C" {
     int           func_802A77E8(CVoiceHandle* handle);
     int           func_802A7850(int iter);
     int           func_802A7B90(CVoiceHandle* handle1, CVoiceHandle* handle2);
-    int           func_802A7EB0(CVoiceHandle* handle1, CVoiceHandle* handle2);
+    int           HpVoice_CheckPairGate(CVoiceHandle* handle1, CVoiceHandle* handle2);
     CVoiceHandle* func_802A330C(int size, int align);
     u8*           CCharVoiceMan_AllocVoiceArena(int size);
     void          __ct__cf_CVS_THREAD(void* self);

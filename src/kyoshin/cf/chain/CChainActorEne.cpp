@@ -12,8 +12,8 @@
 // ---- Cross-TU helper declarations ---------------------------------------
 // func_800AD860 / findObjectById are mangled C++ retail symbols; the rest are
 // plain (unmangled) C-ABI functions and are declared with C linkage.
-extern "C" void* func_802A0804(u32 cls, void* src);
-extern "C" void func_8018C8F4(u8* self, u32 ptg);
+extern "C" void* chainResolveMemberFromSrc(u32 cls, void* src);
+extern "C" void PartyGaugeSetClamped(u8* self, u32 ptg);
 extern "C" void* CPartsChange_GetActorTable(void);
 extern "C" void* CPartsChange_FindActorByObj(void* list, void* obj);
 extern "C" void* CPartsChange_FindActorById(void* list, u32 id);
@@ -55,23 +55,25 @@ struct GlistList {
 
 
 // Operates on the CChainEffect at offset 0x74; compares r4 against effect.unk8's target
-void func_802A0AA0(cf::CChainEffect* effect);
+// Retail calls it by its flat name (config/us/symbols.txt), so C linkage
+// keeps the call-site reloc unmangled like retail.
+extern "C" void chainUnlinkOnOwnerMatch(cf::CChainEffect* effect);
 
 // Resets chain state and clears the chain effect.
-extern "C" void func_80281308(cf::CChainActorEne* self, int val) {
+extern "C" void ChainEne_InitClear_1308(cf::CChainActorEne* self, int val) {
     CChain_setFieldAndClear(self, val);
-    func_802A08F4(self->mChainEffectRaw);
+    chainClearTwoWords(self->mChainEffectRaw);
 }
 
-extern "C" void func_8028133C(cf::CChainActorEne* self) {
+extern "C" void ChainEne_Teardown_133C(cf::CChainActorEne* self) {
     self->CChain_noop_A9E8();
-    func_802A0904(self->mChainEffectRaw);
-    func_80279DC0(self);
+    chainTeardownLinkClear(self->mChainEffectRaw);
+    CChainActor_ClearTargetRef(self);
 }
 
 // Validates an enemy-chain candidate: non-null source, resolves the parts
 // object id, and only then runs the chain logic.
-extern "C" int func_80281384(cf::CChainActorEne* self, int arg) {
+extern "C" int ChainEne_ValidateCand_1384(cf::CChainActorEne* self, int arg) {
     if (arg == 0) return 0;
     void* handle = findObjectById(arg);
     void* obj = func_8016FE34(handle);
@@ -86,18 +88,18 @@ extern "C" int func_80281384(cf::CChainActorEne* self, int arg) {
 
 // 4-arg effect bind: fills the constant 0xb9 class slot, forwards the other
 // three args, and drives the 6th param from a non-zero flag sentinel.
-extern "C" void func_80281438(cf::CChainActorEne* self, int p1, int p2, int p3) {
-    func_802A0950(reinterpret_cast<cf::CChainEffect*>(self->mChainEffectRaw), p1, 0xb9, (int)self, p2, p3 != 0 ? 0x5f : 0);
+extern "C" void ChainEne_BindEffectB9_1438(cf::CChainActorEne* self, int p1, int p2, int p3) {
+    chainBindEffectLink(reinterpret_cast<cf::CChainEffect*>(self->mChainEffectRaw), p1, 0xb9, (int)self, p2, p3 != 0 ? 0x5f : 0);
 }
 
-// Tail-calls func_802A0804 binding the actor to the 0xba effect class.
-extern "C" void* func_80281460(cf::CChainActorEne* self) {
-    return func_802A0804(0xba, self);
+// Tail-calls chainResolveMemberFromSrc binding the actor to the 0xba effect class.
+extern "C" void* ChainEne_MakeEffectBa_1460(cf::CChainActorEne* self) {
+    return chainResolveMemberFromSrc(0xba, self);
 }
 
 // True if this actor's timeline object is the one currently wired into the
 // battle parts system, or if it carries the special 0x96b enemy-chain type.
-extern "C" int func_8028146C(const cf::CChainActorEne* self) {
+extern "C" int ChainEne_IsWired_146C(const cf::CChainActorEne* self) {
     u32 addr = self->unk0;
     if (addr != 0) addr += 0x3e9c;
     EneChainObj* obj = (EneChainObj*)getEffOwner__((void*)addr);
@@ -111,7 +113,7 @@ extern "C" int func_8028146C(const cf::CChainActorEne* self) {
 // Compares two timeline objects by id; falls back to comparing their enemy
 // chain types when the ids differ. Requires the flag bit at 0x3f00 on the
 // second object.
-extern "C" int func_802814E4(cf::CChainActorEne* self, void* arg2) {
+extern "C" int ChainEne_MatchOwner_14E4(cf::CChainActorEne* self, void* arg2) {
     if (((u32*)arg2)[0x3f00 / 4] & 4) {
         u32 a1 = self->unk0;
         if (a1 != 0) a1 += 0x3e9c;
@@ -224,7 +226,7 @@ extern "C" void func_802816FC(cf::CChainActorEne* self) {
 
 // Classifies the actor's timeline object: 0x96b -> 0, 0x96c -> 1, missing -> 4,
 // otherwise 3 minus (vtable state hook result truth).
-extern "C" int func_8028183C(cf::CChainActorEne* self) {
+extern "C" int ChainEne_CheckChainType_183C(cf::CChainActorEne* self) {
     u32 addr = self->unk0;
     if (addr != 0) addr += 0x3e9c;
     EneChainObj* obj = (EneChainObj*)getEffOwner__((void*)addr);
@@ -239,19 +241,19 @@ extern "C" int func_8028183C(cf::CChainActorEne* self) {
     return 4;
 }
 
-// Tail-calls func_802A0AA0 with &this->mChainEffect, forwarding remaining arguments
-void cf::CChainActorEne::func_802818D4() {
-    func_802A0AA0(reinterpret_cast<cf::CChainEffect*>(this->mChainEffectRaw));
+// Tail-calls chainUnlinkOnOwnerMatch with &this->mChainEffect, forwarding remaining arguments
+void cf::CChainActorEne::ChainEne_ReleaseEffect_18D4() {
+    chainUnlinkOnOwnerMatch(reinterpret_cast<cf::CChainEffect*>(this->mChainEffectRaw));
 }
 
 // Returns whether the enemy chain actor is valid/active
-s32 cf::CChainActorEne::func_802818DC() {
+s32 cf::CChainActorEne::ChainEne_AlwaysTrue_18DC() {
     return 1;
 }
 
-extern "C" int func_802818E4(void* self, void* arg) { return static_cast<cf::CChainActorEne*>(self)->CChain_getZero_A9FC(*(void**)arg); }
+extern "C" int ChainEne_GetZeroVia_18E4(void* self, void* arg) { return static_cast<cf::CChainActorEne*>(self)->CChain_getZero_A9FC(*(void**)arg); }
 
 // Address into the battle manager's 0x194 field; returns whether it reached 300.
-extern "C" void func_802818F8(void) {
-    func_8018C8F4((u8*)getInstance__Q22cf14CBattleManagerFv() + 0x194, 0x12c);
+extern "C" void ChainEne_TouchBattle194_18F8(void) {
+    PartyGaugeSetClamped((u8*)getInstance__Q22cf14CBattleManagerFv() + 0x194, 0x12c);
 }

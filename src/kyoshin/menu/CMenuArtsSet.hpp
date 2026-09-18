@@ -48,7 +48,7 @@ public:
 };
 
 // Anonymous menu-sub-object constructed by __ct__8022FA58.
-// Shared by the func_8023xxxx helpers (ArtsCharList_getId, func_8023080C,
+// Shared by the func_8023xxxx helpers (ArtsCharList_getId, ArtsSubCursor_setVisible,
 // ArtsSlotCursor_clampFromEmpty, func_8022FE90).
 class SArtsSub8022FA58 {
 public:
@@ -155,7 +155,7 @@ public:
     u8 field_0x30;
 };
 
-// Pointee of SArtsSub8022FA58.field_0x08; field_0x10 read by func_8023080C.
+// Pointee of SArtsSub8022FA58.field_0x08; field_0x10 read by ArtsSubCursor_setVisible.
 class SArts080C {
 public:
     char _pad[0x10];
@@ -176,7 +176,7 @@ public:
     u8  field_0x25;
     u8  field_0x26;
     u8  field_0x27;
-    u8* field_0x28;     // 0x28 scrollbar/table object passed to func_801F3850
+    u8* field_0x28;     // 0x28 scrollbar/table object passed to CScrollBar_PlaceThumb
     u8 mTable[0x100];   // 0x2C-0x12B
     u8 field_0x12C;     // 0x12C
     u8 field_0x12D;     // 0x12D
@@ -312,7 +312,7 @@ public:
 
 // Pointee of SArts3150C.field_0x08: polymorphic (v11 driver at vtable +0x2C,
 // same shape as SArtsV11Obj) with an extra u8* at +0x10 read by
-// ArtsLayout_runLayoutIn and fed to func_80124270.
+// ArtsLayout_runLayoutIn and fed to setPaneVisible.
 class SArts3150CDriver {
 public:
     virtual void v0();
@@ -344,7 +344,7 @@ public:
 };
 
 // Pointee of SArts3150CDriver.field_0x10 (only used by ArtsLayoutPair_completeLayoutIn): a
-// method at vtable +0x3C returns the pane fed to func_80124270. MWCC
+// method at vtable +0x3C returns the pane fed to setPaneVisible. MWCC
 // reserves a 2-entry vtable header, so declared index 13 emits slot 15
 // (4*15 = 0x3C).
 class SArts3CObj {
@@ -443,7 +443,7 @@ public:
 class SArts31648 {
 public:
     char _pad_00[0x08];
-    SArts080C* field_0x08;               // 0x08 pane (field_0x10 -> func_80124270)
+    SArts080C* field_0x08;               // 0x08 pane (field_0x10 -> setPaneVisible)
     char _pad_0C[0x14 - 0x0C];
     SArts3150CDriver* field_0x14;        // 0x14 v11 driver (field_0x10 too)
     SArtsFloat10* field_0x18;            // 0x18 float object
@@ -651,7 +651,7 @@ public:
 };
 
 // Layout-owner view of SArts308B0View.field_0x00: +0x10 holds the pane-fetch
-// driver whose v13 (+0x3C) returns the pane fed to func_80124270.
+// driver whose v13 (+0x3C) returns the pane fed to setPaneVisible.
 class SArts308B0Layout {
 public:
     char _pad[0x10];
@@ -955,7 +955,7 @@ public:
 // ---------------------------------------------------------------------------
 extern "C" void* getHandleMEM2__Q23mtl10MemManagerFv();
 extern "C" void* readFile__11CDeviceFileFUlPCcP10IWorkEventii(u32, const char*, void*, int, int);
-extern "C" void func_801F34F4(void*);
+extern "C" void CScrollBar_loadLayoutArc(void*);
 // CArtsList vtable (.data). Declared as an array so MWCC emits lis/addi
 // (incomplete array types are not sdata-eligible).
 extern "C" void* lbl_eu_80536908[];
@@ -1074,9 +1074,9 @@ extern "C" void setLayoutTextBoxNumber__FPQ34nw4r3lyt6LayoutPcUc(nw4r::lyt::Layo
 
 extern "C" void ArtsCharList_refreshDisplay(SArtsSub8022FA58* self);
 extern "C" void ArtsSlotCursor_refresh(SArtsSub8022FA58* self);
-extern "C" void func_80124270(void* p, u32 v);
+extern "C" void setPaneVisible(void* p, u32 v);
 // Scrollbar cursor refresh (defined in CScrollBar.cpp; C-linkage retail name).
-extern "C" void func_801F3850(void* p, u16 v);
+extern "C" void CScrollBar_PlaceThumb(void* p, u16 v);
 // Layout-out animation driver (same TU, C-linkage retail name).
 extern "C" void ArtsBusyPane_refreshCursor(SArts313E0* self);
 
@@ -1131,30 +1131,30 @@ extern "C" void CArtsInfo_OpenDetail6(CArtsInfo* self);
 extern "C" void CMenuArtsSet_confirmLockedArt(CMenuArtsSet* self);
 // CSysWin active/advance helpers (defined in CSysWin.cpp; C symbols).
 extern "C" int CSysWin_isActive(void* self);
-extern "C" void func_8022B8E4(void* self);
+extern "C" void sysWinAdvancePhase3(void* self);
 // CArtsInfo draw (defined in CArtsInfo.cpp; C-linkage retail name).
 extern "C" void CArtsInfo_Draw(CArtsInfo* self, void* drawInfo);
 // CSysWin draw (defined in CSysWin.cpp; C-linkage retail name).
-extern "C" void func_8022B7C8(CSysWinFull* self, nw4r::lyt::DrawInfo* drawInfo);
+extern "C" void sysWinDrawLayout(CSysWinFull* self, nw4r::lyt::DrawInfo* drawInfo);
 // Pane-visible check (defined in CTitleAHelp.cpp; C-linkage retail name).
-extern "C" bool func_801C4648(nw4r::lyt::Pane* pane);
+extern "C" bool isPaneVisible(nw4r::lyt::Pane* pane);
 // C-linkage CSysWin state query (defined in CSysWin.cpp).
 extern "C" u32 CSysWin_getUnk34(void* self);
 // Drive/refresh helper (same TU, defined below; C-name for reloc parity).
 extern "C" void CMenuArtsSet_refreshArtsInfo(CMenuArtsSet* self);
 
-extern "C" void func_801F3540(void* obj34);
+extern "C" void CScrollBar_UpdateDispatch(void* obj34);
 // Scroll-bar scroll-out request (CMenuArtsSet_completeLayoutOut state-4 tail).
-extern "C" void func_801F369C(void* obj34);
+extern "C" void CScrollBar_requestScrollOut(void* obj34);
 // Scroll-bar scroll-in with a 3-float init vector, and the tick that
 // consumes it (CMenuArtsSet_completeLayoutIn). Declared here rather than including
 // CMenuPlayAward.hpp (same signature-clash reason as that header documents).
-extern "C" void func_801F3670(u8* scrollBar, const float* vec);
-extern "C" void func_801F367C(u8* scrollBar);
+extern "C" void CScrollBar_InitRootPane(u8* scrollBar, const float* vec);
+extern "C" void CScrollBar_requestScrollIn(u8* scrollBar);
 // Scroll-bar teardown (CMenuArtsSet_teardown).
-extern "C" void func_801F35DC(void* obj34);
+extern "C" void CScrollBar_Teardown(void* obj34);
 extern "C" void func_8023587C(CArtsInfo* self);
-extern "C" void func_8022B748(CSysWinFull* self);
+extern "C" void sysWinDispatchPhase(CSysWinFull* self);
 extern "C" void ArtsLayoutPair_advancePhases(SArts306F0* obj148);
 extern "C" void ArtsLayout_runTwinLayoutIn(SArts31648* self);
 extern "C" void ArtsTableLayout_runLayoutIn(SArts3150C* self);
@@ -1176,7 +1176,7 @@ extern "C" void CMenuArtsSet_returnFromInfo(CMenuArtsSet* self);
 extern "C" void ArtsLayoutPair_releaseSlots(SArts3066C* self);
 // SArtsSub8022FA58 cursor-store helper (CMenuArtsSet_completeLayoutOut). Same-TU definition;
 // noinline so callers emit a real bl (retail shape).
-extern "C" __declspec(noinline) void func_8023080C(SArtsSub8022FA58* self, u8 val);
+extern "C" __declspec(noinline) void ArtsSubCursor_setVisible(SArtsSub8022FA58* self, u8 val);
 // Same-TU release helpers kept out-of-line for retail bl parity.
 extern "C" __declspec(noinline) void ArtsLayoutPair_release(SArts2FDF4* self);
 extern "C" __declspec(noinline) void ArtsTableLayout_release(SArts3066C* self);
@@ -1204,7 +1204,7 @@ void bindLayoutAnimTransform(nw4r::lyt::Layout*, nw4r::lyt::AnimTransform**, nw4
 // CArtsInfo teardown (defined in CArtsInfo.cpp, C symbol).
 extern "C" void CArtsInfo_Cleanup(CArtsInfo* self);
 // CSysWinFull teardown (defined in CSysWin.cpp, C symbol).
-extern "C" void func_8022B7F4(CSysWinFull* self);
+extern "C" void sysWinTermLayout(CSysWinFull* self);
 
 // .sdata2 floats for the layout-animation drivers (ArtsLayout_runLayoutOut etc.).
 // const is load-bearing: it lets MWCC treat the pool load as a constant and
@@ -1218,7 +1218,7 @@ extern const float lbl_eu_80668654;
 // .sdata2 zero float for ArtsTableLayout_load's pane-translate reset (SArtsVec2).
 extern const float lbl_eu_80668658;
 // .sdata2 floats for CMenuArtsSet_completeLayoutIn's scroll-in vector (stack temp fed to
-// func_801F3670).
+// CScrollBar_InitRootPane).
 extern const float lbl_eu_80668678;
 extern const float lbl_eu_8066867C;
 
@@ -1250,14 +1250,14 @@ struct SArts320C0Block {
 };
 extern const SArts320C0Block lbl_eu_8050ABFC;
 // Scrollbar list rebuild (func_802320C0 tail).
-extern "C" void func_801F36BC(void* scrollBar, u32 pageSize, u8 count);
+extern "C" void CScrollBar_UpdateThumb(void* scrollBar, u32 pageSize, u8 count);
 
 // String-table lookup (func_80231220) and learn-arts flag-grid query
 // (func_80231220); C-linkage retail symbols.
 extern "C" u8 BdatGetU8ByTableKey(const void*, const void*, u32);
-extern "C" bool func_801F9268(unsigned char*, int, int);
+extern "C" bool ResTbox_IsCellBitSet(unsigned char*, int, int);
 // Accumulated pane translate (func_801375A0, defined in code_80135FDC.cpp)
-// and pane translate setter (func_801D2150, defined in CSysWin.cpp).
+// and pane translate setter (Cur_SetPaneTranslate, defined in CSysWin.cpp).
 extern "C" void func_801375A0(nw4r::math::VEC3* output, nw4r::lyt::Pane* pane);
 
 // Window-arm chain used by CMenuArtsSet_armSysWin: build a label string pair then
@@ -1265,10 +1265,10 @@ extern "C" void func_801375A0(nw4r::math::VEC3* output, nw4r::lyt::Pane* pane);
 // CSysWin.hpp as (CSysWin*, u8).
 extern "C" char* BdatTouchStringCell(char* a, char* b, u32 count);
 extern "C" void func_8022B9B4(CSysWin* self, char* str, u32 flag);
-extern "C" void func_8022B8B8(CSysWin* self);
+extern "C" void sysWinOpenPhase1(CSysWin* self);
 
-// lib/lyt draw (func_801F3540).
-extern "C" void func_801F35B0(void* obj34, nw4r::lyt::DrawInfo* info);
+// lib/lyt draw (CScrollBar_UpdateDispatch).
+extern "C" void CScrollBar_draw(void* obj34, nw4r::lyt::DrawInfo* info);
 
 // AnimRewindFrame is a flat C symbol (anim-frame check helper).
 extern "C" u32 AnimRewindFrame(nw4r::lyt::AnimTransform*, float);
@@ -1280,7 +1280,7 @@ extern "C" void CArtsInfo_SetField56(CArtsInfo* self, u8 val);
 extern "C" void CArtsInfo_SetLevel58(CArtsInfo* self, u16 val);
 extern "C" void CArtsInfo_RefreshIfReady(CArtsInfo* self);
 // Arts-element scan / character-data refresh (C symbols).
-extern "C" void func_80280DBC(u8* self);
+extern "C" void SysWinLog_ScanGrid(u8* self);
 extern "C" void CtrlObjectParam_SyncParamFromActor(void*);
 // BDAT string -> u16 (code_80135FDC.cpp). u32 3rd arg: retail passes the
 // raw int (no clrlwi at the call site).
@@ -1293,7 +1293,7 @@ extern "C" int sprintf(char*, const char*, ...);
 // func_8022F544 (per-frame input dispatch) callees
 // ---------------------------------------------------------------------------
 // Party-change notice gate (CUICfManager.cpp).
-extern "C" int func_8029A658();
+extern "C" int MenuTutorialIsCreated();
 // Same-TU dispatch helpers (definitions below; C linkage binds the calls to
 // the retail unmangled symbols).
 extern "C" u8 CMenuArtsSet_isBusy(SArts33888* self);
@@ -1310,11 +1310,11 @@ extern "C" void CMenuArtsSet_slotCursorDown(CMenuArtsSet* self);
 extern "C" void CMenuArtsSet_confirmSelect(CMenuArtsSet* self);
 extern "C" u8 CMenuArtsSet_isWindowBusy(CMenuArtsSet* self);
 // Scene/fade helpers (imports).
-extern "C" int func_800FEDF8();
-extern "C" void func_800FF914();
+extern "C" int CMainMenu_GetInstancePtr();
+extern "C" void ArtsInfo_SetReadyFlag();
 // Title/help bar close + mode-set (CTitleAHelp.cpp; free C symbols - the
 // member declarations in CTitleAHelp.hpp mangle differently).
-extern "C" void func_801C414C(CTitleAHelp* self);
+extern "C" void beginClose(CTitleAHelp* self);
 extern "C" void func_801C41E8(CTitleAHelp* self, u8 mode);
 // Member thunks called through their retail unmangled free-symbol forms by
 // func_8022F544 (the member declarations mangle differently).

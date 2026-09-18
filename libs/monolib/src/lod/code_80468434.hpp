@@ -82,10 +82,10 @@ typedef void (*LodD980Fn)(void*);
 extern "C" LodD980Fn lbl_eu_8056D980[];
 
 // Cross-TU LOD/scene entry points referenced by the record-draw helpers.
-// ColiLodBuildRecordMatrix / func_804BCC48 have unmangled retail symbols (C linkage).
+// ColiLodBuildRecordMatrix / ScnData_FwdB7E0C have unmangled retail symbols (C linkage).
 extern "C" {
 void ColiLodBuildRecordMatrix(void* mtx, void* record);
-void func_804BCC48(void* res, void* viewData, void* renderParams);
+void ScnData_FwdB7E0C(void* res, void* viewData, void* renderParams);
 }
 
 // Object + records used by func_8046A3B4 (stride-0x68 record array selected

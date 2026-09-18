@@ -80,14 +80,14 @@ int func_8016CE5C(const cf::CfResReloadImpl* self) {
 }
 
 // FULL_MATCH: vtable slot 6 - returns constant resource type identifier
-int getTypeId() { return 12; }
+extern "C" int getTypeId() { return 12; }
 
 // Computes a pseudo-random reload byte: calls the secondary-interface slot
 // +0x34 with (this, 1), and when both that result and CfRes_getResFileSize are
 // nonzero, hashes the value (multiply-high + correction) into field_1F.
 // Returns the byte, or 1 when it is zero.
 int func_8016CF24(cf::CfResReloadImpl* self) {
-    int v = self->func_8016CFBC(1);
+    int v = self->getWorkValue(1);
     if (self->field_1F == 0 && v != 0) {
         unsigned int h = CfRes_getResFileSize(v);
         if (h != 0) {
@@ -120,7 +120,7 @@ int func_8016CF24(cf::CfResReloadImpl* self) {
 
 // Getter for the 2-entry work-word array at +0x14 (index guarded to < 2;
 // out-of-range reads return 0).
-u32 func_8016CFBC(cf::CfResReloadImpl* self, int index) {
+extern "C" u32 getWorkValue(cf::CfResReloadImpl* self, int index) {
     if (index < 2) {
         return self->field_14[index];
     }
@@ -131,7 +131,7 @@ u32 func_8016CFBC(cf::CfResReloadImpl* self, int index) {
 // looks up the sound slot; if a live sound object exists, forwards arg3 to
 // nw4r BasicSound::SetPlayerPriority. f1/f2 are passed through to
 // CfSoundMan_PlayActorParam.
-void func_8016CFDC(cf::CfResReloadImpl* self, int arg2, int arg3, float f1, float f2, int priority) {
+extern "C" void playReloadSound(cf::CfResReloadImpl* self, int arg2, int arg3, float f1, float f2, int priority) {
     s16 v = self->field_0A;
     int id = -1;
     if (v < 0) {
@@ -154,7 +154,7 @@ void func_8016CFDC(cf::CfResReloadImpl* self, int arg2, int arg3, float f1, floa
 // Resolves the current state's attribute id (field_0A) and, when valid,
 // forwards it with two caller args to CfSoundMan_StopSlotByMode. Void return - retail
 // sets up no return value at the epilogue.
-void func_8016D0C0(cf::CfResReloadImpl* self, int arg2, int arg3) {
+extern "C" void stopReloadSound(cf::CfResReloadImpl* self, int arg2, int arg3) {
     s16 v = self->field_0A;
     int r = -1;
     if (v < 0) {
@@ -170,9 +170,9 @@ void func_8016D0C0(cf::CfResReloadImpl* self, int arg2, int arg3) {
     }
 }
 
-// Same attribute-id resolution as func_8016D0C0, forwarding the id with
+// Same attribute-id resolution as stopReloadSound, forwarding the id with
 // three caller args to CfSoundMan_PauseSlotByMode. Void return.
-void func_8016D144(cf::CfResReloadImpl* self, int arg2, int arg3, int arg4) {
+extern "C" void pauseReloadSound(cf::CfResReloadImpl* self, int arg2, int arg3, int arg4) {
     s16 v = self->field_0A;
     int r = -1;
     if (v < 0) {
@@ -194,7 +194,7 @@ void func_8016D144(cf::CfResReloadImpl* self, int arg2, int arg3, int arg4) {
 // are both present in retail.
 // const-qualified self: MWCC hoists the first member load (lha) above the
 // LR-spill store (see MWCC_CASES "const on the self parameter").
-int func_8016D1D8(const cf::CfResReloadImpl* self) {
+extern "C" int getReloadAttrId(const cf::CfResReloadImpl* self) {
     s16 v = self->field_0A;
     int r = -1;
     if (v < 0) {
@@ -219,13 +219,13 @@ int func_8016D1D8(const cf::CfResReloadImpl* self) {
 // slot reports a live resource id, searches the device table via
 // func_80068928 and bumps the matching entry's +0x38/+0x3A counters (the
 // +0x3A bump only when parent flag bit 0 is set).
-void func_8016D240(cf::CfResReloadImpl* self) {
+extern "C" void bumpReloadDeviceCounts(cf::CfResReloadImpl* self) {
     void* inst = CfRes_getInstanceField();
     if (inst == 0) {
         return;
     }
     for (int i = 0; i < 2; i++) {
-        int v = self->func_8016CFBC(i);
+        int v = self->getWorkValue(i);
         if (v != 0) {
             cf::DeviceSearchEntry* e = func_80068928((u8*)inst, (u32)v, 0x59, 0x61);
             if (e != 0) {
@@ -242,7 +242,7 @@ void func_8016D240(cf::CfResReloadImpl* self) {
 // flag words, then queries the table with the caller's arg2 forwarded as the
 // middle parameter; sets parent flag bits 0x30 on success and returns whether
 // the query succeeded (retail neg/or/srwi normalize reused for branch+return).
-int func_8016D2FC(cf::CfResReloadImpl* self, int arg2) {
+extern "C" int tryResolveReloadSlot30(cf::CfResReloadImpl* self, int arg2) {
     s16 v = self->field_0A;
     int p = 5;
     if (lbl_eu_80663E28 & 0x20) {
@@ -265,7 +265,7 @@ int func_8016D2FC(cf::CfResReloadImpl* self, int arg2) {
 // Picks the lookup param (5 or 3) from parent flag bit 26, queries the
 // table with the caller's arg2 forwarded, sets parent flag bit 4 when the
 // query succeeds, and returns whether it succeeded.
-int func_8016D390(cf::CfResReloadImpl* self, int arg2) {
+extern "C" int tryResolveReloadSlot10(cf::CfResReloadImpl* self, int arg2) {
     s16 v = self->field_0A;
     int p = 5;
     if (self->field_00->field_68 & 0x04000000) {
@@ -294,7 +294,7 @@ int func_8016D390(cf::CfResReloadImpl* self, int arg2) {
 // a register across the flag tests and the lookup-param selection.
 extern "C" void func_8016D3F8(cf::CfResReloadImpl* self) {
     reinterpret_cast<cf::CfObjectModel*>(self->field_00)->CfObjectModel_releaseModelList();
-    func_800BBB50((cf::CfObjectModel*)self->field_00);
+    CfModel_ReattachTrg((cf::CfObjectModel*)self->field_00);
     reinterpret_cast<cf::CfObjectModel*>(self->field_00)->CfObjectModel_releaseModelSub();
     self->field_00->field_90 = 0;
     // Local introduced after the first clear: MWCC reuses this load for both
@@ -322,7 +322,7 @@ extern "C" void func_8016D3F8(cf::CfResReloadImpl* self) {
         self->field_1C--;
         return;
     }
-    int v = self->func_8016CFBC(1);
+    int v = self->getWorkValue(1);
     u8* inst = (u8*)CfRes_getInstanceField();
     if (inst == 0) {
         return;
@@ -371,7 +371,7 @@ extern "C" void func_8016D3F8(cf::CfResReloadImpl* self) {
             self->field_0A = (u16)sp8;
             self->field_00->field_6C |= 0x30;
             self->field_08 = 1;
-            self->func_8016D240();
+            self->bumpReloadDeviceCounts();
             found->field_0C = 0;
         }
     }
@@ -404,17 +404,17 @@ extern "C" void func_8016D688(cf::CfResReloadImpl* self) {
     int ok = 1;
     u32 f6c = self->field_00->field_6C;
     if ((f6c & 0x2) != 0) {
-        self->func_8016DDE8();
+        self->resetReloadState();
         return;
     }
     if (entry->field_04 != self->field_00->field_70) {
-        self->func_8016DDE8();
+        self->resetReloadState();
         CfRes_stub_63990();
         notifyDetach_(self->field_00);
         return;
     }
     if ((f6c & 0x2) != 0) {  // redundant re-test, kept for byte-identity (cr1)
-        self->func_8016DDE8();
+        self->resetReloadState();
         return;
     }
     if (f6c & 0x20) {
@@ -448,7 +448,7 @@ extern "C" void func_8016D688(cf::CfResReloadImpl* self) {
                 return;
             }
             if (self->field_04 > lbl_eu_80667698) {
-                self->field_04 -= ((float (*)())func_80069EA0)();
+                self->field_04 -= ((float (*)())CfT_PlayRateGet)();
                 return;
             }
         }
@@ -461,7 +461,7 @@ extern "C" void func_8016D688(cf::CfResReloadImpl* self) {
             u8* slot18 = entry->field_2C->getHandle18(entry);
             self->field_00->field_90 = slot18;
             u8* h = scnImN4BuildByIdx((u8*)lbl_eu_80663E14, self->field_00->field_90, -1, 1, 0, 0x76);
-            func_800BBADC(self->field_00, h);
+            CfModel_InstallSub(self->field_00, h);
         }
     }
     if (self->field_00->field_6C & 0x10) {
@@ -481,7 +481,7 @@ extern "C" void func_8016D688(cf::CfResReloadImpl* self) {
             self->field_00->field_94 = slot1C;
             // three-arg call: getD80Flag result lands in r3 like retail
             self->field_00->field_9C =
-                func_800584B8((u32)CfRes_getD80Flag(), (u32)self->field_00->field_94, (const char*)work.buf);
+                initMcaFile((u32)CfRes_getD80Flag(), (u32)self->field_00->field_94, (const char*)work.buf);
         }
     }
     if (entry->field_2C->isActive28(entry) != 0) {
@@ -496,7 +496,7 @@ extern "C" void func_8016D688(cf::CfResReloadImpl* self) {
     setMemInitFlag__Q23mtl10MemManagerFb(true);
     int ok2 = (self->field_00->field_68 >> 20) & 1;
     if (ok2 != 0) {
-        func_800BB618((cf::CfObjectModel*)self->field_00, 0);
+        CfModel_SyncVisFlag((cf::CfObjectModel*)self->field_00, 0);
 reinterpret_cast<cf::CfObject*>(self->field_00)->CfObject_syncModelRate(lbl_eu_8066769C);
     }
     func_800BCFA0((cf::CfObjectMove*)self->field_00);
@@ -541,7 +541,7 @@ reinterpret_cast<cf::CfObject*>(self->field_00)->CfObject_syncModelRate(lbl_eu_8
             CfObjectMove_setMoveSpeedGated((cf::CfObjectMove*)self->field_00, lbl_eu_806676A0);
     }
     }
-    self->func_8016DCE4();
+    self->syncReloadObjectNameScale();
 }
 
 // Periodic reload tick: dispatches the +0x28 secondary-interface slot when
@@ -553,14 +553,14 @@ reinterpret_cast<cf::CfObject*>(self->field_00)->CfObject_syncModelRate(lbl_eu_8
 // with flag bit 1 set, the parent +0x98 slot gates the tick (nonzero
 // CONTINUES after clearing field_1C; zero stops). r5 is derived from parent
 // +0x64 bit 27, upgraded by the +0xC4 sub-object's +0x0C bits 16/6.
-extern "C" void func_8016DAF8(cf::CfResReloadImpl* self) {
+extern "C" void tickReloadState(cf::CfResReloadImpl* self) {
     if (self->field_00->field_6C & 0x2) {
-        self->func_8016DDE8();
+        self->resetReloadState();
     }
     if (self->field_08 == 0) {
         return;
     }
-    cf::CfResEneObj* obj = (cf::CfResEneObj*)func_800AD860(self->field_00);
+    cf::CfResEneObj* obj = (cf::CfResEneObj*)getEffOwner__(self->field_00);
     if (obj != 0 && (obj->field_45CA & 0x2)) {
         if (reinterpret_cast<cf::CfObject*>(self->field_00)->CfObject_checkTargetState() != 0) {
             self->field_1C = 0;
@@ -629,7 +629,7 @@ effc:
     self->field_08++;
 }
 
-extern "C" void func_8016DCE4(u8* self) {
+extern "C" void syncReloadObjectNameScale(u8* self) {
 if (!((cf::CObjectParam*)*(void**)self)->CObjectParam_hasObjectName()) {
         void* r = ((cf::CfObjectModel*)*(void**)self)->CfObjectModel_getModelName();
         ((cf::CObjectParam*)*(void**)self)->CObjectParam_setObjectName((const char*)r);
@@ -654,8 +654,8 @@ v = ((cf::CfObject*)*(void**)self)->CfObject_getObjScale();
 
 // Resets the parent flag bits 0x002773F3, restarts the reload counter, and
 // clears the state index unless the counter was already zero.
-void func_8016DDE8(cf::CfResReloadImpl* self) {
-    func_800BAB64(self->field_00);
+extern "C" void resetReloadState(cf::CfResReloadImpl* self) {
+    CfModel_ReleaseAll(self->field_00);
     self->field_00->field_6C &= 0xFFD88C0C;  // clears 0x002773F3 flag bits
     self->field_1C = 3;
     self->field_08 = 0;
@@ -669,26 +669,26 @@ void func_8016DDE8(cf::CfResReloadImpl* self) {
 // EU-only helper: if the state index is valid, notify the parent's resource
 // (+0x70) with that index, then dispatch the +0x28 slot of the secondary
 // interface.
-void func_eu_8016F1C4(cf::CfResReloadImpl* self) {
+extern "C" void reregisterAndResetReload(cf::CfResReloadImpl* self) {
     s16 v = self->field_0A;
     if (v >= 0) {
         CfRes_tryReregisterSlot(v, self->field_00->field_70);
     }
-    self->func_8016DDE8();
+    self->resetReloadState();
 }
 
 // Early-return unless the parent's +0x6C flag bit 1 (0x2) is set, then
 // tail-call through the +0x10 secondary vtable slot +0x28.
-void func_8016DE68(cf::CfResReloadImpl* self) {
+extern "C" void resetReloadIfFlagged(cf::CfResReloadImpl* self) {
     if (!(self->field_00->field_6C & 0x2)) {
         return;
     }
-    self->func_8016DDE8();
+    self->resetReloadState();
 }
 
 // PMTF dispatch: u16 field_08 selects one of the 4 member pointers in
 // lbl_eu_80530FC0; MWCC lowers the call to mulli/lis/addi + `bl __ptmf_scall`.
-void func_8016DE8C(cf::CfResReloadImpl* self) {
+extern "C" void dispatchReloadState(cf::CfResReloadImpl* self) {
     u16 idx = self->field_08;
     if (idx < 4) {
         (self->*lbl_eu_80530FC0[idx])();
@@ -696,9 +696,9 @@ void func_8016DE8C(cf::CfResReloadImpl* self) {
 }
 
 // FULL_MATCH: vtable slot 23 - returns constant resource sub-type
-int getSubTypeId() { return 1; }
+extern "C" int getSubTypeId() { return 1; }
 
-void setWorkValue(cf::CfResReloadImpl* thisPtr, int index, unsigned int value) {
+extern "C" void setWorkValue(cf::CfResReloadImpl* thisPtr, int index, unsigned int value) {
     if (index < 2) {
         ((unsigned int*)((char*)thisPtr + 0x14))[index] = value;
     }
@@ -726,9 +726,9 @@ float lbl_eu_80666210;
 const double lbl_eu_806676C0 = 0x4330000000000000ll;
 const double lbl_eu_806676D0 = 0x4330000000000000ll;
 
-u16 getReloadParam0() { return lbl_eu_80664278; }
+extern "C" u16 getReloadParam0() { return lbl_eu_80664278; }
 
-void updateReloadFloat(short param_1)
+extern "C" void updateReloadFloat(short param_1)
 {
     lbl_eu_80664278 = param_1;
     lbl_eu_80664284 = lbl_eu_806676B0 * lbl_eu_80666210;
@@ -737,7 +737,7 @@ void updateReloadFloat(short param_1)
 // Refreshes the reload timer globals for a given type: stores the type,
 // seeds the reload counter (either a fixed 1 with a constant timer, or a
 // BDAT-derived value via func_8016E654), then picks the delay float by the
-// same flag/selector logic as func_8016E9CC and drives the two sound slots.
+// same flag/selector logic as getReloadDelay and drives the two sound slots.
 extern "C" void func_8016DF4C(u32 type) {
     lbl_eu_80664280 = (u16)type;
     if ((type & 0xFFFF) == 0) {
@@ -768,7 +768,7 @@ extern "C" void func_8016DF4C(u32 type) {
         }
         int ok = 0;
         if (sel != 0) {
-            if (func_801AAAA0(sel) != 0) {
+            if (BattleWork_CheckEffectTableReady(sel) != 0) {
                 ok = 1;
             }
         }
@@ -778,16 +778,16 @@ extern "C" void func_8016DF4C(u32 type) {
             delay = lbl_eu_806676B4;
         }
     }
-    func_8018896C(0, 0, delay, lbl_eu_806676BC);
-    func_8018896C(1, 0, delay, lbl_eu_806676BC);
+    MenuSnd_PushSlotVolume_896C(0, 0, delay, lbl_eu_806676BC);
+    MenuSnd_PushSlotVolume_896C(1, 0, delay, lbl_eu_806676BC);
 }
 
-u16 getReloadParam2() { return lbl_eu_80664280; }
+extern "C" u16 getReloadParam2() { return lbl_eu_80664280; }
 
-u16 getReloadParam1() { return lbl_eu_8066427E; }
+extern "C" u16 getReloadParam1() { return lbl_eu_8066427E; }
 
 // Initializes a 0x10-byte struct from global reload params
-void initReloadInfoStruct(void* self) {
+extern "C" void initReloadInfoStruct(void* self) {
     unsigned char* p = static_cast<unsigned char*>(self);
     memset(self, 0, 0x10);
     *reinterpret_cast<float*>(p + 0x0) = lbl_eu_80664284;
@@ -802,7 +802,7 @@ void initReloadInfoStruct(void* self) {
 // (inverse of initReloadInfoStruct) and clears lbl_eu_80664288. Loads are
 // assigned in retail order; declarations are reversed to steer MWCC's
 // register colors toward retail's descending r7..r3.
-void func_8016E100(cf::ReloadInfo* p) {
+extern "C" void loadReloadInfo(cf::ReloadInfo* p) {
     f32 v0;
     u16 v5, v4, v3, v2, v1;
     v0 = p->field_00;
@@ -821,7 +821,7 @@ void func_8016E100(cf::ReloadInfo* p) {
 }
 
 // Clears the reload-state globals; the float is re-seeded from lbl_eu_806676C8.
-void func_8016E13C() {
+extern "C" void clearReloadGlobals() {
     f32 f = lbl_eu_806676C8;
     lbl_eu_80664278 = 0;
     lbl_eu_8066427A = 0;
@@ -832,7 +832,7 @@ void func_8016E13C() {
     lbl_eu_80664288 = 0;
 }
 
-void updateReloadTypeState(u16 r3, u16 r4) {
+extern "C" void updateReloadTypeState(u16 r3, u16 r4) {
     extern u16 lbl_eu_8066427A;
     extern u16 lbl_eu_8066427C;
     extern u16 lbl_eu_80664288;
@@ -842,9 +842,9 @@ void updateReloadTypeState(u16 r3, u16 r4) {
     } else {
         lbl_eu_80664288 |= 0x1;
     }
-    lbl_eu_80664284 = lbl_eu_806676C8;
-    lbl_eu_8066427A = r3;
-    lbl_eu_8066427C = r4;
+    *(volatile float*)&lbl_eu_80664284 = lbl_eu_806676C8;
+    *(volatile u16*)&lbl_eu_8066427A = r3;
+    *(volatile u16*)&lbl_eu_8066427C = r4;
 }
 
 // Position vector view with the loop-operator -= so MWCC PS-vectorizes the
@@ -1156,8 +1156,8 @@ extern "C" u16 func_8016E854(cf::CfResReloadImpl* self, u16* out1, u16* counter,
 
 // Returns a delay/timer float: two flag checks against lbl_eu_80663E24
 // short-circuit to the default; otherwise the value depends on
-// lbl_eu_80664280 (1 -> 0x65, 2 -> 0x66) passing through func_801AAAA0.
-float func_8016E9CC() {
+// lbl_eu_80664280 (1 -> 0x65, 2 -> 0x66) passing through BattleWork_CheckEffectTableReady.
+extern "C" float getReloadDelay() {
     // Both true-paths share one 'delay = B4' block. Retail issues a separate
     // SDA load of lbl_eu_80663E24 for the bit-25/10 merge, so the first test
     // reads its own copy.
@@ -1179,7 +1179,7 @@ float func_8016E9CC() {
         }
         int ok = 0;
         if (sel != 0) {
-            if (func_801AAAA0(sel) != 0) {
+            if (BattleWork_CheckEffectTableReady(sel) != 0) {
                 ok = 1;
             }
         }
@@ -1254,7 +1254,7 @@ extern "C" void func_8016EA68(cf::CfResReloadImpl* self) {
                 }
                 int ok = 0;
                 if (sel != 0) {
-                    if (func_801AAAA0(sel) != 0) {
+                    if (BattleWork_CheckEffectTableReady(sel) != 0) {
                         ok = 1;
                     }
                 }
@@ -1264,8 +1264,8 @@ extern "C" void func_8016EA68(cf::CfResReloadImpl* self) {
                     delay = lbl_eu_806676B4;
                 }
             }
-            func_8018896C(0, 0, delay, lbl_eu_806676BC);
-            func_8018896C(1, 0, delay, lbl_eu_806676BC);
+            MenuSnd_PushSlotVolume_896C(0, 0, delay, lbl_eu_806676BC);
+            MenuSnd_PushSlotVolume_896C(1, 0, delay, lbl_eu_806676BC);
         }
     }
 }

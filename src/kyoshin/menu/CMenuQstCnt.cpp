@@ -29,7 +29,7 @@ struct QstMenuData {
 
 extern void playUISound(u32);
 
-// The quest-info buffer func_80226FAC / func_802270CC maintain.
+// The quest-info buffer QstCnt_InitRecords_6FAC / func_802270CC maintain.
 struct QstData {
     QstInfo mList[0x400];                       // 0x0000
     u16 field_2000;                             // 0x2000
@@ -46,14 +46,14 @@ QstEntry* copyQstEntry(QstEntry* dst, const QstEntry* src);
 QstEntry* copyQstEntry2(QstEntry* dst, const QstEntry* src);
 void __ct__CMenuQstCnt(CMenuQstCnt* self, CScn* scene, short a, short b, unsigned char c, unsigned char d, unsigned char e);
 CMenuQstCnt* func_802269D8(CProcess* parent, CScn* scene, short a, short b, unsigned char c, unsigned char d, unsigned char e);
-int func_80226B94();
+int QstCnt_HasInstance_6B94();
 void invalidateQstFlag();
-void func_80226BBC(QstMenuData* self);
-void func_80226C18(QstMenuData* self);
-void func_80226C5C(QstMenuData* self);
+void QstCnt_SignalReady_6BBC(QstMenuData* self);
+void QstCnt_AdvanceToOpen_6C18(QstMenuData* self);
+void QstCnt_TickToOpened_6C5C(QstMenuData* self);
 void func_80226C88(CMenuQstCnt* self);
 void func_80226E54(CMenuQstCnt* self);
-QstData* func_80226FAC(QstData* self);
+QstData* QstCnt_InitRecords_6FAC(QstData* self);
 void* __dt__80227070(QstData* self, int flags);
 void func_802270CC(QstData* self);
 void func_80227260(QstData* self, u32 kind, u32 filter);
@@ -83,7 +83,7 @@ void func_8022769C(QstInfo* dst, const QstInfo* src) {
     dst->f7 = src->f7;
 }
 unsigned short selectQstIndex(unsigned char* p);
-QstInfo* func_802276F4(QstInfo* base, unsigned short idx);
+QstInfo* QstCnt_GetInfoAt_76F4(QstInfo* base, unsigned short idx);
 void func_80227710();
 }
 
@@ -92,7 +92,7 @@ void func_80227710();
 CMenuQstCnt* lbl_eu_80664720;
 
 // (lbl_eu_80664720 != 0) - retail lwz sda21; subic; subfe
-extern "C" int func_80226B94() { return lbl_eu_80664720 != 0; }
+extern "C" int QstCnt_HasInstance_6B94() { return lbl_eu_80664720 != 0; }
 
 // Retail keeps setQstEntry/copyQstEntry/copyQstEntry2 as out-of-line calls
 // from every callsite; without the auto_inline guard, MWCC -inline auto
@@ -304,16 +304,16 @@ void CMenuQstCnt::Move() {
         f32 result = lbl_eu_8066856C - camDist;
         if (result < lbl_eu_8066856C) return;
     }
-    if (func_8011CD5C()) return;
-    if (func_80293C10()) return;
-    if (func_8029A658()) return;
-    if (func_801B481C()) return;
-    if (func_80124B78()) return;
+    if (isQuestLogMenuActive()) return;
+    if (PTNotice_IsActive_3C10()) return;
+    if (MenuTutorialIsCreated()) return;
+    if (GetItemMulti_IsActiveFlag()) return;
+    if (SysWinGetSingleton()) return;
     // Retail compares the state with signed cmpi.
     switch ((s32)mState8C) {
-    case 0: func_80226BBC((QstMenuData*)this); break;
-    case 1: func_80226C18((QstMenuData*)this); break;
-    case 2: func_80226C5C((QstMenuData*)this); break;
+    case 0: QstCnt_SignalReady_6BBC((QstMenuData*)this); break;
+    case 1: QstCnt_AdvanceToOpen_6C18((QstMenuData*)this); break;
+    case 2: QstCnt_TickToOpened_6C5C((QstMenuData*)this); break;
     case 3: func_80226C88(this); break;
     }
     // Tail virtual call: Layout::Animate (vtable slot 0x38), option 0.
@@ -341,10 +341,10 @@ void CMenuQstCnt::cbRenderBefore() {
         f32 result = lbl_eu_8066856C - camDist;
         if (result < lbl_eu_8066856C) return;
     }
-    if (func_80293C10()) return;
-    if (func_8029A658()) return;
-    if (func_801B481C()) return;
-    if (func_80124B78()) return;
+    if (PTNotice_IsActive_3C10()) return;
+    if (MenuTutorialIsCreated()) return;
+    if (GetItemMulti_IsActiveFlag()) return;
+    if (SysWinGetSingleton()) return;
     if (mField64 != 0) return;
     GXSetZMode(GX_FALSE, GX_NEVER, GX_FALSE);
     // Raw-storage DrawInfo built/destroyed via the C-ABI ct/dt calls so the
@@ -418,8 +418,8 @@ void invalidateQstFlag() {
 
 // Quest-log gating: when the CF-game resource gate reports the scene is open
 // (not mid-load) and the input state allows it, play the sound and set state 1.
-void func_80226BBC(QstMenuData* self) {
-    if (func_80144FF0() == 0 || cf::CfGameManager::isSceneLoading() || func_80145030()) {
+void QstCnt_SignalReady_6BBC(QstMenuData* self) {
+    if (isLandTelopIdle() == 0 || cf::CfGameManager::isSceneLoading() || getLandTelopE0()) {
         playUISound(0x1f);
         self->mState8C = 1;
     }
@@ -427,7 +427,7 @@ void func_80226BBC(QstMenuData* self) {
 
 // Advance the open/close animation at 0x88 by one frame; when it finishes the
 // animation (advanceAnimTransform returns 1), move to state 2.
-void func_80226C18(QstMenuData* self) {
+void QstCnt_AdvanceToOpen_6C18(QstMenuData* self) {
     if (advanceAnimTransform(self->mAnim88, 1.0f) != 0) {
         self->mState8C = 2;
     }
@@ -435,7 +435,7 @@ void func_80226C18(QstMenuData* self) {
 
 // Per-frame timer: 0x90 counts frames (1 per call); once it reaches 90 frames
 // it clamps to state 3. Uses >= (cror eq,gt,eq; bnelr returns while below).
-void func_80226C5C(QstMenuData* self) {
+void QstCnt_TickToOpened_6C5C(QstMenuData* self) {
     self->mValue90 += 1.0f;
     if (self->mValue90 >= 90.0f) {
         self->mState8C = 3;
@@ -518,7 +518,7 @@ void func_80226E54(CMenuQstCnt* self) {
     setLayoutTextBoxNumber(self->mLayout, &lbl_eu_80509A10[0x4d], self->mSelEntry.f5);
 }
 
-QstData* func_80226FAC(QstData* self) {
+QstData* QstCnt_InitRecords_6FAC(QstData* self) {
     __construct_array(self, (void*)initQstInfo, (void*)&__dt__80227030, 8, 0x400);
     self->field_2000 = 0;
     self->field_2002 = 0;
@@ -567,7 +567,7 @@ void func_802270CC(QstData* self) {
         u16 end = func_801380A0(cat + 1);
         u16 i = (u16)start;
         for (; i < end; i++) {
-            u8 kind = (u8)func_8009CF8C(i + 0x220);
+            u8 kind = (u8)CtrlRemote_TouchBitByArg(i + 0x220);
             if (kind == 0 || kind == 0xC8) continue;
             int r22;
             if (kind >= 0xFE) {
@@ -717,7 +717,7 @@ unsigned short selectQstIndex(unsigned char* p) {
     return (unsigned short)r;
 }
 
-QstInfo* func_802276F4(QstInfo* base, unsigned short idx) {
+QstInfo* QstCnt_GetInfoAt_76F4(QstInfo* base, unsigned short idx) {
     // clrlslwi 16,3 = (idx & 0xFFFF) << 3 -> pointer into an 8-byte QstInfo array
     if (idx >= 0x400) return 0;
     return base + idx;

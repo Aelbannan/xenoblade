@@ -90,7 +90,7 @@ namespace cf {
     class CAttackSet : public _sAttackSet {
     public:
         CAttackSet(){}
-        virtual void func_80153E88();
+        virtual void resetAttackSetArts();
         
         //0x0: vtable
         CAttackParam mAttackParams[6]; //0x4

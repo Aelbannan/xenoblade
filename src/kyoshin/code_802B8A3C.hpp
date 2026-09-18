@@ -125,9 +125,9 @@ struct OrderConfigEntry {
 
 // ── Data imports (plain globals: MWCC does not mangle global data names) ──
 extern u32 lbl_eu_8053B7E8[3];   // ORDER init-state triple
-extern s32 lbl_eu_8053B7F4[];    // func_802B8B0C voice-ID table
-extern u32 lbl_eu_8053B800[3];   // func_802B8B0C init-state triple
-extern u32 lbl_eu_8053B80C[3];   // func_802B8C00 init-state triple
+extern s32 lbl_eu_8053B7F4[];    // startOrderThreadPlayback voice-ID table
+extern u32 lbl_eu_8053B800[3];   // startOrderThreadPlayback init-state triple
+extern u32 lbl_eu_8053B80C[3];   // dispatchOrderThreadPlayback init-state triple
 extern u32 lbl_eu_8053B818[];    // CVS_THREAD_ORDER vtable
 extern OrderConfigEntry lbl_eu_8053B840[]; // func_802B8D4C config table
 

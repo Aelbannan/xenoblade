@@ -51,7 +51,7 @@ struct CTaskGame_setVec4_tmp {
 extern "C" CTaskGame_setVec4_tmp* CTaskGame_setVec4(CTaskGame_setVec4_tmp*, f32, f32, f32, f32);
 
 // Shared .sdata2 float used as the GX texture LOD bias in the file-event
-// handler (func_8029539C). `const` routes it into the readonly sdata2 pool so
+// handler (GamePicOnFileEvent). `const` routes it into the readonly sdata2 pool so
 // MWCC schedules its load early (cf. CExchangeWin lfs-hoist fix).
 extern const f32 lbl_eu_80668BB0;
 
@@ -120,7 +120,7 @@ public:
     GXTexObj mTexObj;                 // 0x6C loaded GX texture object (0x20: 0x6C..0x8B)
     u8 field_8C;                      // 0x8C texture-ready flag (ctor zeroes it; cbRenderBefore gates on it)
     u8 field_8D[3];                   // 0x8D..0x8F gap after GXTexObj
-    // 0x90-0xC4: texture/palette parameter block (read/written by func_80294E58)
+    // 0x90-0xC4: texture/palette parameter block (read/written by GamePicShiftTexParams)
     u32 param_90;
     u32 param_94;
     u32 param_98;

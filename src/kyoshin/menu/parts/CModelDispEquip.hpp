@@ -17,7 +17,7 @@
 #define lbl_eu_805262F0 lbl_eu_805262F0_constchar_hidden
 #define lbl_eu_805262C8 lbl_eu_805262C8_constchar_hidden
 #define zero__Q22ml5CVec3 zero__Q22ml5CVec3_ml_hidden
-#define func_804BE398 func_804BE398_u32_hidden
+#define ScnRes_VertRayForward_E398 ScnRes_VertRayForward_E398_u32_hidden
 #define simGetLeafActData simGetLeafActData_void_hidden
 #define lbl_eu_8066A200 lbl_eu_8066A200_float_hidden
 #include "kyoshin/action/CActParamAnim.hpp"
@@ -33,7 +33,7 @@
 #undef lbl_eu_805262F0
 #undef lbl_eu_805262C8
 #undef zero__Q22ml5CVec3
-#undef func_804BE398
+#undef ScnRes_VertRayForward_E398
 #undef simGetLeafActData
 #undef lbl_eu_8066A200
 
@@ -118,7 +118,7 @@ struct CModelDispObj {
     u8 _00[4];
 };
 
-// Name/param record returned by CfObjectMove_getBdatNameCol11 / CfObjectMove_getBdatNameCol7 / func_800BBC08.
+// Name/param record returned by CfObjectMove_getBdatNameCol11 / CfObjectMove_getBdatNameCol7 / CfModel_GetBdatString.
 struct CModelDispNameParam {
     u8 _00[4];
 };
@@ -222,7 +222,7 @@ struct CModelDispEnumList {
     u32 field_620; // +0x620
 };
 
-// Enum-list slot from func_800F6EC0: move object pointer at +0x04.
+// Enum-list slot from getEntryAt: move object pointer at +0x04.
 struct CModelDispSlot {
     u32 field_00;
     cf::CfObjectMove* field_04; // +0x04
@@ -233,8 +233,8 @@ struct CModelDispSlot {
 // addresses it through the holder base (e.g. ModelDispEquip_RearmAnimSlot's lwz 0xfc8(r31)).
 struct CActParamHolder {
     void* field_0x00; // +0x00 object pointer (vtable dispatch at 0xC4/0xC8)
-    CModelDispObj* field_0x04; // +0x04 anim object (func_800584B8 result)
-    CModelDispObj* field_0x08; // +0x08 anim object (func_800584B8 result)
+    CModelDispObj* field_0x04; // +0x04 anim object (initMcaFile result)
+    CModelDispObj* field_0x08; // +0x08 anim object (initMcaFile result)
     CActParamAnimView actParam;    // +0x0C (0x53C bytes)
     s32 timer;        // +0x548
     CModelDispObj* unk_55C; // +0x54C loaded-model record (Scn_InitGlobalA result)
@@ -356,7 +356,7 @@ extern const u32 lbl_eu_80662738[2];
 extern "C" void tickAnimFrame(CActParamAnimView* self);
 extern "C" bool setAnimSubPos(CActParamAnimView* self, const f32* value);
 extern "C" CModelDispEffectView* func_804CC1F4(const u32* mgr, u8* bdat, u32 global, int r6, int r7, int r8);
-extern "C" void func_804E3D0C(CModelDispEffectView* effect, CModelDispEffectView* parent);
+extern "C" void schedAttachChildSlot(CModelDispEffectView* effect, CModelDispEffectView* parent);
 extern "C" s32 getInstance__Q22ml6MTRandFv();
 extern "C" u32 rand31__Q22ml6MTRandFv();
 extern "C" int atoi(const char* str);
@@ -370,7 +370,7 @@ extern "C" void __destroy_arr(void*, void*, int, int);
 extern "C" void __dt__Q22cf17CActParamAnimGameFv(cf::CActParamAnimGame*, int);
 
 // ---- Cross-TU imports (retail C/verbatim-mangled symbol names) ----
-extern "C" int func_800BBC04(void* arg);
+extern "C" int CfModel_UpdateBdat(void* arg);
 extern "C" void* getBdatEntryColumn__Q22cf13CfGameManagerFv(u32 type, int slot);
 extern "C" int func_800AA33C(ml::FixStr<64>& buf, u32 packed, int prefixFlag, int suffixFlag);
 extern "C" void PartyStateWin_InitMemCounters(CModelDispFileCtx* ctx);
@@ -379,8 +379,8 @@ extern "C" int getFileSize__11CDeviceFileFPCc(const char* path, int flags);
 extern "C" void* readFile__11CDeviceFileFUlPCcP10IWorkEventii(u32 allocHandle, const char* path, void* workEvent, int, int);
 extern "C" void setHandleFlag1__11CDeviceFileFP11CFileHandle(CFileHandle* fh);
 extern "C" void closeFileHandle__FPP11CFileHandle(CFileHandle** handlePtr);
-extern "C" void func_804CC1BC(void* mgr, void* data);
-extern "C" void func_804CC1D8(void* arg, void* data); // (manager, buffer): the
+extern "C" void EffSched_LookupA(void* mgr, void* data);
+extern "C" void EffSched_LookupB(void* arg, void* data); // (manager, buffer): the
 // buffer rides in r4 from the null-check load - keeps the check color r4.
 extern "C" void waitForDrawDone__9CDeviceVIFv();
 
@@ -388,13 +388,13 @@ extern "C" void waitForDrawDone__9CDeviceVIFv();
 extern "C" CModelDispEnumList* CTaskGame_enumListCtor(CModelDispListHolder* holder);
 extern "C" CModelDispEnumList* CTaskGame_enumListGet(CModelDispListHolder* holder);
 extern "C" void __dt__80043E88(CModelDispListHolder* holder, int flag);
-extern "C" void func_800F4A98(CModelDispEnumList* list, u32 type, u32 filter);
-extern "C" CModelDispSlot* func_800F6EC0(CModelDispEnumList* list, u32 index);
-extern "C" void func_804E3CCC(CModelDispEffectView* effect);
-extern "C" void func_804E3D48(CModelDispEffectView* effect, CModelDispEffectView* parent);
+extern "C" void startEnumObjects(CModelDispEnumList* list, u32 type, u32 filter);
+extern "C" CModelDispSlot* getEntryAt(CModelDispEnumList* list, u32 index);
+extern "C" void schedClearFlag15Update(CModelDispEffectView* effect);
+extern "C" void schedDetachChildSlot(CModelDispEffectView* effect, CModelDispEffectView* parent);
 extern "C" CModelDispNameParam* CfObjectMove_getBdatNameCol11(cf::CfObjectMove* move, int index);
 extern "C" CModelDispNameParam* CfObjectMove_getBdatNameCol7(cf::CfObjectMove* move, int index);
-extern "C" CModelDispNameParam* func_800BBC08(u8 value);
+extern "C" CModelDispNameParam* CfModel_GetBdatString(u8 value);
 extern "C" u32 func_8014235C(u32 param1, const char* column, u32 param3);
 extern "C" int sprintf(char* str, const char* fmt, ...);
 extern "C" int* CtrlObjectParam_GetSlotTableBase();
@@ -406,7 +406,7 @@ extern "C" void* CfRes_tryResolveToken(u32 id, u32* outType);
 extern "C" void syncFieldData__Q22cf13CfGameManagerFv(u32 value, bool searchEntries);
 extern "C" void simSetLeafFlag4000(void* model, int flag);
 extern "C" void func_80482DF4(void* model, int flag);
-extern "C" CModelDispObj* func_800584B8(u32 global, u32 id, const char* name);
+extern "C" CModelDispObj* initMcaFile(u32 global, u32 id, const char* name);
 extern "C" CScnItemModel* Scn_SetupAnim(u32 global, u32 id, int a, int b);
 extern "C" CScnItemModel* Scn_SetupAnimDefault(u32 global, CModelDispNameParam* param);
 extern "C" CModelDispObj* Scn_InitGlobalA(u32 global, u8* mDataAdj, const char* name);
@@ -419,7 +419,7 @@ extern "C" void releaseAnimObj(CActParamAnimView* self, CModelDispObj* obj);
 extern "C" void pushAnimNode(CActParamAnimView* self, CModelDispObj* obj, u32 param);
 extern "C" void attachAnimObj(CActParamAnimView* self, CScnItemModel* model, CModelDispObj* anim, u32 param);
 extern "C" CModelDispObj* getAnimModelId(CActParamAnimView* self);
-extern "C" void func_8005A594(CActParamAnimView* self);
+extern "C" void AnimGame_SetStateFlags(CActParamAnimView* self);
 extern "C" void func_804831C4(CScnItemModel* model, CModelDispNameParam* param);
 extern "C" void __ct__CMcaFile(CModelDispMca* self, u32 anim);
 extern "C" void __construct_array(void*, void*, void*, int, int);

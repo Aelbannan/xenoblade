@@ -60,10 +60,10 @@ static inline void scenarioLadder(u32 id) {
 }
 
 // ---------------------------------------------------------------------------
-// func_8027F0A0 (us-80281524)
+// SysWinLog_ResetState (us-80281524)
 // Clears the "scenario log open / state" globals to their closed values.
 // ---------------------------------------------------------------------------
-void func_8027F0A0() {
+void SysWinLog_ResetState() {
     lbl_eu_80664910 = 0;
     lbl_eu_80664911 = 0;
     lbl_eu_80664912 = 0;
@@ -71,7 +71,7 @@ void func_8027F0A0() {
 }
 
 // Definitions of these two helpers are placed at the BOTTOM of this file so
-// that callers below (func_80280D04 / func_80280DBC / func_80280E9C) only see
+// that callers below (SysWinLog_AdvanceTiers / SysWinLog_ScanGrid / func_80280E9C) only see
 // the prototypes from CSysWinScenarioLog.hpp - MWCC then emits a direct `bl`
 // to the retail symbol instead of inlining the body at each call site (retail
 // calls them out-of-line).
@@ -167,12 +167,12 @@ extern "C" CSysWinScenarioLog* __ct__CSysWinScenarioLog(CSysWinScenarioLog* s,
 }
 
 // ---------------------------------------------------------------------------
-// func_8027E9E8 (us-80280e6c)
+// SysWinLog_Create (us-80280e6c)
 // Allocate the CSysWinScenarioLog singleton from work memory, construct it,
 // store it, and register it as a child of `parent`. Returns null when already
 // created. (Regist is called even if the allocation failed, matching retail.)
 // ---------------------------------------------------------------------------
-CSysWinScenarioLog* func_8027E9E8(CProcess* parent, u8* param) {
+CSysWinScenarioLog* SysWinLog_Create(CProcess* parent, u8* param) {
     if (lbl_eu_80664908 != 0) {
         return nullptr;
     }
@@ -189,7 +189,7 @@ CSysWinScenarioLog* func_8027E9E8(CProcess* parent, u8* param) {
 }
 
 // ---------------------------------------------------------------------------
-// func_8027F0B8 (us-8028153c)
+// SysWinLog_PollBattleStart (us-8028153c)
 // When the battle list holds members and the scene is ready, force the
 // scenario-sequence close for a fixed id, then mark the window as shown.
 // ---------------------------------------------------------------------------
@@ -202,7 +202,7 @@ struct CBattleListOwner {
     CBattleListNode* list;          // 0x28
 };
 
-void func_8027F0B8() {
+void SysWinLog_PollBattleStart() {
     CBattleListNode* p;
     s32 count;
     CBattleListNode* head =
@@ -263,15 +263,15 @@ void func_80280804(CScenarioFlagObj* self) {
 // ---------------------------------------------------------------------------
 // Remaining unmatched func_8027* stubs in this unit (non-target).
 // ---------------------------------------------------------------------------
-void func_8027EE70(void* self) { ((void(*)(void*))__dt__18CSysWinScenarioLogFv)((char*)self - 0x6c); }
-void func_8027EE78(void* self) { ((CSysWinScenarioLog*)((char*)self - 0x70))->cbRenderBefore(); }
-void func_8027EE80(void* self) { ((void(*)(void*))__dt__18CSysWinScenarioLogFv)((char*)self - 0x70); }
+void SysWinLog_DtorThunk6C(void* self) { ((void(*)(void*))__dt__18CSysWinScenarioLogFv)((char*)self - 0x6c); }
+void SysWinLog_RenderThunk70(void* self) { ((CSysWinScenarioLog*)((char*)self - 0x70))->cbRenderBefore(); }
+void SysWinLog_DtorThunk70(void* self) { ((void(*)(void*))__dt__18CSysWinScenarioLogFv)((char*)self - 0x70); }
 
-void func_8027EF50() {
+void SysWinLog_PollBattleEnd() {
     if (lbl_eu_80664910 != 0) {
         // Walk the battle-manager ring until we're back at the sentinel and
         // count how many active battle entries there are. (Declaration order
-        // mirrors the matched func_8027F0B8 loop so MWCC colors the node r3 /
+        // mirrors the matched SysWinLog_PollBattleStart loop so MWCC colors the node r3 /
         // sentinel r5 like retail.)
         CSysWinListNode* node;
         s32 count;
@@ -318,7 +318,7 @@ void func_8027EF50() {
 // Draw the scenario-log layout behind the scene while the game is live: same
 // gate chain as Move() but testing bit 10 of the pause word, then Z-off and
 // a layout draw with a stack DrawInfo (raw buffer, direct ctor/dtor calls).
-// noinline keeps the this-adjusting vtable thunk func_8027EE78 a two-instruction
+// noinline keeps the this-adjusting vtable thunk SysWinLog_RenderThunk70 a two-instruction
 // subi + tail-call instead of a full inline copy.
 // ---------------------------------------------------------------------------
 __declspec(noinline) void CSysWinScenarioLog::cbRenderBefore() {
@@ -335,7 +335,7 @@ __declspec(noinline) void CSysWinScenarioLog::cbRenderBefore() {
     if (IsMenuState621F0() == 0) {
         return;
     }
-    if (func_8029A658() != 0) {
+    if (MenuTutorialIsCreated() != 0) {
         return;
     }
     if (mpLayout == 0) {
@@ -369,7 +369,7 @@ void CSysWinScenarioLog::Move() {
     if (IsMenuState621F0() == 0) {
         return;
     }
-    if (func_8029A658() != 0) {
+    if (MenuTutorialIsCreated() != 0) {
         return;
     }
     if (mpLayout == 0) {
@@ -430,10 +430,10 @@ extern "C" void func_8027EA6C(CSysWinScenarioLog* self) {
     self->mState = 1;
     playUISound__FUl(0xd);
     // (u32) cast pins the extern "C" decl (pluginUi.hpp's C++ int overload
-    // would otherwise mangle the reloc to func_8009CF8C__Fi).
-    u16 maxId = (u16)func_8009CF8C((u32)0x20);
+    // would otherwise mangle the reloc to CtrlRemote_TouchBitByArg__Fi).
+    u16 maxId = (u16)CtrlRemote_TouchBitByArg((u32)0x20);
     int chosen = 1;
-    u16 count = (u16)func_8003B1EC((void*)lbl_eu_8066490C);
+    u16 count = (u16)Bdat_GetMaxRow_B1EC((void*)lbl_eu_8066490C);
     int i = 1;
     while ((u16)i <= count) {
         if ((u16)BdatGetU16Direct((void*)lbl_eu_8066490C, &lbl_eu_8050EE24[0x36],
@@ -751,25 +751,25 @@ void func_8027F848(CScenarioLogOwner* arg0, s32 arg1, CScenarioLogArg2* arg2) {
 }
 
 // ---------------------------------------------------------------------------
-// func_8027FC04 (us-80282088)
+// SysWinLog_DrivePair (us-80282088)
 // When both the owner (bit 2) and the peer window (bit 1) gates are set,
 // resolve both device objects via their vtable-0x28c virtual and drive the
 // scenario-log counters for the pair.
 // ---------------------------------------------------------------------------
-// func_8027FC80 has an unmangled retail name, so it is defined with C linkage
-// (same convention as the func_8027EE88/func_8027EEF4 helpers) to keep the
-// call-site relocs named func_8027FC80.
-extern "C" void func_8027FC80(CSysWinDevice* arg0, void* arg1);
+// SysWinLog_DriveCounters has an unmangled retail name, so it is defined with C linkage
+// (same convention as the SysWinLog_BumpEventValue/SysWinLog_QueueEvent helpers) to keep the
+// call-site relocs named SysWinLog_DriveCounters.
+extern "C" void SysWinLog_DriveCounters(CSysWinDevice* arg0, void* arg1);
 
-void func_8027FC04(CScenarioLogOwner* self, CScenarioLogOwner* other) {
+void SysWinLog_DrivePair(CScenarioLogOwner* self, CScenarioLogOwner* other) {
     if ((self->field_0x3F00 & 4) != 0 && (other->field_0x3F00 & 2) != 0) {
         CSysWinDevice* devOther = csysWinCall28C(other);
-        func_8027FC80(csysWinCall28C(self), devOther);
+        SysWinLog_DriveCounters(csysWinCall28C(self), devOther);
     }
 }
 
 // ---------------------------------------------------------------------------
-// func_8027FC80 (us-80282104)
+// SysWinLog_DriveCounters (us-80282104)
 // Drive the scenario-log counters for a given device/window pair: bump 0x4
 // with its 50/200/1000/5000 gate ladder, then, unless the game mode is 0x16,
 // run state-dependent ladders: window state 1/2 bumps 0xd (and sets a guard
@@ -779,7 +779,7 @@ void func_8027FC04(CScenarioLogOwner* self, CScenarioLogOwner* other) {
 // embedded player matches the first slot, compare progress values (vtable
 // 0x224) and close 0x5d/0x5e once arg1 trails arg0 by 5 / 10.
 // ---------------------------------------------------------------------------
-extern "C" void func_8027FC80(CSysWinDevice* arg0, void* arg1) {
+extern "C" void SysWinLog_DriveCounters(CSysWinDevice* arg0, void* arg1) {
     u32 dev = csysWinCallE0(arg0);
     u32 guard = 0;
 
@@ -906,12 +906,12 @@ extern "C" void func_8027FC80(CSysWinDevice* arg0, void* arg1) {
     }
 }
 // ---------------------------------------------------------------------------
-// func_802804F8 (us-8028297c)
+// SysWinLog_LatchOneShot (us-8028297c)
 // Device-side one-shot latch: when the device's owner has scenario flag bit 2
 // live, store the device's usable result (vtable 0x2bc) into the one-shot
 // byte lbl_eu_80664918.
 // ---------------------------------------------------------------------------
-void func_802804F8(CSysWinDevice* self) {
+void SysWinLog_LatchOneShot(CSysWinDevice* self) {
     int flag = 0;
     if (((CSysWinDevView*)self)->mAt9C() != 0 &&
         ((((CSysWinDevView*)self)->mAt9C())->field_0x3F00 & 4)) {
@@ -923,13 +923,13 @@ void func_802804F8(CSysWinDevice* self) {
 }
 
 // ---------------------------------------------------------------------------
-// func_80280588 (us-80282a0c)
+// SysWinLog_GateDevice (us-80282a0c)
 // Device-side scenario-log gate: when the device's owner is set and its flag
 // word bit 1 is live, and the one-shot byte is still clear, ask the device
 // (vtable 0x2bc) whether it is usable; if so, drive the pair's counters via
-// func_8027FC80 and latch the one-shot byte.
+// SysWinLog_DriveCounters and latch the one-shot byte.
 // ---------------------------------------------------------------------------
-void func_80280588(CSysWinDevice* self) {
+void SysWinLog_GateDevice(CSysWinDevice* self) {
     bool flag = false;
     if (((CSysWinDevView*)self)->mAt9C() != 0 &&
         ((((CSysWinDevView*)self)->mAt9C())->field_0x3F00 & 0x4)) {
@@ -950,13 +950,13 @@ void func_80280588(CSysWinDevice* self) {
 gate_done:
     return;
 walk:
-    func_8027FC80(self, 0);
+    SysWinLog_DriveCounters(self, 0);
     lbl_eu_80664918 = 1;
 }
 
 // ---------------------------------------------------------------------------
 // func_80280640 (us-80282ac4)
-// Device-side scenario-log gate (variant of func_80280588): when the device's
+// Device-side scenario-log gate (variant of SysWinLog_GateDevice): when the device's
 // owner is set with flag bit 2 live and the one-shot byte is clear, ask the
 // device (vtable 0x2bc) whether it is usable; if so, scan the actor list for
 // the first owner that passes a state gate (sub-state 1: flag bits 14/15;
@@ -1017,19 +1017,19 @@ void func_80280640(CSysWinDevice* self) {
     // found-owner path jumps past this default, matching retail.)
     found = 0;
 emit:
-    func_8027FC80(self, found);
+    SysWinLog_DriveCounters(self, found);
     lbl_eu_80664918 = 1;
 }
 // ---------------------------------------------------------------------------
-// func_802807A0 (us-80282c24)
+// SysWinLog_GateOwner (us-80282c24)
 // When the owner's scenario gate (flag bit 2) is set and the owner is a
 // member of the battle manager's list, resolve the owner's device object via
 // its vtable and drive the scenario-log counters for that device.
 // ---------------------------------------------------------------------------
-void func_802807A0(CScenarioLogOwner* self) {
+void SysWinLog_GateOwner(CScenarioLogOwner* self) {
     if ((self->field_0x3F00 & 4) != 0) {
         if (CBattleMan_ListHasValue(getInstance__Q22cf14CBattleManagerFv(), self) != 0) {
-            func_8027FC80(csysWinCall28C(self), 0);
+            SysWinLog_DriveCounters(csysWinCall28C(self), 0);
         }
     }
 }
@@ -1198,43 +1198,43 @@ void func_80280BF0() {
 }
 
 // ---------------------------------------------------------------------------
-// func_80280D04 (us-80283188)
+// SysWinLog_AdvanceTiers (us-80283188)
 // Progress the scenario-log sequence through its tiers. Each gate closes an
 // earlier tier before later tiers can advance (1 / 100 / 1000, then, once
 // self reaches 5, a nested 1 / 20 / 50 ladder).
 // ---------------------------------------------------------------------------
-void func_80280D04(s32 self) {
-    u32 v = func_8027EE88(0x1D, self);
+void SysWinLog_AdvanceTiers(s32 self) {
+    u32 v = SysWinLog_BumpEventValue(0x1D, self);
     if (v >= 1) {
-        func_8027EEF4(0x1D);
+        SysWinLog_QueueEvent(0x1D);
     }
     if (v >= 0x64) {
-        func_8027EEF4(0x1E);
+        SysWinLog_QueueEvent(0x1E);
     }
     if (v >= 0x3E8) {
-        func_8027EEF4(0x1F);
+        SysWinLog_QueueEvent(0x1F);
     }
     if (self >= 5) {
-        u32 w = func_8027EE88(0x20, 1);
+        u32 w = SysWinLog_BumpEventValue(0x20, 1);
         if (w >= 1) {
-            func_8027EEF4(0x20);
+            SysWinLog_QueueEvent(0x20);
         }
         if (w >= 0x14) {
-            func_8027EEF4(0x21);
+            SysWinLog_QueueEvent(0x21);
         }
         if (w >= 0x32) {
-            func_8027EEF4(0x22);
+            SysWinLog_QueueEvent(0x22);
         }
     }
 }
 
 // ---------------------------------------------------------------------------
-// func_80280DBC (us-80283240)
+// SysWinLog_ScanGrid (us-80283240)
 // Scan a 2x2 grid of 8 u8 samples (stride 2) for values exceeding thresholds
 // and notify the scenario log at ascending severities; count how many entries
 // are >= 10 and emit a summary gate at 5 / 10 / 16.
 // ---------------------------------------------------------------------------
-void func_80280DBC(u8* self) {
+void SysWinLog_ScanGrid(u8* self) {
     // Declaration order drives MWCC callee-saved coloring (first -> r31);
     // this order reproduces retail's register assignment.
     u8 val;
@@ -1255,13 +1255,13 @@ void func_80280DBC(u8* self) {
             for (i = 0; i < 8; i++) {
                 val = p2[0];
                 if (val >= 2) {
-                    func_8027EEF4(0x48);
+                    SysWinLog_QueueEvent(0x48);
                 }
                 if (val >= 5) {
-                    func_8027EEF4(0x49);
+                    SysWinLog_QueueEvent(0x49);
                 }
                 if (val >= 10) {
-                    func_8027EEF4(0x4A);
+                    SysWinLog_QueueEvent(0x4A);
                 }
                 if (val >= 10) {
                     count++;
@@ -1273,13 +1273,13 @@ void func_80280DBC(u8* self) {
         p += 0x49;
     }
     if (count >= 5) {
-        func_8027EEF4(0x4B);
+        SysWinLog_QueueEvent(0x4B);
     }
     if (count >= 10) {
-        func_8027EEF4(0x4C);
+        SysWinLog_QueueEvent(0x4C);
     }
     if (count >= 0x10) {
-        func_8027EEF4(0x4D);
+        SysWinLog_QueueEvent(0x4D);
     }
 }
 
@@ -1318,7 +1318,7 @@ void func_80280E9C(u8* self) {
     }
     // seg == 4 at loop exit. Keeping this live-out use of seg is what makes
     // MWCC retain retail's segment-counter update inside the bdnz loop.
-    func_8027EEF4(0x4A + seg);
+    SysWinLog_QueueEvent(0x4A + seg);
 }
 
 // ---------------------------------------------------------------------------
@@ -1418,42 +1418,42 @@ void func_80280F44() {
             }
         }
         if (count >= 1) {
-            func_8027EEF4(0x4f);
+            SysWinLog_QueueEvent(0x4f);
         }
         if (count >= 3) {
             if (i == 1) {
-                func_8027EEF4(0x50);
+                SysWinLog_QueueEvent(0x50);
             }
             if (i == 2) {
-                func_8027EEF4(0x51);
+                SysWinLog_QueueEvent(0x51);
             }
             if (i == 3) {
-                func_8027EEF4(0x52);
+                SysWinLog_QueueEvent(0x52);
             }
             if (i == 4) {
-                func_8027EEF4(0x53);
+                SysWinLog_QueueEvent(0x53);
             }
             if (i == 5) {
-                func_8027EEF4(0x54);
+                SysWinLog_QueueEvent(0x54);
             }
             if (i == 6) {
-                func_8027EEF4(0x55);
+                SysWinLog_QueueEvent(0x55);
             }
             if (i == 7) {
-                func_8027EEF4(0x56);
+                SysWinLog_QueueEvent(0x56);
             }
         }
         if (count >= 5) {
-            func_8027EEF4(0x58);
+            SysWinLog_QueueEvent(0x58);
             total++;
         }
     }
     if (total >= 7) {
-        func_8027EEF4(0x59);
+        SysWinLog_QueueEvent(0x59);
     }
 }
 
-extern "C" void func_802811FC(u8* self){
+extern "C" void ScnLog_ClearStateWords(u8* self){
     *(u32*)(self + 0x1D80) = 0;
     *(u32*)(self + 0x1D84) = 0;
 }
@@ -1500,14 +1500,14 @@ void* func_8028120C(CSysWinSlotTable* self, CScenarioLogOwner* arg0) {
 // ---------------------------------------------------------------------------
 // Target-only helper definitions (moved below their callers to block inline).
 // ---------------------------------------------------------------------------
-extern "C" void __declspec(noinline) func_8027EEF4(u32 self) {
+extern "C" void __declspec(noinline) SysWinLog_QueueEvent(u32 self) {
     bool booting = getQueuedFileEventCount__Q22cf13CfGameManagerFv() <= 3;
     if (!booting && lbl_eu_80664772 == 0) {
         queueEventId__Q22cf13CfGameManagerFv(self);
     }
 }
 
-extern "C" u32 __declspec(noinline) func_8027EE88(u32 self, u32 arg) {
+extern "C" u32 __declspec(noinline) SysWinLog_BumpEventValue(u32 self, u32 arg) {
     u32 v = getEventValue40__Q22cf13CfGameManagerFv(self);
     if (lbl_eu_80664772 != 0) {
         // Scene frozen by a subwindow: return the un-bumped value.
@@ -1522,7 +1522,7 @@ extern "C" u32 __declspec(noinline) func_8027EE88(u32 self, u32 arg) {
 }
 
 // ---------------------------------------------------------------------------
-// func_8027EC80 (us-80281104)
+// SysWinLog_BuildLayout (us-80281104)
 // File-event handler for the scenario-log window. When the exchanged file
 // matches mFileHandle74: create the scratch region, take the file data,
 // allocate + construct the tag processor, build the arc accessor + layout +
@@ -1530,7 +1530,7 @@ extern "C" u32 __declspec(noinline) func_8027EE88(u32 self, u32 arg) {
 // mFileHandle78 instead: release the BDAT archive and store the loaded FP in
 // lbl_eu_8066490C, return 1. Otherwise return 0.
 // ---------------------------------------------------------------------------
-extern "C" int func_8027EC80(CSysWinScenarioLog* self, CFileHandle* fh) {
+extern "C" int SysWinLog_BuildLayout(CSysWinScenarioLog* self, CFileHandle* fh) {
     void* data = fh->mData;
     if (self->mFileHandle74 == data) {
         self->mMemRegion.createRegion(mtl::MemManager::getHandleMEM2(), 0x8000,
@@ -1565,7 +1565,7 @@ extern "C" int func_8027EC80(CSysWinScenarioLog* self, CFileHandle* fh) {
     if (self->mFileHandle78 == data) {
         void* fileData78 = self->mFileHandle78->getData();
         setBdatEntry__5CBdatFUlPv(2, fileData78);
-        func_8003AA34();
+        Bdat_GetTable_AA34();
         lbl_eu_8066490C = (u32)getFP__FPCc(&lbl_eu_8050EE24[0xea]);
         self->mFileHandle78 = 0;
         return 1;

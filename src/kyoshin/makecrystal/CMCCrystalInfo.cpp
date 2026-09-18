@@ -13,14 +13,14 @@ namespace nw4r { namespace lyt { class DrawInfo; } }
 
 extern "C" void func_80137924(void*, void*, void*, void*);
 void SplitU32ToS16s(void*, u32);
-void func_801C4B60(void*, u32, u32, u32, u32);
-extern "C" void func_8021AF74(CMCCrystalInfo*);
-extern "C" void func_8021AFC0(CMCCrystalInfo*);
-extern "C" void func_8021B00C(CMCCrystalInfo*);
-extern "C" void func_8021B058(CMCCrystalInfo*);
-extern "C" void func_8021B0A4(CMCCrystalInfo*);
-extern "C" void func_8021B0F0(CMCCrystalInfo*);
-extern "C" void func_8021B13C(CMCCrystalInfo*);
+void setGXColorS10(void*, u32, u32, u32, u32);
+extern "C" void MCCrystal_StepIntro(CMCCrystalInfo*);
+extern "C" void MCCrystal_StepMain(CMCCrystalInfo*);
+extern "C" void MCCrystal_RewindMain(CMCCrystalInfo*);
+extern "C" void MCCrystal_RewindIntro(CMCCrystalInfo*);
+extern "C" void MCCrystal_StepAnim4(CMCCrystalInfo*);
+extern "C" void MCCrystal_StepAnim3(CMCCrystalInfo*);
+extern "C" void MCCrystal_RewindAnim3(CMCCrystalInfo*);
 
 // Small-data symbol (plain C++ extern; lives in another TU).
 extern u32 lbl_eu_806640D8;
@@ -85,32 +85,32 @@ void func_8021A780(CMCCrystalInfo* self)
     if (self->mEnabled) {
         switch (self->mState) {
         case 1:
-            func_8021AF74(self);
+            MCCrystal_StepIntro(self);
             break;
         case 2:
-            func_8021AFC0(self);
+            MCCrystal_StepMain(self);
             break;
         case 4:
-            func_8021B00C(self);
+            MCCrystal_RewindMain(self);
             break;
         case 5:
-            func_8021B058(self);
+            MCCrystal_RewindIntro(self);
             break;
         case 6:
-            func_8021B0A4(self);
+            MCCrystal_StepAnim4(self);
             break;
         case 7:
-            func_8021B0F0(self);
+            MCCrystal_StepAnim3(self);
             break;
         case 8:
-            func_8021B13C(self);
+            MCCrystal_RewindAnim3(self);
             break;
         }
         ((nw4r::lyt::Layout*)self->mLayout)->Animate(0);
     }
 }
 
-void func_8021A840(CMCCrystalInfo* self, nw4r::lyt::DrawInfo* drawInfo)
+void MCCrystal_DrawLayout(CMCCrystalInfo* self, nw4r::lyt::DrawInfo* drawInfo)
 {
     if (self->mEnabled) {
         drawLayout(
@@ -118,10 +118,10 @@ void func_8021A840(CMCCrystalInfo* self, nw4r::lyt::DrawInfo* drawInfo)
     }
 }
 
-void func_8021A860(CMCCrystalInfo* self)
+void MCCrystal_Teardown(CMCCrystalInfo* self)
 {
-    func_801390E0((CFileHandle**)&self->mFileHandle1);
-    func_801390E0((CFileHandle**)&self->mFileHandle2);
+    closeFileHandle((CFileHandle**)&self->mFileHandle1);
+    closeFileHandle((CFileHandle**)&self->mFileHandle2);
     nw4r::lyt::Layout* layout = (nw4r::lyt::Layout*)self->mLayout;
     self->mEnabled = 0;
     if (layout != 0) {
@@ -132,54 +132,59 @@ void func_8021A860(CMCCrystalInfo* self)
     }
     releaseArcResourceAccessor((nw4r::lyt::ArcResourceAccessor*)self->mArcResAccessor);
     releaseArcResourceAccessor((nw4r::lyt::ArcResourceAccessor*)self->mField30);
-    self->mMemRegion1.func_8045F778();
-    self->mMemRegion2.func_8045F778();
+    self->mMemRegion1.deleteRegion();
+    self->mMemRegion2.deleteRegion();
 }
 
 // Converted to inline member function in header
+// Out-of-line C-linkage copy so the retail func_8021A8EC symbol pairs
+// (lbz r3,80(r3): mIsActive at +0x50).
+extern "C" u8 func_8021A8EC(const CMCCrystalInfo* self) {
+    return self->mIsActive;
+}
 
-void func_8021A8F4(CMCCrystalInfo* self)
+void MCCrystal_OpenFromClosed(CMCCrystalInfo* self)
 {
     if (self->mState == 0) {
         self->mState = 1;
         self->mField51 = 0;
-        return func_8021B52C(self);
+        return MCCrystal_BindIntro(self);
     }
 }
 
-void func_8021A918(CMCCrystalInfo* self)
+void MCCrystal_PlayOutro(CMCCrystalInfo* self)
 {
     if (self->mState == 3) {
         self->mState = 4;
         self->mField51 = 0;
-        return func_8021B5B4(self);
+        return MCCrystal_BindMain(self);
     }
 }
 
-void func_8021A93C(CMCCrystalInfo* self)
+void MCCrystal_PlayAnim4(CMCCrystalInfo* self)
 {
     if (self->mState == 3) {
         self->mState = 6;
         self->mField51 = 0;
-        return func_8021B6C4(self);
+        return MCCrystal_BindAnim4(self);
     }
 }
 
-void func_8021A960(CMCCrystalInfo* self)
+void MCCrystal_PlayAnim3A(CMCCrystalInfo* self)
 {
     if (self->mState == 3) {
         self->mState = 7;
         self->mField51 = 0;
-        return func_8021B63C(self);
+        return MCCrystal_BindAnim3(self);
     }
 }
 
-void func_8021A984(CMCCrystalInfo* self)
+void MCCrystal_PlayAnim3B(CMCCrystalInfo* self)
 {
     if (self->mState == 3) {
         self->mState = 8;
         self->mField51 = 0;
-        return func_8021B63C(self);
+        return MCCrystal_BindAnim3(self);
     }
 }
 
@@ -297,7 +302,7 @@ void func_8021AA9C(CMCCrystalInfo* self, u32 idxBase, u32 arg5, u8 arg6, u32 arg
 
 // Clears every crystal-slot display buffer. noinline: retail calls these as
 // separate functions (bl), so inlining would balloon the caller sizes.
-extern "C" __declspec(noinline) void func_8021ADC4(CMCCrystalInfo* self)
+extern "C" __declspec(noinline) void MCCrystal_ClearSlots(CMCCrystalInfo* self)
 {
     char buf[0x20];
     for (u8 i = 1; i <= 8; i++) {
@@ -333,15 +338,15 @@ void func_8021AED0(CMCCrystalInfo* self, CMCCrystalInfo* other, u32 r5)
 }
 #pragma pop
 
-__declspec(noinline) void func_8021AF74(CMCCrystalInfo* self)
+__declspec(noinline) void MCCrystal_StepIntro(CMCCrystalInfo* self)
 {
     if (advanceAnimTransform((nw4r::lyt::AnimTransform*)self->mAnimTransform1, 1.0f)) {
         self->mState = 2;
-        return func_8021B5B4(self);
+        return MCCrystal_BindMain(self);
     }
 }
 
-__declspec(noinline) void func_8021AFC0(CMCCrystalInfo* self)
+__declspec(noinline) void MCCrystal_StepMain(CMCCrystalInfo* self)
 {
     if (advanceAnimTransform((nw4r::lyt::AnimTransform*)self->mAnimTransform2, 1.0f)) {
         self->mState = 3;
@@ -349,15 +354,15 @@ __declspec(noinline) void func_8021AFC0(CMCCrystalInfo* self)
     }
 }
 
-__declspec(noinline) void func_8021B00C(CMCCrystalInfo* self)
+__declspec(noinline) void MCCrystal_RewindMain(CMCCrystalInfo* self)
 {
     if (AnimRewindFrame((nw4r::lyt::AnimTransform*)self->mAnimTransform2, 1.0f)) {
         self->mState = 5;
-        return func_8021B52C(self);
+        return MCCrystal_BindIntro(self);
     }
 }
 
-__declspec(noinline) void func_8021B058(CMCCrystalInfo* self)
+__declspec(noinline) void MCCrystal_RewindIntro(CMCCrystalInfo* self)
 {
     if (AnimRewindFrame((nw4r::lyt::AnimTransform*)self->mAnimTransform1, 1.0f)) {
         self->mState = 0;
@@ -365,7 +370,7 @@ __declspec(noinline) void func_8021B058(CMCCrystalInfo* self)
     }
 }
 
-__declspec(noinline) void func_8021B0A4(CMCCrystalInfo* self)
+__declspec(noinline) void MCCrystal_StepAnim4(CMCCrystalInfo* self)
 {
     if (advanceAnimTransform((nw4r::lyt::AnimTransform*)self->mAnimTransform4, 1.0f)) {
         self->mField51 = 1;
@@ -373,7 +378,7 @@ __declspec(noinline) void func_8021B0A4(CMCCrystalInfo* self)
     }
 }
 
-__declspec(noinline) void func_8021B0F0(CMCCrystalInfo* self)
+__declspec(noinline) void MCCrystal_StepAnim3(CMCCrystalInfo* self)
 {
     if (advanceAnimTransform((nw4r::lyt::AnimTransform*)self->mAnimTransform3, 1.0f)) {
         self->mField51 = 1;
@@ -381,7 +386,7 @@ __declspec(noinline) void func_8021B0F0(CMCCrystalInfo* self)
     }
 }
 
-__declspec(noinline) void func_8021B13C(CMCCrystalInfo* self)
+__declspec(noinline) void MCCrystal_RewindAnim3(CMCCrystalInfo* self)
 {
     if (AnimRewindFrame((nw4r::lyt::AnimTransform*)self->mAnimTransform3, lbl_eu_80668498)) {
         self->mField51 = 1;
@@ -498,7 +503,7 @@ extern "C" __declspec(noinline) void func_8021B500(void* this_) {
 
 // Bind the crystal-info intro animation to the layout and start it playing.
 // (Called on state 0->1 and 4->5 transitions.)
-__declspec(noinline) void func_8021B52C(CMCCrystalInfo* self)
+__declspec(noinline) void MCCrystal_BindIntro(CMCCrystalInfo* self)
 {
     ((nw4r::lyt::Layout*)self->mLayout)->UnbindAllAnimation();
     ((nw4r::lyt::Layout*)self->mLayout)->BindAnimation((nw4r::lyt::AnimTransform*)self->mAnimTransform1);
@@ -508,7 +513,7 @@ __declspec(noinline) void func_8021B52C(CMCCrystalInfo* self)
 
 // Bind the crystal-info outro animation to the layout and start it playing.
 // (Called on state 3->4 transitions.)
-__declspec(noinline) void func_8021B5B4(CMCCrystalInfo* self)
+__declspec(noinline) void MCCrystal_BindMain(CMCCrystalInfo* self)
 {
     ((nw4r::lyt::Layout*)self->mLayout)->UnbindAllAnimation();
     ((nw4r::lyt::Layout*)self->mLayout)->BindAnimation((nw4r::lyt::AnimTransform*)self->mAnimTransform2);
@@ -518,7 +523,7 @@ __declspec(noinline) void func_8021B5B4(CMCCrystalInfo* self)
 
 // Bind the crystal-info intro animation variant for the 3rd anim transform
 // (mAnimTransform3) and start it playing. Called on state 3->7/3->8.
-__declspec(noinline) void func_8021B63C(CMCCrystalInfo* self)
+__declspec(noinline) void MCCrystal_BindAnim3(CMCCrystalInfo* self)
 {
     ((nw4r::lyt::Layout*)self->mLayout)->UnbindAllAnimation();
     ((nw4r::lyt::Layout*)self->mLayout)->BindAnimation((nw4r::lyt::AnimTransform*)self->mAnimTransform3);
@@ -528,7 +533,7 @@ __declspec(noinline) void func_8021B63C(CMCCrystalInfo* self)
 
 // Bind the crystal-info intro animation variant for the 4th anim transform
 // (mAnimTransform4) and start it playing. Called on state 3->6.
-__declspec(noinline) void func_8021B6C4(CMCCrystalInfo* self)
+__declspec(noinline) void MCCrystal_BindAnim4(CMCCrystalInfo* self)
 {
     ((nw4r::lyt::Layout*)self->mLayout)->UnbindAllAnimation();
     ((nw4r::lyt::Layout*)self->mLayout)->BindAnimation((nw4r::lyt::AnimTransform*)self->mAnimTransform4);
@@ -604,7 +609,7 @@ bool CMCCrystalInfo::OnFileEvent(CEventFile* pEventFile)
             }
         }
 
-        func_8021B52C(this);
+        MCCrystal_BindIntro(this);
         ((nw4r::lyt::Layout*)mLayout)->Animate(0);
 
         LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mLayout, &lbl_eu_80508DF8[0x276],
@@ -614,7 +619,7 @@ bool CMCCrystalInfo::OnFileEvent(CEventFile* pEventFile)
         LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mLayout, &lbl_eu_80508DF8[0x2a1],
             (char*)BdatTouchStringCell(&lbl_eu_80508DF8[0x281], &lbl_eu_80508DF8[0x28d], 0x2d), 0);
 
-        func_8021ADC4(this);
+        MCCrystal_ClearSlots(this);
 
         // Pull the two colour pairs off their panes and refresh the alpha
         // channel of the shared slot colours.
@@ -669,10 +674,10 @@ void sinit_8021BBC4()
 {
     SplitU32ToS16s(lbl_eu_806646D8, 0);
     SplitU32ToS16s(lbl_eu_806646E0, 0);
-    func_801C4B60(lbl_eu_806646E8, 0xd2, 0x28, 0x14, 0);
-    func_801C4B60(lbl_eu_806646F0, 0xd2, 0x28, 0x14, 0);
+    setGXColorS10(lbl_eu_806646E8, 0xd2, 0x28, 0x14, 0);
+    setGXColorS10(lbl_eu_806646F0, 0xd2, 0x28, 0x14, 0);
     SplitU32ToS16s(lbl_eu_806646F8, 0);
     SplitU32ToS16s(lbl_eu_80664700, 0);
-    func_801C4B60(lbl_eu_80664708, 0xff, 0xff, 0xfa, 0);
-    func_801C4B60(lbl_eu_80664710, 0xd2, 0x28, 0x14, 0);
+    setGXColorS10(lbl_eu_80664708, 0xff, 0xff, 0xfa, 0);
+    setGXColorS10(lbl_eu_80664710, 0xd2, 0x28, 0x14, 0);
 }

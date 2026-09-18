@@ -12,6 +12,8 @@
 #include "monolib/work/CEventFile.hpp"
 #include <nw4r/lyt.h>
 
+extern "C" void CtrlRemote_SetSharedBit(u32 destination, u32 value);
+
 extern "C" void __dt__15CMenuKizunaTalkFv(void*, int);
 extern "C" void cbRenderBefore__15CMenuKizunaTalkFv(void*);
 
@@ -84,7 +86,7 @@ CMenuKizunaTalk::~CMenuKizunaTalk() {
 void CMenuKizunaTalk::Init() {
     mFile2 = (CFileHandle*)readCommonArchiveFile__11CDeviceFileFUlPCcP10IWorkEventii(
         KyoshinHeap_GetField44(), lbl_eu_80505118, static_cast<IWorkEvent*>(this), 0, 0);
-    func_8009D018(mCharId + 0x3440, 1);
+    CtrlRemote_SetSharedBit(mCharId + 0x3440, 1);
 }
 #pragma optimize_for_size off
 
@@ -112,7 +114,7 @@ void CMenuKizunaTalk::Term() {
 
     releaseArcResourceAccessor__FPQ34nw4r3lyt19ArcResourceAccessor(mArcAccessor);
     mArcAccessor = 0;
-    func_8022B7F4(&mSysWin[0]);
+    sysWinTermLayout(&mSysWin[0]);
 
     // CCur18 cursor virtual slot 3 (vtable + 0xC): per-frame update.
     reinterpret_cast<CCur18View*>(&mCur[0])->vf03();
@@ -152,7 +154,7 @@ CMenuKizunaTalk* func_801BCEBC(CProcess* parent, CScn* scene, u32 charId) {
 // (lbl_eu_80664420 != 0) - needs the size-optimized subic/subfe form; the
 // preceding `#pragma optimize_for_size off` would revert to -O4,p codegen
 #pragma optimize_for_size on
-extern "C" bool func_801BCF38() { return lbl_eu_80664420 != 0; }
+extern "C" bool isKizunaTalkActive() { return lbl_eu_80664420 != 0; }
 #pragma optimize_for_size off
 
 // ---------------------------------------------------------------------------
@@ -216,13 +218,13 @@ void func_801BCF48(CMenuKizunaTalk* self) {
 #pragma optimize_for_size off
 
 // ---------------------------------------------------------------------------
-// Kizuna talk window advance (retail func_801BD0B4): state machine on
+// Kizuna talk window advance (retail updateKizunaTalkWindow): state machine on
 // mFieldA4. State 0 builds the "talk" window, state 1 waits for the layout
 // then plays the open sound, state 2 builds the "leave" window with the
 // character name; every successful state sets mFieldA0 and (re)registers the
 // render callback.
 // ---------------------------------------------------------------------------
-void func_801BD0B4(CMenuKizunaTalk* self) {
+extern "C" void updateKizunaTalkWindow(CMenuKizunaTalk* self) {
     switch (self->mFieldA4) {
     case 0:
         if (CSysWin_isReady(&self->mSysWin[0]) == 0) {
@@ -231,7 +233,7 @@ void func_801BD0B4(CMenuKizunaTalk* self) {
         func_8022B9B4(&self->mSysWin[0],
                       (u32)BdatTouchStringCell(&lbl_eu_80505118[0x33], &lbl_eu_80505118[0x3e], 0x24), 0);
         func_8022BFC8(&self->mSysWin[0], 1);
-        func_8022B8B8(&self->mSysWin[0]);
+        sysWinOpenPhase1(&self->mSysWin[0]);
         break;
     case 1:
         if (self->mLayout == 0) {
@@ -248,9 +250,9 @@ void func_801BD0B4(CMenuKizunaTalk* self) {
         char* s3 = BdatTouchStringCell(&lbl_eu_80505118[0x33], &lbl_eu_80505118[0x3e], 0x2c);
         char* s4 = BdatTouchStringCell(&lbl_eu_80505118[0x33], &lbl_eu_80505118[0x3e], 0x2d);
         func_8022B9B4(&self->mSysWin[0], (u32)s1, (int)s2);
-        func_8022BF6C(&self->mSysWin[0], (u32)s3, (u32)s4);
+        sysWinSetTwoTextValues(&self->mSysWin[0], (u32)s3, (u32)s4);
         func_8022BFC8(&self->mSysWin[0], 0);
-        func_8022B8B8(&self->mSysWin[0]);
+        sysWinOpenPhase1(&self->mSysWin[0]);
         break;
     }
     self->mFieldA0 = 2;
@@ -278,9 +280,9 @@ void func_801BD228(CMenuKizunaTalk* self) {
     case 2:
         if (CSysWin_isActive(&self->mSysWin[0]) != 0) {
             self->mFieldA0 = 3;
-            func_801D216C(&self->mCur[0], 1);
+            Cur_SetVisible(&self->mCur[0], 1);
             u8 tmp[0x10];
-            func_8022C1B4(tmp, &self->mSysWin[0], (u8)self->mField9C);
+            sysWinGetPaneScreenPos(tmp, &self->mSysWin[0], (u8)self->mField9C);
             reinterpret_cast<CCur18View*>(&self->mCur[0])->vf04(tmp);
         }
         break;
@@ -322,12 +324,12 @@ void func_801BD2F8(CMenuKizunaTalk* self) {
             self->mField60 = 2;
             playUISound__FUl(3);
             self->mFieldA0 = 4;
-            func_8022B8E4(&self->mSysWin[0]);
+            sysWinAdvancePhase3(&self->mSysWin[0]);
         } else if (right != 0) {
             self->mField60 = 2;
             self->mFieldA0 = 4;
             playUISound__FUl(6);
-            func_8022B8E4(&self->mSysWin[0]);
+            sysWinAdvancePhase3(&self->mSysWin[0]);
         }
         break;
     case 1:
@@ -348,7 +350,7 @@ void func_801BD2F8(CMenuKizunaTalk* self) {
             if (self->mField9C < 0) self->mField9C = 1;
             playUISound__FUl(1);
             u8 tmp[0xC];
-            func_8022C1B4(tmp, &self->mSysWin[0], (u8)self->mField9C);
+            sysWinGetPaneScreenPos(tmp, &self->mSysWin[0], (u8)self->mField9C);
             reinterpret_cast<CCur18View*>(&self->mCur[0])->vf04(tmp);
         } else if (confirm != 0) {
             // Confirm: move the cursor page down (wrap over 1 to 0).
@@ -356,7 +358,7 @@ void func_801BD2F8(CMenuKizunaTalk* self) {
             if (self->mField9C > 1) self->mField9C = 0;
             playUISound__FUl(1);
             u8 tmp[0xC];
-            func_8022C1B4(tmp, &self->mSysWin[0], (u8)self->mField9C);
+            sysWinGetPaneScreenPos(tmp, &self->mSysWin[0], (u8)self->mField9C);
             reinterpret_cast<CCur18View*>(&self->mCur[0])->vf04(tmp);
         } else if (left != 0) {
             // Left: confirm the current page and advance the window.
@@ -368,26 +370,26 @@ void func_801BD2F8(CMenuKizunaTalk* self) {
                 playUISound__FUl(3);
             }
             self->mFieldA0 = 4;
-            func_8022B8E4(&self->mSysWin[0]);
-            func_801D216C(&self->mCur[0], 0);
+            sysWinAdvancePhase3(&self->mSysWin[0]);
+            Cur_SetVisible(&self->mCur[0], 0);
         } else if (right != 0) {
             self->mField60 = 2;
             self->mFieldA0 = 4;
             playUISound__FUl(6);
-            func_8022B8E4(&self->mSysWin[0]);
-            func_801D216C(&self->mCur[0], 0);
+            sysWinAdvancePhase3(&self->mSysWin[0]);
+            Cur_SetVisible(&self->mCur[0], 0);
         }
         break;
     }
 }
 #pragma optimize_for_size off
 
-// Advance the kizuna talk window state machine (retail func_801BD594):
+// Advance the kizuna talk window state machine (retail pollKizunaTalkReady):
 // window states 0 and 2 wait for the CSysWin panel to become active, state 1
 // waits for the embedded animation transform to finish; each sets the
 // IUIWindow "advance" flag when its wait completes.
 #pragma optimize_for_size on
-void func_801BD594(CMenuKizunaTalk* self) {
+extern "C" void pollKizunaTalkReady(CMenuKizunaTalk* self) {
     switch (self->mFieldA4) {
     case 0:
         if (CSysWin_isActive(&self->mSysWin[0]) != 0) {
@@ -417,13 +419,13 @@ void func_801BD594(CMenuKizunaTalk* self) {
 #pragma optimize_for_size on
 extern "C" __declspec(noinline) void func_801BD630(CMenuKizunaTalk* self) {
     u16 total = BdatGetU16Direct(lbl_eu_80664424, &lbl_eu_80505118[0x49], self->mCharId);
-    if ((u32)(u16)total <= func_8009CF8C((u32)0x20)) {
+    if ((u32)(u16)total <= CtrlRemote_TouchBitByArg((u32)0x20)) {
         u32 b1 = 0, b2 = 0, b3 = 0, b4 = 0;
         u32 talk = BdatGetU8Direct((u32)lbl_eu_80664424, &lbl_eu_80505118[0x4e], self->mCharId);
         u32 talk2 = BdatGetU8Direct((u32)lbl_eu_80664424, &lbl_eu_80505118[0x57], self->mCharId);
         u16 value = BdatGetU16Direct(lbl_eu_80664424, &lbl_eu_80505118[0x60], self->mCharId);
         u32 rank = BdatGetU8Direct((u32)lbl_eu_80664424, &lbl_eu_80505118[0x69], self->mCharId);
-        if (func_8009CF8C((u32)0x20) >= 0x113) {
+        if (CtrlRemote_TouchBitByArg((u32)0x20) >= 0x113) {
             if ((u8)talk == 3) talk = 8;
             if ((u8)talk2 == 3) talk2 = 8;
         }
@@ -578,7 +580,7 @@ int func_801BD7D8(CMenuKizunaTalk* self, CEventFile* evt) {
     if (self->mFile2 == handle) {
         void* data2 = self->mFile2->getData();
         setBdatEntry__5CBdatFUlPv(2, data2);
-        func_8003AA34();
+        Bdat_GetTable_AA34();
         lbl_eu_80664424 = (u8*)getFP__FPCc(&lbl_eu_80505118[0x1e5]);
         self->mFile2 = 0;
         return 1;
@@ -588,8 +590,8 @@ int func_801BD7D8(CMenuKizunaTalk* self, CEventFile* evt) {
 
 void OnFileEvent__15CMenuKizunaTalkFP10CEventFile(void* self) { ((void(*)(void*))func_801BD7D8)((char*)self - 0x6c); }
 
-void func_801BDD8C(void* self) { ((void(*)(void*))__dt__15CMenuKizunaTalkFv)((char*)self - 0x6c); }
+extern "C" void fwdKizunaDtor6C(void* self) { ((void(*)(void*))__dt__15CMenuKizunaTalkFv)((char*)self - 0x6c); }
 
-void func_801BDD94(void* self) { ((void(*)(void*))cbRenderBefore__15CMenuKizunaTalkFv)((char*)self - 0x70); }
+extern "C" void fwdKizunaCbRender70(void* self) { ((void(*)(void*))cbRenderBefore__15CMenuKizunaTalkFv)((char*)self - 0x70); }
 
-extern "C" void func_801BDD9C(void* self) { ((void(*)(void*))__dt__15CMenuKizunaTalkFv)((char*)self - 0x70); }
+extern "C" void fwdKizunaDtor70(void* self) { ((void(*)(void*))__dt__15CMenuKizunaTalkFv)((char*)self - 0x70); }

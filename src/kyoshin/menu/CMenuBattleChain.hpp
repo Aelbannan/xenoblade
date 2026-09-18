@@ -29,7 +29,7 @@ public:
     static bool isFlag01Set();
 };
 
-// Battle-chain menu state shared by the func_802AB3D0..func_802AB5E4 helpers:
+// Battle-chain menu state shared by the trackChainPlayer..requestAnimReset helpers:
 // the current player reference plus two pending toggle flags consumed when the
 // arts-select menu becomes interactable.
 struct CBattleChainMenuState {
@@ -158,7 +158,7 @@ extern u16 lbl_eu_80664BD0[4];
 extern u16 lbl_eu_80664BD8[4];
 extern u16 lbl_eu_80664BE0[4];
 
-// Chain-type colour/position constants read by func_802AA588 (.sdata).
+// Chain-type colour/position constants read by applyChainColorScheme (.sdata).
 extern u32 lbl_eu_80662D70;
 extern u32 lbl_eu_80662D74;
 extern u32 lbl_eu_80662D78;
@@ -204,8 +204,8 @@ nw4r::lyt::ArcResourceAccessor* CUICfManager_getArcResourceAccessor();
 void __ct__17UnkClass_8045F564Fv(UnkClass_8045F564* self);
 void func_80137CD4(void*, const char*, int, u32);
 void PaneSetColorFieldPair(void*, const char*, u32, u32);
-void func_802AAC78(CMenuBattleChain* self);
-void func_802AA588(CMenuBattleChain* self);
+void tickChainCounter(CMenuBattleChain* self);
+void applyChainColorScheme(CMenuBattleChain* self);
 void sinit_802AAF24();
 
 // C-linkage imports from the CMenuArtsSelect unit (retail unmangled names).
@@ -216,7 +216,7 @@ void sinit_802AAF24();
 void CMenuArtsSelect_setDisabled();
 int CMenuArtsSelect_isInteractable();
 int CMenuArtsSelect_isNotReady();
-void func_8010433C();
-void func_801043BC();
+void CMenuArtsSelect_CreateArtsRef();
+void CMenuArtsSelect_ResetSlotAnims();
 CArtsSelectStateView* CMenuArtsSelect_getSelectState();
 }

@@ -4,7 +4,7 @@
 
 #include "kyoshin/cf/CfGameManager.hpp"
 // (pluginUi.hpp not included: its extern "C" BdatTouchStringCell declaration
-// clashes with code_80135FDC.hpp's; only func_800451D8 was needed and it is
+// clashes with code_80135FDC.hpp's; only bindIndexedEffect was needed and it is
 // declared in CMenuZeal.hpp.)
 #include "monolib/device/CDeviceVI.hpp"
 #include "monolib/util/MemManager.hpp"
@@ -119,21 +119,21 @@ void func_8017FEF0(CMenuZeal* self, int arg2) {
     if (player != 0) {
         self->mField_9C = lbl_eu_80667890;
         if (arg2 != 0) {
-            func_800451D8(0xc1, player);
+            bindIndexedEffect(0xc1, player);
         } else {
-            func_800451D8(0xc2, player);
+            bindIndexedEffect(0xc2, player);
         }
     }
 }
 
 // ---------------------------------------------------------------------------
-// func_8017FC88: allocate and register the Zeal singleton.
+// ZealMenuCreateSingleton: allocate and register the Zeal singleton.
 // If a singleton already exists and none of its gate flags (0xBE/0x54/0xA1)
 // are set, returns null; otherwise marks the existing singleton's 0xBF flag
 // and (re)builds a fresh instance: allocate 0xc8 bytes from work memory,
 // construct it, store the singleton, and register it under `parent`.
 // ---------------------------------------------------------------------------
-CMenuZeal* func_8017FC88(CProcess* parent, void* a2, int a3, float f1) {
+CMenuZeal* ZealMenuCreateSingleton(CProcess* parent, void* a2, int a3, float f1) {
     CMenuZeal* existing = lbl_eu_806642A0;
     if (existing != 0) {
         // Bitwise-OR the three gate flags into a local so MWCC keeps the

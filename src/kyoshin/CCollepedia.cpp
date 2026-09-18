@@ -39,7 +39,7 @@ extern "C" void clpWaitOutro(CCollepedia*);
 extern "C" void clpEnterIdle(CCollepedia*);
 extern "C" void clpEnabDetCur(CCollepedia*);
 extern "C" void func_802559DC(CCollepedia*);
-extern "C" void func_80255AB4(CCollepedia*);
+extern "C" void collepediaCreateItemMulti(CCollepedia*);
 extern "C" void func_80255B60(CCollepedia*);
 extern "C" void clpPlayTblSe(CCollepedia*);
 
@@ -392,7 +392,7 @@ extern "C" __declspec(noinline) void func_80253B3C(u8* self_) {
     extern void func_8025449C(u8* self, int a, int b, int c, int itemId);
 
     u16 n = 0;
-    u16 numIds = (u16)func_8003B1EC((void*)lbl_eu_806640EC);
+    u16 numIds = (u16)Bdat_GetMaxRow_B1EC((void*)lbl_eu_806640EC);
     u16 ids[0x12c];
     for (u16 id = 1; id <= numIds; id++) {
         if ((u8)BdatGetItemType(id) == 0xa) {
@@ -405,7 +405,7 @@ extern "C" __declspec(noinline) void func_80253B3C(u8* self_) {
     // One page per category with at least one active, uncompleted entry.
     void* tblA = lbl_eu_806640A0;
     void* tblB = lbl_eu_806640A8;
-    u32 numA = func_8003B1EC(tblA);
+    u32 numA = Bdat_GetMaxRow_B1EC(tblA);
     char* const s = lbl_eu_8050C6E8;
     for (u8 cat = 2; cat <= 0x19; cat++) {
         switch (cat) {
@@ -418,7 +418,7 @@ extern "C" __declspec(noinline) void func_80253B3C(u8* self_) {
         for (u16 j = 1; j <= (u16)numA; j++) {
             if ((u8)BdatGetU8Direct((u32)tblA, &lbl_eu_8050C6E8[0x16b], j) == cat &&
                 BdatGetU8Direct((u32)tblA, &lbl_eu_8050C6E8[0x171], j) == 0 &&
-                func_8009CF8C(j + 0x20c8) != 0) {
+                CtrlRemote_TouchBitByArg(j + 0x20c8) != 0) {
                 u8 cnt = self_[0];
                 self_[cnt * 0x140 + 4] = cat;
                 self_[0] = cnt + 1;
@@ -939,7 +939,7 @@ extern "C" void clpDoFrameUpd(CCollepedia* this_) {
     case 10:
         break;
     case 11:
-        func_80255AB4(this_);
+        collepediaCreateItemMulti(this_);
         break;
     case 12:
         func_80255B60(this_);
@@ -955,7 +955,7 @@ extern "C" void clpDoFrameUpd(CCollepedia* this_) {
         clpPlayTblSe(this_);
         break;
     case 16:
-        if (!func_801B481C()) {
+        if (!GetItemMulti_IsActiveFlag()) {
             this_->field_49 = 3;
         }
         break;
@@ -964,7 +964,7 @@ extern "C" void clpDoFrameUpd(CCollepedia* this_) {
     this_->field_38->Animate(0);
     func_801D202C(&this_->field_54);
     clpCurAnimate(reinterpret_cast<CBaseCur*>(&this_->field_54[0x18])); // +0x6c
-    func_8022B748(&this_->field_9C);
+    sysWinDispatchPhase(&this_->field_9C);
     // Retail calls the second page's state machine with the +0x28EC sub-object
     clpUpdPgState(reinterpret_cast<CCollepedia*>(&this_->field_28EC[0]));
     func_801D202C(&this_->field_54[0x30]); // +0x84
@@ -986,9 +986,9 @@ extern "C" void clpDrawWindow(CCollepedia* this_, nw4r::lyt::DrawInfo* drawInfo)
         drawLayout(this_->field_28F0, drawInfo, 0, 1);
     }
     
-    func_801D20B0((CBaseCur*)((u8*)this_ + 0x54), drawInfo);
-    func_8022B7C8(&this_->field_9C, drawInfo);
-    func_801D20B0((CBaseCur*)((u8*)this_ + 0x84), drawInfo);
+    Cur_DrawLayout((CBaseCur*)((u8*)this_ + 0x54), drawInfo);
+    sysWinDrawLayout(&this_->field_9C, drawInfo);
+    Cur_DrawLayout((CBaseCur*)((u8*)this_ + 0x84), drawInfo);
 }
 #pragma pop
 
@@ -1028,7 +1028,7 @@ void clpFreeAllRes(CCollepedia* this_) {
     ((CBaseCur*)&this_->field_54[0])->cleanup();
 
     clpCurCleanup(reinterpret_cast<CBaseCur*>(&this_->field_54[0x18]));
-    func_8022B7F4(&this_->field_9C);
+    sysWinTermLayout(&this_->field_9C);
 
     ((CBaseCur*)&this_->field_54[0x30])->cleanup();
 }
@@ -1071,7 +1071,7 @@ void clpReqCloseVw(CCollepedia* this_) {
 
     this_->field_49 = 4;
     this_->field_51 = 0;
-    func_801D216C(&this_->field_54, 0);
+    Cur_SetVisible(&this_->field_54, 0);
 
     this_->field_38->SetAnimationEnable(this_->field_44, false);
     this_->field_38->SetAnimationEnable(this_->field_3C, false);
@@ -1265,7 +1265,7 @@ void clpOnCancel(CCollepedia* this_) {
             this_->field_49 = 0xF;
             break;
         }
-        func_8022B8E4(&this_->field_9C);
+        sysWinAdvancePhase3(&this_->field_9C);
         return;
     }
 
@@ -1274,7 +1274,7 @@ void clpOnCancel(CCollepedia* this_) {
     if (this_->field_28F9 == 0) return;
 
     clpCloseDetPg(reinterpret_cast<CCollepedia*>(&this_->field_28EC[0]));
-    func_801D216C(&this_->field_54[0x30], 0);
+    Cur_SetVisible(&this_->field_54[0x30], 0);
     this_->field_49 = 8;
     this_->field_51 = 0;
     playUISound__FUl(6);
@@ -1305,7 +1305,7 @@ extern "C" void clpOnConfirm(CCollepedia* this_) {
             this_->field_49 = 0xF;
             break;
         }
-        func_8022B8E4(&this_->field_9C);
+        sysWinAdvancePhase3(&this_->field_9C);
         return;
     }
 
@@ -1339,7 +1339,7 @@ extern "C" void clpOnConfirm(CCollepedia* this_) {
         }
 
         clpCloseDetPg(reinterpret_cast<CCollepedia*>(&this_->field_28EC[0]));
-        func_801D216C(&this_->field_54[0x30], 0);
+        Cur_SetVisible(&this_->field_54[0x30], 0);
         this_->field_49 = 8;
         this_->field_51 = 0;
         return;
@@ -1364,7 +1364,7 @@ extern "C" void clpOnConfirm(CCollepedia* this_) {
     clpOpenDetail(reinterpret_cast<CCollepedia*>(&this_->field_28EC[0]));
 
     this_->field_DA = 0;
-    func_801D216C(&this_->field_54, 0);
+    Cur_SetVisible(&this_->field_54, 0);
     this_->field_49 = 6;
     this_->field_51 = 0;
     playUISound__FUl(3);
@@ -1382,7 +1382,7 @@ extern "C" u8 clpIsOverlay(CCollepedia* self) {
     return self->field_28FA;
 }
 
-// Returns 1 if any block condition is active, otherwise calls func_801B481C
+// Returns 1 if any block condition is active, otherwise calls GetItemMulti_IsActiveFlag
 extern "C" u32 clpIsBusy(CCollepedia* this_) {
     if (this_->field_49 != 3) {
         return 1;
@@ -1393,7 +1393,7 @@ extern "C" u32 clpIsBusy(CCollepedia* this_) {
     if (this_->field_28FA != 0) {
         return 1;
     }
-    return func_801B481C();
+    return GetItemMulti_IsActiveFlag();
 }
 
 // us-80257a1c
@@ -1403,7 +1403,7 @@ void clpEnterBrows(CCollepedia* this_) {
     if (advanceAnimTransform(this_->field_40, lbl_eu_80668800) != 0) {
         this_->field_49 = 3;
         this_->field_51 = 1;
-        func_801D216C(&this_->field_54, 1);
+        Cur_SetVisible(&this_->field_54, 1);
 
         this_->field_38->SetAnimationEnable(this_->field_3C, false);
         this_->field_38->SetAnimationEnable(this_->field_40, false);
@@ -1429,7 +1429,7 @@ extern "C" __declspec(noinline) void clpEnterIdle(CCollepedia* this_) {
     if (AnimRewindFrame(this_->field_3C, lbl_eu_80668800) != 0) {
         this_->field_51 = 1;
         this_->field_49 = 0;
-        func_801D216C(this_->field_54, 0);
+        Cur_SetVisible(this_->field_54, 0);
     }
 }
 
@@ -1437,7 +1437,7 @@ extern "C" __declspec(noinline) void clpEnabDetCur(CCollepedia* this_) {
     if (this_->field_28F9 == 0) return;
     this_->field_49 = 7;
     this_->field_51 = 1;
-    func_801D216C(&this_->field_54[0x30], 1);
+    Cur_SetVisible(&this_->field_54[0x30], 1);
     clpRefreshCur(this_);
 }
 
@@ -1451,7 +1451,7 @@ __declspec(noinline) void func_802559DC(CCollepedia* this_) {
 
     this_->field_49 = 3;
     this_->field_51 = 1;
-    func_801D216C(&this_->field_54, 1);
+    Cur_SetVisible(&this_->field_54, 1);
 
     clpRefreshCur(this_);
 
@@ -1462,10 +1462,10 @@ __declspec(noinline) void func_802559DC(CCollepedia* this_) {
     char* str = (char*)BdatTouchStringCell(&lbl_eu_8050C6E8[0xA2], &lbl_eu_8050C6E8[0xAE], 0x12);
     func_8022B9B4(&this_->field_9C, str, 0);
     func_8022BFC8((CSysWin*)&this_->field_9C, 1);
-    func_8022B8B8(&this_->field_9C);
+    sysWinOpenPhase1(&this_->field_9C);
 
     void* handle = getHandleMEM2__Q23mtl10MemManagerFv();
-    func_801895EC();
+    MenuSnd_GetMasterVol_95EC();
     func_80043738(0, &lbl_eu_8050C6E8[0x1E9], handle, 2, 1, 0);
 }
 #pragma pop
@@ -1475,7 +1475,7 @@ __declspec(noinline) void func_802559DC(CCollepedia* this_) {
 #pragma dont_inline on
 // us-80257cf0
 // If CSysWin is active, set state, look up table entry, format string, call UIWin_CreateItemMulti
-extern "C" __declspec(noinline) void func_80255AB4(CCollepedia* this_) {
+extern "C" __declspec(noinline) void collepediaCreateItemMulti(CCollepedia* this_) {
     if (!CSysWin_isActive(&this_->field_9C)) return;
 
     this_->field_49 = 12;
@@ -1501,7 +1501,7 @@ extern "C" __declspec(noinline) void func_80255AB4(CCollepedia* this_) {
 #pragma dont_inline on
 // Initialize collepedia display: check condition, set up CSysWin with text, play sounds, load file
 __declspec(noinline) void func_80255B60(CCollepedia* this_) {
-    if (func_801B481C()) return;
+    if (GetItemMulti_IsActiveFlag()) return;
 
     this_->field_49 = 3;
 
@@ -1512,13 +1512,13 @@ __declspec(noinline) void func_80255B60(CCollepedia* this_) {
     char* str = (char*)BdatTouchStringCell(&lbl_eu_8050C6E8[0xA2], &lbl_eu_8050C6E8[0xAE], 0x13);
     func_8022B9B4(&this_->field_9C, str, 0);
     func_8022BFC8((CSysWin*)&this_->field_9C, 1);
-    func_8022B8B8(&this_->field_9C);
+    sysWinOpenPhase1(&this_->field_9C);
 
     incrementEventCounter__FUl(0x85);
     incrementEventCounter__FUl(0x86);
 
     void* handle = getHandleMEM2__Q23mtl10MemManagerFv();
-    func_801895EC();
+    MenuSnd_GetMasterVol_95EC();
     func_80043738(0, &lbl_eu_8050C6E8[0x200], handle, 2, 1, 0);
 }
 #pragma pop
@@ -1617,7 +1617,7 @@ void clpSetPageVis(CCollepedia* this_) {
     for (u8 i = 1; i <= 0x16; i++) {
         sprintf(buf, &lbl_eu_8050C6E8[0x2F7], i);
 
-        func_80124270(this_->field_38->GetRootPane()->FindPaneByName(buf, true), i <= count);
+        setPaneVisible(this_->field_38->GetRootPane()->FindPaneByName(buf, true), i <= count);
 
         if (i == count) {
             copyVEC3(this_->field_DC,
@@ -1690,12 +1690,12 @@ extern "C" __declspec(noinline) void func_80255F98(CCollepedia* this_) {
         sprintf(buf, &lbl_eu_8050C6E8[0x2bb], num);
         nw4r::lyt::Pane* namePane =
             this_->field_38->GetRootPane()->FindPaneByName(buf, true);
-        func_80124270(namePane, (int)i < (int)(u8)count);
+        setPaneVisible(namePane, (int)i < (int)(u8)count);
 
         sprintf(buf, &lbl_eu_8050C6E8[0x2c8], num);
         nw4r::lyt::Pane* numPane =
             this_->field_38->GetRootPane()->FindPaneByName(buf, true);
-        func_80124270(numPane, clpGetRowDone(&this_->field_E8, i));
+        setPaneVisible(numPane, clpGetRowDone(&this_->field_E8, i));
     }
 
     // Fill the 6x5 grid: texture slots and item icons per visible entry.
@@ -1715,7 +1715,7 @@ extern "C" __declspec(noinline) void func_80255F98(CCollepedia* this_) {
     u32 done = clpIsPageDone(&this_->field_E8);
     nw4r::lyt::Pane* markPane = this_->field_38->GetRootPane()->FindPaneByName(
         &lbl_eu_8050C6E8[0x2d6], true);
-    func_80124270(markPane, done);
+    setPaneVisible(markPane, done);
 }
 // Set two pane names on the layout using the current sub-array entry
 #pragma push
@@ -1899,9 +1899,9 @@ bool CCollepedia::OnFileEvent(CEventFile* pEventFile) {
         setBdatEntry__5CBdatFUlPv(2, data);
 
         // Resolve the two message files used by the item/quest name lookups.
-        func_8003AA34();
+        Bdat_GetTable_AA34();
         lbl_eu_806647D8 = getFP__FPCc(&lbl_eu_8050C6E8[0x3a4]);
-        func_8003AA34();
+        Bdat_GetTable_AA34();
         lbl_eu_806647DC = (char*)getFP__FPCc(&lbl_eu_8050C6E8[0x3b3]);
 
         clpTryShow(this);

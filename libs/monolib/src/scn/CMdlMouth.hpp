@@ -55,9 +55,9 @@ public:
     CMdlMouth();
     virtual ~CMdlMouth();
 
-    void func_804E679C(int, int);
-    int  func_804E68A0(u32, nw4r::g3d::ChrAnmResult*);
-    void func_804E6A28();
+    void MdlMouthSetMode(int, int);
+    int  MdlMouthPollAnim(u32, nw4r::g3d::ChrAnmResult*);
+    void MdlMouthTeardown();
 
     /* 0x04 */ CMdlOwnerCtx* field_0x04;  // owner model (view in CMdlMouth.cpp)
     /* 0x08 */ s32   field_0x08;

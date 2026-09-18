@@ -245,7 +245,7 @@ extern "C" void func_800C00C0__Q22cf10CfObjectPcFv(cf::CfObjectPc* self) {
 // CfObjectMove sub-object, and the vtable caller supplies a second int in r4
 // even though the retail mangled name is arg-less. Small args delegate to the
 // base CfObjectMove implementation; larger ones forward a sub-object pointer
-// to func_800CA42C.
+// to ObjPc_ForwardVf0C_A42C.
 void handleMoveState__Q22cf10CfObjectPcFv(cf::CfObjectPc* self, u32 a, u32 b, u32 c, u32 d, u32 e) {
     if ((int)a < 0x2c) {
         // CfObjectMove sub-object at this+0x3E9C. Forward all five args so
@@ -255,7 +255,7 @@ void handleMoveState__Q22cf10CfObjectPcFv(cf::CfObjectPc* self, u32 a, u32 b, u3
     } else {
         u8* obj = ((CfObjectPcSubFields*)self)->mPtr3ED4;
         if (obj != NULL) {
-            func_800CA42C(obj);
+            ObjPc_ForwardVf0C_A42C(obj);
         }
     }
 }
@@ -330,8 +330,8 @@ void cf::CfObjectPc::dispatchPlayerBranch() {
 void cf::CfObjectPc::resetActionTable() {
     u8* self = (u8*)this;
     func_8014B7B0(self + 0x3380);
-    func_8014B804(self + 0x3380, 0, 1, 0, 6, 0, 0, 7, 0, 0, 0, 2, 100, 0);
-    func_8014B804(self + 0x3380, 1, 1, 0, 6, 0, 0, 0xE, 0, 0, 0, 2, 100, 0);
+    aiActionStoreIndexedBytes(self + 0x3380, 0, 1, 0, 6, 0, 0, 7, 0, 0, 0, 2, 100, 0);
+    aiActionStoreIndexedBytes(self + 0x3380, 1, 1, 0, 6, 0, 0, 0xE, 0, 0, 0, 2, 100, 0);
 }
 
 void cf::CfObjectPc::setupActionTable() {
@@ -535,7 +535,7 @@ void CActorParam_UnkVirtualFunc88__Q22cf10CfObjectPcFv(
         f->field_0x1608 = 0x05F60000u - 0x1F01u;
     }
     Obj89cField* obj = (Obj89cField*)self->CActorParam_getStatusTable();
-    func_802617B8((u8*)obj, obj->field_0x89C, arg3);
+    Counter_AddClamped((u8*)obj, obj->field_0x89C, arg3);
     int acted = 0;
     // Drain the action queue through slot 0x35C.
     while (self->CActorParam_consumeCurrencyStep() != 0) {
@@ -544,10 +544,10 @@ void CActorParam_UnkVirtualFunc88__Q22cf10CfObjectPcFv(
     }
     func_8010CE50(f->field_0x3F10, arg1, arg2, arg3);
     if (arg3 != 0 && func_800A2AF0((u8*)arts) != 0) {
-        func_802761E0(f->field_0x3F10);
+        fireLvUpMode4(f->field_0x3F10);
     }
     if (acted != 0) {
-        func_80276148(f->field_0x3F10,
+        fireLvUpCombo(f->field_0x3F10,
             (u32)self->CActorParam_getStatusTable());
         BattleMgrRangeView* bm =
             (BattleMgrRangeView*)getInstance__Q22cf14CBattleManagerFv();
@@ -568,7 +568,7 @@ void CActorParam_UnkVirtualFunc88__Q22cf10CfObjectPcFv(
     actedDone:;
     }
     CtrlObjectParam_SyncParamFromActorEx((u8*)arts, 0);
-    func_801A891C((u8*)self, 0);
+    releaseVisionSlot((u8*)self, 0);
 }
 
 // Global definition under the retail mangled name: the base CActorParam
@@ -632,7 +632,7 @@ extern "C" int func_800C0DD4(cf::CfObjectPc* self, int flag) {
         if (bm->field_0x1AA >= 1 && bm->field_0x1AA <= 0x18) {
             return 0;
         }
-        if (func_801BA2C8((u8*)bm + 0x216C)) {
+        if (SuddenCommuIsStateActive((u8*)bm + 0x216C)) {
             return 0;
         }
         if (((BattleMgrRangeView*)getInstance__Q22cf14CBattleManagerFv())
@@ -645,10 +645,10 @@ extern "C" int func_800C0DD4(cf::CfObjectPc* self, int flag) {
         // lbl_eu_80663E44 with a x100 byte stride; result adds the offset back.
         u32 modeOff = (u32)lbl_eu_80663E42 * 100;
         int channel = (int)*(u16*)((u8*)&lbl_eu_80663E44 + modeOff) + (int)modeOff;
-        func_8003AA34();
+        Bdat_GetTable_AA34();
         void* mgr = lbl_eu_806640D4;
-        int i = func_8003B41C(mgr);
-        int end = i + func_8003B1EC(mgr);
+        int i = Bdat_GetRowBase_B41C(mgr);
+        int end = i + Bdat_GetMaxRow_B1EC(mgr);
         const char* names = (const char*)lbl_eu_804FC5EC;
         for (; i < end; i++) {
             u32 vA = getBdatStringColumnValue(mgr, names + 0x3E, i);
@@ -667,7 +667,7 @@ extern "C" int func_800C0DD4(cf::CfObjectPc* self, int flag) {
             float dmg = lbl_eu_80666B38 *
                 (base * self->CActorParam_getDamageScale());
             if (func_80148778((u8*)self + 8, 0xE9)) {
-                Res10View* e = (Res10View*)func_80149154((u8*)self + 8, 0xE9);
+                Res10View* e = (Res10View*)findBattleStatusEntry((u8*)self + 8, 0xE9);
                 double dT = (double)(int)e->field_0x10;
                 dmg = dmg * (lbl_eu_80666B24 -
                     ((dT - lbl_eu_80666B30) / lbl_eu_80666B28));

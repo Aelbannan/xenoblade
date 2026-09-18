@@ -22,7 +22,7 @@ extern "C" void CfRes_clearField4(u8* self);
 extern "C" void CfResEntry_clearField8(u8* self);
 extern "C" int CfRes_incField8(u8* self);
 extern "C" bool initParticleSystem__Q22cf13CfGameManagerFv(u32 value);
-extern "C" void func_8006398C(u32 value);
+extern "C" void cfResNopValueSink(u32 value);
 
 // Acquire a resource-table entry for a resource id, bumping refcounts.
 // extern "C" keeps the call reloc carrying the retail unmangled name.
@@ -260,7 +260,7 @@ extern "C" void func_800676F8(u8* self);
 // the call reloc from __ct__Q22cf5CfResFv carries the retail name).
 extern "C" void CfRes_initArchiveTables(u8* self, int arg);
 // Packed-token packer (kyoshin/code_800AA008.cpp) - retail C symbol name.
-extern "C" u32 func_800AA2BC(u32 a, u32 b);
+extern "C" u32 Tok_Pack08(u32 a, u32 b);
 // Device-file allocation helper (retail C symbol name).
 extern "C" int KyoshinHeap_GetActive54();
 // Same-unit helpers under their retail unmangled names (CfRes.cpp stubs -
@@ -275,7 +275,7 @@ extern "C" u32 CfRes_packFourFields(u32 a, u32 b, u32 c, u32 d);
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim).
 extern "C" char* getEntryPtr(char* base, int a, int b);
 extern "C" void CfRes_releaseCachedBase(ResInfoEntry* entry, bool cleanup);
-extern "C" void func_800AA318(u32 packed, u32* out0, u32* out1, u32* out2, u32* out3);
+extern "C" void Tok_Unpack(u32 packed, u32* out0, u32* out1, u32* out2, u32* out3);
 
 // CfRes_dispatchArchiveRead (0x800645FC): async archive-read pipeline (path build + open
 // + per-entry init). 6 args, int result; C linkage so the call reloc from
@@ -381,7 +381,7 @@ extern "C" void* CfRes_ptrPlus1E4(void* self);
 
 // Effect-singleton resource registration (C-ABI import, retail unmangled
 // symbol name; same extern "C" convention as CREvtEffect.hpp).
-extern "C" void func_804CC1BC(void* mgr, void* data);
+extern "C" void EffSched_LookupA(void* mgr, void* data);
 
 // Delegate-op dispatcher (defined in CfRes.cpp). Declared int-returning so
 // callers can capture the r3 result (retail callers do `mr r3r31, r3` after
@@ -401,11 +401,11 @@ extern "C" int CfRes_getDeviceFileSize(void* self);
 extern "C" ml::FixStr<64>* CfRes_stub_63ACC(ml::FixStr<64>* str);
 
 // Work-cache list helpers (defined in monolib/src/work/CWorkSystemCache.cpp
-// with C linkage; retail unmangled names). func_804D8FB4 counts the cached
-// entries; func_804D8FDC looks up the index-th entry and writes out its item
+// with C linkage; retail unmangled names). SysCacheCountListNodes counts the cached
+// entries; SysCacheFetchIndexedEntry looks up the index-th entry and writes out its item
 // fields (0x3C value, +0x4 buffer pointer, 0x40 value).
-extern "C" u32 func_804D8FB4(void);
-extern "C" bool func_804D8FDC(int index, u32* outField3C, char** outField4Addr, u32* outField40);
+extern "C" u32 SysCacheCountListNodes(void);
+extern "C" bool SysCacheFetchIndexedEntry(int index, u32* outField3C, char** outField4Addr, u32* outField40);
 
 // Same-TU string compare helper (defined in CfRes.cpp; C linkage so call
 // relocs carry the retail unmangled name).

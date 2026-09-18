@@ -1,5 +1,11 @@
 // CMenuLvUp - level-up menu task reconstruction.
 
+// Shield the chain's C++-linkage Scn_FindCamItem decl (CfCam.hpp form):
+// this TU's local extern "C" MenuLvUpPose* form (CMenuLvUp.hpp:212) would
+// otherwise clash under MWCC 10197 (CfObjectMove.cpp idiom).
+#define Scn_FindCamItem Scn_FindCamItem_chain_hidden
+#define findObjectById findObjectById_chain_hidden
+
 #include "kyoshin/harness_catalog.hpp"
 
 #include "kyoshin/code_80135FDC.hpp"
@@ -7,12 +13,16 @@
 #include "monolib/util/MemManager.hpp"
 #include "monolib/work/CWorkThreadSystem.hpp"
 
+#undef Scn_FindCamItem
+#undef findObjectById
+
 #include "kyoshin/menu/CMenuLvUp.hpp"
 #include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
 
-// forward declarations for scaffold thunk references
-void __dt__9CMenuLvUpFv(void*);
-void cbRenderBefore__9CMenuLvUpFv(void*);
+// forward declarations for scaffold thunk references (extern "C": retail
+// symbols are flat, so the thunk call relocs must be unmangled)
+extern "C" void __dt__9CMenuLvUpFv(void*);
+extern "C" void cbRenderBefore__9CMenuLvUpFv(void*);
 
 // ---------------------------------------------------------------------------
 // Destructor (D1/D2 merged). The UnkClass_8045F564 storage at +0x60 and the
@@ -117,8 +127,8 @@ void CMenuLvUp::Move() {
         f32 resetFrame = lbl_eu_80668A00;
         for (u8 i = 0; i < 3; i++) {
             CMenuLvUpEntry* entry = &mEntries[i];
-            func_80276B14(this, entry);
-            func_802768E0(this, entry);
+            teardownLvUpEntry(this, entry);
+            placeLvUpEntry(this, entry);
 
             switch (entry->field_0x14) {
             case 1:
@@ -238,7 +248,7 @@ extern "C" CMenuLvUp* __ct__CMenuLvUp(CProcess* parent, CScn* scene) {
     return lbl_eu_80664900;
 }
 
-void func_80276148(CMenuLvUp* self, u32 flag) {
+void fireLvUpCombo(CMenuLvUp* self, u32 flag) {
     if (lbl_eu_80664900 != 0) {
         func_80276200(lbl_eu_80664900, self, 1);
         func_80276200(lbl_eu_80664900, self, 2);
@@ -248,13 +258,13 @@ void func_80276148(CMenuLvUp* self, u32 flag) {
     }
 }
 
-void func_802761C0(CMenuLvUp* self) {
+void fireLvUpMode2(CMenuLvUp* self) {
     if (lbl_eu_80664900 != 0) {
         func_80276200(lbl_eu_80664900, self, 2);
     }
 }
 
-void func_802761E0(CMenuLvUp* self) {
+void fireLvUpMode4(CMenuLvUp* self) {
     if (lbl_eu_80664900 != 0) {
         func_80276200(lbl_eu_80664900, self, 4);
     }
@@ -414,13 +424,13 @@ static inline Fn vslot(void* obj, u32 offset) {
 }
 
 // ---------------------------------------------------------------------------
-// func_802768E0 - position and cull the entry's layouts at the actor's screen
+// placeLvUpEntry - position and cull the entry's layouts at the actor's screen
 // location. Both root panes are shown, then the actor's world position
 // (preferring the vfn12C(0x64) anchor, else the vfnAC position) is projected
 // through the scene camera and post-scaled into the pane translate. A facing
 // test on the camera anchors hides the panes when the actor is out of view.
 // ---------------------------------------------------------------------------
-void func_802768E0(CMenuLvUp* self, CMenuLvUpEntry* entry) {
+void placeLvUpEntry(CMenuLvUp* self, CMenuLvUpEntry* entry) {
     if (entry->field_0x10 == 0) return;
 
     // MWCC allocates locals in reverse declaration order to ascending slots:
@@ -492,7 +502,7 @@ void func_802768E0(CMenuLvUp* self, CMenuLvUpEntry* entry) {
 // clear the id, drop the root panes' visible flag bit, and wipe the state
 // bytes.
 // ---------------------------------------------------------------------------
-extern "C" void func_80276B14(CMenuLvUp* self, CMenuLvUpEntry* entry) {
+extern "C" void teardownLvUpEntry(CMenuLvUp* self, CMenuLvUpEntry* entry) {
     if (entry->field_0x10 != 0) {
         MenuLvUpActor* src = findObjectById((int)entry->field_0x10);
         if (src != 0 && (src->field_0x64 & 2)) {
@@ -517,8 +527,8 @@ extern "C" void func_80276B14(CMenuLvUp* self, CMenuLvUpEntry* entry) {
     }
 }
 
-void func_80276C18(void* self) { ((void(*)(void*))__dt__9CMenuLvUpFv)((char*)self - 0x58); }
+void CMenuLvUp_dtorAdj58(void* self) { ((void(*)(void*))__dt__9CMenuLvUpFv)((char*)self - 0x58); }
 
-void func_80276C20(void* self) { ((void(*)(void*))cbRenderBefore__9CMenuLvUpFv)((char*)self - 0x5c); }
+void CMenuLvUp_renderBeforeAdj5C(void* self) { ((void(*)(void*))cbRenderBefore__9CMenuLvUpFv)((char*)self - 0x5c); }
 
-void func_80276C28(void* self) { ((void(*)(void*))__dt__9CMenuLvUpFv)((char*)self - 0x5c); }
+void CMenuLvUp_dtorAdj5C(void* self) { ((void(*)(void*))__dt__9CMenuLvUpFv)((char*)self - 0x5c); }

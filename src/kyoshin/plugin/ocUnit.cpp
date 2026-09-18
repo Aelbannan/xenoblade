@@ -36,11 +36,11 @@ extern "C" {
     void CBattleMan_ClearEventNotify(void* battleMgr, void* actor, int flag);
     void CBattleMan_ClearActorStatus(void* battleMgr, void* actor, int index);
     void CBattleMan_RunBattleEvent(void* battleMgr, void* actor, void* data, int flag);
-    u32 func_800FE68C();
+    u32 Selector_GetInstance();
     void setChildB59__(void* obj, s8 val);
     void bindPartnerO_(void* obj, void* target, void* child);
     void setTargetObj_(void* obj, void* target);
-    void func_800AC4A8(void* obj, u16 param);
+    void CollObjStoreResIdRaw(void* obj, u16 param);
     void func_800ABF24(void* obj, void* pos, void* offset, float f);
     void UIWin_CreateTalkWin(void* subObj, const char* str, int flag);
     void UIWin_CreateEveTalkWin(void* subObj, const char* str);
@@ -148,7 +148,7 @@ extern "C" int func_8003BD7C(VMThread* pThread, int handle, u16 unk) {
     if (strcmp(str, lbl_eu_804FA74C) == 0 || strcmp(str, lbl_eu_804FA74C + 0xC) == 0) {
         found = (cf::CfObject*)createItemObjectWrapper__Q22cf13CfGameManagerFv(lbl_eu_804FA74C, (u16)idx);
         if (found != NULL) {
-            func_8003AA34();
+            Bdat_GetTable_AA34();
             getFP__FPCc(lbl_eu_804FA74C); // init side effect only; result unused
             u32 col = getBdatStringColumnValue((void*)lbl_eu_804FA74C, lbl_eu_804FA74C + 0x10, idx);
             if (*(u8*)&col == 0) {
@@ -175,9 +175,9 @@ extern "C" int func_8003BD7C(VMThread* pThread, int handle, u16 unk) {
     }
     void* oc;
     if (strcmp(str, lbl_eu_804FA74C + 0x35) == 0) {
-        oc = func_80186460(func_801862C0(), found);
+        oc = ArtsSelect_CacheEntry(ArtsSelect_GetContainer(), found);
     } else {
-        oc = func_801863F4(func_801862C0(), found);
+        oc = func_801863F4(ArtsSelect_GetContainer(), found);
     }
     found->mFlags68 |= 0x4000;
     VMArg retVal;
@@ -189,7 +189,7 @@ extern "C" int func_8003BD7C(VMThread* pThread, int handle, u16 unk) {
 }
 
 extern "C" int getPosX(VMThread* pThread, int handle) {
-    void* ctx = func_801862C0();
+    void* ctx = ArtsSelect_GetContainer();
     cf::CfObject* obj = (cf::CfObject*)func_801864DC(ctx, handle);
     VMArg retVal;
     retVal.type = 4;
@@ -201,7 +201,7 @@ extern "C" int getPosX(VMThread* pThread, int handle) {
 ml::CVec3* cf::CfObject::CfObject_getPosVector() { return (ml::CVec3*)&mPos3C; }
 
 extern "C" int getPosY(VMThread* pThread, int handle) {
-    void* ctx = func_801862C0();
+    void* ctx = ArtsSelect_GetContainer();
     cf::CfObject* obj = (cf::CfObject*)func_801864DC(ctx, handle);
     VMArg retVal;
     retVal.type = 4;
@@ -211,7 +211,7 @@ extern "C" int getPosY(VMThread* pThread, int handle) {
 }
 
 extern "C" int getPosZ(VMThread* pThread, int handle) {
-    void* ctx = func_801862C0();
+    void* ctx = ArtsSelect_GetContainer();
     cf::CfObject* obj = (cf::CfObject*)func_801864DC(ctx, handle);
     VMArg retVal;
     retVal.type = 4;
@@ -221,7 +221,7 @@ extern "C" int getPosZ(VMThread* pThread, int handle) {
 }
 
 extern "C" int getObjAngle(VMThread* pThread, int handle) {
-    void* ctx = func_801862C0();
+    void* ctx = ArtsSelect_GetContainer();
     cf::CfObject* obj = (cf::CfObject*)func_801864DC(ctx, handle);
     VMArg retVal;
     retVal.type = 3;
@@ -231,7 +231,7 @@ extern "C" int getObjAngle(VMThread* pThread, int handle) {
 }
 
 extern "C" int getObjParam(VMThread* pThread, int handle) {
-    void* ctx = func_801862C0();
+    void* ctx = ArtsSelect_GetContainer();
     cf::CfObject* obj = (cf::CfObject*)func_801864DC(ctx, handle);
     VMArg retVal;
     retVal.type = 5;
@@ -248,7 +248,7 @@ extern "C" void* CObjectParam_UnkVirtualFunc2__Q22cf12CObjectParamFv(cf::CObject
 }
 
 extern "C" int getObjId(VMThread* pThread, int handle) {
-    void* ctx = func_801862C0();
+    void* ctx = ArtsSelect_GetContainer();
     cf::CfObject* obj = (cf::CfObject*)func_801864DC(ctx, handle);
     VMArg retVal;
     retVal.type = 3;
@@ -258,7 +258,7 @@ extern "C" int getObjId(VMThread* pThread, int handle) {
 }
 
 extern "C" int getTalkObj(VMThread* pThread, int handle) {
-    void* ctx = func_801862C0();
+    void* ctx = ArtsSelect_GetContainer();
     cf::CfObject* obj = (cf::CfObject*)func_801864DC(ctx, handle);
     VMArg retVal;
     if (obj) {
@@ -273,7 +273,7 @@ extern "C" int getTalkObj(VMThread* pThread, int handle) {
 }
 
 int getUnitHp(VMThread* pThread, int handle) {
-    void* ctx = func_801862C0();
+    void* ctx = ArtsSelect_GetContainer();
     cf::CfObject* obj = (cf::CfObject*)func_801864DC(ctx, handle);
     // Cast to CfObjectActor; if it is one, read the float at vtable slot
     // 0x128 and return it truncated to int, else return 0.
@@ -296,7 +296,7 @@ float cf::CActorParam::CActorParam_getHp() { return *(float*)((u8*)this + 0x17E8
 // 1/lbl_eu_80665C30, overwrite the object position vector's X with it and
 // pass the vector to vtable slot 0xA8.
 extern "C" int setPosX(VMThread* pThread, int handle) {
-    void* ctx = func_801862C0();
+    void* ctx = ArtsSelect_GetContainer();
     cf::CfObject* obj = (cf::CfObject*)func_801864DC(ctx, handle);
     VMArg* prop = (VMArg*)vmOCPropertyGet(pThread);
     ml::CVec3 vec;
@@ -322,7 +322,7 @@ extern "C" void CfObject_UnkVirtualFunc22__Q22cf8CfObjectFv(void* self, const vo
 // us-8003cadc: same shape as setPosX but writes the computed angle to
 // the vector's Y component.
 extern "C" int setPosY(VMThread* pThread, int handle) {
-    void* ctx = func_801862C0();
+    void* ctx = ArtsSelect_GetContainer();
     cf::CfObject* obj = (cf::CfObject*)func_801864DC(ctx, handle);
     VMArg* prop = (VMArg*)vmOCPropertyGet(pThread);
     ml::CVec3 vec;
@@ -339,7 +339,7 @@ extern "C" int setPosY(VMThread* pThread, int handle) {
 // us-8003cba0: same shape as setPosX/setPosY but writes the
 // computed angle to the vector's Z component.
 extern "C" int setPosZ(VMThread* pThread, int handle) {
-    void* ctx = func_801862C0();
+    void* ctx = ArtsSelect_GetContainer();
     cf::CfObject* obj = (cf::CfObject*)func_801864DC(ctx, handle);
     VMArg* prop = (VMArg*)vmOCPropertyGet(pThread);
     ml::CVec3 vec;
@@ -355,7 +355,7 @@ extern "C" int setPosZ(VMThread* pThread, int handle) {
 }
 
 int func_8003C6E8(VMThread* pThread, int handle) {
-    void* ctx = func_801862C0();
+    void* ctx = ArtsSelect_GetContainer();
     cf::CfObject* obj = (cf::CfObject*)func_801864DC(ctx, handle);
     // OC property value (u32) -> float via MWCC's direct 2^52 conversion
     // (fsubs, no frsp), scaled by the degrees-to-radians constant, then
@@ -369,7 +369,7 @@ int func_8003C6E8(VMThread* pThread, int handle) {
 void cf::CfObject::CfObject_setMoveHeadAngle(float value) { mField4C = value; }
 
 int setObjName(VMThread* pThread, int handle) {
-    void* ctx = func_801862C0();
+    void* ctx = ArtsSelect_GetContainer();
     cf::CfObject* obj = (cf::CfObject*)func_801864DC(ctx, handle);
     VMArg* prop = (VMArg*)vmOCPropertyGet(pThread);
     // OC property setter: dispatch vtable[0x3C] with the property getter value.
@@ -387,7 +387,7 @@ extern "C" void CObjectParam_UnkVirtualFunc1__Q22cf12CObjectParamFv(void* self, 
 bool isValid() { return false; }
 
 extern "C" int applyPos(VMThread* pThread, int handle) {
-    void* ctx = func_801862C0();
+    void* ctx = ArtsSelect_GetContainer();
     cf::CfObject* obj = (cf::CfObject*)func_801864DC(ctx, handle);
     float* p = (float*)obj->CfObject_getPosVector();
     struct {
@@ -437,7 +437,7 @@ int dispOn(VMThread* pThread, int handle) {
         VMArg* ptr = vmArgPtrGet(pThread, 1);
         flag = vmArgIntGet(2, ptr);
     }
-    void* ctx = func_801862C0();
+    void* ctx = ArtsSelect_GetContainer();
     cf::CfObject* obj = (cf::CfObject*)func_801864DC(ctx, handle);
     // flag == 0: show via vtable slot 0x158; otherwise route through the
     // external display helper.
@@ -459,7 +459,7 @@ int dispOff(VMThread* pThread, int handle) {
         VMArg* ptr = vmArgPtrGet(pThread, 1);
         flag = vmArgIntGet(2, ptr);
     }
-    void* ctx = func_801862C0();
+    void* ctx = ArtsSelect_GetContainer();
     cf::CfObject* obj = (cf::CfObject*)func_801864DC(ctx, handle);
     // If the current display object still accepts display-off, bail out
     // before hiding this object.
@@ -494,7 +494,7 @@ extern "C" int hideUnit(VMThread* pThread, int handle) {
         VMArg* ptr = vmArgPtrGet(pThread, 1);
         arg = vmArgIntGet(2, ptr);
     }
-    void* ctx = func_801862C0();
+    void* ctx = ArtsSelect_GetContainer();
     cf::CfObject* obj = (cf::CfObject*)func_801864DC(ctx, handle);
     if (arg == 0) {
         obj->setPointEnabled(0);
@@ -507,7 +507,7 @@ extern "C" int hideUnit(VMThread* pThread, int handle) {
 int func_8003CC0C(VMThread* pThread, int handle) {
     VMArg* ptr = vmArgPtrGet(pThread, 1);
     int b = vmArgBoolGet(2, ptr);
-    void* ctx = func_801862C0();
+    void* ctx = ArtsSelect_GetContainer();
     cf::CfObject* obj = (cf::CfObject*)func_801864DC(ctx, handle);
     // Cast the OC object to a CfObjectActor and forward the booleanized
     // flag to vtable slot 0x1C0.
@@ -521,7 +521,7 @@ int func_8003CC0C(VMThread* pThread, int handle) {
 int execNpcAction(VMThread* pThread, int handle) {
     VMArg* ptr = vmArgPtrGet(pThread, 1);
     int index = vmArgIntGet(2, ptr);
-    void* ctx = func_801862C0();
+    void* ctx = ArtsSelect_GetContainer();
     cf::CfObject* obj = (cf::CfObject*)func_801864DC(ctx, handle);
     // Copy the 6-entry event-arg table into a local buffer, then dispatch
     // the selected entry through vtable slot 0x114.
@@ -544,7 +544,7 @@ int execNpcAction(VMThread* pThread, int handle) {
 void CfObject_forwardNpcAction__Q22cf8CfObjectFv(cf::CfObject* self, u32 value) { (void)self; (void)value; }
 
 extern "C" int getNpcAction(VMThread* pThread, int handle) {
-    void* ctx = func_801862C0();
+    void* ctx = ArtsSelect_GetContainer();
     cf::CfObject* obj = (cf::CfObject*)func_801864DC(ctx, handle);
     VMArg retVal;
     retVal.type = 3;
@@ -570,7 +570,7 @@ extern "C" int CfObject_UnkVirtualFunc51__Q22cf12CfObjectMoveFv(cf::CfObjectMove
 
 extern int isTalkBlocked(void* obj);
 extern "C" int canTalk(VMThread* pThread, int handle) {
-    void* ctx = func_801862C0();
+    void* ctx = ArtsSelect_GetContainer();
     cf::CfObject* obj = (cf::CfObject*)func_801864DC(ctx, handle);
     int r = isTalkBlocked(obj);
     VMArg retVal;
@@ -582,7 +582,7 @@ extern "C" int canTalk(VMThread* pThread, int handle) {
 int walkR(VMThread* pThread, int handle) {
     VMArg* ptr = vmArgPtrGet(pThread, 1);
     int fixed = vmArgFixedGet(2, ptr);
-    void* ctx = func_801862C0();
+    void* ctx = ArtsSelect_GetContainer();
     cf::CfObject* obj = (cf::CfObject*)func_801864DC(ctx, handle);
     // Fixed-point walk range -> float via MWCC's s32 double-trick, then
     // dispatched to the 0x1EC NPC move-range slot.
@@ -594,7 +594,7 @@ int walkR(VMThread* pThread, int handle) {
 int setMoveWait(VMThread* pThread, int handle) {
     VMArg* ptr = vmArgPtrGet(pThread, 1);
     int arg = vmArgIntGet(2, ptr);
-    void* ctx = func_801862C0();
+    void* ctx = ArtsSelect_GetContainer();
     cf::CfObject* obj = (cf::CfObject*)func_801864DC(ctx, handle);
     // Convert the frame count to time units using the target framerate.
     ((cf::CfObjectMove*)obj)->CfObjectMove_writeTargetField(arg * CDeviceVI::getTargetFramerate());
@@ -608,7 +608,7 @@ extern "C" int setTargetRot(VMThread* pThread, int handle) {
     int rotY = vmArgFixedGet(3, a2);
     VMArg* a3 = vmArgPtrGet(pThread, 3);
     int rotZ = vmArgFixedGet(4, a3);
-    void* ctx = func_801862C0();
+    void* ctx = ArtsSelect_GetContainer();
     cf::CfObjectMove* obj = (cf::CfObjectMove*)func_801864DC(ctx, handle);
     // Fixed-point angles -> floats via MWCC's direct 2^52 signed conversion,
     // scaled back into the object's units, then handed to vtable slot 0x1F4.
@@ -641,7 +641,7 @@ extern "C" int setNpcPath(VMThread* pThread, int handle) {
     } else {
         angle = vmArgIntGet(5, vmArgPtrGet(pThread, 4));
     }
-    obj = (cf::CfObject*)func_801864DC(func_801862C0(), handle);
+    obj = (cf::CfObject*)func_801864DC(ArtsSelect_GetContainer(), handle);
     u16 count = *(u16*)((u8*)arr + 2);
     // Element count must be a non-zero multiple of 3, at most 0x18.
     if ((count % 3) != 0 || (u32)(count - 3) > 0x18) {
@@ -663,7 +663,7 @@ extern "C" int setNpcPath(VMThread* pThread, int handle) {
 }
 
 int isMoving(VMThread* pThread, int handle) {
-    void* ctx = func_801862C0();
+    void* ctx = ArtsSelect_GetContainer();
     cf::CfObject* obj = (cf::CfObject*)func_801864DC(ctx, handle);
     int busy = ((cf::CfObjectMove*)obj)->CfObjectMove_queryNpcAdvance();
     // VM bool retval: type 2 (false) when idle, 1 (true) when busy.
@@ -674,7 +674,7 @@ int isMoving(VMThread* pThread, int handle) {
 }
 
 int waitMove(VMThread* pThread, int handle) {
-    void* ctx = func_801862C0();
+    void* ctx = ArtsSelect_GetContainer();
     cf::CfObject* obj = (cf::CfObject*)func_801864DC(ctx, handle);
     // If the object's "busy" check (vtable[0x1E8]) is false, hold the script.
     if (((cf::CfObjectMove*)obj)->CfObjectMove_queryNpcAdvance() == 0) {
@@ -723,7 +723,7 @@ int moveTo(VMThread* pThread, int handle) {
         idx++;
         flag = vmArgBoolGet(idx, array);
     }
-    obj = (cf::CfObject*)func_801864DC(func_801862C0(), handle);
+    obj = (cf::CfObject*)func_801864DC(ArtsSelect_GetContainer(), handle);
     spf = CDeviceVI::getSecPerFrame();
     vec.x = (float)(s32)posX / lbl_eu_80665C30;
     vec.y = (float)(s32)posY / lbl_eu_80665C30;
@@ -736,7 +736,7 @@ int moveTo(VMThread* pThread, int handle) {
 extern "C" int func_8003D570(VMThread* pThread, int handle) {
     VMArg* ptr = vmArgPtrGet(pThread, 1);
     int arg = vmArgIntGet(2, ptr);
-    void* ctx = func_801862C0();
+    void* ctx = ArtsSelect_GetContainer();
     cf::CfObject* obj = (cf::CfObject*)func_801864DC(ctx, handle);
     ((cf::CfObjectMove*)obj)->CfObjectMove_commandNpcTarget(arg);
     return 0;
@@ -750,14 +750,14 @@ extern "C" int restartNpc(VMThread* pThread, int handle) {
     int b = vmArgIntGet(3, a2);
     VMArg* a3 = vmArgPtrGet(pThread, 3);
     int c = vmArgIntGet(4, a3);
-    void* ctx = func_801862C0();
+    void* ctx = ArtsSelect_GetContainer();
     cf::CfObjectMove* obj = (cf::CfObjectMove*)func_801864DC(ctx, handle);
     obj->CfObjectMove_restartNpcTarget(a, b, c);
     return 0;
 }
 
 int isTalk(VMThread* pThread, int handle) {
-    void* ctx = func_801862C0();
+    void* ctx = ArtsSelect_GetContainer();
     cf::CfObject* obj = (cf::CfObject*)func_801864DC(ctx, handle);
     u32 flags = obj->unk64;
     // volatile keeps the per-arm type stores as separate memory writes
@@ -801,7 +801,7 @@ extern "C" void* CObjectState_getStateData__Q22cf12CObjectStateFv(void* self) {
 }
 
 int onEvent(VMThread* pThread, int handle) {
-    void* ctx = func_801862C0();
+    void* ctx = ArtsSelect_GetContainer();
     cf::CfObject* obj = (cf::CfObject*)func_801864DC(ctx, handle);
     u32 flags = obj->unk64;
     VMArg retVal;
@@ -880,7 +880,7 @@ extern "C" int CObjectState_UnkVirtualFunc8__Q22cf12CObjectStateFv(void* self, i
 // us-8003df40: hasTalkFlag
 // Checks if a CfObject supports a talk/hybridheal flag, returns 1 or 2
 extern "C" int hasTalkFlag(VMThread* pThread, int handle) {
-    void* ctx = func_801862C0();
+    void* ctx = ArtsSelect_GetContainer();
     cf::CfObject* obj = (cf::CfObject*)func_801864DC(ctx, handle);
     VMArg retVal;
     if (obj->unk64 & 0x8) {
@@ -905,7 +905,7 @@ extern "C" int hasTalkFlag(VMThread* pThread, int handle) {
 // Starts a talk window interaction
 extern "C" int winTalk(VMThread* pThread, int handle) {
     const char* str = vmArgStringGet(2, vmArgPtrGet(pThread, 1));
-    cf::CfObject* obj = (cf::CfObject*)func_801864DC(func_801862C0(), handle);
+    cf::CfObject* obj = (cf::CfObject*)func_801864DC(ArtsSelect_GetContainer(), handle);
     cf::CfObjectMove* player;
     // Talk state lives 0x3E9C bytes below the player object base.
     player = cf::CfGameManager::getPlayer(0);
@@ -950,7 +950,7 @@ extern "C" int setState10(VMThread* pThread, int handle) {
         VMArg* ptr = vmArgPtrGet(pThread, 1);
         boolVal = vmArgBoolGet(2, ptr);
     }
-    void* ctx = func_801862C0();
+    void* ctx = ArtsSelect_GetContainer();
     cf::CfObject* obj = (cf::CfObject*)func_801864DC(ctx, handle);
     if (obj->unk64 & 0x8) {
         if (boolVal) {
@@ -967,7 +967,7 @@ extern "C" int setState10(VMThread* pThread, int handle) {
 extern "C" int talkMsg(VMThread* pThread, int handle) {
     VMArg* arg1 = vmArgPtrGet(pThread, 1);
     const char* str = vmArgStringGet(2, arg1);
-    void* ctx = func_801862C0();
+    void* ctx = ArtsSelect_GetContainer();
     cf::CfObject* obj = (cf::CfObject*)func_801864DC(ctx, handle);
     UIWin_CreateTalkWin(*(void**)((u8*)obj + 0x74), str, 1);
     return 0;
@@ -991,7 +991,7 @@ extern "C" int sendNotify(VMThread* pThread, int handle) {
     const char* str;
     arg1 = vmArgPtrGet(pThread, 1);
     str = vmArgStringGet(2, arg1);
-    void* ctx = func_801862C0();
+    void* ctx = ArtsSelect_GetContainer();
     obj = (cf::CfObject*)func_801864DC(ctx, handle);
     UIWin_CreateEveTalkWin(*(void**)((u8*)obj + 0x74), str);
     if (obj->unk64 & 0x8) {
@@ -1019,7 +1019,7 @@ extern "C" int setAct(VMThread* pThread, int handle) {
         VMArg* arg2 = vmArgPtrGet(pThread, 2);
         fixedParam = vmArgFixedGet(3, arg2);
     }
-    void* ctx = func_801862C0();
+    void* ctx = ArtsSelect_GetContainer();
     cf::CfObject* obj = (cf::CfObject*)func_801864DC(ctx, handle);
     // CfObjectMove_setAnimModeArgs is header-declared as the 4-arg form; retail call sites
     // pass a 5th arg (r7=1) the callee ignores -- cast to keep the r3-r7 setup.
@@ -1036,7 +1036,7 @@ extern "C" int setAct(VMThread* pThread, int handle) {
 extern "C" int setRefreshVal(VMThread* pThread, int handle) {
     VMArg* arg1 = vmArgPtrGet(pThread, 1);
     int fixedVal = vmArgFixedGet(2, arg1);
-    void* ctx = func_801862C0();
+    void* ctx = ArtsSelect_GetContainer();
     cf::CfObject* obj = (cf::CfObject*)func_801864DC(ctx, handle);
     float f = (float)(s32)fixedVal / 2048.0f;
     obj->CfObject_pushRefreshValue(f);
@@ -1084,9 +1084,9 @@ extern "C" int lookAt(VMThread* pThread, int handle) {
         idx++;
         rotate = vmArgBoolGet(idx, ptr);
     }
-    cf::CfObject* self = (cf::CfObject*)func_801864DC(func_801862C0(), handle);
+    cf::CfObject* self = (cf::CfObject*)func_801864DC(ArtsSelect_GetContainer(), handle);
     if (targetOC != 0) {
-        cf::CfObject* target = (cf::CfObject*)func_801864DC(func_801862C0(), *(int*)((u8*)targetOC + 4));
+        cf::CfObject* target = (cf::CfObject*)func_801864DC(ArtsSelect_GetContainer(), *(int*)((u8*)targetOC + 4));
         cf::CfObject* actor = (cf::CfObject*)__dynamic_cast(target, 0, lbl_eu_806618E8, lbl_eu_806618F0, 0);
         if (actor == NULL) {
             // Target is not an actor: aim straight at its position vector.
@@ -1121,7 +1121,7 @@ extern "C" int lookAt(VMThread* pThread, int handle) {
 extern "C" int turn(VMThread* pThread, int handle) {
     VMArg* ptr = vmArgPtrGet(pThread, 1);
     int angle = vmArgIntGet(2, ptr);
-    void* ctx = func_801862C0();
+    void* ctx = ArtsSelect_GetContainer();
     cf::CfObject* obj = (cf::CfObject*)func_801864DC(ctx, handle);
     float f = (float)(s32)angle * lbl_eu_8066A210;
     obj->CfObject_setMoveHeadAngle(f);
@@ -1134,7 +1134,7 @@ extern "C" int turn(VMThread* pThread, int handle) {
 // us-8003e9f4: flagUnit80000
 // Sets a flag on the object if it's alive
 extern "C" int flagUnit80000(VMThread* pThread, int handle) {
-    void* ctx = func_801862C0();
+    void* ctx = ArtsSelect_GetContainer();
     cf::CfObject* obj = (cf::CfObject*)func_801864DC(ctx, handle);
     if (obj && (obj->unk64 & 0x80000000)) {
         *(u32*)((u8*)obj + 0x6C) |= 0x00080000;
@@ -1145,7 +1145,7 @@ extern "C" int flagUnit80000(VMThread* pThread, int handle) {
 // us-8003ea4c: flagUnit100000
 // Sets a flag on the object if it's alive
 extern "C" int flagUnit100000(VMThread* pThread, int handle) {
-    void* ctx = func_801862C0();
+    void* ctx = ArtsSelect_GetContainer();
     cf::CfObject* obj = (cf::CfObject*)func_801864DC(ctx, handle);
     if (obj && (obj->unk64 & 0x80000000)) {
         *(u32*)((u8*)obj + 0x6C) |= 0x00100000;
@@ -1158,17 +1158,17 @@ extern "C" int flagUnit100000(VMThread* pThread, int handle) {
 extern "C" int getPartyHandle(VMThread* pThread, int handle) {
     // Declaration order controls MWCC's r30/r31 naming here: the OC handle
     // must land in r30 and the object pointer in r31 to match retail.
-    cf::CfObject* obj = (cf::CfObject*)func_801864DC(func_801862C0(), handle);
+    cf::CfObject* obj = (cf::CfObject*)func_801864DC(ArtsSelect_GetContainer(), handle);
     u32 ocHandle;
     ocHandle = obj->CObjectParam_getSelfObjectId();
     if (!ocHandle) {
         if (obj == (cf::CfObject*)cf::CfGameManager::getPlayer(0)) {
-            ocHandle = *(u32*)((u8*)func_800FE68C() + 0x90E4);
+            ocHandle = *(u32*)((u8*)Selector_GetInstance() + 0x90E4);
         }
     }
     VMArg retVal;
     if (ocHandle) {
-        cf::CfObject* target = (cf::CfObject*)func_801864DC(func_801862C0(), ocHandle);
+        cf::CfObject* target = (cf::CfObject*)func_801864DC(ArtsSelect_GetContainer(), ocHandle);
         const char* typeName;
         if (target->unk64 & 0x80) {
             typeName = &lbl_eu_804FA74C[0x50];
@@ -1199,11 +1199,11 @@ extern "C" int getPartyHandle(VMThread* pThread, int handle) {
 // unit's own OC handle; when valid it is fed through the same virtual again
 // and resolved back to an object whose +0x8C halfword becomes the result.
 extern "C" int getTargetUnitId(VMThread* pThread, int handle) {
-    cf::CfObject* obj = (cf::CfObject*)func_801864DC(func_801862C0(), handle);
+    cf::CfObject* obj = (cf::CfObject*)func_801864DC(ArtsSelect_GetContainer(), handle);
     VMArg retVal;
     if (((cf::CObjectParam*)obj)->CObjectParam_getSelfObjectId()) {
         u32 id = ((cf::CObjectParam*)obj)->CObjectParam_getSelfObjectId();
-        void* target = func_801864DC(func_801862C0(), id);
+        void* target = func_801864DC(ArtsSelect_GetContainer(), id);
         retVal.type = 3;
         retVal.value.uintVal = *(u16*)((u8*)target + 0x8C);
     }
@@ -1214,7 +1214,7 @@ extern "C" int getTargetUnitId(VMThread* pThread, int handle) {
 // us-8003ec88: isPC
 // Checks if the object is a player character
 extern "C" int isPC(VMThread* pThread, int handle) {
-    void* ctx = func_801862C0();
+    void* ctx = ArtsSelect_GetContainer();
     cf::CfObject* obj = (cf::CfObject*)func_801864DC(ctx, handle);
     u32 isType = (obj->unk64 >> 1) & 1;
     VMArg retVal;
@@ -1226,7 +1226,7 @@ extern "C" int isPC(VMThread* pThread, int handle) {
 // us-8003ecec: isNPC
 // Checks if the object is an NPC
 extern "C" int isNPC(VMThread* pThread, int handle) {
-    void* ctx = func_801862C0();
+    void* ctx = ArtsSelect_GetContainer();
     cf::CfObject* obj = (cf::CfObject*)func_801864DC(ctx, handle);
     u32 isType = (obj->unk64 >> 3) & 1;
     VMArg retVal;
@@ -1238,7 +1238,7 @@ extern "C" int isNPC(VMThread* pThread, int handle) {
 // us-8003ed50: isENE
 // Checks if the object is an enemy
 extern "C" int isENE(VMThread* pThread, int handle) {
-    void* ctx = func_801862C0();
+    void* ctx = ArtsSelect_GetContainer();
     cf::CfObject* obj = (cf::CfObject*)func_801864DC(ctx, handle);
     u32 isType = (obj->unk64 >> 2) & 1;
     VMArg retVal;
@@ -1250,7 +1250,7 @@ extern "C" int isENE(VMThread* pThread, int handle) {
 // us-8003edb4: isPT
 // Checks if the object is a party member
 extern "C" int isPT(VMThread* pThread, int handle) {
-    void* ctx = func_801862C0();
+    void* ctx = ArtsSelect_GetContainer();
     cf::CfObject* obj = (cf::CfObject*)func_801864DC(ctx, handle);
     u8 retVal;
     if ((obj->unk64 & 0x4000) || (obj->unk64 & 0x8000)) {
@@ -1272,7 +1272,7 @@ extern "C" int invin(VMThread* pThread, int handle) {
         VMArg* ptr = vmArgPtrGet(pThread, 1);
         enable = vmArgBoolGet(2, ptr);
     }
-    void* ctx = func_801862C0();
+    void* ctx = ArtsSelect_GetContainer();
     cf::CfObject* obj = (cf::CfObject*)func_801864DC(ctx, handle);
     void* actor = (void*)__dynamic_cast(obj, 0, (void*)&__RTTI__Q22cf13CfObjectActor, (void*)&lbl_eu_806618F0, 0);
     if (actor) {
@@ -1334,7 +1334,7 @@ extern "C" int func_8003E974(VMThread* pThread, int handle) {
         arg5 = vmArgIntGet(idx, p);
     }
 
-    void* ctx = func_801862C0();
+    void* ctx = ArtsSelect_GetContainer();
     void* actor =
         (void*)__dynamic_cast(func_801864DC(ctx, handle), 0,
                                                (void*)&__RTTI__Q22cf13CfObjectActor,
@@ -1360,7 +1360,7 @@ extern "C" int func_8003E974(VMThread* pThread, int handle) {
 extern "C" int delBuff(VMThread* pThread, int handle) {
     VMArg* ptr = vmArgPtrGet(pThread, 1);
     int index = vmArgIntGet(2, ptr);
-    void* ctx = func_801862C0();
+    void* ctx = ArtsSelect_GetContainer();
     cf::CfObject* obj = (cf::CfObject*)func_801864DC(ctx, handle);
     // Retail SDA reloc is __RTTI__Q22cf13CfObjectActor (not lbl_eu_806618D8).
     void* actor = (void*)__dynamic_cast(obj, 0, (void*)&__RTTI__Q22cf13CfObjectActor,
@@ -1377,7 +1377,7 @@ extern "C" int delBuff(VMThread* pThread, int handle) {
 extern "C" int setColi(VMThread* pThread, int handle) {
     VMArg* ptr = vmArgPtrGet(pThread, 1);
     int enable = vmArgBoolGet(2, ptr);
-    void* ctx = func_801862C0();
+    void* ctx = ArtsSelect_GetContainer();
     cf::CfObject* obj = (cf::CfObject*)func_801864DC(ctx, handle);
     void* actor = (void*)__dynamic_cast(obj, 0, (void*)&lbl_eu_806618D8, (void*)&lbl_eu_806618F0, 0);
     if (actor) {
@@ -1391,7 +1391,7 @@ extern "C" int setColi(VMThread* pThread, int handle) {
 extern "C" int setEye(VMThread* pThread, int handle) {
     VMArg* ptr = vmArgPtrGet(pThread, 1);
     int target = vmArgIntGet(2, ptr);
-    void* ctx = func_801862C0();
+    void* ctx = ArtsSelect_GetContainer();
     cf::CfObject* obj = (cf::CfObject*)func_801864DC(ctx, handle);
     if (obj) {
         CfObjectMove_setMoveModeField(obj, target);
@@ -1404,7 +1404,7 @@ extern "C" int setEye(VMThread* pThread, int handle) {
 extern "C" int setGrav(VMThread* pThread, int handle) {
     VMArg* ptr = vmArgPtrGet(pThread, 1);
     int enable = vmArgBoolGet(2, ptr);
-    void* ctx = func_801862C0();
+    void* ctx = ArtsSelect_GetContainer();
     cf::CfObject* obj = (cf::CfObject*)func_801864DC(ctx, handle);
     if (obj) {
         obj->CfObject_setMoveBusyState(enable ? 0 : 1);
@@ -1417,7 +1417,7 @@ extern "C" int setGrav(VMThread* pThread, int handle) {
 extern "C" int setUnitVisible(VMThread* pThread, int handle) {
     VMArg* ptr = vmArgPtrGet(pThread, 1);
     int enable = vmArgBoolGet(2, ptr);
-    void* ctx = func_801862C0();
+    void* ctx = ArtsSelect_GetContainer();
     cf::CfObject* obj = (cf::CfObject*)func_801864DC(ctx, handle);
     if (obj) {
         if (enable) {
@@ -1442,7 +1442,7 @@ extern "C" int setUnitVisible(VMThread* pThread, int handle) {
 extern "C" int setUnitState(VMThread* pThread, int handle) {
     VMArg* ptr = vmArgPtrGet(pThread, 1);
     int enable = vmArgBoolGet(2, ptr);
-    void* ctx = func_801862C0();
+    void* ctx = ArtsSelect_GetContainer();
     cf::CfObject* obj = (cf::CfObject*)func_801864DC(ctx, handle);
     if (obj) {
         CfObjectMove_setModelDisplayFlag(obj, enable ? 1 : 0);
@@ -1455,7 +1455,7 @@ extern "C" int setUnitState(VMThread* pThread, int handle) {
 extern "C" int setGameFlag(VMThread* pThread, int handle) {
     VMArg* ptr = vmArgPtrGet(pThread, 1);
     int enable = vmArgBoolGet(2, ptr);
-    void* ctx = func_801862C0();
+    void* ctx = ArtsSelect_GetContainer();
     func_801864DC(ctx, handle);
     void* gameObj = func_800BBC0C();
     if (gameObj) {
@@ -1506,7 +1506,7 @@ extern "C" int func_8003EEE0(VMThread* pThread, int handle, int r5) {
     }
     // func_801863F4's shared header declares it 1-arg; retail passes (ctx, obj).
     typedef void* (*CtxObjFn)(void*, void*);
-    ctx = ((CtxObjFn)&func_801863F4)(func_801862C0(), obj);
+    ctx = ((CtxObjFn)&func_801863F4)(ArtsSelect_GetContainer(), obj);
     obj->mFlags68 |= 0x40000000;
     u8 type = 9;
     VMArg retVal;
@@ -1526,7 +1526,7 @@ extern "C" int setRot(VMThread* pThread, int handle) {
     int rotY = vmArgFixedGet(3, ptr2);
     VMArg* ptr3 = vmArgPtrGet(pThread, 3);
     int rotZ = vmArgFixedGet(4, ptr3);
-    void* ctx = func_801862C0();
+    void* ctx = ArtsSelect_GetContainer();
     cf::CfObject* obj = (cf::CfObject*)func_801864DC(ctx, handle);
     // Fixed-point degrees -> radians via MWCC's direct 2^52 conversion.
     Vec3f vec;
@@ -1542,7 +1542,7 @@ extern "C" int setRot(VMThread* pThread, int handle) {
 extern "C" int gravity(VMThread* pThread, int handle) {
     VMArg* ptr = vmArgPtrGet(pThread, 1);
     int enable = vmArgBoolGet(2, ptr);
-    void* ctx = func_801862C0();
+    void* ctx = ArtsSelect_GetContainer();
     cf::CfObject* obj = (cf::CfObject*)func_801864DC(ctx, handle);
     obj->CfObject_setMoveBusyState(enable ? 0 : 1);
     return 0;
@@ -1585,7 +1585,7 @@ extern "C" int findParty(VMThread* pThread, int handle, int r5) {
                                      : (lbl_eu_80663E24 & ~0x00040000u);
     // Retail chains these: the ctx flowing into the retval is the return
     // value of func_801863F4 (kept in r3 across the call).
-    void* ctx = func_801863F4(func_801862C0(), result);
+    void* ctx = func_801863F4(ArtsSelect_GetContainer(), result);
     *(u32*)((u8*)result + 0x68) |= 0x40000000;
     u8 type = 9;
     VMArg retVal;
@@ -1603,7 +1603,7 @@ extern "C" int pointOnA(VMThread* pThread, int handle) {
         VMArg* ptr = vmArgPtrGet(pThread, 1);
         vmArgIntGet(2, ptr);
     }
-    void* ctx = func_801862C0();
+    void* ctx = ArtsSelect_GetContainer();
     cf::CfObject* obj = (cf::CfObject*)func_801864DC(ctx, handle);
     obj->setPointEnabled(1);
     return 0;
@@ -1616,7 +1616,7 @@ extern "C" int pointOffA(VMThread* pThread, int handle) {
         VMArg* ptr = vmArgPtrGet(pThread, 1);
         vmArgIntGet(2, ptr);
     }
-    void* ctx = func_801862C0();
+    void* ctx = ArtsSelect_GetContainer();
     cf::CfObject* obj = (cf::CfObject*)func_801864DC(ctx, handle);
     obj->setPointEnabled(0);
     return 0;
@@ -1660,7 +1660,7 @@ extern "C" int findBattleActor(VMThread* pThread, int handle, int r5) {
                                      : (lbl_eu_80663E24 & ~0x00040000u);
     // Retail chains these: the ctx flowing into the retval is the return
     // value of func_801863F4 (kept in r3 across the call).
-    void* ctx = func_801863F4(func_801862C0(), result);
+    void* ctx = func_801863F4(ArtsSelect_GetContainer(), result);
     *(u32*)((char*)result + 0x68) |= 0x40000000;
     VMArg retVal;
     retVal.type = 9;
@@ -1677,7 +1677,7 @@ extern "C" int pointOnB(VMThread* pThread, int handle) {
         VMArg* ptr = vmArgPtrGet(pThread, 1);
         vmArgIntGet(2, ptr);
     }
-    void* ctx = func_801862C0();
+    void* ctx = ArtsSelect_GetContainer();
     cf::CfObject* obj = (cf::CfObject*)func_801864DC(ctx, handle);
     obj->setPointEnabled(1);
     return 0;
@@ -1690,7 +1690,7 @@ extern "C" int pointOffB(VMThread* pThread, int handle) {
         VMArg* ptr = vmArgPtrGet(pThread, 1);
         vmArgIntGet(2, ptr);
     }
-    void* ctx = func_801862C0();
+    void* ctx = ArtsSelect_GetContainer();
     cf::CfObject* obj = (cf::CfObject*)func_801864DC(ctx, handle);
     obj->setPointEnabled(0);
     return 0;
@@ -1706,7 +1706,7 @@ extern "C" int setChildVal(VMThread* pThread, int handle) {
         VMArg* ptr = vmArgPtrGet(pThread, 1);
         value = vmArgIntGet(2, ptr);
     }
-    void* ctx = func_801862C0();
+    void* ctx = ArtsSelect_GetContainer();
     cf::CfObject* obj = (cf::CfObject*)func_801864DC(ctx, handle);
     setChildB59__(obj, (s8)value);
     return 0;
@@ -1722,11 +1722,11 @@ extern "C" int followUnit(VMThread* pThread, int handle) {
         VMArg* ptr = vmArgPtrGet(pThread, 1);
         targetOC = (int)vmArgOCGet(2, ptr);
     }
-    void* ctx = func_801862C0();
+    void* ctx = ArtsSelect_GetContainer();
     cf::CfObject* obj = (cf::CfObject*)func_801864DC(ctx, handle);
     void* target = 0;
     if (targetOC) {
-        ctx = func_801862C0();
+        ctx = ArtsSelect_GetContainer();
         target = func_801864DC(ctx, *(int*)((u8*)targetOC + 4));
     }
     bindPartnerO_(obj, target, 0);
@@ -1743,12 +1743,12 @@ extern "C" int func_8003F870(VMThread* pThread, int handle) {
         VMArg* ptr = vmArgPtrGet(pThread, 1);
         targetOC = (int)vmArgOCGet(2, ptr);
     }
-    void* ctx = func_801862C0();
+    void* ctx = ArtsSelect_GetContainer();
     cf::CfObject* obj = (cf::CfObject*)func_801864DC(ctx, handle);
     void* parent = 0;
     void* child = 0;
     if (targetOC) {
-        ctx = func_801862C0();
+        ctx = ArtsSelect_GetContainer();
         parent = func_801864DC(ctx, *(int*)((u8*)targetOC + 4));
         if (parent) {
             u32* fieldC8 = (u32*)((u8*)parent + 0xC8);
@@ -1785,11 +1785,11 @@ extern "C" int setUnitTarget(VMThread* pThread, int handle) {
         VMArg* ptr = vmArgPtrGet(pThread, 1);
         targetOC = (int)vmArgOCGet(2, ptr);
     }
-    void* ctx = func_801862C0();
+    void* ctx = ArtsSelect_GetContainer();
     cf::CfObject* obj = (cf::CfObject*)func_801864DC(ctx, handle);
     void* target = 0;
     if (targetOC) {
-        ctx = func_801862C0();
+        ctx = ArtsSelect_GetContainer();
         target = func_801864DC(ctx, *(int*)((u8*)targetOC + 4));
     }
     setTargetObj_(obj, target);
@@ -1807,14 +1807,14 @@ extern "C" int startBattle(VMThread* pThread, int handle, int r5) {
     void* battleMgr = createBdatCollisionObj__Q22cf13CfGameManagerFv();
     if (battleMgr) {
         *(u32*)((u8*)battleMgr + 0x94) = 5;
-        func_800AC4A8(battleMgr, (u16)param);
+        CollObjStoreResIdRaw(battleMgr, (u16)param);
         ((cf::CfObject*)battleMgr)->setPointEnabled(0);
     }
     if (!battleMgr) {
         vmOCExceptionThrow(pThread);
         return 0;
     }
-    ctx = func_801862C0();
+    ctx = ArtsSelect_GetContainer();
     // func_801863F4 is declared single-arg in code_801862C0.hpp, but the
     // retail callee receives (container, object). Route through a matching
     // function-pointer cast so both argument registers are set up.
@@ -1837,7 +1837,7 @@ extern "C" int pointOnC(VMThread* pThread, int handle) {
         VMArg* ptr = vmArgPtrGet(pThread, 1);
         vmArgIntGet(2, ptr);
     }
-    void* ctx = func_801862C0();
+    void* ctx = ArtsSelect_GetContainer();
     cf::CfObject* obj = (cf::CfObject*)func_801864DC(ctx, handle);
     obj->setPointEnabled(1);
     return 0;
@@ -1850,7 +1850,7 @@ extern "C" int pointOffC(VMThread* pThread, int handle) {
         VMArg* ptr = vmArgPtrGet(pThread, 1);
         vmArgIntGet(2, ptr);
     }
-    void* ctx = func_801862C0();
+    void* ctx = ArtsSelect_GetContainer();
     cf::CfObject* obj = (cf::CfObject*)func_801864DC(ctx, handle);
     obj->setPointEnabled(0);
     return 0;
@@ -1863,7 +1863,7 @@ extern "C" int func_8003FC18(VMThread* pThread, int handle) {
     int distX = vmArgFixedGet(2, ptr1);
     VMArg* ptr2 = vmArgPtrGet(pThread, 2);
     int distY = vmArgFixedGet(3, ptr2);
-    void* ctx = func_801862C0();
+    void* ctx = ArtsSelect_GetContainer();
     cf::CfObject* obj = (cf::CfObject*)func_801864DC(ctx, handle);
     float fDistX = (float)(s32)distX / 2048.0f;
     float fDistY = (float)(s32)distY / 2048.0f;
@@ -1882,7 +1882,7 @@ extern "C" int func_8003FC18(VMThread* pThread, int handle) {
 // Moves an object to a fixed-point position plus yaw angle: fetches four
 // fixed-point args, resolves the object, converts to floats (/2048 via the
 // 0x43300000 double trick), queries the move object through vtable slot 0xAC,
-// then forwards everything to func_800ABFC4.
+// then forwards everything to CollObjSetupRotBoxState5.
 extern "C" int moveToPos(VMThread* pThread, int handle) {
     VMArg* ptr1 = vmArgPtrGet(pThread, 1);
     int x = vmArgFixedGet(2, ptr1);
@@ -1893,7 +1893,7 @@ extern "C" int moveToPos(VMThread* pThread, int handle) {
     VMArg* ptr4 = vmArgPtrGet(pThread, 4);
     int angle = vmArgFixedGet(5, ptr4);
 
-    void* ctx = func_801862C0();
+    void* ctx = ArtsSelect_GetContainer();
     cf::CfObject* obj = (cf::CfObject*)func_801864DC(ctx, handle);
 
     float fx = (float)(s32)x / lbl_eu_80665C30;
@@ -1907,7 +1907,7 @@ extern "C" int moveToPos(VMThread* pThread, int handle) {
         pos.x = fx;
         pos.y = fy;
         pos.z = fz;
-        func_800ABFC4(obj, (void*)moveObj, &pos, fAngle * lbl_eu_8066A210);
+        CollObjSetupRotBoxState5(obj, (void*)moveObj, &pos, fAngle * lbl_eu_8066A210);
     }
     return 0;
 }
@@ -1924,16 +1924,16 @@ extern "C" int chkRange(VMThread* pThread, int handle) {
         target = (cf::CfObject*)vmArgOCGet(2, ptr);
     }
     if (target != 0) {
-        void* ctx2 = func_801862C0();
+        void* ctx2 = ArtsSelect_GetContainer();
         target = (cf::CfObject*)func_801864DC(ctx2, *(u32*)((u8*)target + 4));
     } else {
         target = (cf::CfObject*)getPlayerContainerForCam__Q22cf13CfGameManagerFv();
     }
-    void* ctx = func_801862C0();
+    void* ctx = ArtsSelect_GetContainer();
     cf::CfObject* self = (cf::CfObject*)func_801864DC(ctx, handle);
     int ok = 0;
     if (target != 0) {
-        ok = func_800AB580((cf::CfObjectColl*)self, target, (ml::CVec3*)0,
+        ok = CollObjLoadResourceTimed((cf::CfObjectColl*)self, target, (ml::CVec3*)0,
                            lbl_eu_80665D44);
         // When the target is an embedded move object, gate on the game state.
         if (ok != 0 && (target->unk64 & 0x2)) {
@@ -1964,16 +1964,16 @@ extern "C" int chkEventRange(VMThread* pThread, int handle) {
         target = (cf::CfObject*)vmArgOCGet(2, ptr);
     }
     if (target != 0) {
-        void* ctx2 = func_801862C0();
+        void* ctx2 = ArtsSelect_GetContainer();
         target = (cf::CfObject*)func_801864DC(ctx2, *(u32*)((u8*)target + 4));
     } else {
         target = cf::CfGameManager::getPlayer(0);
     }
-    void* ctx = func_801862C0();
+    void* ctx = ArtsSelect_GetContainer();
     cf::CfObject* self = (cf::CfObject*)func_801864DC(ctx, handle);
     int ok = 0;
     if (target != 0) {
-        ok = func_800AB580((cf::CfObjectColl*)self, target, (ml::CVec3*)0,
+        ok = CollObjLoadResourceTimed((cf::CfObjectColl*)self, target, (ml::CVec3*)0,
                            lbl_eu_80665D44);
         if (!(target->unk64 & 0x2)) {
             ok = 0;
@@ -1993,7 +1993,7 @@ extern "C" int chkEventRange(VMThread* pThread, int handle) {
 extern char lbl_eu_80524E50[];
 extern "C" void ocUnitRegist() {
     void* base = (void*)&lbl_eu_80524E50;
-    func_801862E0(func_801862C0());
+    func_801862E0(ArtsSelect_GetContainer());
     vmOCRegist((OCData*)((char*)base + 0x2D0));
     vmOCRegist((OCData*)((char*)base + 0x398));
     vmOCRegist((OCData*)((char*)base + 0x488));

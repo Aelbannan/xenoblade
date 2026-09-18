@@ -1,6 +1,6 @@
 // kyoshin/CFade
-// FULL_MATCH: __ct__CFade, func_802443E8, func_80244508, func_80244510,
-// func_80244558, func_802445A4, func_802445F0.
+// FULL_MATCH: __ct__CFade, CFade_Update, CFade_IsReady, CFade_IsVisible,
+// CFade_StepFadeIn, CFade_StepFadeOut, CFade_MarkLoaded.
 // The dtor/OnFileEvent need stmw r30/r28 which requires -O4,s (walls #13);
 // the source is byte-perfect apart from that fixed -O4,p save/restore split.
 
@@ -11,17 +11,17 @@
 #include "monolib/util.hpp"
 #include "monolib/work/CEventFile.hpp"
 
-u8 CFade::func_80244508() { return mReady; }
+u8 CFade::CFade_IsReady() { return mReady; }
 
 
-u8 CFade::func_80244510() { return mVisible; }
+u8 CFade::CFade_IsVisible() { return mVisible; }
 
 
 // Retail marks the fade overlay loaded/ready once the layout is attached.
-// noinline: retail keeps these as standalone `bl` targets (func_802445F0 is
-// called from OnFileEvent; the others from func_802443E8). C linkage comes
+// noinline: retail keeps these as standalone `bl` targets (CFade_MarkLoaded is
+// called from OnFileEvent; the others from CFade_Update). C linkage comes
 // from the extern "C" declarations in CFade.hpp (unmangled retail reloc names).
-__declspec(noinline) void func_802445F0(CFade* self) {
+__declspec(noinline) void CFade_MarkLoaded(CFade* self) {
     if (self->mLayout != nullptr) {
         self->mReady = 1;
         self->mIsLoaded = 1;
@@ -31,14 +31,14 @@ __declspec(noinline) void func_802445F0(CFade* self) {
 // once the fade-in animation reaches the target frame, mark faded-in.
 // once the fade-out animation rewinds, return to idle.
 // noinline keeps the retail `bl` instead of inlining the body into
-// func_802443E8. C linkage via CFade.hpp declarations (see above).
-__declspec(noinline) void func_80244558(CFade* self) {
+// CFade_Update. C linkage via CFade.hpp declarations (see above).
+__declspec(noinline) void CFade_StepFadeIn(CFade* self) {
     if (advanceAnimTransform(self->mAnimTrans, lbl_eu_80668750) == 0) return;
     self->mFadeState = 2;
     self->mVisible = 1;
 }
 
-__declspec(noinline) void func_802445A4(CFade* self) {
+__declspec(noinline) void CFade_StepFadeOut(CFade* self) {
     if (AnimRewindFrame(self->mAnimTrans, lbl_eu_80668750) != 0) {
         self->mFadeState = 0;
         self->mVisible = 1;
@@ -86,7 +86,7 @@ bool CFade::OnFileEvent(CEventFile* pEventFile) {
         mLayout->Animate(0);
 
         // Mark the fade overlay loaded/ready now that the layout is attached.
-        func_802445F0(this);
+        CFade_MarkLoaded(this);
 
         mFileHandle = nullptr;
         mMemRegion.func_8045F810();
@@ -114,7 +114,7 @@ CFade::~CFade() {}
 #pragma pop
 
 // start an async read of the fade layout arc.
-void CFade::func_8024439C() {
+void CFade::CFade_StartLoad() {
     mFileHandle = CDeviceFile::readFile(mtl::MemManager::getHandleMEM2(),
         lbl_eu_8050B5A0, reinterpret_cast<IWorkEvent*>(this), 0, 0);
     CDeviceFile::setHandleFlag2(mFileHandle);
@@ -124,31 +124,31 @@ void CFade::func_8024439C() {
 // the layout's animation once loaded and not idle. The s32 copy of the byte
 // state makes MWCC emit signed cmpi (retail), and the sparse switch gives the
 // beq/fallthrough dispatch shape (if/else-if would invert the branches).
-void CFade::func_802443E8() {
+void CFade::CFade_Update() {
     if (mIsLoaded == 0) return;
     s32 state = mFadeState;
     if (state == 0) return;
     switch (state) {
     case 1:
-        func_80244558(this);
+        CFade_StepFadeIn(this);
         break;
     case 3:
-        func_802445A4(this);
+        CFade_StepFadeOut(this);
         break;
     }
     mLayout->Animate(0);
 }
 
 // render the fade layout once loaded and fading.
-void CFade::func_80244460(nw4r::lyt::DrawInfo* drawInfo) {
+void CFade::CFade_Draw(nw4r::lyt::DrawInfo* drawInfo) {
     if (mIsLoaded == 0) return;
     if (mFadeState == 0) return;
     drawLayout(mLayout, drawInfo, 0, 1);
 }
 
 // unload, freeing the file handle, layout and arc resources.
-void CFade::func_8024448C() {
-    func_801390E0(&mFileHandle);
+void CFade::CFade_Unload() {
+    closeFileHandle(&mFileHandle);
     nw4r::lyt::Layout* layout = mLayout;
     mIsLoaded = 0;
     if (layout != nullptr) {
@@ -157,11 +157,11 @@ void CFade::func_8024448C() {
     }
     releaseArcResourceAccessor(mArcResAcc);
     mArcResAcc = nullptr;
-    mMemRegion.func_8045F778();
+    mMemRegion.deleteRegion();
 }
 
 // start fading in if currently idle.
-void CFade::func_80244518() {
+void CFade::CFade_FadeIn() {
     if (mFadeState == 0) {
         mFadeState = 1;
         mVisible = 0;
@@ -169,7 +169,7 @@ void CFade::func_80244518() {
 }
 
 // start fading out if fully faded in.
-void CFade::func_80244538() {
+void CFade::CFade_FadeOut() {
     if (mFadeState == 2) {
         mFadeState = 3;
         mVisible = 0;

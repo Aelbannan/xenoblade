@@ -1,6 +1,6 @@
 // CTalkWindow - talk-window process (unit kyoshin/CTalkWindow).
 //
-// Matching session: dtor, Term, cbRenderBefore, func_8012CC78 (factory) and
+// Matching session: dtor, Term, cbRenderBefore, TalkWin_Create_CC78 (factory) and
 // sinit_8012DE98 (static float-table initializer).
 
 #include "kyoshin/CTalkWindow.hpp"
@@ -23,7 +23,7 @@ extern "C" __attribute__((used)) unsigned char __sbss_blob[8];
 
 
 
-// Global-view declarations so the catalog thunks (func_8012DF78/80/88) can
+// Global-view declarations so the catalog thunks (TalkWin_DtorThunkA_DF78/80/88) can
 // address the member dtor / render callback by their retail symbol names
 // (the definitions below emit those symbols). extern "C" keeps the emitted
 // reloc names unmangled.
@@ -33,7 +33,7 @@ extern "C" void cbRenderBefore__11CTalkWindowFv(void* self);
 void Draw__11CTalkWindowFv() {}
 
 // (lbl_eu_80664044 via blob macro)
-extern "C" void func_8012BDD0() { lbl_eu_80664044 = 0; }
+extern "C" void TalkWin_ClearFlag_BDD0() { lbl_eu_80664044 = 0; }
 
 // ---------------------------------------------------------------------------
 // __ct__CTalkWindow (us-8012c710)
@@ -345,14 +345,14 @@ void func_8012D3D8(CTalkWindow* self) {
         p8->GetTranslate().z));
 }
 
-void func_8012DF78(void* self) { ((void(*)(void*))__dt__11CTalkWindowFv)((char*)self - 0x6c); }
+void TalkWin_DtorThunkA_DF78(void* self) { ((void(*)(void*))__dt__11CTalkWindowFv)((char*)self - 0x6c); }
 
-void func_8012DF80(void* self) { ((void(*)(void*))cbRenderBefore__11CTalkWindowFv)((char*)self - 0x70); }
+void TalkWin_RenderThunk_DF80(void* self) { ((void(*)(void*))cbRenderBefore__11CTalkWindowFv)((char*)self - 0x70); }
 
-void func_8012DF88(void* self) { ((void(*)(void*))__dt__11CTalkWindowFv)((char*)self - 0x70); }
+void TalkWin_DtorThunkB_DF88(void* self) { ((void(*)(void*))__dt__11CTalkWindowFv)((char*)self - 0x70); }
 
 // (lbl_eu_80664044 via blob macro)
-extern "C" bool func_8012CD24() {
+extern "C" bool TalkWin_IsActive_CD24() {
     u32 v = lbl_eu_80664044;
     return ((-v) & ~v) >> 31;
 }
@@ -948,12 +948,12 @@ void CTalkWindow::cbRenderBefore() {
 }
 
 // ---------------------------------------------------------------------------
-// func_8012CC78 (us-8012d744)
+// TalkWin_Create_CC78 (us-8012d744)
 // Talk-window factory: copy the message source into a zeroed stack buffer,
 // allocate the 0xB8-byte CTalkWindow on the work heap, run the ctor (retail
 // C-ABI __ct__CTalkWindow) and register it under the caller's parent.
 // ---------------------------------------------------------------------------
-extern "C" CTalkWindow* func_8012CC78(CProcess* parent, u32 arg1, u32 arg2,
+extern "C" CTalkWindow* TalkWin_Create_CC78(CProcess* parent, u32 arg1, u32 arg2,
                                       const u8* msgSrc, u32 arg3, u32 arg4,
                                       u32 arg5) {
     u8 buf[0x800];

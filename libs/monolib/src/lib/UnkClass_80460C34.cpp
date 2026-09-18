@@ -27,9 +27,9 @@ extern "C" int resetState__17UnkClass_80460C34Fv(z_stream* strm) {
 }
 
 // ---------------------------------------------------------------------------
-// inflateInit2_  (retail func_80460CB4__17UnkClass_80460C34Fv, 0x118)
+// inflateInit2_  (retail ZlibInflateInit2, 0x118)
 // ---------------------------------------------------------------------------
-extern "C" int func_80460CB4__17UnkClass_80460C34Fv(
+extern "C" int ZlibInflateInit2(
         z_stream* strm, int windowBits, const char* version, int stream_size) {
     z_inflate_state* state;
 
@@ -64,7 +64,7 @@ extern "C" int func_80460CB4__17UnkClass_80460C34Fv(
 // ---------------------------------------------------------------------------
 extern "C" int isStateReady__17UnkClass_80460C34Fv(
         z_stream* strm, const char* version, int stream_size) {
-    return func_80460CB4__17UnkClass_80460C34Fv(strm, 15, version, stream_size);
+    return ZlibInflateInit2(strm, 15, version, stream_size);
 }
 
 // ---------------------------------------------------------------------------
@@ -606,7 +606,7 @@ extern "C" int func_80460F58__17UnkClass_80460C34Fv(
         case LEN:
             if (have >= 6 && left >= 258) {
                 ZI_RESTORE();
-                func_80460728__17UnkClass_80460308Fv(strm, out);
+                ZlibInflateFastCore(strm, out);
                 ZI_LOAD();
                 break;
             }

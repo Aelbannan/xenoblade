@@ -412,20 +412,20 @@ void CfGimmick_LoadBdatAreaRotationIndexed(CfGimmick* self, f32* out, void* unus
 }
 
 int CfGimmick_CheckStateFlag1D44(u8* obj) {
-    int v = func_8009CF8C((u32)(obj + 0x1d44));
+    int v = CtrlRemote_TouchBitByArg((u32)(obj + 0x1d44));
     return (v == 1) ? 1 : 0;
 }
 
 int CfGimmick_CheckStateFlag2CC8(u8* obj) {
-    int v = func_8009CF8C((u32)(obj + 0x2cc8));
+    int v = CtrlRemote_TouchBitByArg((u32)(obj + 0x2cc8));
     return (v == 1) ? 1 : 0;
 }
 
 // Sound trigger helper; retail callers reach it through a single-argument
 // view (r4 is never initialised), so only the destination is named here.
-void func_8009D018(u32 destination);
+void CtrlRemote_SetSharedBit(u32 destination);
 // `id` is the gimmick's resource-id base; the sound trigger lives at +0x2CC8.
-void CfGimmick_TriggerSound2CC8(u32 id) { func_8009D018(id + 0x2CC8); }
+void CfGimmick_TriggerSound2CC8(u32 id) { CtrlRemote_SetSharedBit(id + 0x2CC8); }
 
 // Party/rotation-gated checker dispatch: when mask has the party bits (0x21)
 // the loaded-party flag and matching party id must hold; when mask has the
@@ -786,9 +786,9 @@ CfGimmickObject* CfGimmick_SpawnNamedObject(const char* name, int other, const C
         if (strlen(name) >= 0x20) {
             strcpy(buf, name);
             buf[0x1F] = 0;
-            func_800C13FC(obj, buf, other);
+            ObjPoint_SetName_13FC(obj, buf, other);
         } else {
-            func_800C13FC(obj, name, other);
+            ObjPoint_SetName_13FC(obj, name, other);
         }
 
         // Activate, then reposition the object above the requested point.
@@ -822,7 +822,7 @@ unsigned int CfGimmick_IsMessageSystemBusy();
 // Look up a gimmick name from the bdat table: resolve the column for the
 // requested row (prefixing the column string with '3'), format it into the
 // shared message buffer and post the message.  The write-format path is
-// gated on UIWin_GetInstance() (message system loaded) and func_80124B78() being
+// gated on UIWin_GetInstance() (message system loaded) and SysWinGetSingleton() being
 // zero (via the inlined CfGimmick_IsMessageSystemBusy boolean).  When the row is out of range
 // (or the bdat file isn't loaded), the fallback name lbl_eu_80662788 is used.
 int func_8020A484(int index) {
@@ -835,11 +835,11 @@ int func_8020A484(int index) {
     if (index != 0) {
         if (lbl_eu_80664148 != 0) {
             bdat = (u8*)lbl_eu_80664148;
-            func_8003AA34();
+            Bdat_GetTable_AA34();
             // Named cap/cnt like the matched CfGimmick_LookupBdatGimmickName: B41C's result
             // stays callee-saved across the B1EC call.
-            cap = func_8003B41C(bdat);
-            cnt = func_8003B1EC(bdat);
+            cap = Bdat_GetRowBase_B41C(bdat);
+            cnt = Bdat_GetMaxRow_B1EC(bdat);
             if (cap + cnt > index) {
                 u8* col = *(u8**)(lbl_eu_805357E8 + 0x44);
                 col[4] = 0x33;
@@ -866,9 +866,9 @@ int func_8020A484(int index) {
     return 0;
 }
 
-// Returns 1 if func_80124B78() is non-zero, else 0 (retail: neg/or/srwi 31 idiom).
+// Returns 1 if SysWinGetSingleton() is non-zero, else 0 (retail: neg/or/srwi 31 idiom).
 unsigned int CfGimmick_IsMessageSystemBusy() {
-    unsigned int x = func_80124B78();
+    unsigned int x = SysWinGetSingleton();
     /* (-x | x) >> 31: nonzero => 1, zero => 0 */
     return ((unsigned int)-(int)x | x) >> 31;
 }
@@ -877,12 +877,12 @@ void* CfGimmick_LookupBdatGimmickName(int index, int mod) {
     if (index != 0) {
         u8* bdat = (u8*)lbl_eu_80664148;
         if (bdat != 0) {
-            func_8003AA34();
+            Bdat_GetTable_AA34();
             // Sequence the two row-capacity calls so the first (B41C) result is
             // kept in a callee-saved register across the second call, matching
             // the retail add r0, r31(b41c), r3(b1ec).
-            u32 cap = func_8003B41C(bdat);
-            u32 cnt = func_8003B1EC(bdat);
+            u32 cap = Bdat_GetRowBase_B41C(bdat);
+            u32 cnt = Bdat_GetMaxRow_B1EC(bdat);
             // bound > index keeps the retail cmp r0(bound), r28(index) / ble form.
             if ((int)(cap + cnt) > index) {
                 // Patch the column-name prefix, then read the requested row.
@@ -933,11 +933,11 @@ void func_8020A6B0(CfGimmickReg* self, const CfGimmickVec3* point, f32 radius,
         bdat = (u8*)lbl_eu_80664148;
         if (bdat == 0)
             goto defaultName;
-        func_8003AA34();
+        Bdat_GetTable_AA34();
         {
             // B41C's result stays in a callee-saved register across B1EC.
-            s32 cap = func_8003B41C(bdat);
-            s32 cnt = func_8003B1EC(bdat);
+            s32 cap = Bdat_GetRowBase_B41C(bdat);
+            s32 cnt = Bdat_GetMaxRow_B1EC(bdat);
             if ((s32)(cap + cnt) <= index)
                 goto defaultName;
             // Patch the requested column's prefix, then read its value.
@@ -961,9 +961,9 @@ resolvedName:;
                 char buf[0x40];
                 strcpy(buf, name);
                 buf[0x3F] = 0;
-                func_800C13FC(obj, buf, arg7);
+                ObjPoint_SetName_13FC(obj, buf, arg7);
             } else {
-                func_800C13FC(obj, name, arg7);
+                ObjPoint_SetName_13FC(obj, name, arg7);
             }
 
             // Activate, then reposition the object above the requested point.

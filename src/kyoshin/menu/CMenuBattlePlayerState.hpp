@@ -183,7 +183,7 @@ extern const f32 lbl_eu_80666FE4;
 struct CMenuBattleDamageQueue;
 // Draws one queued damage number; the caller embeds the queue object at
 // slot+0x74 (sub-layout resource region).
-void func_8010ACC4(CMenuBattleDamageQueue* queue);
+void BtlDmg_QueueDraw(CMenuBattleDamageQueue* queue);
 
 // Pane/material helpers from code_80135FDC.cpp not yet declared elsewhere.
 // func_80136D74 / BdatTouchStringCell / MakeTplNameSysFile come from code_80135FDC.hpp.

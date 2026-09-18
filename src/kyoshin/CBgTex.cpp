@@ -29,7 +29,7 @@ CBgTex::CBgTex(u8 arg) : CBgTexVtblBase(), mMemRegion() {
 
 CBgTex::~CBgTex() {}
 
-void CBgTex::func_801C3A24() {
+void CBgTex::BgTex_SetupRegion_3A24() {
     u32 handle = mtl::MemManager::getHandleMEM2();
     mMemRegion.createRegion(handle, 0x2000, lbl_eu_80505370, 1);
     Class_8045F858 unusedVar(&mMemRegion);
@@ -67,14 +67,14 @@ void CBgTex::func_801C3A24() {
 
     nw4r::lyt::Pane* pane =
         mLayout->GetRootPane()->FindPaneByName(lbl_eu_80505370 + 0x96, true);
-    func_80124270(pane, !mPtmMode);
+    setPaneVisible(pane, !mPtmMode);
     pane = mLayout->GetRootPane()->FindPaneByName(lbl_eu_80505370 + 0xA0, true);
-    func_80124270(pane, !mPtmMode);
-    this->func_801C3E3C();
+    setPaneVisible(pane, !mPtmMode);
+    this->BgTex_MarkLoaded_3E3C();
     mMemRegion.func_8045F810();
 }
 
-bool CBgTex::func_801C3C14() {
+bool CBgTex::BgTex_Acquire_3C14() {
     nw4r::lyt::ArcResourceAccessor* accessor = lbl_eu_80664464;
     s32 count = lbl_eu_80664460;
     lbl_eu_80664460 = count + 1;
@@ -119,19 +119,19 @@ bool CBgTex::func_801C3C14() {
     return false;
 }
 
-void CBgTex::func_801C3D54() {
+void CBgTex::BgTex_Tick_3D54() {
     if (mLayoutReady == false)
         return;
     mLayout->Animate(0);
 }
 
-void CBgTex::func_801C3D7C(nw4r::lyt::DrawInfo* drawInfo) {
+void CBgTex::BgTex_Draw_3D7C(nw4r::lyt::DrawInfo* drawInfo) {
     if (mLayoutReady == false)
         return;
     drawLayout(mLayout, drawInfo, 0, 1);
 }
 
-void CBgTex::func_801C3D9C() {
+void CBgTex::BgTex_Release_3D9C() {
     lbl_eu_80664460 -= 1;
     func_801390E0(&mFileHandle);
     mLayoutReady = false;
@@ -147,11 +147,11 @@ void CBgTex::func_801C3D9C() {
     mMemRegion.func_8045F778();
 }
 
-u8 CBgTex::func_801C3E34() {
+u8 CBgTex::BgTex_IsLoaded_3E34() {
     return mLoaded;
 }
 
-void CBgTex::func_801C3E3C() {
+void CBgTex::BgTex_MarkLoaded_3E3C() {
     if (mLayout == nullptr)
         return;
     mLoaded = 1;
@@ -167,7 +167,7 @@ bool CBgTex::OnFileEvent(CEventFile* pEventFile) {
         lbl_eu_80664464 = accessor;
         accessor->Attach(pArchive, lbl_eu_80505370 + 0x136);
         mFileHandle = nullptr;
-        this->func_801C3A24();
+        this->BgTex_SetupRegion_3A24();
         return true;
     }
     return false;

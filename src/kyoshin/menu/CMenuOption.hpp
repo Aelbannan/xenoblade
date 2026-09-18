@@ -13,7 +13,7 @@
  *
  * Layout (constructor/destructor + Init):
  *   0x00: CProcess          -- task-system base (0x3C) + vtable PMF data
- *   0x54: u8                -- phase/state flag (written by func_8029BE7C)
+ *   0x54: u8                -- phase/state flag (written by flagOptionPhase1)
  *   0x58: IScnRender        -- render-callback subobject (vptr)
  *   0x5C: CProcess*         -- parent process reference
  *   0x60: CBgTex            -- background layout widget
@@ -67,7 +67,7 @@ public:
 
 // Singleton factory (retail unmangled symbol).
 CMenuOption* func_8029BB24(CProcess* registParent, CProcess* parent, u32 arg);
-// func_8029BBA0 (live-instance check) is declared by kyoshin/CTaskGame.hpp.
+// hasOptionMenu (live-instance check) is declared by kyoshin/CTaskGame.hpp.
 // Complete-object destructor in its retail D2 form (defined in CMenuOption.cpp).
 CMenuOption* __dt__11CMenuOptionFv(CMenuOption* _this, int flags);
 // Retail constructor symbol (unmangled flat form; defined in CMenuOption.cpp).
@@ -75,22 +75,22 @@ CMenuOption* __ct__CMenuOption(CMenuOption* _this, CProcess* parent, u32 arg);
 
 
 // IScnRender vtable this-adjusting thunks (retail: subi r3, r3, 0x58; b ...).
-void func_8029BECC(IScnRender* self);
-void func_8029BED4(IScnRender* self);
+void CMenuOption_renderBeforeAdj58(IScnRender* self);
+void CMenuOption_dtorAdj58(IScnRender* self);
 
 // Option-menu helper entry points (retail-unmangled callee names).
-extern "C" void func_8029BC28(CMenuOption* self);
-extern "C" void func_8029BE7C(CMenuOption* self);
-extern "C" void func_8029BBB0(CMenuOption* self);
+extern "C" void advanceOptionPhase2(CMenuOption* self);
+extern "C" void flagOptionPhase1(CMenuOption* self);
+extern "C" void advanceOptionPhase1(CMenuOption* self);
 extern "C" void func_8029BC78(CMenuOption* self);
 
 // Move()/cbRenderBefore() callees.
-extern "C" void func_801C3D54(CBgTex* self);
-extern "C" void func_801C3FF0(CTitleAHelp* self);
+extern "C" void BgTex_Tick_3D54(CBgTex* self);
+extern "C" void updateHelp(CTitleAHelp* self);
 extern "C" void COptionTickState(COption* self);
 extern "C" void COptionDraw(COption* self, nw4r::lyt::DrawInfo* drawInfo);
-extern "C" void func_801C3D7C(CBgTex* self, nw4r::lyt::DrawInfo* drawInfo);
-extern "C" void func_801C4080(CTitleAHelp* self, nw4r::lyt::DrawInfo* drawInfo);
+extern "C" void BgTex_Draw_3D7C(CBgTex* self, nw4r::lyt::DrawInfo* drawInfo);
+extern "C" void drawHelp(CTitleAHelp* self, nw4r::lyt::DrawInfo* drawInfo);
 extern "C" int IsMenuState621F0();
 // Raw-storage nw4r DrawInfo build/destroy for cbRenderBefore (pre-mangled names).
 extern "C" void __ct__Q34nw4r3lyt8DrawInfoFv(nw4r::lyt::DrawInfo* drawInfo);
@@ -102,8 +102,8 @@ extern "C" void Regist__8CProcessFP8CProcessb(CProcess* self, CProcess* parent, 
 // Ready/idle-check and animation helpers for the embedded sub-widgets
 // (retail unmangles these member helpers; int returns so callers compare
 // with cmpwi directly, no byte mask - matching retail).
-extern "C" int func_801C3E34(CBgTex* self);
-extern "C" int func_801C4114(CTitleAHelp* self);
+extern "C" int BgTex_IsLoaded_3E34(CBgTex* self);
+extern "C" int isInitialized(CTitleAHelp* self);
 extern "C" void func_801C412C(CTitleAHelp* self);
 extern "C" int COptionIsWindowReady(COption* self);
 extern "C" void COptionBeginScrollSetup(COption* self);
@@ -116,7 +116,7 @@ extern "C" void __ct__CBgTex(CBgTex* self, u8 arg);
 extern "C" void __ct__CTitleAHelp(CTitleAHelp* self, char* name, u8 arg);
 extern "C" void __ct__COption(COption* self, u8 arg);
 // __ct__UnkClass_8011C974 is declared by COption.hpp; BdatTouchStringCell by CFloorMap.hpp.
-extern "C" void func_801C3C14(CBgTex* self);
+extern "C" void BgTex_Acquire_3C14(CBgTex* self);
 extern "C" void CTitleAHelp_load(CTitleAHelp* self);
 extern "C" void COptionRebuildWidgets(COption* self);
 
@@ -133,9 +133,9 @@ extern "C" int COptionGetConfirmGate(COption* self);
 extern "C" int COptionGetSecondConfirm(COption* self);
 extern "C" void COptionConfirmSelection(COption* self);
 extern "C" void func_801C41E8(CTitleAHelp* self, u8 arg);
-extern "C" void func_801C414C(CTitleAHelp* self);
-extern "C" int func_800FEDF8();
-extern "C" void func_800FF914();
+extern "C" void beginClose(CTitleAHelp* self);
+extern "C" int CMainMenu_GetInstancePtr();
+extern "C" void ArtsInfo_SetReadyFlag();
 extern "C" int isClassicController__Q22cf13CfGameManagerFv(int arg);
 
 // Retail-unmangled callee names (US strips mangling for these func_ helpers).
@@ -146,8 +146,8 @@ extern "C" int COptionGetLiveFlag(COption* self);
 extern "C" void COptionTeardown(COption* self);
 extern "C" void setPresentationFlag__Q22cf13CfGameManagerFv(bool enable);
 // CBgTex / CTitleAHelp helpers (retail unmangles these member helpers).
-extern "C" void func_801C3D9C(CBgTex* self);
-extern "C" void func_801C40A0(CTitleAHelp* self);
+extern "C" void BgTex_Release_3D9C(CBgTex* self);
+extern "C" void teardown(CTitleAHelp* self);
 
 // D2-form subobject/base destructor helpers (explicit delete flags), used by
 // the free-function form of ~CMenuOption. All are declared extern "C" so the

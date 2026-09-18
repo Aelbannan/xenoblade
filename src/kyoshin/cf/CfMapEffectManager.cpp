@@ -13,10 +13,10 @@
 #include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
 
 namespace cf {
-// Local minimal view of cf::CfGameManager used by func_8016F9D4. The full
+// Local minimal view of cf::CfGameManager used by MapFx_ReloadFromBdat. The full
 // class in include/kyoshin/cf/CfGameManager.hpp declares getControllerWordA37C as
 // void, but retail returns a value (its body is a tail call to
-// func_8006A37C) and this caller truncates it to u16.
+// CfT_FrameCountB) and this caller truncates it to u16.
 class CfGameManager {
 public:
     static u32 getCurrentSlotIndex();
@@ -70,8 +70,8 @@ cf::CfMapEffectManager::~CfMapEffectManager() {
     lbl_eu_80664290 = 0;
 }
 
-// retail: func_8016EEB0 (0x80170264)
-extern "C" void func_8016EEB0(CfMapEffectManager* pSelf) {
+// retail: MapFx_ReleaseHandle (0x80170264)
+extern "C" void MapFx_ReleaseHandle(CfMapEffectManager* pSelf) {
     func_8016EF2C(pSelf);
     CfMapEffectHandle* obj = pSelf->field_0x134;
     pSelf->field_0x12C = -1;
@@ -136,14 +136,14 @@ int func_8016EFD8(int unused, int index) {
     return 0;
 }
 
-extern "C" void func_8016F9D4(CfMapEffectManager* pSelf);
-extern "C" void func_8016F140(CfMapEffectManager* self) { func_8016F9D4(self); }
+extern "C" void MapFx_ReloadFromBdat(CfMapEffectManager* pSelf);
+extern "C" void MapFx_ForwardReload(CfMapEffectManager* self) { MapFx_ReloadFromBdat(self); }
 
-// retail: func_8016F144 (0x801704F8) - scene-attached effect manager. When
+// retail: MapFx_UpdateSceneFx (0x801704F8) - scene-attached effect manager. When
 // the chapter/event counters change, release the current scene handle and
 // create the one matching the new state (BGM/ambient effect ids are
 // language-dependent). The 0x16/1 area-id pair disables the feature entirely.
-void func_8016F144(CfMapEffectManager* self) {
+void MapFx_UpdateSceneFx(CfMapEffectManager* self) {
     cf::CfGameManager::getCurrentSlotIndex();
     u16 cur0 = (u16)cf::CfGameManager::getControllerWordA33C();
     u16 cur1 = (u16)cf::CfGameManager::getControllerWordA37C();
@@ -221,7 +221,7 @@ void func_8016F2A4(CfMapEffectManager* self, int index, u8* bdat) {
     u32 phase = cf::CfGameManager::getCurrentSlotIndex();
     u16 area = (u16)cf::CfGameManager::getControllerWordA33C();
     cf::CfGameManager::getControllerWordA37C(); // result discarded (retail calls it)
-    u16 secs = func_8016DF2C();
+    u16 secs = getReloadParam0();
 
     u32 modelCol = getBdatStringColumnValue(bdat, lbl_eu_80503248 + 0x38, index);
     u8 timeCol = (u8)getBdatStringColumnValue(bdat, lbl_eu_80503248 + 0x40, index);
@@ -236,7 +236,7 @@ void func_8016F2A4(CfMapEffectManager* self, int index, u8* bdat) {
     }
 
     u16 gate = (u16)getBdatStringColumnValue(bdat, lbl_eu_80503248 + 0x4d, index);
-    if (gate != 0 && func_8009CF8C(gate + 0x278a) == 0) {
+    if (gate != 0 && CtrlRemote_TouchBitByArg(gate + 0x278a) == 0) {
         // Gated off: force idle state (1) unless already applied.
         if (*slot != 0 && self->field_0xE4[index] != 1) {
             setChildB59__(*slot, 1);
@@ -387,16 +387,16 @@ void func_8016F2A4(CfMapEffectManager* self, int index, u8* bdat) {
     }
 }
 
-// retail: func_8016F9D4 (0x80170DD0)
-extern "C" void func_8016F9D4(CfMapEffectManager* pSelf) {
+// retail: MapFx_ReloadFromBdat (0x80170DD0)
+extern "C" void MapFx_ReloadFromBdat(CfMapEffectManager* pSelf) {
     u8* bdat = lbl_eu_806640AC;
     u32 v = cf::CfGameManager::getCurrentSlotIndex();
     u16 a = (u16)cf::CfGameManager::getControllerWordA33C();
     u16 b = (u16)cf::CfGameManager::getControllerWordA37C();
-    u16 c = func_8016DF2C();
+    u16 c = getReloadParam0();
     int end;
-    int i = (int)func_8003B41C(bdat);
-    end = i + (int)func_8003B1EC(bdat);
+    int i = (int)Bdat_GetRowBase_B41C(bdat);
+    end = i + (int)Bdat_GetMaxRow_B1EC(bdat);
     for (; i < end; i++) {
         func_8016F2A4(pSelf, i, bdat);
     }
@@ -422,8 +422,8 @@ extern "C" int func_8016FA68(int, int b, int c, int d) {
     return 0;
 }
 
-// retail: func_8016FBA8 (0x80170FA4)
-void func_8016FBA8(CfMapEffectManager* pSelf, int flag) {
+// retail: MapFx_SetSlotFlag (0x80170FA4)
+void MapFx_SetSlotFlag(CfMapEffectManager* pSelf, int flag) {
     for (int i = 0; i < 0x24; i++) {
         CfObject* obj = pSelf->field_0x0C[i];
         if (obj != 0) {
@@ -432,8 +432,8 @@ void func_8016FBA8(CfMapEffectManager* pSelf, int flag) {
     }
 }
 
-// retail: func_8016FC0C (0x80171008)
-void func_8016FC0C(u8 arg) {
+// retail: MapFx_SetPointEnabled (0x80171008)
+void MapFx_SetPointEnabled(u8 arg) {
     if (lbl_eu_80664290 == 0) return;
     for (int i = 0; i < 0x24; i++) {
         CfObject* obj = lbl_eu_80664290->field_0x0C[i];
@@ -481,7 +481,7 @@ void func_8016FD84(float first, float second) {
     }
 }
 
-extern "C" void func_8016FE2C(float val) { lbl_eu_806623E8 = val; }
+extern "C" void MapFx_SetGlobalFloat(float val) { lbl_eu_806623E8 = val; }
 
 extern "C" void* func_8016FE34(void* r3) {
     if (r3 == 0) return 0;

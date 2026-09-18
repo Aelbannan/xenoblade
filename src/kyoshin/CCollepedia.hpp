@@ -139,7 +139,7 @@ struct CCollepedia {
     /* 0x50 */ u8 field_50;
     /* 0x51 */ u8 field_51;
     /* 0x52 */ u8 _52[0x54 - 0x52];
-    /* 0x54 */ u8 field_54[0x9C - 0x54]; // sub-object at 0x54 (used by func_801D216C)
+    /* 0x54 */ u8 field_54[0x9C - 0x54]; // sub-object at 0x54 (used by Cur_SetVisible)
     /* 0x9C */ u8 field_9C; // CSysWin sub-object starts here
     /* 0x9D */ u8 _9D[0xD8 - 0x9D];
     /* 0xD8 */ u8 field_D8;
@@ -173,7 +173,7 @@ extern "C" void __dl__FPv(void*);
 extern "C" u32 CSysWin_isReady(u8*);
 extern "C" u32 CSysWin_getUnk34(u8*);
 extern "C" int CSysWin_isActive(u8*);
-extern "C" u32 func_801B481C();
+extern "C" u32 GetItemMulti_IsActiveFlag();
 extern "C" u32 CItem_sumFamilyByte6(u16);
 extern "C" char lbl_eu_8050C6E8[];
 extern "C" void* lbl_eu_806640A8;
@@ -188,8 +188,8 @@ extern "C" const float lbl_eu_80668814;
 extern "C" const double lbl_eu_80668818;
 extern "C" void playUISound__FUl(u32);
 extern "C" void* lbl_eu_80537474[];
-extern "C" void func_801D20B0(void*, void*);
-extern "C" void func_8022B7C8(void*, nw4r::lyt::DrawInfo*);
+extern "C" void Cur_DrawLayout(void*, void*);
+extern "C" void sysWinDrawLayout(void*, nw4r::lyt::DrawInfo*);
 // u32 (not u16): retail returns the lookup result untruncated (tail-branch b
 // in clpGetCelIcon); narrowing here would emit an extra rlwinm after the call.
 extern "C" u32 BdatGetU16Direct(const void*, const void*, int);
@@ -199,19 +199,19 @@ extern "C" char* lbl_eu_806647DC;
 extern "C" void* lbl_eu_806647D8;
 extern "C" u32 CtrlObjectParam_GetStateBitFlag(u16);
 extern "C" u16 lbl_eu_8050C6A0[];
-extern "C" void func_801D216C(void*, u8);
+extern "C" void Cur_SetVisible(void*, u8);
 extern "C" void func_801D202C(void*); // CCur per-frame update
 extern "C" u16 BdatGetItemId(u32);
-extern "C" void func_8022B748(void*); // CSysWin per-frame update
+extern "C" void sysWinDispatchPhase(void*); // CSysWin per-frame update
 extern "C" u32 lbl_eu_806640EC;
 extern "C" void __dt__7CSysWinFv(void*, int);
 extern "C" void __dt__6CCur18Fv(void*, int);
 extern "C" void __dt__6CCur07Fv(void*, int);
 extern "C" void func_8022B9B4(void*, void*, int);
 extern "C" void func_8022BFC8(CSysWin*, u8);
-extern "C" void func_8022B8B8(void*);
-extern "C" void func_8022B8E4(void*);
-extern "C" void func_8022B7F4(void*);
+extern "C" void sysWinOpenPhase1(void*);
+extern "C" void sysWinAdvancePhase3(void*);
+extern "C" void sysWinTermLayout(void*);
 extern "C" void getEntry__5CBdatFUl(u32);
 extern "C" void closeFileHandle__FPP11CFileHandle(void*);
 extern "C" void deleteRegion__17UnkClass_8045F564Fv(void*);
@@ -223,9 +223,9 @@ extern "C" void* getHandleMEM2__Q23mtl10MemManagerFv();
 extern "C" void* readFile__11CDeviceFileFUlPCcP10IWorkEventii(u32, const char*, void*, int, int);
 extern "C" void* readCommonArchiveFile__11CDeviceFileFUlPCcP10IWorkEventii(u32, const char*, void*, int, int);
 extern "C" u32 KyoshinHeap_GetField44();
-extern "C" float func_801895EC();
+extern "C" float MenuSnd_GetMasterVol_95EC();
 extern "C" void func_80043738(u32, const char*, void*, u32, u32, u32);
-extern "C" void func_80124270(void*, u32);
+extern "C" void setPaneVisible(void*, u32);
 extern "C" void copyVEC3(void*, const void*);
 
 // Additional imports for the CCollepedia constructor
@@ -235,13 +235,13 @@ extern "C" void __ct__CCur18(void* self, void* param);   // CCur18 ctor (+0x84)
 extern "C" void __ct__CSysWin(CSysWin* self, int arg);   // CSysWin ctor
 
 // Imports used by OnFileEvent / func_80253B3C
-extern "C" u32 func_8003B1EC(void*);                     // bdat row count
+extern "C" u32 Bdat_GetMaxRow_B1EC(void*);                     // bdat row count
 extern "C" u32 BdatGetItemType(u16);                       // item kind lookup
-extern "C" u32 func_8009CF8C(u32);                       // unlock-flag lookup
+extern "C" u32 CtrlRemote_TouchBitByArg(u32);                       // unlock-flag lookup
 extern "C" void* lbl_eu_806640A0;                        // bdat table A
 extern "C" u32 lbl_eu_80664184;                          // default category id
 extern "C" void setBdatEntry__5CBdatFUlPv(u32, void*);  // BDAT archive release
-extern "C" void* func_8003AA34();                        // BDAT table unload
+extern "C" void* Bdat_GetTable_AA34();                        // BDAT table unload
 extern "C" void* getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32,
     nw4r::lyt::Layout*);                                 // CDeviceFont helper
 // Shared tag string; retail symbol is the MANGLED getPackedFont__Fv, so this

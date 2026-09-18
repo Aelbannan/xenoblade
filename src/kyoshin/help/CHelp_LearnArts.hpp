@@ -15,7 +15,7 @@ public:
 };
 
 // Character-data object returned by func_8009EC9C. Fields beyond +0xE8
-// are the learn-arts flag grid read by func_801F9268.
+// are the learn-arts flag grid read by ResTbox_IsCellBitSet.
 struct CHelpLearnArtsCharData {
     u8 pad[0xC];            // 0x0..0xB
     u16 mWpnType;           // +0xC
@@ -30,11 +30,11 @@ struct CHelpLearnArtsCharData {
 // CHelpManager singleton is declared (with mLearnArtsFlag @0x16) in
 // kyoshin/cf/CHelpManager.hpp; see that header.
 extern "C" u8* lbl_eu_806640F4;
-extern "C" UNKWORD func_80122450();
-extern "C" u8 func_8012246C();
-extern "C" u32 func_801B481C();
+extern "C" UNKWORD hasQuestWindow();
+extern "C" u8 isQuestWindowOpen();
+extern "C" u32 GetItemMulti_IsActiveFlag();
 extern "C" void* func_8009EC9C(u32 index);
-extern "C" bool func_801F9268(unsigned char* p, int i, int j);
+extern "C" bool ResTbox_IsCellBitSet(unsigned char* p, int i, int j);
 
 // "wpn_type" BDAT column-name string (retail .rodata label, owning TU or extern).
 extern u8 lbl_eu_805138AC[];

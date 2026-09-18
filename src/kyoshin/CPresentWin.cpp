@@ -12,19 +12,19 @@ CPresentWin::~CPresentWin() {
 }
 
 // Draw the present window layout if active and in the right state
-void func_8022DAD8(CPresentWin* self, nw4r::lyt::DrawInfo* drawInfo) {
+void drawPresentWin(CPresentWin* self, nw4r::lyt::DrawInfo* drawInfo) {
     if (self->mField30 == 0) return;
     if (self->mField37 == 0) return;
     drawLayout(self->mpLayout, drawInfo, 0, 1);
 }
 
-u8 func_8022DB6C(CPresentWin* self) { return self->mField30; }
+u8 isPresentActive(CPresentWin* self) { return self->mField30; }
 
 
-u8 func_8022DB74(CPresentWin* self) { return self->mField38; }
+u8 isPresentSettled(CPresentWin* self) { return self->mField38; }
 
 // State-machine transition: if state == 2, advance to state 3 and clear sub-state
-void func_8022DD68(CPresentWin* self) {
+void advancePresentState(CPresentWin* self) {
     if (self->mField37 != 2) return;
     self->mField37 = 3;
     self->mField38 = 0;
@@ -42,7 +42,7 @@ void func_8022DD90(CPresentWin* self) {
 
     u32 itemId = BdatGetItemId(self->mField34) & 0xFFFF;
 
-    u8 rank = func_8022E868(self, self->mField33);
+    u8 rank = lookupPresentRank(self, self->mField33);
     if (rank == 8) rank = 3;
 
     // String-pool base kept in a callee-saved register by retail.
@@ -56,9 +56,9 @@ void func_8022DD90(CPresentWin* self) {
     if ((s8)res < 0) {
         // Time not met: hide the result panes, show the failure panes and a
         // texture matching how far off the player was.
-        func_80124270(self->mpLayout->GetRootPane()->FindPaneByName(pool + 0x133, 1), 1);
-        func_80124270(self->mpLayout->GetRootPane()->FindPaneByName(pool + 0x13e, 1), 0);
-        func_80124270(self->mpLayout->GetRootPane()->FindPaneByName(pool + 0x149, 1), 1);
+        setPaneVisible(self->mpLayout->GetRootPane()->FindPaneByName(pool + 0x133, 1), 1);
+        setPaneVisible(self->mpLayout->GetRootPane()->FindPaneByName(pool + 0x13e, 1), 0);
+        setPaneVisible(self->mpLayout->GetRootPane()->FindPaneByName(pool + 0x149, 1), 1);
 
         void* tex;
         if ((s8)res <= -0x32) {
@@ -73,9 +73,9 @@ void func_8022DD90(CPresentWin* self) {
         }
     } else {
         // Time met: show the result panes and a texture matching the rank.
-        func_80124270(self->mpLayout->GetRootPane()->FindPaneByName(pool + 0x133, 1), 0);
-        func_80124270(self->mpLayout->GetRootPane()->FindPaneByName(pool + 0x13e, 1), 1);
-        func_80124270(self->mpLayout->GetRootPane()->FindPaneByName(pool + 0x195, 1), 1);
+        setPaneVisible(self->mpLayout->GetRootPane()->FindPaneByName(pool + 0x133, 1), 0);
+        setPaneVisible(self->mpLayout->GetRootPane()->FindPaneByName(pool + 0x13e, 1), 1);
+        setPaneVisible(self->mpLayout->GetRootPane()->FindPaneByName(pool + 0x195, 1), 1);
 
         void* tex;
         if ((s8)res >= 0x12c) {
@@ -103,8 +103,8 @@ void func_8022DD90(CPresentWin* self) {
         playUISound(0x36);
     }
     {
-        u8 idxA = func_8022E868(self, self->mField32);
-        u8 idxB = func_8022E868(self, self->mField33);
+        u8 idxA = lookupPresentRank(self, self->mField32);
+        u8 idxB = lookupPresentRank(self, self->mField33);
         func_8013A95C(idxA, idxB, (s8)res);
     }
 
@@ -166,7 +166,7 @@ CPresentWin::CPresentWin() {
 // Advance the present-window frame counter. mField31 selects which counter
 // advances; mField32/mField33 wrap around at mDataCount. If the two counters
 // collide after an advance, the secondary one steps again.
-void func_8022E2F8(CPresentWin* self) {
+void stepPresentCounter(CPresentWin* self) {
     if (self->mField36 != 0) return;
     if (self->mField31 != 0) {
         self->mField33 = (u8)(self->mField33 + 1);
@@ -184,7 +184,7 @@ void func_8022E2F8(CPresentWin* self) {
 }
 
 // retail: tail-branch to func_8022E254 (passes `this` through in r3)
-extern "C" void func_8022E3A8(CPresentWin* self) { func_8022E254(self); }
+extern "C" void dispatchCounterStepBack(CPresentWin* self) { func_8022E254(self); }
 
 // Toggle mField31 (which animation path is active). When toggling ON, skip the
 // frame if the secondary counter would collide; when OFF, repaint the label
@@ -209,9 +209,9 @@ void func_8022E3AC(CPresentWin* self) {
 }
 #pragma pop
 
-u8 func_8022E488(CPresentWin* self) { return self->mField31; }
+u8 getPresentPath(CPresentWin* self) { return self->mField31; }
 
-u8 func_8022E490(CPresentWin* self) { return self->mField36; }
+u8 isPresentBusy(CPresentWin* self) { return self->mField36; }
 
 // Get the world position of the selected pane of another present window and
 // scale its x by that window's label pane (+0x14) horizontal scale factor.
@@ -220,11 +220,11 @@ void func_8022E498(nw4r::math::VEC3* out, CPresentWin* src) {
     out->x = out->x * src->mPane14->GetScale().x;
 }
 
-// retail: lbz r4,0x32(r3); b func_8022E868
-extern "C" u8 func_8022E4FC(CPresentWin* self) { return func_8022E868(self, self->mField32); }
+// retail: lbz r4,0x32(r3); b lookupPresentRank
+extern "C" u8 getPresentRankA(CPresentWin* self) { return lookupPresentRank(self, self->mField32); }
 
-// retail: lbz r4,0x33(r3); b func_8022E868
-extern "C" u8 func_8022E504(CPresentWin* self) { return func_8022E868(self, self->mField33); }
+// retail: lbz r4,0x33(r3); b lookupPresentRank
+extern "C" u8 getPresentRankB(CPresentWin* self) { return lookupPresentRank(self, self->mField33); }
 
 extern "C" __declspec(noinline) void func_8022E50C(CPresentWin* self) {
     if (advanceAnimTransform(self->mpAnimTrans0, lbl_eu_8066862C) != 0) {
@@ -253,20 +253,20 @@ extern "C" __declspec(noinline) void func_8022E5B0(CPresentWin* self) {
         self->mpLayout->SetAnimationEnable(self->mpAnimTrans1, false);
         self->mpLayout->SetAnimationEnable(self->mpAnimTrans0, true);
         self->mField36 = 1;
-        func_80124270(self->mpLayout->GetRootPane()->FindPaneByName(&lbl_eu_8050A84C[0x133], 1), 0);
-        func_80124270(self->mpLayout->GetRootPane()->FindPaneByName(&lbl_eu_8050A84C[0x13e], 1), 0);
+        setPaneVisible(self->mpLayout->GetRootPane()->FindPaneByName(&lbl_eu_8050A84C[0x133], 1), 0);
+        setPaneVisible(self->mpLayout->GetRootPane()->FindPaneByName(&lbl_eu_8050A84C[0x13e], 1), 0);
     }
 }
 
 // Retail uses the stmw/lmw block-save frame for these two (optimize_for_size
-// shape; see KB kyoshin/CCur func_801D2E4C).
+// shape; see KB kyoshin/CCur Cur_ShowTwoSubPanes).
 #pragma push
 #pragma optimize_for_size on
 // Repaint helper for the mField32 (primary) item: look up the item name and
 // message id from the BDAT table, bind the name to pane20's text box and the
 // message texture to mPane28.
 extern "C" __declspec(noinline) void func_8022E698(CPresentWin* self) {
-    u8 idx = func_8022E868(self, self->mField32);
+    u8 idx = lookupPresentRank(self, self->mField32);
     char* name = BdatGetPtrDirect(lbl_eu_80664090, &lbl_eu_8050A84C[0x1cb], idx);
     func_80136D74((nw4r::lyt::Layout*)self->mPane20, name, 0);
     u32 msgId = BdatGetU16Direct(lbl_eu_80664090, &lbl_eu_8050A84C[0x1d0], idx) & 0xFFFF;
@@ -278,7 +278,7 @@ extern "C" __declspec(noinline) void func_8022E698(CPresentWin* self) {
 
 // Same repaint for the mField33 (secondary) item, targeting mPane24/mPane2C.
 extern "C" __declspec(noinline) void func_8022E744(CPresentWin* self) {
-    u8 idx = func_8022E868(self, self->mField33);
+    u8 idx = lookupPresentRank(self, self->mField33);
     char* name = BdatGetPtrDirect(lbl_eu_80664090, &lbl_eu_8050A84C[0x1cb], idx);
     func_80136D74((nw4r::lyt::Layout*)self->mPane24, name, 0);
     u32 msgId = BdatGetU16Direct(lbl_eu_80664090, &lbl_eu_8050A84C[0x1d0], idx) & 0xFFFF;
@@ -341,7 +341,7 @@ extern "C" __declspec(noinline) void func_8022E254(CPresentWin* self) {
     }
 }
 
-extern "C" __declspec(noinline) u8 func_8022E868(CPresentWin* self, u32 r4) {
+extern "C" __declspec(noinline) u8 lookupPresentRank(CPresentWin* self, u32 r4) {
     u8 limit = self->mDataCount;
     if (r4 >= limit) return 0;
     return self->mDataArray[r4];
@@ -400,7 +400,7 @@ void func_8022DB7C(CPresentWin* self) {
             conv[1].w.hi = 0x43300000u;
             src[0] = (f32)(conv[0].d - lbl_eu_80668620);
             src[1] = (f32)(conv[1].d - lbl_eu_80668620);
-            func_80124288(pane, src);
+            writePanePos(pane, src);
         }
     }
     playUISound(0xd);
@@ -448,7 +448,7 @@ void func_8022D614(CPresentWin* self, nw4r::lyt::ArcResourceAccessor* accessor) 
     self->mPane28 = self->mpLayout->GetRootPane()->FindPaneByName(pool + 0x94, 1);
     self->mPane2C = self->mpLayout->GetRootPane()->FindPaneByName(pool + 0xa1, 1);
 
-    func_80124270(self->mpLayout->GetRootPane()->FindPaneByName(pool + 0xae, 1), 0);
+    setPaneVisible(self->mpLayout->GetRootPane()->FindPaneByName(pool + 0xae, 1), 0);
     LayoutSetTextBoxFmtValue(self->mpLayout, pool + 0xb7, pool + 0xc4, 0);
     func_80136D74((nw4r::lyt::Layout*)self->mPane20, pool + 0xc4, 0);
     func_80136D74((nw4r::lyt::Layout*)self->mPane24, pool + 0xc4, 0);
@@ -474,7 +474,7 @@ void func_8022D614(CPresentWin* self, nw4r::lyt::ArcResourceAccessor* accessor) 
             conv.w[1].lo = w1;
             src1[0] = (f32)(conv.d[0] - lbl_eu_80668620);
             src1[1] = (f32)(conv.d[1] - lbl_eu_80668620);
-            func_80124288(pane1, src1);
+            writePanePos(pane1, src1);
         }
     }
 
@@ -497,7 +497,7 @@ void func_8022D614(CPresentWin* self, nw4r::lyt::ArcResourceAccessor* accessor) 
             conv.w[1].lo = w2;
             src2[0] = (f32)(conv.d[0] - lbl_eu_80668620);
             src2[1] = (f32)(conv.d[1] - lbl_eu_80668620);
-            func_80124288(pane2, src2);
+            writePanePos(pane2, src2);
         }
     }
 }

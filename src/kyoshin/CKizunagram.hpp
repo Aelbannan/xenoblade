@@ -714,7 +714,7 @@ void func_80259820(UnkKizunaSelf9820* self);
 extern "C" void* lbl_eu_805375FC[];
 extern "C" void* lbl_eu_805375E4[];
 extern "C" void* lbl_eu_805375F0[];
-extern "C" void func_80124270(nw4r::lyt::Pane* pane, u32 a);
+extern "C" void setPaneVisible(nw4r::lyt::Pane* pane, u32 a);
 extern "C" void TagCopyVec2f(float* dst, const float* src); // copy 2 floats
 
 // Position constants used by func_80257B6C (sda2 floats).
@@ -881,8 +881,8 @@ struct UnkKizunaFontView {
 // ---------------------------------------------------------------------------
 
 // Pane visibility check (CTitleAHelp.cpp) and GX color setter.
-extern "C" bool func_801C4648(nw4r::lyt::Pane* pane);
-extern "C" void func_801C4B60(GXColorS10* color, s16 r, s16 g, s16 b, s16 a);
+extern "C" bool isPaneVisible(nw4r::lyt::Pane* pane);
+extern "C" void setGXColorS10(GXColorS10* color, s16 r, s16 g, s16 b, s16 a);
 
 // sinit_8025D304 color table (14 GXColorS10 entries, 8-byte stride).
 extern GXColorS10 lbl_eu_806647E8;
@@ -1052,8 +1052,8 @@ extern "C" void tryKizIdle(UnkKizunaSelfC580* self);
 extern "C" void func_8025CD40(void* self);
 
 // BDAT/layout-manager helpers (unmangled retail symbols).
-extern "C" u32 func_8003B1EC(void* fp);              // BDAT row count
-extern "C" u32 func_8009CF8C(u32 idx);               // game-progress getter
+extern "C" u32 Bdat_GetMaxRow_B1EC(void* fp);              // BDAT row count
+extern "C" u32 CtrlRemote_TouchBitByArg(u32 idx);               // game-progress getter
 extern "C" u32 CtrlObjectParam_GetWorkTailValue();                      // current kizuna id
 extern "C" char* BdatGetU16Direct(const void* mgr, const void* name, int id);
 extern "C" int BdatGetS16Direct(const void* mgr, const void* name, int id);
@@ -1061,7 +1061,7 @@ extern "C" int BdatGetSexFlag(int id);
 extern "C" void PaneSetVtxColorAll(void* obj, u32 color);
 extern "C" int strcmp(const char*, const char*);
 extern "C" void func_80137F88(nw4r::lyt::Pane* pane, u32 res); // bind texture resource to pane
-// func_8003AA34 is declared by an included header (no-arg bdat manager refresh);
+// Bdat_GetTable_AA34 is declared by an included header (no-arg bdat manager refresh);
 // retail leaves r3=self live into the call either way.
 extern "C" void func_80137CD4(void* layout, const char* tag, int color1, u32 color2);
 

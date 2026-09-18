@@ -52,7 +52,7 @@ extern const char lbl_eu_80503F58[];
 
 // Retail symbols are C-linkage (unmangled); declared here because the declaring
 // header code_800AA008.hpp uses C++ mangling that drifts the reloc names.
-extern "C" void func_800AA318(u32 packed, u32* out0, u32* out1, u32* out2, u32* out3);
+extern "C" void Tok_Unpack(u32 packed, u32* out0, u32* out1, u32* out2, u32* out3);
 extern "C" int func_800AA33C(ml::FixStr<64>& buf, u32 packed, int prefixFlag, int suffixFlag);
 
 namespace cf{
@@ -124,7 +124,7 @@ void CTaskCulling::clearOccFrustums(){
         cf::CfGameManager* gm = (cf::CfGameManager*)cf::CfGameManager::getGameSubManager();
         u32 outA, outB, outC, outD;
 
-        func_800AA318(gm->unk70, &outA, &outB, &outC, &outD);
+        Tok_Unpack(gm->unk70, &outA, &outB, &outC, &outD);
         func_800AA33C(lbl_eu_80664328->unk98, gm->unk70, 0, 0);
         func_800AA33C(lbl_eu_80664328->unkDC, gm->unk70, 1, 0);
 

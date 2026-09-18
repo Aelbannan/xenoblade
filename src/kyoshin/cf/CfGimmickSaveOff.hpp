@@ -17,7 +17,7 @@ extern "C" void __ct__cf_CfGimmick(cf::CfGimmick* self);
 extern "C" void __dt__Q22cf9CfGimmickFv(cf::CfGimmick* self, int flag);
 
 // Gimmick work-area registration helpers (register three column blocks with
-// the bdat manager returned by func_8003AA34).
+// the bdat manager returned by Bdat_GetTable_AA34).
 extern "C" void CfGimmick_LoadBdatAreaPos(cf::CfGimmick* self, float* out, void* unused, void* holder);
 extern "C" void CfGimmick_LoadBdatAreaExtents(cf::CfGimmick* self, cf::CfGimmick* out, void* unused, void* holder);
 extern "C" void CfGimmick_LoadBdatAreaRotation(cf::CfGimmick* self, f32* out, void* bdat, void* table);
@@ -27,7 +27,7 @@ extern "C" void CfGimmick_SetGlobalFlag200000();
 extern "C" void CfGimmick_SetGlobalFlag8();
 
 // Poke the object registered at result+0x84 (save-point activation).
-extern "C" void func_8008B95C(u8* target);
+extern "C" void CtrlMoveEne_MarkActiveSteady(u8* target);
 
 // Scenario/sequence counter from the game manager.
 extern "C" u32 getQueuedFileEventCount__Q22cf13CfGameManagerFv();

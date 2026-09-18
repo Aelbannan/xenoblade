@@ -122,8 +122,8 @@ public:
 };
 
 // Scrollbar destroy / layout-read helpers (unmangled retail symbols).
-extern "C" void func_801F35DC(void* scrollbar);
-extern "C" void func_801F34F4(void* scrollbar);
+extern "C" void CScrollBar_Teardown(void* scrollbar);
+extern "C" void CScrollBar_loadLayoutArc(void* scrollbar);
 
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
 extern "C" void __dt__6CCur18Fv(void*, int);
@@ -133,18 +133,18 @@ extern "C" void __dl__FPv(void*);
 void func_801390E0(CFileHandle**);
 extern "C" void __ct__CScrollBar(void*, int);
 extern "C" u8 BdatGetU8Direct(u32, const char*, u32);
-extern "C" u32 func_8003B1EC(void*);
-extern "C" u32 func_8009CF8C(u32);
-extern "C" void func_801F35B0(void*, nw4r::lyt::DrawInfo*);
-extern "C" void func_801D20B0(void*, void*);
-extern "C" void func_801F369C(void*);
-extern "C" void func_801F3540(u8*);                    // scrollbar per-frame update
+extern "C" u32 Bdat_GetMaxRow_B1EC(void*);
+extern "C" u32 CtrlRemote_TouchBitByArg(u32);
+extern "C" void CScrollBar_draw(void*, nw4r::lyt::DrawInfo*);
+extern "C" void Cur_DrawLayout(void*, void*);
+extern "C" void CScrollBar_requestScrollOut(void*);
+extern "C" void CScrollBar_UpdateDispatch(u8*);                    // scrollbar per-frame update
 // Cursor / scrollbar / layout C-ABI helpers (unmangled retail symbols).
 extern "C" void func_801D202C(u8*);                    // cursor per-frame update
-extern "C" void func_801F3670(u8*, const float*);      // scrollbar init (3-float vec)
-extern "C" void func_801F36BC(u8*, int, int);          // scrollbar range setup
-extern "C" void func_801F3850(u8*, u16);                // scrollbar thumb position
-extern "C" void func_801F367C(u8*);                    // scrollbar show
+extern "C" void CScrollBar_InitRootPane(u8*, const float*);      // scrollbar init (3-float vec)
+extern "C" void CScrollBar_UpdateThumb(u8*, int, int);          // scrollbar range setup
+extern "C" void CScrollBar_PlaceThumb(u8*, u16);                // scrollbar thumb position
+extern "C" void CScrollBar_requestScrollIn(u8*);                    // scrollbar show
 // Layout/text C-ABI helpers normally declared by code_80135FDC.hpp. CMapSel.cpp
 // defines CODE_80135FDC_CPP before including that header, so those exports are
 // skipped there and the declarations below apply (retail CMapSel callers pass
@@ -162,7 +162,7 @@ extern "C" void func_80137924(nw4r::math::VEC3*, nw4r::lyt::Pane*,
 extern "C" void playUISound__FUl(u32);               // UI sound effect
 // Grid-text helpers / cursor construction (C-ABI retail symbols).
 extern "C" u16 BdatGetU16Direct(const void*, const void*, int);
-extern "C" void func_80124270(void*, u32);
+extern "C" void setPaneVisible(void*, u32);
 extern "C" void __ct__CCur18(void*, nw4r::lyt::ArcResourceAccessor*);
 extern "C" nw4r::lyt::ArcResourceAccessor* CUICfManager_getArcResourceAccessor();
 extern "C" int sprintf(char*, const char*, ...);

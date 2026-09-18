@@ -66,7 +66,7 @@ extern "C" void WorkEvent28__10IWorkEventFv();
 extern "C" void WorkEvent29__10IWorkEventFv();
 extern "C" void WorkEvent30__10IWorkEventFv();
 extern "C" void WorkEvent31__10IWorkEventFv();
-extern "C" void func_8048ED1C();
+extern "C" void fwdScnMemDtor();
 extern "C" void Scn_CallUnk60_V4();
 extern "C" void Scn_CallUnk68_V3();
 extern "C" u32 __RTTI__10IWorkEvent;
@@ -85,7 +85,7 @@ extern "C" u32 lbl_eu_8056E5C8[45] = {
     (u32)&CScnMemBlob::Draw__4CScnFv,
     (u32)&CScnMemBlob::Tail__8CProcessFv,
     (u32)&lbl_eu_80663980, 0xFFFFFFAC,
-    (u32)&CScnMemBlob::func_8048ED1C,
+    (u32)&CScnMemBlob::fwdScnMemDtor,
     (u32)&CScnMemBlob::WorkEvent1__10IWorkEventFPvPCc,
     (u32)&CScnMemBlob::OnFileEvent__10IWorkEventFP10CEventFile,
     (u32)&CScnMemBlob::WorkEvent3__4CScnFPv,
@@ -151,11 +151,11 @@ extern "C" __declspec(align(8)) char lbl_eu_8056E6F8[0x38] = {
 };
 
 // CScnNw4r access table accessors (defined in CScnRootNw4r TU, C linkage).
-extern "C" void* func_8048FDDC(void* self);
-extern "C" void* func_8048FDE4(void* self);
-extern "C" void* func_8048FDEC(void* self);
-extern "C" void* func_8048FE0C(void* self);
-extern "C" void* func_8048FE2C(void* self);
+extern "C" void* RootNw4r_Ptr44C(void* self);
+extern "C" void* RootNw4r_Ptr45C(void* self);
+extern "C" void* RootNw4r_SelPtr46C(void* self);
+extern "C" void* RootNw4r_SelPtr47C(void* self);
+extern "C" void* RootNw4r_Ptr49C(void* self);
 
 // WorkEvent thunk callees (CScn TU).
 extern "C" void Scn_CallUnk60_V4(void* self);
@@ -186,43 +186,43 @@ CScnMem::~CScnMem() {
     mtl::MemManager::erase(mAllocId);
 }
 
-u32 func_8048ECD0(CScn* self) { return (u32)self->mUnk8C; }
+extern "C" u32 getScnRootPtr(CScn* self) { return (u32)self->mUnk8C; }
 
 
-extern "C" void* func_8048ECD8(void* self) { return *(void**)((u8*)*(void**)((u8*)self + 0x8C) + 0x10); }
+extern "C" void* getScnRootSlot10(void* self) { return *(void**)((u8*)*(void**)((u8*)self + 0x8C) + 0x10); }
 
-void* func_8048ECE4(CScn* self) { return func_8048FDDC(self->mUnk8C); }
+extern "C" void* getScnRoot44C(CScn* self) { return RootNw4r_Ptr44C(self->mUnk8C); }
 
-void* func_8048ECEC(CScn* self) { return func_8048FDE4(self->mUnk8C); }
+extern "C" void* getScnRoot45C(CScn* self) { return RootNw4r_Ptr45C(self->mUnk8C); }
 
-void* func_8048ECF4(CScn* self) { return func_8048FDEC(self->mUnk8C); }
+extern "C" void* getScnRootSel46C(CScn* self) { return RootNw4r_SelPtr46C(self->mUnk8C); }
 
-void* func_8048ECFC(CScn* self) { return func_8048FE0C(self->mUnk8C); }
+extern "C" void* getScnRootSel47C(CScn* self) { return RootNw4r_SelPtr47C(self->mUnk8C); }
 
-void* func_8048ED04(CScn* self) { return func_8048FE2C(self->mUnk8C); }
+extern "C" void* getScnRoot49C(CScn* self) { return RootNw4r_Ptr49C(self->mUnk8C); }
 
 extern "C" void WorkEvent4__4CScnFv(void* self) { ((void(*)(void*))Scn_CallUnk60_V4)((char*)self - 0x54); }
 
 extern "C" void WorkEvent3__4CScnFPv(void* self, void* r4) { ((void(*)(void*))Scn_CallUnk68_V3)((char*)self - 0x54); }
 
-void func_8048ED1C(void* self){ ((void(*)(void*))__dt__8CScnNw4rFv)((char*)self - 0x54); }
+extern "C" void fwdScnMemDtor(void* self){ ((void(*)(void*))__dt__8CScnNw4rFv)((char*)self - 0x54); }
 
 // Allocate a MemManager-backed block through this CScnMem. The region handle
 // (a) tags field_0x4, the size (c) is shared by field_0xc and the allocation.
-void func_8048EB30(CScnMem* self, u32 a, u32 b, u32 c) {
+extern "C" void allocScnMem(CScnMem* self, u32 a, u32 b, u32 c) {
     self->field_0x4 = a;
     self->field_0xc = c;
     self->mAllocId = mtl::MemManager::create(b, c, lbl_eu_80523F98);
 }
 
-// func_8048EC14: return the idx-th child of the scene root only if it derives
+// getScnGroupChild: return the idx-th child of the scene root only if it derives
 // from ScnGroup, else NULL. Panics on an out-of-range index.
 //
 // The child array is read through the layout mirror (not the inline
 // operator[]/Begin() wrappers): the array pointer is a distinct lowering
 // object, which delays the idx saved-copy web past the group web so retail's
 // group->r31 / idx->r30 coloring is reproduced byte-for-byte.
-nw4r::g3d::ScnObj* func_8048EC14(CScn* self, u32 idx) {
+extern "C" nw4r::g3d::ScnObj* getScnGroupChild(CScn* self, u32 idx) {
     CScnRootNw4rLayout* root =
         reinterpret_cast<CScnRootNw4rLayout*>(self->mUnk8C);
     nw4r::g3d::ScnGroup* group = root->mRootGroup;

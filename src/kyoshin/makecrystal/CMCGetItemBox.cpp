@@ -26,19 +26,19 @@ namespace nw4r { namespace lyt { class AnimTransform; } }
 // declared extern "C"; the mangled ones are declared as normal C++ so the
 // Itanium-mangled reloc name is emitted (matches the retail reloc).
 // Most imports live in the C-linkage imports section of CMCGetItemBox.hpp.
-// The six below stay TU-local: func_801D216C / CSysWin_getUnk34 /
-// CSysWin_isActive / func_8022B8E4 conflict with CModelDispMakeCrystal.cpp's
+// The six below stay TU-local: Cur_SetVisible / CSysWin_getUnk34 /
+// CSysWin_isActive / sysWinAdvancePhase3 conflict with CModelDispMakeCrystal.cpp's
 // own extern "C" decls ((void*, u8) / (void*) forms), and PaneSetTexPaletteByName /
 // BdatGetPtrDirect conflict with code_80135FDC.hpp's signatures - hoisting them
 // would make that TU ill-formed.
 extern "C" {
-void func_801D216C(void*, int);
+void Cur_SetVisible(void*, int);
 u32 CSysWin_getUnk34(CMCGetItemBoxSysWin*);
 int  CSysWin_isActive(CMCGetItemBoxSysWin*);
-void func_8022B8E4(CMCGetItemBoxSysWin*);
+void sysWinAdvancePhase3(CMCGetItemBoxSysWin*);
 void func_8022B9B4(CMCGetItemBoxSysWin*, void*, int);
-void func_8022B8B8(CMCGetItemBoxSysWin*);
-// func_8022B90C / func_8022BFC8 come from kyoshin/CSysWin.hpp (CSysWin* forms).
+void sysWinOpenPhase1(CMCGetItemBoxSysWin*);
+// sysWinSwitchKindPane / func_8022BFC8 come from kyoshin/CSysWin.hpp (CSysWin* forms).
 }
 // C++-linkage (mangled) retail symbols.
 void setLayoutTextBoxNumber(nw4r::lyt::Layout*, char*, u8);   // setLayoutTextBoxNumber__FPQ34nw4r3lyt6LayoutPcUc
@@ -55,9 +55,9 @@ extern "C" void loadItemBoxFiles(CItemBoxInfo*);   // retail reloc is unmangled
 extern "C" void renderItemBox(CItemBoxInfo*);   // retail reloc is unmangled
 extern "C" void updateItemBoxAnims(CItemBoxInfo*);   // retail reloc is unmangled
 extern "C" void func_801D202C(CMCItemBoxSubObj*);
-extern "C" void func_801D20B0(CMCItemBoxSubObj*, nw4r::lyt::DrawInfo*);   // retail reloc is unmangled
-extern "C" void func_8022B7C8(CMCGetItemBoxSysWin*, nw4r::lyt::DrawInfo*);   // retail reloc is unmangled
-extern "C" void func_8022B748(CMCGetItemBoxSysWin*);   // retail reloc is unmangled
+extern "C" void Cur_DrawLayout(CMCItemBoxSubObj*, nw4r::lyt::DrawInfo*);   // retail reloc is unmangled
+extern "C" void sysWinDrawLayout(CMCGetItemBoxSysWin*, nw4r::lyt::DrawInfo*);   // retail reloc is unmangled
+extern "C" void sysWinDispatchPhase(CMCGetItemBoxSysWin*);   // retail reloc is unmangled
 // Use the header's extern "C" __dt__12CItemBoxInfoFv / __dt__7CSysWinFv
 // so call-site relocs stay the retail unmangled names (C++ redecls here
 // were emitting __dt__...Fv__FP... extra-signature names).
@@ -522,7 +522,7 @@ void updateMCGetItemBox(CMCGetItemBox* self) {
     func_801D202C(&self->subObj_88);
     func_801D202C(&self->subObj_A0);
     updateItemBoxAnims((CItemBoxInfo*)self->itemBox);
-    func_8022B748(&self->sysWin_B8);
+    sysWinDispatchPhase(&self->sysWin_B8);
 }
 
 // Draw the item box: item-box info, layout, the (limit-dependent) cursor
@@ -536,11 +536,11 @@ void drawMCGetItemBox(CMCGetItemBox* self, nw4r::lyt::DrawInfo* di) {
     renderItemBox((CItemBoxInfo*)self->itemBox);
     drawLayout(self->layout40, di, 0, 1);
     u8 active = self->sub_314.limit ? self->sub_314.limit : 1;
-    if (active > 1) func_801D20B0(&self->subObj_70, di);
-    func_801D20B0(&self->subObj_58, di);
-    func_801D20B0(&self->subObj_88, di);
-    func_801D20B0(&self->subObj_A0, di);
-    func_8022B7C8(&self->sysWin_B8, di);
+    if (active > 1) Cur_DrawLayout(&self->subObj_70, di);
+    Cur_DrawLayout(&self->subObj_58, di);
+    Cur_DrawLayout(&self->subObj_88, di);
+    Cur_DrawLayout(&self->subObj_A0, di);
+    sysWinDrawLayout(&self->sysWin_B8, di);
 }
 #pragma pop
 
@@ -584,7 +584,7 @@ void func_80297B68(CMCGetItemBox* self) {
     (*(void(**)(void*))((void**)&self->subObj_88)[3])(&self->subObj_88);
     (*(void(**)(void*))((void**)&self->subObj_A0)[3])(&self->subObj_A0);
     func_801D4174((void*)self->itemBox);
-    func_8022B7F4((void*)&self->sysWin_B8);
+    sysWinTermLayout((void*)&self->sysWin_B8);
 }
 
 // Return 0 unless the item box is active and the sys-win is ready.
@@ -635,9 +635,9 @@ void confirmMCGetItemBox(CMCGetItemBox* self) {
     if (self->field_4D != 3) return;
     self->field_4D = 4;
     self->mField55 = 0;
-    func_801D216C(&self->subObj_58, 0);
-    func_801D216C(&self->subObj_70, 0);
-    func_801D216C(&self->subObj_88, 0);
+    Cur_SetVisible(&self->subObj_58, 0);
+    Cur_SetVisible(&self->subObj_70, 0);
+    Cur_SetVisible(&self->subObj_88, 0);
     advanceItemBoxState__FP12CItemBoxInfo((CItemBoxInfo*)self->itemBox);
     playUISound(0x6);
 }
@@ -836,14 +836,14 @@ extern "C" __declspec(noinline) void prevMCGetItemBoxPage(CMCGetItemBox* self) {
 void toggleMCGetItemBoxSysWin(CMCGetItemBox* self) {
     if (CSysWin_getUnk34(&self->sysWin_B8) != 0) {
         if (CSysWin_isActive(&self->sysWin_B8) != 0) {
-            func_8022B8E4(&self->sysWin_B8);
-            func_801D216C(&self->subObj_A0, 1);
+            sysWinAdvancePhase3(&self->sysWin_B8);
+            Cur_SetVisible(&self->subObj_A0, 1);
         }
     } else {
         if (self->mField303 != 0) {
             self->mField303 = 0;
-            func_801D216C(&self->subObj_58, 1);
-            func_801D216C(&self->subObj_A0, 0);
+            Cur_SetVisible(&self->subObj_58, 1);
+            Cur_SetVisible(&self->subObj_A0, 0);
             playUISound(0x6);
         }
     }
@@ -853,8 +853,8 @@ void toggleMCGetItemBoxSysWin(CMCGetItemBox* self) {
 void openMCGetItemBoxSysWin(CMCGetItemBox* self) {
     if (CSysWin_getUnk34(&self->sysWin_B8) == 0) return;
     if (CSysWin_isActive(&self->sysWin_B8) == 0) return;
-    func_8022B8E4(&self->sysWin_B8);
-    func_801D216C(&self->subObj_A0, 1);
+    sysWinAdvancePhase3(&self->sysWin_B8);
+    Cur_SetVisible(&self->subObj_A0, 1);
 }
 
 // Unless the widget is busy and the sort field is -1, report the selected
@@ -900,7 +900,7 @@ extern "C" __declspec(noinline) CMCItemBoxEntry* getMCItemSubEntry(CMCItemBoxSub
     return 0;
 }
 
-extern "C" void forwardMCSubObj88(void* self) { ((void(*)(void*))func_801D216C)((char*)self + 0x88); }
+extern "C" void forwardMCSubObj88(void* self) { ((void(*)(void*))Cur_SetVisible)((char*)self + 0x88); }
 
 // Advance the cursor / tab selection in the item box.
 // -O4,s keeps the retail _savegpr_29/_restgpr_29 call-form prologue (three
@@ -911,8 +911,8 @@ void func_80298614(CMCGetItemBox* self) {
     if (self->mField303 != 0) {
         if (CSysWin_getUnk34(&self->sysWin_B8) != 0) {
             if (CSysWin_isActive(&self->sysWin_B8) != 0) {
-                func_8022B8E4(&self->sysWin_B8);
-                func_801D216C(&self->subObj_A0, 1);
+                sysWinAdvancePhase3(&self->sysWin_B8);
+                Cur_SetVisible(&self->subObj_A0, 1);
             }
         } else {
             CMCItemBoxCursor* arr = &self->arr_1A4;
@@ -927,11 +927,11 @@ void func_80298614(CMCGetItemBox* self) {
                     res = BdatTouchStringCell(&lbl_eu_8050FF8C[0x119],
                                         &lbl_eu_8050FF8C[0x123], r);
                 }
-                func_8022B90C((CSysWin*)&self->sysWin_B8, 0);
+                sysWinSwitchKindPane((CSysWin*)&self->sysWin_B8, 0);
                 func_8022B9B4(&self->sysWin_B8, res, 0);
                 func_8022BFC8((CSysWin*)&self->sysWin_B8, 1);
-                func_8022B8B8(&self->sysWin_B8);
-                func_801D216C(&self->subObj_A0, 0);
+                sysWinOpenPhase1(&self->sysWin_B8);
+                Cur_SetVisible(&self->subObj_A0, 0);
             }
         }
     } else {
@@ -959,8 +959,8 @@ void func_80298614(CMCGetItemBox* self) {
             self->mField303 = 1;
             self->field_304 = (u8)rowN;
             self->field_305 = (u8)(v - (s8)rowN * 4);
-            func_801D216C(&self->subObj_58, 0);
-            func_801D216C(&self->subObj_A0, 1);
+            Cur_SetVisible(&self->subObj_58, 0);
+            Cur_SetVisible(&self->subObj_A0, 1);
             u8 tmp[12];
             CopyTabSlotVec((u32*)tmp, arr->table, v);
             (*(void(**)(void*, void*))((void**)&self->subObj_A0)[4])(&self->subObj_A0, (void*)tmp);
@@ -986,8 +986,8 @@ extern "C" __declspec(noinline) void openMCGetItemBoxPhase2(CMCGetItemBox* self)
     if (advanceAnimTransform((nw4r::lyt::AnimTransform*)self->animTrans2, lbl_eu_80668BF0) != 0) {
         self->field_4D = 3;
         self->mField55 = 1;
-        func_801D216C(&self->subObj_58, 1);
-        func_801D216C(&self->subObj_70, 1);
+        Cur_SetVisible(&self->subObj_58, 1);
+        Cur_SetVisible(&self->subObj_70, 1);
         moveMCGetItemBoxCursor(self);
     }
 }
@@ -1018,7 +1018,7 @@ extern "C" __declspec(noinline) void closeMCGetItemBoxPhase2(CMCGetItemBox* self
     if (AnimRewindFrame(self->animTrans1, lbl_eu_80668BF0) != 0) {
         self->mField55 = 1;
         self->field_4D = 0;
-        func_801D216C(&self->subObj_58, 0);
+        Cur_SetVisible(&self->subObj_58, 0);
     }
 }
 
@@ -1257,12 +1257,12 @@ extern "C" __declspec(noinline) void initMCGetItemBoxList(CMCGetItemBox* self, u
     // (no root local), keeping pressure at 3 callee-saved registers.
     if (arg == 9) {
         char* tbl = lbl_eu_8050FF8C;
-        func_80124270((*(nw4r::lyt::Pane**)((u8*)self->layout40 + 0x10))->FindPaneByName(&tbl[0x184], true), 0);
-        func_80124270((*(nw4r::lyt::Pane**)((u8*)self->layout40 + 0x10))->FindPaneByName(&tbl[0x18f], true), 1);
+        setPaneVisible((*(nw4r::lyt::Pane**)((u8*)self->layout40 + 0x10))->FindPaneByName(&tbl[0x184], true), 0);
+        setPaneVisible((*(nw4r::lyt::Pane**)((u8*)self->layout40 + 0x10))->FindPaneByName(&tbl[0x18f], true), 1);
     } else {
         char* tbl = lbl_eu_8050FF8C;
-        func_80124270((*(nw4r::lyt::Pane**)((u8*)self->layout40 + 0x10))->FindPaneByName(&tbl[0x184], true), 1);
-        func_80124270((*(nw4r::lyt::Pane**)((u8*)self->layout40 + 0x10))->FindPaneByName(&tbl[0x18f], true), 0);
+        setPaneVisible((*(nw4r::lyt::Pane**)((u8*)self->layout40 + 0x10))->FindPaneByName(&tbl[0x184], true), 1);
+        setPaneVisible((*(nw4r::lyt::Pane**)((u8*)self->layout40 + 0x10))->FindPaneByName(&tbl[0x18f], true), 0);
     }
     func_8029967C(self);
     refreshMCGetItemBoxTexts(self);
@@ -1292,13 +1292,13 @@ extern "C" __declspec(noinline) void func_8029967C(CMCGetItemBox* self) {
         char* tbl = lbl_eu_8050FF8C;
         // NOTE: retail reloads layout40 before every root-pane access (no
         // cached layout pointer), keeping only 5 callee-saved regs live.
-        func_80124270((*(nw4r::lyt::Pane**)((u8*)self->layout40 + 0x10))->FindPaneByName(&tbl[0x19a], true), 1);
+        setPaneVisible((*(nw4r::lyt::Pane**)((u8*)self->layout40 + 0x10))->FindPaneByName(&tbl[0x19a], true), 1);
         for (u8 i = 0; i < 3; i++) {
             char buf[0x20];
             sprintf(buf, &tbl[0x1a1], (int)(u8)i + 1);
             // Sign bit of (unsigned)(i - count): 1 while the tab is within
             // the page range (retail lowers this to srwi, not srawi).
-            func_80124270((*(nw4r::lyt::Pane**)((u8*)self->layout40 + 0x10))->FindPaneByName(buf, true),
+            setPaneVisible((*(nw4r::lyt::Pane**)((u8*)self->layout40 + 0x10))->FindPaneByName(buf, true),
                           ((u32)i - (u32)count) >> 31);
         }
         // Retail computes counter+1 separately at each use (memory reload
@@ -1327,7 +1327,7 @@ extern "C" __declspec(noinline) void func_8029967C(CMCGetItemBox* self) {
                  scale * (float)(cvt.d - lbl_eu_80668BD8);
         copyVEC3((u8*)pagePane + 0x2C, (float*)&pos);
     } else {
-        func_80124270((*(nw4r::lyt::Pane**)((u8*)self->layout40 + 0x10))->FindPaneByName(&lbl_eu_8050FF8C[0x19a], true), 0);
+        setPaneVisible((*(nw4r::lyt::Pane**)((u8*)self->layout40 + 0x10))->FindPaneByName(&lbl_eu_8050FF8C[0x19a], true), 0);
     }
     for (u8 i = 0; i < 0x1e; i++) {
         u16 icon = (u16)getMCItemSubItemId(sub, i);
@@ -1380,8 +1380,8 @@ extern "C" __declspec(noinline) void moveMCGetItemBoxCursor(CMCGetItemBox* self)
         p2 = (*(nw4r::lyt::Pane**)((u8*)self->layout40 + 0x10))->FindPaneByName(&tbl[0x1e9], true);
         func_80137924(&posIf, p1, p2, *(nw4r::lyt::Pane**)((u8*)self->layout40 + 0x10));
         ((CBaseCur*)&self->subObj_88)->setRootPaneTranslate(&posIf);
-        func_801D216C(&self->subObj_88, 1);
-        func_801D216C(&self->subObj_58, 0);
+        Cur_SetVisible(&self->subObj_88, 1);
+        Cur_SetVisible(&self->subObj_58, 0);
     } else {
         tbl = lbl_eu_8050FF8C;
         sprintf(nameBuf, &tbl[0x161], (int)(s8)self->field_300 + (int)page * 10 + 1);
@@ -1389,8 +1389,8 @@ extern "C" __declspec(noinline) void moveMCGetItemBoxCursor(CMCGetItemBox* self)
         p2 = (*(nw4r::lyt::Pane**)((u8*)self->layout40 + 0x10))->FindPaneByName(&tbl[0x1e9], true);
         func_80137924(&posElse, p1, p2, *(nw4r::lyt::Pane**)((u8*)self->layout40 + 0x10));
         ((CBaseCur*)&self->subObj_58)->setRootPaneTranslate(&posElse);
-        func_801D216C(&self->subObj_88, 0);
-        func_801D216C(&self->subObj_58, 1);
+        Cur_SetVisible(&self->subObj_88, 0);
+        Cur_SetVisible(&self->subObj_58, 1);
     }
 }
 #pragma pop
@@ -1492,7 +1492,7 @@ bool CMCGetItemBox::OnFileEvent(CEventFile* pEventFile) {
         v1 = s1;
         code80135FDC_setVec3((float*)&s2, lbl_eu_80668C00, lbl_eu_80668BFC, lbl_eu_80668BD4);
         v2 = s2;
-        func_801D24E8(&this->subObj_70, &v2, &v1);
+        Cur_SetTwoPanes09(&this->subObj_70, &v2, &v1);
 
         u8 cur16Buf[0x18];
         __ct__CCur16(cur16Buf, this->arcAcc1);
@@ -1532,15 +1532,15 @@ bool CMCGetItemBox::OnFileEvent(CEventFile* pEventFile) {
         CFileHandle* h3 = this->fileHandle3;
         void* fileData = h3->mData;
         h3->mData = 0;
-        func_8003AA34();
+        Bdat_GetTable_AA34();
         // Retail folds the first lookup's offset directly into lis/addi, then
         // caches the table base for the remaining lookups.
         if (getFP__FPCc(&lbl_eu_8050FF8C[0x29f]) == 0) {
             setBdatEntry__5CBdatFUlPv(2, fileData);
         }
-        func_8003AA34();
+        Bdat_GetTable_AA34();
         lbl_eu_80664A18 = getFP__FPCc(&lbl_eu_8050FF8C[0x29f]);
-        func_8003AA34();
+        Bdat_GetTable_AA34();
         lbl_eu_80664A1C = getFP__FPCc(&lbl_eu_8050FF8C[0x2ae]);
         activateMCGetItemBox(this);
         this->fileHandle3 = 0;
@@ -1551,11 +1551,11 @@ bool CMCGetItemBox::OnFileEvent(CEventFile* pEventFile) {
         void* fileData = h4->mData;
         h4->mData = 0;
         this->memManagerPtr = (u8*)fileData;
-        func_8003AA34();
+        Bdat_GetTable_AA34();
         if (getFP__FPCc(&lbl_eu_8050FF8C[0x119]) == 0) {
             setBdatEntry__5CBdatFUlPv(5, this->memManagerPtr);
         }
-        func_8003AA34();
+        Bdat_GetTable_AA34();
         lbl_eu_80664A20 = getFP__FPCc(&lbl_eu_8050FF8C[0x119]);
         activateMCGetItemBox(this);
         this->fileHandle4 = 0;

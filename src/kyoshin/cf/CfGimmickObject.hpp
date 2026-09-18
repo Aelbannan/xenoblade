@@ -16,7 +16,7 @@
 #include "kyoshin/cf/CfGimmick.hpp"
 #include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
 
-// View of the singleton returned by func_8003AA34 whose members are the
+// View of the singleton returned by Bdat_GetTable_AA34 whose members are the
 // per-gimmick-type bdat table pointers; the ctor loads the object-gimmick
 // table pointer through an sda21 member reloc.
 struct CfGimmickTableSet {
@@ -25,7 +25,7 @@ struct CfGimmickTableSet {
 
 // NOTE: CtrlMovePC.hpp deliberately NOT included here -- its extern "C"
 // getUnk80664658() declaration conflicts with CfGimmick.hpp's. Only
-// cf::CCtrlMovePC / func_80199678 were needed, declared below.
+// cf::CCtrlMovePC / movePcCondFullReset were needed, declared below.
 #include "types.h"
 
 // Per-area table entry at +0x84 (2 entries x 0x10 bytes). Each entry holds
@@ -132,7 +132,7 @@ public:
     /* 0x142 */ u16 field_142;
     /* 0x144 */ u16 field_144[3];      // u16 id table fired by func_801F8BB8
     /* 0x14A */ u16 field_14A[4];      // u16 table scanned by func_801F72A4
-    /* 0x152 */ u16 field_152;         // party-member flag word (func_801F6D8C)
+    /* 0x152 */ u16 field_152;         // party-member flag word (GimObjProbePartySlots)
     /* 0x154 */ u16 field_154;
     /* 0x156 */ u16 field_156;
     /* 0x158 */ u16 field_158;         // gimmick id passed to CfGimmick_PlaySoundAtPos
@@ -151,7 +151,7 @@ public:
     /* 0x16C */ f32 field_16C;         // LOD fade countdown timer (func_801F634C / func_801F6E60)
     /* 0x170 */ f32 field_170;         // countdown timer (func_801F75CC)
     /* 0x174 */ f32 field_174;
-    /* 0x178 */ f32 field_178;         // LOD timer diff (func_801F627C)
+    /* 0x178 */ f32 field_178;         // LOD timer diff (GimObjRefreshLodTimer)
     /* 0x17C */ f32 field_17C;
     /* 0x180 */ f32 field_180;         // effect timer (func_801F76A8 / func_801F6780)
     /* 0x184 */ u32 field_184;         // player bitmask (func_801F72A4)
@@ -223,8 +223,8 @@ void CfGimmick_UnregisterSpawnedObject(void* self);
 void __dt__Q22cf9CfGimmickFv(void* self, int mode);
 void setLODEnable__8CTaskLODFv(u8 lod, int mode);
 void* getScnHandle__Fv(void);
-void func_804BCC30(void* snd, u8 id);
-void func_804BCC3C(void* snd, u8 id);
+void ScnData_FwdB7D9C(void* snd, u8 id);
+void ScnData_FwdB7DD4(void* snd, u8 id);
 void* func_80186BC8(int id);
 void ColiSetMoveEnableFlag(void* self, int mode);
 // Same-TU call targets (scaffold stubs; signatures match the stubs in the .cpp).
@@ -243,8 +243,8 @@ int func_801F879C(cf::CfGimmickObject* self);
 int func_801F89B8(cf::CfGimmickObject* self);
 // Same-TU matched functions (raw retail names).
 int func_801F75CC(cf::CfGimmickObject* self);
-int func_801F6D8C(cf::CfGimmickObject* self);
-void func_801F627C(cf::CfGimmickObject* self, u8 lod, int mode);
+int GimObjProbePartySlots(cf::CfGimmickObject* self);
+void GimObjRefreshLodTimer(cf::CfGimmickObject* self, u8 lod, int mode);
 // Cross-TU imports (retail names - C linkage keeps the raw names unmangled;
 // MWCC would otherwise append __F<argtypes> to global functions).
 f32 getLODDistance__8CTaskLODFv(u8 lod);
@@ -269,7 +269,7 @@ int CfGimmick_CheckPartyIdLoaded(void* self, u32 arg);
 void func_8020A484(u16 id);
 int CfGimmick_CheckStateFlag2CC8(void* obj);
 int CfGimmick_CheckStateFlag1D44(void* obj);
-u32 func_8006A33C();
+u32 CfT_FrameCountA();
 int func_802098EC(u32 mask, cf::CfGimmick* gimmick, const CfGimmickVec3* point,
                   const f32* ang, void* partyId);
 void CItem_consumeFamilyCnt(unsigned int a, int b);
@@ -298,7 +298,7 @@ void func_8007B0C8(int idx);
 void CfGimmick_SetGlobalFlag400000();
 extern "C" void* createBattleActor__Q22cf13CfGameManagerFv(u32 id, u32 mode);  // void* form matches CTaskGameEff.hpp (return-type unity pending repo-wide)
 void* getPlayer__Q22cf13CfGameManagerFi(int index);
-void func_80199678(void* ctrl, int flag);  // CCtrlMovePC helper (CtrlMoveBase)
+void movePcCondFullReset(void* ctrl, int flag);  // CCtrlMovePC helper (CtrlMoveBase)
 void clearPlayerEffect__Q22cf13CfGameManagerFv(void* obj);
 }
 

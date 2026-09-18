@@ -1,7 +1,7 @@
 // cf::CfObjectObj - reconstructed functions for kyoshin/cf/object/CfObjectObj
 // Functions are kept in retail .text order so hexdiff's offset-based symbol
 // fallback maps the unmangled retail names (__ct__cf_CfObjectObj,
-// __dt__800BFA14, func_800BFAB0, func_800BFBF4) onto the mangled decomp ones.
+// __dt__800BFA14, ObjObj_ReleaseModels_FAB0, ObjObj_SetMoveId_FBF4) onto the mangled decomp ones.
 
 #include "kyoshin/harness_catalog.hpp"
 #include "kyoshin/cf/object/CfObjectObj.hpp"
@@ -80,7 +80,7 @@ void cf::CfObjectObj::reset() {}
 // us-800c04f8  - init helper: two vtable init calls, clears two flags,
 // dispatches two helper-ids through the 0x144 virtual, then sets bit-derived
 // flags on arg4/arg5. Returns 1.
-int cf::CfObjectObj::func_800BFAB0(u32 arg4, u32 arg5) {
+int cf::CfObjectObj::ObjObj_ReleaseModels_FAB0(u32 arg4, u32 arg5) {
     // 0x17c then 0x178 virtual init calls on the model.
     this->CfObjectModel_releaseModelList();
     this->CfObjectModel_releaseModelSub();
@@ -109,7 +109,7 @@ void cf::CfObjectObj::update() {
     // member impl (retail uses a plain bl, not a vtable dispatch).
     this->CfObjectMove::CfObject_UnkVirtualFunc4();
     if (this->CfObject_isMoveActiveNow() != 0 && this->field_71C != 0) {
-        func_800CA580(this->mSubObj38, this->field_71C);
+        ObjImplSyncSlotState(this->mSubObj38, this->field_71C);
         this->field_71C = 0;
     }
 }
@@ -117,10 +117,10 @@ void cf::CfObjectObj::update() {
 // us-800c063c  - dispatch a helper id, or store it if not dispatchable.
 // Retail branches straight to the epilogue when mSubObj38 is null (no store
 // then); the id is stored only when mSubObj38 != 0 but the virtual check fails.
-void func_800BFBF4(cf::CfObjectObj* ths, u16 id) {
+void ObjObj_SetMoveId_FBF4(cf::CfObjectObj* ths, u16 id) {
     if (ths->mSubObj38 != 0) {
         if (ths->CfObject_isMoveActiveNow() != 0) {
-            func_800CA580(ths->mSubObj38, id);
+            ObjImplSyncSlotState(ths->mSubObj38, id);
             ths->field_71C = 0;
         } else {
             ths->field_71C = id;

@@ -35,7 +35,7 @@ Retail asm for each symbol is in this directory (`asm_*.s`).
 - Mirror patterns from sibling menu Inits / Term; **do not** edit Move/cbRenderBefore
 
 ### `CUIWindowManager::Term` (`asm_Term_CUIWindowManager.s`)
-- Tiny: `func_8009D0B4()`; `func_8009D514(this ? this+0x54 : this)` (IFlagEvent slice)
+- Tiny: `CtrlRemote_FetchSharedBufPtr()`; `CtrlRemote_ResetSlotArrayByIndex(this ? this+0x54 : this)` (IFlagEvent slice)
 - `*(u8*)(this->unk9C + 0x39) = 1` (SetRemove on child); `lbl_eu_80664088 = 0` via SDA
 - Use `extern "C" CUIWindowManager* lbl_eu_80664088;` (Move already does) — add `Term()` to hpp; field `unk9C` already present as char[] — widen to pointer type if needed
 

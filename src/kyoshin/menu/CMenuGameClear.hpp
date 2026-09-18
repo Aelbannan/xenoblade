@@ -129,9 +129,9 @@ void __ct__CCur18(void* cursor, void* accessor);
 void __dt__6CCur18Fv(void* cursor, int flags);
 void deleteRegion__17UnkClass_8045F564Fv(void* region);
 void* CtrlObjectParam_InitEquipSlots(cf::CtrlObjectParamInit* p);
-void func_8022B7F4(void* syswin);
-void func_8022B7C8(void* syswin, nw4r::lyt::DrawInfo* drawInfo);
-void func_801D20B0(void* cursor, nw4r::lyt::DrawInfo* drawInfo);
+void sysWinTermLayout(void* syswin);
+void sysWinDrawLayout(void* syswin, nw4r::lyt::DrawInfo* drawInfo);
+void Cur_DrawLayout(void* cursor, nw4r::lyt::DrawInfo* drawInfo);
 void __ct__Q34nw4r3lyt8DrawInfoFv(nw4r::lyt::DrawInfo* drawInfo);
 void __dt__Q34nw4r3lyt8DrawInfoFv(nw4r::lyt::DrawInfo* drawInfo, int flags);
 int IsMenuState621F0();
@@ -146,9 +146,9 @@ extern u32 lbl_eu_80663E28;              // task-state flag word (bit 21 gate)
 // CSysWin / cursor helper imports (retail-unmangled C symbols; declared here
 // because the defining headers are not includable from this TU).
 extern "C" void* getCfPadData__Q22cf13CfGameManagerFv();
-extern "C" void func_8022B8E4(CSysWinFull* syswin);
-extern "C" void func_8022C1B4(nw4r::math::VEC3* out, void* syswin, u8 sel);
-extern "C" void func_801D216C(void* cursor, int val);
+extern "C" void sysWinAdvancePhase3(CSysWinFull* syswin);
+extern "C" void sysWinGetPaneScreenPos(nw4r::math::VEC3* out, void* syswin, u8 sel);
+extern "C" void Cur_SetVisible(void* cursor, int val);
 
 extern u32 __ptmf_null[3];               // null pointer-to-member-function
 extern char lbl_eu_8052BF70[];           // CProcess vtable (temp store)

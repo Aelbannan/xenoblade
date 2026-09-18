@@ -16,7 +16,7 @@ struct CArtsSelectSrc {
     u32 id;
 };
 
-// Returned singleton object backing func_801862C0's accessor.
+// Returned singleton object backing ArtsSelect_GetContainer's accessor.
 // Sized to land in normal .bss (not SDA) so its address materializes as lis+addi.
 u8 lbl_eu_80574090[0x1708];
 s8 lbl_eu_806642C8;
@@ -24,7 +24,7 @@ u32 lbl_eu_806642D0;
 
 /* One-time init guard: set the SDA flag on first call, then hand out the
    singleton object's address. Sign-extension in retail matches a signed byte. */
-void* func_801862C0(void) {
+void* ArtsSelect_GetContainer(void) {
     if (lbl_eu_806642C8 == 0) {
         lbl_eu_806642C8 = 1;
     }
@@ -79,7 +79,7 @@ void* func_801863F4(void* self, void* src) {
     return reinterpret_cast<void*>(srcId);
 }
 
-extern "C" void* func_80186460(void* dst, void* src) {
+extern "C" void* ArtsSelect_CacheEntry(void* dst, void* src) {
     const u8* srcBytes = static_cast<const u8*>(src);
     u32 id = *reinterpret_cast<const u32*>(srcBytes + 0x74);
     *(u32*)((u8*)dst + 0x1700) = id;
@@ -234,7 +234,7 @@ void func_80186664(u8* self) {
    object's 0x6C flag word. */
 void func_801866F0(MapProxy** objects, int row) {
     // Refresh the bdat manager (result unused; it populates lbl_eu_806640B0).
-    func_8003AA34();
+    Bdat_GetTable_AA34();
     const char* cols = (const char*)lbl_eu_805038C8;
     void* bdat = lbl_eu_806640B0;
 
@@ -361,8 +361,8 @@ void* func_80186BC8(int p) {
     int i;
     if (lbl_eu_806642D0 != 0 && p != 0) {
         bdat = lbl_eu_806640B0;
-        rowBase = (int)func_8003B41C(bdat);
-        rowCount = (int)func_8003B1EC(bdat) + rowBase;
+        rowBase = (int)Bdat_GetRowBase_B41C(bdat);
+        rowCount = (int)Bdat_GetMaxRow_B1EC(bdat) + rowBase;
         entries = (void**)lbl_eu_806642D0;
         for (i = rowBase; i < rowCount; i++) {
             if (entries[i] != NULL && i == p) {
@@ -419,8 +419,8 @@ void func_80186D20(void* p) {
     s32 end;
     s32 row;
 
-    row = func_8003B41C(bdat);
-    end = row + func_8003B1EC(bdat);
+    row = Bdat_GetRowBase_B41C(bdat);
+    end = row + Bdat_GetMaxRow_B1EC(bdat);
     cols = (const char*)lbl_eu_805038C8;
     slots = reinterpret_cast<MapProxy**>(p) + row;
     slotFlags = reinterpret_cast<u16*>(reinterpret_cast<u8*>(p) + row * 2);

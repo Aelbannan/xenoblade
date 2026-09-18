@@ -297,7 +297,7 @@ extern "C" nw4r::lyt::ArcResourceAccessor* CUICfManager_getArcResourceAccessor()
 // names; the extern "C" declaration fixes the definition linkage).
 struct CFloorMapLayoutData0;
 struct CFloorMapRowList;
-extern "C" void func_80244764(CFloorMapLayoutData0*);
+extern "C" void FloorMap_BuildLayoutBaseArc(CFloorMapLayoutData0*);
 extern "C" void func_80246330(CFloorMapLayoutBlock*);
 extern "C" u32 func_8024FB78(void*);
 extern "C" void func_8024830C(void*, void*);
@@ -314,7 +314,7 @@ extern const u32 lbl_eu_8050BAB0[];
 // Sub-object layouts (from retail field analysis)
 // ============================================================================
 
-// Layout-init wrapper used by func_80244C60/func_80244DD8: a layout slot, its
+// Layout-init wrapper used by FloorMap_BuildLayoutNoCEPane/FloorMap_BuildLayoutNoD9Pane: a layout slot, its
 // arc resource accessor and the two animation transforms bound to it.
 struct CFloorMapLayoutData {
     u8 _00[0x04];
@@ -324,7 +324,7 @@ struct CFloorMapLayoutData {
     nw4r::lyt::AnimTransform* anim10;         // +0x10
 };
 
-// Layout-init view for func_80244764: layout pointer at +0x00 with the arc
+// Layout-init view for FloorMap_BuildLayoutBaseArc: layout pointer at +0x00 with the arc
 // resource accessor right behind it at +0x04 (buildLayout takes
 // &layout/accessor pair, then GetRootPane reads layout+0x10).
 struct CFloorMapLayoutData0 {
@@ -616,8 +616,8 @@ struct CFloorMapRowList {
 // COption.hpp / CItemBoxGrid.hpp / CMapSel.hpp under the same extern "C").
 extern "C" void getEntry__5CBdatFUl(u32);     // CBdat::func(u32) - release shared BDAT handle
 extern "C" void waitForDrawDone__9CDeviceVIFv();   // CDeviceVIF::waitForDrawDone
-extern "C" void func_801F35DC(void* scrollBar);    // CScrollBar teardown
-extern "C" void func_8022B7F4(void* sysWin);       // CSysWin teardown
+extern "C" void CScrollBar_Teardown(void* scrollBar);    // CScrollBar teardown
+extern "C" void sysWinTermLayout(void* sysWin);       // CSysWin teardown
 // C++-mangled imports from code_80135FDC.cpp (unmangled identifiers mangle to
 // the retail symbols, same scheme as CItemBoxInfo.hpp).
 void func_801390E0(CFileHandle**);
@@ -626,9 +626,9 @@ void releaseArcResourceAccessor(nw4r::lyt::ArcResourceAccessor*);
 // (Layout/Pane teardown goes through `delete`: the deleting-dtor vcall
 // at +0x08 matches retail.)
 
-extern "C" void func_801F3540(void* scrollBar);   // CScrollBar per-frame update
+extern "C" void CScrollBar_UpdateDispatch(void* scrollBar);   // CScrollBar per-frame update
 extern "C" void func_801D202C(void* cursor);      // CCur18 per-frame update
-extern "C" void func_8022B748(void* sysWin);      // CSysWin per-frame update
+extern "C" void sysWinDispatchPhase(void* sysWin);      // CSysWin per-frame update
 // Advance the attached anim-transform to a frame (returns nonzero when done);
 // retail symbol keeps the C++ mangled name advanceAnimTransform__FPQ34nw4r3lyt13AnimTransformf.
 u32 advanceAnimTransform(nw4r::lyt::AnimTransform*, float);
@@ -708,13 +708,13 @@ extern "C" char* BdatTouchStringCell(char*, char*, u32);
 extern "C" void LayoutSetTextBoxFmtValue(nw4r::lyt::Layout*, char*, char*, u32);
 extern "C" void* getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32, nw4r::lyt::Layout*);
 extern "C" void func_801375A0(nw4r::math::VEC3*, nw4r::lyt::Pane*);
-extern "C" void func_801F3850(void*, u16);
+extern "C" void CScrollBar_PlaceThumb(void*, u16);
 // C linkage so the same-TU definition emits the retail symbol
-// func_80246200 instead of the mangled C++ name at every call site.
-extern "C" void func_80246200(void*);
+// FloorMap_RefreshCursorRows instead of the mangled C++ name at every call site.
+extern "C" void FloorMap_RefreshCursorRows(void*);
 extern "C" void func_80137B44(nw4r::lyt::Layout*, const char*, u32);
 extern "C" void* PaneSetTexPaletteByName(void*, const char*, void*);
-extern "C" u32 func_8009CF8C(u32);
+extern "C" u32 CtrlRemote_TouchBitByArg(u32);
 
 // Flat C-ABI imports used by the map-cursor functions (retail symbols are
 // unmangled). playUISound keeps C++ linkage so MWCC emits the retail
@@ -733,7 +733,7 @@ extern "C" void func_80249344(CFloorMapLayoutSlots*);
 extern "C" void func_80248ED8(CFloorMapLayoutSlots*);
 // C linkage so the same-TU definition emits the retail plain name.
 extern "C" void* func_80248920(void*, const char*, f32, f32, void*, const char*);
-extern "C" void func_8024577C(void*, u16);
+extern "C" void FloorMap_SetCursorState(void*, u16);
 extern "C" void func_802452C4(void*);
 extern "C" void func_8024B4CC(nw4r::math::VEC3*, void*, nw4r::lyt::Pane*);
 extern void playUISound(u32);
@@ -747,32 +747,32 @@ extern "C" char* MakeTplNameSysFile(u32);
 extern "C" u16 BdatGetU16Direct(const void*, const void*, int);
 extern "C" u8 BdatGetU8Direct(u32, const char*, u32);
 extern "C" s16 BdatGetS16Direct(u32, const char*, u32);
-extern "C" u32 func_8003B1EC(void* bdat);   // BDAT row count (canonical void* form)
+extern "C" u32 Bdat_GetMaxRow_B1EC(void* bdat);   // BDAT row count (canonical void* form)
 extern "C" void* getFP__FPCc(const char*);
-extern "C" void* func_8003AA34();
+extern "C" void* Bdat_GetTable_AA34();
 extern "C" void func_80136400(const char* src, u16* dst, u32 destLen);
 extern "C" void func_80125D00(f32* out, nw4r::lyt::Pane* pane, u16* str);
 extern "C" s32 BdatGetS8Direct(const void*, const void*, s32);
 // Height thresholds picking which of the three status panes lights up.
 extern f32 lbl_eu_80668780;
 extern f32 lbl_eu_80668784;
-extern "C" void func_801F367C(void*);
+extern "C" void CScrollBar_requestScrollIn(void*);
 extern "C" CFloorMapGimmickGlobal* getUnk80664658();
-extern "C" void func_801F3670(void*, const float*);
-extern "C" void func_801F36BC(void*, int, int);
-extern "C" void func_8022C1B4(nw4r::math::VEC3*, void*, u8);
+extern "C" void CScrollBar_InitRootPane(void*, const float*);
+extern "C" void CScrollBar_UpdateThumb(void*, int, int);
+extern "C" void sysWinGetPaneScreenPos(nw4r::math::VEC3*, void*, u8);
 extern "C" void closeFileHandle__FPP11CFileHandle(CFileHandle**);
 extern "C" void Panic__Q24nw4r2dbFPCciPCce(const char*, int, const char*, ...);
 extern "C" int atoi(const char*);
 
 // CSysWin sub-object helpers used by the floor-map input handlers (retail
 // flat names).
-extern "C" void func_8022B8E4(void* sysWin);
-extern "C" void func_801D216C(void* cursor, int mode);
+extern "C" void sysWinAdvancePhase3(void* sysWin);
+extern "C" void Cur_SetVisible(void* cursor, int mode);
 extern "C" void func_8022B9B4(void* sysWin, char* nameA, char* nameB);
-extern "C" void func_8022BF6C(void* sysWin, char* nameA, char* nameB);
+extern "C" void sysWinSetTwoTextValues(void* sysWin, char* nameA, char* nameB);
 // (func_8022BFC8 comes from kyoshin/CSysWin.hpp: CSysWin* form.)
-extern "C" void func_8022B8B8(void* sysWin);
+extern "C" void sysWinOpenPhase1(void* sysWin);
 
 // .sdata2 floats / .sbss globals for the floor-map update functions.
 extern f32 lbl_eu_80668760;   // 1.0f (per-frame countdown step / anim advance)
@@ -874,7 +874,7 @@ extern void* lbl_eu_80573D18[0x1C];
 int func_80138138(int idx);
 extern "C" u32 func_80138574(const char* name, u32 id);
 extern "C" u32 CheckState2CC8Active(u16 id);
-extern "C" CFloorMapVec3* func_801F4E68(CFloorMapGimmickGlobal* mgr, u16 id);
+extern "C" CFloorMapVec3* GimFindPosByRow(CFloorMapGimmickGlobal* mgr, u16 id);
 
 // (Font handles dispatch through IDeviceFontInfo::getFont at +0x24;
 // see monolib/device/CDeviceFont.hpp.)

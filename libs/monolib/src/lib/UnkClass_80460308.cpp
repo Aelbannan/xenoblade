@@ -2,7 +2,7 @@
 //
 // Recovered from retail asm (build/us/asm/monolib/src/lib/UnkClass_80460308.s):
 //   - processData__17UnkClass_80460308Fv: Adler-32 checksum (zlib adler32).
-//   - func_80460728__17UnkClass_80460308Fv: inflate "fast" block decoder core
+//   - ZlibInflateFastCore: inflate "fast" block decoder core
 //     (zlib inflate_fast), driven by the inflate loop in UnkClass_80460C34.
 //
 // The retail symbols carry placeholder "Fv" mangling even though both
@@ -161,7 +161,7 @@ struct InfStream {
  * and decoder state in place. `start` is the caller's initial
  * avail_out, used to recover the output run base.
  */
-extern "C" void func_80460728__17UnkClass_80460308Fv(InfStream* strm, u32 start)
+extern "C" void ZlibInflateFastCore(InfStream* strm, u32 start)
 {
     InfState* state;
     u8* in;

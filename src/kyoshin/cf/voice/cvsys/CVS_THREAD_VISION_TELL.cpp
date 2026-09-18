@@ -6,17 +6,17 @@
 #include "kyoshin/harness_catalog.hpp"
 #include "monolib/math/Random.hpp"
 
-// us-802ac1fc (func_802A9AC4)
+// us-802ac1fc (VisionTell_NotifyComplete)
 // Completion callback: if no active voice, call the playback-start virtual.
-void func_802A9AC4(CVS_THREAD_VISION_TELL* self) {
+void VisionTell_NotifyComplete(CVS_THREAD_VISION_TELL* self) {
     if (func_802A3E88(self) == 0) {
         self->func_802A3B50();
     }
 }
 
-// us-802ac244 (func_802A9B0C)
+// us-802ac244 (VisionTell_RemoveVoice)
 // Remove a voice from the slots by matching its embedded CCharVoice pointer.
-void func_802A9B0C(CVS_THREAD_VISION_TELL* self, CCharVoice* voicePtr) {
+void VisionTell_RemoveVoice(CVS_THREAD_VISION_TELL* self, CCharVoice* voicePtr) {
     func_802A3BEC(self, voicePtr);
 
     // Slot 0x20: load handle, bias if non-null, compare with voicePtr
@@ -90,9 +90,9 @@ CVS_THREAD_VISION_TELL* __ct__802A96C0(CVoiceHandle* h1, CVoiceHandle* h2) {
     return self;
 }
 
-// us-802abed8 (func_802A97A0)
+// us-802abed8 (VisionTell_PlaySlot1)
 // Advance/play function for voice slot 1 (field_0x20).
-void func_802A97A0(CVS_THREAD_VISION_TELL* self) {
+void VisionTell_PlaySlot1(CVS_THREAD_VISION_TELL* self) {
     // Copy init data -- read index 0 first (lwzu pointer-increment) so MWCC
     // emits the lis @ha + lwzu @l base-load form, then the handle, then the
     // remaining elements. Match the HAGE pattern. v0 is declared before p so
@@ -139,7 +139,7 @@ void func_802A97A0(CVS_THREAD_VISION_TELL* self) {
         voiceId = 0xCE;
         break;
     case 1:
-        voiceId = (func_802A7EB0(self->field_0x20, self->field_0x24) == 0) ? 0xCF : 0x51A;
+        voiceId = (HpVoice_CheckPairGate(self->field_0x20, self->field_0x24) == 0) ? 0xCF : 0x51A;
         break;
     default:
         self->func_802A3B50();
@@ -159,10 +159,10 @@ void func_802A97A0(CVS_THREAD_VISION_TELL* self) {
     }
 }
 
-// us-802ac05c (func_802A9924)
+// us-802ac05c (VisionTell_PlaySlot2)
 // Advance/play function for voice slot 2 (field_0x24). Retail re-reads
 // self->field_0x24/field_0x20 from memory at each use (no long-lived caches).
-void func_802A9924(CVS_THREAD_VISION_TELL* self) {
+void VisionTell_PlaySlot2(CVS_THREAD_VISION_TELL* self) {
     if (func_802A3E88(self) != 0) {
         return;
     }

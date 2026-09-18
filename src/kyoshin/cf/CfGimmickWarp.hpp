@@ -18,12 +18,12 @@ namespace cf {
 class __declspec(novtable) CfGimmickWarp {
 public:
     virtual ~CfGimmickWarp();                        // +0x08 dtor
-    virtual void unk_0C();                           // +0x0C  CfGimmick_DetachManager / func_8020D7BC
-    virtual void unk_10();                           // +0x10  func_801F4994 / func_8020D6FC
-    virtual UNKWORD unk_14();                        // +0x14  stub func_801F4B64
-    virtual UNKWORD unk_18();                        // +0x18  stub func_801F4BF8
-    virtual UNKWORD unk_1C();                        // +0x1C  stub func_801F4C8C
-    virtual void unk_20();                           // +0x20  CfGimmick_UpdateColliderMatrix / func_8020D7DC
+    virtual void unk_0C();                           // +0x0C  CfGimmick_DetachManager / CfGimmickWarp_ClearState
+    virtual void unk_10();                           // +0x10  GimNoopA / CfGimmickWarp_UpdateState
+    virtual UNKWORD unk_14();                        // +0x14  stub GimNoopB
+    virtual UNKWORD unk_18();                        // +0x18  stub GimNoopC
+    virtual UNKWORD unk_1C();                        // +0x1C  stub GimNoopD
+    virtual void unk_20();                           // +0x20  CfGimmick_UpdateColliderMatrix / CfGimmickWarp_RefreshMatrices
 
     CfGimmickWarp();
     // Overlay on vptr at +0x00 so ctor can install retail table.

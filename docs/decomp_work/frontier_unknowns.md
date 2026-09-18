@@ -47,18 +47,18 @@ distinct frontier functions that reference them.
 | 15 | `func_800631F0` | 0x800631F0 | 9 | 4 | CfRes |
 | 16 | `func_80086DBC` | 0x80086DBC | 4 | 4 | CCharEffect, CTaskREvtSequence, pluginTime |
 | 17 | `func_801CB0F4` | 0x801CB0F4 | 4 | 4 | CMenuItemExchange, CMenuShopSell |
-| 18 | `func_801D3320` | 0x801D3320 | 4 | 4 | CEquipItemBox, CItemBoxGrid, CTutorialList |
+| 18 | `sortMenuIsVisible28` | 0x801D3320 | 4 | 4 | CEquipItemBox, CItemBoxGrid, CTutorialList |
 | 19 | `cfCam_maskUnk1D4` | 0x8006C6B4 | 6 | 3 | CfCam |
 | 20 | `setMemInitFlag` | 0x80434A4C | 5 | 3 | CLibCriMoviePlay, Class_8045F858, UnkClass_8045F564 |
-| 21 | `func_800AA318` | 0x800AA318 | 4 | 3 | CTaskREvtSequence, CCharVoice, CREvtModelPc |
+| 21 | `Tok_Unpack` | 0x800AA318 | 4 | 3 | CTaskREvtSequence, CCharVoice, CREvtModelPc |
 | 22 | `func_80086DA0` | 0x80086DA0 | 3 | 3 | ocCfp, pluginTime |
 | 23 | `cfCam_testUnk04M` | 0x8006BFC4 | 3 | 3 | CfCam |
 | 24 | `QstLogList_IsSortEnabled` | 0x80227CCC | 3 | 3 | CMenuQuestLog |
-| 25 | `func_8003B1EC` | 0x8003B1EC | 3 | 3 | CFloorMap, CfBdat, code_801862C0 |
-| 26 | `func_801EB020` | 0x801EB020 | 3 | 3 | CItemBoxGrid, CItemBoxLine |
+| 25 | `Bdat_GetMaxRow_B1EC` | 0x8003B1EC | 3 | 3 | CFloorMap, CfBdat, code_801862C0 |
+| 26 | `NumSel_GetActiveFlag_B020` | 0x801EB020 | 3 | 3 | CItemBoxGrid, CItemBoxLine |
 | 27 | `func_8044BE24` | 0x8044BE24 | 3 | 3 | code_804F0258 |
 | 28 | `func_8044BE1C` | 0x8044BE1C | 3 | 3 | code_804F0258 |
-| 29 | `func_801C4B60` | 0x801C4B60 | 18 | 2 | CKizunaTalkList, CKizunagram |
+| 29 | `setGXColorS10` | 0x801C4B60 | 18 | 2 | CKizunaTalkList, CKizunagram |
 | 30 | `func_800596AC` | 0x800596AC | 5 | 2 | CfCam |
 | 31 | `func_800631DC` | 0x800631DC | 4 | 2 | CfRes |
 | 32 | `CTaskGame_setVec4` | 0x800407C8 | 4 | 2 | CTaskGamePic, CScnVirtualLight |
@@ -77,9 +77,9 @@ distinct frontier functions that reference them.
 | 45 | `func_80080F40` | 0x80080F40 | 2 | 2 | CfGameManager, code_8018F8D8 |
 | 46 | `func_80086B14` | 0x80086B14 | 2 | 2 | CfObjectEff |
 | 47 | `poolInsertThunk` | 0x800B2D88 | 2 | 2 | code_800B06A4 |
-| 48 | `func_80069EA0` | 0x80069EA0 | 2 | 2 | CfObjectMove |
-| 49 | `func_8003AA34` | 0x8003AA34 | 2 | 2 | CPartsChange, CfBdat |
-| 50 | `func_8003B41C` | 0x8003B41C | 2 | 2 | CfBdat, code_801862C0 |
+| 48 | `CfT_PlayRateGet` | 0x80069EA0 | 2 | 2 | CfObjectMove |
+| 49 | `Bdat_GetTable_AA34` | 0x8003AA34 | 2 | 2 | CPartsChange, CfBdat |
+| 50 | `Bdat_GetRowBase_B41C` | 0x8003B41C | 2 | 2 | CfBdat, code_801862C0 |
 
 ## UnkClass_* Analysis
 

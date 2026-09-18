@@ -35,7 +35,7 @@ static int isTrailByte(unsigned char c) {
     return r;
 }
 
-int func_800C17DC(const char* str, int* type, int* len) {
+int CmText_DecodeSjisChar(const char* str, int* type, int* len) {
     unsigned char c = (unsigned char)str[0];
     if (isLeadByte(c)) {
         if (isTrailByte((unsigned char)str[1])) {
@@ -77,7 +77,7 @@ int func_800C1A18(CmTextProc* self, char* out, int maxLen) {
     int result = 1;
     while ((u8)self->cursor[0] != 0) {
         int type, lenz;
-        u32 ch = func_800C17DC(self->cursor, &type, &lenz);
+        u32 ch = CmText_DecodeSjisChar(self->cursor, &type, &lenz);
         pos += lenz;
         if (pos >= maxLen) {
             result = 0;
@@ -117,7 +117,7 @@ int func_800C1900(char* str, char** out, int maxLen) {
     int inWord = 0, offset = 0;
     while ((u8)s[0] != 0) {
         int type, lenz;
-        int ch = func_800C17DC(s, &type, &lenz);
+        int ch = CmText_DecodeSjisChar(s, &type, &lenz);
         if (type == 1) {
             if ((u16)ch == '#') break;
             if ((u16)ch == '/' && (u8)s[1] == '/') break;
@@ -202,7 +202,7 @@ void func_800C1B30(CmTextProc* self, int key, const char* name, const char* valu
 /// a keyword token followed by up to two parameters (`KEYWORD name value`); the
 /// keyword must appear in the lbl_eu_8052A528 dispatch table.  `buf` receives
 /// the 0x628-byte table that gets filled.
-void func_800C1CC4(CmTextProc* self, const char* text, CmTextTable* buf) {
+void CmText_ParseTextBuffer(CmTextProc* self, const char* text, CmTextTable* buf) {
     if (buf == 0) return;
     self->buf = buf;
     memset(self->buf, 0, 0x628);
@@ -233,41 +233,41 @@ void func_800C1CC4(CmTextProc* self, const char* text, CmTextTable* buf) {
     }
 }
 
-// Routes to func_800C1CC4 with the global flag record as the leading
+// Routes to CmText_ParseTextBuffer with the global flag record as the leading
 // argument and passes its two arguments through unchanged.
-void func_800C1CAC(u32 arg0, u32 arg1) {
-    func_800C1CC4((CmTextProc*)&lbl_eu_805739E8, (const char*)arg0, (CmTextTable*)arg1);
+void CmText_ParseWithStaticProc(u32 arg0, u32 arg1) {
+    CmText_ParseTextBuffer((CmTextProc*)&lbl_eu_805739E8, (const char*)arg0, (CmTextTable*)arg1);
 }
 
 // Register a callback into the table slot selected by field20 and set the
-// continue flag that the dispatch loop func_800C1EB8 checks.
-void func_800C1E9C(void (*callback)(void), u8 flag) {
+// continue flag that the dispatch loop CmText_DispatchCallbacks checks.
+void CmText_RegisterCallback(void (*callback)(void), u8 flag) {
     lbl_eu_805739F8.fns[lbl_eu_805739F8.field20] = callback;
     lbl_eu_805739F8.field24 = flag;
 }
 
 // Variadic prologue dump: on entry MWCC spills every register-argument into
 // this frame so callers can read them back out of memory. Empty body.
-void func_800C1DF0(...) {}
+void CmText_VariadicNoop(...) {}
 
 // Default no-op callback stored in the callback table at lbl_eu_805739F8.
-// Called by func_800C1EB8 when it iterates the callback array and a slot has no
+// Called by CmText_DispatchCallbacks when it iterates the callback array and a slot has no
 // registered handler.  The empty body corresponds to a single blr instruction.
-extern "C" void func_800C1F28(void) {}
+extern "C" void CmText_DefaultNoopCallback(void) {}
 
 // (Re)initialise the callback table: clear every slot, reset the active index
 // and flag, then install the default no-op callback in slot 0.
-void func_800C1E40() {
+void CmText_InitCallbackTable() {
     lbl_eu_805739F8.field20 = 0;
     lbl_eu_805739F8.field24 = 0;
     memset(&lbl_eu_805739F8, 0, 0x20);
-    lbl_eu_805739F8.fns[lbl_eu_805739F8.field20] = func_800C1F28;
+    lbl_eu_805739F8.fns[lbl_eu_805739F8.field20] = CmText_DefaultNoopCallback;
 }
 
 // Dispatch loop: while the active callback slot is populated, clear the
 // continue flag, invoke the callback, and keep iterating if the callback
 // re-set the flag.
-void func_800C1EB8() {
+void CmText_DispatchCallbacks() {
     if (lbl_eu_805739F8.fns[lbl_eu_805739F8.field20] != 0) {
         do {
             lbl_eu_805739F8.field24 = 0;
@@ -277,7 +277,7 @@ void func_800C1EB8() {
 }
 
 // Default no-op callback stored in the callback table at lbl_eu_805739F8.
-// Called by func_800C1EB8 when it iterates the callback array and a slot has no
+// Called by CmText_DispatchCallbacks when it iterates the callback array and a slot has no
 // registered handler.  The empty body corresponds to a single blr instruction.
 extern "C" void sinit_800C1F2C() {
     lbl_eu_805739F8.field20 = 0;

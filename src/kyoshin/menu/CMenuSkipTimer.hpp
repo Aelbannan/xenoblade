@@ -18,7 +18,7 @@ public:
 // Render-callback interface subobject at +0x58 (secondary vtable).
 // Deliberately declared WITHOUT a virtual destructor (same trick as
 // CMenuFade.hpp): the retail composite vtable (lbl_eu_80539780) fills the
-// dtor slot with the manual func_8029F0A0 adjuster, and a virtual dtor here
+// dtor slot with the manual SkipTimer_ThunkDtor58 adjuster, and a virtual dtor here
 // would make MWCC emit an extra @88@__dt__14CMenuSkipTimerFv thunk that
 // retail does not have. cbRenderBefore stays virtual so MWCC auto-emits the
 // @88@cbRenderBefore__14CMenuSkipTimerFv this-adjusting thunk.
@@ -49,18 +49,18 @@ public:
 // CMenuSkipTimer.cpp and emit the verbatim retail symbols).
 extern "C" CMenuSkipTimer* __ct__CMenuSkipTimer(CMenuSkipTimer* self, CProcess* parent);
 extern "C" CMenuSkipTimer* __dt__14CMenuSkipTimerFv(CMenuSkipTimer* self, int flags);
-extern "C" CMenuSkipTimer* func_8029EDE4(CProcess* self, CProcess* parent);
-extern "C" void func_8029F0A0(IScnRenderCB* sub);
-extern "C" void func_8029EE68(CMenuSkipTimer* self);
-extern "C" void func_8029EEE0(CMenuSkipTimer* self);
-extern "C" void func_8029F048(CMenuSkipTimer* self);
+extern "C" CMenuSkipTimer* SkipTimer_CreateInstance(CProcess* self, CProcess* parent);
+extern "C" void SkipTimer_ThunkDtor58(IScnRenderCB* sub);
+extern "C" void SkipTimer_Phase0Init(CMenuSkipTimer* self);
+extern "C" void SkipTimer_Phase1Mark2(CMenuSkipTimer* self);
+extern "C" void SkipTimer_Phase3Handle(CMenuSkipTimer* self);
 
 // Retail-unmangled callee names (US strips mangling for these func_ helpers).
 // int returns so the caller's `!= 0` stays a plain cmpwi (retail emits no u8 mask).
 extern "C" int CSkipTimerGetSkipButton(CSkipTimer* self);
 extern "C" void CSkipTimerTeardown(CSkipTimer* self);
-extern "C" void func_801C3D9C(CBgTex* self);
-extern "C" void func_801C40A0(CTitleAHelp* self);
+extern "C" void BgTex_Release_3D9C(CBgTex* self);
+extern "C" void teardown(CTitleAHelp* self);
 extern "C" void setPresentationFlag__Q22cf13CfGameManagerFv(u8 enable);
 extern "C" int isIdle__11CTitleAHelpFv(CTitleAHelp* h);
 
@@ -78,23 +78,22 @@ extern u32 lbl_eu_80663E28;
 extern "C" int CSkipTimerIsEngaged(CSkipTimer* self);
 extern "C" void CSkipTimerTick(CSkipTimer* self);
 extern "C" void func_8029FBE0(CSkipTimer* self);
-extern "C" void func_8029EF30(CMenuSkipTimer* self);
-extern "C" void func_801C3D54(CBgTex* self);
-extern "C" void func_801C3FF0(CTitleAHelp* self);
+extern "C" void SkipTimer_Phase2PollPad(CMenuSkipTimer* self);
+extern "C" void BgTex_Tick_3D54(CBgTex* self);
+extern "C" void updateHelp(CTitleAHelp* self);
 // Retail-unmangled CW helpers used by Init()'s temporary-object re-init pattern.
 extern "C" void __ct__CBgTex(void*, int);
 extern "C" void __dt__6CBgTexFv(void*, int);
 extern "C" void __ct__UnkClass_8011C974(void*, void*);
 extern "C" void __ct__CTitleAHelp(void*, char*, int);
 extern "C" void __dt__11CTitleAHelpFv(void*, int);
-extern "C" void __ct__CSkipTimer(void*);
 extern "C" void __dt__10CSkipTimerFv(void*, int);
 extern "C" char* BdatTouchStringCell(char*, char*, int);
-extern "C" void func_801C3C14(CBgTex* self);
+extern "C" void BgTex_Acquire_3C14(CBgTex* self);
 extern "C" void CTitleAHelp_load(CTitleAHelp* self);
 // Game-side CProcess dtor wrapper (D2 form; defined in CMainMenu.cpp).
 extern "C" void __dt__800FED0C(CProcess* self, int flags);
-// Draw/advance helpers for cbRenderBefore / func_8029EF30 (retail keeps the
+// Draw/advance helpers for cbRenderBefore / SkipTimer_Phase2PollPad (retail keeps the
 // bare func_ names at these call sites; int returns keep `!= 0` as cmpwi).
 extern "C" int CSkipTimerIsReady(CSkipTimer* self);
 extern "C" void CSkipTimerConfirmSkip(CSkipTimer* self);
@@ -103,10 +102,10 @@ extern "C" void CSkipTimerNextKey(CSkipTimer* self);
 extern "C" void CSkipTimerPrevKey(CSkipTimer* self);
 extern "C" void CSkipTimerLeaveSkip(CSkipTimer* self);
 extern "C" int func_8029FF1C(CSkipTimer* self);
-extern "C" void func_801C414C(CTitleAHelp* self);
-extern "C" void func_801C3D7C(CBgTex* self, nw4r::lyt::DrawInfo* drawInfo);
+extern "C" void beginClose(CTitleAHelp* self);
+extern "C" void BgTex_Draw_3D7C(CBgTex* self, nw4r::lyt::DrawInfo* drawInfo);
 extern "C" void CSkipTimerDraw(CSkipTimer* self, nw4r::lyt::DrawInfo* drawInfo);
-extern "C" void func_801C4080(CTitleAHelp* self, nw4r::lyt::DrawInfo* drawInfo);
+extern "C" void drawHelp(CTitleAHelp* self, nw4r::lyt::DrawInfo* drawInfo);
 // Raw-storage nw4r DrawInfo build/destroy for cbRenderBefore (pre-mangled names).
 extern "C" void __ct__Q34nw4r3lyt8DrawInfoFv(nw4r::lyt::DrawInfo* drawInfo);
 extern "C" void __dt__Q34nw4r3lyt8DrawInfoFv(nw4r::lyt::DrawInfo* drawInfo, int flags);

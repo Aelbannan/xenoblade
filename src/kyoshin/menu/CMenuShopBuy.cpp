@@ -92,7 +92,7 @@ void CMenuShopBuy::Init() {
     mBgTex.mPtmMode = reinterpret_cast<CBgTex*>(tmpBgRaw)->mPtmMode;
     __dt__6CBgTexFv(reinterpret_cast<CBgTex*>(tmpBgRaw), -1);
 
-    func_801C3C14(&mBgTex);
+    BgTex_Acquire_3C14(&mBgTex);
 
     // Build a temporary CTitleAHelp from the locale string and copy its data
     // fields into the member, then destroy the temp.
@@ -294,8 +294,8 @@ void CMenuShopBuy::Term() {
     }
     removeRenderCB__4CScnFP10IScnRender(mScene, cb);
 
-    func_801C3D9C(&mBgTex);
-    func_801C40A0(&mTitleAHelp);
+    BgTex_Release_3D9C(&mBgTex);
+    teardown(&mTitleAHelp);
     ItemBoxLine_UnloadFiles(reinterpret_cast<CItemBoxLine*>(mItemBoxLine));
 
     lbl_eu_806642F8 = 0;
@@ -311,24 +311,24 @@ void CMenuShopBuy::Move() {
 
     switch (mState) {
     case 0:
-        func_8018C190(this);
+        ShopBuy_OpenPhase(this);
         break;
     case 1:
-        func_8018C208(this);
+        ShopBuy_AdvancePhase(this);
         break;
     case 2:
         func_8018C258(this);
         break;
     case 3:
-        func_8018C59C(this);
+        ShopBuy_MarkClosing(this);
         break;
     default:
         break;
     }
 
-    func_801C3D54(&mBgTex);
+    BgTex_Tick_3D54(&mBgTex);
     ItemBoxLine_UpdateStates(reinterpret_cast<CItemBoxLine*>(mItemBoxLine));
-    func_801C3FF0(&mTitleAHelp);
+    updateHelp(&mTitleAHelp);
 }
 
 void CMenuShopBuy::cbRenderBefore() {
@@ -344,9 +344,9 @@ void CMenuShopBuy::cbRenderBefore() {
     u8 drawInfo[0x54];
     __ct__Q34nw4r3lyt8DrawInfoFv(&drawInfo[0]);
     func_80137250((nw4r::lyt::DrawInfo*)&drawInfo[0]);
-    func_801C3D7C(&mBgTex, (nw4r::lyt::DrawInfo*)&drawInfo[0]);
+    BgTex_Draw_3D7C(&mBgTex, (nw4r::lyt::DrawInfo*)&drawInfo[0]);
     ItemBoxLine_DrawLayout(reinterpret_cast<CItemBoxLine*>(mItemBoxLine), (nw4r::lyt::DrawInfo*)&drawInfo[0]);
-    func_801C4080(&mTitleAHelp, (nw4r::lyt::DrawInfo*)&drawInfo[0]);
+    drawHelp(&mTitleAHelp, (nw4r::lyt::DrawInfo*)&drawInfo[0]);
     __dt__Q34nw4r3lyt8DrawInfoFv(&drawInfo[0], -1);
 }
 
@@ -390,14 +390,14 @@ extern "C" CMenuShopBuy* func_8018C104(CProcess* parent, CScn* scene, u32 arg) {
 }
 
 // (lbl_eu_806642F8 != 0)
-extern "C" bool func_8018C180() { return lbl_eu_806642F8 != 0; }
+extern "C" bool ShopBuy_HasInstance() { return lbl_eu_806642F8 != 0; }
 
 // Phase 0 -> 1 (open): once the background, title bar and item box line are
 // all ready, run the open sequence (title bar + item box line) and play the
 // open sound, then advance the phase byte at 0x6F8.
-extern "C" __declspec(noinline) void func_8018C190(CMenuShopBuy* self) {
-    if (func_801C3E34(&self->mBgTex) != 0) {
-        if (func_801C4114(&self->mTitleAHelp) != 0) {
+extern "C" __declspec(noinline) void ShopBuy_OpenPhase(CMenuShopBuy* self) {
+    if (BgTex_IsLoaded_3E34(&self->mBgTex) != 0) {
+        if (isInitialized(&self->mTitleAHelp) != 0) {
             if (ItemBoxLine_GetSelectReady(reinterpret_cast<CItemBoxLine*>(self->mItemBoxLine)) != 0) {
                 func_801C412C(&self->mTitleAHelp);
                 func_801ED864(reinterpret_cast<CItemBoxLine*>(self->mItemBoxLine));
@@ -410,7 +410,7 @@ extern "C" __declspec(noinline) void func_8018C190(CMenuShopBuy* self) {
 
 // Phase 1 -> 2 (advance): once the title bar is idle and the item box line
 // is ready, move to the next phase.
-extern "C" __declspec(noinline) void func_8018C208(CMenuShopBuy* self) {
+extern "C" __declspec(noinline) void ShopBuy_AdvancePhase(CMenuShopBuy* self) {
     if (isIdle__11CTitleAHelpFv(&self->mTitleAHelp) != 0) {
         if (ItemBoxLine_IsReadyFlag(reinterpret_cast<CItemBoxLine*>(self->mItemBoxLine)) != 0) {
             self->mState = 2;
@@ -422,7 +422,7 @@ extern "C" __declspec(noinline) void func_8018C208(CMenuShopBuy* self) {
 // branches differ only in the flag layout (input-enabled vs pointer-input
 // controller); each handler ends by jumping to the shared focus-refresh.
 extern "C" __declspec(noinline) void func_8018C258(CMenuShopBuy* self) {
-    if (func_8029A658() != 0) return;
+    if (MenuTutorialIsCreated() != 0) return;
 
     // Timer clamped to lbl_eu_80667A28, reset to lbl_eu_80667A20 on confirm.
     self->mFloat6FC += lbl_eu_80667A24;
@@ -448,7 +448,7 @@ extern "C" __declspec(noinline) void func_8018C258(CMenuShopBuy* self) {
             if (ItemBoxLine_IsBusy(reinterpret_cast<CItemBoxLine*>(self->mItemBoxLine)) != 0) {
                 ItemBoxLine_ConfirmOverlayOrHint(reinterpret_cast<CItemBoxLine*>(self->mItemBoxLine));
             } else {
-                func_801C414C(&self->mTitleAHelp);
+                beginClose(&self->mTitleAHelp);
                 ItemBoxLine_LeaveState3(reinterpret_cast<CItemBoxLine*>(self->mItemBoxLine));
                 self->mState = 3;
             }
@@ -486,7 +486,7 @@ extern "C" __declspec(noinline) void func_8018C258(CMenuShopBuy* self) {
             if (ItemBoxLine_IsBusy(reinterpret_cast<CItemBoxLine*>(self->mItemBoxLine)) != 0) {
                 ItemBoxLine_ConfirmOverlayOrHint(reinterpret_cast<CItemBoxLine*>(self->mItemBoxLine));
             } else {
-                func_801C414C(&self->mTitleAHelp);
+                beginClose(&self->mTitleAHelp);
                 ItemBoxLine_LeaveState3(reinterpret_cast<CItemBoxLine*>(self->mItemBoxLine));
                 self->mState = 3;
             }
@@ -508,9 +508,9 @@ extern "C" __declspec(noinline) void func_8018C258(CMenuShopBuy* self) {
                   ItemBoxLine_ResolveFocusId(reinterpret_cast<CItemBoxLine*>(self->mItemBoxLine)));
 }
 
-// Close: same idle+ready guard as func_8018C208, but marks the closing state
+// Close: same idle+ready guard as ShopBuy_AdvancePhase, but marks the closing state
 // byte at 0x54 instead of advancing the phase byte.
-extern "C" __declspec(noinline) void func_8018C59C(CMenuShopBuy* self) {
+extern "C" __declspec(noinline) void ShopBuy_MarkClosing(CMenuShopBuy* self) {
     if (isIdle__11CTitleAHelpFv(&self->mTitleAHelp) != 0) {
         if (ItemBoxLine_IsReadyFlag(reinterpret_cast<CItemBoxLine*>(self->mItemBoxLine)) != 0) {
             self->mField54 = 1;
@@ -518,10 +518,10 @@ extern "C" __declspec(noinline) void func_8018C59C(CMenuShopBuy* self) {
     }
 }
 
-extern "C" void func_8018C5EC(void* self) {
+extern "C" void ShopBuy_ThunkRender(void* self) {
     ((void(*)(void*))cbRenderBefore__12CMenuShopBuyFv)((char*)self - 0x58);
 }
 
-extern "C" void func_8018C5F4(void* self) {
+extern "C" void ShopBuy_ThunkDtor(void* self) {
     ((void(*)(void*))__dt__12CMenuShopBuyFv)((char*)self - 0x58);
 }

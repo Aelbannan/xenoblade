@@ -43,7 +43,7 @@ class CEventFile;
 // CREvtMem subobjects, the field block, the global instance pointer, the
 // subobject registrations, and the dimming/frame-target setup.
 // noinline keeps the call a real bl (an empty inline body would make MWCC
-// fold the ctor away and shrink func_801665A4 below the retail size).
+// fold the ctor away and shrink evtCreateTaskRegister below the retail size).
 __declspec(noinline) cf::CTaskREvent* __ct__cf_CTaskREvent(cf::CTaskREvent* pMem, CScnNw4r* pScene, CView* pView) {
     // CProcess base ctor.
     __ct__8CProcessFv(reinterpret_cast<CProcess*>(pMem));
@@ -109,12 +109,12 @@ __declspec(noinline) cf::CTaskREvent* __ct__cf_CTaskREvent(cf::CTaskREvent* pMem
     lbl_eu_80664240 = reinterpret_cast<CEventMgr*>(pMem);
 
     // Register the IFlagEvent subobject (+0x58); the null-this guard shape
-    // mirrors the dtor's func_8009D514 call.
+    // mirrors the dtor's CtrlRemote_ResetSlotArrayByIndex call.
     cf::IFlagEvent* flagEvent = reinterpret_cast<cf::IFlagEvent*>(pMem);
     if (pMem != nullptr) {
         flagEvent = reinterpret_cast<cf::IFlagEvent*>(reinterpret_cast<u8*>(pMem) + 0x58);
     }
-    func_8009D414(flagEvent);
+    CtrlRemote_ResetSlotArrayObj(flagEvent);
 
     // Register the IScnRender subobject (+0x5C) with the scene.
     IScnRender* render = reinterpret_cast<IScnRender*>(pMem);
@@ -166,7 +166,7 @@ extern "C" __declspec(noinline) cf::CTaskREvent* __dt__Q22cf11CTaskREventFv(cf::
         if (self != nullptr) {
             flagEvent = reinterpret_cast<cf::IFlagEvent*>(reinterpret_cast<u8*>(self) + 0x58);
         }
-        func_8009D514(flagEvent);
+        CtrlRemote_ResetSlotArrayByIndex(flagEvent);
 
         // Restore Wii Remote auto-sleep / dimming state.
         WPADSetAutoSleepTime(5);
@@ -194,7 +194,7 @@ extern "C" __declspec(noinline) cf::CTaskREvent* __dt__Q22cf11CTaskREventFv(cf::
 // Returns 1 while an event sequence is active: manager present, sequence
 // index valid, the +0xB0 gate set, or the +0x6C bit0 flag raised. The final
 // `mgr &&` reuses the CR1 null compare from the first guard (retail shape).
-int func_80164410() {
+int evtIsActiveSeq() {
     CEventMgr* mgr = lbl_eu_80664240;
     if (mgr == 0) return 0;
     if (mgr->field_0x1D4 != -1) return 1;
@@ -222,20 +222,20 @@ int func_80164410() {
 // The magic constant (0x4330000080000000) pools to a TU-local @N label
 // whose value equals retail's shared .sdata2 blob lbl_eu_80667630 -
 // name-only reloc drift, accepted at EQUIVALENT_MATCH (MWCC_CASES §7i).
-float func_80164478() {
+float evtCalcStreamVolume() {
     return lbl_eu_8066762C * (float)(s32)lbl_eu_80662384;
 }
 
-extern "C" u32 func_801644AC() { return (u32)lbl_eu_80662380; }
+extern "C" u32 evtGetBaseNameAddr() { return (u32)lbl_eu_80662380; }
 
-extern "C" u32 func_801644B4() { return (u32)lbl_eu_80664240; }
+extern "C" u32 evtGetManagerAddr() { return (u32)lbl_eu_80664240; }
 void setAutoSleep(u32 arg) {
     CEventMgr* mgr = lbl_eu_80664240;
     if (!mgr) return;
-    func_80166150(mgr, arg);
+    evtSetAutoSleepFlag(mgr, arg);
 }
 
-// func_8016462C: called with a table index by func_801644D8; stub for an
+// func_8016462C: called with a table index by evtFillCharRange; stub for an
 // as-yet-unmatched helper (C linkage inherited from the header declaration
 // so the retail plain symbol is emitted). noinline so the call stays a real
 // bl (an empty inline body would make MWCC DCE the whole walk loop).
@@ -264,7 +264,7 @@ __declspec(noinline) void func_8016462C(u32 index) {
     getControllerValues__Q22cf13CfGameManagerFv(&hi, &lo);
     v = (u16)((hi << 8) | lo);
     evtCharBlob()->mHalfSlots[index] = v;
-    v = (u8)func_8016DF2C();
+    v = (u8)getReloadParam0();
     // Swapped subscript reproduces the retail add operand order
     // (index register first, base register second).
     index[evtCharBlob()->mByteFlags] = v;
@@ -273,7 +273,7 @@ __declspec(noinline) void func_8016462C(u32 index) {
 // Walks the 32-entry event-id table; for each entry strictly above `lower`
 // and at most `upper`, forwards the index to func_8016462C. Only runs when
 // `type` equals 0x20.
-void func_801644D8(cf::CTaskREvent* self, int type, int upper, int lower) {
+void evtFillCharRange(cf::CTaskREvent* self, int type, int upper, int lower) {
     if (type != 0x20) return;
     for (u32 i = 0; i < 0x20; i++) {
         s16 v = lbl_eu_80502F90[i];
@@ -418,7 +418,7 @@ u32 isEventPending() {
 // every odd index) and marks the event manager busy (+0x6C bit1). Returns 1
 // on success; 0 when the manager is missing, the sequence counter is
 // running, or the busy flag is already set.
-int func_80164954() {
+int evtBeginShuffledSeq() {
     CEventMgr* mgr = lbl_eu_80664240;
     if (mgr == 0) return 0;
     if (mgr->field_0x1D4 >= 0) return 0;
@@ -461,10 +461,10 @@ int func_80164A50(const char* path, int arg1, int arg2) {
     CEventMgr* mgr = lbl_eu_80664240;
     if (mgr == 0) return 0;
     if (arg1 == 0 && mgr->field_0x1D4 >= 0) return 0;
-    func_801667AC(reinterpret_cast<cf::CInfoCf*>(mgr->field_0x70));
+    InfoCfRefreshSettings(reinterpret_cast<cf::CInfoCf*>(mgr->field_0x70));
     CEventMgr* m2 = lbl_eu_80664240;
     if ((m2->field_0x74 & 1) == 0) {
-        func_80166784(reinterpret_cast<cf::CInfoCf*>(m2->field_0x70));
+        InfoCfNoopVirt(reinterpret_cast<cf::CInfoCf*>(m2->field_0x70));
         return 0;
     }
     if (getFileSize__11CDeviceFileFPCc(path, 1) < 0) return 0;
@@ -521,7 +521,7 @@ int func_80164A50(const char* path, int arg1, int arg2) {
     return 0;
 }
 
-int func_80164C28() {
+int evtIsBusyBitSet() {
     CEventMgr* mgr = lbl_eu_80664240;
     if (mgr) {
         return mgr->field_0x6C & 1;
@@ -533,7 +533,7 @@ int func_80164C28() {
 // manager running, no +0x74/+0x6C active flags, no +0xB0 gate, sequence
 // counter clean, and no event word pending. Each guard is materialized as a
 // 0/1 word (cntlzw/srwi) and AND-accumulated (retail shape).
-int func_80164C48() {
+int evtIsFullyIdle() {
     CEventMgr* mgr = lbl_eu_80664240;
     if (mgr == 0) return 0;
     if (cf::CfGameManager::isManagerInitialized() == 0) return 0;
@@ -562,7 +562,7 @@ int func_80164C48() {
 // Tears down the active event sequence: clears the +0xB0 gate object, the
 // +0x1D0 word, the +0x6C bit0 flag, notifies the game manager, and clears
 // the global event bit when the +0x1BC byte flag is set.
-void func_80164CFC() {
+void evtTeardownActive() {
     CEventMgr* mgr = lbl_eu_80664240;
     if (mgr == 0) return;
     u32 v;
@@ -594,7 +594,7 @@ void func_80164CFC() {
 // poke the sequence processor, run the bit7-gated cleanup, then clear the
 // +0x1D0 word and the +0x6C bit4 flag (re-reading the global after the calls
 // because they may have replaced the manager).
-void func_80164DB8() {
+void evtUpdateSequenceKick() {
     CEventMgr* mgr = lbl_eu_80664240;
     if (mgr == 0) return;
     if (mgr->field_0xB0 == 0) return;
@@ -623,7 +623,7 @@ void cf::CTaskREvent::Init() {
 // handle vs the scene alloc handle (Scn_CallUnk8C_V9(lbl_eu_80663E14)). The
 // finished player is stored back through the global, re-read after the call
 // because it may have been replaced.
-void func_80164ED0(const char* path, int flag, u8* handle) {
+void evtStartMoviePlayback(const char* path, int flag, u8* handle) {
     CEventMgr* mgr = lbl_eu_80664240;
     if (mgr != 0 && (u32)mgr->mCri == 0xFFFFFFFF) {
         u32 buffer;
@@ -638,7 +638,7 @@ void func_80164ED0(const char* path, int flag, u8* handle) {
     }
 }
 
-void func_80164F6C() {
+void evtStopMoviePlayback() {
     CEventMgr* mgr = lbl_eu_80664240;
     if (mgr == nullptr) return;
     CLibCri* cri = mgr->mCri;
@@ -649,7 +649,7 @@ void func_80164F6C() {
     lbl_eu_80664240->mCri = (CLibCri*)-1;
 }
 
-int func_80164FB4() {
+int evtIsMoviePaused() {
     CEventMgr* mgr = lbl_eu_80664240;
     if (mgr == 0) {
         return 0;
@@ -661,14 +661,14 @@ int func_80164FB4() {
     return isMovieGlobalPaused__7CLibCriFv(cri);
 }
 
-int func_80164FE8(void) {
+int evtHasMoviePlayer(void) {
     int* ptr = (int*)lbl_eu_80664240;
     if (!ptr) return 0;
     int val = *(int*)((char*)ptr + 0x1e0);
     return (unsigned)((-1 - val) | (val + 1)) >> 31;
 }
 
-void func_80165014() {
+void evtClearMoviePause() {
     CEventMgr* mgr = lbl_eu_80664240;
     if (!mgr) return;
     CLibCri* cri = mgr->mCri;
@@ -677,11 +677,11 @@ void func_80165014() {
 }
 
 extern "C" void EvtSeqClearStateBit9();
-extern "C" void func_80165038() { EvtSeqClearStateBit9(); }
+extern "C" void evtClearSeqStateBit9() { EvtSeqClearStateBit9(); }
 
 // Tears down the active event sequence. Runs only while the manager is
 // present and its +0x6C bit0 flag is raised (the `mgr &&` test materializes
-// the 0/1 word via the CR1 compare reused from the outer guard - func_80164410
+// the 0/1 word via the CR1 compare reused from the outer guard - evtIsActiveSeq
 // precedent): clears the +0xB0 gate object, the +0x6C bit0 flag and the
 // +0x1D0 word, notifies the game manager, then clears the global event bit
 // when the +0x1BC byte flag is set. Afterwards cancels the two file handles,
@@ -867,7 +867,7 @@ void cf::CTaskREvent::Move() {
     }
 
     // ---- tail: info refresh + file-load state machine + battle fade ----
-    func_801667AC(reinterpret_cast<cf::CInfoCf*>(this->mInfoCf));
+    InfoCfRefreshSettings(reinterpret_cast<cf::CInfoCf*>(this->mInfoCf));
     u32 busy2 = (lbl_eu_80664240 != 0) ? lbl_eu_80664240->field_0x6C & 1 : 0;
     if (busy2 != 0 || this->field_0x1B4 == 0) {
         if (this->field_0xB0 == 0) {
@@ -1019,7 +1019,7 @@ void cf::CTaskREvent::Move() {
                 REvtActor* ad = getEffOwner____FPv(n->item);
                 if (ad != 0) {
                     u32 o0, o1, o2, o3;
-                    func_800AA318(ad->field_0x3F0C, &o0, &o1, &o2, &o3);
+                    Tok_Unpack(ad->field_0x3F0C, &o0, &o1, &o2, &o3);
                     if (!(o1 == 1 && o2 == 0x3b)) {
                         ad->mSub.vfn88(lbl_eu_80667640);
                     }
@@ -1043,7 +1043,7 @@ void cf::CTaskREvent::Move() {
                 REvtActor* ad = getEffOwner____FPv(n->item);
                 if (ad != 0) {
                     u32 o0, o1, o2, o3;
-                    func_800AA318(ad->field_0x3F0C, &o0, &o1, &o2, &o3);
+                    Tok_Unpack(ad->field_0x3F0C, &o0, &o1, &o2, &o3);
                     if (!(o1 == 1 && o2 == 0x3b)) {
                         ad->mSub.vfn88(lbl_eu_80667628);
                     }
@@ -1063,7 +1063,7 @@ void cf::CTaskREvent::Move() {
 
 void cf::CTaskREvent::Draw() {
     func_80165DF4(this, 0);
-    func_80166050(this, 0);
+    evtSyncBusyDimming(this, 0);
 }
 
 // Event busy/dimming driver: recomputes the busy state from the global event
@@ -1090,7 +1090,7 @@ __declspec(noinline) void func_80165DF4(cf::CTaskREvent* self, int arg) {
             (lbl_eu_80663E24 & 0x10000000) != 0) {
             busy = 0;
         }
-        if ((lbl_eu_80663E28 & 0x20000000) != 0 || func_8012CD24() != 0) {
+        if ((lbl_eu_80663E28 & 0x20000000) != 0 || TalkWin_IsActive_CD24() != 0) {
             busy = 0;
         }
     }
@@ -1161,8 +1161,8 @@ __declspec(noinline) void func_80165DF4(cf::CTaskREvent* self, int arg) {
 // task's +0x6C bit7, push bit7 to match, and when bit6 (auto-sleep) is clear
 // reset the frame target and bump the task manager (func_80165DF4). The
 // manager-idle branch only bumps when bit6 is set. The two bit6-guarded
-// blocks share the flag re-test shape (see func_80166150).
-__declspec(noinline) void func_80166050(cf::CTaskREvent* self, int arg) {
+// blocks share the flag re-test shape (see evtSetAutoSleepFlag).
+__declspec(noinline) void evtSyncBusyDimming(cf::CTaskREvent* self, int arg) {
     bool flag = cf::CfGameManager::isSceneLoading();
     u32 flags = self->field_0x6C;
     // Retail tests with xor. (flag ^ bit7); branch when different.
@@ -1194,8 +1194,8 @@ __declspec(noinline) void func_80166050(cf::CTaskREvent* self, int arg) {
 // Sets the +0x6C bit6 auto-sleep flag to match `arg` and reconfigures the
 // dimming/frame-target state. When bit6 already equals `arg` nothing is done.
 // While `arg` is set, bit8 (0x100) gates the sleep/dimming reset; the two
-// bit8-guarded tails share the arg re-test shape (see func_80166050).
-void func_80166150(CEventMgr* self, u32 arg) {
+// bit8-guarded tails share the arg re-test shape (see evtSyncBusyDimming).
+void evtSetAutoSleepFlag(CEventMgr* self, u32 arg) {
     // Retail compares with xor. (arg ^ bit6); the whole body is skipped when
     // they are equal (retail `beq` to the epilogue).
     if ((arg ^ ((self->field_0x6C >> 6) & 1)) != 0) {
@@ -1254,10 +1254,10 @@ void cf::CTaskREvent::cbRenderBefore() {
 }
 
 // Frame-timing callback (vtable entry of the CDeviceVICb subobject at 0x54,
-// reached through the func_801666C4 thunk with the adjusted CTaskREvent
+// reached through the evtVICbThrottleThunk thunk with the adjusted CTaskREvent
 // pointer). Throttles the task-manager update count toward the PAL/NTSC
 // frame target while the event manager is idle.
-void func_801662E8(cf::CTaskREvent* self) {
+void evtThrottleTaskUpdates(cf::CTaskREvent* self) {
     if (CGame::getInstance() == 0) return;
     CGame::setTaskManagerUpdateCount(1);
     if (CTaskGame_playTimeGate() == 0) return;
@@ -1327,7 +1327,7 @@ int func_801663A8(cf::CTaskREvent* self, CTaskREventFileEvent* ev) {
                 while (i < buf->field_0x20) {
                 if (found->field_0x28 == 1) {
                     u32 out0, out1, out2, out3;
-                    func_800AA318(found->field_0x20, &out0, &out1, &out2, &out3);
+                    Tok_Unpack(found->field_0x20, &out0, &out1, &out2, &out3);
                     if (out0 == 1) {
                         if (out1 == lbl_eu_80663E42 && out2 == lbl_eu_80663E44) {
                             lbl_eu_80663E24 |= 0x02000000;
@@ -1372,7 +1372,7 @@ int func_801663A8(cf::CTaskREvent* self, CTaskREventFileEvent* ev) {
 
 // Allocates a CTaskREvent (size 0x1F8) from the work-thread heap and
 // registers it into pParent. Returns the task (or 0 if allocation failed).
-cf::CTaskREvent* func_801665A4(CProcess* pParent, CScnNw4r* pScene, CView* pView) {
+cf::CTaskREvent* evtCreateTaskRegister(CProcess* pParent, CScnNw4r* pScene, CView* pView) {
     u8* mem = static_cast<u8*>(
         mtl::MemManager::allocate(0x1f8, CWorkThreadSystem::getWorkMem()));
     cf::CTaskREvent* task = reinterpret_cast<cf::CTaskREvent*>(mem);
@@ -1387,17 +1387,17 @@ void viAfterDrawDone__11CDeviceVICbFv() {}
 
 void viBeforeDrawDone__11CDeviceVICbFv() {}
 
-void func_801666C4(void* self) { ((void(*)(void*))func_801662E8)((char*)self - 0x54); }
+void evtVICbThrottleThunk(void* self) { ((void(*)(void*))evtThrottleTaskUpdates)((char*)self - 0x54); }
 
-void func_801666CC(void* self) { ((void(*)(void*))__dt__Q22cf11CTaskREventFv)((char*)self - 0x54); }
+void evtVICbDtorThunk54(void* self) { ((void(*)(void*))__dt__Q22cf11CTaskREventFv)((char*)self - 0x54); }
 
-void func_801666D4(void* self) { ((void(*)(void*))func_801644D8)((char*)self - 0x58); }
+void evtFlagEventFillThunk(void* self) { ((void(*)(void*))evtFillCharRange)((char*)self - 0x58); }
 
-void func_801666DC(void* self) { ((void(*)(void*))__dt__Q22cf11CTaskREventFv)((char*)self - 0x58); }
+void evtFlagEventDtorThunk(void* self) { ((void(*)(void*))__dt__Q22cf11CTaskREventFv)((char*)self - 0x58); }
 
-void func_801666E4(void* self) { ((void(*)(void*))cbRenderBefore__Q22cf11CTaskREventFv)((char*)self - 0x5c); }
+void evtRenderBeforeThunk(void* self) { ((void(*)(void*))cbRenderBefore__Q22cf11CTaskREventFv)((char*)self - 0x5c); }
 
-extern "C" void func_801666EC(u8* self) { ((void(*)(void*))__dt__Q22cf11CTaskREventFv)((char*)self - 0x5c); }
+extern "C" void evtRenderDtorThunk5C(u8* self) { ((void(*)(void*))__dt__Q22cf11CTaskREventFv)((char*)self - 0x5c); }
 
 // IWorkEvent dispatch thunk: the IWorkEvent subobject sits at +0x60 of the
 // cf::CTaskREvent; subtract the offset and tail-call func_801663A8.
@@ -1407,6 +1407,6 @@ void ::CTaskREvent::OnFileEvent(CEventFile* ev) {
         reinterpret_cast<CTaskREventFileEvent*>(ev));
 }
 
-extern "C" void func_801666FC(u8* self) { ((void(*)(void*))__dt__Q22cf11CTaskREventFv)((char*)self - 0x60); }
+extern "C" void evtWorkEventDtorThunk(u8* self) { ((void(*)(void*))__dt__Q22cf11CTaskREventFv)((char*)self - 0x60); }
 
 // CTTask<cf::CTaskREvent> specializations provided by header

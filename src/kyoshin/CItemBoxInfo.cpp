@@ -450,7 +450,7 @@ void setItemBoxResultPane(CItemBoxInfo* info, void* arg2) {
     if (info->state.layout == 0) return;
     nw4r::lyt::Pane* child = (nw4r::lyt::Pane*)*(void**)((u8*)info->state.layout + 0x10);
     nw4r::lyt::Pane* result = child->FindPaneByName((char*)&lbl_eu_805063BC[0x193], true);
-    func_80124270(result, (u32)arg2);
+    setPaneVisible(result, (u32)arg2);
 }
 
 #pragma push
@@ -614,9 +614,9 @@ extern "C" void func_801D5274(void* out, void* arg2, void* arg3) {
         if (flag == 0) continue;
         void* lookup = func_8009EC9C(slot);
         if (v3 == 3) {
-            if (func_8026178C((u8*)lookup + 0x3534, 0x85) == 0) banks[0] = 0;
+            if (Counter_TestBit((u8*)lookup + 0x3534, 0x85) == 0) banks[0] = 0;
         } else if (v3 == 2) {
-            if (func_8026178C((u8*)lookup + 0x3534, 0x84) == 0) banks[0] = 0;
+            if (Counter_TestBit((u8*)lookup + 0x3534, 0x84) == 0) banks[0] = 0;
         } else {
             s16 value = -1;
             switch ((u16)v1) {
@@ -1296,7 +1296,7 @@ void func_801D69FC(CItemBoxInfo* info, u32 itemId, void* record) {
             sprintf(buf, base + 0x35f, idx);
             nw4r::lyt::Pane* pane = ((nw4r::lyt::Pane*)*(void**)((u8*)info->state.layout + 0x10))->FindPaneByName(buf, true);
             if ((u8)i < count) {
-                func_80124270(pane, 1);
+                setPaneVisible(pane, 1);
                 s16 itemVal = 0;
                 u8 itemCount = 0;
                 s16 value = 0;
@@ -1406,7 +1406,7 @@ void func_801D69FC(CItemBoxInfo* info, u32 itemId, void* record) {
                     if ((u8)i < 12) copyVEC3((u8*)info + 0xC8 + (u8)i * 12, &tmp);
                 }
             } else {
-                func_80124270(pane, 0);
+                setPaneVisible(pane, 0);
             }
         }
     } else {
@@ -1420,7 +1420,7 @@ void func_801D69FC(CItemBoxInfo* info, u32 itemId, void* record) {
             sprintf(buf2, base + 0x35f, idx);
             nw4r::lyt::Pane* pane = ((nw4r::lyt::Pane*)*(void**)((u8*)info->state.layout + 0x10))->FindPaneByName(buf2, true);
             if ((u8)i < sel) {
-                func_80124270(pane, 1);
+                setPaneVisible(pane, 1);
                 u32 itemVal = 0;
                 u32 itemCount = 0;
                 u8 val = 0;
@@ -1483,7 +1483,7 @@ void func_801D69FC(CItemBoxInfo* info, u32 itemId, void* record) {
                     if ((u8)i < 12) copyVEC3((u8*)info + 0xC8 + (u8)i * 12, &tmp);
                 }
             } else {
-                func_80124270(pane, 0);
+                setPaneVisible(pane, 0);
             }
         }
     }
@@ -1957,7 +1957,7 @@ void clearItemBoxTripleRows(CItemBoxInfo* info) {
         index = (u8)i + 1;
         sprintf(buf, (char*)&lbl_eu_805063BC[0x35f], index);
         void* r = ((nw4r::lyt::Pane*)*(void**)((u8*)info->state.layout + 0x10))->FindPaneByName(buf, true);
-        func_80124270(r, 0);
+        setPaneVisible(r, 0);
         sprintf(buf, (char*)&lbl_eu_805063BC[0x408], index);
         LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)info->state.layout, buf, (char*)&lbl_eu_805063BC[0x2aa], 0);
         sprintf(buf, (char*)&lbl_eu_805063BC[0x426], index);
@@ -2081,7 +2081,7 @@ extern "C" void func_801D8C0C(CItemBoxInfo* info) {
         if ((u8)i >= count) {
             sprintf(bufElse, (char*)&lbl_eu_805063BC[0x161], (u8)i + 1);
             nw4r::lyt::Pane* pane = ((nw4r::lyt::Pane*)*(void**)((u8*)info->state.layout + 0x10))->FindPaneByName(bufElse, true);
-            func_80124270(pane, 0);
+            setPaneVisible(pane, 0);
         } else {
             u8 slot = (u8)GetCollectedFlagByte((u8)i);
             u32 tag = 0x74696D67u;
@@ -4390,8 +4390,8 @@ u32 getItemBoxCondStat(void* a, void* b, u32 arg2) {
     void* obj;
     u32 result = 0;
     obj = (u8*)func_8009EC9C((u32)b) + 0x3534;
-    if (func_8026178C(obj, arg2) != 0) {
-        result = func_8025FB10(obj, arg2);
+    if (Counter_TestBit(obj, arg2) != 0) {
+        result = IdTable_SumValues(obj, arg2);
     }
     return result;
 }
@@ -4405,8 +4405,8 @@ u32 getItemBoxCondStatById(void* dummy, u32 arg1, u32 arg2) {
     void* obj;
     u32 result = 0;
     obj = (u8*)func_8009EC9C(arg1) + 0x3534;
-    if (func_8026178C(obj, arg2) != 0) {
-        result = func_8025FB10(obj, arg2);
+    if (Counter_TestBit(obj, arg2) != 0) {
+        result = IdTable_SumValues(obj, arg2);
     }
     return result;
 }
@@ -4414,8 +4414,8 @@ u32 getItemBoxCondStatById(void* dummy, u32 arg1, u32 arg2) {
 
 u32 getItemBoxCondStat2D(void* dummy, void* arg1) {
     void* obj = (u8*)func_8009EC9C((u8)(u32)arg1) + 0x3534;
-    if (func_8026178C(obj, 0x2d) != 0) {
-        return func_8025FB10(obj, 0x2d);
+    if (Counter_TestBit(obj, 0x2d) != 0) {
+        return IdTable_SumValues(obj, 0x2d);
     }
     return 0;
 }
@@ -4609,10 +4609,10 @@ bool CItemBoxInfo::OnFileEvent(CEventFile* file) {
 
         u8 mode = *(u8*)((u8*)this + 0x9A);
         if (mode != 1 && mode != 2) {
-            func_80124270(root->FindPaneByName(&lbl_eu_805063BC[0x6dd], true), 0);
+            setPaneVisible(root->FindPaneByName(&lbl_eu_805063BC[0x6dd], true), 0);
         }
         if (mode != 3) {
-            func_80124270(root->FindPaneByName(&lbl_eu_805063BC[0x6e6], true), 0);
+            setPaneVisible(root->FindPaneByName(&lbl_eu_805063BC[0x6e6], true), 0);
         }
 
         // Fixed label texts for the closed item-box view.
@@ -4746,7 +4746,7 @@ bool CItemBoxInfo::OnFileEvent(CEventFile* file) {
                       BdatTouchStringCell(&lbl_eu_805063BC[0x130], &lbl_eu_805063BC[0x139], 9), 0);
         setLayoutTextBoxNumber((nw4r::lyt::Layout*)state.layout, &lbl_eu_805063BC[0x17d], 0);
         setLayoutTextBoxNumber((nw4r::lyt::Layout*)state.layout, &lbl_eu_805063BC[0x188], 0);
-        func_80124270(root->FindPaneByName(&lbl_eu_805063BC[0x193], true), 1);
+        setPaneVisible(root->FindPaneByName(&lbl_eu_805063BC[0x193], true), 1);
 
         // Cache the slot panes at +0x40..+0x8C for the renderer (retail keeps
         // the layout's root pane live in r28 across all 20 lookups).
@@ -5248,13 +5248,13 @@ void func_801E1E0C(CItemBoxSlotFlags* out, void* arg2, void* arg3) {
         if (f != 0) {
             void* lookup = func_8009EC9C((u8)v);
             if ((u8)v3 == 3) {
-                if (func_8026178C((u8*)lookup + 0x3534, 0x85) == 0) {
+                if (Counter_TestBit((u8*)lookup + 0x3534, 0x85) == 0) {
                     local.flags[i] = 0;
                 } else {
                     goto valuePath;
                 }
             } else if ((u8)v3 == 2) {
-                if (func_8026178C((u8*)lookup + 0x3534, 0x84) == 0) {
+                if (Counter_TestBit((u8*)lookup + 0x3534, 0x84) == 0) {
                     local.flags[i] = 0;
                 } else {
                     goto valuePath;
@@ -6226,7 +6226,7 @@ void clearItemBox2TripleRows(CItemBoxInfo2* info) {
         index = (u8)i + 1;
         sprintf(buf, (char*)&lbl_eu_805063BC[0x35f], index);
         void* r = ((nw4r::lyt::Pane*)*(void**)((u8*)*(void**)((u8*)info + 0x34) + 0x10))->FindPaneByName(buf, true);
-        func_80124270(r, 0);
+        setPaneVisible(r, 0);
         sprintf(buf, (char*)&lbl_eu_805063BC[0x408], index);
         LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)*(void**)((u8*)info + 0x34), buf, (char*)&lbl_eu_805063BC[0x2aa], 0);
         sprintf(buf, (char*)&lbl_eu_805063BC[0x426], index);
@@ -6347,7 +6347,7 @@ extern "C" void func_801E4194(CItemBoxInfo2* info) {
         if ((u8)i >= count) {
             sprintf(bufElse, (char*)&lbl_eu_805063BC[0x161], (u8)i + 1);
             nw4r::lyt::Pane* pane = ((nw4r::lyt::Pane*)*(void**)((u8*)info->state.layout + 0x10))->FindPaneByName(bufElse, true);
-            func_80124270(pane, 0);
+            setPaneVisible(pane, 0);
         } else {
             u8 slot = (u8)GetCollectedFlagByte((u8)i);
             u32 tag = 0x74696D67u;
@@ -7971,10 +7971,10 @@ bool CItemBoxInfo2::OnFileEvent(CEventFile* file) {
 
         // Mode-gated pane clears (retail: mode!=1&&mode!=2 / mode!=3).
         if (mode != 1 && mode != 2) {
-            func_80124270(root->FindPaneByName(&lbl_eu_805063BC[0x6dd], true), 0);
+            setPaneVisible(root->FindPaneByName(&lbl_eu_805063BC[0x6dd], true), 0);
         }
         if (mode != 3) {
-            func_80124270(root->FindPaneByName(&lbl_eu_805063BC[0x6e6], true), 0);
+            setPaneVisible(root->FindPaneByName(&lbl_eu_805063BC[0x6e6], true), 0);
         }
 
         // Fixed label texts: each pane gets string-table entry [len].
@@ -8095,16 +8095,16 @@ bool CItemBoxInfo2::OnFileEvent(CEventFile* file) {
         func_801E4194(this);
 
         // Pane clears for the selection view.
-        func_80124270(root->FindPaneByName(&lbl_eu_805063BC[0xc2], true), 0);
-        func_80124270(root->FindPaneByName(&lbl_eu_805063BC[0xce], true), 0);
-        func_80124270(root->FindPaneByName(&lbl_eu_805063BC[0xda], true), 0);
-        func_80124270(root->FindPaneByName(&lbl_eu_805063BC[0xe6], true), 0);
-        func_80124270(root->FindPaneByName(&lbl_eu_805063BC[0xf2], true), 0);
-        func_80124270(root->FindPaneByName(&lbl_eu_805063BC[0xfe], true), 1);
-        func_80124270(root->FindPaneByName(&lbl_eu_805063BC[0x10b], true), 0);
-        func_80124270(root->FindPaneByName(&lbl_eu_805063BC[0x113], true), 0);
-        func_80124270(root->FindPaneByName(&lbl_eu_805063BC[0x121], true), 1);
-        func_80124270(root->FindPaneByName(&lbl_eu_805063BC[0x193], true), 0);
+        setPaneVisible(root->FindPaneByName(&lbl_eu_805063BC[0xc2], true), 0);
+        setPaneVisible(root->FindPaneByName(&lbl_eu_805063BC[0xce], true), 0);
+        setPaneVisible(root->FindPaneByName(&lbl_eu_805063BC[0xda], true), 0);
+        setPaneVisible(root->FindPaneByName(&lbl_eu_805063BC[0xe6], true), 0);
+        setPaneVisible(root->FindPaneByName(&lbl_eu_805063BC[0xf2], true), 0);
+        setPaneVisible(root->FindPaneByName(&lbl_eu_805063BC[0xfe], true), 1);
+        setPaneVisible(root->FindPaneByName(&lbl_eu_805063BC[0x10b], true), 0);
+        setPaneVisible(root->FindPaneByName(&lbl_eu_805063BC[0x113], true), 0);
+        setPaneVisible(root->FindPaneByName(&lbl_eu_805063BC[0x121], true), 1);
+        setPaneVisible(root->FindPaneByName(&lbl_eu_805063BC[0x193], true), 0);
 
         // Cache the 20 slot panes at +0x40..+0x8C for the renderer (retail
         // keeps the layout's root pane live in r28 across all lookups).
@@ -8156,28 +8156,28 @@ bool CItemBoxInfo2::OnFileEvent(CEventFile* file) {
 void sinit_801EABC4() {
     SplitU32ToS16s(&lbl_eu_80664518, 0);
     SplitU32ToS16s(&lbl_eu_80664520, 0);
-    func_801C4B60(&lbl_eu_80664528, 0x25, 0x8a, 0xce, 0);
-    func_801C4B60(&lbl_eu_80664530, 0x25, 0x8a, 0xce, 0);
-    func_801C4B60(&lbl_eu_80664538, 0xd2, 0x28, 0x14, 0);
-    func_801C4B60(&lbl_eu_80664540, 0xd2, 0x28, 0x14, 0);
-    func_801C4B60(&lbl_eu_80664548, 0x1f, 0xb0, 0x1a, 0);
-    func_801C4B60(&lbl_eu_80664550, 0x1f, 0xb0, 0x1a, 0);
+    setGXColorS10(&lbl_eu_80664528, 0x25, 0x8a, 0xce, 0);
+    setGXColorS10(&lbl_eu_80664530, 0x25, 0x8a, 0xce, 0);
+    setGXColorS10(&lbl_eu_80664538, 0xd2, 0x28, 0x14, 0);
+    setGXColorS10(&lbl_eu_80664540, 0xd2, 0x28, 0x14, 0);
+    setGXColorS10(&lbl_eu_80664548, 0x1f, 0xb0, 0x1a, 0);
+    setGXColorS10(&lbl_eu_80664550, 0x1f, 0xb0, 0x1a, 0);
     SplitU32ToS16s(&lbl_eu_80664558, 0);
     SplitU32ToS16s(&lbl_eu_80664560, 0);
-    func_801C4B60(&lbl_eu_80664568, 0xff, 0xff, 0xfa, 0);
-    func_801C4B60(&lbl_eu_80664570, 0x25, 0x8a, 0xce, 0);
-    func_801C4B60(&lbl_eu_80664578, 0xff, 0xff, 0xfa, 0);
-    func_801C4B60(&lbl_eu_80664580, 0xd2, 0x28, 0x14, 0);
-    func_801C4B60(&lbl_eu_80664588, 0xff, 0xff, 0xfa, 0);
-    func_801C4B60(&lbl_eu_80664590, 0x1f, 0xa6, 0x1a, 0);
+    setGXColorS10(&lbl_eu_80664568, 0xff, 0xff, 0xfa, 0);
+    setGXColorS10(&lbl_eu_80664570, 0x25, 0x8a, 0xce, 0);
+    setGXColorS10(&lbl_eu_80664578, 0xff, 0xff, 0xfa, 0);
+    setGXColorS10(&lbl_eu_80664580, 0xd2, 0x28, 0x14, 0);
+    setGXColorS10(&lbl_eu_80664588, 0xff, 0xff, 0xfa, 0);
+    setGXColorS10(&lbl_eu_80664590, 0x1f, 0xa6, 0x1a, 0);
     SplitU32ToS16s(&lbl_eu_80664598, 0);
     SplitU32ToS16s(&lbl_eu_806645A0, 0);
-    func_801C4B60(&lbl_eu_806645A8, 0x80, 0x80, 0x80, 0);
-    func_801C4B60(&lbl_eu_806645B0, 0x80, 0x80, 0x80, 0);
+    setGXColorS10(&lbl_eu_806645A8, 0x80, 0x80, 0x80, 0);
+    setGXColorS10(&lbl_eu_806645B0, 0x80, 0x80, 0x80, 0);
     SplitU32ToS16s(&lbl_eu_806645B8, 0);
     SplitU32ToS16s(&lbl_eu_806645C0, 0);
-    func_801C4B60(&lbl_eu_806645C8, 0xff, 0xff, 0xfa, 0);
-    func_801C4B60(&lbl_eu_806645D0, 0x80, 0x80, 0x80, 0);
+    setGXColorS10(&lbl_eu_806645C8, 0xff, 0xff, 0xfa, 0);
+    setGXColorS10(&lbl_eu_806645D0, 0x80, 0x80, 0x80, 0);
 }
 
 // Retail func_801D3C74: fills the item-name buffer at item_data+0xD9 from
@@ -8311,7 +8311,7 @@ void func_801D77A4(void* arr, u32 index, u16 value) {
 void func_801D4260(CItemBoxInfo* info, u16 arg2, void* arg3, u16 arg4) {
     char* base = (char*)&lbl_eu_805063BC;
 #define SET_PANE(_off, _val) \
-    func_80124270(((nw4r::lyt::Pane*)*(void**)((u8*)info->state.layout + 0x10))->FindPaneByName(base + _off, true), _val)
+    setPaneVisible(((nw4r::lyt::Pane*)*(void**)((u8*)info->state.layout + 0x10))->FindPaneByName(base + _off, true), _val)
     SET_PANE(0xc2, 0x0);
     SET_PANE(0xce, 0x0);
     SET_PANE(0xda, 0x0);

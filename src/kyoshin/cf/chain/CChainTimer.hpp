@@ -60,7 +60,7 @@ namespace cf {
     };
 
     // Voice-action object returned by the battle object's vtable slot 0x298.
-    // Only the arts-id holder and gauge fields touched by func_8027D478 are
+    // Only the arts-id holder and gauge fields touched by ChainTmr_CheckArts_D478 are
     // declared; the rest are opaque.
     class CChainGaugeAction {
     public:
@@ -239,7 +239,7 @@ namespace cf {
         u8 _pad359C[0x3E6C - 0x359C]; // 0x359C-0x3E6B
         u16 field_3E6C;             // 0x3E6C (chain flag bits; bit 12 = chain active)
         u8 _pad3E6E[0x3E98 - 0x3E6E]; // 0x3E6E-0x3E97
-        u32 field_0x3E98;           // 0x3E98 (cleared by func_80279B34)
+        u32 field_0x3E98;           // 0x3E98 (cleared by CChainActor_CleanupVoiceEnd)
         CChainVoiceSub mSub;        // 0x3E9C (embedded voice sub-object)
         u8 _pad3EA0[0x3F00 - 0x3EA0]; // 0x3EA0-0x3EFF
         u32 field_3F00;             // 0x3F00 (flags; bit 30 read by chain start)
@@ -281,19 +281,19 @@ extern "C" {
 int lookupWorkAtAddr(void* addr);
 int func_80148778(void*, int);
 void* func_8016FE34(void* source);
-unsigned long func_801BA2C8(void* self);
-void func_800BBA7C(void* obj, f32* vec);
+unsigned long SuddenCommuIsStateActive(void* self);
+void CfModel_GetSpeedRate(void* obj, f32* vec);
 void* getArtsParamAtCnt(void* self, unsigned int index);
 void* getArtsParamRC(const void* arts, int index, int subindex);
 int func_80154280(void* param, void* actor, int flags);
 void resetBattleGauge__Q22cf13CfGameManagerFv();
 void syncBattleState__Q22cf13CfGameManagerFv(void* object);
 void processFieldEffects__Q22cf13CfGameManagerFv();
-void func_801043BC();
-void func_8027CC3C(void* self, void* owner);
-void func_8027CD08(void* self, void* owner);
-int func_80146300(int val, int flag);
-// (func_8025FB10: single winning decl lives on chain/CChainActorList.hpp.)
+void CMenuArtsSelect_ResetSlotAnims();
+void ChainMusic_SaveSlots(void* self, void* owner);
+void ChainMusic_RestoreSlots(void* self, void* owner);
+int isArtsUsable(int val, int flag);
+// (IdTable_SumValues: single winning decl lives on chain/CChainActorList.hpp.)
 int* CtrlObjectParam_GetSlotTableBase();
 }
 // C++-mangled retail helper findObjectById__Fi (actor id -> action source).

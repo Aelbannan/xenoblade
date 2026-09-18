@@ -318,7 +318,7 @@ struct D81A8_StatusListView {
     u8 statusList;   // +0x08
 };
 
-// Status/arts-data entry returned by func_80149154 (func_800D81A8 reads the
+// Status/arts-data entry returned by findBattleStatusEntry (func_800D81A8 reads the
 // s32 value at +0x10).
 struct BDSessionEntry {
     u8 pad_00[0x10];
@@ -414,11 +414,11 @@ extern "C" u8 lbl_eu_8052BD74[];  // CChainTime vtable (restored by ~CChainTime)
 // instead of a namespace-mangled C++ form).
 extern "C" void CBattleMan_OnActorsEmpty(cf::CBattleManager* mgr);
 extern "C" void func_80279694(cf::CChain* chain, cf::CfObjectActor* actor);
-extern "C" void func_80277B34(cf::CChain* chain);
+extern "C" void CChain_ForwardVoiceClear(cf::CChain* chain);
 extern "C" void func_800DB4FC(void* self, void* obj, void* enemy, void* move);
 extern "C" void func_800DB7F8(void* self, void* obj, void* enemy, void* move);
 extern "C" void CBattleMan_HandleMoveType45(void* self, void* obj, void* enemy, void* move);
-extern "C" int func_802799F0(void* chain, void* obj);
+extern "C" int CChain_HasMemberEntry(void* chain, void* obj);
 
 // C++-mangled retail import (findObjectById__Fi): actor id -> action source.
 void* findObjectById(int id);

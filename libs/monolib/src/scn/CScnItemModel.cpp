@@ -112,8 +112,8 @@ CScnItemModel* __ct__CScnItemModel(CScnItemModel* self, CScnItemModelOwner* owne
     return self;
 }
 
-extern "C" void func_804970D0(u8* self);
-extern "C" void simResetAnimAtC(u8* self) { ((void(*)(void*))func_804970D0)((char*)self + 0xc); }
+extern "C" void scn80496SetNodeIdByName(u8* self);
+extern "C" void simResetAnimAtC(u8* self) { ((void(*)(void*))scn80496SetNodeIdByName)((char*)self + 0xc); }
 
 // func_80482DF4: set/clear the 0x100000 flag at 0x7A4 on self, then walk
 // func_80482DF4: set/clear the 0x100000 flag at 0x7A4 on self, then walk
@@ -620,7 +620,7 @@ extern "C" void simSetFlag2OnTree(CScnItemModel* self, u32 param) {
 // clears the result to 0 but still runs the trailing 0x80 flag on self).
 // Deeper than 3 the function recurses on the next node. When the chain ends
 // at n1/n2 the node is bound directly: simQueryLeafAnim finds the leaf (the
-// deep walk), func_80497190 binds the resource on the node's 0xC sub-object,
+// deep walk), scn80496BindChrAnmPack binds the resource on the node's 0xC sub-object,
 // and the 0x200 flag is set iff the first leaf is null but the re-walk finds
 // a leaf. When self has no 7C4 child, the deep walk runs from the 7C4 / 7C8
 // / self chain (simQueryLeafAnim shape inlined twice) and self gets the same
@@ -647,7 +647,7 @@ extern "C" u32 func_804839D4(CScnItemModel* self, CScnItemAnimResFile* resFile,
                         result = func_804839D4(n3, resFile, index, c, f, g, h);
                     } else {
                         u32 leaf = simQueryLeafAnim(n2);
-                        result = func_80497190(n2->field_0xC, resFile, index, c, f, g, h);
+                        result = scn80496BindChrAnmPack(n2->field_0xC, resFile, index, c, f, g, h);
                         if (leaf == 0 && simQueryLeafAnim(n2) != 0) {
                             n2->flags7A4 |= 0x200;
                         } else {
@@ -658,7 +658,7 @@ extern "C" u32 func_804839D4(CScnItemModel* self, CScnItemAnimResFile* resFile,
                 }
             } else {
                 u32 leaf = simQueryLeafAnim(n1);
-                result = func_80497190(n1->field_0xC, resFile, index, c, f, g, h);
+                result = scn80496BindChrAnmPack(n1->field_0xC, resFile, index, c, f, g, h);
                 if (leaf == 0 && simQueryLeafAnim(n1) != 0) {
                     n1->flags7A4 |= 0x200;
                 } else {
@@ -684,7 +684,7 @@ extern "C" u32 func_804839D4(CScnItemModel* self, CScnItemAnimResFile* resFile,
                     } else if (e2->field_0x7C8 != 0) {
                         r22 = simQueryLeafAnim(e2->field_0x7C8);
                     } else {
-                        r22 = func_804978B8(e2->field_0xC);
+                        r22 = scn80496HasChild1Node(e2->field_0xC);
                     }
                 } else {
                     CScnItemModel* m1 = e1->field_0x7C8;
@@ -695,10 +695,10 @@ extern "C" u32 func_804839D4(CScnItemModel* self, CScnItemAnimResFile* resFile,
                         } else if (m1->field_0x7C8 != 0) {
                             r22 = simQueryLeafAnim(m1->field_0x7C8);
                         } else {
-                            r22 = func_804978B8(m1->field_0xC);
+                            r22 = scn80496HasChild1Node(m1->field_0xC);
                         }
                     } else {
-                        r22 = func_804978B8(e1->field_0xC);
+                        r22 = scn80496HasChild1Node(e1->field_0xC);
                     }
                 }
             } else {
@@ -712,7 +712,7 @@ extern "C" u32 func_804839D4(CScnItemModel* self, CScnItemAnimResFile* resFile,
                         } else if (d1->field_0x7C8 != 0) {
                             r22 = simQueryLeafAnim(d1->field_0x7C8);
                         } else {
-                            r22 = func_804978B8(d1->field_0xC);
+                            r22 = scn80496HasChild1Node(d1->field_0xC);
                         }
                     } else {
                         CScnItemModel* m2 = m1->field_0x7C8;
@@ -723,14 +723,14 @@ extern "C" u32 func_804839D4(CScnItemModel* self, CScnItemAnimResFile* resFile,
                             } else if (m2->field_0x7C8 != 0) {
                                 r22 = simQueryLeafAnim(m2->field_0x7C8);
                             } else {
-                                r22 = func_804978B8(m2->field_0xC);
+                                r22 = scn80496HasChild1Node(m2->field_0xC);
                             }
                         } else {
-                            r22 = func_804978B8(m1->field_0xC);
+                            r22 = scn80496HasChild1Node(m1->field_0xC);
                         }
                     }
                 } else {
-                    r22 = func_804978B8(base->field_0xC);
+                    r22 = scn80496HasChild1Node(base->field_0xC);
                 }
             }
         } else {
@@ -746,7 +746,7 @@ extern "C" u32 func_804839D4(CScnItemModel* self, CScnItemAnimResFile* resFile,
                         } else if (e2->field_0x7C8 != 0) {
                             r22 = simQueryLeafAnim(e2->field_0x7C8);
                         } else {
-                            r22 = func_804978B8(e2->field_0xC);
+                            r22 = scn80496HasChild1Node(e2->field_0xC);
                         }
                     } else {
                         CScnItemModel* m1 = e1->field_0x7C8;
@@ -757,10 +757,10 @@ extern "C" u32 func_804839D4(CScnItemModel* self, CScnItemAnimResFile* resFile,
                             } else if (m1->field_0x7C8 != 0) {
                                 r22 = simQueryLeafAnim(m1->field_0x7C8);
                             } else {
-                                r22 = func_804978B8(m1->field_0xC);
+                                r22 = scn80496HasChild1Node(m1->field_0xC);
                             }
                         } else {
-                            r22 = func_804978B8(e1->field_0xC);
+                            r22 = scn80496HasChild1Node(e1->field_0xC);
                         }
                     }
                 } else {
@@ -774,7 +774,7 @@ extern "C" u32 func_804839D4(CScnItemModel* self, CScnItemAnimResFile* resFile,
                             } else if (d1->field_0x7C8 != 0) {
                                 r22 = simQueryLeafAnim(d1->field_0x7C8);
                             } else {
-                                r22 = func_804978B8(d1->field_0xC);
+                                r22 = scn80496HasChild1Node(d1->field_0xC);
                             }
                         } else {
                             CScnItemModel* m2 = m1->field_0x7C8;
@@ -785,21 +785,21 @@ extern "C" u32 func_804839D4(CScnItemModel* self, CScnItemAnimResFile* resFile,
                                 } else if (m2->field_0x7C8 != 0) {
                                     r22 = simQueryLeafAnim(m2->field_0x7C8);
                                 } else {
-                                    r22 = func_804978B8(m2->field_0xC);
+                                    r22 = scn80496HasChild1Node(m2->field_0xC);
                                 }
                             } else {
-                                r22 = func_804978B8(m1->field_0xC);
+                                r22 = scn80496HasChild1Node(m1->field_0xC);
                             }
                         }
                     } else {
-                        r22 = func_804978B8(base2->field_0xC);
+                        r22 = scn80496HasChild1Node(base2->field_0xC);
                     }
                 }
             } else {
-                r22 = func_804978B8(self->field_0xC);
+                r22 = scn80496HasChild1Node(self->field_0xC);
             }
         }
-        result = func_80497190(self->field_0xC, resFile, index, c, f, g, h);
+        result = scn80496BindChrAnmPack(self->field_0xC, resFile, index, c, f, g, h);
         if (r22 == 0) {
             // deep walk #2: re-walk when the first leaf was null.
             u32 w2;
@@ -815,7 +815,7 @@ extern "C" u32 func_804839D4(CScnItemModel* self, CScnItemAnimResFile* resFile,
                         } else if (e2->field_0x7C8 != 0) {
                             w2 = simQueryLeafAnim(e2->field_0x7C8);
                         } else {
-                            w2 = func_804978B8(e2->field_0xC);
+                            w2 = scn80496HasChild1Node(e2->field_0xC);
                         }
                     } else {
                         CScnItemModel* m1 = e1->field_0x7C8;
@@ -826,10 +826,10 @@ extern "C" u32 func_804839D4(CScnItemModel* self, CScnItemAnimResFile* resFile,
                             } else if (m1->field_0x7C8 != 0) {
                                 w2 = simQueryLeafAnim(m1->field_0x7C8);
                             } else {
-                                w2 = func_804978B8(m1->field_0xC);
+                                w2 = scn80496HasChild1Node(m1->field_0xC);
                             }
                         } else {
-                            w2 = func_804978B8(e1->field_0xC);
+                            w2 = scn80496HasChild1Node(e1->field_0xC);
                         }
                     }
                 } else {
@@ -843,7 +843,7 @@ extern "C" u32 func_804839D4(CScnItemModel* self, CScnItemAnimResFile* resFile,
                             } else if (d1->field_0x7C8 != 0) {
                                 w2 = simQueryLeafAnim(d1->field_0x7C8);
                             } else {
-                                w2 = func_804978B8(d1->field_0xC);
+                                w2 = scn80496HasChild1Node(d1->field_0xC);
                             }
                         } else {
                             CScnItemModel* m2 = m1->field_0x7C8;
@@ -854,14 +854,14 @@ extern "C" u32 func_804839D4(CScnItemModel* self, CScnItemAnimResFile* resFile,
                                 } else if (m2->field_0x7C8 != 0) {
                                     w2 = simQueryLeafAnim(m2->field_0x7C8);
                                 } else {
-                                    w2 = func_804978B8(m2->field_0xC);
+                                    w2 = scn80496HasChild1Node(m2->field_0xC);
                                 }
                             } else {
-                                w2 = func_804978B8(m1->field_0xC);
+                                w2 = scn80496HasChild1Node(m1->field_0xC);
                             }
                         }
                     } else {
-                        w2 = func_804978B8(base->field_0xC);
+                        w2 = scn80496HasChild1Node(base->field_0xC);
                     }
                 }
             } else {
@@ -877,7 +877,7 @@ extern "C" u32 func_804839D4(CScnItemModel* self, CScnItemAnimResFile* resFile,
                             } else if (e2->field_0x7C8 != 0) {
                                 w2 = simQueryLeafAnim(e2->field_0x7C8);
                             } else {
-                                w2 = func_804978B8(e2->field_0xC);
+                                w2 = scn80496HasChild1Node(e2->field_0xC);
                             }
                         } else {
                             CScnItemModel* m1 = e1->field_0x7C8;
@@ -888,10 +888,10 @@ extern "C" u32 func_804839D4(CScnItemModel* self, CScnItemAnimResFile* resFile,
                                 } else if (m1->field_0x7C8 != 0) {
                                     w2 = simQueryLeafAnim(m1->field_0x7C8);
                                 } else {
-                                    w2 = func_804978B8(m1->field_0xC);
+                                    w2 = scn80496HasChild1Node(m1->field_0xC);
                                 }
                             } else {
-                                w2 = func_804978B8(e1->field_0xC);
+                                w2 = scn80496HasChild1Node(e1->field_0xC);
                             }
                         }
                     } else {
@@ -905,7 +905,7 @@ extern "C" u32 func_804839D4(CScnItemModel* self, CScnItemAnimResFile* resFile,
                                 } else if (d1->field_0x7C8 != 0) {
                                     w2 = simQueryLeafAnim(d1->field_0x7C8);
                                 } else {
-                                    w2 = func_804978B8(d1->field_0xC);
+                                    w2 = scn80496HasChild1Node(d1->field_0xC);
                                 }
                             } else {
                                 CScnItemModel* m2 = m1->field_0x7C8;
@@ -916,18 +916,18 @@ extern "C" u32 func_804839D4(CScnItemModel* self, CScnItemAnimResFile* resFile,
                                     } else if (m2->field_0x7C8 != 0) {
                                         w2 = simQueryLeafAnim(m2->field_0x7C8);
                                     } else {
-                                        w2 = func_804978B8(m2->field_0xC);
+                                        w2 = scn80496HasChild1Node(m2->field_0xC);
                                     }
                                 } else {
-                                    w2 = func_804978B8(m1->field_0xC);
+                                    w2 = scn80496HasChild1Node(m1->field_0xC);
                                 }
                             }
                         } else {
-                            w2 = func_804978B8(base2->field_0xC);
+                            w2 = scn80496HasChild1Node(base2->field_0xC);
                         }
                     }
                 } else {
-                    w2 = func_804978B8(self->field_0xC);
+                    w2 = scn80496HasChild1Node(self->field_0xC);
                 }
             }
             if (w2 != 0) {
@@ -985,10 +985,10 @@ extern "C" u32 simBindChrAnimChain(CScnItemModel* self, CScnItemAnimResFile* res
 
 // simQueryLeafAnim: depth-first walk of the field_0x7C4 / field_0x7C8 tree,
 // preferring the 7C4 child, down to the first leaf (both children null),
-// then tail-calls func_804978B8 on the leaf's 0xC sub-object. The 7C4
+// then tail-calls scn80496HasChild1Node on the leaf's 0xC sub-object. The 7C4
 // descent is unrolled 4 levels from the entry node; after a 7C8 escape the
 // remaining descent budget shrinks by one (retail shape: E(node,4) with
-// H(c,b) = { if c->7C8 == 0 -> func_804978B8(c+0xC); else E(c->7C8, b) }).
+// H(c,b) = { if c->7C8 == 0 -> scn80496HasChild1Node(c+0xC); else E(c->7C8, b) }).
 // Every call is a tail call, so no frame is needed (retail starts with the
 // first load).
 extern "C" u32 simQueryLeafAnim(CScnItemModel* node) {
@@ -1007,7 +1007,7 @@ extern "C" u32 simQueryLeafAnim(CScnItemModel* node) {
                 if (n3->field_0x7C8 != 0) {
                     return simQueryLeafAnim(n3->field_0x7C8);
                 }
-                return func_804978B8(n3->field_0xC);
+                return scn80496HasChild1Node(n3->field_0xC);
             }
             // H(n2, 1)
             CScnItemModel* m1 = n2->field_0x7C8;
@@ -1020,9 +1020,9 @@ extern "C" u32 simQueryLeafAnim(CScnItemModel* node) {
                 if (m1->field_0x7C8 != 0) {
                     return simQueryLeafAnim(m1->field_0x7C8);
                 }
-                return func_804978B8(m1->field_0xC);
+                return scn80496HasChild1Node(m1->field_0xC);
             }
-            return func_804978B8(n2->field_0xC);
+            return scn80496HasChild1Node(n2->field_0xC);
         }
         // H(n1, 2)
         CScnItemModel* m1 = n1->field_0x7C8;
@@ -1037,7 +1037,7 @@ extern "C" u32 simQueryLeafAnim(CScnItemModel* node) {
                 if (d1->field_0x7C8 != 0) {
                     return simQueryLeafAnim(d1->field_0x7C8);
                 }
-                return func_804978B8(d1->field_0xC);
+                return scn80496HasChild1Node(d1->field_0xC);
             }
             // H(m1, 1)
             CScnItemModel* m2 = m1->field_0x7C8;
@@ -1050,11 +1050,11 @@ extern "C" u32 simQueryLeafAnim(CScnItemModel* node) {
                 if (m2->field_0x7C8 != 0) {
                     return simQueryLeafAnim(m2->field_0x7C8);
                 }
-                return func_804978B8(m2->field_0xC);
+                return scn80496HasChild1Node(m2->field_0xC);
             }
-            return func_804978B8(m1->field_0xC);
+            return scn80496HasChild1Node(m1->field_0xC);
         }
-        return func_804978B8(n1->field_0xC);
+        return scn80496HasChild1Node(n1->field_0xC);
     }
     // H(node, 3)
     CScnItemModel* m1 = node->field_0x7C8;
@@ -1071,7 +1071,7 @@ extern "C" u32 simQueryLeafAnim(CScnItemModel* node) {
                 if (d2->field_0x7C8 != 0) {
                     return simQueryLeafAnim(d2->field_0x7C8);
                 }
-                return func_804978B8(d2->field_0xC);
+                return scn80496HasChild1Node(d2->field_0xC);
             }
             // H(d1, 1)
             CScnItemModel* m2 = d1->field_0x7C8;
@@ -1084,9 +1084,9 @@ extern "C" u32 simQueryLeafAnim(CScnItemModel* node) {
                 if (m2->field_0x7C8 != 0) {
                     return simQueryLeafAnim(m2->field_0x7C8);
                 }
-                return func_804978B8(m2->field_0xC);
+                return scn80496HasChild1Node(m2->field_0xC);
             }
-            return func_804978B8(d1->field_0xC);
+            return scn80496HasChild1Node(d1->field_0xC);
         }
         // H(m1, 2)
         CScnItemModel* m2 = m1->field_0x7C8;
@@ -1101,7 +1101,7 @@ extern "C" u32 simQueryLeafAnim(CScnItemModel* node) {
                 if (e1->field_0x7C8 != 0) {
                     return simQueryLeafAnim(e1->field_0x7C8);
                 }
-                return func_804978B8(e1->field_0xC);
+                return scn80496HasChild1Node(e1->field_0xC);
             }
             // H(m2, 1)
             CScnItemModel* m3 = m2->field_0x7C8;
@@ -1114,13 +1114,13 @@ extern "C" u32 simQueryLeafAnim(CScnItemModel* node) {
                 if (m3->field_0x7C8 != 0) {
                     return simQueryLeafAnim(m3->field_0x7C8);
                 }
-                return func_804978B8(m3->field_0xC);
+                return scn80496HasChild1Node(m3->field_0xC);
             }
-            return func_804978B8(m2->field_0xC);
+            return scn80496HasChild1Node(m2->field_0xC);
         }
-        return func_804978B8(m1->field_0xC);
+        return scn80496HasChild1Node(m1->field_0xC);
     }
-    return func_804978B8(node->field_0xC);
+    return scn80496HasChild1Node(node->field_0xC);
 }
 
 // simGetLeafFlagBit9: walk the field_0x7C4 / field_0x7C8 tree preferring the
@@ -1575,9 +1575,9 @@ extern "C" float simGetLeafDist7B0(void* self) {
 }
 
 // simGetLeafAnimDist: walk the field_0x7C4 chain to its last node and tail-call
-// func_80497724 with the node's 0xC sub-object. Same hand-unrolled 5-level
+// scn80496GetChild1V6 with the node's 0xC sub-object. Same hand-unrolled 5-level
 // self tail-call shape as simSetLeafDist7B0. extern "C" keeps both the self and
-// the func_80497724 tail-call reloc names verbatim (reloc-site gate).
+// the scn80496GetChild1V6 tail-call reloc names verbatim (reloc-site gate).
 extern "C" float simGetLeafAnimDist(CScnItemModel* self) {
     CScnItemModel* n1 = self->field_0x7C4;
     if (n1 != 0) {
@@ -1591,60 +1591,60 @@ extern "C" float simGetLeafAnimDist(CScnItemModel* self) {
                     if (n5 != 0) {
                         return simGetLeafAnimDist(n5);
                     }
-                    return func_80497724(n4->field_0xC);
+                    return scn80496GetChild1V6(n4->field_0xC);
                 }
-                return func_80497724(n3->field_0xC);
+                return scn80496GetChild1V6(n3->field_0xC);
             }
-            return func_80497724(n2->field_0xC);
+            return scn80496GetChild1V6(n2->field_0xC);
         }
-        return func_80497724(n1->field_0xC);
+        return scn80496GetChild1V6(n1->field_0xC);
     }
-    return func_80497724(self->field_0xC);
+    return scn80496GetChild1V6(self->field_0xC);
 }
 
 // simRefreshFlag8: refresh the 0x8 flag at 0x7A8 on self and every model in
-// the field_0x7C4 chain when the sub-object distance (func_80497724) no
+// the field_0x7C4 chain when the sub-object distance (scn80496GetChild1V6) no
 // longer equals `value`. The first 4 chain nodes inline the ori; the walk's
-// tail calls func_80497760 on the last node's 0xC sub-object, and chains
+// tail calls scn80496CallChild1V5 on the last node's 0xC sub-object, and chains
 // longer than 4 recurse. Hand-unrolled like the other chain walks.
 extern "C" void simRefreshFlag8(CScnItemModel* self, float value) {
-    if (func_80497724(self->field_0xC) != value) {
+    if (scn80496GetChild1V6(self->field_0xC) != value) {
         self->flags7A8 |= 0x8;
     }
     CScnItemModel* n1 = self->field_0x7C4;
     if (n1 != 0) {
-        if (func_80497724(n1->field_0xC) != value) {
+        if (scn80496GetChild1V6(n1->field_0xC) != value) {
             n1->flags7A8 |= 0x8;
         }
         CScnItemModel* n2 = n1->field_0x7C4;
         if (n2 != 0) {
-            if (func_80497724(n2->field_0xC) != value) {
+            if (scn80496GetChild1V6(n2->field_0xC) != value) {
                 n2->flags7A8 |= 0x8;
             }
             CScnItemModel* n3 = n2->field_0x7C4;
             if (n3 != 0) {
-                if (func_80497724(n3->field_0xC) != value) {
+                if (scn80496GetChild1V6(n3->field_0xC) != value) {
                     n3->flags7A8 |= 0x8;
                 }
                 CScnItemModel* n4 = n3->field_0x7C4;
                 if (n4 != 0) {
                     simRefreshFlag8(n4, value);
                 } else {
-                    func_80497760(n3->field_0xC, value);
+                    scn80496CallChild1V5(n3->field_0xC, value);
                 }
             } else {
-                func_80497760(n2->field_0xC, value);
+                scn80496CallChild1V5(n2->field_0xC, value);
             }
         } else {
-            func_80497760(n1->field_0xC, value);
+            scn80496CallChild1V5(n1->field_0xC, value);
         }
     } else {
-        func_80497760(self->field_0xC, value);
+        scn80496CallChild1V5(self->field_0xC, value);
     }
 }
 
 // simGetLeafAnimDist2: walk the field_0x7C4 chain to its last node and tail-call
-// func_80497790 with the node's 0xC sub-object. Same shape as simGetLeafAnimDist.
+// scn80496GetChild1Float with the node's 0xC sub-object. Same shape as simGetLeafAnimDist.
 extern "C" float simGetLeafAnimDist2(CScnItemModel* self) {
     CScnItemModel* n1 = self->field_0x7C4;
     if (n1 != 0) {
@@ -1658,19 +1658,19 @@ extern "C" float simGetLeafAnimDist2(CScnItemModel* self) {
                     if (n5 != 0) {
                         return simGetLeafAnimDist2(n5);
                     }
-                    return func_80497790(n4->field_0xC);
+                    return scn80496GetChild1Float(n4->field_0xC);
                 }
-                return func_80497790(n3->field_0xC);
+                return scn80496GetChild1Float(n3->field_0xC);
             }
-            return func_80497790(n2->field_0xC);
+            return scn80496GetChild1Float(n2->field_0xC);
         }
-        return func_80497790(n1->field_0xC);
+        return scn80496GetChild1Float(n1->field_0xC);
     }
-    return func_80497790(self->field_0xC);
+    return scn80496GetChild1Float(self->field_0xC);
 }
 
 // simGetLeafAnimDist3: walk the field_0x7C4 chain to its last node and tail-call
-// func_804977C0 with the node's 0xC sub-object. Five named locals reproduce
+// scn80496GetChild2Float with the node's 0xC sub-object. Five named locals reproduce
 // the retail register rotation (r4,r3,r4,r5,r3); the cur/next shape used by
 // the simSetLeafDist7B0 family rotates differently (reg-swap-only there).
 extern "C" float simGetLeafAnimDist3(CScnItemModel* self) {
@@ -1686,19 +1686,19 @@ extern "C" float simGetLeafAnimDist3(CScnItemModel* self) {
                     if (n5 != 0) {
                         return simGetLeafAnimDist3(n5);
                     }
-                    return func_804977C0(n4->field_0xC);
+                    return scn80496GetChild2Float(n4->field_0xC);
                 }
-                return func_804977C0(n3->field_0xC);
+                return scn80496GetChild2Float(n3->field_0xC);
             }
-            return func_804977C0(n2->field_0xC);
+            return scn80496GetChild2Float(n2->field_0xC);
         }
-        return func_804977C0(n1->field_0xC);
+        return scn80496GetChild2Float(n1->field_0xC);
     }
-    return func_804977C0(self->field_0xC);
+    return scn80496GetChild2Float(self->field_0xC);
 }
 
 // simGetLeafAnimDist4: same 5-level chain walk as simGetLeafAnimDist3, tail-calling
-// func_804977F0 with the last node's 0xC sub-object.
+// scn80496GetChild2V6 with the last node's 0xC sub-object.
 extern "C" f32 simGetLeafAnimDist4(CScnItemModel* self) {
     CScnItemModel* n1 = self->field_0x7C4;
     if (n1 != 0) {
@@ -1712,19 +1712,19 @@ extern "C" f32 simGetLeafAnimDist4(CScnItemModel* self) {
                     if (n5 != 0) {
                         return simGetLeafAnimDist4(n5);
                     }
-                    return func_804977F0(n4->field_0xC);
+                    return scn80496GetChild2V6(n4->field_0xC);
                 }
-                return func_804977F0(n3->field_0xC);
+                return scn80496GetChild2V6(n3->field_0xC);
             }
-            return func_804977F0(n2->field_0xC);
+            return scn80496GetChild2V6(n2->field_0xC);
         }
-        return func_804977F0(n1->field_0xC);
+        return scn80496GetChild2V6(n1->field_0xC);
     }
-    return func_804977F0(self->field_0xC);
+    return scn80496GetChild2V6(self->field_0xC);
 }
 
 // simGetLeafAnimStatus: same 5-level chain walk as simGetLeafAnimDist3, tail-calling
-// func_8049715C with the last node's 0xC sub-object.
+// scn80496IsNodeFlagBit with the last node's 0xC sub-object.
 extern "C" u32 simGetLeafAnimStatus(CScnItemModel* self) {
     CScnItemModel* n1 = self->field_0x7C4;
     if (n1 != 0) {
@@ -1738,15 +1738,15 @@ extern "C" u32 simGetLeafAnimStatus(CScnItemModel* self) {
                     if (n5 != 0) {
                         return simGetLeafAnimStatus(n5);
                     }
-                    return func_8049715C(n4->field_0xC);
+                    return scn80496IsNodeFlagBit(n4->field_0xC);
                 }
-                return func_8049715C(n3->field_0xC);
+                return scn80496IsNodeFlagBit(n3->field_0xC);
             }
-            return func_8049715C(n2->field_0xC);
+            return scn80496IsNodeFlagBit(n2->field_0xC);
         }
-        return func_8049715C(n1->field_0xC);
+        return scn80496IsNodeFlagBit(n1->field_0xC);
     }
-    return func_8049715C(self->field_0xC);
+    return scn80496IsNodeFlagBit(self->field_0xC);
 }
 
 // simRefreshFadeDist: when value7B0 reaches 1.0, re-seed the fade distances from
@@ -1761,7 +1761,7 @@ extern "C" bool simRefreshFadeDist(CScnItemModel* self) {
     f32 f31, d1, d2;
     if (b) {
         f31 = CDeviceVI::isTvFormatPal() ? lbl_eu_8066A8CC : lbl_eu_8066A8C4;
-        // walk 1: last node's distance (func_80497790 leaves). Written as one
+        // walk 1: last node's distance (scn80496GetChild1Float leaves). Written as one
         // nested-ternary assignment (loads stay conditional via short-circuit)
         // so MWCC places the single fmr f30, f1 at the chain's join (retail
         // shares one move instead of emitting it in every leaf).
@@ -1776,12 +1776,12 @@ extern "C" bool simRefreshFadeDist(CScnItemModel* self) {
                                ? ((n4 = n3->field_0x7C4) != 0
                                       ? ((n5 = n4->field_0x7C4) != 0
                                              ? simGetLeafAnimDist2(n5)
-                                             : func_80497790(n4->field_0xC))
-                                      : func_80497790(n3->field_0xC))
-                               : func_80497790(n2->field_0xC))
-                        : func_80497790(n1->field_0xC))
-                 : func_80497790(self->field_0xC);
-        // walk 2: last node's distance (func_80497724 leaves)
+                                             : scn80496GetChild1Float(n4->field_0xC))
+                                      : scn80496GetChild1Float(n3->field_0xC))
+                               : scn80496GetChild1Float(n2->field_0xC))
+                        : scn80496GetChild1Float(n1->field_0xC))
+                 : scn80496GetChild1Float(self->field_0xC);
+        // walk 2: last node's distance (scn80496GetChild1V6 leaves)
         CScnItemModel* m1 = self->field_0x7C4;
         if (m1 != 0) {
             CScnItemModel* m2 = m1->field_0x7C4;
@@ -1794,19 +1794,19 @@ extern "C" bool simRefreshFadeDist(CScnItemModel* self) {
                         if (m5 != 0) {
                             d2 = simGetLeafAnimDist(m5);
                         } else {
-                            d2 = func_80497724(m4->field_0xC);
+                            d2 = scn80496GetChild1V6(m4->field_0xC);
                         }
                     } else {
-                        d2 = func_80497724(m3->field_0xC);
+                        d2 = scn80496GetChild1V6(m3->field_0xC);
                     }
                 } else {
-                    d2 = func_80497724(m2->field_0xC);
+                    d2 = scn80496GetChild1V6(m2->field_0xC);
                 }
             } else {
-                d2 = func_80497724(m1->field_0xC);
+                d2 = scn80496GetChild1V6(m1->field_0xC);
             }
         } else {
-            d2 = func_80497724(self->field_0xC);
+            d2 = scn80496GetChild1V6(self->field_0xC);
         }
         b = (d1 - f31) <= d2;
     }
@@ -1815,7 +1815,7 @@ extern "C" bool simRefreshFadeDist(CScnItemModel* self) {
         // return value, so no `li r3, 0` appears)
         bool c = self->value7B0 < lbl_eu_8066A8C0;
         if (c) {
-            // walk 3: last node's distance (func_80497724 leaves)
+            // walk 3: last node's distance (scn80496GetChild1V6 leaves)
             f32 d3;
             CScnItemModel* p1 = self->field_0x7C4;
             if (p1 != 0) {
@@ -1829,19 +1829,19 @@ extern "C" bool simRefreshFadeDist(CScnItemModel* self) {
                             if (p5 != 0) {
                                 d3 = simGetLeafAnimDist(p5);
                             } else {
-                                d3 = func_80497724(p4->field_0xC);
+                                d3 = scn80496GetChild1V6(p4->field_0xC);
                             }
                         } else {
-                            d3 = func_80497724(p3->field_0xC);
+                            d3 = scn80496GetChild1V6(p3->field_0xC);
                         }
                     } else {
-                        d3 = func_80497724(p2->field_0xC);
+                        d3 = scn80496GetChild1V6(p2->field_0xC);
                     }
                 } else {
-                    d3 = func_80497724(p1->field_0xC);
+                    d3 = scn80496GetChild1V6(p1->field_0xC);
                 }
             } else {
-                d3 = func_80497724(self->field_0xC);
+                d3 = scn80496GetChild1V6(self->field_0xC);
             }
             return lbl_eu_8066A8C0 >= d3;
         }
@@ -1850,14 +1850,14 @@ extern "C" bool simRefreshFadeDist(CScnItemModel* self) {
     return b;
 }
 
-// simRefreshFadeDist2: twin of simRefreshFadeDist using the func_804977C0 /
-// func_804977F0 leaf walks (simGetLeafAnimDist3 / simGetLeafAnimDist4 deep-chain calls).
+// simRefreshFadeDist2: twin of simRefreshFadeDist using the scn80496GetChild2Float /
+// scn80496GetChild2V6 leaf walks (simGetLeafAnimDist3 / simGetLeafAnimDist4 deep-chain calls).
 extern "C" bool simRefreshFadeDist2(CScnItemModel* self) {
     bool b = self->value7B0 >= lbl_eu_8066A8C0;
     f32 f31, d1, d2;
     if (b) {
         f31 = CDeviceVI::isTvFormatPal() ? lbl_eu_8066A8CC : lbl_eu_8066A8C4;
-        // walk 1: last node's distance (func_804977C0 leaves), nested-ternary
+        // walk 1: last node's distance (scn80496GetChild2Float leaves), nested-ternary
         // single assignment so MWCC shares the fmr f30, f1 at the join.
         CScnItemModel* n1 = self->field_0x7C4;
         CScnItemModel* n2 = 0;
@@ -1870,11 +1870,11 @@ extern "C" bool simRefreshFadeDist2(CScnItemModel* self) {
                                ? ((n4 = n3->field_0x7C4) != 0
                                       ? ((n5 = n4->field_0x7C4) != 0
                                              ? simGetLeafAnimDist3(n5)
-                                             : func_804977C0(n4->field_0xC))
-                                      : func_804977C0(n3->field_0xC))
-                               : func_804977C0(n2->field_0xC))
-                        : func_804977C0(n1->field_0xC))
-                 : func_804977C0(self->field_0xC);
+                                             : scn80496GetChild2Float(n4->field_0xC))
+                                      : scn80496GetChild2Float(n3->field_0xC))
+                               : scn80496GetChild2Float(n2->field_0xC))
+                        : scn80496GetChild2Float(n1->field_0xC))
+                 : scn80496GetChild2Float(self->field_0xC);
         f32 d2;
         CScnItemModel* m1 = self->field_0x7C4;
         if (m1 != 0) {
@@ -1888,19 +1888,19 @@ extern "C" bool simRefreshFadeDist2(CScnItemModel* self) {
                         if (m5 != 0) {
                             d2 = simGetLeafAnimDist4(m5);
                         } else {
-                            d2 = func_804977F0(m4->field_0xC);
+                            d2 = scn80496GetChild2V6(m4->field_0xC);
                         }
                     } else {
-                        d2 = func_804977F0(m3->field_0xC);
+                        d2 = scn80496GetChild2V6(m3->field_0xC);
                     }
                 } else {
-                    d2 = func_804977F0(m2->field_0xC);
+                    d2 = scn80496GetChild2V6(m2->field_0xC);
                 }
             } else {
-                d2 = func_804977F0(m1->field_0xC);
+                d2 = scn80496GetChild2V6(m1->field_0xC);
             }
         } else {
-            d2 = func_804977F0(self->field_0xC);
+            d2 = scn80496GetChild2V6(self->field_0xC);
         }
         b = (d1 - f31) <= d2;
     }
@@ -1920,19 +1920,19 @@ extern "C" bool simRefreshFadeDist2(CScnItemModel* self) {
                             if (p5 != 0) {
                                 d3 = simGetLeafAnimDist4(p5);
                             } else {
-                                d3 = func_804977F0(p4->field_0xC);
+                                d3 = scn80496GetChild2V6(p4->field_0xC);
                             }
                         } else {
-                            d3 = func_804977F0(p3->field_0xC);
+                            d3 = scn80496GetChild2V6(p3->field_0xC);
                         }
                     } else {
-                        d3 = func_804977F0(p2->field_0xC);
+                        d3 = scn80496GetChild2V6(p2->field_0xC);
                     }
                 } else {
-                    d3 = func_804977F0(p1->field_0xC);
+                    d3 = scn80496GetChild2V6(p1->field_0xC);
                 }
             } else {
-                d3 = func_804977F0(self->field_0xC);
+                d3 = scn80496GetChild2V6(self->field_0xC);
             }
             return lbl_eu_8066A8C0 >= d3;
         }
@@ -1994,7 +1994,7 @@ extern "C" void simSetLeafFlag4000(CScnItemModel* self, u32 param) {
 }
 
 // simSetLeafAnimTag: walk the field_0x7C4 chain to its last node and tail-call
-// func_8049782C with the node's 0xC sub-object, forwarding `tag`. The live
+// scn80496RefreshBlendTag with the node's 0xC sub-object, forwarding `tag`. The live
 // tag occupies r4, so the walk rotates r5,r3,r5,r6,r3 (retail shape).
 extern "C" void simSetLeafAnimTag(CScnItemModel* self, u32 tag) {
     CScnItemModel* n1 = self->field_0x7C4;
@@ -2009,19 +2009,19 @@ extern "C" void simSetLeafAnimTag(CScnItemModel* self, u32 tag) {
                     if (n5 != 0) {
                         simSetLeafAnimTag(n5, tag);
                     } else {
-                        func_8049782C(n4->field_0xC, tag);
+                        scn80496RefreshBlendTag(n4->field_0xC, tag);
                     }
                 } else {
-                    func_8049782C(n3->field_0xC, tag);
+                    scn80496RefreshBlendTag(n3->field_0xC, tag);
                 }
             } else {
-                func_8049782C(n2->field_0xC, tag);
+                scn80496RefreshBlendTag(n2->field_0xC, tag);
             }
         } else {
-            func_8049782C(n1->field_0xC, tag);
+            scn80496RefreshBlendTag(n1->field_0xC, tag);
         }
     } else {
-        func_8049782C(self->field_0xC, tag);
+        scn80496RefreshBlendTag(self->field_0xC, tag);
     }
 }
 
@@ -2190,10 +2190,10 @@ int simProbeVfunc34(CScnItemModel* self, u32 param) {
 // embedded CAttrTransform at 0x1F8.
 extern "C" void simRefreshActDist(CScnItemModel* self) {
     if (self->flags7A4 & 0x80000000) {
-        func_8049771C(self->field_0xC, lbl_eu_8066A8C0);
+        scn80496SetFloat178(self->field_0xC, lbl_eu_8066A8C0);
         self->flags7A4 &= ~0x80000000u;
     } else {
-        func_8049771C(self->field_0xC, self->value7B0);
+        scn80496SetFloat178(self->field_0xC, self->value7B0);
     }
     ((CScnItemModelActData*)self->field_0x1F8)->value2E8 =
         self->value7AC * ((CScnItemModelActData*)self->field_0x1F8)->value304;
@@ -2202,8 +2202,8 @@ extern "C" void simRefreshActDist(CScnItemModel* self) {
 }
 
 // simRefreshFadeChain: fade-distance refresh. Three 5-level chain walks run inline
-// (retail shape: shallow leaves call func_8049715C / func_80497790 /
-// func_80497724 directly, only the depth-5 handle calls the walk helper
+// (retail shape: shallow leaves call scn80496IsNodeFlagBit / scn80496GetChild1Float /
+// scn80496GetChild1V6 directly, only the depth-5 handle calls the walk helper
 // simGetLeafAnimStatus / simGetLeafAnimDist2 / simGetLeafAnimDist). Walk 1 and 3 use the
 // if/else form (retail: the self leaf falls into the result join); walk 2
 // uses one nested-ternary single assignment (retail: the n1 leaf falls into
@@ -2211,11 +2211,11 @@ extern "C" void simRefreshActDist(CScnItemModel* self) {
 // simRefreshFadeDist's walk 1). Guards: walk-1 result must be 0, then the last
 // node's distance (f31) must be >= the TV constant, then walk-3's distance
 // must be >= f31 - C4. Finally the 0x8 flag at 0x7A8 is refreshed on the
-// first 4 chain nodes (func_80497724 distance mismatch) with the walk
-// tail-calling simRefreshFlag8 / func_80497760. extern "C" keeps the call
+// first 4 chain nodes (scn80496GetChild1V6 distance mismatch) with the walk
+// tail-calling simRefreshFlag8 / scn80496CallChild1V5. extern "C" keeps the call
 // reloc names verbatim (reloc-site gate).
 extern "C" void simRefreshFadeChain(CScnItemModel* self) {
-    // walk 1: last node's status (simGetLeafAnimStatus / func_8049715C leaves).
+    // walk 1: last node's status (simGetLeafAnimStatus / scn80496IsNodeFlagBit leaves).
     u32 result;
     CScnItemModel* n1 = self->field_0x7C4;
     if (n1 != 0) {
@@ -2229,24 +2229,24 @@ extern "C" void simRefreshFadeChain(CScnItemModel* self) {
                     if (n5 != 0) {
                         result = simGetLeafAnimStatus(n5);
                     } else {
-                        result = func_8049715C(n4->field_0xC);
+                        result = scn80496IsNodeFlagBit(n4->field_0xC);
                     }
                 } else {
-                    result = func_8049715C(n3->field_0xC);
+                    result = scn80496IsNodeFlagBit(n3->field_0xC);
                 }
             } else {
-                result = func_8049715C(n2->field_0xC);
+                result = scn80496IsNodeFlagBit(n2->field_0xC);
             }
         } else {
-            result = func_8049715C(n1->field_0xC);
+            result = scn80496IsNodeFlagBit(n1->field_0xC);
         }
     } else {
-        result = func_8049715C(self->field_0xC);
+        result = scn80496IsNodeFlagBit(self->field_0xC);
     }
     if (result != 0) {
         return;
     }
-    // walk 2: last node's distance (simGetLeafAnimDist2 / func_80497790 leaves),
+    // walk 2: last node's distance (simGetLeafAnimDist2 / scn80496GetChild1Float leaves),
     // nested-ternary single assignment (saved into f31 for the later checks).
     CScnItemModel* m1 = self->field_0x7C4;
     CScnItemModel* m2 = 0;
@@ -2259,15 +2259,15 @@ extern "C" void simRefreshFadeChain(CScnItemModel* self) {
                                 ? ((m4 = m3->field_0x7C4) != 0
                                        ? ((m5 = m4->field_0x7C4) != 0
                                               ? simGetLeafAnimDist2(m5)
-                                              : func_80497790(m4->field_0xC))
-                                       : func_80497790(m3->field_0xC))
-                                : func_80497790(m2->field_0xC))
-                         : func_80497790(m1->field_0xC))
-                  : func_80497790(self->field_0xC);
+                                              : scn80496GetChild1Float(m4->field_0xC))
+                                       : scn80496GetChild1Float(m3->field_0xC))
+                                : scn80496GetChild1Float(m2->field_0xC))
+                         : scn80496GetChild1Float(m1->field_0xC))
+                  : scn80496GetChild1Float(self->field_0xC);
     // The float guards are written as >= (not <) so MWCC emits the retail
     // `fcmpo; cror eq,gt,eq; bne` idiom (a < guard would lower to blt).
     if (f31 >= lbl_eu_8066A8C4) {
-        // walk 3: last node's distance (simGetLeafAnimDist / func_80497724
+        // walk 3: last node's distance (simGetLeafAnimDist / scn80496GetChild1V6
         // leaves), if/else form (used immediately by the guard below).
         f32 d;
         CScnItemModel* p1 = self->field_0x7C4;
@@ -2282,56 +2282,56 @@ extern "C" void simRefreshFadeChain(CScnItemModel* self) {
                         if (p5 != 0) {
                             d = simGetLeafAnimDist(p5);
                         } else {
-                            d = func_80497724(p4->field_0xC);
+                            d = scn80496GetChild1V6(p4->field_0xC);
                         }
                     } else {
-                        d = func_80497724(p3->field_0xC);
+                        d = scn80496GetChild1V6(p3->field_0xC);
                     }
                 } else {
-                    d = func_80497724(p2->field_0xC);
+                    d = scn80496GetChild1V6(p2->field_0xC);
                 }
             } else {
-                d = func_80497724(p1->field_0xC);
+                d = scn80496GetChild1V6(p1->field_0xC);
             }
         } else {
-            d = func_80497724(self->field_0xC);
+            d = scn80496GetChild1V6(self->field_0xC);
         }
         if (d >= f31 - lbl_eu_8066A8C4) {
             // refresh the 0x8 flag: first 4 chain nodes inline, the tail
             // handled by simRefreshFlag8 (chain deeper than 4) or
-            // func_80497760 (leaf).
-            if (func_80497724(self->field_0xC) != f31 - lbl_eu_8066A8C4) {
+            // scn80496CallChild1V5 (leaf).
+            if (scn80496GetChild1V6(self->field_0xC) != f31 - lbl_eu_8066A8C4) {
                 self->flags7A8 |= 0x8;
             }
             CScnItemModel* q1 = self->field_0x7C4;
             if (q1 != 0) {
-                if (func_80497724(q1->field_0xC) != f31 - lbl_eu_8066A8C4) {
+                if (scn80496GetChild1V6(q1->field_0xC) != f31 - lbl_eu_8066A8C4) {
                     q1->flags7A8 |= 0x8;
                 }
                 CScnItemModel* q2 = q1->field_0x7C4;
                 if (q2 != 0) {
-                    if (func_80497724(q2->field_0xC) != f31 - lbl_eu_8066A8C4) {
+                    if (scn80496GetChild1V6(q2->field_0xC) != f31 - lbl_eu_8066A8C4) {
                         q2->flags7A8 |= 0x8;
                     }
                     CScnItemModel* q3 = q2->field_0x7C4;
                     if (q3 != 0) {
-                        if (func_80497724(q3->field_0xC) != f31 - lbl_eu_8066A8C4) {
+                        if (scn80496GetChild1V6(q3->field_0xC) != f31 - lbl_eu_8066A8C4) {
                             q3->flags7A8 |= 0x8;
                         }
                         CScnItemModel* q4 = q3->field_0x7C4;
                         if (q4 != 0) {
                             simRefreshFlag8(q4, f31 - lbl_eu_8066A8C4);
                         } else {
-                            func_80497760(q3->field_0xC, f31 - lbl_eu_8066A8C4);
+                            scn80496CallChild1V5(q3->field_0xC, f31 - lbl_eu_8066A8C4);
                         }
                     } else {
-                        func_80497760(q2->field_0xC, f31 - lbl_eu_8066A8C4);
+                        scn80496CallChild1V5(q2->field_0xC, f31 - lbl_eu_8066A8C4);
                     }
                 } else {
-                    func_80497760(q1->field_0xC, f31 - lbl_eu_8066A8C4);
+                    scn80496CallChild1V5(q1->field_0xC, f31 - lbl_eu_8066A8C4);
                 }
             } else {
-                func_80497760(self->field_0xC, f31 - lbl_eu_8066A8C4);
+                scn80496CallChild1V5(self->field_0xC, f31 - lbl_eu_8066A8C4);
             }
         }
     }
@@ -2612,8 +2612,8 @@ __declspec(noinline) void simToggleWordBits(u8* self, u32 flags, u32 enable) {
 extern "C" u32 lbl_eu_806624D0;   // foreign .sdata
 namespace SIMBlob {
 extern "C" void __dt__13CScnItemModelFv();
-extern "C" void simRefreshActDist(); extern "C" void func_80482048();
-extern "C" void func_80482288(); extern "C" void simGetValue7E4();
+extern "C" void simRefreshActDist(); extern "C" void ScnCamNw4r_EmptyHook48();
+extern "C" void scnItemIdNoopA(); extern "C" void simGetValue7E4();
 extern "C" void simNotifyVfunc28(); extern "C" void simProbeVfunc2C();
 extern "C" void simNotifyVfunc30(); extern "C" void simProbeVfunc34();
 extern "C" void simSetAndPropRate(); extern "C" void simGetRate858();
@@ -2625,8 +2625,8 @@ extern "C" void simProbeModelVec(); extern "C" void simNotifyVfunc94();
 extern "C" void simNotifyReadyTree(); extern "C" void simNotifyVfunc9C();
 extern "C" void simLinkSlot7B4(); extern "C" void simLinkModel7C4();
 extern "C" void simNotifyVfuncB4(); extern "C" void simVtableTrue();
-extern "C" void simVtableFalse(); extern "C" void func_801FCAC0();
-extern "C" void func_801FCBEC(); extern "C" void simRemoveFromPool();
+extern "C" void simVtableFalse(); extern "C" void simVtableFalse3();
+extern "C" void simVtableFalse4(); extern "C" void simRemoveFromPool();
 extern "C" void simRefreshFadeChain(); extern "C" void simSetFlag20Link();
 extern "C" void simSetFlag100Link();
 }
@@ -2634,7 +2634,7 @@ extern "C" void simSetFlag100Link();
 // [.data] 0x8056DD70-0x8056DE80 (272B): CScnItemModel vtable + float constants
 extern "C" u32 lbl_eu_8056DD70[68] = {
     (u32)&lbl_eu_806624D0, 0x00000000, (u32)&SIMBlob::__dt__13CScnItemModelFv,
-    (u32)&SIMBlob::simRefreshActDist, (u32)&SIMBlob::func_80482048, (u32)&SIMBlob::func_80482288,
+    (u32)&SIMBlob::simRefreshActDist, (u32)&SIMBlob::ScnCamNw4r_EmptyHook48, (u32)&SIMBlob::scnItemIdNoopA,
     0x00000000, (u32)&SIMBlob::simGetValue7E4, 0x00000000, 0x00000000,
     (u32)&SIMBlob::simNotifyVfunc28, (u32)&SIMBlob::simProbeVfunc2C, (u32)&SIMBlob::simNotifyVfunc30,
     (u32)&SIMBlob::simProbeVfunc34, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
@@ -2647,7 +2647,7 @@ extern "C" u32 lbl_eu_8056DD70[68] = {
     (u32)&SIMBlob::simNotifyVfunc9C, 0x00000000, 0x00000000, 0x00000000,
     (u32)&SIMBlob::simLinkSlot7B4, (u32)&SIMBlob::simLinkModel7C4, (u32)&SIMBlob::simNotifyVfuncB4,
     0x00000000, (u32)&SIMBlob::simVtableTrue, (u32)&SIMBlob::simVtableFalse,
-    (u32)&SIMBlob::func_801FCAC0, (u32)&SIMBlob::func_801FCBEC, (u32)&SIMBlob::simRemoveFromPool,
+    (u32)&SIMBlob::simVtableFalse3, (u32)&SIMBlob::simVtableFalse4, (u32)&SIMBlob::simRemoveFromPool,
     (u32)&SIMBlob::simRefreshFadeChain, (u32)&SIMBlob::simSetFlag20Link, (u32)&SIMBlob::simSetFlag100Link,
     0x00000000,
     0x3F333333, 0x3F000000, 0x3F000000, 0x3F400000, 0x3F800000, 0x3F800000,

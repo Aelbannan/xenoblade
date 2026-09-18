@@ -4,12 +4,12 @@
 #include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
 
 /// Returns 1 (always-active sentinel or default state check)
-int func_8015CB88();
+int CharEffAlwaysTrue();
 
 /// Returns 0 (inactive/false default)
-int func_8015CCB4();
+int CharEffAlwaysFalse();
 
-// Retail C-ABI imports used by func_8015C2B0 (no shared kyoshin header owns
+// Retail C-ABI imports used by CharEffApplyToTarget (no shared kyoshin header owns
 // them yet; same pattern as include/kyoshin/cf/CCharEffectEne.hpp).
 extern "C" u32 hasParamByteVal(u8* p, u32 v);
 extern "C" void simGetLeafDist7B0(u8* ptr);
@@ -20,19 +20,19 @@ extern "C" void setChildF50G_(u8* self);
 // shared CfGameManager header declares it as a member - same pattern as
 // CTaskGameEff.hpp's createNpcActor__Q22cf13CfGameManagerFv).
 extern "C" void* Scn_CallUnk8C_V9(void* scene);
-extern "C" void func_800AA318(u32 packed, u32* out0, u32* out1, u32* out2, u32* out3);
+extern "C" void Tok_Unpack(u32 packed, u32* out0, u32* out1, u32* out2, u32* out3);
 extern "C" void setTargetObj_(void* obj, void* target);
 extern "C" void setChildB59__(void* obj, s8 val);
-extern "C" void func_804E3CDC(void* effect, f32 f1, f32 f2);
+extern "C" void schedSetStepIntervals(void* effect, f32 f1, f32 f2);
 extern "C" void* getGimmickList__Q22cf13CfGameManagerFv();
 
 // External data referenced by this unit (MWCC does not mangle global data).
 extern u32 lbl_eu_80664228;     // default slot value when NULL is registered
-// Name string compared via strstr by func_8015C2B0.
+// Name string compared via strstr by CharEffApplyToTarget.
 extern char lbl_eu_80501E38[];
 // Per-type handler table (-1/1/2) indexed by the effect type byte.
 extern s8 lbl_eu_80501DF8[];
-// sdata2 scale constant used by func_8015C2B0.
+// sdata2 scale constant used by CharEffApplyToTarget.
 extern f32 lbl_eu_80667530;
 
 // CCharEffect's vtable, stored by __ct__CCharEffect. It is later
@@ -64,20 +64,20 @@ struct CCharEffectBattleObj {
 };
 
 // Real class tree for CCharEffect family (retail __vt__ dump from US split1.s):
-// lbl_eu_8052FDB8 (CCharEffect, 0x20): RTTI 80662330, 0, __dt__Q22cf11CCharEffectFv, func_8015BF04, func_8015C9A0, func_800CEE7C, 0, func_8015C2B0
-// lbl_eu_8052FDD8 (CCharEffectEne, 0x20): same but +0x18 = func_8015CD04
-// lbl_eu_8052FE08 (Npc, 0x20): +0x18 = func_8015CD9C
-// lbl_eu_8052FE38 (Obj, 0x20): +0x18 = func_8015CE44
-// lbl_eu_8052FE68 (Pc, 0x20): +0x18 = func_8015CED0, +0x1C = func_8015CF90
+// lbl_eu_8052FDB8 (CCharEffect, 0x20): RTTI 80662330, 0, __dt__Q22cf11CCharEffectFv, CharEffRemoveSlot, func_8015C9A0, MoveImplNoopC, 0, CharEffApplyToTarget
+// lbl_eu_8052FDD8 (CCharEffectEne, 0x20): same but +0x18 = ChEff_LoadNpcA_CD04
+// lbl_eu_8052FE08 (Npc, 0x20): +0x18 = ChEff_LoadRes_CD9C
+// lbl_eu_8052FE38 (Obj, 0x20): +0x18 = ChEff_LoadActorA_CE44
+// lbl_eu_8052FE68 (Pc, 0x20): +0x18 = ChEff_LoadNpcBind_CED0, +0x1C = ChEff_Dispatch_CF90
 // Hierarchy: CCharEffect is root, others derive directly. CHelp is the proven instance.
 // novtable: do not emit __vt__ from this TU, ctor writes lbl_eu_... label explicitly.
 
 class __declspec(novtable) CCharEffect {
 public:
     virtual ~CCharEffect(); // vtable 0x08
-    virtual void func_8015BF04(::CCharEffectSlot* p); // 0x0C
+    virtual void CharEffRemoveSlot(::CCharEffectSlot* p); // 0x0C
     virtual void func_8015C9A0(); // 0x10
-    virtual void func_800CEE7C(); // 0x14
+    virtual void MoveImplNoopC(); // 0x14
     virtual void* getObj(u32 idx, s32 mode) = 0; // 0x18 pure in base
     virtual void applyEffect(void* target, u32 type, u32 flags); // 0x1C
 };
@@ -127,14 +127,14 @@ struct CCharEffectSlot {
 // id word at +0x14 matched against the manager's vtable-0xA8 result.
 struct CCharEffectSlotSub {
     u8 pad_00[0x14];
-    u32 field_14;           // 0x14  id compared by func_8015C8F4
+    u32 field_14;           // 0x14  id compared by CharEffDetachBySubId
     u8 pad_18[0x4C - 0x18];
     f32 field_4C;           // 0x4C
 };
 
 // Effect data object pointed to by CCharEffectMgr::field_98. Retail it is
 // a CScnItemModel: vtable 0x18 (vfunc18) returns the name string compared
-// by func_8015C2B0; f32 at 0x2E8 and the byte at 0x304 are read there too.
+// by CharEffApplyToTarget; f32 at 0x2E8 and the byte at 0x304 are read there too.
 // Plain layout view (no virtuals); the name query goes via
 // CScnItemModel::vfunc18, the fields stay at absolute offsets.
 struct CCharEffectData {

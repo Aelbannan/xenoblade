@@ -3,7 +3,7 @@
 #include <types.h>
 #include <nw4r/lyt.h>
 
-#include "kyoshin/CSortMenu.hpp"      // CScrollBarData, CScrollBar_isVisible, func_801F367C
+#include "kyoshin/CSortMenu.hpp"      // CScrollBarData, CScrollBar_isVisible, CScrollBar_requestScrollIn
 #include "kyoshin/CBaseCur.hpp"         // CBaseCur (embedded cursor virtuals)
 #include "monolib/device/CDeviceFont.hpp" // IDeviceFontInfo / CDeviceFont
 #include "kyoshin/code_80135FDC.hpp"  // AnimRewindFrame, advanceAnimTransform, BdatTouchStringCell, LayoutSetTextBoxFmtValue
@@ -46,20 +46,20 @@ class CTutorialList;
 
 // CSortMenu / CCur helpers (retail unmangled symbols; C linkage).
 extern "C" u32 func_801D32DC(void*);
-extern "C" int func_801D3320(void*);
-extern "C" int func_801D3328(void*);
-extern "C" void func_801D3064(void*);
-extern "C" void func_801D3160(void*);
-extern "C" void func_801D3408(void*);
+extern "C" int sortMenuIsVisible28(void*);
+extern "C" int sortMenuGetFlag2B(void*);
+extern "C" void sortMenuInitFileRead(void*);
+extern "C" void sortMenuDispatchState(void*);
+extern "C" void sortMenuToState4Page(void*);
 extern "C" void func_801D202C(void*);
 extern "C" void func_801D3724(void*);                     // CSortMenu page up
 extern "C" void func_801D3620(void*);                     // CSortMenu page down
-extern "C" void func_801D377C(void*);                     // CSortMenu page down (alt)
+extern "C" void sortMenuPageDownStep(void*);                     // CSortMenu page down (alt)
 extern "C" void func_801D3698(void*);                     // CSortMenu page up (alt)
-extern "C" void func_801D3430(void*, void*);              // set sort-menu anchor pos
-extern "C" void func_801D3330(void*);                     // rebuild sort menu
-extern "C" void func_801D3454(nw4r::math::VEC3*, void*);  // copy cursor target
-extern "C" void func_801D216C(void*, int);
+extern "C" void sortMenuSetLayoutPos(void*, void*);              // set sort-menu anchor pos
+extern "C" void sortMenuOpenInit(void*);                     // rebuild sort menu
+extern "C" void sortMenuFormatPaneText(nw4r::math::VEC3*, void*);  // copy cursor target
+extern "C" void Cur_SetVisible(void*, int);
 // Device/memory helper (retail unmangled C symbol).
 extern "C" int KyoshinHeap_GetField44();
 void func_801390E0(CFileHandle**);
@@ -70,11 +70,11 @@ void playUISound(u32);
 // Sort-menu sub-object helpers (retail unmangled C symbols; same declarations
 // as CItemBoxGrid.hpp / CMCCrystalBox.hpp, declared here to avoid pulling
 // those TUs' headers into this one).
-extern "C" u32 func_801D3808(void*);
-extern "C" void func_801D350C(void*);
+extern "C" u32 sortMenuGetPageIdx(void*);
+extern "C" void sortMenuResetCount(void*);
 extern "C" void func_801D3518(void*, void*);
 extern "C" void func_801D353C(void*, u8);
-extern "C" void func_801D3258(void*);
+extern "C" void sortMenuTermCleanup(void*);
 // CBdat index-free helper (retail symbol is the pre-mangled __5CBdatFUl form).
 extern "C" void getEntry__5CBdatFUl(u32);
 
@@ -94,7 +94,7 @@ extern "C" void __ct__17UnkClass_8045F564Fv(void* self);
 extern "C" u32 lbl_eu_8053A2A8[];   // CTutorialList vtable (.data; array -> lis/addi)
 extern "C" void __ct__CSortMenu(void* self);
 extern "C" void __ct__UnkClass_8011C974(void* dest, const u32* src);  // 4-word mem-region copy
-extern "C" void func_8011C998(CScrollBarData* dst, const CScrollBarData* src);  // CScrollBar copy
+extern "C" void copyScrollBarData(CScrollBarData* dst, const CScrollBarData* src);  // CScrollBar copy
 
 // Mirror of the CSortMenu body (0xF0 bytes) followed by the tutorial-list
 // extension (id table + summary halfwords), used by the constructor's
@@ -111,7 +111,7 @@ struct CTutorialListMenuData {
     u8  field_29;              // +0x29
     u8  field_2A;              // +0x2A
     u8  field_2B;              // +0x2B
-    u8  mScrollBar[0x40];      // +0x2C CScrollBar (copied via func_8011C998)
+    u8  mScrollBar[0x40];      // +0x2C CScrollBar (copied via copyScrollBarData)
     u32 mArray[32];            // +0x6C (0x80-byte block copy)
     u8  mCount;                // +0xEC
     u8  mPage;                 // +0xED
@@ -135,9 +135,9 @@ extern "C" bool Attach__Q34nw4r3lyt19ArcResourceAccessorFPvPCc(nw4r::lyt::ArcRes
 extern "C" nw4r::lyt::ArcResourceAccessor* CUICfManager_getArcResourceAccessor();
 extern "C" void __ct__CCur18(void* self, void* param);
 extern "C" void validateHeap__17UnkClass_8045F564Fv(void*);
-extern "C" u32 func_8003B1EC(void* fp);
+extern "C" u32 Bdat_GetMaxRow_B1EC(void* fp);
 extern "C" void setBdatEntry__5CBdatFUlPv(u32 value, void* data);
-extern "C" void* func_8003AA34();
+extern "C" void* Bdat_GetTable_AA34();
 extern "C" int isClassicController__Q22cf13CfGameManagerFv(int);
 // .sdata2 int->float conversion magic double (0x4330000000000000) referenced
 // by the u16 pane-size conversions in OnFileEvent.

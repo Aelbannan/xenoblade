@@ -16,20 +16,20 @@ extern "C" void Move__17CMenuPassiveSkillFv();
 extern "C" __declspec(noinline) CMenuPassiveSkill* __ct__CMenuPassiveSkill(CMenuPassiveSkill* self, u32 arg);
 extern "C" void __ct__8CProcessFv(CProcess* self);
 extern "C" CMenuPassiveSkill* __dt__17CMenuPassiveSkillFv(CMenuPassiveSkill* self, int flags);
-extern "C" CMenuPassiveSkill* func_802638D0(CProcess* parent, u32 arg);
-extern "C" unsigned long func_80263944();
+extern "C" CMenuPassiveSkill* createPassiveSkillMenu(CProcess* parent, u32 arg);
+extern "C" unsigned long hasPassiveSkillMenu();
 extern "C" void func_80263954(CMenuPassiveSkill* self);
-extern "C" void func_802639E4(CMenuPassiveSkill* self);
-extern "C" void func_80263A34(CMenuPassiveSkill* self);
-extern "C" void func_801C3D54(CBgTex* self);
-extern "C" void func_801C3FF0(CTitleAHelp* self);
+extern "C" void updatePassiveSkillMenu(CMenuPassiveSkill* self);
+extern "C" void dispatchPassiveSkillInput(CMenuPassiveSkill* self);
+extern "C" void BgTex_Tick_3D54(CBgTex* self);
+extern "C" void updateHelp(CTitleAHelp* self);
 extern "C" void CPassiveSkill_update(u8* self);
-extern "C" void func_80263D3C(CMenuPassiveSkill* self);
-extern "C" void func_80263D8C(CMenuPassiveSkill* self);
-extern "C" void func_80263DE8(CMenuPassiveSkill* self);
-extern "C" void func_80263E4C(CMenuPassiveSkill* self);
-extern "C" u32 func_800FEDF8();
-extern "C" void func_800FF914();
+extern "C" void setPassiveSkillReady(CMenuPassiveSkill* self);
+extern "C" void advancePassiveSkillState(CMenuPassiveSkill* self);
+extern "C" void tryOpenPassiveSkill(CMenuPassiveSkill* self);
+extern "C" void confirmPassiveSkillMenu(CMenuPassiveSkill* self);
+extern "C" u32 CMainMenu_GetInstancePtr();
+extern "C" void ArtsInfo_SetReadyFlag();
 
 // Minimal CTaskGame decl (retail global-namespace class, symbols
 // getInstance__9CTaskGameFv / isFlag01Set__9CTaskGameFv). Full header
@@ -59,7 +59,7 @@ public:
     u8 mIsDisableMove;         // 0x3A
     u8 mIsDisableDraw;         // 0x3B
     u32 ptmfCallbacks[6];      // 0x3C - Move (0-2) / Draw (3-5) callback pmfs
-    u8 field_54;               // 0x54 - state flag written by func_80263D3C
+    u8 field_54;               // 0x54 - state flag written by setPassiveSkillReady
     u8 mField55;               // 0x55
     u8 _pad56[2];              // 0x56..0x57
 };
@@ -72,8 +72,8 @@ public:
     void cbRenderBefore();
 
     // IScnRender vtable this-adjusting thunks
-    void func_80263EAC();
-    void func_80263EB4(int flags);
+    void renderBeforeAdj58();
+    void dtorAdj58(int flags);
 
     // --- member fields ---
     u32 mIScnRenderVt;        // 0x58 - IScnRender subobject vtable slot
@@ -108,7 +108,7 @@ extern f32 lbl_eu_806688F0;
 extern "C" void __ct__UnkClass_8011C974(void* dst, void* src);
 extern char lbl_eu_8050DB4C[];
 extern "C" char* BdatTouchStringCell(char* base, char* entry, u32 len);
-extern "C" void func_801C3C14(CBgTex* self);
+extern "C" void BgTex_Acquire_3C14(CBgTex* self);
 extern "C" void CTitleAHelp_load(CTitleAHelp* self);
 extern "C" void addRenderCB__4CScnFP10IScnRenderUlUl(CScn* scn, IScnRender* render,
                                                       u32 prio, u32 arg);
@@ -241,9 +241,9 @@ struct CMenuPassivePSView {
 #pragma pack(pop)
 
 // Game-progress flag getter (shared split1 helper, retail-unmangled name).
-extern "C" u32 func_8009CF8C(u32 flagId);
+extern "C" u32 CtrlRemote_TouchBitByArg(u32 flagId);
 
-// cf::CfPadData view: only the flag words func_80263A34 reads (held buttons
+// cf::CfPadData view: only the flag words dispatchPassiveSkillInput reads (held buttons
 // at +0x00/+0x04, turbo/short-press flags at +0x104).
 struct CMenuPassivePadView {
     u32 field_0;                // +0x00
@@ -255,7 +255,7 @@ struct CMenuPassivePadView {
 // UI::CPassiveSkill +0x28 sub-object open thunk (retail-unmangled name).
 extern "C" void UI_CPassiveSkill_thunk28_68518(u8* self);
 
-// +0x28 sub-object input thunks dispatched by func_80263A34 (retail names
+// +0x28 sub-object input thunks dispatched by dispatchPassiveSkillInput (retail names
 // unmangled; each takes the +0xB8 sub-object).
 extern "C" void UI_CPassiveSkill_thunk28_67C44(u8* self);
 extern "C" void UI_CPassiveSkill_thunk28_67BA0(u8* self);
@@ -284,16 +284,16 @@ extern f32 lbl_eu_806688F8;
 // the verbatim symbol names).
 // ---------------------------------------------------------------------------
 extern "C" void removeRenderCB__4CScnFP10IScnRender(CScn* scn, IScnRender* render);
-extern "C" void func_801C3D9C(CBgTex* self);
+extern "C" void BgTex_Release_3D9C(CBgTex* self);
 // int (not u8): callers compare r3 directly with cmpi, no rlwinm mask.
-extern "C" int func_801C3E34(CBgTex* self);
-extern "C" void func_801C3D7C(CBgTex* self, nw4r::lyt::DrawInfo* drawInfo);
-extern "C" void func_801C40A0(CTitleAHelp* self);
-extern "C" int func_801C4114(CTitleAHelp* self);
+extern "C" int BgTex_IsLoaded_3E34(CBgTex* self);
+extern "C" void BgTex_Draw_3D7C(CBgTex* self, nw4r::lyt::DrawInfo* drawInfo);
+extern "C" void teardown(CTitleAHelp* self);
+extern "C" int isInitialized(CTitleAHelp* self);
 extern "C" void func_801C412C(CTitleAHelp* self);
 extern "C" void func_801C41E8(CTitleAHelp* self, u8 arg);
-extern "C" void func_801C414C(CTitleAHelp* self);
-extern "C" void func_801C4080(CTitleAHelp* self, nw4r::lyt::DrawInfo* drawInfo);
+extern "C" void beginClose(CTitleAHelp* self);
+extern "C" void drawHelp(CTitleAHelp* self, nw4r::lyt::DrawInfo* drawInfo);
 
 // UI::CPassiveSkill helpers (first arg is the +0xB8 sub-object).
 extern "C" void CPassiveSkill_teardown(u8* self);

@@ -94,8 +94,8 @@ struct CMenuQstCnt {
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
 // ---------------------------------------------------------------------------
 
-extern "C" int func_80144FF0();
-extern "C" int func_80145030(void);
+extern "C" int isLandTelopIdle();
+extern "C" int getLandTelopE0(void);
 extern "C" nw4r::lyt::ArcResourceAccessor* CUICfManager_getArcResourceAccessor();
 extern "C" void initQstInfo(QstInfo* ptr);
 extern "C" void* __dt__80227030(void* self, int mode);
@@ -114,11 +114,11 @@ extern "C" u32 getWorkMem__17CWorkThreadSystemFv();
 extern "C" void* allocate__Q23mtl10MemManagerFUlUl(u32, u32);
 extern "C" void Regist__8CProcessFP8CProcessb(void*, void*, bool);
 extern "C" void waitForDrawDone__9CDeviceVIFv();
-extern "C" int func_80293C10();
-extern "C" int func_8029A658();
-extern "C" u32 func_801B481C();   // canonical u32 form (per CMenuGetItemMulti.cpp def / CVision.hpp)
-extern "C" int func_80124B78();
-extern "C" int func_8011CD5C();
+extern "C" int PTNotice_IsActive_3C10();
+extern "C" int MenuTutorialIsCreated();
+extern "C" u32 GetItemMulti_IsActiveFlag();   // canonical u32 form (per CMenuGetItemMulti.cpp def / CVision.hpp)
+extern "C" int SysWinGetSingleton();
+extern "C" int isQuestLogMenuActive();
 extern "C" char* func_801394D4(u16);
 extern "C" u16 func_801380A0(u16);
 extern "C" u32 func_80138138(u16);

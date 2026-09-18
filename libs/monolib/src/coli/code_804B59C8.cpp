@@ -236,7 +236,7 @@ struct CColiMoverState {
     u8 field_0x48[0x5C - 0x48];
     u32 field_0x5C;
     u8* field_0x60;
-    f32 field_0x64;   // 0x64 - upper Y bound (func_804B7044 gate)
+    f32 field_0x64;   // 0x64 - upper Y bound (Coli_IsHeightInRange_7044 gate)
     f32 field_0x68;   // 0x68 - lower Y bound
     u32 field_0x6C;
     u32 field_0x70;
@@ -314,7 +314,7 @@ struct CColiOutEntry {
 
 // Shared mover-state reset helper (defined in the sibling coli unit; C
 // linkage so the bl reloc carries the retail name).
-extern "C" void func_804BAE10(CColiMoverState* self);
+extern "C" void ColiQuery_Reset(CColiMoverState* self);
 extern "C" void func_804B7804(CColiMoverState* self);
 extern "C" void* __register_global_object(void* object, void* destructor, void* registration);
 
@@ -374,7 +374,7 @@ struct CColiRegObj {
     void (CColiRegObj::*field_0x7C)();                 // 0x7C
     u8 field_0x88[0xA0 - 0x88];                        // 0x88 - pad
     void (CColiRegObj::*field_0xA0)(const ml::CVec3*, const ml::CVec3*);  // 0xA0
-    void (CColiRegObj::*field_0xAC)(u16*, u16);  // 0xAC - register callback (func_804B791C dispatch)
+    void (CColiRegObj::*field_0xAC)(u16*, u16);  // 0xAC - register callback (Coli_DispatchRegCb_791C dispatch)
     bool (CColiRegObj::*field_0xB8)(f32);              // 0xB8 - height gate
 };
 
@@ -398,8 +398,8 @@ struct CColiScan {
 
 void func_804BC494(CColiScan* self, const Vec* a, const Vec* b);
 // C linkage so the bl relocs carry the retail plain symbol names.
-extern "C" bool func_804BB1A0(const Vec3* a, const Vec3* b);
-extern "C" bool func_804BB228(const Vec3* a, const Vec3* b);
+extern "C" bool Coli_PointInSlab(const Vec3* a, const Vec3* b);
+extern "C" bool Coli_PointInBox(const Vec3* a, const Vec3* b);
 
 // Movement-tracked mover: previous position +0x0C, saved copy +0x38,
 // current position +0x50, distance-squared threshold +0x5C, flag +0x60.
@@ -430,42 +430,42 @@ extern "C" void func_804B708C(CColiSrc* a, CColiMover* b);
 extern "C" void func_804B71CC(CColiSrc* a, CColiMover* b);
 
 // Sibling-unit helpers (global scope: MWCC emits C names).
-u32 func_804BC9A0(CColiMoverState* self);
+u32 Coli_CheckFlag(CColiMoverState* self);
 void func_804BBFA0(CColiMoverState* self, const Vec* src, u32 idx, f32 radius);
 void func_804BBFD4(CColiMoverState* self, CColiMgr* mgr, const Vec* src, u32 idx);
 void func_804BC134(CColiMoverState* self, const Vec* src, u32 idx, f32 radius);
 
 // extern "C" forward declarations so the data table below can reference
 // the retail plain (unmangled) symbol names for its R_PPC_ADDR32 relocs.
-extern "C" void func_804B5B34(void);
+extern "C" void Coli_Noop_5B34(void);
 extern "C" void func_804B5BB0(CColiSrc* a, CColiMover* b);
 extern "C" void func_804B5C58(CColiSrc* a, CColiMover* b);
 extern "C" void func_804B5CEC(CColiSrc* a, CColiMover* b);
 extern "C" void func_804B5DE8(CColiSrc* a, CColiMover* b);
 extern "C" void func_804B5E68(CColiSrc* a, CColiMover* b);
-extern "C" void func_804B61F8(void);
+extern "C" void Coli_Noop_61F8(void);
 extern "C" void func_804B61FC(CColiObj* self, CColiQuery* query);
 extern "C" void func_804B62B0(CColiObj* self, CColiQuery* query);
 extern "C" void func_804B6364(CColiObj* self, CColiQuery* query);
 extern "C" void func_804B6418(CColiObj* self, CColiQuery* query);
 extern "C" void func_804B64CC(CColiObj* self, CColiQuery* query);
 extern "C" void func_804B6580(CColiObj* self, CColiQuery* query);
-extern "C" void func_804B6634(void);
+extern "C" void Coli_Noop_6634(void);
 extern "C" void func_804B6638(u32 a, const u32* head, const u32* info);
 extern "C" void func_804B66B0(u32 a, const u32* head, const u32* info);
 extern "C" void func_804B6728(u32 a, const ScnHeadWord* head, const u32* info);
 extern "C" void func_804B684C(u32 a, const ScnHeadWord* head, const u32* info);
-extern "C" void func_804B6954(void* a, void* b, void* c);
+extern "C" void Coli_InvokeMgrCb_6954(void* a, void* b, void* c);
 extern "C" void func_804B6974(CColiRegObj* self, const Vec* in1, const Vec* in2);
 extern "C" void func_804B6A3C(CColiRegObj* self, const Vec* in1, const Vec* in2);
-extern "C" void func_804B6C48(CColiRegObj* self, const Vec* a, const Vec* in);
+extern "C" void Coli_XformNotifyA_6C48(CColiRegObj* self, const Vec* a, const Vec* in);
 extern "C" void func_804B6D30(CColiRegObj* self, const Vec* in1, const Vec* in2);
-extern "C" void func_804B6F58(CColiRegObj* self, ml::CVec3* vecs, const Vec* in);
-extern "C" u32 func_804B7044(u8* self, float f);
-extern "C" u32 func_804B7074(u8* self, float f);
+extern "C" void Coli_XformNotifyB_6F58(CColiRegObj* self, ml::CVec3* vecs, const Vec* in);
+extern "C" u32 Coli_IsHeightInRange_7044(u8* self, float f);
+extern "C" u32 Coli_IsUnderCeiling_7074(u8* self, float f);
 extern "C" void func_804B7944(CColiRegObj* self, u16* list, int count);
 extern "C" void func_804B7A00(CColiRegObj* self, u16* list, int count);
-extern "C" void func_804B7AC8(void);
+extern "C" void Coli_Noop_7AC8(void);
 
 // func_804B59C8 - track mover movement. When the squared distance between
 // the current position (0x50) and the previous position (0x0C) is at least
@@ -493,19 +493,19 @@ void func_804B59C8(CTrackedMover* self) {
     self->field_0x5C = dist2;
 }
 
-u32 func_804B5A68(void) {
+u32 Coli_GetBitTable_5A68(void) {
     extern u32 lbl_eu_80663AC8;
     return lbl_eu_80663AC8;
 }
 
 extern char lbl_eu_8065F1A0[];
-extern "C" void* func_804B5A70(void){ return (void*)&lbl_eu_8065F1A0; }
+extern "C" void* Coli_GetWorkBase_5A70(void){ return (void*)&lbl_eu_8065F1A0; }
 
 // Scalar deleting-style destructor wrapper registered by the sibling sinit:
 // reset the mover state, then free the object when the delete flag is set.
 extern "C" CColiMoverState* __dt__804B5A7C(CColiMoverState* self, int flag) {
     if (self != NULL) {
-        func_804BAE10(self);
+        ColiQuery_Reset(self);
         if (flag > 0) {
             ::operator delete(self);
         }
@@ -520,7 +520,7 @@ extern "C" ScnResData* __dt__804B5AD0(ScnResData* self, int flag) {
     if (self != NULL) {
         func_804B7804((CColiMoverState*)self);
         if (self != NULL) {
-            func_804BAE10((CColiMoverState*)self);
+            ColiQuery_Reset((CColiMoverState*)self);
         }
         if (flag > 0) {
             ::operator delete(self);
@@ -529,7 +529,7 @@ extern "C" ScnResData* __dt__804B5AD0(ScnResData* self, int flag) {
     return self;
 }
 
-void func_804B5B34(void) {}
+void Coli_Noop_5B34(void) {}
 
 // func_804B5B38 - like func_804B5DE8 but symmetric: accept only when the
 // plane offset magnitude is under the acceptance radius at +0x120.
@@ -725,7 +725,7 @@ void func_804B5E68(CColiSrc* a, CColiMover* b) {
     lbl_eu_80665988++;
 }
 
-void func_804B61F8(void) {}
+void Coli_Noop_61F8(void) {}
 
 // func_804B61FC / func_804B62B0 / func_804B6364 / func_804B6418 - register
 // the query's collision index when its entry's segment test passes and the
@@ -805,7 +805,7 @@ void func_804B64CC(CColiObj* self, CColiQuery* query) {
     u16 flags = entry->field_0x02;
     u32 mask = 1u << (flags & 0x1F);
     if (bits[(flags >> 5) & 0x7F] & mask) return;
-    if (!func_804BB1A0((const Vec3*)&entry->field_0x64, (const Vec3*)&entry->field_0x70)) return;
+    if (!Coli_PointInSlab((const Vec3*)&entry->field_0x64, (const Vec3*)&entry->field_0x70)) return;
     CColiListMgr* lm = &w->l.listMgr;
     u16 v = query->field_0x02;
     if (lm->count < 0x10) {
@@ -822,7 +822,7 @@ void func_804B6580(CColiObj* self, CColiQuery* query) {
     CColiEntry* entry = &self->field_0x40[idx];
     u16 flags = entry->field_0x02;
     if (w->b.bitTable[(flags >> 5) & 0x7F] & (1u << (flags & 0x1F))) return;
-    if (!func_804BB228((const Vec3*)&entry->field_0x64, (const Vec3*)&entry->field_0x70)) return;
+    if (!Coli_PointInBox((const Vec3*)&entry->field_0x64, (const Vec3*)&entry->field_0x70)) return;
     CColiListMgr* lm = &w->l.listMgr;
     u16 v = query->field_0x02;
     if (lm->count < 0x10) {
@@ -832,7 +832,7 @@ void func_804B6580(CColiObj* self, CColiQuery* query) {
     }
 }
 
-void func_804B6634(void) {}
+void Coli_Noop_6634(void) {}
 
 // func_804B6638 / func_804B66B0 - append a new scene-resource entry to the
 // 32-slot table (lbl_eu_8065F428): copy the 12-byte header and info block
@@ -946,7 +946,7 @@ void func_804B684C(u32 a, const ScnHeadWord* head, const u32* info) {
 }
 
 // Invoke the manager's callback slot with the stored context pointer.
-void func_804B6954(void* a, void* b, void* c) {
+void Coli_InvokeMgrCb_6954(void* a, void* b, void* c) {
     void (*fn)(void*, void*, void*) = (void (*)(void*, void*, void*))lbl_eu_8065F1C8.field_0xA0;
     void* p = (void*)lbl_eu_8065F1C8.field_0x9C;
     fn(b, c, p);
@@ -1017,12 +1017,12 @@ void func_804B6A3C(CColiRegObj* self, const Vec* in1, const Vec* in2) {
     (self->*self->field_0xA0)(&out1, &out2);
 }
 
-// func_804B6C48 - normalise `in` against the manager's embedded matrix
+// Coli_XformNotifyA_6C48 - normalise `in` against the manager's embedded matrix
 // (falling back to ml::CVec3::zero for a null vector), then ask the object's
 // height gate (ptmf +0xB8) whether the Y component is acceptable. When it is,
 // transform `a` by the matrix source and hand both vectors to the mover
 // callback (ptmf +0xA0).
-void func_804B6C48(CColiRegObj* self, const Vec* a, const Vec* in) {
+void Coli_XformNotifyA_6C48(CColiRegObj* self, const Vec* a, const Vec* in) {
     ml::CVec3 out;
     PSMTXMultVec(lbl_eu_8065F1C8.field_0xF0, in, out);
     f32 len2 = out.y * out.y;
@@ -1082,11 +1082,11 @@ void func_804B6D30(CColiRegObj* self, const Vec* in1, const Vec* in2) {
     }
 }
 
-// func_804B6F58 - normalise `in` against the manager's embedded matrix,
+// Coli_XformNotifyB_6F58 - normalise `in` against the manager's embedded matrix,
 // transform every vector of the `vecs` array by the matrix source in place,
 // then hand the array and the normalised vector to the mover callback
 // (ptmf +0xA0).
-void func_804B6F58(CColiRegObj* self, ml::CVec3* vecs, const Vec* in) {
+void Coli_XformNotifyB_6F58(CColiRegObj* self, ml::CVec3* vecs, const Vec* in) {
     ml::CVec3 out;
     PSMTXMultVec(lbl_eu_8065F1C8.field_0xF0, in, out);
     f32 len2 = out.y * out.y;
@@ -1104,13 +1104,13 @@ void func_804B6F58(CColiRegObj* self, ml::CVec3* vecs, const Vec* in) {
     (self->*self->field_0xA0)(vecs, &out);
 }
 
-extern "C" u32 func_804B7044(u8* self, float f) {
+extern "C" u32 Coli_IsHeightInRange_7044(u8* self, float f) {
     u32 r = 0;
     if (f <= *(float*)((u8*)self + 0x64) && f >= *(float*)((u8*)self + 0x68)) r = 1;
     return r;
 }
 
-extern "C" u32 func_804B7074(u8* self, float f) { return f <= *(float*)((u8*)self + 0x64); }
+extern "C" u32 Coli_IsUnderCeiling_7074(u8* self, float f) { return f <= *(float*)((u8*)self + 0x64); }
 
 // func_804B708C - resolve the raycast hit point (offset + dir * t) and test
 // it against the mover's three vertices: store the mover's half-float vertex
@@ -1212,18 +1212,18 @@ extern "C" void func_804B71CC(CColiSrc* a, CColiMover* b) {
     }
 }
 
-// func_804B74F0 - relocate the raycast object's table pointers from a base
+// Coli_InstallDataPtrs_74F0 - relocate the raycast object's table pointers from a base
 // record whose first words are byte-offsets into the record itself.
-extern "C" void func_804BC9DC(void* self, u32 a, u32 b);
+extern "C" void Coli_StoreRange(void* self, u32 a, u32 b);
 
-extern "C" void func_804B74F0(u32* self, u8* data) {
+extern "C" void Coli_InstallDataPtrs_74F0(u32* self, u8* data) {
     u32* w = (u32*)data;
     ((u32*)self)[0x50 / 4] = (u32)(data + w[0]);
     ((u32*)self)[0x54 / 4] = (u32)(data + w[1]);
     ((u32*)self)[0x58 / 4] = (u32)(data + w[2]);
     ((u32*)self)[0x5C / 4] = (u32)(data + w[3]);
     ((u32*)self)[0x74 / 4] = w[4];
-    func_804BC9DC(self, (u32)(data + w[5]), (u32)(data + w[6]));
+    Coli_StoreRange(self, (u32)(data + w[5]), (u32)(data + w[6]));
 }
 
 // func_804B7540 - (re)allocate the mover-state entry table: free the old
@@ -1324,7 +1324,7 @@ extern "C" void func_804B7804(CColiMoverState* self) {
     self->field_0x98 = s2[1];
     self->field_0x9C = s2[2];
     self->field_0x5C = 0;
-    func_804BAE10(self);
+    ColiQuery_Reset(self);
     PSMTXIdentity(lbl_eu_8065F1C8.field_0xF0);
     lbl_eu_8065F1C8.field_0x134 = 1;
     memset(lbl_eu_8065F1A0, 0, 0x28);
@@ -1334,10 +1334,10 @@ extern "C" void func_804B7804(CColiMoverState* self) {
     }
 }
 
-// func_804B791C: forward the entry pointer + value to the +0xAC register
+// Coli_DispatchRegCb_791C: forward the entry pointer + value to the +0xAC register
 // callback member pointer (MWCC lowers the call to `addi r12,self,0xAC; bl
 // __ptmf_scall` with the args passed through untouched).
-void func_804B791C(CColiRegObj* self, u16* entry, u16 value) {
+void Coli_DispatchRegCb_791C(CColiRegObj* self, u16* entry, u16 value) {
     (self->*self->field_0xAC)(entry, value);
 }
 
@@ -1380,7 +1380,7 @@ void func_804B7A00(CColiRegObj* self, u16* list, int count) {
     }
 }
 
-void func_804B7AC8(void) {}
+void Coli_Noop_7AC8(void) {}
 
 // Dispatch object for func_804B7ACC: per-index record table at 0x3C, a signed
 // offset applied to the shared seen-bit array at 0x6C, and a member-function
@@ -1620,9 +1620,9 @@ void func_804B7E0C(CColiMoverState* self, int idx, const u32* data) {
     }
 }
 
-// func_804B8078: when the mover state is active, align the entry's flag word
+// Coli_ClearOutFlag_8078: when the mover state is active, align the entry's flag word
 // to 4 and store the pooled float constant at +4.
-void func_804B8078(CColiMoverState* self, int idx) {
+void Coli_ClearOutFlag_8078(CColiMoverState* self, int idx) {
     if (self->field_0x78 == 0) {
         return;
     }
@@ -1631,9 +1631,9 @@ void func_804B8078(CColiMoverState* self, int idx) {
     e->field_0x04 = lbl_eu_8066AED0;
 }
 
-// func_804B80A4: when the mover state is active (field_0x78), return a
+// Coli_GetOutMatrix_80A4: when the mover state is active (field_0x78), return a
 // pointer to the mover-state entry's matrix at +8 (0xE0 stride); else null.
-void* func_804B80A4(CColiMoverState* self, int idx) {
+void* Coli_GetOutMatrix_80A4(CColiMoverState* self, int idx) {
     if (self->field_0x78 != 0) {
         return &reinterpret_cast<CColiOutEntry*>(self->field_0x60)[idx].mtx;
     }
@@ -1798,7 +1798,7 @@ void func_804B877C(CColiMoverState* state, const Vec* offset, u32 flags, int mod
     mgr->field_0x136 = 0;
     mgr->field_0xEC = 0;
     mgr->field_0x130 = 0;
-    if (func_804BC9A0(state) != 0) {
+    if (Coli_CheckFlag(state) != 0) {
         if (mgr->field_0x134 == 0) {
             u32 ac = state->field_0xAC;
             u32 b0 = state->field_0xB0;
@@ -1937,7 +1937,7 @@ extern "C" void func_804B8C2C(CColiMoverState* state, const Vec* data, const Vec
     mgr->field_0x136 = 0;
     mgr->field_0xEC = 0;
     mgr->field_0x130 = 0;
-    if (func_804BC9A0(state) == 0) return;
+    if (Coli_CheckFlag(state) == 0) return;
     func_804BBFD4(state, (CColiMgr*)data, pos2, state->field_0x34->field_0x04);
     if (mgr->field_0x136 == 0 && state->field_0x78 == 0) return;
     if (flag != 0) {
@@ -2079,7 +2079,7 @@ extern "C" void func_804B91E0(CColiMoverState* state, const Vec* pos, u32 filter
     mgr->field_0x136 = 0;
     mgr->field_0xEC = 0;
     mgr->field_0x130 = 0;
-    if (func_804BC9A0(state) == 0) return;
+    if (Coli_CheckFlag(state) == 0) return;
     if (rayLen < 0.0f) {
         Vec shifted;
         shifted.x = pos->x;
@@ -2240,7 +2240,7 @@ extern "C" void func_804B9818(CColiMoverState* state, const Vec* pos, u32 filter
     mgr->field_0x136 = 0;
     mgr->field_0xEC = 0;
     mgr->field_0x130 = 0;
-    if (func_804BC9A0(state) == 0) return;
+    if (Coli_CheckFlag(state) == 0) return;
     if (rayLen < 0.0f) {
         Vec shifted;
         shifted.x = pos->x;
@@ -2383,7 +2383,7 @@ void func_804B9E14(CColiMoverState* state, const Vec* offset, u32 flags, int mod
     mgr->field_0x136 = 0;
     mgr->field_0xEC = 0;
     mgr->field_0x130 = 0;
-    if (func_804BC9A0(state) != 0) {
+    if (Coli_CheckFlag(state) != 0) {
         func_804BBFA0(state, offset, state->field_0x34->field_0x04, scale);
         if (mgr->field_0x136 != 0 || state->field_0x78 != 0) {
             state->field_0x7C = lbl_eu_8056F508[0x300 / 4];
@@ -2502,7 +2502,7 @@ void func_804BA26C(CColiMoverState* state, void* ctx, const Mtx mtx, u32 flagsA,
         state->field_0x98 = tbl[0x37C / 4];
         state->field_0x9C = tbl[0x380 / 4];
     }
-    if (func_804BC9A0(state) == 0) return;
+    if (Coli_CheckFlag(state) == 0) return;
     func_804BC164((void*)state, (const Vec3*)&mgr->field_0x3C[0], (const Vec3*)centerP, sx, sy, sz,
                   0);
     if (ctx == 0 && lbl_eu_80665988 != 0) return;
@@ -2614,7 +2614,7 @@ void func_804BA7BC(CColiScan* self, const Vec* a, const Vec* b) {
 u32 func_804BA8B4(CColiMoverState* self, Vec* src, Vec* dst, f32* angle,
                   u32 flagsA, u32 flagsB, f32 yOff, f32 yRange) {
     CColiMgr* mgr = &lbl_eu_8065F1C8;
-    if (func_804BC9A0(self) == 0) return 0;
+    if (Coli_CheckFlag(self) == 0) return 0;
     if (self->field_0x78 == 0) return 0;
     {
         u32* d = (u32*)&mgr->field_0x18;
@@ -2748,7 +2748,7 @@ u32 func_804BA8B4(CColiMoverState* self, Vec* src, Vec* dst, f32* angle,
     return 1;
 }
 
-extern "C" u32 func_804BADA0(u8* self) { return *(u32*)((u8*)self + 0x5C) != 0; }
+extern "C" u32 Coli_IsSlotActive_ADA0(u8* self) { return *(u32*)((u8*)self + 0x5C) != 0; }
 
 // --- hard-symbol stubs (scaffold_hard_symbols) ---
 // Static initializer for the scene-resource object (lbl_eu_8065F32C): reset
@@ -2756,7 +2756,7 @@ extern "C" u32 func_804BADA0(u8* self) { return *(u32*)((u8*)self + 0x5C) != 0; 
 // state init, and register the object for exit-time destruction.
 void sinit_804BADB4() {
     CColiMoverState* obj = (CColiMoverState*)&lbl_eu_8065F32C;
-    func_804BAE10(obj);
+    ColiQuery_Reset(obj);
     ((ScnResData*)obj)->field_0x60 = NULL;
     func_804B7804(obj);
     void* const dtor = (void*)&__dt__804B5AD0;
@@ -2774,10 +2774,10 @@ void sinit_804BADB4() {
 // split .data carries no relocations, so raw bytes are byte-identical).
 extern "C" u32 lbl_eu_8056F508[250] = {
 
-    0x00000000, 0xFFFFFFFF, (u32)&func_804B5B34, 0x00000000, 0xFFFFFFFF, (u32)&func_804B61F8, 0x00000000, 0xFFFFFFFF,
-    (u32)&func_804B6634, 0x00000000, 0xFFFFFFFF, (u32)&func_804B5B38, 0x00000000, 0xFFFFFFFF, (u32)&func_804B6638, 0x00000000,
+    0x00000000, 0xFFFFFFFF, (u32)&Coli_Noop_5B34, 0x00000000, 0xFFFFFFFF, (u32)&Coli_Noop_61F8, 0x00000000, 0xFFFFFFFF,
+    (u32)&Coli_Noop_6634, 0x00000000, 0xFFFFFFFF, (u32)&func_804B5B38, 0x00000000, 0xFFFFFFFF, (u32)&func_804B6638, 0x00000000,
     0xFFFFFFFF, (u32)&func_804B61FC, 0x00000000, 0xFFFFFFFF, (u32)&func_804B7A00, 0x00000000, 0xFFFFFFFF, (u32)&func_804B7944,
-    0x00000000, 0xFFFFFFFF, (u32)&func_804B7AC8, 0x00000000, 0xFFFFFFFF, (u32)&func_804B6638, 0x00000000, 0xFFFFFFFF,
+    0x00000000, 0xFFFFFFFF, (u32)&Coli_Noop_7AC8, 0x00000000, 0xFFFFFFFF, (u32)&func_804B6638, 0x00000000, 0xFFFFFFFF,
     (u32)&func_804B6A3C, 0x00000000, 0xFFFFFFFF, (u32)&func_804B6974, 0x00000000, 0xFFFFFFFF, (u32)&func_804B6974, 0x00000000,
     0xFFFFFFFF, (u32)&func_804B5BB0, 0x00000000, 0xFFFFFFFF, (u32)&func_804B6364, 0x00000000, 0xFFFFFFFF, (u32)&func_804B6638,
     0x00000000, 0xFFFFFFFF, (u32)&func_804B6728, 0x00000000, 0xFFFFFFFF, (u32)&func_804B7A00, 0x00000000, 0xFFFFFFFF,
@@ -2788,24 +2788,24 @@ extern "C" u32 lbl_eu_8056F508[250] = {
     0xFFFFFFFF, (u32)&func_804B7944, 0x00000000, 0xFFFFFFFF, (u32)&func_804B6638, 0x00000000, 0xFFFFFFFF, (u32)&func_804B6728,
     0x00000000, 0xFFFFFFFF, (u32)&func_804B6A3C, 0x00000000, 0xFFFFFFFF, (u32)&func_804B6974, 0x00000000, 0xFFFFFFFF,
     (u32)&func_804B6974, 0x00000000, 0xFFFFFFFF, (u32)&func_804B5CEC, 0x00000000, 0xFFFFFFFF, (u32)&func_804B64CC, 0x00000000,
-    0xFFFFFFFF, (u32)&func_804B7044, 0x00000000, 0xFFFFFFFF, (u32)&func_804B6638, 0x00000000, 0xFFFFFFFF, (u32)&func_804B684C,
+    0xFFFFFFFF, (u32)&Coli_IsHeightInRange_7044, 0x00000000, 0xFFFFFFFF, (u32)&func_804B6638, 0x00000000, 0xFFFFFFFF, (u32)&func_804B684C,
     0x00000000, 0xFFFFFFFF, (u32)&func_804B7A00, 0x00000000, 0xFFFFFFFF, (u32)&func_804B7944, 0x00000000, 0xFFFFFFFF,
     (u32)&func_804B5BB0, 0x00000000, 0xFFFFFFFF, (u32)&func_804B6638, 0x00000000, 0xFFFFFFFF, (u32)&func_804B684C, 0x00000000,
-    0xFFFFFFFF, (u32)&func_804B6D30, 0x00000000, 0xFFFFFFFF, (u32)&func_804B6C48, 0x00000000, 0xFFFFFFFF, (u32)&func_804B6C48,
+    0xFFFFFFFF, (u32)&func_804B6D30, 0x00000000, 0xFFFFFFFF, (u32)&Coli_XformNotifyA_6C48, 0x00000000, 0xFFFFFFFF, (u32)&Coli_XformNotifyA_6C48,
     0x00000000, 0xFFFFFFFF, (u32)&func_804B5CEC, 0x00000000, 0xFFFFFFFF, (u32)&func_804B64CC, 0x00000000, 0xFFFFFFFF,
-    (u32)&func_804B7074, 0x00000000, 0xFFFFFFFF, (u32)&func_804B684C, 0x00000000, 0xFFFFFFFF, (u32)&func_804B7A00, 0x00000000,
+    (u32)&Coli_IsUnderCeiling_7074, 0x00000000, 0xFFFFFFFF, (u32)&func_804B684C, 0x00000000, 0xFFFFFFFF, (u32)&func_804B7A00, 0x00000000,
     0xFFFFFFFF, (u32)&func_804B7944, 0x00000000, 0xFFFFFFFF, (u32)&func_804B5BB0, 0x00000000, 0xFFFFFFFF, (u32)&func_804B684C,
-    0x00000000, 0xFFFFFFFF, (u32)&func_804B6D30, 0x00000000, 0xFFFFFFFF, (u32)&func_804B6C48, 0x00000000, 0xFFFFFFFF,
-    (u32)&func_804B6C48, 0x00000000, 0xFFFFFFFF, (u32)&func_804B5DE8, 0x00000000, 0xFFFFFFFF, (u32)&func_804B66B0, 0x00000000,
+    0x00000000, 0xFFFFFFFF, (u32)&func_804B6D30, 0x00000000, 0xFFFFFFFF, (u32)&Coli_XformNotifyA_6C48, 0x00000000, 0xFFFFFFFF,
+    (u32)&Coli_XformNotifyA_6C48, 0x00000000, 0xFFFFFFFF, (u32)&func_804B5DE8, 0x00000000, 0xFFFFFFFF, (u32)&func_804B66B0, 0x00000000,
     0xFFFFFFFF, (u32)&func_804B62B0, 0x00000000, 0xFFFFFFFF, (u32)&func_804B7A00, 0x00000000, 0xFFFFFFFF, (u32)&func_804B7944,
     0x00000000, 0xFFFFFFFF, (u32)&func_804B5DE8, 0x00000000, 0xFFFFFFFF, (u32)&func_804B66B0, 0x00000000, 0xFFFFFFFF,
     (u32)&func_804B6A3C, 0x00000000, 0xFFFFFFFF, (u32)&func_804B6974, 0x00000000, 0xFFFFFFFF, (u32)&func_804B6974, 0x00000000,
     0xFFFFFFFF, (u32)&func_804B5E68, 0x00000000, 0xFFFFFFFF, (u32)&func_804B6580, 0x00000000, 0xFFFFFFFF, (u32)&func_804B7A00,
-    0x00000000, 0xFFFFFFFF, (u32)&func_804B7944, 0x00000000, 0xFFFFFFFF, (u32)&func_804B6954, 0x00000000, 0xFFFFFFFF,
-    (u32)&func_804B6634, 0x00000000, 0xFFFFFFFF, (u32)&func_804B6F58, 0x00000000, 0xFFFFFFFF, (u32)&func_804B6954, 0x00000000,
+    0x00000000, 0xFFFFFFFF, (u32)&func_804B7944, 0x00000000, 0xFFFFFFFF, (u32)&Coli_InvokeMgrCb_6954, 0x00000000, 0xFFFFFFFF,
+    (u32)&Coli_Noop_6634, 0x00000000, 0xFFFFFFFF, (u32)&Coli_XformNotifyB_6F58, 0x00000000, 0xFFFFFFFF, (u32)&Coli_InvokeMgrCb_6954, 0x00000000,
     0xFFFFFFFF, (u32)&func_804B7A00, 0x00000000, 0xFFFFFFFF, (u32)&func_804B7944, 0x00000000, 0xFFFFFFFF, (u32)&func_804B5BB0,
-    0x00000000, 0xFFFFFFFF, (u32)&func_804B6C48, 0x00000000, 0xFFFFFFFF, (u32)&func_804B684C, 0x00000000, 0xFFFFFFFF,
-    (u32)&func_804B7044, 0x00000000,};
+    0x00000000, 0xFFFFFFFF, (u32)&Coli_XformNotifyA_6C48, 0x00000000, 0xFFFFFFFF, (u32)&func_804B684C, 0x00000000, 0xFFFFFFFF,
+    (u32)&Coli_IsHeightInRange_7044, 0x00000000,};
 
 // [.sdata] 0x80663AC8-0x80663AD8 (0x10 = 16B): seen-bit base pointer (points
 // at the .bss workspace lbl_eu_8065D1A0), zeroing-window base (same), then

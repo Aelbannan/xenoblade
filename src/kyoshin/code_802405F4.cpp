@@ -32,8 +32,8 @@
 
 
 // Copy helpers for member sub-object initialization
-// func_801BE108: copies CBgTex field-by-field from src to dest
-extern void func_801BE108(CBgTex* dest, CBgTex* src);
+// ItemEx_CopyBgTex: copies CBgTex field-by-field from src to dest
+extern void ItemEx_CopyBgTex(CBgTex* dest, CBgTex* src);
 // func_801BE16C: copies CTitleAHelp field-by-field from src to dest
 extern void func_801BE16C(CTitleAHelp* dest, CTitleAHelp* src);
 
@@ -42,7 +42,7 @@ void func_80241640(CMapSel* dest, CMapSel* src);
 void func_8024189C(CFade* dest, CFade* src);
 void func_80241920(CFloorMap* dest, CFloorMap* src);
 extern void func_8024343C(CMapSel* mapSel);
-extern void func_8024439C(CFade* fade);
+extern void CFade_StartLoad(CFade* fade);
 
 // String table base for MNU_item / MNU_kyeassign lookups
 extern "C" {
@@ -53,10 +53,10 @@ extern void setPresentationFlag__Q22cf13CfGameManagerFv(bool enable);
 // Term-time helpers (declared here; retail unmangled call relocs).
 extern "C" void waitForDrawDone__9CDeviceVIFv();
 extern "C" void Scn_SetPauseFlag(CScn* scn, int flag);
-extern "C" void func_801C3D9C(CBgTex* self);
-extern "C" void func_801C40A0(CTitleAHelp* self);
+extern "C" void BgTex_Release_3D9C(CBgTex* self);
+extern "C" void teardown(CTitleAHelp* self);
 extern "C" void func_802435CC(CMapSel* self);
-extern "C" void func_8024448C(CFade* self);
+extern "C" void CFade_Unload(CFade* self);
 extern "C" void func_8024CB94(CFloorMap* self);
 extern u32 lbl_eu_80664790;
 }
@@ -220,7 +220,7 @@ extern "C" void func_802408D4(MenuFxObj* obj) {
     }
 }
 
-void func_80240A64(u8* base) {
+void MenuFx_ClearSlotFlags(u8* base) {
     base[0x0] = 0;
     *(int *)(base + 0x4) = 0;
     base[0x188] = 0;
@@ -465,9 +465,9 @@ void CMenuMapSelect::Init() {
 
     {
         CBgTex bgTex(0);
-        func_801BE108(&mBgTex, &bgTex);
+        ItemEx_CopyBgTex(&mBgTex, &bgTex);
     } // bgTex destructor runs here
-    mBgTex.func_801C3C14();
+    mBgTex.BgTex_Acquire_3C14();
 
     char* helpStr = (char*)BdatTouchStringCell(lbl_eu_8050B498, lbl_eu_8050B498 + 8, 1);
     {
@@ -486,7 +486,7 @@ void CMenuMapSelect::Init() {
         CFade fade;
         func_8024189C(&mFade, &fade);
     } // fade destructor runs here
-    func_8024439C(&mFade);
+    CFade_StartLoad(&mFade);
 
     {
         CFloorMap floorMap;
@@ -706,10 +706,10 @@ void CMenuMapSelect::Term() {
     }
     mScn->removeRenderCB(cb);
 
-    func_801C3D9C(&mBgTex);
-    func_801C40A0(&mTitleHelp);
+    BgTex_Release_3D9C(&mBgTex);
+    teardown(&mTitleHelp);
     func_802435CC(&mMapSel);
-    func_8024448C(&mFade);
+    CFade_Unload(&mFade);
     func_8024CB94(&mFloorMap);
 
     lbl_eu_80664790 = 0;
@@ -729,8 +729,8 @@ void CMenuMapSelect::Move() {
 
     switch (mState) {
     case 0:
-        if (func_801C3E34(&mBgTex) == 0) break;
-        if (func_801C4114(&mTitleHelp) == 0) break;
+        if (BgTex_IsLoaded_3E34(&mBgTex) == 0) break;
+        if (isInitialized(&mTitleHelp) == 0) break;
         if (func_80243680(&mMapSel) == 0) break;
         func_801C412C(&mTitleHelp);
         func_802436CC(&mMapSel);
@@ -763,19 +763,19 @@ void CMenuMapSelect::Move() {
     case 5:
         if (func_8024CE1C(&mFloorMap) == 0) break;
         func_801C4654(&mTitleHelp, 0);
-        func_801C46B4(&mTitleHelp, BdatTouchStringCell(lbl_eu_8050B498, lbl_eu_8050B498 + 8, 3));
-        if (func_8009CF8C((u32)0x3212) != 0) {
+        setInfoText(&mTitleHelp, BdatTouchStringCell(lbl_eu_8050B498, lbl_eu_8050B498 + 8, 3));
+        if (CtrlRemote_TouchBitByArg((u32)0x3212) != 0) {
             func_801C46DC(&mTitleHelp, 1);
         }
         func_801C41E8(&mTitleHelp, 0);
         func_8024BE1C(&mFloorMap);
         playUISound__FUl(0x6d);
-        func_80244538(&mFade);
+        CFade_FadeOut(&mFade);
         mState = 6;
         break;
 
     case 6:
-        if (func_80244510(&mFade) == 0) break;
+        if (CFade_IsVisible(&mFade) == 0) break;
         mState = 7;
         break;
 
@@ -784,28 +784,28 @@ void CMenuMapSelect::Move() {
         break;
 
     case 8:
-        if (func_80244510(&mFade) == 0) break;
+        if (CFade_IsVisible(&mFade) == 0) break;
         func_8024CB94(&mFloorMap);
         func_801C4654(&mTitleHelp, 1);
-        func_801C46B4(&mTitleHelp, BdatTouchStringCell(lbl_eu_8050B498, lbl_eu_8050B498 + 8, 3));
+        setInfoText(&mTitleHelp, BdatTouchStringCell(lbl_eu_8050B498, lbl_eu_8050B498 + 8, 3));
         func_801C46DC(&mTitleHelp, 0);
         func_801C41E8(&mTitleHelp, 0x4a);
-        func_80244538(&mFade);
+        CFade_FadeOut(&mFade);
         mState = 9;
         break;
 
     case 9:
-        if (func_80244510(&mFade) == 0) break;
+        if (CFade_IsVisible(&mFade) == 0) break;
         mState = 2;
         break;
 
     case 10:
-        if (func_80244510(&mFade) == 0) break;
-        func_8008413C__Q22cf13CfGameManagerFv(func_8024F54C(&mFloorMap), 0);
+        if (CFade_IsVisible(&mFade) == 0) break;
+        func_8008413C__Q22cf13CfGameManagerFv(FloorMap_GetU16Field5A(&mFloorMap), 0);
         mState = 0xb;
-        if (func_800FF738()) {
-            func_800FEDF8();
-            func_800FF914();
+        if (CMainMenu_IsOpen()) {
+            CMainMenu_GetInstancePtr();
+            ArtsInfo_SetReadyFlag();
         }
         break;
 
@@ -814,12 +814,12 @@ void CMenuMapSelect::Move() {
         break;
     }
 
-    if (func_8024CE60(&mFloorMap) == 0) {
-        func_801C3D54(&mBgTex);
-        func_802434A0(&mMapSel);
+    if (FloorMap_GetField40Flag(&mFloorMap) == 0) {
+        BgTex_Tick_3D54(&mBgTex);
+        updateMapSel(&mMapSel);
     }
-    func_801C3FF0(&mTitleHelp);
-    func_802443E8(&mFade);
+    updateHelp(&mTitleHelp);
+    CFade_Update(&mFade);
     func_8024C1FC(&mFloorMap);
 }
 
@@ -837,12 +837,12 @@ void CMenuMapSelect::cbRenderBefore() {
     u8 drawInfo[0x60];
     __ct__Q34nw4r3lyt8DrawInfoFv(reinterpret_cast<nw4r::lyt::DrawInfo*>(drawInfo));
     func_80137250(reinterpret_cast<nw4r::lyt::DrawInfo*>(drawInfo));
-    if (func_8024CE60(&mFloorMap) == 0) {
-        func_801C3D7C(&mBgTex, reinterpret_cast<nw4r::lyt::DrawInfo*>(drawInfo));
+    if (FloorMap_GetField40Flag(&mFloorMap) == 0) {
+        BgTex_Draw_3D7C(&mBgTex, reinterpret_cast<nw4r::lyt::DrawInfo*>(drawInfo));
         func_80243560(&mMapSel, reinterpret_cast<nw4r::lyt::DrawInfo*>(drawInfo));
     }
     func_8024C8F8(&mFloorMap, reinterpret_cast<nw4r::lyt::DrawInfo*>(drawInfo));
-    func_801C4080(&mTitleHelp, reinterpret_cast<nw4r::lyt::DrawInfo*>(drawInfo));
-    func_80244460(&mFade, reinterpret_cast<nw4r::lyt::DrawInfo*>(drawInfo));
+    drawHelp(&mTitleHelp, reinterpret_cast<nw4r::lyt::DrawInfo*>(drawInfo));
+    CFade_Draw(&mFade, reinterpret_cast<nw4r::lyt::DrawInfo*>(drawInfo));
     __dt__Q34nw4r3lyt8DrawInfoFv(reinterpret_cast<nw4r::lyt::DrawInfo*>(drawInfo), -1);
 }

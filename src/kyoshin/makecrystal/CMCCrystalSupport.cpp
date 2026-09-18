@@ -72,16 +72,18 @@ extern "C" void func_8022E8F8(CMCCrystalSupport* self) {
 }
 #pragma pop
 
-extern "C" void func_8022E988(CMCCrystalSupport* self) {
+extern "C" void CrySupAdvanceAnim(CMCCrystalSupport* self);
+
+extern "C" void CrySupTickAnim(CMCCrystalSupport* self) {
     if (self->mLoaded != 0) {
         if (self->mState == 1) {
-            func_8022EB0C(self);
+            CrySupAdvanceAnim(self);
         }
         self->mLayout->Animate(0);
     }
 }
 
-extern "C" void func_8022E9E4(CMCCrystalSupport* self,
+extern "C" void CrySupDrawLayout(CMCCrystalSupport* self,
                               nw4r::lyt::DrawInfo* drawInfo) {
     if (self->mLoaded == 0) {
         return;
@@ -90,7 +92,7 @@ extern "C" void func_8022E9E4(CMCCrystalSupport* self,
         self->mLayout, drawInfo, 0, 1);
 }
 
-extern "C" void func_8022EA04(CMCCrystalSupport* self) {
+extern "C" void CrySupUnloadLayout(CMCCrystalSupport* self) {
     self->mLoaded = 0;
     if (self->mLayout != nullptr) {
         delete self->mLayout;
@@ -98,7 +100,7 @@ extern "C" void func_8022EA04(CMCCrystalSupport* self) {
     }
 }
 
-extern "C" void func_8022EA64(CMCCrystalSupport* self) {
+extern "C" void CrySupStartState(CMCCrystalSupport* self) {
     self->mState = 1;
     *(float*)((u8*)self->mAnimTransform + 0x10) = lbl_eu_80668630;
     self->mFinished = 0;
@@ -107,7 +109,7 @@ extern "C" void func_8022EA64(CMCCrystalSupport* self) {
 
 #pragma push
 #pragma optimize_for_size on
-extern "C" void func_8022EA88(CMCCrystalSupport* self, u16 index) {
+extern "C" void CrySupSetTexByIndex(CMCCrystalSupport* self, u16 index) {
     const char* base = lbl_eu_8050AA3C;
     u16 key = BdatGetU16Direct((const char*)lbl_eu_80664090, base + 0x2d,
                             (const char*)index);
@@ -119,9 +121,9 @@ extern "C" void func_8022EA88(CMCCrystalSupport* self, u16 index) {
 }
 #pragma pop
 
-// noinline: retail calls this via a real `bl` from func_8022E988 (sibling in this
+// noinline: retail calls this via a real `bl` from CrySupTickAnim (sibling in this
 // TU); without it MWCC inlines the body into the caller and the bl disappears.
-extern "C" __declspec(noinline) void func_8022EB0C(CMCCrystalSupport* self) {
+extern "C" __declspec(noinline) void CrySupAdvanceAnim(CMCCrystalSupport* self) {
     if (advanceAnimTransform__FPQ34nw4r3lyt13AnimTransformf(
             self->mAnimTransform, lbl_eu_80668634) != 0) {
         self->mState = 0;

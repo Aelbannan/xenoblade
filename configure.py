@@ -499,7 +499,7 @@ config.libs = [
             Object(NonMatching, "kyoshin/cfsys/CfObjectImplNpc.cpp"),
             Object(NonMatching, "kyoshin/cfsys/CfObjectImplMove.cpp"),
             Object(NonMatching, "kyoshin/cfsys/CfObjectImplEne.cpp"),
-            Object(NonMatching, "kyoshin/cf/CtrlAct.cpp", mw_version="Wii/1.1"),  # VERIFIED 2026-08: Wii/1.1 emits retail early-stw-before-args for address-taken gate locals (GC/3.0a5.2 sinks them) - net 9->12 FULL_MATCH, func_800D2A5C 98.5%/func_800D4F30 91.5%/func_800D6720 94.8% now pure reg-swap; split PASS 0x2C4 spare
+            Object(NonMatching, "kyoshin/cf/CtrlAct.cpp", mw_version="Wii/1.1"),  # VERIFIED 2026-08: Wii/1.1 emits retail early-stw-before-args for address-taken gate locals (GC/3.0a5.2 sinks them) - net 9->12 FULL_MATCH, ctrlActDispatchEntry 98.5%/func_800D4F30 91.5%/func_800D6720 94.8% now pure reg-swap; split PASS 0x2C4 spare
             Object(NonMatching, "kyoshin/cf/CBattleManager.cpp", extra_cflags=["-RTTI off"]),  # retail has no RTTI data in this TU; -RTTI off kills trailing typeinfo/RTTI so .data drop shrinks 0x60→0x2C, .rodata 0x1D6→0xCA, .sdata 0x58→0x0
             Object(NonMatching, "kyoshin/cf/code_800F42AC.cpp"),
             Object(NonMatching, "kyoshin/cf/CfObjectEnumList.cpp"),
@@ -548,7 +548,7 @@ config.libs = [
             Object(Matching, "kyoshin/realtimeevt/CREvtMem.cpp"),
             Object(NonMatching, "kyoshin/cf/CTaskREvtSequence.cpp"),
             Object(Matching, "kyoshin/cf/CfResObjImpl.cpp"),
-            Object(NonMatching, "kyoshin/cf/CfResReloadImpl.cpp", mw_version="GC/3.0a5.2"),  # retail func_8016E100 struct-copy store order (stfs f0 first) only matches under GC/3.0a5.2; Wii/1.1 hoists the last-load store (sth r3) first
+            Object(NonMatching, "kyoshin/cf/CfResReloadImpl.cpp", mw_version="GC/3.0a5.2"),  # retail loadReloadInfo struct-copy store order (stfs f0 first) only matches under GC/3.0a5.2; Wii/1.1 hoists the last-load store (sth r3) first
             Object(NonMatching, "kyoshin/cf/CfMapEffectManager.cpp"),
             Object(NonMatching, "kyoshin/cf/object/CfObjectActor.cpp"),
             Object(NonMatching, "kyoshin/realtimeevt/CREvtModel.cpp"),
@@ -610,14 +610,14 @@ config.libs = [
                 link_transform={
                     "renames": [
                         ("__ct__6CBgTexFUc", "__ct__CBgTex"),
-                        ("func_801C3A24__6CBgTexFv", "func_801C3A24"),
-                        ("func_801C3C14__6CBgTexFv", "func_801C3C14"),
-                        ("func_801C3D54__6CBgTexFv", "func_801C3D54"),
-                        ("func_801C3D7C__6CBgTexFPQ34nw4r3lyt8DrawInfo",
-                         "func_801C3D7C"),
-                        ("func_801C3D9C__6CBgTexFv", "func_801C3D9C"),
-                        ("func_801C3E34__6CBgTexFv", "func_801C3E34"),
-                        ("func_801C3E3C__6CBgTexFv", "func_801C3E3C"),
+                        ("BgTex_SetupRegion_3A24__6CBgTexFv", "BgTex_SetupRegion_3A24"),
+                        ("BgTex_Acquire_3C14__6CBgTexFv", "BgTex_Acquire_3C14"),
+                        ("BgTex_Tick_3D54__6CBgTexFv", "BgTex_Tick_3D54"),
+                        ("BgTex_Draw_3D7C__6CBgTexFPQ34nw4r3lyt8DrawInfo",
+                         "BgTex_Draw_3D7C"),
+                        ("BgTex_Release_3D9C__6CBgTexFv", "BgTex_Release_3D9C"),
+                        ("BgTex_IsLoaded_3E34__6CBgTexFv", "BgTex_IsLoaded_3E34"),
+                        ("BgTex_MarkLoaded_3E3C__6CBgTexFv", "BgTex_MarkLoaded_3E3C"),
                     ],
                 },
             ),
@@ -651,7 +651,7 @@ config.libs = [
             Object(Matching, "kyoshin/cf/CfGimmickItem.cpp"),
             Object(NonMatching, "kyoshin/makecrystal/CMenuMakeCrystal.cpp", extra_cflags=["-O4,s"]),
             Object(NonMatching, "kyoshin/makecrystal/CMakeCrystalWin.cpp"),
-            Object(Matching, "kyoshin/makecrystal/code_80213488.cpp", extra_cflags=["-O4,s", "-func_align 4"]),  # retail func_80213488 keeps the stmw/rolled-loop size form (was pragma optimize_for_size); -func_align 4 kills inter-function padding
+            Object(Matching, "kyoshin/makecrystal/code_80213488.cpp", extra_cflags=["-O4,s", "-func_align 4"]),  # retail MakeCrystal_ResetTable keeps the stmw/rolled-loop size form (was pragma optimize_for_size); -func_align 4 kills inter-function padding
             Object(NonMatching, "kyoshin/makecrystal/CMCCrystalBox.cpp"),
             Object(NonMatching, "kyoshin/makecrystal/CMCCrystalInfo.cpp"),
             Object(NonMatching, "kyoshin/makecrystal/CModelDispMakeCrystal.cpp"),
@@ -777,7 +777,7 @@ config.libs = [
                 link_transform={
                     "renames": [
                         ("__ct__Q22cf5CHelpFPvUl", "__ct__Q22cf5CHelpFv"),
-                        ("func_802B7C68__Q22cf5CHelpFv", "func_802B7C68"),
+                        ("CHelp_refreshPartyMenu__Q22cf5CHelpFv", "CHelp_refreshPartyMenu"),
                         ("func_802B7CBC__Q22cf11CHelpSwitchFUl",
                          "trySetHelpFlag__Q22cf11CHelpSwitchFv"),
                         ("func_802B7CE4__Q22cf11CHelpSwitchFUc",
@@ -1987,7 +1987,7 @@ config.libs = [
             Object(NonMatching, "monolib/src/scn/CLight.cpp"),
             Object(NonMatching, "monolib/src/scn/CScnEnvLgtCtrl.cpp"),
             Object(NonMatching, "monolib/src/effect/Unknown1.cpp"),
-            Object(Matching, "monolib/src/effect/code_804C8684.cpp", mw_version="GC/3.0a5.2"),  # retail func_804C8690 pair-copy schedule (addi after both pair loads, word load after pair stores) only matches under GC/3.0a5.2
+            Object(Matching, "monolib/src/effect/code_804C8684.cpp", mw_version="GC/3.0a5.2"),  # retail EffCtl_StoreFlagAndParams pair-copy schedule (addi after both pair loads, word load after pair stores) only matches under GC/3.0a5.2
             Object(NonMatching, "monolib/src/effect/code_804C8718.cpp"),
             Object(NonMatching, "monolib/src/effect/code_804CC2B8.cpp"),
             Object(NonMatching, "monolib/src/effect/CETrail.cpp"),
@@ -2005,7 +2005,7 @@ config.libs = [
             Object(NonMatching, "monolib/src/work/CWorkSystemPack.cpp"),
             Object(NonMatching, "monolib/src/core/CPackItem.cpp", extra_cflags=["-func_align 16", "-RTTI off"]),  # NEW angle wave-8 retry: retail has no RTTI structs in TU (.data head is sdata ptr+0, .rodata 0xC "CPackItem", .sdata 0x8 pair); -RTTI off kills MWCC duplicate type names + __RTTI__ copies
             Object(NonMatching, "monolib/src/core/CArcItem.cpp", extra_cflags=["-func_align 16"]),
-            Object(NonMatching, "monolib/src/core/code_804DEDA8.cpp", mw_version="GC/3.0a5.2"),  # retail unit is GC-compiled: func_804DFB88 duplicate-blt guard only reproduces under GC/3.0a5.2 (Wii/1.1 merges the two handle<0 tests). NOTE: -ipa off tested for func_804DF4BC path-B reload - no effect (pointer-walk is strength reduction, not aliasing) and reverted
+            Object(NonMatching, "monolib/src/core/code_804DEDA8.cpp", mw_version="GC/3.0a5.2"),  # retail unit is GC-compiled: SchedItem_ReleaseHandle duplicate-blt guard only reproduces under GC/3.0a5.2 (Wii/1.1 merges the two handle<0 tests). NOTE: -ipa off tested for func_804DF4BC path-B reload - no effect (pointer-walk is strength reduction, not aliasing) and reverted
             Object(NonMatching, "monolib/src/core/CSchedule.cpp"),
             Object(NonMatching, "monolib/src/core/code_804E36DC.cpp"),
             Object(NonMatching, "monolib/src/core/ScheduleList.cpp"),

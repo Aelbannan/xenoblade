@@ -47,7 +47,7 @@ struct UnkStruct_8009D7E4_Ret {
 extern "C" void __ct__8009F8B8(u8* obj);   // CtrlObjectParam.cpp (arts/param ctor)
 extern "C" void func_800A03F4(u8* obj);    // CtrlObjectParam.cpp
 extern "C" void func_800A145C(u8* obj);    // CtrlObjectParam.cpp
-extern "C" void func_800CA42C(u8* obj);    // CfObjectImplPc.cpp
+extern "C" void ObjPc_ForwardVf0C_A42C(u8* obj);    // CfObjectImplPc.cpp
 extern "C" void func_800A18A4(u8* obj, int value);      // CtrlObjectParam.cpp
 extern "C" UnkStruct_8009D7E4_Ret* CtrlObjectParam_GetArtsStatsRow(u8* obj, int index);  // arts data lookup
 extern "C" void func_8014B7B0(u8* obj);                  // CAIAction.cpp
@@ -66,7 +66,7 @@ extern "C" unsigned long CfRes_getAllocHandle();   // bdat heap handle getter
 // NOTE: the real definition is func_80175A50(CActorParam* dst, CActorParam*
 // src) - the write target comes FIRST.
 extern "C" void func_80175A50(cf::CActorParam* dst, cf::CActorParam* src);       // CActorParam.cpp
-extern "C" void func_8014B804(u8* self, int index, int a2, int a3, int a4,
+extern "C" void aiActionStoreIndexedBytes(u8* self, int index, int a2, int a3, int a4,
     int a5, int a6, int a7, int a8, int a9, int a10, int a11, int a12, int a13);
 // getInstance__Q22cf14CBattleManagerFv is declared by kyoshin/cf/CBattleManagerApi.hpp
 // (pulled in via CAIAction.hpp).
@@ -83,11 +83,11 @@ extern const float lbl_eu_80666B24;   // .sdata2 gauge constants (UnkVirtualFunc
 extern const float lbl_eu_80666B28;
 extern const double lbl_eu_80666B30; // 4503601774854144.0 (2^52+2^51): doubles as the int->double biased-magic constant
 extern "C" void func_8010CE50(u8* obj, int a, int b, int c);
-extern "C" void func_802617B8(u8* obj, u32 value, int a);
+extern "C" void Counter_AddClamped(u8* obj, u32 value, int a);
 extern "C" void func_800A282C(u8* obj, int flag);
 extern "C" int func_800A2AF0(u8* obj);
-extern "C" void func_802761E0(u8* obj);
-extern "C" void func_80276148(u8* obj, u32 value);
+extern "C" void fireLvUpMode4(u8* obj);
+extern "C" void fireLvUpCombo(u8* obj, u32 value);
 // .rodata literal copied onto the stack by UnkVirtualFunc4 (struct defined
 // below); bdat file ptr.
 extern void* lbl_eu_80664090;
@@ -116,7 +116,7 @@ struct PcResFlagsObj {
     u32 field_0x4EC;
 };
 
-// Object returned by func_80149154 (holds a word at +0x10).
+// Object returned by findBattleStatusEntry (holds a word at +0x10).
 struct Res10View {
     u8 _0[0x10];
     u32 field_0x10;
@@ -129,10 +129,10 @@ extern void* lbl_eu_806640D4;
 extern const float lbl_eu_80666B38;
 extern const double lbl_eu_80666B40;
 extern "C" {
-void* func_8003AA34();                         // bdat manager refresh (void* return - must match CArtsInfo.hpp:679 / the other ~40 decls; divergent extern "C" types = 10197)
-u32 func_8003B41C(void* mgr);                  // first bdat row index (canonical form per ocBdat.cpp def)
-u32 func_8003B1EC(void* mgr);                  // bdat row count (canonical form per ocBdat.cpp def)
-unsigned long func_801BA2C8(void* obj);        // battle-manager state probe (unified with CChainTimer.hpp)
+void* Bdat_GetTable_AA34();                         // bdat manager refresh (void* return - must match CArtsInfo.hpp:679 / the other ~40 decls; divergent extern "C" types = 10197)
+u32 Bdat_GetRowBase_B41C(void* mgr);                  // first bdat row index (canonical form per ocBdat.cpp def)
+u32 Bdat_GetMaxRow_B1EC(void* mgr);                  // bdat row count (canonical form per ocBdat.cpp def)
+unsigned long SuddenCommuIsStateActive(void* obj);        // battle-manager state probe (unified with CChainTimer.hpp)
 }
 // cf::CfSoundMan lives on kyoshin/cf/CfSoundMan.hpp (single definition;
 // include it where playActorSound is needed).

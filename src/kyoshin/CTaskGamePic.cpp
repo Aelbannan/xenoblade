@@ -158,11 +158,11 @@ CTaskGamePic::~CTaskGamePic() {}
 #pragma optimize_for_size off
 
 // ---------------------------------------------------------------------------
-// func_80294E58 - shifts the 8-word texture/palette parameter block
+// GamePicShiftTexParams - shifts the 8-word texture/palette parameter block
 // (0x90..0xC4). If the 3rd source word is non-zero the source block also
 // overwrites the "current" block at 0x90.
 // ---------------------------------------------------------------------------
-extern "C" void func_80294E58(CTaskGamePic* ths, u32 index, const u32* src) {
+extern "C" void GamePicShiftTexParams(CTaskGamePic* ths, u32 index, const u32* src) {
     u32 sh = index << 8;
     ths->param_A0 = ths->param_90;
     ths->param_A4 = ths->param_94;
@@ -183,12 +183,12 @@ extern "C" void func_80294E58(CTaskGamePic* ths, u32 index, const u32* src) {
 }
 
 // ---------------------------------------------------------------------------
-// func_80294EC0 - kicks off an async file load for the scene's
+// GamePicStartFileLoad - kicks off an async file load for the scene's
 // resource, using the embedded file-event object at +0x54 as the callback.
 // Retail saves r29-r31 with stmw/lmw (size-opt frame shape).
 // ---------------------------------------------------------------------------
 #pragma optimize_for_size on
-extern "C" void func_80294EC0(CTaskGamePic* ths, const char* path) {
+extern "C" void GamePicStartFileLoad(CTaskGamePic* ths, const char* path) {
     IWorkEvent* ev = reinterpret_cast<IWorkEvent*>(ths); // null-this -> null
     if (ths) ev = reinterpret_cast<IWorkEvent*>(&ths->field_54);
     u32 handle = Scn_CallUnk8C_V9(ths->mScene);
@@ -218,10 +218,10 @@ void CTaskGamePic::Term() {
 }
 
 // ---------------------------------------------------------------------------
-// func_8029539C - the file-event handler for the loaded texture.
+// GamePicOnFileEvent - the file-event handler for the loaded texture.
 // Binds the palette, builds a GX texture object from it, then clears the load.
 // ---------------------------------------------------------------------------
-extern "C" bool func_8029539C(CTaskGamePic* ths, CEventFile* pEvent) {
+extern "C" bool GamePicOnFileEvent(CTaskGamePic* ths, CEventFile* pEvent) {
     // Retail loads pEvent->mFileHandle first and compares it against
     // ths->mFileHandle (cmplw r0, r5), so the event side is the left operand.
     if (pEvent->mFileHandle == ths->mFileHandle) {
@@ -251,27 +251,27 @@ void cbRenderBefore__12CTaskGamePicFv(CTaskGamePic*);
 // subobjects: adjust `this` back to the CTaskGamePic primary, tail-call the
 // real member.
 void OnFileEvent__12CTaskGamePicFP10CEventFile(IWorkEvent* ths) {
-    ((void (*)(CTaskGamePic*))func_8029539C)(
+    ((void (*)(CTaskGamePic*))GamePicOnFileEvent)(
         reinterpret_cast<CTaskGamePic*>(reinterpret_cast<char*>(ths) - 0x54));
 }
 
-void func_8029554C(IWorkEvent* ths) {
+void GamePicDtorThunkEv(IWorkEvent* ths) {
     ((void (*)(CTaskGamePic*))__dt__12CTaskGamePicFv)(
         reinterpret_cast<CTaskGamePic*>(reinterpret_cast<char*>(ths) - 0x54));
 }
 
-void func_80295554(IScnRender* ths) {
+void GamePicRenderBeforeThunk(IScnRender* ths) {
     reinterpret_cast<CTaskGamePic*>(reinterpret_cast<char*>(ths) - 0x58)->cbRenderBefore();
 }
 
-void func_8029555C(IScnRender* ths) {
+void GamePicDtorThunkRender(IScnRender* ths) {
     ((void (*)(CTaskGamePic*))__dt__12CTaskGamePicFv)(
         reinterpret_cast<CTaskGamePic*>(reinterpret_cast<char*>(ths) - 0x58));
 }
 
 // Returns int (not s16) so callers re-sign-extend the result like retail.
 // Bottom edge of an ml::CRect (mPos.y + mSize.y).
-extern "C" s16 func_80295388(const ml::CRect* r) {
+extern "C" s16 GamePicRectBottom(const ml::CRect* r) {
     return (s16)(r->mPos.y + r->mSize.y);
 }
 // ---------------------------------------------------------------------------
@@ -352,10 +352,10 @@ void CTaskGamePic::cbRenderBefore() {
         // x computed into a local first so MWCC stages it in a callee-saved
         // register across the nested helper call (retail shape).
         s16 vx3 = rectA.mPos.x;
-        dgx0.add(vx3, func_80295388(&rectA), 0,
+        dgx0.add(vx3, GamePicRectBottom(&rectA), 0,
                  tex->mHeight);
         s16 vx4 = rectA.mPos.x + rectA.mSize.x;
-        dgx0.add(vx4, func_80295388(&rectA),
+        dgx0.add(vx4, GamePicRectBottom(&rectA),
                  tex->mWidth, tex->mHeight);
         dgx0.end();
     }

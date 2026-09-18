@@ -31,11 +31,11 @@ struct CMdlOwnerCtx {
     nw4r::g3d::ScnMdl* field_0x147C;     // 0x147C g3d scene object (ScnMdl)
 };
 
-extern "C" void func_804E6898(CMdlMouth* ths, float val) {
+extern "C" void MdlMouthSetValue(CMdlMouth* ths, float val) {
     ths->value2C = val;
 }
 
-extern "C" int func_804E68A0(CMdlMouth* ths, u32 arg2, nw4r::g3d::ChrAnmResult* res) {
+extern "C" int MdlMouthPollAnim(CMdlMouth* ths, u32 arg2, nw4r::g3d::ChrAnmResult* res) {
     // Mismatched own-node id: callers may only animate the bound node.
     if ((u32)ths->field_0x0C != arg2) {
         return 0;
@@ -80,7 +80,7 @@ extern "C" void* __dt__9CMdlMouthFv(CMdlMouth* ths, int flag) {
     return ths;
 }
 
-extern "C" void func_804E6A28(CMdlMouth* ths) {
+extern "C" void MdlMouthTeardown(CMdlMouth* ths) {
     // Per-frame mouth update: bail when no material is bound (id < 0) or the
     // closing timer still counts down; otherwise integrate the open angle and
     // push the SRT offset-table row into the copied material's texture SRT.
@@ -198,7 +198,7 @@ extern "C" void func_804E65CC(CMdlMouth* ths, CMdlOwnerCtx* model) {
     }
 }
 
-extern "C" void func_804E679C(CMdlMouth* ths, int arg2, int arg3) {
+extern "C" void MdlMouthSetMode(CMdlMouth* ths, int arg2, int arg3) {
     // All follow-up blocks are guarded by the mode-change condition: retail skips
     // the whole body with a single branch when field_0x08 already equals arg2.
     if (ths->field_0x08 != arg2) {

@@ -17,9 +17,9 @@ extern "C" {
     extern char lbl_eu_80504148[];  // voice file-name format string
 
     extern s32 func_80189A04(s32 index);                        // sound-slot busy check
-    extern s32 func_801897A0(const char* name, float vol, s32 flag);  // play archive voice
+    extern s32 MenuSnd_TryPlayGated_97A0(const char* name, float vol, s32 flag);  // play archive voice
     extern "C" void CfSoundMan_StopSlotByMode(u32 a, u32 b, u32 c);        // CfSoundMan stop helper (matches CfObjectImplMove.hpp)
-    extern void func_80189318(s32 clearName, float fadeTime);   // stop BGM slot (menu sound system)
+    extern void MenuSnd_StopSlot0Clear_9318(s32 clearName, float fadeTime);   // stop BGM slot (menu sound system)
     extern void func_8018986C(const char* name, float fadeTime); // stop voice by name
     extern void func_80188D34(const char* name, bool enable, float value, float fadeTime); // play BGM
     extern void queueBdatTextA__Q22cf13CfGameManagerFv(u32 first, u32 second, bool enabled, float value); // field BGM state
@@ -41,7 +41,7 @@ struct SndVec3 {
 };
 
 extern "C" {
-    extern void func_801896A8(s32 index, float f1, float f2);              // master SE volume (menu sound system)
+    extern void MenuSnd_SetBalancePush_96A8(s32 index, float f1, float f2);              // master SE volume (menu sound system)
     extern void func_801AAC70(u32 id, u32 vol, float fade);                // map SE volume (tail-call stub)
     extern u16 playActorSound__Q22cf10CfSoundManFUlUlUlUlf(u32 r3, u32 r4, u32 r5, u32 r6, float f1); // play SE
     extern SoundSlotEntry* CfSoundMan_TouchSlotById(u16 handle);                      // SE slot lookup (tail-call stub)
@@ -82,7 +82,7 @@ int stopBgm(VMThread* pThread) {
         float converted = vmArgFixedGet(2, vmArgPtrGet(pThread, 1));
         vol = converted;
     }
-    func_80189318(1, (float)(int)vol / lbl_eu_80667D90);
+    MenuSnd_StopSlot0Clear_9318(1, (float)(int)vol / lbl_eu_80667D90);
     return 0;
 }
 
@@ -185,7 +185,7 @@ int stopFieldBgm(VMThread* pThread) {
     }
     float fade = (float)(int)vol / lbl_eu_80667D90;
     queueBdatTextA__Q22cf13CfGameManagerFv(0, 0, 1, fade);
-    func_80189318(1, fade);
+    MenuSnd_StopSlot0Clear_9318(1, fade);
     return 0;
 }
 
@@ -201,7 +201,7 @@ int stopTownBgm(VMThread* pThread) {
     }
     float fade = (float)(int)vol / lbl_eu_80667D90;
     func_8007C374__Q22cf13CfGameManagerFv(0, 0, fade, 1);
-    func_80189318(1, fade);
+    MenuSnd_StopSlot0Clear_9318(1, fade);
     return 0;
 }
 
@@ -225,7 +225,7 @@ int setVolBgm(VMThread* pThread) {
         fade = converted;
     }
     int fadeInt = fade;
-    func_801896A8(0, (float)vol / lbl_eu_80667D90,
+    MenuSnd_SetBalancePush_96A8(0, (float)vol / lbl_eu_80667D90,
                   (float)fadeInt / lbl_eu_80667D90);
     return 0;
 }
@@ -244,7 +244,7 @@ int playVoice(VMThread* pThread) {
     } else {
         buf.clear();
     }
-    func_801897A0(buf.mString, lbl_eu_80667DA0, 1);
+    MenuSnd_TryPlayGated_97A0(buf.mString, lbl_eu_80667DA0, 1);
     return 0;
 }
 

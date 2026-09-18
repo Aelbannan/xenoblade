@@ -14,7 +14,7 @@
 #include "monolib/device/CDeviceVI.hpp"
 
 // Minimal local declaration of cf::CTaskREvent: CTaskREvent.hpp currently
-// conflicts with CfGameManager.hpp (both declare a global func_8009D5FC with
+// conflicts with CfGameManager.hpp (both declare a global CtrlRemote_GetFileEventIds with
 // different return types), so this TU re-declares only the members it uses.
 // Signatures match the real header so the mangled symbols link to retail.
 namespace cf {
@@ -220,12 +220,12 @@ void CTaskGameCf::func_800444FC(){
         }
 
         CUICfManager_createInstance(CTaskManager::GetRootProcGame(), pTaskGame->getScene(), -1);
-        func_801665A4(CTaskManager::GetRootProcRealTime(), pTaskGame->getScene(), pTaskGame->unk70);
+        evtCreateTaskRegister(CTaskManager::GetRootProcRealTime(), pTaskGame->getScene(), pTaskGame->unk70);
 
         if(newCampaign){
             CtrlObjectParam_GetSlotTableBase();
             CtrlObjectParam_GetSlotTableBase();
-            func_eu_8006B238();
+            CfT_ResetEventState();
         } else {
             cf::CtrlObjectParamSlots* party = reinterpret_cast<cf::CtrlObjectParamSlots*>(CtrlObjectParam_GetSlotTableBase());
             CtrlObjectParam_GetSlotTableBase();
@@ -245,8 +245,8 @@ void CTaskGameCf::func_800444FC(){
             unk_64.mString[0] ? unk_64.c_str() : nullptr, unk_88, func_8024005C());
         func_80059C58(pTaskGame, pTaskGame->getScene());
         CTaskCulling::create(pTaskGame, pTaskGame->getScene());
-        if(func_8009CF8C((u32)0x20) == 0){
-            func_8009D018(0x20, 1);
+        if(CtrlRemote_TouchBitByArg((u32)0x20) == 0){
+            CtrlRemote_SetSharedBit(0x20, 1);
         }
         func_8004302C(1, 0);
         // Switch to the running-state move handler (pooled PTMF copy from
@@ -290,7 +290,7 @@ void CTaskGameCf::func_800444FC(){
 
             ::func_8012F87C(0);
 
-            ((CProcess*)func_801644B4())->SetRemove();
+            ((CProcess*)evtGetManagerAddr())->SetRemove();
 
             mMoveFunc = lbl_eu_80525B30;
         }

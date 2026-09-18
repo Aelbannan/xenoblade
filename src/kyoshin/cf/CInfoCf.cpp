@@ -10,16 +10,16 @@
 #include "monolib/device/CDeviceVI.hpp"
 #include <revolution/gx/GXPixel.h>
 
-// Global: UI state flag read by func_80166830.
+// Global: UI state flag read by InfoCfGetUiFlags.
 
 // Body-copy helpers defined below in this TU (called by CMenuItem::Init).
 // extern "C": the retail reloc names are unmangled (same convention as
-// func_80167A18 in kyoshin/menu/CMenuItem.cpp).
-extern "C" void func_80166E48(CInfoCfObjE48* dst, const CInfoCfObjE48* src);
+// ItemMenu_IsPresent in kyoshin/menu/CMenuItem.cpp).
+extern "C" void InfoCfCopyObjE48(CInfoCfObjE48* dst, const CInfoCfObjE48* src);
 extern "C" void func_80166F80(CInfoCfObjF80* dst, const CInfoCfObjF80* src);
-extern "C" void func_801671D4(CInfoCfObjD4* dst, const CInfoCfObjD4* src);
-extern "C" void func_80167260(CInfoCfObj60* dst, const CInfoCfObj60* src);
-extern "C" void func_801672E4(CInfoCfObjE4* dst, const CInfoCfObjE4* src);
+extern "C" void InfoCfCopyObjD4(CInfoCfObjD4* dst, const CInfoCfObjD4* src);
+extern "C" void InfoCfCopyObj60(CInfoCfObj60* dst, const CInfoCfObj60* src);
+extern "C" void InfoCfCopyObjE4(CInfoCfObjE4* dst, const CInfoCfObjE4* src);
 extern "C" void func_80167368(CInfoCfObj368* dst, const CInfoCfObj368* src);
 // func_8016742C is declared by CItemBoxGrid.hpp (retail-unmangled name,
 // void* ABI); the typed object views are passed straight through.
@@ -44,29 +44,29 @@ cf::CInfoCf::~CInfoCf() {
     lbl_eu_80664250 = 0;
 }
 
-extern "C" void* func_8016676C() { return *(void**)((u8*)lbl_eu_80664250 + 0xC); }
+extern "C" void* InfoCfGetUnk0C() { return *(void**)((u8*)lbl_eu_80664250 + 0xC); }
 
-extern "C" void* func_80166778() { return *(void**)((u8*)lbl_eu_80664250 + 0x10); }
+extern "C" void* InfoCfGetUnk10() { return *(void**)((u8*)lbl_eu_80664250 + 0x10); }
 
 // FULL_MATCH - no-op virtual function (vtable slot 2).  Immediately returns.
-void func_80166784() {
+void InfoCfNoopVirt() {
 }
 
 // Toggle bits of the UI-state singleton's flag word: set bit 0x2, then
 // immediately clear bit 0x1. The singleton pointer is re-read from the global
 // between the two (retail reloads it), so both statements dereference the
 // global directly rather than sharing a local.
-void func_80166788() {
+void InfoCfSetBit2ClearBit1() {
     lbl_eu_80664250->mFlags |= 0x2;
     lbl_eu_80664250->mFlags &= ~0x1;
 }
 
-void func_801667AC(cf::CInfoCf* self) {
+void InfoCfRefreshSettings(cf::CInfoCf* self) {
     // Refresh the cached setting state: re-read the UI flag word, the option
     // and timer values, then rewrite the flag word (clear bit 0x1; set it back
     // when the cached setting matches the option-flag/pause combo).
     cf::CfGameManager::getInstance();
-    self->mField08 = func_80166830();
+    self->mField08 = InfoCfGetUiFlags();
     CfRes_getInstPtrBC();
     self->mField0C = KyoshinHeap_GetActive54();
     u32 v = KyoshinHeap_GetSize500000();
@@ -80,8 +80,8 @@ void func_801667AC(cf::CInfoCf* self) {
 }
 
 // FULL_MATCH - Returns the global UI state flag value (lbl_eu_80663E24).
-// noinline: retail calls this out-of-line from func_801667AC.
-__declspec(noinline) u32 func_80166830() {
+// noinline: retail calls this out-of-line from InfoCfRefreshSettings.
+__declspec(noinline) u32 InfoCfGetUiFlags() {
     return lbl_eu_80663E24;
 }
 
@@ -134,8 +134,8 @@ void CMenuItem::Init() {
     mBgTex.mPtmMode = tmpBgTex->mPtmMode;
     __dt__6CBgTexFv(tmpBgTex, -1);
 
-    if (func_801C3C14(&mBgTex) != 0) {
-        func_801C3A24(&mBgTex);
+    if (BgTex_Acquire_3C14(&mBgTex) != 0) {
+        BgTex_SetupRegion_3A24(&mBgTex);
     }
 
     // --- Re-initialise the embedded CTitleAHelp via a temporary ---
@@ -208,11 +208,11 @@ void CMenuItem::Init() {
     dh->tail.field_6A = sh->tail.field_6A;
     dh->tail.field_6E = sh->tail.field_6E;
     dh->tail.field_6F = sh->tail.field_6F;
-    func_80166E48(&dstBody->objE8, &srcBody->objE8);
+    InfoCfCopyObjE48(&dstBody->objE8, &srcBody->objE8);
     func_80166F80(&dstBody->obj1D8, &srcBody->obj1D8);
-    func_801671D4(&dstBody->obj3E4, &srcBody->obj3E4);
-    func_80167260(&dstBody->obj418, &srcBody->obj418);
-    func_801672E4(&dstBody->obj440, &srcBody->obj440);
+    InfoCfCopyObjD4(&dstBody->obj3E4, &srcBody->obj3E4);
+    InfoCfCopyObj60(&dstBody->obj418, &srcBody->obj418);
+    InfoCfCopyObjE4(&dstBody->obj440, &srcBody->obj440);
     func_80167368(&dstBody->obj468, &srcBody->obj468);
     func_8016742C(&dstBody->obj4AC, (void*)&srcBody->obj4AC);
     func_8016742C(&dstBody->obj4E8, (void*)&srcBody->obj4E8);
@@ -274,7 +274,7 @@ void CMenuItem::Init() {
 // Copy a 0xEB-byte body slice (+0x04..+0xEF). The 16-entry 8-byte table at
 // +0x6C is copied by a counted lwzu/stwu loop (element base registers walk
 // from 0x68 = 0x6C-4).
-extern "C" void func_80166E48(CInfoCfObjE48* dst, const CInfoCfObjE48* src) {
+extern "C" void InfoCfCopyObjE48(CInfoCfObjE48* dst, const CInfoCfObjE48* src) {
     dst->head = src->head;
     dst->tail = src->tail;
 }
@@ -287,17 +287,17 @@ extern "C" void func_80166F80(CInfoCfObjF80* dst, const CInfoCfObjF80* src) {
 // Copy a 0x21-byte body slice (7 words + 5 bytes at +0x04..+0x24), skipping
 // the member vtable at +0x00. Member struct assignment reproduces the retail
 // load-all-then-store-all shape and register allocation.
-extern "C" void func_80167260(CInfoCfObj60* dst, const CInfoCfObj60* src) {
+extern "C" void InfoCfCopyObj60(CInfoCfObj60* dst, const CInfoCfObj60* src) {
     dst->body = src->body;
 }
 
 // Copy an 8-word + 4-byte body slice (+0x04..+0x27).
-extern "C" void func_801672E4(CInfoCfObjE4* dst, const CInfoCfObjE4* src) {
+extern "C" void InfoCfCopyObjE4(CInfoCfObjE4* dst, const CInfoCfObjE4* src) {
     dst->body = src->body;
 }
 
 // Copy a 10-word + 5-byte body slice (+0x04..+0x30).
-extern "C" void func_801671D4(CInfoCfObjD4* dst, const CInfoCfObjD4* src) {
+extern "C" void InfoCfCopyObjD4(CInfoCfObjD4* dst, const CInfoCfObjD4* src) {
     dst->body = src->body;
 }
 
@@ -464,8 +464,8 @@ void CMenuItem::Term() {
     }
     mScene->removeRenderCB(renderCB);
 
-    func_801C3D9C(&mBgTex);
-    func_801C40A0(&mTitleAHelp);
+    BgTex_Release_3D9C(&mBgTex);
+    teardown(&mTitleAHelp);
     UnloadItemBox(&mItemBoxGrid);
 
     lbl_eu_80664258 = 0;
@@ -491,8 +491,8 @@ void CMenuItem::Move() {
     if (pressed != 0) {
         // Close a pending item-box interaction, then mark the menu done.
         if (IsSubWinActive(&mItemBoxGrid) == 0) {
-            if (func_800FEDF8() != 0) {
-                func_800FF914();
+            if (CMainMenu_GetInstancePtr() != 0) {
+                ArtsInfo_SetReadyFlag();
             }
             playUISound__FUl(6);
             mState = 4;
@@ -504,7 +504,7 @@ void CMenuItem::Move() {
     case 0:
         // Once the bg texture, title bar and item grid are all ready,
         // start the panel intro animations and play the open cue.
-        if (func_801C3E34(&mBgTex) != 0 && func_801C4114(&mTitleAHelp) != 0 &&
+        if (BgTex_IsLoaded_3E34(&mBgTex) != 0 && isInitialized(&mTitleAHelp) != 0 &&
             IsItemBoxReady(&mItemBoxGrid) != 0) {
             func_801C412C(&mTitleAHelp);
             func_801CB28C(&mItemBoxGrid);
@@ -529,9 +529,9 @@ void CMenuItem::Move() {
         break;
     }
 
-    func_801C3D54(&mBgTex);
+    BgTex_Tick_3D54(&mBgTex);
     UpdateItemBox(&mItemBoxGrid);
-    func_801C3FF0(&mTitleAHelp);
+    updateHelp(&mTitleAHelp);
 }
 
 void CMenuItem::cbRenderBefore() {
@@ -546,8 +546,8 @@ void CMenuItem::cbRenderBefore() {
     u8 drawInfo[0x54];
     __ct__Q34nw4r3lyt8DrawInfoFv(&drawInfo[0]);
     func_80137250((nw4r::lyt::DrawInfo*)&drawInfo[0]);
-    func_801C3D7C(&mBgTex, (nw4r::lyt::DrawInfo*)&drawInfo[0]);
+    BgTex_Draw_3D7C(&mBgTex, (nw4r::lyt::DrawInfo*)&drawInfo[0]);
     DrawItemBoxGrid(&mItemBoxGrid, (nw4r::lyt::DrawInfo*)&drawInfo[0]);
-    func_801C4080(&mTitleAHelp, (nw4r::lyt::DrawInfo*)&drawInfo[0]);
+    drawHelp(&mTitleAHelp, (nw4r::lyt::DrawInfo*)&drawInfo[0]);
     __dt__Q34nw4r3lyt8DrawInfoFv(&drawInfo[0], -1);
 }

@@ -52,11 +52,11 @@ void CMenuKizunagram::Term() {
     }
     removeRenderCB__4CScnFP10IScnRender(reinterpret_cast<CScn*>(mParentRef), renderCB);
 
-    func_801C40A0(&mTitleAHelp);
+    teardown(&mTitleAHelp);
     teardownKizuna(&mSub98);
     func_8025D9C4(&mPcKizunagram);
-    func_802AE62C(&mLoad);
-    func_8024448C(&mFade);
+    CLoadTeardownLayout(&mLoad);
+    CFade_Unload(&mFade);
 
     lbl_eu_806647E0 = 0;
     DecMenuCounter64080();
@@ -92,8 +92,8 @@ body:
             bit = (pad->mPressedButtonFlags >> 10) & 1;
         }
         if (bit != 0) {
-            if (func_800FEDF8() != 0) {
-                func_800FF914();
+            if (CMainMenu_GetInstancePtr() != 0) {
+                ArtsInfo_SetReadyFlag();
             }
             playUISound(6);
             field_0x21C = 8;
@@ -102,23 +102,23 @@ body:
     }
     // Per-state helpers (0..10), then per-frame sub-object refresh.
     switch (field_0x21C) {
-    case 0: func_80257318(this); break;
+    case 0: KizunagramBeginFadeIn(this); break;
     case 1: func_80257360(this); break;
-    case 2: func_802573B8(this); break;
-    case 3: func_80257448(this); break;
+    case 2: KizunagramConfirmChartAdvance(this); break;
+    case 3: KizunagramOpenCharWindow(this); break;
     case 4: func_80257498(this); break;
-    case 5: func_80257704(this); break;
-    case 6: func_80257754(this); break;
-    case 7: func_802577F0(this); break;
+    case 5: KizunagramSetPhaseFlag54(this); break;
+    case 6: KizunagramAdvanceToPcWin(this); break;
+    case 7: KizunagramAdvanceToState9(this); break;
     case 8: func_80257840(this); break;
-    case 9: func_80257994(this); break;
-    case 10: func_80257A2C(this); break;
+    case 9: KizunagramAdvanceToState7(this); break;
+    case 10: KizunagramReopenCharWindow(this); break;
     }
-    func_801C3FF0(&mTitleAHelp);
+    updateHelp(&mTitleAHelp);
     tickKizMain(&mSub98);
     KizunagramUpdateMainState(&mPcKizunagram);
     func_802AE560(&mLoad);
-    func_802443E8(&mFade);
+    CFade_Update(&mFade);
 }
 
 void CMenuKizunagram::cbRenderBefore() {
@@ -149,22 +149,22 @@ body:
     // Draw the title/help bar once the per-character window is past the
     // opening phase (state >= 8) or when its visibility flag is set.
     if (field_0x21D != 0 || field_0x21C >= 8) {
-        func_801C4080(&mTitleAHelp, (nw4r::lyt::DrawInfo*)&drawInfo[0]);
+        drawHelp(&mTitleAHelp, (nw4r::lyt::DrawInfo*)&drawInfo[0]);
     }
-    func_80244460(&mFade, (nw4r::lyt::DrawInfo*)&drawInfo[0]);
-    func_802AE5F0(&mLoad, (nw4r::lyt::DrawInfo*)&drawInfo[0]);
+    CFade_Draw(&mFade, (nw4r::lyt::DrawInfo*)&drawInfo[0]);
+    CLoadDrawIfVisible(&mLoad, (nw4r::lyt::DrawInfo*)&drawInfo[0]);
     __dt__Q34nw4r3lyt8DrawInfoFv((nw4r::lyt::DrawInfo*)&drawInfo[0], -1);
 end:
     ;
 }
 
 // ---------------------------------------------------------------------------
-// func_8025728C (us-802594c8) - create the kizuna-gram singleton: returns 0
+// KizunagramCreateSingleton (us-802594c8) - create the kizuna-gram singleton: returns 0
 // when it already exists, otherwise allocates the object (0x220 bytes),
 // constructs it, stores the singleton and registers it as a CProcess child
 // of `parent`.
 // ---------------------------------------------------------------------------
-CMenuKizunagram* func_8025728C(CProcess* parent, int a, int b) {
+CMenuKizunagram* KizunagramCreateSingleton(CProcess* parent, int a, int b) {
     if (lbl_eu_806647E0 != 0) {
         return 0;
     }
@@ -229,20 +229,20 @@ extern "C" CMenuKizunagram* __ct__CMenuKizunagram(CMenuKizunagram* self, int a, 
     self->field_0x21D = 1;
     self->field_0x21E = (u8)b;
     CTaskGame_deleteLoad();
-    func_8011C400();
+    MiniMapSetActiveFlag();
     return self;
 }
 
 
 // ---------------------------------------------------------------------------
-// func_80257318 (us-80259554)
+// KizunagramBeginFadeIn (us-80259554)
 // When the fade overlay is loaded/ready, mark the screen active (state byte)
 // and start the fade-in animation.
 // ---------------------------------------------------------------------------
-void func_80257318(CMenuKizunagram* self) {
-    if (func_80244508(&self->mFade) != 0) {
+void KizunagramBeginFadeIn(CMenuKizunagram* self) {
+    if (CFade_IsReady(&self->mFade) != 0) {
         self->field_0x21C = 1;
-        func_80244518(&self->mFade);
+        CFade_FadeIn(&self->mFade);
     }
 }
 
@@ -251,35 +251,35 @@ void func_80257318(CMenuKizunagram* self) {
 // both ready, start the fade-out (state 2) and dismiss the overlay.
 // ---------------------------------------------------------------------------
 void func_80257360(CMenuKizunagram* self) {
-    if (func_802AE6AC(&self->mLoad) != 0 && func_80244510(&self->mFade) != 0) {
+    if (CLoadIsLoadReady(&self->mLoad) != 0 && CFade_IsVisible(&self->mFade) != 0) {
         self->field_0x21C = 2;
-        func_802AE6C4(&self->mLoad);
+        CLoadStartFadeInStep(&self->mLoad);
     }
 }
 
 // ---------------------------------------------------------------------------
-// func_802573B8 (us-802595f4) - when the title help and kizuna chart are
+// KizunagramConfirmChartAdvance (us-802595f4) - when the title help and kizuna chart are
 // ready, sync the chart selection into the help bar, dismiss both, play the
 // confirm sound and advance to state 3.
 // ---------------------------------------------------------------------------
-void func_802573B8(CMenuKizunagram* self) {
-    if (func_801C4114(&self->mTitleAHelp) != 0 && kizChartReady(&self->mSub98) != 0) {
+void KizunagramConfirmChartAdvance(CMenuKizunagram* self) {
+    if (isInitialized(&self->mTitleAHelp) != 0 && kizChartReady(&self->mSub98) != 0) {
         func_801C41E8(&self->mTitleAHelp, kizChartStatus(&self->mSub98));
         func_801C412C(&self->mTitleAHelp);
         kizStartChart(&self->mSub98);
-        func_802AE758(&self->mLoad);
-        func_80244538(&self->mFade);
+        CLoadStartRetryStep(&self->mLoad);
+        CFade_FadeOut(&self->mFade);
         self->field_0x21C = 3;
         playUISound(0x6d);
     }
 }
 
 // ---------------------------------------------------------------------------
-// func_80257448 (us-80259684)
+// KizunagramOpenCharWindow (us-80259684)
 // When the title help is idle and the kizuna chart is open, show the
 // per-character window (state 4).
 // ---------------------------------------------------------------------------
-void func_80257448(CMenuKizunagram* self) {
+void KizunagramOpenCharWindow(CMenuKizunagram* self) {
     if (isIdle__11CTitleAHelpFv(&self->mTitleAHelp) != 0 &&
         kizChartOpen(&self->mSub98) != 0) {
         self->field_0x21C = 4;
@@ -334,13 +334,13 @@ merged:
         // follow-up check passes, dismiss the chart and advance to state 6.
         kizOpenWinNop(&self->mSub98);
         if (kizChartBusy(&self->mSub98) == 0 && kizHasSelFlag(&self->mSub98) != 0) {
-            func_801C4198(&self->mTitleAHelp);
+            markReplayClose(&self->mTitleAHelp);
             kizCloseChart(&self->mSub98, 0);
             self->field_0x21C = 6;
         }
     } else if (dismiss != 0) {
         // Back out of the chart: dismiss the help bar and go to state 5.
-        func_801C414C(&self->mTitleAHelp);
+        beginClose(&self->mTitleAHelp);
         kizCloseChart(&self->mSub98, 1);
         self->field_0x21C = 5;
     } else if (toggle != 0) {
@@ -387,18 +387,18 @@ merged:
 }
 
 // ---------------------------------------------------------------------------
-// func_80257704 (us-80259940)
+// KizunagramSetPhaseFlag54 (us-80259940)
 // When the title help is idle and the kizuna chart is open, set the phase
 // flag at 0x54.
 // ---------------------------------------------------------------------------
-void func_80257704(CMenuKizunagram* self) {
+void KizunagramSetPhaseFlag54(CMenuKizunagram* self) {
     if (isIdle__11CTitleAHelpFv(&self->mTitleAHelp) != 0 &&
         kizChartOpen(&self->mSub98) != 0) {
         self->field_0x54 = 1;
     }
 }
 
-void func_80257754(CMenuKizunagram* self) {
+void KizunagramAdvanceToPcWin(CMenuKizunagram* self) {
     // Open the per-character window: once the title bar, kizuna chart and PC
     // window are all idle/ready, set the help text from the string pool,
     // animate it, dismiss the chart and advance to state 8.
@@ -406,20 +406,20 @@ void func_80257754(CMenuKizunagram* self) {
         kizChartOpen(&self->mSub98) != 0 &&
         KizunagramIsHidden(&self->mPcKizunagram) != 0) {
         char* name = BdatTouchStringCell(lbl_eu_8050CAB8, lbl_eu_8050CAB8 + 0xb, 2);
-        func_801C41C0(&self->mTitleAHelp, name);
+        setNameText(&self->mTitleAHelp, name);
         func_801C41E8(&self->mTitleAHelp, 0x59);
-        func_801C416C(&self->mTitleAHelp);
+        reopenFromClose(&self->mTitleAHelp);
         KizunagramOpen(&self->mPcKizunagram);
         self->field_0x21C = 8;
     }
 }
 
 // ---------------------------------------------------------------------------
-// func_802577F0 (us-80259a2c)
+// KizunagramAdvanceToState9 (us-80259a2c)
 // When the title help is idle and the per-character window is open, set the
 // screen state to 9.
 // ---------------------------------------------------------------------------
-void func_802577F0(CMenuKizunagram* self) {
+void KizunagramAdvanceToState9(CMenuKizunagram* self) {
     if (isIdle__11CTitleAHelpFv(&self->mTitleAHelp) != 0 &&
         KizunagramIsOpen(&self->mPcKizunagram) != 0) {
         self->field_0x21C = 9;
@@ -462,7 +462,7 @@ void func_80257840(CMenuKizunagram* self) {
         return;
     }
     if (a) {
-        func_801C4198(&self->mTitleAHelp);
+        markReplayClose(&self->mTitleAHelp);
         KizunagramClose(&self->mPcKizunagram);
         self->field_0x21C = 0xa;
     } else if (f1) {
@@ -477,28 +477,28 @@ void func_80257840(CMenuKizunagram* self) {
 }
 
 // ---------------------------------------------------------------------------
-// func_80257994 (us-80259bd0) - when the title help is idle and the
+// KizunagramAdvanceToState7 (us-80259bd0) - when the title help is idle and the
 // per-character window is open, set the help bar text from the kizuna chart
 // string pool, start its animation, dismiss the chart and advance to state 7.
 // ---------------------------------------------------------------------------
-void func_80257994(CMenuKizunagram* self) {
+void KizunagramAdvanceToState7(CMenuKizunagram* self) {
     if (isIdle__11CTitleAHelpFv(&self->mTitleAHelp) != 0 &&
         KizunagramIsOpen(&self->mPcKizunagram) != 0) {
         char* name = BdatTouchStringCell(lbl_eu_8050CAB8, lbl_eu_8050CAB8 + 0xb, 1);
-        func_801C41C0(&self->mTitleAHelp, name);
+        setNameText(&self->mTitleAHelp, name);
         func_801C41E8(&self->mTitleAHelp, kizChartStatus(&self->mSub98));
-        func_801C416C(&self->mTitleAHelp);
+        reopenFromClose(&self->mTitleAHelp);
         kizStartChart(&self->mSub98);
         self->field_0x21C = 7;
     }
 }
 
 // ---------------------------------------------------------------------------
-// func_80257A2C (us-80259c68)
+// KizunagramReopenCharWindow (us-80259c68)
 // When the title help is idle and the kizuna chart is open, show the
-// per-character window (state 4). Same shape as func_80257448.
+// per-character window (state 4). Same shape as KizunagramOpenCharWindow.
 // ---------------------------------------------------------------------------
-void func_80257A2C(CMenuKizunagram* self) {
+void KizunagramReopenCharWindow(CMenuKizunagram* self) {
     if (isIdle__11CTitleAHelpFv(&self->mTitleAHelp) != 0 &&
         kizChartOpen(&self->mSub98) != 0) {
         self->field_0x21C = 4;
@@ -508,13 +508,13 @@ void func_80257A2C(CMenuKizunagram* self) {
 // IScnRender vtable adjustor thunk for cbRenderBefore.
 // When IScnRender virtual functions dispatch through IScnRender*,
 // 'this' points to the IScnRender subobject at offset +0x58 within
-extern "C" void func_80257A7C(void* self) {
+extern "C" void KizunagramRenderBeforeThunk(void* self) {
     ((void(*)(void*))cbRenderBefore__15CMenuKizunagramFv)((char*)self - 0x58);
 }
 
 // IScnRender vtable adjustor thunk for ~CMenuKizunagram.
-extern "C" void func_80257A84(void* self) {
+extern "C" void KizunagramDeleteDtorThunk(void* self) {
     ((void(*)(void*))__dt__15CMenuKizunagramFv)((char*)self - 0x58);
 }
 
-extern "C" unsigned long func_80257308(void) { return lbl_eu_806647E0 != 0; }
+extern "C" unsigned long KizunagramIsCreated(void) { return lbl_eu_806647E0 != 0; }

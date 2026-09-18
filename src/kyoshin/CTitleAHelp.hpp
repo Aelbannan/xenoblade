@@ -13,22 +13,22 @@ public:
     CTitleAHelp(char*, u8);
     virtual ~CTitleAHelp();
     void CTitleAHelp_load();
-    void func_801C3FF0();
-    void func_801C4080(nw4r::lyt::DrawInfo*);
-    void func_801C40A0();
-    u8 func_801C4114();
-    u8 func_801C411C();
+    void updateHelp();
+    void drawHelp(nw4r::lyt::DrawInfo*);
+    void teardown();
+    u8 isInitialized();
+    u8 isActive();
     u8 isIdle();
     void func_801C412C();
-    void func_801C414C();
-    void func_801C416C();
-    void func_801C4198();
-    void func_801C41C0(char*);
+    void beginClose();
+    void reopenFromClose();
+    void markReplayClose();
+    void setNameText(char*);
     // retail keeps func_801C41E8 unmangled (C linkage): free function in .cpp
     void func_801C4654(u32);
-    void func_801C46B4(char*);
+    void setInfoText(char*);
     void func_801C46DC(u32);
-    void func_801C473C(u8);
+    void setActive(u8);
     virtual bool OnFileEvent(CEventFile* pEventFile) override;
 
     UnkClass_8045F564 unk4;
@@ -62,7 +62,7 @@ public:
     virtual u32 vf7() = 0;  // +0x24
 };
 
-bool func_801C4648(nw4r::lyt::Pane*);
+bool isPaneVisible(nw4r::lyt::Pane*);
 
 // One row of the title-A help table: 7 u16 cells indexed by button id.
 struct HelpRow {

@@ -67,9 +67,9 @@ extern "C" void* __dt__80482054(u8* self, int deleting) {
 }
 
 // ===========================================================================
-// func_80481F00 (vtable slot 9) - rebuild the nw4r camera frustum.
+// ScnCamNw4r_RefreshFrustumA (vtable slot 9) - rebuild the nw4r camera frustum.
 // ===========================================================================
-void func_80481F00(CScnItemCameraNw4r* self) {
+void ScnCamNw4r_RefreshFrustumA(CScnItemCameraNw4r* self) {
     CScnItemCameraNw4rLayout* cam = (CScnItemCameraNw4rLayout*)self;
 
     // Refresh camera internals in the base object first.
@@ -85,9 +85,9 @@ void func_80481F00(CScnItemCameraNw4r* self) {
 }
 
 // ===========================================================================
-// func_80481F9C (vtable slot 5) - rebuild the nw4r camera frustum.
+// ScnCamNw4r_RefreshFrustumB (vtable slot 5) - rebuild the nw4r camera frustum.
 // ===========================================================================
-void func_80481F9C(CScnItemCameraNw4r* self) {
+void ScnCamNw4r_RefreshFrustumB(CScnItemCameraNw4r* self) {
     CScnItemCameraNw4rLayout* cam = (CScnItemCameraNw4rLayout*)self;
 
     // Refresh camera internals in the base object first.
@@ -107,9 +107,9 @@ void func_80481F9C(CScnItemCameraNw4r* self) {
 // ===========================================================================
 // retail: addi r3,r3,0x2b8; b IntersectSphere__Q34nw4r4math7FRUSTUMCFPCQ34nw4r4math6SPHERE
 extern "C" bool IntersectSphere__Q34nw4r4math7FRUSTUMCFPCQ34nw4r4math6SPHERE(void* frustum, const void* sphere);
-extern "C" bool func_80482038(u8* self, const void* sphere) {
+extern "C" bool ScnCamNw4r_TestSphereHit(u8* self, const void* sphere) {
     return IntersectSphere__Q34nw4r4math7FRUSTUMCFPCQ34nw4r4math6SPHERE(self + 0x2b8, sphere);
 }
-extern "C" void* func_80482040(u8* self) { return 0; }
-void func_80482048() {}
-void* func_8048204C(u8* self) { return (void*)((u8*)self + 0x10); }
+extern "C" void* ScnCamNw4r_NullHook40(u8* self) { return 0; }
+void ScnCamNw4r_EmptyHook48() {}
+void* ScnCamNw4r_GetField10Ptr(u8* self) { return (void*)((u8*)self + 0x10); }

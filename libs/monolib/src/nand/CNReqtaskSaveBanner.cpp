@@ -61,14 +61,14 @@ extern "C" {
     s32 CNReqSaveNandOpen(const char* path, u8 flag);  // NAND set-buffer / open wrapper
     s32 CNReqSaveNandTell(u32* pos);                   // NAND tell / read primitive
     s32 CNReqSaveNandClose(void);            // NAND close primitive
-    const char* func_804F50D0(CNReqtaskSaveBannerData* data);  // build the banner path string (in this file)
+    const char* CNReqtaskSaveBanner_BuildPath(CNReqtaskSaveBannerData* data);  // build the banner path string (in this file)
     s32 CNReqSaveNandCreate(const char* path, u8 perm, u8 attr);   // NAND create (async)
-    s32 func_804F53DC(CNReqtaskSaveBannerTarget* ptr);        // NAND prim-task finish helper
+    s32 Banner_AllocData_53DC(CNReqtaskSaveBannerTarget* ptr);        // NAND prim-task finish helper
     void CNReqSaveDeallocIfOpen(CNandTask* data, CNandTask* dealloc);  // NAND dealloc helper
     s32 CNReqSaveNandWrite(u32 addr, u32 size);  // NAND buffer commit primitive
     s32 CNReqSaveNandMove(const char* from, const char* to);      // NAND move (async)
     void __dt__804F5738(CNandBlock* ptr);   // task-block destructor
-    void func_804F5080(CNandTask* data, CNandTask* dealloc);  // releases the banner data block
+    void CNReqtaskSaveBanner_Release(CNandTask* data, CNandTask* dealloc);  // releases the banner data block
 }
 
 // CNReqtaskSaveBanner sub-task parameter block (embedded in CNRequest at 0):
@@ -84,26 +84,26 @@ struct CNReqtaskSaveBannerData {
     u8 fC;
 };
 
-// us-804f92d8: func_804F4D7C
+// us-804f92d8: CNReqtaskSaveBanner_Init
 // Configures the CNReqtaskSaveBanner sub-task: records the NAND data object and
 // banner id, resets the async state to step 0, then returns the task vtable
 // pointer.
-extern "C" CNReqtaskSaveBannerVtbl** func_804F4D7C(CNReqtaskSaveBannerData* data, CNReqtaskSaveBannerTarget* arg1, u8 arg2) {
+extern "C" CNReqtaskSaveBannerVtbl** CNReqtaskSaveBanner_Init(CNReqtaskSaveBannerData* data, CNReqtaskSaveBannerTarget* arg1, u8 arg2) {
     data->f0 = arg1;
     data->fC = arg2;
     data->state = 0;
     return &lbl_eu_80665A90;
 }
 
-// us-804f9638: func_804F50D0
+// us-804f9638: CNReqtaskSaveBanner_BuildPath
 // Banner path builder: formats "%s%s" (prefix/meta from the shared .sdata
 // pointers) into the unit's static FixStr<32> buffer (lbl_eu_80661850) and
 // returns it. On the first call the buffer is cleared and the init flag
 // latched to 1; later calls skip straight to the format.
 // Mirrors CNReqtaskSave::CNReqSaveBuildSavePath (u8 buffer + reinterpret_cast FixStr).
-// noinline: retail func_804F4D90 emits `bl func_804F50D0`; without it MWCC
+// noinline: retail CNReqtaskSaveBanner_Step emits `bl CNReqtaskSaveBanner_BuildPath`; without it MWCC
 // inlines this helper and blows the split budget.
-__declspec(noinline) const char* func_804F50D0(CNReqtaskSaveBannerData* data) {
+__declspec(noinline) const char* CNReqtaskSaveBanner_BuildPath(CNReqtaskSaveBannerData* data) {
     if (lbl_eu_80665A94 == 0) {
         reinterpret_cast<ml::FixStr<32>&>(lbl_eu_80661850).clear();
         lbl_eu_80665A94 = 1;
@@ -113,10 +113,10 @@ __declspec(noinline) const char* func_804F50D0(CNReqtaskSaveBannerData* data) {
     return reinterpret_cast<const ml::FixStr<32>&>(lbl_eu_80661850).c_str();
 }
 
-// us-804f95e8: func_804F5080
+// us-804f95e8: CNReqtaskSaveBanner_Release
 // Releases the dynamically-sizeable banner data block (destructor + dealloc)
 // before handing the task block back to the NAND allocator.
-void func_804F5080(CNandTask* data, CNandTask* dealloc) {
+void CNReqtaskSaveBanner_Release(CNandTask* data, CNandTask* dealloc) {
     if (dealloc != 0) {
         CNandBlock* block = dealloc->field_0;
         if (block != 0) {
@@ -136,7 +136,7 @@ struct CNReqtaskSaveBannerTarget {
     u8 unk325;
 };
 
-// us-804f92f0: func_804F4D90
+// us-804f92f0: CNReqtaskSaveBanner_Step
 // Async NAND banner-save state machine, polled by the CNand completion pump.
 // Advancing one step per call; returns 1 when fully saved, 2 on error, 0
 // while still in progress. Steps:
@@ -146,14 +146,14 @@ struct CNReqtaskSaveBannerTarget {
 //   3  -> wait for that read to finish (CNReqSaveNandClose puff); branch on buffer
 //   4  -> done (return 1)
 //   5  -> build the save path and write it to NAND (CNReqSaveNandCreate)
-//   6  -> wait for the write task to complete (func_804F53DC)
+//   6  -> wait for the write task to complete (Banner_AllocData_53DC)
 //   7  -> rewrite banner via a second set-buffer pass (CNReqSaveNandOpen)
 //   8  -> commit the header/buffer to NAND (CNReqSaveNandWrite)
 //   9  -> wait for the commit to finish (CNReqSaveNandClose)
 //   0xA -> destroy the in-progress block, move the banner into place
 //          (CNReqSaveNandMove)
 //   0xB -> done (return 1)
-extern "C" s32 func_804F4D90(CNReqtaskSaveBannerVtbl* vtable_ptr, CNReqtaskSaveBannerData* data) {
+extern "C" s32 CNReqtaskSaveBanner_Step(CNReqtaskSaveBannerVtbl* vtable_ptr, CNReqtaskSaveBannerData* data) {
     CNReqtaskSaveBannerData* d = data;
     CNReqtaskSaveBannerTarget* t = d->f0;
     if (t->unk324 != 0) {
@@ -224,7 +224,7 @@ extern "C" s32 func_804F4D90(CNReqtaskSaveBannerVtbl* vtable_ptr, CNReqtaskSaveB
             return 1;
 
         case 5: {
-            const char* pathStr = func_804F50D0(data);
+            const char* pathStr = CNReqtaskSaveBanner_BuildPath(data);
             r = CNReqSaveNandCreate(pathStr, 0x34, 0);
             if (r != 0 && r != -6) return 2;
             d->state = 6;
@@ -232,13 +232,13 @@ extern "C" s32 func_804F4D90(CNReqtaskSaveBannerVtbl* vtable_ptr, CNReqtaskSaveB
         }
 
         case 6:
-            r = func_804F53DC(d->f0);
+            r = Banner_AllocData_53DC(d->f0);
             if (r == 0) return 2;
             d->state = 7;
             break;
 
         case 7: {
-            const char* pathStr = func_804F50D0(data);
+            const char* pathStr = CNReqtaskSaveBanner_BuildPath(data);
             r = CNReqSaveNandOpen(pathStr, 2);
             if (r != 0) return 2;
             d->state = 8;
@@ -265,7 +265,7 @@ extern "C" s32 func_804F4D90(CNReqtaskSaveBannerVtbl* vtable_ptr, CNReqtaskSaveB
             p = d->f0;
             __dt__804F5738((CNandBlock*)p);
             bannerPath = CNReqSaveBuildTempPath(d->fC);
-            const char* pathStr = func_804F50D0(data);
+            const char* pathStr = CNReqtaskSaveBanner_BuildPath(data);
             r = CNReqSaveNandMove(pathStr, bannerPath);
             if (r != 0) return 2;
             d->state = 0xB;
@@ -301,8 +301,8 @@ extern "C" __declspec(noinline) void sinit_804F5140() {
 // ============================================================================
 // Retail data owned by this TU (dissolved monolibdata2 blob).
 // The 12-entry jumptable (jumptable_eu_80570328, .data +0x00..+0x2F) is
-// auto-emitted by the switch() in func_804F4D90 (all 12 entries are
-// func_804F4D90 + a per-case offset), so only the two 16-byte vtables follow.
+// auto-emitted by the switch() in CNReqtaskSaveBanner_Step (all 12 entries are
+// CNReqtaskSaveBanner_Step + a per-case offset), so only the two 16-byte vtables follow.
 // ============================================================================
 
 // === .rodata 0x1C: "CNReqtaskSaveBanner\0" + "%s%s\0" (single 0x1C blob so the
@@ -321,7 +321,7 @@ extern "C" u32 lbl_eu_80663CD8[2] = { (u32)&lbl_eu_80524894, (u32)&lbl_eu_805703
 
 // === .data +0x30: banner-save vtable (16B) ===
 extern "C" u32 lbl_eu_80570358[4] = {
-    (u32)&lbl_eu_80663CD8, 0x00000000, (u32)&func_804F4D90, (u32)&func_804F5080,
+    (u32)&lbl_eu_80663CD8, 0x00000000, (u32)&CNReqtaskSaveBanner_Step, (u32)&CNReqtaskSaveBanner_Release,
 };
 // === .data +0x40: second vtable (16B) ===
 extern "C" u32 lbl_eu_80570368[4] = {

@@ -17,10 +17,10 @@ struct CREvtLight {
     // CREvtLight fields
     /* 0x14 */ u32 field_14;  // initialized to 0
     /* 0x18 */ u32 field_18;  // constructor arg
-    /* 0x1C */ u32 field_1C;  // set by func_801C36C4
+    /* 0x1C */ u32 field_1C;  // set by CREvtLight_SetResource
     /* 0x20 */ void* field_20; // resource handle (nullptr initially)
 
-    // Position/orientation of the light (used by func_801C37CC / func_801C3850)
+    // Position/orientation of the light (used by CREvtLight_DistToTarget / CREvtLight_AngleState)
     /* 0x24 */ u8 pad_24[0x3C - 0x24];
     /* 0x3C */ nw4r::math::VEC3 mPos;
     /* 0x48 */ u8 pad_48[0x4C - 0x48];

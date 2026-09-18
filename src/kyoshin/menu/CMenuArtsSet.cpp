@@ -151,7 +151,7 @@ extern "C" unsigned long CMenuArtsSet_isCreated() {
 // held button-flag combinations and dispatches to the cursor/window handlers;
 // the shared tail syncs the title help bar from the list state.
 extern "C" void func_8022F544(CMenuArtsSetCtorShim* self) {
-    if (func_8029A658() != 0) {
+    if (MenuTutorialIsCreated() != 0) {
         return;
     }
 
@@ -200,7 +200,7 @@ extern "C" void func_8022F544(CMenuArtsSetCtorShim* self) {
             } else if (CMenuArtsSet_isSlotWindowEmpty((CMenuArtsSet*)&self->mList) != 0) {
                 CMenuArtsSet_armSysWin((CMenuArtsSet*)&self->mList);
             } else {
-                func_801C414C(&self->mTitleAHelp);
+                beginClose(&self->mTitleAHelp);
                 CMenuArtsSet_beginClose((CMenuArtsSet*)&self->mList);
                 self->field360 = 3;
             }
@@ -240,8 +240,8 @@ extern "C" void func_8022F544(CMenuArtsSetCtorShim* self) {
             if (CMenuArtsSet_isSlotWindowEmpty((CMenuArtsSet*)&self->mList) != 0) {
                 CMenuArtsSet_armSysWin((CMenuArtsSet*)&self->mList);
             } else if (CMenuArtsSet_isWindowBusy((CMenuArtsSet*)&self->mList) == 0) {
-                if (func_800FEDF8() != 0) {
-                    func_800FF914();
+                if (CMainMenu_GetInstancePtr() != 0) {
+                    ArtsInfo_SetReadyFlag();
                     playUISound__FUl(6);
                 }
                 self->field360 = 4;
@@ -291,7 +291,7 @@ extern "C" void func_8022F544(CMenuArtsSetCtorShim* self) {
             } else if (CMenuArtsSet_isSlotWindowEmpty((CMenuArtsSet*)&self->mList) != 0) {
                 CMenuArtsSet_armSysWin((CMenuArtsSet*)&self->mList);
             } else {
-                func_801C414C(&self->mTitleAHelp);
+                beginClose(&self->mTitleAHelp);
                 CMenuArtsSet_beginClose((CMenuArtsSet*)&self->mList);
                 self->field360 = 3;
             }
@@ -331,8 +331,8 @@ extern "C" void func_8022F544(CMenuArtsSetCtorShim* self) {
             if (CMenuArtsSet_isSlotWindowEmpty((CMenuArtsSet*)&self->mList) != 0) {
                 CMenuArtsSet_armSysWin((CMenuArtsSet*)&self->mList);
             } else if (CMenuArtsSet_isWindowBusy((CMenuArtsSet*)&self->mList) == 0) {
-                if (func_800FEDF8() != 0) {
-                    func_800FF914();
+                if (CMainMenu_GetInstancePtr() != 0) {
+                    ArtsInfo_SetReadyFlag();
                     playUISound__FUl(6);
                 }
                 self->field360 = 4;
@@ -426,9 +426,9 @@ extern "C" __declspec(noinline) void func_8022FAD0(SArtsSub8022FA58* selfRaw) {
     LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)self->field_0x00, base + 0x6f, label, 0);
 
     // Static caption textboxes on the main layout.
-    func_80124270(self->field_0x08->field_0x10->v13(base + 0x78, 1), 0);
-    func_80124270(self->field_0x08->field_0x10->v13(base + 0x7f, 1), 0);
-    func_80124270(self->field_0x08->field_0x10->v13(base + 0x8f, 1), 0);
+    setPaneVisible(self->field_0x08->field_0x10->v13(base + 0x78, 1), 0);
+    setPaneVisible(self->field_0x08->field_0x10->v13(base + 0x7f, 1), 0);
+    setPaneVisible(self->field_0x08->field_0x10->v13(base + 0x8f, 1), 0);
 
     // Cursor anchor: resolve both panes on the label layout and convert the
     // first pane's position into root-pane space. Block-scope view: retail
@@ -442,12 +442,12 @@ extern "C" __declspec(noinline) void func_8022FAD0(SArtsSub8022FA58* selfRaw) {
             anchor, rootPane,
             (nw4r::lyt::Pane*)self->field_0x00->field_0x10);
     nw4r::math::VEC3 pos = tmp;
-    func_801D2150((nw4r::lyt::Pane*)self->field_0x08->field_0x10, &pos);
+    Cur_SetPaneTranslate((nw4r::lyt::Pane*)self->field_0x08->field_0x10, &pos);
 
     // Single-player builds also refresh the two help captions.
     if (code80135FDC_getByte_64077() <= 1) {
-        func_80124270(self->field_0x00->field_0x10->v13(base + 0xb5, 1), 0);
-        func_80124270(self->field_0x00->field_0x10->v13(base + 0xc0, 1), 0);
+        setPaneVisible(self->field_0x00->field_0x10->v13(base + 0xb5, 1), 0);
+        setPaneVisible(self->field_0x00->field_0x10->v13(base + 0xc0, 1), 0);
     }
 
     ArtsCharList_refreshDisplay(selfRaw);
@@ -477,8 +477,8 @@ extern "C" __declspec(noinline) void ArtsLayoutPair_advance(SArts2FDF4* self) {
     self->field_0x8->v14(0);
 }
 
-// 2-arg C++ overload of func_80124270 (separate mangled symbol), used by ArtsBusyPane_showPrimary.
-void func_80124270(void*, u32);
+// 2-arg C++ overload of setPaneVisible (separate mangled symbol), used by ArtsBusyPane_showPrimary.
+void setPaneVisible(void*, u32);
 
 // AnimTransform frame-check helper (defined in COption.cpp / CArtsInfo.cpp).
 u32 advanceAnimTransform(nw4r::lyt::AnimTransform*, float);
@@ -549,9 +549,9 @@ __declspec(noinline) void ArtsLayoutPair_completeLayoutOut(SArts2FF74* self) {
         self->field_0x10->field_0x10 = lbl_eu_8066864C;
         self->field_0x18 = 1;
         if (self->field_0x17 != 0) {
-            func_80124270(((SArts3CObj*)self->field_0x08->field_0x10)->v13(lbl_eu_8050AC70 + 0x8F, 1), 1);
+            setPaneVisible(((SArts3CObj*)self->field_0x08->field_0x10)->v13(lbl_eu_8050AC70 + 0x8F, 1), 1);
         } else {
-            func_80124270(((SArts3CObj*)self->field_0x08->field_0x10)->v13(lbl_eu_8050AC70 + 0x7F, 1), 1);
+            setPaneVisible(((SArts3CObj*)self->field_0x08->field_0x10)->v13(lbl_eu_8050AC70 + 0x7F, 1), 1);
         }
     }
 }
@@ -569,8 +569,8 @@ extern "C" __declspec(noinline) void ArtsLayoutPair_completeLayoutIn(SArts30070*
         self->field_0x0C->field_0x10 = lbl_eu_8066864C;
         self->field_0x18 = 0;
         self->field_0x16 = 1;
-        func_80124270(((SArts3CObj*)self->field_0x08->field_0x10)->v13(lbl_eu_8050AC70 + 0x7F, 1), 0);
-        func_80124270(((SArts3CObj*)self->field_0x08->field_0x10)->v13(lbl_eu_8050AC70 + 0x8F, 1), 0);
+        setPaneVisible(((SArts3CObj*)self->field_0x08->field_0x10)->v13(lbl_eu_8050AC70 + 0x7F, 1), 0);
+        setPaneVisible(((SArts3CObj*)self->field_0x08->field_0x10)->v13(lbl_eu_8050AC70 + 0x8F, 1), 0);
     }
 }
 
@@ -718,8 +718,8 @@ extern "C" __declspec(noinline) void ArtsLayoutPair_loadSlots(SArts304C4* self) 
     self->field_0x08->v11(self->field_0x10, 0);
     self->field_0x08->v11(self->field_0x0C, 1);
     self->field_0x08->v14(0);
-    func_80124270(self->field_0x08->field_0x10->v13(lbl_eu_8050AC70 + 0x15C, 1), 0);
-    func_80124270(self->field_0x08->field_0x10->v13(lbl_eu_8050AC70 + 0x16A, 1), 0);
+    setPaneVisible(self->field_0x08->field_0x10->v13(lbl_eu_8050AC70 + 0x15C, 1), 0);
+    setPaneVisible(self->field_0x08->field_0x10->v13(lbl_eu_8050AC70 + 0x16A, 1), 0);
     buildLayout((nw4r::lyt::Layout**)&self->field_0x14, self->field_0x04,
                   lbl_eu_8050AC70 + 0x178);
     bindLayoutAnimTransform((nw4r::lyt::Layout*)self->field_0x14, &self->field_0x18,
@@ -729,7 +729,7 @@ extern "C" __declspec(noinline) void ArtsLayoutPair_loadSlots(SArts304C4* self) 
     self->field_0x14->v11(self->field_0x1C, 0);
     self->field_0x14->v11(self->field_0x18, 1);
     self->field_0x14->v14(0);
-    func_80124270(self->field_0x14->field_0x10, 0);
+    setPaneVisible(self->field_0x14->field_0x10, 0);
     ArtsSlotCursor_refresh((SArtsSub8022FA58*)self);
 }
 #pragma optimize_for_size off
@@ -786,9 +786,9 @@ extern "C" __declspec(noinline) void ArtsDrawBox_draw(SArtsDrawBox* self, nw4r::
 
 // C-linkage + noinline: CMenuArtsSet_completeLayoutOut calls this and retail keeps a real
 // bl (not an inline).
-extern "C" __declspec(noinline) void func_8023080C(SArtsSub8022FA58* self, u8 val) {
+extern "C" __declspec(noinline) void ArtsSubCursor_setVisible(SArtsSub8022FA58* self, u8 val) {
     if (self->field_0x27 != 0) {
-        func_80124270(((SArts080C*)(self->field_0x08))->field_0x10, 0);
+        setPaneVisible(((SArts080C*)(self->field_0x08))->field_0x10, val);
     } else {
         self->field_0x22 = val;
         return ArtsSlotCursor_refresh(self);
@@ -856,7 +856,7 @@ extern "C" __declspec(noinline) void func_802308B0(SArts308B0View* self, u8 v) {
             if (res != NULL) {
                 PaneSetTexPaletteByName((nw4r::lyt::Layout*)self->field_0x00,
                               (char*)names.w[i], res);
-                func_80124270(
+                setPaneVisible(
                     ((SArts308B0Layout*)self->field_0x00)->field_0x10->v13(
                         (void*)panes.w[i], 1),
                     1);
@@ -874,13 +874,13 @@ extern "C" __declspec(noinline) void func_802308B0(SArts308B0View* self, u8 v) {
                     }
                 }
             } else {
-                func_80124270(
+                setPaneVisible(
                     ((SArts308B0Layout*)self->field_0x00)->field_0x10->v13(
                         (void*)panes.w[i], 1),
                     0);
             }
         } else {
-            func_80124270(
+            setPaneVisible(
                 ((SArts308B0Layout*)self->field_0x00)->field_0x10->v13(
                     (void*)panes.w[i], 1),
                 0);
@@ -1010,8 +1010,8 @@ extern "C" __declspec(noinline) void func_802308B0(SArts308B0View* self, u8 v) {
 extern "C" __declspec(noinline) void ArtsBusyPane_showPrimary(SArts30D18* self) {
     if (self->field_0x23 != 0) {
         self->field_0x24 = 0;
-        func_80124270(self->field_0x08->field_0x10, 1);
-        func_80124270(self->field_0x14->field_0x10, 0);
+        setPaneVisible(self->field_0x08->field_0x10, 1);
+        setPaneVisible(self->field_0x14->field_0x10, 0);
     }
 }
 
@@ -1237,7 +1237,7 @@ extern "C" __declspec(noinline) u8 func_80231220(SArtsSub8022FA58* self) {
         u8 v = elems[arts].data[off + idx];
         char* base = lbl_eu_8050AC70;
         u32 r = BdatGetU8ByTableKey(base + 0x1C8, base + 0x1FE, v);
-        if (func_801F9268((u8*)elems, arts, (u8)r) != 0) {
+        if (ResTbox_IsCellBitSet((u8*)elems, arts, (u8)r) != 0) {
             u16 w = *(const u16*)((u8*)&elems[arts] + ((u8)r << 1));
             result = *(const u8*)&w;
         }
@@ -1280,13 +1280,13 @@ extern "C" __declspec(noinline) u32 ArtsSlot_isWindowEmpty(SArtsSub8022FA58* sel
 extern "C" __declspec(noinline) void ArtsBusyPane_toggle(SArts313E0* self) {
     if (self->field_0x27 != 0) {
         self->field_0x27 = 0;
-        func_80124270(self->field_0x08->field_0x10, 1);
-        func_80124270(self->field_0x14->field_0x10, 0);
+        setPaneVisible(self->field_0x08->field_0x10, 1);
+        setPaneVisible(self->field_0x14->field_0x10, 0);
     } else {
         self->field_0x27 = 1;
         self->field_0x21 = self->field_0x20;
         ArtsBusyPane_refreshCursor(self);
-        func_80124270(self->field_0x14->field_0x10, 1);
+        setPaneVisible(self->field_0x14->field_0x10, 1);
     }
 }
 
@@ -1327,7 +1327,7 @@ extern "C" __declspec(noinline) void ArtsSlotCursor_refresh(SArtsSub8022FA58* se
     pane = (nw4r::lyt::Pane*)((SArts3CObj*)((SArts3150CDriver*)self->field_0x00)->field_0x10)
                ->v13((void*)(lbl_eu_8050AC70 + 0xA6), 1);
     pos.x *= pane->GetScale().x;
-    func_801D2150((nw4r::lyt::Pane*)((SArts3150CDriver*)self->field_0x08)->field_0x10, &pos);
+    Cur_SetPaneTranslate((nw4r::lyt::Pane*)((SArts3150CDriver*)self->field_0x08)->field_0x10, &pos);
     CMenuArtsSet_setPaneScale((CMenuArtsSet*)((SArts3150CDriver*)self->field_0x08)->field_0x10,
                   &vecs[self->field_0x20]);
 }
@@ -1357,8 +1357,8 @@ __declspec(noinline) void ArtsLayout_runLayoutIn(SArts3150C* self) {
         self->field_0x08->v11(self->field_0x10, 0);
         self->field_0x08->v11(self->field_0x0C, 1);
         self->field_0x0C->field_0x10 = lbl_eu_8066864C;
-        func_80124270(self->field_0x08->field_0x10, 0);
-        func_80124270(self->field_0x14->field_0x10, 1);
+        setPaneVisible(self->field_0x08->field_0x10, 0);
+        setPaneVisible(self->field_0x14->field_0x10, 1);
         self->field_0x24 = 2;
         self->field_0x23 = 1;
     }
@@ -1387,8 +1387,8 @@ __declspec(noinline) void ArtsLayout_runTwinLayoutIn(SArts31648* self) {
         self->field_0x14->v11(self->field_0x1C, 0);
         self->field_0x14->v11(self->field_0x18, 1);
         self->field_0x18->field_0x10 = lbl_eu_8066864C;
-        func_80124270(self->field_0x08->field_0x10, 1);
-        func_80124270(self->field_0x14->field_0x10, 0);
+        setPaneVisible(self->field_0x08->field_0x10, 1);
+        setPaneVisible(self->field_0x14->field_0x10, 0);
         self->field_0x24 = 0;
         self->field_0x23 = 1;
     }
@@ -1420,7 +1420,7 @@ extern "C" __declspec(noinline) void ArtsBusyPane_refreshCursor(SArts313E0* self
     pane = (nw4r::lyt::Pane*)((SArts3CObj*)((SArts3150CDriver*)self->field_0x00)->field_0x10)
                ->v13((void*)(lbl_eu_8050AC70 + 0xA6), 1);
     pos.x *= pane->GetScale().x;
-    func_801D2150((nw4r::lyt::Pane*)self->field_0x14->field_0x10, &pos);
+    Cur_SetPaneTranslate((nw4r::lyt::Pane*)self->field_0x14->field_0x10, &pos);
     CMenuArtsSet_setPaneScale((CMenuArtsSet*)self->field_0x14->field_0x10, &vecs[self->field_0x21]);
 }
 #pragma optimize_for_size off
@@ -1468,8 +1468,8 @@ extern "C" __declspec(noinline) void ArtsTableLayout_load(SArts304C4* self) {
     self->field_0x08->v11(self->field_0x10, 0);
     self->field_0x08->v11(self->field_0x0C, 1);
     self->field_0x08->v14(0);
-    func_80124270(self->field_0x08->field_0x10->v13(lbl_eu_8050AC70 + 0x202, 1), 0);
-    func_80124270(self->field_0x08->field_0x10->v13(lbl_eu_8050AC70 + 0x210, 1), 0);
+    setPaneVisible(self->field_0x08->field_0x10->v13(lbl_eu_8050AC70 + 0x202, 1), 0);
+    setPaneVisible(self->field_0x08->field_0x10->v13(lbl_eu_8050AC70 + 0x210, 1), 0);
     SArtsVec2 v1 = {lbl_eu_80668658, lbl_eu_80668658};
     CMenuArtsSet_setPaneScale((CMenuArtsSet*)self->field_0x08->field_0x10, &v1);
     buildLayout((nw4r::lyt::Layout**)&self->field_0x14, self->field_0x04,
@@ -1481,7 +1481,7 @@ extern "C" __declspec(noinline) void ArtsTableLayout_load(SArts304C4* self) {
     self->field_0x14->v11(self->field_0x1C, 0);
     self->field_0x14->v11(self->field_0x18, 1);
     self->field_0x14->v14(0);
-    func_80124270(self->field_0x14->field_0x10, 0);
+    setPaneVisible(self->field_0x14->field_0x10, 0);
     SArtsVec2 v2 = {lbl_eu_80668658, lbl_eu_80668658};
     CMenuArtsSet_setPaneScale((CMenuArtsSet*)self->field_0x14->field_0x10, &v2);
     ArtsTableCursor_refresh((SArts327B0*)self);
@@ -1575,7 +1575,7 @@ extern "C" __declspec(noinline) void ArtsTable_scrollUp(SArts322BC* self) {
         }
     }
     // Args evaluated right-to-left: cursor byte first, scrollbar second.
-    func_801F3850(self->field_0x28, self->field_0x21);
+    CScrollBar_PlaceThumb(self->field_0x28, self->field_0x21);
     ArtsTableCursor_refresh((SArts327B0*)self);
     func_80232C78((SArts327B0*)self);
 }
@@ -1611,7 +1611,7 @@ extern "C" __declspec(noinline) void ArtsTable_scrollDown(SArts322BC* self) {
     // arg-2 register), scrollbar pointer second.
     u16 c = self->field_0x21;
     u8* sb = self->field_0x28;
-    func_801F3850(sb, c);
+    CScrollBar_PlaceThumb(sb, c);
     ArtsTableCursor_refresh((SArts327B0*)self);
     func_80232C78((SArts327B0*)self);
 }
@@ -1645,7 +1645,7 @@ extern "C" __declspec(noinline) void ArtsTable_pageUp(SArts322BC* self) {
     // arg-2 register), scrollbar pointer second.
     u16 c = self->field_0x21;
     u8* sb = self->field_0x28;
-    func_801F3850(sb, c);
+    CScrollBar_PlaceThumb(sb, c);
     ArtsTableCursor_refresh((SArts327B0*)self);
     func_80232C78((SArts327B0*)self);
 }
@@ -1675,7 +1675,7 @@ extern "C" __declspec(noinline) void ArtsTable_pageDown(SArts322BC* self) {
     // Sibling 80231F60: cursor byte first so the (s8) load births in r4.
     s8 page = self->field_0x21;
     u8* sb = self->field_0x28;
-    func_801F3850(sb, (u16)page);
+    CScrollBar_PlaceThumb(sb, (u16)page);
     ArtsTableCursor_refresh((SArts327B0*)self);
     func_80232C78((SArts327B0*)self);
 }
@@ -1705,7 +1705,7 @@ extern "C" __declspec(noinline) void func_802320C0(SArts322BC* self, u8 arg) {
     for (u8 i = 0; i < p->count; i++) {
         u32 artId = BdatGetU8ByTableKey(lbl_eu_8050AC70 + 0x1C8, lbl_eu_8050AC70 + 0x1FE,
                                   p->id + i);
-        if (func_801F9268((u8*)elems, charIdx, (u8)artId) == 0) {
+        if (ResTbox_IsCellBitSet((u8*)elems, charIdx, (u8)artId) == 0) {
             continue;
         }
         const u8* elemBytes = (const u8*)&elems[charIdx];
@@ -1735,8 +1735,8 @@ extern "C" __declspec(noinline) void func_802320C0(SArts322BC* self, u8 arg) {
         row[8] = f7 != 0;
         row[9] = f6 != 0;
     }
-    func_801F36BC(self->field_0x28, 5, self->field_0x12C);
-    func_801F3850(self->field_0x28, (u16)self->field_0x21);
+    CScrollBar_UpdateThumb(self->field_0x28, 5, self->field_0x12C);
+    CScrollBar_PlaceThumb(self->field_0x28, (u16)self->field_0x21);
     func_80232C78((SArts327B0*)self);
     ArtsTableCursor_refresh((SArts327B0*)self);
 }
@@ -1828,7 +1828,7 @@ extern "C" __declspec(noinline) void ArtsTable_bumpUsage(SArts322BC* self, int k
         u8* p = (u8*)base + arts * 0x49 + ((u8)row[1] << 1);
         *p += 1;
         row[2] = *p;
-        func_80280DBC((u8*)base);
+        SysWinLog_ScanGrid((u8*)base);
         CtrlObjectParam_SyncParamFromActor(root);
         func_80232C78((SArts327B0*)self);
         ArtsTableCursor_refresh((SArts327B0*)self);
@@ -1854,7 +1854,7 @@ extern "C" __declspec(noinline) void ArtsTable_bumpUsage(SArts322BC* self, int k
         u8* p = (u8*)base + arts * 0x49 + ((u8)row[1] << 1);
         *p += 1;
         row[2] = *p;
-        func_80280DBC((u8*)base);
+        SysWinLog_ScanGrid((u8*)base);
         CtrlObjectParam_SyncParamFromActor(root);
         func_80232C78((SArts327B0*)self);
         ArtsTableCursor_refresh((SArts327B0*)self);
@@ -1926,10 +1926,10 @@ extern "C" __declspec(noinline) int ArtsTable_isAtBottom(SArts322BC* self) {
 #pragma pop
 
 extern "C" __declspec(noinline) void ArtsTable_resetCursor(SArts327B0* self) {
-    extern void func_801F3850(void*, u32);
+    extern void CScrollBar_PlaceThumb(void*, u32);
     self->field_0x20 = 0;
     self->field_0x21 = 0;
-    func_801F3850(self->field_0x28, 0);
+    CScrollBar_PlaceThumb(self->field_0x28, 0);
     ArtsTableCursor_refresh(self);
     func_80232C78(self);
 }
@@ -1946,7 +1946,7 @@ extern "C" __declspec(noinline) void func_80232800(SArts322BC* self) {
         self->field_0x21 = 0;
         self->field_0x20 = count - (count > 0);
     }
-    func_801F3850(self->field_0x28, (u16)(s8)self->field_0x21);
+    CScrollBar_PlaceThumb(self->field_0x28, (u16)(s8)self->field_0x21);
     ArtsTableCursor_refresh((SArts327B0*)self);
     func_80232C78((SArts327B0*)self);
 }
@@ -1957,12 +1957,12 @@ extern "C" __declspec(noinline) void func_80232800(SArts322BC* self) {
 extern "C" __declspec(noinline) void ArtsTable_toggleBusyPanes(SArts32888* self) {
     if (self->field_0x12D != 0) {
         self->field_0x12D = 0;
-        func_80124270(self->field_0x08->field_0x10, 1);
-        func_80124270(self->field_0x14->field_0x10, 0);
+        setPaneVisible(self->field_0x08->field_0x10, 1);
+        setPaneVisible(self->field_0x14->field_0x10, 0);
     } else {
         self->field_0x12D = 1;
-        func_80124270(self->field_0x08->field_0x10, 0);
-        func_80124270(self->field_0x14->field_0x10, 1);
+        setPaneVisible(self->field_0x08->field_0x10, 0);
+        setPaneVisible(self->field_0x14->field_0x10, 1);
     }
 }
 
@@ -1987,8 +1987,8 @@ extern "C" __declspec(noinline) void ArtsTableLayout_runLayoutIn(SArts3150C* sel
         self->field_0x08->v11(self->field_0x10, 0);
         self->field_0x08->v11(self->field_0x0C, 1);
         self->field_0x0C->field_0x10 = lbl_eu_8066864C;
-        func_80124270(self->field_0x08->field_0x10, 0);
-        func_80124270(self->field_0x14->field_0x10, 1);
+        setPaneVisible(self->field_0x08->field_0x10, 0);
+        setPaneVisible(self->field_0x14->field_0x10, 1);
         self->field_0x24 = 2;
         self->field_0x23 = 1;
     }
@@ -2013,8 +2013,8 @@ extern "C" __declspec(noinline) void ArtsTableLayout_runTwinLayoutIn(SArts31648*
         self->field_0x14->v11(self->field_0x1C, 0);
         self->field_0x14->v11(self->field_0x18, 1);
         self->field_0x18->field_0x10 = lbl_eu_8066864C;
-        func_80124270(self->field_0x08->field_0x10, 1);
-        func_80124270(self->field_0x14->field_0x10, 0);
+        setPaneVisible(self->field_0x08->field_0x10, 1);
+        setPaneVisible(self->field_0x14->field_0x10, 0);
         self->field_0x24 = 0;
         self->field_0x23 = 1;
     }
@@ -2036,8 +2036,8 @@ extern "C" __declspec(noinline) void ArtsTableCursor_refresh(SArts327B0* self) {
     pane = (nw4r::lyt::Pane*)((SArts3CObj*)self->field_0x00->field_0x10)
                ->v13((void*)(lbl_eu_8050AC70 + 0xA6), 1);
     pos.x *= pane->GetScale().x;
-    func_801D2150((nw4r::lyt::Pane*)self->field_0x08->field_0x10, &pos);
-    func_801D2150((nw4r::lyt::Pane*)self->field_0x14->field_0x10, &pos);
+    Cur_SetPaneTranslate((nw4r::lyt::Pane*)self->field_0x08->field_0x10, &pos);
+    Cur_SetPaneTranslate((nw4r::lyt::Pane*)self->field_0x14->field_0x10, &pos);
 }
 #pragma optimize_for_size off
 
@@ -2065,10 +2065,10 @@ extern "C" __declspec(noinline) void func_80232C78(SArts327B0* selfRaw) {
         void* pane = ((SArts308B0Layout*)self->field_0x00)->field_0x10->v13(buf, 1);
         if ((s8)self->field_0x21 + i >= (int)self->field_0x12C) {
             // Row past the end of the table: hide its label pane entirely.
-            func_80124270(pane, 0);
+            setPaneVisible(pane, 0);
             continue;
         }
-        func_80124270(pane, 1);
+        setPaneVisible(pane, 1);
         SArts32C78Row* row = &self->mRows[(s8)self->field_0x21 + i];
 
         char* name = MakeTplNameSysFile(row->field_0x04);
@@ -2091,7 +2091,7 @@ extern "C" __declspec(noinline) void func_80232C78(SArts327B0* selfRaw) {
         sprintf(buf, base + 0x27e, i + 9);
         void* pane2 = ((SArts308B0Layout*)self->field_0x00)->field_0x10->v13(buf, 1);
         if (pane2 != NULL) {
-            func_80124270(pane2, 0);
+            setPaneVisible(pane2, 0);
         }
 
         // Find which of the 8 slots currently holds this row's art; when
@@ -2103,7 +2103,7 @@ extern "C" __declspec(noinline) void func_80232C78(SArts327B0* selfRaw) {
             int sel = (flag == 0);
             if (row->field_0x00 == getArtsSlotRC(recv, sel, j)) {
                 if (pane2 != NULL) {
-                    func_80124270(pane2, 1);
+                    setPaneVisible(pane2, 1);
                 }
                 break;
             }
@@ -2326,7 +2326,7 @@ void CArtsList_startLoad(CArtsList* self) {
     void* handle = getHandleMEM2__Q23mtl10MemManagerFv();
     self->field_0x14 = (CFileHandle*)readFile__11CDeviceFileFUlPCcP10IWorkEventii(
         (u32)handle, lbl_eu_8050AC70 + 0x2ba, self, 0, 0);
-    func_801F34F4(&self->mScrollBar);
+    CScrollBar_loadLayoutArc(&self->mScrollBar);
     CArtsInfo_LoadFiles(&self->mSubObj74);
     ((SArtsWinE8*)&self->mSysWinE8)->v32();
 }
@@ -2341,9 +2341,9 @@ void func_8023359C(CMenuArtsSet* self) {
             case 6: CMenuArtsSet_returnFromInfo(self); break;
         }
         self->field_0x1C->v14(0);
-        func_801F3540(self->field_0x34);
+        CScrollBar_UpdateDispatch(self->field_0x34);
         func_8023587C(&self->mSubObj74);
-        func_8022B748(&self->mSubObjE8);
+        sysWinDispatchPhase(&self->mSubObjE8);
         ArtsLayoutPair_advance((SArts2FDF4*)&self->mSubObj124);
         ArtsLayoutPair_advancePhases((SArts306F0*)&self->mSubObj148);
         ArtsTableLayout_advancePhases((SArts306F0*)((u8*)&self->mSubObj148 + 0x2C));
@@ -2361,7 +2361,7 @@ void CMenuArtsSet_draw(CMenuArtsSet* self, nw4r::lyt::DrawInfo* info) {
     if (self->field_0x28 == 0) return;
     if (self->field_0x2C == 0) return;
     drawLayout((nw4r::lyt::Layout*)self->field_0x1C, info, 0, 1);
-    func_801F35B0(&self->field_0x34, info);
+    CScrollBar_draw(&self->field_0x34, info);
     u8 v = 0;
     if (CSysWin_getUnk34(&self->mSubObjE8) == 0) {
         if (self->mSubObj124.field_0x15 == 0) {
@@ -2378,7 +2378,7 @@ void CMenuArtsSet_draw(CMenuArtsSet* self, nw4r::lyt::DrawInfo* info) {
     ArtsDrawBox_draw((SArtsDrawBox*)&self->mSubObj148, info);
     ArtsTableDrawBox_draw((SArtsDrawBox*)((u8*)&self->mSubObj148 + 0x2C), info);
     CArtsInfo_Draw(&self->mSubObj74, info);
-    func_8022B7C8(&self->mSubObjE8, info);
+    sysWinDrawLayout(&self->mSubObjE8, info);
 }
 #pragma optimize_for_size off
 
@@ -2402,9 +2402,9 @@ void CMenuArtsSet_teardown(CMenuArtsSet* self) {
     releaseArcResourceAccessor(self->field_0x18);
     self->field_0x18 = 0;
     self->mMemRegion.func_8045F778();
-    func_801F35DC(&self->field_0x34);
+    CScrollBar_Teardown(&self->field_0x34);
     CArtsInfo_Cleanup(&self->mSubObj74);
-    func_8022B7F4(&self->mSubObjE8);
+    sysWinTermLayout(&self->mSubObjE8);
 }
 
 u8 CArtsList_isReady(CArtsList* self) {
@@ -2452,7 +2452,7 @@ __declspec(noinline) void CMenuArtsSet_beginClose(CMenuArtsSet* self) {
     if (CSysWin_getUnk34(&self->mSubObjE8) != 0) return;
     self->field_0x2C = 4;
     self->mField31 = 0;
-    func_8023080C(&self->mSubObj148, 0);
+    ArtsSubCursor_setVisible(&self->mSubObj148, 0);
     self->field_0x196 = 0;
     ArtsTableCursor_refresh((SArts327B0*)((u8*)&self->mSubObj148 + 0x2C));
     CArtsInfo_ReqState4(&self->mSubObj74);
@@ -2481,9 +2481,9 @@ __declspec(noinline) void CMenuArtsSet_cursorUp(CMenuArtsSet* self) {
     }
     if (CArtsInfo_IsStateGE6(&self->mSubObj74) != 0) return;
     if (self->mSubObj148.field_0x27 != 0) {
-        if (func_801C4648((nw4r::lyt::Pane*)((SArts313E0*)&self->mSubObj148)
+        if (isPaneVisible((nw4r::lyt::Pane*)((SArts313E0*)&self->mSubObj148)
                               ->field_0x08->field_0x10) != 0) {
-            func_8023080C(&self->mSubObj148, 0);
+            ArtsSubCursor_setVisible(&self->mSubObj148, 0);
             func_80232800(&self->mList174);
             self->field_0x196 = 1;
             ArtsTableCursor_refresh((SArts327B0*)&self->mList174);
@@ -2491,7 +2491,7 @@ __declspec(noinline) void CMenuArtsSet_cursorUp(CMenuArtsSet* self) {
         } else if (ArtsTable_isAtTop((SArts3270C*)&self->mList174) != 0) {
             self->field_0x196 = 0;
             ArtsTableCursor_refresh((SArts327B0*)&self->mList174);
-            func_8023080C(&self->mSubObj148, 1);
+            ArtsSubCursor_setVisible(&self->mSubObj148, 1);
             CMenuArtsSet_refreshArtsInfo(self);
         } else {
             ArtsTable_scrollUp(&self->mList174);
@@ -2501,7 +2501,7 @@ __declspec(noinline) void CMenuArtsSet_cursorUp(CMenuArtsSet* self) {
         return;
     }
     if (self->mSubObj148.field_0x22 != 0) {
-        func_8023080C(&self->mSubObj148, 0);
+        ArtsSubCursor_setVisible(&self->mSubObj148, 0);
         func_80232800(&self->mList174);
         self->field_0x196 = 1;
         ArtsTableCursor_refresh((SArts327B0*)&self->mList174);
@@ -2509,7 +2509,7 @@ __declspec(noinline) void CMenuArtsSet_cursorUp(CMenuArtsSet* self) {
     } else if (ArtsTable_isAtTop((SArts3270C*)&self->mList174) != 0) {
         self->field_0x196 = 0;
         ArtsTableCursor_refresh((SArts327B0*)&self->mList174);
-        func_8023080C(&self->mSubObj148, 1);
+        ArtsSubCursor_setVisible(&self->mSubObj148, 1);
         CMenuArtsSet_refreshArtsInfo(self);
     } else {
         ArtsTable_scrollUp(&self->mList174);
@@ -2534,9 +2534,9 @@ __declspec(noinline) void CMenuArtsSet_cursorDown(CMenuArtsSet* self) {
     }
     if (CArtsInfo_IsStateGE6(&self->mSubObj74) != 0) return;
     if (self->mSubObj148.field_0x27 != 0) {
-        if (func_801C4648((nw4r::lyt::Pane*)((SArts313E0*)&self->mSubObj148)
+        if (isPaneVisible((nw4r::lyt::Pane*)((SArts313E0*)&self->mSubObj148)
                               ->field_0x08->field_0x10) != 0) {
-            func_8023080C(&self->mSubObj148, 0);
+            ArtsSubCursor_setVisible(&self->mSubObj148, 0);
             ArtsTable_resetCursor((SArts327B0*)&self->mList174);
             self->field_0x196 = 1;
             ArtsTableCursor_refresh((SArts327B0*)&self->mList174);
@@ -2544,7 +2544,7 @@ __declspec(noinline) void CMenuArtsSet_cursorDown(CMenuArtsSet* self) {
         } else if (ArtsTable_isAtBottom((SArts322BC*)&self->mList174) != 0) {
             self->field_0x196 = 0;
             ArtsTableCursor_refresh((SArts327B0*)&self->mList174);
-            func_8023080C(&self->mSubObj148, 1);
+            ArtsSubCursor_setVisible(&self->mSubObj148, 1);
             CMenuArtsSet_refreshArtsInfo(self);
         } else {
             ArtsTable_scrollDown(&self->mList174);
@@ -2554,7 +2554,7 @@ __declspec(noinline) void CMenuArtsSet_cursorDown(CMenuArtsSet* self) {
         return;
     }
     if (self->mSubObj148.field_0x22 != 0) {
-        func_8023080C(&self->mSubObj148, 0);
+        ArtsSubCursor_setVisible(&self->mSubObj148, 0);
         ArtsTable_resetCursor((SArts327B0*)&self->mList174);
         self->field_0x196 = 1;
         ArtsTableCursor_refresh((SArts327B0*)&self->mList174);
@@ -2562,7 +2562,7 @@ __declspec(noinline) void CMenuArtsSet_cursorDown(CMenuArtsSet* self) {
     } else if (ArtsTable_isAtBottom((SArts322BC*)&self->mList174) != 0) {
         self->field_0x196 = 0;
         ArtsTableCursor_refresh((SArts327B0*)&self->mList174);
-        func_8023080C(&self->mSubObj148, 1);
+        ArtsSubCursor_setVisible(&self->mSubObj148, 1);
         CMenuArtsSet_refreshArtsInfo(self);
     } else {
         ArtsTable_scrollDown(&self->mList174);
@@ -2581,7 +2581,7 @@ __declspec(noinline) void CMenuArtsSet_slotCursorUp(CMenuArtsSet* self) {
     if (self->mSubObj148.field_0x23 == 0) return;
     if (CSysWin_getUnk34(&self->mSubObjE8) != 0) return;
     if (self->mSubObj148.field_0x27 != 0) {
-        if (func_801C4648((nw4r::lyt::Pane*)((SArts080C*)self->mSubObj148.field_0x08)->field_0x10) != 0) {
+        if (isPaneVisible((nw4r::lyt::Pane*)((SArts080C*)self->mSubObj148.field_0x08)->field_0x10) != 0) {
             ArtsSlotCursor_moveUp(&self->mSubObj148, self->mSubObj148.field_0x27);
             CMenuArtsSet_refreshArtsInfo(self);
             goto L_Sound;
@@ -2608,7 +2608,7 @@ __declspec(noinline) void CMenuArtsSet_slotCursorDown(CMenuArtsSet* self) {
     if (self->mSubObj148.field_0x23 == 0) return;
     if (CSysWin_getUnk34(&self->mSubObjE8) != 0) return;
     if (self->mSubObj148.field_0x27 != 0) {
-        if (func_801C4648((nw4r::lyt::Pane*)((SArts080C*)self->mSubObj148.field_0x08)->field_0x10) != 0) {
+        if (isPaneVisible((nw4r::lyt::Pane*)((SArts080C*)self->mSubObj148.field_0x08)->field_0x10) != 0) {
             ArtsSlotCursor_moveDown(&self->mSubObj148, self->mSubObj148.field_0x27);
             CMenuArtsSet_refreshArtsInfo(self);
             goto L_Sound;
@@ -2637,7 +2637,7 @@ L_Sound:
 __declspec(noinline) void CMenuArtsSet_advanceIdle(CMenuArtsSet* self) {
     if (CSysWin_getUnk34(&self->mSubObjE8) != 0) {
         if (CSysWin_isActive(&self->mSubObjE8) != 0) {
-            func_8022B8E4(&self->mSubObjE8);
+            sysWinAdvancePhase3(&self->mSubObjE8);
             self->field_0x2A6 = 0;
         }
         return;
@@ -2661,7 +2661,7 @@ __declspec(noinline) void CMenuArtsSet_advanceIdle(CMenuArtsSet* self) {
     if (self->mSubObj148.field_0x27 != 0) {   // absolute 0x16F busy flag
         ArtsBusyPane_toggle((SArts313E0*)&self->mSubObj148);
         if (self->field_0x196 != 0) {
-            func_8023080C(&self->mSubObj148, 0);
+            ArtsSubCursor_setVisible(&self->mSubObj148, 0);
         }
         playUISound__FUl(6);
         return;
@@ -2691,7 +2691,7 @@ __declspec(noinline) void func_802340C4(CMenuArtsSet* self) {
     if (self->field_0x2C != 3) return;
     if (CSysWin_getUnk34(&self->mSubObjE8) != 0) {
         if (CSysWin_isActive(&self->mSubObjE8) != 0) {
-            func_8022B8E4(&self->mSubObjE8);
+            sysWinAdvancePhase3(&self->mSubObjE8);
             self->field_0x2A6 = 0;
             playUISound__FUl(3);
         }
@@ -2746,7 +2746,7 @@ __declspec(noinline) void func_802340C4(CMenuArtsSet* self) {
         int matched = 0;
         u32 cur = ArtsTable_getSelectedId(&self->mList174);
         if (cur == (u8)func_80231014(&self->mSubObj148) &&
-            func_801C4648(
+            isPaneVisible(
                 (nw4r::lyt::Pane*)((SArts313E0*)&self->mSubObj148)
                     ->field_0x14->field_0x10) == 0) {
             matched = 1;
@@ -2794,7 +2794,7 @@ __declspec(noinline) void func_802340C4(CMenuArtsSet* self) {
                                        lbl_eu_8050AC70 + 0x5b, 0x35);
             func_8022B9B4((CSysWin*)&self->mSubObjE8, name, 0);
             func_8022BFC8((CSysWin*)&self->mSubObjE8, 1);
-            func_8022B8B8((CSysWin*)&self->mSubObjE8);
+            sysWinOpenPhase1((CSysWin*)&self->mSubObjE8);
         } else if (ArtsTable_isRowSelectable((SArts322BC*)&self->mList174, key) != 0) {
             // Selectable entry: pick the help id from the learn-state table.
             u16 id;
@@ -2811,7 +2811,7 @@ __declspec(noinline) void func_802340C4(CMenuArtsSet* self) {
                                        lbl_eu_8050AC70 + 0x5b, id);
             func_8022B9B4((CSysWin*)&self->mSubObjE8, name, 0);
             func_8022BFC8((CSysWin*)&self->mSubObjE8, 1);
-            func_8022B8B8((CSysWin*)&self->mSubObjE8);
+            sysWinOpenPhase1((CSysWin*)&self->mSubObjE8);
         } else {
             u16 pct = func_80232370((SArts322BC*)&self->mList174, key);
             // Retail computes the advance arm as the fall-through (>=).
@@ -2823,7 +2823,7 @@ __declspec(noinline) void func_802340C4(CMenuArtsSet* self) {
                                            lbl_eu_8050AC70 + 0x5b, 0x34);
                 func_8022B9B4((CSysWin*)&self->mSubObjE8, name, 0);
                 func_8022BFC8((CSysWin*)&self->mSubObjE8, 1);
-                func_8022B8B8((CSysWin*)&self->mSubObjE8);
+                sysWinOpenPhase1((CSysWin*)&self->mSubObjE8);
             }
         }
         playUISound__FUl(3);
@@ -2835,7 +2835,7 @@ __declspec(noinline) void func_802340C4(CMenuArtsSet* self) {
                                    lbl_eu_8050AC70 + 0x5b, 0x35);
         func_8022B9B4((CSysWin*)&self->mSubObjE8, name, 0);
         func_8022BFC8((CSysWin*)&self->mSubObjE8, 1);
-        func_8022B8B8((CSysWin*)&self->mSubObjE8);
+        sysWinOpenPhase1((CSysWin*)&self->mSubObjE8);
     } else if (ArtsTable_isRowSelectable((SArts322BC*)&self->mList174, -1) != 0) {
         u16 id;
         if (lbl_eu_806628A8[0] == 0 &&
@@ -2851,7 +2851,7 @@ __declspec(noinline) void func_802340C4(CMenuArtsSet* self) {
                                    lbl_eu_8050AC70 + 0x5b, id);
         func_8022B9B4((CSysWin*)&self->mSubObjE8, name, 0);
         func_8022BFC8((CSysWin*)&self->mSubObjE8, 1);
-        func_8022B8B8((CSysWin*)&self->mSubObjE8);
+        sysWinOpenPhase1((CSysWin*)&self->mSubObjE8);
     } else {
         u16 pct = func_80232370((SArts322BC*)&self->mList174, -1);
         if ((u32)ArtsCharList_getProgress((SArtsSub8022FA58*)&self->mSubObj124) >= pct) {
@@ -2861,7 +2861,7 @@ __declspec(noinline) void func_802340C4(CMenuArtsSet* self) {
                                        lbl_eu_8050AC70 + 0x5b, 0x34);
             func_8022B9B4((CSysWin*)&self->mSubObjE8, name, 0);
             func_8022BFC8((CSysWin*)&self->mSubObjE8, 1);
-            func_8022B8B8((CSysWin*)&self->mSubObjE8);
+            sysWinOpenPhase1((CSysWin*)&self->mSubObjE8);
         }
     }
     playUISound__FUl(3);
@@ -2976,7 +2976,7 @@ extern "C" __declspec(noinline) void CMenuArtsSet_armSysWin(CMenuArtsSet* self) 
     char* name = BdatTouchStringCell(base + 0x50, base + 0x5b, 0x3c);
     func_8022B9B4((CSysWin*)&self->mSubObjE8, name, 0);
     func_8022BFC8((CSysWin*)&self->mSubObjE8, 1);
-    func_8022B8B8((CSysWin*)&self->mSubObjE8);
+    sysWinOpenPhase1((CSysWin*)&self->mSubObjE8);
     self->field_0x2A6 = 1;
 }
 
@@ -3001,7 +3001,7 @@ __declspec(noinline) void CMenuArtsSet_confirmSelect(CMenuArtsSet* self) {
             cur = ArtsTable_getSelectedId(&self->mList174);
             u8 r = func_80231014(&self->mSubObj148);
             if (r == cur) {
-                if (func_801C4648((nw4r::lyt::Pane*)((SArts313E0*)&self->mSubObj148)
+                if (isPaneVisible((nw4r::lyt::Pane*)((SArts313E0*)&self->mSubObj148)
                                       ->field_0x14->field_0x10) == 0) {
                     matched = 1;
                 }
@@ -3045,7 +3045,7 @@ __declspec(noinline) void CMenuArtsSet_confirmSelect(CMenuArtsSet* self) {
         return;
     }
     ArtsTable_toggleBusyPanes((SArts32888*)&self->mList174);
-    func_8023080C(&self->mSubObj148, 1);
+    ArtsSubCursor_setVisible(&self->mSubObj148, 1);
     ArtsSlotCursor_clampFromEmpty(&self->mSubObj148);
     CMenuArtsSet_refreshArtsInfo(self);
     playUISound__FUl(2);
@@ -3137,15 +3137,15 @@ void CMenuArtsSet_completeLayoutIn(CMenuArtsSet* self) {
     vec[0] = lbl_eu_80668678;
     vec[1] = lbl_eu_8066867C;
     vec[2] = lbl_eu_8066864C;
-    func_801F3670(self->field_0x34, vec);
-    func_801F367C(self->field_0x34);
+    CScrollBar_InitRootPane(self->field_0x34, vec);
+    CScrollBar_requestScrollIn(self->field_0x34);
 }
 
 extern "C" __declspec(noinline) void CMenuArtsSet_enterInteract(CMenuArtsSet* self) {
     if (advanceAnimTransform(self->field_0x24, lbl_eu_80668648) != 0) {
         self->field_0x2C = 3;
         self->mField31 = 1;
-        func_8023080C(&self->mSubObj148, 1);
+        ArtsSubCursor_setVisible(&self->mSubObj148, 1);
         CMenuArtsSet_refreshArtsInfo(self);
     }
 }
@@ -3160,8 +3160,8 @@ __declspec(noinline) void CMenuArtsSet_completeLayoutOut(CMenuArtsSet* self) {
         self->field_0x1C->v11(self->field_0x24, 0);
         self->field_0x1C->v11(self->field_0x20, 1);
         self->field_0x2C = 5;
-        func_8023080C(&self->mSubObj148, 0);
-        func_801F369C(self->field_0x34);
+        ArtsSubCursor_setVisible(&self->mSubObj148, 0);
+        CScrollBar_requestScrollOut(self->field_0x34);
     }
 }
 

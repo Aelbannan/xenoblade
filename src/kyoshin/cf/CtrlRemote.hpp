@@ -3,7 +3,7 @@
 #include <types.h>
 
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
-extern "C" u32 func_8009D1F8(u32* buffer, s32 index);
+extern "C" u32 CtrlRemote_TestSharedBit(u32* buffer, s32 index);
 extern "C" u32 CfRes_getHeapHandle();
 
 // Player-object state/event probe (retail unmangled C-ABI name; arg1 is the
@@ -42,7 +42,7 @@ extern "C" void __ct__cf_CtrlPc(cf::CtrlPc* obj, void* posObj, void* arg5);
 // declares the real signature here and hides the scaffold decl via #define.
 cf::CtrlRemote* __ct__CtrlRemote(cf::CtrlRemote* obj, void* posObj, int arg5);
 
-// Serialized control-data buffer parsed by func_8009CE14:
+// Serialized control-data buffer parsed by CtrlRemote_DispatchBufOp:
 // [0x00 u32 kind][0x04 u32 payload size][0x08 payload bytes].
 struct CtrlRemoteBuf {
     u32 field_00;   // 0x00
@@ -50,18 +50,18 @@ struct CtrlRemoteBuf {
     u8 mData[4];    // 0x08 (payload follows the 8-byte header)
 };
 
-// Typed-parse helpers dispatched by func_8009CE14. Retail bodies live in the
+// Typed-parse helpers dispatched by CtrlRemote_DispatchBufOp. Retail bodies live in the
 // retail binary (not decompiled in this TU) - declare only so the call sites
 // emit real `bl` relocs instead of inlining. C linkage keeps the retail
 // unmangled reloc names.
 extern "C" u32 func_8009C9B8(cf::CtrlRemote* self, CtrlRemoteBuf* buf, u32 arg);
-extern "C" u32 func_8009CAAC(cf::CtrlRemote* self, CtrlRemoteBuf* buf, u32 arg);
+extern "C" u32 CtrlRemote_RunWithHeapCtx(cf::CtrlRemote* self, CtrlRemoteBuf* buf, u32 arg);
 extern "C" u32 func_8009CB80(cf::CtrlRemote* self, CtrlRemoteBuf* buf, u32 arg);
 
 // Heap alloc/free callbacks installed into the UnkClass_80460C34Ctx below;
 // defined in this TU (C linkage so the address-of relocs match retail).
-extern "C" void* func_8009C8F4(cf::CtrlRemote* self, u32 a, u32 b);
-extern "C" void func_8009C980(cf::CtrlRemote* self, u8* ptr);
+extern "C" void* CtrlRemote_AllocZeroed(cf::CtrlRemote* self, u32 a, u32 b);
+extern "C" void CtrlRemote_FreeBuffer(cf::CtrlRemote* self, u8* ptr);
 
 // Object stored in the shared control-data slots (buf + 0x1234 + 4*i);
 // vtable slot 3 (offset 0x0C) receives (index, clamped value, extracted bits)
@@ -73,10 +73,7 @@ public:
 };
 
 // Retail bit-setter over the control-data buffer; defined in this TU.
-void func_8009D2C8(u32* buffer, u32 index, u32 value);
-
-// Retail bit-setter over the control-data buffer; defined in this TU.
-void func_8009D2C8(u32* buffer, u32 index, u32 value);
+extern "C" void func_8009D2C8(u32* buffer, u32 index, u32 value);
 
 // Control-index -> (word pointer, type, sub-index) mapper; defined in this TU.
 extern "C" u32* func_8009D12C(u32* buffer, s32 index, s32* typeOut, s32* idxOut);
@@ -88,11 +85,11 @@ extern "C" u32 lbl_eu_80661C70[2];
 extern "C" u32 lbl_eu_80528048[4];
 extern "C" u32 lbl_eu_80528058[32];
 
-// Global flag word read by func_8009D5FC (retail: lwz r3, lbl_eu_80663E88@sda21).
+// Global flag word read by CtrlRemote_GetFileEventIds (retail: lwz r3, lbl_eu_80663E88@sda21).
 extern u32 lbl_eu_80663E88;
 
 // 0x38-byte stack context handed to the retail UnkClass_80460C34 methods by
-// func_8009CAAC (fields at the offsets the retail prologue stores).
+// CtrlRemote_RunWithHeapCtx (fields at the offsets the retail prologue stores).
 struct UnkClass_80460C34Ctx {
     u8* mPayload;    // 0x00 (buf + 8)
     u32 mArg;        // 0x04
@@ -100,8 +97,8 @@ struct UnkClass_80460C34Ctx {
     void* mSelf;     // 0x0C
     u32 mSize;       // 0x10
     u8 _14[0x20 - 0x14];
-    void* mAlloc;    // 0x20 (func_8009C8F4)
-    void* mFree;     // 0x24 (func_8009C980)
+    void* mAlloc;    // 0x20 (CtrlRemote_AllocZeroed)
+    void* mFree;     // 0x24 (CtrlRemote_FreeBuffer)
     u32 mZero;       // 0x28
     u8 _2C[0x38 - 0x2C];
 };
@@ -137,13 +134,13 @@ void* findObjectById(int id);
 
 // Voice/battle-list sweep helpers (retail unmangled C-ABI names).
 // Signature matches CfObjectImplMove.hpp (both headers appear together).
-extern "C" void* func_800F6EAC(CfMoveEnumList* list, u32 idx);
+extern "C" void* getObjectAt(CfMoveEnumList* list, u32 idx);
 extern "C" void* func_8016FE34(void* r3);
 class Fd44State;
 // Retail call site passes no argument (r3 left over from the previous call);
 // matches the CtrlPc.hpp declaration.
 extern "C" Fd44State* func_8017FD44();
-extern "C" void* func_800451D8(u32 cls, void* param);
+extern "C" void* bindIndexedEffect(u32 cls, void* param);
 
 // Actor-state gate probe (retail unmangled C-ABI name; see CfCam.hpp).
 
@@ -153,7 +150,7 @@ extern "C" void CCharVoiceMan_EnqueueOrderVoice1();
 extern "C" void CCharVoiceMan_FlagPendingVoice();
 extern "C" void CCharVoiceMan_EnqueueOrderVoice0();
 extern "C" void CCharVoiceMan_EnqueueOrderVoice2();
-extern "C" int func_801B0F8C();
+extern "C" int battleCommuIsActive();
 
 // CtrlPc view exposing vf38 (vtable slot 0xA0) for func_8009BD14's menu-state
 // word reads (CtrlPc.hpp stops at vf37 = 0x9C). The Nth declared virtual sits
@@ -193,7 +190,7 @@ struct CtrlVoiceSweepView {
     u32 mField74;               // 0x74
 };
 
-// Result view of self->vf38() (vtable slot 0xA0) for func_8009A4AC: flag
+// Result view of self->vf38() (vtable slot 0xA0) for CtrlRemote_SweepAimVoiceFlags: flag
 // words at 0x00 / 0x0C / 0x10 (the CtrlPcSub37 view in CtrlPc.hpp does not
 // expose the 0x0C word this sweep reads).
 struct CtrlRemoteSubA0 {
@@ -327,8 +324,8 @@ extern "C" f32 Atan2FIdx__Q24nw4r4mathFff(f32 y, f32 x);
 extern "C" f32 FrSqrt__Q24nw4r4mathFf(f32 value);
 extern "C" void Warning__Q24nw4r2dbFPCciPCce(const char*, int, const char*, ...);
 extern "C" CtrlUnk64658View* getUnk80664658();
-extern "C" int func_802799F0(void* a, void* b);
-extern "C" u32 func_8029EE58();
+extern "C" int CChain_HasMemberEntry(void* a, void* b);
+extern "C" u32 SkipTimer_IsActiveFlag();
 
 // Debug-assert strings pooled by the Warning call in func_80098EF8 (retail
 // .data at 0x80526324 / 0x80526300).
@@ -358,7 +355,7 @@ extern const f32 lbl_eu_80666748;
 // Imports / views used by func_8009AE80.
 // ---------------------------------------------------------------------------
 
-// func_800FE68C object view covering both the actor-id word (+0x90E4) and the
+// Selector_GetInstance object view covering both the actor-id word (+0x90E4) and the
 // demo/idle state word (+0xC180) probed by func_8009AE80.
 struct CfObjAe80 {
     u8 _00[0x90E4];
@@ -369,8 +366,8 @@ struct CfObjAe80 {
 
 // Selector-system helpers (retail C-ABI names; CfObjectSelectorObj.cpp).
 extern "C" void func_800FE860(void* obj, u32 arg);
-extern "C" unsigned long func_800FE910(void* obj);
-extern "C" void func_800FE950(void* obj, u32 a, u32 b, u32 c);
+extern "C" unsigned long testFlagBit10(void* obj);
+extern "C" void setRequestParams(void* obj, u32 a, u32 b, u32 c);
 
 // vf37() (vtable slot 0x9C) result view for func_8009AE80: menu-state flag
 // words at 0x00 / 0x04 / 0x08 / 0x10 / 0x14.
@@ -415,7 +412,7 @@ public:
 };
 
 // CtrlPc-compatible view exposing both vf37/vf38 (slots 0x9C/0xA0) and the
-// +0x2C state word for func_8009C6BC.
+// +0x2C state word for CtrlRemote_MirrorMenuVoiceBits.
 class CtrlPcVf38State {
 public:
     virtual ~CtrlPcVf38State();  // vtable slot 0x08
@@ -526,7 +523,7 @@ struct CtrlAccSweepView {
 };
 
 // CtrlPlayerObj view exposing the +0x3E9C voice-owner region as a u8 array
-// (func_8009BD14's func_800451D8 argument, matching the acc-view shape).
+// (func_8009BD14's bindIndexedEffect argument, matching the acc-view shape).
 struct CtrlPlayerSweepView {
     u8 _00[0x3E9C];
     u8 mOwner3E9C[0x10];       // 0x3E9C voice-owner region (opaque)
@@ -545,15 +542,15 @@ struct CtrlEnumListSweep {
 // ---------------------------------------------------------------------------
 
 extern "C" int func_80190940(void* res, void* actor, int mode, void* filter);
-extern "C" unsigned long func_801BA2C8(void* self);
+extern "C" unsigned long SuddenCommuIsStateActive(void* self);
 extern "C" void func_80280ADC();
 extern "C" void func_8017FEF0(void* obj, int arg);
 extern "C" void* CBattleMan_FetchVisionObj(void* bm);
 extern "C" u32 getAnimModelId(void* obj);
 extern "C" void CfObjectMove_setAnimModeArgs(u8* obj, int a, int b, int c, int d);
 extern "C" void CCharVoiceMan_PushChainVoiceNode(void* a, void* b);
-extern "C" void func_801B0E88();
-extern "C" void func_8018C820(void* obj, int value);
+extern "C" void battleCommuDisableAnims();
+extern "C" void PartyGaugeAddClamped(void* obj, int value);
 
 namespace cf {
 class CChainState;

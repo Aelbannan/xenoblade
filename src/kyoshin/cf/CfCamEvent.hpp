@@ -34,7 +34,7 @@ struct CfCamBlock48 {
     f32 unk2C;            // 0x2C
 };
 
-// 0x25C camera body block - shared region used by func_8006A82C to refresh
+// 0x25C camera body block - shared region used by CfCamEvt_InitCamVectors to refresh
 // the direction/lookat/pos vectors in one pass.
 struct CfCamBody25C {
     ml::CVec3 dir;      // +0x00 (unk25C)
@@ -152,7 +152,7 @@ extern "C" float cfCam_vecToAngles(ml::CVec3* pos274, ml::CVec3* lookat, ml::CVe
 extern "C" void func_80074090(void* out);
 extern "C" cf::CfCamDispatch* CfCamEvent_initCamIntfInstances(cf::CfCamEvent* self);
 extern const f32 lbl_eu_80666268;
-void cfCam_andcUnk04(void* self, int mask);  // clears bits in the 0x04 flag word
+extern "C" void cfCam_andcUnk04(void* self, u32 mask);  // clears bits in the 0x04 flag word
 
 // Minimal layout region of CfCamFollow: only the vtable slot (offset 0x00) is
 // touched here, to install the camera-event vtable in the factory.
@@ -183,7 +183,7 @@ extern "C" int func_80073640(void*, ml::CVec3*, ml::CVec3*, ml::CVec3*, int);
 extern "C" void cfCam_applyRelPos(void*, void*, void*, int, float, float);
 extern "C" int CfRes_getD80Flag();
 extern "C" float Scn_GetFrameDelta();                     // scene elapsed-time getter
-extern "C" int func_804BE398(void*, u32, u32, u32, f32, f32);
+extern "C" int ScnRes_VertRayForward_E398(void*, u32, u32, u32, f32, f32);
 extern "C" void func_804BE4B4(void*, int);
 extern "C" void scnImN4DynStart();
 extern "C" void simSetValue7E8(void*, int);

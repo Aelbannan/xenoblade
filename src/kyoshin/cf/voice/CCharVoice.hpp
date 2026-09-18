@@ -43,11 +43,11 @@ struct CCharVoice {
     // 2 bytes padding to 0x3C
     void* mVtable;           // 0x3C -- vtable pointer
 
-    void func_802A0B8C(CVoiceOwnerIntf* owner);
-    void func_802A0E08();
-    void func_802A0FE8();
-    bool func_802A109C(float volume, int voiceId, int priority);
-    void func_802A1304();
+    void attachOwner(CVoiceOwnerIntf* owner);
+    void updatePosition();
+    void stopVoiceA();
+    bool playGated(float volume, int voiceId, int priority);
+    void stopVoiceB();
 };
 
 // 4-byte zero blob at .rodata:0x805106D4 (empty default voice name).
@@ -60,7 +60,7 @@ struct CVoiceName {
     char pad[12];
 };
 
-// Raw 3-float position block copied as raw bytes by func_802A0E08's
+// Raw 3-float position block copied as raw bytes by updatePosition's
 // fallback branch (retail copies it with lwz/stw, i.e. a struct copy).
 // The union's u32 member keeps the copy integer-typed.
 union CVoicePos {
@@ -80,7 +80,7 @@ struct CVoiceModelPos {
     float z;  // 0x2C
 };
 
-// Owner-object interface used by func_802A0E08.  The owner vtable places
+// Owner-object interface used by updatePosition.  The owner vtable places
 // getPosition at raw slot 41 (offset 0xac) and getModelPos at raw slot 72
 // (offset 0x128); MWCC adds 2 implicit leading vtable slots, so declared
 // slot P lands at offset (P+2)*4.  The padding virtuals keep offsets exact.

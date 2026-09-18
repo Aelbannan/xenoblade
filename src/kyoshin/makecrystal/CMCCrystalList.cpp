@@ -39,7 +39,7 @@ char* BdatTouchStringCell(const void*, const void*, int);
 u8 BdatGetU8Direct(u32, const char*, u32);
 char* BdatGetPtrDirect(const void*, const void*);
 void PaneSetTexPaletteByName(void*, void*, void*);
-void func_80124270(void*, u32);
+void setPaneVisible(void*, u32);
 void AnimJumpToLast(void*, void*);
 }
 
@@ -104,14 +104,14 @@ void func_80222848(CMCCrystalList* self)
 // Per-state animation handlers for the func_802228B8 dispatcher (defined below).
 // extern "C" so call relocs resolve to the unmangled retail names; noinline
 // keeps MWCC's -inline auto from folding the handlers into the dispatcher.
-extern "C" void __declspec(noinline) func_802233AC(CMCCrystalList* self);
-extern "C" void __declspec(noinline) func_802233F8(CMCCrystalList* self);
+extern "C" void __declspec(noinline) crystalListWaitAnim1To2(CMCCrystalList* self);
+extern "C" void __declspec(noinline) crystalListWaitAnim2To3(CMCCrystalList* self);
 extern "C" void __declspec(noinline) func_80223444(CMCCrystalList* self);
-extern "C" void __declspec(noinline) func_80223498(CMCCrystalList* self);
-extern "C" void __declspec(noinline) func_802234E4(CMCCrystalList* self);
-extern "C" void __declspec(noinline) func_80223530(CMCCrystalList* self);
-extern "C" void __declspec(noinline) func_8022357C(CMCCrystalList* self);
-extern "C" void __declspec(noinline) func_802235C8(CMCCrystalList* self);
+extern "C" void __declspec(noinline) crystalListRewindAnim2To5(CMCCrystalList* self);
+extern "C" void __declspec(noinline) crystalListRewindAnim1To0(CMCCrystalList* self);
+extern "C" void __declspec(noinline) crystalListWaitAnim3To3(CMCCrystalList* self);
+extern "C" void __declspec(noinline) crystalListRewindAnim3To3(CMCCrystalList* self);
+extern "C" void __declspec(noinline) crystalListWaitAnim4To3(CMCCrystalList* self);
 
 // Retail 0x802246F8: state-machine dispatcher. When mState != 0, dispatch on
 // mStateIdx (0..7) to the per-state animation handlers, then re-animate the
@@ -123,14 +123,14 @@ void func_802228B8(CMCCrystalList* self)
 {
     if (self->mState != 0) {
         switch (self->mStateIdx) {
-        case 0: func_802233AC(self); break;
-        case 1: func_802233F8(self); break;
+        case 0: crystalListWaitAnim1To2(self); break;
+        case 1: crystalListWaitAnim2To3(self); break;
         case 2: func_80223444(self); break;
-        case 3: func_80223498(self); break;
-        case 4: func_802234E4(self); break;
-        case 5: func_80223530(self); break;
-        case 6: func_8022357C(self); break;
-        case 7: func_802235C8(self); break;
+        case 3: crystalListRewindAnim2To5(self); break;
+        case 4: crystalListRewindAnim1To0(self); break;
+        case 5: crystalListWaitAnim3To3(self); break;
+        case 6: crystalListRewindAnim3To3(self); break;
+        case 7: crystalListWaitAnim4To3(self); break;
         case 8: break;
         }
         self->mLayout->Animate(0);
@@ -163,69 +163,69 @@ extern "C" void __dt__80222984(CMCCrystalList* self) {
     self->mMemRegion2.func_8045F778();
 }
 
-void CMCCrystalList::func_80222964(nw4r::lyt::DrawInfo* drawInfo)
+void CMCCrystalList::crystalListDrawIfActive(nw4r::lyt::DrawInfo* drawInfo)
 {
     if (mState != 0) {
         drawLayout(*reinterpret_cast<nw4r::lyt::Layout**>(reinterpret_cast<unsigned char*>(this) + 0x34), drawInfo, 0, 1);
     }
 }
 
-u8 CMCCrystalList::func_80222A50() { return mDataFlag; }
+u8 CMCCrystalList::crystalListGetDataFlag() { return mDataFlag; }
 
-u8 CMCCrystalList::func_80222A58() { return mIsActive; }
+u8 CMCCrystalList::crystalListIsActive() { return mIsActive; }
 
 // Forward decls for functions defined later in this TU. They are C-linkage in
 // retail (unmangled symbols), so extern "C" keeps the call relocs unmangled.
-extern "C" void func_80223698(CMCCrystalList* self);
+extern "C" void crystalListEnableAnim1(CMCCrystalList* self);
 extern "C" void func_80223988(CMCCrystalList* self);
 extern "C" void func_80223614(CMCCrystalList* self, u32 idx);
-extern "C" void func_80223754(CMCCrystalList* self);
+extern "C" void crystalListEnableAnim2(CMCCrystalList* self);
 extern "C" int func_8013BC0C(void*, void*);
-extern "C" void func_80223810(CMCCrystalList* self);
-extern "C" void func_802238CC(CMCCrystalList* self);
+extern "C" void crystalListEnableAnim3(CMCCrystalList* self);
+extern "C" void crystalListEnableAnim4(CMCCrystalList* self);
 
-void func_80222A60(CMCCrystalList* self)
+void crystalListState0To1(CMCCrystalList* self)
 {
     if (self->mStateIdx == 0) {
         self->mStateIdx = 1;
         self->mIsActive = 0;
-        func_80223698(self);
+        crystalListEnableAnim1(self);
     }
 }
 
-void func_80222A84(CMCCrystalList* self)
+void crystalListState3To6(CMCCrystalList* self)
 {
     if (self->mStateIdx == 3) {
         self->mStateIdx = 6;
         self->mIsActive = 0;
-        func_80223810(self);
+        crystalListEnableAnim3(self);
     }
 }
 
-void func_80222AA8(CMCCrystalList* self)
+void crystalListState3To7(CMCCrystalList* self)
 {
     if (self->mStateIdx == 3) {
         self->mStateIdx = 7;
         self->mIsActive = 0;
-        func_80223810(self);
+        crystalListEnableAnim3(self);
     }
 }
 
-void func_80222ACC(CMCCrystalList* self)
+void crystalListState3To8(CMCCrystalList* self)
 {
     if (self->mStateIdx == 3) {
         self->mStateIdx = 8;
         self->mIsActive = 0;
-        func_802238CC(self);
+        crystalListEnableAnim4(self);
     }
 }
 
-void func_80222AF0(CMCCrystalList* self)
+void crystalListState3To4(CMCCrystalList* self)
 {
     if (self->mStateIdx == 3) {
         self->mStateIdx = 4;
         self->mIsActive = 0;
-        func_80223754(self);
+        crystalListEnableAnim2(self);
     }
 }
 
@@ -319,7 +319,7 @@ extern "C" void func_80222D9C(CMCCrystalList* self, u32 arg) {
 
         if (arg == 0 && self->mStateIdx >= 3) {
             sprintf(buf, &lbl_eu_805092C0[0x13e], i);
-            func_80124270(
+            setPaneVisible(
                 self->mLayout->GetRootPane()->FindPaneByName(buf, true), 0);
             AnimJumpToLast(
                 self->mLayout->GetRootPane()->FindPaneByName(buf, true),
@@ -428,26 +428,26 @@ void func_80223004(CMCCrystalList* self, u32 idx, u32 val, int kind) {
         break;
     }
 
-    func_80124270(paneA, result);
-    func_80124270(paneB, result);
-    func_80124270(paneC, !result);
+    setPaneVisible(paneA, result);
+    setPaneVisible(paneB, result);
+    setPaneVisible(paneC, !result);
 }
 #pragma optimize_for_size off
 
 // Retail 0x802232E4: reset anim trans 4's frame to 0, then re-animate the
 // layout (virtual Animate at vtable+0x38, r4 = 0 option).
-void func_802232E4(CMCCrystalList* self)
+void crystalListResetAnim4Play(CMCCrystalList* self)
 {
-    func_802238CC(self);
+    crystalListEnableAnim4(self);
     self->mAnimTrans4->SetFrame(0.0f);
     self->mLayout->Animate(0);
 }
 
-// Retail 0x80223334: switch to anim set 3 (func_80223810), rewind anim trans
+// Retail 0x80223334: switch to anim set 3 (crystalListEnableAnim3), rewind anim trans
 // 3 to (frame-size - sentinel) frames, then re-animate the layout.
 void func_80223334(CMCCrystalList* self)
 {
-    func_80223810(self);
+    crystalListEnableAnim3(self);
     float f = self->mAnimTrans3->GetFrameSize();
     f = f - lbl_eu_80668548 - lbl_eu_80668544;
     self->mAnimTrans3->SetFrame(f);
@@ -455,17 +455,17 @@ void func_80223334(CMCCrystalList* self)
 }
 
 // Retail 0x802233AC: wait for anim trans 1 (via advanceAnimTransform) to finish,
-// then enter state 2 and run func_80223754.
-extern "C" void __declspec(noinline) func_802233AC(CMCCrystalList* self)
+// then enter state 2 and run crystalListEnableAnim2.
+extern "C" void __declspec(noinline) crystalListWaitAnim1To2(CMCCrystalList* self)
 {
     if (advanceAnimTransform(self->mAnimTrans1, lbl_eu_80668544)) {
         self->mStateIdx = 2;
-        func_80223754(self);
+        crystalListEnableAnim2(self);
     }
 }
 
 // Retail 0x802233F8: wait for anim trans 2 to finish, then activate state 3.
-extern "C" void __declspec(noinline) func_802233F8(CMCCrystalList* self)
+extern "C" void __declspec(noinline) crystalListWaitAnim2To3(CMCCrystalList* self)
 {
     if (advanceAnimTransform(self->mAnimTrans2, lbl_eu_80668544) != 0) {
         self->mStateIdx = 3;
@@ -505,18 +505,18 @@ extern "C" void __declspec(noinline) func_80223614(CMCCrystalList* self, u32 idx
 #pragma optimize_for_size off
 
 // Retail 0x80223498: wait for anim trans 2 (via AnimRewindFrame) to finish,
-// then enter state 5 and run func_80223698.
-extern "C" void __declspec(noinline) func_80223498(CMCCrystalList* self)
+// then enter state 5 and run crystalListEnableAnim1.
+extern "C" void __declspec(noinline) crystalListRewindAnim2To5(CMCCrystalList* self)
 {
     if (AnimRewindFrame(self->mAnimTrans2, lbl_eu_80668544) != 0) {
         self->mStateIdx = 5;
-        func_80223698(self);
+        crystalListEnableAnim1(self);
     }
 }
 
 // Retail 0x802234E4: wait for anim trans 1 (via AnimRewindFrame) to finish,
 // then reset to state 0 and activate.
-extern "C" void __declspec(noinline) func_802234E4(CMCCrystalList* self)
+extern "C" void __declspec(noinline) crystalListRewindAnim1To0(CMCCrystalList* self)
 {
     if (AnimRewindFrame(self->mAnimTrans1, lbl_eu_80668544) != 0) {
         self->mStateIdx = 0;
@@ -525,7 +525,7 @@ extern "C" void __declspec(noinline) func_802234E4(CMCCrystalList* self)
 }
 
 // Retail 0x80223530: wait for anim trans 3 to finish, then activate state 3.
-extern "C" void __declspec(noinline) func_80223530(CMCCrystalList* self)
+extern "C" void __declspec(noinline) crystalListWaitAnim3To3(CMCCrystalList* self)
 {
     if (advanceAnimTransform(self->mAnimTrans3, lbl_eu_80668544) != 0) {
         self->mStateIdx = 3;
@@ -535,7 +535,7 @@ extern "C" void __declspec(noinline) func_80223530(CMCCrystalList* self)
 
 // Retail 0x8022357C: wait for anim trans 3 (via AnimRewindFrame) to finish,
 // then activate state 3.
-extern "C" void __declspec(noinline) func_8022357C(CMCCrystalList* self)
+extern "C" void __declspec(noinline) crystalListRewindAnim3To3(CMCCrystalList* self)
 {
     if (AnimRewindFrame(self->mAnimTrans3, lbl_eu_80668544) != 0) {
         self->mStateIdx = 3;
@@ -545,7 +545,7 @@ extern "C" void __declspec(noinline) func_8022357C(CMCCrystalList* self)
 
 // Retail 0x802235C8: wait for anim trans 4 (via advanceAnimTransform) to finish,
 // then activate state 3.
-extern "C" void __declspec(noinline) func_802235C8(CMCCrystalList* self)
+extern "C" void __declspec(noinline) crystalListWaitAnim4To3(CMCCrystalList* self)
 {
     if (advanceAnimTransform(self->mAnimTrans4, lbl_eu_80668544) != 0) {
         self->mStateIdx = 3;
@@ -556,7 +556,7 @@ extern "C" void __declspec(noinline) func_802235C8(CMCCrystalList* self)
 // Retail 0x802254D8: layout animation setup. Disable anim resource 5 across
 // the whole pane tree (recursive via the root pane), then toggle the
 // per-layout anim transforms: disable 4/3/2, enable 1.
-extern "C" void __declspec(noinline) func_80223698(CMCCrystalList* self)
+extern "C" void __declspec(noinline) crystalListEnableAnim1(CMCCrystalList* self)
 {
     self->mLayout->GetRootPane()->SetAnimationEnable(*self->mAnimRes5, false, true);
     self->mLayout->SetAnimationEnable(self->mAnimTrans4, false);
@@ -566,7 +566,7 @@ extern "C" void __declspec(noinline) func_80223698(CMCCrystalList* self)
 }
 
 // Retail 0x80225554: same setup, disable 4/3/1, enable 2.
-extern "C" void __declspec(noinline) func_80223754(CMCCrystalList* self)
+extern "C" void __declspec(noinline) crystalListEnableAnim2(CMCCrystalList* self)
 {
     self->mLayout->GetRootPane()->SetAnimationEnable(*self->mAnimRes5, false, true);
     self->mLayout->SetAnimationEnable(self->mAnimTrans4, false);
@@ -576,7 +576,7 @@ extern "C" void __declspec(noinline) func_80223754(CMCCrystalList* self)
 }
 
 // Retail 0x80225650: same setup, disable 4/1/2, enable 3.
-extern "C" void __declspec(noinline) func_80223810(CMCCrystalList* self)
+extern "C" void __declspec(noinline) crystalListEnableAnim3(CMCCrystalList* self)
 {
     self->mLayout->GetRootPane()->SetAnimationEnable(*self->mAnimRes5, false, true);
     self->mLayout->SetAnimationEnable(self->mAnimTrans4, false);
@@ -586,7 +586,7 @@ extern "C" void __declspec(noinline) func_80223810(CMCCrystalList* self)
 }
 
 // Retail 0x8022570C: same setup, disable 1/2/3, enable 4.
-extern "C" void __declspec(noinline) func_802238CC(CMCCrystalList* self)
+extern "C" void __declspec(noinline) crystalListEnableAnim4(CMCCrystalList* self)
 {
     self->mLayout->GetRootPane()->SetAnimationEnable(*self->mAnimRes5, false, true);
     self->mLayout->SetAnimationEnable(self->mAnimTrans1, false);
@@ -672,7 +672,7 @@ bool CMCCrystalList::OnFileEvent(CEventFile* pEventFile)
         LayoutSetTextBoxFmtValue(mLayout, &lbl_eu_805092C0[0x267],
             BdatTouchStringCell(&lbl_eu_805092C0[0x247], &lbl_eu_805092C0[0x253], 0x2d), 0);
 
-        func_80223698(this);
+        crystalListEnableAnim1(this);
         mLayout->Animate(0);
 
         // Second archive present -> mark the list ready.

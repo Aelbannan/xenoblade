@@ -129,7 +129,7 @@ extern "C" __declspec(noinline) CTitleMenu* __ct__CTitleMenu(CTitleMenu* self);
 extern "C" UnkClass_8045F564* __ct__17UnkClass_8045F564Fv(UnkClass_8045F564* self);
 extern "C" CBaseCur* __ct__CCur18(CBaseCur* self, nw4r::lyt::ArcResourceAccessor* arcResAcc);
 extern "C" void __dt__6CCur18Fv(void* self, int flags);
-extern "C" void func_801D216C(void* pCur, u8 val);
+extern "C" void Cur_SetVisible(void* pCur, u8 val);
 extern "C" void func_801D202C(CBaseCur* pCur);
 extern "C" void CTitle_fileEventCallback(void* a, unsigned int b, unsigned char v);
 extern "C" int func_8023FEDC(void (*pCallback)(void*, unsigned int, unsigned char));
@@ -145,7 +145,7 @@ extern u32 lbl_eu_80663E28;
 // RGB color builder (defined in CTitleAHelp.cpp; returns the dest pointer so
 // callers can thread it into PaneMatSetTevColorsByName). Retail keeps the unmangled short
 // name, so declare it with C linkage.
-extern "C" GXColorS10* func_801C4B60(GXColorS10* color, s16 r, s16 g, s16 b, s16 a);
+extern "C" GXColorS10* setGXColorS10(GXColorS10* color, s16 r, s16 g, s16 b, s16 a);
 // .sdata2 constants used by the logo/menu animation helpers (US/EU names).
 extern const float lbl_eu_80668FE0;
 extern double lbl_eu_80668FE8; // 0x4330000000000000 (2^52) - u32->f32 conversion magic

@@ -88,7 +88,7 @@ extern "C" void probe_2reg(CSysWin* self, int kind) {
 #pragma optimize_for_size on
 extern "C" void playUISound__FUl(u32);
 // retail: if (field_35 == 2) { field_35 = 3; field_36 = 0; tail playUISound(0xE) }
-extern "C" void func_8022B8E4(void* self) {
+extern "C" void sysWinAdvancePhase3(void* self) {
     if (*(u8*)((char*)self + 0x35) == 2) {
         *(u8*)((char*)self + 0x35) = 3;
         *(u8*)((char*)self + 0x36) = 0;
@@ -98,7 +98,7 @@ extern "C" void func_8022B8E4(void* self) {
 
 #pragma push
 #pragma optimize_for_size on
-extern "C" void func_8022BF6C(CSysWin* self, char* a, char* b) {
+extern "C" void sysWinSetTwoTextValues(CSysWin* self, char* a, char* b) {
     LayoutSetTextBoxFmtValue(self->mLayout, lbl_eu_8050A478 + 0x77, a, 0);
     LayoutSetTextBoxFmtValue(self->mLayout, lbl_eu_8050A478 + 0x82, b, 0);
 }
@@ -111,12 +111,12 @@ extern "C" void func_8022BF6C(CSysWin* self, char* a, char* b) {
 // us-8022e0ac - format a pane name (idx+1), find two panes in the
 // second window's layout, and compute the second pane's absolute screen
 // position into out (ancestor translate sum via func_80137924). Same shape as
-// func_8022C930 / clpCalcCurPos: each GetRootPane() is a fresh load (retail
+// getShopWinPanePos / clpCalcCurPos: each GetRootPane() is a fresh load (retail
 // reloads window->mLayout per use). optimize_for_size matches the retail
 // stmw/lmw prologue for the 4 callee-saved regs (r28-r31).
 #pragma push
 #pragma optimize_for_size on
-extern "C" void func_8022C1B4(nw4r::math::VEC3* out, CSysWin* window, int idx) {
+extern "C" void sysWinGetPaneScreenPos(nw4r::math::VEC3* out, CSysWin* window, int idx) {
     char buf[0x28];
     sprintf(buf, &lbl_eu_8050A478[0xde], idx + 1);
     nw4r::lyt::Pane* pane1 = window->mLayout->GetRootPane()->FindPaneByName(buf, true);
@@ -128,7 +128,7 @@ extern "C" void func_8022C1B4(nw4r::math::VEC3* out, CSysWin* window, int idx) {
 // us-8022e150 - advance the window animation; mark it active (phase 2)
 // when the anim transform consumed the step.
 #pragma dont_inline on
-extern "C" void func_8022C258(CSysWin* self) {
+extern "C" void sysWinPhase1To2Advance(CSysWin* self) {
     const f32 duration = lbl_eu_806685F0;
     if (advanceAnimTransform(self->mAnimTrans, duration) != 0) {
         self->field_35 = 2;
@@ -140,7 +140,7 @@ extern "C" void func_8022C258(CSysWin* self) {
 // us-8022e19c - advance the window when the game-manager's active
 // kind differs from the window's current kind (window kind must be < 5).
 #pragma dont_inline on
-extern "C" void func_8022C2A4(CSysWin* self) {
+extern "C" void sysWinSyncKindAdvance(CSysWin* self) {
     if (self->field_38 >= 5) return;
     if (self->field_39 == (u32)isClassicController__Q22cf13CfGameManagerFv(-1)) return;
     func_8022BFC8(self, self->field_38);
@@ -150,7 +150,7 @@ extern "C" void func_8022C2A4(CSysWin* self) {
 // us-8022e1f0 - rewind the window animation; clear the open flag
 // (phase 0) once the reverse anim finishes.
 #pragma dont_inline on
-extern "C" void func_8022C2F8(CSysWin* self) {
+extern "C" void sysWinRewindToPhase0(CSysWin* self) {
     const f32 duration = lbl_eu_806685F0;
     if (AnimRewindFrame(self->mAnimTrans, duration) != 0) {
         self->field_35 = 0;
@@ -163,7 +163,7 @@ extern "C" void func_8022C2F8(CSysWin* self) {
 // us-8022e240 - layout/kind setup after a file load (called by
 // OnFileEvent once the System window layout is built): find the two label
 // panes, write all six label texts, bind the tag processor into each label
-// pane, then re-apply the current kind's pane visibility via func_8022B90C.
+// pane, then re-apply the current kind's pane visibility via sysWinSwitchKindPane.
 // optimize_for_size matches the retail stmw/lmw prologue + shared string
 // base for the 2 callee-saved regs (r30-r31) under the unit's -O4,p flags.
 #pragma push
@@ -222,7 +222,7 @@ extern "C" void func_8022C348(CSysWin* self) {
         void* tag = self->mTagProcessor;
         t->mpTagProcessor = tag;
     }
-    func_8022B90C(self, self->field_37);
+    sysWinSwitchKindPane(self, self->field_37);
 }
 #pragma pop
 
@@ -269,7 +269,7 @@ bool CSysWin::OnFileEvent(CEventFile* pEventFile) {
 
 // us-8022d52c - load the System.arc file (IWorkEvent callback = this)
 // into the window's file-handle slot, mark the handle, and clear the ready flag.
-extern "C" void func_8022B6F4(CSysWin* self) {
+extern "C" void sysWinInitFileRead(CSysWin* self) {
     u32 allocHandle = mtl::MemManager::getHandleMEM2();
     self->mFileHandle = CDeviceFile::readFile(
         allocHandle, lbl_eu_8050A478, reinterpret_cast<IWorkEvent*>(self), 0, 0);
@@ -283,7 +283,7 @@ extern "C" void func_8022B6F4(CSysWin* self) {
 // bl's. Goto-chain dispatch (MWCC_CASES §7d2): switch/if-else shapes don't
 // reproduce retail's linear equality chain with bodies appended after the
 // tests; the int temp keeps the compares signed (cmpi) without an extsb.
-extern "C" void func_8022B748(CSysWin* self) {
+extern "C" void sysWinDispatchPhase(CSysWin* self) {
     if (self->field_34 != 0) {
         int phase = self->field_35;
         if (phase == 1) goto case1;
@@ -291,13 +291,13 @@ extern "C" void func_8022B748(CSysWin* self) {
         if (phase == 3) goto case3;
         goto tail;
     case1:
-        func_8022C258(self);
+        sysWinPhase1To2Advance(self);
         goto tail;
     case2:
-        func_8022C2A4(self);
+        sysWinSyncKindAdvance(self);
         goto tail;
     case3:
-        func_8022C2F8(self);
+        sysWinRewindToPhase0(self);
     tail:
         self->mLayout->Animate(0);
     }
@@ -305,7 +305,7 @@ extern "C" void func_8022B748(CSysWin* self) {
 
 // us-8022d600 - draw the system-window layout when it is open and
 // animated (field_34/field_35 guards), passing through the caller's DrawInfo.
-extern "C" void func_8022B7C8(CSysWin* self, nw4r::lyt::DrawInfo* drawInfo) {
+extern "C" void sysWinDrawLayout(CSysWin* self, nw4r::lyt::DrawInfo* drawInfo) {
     if (self->field_34 == 0) return;
     if (self->field_35 == 0) return;
     return drawLayout(self->mLayout, drawInfo, 0, 1);
@@ -316,7 +316,7 @@ extern "C" void func_8022B7C8(CSysWin* self, nw4r::lyt::DrawInfo* drawInfo) {
 // prologue check (same as CBattery::releaseLayout).
 #pragma push
 #pragma optimize_for_size on
-extern "C" void func_8022B7F4(CSysWin* self) {
+extern "C" void sysWinTermLayout(CSysWin* self) {
     func_801390E0(&self->mFileHandle);
     nw4r::lyt::Layout* layout = self->mLayout;
     self->field_34 = 0;
@@ -337,7 +337,7 @@ extern "C" void func_8022B7F4(CSysWin* self) {
 
 // us-8022d6f0 - open the window (only when idle): mark phase 1 and
 // play the opening UI sound.
-extern "C" void func_8022B8B8(CSysWin* self) {
+extern "C" void sysWinOpenPhase1(CSysWin* self) {
     if (self->field_35 != 0) return;
     self->field_35 = 1;
     self->field_36 = 0;
@@ -351,22 +351,22 @@ extern "C" void func_8022B8B8(CSysWin* self) {
 // optimize_for_size matches the retail stmw/lmw prologue (r30-r31).
 #pragma push
 #pragma optimize_for_size on
-extern "C" void func_8022B90C(CSysWin* self, int kind) {
-    func_80124270(reinterpret_cast<nw4r::lyt::Pane*>(self->field_2C), 0);
-    func_80124270(reinterpret_cast<nw4r::lyt::Pane*>(self->field_30), 0);
+extern "C" void sysWinSwitchKindPane(CSysWin* self, int kind) {
+    setPaneVisible(reinterpret_cast<nw4r::lyt::Pane*>(self->field_2C), 0);
+    setPaneVisible(reinterpret_cast<nw4r::lyt::Pane*>(self->field_30), 0);
     self->field_37 = (u8)kind;
     switch (kind) {
     case 0:
-        func_80124270(reinterpret_cast<nw4r::lyt::Pane*>(self->field_2C), 1);
+        setPaneVisible(reinterpret_cast<nw4r::lyt::Pane*>(self->field_2C), 1);
         break;
     case 1:
-        func_80124270(reinterpret_cast<nw4r::lyt::Pane*>(self->field_2C), 1);
+        setPaneVisible(reinterpret_cast<nw4r::lyt::Pane*>(self->field_2C), 1);
         break;
     case 2:
-        func_80124270(reinterpret_cast<nw4r::lyt::Pane*>(self->field_30), 1);
+        setPaneVisible(reinterpret_cast<nw4r::lyt::Pane*>(self->field_30), 1);
         break;
     case 3:
-        func_80124270(reinterpret_cast<nw4r::lyt::Pane*>(self->field_30), 1);
+        setPaneVisible(reinterpret_cast<nw4r::lyt::Pane*>(self->field_30), 1);
         break;
     }
 }
@@ -379,7 +379,7 @@ extern "C" void func_8022B90C(CSysWin* self, int kind) {
 extern "C" void func_8022B9B4(CSysWin* self, char* textA, char* textB) {
     nw4r::lyt::Pane* pane0 =
         self->mLayout->GetRootPane()->FindPaneByName(&lbl_eu_8050A478[0x13], true);
-    // Goto-chain dispatch (cf. func_8022B748): retail's linear equality chain
+    // Goto-chain dispatch (cf. sysWinDispatchPhase): retail's linear equality chain
     // with case bodies appended after the tests; the u8 loads as an int so the
     // compares stay plain cmpwi without an extsb.
     int kind = self->field_37;
@@ -407,27 +407,27 @@ case0:
         f32 h = size[1];
         if (h >= lbl_eu_80668598) {
             nw4r::math::VEC3 v;
-            func_801D2150(reinterpret_cast<nw4r::lyt::Pane*>(self->field_2C),
+            Cur_SetPaneTranslate(reinterpret_cast<nw4r::lyt::Pane*>(self->field_2C),
                           code80135FDC_setVec3(&v.x, lbl_eu_8066859C, lbl_eu_806685A0, lbl_eu_8066859C));
         } else if (h >= lbl_eu_806685A4) {
             nw4r::math::VEC3 v;
-            func_801D2150(reinterpret_cast<nw4r::lyt::Pane*>(self->field_2C),
+            Cur_SetPaneTranslate(reinterpret_cast<nw4r::lyt::Pane*>(self->field_2C),
                           code80135FDC_setVec3(&v.x, lbl_eu_8066859C, lbl_eu_806685A8, lbl_eu_8066859C));
         } else if (h >= lbl_eu_806685AC) {
             nw4r::math::VEC3 v;
-            func_801D2150(reinterpret_cast<nw4r::lyt::Pane*>(self->field_2C),
+            Cur_SetPaneTranslate(reinterpret_cast<nw4r::lyt::Pane*>(self->field_2C),
                           code80135FDC_setVec3(&v.x, lbl_eu_8066859C, lbl_eu_806685B0, lbl_eu_8066859C));
         } else if (h >= lbl_eu_806685B4) {
             nw4r::math::VEC3 v;
-            func_801D2150(reinterpret_cast<nw4r::lyt::Pane*>(self->field_2C),
+            Cur_SetPaneTranslate(reinterpret_cast<nw4r::lyt::Pane*>(self->field_2C),
                           code80135FDC_setVec3(&v.x, lbl_eu_8066859C, lbl_eu_806685B8, lbl_eu_8066859C));
         } else if (h >= lbl_eu_806685BC) {
             nw4r::math::VEC3 v;
-            func_801D2150(reinterpret_cast<nw4r::lyt::Pane*>(self->field_2C),
+            Cur_SetPaneTranslate(reinterpret_cast<nw4r::lyt::Pane*>(self->field_2C),
                           code80135FDC_setVec3(&v.x, lbl_eu_8066859C, lbl_eu_806685C0, lbl_eu_8066859C));
         } else {
             nw4r::math::VEC3 v;
-            func_801D2150(reinterpret_cast<nw4r::lyt::Pane*>(self->field_2C),
+            Cur_SetPaneTranslate(reinterpret_cast<nw4r::lyt::Pane*>(self->field_2C),
                           code80135FDC_setVec3(&v.x, lbl_eu_8066859C, lbl_eu_806685C4, lbl_eu_8066859C));
         }
     }
@@ -457,9 +457,9 @@ case1:
         f32 pick[2];
         TagCopyVec2f(pick, posA[0] > posB[0] ? posA : posB);
         pick[1] = lbl_eu_806685BC;
-        func_80124288(pane0, pick);
+        writePanePos(pane0, pick);
         nw4r::math::VEC3 v;
-        func_801D2150(reinterpret_cast<nw4r::lyt::Pane*>(self->field_2C),
+        Cur_SetPaneTranslate(reinterpret_cast<nw4r::lyt::Pane*>(self->field_2C),
                       code80135FDC_setVec3(&v.x, lbl_eu_8066859C, lbl_eu_806685C0, lbl_eu_8066859C));
     }
     goto end;
@@ -482,19 +482,19 @@ case2:
         f32 h = size[1];
         if (h >= lbl_eu_806685AC) {
             nw4r::math::VEC3 v;
-            func_801D2150(reinterpret_cast<nw4r::lyt::Pane*>(self->field_30),
+            Cur_SetPaneTranslate(reinterpret_cast<nw4r::lyt::Pane*>(self->field_30),
                           code80135FDC_setVec3(&v.x, lbl_eu_8066859C, lbl_eu_806685C8, lbl_eu_8066859C));
         } else if (h >= lbl_eu_806685B4) {
             nw4r::math::VEC3 v;
-            func_801D2150(reinterpret_cast<nw4r::lyt::Pane*>(self->field_30),
+            Cur_SetPaneTranslate(reinterpret_cast<nw4r::lyt::Pane*>(self->field_30),
                           code80135FDC_setVec3(&v.x, lbl_eu_8066859C, lbl_eu_806685CC, lbl_eu_8066859C));
         } else if (h >= lbl_eu_806685BC) {
             nw4r::math::VEC3 v;
-            func_801D2150(reinterpret_cast<nw4r::lyt::Pane*>(self->field_30),
+            Cur_SetPaneTranslate(reinterpret_cast<nw4r::lyt::Pane*>(self->field_30),
                           code80135FDC_setVec3(&v.x, lbl_eu_8066859C, lbl_eu_806685D0, lbl_eu_8066859C));
         } else {
             nw4r::math::VEC3 v;
-            func_801D2150(reinterpret_cast<nw4r::lyt::Pane*>(self->field_30),
+            Cur_SetPaneTranslate(reinterpret_cast<nw4r::lyt::Pane*>(self->field_30),
                           code80135FDC_setVec3(&v.x, lbl_eu_8066859C, lbl_eu_806685D4, lbl_eu_8066859C));
         }
     }
@@ -524,9 +524,9 @@ case3:
         f32 pick[2];
         TagCopyVec2f(pick, posA[0] > posB[0] ? posA : posB);
         pick[1] = lbl_eu_806685D8;
-        func_80124288(pane0, pick);
+        writePanePos(pane0, pick);
         nw4r::math::VEC3 v;
-        func_801D2150(reinterpret_cast<nw4r::lyt::Pane*>(self->field_30),
+        Cur_SetPaneTranslate(reinterpret_cast<nw4r::lyt::Pane*>(self->field_30),
                       code80135FDC_setVec3(&v.x, lbl_eu_8066859C, lbl_eu_806685D4, lbl_eu_8066859C));
     }
 end:
@@ -568,7 +568,7 @@ extern "C" void func_8022BFC8(CSysWin* self, u8 kind) {
             f32 sz[2];
             sz[0] = (f32)texW;
             sz[1] = (f32)texH;
-            func_80124288(pane1, sz);
+            writePanePos(pane1, sz);
         }
         nw4r::lyt::Pane* pane2 =
             self->mLayout->GetRootPane()->FindPaneByName(&lbl_eu_8050A478[0xd4], true);
@@ -576,7 +576,7 @@ extern "C" void func_8022BFC8(CSysWin* self, u8 kind) {
             f32 sz[2];
             sz[0] = (f32)texW;
             sz[1] = (f32)texH;
-            func_80124288(pane2, sz);
+            writePanePos(pane2, sz);
         }
     }
 }

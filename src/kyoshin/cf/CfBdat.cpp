@@ -224,8 +224,8 @@ void* lbl_eu_8066411C;
 void* lbl_eu_80664120;
 void* lbl_eu_80664124;
 
-extern "C" u32 func_8003B1EC(void* bdat);
-extern "C" u32 func_8003B41C(void* bdat);
+extern "C" u32 Bdat_GetMaxRow_B1EC(void* bdat);
+extern "C" u32 Bdat_GetRowBase_B41C(void* bdat);
 extern "C" u32 func_800AA714(const char* path);
 extern "C" u32 getBdatStringColumnValue(void* bdat, const char* col, s32 index);
 
@@ -248,7 +248,7 @@ u32 cf::CfBdat::func_801422A8(u32 param1) {
         result = 0;
         if (param1 & 0xFFFF) {
             data = lbl_eu_806640F4;
-            int total = (int)(func_8003B1EC(data) + func_8003B41C(data));
+            int total = (int)(Bdat_GetMaxRow_B1EC(data) + Bdat_GetRowBase_B41C(data));
             if ((u16)param1 < total) {
                 result = func_800AA714((const char*)getBdatStringColumnValue(
                     data, &lbl_eu_80500FA4[0x34f], (u16)param1));

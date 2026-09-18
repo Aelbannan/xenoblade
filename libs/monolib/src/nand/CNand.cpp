@@ -9,7 +9,7 @@
 //   +0x128 void*mTable   -- pointer to the shared callback table (lbl_eu_8056FD48)
 //
 // The constructor/destructor and the request-enqueue helpers below carry
-// retail placeholder symbol names (e.g. __ct__CNand, func_804DA248) that are
+// retail placeholder symbol names (e.g. __ct__CNand, NandMgrEnqueueCheck) that are
 // not standard MWCC manglings, so they are emitted as extern "C" stand-alone
 // functions -- the same fragment-anchored pattern used elsewhere in monolib
 // (see scn/code_804BF59C.cpp). CNand/CNRequest are plain data layouts; the
@@ -128,8 +128,8 @@ extern "C" DECOMP_DONT_INLINE CNand* __ct__CNand(CNand* self) {
 
 // --- helpers --------------------------------------------------------------
 
-// Reset the ring head/tail and mark the manager ready (func_804DA1B4).
-extern "C" void func_804DA1B4(CNand* self) {
+// Reset the ring head/tail and mark the manager ready (NandMgrResetReady).
+extern "C" void NandMgrResetReady(CNand* self) {
     self->mHead = 0;
     self->mTail = 0;
     self->mStatus = 1;
@@ -147,9 +147,9 @@ extern "C" DECOMP_DONT_INLINE CNRequest* func_804DA47C(CNand* self) {
     return req;
 }
 
-// Completion pump (func_804DA1CC): while the head request is active, poll it;
+// Completion pump (NandMgrPumpCompletion): while the head request is active, poll it;
 // on success record its status byte and advance the head, else stop.
-extern "C" void func_804DA1CC(CNand* self) {
+extern "C" void NandMgrPumpCompletion(CNand* self) {
     u8 status;
     while (self->mReq[self->mHead].mTask != nullptr) {
         if (CNReqSavePollTask(&self->mReq[self->mHead], &status) == 0) {
@@ -160,8 +160,8 @@ extern "C" void func_804DA1CC(CNand* self) {
     }
 }
 
-// Enqueue a check request (func_804DA248).
-extern "C" int func_804DA248(CNand* self, u32 a1, u32 a2, u32 a3) {
+// Enqueue a check request (NandMgrEnqueueCheck).
+extern "C" int NandMgrEnqueueCheck(CNand* self, u32 a1, u32 a2, u32 a3) {
     CNRequest* req = func_804DA47C(self);
     if (req != nullptr) {
         return CNReqSaveInitCheck(req, a1, a2, a3);
@@ -170,8 +170,8 @@ extern "C" int func_804DA248(CNand* self, u32 a1, u32 a2, u32 a3) {
 }
 
 // Enqueue a save request, optionally preceded by a directory-create request
-// and followed by a flush request (func_804DA29C).
-extern "C" int func_804DA29C(CNand* self, u32 a1, u32 a2, u32 a3, u32 a4, u32 a5) {
+// and followed by a flush request (NandMgrEnqueueSaveFlush).
+extern "C" int NandMgrEnqueueSaveFlush(CNand* self, u32 a1, u32 a2, u32 a3, u32 a4, u32 a5) {
     if (self->mFlag != 0) {
         CNRequest* req = func_804DA47C(self);
         if (req == nullptr) {
@@ -203,8 +203,8 @@ extern "C" int func_804DA29C(CNand* self, u32 a1, u32 a2, u32 a3, u32 a4, u32 a5
     return 1;
 }
 
-// Enqueue a load request (func_804DA34C).
-extern "C" int func_804DA34C(CNand* self, u32 a1, u32 a2, u32 a3) {
+// Enqueue a load request (NandMgrEnqueueLoad).
+extern "C" int NandMgrEnqueueLoad(CNand* self, u32 a1, u32 a2, u32 a3) {
     CNRequest* req = func_804DA47C(self);
     if (req == nullptr) {
         return 0;
@@ -212,8 +212,8 @@ extern "C" int func_804DA34C(CNand* self, u32 a1, u32 a2, u32 a3) {
     return CNReqSaveInitLoad(req, a1, a2, a3, self->mFlag);
 }
 
-// Enqueue a remove request (func_804DA3A0).
-extern "C" int func_804DA3A0(CNand* self, u32 a1) {
+// Enqueue a remove request (NandMgrEnqueueRemove).
+extern "C" int NandMgrEnqueueRemove(CNand* self, u32 a1) {
     CNRequest* req = func_804DA47C(self);
     if (req == nullptr) {
         return 0;
@@ -221,8 +221,8 @@ extern "C" int func_804DA3A0(CNand* self, u32 a1) {
     return CNReqSaveInitRemove(req, a1, self->mFlag);
 }
 
-// Enqueue a readdir request (func_804DA3E4).
-extern "C" int func_804DA3E4(CNand* self, u32 a1, u32 a2, u32 a3) {
+// Enqueue a readdir request (NandMgrEnqueueReaddir).
+extern "C" int NandMgrEnqueueReaddir(CNand* self, u32 a1, u32 a2, u32 a3) {
     CNRequest* req = func_804DA47C(self);
     if (req == nullptr) {
         return 0;
@@ -230,8 +230,8 @@ extern "C" int func_804DA3E4(CNand* self, u32 a1, u32 a2, u32 a3) {
     return CNReqSaveInitReaddir(req, a1, a2, a3, self->mFlag);
 }
 
-// Enqueue a flush request (func_804DA438).
-extern "C" int func_804DA438(CNand* self, u32 a1) {
+// Enqueue a flush request (NandMgrEnqueueFlush).
+extern "C" int NandMgrEnqueueFlush(CNand* self, u32 a1) {
     CNRequest* req = func_804DA47C(self);
     if (req == nullptr) {
         return 0;
@@ -239,8 +239,8 @@ extern "C" int func_804DA438(CNand* self, u32 a1) {
     return CNReqSaveInitSaveBanner(req, a1, 0);
 }
 
-// Enqueue a banner/load request against the shared path buffer (func_eu_804DE660).
-extern "C" int func_eu_804DE660(CNand* self, u32 a1, u32 a2) {
+// Enqueue a banner/load request against the shared path buffer (NandMgrEnqueueBannerLoad).
+extern "C" int NandMgrEnqueueBannerLoad(CNand* self, u32 a1, u32 a2) {
     CNRequest* req = func_804DA47C(self);
     if (req == nullptr) {
         return 0;

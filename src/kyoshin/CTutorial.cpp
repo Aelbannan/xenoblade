@@ -50,13 +50,13 @@ CTutorial::CTutorial(u8 param_1, u8 param_2) : CTutorialVtblBase() {
     field_53 = param_2;
 }
 
-u8 CTutorial::func_8029ACAC() { return this->field_46; }
-u8 CTutorial::func_8029ACB4() { return this->field_47; }
-u8 CTutorial::func_8029ACBC() { return this->field_52; }
+u8 CTutorial::Tutorial_GetField46Mark() { return this->field_46; }
+u8 CTutorial::Tutorial_GetField47Mark() { return this->field_47; }
+u8 CTutorial::Tutorial_GetField52Mark() { return this->field_52; }
 
 /* Draw the tutorial layout when the active gate (0x44) is set. r4 (the draw
  * info) is passed straight through to the layout draw helper. */
-void CTutorial::func_8029ABB8(nw4r::lyt::DrawInfo* drawInfo) {
+void CTutorial::Tutorial_DrawLayoutGated(nw4r::lyt::DrawInfo* drawInfo) {
     if (field_44 != 0) {
         drawLayout(mpLayout, drawInfo, 0, 1);
     }
@@ -64,7 +64,7 @@ void CTutorial::func_8029ABB8(nw4r::lyt::DrawInfo* drawInfo) {
 
 /* Idempotent start: if not already running, mark state 1 and fire the 0x8
  * UI sound/effect event. */
-void CTutorial::func_8029ACC4() {
+void CTutorial::Tutorial_StartIfIdle() {
     if (field_45 == 0) {
         field_45 = 1;
         field_47 = 0;
@@ -100,7 +100,7 @@ void CTutorial::func_8029AE9C() {
 CTutorial::~CTutorial() {}
 
 /* Advance-animation (0x40) reached the end frame: state 3, visible. */
-__declspec(noinline) void CTutorial::func_8029AF30() {
+__declspec(noinline) void CTutorial::Tutorial_FinishAdvanceAnim() {
     if (advanceAnimTransform(mpAnimTrans1, lbl_eu_80668C08) != 0) {
         field_45 = 3;
         field_47 = 1;
@@ -118,7 +118,7 @@ void CTutorial::func_8029AF7C() {
 }
 
 /* Rewind-animation (0x3C) reached the start frame: state 0, visible. */
-__declspec(noinline) void CTutorial::func_8029B010() {
+__declspec(noinline) void CTutorial::Tutorial_FinishRewindAnim() {
     if (AnimRewindFrame(mpAnimTrans0, lbl_eu_80668C08) != 0) {
         field_45 = 0;
         field_47 = 1;
@@ -149,7 +149,7 @@ void CTutorial::func_8029B124() {
 // Tutorial data reload: validate the loaded resources, resolve the BDAT
 // text-table pointer when the region gate (0x53) is clear, then reset the
 // page counters and refresh.
-extern "C" void func_8029B05C(CTutorial* self) {
+extern "C" void Tutorial_ReloadTutorialData(CTutorial* self) {
     if (self->field_53 != 0) {
         if (self->mAccessor0 == nullptr || self->field_4C == nullptr ||
             self->mAccessor1 == nullptr)
@@ -158,7 +158,7 @@ extern "C" void func_8029B05C(CTutorial* self) {
         if (self->mAccessor0 == nullptr || self->mAccessor1 == nullptr)
             return;
         // Resolve the tutorial BDAT table handle by its pooled tag string.
-        func_8003AA34();
+        Bdat_GetTable_AA34();
         lbl_eu_80664A30 = (u32)getFP(&lbl_eu_80510290[0x6b]);
     }
     self->field_46 = 1;
@@ -173,13 +173,13 @@ extern "C" void func_8029B05C(CTutorial* self) {
 void CTutorial::func_8029B498() {
     s16 i = 0x3340;
     while (i < 0x33bf) {
-        func_8009D018(i, (u32)this);
+        CtrlRemote_SetSharedBit(i, (u32)this);
         i++;
     }
     // (a | -a) >> 31 (arithmetic) is -1 for any nonzero address, 0 for null;
     // masked to the 0x7F000000 window.
     s32 addr = (s32)this;
-    func_8009D018(0x270, ((addr | -addr) >> 31) & 0x7f000000);
+    CtrlRemote_SetSharedBit(0x270, ((addr | -addr) >> 31) & 0x7f000000);
 }
 
 // Page-counter tick: play the confirm sound while the counter is nonzero,
@@ -250,9 +250,9 @@ bool CTutorial::OnFileEvent(CEventFile* pEventFile) {
         mFileHandle1->mData = nullptr;
         field_4C = (u8*)data;
         CBdat::func_8003AA78(4, data);
-        func_8003AA34();
+        Bdat_GetTable_AA34();
         lbl_eu_80664A30 = (u32)getFP(&lbl_eu_80510290[0x6b]);
-        func_8029B05C(this);
+        Tutorial_ReloadTutorialData(this);
         mFileHandle1 = nullptr;
         return true;
     }
@@ -268,7 +268,7 @@ bool CTutorial::OnFileEvent(CEventFile* pEventFile) {
         mAccessor1 = CLibLayout::createArcResourceAccessor();
         mAccessor1->Attach(arcData, &lbl_eu_80510290[0xc7]);
 
-        func_8029B05C(this);
+        Tutorial_ReloadTutorialData(this);
         mFileHandle2 = nullptr;
         mRegion1.func_8045F810();
         return true;
@@ -280,14 +280,14 @@ bool CTutorial::OnFileEvent(CEventFile* pEventFile) {
 // clear, close the three file handles, destroy + clear the layout, release
 // both accessors, free the data buffer, clear the shared BDAT pointer, then
 // tear down both memory regions in declaration order.
-void CTutorial::func_8029ABD8() {
+void CTutorial::Tutorial_TeardownTutorial() {
     CDeviceVI::waitForDrawDone();
     if (field_53 != 0) {
         CBdat::getEntry(4);
     }
-    func_801390E0(&mFileHandle0);
-    func_801390E0(&mFileHandle1);
-    func_801390E0(&mFileHandle2);
+    closeFileHandle__FPP11CFileHandle(&mFileHandle0);
+    closeFileHandle__FPP11CFileHandle(&mFileHandle1);
+    closeFileHandle__FPP11CFileHandle(&mFileHandle2);
     field_44 = 0;
     nw4r::lyt::Layout* layout = mpLayout;
     if (layout != nullptr) {
@@ -303,14 +303,14 @@ void CTutorial::func_8029ABD8() {
         field_4C = nullptr;
     }
     lbl_eu_80664A30 = 0;
-    mRegion0.func_8045F778();
-    mRegion1.func_8045F778();
+    mRegion0.deleteRegion();
+    mRegion1.deleteRegion();
 }
 
 // Load the three tutorial data files: the layout arc, then (when the region
 // gate 0x53 is set) a locale-specific data file whose path is sprintf-ed, and
 // finally a game data file whose path depends on the CfGameManager flag.
-void CTutorial::func_8029AA34() {
+void CTutorial::Tutorial_LoadTutorialFiles() {
     char buf[0x40];
     mFileHandle0 = CDeviceFile::readFile(
         mtl::MemManager::getHandleMEM2(), lbl_eu_80510290,
@@ -342,13 +342,13 @@ extern "C" void func_8029AB28(CTutorial* self) {
         self->func_8029AE9C();
         break;
     case 2:
-        self->func_8029AF30();
+        self->Tutorial_FinishAdvanceAnim();
         break;
     case 4:
         self->func_8029AF7C();
         break;
     case 5:
-        self->func_8029B010();
+        self->Tutorial_FinishRewindAnim();
         break;
     default:
         break;
@@ -358,7 +358,7 @@ extern "C" void func_8029AB28(CTutorial* self) {
 
 /* Advance-anim fully finished: state 4, hide, swap back to anim0 (rewind
  * transform) and re-tick the layout, then play the completion sound. */
-void CTutorial::func_8029ACEC() {
+void CTutorial::Tutorial_AdvanceState3To4() {
     if (field_45 == 3) {
         field_45 = 4;
         field_47 = 0;

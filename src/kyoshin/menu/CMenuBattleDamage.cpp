@@ -29,7 +29,7 @@
 
 extern "C" void* __dt__17CMenuBattleDamageFv(void*, int);
 
-// Defined below in this TU (damage-slot enqueue; also called by func_80109734).
+// Defined below in this TU (damage-slot enqueue; also called by BtlDmg_NotifyDamage).
 extern "C" void func_801098B0(CMenuBattleDamage* self, int actorId,
                               int value, u32 flags);
 
@@ -465,15 +465,15 @@ void cursorFinalize() {}
 
 extern CMenuBattleDamage* lbl_eu_80663F28;
 
-extern "C" void func_80109874(u8 val) { CMenuBattleDamage* g = lbl_eu_80663F28; if (g) *(u8*)((u8*)g + 0x777) = val; }
-extern "C" void func_80109888(u8 val) { CMenuBattleDamage* g = lbl_eu_80663F28; if (g) *(u8*)((u8*)g + 0x778) = val; }
-extern "C" void func_8010989C(u8 val) { CMenuBattleDamage* g = lbl_eu_80663F28; if (g) *(u8*)((u8*)g + 0x779) = val; }
+extern "C" void BtlDmg_SetByte777(u8 val) { CMenuBattleDamage* g = lbl_eu_80663F28; if (g) *(u8*)((u8*)g + 0x777) = val; }
+extern "C" void BtlDmg_SetByte778(u8 val) { CMenuBattleDamage* g = lbl_eu_80663F28; if (g) *(u8*)((u8*)g + 0x778) = val; }
+extern "C" void BtlDmg_SetField779(u8 val) { CMenuBattleDamage* g = lbl_eu_80663F28; if (g) *(u8*)((u8*)g + 0x779) = val; }
 
 // Battle-damage singleton factory. Returns null when one already exists;
 // otherwise allocates the 0x77c-byte object from the work-thread region,
 // constructs it with the owning scene, registers it under `parent` and
 // returns the singleton.
-CMenuBattleDamage* func_801096B8(CProcess* parent, CScn* scene) {
+CMenuBattleDamage* BtlDmg_Create(CProcess* parent, CScn* scene) {
     if (lbl_eu_80663F28 != 0) {
         return 0;
     }
@@ -490,14 +490,15 @@ CMenuBattleDamage* func_801096B8(CProcess* parent, CScn* scene) {
     return lbl_eu_80663F28;
 }
 
-extern "C" void func_80109734(int actorId, int value) {
+extern "C" void BtlDmg_NotifyDamage(int actorId, int value) {
     CMenuBattleDamage* g = lbl_eu_80663F28;
     if (g) {
         func_801098B0(g, actorId, value, 0);
     }
 }
-extern "C" void func_8010975C(u8 val) { CMenuBattleDamage* g = lbl_eu_80663F28; if (g) *(u8*)((u8*)g + 0x774) = val; }
-extern "C" void func_80109784(int actorId, int value, u32 flags) {
+extern "C" void BtlDmg_SetDamageType(u8 val) { CMenuBattleDamage* g = lbl_eu_80663F28; if (g) *(u8*)((u8*)g + 0x774) = val; }
+extern "C" void BtlDmg_SetDamageDir(u8 val) { CMenuBattleDamage* g = lbl_eu_80663F28; if (g) *(u8*)((u8*)g + 0x775) = val; }
+extern "C" void BtlDmg_FilterNotifyDamage(int actorId, int value, u32 flags) {
     if (lbl_eu_80663F28 == NULL) {
         return;
     }
@@ -525,7 +526,17 @@ extern "C" void func_80109784(int actorId, int value, u32 flags) {
 
 // Cursor state machine: state 2 -> 3 (damage-up animation), enabling the
 // third anim and disabling the first two.
-void func_8010A710(CPcSelectCursor01* self) {
+// Cursor first-activation: when the state word is clear, set it and clear
+// the anim flag (retail bare BtlDmg_CursorActivate).
+void BtlDmg_CursorActivate(CPcSelectCursor01* self) {
+    if (self->field_0x2C != 0) {
+        return;
+    }
+    self->field_0x2C = 1;
+    self->field_0x28 = 0;
+}
+
+void BtlDmg_CursorToState3(CPcSelectCursor01* self) {
     if (self->field_0x2C != 2) {
         return;
     }
@@ -538,7 +549,7 @@ void func_8010A710(CPcSelectCursor01* self) {
 
 // Cursor state machine: state 2 -> 4, enabling the second anim and
 // disabling the others.
-void func_8010A7A8(CPcSelectCursor01* self) {
+void BtlDmg_CursorToState4(CPcSelectCursor01* self) {
     if (self->field_0x2C != 2) {
         return;
     }
@@ -549,12 +560,20 @@ void func_8010A7A8(CPcSelectCursor01* self) {
     self->mLayout->SetAnimationEnable(self->field_0x20, true);
 }
 
-extern "C" void func_8010A67C(void* self) { ((void(*)(void*))__dt__17CMenuBattleDamageFv)((char*)self - 0x58); }
+extern "C" void BtlDmg_ThunkEventDtor(void* self) { ((void(*)(void*))__dt__17CMenuBattleDamageFv)((char*)self - 0x58); }
 
-extern "C" void func_8010A68C(void* self) { ((void(*)(void*))__dt__17CMenuBattleDamageFv)((char*)self - 0x5c); }
+extern "C" void cbRenderBefore__17CMenuBattleDamageFv(void*);
+extern "C" void BtlDmg_ThunkRenderBefore(void* self) { ((void(*)(void*))cbRenderBefore__17CMenuBattleDamageFv)((char*)self - 0x5c); }
+
+extern "C" void BtlDmg_ThunkRenderDtor(void* self) { ((void(*)(void*))__dt__17CMenuBattleDamageFv)((char*)self - 0x5c); }
 
 // Damage-number text: store the value, look up the "N_Damage" pane on the
 // layout's root and place it at (-178, 110 - 86*value, 0).
+// Cursor anim-flag getter (retail bare BtlDmg_CursorGetFlag).
+u8 BtlDmg_CursorGetFlag(CPcSelectCursor01* self) {
+    return self->field_0x28;
+}
+
 void func_8010A848(CPcSelectCursor01* self, u8 value) {
     self->field_0x29 = value;
     nw4r::lyt::Pane* pane = self->mLayout->GetRootPane()->FindPaneByName(
@@ -566,7 +585,7 @@ void func_8010A848(CPcSelectCursor01* self, u8 value) {
         lbl_eu_80666F94));
 }
 
-extern "C" void func_8010A8E4(CPcSelectCursor01* self) {
+extern "C" void BtlDmg_CursorReset(CPcSelectCursor01* self) {
     self->field_0x2C = 0;
     self->mAnim1->SetFrame(lbl_eu_80666F94);
     self->mLayout->Animate();
@@ -605,7 +624,7 @@ void func_8010A940(CMenuBattleDamageQueue* self, u32 v0, u32 v1, u32 v2) {
 // Draw one queued damage number: find the first non-empty digit slot, write
 // its three digits into the layout panes, play the hit sound and clear it.
 // If every slot is empty, mark the queue idle.
-extern "C" void func_8010ACC4(CMenuBattleDamageQueue* self) {
+extern "C" void BtlDmg_QueueDraw(CMenuBattleDamageQueue* self) {
     for (u8 i = 0; i < 0x20; i++) {
         CMenuBattleDamageSlot& s = self->mSlots[i];
         if (s.mVal0 == 0 && s.mVal1 == 0 && s.mVal2 == 0) {
@@ -901,13 +920,13 @@ void func_801098B0(CMenuBattleDamage* self, int actorId, int value,
         } else if (flags & 0x20) {
             switch (value) {
             case 1:
-                text = func_eu_802B142C();
+                text = getErrMesText12();
                 break;
             case 2:
-                text = func_eu_802B1444();
+                text = getErrMesText13();
                 break;
             case 3:
-                text = func_eu_802B145C();
+                text = getErrMesText14();
                 break;
             }
         }

@@ -214,11 +214,11 @@ void CMenuBattleEnd::cbRenderBefore() {
 }
 
 // ---------------------------------------------------------------------------
-// func_8026F8B0 - task entry: if an instance already exists, queue the new
+// createBattleEndMenu - task entry: if an instance already exists, queue the new
 // request onto it; otherwise allocate (0xbc bytes on the work heap), construct
 // and register the battle-end screen under `parent`.
 // ---------------------------------------------------------------------------
-extern "C" CMenuBattleEnd* func_8026F8B0(CProcess* parent, CScn* scene, u8 mode,
+extern "C" CMenuBattleEnd* createBattleEndMenu(CProcess* parent, CScn* scene, u8 mode,
                                          u32 param) {
     if (lbl_eu_80664898 != 0) {
         func_8026FB0C(lbl_eu_80664898, mode, param);
@@ -329,8 +329,8 @@ extern "C" void func_8026FB0C(CMenuBattleEnd* obj, u8 flag, u32 param) {
     }
 }
 
-void func_8026FC90(void* self) { ((void(*)(void*))__dt__14CMenuBattleEndFv)((char*)self - 0x6c); }
+extern "C" void fwdBattleEndDtor6C(void* self) { ((void(*)(void*))__dt__14CMenuBattleEndFv)((char*)self - 0x6c); }
 
-void func_8026FC98(void* self) { ((void(*)(void*))cbRenderBefore__14CMenuBattleEndFv)((char*)self - 0x70); }
+extern "C" void fwdBattleEndCbRender70(void* self) { ((void(*)(void*))cbRenderBefore__14CMenuBattleEndFv)((char*)self - 0x70); }
 
-void func_8026FCA0(void* self) { ((void(*)(void*))__dt__14CMenuBattleEndFv)((char*)self - 0x70); }
+extern "C" void fwdBattleEndDtor70(void* self) { ((void(*)(void*))__dt__14CMenuBattleEndFv)((char*)self - 0x70); }

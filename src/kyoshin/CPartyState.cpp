@@ -27,17 +27,17 @@ CPartyState::CPartyState()
     field_0x57 = 0;
 }
 
-u8 CPartyState::func_801FD17C() { return field_0x30; }
+u8 CPartyState::isPartySettled() { return field_0x30; }
 
 
-u8 CPartyState::func_801FD184() { return field_0x31; }
+u8 CPartyState::isPartyIdle() { return field_0x31; }
 
-u8 CPartyState::func_801FD18C() { return field_0x57; }
+u8 CPartyState::isPartyReady() { return field_0x57; }
 
 
 // Selection page-down / left input: clamp the current member index against
 // the party size (2/3-per-row page clamp), then refresh and cue the cursor.
-extern "C" void func_801FD304(CPartyState* self) {
+extern "C" void pageDownPartySelect(CPartyState* self) {
     u8 memberCount = code80135FDC_getByte_64077();
     u8 cur = self->field_0x4C;
     s8 s = (s8)cur;
@@ -65,13 +65,13 @@ extern "C" void func_801FD304(CPartyState* self) {
     } else {
         self->field_0x4C = 2;
     }
-    func_801FD8F8((CPartyState*)self);
+    refreshPartyCursor((CPartyState*)self);
     playUISound(1);
 }
 
 // Selection page-up / right input: clamp the current member index against
 // the party size, then refresh and cue the cursor.
-extern "C" void func_801FD3D4(CPartyState* self) {
+extern "C" void pageUpPartySelect(CPartyState* self) {
     u8 memberCount = code80135FDC_getByte_64077();
     u8 cur = self->field_0x4C;
     s8 s = (s8)cur;
@@ -91,18 +91,18 @@ extern "C" void func_801FD3D4(CPartyState* self) {
     } else {
         self->field_0x4C = 1;
     }
-    func_801FD8F8((CPartyState*)self);
+    refreshPartyCursor((CPartyState*)self);
     playUISound(1);
 }
 
 // Party-select cancel (page-back): reset the highlight slot, refresh, and cue
-// the cancel sound; busy-slot checks match func_801FD604.
-extern "C" void func_801FD48C(CPartyState* self) {
+// the cancel sound; busy-slot checks match confirmPartySelect.
+extern "C" void cancelPartySelect(CPartyState* self) {
     u8 highlight = self->field_0x4D;
     if ((s8)highlight < 0) {
         self->field_0x4E = 1;
         self->field_0x4D = -1;
-        func_801FD8F8(self);
+        refreshPartyCursor(self);
         playUISound(3);
         return;
     }
@@ -123,17 +123,17 @@ extern "C" void func_801FD48C(CPartyState* self) {
             return;
         }
     }
-    func_801FE0C8(self);
-    func_801FD8F8(self);
+    swapPartyMembers(self);
+    refreshPartyCursor(self);
     playUISound(0x11);
     return;
 same:
     self->field_0x4D = -1;
-    func_801FD8F8(self);
+    refreshPartyCursor(self);
     playUISound(6);
 }
 
-u32 CPartyState::func_801FD580() {
+u32 CPartyState::isPartyHighlightSet() {
     s8 val = field_0x4D;
     // Match rlwinm extraction of sign bit followed by xori
     return ((u32)(val >> 31) & 1) ^ 1;
@@ -141,7 +141,7 @@ u32 CPartyState::func_801FD580() {
 
 extern "C" void func_801FD594(void* self) {
     *(s8*)((u8*)self + 0x4D) = -1;
-    func_801FD8F8((CPartyState*)self);
+    refreshPartyCursor((CPartyState*)self);
     playUISound(6);
 }
 
@@ -152,18 +152,18 @@ extern "C" int func_801FD5C4(void* self) {
     return (a - b) != 0 ? 1 : 2;
 }
 
-u8 CPartyState::func_801FD5F4() { return field_0x4E; }
+u8 CPartyState::isPartyCloseRequested() { return field_0x4E; }
 
-u8 CPartyState::func_801FD5FC() { return field_0x4C; }
+u8 CPartyState::getPartySelectIndex() { return field_0x4C; }
 
 // Party-select confirm: swap the highlighted member (0x4D) into the current
 // slot (0x4C). Refuses when the target slot's character is busy (+0x176C==1);
 // a stale highlight (< 0) is re-seeded from the current slot instead.
-extern "C" void func_801FD604(CPartyState* self) {
+extern "C" void confirmPartySelect(CPartyState* self) {
     u8 highlight = self->field_0x4D;
     if ((s8)highlight < 0) {
         self->field_0x4D = self->field_0x4C;
-        func_801FD8F8(self);
+        refreshPartyCursor(self);
         playUISound(2);
         return;
     }
@@ -184,29 +184,29 @@ extern "C" void func_801FD604(CPartyState* self) {
             return;
         }
     }
-    func_801FE0C8(self);
-    func_801FD8F8(self);
+    swapPartyMembers(self);
+    refreshPartyCursor(self);
     playUISound(0x11);
     return;
 same:
     self->field_0x4D = -1;
-    func_801FD8F8(self);
+    refreshPartyCursor(self);
     playUISound(6);
 }
 
 // Refresh the party-select cursor: format each slot's pane name, look up the
 // pane, accumulate its translate, and move the cursor sub-panes onto it.
-extern "C" __declspec(noinline) void func_801FD8F8(CPartyState* self) {
+extern "C" __declspec(noinline) void refreshPartyCursor(CPartyState* self) {
     char buf[0x28];
     sprintf(buf, lbl_eu_80507D40, self->field_0x4F[(s8)self->field_0x4C]);
     nw4r::lyt::Pane* pane = self->mLayout->GetRootPane()->FindPaneByName(buf, true);
     nw4r::math::VEC3 tmp;
     func_801375A0(&tmp, pane);
     if ((s8)self->field_0x4C < 3) {
-        func_801D2C80(&self->mCur22, &tmp, 2);
+        Cur_PlacePaneByIndex(&self->mCur22, &tmp, 2);
         func_801D2BFC(&self->mCur22, 2);
     } else {
-        func_801D2C80(&self->mCur22, &tmp, 3);
+        Cur_PlacePaneByIndex(&self->mCur22, &tmp, 3);
         func_801D2BFC(&self->mCur22, 3);
     }
     if ((s8)self->field_0x4D >= 0) {
@@ -216,10 +216,10 @@ extern "C" __declspec(noinline) void func_801FD8F8(CPartyState* self) {
         func_801375A0(&tmp2, pane2);
         tmp = tmp2;
         if ((s8)self->field_0x4D < 3) {
-            func_801D2C80(&self->mCur22, &tmp, 0);
+            Cur_PlacePaneByIndex(&self->mCur22, &tmp, 0);
             func_801D2CF4(&self->mCur22, 0, 1);
         } else {
-            func_801D2C80(&self->mCur22, &tmp, 1);
+            Cur_PlacePaneByIndex(&self->mCur22, &tmp, 1);
             func_801D2CF4(&self->mCur22, 1, 1);
         }
     }
@@ -228,7 +228,7 @@ extern "C" __declspec(noinline) void func_801FD8F8(CPartyState* self) {
 // Party-state panel advance (opening): when the +0x20 anim transform reaches
 // the target frame, bind the panel anims and move to state 2.
 // DECOMP_DONT_INLINE: retail calls these helpers through real `bl`s from
-// func_801FCFF4; -inline auto would otherwise inline them into the switch.
+// advancePartyPanel; -inline auto would otherwise inline them into the switch.
 extern "C" __declspec(noinline) void func_801FD6F0(CPartyState* self) {
     float target = lbl_eu_80668218;
     if (advanceAnimTransform(self->mAnimTrans1, target) != 0) {
@@ -242,7 +242,7 @@ extern "C" __declspec(noinline) void func_801FD6F0(CPartyState* self) {
 // sound state, rebuild the state panel, and reset the visibility flags.
 // DECOMP_DONT_INLINE: retail calls these helpers through real `bl`s; -inline
 // auto would otherwise inline them into OnFileEvent and blow the split.
-extern "C" __declspec(noinline) void func_801FD8A0(CPartyState* self) {
+extern "C" __declspec(noinline) void refreshPartyPanel(CPartyState* self) {
     if (self->mLayout != 0) {
         func_80139198(0);
         func_801FDA7C(self);
@@ -267,8 +267,8 @@ extern "C" __declspec(noinline) void func_801FD76C(CPartyState* self) {
     if (advanceAnimTransform(self->mAnimTrans0, lbl_eu_80668218) != 0) {
         self->field_0x2C = 3;
         self->field_0x31 = 1;
-        func_801D216C(&self->mCur22, 1);
-        func_801FD8F8((CPartyState*)self);
+        Cur_SetVisible(&self->mCur22, 1);
+        refreshPartyCursor((CPartyState*)self);
     }
 }
 
@@ -309,13 +309,13 @@ extern "C" void func_801FD220(CPartyState* self) {
     } else {
         self->field_0x4C = (u8)(cur - 1);
     }
-    func_801FD8F8((CPartyState*)self);
+    refreshPartyCursor((CPartyState*)self);
     playUISound(1);
 }
 
 // Selection confirm: swap the party member at the highlight slot (0x4D) with
 // the selected member (0x4C), reset the highlight, refresh, and mark ready.
-extern "C" __declspec(noinline) void func_801FE0C8(CPartyState* self) {
+extern "C" __declspec(noinline) void swapPartyMembers(CPartyState* self) {
     int* party = CtrlObjectParam_GetSlotTableBase();
     // (u8) result cast instead of `& 0xFF` — same mask, different VR birth.
     u8 slotA = (u8)GetCollectedFlagByte((u8)self->field_0x4D);
@@ -358,7 +358,7 @@ extern "C" __declspec(noinline) void func_801FE20C(CPartyState* self, u32 member
         float tmp[2];
         TagCopyVec2f(tmp, const_cast<float*>(&pane->GetSize().width));
         tmp[0] = lbl_eu_80668234 * ratio;
-        func_80124288(pane, tmp);
+        writePanePos(pane, tmp);
     }
 }
 
@@ -415,7 +415,7 @@ extern "C" __declspec(noinline) void func_801FDA7C(CPartyState* self) {
         sprintf(buf78, strs, slotByte);
         if ((u32)i >= count) {
             nw4r::lyt::Pane* pane = self->mLayout->GetRootPane()->FindPaneByName(buf78, true);
-            func_80124270(pane, 0);
+            setPaneVisible(pane, 0);
             continue;
         }
         u8 member = GetCollectedFlagByte(i);
@@ -447,7 +447,7 @@ extern "C" __declspec(noinline) void func_801FDA7C(CPartyState* self) {
         func_801FE20C(self, member, buf78);
         sprintf(buf78, strs + 0x6c, slotByte);
         // Retail converts the two counters via unsigned-int-to-float.
-        func_801FE39C(self, (float)v3, (float)v4, member, (u32)buf78);
+        positionPartyPane(self, (float)v3, (float)v4, member, (u32)buf78);
 
         if (i >= 3) {
             u16 id = BdatGetU16Direct(lbl_eu_80664090, strs + 0x7d, member);
@@ -462,10 +462,10 @@ extern "C" __declspec(noinline) void func_801FDA7C(CPartyState* self) {
             u32 next = i + 1;
             sprintf(buf78, strs + 0x95, next);
             nw4r::lyt::Pane* pane = self->mLayout->GetRootPane()->FindPaneByName(buf78, true);
-            if (data2->field_0x176C == 1 || func_8009CF8C(0x3356) == 0) {
-                func_80124270(pane, 0);
+            if (data2->field_0x176C == 1 || CtrlRemote_TouchBitByArg(0x3356) == 0) {
+                setPaneVisible(pane, 0);
             } else {
-                func_80124270(pane, 1);
+                setPaneVisible(pane, 1);
                 sprintf(buf78, strs + 0xa4, member, data2->slotArea.field_0x3DD0 + 1);
                 u32 tex = (u32)self->mArcResAcc->GetResource(0x74696D67, buf78, 0);
                 if (tex != 0) {
@@ -481,7 +481,7 @@ extern "C" __declspec(noinline) void func_801FDA7C(CPartyState* self) {
         if ((u32)(u8)k >= count2) {
             sprintf(buf38, strs + 0xd0, k + 1);
             nw4r::lyt::Pane* pane = self->mLayout->GetRootPane()->FindPaneByName(buf38, true);
-            func_80124270(pane, 0);
+            setPaneVisible(pane, 0);
             continue;
         }
         u8 m2 = GetCollectedFlagWord8(k);
@@ -500,7 +500,7 @@ extern "C" __declspec(noinline) void func_801FDA7C(CPartyState* self) {
 // bind them to the panel's text panes. The timer >> 12 is the minute counter
 // (clamped to 99/999); the low field (raw >> 6 & 0x3f, max 59) is the seconds.
 extern "C" __declspec(noinline) void func_801FE154(CPartyState* self) {
-    u32 raw = func_8006A80C();
+    u32 raw = CfT_FrameTimerGet();
     u32 t = raw >> 12;
     char buf[8];
     if (t > 0x63) {
@@ -522,7 +522,7 @@ extern "C" __declspec(noinline) void func_801FE154(CPartyState* self) {
 // Position a party panel pane by name: compute a ratio (0 when either input
 // is zero), index a 5-float position table by it, and write the pane's X
 // translate (Y/Z kept from the pane's size field). arg4 is unused.
-extern "C" __declspec(noinline) void func_801FE39C(CPartyState* self, float f1, float f2, u32 arg4, u32 name) {
+extern "C" __declspec(noinline) void positionPartyPane(CPartyState* self, float f1, float f2, u32 arg4, u32 name) {
     u32 flag = 0;
     if (f1 != lbl_eu_80668230 && f2 != lbl_eu_80668230) {
         flag = 1;
@@ -542,7 +542,7 @@ extern "C" __declspec(noinline) void func_801FE39C(CPartyState* self, float f1, 
         float tmp[2];
         TagCopyVec2f(tmp, reinterpret_cast<float*>(reinterpret_cast<u8*>(pane) + 0x4c));
         tmp[0] = value;
-        func_80124288(pane, tmp);
+        writePanePos(pane, tmp);
     }
 }
 
@@ -630,7 +630,7 @@ bool CPartyState::OnFileEvent(CEventFile* pEventFile) {
         __dt__6CCur22Fv(&tmp, -1);
         reinterpret_cast<CPartyStateCur*>(&mCur22)->vfn0();
 
-        func_801FD8A0(this);
+        refreshPartyPanel(this);
         mFileHandle = 0;
         mMemRegion.func_8045F810();
         return true;
@@ -641,7 +641,7 @@ bool CPartyState::OnFileEvent(CEventFile* pEventFile) {
 // Start the async read of the party-state layout arc. The alloc region is
 // picked by file size: MEM1 when small, the common-archive MEM2 region for
 // mid sizes, plain MEM2 otherwise.
-extern "C" void func_801FCF5C(CPartyState* self) {
+extern "C" void loadPartyLayoutArc(CPartyState* self) {
     int fileSize = getFileSize__11CDeviceFileFPCc(lbl_eu_80662728, 1);
     int mem1Max = (int)mtl::MemManager::getMaxAllocSize(mtl::MemManager::getHandleMEM1());
     int mem2Max = (int)mtl::MemManager::getMaxAllocSize(Scn_CallUnk8C_V9(lbl_eu_80663E14));
@@ -658,7 +658,7 @@ extern "C" void func_801FCF5C(CPartyState* self) {
 
 // Party-state panel advance: dispatch the per-state animation step, then
 // re-animate the layout and update the embedded cursor.
-extern "C" void func_801FCFF4(CPartyState* self) {
+extern "C" void advancePartyPanel(CPartyState* self) {
     if (self->field_0x28 != 0) {
         func_801FE154(self);
         switch (self->field_0x2C) {
@@ -691,7 +691,7 @@ void drawLayout(nw4r::lyt::Layout*, nw4r::lyt::DrawInfo*, int, int);
 extern "C" void func_801FD0A0(CPartyState* self, nw4r::lyt::DrawInfo* drawInfo) {
     if (self->field_0x28 != 0) {
         drawLayout(self->mLayout, drawInfo, 0, 1);
-        func_801D20B0(&self->mCur22, drawInfo);
+        Cur_DrawLayout(&self->mCur22, drawInfo);
     }
 }
 #pragma optimize_for_size off
@@ -723,14 +723,14 @@ extern "C" void func_801FD290(CPartyState* self) {
             self->field_0x4C = 3;
         }
     }
-    func_801FD8F8((CPartyState*)self);
+    refreshPartyCursor((CPartyState*)self);
     playUISound(1);
 }
 
 // Teardown: release the file handle, destroy the bound layout, release the
 // arc accessor, stop the embedded cursor, and tear down the scratch memory
 // region. The double null-check below is retail: `delete` re-checks the
-// pointer (see the matched CBgTex::func_801C3D9C for the same shape).
+// pointer (see the matched CBgTex::BgTex_Release_3D9C for the same shape).
 extern "C" void func_801FD0F4(CPartyState* self) {
     func_801390E0(&self->mFileHandle);
     nw4r::lyt::Layout* layout = self->mLayout;

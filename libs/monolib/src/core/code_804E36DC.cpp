@@ -29,7 +29,7 @@ struct CScheduleFlags {
 // ---------------------------------------------------------------------------
 
 // us-804e8224: initialize a pool item (all slots closed).
-extern "C" void func_804E3D88(CScheduleItem* item) {
+extern "C" void schedClearItemSlots(CScheduleItem* item) {
     item->mEntryData = NULL;
     item->mOwner = NULL;
     item->mFlags = 0;
@@ -42,9 +42,9 @@ extern "C" void func_804E3D88(CScheduleItem* item) {
 }
 
 // us-804e82c8: release every slot and clear the item.
-extern "C" void func_804E3E2C(CScheduleItem* item) {
+extern "C" void schedReleaseItemSlots(CScheduleItem* item) {
     for (int i = 0; i < 32; i++) {
-        func_804DFE20(item->mSlots[i]);
+        SchedFx_ReleaseHandle(item->mSlots[i]);
         item->mSlots[i] = -1;
     }
     item->mEntryData = NULL;
@@ -56,7 +56,7 @@ extern "C" void func_804E3E2C(CScheduleItem* item) {
 }
 
 // us-804e8350: bind an entry blob slice to the item.
-extern "C" int func_804E3EB4(CScheduleItem* item, u8* base,
+extern "C" int schedInitItemFromData(CScheduleItem* item, u8* base,
                              const CScheduleEntryData* data, CSchedule* owner) {
     item->mLifetime = data->mLifetime;
     u16 offset = data->mOffset;
@@ -86,9 +86,9 @@ extern "C" void func_804E3FB0(CScheduleItem* item, ScheduleEntry* entries,
         item->mSlots[count] = handle;
         if (handle >= 0) {
             if (slotIndex >= 0) {
-                CEffectObj* obj = func_804DFEAC(slotVal);
+                CEffectObj* obj = SchedFx_FetchByHandle(slotVal);
                 if (obj != NULL) {
-                    obj = func_804DFEAC(slotVal);
+                    obj = SchedFx_FetchByHandle(slotVal);
                     obj->mFlags1C |= 0x2000;
                 }
             }
@@ -105,21 +105,21 @@ extern "C" void func_804E4094(CScheduleItem* item, f32 delta) {
         return;
     }
     for (int i = 0; i < 32; i++) {
-        CEffectObj* obj = func_804DFEAC(item->mSlots[i]);
+        CEffectObj* obj = SchedFx_FetchByHandle(item->mSlots[i]);
         if (obj != NULL) {
             if (obj->mFlags1C & 0x8000) {
                 func_804C8D90(obj, delta);
             } else {
                 int referenced = 0;
                 for (int j = 0; j < item->mCount; j++) {
-                    CEffectObj* other = func_804DFEAC(item->mSlots[j]);
+                    CEffectObj* other = SchedFx_FetchByHandle(item->mSlots[j]);
                     if (other != NULL && other->mField20 == item->mSlots[i]) {
                         referenced = 1;
                         break;
                     }
                 }
                 if (!referenced) {
-                    func_804DFE20(item->mSlots[i]);
+                    SchedFx_ReleaseHandle(item->mSlots[i]);
                     item->mSlots[i] = -1;
                     if (item->mCount != 0) {
                         item->mCount--;
@@ -129,15 +129,15 @@ extern "C" void func_804E4094(CScheduleItem* item, f32 delta) {
         }
     }
     for (int i = 0; i < 32; i++) {
-        CEffectObj* obj = func_804DFEAC(item->mSlots[i]);
+        CEffectObj* obj = SchedFx_FetchByHandle(item->mSlots[i]);
         if (obj != NULL) {
-            func_804C9D24(obj);
+            EffSys_AdvanceChain(obj);
         }
     }
 }
 
 // us-804e8390: per-frame item step used by CSchedule::func_804E39E8.
-extern "C" DECOMP_DONT_INLINE int func_804E3EF4(CScheduleItem* item, f32 time, f32 delta,
+extern "C" DECOMP_DONT_INLINE int schedTickItemLifetime(CScheduleItem* item, f32 time, f32 delta,
                              ScheduleEntry* entries, CSchedule* sched) {
     if (!((item->mFlags >> 7) & 1)) {
         func_804E3FB0(item, entries, sched);
@@ -153,20 +153,20 @@ extern "C" DECOMP_DONT_INLINE int func_804E3EF4(CScheduleItem* item, f32 time, f
 }
 
 // us-804e8650: emit/update all slot objects (two passes).
-extern "C" DECOMP_DONT_INLINE void func_804E41B4(CScheduleItem* item) {
+extern "C" DECOMP_DONT_INLINE void schedReleaseItemObjects(CScheduleItem* item) {
     if (item->mCount == 0) {
         return;
     }
     for (int i = 0; i < 32; i++) {
-        CEffectObj* obj = func_804DFEAC(item->mSlots[i]);
+        CEffectObj* obj = SchedFx_FetchByHandle(item->mSlots[i]);
         if (obj != NULL) {
             func_804C9D30(obj);
         }
     }
     for (int i = 0; i < 32; i++) {
-        CEffectObj* obj = func_804DFEAC(item->mSlots[i]);
+        CEffectObj* obj = SchedFx_FetchByHandle(item->mSlots[i]);
         if (obj != NULL) {
-            func_804CAA94(obj);
+            EffObj_StepNode(obj);
         }
     }
 }
@@ -178,7 +178,7 @@ extern "C" DECOMP_DONT_INLINE void func_804E424C(CScheduleItem* item, f32 delta,
     }
     CEffectObj* obj;
     for (int i = 0; i < 32; i++) {
-        obj = func_804DFEAC(item->mSlots[i]);
+        obj = SchedFx_FetchByHandle(item->mSlots[i]);
         if (obj != NULL && obj->mField2E > 0) {
             void* arg = func_804CB5FC(obj);
             func_804DF808(sched, arg, obj, delta);
@@ -240,9 +240,9 @@ extern "C" void func_804E36DC(CSchedule* self, f32 dt) {
             func_804E39E8(self, (f32)denom);
             if (self->mEntryCount != 0) {
                 for (int j = 0; j < 32; j++) {
-                    CScheduleItem* item = (CScheduleItem*)func_804DFBF4(self->mHandles[j]);
+                    CScheduleItem* item = (CScheduleItem*)SchedItem_FetchByHandle(self->mHandles[j]);
                     if (item != NULL) {
-                        func_804E41B4(item);
+                        schedReleaseItemObjects(item);
                     }
                 }
             }
@@ -261,9 +261,9 @@ extern "C" void func_804E39E8(CSchedule* self, f32 delta) {
     }
     self->field_0xd9 = 0;
     for (int i = 0; i < 32; i++) {
-        CScheduleItem* item = (CScheduleItem*)func_804DFBF4(self->mHandles[i]);
+        CScheduleItem* item = (CScheduleItem*)SchedItem_FetchByHandle(self->mHandles[i]);
         if (item != NULL) {
-            if (func_804E3EF4(item, self->field_0x54, delta, self->mEntries, self) != 0) {
+            if (schedTickItemLifetime(item, self->field_0x54, delta, self->mEntries, self) != 0) {
                 self->field_0xd9++;
             }
         }
@@ -273,7 +273,7 @@ extern "C" void func_804E39E8(CSchedule* self, f32 delta) {
         if (self->mEntryCount != 0) {
             for (int i = 0; i < 32; i++) {
                 if (self->mHandles[i] >= 0) {
-                    func_804DFB88(self->mHandles[i]);
+                    SchedItem_ReleaseHandle(self->mHandles[i]);
                     self->mHandles[i] = -1;
                 }
             }
@@ -284,14 +284,14 @@ extern "C" void func_804E39E8(CSchedule* self, f32 delta) {
 }
 
 // us-804e7fa4: emit/update every resolved item.
-extern "C" void func_804E3B08(CSchedule* self) {
+extern "C" void schedReleaseAllItems(CSchedule* self) {
     if (self->mEntryCount == 0) {
         return;
     }
     for (int i = 0; i < 32; i++) {
-        CScheduleItem* item = (CScheduleItem*)func_804DFBF4(self->mHandles[i]);
+        CScheduleItem* item = (CScheduleItem*)SchedItem_FetchByHandle(self->mHandles[i]);
         if (item != NULL) {
-            func_804E41B4(item);
+            schedReleaseItemObjects(item);
         }
     }
 }
@@ -314,7 +314,7 @@ extern "C" void func_804E3B6C(CSchedule* self) {
         dist = PSVECMag(diff);
     }
     for (int i = 0; i < 32; i++) {
-        CScheduleItem* item = (CScheduleItem*)func_804DFBF4(self->mHandles[i]);
+        CScheduleItem* item = (CScheduleItem*)SchedItem_FetchByHandle(self->mHandles[i]);
         if (item != NULL) {
             func_804E424C(item, dist, self);
         }
@@ -322,13 +322,13 @@ extern "C" void func_804E3B6C(CSchedule* self) {
 }
 
 // us-804e8168: clear the retired flag and notify listeners.
-extern "C" void func_804E3CCC(CSchedule* self) {
+extern "C" void schedClearFlag15Update(CSchedule* self) {
     ((CScheduleFlags*)&self->field_0x00)->b15 = 0;
-    func_804E536C(self);
+    SchedList_DropBoth(self);
 }
 
 // us-804e8178: set the fixed-timestep accumulator/interval (non-zero only).
-extern "C" void func_804E3CDC(CSchedule* self, f32 accumulator, f32 interval) {
+extern "C" void schedSetStepIntervals(CSchedule* self, f32 accumulator, f32 interval) {
     if (accumulator == lbl_eu_8066B2E4) {
         return;
     }
@@ -340,12 +340,12 @@ extern "C" void func_804E3CDC(CSchedule* self, f32 accumulator, f32 interval) {
 }
 
 // us-804e8198: look up an entry by key.
-extern "C" void* func_804E3CFC(CSchedule* self) {
-    return func_804DF2F0(self->field_0x0c, self->mEntries);
+extern "C" void* schedFindEntryByKey(CSchedule* self) {
+    return SchedRes_FindValueByKey(self->field_0x0c, self->mEntries);
 }
 
 // us-804e81a8: register a child in the first free child slot.
-extern "C" void func_804E3D0C(CSchedule* self, CScheduleChild* child) {
+extern "C" void schedAttachChildSlot(CSchedule* self, CScheduleChild* child) {
     for (int i = 0; i < 4; i++) {
         if (self->mChildren[i] == NULL) {
             self->mChildren[i] = child;
@@ -355,7 +355,7 @@ extern "C" void func_804E3D0C(CSchedule* self, CScheduleChild* child) {
 }
 
 // us-804e81e4: unregister a child.
-extern "C" void func_804E3D48(CSchedule* self, CScheduleChild* child) {
+extern "C" void schedDetachChildSlot(CSchedule* self, CScheduleChild* child) {
     for (int i = 0; i < 4; i++) {
         if (self->mChildren[i] == child) {
             self->mChildren[i] = NULL;

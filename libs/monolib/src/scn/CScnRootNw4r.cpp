@@ -10,7 +10,7 @@
 
 extern "C" u32 lbl_eu_8056E768[23];  // CScnRootNw4r vtable group (.data, below)
 
-void* func_8048FDDC(u8* self) { return (void*)((u8*)self + 0x44c); }
+void* RootNw4r_Ptr44C(u8* self) { return (void*)((u8*)self + 0x44c); }
 
 // us-804933ac: complete destructor. Restores both retail vptrs by hand
 // (primary + IScnObjCallback secondary at +0xC), drains every remaining
@@ -67,20 +67,20 @@ CScnRootNw4r::~CScnRootNw4r() {
 }
 
 
-extern "C" void* func_8048FDE4(u8* self) { return (void*)((u8*)self + 0x45c); }
+extern "C" void* RootNw4r_Ptr45C(u8* self) { return (void*)((u8*)self + 0x45c); }
 
 
-extern "C" void* func_8048FDEC(u8* self) {
+extern "C" void* RootNw4r_SelPtr46C(u8* self) {
     if (*(u32*)((u8*)self + 0x4C4) == 0xFFFFFFFF) return (u8*)self + 0x44C;
     return (u8*)self + 0x46C;
 }
 
-extern "C" void* func_8048FE0C(u8* self) {
+extern "C" void* RootNw4r_SelPtr47C(u8* self) {
     if (*(u32*)((u8*)self + 0x4D0) == 0xFFFFFFFF) return (u8*)self + 0x44C;
     return (u8*)self + 0x47C;
 }
 
-extern "C" void* func_8048FE2C(u8* self) { return (void*)((u8*)self + 0x49c); }
+extern "C" void* RootNw4r_Ptr49C(u8* self) { return (void*)((u8*)self + 0x49c); }
 
 // us-80493ea8: allocate `size` bytes from the scene-root allocator.
 // Falls back to the MEM2 region when the current region cannot hold size*2.
@@ -101,7 +101,7 @@ void* func_8048FE34(CScnRootNw4r* self, u32 size) {
 }
 
 // us-80493f38: deallocate a buffer unless it is null.
-void func_8048FEC4(CScnRootNw4r* self, u8* p) {
+void RootNw4r_FreeBuf(CScnRootNw4r* self, u8* p) {
     if (p != 0) {
         mtl::MemManager::deallocate(p);
     }
@@ -144,7 +144,7 @@ extern "C" void func_8048FFBC(CScnRootNw4r* self, u32 a, s32 b) {
     }
 }
 
-extern "C" u32 func_80490038(u8* self) { return *(u32*)((u8*)self + 0x14); }
+extern "C" u32 RootNw4r_GetField14(u8* self) { return *(u32*)((u8*)self + 0x14); }
 
 // us-804940b4: return the +0x4B8 alloc handle, creating it lazily through
 // the virtual at vtable+0x2C when it is still invalid (-1).
@@ -162,9 +162,9 @@ extern "C" u32 func_80490040(CScnRootNw4r* self) {
     return handle;
 }
 
-extern "C" void func_80490088(u8* self) { ((void(*)(void*))func_8048FED8)((char*)self - 0xc); }
+extern "C" void RootNw4r_ThunkFED8(u8* self) { ((void(*)(void*))func_8048FED8)((char*)self - 0xc); }
 
-extern "C" void func_80490090(u8* self) { ((void(*)(void*))__dt__12CScnRootNw4rFv)((char*)self - 0xc); }
+extern "C" void RootNw4r_ThunkDtor(u8* self) { ((void(*)(void*))__dt__12CScnRootNw4rFv)((char*)self - 0xc); }
 
 extern "C" u32 getScnCounter__Fv(void) {
     extern u32 lbl_eu_806639A8;
@@ -322,7 +322,7 @@ s32 func_8048F7A8(CScnRootNw4r* self, CScnCamLayout* cam) {
 
 // us-8049395c: update the nw4r scene root (animation/world/material), then
 // flag the frame as drawn.
-extern "C" void func_8048F8E8(CScnRootNw4r* self) {
+extern "C" void RootNw4r_UpdateFrame(CScnRootNw4r* self) {
     if (self->mScnRoot == NULL) {
         return;
     }
@@ -374,8 +374,8 @@ extern "C" void func_8048F994(CScnRootNw4r* self) {
     }
 
     func_804C22F0(self->field_0x4->mEnvLgtCtrl);
-    func_8048D1B0(self->field_0x4->mLightMan);
-    func_8049DE70(self->field_0x4->mFogMan);
+    LightManInvokeLightV3(self->field_0x4->mLightMan);
+    FogManIsFogEnabled(self->field_0x4->mFogMan);
     CScnItemPool_forEachCallVfunc14(self->field_0x4->mItemPool);
 
     self->mScnRoot->CalcView();
@@ -408,7 +408,7 @@ extern "C" void func_8048FAA8(CScnRootNw4r* self, int flag) {
         resetGXStateA__8CGXCacheFv(CDeviceGX::getCacheInstance());
         updateViewRoot__9CViewRootFv();
 
-        if (func_8048D264(self->field_0x4) != 0) {
+        if (MaruShadowSetupTexturePipe(self->field_0x4) != 0) {
             for (CScnDrawNode* node = list->mStartNodePtr->mNext;
                  node != list->mStartNodePtr; node = node->mNext) {
                 if (node->mItem->hook != NULL) {
@@ -507,7 +507,7 @@ void func_8048FC68(CScnRootNw4r* self) {
 // ExecCallback_* names are splitter-shortened nw4r template symbols.
 extern "C" u32 lbl_eu_806639A0;
 extern "C" u32 lbl_eu_80663998;
-extern "C" void func_8048F2F0();
+extern "C" void getScnRootGroupHandle();
 extern "C" void scnImN4GetWord4AC();
 extern "C" void ExecCallback_CALC_MAT__Q34nw4r3g3d15IScnObjCallbackFQ44nw4r3g3d6ScnObj6TimingPQ34nw4r3g3d6ScnObjUlPv();
 extern "C" void ExecCallback_CALC_VIEW__Q34nw4r3g3d15IScnObjCallbackFQ44nw4r3g3d6ScnObj6TimingPQ34nw4r3g3d6ScnObjUlPv();
@@ -518,19 +518,19 @@ extern "C" u32 lbl_eu_8056E768[23] = {
     (u32)&__dt__12CScnRootNw4rFv,
     (u32)&func_8048F5C8,
     (u32)&func_8048F4D0,
-    (u32)&func_8048F8E8,
+    (u32)&RootNw4r_UpdateFrame,
     (u32)&func_8048F994,
     (u32)&func_8048FC68,
     (u32)&func_8048FF90,
     (u32)&func_8048FFBC,
-    (u32)&func_8048F2F0,
+    (u32)&getScnRootGroupHandle,
     (u32)&scnImN4GetWord4AC,
     (u32)&func_80490040,
-    (u32)&func_80490038,
+    (u32)&RootNw4r_GetField14,
     (u32)&lbl_eu_806639A0,
     0xFFFFFFF4,
-    (u32)&func_80490090,
-    (u32)&func_80490088,
+    (u32)&RootNw4r_ThunkDtor,
+    (u32)&RootNw4r_ThunkFED8,
     (u32)&ExecCallback_CALC_MAT__Q34nw4r3g3d15IScnObjCallbackFQ44nw4r3g3d6ScnObj6TimingPQ34nw4r3g3d6ScnObjUlPv,
     (u32)&ExecCallback_CALC_VIEW__Q34nw4r3g3d15IScnObjCallbackFQ44nw4r3g3d6ScnObj6TimingPQ34nw4r3g3d6ScnObjUlPv,
     (u32)&ExecCallback_DRAW_OPA__Q34nw4r3g3d15IScnObjCallbackFQ44nw4r3g3d6ScnObj6TimingPQ34nw4r3g3d6ScnObjUlPv,

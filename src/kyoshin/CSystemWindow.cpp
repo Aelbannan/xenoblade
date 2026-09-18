@@ -141,7 +141,7 @@ void CSystemWindow::Init() {
 
 void CSystemWindow::Term() {
     CDeviceVI::waitForDrawDone();
-    func_8022B7F4(&mSysWin[0]);
+    sysWinTermLayout(&mSysWin[0]);
 
     lbl_eu_80663FD8 = 0;
 
@@ -168,7 +168,7 @@ void CSystemWindow::Move() {
             mState = 1;
             func_8022B9B4(&mSysWin[0], &mStr1[0], &mStr2[0]);
             func_8022BFC8(&mSysWin[0], 1);
-            func_8022B8B8(&mSysWin[0]);
+            sysWinOpenPhase1(&mSysWin[0]);
         }
         break;
     }
@@ -188,7 +188,7 @@ void CSystemWindow::Move() {
             confirmBtn = (pad->mPressedButtonFlags >> 4) & 1;
         if (confirmBtn != 0) {
             mState = 3;
-            func_8022B8E4(&mSysWin[0]);
+            sysWinAdvancePhase3(&mSysWin[0]);
             playUISound(3);
         }
         break;
@@ -202,7 +202,7 @@ void CSystemWindow::Move() {
         break;
     }
 
-    func_8022B748(&mSysWin[0]);
+    sysWinDispatchPhase(&mSysWin[0]);
 }
 
 
@@ -219,13 +219,13 @@ void CSystemWindow::cbRenderBefore() {
     u8 drawInfo[0x54];
     __ct__Q34nw4r3lyt8DrawInfoFv(&drawInfo[0]);
     func_80137250((nw4r::lyt::DrawInfo*)&drawInfo[0]);
-    func_8022B7C8(&mSysWin[0], (nw4r::lyt::DrawInfo*)&drawInfo[0]);
+    sysWinDrawLayout(&mSysWin[0], (nw4r::lyt::DrawInfo*)&drawInfo[0]);
     __dt__Q34nw4r3lyt8DrawInfoFv(&drawInfo[0], -1);
 }
 
 // Creates the singleton CSystemWindow on the work heap and registers it as a
 // CProcess under `parent`. Returns 0 if the singleton already exists.
-CSystemWindow* func_80124AEC(CProcess* parent, CScn* scene, u32 opt,
+CSystemWindow* SysWinCreateSingleton(CProcess* parent, CScn* scene, u32 opt,
                              const char* str1, const char* str2) {
     if (lbl_eu_80663FD8 != 0) return 0;
 
@@ -241,6 +241,6 @@ CSystemWindow* func_80124AEC(CProcess* parent, CScn* scene, u32 opt,
 }
 
 /* Returns the singleton CSystemWindow instance (lbl_eu_80663FD8 in .sbss). */
-CSystemWindow* func_80124B78() {
+CSystemWindow* SysWinGetSingleton() {
     return lbl_eu_80663FD8;
 }

@@ -4,27 +4,27 @@
 #include "kyoshin/harness_catalog.hpp"
 #include "kyoshin/CModelDisp.hpp"
 // CfObjectImplMove.hpp (via harness_catalog) now declares canonical extern "C"
-// void* forms of CTaskGame_enumListCtor/CTaskGame_enumListGet/func_800F4A98; CModelDispEquip.hpp
+// void* forms of CTaskGame_enumListCtor/CTaskGame_enumListGet/startEnumObjects; CModelDispEquip.hpp
 // re-declares them with typed prototypes, which MWCC rejects as an illegal
 // extern-"C" overload. Rename the typed decls out of the way for the include;
 // call sites below then bind to the canonical void* forms (same retail names).
 #define CTaskGame_enumListCtor dispEnumListCtor_typed
 #define CTaskGame_enumListGet dispEnumListGet_typed
-#define func_800F4A98 dispEnumListFill_typed
+#define startEnumObjects dispEnumListFill_typed
 #define __dt__80043E88 dispEnumListDtor_typed
 #define getPlayer__Q22cf13CfGameManagerFi dispGetPlayer_typed
 #include "kyoshin/menu/parts/CModelDispEquip.hpp"
 #undef CTaskGame_enumListCtor
 #undef CTaskGame_enumListGet
-#undef func_800F4A98
+#undef startEnumObjects
 #undef __dt__80043E88
 #undef getPlayer__Q22cf13CfGameManagerFi
 
 // Cross-TU calls (retail unmangled symbols; declared in CModelDisp.hpp)
 extern "C" void func_801FC3B0(CModelDisp* self);
-extern "C" __declspec(noinline) void func_801FCAC8(CModelDisp* self);
-extern "C" __declspec(noinline) void func_801FC218(CModelDisp* self);
-extern "C" __declspec(noinline) void func_801FC15C(CModelDisp* self);
+extern "C" __declspec(noinline) void ModelDispFlushSlotAnims(CModelDisp* self);
+extern "C" __declspec(noinline) void ModelDispDriveFadeIn(CModelDisp* self);
+extern "C" __declspec(noinline) void ModelDispDriveFadeOut(CModelDisp* self);
 
 // Sub-object ctor/dtor stubs (retail func_801FBEB8 / __dt__801FBF0C). Their
 // bodies are separate match targets; they exist here only so the constructor's
@@ -168,10 +168,10 @@ extern "C" void func_801FC0C4(CModelDisp* self) {
 }
 #pragma optimize_for_size off
 
-u8 func_801FC114(void* self) { return ((CModelDisp*)self)->field_2FE4; }
+u8 ModelDispGetDoneFlag(void* self) { return ((CModelDisp*)self)->field_2FE4; }
 
 // retail: if (field_2FD8 == 2) { field_2FD8 = 3; field_2FE4 = 0; }
-extern "C" void func_801FC13C(CModelDisp* self) {
+extern "C" void ModelDispStartFadeIn(CModelDisp* self) {
     if (self->field_2FD8 == 2) {
         self->field_2FD8 = 3;
         self->field_2FE4 = 0;
@@ -181,7 +181,7 @@ extern "C" void func_801FC13C(CModelDisp* self) {
 // Advances field_2FE0 by lbl_eu_806681E8 each call. When it reaches
 // lbl_eu_806681F4, decrements field_2FDC by lbl_eu_806681F8 (clamped to
 // lbl_eu_806681EC) and calls each sub-object's vmethod (+0x48).
-extern "C" __declspec(noinline) void func_801FC15C(CModelDisp* self) {
+extern "C" __declspec(noinline) void ModelDispDriveFadeOut(CModelDisp* self) {
     // Inline .sdata2 constants give the retail f-register assignment:
     // increment -> f1, threshold -> f0, timer -> f2.
     f32 t = self->field_2FE0 + lbl_eu_806681E8;
@@ -227,7 +227,7 @@ CModelDisp::~CModelDisp() {
 // Fade-in driver: advances field_2FDC toward lbl_eu_806681E8 (the target
 // value); once past it, clamps and calls each active slot's vmethod (+0x48)
 // with the current alpha.
-extern "C" __declspec(noinline) void func_801FC218(CModelDisp* self) {
+extern "C" __declspec(noinline) void ModelDispDriveFadeIn(CModelDisp* self) {
     self->field_2FDC += lbl_eu_806681F8;
     // lhs/right order matters for MWCC's fcmpo operand allocation
     if (self->field_2FDC > lbl_eu_806681E8) {
@@ -268,13 +268,13 @@ extern "C" __declspec(noinline) void func_801FC3B0(CModelDisp* self) {
         CActParamHolder* h = (CActParamHolder*)((u8*)self + i * 0xFF0 + 8);
         CModelDispListHolder holder;
         CTaskGame_enumListCtor(&holder);
-        func_800F4A98((CModelDispEnumList*)CTaskGame_enumListGet(&holder), names[i], 0);
+        startEnumObjects((CModelDispEnumList*)CTaskGame_enumListGet(&holder), names[i], 0);
         if (((CModelDispEnumList*)CTaskGame_enumListGet(&holder))->field_620 == 0) {
             func_801FC2B4(self, h);
             __dt__80043E88(&holder, -1);
             continue;
         }
-        CModelDispSlot* slot = func_800F6EC0((CModelDispEnumList*)CTaskGame_enumListGet(&holder), 0);
+        CModelDispSlot* slot = getEntryAt((CModelDispEnumList*)CTaskGame_enumListGet(&holder), 0);
         if (slot->field_04 == NULL) {
             __dt__80043E88(&holder, -1);
             continue;
@@ -332,9 +332,9 @@ extern "C" __declspec(noinline) void func_801FC3B0(CModelDisp* self) {
                     ((CModelDispSub*)((u32*)h + j))->mFlagFD0 = (bits >> 12) & 0x3FF;
                 }
             }
-            h->field_0x04 = func_800584B8((u32)self->mInitParam, actor->field_3F30,
+            h->field_0x04 = initMcaFile((u32)self->mInitParam, actor->field_3F30,
                                           (char*)lbl_eu_80507CF4);
-            h->field_0x08 = func_800584B8(
+            h->field_0x08 = initMcaFile(
                 (u32)self->mInitParam,
                 reinterpret_cast<u32>(reinterpret_cast<cf::CfObjectModel*>(&actor->move[0])->CfObjectModel_getAnimState()), nameBase + 4);
             reinterpret_cast<CActParamAnim*>(&h->actParam)->func_8004B114();
@@ -416,7 +416,7 @@ extern "C" __declspec(noinline) void func_801FC3B0(CModelDisp* self) {
                     if (mp != NULL && h->unk_55C != NULL) {
                         CActParamAnimView* ap = &h->actParams[j];
                         ap->field_0x378 = j;
-                        func_8005A594(ap);
+                        AnimGame_SetStateFlags(ap);
                         attachAnimObj(
                             ap, mp, h->unk_55C,
                             reinterpret_cast<cf::CfObjectModel*>(&actor->move[0])->CfObjectModel_getAnimFlags());
@@ -432,7 +432,7 @@ extern "C" __declspec(noinline) void func_801FC3B0(CModelDisp* self) {
             h->timer = 150;
             ((CScnItemModel*)h->field_0x00)->vfunc48(self->field_2FDC);
             ((CScnItemModel*)h->field_0x00)->vfunc9C(3, 0);
-            func_801FCAC8(self);
+            ModelDispFlushSlotAnims(self);
         } else if (h->field_0x00 != NULL && ok == false) {
             func_801FC2B4(self, h);
         }
@@ -448,7 +448,7 @@ extern "C" __declspec(noinline) void func_801FC3B0(CModelDisp* self) {
 // (-O4,p would emit individual stw/lwz pairs).
 #pragma push
 #pragma optimize_for_size on
-extern "C" void func_801FBFD8(CModelDisp* self) {
+extern "C" void ModelDispInitPoseSlots(CModelDisp* self) {
     f32 vecB[3]; // sp+0x14 in retail
     f32 vecA[3]; // sp+0x08 in retail
     // Retail keeps Scn_FindCamItem's pose and the FIRST writeVec3f dest
@@ -463,7 +463,7 @@ extern "C" void func_801FBFD8(CModelDisp* self) {
 }
 #pragma pop
 
-int func_801FCAC0(void* self) { return 0; }
+int simVtableFalse3(void* self) { return 0; }
 
 // Retail 0x801FCAC8: for each active slot, restart its chain buffer once
 // (guarded by the signed countdown at +0x550), then flush it via
@@ -471,7 +471,7 @@ int func_801FCAC0(void* self) { return 0; }
 // -O4,s keeps the stmw/lmw four-register save frame.
 #pragma push
 #pragma optimize_for_size on
-extern "C" __declspec(noinline) void func_801FCAC8(CModelDisp* self) {
+extern "C" __declspec(noinline) void ModelDispFlushSlotAnims(CModelDisp* self) {
     CModelDispSub* sub;
     for (u8 i = 0; i < 3; i++) {
         sub = (CModelDispSub*)((u8*)self + i * 0xFF0);
@@ -514,9 +514,9 @@ void func_801FCBF4(CModelDisp* self, CModelDispParent* param, s32 enable,
             names[2] = *src++;
             CModelDispListHolder holder;
             CTaskGame_enumListCtor(&holder);
-            func_800F4A98((CModelDispEnumList*)CTaskGame_enumListGet(&holder), names[i], 0);
+            startEnumObjects((CModelDispEnumList*)CTaskGame_enumListGet(&holder), names[i], 0);
             if (((CModelDispEnumList*)CTaskGame_enumListGet(&holder))->field_620 >= 1) {
-                CModelDispSlot* slot = func_800F6EC0((CModelDispEnumList*)CTaskGame_enumListGet(&holder), 0);
+                CModelDispSlot* slot = getEntryAt((CModelDispEnumList*)CTaskGame_enumListGet(&holder), 0);
                 if (slot->field_04 != NULL) {
                     CModelDispActor* actor = getCfObjectPc(slot->field_04);
                     CModelDispNameParam* res = NULL; // name param from the lookup
@@ -572,7 +572,7 @@ void func_801FCBF4(CModelDisp* self, CModelDispParent* param, s32 enable,
 extern "C" __declspec(noinline) void func_801FCB4C(CModelDisp* self, s32 enable, s32 idx, void* arg, s32 slotIdx) {
     if (enable == 0)
         return;
-    if (func_800BBC04(arg) <= 0)
+    if (CfModel_UpdateBdat(arg) <= 0)
         return;
     {
         // Slot table is addressed word-wise off the sub-object base.
@@ -587,7 +587,7 @@ extern "C" __declspec(noinline) void func_801FCB4C(CModelDisp* self, s32 enable,
 }
 #pragma pop
 
-int func_801FCBEC(void* self) { return 0; }
+int simVtableFalse4(void* self) { return 0; }
 
 #pragma push
 #pragma optimize_for_size on
@@ -613,7 +613,7 @@ void func_801FCDB4(CModelDisp* self, void* param, void* chainArg) {
 }
 #pragma pop
 
-extern "C" void func_801FC11C(void* self) {
+extern "C" void ModelDispStartFadeOut(void* self) {
     if (*(u8*)((u8*)self + 0x2FD8) != 0) return;
     *(u8*)((u8*)self + 0x2FD8) = 1;
     *(u8*)((u8*)self + 0x2FE4) = 0;
@@ -622,17 +622,17 @@ extern "C" void func_801FC11C(void* self) {
 // Defined after its callees so -ipa does not fold their bodies into this
 // dispatch (retail keeps them as separate bl calls).
 // Per-frame state dispatch on field_2FD8.
-extern "C" void func_801FC060(CModelDisp* self) {
+extern "C" void ModelDispTickState(CModelDisp* self) {
     switch (self->field_2FD8) {
     case 1:
-        func_801FC15C(self);
+        ModelDispDriveFadeOut(self);
         break;
     case 2:
         func_801FC3B0(self);
-        func_801FCAC8(self);
+        ModelDispFlushSlotAnims(self);
         break;
     case 3:
-        func_801FC218(self);
+        ModelDispDriveFadeIn(self);
         break;
     }
 }

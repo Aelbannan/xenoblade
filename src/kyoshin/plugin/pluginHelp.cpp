@@ -6,10 +6,10 @@
 #include "monolib/vm/yvm2.h"
 
 extern "C" {
-    extern u32 func_8009CF8C(u32 resourceId);
-    extern void func_8009D018(u32 destination, u32 value);
+    extern u32 CtrlRemote_TouchBitByArg(u32 resourceId);
+    extern void CtrlRemote_SetSharedBit(u32 destination, u32 value);
     extern void CUICfManager_queueTutorialMenu(u32 param0, u32 param1, u32 param2);
-    extern u32 func_8029A658();
+    extern u32 MenuTutorialIsCreated();
     extern void UIWin_CreatePTChange(u32 param0);
     extern void enablePadFlags__Q22cf13CfGameManagerFUlb(int, int);
 }
@@ -17,13 +17,13 @@ extern "C" {
 /// Script command: open the help system for a specific resource (0x3340).
 /// If the resource is not yet loaded, creates a help entry and loads it.
 /// Returns 0 and sets wait mode if the help system is active.
-int func_802AEBC4(VMThread* pThread) {
-    if (func_8009CF8C(0x3340) == 0) {
+int PlugHelp_QueueTutorial1(VMThread* pThread) {
+    if (CtrlRemote_TouchBitByArg(0x3340) == 0) {
         CUICfManager_queueTutorialMenu(1, 0, 0);
-        func_8009D018(0x3340, 1);
+        CtrlRemote_SetSharedBit(0x3340, 1);
     }
 
-    if (func_8029A658() != 0) {
+    if (MenuTutorialIsCreated() != 0) {
         vmWaitModeSet(pThread);
     }
 
@@ -31,14 +31,14 @@ int func_802AEBC4(VMThread* pThread) {
 }
 
 /// Script command: open the help system for a specific resource (0x337D).
-/// Mirrors func_802AEBC4 but with different resource/help IDs.
-int func_802AEC30(VMThread* pThread) {
-    if (func_8009CF8C(0x337D) == 0) {
+/// Mirrors PlugHelp_QueueTutorial1 but with different resource/help IDs.
+int PlugHelp_QueueTutorial3E(VMThread* pThread) {
+    if (CtrlRemote_TouchBitByArg(0x337D) == 0) {
         CUICfManager_queueTutorialMenu(0x3E, 0, 0);
-        func_8009D018(0x337D, 1);
+        CtrlRemote_SetSharedBit(0x337D, 1);
     }
 
-    if (func_8029A658() != 0) {
+    if (MenuTutorialIsCreated() != 0) {
         vmWaitModeSet(pThread);
     }
 
@@ -48,8 +48,8 @@ int func_802AEC30(VMThread* pThread) {
 /// Script command: close the help system. If the help system is currently
 /// active, sets wait mode and returns 0. Otherwise, re-enables pad input
 /// flags and clears the help state.
-int func_802AEC9C(VMThread* pThread) {
-    if (func_8029A658() != 0) {
+int PlugHelp_OpenPTChangeMenu(VMThread* pThread) {
+    if (MenuTutorialIsCreated() != 0) {
         vmWaitModeSet(pThread);
         return 0;
     }

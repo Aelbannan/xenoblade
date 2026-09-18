@@ -7,7 +7,7 @@
  * Subobject stored in arrays at mSubObjArray1 and mSubObjArray2.
  * Element size: 0x10 (16 bytes).
  * Has a non-trivial destructor (__dt__8049EA9C) but trivial constructor.
- * The trivial constructor is the no-op function func_8049EA98 (just blr).
+ * The trivial constructor is the no-op function ScnCam_NullCtor (just blr).
  */
 struct CScnItemCameraSubObj {
     // TODO: Decompile subobject layout (0x10 bytes)
@@ -30,7 +30,7 @@ public:
 
     /**
      * Virtual function at vtable+0x0C.
-     * No-op in this class (func_8049F9A4 - just blr).
+     * No-op in this class (ScnCam_NoopVFunc - just blr).
      * Overridden by base class default.
      */
     virtual void vfunc_0C();
@@ -75,7 +75,7 @@ public:
     f32 mUnk1F4;                                 // 0x1F4
 
     // Subobject arrays - each is 6 elements of 0x10 bytes
-    // Constructed with no-op constructor (func_8049EA98) and
+    // Constructed with no-op constructor (ScnCam_NullCtor) and
     // __dt__8049EA9C destructor
     CScnItemCameraSubObj mSubObjArray1[6];       // 0x1F8 (6 * 0x10 = 0x60 bytes)
     CScnItemCameraSubObj mSubObjArray2[6];       // 0x258 (6 * 0x10 = 0x60 bytes)

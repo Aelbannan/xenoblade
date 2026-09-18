@@ -7,7 +7,7 @@
 #include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
 
 /*
- * System window process (singleton, created by func_80124AEC).
+ * System window process (singleton, created by SysWinCreateSingleton).
  *
  * Retail class layout (derived from the Init/Term/dtor ASM):
  *   0x00  CProcess primary base - destroyed via ~CProcess (offset 0) in dtor
@@ -86,8 +86,8 @@ public:
 // (func_80137250__FPQ34nw4r3lyt8DrawInfo), so it is declared as a normal C++
 // global function to let MWCC mangle it - NOT inside the extern "C" block.
 extern "C" {
-void func_8022B7F4(void* syswin);
-void func_8022B7C8(void* syswin, nw4r::lyt::DrawInfo* drawInfo);
+void sysWinTermLayout(void* syswin);
+void sysWinDrawLayout(void* syswin, nw4r::lyt::DrawInfo* drawInfo);
 int IsMenuState621F0();
 void setPresentationFlag__Q22cf13CfGameManagerFv(bool enable);
 void __ct__CSysWin(void* syswin, int arg);
@@ -100,9 +100,9 @@ u32 CSysWin_isReady(void* syswin);
 int CSysWin_isActive(void* syswin);
 void func_8022B9B4(void* syswin, void* str1, void* str2);
 void func_8022BFC8(void* syswin, int kind);
-void func_8022B8B8(void* syswin);
-void func_8022B8E4(void* syswin);
-void func_8022B748(void* syswin);
+void sysWinOpenPhase1(void* syswin);
+void sysWinAdvancePhase3(void* syswin);
+void sysWinDispatchPhase(void* syswin);
 // Verbatim-mangled retail import: a C++ member declaration on cf::CfGameManager
 // would change call-site codegen (see MWCC_CASES); keep C linkage.
 int isClassicController__Q22cf13CfGameManagerFv(int arg);
@@ -116,9 +116,9 @@ void func_80137250(nw4r::lyt::DrawInfo* drawInfo);
 void playUISound(u32 op);
 
 // Singleton factory (typed to __ct__CSystemWindow args).
-CSystemWindow* func_80124AEC(CProcess* parent, CScn* scene, u32 opt,
+CSystemWindow* SysWinCreateSingleton(CProcess* parent, CScn* scene, u32 opt,
                              const char* str1, const char* str2);
-CSystemWindow* func_80124B78();
+CSystemWindow* SysWinGetSingleton();
 
 // Global data imports (MWCC does not mangle global-scope data names).
 extern CSystemWindow* lbl_eu_80663FD8;   // singleton instance pointer (.sbss)

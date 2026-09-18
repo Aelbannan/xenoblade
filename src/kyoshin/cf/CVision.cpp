@@ -15,7 +15,7 @@ namespace cf { class CfGameManager; }
 // TU's chain now share the extern "C" void*(int) form (CfObjectImplMove.hpp
 // was converted from C++ linkage).
 // Shield-clearing note (H3): the enum-list helper family (CTaskGame_enumListCtor /
-// CTaskGame_enumListGet / func_800F6EAC / __dt__80043E88 / func_800F4A98) carries
+// CTaskGame_enumListGet / getObjectAt / __dt__80043E88 / startEnumObjects) carries
 // ONE identical extern "C" void* form on every header in this TU's include
 // chain now -- CAIAction.hpp, CVision.hpp and CfObjectImplMove.hpp all agree
 // (return types, parameter lists and linkage) -- so the former
@@ -27,7 +27,7 @@ namespace cf { class CfGameManager; }
 // int-id view this TU used to keep behind a guard was a stale-r3 dual-arity
 // artifact, and its id-passing call sites below now cast their args to
 // (void*) instead of redeclaring the symbol with an int parameter.
-// func_800F477C keeps one extern "C" void*(void*) declaration in this TU;
+// CfCode_GetSubObject keeps one extern "C" void*(void*) declaration in this TU;
 // the old no-arg copy on CfObjectImplMove.hpp moved TU-local into
 // CfObjectImplMove.cpp, which is the only caller of that ABI.
 // (Region line count preserved: MWCC -ipa file codegen is line-sensitive.)
@@ -35,6 +35,7 @@ namespace cf { class CfGameManager; }
 #include "kyoshin/CTaskGameApi.hpp"
 // (CUIWindowManagerApi.hpp omitted: conflicts with this TU's closure.)
 extern "C" void* UIWin_BuildFlagBuf(u32 target);
+extern "C" void UIWin_FlagBufClear();
 
 // The BFC38/BFE8C shields are gone: all headers in this TU's chain now share
 // one extern "C" form per symbol (BFC38 unified on the u16-returning
@@ -77,16 +78,16 @@ extern "C" void* __dt__801A36D0(cf::UnkClass_801A36D0* self, int deleting);
 #include "kyoshin/cf/object/CAIAction.hpp"
 #include "kyoshin/cf/chain/CChainTimer.hpp"
 // CBattleManager.hpp pulls CfObjectActor.hpp; its declarations of the
-// enum-list family and func_8016FE34/func_800F477C no longer diverge from
+// enum-list family and func_8016FE34/CfCode_GetSubObject no longer diverge from
 // the canonical extern "C" void* forms, so the former #undef/rename
 // epilogue after this include is gone entirely.
 #include "kyoshin/cf/CBattleManager.hpp"
 // The explicit extern "C" declarations below stay: they are identical
 // duplicates of the chain-header forms (legal redeclaration) and act as
 // this TU's visible import anchors.
-// Removed here: #undef func_8016FE34, #undef func_800F477C,
-// #undef CTaskGame_enumListCtor, #undef CTaskGame_enumListGet, #undef func_800F6EAC,
-// #undef __dt__80043E88, #undef func_800F4A98 (no macros remain).
+// Removed here: #undef func_8016FE34, #undef CfCode_GetSubObject,
+// #undef CTaskGame_enumListCtor, #undef CTaskGame_enumListGet, #undef getObjectAt,
+// #undef __dt__80043E88, #undef startEnumObjects (no macros remain).
 // Region line count preserved: MWCC -ipa file codegen in this TU is
 // sensitive to downstream source line numbers (CMenuPTGauge case).
 //
@@ -94,8 +95,8 @@ extern "C" u16 playActorSound__Q22cf10CfSoundManFUlUlUlUlf(u32 a, u32 b, u32 c, 
 extern "C" void CTaskGame_enumListCtor(void* list);
 extern "C" void* CTaskGame_enumListGet(void* list);
 extern "C" void __dt__80043E88(void* list, int tags);
-extern "C" void* func_800F6EAC(void* list, u32 idx);
-extern "C" void func_800F4A98(void* list, u32 type, u32 filter);
+extern "C" void* getObjectAt(void* list, u32 idx);
+extern "C" void startEnumObjects(void* list, u32 type, u32 filter);
 extern "C" void CfSoundMan_StopSlotByMode(u32 a, u32 b, u32 c);
 
 using namespace cf;
@@ -166,7 +167,7 @@ struct CVisionFxParam {
 extern "C" void CCharVoiceMan_PushFreshSoundNode(void* a, void* b); // CCharVoiceMan.cpp defines an empty stub
 extern "C" void func_801AF934(u32 a);            // CMenuVision.cpp defines an empty stub
 
-// Object handed to func_801A5E58 by func_800F477C (reads byte at 0x42).
+// Object handed to func_801A5E58 by CfCode_GetSubObject (reads byte at 0x42).
 struct CVisionRefObj {
     u8 unk0[0x42];  // 0x00
     s8 b_42;         // 0x42 (signed: retail compares with cmpi)
@@ -174,7 +175,7 @@ struct CVisionRefObj {
     u32 w_78;        // 0x78
 };
 // Kept inline (not moved to CVision.hpp): sibling TUs declare these.
-extern "C" void* func_800F477C(void* self); // canonical opaque owner form (code_800F42AC)
+extern "C" void* CfCode_GetSubObject(void* self); // canonical opaque owner form (code_800F42AC)
 extern "C" bool isGlobalCamFlagSet__Fi(int mask);         // CfObjectActor.hpp/CChain.hpp declare bool(int); s32=long would clash
 
 // Object passed to func_801A6A7C / func_801A380C-family (battle object).
@@ -899,10 +900,10 @@ void func_801A4194(CVision* self) {
     if (w4) {
         u8 vdlist[8];
         CTaskGame_enumListCtor(vdlist);
-        func_800F4A98(CTaskGame_enumListGet(vdlist), 0x328, 0);
+        startEnumObjects(CTaskGame_enumListGet(vdlist), 0x328, 0);
         u32 i = 0;
         while (i < *(u32*)((u8*)CTaskGame_enumListGet(vdlist) + 0x620)) {
-            void* elem = func_800F6EAC(CTaskGame_enumListGet(vdlist), i);
+            void* elem = getObjectAt(CTaskGame_enumListGet(vdlist), i);
             void* obj = __dynamic_cast(elem, 0, &lbl_eu_806618E8, &lbl_eu_806618F0, 0);
             if (obj == 0) {
                 self->vt_20(1);
@@ -1089,10 +1090,10 @@ void func_801A47D0(CVision* self) {
     if (w4) {
         u8 vdlist[8];
         CTaskGame_enumListCtor(vdlist);
-        func_800F4A98(CTaskGame_enumListGet(vdlist), 0x328, 0x1);
+        startEnumObjects(CTaskGame_enumListGet(vdlist), 0x328, 0x1);
         u32 i = 0;
         while (i < *(u32*)((u8*)CTaskGame_enumListGet(vdlist) + 0x620)) {
-            void* elem = func_800F6EAC(CTaskGame_enumListGet(vdlist), i);
+            void* elem = getObjectAt(CTaskGame_enumListGet(vdlist), i);
             void* obj = __dynamic_cast(elem, 0, &lbl_eu_806618E8, &lbl_eu_806618F0, 0);
             if (obj == 0) {
                 self->vt_20(1);
@@ -1695,8 +1696,8 @@ void func_801A5E58(CVision* self) {
     }
     if (w1) {
         f32 scl = lbl_eu_80667D38;
-        if (func_800F477C(sub) != 0) {
-            if (((CVisionRefObj*)func_800F477C(sub))->b_42 == 1) {
+        if (CfCode_GetSubObject(sub) != 0) {
+            if (((CVisionRefObj*)CfCode_GetSubObject(sub))->b_42 == 1) {
                 scl = lbl_eu_80667D3C;
             }
         }
@@ -1777,12 +1778,12 @@ void func_801A60B0(CVision* self) {
     if (w2) {
         u8 vdlist[8];
         CTaskGame_enumListCtor(vdlist);
-        func_800F4A98(CTaskGame_enumListGet(vdlist), 0x328, 0);
+        startEnumObjects(CTaskGame_enumListGet(vdlist), 0x328, 0);
         // Flag every matching player object; bail out with vt_20(1) if the
         // cast fails mid-iteration.
         u32 i = 0;
         while (i < *(u32*)((u8*)CTaskGame_enumListGet(vdlist) + 0x620)) {
-            void* elem = func_800F6EAC(CTaskGame_enumListGet(vdlist), i);
+            void* elem = getObjectAt(CTaskGame_enumListGet(vdlist), i);
             void* obj = __dynamic_cast(elem, 0, &lbl_eu_806618E8, &lbl_eu_806618F0, 0);
             if (obj == 0) {
                 self->vt_20(1);
@@ -1824,14 +1825,14 @@ void func_801A60B0(CVision* self) {
     }
 }
 
-void func_801A6340(CVision* self) {
+void evalVisionTrigger(CVision* self) {
     CVisionSub* sub = (self->sub.field_00 == 0) ? 0 : &self->sub;
     CVisionFusion* fr = (CVisionFusion*)func_8016FE34((void*)findObjectById__Fi(sub->field_00));
     CVisionFusion* fr2 = (CVisionFusion*)func_8016FE34((void*)findObjectById__Fi(sub->field_04));
     // Retail materializes the equality test via mfcr/extrwi (value context).
     bool atBase = (lbl_eu_80667CD4 == self->field_2619C);
     if (atBase) {
-        func_801537E0(&fr->field_3380);
+        aiActionClearBits0006(&fr->field_3380);
     }
     // Materialized timer-window checks (retail evaluates both into r0).
     int w1;
@@ -1859,7 +1860,7 @@ void func_801A6340(CVision* self) {
             fr2->field_3388 &= 0xFFFD;
             fr2->field_04->v20(0x4000);
         }
-        sub->field_0C->field_7C = func_800F42AC(sub);
+        sub->field_0C->field_7C = ScMain_GetRoundedMetric(sub);
         self->vt_1C();
     }
 }
@@ -1881,7 +1882,7 @@ void func_801A897C(CVision* self, void* slot, void* r28) {
         if (bs->w_824 & 0x10000) {
             return;
         }
-        if (func_800F4730() > 2) {
+        if (ScMain_DecodeFlagPriority() > 2) {
             return;
         }
         u32 x = *(u32*)((u8*)slot + 0x3f10);
@@ -1895,12 +1896,12 @@ void func_801A897C(CVision* self, void* slot, void* r28) {
         if (fu->vf298()->w_04 != 0) {
             u32 v26 = bs->w_828;
             u32 v25 = bs->w_82C;
-            CVision* r27 = (CVision*)func_800F4648(bs);
+            CVision* r27 = (CVision*)ScMain_GetSummedInt(bs);
             // Out-params land in stack locals (retail reads sp+0x50 back).
             f32 outF;
             s32 outI;
             func_800E921C(CBattleManager::getInstance(), bs, fu, &outF, &outI);
-            if (func_800F46C0(bs, fu) != 0) {
+            if (ScMain_IsDistinctFrom(bs, fu) != 0) {
                 return;
             }
             f32 f1 = outF;
@@ -1984,7 +1985,7 @@ void func_801A897C(CVision* self, void* slot, void* r28) {
                 }
             }
         }
-        if (func_800F4424(p) == f31) {
+        if (ScMain_GetRatio(p) == f31) {
             // Timer expired: re-arm unless a pair of progress bits is half-set
             // (started but not finished) or the effect flag is already up.
             u32 flags = p->w_824;
@@ -1996,7 +1997,7 @@ void func_801A897C(CVision* self, void* slot, void* r28) {
                 func_801AF934(0);
                 p->w_824 |= 0x10000;
                 if (p->w_824 & 0x20000) {
-                    func_8009D018(0x30e3, 0);
+                    CtrlRemote_SetSharedBit(0x30e3, 0);
                     UIWin_BuildFlagBuf(0x375);
                     UIWin_FlagBufClear();
                 }
@@ -2049,13 +2050,13 @@ void func_801A897C(CVision* self, void* slot, void* r28) {
             r28 = (void*)4;
         }
         if (func_80148778((u8*)slot + 8, 0xc) != 0 &&
-            (func_800F477C(p) == 0 || !(((CVisionRefObj*)func_800F477C(p))->w_78 & 1))) {
+            (CfCode_GetSubObject(p) == 0 || !(((CVisionRefObj*)CfCode_GetSubObject(p))->w_78 & 1))) {
             r28 = (void*)4;
         }
         if (!(p->w_824 & 4) && r28 == 0) {
             // Fusion hand-off: run the embedded sub-object's slot-0x4C call
             // and feed the result plus both actors to the battle manager.
-            if (func_800F46C0(p, (CVisionBattleObj*)slot) != 0 && !(p->w_824 & 0x20000)) {
+            if (ScMain_IsDistinctFrom(p, (CVisionBattleObj*)slot) != 0 && !(p->w_824 & 0x20000)) {
                 r28 = (void*)3;
                 void* emb = *(void**)((u8*)slot + 0x3E9C);
                 u32 res = ((u32 (*)(void*))(*(void***)emb)[0x4C / 4])(emb);
@@ -2124,7 +2125,7 @@ void func_801A6540(CVision* self) {
         func_8014AC38(&((CVisionFusion*)fu)->field_3380, &p);
         CfObjectMove_setAnimModeArgs((u8*)fu + 0x3e9c, 1, 0, -1, 1);
         if (func_8014B8BC(&((CVisionFusion*)fu)->field_3380, &p) == 0) {
-            func_801537E0(&((CVisionFusion*)fu)->field_3380);
+            aiActionClearBits0006(&((CVisionFusion*)fu)->field_3380);
             func_800EA484(CBattleManager::getInstance(), lbl_eu_80667CF0, 0x13);
             // Install the lbl_eu_805331E8 callback with the fader fields reset.
             CVisionPtmf cb;
@@ -2154,17 +2155,17 @@ void func_801A6540(CVision* self) {
         sub->field_04 = p.w_00;
         sub->field_0C = p.obj18;
 
-        func_801537E0(&((CVisionFusion*)fu)->field_3380);
+        aiActionClearBits0006(&((CVisionFusion*)fu)->field_3380);
         u32 outC;
         u32 out8;
         func_800E921C(CBattleManager::getInstance(), sub, fu, &outC, &out8);
         sub->field_830 = lbl_eu_80667CD4;
 
         // Queue FX events 1..5 on the vision ring at step-increasing times.
-        // The time accumulator deliberately lives across the func_801AC09C
+        // The time accumulator deliberately lives across the isVisionSlotAnimating
         // call (retail keeps it in f31).
         f32 t = lbl_eu_80667CE4;
-        if (func_801AC09C(1) == 0) {
+        if (isVisionSlotAnimating(1) == 0) {
             // Build the five ring events (ids 1..5 at step-increasing times),
             // then enqueue them; MWCC fuses the two loops. Ring fields are
             // reached as far-offset CVision members (retail emits a fresh
@@ -2297,7 +2298,7 @@ int func_801A6BCC(CVision* self, CVisionObjV* obj, CVisionObjV* r5) {
     if (CBattleManager::getInstance()->CheckUnk84Flag(0x200) != 0) {
         return 0;
     }
-    if (func_801B481C() != 0) {
+    if (GetItemMulti_IsActiveFlag() != 0) {
         return 0;
     }
 
@@ -2348,10 +2349,10 @@ int func_801A6BCC(CVision* self, CVisionObjV* obj, CVisionObjV* r5) {
     if (CBattleManager::getInstance()->CheckUnk84Flag(0x100) == 0) {
         // Movie/dialogue mode gates: the pending-event id must be clear and the
         // current event must be an accepted type (or the damage preview failed).
-        if (func_8009CF8C(0x335e) != 0) {
+        if (CtrlRemote_TouchBitByArg(0x335e) != 0) {
             return 0;
         }
-        s32 mode = func_8009CF8C(0x20);
+        s32 mode = CtrlRemote_TouchBitByArg(0x20);
         f32 outDamage;
         u32 outCount;
         s32 ok = func_8009E344(CtrlObjectParam_GetSlotTableBase(), 1, (int*)&outDamage, (int*)&outCount);
@@ -2421,7 +2422,7 @@ int func_801A6BCC(CVision* self, CVisionObjV* obj, CVisionObjV* r5) {
         }
     }
     if (engage != 0) {
-        if (self->vt_28(obj, target) == 0) {
+        if (self->func_801A5444(obj, target) == 0) {
             return 0;
         }
     }
@@ -2516,7 +2517,7 @@ int func_801A70DC(CVision* self, void* obj, void* obj2) {
     sub->field_0C = eff;
     if (eff->field_78 & 0x8000) {
         sub->field_824 |= 0x20000;
-        func_8009D018(0x30e3, 0);
+        CtrlRemote_SetSharedBit(0x30e3, 0);
         UIWin_BuildFlagBuf(0x375);
         UIWin_FlagBufClear();
     }
@@ -2535,9 +2536,9 @@ int func_801A70DC(CVision* self, void* obj, void* obj2) {
     // per-slot vision parameter block.
     u8 vdlist[8];
     CTaskGame_enumListCtor(vdlist);
-    func_800F4A98(CTaskGame_enumListGet(vdlist), 0x20, 0);
+    startEnumObjects(CTaskGame_enumListGet(vdlist), 0x20, 0);
     for (u32 i = 0; i < ((CVisionEnumList*)CTaskGame_enumListGet(vdlist))->count; i++) {
-        void* elem = func_800F6EAC(CTaskGame_enumListGet(vdlist), i);
+        void* elem = getObjectAt(CTaskGame_enumListGet(vdlist), i);
         void* actor = __dynamic_cast(elem, 0, &__RTTI__Q22cf13CfObjectActor, &lbl_eu_806618F0, 0);
         if (actor != obj && actor != obj2) {
             CVisionActor3388* a = (CVisionActor3388*)actor;
@@ -2622,7 +2623,7 @@ void func_801A74DC(CVision* self) {
             sub = &self->sub;
         }
         if (sub->field_824 & 0x20000) {
-            func_8009D018(0x30e3, 1);
+            CtrlRemote_SetSharedBit(0x30e3, 1);
         }
         // Per-player: the fusion-state query runs twice (test then fetch);
         // the stat is passed as a plain float (MWCC's int->float magic).
@@ -2679,10 +2680,10 @@ void func_801A7704(CVision* self) {
 
     u8 vdlist[8];
     CTaskGame_enumListCtor(vdlist);
-    func_800F4A98(CTaskGame_enumListGet(vdlist), 0x20, 0);
+    startEnumObjects(CTaskGame_enumListGet(vdlist), 0x20, 0);
     u32 off = 0, i = 0;
     for (; i < ((CVisionEnumList*)CTaskGame_enumListGet(vdlist))->count; off += 0x4818, i++) {
-        void* elem = func_800F6EAC(CTaskGame_enumListGet(vdlist), i);
+        void* elem = getObjectAt(CTaskGame_enumListGet(vdlist), i);
         void* obj = __dynamic_cast(elem, 0, &__RTTI__Q22cf13CfObjectActor, &lbl_eu_806618F0, 0);
         if (obj == (void*)p1 || obj == (void*)p2) {
             continue;
@@ -2715,9 +2716,9 @@ void func_801A7704(CVision* self) {
     // actor whose battle-state id is outside [0xa1,0xa4] and != 0xb8.
     u8 vdlist2[8];
     CTaskGame_enumListCtor(vdlist2);
-    func_800F4A98(CTaskGame_enumListGet(vdlist2), 0x80000, 0);
+    startEnumObjects(CTaskGame_enumListGet(vdlist2), 0x80000, 0);
     for (u32 i = 0; i < ((CVisionEnumList*)CTaskGame_enumListGet(vdlist2))->count; i++) {
-        void* elem = func_800F6EAC(CTaskGame_enumListGet(vdlist2), i);
+        void* elem = getObjectAt(CTaskGame_enumListGet(vdlist2), i);
         void* obj = __dynamic_cast(elem, 0, &lbl_eu_80661970, &lbl_eu_806618F0, 0);
         if (obj == 0) {
             self->vt_20(1);
@@ -2744,9 +2745,9 @@ void func_801A7D6C(CVision* self, void* r4) {
     }
     u8 vdlist[8];
     CTaskGame_enumListCtor(vdlist);
-    func_800F4A98(CTaskGame_enumListGet(vdlist), 0x328, 0);
+    startEnumObjects(CTaskGame_enumListGet(vdlist), 0x328, 0);
     for (u32 i = 0; i < ((CVisionEnumList*)CTaskGame_enumListGet(vdlist))->count; i++) {
-        void* elem = func_800F6EAC(CTaskGame_enumListGet(vdlist), i);
+        void* elem = getObjectAt(CTaskGame_enumListGet(vdlist), i);
         void* obj = __dynamic_cast(elem, 0, &lbl_eu_806618E8, &lbl_eu_806618F0, 0);
         if (obj == 0) {
             self->vt_20(1);
@@ -2779,9 +2780,9 @@ void func_801A7D6C(CVision* self, void* r4) {
         }
         func_800F449C(sub);
     }
-    func_800F4A98(CTaskGame_enumListGet(vdlist), 0x20, 0);
+    startEnumObjects(CTaskGame_enumListGet(vdlist), 0x20, 0);
     for (u32 i = 0; i < *(u32*)((u8*)CTaskGame_enumListGet(vdlist) + 0x620); i++) {
-        void* elem = func_800F6EAC(CTaskGame_enumListGet(vdlist), i);
+        void* elem = getObjectAt(CTaskGame_enumListGet(vdlist), i);
         CVisionFusion* actor = (CVisionFusion*)__dynamic_cast(elem, 0, &__RTTI__Q22cf13CfObjectActor, &lbl_eu_806618F0, 0);
         actor->field_3388 &= 0xFFFD;
         actor->field_04->v20(0x4000);
@@ -2803,7 +2804,7 @@ void func_801A7D6C(CVision* self, void* r4) {
     __dt__80043E88(vdlist, -1);
 }
 
-int* func_801A8070(int* param) {
+int* getNonZeroSlot1(int* param) {
     if (param[1] == 0) {
         return 0;
     }
@@ -2811,9 +2812,9 @@ int* func_801A8070(int* param) {
 }
 
 // ---------------------------------------------------------------------------
-// us-801a986c: Clear all four vision effect slots (retail func_801A8138).
+// us-801a986c: Clear all four vision effect slots (retail clearAllVisionEffects).
 // ---------------------------------------------------------------------------
-void func_801A8138(CVision* self) {
+void clearAllVisionEffects(CVision* self) {
     for (int i = 0; i < 4; i++) {
         if (self->effectArray[i] != 0) {
             self->effectArray[i]->field_B0 = 0;
@@ -2858,9 +2859,9 @@ void func_801A8244(CVision* self, void* r25, int r26, int r27, int r28) {
     if (r26 != 0) {
         u8 vdlist[8];
         CTaskGame_enumListCtor(vdlist);
-        func_800F4A98(CTaskGame_enumListGet(vdlist), 0x20, 0);
+        startEnumObjects(CTaskGame_enumListGet(vdlist), 0x20, 0);
         for (u32 i = 0; i < ((CVisionEnumList*)CTaskGame_enumListGet(vdlist))->count; i++) {
-            CVisionBattleObj* obj = (CVisionBattleObj*)func_8016FE34(func_800F6EAC(CTaskGame_enumListGet(vdlist), i));
+            CVisionBattleObj* obj = (CVisionBattleObj*)func_8016FE34(getObjectAt(CTaskGame_enumListGet(vdlist), i));
             if (obj->vf308() == 3) {
                 obj->vf304(4);
             } else if (obj->vf308() == 0) {
@@ -2873,7 +2874,7 @@ void func_801A8244(CVision* self, void* r25, int r26, int r27, int r28) {
         if (r27 != 0) {
             CCharVoiceMan_EnqueuePendingActionVoice(r26, r28, fu);
         }
-        func_80280D04(r26);
+        SysWinLog_AdvanceTiers(r26);
     }
 
     // Per-mode FX routing. Cases fall through; each block sets its flag bit
@@ -2882,24 +2883,24 @@ void func_801A8244(CVision* self, void* r25, int r26, int r27, int r28) {
     switch (r26) {
     case 5:
         slot->w_824 |= 0x1;
-        func_801ACD5C(1);
+        restartVisionSlots(1);
         func_800F449C(slot);
-        func_8018C820((u8*)CBattleManager::getInstance() + 0x194, 0);
+        PartyGaugeAddClamped((u8*)CBattleManager::getInstance() + 0x194, 0);
         func_800F3970(CBattleManager::getInstance(), fu, 0, 0x17, 0);
         engaged = 1;
     case 4:
         slot->w_824 = (slot->w_824 | 0x2) & ~0x40;
-        func_801ACD5C(2);
+        restartVisionSlots(2);
         if (engaged == 0) {
-            func_8018C820((u8*)CBattleManager::getInstance() + 0x194, 0);
+            PartyGaugeAddClamped((u8*)CBattleManager::getInstance() + 0x194, 0);
             func_800F3970(CBattleManager::getInstance(), fu, 0, 0x18, 0);
             engaged = 1;
         }
     case 3:
         slot->w_824 = (slot->w_824 | 0x4) & ~0x80;
-        func_801ACD5C(4);
+        restartVisionSlots(4);
         if (engaged == 0) {
-            func_8018C820((u8*)CBattleManager::getInstance() + 0x194, 0);
+            PartyGaugeAddClamped((u8*)CBattleManager::getInstance() + 0x194, 0);
             func_800F3970(CBattleManager::getInstance(), fu, 0, 0x19, 0);
             engaged = 1;
         }
@@ -2917,7 +2918,7 @@ void func_801A8244(CVision* self, void* r25, int r26, int r27, int r28) {
         stage = 1;
     case 2:
         slot->w_824 = (slot->w_824 | 0x8) & ~0x100;
-        func_801ACD5C(8);
+        restartVisionSlots(8);
         // Track the actor's fusion-readiness bit in the tier-2 flag word.
         if (slot->w_88 & 0x1000) {
             slot->w_824 |= 0x400;
@@ -2925,7 +2926,7 @@ void func_801A8244(CVision* self, void* r25, int r26, int r27, int r28) {
             slot->w_824 &= ~0x400;
         }
         if (engaged == 0) {
-            func_8018C820((u8*)CBattleManager::getInstance() + 0x194, 0);
+            PartyGaugeAddClamped((u8*)CBattleManager::getInstance() + 0x194, 0);
             func_800F3970(CBattleManager::getInstance(), fu, 0, 0x1a, 0);
             engaged = 1;
         }
@@ -2943,9 +2944,9 @@ void func_801A8244(CVision* self, void* r25, int r26, int r27, int r28) {
         stage = stage + 1;
     case 1:
         slot->w_824 = ((slot->w_824 | 0x10) & ~0x200) | 0x4000;
-        func_801ACD5C(0x10);
+        restartVisionSlots(0x10);
         if (engaged == 0) {
-            func_8018C820((u8*)CBattleManager::getInstance() + 0x194, 0);
+            PartyGaugeAddClamped((u8*)CBattleManager::getInstance() + 0x194, 0);
             func_800F3970(CBattleManager::getInstance(), fu, 0, 0x1b, 0);
         }
         {
@@ -2975,14 +2976,14 @@ void func_801A8244(CVision* self, void* r25, int r26, int r27, int r28) {
         return;
     }
     // Full-tier engage: fire vf1E8 on the slot and spawn a vision effect for
-    // each player whose fusion state passes the func_8026178C probe.
+    // each player whose fusion state passes the Counter_TestBit probe.
     {
         CVisionArg5 data = *(CVisionArg5*)lbl_eu_80503F80;
         for (int i = 0; i < 3; i++) {
             CVisionBattleObj* pl = (CVisionBattleObj*)func_8016FE34(getPlayer__Q22cf13CfGameManagerFi(i));
             if (pl == 0) continue;
             if (pl->vf290() == 0) continue;
-            if (func_8026178C((void*)pl->vf290(), 0x8c) == 0) continue;
+            if (Counter_TestBit((void*)pl->vf290(), 0x8c) == 0) continue;
             u16 objId = ((CVisionObjV*)pl)->field_3F28;
             u32 rv = (u32)fu->vf1E8(data);
             s32 n = (s32)(data.f[4] * (double)rv);
@@ -3039,9 +3040,9 @@ cf::CVision::~CVision() {
 
 // ---------------------------------------------------------------------------
 // us-801a7c18: Release the zero/zero slot of the battle manager's vision
-// sub-object (retail func_801A64F8).
+// sub-object (retail pollVisionSlots).
 // ---------------------------------------------------------------------------
-void func_801A64F8() {
+void pollVisionSlots() {
     if (CBattleManager::getInstance() &&
         &CBattleManager::getInstance()->mVision) {
         func_801A897C(&CBattleManager::getInstance()->mVision, 0, 0);
@@ -3050,9 +3051,9 @@ void func_801A64F8() {
 
 // ---------------------------------------------------------------------------
 // us-801aa050: Release an arbitrary slot of the battle manager's vision
-// sub-object (retail func_801A891C). Args are forwarded untouched.
+// sub-object (retail releaseVisionSlot). Args are forwarded untouched.
 // ---------------------------------------------------------------------------
-void func_801A891C(void* a, int b) {
+void releaseVisionSlot(void* a, int b) {
     if (CBattleManager::getInstance() &&
         &CBattleManager::getInstance()->mVision) {
         func_801A897C(&CBattleManager::getInstance()->mVision, (int)a, b);
@@ -3061,9 +3062,9 @@ void func_801A891C(void* a, int b) {
 
 // ---------------------------------------------------------------------------
 // us-801a97c0: Lazily create the vision effect at `index` and record the
-// owning CVision back-pointer (retail func_801A808C).
+// owning CVision back-pointer (retail createVisionEffect).
 // ---------------------------------------------------------------------------
-void func_801A808C(CVision* self, int index) {
+void createVisionEffect(CVision* self, int index) {
     // Scaled index materialized before the object base is referenced: MWCC
     // colors/creates the value nodes in statement order, which reproduces the
     // retail rlwinm-before-addis schedule.
@@ -3074,7 +3075,7 @@ void func_801A808C(CVision* self, int index) {
         return;
     }
     CVisionEffect* eff =
-        (CVisionEffect*)func_800451D8(lbl_eu_80503F60[index].field_00, 0);
+        (CVisionEffect*)bindIndexedEffect(lbl_eu_80503F60[index].field_00, 0);
     *slot = eff;
     if (eff != 0) {
         eff->field_B0 = (u32)self;
@@ -3082,9 +3083,9 @@ void func_801A808C(CVision* self, int index) {
 }
 
 // ---------------------------------------------------------------------------
-// us-801a9830: Clear the vision effect at `index` (retail func_801A80FC).
+// us-801a9830: Clear the vision effect at `index` (retail clearVisionEffect).
 // ---------------------------------------------------------------------------
-void func_801A80FC(CVision* self, int index) {
+void clearVisionEffect(CVision* self, int index) {
     if (self->effectArray[index] != 0) {
         self->effectArray[index]->field_B0 = 0;
         self->effectArray[index]->field_68 |= 0x40;
@@ -3094,9 +3095,9 @@ void func_801A80FC(CVision* self, int index) {
 
 // ---------------------------------------------------------------------------
 // us-801a9930: Null out the first effect whose object identity matches
-// `value` (retail func_801A81FC).
+// `value` (retail detachVisionEffect).
 // ---------------------------------------------------------------------------
-void func_801A81FC(CVision* self, u32 value) {
+void detachVisionEffect(CVision* self, u32 value) {
     for (int i = 0; i < 4; i++) {
         if (self->effectArray[i] == (CVisionEffect*)value) {
             self->effectArray[i] = 0;
@@ -3106,10 +3107,10 @@ void func_801A81FC(CVision* self, u32 value) {
 }
 
 // ---------------------------------------------------------------------------
-// us-801aa980: Like func_801A81FC, but also clears the effect's owning
-// back-pointer before nulling the slot (retail func_801A924C).
+// us-801aa980: Like detachVisionEffect, but also clears the effect's owning
+// back-pointer before nulling the slot (retail releaseVisionEffect).
 // ---------------------------------------------------------------------------
-void func_801A924C(CVision* self, u32 value) {
+void releaseVisionEffect(CVision* self, u32 value) {
     for (int i = 0; i < 4; i++) {
         if (self->effectArray[i] == (CVisionEffect*)value) {
             CVisionEffect* e = self->effectArray[i];

@@ -8,7 +8,7 @@
 #include "kyoshin/CTagProcessor.hpp"              // CTagProcessor (tag alloc)
 // Implicit-r3 form: retail call sites that do NOT set r3 (the def in
 // ocBdat.cpp takes no args); header decl is the 1-arg caller-tuned form.
-extern "C" void* func_8003AA34(void);
+extern "C" void* Bdat_GetTable_AA34(void);
 #include "monolib/device/CDeviceFile.hpp"         // readFile / readCommonArchiveFile
 #include "monolib/device/CDeviceFont.hpp"         // CDeviceFont::getFontInfo
 #include "monolib/device/CDeviceVI.hpp"          // waitForDrawDone
@@ -17,18 +17,18 @@ extern "C" void* func_8003AA34(void);
 #include <new>
 #include <revolution/gx/GXPixel.h>                 // GXSetZMode
 
-// func_80122BB0 calls func_801242FC, which is defined later in this TU.
+// completeWindowOpen calls enableAnimB, which is defined later in this TU.
 // extern "C": the retail symbol is unmangled, so both the definition and the
 // call reloc must carry C linkage (CCur.cpp precedent).
-extern "C" void func_801242FC(QuestWinObj* self);
+extern "C" void enableAnimB(QuestWinObj* self);
 
-u32 func_80122448(void) {
+u32 getQuestWindow(void) {
     extern u32 lbl_eu_80663FD0;
     return lbl_eu_80663FD0;
 }
 
 // (lbl_eu_80663FD0 != 0) - retail lwz sda21; subic; subfe
-extern "C" bool func_80122450() { extern u32 lbl_eu_80663FD0; return lbl_eu_80663FD0 != 0; }
+extern "C" bool hasQuestWindow() { extern u32 lbl_eu_80663FD0; return lbl_eu_80663FD0 != 0; }
 
 int lbl_eu_80663D1C;
 
@@ -40,31 +40,31 @@ extern u32 lbl_eu_80663FD0;
 void func_80122460(){ lbl_eu_80663FD0 = 0; }
 
 // Install the retail Move-hook ptmf (+0x3C) only while no party / other menu
-// is active (func_80293C10, func_80192BD0) and the window's own idle gates
+// is active (PTNotice_IsActive_3C10, menuPTStateIsActive) and the window's own idle gates
 // (0x88/0x8C) are both clear.
-void func_80122654(QuestWinObj* self) {
-    if (func_80293C10() == 0 && func_80192BD0() == 0 &&
+void installMoveHook(QuestWinObj* self) {
+    if (PTNotice_IsActive_3C10() == 0 && menuPTStateIsActive() == 0 &&
         self->field_0x88 == 0 && self->field_0x8C == 0) {
         self->mMoveFunc = lbl_eu_8052D074;
     }
 }
 
 // ---------------------------------------------------------------------------
-// func_801226C8 (us-801231a4): quest-window state driver. Gate on the scene
+// updateWindow (us-801231a4): quest-window state driver. Gate on the scene
 // being active, dispatch the window state byte (0..3), then always advance the
 // layout animation and run the cursor update.
 // ---------------------------------------------------------------------------
-void func_801226C8(QuestWinObj* self) {
+void updateWindow(QuestWinObj* self) {
     if (IsMenuState621F0() == 0) return;
     switch (self->field_0xBC) {
     case 0:
         setPresentationFlag__Q22cf13CfGameManagerFv(true);
         self->field_0xBC = 1;
-        func_801D216C(&self->mCursor, 0);
+        Cur_SetVisible(&self->mCursor, 0);
         func_8012435C(self);
         break;
     case 1:
-        func_80122BB0(self);
+        completeWindowOpen(self);
         break;
     case 2:
         func_80122C08(self);
@@ -78,7 +78,7 @@ void func_801226C8(QuestWinObj* self) {
 }
 
 // ---------------------------------------------------------------------------
-// func_8012278C (us-80123268): quest-window file-event handler, dispatched by
+// onQuestFileEvent (us-80123268): quest-window file-event handler, dispatched by
 // CQuestWindow::OnFileEvent with this - 0x6C. The event's file handle picks
 // the branch: the window arc (field_0x88) builds the whole layout - scratch
 // region (RAII Class_8045F858 guard), tag processor, resource accessor,
@@ -88,7 +88,7 @@ void func_801226C8(QuestWinObj* self) {
 // too. Both branches clear the consumed handle; unmatched events return false.
 // ---------------------------------------------------------------------------
 // C linkage comes from the header's extern "C" block (retail name unmangled).
-bool func_8012278C(CQuestWindow* self, CEventFile* event) {
+bool onQuestFileEvent(CQuestWindow* self, CEventFile* event) {
     CFileHandle* evt = event->mFileHandle;
     if (self->field_0x88 == evt) {
         // Scratch heap region (RAII Class_8045F858 guard), then detach the
@@ -150,7 +150,7 @@ bool func_8012278C(CQuestWindow* self, CEventFile* event) {
             t->mpTagProcessor = self->field_0x90;
         }
 
-        func_8012429C((QuestWinObj*)self);
+        enableAnimA((QuestWinObj*)self);
         self->mAnimA->SetFrame(lbl_eu_8066713C);
         self->mpLayout->Animate(0);
 
@@ -171,14 +171,14 @@ bool func_8012278C(CQuestWindow* self, CEventFile* event) {
 
         func_801231C4(self);
         self->field_0x88 = 0;
-        self->mMemRegion.func_8045F810();
+        self->mMemRegion.validateHeap();
         __dt__14Class_8045F858Fv(regionBuf, -1);
         return true;
     }
     if (self->field_0x8C == evt) {
         u8* fileData = (u8*)self->field_0x8C->getData();
         setBdatEntry__5CBdatFUlPv(2, fileData);
-        func_8003AA34();
+        Bdat_GetTable_AA34();
         self->field_0xD0 =
             (u32)getFP__FPCc(lbl_eu_8052CFF4[func_80138138(self->field_B8)]);
         func_801231C4(self);
@@ -206,7 +206,7 @@ void CQuestWindow::cbRenderBefore() {
     func_80137250((nw4r::lyt::DrawInfo*)&drawInfo[0]);
     drawLayout(mpLayout, (nw4r::lyt::DrawInfo*)&drawInfo[0], 0, 1);
     if (field_0xC0 >= 0) {
-        func_801D20B0(&mCursor[0], (nw4r::lyt::DrawInfo*)&drawInfo[0]);
+        Cur_DrawLayout(&mCursor[0], (nw4r::lyt::DrawInfo*)&drawInfo[0]);
     }
     __dt__Q34nw4r3lyt8DrawInfoFv((nw4r::lyt::DrawInfo*)&drawInfo[0], -1);
 }
@@ -289,12 +289,12 @@ extern "C" void* __ct__CQuestWindow(CQuestWindow* self, u32 arg1, u32 arg2, u32 
 }
 
 // ---------------------------------------------------------------------------
-// func_80122B2C (us-80123608): quest-window factory. The singleton guard
+// createQuestWindow (us-80123608): quest-window factory. The singleton guard
 // (lbl_eu_80663FD4) returns 0 when the window already exists; otherwise the
 // 0xEC-byte object is allocated on the work heap, constructed (retail C-ABI
 // __ct__CQuestWindow) and registered under `parent`.
 // ---------------------------------------------------------------------------
-CQuestWindow* func_80122B2C(CProcess* parent, u32 arg1, u32 arg2, u32 arg3) {
+CQuestWindow* createQuestWindow(CProcess* parent, u32 arg1, u32 arg2, u32 arg3) {
     if (lbl_eu_80663FD4 != 0) {
         return 0;
     }
@@ -309,18 +309,18 @@ CQuestWindow* func_80122B2C(CProcess* parent, u32 arg1, u32 arg2, u32 arg3) {
 }
 
 // Window open animation: wait until anim A (+0x98) reaches the completion
-// frame, then run the layout's anim switch (func_801242FC), show the cursor
+// frame, then run the layout's anim switch (enableAnimB), show the cursor
 // at +0xA0 and mark the window running (state byte +0xBC = 2).
-void func_80122BB0(QuestWinObj* self) {
+void completeWindowOpen(QuestWinObj* self) {
     if (advanceAnimTransform(self->mAnimA, lbl_eu_80667140) != 0) {
-        func_801242FC(self);
-        func_801D216C(&self->mCursor, 1);
+        enableAnimB(self);
+        Cur_SetVisible(&self->mCursor, 1);
         self->field_0xBC = 2;
     }
 }
 
 // Empty stubs must stay noinline: their bodies are visible in this TU and
-// MWCC would otherwise inline them into func_801226C8's switch, collapsing
+// MWCC would otherwise inline them into updateWindow's switch, collapsing
 // the case-2/3 dispatch and the func_8012435C call (retail keeps the calls).
 // ---------------------------------------------------------------------------
 // func_80122C08 (us-801236e4): quest-window input handling for the open
@@ -335,10 +335,10 @@ __attribute__((noinline)) void func_80122C08(QuestWinObj* self) {
         u32 confirm = (classic != 0) ? ((pad->field_04 >> 21) & 1)
                                      : ((pad->field_04 >> 4) & 1);
         if (confirm != 0) {
-            func_8012429C(self);
+            enableAnimA(self);
             playUISound__FUl(3);
             self->field_0xBC = 3;
-            func_801D216C(&self->mCursor, 0);
+            Cur_SetVisible(&self->mCursor, 0);
         }
     } else if (self->field_0xC4 != 0) {
         CPadView* pad = (CPadView*)getCfPadData__Q22cf13CfGameManagerFv();
@@ -363,8 +363,8 @@ __attribute__((noinline)) void func_80122C08(QuestWinObj* self) {
                 self->field_0x60 = 1;
                 playUISound__FUl(3);
                 self->field_0xBC = 3;
-                func_801D216C(&self->mCursor, 0);
-                func_8012429C(self);
+                Cur_SetVisible(&self->mCursor, 0);
+                enableAnimA(self);
             }
         } else if (dLeft != 0) {
             self->field_0xC0 = self->field_0xC0 - 1;
@@ -402,8 +402,8 @@ __attribute__((noinline)) void func_80122C08(QuestWinObj* self) {
                 }
                 playUISound__FUl(3);
                 self->field_0xBC = 3;
-                func_801D216C(&self->mCursor, 0);
-                func_8012429C(self);
+                Cur_SetVisible(&self->mCursor, 0);
+                enableAnimA(self);
             }
         } else if (dLeft != 0) {
             self->field_0xC0 = self->field_0xC0 - 1;
@@ -429,7 +429,7 @@ __attribute__((noinline)) void func_80122C08(QuestWinObj* self) {
 __attribute__((noinline)) void func_80122EF8(QuestWinObj* self) {
     if (AnimRewindFrame(self->mAnimA, lbl_eu_80667140) == 0) return;
     if (self->field_0xCC > 0) {
-        func_800451D8(self->field_0xCC, getPlayer__Q22cf13CfGameManagerFi(0));
+        bindIndexedEffect(self->field_0xCC, getPlayer__Q22cf13CfGameManagerFi(0));
     }
     self->field_64 = 1;
     if (self->field_0xC8 == 0) return;
@@ -441,8 +441,8 @@ __attribute__((noinline)) void func_80122EF8(QuestWinObj* self) {
                 (i == 4 && CtrlObjectParam_GetCurrentRowKey() != 0)) {
                 char* p = (char*)obj + 0x3534;
                 int v = 0x64;
-                if (func_8026178C(p, 0x89) != 0) {
-                    v = func_8025FB10(p, 0x89) + 0x64;
+                if (Counter_TestBit(p, 0x89) != 0) {
+                    v = IdTable_SumValues(p, 0x89) + 0x64;
                 }
                 // int->double via the 0x4330 magic-high-word idiom: bits
                 // (0x43300000|n) as f64 equal n+2^52; retail preloads the 2^52
@@ -476,7 +476,7 @@ __attribute__((noinline)) void func_80122EF8(QuestWinObj* self) {
         incrementEventCounter__FUl(0xb8);
     }
     if (self->field_B8 - 0x100 <= 4) {
-        func_8009D018(self->field_B8 + 0x704, 2);
+        CtrlRemote_SetSharedBit(self->field_B8 + 0x704, 2);
         char* msg = BdatTouchStringCell(&lbl_eu_804FEC84[0xac], &lbl_eu_804FEC84[0x88],
                                   0x81);
         UIWin_CreateSysWin0(msg, 0, 0);
@@ -490,11 +490,11 @@ __attribute__((noinline)) void func_80122EF8(QuestWinObj* self) {
         } data;
         data.w = lbl_eu_80667144;
         data.b = lbl_eu_80667148;
-        s16 s = (s16)func_8009CF8C(0x7fc);
+        s16 s = (s16)CtrlRemote_TouchBitByArg(0x7fc);
         s = (s16)(s + (s8)data.bytes[self->field_B8 - 0x100]);
-        func_8009D018(0x7fc, s);
-        if (func_8015D310() != 0) {
-            func_8015D3A0();
+        CtrlRemote_SetSharedBit(0x7fc, s);
+        if (Col6_ScanItemSlots_D310() != 0) {
+            Col6_ReserveBoxSlot_D3A0();
             UIWin_CreateCol6Check();
         }
     }
@@ -524,15 +524,15 @@ void func_801231C4(CQuestWindow* self) {
     self->field_0xE4 = BdatGetU8Direct(questRow, &base[0xcd], questId);
     u8 v = BdatGetU8Direct(questRow, &base[0xa2], questId);
     if (v == 1) {
-        func_80124270((void*)self->mpLayout->GetRootPane()->FindPaneByName(&base[0xd8], true), 0);
-        func_80124270((void*)self->mpLayout->GetRootPane()->FindPaneByName(&base[0xe1], true), 0);
-        func_80124270((void*)self->mpLayout->GetRootPane()->FindPaneByName(&base[0xea], true), 1);
-        func_80124270((void*)self->mpLayout->GetRootPane()->FindPaneByName(&base[0xf5], true), 1);
+        setPaneVisible((void*)self->mpLayout->GetRootPane()->FindPaneByName(&base[0xd8], true), 0);
+        setPaneVisible((void*)self->mpLayout->GetRootPane()->FindPaneByName(&base[0xe1], true), 0);
+        setPaneVisible((void*)self->mpLayout->GetRootPane()->FindPaneByName(&base[0xea], true), 1);
+        setPaneVisible((void*)self->mpLayout->GetRootPane()->FindPaneByName(&base[0xf5], true), 1);
     } else {
-        func_80124270((void*)self->mpLayout->GetRootPane()->FindPaneByName(&base[0xd8], true), 1);
-        func_80124270((void*)self->mpLayout->GetRootPane()->FindPaneByName(&base[0xe1], true), 1);
-        func_80124270((void*)self->mpLayout->GetRootPane()->FindPaneByName(&base[0xea], true), 0);
-        func_80124270((void*)self->mpLayout->GetRootPane()->FindPaneByName(&base[0xf5], true), 0);
+        setPaneVisible((void*)self->mpLayout->GetRootPane()->FindPaneByName(&base[0xd8], true), 1);
+        setPaneVisible((void*)self->mpLayout->GetRootPane()->FindPaneByName(&base[0xe1], true), 1);
+        setPaneVisible((void*)self->mpLayout->GetRootPane()->FindPaneByName(&base[0xea], true), 0);
+        setPaneVisible((void*)self->mpLayout->GetRootPane()->FindPaneByName(&base[0xf5], true), 0);
     }
     char* res = 0;
     switch (v) {
@@ -550,8 +550,8 @@ void func_801231C4(CQuestWindow* self) {
         PaneSetTexPaletteByName(self->mpLayout, &base[0x13c], res);
     }
     if ((questId - 0x100) <= 4) {
-        if ((func_8009CF8C(questId + 0x220) & 0xFF) == 0) {
-            func_8009D018(questId + 0x220, 1);
+        if ((CtrlRemote_TouchBitByArg(questId + 0x220) & 0xFF) == 0) {
+            CtrlRemote_SetSharedBit(questId + 0x220, 1);
         }
     }
     self->field_0xC4 = BdatGetU8Direct(questRow, &base[0x144], questId);
@@ -572,7 +572,7 @@ void func_801231C4(CQuestWindow* self) {
     LayoutSetTextBoxFmtValue(self->mpLayout, &base[0x96], s, (u32)self->field_0x90);
     char* cur;
     if (self->field_0xC8 != 0) {
-        if ((func_8009CF8C(questId + 0x220) & 1) != 0) {
+        if ((CtrlRemote_TouchBitByArg(questId + 0x220) & 1) != 0) {
             cur = BdatGetPtrDirect((const void*)self->field_0xD0, &base[0x18a], questId);
         } else {
             cur = BdatGetPtrDirect((const void*)self->field_0xD0, &base[0x195], questId);
@@ -604,7 +604,7 @@ void func_801231C4(CQuestWindow* self) {
             ml::FixStr<32> buf2(false);
             buf2.mString[0] = 0;
             buf2.mLength = 0;
-            u8 flg = (u8)(func_8009CF8C(questId + 0x220) & 1);
+            u8 flg = (u8)(CtrlRemote_TouchBitByArg(questId + 0x220) & 1);
             u8 i = 0;
             char buf[0x20];
             do {
@@ -730,18 +730,18 @@ void func_801231C4(CQuestWindow* self) {
             nw4r::math::VEC2 vec;
             vec.x = (f32)(u32)a;
             vec.y = (f32)(u32)b;
-            func_80124288((u8*)pane, (const float*)&vec);
+            writePanePos((u8*)pane, (const float*)&vec);
         }
         pane = self->mpLayout->GetRootPane()->FindPaneByName(&base[0x271], true);
         if (pane != 0) {
             nw4r::math::VEC2 vec2;
             vec2.x = (f32)(u32)a;
             vec2.y = (f32)(u32)b;
-            func_80124288((u8*)pane, (const float*)&vec2);
+            writePanePos((u8*)pane, (const float*)&vec2);
         }
     }
     if (self->field_0xC8 != 0) {
-        u8 flg = (u8)(func_8009CF8C(questId + 0x220) & 1);
+        u8 flg = (u8)(CtrlRemote_TouchBitByArg(questId + 0x220) & 1);
         u8 i = 0;
         s32 c26 = 0xc6;
         char buf4[0x20];
@@ -759,7 +759,7 @@ void func_801231C4(CQuestWindow* self) {
             }
             u8 v2 = BdatGetU8Direct(questRow, buf4, questId);
             if ((v27 & 0xFFFF) != 0) {
-                func_8009D018((v27 & 0xFFFF) + 0x608, v2);
+                CtrlRemote_SetSharedBit((v27 & 0xFFFF) + 0x608, v2);
             }
             if (i == 0) {
                 if (flg != 0) {
@@ -772,10 +772,10 @@ void func_801231C4(CQuestWindow* self) {
                     BdatGetU16Direct((const void*)questRow, &base[0x172], questId) & 0xFFFF);
                 if ((v30 & 0xFFFF) != 0) {
                     s32 v21 = (s32)(v27b & 0xFF) + 0x21;
-                    s32 v4 = (s32)func_8009CF8C((u32)v21) + (v30 & 0xFFFF);
+                    s32 v4 = (s32)CtrlRemote_TouchBitByArg((u32)v21) + (v30 & 0xFFFF);
                     if (v4 < 0) v4 = 0;
                     if (v4 > 0x2710) v4 = 0x2710;
-                    func_8009D018((u32)v21, (u32)v4);
+                    CtrlRemote_SetSharedBit((u32)v21, (u32)v4);
                     struct PlayerView {
                         u8 pad[0x8C];
                         u16 field_8C;
@@ -791,21 +791,21 @@ void func_801231C4(CQuestWindow* self) {
             i++;
         } while (i < 4);
     }
-    func_80124270((void*)self->mpLayout->GetRootPane()->FindPaneByName(&base[0x2cc], true), 0);
-    func_80124270((void*)self->mpLayout->GetRootPane()->FindPaneByName(&base[0x2d7], true), 0);
-    func_80124270((void*)self->mpLayout->GetRootPane()->FindPaneByName(&base[0x2e3], true), 0);
-    func_80124270((void*)self->mpLayout->GetRootPane()->FindPaneByName(&base[0x2ec], true), 0);
+    setPaneVisible((void*)self->mpLayout->GetRootPane()->FindPaneByName(&base[0x2cc], true), 0);
+    setPaneVisible((void*)self->mpLayout->GetRootPane()->FindPaneByName(&base[0x2d7], true), 0);
+    setPaneVisible((void*)self->mpLayout->GetRootPane()->FindPaneByName(&base[0x2e3], true), 0);
+    setPaneVisible((void*)self->mpLayout->GetRootPane()->FindPaneByName(&base[0x2ec], true), 0);
     if (self->field_0xC8 == 0) {
         if (self->field_0xC4 == 0) {
-            func_80124270((void*)self->mpLayout->GetRootPane()->FindPaneByName(&base[0x2cc], true), 1);
+            setPaneVisible((void*)self->mpLayout->GetRootPane()->FindPaneByName(&base[0x2cc], true), 1);
         } else {
-            func_80124270((void*)self->mpLayout->GetRootPane()->FindPaneByName(&base[0x2d7], true), 1);
+            setPaneVisible((void*)self->mpLayout->GetRootPane()->FindPaneByName(&base[0x2d7], true), 1);
         }
-        func_80124270((void*)self->mpLayout->GetRootPane()->FindPaneByName(&base[0x2ec], true), 1);
+        setPaneVisible((void*)self->mpLayout->GetRootPane()->FindPaneByName(&base[0x2ec], true), 1);
         playUISound__FUl(0x19);
     } else {
-        func_80124270((void*)self->mpLayout->GetRootPane()->FindPaneByName(&base[0x2d7], true), 1);
-        func_80124270((void*)self->mpLayout->GetRootPane()->FindPaneByName(&base[0x2e3], true), 1);
+        setPaneVisible((void*)self->mpLayout->GetRootPane()->FindPaneByName(&base[0x2d7], true), 1);
+        setPaneVisible((void*)self->mpLayout->GetRootPane()->FindPaneByName(&base[0x2e3], true), 1);
         playUISound__FUl(0x1c);
         self->field_0xC0 = 0;
     }
@@ -816,28 +816,28 @@ void func_801231C4(CQuestWindow* self) {
 
 // Pane-flag toggle: clear bit 0 of the pane's +0xBB flag byte (nw4r
 // visible bit) and OR in the caller's flag byte (0/1 = hide/show).
-void func_80124270(PaneFlagRef* self, u32 flag) {
+void setPaneVisible(PaneFlagRef* self, u32 flag) {
     self->mFlag = (self->mFlag & 0xFE) | (flag & 0xFF);
 }
 
 // retail: lfs f1,0(r4); lfs f0,4(r4); stfs f1,0x4c(r3); stfs f0,0x50(r3)
 // const source is required: non-const forces load/store interleaving (aliasing)
-extern "C" void func_80124288(u8* self, const float* src){
+extern "C" void writePanePos(u8* self, const float* src){
     ((float*)(self + 0x4C))[0] = src[0];
     ((float*)(self + 0x4C))[1] = src[1];
 }
 
 // Bind anim B (+0x9C) disabled then anim A (+0x98) enabled onto the layout
-// (func_8012429C; mirror image of func_801242FC).
-void func_8012429C(QuestWinObj* self) {
+// (enableAnimA; mirror image of enableAnimB).
+void enableAnimA(QuestWinObj* self) {
     self->mpLayout->SetAnimationEnable(self->mAnimB, false);
     self->mpLayout->SetAnimationEnable(self->mAnimA, true);
 }
 
 // Bind anim A (+0x98) disabled then anim B (+0x9C) enabled onto the layout
-// (func_801242FC; mirror image of func_8012429C). extern "C" keeps the
+// (enableAnimB; mirror image of enableAnimA). extern "C" keeps the
 // unmangled retail symbol name (see the forward declaration above).
-extern "C" void func_801242FC(QuestWinObj* self) {
+extern "C" void enableAnimB(QuestWinObj* self) {
     self->mpLayout->SetAnimationEnable(self->mAnimA, false);
     self->mpLayout->SetAnimationEnable(self->mAnimB, true);
 }
@@ -885,13 +885,13 @@ __attribute__((noinline)) void func_8012435C(QuestWinObj* self) {
 
 void* __dt__12CQuestWindowFv(CQuestWindow* self, int flags);
 extern "C" void cbRenderBefore__12CQuestWindowFv(CQuestWindow* self);
-void OnFileEvent__12CQuestWindowFP10CEventFile(void* self) { ((void(*)(void*))func_8012278C)((char*)self - 0x6c); }
+void OnFileEvent__12CQuestWindowFP10CEventFile(void* self) { ((void(*)(void*))onQuestFileEvent)((char*)self - 0x6c); }
 
-void func_801245D4(void* self) { ((void(*)(void*))__dt__12CQuestWindowFv)((char*)self - 0x6c); }
+void CQuestWindow_dtorAdj6C(void* self) { ((void(*)(void*))__dt__12CQuestWindowFv)((char*)self - 0x6c); }
 
-void func_801245DC(void* self) { ((void(*)(void*))cbRenderBefore__12CQuestWindowFv)((char*)self - 0x70); }
+void CQuestWindow_renderBeforeAdj70(void* self) { ((void(*)(void*))cbRenderBefore__12CQuestWindowFv)((char*)self - 0x70); }
 
-extern "C" void func_801245E4(void* self) { ((void(*)(void*))__dt__12CQuestWindowFv)((char*)self - 0x70); }
+extern "C" void CQuestWindow_dtorAdj70(void* self) { ((void(*)(void*))__dt__12CQuestWindowFv)((char*)self - 0x70); }
 
 // --- hard-symbol stubs (scaffold_hard_symbols) ---
 // CTTask<T> is declared in kyoshin/CTaskGameEff.hpp (via harness_catalog.hpp);
@@ -921,7 +921,7 @@ template<> void CTTask<IUIWindow>::Draw() {
 
 // Retail: lwz lbl_eu_80663FD4@sda21; null-check; lbz +0xDA; addic/subfe
 // setnz (byte != 0). Returns 1 while the quest-window state byte is non-zero.
-bool func_8012246C() {
+bool isQuestWindowOpen() {
     QuestWindowState* p = lbl_eu_80663FD4;
     if (p != 0) {
         return p->field_0xDA != 0;
@@ -965,8 +965,8 @@ void CQuestWindow::Term() {
         render = reinterpret_cast<IScnRender*>(&field_70);
     }
     mpScn->removeRenderCB(render);
-    func_801390E0(&field_0x88);
-    func_801390E0(&field_0x8C);
+    closeFileHandle(&field_0x88);
+    closeFileHandle(&field_0x8C);
     CBdat::getEntry(2);
     reinterpret_cast<CCursor18*>(&mCursor[0])->vf3();
     if (mpLayout != 0) {
@@ -984,7 +984,7 @@ void CQuestWindow::Term() {
     enablePadFlags__Q22cf13CfGameManagerFUlb(-1, 0);
     enablePadFlags__Q22cf13CfGameManagerFUlb(field_0xE8, 1);
     DecMenuCounter64080();
-    if (func_801B481C() == 0) {
+    if (GetItemMulti_IsActiveFlag() == 0) {
         if (code80135FDC_getByte_64080() == 0) {
             setPresentationFlag__Q22cf13CfGameManagerFv(false);
         }

@@ -7,8 +7,8 @@
 namespace cf {
 
 // Driver sub-object at CfObjectImplObj::field_14: command dispatcher at
-// vtable 0x204 (5-arg form used by func_800CA590), event id at +0x98
-// (func_800CA540), driver id at +0xC4. Dummy slots pin vfn204 to vtable
+// vtable 0x204 (5-arg form used by ObjImplDispatchCmd), event id at +0x98
+// (ObjImplPushEventResolve), driver id at +0xC4. Dummy slots pin vfn204 to vtable
 // offset 0x204 (CfEmbeddedSubObj_3E9C scheme).
 class CfObjectImplObjSub {
 public:
@@ -69,7 +69,7 @@ public:
 
 // Object handled by this TU's helpers (same family as CfObjectImplPc /
 // CfObjectImplMove views of the "Obj" implementation object): vtable slots
-// up to 0xE4 (the vfE4 query dispatched by func_800CA4EC), the driver
+// up to 0xE4 (the vfE4 query dispatched by ObjImplPrepFrame), the driver
 // sub-object at +0x14, the actor object at +0x18, and an embedded
 // CPartsChange at +0x368 (0x30 bytes, released by the destructor).
 // Never instantiated, so no vtable is emitted.
@@ -142,7 +142,7 @@ public:
     u8 mPartsChange[0x30];           // 0x368-0x397 (embedded parts-change)
 };
 
-// Command parameter consumed by func_800CA590: mode byte at +0xA (0x10 /
+// Command parameter consumed by ObjImplDispatchCmd: mode byte at +0xA (0x10 /
 // 0x11) and a digit char at +0x1C parsed via atoi when it is '0'-'9'.
 struct CfObjCmdParam {
     u8 _pad00[0xA];              // 0x00-0x09
@@ -153,11 +153,13 @@ struct CfObjCmdParam {
 
 } // namespace cf
 
+struct PartsChangeIf;
+
 // C-ABI imports (retail symbols are unmangled - keep linkage/signatures
 // verbatim; same scheme as CfObjectImplPc.hpp / CfObjectImplEne.hpp).
 extern "C" {
-void func_800CA948(void* self);
-void func_800CAB00(CfObjectImplMoveObj* self);
+void MoveImplInitFields(void* self);
+void MoveImplPushEventId(CfObjectImplMoveObj* self);
 void func_8015BB3C(void* a, void* b, void* c);
 void CPartsChange_ResolveSlotNames(cf::CPartsChange* self, u8 r4, PartsChangeIf* obj);
 int atoi(const char* str);

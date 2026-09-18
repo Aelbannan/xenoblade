@@ -50,7 +50,7 @@ public:
     u8 mState;                       // 0x84
 };
 
-// Global singleton root from which func_80252538 / isInitialized read.
+// Global singleton root from which Pause_IsActive / isInitialized read.
 extern CMenuPause* lbl_eu_806647C8;
 
 // C-linkage imports (retail symbol names -- these identifiers are pre-mangled
@@ -101,7 +101,7 @@ struct CMenuPauseTexObj {
 extern "C" {
     void __dt__8CProcessFv(void*, int);
     void playUISound__FUl(u32);
-    void func_80188890(u32);
+    void MenuSnd_SetSlotsPause_8890(u32);
     int isClassicController__Q22cf13CfGameManagerFv(int arg);
     void CfSoundMan_PlayRequest(f32, int, int, int);
     void MenuStateClear64064();

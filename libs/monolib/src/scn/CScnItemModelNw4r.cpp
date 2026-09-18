@@ -166,11 +166,11 @@ extern "C" void  scnImN4SetTevSwap(CScnItemModelNw4r* self, u32 enable) {
     simNotifyVfuncB4((CScnItemModel*)self, enable);
 }
 
-extern "C" void func_804E679C(u8* self);
-extern "C" void  scnImN4MouthFnA(u8* self) { ((void(*)(void*))func_804E679C)((char*)self + 0x1700); }
+extern "C" void MdlMouthSetMode(u8* self);
+extern "C" void  scnImN4MouthFnA(u8* self) { ((void(*)(void*))MdlMouthSetMode)((char*)self + 0x1700); }
 
-extern "C" void func_804E6898(u8* self);
-extern "C" void  scnImN4MouthFnB(u8* self) { ((void(*)(void*))func_804E6898)((char*)self + 0x1700); }
+extern "C" void MdlMouthSetValue(u8* self);
+extern "C" void  scnImN4MouthFnB(u8* self) { ((void(*)(void*))MdlMouthSetValue)((char*)self + 0x1700); }
 
 extern "C" u32  scnImN4GetMouth08(u8* self) { return *(u32*)((u8*)self + 0x1708); }
 
@@ -181,7 +181,7 @@ extern "C" void  scnImN4FwdEyeAnim(CScnItemModelNw4r* self, u32 param) {
     if (node != 0) {
         node->vfunc64(param);
     }
-    func_804E77BC(&self->field_0x1770, param);
+    EyeAnm_SetState(&self->field_0x1770, param);
 }
 
 // Virtual dispatch target: v_i at vtable offset 8+4*i (MWCC RTTI header).
@@ -287,8 +287,8 @@ extern "C" void func_80487EE0(CScnItemModelNw4r* self) {
     self->field_0x16C4 = 0;
     simRefreshActDist(self);
     if (self->field_0x7A4 & 0x1000) {
-        func_804E77C4(&self->field_0x1770);
-        func_804E6A28(&self->field_0x1700);
+        EyeAnm_TickBlink(&self->field_0x1770);
+        MdlMouthTeardown(&self->field_0x1700);
         f32 fade = self->field_04->field_0x84->value8;
         f32 f = simGetLeafDist7B0((CScnItemModel*)self);
         if (self->field_0x7A8 & 4) {
@@ -693,7 +693,7 @@ extern "C" void  scnImN4UnlinkChain(CScnItemModelNw4r* self) {
 
 // scnImN4Teardown: teardown of a CScnItemModelNw4r (see retail flow).
 extern "C" void  scnImN4Teardown(CScnItemModelNw4r* self) {
-    func_80496D74(&self->field_0xC);
+    scn80496ReleaseChildren(&self->field_0xC);
     simRemoveFromPool((CScnItemModel*)self);
     self->member824.field_4 = 0;
     if (self->member824.field_C != 0xFFFFFFFF) {
@@ -750,14 +750,14 @@ extern "C" void  scnImN4Teardown(CScnItemModelNw4r* self) {
             (nw4r::g3d::AnmObj*)self->field_0x148C);
         ((nw4r::g3d::G3dObj*)self->field_0x148C)->Destroy();
     }
-    // Owner handle kept in a local (retail r28) across both func_8048ECD8
+    // Owner handle kept in a local (retail r28) across both getScnRootSlot10
     // calls.
     CScnItemModelNw4rOwner* owner = self->field_04;
     if (self->field_0x1484 != 0) {
         CScnItemModelNw4rRoot2888* root =
-            (CScnItemModelNw4rRoot2888*)func_8048ECD8(owner);
+            (CScnItemModelNw4rRoot2888*)getScnRootSlot10(owner);
         if (root->field_0x2888 == (u32)self->field_0x1484) {
-            RemoveAnmScn__Q34nw4r3g3d7ScnRootFv(func_8048ECD8(owner));
+            RemoveAnmScn__Q34nw4r3g3d7ScnRootFv(getScnRootSlot10(owner));
         }
         ((nw4r::g3d::G3dObj*)self->field_0x1484)->Destroy();
     }
@@ -965,7 +965,7 @@ extern "C" void  scnImN4LookBind(CScnItemModelNw4r* self, u32 param) {
 extern "C" void  scnImN4LookRel(CScnItemModelNw4r* self) {
     s32 v = self->field_0x17C8;
     if (v == 0) return;
-    func_804E8284(v);
+    setMdlLookAngles(v);
 }
 
 // __dt__17CScnItemModelNw4rFv: CScnItemModelNw4r destructor, fragment-function
@@ -1270,7 +1270,7 @@ extern "C" void  func_80489584(CScnItemModelNw4r* self, int param) {
 // them into the transform's position, then (unless the bit-5 busy flag or a
 // link id is set) refresh the transform and push it into the scene object.
 // Otherwise fall back to the UV/mouth anim helpers (func_804E72D0 /
-// func_804E68A0) gated on the vtable-0x74 handled query.
+// MdlMouthPollAnim) gated on the vtable-0x74 handled query.
 extern "C" void  func_80489014(CScnItemModelNw4r* self, nw4r::g3d::ChrAnmResult* out,
                    u32 unused, CScnItemModelNw4rFrameOut* frame) {
     if (self->field_0x14A0 == frame->field_6) {
@@ -1312,7 +1312,7 @@ extern "C" void  func_80489014(CScnItemModelNw4r* self, nw4r::g3d::ChrAnmResult*
     }
     if (func_804E72D0(&self->field_0x1730, frame->field_6, out) == 0) {
         if (((CScnItemModelNw4rV74*)self)->v27() == 0) {
-            func_804E68A0(&self->field_0x1700, frame->field_6, out);
+            MdlMouthPollAnim(&self->field_0x1700, frame->field_6, out);
         }
     }
 }
@@ -2309,14 +2309,14 @@ extern "C" u32  scnImN4GetHidByIx(CScnItemModelNw4r* self, u32 index) {
 }
 
 // scnImN4MtxByName: like scnImN4MtxByIdx, but the node is resolved by name via
-// func_80490AF4 (the model resource's ResMdl handle). Null name or absent
+// TexMan_FindNode_0AF4 (the model resource's ResMdl handle). Null name or absent
 // node -> 0; the second null check is retail's redundant assert reusing
 // the first compare's CR flags.
 extern "C" nw4r::math::MTX34*  scnImN4MtxByName(CScnItemModelNw4r* self, const char* name) {
     if (name == 0) {
         return 0;
     }
-    nw4r::g3d::ResNode node = func_80490AF4(self, name);
+    nw4r::g3d::ResNode node = TexMan_FindNode_0AF4(self, name);
     if (node.ptr() == 0) {
         return 0;
     }
@@ -2454,8 +2454,8 @@ extern "C" int  scnImN4NodeIdByNm(const CScnItemModelNw4r* self, const char* nam
     return node.GetID();
 }
 
-extern "C" void func_80496FC4(u8* self);
-extern "C" void scnImN4AnimFn(u8* self) { ((void(*)(void*))func_80496FC4)((char*)self + 0xc); }
+extern "C" void scn80496FindChrAnm(u8* self);
+extern "C" void scnImN4AnimFn(u8* self) { ((void(*)(void*))scn80496FindChrAnm)((char*)self + 0xc); }
 
 // scnImN4SyncVisFlg: model-visible flag sync. Syncs the +0x7A4 bit-21 flag to
 // `param` (simSetFlag200000), then - when the "action" combination (bit 21 |
@@ -2719,18 +2719,18 @@ extern "C" CScnItemModelNw4r* __ct__CScnItemModelNw4r(
     bufferOption |= 0x9DC;
 
     // Scene model: the first model built in the session uses the
-    // func_8048ED04 allocator path, later ones func_8048ECE4 (the .sbss byte
+    // getScnRoot49C allocator path, later ones getScnRoot44C (the .sbss byte
     // is a one-shot switch cleared right after the read).
     u32 scnMdlSize;
     if (lbl_eu_806658D8 != 0) {
         nw4r::g3d::ResMdl resMdl(self->field_0x146C);
         self->field_0x147C = nw4r::g3d::ScnMdl::Construct(
-            (MEMAllocator*)func_8048ED04((CScn*)pSrc), &scnMdlSize, resMdl,
+            (MEMAllocator*)getScnRoot49C((CScn*)pSrc), &scnMdlSize, resMdl,
             bufferOption, 2);
     } else {
         nw4r::g3d::ResMdl resMdl(self->field_0x146C);
         self->field_0x147C = nw4r::g3d::ScnMdl::Construct(
-            (MEMAllocator*)func_8048ECE4((CScn*)pSrc), &scnMdlSize, resMdl,
+            (MEMAllocator*)getScnRoot44C((CScn*)pSrc), &scnMdlSize, resMdl,
             bufferOption, 2);
     }
     lbl_eu_806658D8 = 0;
@@ -2756,7 +2756,7 @@ extern "C" CScnItemModelNw4r* __ct__CScnItemModelNw4r(
                                        self->field_0x1474);
         }
         if (func_8048F630(
-                (CScnRootNw4r*)(uintptr_t)func_8048ECD0((CScn*)pSrc),
+                (CScnRootNw4r*)(uintptr_t)getScnRootPtr((CScn*)pSrc),
                 (CScnCamLayout*)self) != 0) {
             self->field_0x7A4 |= 0x1000;
         } else {
@@ -2821,7 +2821,7 @@ extern "C" CScnItemModelNw4r* __ct__CScnItemModelNw4r(
         bound.Bind(resAnmScn);
         u32 anmSize;
         nw4r::g3d::AnmScnRes* anmScnRes = nw4r::g3d::AnmScnRes::Construct(
-            (MEMAllocator*)func_8048ECE4((CScn*)pSrc), &anmSize, bound, 0);
+            (MEMAllocator*)getScnRoot44C((CScn*)pSrc), &anmSize, bound, 0);
         self->field_0x1484 = anmScnRes;
         u32 policyAddr = (u32)(void*)&nw4r::g3d::PlayPolicy_Loop;
         if (!((policyAddr & 0xFF000000) == 0x80000000 ||
@@ -2837,7 +2837,7 @@ extern "C" CScnItemModelNw4r* __ct__CScnItemModelNw4r(
         ((nw4r::g3d::FrameCtrl*)((u8*)anmScnRes + 0xC))
             ->SetPlayPolicy(nw4r::g3d::PlayPolicy_Loop);
         nw4r::g3d::ScnRoot* root =
-            (nw4r::g3d::ScnRoot*)(uintptr_t)func_8048ECD8(pSrc);
+            (nw4r::g3d::ScnRoot*)(uintptr_t)getScnRootSlot10(pSrc);
         if (((CScnItemModelNw4rRoot2888*)root)->field_0x2888 != 0) {
             RemoveAnmScn__Q34nw4r3g3d7ScnRootFv(root);
         }
@@ -2863,7 +2863,7 @@ extern "C" CScnItemModelNw4r* __ct__CScnItemModelNw4r(
                 vec[1] = cvtToF_A8F0(cvtA);
                 cvtB.lo = fogColor.r;
                 vec[0] = cvtToF_A8F0(cvtB);
-                func_8049DE74(self->field_04->field_0x78, (u32)fogType, vec,
+                FogManCopyFogParams(self->field_04->field_0x78, (u32)fogType, vec,
                               startz, endz, nearz, farz);
             }
         }
@@ -2876,7 +2876,7 @@ extern "C" CScnItemModelNw4r* __ct__CScnItemModelNw4r(
         nw4r::g3d::ResAnmClr resClr = resFile.GetResAnmClr(0);
         u32 clrSize;
         nw4r::g3d::AnmObjMatClrRes* obj = nw4r::g3d::AnmObjMatClrRes::Construct(
-            (MEMAllocator*)func_8048ECF4((CScn*)pSrc), &clrSize, resClr,
+            (MEMAllocator*)getScnRootSel46C((CScn*)pSrc), &clrSize, resClr,
             resMdl, 0);
         self->field_0x1490 = obj;
         nw4r::g3d::ResMdl bindMdl(pResMdl->ptr());
@@ -2890,7 +2890,7 @@ extern "C" CScnItemModelNw4r* __ct__CScnItemModelNw4r(
         nw4r::g3d::ResAnmTexSrt resSrt = resFile.GetResAnmTexSrt(0);
         u32 srtSize;
         nw4r::g3d::AnmObjTexSrtRes* obj = nw4r::g3d::AnmObjTexSrtRes::Construct(
-            (MEMAllocator*)func_8048ECF4((CScn*)pSrc), &srtSize, resSrt,
+            (MEMAllocator*)getScnRootSel46C((CScn*)pSrc), &srtSize, resSrt,
             resMdl, 0);
         self->field_0x1488 = obj;
         if (obj != 0) {
@@ -2906,7 +2906,7 @@ extern "C" CScnItemModelNw4r* __ct__CScnItemModelNw4r(
         nw4r::g3d::ResAnmTexPat resPat = resFile.GetResAnmTexPat(0);
         u32 patSize;
         nw4r::g3d::AnmObjTexPatRes* obj = nw4r::g3d::AnmObjTexPatRes::Construct(
-            (MEMAllocator*)func_8048ECE4((CScn*)pSrc), &patSize, resPat,
+            (MEMAllocator*)getScnRoot44C((CScn*)pSrc), &patSize, resPat,
             resMdl, 0);
         self->field_0x148C = obj;
         if (obj != 0) {
@@ -3029,7 +3029,7 @@ extern "C" CScnItemModelNw4r* __ct__CScnItemModelNw4r(
             self->field_0x85C |= 0x2;
         } else {
             u32 handle = ((CScnItemModelNw4rRootHandle*)(uintptr_t)
-                              func_8048ECD0((CScn*)pSrc))
+                              getScnRootPtr((CScn*)pSrc))
                               ->v09();
             void* p = mtl::MemManager::allocate(0x74, handle);
             if (p != 0) {
@@ -3136,9 +3136,9 @@ extern "C" CScnItemModelNw4r* __ct__CScnItemModelNw4r(
     func_8048E69C(&self->field_0x1650, &shadowOut, self);
     if (shadowOut != 0) {
         if (shadowOut & 0x4) {
-            func_804C0228((CScnEnvLgtData*)&self->field_0x31C, 1);
+            ScnEnvLgt_EnableFlag80((CScnEnvLgtData*)&self->field_0x31C, 1);
         } else if (shadowOut & 0x8) {
-            func_804C0254((CScnEnvLgtData*)&self->field_0x31C, 1);
+            ScnEnvLgt_EnableFlag100((CScnEnvLgtData*)&self->field_0x31C, 1);
         }
         if (shadowOut & 0x10) {
             self->field_0x7A8 |= 0x10;
@@ -3318,7 +3318,7 @@ extern "C" void ExecCallback_DRAW_XLU__Q34nw4r3g3d15IScnObjCallbackFQ44nw4r3g3d6
 extern "C" void __dt__Q34nw4r3g3d15IScnObjCallbackFv();
 extern "C" void __dt__Q34nw4r3g3d18ICalcWorldCallbackFv();
 extern "C" void CfObjectMove_getStatusBit1678();
-extern "C" void func_80482048();
+extern "C" void ScnCamNw4r_EmptyHook48();
 extern "C" void simGetRate858();
 extern "C" void simVtableTrue();
 extern "C" void simGetValue7E4();
@@ -3326,7 +3326,7 @@ extern "C" void* lbl_eu_806624D8;
 extern "C" void* lbl_eu_806638D8;
 
 extern "C" u32 lbl_eu_8056DE80[386] = {
-    (u32)&lbl_eu_806624C0, 0x00000000, (u32)&__dt__17CScnItemModelNw4rFv, (u32)&func_80487EE0, (u32)&func_80482048, (u32)&func_804885FC,
+    (u32)&lbl_eu_806624C0, 0x00000000, (u32)&__dt__17CScnItemModelNw4rFv, (u32)&func_80487EE0, (u32)&ScnCamNw4r_EmptyHook48, (u32)&func_804885FC,
     (u32)&scnImN4GetResName, (u32)&simGetValue7E4, (u32)&scnImN4GetTblCnt, (u32)&func_8048B4C4, (u32)&scnImN4SetNodeHid, (u32)&scnImN4GetHidByNm,
     (u32)&scnImN4SetNodeVis, (u32)&scnImN4GetHidByIx, (u32)&func_8048B3F0, (u32)&scnImN4MtxByName, (u32)&scnImN4MtxByIdx, (u32)&scnImN4NodeIdByNm,
     (u32)&func_8048A588, (u32)&simGetRate858, (u32)&scnImN4SetMaruPtr, (u32)&CfObjectMove_getStatusBit1678, (u32)&scnImN4MouthFnA, (u32)&scnImN4MouthFnB,

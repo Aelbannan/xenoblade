@@ -2,6 +2,6 @@
 
 namespace cf {
 void CHelp_ShopBuy::checkHelpCondition() {
-    func_8018C180();
+    ShopBuy_HasInstance();
 }
 } // namespace cf

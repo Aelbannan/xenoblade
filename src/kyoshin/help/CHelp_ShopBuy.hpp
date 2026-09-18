@@ -6,7 +6,7 @@
 // ---------------------------------------------------------------------------
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
 // ---------------------------------------------------------------------------
-extern "C" void func_8018C180();
+extern "C" void ShopBuy_HasInstance();
 
 namespace cf {
 class __declspec(novtable) CHelp_ShopBuy : public CHelp {

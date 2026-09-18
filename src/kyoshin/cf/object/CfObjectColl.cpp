@@ -20,12 +20,12 @@ public:
 } // namespace cf
 
 // Retail callee keeps its flat, unmangled name (reloc-name fix, PLAN.md 17.6).
-extern "C" u32 func_800AA2BC(u32 a, u32 b);
+extern "C" u32 Tok_Pack08(u32 a, u32 b);
 extern "C" u32 func_800AA714(const char* path);
 
 // Null-guarded bit-15 flag test on +0x64
 // set (retail keeps r3 = self and tests with r0 via bclr 4,2).
-extern "C" void* func_800AB3D0(void* self) {
+extern "C" void* CollObjHasFlag64Bit15(void* self) {
     if (self && (*(u32*)((u8*)self + 0x64) & 0x8000))
         return self;
     return 0;
@@ -96,7 +96,7 @@ void cf::CfObjectColl::refreshCollLink() {
 // per-state +0x154 timer update.
 // Retail symbol is flat/unmangled; C linkage keeps the emitted name
 // byte-exact so objdiff/certifier pair it (body codegen is unchanged).
-extern "C" int func_800AB580(cf::CfObjectColl* self, cf::CfObject* obj, ml::CVec3* out, float f1) {
+extern "C" int CollObjLoadResourceTimed(cf::CfObjectColl* self, cf::CfObject* obj, ml::CVec3* out, float f1) {
     if (obj == NULL)
         return 0;
     u32 flags = self->field_0x68;
@@ -285,7 +285,7 @@ void func_800AB978(cf::CfObjectColl* self, cf::CollVec* vecA, cf::CollVec* vecB,
 // matrix at +0xF0 using the translation from A, raise flag bit 0 and stamp
 // 0x98=3 / 0x94=1. Pointers stay non-const: retail reloads A's words between
 // the two block copies, which requires potential aliasing.
-void func_800ABA18(cf::CfObjectColl* self, cf::CollVec* a, const ml::CVec3* ext,
+void CollObjSetupRotBoxFromAVec(cf::CfObjectColl* self, cf::CollVec* a, const ml::CVec3* ext,
                    float angle) {
     u32 v0 = a->w0;
     self->field_0xA4 = a->w4;
@@ -432,7 +432,7 @@ void func_800ABE84(cf::CfObjectColl* self, const cf::CollVec* b, cf::CollVec* a,
 // Refresh resource via slot 0x9C, negate/expand the extent vector into the
 // 0xD8 block, build a Y-rotation matrix at +0xF0 (angle scaled to FIdx space),
 // invert it in place, then stamp the state words 0x98=3 / 0x94=5.
-void func_800ABFC4(cf::CfObjectColl* self, ml::CVec3* pos, const ml::CVec3* ext, float angle) {
+void CollObjSetupRotBoxState5(cf::CfObjectColl* self, ml::CVec3* pos, const ml::CVec3* ext, float angle) {
     self->func_80047814(pos);
     Mtx& m = self->field_0xF0;
     ml::CVec3 e;
@@ -499,7 +499,7 @@ void func_800AC110(cf::CfObjectColl* self, cf::CollVec* a, const cf::CollVec* b,
 // (angle scaled to FIdx space), invert it in place, then stamp 0x98=3 / 0x94=4.
 // pos is intentionally non-const: retail relies on potential aliasing with
 // the matrix block, which keeps both translation stores alive.
-void func_800AC1BC(cf::CfObjectColl* self, ml::CVec3* pos, const ml::CVec3* ext,
+void CollObjSetupRotBoxState4Timed(cf::CfObjectColl* self, ml::CVec3* pos, const ml::CVec3* ext,
                    float angle) {
     self->func_80047814(pos);
     Mtx& m = self->field_0xF0;
@@ -539,14 +539,14 @@ void func_800AC1BC(cf::CfObjectColl* self, ml::CVec3* pos, const ml::CVec3* ext,
 
 // Resolve the packed resource id from the (a, b) pair via the shared helper,
 // then format the display name from the retail format string.
-void func_800AC30C(cf::CfObjectColl* self, u32 a, u32 b) {
-    self->field_0x9C = func_800AA2BC(a, b);
+void CollObjSetResIdPairName(cf::CfObjectColl* self, u32 a, u32 b) {
+    self->field_0x9C = Tok_Pack08(a, b);
     self->fieldName120.format(lbl_eu_804FC134, a, b);
 }
 
 // Set or clear the indexed FixStr<16> entry in the name array that starts at
 // offset 0x120 (each entry is 0x14 bytes: 16-char buffer + length word).
-void func_800AC378(cf::CfObjectColl* self, const char* name, int index) {
+void CollObjSetNameSlot(cf::CfObjectColl* self, const char* name, int index) {
     // Indexed name-table entry (each slot is 0x14 bytes); the 0x120 field
     // offset is left in the store displacements rather than folded into the
     // entry pointer.
@@ -561,28 +561,28 @@ void func_800AC378(cf::CfObjectColl* self, const char* name, int index) {
 
 // Resolve the resource id for the given path, then format its display name
 // into the embedded FixStr<16> using the suffix of the retail format string.
-void func_800AC3F4(cf::CfObjectColl* self, const char* name) {
+void CollObjSetResIdPathName(cf::CfObjectColl* self, const char* name) {
     self->field_0x9C = func_800AA714(name);
     self->fieldName120.format(lbl_eu_804FC134 + 0xa, name);
 }
 
-void func_800AC450(void* self, unsigned long a, unsigned long b) {
+void CollObjPackResIdWords(void* self, unsigned long a, unsigned long b) {
     *(unsigned long*)((char*)self + 0x9c) = (a << 16) + b;
 }
 
 unsigned long func_800AC460(void* self) {
-    extern unsigned long func_8009D018(unsigned long);
+    extern unsigned long CtrlRemote_SetSharedBit(unsigned long);
     unsigned long v = *(unsigned long*)((char*)self + 0x9c);
-    return func_8009D018((v >> 16) + 0x20c8);
+    return CtrlRemote_SetSharedBit((v >> 16) + 0x20c8);
 }
 
 // Sign test on a call through the u16 index at +0x9C (offset 0x20C8 table).
-extern "C" int func_8009CF8C(u32 resourceId);
-extern "C" bool func_800AC470(void* self) {
-    return func_8009CF8C((*(u32*)((u8*)self + 0x9C) >> 16) + 0x20C8) != 0;
+extern "C" int CtrlRemote_TouchBitByArg(u32 resourceId);
+extern "C" bool CollObjTestResIdReady(void* self) {
+    return CtrlRemote_TouchBitByArg((*(u32*)((u8*)self + 0x9C) >> 16) + 0x20C8) != 0;
 }
 
-extern "C" void func_800AC4A8(void* self, u32 val) { *(u32*)((u8*)self + 0x9C) = val; }
+extern "C" void CollObjStoreResIdRaw(void* self, u32 val) { *(u32*)((u8*)self + 0x9C) = val; }
 
 extern const float lbl_eu_80666914;
 extern "C" float CfObject_UnkVirtualFunc73__Q22cf8CfObjectFv() { return lbl_eu_80666914; }
@@ -691,7 +691,7 @@ int cf::CfObjectPoint::isCollEnabled() {
     return (field_0x68 >> 20) & 1;
 }
 
-extern "C" void* func_800AC610(void* param_1) {
+extern "C" void* CollObjHasFlag64Bit5(void* param_1) {
     if (param_1 != NULL && (*(unsigned int*)((char*)param_1 + 0x64) & 0x20)) {
         return param_1;
     }

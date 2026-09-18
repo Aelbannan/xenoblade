@@ -42,7 +42,7 @@ struct CMenuTitleCtorShim {
 }; // sizeof 0xF0
 
 // Opaque sub-menu object embedded at offset 0x60 of the menu object handled by
-// the func_802B5F58 / func_802B60CC controller handlers in this TU.
+// the TitleMenuShowSub / func_802B60CC controller handlers in this TU.
 class CMenuTitleSub {};
 
 // Layout of the menu object passed to the controller handlers.

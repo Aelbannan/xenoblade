@@ -321,7 +321,7 @@ void func_8046A3B4__Q23LOD17UnkClass_80468434Fv(u32 idx, const f32* srcMtx,
     for (i = 0; i < o->field_0x4; i++) {
         if ((rec2[i].field_0x0 & 4) != 0) {
             PSMTXConcat(work, lbl_eu_80658048[i], work);
-            func_804BCC48(getScnHandle__Fv(), arg2, (u8*)work);
+            ScnData_FwdB7E0C(getScnHandle__Fv(), arg2, (u8*)work);
         }
     }
 }

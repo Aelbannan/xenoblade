@@ -5,24 +5,24 @@
 #include "kyoshin/cf/object/CfObjectMoveApi.hpp"
 #include "kyoshin/cf/CfMapItemManager.hpp"
 // harness_catalog.hpp pulls CTaskGameEff.hpp -> CfObjectImplMove/Walker.hpp,
-// whose C++-linkage typed CTaskGame_enumListCtor / func_804BE398 decls clash with the
+// whose C++-linkage typed CTaskGame_enumListCtor / ScnRes_VertRayForward_E398 decls clash with the
 // canonical extern "C" forms in CtrlMoveBase.hpp / CtrlPc.hpp. Hide them for
 // this TU (our call sites use the canonical extern "C" ABI).
 #define CTaskGame_enumListCtor CTaskGame_enumListCtor_altdecl
-#define func_8014B2DC func_8014B2DC_altdecl
+#define aiActionClearBlockADC aiActionClearBlockADC_altdecl
 #define CTaskGame_enumListGet CTaskGame_enumListGet_altdecl
 #define func_80043E88 func_80043E88_altdecl
 #define __dt__80043E88 __dt__80043E88_altdecl
-#define func_800F6E08 func_800F6E08_altdecl
-#define func_800F4A98 func_800F4A98_altdecl
+#define findFirstCleanObjectId findFirstCleanObjectId_altdecl
+#define startEnumObjects startEnumObjects_altdecl
 #include "kyoshin/harness_catalog.hpp"
 #undef CTaskGame_enumListCtor
-#undef func_8014B2DC
+#undef aiActionClearBlockADC
 #undef CTaskGame_enumListGet
 #undef func_80043E88
 #undef __dt__80043E88
-#undef func_800F6E08
-#undef func_800F4A98
+#undef findFirstCleanObjectId
+#undef startEnumObjects
 #include "monolib/scn/CScnTimeApi.hpp"
 
 #include "kyoshin/cf/CtrlAct.hpp"
@@ -494,7 +494,7 @@ void func_800D1CFC(CtrlActView* self) {
 // Target us-800d29f4. Per-frame action driver for the controlled actor.
 // Gate phase: usable-gate virtual (slot 0x2BC), control word 0x2000, the
 // action-container id probes 15/9 and the 0x805 command gate feeding the
-// voice-height probe into func_8014B2EC. Then a cascade of func_80174C98
+// voice-height probe into aiActionUpdateEntriesDelta. Then a cascade of func_80174C98
 // command gates - any match (or a non-empty battle ring) runs the body. The
 // body fetches a 0x20-byte action entry via func_8014B8BC and either rebuilds
 // the +0x2A4 action-state block or dispatches the entry's kind byte through a
@@ -520,7 +520,7 @@ void func_800D1F0C(CtrlActView* self) {
                     f32 scale = Scn_GetFrameDelta(lbl_eu_80663E14);
                     f32 h2 = ((CtrlActVoiceHeightIntf*)&self->mPlayer->mSub3E9C)
                                  ->getHeight();
-                    func_8014B2EC(&self->mPlayer->mField3380,
+                    aiActionUpdateEntriesDelta(&self->mPlayer->mField3380,
                                   h2 * scale / lbl_eu_80666D44);
                 }
             }
@@ -586,7 +586,7 @@ void func_800D1F0C(CtrlActView* self) {
             self->mPlayer->mField3E6C &= ~0x20;
             ((CtrlActEntryObj*)entry.mPtr18)->mField7C = lbl_eu_80666CF8;
             CfObjectMove_setAnimModeArgs((u8*)&self->mPlayer->mSub3E9C, 0x31, 0, -1, 1);
-            func_8014B2DC(&self->mPlayer->mField3380);
+            aiActionClearBlockADC(&self->mPlayer->mField3380);
         } else if (st == 2) {
             // L_33B8: restart via command gates 0x806/0x10/0x18.
             u32 c1 = *self->mPlayer->mField4->vf30();
@@ -672,7 +672,7 @@ void func_800D1F0C(CtrlActView* self) {
     switch (entry.mKind) {
     case 0:
     case 1:
-        self->func_800D2A5C(&entry);
+        self->ctrlActDispatchEntry(&entry);
         break;
     case 2:
     case 3:
@@ -702,51 +702,51 @@ void func_800D1F0C(CtrlActView* self) {
     }
     case 8:
         func_80174B4C(self->mPlayer, 0x80);
-        func_800D5874(self, 1, 0);
+        ctrlActSetupActionKind(self, 1, 0);
         break;
     case 9:
         func_80174B4C(self->mPlayer, 0xc0);
-        func_800D5874(self, 2, entry.mKind);
+        ctrlActSetupActionKind(self, 2, entry.mKind);
         break;
     case 10:
         func_80174B4C(self->mPlayer, 0x100);
-        func_800D5874(self, 3, 0);
+        ctrlActSetupActionKind(self, 3, 0);
         break;
     case 11:
         func_80174B4C(self->mPlayer, 0x140);
-        func_800D5874(self, 3, 5);
+        ctrlActSetupActionKind(self, 3, 5);
         break;
     case 12:
         func_80174B4C(self->mPlayer, 0x180);
-        func_800D5874(self, 3, 0xa);
+        ctrlActSetupActionKind(self, 3, 0xa);
         break;
     case 13:
         func_80174B4C(self->mPlayer, 0x1c0);
         if (func_80148778(&self->mPlayer->mField8, 0xb) != 0) {
-            func_800D5874(self, 0xa, 0);
+            ctrlActSetupActionKind(self, 0xa, 0);
         } else {
-            func_800D5874(self, 4, 0);
+            ctrlActSetupActionKind(self, 4, 0);
         }
         break;
     case 14:
         func_80174B4C(self->mPlayer, 0x200);
-        func_800D5874(self, 5, 0);
+        ctrlActSetupActionKind(self, 5, 0);
         break;
     case 15:
         func_80174B4C(self->mPlayer, 0x240);
-        func_800D5874(self, 6, 0);
+        ctrlActSetupActionKind(self, 6, 0);
         break;
     case 16:
         func_80174B4C(self->mPlayer, 0x280);
-        func_800D5874(self, 7, 0);
+        ctrlActSetupActionKind(self, 7, 0);
         break;
     case 17:
         func_80174B4C(self->mPlayer, 0x2c0);
-        func_800D5874(self, 8, 0);
+        ctrlActSetupActionKind(self, 8, 0);
         break;
     case 18:
         func_80174B4C(self->mPlayer, 0x300);
-        func_800D5874(self, 9, 0);
+        ctrlActSetupActionKind(self, 9, 0);
         break;
     case 19: {
         void* t = func_8016FE34(findObjectById((int)entry.mField0));
@@ -798,7 +798,7 @@ void func_800D1F0C(CtrlActView* self) {
             break;
         }
         void* bm = getInstance__Q22cf14CBattleManagerFv();
-        func_8027936C(&((CtrlActBmView*)bm)->mField1A8, (int)self->mPlayer);
+        CChain_TryActivateChain(&((CtrlActBmView*)bm)->mField1A8, (int)self->mPlayer);
         break;
     }
     default:
@@ -821,7 +821,7 @@ float cf::CAttackParam::CAttackParam_getArtsGaugeMax() {
 // (attack index, actor id, kind flags 0x54/0x55 select the 0x78 flag bits).
 // (gate helper experiments reverted: direct calls reproduce retail's
 // stack-slot order)
-int func_800D2A5C(CtrlActView* self, CtrlActAtkArg* arg) {
+int ctrlActDispatchEntry(CtrlActView* self, CtrlActAtkArg* arg) {
     // self->mPlayer is re-read at every use site (no cached local) so the
     // compiler reloads it per block like the retail code; the casts only
     // select real virtual dispatch (see CtrlActPlayerReal in CtrlAct.hpp).
@@ -941,7 +941,7 @@ extern "C" int func_800D2D64(CtrlActView* self, CtrlActAtkArg* arg) {
     void* arts;
     {
         CtrlActPlayerView* p = self->mPlayer;
-        arts = func_80153CAC(p->table->method27C(p), atkIndex);
+        arts = getArtsSlotByFlatIdx(p->table->method27C(p), atkIndex);
     }
     CtrlActAtkParam* atk;
     {
@@ -1066,7 +1066,7 @@ extern "C" int func_800D2D64(CtrlActView* self, CtrlActAtkArg* arg) {
             ->method20(&self->mPlayer->mField8, 0xeb);
         return 1;
     }
-    if (func_80145C00(atk->mField48) != 0) {
+    if (isBattleEventKind3(atk->mField48) != 0) {
         if (self->mPlayer->mField1530 != 0) {
             u8 v = ((CtrlActBmView*)getInstance__Q22cf14CBattleManagerFv())
                       ->mField1AA;
@@ -1181,10 +1181,10 @@ extern "C" int func_800D34D4(CtrlActView* self) {
         func_800D3FFC(self);
         break;
     case 3:
-        func_800D4834(self);
+        ctrlActState4Handler(self);
         break;
     case 4:
-        func_800D56F0(self);
+        ctrlActHandleCase4Move(self);
         break;
     case 5:
         func_800D49F4(self);
@@ -1609,13 +1609,13 @@ extern "C" void func_800D3FFC(CtrlActView* self) {
     CVoicePos* pp4 = self->mPlayer->mSub3E9C.getPosition();
     ml::CVec3 target = *(ml::CVec3*)pp4 + scopy;
     bool doReset = true;
-    if (self->func_800D64E0(&target, 1) == 0) {
+    if (self->ctrlActProbeTargetReset(&target, 1) == 0) {
         ml::CVec3 off(lbl_eu_80666CF8, lbl_eu_80666CFC, lbl_eu_80666CF8);
         ml::CVec3 probePos = target + off;
         ml::CVec3 probeArg = probePos;
-        if (func_804BE398(&probeArg, 0x4a05, 0, 0, lbl_eu_80666D84,
+        if (ScnRes_VertRayForward_E398(&probeArg, 0x4a05, 0, 0, lbl_eu_80666D84,
                           lbl_eu_80666CF8) != 0) {
-            if (((ml::CVec3*)func_804BE520(0))->y > lbl_eu_80666CF8) {
+            if (((ml::CVec3*)ScnRes_GetEntryHead2_E520(0))->y > lbl_eu_80666CF8) {
                 doReset = false;
             }
         }
@@ -1639,7 +1639,7 @@ extern "C" void func_800D3FFC(CtrlActView* self) {
 // slots and store the facing angle. Falling out of the timer or failing the
 // vf24 probe resets the 0x30 state block.
 
-extern "C" void func_800D4834(CtrlActView* self) {
+extern "C" void ctrlActState4Handler(CtrlActView* self) {
     ml::CVec3 vec1c;
     ml::CVec3 vec10;
     f32 x8;
@@ -1669,9 +1669,9 @@ extern "C" void func_800D4834(CtrlActView* self) {
     if (self->mField54 > lbl_eu_80666CF8) {
         CVoicePos* p2 =
             ((CVoiceOwnerIntfPc*)&((CtrlActSweepView*)other)->mOwner3E9C)->getPosition();
-        if (self->func_800D49E4(&vec1c, p2) != 0) {
+        if (self->ctrlActAimAtTarget(&vec1c, p2) != 0) {
             f32 x8;
-            self->func_800D49EC(&vec10, &x8, &vec1c, 1, 0);
+            self->ctrlActComputeAimVec(&vec10, &x8, &vec1c, 1, 0);
             f32 az = vec10.z;
             f32 ax = vec10.x;
             f32 ang = nw4r::math::Atan2FIdx(ax, az);
@@ -1689,9 +1689,9 @@ extern "C" void func_800D4834(CtrlActView* self) {
 
 
 
-int func_800D49E4(void* self) { return 0; }
+int ctrlActAimAtTarget(void* self) { return 0; }
 
-int func_800D49EC(void* self) { return 0; }
+int ctrlActComputeAimVec(void* self) { return 0; }
 
 // Target us-800d54dc. Looming-action update (kind 5): gate on the player
 // state, resolve the action source, then run the phase: phase 0 positions
@@ -1993,7 +1993,7 @@ void func_800D5308(CtrlActView* self) {
     ml::CVec3 sumA = *(ml::CVec3*)pos + v;
     ml::CVec3 point = sumA;
     int r0;
-    if (self->func_800D64D8(&sumA) != 0) {
+    if (self->ctrlActCheckBlockedProbe(&sumA) != 0) {
         blocked = 1;
         ml::CVec3 up;
         up.x = lbl_eu_80666CF8;
@@ -2001,15 +2001,15 @@ void func_800D5308(CtrlActView* self) {
         up.z = lbl_eu_80666CF8;
         ml::CVec3 probe = point + up;
         ml::CVec3 probeCopy = probe;
-        if (func_804BE398(&probeCopy, 0x40004a05, 0, 0, lbl_eu_80666D84,
+        if (ScnRes_VertRayForward_E398(&probeCopy, 0x40004a05, 0, 0, lbl_eu_80666D84,
                           lbl_eu_8066AF20) != 0) {
-            if (((ml::CVec3*)func_804BE520(0))->y > lbl_eu_80666CF8) {
+            if (((ml::CVec3*)ScnRes_GetEntryHead2_E520(0))->y > lbl_eu_80666CF8) {
                 blocked = 0;
             }
         }
         if (blocked != 0) {
             r0 = 1;
-        } else if (self->func_800D64E0(&point, 1) != 0) {
+        } else if (self->ctrlActProbeTargetReset(&point, 1) != 0) {
             r0 = 0;
         } else {
             r0 = 1;
@@ -2033,7 +2033,7 @@ void func_800D5308(CtrlActView* self) {
 // re-aim at the current facing target while the timer is live (vf25 probe),
 // with the aim/fx state value written from either the success or failure
 // path.
-extern "C" void func_800D56F0(CtrlActView* self) {
+extern "C" void ctrlActHandleCase4Move(CtrlActView* self) {
     CtrlActPlayerView* player = self->mPlayer;
     u32 id = *player->mField4->vf30();
     u32 local = id;
@@ -2045,7 +2045,7 @@ extern "C" void func_800D56F0(CtrlActView* self) {
         self->mField54 = next;
         if (next > lbl_eu_80666CF8) {
             ml::CVec3 vec;
-            if (self->func_800D5814(&vec) != 0) {
+            if (self->ctrlActFaceTargetVec(&vec) != 0) {
                 f32 az = vec.z;
                 f32 ax = vec.x;
                 f32 ang = nw4r::math::Atan2FIdx(ax, az);
@@ -2064,14 +2064,14 @@ extern "C" void func_800D56F0(CtrlActView* self) {
     }
 }
 
-int func_800D5814(void* self) { return 0; }
+int ctrlActFaceTargetVec(void* self) { return 0; }
 
-void func_800D581C(void* self) {
+void ctrlActClearState30(void* self) {
     memset((u8*)self + 0x30, 0, 0x2C);
     func_80174C24(*(void**)((u8*)self + 0x5C), 0x40);
 }
 
-unsigned long func_800D5860(void* self) {
+unsigned long ctrlActIsFlagBit15Clear(void* self) {
     unsigned long v = *(unsigned long*)((char*)self + 0x58);
     return !((v >> 15) & 1);
 }
@@ -2081,7 +2081,7 @@ unsigned long func_800D5860(void* self) {
 // (y offset by a constant), then apply the kind-specific parameter:
 // kind 3 stores the raw parameter, kinds 4/0xA set the timer constant, and
 // kind 2 maps the parameter through the 0x28..0x2C ladder.
-void func_800D5874(CtrlActView* self, u32 kindParam, int param2) {
+void ctrlActSetupActionKind(CtrlActView* self, u32 kindParam, int param2) {
     memset(&self->mPos30, 0, 0x2c);
     self->mFlags58.mKind = kindParam;
     self->mFlags58.mBit15 = 1;
@@ -2127,7 +2127,7 @@ void func_800D5874(CtrlActView* self, u32 kindParam, int param2) {
     }
 }
 
-void func_800D59FC(void* obj) {
+void ctrlActUpdateData70(void* obj) {
     struct __attribute__((packed)) Data70 {
         float f70;
         unsigned short u74;
@@ -2168,9 +2168,9 @@ extern "C" void func_800D5A2C(CtrlActView* self) {
             CfEnumListHolder holder;
             CTaskGame_enumListCtor(&holder);
             CfEnumList* lst = (CfEnumList*)CTaskGame_enumListGet(&holder);
-            func_800F4A98(lst, data[i], 0);
+            startEnumObjects(lst, data[i], 0);
             lst = (CfEnumList*)CTaskGame_enumListGet(&holder);
-            int id = (int)(intptr_t)func_800F6E08(lst);
+            int id = (int)(intptr_t)findFirstCleanObjectId(lst);
             if (id != 0) {
                 void* actor = findObjectById(id);
                 if (actor != 0) {
@@ -2363,13 +2363,13 @@ extern "C" int func_800D5F98(CtrlActView* self, CtrlActSrc* src) {
     ml::CVec3 scaled = v * lbl_eu_80666CFC;
     CVoicePos* ppos3 = self->mPlayer->mSub3E9C.getPosition();
     ml::CVec3 sum = *(ml::CVec3*)ppos3 + scaled;
-    if (self->func_800D64E0(&sum, 1) == 0) {
+    if (self->ctrlActProbeTargetReset(&sum, 1) == 0) {
         ml::CVec3 offset(lbl_eu_80666CF8, lbl_eu_80666CFC, lbl_eu_80666CF8);
         ml::CVec3 probe = sum + offset;
         int r29 = 1;
-        if (func_804BE398(&probe, 0x4a05, 0, 0, lbl_eu_80666D84,
+        if (ScnRes_VertRayForward_E398(&probe, 0x4a05, 0, 0, lbl_eu_80666D84,
                           lbl_eu_8066AF20) != 0) {
-            if (((ml::CVec3*)func_804BE520(0))->y > lbl_eu_80666CF8) {
+            if (((ml::CVec3*)ScnRes_GetEntryHead2_E520(0))->y > lbl_eu_80666CF8) {
                 r29 = 0;
             }
         }
@@ -2383,9 +2383,9 @@ extern "C" int func_800D5F98(CtrlActView* self, CtrlActSrc* src) {
     return 1;
 }
 
-int func_800D64D8(void* self) { return 0; }
+int ctrlActCheckBlockedProbe(void* self) { return 0; }
 
-int func_800D64E0(void* self) { return 0; }
+int ctrlActProbeTargetReset(void* self) { return 0; }
 
 // Target us-800d6fd0. Facing-clearance probe: gate on the player's 0x3374
 // bit 15 and a live battle target, project a unit circle along mFieldC at the
@@ -2402,27 +2402,27 @@ extern "C" int func_800D64E8(CtrlActView* self) {
             ml::CVec3 pos =
                 *(ml::CVec3*)self->mPlayer->mSub3E9C.getPosition();
             ml::CVec3 sum = pos + local;
-            if (func_804BE398(&sum, 0x4a11, 0, 1, lbl_eu_80666DA4,
+            if (ScnRes_VertRayForward_E398(&sum, 0x4a11, 0, 1, lbl_eu_80666DA4,
                               lbl_eu_8066AF20) != 0) {
                 int best = -1;
                 f32 bestY = lbl_eu_80666DA8;
                 // Retail scans with an unsigned counter here but a signed
                 // one in the second pass.
-                for (u32 i = 0; i < (u32)func_804BE4AC(); i++) {
-                    if (((ml::CVec3*)func_804BE520(i))->y
+                for (u32 i = 0; i < (u32)ScnRes_GetEntryCount_E4AC(); i++) {
+                    if (((ml::CVec3*)ScnRes_GetEntryHead2_E520(i))->y
                         >= lbl_eu_80666CF8) {
-                        if (bestY > ((ml::CVec3*)func_804BE50C(i))->y) {
-                            bestY = ((ml::CVec3*)func_804BE50C(i))->y;
+                        if (bestY > ((ml::CVec3*)ScnRes_GetEntryPtr_E50C(i))->y) {
+                            bestY = ((ml::CVec3*)ScnRes_GetEntryPtr_E50C(i))->y;
                             best = i;
                         }
                     }
                 }
-                if (best >= 0 && func_804BE5A4(0x40000, best) != 0) {
+                if (best >= 0 && ScnRes_EntryFlagThunk_E5A4(0x40000, best) != 0) {
                     f32 low = bestY - lbl_eu_80666D4C;
-                    for (int i = 0; i < func_804BE4AC(); i++) {
-                        if (best != i && bestY > ((ml::CVec3*)func_804BE50C(i))->y
-                            && low < ((ml::CVec3*)func_804BE50C(i))->y) {
-                            low = ((ml::CVec3*)func_804BE50C(i))->y;
+                    for (int i = 0; i < ScnRes_GetEntryCount_E4AC(); i++) {
+                        if (best != i && bestY > ((ml::CVec3*)ScnRes_GetEntryPtr_E50C(i))->y
+                            && low < ((ml::CVec3*)ScnRes_GetEntryPtr_E50C(i))->y) {
+                            low = ((ml::CVec3*)ScnRes_GetEntryPtr_E50C(i))->y;
                         }
                     }
                     if (bestY - low > lbl_eu_80666D20) {
@@ -2458,31 +2458,31 @@ extern "C" int func_800D6720(CtrlActView* self, int flag) {
               + lbl_eu_80666DAC * sin;
     local.y = y;
     local.z = z;
-    if (func_804BE398(&local, 0x4a05, 0, 1, lbl_eu_80666DB0,
+    if (ScnRes_VertRayForward_E398(&local, 0x4a05, 0, 1, lbl_eu_80666DB0,
                       lbl_eu_8066AF20) != 0) {
         f32 bestY = lbl_eu_80666DA8;
         int best = -1;
         // Retail scans with an unsigned counter here.
-        for (u32 i = 0; i < (u32)func_804BE4AC(); i++) {
-            if (bestY < ((ml::CVec3*)func_804BE50C(i))->y) {
-                bestY = ((ml::CVec3*)func_804BE50C(i))->y;
+        for (u32 i = 0; i < (u32)ScnRes_GetEntryCount_E4AC(); i++) {
+            if (bestY < ((ml::CVec3*)ScnRes_GetEntryPtr_E50C(i))->y) {
+                bestY = ((ml::CVec3*)ScnRes_GetEntryPtr_E50C(i))->y;
                 best = i;
             }
         }
         if (best >= 0) {
-            if (((ml::CVec3*)func_804BE520(best))->y < lbl_eu_80666CF8) {
+            if (((ml::CVec3*)ScnRes_GetEntryHead2_E520(best))->y < lbl_eu_80666CF8) {
                 f32 py = self->mPlayer->mSub3E9C.getPosition()->f[1];
                 if (bestY <= py) {
                     return 1;
                 }
             }
             self->mField74 |= 2;
-            if (func_804BE5A4(0x40000, best) != 0) {
+            if (ScnRes_EntryFlagThunk_E5A4(0x40000, best) != 0) {
                 f32 low = bestY - lbl_eu_80666D4C;
-                for (int i = 0; i < func_804BE4AC(); i++) {
-                    if (best != i && bestY > ((ml::CVec3*)func_804BE50C(i))->y
-                        && low < ((ml::CVec3*)func_804BE50C(i))->y) {
-                        low = ((ml::CVec3*)func_804BE50C(i))->y;
+                for (int i = 0; i < ScnRes_GetEntryCount_E4AC(); i++) {
+                    if (best != i && bestY > ((ml::CVec3*)ScnRes_GetEntryPtr_E50C(i))->y
+                        && low < ((ml::CVec3*)ScnRes_GetEntryPtr_E50C(i))->y) {
+                        low = ((ml::CVec3*)ScnRes_GetEntryPtr_E50C(i))->y;
                     }
                 }
                 if (bestY - low > target->mField508) {
@@ -2491,7 +2491,7 @@ extern "C" int func_800D6720(CtrlActView* self, int flag) {
                 }
             }
         }
-        if (func_804BE5A4(0x20000, best) != 0) {
+        if (ScnRes_EntryFlagThunk_E5A4(0x20000, best) != 0) {
             if ((target->mField4EC & 0x100) == 0) {
                 self->mField74 |= 4;
                 return 1;
@@ -2534,7 +2534,7 @@ extern "C" void func_800D69D8(CtrlActView* self, ml::CVec3* pos,
                 // Pre-compute the range object so the world-pointer load
                 // lands last (right before the call) like retail.
                 u8* rangeObj = (u8*)self->mPlayer + 0x44A8;
-                if (func_804B54D4(lbl_eu_80665958, rangeObj, &sum, 0,
+                if (Coli_SweepSegNodes(lbl_eu_80665958, rangeObj, &sum, 0,
                                   0) != 0) {
                     self->mField7B = 0x78;
                 }
@@ -2592,7 +2592,7 @@ extern "C" void func_800D69D8(CtrlActView* self, ml::CVec3* pos,
                 u8* rangeObj = (u8*)self->mPlayer + 0x44A8;
                 if (func_804B526C(lbl_eu_80665958, rangeObj, &pos2,
                                   &probe, 0, 0, 0) == 0) {
-                    if (self->func_800D64E0(&probe, 1) != 0) {
+                    if (self->ctrlActProbeTargetReset(&probe, 1) != 0) {
                         self->mField7B = 0;
                         r22 = 0;
                         self->mField74 = (self->mField74 & ~0x200) | 0x100;
@@ -2645,7 +2645,7 @@ extern "C" void func_800D69D8(CtrlActView* self, ml::CVec3* pos,
             ml::CVec3 sum2 = pos2 + scaled2;
             ml::CVec3 probe2 = sum2;
             u8* rangeObj2 = (u8*)self->mPlayer + 0x44A8;
-            if (func_804B4E10(lbl_eu_80665958, rangeObj2, &probe2, 0, 0,
+            if (Coli_WalkQuery(lbl_eu_80665958, rangeObj2, &probe2, 0, 0,
                               0) != 0) {
                 hit = 1;
             } else {
@@ -2673,7 +2673,7 @@ extern "C" void func_800D69D8(CtrlActView* self, ml::CVec3* pos,
                 ml::CVec3 sum3 = *(ml::CVec3*)pp + scaled3;
                 ml::CVec3 newPos = sum3;
                 self->mPos60 = newPos;
-                if (self->func_800D64E0(&self->mPos60, 1) != 0) {
+                if (self->ctrlActProbeTargetReset(&self->mPos60, 1) != 0) {
                     target = &self->mPos60;
                     self->mField74 |= 0xC0;
                 }
@@ -2696,7 +2696,7 @@ extern "C" void func_800D69D8(CtrlActView* self, ml::CVec3* pos,
     } else {
         f32 x8;
         ml::CVec3 outE4;
-        if (self->func_800D49EC(&outE4, &x8, target, 1, 0) != 0) {
+        if (self->ctrlActComputeAimVec(&outE4, &x8, target, 1, 0) != 0) {
             f32 f23 = lbl_eu_80666D40 *
                       nw4r::math::Atan2FIdx(outE4.x, outE4.z);
             self->mFieldC = f23;
@@ -2779,7 +2779,7 @@ extern "C" void func_800D755C(CtrlActView* self, ml::CVec3* pos) {
         CVoicePos* ppos = self->mPlayer->mSub3E9C.getPosition();
         ml::CVec3 playerProbe = *(ml::CVec3*)ppos + offset;
         ml::CVec3 targetProbe = *pos + offset;
-        if (func_804BE348(&playerProbe, &targetProbe, 0x44A11, 0, 0) != 0) {
+        if (ScnRes_SegQueryForward_E348(&playerProbe, &targetProbe, 0x44A11, 0, 0) != 0) {
             self->mField74 &= ~1;
         } else {
             self->mField74 |= 1;
@@ -2791,10 +2791,10 @@ probe_done:
     // counters (0x7B) and clear the facing when the target is close.
     if (self->mField74 & 1) {
         self->mField74 &= ~0x20;
-        self->func_800D49EC(&out, &x8, pos, 1, 1);
+        self->ctrlActComputeAimVec(&out, &x8, pos, 1, 1);
         goto finish;
     }
-    if (self->func_800D49EC(&out, &x8, pos, 1, 0) != 0) {
+    if (self->ctrlActComputeAimVec(&out, &x8, pos, 1, 0) != 0) {
         self->mField7B = 0;
         self->mField74 &= ~0x820;
         goto finish;
@@ -2813,7 +2813,7 @@ probe_done:
         local2.x = fx;
         local2.y = f30;
         local2.z = f29;
-        if (func_804BE398(&local2, 0x4a11, 0, 0, lbl_eu_80666DB0,
+        if (ScnRes_VertRayForward_E398(&local2, 0x4a11, 0, 0, lbl_eu_80666DB0,
                           lbl_eu_8066AF20) != 0) {
             u16 v = self->mField74;
             if (v & 0x400) {

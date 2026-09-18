@@ -28,7 +28,7 @@ namespace cf {
     // Retrieve a 16-bit arts-slot entry at row*0x10 + col*0x2 bytes in.
     // `this`(r3) accumulates both strides, matching the retail rlwinm/mr pair.
     // Accumulate the row*0x10 and col*0x2 strides into a running byte pointer
-    // (mirrors func_80153CAC), so MWCC keeps `this`(r3) as the accumulator and
+    // (mirrors getArtsSlotByFlatIdx), so MWCC keeps `this`(r3) as the accumulator and
     // reuses each source register for its own shift.
     void CArtsSet::setArtsSlotRC(unsigned short value, unsigned short row, unsigned short index) {
         // Match-pinned (u8*)this strides (row*0x10 + col*2 + 4).
@@ -54,7 +54,7 @@ namespace cf {
     }
 }
 
-unsigned short func_80153CAC(const cf::CArtsSet* set, int index) {
+unsigned short getArtsSlotByFlatIdx(const cf::CArtsSet* set, int index) {
     int row = index / 8;
     int col = index % 8;
     const char* p = reinterpret_cast<const char*>(set);
@@ -124,7 +124,7 @@ extern "C" cf::CArtsParam* getArtsParamAtCnt(cf::CArtsSet* set, unsigned int ind
 
 extern cf::CArtsParam lbl_eu_80573D88;
 
-cf::CArtsParam* func_80153DCC(cf::CArtsSet* self, int id) {
+cf::CArtsParam* lookupArtsParamById(cf::CArtsSet* self, int id) {
     unsigned char* outer = reinterpret_cast<unsigned char*>(self);
     unsigned char* inner;
     int row = 0;
@@ -171,7 +171,7 @@ namespace cf {
     }
 }
 
-void func_80153E88(cf::CAttackSet* set) {
+void resetAttackSetArts(cf::CAttackSet* set) {
     std::memset(set, 0, 0xc);
     cf::CAttackParam* arr = reinterpret_cast<cf::CAttackParam*>(reinterpret_cast<unsigned char*>(set) + 0x10);
     for (int i = 0; i < 6; i++) {

@@ -44,7 +44,7 @@ public:
  * Layout (derived from the Init/Term/cbRenderBefore ASM):
  *   0x00  CProcess region (link nodes, vtable at 0x10, child list, flags)
  *   0x3C  ptmfMove[3] / 0x48 ptmfDraw[3] (__ptmf_null callback slots)
- *   0x54/0x55 state bytes (0x54 read by the func_8017FC88 singleton gate)
+ *   0x54/0x55 state bytes (0x54 read by the ZealMenuCreateSingleton singleton gate)
  *   0x58/0x5C IWorkEvent / IScnRender subobject vtable slots
  *   0x60  CScn* mScn (owning scene, removeRenderCB target)
  *   0x64/0x78/0x8C nw4r::lyt::Layout* (drawn in cbRenderBefore)
@@ -52,7 +52,7 @@ public:
  *   0xA0/0xA1 flags (0xA0 gates the 0x8C layout draw)
  *   0xA4  UnkClass_8045F564 scratch region (0x10 bytes)
  *   0xBD/0xBE/0xBF flags (0xBD gates the whole draw; 0xBF set by the
- *        func_8017FC88 singleton gate and cleared in Term)
+ *        ZealMenuCreateSingleton singleton gate and cleared in Term)
  */
 class CMenuZeal {
 public:
@@ -144,7 +144,7 @@ int isClassicController__Q22cf13CfGameManagerFv(int arg);
 }
 // Effect/cue object factory (defined in pluginUi.cpp; declared here because
 // pluginUi.hpp's extern "C" BdatTouchStringCell clashes with code_80135FDC.hpp's).
-void* func_800451D8(u32 cls, void* param);
+void* bindIndexedEffect(u32 cls, void* param);
 
 // UI sound effect (mangles to playUISound__FUl).
 void playUISound(u32 op);

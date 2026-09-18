@@ -10,7 +10,7 @@ void loadControllerConfigA__Q22cf13CfGameManagerFv(unsigned short);
 void loadControllerConfigB__Q22cf13CfGameManagerFv(unsigned short);
 }
 
-extern "C" int func_80045560(VMThread* ths, int a, int val){
+extern "C" int getType9Value(VMThread* ths, int a, int val){
     VMArg arg;
     arg.type = 9;
     arg.unk2 = val;
@@ -19,7 +19,7 @@ extern "C" int func_80045560(VMThread* ths, int a, int val){
     return 1;
 }
 
-extern "C" int func_8004559C(VMThread* ths){
+extern "C" int getCtrlWordA33C(VMThread* ths){
     VMArg arg;
     arg.type = 3;
     arg.value.intVal = getControllerWordA33C__Q22cf13CfGameManagerFv();
@@ -27,7 +27,7 @@ extern "C" int func_8004559C(VMThread* ths){
     return 1;
 }
 
-extern "C" int func_800455E8(VMThread* ths){
+extern "C" int getCtrlWordA37C(VMThread* ths){
     VMArg arg;
     arg.type = 3;
     arg.value.intVal = getControllerWordA37C__Q22cf13CfGameManagerFv();
@@ -35,7 +35,7 @@ extern "C" int func_800455E8(VMThread* ths){
     return 1;
 }
 
-extern "C" int func_80045634(VMThread* ths){
+extern "C" int getCtrlWordDiv3(VMThread* ths){
     VMArg arg;
     arg.type = 3;
     arg.value.intVal = getControllerWordA33C__Q22cf13CfGameManagerFv() / 3;
@@ -43,14 +43,14 @@ extern "C" int func_80045634(VMThread* ths){
     return 1;
 }
 
-extern "C" int func_80045694(VMThread* ths){
+extern "C" int setCtrlConfigA(VMThread* ths){
     VMArg* prop = (VMArg*)vmOCPropertyGet(ths);
     u32 val = prop->value.uintVal;
     loadControllerConfigA__Q22cf13CfGameManagerFv(val & 0xFFFF);
     return 0;
 }
 
-extern "C" int func_800456C4(VMThread* ths){
+extern "C" int setCtrlConfigB(VMThread* ths){
     VMArg* prop = (VMArg*)vmOCPropertyGet(ths);
     u32 val = prop->value.uintVal;
     loadControllerConfigB__Q22cf13CfGameManagerFv(val & 0xFFFF);

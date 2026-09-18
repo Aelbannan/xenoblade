@@ -73,7 +73,7 @@ extern "C" CItemImpl* CItem_initItemImplInstances(CItemData* self);
 // with CfGameManager.hpp's getInstance__Q22cf14CBattleManagerFv return type.
 extern "C" void* findObjB28ById(s32);
 extern "C" int func_80148778(void* obj, int id);   // battle-state status probe
-extern "C" void* func_80149154(void* obj, u32 id); // battle-state status value
+extern "C" void* findBattleStatusEntry(void* obj, u32 id); // battle-state status value
 #include "monolib/util/MemManager.hpp"       // mtl::MemManager (work-buffer alloc)
 
 #include <new>
@@ -1030,7 +1030,7 @@ void func_8009EF9C(cf::CtrlObjectParamEF9C* self, u32 arg2) {
             volatile u32 vC6 = getBdatStringColumnValue(bdat, &strBase[0xC6], self->field_00);
             volatile u32 vCE = getBdatStringColumnValue(bdat, &strBase[0xCE], self->field_00);
             volatile u32 vD5 = getBdatStringColumnValue(bdat, &strBase[0xD5], self->field_00);
-            func_80174B3C(&view->field_3358, (u8)vD5, (u8)vCE, (u8)vC6);
+            MapItemStoreBytes567(&view->field_3358, (u8)vD5, (u8)vCE, (u8)vC6);
             func_80174AE8(&view->field_3358);
             volatile u32 vDC = getBdatStringColumnValue(bdat, &strBase[0xDC], self->field_00);
             if ((u8)vDC != 0) view->unk15F0 = 1;
@@ -1095,7 +1095,7 @@ void func_8009EF9C(cf::CtrlObjectParamEF9C* self, u32 arg2) {
             volatile u32 vC6 = getBdatStringColumnValue(bdat, &strBase[0xC6], self->field_00);
             volatile u32 vCE = getBdatStringColumnValue(bdat, &strBase[0xCE], self->field_00);
             volatile u32 vD5 = getBdatStringColumnValue(bdat, &strBase[0xD5], self->field_00);
-            func_80174B3C(&view->field_3358, (u8)vD5, (u8)vCE, (u8)vC6);
+            MapItemStoreBytes567(&view->field_3358, (u8)vD5, (u8)vCE, (u8)vC6);
             func_80174AE8(&view->field_3358);
             volatile u32 vDC = getBdatStringColumnValue(bdat, &strBase[0xDC], self->field_00);
             if ((u8)vDC != 0) view->unk15F0 = 1;
@@ -1215,7 +1215,7 @@ extern "C" __declspec(noinline) void __ct__8009F8B8(cf::CtrlObjectParamArtsSlotO
 extern "C" void func_800A03F4(cf::CtrlObjectParamArtsInitView* self) {
     u16 artsKey = self->field_0C;
     void* v125 = self->mParam.CActorParam_getArtsSlotIds();
-    reinterpret_cast<cf::CAttackSet*>(reinterpret_cast<u8*>(v125) + 0xC)->func_80153E88();
+    reinterpret_cast<cf::CAttackSet*>(reinterpret_cast<u8*>(v125) + 0xC)->resetAttackSetArts();
     if (artsKey == 0) {
         void* bdat = reinterpret_cast<void*>(lbl_eu_80664090);
         const char* strBase = lbl_eu_804FBCB0;
@@ -1262,7 +1262,7 @@ extern "C" void func_800A03F4(cf::CtrlObjectParamArtsInitView* self) {
             }
             loop++;
         } while (loop < 6);
-        func_8003AA34();
+        Bdat_GetTable_AA34();
         const char* strBase = lbl_eu_804FBCB0;
         void* fp = getFP__FPCc(&strBase[0x237]);
         f32 f30 = lbl_eu_806667A0;
@@ -1276,7 +1276,7 @@ extern "C" void func_800A03F4(cf::CtrlObjectParamArtsInitView* self) {
             cf::CtrlObjectParamAtkView* atk = reinterpret_cast<cf::CtrlObjectParamAtkView*>(
                 getAtkParam(data2, i));
             if (slot == 0) {
-                reinterpret_cast<cf::CAttackSet*>(reinterpret_cast<u8*>(atk) + 0x84)->func_80153E88();
+                reinterpret_cast<cf::CAttackSet*>(reinterpret_cast<u8*>(atk) + 0x84)->resetAttackSetArts();
             } else {
                 char* name = reinterpret_cast<char*>(
                     getBdatStringColumnValue(fp, &strBase[0x86], slot));
@@ -1648,7 +1648,7 @@ extern "C" u8 func_800A145C(cf::CtrlObjectParamArtsLearnView* self) {
     } else {
         self->mParam.CActorParam_resetArtsStatus(self);
     }
-    func_8003AA34();
+    Bdat_GetTable_AA34();
     const char* strBase = lbl_eu_804FBCB0;
     void* fp = getFP__FPCc(&strBase[0x101]);
     u16 rowKey = self->field_0C;
@@ -1786,10 +1786,10 @@ extern "C" void func_800A18A4(cf::CtrlObjectParamArtsSlotOwner* self, int arg2) 
     } else {
         self->mParam.CActorParam_resetArtsStatus(self);
     }
-    const char* strBase = lbl_eu_804FBCB0;   // materialized before func_8003AA34 (retail lis/addi r22)
+    const char* strBase = lbl_eu_804FBCB0;   // materialized before Bdat_GetTable_AA34 (retail lis/addi r22)
     u16 rowKey = self->field_0C;
     rows = &self->rows[0];
-    func_8003AA34();
+    Bdat_GetTable_AA34();
     void* fp = getFP__FPCc(&strBase[0x101]);
     volatile union { u32 w; u8 b[4]; } v;
     v.w = getBdatStringColumnValue(reinterpret_cast<void*>(lbl_eu_806640F4),
@@ -1847,10 +1847,10 @@ extern "C" void func_800A18A4(cf::CtrlObjectParamArtsSlotOwner* self, int arg2) 
 // Arts rank/level helper: gate on the party-member frame count (type 3 /
 // state 0x1D), forward the change to the actor (slot 0x1F4) when present,
 // else apply it to the embedded CActorParam (slots 0x1DC/0x1FC) and the
-// arts-set helper func_802617B8. The loop then levels the arts (slot 0xFC
+// arts-set helper Counter_AddClamped. The loop then levels the arts (slot 0xFC
 // count vs the 0x263 column), refreshes the D4/D6 display fields from the
 // item impl labels when the E6 bit-2 flag is set, and gates the
-// arts-change write (func_8026187C) on party membership.
+// arts-change write (Counter884_AddClamped) on party membership.
 extern "C" __declspec(noinline) void func_800A21F8(void* selfV, u32 value, u32 a, u32 b) {
     cf::CtrlObjectParamTypeView* self = reinterpret_cast<cf::CtrlObjectParamTypeView*>(selfV);
     cf::CtrlObjectParamArtsRankView* view =
@@ -1871,7 +1871,7 @@ extern "C" __declspec(noinline) void func_800A21F8(void* selfV, u32 value, u32 a
     }
     self->mParam.CActorParam_addSpentCurrency(val);
     self->mParam.CActorParam_addSecondCurrency(argA);
-    func_802617B8(&self->big[0], view->field_3DD0, argB);
+    Counter_AddClamped(&self->big[0], view->field_3DD0, argB);
     // Local declaration order mirrors the retail register pool fill:
     // r30=strBase, f29/f30/f31 constants, r27=repeat, r31=magic, r24=cap.
     const char* strBase = lbl_eu_804FBCB0;
@@ -1937,10 +1937,10 @@ extern "C" __declspec(noinline) void func_800A21F8(void* selfV, u32 value, u32 a
                 if ((u32)cf::CfGameManager::getQueuedFileEventCount() >= 0x1D) {
                     // skip
                 } else {
-                    func_8026187C(&self->big[0], 1);
+                    Counter884_AddClamped(&self->big[0], 1);
                 }
             } else {
-                func_8026187C(&self->big[0], 1);
+                Counter884_AddClamped(&self->big[0], 1);
             }
         }
         self->mParam.CActorParam_setSpentCurrency(-r28);
@@ -2018,8 +2018,8 @@ extern "C" void func_800A1E3C(cf::CtrlObjectParamTypeView* self, int* v1, int* v
     int levelA = (tmpType == 1) ? 100 : 90;
     int levelB = levelA;
     u8* lookup = reinterpret_cast<u8*>(lbl_eu_80663E88 + self->field_00 * 0x3DD4 + 0x7724);
-    if (func_8026178C(lookup, 0x8B)) levelA = 100;
-    if (func_8026178C(lookup, 0x8E)) levelB = 100;
+    if (Counter_TestBit(lookup, 0x8B)) levelA = 100;
+    if (Counter_TestBit(lookup, 0x8E)) levelB = 100;
     *v1 = *v1 * levelA / 100;
     *v2 = *v2 * levelB / 100;
     rank = 10;
@@ -2052,28 +2052,28 @@ extern "C" void func_800A1B08(u32 rowIndex, int* outA, int* outB,
         *outA = 125;
         *outB += 25;
     }
-    if (func_8026178C(lookup, 0x86)) {
-        *outA += func_8025FB10(lookup, 0x86);
+    if (Counter_TestBit(lookup, 0x86)) {
+        *outA += IdTable_SumValues(lookup, 0x86);
     }
-    if (func_8026178C(lookup, 0x8D)) {
-        *outB += func_8025FB10(lookup, 0x8D);
+    if (Counter_TestBit(lookup, 0x8D)) {
+        *outB += IdTable_SumValues(lookup, 0x8D);
     }
     u32 gameState = cf::CfGameManager::getCurrentSlotIndex();
-    if (func_8026178C(lookup, 0x87) && gameState != 4) {
-        *outA += func_8025FB10(lookup, 0x87);
+    if (Counter_TestBit(lookup, 0x87) && gameState != 4) {
+        *outA += IdTable_SumValues(lookup, 0x87);
     }
-    if (func_8026178C(lookup, 0x88) && gameState == 4) {
-        *outA += func_8025FB10(lookup, 0x88);
+    if (Counter_TestBit(lookup, 0x88) && gameState == 4) {
+        *outA += IdTable_SumValues(lookup, 0x88);
     }
     u8* entryBase = reinterpret_cast<u8*>(lbl_eu_80663E88 + rowOff);
     if (func_80148778(entryBase + 0x4374, 0xB7)) {
         cf::CBattleStateEntry* entry = reinterpret_cast<cf::CBattleStateEntry*>(
-            func_80149154(entryBase + 0x4374, 0xB7));
+            findBattleStatusEntry(entryBase + 0x4374, 0xB7));
         *outA += entry->unk10;
     }
     if (func_80148778(entryBase + 0x4374, 0xB8)) {
         cf::CBattleStateEntry* entry = reinterpret_cast<cf::CBattleStateEntry*>(
-            func_80149154(entryBase + 0x4374, 0xB8));
+            findBattleStatusEntry(entryBase + 0x4374, 0xB8));
         *outB += entry->unk10;
     }
 }
@@ -2091,7 +2091,7 @@ extern "C" void func_800A1CA0(u8* self, int* outLevel, int* outRank,
     int off = 0;
     int tmpIndex = 0;
     int tmpType = 0;
-    if (func_8009CF8C(0x3356) == 0) {
+    if (CtrlRemote_TouchBitByArg(0x3356) == 0) {
         *outLevel = 0;
         *outRank = 0;
         return;
@@ -2233,7 +2233,7 @@ probed:
     if (self->field_00 == 3) {
         if ((u32)cf::CfGameManager::getQueuedFileEventCount() >= 0x1D) return;
     }
-    func_8026187C(self->big, arg4);
+    Counter884_AddClamped(self->big, arg4);
 }
 
 // ── func_800A2974 (us-800a334c) ───────────────────────────────────────────
@@ -2286,7 +2286,7 @@ probed:
     if (self->field_00 == 3) {
         if ((u32)cf::CfGameManager::getQueuedFileEventCount() >= 0x1D) return;
     }
-    func_802618AC(self->big, arg2);
+    Counter884_SetClamped(self->big, arg2);
 }
 
 u32 cf::CActorParam::CActorParam_getSpentCurrency() {
@@ -2310,7 +2310,7 @@ void cf::CActorParam::CActorParam_setSpentCurrency(u32 val) {
 // Arts-set re-apply: walk the 11 x 0xC4 arts groups at +0x3534. For the
 // group matching the selected row (field_3DD0), claim the first empty slot
 // whose bdat cost (byte*100) fits the row's level cap at +0x3DBC: pay it via
-// func_802617B8, fill the slot (func_8025F528), re-run this pass recursively,
+// Counter_AddClamped, fill the slot (func_8025F528), re-run this pass recursively,
 // and reload the cap from the (possibly moved) selected row. Non-empty slots
 // with a zero flag are re-armed via func_8025F2E8. Afterwards rebuild the
 // arts set when any group is dirty or a claim happened, mirror it into the
@@ -2344,7 +2344,7 @@ extern "C" int func_800A2AF0(cf::CtrlObjectParamTypeView* selfV) {
                     colv.w = getBdatStringColumnValue(table, &strBase[0x26D], idx);
                     int cost = (int)*(const u8*)&colv * 100;
                     if (cost <= cap) {
-                        func_802617B8(reinterpret_cast<u8*>(view) + 0x3534,
+                        Counter_AddClamped(reinterpret_cast<u8*>(view) + 0x3534,
                                       view->field_3DD0, -cost);
                         func_8025F528(reinterpret_cast<u8*>(view) + 0x3534,
                                       row, s + 1, (u32)idx);

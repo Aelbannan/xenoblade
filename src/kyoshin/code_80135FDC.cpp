@@ -37,10 +37,10 @@ extern "C" {
 // copyVEC3 stays inline
 // move into code_80135FDC.hpp would clash in CCollepedia.cpp.
 extern void copyVEC3(nw4r::math::VEC3*, const nw4r::math::VEC3*);
-// func_8009CF8C stays inline: include/functions.hpp declares it as
-// bool func_8009CF8C(int) - a move into code_80135FDC.hpp would clash in
+// CtrlRemote_TouchBitByArg stays inline: include/functions.hpp declares it as
+// bool CtrlRemote_TouchBitByArg(int) - a move into code_80135FDC.hpp would clash in
 // CGame / CMenu* units that pull functions.hpp via monolib/scn.hpp.
-extern u32 func_8009CF8C(u32);
+extern u32 CtrlRemote_TouchBitByArg(u32);
 // forward decls: func_801375A0 calls these helpers before their definitions
 // (they are defined later in this TU).
 extern void code80135FDC_setVec3(float* self, float a, float b, float c);
@@ -157,27 +157,27 @@ extern u8 lbl_eu_8052E568[];
 extern u8 lbl_eu_8052E590[];
 }
 
-// func_8003AA34: code_801862C0.hpp (via harness_catalog.hpp) declares it as
+// Bdat_GetTable_AA34: code_801862C0.hpp (via harness_catalog.hpp) declares it as
 // void*() - an extern-"C" function cannot be redeclared with a different
 // signature here. Retail callers in this TU pass a table name in r3 (the
 // callee ignores it), so those call sites go through a signature cast; MWCC
-// emits the same direct bl to func_8003AA34 either way.
-#define func_8003AA34(name) ((void (*)(const char*))func_8003AA34)(name)
+// emits the same direct bl to Bdat_GetTable_AA34 either way.
+#define Bdat_GetTable_AA34(name) ((void (*)(const char*))Bdat_GetTable_AA34)(name)
 
 
 
 // --- helpers ---
-// func_8003B1EC stays inline: CKizunaTalkList.hpp declares it as (void*) - a
+// Bdat_GetMaxRow_B1EC stays inline: CKizunaTalkList.hpp declares it as (void*) - a
 // move into code_80135FDC.hpp would clash in CKizunaTalkList.cpp.
-extern "C" u32 func_8003B1EC(void*);
+extern "C" u32 Bdat_GetMaxRow_B1EC(void*);
 // CtrlObjectParam_GetSlotTableBase stays inline: include/functions.hpp and CChainActorPc.hpp
 // declare it as int* - a move into code_80135FDC.hpp would clash in
 // CGame / CMenu* units that pull those headers transitively.
 extern "C" void* CtrlObjectParam_GetSlotTableBase(void);
-// func_8009D018 stays inline: include/functions.hpp declares it as
-// void func_8009D018(int, int) - a move into code_80135FDC.hpp would clash in
+// CtrlRemote_SetSharedBit stays inline: include/functions.hpp declares it as
+// void CtrlRemote_SetSharedBit(int, int) - a move into code_80135FDC.hpp would clash in
 // CGame / CMenu* units that pull functions.hpp via monolib/scn.hpp.
-extern "C" void func_8009D018(u32 destination, u32 value);
+extern "C" void CtrlRemote_SetSharedBit(u32 destination, u32 value);
 
 // Real class tree recovered from retail vtables (see header).
 
@@ -225,11 +225,11 @@ u8 GetCollectedFlagByte(u32 idx) {
 // BdatGetS16ByTableKey: BDAT string -> s16
 // BdatTouchStringCell: BDAT string -> void
 
-// BDAT string column readers. Each validates the table (func_8003AA34),
+// BDAT string column readers. Each validates the table (Bdat_GetTable_AA34),
 // resolves the file pointer, reads the cell, and reinterprets it at the
 // requested width/sign: u8 / u16 / s16 / s8.
 u8 BdatGetU8ByTableKey(const void* tableName, const void* column, u32 key) {
-    func_8003AA34((const char*)tableName);
+    Bdat_GetTable_AA34((const char*)tableName);
     void* fp = getFP__FPCc((const char*)tableName);
     void* result = getBdatStringColumnValue(fp, (const char*)column,
                                             (const void*)(uintptr_t)key);
@@ -237,7 +237,7 @@ u8 BdatGetU8ByTableKey(const void* tableName, const void* column, u32 key) {
 }
 
 u16 BdatGetU16ByTableKey(const void* tableName, const void* column, u32 key) {
-    func_8003AA34((const char*)tableName);
+    Bdat_GetTable_AA34((const char*)tableName);
     void* fp = getFP__FPCc((const char*)tableName);
     void* result = getBdatStringColumnValue(fp, (const char*)column,
                                             (const void*)(uintptr_t)key);
@@ -245,7 +245,7 @@ u16 BdatGetU16ByTableKey(const void* tableName, const void* column, u32 key) {
 }
 
 s16 BdatGetS16ByTableKey(const void* tableName, const void* column, u32 key) {
-    func_8003AA34((const char*)tableName);
+    Bdat_GetTable_AA34((const char*)tableName);
     void* fp = getFP__FPCc((const char*)tableName);
     void* result = getBdatStringColumnValue(fp, (const char*)column,
                                             (const void*)(uintptr_t)key);
@@ -253,7 +253,7 @@ s16 BdatGetS16ByTableKey(const void* tableName, const void* column, u32 key) {
 }
 
 s8 BdatGetS8ByTableKey(const void* tableName, const void* column, u32 key) {
-    func_8003AA34((const char*)tableName);
+    Bdat_GetTable_AA34((const char*)tableName);
     void* fp = getFP__FPCc((const char*)tableName);
     void* result = getBdatStringColumnValue(fp, (const char*)column,
                                             (const void*)(uintptr_t)key);
@@ -263,42 +263,42 @@ s8 BdatGetS8ByTableKey(const void* tableName, const void* column, u32 key) {
 }
 
 void BdatTouchStringCell(const char* a, const char* b, const char* c) {
-    func_8003AA34(a);
+    Bdat_GetTable_AA34(a);
     void* fp = getFP__FPCc(a);
     getBdatStringColumnValue(fp, b, c);
 }
 
 u8 BdatGetU8Direct(const char* a, const char* b, const char* c) {
     if (a == 0) return 0;
-    func_8003AA34(a);
+    Bdat_GetTable_AA34(a);
     void* result = getBdatStringColumnValue((void*)a, b, c);
     return *(u8*)&result;
 }
 
 extern "C" u16 BdatGetU16Direct(const char* a, const char* b, const char* c) {
     if (a == 0) return 0;
-    func_8003AA34(a);
+    Bdat_GetTable_AA34(a);
     void* result = getBdatStringColumnValue((void*)a, b, c);
     return *(u16*)&result;
 }
 
 extern "C" int BdatGetS8Direct(const char* a, const char* b, const char* c) {
     if (a == 0) return 0;
-    func_8003AA34(a);
+    Bdat_GetTable_AA34(a);
     void* result = getBdatStringColumnValue((void*)a, b, c);
     return (s8)(*(u8*)&result);
 }
 
 extern "C" s16 BdatGetS16Direct(const char* a, const char* b, const char* c) {
     if (a == 0) return 0;
-    func_8003AA34(a);
+    Bdat_GetTable_AA34(a);
     void* result = getBdatStringColumnValue((void*)a, b, c);
     return *(s16*)&result;
 }
 
 extern "C" void* BdatGetPtrDirect(const char* a, const char* b, const char* c) {
     if (a == 0) return 0;
-    func_8003AA34(a);
+    Bdat_GetTable_AA34(a);
     return getBdatStringColumnValue((void*)a, b, c);
 }
 
@@ -745,7 +745,7 @@ extern "C" int func_8013732C(const char* name) {
     if (lbl_eu_80664098 == 0) {
         rowIdx = 0;
     } else {
-        func_8003AA34(name);
+        Bdat_GetTable_AA34(name);
         void* result = getBdatStringColumnValue(
             reinterpret_cast<void*>(lbl_eu_80664098),
             col0x22, name);
@@ -753,7 +753,7 @@ extern "C" int func_8013732C(const char* name) {
     }
 
     // retail validates the raw base name here, then opens base+0x15
-    func_8003AA34(lbl_eu_80500664);
+    Bdat_GetTable_AA34(lbl_eu_80500664);
     void* fp = getFP__FPCc(&lbl_eu_80500664[0x15]);
     void* result2 = getBdatStringColumnValue(
         fp, &lbl_eu_80500664[0x0F],
@@ -1151,7 +1151,7 @@ extern "C" u32 func_80138138(u32 val) {
 
 extern "C" u32 func_80138234(const char* name, u32 id) {
     u32 flag = 0;
-    if (func_8009CF8C(id + 0x220) != 0) return 0;
+    if (CtrlRemote_TouchBitByArg(id + 0x220) != 0) return 0;
 
     // One reusable column pointer: retail rematerializes the table base per
     // block and cycles a single register for the column offset.
@@ -1169,7 +1169,7 @@ extern "C" u32 func_80138234(const char* name, u32 id) {
     if (name == NULL) {
         v1 = 0;
     } else {
-        func_8003AA34(lbl_eu_80500664);
+        Bdat_GetTable_AA34(lbl_eu_80500664);
         void* result = getBdatStringColumnValue((void*)name, col, (const char*)id);
         v1 = *(u16*)&result;
     }
@@ -1177,7 +1177,7 @@ extern "C" u32 func_80138234(const char* name, u32 id) {
     if (name == NULL) {
         v2 = 0;
     } else {
-        func_8003AA34(lbl_eu_80500664);
+        Bdat_GetTable_AA34(lbl_eu_80500664);
         void* result = getBdatStringColumnValue((void*)name, col, (const char*)id);
         v2 = *(u16*)&result;
     }
@@ -1185,7 +1185,7 @@ extern "C" u32 func_80138234(const char* name, u32 id) {
     if (name == NULL) {
         v3 = 0;
     } else {
-        func_8003AA34(lbl_eu_80500664);
+        Bdat_GetTable_AA34(lbl_eu_80500664);
         void* result = getBdatStringColumnValue((void*)name, col, (const char*)id);
         v3 = *(u8*)&result;
     }
@@ -1193,7 +1193,7 @@ extern "C" u32 func_80138234(const char* name, u32 id) {
     if (name == NULL) {
         v4 = 0;
     } else {
-        func_8003AA34(lbl_eu_80500664);
+        Bdat_GetTable_AA34(lbl_eu_80500664);
         void* result = getBdatStringColumnValue((void*)name, col, (const char*)id);
         v4 = *(u16*)&result;
     }
@@ -1201,7 +1201,7 @@ extern "C" u32 func_80138234(const char* name, u32 id) {
     if (name == NULL) {
         v5 = 0;
     } else {
-        func_8003AA34(lbl_eu_80500664);
+        Bdat_GetTable_AA34(lbl_eu_80500664);
         void* result = getBdatStringColumnValue((void*)name, col, (const char*)id);
         v5 = *(u16*)&result;
     }
@@ -1209,7 +1209,7 @@ extern "C" u32 func_80138234(const char* name, u32 id) {
     if (name == NULL) {
         v6 = 0;
     } else {
-        func_8003AA34(lbl_eu_80500664);
+        Bdat_GetTable_AA34(lbl_eu_80500664);
         void* result = getBdatStringColumnValue((void*)name, col, (const char*)id);
         v6 = *(u16*)&result;
     }
@@ -1217,7 +1217,7 @@ extern "C" u32 func_80138234(const char* name, u32 id) {
     if (name == NULL) {
         v7 = 0;
     } else {
-        func_8003AA34(lbl_eu_80500664);
+        Bdat_GetTable_AA34(lbl_eu_80500664);
         void* result = getBdatStringColumnValue((void*)name, col, (const char*)id);
         v7 = *(u16*)&result;
     }
@@ -1225,7 +1225,7 @@ extern "C" u32 func_80138234(const char* name, u32 id) {
     if (name == NULL) {
         v8 = 0;
     } else {
-        func_8003AA34(lbl_eu_80500664);
+        Bdat_GetTable_AA34(lbl_eu_80500664);
         void* result = getBdatStringColumnValue((void*)name, col, (const char*)id);
         v8 = *(u8*)&result;
     }
@@ -1234,15 +1234,15 @@ extern "C" u32 func_80138234(const char* name, u32 id) {
     if (((u32)(v5 + v4) + (u32)(v8 + v2)) + ((u32)(v6 + v3) + (u32)(v7 + v1)) == 0) {
         return 0;
     }
-    if ((u16)func_8009CF8C(0x20) < v1) return 0;
-    if (v2 != 0 && (u8)func_8009CF8C(v2 + 0x220) < 0xFE) return 0;
-    if ((u16)func_8009CF8C(v3 + 0x21) < v4) return 0;
+    if ((u16)CtrlRemote_TouchBitByArg(0x20) < v1) return 0;
+    if (v2 != 0 && (u8)CtrlRemote_TouchBitByArg(v2 + 0x220) < 0xFE) return 0;
+    if ((u16)CtrlRemote_TouchBitByArg(v3 + 0x21) < v4) return 0;
 
     flag = 0;
     if (v5 != 0) {
         void* result = getBdatStringColumnValue((void*)lbl_eu_80664098, &lbl_eu_80500664[0x7E], (const char*)v5);
         u16 val = *(u16*)&result;
-        if (func_8009CF8C(val + 0xA20) == 0) {
+        if (CtrlRemote_TouchBitByArg(val + 0xA20) == 0) {
             flag = 1;
         }
     }
@@ -1252,14 +1252,14 @@ extern "C" u32 func_80138234(const char* name, u32 id) {
     if (v6 != 0) {
         void* result = getBdatStringColumnValue((void*)lbl_eu_80664098, &lbl_eu_80500664[0x7E], (const char*)v6);
         u16 val = *(u16*)&result;
-        if (func_8009CF8C(val + 0xA20) == 0) {
+        if (CtrlRemote_TouchBitByArg(val + 0xA20) == 0) {
             flag = 1;
         }
     }
     if (flag != 0) return 0;
 
     // subf/cntlzw/srwi booleanization, as in retail
-    return ((u16)func_8009CF8C(v7 + 0x608) - v8) == 0;
+    return ((u16)CtrlRemote_TouchBitByArg(v7 + 0x608) - v8) == 0;
 }
 
 extern "C" u32 func_80138574(const char* name, u32 id) {
@@ -1268,7 +1268,7 @@ extern "C" u32 func_80138574(const char* name, u32 id) {
 
     u8 v1 = 0;
     if (name != NULL) {
-        func_8003AA34(&lbl_eu_80500664[0]);
+        Bdat_GetTable_AA34(&lbl_eu_80500664[0]);
         void* result = getBdatStringColumnValue((void*)name, &lbl_eu_80500664[0x87], (const char*)id);
         v1 = *(u8*)&result;
     }
@@ -1276,23 +1276,23 @@ extern "C" u32 func_80138574(const char* name, u32 id) {
 
     u16 v2 = 0;
     if (name != NULL) {
-        func_8003AA34(&lbl_eu_80500664[0]);
+        Bdat_GetTable_AA34(&lbl_eu_80500664[0]);
         void* result = getBdatStringColumnValue((void*)name, &lbl_eu_80500664[0x8F], (const char*)id);
         v2 = *(u16*)&result;
     }
     u16 v3 = 0;
     if (name != NULL) {
-        func_8003AA34(&lbl_eu_80500664[0]);
+        Bdat_GetTable_AA34(&lbl_eu_80500664[0]);
         void* result = getBdatStringColumnValue((void*)name, &lbl_eu_80500664[0x9A], (const char*)id);
         v3 = *(u16*)&result;
     }
 
-    u32 check = func_8009CF8C(0x20) & 0xFFFF;
+    u32 check = CtrlRemote_TouchBitByArg(0x20) & 0xFFFF;
     if (v2 > check || check > v3) return 0;
 
     u8 v4 = 0;
     if (name != NULL) {
-        func_8003AA34(&lbl_eu_80500664[0]);
+        Bdat_GetTable_AA34(&lbl_eu_80500664[0]);
         void* result = getBdatStringColumnValue((void*)name, &lbl_eu_80500664[0xA5], (const char*)id);
         v4 = *(u8*)&result;
     }
@@ -1300,13 +1300,13 @@ extern "C" u32 func_80138574(const char* name, u32 id) {
         void* fp = getFP__FPCc(&lbl_eu_80500664[0xAA]);
         u16 key = 0;
         if (name != NULL) {
-            func_8003AA34(&lbl_eu_80500664[0]);
+            Bdat_GetTable_AA34(&lbl_eu_80500664[0]);
             void* result = getBdatStringColumnValue((void*)name, &lbl_eu_80500664[0xB9], (const char*)id);
             key = *(u16*)&result;
         }
         u8 v5 = 0;
         if (fp != NULL) {
-            func_8003AA34(&lbl_eu_80500664[0]);
+            Bdat_GetTable_AA34(&lbl_eu_80500664[0]);
             void* result = getBdatStringColumnValue(fp, &lbl_eu_80500664[0xC0], (const char*)key);
             v5 = *(u8*)&result;
         }
@@ -1314,22 +1314,22 @@ extern "C" u32 func_80138574(const char* name, u32 id) {
 
         u8 v6 = 0;
         if (fp != NULL) {
-            func_8003AA34(&lbl_eu_80500664[0]);
+            Bdat_GetTable_AA34(&lbl_eu_80500664[0]);
             void* result = getBdatStringColumnValue(fp, &lbl_eu_80500664[0xC8], (const char*)key);
             v6 = *(u8*)&result;
         }
-        if (v6 != 0 && v6 != (u16)func_8016DF2C()) return 0;
+        if (v6 != 0 && v6 != (u16)getReloadParam0()) return 0;
     } else {
         u16 tick = 0;
         u16 other = 0;
-        func_8006A234(&tick, &other);
+        CfT_PlayClockSnapshot(&tick, &other);
         switch (tick) {
         case 0:
         case 1:
         case 2: {
             u8 v = 0;
             if (name != NULL) {
-                func_8003AA34(&lbl_eu_80500664[0]);
+                Bdat_GetTable_AA34(&lbl_eu_80500664[0]);
                 void* result = getBdatStringColumnValue((void*)name, &lbl_eu_80500664[0x113], (const char*)id);
                 v = *(u8*)&result;
             }
@@ -1341,7 +1341,7 @@ extern "C" u32 func_80138574(const char* name, u32 id) {
         case 5: {
             u8 v = 0;
             if (name != NULL) {
-                func_8003AA34(&lbl_eu_80500664[0]);
+                Bdat_GetTable_AA34(&lbl_eu_80500664[0]);
                 void* result = getBdatStringColumnValue((void*)name, &lbl_eu_80500664[0x10A], (const char*)id);
                 v = *(u8*)&result;
             }
@@ -1353,7 +1353,7 @@ extern "C" u32 func_80138574(const char* name, u32 id) {
         case 8: {
             u8 v = 0;
             if (name != NULL) {
-                func_8003AA34(&lbl_eu_80500664[0]);
+                Bdat_GetTable_AA34(&lbl_eu_80500664[0]);
                 void* result = getBdatStringColumnValue((void*)name, &lbl_eu_80500664[0x101], (const char*)id);
                 v = *(u8*)&result;
             }
@@ -1365,7 +1365,7 @@ extern "C" u32 func_80138574(const char* name, u32 id) {
         case 11: {
             u8 v = 0;
             if (name != NULL) {
-                func_8003AA34(&lbl_eu_80500664[0]);
+                Bdat_GetTable_AA34(&lbl_eu_80500664[0]);
                 void* result = getBdatStringColumnValue((void*)name, &lbl_eu_80500664[0xF8], (const char*)id);
                 v = *(u8*)&result;
             }
@@ -1377,7 +1377,7 @@ extern "C" u32 func_80138574(const char* name, u32 id) {
         case 14: {
             u8 v = 0;
             if (name != NULL) {
-                func_8003AA34(&lbl_eu_80500664[0]);
+                Bdat_GetTable_AA34(&lbl_eu_80500664[0]);
                 void* result = getBdatStringColumnValue((void*)name, &lbl_eu_80500664[0xEE], (const char*)id);
                 v = *(u8*)&result;
             }
@@ -1389,7 +1389,7 @@ extern "C" u32 func_80138574(const char* name, u32 id) {
         case 17: {
             u8 v = 0;
             if (name != NULL) {
-                func_8003AA34(&lbl_eu_80500664[0]);
+                Bdat_GetTable_AA34(&lbl_eu_80500664[0]);
                 void* result = getBdatStringColumnValue((void*)name, &lbl_eu_80500664[0xE4], (const char*)id);
                 v = *(u8*)&result;
             }
@@ -1401,7 +1401,7 @@ extern "C" u32 func_80138574(const char* name, u32 id) {
         case 20: {
             u8 v = 0;
             if (name != NULL) {
-                func_8003AA34(&lbl_eu_80500664[0]);
+                Bdat_GetTable_AA34(&lbl_eu_80500664[0]);
                 void* result = getBdatStringColumnValue((void*)name, &lbl_eu_80500664[0xDA], (const char*)id);
                 v = *(u8*)&result;
             }
@@ -1411,7 +1411,7 @@ extern "C" u32 func_80138574(const char* name, u32 id) {
         default: {
             u8 v = 0;
             if (name != NULL) {
-                func_8003AA34(&lbl_eu_80500664[0]);
+                Bdat_GetTable_AA34(&lbl_eu_80500664[0]);
                 void* result = getBdatStringColumnValue((void*)name, &lbl_eu_80500664[0xD0], (const char*)id);
                 v = *(u8*)&result;
             }
@@ -1423,85 +1423,85 @@ extern "C" u32 func_80138574(const char* name, u32 id) {
 
     u16 v7 = 0;
     if (name != NULL) {
-        func_8003AA34(&lbl_eu_80500664[0]);
+        Bdat_GetTable_AA34(&lbl_eu_80500664[0]);
         void* result = getBdatStringColumnValue((void*)name, &lbl_eu_80500664[0x11C], (const char*)id);
         v7 = *(u16*)&result;
     }
     if (v7 != 0) {
         u8 v8 = 0;
         if (name != NULL) {
-            func_8003AA34(&lbl_eu_80500664[0]);
+            Bdat_GetTable_AA34(&lbl_eu_80500664[0]);
             void* result = getBdatStringColumnValue((void*)name, &lbl_eu_80500664[0x125], (const char*)id);
             v8 = *(u8*)&result;
         }
-        if ((func_8009CF8C(v7 + 0x220) & 0xFF) != v8) return 0;
+        if ((CtrlRemote_TouchBitByArg(v7 + 0x220) & 0xFF) != v8) return 0;
     }
     u8 v9 = 0;
     if (name != NULL) {
-        func_8003AA34(&lbl_eu_80500664[0]);
+        Bdat_GetTable_AA34(&lbl_eu_80500664[0]);
         void* result = getBdatStringColumnValue((void*)name, &lbl_eu_80500664[0x12B], (const char*)id);
         v9 = *(u8*)&result;
     }
     if (v9 != 0) {
         u8 v10 = 0;
         if (name != NULL) {
-            func_8003AA34(&lbl_eu_80500664[0]);
+            Bdat_GetTable_AA34(&lbl_eu_80500664[0]);
             void* result = getBdatStringColumnValue((void*)name, &lbl_eu_80500664[0x135], (const char*)id);
             v10 = *(u8*)&result;
         }
-        if ((func_8009CF8C(v9 + 0x798) & 0xFF) != v10) return 0;
+        if ((CtrlRemote_TouchBitByArg(v9 + 0x798) & 0xFF) != v10) return 0;
     }
     u8 v11 = 0;
     if (name != NULL) {
-        func_8003AA34(&lbl_eu_80500664[0]);
+        Bdat_GetTable_AA34(&lbl_eu_80500664[0]);
         void* result = getBdatStringColumnValue((void*)name, &lbl_eu_80500664[0x13C], (const char*)id);
         v11 = *(u8*)&result;
     }
     if (v11 != 0) {
         u16 v12 = 0;
         if (name != NULL) {
-            func_8003AA34(&lbl_eu_80500664[0]);
+            Bdat_GetTable_AA34(&lbl_eu_80500664[0]);
             void* result = getBdatStringColumnValue((void*)name, &lbl_eu_80500664[0x147], (const char*)id);
             v12 = *(u16*)&result;
         }
-        if ((u16)func_8009CF8C(v11 + 0x21) < v12) return 0;
+        if ((u16)CtrlRemote_TouchBitByArg(v11 + 0x21) < v12) return 0;
     }
     u16 v13 = 0;
     if (name != NULL) {
-        func_8003AA34(&lbl_eu_80500664[0]);
+        Bdat_GetTable_AA34(&lbl_eu_80500664[0]);
         void* result = getBdatStringColumnValue((void*)name, &lbl_eu_80500664[0x14F], (const char*)id);
         v13 = *(u16*)&result;
     }
     if (v13 != 0) {
-        if (func_8009CF8C(v13 + 0xA20) == 0) return 0;
+        if (CtrlRemote_TouchBitByArg(v13 + 0xA20) == 0) return 0;
     }
     u8 v14 = 0;
     if (name != NULL) {
-        func_8003AA34(&lbl_eu_80500664[0]);
+        Bdat_GetTable_AA34(&lbl_eu_80500664[0]);
         void* result = getBdatStringColumnValue((void*)name, &lbl_eu_80500664[0x15A], (const char*)id);
         v14 = *(u8*)&result;
     }
     if (v14 != 0) {
         u16 v15 = 0;
         if (name != NULL) {
-            func_8003AA34(&lbl_eu_80500664[0]);
+            Bdat_GetTable_AA34(&lbl_eu_80500664[0]);
             void* result = getBdatStringColumnValue((void*)name, &lbl_eu_80500664[0x164], (const char*)id);
             v15 = *(u16*)&result;
         }
-        if ((u16)func_8009CF8C(v14 + 0x7FC) < v15) return 0;
+        if ((u16)CtrlRemote_TouchBitByArg(v14 + 0x7FC) < v15) return 0;
     }
     u8 v16 = 0;
     if (name != NULL) {
-        func_8003AA34(&lbl_eu_80500664[0]);
+        Bdat_GetTable_AA34(&lbl_eu_80500664[0]);
         void* result = getBdatStringColumnValue((void*)name, &lbl_eu_80500664[0x16B], (const char*)id);
         v16 = *(u8*)&result;
     }
     if (v16 != 0) {
         if (name != NULL) {
-            func_8003AA34(&lbl_eu_80500664[0]);
+            Bdat_GetTable_AA34(&lbl_eu_80500664[0]);
             getBdatStringColumnValue((void*)name, &lbl_eu_80500664[0x175], (const char*)id);
         }
-        if (func_8009CF8C(v16 + 0x2578) == 0) return 0;
+        if (CtrlRemote_TouchBitByArg(v16 + 0x2578) == 0) return 0;
     }
     return 1;
 }
@@ -1512,7 +1512,7 @@ extern "C" void* func_80138DA4(const char* str) {
     const char* base = lbl_eu_80500664;
     const char* col = base + 0x17C;
     const char* file = base + 0x181;
-    func_8003AA34(base);
+    Bdat_GetTable_AA34(base);
     void* fp = getFP__FPCc(file);
     return (void*)(getBdatStringColumnValue)(fp, col, v);
 }
@@ -1523,7 +1523,7 @@ extern "C" u8 BdatGetSexFlag(const char* key) {
     if (src == 0) {
         return 0;
     }
-    func_8003AA34(key);
+    Bdat_GetTable_AA34(key);
     void* result = getBdatStringColumnValue((void*)src, col, key);
     return *(u8*)&result;
 }
@@ -1531,7 +1531,7 @@ extern "C" u8 BdatGetSexFlag(const char* key) {
 extern "C" u32 func_80138E90(const char* key) {
     u8 v = 0;
     if (lbl_eu_80664098 != 0) {
-        func_8003AA34(key);
+        Bdat_GetTable_AA34(key);
         void* result = getBdatStringColumnValue((void*)lbl_eu_80664098, &lbl_eu_80500664[0x18A], key);
         v = *(u8*)&result;
     }
@@ -1568,7 +1568,7 @@ extern "C" u32 func_80138E90(const char* key) {
 
 extern "C" char* MakeTplNameSysFile(const char* key) {
     if (lbl_eu_80664068 == 0) {
-        func_8003AA34(key);
+        Bdat_GetTable_AA34(key);
         lbl_eu_80664068 = (u32)getFP__FPCc(&lbl_eu_80500664[0x192]);
     }
     const char* col = &lbl_eu_80500664[0x19F];
@@ -1577,9 +1577,9 @@ extern "C" char* MakeTplNameSysFile(const char* key) {
     if (fp == NULL) {
         result = NULL;
     } else {
-        // retail: bl func_8003AA34 with no arg move - r3 already holds
+        // retail: bl Bdat_GetTable_AA34 with no arg move - r3 already holds
         // &lbl_eu_80500664[0] from the shared base computation with col
-        func_8003AA34(&lbl_eu_80500664[0]);
+        Bdat_GetTable_AA34(&lbl_eu_80500664[0]);
         result = getBdatStringColumnValue(fp, col, key);
     }
     sprintf(&lbl_eu_80573B30[0], &lbl_eu_80500664[0x1A8], result);
@@ -1590,14 +1590,14 @@ extern "C" char* func_8013902C(const char* key) {
     // Register mapping in retail: key -> r29, file pointer -> r30, column
     // pointer -> r31; the column pointer is hoisted above the fp check.
     if (lbl_eu_8066406C == 0) {
-        func_8003AA34(key);
+        Bdat_GetTable_AA34(key);
         lbl_eu_8066406C = (u32)getFP__FPCc(&lbl_eu_80500664[0x1AF]);
     }
     char* result = NULL;
     const char* col = &lbl_eu_80500664[0x1C7];
     void* fp = (void*)lbl_eu_8066406C;
     if (fp != NULL) {
-        func_8003AA34(key);
+        Bdat_GetTable_AA34(key);
         result = (char*)getBdatStringColumnValue(fp, col, key);
     }
     sprintf(&lbl_eu_80573BB0[0], &lbl_eu_80500664[0x1A8], result);
@@ -1713,7 +1713,7 @@ extern "C" u16 BdatGetItemType(const char* name) {
     if (src == 0) {
         return 0;
     }
-    func_8003AA34(name);
+    Bdat_GetTable_AA34(name);
     void* result = getBdatStringColumnValue((void*)src, col, name);
     return *(u16*)&result;
 }
@@ -1724,7 +1724,7 @@ extern "C" u16 BdatGetItemId(const char* name) {
     if (src == 0) {
         return 0;
     }
-    func_8003AA34(name);
+    Bdat_GetTable_AA34(name);
     void* result = getBdatStringColumnValue((void*)src, col, name);
     return *(u16*)&result;
 }
@@ -1732,7 +1732,7 @@ extern "C" u16 BdatGetItemId(const char* name) {
 extern "C" u32 func_801393CC(const char* name) {
     u32 v = 0;
     if (lbl_eu_806640EC != 0) {
-        func_8003AA34(name);
+        Bdat_GetTable_AA34(name);
         void* result = getBdatStringColumnValue((void*)lbl_eu_806640EC, &lbl_eu_80500664[0x1D2], name);
         v = *(u16*)&result;
     }
@@ -1763,7 +1763,7 @@ extern "C" char* func_801394D4(const char* name) {
     if (lbl_eu_806640EC == 0) {
         b = 0;
     } else {
-        func_8003AA34((const char*)a);
+        Bdat_GetTable_AA34((const char*)a);
         void* r = getBdatStringColumnValue((void*)lbl_eu_806640EC, col1DB, name);
         b = *(u16*)&r;
     }
@@ -1772,7 +1772,7 @@ extern "C" char* func_801394D4(const char* name) {
     if (lbl_eu_806640EC == 0) {
         c = 0;
     } else {
-        func_8003AA34(&lbl_eu_80500664[0]);
+        Bdat_GetTable_AA34(&lbl_eu_80500664[0]);
         void* r = getBdatStringColumnValue((void*)lbl_eu_806640EC, col1D2, name);
         c = *(u16*)&r;
     }
@@ -1781,7 +1781,7 @@ extern "C" char* func_801394D4(const char* name) {
     if (a == 0) {
         d0 = 0;
     } else {
-        func_8003AA34(&lbl_eu_80500664[0]);
+        Bdat_GetTable_AA34(&lbl_eu_80500664[0]);
         d0 = getBdatStringColumnValue((void*)a, col17C, (const char*)(u32)b);
     }
     sprintf(&lbl_eu_80573C30[0], &lbl_eu_80500664[0], d0);
@@ -1791,11 +1791,11 @@ extern "C" char* func_801394D4(const char* name) {
         if (lbl_eu_806640EC == 0) {
             d = 0;
         } else {
-            func_8003AA34(&lbl_eu_80500664[0]);
+            Bdat_GetTable_AA34(&lbl_eu_80500664[0]);
             rv = getBdatStringColumnValue((void*)lbl_eu_806640EC, &lbl_eu_80500664[0x1E2], name);
             d = *(u8*)&rv;
         }
-        func_8003AA34((const char*)rv);
+        Bdat_GetTable_AA34((const char*)rv);
         void* fp = getFP__FPCc(&lbl_eu_80500664[0x1EB]);
         void* r2 = getBdatStringColumnValue(fp, col17C,
                                            (const char*)(0x1E - (d - 1)));
@@ -1991,7 +1991,7 @@ extern "C" f32 BlendFloatAvgScale(u32 a, u32 b, u32 c, f32 d) {
 }
 
 extern "C" void func_80139CEC(const char* arg) {
-    func_8003AA34(arg);
+    Bdat_GetTable_AA34(arg);
     getFP__FPCc(&lbl_eu_80500664[0x1F9]);
     void* gm = cf::CfGameManager::getGameSubManager();
     if (gm == NULL) return;
@@ -1999,7 +1999,7 @@ extern "C" void func_80139CEC(const char* arg) {
     for (u8 i = 0; i <= 0x63; i++) {
         deactivateLOD__8CTaskLODFv(i);
         void* snd = getScnHandle__Fv();
-        func_804BCC3C(snd, i);
+        ScnData_FwdB7DD4(snd, i);
         forwardMpfCallC__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, i);
     }
 
@@ -2021,244 +2021,244 @@ extern "C" void func_80139CEC(const char* arg) {
         if (ch < 0) break;
         activateLOD__8CTaskLODFv(ch);
         void* snd = getScnHandle__Fv();
-        func_804BCC30(snd, ch);
+        ScnData_FwdB7D9C(snd, ch);
         forwardMpfCallB__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, ch);
         j++;
     }
 
-    if (func_8009CF8C(0x7D0) == 1) {
+    if (CtrlRemote_TouchBitByArg(0x7D0) == 1) {
         activateLOD__8CTaskLODFv(0x50);
         void* snd = getScnHandle__Fv();
-        func_804BCC30(snd, 0x50);
+        ScnData_FwdB7D9C(snd, 0x50);
         forwardMpfCallB__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, 0x50);
         activateLOD__8CTaskLODFv(0x63);
         snd = getScnHandle__Fv();
-        func_804BCC30(snd, 0x63);
+        ScnData_FwdB7D9C(snd, 0x63);
         forwardMpfCallB__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, 0x63);
         activateLOD__8CTaskLODFv(0x09);
         snd = getScnHandle__Fv();
-        func_804BCC30(snd, 0x09);
+        ScnData_FwdB7D9C(snd, 0x09);
         forwardMpfCallB__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, 0x09);
     }
 
     for (u8 i = 0; i < 4; i++) {
-        u8 n = (u8)func_8009CF8C(i + 0x7FE);
+        u8 n = (u8)CtrlRemote_TouchBitByArg(i + 0x7FE);
         u32 base = (u32)((i + 1) * 10);
         for (u8 k = 1; k <= n; k++) {
             u8 v1 = (u8)(base + k);
             activateLOD__8CTaskLODFv(v1);
             void* snd = getScnHandle__Fv();
-            func_804BCC30(snd, v1);
+            ScnData_FwdB7D9C(snd, v1);
             forwardMpfCallB__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, v1);
 
             u8 v2 = (u8)(k + 0x3C);
             activateLOD__8CTaskLODFv(v2);
             snd = getScnHandle__Fv();
-            func_804BCC30(snd, v2);
+            ScnData_FwdB7D9C(snd, v2);
             forwardMpfCallB__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, v2);
 
             u8 v3 = (u8)(k + 0x46);
             deactivateLOD__8CTaskLODFv(v3);
             snd = getScnHandle__Fv();
-            func_804BCC3C(snd, v3);
+            ScnData_FwdB7DD4(snd, v3);
             forwardMpfCallC__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, v3);
 
             if (v2 == 0x3D) {
                 activateLOD__8CTaskLODFv(0x55);
                 snd = getScnHandle__Fv();
-                func_804BCC30(snd, 0x55);
+                ScnData_FwdB7D9C(snd, 0x55);
                 forwardMpfCallB__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, 0x55);
             }
             if (v2 == 0x3E) {
                 activateLOD__8CTaskLODFv(0x56);
                 snd = getScnHandle__Fv();
-                func_804BCC30(snd, 0x56);
+                ScnData_FwdB7D9C(snd, 0x56);
                 forwardMpfCallB__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, 0x56);
             }
             if (v2 == 0x3D) {
                 activateLOD__8CTaskLODFv(0x57);
                 snd = getScnHandle__Fv();
-                func_804BCC30(snd, 0x57);
+                ScnData_FwdB7D9C(snd, 0x57);
                 forwardMpfCallB__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, 0x57);
             }
             if (v2 == 0x3D) {
                 activateLOD__8CTaskLODFv(0x58);
                 snd = getScnHandle__Fv();
-                func_804BCC30(snd, 0x58);
+                ScnData_FwdB7D9C(snd, 0x58);
                 forwardMpfCallB__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, 0x58);
             }
-            if (func_8009CF8C(0x20) >= 0x16E) {
+            if (CtrlRemote_TouchBitByArg(0x20) >= 0x16E) {
                 activateLOD__8CTaskLODFv(0x59);
                 snd = getScnHandle__Fv();
-                func_804BCC30(snd, 0x59);
+                ScnData_FwdB7D9C(snd, 0x59);
                 forwardMpfCallB__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, 0x59);
                 if (v1 == 0x0E) {
                     activateLOD__8CTaskLODFv(0x5A);
                     snd = getScnHandle__Fv();
-                    func_804BCC30(snd, 0x5A);
+                    ScnData_FwdB7D9C(snd, 0x5A);
                     forwardMpfCallB__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, 0x5A);
                 }
             }
             if (v2 == 0x3D) {
                 activateLOD__8CTaskLODFv(0x5B);
                 snd = getScnHandle__Fv();
-                func_804BCC30(snd, 0x5B);
+                ScnData_FwdB7D9C(snd, 0x5B);
                 forwardMpfCallB__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, 0x5B);
             }
             if (v2 == 0x3D) {
                 activateLOD__8CTaskLODFv(0x5C);
                 snd = getScnHandle__Fv();
-                func_804BCC30(snd, 0x5C);
+                ScnData_FwdB7D9C(snd, 0x5C);
                 forwardMpfCallB__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, 0x5C);
             }
             if (v2 == 0x3E) {
                 activateLOD__8CTaskLODFv(0x5D);
                 snd = getScnHandle__Fv();
-                func_804BCC30(snd, 0x5D);
+                ScnData_FwdB7D9C(snd, 0x5D);
                 forwardMpfCallB__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, 0x5D);
             }
             if (v2 == 0x3F) {
                 activateLOD__8CTaskLODFv(0x5E);
                 snd = getScnHandle__Fv();
-                func_804BCC30(snd, 0x5E);
+                ScnData_FwdB7D9C(snd, 0x5E);
                 forwardMpfCallB__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, 0x5E);
             }
             if (v2 == 0x40) {
                 activateLOD__8CTaskLODFv(0x5F);
                 snd = getScnHandle__Fv();
-                func_804BCC30(snd, 0x5F);
+                ScnData_FwdB7D9C(snd, 0x5F);
                 forwardMpfCallB__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, 0x5F);
             }
             if (v2 == 0x40) {
                 activateLOD__8CTaskLODFv(0x60);
                 snd = getScnHandle__Fv();
-                func_804BCC30(snd, 0x60);
+                ScnData_FwdB7D9C(snd, 0x60);
                 forwardMpfCallB__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, 0x60);
             }
             if (v2 == 0x41) {
                 activateLOD__8CTaskLODFv(0x61);
                 snd = getScnHandle__Fv();
-                func_804BCC30(snd, 0x61);
+                ScnData_FwdB7D9C(snd, 0x61);
                 forwardMpfCallB__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, 0x61);
             }
             if (v2 == 0x41) {
                 activateLOD__8CTaskLODFv(0x62);
                 snd = getScnHandle__Fv();
-                func_804BCC30(snd, 0x62);
+                ScnData_FwdB7D9C(snd, 0x62);
                 forwardMpfCallB__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, 0x62);
             }
 
             if (getLODData__8CTaskLODFv(0x2D)) {
                 deactivateLOD__8CTaskLODFv(0x50);
                 snd = getScnHandle__Fv();
-                func_804BCC3C(snd, 0x50);
+                ScnData_FwdB7DD4(snd, 0x50);
                 forwardMpfCallC__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, 0x50);
             }
             if (getLODData__8CTaskLODFv(0x0E)) {
                 deactivateLOD__8CTaskLODFv(0x51);
                 snd = getScnHandle__Fv();
-                func_804BCC3C(snd, 0x51);
+                ScnData_FwdB7DD4(snd, 0x51);
                 forwardMpfCallC__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, 0x51);
             }
             if (getLODData__8CTaskLODFv(0x2A)) {
                 deactivateLOD__8CTaskLODFv(0x52);
                 snd = getScnHandle__Fv();
-                func_804BCC3C(snd, 0x52);
+                ScnData_FwdB7DD4(snd, 0x52);
                 forwardMpfCallC__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, 0x52);
             }
             if (getLODData__8CTaskLODFv(0x22)) {
                 deactivateLOD__8CTaskLODFv(0x53);
                 snd = getScnHandle__Fv();
-                func_804BCC3C(snd, 0x53);
+                ScnData_FwdB7DD4(snd, 0x53);
                 forwardMpfCallC__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, 0x53);
             }
             if (getLODData__8CTaskLODFv(0x23)) {
                 deactivateLOD__8CTaskLODFv(0x54);
                 snd = getScnHandle__Fv();
-                func_804BCC3C(snd, 0x54);
+                ScnData_FwdB7DD4(snd, 0x54);
                 forwardMpfCallC__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, 0x54);
             }
             if (getLODData__8CTaskLODFv(0x3E)) {
                 deactivateLOD__8CTaskLODFv(0x55);
                 snd = getScnHandle__Fv();
-                func_804BCC3C(snd, 0x55);
+                ScnData_FwdB7DD4(snd, 0x55);
                 forwardMpfCallC__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, 0x55);
             }
             if (getLODData__8CTaskLODFv(0x2D)) {
                 deactivateLOD__8CTaskLODFv(0x57);
                 snd = getScnHandle__Fv();
-                func_804BCC3C(snd, 0x57);
+                ScnData_FwdB7DD4(snd, 0x57);
                 forwardMpfCallC__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, 0x57);
             }
             if (getLODData__8CTaskLODFv(0x2D)) {
                 deactivateLOD__8CTaskLODFv(0x58);
                 snd = getScnHandle__Fv();
-                func_804BCC3C(snd, 0x58);
+                ScnData_FwdB7DD4(snd, 0x58);
                 forwardMpfCallC__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, 0x58);
             }
             if (getLODData__8CTaskLODFv(0x0E)) {
                 deactivateLOD__8CTaskLODFv(0x59);
                 snd = getScnHandle__Fv();
-                func_804BCC3C(snd, 0x59);
+                ScnData_FwdB7DD4(snd, 0x59);
                 forwardMpfCallC__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, 0x59);
             }
             if (getLODData__8CTaskLODFv(0x0B)) {
                 deactivateLOD__8CTaskLODFv(0x5B);
                 snd = getScnHandle__Fv();
-                func_804BCC3C(snd, 0x5B);
+                ScnData_FwdB7DD4(snd, 0x5B);
                 forwardMpfCallC__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, 0x5B);
             }
             if (getLODData__8CTaskLODFv(0x15)) {
                 deactivateLOD__8CTaskLODFv(0x5C);
                 snd = getScnHandle__Fv();
-                func_804BCC3C(snd, 0x5C);
+                ScnData_FwdB7DD4(snd, 0x5C);
                 forwardMpfCallC__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, 0x5C);
             }
             if (getLODData__8CTaskLODFv(0x0C)) {
                 deactivateLOD__8CTaskLODFv(0x5D);
                 snd = getScnHandle__Fv();
-                func_804BCC3C(snd, 0x5D);
+                ScnData_FwdB7DD4(snd, 0x5D);
                 forwardMpfCallC__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, 0x5D);
             }
             if (getLODData__8CTaskLODFv(0x0D)) {
                 deactivateLOD__8CTaskLODFv(0x5E);
                 snd = getScnHandle__Fv();
-                func_804BCC3C(snd, 0x5E);
+                ScnData_FwdB7DD4(snd, 0x5E);
                 forwardMpfCallC__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, 0x5E);
             }
             if (getLODData__8CTaskLODFv(0x0E)) {
                 deactivateLOD__8CTaskLODFv(0x5F);
                 snd = getScnHandle__Fv();
-                func_804BCC3C(snd, 0x5F);
+                ScnData_FwdB7DD4(snd, 0x5F);
                 forwardMpfCallC__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, 0x5F);
             }
             if (getLODData__8CTaskLODFv(0x2C)) {
                 deactivateLOD__8CTaskLODFv(0x60);
                 snd = getScnHandle__Fv();
-                func_804BCC3C(snd, 0x60);
+                ScnData_FwdB7DD4(snd, 0x60);
                 forwardMpfCallC__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, 0x60);
             }
             if (getLODData__8CTaskLODFv(0x0F)) {
                 deactivateLOD__8CTaskLODFv(0x61);
                 snd = getScnHandle__Fv();
-                func_804BCC3C(snd, 0x61);
+                ScnData_FwdB7DD4(snd, 0x61);
                 forwardMpfCallC__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, 0x61);
             }
             if (getLODData__8CTaskLODFv(0x19)) {
                 deactivateLOD__8CTaskLODFv(0x62);
                 snd = getScnHandle__Fv();
-                func_804BCC3C(snd, 0x62);
+                ScnData_FwdB7DD4(snd, 0x62);
                 forwardMpfCallC__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, 0x62);
             }
         }
     }
 
-    u8 n2 = (u8)func_8009CF8C(0x802);
+    u8 n2 = (u8)CtrlRemote_TouchBitByArg(0x802);
     for (u8 k = 1; k <= n2; k++) {
         u8 v = (u8)(k + 0x32);
         activateLOD__8CTaskLODFv(v);
         void* snd = getScnHandle__Fv();
-        func_804BCC30(snd, v);
+        ScnData_FwdB7D9C(snd, v);
         forwardMpfCallB__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, v);
     }
 }
@@ -2318,11 +2318,11 @@ extern "C" u16 func_8013A7D0(u16 arg1, u16 arg2) {
     const char* col204 = &lbl_eu_80500664[0x204];
     int flag = 0;
     const char* fpName = &lbl_eu_80500664[0x20B];
-    func_8003AA34((const char*)arg1);
+    Bdat_GetTable_AA34((const char*)arg1);
     void* fp = getFP__FPCc(fpName);
     void* r = getBdatStringColumnValue(fp, col204, (const char*)5);
     u16 row0 = *(u16*)&r;
-    if (func_8009CF8C(0x20) >= row0) flag = 1;
+    if (CtrlRemote_TouchBitByArg(0x20) >= row0) flag = 1;
 
     u32 arrA[2] = { *(u32*)&lbl_eu_80667310, *(u32*)&lbl_eu_80667314 };
     u32 arrB[2] = { *(u32*)&lbl_eu_80667318, *(u32*)&lbl_eu_8066731C };
@@ -2333,20 +2333,20 @@ extern "C" u16 func_8013A7D0(u16 arg1, u16 arg2) {
     for (u8 i = 1; i <= 0x15; i++) {
         u16 v1 = 0;
         if (fp2 != 0) {
-            func_8003AA34((const char*)fp2);
+            Bdat_GetTable_AA34((const char*)fp2);
             void* r1 = getBdatStringColumnValue(fp2, (const char*)colA, (const char*)(u32)i);
             v1 = *(u16*)&r1;
         }
         u16 v2 = 0;
         if (fp2 != 0) {
-            func_8003AA34((const char*)fp2);
+            Bdat_GetTable_AA34((const char*)fp2);
             void* r2 = getBdatStringColumnValue(fp2, (const char*)colB, (const char*)(u32)i);
             v2 = *(u16*)&r2;
         }
         u16 a = (u16)(v1 + 0xFF91);
         u16 b = (u16)(v2 + 0xFF91);
         if ((a == arg1 && b == arg2) || (a == arg2 && b == arg1)) {
-            result = (s16)func_8009CF8C(i + 0x28);
+            result = (s16)CtrlRemote_TouchBitByArg(i + 0x28);
             break;
         }
     }
@@ -2358,11 +2358,11 @@ extern "C" void func_8013A95C(u16 arg1, u16 arg2, s8 delta) {
     const char* col204 = &lbl_eu_80500664[0x204];
     int flag = 0;
     const char* fpName = &lbl_eu_80500664[0x20B];
-    func_8003AA34((const char*)arg1);
+    Bdat_GetTable_AA34((const char*)arg1);
     void* fp = getFP__FPCc(fpName);
     void* r = getBdatStringColumnValue(fp, col204, (const char*)5);
     u16 row0 = *(u16*)&r;
-    if (func_8009CF8C(0x20) >= row0) flag = 1;
+    if (CtrlRemote_TouchBitByArg(0x20) >= row0) flag = 1;
 
     u32 arrA[2] = { *(u32*)&lbl_eu_80667320, *(u32*)&lbl_eu_80667324 };
     u32 arrB[2] = { *(u32*)&lbl_eu_80667328, *(u32*)&lbl_eu_8066732C };
@@ -2372,13 +2372,13 @@ extern "C" void func_8013A95C(u16 arg1, u16 arg2, s8 delta) {
     for (u8 i = 1; i <= 0x15; i++) {
         u16 v1 = 0;
         if (fp2 != 0) {
-            func_8003AA34((const char*)fp2);
+            Bdat_GetTable_AA34((const char*)fp2);
             void* r1 = getBdatStringColumnValue(fp2, (const char*)colA, (const char*)(u32)i);
             v1 = *(u16*)&r1;
         }
         u16 v2 = 0;
         if (fp2 != 0) {
-            func_8003AA34((const char*)fp2);
+            Bdat_GetTable_AA34((const char*)fp2);
             void* r2 = getBdatStringColumnValue(fp2, (const char*)colB, (const char*)(u32)i);
             v2 = *(u16*)&r2;
         }
@@ -2386,11 +2386,11 @@ extern "C" void func_8013A95C(u16 arg1, u16 arg2, s8 delta) {
         u16 b = (u16)(v2 + 0xFF91);
         if ((a == arg1 && b == arg2) || (a == arg2 && b == arg1)) {
             u8 idx = i + 0x28;
-            s16 v = (s16)func_8009CF8C(idx);
+            s16 v = (s16)CtrlRemote_TouchBitByArg(idx);
             s16 nv = (s16)(v + (s8)delta);
             if (nv < 0) nv = 0;
             if (nv > 0x1388) nv = 0x1388;
-            func_8009D018(idx, (s32)nv);
+            CtrlRemote_SetSharedBit(idx, (s32)nv);
             break;
         }
     }
@@ -2403,12 +2403,12 @@ extern "C" void func_8013AB0C(u8* out1, u8* out2, int idx) {
     // into two stack arrays AFTER the unlock check, indexed by the flag.
     int flag = 0;
     u32 row = idx - 0x28;
-    func_8003AA34((const char*)out1);
+    Bdat_GetTable_AA34((const char*)out1);
     void* fp = getFP__FPCc(&lbl_eu_80500664[0x20B]);
     void* r = getBdatStringColumnValue(fp, &lbl_eu_80500664[0x204],
                                        (const char*)5);
     u16 row0 = *(u16*)&r;
-    if (func_8009CF8C(0x20) >= row0) flag = 1;
+    if (CtrlRemote_TouchBitByArg(0x20) >= row0) flag = 1;
 
     u32 arrB[2];
     u32 arrA[2];
@@ -2421,7 +2421,7 @@ extern "C" void func_8013AB0C(u8* out1, u8* out2, int idx) {
     u32 colA = arrA[flag];
     u16 v1 = 0;
     if (fp2 != 0) {
-        func_8003AA34((const char*)fp2);
+        Bdat_GetTable_AA34((const char*)fp2);
         void* r1 = getBdatStringColumnValue(fp2, (const char*)colA,
                                             (const char*)row);
         v1 = *(u16*)&r1;
@@ -2429,7 +2429,7 @@ extern "C" void func_8013AB0C(u8* out1, u8* out2, int idx) {
     u32 colB = arrB[flag];
     u16 v2 = 0;
     if (fp2 != 0) {
-        func_8003AA34((const char*)fp2);
+        Bdat_GetTable_AA34((const char*)fp2);
         void* r2 = getBdatStringColumnValue(fp2, (const char*)colB,
                                             (const char*)row);
         v2 = *(u16*)&r2;
@@ -2447,13 +2447,13 @@ extern "C" int func_8013AC3C(u8 max, u8 count, u32 off) {
     XBMapTableAC3C table = *(const XBMapTableAC3C*)&lbl_eu_80500480[0];
     // Retail's copy loop leaves the tail word (the table name) in r3, which
     // is then passed straight to the validator.
-    func_8003AA34((const char*)table.w[30]);
+    Bdat_GetTable_AA34((const char*)table.w[30]);
     u32 sum = 0;
     for (u8 i = 2; i < max; i++) {
         u32 p = table.w[i - 1];
         if (p != 0) {
             void* fp = getFP__FPCc((const char*)p);
-            sum += func_8003B1EC((void*)fp) * 0x240;
+            sum += Bdat_GetMaxRow_B1EC((void*)fp) * 0x240;
         }
     }
     sum += (count - 1) * 0x240;
@@ -2464,7 +2464,7 @@ extern "C" void func_8013ACFC() {
     // retail materializes the table base once (r22) and derives every
     // sub-table (+0x418/+0x378/+0x2F0) and column name from it
     u8* tbl = lbl_eu_80500108;
-    if (func_8009CF8C(0x20) <= 4) return;
+    if (CtrlRemote_TouchBitByArg(0x20) <= 4) return;
     if ((lbl_eu_80663E24 & 0x100) == 0) return;
     void* cam = (void*)Scn_QueryUnk80State((CScn*)lbl_eu_80663E14);
     f32 f = lbl_eu_806672E8 - *(f32*)((u8*)cam + 0xC);
@@ -2478,7 +2478,7 @@ extern "C" void func_8013ACFC() {
     void* bdat = (void*)lbl_eu_806640A8;
     u16 row = 0;
     if (bdat != NULL) {
-        func_8003AA34((const char*)(tbl + 0x22B));
+        Bdat_GetTable_AA34((const char*)(tbl + 0x22B));
         void* r = getBdatStringColumnValue(bdat, (const char*)(tbl + 0x22B),
                                            (const char*)(u32)flag);
         row = *(u16*)&r;
@@ -2488,7 +2488,7 @@ extern "C" void func_8013ACFC() {
 
     u8 col2 = 0;
     if (bdat != NULL) {
-        func_8003AA34((const char*)(tbl + 0x23A));
+        Bdat_GetTable_AA34((const char*)(tbl + 0x23A));
         void* r = getBdatStringColumnValue(bdat, (const char*)(tbl + 0x23A),
                                            (const char*)(u32)flag);
         col2 = *(u8*)&r;
@@ -2505,18 +2505,18 @@ extern "C" void func_8013ACFC() {
     f32 sy = pos->y;
     f32 sz = pos->z / scale * lbl_eu_80667344;
 
-    func_8003AA34((const char*)pos);
+    Bdat_GetTable_AA34((const char*)pos);
     u32 name = t1.w[flag];
     if (name == 0) return;
     void* fp = getFP__FPCc((const char*)name);
-    u8 n = (u8)func_8003B1EC((void*)fp);
+    u8 n = (u8)Bdat_GetMaxRow_B1EC((void*)fp);
 
     const char* colName = (const char*)(tbl + 0x247);
     u8 idx = 0;
     for (u8 i = 1; i <= n; i++) {
         s16 v = 0;
         if (fp != NULL) {
-            func_8003AA34((const char*)fp);
+            Bdat_GetTable_AA34((const char*)fp);
             void* r = getBdatStringColumnValue(fp, colName,
                                                (const char*)(u32)i);
             v = *(s16*)&r;
@@ -2545,26 +2545,26 @@ extern "C" void func_8013ACFC() {
         f32 dz = (f32)(s32)(q2 - q) * cell - sz;
         if (dx * dx + dz * dz <= R2) {
             XBMapTable2 t2 = *(const XBMapTable2*)t2src;
-            func_8003AA34((const char*)t2.w[28]);
+            Bdat_GetTable_AA34((const char*)t2.w[28]);
             u32 sum = 0;
             for (u8 j = 2; j < flag; j++) {
                 u32 p = t2.w[j];
                 if (p != 0) {
                     void* fp2 = getFP__FPCc((const char*)p);
-                    sum += func_8003B1EC((void*)fp2) * 0x240;
+                    sum += Bdat_GetMaxRow_B1EC((void*)fp2) * 0x240;
                 }
             }
             sum += baseOff;
             u32 addr = sum + i2 + 1;
             if (CtrlObjectParam_GetItemBitFlag(addr) == 0) {
                 XBMapTable3 t3 = *(const XBMapTable3*)t3src;
-                func_8003AA34((const char*)t3.w[32]);
+                Bdat_GetTable_AA34((const char*)t3.w[32]);
                 u32 sum2 = 0;
                 for (u8 j = 2; j < flag; j++) {
                     u32 p = t3.w[j];
                     if (p != 0) {
                         void* fp2 = getFP__FPCc((const char*)p);
-                        sum2 += func_8003B1EC((void*)fp2) * 0x240;
+                        sum2 += Bdat_GetMaxRow_B1EC((void*)fp2) * 0x240;
                     }
                 }
                 sum2 += baseOff;
@@ -2584,18 +2584,18 @@ extern "C" void func_8013B1C4(u32 v) {
     Table805A8Copy table;
     table = *(Table805A8Copy*)&lbl_eu_805005A8;
     // retail reuses the copy loop's last loaded word (w[32]) as the argument
-    func_8003AA34((const char*)table.w[32]);
+    Bdat_GetTable_AA34((const char*)table.w[32]);
     u32 sum = 0;
     for (u8 i = 2; i < v; i++) {
         u32 p = table.w[i - 1];
         if (p != 0) {
             void* fp = getFP__FPCc((const char*)p);
-            sum += func_8003B1EC((void*)fp) * 0x240;
+            sum += Bdat_GetMaxRow_B1EC((void*)fp) * 0x240;
         }
     }
     u32 last = v - 1;
     void* fp = getFP__FPCc((const char*)table.w[last]);
-    int n = func_8003B1EC((void*)fp);
+    int n = Bdat_GetMaxRow_B1EC((void*)fp);
     for (int j = 0; j < n; j++) {
         u32 base = sum + (u32)j * 0x240;
         for (u16 k = 0; k < 0x240; k++) {
@@ -2629,29 +2629,29 @@ extern "C" f32 GetFloatTableEntry(u32 idx) {
 }
 
 extern "C" void func_8013B428__FUl(u32 value) {
-    if (func_8009CF8C(0x20) <= 3) return;
+    if (CtrlRemote_TouchBitByArg(0x20) <= 3) return;
     // retail divides the param as SIGNED (mulhw + srawi + sign-adjust), so
     // cast to int before the modulo even though the ABI type is unsigned.
     u8 m = (u8)((int)value % 200);
     // bool temp: forces the retail neg/or/srwi. booleanize idiom for the
     // nonzero test (a plain != 0 would compile to cmpwi/bne)
-    bool busy = (func_8009CF8C(m + 0x312C) != 0);
+    bool busy = (CtrlRemote_TouchBitByArg(m + 0x312C) != 0);
     if (busy) return;
 
     // u16 arithmetic: the ++ keeps the value's upper bits "dirty" so every
     // use re-masks it (clrlwi) exactly like retail (call arg + each case body)
-    u16 n = (u16)func_8009CF8C(m + 0x40);
+    u16 n = (u16)CtrlRemote_TouchBitByArg(m + 0x40);
     n++;
-    func_8009D018(m + 0x40, (u16)n);
+    CtrlRemote_SetSharedBit(m + 0x40, (u16)n);
 
     int flag = 0;
     switch (m) {
     case 0:
-        if (func_8009CF8C(0x320) < 0xFE) break;
-        if (func_8009CF8C(0x321) < 0xFE) break;
-        if (func_8009CF8C(0x322) < 0xFE) break;
-        if (func_8009CF8C(0x323) < 0xFE) break;
-        if (func_8009CF8C(0x324) >= 0xFE) flag = 1;
+        if (CtrlRemote_TouchBitByArg(0x320) < 0xFE) break;
+        if (CtrlRemote_TouchBitByArg(0x321) < 0xFE) break;
+        if (CtrlRemote_TouchBitByArg(0x322) < 0xFE) break;
+        if (CtrlRemote_TouchBitByArg(0x323) < 0xFE) break;
+        if (CtrlRemote_TouchBitByArg(0x324) >= 0xFE) flag = 1;
         break;
     case 0x79: if ((u16)n == 0x1) flag = 1; break;
     case 0x7A: if ((u16)n == 0xFA) flag = 1; break;
@@ -2676,7 +2676,7 @@ extern "C" void func_8013B428__FUl(u32 value) {
         // and calls queueEventId with the ORIGINAL m afterwards
         u8 i;
         for (i = 1; i <= 5; i++) {
-            if (func_8009CF8C(i + 0x21) < 0x1F40) return;
+            if (CtrlRemote_TouchBitByArg(i + 0x21) < 0x1F40) return;
         }
         flag = 1;
         break;
@@ -2707,20 +2707,20 @@ extern "C" void func_8013B88C(u8 v) {
         return;
     } else if (v <= 0x1D) {
         void* fp = getFP__FPCc(&lbl_eu_80500664[0x15]);
-        int n = func_8003B1EC((void*)fp);
+        int n = Bdat_GetMaxRow_B1EC((void*)fp);
         u8 count = 0;
         u8 good = 0;
         for (int i = 1; i <= n; i++) {
             u8 c = 0;
             if (fp != 0) {
-                func_8003AA34((const char*)fp);
+                Bdat_GetTable_AA34((const char*)fp);
                 void* r = getBdatStringColumnValue(fp, &lbl_eu_80500664[0x0F],
                                                    (const char*)(u32)i);
                 c = *(u8*)&r;
             }
             if (c == v) {
                 count++;
-                if (func_8009CF8C(i + 0x20C8) != 0) {
+                if (CtrlRemote_TouchBitByArg(i + 0x20C8) != 0) {
                     good++;
                 }
             }
@@ -2952,7 +2952,7 @@ extern "C" int GetSysStateFlag25() {
 }
 
 int CheckState2CC8Active(void* obj) {
-    int v = (int)func_8009CF8C((u32)obj + 0x2CC8);
+    int v = (int)CtrlRemote_TouchBitByArg((u32)obj + 0x2CC8);
     return (v == 1) ? 1 : 0;
 }
 

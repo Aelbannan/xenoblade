@@ -88,8 +88,8 @@ public:
     virtual void vf100();                       // index 62 -> vtable 0x100
     virtual void vf104();                       // index 63 -> vtable 0x104
 
-    void* func_800C22C4();
-    u32 func_800C5970();
+    void* Walker_InnerPtr68();
+    u32 Walker_GetField380();
 
     // Layout fields (vptr implicit at 0x00 from the virtuals above)
     class CfWalkField04* field_04;             // 0x04

@@ -85,7 +85,7 @@ public:
 extern "C" void func_804903B8(CScnTexWorkMan* self,
                               const nw4r::g3d::ResNode* pNode,
                               ml::CVec3* pos, ml::CVec3* scale);
-extern "C" void* func_8049431C(u8* obj, u8* image, u16 w, u16 h, u32 fmt,
+extern "C" void* TexObj_InitExt(u8* obj, u8* image, u16 w, u16 h, u32 fmt,
                                u8* p6);
 
 // Texture-work memory-pool state (retail .sdata/.sbss).
@@ -123,7 +123,7 @@ CScnTexWorkMan::~CScnTexWorkMan() {
 
 // Resolve a ResMdl's node dictionary (offset field at 0x60) to a ResNode,
 // with the nw4r null/alignment asserts.
-extern "C" nw4r::g3d::ResNode func_804909A8(nw4r::g3d::ResNode mdl) {
+extern "C" nw4r::g3d::ResNode TexMan_NodeFromMdl_09A8(nw4r::g3d::ResNode mdl) {
     if (mdl.ptr() == NULL) {
         nw4r::db::Panic(lbl_eu_8056E850, 0x2c, lbl_eu_8056E834,
                         lbl_eu_80663910, lbl_eu_806639B8);
@@ -144,7 +144,7 @@ extern "C" nw4r::g3d::ResNode func_804909A8(nw4r::g3d::ResNode mdl) {
 
 // Initialize the position/scale defaults and clamp them against the model's
 // node boxes.
-extern "C" int func_80490A44(CScnTexWorkMan* self, ml::CVec3* pos,
+extern "C" int TexMan_GetDefaultXf_0A44(CScnTexWorkMan* self, ml::CVec3* pos,
                              ml::CVec3* scale) {
     nw4r::g3d::ResMdl mdl = nw4r::g3d::ResMdl(self->mResMdl1);
     if (mdl.GetResNode(0).IsValid() == false) {
@@ -163,7 +163,7 @@ extern "C" int func_80490A44(CScnTexWorkMan* self, ml::CVec3* pos,
 }
 
 // Reserve texture-work memory from the pool and build a texture-work object.
-extern "C" void* func_80490208(void* p, u16 w, u16 h, u32 fmt) {
+extern "C" void* TexMan_AllocBuffer_0208(void* p, u16 w, u16 h, u32 fmt) {
     if (lbl_eu_806658FC != 0) {
         return 0;
     }
@@ -180,9 +180,9 @@ extern "C" void* func_80490208(void* p, u16 w, u16 h, u32 fmt) {
     u8* obj = (u8*)mtl::MemManager::allocate(
         0x2c, CWorkThreadSystem::getWorkMem());
     if (obj != 0) {
-        // func_8049431C returns its first argument, so r3 keeps the object
+        // TexObj_InitExt returns its first argument, so r3 keeps the object
         // across the call in both paths.
-        obj = (u8*)func_8049431C(obj, (u8*)aligned, w, h, fmt, (u8*)cursor);
+        obj = (u8*)TexObj_InitExt(obj, (u8*)aligned, w, h, fmt, (u8*)cursor);
     }
     lbl_eu_80665900 = (u32)obj;
     return obj;
@@ -309,7 +309,7 @@ extern "C" void __dt__804943A0(void* self, int flags);
 // allocated work object, publish its +0x28 word into the allocation cursor;
 // then delete the arg when non-null (retail tail-calls __dt__804943A0). The
 // arg is the SECOND parameter (retail compares r4; r3 self is unused).
-extern "C" void func_804902D8(void* self, void* arg) {
+extern "C" void TexMan_ReleaseArg_02D8(void* self, void* arg) {
     if (lbl_eu_806658FC != 0) return;
     if (lbl_eu_80665900 == (u32)arg) {
         lbl_eu_806658F0 = *(u32*)((u8*)arg + 0x28);
@@ -323,13 +323,13 @@ void onViAfterDrawDone__14CScnTexWorkManFv(void) {}
 
 int lbl_eu_806658F8;
 
-void func_80490314() {
+void TexMan_SnapCursor_0314() {
     if (lbl_eu_806658FC == 0) {
         lbl_eu_806658F8 = lbl_eu_806658F0;
     }
 }
 
-void func_8049032C() {
+void TexMan_RestoreCursor_032C() {
     if (lbl_eu_806658FC != 0) return;
     lbl_eu_806658F0 = lbl_eu_806658F8;
     lbl_eu_806658F8 = 0;
@@ -340,7 +340,7 @@ extern "C" void* Scn_GetCamList(void* scene, void* view);
 
 // Apply the camera's perspective (matrix at cam+0x9c, fov/near/far at
 // cam+0x1e0/0x1ec/0x1f0) to the given CDrawGX; falls back to the current view.
-int func_8049034C(CScnTexWorkMan* scene, CDrawGX* gx, CView* view) {
+int TexMan_ApplyCamPersp_034C(CScnTexWorkMan* scene, CDrawGX* gx, CView* view) {
     if (view == NULL) {
         view = CView::getCurrentView();
     }
@@ -354,14 +354,14 @@ int func_8049034C(CScnTexWorkMan* scene, CDrawGX* gx, CView* view) {
     return 1;
 }
 
-extern "C" nw4r::g3d::ResNode func_80490AF4(void* self, const char* name) {
+extern "C" nw4r::g3d::ResNode TexMan_FindNode_0AF4(void* self, const char* name) {
     nw4r::g3d::ResMdl mdl = *(nw4r::g3d::ResMdl*)((u8*)self + 0x146C);
     return mdl.GetResNode(name);
 }
 
 // Resolve a ResNode's next sibling (offset field at 0x64) with the nw4r
 // null/alignment asserts.
-nw4r::g3d::ResNode func_8049090C(nw4r::g3d::ResNode pNode) {
+nw4r::g3d::ResNode TexMan_NodeFromNode_090C(nw4r::g3d::ResNode pNode) {
     if (pNode.ptr() == NULL) {
         nw4r::db::Panic(lbl_eu_8056E850, 0x2c, lbl_eu_8056E834,
                         lbl_eu_80663910, lbl_eu_806639B8);
@@ -469,9 +469,9 @@ L_ok:
 L_countSib:
         (*pCounter)++;
 L_okSib:
-        nw4r::g3d::ResNode sib2 = func_8049090C(sib);
+        nw4r::g3d::ResNode sib2 = TexMan_NodeFromNode_090C(sib);
         func_80490B20(&sib2, pCounter);
-        nw4r::g3d::ResNode sib3 = func_804909A8(sib);
+        nw4r::g3d::ResNode sib3 = TexMan_NodeFromMdl_09A8(sib);
         func_80490B20(&sib3, pCounter);
     }
     if (pNode->ptr() == NULL) {
@@ -521,9 +521,9 @@ L_okSib:
 L_countChild:
         (*pCounter)++;
 L_okChild:
-        nw4r::g3d::ResNode child2 = func_8049090C(child);
+        nw4r::g3d::ResNode child2 = TexMan_NodeFromNode_090C(child);
         func_80490B20(&child2, pCounter);
-        nw4r::g3d::ResNode child3 = func_804909A8(child);
+        nw4r::g3d::ResNode child3 = TexMan_NodeFromMdl_09A8(child);
         func_80490B20(&child3, pCounter);
     }
     }
@@ -616,9 +616,9 @@ L_ok:
 L_countSib:
         counter++;
 L_okSib:
-        nw4r::g3d::ResNode sib2 = func_8049090C(sib);
+        nw4r::g3d::ResNode sib2 = TexMan_NodeFromNode_090C(sib);
         func_80490B20(&sib2, &counter);
-        nw4r::g3d::ResNode sib3 = func_804909A8(sib);
+        nw4r::g3d::ResNode sib3 = TexMan_NodeFromMdl_09A8(sib);
         func_80490B20(&sib3, &counter);
     }
     if (node == NULL) {
@@ -668,9 +668,9 @@ L_okSib:
 L_countChild:
         counter++;
 L_okChild:
-        nw4r::g3d::ResNode child2 = func_8049090C(child);
+        nw4r::g3d::ResNode child2 = TexMan_NodeFromNode_090C(child);
         func_80490B20(&child2, &counter);
-        nw4r::g3d::ResNode child3 = func_804909A8(child);
+        nw4r::g3d::ResNode child3 = TexMan_NodeFromMdl_09A8(child);
         func_80490B20(&child3, &counter);
     }
     }
@@ -776,9 +776,9 @@ L_pushSib:
             pList->array[pList->count++] = id;
         }
 L_okSib:
-        nw4r::g3d::ResNode sib2 = func_8049090C(sib);
+        nw4r::g3d::ResNode sib2 = TexMan_NodeFromNode_090C(sib);
         func_80491764(&sib2, pList);
-        nw4r::g3d::ResNode sib3 = func_804909A8(sib);
+        nw4r::g3d::ResNode sib3 = TexMan_NodeFromMdl_09A8(sib);
         func_80491764(&sib3, pList);
     }
     if (pNode->ptr() == NULL) {
@@ -835,9 +835,9 @@ L_pushChild:
             pList->array[pList->count++] = id;
         }
 L_okChild:
-        nw4r::g3d::ResNode child2 = func_8049090C(child);
+        nw4r::g3d::ResNode child2 = TexMan_NodeFromNode_090C(child);
         func_80491764(&child2, pList);
-        nw4r::g3d::ResNode child3 = func_804909A8(child);
+        nw4r::g3d::ResNode child3 = TexMan_NodeFromMdl_09A8(child);
         func_80491764(&child3, pList);
     }
     }

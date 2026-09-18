@@ -12,24 +12,24 @@ void CHelp::dispatchHelp() {
     UNKWORD a = this->getSkipResetFlag();
     UNKWORD b = this->getHelpSceneId();
     CUICfManager_queueTutorialMenu(static_cast<u8>(mParam), b, a);
-    func_8009D018(mOwner, 1);
+    CtrlRemote_SetSharedBit(mOwner, 1);
 }
 
 } // namespace cf
 
-// Unmangled retail free function (symbols.txt `func_802B7C64`): a C-style
-// thunk that tail-jumps to func_8029A658 (the party-change-notice gate).
+// Unmangled retail free function (symbols.txt `CHelp_ForwardPartyNotice`): a C-style
+// thunk that tail-jumps to MenuTutorialIsCreated (the party-change-notice gate).
 // CHelpManager.cpp calls it as a bare free function, so C linkage is required
 // to emit the unmangled symbol name.
-extern "C" void func_802B7C64() {
-    func_8029A658();
+extern "C" void CHelp_ForwardPartyNotice() {
+    MenuTutorialIsCreated();
 }
 
 // Close/refresh the party menu: UIWin_CreateMenuUpdate(mode 3) on this instance's
-// parameter, then re-arms the interface via func_8009D018.
-void cf::CHelp::func_802B7C68() {
+// parameter, then re-arms the interface via CtrlRemote_SetSharedBit.
+void cf::CHelp::refreshPartyMenu() {
     UIWin_CreateMenuUpdate(3, this->mParam, 0, 0);
-    func_8009D018(this->mOwner, 1);
+    CtrlRemote_SetSharedBit(this->mOwner, 1);
 }
 
 void cf::CHelpSwitch::func_802B7CB0() {

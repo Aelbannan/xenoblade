@@ -18,13 +18,13 @@ namespace cf {
     };
 }
 
-extern "C" void func_802A0950(cf::CChainEffect*, int a, int b, int c, int d, int e);
+extern "C" void chainBindEffectLink(cf::CChainEffect*, int a, int b, int c, int d, int e);
 
 // ---------------------------------------------------------------------------
 // Effect linkage / registry shapes (global scope members of this TU).
 // ---------------------------------------------------------------------------
 
-// Effect linkage object returned by func_800451D8 (owns the caller effect).
+// Effect linkage object returned by bindIndexedEffect (owns the caller effect).
 struct CChainObj {
     u8 pad_00[0x98];
     u32 field_98;                 //0x98
@@ -45,7 +45,7 @@ struct CChainNode {
     void* field_08;                      //0x8: object pointer
 };
 
-// Object produced by func_800AC610 (examined in func_802A0818).
+// Object produced by CollObjHasFlag64Bit5 (examined in chainUnbindMatchingObjects).
 struct CChainItem {
     u8 pad_00[0x8C];
     u16 field_8C;                 //0x8C
@@ -58,12 +58,12 @@ struct CChainItem {
 // the codebase). getInstance is a plain global C++ function whose retail
 // symbol already carries the MWCC `__Fv` mangle, so it is left as-is.
 extern "C" {
-void* func_800451D8(u32 cls, int param);
+void* bindIndexedEffect(u32 cls, int param);
 void setTargetObj_(void* obj, void* target);
 void setChildB59__(void* obj, s8 val);
 void func_800B3A88(void* self, void* target);
 struct CChainManager* getReslistBE8(void);
-void* func_800AC610(void* param);
+void* CollObjHasFlag64Bit5(void* param);
 extern "C" u16 playActorSound__Q22cf10CfSoundManFUlUlUlUlf(u32 a, u32 b, u32 c, u32 d, f32 e);
 extern f32 lbl_eu_80668C50;
 }

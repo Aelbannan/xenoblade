@@ -9,19 +9,22 @@ void __ct__802A4E48(){}
 
 void func_802A5174(){}
 
-// us-802a76d8 (func_802A4FA4)
+// us-802a76d8 (BufVxAdvanceSlot)
 // Advance the current voice slot: restore the base state triple, then if the
 // current slot's voice is still strongly active pull the next line; otherwise
 // (no handle / active / play rejected) restart via the playback virtual.
-void func_802A4FA4(CVS_THREAD_BUF* self) {
+void BufVxAdvanceSlot(CVS_THREAD_BUF* self) {
     // Restore the base state triple via the lwzu/spread load-with-update
     // pattern (v0 declared first so the lwzu destination colours low).
+    // Head words accessed via raw view (0x00/0x04/0x08) like
+    // CVS_THREAD_HEAD_VIEW in the sibling thread TUs.
     u32 v0;
+    u32* head = reinterpret_cast<u32*>(self);
     const u32* p = lbl_eu_805399EC;
     v0 = *p++;
-    self->unk4 = *p++;
-    self->unk0 = (u32*)v0;
-    self->unk8 = *p;
+    head[1] = *p++;
+    head[0] = v0;
+    head[2] = *p;
 
     CVoiceHandle* handle = self->slotHandles[self->field_0x3c];
     if (handle == NULL) {
@@ -47,10 +50,10 @@ restart:
     self->func_802A3B50();
 }
 
-// us-802a7794 (func_802A5060)
+// us-802a7794 (BufVxAdvanceIndex)
 // Advance the slot index; when it passes the slot limit, restart the thread,
 // otherwise re-copy the init-state triple into the base fields.
-void func_802A5060(CVS_THREAD_BUF* self) {
+void BufVxAdvanceIndex(CVS_THREAD_BUF* self) {
     if (func_802A3E88(self) != 0) {
         return;
     }
@@ -59,11 +62,12 @@ void func_802A5060(CVS_THREAD_BUF* self) {
     self->field_0x3c = idx;
     if (idx < self->field_0x38) {
         u32 v0;
+        u32* head = reinterpret_cast<u32*>(self);
         const u32* p = lbl_eu_805399F8;
         v0 = *p++;
-        self->unk4 = *p++;
-        self->unk0 = (u32*)v0;
-        self->unk8 = *p;
+        head[1] = *p++;
+        head[0] = v0;
+        head[2] = *p;
     } else {
         self->func_802A3B50();
     }
@@ -88,4 +92,11 @@ void func_802A50E0(CVS_THREAD_BUF* self, CCharVoice* voicePtr) {
 // Matches CVS_THREAD::blank1 slot in vtable; BUF subclass returns 0x104 (260).
 int CVS_THREAD_BUF::blank1() {
     return BUFFER_SIZE;
+}
+
+// us-802a7f5c (func_802A5828): retail C-ABI buffer-size getter (0x8).
+// Plain function returning BUFFER_SIZE; mirrors EndVoice_AllocSize pattern
+// in the sibling BATTLE_END TU (plain C function, not the virtual).
+extern "C" int func_802A5828() {
+    return 0x104;
 }

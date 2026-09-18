@@ -14,7 +14,7 @@
 class CVS_THREAD_SUDDEN : public CVS_THREAD {
 public:
     CVoiceHandle* voiceHandle;  // 0x20: voice handle pointer slot
-    int blank1() override;
+    int SuddenVx_GetBufferSizeValue() override;
 };
 
 // C-linkage imports used by this TU's thread helpers / factory. Kept here

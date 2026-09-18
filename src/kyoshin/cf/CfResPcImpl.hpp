@@ -140,13 +140,13 @@ struct CfResPcParent {
     /* 0x90 */ u32 field_90;       // cleared by func_8018CB3C
     /* 0x94 */ u32 field_94;       // cleared by func_8018CB3C
     /* 0x98 */ void* field_98;  // model object (vtable slot +0xC4 dispatched by func_8018E7E4)
-    /* 0x9C */ u32 field_9C;       // model handle (func_800584B8 result, written by func_8018DE8C)
+    /* 0x9C */ u32 field_9C;       // model handle (initMcaFile result, written by func_8018DE8C)
     u8 field_A0[0xC4 - 0xA0];      // 0xA0..0xC3
     /* 0xC4 */ CfResPcC4Obj* field_C4;  // sub-object (flag word at +0x4EC folded by func_8018DE8C)
     u8 field_C8[0x6CC - 0xC8];     // 0xC8..0x6CB
     /* 0x6CC */ u16 field_6CC;     // set to 1 by func_8018DE8C when parent != getPlayer(0)
     u8 field_6CE[0x6D4 - 0x6CE];   // 0x6CE..0x6D3
-    /* 0x6D4 */ u32 field_6D4;     // model handle (func_800584B8 result for the +0x708 object)
+    /* 0x6D4 */ u32 field_6D4;     // model handle (initMcaFile result for the +0x708 object)
     /* 0x6D8 */ u32 field_6D8;     // loaded model handle (Scn_InitGlobalA result)
     /* 0x6DC */ CfResPcLookupEntry* field_6DC;  // active lookup entry
     /* 0x6E0 */ u32 field_6E0;
@@ -262,7 +262,7 @@ public:
     virtual void CfResPcImpl_cleanupStateCounters();           // 0x10
     virtual int CfResPcImpl_isHandlerActive();            // 0x14
     virtual void CfObjectMove_relaySubB0Slot14();           // 0x18
-    virtual void func_8016CD64();           // 0x1C
+    virtual void ResObj_Noop_CD64();           // 0x1C
     virtual int CfResPcImpl_getHandlerLimit();            // 0x20
     virtual void CfResPcImpl_detachResources();           // 0x24
     virtual void func_8018CB3C();           // 0x28
@@ -280,7 +280,7 @@ public:
     virtual void CfResPcImpl_notifyReloadSimple(int arg2, int arg3); // 0x58
     virtual void CfResPcImpl_notifyReloadEvent(int arg2, int arg3, int arg4); // 0x5C
     virtual int CfResPcImpl_getLiveStateId();            // 0x60
-    virtual int func_8016CD54();            // 0x64
+    virtual int ResObj_ZeroStubA_CD54();            // 0x64
     virtual int CfResObj_true68();            // 0x68
 
     void*& vtbl() { return *reinterpret_cast<void**>(reinterpret_cast<u8*>(this) + 0x10); }
@@ -309,7 +309,7 @@ struct CfResPcFileHost {
 };
 
 // Byte view of the object at host+0x408 used by CfResPcImpl_refreshMapAreaEvents: the +0x00 and
-// +0x08 CfTFile slots are the copy pair for func_80069A78 (the same +0x408
+// +0x08 CfTFile slots are the copy pair for CfTFile_CopyPayload (the same +0x408
 // slot that CfResPcImpl_cleanupMgrSlots views as CfResPcMgrView).
 struct CfResPcMgrFileView {
     /* 0x00 */ class CfTFile* field_00;
@@ -352,7 +352,7 @@ struct CfResPcHostGM {
 
 } // namespace cf
 
-// Result of func_8009D5FC lives in kyoshin/cf/CfGameManager.hpp
+// Result of CtrlRemote_GetFileEventIds lives in kyoshin/cf/CfGameManager.hpp
 // (CfFileEventIdsView); declared there - forward view here only.
 struct CfFileEventIdsView;
 
@@ -441,14 +441,14 @@ extern "C" int func_800AA33C(ml::FixStr<64>& buf, u32 packed, int prefixFlag, in
 // C-ABI imports (defined in CfRes.cpp / IResInfo.cpp / CfScript.cpp /
 // CtrlObjectParam.cpp / code_8018F8D8.cpp / CfGameManagerUnityHelpers.hpp).
 // extern "C" keeps the call-site relocs at the plain retail names (same
-// convention as CfResReloadImpl.hpp / the existing func_80069ACC below).
+// convention as CfResReloadImpl.hpp / the existing CfTFile_LoadEventArchive below).
 extern "C" void CfRes_cancelPendingRead(CResLookup* child, cf::CfResPcLookupEntry* parent);
 extern "C" void CfRes_releaseCachedBase(cf::CfResPcLookupEntry* entry, bool cleanup);
-extern "C" ::CfFileEventIdsView* func_8009D5FC();
+extern "C" ::CfFileEventIdsView* CtrlRemote_GetFileEventIds();
 extern "C" void func_8009EB2C(int a, int b, u8* c);
 extern "C" void CtrlObjectParam_ActivateCharRow(void* object);
 extern "C" void* func_8009EC9C(u32 idx);  // canonical owner-form (void*) shared by all TUs; callers cast to cf::CfResPcCharData*
-extern "C" void func_80068AEC(u8* name);
+extern "C" void CfScript_LoadSlot0(u8* name);
 extern "C" void func_8008413C__Q22cf13CfGameManagerFv(u16 a, u32 b);
 extern "C" void processMapChange__Q22cf13CfGameManagerFv(u32 mask);
 extern "C" bool loadBdatTableCache__Q22cf13CfGameManagerFv(u8* manager, u32 first, u32 second);
@@ -461,7 +461,7 @@ extern "C" void KyoshinHeap_AllocFld34(int index);
 extern "C" void CfRes_tryRefreshSlot16C(u8* obj, int arg);
 extern "C" void runMgrTeardownSeq();
 extern "C" void notifyObjectMapChange__Q22cf13CfGameManagerFv(cf::CfResPcMgrView* manager);
-extern "C" void func_800BBB50(cf::CfResPcParent* parent);
+extern "C" void CfModel_ReattachTrg(cf::CfResPcParent* parent);
 extern "C" void CfObjectMove_resetAnimModeArgs(cf::CfResPcParent* parent);
 extern "C" void CfResPcImpl_refreshMapAreaEvents(void* self);
 extern "C" cf::CfResPcEntry38* CfRes_getEntryPtrCol0(int index);
@@ -479,7 +479,7 @@ extern "C" cf::CfResPcLookupEntry* CfRes_getArrayElem20Idx(int state);
 extern "C" void CfRes_decTblRefByIdx(int state);
 extern "C" void CfRes_setTblHandle(int a, int b);
 extern "C" cf::CfResPcSoundSlotEntry* CfSoundMan_TouchSlotById(u16 handle);
-extern "C" void func_800BAB64(cf::CfResPcParent* parent);
+extern "C" void CfModel_ReleaseAll(cf::CfResPcParent* parent);
 extern "C" void* CfRes_getInstPtr170();
 
 // C-ABI imports used by CfResPcImpl_euReregisterOnFlag / CfResPcImpl_notifyReloadSimple / CfResPcImpl_requestResourceLoad /
@@ -502,7 +502,7 @@ extern "C" void stubEmptyC__Q22cf13CfGameManagerFv(int flag);
 extern "C" void loadPartyResources__Q22cf13CfGameManagerFv(u32 value);
 extern "C" void syncGameTime__Q22cf13CfGameManagerFv(cf::CfGameManager* object, u32 first, u32 second);
 extern "C" void resetGameFlags__Q22cf13CfGameManagerFv(int arg);
-extern "C" int func_8018892C(int index);
+extern "C" int MenuSnd_IsSlotLive_892C(int index);
 extern "C" void func_8004302C(int a, int b);
 
 // Game-manager flag words read/written by CfResPcImpl_handleMapChangeEvent / CfResPcImpl_loadFileEventTable /
@@ -512,25 +512,25 @@ extern u16 lbl_eu_80663E46;
 extern u16 lbl_eu_80663E42;  // current area id (written by CfResPcImpl_reloadMapSection)
 extern u16 lbl_eu_80663E44;  // current area sub-id (written by CfResPcImpl_reloadMapSection)
 
-// C-ABI import (defined in CfTFile.cpp, retail C name func_80069ACC): loads
+// C-ABI import (defined in CfTFile.cpp, retail C name CfTFile_LoadEventArchive): loads
 // the file-event archive for a packed token. extern "C" keeps the call-site
 // reloc at the plain retail name (CfTFile.hpp does not declare it).
-extern "C" int func_80069ACC(cf::CfTFile* self, u32 param);
+extern "C" int CfTFile_LoadEventArchive(cf::CfTFile* self, u32 param);
 
 // C-ABI imports used by CfResPcImpl_handleFileEventLoad / CfResPcImpl_refreshMapAreaEvents (defined in
 // CfTFile.cpp / CfRes.cpp / CfScript.cpp / CfCamEvent_1.cpp / the model
 // layer). extern "C" keeps the call-site relocs at the plain retail names.
-extern "C" u32 func_80069C14(u8* self);
-extern "C" void func_800699B0(cf::CfTFile* self);
-extern "C" void func_80069A78(cf::CfTFile* dst, cf::CfTFile* src);
+extern "C" u32 CfTFile_TestField828(u8* self);
+extern "C" void CfTFile_CancelResetNibble(cf::CfTFile* self);
+extern "C" void CfTFile_CopyPayload(cf::CfTFile* dst, cf::CfTFile* src);
 extern "C" void CfRes_runUpdatePipeline();
 extern "C" u32 func_80061870(u32 a, u32 b, u32 c, u32 d, u32 e, u32 f);
 extern "C" int func_8007B0A0(int val);
 extern "C" void func_800B06C8();
 extern "C" void CfRes_tryRefreshByBits(u32 a, u32 b);
-extern "C" void func_80068B9C();
-extern "C" u32 func_8009CF8C(u32 resourceId);
-extern "C" void func_8016E164(u32 a, u32 b);
+extern "C" void CfScript_FlagSlot0();
+extern "C" u32 CtrlRemote_TouchBitByArg(u32 resourceId);
+extern "C" void updateReloadTypeState(u32 a, u32 b);
 extern "C" void scanTboxByXY();
 
 // Stack-buffer slot query (CfGameManager helper): fills CfResPcLoadBuffer.
@@ -586,14 +586,14 @@ extern const float lbl_eu_80667A60;
 // the model layer / monolib scn). extern "C" keeps the call-site relocs at
 // the plain retail names.
 extern "C" cf::CfResPcTableEntry* CfRes_getPcGridEntry(int id, int a);
-extern "C" void func_800BBADC(cf::CfResPcParent* parent, u8* handle);
-extern "C" u8* func_800584B8(u32 global, u32 id, const char* name);
+extern "C" void CfModel_InstallSub(cf::CfResPcParent* parent, u8* handle);
+extern "C" u8* initMcaFile(u32 global, u32 id, const char* name);
 extern "C" void simResetAnimAtC(void* obj, const char* name);
 extern "C" void func_804831C4(void* obj, u8* handle);
 extern "C" void* Scn_SetupAnim(u32 global, u32 id, int a, int b);
 extern "C" char* func_800AA5C0(void* handle);
 extern "C" void CfObjectMove_setMoveSpeedGated(cf::CfObjectMove* player, float value);
-extern "C" int func_804BE470(void* a1, void* a2, void* a3, void* a4, void* a5);
+extern "C" int ScnRes_Notify5Ptr_E470(void* a1, void* a2, void* a3, void* a4, void* a5);
 extern "C" void* __dynamic_cast(void* obj, long offset, const void* src_type,
                                 const void* dst_type, void* src2dst);
 
@@ -610,8 +610,8 @@ extern char lbl_eu_80503BC4[];
 // lbl_eu_80532774 references these unmangled names; the same-named virtuals
 // above are scoped methods and do not collide).
 extern "C" void CfObjectMove_relaySubB0Slot14(void* self);
-extern "C" void func_8016CD64();
-extern "C" int func_8016CD54();
+extern "C" void ResObj_Noop_CD64();
+extern "C" int ResObj_ZeroStubA_CD54();
 extern "C" int CfResObj_true68();
 // Compiler-generated deleting destructor (defined in this TU's .text).
 extern "C" void __dt__Q22cf11CfResPcImplFv();

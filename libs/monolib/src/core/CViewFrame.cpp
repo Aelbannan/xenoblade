@@ -748,7 +748,7 @@ extern "C" void getFrame2ViewOffset__10CViewFrameFR7CRect16PC10CViewFrame(
 // is the visible content area in the owner's coordinate space.
 // @param out    Receives the client rectangle.
 // @param frame  The frame whose owner's client rect to query.
-extern "C" void func_8043FD10__10CViewFrameFR7CRect16PC10CViewFrame(
+extern "C" void CViewFrame_ComputeContentRect(
     ml::CRect16* out, const CViewFrame* frame) {
     CView* view = frame->mOwner;
     int expand = 0;

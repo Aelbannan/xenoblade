@@ -69,8 +69,8 @@ public:
     void cbRenderBefore();
 
     // IScnRender vtable this-adjusting thunks
-    void func_8018B6A8();
-    void func_8018B6B0();
+    void MenuShopSellRenderThunk58();
+    void MenuShopSellDtorThunk58();
 
     // CProcess base occupies 0x00-0x3B; vtable pointer-to-member data follows.
     u32 ptmf0[3];               // 0x3C-0x47: vtable pointer-to-member data
@@ -96,8 +96,8 @@ extern "C" void cbRenderBefore__13CMenuShopSellFv(void* self);
 extern "C" void func_8018B0FC(void*, void*);
 extern "C" void func_8018B130(void*, void*);
 extern "C" CMenuShopSell* func_8018B324(CProcess* parent, CScn* scene);
-extern "C" bool func_8018B398();
-extern "C" __declspec(noinline) void func_8018B3A8(CMenuShopSell* self);
+extern "C" bool MenuShopSellIsCreated();
+extern "C" __declspec(noinline) void MenuShopSellHandlePhase0(CMenuShopSell* self);
 extern "C" __declspec(noinline) void func_8018B420(CMenuShopSell* self);
 extern "C" __declspec(noinline) void func_8018B470(CMenuShopSell* self);
 extern "C" __declspec(noinline) void func_8018B658(CMenuShopSell* self);
@@ -128,12 +128,12 @@ struct ShopSellPadData {
 // func_8018B470 pad/flag callees (retail unmangled names). IsItemBoxActive is
 // declared int so the caller compares with cmpwi directly; GetPromptState is
 // declared int so the (u8) cast at the tail emits the retail clrlwi.
-extern "C" int func_8029A658();
+extern "C" int MenuTutorialIsCreated();
 extern "C" ShopSellPadData* getCfPadData__Q22cf13CfGameManagerFv();
 extern "C" void func_801CCAF0(CItemBoxGrid* self);
 extern "C" int IsItemBoxActive(CItemBoxGrid* self);
 extern "C" void HandleCancelBtn(CItemBoxGrid* self, u32 arg);
-extern "C" void func_801C414C(CTitleAHelp* self);
+extern "C" void beginClose(CTitleAHelp* self);
 extern "C" void AdvanceBoxState(CItemBoxGrid* self);
 extern "C" void func_801CB5F0(CItemBoxGrid* self);
 extern "C" void func_801CBA04(CItemBoxGrid* self);
@@ -148,22 +148,22 @@ extern "C" void func_801C41E8(CTitleAHelp* self, u8 mode);
 // Retail-unmangled callee names (US strips the member manglings for these
 // func_ helpers; GetField61 keeps its bare name too). int returns keep the
 // caller's `!= 0` as a plain cmpwi (no u8 mask), like retail.
-extern "C" void func_801C3D9C(CBgTex* self);
-extern "C" void func_801C40A0(CTitleAHelp* self);
+extern "C" void BgTex_Release_3D9C(CBgTex* self);
+extern "C" void teardown(CTitleAHelp* self);
 extern "C" void UnloadItemBox(CItemBoxGrid* self);
 extern "C" int GetField61(CItemBoxGrid* self);
 extern "C" void setPresentationFlag__Q22cf13CfGameManagerFv(u8 enable);
-extern "C" int func_801C3E34(CBgTex* self);
-extern "C" int func_801C4114(CTitleAHelp* self);
+extern "C" int BgTex_IsLoaded_3E34(CBgTex* self);
+extern "C" int isInitialized(CTitleAHelp* self);
 extern "C" void func_801C412C(CTitleAHelp* self);
 extern "C" int IsItemBoxReady(CItemBoxGrid* self);
 extern "C" void func_801CB28C(CItemBoxGrid* self);
-extern "C" void func_801C3D54(CBgTex* self);
-extern "C" void func_801C3D7C(CBgTex* self, nw4r::lyt::DrawInfo* drawInfo);
+extern "C" void BgTex_Tick_3D54(CBgTex* self);
+extern "C" void BgTex_Draw_3D7C(CBgTex* self, nw4r::lyt::DrawInfo* drawInfo);
 extern "C" void UpdateItemBox(CItemBoxGrid* self);
 extern "C" void DrawItemBoxGrid(CItemBoxGrid* self, nw4r::lyt::DrawInfo* drawInfo);
-extern "C" void func_801C3FF0(CTitleAHelp* self);
-extern "C" void func_801C4080(CTitleAHelp* self, nw4r::lyt::DrawInfo* drawInfo);
+extern "C" void updateHelp(CTitleAHelp* self);
+extern "C" void drawHelp(CTitleAHelp* self, nw4r::lyt::DrawInfo* drawInfo);
 extern "C" int IsMenuState621F0();
 extern "C" void playUISound__FUl(u32 op);
 

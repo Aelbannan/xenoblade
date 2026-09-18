@@ -8,8 +8,8 @@
  * Fields are populated from BDAT columns at construction.
  *
  * FULL_MATCH symbols in this TU:
- *   func_8026E5BC -- vtable override CfGimmickEne[+0x20] (empty no-op)
- *   func_8026F31C -- dispatch table entry [5]           (empty no-op)
+ *   gimmickEneNoopVtable20 -- vtable override CfGimmickEne[+0x20] (empty no-op)
+ *   gimmickEneNoopDispatch5 -- dispatch table entry [5]           (empty no-op)
  */
 
 #include "types.h"
@@ -84,8 +84,8 @@ public:
 } // namespace cf
 
 // Extern "C" exports -- linker names must match retail symbols.
-extern "C" void func_8026E5BC();
-extern "C" void func_8026F31C();
+extern "C" void gimmickEneNoopVtable20();
+extern "C" void gimmickEneNoopDispatch5();
 
 // CfGimmickEne vtable (stored at +0x00 by the constructor/destructor).
 extern u8 lbl_eu_80537A78[];
@@ -99,7 +99,7 @@ extern f64 lbl_eu_80668980;
 extern f32 lbl_eu_80668988;
 extern f32 lbl_eu_8066898C;
 
-// sdata2 constants used by the marker-quad renderer (func_8026E7F8).
+// sdata2 constants used by the marker-quad renderer (gimmickEneSetupGXState).
 // The quad corner coordinates (-1.0/1.0) are written as literals so MWCC
 // reloads them per FIFO write exactly like retail (extern refs get CSE'd or
 // reordered); they land in this TU's sdata2 at 0x80668974/0x80668978.
@@ -149,8 +149,8 @@ extern void attachLODObject__8CTaskLODFv(u8 lod, int mode);
 extern void detachLODObject__8CTaskLODFv(u8 lod, int mode);
 extern void addLODEntry__8CTaskLODFv(u8 lod, int mode);
 extern void* getScnHandle__Fv();
-extern void func_804BCC30(void* snd, u8 id);
-extern void func_804BCC3C(void* snd, u8 id);
+extern void ScnData_FwdB7D9C(void* snd, u8 id);
+extern void ScnData_FwdB7DD4(void* snd, u8 id);
 
 // Gimmick-state setter (CfGimmick.cpp) and sound playback (CfSoundMan, the
 // retail symbol returns the started sound id).
@@ -162,24 +162,24 @@ extern "C" u16 playActorSound__Q22cf10CfSoundManFUlUlUlUlf(
 
 // Scene / frame helpers (monolib scn).
 extern cf::CfGimmickEneScene* Scn_GetCurrentScene();            // current-scene global
-extern cf::CfGimmickEneSceneState* func_8048ECD0(cf::CfGimmickEneScene* scene);  // -> +0x8C
+extern cf::CfGimmickEneSceneState* getScnRootPtr(cf::CfGimmickEneScene* scene);  // -> +0x8C
 
 // Base gimmick deactivation helper (CfGimmick.cpp).
 extern void CfGimmick_ClearManagerBinding(cf::CfGimmick* self);
 
 // Scene root-group accessor (monolib CScnMem): retail symbol is unmangled
 // (C linkage), takes the shared scene pointer and a child index.
-extern "C" nw4r::g3d::ScnObj* func_8048EC14(CScn* scene, unsigned int index);
+extern "C" nw4r::g3d::ScnObj* getScnGroupChild(CScn* scene, unsigned int index);
 
 // Gimmick-state setter on the CfGimmickGlobal (sound/event dispatcher).
-extern void func_801F4B68(int value, int id);
+extern void GimDispatch18ByRow(int value, int id);
 
 // CArtsSet helpers (the arts set pointer comes from CActorParam::CActorParam_getArtsSet()).
 extern cf::CArtsParam* getArtsParamByIdx(cf::CArtsSet* artsSet, int index);
-extern int func_80153CAC(const void* artsSet, int index);
+extern int getArtsSlotByFlatIdx(const void* artsSet, int index);
 
 // Same-TU call targets (scaffold stubs).
 extern void func_8026E6E4(cf::CfGimmickEne* self);
-extern void func_8026E7F8(cf::CfGimmickEne* self, int arg);
+extern void gimmickEneSetupGXState(cf::CfGimmickEne* self, int arg);
 
 } // extern "C"

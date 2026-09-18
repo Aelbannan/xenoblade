@@ -21,14 +21,14 @@
 // func_* names); noinline: retail calls each via bl, -ipa file would inline.
 extern "C" void __declspec(noinline) func_80243ABC(CMapSel*);
 extern "C" void __declspec(noinline) func_80243B88(CMapSel*);
-extern "C" void __declspec(noinline) func_80243BE8(CMapSel*);
+extern "C" void __declspec(noinline) finishMapSelClose(CMapSel*);
 extern "C" void __declspec(noinline) func_80243C6C(CMapSel*);
 extern "C" void __declspec(noinline) func_80243CB8(CMapSel*);
-extern "C" void __declspec(noinline) func_80243CFC(CMapSel*);
+extern "C" void __declspec(noinline) refreshMapGridText(CMapSel*);
 extern "C" void __declspec(noinline) func_80243E08(CMapSel*);
-extern "C" void __declspec(noinline) func_80243ED8(CMapSel*);
+extern "C" void __declspec(noinline) loadSelectedMapResource(CMapSel*);
 extern "C" void __declspec(noinline) func_80243FC4(CMapSel*);
-extern "C" void __declspec(noinline) func_80243838(CMapSel*);
+extern "C" void __declspec(noinline) moveMapSelSelection(CMapSel*);
 extern "C" void __declspec(noinline) func_80244020(CMapSel*);
 
 /* __ct__CMapSel - Construct the map-selection widget: set the IWorkEvent
@@ -98,7 +98,7 @@ CMapSel::CMapSel() {
     // --- Build the map grid ---------------------------------------------
     void* mapTable = lbl_eu_806640A0;    // BDAT table for map ids
     void* orderTable = lbl_eu_806640A8;  // BDAT table for sort keys
-    s32 mapCount = (s32)func_8003B1EC(mapTable);
+    s32 mapCount = (s32)Bdat_GetMaxRow_B1EC(mapTable);
     u8 curMap = (u8)lbl_eu_80664184;     // current map id -> initial selection
 
     // For each map id 2..28 (types 10/20/22/26/28 excluded), append the map
@@ -113,7 +113,7 @@ CMapSel::CMapSel() {
         case 17: case 18: case 19: case 21: case 23: case 24: case 25: case 27:
             for (s32 j = 1; j <= mapCount; j++) {
                 if (BdatGetU8Direct((u32)mapTable, base, (u32)j) == mapId) {
-                    if (func_8009CF8C((u32)(j + 0x20c8)) != 0) {
+                    if (CtrlRemote_TouchBitByArg((u32)(j + 0x20c8)) != 0) {
                         u8 idx = self->mGridData[0x20];
                         self->mGridData[idx] = mapId;
                         self->mGridData[0x20] = idx + 1;
@@ -190,22 +190,22 @@ extern "C" void* __dt__7CMapSelFv(CMapSel* self, int flags) {
 #pragma pop
 
 /* func_8024343C - Start the map-select UI: request the layout archive from
-   MEM2 and mark the pending-map flag so func_80243ED8 begins the countdown,
+   MEM2 and mark the pending-map flag so loadSelectedMapResource begins the countdown,
    then read the scrollbar's layout arc. */
 void func_8024343C(CMapSel* self) {
     self->mFileHandle = CDeviceFile::readFile(
         mtl::MemManager::getHandleMEM2(), &lbl_eu_8050B4A8[0xc],
         reinterpret_cast<IWorkEvent*>(self), 0, 0);
     self->mGridData[0x21] = 1;
-    func_80243ED8(self);
-    func_801F34F4(&self->mScrollBar[0]);
+    loadSelectedMapResource(self);
+    CScrollBar_loadLayoutArc(&self->mScrollBar[0]);
 }
 
-/* func_802434A0 - Per-frame update: drive the state machine, then animate the
+/* updateMapSel - Per-frame update: drive the state machine, then animate the
    layout, scrollbar, and cursor. Guards on field_0x30 (widget active) and
    mState (not uninitialized); the state dispatch mirrors retail (1: loading,
    2: visible, 3: transitioning out, 4: closing, 5: post-close cleanup). */
-extern "C" void __declspec(noinline) func_802434A0(CMapSel* self) {
+extern "C" void __declspec(noinline) updateMapSel(CMapSel* self) {
     if (self->field_0x30 != 0 && self->mState != 0) {
         switch (self->mState) {
         case 1:
@@ -215,18 +215,18 @@ extern "C" void __declspec(noinline) func_802434A0(CMapSel* self) {
             func_80243B88(self);
             break;
         case 3:
-            func_80243ED8(self);
+            loadSelectedMapResource(self);
             func_80243E08(self);
             break;
         case 4:
-            func_80243BE8(self);
+            finishMapSelClose(self);
             break;
         case 5:
             func_80243C6C(self);
             break;
         }
         self->mLayout->Animate(0);
-        func_801F3540(self->mScrollBar);
+        CScrollBar_UpdateDispatch(self->mScrollBar);
         func_801D202C(self->mCursor);
     }
 }
@@ -242,8 +242,8 @@ void drawLayout(nw4r::lyt::Layout*, nw4r::lyt::DrawInfo*, int, int);
 void func_80243560(CMapSel* self, nw4r::lyt::DrawInfo* drawInfo) {
     if (self->field_0x30 != 0 && self->mState != 0) {
         drawLayout(self->mLayout, drawInfo, 0, 1);
-        func_801F35B0(self->mScrollBar, drawInfo);
-        func_801D20B0(self->mCursor, drawInfo);
+        CScrollBar_draw(self->mScrollBar, drawInfo);
+        Cur_DrawLayout(self->mCursor, drawInfo);
     }
 }
 #pragma pop
@@ -254,8 +254,8 @@ void func_80243560(CMapSel* self, nw4r::lyt::DrawInfo* drawInfo) {
    run the cursor's release virtual. The doubled null-check before the
    layout virtual mirrors retail codegen. */
 extern "C" void __declspec(noinline) func_802435CC(CMapSel* self) {
-    func_801390E0(&self->mFileHandle);
-    func_801390E0(&self->mFileHandle2);
+    closeFileHandle(&self->mFileHandle);
+    closeFileHandle(&self->mFileHandle2);
     self->field_0x30 = 0;
     CDeviceVI::waitForDrawDone();
     if (self->mLayout != nullptr) {
@@ -270,7 +270,7 @@ extern "C" void __declspec(noinline) func_802435CC(CMapSel* self) {
     }
     releaseArcResourceAccessor(self->mArcAccessor);
     reinterpret_cast<UnkClass_8045F564*>(&self->mMemRegion[0])->func_8045F778();
-    func_801F35DC(self->mScrollBar);
+    CScrollBar_Teardown(self->mScrollBar);
     reinterpret_cast<CMapSelCurObj*>(&self->mCursor[0])->vfUpdate();
 }
 
@@ -285,6 +285,11 @@ extern "C" u8 func_80243680(void* self) {
 }
 
 // FULL_MATCH: reads the initial-setup flag at +0x33 (set to 1 in ctor, cleared on play/close)
+// Out-of-line C-linkage copy so the retail func_802436C4 symbol pairs
+// (the header inline member keeps serving C++ callers).
+extern "C" u8 func_802436C4(const CMapSel* self) {
+    return self->mFlag33;
+}
 
 // One-shot init: when the +0x31 byte is clear, set it and +0x33, then run
 // the two init hooks.
@@ -292,16 +297,16 @@ extern "C" void func_802436CC(CMapSel* self) {
     if (*(u8*)((u8*)self + 0x31) == 0) {
         *((u8*)self + 0x31) = 1;
         *((u8*)self + 0x33) = 0;
-        func_80243CFC(self);
+        refreshMapGridText(self);
         func_80244020(self);
     }
 }
 
-// When the +0x24 layout is present, run the grid rebuild (func_80243CFC) and
+// When the +0x24 layout is present, run the grid rebuild (refreshMapGridText) and
 // raise the +0x32/+0x30 flags.
 extern "C" void func_80243CB8(CMapSel* self) {
     if (*(u32*)((u8*)self + 0x24) != 0) {
-        func_80243CFC(self);
+        refreshMapGridText(self);
         *(u8*)((u8*)self + 0x32) = 1;
         *(u8*)((u8*)self + 0x30) = 1;
     }
@@ -309,12 +314,12 @@ extern "C" void func_80243CB8(CMapSel* self) {
 
 // When the +0x31 state is 3, advance to 4, clear +0x33, run the scrollbar
 // cleanup at +0x74 and play sound 6.
-extern "C" void func_801D216C(void*, int);
+extern "C" void Cur_SetVisible(void*, int);
 extern "C" void func_8024371C(CMapSel* self) {
     if (*(u8*)((u8*)self + 0x31) == 3) {
         *(u8*)((u8*)self + 0x31) = 4;
         *(u8*)((u8*)self + 0x33) = 0;
-        func_801D216C((u8*)self + 0x74, 0);
+        Cur_SetVisible((u8*)self + 0x74, 0);
         playUISound__FUl(6);
     }
 }
@@ -346,18 +351,18 @@ extern "C" void __declspec(noinline) func_80243768(CMapSel* self) {
             }
         }
     }
-    func_80243CFC(self);
+    refreshMapGridText(self);
     func_80244020(self);
     s8 cur = self->mSelX;
-    func_801F3850(self->mScrollBar, (u16)cur);
+    CScrollBar_PlaceThumb(self->mScrollBar, (u16)cur);
     func_80243FC4(self);
     playUISound__FUl(1);
 }
 
-/* func_80243838 - Move the selection right one column. Wraps from the bottom
+/* moveMapSelSelection - Move the selection right one column. Wraps from the bottom
    row of a column to the top of the next column; past the last column, wraps
    to the first entry. mGridData[0x20] is the map count (grid has 10 rows). */
-extern "C" void __declspec(noinline) func_80243838(CMapSel* self) {
+extern "C" void __declspec(noinline) moveMapSelSelection(CMapSel* self) {
     u8 count = self->mGridData[0x20];
     if (count >= 10) {
         s8 y = (s8)((u8)(self->mSelY + 1));
@@ -379,9 +384,9 @@ extern "C" void __declspec(noinline) func_80243838(CMapSel* self) {
             self->mSelX = 0;
         }
     }
-    func_80243CFC(self);
+    refreshMapGridText(self);
     func_80244020(self);
-    func_801F3850(self->mScrollBar, self->mSelX);
+    CScrollBar_PlaceThumb(self->mScrollBar, self->mSelX);
     func_80243FC4(self);
     playUISound__FUl(1);
 }
@@ -403,9 +408,9 @@ extern "C" void __declspec(noinline) func_8024391C(CMapSel* self) {
         self->mSelY = 0;
         self->mSelX = 0;
     }
-    func_80243CFC(self);
+    refreshMapGridText(self);
     func_80244020(self);
-    func_801F3850(self->mScrollBar, self->mSelX);
+    CScrollBar_PlaceThumb(self->mScrollBar, self->mSelX);
     func_80243FC4(self);
     playUISound__FUl(1);
 }
@@ -432,14 +437,14 @@ extern "C" void __declspec(noinline) func_802439CC(CMapSel* self) {
         self->mSelX = 0;
         if ((s8)(u8)(count - 1) < 0) self->mSelY = 0;
     }
-    func_80243CFC(self);
+    refreshMapGridText(self);
     func_80244020(self);
-    func_801F3850(self->mScrollBar, self->mSelX);
+    CScrollBar_PlaceThumb(self->mScrollBar, self->mSelX);
     func_80243FC4(self);
     playUISound__FUl(1);
 }
 
-u8 func_80243A9C(CMapSelFull* self){
+u8 getMapGridCell(CMapSelFull* self){
     s8 x = self->field_8D;
     s8 y = self->field_8C;
     return self->mGridData[x + y];
@@ -458,11 +463,11 @@ extern "C" void __declspec(noinline) func_80243ABC(CMapSel* self) {
         vec[1] = lbl_eu_80668744;
         u8* sb = &self->mScrollBar[0];
         vec[2] = lbl_eu_80668738;
-        func_801F3670(sb, vec);
-        func_801F36BC(self->mScrollBar, 10, self->mGridData[0x20]);
+        CScrollBar_InitRootPane(sb, vec);
+        CScrollBar_UpdateThumb(self->mScrollBar, 10, self->mGridData[0x20]);
         s8 selX = self->mSelX;
-        func_801F3850(self->mScrollBar, (u16)selX);
-        func_801F367C(self->mScrollBar);
+        CScrollBar_PlaceThumb(self->mScrollBar, (u16)selX);
+        CScrollBar_requestScrollIn(self->mScrollBar);
     }
 }
 
@@ -473,19 +478,19 @@ extern "C" void __declspec(noinline) func_80243B88(CMapSel* self) {
     if (advanceAnimTransform(self->mAnimTransform2, lbl_eu_8066873C) != 0) {
         self->mState = 3;
         self->mFlag33 = 1;
-        func_801D216C(&self->mCursor[0], 1);
+        Cur_SetVisible(&self->mCursor[0], 1);
         func_80244020(self);
     }
 }
 
-/* func_80243BE8 - Poll animation completion on mAnimTransform2, then enable both
+/* finishMapSelClose - Poll animation completion on mAnimTransform2, then enable both
    animations, set state to 5 (post-close cleanup), and notify the scrollbar. */
-extern "C" void __declspec(noinline) func_80243BE8(CMapSel* self) {
+extern "C" void __declspec(noinline) finishMapSelClose(CMapSel* self) {
     if (AnimRewindFrame(self->mAnimTransform2, 1.0f) != 0) {
         self->mLayout->SetAnimationEnable(self->mAnimTransform2, false);
         self->mLayout->SetAnimationEnable(self->mAnimTransform1, true);
         self->mState = 5;
-        func_801F369C(self->mScrollBar);
+        CScrollBar_requestScrollOut(self->mScrollBar);
     }
 }
 
@@ -496,12 +501,12 @@ extern "C" void __declspec(noinline) func_80243C6C(CMapSel* self) {
     }
 }
 
-/* func_80243CFC - Refresh the 10 grid cells' text. For each column index i
+/* refreshMapGridText - Refresh the 10 grid cells' text. For each column index i
    (0..9), sprintf the pane name, then set the cell text from the BDAT map
    table; when the column matches the current selection X, also set the
    selected-row labels. Out-of-range columns are blanked with the placeholder
    string at +0x52. */
-extern "C" void __declspec(noinline) func_80243CFC(CMapSel* self) {
+extern "C" void __declspec(noinline) refreshMapGridText(CMapSel* self) {
     char buf[32];
     char* base = lbl_eu_8050B4A8;
     for (u32 i = 0; i < 10; i++) {
@@ -544,14 +549,14 @@ extern "C" void __declspec(noinline) func_80243E08(CMapSel* self) {
     PaneSetTexPaletteByName(self->mLayout, base + 0x66, self->mAllocatedMem);
     nw4r::lyt::Pane* pane =
         self->mLayout->GetRootPane()->FindPaneByName(base + 0x66, true);
-    func_80124270(pane, 1);
+    setPaneVisible(pane, 1);
 }
 #pragma pop
 
-/* func_80243ED8 - Count down the map-select transition timer; when it
+/* loadSelectedMapResource - Count down the map-select transition timer; when it
    expires, tear down the previous map-data load (release the handle and the
    allocated buffer) and start loading the newly selected map's file. */
-extern "C" void __declspec(noinline) func_80243ED8(CMapSel* self) {
+extern "C" void __declspec(noinline) loadSelectedMapResource(CMapSel* self) {
     CDeviceVI::waitForDrawDone();
     if (self->mTimer > lbl_eu_80668738) {
         self->mTimer -= lbl_eu_8066873C;
@@ -559,7 +564,7 @@ extern "C" void __declspec(noinline) func_80243ED8(CMapSel* self) {
     }
     if (self->mGridData[0x21] == 0) return;
     self->mGridData[0x21] = 0;
-    func_801390E0(&self->mFileHandle2);
+    closeFileHandle(&self->mFileHandle2);
     if (self->mAllocatedMem != 0) {
         mtl::MemManager::deallocate(self->mAllocatedMem);
         self->mAllocatedMem = 0;

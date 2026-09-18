@@ -36,7 +36,7 @@ CREvtMovie* __ct__CREvtMovie(CREvtMovie* self, CREvtMovieScript* scriptData) {
 CREvtMovie* __ct__802948D0(CREvtMovie* self, int dealloc_flag) {
     if (self != 0) {
         self->vtable = &lbl_eu_80538AA0[0];
-        func_80164F6C();
+        evtStopMoviePlayback();
         __dt__Q22cf8CREvtObjFv(self, 0);
 
         if (dealloc_flag > 0) {
@@ -47,12 +47,12 @@ CREvtMovie* __ct__802948D0(CREvtMovie* self, int dealloc_flag) {
 }
 
 // ============================================================================
-// func_8029493C: Check counter and cleanup if matches
-// If scriptData->counter == currentTick + 1, calls func_80164F6C()
+// EvtMovie_MaybeAdvance_493C: Check counter and cleanup if matches
+// If scriptData->counter == currentTick + 1, calls evtStopMoviePlayback()
 // ============================================================================
-void func_8029493C(CREvtMovie* self) {
+void EvtMovie_MaybeAdvance_493C(CREvtMovie* self) {
     if (self->mScriptData->mCounter == EvtSeqGetWalkIndex() + 1) {
-        func_80164F6C();
+        evtStopMoviePlayback();
     }
 }
 
@@ -69,7 +69,7 @@ void func_80294980(CREvtMovie* self) {
     if (self->mScriptData->mCounter != EvtSeqGetWalkIndex()) return;
 
     // Check if already playing or finished
-    if (func_80164FE8() != 0) return;
+    if (evtHasMoviePlayer() != 0) return;
 
     // Build file path on stack: "/ev/realtime/" + scriptName + ".sfd"
     // Suffix local assigned up front keeps the base pointer in a
@@ -90,7 +90,7 @@ void func_80294980(CREvtMovie* self) {
     std::strcat(buf.mPath, name);
     buf.mLength += eLen;
 
-    func_80164ED0(buf.mPath, 1, EvtSeqGetC4FlagBit1());
+    evtStartMoviePlayback(buf.mPath, 1, EvtSeqGetC4FlagBit1());
     self->mFlag19 = 0;
 }
 #pragma pop
@@ -107,7 +107,7 @@ void func_80294A70(CREvtMovie* self) {
     if (self->mScriptData->mCounter != EvtSeqGetWalkIndex() + 1) return;
 
     // Check if already playing or finished
-    if (func_80164FE8() != 0) return;
+    if (evtHasMoviePlayer() != 0) return;
 
     // Check timing: elapsed time since last event
     if (EvtSeqGetEntryLimit() - EvtSeqGetCounter100() >= 25) return;  // too early
@@ -118,7 +118,7 @@ void func_80294A70(CREvtMovie* self) {
         return;
 
     // Double-check not playing
-    if (func_80164FE8() != 0) return;
+    if (evtHasMoviePlayer() != 0) return;
 
     // Build file path on stack: "/ev/realtime/" + scriptName + ".sfd"
     char* name;
@@ -137,7 +137,7 @@ void func_80294A70(CREvtMovie* self) {
     std::strcat(buf.mPath, name);
     buf.mLength += eLen;
 
-    func_80164ED0(buf.mPath, 1, EvtSeqGetC4FlagBit1());
+    evtStartMoviePlayback(buf.mPath, 1, EvtSeqGetC4FlagBit1());
     self->mFlag19 = 0;
 }
 #pragma pop
@@ -154,11 +154,11 @@ void func_80294BA4(CREvtMovie* self) {
     if (self->mScriptData->mCounter != EvtSeqGetWalkIndex()) return;
 
     // If currently playing, stop
-    if (func_80164FB4() != 0) {
-        func_80165014();
+    if (evtIsMoviePaused() != 0) {
+        evtClearMoviePause();
     }
     // Otherwise if not finished, start playback
-    else if (func_80164FE8() == 0) {
+    else if (evtHasMoviePlayer() == 0) {
         // Build file path on stack: "/ev/realtime/" + scriptName + ".sfd"
         char* name;
         char* dir = lbl_eu_8050FD98;
@@ -176,7 +176,7 @@ void func_80294BA4(CREvtMovie* self) {
         std::strcat(buf.mPath, name);
         buf.mLength += eLen;
 
-        func_80164ED0(buf.mPath, 0, EvtSeqGetC4FlagBit1());
+        evtStartMoviePlayback(buf.mPath, 0, EvtSeqGetC4FlagBit1());
         self->mFlag19 = 1;
     }
     self->mFlag19 = 1;
@@ -184,6 +184,6 @@ void func_80294BA4(CREvtMovie* self) {
 #pragma pop
 
 // ============================================================================
-// func_80294CB0: Empty virtual function override (blr)
+// EvtMovie_Noop_4CB0: Empty virtual function override (blr)
 // ============================================================================
-void func_80294CB0(void) {}
+void EvtMovie_Noop_4CB0(void) {}

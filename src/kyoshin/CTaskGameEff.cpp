@@ -147,18 +147,18 @@ extern "C" __declspec(noinline) void* __dt__12CTaskGameEffFv(void* self, int fla
 #pragma optimize_for_size off
 
 // Returns a global word from the sdata2/sdata pool (single lwz+sda21 reloc).
-u32 func_80044DF4() { return (u32)lbl_eu_80663D40; }
+extern "C" u32 getEffectTask() { return (u32)lbl_eu_80663D40; }
 
 #pragma optimize_for_size on
 void CTaskGameEff::Init() {
     lbl_eu_80663D40 = this;
 
-    void* size = func_804CB9F4();
+    void* size = EffSys_GetConstBase();
     mMemAlloc = (u32)mtl::MemManager::allocate_head(mtl::MemManager::getHandleMEM1(),
                                                      (u32)size, 0x20);
-    void* size2 = func_804CB9F4();
-    func_804CBA00(lbl_eu_8065FC18, (void*)mMemAlloc, size2);
-    func_804CBAA8(lbl_eu_8065FC18, mScene, 1);
+    void* size2 = EffSys_GetConstBase();
+    EffSys_Startup(lbl_eu_8065FC18, (void*)mMemAlloc, size2);
+    EffSys_InitScene(lbl_eu_8065FC18, mScene, 1);
 
     // Register render callbacks. Retail re-evaluates the null-guard at each
     // call site via the two-statement guard idiom.
@@ -184,14 +184,14 @@ void CTaskGameEff::Init() {
 }
 #pragma optimize_for_size off
 
-// func_800450CC: allocate a CTaskGameEff (0x94) from work memory, construct it
+// createGameEffTask: allocate a CTaskGameEff (0x94) from work memory, construct it
 // with `scene`, register it under `parent`, then spin up the after-task factory
 // under the scene root process. Returns the new task (or null if the allocation
 // failed; Regist still runs on the null pointer - retail behaviour, same as the
 // __ct__CTaskGameEffAfter factory).
 // optimize_for_size on: retail saves r29-r31 via stmw, not individual stw.
 #pragma optimize_for_size on
-CTaskGameEff* func_800450CC(CProcess* parent, CScn* scene) {
+extern "C" CTaskGameEff* createGameEffTask(CProcess* parent, CScn* scene) {
     CTaskGameEff* task = (CTaskGameEff*)mtl::MemManager::allocate(0x94, CWorkThreadSystem::getWorkMem());
     if (task != nullptr) {
         task = __ct__CTaskGameEff(task, scene);
@@ -212,7 +212,7 @@ void CTaskGameEff::Term() {
     Scn_CallUnk8C_V7(mScene, cb54, 8);
 
     mScene->removeRenderCB(&field_0x70);
-    func_804CC154(&lbl_eu_8065FC18[0]);
+    EffSys_Teardown(&lbl_eu_8065FC18[0]);
 
     if (mMemAlloc != 0) {
         mtl::MemManager::deallocate((void*)mMemAlloc);
@@ -230,7 +230,7 @@ void setEffectEnabled(u32 enable) {
     CTaskGameEff* gTask = lbl_eu_80663D40;
     if (gTask == nullptr) return;
     f32 time = (enable != 0) ? lbl_eu_80665D94 : gTask->field_0x6C;
-    func_804CBB14(lbl_eu_8065FC18, time);
+    EffSys_DriveRandom(lbl_eu_8065FC18, time);
     gTask = lbl_eu_80663D40;
     if (enable != 0) {
         gTask->field_0x68 |= 0x2;
@@ -240,7 +240,7 @@ void setEffectEnabled(u32 enable) {
 }
 
 extern "C" __declspec(noinline) void cbRenderBefore__12CTaskGameEffFv(void* self) {
-    func_804CBB60(lbl_eu_8065FC18);
+    EffSys_StepSchedules(lbl_eu_8065FC18);
 }
 
 // func_80045044: flush GX state, fold this->mActive into bit 11 (0x800) of the
@@ -259,16 +259,16 @@ extern "C" __declspec(noinline) void func_80045044(CTaskGameEff* self, void* par
     };
     ((EffFlagBits*)&lbl_eu_8065FC18[0])->activeBit = self->mActive;
     func_804CBB84(&lbl_eu_8065FC18[0], param);
-    func_804CBC90(&lbl_eu_8065FC18[0]);
-    func_804CBD14(&lbl_eu_8065FC18[0]);
-    func_804CBDB4(&lbl_eu_8065FC18[0]);
-    func_804CC104(&lbl_eu_8065FC18[0]);
+    EffRender_PassFirst(&lbl_eu_8065FC18[0]);
+    EffRender_PassFilteredA(&lbl_eu_8065FC18[0]);
+    EffRender_PassSecond(&lbl_eu_8065FC18[0]);
+    EffSys_ResetAlpha(&lbl_eu_8065FC18[0]);
     CDeviceGX::getCacheInstance()->resetGXStateA();
     CViewRoot::updateViewRoot();
 }
 #pragma optimize_for_size off
 
-void func_800450C8() {}
+extern "C" void noopGameEffTask() {}
 
 // func_8004513C: resolve an effect object by id and attach it to the battle
 // host's +0x3E9C container. mode selects the resolver: 1 = the host
@@ -297,12 +297,12 @@ void* func_8004513C(EffHostObj* target, EffHostObj* host, u32 id, u32 mode) {
 }
 #pragma optimize_for_size off
 
-// func_800451D8: resolve an effect by table index off the game-manager instance,
+// bindIndexedEffect: resolve an effect by table index off the game-manager instance,
 // dynamic-cast it to the base effect type, attach it to `manager`, and copy the
 // manager's 0x304 data block. Returns the resolved effect (or 0).
 // optimize_for_size on: retail prologue saves r30+r31 via stmw, not stw.
 #pragma optimize_for_size on
-void* func_800451D8(int index, void* manager) {
+void* bindIndexedEffect(int index, void* manager) {
     if (cf::CfGameManager::getInstance() == nullptr) {
         return nullptr;
     }
@@ -325,16 +325,16 @@ void* func_800451D8(int index, void* manager) {
 // Renders/updates effect resources via the global effect singleton at lbl_eu_8065FC18.
 // First parameter (this) is unused; second parameter is forwarded to func_804CBB84.
 // The cache/ViewRoot pair flushes GX state before and after the effect calls.
-// NOTE: func_80045284 and func_800452EC share one `optimize_for_size on`
+// NOTE: runEffectPassB and func_800452EC share one `optimize_for_size on`
 // region - retail saves r30+r31 via stmw in both.
 #pragma optimize_for_size on
-void func_80045284(void* unused, void* param) {
+extern "C" void runEffectPassB(void* unused, void* param) {
     CDeviceGX::getCacheInstance()->resetGXStateA();
     CViewRoot::updateViewRoot();
     func_804CBB84(lbl_eu_8065FC18, param);
-    func_804CBE48(lbl_eu_8065FC18);
-    func_804CC104(lbl_eu_8065FC18);
-    func_804CBEE8(lbl_eu_8065FC18);
+    EffRender_PassFilteredB(lbl_eu_8065FC18);
+    EffSys_ResetAlpha(lbl_eu_8065FC18);
+    EffSys_Thunk8688(lbl_eu_8065FC18);
     CDeviceGX::getCacheInstance()->resetGXStateA();
     CViewRoot::updateViewRoot();
 }
@@ -365,10 +365,10 @@ void func_800452EC(CScn* scene) {
     }
 }
 
-// func_800453EC: unregister the render callbacks for `scene` and unlink it
+// unregisterEffectScene: unregister the render callbacks for `scene` and unlink it
 // from the effect-task's scene list. Finds the list node whose scene matches,
 // detaches the task's callbacks, then unlinks the node.
-void func_800453EC(CScn* scene) {
+extern "C" void unregisterEffectScene(CScn* scene) {
     CTaskGameEff* gTask = lbl_eu_80663D40;
     if (gTask == nullptr) return;
     if (scene == nullptr) return;
@@ -403,22 +403,22 @@ void func_800453EC(CScn* scene) {
 
 
 
-// IWorkEvent/IScnRender vtable this-adjusting thunks (retail func_80045540..
+// IWorkEvent/IScnRender vtable this-adjusting thunks (retail fwdEffScnCb54..
 // 80045558): subi the subobject pointer, tail-branch to the real impl.
 extern "C" void* __dt__12CTaskGameEffFv(void*, int);
-extern "C" void func_80045540(void* self) {
+extern "C" void fwdEffScnCb54(void* self) {
     cbRenderBefore__12CTaskGameEffFv((char*)self - 0x54);
 }
 
-extern "C" void func_80045548(void* self, int flags) {
+extern "C" void fwdEffDtor54(void* self, int flags) {
     __dt__12CTaskGameEffFv((char*)self - 0x54, flags);
 }
 
-extern "C" void func_80045550(CTaskGameEff* self, void* param) {
+extern "C" void fwdEffFrameCb58(CTaskGameEff* self, void* param) {
     func_80045044(reinterpret_cast<CTaskGameEff*>(reinterpret_cast<char*>(self) - 0x58), param);
 }
 
-extern "C" void func_80045558(void* self, int flags) {
+extern "C" void fwdEffDtor58(void* self, int flags) {
     __dt__12CTaskGameEffFv((char*)self - 0x58, flags);
 }
 

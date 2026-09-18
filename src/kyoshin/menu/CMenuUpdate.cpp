@@ -67,7 +67,7 @@ extern "C" __declspec(noinline) void __ct__IScnRender(void* self) {
 }
 
 // CMenuUpdate_8014274C ctor
-// Returns self so callers can nest it as the src argument of func_80143F54
+// Returns self so callers can nest it as the src argument of MenuUpdate_CopyQuadWord
 // (retail emits 'bl __ct__; mr r4,r3' shapes).
 extern "C" __declspec(noinline) CMenuUpdate_8014274C* __ct__8014274C(CMenuUpdate_8014274C* self) {
     self->field_0 = 0; self->field_4 = 0; self->field_8 = 0; self->field_C = 0;
@@ -227,12 +227,12 @@ extern "C" void Move__11CMenuUpdateFv(void* self) {
     if (isFlag01Set__9CTaskGameFv(taskGame) || testResInfoFlag(0x200000))
         return;
     if (IsMenuState621F0() == 0) return;
-    if (func_80143F78(self)) return;
+    if (MenuUpdate_CheckBootGates(self)) return;
 
     switch ((int)obj->mMode) {
-    case 0: func_80144070(self); break;
+    case 0: MenuUpdate_EnterMode1Chime(self); break;
     case 1: func_801440A8(self); break;
-    case 2: func_80144410(self); break;
+    case 2: MenuUpdate_GuardFirstEntry(self); break;
     }
 
     // Layout::Animate(0) - virtual slot 0x38
@@ -247,7 +247,7 @@ extern "C" void cbRenderBefore__11CMenuUpdateFv(void* self) {
     if (isFlag01Set__9CTaskGameFv(taskGame) || testResInfoFlag(0x200000))
         return;
     if (IsMenuState621F0() == 0) return;
-    if (func_80143F78(self)) return;
+    if (MenuUpdate_CheckBootGates(self)) return;
 
     GXSetZMode(GX_FALSE, GX_NEVER, GX_FALSE);
 
@@ -269,8 +269,8 @@ extern "C" u8 func_80143F4C(u8* self) { return self[0x64]; }
 extern "C" __declspec(noinline) int getField64(u8* self) { return self[0x64]; }
 extern "C" __declspec(noinline) void* getGlobalA10() { return (void*)lbl_eu_80664A10; }
 extern "C" __declspec(noinline) int getGlobal0E0() { return lbl_eu_806640E0; }
-extern "C" __declspec(noinline) void func_80142C64(void* self) { ((u8*)self)[0x15] = 1; }
-extern "C" void func_80142C80() { if (lbl_eu_80664198) { ((void(*)(void*, u8))setField64)((void*)(u32)lbl_eu_80664198, 1); } }
+extern "C" __declspec(noinline) void MenuUpdate_MarkByte15Ready(void* self) { ((u8*)self)[0x15] = 1; }
+extern "C" void MenuUpdate_SignalGlobalField64() { if (lbl_eu_80664198) { ((void(*)(void*, u8))setField64)((void*)(u32)lbl_eu_80664198, 1); } }
 extern "C" __declspec(noinline) void* noop_80142D5C(void* self) { return self; }
 extern "C" void* setVec2(void* self, f32 a, f32 b) { *(f32*)self = a; *(f32*)((u8*)self + 4) = b; return self; }
 extern "C" __declspec(noinline) void setFieldFloat10(void* self, f32 val) { *(f32*)((u8*)self + 0x10) = val; }
@@ -284,27 +284,27 @@ extern "C" __declspec(noinline) CMenuUpdate_8014274C* init_8014274C(CMenuUpdate_
 extern "C" void func_80143F38(CMenuUpdate_8014274C* self, u32 v0, u32 v1, u32 v2, u32 v3) {
     init_8014274C(self, v0, v1, v2, v3);
 }
-extern "C" __declspec(noinline) void func_80143F54(u32* dest, const u32* src) {
+extern "C" __declspec(noinline) void MenuUpdate_CopyQuadWord(u32* dest, const u32* src) {
     const u32* s = src; u32* d = dest;
     d[0] = s[0]; d[1] = s[1]; d[2] = s[2]; d[3] = s[3];
 }
 
-// func_80142B4C - process factory. Mode 2 flags a global; mode 6 checks a
+// MenuUpdate_SpawnProcessForMode - process factory. Mode 2 flags a global; mode 6 checks a
 // save-flag resource and marks it dirty. Reuses the existing process if one is
 // registered, otherwise allocates a CMenuUpdate (0x130 bytes from work mem).
 // The ctor result redefines obj so the pointer stays in r3 across the call.
-extern "C" void* func_80142B4C(void* self, u32 r4, int r5, int r6, int r7, int r8) {
-    if (r5 == 2) { func_80142C64(getGlobalA10()); }
+extern "C" void* MenuUpdate_SpawnProcessForMode(void* self, u32 r4, int r5, int r6, int r7, int r8) {
+    if (r5 == 2) { MenuUpdate_MarkByte15Ready(getGlobalA10()); }
     if (r5 == 6) {
         int val = getGlobal0E0();
         u16 result = BdatGetU16Direct((void*)val, (const char*)((u32)lbl_eu_805013C8 + 0x64), r6);
         if (!result) return 0;
-        if (func_8009CF8C(r6 + 0x3214)) {
+        if (CtrlRemote_TouchBitByArg(r6 + 0x3214)) {
             if (GetSysStateFlag22()) {
                 return 0;
             }
         } else {
-            func_8009D018(r6 + 0x3214, 1);
+            CtrlRemote_SetSharedBit(r6 + 0x3214, 1);
         }
     }
     if (lbl_eu_80664198 != 0) {
@@ -321,10 +321,10 @@ extern "C" void* func_80142B4C(void* self, u32 r4, int r5, int r6, int r7, int r
     return (void*)(u32)lbl_eu_80664198;
 }
 
-// func_80142CA0 - format a texture name into a FixStr<32> buffer and bind it
+// MenuUpdate_FormatNotifyText - format a texture name into a FixStr<32> buffer and bind it
 // into the layout. The FixStr default-init is the out-of-line CfGameManager
 // helper (retail shape).
-extern "C" void func_80142CA0(void* self, void* name, void* fmtArg) {
+extern "C" void MenuUpdate_FormatNotifyText(void* self, void* name, void* fmtArg) {
     CMenuUpdate* obj = (CMenuUpdate*)self;
     if (!name) return;
     if (!fmtArg) return;
@@ -376,21 +376,21 @@ extern "C" __declspec(noinline) void func_80142D60(void* self) {
         if (pane != NULL) {
             float v[2];
             setVec2(v, h, w);
-            func_80124288(pane, v);
+            writePanePos(pane, v);
         }
         pane = ((nw4r::lyt::Pane*)getField10((u8*)obj->mLayout))
                    ->FindPaneByName((const char*)lbl_eu_805013C8 + 0x9d, true);
         if (pane != NULL) {
             float v[2];
             setVec2(v, h, w);
-            func_80124288(pane, v);
+            writePanePos(pane, v);
         }
         pane = ((nw4r::lyt::Pane*)getField10((u8*)obj->mLayout))
                    ->FindPaneByName((const char*)lbl_eu_805013C8 + 0xaa, true);
         if (pane != NULL) {
             float v[2];
             setVec2(v, h, w);
-            func_80124288(pane, v);
+            writePanePos(pane, v);
         }
     }
 
@@ -410,10 +410,10 @@ extern "C" __declspec(noinline) void func_80142D60(void* self) {
                                  ->FindPaneByName((const char*)lbl_eu_805013C8 + 0xf6, true);
     nw4r::lyt::Pane* paneD = ((nw4r::lyt::Pane*)getField10((u8*)obj->mLayout))
                                  ->FindPaneByName((const char*)lbl_eu_805013C8 + 0xff, true);
-    func_80124270(paneA, 0);
-    func_80124270(paneB, 0);
-    func_80124270(paneC, 0);
-    func_80124270(paneD, 0);
+    setPaneVisible(paneA, 0);
+    setPaneVisible(paneB, 0);
+    setPaneVisible(paneC, 0);
+    setPaneVisible(paneD, 0);
 
     // Shared temporaries: one slot each across all switch arms keeps MWCC's
     // stack frame at the retail size.
@@ -422,12 +422,12 @@ extern "C" __declspec(noinline) void func_80142D60(void* self) {
 
     switch (obj->mState) {
     case 1:
-        func_80124270(paneB, 1);
+        setPaneVisible(paneB, 1);
         obj->mActiveAnim = obj->mAnim1;
         break;
 
     case 2: {
-        func_80124270(paneC, 1);
+        setPaneVisible(paneC, 1);
         res = ((nw4r::lyt::ArcResourceAccessor*)CUICfManager_getArcResourceAccessor())
                   ->GetResource(0x74696D67, (const char*)lbl_eu_805013C8 + 0x107, NULL);
         if (res != NULL) {
@@ -440,8 +440,8 @@ extern "C" __declspec(noinline) void func_80142D60(void* self) {
     case 4: {
         char* s = BdatTouchStringCell((const char*)lbl_eu_805013C8 + 0x140,
                                 (const char*)lbl_eu_805013C8 + 0x14d, obj->mSubState + 0x6f);
-        func_80142CA0(obj, (void*)((const char*)lbl_eu_805013C8 + 0x156), s);
-        func_80142CA0(obj, (void*)((const char*)lbl_eu_805013C8 + 0x161), s);
+        MenuUpdate_FormatNotifyText(obj, (void*)((const char*)lbl_eu_805013C8 + 0x156), s);
+        MenuUpdate_FormatNotifyText(obj, (void*)((const char*)lbl_eu_805013C8 + 0x161), s);
 
         // Sub-type specific texture over the first text slot.
         res = NULL;
@@ -474,16 +474,16 @@ extern "C" __declspec(noinline) void func_80142D60(void* self) {
         // Counter sign selects the countdown vs count-up gauge group; the
         // magnitude picks the number-strip texture bound to the gauge pane.
         if (obj->mCounter < 0) {
-            func_80124270(((nw4r::lyt::Pane*)getField10((u8*)obj->mLayout))
+            setPaneVisible(((nw4r::lyt::Pane*)getField10((u8*)obj->mLayout))
                               ->FindPaneByName((const char*)lbl_eu_805013C8 + 0x1f3, true),
                           1);
-            func_80124270(((nw4r::lyt::Pane*)getField10((u8*)obj->mLayout))
+            setPaneVisible(((nw4r::lyt::Pane*)getField10((u8*)obj->mLayout))
                               ->FindPaneByName((const char*)lbl_eu_805013C8 + 0x1fe, true),
                           0);
-            func_80124270(((nw4r::lyt::Pane*)getField10((u8*)obj->mLayout))
+            setPaneVisible(((nw4r::lyt::Pane*)getField10((u8*)obj->mLayout))
                               ->FindPaneByName((const char*)lbl_eu_805013C8 + 0x209, true),
                           0);
-            func_80124270(((nw4r::lyt::Pane*)getField10((u8*)obj->mLayout))
+            setPaneVisible(((nw4r::lyt::Pane*)getField10((u8*)obj->mLayout))
                               ->FindPaneByName((const char*)lbl_eu_805013C8 + 0x213, true),
                           1);
             if (obj->mCounter <= -200) {
@@ -499,16 +499,16 @@ extern "C" __declspec(noinline) void func_80142D60(void* self) {
                 PaneSetTexPaletteByName(obj->mLayout, (const char*)lbl_eu_805013C8 + 0x213, res);
             }
         } else {
-            func_80124270(((nw4r::lyt::Pane*)getField10((u8*)obj->mLayout))
+            setPaneVisible(((nw4r::lyt::Pane*)getField10((u8*)obj->mLayout))
                               ->FindPaneByName((const char*)lbl_eu_805013C8 + 0x1f3, true),
                           0);
-            func_80124270(((nw4r::lyt::Pane*)getField10((u8*)obj->mLayout))
+            setPaneVisible(((nw4r::lyt::Pane*)getField10((u8*)obj->mLayout))
                               ->FindPaneByName((const char*)lbl_eu_805013C8 + 0x1fe, true),
                           1);
-            func_80124270(((nw4r::lyt::Pane*)getField10((u8*)obj->mLayout))
+            setPaneVisible(((nw4r::lyt::Pane*)getField10((u8*)obj->mLayout))
                               ->FindPaneByName((const char*)lbl_eu_805013C8 + 0x258, true),
                           0);
-            func_80124270(((nw4r::lyt::Pane*)getField10((u8*)obj->mLayout))
+            setPaneVisible(((nw4r::lyt::Pane*)getField10((u8*)obj->mLayout))
                               ->FindPaneByName((const char*)lbl_eu_805013C8 + 0x262, true),
                           1);
             if (obj->mCounter >= 500) {
@@ -528,7 +528,7 @@ extern "C" __declspec(noinline) void func_80142D60(void* self) {
                 PaneSetTexPaletteByName(obj->mLayout, (const char*)lbl_eu_805013C8 + 0x262, res);
             }
         }
-        func_80124270(paneA, 1);
+        setPaneVisible(paneA, 1);
         obj->mActiveAnim = obj->mAnim2;
         break;
     }
@@ -539,7 +539,7 @@ extern "C" __declspec(noinline) void func_80142D60(void* self) {
         u32 wideFlag = 0;
         u16 len = BdatGetU16ByTableKey((const char*)lbl_eu_805013C8 + 0x293,
                                 (const char*)lbl_eu_805013C8 + 0x2a4, 5);
-        if ((u32)func_8009CF8C(0x20) >= (u32)len) {
+        if ((u32)CtrlRemote_TouchBitByArg(0x20) >= (u32)len) {
             wideFlag = 1;
         }
 
@@ -558,21 +558,21 @@ extern "C" __declspec(noinline) void func_80142D60(void* self) {
             (const char*)lbl_eu_805013C8 + 0x140, (const char*)lbl_eu_805013C8 + 0x14d,
             BdatGetU16ByTableKey((const char*)lbl_eu_805013C8 + 0x2ab, (const char*)obj->mSubType,
                           pairA[wideFlag]));
-        func_80142CA0(obj, (void*)((const char*)lbl_eu_805013C8 + 0x156), s1);
-        func_80142CA0(obj, (void*)((const char*)lbl_eu_805013C8 + 0x161), s2);
+        MenuUpdate_FormatNotifyText(obj, (void*)((const char*)lbl_eu_805013C8 + 0x156), s1);
+        MenuUpdate_FormatNotifyText(obj, (void*)((const char*)lbl_eu_805013C8 + 0x161), s2);
         func_80137B44(obj->mLayout, (const char*)lbl_eu_805013C8 + 0x156, -1);
 
         if (obj->mCounter < 0) {
-            func_80124270(((nw4r::lyt::Pane*)getField10((u8*)obj->mLayout))
+            setPaneVisible(((nw4r::lyt::Pane*)getField10((u8*)obj->mLayout))
                               ->FindPaneByName((const char*)lbl_eu_805013C8 + 0x1f3, true),
                           1);
-            func_80124270(((nw4r::lyt::Pane*)getField10((u8*)obj->mLayout))
+            setPaneVisible(((nw4r::lyt::Pane*)getField10((u8*)obj->mLayout))
                               ->FindPaneByName((const char*)lbl_eu_805013C8 + 0x1fe, true),
                           0);
-            func_80124270(((nw4r::lyt::Pane*)getField10((u8*)obj->mLayout))
+            setPaneVisible(((nw4r::lyt::Pane*)getField10((u8*)obj->mLayout))
                               ->FindPaneByName((const char*)lbl_eu_805013C8 + 0x209, true),
                           1);
-            func_80124270(((nw4r::lyt::Pane*)getField10((u8*)obj->mLayout))
+            setPaneVisible(((nw4r::lyt::Pane*)getField10((u8*)obj->mLayout))
                               ->FindPaneByName((const char*)lbl_eu_805013C8 + 0x213, true),
                           0);
             if (obj->mCounter <= -50) {
@@ -588,16 +588,16 @@ extern "C" __declspec(noinline) void func_80142D60(void* self) {
                 PaneSetTexPaletteByName(obj->mLayout, (const char*)lbl_eu_805013C8 + 0x209, res);
             }
         } else {
-            func_80124270(((nw4r::lyt::Pane*)getField10((u8*)obj->mLayout))
+            setPaneVisible(((nw4r::lyt::Pane*)getField10((u8*)obj->mLayout))
                               ->FindPaneByName((const char*)lbl_eu_805013C8 + 0x1f3, true),
                           0);
-            func_80124270(((nw4r::lyt::Pane*)getField10((u8*)obj->mLayout))
+            setPaneVisible(((nw4r::lyt::Pane*)getField10((u8*)obj->mLayout))
                               ->FindPaneByName((const char*)lbl_eu_805013C8 + 0x1fe, true),
                           1);
-            func_80124270(((nw4r::lyt::Pane*)getField10((u8*)obj->mLayout))
+            setPaneVisible(((nw4r::lyt::Pane*)getField10((u8*)obj->mLayout))
                               ->FindPaneByName((const char*)lbl_eu_805013C8 + 0x258, true),
                           1);
-            func_80124270(((nw4r::lyt::Pane*)getField10((u8*)obj->mLayout))
+            setPaneVisible(((nw4r::lyt::Pane*)getField10((u8*)obj->mLayout))
                               ->FindPaneByName((const char*)lbl_eu_805013C8 + 0x262, true),
                           0);
             if (obj->mCounter >= 300) {
@@ -617,7 +617,7 @@ extern "C" __declspec(noinline) void func_80142D60(void* self) {
                 PaneSetTexPaletteByName(obj->mLayout, (const char*)lbl_eu_805013C8 + 0x258, res);
             }
         }
-        func_80124270(paneA, 1);
+        setPaneVisible(paneA, 1);
         obj->mActiveAnim = obj->mAnim2;
         break;
     }
@@ -627,12 +627,12 @@ extern "C" __declspec(noinline) void func_80142D60(void* self) {
                       BdatGetPtrDirect((const void*)getGlobal0E0(),
                                     (const char*)lbl_eu_805013C8 + 0x330, obj->mSubState),
                       0);
-        func_80124270(paneD, 1);
+        setPaneVisible(paneD, 1);
         obj->mActiveAnim = obj->mAnim1;
         break;
 
     case 3: {
-        func_80124270(paneC, 1);
+        setPaneVisible(paneC, 1);
         res = ((nw4r::lyt::ArcResourceAccessor*)CUICfManager_getArcResourceAccessor())
                   ->GetResource(0x74696D67, (const char*)lbl_eu_805013C8 + 0x335, NULL);
         if (res != NULL) {
@@ -683,7 +683,7 @@ extern "C" __declspec(noinline) void func_80143ADC(CMenuUpdate* obj, int type, u
             if (e->field_0 == sType) return;
             if (e->field_0 == 0) {
                 CMenuUpdate_8014274C t;
-                func_80143F54((u32*)e, (u32*)init_8014274C(&t, sType, sArg1, sArg2, sArg3));
+                MenuUpdate_CopyQuadWord((u32*)e, (u32*)init_8014274C(&t, sType, sArg1, sArg2, sArg3));
                 if (!getField64((u8*)self)) return;
                 setField64((u8*)self, 0);
                 return;
@@ -704,7 +704,7 @@ extern "C" __declspec(noinline) void func_80143ADC(CMenuUpdate* obj, int type, u
             CMenuUpdate_8014274C* e = &self->mEntries[i];
             if (e->field_0 == 0) {
                 CMenuUpdate_8014274C t;
-                func_80143F54((u32*)e, (u32*)init_8014274C(&t, sType, sArg1, sArg2, sArg3));
+                MenuUpdate_CopyQuadWord((u32*)e, (u32*)init_8014274C(&t, sType, sArg1, sArg2, sArg3));
                 if (!getField64((u8*)self)) return;
                 setField64((u8*)self, 0);
                 return;
@@ -731,7 +731,7 @@ extern "C" __declspec(noinline) void func_80143ADC(CMenuUpdate* obj, int type, u
     for (i = 0; i < 8; i++) {
         CMenuUpdate_8014274C* e = &self->mEntries[i];
         if (e->field_0 == 4 || e->field_0 == 5) {
-            func_80143F54((u32*)&keepA[nA].field_0, (u32*)&e->field_0);
+            MenuUpdate_CopyQuadWord((u32*)&keepA[nA].field_0, (u32*)&e->field_0);
             nA++;
         }
     }
@@ -751,7 +751,7 @@ extern "C" __declspec(noinline) void func_80143ADC(CMenuUpdate* obj, int type, u
     u8 idx = nA;
     for (; idx < 8; idx++) {
         if (self->mEntries[idx].field_0 == 0) break;
-        func_80143F54((u32*)&keepB[nB].field_0, (u32*)&self->mEntries[idx].field_0);
+        MenuUpdate_CopyQuadWord((u32*)&keepB[nB].field_0, (u32*)&self->mEntries[idx].field_0);
         nB++;
     }
 
@@ -759,39 +759,39 @@ extern "C" __declspec(noinline) void func_80143ADC(CMenuUpdate* obj, int type, u
     for (u8 k = 0; k < 8; k++) {
         CMenuUpdate_8014274C clr;
         __ct__8014274C(&clr);
-        func_80143F54((u32*)&self->mEntries[k].field_0, (u32*)&clr.field_0);
+        MenuUpdate_CopyQuadWord((u32*)&self->mEntries[k].field_0, (u32*)&clr.field_0);
     }
 
     // Re-file: kept tail, the new entry, then the saved prefix run. The
     // write index reuses nA itself (retail keeps both in one register).
     u8 j;
     for (j = 0; j < nA; j++) {
-        func_80143F54((u32*)&self->mEntries[j].field_0, (u32*)&keepA[j].field_0);
+        MenuUpdate_CopyQuadWord((u32*)&self->mEntries[j].field_0, (u32*)&keepA[j].field_0);
     }
 
     CMenuUpdate_8014274C neu; // sp+0x8
-    func_80143F54((u32*)&self->mEntries[nA].field_0,
+    MenuUpdate_CopyQuadWord((u32*)&self->mEntries[nA].field_0,
                   (u32*)init_8014274C(&neu, sType, sArg1, sArg2, sArg3));
     nA++;
 
     for (j = 0; j < nB; j++) {
-        func_80143F54((u32*)&self->mEntries[nA + j].field_0, (u32*)&keepB[j].field_0);
+        MenuUpdate_CopyQuadWord((u32*)&self->mEntries[nA + j].field_0, (u32*)&keepB[j].field_0);
     }
 }
 
-// func_80143F78 - pause/transition guard; decrements a fade timer in 0x12C
-extern "C" int func_80143F78(void* self) {
+// MenuUpdate_CheckBootGates - pause/transition guard; decrements a fade timer in 0x12C
+extern "C" int MenuUpdate_CheckBootGates(void* self) {
     CMenuUpdate* obj = (CMenuUpdate*)self;
     if (!code80135FDC_getByte_64059() && !isGlobalCamFlagSet__Fi(0x1000000) &&
         isGlobalCamFlagSet__Fi((int)0xBFE40000)) {
         return 1;
     }
-    if (func_8029A658()) obj->mFloat12C = lbl_eu_806673C0;
+    if (MenuTutorialIsCreated()) obj->mFloat12C = lbl_eu_806673C0;
     if (isSceneLoading__Q22cf13CfGameManagerFv()) return 1;
     if (isSceneActive__Q22cf13CfGameManagerFv()) return 1;
     if (!isSceneReadyForInput__Q22cf13CfGameManagerFv()) return 1;
-    if (func_801BCF38()) return 1;
-    if (func_8029EE58()) return 1;
+    if (isKizunaTalkActive()) return 1;
+    if (SkipTimer_IsActiveFlag()) return 1;
     // Clamp: subtract the fade step into the field, then clamp.
     // lbl_eu_806673A0 is const-qualified so the load may hoist above the
     // member store, reproducing retail's sub/store/cmp/store order.
@@ -802,8 +802,8 @@ extern "C" int func_80143F78(void* self) {
     return 0;
 }
 
-// func_80144070
-extern "C" __declspec(noinline) void func_80144070(void* self) {
+// MenuUpdate_EnterMode1Chime
+extern "C" __declspec(noinline) void MenuUpdate_EnterMode1Chime(void* self) {
     CMenuUpdate* obj = (CMenuUpdate*)self;
     playUISound__FUl(0x1F);
     obj->mMode = 1;
@@ -834,7 +834,7 @@ extern "C" __declspec(noinline) void func_801440A8(void* self) {
         for (; iA < 8; iA++) {
             s32 f = obj->mEntries[iA].field_0;
             if (f != 4 && f != 5) break;
-            func_80143F54((u32*)&act[nAct++], (u32*)&obj->mEntries[iA].field_0);
+            MenuUpdate_CopyQuadWord((u32*)&act[nAct++], (u32*)&obj->mEntries[iA].field_0);
         }
 
         CMenuUpdate_8014274C rest[8]; // sp+0x28
@@ -850,38 +850,38 @@ extern "C" __declspec(noinline) void func_801440A8(void* self) {
         nRest = 0;
         while (iB < 8) {
             if (obj->mEntries[iB].field_0 == 0) break;
-            func_80143F54((u32*)&rest[nRest++], (u32*)&obj->mEntries[iB].field_0);
+            MenuUpdate_CopyQuadWord((u32*)&rest[nRest++], (u32*)&obj->mEntries[iB].field_0);
             iB++;
         }
 
         for (k = 0; k < 8; k++) {
             CMenuUpdate_8014274C clr;
-            func_80143F54((u32*)&obj->mEntries[k].field_0,
+            MenuUpdate_CopyQuadWord((u32*)&obj->mEntries[k].field_0,
                           (u32*)__ct__8014274C(&clr));
         }
 
         w = 0;
         for (j = 0; j < nAct; j++) {
-            func_80143F54((u32*)&obj->mEntries[w++].field_0, (u32*)&act[j].field_0);
+            MenuUpdate_CopyQuadWord((u32*)&obj->mEntries[w++].field_0, (u32*)&act[j].field_0);
         }
         // Re-file the saved header block right after the active entries.
-        func_80143F54((u32*)&obj->mEntries[w++].field_0, (u32*)&obj->mState);
+        MenuUpdate_CopyQuadWord((u32*)&obj->mEntries[w++].field_0, (u32*)&obj->mState);
         for (j = 0; j < nRest; j++) {
-            func_80143F54((u32*)&obj->mEntries[w++].field_0, (u32*)&rest[j].field_0);
+            MenuUpdate_CopyQuadWord((u32*)&obj->mEntries[w++].field_0, (u32*)&rest[j].field_0);
         }
 
         CMenuUpdate_8014274C clrState;
-        func_80143F54((u32*)&obj->mState, (u32*)__ct__8014274C(&clrState));
+        MenuUpdate_CopyQuadWord((u32*)&obj->mState, (u32*)__ct__8014274C(&clrState));
     } else {
         // Confirm-button handling on the state-machine side.
         CMenuUpdatePadData* pad = (CMenuUpdatePadData*)cf::CfGameManager::getCurrentPad();
         if (pad->mPressedButtonFlags & 0x200) {
-            if (code80135FDC_getByte_64059() || CUICfManager_hasInUseSlot() || func_80122450() ||
-                func_80226B94()) {
+            if (code80135FDC_getByte_64059() || CUICfManager_hasInUseSlot() || hasQuestWindow() ||
+                QstCnt_HasInstance_6B94()) {
                 playUISound__FUl(5);
             } else {
                 CfRes_getE14();
-                f32 v = func_801443E4();
+                f32 v = MenuUpdate_QueryUnk80Float();
                 // Retail tests each failure condition with a cror merge
                 // ((v >= C4), (mFloat12C <= 0)) and exits to the common tail
                 // when either negated test holds.
@@ -901,22 +901,22 @@ extern "C" __declspec(noinline) void func_801440A8(void* self) {
     }
 }
 
-// func_801443E4
-extern "C" __declspec(noinline) f32 func_801443E4() {
+// MenuUpdate_QueryUnk80Float
+extern "C" __declspec(noinline) f32 MenuUpdate_QueryUnk80Float() {
     Unk_8049603C* mgr = (Unk_8049603C*)Scn_QueryUnk80State();
     f32 val = mgr->field_C;
     return lbl_eu_806673C4 - val;
 }
 
-// func_80144410
-// func_80144410 - idle-state handler (mode 2): closes the front window and
+// MenuUpdate_GuardFirstEntry
+// MenuUpdate_GuardFirstEntry - idle-state handler (mode 2): closes the front window and
 // compacts the remaining non-empty entries toward the front.
-extern "C" __declspec(noinline) void func_80144410(void* self) {
+extern "C" __declspec(noinline) void MenuUpdate_GuardFirstEntry(void* self) {
     CMenuUpdate* obj = (CMenuUpdate*)self;
     if (isGlobalCamFlagSet__Fi(0x1000000) && obj->mEntries[0].field_0 != 4 &&
         obj->mEntries[0].field_0 != 5)
         return;
-    if (CUICfManager_hasInUseSlot() || func_80122450() || func_80226B94())
+    if (CUICfManager_hasInUseSlot() || hasQuestWindow() || QstCnt_HasInstance_6B94())
         return;
 
     if (obj->mEntries[0].field_0 == 0) {
@@ -927,10 +927,10 @@ extern "C" __declspec(noinline) void func_80144410(void* self) {
     obj->mFloat128 = lbl_eu_806673A0;
     obj->mMode = 0;
     // Stash the closing entry in the header block, then blank slot 0.
-    func_80143F54((u32*)&obj->mState, (u32*)&obj->mEntries[0].field_0);
+    MenuUpdate_CopyQuadWord((u32*)&obj->mState, (u32*)&obj->mEntries[0].field_0);
     {
         CMenuUpdate_8014274C clr;
-        func_80143F54((u32*)&obj->mEntries[0].field_0, (u32*)__ct__8014274C(&clr));
+        MenuUpdate_CopyQuadWord((u32*)&obj->mEntries[0].field_0, (u32*)__ct__8014274C(&clr));
     }
     func_80142D60(self);
 
@@ -949,12 +949,12 @@ extern "C" __declspec(noinline) void func_80144410(void* self) {
     i = 1;
     for (; i < 8; i++) {
         if (obj->mEntries[i].field_0 == 0) break;
-        func_80143F54((u32*)&tmp[n++], (u32*)&obj->mEntries[i].field_0);
+        MenuUpdate_CopyQuadWord((u32*)&tmp[n++], (u32*)&obj->mEntries[i].field_0);
     }
     s32* dst = &obj->mEntries[0].field_0;
     s32* src = &tmp[0].field_0;
     for (int k = 0; k < 8; k++) {
-        func_80143F54((u32*)dst, (u32*)src);
+        MenuUpdate_CopyQuadWord((u32*)dst, (u32*)src);
         src += 4;
         dst += 4;
     }

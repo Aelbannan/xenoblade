@@ -89,24 +89,24 @@ void* __construct_new_array(void* block, void (*ctor)(void*), void (*dtor)(void*
 // Cross-TU calls (placeholder symbols; extern "C" keeps retail reloc names)
 // ---------------------------------------------------------------------------
 extern "C" {
-void func_804EE558(void* link, void* arg, u32 type, void* data, void* unk);
-void func_804EE60C(void* link);
-int func_804EEACC(void* link);
+void lytBindSetupForPane(void* link, void* arg, u32 type, void* data, void* unk);
+void lytBindRefreshPlayer(void* link);
+int lytBindCanResolveTarget(void* link);
 void func_804EE8FC(void* link, u32 index);
-void func_804F2A8C(void* obj);
+void DbgZeroTriple(void* obj);
 void* func_804D5F54(void* self, s16 count);
-void func_804D6070(void* vtx);
+void EffFxEmptyStub(void* vtx);
 void func_804D6074(void* trailSeg, void* trail, const void* color, u32 a, u32 b, const void* c, const void* d);
 void* scnVlAllocSlot(void* res);
 void scnVlFreeSlot(void* res);
 void func_804C03A0(void* light, u32 mode);
 void func_804C0454(void* light, void* arg);
 void func_804C07F0(void* light, const void* color);
-void func_804C08C8(void* light, u32 mode);
-void func_804C09E0(void* light, s32 mode, f32 a, f32 b);
+void LightCtlSetEnable(void* light, u32 mode);
+void LightCtlInitDistAttn(void* light, s32 mode, f32 a, f32 b);
 // Scene-root accessor (see CScnMem.cpp); single-argument signature keeps
 // MWCC's IPA register info intact so r4/r5 constants survive across the calls.
-void* func_8048ECD8(void* scene);
+void* getScnRootSlot10(void* scene);
 }
 
 namespace nw4r {
@@ -200,7 +200,7 @@ struct CETrail {
     void* m_vtable2;          // 0x184
 };
 
-// Light wrapper used by func_804D807C/__dt__804D80F0/func_804D8160
+// Light wrapper used by TrailLight_Init/__dt__804D80F0/func_804D8160
 struct CLight {
     u8 m_pad00[0x30];
     u32 m_flags; // 0x30
@@ -303,8 +303,8 @@ extern "C" void* __dt__804D6C60(CETrail* t, u32 count, s16 segCount, void* linkA
     t->m_buffer = nullptr;
     t->m_verts = nullptr;
 
-    func_804F2A8C((char*)&t->m_link0 + 0xC);
-    func_804F2A8C((char*)&t->m_link1 + 0xC);
+    DbgZeroTriple((char*)&t->m_link0 + 0xC);
+    DbgZeroTriple((char*)&t->m_link1 + 0xC);
 
     if ((s32)count < 2) {
         count = 2;
@@ -358,7 +358,7 @@ extern "C" void* __dt__804D6C60(CETrail* t, u32 count, s16 segCount, void* linkA
     if (need <= mtl::MemManager::getMaxAllocSize(*(u32*)&lbl_eu_8065FC18[1])) {
         u32 n2 = segCount * count * 2;
         void* block2 = mtl::MemManager::allocate_array(n2 * 0x1C + 0x10, *(u32*)&lbl_eu_8065FC18[1]);
-        verts = (CETrailVertex*)__construct_new_array(block2, (void (*)(void*))func_804D6070, nullptr, 0x1C, n2);
+        verts = (CETrailVertex*)__construct_new_array(block2, (void (*)(void*))EffFxEmptyStub, nullptr, 0x1C, n2);
     } else {
         verts = nullptr;
     }
@@ -379,12 +379,12 @@ extern "C" void* __dt__804D6C60(CETrail* t, u32 count, s16 segCount, void* linkA
     } else {
         typeA = 0;
     }
-    func_804EE558(&t->m_link0, linkArg, typeA, payloadA, nullptr);
+    lytBindSetupForPane(&t->m_link0, linkArg, typeA, payloadA, nullptr);
 
     if (dataB != nullptr) {
-        func_804EE558(&t->m_link1, linkArg, dataB[0], dataB + 2, nullptr);
+        lytBindSetupForPane(&t->m_link1, linkArg, dataB[0], dataB + 2, nullptr);
     } else {
-        func_804EE558(&t->m_link1, linkArg, 0, nullptr, nullptr);
+        lytBindSetupForPane(&t->m_link1, linkArg, 0, nullptr, nullptr);
     }
 
     t->m_158 = flag158;
@@ -533,11 +533,11 @@ extern "C" CETrail* __dt__7CETrailFv(CETrail* t, int deleting) {
 }
 
 // ---------------------------------------------------------------------------
-// func_804D73FC: release both link attachments
+// Trail_ReleaseLinks: release both link attachments
 // ---------------------------------------------------------------------------
-extern "C" void func_804D73FC(CETrail* t) {
-    func_804EE60C(&t->m_link0);
-    func_804EE60C(&t->m_link1);
+extern "C" void Trail_ReleaseLinks(CETrail* t) {
+    lytBindRefreshPlayer(&t->m_link0);
+    lytBindRefreshPlayer(&t->m_link1);
 }
 
 // ---------------------------------------------------------------------------
@@ -648,10 +648,10 @@ extern "C" void func_804D7434(CETrail* t, s32 mode, const u8* color) {
 // func_804D77E4: update trail geometry from link matrices
 // ---------------------------------------------------------------------------
 extern "C" void func_804D77E4(CETrail* t, const Mtx* M, const ml::CVec4* color, const ml::CVec4* scale, f32 f) {
-    if (func_804EEACC(&t->m_link0) == 0) {
+    if (lytBindCanResolveTarget(&t->m_link0) == 0) {
         return;
     }
-    if (func_804EEACC(&t->m_link1) == 0) {
+    if (lytBindCanResolveTarget(&t->m_link1) == 0) {
         return;
     }
 
@@ -883,9 +883,9 @@ extern "C" void func_804D7B28(CETrail* t, const ml::CVec3* posA, const ml::CVec3
 }
 
 // ---------------------------------------------------------------------------
-// func_804D807C: light attachment init
+// TrailLight_Init: light attachment init
 // ---------------------------------------------------------------------------
-extern "C" CETrailLight* func_804D807C(CETrailLight* self, CResHolder* parent) {
+extern "C" CETrailLight* TrailLight_Init(CETrailLight* self, CResHolder* parent) {
     self->m_parent = parent;
     self->m_light = (CLight*)scnVlAllocSlot(parent->m_res);
     if (self->m_light == nullptr) {
@@ -893,7 +893,7 @@ extern "C" CETrailLight* func_804D807C(CETrailLight* self, CResHolder* parent) {
     }
     func_804C03A0(self->m_light, 3);
     self->m_light->m_flags = (self->m_light->m_flags & ~0xFu) | 0xFu;
-    func_804C08C8(self->m_light, 0);
+    LightCtlSetEnable(self->m_light, 0);
     return self;
 }
 
@@ -937,7 +937,7 @@ void func_804D8160(CETrailLight* self, void* arg, s32 mode, CETrailLightParam* p
     }
 
     if (p->m_intensity <= lbl_eu_8066B198) {
-        func_804C08C8(self->m_light, 0);
+        LightCtlSetEnable(self->m_light, 0);
         return;
     }
 
@@ -961,9 +961,9 @@ void func_804D8160(CETrailLight* self, void* arg, s32 mode, CETrailLightParam* p
     }
     s32 m = (s32)fm;
 
-    func_804C08C8(self->m_light, 1);
+    LightCtlSetEnable(self->m_light, 1);
     func_804C0454(self->m_light, arg);
-    func_804C09E0(self->m_light, m, f1, f2);
+    LightCtlInitDistAttn(self->m_light, m, f1, f2);
 
     LightColor out;
     self->m_light->m_3C = lbl_eu_8066B1AC;
@@ -986,18 +986,18 @@ void func_804D82DC(CScnRootEnv* scene) {
     lbl_eu_806659BC = 0;
     lbl_eu_80663B3C[0] = 1;
 
-    nw4r::g3d::ScnRoot* root = (nw4r::g3d::ScnRoot*)func_8048ECD8(scene);
+    nw4r::g3d::ScnRoot* root = (nw4r::g3d::ScnRoot*)getScnRootSlot10(scene);
     *(FogData*)&lbl_eu_8065FCA0 = *root->GetFog(0);
 
     // Retail re-reads the global for the second lookup.
-    nw4r::g3d::ScnRoot* root2 = (nw4r::g3d::ScnRoot*)func_8048ECD8(lbl_eu_806659B8);
+    nw4r::g3d::ScnRoot* root2 = (nw4r::g3d::ScnRoot*)getScnRootSlot10(lbl_eu_806659B8);
     *(FogData*)&lbl_eu_8065FCD0 = *root2->GetFog(0);
 }
 
 // ---------------------------------------------------------------------------
-// func_804D83D0: per-frame fog restore
+// Trail_RestoreFog: per-frame fog restore
 // ---------------------------------------------------------------------------
-extern "C" void func_804D83D0(void) {
+extern "C" void Trail_RestoreFog(void) {
     s32 saved = lbl_eu_80663B38;
     s32 cur = lbl_eu_806659B8->m_fogEnv->m_index;
 

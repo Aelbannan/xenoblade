@@ -7,10 +7,10 @@
 #include "kyoshin/cf/voice/cvsys/CVS_THREAD_BATTLE_END_SP.hpp"
 #include "monolib/math/Random.hpp"
 
-// us-802ae1a8 (func_802ABA70)
+// us-802ae1a8 (CVSBattleEndSPResetState)
 // If no voice is active, reset the base state triple in the object header
 // (offsets 0x00..0x08) from the init table lbl_eu_8053A1AC.
-void func_802ABA70(CVS_THREAD_BATTLE_END_SP* self) {
+void CVSBattleEndSPResetState(CVS_THREAD_BATTLE_END_SP* self) {
     if (func_802A3E88(self) == 0) {
         // Pointer increment reproduces the lwzu/spread load-with-update.
         // v0 is declared first so MWCC colours it (the lwzu destination) into
@@ -25,7 +25,7 @@ void func_802ABA70(CVS_THREAD_BATTLE_END_SP* self) {
     }
 }
 
-// us-802ae1f8 (func_802ABAC0)
+// us-802ae1f8 (CVSBattleEndSPRemoveVoice)
 // Remove a voice from the slot array by matching its embedded CCharVoice.
 // Each non-null handle is biased by +0x3E9C before comparing, so a slot is
 // cleared when its embedded voice matches voicePtr.
@@ -34,7 +34,7 @@ void func_802ABA70(CVS_THREAD_BATTLE_END_SP* self) {
 // cursor register (r5); the remaining 7-insn diff is a pure counter/handle
 // register-color swap (decomp i=r4/handle=r6 vs retail i=r6/handle=r4) that
 // resisted every declaration-order permutation tried.
-void func_802ABAC0(CVS_THREAD_BATTLE_END_SP* self, CCharVoice* voicePtr) {
+void CVSBattleEndSPRemoveVoice(CVS_THREAD_BATTLE_END_SP* self, CCharVoice* voicePtr) {
     func_802A3BEC(self, voicePtr);
 
     CVoiceHandle* handle;
@@ -56,14 +56,14 @@ void func_802ABAC0(CVS_THREAD_BATTLE_END_SP* self, CCharVoice* voicePtr) {
     }
 }
 
-// us-802ae038 (func_802AB900)
+// us-802ae038 (CVSBattleEndSPResetAndSweep)
 // Advance the special battle-end sequence. Each command string is a 2-byte
 // pair: [0] = the voice-state to trigger on, [1] = an extra parameter whose
 // absolute value (plus 0xCE4) is the voice ID to play. If the matching slot's
 // voice is inactive it is played; otherwise (or when the state matches no
 // active handle) the sequence ends via the blank1() virtual. Steps the
 // command string by 2 bytes while a full pair remains.
-void func_802AB900(CVS_THREAD_BATTLE_END_SP* self) {
+void CVSBattleEndSPResetAndSweep(CVS_THREAD_BATTLE_END_SP* self) {
     // Restore the base state triple. Declaring v0 before p colours v0 into
     // the lower register (the lwzu destination), matching retail.
     CVS_THREAD_STATE3* st = (CVS_THREAD_STATE3*)self;
@@ -132,9 +132,9 @@ matched:
 }
 
 // Virtual override body (vtable[2]): returns the logical allocation size for
-// this thread type. Retail exports this as the unmangled symbol func_802ABB38,
+// this thread type. Retail exports this as the unmangled symbol CVSBattleEndSPGetBufSize,
 // so the definition keeps the retail name.
-int func_802ABB38() {
+int CVSBattleEndSPGetBufSize() {
     return CVS_THREAD_BATTLE_END_SP::BUFFER_SIZE;
 }
 

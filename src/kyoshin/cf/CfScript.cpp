@@ -38,16 +38,16 @@ void FixStr<128>::format(const char* fmt, ...) {
 namespace cf {
 
 // Forward declarations for functions in this TU
-__declspec(noinline) char* func_80068A30(char* dest, const char* src);
-__declspec(noinline) void func_80068B58(CfScriptManager* mgr, const char* name);
+__declspec(noinline) char* CfScript_CopyName(char* dest, const char* src);
+__declspec(noinline) void CfScript_PutSlot1(CfScriptManager* mgr, const char* name);
 
-// func_80068A20 - initializer for path string
-void func_80068A20() {
-    func_80068A30(lbl_eu_805708D0, lbl_eu_80661AC0);
+// CfScript_InitPath - initializer for path string
+void CfScript_InitPath() {
+    CfScript_CopyName(lbl_eu_805708D0, lbl_eu_80661AC0);
 }
 
-// func_80068A30 - copy string with length tracking; returns dest
-__declspec(noinline) char* func_80068A30(char* dest, const char* src) {
+// CfScript_CopyName - copy string with length tracking; returns dest
+__declspec(noinline) char* CfScript_CopyName(char* dest, const char* src) {
     u32 len = strlen(src);
     CfScriptNameBuffer* buf = (CfScriptNameBuffer*)dest;
     buf->mLength = len;
@@ -55,26 +55,26 @@ __declspec(noinline) char* func_80068A30(char* dest, const char* src) {
     return dest;
 }
 
-// func_80068A80 - get singleton and init
-void func_80068A80() {
+// CfScript_InitMgr - get singleton and init
+void CfScript_InitMgr() {
     CfScriptManager* mgr = CfScriptManager::getInstance();
     mgr->init();
 }
 
-// func_80068AA4 - get singleton and call func_800694B0
-extern "C" void func_80068AA4() {
+// CfScript_UpdateMgr - get singleton and call func_800694B0
+extern "C" void CfScript_UpdateMgr() {
     CfScriptManager* mgr = CfScriptManager::getInstance();
     mgr->updateScript();
 }
 
-// func_80068AC8 - get singleton and call func_8006953C
-void func_80068AC8() {
+// CfScript_ResetMgr - get singleton and call func_8006953C
+void CfScript_ResetMgr() {
     CfScriptManager* mgr = CfScriptManager::getInstance();
     mgr->resetScripts();
 }
 
-// func_80068AEC - get singleton and load slot 0
-void func_80068AEC(const char* name) {
+// CfScript_LoadSlot0 - get singleton and load slot 0
+void CfScript_LoadSlot0(const char* name) {
     CfScriptManager* mgr = CfScriptManager::getInstance();
     mgr->loadSlotZero(name);
 }
@@ -84,73 +84,73 @@ __declspec(noinline) void CfScriptManager::loadSlotZero(const char* name) {
     func_80068ECC(&mScripts[0], name);
 }
 
-// func_80068B24 - get singleton and call func_80068B58 (free function: loads
+// CfScript_LoadSlot1 - get singleton and call CfScript_PutSlot1 (free function: loads
 // slot 1 by offsetting the singleton base, mirroring the retail split where
 // slot 1 has no member thunk).
-void func_80068B24(const char* name) {
+void CfScript_LoadSlot1(const char* name) {
     CfScriptManager* mgr = CfScriptManager::getInstance();
-    func_80068B58(mgr, name);
+    CfScript_PutSlot1(mgr, name);
 }
 
-// func_80068B58 - load script into slot 1
-__declspec(noinline) void func_80068B58(CfScriptManager* mgr, const char* name) {
+// CfScript_PutSlot1 - load script into slot 1
+__declspec(noinline) void CfScript_PutSlot1(CfScriptManager* mgr, const char* name) {
     CfScript* script = &mgr->mScripts[1];
     func_80068ECC(script, name);
 }
 
-// func_80068B60 - get singleton and call func_80068B94
-void func_80068B60(const char* name) {
+// CfScript_LoadSlot2 - get singleton and call CfScript_PutSlot2
+void CfScript_LoadSlot2(const char* name) {
     CfScriptManager* mgr = CfScriptManager::getInstance();
-    mgr->func_80068B94(name);
+    mgr->CfScript_PutSlot2(name);
 }
 
-// CfScriptManager::func_80068B94 - load script into slot 2
-__declspec(noinline) void CfScriptManager::func_80068B94(const char* name) {
+// CfScriptManager::CfScript_PutSlot2 - load script into slot 2
+__declspec(noinline) void CfScriptManager::CfScript_PutSlot2(const char* name) {
     CfScript* script = &mScripts[2];
     func_80068ECC(script, name);
 }
 
-// func_80068B9C - get singleton and call func_80068BC0
-extern "C" void func_80068B9C() {
+// CfScript_FlagSlot0 - get singleton and call CfScript_SetFlag0
+extern "C" void CfScript_FlagSlot0() {
     CfScriptManager* mgr = CfScriptManager::getInstance();
-    mgr->func_80068BC0();
+    mgr->CfScript_SetFlag0();
 }
 
-// CfScriptManager::func_80068BC0 - set flag bit 2 on slot 0
-__declspec(noinline) void CfScriptManager::func_80068BC0() {
+// CfScriptManager::CfScript_SetFlag0 - set flag bit 2 on slot 0
+__declspec(noinline) void CfScriptManager::CfScript_SetFlag0() {
     mScripts[0].mFlags |= 0x4;
 }
 
-// func_80068BD0 - get singleton and call func_80068BF4
-extern "C" void func_80068BD0() {
+// CfScript_FlagSlot1 - get singleton and call CfScript_SetFlag1
+extern "C" void CfScript_FlagSlot1() {
     CfScriptManager* mgr = CfScriptManager::getInstance();
-    mgr->func_80068BF4();
+    mgr->CfScript_SetFlag1();
 }
 
-// CfScriptManager::func_80068BF4 - set flag bit 2 on slot 1
-__declspec(noinline) void CfScriptManager::func_80068BF4() {
+// CfScriptManager::CfScript_SetFlag1 - set flag bit 2 on slot 1
+__declspec(noinline) void CfScriptManager::CfScript_SetFlag1() {
     mScripts[1].mFlags |= 0x4;
 }
 
-// func_80068C04 - get singleton and call func_80068C28
-extern "C" void func_80068C04() {
+// CfScript_FlagSlot2 - get singleton and call CfScript_SetFlag2
+extern "C" void CfScript_FlagSlot2() {
     CfScriptManager* mgr = CfScriptManager::getInstance();
-    mgr->func_80068C28();
+    mgr->CfScript_SetFlag2();
 }
 
-// CfScriptManager::func_80068C28 - set flag bit 2 on slot 2
-__declspec(noinline) void CfScriptManager::func_80068C28() {
+// CfScriptManager::CfScript_SetFlag2 - set flag bit 2 on slot 2
+__declspec(noinline) void CfScriptManager::CfScript_SetFlag2() {
     mScripts[2].mFlags |= 0x4;
 }
 
-// func_80068C38 - get singleton and call func_80068C5C
-extern "C" void func_80068C38() {
+// CfScript_SleepReq2 - get singleton and call CfScript_SleepSlot2
+extern "C" void CfScript_SleepReq2() {
     CfScriptManager* mgr = CfScriptManager::getInstance();
-    mgr->func_80068C5C();
+    mgr->CfScript_SleepSlot2();
 }
 
-// CfScriptManager::func_80068C5C - sleep VM thread for slot 2 if flag set
-__declspec(noinline) void CfScriptManager::func_80068C5C() {
+// CfScriptManager::CfScript_SleepSlot2 - sleep VM thread for slot 2 if flag set
+__declspec(noinline) void CfScriptManager::CfScript_SleepSlot2() {
     CfScript& script = mScripts[2];
     if (script.mFlags & 0x20) {
         if (script.mVmContext != nullptr) {
@@ -159,14 +159,14 @@ __declspec(noinline) void CfScriptManager::func_80068C5C() {
     }
 }
 
-// func_80068C7C - get singleton and call func_80068CA0
-extern "C" void func_80068C7C() {
+// CfScript_ClearReq0 - get singleton and call CfScript_ClearSlot0
+extern "C" void CfScript_ClearReq0() {
     CfScriptManager* mgr = CfScriptManager::getInstance();
-    mgr->func_80068CA0();
+    mgr->CfScript_ClearSlot0();
 }
 
-// CfScriptManager::func_80068CA0 - reset/cleanup slot 0
-__declspec(noinline) void CfScriptManager::func_80068CA0() {
+// CfScriptManager::CfScript_ClearSlot0 - reset/cleanup slot 0
+__declspec(noinline) void CfScriptManager::CfScript_ClearSlot0() {
     CfScript& script = mScripts[0];
 
     if (script.mFileHandle != nullptr) {
@@ -186,14 +186,14 @@ __declspec(noinline) void CfScriptManager::func_80068CA0() {
     script.mNameLen = 0;
 }
 
-// func_80068D14 - get singleton and call func_80068D38
-extern "C" void func_80068D14() {
+// CfScript_ClearReq1 - get singleton and call CfScript_ClearSlot1
+extern "C" void CfScript_ClearReq1() {
     CfScriptManager* mgr = CfScriptManager::getInstance();
-    mgr->func_80068D38();
+    mgr->CfScript_ClearSlot1();
 }
 
-// CfScriptManager::func_80068D38 - reset/cleanup slot 1
-__declspec(noinline) void CfScriptManager::func_80068D38() {
+// CfScriptManager::CfScript_ClearSlot1 - reset/cleanup slot 1
+__declspec(noinline) void CfScriptManager::CfScript_ClearSlot1() {
     CfScript& script = mScripts[1];
 
     if (script.mFileHandle != nullptr) {
@@ -213,14 +213,14 @@ __declspec(noinline) void CfScriptManager::func_80068D38() {
     script.mNameLen = 0;
 }
 
-// func_80068DAC - get singleton and call func_80068DD0
-extern "C" void func_80068DAC() {
+// CfScript_ClearReq2 - get singleton and call CfScript_ClearSlot2
+extern "C" void CfScript_ClearReq2() {
     CfScriptManager* mgr = CfScriptManager::getInstance();
-    mgr->func_80068DD0();
+    mgr->CfScript_ClearSlot2();
 }
 
-// CfScriptManager::func_80068DD0 - reset/cleanup slot 2
-__declspec(noinline) void CfScriptManager::func_80068DD0() {
+// CfScriptManager::CfScript_ClearSlot2 - reset/cleanup slot 2
+__declspec(noinline) void CfScriptManager::CfScript_ClearSlot2() {
     CfScript& script = mScripts[2];
 
     if (script.mFileHandle != nullptr) {
@@ -240,24 +240,24 @@ __declspec(noinline) void CfScriptManager::func_80068DD0() {
     script.mNameLen = 0;
 }
 
-// func_80068E44 - get singleton and call func_80068E7C
-void func_80068E44(int mask) {
-    func_80068E7C(CfScriptManager::getInstance(), 2, mask);
+// CfScript_TestMask - get singleton and call CfScript_TestFlags
+void CfScript_TestMask(int mask) {
+    CfScript_TestFlags(CfScriptManager::getInstance(), 2, mask);
 }
 
-// func_80068E7C - check flags with mask (returns (flags & mask) != 0)
-extern "C" u32 func_80068E7C(CfScriptManager* mgr, int index, int mask) {
+// CfScript_TestFlags - check flags with mask (returns (flags & mask) != 0)
+extern "C" u32 CfScript_TestFlags(CfScriptManager* mgr, int index, int mask) {
     CfScript& script = mgr->mScripts[index];
     u32 result = script.mFlags & mask;
     return result != 0;
 }
 
-// func_80068E9C - format or copy string based on condition
-// retail: pure tail calls (b func_80068A30 / b format) - func_80068A30 is noinline
+// CfScript_MakeName - format or copy string based on condition
+// retail: pure tail calls (b CfScript_CopyName / b format) - CfScript_CopyName is noinline
 // so the if-branch collapses to a tail call; format string is base of lbl_eu_804FB3A4.
-void func_80068E9C(char* dest, const char* src1, const char* src2, const char* src3) {
+void CfScript_MakeName(char* dest, const char* src1, const char* src2, const char* src3) {
     if (src3 != nullptr) {
-        func_80068A30(dest, src3);
+        CfScript_CopyName(dest, src3);
     } else {
         ((ml::FixStr<64>*)dest)->format(lbl_eu_804FB3A4, src1, src2);
     }

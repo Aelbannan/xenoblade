@@ -123,19 +123,19 @@ void* lbl_eu_8052E19C[]; // reslist<CUIBattleChild*> vtable
 void* lbl_eu_8052E0A8[]; // initial mMoveFunc pmf pool
 void __ct__8CProcessFv(CProcess*);
 
-void* func_801096B8(void* proc, void* scn);
-void* func_801ACCE0(void* proc, void* scn);
+void* BtlDmg_Create(void* proc, void* scn);
+void* createVisionMenu(void* proc, void* scn);
 void* func_80187694(void* proc, void* scn);
-void* func_801B0E0C(void* proc, void* scn);
-void* func_80104210(void* proc, void* scn);
-void* func_8010CDCC(void* proc, void* scn);
-void* func_8010CE48();
-void func_8010CF5C();
+void* battleCommuCreateRegister(void* proc, void* scn);
+void* CMenuArtsSelect_CreateMenu(void* proc, void* scn);
+void* BpsStateCreateSingleton(void* proc, void* scn);
+void* BpsStateSingletonToInt();
+void BpsStateFlag7C9Set();
 
-int func_80164410();
+int evtIsActiveSeq();
 int func_801042A4();
 int func_801042B4();
-int func_800FF738();
+int CMainMenu_IsOpen();
 // Family-canonical form - must match CfObjectPc.hpp / CAIAction.hpp /
 // code_802B8A3C.hpp (see the 10197 note in CTaskGame.hpp).
 bool isGlobalCamFlagSet__Fi(UNKWORD r3);
@@ -145,7 +145,12 @@ void* CUICfManager_getArcResourceAccessor();
 extern u32 getPackedFont();
 extern cf::CfObjectPc* getCfObjectPc(cf::CfObjectMove* objMove);
 // C++-mangled retail helper findObjectById__Fi (actor id -> action source).
-void* findObjectById(int id);typedef u32* (*GetU32Fn)(void*);
+void* findObjectById(int id);
+// Resource getter renamed by the parallel Track-B pass
+// (func_8009CF8C -> CtrlRemote_TouchBitByArg); plain C++ decl mirrors the
+// pre-rename TU state (cf. CMiniMap.cpp) so call-site codegen is unchanged.
+u32 CtrlRemote_TouchBitByArg(u32 resourceId);
+typedef u32* (*GetU32Fn)(void*);
 typedef int (*GetIntFn)(void*);
 
 template <typename Fn>
@@ -242,7 +247,7 @@ void CUIBattleManager::Move() {
             } else {
                 lbl_eu_80664048->unk82 &= 0xfd;
                 retCreate96B8 =
-                    func_801096B8(lbl_eu_80664048->unk7C, lbl_eu_80664048->unk58);
+                    BtlDmg_Create(lbl_eu_80664048->unk7C, lbl_eu_80664048->unk58);
                 if (retCreate96B8 != NULL) {
                     inst = lbl_eu_80664048;
                     i = 0;
@@ -270,7 +275,7 @@ void CUIBattleManager::Move() {
             } else {
                 lbl_eu_80664048->unk82 &= 0xf7;
                 retCreateACCE0 =
-                    func_801ACCE0(lbl_eu_80664048->unk7C, lbl_eu_80664048->unk58);
+                    createVisionMenu(lbl_eu_80664048->unk7C, lbl_eu_80664048->unk58);
                 if (retCreateACCE0 != NULL) {
                     inst = lbl_eu_80664048;
                     i = 0;
@@ -292,8 +297,8 @@ void CUIBattleManager::Move() {
     if ((unk82 & 0x10) != 0 && getPackedFont() != 0) {
         unk82 &= 0xef;
         if (lbl_eu_80664048 != NULL) {
-            // Retail: cntlzw/srwi zero-test on func_8009CF8C(0x3357).
-            if (__cntlzw((u32)func_8009CF8C(0x3357)) >> 5 != 0 ||
+            // Retail: cntlzw/srwi zero-test on CtrlRemote_TouchBitByArg(0x3357).
+            if (__cntlzw((u32)CtrlRemote_TouchBitByArg(0x3357)) >> 5 != 0 ||
                 CUICfManager_getArcResourceAccessor() == NULL) {
                 lbl_eu_80664048->unk82 |= 0x10;
             } else {
@@ -326,7 +331,7 @@ void CUIBattleManager::Move() {
             } else {
                 lbl_eu_80664048->unk82 &= 0xdf;
                 retCreateB0E0C =
-                    func_801B0E0C(lbl_eu_80664048->unk7C, lbl_eu_80664048->unk58);
+                    battleCommuCreateRegister(lbl_eu_80664048->unk7C, lbl_eu_80664048->unk58);
                 if (retCreateB0E0C != NULL) {
                     inst = lbl_eu_80664048;
                     i = 0;
@@ -345,7 +350,7 @@ void CUIBattleManager::Move() {
         }
     }
 
-    if (unkE9 == 0 && func_80164410() == 0) {
+    if (unkE9 == 0 && evtIsActiveSeq() == 0) {
         if (cf::CfGameManager::getPlayer(0) != NULL) {
             if (mFileArtsElemDone == NULL) {
                 mFileArtsElem = CDeviceFile::readFile(
@@ -362,8 +367,8 @@ void CUIBattleManager::Move() {
                         faceId = (u8)partyId;
                         // Party slot 4 remaps to slot 12 while the 0x20
                         // system flag is under 0x21 and 0x3508 is unset.
-                        if (faceId == 4 && (int)func_8009CF8C(0x20) < 0x21 &&
-                            (int)func_8009CF8C(0x3508) == 0) {
+                        if (faceId == 4 && (int)CtrlRemote_TouchBitByArg(0x20) < 0x21 &&
+                            (int)CtrlRemote_TouchBitByArg(0x3508) == 0) {
                             faceId = 0xC;
                         }
                         sprintf(pathBuf178, lbl_eu_804FFF2C + 0x3D, faceId);
@@ -416,7 +421,7 @@ void CUIBattleManager::Move() {
                             actor->field_3E9C);
                         lbl_eu_8066404C = (void*)handle;
                         if (lbl_eu_80664048 != NULL) {
-                            retMarkB = func_80104210(lbl_eu_80664048->unk7C,
+                            retMarkB = CMenuArtsSelect_CreateMenu(lbl_eu_80664048->unk7C,
                                                      lbl_eu_80664048->unk58);
                             if (retMarkB != NULL) {
                                 inst = lbl_eu_80664048;
@@ -448,12 +453,12 @@ void CUIBattleManager::Move() {
                                 (((CUIBattleAction*)obj)->field_64 & 4) != 0) {
                                 cf::CfGameManager::getInstance();
                                 if (isGlobalCamFlagSet__Fi(0x1000000) == 0 &&
-                                    func_800FF738() == 0) {
+                                    CMainMenu_IsOpen() == 0) {
                                     if (lbl_eu_8066404C != (void*)handle ||
                                         CMenuArtsSelect_isCreated() == 0) {
                                         lbl_eu_8066404C = (void*)handle;
                                         if (lbl_eu_80664048 != NULL) {
-                                            retMarkA = func_80104210(
+                                            retMarkA = CMenuArtsSelect_CreateMenu(
                                                 lbl_eu_80664048->unk7C,
                                                 lbl_eu_80664048->unk58);
                                             if (retMarkA != NULL) {
@@ -537,13 +542,13 @@ int func_8012E6DC() {
     }
     return 0;
 }
-void CUIBattleManager::func_8012F29C() {
-    // Swap the Move callback to the retail no-op pmf {0, -1, func_8012F2BC}.
+void CUIBattleManager::parkMoveHandler() {
+    // Swap the Move callback to the retail no-op pmf {0, -1, UIBattleMoveNoop}.
     // (Reached via the pmf installed by __ct__CUIBattleManager.)
     mMoveFunc = lbl_eu_8052E0B4;
 }
-extern "C" void func_8012F2BC() {}
-extern "C" void func_8012F860() {
+extern "C" void UIBattleMoveNoop() {}
+extern "C" void UIBattleMarkFlags82() {
     if (lbl_eu_80664048 != 0) {
         reinterpret_cast<unsigned char *>(lbl_eu_80664048)[0x82] |= 0x3b;
     }
@@ -583,9 +588,9 @@ extern "C" void func_8012F87C(u32 arg) {
     // Final request-bit clear re-reads the singleton in retail.
     lbl_eu_80664048->unk82 = 0;
 }
-extern "C" unsigned char func_8012FA5C() { return lbl_eu_80664048 == 0 ? 0 : *(unsigned char *)((char *)lbl_eu_80664048 + 0xe8); }
-extern "C" void* func_8012FA78() { void* p = lbl_eu_80664048; if (p == 0) return 0; if (*(unsigned char*)((char*)p + 0xe8) != 0) return (char*)p + 0xb8; return 0; }
-extern "C" int func_8012FDBC() { if (lbl_eu_80664048 == 0) return -1; return *(int*)((char*)lbl_eu_80664048 + 0xec); }
+extern "C" unsigned char UIBattleGetFlagE8() { return lbl_eu_80664048 == 0 ? 0 : *(unsigned char *)((char *)lbl_eu_80664048 + 0xe8); }
+extern "C" void* UIBattleGetTableB8() { void* p = lbl_eu_80664048; if (p == 0) return 0; if (*(unsigned char*)((char*)p + 0xe8) != 0) return (char*)p + 0xb8; return 0; }
+extern "C" int UIBattleGetWordEC() { if (lbl_eu_80664048 == 0) return -1; return *(int*)((char*)lbl_eu_80664048 + 0xec); }
 extern "C" void Draw__Q216CUIBattleManager5CTestFv() {}
 extern "C" void Move__Q216CUIBattleManager5CTestFv() {}
 extern "C" void Term__Q216CUIBattleManager5CTestFv() {}
@@ -714,7 +719,7 @@ extern "C" __declspec(noinline) CUIBattleManager* __ct__CUIBattleManager(
 extern "C" void __dt__8012E534(CUIBattleManager* self) {
     int i;
 
-    func_8012E630(self);
+    UIBattleCancelPendingLoads(self);
     for (i = 0; i < 3; i++) {
         self->mFaceTex[i][0] = NULL;
         self->mFaceTex[i][1] = NULL;
@@ -750,7 +755,7 @@ extern "C" void __dt__8012E534(CUIBattleManager* self) {
     lbl_eu_80664048 = NULL;
 }
 
-extern "C" void func_8012E630(CUIBattleManager* self) {
+extern "C" void UIBattleCancelPendingLoads(CUIBattleManager* self) {
     int i;
 
     if (self->mFileArtsElem != NULL) {
@@ -958,12 +963,12 @@ extern "C" CUIBattleChild* func_8012F5F8() {
         lbl_eu_80664048->unk82 |= 1;
         return NULL;
     }
-    if (func_80164410() != 0) {
+    if (evtIsActiveSeq() != 0) {
         lbl_eu_80664048->unk82 |= 1;
         return NULL;
     }
     lbl_eu_80664048->unk82 &= ~1u;
-    savedRet = func_8010CDCC(lbl_eu_80664048->unk7C, lbl_eu_80664048->unk58);
+    savedRet = BpsStateCreateSingleton(lbl_eu_80664048->unk7C, lbl_eu_80664048->unk58);
     if (savedRet == NULL) {
         return NULL;
     }
@@ -989,7 +994,7 @@ extern "C" CUIBattleChild* func_8012F5F8() {
 }
 
 // Retail func_8012F750: create/bind request variant using bit 3 of unk82 and
-// the func_801ACCE0 factory (no assets-ready gating, unlike func_8012F5F8).
+// the createVisionMenu factory (no assets-ready gating, unlike func_8012F5F8).
 // Same shape as the bit-2/bit-8 blocks in Move(): the call result lives in a
 // function-top savedRet local so MWCC stack-homes it across the setItem
 // try/catch region, matching the retail spill/reload/EH-save block.
@@ -1010,7 +1015,7 @@ extern "C" CUIBattleChild* func_8012F750(u32 arg) {
         return NULL;
     }
     lbl_eu_80664048->unk82 &= ~8u;
-    savedRet = func_801ACCE0(lbl_eu_80664048->unk7C, lbl_eu_80664048->unk58);
+    savedRet = createVisionMenu(lbl_eu_80664048->unk7C, lbl_eu_80664048->unk58);
     if (savedRet == NULL) {
         return NULL;
     }
@@ -1043,11 +1048,11 @@ extern "C" void func_8012FAA8() {
     if (lbl_eu_80664048 == NULL) {
         return;
     }
-    func_8012E630(lbl_eu_80664048);
+    UIBattleCancelPendingLoads(lbl_eu_80664048);
     {
-        CUIBattleChild* matchItem = static_cast<CUIBattleChild*>(func_8010CE48());
+        CUIBattleChild* matchItem = static_cast<CUIBattleChild*>(BpsStateSingletonToInt());
         if (matchItem != NULL) {
-            func_8010CF5C();
+            BpsStateFlag7C9Set();
             {
                 // Retail walks the child reslist with the condition checked
                 // first, re-reading the singleton (and thus the sentinel)
@@ -1109,7 +1114,7 @@ extern "C" void func_8012FAA8() {
 }
 // Check the arts-sys arc accessor (0x90) for a named 'timg' texture resource.
 // Returns the resource pointer, or NULL if the accessor is not ready / missing.
-void* func_8012FD04(const char* name) {
+void* UIBattleFindSysTimg(const char* name) {
     nw4r::lyt::ArcResourceAccessor* acc = lbl_eu_80664048->mFileArtsSysDone;
     if (acc != NULL) {
         void* result = acc->GetResource(0x74696D67 /* 'timg' */, name, 0);
@@ -1120,8 +1125,8 @@ void* func_8012FD04(const char* name) {
     return NULL;
 }
 
-// Same as func_8012FD04 but for the arts-elem arc accessor (0x88).
-void* func_8012FD60(const char* name) {
+// Same as UIBattleFindSysTimg but for the arts-elem arc accessor (0x88).
+void* UIBattleFindElemTimg(const char* name) {
     nw4r::lyt::ArcResourceAccessor* acc = lbl_eu_80664048->mFileArtsElemDone;
     if (acc != NULL) {
         void* result = acc->GetResource(0x74696D67 /* 'timg' */, name, 0);
@@ -1134,7 +1139,7 @@ void* func_8012FD60(const char* name) {
 
 // Search the three per-party arts accessors (0xA0 + i*4) for a named 'timg'
 // texture resource. Returns the first hit, or NULL.
-void* func_8012FC74(const char* name) {
+void* UIBattleFindPartyTimg(const char* name) {
     u8 i;
     for (i = 0; i < 3; i++) {
         nw4r::lyt::ArcResourceAccessor* acc = lbl_eu_80664048->mFileArtsPcBusy[i];

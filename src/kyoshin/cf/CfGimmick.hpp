@@ -152,7 +152,7 @@ struct CfPlayerIdView {
 // Cross-TU callees (resolved via the retail symbol map).
 extern "C" void func_800B3A88(void* self, void* target);
 extern "C" void CfSoundMan_ApplySlotStop(int a, u16 b, int c);
-extern "C" u32 func_8009CF8C(u32 resourceId);
+extern "C" u32 CtrlRemote_TouchBitByArg(u32 resourceId);
 
 // Small-data globals accessed by CfGimmick-region helpers (@sda21 loads/stores).
 extern "C" u32 lbl_eu_806646B4;
@@ -184,9 +184,9 @@ extern "C" void* lbl_eu_80664148;   // .sbss - current bdat file pointer
 extern "C" const void* lbl_eu_80662788[2];
 
 // Column-capacity helpers (CBdat row begin/count).
-extern "C" void* func_8003AA34();
-extern "C" u32 func_8003B41C(void* bdat);
-extern "C" u32 func_8003B1EC(void* bdat);
+extern "C" void* Bdat_GetTable_AA34();
+extern "C" u32 Bdat_GetRowBase_B41C(void* bdat);
+extern "C" u32 Bdat_GetMaxRow_B1EC(void* bdat);
 
 // Player per-heal helpers paired with CfObject_syncModelRate (+0x168).
 extern "C" void CfObjectMove_setMoveSpeedGated(cf::CfObjectMove* player, float value);
@@ -214,7 +214,7 @@ extern "C" void CfSoundMan_PlayLinkedParam(u32 mode, u32 value,
 // Sound constants loaded in CfGimmick_PlaySoundAtPos / CfGimmick_PlaySoundAtPosScaled (retail .sda21 loads)
 extern "C" const float lbl_eu_80668358;
 extern "C" const float lbl_eu_8066835C;
-extern "C" unsigned int func_80124B78();
+extern "C" unsigned int SysWinGetSingleton();
 // FIdx scale applied to the rotation point before MTX34RotXYZFIdx.
 extern "C" const f32 lbl_eu_80668354;
 
@@ -229,7 +229,7 @@ extern "C" f32 lbl_eu_806646B0;
 // Height-offset pair (1.5, 0.0) for spawned objects; [0] is the live offset.
 // Array shape preserves retail's trailing pad float at 8066837C.
 extern "C" const f32 lbl_eu_80668378[2];
-extern "C" void func_800C13FC(void* obj, const char* name, int arg);
+extern "C" void ObjPoint_SetName_13FC(void* obj, const char* name, int arg);
 // Create/attach a gimmick object (C-ABI, unmangled): manager first, then flags.
 extern "C" CfGimmickObject* func_800B20B4(void* mgr, int a, int b, int c);
 

@@ -41,7 +41,7 @@ struct UnkSceneDataObj {
 // Global singleton slot (retail .sbss 0x806658B8).
 extern UnkSceneDataObj* lbl_eu_806658B8;
 
-// Overlay for the ScnObj returned by func_8048EC14: the destructor probes
+// Overlay for the ScnObj returned by getScnGroupChild: the destructor probes
 // the flag at +0xE4 before removing the object from its parent group.
 struct UnkScnObjFlagE4 {
     u8 pad[0xE4];
@@ -181,8 +181,8 @@ extern "C" void setPlainDrawNode__Q26mpfsys18MPFDrawDisplayListFv(
     mpfsys::MPFDrawDisplayList* self, void* arg);
 extern "C" void setColorDrawNode__Q26mpfsys18MPFDrawDisplayListFv(
     mpfsys::MPFDrawDisplayList* self, void* arg);
-extern "C" void* func_8048ECEC(CScn* self);
-extern "C" u32 func_8048ECD0(CScn* self);
+extern "C" void* getScnRoot45C(CScn* self);
+extern "C" u32 getScnRootPtr(CScn* self);
 extern "C" void func_8047CC4C__17UnkClass_8047CA88Fv(
     UnkClass_8047CA88* self, void* desc, void* dataPtr,
     nw4r::math::VEC3* vec, f32 scale);
@@ -214,8 +214,8 @@ struct UnkClass_8047BB54Layout {
 };
 
 // Scene-root child lookup defined in monolib/src/scn/CScnMem.cpp; retail kept
-// the unmangled name func_8048EC14, so C linkage is required for the reloc.
-extern "C" nw4r::g3d::ScnObj* func_8048EC14(CScn* self, u32 idx);
+// the unmangled name getScnGroupChild, so C linkage is required for the reloc.
+extern "C" nw4r::g3d::ScnObj* getScnGroupChild(CScn* self, u32 idx);
 
 // MWCC's operator-delete runtime symbol; C linkage keeps the unmangled name
 // (same pattern as CNBanner.cpp).
@@ -288,7 +288,7 @@ extern "C" void __dt__8047BDA8(UnkClass_8047BB54* obj) {
     }
     self->field_0x14 = NULL;
     if (self->field_0x2E38 != NULL) {
-        nw4r::g3d::ScnObj* scnObj = func_8048EC14(self->field_0x2E2C, 8);
+        nw4r::g3d::ScnObj* scnObj = getScnGroupChild(self->field_0x2E2C, 8);
         if (((UnkScnObjFlagE4*)scnObj)->field_0xE4 != 0) {
             ((nw4r::g3d::ScnGroup*)scnObj)->Remove(
                 (nw4r::g3d::ScnObj*)self->field_0x2E38);
@@ -505,14 +505,14 @@ extern "C" int initMpfSystem__17UnkClass_8047BB54Fv(UnkClass_8047BB54* self,
             (mpfsys::UnkClass_80471EC8*)layout->gap_0x24, lbl_eu_8066A858);
         u32 size;
         nw4r::g3d::ScnProc* proc = nw4r::g3d::ScnProc::Construct(
-            (MEMAllocator*)func_8048ECEC(cscn), &size,
+            (MEMAllocator*)getScnRoot45C(cscn), &size,
             &initMpfDrawBuffer__17UnkClass_8047BB54Fv, true, true, 0);
         layout->field_0x2E38 = proc;
         proc->SetUserData(self);
         nw4r::g3d::ScnObj* procCopy =
             (nw4r::g3d::ScnObj*)layout->field_0x2E38;
         nw4r::g3d::ScnGroup* group =
-            (nw4r::g3d::ScnGroup*)func_8048EC14(cscn, 8);
+            (nw4r::g3d::ScnGroup*)getScnGroupChild(cscn, 8);
         group->PushBack(procCopy);
         return 1;
     }
@@ -565,7 +565,7 @@ extern "C" void initMpfDrawBuffer__17UnkClass_8047BB54Fv(
         (UnkClass_8047BB54Layout*)proc->GetUserData();
     if ((self->field_0x10 & 1) == 0) return;
     if ((self->field_0x10 & 4) == 0) return;
-    if (((CScnRootNw4rGate*)func_8048ECD0(self->field_0x2E2C))->field_0x19 != 0)
+    if (((CScnRootNw4rGate*)getScnRootPtr(self->field_0x2E2C))->field_0x19 != 0)
         return;
     view = getCurrentView__5CViewFv();
     vf = Scn_HasCamItem(Scn_GetCurrentScene(view), view);

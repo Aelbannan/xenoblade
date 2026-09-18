@@ -23,7 +23,7 @@ extern "C" {
 
 // Base class ctor (CCtrlMoveBase) and helpers.
 void __ct__80088904(CCtrlMovePC* self, void* baseParam);
-void func_80089684(CCtrlMovePC* self);
+void maskMoveBaseFlags(CCtrlMovePC* self);
 void func_8008962C(CCtrlMovePC* self);
 void func_80089694(CCtrlMovePC* self, const Vec* v, f32 f);
 
@@ -106,7 +106,7 @@ extern "C" CCtrlMovePC* __ct__801993C4(CCtrlMovePC* self, void* baseParam, void*
     self->mBaseVtable2 = (void*)lbl_eu_80532D58;
 
     self->mStateFunc = __ptmf_null;
-    func_80089684(self);
+    maskMoveBaseFlags(self);
 
     self->mStateFunc = lbl_eu_80532B60;
     func_8008962C(self);
@@ -150,9 +150,9 @@ extern "C" CCtrlMovePC* __ct__801993C4(CCtrlMovePC* self, void* baseParam, void*
 }
 
 // ============================================================================
-// func_80199618 - release active task, reset base (0x60 bytes)
+// movePcReleaseTaskReset - release active task, reset base (0x60 bytes)
 // ============================================================================
-extern "C" void func_80199618(CCtrlMovePC* self) {
+extern "C" void movePcReleaseTaskReset(CCtrlMovePC* self) {
     if (self->mTask != 0) {
         void* gm = cf::CfGameManager::getGameSubManager();
         if (gm != 0) {
@@ -167,9 +167,9 @@ extern "C" void func_80199618(CCtrlMovePC* self) {
 }
 
 // ============================================================================
-// func_8019EDAC - tick counter; on wrap set data flag + transition (0x5C)
+// movePcTickCounterWrap - tick counter; on wrap set data flag + transition (0x5C)
 // ============================================================================
-extern "C" int func_8019EDAC(CCtrlMovePC* self) {
+extern "C" int movePcTickCounterWrap(CCtrlMovePC* self) {
     s16 v = self->mArr124[1];          // 0x126
     self->mArr124[1] = (s16)(v + 1);
     if (v >= 8) {
@@ -183,9 +183,9 @@ extern "C" int func_8019EDAC(CCtrlMovePC* self) {
 }
 
 // ============================================================================
-// func_8019EE08 - flag-driven state transition + counter reset (0xB0)
+// movePcFlagTransitionReset - flag-driven state transition + counter reset (0xB0)
 // ============================================================================
-extern "C" int func_8019EE08(CCtrlMovePC* self) {
+extern "C" int movePcFlagTransitionReset(CCtrlMovePC* self) {
     u32 f = self->mFlags4C;
     if ((f & 0x00200000u) == 0) {      // rlwinm. bit 10
         self->mStateFunc = lbl_eu_80532D34;
@@ -208,9 +208,9 @@ extern "C" int func_8019EE08(CCtrlMovePC* self) {
 }
 
 // ============================================================================
-// func_8019CCDC - facing sin/cos update or ptmf transition (0xC4)
+// movePcFacingSinCosUpdate - facing sin/cos update or ptmf transition (0xC4)
 // ============================================================================
-extern "C" int func_8019CCDC(CCtrlMovePC* self) {
+extern "C" int movePcFacingSinCosUpdate(CCtrlMovePC* self) {
     if (self->mFlags4C & 0x00040000u) {        // rlwinm. bit 13
         self->mVec90.y = lbl_eu_80667B60;      // 0x94 = 0.0
         cf::CfObjectActor* w = (cf::CfObjectActor*)self->mObject;
@@ -227,9 +227,9 @@ extern "C" int func_8019CCDC(CCtrlMovePC* self) {
 }
 
 // ============================================================================
-// func_8019EEB8 - counter-gated facing update or transition (0xD8)
+// movePcCounterFacingUpdate - counter-gated facing update or transition (0xD8)
 // ============================================================================
-extern "C" int func_8019EEB8(CCtrlMovePC* self) {
+extern "C" int movePcCounterFacingUpdate(CCtrlMovePC* self) {
     s16 old = self->mArr124[15];               // 0x142
     self->mArr124[15] = (s16)(old + 1);
     if (old < 30) {
@@ -251,10 +251,10 @@ extern "C" int func_8019EEB8(CCtrlMovePC* self) {
 }
 
 // ============================================================================
-// func_8019956C - top-level tick: query object, gate on battle state, run the
+// movePcTopTickDispatch - top-level tick: query object, gate on battle state, run the
 // state-machine dispatch loop (0xAC).
 // ============================================================================
-extern "C" void func_8019956C(CCtrlMovePC* self) {
+extern "C" void movePcTopTickDispatch(CCtrlMovePC* self) {
     cf::CfObject* emb = (cf::CfObject*)((char*)self->mObject + 0x3e9c);
     f32 v = emb->CfObject_getMoveSpeedRate();
     if (lbl_eu_80667B60 == v) {
@@ -301,12 +301,12 @@ static inline void releaseTask(CCtrlMovePC* s) {
 }
 
 // ============================================================================
-// func_80199678 - conditional full reset + task release (0x198)
+// movePcCondFullReset - conditional full reset + task release (0x198)
 // ============================================================================
-extern "C" void func_80199678(void* selfv, int flag) {
+extern "C" void movePcCondFullReset(void* selfv, int flag) {
     CCtrlMovePC* self = (CCtrlMovePC*)selfv;
     if (flag != 0) {
-        func_80089684(self);
+        maskMoveBaseFlags(self);
         self->mStateFunc = lbl_eu_80532B78;
         func_8008962C(self);
         self->mFlags4C = 0x80000000u;
@@ -330,11 +330,11 @@ extern "C" void func_80199678(void* selfv, int flag) {
 }
 
 // ============================================================================
-// func_80199810 - reset (gated on flag bit) then set position (0x1B0)
+// movePcResetAndSetPos - reset (gated on flag bit) then set position (0x1B0)
 // ============================================================================
-extern "C" void func_80199810(CCtrlMovePC* self, const Vec* pos) {
+extern "C" void movePcResetAndSetPos(CCtrlMovePC* self, const Vec* pos) {
     if (self->mFlags4C & 0x00800000u) {        // rlwinm. bit 8
-        func_80089684(self);
+        maskMoveBaseFlags(self);
         self->mStateFunc = lbl_eu_80532B84;
         func_8008962C(self);
         self->mFlags4C = 0x80000000u;
@@ -371,7 +371,7 @@ extern "C" void func_8019A9C4(cf::CCtrlMovePC* self) {
     self->mPlayer = (p0 != 0) ? (char*)p0 - 0x3e9c : 0;
     if ((self->mFlags4C & 0x100u) != 0) {
     // --- one-shot reset ---
-    func_80089990(self);
+    maskMoveChildFlags(self);
     if (self->mTask != 0) {
         void* gm = cf::CfGameManager::getGameSubManager();
         if (gm != 0) {
@@ -535,7 +535,7 @@ extern "C" void func_8019A9C4(cf::CCtrlMovePC* self) {
     cf::CfGlobalSettings* gs = getUnk80664658();
     if ((gs->field_214 & 0x8000u) && !(self->mFlags4C & 0x20u)) {
         ml::CVec3* pos = ((cf::CfObject*)((char*)self->mObject + 0x3e9c))->CfObject_getPosVector();
-        if (func_801F4ED8(gs, pos) != 0) {
+        if (GimProbeLockAccept(gs, pos) != 0) {
             self->mFlags4C |= 0x20u;
         } else {
             self->mFlags4C |= 0x80u;
@@ -588,7 +588,7 @@ extern "C" void func_8019A9C4(cf::CCtrlMovePC* self) {
 
     // --- move-task allocation and commit toward the candidate spot ---
     gs = getUnk80664658();
-    if ((gs->field_214 & 0x8000u) && func_801F4ED8(gs, &out) != 0) {
+    if ((gs->field_214 & 0x8000u) && GimProbeLockAccept(gs, &out) != 0) {
         int okT;
         if (self->mTask == 0) {
             okT = 0;
@@ -619,7 +619,7 @@ extern "C" void func_8019A9C4(cf::CCtrlMovePC* self) {
         ml::CVec3 up(lbl_eu_80667B60, lbl_eu_80667BC4, lbl_eu_80667B60);   // (0, BC4, 0)
         ml::CVec3 diff = out + up;                   // stack +0x18 -> +0x54
         ml::CVec3 sum = self->mPos + up;             // stack +0x24 -> +0x6c
-        if (func_804BE348(&sum, &diff, 0x40004a05, 0, 0) != 0) {
+        if (ScnRes_SegQueryForward_E348(&sum, &diff, 0x40004a05, 0, 0) != 0) {
             return;
         }
     }
@@ -634,7 +634,7 @@ extern "C" void func_8019A9C4(cf::CCtrlMovePC* self) {
         sub2->mField3F4 = ml::CVec3::zero.y;
         sub2->mField3F8 = ml::CVec3::zero.z;
     }
-    func_80089990(self);
+    maskMoveChildFlags(self);
     if (self->mTask != 0) {
         void* gm = cf::CfGameManager::getGameSubManager();
         if (gm != 0) {
@@ -718,7 +718,7 @@ extern "C" int func_8019B4F0(cf::CCtrlMovePC* self) {
                 ml::CVec3 moved = self->mVecC0 + step;
                 ml::CVec3 movedCopy = moved;
                 (void)movedCopy;
-                if (((Probe2Fn)func_804B54D4)(lbl_eu_80665958,
+                if (((Probe2Fn)Coli_SweepSegNodes)(lbl_eu_80665958,
                         (char*)self->mObject + 0x44a8)) {
                     self->mArr124[3] = 120;
                 }
@@ -850,10 +850,10 @@ extern "C" int func_8019B4F0(cf::CCtrlMovePC* self) {
                     probe.z = lbl_eu_80667BC8 * out.z
                             + ((cf::CfObject*)((cf::CfMoveData*)self->mBaseData)->field_28)
                                   ->CfObject_getPosVector()->z;
-                    if (func_804BE398(&probe, 0x4a05, 0, 0, lbl_eu_80667BE4,
+                    if (ScnRes_VertRayForward_E398(&probe, 0x4a05, 0, 0, lbl_eu_80667BE4,
                                       lbl_eu_80667B60) == 0) {
                         self->mFlags50 |= 0x800u;
-                    } else if (func_804BE5A4(0x20000, 0) != 0) {
+                    } else if (ScnRes_EntryFlagThunk_E5A4(0x20000, 0) != 0) {
                         self->mFlags50 |= 0x1000u;
                     }
                 }
@@ -1142,9 +1142,9 @@ extern "C" int func_8019C304(cf::CCtrlMovePC* self) {
                 f32 ty = lbl_eu_80667B70 + p3->y;
                 ml::CVec3* p4 = ((cf::CfObject*)((cf::CfMoveData*)self->mBaseData)->field_28)->CfObject_getPosVector();
                 ml::CVec3 probe(lbl_eu_80667BC8 * self->mVec90.x + p4->x, ty, tz);
-                if (func_804BE398(&probe, 0x4a05, 0, 0, lbl_eu_80667BE4, lbl_eu_80667B60) == 0) {
+                if (ScnRes_VertRayForward_E398(&probe, 0x4a05, 0, 0, lbl_eu_80667BE4, lbl_eu_80667B60) == 0) {
                     self->mFlags50 |= 0x800u;
-                } else if (func_804BE5A4(0x20000, 0) != 0) {
+                } else if (ScnRes_EntryFlagThunk_E5A4(0x20000, 0) != 0) {
                     self->mFlags50 |= 0x1000u;
                 }
             }
@@ -1258,7 +1258,7 @@ extern "C" int func_801999C0(cf::CCtrlMovePC* self) {
 
     if ((self->mFlags4C & 0x800000u) == 0) {
         self->mFlags4C |= 0x00800000u;
-        func_80089990(self);
+        maskMoveChildFlags(self);
         if (self->mTask != 0) {
             void* gm = cf::CfGameManager::getGameSubManager();
             if (gm != 0) {
@@ -1273,7 +1273,7 @@ extern "C" int func_801999C0(cf::CCtrlMovePC* self) {
         self->mVecD8 = *pos;
         self->mBase38 = lbl_eu_80667B64;      // 32.0
         ((cf::CfObjWrap*)self->mObject)->mField455A = 100;
-        func_800D59FC(self->mBaseData);
+        ctrlActUpdateData70(self->mBaseData);
         // Retail interleaves the ptmf-table address calc between the array
         // zeroing stores, so the assignment sits lexically after [17].
         self->mArr124[17] = 0;
@@ -1443,7 +1443,7 @@ extern "C" int func_801999C0(cf::CCtrlMovePC* self) {
         cf::CfGlobalSettings* gs = getUnk80664658();
         if (gs->field_214 & 0x8000u) {
             ml::CVec3* pos = ((cf::CfObject*)((char*)self->mObject + 0x3e9c))->CfObject_getPosVector();
-            if (func_801F4ED8(getUnk80664658(), pos) == 0) {
+            if (GimProbeLockAccept(getUnk80664658(), pos) == 0) {
                 self->mFlags4C |= 0x1000u;
                 self->mVecCC = self->mPos;
             }
@@ -1912,7 +1912,7 @@ extern "C" int func_8019CDA0(cf::CCtrlMovePC* self) {
                 ml::CVec3 a = *p3 - scaled;
                 ml::CVec3 diff = a - facing;
                 ml::CVec3 sum = a + facing;
-                if (func_804BE348(&diff, &sum, 0, 0x2000, 0) == 0) {
+                if (ScnRes_SegQueryForward_E348(&diff, &sum, 0, 0x2000, 0) == 0) {
                     if (dGoal.x != lbl_eu_80667B60 || dGoal.z != lbl_eu_80667B60) {
                         hit = 0;
                         work = ml::CVec3(dGoal.x, lbl_eu_80667B60, dGoal.z);
@@ -1941,7 +1941,7 @@ extern "C" int func_8019CDA0(cf::CCtrlMovePC* self) {
                 ml::CVec3 a = *p3 - scaled;
                 ml::CVec3 diff = a - facing;
                 ml::CVec3 sum = a + facing;
-                if (func_804BE348(&diff, &sum, 0, 0x2000, 0) == 0) {
+                if (ScnRes_SegQueryForward_E348(&diff, &sum, 0, 0x2000, 0) == 0) {
                     if (dGoal.y != lbl_eu_80667B60) {
                         hit = 0;
                         work = ml::CVec3(lbl_eu_80667B60, dGoal.y, lbl_eu_80667B60);
@@ -2148,7 +2148,7 @@ extern "C" int func_8019DD54(cf::CCtrlMovePC* self) {
         ml::CVec3 facing(s3, lbl_eu_80667B60, c3);
         ml::CVec3 diff = target - facing;
         ml::CVec3 sum = target + facing;
-        if (func_804BE348(&diff, &sum, 0, 0x2000, 0) == 0) {
+        if (ScnRes_SegQueryForward_E348(&diff, &sum, 0, 0x2000, 0) == 0) {
             return 0;
         }
 
@@ -2243,7 +2243,7 @@ extern "C" int func_8019DD54(cf::CCtrlMovePC* self) {
     vA.y += lbl_eu_80667BC4;
     ml::CVec3 vB(goal.x, goal.y, goal.z);
     vB.y += lbl_eu_80667BC4;
-    if (func_804BE348(&vA, &vB, 0x44a05, 0, 0) != 0) {
+    if (ScnRes_SegQueryForward_E348(&vA, &vB, 0x44a05, 0, 0) != 0) {
         return 0;
     }
 
@@ -2280,7 +2280,7 @@ extern "C" int func_8019DD54(cf::CCtrlMovePC* self) {
         sub2->mField3F4 = ml::CVec3::zero.y;
         sub2->mField3F8 = ml::CVec3::zero.z;
     }
-    func_80089990(self);
+    maskMoveChildFlags(self);
     if (self->mTask != 0) {
         void* gm = cf::CfGameManager::getGameSubManager();
         if (gm != 0) {
@@ -2346,8 +2346,8 @@ extern "C" void func_8019E710(cf::CCtrlMovePC* self) {
                             ml::CVec3* pos = ((cf::CfObject*)((char*)self->mObject + 0x3e9c))->CfObject_getPosVector();
                             ml::CVec3 tmp = *pos + *vp;
                             ml::CVec3 probe(tmp.x, tmp.y + lbl_eu_80667B68, tmp.z);
-                            if (func_804BE398(&probe, 0x44a05, 0, 0, lbl_eu_80667C34, lbl_eu_8066AF20) != 0) {
-                                if (func_804BE5A4(0x400, 0) != 0) {
+                            if (ScnRes_VertRayForward_E398(&probe, 0x44a05, 0, 0, lbl_eu_80667C34, lbl_eu_8066AF20) != 0) {
+                                if (ScnRes_EntryFlagThunk_E5A4(0x400, 0) != 0) {
                                     ml::CVec3 scaled = *vp * lbl_eu_80667BD0;
                                     *vp = scaled;
                                     func_800898D4(self, vp);
@@ -2408,8 +2408,8 @@ extern "C" void func_8019E710(cf::CCtrlMovePC* self) {
             ml::CVec3 probeArg = probePos;
 
             blocked = 0;
-            if (func_804BE398(&probeArg, 0x4a05, 0, 0, lbl_eu_80667BE4, lbl_eu_8066AF20) != 0) {
-                if (func_804BE5A4(0x20000, 0) == 0) {
+            if (ScnRes_VertRayForward_E398(&probeArg, 0x4a05, 0, 0, lbl_eu_80667BE4, lbl_eu_8066AF20) != 0) {
+                if (ScnRes_EntryFlagThunk_E5A4(0x20000, 0) == 0) {
                     blocked = 1;
                 } else if ((((cf::CfObjWrap*)self->mObject)->mSub->mField4EC & 0x100u) == 0) {
                     blocked = 1;
@@ -2485,7 +2485,7 @@ extern "C" f32 func_8019EF90(cf::CCtrlMovePC* self) {
             sum = goal + dir;
             start = diff;
             end = sum;
-            if (func_804BE348(&start, &end, 0, 0x2000, 0) != 0) {
+            if (ScnRes_SegQueryForward_E348(&start, &end, 0, 0x2000, 0) != 0) {
                 func_804BE4E0(&n, 0);
                 if (i == 0) {
                     return lbl_eu_80667BD8 * Atan2FIdx__Q24nw4r4mathFff(-n.x, -n.z);
@@ -2611,11 +2611,11 @@ extern "C" void func_8019F1E0(cf::CCtrlMovePC* self) {
         f32 c = CosFIdx__Q24nw4r4mathFf(degScale * amp);
         probe.z += rad * c;
 
-        if (func_804BE398(&probe, 0x4a05, 0, 0, lbl_eu_80667C48, lbl_eu_80667C4C) == 0) {
+        if (ScnRes_VertRayForward_E398(&probe, 0x4a05, 0, 0, lbl_eu_80667C48, lbl_eu_80667C4C) == 0) {
             self->mArr124[16] = h + 1;
             continue;
         }
-        if (func_804BE5A4(0x20000, 0) != 0) {
+        if (ScnRes_EntryFlagThunk_E5A4(0x20000, 0) != 0) {
             self->mArr124[16] = h + 1;
             continue;
         }

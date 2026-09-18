@@ -38,6 +38,9 @@ extern const void* lbl_eu_80527AB8[];
 extern const void* lbl_eu_80527AE0[];
 extern const void* lbl_eu_80527B10[];
 #include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
+// CfT_PlayRateGet (defined in CfTFile.cpp, no header decl): frame-delta
+// getter; declared void here, called through a float cast (CfCam idiom).
+extern "C" void CfT_PlayRateGet();
 
 // typed retail data (replaces old byte blobs): strings sized to retail gaps,
 // sdata2 as one struct to freeze MWCC order and keep the leading 0.0 live.
@@ -197,13 +200,13 @@ void CfObjectMove_UnkVirtualFunc6__Q22cf12CfObjectMoveFv(void* self, unsigned lo
 
 // 0x80094310: clear field_04, then run the char-object virtuals at vtable
 // slots +0x58/+0x5C.
-void func_80093938(cf::CCtrlNpcChar* self) {
+void CtrlNpcCharInitState(cf::CCtrlNpcChar* self) {
     self->field_04 = 0;
     reinterpret_cast<cf::CfObject*>(self)->CfObject_initEventState();
     reinterpret_cast<cf::CfObject*>(self)->CfObject_syncEnableState();
 }
 
-extern "C" void func_800966E8(cf::CtrlNpc* self);
+extern "C" void CtrlNpcAdvanceBehavior(cf::CtrlNpc* self);
 
 // 0x8009398C: per-frame NPC action-state dispatcher. Gates on the
 // presentation flag probe and the character's busy/lock virtuals, then runs
@@ -317,7 +320,7 @@ bodyStart:
             goto tail;
         }
         if (act == 6) {
-            func_800966E8(self);
+            CtrlNpcAdvanceBehavior(self);
             goto tail;
         }
         if (act == 4) {
@@ -499,15 +502,15 @@ void func_80093F28(cf::CtrlNpc* self) {
             }
         }
 
-        func_8003AA34();
-        func_8003AA34();
+        Bdat_GetTable_AA34();
+        Bdat_GetTable_AA34();
         void* fp1 = getFP__FPCc(lbl_eu_804FBB0C + 0x7);
         // Zeroed here (not at function top) so the 8-word inline clear lands
         // between the getFP call and sprintf, like retail.
         char sbuf[0x20] = {0};
         sprintf(sbuf, lbl_eu_804FBB0C + 0x13, lbl_eu_80663E42,
                 lbl_eu_80663E44);
-        func_8003AA34();
+        Bdat_GetTable_AA34();
         void* fp2 = getFP__FPCc(sbuf);
 
         if (reinterpret_cast<cf::CObjectState*>(self->field_28)->CObjectState_setStateBitMask0(0x2000, 1) != 0) {
@@ -529,7 +532,7 @@ void func_80093F28(cf::CtrlNpc* self) {
                     fp2, lbl_eu_804FBB0C + 0x28, count);
                 v40.w = getBdatStringColumnValue(
                     fp2, lbl_eu_804FBB0C + 0x33, count);
-                u32 cur = func_8009CF8C(UIWin_PackHiLo(0x200001, 0));
+                u32 cur = CtrlRemote_TouchBitByArg(UIWin_PackHiLo(0x200001, 0));
                 if ((int)cur < (int)v44.h)
                     continue;
                 if ((int)v40.h < (int)cur)
@@ -545,7 +548,7 @@ void func_80093F28(cf::CtrlNpc* self) {
                 v38.w = getBdatStringColumnValue(
                     fp2, lbl_eu_804FBB0C + 0x3E, count);
                 if (v38.h != 0) {
-                    u32 f = func_8009CF8C(UIWin_PackHiLo(0x2203E8, v38.h));
+                    u32 f = CtrlRemote_TouchBitByArg(UIWin_PackHiLo(0x2203E8, v38.h));
                     if (f != 0xFE && f != 0xFF)
                         continue;
                 }
@@ -554,7 +557,7 @@ void func_80093F28(cf::CtrlNpc* self) {
                     fp2, lbl_eu_804FBB0C + 0x47, count);
                 if (v34.h != 0) {
                     u32 f =
-                        func_8009CF8C(UIWin_PackHiLo(0x608190, v34.h));
+                        CtrlRemote_TouchBitByArg(UIWin_PackHiLo(0x608190, v34.h));
                     v30.w = getBdatStringColumnValue(
                         fp2, lbl_eu_804FBB0C + 0x51, count);
                     if (f != v30.b)
@@ -564,7 +567,7 @@ void func_80093F28(cf::CtrlNpc* self) {
                 v2C.w = getBdatStringColumnValue(
                     fp2, lbl_eu_804FBB0C + 0x58, count);
                 if (v2C.b != 0) {
-                    u32 f = func_8009CF8C(UIWin_PackHiLo(0x798064, v2C.b));
+                    u32 f = CtrlRemote_TouchBitByArg(UIWin_PackHiLo(0x798064, v2C.b));
                     v28.w = getBdatStringColumnValue(
                         fp2, lbl_eu_804FBB0C + 0x62, count);
                     if (f != v28.b)
@@ -574,7 +577,7 @@ void func_80093F28(cf::CtrlNpc* self) {
                 v24.w = getBdatStringColumnValue(
                     fp2, lbl_eu_804FBB0C + 0x69, count);
                 if (v24.b != 0) {
-                    u32 f = func_8009CF8C(UIWin_PackHiLo(0x210007, v24.b));
+                    u32 f = CtrlRemote_TouchBitByArg(UIWin_PackHiLo(0x210007, v24.b));
                     v20.w = getBdatStringColumnValue(
                         fp2, lbl_eu_804FBB0C + 0x74, count);
                     if (f < v20.h)
@@ -585,7 +588,7 @@ void func_80093F28(cf::CtrlNpc* self) {
                     fp2, lbl_eu_804FBB0C + 0x7C, count);
                 if (v1C.h != 0) {
                     u32 f =
-                        func_8009CF8C(UIWin_PackHiLo(0xA2012C, v1C.h));
+                        CtrlRemote_TouchBitByArg(UIWin_PackHiLo(0xA2012C, v1C.h));
                     if (f == 0)
                         continue;
                 }
@@ -593,7 +596,7 @@ void func_80093F28(cf::CtrlNpc* self) {
                 v18.w = getBdatStringColumnValue(
                     fp2, lbl_eu_804FBB0C + 0x87, count);
                 if (v18.b != 0) {
-                    u32 f = func_8009CF8C(UIWin_PackHiLo(0x7FC008, v18.b));
+                    u32 f = CtrlRemote_TouchBitByArg(UIWin_PackHiLo(0x7FC008, v18.b));
                     v14.w = getBdatStringColumnValue(
                         fp2, lbl_eu_804FBB0C + 0x91, count);
                     if (f < v14.h)
@@ -603,7 +606,7 @@ void func_80093F28(cf::CtrlNpc* self) {
                 v10.w = getBdatStringColumnValue(
                     fp2, lbl_eu_804FBB0C + 0x98, count);
                 if (v10.b != 0) {
-                    u32 f = func_8009CF8C(UIWin_PackHiLo(0x25781E, v10.b));
+                    u32 f = CtrlRemote_TouchBitByArg(UIWin_PackHiLo(0x25781E, v10.b));
                     v0C.w = getBdatStringColumnValue(
                         fp2, lbl_eu_804FBB0C + 0xA2, count);
                     if (f != v0C.b)
@@ -649,7 +652,7 @@ extern "C" void CObjectState_applyStateFlags__Q22cf12CObjectStateFv(cf::CObjectS
 // copy `count` 12-byte elements from src into the +0xE0 target array. Bulk
 // copies run in 8-element groups (retail unrolls each group into 24 word
 // loads/stores).
-void func_800948F8(cf::CtrlNpc* self, u32 a, u32 b, int count,
+void CtrlNpcInitMoveWindow(cf::CtrlNpc* self, u32 a, u32 b, int count,
                    const ml::CVec3* src, f32 f) {
     // Retail evaluates the frame-count expression before any stores.
     self->field_168 = (s16)((b - a) * 60);
@@ -671,13 +674,18 @@ void func_800948F8(cf::CtrlNpc* self, u32 a, u32 b, int count,
 // character object + the new target vec), then compute the heading toward the
 // a distance check picks a turn amount (jittered/continued), the
 // heading is stored to field_0C, and the character is kicked if it is idle.
-void __declspec(noinline) func_80094A9C(cf::CtrlNpc* self,
+#undef lbl_eu_80666698
+#undef lbl_eu_806666A4
+#undef lbl_eu_806666A8
+#undef lbl_eu_806666AC
+#undef lbl_eu_806666B0
+void __declspec(noinline) CtrlNpcSetupMoveAction(cf::CtrlNpc* self,
                                         const ml::CVec3* vec, f32 scale,
                                         f32 paramB) {
     cf::CtrlNpcVec3W* pos = reinterpret_cast<cf::CtrlNpcVec3W*>(reinterpret_cast<cf::CfObject*>(self->field_28)->CfObject_getPosVector());
     const u32* vw = reinterpret_cast<const u32*>(vec);
-    u32 px = pos->x;
     u32 py = pos->y;
+    u32 px = pos->x;
     self->field_E0w[1] = py;
     self->field_E0w[0] = px;
     self->field_E0w[2] = pos->z;
@@ -719,11 +727,16 @@ void __declspec(noinline) func_80094A9C(cf::CtrlNpc* self,
             CfObjectMove_setAnimModeArgs((u8*)self->field_28, 3, 0, -1, 1);
     }
 }
+#define lbl_eu_80666698 sdata2_CtrlNpc.f0
+#define lbl_eu_806666A4 sdata2_CtrlNpc.f3
+#define lbl_eu_806666A8 sdata2_CtrlNpc.f4
+#define lbl_eu_806666AC sdata2_CtrlNpc.f5
+#define lbl_eu_806666B0 sdata2_CtrlNpc.f6
 
 // 0x800956C0: store the action-setup fields, then dispatch: a zero action id
 // arms the movement sub-object (CCtrlMoveNpc at +0x30), anything else runs
 // the generic action setup.
-void func_80094CE8(cf::CtrlNpc* self, const ml::CVec3* vec, int val, f32 scale, f32 paramB) {
+void CtrlNpcSetupAction(cf::CtrlNpc* self, const ml::CVec3* vec, int val, f32 scale, f32 paramB) {
     u16 v = self->field_C6;
     v = (u16)__rlwimi(v, (u32)val, 8, 16, 23);
     self->field_C0 = 6;
@@ -731,14 +744,14 @@ void func_80094CE8(cf::CtrlNpc* self, const ml::CVec3* vec, int val, f32 scale, 
     self->field_158 = paramB;
     self->field_BE = 1;
     if (val != 0)
-        func_80094A9C(self, vec, scale, paramB);
+        CtrlNpcSetupMoveAction(self, vec, scale, paramB);
     else
         func_8019F6E8((cf::CCtrlMoveNpc*)self->_sub30, vec, scale, paramB);
 }
 
 // 0x800956F4: action-advance query - whether the NPC may advance from its
 // current busy state (field_BE) given the action kind (field_C0).
-int func_80094D1C(const cf::CtrlNpc* self) {
+int CtrlNpcCanAdvanceAction(const cf::CtrlNpc* self) {
     int result = 0;
     u32 c0 = self->field_C0;
     if (c0 == 3) {
@@ -764,7 +777,7 @@ int func_80094D1C(const cf::CtrlNpc* self) {
 
 // 0x800957CC: store the target position words and flags, then activate the
 // character object if it is in one of the "in action" states (0x21..0x2A).
-void func_80094DF4(cf::CtrlNpc* self, const cf::CtrlNpcVec3W* vec) {
+void CtrlNpcStoreTargetActivate(cf::CtrlNpc* self, const cf::CtrlNpcVec3W* vec) {
     self->field_14 = lbl_eu_80666698;
     self->field_C8 = vec->x;
     self->field_CC = vec->y;
@@ -781,8 +794,10 @@ void func_80094DF4(cf::CtrlNpc* self, const cf::CtrlNpcVec3W* vec) {
 
 // 0x8009581C: reset the movement target to the character's current position
 // and arm the action fields (kind 4) with the given id.
+#undef lbl_eu_80666698
 void func_80094E44(cf::CtrlNpc* self, u32 val) {
     self->field_14 = lbl_eu_80666698;
+#define lbl_eu_80666698 sdata2_CtrlNpc.f0
     self->field_BE = 0;
     self->field_C0 = 4;
     self->field_16C = val;
@@ -801,8 +816,10 @@ void func_80094E44(cf::CtrlNpc* self, u32 val) {
 // 0x800958B4: reset the movement target to the character's current position
 // and arm the action fields (kind 5); the 0x16E/0x170 ids are clamped into
 // [0, 0x68) (out-of-range ids become 0).
-void func_80094EDC(cf::CtrlNpc* self, int r4, int r5, int r6) {
+#undef lbl_eu_80666698
+void CtrlNpcArmMoveTarget5(cf::CtrlNpc* self, int r4, int r5, int r6) {
     self->field_14 = lbl_eu_80666698;
+#define lbl_eu_80666698 sdata2_CtrlNpc.f0
     self->field_BE = 0;
     self->field_C0 = 5;
     self->field_16C = r4;
@@ -811,8 +828,8 @@ void func_80094EDC(cf::CtrlNpc* self, int r4, int r5, int r6) {
     int ok6 = (r6 >= 0) && !(r6 >= 0x68);
     self->field_170 = ok6 ? r6 : 0;
     cf::CtrlNpcVec3W* pos = reinterpret_cast<cf::CtrlNpcVec3W*>(reinterpret_cast<cf::CfObject*>(self->field_28)->CfObject_getPosVector());
-    u32 x = pos->x;
     u32 y = pos->y;
+    u32 x = pos->x;
     self->field_B0.u = y;
     self->field_AC.u = x;
     self->field_B4.u = pos->z;
@@ -823,7 +840,7 @@ void func_80094EDC(cf::CtrlNpc* self, int r4, int r5, int r6) {
 
 // 0x800959A0: record the flag byte, then activate the character object if it
 // is in one of the "in action" states (0x21..0x2A).
-void func_80094FC8(cf::CtrlNpc* self, u8 val) {
+void CtrlNpcSetFlagActivate(cf::CtrlNpc* self, u8 val) {
     self->field_C2 = val;
     cf::CfObjectMove* obj = self->field_28;
     if (NpcCharView(obj)->field_6C4 < 0x21)
@@ -839,7 +856,7 @@ float CfObject_UnkVirtualFunc71__Q22cf13CfObjectModelFv(void* self) { return *(f
 
 // 0x800959D8: when the character object's field_C4 flag is set, feed the
 // halfword field_16C into the battle-status helper and bump the busy counter.
-void func_80095000(cf::CtrlNpc* self) {
+void CtrlNpcFireAnimMode16C(cf::CtrlNpc* self) {
     cf::CfObjectMove* obj = self->field_28;
     if (NpcCharView(obj)->field_C4 != 0) {
         CfObjectMove_setAnimModeArgs((u8*)obj, self->field_16C, 0, -1, 1);
@@ -850,7 +867,7 @@ void func_80095000(cf::CtrlNpc* self) {
 // 0x80095A34: when field_C4 is set, dispatch the battle-status helper with
 // field_16C (or field_16E when it is zero); the zero branch bumps the busy
 // counter one extra time.
-void func_8009505C(cf::CtrlNpc* self) {
+void CtrlNpcFireAnimMode16CorE(cf::CtrlNpc* self) {
     cf::CfObjectMove* obj = self->field_28;
     if (NpcCharView(obj)->field_C4 != 0) {
         if (self->field_16C != 0) {
@@ -866,7 +883,7 @@ void func_8009505C(cf::CtrlNpc* self) {
 // 0x80095AC0: advance the NPC action - when the character object's field_C4
 // flag is set and it is idle (or the page helper says so), feed field_16E
 // into the battle-status helper and bump the busy counter.
-void func_800950E8(cf::CtrlNpc* self) {
+void CtrlNpcFireAnimModeIdleE(cf::CtrlNpc* self) {
     cf::CfObjectMove* obj = self->field_28;
     cf::CCtrlNpcC4Object* flag = NpcCharView(obj)->field_C4;
     if (flag != 0 && (reinterpret_cast<cf::CfObject*>(obj)->CfObject_queryTargetState() != 0 || getAnimModelId(flag) == 1)) {
@@ -878,12 +895,12 @@ void func_800950E8(cf::CtrlNpc* self) {
     }
 }
 
-void func_8009519C() {}
+void CtrlNpcNoop() {}
 
 // 0x80095B78: pull the movement target from the character object's position
 // getter (vtable +0xac), record it, and either bump the busy counter or reset
 // the movement flag.
-void func_800951A0(cf::CtrlNpc* self) {
+void CtrlNpcSyncTargetFromPos(cf::CtrlNpc* self) {
     cf::CtrlNpcVec3W* pos = reinterpret_cast<cf::CtrlNpcVec3W*>(reinterpret_cast<cf::CfObject*>(self->field_28)->CfObject_getPosVector());
     u32 x = pos->x;
     self->field_CC = pos->y;
@@ -948,7 +965,7 @@ void func_80095224(cf::CtrlNpc* self) {
 
 // 0x80095E28: per-frame movement/action update - check the distance to the
 // target, tick the action timers, and advance the busy state.
-void func_80095450(cf::CtrlNpc* self) {
+void CtrlNpcUpdateMovement(cf::CtrlNpc* self) {
     // CVec3::sub lowers to the VEC3Sub paired-single kernel into an inner
     // temp plus component copy; retail keeps both stack regions alive.
     const ml::CVec3* posf =
@@ -1009,7 +1026,7 @@ struct CtrlNpcData {
     short field_BE;
 };
 
-void func_8009563C(char* p) {
+void CtrlNpcTickTimer(char* p) {
     CtrlNpcData* data = reinterpret_cast<CtrlNpcData*>(p);
     short v = data->field_BA - 1;
     data->field_BA = v;
@@ -1020,7 +1037,7 @@ void func_8009563C(char* p) {
 
 // 0x80096034: movement-timer body (not yet recovered); the stub keeps the
 // retail arg shape and C linkage (from the header declaration) so
-// func_80096488's call reloc matches retail. noinline so the call stays a bl.
+// CtrlNpcRestartTimerGated's call reloc matches retail. noinline so the call stays a bl.
 // Same-TU forward decl (defined below).
 void func_80095F44(cf::CtrlNpc* self);
 
@@ -1312,7 +1329,7 @@ void func_80095F44(cf::CtrlNpc* self) {
             }
             if (distSq < speed * speed) {
                 f32 ratio =
-                    (speed - (f32)func_800A3EF4(distSq)) / speed;
+                    (speed - (f32)VecMath_SafeSqrtF(distSq)) / speed;
                 f32 newProg = lbl_eu_806666A4 - ratio;
                 f32 prog2 = reinterpret_cast<cf::CfObject*>(self->field_28)->CfObject_getMoveFactor();
                 self->field_D8 = (prog2 - f30) * newProg + f30;
@@ -1371,7 +1388,7 @@ void func_80095F44(cf::CtrlNpc* self) {
 // 0x80096E60: query the game manager's current id halfword; when it falls
 // outside [field_160, field_164), clear the busy flag and restart the
 // movement timer.
-void func_80096488(cf::CtrlNpc* self) {
+void CtrlNpcRestartTimerGated(cf::CtrlNpc* self) {
     u16 id;
     u16 dummy;
     getControllerValues__Q22cf13CfGameManagerFv(&id, &dummy);
@@ -1438,13 +1455,16 @@ int func_800964EC(cf::CtrlNpc* self) {
 // (field_BE): state 1 arms the movement/character action (depending on the
 // packed action byte in field_C6), state 2 waits for the character to become
 // idle, state 3 counts the movement timer down to 0.
-void func_800966E8(cf::CtrlNpc* self) {
+#undef lbl_eu_80666698
+#undef lbl_eu_80666700
+#undef lbl_eu_80666714
+void CtrlNpcAdvanceBehavior(cf::CtrlNpc* self) {
     if (self->field_BE == 1) {
         int armed;
         if (((self->field_C6 >> 8) & 0xFF) != 0)
             armed = func_800964EC(self);
         else
-            armed = func_8019F8E0((cf::CCtrlMoveNpc*)self->_sub30);
+            armed = NpcMove_DispatchState((cf::CCtrlMoveNpc*)self->_sub30);
         if (armed != 0) {
             self->field_BE = 1;
         } else if (self->field_158 < lbl_eu_80666714) {
@@ -1460,9 +1480,9 @@ void func_800966E8(cf::CtrlNpc* self) {
             self->field_BE = 3;
         }
     } else if (self->field_BE == 3) {
-        // CfGameManager.hpp declares func_80069EA0 void; it really returns
+        // CfGameManager.hpp declares CfT_PlayRateGet void; it really returns
         // the frame delta (see CfTFile.cpp), so call it through a cast.
-        f32 v = self->field_D4 - ((float (*)())func_80069EA0)();
+        f32 v = self->field_D4 - ((float (*)())CfT_PlayRateGet)();
         self->field_D4 = v;
         if (v <= lbl_eu_80666698) {
             self->field_D4 = lbl_eu_80666698;
@@ -1470,10 +1490,13 @@ void func_800966E8(cf::CtrlNpc* self) {
         }
     }
 }
+#define lbl_eu_80666698 sdata2_CtrlNpc.f0
+#define lbl_eu_80666700 sdata2_CtrlNpc.f22
+#define lbl_eu_80666714 sdata2_CtrlNpc.f27
 
 // 0x800971D0: returns whether the NPC is active - either the "busy" flag is
 // set, or the character object's state query (vtable +0x24) reports active.
-int func_800967F8(cf::CtrlNpc* self) {
+int CtrlNpcIsActive(cf::CtrlNpc* self) {
     if (self->field_174 != 0)
         goto ret1;
     if (reinterpret_cast<cf::CObjectState*>(self->field_28)->CObjectState_checkStateFlags8(0x1000) == 0)
@@ -1484,9 +1507,9 @@ ret0:
     return 0;
 }
 
-extern "C" int func_8009684C(u8* self) { return 1; }
+extern "C" int CtrlNpcAlwaysTrue(u8* self) { return 1; }
 
-extern "C" int func_80096854(u8* self) { return 0; }
+extern "C" int CtrlNpcAlwaysFalse(u8* self) { return 0; }
 
 cf::CtrlNpc::~CtrlNpc() {}
 
@@ -1505,25 +1528,25 @@ __declspec(section ".data") const char* lbl_eu_80527A80[8] = {
 };
 // handler tables: member function pointers (0, -1, func)
 __declspec(section ".data") const void* lbl_eu_80527AA0[] = {
-    (void*)0, (void*)-1, (void*)func_80095000,
-    (void*)0, (void*)-1, (void*)func_8009519C
+    (void*)0, (void*)-1, (void*)CtrlNpcFireAnimMode16C,
+    (void*)0, (void*)-1, (void*)CtrlNpcNoop
 };
 __declspec(section ".data") const void* lbl_eu_80527AB8[] = {
-    (void*)0, (void*)-1, (void*)func_8009505C,
-    (void*)0, (void*)-1, (void*)func_800950E8,
-    (void*)0, (void*)-1, (void*)func_8009519C,
+    (void*)0, (void*)-1, (void*)CtrlNpcFireAnimMode16CorE,
+    (void*)0, (void*)-1, (void*)CtrlNpcFireAnimModeIdleE,
+    (void*)0, (void*)-1, (void*)CtrlNpcNoop,
     (void*)0
 };
 __declspec(section ".data") const void* lbl_eu_80527AE0[] = {
-    (void*)0, (void*)-1, (void*)func_800951A0,
+    (void*)0, (void*)-1, (void*)CtrlNpcSyncTargetFromPos,
     (void*)0, (void*)-1, (void*)func_80095224,
-    (void*)0, (void*)-1, (void*)func_80095450,
-    (void*)0, (void*)-1, (void*)func_8009563C
+    (void*)0, (void*)-1, (void*)CtrlNpcUpdateMovement,
+    (void*)0, (void*)-1, (void*)CtrlNpcTickTimer
 };
 __declspec(section ".data") const void* lbl_eu_80527B10[] = {
     (void*)0, (void*)-1, (void*)func_8009565C,
     (void*)0, (void*)-1, (void*)func_80095F44,
-    (void*)0, (void*)-1, (void*)func_80096488,
+    (void*)0, (void*)-1, (void*)CtrlNpcRestartTimerGated,
     (void*)0
 };
 // (typed .rodata/.sdata2 live at the top of this file)

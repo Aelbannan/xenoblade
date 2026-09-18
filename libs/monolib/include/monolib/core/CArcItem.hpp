@@ -11,8 +11,8 @@ public:
     CArcItem(const char* pFilename);
     virtual ~CArcItem();
     virtual bool OnFileEvent(CEventFile* pEventFile);
-    void func_804DEC30();
-    bool func_804DEC6C(const char* pPath, void** pOutStartAddr, u32* pOutLength);
+    void updateLoadState();
+    bool findFileEntry(const char* pPath, void** pOutStartAddr, u32* pOutLength);
 
     ml::FixStr<32> unk4;
     CFileHandle* unk28;

@@ -93,9 +93,9 @@ public:
 extern "C" {
 CMenuPTChangeNotice* __ct__CMenuPTChangeNotice(CMenuPTChangeNotice* obj, void* arg);
 CMenuPTChangeNotice* __dt__19CMenuPTChangeNoticeFv(CMenuPTChangeNotice* obj, int flags);
-CMenuPTChangeNotice* func_80293B9C(CProcess* parent, void* arg);
-void func_80293C20(CMenuPTChangeNotice* obj);
-void func_80293D2C(CMenuPTChangeNotice* obj);
+CMenuPTChangeNotice* PTNotice_Create_3B9C(CProcess* parent, void* arg);
+void PTNotice_Advance_3C20(CMenuPTChangeNotice* obj);
+void PTNotice_Rewind_3D2C(CMenuPTChangeNotice* obj);
 int func_8029348C(CMenuPTChangeNotice* obj, CEventFile* evt);
 }
 
@@ -126,9 +126,9 @@ void PaneSetTexPaletteByName(nw4r::lyt::Layout*, const char*, void*);
 char* MakeTplNameSysFile(u32);
 nw4r::lyt::ArcResourceAccessor* CUICfManager_getArcResourceAccessor();
 u16 BdatGetU16Direct(const void*, const void*, int);
-void func_80124270(nw4r::lyt::Pane*, u32);
-void func_80124288(nw4r::lyt::Pane*, float*);
-u32 func_8009CF8C(u32);
+void setPaneVisible(nw4r::lyt::Pane*, u32);
+void writePanePos(nw4r::lyt::Pane*, float*);
+u32 CtrlRemote_TouchBitByArg(u32);
 void func_80139198(u32);
 u8 GetCollectedFlagByte(u32);
 u8 GetCollectedFlagWord8(u32);

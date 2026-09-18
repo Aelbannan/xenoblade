@@ -19,7 +19,7 @@ __declspec(section ".sdata2") extern const f64 lbl_eu_80668C98 =
 
 // Virtual method override: returns the buffer size for this thread type.
 // Matches CVS_THREAD::blank1 slot in vtable; EHP subclass returns 0xB4 (180).
-int func_802A6818() {
+extern "C" int getEhpBufferSize() {
     return 0xB4;
 }
 
@@ -32,11 +32,11 @@ void func_802A6718(CVS_THREAD_EHP* self) {
     }
 }
 
-// us-802a8e94 (func_802A6760)
+// us-802a8e94 (removeEhpVoice)
 // Remove a voice from all slots by matching its embedded CCharVoice pointer.
 // A CVoiceHandle stores the CCharVoice at offset 0x3E9C, so a non-null handle
 // is biased by 0x3E9C before comparing against the incoming voice pointer.
-void func_802A6760(CVS_THREAD_EHP* self, CCharVoice* voicePtr) {
+extern "C" void removeEhpVoice(CVS_THREAD_EHP* self, CCharVoice* voicePtr) {
     func_802A3BEC(self, voicePtr);
 
     // Slot 0x20
@@ -76,12 +76,12 @@ void func_802A6760(CVS_THREAD_EHP* self, CCharVoice* voicePtr) {
     }
 }
 
-// us-802a8cc0 (func_802A658C)
+// us-802a8cc0 (advanceEhpSlotIndex)
 // Advance the rotating index (field_0x38) forward or backward depending on the
 // direction flag (field_0x44), wrapping at the bounds (0..field_0x3c). When the
 // index lands on the stop index (field_0x40), the playback-start virtual is
 // invoked; otherwise the slot-state triple is reloaded from lbl_eu_80539B14.
-void func_802A658C(CVS_THREAD_EHP* self) {
+extern "C" void advanceEhpSlotIndex(CVS_THREAD_EHP* self) {
     if (func_802A3E88(self) != 0) {
         return;
     }
@@ -115,12 +115,12 @@ void func_802A658C(CVS_THREAD_EHP* self) {
     }
 }
 
-// us-802a8d84 (func_802A6650)
+// us-802a8d84 (playEhpSlot2)
 // Play function for slot 2. Reloads the slot-state triple from lbl_eu_80539B20,
 // finds a free voice handle (excluding slot 2's own handle), and if that handle
 // is inactive plays a random voice ID (mtRand(2) + 0x51D). On any failure the
 // playback-start virtual is invoked as a fallback.
-void func_802A6650(CVS_THREAD_EHP* self) {
+extern "C" void playEhpSlot2(CVS_THREAD_EHP* self) {
     if (func_802A3E88(self) != 0) {
         return;
     }
@@ -156,11 +156,11 @@ void func_802A6650(CVS_THREAD_EHP* self) {
     self->func_802A3B50();
 }
 
-// us-802a8f54 (func_802A6820)
+// us-802a8f54 (selectEhpVoicePair)
 // Standalone EHP voice selector. Given two party-slot indices (a, b), it picks
 // a voice ID based on their relationship, allocates a 0xAA-byte buffer, and
 // plays the voice on the currently free handle. Returns 0 in all paths.
-int func_802A6820(int a, int b) {
+extern "C" int selectEhpVoicePair(int a, int b) {
     if (a == b) {
         return 0;
     }
@@ -298,13 +298,13 @@ CVS_THREAD_EHP* __ct__802A5ED4(CVoiceHandle* handle, CVoiceHandle* owner2, s32 h
     return self;
 }
 
-// us-802a88b0 (func_802A617C)
+// us-802a88b0 (selectEhpVoiceByHp)
 // EHP playback selector driven by the owner's HP gauge. Gates on both owner
 // slots being live, reads the HP ratio through the gauge object's float
 // getters (slots 74/75), and either collects free rotating slots (low-gauge
 // case) or plays a random damage voice on slot 0x24's embedded CCharVoice
 // (high-gauge case). Falls back to the playback-start virtual otherwise.
-void func_802A617C(CVS_THREAD_EHP* self) {
+extern "C" void selectEhpVoiceByHp(CVS_THREAD_EHP* self) {
     if (self->field_0x20 != NULL && self->field_0x24 != NULL &&
         ((CVoiceChainVTV*)self->field_0x24)->isActive() == 0) {
         // Gauge computation (textually duplicated in retail):
@@ -375,12 +375,12 @@ void func_802A617C(CVS_THREAD_EHP* self) {
     self->func_802A3B50();
 }
 
-// us-802a8b3c (func_802A6408)
+// us-802a8b3c (startEhpVoice)
 // EHP start request: install the slot-state triple from lbl_eu_80539ADC, then
 // if both the owner (field_0x24) and the current rotating slot are idle, pick
 // a voice ID from the owner's battle state and play it on the rotating slot's
 // embedded CCharVoice. Any failure falls back to the playback-start virtual.
-void func_802A6408(CVS_THREAD_EHP* self) {
+extern "C" void startEhpVoice(CVS_THREAD_EHP* self) {
     u32 v0;
     const u32* p = lbl_eu_80539ADC;
     v0 = *p++;
@@ -454,14 +454,14 @@ void func_802A6408(CVS_THREAD_EHP* self) {
     self->func_802A3B50();
 }
 
-// us-802a908c (func_802A6958)
+// us-802a908c (playEhpStartVoice)
 // EHP thread start request. Gated on manager flag bit 15 (word at handle
 // +0x3F08) and on the handle itself being inactive. Scans the global voice
 // handle list for any active handle whose category passes the
 // func_80174C98 gate; if none qualifies nothing plays. Otherwise allocates
 // the 0x28-byte playback buffer and plays voice 0xA8D on this handle's
 // embedded CCharVoice. Returns 0 in all paths.
-int func_802A6958(CVoiceHandle* self) {
+extern "C" int playEhpStartVoice(CVoiceHandle* self) {
     CVoiceHandle* handle;
     CVoiceHandleListNode* node;
     int played;

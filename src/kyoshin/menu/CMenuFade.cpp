@@ -131,23 +131,23 @@ void CMenuFade::Term() {
     lbl_eu_80663FA0 = 0;
 }
 
-int func_80113E1C() {
+extern "C" int getFadeMenu() {
     return lbl_eu_80663FA0;
 }
-u8 func_80113E24(u8* pthis) {
+extern "C" u8 isFadeActive(u8* pthis) {
     return pthis[0x94];
 }
-void func_80113E2C(CMenuFade* pthis) {
+extern "C" void triggerFadeMenu(CMenuFade* pthis) {
     pthis->field_0x54 = 1;
 }
-void __dt__9CMenuFadeFv(CMenuFade*);
-void func_80113E38(CMenuFade* p) {
-    __dt__9CMenuFadeFv((CMenuFade*)((char*)p - 0x58));
+extern "C" CMenuFade* __dt__9CMenuFadeFv(CMenuFade* self, int deleteFlag);
+extern "C" void fwdFadeDtor58(CMenuFade* p) {
+    ((void(*)(CMenuFade*))__dt__9CMenuFadeFv)((CMenuFade*)((char*)p - 0x58));
 }
-void cbRenderBefore__9CMenuFadeFv(void* self);
-void func_80113E40(void* self) { ((void(*)(void*))cbRenderBefore__9CMenuFadeFv)((char*)self - 0x5c); }
-void func_80113E48(void* arg0) {
-    __dt__9CMenuFadeFv((struct CMenuFade*)((char*)arg0 - 0x5C));
+extern "C" void cbRenderBefore__9CMenuFadeFv(void* self);
+extern "C" void fwdFadeCbRender5C(void* self) { ((void(*)(void*))cbRenderBefore__9CMenuFadeFv)((char*)self - 0x5c); }
+extern "C" void fwdFadeDtor5C(void* arg0) {
+    ((void(*)(CMenuFade*))__dt__9CMenuFadeFv)((struct CMenuFade*)((char*)arg0 - 0x5C));
 }
 
 void func_80113C84(){}

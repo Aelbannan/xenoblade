@@ -25,7 +25,7 @@ struct CMCItemBoxEntry {
 };
 
 /* Small sub-object passed to the C-linkage menu helpers
-   (func_801D216C). 0x18 bytes; stores a vtable pointer at +0x00. */
+   (Cur_SetVisible). 0x18 bytes; stores a vtable pointer at +0x00. */
 struct CMCItemBoxSubObj {
     u8 bytes[0x18];
 };
@@ -253,7 +253,7 @@ extern "C" u16 ArrayGet12(const unsigned short*, unsigned char);
 extern "C" void CopyTabSlotVec(u32*, void*, u32);
 // func_80137924 lives in kyoshin/CSysWin.hpp (typed VEC3/Pane form).
 extern "C" char* BdatTouchStringCell(const void*, const void*, int);
-extern "C" void func_80124270(void*, u32);
+extern "C" void setPaneVisible(void*, u32);
 extern "C" void func_801D4174(void*);
 extern "C" void func_801D4260(void*, u16);
 extern "C" void func_801D47D4(void*, u32, u32, u32);
@@ -264,7 +264,7 @@ extern "C" char* func_80296FC0(CMCItemBoxSub*, u16);
 extern "C" char* func_80296E98(CMCItemBoxSub*, u16);
 extern "C" __declspec(noinline) u32 getMCItemSubItemId(CMCItemBoxSub*, u32);
 extern "C" __declspec(noinline) s8 getMCItemSubKind(CMCItemBoxSub*, u32);
-extern "C" void func_8022B7F4(void*);
+extern "C" void sysWinTermLayout(void*);
 extern "C" void* func_801D3C74(void*, u32);
 extern "C" u32 AnimRewindFrame(nw4r::lyt::AnimTransform*, float);
 // Retail mangled names kept as source names so the reloc matches exactly.
@@ -316,7 +316,7 @@ extern "C" void* __ct__CCur09(void*, void*);
 extern "C" void* __ct__CCur16(void*, void*);
 extern "C" void* __ct__CCur18(void*, void*);
 extern "C" void copyVEC3(void*, void*);
-extern "C" void func_801D24E8(void*, void*, void*);
+extern "C" void Cur_SetTwoPanes09(void*, void*, void*);
 extern "C" u8   BdatGetU8Direct(u32, const char*, u32);
 extern "C" char* BdatGetPtrDirect(const void*, const void*, int);
 extern "C" void PaneSetTexPaletteByName(void*, const char*, void*);
@@ -325,7 +325,7 @@ extern "C" void buildLayout__FPPQ34nw4r3lyt6LayoutPQ34nw4r3lyt19ArcResourceAcces
 extern "C" void bindLayoutAnimTransform__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(nw4r::lyt::Layout*, nw4r::lyt::AnimTransform**, nw4r::lyt::ArcResourceAccessor*, char*);
 extern "C" void setLayoutTextBoxFont__FPQ34nw4r3lyt6LayoutPcUl(nw4r::lyt::Layout*, char*, u32);
 // code80135FDC_setVec3 lives in kyoshin/CSysWin.hpp (VEC3-returning form).
-extern "C" void func_8003AA34();
+extern "C" void Bdat_GetTable_AA34();
 extern "C" void setBdatEntry__5CBdatFUlPv(u32, void*);
 extern "C" void* __ct__CTagProcessor(void*);
 extern "C" void* getAllocHandle__10CLibLayoutFv(void);

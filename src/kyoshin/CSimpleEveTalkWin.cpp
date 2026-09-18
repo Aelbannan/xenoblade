@@ -1,5 +1,5 @@
 // CSimpleEveTalkWin - simple event-talk window process (singleton factory
-// func_801A20DC). See CSimpleEveTalkWin.hpp for the layout notes.
+// eveTalkWinCreateRegister). See CSimpleEveTalkWin.hpp for the layout notes.
 
 #include "kyoshin/CSimpleEveTalkWin.hpp"
 
@@ -344,8 +344,8 @@ void CSimpleEveTalkWin::Move() {
         }
         break;
     case 2:
-        // Message advance (tag-processor page logic in func_801A2624).
-        func_801A2624(this);
+        // Message advance (tag-processor page logic in eveTalkWinAdvancePage).
+        eveTalkWinAdvancePage(this);
         break;
     case 3:
         // Closing animation finished: unregister the render callback and hand
@@ -411,15 +411,15 @@ void CSimpleEveTalkWin::cbRenderBefore() {
 
 // Creates the singleton CSimpleEveTalkWin on the work heap and registers it as
 // a CProcess under `parent`. If the singleton already exists the message is
-// handed to func_801A2190 instead and 0 is returned.
-CSimpleEveTalkWin* func_801A20DC(CProcess* parent, CScn* scene, u32 text,
+// handed to eveTalkWinSetReuseText instead and 0 is returned.
+CSimpleEveTalkWin* eveTalkWinCreateRegister(CProcess* parent, CScn* scene, u32 text,
                                  const u8* msgSrc, u8 flag) {
     u8 buf[0x800];
     memset(buf, 0, 0x800);
     func_80136400((const char*)msgSrc, (u16*)buf, 0x400);
 
     if (lbl_eu_80664320 != 0) {
-        func_801A2190(lbl_eu_80664320, text, buf);
+        eveTalkWinSetReuseText(lbl_eu_80664320, text, buf);
         return 0;
     }
 
@@ -436,9 +436,9 @@ CSimpleEveTalkWin* func_801A20DC(CProcess* parent, CScn* scene, u32 text,
 
 // --- this-adjusting thunks (retail vtable dispatch: "this" lands at the
 // embedded IWorkEvent/IScnRender subobject; back off to the object base and
-// forward to the real member). func_801A2190 / func_801A2624 remain stubs.
+// forward to the real member). eveTalkWinSetReuseText / eveTalkWinAdvancePage remain stubs.
 
-extern "C" __declspec(noinline) void func_801A2190(CSimpleEveTalkWin* owner,
+extern "C" __declspec(noinline) void eveTalkWinSetReuseText(CSimpleEveTalkWin* owner,
                                                     u32 textId, u8* msgBuf) {
     owner->field_67 = 1;
     owner->field_68 = textId;
@@ -581,7 +581,7 @@ extern "C" __declspec(noinline) void func_801A2190(CSimpleEveTalkWin* owner,
 // Message-advance step (window state 2): re-fetch the message text box, ask
 // the tag processor which page action the confirm button triggered and run it
 // (4 = select accepted, 2 = page animation, 0/1/3 = page/close logic).
-extern "C" void func_801A2624(CSimpleEveTalkWin* self) {
+extern "C" void eveTalkWinAdvancePage(CSimpleEveTalkWin* self) {
     nw4r::lyt::Pane* pane =
         self->mpLayout->GetRootPane()->FindPaneByName(&lbl_eu_80503E14[0x109],
                                                       1);
@@ -674,14 +674,14 @@ extern "C" void cbRenderBefore__17CSimpleEveTalkWinFv(void*);
 // flat `__dt__`/`cbRenderBefore` and is §17.6 high-level C++ (extern "C"
 // REL24, no asm). With real bases the ideal would be
 // `static_cast<CSimpleEveTalkWin*>(base)->~…`, today 0x20/0x9c.
-void func_801A29B4(u8* self) {
+void eveTalkWinDtorThunk6C(u8* self) {
     ((void (*)(void*))__dt__17CSimpleEveTalkWinFv)((char*)self - 0x6c);
 }
 
-void func_801A29BC(u8* self) {
+void eveTalkWinRenderBeforeThunk(u8* self) {
     ((void (*)(void*))cbRenderBefore__17CSimpleEveTalkWinFv)((char*)self - 0x70);
 }
 
-void func_801A29C4(u8* self) {
+void eveTalkWinDtorThunk70(u8* self) {
     ((void (*)(void*))__dt__17CSimpleEveTalkWinFv)((char*)self - 0x70);
 }

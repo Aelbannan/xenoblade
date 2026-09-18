@@ -11,7 +11,7 @@ class UnkClass_800817BC;
 extern "C" {
 void __ct__cf_CfGimmick(void* self);
 void __dt__Q22cf9CfGimmickFv(void* self, int mode);
-void* func_8003AA34();
+void* Bdat_GetTable_AA34();
 void CfGimmick_LoadBdatAreaPosIndexed(void* self, void* subobj, void* bdat, void* stack, int idx);
 void CfGimmick_LoadBdatAreaRotationIndexed(void* self, void* subobj, void* bdat, void* stack, int idx);
 void CfGimmick_LoadBdatAreaExtentsIndexed(void* self, void* subobj, void* bdat, void* stack, int idx);
@@ -47,10 +47,10 @@ void setLODObject__8CTaskLODFv(u8 lod, u16 id);
 void getLODOrSelf__8CTaskLODFv(u8 lod);
 u16 getLODObject__8CTaskLODFv(u8 lod);
 void* getScnHandle__Fv();
-void func_804BCC30(void* ptr, u8 id);
-void func_804BCC3C(void* ptr, u8 id);
-void* func_804BCC54(void* ptr, u16 id);
-u16 func_804BCC6C(void* ptr, u8 id);
+void ScnData_FwdB7D9C(void* ptr, u8 id);
+void ScnData_FwdB7DD4(void* ptr, u8 id);
+void* ScnData_FwdB80A4(void* ptr, u16 id);
+u16 ScnData_FwdB80CC(void* ptr, u8 id);
 UnkClass_800817BC* createBattleActor__Q22cf13CfGameManagerFv(u32 id, u32 mode);
 void CfSoundMan_ApplySlotStop(int a, u16 b, int c);
 int CfSoundMan_IsRecordActive(int a);
@@ -59,7 +59,7 @@ extern "C" u16 playActorSound__Q22cf10CfSoundManFUlUlUlUlf(u32 a, u32 b, u32 c, 
 void CfSoundMan_WriteSlotParam(u16 id, void* pos);
 void __dl__FPv(void* ptr);
 void __ptmf_scall(void* obj, void* ptmf);
-void func_8020B34C(CfGimmickElvData* self);
+void GimmickElv_InitSubObjects(CfGimmickElvData* self);
 }
 
 // CfGimmickElv field layout (derived from retail ASM analysis)

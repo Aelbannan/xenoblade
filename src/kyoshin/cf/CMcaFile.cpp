@@ -23,7 +23,7 @@ CMcaFile::~CMcaFile() {
     // Nothing to destroy; deletion is handled by MWCC ABI flag
 }
 
-extern "C" void func_800584B8(u8* self, void* data, const char* name) {
+extern "C" void initMcaFile(u8* self, void* data, const char* name) {
     u8* d = (u8*)data;
     s32 hasMagic = 0;
     void* dataAdj = data;

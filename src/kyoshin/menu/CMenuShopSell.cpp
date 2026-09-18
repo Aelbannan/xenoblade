@@ -3,7 +3,14 @@
 
 #include "kyoshin/menu/CMenuShopSell.hpp"
 
-#include "kyoshin/CTaskGame.hpp"
+// CTaskGame.hpp conflicts with CItemBoxGrid.hpp (via CMenuShopSell.hpp) on
+// getLanguage__9CDeviceSCFv (int vs u8). Only the two statics below are
+// used in this TU (same workaround as CMenuGCItem.cpp).
+class CTaskGame {
+public:
+    static CTaskGame* getInstance();
+    static bool isFlag01Set();
+};
 #include "monolib/device/CDeviceVI.hpp"
 #include "monolib/scn/CScn.hpp"
 #include "monolib/util/MemManager.hpp"
@@ -139,8 +146,8 @@ void CMenuShopSell::Term() {
     }
     mScene->removeRenderCB(renderCB);
 
-    func_801C3D9C(&mBgTex);
-    func_801C40A0(&mTitleAHelp);
+    BgTex_Release_3D9C(&mBgTex);
+    teardown(&mTitleAHelp);
     UnloadItemBox(&mItemBoxGrid);
 
     lbl_eu_806642F0 = 0;
@@ -156,7 +163,7 @@ void CMenuShopSell::Move() {
 
     switch (mState) {
     case 0:
-        func_8018B3A8(this);
+        MenuShopSellHandlePhase0(this);
         break;
     case 1:
         func_8018B420(this);
@@ -171,9 +178,9 @@ void CMenuShopSell::Move() {
         break;
     }
 
-    func_801C3D54(&mBgTex);
+    BgTex_Tick_3D54(&mBgTex);
     UpdateItemBox(&mItemBoxGrid);
-    func_801C3FF0(&mTitleAHelp);
+    updateHelp(&mTitleAHelp);
 }
 
 /* Render the shop-sell screen through a stack DrawInfo: gate on the task/busy
@@ -191,9 +198,9 @@ void CMenuShopSell::cbRenderBefore() {
     u8 drawInfo[0x54];
     __ct__Q34nw4r3lyt8DrawInfoFv(&drawInfo[0]);
     func_80137250((nw4r::lyt::DrawInfo*)&drawInfo[0]);
-    func_801C3D7C(&mBgTex, (nw4r::lyt::DrawInfo*)&drawInfo[0]);
+    BgTex_Draw_3D7C(&mBgTex, (nw4r::lyt::DrawInfo*)&drawInfo[0]);
     DrawItemBoxGrid(&mItemBoxGrid, (nw4r::lyt::DrawInfo*)&drawInfo[0]);
-    func_801C4080(&mTitleAHelp, (nw4r::lyt::DrawInfo*)&drawInfo[0]);
+    drawHelp(&mTitleAHelp, (nw4r::lyt::DrawInfo*)&drawInfo[0]);
     __dt__Q34nw4r3lyt8DrawInfoFv(&drawInfo[0], -1);
 }
 
@@ -218,13 +225,13 @@ extern "C" CMenuShopSell* func_8018B324(CProcess* parent, CScn* scene) {
 }
 
 // (lbl_eu_806642F0 != 0)
-extern "C" bool func_8018B398() { return lbl_eu_806642F0 != 0; }
+extern "C" bool MenuShopSellIsCreated() { return lbl_eu_806642F0 != 0; }
 
 /* Phase 0 -> 1 (open): once the background, title bar and item grid are all
  * ready, run the open sequence (title bar + item grid) and play the open
  * sound, then advance the phase byte at 0x4AC4. */
-extern "C" __declspec(noinline) void func_8018B3A8(CMenuShopSell* self) {
-    if (func_801C3E34(&self->mBgTex) != 0 && func_801C4114(&self->mTitleAHelp) != 0 &&
+extern "C" __declspec(noinline) void MenuShopSellHandlePhase0(CMenuShopSell* self) {
+    if (BgTex_IsLoaded_3E34(&self->mBgTex) != 0 && isInitialized(&self->mTitleAHelp) != 0 &&
         IsItemBoxReady(&self->mItemBoxGrid) != 0) {
         func_801C412C(&self->mTitleAHelp);
         func_801CB28C(&self->mItemBoxGrid);
@@ -249,7 +256,7 @@ extern "C" __declspec(noinline) void func_8018B420(CMenuShopSell* self) {
 // branches differ only in the button-bit layout (pointer-input controller vs
 // plain pad); each handler ends by jumping to the shared focus refresh.
 extern "C" __declspec(noinline) void func_8018B470(CMenuShopSell* self) {
-    if (func_8029A658() != 0) return;
+    if (MenuTutorialIsCreated() != 0) return;
 
     ShopSellPadData* pad = getCfPadData__Q22cf13CfGameManagerFv();
     if (isClassicController__Q22cf13CfGameManagerFv(-1) != 0) {
@@ -274,7 +281,7 @@ extern "C" __declspec(noinline) void func_8018B470(CMenuShopSell* self) {
             if (IsItemBoxActive(&self->mItemBoxGrid) != 0) {
                 HandleCancelBtn(&self->mItemBoxGrid, 0);
             } else {
-                func_801C414C(&self->mTitleAHelp);
+                beginClose(&self->mTitleAHelp);
                 AdvanceBoxState(&self->mItemBoxGrid);
                 self->mState = 3;
             }
@@ -313,7 +320,7 @@ extern "C" __declspec(noinline) void func_8018B470(CMenuShopSell* self) {
             if (IsItemBoxActive(&self->mItemBoxGrid) != 0) {
                 HandleCancelBtn(&self->mItemBoxGrid, 0);
             } else {
-                func_801C414C(&self->mTitleAHelp);
+                beginClose(&self->mTitleAHelp);
                 AdvanceBoxState(&self->mItemBoxGrid);
                 self->mState = 3;
             }
@@ -351,12 +358,12 @@ extern "C" __declspec(noinline) void func_8018B658(CMenuShopSell* self) {
 
 // Adjusting thunk: upcasts from secondary base (at offset +0x58 within CMenuShopSell)
 // to the full object, then tail-calls cbRenderBefore.
-extern "C" void func_8018B6A8(void* self) {
+extern "C" void MenuShopSellRenderThunk58(void* self) {
     ((void(*)(void*))cbRenderBefore__13CMenuShopSellFv)((char*)self - 0x58);
 }
 
 // Adjusting thunk: upcasts from secondary base (at offset +0x58 within CMenuShopSell)
 // to the full object, then tail-calls the destructor.
-extern "C" void func_8018B6B0(void* self) {
+extern "C" void MenuShopSellDtorThunk58(void* self) {
     ((void(*)(void*))__dt__13CMenuShopSellFv)((char*)self - 0x58);
 }

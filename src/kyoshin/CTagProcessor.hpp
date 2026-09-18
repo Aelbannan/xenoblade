@@ -948,9 +948,9 @@ void func_801375A0(f32* out, nw4r::lyt::Pane* pane);
 // func_8012615C's C-ABI imports: flat (or pre-mangled) retail names.
 extern "C" void* func_800BBC0C(void* obj);  // talk-source getter (retail r3 = prior call's result)
 extern "C" void func_8004B9D4(void* w, int a, int b, int c, int d);
-u32 func_8009CF8C(u32 id);
-void func_8009D018(u32 owner, u32 value);
-void* func_800451D8(u32 cls, void* param);
+u32 CtrlRemote_TouchBitByArg(u32 id);
+void CtrlRemote_SetSharedBit(u32 owner, u32 value);
+void* bindIndexedEffect(u32 cls, void* param);
 void UIWin_CreateMenuUpdate(u32 a, u32 b, u32 c, u32 d);
 void MenuStateClear6405A();
 u8 code80135FDC_getByte_6405A();

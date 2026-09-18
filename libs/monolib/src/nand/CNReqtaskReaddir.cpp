@@ -48,7 +48,7 @@ extern "C" __declspec(align(8)) const char lbl_eu_80524620[24] = {
 extern "C" u32 lbl_eu_80663B70;   // .sdata foreign base-list (CWorkSystemCache)
 extern "C" void CNReqSaveDeallocIfOpen(); // foreign task helper
 // In-TU helper forward decl (defined below).
-extern "C" s32 func_804DB114(CNReqtaskReaddirVtbl* vtable_ptr, CNReqtaskReaddirData* d);
+extern "C" s32 Readdir_PollState_B114(CNReqtaskReaddirVtbl* vtable_ptr, CNReqtaskReaddirData* d);
 
 // === .sdata size=0x8 align=8 ===
 // RTTI locator: {name-ptr, base-list} (forward-decl of the .data tail below).
@@ -58,7 +58,7 @@ extern "C" u32 lbl_eu_80663B98[2] = { (u32)&lbl_eu_80524620, (u32)&lbl_eu_8056FD
 // === .data size=0x20 align=8 ===
 // Task vtable (16B).
 extern "C" u32 lbl_eu_8056FDA8[4] = {
-    (u32)&lbl_eu_80663B98, 0x00000000, (u32)&func_804DB114, (u32)&CNReqSaveDeallocIfOpen,
+    (u32)&lbl_eu_80663B98, 0x00000000, (u32)&Readdir_PollState_B114, (u32)&CNReqSaveDeallocIfOpen,
 };
 // Base-list tail (16B).
 extern "C" u32 lbl_eu_8056FDB8[4] = {
@@ -68,11 +68,11 @@ extern "C" u32 lbl_eu_8056FDB8[4] = {
 // === .sbss size=0x8 align=8 (zero-fill) ===
 extern "C" u32 lbl_eu_806659F0[2] = {0, 0};
 
-// us-804df3b8: func_804DB0F0
+// us-804df3b8: Readdir_Init_B0F0
 // Configures the CNReqtaskReaddir sub-task: records the entry buffer, max count,
 // directory handle and type filter, resets the async state, clears the entry
 // buffer and directory, then returns the task vtable pointer.
-extern "C" CNReqtaskReaddirVtbl** func_804DB0F0(CNReqtaskReaddirData* d, u32* entries, u32 count, u32* dir, u8 arg) {
+extern "C" CNReqtaskReaddirVtbl** Readdir_Init_B0F0(CNReqtaskReaddirData* d, u32* entries, u32 count, u32* dir, u8 arg) {
     d->mBuf = entries;
     d->mCount = count;
     d->mDir = dir;
@@ -83,14 +83,14 @@ extern "C" CNReqtaskReaddirVtbl** func_804DB0F0(CNReqtaskReaddirData* d, u32* en
     return (CNReqtaskReaddirVtbl**)&lbl_eu_806659F0;
 }
 
-// us-804df3e0: func_804DB114
+// us-804df3e0: Readdir_PollState_B114
 // Async NAND readdir state machine, polled by the CNand completion pump.
 // Advancing one step per call; returns 1 when finished, 2 on error, and 0 while
 // still in progress. Steps:
 //   0 -> begin listing the directory (CNReqSaveNandReadDir)
 //   1 -> read entries into mBuf (CNReqSaveNandReadDir)
 //   2..3 -> finish the listing and report the result
-extern "C" s32 func_804DB114(CNReqtaskReaddirVtbl* vtable_ptr, CNReqtaskReaddirData* d) {
+extern "C" s32 Readdir_PollState_B114(CNReqtaskReaddirVtbl* vtable_ptr, CNReqtaskReaddirData* d) {
     if (lbl_eu_806659D0 != 0) { // NAND subsystem busy
         return 0;
     }

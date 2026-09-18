@@ -50,16 +50,16 @@ extern u8 lbl_eu_8052E444[];
 // CMainMenu.hpp) so TUs that include several of these headers stay legal.
 extern u32 lbl_eu_80664184;      // scene-mode global (u8-narrowed reads)
 extern const f32 lbl_eu_806672C8; // proximity float constant (.sdata2, r2-sda21)
-extern "C" int func_800FF738();  // matches CTaskGame.hpp
-extern "C" u32 func_801B481C();  // canonical u32 form (per CMenuGetItemMulti.cpp def / CVision.hpp)
-extern "C" int func_80293C10();  // matches CMenuQstCnt.hpp (int)
-extern "C" int func_8029A658();  // matches CMainMenu.hpp / CMenuQstCnt.hpp
+extern "C" int CMainMenu_IsOpen();  // matches CTaskGame.hpp
+extern "C" u32 GetItemMulti_IsActiveFlag();  // canonical u32 form (per CMenuGetItemMulti.cpp def / CVision.hpp)
+extern "C" int PTNotice_IsActive_3C10();  // matches CMenuQstCnt.hpp (int)
+extern "C" int MenuTutorialIsCreated();  // matches CMainMenu.hpp / CMenuQstCnt.hpp
 void playUISound(u32);         // mangles to playUISound__FUl
 class CSysWinBuff;
 extern "C" CSysWinBuff* getInstance__11CSysWinBuffFv(); // matches CMainMenu.hpp
-extern "C" u32 func_8009CF8C(u32 resourceId);      // resource getter (CMiniMap.cpp)
-extern "C" u32 func_800FF6BC(u8* ctx, u32 scene);  // menu factory (CMainMenu.cpp)
-extern "C" u32 func_80122450();                    // close-quest-menu gate (CMainMenu.hpp)
+extern "C" u32 CtrlRemote_TouchBitByArg(u32 resourceId);      // resource getter (CMiniMap.cpp)
+extern "C" u32 CMainMenu_Create(u8* ctx, u32 scene);  // menu factory (CMainMenu.cpp)
+extern "C" u32 hasQuestWindow();                    // close-quest-menu gate (CMainMenu.hpp)
 extern char lbl_8066DCF8[4];     // .sbss2 font-name blob (address used as pName)
 // C-library delete operators (flat retail symbols; shared runtime helpers).
 // Canonical void-return form - MUST match the ~100 other __dl__FPv decls
@@ -92,7 +92,7 @@ extern "C" bool isFlag01Set__9CTaskGameFv(CTaskGame* self);
 // classes into this TU).
 extern "C" bool isSceneActive__Q22cf13CfGameManagerFv();
 extern "C" int isAnyFieldFlagSet__Q22cf13CfGameManagerFv();
-extern "C" int func_8011CD5C();
+extern "C" int isQuestLogMenuActive();
 extern "C" bool CMenuArtsSelect_isCreated();
 // Window/IUI helpers (flat retail names; defining TU is CUIWindowManager.cpp).
 extern "C" void UIWin_CreatePTChange(int mode);

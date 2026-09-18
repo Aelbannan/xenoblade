@@ -65,12 +65,12 @@ struct TexDrawSize {
 };
 
 extern "C" {
-void func_804D8B28(void* desktop);
-void func_804D8B30(void* desktop);
-void func_804D8B38(void* draw);
-int func_804D8B4C(void* draw, void* desktop, void* material);
-void func_804D8C18(void* draw);
-void func_804D8C68(void* draw, int a, const void* b);
+void snapTexCursor(void* desktop);
+void restoreTexCursor(void* desktop);
+void initEffectDrawCtx(void* draw);
+int setupEffectDrawCtx(void* draw, void* desktop, void* material);
+void releaseEffectDrawTex(void* draw);
+void blitEffectViewRect(void* draw, int a, const void* b);
 void func_804DF164(void* tex, int index, int cacheIndex, int wrap);
 extern u32 lbl_eu_80665A08; // default clamp-info blob
 extern const f32 lbl_eu_8066B478; // draw-epsilon
@@ -85,7 +85,7 @@ void func_804F3258(s32 texMap, void* drawCtx, const DrawQuad* quad, s16 mode,
                    QuadTexCtx* ctx);
 void func_804F3B60(Mtx44 mtx, s32 update, f32 bottom, f32 top);
 void func_804F4628(s32 update, f32 bottom, f32 top);
-void func_804F3988(s32 mode);
+void DbgSetTevSwapMode(s32 mode);
 // Gradient-shaded textured quad emitter worker (called from func_804F0258).
 // Defined below, after its helpers.
 struct CDrawCtxLocal;
@@ -94,7 +94,7 @@ void func_804F06C4(int texMap, CDrawCtxLocal* drawCtx, const ml::CVec3* pos,
                    int boundFlag, int flag, QuadTexCtx* mtxCtx, u8 mode);
 struct TexScaleParam;
 ml::CMat34* func_804F42A0(int update, TexScaleParam* params);
-void func_804F45EC(const void* src);
+void DbgSetPerspectiveProj(const void* src);
 f32 getWidthScale__9CDeviceVIFv();
 
 // Shared read-only literals (monolibdata2 .sdata2).
@@ -241,17 +241,17 @@ void func_804F0F2C(void* desktop, f32 alpha, const ml::CVec3* pos, const TexDraw
     if (alpha <= lbl_eu_8066B478) return;
     if (clampInfo == NULL) clampInfo = (const void*)&lbl_eu_80665A08;
 
-    func_804D8B28(desktop);
+    snapTexCursor(desktop);
     CDrawCtxLocal draw;
-    func_804D8B38(&draw);
-    if (func_804D8B4C(&draw, desktop, material) != 0) {
+    initEffectDrawCtx(&draw);
+    if (setupEffectDrawCtx(&draw, desktop, material) != 0) {
         if (mtxSrc == NULL || mtxSrc->mTex == NULL || mtxSrc->mIndex < 0) {
-            func_804D8C68(&draw, 0, 0);
+            blitEffectViewRect(&draw, 0, 0);
             func_804F10A0(0, alpha, &draw, pos, reinterpret_cast<const f32*>(size),
                           (s32)1, static_cast<CMarkerDistProvider*>(0),
                           static_cast<QuadTexCtx*>(0), (s32)-1);
         } else {
-            func_804D8C68(&draw, 0, 0);
+            blitEffectViewRect(&draw, 0, 0);
             if (mtxSrc->mTex != NULL) {
                 func_804DF164(mtxSrc->mTex, mtxSrc->mIndex, 1, mtxSrc->mField08);
             }
@@ -259,9 +259,9 @@ void func_804F0F2C(void* desktop, f32 alpha, const ml::CVec3* pos, const TexDraw
                           (s32)1, static_cast<CMarkerDistProvider*>(0),
                           reinterpret_cast<QuadTexCtx*>(mtxSrc), (s32)1);
         }
-        func_804D8C18(&draw);
+        releaseEffectDrawTex(&draw);
     }
-    func_804D8B30(desktop);
+    restoreTexCursor(desktop);
 }
 
 // Float -> u32 bit copy (spill through stack; see floatBits below).
@@ -688,25 +688,25 @@ void func_804F1F18(void* desktop, ml::CVec3* pos, TexDrawSize* size, f32 alpha,
     if (fbW < p.x) p.x = fbW;
     if (fbH < p.y) p.y = fbH;
 
-    func_804D8B28(desktop);
+    snapTexCursor(desktop);
     CDrawCtxLocal draw;
-    func_804D8B38(&draw);
-    if (func_804D8B4C(&draw, desktop, material) != 0) {
+    initEffectDrawCtx(&draw);
+    if (setupEffectDrawCtx(&draw, desktop, material) != 0) {
         if (mtxSrc == NULL || mtxSrc->mTex == NULL || mtxSrc->mIndex < 0) {
-            func_804D8C68(&draw, 0, 0);
+            blitEffectViewRect(&draw, 0, 0);
             func_804F213C(0, &draw, &p, reinterpret_cast<const f32*>(size), -1, NULL,
                           a, fadeMax);
         } else {
-            func_804D8C68(&draw, 0, 0);
+            blitEffectViewRect(&draw, 0, 0);
             if (mtxSrc->mTex != NULL) {
                 func_804DF164(mtxSrc->mTex, mtxSrc->mIndex, 1, mtxSrc->mField08);
             }
             func_804F213C(0, &draw, &p, reinterpret_cast<const f32*>(size), 1, mtxSrc,
                           a, fadeMax);
         }
-        func_804D8C18(&draw);
+        releaseEffectDrawTex(&draw);
     }
-    func_804D8B30(desktop);
+    restoreTexCursor(desktop);
 }
 
 // Main FIFO window used by the direct vertex emitters (WGPIPE).
@@ -955,7 +955,7 @@ void func_804F213C(s32 texMap, void* drawCtx, const ml::CVec3* pos, const f32* r
     }
 }
 
-extern "C" void func_804F2A8C(void* self) {
+extern "C" void DbgZeroTriple(void* self) {
     *(u32*)((u8*)self + 8) = 0;
     *(u32*)((u8*)self + 0) = 0;
     *(u32*)((u8*)self + 4) = 0;
@@ -1006,7 +1006,7 @@ struct CAnim {
     virtual bool v23() = 0; // vptr + 0x64: player availability check
 };
 
-void func_804F2AA0(CAnimPlayerRef* self, CAnim* anim, u32 id) {
+void DbgBindAnimPlayer(CAnimPlayerRef* self, CAnim* anim, u32 id) {
     self->mAnim = anim;
     self->mId = id;
     self->mPlayer = 0;
@@ -1117,10 +1117,10 @@ s32 func_804F2DF0(CAnimPlayerRef* self, ml::CVec3* out) {
 void func_804F2E44(void* desktop, DrawQuad* quad, s32 mode, void* material,
                    TexMtxSrc* mtxSrc) {
     if (quad->field_0xc <= lbl_eu_8066B4F0) return;
-    func_804D8B28(desktop);
+    snapTexCursor(desktop);
     CDrawCtxLocal draw;
-    func_804D8B38(&draw);
-    if (func_804D8B4C(&draw, desktop, material) != 0) {
+    initEffectDrawCtx(&draw);
+    if (setupEffectDrawCtx(&draw, desktop, material) != 0) {
         bool bound = mtxSrc != NULL && mtxSrc->mTex != NULL && mtxSrc->mIndex >= 0;
         bool inside = quad->x >= lbl_eu_8066B4F4 && quad->y >= lbl_eu_8066B4F4 &&
                       quad->z >= lbl_eu_8066B4F4;
@@ -1133,32 +1133,32 @@ void func_804F2E44(void* desktop, DrawQuad* quad, s32 mode, void* material,
                 lbl_eu_80665A80[0] = 1;
             }
             if (inside) {
-                func_804D8C68(&draw, 0, 0);
-                func_804F3988(mode);
+                blitEffectViewRect(&draw, 0, 0);
+                DbgSetTevSwapMode(mode);
             } else if (quad->field_0xc >= lbl_eu_8066B4F4) {
-                func_804F3988(mode);
-                func_804D8C68(&draw, 0, 0);
+                DbgSetTevSwapMode(mode);
+                blitEffectViewRect(&draw, 0, 0);
                 func_804F3258(0, &draw,
                               reinterpret_cast<const DrawQuad*>(lbl_eu_806617F0), -1, NULL);
-                func_804D8C68(&draw, 0, 0);
-                func_804F3988(0);
+                blitEffectViewRect(&draw, 0, 0);
+                DbgSetTevSwapMode(0);
             } else {
                 CDrawCtxLocal sub;
-                func_804D8B38(&sub);
-                if (func_804D8B4C(&sub, draw.field_0x00, NULL) != 0) {
-                    func_804D8C68(&sub, 0, 0);
-                    func_804F3988(mode);
+                initEffectDrawCtx(&sub);
+                if (setupEffectDrawCtx(&sub, draw.field_0x00, NULL) != 0) {
+                    blitEffectViewRect(&sub, 0, 0);
+                    DbgSetTevSwapMode(mode);
                     func_804F3258(0, &sub,
                                   reinterpret_cast<const DrawQuad*>(lbl_eu_806617F0), -1, NULL);
-                    func_804D8C68(&draw, 0, 0);
-                    func_804F3988(0);
+                    blitEffectViewRect(&draw, 0, 0);
+                    DbgSetTevSwapMode(0);
                     func_804F3258(0, &sub,
                                   reinterpret_cast<const DrawQuad*>(lbl_eu_806617F0), -1, NULL);
-                    func_804D8C18(&sub);
+                    releaseEffectDrawTex(&sub);
                 }
             }
             func_804F3258(0, &draw, quad, -1, NULL);
-            func_804F3988(0);
+            DbgSetTevSwapMode(0);
         } else {
             if (lbl_eu_80665A80[0] == 0) {
                 lbl_eu_806617F0[0] = lbl_eu_8066B4F4;
@@ -1168,28 +1168,28 @@ void func_804F2E44(void* desktop, DrawQuad* quad, s32 mode, void* material,
                 lbl_eu_80665A80[0] = 1;
             }
             if (inside) {
-                func_804D8C68(&draw, 0, 0);
-                func_804F3988(mode);
+                blitEffectViewRect(&draw, 0, 0);
+                DbgSetTevSwapMode(mode);
             } else if (quad->field_0xc >= lbl_eu_8066B4F4) {
-                func_804F3988(mode);
-                func_804D8C68(&draw, 0, 0);
+                DbgSetTevSwapMode(mode);
+                blitEffectViewRect(&draw, 0, 0);
                 func_804F3258(0, &draw,
                               reinterpret_cast<const DrawQuad*>(lbl_eu_806617F0), -1, NULL);
-                func_804D8C68(&draw, 0, 0);
-                func_804F3988(0);
+                blitEffectViewRect(&draw, 0, 0);
+                DbgSetTevSwapMode(0);
             } else {
                 CDrawCtxLocal sub;
-                func_804D8B38(&sub);
-                if (func_804D8B4C(&sub, draw.field_0x00, NULL) != 0) {
-                    func_804D8C68(&sub, 0, 0);
-                    func_804F3988(mode);
+                initEffectDrawCtx(&sub);
+                if (setupEffectDrawCtx(&sub, draw.field_0x00, NULL) != 0) {
+                    blitEffectViewRect(&sub, 0, 0);
+                    DbgSetTevSwapMode(mode);
                     func_804F3258(0, &sub,
                                   reinterpret_cast<const DrawQuad*>(lbl_eu_806617F0), -1, NULL);
-                    func_804D8C68(&draw, 0, 0);
-                    func_804F3988(0);
+                    blitEffectViewRect(&draw, 0, 0);
+                    DbgSetTevSwapMode(0);
                     func_804F3258(0, &sub,
                                   reinterpret_cast<const DrawQuad*>(lbl_eu_806617F0), -1, NULL);
-                    func_804D8C18(&sub);
+                    releaseEffectDrawTex(&sub);
                 }
             }
             if (mtxSrc->mTex != NULL) {
@@ -1197,11 +1197,11 @@ void func_804F2E44(void* desktop, DrawQuad* quad, s32 mode, void* material,
             }
             func_804F3258(0, &draw, quad, 1,
                           reinterpret_cast<QuadTexCtx*>(mtxSrc));
-            func_804F3988(0);
+            DbgSetTevSwapMode(0);
         }
-        func_804D8C18(&draw);
+        releaseEffectDrawTex(&draw);
     }
-    func_804D8B30(desktop);
+    restoreTexCursor(desktop);
 }
 
 // Gradient-shaded screen-space quad emitter (called from func_804F2E44).
@@ -1442,7 +1442,7 @@ void func_804F3258(s32 texMap, void* drawCtx, const void* quadData, s32 mode,
 }
 
 // Swap-mode tables indexed by mode: rows are swap table entries 0-3.
-void func_804F3988(s32 mode) {
+void DbgSetTevSwapMode(s32 mode) {
     switch (mode) {
     case 1:
         GXSetTevSwapModeTable(GX_TEV_SWAP0, GX_CH_RED, GX_CH_RED, GX_CH_RED, GX_CH_ALPHA);
@@ -1471,7 +1471,7 @@ void func_804F3988(s32 mode) {
     }
 }
 
-void func_804F3B4C(Mtx mtx, const void* scene) {
+void DbgCopyCamProj(Mtx mtx, const void* scene) {
     Scn_CopyCamProjMatrix(scene, mtx, -1);
 }
 
@@ -1578,7 +1578,7 @@ ml::CMat34* func_804F42A0(int update, TexScaleParam* params) {
 void func_804F0258(void* desktop, DrawQuad* quad, ml::CVec3* dir, TexDrawSize* size,
                    void* material, TexMtxSrc* mtxSrc) {
     if (size->field_0x0c <= lbl_eu_8066B440) return;
-    func_804D8B28(desktop);
+    snapTexCursor(desktop);
 
     // Clamp the direction per axis: up to the unit vector first, then down
     // to the B444 floor (retail order).
@@ -1591,18 +1591,18 @@ void func_804F0258(void* desktop, DrawQuad* quad, ml::CVec3* dir, TexDrawSize* s
     if (v.z < lbl_eu_8066B444) v.z = lbl_eu_8066B444;
 
     CDrawCtxLocal draw;
-    func_804D8B38(&draw);
-    if (func_804D8B4C(&draw, desktop, material) != 0) {
+    initEffectDrawCtx(&draw);
+    if (setupEffectDrawCtx(&draw, desktop, material) != 0) {
         if (!(mtxSrc != NULL && mtxSrc->mTex != NULL && mtxSrc->mIndex >= 0)) {
             // Unbound path.
             if (lbl_eu_8066B448 == v.x && lbl_eu_8066B448 == v.y) {
-                func_804D8C68(&draw, 0, 0);
+                blitEffectViewRect(&draw, 0, 0);
             } else {
                 f32 hiU[3];
                 f32 loU[3];
                 CDrawCtxLocal subU;
-                func_804D8B38(&subU);
-                if (func_804D8B4C(&subU, draw.field_0x00, NULL) != 0) {
+                initEffectDrawCtx(&subU);
+                if (setupEffectDrawCtx(&subU, draw.field_0x00, NULL) != 0) {
                     // Per-axis min/max band for the gradient falloff.
                     f32 t = v.x * lbl_eu_8066B44C;
                     if (t < lbl_eu_8066B448) {
@@ -1623,18 +1623,18 @@ void func_804F0258(void* desktop, DrawQuad* quad, ml::CVec3* dir, TexDrawSize* s
                     loU[2] = v.z;
                     hiU[2] = lbl_eu_8066B448;
 
-                    func_804D8C68(&subU, 0, 0);
+                    blitEffectViewRect(&subU, 0, 0);
                     func_804F06C4(0, &subU, (const ml::CVec3*)&ml::CVec3::zero,
                                   (const f32*)&ml::CVec3::unit, (const f32*)hiU,
                                   (const f32*)&ml::CCol4::white, -1, 0,
                                   (QuadTexCtx*)NULL, 0);
-                    func_804D8C68(&draw, 0, loU);
+                    blitEffectViewRect(&draw, 0, loU);
                     func_804F06C4(0, &subU, (const ml::CVec3*)&ml::CVec3::zero,
                                   (const f32*)&ml::CVec3::unit,
                                   (const f32*)&ml::CVec3::unit,
                                   (const f32*)&ml::CCol4::white, -1, 0,
                                   (QuadTexCtx*)NULL, 0);
-                    func_804D8C18(&subU);
+                    releaseEffectDrawTex(&subU);
                 }
             }
             func_804F06C4(0, &draw, reinterpret_cast<const ml::CVec3*>(quad),
@@ -1643,13 +1643,13 @@ void func_804F0258(void* desktop, DrawQuad* quad, ml::CVec3* dir, TexDrawSize* s
                           (QuadTexCtx*)NULL, 1);
         } else {
             if (lbl_eu_8066B448 == v.x && lbl_eu_8066B448 == v.y) {
-                func_804D8C68(&draw, 0, 0);
+                blitEffectViewRect(&draw, 0, 0);
             } else {
                 CDrawCtxLocal subB;
                 f32 loB[3];
                 f32 hiB[3];
-                func_804D8B38(&subB);
-                if (func_804D8B4C(&subB, draw.field_0x00, NULL) != 0) {
+                initEffectDrawCtx(&subB);
+                if (setupEffectDrawCtx(&subB, draw.field_0x00, NULL) != 0) {
                     f32 t = v.x * lbl_eu_8066B44C;
                     if (t < lbl_eu_8066B448) {
                         loB[0] = t;
@@ -1669,18 +1669,18 @@ void func_804F0258(void* desktop, DrawQuad* quad, ml::CVec3* dir, TexDrawSize* s
                     loB[2] = v.z;
                     hiB[2] = lbl_eu_8066B448;
 
-                    func_804D8C68(&subB, 0, 0);
+                    blitEffectViewRect(&subB, 0, 0);
                     func_804F06C4(0, &subB, (const ml::CVec3*)&ml::CVec3::zero,
                                   (const f32*)&ml::CVec3::unit, (const f32*)hiB,
                                   (const f32*)&ml::CCol4::white, -1, 0,
                                   (QuadTexCtx*)NULL, 0);
-                    func_804D8C68(&draw, 0, loB);
+                    blitEffectViewRect(&draw, 0, loB);
                     func_804F06C4(0, &subB, (const ml::CVec3*)&ml::CVec3::zero,
                                   (const f32*)&ml::CVec3::unit,
                                   (const f32*)&ml::CVec3::unit,
                                   (const f32*)&ml::CCol4::white, -1, 0,
                                   (QuadTexCtx*)NULL, 0);
-                    func_804D8C18(&subB);
+                    releaseEffectDrawTex(&subB);
                 }
             }
             if (mtxSrc->mTex != NULL) {
@@ -1691,9 +1691,9 @@ void func_804F0258(void* desktop, DrawQuad* quad, ml::CVec3* dir, TexDrawSize* s
                           reinterpret_cast<const f32*>(size), 1, 1,
                           reinterpret_cast<QuadTexCtx*>(mtxSrc), 1);
         }
-        func_804D8C18(&draw);
+        releaseEffectDrawTex(&draw);
     }
-    func_804D8B30(desktop);
+    restoreTexCursor(desktop);
 }
 
 
@@ -1747,7 +1747,7 @@ void func_804F06C4(int texMap, CDrawCtxLocal* drawCtx, const ml::CVec3* pos,
             GXSetZMode(GX_TRUE, GX_GEQUAL, GX_FALSE);
             z = -pos->z;
         }
-        func_804F45EC(drawCtx->field_0x00);
+        DbgSetPerspectiveProj(drawCtx->field_0x00);
         f32 depthTan = z * (f32)tan(lbl_eu_8066B458 * persp / lbl_eu_8066B45C);
 
         // Aspect ratio of the GX cache viewport, scaled by device width scale.
@@ -1901,13 +1901,13 @@ void func_804F06C4(int texMap, CDrawCtxLocal* drawCtx, const ml::CVec3* pos,
     }
 }
 
-void func_804F45EC(const void* src) {
+void DbgSetPerspectiveProj(const void* src) {
     Mtx44 m;
     Scn_CopyCamProjMatrix(src, m, -1);
     GXSetProjection(m, GX_PERSPECTIVE);
 }
 
-void func_804F4620(Mtx mtx){ GXSetProjection(mtx, GX_PERSPECTIVE); }
+void DbgPushPerspective(Mtx mtx){ GXSetProjection(mtx, GX_PERSPECTIVE); }
 
 // Projection updater (see func_804F3B60): refreshes the texture-scale table
 // when the cache view is valid, then builds and uploads an ortho projection
@@ -1946,4 +1946,4 @@ void func_804F4628(s32 update, f32 bottom, f32 top) {
     GXSetProjection(m, GX_ORTHOGRAPHIC);
 }
 
-void func_804F4D74(Mtx mtx){ GXSetProjection(mtx, GX_ORTHOGRAPHIC); }
+void DbgPushOrtho(Mtx mtx){ GXSetProjection(mtx, GX_ORTHOGRAPHIC); }

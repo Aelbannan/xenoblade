@@ -520,7 +520,7 @@ struct ActParamRegRec {
 class CScnItemAnim;
 // Name-lookup import (defined in libs/monolib/src/scn/CScnItemAnim.cpp);
 // retail references it under an unmangled symbol.
-extern "C" int func_8049E648(CScnItemAnim* self, const char* name);
+extern "C" int ItemAnim_FindIndex_E648(CScnItemAnim* self, const char* name);
 // Register a stream's record chain into the table's slots; returns 0.
 extern "C" __declspec(noinline) int func_800555EC(CActParamLinkTable* table, CScnItemAnim* anim, ActParamStackNode* node);
 extern "C" int func_800557E8(ActParamStack* self, ActParamStrRec* dst, ActParamStrRec* src);

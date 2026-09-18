@@ -1,8 +1,8 @@
-// The catalog header declares the post-update hook func_804BF940 as (void),
+// The catalog header declares the post-update hook ScnEnvLgt_noopF940 as (void),
 // which conflicts with the real signature (the retail call site passes the
 // data pointer in r3). Rename the catalog's declaration out of the way for
 // every inclusion in this TU so only the correct one is visible.
-#define func_804BF940 func_804BF940_catalog_unused
+#define ScnEnvLgt_noopF940 ScnEnvLgt_noopF940_catalog_unused
 // Auto-scaffolded catalog TU for monolib/src/scn/CScnEnvLgtCtrl
 // Replace stubs with high-level C/C++ during decomp.
 
@@ -26,18 +26,18 @@
 #include <revolution/MTX.h>              // PSMTXConcat / PSMTXIdentity / PSVECNormalize
 #include "monolib/math/CVec3.hpp"        // ml::CVec3::zero
 #include "libs/monolib/src/scn/CScnEnvLgtCtrl.hpp"
-#include "libs/monolib/src/scn/CScnItemModelNw4r.hpp"  // func_8048ECD8 / Scn_GetFrameDelta queries
+#include "libs/monolib/src/scn/CScnItemModelNw4r.hpp"  // getScnRootSlot10 / Scn_GetFrameDelta queries
 #include "monolib/math/CVec4.hpp"       // ml::CVec4 (scnLgtDispatchEnv slot/walk vecs)
-// The catalog header declares the post-update hook func_804BF940 as (void),
+// The catalog header declares the post-update hook ScnEnvLgt_noopF940 as (void),
 // which conflicts with the real signature declared in CScnEnvLgtCtrl.hpp
 // (the retail call site passes the data pointer in r3). Rename the catalog's
 // declaration out of the way so only the correct one is visible.
 #include "monolib/scn/code_804BF59C.hpp"  // CScnEnvLgtData (mAmbColorBase / mFlags)
-#undef func_804BF940
+#undef ScnEnvLgt_noopF940
 // Real signature of the post-update hook (retail passes the data pointer in
 // r3); the catalog header's (void) declaration is renamed out of the way.
-extern "C" void func_804BF940(CScnEnvLgtData* self);
-extern "C" void func_804BF8A8(CScnEnvLgtData* self);
+extern "C" void ScnEnvLgt_noopF940(CScnEnvLgtData* self);
+extern "C" void ScnEnvLgt_ClearLights(CScnEnvLgtData* self);
 #include "monolib/util/MemManager.hpp"    // mtl::MemManager (allocate / deallocate)
 #include "monolib/util/reslist.hpp"       // reslist<T> (embedded light-item list)
 
@@ -107,7 +107,7 @@ extern "C" void scnLgtSetBound(void* self, u32 val) { *(u32*)((u8*)self + 0xa8) 
 void scnLgtGatherLights(CScnEnvLgtCtrl* self, CScnEnvLgtData* data, void* arg,
                    float f) {
     u32 count = 0;
-    func_804BF8A8(data);
+    ScnEnvLgt_ClearLights(data);
     CScnEnvLgtCtrlListNode* node;
     for (node = self->field_0x0C->mNext; node != self->field_0x0C;
          node = node->mNext) {
@@ -121,7 +121,7 @@ void scnLgtGatherLights(CScnEnvLgtCtrl* self, CScnEnvLgtData* data, void* arg,
             count = node->mItem->v15(f, data, arg, count);
         }
     }
-    func_804BF940(data);
+    ScnEnvLgt_noopF940(data);
     data->mActiveLightCount = count;
 }
 
@@ -139,7 +139,7 @@ void scnLgtBindLightArg(CScnEnvLgtCtrl* self, void* arg) {
 
 // scnLgtApplyFogByte (us-804c57d0): set +0x00 bit 0x20 and clear bit 0x10, then
 // walk the light-object ring; every active item (vtable 0x64) receives the
-// scene root (func_8048ECD8) plus the fog-manager byte at +0x28 through
+// scene root (getScnRootSlot10) plus the fog-manager byte at +0x28 through
 // vtable slot 0x34.
 void scnLgtApplyFogByte(CScnEnvLgtCtrl* self) {
     self->flags = (self->flags & ~0x10) | 0x20;
@@ -148,25 +148,25 @@ void scnLgtApplyFogByte(CScnEnvLgtCtrl* self) {
     while (node != self->field_0x0C) {
         if (node->mItem->v23()) {
             owner = (CScnItemModelNw4rOwner*)self->field_0x04_ptr;
-            node->mItem->v11(func_8048ECD8(owner), owner->field_0x78[0x28]);
+            node->mItem->v11(getScnRootSlot10(owner), owner->field_0x78[0x28]);
         }
         node = node->mNext;
     }
 }
 
-extern "C" void func_8048D124(void* a);
-extern "C" void scnLgtDeactLightMan(u8* self, CScnItemModelNw4rEnvLight* lgt) { func_8048D124(*(void**)((u8*)*(void**)((u8*)self + 4) + 0x64)); }
+extern "C" void LightManArmSelectedLight(void* a);
+extern "C" void scnLgtDeactLightMan(u8* self, CScnItemModelNw4rEnvLight* lgt) { LightManArmSelectedLight(*(void**)((u8*)*(void**)((u8*)self + 4) + 0x64)); }
 
 // func_804C172C (us-804c5888): refresh the scene's light manager
-// (func_8048D160 on the owner's +0x64 slot), then clear +0x00 bit 0x40;
+// (LightManDeactivateArmedLight on the owner's +0x64 slot), then clear +0x00 bit 0x40;
 // unless bit 0x20 was set, walk the light-object ring and hand every active
-// item (vtable 0x64) the scene root (func_8048ECD8) through vtable slot
+// item (vtable 0x64) the scene root (getScnRootSlot10) through vtable slot
 // 0x4C, then set bit 0x20 and clear bit 0x10 in +0x00. Finally, when bit
 // 0x400 is set, push the fog constants into scene-root fog slot 0x1E: reset
 // the type, copy the AFE0 color word byte-wise into FogData::color, and set
 // startz/endz (AFE4/AFE8) plus nearz/farz (AFE4/AFE8).
 void func_804C172C(CScnEnvLgtCtrl* self) {
-    func_8048D160(
+    LightManDeactivateArmedLight(
         ((CScnEnvLgtCtrlOwnerLightMan*)self->field_0x04_ptr)->field_0x64);
     u32 flags = self->flags;
     self->flags = flags & ~0x40;
@@ -174,7 +174,7 @@ void func_804C172C(CScnEnvLgtCtrl* self) {
         CScnEnvLgtCtrlListNode* node = self->field_0x0C->mNext;
         while (node != self->field_0x0C) {
             if (node->mItem->v23()) {
-                node->mItem->v17(func_8048ECD8(self->field_0x04_ptr));
+                node->mItem->v17(getScnRootSlot10(self->field_0x04_ptr));
             }
             node = node->mNext;
         }
@@ -186,7 +186,7 @@ void func_804C172C(CScnEnvLgtCtrl* self) {
         // into FogData::color through a stack spill.
         GXColor col = lbl_eu_8066AFE0;
         nw4r::g3d::Fog fog =
-            ((nw4r::g3d::ScnRoot*)func_8048ECD8(self->field_0x04_ptr))
+            ((nw4r::g3d::ScnRoot*)getScnRootSlot10(self->field_0x04_ptr))
                 ->GetFog(0x1e);
         if (fog.ptr() == NULL) {
             nw4r::db::Panic(lbl_eu_8056EC00, 0x41, lbl_eu_8056EBE0);
@@ -228,7 +228,7 @@ void scnLgtEnterMode10(CScnEnvLgtCtrl* self) {
         CScnEnvLgtCtrlListNode* node = self->field_0x0C->mNext;
         while (node != self->field_0x0C) {
             if (node->mItem->v23()) {
-                node->mItem->v16(func_8048ECD8(self->field_0x04_ptr));
+                node->mItem->v16(getScnRootSlot10(self->field_0x04_ptr));
             }
             node = node->mNext;
         }
@@ -247,7 +247,7 @@ void scnLgtEnterMode20(CScnEnvLgtCtrl* self) {
         CScnEnvLgtCtrlListNode* node = self->field_0x0C->mNext;
         while (node != self->field_0x0C) {
             if (node->mItem->v23()) {
-                node->mItem->v17(func_8048ECD8(self->field_0x04_ptr));
+                node->mItem->v17(getScnRootSlot10(self->field_0x04_ptr));
             }
             node = node->mNext;
         }
@@ -264,7 +264,7 @@ void scnLgtPushFogNone(CScnEnvLgtCtrl* self) {
     if (!(flags & 0x40)) {
         self->flags |= 0x40;
         nw4r::g3d::ScnRoot* root =
-            (nw4r::g3d::ScnRoot*)func_8048ECD8(self->field_0x04_ptr);
+            (nw4r::g3d::ScnRoot*)getScnRootSlot10(self->field_0x04_ptr);
         nw4r::g3d::Fog fog = root->GetFog(0);
         if (fog.ptr() == NULL) {
             nw4r::db::Panic(lbl_eu_8056EC00, 0x41, lbl_eu_8056EBE0);
@@ -278,13 +278,13 @@ void scnLgtPushFogNone(CScnEnvLgtCtrl* self) {
 
 // scnLgtScaleLgtRing (us-804c5c58): clear the +0x00 flag bits 0x70, then walk
 // the light-object ring; every active item (vtable 0x64) gets the scene
-// root (func_8048ECD8) plus this function's float through vtable slot 0x50.
+// root (getScnRootSlot10) plus this function's float through vtable slot 0x50.
 void scnLgtScaleLgtRing(CScnEnvLgtCtrl* self, float f) {
     self->flags &= ~0x70;
     CScnEnvLgtCtrlListNode* node = self->field_0x0C->mNext;
     while (node != self->field_0x0C) {
         if (node->mItem->v23()) {
-            node->mItem->v18(func_8048ECD8(self->field_0x04_ptr), f);
+            node->mItem->v18(getScnRootSlot10(self->field_0x04_ptr), f);
         }
         node = node->mNext;
     }
@@ -510,13 +510,13 @@ extern "C" __declspec(noinline) void func_804C22F0(CScnEnvLgtCtrl* self) {
     u32 hitB;
     CScnEnvLgtCtrlListNode* node;
     if (self->flags & 0x100) {
-        func_8049DE68(
+        FogManSetValue08(
             ((CScnItemModelNw4rOwner*)self->field_0x04_ptr)->field_0x78, 2);
     }
     if (self->flags & 0x8) {
         CScnEnvLgtCtrlCamWork* cam =
             ((CScnEnvLgtCtrlOwnerLight*)self->field_0x04_ptr)->field_0x68;
-        func_8049B158(cam, cam->mCamId);
+        CamMan_FindItemA_B158(cam, cam->mCamId);
     }
     flag = 0;
     if (self->flags & 0x80) {
@@ -535,8 +535,8 @@ extern "C" __declspec(noinline) void func_804C22F0(CScnEnvLgtCtrl* self) {
             req.x = v.x;
             req.y = v.y;
             req.z = v.z;
-            if (func_804BE398(&req, 0x6a01, 0, 0, lbl_eu_8066B000)) {
-                if (func_804BE5AC()) {
+            if (ScnRes_VertRayForward_E398(&req, 0x6a01, 0, 0, lbl_eu_8066B000)) {
+                if (ScnRes_HasHighFlagEntry_E5AC()) {
                     flag = 1;
                     if (self->flags & 4) {
                         self->altCnt.flashCounter = 0;
@@ -558,7 +558,7 @@ extern "C" __declspec(noinline) void func_804C22F0(CScnEnvLgtCtrl* self) {
             } else if (self->flags & 4) {
                 flag = 1;
             }
-            if (func_804BE5A0(0x20)) {
+            if (ScnRes_HasFlaggedEntry_E5A0(0x20)) {
                 self->flags |= 0x200;
             } else {
                 self->flags &= ~0x200;
@@ -621,7 +621,7 @@ void scnLgtBindCamera(CScnEnvLgtCtrl* self) {
     CScnEnvLgtCtrlCamWork* cam =
         *(CScnEnvLgtCtrlCamWork**)((u8*)self->field_0x04_ptr + 0x68);
     CScnEnvLgtCtrlCamView* camView =
-        (CScnEnvLgtCtrlCamView*)func_8049B158(cam, cam->mCamId);
+        (CScnEnvLgtCtrlCamView*)CamMan_FindItemA_B158(cam, cam->mCamId);
     CScnEnvLgtCtrlListNode* node = self->field_0x0C->mNext;
     while (node != self->field_0x0C) {
         if (node->mItem->v23()) {
@@ -695,7 +695,7 @@ extern "C" __declspec(noinline) void func_804C26F0(CScnEnvLgtCtrl* self) {
     ((CScnEnvLgtCtrlBits28*)self->field_0x28)->field_0x68 = zero;
     func_80498D98((CScnEnvLgtCtrlBits28*)self->field_0x28);
     ((CScnEnvLgtCtrlBits28*)self->field_0x28)->field_0x58 = four;
-    func_80498DC0((u8*)((CScnEnvLgtCtrlBits28*)self->field_0x28), 1);
+    Blend_SetFlag2((u8*)((CScnEnvLgtCtrlBits28*)self->field_0x28), 1);
     ((CScnEnvLgtCtrlBits28*)self->field_0x28)->field_0x38[0] =
         f32tou32b(lbl_eu_8066AFDC);
     ((CScnEnvLgtCtrlBits28*)self->field_0x28)->field_0x38[1] =
@@ -1218,7 +1218,7 @@ extern "C" __declspec(noinline) void func_804C34A0(CScnEnvLgtCtrl* self,
         acc.w = oneF;
         func_80495644(env, layer);
         func_804952C4(env, (const ml::CVec3*)&acc);
-        func_804956F8(env);
+        resetLightSlotIndex(env);
         if (layer == 1) {
             self->flags |= 0x200;
             ((CScnEnvLgtCtrlLgtView*)self)->field_0x54_pairs[0] = acc.pairs[0];
@@ -1305,7 +1305,7 @@ int func_804C3778(CScnEnvLgtCtrl* self, CScnEnvLgtLightView* view,
             func_804C07F0(view, &out);
         }
         func_804C0484(view, (const u8*)entry + 0xC);
-        func_804C08C8(view, 1);
+        LightCtlSetEnable(view, 1);
         return 1;
     }
     CScnEnvLgtCtrlLgtVec4 out;
@@ -1320,7 +1320,7 @@ int func_804C3778(CScnEnvLgtCtrl* self, CScnEnvLgtLightView* view,
         func_804C03A0(view, 1);
         func_804C07F0(view, &out);
         func_804C0484(view, (const u8*)ctl + 0x30);
-        func_804C08C8(view, 1);
+        LightCtlSetEnable(view, 1);
         return 1;
     }
     return 0;
@@ -1357,9 +1357,9 @@ int func_804C392C(CScnEnvLgtCtrl* self, CScnEnvLgtLightView* view,
         out.w = lbl_eu_8066B014;
         func_804C07F0(view, &out);
         func_804C0454(view, (const u8*)entry);
-        func_804C09E0(view, entry->field_0x34, entry->field_0x28,
+        LightCtlInitDistAttn(view, entry->field_0x34, entry->field_0x28,
                       entry->field_0x2C);
-        func_804C08C8(view, 1);
+        LightCtlSetEnable(view, 1);
         return 1;
     }
     CScnEnvLgtCtrlLgtVec4 out;
@@ -1368,8 +1368,8 @@ int func_804C392C(CScnEnvLgtCtrl* self, CScnEnvLgtLightView* view,
         func_804C03A0(view, 3);
         func_804C07F0(view, &out);
         func_804C0454(view, (const u8*)ctl + 0x30);
-        func_804C09E0(view, ctl->field_0x44, ctl->field_0x48, ctl->field_0x4C);
-        func_804C08C8(view, 1);
+        LightCtlInitDistAttn(view, ctl->field_0x44, ctl->field_0x48, ctl->field_0x4C);
+        LightCtlSetEnable(view, 1);
         return 1;
     }
     return 0;
@@ -1377,7 +1377,7 @@ int func_804C392C(CScnEnvLgtCtrl* self, CScnEnvLgtLightView* view,
 
 // func_804C3AC8 (us-804c7c24): apply a light command with an explicit f1
 // scale (superset of func_804C3778: the entry path also pushes the row's
-// direction pair via func_804C09E0/func_804C0920, and the fallback pushes
+// direction pair via LightCtlInitDistAttn/LightCtlInitSpot, and the fallback pushes
 // the control's +0x44/+0x50 block). Returns 0 when the index bit is already
 // set or func_804C3F58 rejects the control.
 int func_804C3AC8(CScnEnvLgtCtrl* self, CScnEnvLgtLightView* view,
@@ -1406,10 +1406,10 @@ int func_804C3AC8(CScnEnvLgtCtrl* self, CScnEnvLgtLightView* view,
         func_804C07F0(view, &out);
         func_804C0454(view, (const u8*)entry);
         func_804C0484(view, (const u8*)entry + 0xC);
-        func_804C09E0(view, entry->field_0x34, entry->field_0x28,
+        LightCtlInitDistAttn(view, entry->field_0x34, entry->field_0x28,
                       entry->field_0x2C);
-        func_804C0920(view, entry->field_0x38, entry->field_0x30);
-        func_804C08C8(view, 1);
+        LightCtlInitSpot(view, entry->field_0x38, entry->field_0x30);
+        LightCtlSetEnable(view, 1);
         return 1;
     }
     CScnEnvLgtCtrlLgtVec4 out;
@@ -1419,9 +1419,9 @@ int func_804C3AC8(CScnEnvLgtCtrl* self, CScnEnvLgtLightView* view,
         func_804C07F0(view, &out);
         func_804C0454(view, (const u8*)ctl + 0x30);
         func_804C0484(view, (const u8*)ctl + 0x44);
-        func_804C09E0(view, ctl->field_0x50, ctl->field_0x54, ctl->field_0x58);
-        func_804C0920(view, ctl->field_0x5C, ctl->field_0x60);
-        func_804C08C8(view, 1);
+        LightCtlInitDistAttn(view, ctl->field_0x50, ctl->field_0x54, ctl->field_0x58);
+        LightCtlInitSpot(view, ctl->field_0x5C, ctl->field_0x60);
+        LightCtlSetEnable(view, 1);
         return 1;
     }
     return 0;
@@ -1455,7 +1455,7 @@ extern "C" __declspec(noinline) void func_804C3C9C(
             if (radius * radius >= d2) continue;
             func_804C03A0(view, 3);
             func_804C0454(view, (const u8*)&slot->field_0x18);
-            func_804C09E0(view, 0, lbl_eu_8066B020, lbl_eu_8066B024);
+            LightCtlInitDistAttn(view, 0, lbl_eu_8066B020, lbl_eu_8066B024);
             f32 inner = kAtten * radius;
             if (inner * inner < d2) {
                 // Project onto the inner sphere.
@@ -1495,7 +1495,7 @@ extern "C" __declspec(noinline) void func_804C3C9C(
             func_804C07F0(view, &pos);
         }
         self->field_0x130[self->field_0xE4] = zero;
-        func_804C08C8(view, 1);
+        LightCtlSetEnable(view, 1);
         self->field_0xE4++;
     }
 }
@@ -3113,7 +3113,7 @@ extern "C" void scnLgtBuildHeader(CScnEnvLgtCtrlLgtHeader* dst,
 // func_804C6D64 (us-804caec0): fill a light target's config from the
 // 0xd8-byte entry. Bit 0 of the +0x14 control flags rejects the update; the
 // +0x04 switch picks the 4-word config at +0x5C..0x68, +0x58 gets the
-// rodata table word for +0x06, and func_80498DC0 toggles the +0x54 flag
+// rodata table word for +0x06, and Blend_SetFlag2 toggles the +0x54 flag
 // from +0x08. When bits 1-2 of +0x14 are set, blend the selected source row
 // (entry + row*0x20 + 0x38, count = +0x12) into the dst row at +0xB8 with
 // the constant weight; a dst[3] above the .sdata2 sentinel still returns 0.
@@ -3152,7 +3152,7 @@ extern "C" __declspec(noinline) int func_804C6D64(u8* entry,
         break;
     }
     out->field_0x58 = lbl_eu_805244C0[e->field_0x06w];
-    func_80498DC0((u8*)out, e->field_0x08w != 0);
+    Blend_SetFlag2((u8*)out, e->field_0x08w != 0);
     f32* dst = e->field_0xB8_row;
     if (e->field_0x14 & 0x6) {
         f32* src;
@@ -4221,14 +4221,14 @@ u32 func_804C12A4(CScnEnvLgtCtrl* self) {
 // scnLgtDispatchEnv (us-804c5494): per-frame light-env dispatch. Resolves the
 // camera item through the owner's +0x68 camera-work blob, re-inits the four
 // CLightEnv slots (func_80495644 + func_804952C4 with the AFD8/AFDC color
-// pair + func_804956F8), then walks the light-item ring forward dispatching
+// pair + resetLightSlotIndex), then walks the light-item ring forward dispatching
 // v9(env) plus the v12/v13 vec4 queries (applying results through
 // scnVlApplyDir4C / scnVlApplyDir6C on the owner's +0x5C virtual-light manager
 // when they return nonzero), and backward dispatching v10(env,
 // &camItem->field_0x10C) on active items.
 void scnLgtDispatchEnv(CScnVirtualLightSub* sub, CLightEnv* env) {
     CScnEnvLgtCtrl* self = (CScnEnvLgtCtrl*)sub;
-    CScnEnvLgtCtrlCamView* camView = (CScnEnvLgtCtrlCamView*)func_8049B158(
+    CScnEnvLgtCtrlCamView* camView = (CScnEnvLgtCtrlCamView*)CamMan_FindItemA_B158(
         ((CScnEnvLgtCtrlOwnerLight*)self->field_0x04_ptr)->field_0x68,
         ((CScnEnvLgtCtrlOwnerLight*)self->field_0x04_ptr)->field_0x68->mCamId);
     ml::CVec4 v18;   // sp+0x18 ring-walk vec4 (declared first -> higher slot)
@@ -4240,7 +4240,7 @@ void scnLgtDispatchEnv(CScnVirtualLightSub* sub, CLightEnv* env) {
         v8.z = lbl_eu_8066AFD8;
         v8.w = lbl_eu_8066AFDC;
         func_804952C4(env, (const ml::CVec3*)&v8);
-        func_804956F8(env);
+        resetLightSlotIndex(env);
     }
     CScnEnvLgtCtrlListNode* node = self->field_0x0C->mNext;
     while (node != self->field_0x0C) {

@@ -159,14 +159,14 @@ extern "C" float lbl_eu_80664A50;
 extern "C" const float lbl_eu_80668C4C;
 extern "C" const float lbl_eu_80662C78;
 extern "C" const float lbl_eu_80668C48;
-extern "C" void func_8022B7C8(void*, void*);
-extern "C" void func_8022B7F4(void*);
+extern "C" void sysWinDrawLayout(void*, void*);
+extern "C" void sysWinTermLayout(void*);
 // C-exported retail symbol: unmangled reloc name must be emitted at call sites.
-extern "C" void func_80124270(void*, u32);
+extern "C" void setPaneVisible(void*, u32);
 extern "C" int CSysWin_isActive(void*);
-extern "C" void func_8022B8E4(void*);
-extern "C" u32 func_800FEDF8();
-extern "C" void func_800FF914();
+extern "C" void sysWinAdvancePhase3(void*);
+extern "C" u32 CMainMenu_GetInstancePtr();
+extern "C" void ArtsInfo_SetReadyFlag();
 
 // Shared-arc font/text value feeding setLayoutTextBoxFont (unmangled retail symbol).
 extern "C" u32 CUICfManager_getPackedFontD8();
@@ -206,7 +206,7 @@ extern "C" void CSkipTimerActivateTimer(CSkipTimer* self);
 
 class CSysWin;
 // CSysWin per-frame update (retail symbol is unmangled; defined extern "C" in CSysWin.cpp).
-extern "C" void func_8022B748(CSysWin* sysWin);
+extern "C" void sysWinDispatchPhase(CSysWin* sysWin);
 
 // cf::CfGameManager static (retail symbol keeps the Fv suffix from the
 // decompiler guess; the real signature is 3 u32s, see CREvtCamera.cpp).
@@ -214,4 +214,4 @@ extern "C" void func_80086B5C__Q22cf13CfGameManagerFv(u32, u32, u32);
 
 // Window content setters from CSysWin.cpp (retail-unmangled names).
 extern "C" void func_8022B9B4(void* syswin, void* str1, void* str2);
-extern "C" void func_8022B8B8(void* syswin);
+extern "C" void sysWinOpenPhase1(void* syswin);

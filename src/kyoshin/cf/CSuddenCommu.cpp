@@ -12,7 +12,7 @@
 // ml::math::mtRand(int) - mangles to the retail mtRand__Q22ml4mathFi.
 #include "monolib/math/Random.hpp"
 // CBattleManager.hpp currently pulls a conflicting CfObjectActor.hpp decl
-// (func_80149154 overload); use the standalone header chain instead.
+// (findBattleStatusEntry overload); use the standalone header chain instead.
 // NOTE: CVision.hpp omitted - its extern "C" CTaskGame_enumListCtor(void*) clashes
 // with the typed decl reachable via harness_catalog.hpp -> CfObjectImplMove.hpp.
 #include "kyoshin/cf/CCharEffect.hpp" // setChildB59__ (cue release)
@@ -56,7 +56,7 @@ cf::CSuddenCommu::CSuddenCommu() {
 
 // Commu state reset: clears the pairing/state fields and retires the current
 // voice id, then parks the timer at E30 and zeroes the flag word.
-void func_801BA1DC(CSuddenCommu* self) {
+void SuddenCommuResetPairingState(CSuddenCommu* self) {
     self->field_14 = 0;
     self->field_4 = -1;
     self->field_6 = -1;
@@ -75,25 +75,25 @@ void func_801BA1DC(CSuddenCommu* self) {
     *(u32*)&self->field_24 = 0;
 }
 
-extern "C" void func_801BA250(void* self) { *(u32*)((u8*)self + 0x20) = 0; }
+extern "C" void SuddenCommuClearCueSlot(void* self) { *(u32*)((u8*)self + 0x20) = 0; }
 
 // Sudden-commu per-frame driver: only runs while the CfGameManager singleton
-// is absent (getInstance() == 0); otherwise just re-arms (func_801BADE4) and
+// is absent (getInstance() == 0); otherwise just re-arms (SuddenCommuRearmTimer) and
 // ticks (func_801BBCBC), then dispatches the handler selected by field_14
 // through the retail PMF table (12-byte ptmf stride). The const-reference
 // binding keeps MWCC from materializing a stack local - it passes the table
 // entry address straight to __ptmf_scall in r12.
 typedef void (CSuddenCommu::*CSuddenCommuStateFn)();
-void func_801BA25C(CSuddenCommu* self) {
+void SuddenCommuDriveFrame(CSuddenCommu* self) {
     if (isSceneLoading__Q22cf13CfGameManagerFv() != 0) return;
-    func_801BADE4(self);
+    SuddenCommuRearmTimer(self);
     if (func_801BBCBC(self) != 0) return;
     CSuddenCommuStateFn const& pmf =
         *(CSuddenCommuStateFn const*)((u8*)&lbl_eu_80575870[self->field_14 * 3]);
     (self->*pmf)();
 }
 
-unsigned long func_801BA2C8(void* self) {
+unsigned long SuddenCommuIsStateActive(void* self) {
     unsigned long v = *(unsigned long*)((char*)self + 0x14);
     return !!v;
 }
@@ -101,9 +101,9 @@ unsigned long func_801BA2C8(void* self) {
 // Sudden-commu availability gate. Returns 0 while the commu state machine is
 // live (field_14 non-zero) or the battle/voice system is busy, 1 when the
 // commu may start. Read-only - no side effects on self.
-__declspec(noinline) int func_801BA2DC(CSuddenCommu* self) {
+__declspec(noinline) int SuddenCommuCanStart(CSuddenCommu* self) {
     if (self->field_14 != 0) return 0;
-    bool voiceRes = (func_8009CF8C(0x335F) == 0);
+    bool voiceRes = (CtrlRemote_TouchBitByArg(0x335F) == 0);
     if (voiceRes) return 0;
     if (((CSuddenCommuBmView*)getInstance__Q22cf14CBattleManagerFv())->field_1AA != 0) return 0;
     if (((CSuddenCommuBmView*)getInstance__Q22cf14CBattleManagerFv())->field_20C8 != 0) return 0;
@@ -132,7 +132,7 @@ __declspec(noinline) int func_801BA2DC(CSuddenCommu* self) {
 }
 
 // Sudden-commu voice-count sweep: for each of the three player slots, probe
-// the battle object at +0x15E0 via func_80260518 (0x34) and broadcast the
+// the battle object at +0x15E0 via IdTable_QuerySumFloat (0x34) and broadcast the
 // command payload to every idle actor (vtable 0x2BC == 0); accumulate the
 // 0x61 stat into the global voice count and, when the 0x47 stat is present,
 // scale it (lbl_eu_80667E34) and feed each idle actor's 0x11C slot with the
@@ -153,7 +153,7 @@ __declspec(noinline) void func_801BA490(CSuddenCommu* self) {
 
         u32 stat;
         f32 statF;
-        if (func_80260518(obj, 0x34, &stat, &statF) != 0) {
+        if (IdTable_QuerySumFloat(obj, 0x34, &stat, &statF) != 0) {
             CSuddenCommuCmd cmd;
             std::memset(&cmd, 0, sizeof(cmd));
             cmd.field_C = 2;
@@ -204,7 +204,7 @@ __declspec(noinline) void func_801BA490(CSuddenCommu* self) {
 
     if (total != 0) {
         if (self->field_24 & 0x4) total += 0x19;
-        func_8018C820(&((CSuddenCommuBmGauge*)getInstance__Q22cf14CBattleManagerFv())->field_194, total);
+        PartyGaugeAddClamped(&((CSuddenCommuBmGauge*)getInstance__Q22cf14CBattleManagerFv())->field_194, total);
     }
 
     if (self->field_C == 4) {
@@ -263,12 +263,12 @@ __declspec(noinline) void func_801BA490(CSuddenCommu* self) {
     func_80280BF0();
 }
 
-// Sudden-commu state dispatch (called from func_801BB9DC when no 0x20/0x40
+// Sudden-commu state dispatch (called from SuddenCommuDispatchFlags when no 0x20/0x40
 // flag is set). Player slot field_4 selects the actor; then on the actor:
 // state 4 -> full reset + voice-action probe (0x803) and vf314 kick;
 // state 0 -> record state 0xB, probe 0x803 and chain vf308/vf304;
 // otherwise just reset. A missing player also resets.
-__declspec(noinline) void func_801BA978(CSuddenCommu* self) {
+__declspec(noinline) void SuddenCommuResolvePhaseState(CSuddenCommu* self) {
     CSuddenCommuActor* player = (CSuddenCommuActor*)cf::CfGameManager::getPlayer(self->field_4);
     if (player != 0) player = (CSuddenCommuActor*)((char*)player - 0x3E9C);
     if (player != 0) {
@@ -353,7 +353,7 @@ __declspec(noinline) void func_801BA978(CSuddenCommu* self) {
 void func_801BAB94(CSuddenCommu* self, CSuddenCommuActor* attacker,
                    CSuddenCommuActor* target, CSuddenCommuMoveData* move) {
     if (!(attacker->flags3F00 & 0x2)) return;
-    if (func_801BA2DC(self) == 0) return;
+    if (SuddenCommuCanStart(self) == 0) return;
     for (int i = 0; i < 3; i++) {
         void* spot = cf::CfGameManager::getPlayer(i);
         CSuddenCommuActor* player = (CSuddenCommuActor*)spot;
@@ -397,8 +397,8 @@ void func_801BAB94(CSuddenCommu* self, CSuddenCommuActor* attacker,
 // Sudden-commu partner dispatch: gate on the partner-state helper, then pick
 // the match target (the given target when its +0x3F00 bit 0x2 is set, else the
 // attacker) and scan the three player slots for the matching player actor.
-void func_801BAD24(CSuddenCommu* self, CSuddenCommuActor* attacker, CSuddenCommuActor* target) {
-    if (func_801BA2DC(self) == 0) return;
+void SuddenCommuDispatchPartner(CSuddenCommu* self, CSuddenCommuActor* attacker, CSuddenCommuActor* target) {
+    if (SuddenCommuCanStart(self) == 0) return;
     int mode;
     CSuddenCommuActor* match;
     if (target->flags3F00 & 0x2) {
@@ -428,7 +428,7 @@ void func_801BAD24(CSuddenCommu* self, CSuddenCommuActor* attacker, CSuddenCommu
 // were checked, arm the commu again (field_24 |= 1); otherwise run the
 // pre-start gate (voice, battle flags, camera mode, player voice ids) and
 // either re-enter the commu (state 4) or restart the timer.
-extern "C" void func_801BADE4(CSuddenCommu* self) {
+extern "C" void SuddenCommuRearmTimer(CSuddenCommu* self) {
     // Single "current player" slot reused across the probe blocks (retail r30).
     CSuddenCommuActor* player;
     self->field_24 &= ~1;
@@ -482,7 +482,7 @@ extern "C" void func_801BADE4(CSuddenCommu* self) {
             if (flag29 != 0 && count28 >= 2) {
                 self->field_24 |= 1;
             } else if (self->field_14 == 0) {
-                bool voiceRes = (func_8009CF8C(0x335F) == 0);
+                bool voiceRes = (CtrlRemote_TouchBitByArg(0x335F) == 0);
                 if (voiceRes) goto commu_end;
                 if (((CSuddenCommuBmView*)getInstance__Q22cf14CBattleManagerFv())->field_1AA != 0) goto commu_end;
                 if (((CSuddenCommuBmView*)getInstance__Q22cf14CBattleManagerFv())->field_20C8 != 0) goto commu_end;
@@ -631,7 +631,7 @@ __declspec(noinline) void func_801BB464(CSuddenCommu* self, int playerIdx, int t
     }
 }
 
-void func_801BB818() {}
+void SuddenCommuIdleNop() {}
 
 // Battle-state entry (mode 2/3): refresh the actor enum lists, fade the BGM,
 // retire the old voice id and pick the next one, attach a voice-cue object to
@@ -639,7 +639,7 @@ void func_801BB818() {}
 void func_801BB81C(CSuddenCommu* self) {
     CSuddenCommuVoiceCue* cue;
     void* player;
-    func_801BC474(self);
+    SuddenCommuMarkCommuVoices(self);
     func_800EA484((cf::CBattleManager*)getInstance__Q22cf14CBattleManagerFv(), lbl_eu_80667E54, 0x13);
     func_802A35B8(self->field_10);
     self->field_10 = CCharVoiceMan_AllocCommuVoiceId();
@@ -648,7 +648,7 @@ void func_801BB81C(CSuddenCommu* self) {
     if (player != 0) {
         if (player != 0)
             player = (char*)player + 0x3E9C;
-        cue = (CSuddenCommuVoiceCue*)func_800451D8(0xC0, (int)player);
+        cue = (CSuddenCommuVoiceCue*)bindIndexedEffect(0xC0, (int)player);
         self->field_20p = cue;
         if (cue != 0) {
             ((cf::CfObject*)cue)->CfObject_pushRefreshValue(lbl_eu_80667E58);
@@ -676,7 +676,7 @@ void func_801BB81C(CSuddenCommu* self) {
 // re-arm via func_801BC6A4 using the initiator slot constant 0 when +0x04 is
 // set, otherwise the queued partner at +0x06; then advance state (+0x14) to 3
 // (committed even when neither partner id is set).
-void func_801BB91C(CSuddenCommu* self) {
+void SuddenCommuGatePhaseTo3(CSuddenCommu* self) {
     bool missing = !func_802A3748(self->field_10);
     if (missing) {
         if (self->field_4 != 0)
@@ -688,8 +688,8 @@ void func_801BB91C(CSuddenCommu* self) {
 }
 
 // Voice-node gate: if no voice node is registered for the id at +0x10,
-// record state 4 at +0x14 (flag dispatch in func_801BB9DC picks it up).
-void func_801BB998(CSuddenCommu* self) {
+// record state 4 at +0x14 (flag dispatch in SuddenCommuDispatchFlags picks it up).
+void SuddenCommuGatePhaseTo4(CSuddenCommu* self) {
     bool missing = !func_802A3748(self->field_10);
     if (missing) {
         self->field_14 = 4;
@@ -698,8 +698,8 @@ void func_801BB998(CSuddenCommu* self) {
 
 // Flag dispatch: reads the flag word at +0x24. If any of bits 5/6/7
 // (0xE0) are set, dispatch on bit 5 (0x20) -> set flag 0x4 and call
-// func_801BA490, else bit 6 (0x40) -> func_801BA490, else func_801BA978.
-void func_801BB9DC(CSuddenCommu* self) {
+// func_801BA490, else bit 6 (0x40) -> func_801BA490, else SuddenCommuResolvePhaseState.
+void SuddenCommuDispatchFlags(CSuddenCommu* self) {
     u32 flags = self->field_24;
     if ((flags & 0xE0) == 0) return;
     if (flags & 0x20) {
@@ -708,18 +708,18 @@ void func_801BB9DC(CSuddenCommu* self) {
     } else if (flags & 0x40) {
         func_801BA490(self);
     } else {
-        func_801BA978(self);
+        SuddenCommuResolvePhaseState(self);
     }
 }
 
-void func_801BBA14(CSuddenCommu* self) {
+void SuddenCommuPlayPartnerCue6(CSuddenCommu* self) {
     func_801BC6A4(self, self->field_6, 1);
     self->field_14 = 6;
 }
 
-// Same voice-node gate as func_801BB998, but the recorded state depends on
+// Same voice-node gate as SuddenCommuGatePhaseTo4, but the recorded state depends on
 // +0x0A and bit 2 of the +0x24 flag word (0x4).
-void func_801BBA50(CSuddenCommu* self) {
+void SuddenCommuBranchGate7or9(CSuddenCommu* self) {
     bool missing = !func_802A3748(self->field_10);
     if (missing) {
         if (self->field_A == 1 || (self->field_24 & 0x4) == 0) {
@@ -730,45 +730,45 @@ void func_801BBA50(CSuddenCommu* self) {
     }
 }
 
-void func_801BBAB8(CSuddenCommu* self) {
+void SuddenCommuPlayPartnerCue8(CSuddenCommu* self) {
     func_801BC6A4(self, self->field_8, 3);
     self->field_14 = 8;
 }
 
-void func_801BBAF4(CSuddenCommu* self) {
+void SuddenCommuGatePhase9Plain(CSuddenCommu* self) {
     bool missing = !func_802A3748(self->field_10);
     if (missing) {
         self->field_14 = 9;
     }
 }
 
-void func_801BBB38(CSuddenCommu* self) {
+void SuddenCommuPlayInitiatorCue10(CSuddenCommu* self) {
     func_801BC6A4(self, self->field_4, 5);
     self->field_14 = 10;
 }
 
-void func_801BBB74(CSuddenCommu* self) {
+void SuddenCommuVoiceEndGateA(CSuddenCommu* self) {
     bool missing = !func_802A3748(self->field_10);
     if (missing) {
         self->field_14 = 0xD;
     }
 }
 
-void func_801BBBB8(CSuddenCommu* self) {
+void SuddenCommuPlayInitiatorCue12(CSuddenCommu* self) {
     func_801BC6A4(self, self->field_4, 2);
     self->field_14 = 12;
 }
 
-void func_801BBBF4(CSuddenCommu* self) {
+void SuddenCommuVoiceEndGateB(CSuddenCommu* self) {
     bool missing = !func_802A3748(self->field_10);
     if (missing) {
         self->field_14 = 0xD;
     }
 }
 
-// Commu-state initializer (same reset shape as func_801BA1DC) preceded by a
+// Commu-state initializer (same reset shape as SuddenCommuResetPairingState) preceded by a
 // battle-manager voice-volume call that retires cue id 0x13.
-void func_801BBC38(CSuddenCommu* self) {
+void SuddenCommuInitResetState(CSuddenCommu* self) {
     cf::CBattleManager* bm = (cf::CBattleManager*)getInstance__Q22cf14CBattleManagerFv();
     func_800EA484(bm, lbl_eu_80667E38, 0x13);
     self->field_14 = 0;
@@ -780,7 +780,7 @@ void func_801BBC38(CSuddenCommu* self) {
     self->field_E = 0;
     func_802A35B8(self->field_10);
     f32 const v30 = lbl_eu_80667E30;
-    // Volatile accesses chain the retail order (see func_801BA1DC).
+    // Volatile accesses chain the retail order (see SuddenCommuResetPairingState).
     self->field_10 = (u32)-1;
     self->field_18 = v30;
     // Plain (non-volatile) final store: a volatile last store makes MWCC hoist
@@ -840,7 +840,7 @@ int func_801BBCBC(CSuddenCommu* self) {
             if (found != 0) {
                 // Busy actor: retire the voice, reset the commu state, and
                 // drop out of the camera path for this frame.
-                func_801BC590(self);
+                SuddenCommuClearCommuVoices(self);
                 func_800EA484((cf::CBattleManager*)getInstance__Q22cf14CBattleManagerFv(), lbl_eu_80667E38, 0x13);
                 func_800EA484((cf::CBattleManager*)getInstance__Q22cf14CBattleManagerFv(), lbl_eu_80667E38, 0x13);
                 self->field_14 = 0;
@@ -867,7 +867,7 @@ int func_801BBCBC(CSuddenCommu* self) {
         }
         if (camPass) {
             // Camera reached the commu target: full reset and mark ended.
-            func_801BC590(self);
+            SuddenCommuClearCommuVoices(self);
             func_800EA484((cf::CBattleManager*)getInstance__Q22cf14CBattleManagerFv(), lbl_eu_80667E38, 0x13);
             func_800EA484((cf::CBattleManager*)getInstance__Q22cf14CBattleManagerFv(), lbl_eu_80667E38, 0x13);
             self->field_14 = 0;
@@ -937,7 +937,7 @@ int func_801BBCBC(CSuddenCommu* self) {
         } else {
             self->field_24 |= 0x80;
         }
-        func_801BC590(self);
+        SuddenCommuClearCommuVoices(self);
         func_800EA484((cf::CBattleManager*)getInstance__Q22cf14CBattleManagerFv(), lbl_eu_80667E38, 0x13);
         self->field_24 &= ~0x4;
         return 0;
@@ -971,14 +971,14 @@ int func_801BBCBC(CSuddenCommu* self) {
 
 // Two holders keep the retail stack slots (sp+0x10, sp+0x08); sibling scopes
 // end each holder's lifetime at its dtor call like retail.
-void func_801BC474(CSuddenCommu* self) {
+void SuddenCommuMarkCommuVoices(CSuddenCommu* self) {
     {
         CSuddenCommuEnumHolder holder;
         CTaskGame_enumListCtor(&holder);
-        func_800F4A98(CTaskGame_enumListGet(&holder), 0x100, 0);
+        startEnumObjects(CTaskGame_enumListGet(&holder), 0x100, 0);
         for (u32 i = 0; i < ((cf::CfObjEnumList*)CTaskGame_enumListGet(&holder))->mPtrCount; i++) {
             cf::CfObjEnumList* list = (cf::CfObjEnumList*)CTaskGame_enumListGet(&holder);
-            void* p = func_800F6EAC((CfMoveEnumList*)list, i);
+            void* p = getObjectAt((CfMoveEnumList*)list, i);
             CSuddenCommuActor* actor = (CSuddenCommuActor*)p;
             if (p != 0) actor = (CSuddenCommuActor*)((char*)p - 0x3E9C);
             actor->voiceAct.field_3388 |= 0x2;
@@ -988,10 +988,10 @@ void func_801BC474(CSuddenCommu* self) {
     {
         CSuddenCommuEnumHolder holder;
         CTaskGame_enumListCtor(&holder);
-        func_800F4A98(CTaskGame_enumListGet(&holder), 0x20, 0);
+        startEnumObjects(CTaskGame_enumListGet(&holder), 0x20, 0);
         for (u32 i = 0; i < ((cf::CfObjEnumList*)CTaskGame_enumListGet(&holder))->mPtrCount; i++) {
             cf::CfObjEnumList* list = (cf::CfObjEnumList*)CTaskGame_enumListGet(&holder);
-            void* p = func_800F6EAC((CfMoveEnumList*)list, i);
+            void* p = getObjectAt((CfMoveEnumList*)list, i);
             CSuddenCommuActor* actor = (CSuddenCommuActor*)p;
             if (p != 0) actor = (CSuddenCommuActor*)((char*)p - 0x3E9C);
             actor->voiceAct.field_3388 |= 0x2;
@@ -1006,34 +1006,34 @@ void func_801BC474(CSuddenCommu* self) {
 }
 
 // Sudden-commu flag-clear sweep: when field_24 bit 0x2 is set, clear it and
-// call func_801537E0 on every battle actor's voice-act sub-object (+0x3380)
+// call aiActionClearBits0006 on every battle actor's voice-act sub-object (+0x3380)
 // across both enum lists.
-void func_801BC590(CSuddenCommu* self) {
+void SuddenCommuClearCommuVoices(CSuddenCommu* self) {
     if (!(self->field_24 & 0x2)) return;
     self->field_24 &= ~0x2;
     {
         CSuddenCommuEnumHolder holder;
         CTaskGame_enumListCtor(&holder);
-        func_800F4A98(CTaskGame_enumListGet(&holder), 0x100, 0);
+        startEnumObjects(CTaskGame_enumListGet(&holder), 0x100, 0);
         for (u32 i = 0; i < ((cf::CfObjEnumList*)CTaskGame_enumListGet(&holder))->mPtrCount; i++) {
             cf::CfObjEnumList* list = (cf::CfObjEnumList*)CTaskGame_enumListGet(&holder);
-            void* p = func_800F6EAC((CfMoveEnumList*)list, i);
+            void* p = getObjectAt((CfMoveEnumList*)list, i);
             CSuddenCommuActor* actor = (CSuddenCommuActor*)p;
             if (p != 0) actor = (CSuddenCommuActor*)((char*)p - 0x3E9C);
-            func_801537E0(&actor->voiceAct);
+            aiActionClearBits0006(&actor->voiceAct);
         }
         __dt__80043E88(&holder, -1);
     }
     {
         CSuddenCommuEnumHolder holder;
         CTaskGame_enumListCtor(&holder);
-        func_800F4A98(CTaskGame_enumListGet(&holder), 0x20, 0);
+        startEnumObjects(CTaskGame_enumListGet(&holder), 0x20, 0);
         for (u32 i = 0; i < ((cf::CfObjEnumList*)CTaskGame_enumListGet(&holder))->mPtrCount; i++) {
             cf::CfObjEnumList* list = (cf::CfObjEnumList*)CTaskGame_enumListGet(&holder);
-            void* p = func_800F6EAC((CfMoveEnumList*)list, i);
+            void* p = getObjectAt((CfMoveEnumList*)list, i);
             CSuddenCommuActor* actor = (CSuddenCommuActor*)p;
             if (p != 0) actor = (CSuddenCommuActor*)((char*)p - 0x3E9C);
-            func_801537E0(&actor->voiceAct);
+            aiActionClearBits0006(&actor->voiceAct);
         }
         __dt__80043E88(&holder, -1);
     }

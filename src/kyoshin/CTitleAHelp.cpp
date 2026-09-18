@@ -17,19 +17,19 @@
 #include <nw4r/ut.h>
 
 // Retail symbol is unmangled (C linkage); extern "C" keeps the reloc name.
-extern "C" void func_80124270(nw4r::lyt::Pane*, u32);
+extern "C" void setPaneVisible(nw4r::lyt::Pane*, u32);
 
 // Retail keeps these state-machine helpers unmangled (C linkage); declare
-// them extern "C" so the switch in func_801C3FF0 emits the retail relocs.
-extern "C" void func_801C477C(CTitleAHelp*);
-extern "C" void func_801C47F8(CTitleAHelp*);
-extern "C" void func_801C484C(CTitleAHelp*);
-extern "C" void func_801C48E0(CTitleAHelp*);
+// them extern "C" so the switch in updateHelp emits the retail relocs.
+extern "C" void stepOpenAnim(CTitleAHelp*);
+extern "C" void stepShownAnim(CTitleAHelp*);
+extern "C" void stepCloseAnim(CTitleAHelp*);
+extern "C" void stepHiddenAnim(CTitleAHelp*);
 
 // Unmangled retail helper symbols defined below in this TU; global-qualified
 // calls from member functions must bind to these, not to the same-named
 // class members.
-extern "C" void func_801C41C0(CTitleAHelp* self, char* arg);
+extern "C" void setNameText(CTitleAHelp* self, char* arg);
 extern "C" void func_801C41E8(CTitleAHelp* self, u8 arg);
 
 // Retail constructor symbol (extern "C" to avoid MWCC mangling to __ct__11CTitleAHelpFPcUc)
@@ -64,44 +64,44 @@ void CTitleAHelp::CTitleAHelp_load() {
     CDeviceFile::setHandleFlag1(mFileHandle);
 }
 
-void CTitleAHelp::func_801C3FF0() {
+void CTitleAHelp::updateHelp() {
     if(unk28 == 0) return;
     switch(unk2c) {
         case 1:
-            func_801C477C(this);
+            stepOpenAnim(this);
             break;
         case 2:
-            func_801C47F8(this);
+            stepShownAnim(this);
             break;
         case 4:
-            func_801C484C(this);
+            stepCloseAnim(this);
             break;
         case 5:
-            func_801C48E0(this); // retail falls through to Animate (no break)
+            stepHiddenAnim(this); // retail falls through to Animate (no break)
     }
     mLayout->Animate(0);
 }
 
-void CTitleAHelp::func_801C4080(nw4r::lyt::DrawInfo* drawInfo) {
+void CTitleAHelp::drawHelp(nw4r::lyt::DrawInfo* drawInfo) {
     if (unk28 == 0)
         return;
     drawLayout(mLayout, drawInfo, 0, 1);
 }
 
-void CTitleAHelp::func_801C40A0() {
-    func_801390E0(&mFileHandle);
+void CTitleAHelp::teardown() {
+    closeFileHandle(&mFileHandle);
     unk28 = 0;
     if(mLayout != nullptr) {
         delete mLayout;
         mLayout = nullptr;
     }
     releaseArcResourceAccessor(mArcResourceAccessor);
-    unk4.func_8045F778();
+    unk4.deleteRegion();
 }
 
-u8 CTitleAHelp::func_801C4114() { return unk35; }
+u8 CTitleAHelp::isInitialized() { return unk35; }
 
-u8 CTitleAHelp::func_801C411C() {
+u8 CTitleAHelp::isActive() {
 	return unk28;
 }
 
@@ -114,21 +114,21 @@ void CTitleAHelp::func_801C412C() {
     }
 }
 
-void CTitleAHelp::func_801C414C() {
+void CTitleAHelp::beginClose() {
     if (unk2c == 3) {
         unk2c = 4;
         unk36 = 0;
     }
 }
 
-void CTitleAHelp::func_801C416C() {
+void CTitleAHelp::reopenFromClose() {
     if(unk37 != 0 && unk2c == 4) {
         unk2c = 2;
         unk36 = 0;
     }
 }
 
-void CTitleAHelp::func_801C4198() {
+void CTitleAHelp::markReplayClose() {
     if(unk2c == 3) {
         unk2c = 4;
         unk36 = 0;
@@ -137,7 +137,7 @@ void CTitleAHelp::func_801C4198() {
 }
 
 extern char lbl_eu_805054BC[];
-extern "C" void __declspec(noinline) func_801C41C0(CTitleAHelp* self, char* arg) {
+extern "C" void __declspec(noinline) setNameText(CTitleAHelp* self, char* arg) {
     if(self->mLayout == nullptr) return;
     LayoutSetTextBoxFmtValue(self->mLayout, lbl_eu_805054BC + 0x17, arg, 0);
 }
@@ -158,8 +158,8 @@ extern "C" void __declspec(noinline) func_801C41E8(CTitleAHelp* self, u8 arg) {
 
         u16 tableVal = row->cell[i];
         if (tableVal != 0) {
-            func_80124270(self->mLayout->GetRootPane()->FindPaneByName(buf1, true), 1);
-            func_80124270(self->mLayout->GetRootPane()->FindPaneByName(buf2, true), 1);
+            setPaneVisible(self->mLayout->GetRootPane()->FindPaneByName(buf1, true), 1);
+            setPaneVisible(self->mLayout->GetRootPane()->FindPaneByName(buf2, true), 1);
 
             const char* fileID = lbl_eu_805054BC + 0x37;
             if (isClassicController__Q22cf13CfGameManagerFv(-1) != 0) {
@@ -189,8 +189,8 @@ extern "C" void __declspec(noinline) func_801C41E8(CTitleAHelp* self, u8 arg) {
             char* helpText = BdatTouchStringCell(lbl_eu_805054BC + 0x49, lbl_eu_805054BC + 0x57, tableVal);
             LayoutSetTextBoxFmtValue(self->mLayout, buf2, helpText, 0);
         } else {
-            func_80124270(self->mLayout->GetRootPane()->FindPaneByName(buf1, true), 0);
-            func_80124270(self->mLayout->GetRootPane()->FindPaneByName(buf2, true), 0);
+            setPaneVisible(self->mLayout->GetRootPane()->FindPaneByName(buf1, true), 0);
+            setPaneVisible(self->mLayout->GetRootPane()->FindPaneByName(buf2, true), 0);
         }
     }
 
@@ -206,7 +206,7 @@ extern "C" void __declspec(noinline) func_801C41E8(CTitleAHelp* self, u8 arg) {
         sprintf(buf3, lbl_eu_805054BC + 0x2b, i);
 
         nw4r::lyt::TextBox* textBox = (nw4r::lyt::TextBox*)self->mLayout->GetRootPane()->FindPaneByName(buf3, true);
-        if (!func_801C4648(textBox)) return;
+        if (!isPaneVisible(textBox)) return;
 
         if (i == 0) {
             copyVEC3(&oldVec, &textBox->GetTranslate());
@@ -238,7 +238,7 @@ extern "C" void __declspec(noinline) func_801C41E8(CTitleAHelp* self, u8 arg) {
         if (i < 5) {
             sprintf(buf3, lbl_eu_805054BC + 0x2b, i + 1);
             nw4r::lyt::TextBox* nextPane = (nw4r::lyt::TextBox*)self->mLayout->GetRootPane()->FindPaneByName(buf3, true);
-            if (!func_801C4648(nextPane)) return;
+            if (!isPaneVisible(nextPane)) return;
 
             wchar_t firstChar = nextPane->GetString()[0];
             if (firstChar != 0x2b && firstChar != 0xff0b) {
@@ -253,10 +253,10 @@ extern "C" void __declspec(noinline) func_801C41E8(CTitleAHelp* self, u8 arg) {
 void CTitleAHelp::func_801C4654(u32 arg) {
     if(mLayout == nullptr) return;
     nw4r::lyt::Pane* pane = mLayout->GetRootPane()->FindPaneByName(lbl_eu_805054BC + 0x5c, true);
-    func_80124270(pane, arg);
+    setPaneVisible(pane, arg);
 }
 
-extern "C" void func_801C46B4(CTitleAHelp* self, char* arg) {
+extern "C" void setInfoText(CTitleAHelp* self, char* arg) {
     if(self->mLayout == nullptr) return;
     LayoutSetTextBoxFmtValue(self->mLayout, lbl_eu_805054BC + 0x64, arg, 0);
 }
@@ -264,10 +264,10 @@ extern "C" void func_801C46B4(CTitleAHelp* self, char* arg) {
 void CTitleAHelp::func_801C46DC(u32 arg) {
     if(mLayout == nullptr) return;
     nw4r::lyt::Pane* pane = mLayout->GetRootPane()->FindPaneByName(lbl_eu_805054BC + 0x70, true);
-    func_80124270(pane, arg);
+    setPaneVisible(pane, arg);
 }
 
-void CTitleAHelp::func_801C473C(u8 arg) {
+void CTitleAHelp::setActive(u8 arg) {
     unk28 = arg;
 }
 
@@ -277,15 +277,15 @@ extern u32 lbl_eu_80664468;
 extern u32 lbl_eu_80664470;
 extern u32 lbl_eu_80664478;
 extern u32 lbl_eu_80664480;
-extern "C" void func_801C4744(CTitleAHelp* self) {
+extern "C" void applyPaneTevColors(CTitleAHelp* self) {
     PaneMatSetTevColorsByName(self->mLayout, lbl_eu_805054BC + 0x17, &lbl_eu_80664468, &lbl_eu_80664470);
 }
 
-extern "C" void func_801C4760(CTitleAHelp* self) {
+extern "C" void applyPaneTevColorsAlt(CTitleAHelp* self) {
     PaneMatSetTevColorsByName(self->mLayout, lbl_eu_805054BC + 0x17, &lbl_eu_80664478, &lbl_eu_80664480);
 }
 
-extern "C" void __declspec(noinline) func_801C477C(CTitleAHelp* self) {
+extern "C" void __declspec(noinline) stepOpenAnim(CTitleAHelp* self) {
     if(advanceAnimTransform(self->mAnimTrans20, 1.0f)) {
         self->mLayout->SetAnimationEnable(self->mAnimTrans20, 0);
         self->mLayout->SetAnimationEnable(self->mAnimTrans24, 1);
@@ -293,7 +293,7 @@ extern "C" void __declspec(noinline) func_801C477C(CTitleAHelp* self) {
     }
 }
 
-extern "C" void __declspec(noinline) func_801C47F8(CTitleAHelp* self) {
+extern "C" void __declspec(noinline) stepShownAnim(CTitleAHelp* self) {
     if(advanceAnimTransform(self->mAnimTrans24, 1.0f)) {
         self->unk2c = 3;
         self->unk36 = 1;
@@ -301,7 +301,7 @@ extern "C" void __declspec(noinline) func_801C47F8(CTitleAHelp* self) {
     }
 }
 
-extern "C" void __declspec(noinline) func_801C484C(CTitleAHelp* self) {
+extern "C" void __declspec(noinline) stepCloseAnim(CTitleAHelp* self) {
     if(AnimRewindFrame(self->mAnimTrans24, 1.0f)) {
         if(self->unk37 == 0) {
             self->mLayout->SetAnimationEnable(self->mAnimTrans24, 0);
@@ -313,7 +313,7 @@ extern "C" void __declspec(noinline) func_801C484C(CTitleAHelp* self) {
     }
 }
 
-extern "C" void __declspec(noinline) func_801C48E0(CTitleAHelp* self) {
+extern "C" void __declspec(noinline) stepHiddenAnim(CTitleAHelp* self) {
     if(AnimRewindFrame(self->mAnimTrans20, 1.0f)) {
         self->unk2c = 0;
         self->unk36 = 1;
@@ -352,9 +352,9 @@ bool CTitleAHelp::OnFileEvent(CEventFile* pEventFile) {
 
         // Hide the caution pane; retail re-reads layout+0x10 here rather than
         // reusing the root pane held for func_8013676C.
-        func_80124270(mLayout->GetRootPane()->FindPaneByName(&lbl_eu_805054BC[0x70], true), false);
+        setPaneVisible(mLayout->GetRootPane()->FindPaneByName(&lbl_eu_805054BC[0x70], true), false);
 
-        ::func_801C41C0(this, mName); // global (unmangled retail symbol)
+        ::setNameText(this, mName); // global (unmangled retail symbol)
         ::func_801C41E8(this, unk34);
         unk35 = 1;
         unk28 = 1;
@@ -372,24 +372,24 @@ bool CTitleAHelp::OnFileEvent(CEventFile* pEventFile) {
  * Utility functions
  *
  ******************************************************************************/
-bool func_801C4648(nw4r::lyt::Pane* self) {
+bool isPaneVisible(nw4r::lyt::Pane* self) {
     const u8* bytes = reinterpret_cast<const u8*>(self);
     return (bytes[0xBB] & 1) != 0;
 }
 
-// Retail symbol func_801C4B60 is unmangled (C linkage): declare it extern "C"
+// Retail symbol setGXColorS10 is unmangled (C linkage): declare it extern "C"
 // so the definition and sinit's calls all emit the retail reloc name.
-extern "C" void func_801C4B60(GXColorS10*, s16, s16, s16, s16);
+extern "C" void setGXColorS10(GXColorS10*, s16, s16, s16, s16);
 
 void sinit_801C4AE4() {
-    func_801C4B60(reinterpret_cast<GXColorS10*>(&lbl_eu_80664468), 0xa8, 0x52, 0x08, 0x00);
-    func_801C4B60(reinterpret_cast<GXColorS10*>(&lbl_eu_80664470), 0xa8, 0x52, 0x08, 0xff);
+    setGXColorS10(reinterpret_cast<GXColorS10*>(&lbl_eu_80664468), 0xa8, 0x52, 0x08, 0x00);
+    setGXColorS10(reinterpret_cast<GXColorS10*>(&lbl_eu_80664470), 0xa8, 0x52, 0x08, 0xff);
 
-    func_801C4B60(reinterpret_cast<GXColorS10*>(&lbl_eu_80664478), 0x05, 0x80, 0xa6, 0x00);
-    func_801C4B60(reinterpret_cast<GXColorS10*>(&lbl_eu_80664480), 0x05, 0x80, 0xa6, 0xff);
+    setGXColorS10(reinterpret_cast<GXColorS10*>(&lbl_eu_80664478), 0x05, 0x80, 0xa6, 0x00);
+    setGXColorS10(reinterpret_cast<GXColorS10*>(&lbl_eu_80664480), 0x05, 0x80, 0xa6, 0xff);
 }
 
-void __declspec(noinline) func_801C4B60(GXColorS10* color, s16 r, s16 g, s16 b, s16 a) {
+void __declspec(noinline) setGXColorS10(GXColorS10* color, s16 r, s16 g, s16 b, s16 a) {
     color->a = a;
     color->b = b;
     color->g = g;

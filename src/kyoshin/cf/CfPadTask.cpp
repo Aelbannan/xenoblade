@@ -17,10 +17,10 @@ extern "C" {
     extern const float lbl_eu_80667EAC; // 0.3f
     extern const float lbl_eu_80667EB4; // 1.0f
     extern const float lbl_eu_80667EB8; // 0.7f
-    const wchar_t* func_eu_802B1384();
-    const wchar_t* func_eu_802B139C();
-    const wchar_t* func_eu_802B13B4();
-    const wchar_t* func_eu_802B13CC();
+    const wchar_t* getErrMesText04();
+    const wchar_t* getErrMesText05();
+    const wchar_t* getErrMesText06();
+    const wchar_t* getErrMesText07();
     // Retail symbols.txt recovers this as Fv (wrong mangling); call by that name for reloc match.
     void setPad__Q22cf13CfGameManagerFv(int r3, CPad* pPad, u32 r5);
     // Retail sbss singleton (config symbols.txt); mangled spInstance fails reloc name match.
@@ -200,13 +200,13 @@ void CfPadTask::setButtonDisableTime(float f1) {
             //If a controller error persists for more than 9 frames, trigger an error
             if(mErrorFrameCount > MAX_ERROR_FRAMES){
                 if(result == ERROR_WIIMOTE_DISCONNECTED){
-                    CGame::registerControllerErrorEntry(func_eu_802B1384(), this, 0);
+                    CGame::registerControllerErrorEntry(getErrMesText04(), this, 0);
                 }else if(result == ERROR_NUNCHUCK_DISCONNECTED){
-                    CGame::registerControllerErrorEntry(func_eu_802B139C(), this, 0);
+                    CGame::registerControllerErrorEntry(getErrMesText05(), this, 0);
                 }else if(result == ERROR_CLASSIC_CONTROLLER_DISCONNECTED){
-                    CGame::registerControllerErrorEntry(func_eu_802B13B4(), this, 0);
+                    CGame::registerControllerErrorEntry(getErrMesText06(), this, 0);
                 }else if(result == ERROR_NO_EXTENSION){
-                    CGame::registerControllerErrorEntry(func_eu_802B13CC(), this, 0);
+                    CGame::registerControllerErrorEntry(getErrMesText07(), this, 0);
                 }
 
                 mErrorFrameCount = 0;

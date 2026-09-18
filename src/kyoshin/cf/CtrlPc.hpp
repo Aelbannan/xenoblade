@@ -13,7 +13,7 @@ class CtrlPlayerSub3ED4;
 namespace cf { class CCtrlMovePC; }
 // Declared fully in CtrlMovePC.hpp (not includable here - conflicting views);
 // retail C-ABI names for the CCtrlMovePC tick helpers used by func_80097134.
-extern "C" void func_8019956C(cf::CCtrlMovePC* self);
+extern "C" void movePcTopTickDispatch(cf::CCtrlMovePC* self);
 extern "C" void func_8019A9C4(cf::CCtrlMovePC* self);
 
 // ---------------------------------------------------------------------------
@@ -235,14 +235,14 @@ struct CfEnumList {
 // set); cast the shared getInstance result to this at the use sites.
 struct CBattleManagerViewPc {
     u8 _00[0x1A8];
-    u8 mField1A8;            // 0x1A8 chain region (handed to func_8027936C)
+    u8 mField1A8;            // 0x1A8 chain region (handed to CChain_TryActivateChain)
     u8 _1A9[0x1AA - 0x1A9];
     u8 mField1AA;            // 0x1AA battle-state byte
     u8 _1AB[0x20C8 - 0x1AB];
     s16 mField20C8;          // 0x20C8 chain/timer state (signed)
 };
 
-// Object behind func_800FE68C (lbl_eu_80663F14): actor-id word at +0x90E4.
+// Object behind Selector_GetInstance (lbl_eu_80663F14): actor-id word at +0x90E4.
 struct CfObj90E4 {
     u8 _00[0x90E4];
     u32 mField90E4;  // 0x90E4
@@ -261,24 +261,24 @@ extern "C" void* __dt__Q22cf6CtrlPcFv(cf::CtrlPc* obj, int flags);
 // CfObjEnumList stack-holder helpers (retail C-ABI names).
 extern "C" void CTaskGame_enumListCtor(void* holder);
 extern "C" void* CTaskGame_enumListGet(void* holder);
-extern "C" void func_800F4A98(void* list, u32 type, u32 filter);
+extern "C" void startEnumObjects(void* list, u32 type, u32 filter);
 extern "C" void* __ct__800FB044(void* list, f32 radius, void* pos, int arg);
 extern "C" void __dt__80043E88(void* holder, int flags);
-extern "C" void* func_800F6E98(void* list, int index);
+extern "C" void* getObjectIdAt(void* list, int index);
 // CBattleManager singleton + actor-id query helper (retail C-ABI names).
 // Voice/AI-action helpers + C-ABI imports used by the pad-handler funcs.
 // (func_80174C98 comes from CtrlMovePC.hpp.)
 class UnkClass_800821F8View;   // defined below (getCameraDataBlock result view)
 extern "C" void clrAnimEff(void* obj);
 extern "C" void func_8014AC38(void* a, void* b);
-extern "C" void func_8027936C(void* a, int b);
+extern "C" void CChain_TryActivateChain(void* a, int b);
 extern "C" void* __dynamic_cast(void* src, long offset, const void* src_type,
                                 const void* dst_type, void* src2dst);
-extern "C" void* func_800FEDF8(void);
+extern "C" void* CMainMenu_GetInstancePtr(void);
 extern "C" int CBattleMan_ListHasValue(void* bm, void* obj);
 extern "C" void cfCam_andcUnk04(void* obj, u32 mask);
 extern "C" void cfCam_setClear04(void* obj, u32 mask, int flag);
-extern "C" CfObj90E4* func_800FE68C(void);
+extern "C" CfObj90E4* Selector_GetInstance(void);
 // (getCameraDataBlock__Q22cf13CfGameManagerFv: single winning decl on
 // CfGameManagerApi.hpp - canonical UnkClass_800821F8* view; call sites cast
 // to the UnkClass_800821F8View vtable proxy defined below.)
@@ -287,7 +287,7 @@ extern "C" const void* lbl_eu_80661C60;   // __dynamic_cast src typeinfo
 extern "C" const void* lbl_eu_80661BE8;   // __dynamic_cast dst typeinfo
 // In-TU function, C-linkage so the call reloc is the retail name.
 extern "C" void* func_80098694(cf::CtrlPc* self);
-extern "C" u32 func_80098B74(int index);
+extern "C" u32 getPadConfigEntry(int index);
 // getCfObjectPc(CfObjectMove*) (retail mangled name
 // getCfObjectPc__FPQ22cf12CfObjectMove); proper C++ decl so MWCC emits the
 // retail reloc. Returns the player object (CtrlPlayerObj layout at +0x4).
@@ -311,7 +311,7 @@ extern u8 lbl_eu_80527DB0[];
 // Retail CtrlPad vtable data (.data at 0x80527C80), stored manually (novtable).
 extern u8 lbl_eu_80527C80[];
 // CtrlPad ctor pad-config table: 30 u32 entries (0x78 bytes) fed to
-// func_80098BD0(i, tbl[i]) in __ct__cf_CtrlPad.
+// setPadConfigEntry(i, tbl[i]) in __ct__cf_CtrlPad.
 extern u32 lbl_eu_80527C08[];
 
 // ---------------------------------------------------------------------------
@@ -390,10 +390,10 @@ struct ArtsSelStateViewPc {
 extern "C" ArtsSelStateViewPc* CMenuArtsSelect_getSelectState(void);
 extern "C" void bindPartnerO_(void* obj, void* target, u32 child);
 extern "C" void CfObjectMove_setAnimModeArgs(u8* owner, int a, int b, int c, int d); // u8* (not void*) to match CfObjectMove.hpp/CfObjectMoveApi.hpp - distinct extern "C" first-param types are an illegal overload when co-visible
-extern "C" void func_800F6D50(CfEnumList* list, u32 val);
+extern "C" void appendObjectById(CfEnumList* list, u32 val);
 // void* parameter form matches CAIAction.hpp's declaration (two extern "C"
 // overloads of the same name are illegal).
-extern "C" void* func_800F6E08(void* list);
+extern "C" void* findFirstCleanObjectId(void* list);
 // Enum list with the extra word at +0x3030 cleared by func_80098194.
 struct CfListBig : CfEnumList {
     u8 _624[0x3030 - 0x624];
@@ -746,7 +746,7 @@ public:
 extern "C" void __ct__CtrlRemote(void* obj, void* posObj, int arg5);
 extern "C" void __ct__800D10DC(void* obj, void* posObj, void* arg5);
 // Pad-config writer used by the __ct__cf_CtrlPad loop (retail 0x800995A8).
-extern "C" void func_80098BD0(int index, u32 value);
+extern "C" void setPadConfigEntry(int index, u32 value);
 
 extern "C" void* getArtsParamRC2(void* artsSet, int row, int col);
 extern "C" int func_801B202C(void);

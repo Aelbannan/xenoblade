@@ -228,7 +228,7 @@ void CArtsInfo_Draw(CArtsInfo* self, void* drawInfo) {
 
     s8 cursorActive = self->field_0x5A;
     if (cursorActive >= 0) {
-        func_801D20B0(self->mCursor, drawInfo);
+        Cur_DrawLayout(self->mCursor, drawInfo);
     }
 }
 #pragma optimize_for_size off
@@ -363,7 +363,7 @@ void CArtsInfo_ToStateA(CArtsInfo* self) {
     self->field_0x49 = 0;
 
     // Set cursor visibility
-    func_801D216C(self->mCursor, 0);
+    Cur_SetVisible(self->mCursor, 0);
 
     // Real member calls so MWCC emits the retail r12 vtable dispatch
     // (vtable[0x2C] = SetAnimationEnable, vtable[0x38] = Animate).
@@ -387,7 +387,7 @@ void CArtsInfo_ToStateC(CArtsInfo* self) {
     self->field_0x49 = 0;
 
     // Set cursor visibility
-    func_801D216C(self->mCursor, 0);
+    Cur_SetVisible(self->mCursor, 0);
 
     // Bind animations to layout 2
     self->mpLayout2->SetAnimationEnable(self->mpAnimTrans5, false);
@@ -539,7 +539,7 @@ void CArtsInfo_AnimState6(CArtsInfo* self) {
 
     self->field_0x44 = 9;
     self->field_0x49 = 1;
-    func_801D216C(self->mCursor, 1);
+    Cur_SetVisible(self->mCursor, 1);
     CArtsInfo_UpdateCursor(self);
 }
 
@@ -845,8 +845,8 @@ extern "C" __declspec(noinline) int func_80236E6C(CArtsInfo* self, int arg2) {
 
 // CArtsInfo_GetSkill5C - arts skill lookup (flag 0x5C)
 // .text:0x18E0, size 0x58
-// Walks the character-data +0x3534 object: func_8026178C tests whether the
-// skill is reachable, func_8025FB10 returns its summed value (see
+// Walks the character-data +0x3534 object: Counter_TestBit tests whether the
+// skill is reachable, IdTable_SumValues returns its summed value (see
 // code_8025FB10.cpp).
 // extern "C" + noinline: retail callers (func_80237A0C) emit a bl to the
 // unmangled out-of-line symbol; without both, MWCC mangles the call-site
@@ -854,8 +854,8 @@ extern "C" __declspec(noinline) int func_80236E6C(CArtsInfo* self, int arg2) {
 // (float) conversion uses the signed xoris magic (retail codegen).
 extern "C" __declspec(noinline) int CArtsInfo_GetSkill5C(CArtsInfo* self) {
     u8* obj = (u8*)func_8009EC9C(self->field_0x54) + 0x3534;
-    if (func_8026178C(obj, 0x5C) != 0) {
-        return func_8025FB10(obj, 0x5C);
+    if (Counter_TestBit(obj, 0x5C) != 0) {
+        return IdTable_SumValues(obj, 0x5C);
     }
     return 0;
 }
@@ -866,8 +866,8 @@ extern "C" __declspec(noinline) int CArtsInfo_GetSkill5C(CArtsInfo* self) {
 // bl to it (noinline + C linkage keeps the call-site reloc name retail-identical).
 extern "C" __declspec(noinline) u32 CArtsInfo_GetSkill2D(CArtsInfo* self) {
     u8* obj = (u8*)func_8009EC9C(self->field_0x54) + 0x3534;
-    if (func_8026178C(obj, 0x2D) != 0) {
-        return func_8025FB10(obj, 0x2D);
+    if (Counter_TestBit(obj, 0x2D) != 0) {
+        return IdTable_SumValues(obj, 0x2D);
     }
     return 0;
 }
@@ -2567,7 +2567,7 @@ int CArtsInfo::OnFileEvent(CEventFile* event) {
 
         // Detail panes on layout2: hide each extra pane; the message pane's
         // anchor triple is rotated before it is hidden.
-        func_80124270((*(nw4r::lyt::Pane**)((u8*)mpLayout2 + 0x10))->FindPaneByName(&lbl_eu_8050B00C[0x3FC], true), 0);
+        setPaneVisible((*(nw4r::lyt::Pane**)((u8*)mpLayout2 + 0x10))->FindPaneByName(&lbl_eu_8050B00C[0x3FC], true), 0);
         nw4r::lyt::Pane* pn1028 = (*(nw4r::lyt::Pane**)((u8*)mpLayout2 + 0x10))->FindPaneByName(&lbl_eu_8050B00C[0x404], true);
         if (pn1028 != 0) {
             CArtsPanePos* pos = (CArtsPanePos*)((char*)pn1028 + 0x2C);
@@ -2576,12 +2576,12 @@ int CArtsInfo::OnFileEvent(CEventFile* event) {
             pos->y.f = x.f;
             pos->z.f = y.f;
         }
-        func_80124270((*(nw4r::lyt::Pane**)((u8*)mpLayout2 + 0x10))->FindPaneByName(&lbl_eu_8050B00C[0x40B], true), 0);
-        func_80124270((*(nw4r::lyt::Pane**)((u8*)mpLayout2 + 0x10))->FindPaneByName(&lbl_eu_8050B00C[0x378], true), 0);
-        func_80124270((*(nw4r::lyt::Pane**)((u8*)mpLayout2 + 0x10))->FindPaneByName(&lbl_eu_8050B00C[0x184], true), 0);
-        func_80124270((*(nw4r::lyt::Pane**)((u8*)mpLayout2 + 0x10))->FindPaneByName(&lbl_eu_8050B00C[0x413], true), 0);
+        setPaneVisible((*(nw4r::lyt::Pane**)((u8*)mpLayout2 + 0x10))->FindPaneByName(&lbl_eu_8050B00C[0x40B], true), 0);
+        setPaneVisible((*(nw4r::lyt::Pane**)((u8*)mpLayout2 + 0x10))->FindPaneByName(&lbl_eu_8050B00C[0x378], true), 0);
+        setPaneVisible((*(nw4r::lyt::Pane**)((u8*)mpLayout2 + 0x10))->FindPaneByName(&lbl_eu_8050B00C[0x184], true), 0);
+        setPaneVisible((*(nw4r::lyt::Pane**)((u8*)mpLayout2 + 0x10))->FindPaneByName(&lbl_eu_8050B00C[0x413], true), 0);
         nw4r::lyt::Pane* pn238 = (*(nw4r::lyt::Pane**)((u8*)mpLayout2 + 0x10))->FindPaneByName(&lbl_eu_8050B00C[0xEE], true);
-        func_80124270(pn238, 0);
+        setPaneVisible(pn238, 0);
 
         // Snapshot the message pane's two vertex-colour pairs into the sbss
         // colour globals.
@@ -2619,9 +2619,9 @@ int CArtsInfo::OnFileEvent(CEventFile* event) {
         CFileHandle* fh2 = (CFileHandle*)field_0x18;
         void* data = fh2->getData();
         setBdatEntry__5CBdatFUlPv(2, data);
-        func_8003AA34();
+        Bdat_GetTable_AA34();
         field_0x4C = (int)getFP__FPCc(&lbl_eu_8050B00C[1054]);
-        func_8003AA34();
+        Bdat_GetTable_AA34();
         field_0x50 = (int)getFP__FPCc(&lbl_eu_8050B00C[1063]);
         // split1 refresh notification (retail bl at +0x678c)
         func_8023B430(this);
@@ -2637,6 +2637,6 @@ int CArtsInfo::OnFileEvent(CEventFile* event) {
 void sinit_8023BC8C() {
     SplitU32ToS16s(&lbl_eu_80664748, 0);
     SplitU32ToS16s(&lbl_eu_80664750, 0);
-    func_801C4B60(&lbl_eu_80664758, 0xff, 0xff, 0xfa, 0);
-    func_801C4B60(&lbl_eu_80664760, 0x25, 0x8a, 0xce, 0);
+    setGXColorS10(&lbl_eu_80664758, 0xff, 0xff, 0xfa, 0);
+    setGXColorS10(&lbl_eu_80664760, 0x25, 0x8a, 0xce, 0);
 }

@@ -199,8 +199,8 @@ void CMenuBattleChain::Move() {
         mLayout->BindAnimation(mAnim0);
         mLayout->SetAnimationEnable(mAnim0, true);
         mLayout->Animate(0);
-        func_802AAC78(this);
-        func_802AA588(this);
+        tickChainCounter(this);
+        applyChainColorScheme(this);
         break;
     case 1:
         if (advanceAnimTransform(mAnim0, lbl_eu_80668CB4) != 0) {
@@ -227,8 +227,8 @@ void CMenuBattleChain::Move() {
             mLayout->BindAnimation(mAnim3);
             mLayout->SetAnimationEnable(mAnim3, true);
             mLayout->Animate(0);
-            func_802AAC78(this);
-            func_802AA588(this);
+            tickChainCounter(this);
+            applyChainColorScheme(this);
         }
         break;
     case 5:
@@ -286,10 +286,10 @@ body:
  * switch its chain type and return null; otherwise allocate 0xa0 bytes from
  * the work heap, construct the menu and register it under the parent process.
  */
-extern "C" void func_802AA3D0(CMenuBattleChain* self, u8 arg);
+extern "C" void switchChainType(CMenuBattleChain* self, u8 arg);
 CMenuBattleChain* func_802AA2A0(CProcess* parent, CScn* scene, u8 chainType) {
     if (lbl_eu_80664A60 != NULL) {
-        func_802AA3D0(lbl_eu_80664A60, chainType);
+        switchChainType(lbl_eu_80664A60, chainType);
         return NULL;
     }
     u32 heap = CWorkThreadSystem::getWorkMem();
@@ -326,7 +326,7 @@ void requestCancelChain() {
  * one (or either is 8), replay the second anim transform; otherwise switch to
  * the fourth. The new type is stored back at +0x9D.
  */
-extern "C" void func_802AA3D0(CMenuBattleChain* self, u8 arg) {
+extern "C" void switchChainType(CMenuBattleChain* self, u8 arg) {
     if (self->mField9D == arg) {
         self->mField9C = 4;
         self->mAnim2->SetFrame(lbl_eu_80668CB0);
@@ -358,7 +358,7 @@ extern "C" void func_802AA3D0(CMenuBattleChain* self, u8 arg) {
  * the gauge colour pair and the four bar colour pairs (all pane names live
  * in the lbl_eu_8051088C name table at +0xc9..0x133). Type 0 has no scheme.
  */
-extern "C" void func_802AA588(CMenuBattleChain* self) {
+extern "C" void applyChainColorScheme(CMenuBattleChain* self) {
     switch (self->mField9D) {
     case 0:
         break;
@@ -482,7 +482,7 @@ extern "C" void func_802AA588(CMenuBattleChain* self) {
  * below 5, show the "progress" panes; once it reaches 5, clamp it and show the
  * "done" panes instead. Pane visibility is bit 0 of the byte at +0xBB.
  */
-extern "C" void func_802AAC78(CMenuBattleChain* self) {
+extern "C" void tickChainCounter(CMenuBattleChain* self) {
     u8 count = self->mField9E + 1;
     self->mField9E = count;
     if (count >= 5) {
@@ -512,7 +512,7 @@ extern "C" void func_802AAC78(CMenuBattleChain* self) {
  * Retail: subi r3, r3, 0x6c; b __dt__16CMenuBattleChainFv
  * Single-arg cast: delete flag stays in r4 as caller leftover.
  */
-void func_802AB3B8(IWorkEvent* self) {
+void CMenuBattleChain_dtorAdj6C(IWorkEvent* self) {
     ((void (*)(CMenuBattleChain*))__dt__16CMenuBattleChainFv)(
         reinterpret_cast<CMenuBattleChain*>(reinterpret_cast<char*>(self) - 0x6c));
 }
@@ -522,7 +522,7 @@ void func_802AB3B8(IWorkEvent* self) {
  * Retail: subi r3, r3, 0x70; b cbRenderBefore__16CMenuBattleChainFv
  * Flat-symbol cast keeps the 2-insn thunk (member call would inline/expand).
  */
-void func_802AB3C0(IScnRender* self) {
+void CMenuBattleChain_renderBeforeAdj70(IScnRender* self) {
     ((void (*)(CMenuBattleChain*))cbRenderBefore__16CMenuBattleChainFv)(
         reinterpret_cast<CMenuBattleChain*>(reinterpret_cast<char*>(self) - 0x70));
 }
@@ -531,34 +531,34 @@ void func_802AB3C0(IScnRender* self) {
  * IScnRender (+0x70) vtable this-adjusting thunk for ~CMenuBattleChain.
  * Retail: subi r3, r3, 0x70; b __dt__16CMenuBattleChainFv
  */
-void func_802AB3C8(IScnRender* self) {
+void CMenuBattleChain_dtorAdj70(IScnRender* self) {
     ((void (*)(CMenuBattleChain*))__dt__16CMenuBattleChainFv)(
         reinterpret_cast<CMenuBattleChain*>(reinterpret_cast<char*>(self) - 0x70));
 }
 
 // Track the current player and clear both pending toggle flags.
-void func_802AB3D0(CBattleChainMenuState* self) {
+void trackChainPlayer(CBattleChainMenuState* self) {
     self->mPlayer = cf::CfGameManager::getPlayer(0);
     self->mFlag4 = 0;
     self->mFlag5 = 0;
 }
 
 // Consume the pending toggle flags once the arts-select menu is interactable.
-void func_802AB410(CBattleChainMenuState* self) {
+void consumeChainToggles(CBattleChainMenuState* self) {
     if (CMenuArtsSelect_isInteractable()) {
         if (self->mFlag4 != 0) {
-            func_8010433C();
+            CMenuArtsSelect_CreateArtsRef();
             self->mFlag4 = 0;
         }
         if (self->mFlag5 != 0) {
-            func_801043BC();
+            CMenuArtsSelect_ResetSlotAnims();
             self->mFlag5 = 0;
         }
     }
 }
 
 // Disable the arts-select menu, then (re)track the current player.
-void func_802AB474(CBattleChainMenuState* self) {
+void reinitChainPlayer(CBattleChainMenuState* self) {
     CMenuArtsSelect_setDisabled();
     self->mPlayer = cf::CfGameManager::getPlayer(0);
     self->mFlag4 = 0;
@@ -567,7 +567,7 @@ void func_802AB474(CBattleChainMenuState* self) {
 
 // Disable the arts-select menu only when the tracked player changed, then
 // (re)track the current player.
-void func_802AB4B8(CBattleChainMenuState* self) {
+void updateChainPlayer(CBattleChainMenuState* self) {
     if (self->mPlayer != cf::CfGameManager::getPlayer(0)) {
         CMenuArtsSelect_setDisabled();
     }
@@ -598,18 +598,18 @@ bool func_802AB510(CBattleChainMenuState* self, u8* outFlag) {
     return true;
 }
 
-extern "C" void func_802AB590(CBattleChainMenuState* self) { self->mFlag4 = 1; }
+extern "C" void requestArtsRef(CBattleChainMenuState* self) { self->mFlag4 = 1; }
 
 // Whether the chain menu is busy (pending flag or arts-select not ready).
-bool func_802AB59C(CBattleChainMenuState* self) {
+bool isChainMenuBusy(CBattleChainMenuState* self) {
     return self->mFlag4 != 0 || CMenuArtsSelect_isNotReady();
 }
 
-extern "C" void func_802AB5E4(CBattleChainMenuState* self) { self->mFlag5 = 1; }
+extern "C" void requestAnimReset(CBattleChainMenuState* self) { self->mFlag5 = 1; }
 
 // --- hard-symbol stubs (scaffold_hard_symbols) ---
 // Battle-chain pane colour records (zero-init .sbss; values filled at startup
-// by sinit_802AAF24). Pairs are consumed by func_802AA588 per chain type.
+// by sinit_802AAF24). Pairs are consumed by applyChainColorScheme per chain type.
 u16 lbl_eu_80664A68[4];
 u16 lbl_eu_80664A70[4];
 u16 lbl_eu_80664A78[4];

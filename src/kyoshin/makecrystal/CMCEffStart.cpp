@@ -191,7 +191,7 @@ char lbl_eu_805095EC[] =
 "mf10_cry06_chn_out.brlan\0txt_num\0\0\0\0\0\0";
 
 // Kept inline (not promoted to CMCEffStart.hpp): see the NOTE in the header.
-extern "C" void func_80124270(nw4r::lyt::Pane*, u32);
+extern "C" void setPaneVisible(nw4r::lyt::Pane*, u32);
 
 extern u32 CUICfManager_getPackedFont9C();
 
@@ -564,7 +564,7 @@ CMCEffCrystal::CMCEffCrystal(nw4r::lyt::ArcResourceAccessor* pArcResourceAccesso
 
 CMCEffCrystal::~CMCEffCrystal() {}
 
-void CMCEffCrystal::func_80224CE4(){
+void CMCEffCrystal::MCCrystal_BuildLayouts(){
     // String pool: trace 0x175/0x18a/0x1a2, crystal 0x1bb/0x1d1/0x1ea/0x207/0x221, list 0x23b/0x250.
     buildLayout__FPPQ34nw4r3lyt6LayoutPQ34nw4r3lyt19ArcResourceAccessorPCc(&mLayoutC, mArcResourceAccessor, &lbl_eu_805095EC[0x175]);
     bindLayoutAnimTransform__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(mLayoutC, &mAnimTrans10, mArcResourceAccessor, &lbl_eu_805095EC[0x18a]);
@@ -654,7 +654,7 @@ void CMCEffCrystal::startIn() {
         bindInAnimCrystal();
         mAnimTrans1c->SetFrame(lbl_eu_80668550);
         unk5 = 0;
-        func_80124270(mLayout2c->GetRootPane(), 1);
+        setPaneVisible(mLayout2c->GetRootPane(), 1);
     }
 }
 
@@ -688,12 +688,12 @@ void CMCEffCrystal::startSpecial() {
         bindSpecialAnim();
         mAnimTrans24->SetFrame(lbl_eu_80668550);
         unk5 = 0;
-        func_80124270(mLayout2c->GetRootPane(), 0);
+        setPaneVisible(mLayout2c->GetRootPane(), 0);
     }
 }
 
 void CMCEffCrystal::setTraceVisible(u32 arg1) {
-    func_80124270(mLayoutC->GetRootPane()->FindPaneByName(&lbl_eu_805095EC[0x26a], true), arg1);
+    setPaneVisible(mLayoutC->GetRootPane()->FindPaneByName(&lbl_eu_805095EC[0x26a], true), arg1);
 }
 
 void CMCEffCrystal::setCrystalInfo(u16 arg1, u8 arg2) {

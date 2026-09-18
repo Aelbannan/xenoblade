@@ -1,4 +1,4 @@
-// FULL_MATCH: func_802B0F08, func_802B0F10
+// FULL_MATCH: CMenuGCItem_RenderThunk58, CMenuGCItem_DtorThunk58
 
 #include "kyoshin/menu/CMenuGCItem.hpp"
 
@@ -115,8 +115,8 @@ void CMenuGCItem::Term() {
     }
     reinterpret_cast<CScn*>(mParentRef)->removeRenderCB(renderCB);
 
-    func_801C3D9C(&mBgTex);
-    func_801C40A0(&mTitleAHelp);
+    BgTex_Release_3D9C(&mBgTex);
+    teardown(&mTitleAHelp);
     UnloadItemBox(&mItemBoxGrid);
 
     lbl_eu_80664C00 = 0;
@@ -133,7 +133,7 @@ void CMenuGCItem::Move() {
     case 0:
         // Once the bg texture, title bar and item grid are all ready, start
         // the panel intro animations and play the open cue (sound 0x6d).
-        if (func_801C3E34(&mBgTex) != 0 && func_801C4114(&mTitleAHelp) != 0 &&
+        if (BgTex_IsLoaded_3E34(&mBgTex) != 0 && isInitialized(&mTitleAHelp) != 0 &&
             IsItemBoxReady(&mItemBoxGrid) != 0) {
             func_801C412C(&mTitleAHelp);
             func_801CB28C(&mItemBoxGrid);
@@ -158,8 +158,8 @@ void CMenuGCItem::Move() {
         break;
     }
 
-    func_801C3D54(&mBgTex);
-    func_801C3FF0(&mTitleAHelp);
+    BgTex_Tick_3D54(&mBgTex);
+    updateHelp(&mTitleAHelp);
     UpdateItemBox(&mItemBoxGrid);
 }
 
@@ -178,8 +178,8 @@ void CMenuGCItem::cbRenderBefore() {
     u8 drawInfo[0x54];
     __ct__Q34nw4r3lyt8DrawInfoFv(&drawInfo[0]);
     func_80137250((nw4r::lyt::DrawInfo*)&drawInfo[0]);
-    func_801C3D7C(&mBgTex, (nw4r::lyt::DrawInfo*)&drawInfo[0]);
-    func_801C4080(&mTitleAHelp, (nw4r::lyt::DrawInfo*)&drawInfo[0]);
+    BgTex_Draw_3D7C(&mBgTex, (nw4r::lyt::DrawInfo*)&drawInfo[0]);
+    drawHelp(&mTitleAHelp, (nw4r::lyt::DrawInfo*)&drawInfo[0]);
     DrawItemBoxGrid(&mItemBoxGrid, (nw4r::lyt::DrawInfo*)&drawInfo[0]);
     __dt__Q34nw4r3lyt8DrawInfoFv(&drawInfo[0], -1);
 }
@@ -191,22 +191,22 @@ void CMenuGCItem::cbRenderBefore() {
  *
  * Retail: subi r3, r3, 0x58; b cbRenderBefore__11CMenuGCItemFv
  */
-extern "C" void func_802B0F08(void* self) {
+extern "C" void CMenuGCItem_RenderThunk58(void* self) {
     ((void(*)(void*))cbRenderBefore__11CMenuGCItemFv)((char*)self - 0x58);
 }
 
 /**
  * IScnRender vtable this-adjusting thunk for ~CMenuGCItem.
  *
- * Same adjustment as func_802B0F08 but forwards to the destructor.
+ * Same adjustment as CMenuGCItem_RenderThunk58 but forwards to the destructor.
  *
  * Retail: subi r3, r3, 0x58; b __dt__11CMenuGCItemFv
  */
-extern "C" void func_802B0F10(void* self) {
+extern "C" void CMenuGCItem_DtorThunk58(void* self) {
     ((void(*)(void*))__dt__11CMenuGCItemFv)((char*)self - 0x58);
 }
 
-extern "C" int func_802B0D10() {
+extern "C" int CMenuGCItem_IsActive() {
     return lbl_eu_80664C00 != 0;
 }
 

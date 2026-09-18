@@ -13,7 +13,7 @@
 using ml::CVec3;
 
 // scratch bitmap allocator (coli unit); retail symbol is C-linkage
-extern "C" void* func_804B5A68();
+extern "C" void* Coli_GetBitTable_5A68();
 
 // stride-8 threshold slot overlaid at 0x24 by func_8047EEB0
 struct ScnSlot8 {
@@ -524,7 +524,7 @@ extern "C" s32 func_8047EAD4__17UnkClass_8047E110Fv(
     }
     // BFS path: expand from b, collecting the first flagged node's matches
     const Fe48Table& tbl = lbl_eu_80658540;
-    u32* bitmap = (u32*)::func_804B5A68();
+    u32* bitmap = (u32*)::Coli_GetBitTable_5A68();
     memset(bitmap, 0, (((const u16*)m.field_0x8)[a * 3 + 1] >> 5) * 4);
     u16* work = (u16*)tbl.field_0x8;
     u16* frontier = work + cnt;
@@ -661,7 +661,7 @@ extern "C" s32 func_8047EFBC__17UnkClass_8047E110Fv(UnkClass_8047E110* self,
     u16* out, s32 seed, s32 dir = 0) {
     ScnManagerLayout& m = *(ScnManagerLayout*)self;
     const u16* tbl = (const u16*)m.field_0x94;
-    u32* bitmap = (u32*)::func_804B5A68();
+    u32* bitmap = (u32*)::Coli_GetBitTable_5A68();
     u32 v = tbl[seed];
     // per-pass cursor counts and thresholds, filled by the direction select
     s32 cur[2];
@@ -894,7 +894,7 @@ extern "C" s32 func_8047F730__17UnkClass_8047E110Fv(
     UnkClass_8047E110* self, u16* out, s32 count1, s32 count2) {
     ScnManagerLayout& m = *(ScnManagerLayout*)self;
     u16* dist = (u16*)m.field_0x94;
-    u32* bitmap = (u32*)::func_804B5A68();
+    u32* bitmap = (u32*)::Coli_GetBitTable_5A68();
     const WalkSpawnDesc* desc = (const WalkSpawnDesc*)m.field_0x0;
     u16* buf = (u16*)m.field_0x98;
     u16* other = buf + (desc->field_0x10 >> 1) + 10;
@@ -1129,7 +1129,7 @@ extern "C" s32 func_8048020C__17UnkClass_8047E110Fv(UnkClass_8047E110* self,
     }
     ScnWpKey& wp = ((ScnWpKey*)m.field_0x8)[key];
     const Fe48Table& tbl = lbl_eu_80658540;
-    u32* bitmap = (u32*)::func_804B5A68();
+    u32* bitmap = (u32*)::Coli_GetBitTable_5A68();
     memset(bitmap, 0, ((wp.range >> 5) + 1) * 4);
     u16* buf = (u16*)tbl.field_0x8; // distance map, indexed by id-base
     u16* frontier = buf + wp.range; // frontier queue area
@@ -1196,7 +1196,7 @@ extern "C" s32 func_804804DC__17UnkClass_8047E110Fv(UnkClass_8047E110* self,
     u16* work = (u16*)lbl_eu_80658540.field_0x8;
     u16* qA = work + cap; // forward queue half
     u16* qB = qA + cap;   // backward queue half / dist map
-    u32* bitmap = (u32*)::func_804B5A68();
+    u32* bitmap = (u32*)::Coli_GetBitTable_5A68();
     memset(bitmap, 0, ((total >> 5) + 1) * 4);
     work[0] = (u16)seedA;
     work[1] = (u16)seedB;
@@ -1717,7 +1717,7 @@ extern "C" s32 func_80481790__17UnkClass_8047E110Fv(UnkClass_8047E110* self,
     s32 count;
     s32 pass;
     u16* front = (u16*)lbl_eu_80658540.field_0x8;
-    bits = (u32*)::func_804B5A68();
+    bits = (u32*)::Coli_GetBitTable_5A68();
     // size re-read through the manager so the load isn't reused
     memset(bits, 0,
         ((((const WalkSpawnDesc*)mgr.field_0x0)->field_0x0 >> 5) + 1) * 4);
@@ -1867,13 +1867,13 @@ extern "C" bool isNodeInWalkBox__17UnkClass_8047E110Fv(UnkClass_8047E110* self,
 extern "C" bool isNodeAtPosition__17UnkClass_8047E110Fv(UnkClass_8047E110* self,
     const ScnWalkNode* node);
 extern "C" void __dt__18CScnItemCameraNw4rFv();
-extern "C" void func_8049F9A4();
-extern "C" void func_80482048();
-extern "C" void func_80481F9C();
-extern "C" void func_8048204C();
-extern "C" void func_80482040();
-extern "C" void func_80482038();
-extern "C" void func_80481F00();
+extern "C" void ScnCam_NoopVFunc();
+extern "C" void ScnCamNw4r_EmptyHook48();
+extern "C" void ScnCamNw4r_RefreshFrustumB();
+extern "C" void ScnCamNw4r_GetField10Ptr();
+extern "C" void ScnCamNw4r_NullHook40();
+extern "C" void ScnCamNw4r_TestSphereHit();
+extern "C" void ScnCamNw4r_RefreshFrustumA();
 extern "C" u32 lbl_eu_806638A8;   // .sdata RTTI locator (foreign unit)
 extern "C" u32 lbl_eu_806624D8;   // .sdata RTTI locator (foreign unit)
 extern "C" u32 lbl_eu_806638B0;   // .sdata RTTI locator (foreign unit)
@@ -1892,10 +1892,10 @@ extern "C" u32 lbl_eu_8056DC80[4] = {
 };
 extern "C" u32 lbl_eu_8056DC90[10] = {
     (u32)&lbl_eu_806638A8, 0x00000000,
-    (u32)&__dt__18CScnItemCameraNw4rFv, (u32)&func_8049F9A4,
-    (u32)&func_80482048, (u32)&func_80481F9C,
-    (u32)&func_8048204C, (u32)&func_80482040,
-    (u32)&func_80482038, (u32)&func_80481F00,
+    (u32)&__dt__18CScnItemCameraNw4rFv, (u32)&ScnCam_NoopVFunc,
+    (u32)&ScnCamNw4r_EmptyHook48, (u32)&ScnCamNw4r_RefreshFrustumB,
+    (u32)&ScnCamNw4r_GetField10Ptr, (u32)&ScnCamNw4r_NullHook40,
+    (u32)&ScnCamNw4r_TestSphereHit, (u32)&ScnCamNw4r_RefreshFrustumA,
 };
 extern "C" u32 lbl_eu_8056DCB8[5] = {
     (u32)&lbl_eu_806624D8, 0x00000000, (u32)&lbl_eu_806638B0, 0x00000000,

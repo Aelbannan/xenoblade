@@ -14,7 +14,7 @@
 // Imports from code_804E36DC.cpp / CSchedule.cpp (defined there with C
 // linkage; the canonical declarations live in headers that are out of this
 // TU's writable scope).
-extern "C" void func_804E3B08(CSchedule* self);
+extern "C" void schedReleaseAllItems(CSchedule* self);
 extern "C" void func_804E3B6C(CSchedule* self);
 extern "C" void func_804E36DC(CSchedule* self, f32 dt);
 extern "C" void __ct__CSchedule(CSchedule* self);
@@ -110,24 +110,24 @@ extern "C" u32 lbl_eu_80663C28[2] = {
 extern "C" SLResBase* __dt___reslist_base_CSchedule(SLResBase* self, int flag);
 extern "C" SLResBase* __dt__reslist_CSchedule(SLResBase* self, int flag);
 extern "C" SLList* __dt__12ScheduleListFv(SLList* self, int flag);
-extern "C" void func_804E45F4(SLList* self, f32 dt);
-extern "C" void func_804E4718(SLList* self);
-extern "C" void func_804E479C(SLList* self, u8* x);
+extern "C" void SchedList_StepAll(SLList* self, f32 dt);
+extern "C" void SchedList_SweepAll(SLList* self);
+extern "C" void SchedList_SweepMatched(SLList* self, u8* x);
 extern "C" CSchedule* func_804E4830(SLList* self, ScheduleEntry* entries,
                                     u8* p8, u8* pc, u32 fa, u32 fb, u8* p10);
-extern "C" void func_804E498C(SLList* self, CSchedule* x);
-extern "C" void func_804E4A20(SLList* self, u32 x);
-extern "C" void func_804E4AD4(SLList* self, u32 x);
-extern "C" u32 func_804E4B24(SLList* self);
-extern "C" void* func_804E4B48(u8* self);
+extern "C" void SchedList_DropItem(SLList* self, CSchedule* x);
+extern "C" void SchedList_DropByField14(SLList* self, u32 x);
+extern "C" void SchedList_ClearMatchTags(SLList* self, u32 x);
+extern "C" u32 SchedList_TallyItems(SLList* self);
+extern "C" void* SchedList_RingHead(u8* self);
 
 extern "C" __declspec(align(8)) u32 lbl_eu_80570078[12] __attribute__((weak)) = {
     (u32)&lbl_eu_80663C10, 0x00000000,
-    (u32)&__dt__12ScheduleListFv, (u32)&func_804E45F4,
-    (u32)&func_804E4718, (u32)&func_804E479C,
-    (u32)&func_804E4830, (u32)&func_804E498C,
-    (u32)&func_804E4A20, (u32)&func_804E4AD4,
-    (u32)&func_804E4B24, (u32)&func_804E4B48,
+    (u32)&__dt__12ScheduleListFv, (u32)&SchedList_StepAll,
+    (u32)&SchedList_SweepAll, (u32)&SchedList_SweepMatched,
+    (u32)&func_804E4830, (u32)&SchedList_DropItem,
+    (u32)&SchedList_DropByField14, (u32)&SchedList_ClearMatchTags,
+    (u32)&SchedList_TallyItems, (u32)&SchedList_RingHead,
 };
 extern "C" u32 lbl_eu_805700A8[3] = {
     (u32)&lbl_eu_80663C28, 0, 0,
@@ -248,11 +248,11 @@ static u32 slAllocHandle(void) {
     } while (0)
 
 // ---------------------------------------------------------------------------
-// func_804E45F4: step every schedule (func_804E36DC with a delta), then
+// SchedList_StepAll: step every schedule (func_804E36DC with a delta), then
 // remove-and-destroy any schedule whose flags select the removal path
 // (bit 10 set, bit 15 clear).
 // ---------------------------------------------------------------------------
-void func_804E45F4(SLList* self, f32 dt) {
+void SchedList_StepAll(SLList* self, f32 dt) {
     SLNode* node;
     u32 count = 0;
     CSchedule* item;
@@ -303,8 +303,8 @@ void func_804E45F4(SLList* self, f32 dt) {
     }
 }
 
-// func_804E4718: func_804E3B08 on each schedule, guarded by a non-empty list.
-void func_804E4718(SLList* self) {
+// SchedList_SweepAll: schedReleaseAllItems on each schedule, guarded by a non-empty list.
+void SchedList_SweepAll(SLList* self) {
     SLNode* node;
     u32 count = 0;
     SLNode* sentinel;
@@ -317,14 +317,14 @@ void func_804E4718(SLList* self) {
     if (count != 0) {
         node = (*(volatile SLNode**)&self->mRes.mStartNodePtr)->mNext;
         while (node != self->mRes.mStartNodePtr && node != 0) {
-            func_804E3B08((CSchedule*)node->mItem);
+            schedReleaseAllItems((CSchedule*)node->mItem);
             node = node->mNext;
         }
     }
 }
 
-// func_804E479C: func_804E3B6C on each schedule whose field_0x10 matches x.
-void func_804E479C(SLList* self, u8* x) {
+// SchedList_SweepMatched: func_804E3B6C on each schedule whose field_0x10 matches x.
+void SchedList_SweepMatched(SLList* self, u8* x) {
     SLNode* node;
     u32 count = 0;
     SLNode* sentinel;
@@ -408,8 +408,8 @@ CSchedule* func_804E4830(SLList* self, ScheduleEntry* entries,
     return p;
 }
 
-// func_804E498C: find node holding x, destroy x, unlink the node.
-void func_804E498C(SLList* self, CSchedule* x) {
+// SchedList_DropItem: find node holding x, destroy x, unlink the node.
+void SchedList_DropItem(SLList* self, CSchedule* x) {
     SLNode* node;
     SLNode* sentinel;
     if (x == 0) return;
@@ -433,9 +433,9 @@ void func_804E498C(SLList* self, CSchedule* x) {
     }
 }
 
-// func_804E4A20: remove first node whose item's field_0x14 matches x;
+// SchedList_DropByField14: remove first node whose item's field_0x14 matches x;
 // field_0x18 match clears instead.
-void func_804E4A20(SLList* self, u32 x) {
+void SchedList_DropByField14(SLList* self, u32 x) {
     SLNode* node;
     SLNode* cur;
     CSchedule* item;
@@ -465,8 +465,8 @@ void func_804E4A20(SLList* self, u32 x) {
     }
 }
 
-// func_804E4AD4: clear any schedule's field_0x14/field_0x18 that matches x.
-void func_804E4AD4(SLList* self, u32 x) {
+// SchedList_ClearMatchTags: clear any schedule's field_0x14/field_0x18 that matches x.
+void SchedList_ClearMatchTags(SLList* self, u32 x) {
     u32 zero = 0;
     SLNode* cur;
     SLNode* node;
@@ -486,8 +486,8 @@ void func_804E4AD4(SLList* self, u32 x) {
     }
 }
 
-// func_804E4B24: count the schedules in the ring (excludes the sentinel).
-u32 func_804E4B24(SLList* self) {
+// SchedList_TallyItems: count the schedules in the ring (excludes the sentinel).
+u32 SchedList_TallyItems(SLList* self) {
     SLNode* node;
     SLNode* sentinel;
     u32 count = 0;
@@ -500,8 +500,8 @@ u32 func_804E4B24(SLList* self) {
     return count;
 }
 
-// func_804E4B48: walk the sentinel ring back to its head.
-void* func_804E4B48(u8* self) {
+// SchedList_RingHead: walk the sentinel ring back to its head.
+void* SchedList_RingHead(u8* self) {
     u8* head = *(u8**)((u8*)self + 8);
     u8* cur = *(u8**)head;
     while (cur != head) {
@@ -656,8 +656,8 @@ SLList* __dt__12ScheduleListFv(SLList* self, int flag) {
     return self;
 }
 
-// func_804E4D58: terminate the global schedule lists.
-void func_804E4D58(u32 x) {
+// SchedList_TeardownAll: terminate the global schedule lists.
+void SchedList_TeardownAll(u32 x) {
     if (x != 0) {
         if (lbl_eu_80665A54 != 0) {
             if (lbl_eu_80665A54 != 0) {
@@ -674,8 +674,8 @@ void func_804E4D58(u32 x) {
     }
 }
 
-// func_804E4E38: advance both global schedule lists (vtable 0x10).
-void func_804E4E38() {
+// SchedList_AdvanceBoth: advance both global schedule lists (vtable 0x10).
+void SchedList_AdvanceBoth() {
     SLList* a = lbl_eu_80665A50;
     if (a != 0) {
         ((SLDispatch*)a)->updateAll();
@@ -686,8 +686,8 @@ void func_804E4E38() {
     }
 }
 
-// func_804E4DD4: forward delta to both global schedule lists (vtable 0xc).
-void func_804E4DD4(f32 x) {
+// SchedList_StepBoth: forward delta to both global schedule lists (vtable 0xc).
+void SchedList_StepBoth(f32 x) {
     SLList* a = lbl_eu_80665A50;
     if (a != 0) {
         ((SLDispatch*)a)->step(x);
@@ -698,8 +698,8 @@ void func_804E4DD4(f32 x) {
     }
 }
 
-// func_804E4E8C: hand an argument to both global schedule lists (vtable 0x14).
-void func_804E4E8C(u32 x) {
+// SchedList_FindBoth: hand an argument to both global schedule lists (vtable 0x14).
+void SchedList_FindBoth(u32 x) {
     SLList* a = lbl_eu_80665A50;
     if (a != 0) {
         ((SLDispatch*)a)->find((void*)x);
@@ -710,8 +710,8 @@ void func_804E4E8C(u32 x) {
     }
 }
 
-// func_804E4EF8: route an add-schedule request to one of the two lists.
-void func_804E4EF8(u32 p0, u32 p1, u32 p2, u32 p3, u32 p4, u32 p5) {
+// SchedList_RouteAddReq: route an add-schedule request to one of the two lists.
+void SchedList_RouteAddReq(u32 p0, u32 p1, u32 p2, u32 p3, u32 p4, u32 p5) {
     SLList* list;
     u32 use54 = 0;
     if (((lbl_eu_8065FC18[0] >> 12) & 1) != 0 && p4 == 0) {
@@ -762,8 +762,8 @@ void __ct__804E4F9C() {
     }
 }
 
-// func_804E536C: forward an argument to both global schedule lists (vtable 0x1c).
-void func_804E536C(u32 x) {
+// SchedList_DropBoth: forward an argument to both global schedule lists (vtable 0x1c).
+void SchedList_DropBoth(u32 x) {
     SLList* a = lbl_eu_80665A50;
     if (a != 0) {
         ((SLDispatch*)a)->removeItem((CSchedule*)x);
@@ -774,8 +774,8 @@ void func_804E536C(u32 x) {
     }
 }
 
-// func_804E53D8: sum the per-list counts reported by both global lists.
-u32 func_804E53D8() {
+// SchedList_TallyBoth: sum the per-list counts reported by both global lists.
+u32 SchedList_TallyBoth() {
     u32 total = 0;
     SLList* a = lbl_eu_80665A50;
     if (a != 0) {

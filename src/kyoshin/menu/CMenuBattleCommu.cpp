@@ -286,7 +286,7 @@ draw:
 // `parent`. The singleton store + Regist run even when the allocation failed
 // (r3 stays NULL).
 // ---------------------------------------------------------------------------
-CMenuBattleCommu* func_801B0E0C(CProcess* parent, CScn* scene) {
+CMenuBattleCommu* battleCommuCreateRegister(CProcess* parent, CScn* scene) {
     if (lbl_eu_80664390 != 0) {
         return 0;
     }
@@ -309,7 +309,7 @@ CMenuBattleCommu* func_801B0E0C(CProcess* parent, CScn* scene) {
 // then 0x8C enabled), reset the 0x8C animation frame, mark state 6 and play
 // the "open" cue.
 // ---------------------------------------------------------------------------
-void func_801B0E88() {
+void battleCommuDisableAnims() {
     CMenuBattleCommu* self = lbl_eu_80664390;
     if (self == 0) {
         return;
@@ -333,7 +333,7 @@ void func_801B0E88() {
 
 // Singleton active check: true when the instance exists and its +0x90 state
 // word is set.
-bool func_801B0F8C() {
+bool battleCommuIsActive() {
     bool ret = false;
     if (lbl_eu_80664390 != 0 && lbl_eu_80664390->mField90 != 0) {
         ret = true;
@@ -557,7 +557,7 @@ void func_801B0FB0(CMenuBattleCommu* self) {
 // state 4 unless the player is in a special battle state (1,2,3,4,7,8) that
 // keeps the commu up.
 // ---------------------------------------------------------------------------
-void func_801B1618(CMenuBattleCommu* self) {
+void battleCommuAdvanceAnim80(CMenuBattleCommu* self) {
     if (advanceAnimTransform(self->mField80, lbl_eu_80667DE4) == 0) {
         return;
     }
@@ -608,8 +608,8 @@ void func_801B1618(CMenuBattleCommu* self) {
     self->mField90 = 4;
 }
 
-void func_801B18B8(void* self) { ((void(*)(void*))__dt__16CMenuBattleCommuFv)((char*)self - 0x58); }
+void battleCommuDtorThunk58(void* self) { ((void(*)(void*))__dt__16CMenuBattleCommuFv)((char*)self - 0x58); }
 
-void func_801B18C0(void* self) { ((void(*)(void*))cbRenderBefore__16CMenuBattleCommuFv)((char*)self - 0x5c); }
+void battleCommuRenderBeforeThunk(void* self) { ((void(*)(void*))cbRenderBefore__16CMenuBattleCommuFv)((char*)self - 0x5c); }
 
-void func_801B18C8(void* self) { ((void(*)(void*))__dt__16CMenuBattleCommuFv)((char*)self - 0x5c); }
+void battleCommuDtorThunk5C(void* self) { ((void(*)(void*))__dt__16CMenuBattleCommuFv)((char*)self - 0x5c); }

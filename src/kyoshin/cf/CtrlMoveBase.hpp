@@ -10,7 +10,7 @@ namespace cf {
 
     // CCtrlMoveBase layout: 0x48 bytes of data (field_0x00..field_0x46) then
     // the vptr for its single virtual unk08 at +0x48. Retail secondary table
-    // lbl_eu_80527808 is the vtable for this class (RTTI,0,func_80089628).
+    // lbl_eu_80527808 is the vtable for this class (RTTI,0,emptyMoveBaseHook).
     // Using __declspec(novtable) and manual vptr store keeps the vptr at +0x48
     // and makes this->unk08() dispatch via lwz 72(r31); lwz 8(r12) with
     // primary this (or r3,r31) exactly like retail.
@@ -66,7 +66,7 @@ extern "C" int func_8047D2AC__17UnkClass_8047D2ACFv(void* a, void* b, void* c,
                                                      f32 d, f32 e, const void* f);
 extern "C" int walkPathCheck__17UnkClass_8047D2ACFv(void* a, void* b, const void* c,
                                                      f32 d, f32 e, int f);
-extern "C" int func_804BE398(void* vec, int a, int b, int c, f32 d, f32 e);
+extern "C" int ScnRes_VertRayForward_E398(void* vec, int a, int b, int c, f32 d, f32 e);
 extern "C" void func_804BE4B4(void* out, int a);
 extern "C" void func_804BE4E0(void* out, int a);
 

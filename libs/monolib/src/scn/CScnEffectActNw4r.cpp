@@ -32,17 +32,17 @@ CScnEffectActNw4r::~CScnEffectActNw4r() {}
 
 // Most slots are one-line forwarders: load mpMgr and tail-call into the
 // manager's implementation.
-extern "C" void func_8049BEA4(CScnEffectActNw4r* self) { Scn_IsAnimActiveOrNull(self->mpMgr); }
+extern "C" void EffectActNw4rProbeAnimActive(CScnEffectActNw4r* self) { Scn_IsAnimActiveOrNull(self->mpMgr); }
 
-extern "C" void func_8049BEAC(CScnEffectActNw4r* self) { simSetLeafDist7B0(self->mpMgr); }
+extern "C" void EffectActNw4rSetLeafDist(CScnEffectActNw4r* self) { simSetLeafDist7B0(self->mpMgr); }
 
-extern "C" void func_8049BEB4(CScnEffectActNw4r* self) { simSetFlag2OnTree(self->mpMgr); }
+extern "C" void EffectActNw4rSetTreeFlag2(CScnEffectActNw4r* self) { simSetFlag2OnTree(self->mpMgr); }
 
-extern "C" u8* func_8049BEE4(CScnEffectActNw4r* self) { return simGetLeafActData(self->mpMgr); }
+extern "C" u8* EffectActNw4rGetLeafActData(CScnEffectActNw4r* self) { return simGetLeafActData(self->mpMgr); }
 
 // Copy the position triplet into the manager's scale/pos fields at 0x304.
 // Kept as integer word copies: retail moves the bits without float ops.
-extern "C" void func_8049BEEC(CScnEffectActNw4r* self, const void* other) {
+extern "C" void EffectActNw4rStoreMgrScalePos(CScnEffectActNw4r* self, const void* other) {
     CScnEffectActMgr* mgr = self->mpMgr;
     *(u32*)&mgr->field_0x304 = *(u32*)other;
     *(u32*)&mgr->field_0x308 = *(u32*)((const char*)other + 4);
@@ -72,7 +72,7 @@ extern "C" u8* func_8049BF84(const CScnEffectActNw4r* self) {
 }
 
 // Effect-act lookup: the local id table first, then the manager's chain.
-CScnEffectAct* func_8049C314(const CScnEffectActNw4r* self, u32 idx) {
+CScnEffectAct* EffectActNw4rFindActIndexed(const CScnEffectActNw4r* self, u32 idx) {
     if (self->mCount > idx) {
         return self->mActs[idx];
     }
@@ -83,13 +83,13 @@ CScnEffectAct* func_8049C314(const CScnEffectActNw4r* self, u32 idx) {
     return 0;
 }
 
-// Same lookup as func_8049C314, but gated on the manager's act flag and
+// Same lookup as EffectActNw4rFindActIndexed, but gated on the manager's act flag and
 // preferring the manager's direct act slot before falling back to the chain.
-CScnEffectAct* func_8049BFAC(const CScnEffectActNw4r* self, u32 idx) {
+CScnEffectAct* EffectActNw4rFindActGated(const CScnEffectActNw4r* self, u32 idx) {
     if ((self->mpMgr->field_0x7a4 & 0x40000000) == 0) {
         return 0;
     }
-    if (func_80490AF4(self->mpMgr, idx)) {
+    if (TexMan_FindNode_0AF4(self->mpMgr, idx)) {
         return self->mpMgr->v13(idx);
     }
     CScnEffectAct* chain = self->mpMgr->field_0x7c4;
@@ -101,7 +101,7 @@ CScnEffectAct* func_8049BFAC(const CScnEffectActNw4r* self, u32 idx) {
 
 // Id-based lookup that scans the u16 id table before falling back to the
 // manager's chain.
-CScnEffectAct* func_8049C18C(const CScnEffectActNw4r* self, u32 idx) {
+CScnEffectAct* EffectActNw4rFindActById(const CScnEffectActNw4r* self, u32 idx) {
     if ((self->mpMgr->field_0x7a4 & 0x40000000) == 0) {
         return 0;
     }
@@ -119,7 +119,7 @@ CScnEffectAct* func_8049C18C(const CScnEffectActNw4r* self, u32 idx) {
 
 // Id-based lookup that also copies the act's position triplet into out;
 // returns 1 on success, 0 when the fallback chain reports none.
-u32 func_8049C244(const CScnEffectActNw4r* self, u32 idx, ml::CVec3* out) {
+u32 EffectActNw4rGetActPosById(const CScnEffectActNw4r* self, u32 idx, ml::CVec3* out) {
     u32 count = self->mCount;
     for (u32 i = 0; i < count; i++) {
         if (self->mIds[i] == idx) {
@@ -143,14 +143,14 @@ u32 func_8049C244(const CScnEffectActNw4r* self, u32 idx, ml::CVec3* out) {
 
 // Fills out with the act's position triplet; zero when the effect acts are
 // disabled or absent.
-void func_8049C060(ml::CVec3* out, const CScnEffectActNw4r* self, u32 idx) {
+void EffectActNw4rGetActPosOut(ml::CVec3* out, const CScnEffectActNw4r* self, u32 idx) {
     if ((self->mpMgr->field_0x7a4 & 0x40000000) == 0) {
         out->x = ml::CVec3::zero.x;
         out->y = ml::CVec3::zero.y;
         out->z = ml::CVec3::zero.z;
         return;
     }
-    if (func_80490AF4(self->mpMgr, idx)) {
+    if (TexMan_FindNode_0AF4(self->mpMgr, idx)) {
         CScnEffectAct* act = self->mpMgr->v13(idx);
         float z = act->field_0x2c.x;
         float y = act->field_0x1c.x;
@@ -176,13 +176,13 @@ void func_8049C060(ml::CVec3* out, const CScnEffectActNw4r* self, u32 idx) {
     out->z = ml::CVec3::zero.z;
 }
 
-extern "C" void func_8049C394(CScnEffectActNw4r* self) { simPushWordToBuf(self->mpMgr); }
+extern "C" void EffectActNw4rPushWordBuf(CScnEffectActNw4r* self) { simPushWordToBuf(self->mpMgr); }
 
-void func_8049C39C(CScnEffectActNw4r* self) {
+void EffectActNw4rRemoveWordBuf(CScnEffectActNw4r* self) {
     simRemoveWordFromBuf(self->mpMgr);
 }
 
-void func_8049C3A4(CScnEffectActNw4r* self) {
+void EffectActNw4rPushXform(CScnEffectActNw4r* self) {
     scnImN4PushXform(self->mpMgr);
 }
 
@@ -212,14 +212,14 @@ u32 func_8049C3AC(CScnEffectActNw4r* self) {
 }
 
 // Bit 30 of the manager's flag word: the manager has a direct act ready.
-extern "C" u32 func_8049C420(CScnEffectActNw4r* self) { return (self->mpMgr->field_0x7a4 >> 30) & 1; }
+extern "C" u32 EffectActNw4rHasDirectAct(CScnEffectActNw4r* self) { return (self->mpMgr->field_0x7a4 >> 30) & 1; }
 
-extern "C" u32 func_8049C430(CScnEffectActNw4r* self) { return self->mCount; }
+extern "C" u32 EffectActNw4rGetActCount(CScnEffectActNw4r* self) { return self->mCount; }
 
 // Virtual dispatch thunks on the manager (slots 4 / 43 / 16).
-extern "C" void func_8049BA44(CScnEffectActNw4r* self) { self->mpMgr->v4(); }
-extern "C" void func_8049BEBC(CScnEffectActNw4r* self) { self->mpMgr->v43(); }
-extern "C" void func_8049BED0(CScnEffectActNw4r* self) { self->mpMgr->v16(); }
+extern "C" void EffectActNw4rMgrCallV04(CScnEffectActNw4r* self) { self->mpMgr->v4(); }
+extern "C" void EffectActNw4rCallMgrV43(CScnEffectActNw4r* self) { self->mpMgr->v43(); }
+extern "C" void EffectActNw4rCallMgrV16(CScnEffectActNw4r* self) { self->mpMgr->v16(); }
 
 // Recursively register every node whose name is "<tag><NNN>" (three digits at
 // offsets 2..4) into the effect-act table: the node's mtx id selects the act
@@ -356,14 +356,14 @@ extern u32 lbl_eu_80663A28;
 extern "C" u32 lbl_eu_8056EAD8[26] = {
     (u32)&lbl_eu_80663A20, 0x00000000,
     (u32)&__dt__17CScnEffectActNw4rFv,
-    (u32)&func_8049BEA4, (u32)&func_8049BA44, (u32)&func_8049BEAC,
-    (u32)&func_8049BEB4, (u32)&func_8049BEBC, (u32)&func_8049BED0,
-    (u32)&func_8049BEE4, (u32)&func_8049BEEC, (u32)&func_8049BF0C,
+    (u32)&EffectActNw4rProbeAnimActive, (u32)&EffectActNw4rMgrCallV04, (u32)&EffectActNw4rSetLeafDist,
+    (u32)&EffectActNw4rSetTreeFlag2, (u32)&EffectActNw4rCallMgrV43, (u32)&EffectActNw4rCallMgrV16,
+    (u32)&EffectActNw4rGetLeafActData, (u32)&EffectActNw4rStoreMgrScalePos, (u32)&func_8049BF0C,
     (u32)&func_8049BF34, (u32)&func_8049BF5C, (u32)&func_8049BF84,
-    (u32)&func_8049BFAC, (u32)&func_8049C060, (u32)&func_8049C18C,
-    (u32)&func_8049C244, (u32)&func_8049C430, (u32)&func_8049C314,
-    (u32)&func_8049C394, (u32)&func_8049C39C, (u32)&func_8049C3A4,
-    (u32)&func_8049C3AC, (u32)&func_8049C420,
+    (u32)&EffectActNw4rFindActGated, (u32)&EffectActNw4rGetActPosOut, (u32)&EffectActNw4rFindActById,
+    (u32)&EffectActNw4rGetActPosById, (u32)&EffectActNw4rGetActCount, (u32)&EffectActNw4rFindActIndexed,
+    (u32)&EffectActNw4rPushWordBuf, (u32)&EffectActNw4rRemoveWordBuf, (u32)&EffectActNw4rPushXform,
+    (u32)&func_8049C3AC, (u32)&EffectActNw4rHasDirectAct,
 };
 extern "C" u32 lbl_eu_8056EB40[4] = {
     (u32)&lbl_eu_80663A28, 0x00000000, 0x00000000, 0x00000000,

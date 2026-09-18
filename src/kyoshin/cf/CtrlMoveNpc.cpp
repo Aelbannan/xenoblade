@@ -84,17 +84,17 @@ void __ptmf_scall(...);
 extern int (CCtrlMoveNpc::*const lbl_eu_80532DA8)();
 
 // bdat helpers / task helpers / movement helper (unmangled global symbols).
-// func_8003AA34 and getBdatStringColumnValue come from kyoshin/code_801862C0.hpp.
+// Bdat_GetTable_AA34 and getBdatStringColumnValue come from kyoshin/code_801862C0.hpp.
 // func_8019FB54 is defined below; this prototype fixes its C linkage so the
 // retail unmangled symbol name is emitted.
-u32 func_8003B41C(void* bdat);
-u32 func_8003B1EC(void* bdat);
+u32 Bdat_GetRowBase_B41C(void* bdat);
+u32 Bdat_GetMaxRow_B1EC(void* bdat);
 void activateLOD__8CTaskLODFv(s8 v);
 void deactivateLOD__8CTaskLODFv(u8 v);
 void* getScnHandle__Fv(void);
-void func_804BCC30(void*, s8 v);
-void func_804BCC3C(void*, u8 v);
-void func_80089990(cf::CCtrlMoveBase* ths);
+void ScnData_FwdB7D9C(void*, s8 v);
+void ScnData_FwdB7DD4(void*, u8 v);
+void maskMoveChildFlags(cf::CCtrlMoveBase* ths);
 f32 FrSqrt__Q24nw4r4mathFf(f32 x);
 int func_8019FB54(u32 idx, const char* p1, const char* p2, const char* p3,
                   const char* p4, const char* p5, const char* p6, const char* p7);
@@ -104,7 +104,7 @@ void func_80088974(CCtrlMoveNpc* ths, const ml::CVec3* a, const ml::CVec3* b,
                    int c, int d);
 void func_80089694(CCtrlMoveNpc* ths, const ml::CVec3* a, f32 f);
 void func_8008962C(CCtrlMoveNpc* ths);
-void func_80093618(cf::CCtrlMoveData* data, f32 f);
+void CtrlMoveEne_CommitHeadAngle(cf::CCtrlMoveData* data, f32 f);
 int  func_800A5038(const ml::CVec3* sub, const ml::CVec3* v, f32 f1, f32 f2);
 void Warning__Q24nw4r2dbFPCciPCce(const char* file, int line, const char* fmt, ...);
 
@@ -158,10 +158,10 @@ CCtrlMoveNpc::CCtrlMoveNpc() {
 }
 
 // ---------------------------------------------------------------------------
-// func_8019F8E0 - dispatch the state ptmf if set; return "was set".
+// NpcMove_DispatchState - dispatch the state ptmf if set; return "was set".
 // ---------------------------------------------------------------------------
 namespace cf {
-int func_8019F8E0(CCtrlMoveNpc* ths) {
+int NpcMove_DispatchState(CCtrlMoveNpc* ths) {
     if (ths->mStateFunc) {
         (ths->*ths->mStateFunc)();
     }
@@ -215,7 +215,7 @@ void func_8019F6E8(CCtrlMoveNpc* ths, const ml::CVec3* vec, f32 scale, f32 param
         ths->mField70 = v;
     }
 
-    func_80089990((cf::CCtrlMoveBase*)ths);
+    maskMoveChildFlags((cf::CCtrlMoveBase*)ths);
     ths->mVec18 = ml::CVec3::zero;
     ths->mStateFunc = lbl_eu_80532DA8;
 }
@@ -273,14 +273,14 @@ int func_8019FB54(u32 idx, const char* p1, const char* p2, const char* p3,
 // (retail symbol is the unmangled pre-mangled name).
 // ---------------------------------------------------------------------------
 void func_8019FD2C() {
-    func_8003AA34();
+    Bdat_GetTable_AA34();
     void* bdat = lbl_eu_806640B4;
     cf::CfGameManager::getGameSubManager();
 
     u32* bitmap;
     const char* str;
-    s32 base = (s32)func_8003B41C(bdat);
-    s32 count = (s32)func_8003B1EC(bdat);
+    s32 base = (s32)Bdat_GetRowBase_B41C(bdat);
+    s32 count = (s32)Bdat_GetMaxRow_B1EC(bdat);
     bitmap = lbl_eu_805757E0;
     str = lbl_eu_80503D30;
     s32 end = base + count;
@@ -299,7 +299,7 @@ void func_8019FD2C() {
             if (w & bit) {
                 bitmap[word] = w & ~bit;
                 activateLOD__8CTaskLODFv(v);
-                func_804BCC30(getScnHandle__Fv(), v);
+                ScnData_FwdB7D9C(getScnHandle__Fv(), v);
             }
         } else {
             s32 word = idx >> 5;
@@ -308,7 +308,7 @@ void func_8019FD2C() {
             if (!(w & bit)) {
                 bitmap[word] = w | bit;
                 deactivateLOD__8CTaskLODFv(v);
-                func_804BCC3C(getScnHandle__Fv(), v);
+                ScnData_FwdB7DD4(getScnHandle__Fv(), v);
             }
         }
     }
@@ -364,7 +364,7 @@ void func_8019F93C(CCtrlMoveNpc* ths) {
     // turn-rate helper before dropping back to the idle state function.
     ths->mBaseData->field_0x14 = lbl_eu_80667C5C;
     if (ths->mField6C < lbl_eu_80667C78) {
-        func_80093618(ths->mBaseData,
+        CtrlMoveEne_CommitHeadAngle(ths->mBaseData,
                       ths->mField6C * lbl_eu_8066A210);
         ths->mStateFunc = __ptmf_null;
         func_8008962C(ths);
@@ -375,7 +375,7 @@ void func_8019F93C(CCtrlMoveNpc* ths) {
 }
 }
 
-// func_8019FB40 - clear the 16-byte Npc row bitmap.
-void func_8019FB40() {
+// NpcMove_ClearRowBmp - clear the 16-byte Npc row bitmap.
+void NpcMove_ClearRowBmp() {
     memset(lbl_eu_805757E0, 0, 0x10);
 }

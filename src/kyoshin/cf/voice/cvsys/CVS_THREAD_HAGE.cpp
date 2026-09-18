@@ -5,9 +5,9 @@
 #include "kyoshin/harness_catalog.hpp"
 #include "monolib/math/Random.hpp"
 
-// us-802a98c0 (func_802A718C)
+// us-802a98c0 (HageVxOnComplete)
 // Completion callback: if no active voice, call the playback-start virtual.
-void func_802A718C(CVS_THREAD_HAGE* self) {
+void HageVxOnComplete(CVS_THREAD_HAGE* self) {
     if (func_802A3E88(self) == 0) {
         self->func_802A3B50();
     }

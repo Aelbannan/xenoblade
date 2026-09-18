@@ -53,7 +53,7 @@ void func_800AB2E4(void* /*unused*/, cf::CfCollCapsuleImpl* capsule){
 
 // Forward capsule collision data to the collision query system.
 // r3 is unused.
-extern "C" void func_800AB3B8(void* /*unused*/, cf::CfCollCapsuleImpl* capsule,
+extern "C" void collCapsuleQueryOffset(void* /*unused*/, cf::CfCollCapsuleImpl* capsule,
                                void* query, float offsetRadius) {
     func_800A4C48(query, &capsule->mStart, &capsule->mEnd,
                   capsule->mRadius + offsetRadius);

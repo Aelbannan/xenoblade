@@ -31,23 +31,23 @@ void CTTask<CTaskGameEvt>::Draw() {
 // Non-target glue stubs (preserved from scaffold; not part of the match set).
 // ---------------------------------------------------------------------------
 
-extern "C" int func_80295764(void* self);
+extern "C" int EvtTask_NullHandler(void* self);
 
-extern "C" void OnFileEvent__12CTaskGameEvtFP10CEventFile(void* self) { ((void(*)(void*))func_80295764)((char*)self - 0x54); }
+extern "C" void OnFileEvent__12CTaskGameEvtFP10CEventFile(void* self) { ((void(*)(void*))EvtTask_NullHandler)((char*)self - 0x54); }
 
 // Tail-call wrappers into the cf event-task helper calls.
-void func_802956A4(void) { func_80165038(); }
+void EvtTask_Relay65038(void) { evtClearSeqStateBit9(); }
 
-void func_802956A8(void) { func_80164CFC(); }
+void EvtTask_Relay64CFC(void) { evtTeardownActive(); }
 
 extern "C" void cbRenderBefore__12CTaskGameEvtFv(void* self) { (void)self; }
 extern "C" void __dt__12CTaskGameEvtFv(void*, int);
 
-extern "C" int func_80295764(void* self) { (void)self; return 0; }
+extern "C" int EvtTask_NullHandler(void* self) { (void)self; return 0; }
 
-extern "C" void func_80295870(void* self) { ((void(*)(void*))__dt__12CTaskGameEvtFv)((char*)self - 0x54); }
-extern "C" void func_80295878(void* self) { ((void(*)(void*))cbRenderBefore__12CTaskGameEvtFv)((char*)self - 0x58); }
-extern "C" void func_80295880(void* self) { ((void(*)(void*))__dt__12CTaskGameEvtFv)((char*)self - 0x58); }
+extern "C" void EvtTask_ThunkDtor54(void* self) { ((void(*)(void*))__dt__12CTaskGameEvtFv)((char*)self - 0x54); }
+extern "C" void EvtTask_ThunkRender58(void* self) { ((void(*)(void*))cbRenderBefore__12CTaskGameEvtFv)((char*)self - 0x58); }
+extern "C" void EvtTask_ThunkDtor58(void* self) { ((void(*)(void*))__dt__12CTaskGameEvtFv)((char*)self - 0x58); }
 
 // ---------------------------------------------------------------------------
 // Target members.
@@ -130,8 +130,8 @@ void CTaskGameEvt::Move() {
     u32 flags = mFlags;
     if ((flags & 0x2) && !(flags & 0x1) &&
         cf::CTaskGameCf::getInstance() != 0 &&
-        func_80164C48() != 0) {
-        if (func_80164954()) {
+        evtIsFullyIdle() != 0) {
+        if (evtBeginShuffledSeq()) {
             mFlags |= 1;
         } else {
             mFlags &= ~1;

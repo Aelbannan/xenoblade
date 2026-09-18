@@ -41,7 +41,7 @@ public:
     virtual ~CScnBloom();
 
     // CScnFilter virtual overrides (thunks adjust this from CScnFilter subobject at 0x48)
-    // Implemented as extern "C" thunks: func_804996D8, func_804996E0
+    // Implemented as extern "C" thunks: CScnBloom_renderBloomAdj48, CScnBloom_destroyAdj48
 
 private:
     // Main vtable at offset 0x80

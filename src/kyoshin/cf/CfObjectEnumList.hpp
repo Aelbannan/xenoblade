@@ -19,9 +19,9 @@ public:
     CfObjEnumList();
     ~CfObjEnumList();
 
-    void* func_800F6E98(int index);
-    void* func_800F6EAC(unsigned long idx);
-    void* func_800F6EC0(int index);
+    void* getObjectIdAt(int index);
+    void* getObjectAt(unsigned long idx);
+    void* getEntryAt(int index);
 
     // reslist base: vtable pointer (0x00), sentinel, backing storage, and
     // ownership flag. The methods below are plain (direct-call) methods, but
@@ -53,9 +53,9 @@ public:
 
 } // namespace cf
 
-// Sortable-list interface used by func_800F8890 (retail vtable slots +0x10
+// Sortable-list interface used by partitionSortList (retail vtable slots +0x10
 // get(), +0x14 value(); the retail vtable has two extra leading slots vs the
-// Sortable-list interface used by func_800F8890.  The retail vtable is 8
+// Sortable-list interface used by partitionSortList.  The retail vtable is 8
 // bytes past the declaration's slot 0 (MWCC emits two leading non-user
 // vtable entries here, same +2 as CfEnumActorBase), so get()/value() land at
 // retail +0x08/+0x0C.  get() returns a pointer to the element slot; the
@@ -278,9 +278,9 @@ public:
 #undef ENUM_VIEW_DUMMY
 
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
-extern "C" void func_800F4798(void* self);
+extern "C" void Sc4798_GetSignedItemValue(void* self);
 extern "C" int func_804B5088(void* self, void* a, void* b, int filter, int isFirst); // object enum probe
-extern "C" int func_804BE348(void* a, void* b, int c, int d, int e);   // coli probe query
+extern "C" int ScnRes_SegQueryForward_E348(void* a, void* b, int c, int d, int e);   // coli probe query
 // cone probe on aux+0x60C (self, spot, range, cone half-angle, angle offset)
 extern "C" int ColiCheckMoveScaled(void* self, void* spot, float a, float b, float c);
 // func_804B5088 (object enum probe) is declared above; do not redeclare here.

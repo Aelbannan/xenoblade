@@ -23,7 +23,7 @@ struct ExtendedTexObj {
     u32 mField28;   // +0x28
 };
 
-extern "C" ExtendedTexObj* func_8049431C(ExtendedTexObj* self, void* image, u16 w, u16 h, u32 fmt, void* p6) {
+extern "C" ExtendedTexObj* TexObj_InitExt(ExtendedTexObj* self, void* image, u16 w, u16 h, u32 fmt, void* p6) {
     GXInitTexObj((GXTexObj*)self, image, w, h, (GXTexFmt)fmt, GX_CLAMP, GX_CLAMP, 0);
     GXInitTexObjFilter((GXTexObj*)self, GX_LINEAR, GX_NEAR);
     self->mField20 = (u32)image;
@@ -75,11 +75,11 @@ extern "C" void func_80494540(ExtendedTexObj* self, ml::CRect* rect, u16 w, u16 
     }
 }
 
-extern "C" void func_804944DC(ExtendedTexObj* self, ml::CRect* rect, GXBool p3, GXBool p4) {
+extern "C" void TexObj_BlitRect(ExtendedTexObj* self, ml::CRect* rect, GXBool p3, GXBool p4) {
     func_80494540(self, rect, GXGetTexObjWidth((GXTexObj*)self), GXGetTexObjHeight((GXTexObj*)self), p3, p4);
 }
 
-extern "C" void func_804943E0(ExtendedTexObj* self, GXBool p2, GXBool p3) {
+extern "C" void TexObj_BlitViewRect(ExtendedTexObj* self, GXBool p2, GXBool p3) {
     void* view = getCurrentView__5CViewFv();
     if (view != 0) {
         ml::CRect rect;

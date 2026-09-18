@@ -21,13 +21,13 @@ extern "C" int CSysWin_isActive(void*);
 extern "C" void CTitle_update(void*);
 
 // CSysWin advance helper (retail C-linkage; same declaration as CSystemWindow.hpp).
-extern "C" void func_8022B748(void*);
+extern "C" void sysWinDispatchPhase(void*);
 
 // CSysWin content setters / advance-close helpers (retail unmangled names,
 // defined in CSysWin.cpp). func_8022BFC8 is declared by CSysWin.hpp.
 extern "C" void func_8022B9B4(void* syswin, const char* msg, int flag);
-extern "C" void func_8022B8B8(void* syswin);
-extern "C" void func_8022B8E4(void* syswin);
+extern "C" void sysWinOpenPhase1(void* syswin);
+extern "C" void sysWinAdvancePhase3(void* syswin);
 
 // Pane-name format helper (code_80135FDC.cpp, retail unmangled name).
 extern "C" char* BdatTouchStringCell(char* fmt, char* base, u32 id);
@@ -45,7 +45,7 @@ struct CErrMesPad {
 };
 
 
-extern "C" void func_8022B7F4(void*);
+extern "C" void sysWinTermLayout(void*);
 
 // CMenuTitle +0x60 sub-object advance/release helpers (retail C-linkage, CTitle.cpp).
 extern "C" void CTitle_startLoad(void*);
@@ -56,7 +56,7 @@ extern "C" void CTitle_teardown(void*);
 // C linkage so calls bind to it (same pattern as isClassicController in CSysWin.hpp).
 extern "C" void lookupEffectForResource__Q22cf13CfGameManagerFv(int, int, int);
 
-// cf::CfGameManager error-message helper (func_802B48E4 dispatches 0x29/0x24).
+// cf::CfGameManager error-message helper (ErrWin_RegEntryS1_48E4 dispatches 0x29/0x24).
 // Retail ships the no-arg-Fv mangled name verbatim; keep it under C linkage so
 // the call site binds to the retail symbol (same pattern as lookupEffectForResource).
 extern "C" void createBattleEffect__Q22cf13CfGameManagerFv(u32, u8*);
@@ -90,7 +90,7 @@ extern u32 lbl_eu_80664C28;
 extern u32 lbl_eu_80664C30;
 
 // Sub-object embedded at CErrMesEntry +0x09, managed by the func_802B5148 /
-// func_802B515C / func_802B58A4 family. Its first byte is an active flag;
+// ErrWin_UpdateSub_515C / ErrWin_ClearAllLists_58A4 family. Its first byte is an active flag;
 // the rest of the layout is opaque to this TU.
 struct CErrMesSub {
     u8 field_0;  // +0x00 - active flag
@@ -105,7 +105,7 @@ struct CErrMesEntry {
 };
 
 // Error-message sub-object update (defined in this TU; declared extern "C" +
-// noinline so func_802B4B84's call stays a direct `bl func_802B5148` instead
+// noinline so ErrWin_ResetRecord_4B84's call stays a direct `bl func_802B5148` instead
 // of an inlined stub body).
 extern "C" __declspec(noinline) void func_802B5148(CErrMesSub* self);
 
@@ -131,7 +131,7 @@ extern "C" void __dt__Q34nw4r3lyt8DrawInfoFv(nw4r::lyt::DrawInfo* self, int flag
 // func_80137250__FPQ34nw4r3lyt8DrawInfo, so it is a plain C++ declaration.
 void func_80137250(nw4r::lyt::DrawInfo* drawInfo);
 
-// Circular-list views used by func_802B58A4's active-flag sweeps. The lists
+// Circular-list views used by ErrWin_ClearAllLists_58A4's active-flag sweeps. The lists
 // returned by getListB28__Fv / getReslistC08 share the same shape: the
 // sentinel head lives at +0x04 and each node carries its item at +0x08.
 struct CErrMesListNode {
@@ -152,20 +152,20 @@ CErrMesList* getListB28();
 extern "C" CErrMesList* getReslistC08();
 
 // Record base recovered from a list item by subtracting 0x3E9C (the item
-// points at the embedded CfObjectMove sub-object). func_802B58A4 clears the
+// points at the embedded CfObjectMove sub-object). ErrWin_ClearAllLists_58A4 clears the
 // +0x4590 active flag on every live record.
 struct CErrMesRecord {
     u8 _00[0x4590];
     u8 field_0x4590;  // active flag
 };
 
-// Enemy record view for func_802B58A4's third sweep (byte at +0x6F4).
+// Enemy record view for ErrWin_ClearAllLists_58A4's third sweep (byte at +0x6F4).
 struct CErrMesEnemyObj {
     u8 _00[0x6F4];
     u8 field_0x6F4;  // active flag
 };
 
-// Owner object for func_802B48E4: battle-object-like layout with the embedded
+// Owner object for ErrWin_RegEntryS1_48E4: battle-object-like layout with the embedded
 // CfObjectMove at +0x3E9C (its address is passed to createBattleEffect), a flag
 // word at +0x3F00 (bit 1 = battle active) and a comparison word at +0x3F10.
 struct CErrMesOwner {

@@ -16,6 +16,14 @@
 #include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
 #include "kyoshin/cf/object/CfObjectEne.hpp" // cf::CfObjectEne + CfEneTablePtrs/CfEneTailView/CfEneReloadSlot views
 
+// Gimmick unbind helper (defined in code_801F3BE0.cpp; retail keeps the
+// bare C-linkage name, so declare extern "C" like the ctx snapshot).
+extern "C" void GimUnbindEnemyActor(void* obj, void* actor);
+extern "C" void GimBindEnemyActor(void* obj, void* actor);
+unsigned long SuddenCommuIsStateActive(void* self);
+extern "C" void Counter_AddClamped(u8* obj, u32 value, int a);
+extern "C" void ColiSetMoveVec2(void* region, int flag, f32 a, f32 b);
+
 // .sdata2 pool (retail 0x70) as one struct: freezes retail declaration
 // order (MWCC would reorder individual consts by first use) and keeps the
 // three code-orphaned slots (ene1Lv tag, trailing 180.0f, trailing 2^52)
@@ -200,7 +208,7 @@ cf::CfObjectEne* __dt__Q22cf11CfObjectEneFv(cf::CfObjectEne* self, s32 deleteFla
         ((cf::CfEneTablePtrs*)self)->vt3380 = (u32)(v + 0x36C);
         ((cf::CfEneTablePtrs*)self)->vt3E9C = (u32)(v + 0x37C);
         if (getUnk80664658() != 0) {
-            func_801F4DDC(getUnk80664658(), self);
+            GimUnbindEnemyActor(getUnk80664658(), self);
         }
         // +0x3E9C CfObjectMove: slot +0x68 = CfObject_releaseMoveTargets.
         ((cf::CfObjectAt3E9C*)self)->CfObject_releaseMoveTargets();
@@ -542,7 +550,7 @@ void cf::CfObjectEne::func_800ADDA8() {
     }
     // retail calls the getter twice (test + argument)
     if (getUnk80664658() != 0) {
-        func_801F4D50(getUnk80664658(), this);
+        GimBindEnemyActor(getUnk80664658(), this);
     }
 }
 
@@ -575,7 +583,7 @@ void CActorParam_UnkVirtualFunc168__Q22cf11CActorParamFv(void* self, float val) 
 // primary vtable +0x288 slot six times and resets the +0x3380 CAIAction
 // subobject (func_8014B7B0 / func_8015396C).
 void cf::CfObjectEne::initEnemyBdatParams() {
-    func_8003AA34();
+    Bdat_GetTable_AA34();
     // addressable union pins the raw column word to a frame home across the
     // slot +0xF0 vcall; the u16 punned read narrows on reload (retail lhz)
     cf::CfEneColNarrow col;
@@ -604,7 +612,7 @@ void cf::CfObjectEne::initEnemyBdatParams() {
 // (+0x48, or +0x44 when the +0x48 is 0.0f) and scales the +0x64 attack
 // count by the +0x1C4 rate * lbl_eu_8066A20C.
 void cf::CfObjectEne::CActorParam_UnkVirtualFunc167() {
-    func_8003AA34();
+    Bdat_GetTable_AA34();
     void* bdat = getFP(((cf::CfEneLookupView*)this)->field_0x3F14);
     char* cols = lbl_eu_804FC168;
     // each column result is a u32 frame temp live across the slot +0x288
@@ -619,7 +627,7 @@ void cf::CfObjectEne::CActorParam_UnkVirtualFunc167() {
     ((u16*)this->CActorParam_getArtsSlotIds())[4] = 0;
     ((u16*)this->CActorParam_getArtsSlotIds())[5] = 0;
 
-    func_8003AA34();
+    Bdat_GetTable_AA34();
     u8* bdat2 = (u8*)getFP(&cols[0x2B6]);
     f32 zero = lbl_eu_80666968;
     f32 scale = lbl_eu_8066A20C;
@@ -687,7 +695,7 @@ void cf::CfObjectEne::CActorParam_UnkVirtualFunc166() {
     cvA.w[0] = 0x43300000;
     cvB.w[0] = 0x43300000;
     cf::CfEneLookupView* v = (cf::CfEneLookupView*)this;
-    func_8003AA34();
+    Bdat_GetTable_AA34();
     void* bdat = getFP(v->field_0x3F14);
     const char* tbl = (const char*)lbl_eu_804FC168;
     u16 row = v->field_0x3F28;
@@ -708,7 +716,7 @@ void cf::CfObjectEne::CActorParam_UnkVirtualFunc166() {
     u32 a7 = getBdatStringColumnValue(bdat, tbl + 0x1D1, row);
     setArtsSlotByIdx(this->CActorParam_getArtsSet(), a7, 7);
 
-    func_8003AA34();
+    Bdat_GetTable_AA34();
     void* bdat2 = getFP(&tbl[0x1D7]);
     // Hoisted constants the loop keeps live across calls (retail f29/f30/f31/f28)
     f32 subA = lbl_eu_806669A0;
@@ -718,7 +726,7 @@ void cf::CfObjectEne::CActorParam_UnkVirtualFunc166() {
     int i;
     s16 zero46 = 0;  // retail keeps a dedicated zero reg for field_0x46
     for (i = 0; i < 8; i++) {
-        u16 slot = func_80153CAC(this->CActorParam_getArtsSet(), (s16)i);
+        u16 slot = getArtsSlotByFlatIdx(this->CActorParam_getArtsSet(), (s16)i);
         if (slot == 0) continue;
         cf::CfEneArtsParamView* arts = (cf::CfEneArtsParamView*)getArtsParamByIdx(this->CActorParam_getArtsSet(), i);
         // name column referenced through the raw label (not tbl), as in retail
@@ -788,7 +796,7 @@ void cf::CfObjectEne::CActorParam_UnkVirtualFunc166() {
 // (shifted right 4) and looks up the column value in the BDAT table returned
 // by getGlobalPtr6409C. Returns whatever getBdatStringColumnValue produced (the
 // retail leaves it in r3).
-u32 func_800AF7E4(cf::CfObjectEne* self, const char* column) {
+extern "C" u32 getEneBdatColumn(cf::CfObjectEne* self, const char* column) {
     return getBdatStringColumnValue((void*)getGlobalPtr6409C__Q22cf13CfGameManagerFv(), column,
                                     ((cf::CfObjectEne456CView*)self)->field_0x456C >> 4);
 }
@@ -796,14 +804,14 @@ u32 func_800AF7E4(cf::CfObjectEne* self, const char* column) {
 // us-800b00f8: bdat lookup helper. r3 is a dead incoming arg (retail never
 // reads it); the bdat pointer is getGlobalWord640A4's return (party-count
 // getter), column/index come from r4/r5.
-u32 func_800AF82C(u32 unused, const char* col, u32 index) {
+extern "C" u32 getEneBdatByIndex(u32 unused, const char* col, u32 index) {
     return getBdatStringColumnValue((u8*)getGlobalWord640A4__Q22cf13CfGameManagerFv(), col, index);
 }
 
 // us-800b013c: enemy drop/reward application. Guard chain (flag bit
 // 0x100000, shared lbl_eu_80663E24 bits 0xAFA40000, +0x3F60 target bit 8,
 // primary vtable +0x2BC, CBattleManager party-count range and mode words)
-// then scans the enemy bdat rows [func_8003B41C, +func_8003B1EC) for the
+// then scans the enemy bdat rows [Bdat_GetRowBase_B41C, +Bdat_GetMaxRow_B1EC) for the
 // model id and channel, accumulates `scene time * sub8C + field_0x45CC`
 // against the reward threshold (`reward * 30`) and applies the scaled count
 // through the primary vtable +0x11C slot before clearing field_0x45CC and
@@ -824,7 +832,7 @@ void func_800AF870(cf::CfObjectEne* self) {
     ok = 1;
 bmCheck:
     if (ok != 0) return;
-    if (func_801BA2C8(&((cf::CfEneBmView*)getInstance__Q22cf14CBattleManagerFv())->field_0x216C) != 0) return;
+    if (SuddenCommuIsStateActive(&((cf::CfEneBmView*)getInstance__Q22cf14CBattleManagerFv())->field_0x216C) != 0) return;
     cf::CfEneBmView* bm3 = (cf::CfEneBmView*)getInstance__Q22cf14CBattleManagerFv();
     s16 idx = bm3->field_0x20C8;
     if (idx != 0) return;
@@ -832,10 +840,10 @@ bmCheck:
     u32 modeOff = (u32)*(u16*)((u8*)&lbl_eu_80663E42 + idx) * 100;
     int channel = (int)*(u16*)((u8*)&lbl_eu_80663E44 + modeOff) + (int)modeOff;
     s32 key = ((cf::CfEneMoveTgtView*)((cf::CfActorField3F60*)self)->field_0x3F60)->field_0x4B0;
-    func_8003AA34();
+    Bdat_GetTable_AA34();
     u8* bdat = (u8*)lbl_eu_806640D4;
-    int row = (int)func_8003B41C(bdat);
-    int endRow = row + (int)func_8003B1EC(bdat);
+    int row = (int)Bdat_GetRowBase_B41C(bdat);
+    int endRow = row + (int)Bdat_GetMaxRow_B1EC(bdat);
     const char* tbl = (const char*)lbl_eu_804FC168;
     for (; row < endRow; row++) {
         u8 model = (u8)getBdatStringColumnValue(bdat, tbl + 0x2C3, row);
@@ -1212,13 +1220,13 @@ void* CActorParam_UnkVirtualFunc93__Q22cf11CActorParamFv(cf::CActorParam* self) 
 
 // us-800b0be0: retail symbol is Fv; the real ABI passes (self, val, argA, argB).
 // Forwards to Unk82(val) / Unk90(argA), then the +0x15E0 sub-object to
-// func_802617B8 when present (flag = argB).
+// Counter_AddClamped when present (flag = argB).
 void CActorParam_UnkVirtualFunc88__Q22cf11CActorParamFv(cf::CActorParam* self, u32 val, u32 argA, u32 argB) {
     self->CActorParam_addSpentCurrency(val);
     self->CActorParam_addSecondCurrency(argA);
     u8* obj = ((cf::CfActorParam15E0View*)self)->field_0x15E0;
     if (obj != NULL) {
-        func_802617B8(obj, ((cf::CfActorObj89CView*)obj)->field_0x89C, argB);
+        Counter_AddClamped(obj, ((cf::CfActorObj89CView*)obj)->field_0x89C, argB);
     }
 }
 

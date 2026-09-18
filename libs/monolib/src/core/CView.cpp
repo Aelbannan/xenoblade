@@ -2,7 +2,7 @@
 // Retail names are unmangled (extern "C"): the CView dtor shell and the
 // CFontLayer-base deleting-dtor shell referenced by the vtable.
 extern "C" void __dt__5CViewFv(void*);
-extern "C" void func_8043FBC4(u8* self) {
+extern "C" void CView_DtorShell1C4(u8* self) {
     __dt__5CViewFv((char*)self - 0x1C4);
 }
 
@@ -49,7 +49,7 @@ void apply__11CSplitFrameFv(void* splitFrame);
 void setCurrent__9CViewRootFP5CView(CView* view);
 CWorkThread* getWorkThread__9CWorkUtilFUl(u32 workId);
 extern "C" void updateScrollForSize__17CViewRectDataCoreFRCQ22ml6CPnt16(CViewRectDataCore* data, const ml::CPnt16& size);
-extern "C" void func_8043FD10__10CViewFrameFR7CRect16PC10CViewFrame(ml::CRect16* rect, const CViewFrame* frame);
+extern "C" void CViewFrame_ComputeContentRect(ml::CRect16* rect, const CViewFrame* frame);
 extern "C" void setBoundsSize__17CViewRectDataCoreFRCQ22ml6CPnt16(CViewRectDataCore* data, const ml::CPnt16& maxSize);
 extern "C" void __ct__CViewFrame(CViewFrame* frame);
 // CFontLayer base ctor (un-mangled retail symbol; defined in the shipped
@@ -264,7 +264,7 @@ extern "C" u32 lbl_eu_80663598[2] = { (u32)&lbl_eu_80522624, 0 };
 // vtable at +0x74 (this-adjust -0x1C4). Defined BEFORE the class-info so the
 // .data emission order matches retail (vtable @0x8056B5E0, class-info
 // @0x8056B6B0, template vtables @0x8056B6CC).
-extern "C" void func_8043FBC4(u8* self);
+extern "C" void CView_DtorShell1C4(u8* self);
 extern "C" void CView_UnkVirtualFunc1__5CViewFv(CView* self);
 extern "C" void detachRenderWork__5CViewFP11CWorkThread(void* self, void* thread);
 extern "C" int CView_UnkVirtualFunc3__5CViewFv(CView* self, IWorkEvent* event);
@@ -298,7 +298,7 @@ u32 lbl_eu_8056B5E0[0xD0 / 4] = {
     (u32)&wkRenderAfter__11CWorkThreadFv, (u32)&wkStandbyLogin__5CViewFv,
     (u32)&wkStandbyLogout__5CViewFv, (u32)&wkStandbyExceptionRetry__11CWorkThreadFUl,
     // CFontLayer secondary vtable (0x30)
-    (u32)&lbl_eu_80663578, 0xFFFFFE3C, (u32)&func_8043FBC4,
+    (u32)&lbl_eu_80663578, 0xFFFFFE3C, (u32)&CView_DtorShell1C4,
     (u32)&CView_UnkVirtualFunc1__5CViewFv, (u32)&detachRenderWork__5CViewFP11CWorkThread,
     (u32)&CView_UnkVirtualFunc3__5CViewFv, (u32)&CView_UnkVirtualFunc4__5CViewFv,
     (u32)&CView_UnkVirtualFunc5__5CViewFv, (u32)&CView_UnkVirtualFunc6__5CViewFv,
@@ -3002,7 +3002,7 @@ extern "C" void clipRectToView__5CViewFRQ22ml5CRectP5CView(ml::CRect& rect,
         CVIEW_WALK_NEXT(cur, parentSnap);
     }
 
-    func_8043FD10__10CViewFrameFR7CRect16PC10CViewFrame(&tailOff, &other->mFrame);
+    CViewFrame_ComputeContentRect(&tailOff, &other->mFrame);
     rect.mPos.x = x;
     rect.mPos.y = y;
     rect.mSize.x = tailOff.mSize.x;

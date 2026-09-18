@@ -40,7 +40,7 @@ public:
 // (Declarations already provided by included headers: CBattleMan_SetPartyFlagReset,
 // CBattleMan_FetchVisionObj, func_800D9978 and the CfMoveEnumHolder/CfMoveEnumList
 // family live in cfsys/CfObjectImplMove.hpp / cf/CfGameManager.hpp;
-// func_801862C0/func_801864DC/func_8003AA34/func_8003B1EC in
+// ArtsSelect_GetContainer/func_801864DC/Bdat_GetTable_AA34/Bdat_GetMaxRow_B1EC in
 // kyoshin/code_801862C0.hpp.)
 extern "C" {
     // CBattleManager helpers
@@ -59,9 +59,9 @@ extern "C" {
     void __ct__800FC32C(void* list, int a, int b, int c);
 
     // Camera / selector helpers
-    void* func_800FE68C();
+    void* Selector_GetInstance();
     void func_800FE96C(void* cam, void* target);
-    void func_800FE950(void* cam, u32 a, u32 b, u32 c);
+    void setRequestParams(void* cam, u32 a, u32 b, u32 c);
 
     // Vision
     void func_801A8244(void* vision, void* visionList, int a, int b, int c);
@@ -69,20 +69,20 @@ extern "C" {
     // Voice / action helpers
     void* func_8016FE34(void* source);
     void func_801537F0(void* self);
-    void func_801537E0(void* self);
+    void aiActionClearBits0006(void* self);
 
     // PTG / tension helpers
-    void* func_801862C0();
+    void* ArtsSelect_GetContainer();
     void* func_801864DC(void* mgr, int slot);
 
     // Monado arts unlock
     void* func_8009EC9C(u32 index);
-    void func_801F9288(void* self, int, int, int);
+    void ResTbox_SetCellBit80(void* self, int, int, int);
     void func_801F92B0(void* self, int, int, int);
 
     // Game state / flags
     bool isGlobalCamFlagSet__Fi(s32 mask);
-    u32 func_80192BD0();
+    u32 menuPTStateIsActive();
 
     // bdat helpers
     void* getFP__FPCc(const char* name);
@@ -130,7 +130,7 @@ int isEnd(VMThread* pThread) {
     cf::CBattleManager* bm = cf::CBattleManager::getInstance();
     // Intrusive ring list: bm+8 points at a sentinel node whose `next`
     // wraps back to itself when empty. Declaration order mirrors the matched
-    // func_8027F0B8 loop so MWCC colors the node r3 / sentinel r5.
+    // SysWinLog_PollBattleStart loop so MWCC colors the node r3 / sentinel r5.
     cf::BtlRingNode* node;
     int count;
     cf::BtlRingNode* sentinel = *(cf::BtlRingNode**)((u8*)bm + 8);
@@ -204,10 +204,10 @@ int attackEne(VMThread* pThread) {
     }
     u8 holder[8];
     CTaskGame_enumListCtor((CfMoveEnumHolder*)holder);
-    func_800F4A98(CTaskGame_enumListGet((CfMoveEnumHolder*)holder), 0x100, 0);
+    startEnumObjects(CTaskGame_enumListGet((CfMoveEnumHolder*)holder), 0x100, 0);
     // Count is re-read via the holder accessor every iteration (retail shape).
     for (u32 i = 0; i < *(u32*)((u8*)CTaskGame_enumListGet((CfMoveEnumHolder*)holder) + 0x620); i++) {
-        void* unit = func_8016FE34(func_800F6EAC((CfMoveEnumList*)CTaskGame_enumListGet((CfMoveEnumHolder*)holder), i));
+        void* unit = func_8016FE34(getObjectAt((CfMoveEnumList*)CTaskGame_enumListGet((CfMoveEnumHolder*)holder), i));
         if (targetId == *(u16*)((u8*)unit + 0x3F28)) {
             func_800D9978(cf::CBattleManager::getInstance(), unit);
         }
@@ -225,27 +225,27 @@ int selectTgt(VMThread* pThread) {
         ocObj = vmArgOCGet(2, vmArgPtrGet(pThread, 1));
     }
     if (ocObj != 0) {
-        void* mgr = func_801862C0();
+        void* mgr = ArtsSelect_GetContainer();
         void* slot = func_801864DC(mgr, *(u32*)((u8*)ocObj + 4));
         if (slot != 0) {
-            void* cam = func_800FE68C();
+            void* cam = Selector_GetInstance();
             func_800FE96C(cam, *(void**)((u8*)slot + 0x74));
         }
     } else {
         u8 holder[8];
         CTaskGame_enumListCtor((CfMoveEnumHolder*)holder);
         void* list = CTaskGame_enumListGet((CfMoveEnumHolder*)holder);
-        func_800F4A98((CfMoveEnumList*)list, 0x100, 0x802);
+        startEnumObjects((CfMoveEnumList*)list, 0x100, 0x802);
         void* player = cf::CfGameManager::getPlayer(0);
         // Target getter at vtable+0xAC is
         // cf::CfObject::CfObject_getPosVector on the player object.
         void* target = (void*)((cf::CfObject*)player)->CfObject_getPosVector();
         list = CTaskGame_enumListGet((CfMoveEnumHolder*)holder);
         func_800F6ED0((CfMoveEnumList*)list, target);
-        void* cam = func_800FE68C();
-        func_800FE950(cam, 0x80000003, 0, 0);
-        void* val = func_800F6E08(CTaskGame_enumListGet((CfMoveEnumHolder*)holder));
-        cam = func_800FE68C();
+        void* cam = Selector_GetInstance();
+        setRequestParams(cam, 0x80000003, 0, 0);
+        void* val = findFirstCleanObjectId(CTaskGame_enumListGet((CfMoveEnumHolder*)holder));
+        cam = Selector_GetInstance();
         func_800FE96C(cam, val);
         __dt__80043E88((CfMoveEnumHolder*)holder, -1);
     }
@@ -286,7 +286,7 @@ int isVoiceEvent(VMThread* pThread) {
     int result = 0;
     cf::CfGameManager::getInstance();
     if (isGlobalCamFlagSet__Fi(0x10000000) != 0) {
-        if (!CMenuArtsSelect_isCreated() && func_80192BD0() == 0) {
+        if (!CMenuArtsSelect_isCreated() && menuPTStateIsActive() == 0) {
             result = 1;
         }
     }
@@ -302,7 +302,7 @@ int unlockMonadoArts(VMThread* pThread) {
     void* data = func_8009EC9C(1);
     void* ptr = (u8*)data + 0xE8;
     for (int i = 0; i < 8; i++) {
-        func_801F9288(ptr, 0, 1, i);
+        ResTbox_SetCellBit80(ptr, 0, 1, i);
         func_801F92B0(ptr, 0, 1, i);
     }
     return 0;
@@ -388,7 +388,7 @@ int breakVision(VMThread* pThread) {
             // into an in-place update of voiceAction (retail recomputes the
             // addi per call).
             func_801537F0((u8*)voiceAction + 0x3380);
-            func_801537E0(&((u8*)voiceAction)[0x3380]);
+            aiActionClearBits0006(&((u8*)voiceAction)[0x3380]);
         }
     }
     return 0;
@@ -399,7 +399,7 @@ int setPTG(VMThread* pThread) {
     cf::CBattleManager* bm = cf::CBattleManager::getInstance();
     if (bm != 0) {
         bm = cf::CBattleManager::getInstance();
-        func_8018C8F4((u8*)bm + 0x194, ptg);
+        PartyGaugeSetClamped((u8*)bm + 0x194, ptg);
     }
     return 0;
 }
@@ -419,10 +419,10 @@ int getPTG(VMThread* pThread) {
 }
 
 int test(VMThread* pThread) {
-    func_8003AA34();
-    func_8003AA34();
+    Bdat_GetTable_AA34();
+    Bdat_GetTable_AA34();
     void* bdat = getFP__FPCc("ene_arts");
-    u32 count = func_8003B1EC(bdat);
+    u32 count = Bdat_GetMaxRow_B1EC(bdat);
     for (int i = 1; i < (int)count; i++) {
         getBdatStringColumnValue(bdat, "name", i);
     }

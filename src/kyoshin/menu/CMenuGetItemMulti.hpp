@@ -104,7 +104,7 @@ public:
     u8 field_20E;
     u8 field_20F;
     // Rank-item slot display arrays (shared by the category-3/9 item
-    // handlers func_801B7440 / func_801B70BC / func_801B7A58): per-slot item
+    // handlers GetItemMulti_FillEntryRankPane / func_801B70BC / func_801B7A58): per-slot item
     // ids, positions and the "slot filled" flag byte. Slots 8-11 are the
     // rank-item display. The +0x2C4/+0x2D0 arrays are only written by
     // func_801B7A58 (extra per-slot rank data).
@@ -164,10 +164,10 @@ public:
 // Get-item-multi singleton instance pointer (retail SDA symbol).
 extern u32 lbl_eu_80664414;
 
-// Currently-loaded item file buffer pointer (released by Term/func_801B45A0).
+// Currently-loaded item file buffer pointer (released by Term/GetItemMulti_OnFileEvent).
 extern u32 lbl_eu_80664418;
 
-// Item-name font pointer (.sbss, read by func_801B7440's item-name lookup).
+// Item-name font pointer (.sbss, read by GetItemMulti_FillEntryRankPane's item-name lookup).
 extern void* lbl_eu_806640D8;
 
 // Pane colour/position defaults (.sbss, written by sinit_801B9FC8).
@@ -215,12 +215,12 @@ extern f32 lbl_eu_80667E2C;
 extern f64 lbl_eu_80667E08;
 
 // Item-window font/table pointers (.sbss) used by the category-4/8 item
-// handlers (func_801B6184 / func_801B69F4) and func_801B7A58.
+// handlers (func_801B6184 / GetItemMulti_ShowEntryDetailPanes) and func_801B7A58.
 extern u32 lbl_eu_806640F4;
 extern u32 lbl_eu_806640F8;
 
 // Item-table pointer + fallback name-table font pointer used by
-// func_801B76CC's description/rank text lookups (.sbss).
+// GetItemMulti_ShowIdCategoryPanes's description/rank text lookups (.sbss).
 extern void* lbl_eu_80664104;
 extern void* lbl_eu_806640A8;
 
@@ -255,20 +255,20 @@ struct CfGameManagerTermFields {
 
 // C-ABI imports (retail emits these unmangled). The .sbss/.rodata labels each
 // interacts with are noted on the decl.
-extern "C" void func_8003AA34();                    // bdat refresh (paired with the lbl_eu_80504A3C fp lookup)
+extern "C" void Bdat_GetTable_AA34();                    // bdat refresh (paired with the lbl_eu_80504A3C fp lookup)
 extern "C" void setBdatEntry__5CBdatFUlPv(u32 value, u8* data);
 extern "C" void getEntry__5CBdatFUl(u32 value);
 extern "C" u8 DecMenuCounter64080();                      // flag reset alongside code80135FDC_getByte_64080
 extern "C" u8 code80135FDC_getByte_64080();
-extern "C" void func_8022B7F4(u8* syswin);          // CSysWin teardown (Term, after the lbl_eu_80664414/18 clears)
-extern "C" void func_8022B7C8(u8* syswin, nw4r::lyt::DrawInfo* drawInfo);
-extern "C" void func_801D20B0(CBaseCur* cur, nw4r::lyt::DrawInfo* drawInfo);
-extern "C" void func_8022B8E4(u8* syswin);          // CSysWin re-layout
+extern "C" void sysWinTermLayout(u8* syswin);          // CSysWin teardown (Term, after the lbl_eu_80664414/18 clears)
+extern "C" void sysWinDrawLayout(u8* syswin, nw4r::lyt::DrawInfo* drawInfo);
+extern "C" void Cur_DrawLayout(CBaseCur* cur, nw4r::lyt::DrawInfo* drawInfo);
+extern "C" void sysWinAdvancePhase3(u8* syswin);          // CSysWin re-layout
 // CSysWin content setters (grade-up window setup in func_801B8E2C /
-// func_801B82E8); func_8022B90C/BFC8 take CSysWin* (declared in CSysWin.hpp).
+// func_801B82E8); sysWinSwitchKindPane/BFC8 take CSysWin* (declared in CSysWin.hpp).
 extern "C" void func_8022B9B4(u8* syswin, char* text, u32 flag);
-extern "C" void func_8022B8B8(u8* syswin);
-extern "C" void func_8022BF6C(u8* syswin, char* a, char* b);
+extern "C" void sysWinOpenPhase1(u8* syswin);
+extern "C" void sysWinSetTwoTextValues(u8* syswin, char* a, char* b);
 // Item removal helpers (item sweeps in func_801B8E2C): release an entry
 // and notify the item system.
 extern "C" void CItemData_lookupOrAlloc(CMenuGetItemMultiEntry* entry, u32 flags);
@@ -277,17 +277,17 @@ extern "C" void func_80140E00(u32 a, u32 id, u32 b);
 // Slot-window name source used by func_801B82E8's A-press open (no args).
 extern "C" char* func_801D3C74();
 // Cursor position + window selection helpers (pad-input handlers).
-extern "C" void func_8022C1B4(nw4r::math::VEC3* out, u8* syswin, u8 sel);
-extern "C" void func_801D216C(CBaseCur* cur, u8 val); // cursor visibility setter
+extern "C" void sysWinGetPaneScreenPos(nw4r::math::VEC3* out, u8* syswin, u8 sel);
+extern "C" void Cur_SetVisible(CBaseCur* cur, u8 val); // cursor visibility setter
 // Per-frame system-window/cursor updates (Move's tail after the state switch).
-extern "C" void func_8022B748(u8* syswin);
+extern "C" void sysWinDispatchPhase(u8* syswin);
 extern "C" void func_801D202C(CBaseCur* cur);
 // System-window lifecycle queries used by Move's state machine.
 extern "C" int CSysWin_isActive(u8* syswin);
 extern "C" u32 CSysWin_isReady(u8* syswin);
 extern "C" u32 CSysWin_getUnk34(u8* syswin); // window state query (pad handlers)
 // Item-menu active check (CMenuItem.cpp) and item-created callback (CUICfManager.cpp).
-extern "C" u32 func_80167A18();
+extern "C" u32 ItemMenu_IsPresent();
 extern "C" u32 CUICfManager_queuePauseItemMenu(u8 self, u8 arg1, u8 arg2);
 // Rank-window geometry helpers (CItemBoxInfo.cpp family).
 extern "C" f32 GetFloatTableEntry(u32 idx);

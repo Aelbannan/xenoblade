@@ -6,10 +6,10 @@
 namespace cf {
 
 // us-802bafa4
-// Calls vtbl slot 7 with 1 (true) only if both func_80293C10 and func_80192BD0
+// Calls vtbl slot 7 with 1 (true) only if both PTNotice_IsActive_3C10 and menuPTStateIsActive
 // return zero; otherwise 0.
 void CHelp_ClosePartyMenu::checkHelpCondition() {
-    u32 flag = (!func_80293C10() && !func_80192BD0()) ? 1 : 0;
+    u32 flag = (!PTNotice_IsActive_3C10() && !menuPTStateIsActive()) ? 1 : 0;
     this->func_802B7CBC(flag);
 }
 

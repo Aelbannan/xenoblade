@@ -6,7 +6,7 @@ extern "C" {
     void closeFileHandle__FPP11CFileHandle(void*);
     void func_80139124(void*);
     void func_80138078(int);
-    void func_8009D018(u32, u32);
+    void CtrlRemote_SetSharedBit(u32, u32);
 }
 #include "kyoshin/CSaveLoad.hpp"
 #include "monolib/util/MemManager.hpp"
@@ -45,7 +45,7 @@ extern "C" {
 #include "monolib/device/CDeviceSC.hpp"
 
 // External function declarations
-extern "C" void func_801F369C(void*);  // retail symbol is unmangled (CItemBoxLine/COption/CSortMenu.hpp pattern)
+extern "C" void CScrollBar_requestScrollOut(void*);  // retail symbol is unmangled (CItemBoxLine/COption/CSortMenu.hpp pattern)
 void playUISound(u32);
 u32 advanceAnimTransform(nw4r::lyt::AnimTransform*, float);
 // AnimRewindFrame declared in code_80135FDC.hpp
@@ -59,7 +59,7 @@ extern const float lbl_eu_80668B74;
 extern cf::CfAward lbl_eu_806649F8;
 extern u8 lbl_eu_80576CF8[];
 extern void __register_global_object(void*, void*, void*);
-extern void func_8009D414(void*);
+extern void CtrlRemote_ResetSlotArrayObj(void*);
 
 // CDeviceFile / MemManager / CSysWin / game system function declarations
 extern u32 lbl_eu_80663E28;
@@ -562,7 +562,7 @@ CSaveLoad::~CSaveLoad() {
 void CSaveLoad::loadSaveData() {
     u32 handle = (u32)getHandleMEM2__Q23mtl10MemManagerFv();
     mFileHandle = (CFileHandle*)readFile__11CDeviceFileFUlPCcP10IWorkEventii(handle, (const char*)&lbl_eu_8050F7CC[0x92], this, 0, 0);
-    func_801F34F4(mScrollbar);
+    CScrollBar_loadLayoutArc(mScrollbar);
 
     // Virtual call on CSysWin-like objects at offsets 0x98 and 0xD4
     // Use virtual dispatch through CSysWinProxy to match retail r12 pattern
@@ -584,7 +584,7 @@ extern "C" void CSaveLoad_draw(CSaveLoad* self, nw4r::lyt::DrawInfo* drawInfo) {
     if (self->mField120 == 0) return;
 
     drawLayout(self->mLayout, drawInfo, 0, 1);
-    func_801F35B0(self->mScrollbar, drawInfo);
+    CScrollBar_draw(self->mScrollbar, drawInfo);
 
     // Cursor pane is only drawn while both windows are idle
     if (CSysWin_getUnk34(&self->mSysWin98) == 0 &&
@@ -594,9 +594,9 @@ extern "C" void CSaveLoad_draw(CSaveLoad* self, nw4r::lyt::DrawInfo* drawInfo) {
         CSLCur_draw((CSLCur*)((char*)self + 0x28), drawInfo);
     }
 
-    func_8022B7C8(&self->mSysWin98, drawInfo);
-    func_801D20B0((char*)self + 0x40, drawInfo);
-    func_8022B7C8(&self->mSysWinD4, drawInfo);
+    sysWinDrawLayout(&self->mSysWin98, drawInfo);
+    Cur_DrawLayout((char*)self + 0x40, drawInfo);
+    sysWinDrawLayout(&self->mSysWinD4, drawInfo);
 
     // Sub-layout pointer stored inside the second CSysWin block (+0x114)
     nw4r::lyt::Layout* subLayout = *(nw4r::lyt::Layout**)((char*)&self->mSysWinD4 + 0x40);
@@ -610,7 +610,7 @@ extern "C" void CSaveLoad_draw(CSaveLoad* self, nw4r::lyt::DrawInfo* drawInfo) {
 // Cleanup/reset function for CSaveLoad
 void CSaveLoad_reset(CSaveLoad* self) {
     CWorkSystem::setSaveLoadInvalidReset(false);
-    func_eu_804521BC(1);
+    DevFile_SetByteA9(1);
     CLibHbm::setHbmStopFlag(false);
     closeFileHandle__FPP11CFileHandle(&self->mFileHandle);
     self->mField120 = 0;
@@ -641,11 +641,11 @@ void CSaveLoad_reset(CSaveLoad* self) {
     }
     
     CSLCur_destroy((UnkPtrHolder*)((char*)self + 0x28));
-    func_801F35DC((u8*)self + 0x58);
-    func_8022B7F4(&self->mSysWin98);
+    CScrollBar_Teardown((u8*)self + 0x58);
+    sysWinTermLayout(&self->mSysWin98);
     // Virtual call at self+0x40 (CCur18), vtable slot 3 (offset 0x0C), no null check
     ((CCur18Obj*)((char*)self + 0x40))->vf3();
-    func_8022B7F4(&self->mSysWinD4);
+    sysWinTermLayout(&self->mSysWinD4);
     CSLSub_destroy((UnkSlot4Ptr*)((char*)self + 0x110));
     ((UnkClass_8045F564*)((char*)self + 0x04))->deleteRegion();
     lbl_eu_806649F4 = nullptr;
@@ -694,10 +694,10 @@ void CSaveLoad_open(CSaveLoad* p) {
     vec[0] = lbl_eu_80668B70;
     vec[1] = lbl_eu_80668B74;
     vec[2] = lbl_eu_80668B6C;
-    func_801F3670(p->mScrollbar, vec);
+    CScrollBar_InitRootPane(p->mScrollbar, vec);
 
     int val = (int)(u16)lbl_eu_80662AC8;
-    func_801F36BC(p->mScrollbar, 3, val);
+    CScrollBar_UpdateThumb(p->mScrollbar, 3, val);
 
     {
         void (*fn90994)(CSaveLoad*) = func_80290994;
@@ -713,7 +713,7 @@ extern "C" void CSaveLoad_close(CSaveLoad* p) {
     // Function pointer cast prevents inlining of CSaveLoad_enAnimB's body
     ((void (*)(CSaveLoad*))CSaveLoad_enAnimB)(p);
     p->mField3C = 0;
-    func_801F369C(p->mScrollbar);
+    CScrollBar_requestScrollOut(p->mScrollbar);
     playUISound(6);
 }
 #pragma optimize_for_size off
@@ -770,7 +770,7 @@ void CSaveLoad_curUp(CSaveLoad* self) {
     
 normalPath:
     CSaveLoad_refresh(self);
-    func_801F3850(self->mScrollbar, self->mField126);
+    CScrollBar_PlaceThumb(self->mScrollbar, self->mField126);
     playUISound(1);
 }
 
@@ -823,7 +823,7 @@ void CSaveLoad_curDown(CSaveLoad* self) {
 
 updatePath:
     CSaveLoad_refresh(self);
-    func_801F3850(self->mScrollbar, self->mField126);
+    CScrollBar_PlaceThumb(self->mScrollbar, self->mField126);
     playUISound(1);
 }
 
@@ -853,7 +853,7 @@ void CSaveLoad_pageUp(CSaveLoad* p) {
     }
 
     CSaveLoad_refresh(p);
-    func_801F3850(p->mScrollbar, p->mField126);
+    CScrollBar_PlaceThumb(p->mScrollbar, p->mField126);
     playUISound(1);
 }
 
@@ -889,7 +889,7 @@ extern "C" void CSaveLoad_pageDown(CSaveLoad* self) {
     }
 
     CSaveLoad_refresh(self);
-    func_801F3850(self->mScrollbar, self->mField126);
+    CScrollBar_PlaceThumb(self->mScrollbar, self->mField126);
     playUISound(1);
 }
 
@@ -910,8 +910,8 @@ void CSaveLoad_confirm(CSaveLoad* self) {
                 playUISound(6);
                 self->mField12C = 0;
             }
-            func_8022B8E4(&self->mSysWin98);
-            func_801D216C((void*)((u8*)self + 0x40), 0);
+            sysWinAdvancePhase3(&self->mSysWin98);
+            Cur_SetVisible((void*)((u8*)self + 0x40), 0);
             self->mField121 = 7;
         }
         return;
@@ -919,7 +919,7 @@ void CSaveLoad_confirm(CSaveLoad* self) {
 
     if (CSysWin_getUnk34(&self->mSysWinD4) != 0) {
         if (CSysWin_isActive(&self->mSysWinD4) != 0) {
-            func_8022B8E4(&self->mSysWinD4);
+            sysWinAdvancePhase3(&self->mSysWinD4);
             self->mField121 = 9;
             if (self->mField12C != 0) {
                 self->mField12C = 0;
@@ -954,9 +954,9 @@ noCursor:
 
 common:
     func_8022B9B4(&self->mSysWin98, (u32)s1, 0);
-    func_8022BF6C(&self->mSysWin98, (u32)s2, (u32)s3);
+    sysWinSetTwoTextValues(&self->mSysWin98, (u32)s2, (u32)s3);
     func_8022BFC8(&self->mSysWin98, 0);
-    func_8022B8B8(&self->mSysWin98);
+    sysWinOpenPhase1(&self->mSysWin98);
     self->mField128 = 1;
     self->mField121 = 6;
     playUISound(3);
@@ -969,8 +969,8 @@ void CSaveLoad_cancel(CSaveLoad* p) {
     if (CSysWin_getUnk34((void*)&p->mSysWin98) == 0) return;
     if (CSysWin_isActive((void*)&p->mSysWin98) == 0) return;
 
-    func_8022B8E4((void*)&p->mSysWin98);
-    func_801D216C((char*)p + 0x40, 0);
+    sysWinAdvancePhase3((void*)&p->mSysWin98);
+    Cur_SetVisible((char*)p + 0x40, 0);
 
     p->mField121 = 7;
     p->mField128 = 1;
@@ -992,9 +992,9 @@ void CSaveLoad_openDel(CSaveLoad* self) {
     char* s2 = BdatTouchStringCell((char*)&lbl_eu_8050F7CC[0xa7], (char*)&lbl_eu_8050F7CC[0xb2], 0x3c);
     char* s3 = BdatTouchStringCell((char*)&lbl_eu_8050F7CC[0xa7], (char*)&lbl_eu_8050F7CC[0xb2], 0x3d);
     func_8022B9B4(&self->mSysWin98, (u32)s1, 0);
-    func_8022BF6C(&self->mSysWin98, (u32)s2, (u32)s3);
+    sysWinSetTwoTextValues(&self->mSysWin98, (u32)s2, (u32)s3);
     func_8022BFC8(&self->mSysWin98, 0);
-    func_8022B8B8(&self->mSysWin98);
+    sysWinOpenPhase1(&self->mSysWin98);
     self->mField128 = 1;
     self->mField12C = 1;
     self->mField121 = 6;
@@ -1063,7 +1063,7 @@ extern "C" __declspec(noinline) void CSaveLoad_tickCloseA(CSaveLoad* self) {
 extern "C" __declspec(noinline) void CSaveLoad_tickConf(CSaveLoad* self) {
     if (CSysWin_isActive((void*)&self->mSysWin98) != 0) {
         self->mField121 = 3;
-        func_801D216C((char*)self + 0x40, 1);
+        Cur_SetVisible((char*)self + 0x40, 1);
         {
             void (*fn)(CSaveLoad*) = CSaveLoad_refresh;
             fn(self);
@@ -1086,7 +1086,7 @@ extern "C" __declspec(noinline) void CSaveLoad_execOp(CSaveLoad* self) {
     if (self->mField12C != 0) {
         // Delete/overwrite path
         CWorkSystem::setSaveLoadInvalidReset(true);
-        func_eu_804521BC(0);
+        DevFile_SetByteA9(0);
         CLibHbm::setHbmStopFlag(true);
 
         char* r5 = (char*)BdatTouchStringCell((char*)&lbl_eu_8050F7CC[0xa7], (char*)&lbl_eu_8050F7CC[0xb2], 0x52);
@@ -1117,11 +1117,11 @@ extern "C" __declspec(noinline) void CSaveLoad_execOp(CSaveLoad* self) {
     } else {
         // Save path
         if (self->mField12B != 0) {
-            func_8009D018(0x3213, 1);
+            CtrlRemote_SetSharedBit(0x3213, 1);
         }
 
         CWorkSystem::setSaveLoadInvalidReset(true);
-        func_eu_804521BC(0);
+        DevFile_SetByteA9(0);
         CLibHbm::setHbmStopFlag(true);
 
         char* r5 = (char*)BdatTouchStringCell((char*)&lbl_eu_8050F7CC[0xa7], (char*)&lbl_eu_8050F7CC[0xb2], 0x36);
@@ -1145,9 +1145,9 @@ extern "C" __declspec(noinline) void CSaveLoad_finish(CSaveLoad* p) {
     if (p->mField12D == 0) goto setError3;
 
     p->mField12A = 1;
-    func_80145018();
-    func_80142C80();
-    func_8014A2D0();
+    requestLandTelop();
+    MenuUpdate_SignalGlobalField64();
+    CMenuGetItem_SetField54();
     invalidateQstFlag();
 
     // Load global after function calls to prevent reordering
@@ -1198,13 +1198,13 @@ win54:
         s1 = (char*)BdatTouchStringCell((char*)&lbl_eu_8050F7CC[0xa7], (char*)&lbl_eu_8050F7CC[0xb2], 0x54);
         func_8022B9B4(&self->mSysWinD4, (u32)s1, 0);
         func_8022BFC8(&self->mSysWinD4, 1);
-        func_8022B8B8(&self->mSysWinD4);
+        sysWinOpenPhase1(&self->mSysWinD4);
         goto clear12E;
 win55:
         s1 = (char*)BdatTouchStringCell((char*)&lbl_eu_8050F7CC[0xa7], (char*)&lbl_eu_8050F7CC[0xb2], 0x55);
         func_8022B9B4(&self->mSysWinD4, (u32)s1, 0);
         func_8022BFC8(&self->mSysWinD4, 1);
-        func_8022B8B8(&self->mSysWinD4);
+        sysWinOpenPhase1(&self->mSysWinD4);
         goto clear12E;
 threeString:
         // 3-string path: update syswin 0x98 with strings
@@ -1220,9 +1220,9 @@ threeString:
         s3 = (char*)BdatTouchStringCell((char*)&lbl_eu_8050F7CC[0xa7], (char*)&lbl_eu_8050F7CC[0xb2],
                                   msgIdx);
         func_8022B9B4(&self->mSysWin98, (u32)s1, 0);
-        func_8022BF6C(&self->mSysWin98, (u32)s2, (u32)s3);
+        sysWinSetTwoTextValues(&self->mSysWin98, (u32)s2, (u32)s3);
         func_8022BFC8(&self->mSysWin98, 0);
-        func_8022B8B8(&self->mSysWin98);
+        sysWinOpenPhase1(&self->mSysWin98);
         self->mField128 = 1;
         self->mField12C = 1;
         self->mField121 = 6;
@@ -1233,12 +1233,12 @@ clear12E:
 
     if (self->mField12C != 0) {
         CWorkSystem::setSaveLoadInvalidReset(false);
-        func_eu_804521BC(1);
+        DevFile_SetByteA9(1);
         CLibHbm::setHbmStopFlag(false);
         s1 = (char*)BdatTouchStringCell((char*)&lbl_eu_8050F7CC[0xa7], (char*)&lbl_eu_8050F7CC[0xb2], 0x3E);
         func_8022B9B4(&self->mSysWinD4, (u32)s1, 0);
         func_8022BFC8(&self->mSysWinD4, 1);
-        func_8022B8B8(&self->mSysWinD4);
+        sysWinOpenPhase1(&self->mSysWinD4);
         playUISound(0x7A);
         return;
     }
@@ -1247,7 +1247,7 @@ clear12E:
         s1 = (char*)BdatTouchStringCell((char*)&lbl_eu_8050F7CC[0xa7], (char*)&lbl_eu_8050F7CC[0xb2], 0x47);
         func_8022B9B4(&self->mSysWinD4, (u32)s1, 0);
         func_8022BFC8(&self->mSysWinD4, 1);
-        func_8022B8B8(&self->mSysWinD4);
+        sysWinOpenPhase1(&self->mSysWinD4);
         lbl_eu_80662ACC = (u32)(s8)self->mField124;
         self->mField12D = 1;
         playUISound(0x28);
@@ -1255,16 +1255,16 @@ clear12E:
     }
 
     if (self->mField12B != 0) {
-        func_8009D018(0x3213, 0);
+        CtrlRemote_SetSharedBit(0x3213, 0);
     }
 
     CWorkSystem::setSaveLoadInvalidReset(false);
-    func_eu_804521BC(1);
+    DevFile_SetByteA9(1);
     CLibHbm::setHbmStopFlag(false);
     s1 = (char*)BdatTouchStringCell((char*)&lbl_eu_8050F7CC[0xa7], (char*)&lbl_eu_8050F7CC[0xb2], 0x37);
     func_8022B9B4(&self->mSysWinD4, (u32)s1, 0);
     func_8022BFC8(&self->mSysWinD4, 1);
-    func_8022B8B8(&self->mSysWinD4);
+    sysWinOpenPhase1(&self->mSysWinD4);
     lbl_eu_80662ACC = (u32)(s8)self->mField124;
     playUISound(0x28);
 }
@@ -1330,10 +1330,10 @@ void CSaveLoad_update(CSaveLoad* self) {
 
     ((UnkVtblObj*)self->mLayout)->vf14(0);
     CSLCur_update((UnkPtrHolder*)((char*)self + 0x28));
-    func_801F3540(self->mScrollbar);
-    func_8022B748(&self->mSysWin98);
+    CScrollBar_UpdateDispatch(self->mScrollbar);
+    sysWinDispatchPhase(&self->mSysWin98);
     func_801D202C((char*)self + 0x40);
-    func_8022B748(&self->mSysWinD4);
+    sysWinDispatchPhase(&self->mSysWinD4);
     CSLSub_update((CSLCur*)((char*)self + 0x110));
 }
 #pragma optimize_for_size off
@@ -1388,7 +1388,7 @@ extern "C" void CSaveLoad_refresh(CSaveLoad* self) {
     if (CSysWin_getUnk34(&self->mSysWin98) != 0) {
         // Window open: refresh the L/R button highlight on the cursor object
         char btnBuf[0xC];
-        func_8022C1B4(btnBuf, &self->mSysWin98, self->mField128);
+        sysWinGetPaneScreenPos(btnBuf, &self->mSysWin98, self->mField128);
         ((CCur18Obj*)((char*)self + 0x40))->vf4((int)btnBuf);
     } else {
         char* strBase = (char*)&lbl_eu_8050F7CC;
@@ -1478,7 +1478,7 @@ void func_80290994(CSaveLoad* self) {
                 void* pane =
                     ((RootPaneProxy*)*(void**)((char*)self->mLayout + 0x10))->vf15(emptyBtnBuf, 1);
                 if (pane != 0) {
-                    func_80124270(pane, 0u);
+                    setPaneVisible(pane, 0u);
                 }
             }
 
@@ -1497,7 +1497,7 @@ void func_80290994(CSaveLoad* self) {
             sprintf(slotNameBuf, (const char*)&strBase[0x19d], slotNum);
             void* pane =
                 ((RootPaneProxy*)*(void**)((char*)self->mLayout + 0x10))->vf15(slotNameBuf, 1);
-            func_80124270(pane, 0u);
+            setPaneVisible(pane, 0u);
         } else {
             // Slot has save data
             // Format slot data strings
@@ -1560,7 +1560,7 @@ void func_80290994(CSaveLoad* self) {
                 u32 rec = *(u32*)(slotData + btn * 4 + 0x14);
                 if ((u8)rec != 0) {
                     if (pane != 0) {
-                        func_80124270(pane, 1u);
+                        setPaneVisible(pane, 1u);
                     }
                     // Look up the award icon texture and attach it
                     char* iconName = (char*)MakeTplNameSysFile(
@@ -1575,7 +1575,7 @@ void func_80290994(CSaveLoad* self) {
                     }
                 } else {
                     if (pane != 0) {
-                        func_80124270(pane, 0u);
+                        setPaneVisible(pane, 0u);
                     }
                 }
             }
@@ -1618,7 +1618,7 @@ void func_80290994(CSaveLoad* self) {
             sprintf(slotNameBuf, (const char*)&strBase[0x19d], slotNum);
             void* pane =
                 ((RootPaneProxy*)*(void**)((char*)self->mLayout + 0x10))->vf15(slotNameBuf, 1);
-            func_80124270(pane, (*(u8*)(slotData + 0x67) != 0) ? 1u : 0u);
+            setPaneVisible(pane, (*(u8*)(slotData + 0x67) != 0) ? 1u : 0u);
         }
     }
 }
@@ -1828,11 +1828,11 @@ int OnFileEvent__9CSaveLoadFv(CSaveLoad* self, CEventFile* event) {
 
     // Hide three named panes via the root pane lookup virtual
     void* pane = ((RootPaneProxy*)*(void**)((char*)self->mLayout + 0x10))->vf15((const char*)&strBase[0x3de], 1);
-    func_80124270(pane, 0);
+    setPaneVisible(pane, 0);
     pane = ((RootPaneProxy*)*(void**)((char*)self->mLayout + 0x10))->vf15((const char*)&strBase[0x3ea], 1);
-    func_80124270(pane, 0);
+    setPaneVisible(pane, 0);
     pane = ((RootPaneProxy*)*(void**)((char*)self->mLayout + 0x10))->vf15((const char*)&strBase[0x3f6], 1);
-    func_80124270(pane, 0);
+    setPaneVisible(pane, 0);
 
     // Build a stack CSLCur bound to the arc accessor and spill its fields into
     // the embedded cursor object at self+0x28, then run its slot-8 virtual.
@@ -1927,7 +1927,7 @@ cf::CfAward::~CfAward() {
     mVtbl = (char*)base + 8;
 
     // Call the cleanup function (subobject destructor)
-    func_8009D514(this);
+    CtrlRemote_ResetSlotArrayByIndex(this);
 }
 
 // Count valid entries (0-299) and award achievements based on thresholds.
@@ -1943,7 +1943,7 @@ void awardCollectCount(int val) {
     i = 0;
     while (i < 300) {
         if (((int (*)(int))isCollepediaId)(i) != 0) {
-            if (((u32 (*)(u32))func_8009CF8C)(i + 0x1d44) != 0) {
+            if (((u32 (*)(u32))CtrlRemote_TouchBitByArg)(i + 0x1d44) != 0) {
                 count++;
             }
         }
@@ -1952,36 +1952,36 @@ void awardCollectCount(int val) {
 
     // Award achievements based on number of completed entries
     if ((u32)count >= 1) {
-        func_8027EEF4(8);
+        SysWinLog_QueueEvent(8);
     }
     if ((u32)count >= 10) {
-        func_8027EEF4(9);
+        SysWinLog_QueueEvent(9);
     }
     if ((u32)count >= 100) {
-        func_8027EEF4(10);
+        SysWinLog_QueueEvent(10);
     }
 }
 
 extern "C" void awardCount8F() {
-    u32 result = func_8027EE88(0x8f, 1);
+    u32 result = SysWinLog_BumpEventValue(0x8f, 1);
     if (result >= 0x64) {
-        func_8027EEF4(0x8f);
+        SysWinLog_QueueEvent(0x8f);
     }
     if (result >= 0x3e8) {
-        func_8027EEF4(0x90);
+        SysWinLog_QueueEvent(0x90);
     }
 }
 
 extern "C" void awardCount91() {
-    u32 result = func_8027EE88(0x91, 1);
+    u32 result = SysWinLog_BumpEventValue(0x91, 1);
     if (result >= 1) {
-        func_8027EEF4(0x91);
+        SysWinLog_QueueEvent(0x91);
     }
     if (result >= 0x32) {
-        func_8027EEF4(0x92);
+        SysWinLog_QueueEvent(0x92);
     }
     if (result >= 0x12c) {
-        func_8027EEF4(0x93);
+        SysWinLog_QueueEvent(0x93);
     }
 }
 
@@ -1991,25 +1991,25 @@ extern "C" void awardCount91() {
 // Uses bool conversion to match MWCC's neg+or+srwi. pattern.
 extern "C" u32 chkAwardFlags98() {
     bool b;
-    b = func_8009CF8C(0xa26);
+    b = CtrlRemote_TouchBitByArg(0xa26);
     if (!b) return 0;
-    b = func_8009CF8C(0xa2c);
+    b = CtrlRemote_TouchBitByArg(0xa2c);
     if (!b) return 0;
-    b = func_8009CF8C(0xa2d);
+    b = CtrlRemote_TouchBitByArg(0xa2d);
     if (!b) return 0;
-    b = func_8009CF8C(0xa2e);
+    b = CtrlRemote_TouchBitByArg(0xa2e);
     if (!b) return 0;
-    b = func_8009CF8C(0xa2f);
+    b = CtrlRemote_TouchBitByArg(0xa2f);
     if (!b) return 0;
-    b = func_8009CF8C(0xa30);
+    b = CtrlRemote_TouchBitByArg(0xa30);
     if (!b) return 0;
-    b = func_8009CF8C(0xa32);
+    b = CtrlRemote_TouchBitByArg(0xa32);
     if (!b) return 0;
-    b = func_8009CF8C(0xa34);
+    b = CtrlRemote_TouchBitByArg(0xa34);
     if (!b) return 0;
-    b = func_8009CF8C(0xa4b);
+    b = CtrlRemote_TouchBitByArg(0xa4b);
     if (b) goto ret1;
-    b = func_8009CF8C(0xac5);
+    b = CtrlRemote_TouchBitByArg(0xac5);
     if (b) goto ret1;
     return 0;
 
@@ -2020,41 +2020,41 @@ ret1:
 // Check if flags 0xad6/0xb48, 0xad7/0xb47, 0xb38-0xb41, 0xb44-0xb46 are all set.
 // Returns 1 if all pass, 0 otherwise.
 extern "C" u32 chkAwardFlags9D() {
-    bool b = func_8009CF8C(0xad6);
+    bool b = CtrlRemote_TouchBitByArg(0xad6);
     if (b) {} else {
-        b = func_8009CF8C(0xb48);
+        b = CtrlRemote_TouchBitByArg(0xb48);
         if (b) {} else return 0;
     }
-    b = func_8009CF8C(0xad7);
+    b = CtrlRemote_TouchBitByArg(0xad7);
     if (b) {} else {
-        b = func_8009CF8C(0xb47);
+        b = CtrlRemote_TouchBitByArg(0xb47);
         if (b) {} else return 0;
     }
-    b = func_8009CF8C(0xb38);
+    b = CtrlRemote_TouchBitByArg(0xb38);
     if (b) {} else return 0;
-    b = func_8009CF8C(0xb39);
+    b = CtrlRemote_TouchBitByArg(0xb39);
     if (b) {} else return 0;
-    b = func_8009CF8C(0xb3a);
+    b = CtrlRemote_TouchBitByArg(0xb3a);
     if (b) {} else return 0;
-    b = func_8009CF8C(0xb3b);
+    b = CtrlRemote_TouchBitByArg(0xb3b);
     if (b) {} else return 0;
-    b = func_8009CF8C(0xb3c);
+    b = CtrlRemote_TouchBitByArg(0xb3c);
     if (b) {} else return 0;
-    b = func_8009CF8C(0xb3d);
+    b = CtrlRemote_TouchBitByArg(0xb3d);
     if (b) {} else return 0;
-    b = func_8009CF8C(0xb3e);
+    b = CtrlRemote_TouchBitByArg(0xb3e);
     if (b) {} else return 0;
-    b = func_8009CF8C(0xb3f);
+    b = CtrlRemote_TouchBitByArg(0xb3f);
     if (b) {} else return 0;
-    b = func_8009CF8C(0xb40);
+    b = CtrlRemote_TouchBitByArg(0xb40);
     if (b) {} else return 0;
-    b = func_8009CF8C(0xb41);
+    b = CtrlRemote_TouchBitByArg(0xb41);
     if (b) {} else return 0;
-    b = func_8009CF8C(0xb44);
+    b = CtrlRemote_TouchBitByArg(0xb44);
     if (b) {} else return 0;
-    b = func_8009CF8C(0xb45);
+    b = CtrlRemote_TouchBitByArg(0xb45);
     if (b) {} else return 0;
-    b = func_8009CF8C(0xb46);
+    b = CtrlRemote_TouchBitByArg(0xb46);
     return b;
 }
 
@@ -2062,109 +2062,109 @@ extern "C" u32 chkAwardFlags9D() {
 // Some checks have fallback flags if the primary is not set.
 // Returns 1 if all pass, 0 otherwise.
 u32 chkAwardFlags9B() {
-    bool b = func_8009CF8C(0xa85);
+    bool b = CtrlRemote_TouchBitByArg(0xa85);
     if (b) {} else return 0;
-    b = func_8009CF8C(0xa86);
+    b = CtrlRemote_TouchBitByArg(0xa86);
     if (b) {} else return 0;
-    b = func_8009CF8C(0xa87);
+    b = CtrlRemote_TouchBitByArg(0xa87);
     if (b) {} else return 0;
-    b = func_8009CF8C(0xa88);
+    b = CtrlRemote_TouchBitByArg(0xa88);
     if (b) {} else {
-        b = func_8009CF8C(0xad8);
+        b = CtrlRemote_TouchBitByArg(0xad8);
         if (b) {} else return 0;
     }
-    b = func_8009CF8C(0xa89);
+    b = CtrlRemote_TouchBitByArg(0xa89);
     if (b) {} else {
-        b = func_8009CF8C(0xac9);
+        b = CtrlRemote_TouchBitByArg(0xac9);
         if (b) {} else return 0;
     }
-    b = func_8009CF8C(0xa8a);
+    b = CtrlRemote_TouchBitByArg(0xa8a);
     if (b) {} else return 0;
-    b = func_8009CF8C(0xa8b);
+    b = CtrlRemote_TouchBitByArg(0xa8b);
     if (b) {} else return 0;
-    b = func_8009CF8C(0xa8c);
+    b = CtrlRemote_TouchBitByArg(0xa8c);
     if (b) {} else return 0;
-    b = func_8009CF8C(0xa8d);
+    b = CtrlRemote_TouchBitByArg(0xa8d);
     if (b) {} else return 0;
-    b = func_8009CF8C(0xa8e);
+    b = CtrlRemote_TouchBitByArg(0xa8e);
     if (b) {} else return 0;
-    b = func_8009CF8C(0xa8f);
+    b = CtrlRemote_TouchBitByArg(0xa8f);
     if (b) {} else {
-        b = func_8009CF8C(0xa7e);
+        b = CtrlRemote_TouchBitByArg(0xa7e);
         if (b) {} else return 0;
     }
-    b = func_8009CF8C(0xa90);
+    b = CtrlRemote_TouchBitByArg(0xa90);
     if (b) {} else return 0;
-    b = func_8009CF8C(0xa91);
+    b = CtrlRemote_TouchBitByArg(0xa91);
     if (b) {} else return 0;
-    b = func_8009CF8C(0xa92);
+    b = CtrlRemote_TouchBitByArg(0xa92);
     if (b) {} else return 0;
-    b = func_8009CF8C(0xa93);
+    b = CtrlRemote_TouchBitByArg(0xa93);
     if (b) {} else {
-        b = func_8009CF8C(0xacc);
+        b = CtrlRemote_TouchBitByArg(0xacc);
         if (b) {} else return 0;
     }
-    b = func_8009CF8C(0xa94);
+    b = CtrlRemote_TouchBitByArg(0xa94);
     if (b) {} else return 0;
-    b = func_8009CF8C(0xa95);
+    b = CtrlRemote_TouchBitByArg(0xa95);
     if (b) {} else return 0;
-    b = func_8009CF8C(0xa96);
+    b = CtrlRemote_TouchBitByArg(0xa96);
     if (b) {} else return 0;
-    b = func_8009CF8C(0xa97);
+    b = CtrlRemote_TouchBitByArg(0xa97);
     if (b) {} else return 0;
-    b = func_8009CF8C(0xa98);
+    b = CtrlRemote_TouchBitByArg(0xa98);
     if (b) {} else return 0;
-    b = func_8009CF8C(0xa99);
+    b = CtrlRemote_TouchBitByArg(0xa99);
     if (b) {} else return 0;
-    b = func_8009CF8C(0xa9a);
+    b = CtrlRemote_TouchBitByArg(0xa9a);
     if (b) {} else {
-        b = func_8009CF8C(0xace);
+        b = CtrlRemote_TouchBitByArg(0xace);
         if (b) {} else return 0;
     }
-    b = func_8009CF8C(0xa9b);
+    b = CtrlRemote_TouchBitByArg(0xa9b);
     if (b) {} else return 0;
-    b = func_8009CF8C(0xa9c);
+    b = CtrlRemote_TouchBitByArg(0xa9c);
     if (b) {} else return 0;
-    b = func_8009CF8C(0xa9d);
+    b = CtrlRemote_TouchBitByArg(0xa9d);
     if (b) {} else return 0;
-    b = func_8009CF8C(0xa9e);
+    b = CtrlRemote_TouchBitByArg(0xa9e);
     if (b) {} else return 0;
-    b = func_8009CF8C(0xa9f);
+    b = CtrlRemote_TouchBitByArg(0xa9f);
     if (b) {} else return 0;
-    b = func_8009CF8C(0xaa0);
+    b = CtrlRemote_TouchBitByArg(0xaa0);
     if (b) {} else return 0;
-    b = func_8009CF8C(0xaa1);
+    b = CtrlRemote_TouchBitByArg(0xaa1);
     if (b) {} else {
-        b = func_8009CF8C(0xacd);
+        b = CtrlRemote_TouchBitByArg(0xacd);
         if (b) {} else return 0;
     }
-    b = func_8009CF8C(0xaa2);
+    b = CtrlRemote_TouchBitByArg(0xaa2);
     if (b) {} else return 0;
-    b = func_8009CF8C(0xaa3);
+    b = CtrlRemote_TouchBitByArg(0xaa3);
     if (b) {} else return 0;
-    b = func_8009CF8C(0xaa4);
+    b = CtrlRemote_TouchBitByArg(0xaa4);
     if (b) {} else {
-        b = func_8009CF8C(0xa80);
+        b = CtrlRemote_TouchBitByArg(0xa80);
         if (b) {} else {
-            b = func_8009CF8C(0xa81);
+            b = CtrlRemote_TouchBitByArg(0xa81);
             if (b) {} else return 0;
         }
     }
-    b = func_8009CF8C(0xaa5);
+    b = CtrlRemote_TouchBitByArg(0xaa5);
     if (b) {} else return 0;
-    b = func_8009CF8C(0xaa6);
+    b = CtrlRemote_TouchBitByArg(0xaa6);
     if (b) {} else return 0;
-    b = func_8009CF8C(0xaa7);
+    b = CtrlRemote_TouchBitByArg(0xaa7);
     if (b) {} else {
-        b = func_8009CF8C(0xaca);
+        b = CtrlRemote_TouchBitByArg(0xaca);
         if (b) {} else return 0;
     }
-    b = func_8009CF8C(0xaa8);
+    b = CtrlRemote_TouchBitByArg(0xaa8);
     if (b) {} else {
-        b = func_8009CF8C(0xac8);
+        b = CtrlRemote_TouchBitByArg(0xac8);
         if (b) {} else return 0;
     }
-    b = func_8009CF8C(0xab1);
+    b = CtrlRemote_TouchBitByArg(0xab1);
     if (b) {} else return 0;
     return 1;
 }
@@ -2173,74 +2173,74 @@ u32 chkAwardFlags9B() {
 // 0xacd/0xace, 0xacf-0xad3, 0xad4/0xad5, 0xad6, 0xad7 are all set.
 // Returns 1 if all pass, 0 otherwise.
 extern "C" u32 chkAwardFlags9A() {
-    bool b = func_8009CF8C(0xa71);
+    bool b = CtrlRemote_TouchBitByArg(0xa71);
     if (b) {} else return 0;
-    b = func_8009CF8C(0xa72);
+    b = CtrlRemote_TouchBitByArg(0xa72);
     if (b) {} else return 0;
-    b = func_8009CF8C(0xa73);
+    b = CtrlRemote_TouchBitByArg(0xa73);
     if (b) {} else return 0;
-    b = func_8009CF8C(0xa74);
+    b = CtrlRemote_TouchBitByArg(0xa74);
     if (b) {} else return 0;
-    b = func_8009CF8C(0xa75);
+    b = CtrlRemote_TouchBitByArg(0xa75);
     if (b) {} else return 0;
-    b = func_8009CF8C(0xa76);
+    b = CtrlRemote_TouchBitByArg(0xa76);
     if (b) {} else return 0;
-    b = func_8009CF8C(0xa77);
+    b = CtrlRemote_TouchBitByArg(0xa77);
     if (b) {} else return 0;
-    b = func_8009CF8C(0xa78);
+    b = CtrlRemote_TouchBitByArg(0xa78);
     if (b) {} else return 0;
-    b = func_8009CF8C(0xa79);
+    b = CtrlRemote_TouchBitByArg(0xa79);
     if (b) {} else return 0;
-    b = func_8009CF8C(0xa70);
+    b = CtrlRemote_TouchBitByArg(0xa70);
     if (b) {} else return 0;
-    b = func_8009CF8C(0xac1);
+    b = CtrlRemote_TouchBitByArg(0xac1);
     if (b) {} else return 0;
-    b = func_8009CF8C(0xac2);
+    b = CtrlRemote_TouchBitByArg(0xac2);
     if (b) {} else return 0;
-    b = func_8009CF8C(0xac3);
+    b = CtrlRemote_TouchBitByArg(0xac3);
     if (b) {} else return 0;
-    b = func_8009CF8C(0xac4);
+    b = CtrlRemote_TouchBitByArg(0xac4);
     if (b) {} else return 0;
-    b = func_8009CF8C(0xac5);
+    b = CtrlRemote_TouchBitByArg(0xac5);
     if (b) {} else return 0;
-    b = func_8009CF8C(0xac6);
+    b = CtrlRemote_TouchBitByArg(0xac6);
     if (b) {} else {
-        b = func_8009CF8C(0xac7);
+        b = CtrlRemote_TouchBitByArg(0xac7);
         if (b) {} else return 0;
     }
-    b = func_8009CF8C(0xac8);
+    b = CtrlRemote_TouchBitByArg(0xac8);
     if (b) {} else return 0;
-    b = func_8009CF8C(0xac9);
+    b = CtrlRemote_TouchBitByArg(0xac9);
     if (b) {} else return 0;
-    b = func_8009CF8C(0xaca);
+    b = CtrlRemote_TouchBitByArg(0xaca);
     if (b) {} else return 0;
-    b = func_8009CF8C(0xacb);
+    b = CtrlRemote_TouchBitByArg(0xacb);
     if (b) {} else return 0;
-    b = func_8009CF8C(0xacc);
+    b = CtrlRemote_TouchBitByArg(0xacc);
     if (b) {} else return 0;
-    b = func_8009CF8C(0xacd);
+    b = CtrlRemote_TouchBitByArg(0xacd);
     if (b) {} else {
-        b = func_8009CF8C(0xace);
+        b = CtrlRemote_TouchBitByArg(0xace);
         if (b) {} else return 0;
     }
-    b = func_8009CF8C(0xacf);
+    b = CtrlRemote_TouchBitByArg(0xacf);
     if (b) {} else return 0;
-    b = func_8009CF8C(0xad0);
+    b = CtrlRemote_TouchBitByArg(0xad0);
     if (b) {} else return 0;
-    b = func_8009CF8C(0xad1);
+    b = CtrlRemote_TouchBitByArg(0xad1);
     if (b) {} else return 0;
-    b = func_8009CF8C(0xad2);
+    b = CtrlRemote_TouchBitByArg(0xad2);
     if (b) {} else return 0;
-    b = func_8009CF8C(0xad3);
+    b = CtrlRemote_TouchBitByArg(0xad3);
     if (b) {} else return 0;
-    b = func_8009CF8C(0xad4);
+    b = CtrlRemote_TouchBitByArg(0xad4);
     if (b) {} else {
-        b = func_8009CF8C(0xad5);
+        b = CtrlRemote_TouchBitByArg(0xad5);
         if (b) {} else return 0;
     }
-    b = func_8009CF8C(0xad6);
+    b = CtrlRemote_TouchBitByArg(0xad6);
     if (b) {} else return 0;
-    b = func_8009CF8C(0xad7);
+    b = CtrlRemote_TouchBitByArg(0xad7);
     return b;
 }
 
@@ -2251,119 +2251,119 @@ extern "C" u32 chkAwardFlags9A() {
 // 0xae4/0xb13, 0xae5/0xb14, 0xae6/0xb18) are set.
 // Returns 1 if all pass, 0 otherwise.
 extern "C" u32 chkAwardFlags9C() {
-    bool b = func_8009CF8C(0xa66);
+    bool b = CtrlRemote_TouchBitByArg(0xa66);
     if (b) {} else return 0;
-    b = func_8009CF8C(0xa67);
+    b = CtrlRemote_TouchBitByArg(0xa67);
     if (b) {} else return 0;
-    b = func_8009CF8C(0xaa9);
+    b = CtrlRemote_TouchBitByArg(0xaa9);
     if (b) {} else {
-        b = func_8009CF8C(0xb05);
+        b = CtrlRemote_TouchBitByArg(0xb05);
         if (b) {} else return 0;
     }
-    b = func_8009CF8C(0xaaa);
+    b = CtrlRemote_TouchBitByArg(0xaaa);
     if (b) {} else {
-        b = func_8009CF8C(0xb07);
+        b = CtrlRemote_TouchBitByArg(0xb07);
         if (b) {} else return 0;
     }
-    b = func_8009CF8C(0xaab);
+    b = CtrlRemote_TouchBitByArg(0xaab);
     if (b) {} else {
-        b = func_8009CF8C(0xad0);
+        b = CtrlRemote_TouchBitByArg(0xad0);
         if (b) {} else {
-            b = func_8009CF8C(0xb1f);
+            b = CtrlRemote_TouchBitByArg(0xb1f);
             if (b) {} else return 0;
         }
     }
-    b = func_8009CF8C(0xacf);
+    b = CtrlRemote_TouchBitByArg(0xacf);
     if (b) {} else {
-        b = func_8009CF8C(0xae7);
+        b = CtrlRemote_TouchBitByArg(0xae7);
         if (b) {} else {
-            b = func_8009CF8C(0xb1b);
+            b = CtrlRemote_TouchBitByArg(0xb1b);
             if (b) {} else return 0;
         }
     }
-    b = func_8009CF8C(0xad1);
+    b = CtrlRemote_TouchBitByArg(0xad1);
     if (b) {} else {
-        b = func_8009CF8C(0xae8);
+        b = CtrlRemote_TouchBitByArg(0xae8);
         if (b) {} else {
-            b = func_8009CF8C(0xb1c);
+            b = CtrlRemote_TouchBitByArg(0xb1c);
             if (b) {} else return 0;
         }
     }
-    b = func_8009CF8C(0xad2);
+    b = CtrlRemote_TouchBitByArg(0xad2);
     if (b) {} else {
-        b = func_8009CF8C(0xaea);
+        b = CtrlRemote_TouchBitByArg(0xaea);
         if (b) {} else {
-            b = func_8009CF8C(0xb1e);
+            b = CtrlRemote_TouchBitByArg(0xb1e);
             if (b) {} else return 0;
         }
     }
-    b = func_8009CF8C(0xad3);
+    b = CtrlRemote_TouchBitByArg(0xad3);
     if (b) {} else {
-        b = func_8009CF8C(0xae9);
+        b = CtrlRemote_TouchBitByArg(0xae9);
         if (b) {} else {
-            b = func_8009CF8C(0xb1d);
+            b = CtrlRemote_TouchBitByArg(0xb1d);
             if (b) {} else return 0;
         }
     }
-    b = func_8009CF8C(0xad4);
+    b = CtrlRemote_TouchBitByArg(0xad4);
     if (b) {} else {
-        b = func_8009CF8C(0xaeb);
+        b = CtrlRemote_TouchBitByArg(0xaeb);
         if (b) {} else {
-            b = func_8009CF8C(0xb20);
+            b = CtrlRemote_TouchBitByArg(0xb20);
             if (b) {} else return 0;
         }
     }
-    b = func_8009CF8C(0xad5);
+    b = CtrlRemote_TouchBitByArg(0xad5);
     if (b) {} else {
-        b = func_8009CF8C(0xaec);
+        b = CtrlRemote_TouchBitByArg(0xaec);
         if (b) {} else {
-            b = func_8009CF8C(0xb21);
+            b = CtrlRemote_TouchBitByArg(0xb21);
             if (b) {} else return 0;
         }
     }
-    b = func_8009CF8C(0xaed);
+    b = CtrlRemote_TouchBitByArg(0xaed);
     if (b) {} else {
-        b = func_8009CF8C(0xb23);
+        b = CtrlRemote_TouchBitByArg(0xb23);
         if (b) {} else return 0;
     }
-    b = func_8009CF8C(0xadf);
+    b = CtrlRemote_TouchBitByArg(0xadf);
     if (b) {} else {
-        b = func_8009CF8C(0xafe);
+        b = CtrlRemote_TouchBitByArg(0xafe);
         if (b) {} else return 0;
     }
-    b = func_8009CF8C(0xae0);
+    b = CtrlRemote_TouchBitByArg(0xae0);
     if (b) {} else {
-        b = func_8009CF8C(0xb00);
+        b = CtrlRemote_TouchBitByArg(0xb00);
         if (b) {} else return 0;
     }
-    b = func_8009CF8C(0xae1);
+    b = CtrlRemote_TouchBitByArg(0xae1);
     if (b) {} else {
-        b = func_8009CF8C(0xb04);
+        b = CtrlRemote_TouchBitByArg(0xb04);
         if (b) {} else return 0;
     }
-    b = func_8009CF8C(0xae2);
+    b = CtrlRemote_TouchBitByArg(0xae2);
     if (b) {} else {
-        b = func_8009CF8C(0xb0d);
+        b = CtrlRemote_TouchBitByArg(0xb0d);
         if (b) {} else return 0;
     }
-    b = func_8009CF8C(0xae3);
+    b = CtrlRemote_TouchBitByArg(0xae3);
     if (b) {} else {
-        b = func_8009CF8C(0xb11);
+        b = CtrlRemote_TouchBitByArg(0xb11);
         if (b) {} else return 0;
     }
-    b = func_8009CF8C(0xae4);
+    b = CtrlRemote_TouchBitByArg(0xae4);
     if (b) {} else {
-        b = func_8009CF8C(0xb13);
+        b = CtrlRemote_TouchBitByArg(0xb13);
         if (b) {} else return 0;
     }
-    b = func_8009CF8C(0xae5);
+    b = CtrlRemote_TouchBitByArg(0xae5);
     if (b) {} else {
-        b = func_8009CF8C(0xb14);
+        b = CtrlRemote_TouchBitByArg(0xb14);
         if (b) {} else return 0;
     }
-    b = func_8009CF8C(0xae6);
+    b = CtrlRemote_TouchBitByArg(0xae6);
     if (b) {} else {
-        b = func_8009CF8C(0xb18);
+        b = CtrlRemote_TouchBitByArg(0xb18);
         if (b) {} else return 0;
     }
     return 1;
@@ -2377,21 +2377,21 @@ void awardQuestFlags() {
     int i;
     u32 count = 0;
     for (i = 0; i < 300; i++) {
-        bool b = func_8009CF8C(i + 0xa20);
+        bool b = CtrlRemote_TouchBitByArg(i + 0xa20);
         if (b) count++;
     }
     
-    if (count >= 1) func_8027EEF4(0x94);
-    if (count >= 10) func_8027EEF4(0x95);
-    if (count >= 50) func_8027EEF4(0x96);
-    if (count >= 120) func_8027EEF4(0x97);
+    if (count >= 1) SysWinLog_QueueEvent(0x94);
+    if (count >= 10) SysWinLog_QueueEvent(0x95);
+    if (count >= 50) SysWinLog_QueueEvent(0x96);
+    if (count >= 120) SysWinLog_QueueEvent(0x97);
     
-    if (chkAwardFlags98()) func_8027EEF4(0x98);
-    if (chkAwardFlags99()) func_8027EEF4(0x99);
-    if (chkAwardFlags9A()) func_8027EEF4(0x9a);
-    if (chkAwardFlags9B()) func_8027EEF4(0x9b);
-    if (chkAwardFlags9C()) func_8027EEF4(0x9c);
-    if (chkAwardFlags9D()) func_8027EEF4(0x9d);
+    if (chkAwardFlags98()) SysWinLog_QueueEvent(0x98);
+    if (chkAwardFlags99()) SysWinLog_QueueEvent(0x99);
+    if (chkAwardFlags9A()) SysWinLog_QueueEvent(0x9a);
+    if (chkAwardFlags9B()) SysWinLog_QueueEvent(0x9b);
+    if (chkAwardFlags9C()) SysWinLog_QueueEvent(0x9c);
+    if (chkAwardFlags9D()) SysWinLog_QueueEvent(0x9d);
 }
 
 
@@ -2412,13 +2412,13 @@ extern "C" void awardAffinity() {
             int result = getTableValueByPair__Q22cf13CfGameManagerFv(i, j);
 
             if (result >= 1000) {
-                func_8027EEF4(0xaf);
+                SysWinLog_QueueEvent(0xaf);
             }
             if (result >= 3000) {
-                func_8027EEF4(0xb0);
+                SysWinLog_QueueEvent(0xb0);
             }
             if (result >= 5000) {
-                func_8027EEF4(0xb1);
+                SysWinLog_QueueEvent(0xb1);
             }
             if (result < 2000) {
                 allFlag = 0;
@@ -2430,10 +2430,10 @@ extern "C" void awardAffinity() {
     }
 
     if (allFlag != 0) {
-        func_8027EEF4(0xb2);
+        SysWinLog_QueueEvent(0xb2);
     }
     if (allFlag2 != 0) {
-        func_8027EEF4(0xb3);
+        SysWinLog_QueueEvent(0xb3);
     }
 }
 
@@ -2447,7 +2447,7 @@ extern "C" void processAward__Q22cf7CfAwardFv(cf::CfAward*, int val) {
 
 
 // Count valid items/quests: iterates IDs 0-299, checks validity via
-// isCollepediaId and func_8009CF8C, returns the count of valid entries
+// isCollepediaId and CtrlRemote_TouchBitByArg, returns the count of valid entries
 // Retail symbol is unmangled; declared extern "C" in CfGameManager.hpp
 extern "C" s32 countCollepedia() {
     int count;
@@ -2456,7 +2456,7 @@ extern "C" s32 countCollepedia() {
     i = 0;
     while (i < 300) {
         if (((int (*)(int))isCollepediaId)(i) != 0) {
-            if (((u32 (*)(u32))func_8009CF8C)(i + 0x1d44) != 0) {
+            if (((u32 (*)(u32))CtrlRemote_TouchBitByArg)(i + 0x1d44) != 0) {
                 count++;
             }
         }
@@ -2570,21 +2570,21 @@ L_8029438C:
 
 // Check if all save/load related resources are available
 u32 chkAwardFlags99() {
-    bool b = func_8009CF8C(0xa61);
+    bool b = CtrlRemote_TouchBitByArg(0xa61);
     if (b) {} else return 0;
-    b = func_8009CF8C(0xa7a);
+    b = CtrlRemote_TouchBitByArg(0xa7a);
     if (b) {} else return 0;
-    b = func_8009CF8C(0xa60);
+    b = CtrlRemote_TouchBitByArg(0xa60);
     if (b) {} else return 0;
-    b = func_8009CF8C(0xa62);
+    b = CtrlRemote_TouchBitByArg(0xa62);
     if (b) {} else return 0;
-    b = func_8009CF8C(0xa63);
+    b = CtrlRemote_TouchBitByArg(0xa63);
     if (b) {} else return 0;
-    b = func_8009CF8C(0xa64);
+    b = CtrlRemote_TouchBitByArg(0xa64);
     if (b) {} else return 0;
-    b = func_8009CF8C(0xa65);
+    b = CtrlRemote_TouchBitByArg(0xa65);
     if (b) {} else return 0;
-    b = func_8009CF8C(0xaee);
+    b = CtrlRemote_TouchBitByArg(0xaee);
     return b;
 }
 
@@ -2596,7 +2596,7 @@ u32 chkAwardFlags99() {
 extern "C" void sinit_802930E0() {
     lbl_eu_806649F8.mSecondBase = (void*)&lbl_eu_80538858;
     lbl_eu_806649F8.mVtbl = (char*)&lbl_eu_80538858 + 8;
-    func_8009D414(&lbl_eu_806649F8);
+    CtrlRemote_ResetSlotArrayObj(&lbl_eu_806649F8);
     __register_global_object(&lbl_eu_806649F8, (void*)__dt__Q22cf7CfAwardFv, (void*)lbl_eu_80576CF8);
 }
 

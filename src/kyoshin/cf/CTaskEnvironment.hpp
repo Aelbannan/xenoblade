@@ -155,9 +155,9 @@ extern "C" void scnLgtBindLightArg(CTaskEnvLgtCtrlAccess* ctrl, void* arg);
 extern "C" void* copyVec3Words(void* dst, const void* src);
 extern "C" void* writeVec3f(ml::CVec3* out, float x, float y, float z);
 extern "C" float cosAnimFIdx(float angle);
-extern "C" void func_8005A374(CTimeLightGrp* grp);
-extern "C" void func_8049E374(u8* self, float a, float b);
-extern "C" void func_8049E350(u8* self, const void* src);
+extern "C" void TimeLightApplyScaledColor(CTimeLightGrp* grp);
+extern "C" void FogManSetNearFar(u8* self, float a, float b);
+extern "C" void FogManCopyFogWords(u8* self, const void* src);
 extern "C" void scnVlApplyDir4C(CVirtualLightObj* self, const ml::CVec4* src,
                               f32 value);
 
@@ -191,7 +191,7 @@ extern "C" CVirtualLightObj* scnVlCreateAmb(CTaskEnvScnMgr* mgr, const u8* slot,
                                            const void* color);
 extern "C" CVirtualLightObj* func_804933AC(CTaskEnvScnMgr* mgr, const u8* slot,
                                            const void* color, const void* dir);
-extern "C" void func_8005A2F0(CTimeLightGrp* grp, CVirtualLightObj* obj);
+extern "C" void TimeLightPushBack(CTimeLightGrp* grp, CVirtualLightObj* obj);
 
 // u32 word-pair / f64 view used to build the 0x43300000-prefixed int->float
 // conversion pattern by hand so the pool reloc names the retail constant
@@ -290,7 +290,7 @@ extern "C" void func_800596B8(CTaskEnvRotMtx* mtx, float angle);
 
 // Flat-name accessors shared with Move (retail unmangled symbols).
 extern "C" u32 getSubField78(void* self);
-extern "C" void* func_8005870C(void* self);
-extern "C" float func_8005871C(void* self);
-extern "C" float func_80058724(void* self);
+extern "C" void* Env_GetSub64(void* self);
+extern "C" float Env_GetFloat54(void* self);
+extern "C" float Env_GetFloat58(void* self);
 extern "C" void nopFunc();

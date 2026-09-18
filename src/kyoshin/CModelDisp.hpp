@@ -55,8 +55,8 @@ struct CModelDispSub;
 extern u32 lbl_eu_80535390[];     // CModelDisp vtable (.data)
 extern const f32 lbl_eu_806681E8;  // .sdata2 float -> field_2FDC target
 extern f32 lbl_eu_806681EC;       // .sdata2 float -> field_2FE0
-extern const f32 lbl_eu_806681F0; // .sdata2 float (func_801FBFD8 vec arg)
-extern const f32 lbl_eu_806681F4; // .sdata2 float (func_801FBFD8 vec arg)
+extern const f32 lbl_eu_806681F0; // .sdata2 float (ModelDispInitPoseSlots vec arg)
+extern const f32 lbl_eu_806681F4; // .sdata2 float (ModelDispInitPoseSlots vec arg)
 extern const f32 lbl_eu_806681F8; // .sdata2 float -> field_2FDC increment
 
 // (runtime imports and act-param view types come from

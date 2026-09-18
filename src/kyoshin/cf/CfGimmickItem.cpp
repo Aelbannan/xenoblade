@@ -44,7 +44,7 @@ extern "C" cf::CfGimmickItem* __ct__cf_CfGimmickItem(cf::CfGimmickItem* self,
     self->vtable = (u32*)lbl_eu_80535A98;
     self->field_82 = 6;
 
-    void* mgr = func_8003AA34();
+    void* mgr = Bdat_GetTable_AA34();
     // Retail keeps the bdat table handle in a dedicated frame slot and
     // reloads it for every column read (its address escapes below).
     u32 bdat = lbl_eu_8066413C;
@@ -143,7 +143,7 @@ extern "C" cf::CfGimmickItem* __ct__cf_CfGimmickItem(cf::CfGimmickItem* self,
 }
 
 // ---------------------------------------------------------------------------
-// func_80210668 -- PTMF state dispatch + one-frame spawn/cleanup
+// GimItem_StateDispatch -- PTMF state dispatch + one-frame spawn/cleanup
 // ---------------------------------------------------------------------------
 
 // Field-74 state flag bits (retail rlwinm masks).
@@ -152,7 +152,7 @@ enum {
     kItemFlagBusy = 0x20,   // actor busy flag (spawned/attached)
 };
 
-void func_80210668(cf::CfGimmickItem* self) {
+void GimItem_StateDispatch(cf::CfGimmickItem* self) {
     // Dispatch the current state through the 12-byte PTMF table.
     (self->*((cf::CfGimmickItemState*)lbl_eu_80535A50)[self->field_9E])();
 
@@ -169,10 +169,10 @@ void func_80210668(cf::CfGimmickItem* self) {
 }
 
 // ---------------------------------------------------------------------------
-// func_80210844 -- busy-flag handled item activation; falls back to state 4
+// GimItem_BusyActivate -- busy-flag handled item activation; falls back to state 4
 // ---------------------------------------------------------------------------
 
-void func_80210844(cf::CfGimmickItem* self) {
+void GimItem_BusyActivate(cf::CfGimmickItem* self) {
     CfGimmick_SetGlobalFlagC0042();
 
     // a busy actor only stays when CfGimmick_IsMessageSystemBusy still reports work, and an
@@ -207,10 +207,10 @@ st4:
 }
 
 // ---------------------------------------------------------------------------
-// func_80210AD0 -- detect what can be collected and move to the next state
+// GimItem_CollectScan -- detect what can be collected and move to the next state
 // ---------------------------------------------------------------------------
 
-void func_80210AD0(cf::CfGimmickItem* self) {
+void GimItem_CollectScan(cf::CfGimmickItem* self) {
     for (int i = 0; i < 3; ++i) {
         if (self->field_84[i] != 0 && (self->field_74 & (1 << i))) {
             CItem_consumeFamilyCnt(self->field_84[i], 1);
@@ -235,10 +235,10 @@ void func_80210AD0(cf::CfGimmickItem* self) {
 }
 
 // ---------------------------------------------------------------------------
-// func_80210BAC -- placement dispatch; on miss reset the item state
+// GimItem_PlaceDispatch -- placement dispatch; on miss reset the item state
 // ---------------------------------------------------------------------------
 
-void func_80210BAC(cf::CfGimmickItem* self) {
+void GimItem_PlaceDispatch(cf::CfGimmickItem* self) {
     if ((self->field_66 & 1) != 0 ||
         jumptable_eu_80535830[self->mType](
             (cf::CfGimmick*)&self->vobj, &lbl_eu_805765A0, &self->vvec04) == 0) {
@@ -247,10 +247,10 @@ void func_80210BAC(cf::CfGimmickItem* self) {
 }
 
 // ---------------------------------------------------------------------------
-// func_802106F8 -- working-frame update: range window, respawn gate, spawn
+// GimItem_WorkFrameUpdate -- working-frame update: range window, respawn gate, spawn
 // ---------------------------------------------------------------------------
 
-void func_802106F8(cf::CfGimmickItem* self) {
+void GimItem_WorkFrameUpdate(cf::CfGimmickItem* self) {
     // Only run while the current sequence counter sits inside the item's
     // active window [field_6C, field_6E] (either bound non-zero enables it).
     if (self->field_6C != 0 || self->field_6E != 0) {
@@ -299,10 +299,10 @@ void func_802106F8(cf::CfGimmickItem* self) {
 }
 
 // ---------------------------------------------------------------------------
-// func_802108D8 -- per-frame LOD/effect/manager update + countdown reset
+// GimItem_LodFxUpdate -- per-frame LOD/effect/manager update + countdown reset
 // ---------------------------------------------------------------------------
 
-void func_802108D8(cf::CfGimmickItem* self) {
+void GimItem_LodFxUpdate(cf::CfGimmickItem* self) {
     CfGimmick_SetGlobalFlagC0042();
 
     // While the 0x8 busy flag is clear, run the per-frame LOD filters, fire
@@ -356,7 +356,7 @@ void func_802108D8(cf::CfGimmickItem* self) {
 
     // Countdown: while field_A0 < field_98 just increment; once the window
     // expires, keep the item alive only if a busy actor still reports work
-    // (same ok/zero merge as func_80210844), otherwise reset to state 3.
+    // (same ok/zero merge as GimItem_BusyActivate), otherwise reset to state 3.
     if (self->field_A0 < self->field_98) {
         self->field_A0++;
     } else {
@@ -393,7 +393,7 @@ void func_802108D8(cf::CfGimmickItem* self) {
 // FULL_MATCH: Virtual function override -- no-op
 // ---------------------------------------------------------------------------
 
-extern "C" void func_80210C1C() {}
+extern "C" void GimItem_Noop() {}
 
 // ----- typified retail data (replaces copy_data_sections) -----
 // .rodata RTTI class-name (0x12) + 2-byte pad gap to lbl_eu_805087AC.
@@ -436,9 +436,9 @@ extern char lbl_eu_80662708[];
 extern "C" {
 void CfGimmick_DetachManager(void);
 void func_8020F484(void);
-void func_801F4B64(void);
-void func_801F4BF8(void);
-void func_801F4C8C(void);
+void GimNoopB(void);
+void GimNoopC(void);
+void GimNoopD(void);
 void func_8020F38C(void);
 void __dt__Q22cf13CfGimmickJumpFv(void*, int);  // ABI deleting dtor
 }
@@ -447,8 +447,8 @@ u32 lbl_eu_80535A18[9] = {
     (u32)lbl_eu_806627B0, 0,
     (u32)__dt__Q22cf13CfGimmickJumpFv,
     (u32)CfGimmick_DetachManager, (u32)func_8020F484,
-    (u32)func_801F4B64, (u32)func_801F4BF8,
-    (u32)func_801F4C8C, (u32)func_8020F38C,
+    (u32)GimNoopB, (u32)GimNoopC,
+    (u32)GimNoopD, (u32)func_8020F38C,
 };
 __declspec(section ".data") __attribute__((used, aligned(8)))
 u32 lbl_eu_80535A3C[5] = {

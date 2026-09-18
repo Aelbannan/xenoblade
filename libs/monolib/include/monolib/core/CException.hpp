@@ -25,7 +25,7 @@ public:
     virtual void wkRender();
     virtual bool wkStandbyLogin();
     virtual bool wkStandbyLogout();
-    void func_804591BC(IException* pException);
+    void AddToGlobalArray(IException* pException);
     void func_804591DC(IException* pException);
     void setGlobalMessage();
 

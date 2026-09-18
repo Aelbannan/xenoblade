@@ -27,17 +27,17 @@ extern "C" __declspec(noinline) void* __dt__804997D0(void* self, int mode) {
     return self;
 }
 void func_8043E928__5CViewFRQ22ml5CRectP5CView(ml::CRect* rect, CView* view);
-void func_80490314(CTexWorkObj* obj);
-GXTexObj* func_80490208(CTexWorkObj* obj, u16 w, u16 h, u32 fmt);
-void func_804902D8(CTexWorkObj* obj, GXTexObj* tex);
-void func_804943E0(GXTexObj* tex, int p2, int p3);
+void TexMan_SnapCursor_0314(CTexWorkObj* obj);
+GXTexObj* TexMan_AllocBuffer_0208(CTexWorkObj* obj, u16 w, u16 h, u32 fmt);
+void TexMan_ReleaseArg_02D8(CTexWorkObj* obj, GXTexObj* tex);
+void TexObj_BlitViewRect(GXTexObj* tex, int p2, int p3);
 void __dt__10CScnFilterFv(CScnFilter* self, s32 flags);
-void func_804944DC(GXTexObj* tex, ml::CRect* rect, u8 p3, u8 p4);
+void TexObj_BlitRect(GXTexObj* tex, ml::CRect* rect, u8 p3, u8 p4);
 u32 func_80499810(CScnBloom* self, CTexWorkObj* work, GXTexObj** bufs,
                   int maxBufs, ml::CRect* rect, u32 flag);
-void func_80494A64(int a, int b, int c);
-void func_80494C30(int a, int b, int c);
-void func_804948F4(int a, int b);
+void setupLightTevColor(int a, int b, int c);
+void setupLightTevAlpha(int a, int b, int c);
+void setupLightVtxFormat(int a, int b);
 void func_80494F10(ml::CRect* rect, ml::CCol4* p2, ml::CCol4* p3);
 void func_8044A578__8CGXCacheFv(CGXCache* cache, ml::CCol4* color, int flag);
 void func_8044A7F8__8CGXCacheFv(CGXCache* cache, u32 a, u32 b, u32 c, u32 d, u32 e);
@@ -63,14 +63,14 @@ extern "C" u32 lbl_eu_80663A00;
 // Foreign function referenced by the dispatch table.
 extern "C" void func_8049C868();
 // Forward declarations for in-TU extern "C" functions referenced below.
-extern "C" void func_804996E0(CScnBloom* self, s32 flags);
-extern "C" void func_804996D8(CScnBloom* self, u32 param);
+extern "C" void CScnBloom_destroyAdj48(CScnBloom* self, s32 flags);
+extern "C" void CScnBloom_renderBloomAdj48(CScnBloom* self, u32 param);
 
 // === .data size=0x38 align=8 ===
 // CScnBloom dispatch table (36B): typeinfo locators + virtual thunks.
 extern "C" u32 lbl_eu_8056EA08[9] = {
     (u32)&lbl_eu_806639F8, 0x00000000, (u32)&lbl_eu_806639F8, 0xFFFFFFB8,
-    (u32)&func_804996E0, (u32)&func_8049C868, (u32)&func_804996D8,
+    (u32)&CScnBloom_destroyAdj48, (u32)&func_8049C868, (u32)&CScnBloom_renderBloomAdj48,
     (u32)&__dt__9CScnBloomFv, (u32)&func_8049928C,
 };
 // Bloom param block (20B).
@@ -79,14 +79,14 @@ extern "C" u32 lbl_eu_8056EA2C[5] = {
 };
 
 // ============================================================================
-// FULL_MATCH: us-8049d7bc (func_804996D8)
+// FULL_MATCH: us-8049d7bc (CScnBloom_renderBloomAdj48)
 // Virtual thunk for CScnFilter::renderBloom override.
 // When called through the CScnFilter vtable, 'this' points to the
 // CScnFilter subobject at offset 0x48 from the CScnBloom base.
 // This thunk adjusts 'this' back to the CScnBloom base and tail-calls
 // the implementation (func_8049928C).
 // ============================================================================
-extern "C" void func_804996D8(CScnBloom* self, u32 param) {
+extern "C" void CScnBloom_renderBloomAdj48(CScnBloom* self, u32 param) {
     // Adjust this from CScnFilter subobject (+0x48) to CScnBloom base
     CScnBloom* base = reinterpret_cast<CScnBloom*>(
         reinterpret_cast<uintptr_t>(self) - 0x48
@@ -98,14 +98,14 @@ extern "C" void func_804996D8(CScnBloom* self, u32 param) {
 }
 
 // ============================================================================
-// FULL_MATCH: us-8049d7c4 (func_804996E0)
+// FULL_MATCH: us-8049d7c4 (CScnBloom_destroyAdj48)
 // Virtual thunk for CScnFilter::destroyBloom override.
 // When called through the CScnFilter vtable, 'this' points to the
 // CScnFilter subobject at offset 0x48 from the CScnBloom base.
 // This thunk adjusts 'this' back to the CScnBloom base and tail-calls
 // the CScnBloom destructor.
 // ============================================================================
-extern "C" void func_804996E0(CScnBloom* self, s32 flags) {
+extern "C" void CScnBloom_destroyAdj48(CScnBloom* self, s32 flags) {
     // Adjust this from CScnFilter subobject (+0x48) to CScnBloom base
     CScnBloom* base = reinterpret_cast<CScnBloom*>(
         reinterpret_cast<uintptr_t>(self) - 0x48
@@ -226,13 +226,13 @@ extern "C" void func_8049A128(CScnBloom* self) {
     }
 
     CTexWorkObj* texWork = ((CScnBloomView*)self->mView)->mTexWork;
-    func_80490314(texWork);
-    self->mTexture = func_80490208(texWork, (u16)rect.mSize.x, (u16)rect.mSize.y, self->mTexFormat);
+    TexMan_SnapCursor_0314(texWork);
+    self->mTexture = TexMan_AllocBuffer_0208(texWork, (u16)rect.mSize.x, (u16)rect.mSize.y, self->mTexFormat);
     if (self->mTexture != 0) {
         ml::CCol4* cacheColor = CDeviceGX::getCacheInstance()->getClearColor();
         self->mClearColor = *cacheColor;
         func_8044A578__8CGXCacheFv(CDeviceGX::getCacheInstance(), &ml::CCol4::black, 0);
-        func_804944DC(self->mTexture, &rect, 0, 1);
+        TexObj_BlitRect(self->mTexture, &rect, 0, 1);
     }
 }
 
@@ -257,15 +257,15 @@ extern "C" void func_8049A850(CScnBloom* self, GXTexObj* tex, ml::CRect* rect) {
         GXSetTevOrder(GX_TEVSTAGE0, GX_TEXCOORD0, GX_TEXMAP0, GX_COLOR0A0);
         GXSetTevColorOp(GX_TEVSTAGE0, GX_TEV_ADD, GX_TB_ZERO, GX_CS_SCALE_1, GX_TRUE, GX_TEVPREV);
         GXSetTevColorIn(GX_TEVSTAGE0, GX_CC_ZERO, GX_CC_RASC, GX_CC_TEXC, GX_CC_C2);
-        func_80494C30(0, 0, 0);
+        setupLightTevAlpha(0, 0, 0);
     } else {
         GXSetNumTevStages(2);
         GXSetTevOrder(GX_TEVSTAGE0, GX_TEXCOORD0, GX_TEXMAP0, GX_COLOR0A0);
         GXSetTevOrder(GX_TEVSTAGE1, GX_TEXCOORD0, GX_TEXMAP0, GX_COLOR0A0);
-        func_80494A64(0, 2, 1);
-        func_80494A64(1, 4, 0);
-        func_80494C30(0, 0, 0);
-        func_80494C30(1, 0, 0);
+        setupLightTevColor(0, 2, 1);
+        setupLightTevColor(1, 4, 0);
+        setupLightTevAlpha(0, 0, 0);
+        setupLightTevAlpha(1, 0, 0);
     }
     GXInitTexObjFilter(tex, GX_LINEAR, GX_LINEAR);
     GXLoadTexObj(tex, GX_TEXMAP0);
@@ -323,9 +323,9 @@ extern "C" void func_8049AA74(CScnBloom* self) {
     u32 w = (u32)rect.mSize.x;
     u32 h = (u32)rect.mSize.y;
     u32 fmt = self->mTexFormat;
-    GXTexObj* tex = func_80490208(texWork, (u16)((w + (w >> 31)) >> 1), (u16)((h + (h >> 31)) >> 1), fmt);
+    GXTexObj* tex = TexMan_AllocBuffer_0208(texWork, (u16)((w + (w >> 31)) >> 1), (u16)((h + (h >> 31)) >> 1), fmt);
     if (tex != 0) {
-        func_804944DC(tex, &rect, 1, 0);
+        TexObj_BlitRect(tex, &rect, 1, 0);
         CDeviceGX::getCacheInstance()->resetGXStateA();
         updateOrthoGX__8CGXCacheFv(CDeviceGX::getCacheInstance());
         CDeviceGX::getCacheInstance()->setZCompareMD(0, 0);
@@ -333,28 +333,28 @@ extern "C" void func_8049AA74(CScnBloom* self) {
         setAlphaBlend__8CGXCacheFv(CDeviceGX::getCacheInstance(), 0, 0);
         GXLoadPosMtxImm(ml::CMat34::identity.m, 0);
         GXSetCurrentMtx(0);
-        func_804948F4(0, 1);
+        setupLightVtxFormat(0, 1);
         func_8049A850(self, tex, &rect);
-        func_804902D8(texWork, tex);
+        TexMan_ReleaseArg_02D8(texWork, tex);
     }
 }
 
 // Stub functions for other symbols in this TU (not yet decompiled)
-extern "C" void func_804996D8_stub() {}
+extern "C" void CScnBloom_renderBloomAdj48_stub() {}
 
-extern "C" void func_804996D8_stub2() {}
+extern "C" void CScnBloom_renderBloomAdj48_stub2() {}
 
-extern "C" void func_804996D8_stub3() {}
+extern "C" void CScnBloom_renderBloomAdj48_stub3() {}
 
-extern "C" void func_804996D8_stub4() {}
+extern "C" void CScnBloom_renderBloomAdj48_stub4() {}
 
-extern "C" void func_804996D8_stub5() {}
+extern "C" void CScnBloom_renderBloomAdj48_stub5() {}
 
-extern "C" void func_804996D8_stub6() {}
+extern "C" void CScnBloom_renderBloomAdj48_stub6() {}
 
-extern "C" void func_804996D8_stub7() {}
+extern "C" void CScnBloom_renderBloomAdj48_stub7() {}
 
-extern "C" void func_804996D8_stub8() {}
+extern "C" void CScnBloom_renderBloomAdj48_stub8() {}
 
 // Delete-flag dtor: tear down the base (+0xC), free when the flag is
 // positive, and return self (retail stmw r30 frame).
@@ -437,22 +437,22 @@ extern "C" void func_8049A318(CScnBloom* self) {
     // Half-resolution screen texture (format 4).
     u32 w = (u32)rect.mSize.x;
     u32 h = (u32)rect.mSize.y;
-    GXTexObj* tex = func_80490208(texWork, (u16)((w + (w >> 31)) >> 1),
+    GXTexObj* tex = TexMan_AllocBuffer_0208(texWork, (u16)((w + (w >> 31)) >> 1),
                                   (u16)((h + (h >> 31)) >> 1), 4);
     if (tex == NULL)
         return;
 
     CGXCache* cache = CDeviceGX::getCacheInstance();
     GXInitTexObjFilter(tex, (GXTexFilter)1, (GXTexFilter)1);
-    func_804944DC(tex, &rect, 1, 0);
-    func_804948F4(0, 1);
+    TexObj_BlitRect(tex, &rect, 1, 0);
+    setupLightVtxFormat(0, 1);
     GXSetNumTexGens(1);
     GXSetTexCoordGen2(GX_TEXCOORD0, GX_TG_MTX2x4, GX_TG_TEX0, GX_IDENTITY, GX_FALSE,
                       GX_PTIDENTITY);
     GXSetNumTevStages(1);
     GXSetTevOrder(GX_TEVSTAGE0, GX_TEXCOORD0, GX_TEXMAP0, GX_COLOR0A0);
-    func_80494A64(0, 2, 0);
-    func_80494C30(0, 0, 0);
+    setupLightTevColor(0, 2, 0);
+    setupLightTevAlpha(0, 0, 0);
     updateOrthoGX__8CGXCacheFv(cache);
     cache->setZCompareMD(0, 0);
     cache->setZWriteMode(0, 0);
@@ -468,7 +468,7 @@ extern "C" void func_8049A318(CScnBloom* self) {
     rect2.mSize.y = tileH;
     func_80494F10(&rect2, &col2, &col3);
     GXPixModeSync();
-    func_804902D8(texWork, tex);
+    TexMan_ReleaseArg_02D8(texWork, tex);
 
     GXTexObj* bufs[10];
     memset(bufs, 0, sizeof(bufs));
@@ -478,10 +478,10 @@ extern "C" void func_8049A318(CScnBloom* self) {
     rc.mSize.y = tileH;
     u32 count = func_80499810(self, texWork, bufs, 10, &rc, 0);
 
-    func_804948F4(0, 1);
+    setupLightVtxFormat(0, 1);
     GXSetNumTevStages(1);
-    func_80494A64(0, 2, 0);
-    func_80494C30(0, 0, 0);
+    setupLightTevColor(0, 2, 0);
+    setupLightTevAlpha(0, 0, 0);
     func_8044A7F8__8CGXCacheFv(cache, 0, 4, 5, 0, 0);
     GXInitTexObjFilter(self->mTexture, (GXTexFilter)1, (GXTexFilter)1);
     GXLoadTexObj(self->mTexture, GX_TEXMAP0);
@@ -504,10 +504,10 @@ extern "C" void func_8049A318(CScnBloom* self) {
         func_8049A850(self, self->mTexture, &rect);
     }
     for (u32 i = 0; i < count; i++) {
-        func_804902D8(texWork, bufs[i]);
+        TexMan_ReleaseArg_02D8(texWork, bufs[i]);
     }
-    func_804902D8(texWork, self->mTexture);
-    func_80490314(texWork);
+    TexMan_ReleaseArg_02D8(texWork, self->mTexture);
+    TexMan_SnapCursor_0314(texWork);
     self->mTexture = NULL;
     func_8044A578__8CGXCacheFv(cache, &self->mClearColor, 0);
 }
@@ -531,17 +531,17 @@ u32 func_80499810(CScnBloom* self, CTexWorkObj* work, GXTexObj** bufs,
     rc.mSize.x = w;
     rc.mSize.y = h;
 
-    GXTexObj* tex = func_80490208(work, (u16)w, (u16)h, 1);
+    GXTexObj* tex = TexMan_AllocBuffer_0208(work, (u16)w, (u16)h, 1);
     if (work == NULL)
         return 0;
 
     GXInitTexObjFilter(tex, (GXTexFilter)1, (GXTexFilter)1);
-    func_804944DC(tex, &rc, 0, 0);
+    TexObj_BlitRect(tex, &rc, 0, 0);
 
     if (flag == 0) {
         GXSetNumTevStages(1);
         GXSetTevOrder(GX_TEVSTAGE0, GX_TEXCOORD0, GX_TEXMAP0, GX_COLOR0A0);
-        func_80494A64(0, 1, 0);
+        setupLightTevColor(0, 1, 0);
     } else {
         // Two constant TEV colors built from the blend/filter mode params.
         GXColorS10 blendCol = {0, 0, 0, 0};
@@ -578,10 +578,10 @@ u32 func_80499810(CScnBloom* self, CTexWorkObj* work, GXTexObj** bufs,
                    lbl_eu_8066AB00);
     func_80494F10(&rc, &colA, &colB);
 
-    func_804948F4(0, 1);
+    setupLightVtxFormat(0, 1);
     GXSetNumTevStages(1);
-    func_80494A64(0, 2, 0);
-    func_80494C30(0, 0, 0);
+    setupLightTevColor(0, 2, 0);
+    setupLightTevAlpha(0, 0, 0);
 
     f32 scale = self->mEnabled ? lbl_eu_8066AB10 : lbl_eu_8066AB18;
     const f32 one = lbl_eu_8066AB00;
@@ -597,12 +597,12 @@ u32 func_80499810(CScnBloom* self, CTexWorkObj* work, GXTexObj** bufs,
         f32 sx = self->mThreshold / ((f64)(u32)(u16)tw - lbl_eu_8066AB20);
         f32 sy = self->mThreshold / ((f64)(u32)(u16)th - lbl_eu_8066AB20);
 
-        *pBuf = func_80490208(work, (u16)tw, (u16)th, self->mBlurSamples);
+        *pBuf = TexMan_AllocBuffer_0208(work, (u16)tw, (u16)th, self->mBlurSamples);
         if (*pBuf == NULL)
             break;
 
         if (count == 0) {
-            func_804944DC(*pBuf, &rc, 0, 0);
+            TexObj_BlitRect(*pBuf, &rc, 0, 0);
             func_8044A7F8__8CGXCacheFv(CDeviceGX::getCacheInstance(), 0, 4, 5,
                                        0, 0);
             GXInitTexObjFilter(*pBuf, (GXTexFilter)self->mUnk2C,
@@ -610,7 +610,7 @@ u32 func_80499810(CScnBloom* self, CTexWorkObj* work, GXTexObj** bufs,
             GXLoadTexObj(*pBuf, GX_TEXMAP0);
             func_80494F10(&rc, &ml::CCol4(zero, zero, one, one),
                           &ml::CCol4(one, one, one, scale));
-            func_804944DC(*pBuf, &rc, 0, 0);
+            TexObj_BlitRect(*pBuf, &rc, 0, 0);
         } else {
             func_8044A7F8__8CGXCacheFv(CDeviceGX::getCacheInstance(), 0, 4, 5,
                                        0, 0);
@@ -629,27 +629,27 @@ u32 func_80499810(CScnBloom* self, CTexWorkObj* work, GXTexObj** bufs,
         if (self->mEnabled == 0) {
             func_80494F10(&rc, &ml::CCol4(sx, sy, one - sx, one - sy),
                           &ml::CCol4(one, one, one, scale));
-            func_804944DC(*pBuf, &rc, 0, 0);
+            TexObj_BlitRect(*pBuf, &rc, 0, 0);
         } else {
             // Center tap plus four diagonal taps around it.
             ml::CCol4 cb2(one, one, one, scale);
             func_80494F10(&rc, &ml::CCol4(-sx, -sy, one - sx, one - sy), &cb2);
-            func_804944DC(*pBuf, &rc, 0, 0);
+            TexObj_BlitRect(*pBuf, &rc, 0, 0);
 
             func_8044A7F8__8CGXCacheFv(CDeviceGX::getCacheInstance(), 1, 4, 1,
                                        0, 0);
             ml::CCol4 c1(sx, -sy, one + sx, one - sy);
-            func_80494F10(&rc, &c1, &cb2);            func_804944DC(*pBuf, &rc, 0, 0);
+            func_80494F10(&rc, &c1, &cb2);            TexObj_BlitRect(*pBuf, &rc, 0, 0);
 
             func_8044A7F8__8CGXCacheFv(CDeviceGX::getCacheInstance(), 1, 4, 1,
                                        0, 0);
             ml::CCol4 c2(-sx, sy, one - sx, one + sy);
-            func_80494F10(&rc, &c2, &cb2);            func_804944DC(*pBuf, &rc, 0, 0);
+            func_80494F10(&rc, &c2, &cb2);            TexObj_BlitRect(*pBuf, &rc, 0, 0);
 
             func_8044A7F8__8CGXCacheFv(CDeviceGX::getCacheInstance(), 1, 4, 1,
                                        0, 0);
             ml::CCol4 c3(sx, sy, one + sx, one + sy);
-            func_80494F10(&rc, &c3, &cb2);            func_804944DC(*pBuf, &rc, 0, 0);
+            func_80494F10(&rc, &c3, &cb2);            TexObj_BlitRect(*pBuf, &rc, 0, 0);
         }
 
         // Halve the tile size each pass, rounding up to keep sizes even.
@@ -667,7 +667,7 @@ u32 func_80499810(CScnBloom* self, CTexWorkObj* work, GXTexObj** bufs,
         count++;
     }
 
-    func_804902D8(work, tex);
+    TexMan_ReleaseArg_02D8(work, tex);
     return count;
 }
 
@@ -686,7 +686,7 @@ extern "C" void func_8049928C(CScnBloom* self, u32 param) {
         // 'param' is the owning scene-view object; its +0x6C holds the texture
         // work manager.
         CTexWorkObj* texWork = ((CScnBloomView*)param)->mTexWork;
-        GXTexObj* tex = func_80490208(texWork, (u16)rect.mSize.x, (u16)rect.mSize.y,
+        GXTexObj* tex = TexMan_AllocBuffer_0208(texWork, (u16)rect.mSize.x, (u16)rect.mSize.y,
                                       self->mTexFormat);
         if (tex != NULL) {
             CGXCache* cache = CDeviceGX::getCacheInstance();
@@ -700,15 +700,15 @@ extern "C" void func_8049928C(CScnBloom* self, u32 param) {
             cache->setZCompareMD(0, 0);
             cache->setZWriteMode(0, 0);
             setAlphaBlend__8CGXCacheFv(cache, 0, 0);
-            func_804948F4(0, 1);
+            setupLightVtxFormat(0, 1);
             GXSetNumTexGens(1);
             GXSetTexCoordGen2(GX_TEXCOORD0, GX_TG_MTX2x4, GX_TG_TEX0, GX_IDENTITY,
                               GX_FALSE, GX_PTIDENTITY);
             GXSetNumTevStages(1);
             GXSetTevOrder(GX_TEVSTAGE0, GX_TEXCOORD0, GX_TEXMAP0, GX_COLOR0A0);
-            func_80494A64(0, 2, 0);
-            func_80494C30(0, 0, 0);
-            func_804943E0(tex, 0, 1);
+            setupLightTevColor(0, 2, 0);
+            setupLightTevAlpha(0, 0, 0);
+            TexObj_BlitViewRect(tex, 0, 1);
 
             // Tile sizes: viewport divided by mUnk44, rounded up to an even
             // count (odd quotient gets incremented).
@@ -760,10 +760,10 @@ extern "C" void func_8049928C(CScnBloom* self, u32 param) {
                 GXSetNumTevStages(2);
                 GXSetTevOrder(GX_TEVSTAGE0, GX_TEXCOORD0, GX_TEXMAP0, GX_COLOR0A0);
                 GXSetTevOrder(GX_TEVSTAGE1, GX_TEXCOORD1, GX_TEXMAP1, GX_COLOR0A0);
-                func_80494A64(0, 2, 0);
-                func_80494A64(1, 5, 0);
-                func_80494C30(0, 0, 0);
-                func_80494C30(1, 4, 0);
+                setupLightTevColor(0, 2, 0);
+                setupLightTevColor(1, 5, 0);
+                setupLightTevAlpha(0, 0, 0);
+                setupLightTevAlpha(1, 4, 0);
                 GXLoadTexObj((GXTexObj*)((u8*)&self->mClearColor + 0xC), GX_TEXMAP1);
             }
             for (u32 i = 0; i < count; i++) {
@@ -773,10 +773,10 @@ extern "C" void func_8049928C(CScnBloom* self, u32 param) {
                 func_80494F10(&rect, &col, &col3);
             }
             for (u32 i = 0; i < count; i++) {
-                func_804902D8(texWork, bufs[i]);
+                TexMan_ReleaseArg_02D8(texWork, bufs[i]);
             }
-            func_804902D8(texWork, tex);
-            func_80490314(texWork);
+            TexMan_ReleaseArg_02D8(texWork, tex);
+            TexMan_SnapCursor_0314(texWork);
             cache->setZCompareMD(1, 0);
             cache->setZWriteMode(1, 0);
             setAlphaBlend__8CGXCacheFv(cache, 0, 0);

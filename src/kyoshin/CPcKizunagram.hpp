@@ -225,7 +225,7 @@ extern "C" int KizunagramCheckMappedRowValid(CPcKizunagram* self, const void* ta
 extern "C" int KizunagramCheckRowHighlight(CPcKizunagram* self, const void* table, int id);
 extern "C" int KizunagramCheckRowAvailable(CPcKizunagram* self, const void* table, int id);
 extern "C" void* getFP__FPCc(const char* path);
-extern "C" u32 func_8003B1EC(void*);
+extern "C" u32 Bdat_GetMaxRow_B1EC(void*);
 
 // Sound / effect helper (C-linkage retail symbol playUISound__FUl).
 extern "C" void playUISound__FUl(u32 arg);
@@ -267,9 +267,9 @@ extern "C" char* BdatGetPtrDirect(const void*, const void*, int);
 // u32-return view: retail masks the column byte at the call sites (clrlwi 24),
 // so this TU saw an int/unsigned return, not u8.
 extern "C" u32 BdatGetU8Direct(u32, const char*, u32);
-extern "C" int func_801C4648(void);
+extern "C" int isPaneVisible(void);
 extern "C" u16 BdatGetU16ByTableKey(const void*, const void*, u32);
-extern "C" u32 func_8009CF8C(u32);
+extern "C" u32 CtrlRemote_TouchBitByArg(u32);
 extern "C" u32 CUICfManager_getPackedFont9C(void);
 extern "C" void func_80137F88(void*, u32);
 extern "C" void PaneSetVtxColorAll(void*, u32);
@@ -284,7 +284,7 @@ extern "C" const u32 lbl_eu_806688A4;
 // Literal mangled identifier links to the same symbol as setLayoutTextBoxNumber.
 extern "C" void setLayoutTextBoxNumber__FPQ34nw4r3lyt6LayoutPcUc(nw4r::lyt::Layout*, char*, u16);
 extern "C" void func_80137924(void*, void*, void*, void*);
-extern "C" void func_80124270(void*, u32);
+extern "C" void setPaneVisible(void*, u32);
 
 // Cursor destroy helper (external retail symbol, not in this TU).
 extern "C" void KizunaCurDestroyLayout(CPcKizunaCur* cur);
@@ -292,7 +292,7 @@ extern "C" void KizunaCurDestroyLayout(CPcKizunaCur* cur);
 // Fixed 8-entry cursor-row ordering (signed bytes) kept in .sdata2 as two
 // separate u32 words (retail loads lbl_eu_80668888 and lbl_eu_8066888C via
 // @sda21 individually).
-extern "C" void* func_8003AA34(void);
+extern "C" void* Bdat_GetTable_AA34(void);
 struct S8Bytes {
     union {
         u32 w[2];   // copied as two words (lwz/stw pair into the local)

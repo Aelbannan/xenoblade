@@ -108,7 +108,7 @@ void clearStatus__Q22cf11CfObjectMapFv(void* self) {
     *(unsigned short*)((char*)self + 0x8e) = 0;
 }
 
-void func_800B9C70() {}
+extern "C" void noopMapStub() {}
 
 extern "C" int func_800B9C74(cf::CfObjectMap* self, u32 a, u32 b) {
     self->CfObjectModel_releaseModelSub();
@@ -118,7 +118,7 @@ extern "C" int func_800B9C74(cf::CfObjectMap* self, u32 a, u32 b) {
     }
     void* handle = CfRes_tryResolveLink(a, b, 3);
     if (handle != 0) {
-        self->field_0x2F38 = func_800AA2BC(a, b);
+        self->field_0x2F38 = Tok_Pack08(a, b);
         self->mFlags68 &= 0x40000000;
         self->field_0x8E = 1;
         self->mTarget70 = handle;
@@ -137,7 +137,7 @@ extern "C" int func_800B9C74(cf::CfObjectMap* self, u32 a, u32 b) {
         if (size > 0) {
             u32 rounded = (size + 0x7FF) & ~0x7FF;
             UnkRes866A0* res = CfRes_getInstPtr134();
-            if (res->field_0x2C->cmpField4Eq(res, func_800AA2BC(a, b)) != 0 && KyoshinHeap_GetField18() != 0) {
+            if (res->field_0x2C->cmpField4Eq(res, Tok_Pack08(a, b)) != 0 && KyoshinHeap_GetField18() != 0) {
                 self->field_0xE4 = KyoshinHeap_GetField18();
                 self->field_0x2F40 = 1;
             } else {
@@ -247,7 +247,7 @@ extern "C" void func_800B9E4C(cf::CfObjectMap* self) {
         *reinterpret_cast<void**>(self->field_0x90) = CfRes_getLazyField10(resB->field_0x2C, resB);
         self->field_0xDC = CfRes_getLazyField20(resC->field_0x2C, resC);
         void* r3 = scnImN4BuildByIdx(lbl_eu_80663E14, *reinterpret_cast<void**>(self->field_0x90), 5, 1, 0, 0x30);
-        func_800BBADC(self, r3);
+        CfModel_InstallSub(self, r3);
         clearPoolData__17UnkClass_8047CD0CFv(&self->field_0x2F2C);
         if (self->field_0xDC != 0) {
             self->field_0xEC = Scn_InitGlobalB(lbl_eu_80663E14, self->field_0xDC, buf);
@@ -326,7 +326,7 @@ extern "C" void func_800BA440(cf::CfObjectMap* self) {
         setMpfFloatParam__17UnkClass_8047BB54Fv(&self->field_0xF0, value);
     }
     updateLODFrame__8CTaskLODFv(value);
-    u32 v = func_8016E08C();
+    u32 v = getReloadParam2();
     if (getUnk80664658()->field_214 & 0x80) {
         v = getUnk80664658()->field_210 & 0xFFFF;
     }
@@ -343,7 +343,7 @@ extern "C" void func_800BA440(cf::CfObjectMap* self) {
     if (lbl_eu_80663E28 & 0x01000000) {
         v = 2;
     } else {
-        v = func_8016E094() & 0xFFFF;
+        v = getReloadParam1() & 0xFFFF;
     }
     syncLODTask__8CTaskLODFv(v);
     if (&self->field_0xF0 != 0) {
@@ -405,7 +405,7 @@ extern "C" void setMapEffectFlag__Q22cf11CfObjectMapFv(cf::CfObjectMap* self, vo
     }
     setLODFilterFlag__8CTaskLODFv(task);
     if (getMapEffectManager__Q22cf13CfGameManagerFv() != 0) {
-        func_8016FBA8(getMapEffectManager__Q22cf13CfGameManagerFv(), task);
+        MapFx_SetSlotFlag(getMapEffectManager__Q22cf13CfGameManagerFv(), task);
     }
 }
 

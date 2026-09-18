@@ -296,36 +296,36 @@ extern "C" void Scn_ReleaseUnk80(void* p) {
     func_8049C72C(*(int*)((u8*)p + 0x80));
 }
 extern "C" void* Scn_GetUnk80Handle(void* _this) {
-    return func_8049C794(*(void**)((char*)_this + 0x80));
+    return isFadeIdle(*(void**)((char*)_this + 0x80));
 }
 extern "C" u32 Scn_QueryUnk80State(u8* self) {
-    extern u32 func_8049C7A8(u32);
-    return func_8049C7A8(*(u32*)((char*)self + 0x80));
+    extern u32 getFadeColorPtr(u32);
+    return getFadeColorPtr(*(u32*)((char*)self + 0x80));
 }
 extern "C" bool Scn_IsDefaultScale(u8* self) {
-    extern void* func_8049C7A8(void*);
+    extern void* getFadeColorPtr(void*);
     bool result = false;
-    if (func_8049C794(*(void**)((u8*)self + 0x80))) {
-        if (((ScnFloats*)func_8049C7A8(*(void**)((u8*)self + 0x80)))->unk0C == lbl_eu_8066AAB4)
+    if (isFadeIdle(*(void**)((u8*)self + 0x80))) {
+        if (((ScnFloats*)getFadeColorPtr(*(void**)((u8*)self + 0x80)))->unk0C == lbl_eu_8066AAB4)
             result = true;
     }
     return result;
 }
 // Same shape as Scn_IsDefaultScale but an ordered >= compare against 1.0f.
 extern "C" bool Scn_IsScaleAtLeastOne(u8* self) {
-    extern void* func_8049C7A8(void*);
+    extern void* getFadeColorPtr(void*);
     bool result = false;
-    if (func_8049C794(*(void**)((u8*)self + 0x80))) {
-        if (((ScnFloats*)func_8049C7A8(*(void**)((u8*)self + 0x80)))->unk0C >= lbl_eu_8066AAB8)
+    if (isFadeIdle(*(void**)((u8*)self + 0x80))) {
+        if (((ScnFloats*)getFadeColorPtr(*(void**)((u8*)self + 0x80)))->unk0C >= lbl_eu_8066AAB8)
             result = true;
     }
     return result;
 }
 extern "C" void* Scn_GetUnk80Resource(u8* self) {
-    return func_8049C7B0(*(void**)((char*)self + 0x80));
+    return isFadeSettled(*(void**)((char*)self + 0x80));
 }
 extern "C" int Scn_GetCamWorkInt(void* _this) {
-    return func_8049AED4(*(int*)((char*)_this + 0x68));
+    return CamMan_SwapViewParam_AED4(*(int*)((char*)_this + 0x68));
 }
 // Fetches the camera item for `id` and copies its +0x194 projection matrix
 // (MTX44, 16 words) into dest. Per-slot coloring recipe (MWCC_CASES.md
@@ -335,8 +335,8 @@ extern "C" int Scn_GetCamWorkInt(void* _this) {
 extern "C" void Scn_CopyCamProjMatrix(CScn* self, ScnCamParams* dest, s32 id) {
     // Two-arg camera lookup (the TU-wide decl above is the 1-arg form kept
     // for the already-matched single-arg callers).
-    extern ScnCamItemView* func_8049B158(void* camWork, s32 id);
-    ScnCamItemView* item = func_8049B158(self->mCamWork, id);
+    extern ScnCamItemView* CamMan_FindItemA_B158(void* camWork, s32 id);
+    ScnCamItemView* item = CamMan_FindItemA_B158(self->mCamWork, id);
     // Decl order colors the temps (hi -> r0, lo -> r4 like retail); the
     // read/store order below pins the emission order (lo word first).
     u32 w1;
@@ -396,23 +396,23 @@ extern "C" void Scn_CopyCamProjMatrix(CScn* self, ScnCamParams* dest, s32 id) {
 }
 // Get the camera item handle, lazily creating id -1 when missing; returns
 // the item payload +0x9C (the sibling +0xCC variant mirrors it).
-extern "C" void* func_8049B1CC(void*);
+extern "C" void* CamMan_FindItemB_B1CC(void*);
 extern "C" void* Scn_GetCamItem9C(void* self) {
-    void* r = func_8049B1CC(*(void**)((u8*)self + 0x68));
+    void* r = CamMan_FindItemB_B1CC(*(void**)((u8*)self + 0x68));
     if (!r)
-        r = ((void* (*)(void*, int))func_8049B1CC)(*(void**)((u8*)self + 0x68), -1);
+        r = ((void* (*)(void*, int))CamMan_FindItemB_B1CC)(*(void**)((u8*)self + 0x68), -1);
     return (u8*)r + 0x9C;
 }
 
 // Sibling with the +0xCC payload offset.
 extern "C" void* Scn_GetCamItemCC(void* self) {
-    void* r = func_8049B1CC(*(void**)((u8*)self + 0x68));
+    void* r = CamMan_FindItemB_B1CC(*(void**)((u8*)self + 0x68));
     if (!r)
-        r = ((void* (*)(void*, int))func_8049B1CC)(*(void**)((u8*)self + 0x68), -1);
+        r = ((void* (*)(void*, int))CamMan_FindItemB_B1CC)(*(void**)((u8*)self + 0x68), -1);
     return (u8*)r + 0xCC;
 }
 extern "C" int Scn_FindCamItem(void* _this) {
-    return func_8049B158(*(int*)((char*)_this + 0x68));
+    return CamMan_FindItemA_B158(*(int*)((char*)_this + 0x68));
 }
 extern "C" bool Scn_HasCamItem(void* _this) {
     return func_8049B240(*(int*)((char*)_this + 0x68));
@@ -461,10 +461,10 @@ extern "C" void Scn_SetCurrentScene(u32 value) {
 extern "C" int Scn_GetCurrentScene() {
     return (int)lbl_eu_80665908;
 }
-extern "C" void func_8049B3FC();
-extern "C" void func_8049B408();
-void execScriptCode__Fv(void) { func_8049B3FC(); }
-void resetScriptCode__Fv(void) { func_8049B408(); }
+extern "C" void CamMan_EvalScript0_B3FC();
+extern "C" void CamMan_EvalScript_B408();
+void execScriptCode__Fv(void) { CamMan_EvalScript0_B3FC(); }
+void resetScriptCode__Fv(void) { CamMan_EvalScript_B408(); }
 // Virtual dispatch target: v_i at vtable offset 8+4*i (MWCC RTTI header).
 
 

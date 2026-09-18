@@ -17,7 +17,7 @@ struct S {
     unsigned char f;
 };
 
-extern "C" void func_80251294(S* r3, const S* r4);
+extern "C" void MapSelectSCCopyWidgetState(S* r3, const S* r4);
 
 // Retail constructor (unmangled global) with an explicit arg, mirroring the
 // CMenuOption ctor pattern: base CProcess ctor, temp vtable store, null PMF
@@ -129,7 +129,7 @@ void CMenuMapSelectSC::Init() {
     mFade.mVisible = tmpFade->mVisible;
     __dt__5CFadeFv(tmpFade, -1);
 
-    func_8024439C(&mFade);
+    CFade_StartLoad(&mFade);
 
     // --- Re-initialise the embedded CFloorMap via a temporary ---
     u8 tempFloor[0x3348];
@@ -222,10 +222,10 @@ void CMenuMapSelectSC::Init() {
     *(u8*)((u8*)this + 0x338c) = *(u8*)(tempFloor + 0x32cc);
 
     // Four 0x18-byte sub-object copies.
-    func_80251294((S*)((u8*)this + 0x3390), (const S*)(tempFloor + 0x3338));
-    func_80251294((S*)((u8*)this + 0x33a8), (const S*)(tempFloor + 0x3350));
-    func_80251294((S*)((u8*)this + 0x33c0), (const S*)(tempFloor + 0x3368));
-    func_80251294((S*)((u8*)this + 0x33d8), (const S*)(tempFloor + 0x3380));
+    MapSelectSCCopyWidgetState((S*)((u8*)this + 0x3390), (const S*)(tempFloor + 0x3338));
+    MapSelectSCCopyWidgetState((S*)((u8*)this + 0x33a8), (const S*)(tempFloor + 0x3350));
+    MapSelectSCCopyWidgetState((S*)((u8*)this + 0x33c0), (const S*)(tempFloor + 0x3368));
+    MapSelectSCCopyWidgetState((S*)((u8*)this + 0x33d8), (const S*)(tempFloor + 0x3380));
 
     // Tail fields (member 0x3330-0x344).
     *(u32*)((u8*)this + 0x33f0) = *(u32*)(tempFloor + 0x3330);
@@ -245,7 +245,7 @@ void CMenuMapSelectSC::Init() {
     reinterpret_cast<CScn*>(mParentRef)->addRenderCB(renderCB, 0xd, 1);
 }
 
-extern "C" void func_80251294(S* dst, const S* src) {
+extern "C" void MapSelectSCCopyWidgetState(S* dst, const S* src) {
     // Retail copies only +4..+15 (four words) and +20/+21 (two bytes).
     // The leading dummy word is padding so field offsets match; it is
     // never stored. No extra guard: that emitted a 2-insn sdata preamble.
@@ -268,8 +268,8 @@ void CMenuMapSelectSC::Term() {
     }
     reinterpret_cast<CScn*>(mParentRef)->removeRenderCB(renderCB);
 
-    func_801C40A0(&mTitleAHelp);
-    func_8024448C(&mFade);
+    teardown(&mTitleAHelp);
+    CFade_Unload(&mFade);
     func_8024CB94(&mFloorMap);
 
     lbl_eu_806647C0 = 0;
@@ -289,16 +289,16 @@ end:
 body:
     switch (mState) {
     case 0:
-        func_80251560(this);
+        MapSelectSCBeginFadeIn(this);
         break;
     case 1:
-        func_802515B8(this);
+        MapSelectSCPrepFloorMap(this);
         break;
     case 2:
         func_80251628(this);
         break;
     case 3:
-        if (func_80244510(&mFade) != 0) {
+        if (CFade_IsVisible(&mFade) != 0) {
             mState = 4;
         }
         break;
@@ -306,17 +306,17 @@ body:
         func_802516DC(this);
         break;
     case 5:
-        func_80251D4C(this);
+        MapSelectSCResetFloorMapIdle(this);
         break;
     case 6:
-        func_80251D94(this);
+        MapSelectSCCommitCursorIdle(this);
         break;
     case 7:
         mField54 = 1;
         break;
     }
-    func_801C3FF0(&mTitleAHelp);
-    func_802443E8(&mFade);
+    updateHelp(&mTitleAHelp);
+    CFade_Update(&mFade);
     func_8024C1FC(&mFloorMap);
 }
 
@@ -345,8 +345,8 @@ body:
     __ct__Q34nw4r3lyt8DrawInfoFv((nw4r::lyt::DrawInfo*)&drawInfo[0]);
     func_80137250((nw4r::lyt::DrawInfo*)&drawInfo[0]);
     func_8024C8F8(&mFloorMap, (nw4r::lyt::DrawInfo*)&drawInfo[0]);
-    func_801C4080(&mTitleAHelp, (nw4r::lyt::DrawInfo*)&drawInfo[0]);
-    func_80244460(&mFade, (nw4r::lyt::DrawInfo*)&drawInfo[0]);
+    drawHelp(&mTitleAHelp, (nw4r::lyt::DrawInfo*)&drawInfo[0]);
+    CFade_Draw(&mFade, (nw4r::lyt::DrawInfo*)&drawInfo[0]);
     __dt__Q34nw4r3lyt8DrawInfoFv((nw4r::lyt::DrawInfo*)&drawInfo[0], -1);
 }
 
@@ -372,13 +372,13 @@ CMenuMapSelectSC* func_802514D4(CProcess* parent, CProcess* arg) {
 }
 
 // (lbl_eu_806647C0 != 0)
-extern "C" bool func_80251550() { extern u32 lbl_eu_806647C0; return lbl_eu_806647C0 != 0; }
+extern "C" bool MapSelectSCIsCreated() { extern u32 lbl_eu_806647C0; return lbl_eu_806647C0 != 0; }
 
 // World-map phase 0: wait for the title/help bar and fade to be ready, then
 // start the fade-in animation and advance to phase 1.
-extern "C" void func_80251560(CMenuMapSelectSC* self) {
-    if (func_801C4114(&self->mTitleAHelp) && func_80244508(&self->mFade)) {
-        func_80244518(&self->mFade);
+extern "C" void MapSelectSCBeginFadeIn(CMenuMapSelectSC* self) {
+    if (isInitialized(&self->mTitleAHelp) && CFade_IsReady(&self->mFade)) {
+        CFade_FadeIn(&self->mFade);
         self->mState = 1;
     }
 }
@@ -386,8 +386,8 @@ extern "C" void func_80251560(CMenuMapSelectSC* self) {
 // World-map phase 2: once the fade has finished hiding, prepare the floor map
 // for the current map id, start its file loads, advance to phase 3 and play
 // the confirm sound.
-extern "C" void func_802515B8(CMenuMapSelectSC* self) {
-    if (func_80244510(&self->mFade) != 0) {
+extern "C" void MapSelectSCPrepFloorMap(CMenuMapSelectSC* self) {
+    if (CFade_IsVisible(&self->mFade) != 0) {
         Scn_SetPauseFlag(reinterpret_cast<CScn*>(self->mParentRef), 0);
         func_8024F1FC(&self->mFloorMap, (u8)lbl_eu_80664184);
         func_8024C104(&self->mFloorMap);
@@ -402,15 +402,15 @@ extern "C" void func_80251628(CMenuMapSelectSC* self) {
     if (func_8024CE1C(&self->mFloorMap) != 0) {
         func_801C4654(&self->mTitleAHelp, 0);
         char* name = BdatTouchStringCell(lbl_eu_8050C5A4, lbl_eu_8050C5A4 + 8, 3);
-        func_801C46B4(&self->mTitleAHelp, name);
-        if (func_8009CF8C(0x3212) != 0) {
+        setInfoText(&self->mTitleAHelp, name);
+        if (CtrlRemote_TouchBitByArg(0x3212) != 0) {
             func_801C46DC(&self->mTitleAHelp, 1);
         }
         func_801C41E8(&self->mTitleAHelp, 0);
         func_801C412C(&self->mTitleAHelp);
         func_8024BE1C(&self->mFloorMap);
         playUISound(0x6d);
-        func_80244538(&self->mFade);
+        CFade_FadeOut(&self->mFade);
         self->mState = 3;
     }
 }
@@ -420,7 +420,7 @@ extern "C" void func_80251628(CMenuMapSelectSC* self) {
 // pad layout differs between Classic (bits 21-23/25-26) and Wiimote/Nunchuk
 // (bits 4-5/10/12) controllers.
 extern "C" void func_802516DC(CMenuMapSelectSC* self) {
-    if (func_8024F538(&self->mFloorMap) != 0) {
+    if (FloorMap_ClassifyByte41(&self->mFloorMap) != 0) {
         return;
     }
 
@@ -436,14 +436,14 @@ extern "C" void func_802516DC(CMenuMapSelectSC* self) {
 
     if (cf::CfGameManager::isClassicController(-1) != 0) {
         // Classic controller layout.
-        if (func_8024F6E0(&self->mFloorMap) != 0) {
-            if (func_8024F630(&self->mFloorMap) > 1 && func_8024F6D8(&self->mFloorMap) != 0) {
+        if (FloorMap_CheckRowVisited(&self->mFloorMap) != 0) {
+            if (FloorMap_GetBdatMaxRow(&self->mFloorMap) > 1 && FloorMap_GetField208Plain(&self->mFloorMap) != 0) {
                 func_801C41E8(&self->mTitleAHelp, 0x4b);
             } else {
                 func_801C41E8(&self->mTitleAHelp, 0x4c);
             }
         } else {
-            if (func_8024F630(&self->mFloorMap) > 1 && func_8024F6D8(&self->mFloorMap) != 0) {
+            if (FloorMap_GetBdatMaxRow(&self->mFloorMap) > 1 && FloorMap_GetField208Plain(&self->mFloorMap) != 0) {
                 func_801C41E8(&self->mTitleAHelp, 0x4d);
             } else {
                 func_801C41E8(&self->mTitleAHelp, 0x4e);
@@ -453,15 +453,15 @@ extern "C" void func_802516DC(CMenuMapSelectSC* self) {
 
         CPad* pad = cf::CfGameManager::getCurrentPad();
         if ((pad->mTurboPressButtonFlags & 0x02000000) != 0 &&
-            func_8024F630(&self->mFloorMap) > 1 &&
-            func_8024F6BC(&self->mFloorMap) != 0 &&
+            FloorMap_GetBdatMaxRow(&self->mFloorMap) > 1 &&
+            FloorMap_GetField208Gated(&self->mFloorMap) != 0 &&
             func_8024F784(&self->mFloorMap) == 0) {
             func_8024CE68(&self->mFloorMap);
             return;
         }
         if ((pad->mTurboPressButtonFlags & 0x04000000) != 0 &&
-            func_8024F630(&self->mFloorMap) > 1 &&
-            func_8024F6BC(&self->mFloorMap) != 0 &&
+            FloorMap_GetBdatMaxRow(&self->mFloorMap) > 1 &&
+            FloorMap_GetField208Gated(&self->mFloorMap) != 0 &&
             func_8024F784(&self->mFloorMap) == 0) {
             func_8024D23C(&self->mFloorMap);
             return;
@@ -470,15 +470,15 @@ extern "C" void func_802516DC(CMenuMapSelectSC* self) {
         u32 pressed = pad->mPressedButtonFlags;
         if ((pressed & 0x00200000) != 0) {
             func_8024EE50(&self->mFloorMap);
-            if (func_8024F54C(&self->mFloorMap) != 0) {
-                func_80244518(&self->mFade);
+            if (FloorMap_GetU16Field5A(&self->mFloorMap) != 0) {
+                CFade_FadeIn(&self->mFade);
                 self->mState = 6;
             }
         } else if ((pressed & 0x00400000) != 0) {
-            if (func_8024F554(&self->mFloorMap) != 0) {
+            if (FloorMap_GetActiveFlag58(&self->mFloorMap) != 0) {
                 func_8024F55C(&self->mFloorMap);
             } else if (func_8024F784(&self->mFloorMap) == 0) {
-                func_80244518(&self->mFade);
+                CFade_FadeIn(&self->mFade);
                 self->mState = 5;
                 playUISound(6);
             } else {
@@ -486,7 +486,7 @@ extern "C" void func_802516DC(CMenuMapSelectSC* self) {
             }
         } else if ((pressed & 0x00800000) != 0) {
             if (func_8024F784(&self->mFloorMap) == 0) {
-                func_80244518(&self->mFade);
+                CFade_FadeIn(&self->mFade);
                 self->mState = 5;
                 playUISound(6);
             }
@@ -528,14 +528,14 @@ extern "C" void func_802516DC(CMenuMapSelectSC* self) {
         }
     } else {
         // Wiimote/Nunchuk layout.
-        if (func_8024F6E0(&self->mFloorMap) != 0) {
-            if (func_8024F630(&self->mFloorMap) > 1 && func_8024F6D8(&self->mFloorMap) != 0) {
+        if (FloorMap_CheckRowVisited(&self->mFloorMap) != 0) {
+            if (FloorMap_GetBdatMaxRow(&self->mFloorMap) > 1 && FloorMap_GetField208Plain(&self->mFloorMap) != 0) {
                 func_801C41E8(&self->mTitleAHelp, 0x4b);
             } else {
                 func_801C41E8(&self->mTitleAHelp, 0x4c);
             }
         } else {
-            if (func_8024F630(&self->mFloorMap) > 1 && func_8024F6D8(&self->mFloorMap) != 0) {
+            if (FloorMap_GetBdatMaxRow(&self->mFloorMap) > 1 && FloorMap_GetField208Plain(&self->mFloorMap) != 0) {
                 func_801C41E8(&self->mTitleAHelp, 0x4d);
             } else {
                 func_801C41E8(&self->mTitleAHelp, 0x4e);
@@ -545,8 +545,8 @@ extern "C" void func_802516DC(CMenuMapSelectSC* self) {
 
         CPad* pad = cf::CfGameManager::getCurrentPad();
         if ((pad->mHeldButtonFlags & 0x1000) != 0 &&
-            func_8024F630(&self->mFloorMap) > 1 &&
-            func_8024F6BC(&self->mFloorMap) != 0 &&
+            FloorMap_GetBdatMaxRow(&self->mFloorMap) > 1 &&
+            FloorMap_GetField208Gated(&self->mFloorMap) != 0 &&
             func_8024F784(&self->mFloorMap) == 0) {
             func_801C41E8(&self->mTitleAHelp, 0x4f);
             if (self->mTimer > lbl_eu_806687C4) {
@@ -563,15 +563,15 @@ extern "C" void func_802516DC(CMenuMapSelectSC* self) {
             u32 pressed = pad->mPressedButtonFlags;
             if ((pressed & 0x10) != 0) {
                 func_8024EE50(&self->mFloorMap);
-                if (func_8024F54C(&self->mFloorMap) != 0) {
-                    func_80244518(&self->mFade);
+                if (FloorMap_GetU16Field5A(&self->mFloorMap) != 0) {
+                    CFade_FadeIn(&self->mFade);
                     self->mState = 6;
                 }
             } else if ((pressed & 0x20) != 0) {
-                if (func_8024F554(&self->mFloorMap) != 0) {
+                if (FloorMap_GetActiveFlag58(&self->mFloorMap) != 0) {
                     func_8024F55C(&self->mFloorMap);
                 } else if (func_8024F784(&self->mFloorMap) == 0) {
-                    func_80244518(&self->mFade);
+                    CFade_FadeIn(&self->mFade);
                     self->mState = 5;
                     playUISound(6);
                 } else {
@@ -579,7 +579,7 @@ extern "C" void func_802516DC(CMenuMapSelectSC* self) {
                 }
             } else if ((pressed & 0x400) != 0) {
                 if (func_8024F784(&self->mFloorMap) == 0) {
-                    func_80244518(&self->mFade);
+                    CFade_FadeIn(&self->mFade);
                     self->mState = 5;
                     playUISound(6);
                 }
@@ -623,8 +623,8 @@ extern "C" void func_802516DC(CMenuMapSelectSC* self) {
 
 // World-map phase 6: wait for the fade to finish hiding, then reset the
 // floor map and move to phase 7 (idle).
-extern "C" void func_80251D4C(CMenuMapSelectSC* self) {
-    if (func_80244510(&self->mFade)) {
+extern "C" void MapSelectSCResetFloorMapIdle(CMenuMapSelectSC* self) {
+    if (CFade_IsVisible(&self->mFade)) {
         func_8024CB94(&self->mFloorMap);
         self->mState = 7;
     }
@@ -632,9 +632,9 @@ extern "C" void func_80251D4C(CMenuMapSelectSC* self) {
 
 // World-map phase 6 variant: after the fade completes, hand the selected
 // floor-map cursor index to the game manager and move to phase 7 (idle).
-extern "C" void func_80251D94(CMenuMapSelectSC* self) {
-    if (func_80244510(&self->mFade)) {
-        func_8008413C__Q22cf13CfGameManagerFv(func_8024F54C(&self->mFloorMap), 0);
+extern "C" void MapSelectSCCommitCursorIdle(CMenuMapSelectSC* self) {
+    if (CFade_IsVisible(&self->mFade)) {
+        func_8008413C__Q22cf13CfGameManagerFv(FloorMap_GetU16Field5A(&self->mFloorMap), 0);
         self->mState = 7;
     }
 }
@@ -644,14 +644,14 @@ extern "C" void func_80251D94(CMenuMapSelectSC* self) {
 // vtable dispatch passes 'this' pointing at +0x58, so the thunk subtracts
 // it back and tail-calls the real implementation.
 // Retail: subi r3, r3, 0x58; b cbRenderBefore__16CMenuMapSelectSCFv
-void func_80251DE8(IScnRender* self) {
+void MapSelectSCRenderThunk58(IScnRender* self) {
     ((void(*)(char*))cbRenderBefore__16CMenuMapSelectSCFv)((char*)self - 0x58);
 }
 
 // IScnRender vtable this-adjusting thunk for ~CMenuMapSelectSC.
-// Same adjustment as func_80251DE8 but forwards to the destructor, leaving
+// Same adjustment as MapSelectSCRenderThunk58 but forwards to the destructor, leaving
 // r4 (delete flag) as caller leftover.
 // Retail: subi r3, r3, 0x58; b __dt__16CMenuMapSelectSCFv
-void func_80251DF0(IScnRender* self) {
+void MapSelectSCDtorThunk58(IScnRender* self) {
     ((void(*)(char*))__dt__16CMenuMapSelectSCFv)((char*)self - 0x58);
 }

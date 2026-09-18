@@ -184,7 +184,7 @@ class CMCEffCrystal {
 public:
     CMCEffCrystal(nw4r::lyt::ArcResourceAccessor*);
     virtual ~CMCEffCrystal();
-    virtual void func_80224CE4();
+    virtual void MCCrystal_BuildLayouts();
     void func_80224E1C();
     void func_80224EF8(nw4r::lyt::DrawInfo*);
     void func_80224F84();
@@ -332,7 +332,7 @@ public:
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
 extern "C" u32 advanceAnimTransform__FPQ34nw4r3lyt13AnimTransformf(nw4r::lyt::AnimTransform*, float);
 extern "C" void playUISound__FUl(u32);
-// NOTE: func_80124270 is intentionally NOT promoted to this header. Parallel
+// NOTE: setPaneVisible is intentionally NOT promoted to this header. Parallel
 // TU conversions declare it with conflicting signatures in their own headers
 // (CItemBoxInfo.hpp: `(void*, void*)` vs CMCGetItemBox.hpp: `(nw4r::lyt::Pane*,
 // u32)`), so a shared declaration here would add a third voice to that live

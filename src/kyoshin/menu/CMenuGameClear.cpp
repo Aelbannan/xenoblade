@@ -11,9 +11,10 @@
 
 #include <revolution/GX.h>
 
-// forward declarations for scaffold thunk references
-void cbRenderBefore__14CMenuGameClearFv(void*);
-void __dt__14CMenuGameClearFv(void*);
+// forward declarations for scaffold thunk references (retail bare
+// symbols, so C linkage like the sibling TUs' thunk targets)
+extern "C" void cbRenderBefore__14CMenuGameClearFv(void*);
+extern "C" void __dt__14CMenuGameClearFv(void*);
 
 /*
  * Singleton factory constructor (retail unmangled symbol). Allocates the
@@ -114,7 +115,7 @@ void CMenuGameClear::Term() {
     }
     mScene->removeRenderCB(render);
 
-    func_8022B7F4(&mSysWin);
+    sysWinTermLayout(&mSysWin);
     ((CBaseCur*)&mCursor[0])->cleanup();
     deleteRegion__17UnkClass_8045F564Fv(&mMemRegion[0]);
 
@@ -154,13 +155,13 @@ body:
         u8 drawInfo[0x54];
         __ct__Q34nw4r3lyt8DrawInfoFv((nw4r::lyt::DrawInfo*)&drawInfo[0]);
         func_80137250((nw4r::lyt::DrawInfo*)&drawInfo[0]);
-        func_8022B7C8(&mSysWin[0], (nw4r::lyt::DrawInfo*)&drawInfo[0]);
-        func_801D20B0(&mCursor[0], (nw4r::lyt::DrawInfo*)&drawInfo[0]);
+        sysWinDrawLayout(&mSysWin[0], (nw4r::lyt::DrawInfo*)&drawInfo[0]);
+        Cur_DrawLayout(&mCursor[0], (nw4r::lyt::DrawInfo*)&drawInfo[0]);
         __dt__Q34nw4r3lyt8DrawInfoFv((nw4r::lyt::DrawInfo*)&drawInfo[0], -1);
     }
 }
 
-extern "C" unsigned long func_802B22E0() {
+extern "C" unsigned long ClearMenu_IsPresent() {
     return lbl_eu_80664C08 != 0;
 }
 
@@ -188,15 +189,15 @@ extern "C" void func_802B22F4(CMenuGameClear* self) {
 
     if (dirBit != 0) {
         self->mField70 = 4;
-        func_8022B8E4((CSysWinFull*)&self->mSysWin[0]);
-        func_801D216C(&self->mCursor[0], 0);
+        sysWinAdvancePhase3((CSysWinFull*)&self->mSysWin[0]);
+        Cur_SetVisible(&self->mCursor[0], 0);
         playUISound(3);
     } else if (down != 0) {
         if (--self->mField71 < 0) {
             self->mField71 = 1;
         }
         nw4r::math::VEC3 pos;
-        func_8022C1B4(&pos, &self->mSysWin[0], self->mField71);
+        sysWinGetPaneScreenPos(&pos, &self->mSysWin[0], self->mField71);
         ((CBaseCur*)&self->mCursor[0])->setRootPaneTranslate(&pos);
         playUISound(1);
     } else if (up != 0) {
@@ -204,7 +205,7 @@ extern "C" void func_802B22F4(CMenuGameClear* self) {
             self->mField71 = 0;
         }
         nw4r::math::VEC3 pos;
-        func_8022C1B4(&pos, &self->mSysWin[0], self->mField71);
+        sysWinGetPaneScreenPos(&pos, &self->mSysWin[0], self->mField71);
         ((CBaseCur*)&self->mCursor[0])->setRootPaneTranslate(&pos);
         playUISound(1);
     }
@@ -230,15 +231,15 @@ extern "C" void func_802B2488(CMenuGameClear* self) {
 
     if (dirBit != 0) {
         self->mField70 = 8;
-        func_8022B8E4((CSysWinFull*)&self->mSysWin[0]);
-        func_801D216C(&self->mCursor[0], 0);
+        sysWinAdvancePhase3((CSysWinFull*)&self->mSysWin[0]);
+        Cur_SetVisible(&self->mCursor[0], 0);
         playUISound(3);
     } else if (down != 0) {
         if (--self->mField71 < 0) {
             self->mField71 = 1;
         }
         nw4r::math::VEC3 pos;
-        func_8022C1B4(&pos, &self->mSysWin[0], self->mField71);
+        sysWinGetPaneScreenPos(&pos, &self->mSysWin[0], self->mField71);
         ((CBaseCur*)&self->mCursor[0])->setRootPaneTranslate(&pos);
         playUISound(1);
     } else if (up != 0) {
@@ -246,16 +247,16 @@ extern "C" void func_802B2488(CMenuGameClear* self) {
             self->mField71 = 0;
         }
         nw4r::math::VEC3 pos;
-        func_8022C1B4(&pos, &self->mSysWin[0], self->mField71);
+        sysWinGetPaneScreenPos(&pos, &self->mSysWin[0], self->mField71);
         ((CBaseCur*)&self->mCursor[0])->setRootPaneTranslate(&pos);
         playUISound(1);
     }
 }
 
-void func_802B261C(void* self) { ((void(*)(void*))cbRenderBefore__14CMenuGameClearFv)((char*)self - 0x58); }
+void ClearMenu_ThunkRender58(void* self) { ((void(*)(void*))cbRenderBefore__14CMenuGameClearFv)((char*)self - 0x58); }
 
-void func_802B2624(void* self) { ((void(*)(void*))__dt__14CMenuGameClearFv)((char*)self - 0x58); }
+void ClearMenu_ThunkDtor58(void* self) { ((void(*)(void*))__dt__14CMenuGameClearFv)((char*)self - 0x58); }
 
-extern "C" u32 func_802B262C() {
+extern "C" u32 ClearMenu_GetGlobal10() {
     return lbl_eu_80664C10;
 }

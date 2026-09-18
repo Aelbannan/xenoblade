@@ -11,29 +11,29 @@
 // CLoad class, but declares the func_802AExxxx helpers itself below as
 // extern "C" so call relocs carry the retail UNMANGLED symbol names
 // (identical plain decls emit mangled __FP5CLoad refs). MWCC 10505.
-#define func_802AE508 func_802AE508_CLoadHdr
+#define CLoadBeginFileRequest CLoadBeginFileRequest_CLoadHdr
 #define func_802AE560 func_802AE560_CLoadHdr
-#define func_802AE5F0 func_802AE5F0_CLoadHdr
-#define func_802AE62C func_802AE62C_CLoadHdr
-#define func_802AE6AC func_802AE6AC_CLoadHdr
-#define func_802AE6B4 func_802AE6B4_CLoadHdr
-#define func_802AE6BC func_802AE6BC_CLoadHdr
-#define func_802AE6C4 func_802AE6C4_CLoadHdr
-#define func_802AE758 func_802AE758_CLoadHdr
-#define func_802AE7EC func_802AE7EC_CLoadHdr
-#define func_802AE894 func_802AE894_CLoadHdr
+#define CLoadDrawIfVisible CLoadDrawIfVisible_CLoadHdr
+#define CLoadTeardownLayout CLoadTeardownLayout_CLoadHdr
+#define CLoadIsLoadReady CLoadIsLoadReady_CLoadHdr
+#define CLoadIsLoaded CLoadIsLoaded_CLoadHdr
+#define CLoadIsAnimSettled CLoadIsAnimSettled_CLoadHdr
+#define CLoadStartFadeInStep CLoadStartFadeInStep_CLoadHdr
+#define CLoadStartRetryStep CLoadStartRetryStep_CLoadHdr
+#define CLoadAdvanceFadeHold CLoadAdvanceFadeHold_CLoadHdr
+#define CLoadFinishRetryIdle CLoadFinishRetryIdle_CLoadHdr
 #include "kyoshin/CLoad.hpp"
-#undef func_802AE508
+#undef CLoadBeginFileRequest
 #undef func_802AE560
-#undef func_802AE5F0
-#undef func_802AE62C
-#undef func_802AE6AC
-#undef func_802AE6B4
-#undef func_802AE6BC
-#undef func_802AE6C4
-#undef func_802AE758
-#undef func_802AE7EC
-#undef func_802AE894
+#undef CLoadDrawIfVisible
+#undef CLoadTeardownLayout
+#undef CLoadIsLoadReady
+#undef CLoadIsLoaded
+#undef CLoadIsAnimSettled
+#undef CLoadStartFadeInStep
+#undef CLoadStartRetryStep
+#undef CLoadAdvanceFadeHold
+#undef CLoadFinishRetryIdle
 
 // Opaque kizuna-chart sub-object at +0x98 (spans 0x98..0x178). Driven by
 // kizChartOpen (CKizunagram unit); detailed layout TBD.
@@ -76,8 +76,8 @@ public:
     void cbRenderBefore();
 
     // IScnRender vtable this-adjusting thunks
-    void func_80257A7C();
-    void func_80257A84();
+    void KizunagramRenderBeforeThunk();
+    void KizunagramDeleteDtorThunk();
 
     u32 ptmf0[3];                    // 0x3C-0x47: null PMF callback slot group 1
     u32 ptmf1[3];                    // 0x48-0x53: null PMF callback slot group 2
@@ -109,26 +109,26 @@ class CTaskGame;
 extern "C" int isIdle__11CTitleAHelpFv(CTitleAHelp* h);
 extern "C" int kizChartOpen(UnkKizunaMenuSub98* self);
 extern "C" int KizunagramIsOpen(UnkKizunaMenuPcSub* self);
-extern "C" int func_80244508(CFade* self);
-extern "C" void func_80244518(CFade* self);
+extern "C" int CFade_IsReady(CFade* self);
+extern "C" void CFade_FadeIn(CFade* self);
 
 // Additional retail-unmangled callee names for the kizuna-gram screen state
 // helpers (same scheme as CMenuMapSelectSC / CMakeCrystalWin). Return types
 // are int where retail compares r3 with cmpwi directly (no byte mask);
 // kizChartStatus is u8 because retail masks its result with clrlwi.
 // Retail-unmangled views of the CLoad helpers (see include shield above).
-extern "C" u8 func_802AE6AC(CLoad* self);
-extern "C" void func_802AE6C4(CLoad* self);
-extern "C" void func_802AE758(CLoad* self);
-extern "C" int func_80244510(CFade* self);
-extern "C" void func_80244538(CFade* self);
+extern "C" int CLoadIsLoadReady(CLoad* self);
+extern "C" void CLoadStartFadeInStep(CLoad* self);
+extern "C" void CLoadStartRetryStep(CLoad* self);
+extern "C" int CFade_IsVisible(CFade* self);
+extern "C" void CFade_FadeOut(CFade* self);
 extern "C" int kizChartReady(UnkKizunaMenuSub98* self);
 extern "C" u8 kizChartStatus(UnkKizunaMenuSub98* self);
 extern "C" void kizStartChart(UnkKizunaMenuSub98* self);
-extern "C" int func_801C4114(CTitleAHelp* self);
+extern "C" int isInitialized(CTitleAHelp* self);
 extern "C" void func_801C412C(CTitleAHelp* self);
-extern "C" void func_801C416C(CTitleAHelp* self);
-extern "C" void func_801C41C0(CTitleAHelp* self, char* name);
+extern "C" void reopenFromClose(CTitleAHelp* self);
+extern "C" void setNameText(CTitleAHelp* self, char* name);
 extern "C" void func_801C41E8(CTitleAHelp* self, u8 arg);
 extern "C" char* BdatTouchStringCell(char* a, char* b, int id);
 
@@ -169,15 +169,15 @@ extern "C" int IsMenuState621F0();
 
 // CTitleAHelp / CFade helpers used by Term / cbRenderBefore (retail strips
 // the mangling for these member helpers).
-extern "C" void func_801C40A0(CTitleAHelp* self);
-extern "C" void func_801C4080(CTitleAHelp* self, nw4r::lyt::DrawInfo* drawInfo);
-extern "C" void func_801C4198(CTitleAHelp* self);
-extern "C" void func_80244460(CFade* self, nw4r::lyt::DrawInfo* drawInfo);
-extern "C" void func_8024448C(CFade* self);
+extern "C" void teardown(CTitleAHelp* self);
+extern "C" void drawHelp(CTitleAHelp* self, nw4r::lyt::DrawInfo* drawInfo);
+extern "C" void markReplayClose(CTitleAHelp* self);
+extern "C" void CFade_Draw(CFade* self, nw4r::lyt::DrawInfo* drawInfo);
+extern "C" void CFade_Unload(CFade* self);
 
 // CLoad draw/reset helpers.
-extern "C" void func_802AE62C(CLoad* self);
-extern "C" void func_802AE5F0(CLoad* self, nw4r::lyt::DrawInfo* drawInfo);
+extern "C" void CLoadTeardownLayout(CLoad* self);
+extern "C" void CLoadDrawIfVisible(CLoad* self, nw4r::lyt::DrawInfo* drawInfo);
 
 // Kizuna-chart sub-object helpers (retail-unmangled; CKizunagram unit).
 extern "C" void teardownKizuna(UnkKizunaMenuSub98* self);
@@ -194,7 +194,7 @@ extern "C" void kizCursorDir2(UnkKizunaMenuSub98* self);
 extern "C" void kizCursorDir3(UnkKizunaMenuSub98* self);
 extern "C" void kizCursorDir4(UnkKizunaMenuSub98* self);
 extern "C" void tickKizMove(UnkKizunaMenuSub98* self);
-extern "C" void func_801C414C(CTitleAHelp* self);
+extern "C" void beginClose(CTitleAHelp* self);
 // CPcKizunagram helpers. Return types are int (not u8) so callers compare
 // with cmpwi directly (no byte mask), matching retail.
 extern "C" int KizunagramIsHidden(UnkKizunaMenuPcSub* self);
@@ -210,28 +210,28 @@ extern "C" void KizunagramCursorPageDown(UnkKizunaMenuPcSub* self);
 // Move() state-dispatch helpers (retail-unmangled; defined in this TU).
 // Declared extern "C" so the switch-dispatch call sites in Move() emit the
 // literal retail reloc names (the definitions below inherit C linkage).
-extern "C" void func_80257318(CMenuKizunagram* self);
+extern "C" void KizunagramBeginFadeIn(CMenuKizunagram* self);
 extern "C" void func_80257360(CMenuKizunagram* self);
-extern "C" void func_802573B8(CMenuKizunagram* self);
-extern "C" void func_80257448(CMenuKizunagram* self);
+extern "C" void KizunagramConfirmChartAdvance(CMenuKizunagram* self);
+extern "C" void KizunagramOpenCharWindow(CMenuKizunagram* self);
 extern "C" void func_80257498(CMenuKizunagram* self);
-extern "C" void func_80257704(CMenuKizunagram* self);
-extern "C" void func_80257754(CMenuKizunagram* self);
-extern "C" void func_802577F0(CMenuKizunagram* self);
+extern "C" void KizunagramSetPhaseFlag54(CMenuKizunagram* self);
+extern "C" void KizunagramAdvanceToPcWin(CMenuKizunagram* self);
+extern "C" void KizunagramAdvanceToState9(CMenuKizunagram* self);
 extern "C" void func_80257840(CMenuKizunagram* self);
-extern "C" void func_80257994(CMenuKizunagram* self);
-extern "C" void func_80257A2C(CMenuKizunagram* self);
+extern "C" void KizunagramAdvanceToState7(CMenuKizunagram* self);
+extern "C" void KizunagramReopenCharWindow(CMenuKizunagram* self);
 
 // Move() per-frame sub-object refresh helpers (retail-unmangled).
-extern "C" void func_801C3FF0(CTitleAHelp* self);
+extern "C" void updateHelp(CTitleAHelp* self);
 extern "C" void tickKizMain(UnkKizunaMenuSub98* self);
 extern "C" void KizunagramUpdateMainState(UnkKizunaMenuPcSub* self);
 extern "C" void func_802AE560(CLoad* self);
-extern "C" void func_802443E8(CFade* self);
+extern "C" void CFade_Update(CFade* self);
 
 // Sound helpers used by Move() (retail-unmangled).
-extern "C" int func_800FEDF8();
-extern "C" void func_800FF914();
+extern "C" int CMainMenu_GetInstancePtr();
+extern "C" void ArtsInfo_SetReadyFlag();
 
 // Sub-object / base constructors (retail-unmangled ctor names).
 extern "C" void __ct__8CProcessFv(CProcess* self);
@@ -243,7 +243,7 @@ extern "C" void __ct__CFade(CFade* self);
 
 // Ctor tail helpers (retail-unmangled).
 extern "C" void CTaskGame_deleteLoad();
-extern "C" void func_8011C400();
+extern "C" void MiniMapSetActiveFlag();
 
 // C++-linkage helper - retail emits the mangled form
 // func_80137250__FPQ34nw4r3lyt8DrawInfo.

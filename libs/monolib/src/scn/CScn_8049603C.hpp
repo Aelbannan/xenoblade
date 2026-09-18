@@ -5,10 +5,10 @@
 class CScn;
 
 // Single winning declaration for Scn_QueryUnk80State (body in CScn.cpp:
-// loads CScn+0x80 and tail-calls func_8049C7A8, returning the scene
+// loads CScn+0x80 and tail-calls getFadeColorPtr, returning the scene
 // float block; floats live at +0/+4/+8/+C).
 //
-// NOTE: two retail call sites (cf::CfCam, menu::CMenuUpdate::func_801443E4)
+// NOTE: two retail call sites (cf::CfCam, menu::CMenuUpdate::MenuUpdate_QueryUnk80Float)
 // branch here WITHOUT setting up r3 (stale-register trick); those TUs keep
 // a private no-arg declaration and must NOT include this header - a single
 // prototype cannot express both arities, and an ellipsis one would make

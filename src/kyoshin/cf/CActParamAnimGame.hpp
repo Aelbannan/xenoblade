@@ -224,7 +224,7 @@ extern const float lbl_eu_80666044;   // sdata2: 1.0f (field_500 / field_508 ini
 extern const float lbl_eu_80666048;   // sdata2: field_50C / field_504 initializer
 extern const float lbl_eu_8066604C;   // sdata2: field_47C initializer (func_8005A5B0)
 extern const float lbl_eu_80666050;   // sdata2: ground-probe threshold (func_8005E60C)
-extern const float lbl_eu_80666054;   // sdata2: func_804BE470 probe arg (func_8005A5B0)
+extern const float lbl_eu_80666054;   // sdata2: ScnRes_Notify5Ptr_E470 probe arg (func_8005A5B0)
 extern const float lbl_eu_80666058;   // sdata2: height-diff threshold (func_8005A5B0)
 extern const float lbl_eu_8066605C;   // sdata2: move-vec scale (func_8005A5B0)
 extern const float lbl_eu_80666060;   // sdata2: step vec / probe arg (func_8005A5B0)
@@ -275,7 +275,7 @@ extern const float lbl_eu_80666154;   // sdata2: height bound (func_8005EEB4)
 extern const float lbl_eu_80666158;   // sdata2: height bound (func_8005EEB4)
 extern const float lbl_eu_8066615C;   // sdata2: probe offset (func_8005EEB4)
 extern const float lbl_eu_80666160;   // sdata2: height bound (func_8005EEB4)
-extern u32 lbl_eu_80665958;   // sdata: object pointer passed to func_804B5658 (func_8005EEB4)
+extern u32 lbl_eu_80665958;   // sdata: object pointer passed to Coli_WalkReport (func_8005EEB4)
 extern const float lbl_eu_8066610C;   // sdata2: ground-probe constant (func_8005D2C4)
 extern const float lbl_eu_80666110;   // sdata2: drop threshold (func_8005D2C4)
 extern const float lbl_eu_80666114;   // sdata2: ground-probe constant (func_8005D2C4)
@@ -298,7 +298,7 @@ extern "C" void setAnimCount(void* self, u32 param);
 // the +0x10 child-data region, and a global state query (func_8005D2C4).
 extern "C" float getParamFloat0C(const void* data);
 extern "C" float getParamFloat08(const void* data);
-extern "C" int func_804BCC10(void);
+extern "C" int ScnData_FwdBC9A0(void);
 
 // C-linkage imports from libs/monolib/src/scn/code_804BC9EC.cpp (sound
 // system global state / query) and kyoshin/CUIBattleManager.cpp (link

@@ -22,7 +22,7 @@ struct CSysWinFull {
 extern u32 lbl_eu_80536510[];
 
 // Shared string pool (split1 .rodata): "/menu/jp/System.arc" and the window
-// label strings (func_8022BF6C indexes +0x77 and +0x82).
+// label strings (sysWinSetTwoTextValues indexes +0x77 and +0x82).
 extern char lbl_eu_8050A478[];
 
 // C-linkage CSysWin helper imports used by CSysWin.cpp. MWCC does not mangle
@@ -47,19 +47,19 @@ extern "C" nw4r::lyt::ArcResourceAccessor* createArcResourceAccessor__10CLibLayo
 // C-linkage layout helpers (defined in code_80135FDC.cpp / retail-unmangled).
 extern "C" void func_80137924(nw4r::math::VEC3*, nw4r::lyt::Pane*,
                                nw4r::lyt::Pane*, nw4r::lyt::Pane*);
-extern "C" void func_80124270(void*, u32);
+extern "C" void setPaneVisible(void*, u32);
 void func_801390E0(CFileHandle**);
-extern "C" void func_80124288(nw4r::lyt::Pane*, float*);
+extern "C" void writePanePos(nw4r::lyt::Pane*, float*);
 
 // C-linkage helper imports for the window content setters (func_8022B9B4 /
 // func_8022C348). Retail emits the unmangled names at the call sites.
 // TagProcCalcPageLayout is declared by CTagProcessor.hpp with its retail signature
 // (void*, CTagMsgView*, CTagOutView*) - cast panes at the call sites.
 extern "C" void TagCopyVec2f(float* dst, float* src);  // copy 2 floats (VEC2)
-extern "C" void func_801D2150(nw4r::lyt::Pane* pane,
+extern "C" void Cur_SetPaneTranslate(nw4r::lyt::Pane* pane,
                                const nw4r::math::VEC3* trans);
 // Retail code80135FDC_setVec3 leaves its first arg (a pointer) in r3, so
-// callers reuse it as the returned pointer for func_801D2150 (see
+// callers reuse it as the returned pointer for Cur_SetPaneTranslate (see
 // CScrollBar.cpp).
 extern "C" nw4r::math::VEC3* code80135FDC_setVec3(float* out, float x, float y, float z);
 
@@ -99,7 +99,7 @@ extern "C" int isClassicController__Q22cf13CfGameManagerFv(int arg);
 class CSysWin;
 
 // func_8022BFC8 (us-8022dec0) - window-kind advance helper, called by
-// func_8022C2A4. C-linkage so the call site binds to the retail symbol; the
+// sysWinSyncKindAdvance. C-linkage so the call site binds to the retail symbol; the
 // definition lives in CSysWin.cpp (not yet matched).
 extern "C" void func_8022BFC8(CSysWin* self, u8 kind);
 
@@ -108,7 +108,7 @@ extern "C" void func_8022BFC8(CSysWin* self, u8 kind);
  *
  * Retail polymorphic class (vtable lbl_eu_80536510): IWorkEvent handlers at
  * +0x08..+0x84 (dtor override, WorkEvent1..31 with OnFileEvent overridden at
- * +0x10) plus its own loadSystemArc slot at +0x88 (func_8022B6F4).
+ * +0x10) plus its own loadSystemArc slot at +0x88 (sysWinInitFileRead).
  * __declspec(novtable): the table lives in the data blob, so no TU emits
  * __vt__7CSysWin; __ct__CSysWin stores the label manually (same idiom as
  * cf::CHelp / CBaseCur). The retail method symbols keep their short
@@ -119,7 +119,7 @@ class __declspec(novtable) CSysWin : public IWorkEvent {
 public:
     virtual ~CSysWin();            // +0x08 (def: __dt__7CSysWinFv)
     virtual bool OnFileEvent(CEventFile* pEventFile); // +0x10 override
-    virtual void loadSystemArc();  // +0x88 (def: func_8022B6F4)
+    virtual void loadSystemArc();  // +0x88 (def: sysWinInitFileRead)
 
     // Overlay on the implicit vptr at +0x00 so the free-function ctor can
     // store the retail table label.
@@ -146,6 +146,6 @@ public:
 // OnFileEvent. Defined as a stub in CSysWin.cpp (not yet matched).
 extern "C" void func_8022C348(CSysWin* self);
 
-// func_8022B90C (us-8022d744) - switch the visible pane for a window kind.
+// sysWinSwitchKindPane (us-8022d744) - switch the visible pane for a window kind.
 // Defined in CSysWin.cpp; declared here so func_8022C348 can call it.
-extern "C" void func_8022B90C(CSysWin* self, int kind);
+extern "C" void sysWinSwitchKindPane(CSysWin* self, int kind);

@@ -40,7 +40,7 @@ extern const float lbl_eu_80668B04;
 // varargs name formatter (MWCC keeps the unmangled library name).
 int sprintf(char*, const char*, ...);
 // SysWin name probe + pane-position reader (func_80289CC0 tail).
-extern "C" void func_8022C1B4(void* out, void* syswin, u8 sel);
+extern "C" void sysWinGetPaneScreenPos(void* out, void* syswin, u8 sel);
 extern "C" void func_801375A0(nw4r::math::VEC3* out, nw4r::lyt::Pane* pane);
 
 extern "C" __declspec(noinline) u8 getEIBOpenFlag(CEquipItemBox* self) { return self->unk_40; }
@@ -1530,7 +1530,7 @@ extern "C" void loadEIBFiles(CEquipItemBox* self) {
     self->field_2C = CDeviceFile::readCommonArchiveFile(KyoshinHeap_GetField44(),
                                                         &lbl_eu_8050EFDC[0x166],
                                                         reinterpret_cast<IWorkEvent*>(self), 0, 0);
-    func_801D3064(&self->_padSortMenu[0]);
+    sortMenuInitFileRead(&self->_padSortMenu[0]);
     ((CEquipItemBoxSysWinView*)&self->_padSysWin1[0])->v32();
     ((CEquipItemBoxSysWinView*)&self->_padSysWin2[0])->v32();
 }
@@ -1559,9 +1559,9 @@ extern "C" void updateEIBBox(CEquipItemBox* self) {
         updateEIBCur((CEIBCur*)&self->_pad44[0]);
         updateEIBCur((CEIBCur*)&self->pagecur[0]);
         func_801D202C(&self->ccur18[0]);
-        func_801D3160(&self->_padSortMenu[0]);
-        func_8022B748(&self->_padSysWin1[0]);
-        func_8022B748(&self->_padSysWin2[0]);
+        sortMenuDispatchState(&self->_padSortMenu[0]);
+        sysWinDispatchPhase(&self->_padSysWin1[0]);
+        sysWinDispatchPhase(&self->_padSysWin2[0]);
     }
 }
 
@@ -1580,18 +1580,18 @@ extern "C" void drawEIBBox(CEquipItemBox* self, nw4r::lyt::DrawInfo* drawInfo) {
     if (x > 1) {
         drawEIBCur((CEIBCur*)&self->pagecur[0], drawInfo);
     }
-    func_8022B7C8(&self->_padSysWin1[0], drawInfo);
+    sysWinDrawLayout(&self->_padSysWin1[0], drawInfo);
     if (self->unk_37b != 0 && CSysWin_getUnk34(&self->_padSysWin2[0]) == 0) {
         drawEIBCur((CEIBCur*)&self->_pad44[0], drawInfo);
     }
     if (CSysWin_getUnk34(&self->_padSysWin2[0]) == 0) {
-        if (func_801D3320(&self->_padSortMenu[0]) != 0 ||
+        if (sortMenuIsVisible28(&self->_padSortMenu[0]) != 0 ||
             CSysWin_getUnk34(&self->_padSysWin1[0]) != 0 ||
             self->unk_375 != 0) {
-            func_801D20B0(&self->ccur18[0], drawInfo);
+            Cur_DrawLayout(&self->ccur18[0], drawInfo);
         }
     }
-    func_8022B7C8(&self->_padSysWin2[0], drawInfo);
+    sysWinDrawLayout(&self->_padSysWin2[0], drawInfo);
 }
 #pragma pop
 
@@ -1616,9 +1616,9 @@ extern "C" void closeEIBBox(CEquipItemBox* self) {
     resetEIBCur((CEIBCur*)((u8*)self + 0x44));
     resetEIBCur((CEIBCur*)((u8*)self + 0x5c));
     ((CBaseCur*)&self->ccur18[0])->cleanup();
-    func_801D3258(self->_padSortMenu);
-    func_8022B7F4(&self->_padSysWin1[0]);
-    func_8022B7F4(&self->_padSysWin2[0]);
+    sortMenuTermCleanup(self->_padSortMenu);
+    sysWinTermLayout(&self->_padSysWin1[0]);
+    sysWinTermLayout(&self->_padSysWin2[0]);
 }
 
 // Check the sort menu and both system windows are ready; return unk_42.
@@ -1641,15 +1641,15 @@ extern "C" __declspec(noinline) int eibInputBlocked(CEquipItemBox* self) {
     if (self->unk_375 != 0) return 1;
     nw4r::lyt::Pane* pane =
         self->field_38->GetRootPane()->FindPaneByName(&lbl_eu_8050EFDC[0x182], true);
-    if (pane != 0 && func_801C4648(pane) != 0) return 1;
-    return func_801D3320(self->_padSortMenu);
+    if (pane != 0 && isPaneVisible(pane) != 0) return 1;
+    return sortMenuIsVisible28(self->_padSortMenu);
 }
 
 extern "C" __declspec(noinline) int eibMenuBusy(CEquipItemBox* self) {
     if (CSysWin_getUnk34(self->_padSysWin1) != 0) {
         return 1;
     }
-    return func_801D3320(self->_padSortMenu);
+    return sortMenuIsVisible28(self->_padSortMenu);
 }
 
 extern "C" __declspec(noinline) u8 getEIBNamePane(CEquipItemBox* self) { return self->unk_375; }
@@ -1680,7 +1680,7 @@ extern "C" __declspec(noinline) void openEIBBox(CEquipItemBox* self) {
 #pragma optimize_for_size on
 extern "C" __declspec(noinline) void finishEIBEntry(CEquipItemBox* self) {
     if (self->unk_41 != 2) return;
-    if (func_801D3320(self->_padSortMenu) != 0) return;
+    if (sortMenuIsVisible28(self->_padSortMenu) != 0) return;
     self->unk_41 = 3;
     self->unk_43 = 0;
     self->unk_58 = 0;
@@ -1689,7 +1689,7 @@ extern "C" __declspec(noinline) void finishEIBEntry(CEquipItemBox* self) {
     nw4r::lyt::Pane* pane =
         self->field_38->GetRootPane()->FindPaneByName(&lbl_eu_8050EFDC[0x182], true);
     if (pane != 0) {
-        func_80124270(pane, 0);
+        setPaneVisible(pane, 0);
         self->unk_378 = 0;
     }
 }
@@ -1710,12 +1710,12 @@ extern "C" void eibNavLeft(CEquipItemBox* self) {
     }
 
     // Syswin1 not active: check sort menu
-    if (func_801D3320(&self->_padSortMenu[0]) != 0) {
+    if (sortMenuIsVisible28(&self->_padSortMenu[0]) != 0) {
         // Sort menu busy: close it and move cursor
-        if (func_801D3328(&self->_padSortMenu[0]) == 0) return;
+        if (sortMenuGetFlag2B(&self->_padSortMenu[0]) == 0) return;
         func_801D3620(&self->_padSortMenu[0]);
         char tmp[0xC];
-        func_801D3454(tmp, &self->_padSortMenu[0]);
+        sortMenuFormatPaneText(tmp, &self->_padSortMenu[0]);
         ((CBaseCur*)&self->ccur18[0])->setRootPaneTranslate((nw4r::math::VEC3*)tmp);
     } else {
         // Sort menu idle: retail dispatches on unk_375 FIRST -- no sel==-1
@@ -1768,11 +1768,11 @@ extern "C" __declspec(noinline) void func_802869B4(CEquipItemBox* self) {
         }
         return;
     }
-    if (func_801D3320(&self->_padSortMenu[0]) != 0) {
-        if (func_801D3328(&self->_padSortMenu[0]) != 0) {
+    if (sortMenuIsVisible28(&self->_padSortMenu[0]) != 0) {
+        if (sortMenuGetFlag2B(&self->_padSortMenu[0]) != 0) {
             func_801D3698(&self->_padSortMenu[0]);
             nw4r::math::VEC3 tmp;
-            func_801D3454(&tmp, &self->_padSortMenu[0]);
+            sortMenuFormatPaneText(&tmp, &self->_padSortMenu[0]);
             ((CBaseCur*)&self->ccur18[0])->setRootPaneTranslate((nw4r::math::VEC3*)&tmp);
             playUISound__FUl(1);
             return;
@@ -1815,11 +1815,11 @@ extern "C" __declspec(noinline) void func_802869B4(CEquipItemBox* self) {
 extern "C" __declspec(noinline) void eibNavUp(CEquipItemBox* self) {
     if (CSysWin_getUnk34(&self->_padSysWin2[0]) != 0) return;
     if (CSysWin_getUnk34(&self->_padSysWin1[0]) != 0) return;
-    if (func_801D3320(&self->_padSortMenu[0]) != 0) {
-        if (func_801D3328(&self->_padSortMenu[0]) != 0) {
+    if (sortMenuIsVisible28(&self->_padSortMenu[0]) != 0) {
+        if (sortMenuGetFlag2B(&self->_padSortMenu[0]) != 0) {
             func_801D3724(&self->_padSortMenu[0]);
             nw4r::math::VEC3 tmp;
-            func_801D3454(&tmp, &self->_padSortMenu[0]);
+            sortMenuFormatPaneText(&tmp, &self->_padSortMenu[0]);
             ((CBaseCur*)&self->ccur18[0])->setRootPaneTranslate((nw4r::math::VEC3*)&tmp);
             playUISound__FUl(1);
         }
@@ -1878,11 +1878,11 @@ extern "C" __declspec(noinline) void eibNavUp(CEquipItemBox* self) {
 extern "C" void eibNavRight(CEquipItemBox* self) {
     if (CSysWin_getUnk34(&self->_padSysWin2[0]) != 0) return;
     if (CSysWin_getUnk34(&self->_padSysWin1[0]) != 0) return;
-    if (func_801D3320(&self->_padSortMenu[0]) != 0) {
-        if (func_801D3328(&self->_padSortMenu[0]) == 0) return;
-        func_801D377C(&self->_padSortMenu[0]);
+    if (sortMenuIsVisible28(&self->_padSortMenu[0]) != 0) {
+        if (sortMenuGetFlag2B(&self->_padSortMenu[0]) == 0) return;
+        sortMenuPageDownStep(&self->_padSortMenu[0]);
         nw4r::math::VEC3 tmp;
-        func_801D3454(&tmp, &self->_padSortMenu[0]);
+        sortMenuFormatPaneText(&tmp, &self->_padSortMenu[0]);
         ((CBaseCur*)&self->ccur18[0])->setRootPaneTranslate((nw4r::math::VEC3*)&tmp);
         playUISound__FUl(1);
         return;
@@ -1935,7 +1935,7 @@ extern "C" void eibNavRight(CEquipItemBox* self) {
 #pragma optimize_for_size on
 __declspec(noinline) void CEquipItemBox::func_80286F6C() {
     if (CSysWin_getUnk34(_padSysWin1) != 0) return;
-    if (func_801D3320(_padSortMenu) != 0) return;
+    if (sortMenuIsVisible28(_padSortMenu) != 0) return;
     CEquipItemGrid* grid = (CEquipItemGrid*)&_pad37D[1];
     ::eibGridNext((CEquipItemBox*)grid);
     if ((s8)unk_1f5 >= ::getEIBColCount((CEquipItemBox*)grid)) {
@@ -1956,7 +1956,7 @@ __declspec(noinline) void CEquipItemBox::func_80286F6C() {
 // lists (backward mirror of func_80286F6C).
 extern "C" __declspec(noinline) void eibPagePrev(CEquipItemBox* self) {
     if (CSysWin_getUnk34(&self->_padSysWin1[0]) != 0) return;
-    if (func_801D3320(&self->_padSortMenu[0]) != 0) return;
+    if (sortMenuIsVisible28(&self->_padSortMenu[0]) != 0) return;
     CEquipItemGrid* grid = (CEquipItemGrid*)&self->_pad37D[1];
     eibGridPrev((CEquipItemBox*)grid);
     if ((s8)self->unk_1f5 >= getEIBColCount((CEquipItemBox*)grid)) {
@@ -1979,16 +1979,16 @@ extern "C" __declspec(noinline) void eibPagePrev(CEquipItemBox* self) {
 extern "C" void eibConfirmSort(CEquipItemBox* self) {
     if (CSysWin_getUnk34(&self->_padSysWin1[0]) != 0) return;
     if (self->unk_375 != 0) return;
-    if (func_801D3320(&self->_padSortMenu[0]) != 0) {
-        if (func_801D3328(&self->_padSortMenu[0]) == 0) return;
+    if (sortMenuIsVisible28(&self->_padSortMenu[0]) != 0) {
+        if (sortMenuGetFlag2B(&self->_padSortMenu[0]) == 0) return;
         func_80289CC0(self);
         self->unk_58 = 1;
-        func_801D216C(&self->ccur18[0], 0);
-        func_801D3408(&self->_padSortMenu[0]);
+        Cur_SetVisible(&self->ccur18[0], 0);
+        sortMenuToState4Page(&self->_padSortMenu[0]);
         playUISound__FUl(6);
         return;
     }
-    if (func_801D3328(&self->_padSortMenu[0]) == 0) return;
+    if (sortMenuGetFlag2B(&self->_padSortMenu[0]) == 0) return;
     nw4r::math::VEC3 result;
     nw4r::math::VEC3 tmp;
     nw4r::lyt::Pane* root = self->field_38->GetRootPane();
@@ -1998,13 +1998,13 @@ extern "C" void eibConfirmSort(CEquipItemBox* self) {
                   root->FindPaneByName(&lbl_eu_8050EFDC[0x18a], true),
                   root->FindPaneByName(&lbl_eu_8050EFDC[0x193], true),
                   root);
-    func_801D3430(&self->_padSortMenu[0], &result);
+    sortMenuSetLayoutPos(&self->_padSortMenu[0], &result);
     func_801D353C(&self->_padSortMenu[0], (u8)(self->unk_379 + self->unk_37a));
     self->unk_58 = 0;
-    func_801D3454(&tmp, &self->_padSortMenu[0]);
+    sortMenuFormatPaneText(&tmp, &self->_padSortMenu[0]);
     ((CBaseCur*)&self->ccur18[0])->setRootPaneTranslate((nw4r::math::VEC3*)&tmp);
-    func_801D216C(&self->ccur18[0], 1);
-    func_801D3330(&self->_padSortMenu[0]);
+    Cur_SetVisible(&self->ccur18[0], 1);
+    sortMenuOpenInit(&self->_padSortMenu[0]);
     self->unk_1f6 = 0;
     playUISound__FUl(2);
 }
@@ -2021,8 +2021,8 @@ extern "C" void eibHandleSubPage(CEquipItemBox* self, int param) {
     if (CSysWin_getUnk34(&self->_padSysWin1[0]) != 0) {
         if (CSysWin_isActive(&self->_padSysWin1[0]) != 0) {
             self->unk_41 = 5;
-            func_8022B8E4(&self->_padSysWin1[0]);
-            func_801D216C(&self->ccur18[0], 0);
+            sysWinAdvancePhase3(&self->_padSysWin1[0]);
+            Cur_SetVisible(&self->ccur18[0], 0);
             self->unk_58 = 1;
             self->unk_374 = 0;
         }
@@ -2030,24 +2030,24 @@ extern "C" void eibHandleSubPage(CEquipItemBox* self, int param) {
     }
     if (CSysWin_getUnk34(&self->_padSysWin2[0]) != 0) {
         if (CSysWin_isActive(&self->_padSysWin2[0]) != 0) {
-            func_8022B8E4(&self->_padSysWin2[0]);
+            sysWinAdvancePhase3(&self->_padSysWin2[0]);
         }
         return;
     }
     nw4r::lyt::Pane* pane =
         self->field_38->GetRootPane()->FindPaneByName(&lbl_eu_8050EFDC[0x182], true);
-    if (func_801D3320(&self->_padSortMenu[0]) != 0) {
-        if (func_801D3328(&self->_padSortMenu[0]) == 0) return;
+    if (sortMenuIsVisible28(&self->_padSortMenu[0]) != 0) {
+        if (sortMenuGetFlag2B(&self->_padSortMenu[0]) == 0) return;
         func_80289CC0(self);
         self->unk_58 = 1;
-        func_801D216C(&self->ccur18[0], 0);
-        func_801D3408(&self->_padSortMenu[0]);
+        Cur_SetVisible(&self->ccur18[0], 0);
+        sortMenuToState4Page(&self->_padSortMenu[0]);
     } else if (self->unk_375 != 0) {
         self->unk_375 = 0;
         self->unk_58 = 1;
-        func_801D216C(&self->ccur18[0], 0);
-    } else if (func_801C4648(pane) != 0) {
-        func_80124270(pane, 0);
+        Cur_SetVisible(&self->ccur18[0], 0);
+    } else if (isPaneVisible(pane) != 0) {
+        setPaneVisible(pane, 0);
         self->unk_378 = 0;
     }
     if (param == 0) {
@@ -2068,7 +2068,7 @@ extern "C" void func_802873D8(){}
 extern "C" __declspec(noinline) void stepEIBSysWin2(CEquipItemBox* self) {
     if (self->unk_375 != 0 && CSysWin_getUnk34(self->_padSysWin2) != 0
         && CSysWin_isActive(self->_padSysWin2) != 0) {
-        func_8022B8E4(self->_padSysWin2);
+        sysWinAdvancePhase3(self->_padSysWin2);
     }
 }
 
@@ -2154,18 +2154,18 @@ extern "C" void eibApplySelect(CEquipItemBox* self, u32 param) {
 extern "C" __declspec(noinline) void func_80287FE0(CEquipItemBox* self) {
     if (self->unk_41 != 2 && self->unk_41 != 4) return;
     if (CSysWin_getUnk34(&self->_padSysWin1[0]) != 0) return;
-    if (func_801D3320(&self->_padSortMenu[0]) != 0) return;
+    if (sortMenuIsVisible28(&self->_padSortMenu[0]) != 0) return;
     nw4r::lyt::Pane* pane =
         self->field_38->GetRootPane()->FindPaneByName(&lbl_eu_8050EFDC[0x182], true);
     if (pane == 0) return;
     // Retail dispatches the VISIBLE-pane cases immediately and defers the
     // invisible-pane handler to a tail block after them.
-    if (func_801C4648(pane) != 0) {
+    if (isPaneVisible(pane) != 0) {
         if (self->unk_375 != 0) {
             // Name pane up: close the sub-window or commit its selection.
             if (CSysWin_getUnk34(&self->_padSysWin2[0]) != 0) {
                 if (CSysWin_isActive(&self->_padSysWin2[0]) != 0) {
-                    func_8022B8E4(&self->_padSysWin2[0]);
+                    sysWinAdvancePhase3(&self->_padSysWin2[0]);
                 }
                 return;
             }
@@ -2181,10 +2181,10 @@ extern "C" __declspec(noinline) void func_80287FE0(CEquipItemBox* self) {
                 text = BdatGetPtrDirect((const void*)lbl_eu_806649E0,
                                      &lbl_eu_8050EFDC[0x1a2], v);
             }
-            func_8022B90C(&self->_padSysWin2[0], 0);
+            sysWinSwitchKindPane(&self->_padSysWin2[0], 0);
             func_8022B9B4(&self->_padSysWin2[0], text, 0);
             func_8022BFC8(&self->_padSysWin2[0], 1);
-            func_8022B8B8(&self->_padSysWin2[0]);
+            sysWinOpenPhase1(&self->_padSysWin2[0]);
             self->unk_58 = 0;
             return;
         }
@@ -2215,7 +2215,7 @@ extern "C" __declspec(noinline) void func_80287FE0(CEquipItemBox* self) {
         self->unk_375 = 1;
         self->unk_376 = (u8)pos;
         self->unk_377 = (u8)(sel - (s8)pos * 4);
-        func_801D216C(&self->ccur18[0], 1);
+        Cur_SetVisible(&self->ccur18[0], 1);
         nw4r::math::VEC3 tmp;
         CopyTabSlotVec(&tmp, &list->field_00[0], sel);
         ((CBaseCur*)&self->ccur18[0])->setRootPaneTranslate((nw4r::math::VEC3*)&tmp);
@@ -2225,7 +2225,7 @@ extern "C" __declspec(noinline) void func_80287FE0(CEquipItemBox* self) {
     }
     // Invisible pane: show it (unless syswin2 is busy), then sound state 2.
     if (CSysWin_getUnk34(&self->_padSysWin2[0]) != 0) return;
-    func_80124270(pane, 1);
+    setPaneVisible(pane, 1);
     playUISound__FUl(2);
 }
 #pragma pop
@@ -2242,7 +2242,7 @@ extern "C" __declspec(noinline) void func_80287FE0(CEquipItemBox* self) {
 #pragma auto_inline off
 extern "C" __declspec(noinline) int func_802882A4(CEquipItemBox* self) {
     self->unk_37c = 0;
-    if (func_801D3320(&self->_padSortMenu[0]) != 0) return 1;
+    if (sortMenuIsVisible28(&self->_padSortMenu[0]) != 0) return 1;
     CEquipItemGrid* grid = (CEquipItemGrid*)&self->_pad37D[1];
     u8 idx = (u8)(self->unk_1f4 + self->unk_1f5 * 5);
     if (getEIBByte6(grid, idx) == 0) return 0;
@@ -2276,7 +2276,7 @@ extern "C" __declspec(noinline) int func_802882A4(CEquipItemBox* self) {
     u8 v = (u8)BdatGetU8Direct(lbl_eu_806640EC, &lbl_eu_8050EFDC[0x20],
                              w >> 20);
     if ((((u32)(s8)(v - 1)) >> 5) == 0) return 1;
-    if (func_8009CF8C(0x3508) != 0) return 1;
+    if (CtrlRemote_TouchBitByArg(0x3508) != 0) return 1;
     self->unk_37c = 1;
     return 0;
 }
@@ -2350,7 +2350,7 @@ extern "C" u32 findEIBEquipSlot(CEquipItemBox* self) {
 extern "C" void eibTryCloseRow(CEquipItemBox* self) {
     if ((s8)self->unk_1f5 == -1) return;
     if (self->unk_375 != 0) return;
-    if (func_801D3320(&self->_padSortMenu[0]) != 0) return;
+    if (sortMenuIsVisible28(&self->_padSortMenu[0]) != 0) return;
     if (CSysWin_getUnk34(&self->_padSysWin2[0]) != 0) return;
     if (CSysWin_getUnk34(&self->_padSysWin1[0]) != 0) return;
     self->unk_1f5 = -1;
@@ -2369,8 +2369,8 @@ extern "C" __declspec(noinline) int eibHudPrompt(CEquipItemBox* self) {
     bool manyParty = code80135FDC_getByte_64077() > 1;
     nw4r::lyt::Pane* pane =
         self->field_38->GetRootPane()->FindPaneByName(&lbl_eu_8050EFDC[0x182], true);
-    bool vis = func_801C4648(pane);
-    if (func_801D3320(&self->_padSortMenu[0]) != 0) return 0x2b;
+    bool vis = isPaneVisible(pane);
+    if (sortMenuIsVisible28(&self->_padSortMenu[0]) != 0) return 0x2b;
     if (self->unk_375 != 0) return 0x22;
     if ((s8)self->unk_1f5 == -1) {
         u32 cat = self->unk_36c[(s8)self->unk_373];
@@ -2467,7 +2467,7 @@ extern "C" __declspec(noinline) void eibCloseAnim(CEquipItemBox* self) {
 extern "C" __declspec(noinline) void eibSysWin1Done(CEquipItemBox* self) {
     if (CSysWin_isActive(self->_padSysWin1) != 0) {
         self->unk_41 = 2;
-        func_801D216C(self->ccur18, 1);
+        Cur_SetVisible(self->ccur18, 1);
         func_80289CC0(self);
     }
 }
@@ -2568,10 +2568,10 @@ extern "C" __declspec(noinline) void func_802891B8(CEquipItemBox* self, s8 v,
     } else if (v == 0) {
         sprintf(bufText, &lbl_eu_8050EFDC[0x228]);
     } else if (v == -2) {
-        sprintf(bufText, func_eu_802B148C());
+        sprintf(bufText, getErrMesText16());
         PaneMatSetTevColorsByName(self->field_38, bufName, lbl_eu_806649C0, lbl_eu_806649C8);
     } else if (v == -3) {
-        sprintf(bufText, func_eu_802B1474());
+        sprintf(bufText, getErrMesText15());
         PaneMatSetTevColorsByName(self->field_38, bufName, lbl_eu_806649D0, lbl_eu_806649D8);
     } else {
         sprintf(bufText, &lbl_eu_8050EFDC[0x228]);
@@ -2686,7 +2686,7 @@ extern "C" __declspec(noinline) void bindEIBCellMark(CEquipItemBox* self, u32 mo
     }
     sprintf(buf, &lbl_eu_8050EFDC[0x270], n);
     nw4r::lyt::Pane* pane = self->field_38->GetRootPane()->FindPaneByName(buf, true);
-    func_80124270(pane, show == 0 ? 1 : 0);
+    setPaneVisible(pane, show == 0 ? 1 : 0);
 }
 
 #pragma push
@@ -2779,11 +2779,11 @@ void CEquipItemBox::func_80289754() {
     if (pages > 1) {
         nw4r::lyt::Pane* pane =
             field_38->GetRootPane()->FindPaneByName(&lbl_eu_8050EFDC[0x285], true);
-        func_80124270(pane, 1);
+        setPaneVisible(pane, 1);
         for (u8 i = 0; i < 10; i++) {
             sprintf(buf1, &lbl_eu_8050EFDC[0x28c], i + 1);
             nw4r::lyt::Pane* p = field_38->GetRootPane()->FindPaneByName(buf1, true);
-            func_80124270(p, (u8)i < pages);
+            setPaneVisible(p, (u8)i < pages);
         }
         setLayoutTextBoxNumber(field_38, &lbl_eu_8050EFDC[0x29b], (u8)((u8)grid->idx + 1));
         nw4r::lyt::Pane* cur =
@@ -2802,13 +2802,13 @@ void CEquipItemBox::func_80289754() {
     } else {
         nw4r::lyt::Pane* pane =
             field_38->GetRootPane()->FindPaneByName(&lbl_eu_8050EFDC[0x285], true);
-        func_80124270(pane, 0);
+        setPaneVisible(pane, 0);
     }
     for (u8 i = 0; i < 6; i++) {
         sprintf(buf2, &lbl_eu_8050EFDC[0x2b2], i + 1);
         nw4r::lyt::Pane* p = field_38->GetRootPane()->FindPaneByName(buf2, true);
         if (p != 0) {
-            func_80124270(p, (u8)i < ::getEIBColCount((CEquipItemBox*)grid));
+            setPaneVisible(p, (u8)i < ::getEIBColCount((CEquipItemBox*)grid));
         }
     }
     for (u8 i = 0; i < 30; i++) {
@@ -2892,7 +2892,7 @@ extern "C" __declspec(noinline) void func_80289CC0(CEquipItemBox* self) {
     // live across the branch join. Keep declarations branch-local.
     // Polarity per retail: menu OPEN (!= 0) takes the win-name path.
     if (CSysWin_getUnk34(&self->_padSysWin1[0]) != 0) {
-        func_8022C1B4(winName, &self->_padSysWin1[0], self->unk_374);
+        sysWinGetPaneScreenPos(winName, &self->_padSysWin1[0], self->unk_374);
         ((CBaseCur*)&self->ccur18[0])->setRootPaneTranslate((nw4r::math::VEC3*)winName);
     } else {
         s8 sel = self->unk_1f5;
@@ -2966,7 +2966,7 @@ extern "C" __declspec(noinline) void fillEIBSortMenu(CEquipItemBox* self) {
     char* name = BdatTouchStringCell(&lbl_eu_8050EFDC[0x2d], &lbl_eu_8050EFDC[0x36], (u32)buf[idx]);
     LayoutSetTextBoxFmtValue(self->field_38, &lbl_eu_8050EFDC[0x2d4], name, 0);
     if (func_801D32DC(&self->_padSortMenu[0]) != 0) {
-        func_801D350C(&self->_padSortMenu[0]);
+        sortMenuResetCount(&self->_padSortMenu[0]);
         u8 i = 0;
         while (1) {
             if ((int)buf[i] <= 0) break;
@@ -2997,7 +2997,7 @@ extern "C" void pushEIBCatList(CEquipItemBox* self, u8 val) {
 #pragma push
 #pragma auto_inline off
 extern "C" __declspec(noinline) void eibSortPageNext(CEquipItemBox* self) {
-    if (func_801D3320(self->_padSortMenu) != 0) return;
+    if (sortMenuIsVisible28(self->_padSortMenu) != 0) return;
     u8 v = self->unk_373 + 1;
     self->unk_373 = v;
     if ((int)(s8)v >= self->unk_372) {
@@ -3012,7 +3012,7 @@ extern "C" __declspec(noinline) void eibSortPageNext(CEquipItemBox* self) {
 // Step the sort-menu page selection forwards (wrapping back to page 0 after the
 // last page) with the current page stored in unk_373.
 extern "C" __declspec(noinline) void eibSortPagePrev(CEquipItemBox* self) {
-    if (func_801D3320(self->_padSortMenu) != 0) return;
+    if (sortMenuIsVisible28(self->_padSortMenu) != 0) return;
     u8 v = self->unk_373 - 1;
     self->unk_373 = v;
     if ((s8)v < 0) {
@@ -3054,9 +3054,9 @@ extern "C" void refreshEIBSortTabs(CEquipItemBox* self) {
             }
         }
         nw4r::lyt::Pane* pane1 = self->field_38->GetRootPane()->FindPaneByName(buf1, true);
-        func_80124270(pane1, flagA);
+        setPaneVisible(pane1, flagA);
         nw4r::lyt::Pane* pane2 = self->field_38->GetRootPane()->FindPaneByName(buf2, true);
-        func_80124270(pane2, flagB);
+        setPaneVisible(pane2, flagB);
         func_8028A374(self, v, i);
     }
     func_8028A5D8(self, self->unk_373);
@@ -3142,9 +3142,9 @@ extern "C" void func_8028A5D8(CEquipItemBox* self, int a) {
             }
         }
         nw4r::lyt::Pane* pane = self->field_38->GetRootPane()->FindPaneByName(name1, true);
-        func_80124270(pane, flagA);
+        setPaneVisible(pane, flagA);
         pane = self->field_38->GetRootPane()->FindPaneByName(name2, true);
-        func_80124270(pane, flagB);
+        setPaneVisible(pane, flagB);
     }
     u8 v2 = self->unk_36c[(s8)self->unk_373];
     if ((u32)(v2 - 4) <= 4 || v2 == 2 || v2 == 0xb) {
@@ -3227,36 +3227,36 @@ extern "C" __declspec(noinline) void resetEIBPageView(CEquipItemBox* self) {
         copyVEC3(view->field_228[i], p);
     }
     const char* base = lbl_eu_8050EFDC;
-    func_80124270(self->field_38->GetRootPane()->FindPaneByName(base + 0x4a7, true), 0);
-    func_80124270(self->field_38->GetRootPane()->FindPaneByName(base + 0x4b3, true), 0);
-    func_80124270(self->field_38->GetRootPane()->FindPaneByName(base + 0x4bf, true), 0);
-    func_80124270(self->field_38->GetRootPane()->FindPaneByName(base + 0x4ca, true), 0);
-    func_80124270(self->field_38->GetRootPane()->FindPaneByName(base + 0x4d5, true), 0);
-    func_80124270(self->field_38->GetRootPane()->FindPaneByName(base + 0x4e0, true), 0);
-    func_80124270(self->field_38->GetRootPane()->FindPaneByName(base + 0x4eb, true), 0);
-    func_80124270(self->field_38->GetRootPane()->FindPaneByName(base + 0x4f6, true), 0);
-    func_80124270(self->field_38->GetRootPane()->FindPaneByName(base + 0x501, true), 0);
-    func_80124270(self->field_38->GetRootPane()->FindPaneByName(base + 0x50c, true), 0);
-    func_80124270(self->field_38->GetRootPane()->FindPaneByName(base + 0x517, true), 0);
-    func_80124270(self->field_38->GetRootPane()->FindPaneByName(base + 0x522, true), 0);
-    func_80124270(self->field_38->GetRootPane()->FindPaneByName(base + 0x52e, true), 0);
-    func_80124270(self->field_38->GetRootPane()->FindPaneByName(base + 0x53a, true), 0);
-    func_80124270(self->field_38->GetRootPane()->FindPaneByName(base + 0x546, true), 0);
-    func_80124270(self->field_38->GetRootPane()->FindPaneByName(base + 0x552, true), 0);
-    func_80124270(self->field_38->GetRootPane()->FindPaneByName(base + 0x55e, true), 0);
-    func_80124270(self->field_38->GetRootPane()->FindPaneByName(base + 0x56a, true), 0);
-    func_80124270(self->field_38->GetRootPane()->FindPaneByName(base + 0x577, true), 0);
-    func_80124270(self->field_38->GetRootPane()->FindPaneByName(base + 0x584, true), 0);
-    func_80124270(self->field_38->GetRootPane()->FindPaneByName(base + 0x591, true), 0);
-    func_80124270(self->field_38->GetRootPane()->FindPaneByName(base + 0x59b, true), 0);
-    func_80124270(self->field_38->GetRootPane()->FindPaneByName(base + 0x5a5, true), 0);
-    func_80124270(self->field_38->GetRootPane()->FindPaneByName(base + 0x5af, true), 0);
-    func_80124270(self->field_38->GetRootPane()->FindPaneByName(base + 0x5be, true), 0);
-    func_80124270(self->field_38->GetRootPane()->FindPaneByName(base + 0x5cd, true), 0);
-    func_80124270(self->field_38->GetRootPane()->FindPaneByName(base + 0x5dc, true), 0);
-    func_80124270(self->field_38->GetRootPane()->FindPaneByName(base + 0x5e7, true), 0);
-    func_80124270(self->field_38->GetRootPane()->FindPaneByName(base + 0x5f2, true), 0);
-    func_80124270(self->field_38->GetRootPane()->FindPaneByName(base + 0x5fe, true), 0);
+    setPaneVisible(self->field_38->GetRootPane()->FindPaneByName(base + 0x4a7, true), 0);
+    setPaneVisible(self->field_38->GetRootPane()->FindPaneByName(base + 0x4b3, true), 0);
+    setPaneVisible(self->field_38->GetRootPane()->FindPaneByName(base + 0x4bf, true), 0);
+    setPaneVisible(self->field_38->GetRootPane()->FindPaneByName(base + 0x4ca, true), 0);
+    setPaneVisible(self->field_38->GetRootPane()->FindPaneByName(base + 0x4d5, true), 0);
+    setPaneVisible(self->field_38->GetRootPane()->FindPaneByName(base + 0x4e0, true), 0);
+    setPaneVisible(self->field_38->GetRootPane()->FindPaneByName(base + 0x4eb, true), 0);
+    setPaneVisible(self->field_38->GetRootPane()->FindPaneByName(base + 0x4f6, true), 0);
+    setPaneVisible(self->field_38->GetRootPane()->FindPaneByName(base + 0x501, true), 0);
+    setPaneVisible(self->field_38->GetRootPane()->FindPaneByName(base + 0x50c, true), 0);
+    setPaneVisible(self->field_38->GetRootPane()->FindPaneByName(base + 0x517, true), 0);
+    setPaneVisible(self->field_38->GetRootPane()->FindPaneByName(base + 0x522, true), 0);
+    setPaneVisible(self->field_38->GetRootPane()->FindPaneByName(base + 0x52e, true), 0);
+    setPaneVisible(self->field_38->GetRootPane()->FindPaneByName(base + 0x53a, true), 0);
+    setPaneVisible(self->field_38->GetRootPane()->FindPaneByName(base + 0x546, true), 0);
+    setPaneVisible(self->field_38->GetRootPane()->FindPaneByName(base + 0x552, true), 0);
+    setPaneVisible(self->field_38->GetRootPane()->FindPaneByName(base + 0x55e, true), 0);
+    setPaneVisible(self->field_38->GetRootPane()->FindPaneByName(base + 0x56a, true), 0);
+    setPaneVisible(self->field_38->GetRootPane()->FindPaneByName(base + 0x577, true), 0);
+    setPaneVisible(self->field_38->GetRootPane()->FindPaneByName(base + 0x584, true), 0);
+    setPaneVisible(self->field_38->GetRootPane()->FindPaneByName(base + 0x591, true), 0);
+    setPaneVisible(self->field_38->GetRootPane()->FindPaneByName(base + 0x59b, true), 0);
+    setPaneVisible(self->field_38->GetRootPane()->FindPaneByName(base + 0x5a5, true), 0);
+    setPaneVisible(self->field_38->GetRootPane()->FindPaneByName(base + 0x5af, true), 0);
+    setPaneVisible(self->field_38->GetRootPane()->FindPaneByName(base + 0x5be, true), 0);
+    setPaneVisible(self->field_38->GetRootPane()->FindPaneByName(base + 0x5cd, true), 0);
+    setPaneVisible(self->field_38->GetRootPane()->FindPaneByName(base + 0x5dc, true), 0);
+    setPaneVisible(self->field_38->GetRootPane()->FindPaneByName(base + 0x5e7, true), 0);
+    setPaneVisible(self->field_38->GetRootPane()->FindPaneByName(base + 0x5f2, true), 0);
+    setPaneVisible(self->field_38->GetRootPane()->FindPaneByName(base + 0x5fe, true), 0);
 }
 #pragma pop
 
@@ -3287,30 +3287,30 @@ extern "C" void func_8028AF98(CEquipItemBox* self, int a, int b) {
     char buf[0x20];
     char nb[0x28];
     base = lbl_eu_8050EFDC;
-    func_80124270(self->field_38->GetRootPane()->FindPaneByName(base + 0x4a7, true), 1);
-    func_80124270(self->field_38->GetRootPane()->FindPaneByName(base + 0x4bf, true), 1);
-    func_80124270(self->field_38->GetRootPane()->FindPaneByName(base + 0x4ca, true), 1);
-    func_80124270(self->field_38->GetRootPane()->FindPaneByName(base + 0x4d5, true), 1);
-    func_80124270(self->field_38->GetRootPane()->FindPaneByName(base + 0x4e0, true), 1);
-    func_80124270(self->field_38->GetRootPane()->FindPaneByName(base + 0x4eb, true), 1);
-    func_80124270(self->field_38->GetRootPane()->FindPaneByName(base + 0x4f6, true), 1);
-    func_80124270(self->field_38->GetRootPane()->FindPaneByName(base + 0x501, true), 1);
-    func_80124270(self->field_38->GetRootPane()->FindPaneByName(base + 0x50c, true), 1);
-    func_80124270(self->field_38->GetRootPane()->FindPaneByName(base + 0x517, true), 1);
-    func_80124270(self->field_38->GetRootPane()->FindPaneByName(base + 0x522, true), 1);
-    func_80124270(self->field_38->GetRootPane()->FindPaneByName(base + 0x52e, true), 1);
-    func_80124270(self->field_38->GetRootPane()->FindPaneByName(base + 0x53a, true), 1);
-    func_80124270(self->field_38->GetRootPane()->FindPaneByName(base + 0x546, true), 1);
-    func_80124270(self->field_38->GetRootPane()->FindPaneByName(base + 0x552, true), 1);
-    func_80124270(self->field_38->GetRootPane()->FindPaneByName(base + 0x56a, true), 1);
-    func_80124270(self->field_38->GetRootPane()->FindPaneByName(base + 0x577, true), 1);
-    func_80124270(self->field_38->GetRootPane()->FindPaneByName(base + 0x584, true), 1);
-    func_80124270(self->field_38->GetRootPane()->FindPaneByName(base + 0x591, true), 1);
-    func_80124270(self->field_38->GetRootPane()->FindPaneByName(base + 0x59b, true), 1);
-    func_80124270(self->field_38->GetRootPane()->FindPaneByName(base + 0x5a5, true), 1);
-    func_80124270(self->field_38->GetRootPane()->FindPaneByName(base + 0x5af, true), 1);
-    func_80124270(self->field_38->GetRootPane()->FindPaneByName(base + 0x5be, true), 1);
-    func_80124270(self->field_38->GetRootPane()->FindPaneByName(base + 0x5cd, true), 1);
+    setPaneVisible(self->field_38->GetRootPane()->FindPaneByName(base + 0x4a7, true), 1);
+    setPaneVisible(self->field_38->GetRootPane()->FindPaneByName(base + 0x4bf, true), 1);
+    setPaneVisible(self->field_38->GetRootPane()->FindPaneByName(base + 0x4ca, true), 1);
+    setPaneVisible(self->field_38->GetRootPane()->FindPaneByName(base + 0x4d5, true), 1);
+    setPaneVisible(self->field_38->GetRootPane()->FindPaneByName(base + 0x4e0, true), 1);
+    setPaneVisible(self->field_38->GetRootPane()->FindPaneByName(base + 0x4eb, true), 1);
+    setPaneVisible(self->field_38->GetRootPane()->FindPaneByName(base + 0x4f6, true), 1);
+    setPaneVisible(self->field_38->GetRootPane()->FindPaneByName(base + 0x501, true), 1);
+    setPaneVisible(self->field_38->GetRootPane()->FindPaneByName(base + 0x50c, true), 1);
+    setPaneVisible(self->field_38->GetRootPane()->FindPaneByName(base + 0x517, true), 1);
+    setPaneVisible(self->field_38->GetRootPane()->FindPaneByName(base + 0x522, true), 1);
+    setPaneVisible(self->field_38->GetRootPane()->FindPaneByName(base + 0x52e, true), 1);
+    setPaneVisible(self->field_38->GetRootPane()->FindPaneByName(base + 0x53a, true), 1);
+    setPaneVisible(self->field_38->GetRootPane()->FindPaneByName(base + 0x546, true), 1);
+    setPaneVisible(self->field_38->GetRootPane()->FindPaneByName(base + 0x552, true), 1);
+    setPaneVisible(self->field_38->GetRootPane()->FindPaneByName(base + 0x56a, true), 1);
+    setPaneVisible(self->field_38->GetRootPane()->FindPaneByName(base + 0x577, true), 1);
+    setPaneVisible(self->field_38->GetRootPane()->FindPaneByName(base + 0x584, true), 1);
+    setPaneVisible(self->field_38->GetRootPane()->FindPaneByName(base + 0x591, true), 1);
+    setPaneVisible(self->field_38->GetRootPane()->FindPaneByName(base + 0x59b, true), 1);
+    setPaneVisible(self->field_38->GetRootPane()->FindPaneByName(base + 0x5a5, true), 1);
+    setPaneVisible(self->field_38->GetRootPane()->FindPaneByName(base + 0x5af, true), 1);
+    setPaneVisible(self->field_38->GetRootPane()->FindPaneByName(base + 0x5be, true), 1);
+    setPaneVisible(self->field_38->GetRootPane()->FindPaneByName(base + 0x5cd, true), 1);
     g = lbl_eu_806640F4;
     BdatGetItemType(a);
     kind2 = BdatGetItemId(a);
@@ -3386,28 +3386,28 @@ extern "C" void func_8028B7CC(CEquipItemBox* self, int kind, int item) {
     char* base = lbl_eu_8050EFDC;
     u16 kind2;
     u32 nameA, nameB, nameC;
-    func_80124270(self->field_38->GetRootPane()->FindPaneByName(base + 0x4a7, true), 1);
-    func_80124270(self->field_38->GetRootPane()->FindPaneByName(base + 0x4bf, true), 1);
-    func_80124270(self->field_38->GetRootPane()->FindPaneByName(base + 0x4ca, true), 1);
-    func_80124270(self->field_38->GetRootPane()->FindPaneByName(base + 0x4d5, true), 1);
-    func_80124270(self->field_38->GetRootPane()->FindPaneByName(base + 0x4e0, true), 1);
-    func_80124270(self->field_38->GetRootPane()->FindPaneByName(base + 0x4eb, true), 1);
-    func_80124270(self->field_38->GetRootPane()->FindPaneByName(base + 0x4f6, true), 1);
-    func_80124270(self->field_38->GetRootPane()->FindPaneByName(base + 0x501, true), 1);
-    func_80124270(self->field_38->GetRootPane()->FindPaneByName(base + 0x50c, true), 1);
-    func_80124270(self->field_38->GetRootPane()->FindPaneByName(base + 0x517, true), 1);
-    func_80124270(self->field_38->GetRootPane()->FindPaneByName(base + 0x546, true), 1);
-    func_80124270(self->field_38->GetRootPane()->FindPaneByName(base + 0x552, true), 1);
-    func_80124270(self->field_38->GetRootPane()->FindPaneByName(base + 0x55e, true), 1);
-    func_80124270(self->field_38->GetRootPane()->FindPaneByName(base + 0x56a, true), 1);
-    func_80124270(self->field_38->GetRootPane()->FindPaneByName(base + 0x577, true), 1);
-    func_80124270(self->field_38->GetRootPane()->FindPaneByName(base + 0x584, true), 1);
-    func_80124270(self->field_38->GetRootPane()->FindPaneByName(base + 0x591, true), 1);
-    func_80124270(self->field_38->GetRootPane()->FindPaneByName(base + 0x59b, true), 1);
-    func_80124270(self->field_38->GetRootPane()->FindPaneByName(base + 0x5a5, true), 1);
-    func_80124270(self->field_38->GetRootPane()->FindPaneByName(base + 0x5af, true), 1);
-    func_80124270(self->field_38->GetRootPane()->FindPaneByName(base + 0x5be, true), 1);
-    func_80124270(self->field_38->GetRootPane()->FindPaneByName(base + 0x5cd, true), 1);
+    setPaneVisible(self->field_38->GetRootPane()->FindPaneByName(base + 0x4a7, true), 1);
+    setPaneVisible(self->field_38->GetRootPane()->FindPaneByName(base + 0x4bf, true), 1);
+    setPaneVisible(self->field_38->GetRootPane()->FindPaneByName(base + 0x4ca, true), 1);
+    setPaneVisible(self->field_38->GetRootPane()->FindPaneByName(base + 0x4d5, true), 1);
+    setPaneVisible(self->field_38->GetRootPane()->FindPaneByName(base + 0x4e0, true), 1);
+    setPaneVisible(self->field_38->GetRootPane()->FindPaneByName(base + 0x4eb, true), 1);
+    setPaneVisible(self->field_38->GetRootPane()->FindPaneByName(base + 0x4f6, true), 1);
+    setPaneVisible(self->field_38->GetRootPane()->FindPaneByName(base + 0x501, true), 1);
+    setPaneVisible(self->field_38->GetRootPane()->FindPaneByName(base + 0x50c, true), 1);
+    setPaneVisible(self->field_38->GetRootPane()->FindPaneByName(base + 0x517, true), 1);
+    setPaneVisible(self->field_38->GetRootPane()->FindPaneByName(base + 0x546, true), 1);
+    setPaneVisible(self->field_38->GetRootPane()->FindPaneByName(base + 0x552, true), 1);
+    setPaneVisible(self->field_38->GetRootPane()->FindPaneByName(base + 0x55e, true), 1);
+    setPaneVisible(self->field_38->GetRootPane()->FindPaneByName(base + 0x56a, true), 1);
+    setPaneVisible(self->field_38->GetRootPane()->FindPaneByName(base + 0x577, true), 1);
+    setPaneVisible(self->field_38->GetRootPane()->FindPaneByName(base + 0x584, true), 1);
+    setPaneVisible(self->field_38->GetRootPane()->FindPaneByName(base + 0x591, true), 1);
+    setPaneVisible(self->field_38->GetRootPane()->FindPaneByName(base + 0x59b, true), 1);
+    setPaneVisible(self->field_38->GetRootPane()->FindPaneByName(base + 0x5a5, true), 1);
+    setPaneVisible(self->field_38->GetRootPane()->FindPaneByName(base + 0x5af, true), 1);
+    setPaneVisible(self->field_38->GetRootPane()->FindPaneByName(base + 0x5be, true), 1);
+    setPaneVisible(self->field_38->GetRootPane()->FindPaneByName(base + 0x5cd, true), 1);
     // Loaded into a register only here (retail keeps it live across the
     // bdat-name lookups below).
     u32 g = lbl_eu_806640F8;
@@ -3473,19 +3473,19 @@ extern "C" void func_8028BE74(CEquipItemBox* self, int kind, int item) {
     char* base = lbl_eu_8050EFDC;
     // All pane lookups in this handler go through the layout's pane-finder
     // sub-object (vtable slot 13), not the root pane.
-    func_80124270(((nw4r::lyt::Pane*)((CEquipItemBoxLayoutView*)self->field_38)->field_10)
+    setPaneVisible(((nw4r::lyt::Pane*)((CEquipItemBoxLayoutView*)self->field_38)->field_10)
                       ->FindPaneByName(base + 0x4b3, true),
                   1);
-    func_80124270(((nw4r::lyt::Pane*)((CEquipItemBoxLayoutView*)self->field_38)->field_10)
+    setPaneVisible(((nw4r::lyt::Pane*)((CEquipItemBoxLayoutView*)self->field_38)->field_10)
                       ->FindPaneByName(base + 0x5dc, true),
                   1);
-    func_80124270(((nw4r::lyt::Pane*)((CEquipItemBoxLayoutView*)self->field_38)->field_10)
+    setPaneVisible(((nw4r::lyt::Pane*)((CEquipItemBoxLayoutView*)self->field_38)->field_10)
                       ->FindPaneByName(base + 0x5e7, true),
                   1);
-    func_80124270(((nw4r::lyt::Pane*)((CEquipItemBoxLayoutView*)self->field_38)->field_10)
+    setPaneVisible(((nw4r::lyt::Pane*)((CEquipItemBoxLayoutView*)self->field_38)->field_10)
                       ->FindPaneByName(base + 0x5f2, true),
                   1);
-    func_80124270(((nw4r::lyt::Pane*)((CEquipItemBoxLayoutView*)self->field_38)->field_10)
+    setPaneVisible(((nw4r::lyt::Pane*)((CEquipItemBoxLayoutView*)self->field_38)->field_10)
                       ->FindPaneByName(base + 0x5fe, true),
                   1);
     BdatGetItemType(kind);
@@ -3566,13 +3566,13 @@ extern "C" void func_8028C280(CEquipItemBox* self, int a, int b) {
         u8 storeByte = 0;
         s16 storeKey = 0;
         if (idx >= count) {
-            func_80124270(pane, 0);
+            setPaneVisible(pane, 0);
             sprintf(buf, base + 0x6f4, i1);
             LayoutSetTextBoxFmtValue(self->field_38, buf, base + 0x228, 0);
             sprintf(buf, base + 0x705, i1);
             LayoutSetTextBoxFmtValue(self->field_38, buf, base + 0x228, 0);
         } else {
-            func_80124270(pane, 1);
+            setPaneVisible(pane, 1);
             s16 slot = ((CEquipItemBoxItemImplView*)CItem_initItemImplInstances((CItemInstance*)b))
                            ->vf40((CItemInstance*)b, (u8)idx);
             if (slot != -1) {
@@ -3753,11 +3753,11 @@ extern "C" int func_8028CBCC(CEquipItemBox* self) {
         u8 holder[0x10];
         CTaskGame_enumListCtor(holder);
         void* list = CTaskGame_enumListGet(holder);
-        func_800F4A98(list, tbl.w[slot], 0);
+        startEnumObjects(list, tbl.w[slot], 0);
         list = CTaskGame_enumListGet(holder);
         if (((CEquipItemBoxEnumList*)list)->field_620 >= 1) {
             CEquipItemBoxMoveEntryView* entry =
-                (CEquipItemBoxMoveEntryView*)func_800F6EC0(list, 0);
+                (CEquipItemBoxMoveEntryView*)getEntryAt(list, 0);
             if (entry != 0 && entry->field_4 != 0) {
                 void* moveObj = getCfObjectPc__FPQ22cf12CfObjectMove(entry);
                 if (kindByte != 3) {
@@ -4022,7 +4022,7 @@ int CEquipItemBox::OnFileEvent(CEventFile* ev) {
         CEquipItemBoxFileHandleView* fh3 = (CEquipItemBoxFileHandleView*)field_2C;
         void* buf3 = fh3->field_4;
         fh3->field_4 = 0;
-        func_8003AA34();  // retail passes no args (r3 stale from the field_2C load)
+        Bdat_GetTable_AA34();  // retail passes no args (r3 stale from the field_2C load)
         if (getFP__FPCc(&lbl_eu_8050EFDC[0x7b9]) == 0) {
             setBdatEntry__5CBdatFUlPv(5, buf3);
         }
@@ -4038,32 +4038,32 @@ int CEquipItemBox::OnFileEvent(CEventFile* ev) {
 // --- hard-symbol stubs (scaffold_hard_symbols) ---
 // Static initialiser: reset/set the 24 .sbss colour-table entries used by the
 // sort-menu page rebuild (PaneMatSetTevColorsByName pairs). SplitU32ToS16s clears a table,
-// func_801C4B60 sets its RGBA values.
+// setGXColorS10 sets its RGBA values.
 extern "C" void sinit_8028DAB0() {
     SplitU32ToS16s(lbl_eu_80664920, 0);
     SplitU32ToS16s(lbl_eu_80664928, 0);
-    func_801C4B60(lbl_eu_80664930, 0x79, 0x49, 0x7, 0x0);
-    func_801C4B60(lbl_eu_80664938, 0xed, 0xcd, 0x83, 0x0);
-    func_801C4B60(lbl_eu_80664940, 0x1a, 0x43, 0x53, 0x0);
-    func_801C4B60(lbl_eu_80664948, 0xc4, 0xe8, 0xeb, 0x0);
-    func_801C4B60(lbl_eu_80664950, 0x74, 0x54, 0x1d, 0x0);
-    func_801C4B60(lbl_eu_80664958, 0xd5, 0xb9, 0x78, 0x0);
-    func_801C4B60(lbl_eu_80664960, 0x3d, 0x68, 0x78, 0x0);
-    func_801C4B60(lbl_eu_80664968, 0xc4, 0xe8, 0xeb, 0x0);
+    setGXColorS10(lbl_eu_80664930, 0x79, 0x49, 0x7, 0x0);
+    setGXColorS10(lbl_eu_80664938, 0xed, 0xcd, 0x83, 0x0);
+    setGXColorS10(lbl_eu_80664940, 0x1a, 0x43, 0x53, 0x0);
+    setGXColorS10(lbl_eu_80664948, 0xc4, 0xe8, 0xeb, 0x0);
+    setGXColorS10(lbl_eu_80664950, 0x74, 0x54, 0x1d, 0x0);
+    setGXColorS10(lbl_eu_80664958, 0xd5, 0xb9, 0x78, 0x0);
+    setGXColorS10(lbl_eu_80664960, 0x3d, 0x68, 0x78, 0x0);
+    setGXColorS10(lbl_eu_80664968, 0xc4, 0xe8, 0xeb, 0x0);
     SplitU32ToS16s(lbl_eu_80664970, 0);
     SplitU32ToS16s(lbl_eu_80664978, 0);
-    func_801C4B60(lbl_eu_80664980, 0x80, 0x80, 0x80, 0x0);
-    func_801C4B60(lbl_eu_80664988, 0x80, 0x80, 0x80, 0x0);
+    setGXColorS10(lbl_eu_80664980, 0x80, 0x80, 0x80, 0x0);
+    setGXColorS10(lbl_eu_80664988, 0x80, 0x80, 0x80, 0x0);
     SplitU32ToS16s(lbl_eu_80664990, 0);
     SplitU32ToS16s(lbl_eu_80664998, 0);
-    func_801C4B60(lbl_eu_806649A0, 0xff, 0xff, 0xfa, 0x0);
-    func_801C4B60(lbl_eu_806649A8, 0x80, 0x80, 0x80, 0x0);
+    setGXColorS10(lbl_eu_806649A0, 0xff, 0xff, 0xfa, 0x0);
+    setGXColorS10(lbl_eu_806649A8, 0x80, 0x80, 0x80, 0x0);
     SplitU32ToS16s(lbl_eu_806649B0, 0);
     SplitU32ToS16s(lbl_eu_806649B8, 0);
-    func_801C4B60(lbl_eu_806649C0, 0x12, 0xa3, 0xe7, 0x0);
-    func_801C4B60(lbl_eu_806649C8, 0xff, 0xff, 0xff, 0x0);
-    func_801C4B60(lbl_eu_806649D0, 0xb3, 0x9, 0xc0, 0x0);
-    func_801C4B60(lbl_eu_806649D8, 0xff, 0xff, 0xff, 0x0);
+    setGXColorS10(lbl_eu_806649C0, 0x12, 0xa3, 0xe7, 0x0);
+    setGXColorS10(lbl_eu_806649C8, 0xff, 0xff, 0xff, 0x0);
+    setGXColorS10(lbl_eu_806649D0, 0xb3, 0x9, 0xc0, 0x0);
+    setGXColorS10(lbl_eu_806649D8, 0xff, 0xff, 0xff, 0x0);
 }
 
 // Rebuild the equip grid for a page: clear all 0x400 cells (per-cell byte 6),
@@ -4173,10 +4173,10 @@ general:
                 if ((u32)(n3 - 4) <= 9) {
                     /* no-op */
                 } else if (n3 == 3) {
-                    if (func_8026178C((u8*)func_8009EC9C(b) + 0x3534, 0x85) == 0) cell->unk6 = 0;
+                    if (Counter_TestBit((u8*)func_8009EC9C(b) + 0x3534, 0x85) == 0) cell->unk6 = 0;
                 }
                 if (n3 == 2) {
-                    if (func_8026178C((u8*)func_8009EC9C(b) + 0x3534, 0x84) == 0) cell->unk6 = 0;
+                    if (Counter_TestBit((u8*)func_8009EC9C(b) + 0x3534, 0x84) == 0) cell->unk6 = 0;
                 }
             }
             // Second category scan: match the cell's item id against the
@@ -4203,7 +4203,7 @@ general:
 tail:
         u32 name4 = BdatGetU8Direct(lbl_eu_806640EC, (char*)base + 0x20, obj->word >> 20);
         cell->unk5 = ((u8)name4 == 1) ? 1 : 0;
-        if (func_8009CF8C(0x3508) != 0) cell->unk5 = 0;
+        if (CtrlRemote_TouchBitByArg(0x3508) != 0) cell->unk5 = 0;
     }
     // Page-count update when the category changed (manual ceil: fctiwz +
     // fractional-part round-up, clamped to >= 1).

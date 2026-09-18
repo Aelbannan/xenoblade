@@ -32,7 +32,7 @@ extern "C" {
     extern const char lbl_eu_80535460[];
 
     // bdat helpers (C-linkage in retail; ocBdat.hpp declares them as C++).
-    void* func_8003AA34();
+    void* Bdat_GetTable_AA34();
     // (getBdatStringColumnValue is declared by object/CBattleState.hpp.)
 
     // Actor param helpers (C-linkage in retail). Typed as cf::CfObjectActor*
@@ -46,7 +46,7 @@ extern "C" {
                       cf::CBattleStateEntry*, int);
     void* CBattleMan_FetchVisionObj(cf::CBattleManager*);
     bool isGlobalCamFlagSet__Fi(int mask);
-    cf::CfUnknownSub* func_800F477C(cf::CfCode800F42AC* self);
+    cf::CfUnknownSub* CfCode_GetSubObject(cf::CfCode800F42AC* self);
 
     // 100.0f constant used by getPcHpRate / getEneHpRate (lives in .sdata2).
     extern const float lbl_eu_80668250;
@@ -356,10 +356,10 @@ int onEneArtsAttack(VMThread* pThread) {
                     if (bmTarget != nullptr) {
                         CfCode800F42AC* bmTargetObj =
                             reinterpret_cast<CfCode800F42AC*>(bmTarget);
-                        // func_800F477C returns CfUnknownSub*; compare as
+                        // CfCode_GetSubObject returns CfUnknownSub*; compare as
                         // UnkStruct2* to match unk50's type.
                         if (reinterpret_cast<CActorParam_UnkStruct2*>(
-                                func_800F477C(bmTargetObj)) == unk1->unk50) {
+                                CfCode_GetSubObject(bmTargetObj)) == unk1->unk50) {
                             result.value.intVal = 1;
                         }
                     }
@@ -372,7 +372,7 @@ int onEneArtsAttack(VMThread* pThread) {
                         CfCode800F42AC* bmTargetObj =
                             reinterpret_cast<CfCode800F42AC*>(bmTarget);
                         if (reinterpret_cast<CActorParam_UnkStruct2*>(
-                                func_800F477C(bmTargetObj)) == unk1->unk50) {
+                                CfCode_GetSubObject(bmTargetObj)) == unk1->unk50) {
                             u32 bmFlags = *reinterpret_cast<u32*>(
                                 bmTarget + 0x824);
                             if (bmFlags & (1u << 17)) {
@@ -495,7 +495,7 @@ extern "C" int synchro(VMThread* pThread) {
 // func_800A18A4 with the original art id.
 extern "C" int learnArts(VMThread* pThread) {
     int id = vmArgIntGet(2, vmArgPtrGet(pThread, 1));
-    (void)func_8003AA34();
+    (void)Bdat_GetTable_AA34();
     void* fp = getFP(lbl_eu_80507FC0);
     u32 val = getBdatStringColumnValue(fp, lbl_eu_80507FC0 + 8, id);
     // u8 spill/reload through a 4-byte array forces MWCC to emit the retail

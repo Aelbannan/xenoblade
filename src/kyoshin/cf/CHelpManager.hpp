@@ -41,7 +41,7 @@ struct CHelpListHolder {
     u8 pad_5[3];   // 0x5..0x7
 };
 
-// Zero a list holder (retail func_802968A8; defined in CHelpManager.cpp).
+// Zero a list holder (retail clearHelpListHolder; defined in CHelpManager.cpp).
 
 // Data-only base so the C++ vptr lands at +0x1C: MWCC places the vptr at the
 // first virtual declaration, and retail's deleting-dtor `delete` path reads
@@ -304,9 +304,9 @@ struct CHelpTableFull {
 // TU-local helpers (retail symbols are unmangled free functions, so these
 // keep C linkage; defined in CHelpManager.cpp). DECOMP_DONT_INLINE keeps
 // retail's real `bl` calls (MWCC would otherwise inline the small bodies).
-extern "C" DECOMP_DONT_INLINE void func_802968A8(cf::CHelpListHolder* self);
-extern "C" DECOMP_DONT_INLINE void func_802968B8(cf::CHelpListHolder* self, void** items, u8 flag);
-extern "C" DECOMP_DONT_INLINE void func_80296924(cf::CHelpListHolder* self);
+extern "C" DECOMP_DONT_INLINE void clearHelpListHolder(cf::CHelpListHolder* self);
+extern "C" DECOMP_DONT_INLINE void bindHelpListItems(cf::CHelpListHolder* self, void** items, u8 flag);
+extern "C" DECOMP_DONT_INLINE void clearHelpList(cf::CHelpListHolder* self);
 
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
 extern cf::CHelpManager* lbl_eu_80664A10;
@@ -369,4 +369,4 @@ extern void* lbl_eu_80538E30[]; // default mListB item array
 extern cf::CHelpTableEntry lbl_eu_80538E90[]; // mField10 -> item-array table
 extern "C" int isSceneReadyForInput__Q22cf13CfGameManagerFv();
 extern "C" u32 getQueuedFileEventCount__Q22cf13CfGameManagerFv(); // scenario sequence counter
-extern "C" u32 func_802B7C64(); // help-active check (trampoline to func_8029A658)
+extern "C" u32 CHelp_ForwardPartyNotice(); // help-active check (trampoline to MenuTutorialIsCreated)

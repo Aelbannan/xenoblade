@@ -143,7 +143,7 @@ const void* lbl_eu_80525D68[76] = {
     (const void*)lbl_eu_804FAB90, (const void*)setLastTalkNpc,
     (const void*)lbl_eu_804FABA0, (const void*)isSETalkVoiceWait,
     (const void*)lbl_eu_804FABB4, (const void*)func_eu_80046DA0,
-    (const void*)lbl_eu_804FABC8, (const void*)func_eu_80046DC4,
+    (const void*)lbl_eu_804FABC8, (const void*)uiClearSETalkVoiceWait,
     (const void*)0, (const void*)0
 };
 
@@ -152,7 +152,7 @@ void ui_mesGetArts(VMThread* pThread) {
     int num2 = vmArgIntGet(3, vmArgPtrGet(pThread, 2));
 }
 
-bool UiFlags::func_800459FC(u32 mask) const {
+bool UiFlags::hasAnyFlags(u32 mask) const {
     return (this->flags & mask) != 0;
 }
 void pluginUiRegist() {
@@ -243,7 +243,7 @@ int fadeOut_1(VMThread* pThread) {
 }
 // Fade-wait script command: park the thread while a fade is running.
 int fadeWait_1(VMThread* pThread) {
-    if (func_80113E1C() && func_80113E24()) {
+    if (getFadeMenu() && isFadeActive()) {
         vmWaitModeSet(pThread);
     }
     return 0;
@@ -318,7 +318,7 @@ int setTrust(VMThread* pThread) {
 
     // Clamp the new trust value into [0, 5000]; remember the original delta.
     int saved = 0;
-    int cur = func_8009CF8C(arg3 + 0x28);
+    int cur = CtrlRemote_TouchBitByArg(arg3 + 0x28);
     int val = cur + arg4;
     if (val < 0) val = 0;
     if (val > 0x1388) {
@@ -327,7 +327,7 @@ int setTrust(VMThread* pThread) {
         if (arg4 < 0) arg4 = 0;
         val = 0x1388;
     }
-    func_8009D018(arg3 + 0x28, val);
+    CtrlRemote_SetSharedBit(arg3 + 0x28, val);
     if (saved != 0) arg4 = saved;
     if (arg4 == 0) return 0;
 
@@ -355,29 +355,29 @@ int setTrust(VMThread* pThread) {
     CTaskGame_enumListCtor(&holder);
 
     // Spawn the effect on the arg1 player slot.
-    func_800F4A98(CTaskGame_enumListGet(&holder), tbl.values[arg1], 0);
+    startEnumObjects(CTaskGame_enumListGet(&holder), tbl.values[arg1], 0);
     if (CTaskGame_enumListGet(&holder)->count >= 1) {
         if (code80135FDC_getByte_64059() == 0) {
             CfEnumListItem* item =
-                (CfEnumListItem*)func_800F6EC0(CTaskGame_enumListGet(&holder), 0);
+                (CfEnumListItem*)getEntryAt(CTaskGame_enumListGet(&holder), 0);
             void* cast = __dynamic_cast(item->field_04, 0,
                                         (const void*)&lbl_eu_806618D8,
                                         (const void*)&lbl_eu_806618F0, 0);
-            func_800451D8((u32)state, cast);
+            bindIndexedEffect((u32)state, cast);
         }
         done++;
     }
 
     // Same for the arg2 slot; both must succeed before notifying.
-    func_800F4A98(CTaskGame_enumListGet(&holder), tbl.values[arg2], 0);
+    startEnumObjects(CTaskGame_enumListGet(&holder), tbl.values[arg2], 0);
     if (CTaskGame_enumListGet(&holder)->count >= 1) {
         if (code80135FDC_getByte_64059() == 0) {
             CfEnumListItem* item =
-                (CfEnumListItem*)func_800F6EC0(CTaskGame_enumListGet(&holder), 0);
+                (CfEnumListItem*)getEntryAt(CTaskGame_enumListGet(&holder), 0);
             void* cast = __dynamic_cast(item->field_04, 0,
                                         (const void*)&lbl_eu_806618D8,
                                         (const void*)&lbl_eu_806618F0, 0);
-            func_800451D8((u32)state, cast);
+            bindIndexedEffect((u32)state, cast);
         }
         done++;
     }
@@ -586,7 +586,7 @@ int setLastTalkNpc(VMThread* pThread) {
         return 0;
     }
     char* tbl = lbl_eu_80664098;
-    int count = func_8003B1EC(tbl);
+    int count = Bdat_GetMaxRow_B1EC(tbl);
     for (int i = 1; i <= count; i++) {
         // Key compare is on the low 16 bits only.
         if ((u16)BdatGetU16Direct(tbl, &lbl_eu_804FABF0[0x1f], i) == id) {
@@ -609,7 +609,7 @@ extern "C" int func_eu_80046DA0(VMThread* pThread) {
     func_eu_8013C8DC();
     return 0;
 }
-extern "C" int func_eu_80046DC4(VMThread* pThread) {
+extern "C" int uiClearSETalkVoiceWait(VMThread* pThread) {
     extern void MenuStateClear64064();
     MenuStateClear64064();
     return 0;

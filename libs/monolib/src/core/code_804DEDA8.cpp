@@ -35,7 +35,7 @@ struct AnimVec4 {
 };
 
 // View of the schedule item used by the anim/entry helpers (func_804E04D4,
-// func_804E18CC): f32 at 0x00, byte frame fields at 0x05/0x06, f32s at
+// SchedAnim_AdvanceCursor): f32 at 0x00, byte frame fields at 0x05/0x06, f32s at
 // 0x0C/0x10. Overlaps CScheduleItem (same object, different class view).
 struct CSchedAnimItem {
     f32 mField00;   // 0x00
@@ -214,10 +214,10 @@ extern void* lbl_eu_80665A44; // .sbss pointer slot (4 bytes)
 
 // Zero one 0x18-byte schedule-resource entry. never_inline so callers (e.g.
 // func_804DF344) keep the retail direct `bl` instead of an inlined loop body.
-// extern "C" keeps the call-site reloc name matching retail (func_804DEDA8).
+// extern "C" keeps the call-site reloc name matching retail (SchedRes_ZeroEntry).
 // Definition sits below func_804DF344 so MWCC's same-TU IPA cannot inline it
 // into the allocation loop at -O4,p.
-extern "C" void func_804DEDA8(void* r3);
+extern "C" void SchedRes_ZeroEntry(void* r3);
 
 // Destructor of the static schedule-resource manager (object at 0x804DF068):
 // release the two heap arrays and the MemManager block, then zero the object.
@@ -226,8 +226,8 @@ extern "C" void func_804DEDA8(void* r3);
 // leaves the pool globals untouched (retail reloads them per iteration).
 extern "C" void __dt__804DF068(CSchedResMgr* obj);
 
-// Lookup-table object shared by func_804DF118 / func_804DF2C4 / func_804DF2F0
-// (func_804DF2A8 reads the same object's res-table pointer at +0x10).
+// Lookup-table object shared by SchedRes_LookupKeyIndexed / SchedRes_ResetAnimViaTable / SchedRes_FindValueByKey
+// (SchedRes_EntryByIndex reads the same object's res-table pointer at +0x10).
 struct CResLookupEntry {
     void* mValue; // 0x00
     void* mKey;   // 0x04
@@ -239,13 +239,13 @@ struct CResLookup {
     u8 _pad03;                 // 0x03
     u32 _pad04;                // 0x04
     CResLookupEntry* mEntries; // 0x08: {value,key} entries, 8-byte stride
-    u32* mTable;               // 0x0C: index -> u32 table (func_804DF2C4)
+    u32* mTable;               // 0x0C: index -> u32 table (SchedRes_ResetAnimViaTable)
 };
 
 // Indexed key accessor: index must be < 0x100 and within the entry count.
 // never_inline so func_804DF5F8 keeps the retail direct `bl`; extern "C"
 // keeps the call-site reloc name matching retail.
-extern "C" DECOMP_DONT_INLINE void* func_804DF118(CResLookup* self, u32 index) {
+extern "C" DECOMP_DONT_INLINE void* SchedRes_LookupKeyIndexed(CResLookup* self, u32 index) {
     if (index >= 0x100) {
         return NULL;
     }
@@ -257,8 +257,8 @@ extern "C" DECOMP_DONT_INLINE void* func_804DF118(CResLookup* self, u32 index) {
 
 // One 0x18-byte schedule-resource entry. func_804DF5F8 matches the key at
 // 0x04; the lookup-table fields (count at 0x02, entry array at 0x08) are read
-// through the CResLookup view by func_804DF118. Each element is zeroed by
-// func_804DEDA8 at allocation time (func_804DF344).
+// through the CResLookup view by SchedRes_LookupKeyIndexed. Each element is zeroed by
+// SchedRes_ZeroEntry at allocation time (func_804DF344).
 struct CResEntry {
     u8 mField00;                // 0x00
     u8 mField01;                // 0x01
@@ -269,10 +269,10 @@ struct CResEntry {
     u8 mRest[0x0C];             // 0x0C..0x18
 };
 
-extern u8 lbl_eu_806616B8[0x60]; // .bss buffer cleared by func_804DF150
+extern u8 lbl_eu_806616B8[0x60]; // .bss buffer cleared by SchedRes_ClearBuf60
 
 // Zero a 0x60-byte global buffer (tail call to memset).
-void func_804DF150() {
+void SchedRes_ClearBuf60() {
     memset(lbl_eu_806616B8, 0, 0x60);
 }
 
@@ -368,7 +368,7 @@ struct ResTable {
     u32 indexOffset;
 };
 
-void* func_804DF2A8(u8* self, int index) {
+void* SchedRes_EntryByIndex(u8* self, int index) {
     ResTable* base = *(ResTable**)((u8*)self + 0x10);
     ResTableIndex* entries = (ResTableIndex*)((u8*)base + base->indexOffset);
     return (u8*)base + entries[index].offset;
@@ -380,7 +380,7 @@ extern "C" int Scn_ResetAnim(int a, int b, int c);
 // Look up mTable[index]; a non-zero entry is forwarded to Scn_ResetAnim along
 // with the caller's argument. The -1 third argument is dead at the callee
 // (Scn_ResetAnim hard-codes 8 into r5) but kept for byte-identical codegen.
-int func_804DF2C4(CResLookup* self, int a, int index) {
+int SchedRes_ResetAnimViaTable(CResLookup* self, int a, int index) {
     u32 entry = self->mTable[index];
     if (entry != 0) {
         return Scn_ResetAnim(a, entry, -1);
@@ -389,7 +389,7 @@ int func_804DF2C4(CResLookup* self, int a, int index) {
 }
 
 // Search the entry table for a matching key and return its value.
-void* func_804DF2F0(CResLookup* self, void* key) {
+void* SchedRes_FindValueByKey(CResLookup* self, void* key) {
     if (key != NULL) {
         int count = self->mCount;
         int off;             // byte offset of the current entry
@@ -425,7 +425,7 @@ void* func_804DF344(u32 size, u32 count) {
     lbl_eu_80665A28[0] = 0;
     off = 0;
     for (i = 0; i < (s32)count; i++) {
-        func_804DEDA8((u8*)lbl_eu_80665A20 + off);
+        SchedRes_ZeroEntry((u8*)lbl_eu_80665A20 + off);
         off += 0x18;
     }
     return end;
@@ -433,7 +433,7 @@ void* func_804DF344(u32 size, u32 count) {
 
 #pragma push
 #pragma auto_inline off
-extern "C" void func_804DEDA8(void* r3) {
+extern "C" void SchedRes_ZeroEntry(void* r3) {
     char* base = (char*)r3;
     base[0] = 0;
     base[2] = 0;
@@ -688,14 +688,14 @@ extern "C" void __dt__804DF068(CSchedResMgr* obj) {
 #pragma pop
 
 // Look up a schedule-resource entry by key; resolve its value through the
-// entry's lookup table (func_804DF118) and report the entry/value pointers.
+// entry's lookup table (SchedRes_LookupKeyIndexed) and report the entry/value pointers.
 // Returns 1 on a match, 0 otherwise.
 s32 func_804DF5F8(CResEntry** outEntry, u32* outValue, u32 key, u32 index) {
     s32 i = 0;
     while (i < lbl_eu_80665A24) {
         CResEntry* entry = &lbl_eu_80665A20[i];
         if (entry->mKey != 0 && key == entry->mKey) {
-            u32 v = (u32)func_804DF118((CResLookup*)entry, index);
+            u32 v = (u32)SchedRes_LookupKeyIndexed((CResLookup*)entry, index);
             *outValue = v;
             if (v != 0) {
                 *outEntry = entry;
@@ -746,7 +746,7 @@ u32 lbl_eu_80665A40;
 // tables sized to `count`, each allocated from the MemManager handle when it
 // fits the region's max alloc size (else NULL). Records the count in
 // lbl_eu_80665A3C and clears the live counter first.
-extern "C" void func_804DF690(u32 count) {
+extern "C" void SchedRes_AllocElemTables(u32 count) {
     lbl_eu_80665A30 = 0;
     u32 s1 = count * 0x14;
     if (s1 <= mtl::MemManager::getMaxAllocSize(lbl_eu_8065FC18.mHandle)) {
@@ -783,7 +783,7 @@ void __dt__804DF744() {
     lbl_eu_80665A3C = 0;
 }
 
-// Effect object pool at lbl_eu_80661728, looked up by handle via func_804DFEAC.
+// Effect object pool at lbl_eu_80661728, looked up by handle via SchedFx_FetchByHandle.
 // CEffectObj in CScheduleItem.hpp is a partial view of the 0x22C-byte elements.
 struct CEffectObject {
     u8 mData[0x22C];
@@ -797,7 +797,7 @@ struct CEffectPool {
 extern CEffectPool lbl_eu_80661728;
 
 // Effect-node pool at lbl_eu_80661738 (node stride 0x338), looked up via
-// func_804E0114(index). Cross-TU callers treat nodes as EffectNode*.
+// SchedNode_FetchByIndex(index). Cross-TU callers treat nodes as EffectNode*.
 struct CEffectNode {
     s16 mMark;        // 0x00: allocation mark; < 0 marks the slot free
     u8 mData[0x336];  // 0x02..0x338
@@ -819,14 +819,14 @@ extern "C" s32 func_804C8830(CEffectObj* self, const u8* base, const u8* data,
 
 // Re-initialize the schedule resource tables: clear both element arrays and
 // reset the pool counters.
-void func_804DF7A4() {
+void SchedRes_ReinitTables() {
     lbl_eu_80665A30 = 0;
     memset(lbl_eu_80665A34, 0, (u32)lbl_eu_80665A3C * 0x14);
     memset(lbl_eu_80665A38, 0, (u32)lbl_eu_80665A3C * 0xC);
     lbl_eu_80665A40 = 0;
 }
 
-void func_804DF7FC() { lbl_eu_80665A30 = 0; }
+void SchedRes_ClearLiveCount() { lbl_eu_80665A30 = 0; }
 
 // Claim or refresh a schedule-resource element for `key`:
 // - scan the 0x14-byte element array for an entry whose key matches; if none
@@ -918,9 +918,9 @@ void func_804DF808(u32 key, CSchedFxObjView* obj, void* owner, f32 prio) {
     lbl_eu_80665A40 = n + 1;
 }
 
-// Import from monolib/src/core/code_804E36DC.cpp (retail symbol func_804E3D88):
+// Import from monolib/src/core/code_804E36DC.cpp (retail symbol schedClearItemSlots):
 // initialize one pool item (all slots closed).
-extern "C" void func_804E3D88(CScheduleItem* item);
+extern "C" void schedClearItemSlots(CScheduleItem* item);
 
 // Allocate/initialize the schedule-item pool: round the byte size up to 32,
 // record base/count, then run the item initializer over each 0x58-byte item.
@@ -934,7 +934,7 @@ void* func_804DFA08(u32 size, s32 count) {
     i = 0;
     s32 off = 0;
     while (i < count) {
-        func_804E3D88((CScheduleItem*)((u8*)lbl_eu_80661718.base + off));
+        schedClearItemSlots((CScheduleItem*)((u8*)lbl_eu_80661718.base + off));
         off += 0x58;
         i++;
     }
@@ -942,8 +942,8 @@ void* func_804DFA08(u32 size, s32 count) {
 }
 
 // Entry-blob resolver for allocated schedule items (retail symbol
-// func_804E3EB4, monolib/src/core/code_804E36DC.cpp).
-extern "C" s32 func_804E3EB4(CScheduleItem* item, u32 a, u32 b, u32 c);
+// schedInitItemFromData, monolib/src/core/code_804E36DC.cpp).
+extern "C" s32 schedInitItemFromData(CScheduleItem* item, u32 a, u32 b, u32 c);
 
 // Allocate a free schedule item from the pool ring for (a, b, c): starting
 // past the most recently released handle, claim the first slot whose
@@ -960,7 +960,7 @@ s32 func_804DFA84(u32 a, u32 b, u32 c) {
             if (node->mPoolIndex >= 0) {
                 idx = (idx + 1) % lbl_eu_80661718.count;
             } else {
-                func_804E3D88(node);
+                schedClearItemSlots(node);
                 node->mPoolIndex = (s16)idx;
                 lbl_eu_80661718.freeCount++;
                 lbl_eu_80661718.lastHandle =
@@ -972,7 +972,7 @@ s32 func_804DFA84(u32 a, u32 b, u32 c) {
     if (node == NULL) {
         return -1;
     }
-    if (func_804E3EB4(node, a, b, c) != 0) {
+    if (schedInitItemFromData(node, a, b, c) != 0) {
         return node->mPoolIndex;
     }
     return -1;
@@ -980,14 +980,14 @@ s32 func_804DFA84(u32 a, u32 b, u32 c) {
 
 // Release a schedule item by handle (idempotent for invalid handles).
 // NOTE: retail keeps a duplicated `handle < 0` test (two blt from one cmpwi);
-// the `!(handle < 0)` conjunct preserves it (same shape as func_804DFE20).
-extern "C" void func_804DFB88(s16 handle) {
+// the `!(handle < 0)` conjunct preserves it (same shape as SchedFx_ReleaseHandle).
+extern "C" void SchedItem_ReleaseHandle(s16 handle) {
     if (handle < 0) {
         return;
     }
     if (!(handle < 0) && lbl_eu_80661718.count > handle) {
         lbl_eu_80661718.lastHandle = handle;
-        func_804E3E2C(&lbl_eu_80661718.base[handle]);
+        schedReleaseItemSlots(&lbl_eu_80661718.base[handle]);
         if (lbl_eu_80661718.freeCount > 0) {
             lbl_eu_80661718.freeCount--;
         }
@@ -995,7 +995,7 @@ extern "C" void func_804DFB88(s16 handle) {
 }
 
 // Look up a schedule item by handle; returns NULL for invalid handles.
-extern "C" CScheduleItem* func_804DFBF4(s16 handle) {
+extern "C" CScheduleItem* SchedItem_FetchByHandle(s16 handle) {
     if (handle < 0) {
         return NULL;
     }
@@ -1007,8 +1007,8 @@ extern "C" CScheduleItem* func_804DFBF4(s16 handle) {
 }
 
 // Import from monolib/src/effect/code_804C8718.cpp (retail symbol
-// func_804C8718): effect-manager initializer, run per pool element.
-extern "C" void func_804C8718(CEffectObj* obj);
+// EffSys_InitRoot): effect-manager initializer, run per pool element.
+extern "C" void EffSys_InitRoot(CEffectObj* obj);
 
 // Allocate/initialize the effect-object pool: round the byte size up to 32,
 // record base/count, then run the effect-manager init over each 0x22C-byte
@@ -1023,7 +1023,7 @@ void* func_804DFC48(u32 size, s32 count) {
     i = 0;
     s32 off = 0;
     while (i < count) {
-        func_804C8718((CEffectObj*)((u8*)lbl_eu_80661728.mBase + off));
+        EffSys_InitRoot((CEffectObj*)((u8*)lbl_eu_80661728.mBase + off));
         off += 0x22c;
         i++;
     }
@@ -1048,7 +1048,7 @@ s32 func_804DFCC4(const u8* base, const u8* data, u8* arg3, s32 arg4,
             if (*(s16*)((u8*)node + 0x1e) >= 0) {
                 idx = (idx + 1) % lbl_eu_80661728.mCount;
             } else {
-                func_804C8718(node);
+                EffSys_InitRoot(node);
                 *(s16*)((u8*)node + 0x1e) = (s16)idx;
                 lbl_eu_80661728.mActiveCount++;
                 lbl_eu_80661728.mLastHandle =
@@ -1077,7 +1077,7 @@ s32 func_804DFCC4(const u8* base, const u8* data, u8* arg3, s32 arg4,
 
 // Release an effect object handle: remember it, run the effect-manager
 // release, and drop the active-object count.
-void func_804DFE20(s16 handle) {
+void SchedFx_ReleaseHandle(s16 handle) {
     if (handle < 0) {
         return;
     }
@@ -1090,12 +1090,12 @@ void func_804DFE20(s16 handle) {
     }
 }
 
-u32 func_804DFE8C() { return lbl_eu_80661728.mActiveCount; }
+u32 SchedFx_CountActive() { return lbl_eu_80661728.mActiveCount; }
 
-u32 func_804DFE9C() { return lbl_eu_80661728.mCount; }
+u32 SchedFx_CountTotal() { return lbl_eu_80661728.mCount; }
 
 // Look up an effect object by handle; NULL for out-of-range handles.
-CEffectObj* func_804DFEAC(s16 handle) {
+CEffectObj* SchedFx_FetchByHandle(s16 handle) {
     if (handle < 0) {
         return NULL;
     }
@@ -1107,9 +1107,9 @@ CEffectObj* func_804DFEAC(s16 handle) {
 }
 
 // Effect-node pool element initializer (monolib/src/effect/code_804CC2B8.cpp,
-// retail symbol func_804CC2B8). extern "C" keeps the call-site reloc name
+// retail symbol EffFxInitStructLinks). extern "C" keeps the call-site reloc name
 // matching retail.
-extern "C" void func_804CC2B8(CEffectNode* node);
+extern "C" void EffFxInitStructLinks(CEffectNode* node);
 
 // Allocate the effect-node pool (stride 0x338) plus a follow-on 0x34-per-item
 // table: round the byte size up twice (32-byte granularity), record the pool
@@ -1126,7 +1126,7 @@ extern "C" void* func_804DFF00(u32 size, u32 count) {
     u32 off = 0;
     s32 i;
     for (i = 0; i < (s32)count; i++) {
-        func_804CC2B8((CEffectNode*)((u8*)lbl_eu_80661738.mBase + off));
+        EffFxInitStructLinks((CEffectNode*)((u8*)lbl_eu_80661738.mBase + off));
         off += 0x338;
     }
     u32 tail = (base + count * 0x338 + 0x1f) & ~0x1f;
@@ -1153,7 +1153,7 @@ s32 func_804DFFA8(CScheduleItem* item) {
             if (node->mMark >= 0) {
                 idx = (idx + 1) % lbl_eu_80661738.mCount;
             } else {
-                func_804CC2B8(node);
+                EffFxInitStructLinks(node);
                 node->mMark = (s16)idx;
                 lbl_eu_80661738.mField08++;
                 lbl_eu_80661738.mLastHandle =
@@ -1179,7 +1179,7 @@ extern "C" void __dt__804CC2E4(CEffectNode* node);
 // before the pool-count test; MWCC merges the duplicated `handle < 0`
 // disjuncts to `handle <= -1` under the unit's -O4,p, so this shape keeps
 // the byte count but the branch test remains `cmpwi r3,-1; ble` (open item).
-void func_804E0098(s16 handle) {
+void SchedNode_ReleaseHandle(s16 handle) {
     if (handle < 0) {
         return;
     }
@@ -1192,10 +1192,10 @@ void func_804E0098(s16 handle) {
     }
 }
 
-u32 func_804E0104() { return lbl_eu_80661738.mCount; }
+u32 SchedNode_CountTotal() { return lbl_eu_80661738.mCount; }
 
 // Look up an effect node by index; NULL for out-of-range indices.
-CEffectNode* func_804E0114(s32 index) {
+CEffectNode* SchedNode_FetchByIndex(s32 index) {
     if (index < 0) {
         return NULL;
     }
@@ -1210,7 +1210,7 @@ extern void* lbl_eu_80665A44; // .sbss pointer slot (4 bytes)
 
 // Indexed handle lookup: returns the sbss pointer-slot value advanced by
 // arg*0x34 (retail folds the constant slot address into an sda21 load).
-void* func_804E0168(s32 arg) {
+void* SchedNode_FetchSlotPtr(s32 arg) {
     if (arg < 0) {
         return NULL;
     }
@@ -1870,7 +1870,7 @@ void func_804E17A4(CSchedAnimItem* item, u8* base) {
 // Advance the item's animation cursor: look up the entry element at index 8,
 // then interpolate the element's float table between slot 0 and the
 // (span & 0x1F)-th entry, scaled by the item's 0x0C factor.
-extern "C" void func_804E18CC(CSchedAnimItem* item, CEntryElem* entries, u8* arg4, f32 f1) {
+extern "C" void SchedAnim_AdvanceCursor(CSchedAnimItem* item, CEntryElem* entries, u8* arg4, f32 f1) {
     CEntryElem* ret = func_804E0248((CScheduleItem*)item, entries, 8, arg4, f1);
     if (ret == NULL) {
         return;
@@ -1924,7 +1924,7 @@ extern "C" void func_804E196C(CSchedAnimItem* item, u8* base) {
 
 // Refresh slot handles 2/3 from the entry-blob element selected by
 // func_804E0248 at index 8.
-void func_804E1A44(CScheduleItem* item, CEntryElem* entries, u8* arg3, f32 f1) {
+void SchedAnim_RefreshSlotHandles(CScheduleItem* item, CEntryElem* entries, u8* arg3, f32 f1) {
     CEntryElem* ret = func_804E0248(item, entries, 8, arg3, f1);
     if (ret != NULL) {
         if (item->mSlots[2] != ret->mField04) {
@@ -2184,7 +2184,7 @@ void func_804E1D50(CSchedAnimItem* item, u8* base) {
 // 0x10's +4 vector toward the (frame span & 0xFF)-th element (0x10-byte
 // stride) at the current rate, then scale it by the item's 0x0C..0x14
 // vector.
-void func_804E2088(CSchedAnimItem* item, CEntryElem* entries, u8* arg3, f32 f1) {
+void SchedAnim_LerpVec24(CSchedAnimItem* item, CEntryElem* entries, u8* arg3, f32 f1) {
     CEntryElem* ret = func_804E0248((CScheduleItem*)item, entries, 0x10, arg3, f1);
     if (ret != NULL) {
         f32 rate = func_804E04D4(item, entries, 0x10);
@@ -2567,7 +2567,7 @@ void func_804E2D8C(CSchedAnimItem* item, u8* base) {
 // 0x10's +4 vector toward the (frame span & 0xFF)-th element (0x10-byte
 // stride) at the current rate, then set bit 0x20 of the 0x04 flag byte when
 // the vector is not (1,1,1).
-void func_804E2EAC(CSchedAnimItem* item, CEntryElem* entries, u8* arg3, f32 f1) {
+void SchedAnim_RefreshScaleVec(CSchedAnimItem* item, CEntryElem* entries, u8* arg3, f32 f1) {
     CEntryElem* ret = func_804E0248((CScheduleItem*)item, entries, 0x10, arg3, f1);
     if (ret == NULL) {
         return;

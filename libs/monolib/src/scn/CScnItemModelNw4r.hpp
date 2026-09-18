@@ -60,7 +60,7 @@ struct CScnItemModelNw4rOwner {
     u8 _00[0x5C];                   // 0x00..0x5C
     CScnVirtualLight* field_0x5C;   // 0x5C (scnVlUpdate arg, func_80489584)
     u8 _60[0x18];                   // 0x60..0x78
-    u8* field_0x78;                 // 0x78 (fog manager, func_8049DE74 arg in the ctor)
+    u8* field_0x78;                 // 0x78 (fog manager, FogManCopyFogParams arg in the ctor)
     u8* field_7C;                   // 0x7C (light-env handle, scnImN4LgtModeSw)
     u8 _80[0x4];                    // 0x80..0x84
     // Fade-control sub-object at +0x84 (f32 fade value at +8, read by
@@ -198,7 +198,7 @@ struct CScnItemModelNw4rScnMdl11C {
     void* field_0x11C;  // +0x11C (mpCalcWorldCallback)
 };
 
-// Virtual-dispatch view for the scene-root handle returned by func_8048ECD0:
+// Virtual-dispatch view for the scene-root handle returned by getScnRootPtr:
 // the vtable-0x2C slot returns the MemManager handle used for the CMdlLook
 // fallback allocation (declared virtual N lands at 8+4*N, so v09 -> 0x2C).
 struct CScnItemModelNw4rRootHandle {
@@ -252,7 +252,7 @@ struct CScnItemModelNw4rB4V10 {
     virtual void v03() = 0;
 };
 
-// View of the func_8048ECD8 scene-root result: only the +0x2888 slot that
+// View of the getScnRootSlot10 scene-root result: only the +0x2888 slot that
 // scnImN4Teardown compares against the +0x1484 anm-scene object is known.
 struct CScnItemModelNw4rRoot2888 {
     u8 _00[0x2888];     // 0x00..0x2888
@@ -455,7 +455,7 @@ public:
 // Cross-TU C-linkage placeholders (retail symbols are unmangled func_* names
 // until symbol recovery renames them; keep the C linkage to match relocs).
 extern "C" void func_804E8220(s32 v);
-extern "C" void func_804E8284(s32 v);
+extern "C" void setMdlLookAngles(s32 v);
 extern "C" void simSetFlag8000000(CScnItemModelNw4r* self, u32 enable);
 extern "C" void simNotifyReadyTree(CScnItemModelNw4r* self);
 extern "C" void simNotifyVfunc8C(CScnItemModelNw4r* self, u32 param);
@@ -508,7 +508,7 @@ extern "C" void scnVlUpdate(CScnVirtualLight* self, CScnEnvLgtData* data,
 // Fade-distance refresh (defined in CScnItemModel.cpp).
 extern "C" void simRefreshFadeChain(CScnItemModelNw4r* self);
 // Eye-anim state setter (defined in CMdlAnmEye.cpp).
-extern "C" void func_804E77BC(CMdlAnmEye* self, u32 val);
+extern "C" void EyeAnm_SetState(CMdlAnmEye* self, u32 val);
 // Light-env init / clear (defined in CScnEnvLgtCtrl.cpp).
 extern "C" void scnLgtDeactLightMan(u8* self, CScnItemModelNw4rEnvLight* lgt);
 extern "C" void func_804C172C(u8* self);
@@ -528,7 +528,7 @@ extern "C" void func_804EB7F8(u8* self);
 // CScn_80496B0C.cpp), pool deregistration (CScnItemModel.cpp), CMdlDynamics
 // release (CMdlDynamics.cpp), the scene root anm-scene removal (g3d_scnroot)
 // and the +0x16C8 sub-object destructor fragment.
-extern "C" void func_80496D74(void* self);
+extern "C" void scn80496ReleaseChildren(void* self);
 extern "C" void simRemoveFromPool(CScnItemModel* self);
 extern "C" void func_804EB8A0(u8* self);
 // CMdlDynamics world-matrix sync (defined in CMdlDynamics.cpp), called by
@@ -536,7 +536,7 @@ extern "C" void func_804EB8A0(u8* self);
 extern "C" void func_804EBBCC(void* self, nw4r::math::MTX34* mtxs);
 // Shadow-matrix propagation tail of func_80489200 (defined later in this TU).
 void func_8048AB2C(CScnItemModelNw4r* self, nw4r::math::MTX34* worldMtxBase);
-extern "C" void* func_8048ECD8(void* self);
+extern "C" void* getScnRootSlot10(void* self);
 extern "C" void* RemoveAnmScn__Q34nw4r3g3d7ScnRootFv(void* self);
 extern "C" void* __dt__804E5DE0(void* self);
 
@@ -545,8 +545,8 @@ extern "C" void* __dt__804E5DE0(void* self);
 extern "C" u32 lbl_eu_8056DE80[];
 
 // .sbss byte: one-shot allocator-path switch read/cleared by the ctor (the
-// first constructed model uses the func_8048ED04 path, later ones
-// func_8048ECE4). Owned by monolibdata2.o.
+// first constructed model uses the getScnRoot49C path, later ones
+// getScnRoot44C). Owned by monolibdata2.o.
 extern u8 lbl_eu_806658D8;
 
 // .sdata2 constants used by the ctor: 30.0f (radius flag threshold) and the
@@ -580,12 +580,12 @@ extern "C" void simNotifyVfunc28(CScnItemModel* self, u32 a, u32 b);
 extern "C" void func_804979A4(void* self, ml::CVec3* outA, ml::CVec3* outB,
                               ml::CVec3* outC, u32 nodeIdx);
 extern "C" int func_804E72D0(void* self, u32 arg2, void* res);
-extern "C" int func_804E68A0(void* self, u32 arg2, void* res);
+extern "C" int MdlMouthPollAnim(void* self, u32 arg2, void* res);
 
 // func_80487EE0 per-frame anim helpers (defined in CMdlAnmEye.cpp /
 // CMdlMouth.cpp): eye-anim / mouth-anim refresh.
-extern "C" void func_804E77C4(void* self);
-extern "C" void func_804E6A28(void* self);
+extern "C" void EyeAnm_TickBlink(void* self);
+extern "C" void MdlMouthTeardown(void* self);
 // Fade-distance walk (defined in CScnItemModel.cpp): last-chain fade value.
 extern "C" float simGetLeafDist7B0(void* self);
 // Fade refresh (defined in CScnItemModel.cpp).
@@ -681,7 +681,7 @@ extern "C" u32 Scn_CallUnk8C_V8(CScnItemModelNw4rOwner* owner);
 extern "C" void simSetFlag2OnTree(CScnItemModel* self, u32 param);
 // Node lookup by name (defined in CScnTexWorkMan.cpp; returns the model
 // resource's ResNode).
-extern "C" nw4r::g3d::ResNode func_80490AF4(void* self, const char* name);
+extern "C" nw4r::g3d::ResNode TexMan_FindNode_0AF4(void* self, const char* name);
 
 // scnImN4LinkList2 / func_80488D54 / scnImN4SetTevSwap / func_80489C94 cross-TU
 // imports (defined in CScnItemModel.cpp / CScn.cpp / CScnItemPool.cpp).
@@ -773,10 +773,10 @@ extern "C" void* __ct__CMdlLook(void* self);
 
 // CScn allocator/root getters (defined in CScnMem.cpp): resolve the owner's
 // MEMAllocator variants and the g3d scene root.
-extern "C" void* func_8048ED04(CScn* self);
-extern "C" void* func_8048ECE4(CScn* self);
-extern "C" void* func_8048ECF4(CScn* self);
-extern "C" u32 func_8048ECD0(CScn* self);
+extern "C" void* getScnRoot49C(CScn* self);
+extern "C" void* getScnRoot44C(CScn* self);
+extern "C" void* getScnRootSel46C(CScn* self);
+extern "C" u32 getScnRootPtr(CScn* self);
 
 // Sub-object init hooks (retail unmangled fragment names): CMdlDynamics
 // (func_804E95E0), CMdlMaterial (func_804E54B8 / func_804E5990), CMdlMouth
@@ -802,7 +802,7 @@ extern "C" void func_80491764(nw4r::g3d::ResNode* pNode,
 
 // Fog-manager param push (defined in CScnFogMan.cpp): (fogMan, fogType, color
 // vec, near/far params).
-extern "C" void func_8049DE74(void* self, u32 value, const f32* src, f32 p0,
+extern "C" void FogManCopyFogParams(void* self, u32 value, const f32* src, f32 p0,
                               f32 p1, f32 p2, f32 p3);
 
 // nw4r g3d scene-root anm-scene attach (defined in g3d_scnroot.cpp; not

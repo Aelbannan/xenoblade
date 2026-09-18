@@ -31,7 +31,7 @@ extern "C" { // lbl_* and func_* retail names need unmangled emission
     extern u8 lbl_eu_80660000[40];               // static FixStr<32> path buffer (.bss)
 
     // NAND subsystem primitives (stripped retail names -> C linkage).
-    // Note: retail func_804DB348 (CNReqtaskCheck unit) and CNReqSaveConfigSave (this
+    // Note: retail NandCheck_InitTaskData (CNReqtaskCheck unit) and CNReqSaveConfigSave (this
     // unit) actually take more arguments; the init helpers here call them with
     // only the task-block pointer, so the in-TU declarations are 1-arg to
     // reproduce the retail call bytes.
@@ -40,7 +40,7 @@ extern "C" { // lbl_* and func_* retail names need unmangled emission
     s32 CNReqSaveNandOpen(const char* path, u8 flag);            // NAND open wrapper (defined below)
     const char* CNReqSaveBuildTempPath(u8 id);                        // temp-path builder (defined below)
     void CNReqSaveNandCallback(s32 result, NANDCommandBlock* block); // NAND completion callback (defined below)
-    CNReqtaskCheckVtbl** func_804DB348(CNReqtaskCheckData* data);  // check sub-task config
+    CNReqtaskCheckVtbl** NandCheck_InitTaskData(CNReqtaskCheckData* data);  // check sub-task config
     CNReqtaskSaveVtbl**  CNReqSaveConfigSave(CNReqtaskSaveData* data);   // save sub-task config (defined below)
     CException* logExceptionMessage__10CExceptionFv(const wchar_t* msg); // CException::logExceptionMessage (stripped name)
 
@@ -49,10 +49,10 @@ extern "C" { // lbl_* and func_* retail names need unmangled emission
     // call sites only set r3 (the data block) because the args are already in
     // r4-r7, so these full-signature declarations reproduce the call bytes.
     CNReqtaskLoadVtbl**       func_804DAF70(u8* data, const char* path, u32 arg2, u32 arg3, u8 arg4); // load sub-task config
-    CNReqtaskRemoveVtbl**     func_804DB240(u8* data, const char* path, u8 arg);                     // remove sub-task config
-    CNReqtaskReaddirVtbl**    func_804DB0F0(CNReqtaskReaddirData* d, u32* entries, u32 count, u32* dir, u8 arg); // readdir sub-task config
+    CNReqtaskRemoveVtbl**     NandRmConfigure(u8* data, const char* path, u8 arg);                     // remove sub-task config
+    CNReqtaskReaddirVtbl**    Readdir_Init_B0F0(CNReqtaskReaddirData* d, u32* entries, u32 count, u32* dir, u8 arg); // readdir sub-task config
     char**                    func_eu_804F9E98(MonoRequestState* req, const char* src, u8 flagD, u8 flagE);     // request-record setup
-    CNReqtaskSaveBannerVtbl** func_804F4D7C(CNReqtaskSaveBannerData* data, CNReqtaskSaveBannerTarget* arg1, u8 arg2); // save-banner sub-task config
+    CNReqtaskSaveBannerVtbl** CNReqtaskSaveBanner_Init(CNReqtaskSaveBannerData* data, CNReqtaskSaveBannerTarget* arg1, u8 arg2); // save-banner sub-task config
 
     // The five matched targets below (definitions inherit C linkage).
     void CNReqSaveDeallocIfOpen(CNandTask* data, CNandTask* dealloc);        // NAND dealloc helper
@@ -124,7 +124,7 @@ __declspec(noinline) CException* CNReqSaveDispatchError(s32 code) {
 // CNRequest helper: initialises the CNReqtaskCheck sub-task block at +0x04 and
 // records the returned task vtable at +0x00; returns whether init succeeded.
 bool CNReqSaveInitCheck(CNRequest* self) {
-    CNReqtaskCheckVtbl** v = func_804DB348((CNReqtaskCheckData*)self->field_0x4);
+    CNReqtaskCheckVtbl** v = NandCheck_InitTaskData((CNReqtaskCheckData*)self->field_0x4);
     self->field_0x0 = (CNandTask*)v;
     return v != 0;
 }
@@ -507,7 +507,7 @@ int CNReqSaveInitLoad(CNRequest* req, u32 a1, u32 a2, u32 a3, u8 flag) {
 #pragma push
 #pragma optimize_for_size on
 int CNReqSaveInitRemove(CNRequest* req, u32 a1, u8 flag) {
-    CNReqtaskRemoveVtbl** v = func_804DB240((u8*)req->field_0x4, (const char*)a1, flag);
+    CNReqtaskRemoveVtbl** v = NandRmConfigure((u8*)req->field_0x4, (const char*)a1, flag);
     req->field_0x0 = (CNandTask*)v;
     return v != 0;
 }
@@ -520,7 +520,7 @@ int CNReqSaveInitRemove(CNRequest* req, u32 a1, u8 flag) {
 #pragma push
 #pragma optimize_for_size on
 int CNReqSaveInitReaddir(CNRequest* req, u32 a1, u32 a2, u32 a3, u8 flag) {
-    CNReqtaskReaddirVtbl** v = func_804DB0F0((CNReqtaskReaddirData*)req->field_0x4, (u32*)a1, a2, (u32*)a3, flag);
+    CNReqtaskReaddirVtbl** v = Readdir_Init_B0F0((CNReqtaskReaddirData*)req->field_0x4, (u32*)a1, a2, (u32*)a3, flag);
     req->field_0x0 = (CNandTask*)v;
     return v != 0;
 }
@@ -550,7 +550,7 @@ int CNReqSaveSetupRequest(CNRequest* req, const char* buf, u8 size, u8 a3) {
 #pragma push
 #pragma optimize_for_size on
 int CNReqSaveInitSaveBanner(CNRequest* req, u32 a1, u8 a2) {
-    CNReqtaskSaveBannerVtbl** v = func_804F4D7C((CNReqtaskSaveBannerData*)req->field_0x4, (CNReqtaskSaveBannerTarget*)a1, a2);
+    CNReqtaskSaveBannerVtbl** v = CNReqtaskSaveBanner_Init((CNReqtaskSaveBannerData*)req->field_0x4, (CNReqtaskSaveBannerTarget*)a1, a2);
     req->field_0x0 = (CNandTask*)v;
     return v != 0;
 }

@@ -36,7 +36,7 @@ extern "C" CCharEffectEne* __ct__cf_CCharEffectEne(CCharEffectEne* self) {
     return self;
 }
 
-extern "C" void* func_8015CD04(CCharEffectEne* self, u32 index, s32 mode) {
+extern "C" void* ChEff_LoadNpcA_CD04(CCharEffectEne* self, u32 index, s32 mode) {
     void* result = nullptr;
     if (mode < 0) {
         u16 entry = lbl_eu_80501E48[index];
@@ -53,7 +53,7 @@ extern "C" void* func_8015CD04(CCharEffectEne* self, u32 index, s32 mode) {
     return result;
 }
 
-extern "C" void* func_8015CD9C(CCharEffectEne* self, u32 index, s32 mode) {
+extern "C" void* ChEff_LoadRes_CD9C(CCharEffectEne* self, u32 index, s32 mode) {
     void* obj = nullptr;
     if (mode < 0) {
         u16 entry = lbl_eu_80501EB8[index];
@@ -69,7 +69,7 @@ extern "C" void* func_8015CD9C(CCharEffectEne* self, u32 index, s32 mode) {
     return obj;
 }
 
-extern "C" void* func_8015CE44(CCharEffectEne* self, u32 index, s32 mode) {
+extern "C" void* ChEff_LoadActorA_CE44(CCharEffectEne* self, u32 index, s32 mode) {
     void* obj = nullptr;
     if (mode < 0) {
         u16 entry = lbl_eu_80501F28[index];
@@ -85,7 +85,7 @@ extern "C" void* func_8015CE44(CCharEffectEne* self, u32 index, s32 mode) {
     return obj;
 }
 
-extern "C" void* func_8015CED0(CCharEffectEne* self, u32 index, s32 mode) {
+extern "C" void* ChEff_LoadNpcBind_CED0(CCharEffectEne* self, u32 index, s32 mode) {
     void* obj = nullptr;
     if (mode < 0) {
         u16 entry = lbl_eu_80501F98[index];
@@ -105,7 +105,7 @@ extern "C" void* func_8015CED0(CCharEffectEne* self, u32 index, s32 mode) {
     return obj;
 }
 
-extern "C" void func_8015CF90(CCharEffectEne* self, void* target, u32 type, u32 flags) {
+extern "C" void ChEff_Dispatch_CF90(CCharEffectEne* self, void* target, u32 type, u32 flags) {
     void* mgr;
     void* data;
     void* dataSrc;

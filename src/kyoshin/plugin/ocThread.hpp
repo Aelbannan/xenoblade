@@ -31,8 +31,8 @@ int wakeup_8003A88C(VMThread* pThread, u32 threadId);
 void ocThreadRegist();
 
 /* List-head accessors used by the script VM's thread bookkeeping. */
-OcThreadListHdr* func_8003A4E0();
-OcThreadListHdr* func_8003A4EC();
+OcThreadListHdr* getOcMsgList();
+OcThreadListHdr* getOcLogList();
 void sinit_8003A4F8();
 
 #ifdef __cplusplus

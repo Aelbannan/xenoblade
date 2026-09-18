@@ -16,10 +16,10 @@ struct FxSoundSlot {
 // C++ declaration would have MWCC append the parameter mangling).
 extern "C" int func_801C34B0(FxSoundSlot* slots, int index, int frame);
 
-// FX-slot pair constructor (retail func_801C32E8, defined in
+// FX-slot pair constructor (retail FxPair_Init, defined in
 // code_801C2C14.cpp): constructs the two 0x4FC-byte FX slots. extern "C" so
 // the call reloc binds to the retail-unmangled name.
-extern "C" FxSoundSlot* func_801C32E8(FxSoundSlot* self);
+extern "C" FxSoundSlot* FxPair_Init(FxSoundSlot* self);
 
 // FX-slot pair destructor (retail __dt__801C3340, defined in
 // code_801C2C14.cpp): clears both slots' effects and destroys the member
@@ -278,9 +278,9 @@ extern u32 lbl_eu_80663E28;
 // Sound-start gate helpers (defined in other TUs; C ABI so the call relocs
 // bind to the retail-unmangled names).
 extern "C" bool isSceneActive__Q22cf13CfGameManagerFv();
-extern "C" u32 func_80294624();
-extern "C" u32 func_8028E440();
-extern "C" u32 func_802B22E0();
+extern "C" u32 SysWinSaveIsCreated();
+extern "C" u32 isSaveMenuActive();
+extern "C" u32 ClearMenu_IsPresent();
 extern "C" bool isInitialized__10CMenuPauseFv();
 
 // Sound-id counter for freshly allocated slots (retail .sdata u16; read and
@@ -354,7 +354,7 @@ struct UnkClass_800821F8Snd {
 
 // Sound-start gate helpers used by cf::CfSoundMan::playActorSound (defined in
 // other TUs).
-extern "C" u32 func_80252538();
+extern "C" u32 Pause_IsActive();
 extern "C" int CfRes_getD80Flag();
 
 // Computes a distance-based pan/volume pair from the actor position against

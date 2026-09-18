@@ -15,7 +15,7 @@
 //   +0x320 u32    mCountRef      -- pending-load reference counter
 //   +0x324 u8     mBusy          -- files still registered with CDeviceFile
 //   +0x325 u8     mFlag          -- "needs rebuild" / dirty flag
-//   +0x326 u8     mKind          -- selector forwarded to func_eu_804521BC
+//   +0x326 u8     mKind          -- selector forwarded to DevFile_SetByteA9
 //
 // OPEN ITEM (split-size): all 9 functions byte-match, but decomp .text is
 // +0x50 over budget. The overflow is the weak out-of-line copy of the
@@ -44,7 +44,7 @@ extern "C" {
 // (CDeviceFile::func_8044F0E4; header edit out of scope for this session).
 void cancelJobsForPath__11CDeviceFileFPCc(const char* path);
 // Locale/count selector latch (defined in CDeviceFile.cpp).
-void func_eu_804521BC(u8 val);
+void DevFile_SetByteA9(u8 val);
 }
 
 // Data objects referenced by this unit (global scope -> no C++ mangling).
@@ -58,7 +58,7 @@ struct CEventFile {
     const char* field_C;  // 0xC  file path / name string
 };
 
-// Mirror of the NANDBanner block layout as consumed by func_804F53DC. The
+// Mirror of the NANDBanner block layout as consumed by Banner_AllocData_53DC. The
 // SDK header declares iconTexture[0x1200][8]; the actual per-icon stride is
 // 0x1200 (8 icons fill the 0xF0A0 block), so this TU uses its own struct.
 struct CNandBannerBlock {
@@ -140,7 +140,7 @@ CNBanner::~CNBanner() {
             i++;
         }
         this->mBusy = 0;
-        func_eu_804521BC(this->mKind);
+        DevFile_SetByteA9(this->mKind);
     }
     if (this->mAlloc0 != 0) {
         ::operator delete(this->mAlloc0);
@@ -184,7 +184,7 @@ void CNBanner_destroyBlock(CNBanner* banner) {
             }
         }
         banner->mBusy = 0;
-        func_eu_804521BC(banner->mKind);
+        DevFile_SetByteA9(banner->mKind);
     }
     if (banner->mAlloc0 != 0) {
         ::operator delete(banner->mAlloc0);
@@ -210,7 +210,7 @@ bool CNBanner::OnFileEvent(CEventFile* event) {
         this->mBusy = (u8)busy;
         this->mFlag = (u8)((this->mFlag | notPrimary) != 0);
         if (busy == 0) {
-            func_eu_804521BC(this->mKind);
+            DevFile_SetByteA9(this->mKind);
         }
         return true;
     }
@@ -223,7 +223,7 @@ bool CNBanner::OnFileEvent(CEventFile* event) {
             this->mBusy = (u8)busy;
             this->mFlag = (u8)((this->mFlag | notPrimary) != 0);
             if (busy == 0) {
-                func_eu_804521BC(this->mKind);
+                DevFile_SetByteA9(this->mKind);
             }
             return true;
         }
@@ -239,9 +239,9 @@ void CNBanner::setSubtitle(const char* str) { mDesc.format(str); }
 
 void CNBanner::setBannerPath(const char* str) { mPath.format(str); }
 
-// --- func_804F53DC --------------------------------------------------------
+// --- Banner_AllocData_53DC --------------------------------------------------------
 
-// us-804f9954: func_804F53DC
+// us-804f9954: Banner_AllocData_53DC
 // Builds and starts loading the NAND banner block. Allocates a NANDBanner
 // (0xF0A0) from MEM2, renders the UTF-8 title/subtitle fields to UTF-16 locals,
 // zeroes the block and initialises its header with NANDInitBanner, packs the
@@ -249,7 +249,7 @@ void CNBanner::setBannerPath(const char* str) { mPath.format(str); }
 // issues async archive reads of the banner texture and each icon's texture
 // through CDeviceFile. Returns 1 on success, or 0 if the allocation or either
 // encoding conversion failed.
-extern "C" s32 func_804F53DC(CNBanner* self) {
+extern "C" s32 Banner_AllocData_53DC(CNBanner* self) {
     self->mFlag = 0;
 
     // Allocate the NAND banner data block from the MEM2 heap.
@@ -336,8 +336,8 @@ extern "C" s32 func_804F53DC(CNBanner* self) {
         self->mCountRef++;
     }
 
-    self->mKind = (u8)func_eu_804521C4();
-    func_eu_804521BC(1);
+    self->mKind = (u8)DevFile_GetByteA9();
+    DevFile_SetByteA9(1);
     self->field_8 = self->mCount * 0x1200 + 0x60A0;
     return 1;
 }
@@ -361,7 +361,7 @@ extern "C" __declspec(section ".rodata") const char lbl_eu_805248B0[0x10] = "CNB
 extern "C" __declspec(section ".rodata") const char lbl_eu_805248C0[0x13] = "CNReqtaskCreatedir";
 
 // Foreign free functions referenced from the probe-vtable blob.
-extern "C" void func_eu_804F9EE0();
+extern "C" void MonoReqPollLifecycle();
 extern "C" void CNReqSaveDeallocIfOpen();
 // forward decls for cross-referencing blobs below
 extern "C" u32 lbl_eu_80663CE8[2];
@@ -387,5 +387,5 @@ char* lbl_eu_80665A98;  // kept alive by refs from monolib_eu_804F9E98.cpp
 
 // [.data] probe vtable + tail of the foreign class (defined here so their
 // .data placement follows the compiler-emitted vtable / base list).
-extern "C" u32 lbl_eu_80570410[4] = { (u32)&lbl_eu_80663CE8, 0, (u32)&func_eu_804F9EE0, (u32)&CNReqSaveDeallocIfOpen };
+extern "C" u32 lbl_eu_80570410[4] = { (u32)&lbl_eu_80663CE8, 0, (u32)&MonoReqPollLifecycle, (u32)&CNReqSaveDeallocIfOpen };
 extern "C" u32 lbl_eu_80570420[3] = { (u32)&lbl_eu_80663B70, 0, 0 };

@@ -237,7 +237,7 @@ static inline void printChecked(WideTextWriter* writer, u32 writerRegion,
 // Shared object layouts for this TU's accessor functions.
 // ---------------------------------------------------------------------------
 
-// Object touched by func_8026178C / func_80261844 / func_8026187C:
+// Object touched by Counter_TestBit / Counter_SetClamped / Counter884_AddClamped:
 //   +0x870: u32 bitmap array (32 bits per entry)
 //   +0x884: signed counter clamped to [0, 999]
 //   +0x888: signed int array clamped to [0, 999999]
@@ -249,7 +249,7 @@ struct CUnk8025FB10 {
     s32 mValues888[1];              // +0x888
 };
 
-// Linked-list node walked by func_8025FD60 (+0x18 = next pointer).
+// Linked-list node walked by IdTable_WalkToLast (+0x18 = next pointer).
 struct CUnkList8025FB10 {
     u8 pad_0[0x18];
     CUnkList8025FB10* field_18;     // +0x18
@@ -257,21 +257,21 @@ struct CUnkList8025FB10 {
 
 // Walk the +0x18 chain to its last node (defined below; called by the
 // accessor family after their 16-level unroll).
-extern "C" CUnkList8025FB10* func_8025FD60(CUnkList8025FB10* p);
+extern "C" CUnkList8025FB10* IdTable_WalkToLast(CUnkList8025FB10* p);
 
-// ID-table entry / walk node for the func_8025FB10 accessor family.  Rows of
+// ID-table entry / walk node for the IdTable_SumValues accessor family.  Rows of
 // the +0x000 table are 0xC4 bytes (6 entries + 4 pad); each entry is 32
 // bytes.  Entries also form two linked chains: +0x18 child chain (walked to
-// its deepest node, 16 levels unrolled here then func_8025FD60) and +0x1C
+// its deepest node, 16 levels unrolled here then IdTable_WalkToLast) and +0x1C
 // sibling chain (summed/maxed by the accessors).
 struct CUnkItem8025FB10 {
     u8 pad_0[0x4];                  // +0x00
     u16 mId;                        // +0x04
     u8 pad_6[0x2];                  // +0x06
-    s32 mValue;                     // +0x08 - summed by func_8025FB10 family
-    s16 mValueC;                    // +0x0C - maxed by func_8025FDB8 family
+    s32 mValue;                     // +0x08 - summed by IdTable_SumValues family
+    s16 mValueC;                    // +0x0C - maxed by IdTable_MaxValueC family
     u8 pad_E[0x2];                  // +0x0E
-    f32 mValue10;                   // +0x10 - maxed by func_80260010
+    f32 mValue10;                   // +0x10 - maxed by IdTable_MaxValue10
     u8 pad_14[0x4];                 // +0x14
     CUnkItem8025FB10* mChild;       // +0x18
     CUnkItem8025FB10* mNext;        // +0x1C
@@ -324,7 +324,7 @@ struct CUnkGroup8025FB10 {
     u32 mPad;                       // 0xC4
 };
 
-// Object shared by the func_8025FB10 accessor family:
+// Object shared by the IdTable_SumValues accessor family:
 //   +0x000: 11 groups x 0xC4 (66 ID entries)
 //   +0x870: bitmap, one bit per reachable ID
 struct CUnkObj8025FB10 {
@@ -353,9 +353,9 @@ static inline CUnkItem8025FB10* findRecByIndex(CUnkObj8025FB10* obj,
 // us-80261c5c - if the ID's bitmap bit is clear return 0; else look
 // the ID up in the 66-entry table (signed i/6, i%6 -> row/column), walk the
 // entry's +0x18 child chain to its deepest node (retail unrolls 16 levels
-// then delegates the remainder to func_8025FD60) and return the sum of the
+// then delegates the remainder to IdTable_WalkToLast) and return the sum of the
 // +0x1C sibling chain's +0x08 values.
-s32 func_8025FB10(CUnkObj8025FB10* obj, int index) {
+s32 IdTable_SumValues(CUnkObj8025FB10* obj, int index) {
     if (!(obj->mBitmap[(u32)index >> 5] & (1 << (index & 0x1F)))) {
         return 0;
     }
@@ -406,7 +406,7 @@ s32 func_8025FB10(CUnkObj8025FB10* obj, int index) {
     if (t == 0) goto SUM;
     result = t->mChild;
     if (result == 0) goto K16;
-    result = (CUnkItem8025FB10*)func_8025FD60((CUnkList8025FB10*)result);
+    result = (CUnkItem8025FB10*)IdTable_WalkToLast((CUnkList8025FB10*)result);
     goto SUM;
 K16: result = t; goto SUM;
 K14: result = t; goto SUM;
@@ -435,7 +435,7 @@ SUM:
 // KizunaEntryFindListHead pattern); the fully-flat or fully-nested forms differ.
 // extern "C" keeps the self tail-call reloc name verbatim (reloc-site
 // gate) - same as KizunaEntryFindListHead in CPcKizunagram.cpp.
-extern "C" CUnkList8025FB10* func_8025FD60(CUnkList8025FB10* p) {
+extern "C" CUnkList8025FB10* IdTable_WalkToLast(CUnkList8025FB10* p) {
     CUnkList8025FB10* n1 = p->field_18;
     if (n1 == 0) return p;
     CUnkList8025FB10* n2 = n1->field_18;
@@ -446,7 +446,7 @@ extern "C" CUnkList8025FB10* func_8025FD60(CUnkList8025FB10* p) {
             if (n4 == 0) return n3;
             CUnkList8025FB10* n5 = n4->field_18;
             if (n5 != 0) {
-                return func_8025FD60(n5);
+                return IdTable_WalkToLast(n5);
             }
             return n4;
         }
@@ -455,10 +455,10 @@ extern "C" CUnkList8025FB10* func_8025FD60(CUnkList8025FB10* p) {
     return n1;
 }
 
-// us-80261f04 - like func_8025FB10 but returns the maximum s16
+// us-80261f04 - like IdTable_SumValues but returns the maximum s16
 // +0x0C value along the deepest child's +0x1C sibling chain (or 0 when the
 // ID is absent).
-s32 func_8025FDB8(CUnkObj8025FB10* obj, int index) {
+s32 IdTable_MaxValueC(CUnkObj8025FB10* obj, int index) {
     if (!(obj->mBitmap[(u32)index >> 5] & (1 << (index & 0x1F)))) {
         return 0;
     }
@@ -509,7 +509,7 @@ s32 func_8025FDB8(CUnkObj8025FB10* obj, int index) {
     if (t == 0) goto SMAX;
     result = t->mChild;
     if (result == 0) goto S16;
-    result = (CUnkItem8025FB10*)func_8025FD60((CUnkList8025FB10*)result);
+    result = (CUnkItem8025FB10*)IdTable_WalkToLast((CUnkList8025FB10*)result);
     goto SMAX;
 S16: result = t; goto SMAX;
 S14: result = t; goto SMAX;
@@ -535,10 +535,10 @@ SMAX:
     return best;
 }
 
-// us-8026215c - like func_8025FB10 but returns the maximum f32
+// us-8026215c - like IdTable_SumValues but returns the maximum f32
 // +0x10 value along the deepest child's +0x1C sibling chain, else the shared
 // sdata2 constant (lbl_eu_806688B8).
-f32 func_80260010(CUnkObj8025FB10* obj, int index) {
+f32 IdTable_MaxValue10(CUnkObj8025FB10* obj, int index) {
     if (!(obj->mBitmap[(u32)index >> 5] & (1 << (index & 0x1F)))) {
         return lbl_eu_806688B8;
     }
@@ -589,7 +589,7 @@ f32 func_80260010(CUnkObj8025FB10* obj, int index) {
     if (t == 0) goto MMAX;
     result = t->mChild;
     if (result == 0) goto M16;
-    result = (CUnkItem8025FB10*)func_8025FD60((CUnkList8025FB10*)result);
+    result = (CUnkItem8025FB10*)IdTable_WalkToLast((CUnkList8025FB10*)result);
     goto MMAX;
 M16: result = t; goto MMAX;
 M14: result = t; goto MMAX;
@@ -614,7 +614,7 @@ MMAX:
     return best;
 }
 
-// us-802623b0 - like func_8025FB10 but stores the sum through the
+// us-802623b0 - like IdTable_SumValues but stores the sum through the
 // third argument and returns whether the sum is non-zero.
 bool func_80260264(CUnkObj8025FB10* obj, int index, s32* outSum) {
     s32 sum = 0;
@@ -629,7 +629,7 @@ bool func_80260264(CUnkObj8025FB10* obj, int index, s32* outSum) {
             // Deepest node of the +0x18 child chain.  Retail unrolls 10
             // pointer pairs; odd-level nulls copy at the bottom, even-level
             // nulls fall straight through, and deep walks delegate to
-            // func_8025FD60 with the odd-level cursor.
+            // IdTable_WalkToLast with the odd-level cursor.
             CUnkItem8025FB10* result;
             CUnkItem8025FB10* a = rec->mChild;
             if (a == 0) goto PR;
@@ -672,7 +672,7 @@ bool func_80260264(CUnkObj8025FB10* obj, int index, s32* outSum) {
             b = a->mChild;
             if (b == 0) goto PSUM;
             result =
-                (CUnkItem8025FB10*)func_8025FD60((CUnkList8025FB10*)a);
+                (CUnkItem8025FB10*)IdTable_WalkToLast((CUnkList8025FB10*)a);
             goto PSUM;
         P19: result = b; goto PSUM;
         P17: result = b; goto PSUM;
@@ -703,7 +703,7 @@ bool func_80260264(CUnkObj8025FB10* obj, int index, s32* outSum) {
 // us-80262664 - dual accessor.  Stores the +0x08 sum chain total for
 // the ID through outSum, and (only when that sum is non-zero) the +0x10
 // float max through outFloat; returns whether the float max is non-zero.
-bool func_80260518(CUnkObj8025FB10* obj, int index, s32* outSum, f32* outFloat) {
+bool IdTable_QuerySumFloat(CUnkObj8025FB10* obj, int index, s32* outSum, f32* outFloat) {
     s32 sum;
     if (!(obj->mBitmap[(u32)index >> 5] & (1 << (index & 0x1F)))) {
         sum = 0;
@@ -722,7 +722,7 @@ bool func_80260518(CUnkObj8025FB10* obj, int index, s32* outSum, f32* outFloat) 
     }
 
     // Deepest node of the +0x18 child chain (21 unrolled levels, then
-    // func_8025FD60).  Odd levels reuse `result` so even-level null paths
+    // IdTable_WalkToLast).  Odd levels reuse `result` so even-level null paths
     // need no copy (direct to the sum loop); odd-level nulls (result =
     // even node) land in bottom blocks, mirroring retail's rotation.
     CUnkItem8025FB10* result;
@@ -778,7 +778,7 @@ bool func_80260518(CUnkObj8025FB10* obj, int index, s32* outSum, f32* outFloat) 
     if (n20 == 0) goto DSUM;
     result = n20->mChild;
     if (result == 0) goto D21;
-    result = (CUnkItem8025FB10*)func_8025FD60((CUnkList8025FB10*)result);
+    result = (CUnkItem8025FB10*)IdTable_WalkToLast((CUnkList8025FB10*)result);
     goto DSUM;
 D21: result = n20; goto DSUM;
 D19: result = n18; goto DSUM;
@@ -878,7 +878,7 @@ SUMSTORE:
     if (f20 == 0) goto EMAX;
     resultF = f20->mChild;
     if (resultF == 0) goto E21;
-    resultF = (CUnkItem8025FB10*)func_8025FD60((CUnkList8025FB10*)resultF);
+    resultF = (CUnkItem8025FB10*)IdTable_WalkToLast((CUnkList8025FB10*)resultF);
     goto EMAX;
 E21: resultF = f20; goto EMAX;
 E19: resultF = f18; goto EMAX;
@@ -957,7 +957,7 @@ bool func_80260A6C(CUnkObj8025FB10* obj, int index, s32* outSum, s32* outMax) {
             b = a->mChild;
             if (b == 0) goto ASUM;
             result =
-                (CUnkItem8025FB10*)func_8025FD60((CUnkList8025FB10*)a);
+                (CUnkItem8025FB10*)IdTable_WalkToLast((CUnkList8025FB10*)a);
             goto ASUM;
         A15: result = b; goto ASUM;
         A13: result = b; goto ASUM;
@@ -1042,7 +1042,7 @@ bool func_80260A6C(CUnkObj8025FB10* obj, int index, s32* outSum, s32* outMax) {
             b = a->mChild;
             if (b == 0) goto BMAX;
             result =
-                (CUnkItem8025FB10*)func_8025FD60((CUnkList8025FB10*)a);
+                (CUnkItem8025FB10*)IdTable_WalkToLast((CUnkList8025FB10*)a);
             goto BMAX;
         B21: result = b; goto BMAX;
         B19: result = b; goto BMAX;
@@ -1076,7 +1076,7 @@ bool func_80260A6C(CUnkObj8025FB10* obj, int index, s32* outSum, s32* outMax) {
 // for the ID through outSum, then (when non-zero) the +0x0C halfword max
 // through outMax, then (when non-zero) the +0x10 float max through outFloat;
 // returns whether the float max is non-zero.
-bool func_80260FB0(CUnkObj8025FB10* obj, int index, s32* outSum, s32* outMax,
+bool IdTable_QuerySumMaxFloat(CUnkObj8025FB10* obj, int index, s32* outSum, s32* outMax,
                    f32* outFloat) {
     s32 sum;
     s32 max;
@@ -1097,7 +1097,7 @@ bool func_80260FB0(CUnkObj8025FB10* obj, int index, s32* outSum, s32* outMax,
     }
 
     // Deepest node of the +0x18 child chain (21 unrolled levels, then
-    // func_8025FD60).  Odd levels reuse `result` so even-level null paths
+    // IdTable_WalkToLast).  Odd levels reuse `result` so even-level null paths
     // need no copy (direct to the sum loop); odd-level nulls (result =
     // even node) land in bottom blocks, mirroring retail's rotation.
     CUnkItem8025FB10* result;
@@ -1153,7 +1153,7 @@ bool func_80260FB0(CUnkObj8025FB10* obj, int index, s32* outSum, s32* outMax,
     if (s20 == 0) goto SSUM;
     result = s20->mChild;
     if (result == 0) goto SS21;
-    result = (CUnkItem8025FB10*)func_8025FD60((CUnkList8025FB10*)result);
+    result = (CUnkItem8025FB10*)IdTable_WalkToLast((CUnkList8025FB10*)result);
     goto SSUM;
 SS21: result = s20; goto SSUM;
 SS19: result = s18; goto SSUM;
@@ -1252,7 +1252,7 @@ SUMSTORE:
     if (m20 == 0) goto MMAX;
     resultM = m20->mChild;
     if (resultM == 0) goto MM21;
-    resultM = (CUnkItem8025FB10*)func_8025FD60((CUnkList8025FB10*)resultM);
+    resultM = (CUnkItem8025FB10*)IdTable_WalkToLast((CUnkList8025FB10*)resultM);
     goto MMAX;
 MM21: resultM = m20; goto MMAX;
 MM19: resultM = m18; goto MMAX;
@@ -1355,7 +1355,7 @@ MAXSTORE:
     if (g20 == 0) goto GMAX;
     resultF = g20->mChild;
     if (resultF == 0) goto GG21;
-    resultF = (CUnkItem8025FB10*)func_8025FD60((CUnkList8025FB10*)resultF);
+    resultF = (CUnkItem8025FB10*)IdTable_WalkToLast((CUnkList8025FB10*)resultF);
     goto GMAX;
 GG21: resultF = g20; goto GMAX;
 GG19: resultF = g18; goto GMAX;
@@ -1386,15 +1386,15 @@ FSTORE:
 
 // us-802638d8 - test bit (index & 0x1F) of bitmap word (index >> 5)
 // at +0x870. Returns 0/1.
-u8 func_8026178C(CUnk8025FB10* obj, u32 index) {
+u8 Counter_TestBit(CUnk8025FB10* obj, u32 index) {
     return (obj->mBitmap[index >> 5] & (1 << (index & 0x1F))) != 0;
 }
 
 // us-80263904 - gated counter add: when the script flag at slot
 // 0x3356 is set, add value to mValues888[index], clamped to [0, 999999].
-void func_802617B8(CUnk8025FB10* obj, int index, int value) {
+void Counter_AddClamped(CUnk8025FB10* obj, int index, int value) {
     // Materializing the negation reproduces retail's cntlzw/srwi idiom.
-    s32 gated = !func_8009CF8C(0x3356);
+    s32 gated = !CtrlRemote_TouchBitByArg(0x3356);
     if (gated) {
         return;
     }
@@ -1410,7 +1410,7 @@ void func_802617B8(CUnk8025FB10* obj, int index, int value) {
 }
 
 // us-80263990 - set mValues888[index] to value, clamped to [0, 999999].
-void func_80261844(CUnk8025FB10* obj, int index, int value) {
+void Counter_SetClamped(CUnk8025FB10* obj, int index, int value) {
     s32* pValue = &obj->mValues888[index];
     *pValue = value;
     if (value < 0) {
@@ -1421,7 +1421,7 @@ void func_80261844(CUnk8025FB10* obj, int index, int value) {
 }
 
 // us-802639c8 - add delta to the +0x884 counter, clamped to [0, 999].
-void func_8026187C(CUnk8025FB10* obj, int delta) {
+void Counter884_AddClamped(CUnk8025FB10* obj, int delta) {
     s32 value = obj->mCounter884 + delta;
     obj->mCounter884 = value;
     if (value < 0) {
@@ -1431,7 +1431,7 @@ void func_8026187C(CUnk8025FB10* obj, int delta) {
     }
 }
 
-void func_802618AC(u8* obj, int value) {
+void Counter884_SetClamped(u8* obj, int value) {
     int* field = (int*)(obj + 0x884);
     *field = value;
     if (value < 0) *field = 0;
@@ -1479,7 +1479,7 @@ int lbl_eu_80664868;
 int lbl_eu_80662980;
 int lbl_eu_80664874;
 
-void func_802618D8(u8* arg) {
+void TextState_Init(u8* arg) {
     lbl_eu_80664864 = 0;
     lbl_eu_80664868 = 0;
     lbl_eu_80662980 = -1;
@@ -1497,7 +1497,7 @@ void func_802618D8(u8* arg) {
     lbl_eu_80664870 = (u8*)mtl::MemManager::allocate_head(handle2, 0x400, 0x20);
 }
 
-void func_80261944(int arg) {
+void TextState_Reset(int arg) {
     lbl_eu_80664864 = arg;
     lbl_eu_80664868 = arg;
     lbl_eu_80662980 = -1;
@@ -1574,9 +1574,9 @@ void func_80261960(int idx) {
 
 // us-80263d14 - draw the shared message centered horizontally,
 // above the bottom of the frame buffer (PAL-safe height offset).
-extern "C" void func_80261B98(const wchar_t* text, f32 x, f32 y);
+extern "C" void TextState_DrawTextOrtho(const wchar_t* text, f32 x, f32 y);
 
-void func_80261A80() {
+void TextState_DrawStaged() {
     if (Class_80296898::getInstance()->mConfigData[0x22] == 0) {
         return;
     }
@@ -1590,7 +1590,7 @@ void func_80261A80() {
     s32 halfWidth = CDeviceVI::getRenderModeObj()->fbWidth >> 1;
     s32 bottomOffset = CDeviceVI::isTvFormatPal() ? 0x44 : 0x38;
     s32 efbHeight = CDeviceVI::getRenderModeObj()->efbHeight;
-    func_80261B98((const wchar_t*)lbl_eu_80664874,
+    TextState_DrawTextOrtho((const wchar_t*)lbl_eu_80664874,
                   halfWidth,
                   efbHeight - bottomOffset);
 }
@@ -1620,7 +1620,7 @@ void __dt__80261B1C() {
 }
 
 // C-linkage so caller relocs reference the literal retail symbol name.
-extern "C" void func_80261B98(const wchar_t* text, f32 x, f32 y) {
+extern "C" void TextState_DrawTextOrtho(const wchar_t* text, f32 x, f32 y) {
     Mtx44 identity;
     Mtx44 projection;
 

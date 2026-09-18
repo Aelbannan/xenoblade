@@ -80,7 +80,7 @@ extern "C" __declspec(noinline) void setCurPanePhase(UnkKizunaSelf57D90* self, u
     for (u8 i = 0; i < 2; i++) {
         UnkKizunaRes59344* res =
             ((UnkKizunaMid59344*)self->field8)->field10->target(paneIds[i], 1);
-        func_80124270((nw4r::lyt::Pane*)res, (u32)(i == a));
+        setPaneVisible((nw4r::lyt::Pane*)res, (u32)(i == a));
     }
 }
 
@@ -200,7 +200,7 @@ extern "C" __declspec(noinline) void func_802580CC(UnkKizunaLineBuild* self) {
     ((UnkKizunaMid59344*)self->layout)
         ->field10->target((int)(str + 0x8b), 1)
         ->fieldB8 = 0;
-    func_80124270(
+    setPaneVisible(
         (nw4r::lyt::Pane*)((UnkKizunaMid59344*)self->layout)->field10->target(
             (int)(str + 0x8b), 1),
         0);
@@ -248,7 +248,7 @@ extern "C" __declspec(noinline) void func_802580CC(UnkKizunaLineBuild* self) {
         newPane = new (paneMem) nw4r::lyt::Pane();
     }
     newPane->SetName(str + 0x9a);
-    func_80124270(newPane, 1);
+    setPaneVisible(newPane, 1);
     nw4r::lyt::Pane* parent =
         (nw4r::lyt::Pane*)((UnkKizunaMid59344*)self->layout)->field10->target(
             (int)(str + 0xa4), 1);
@@ -316,7 +316,7 @@ extern "C" __declspec(noinline) void func_802580CC(UnkKizunaLineBuild* self) {
                 copyVEC3((f32*)&((KizunaPaneTranslateView*)pic)->translate,
                          (f32*)&picPos);
 
-                func_80124270(pic, 1);
+                setPaneVisible(pic, 1);
                 nw4r::lyt::Pane* picParent =
                     (nw4r::lyt::Pane*)((UnkKizunaMid59344*)self->layout)
                         ->field10->target((int)(str + 0x9a), 1);
@@ -355,7 +355,7 @@ extern "C" __declspec(noinline) void func_802580CC(UnkKizunaLineBuild* self) {
     func_80259820(reinterpret_cast<UnkKizunaSelf9820*>(self));
 
     // Pick the progress message tag from the game-progress byte at 0x20.
-    u32 prog20 = (u16)func_8009CF8C(0x20);
+    u32 prog20 = (u16)CtrlRemote_TouchBitByArg(0x20);
     const char* msg;
     if (prog20 >= 0x64) {
         if (prog20 >= 0x89) {
@@ -379,12 +379,12 @@ extern "C" __declspec(noinline) void func_802580CC(UnkKizunaLineBuild* self) {
     // Hide the five fixed number/name pane pairs.
     for (u32 i = 1; i <= 5; i++) {
         sprintf(nameBuf, str + 0x171, (u8)i);
-        func_80124270(
+        setPaneVisible(
             (nw4r::lyt::Pane*)((UnkKizunaMid59344*)self->layout)->field10->target(
                 (int)nameBuf, 1),
             0);
         sprintf(nameBuf, str + 0x17c, (u8)i);
-        func_80124270(
+        setPaneVisible(
             (nw4r::lyt::Pane*)((UnkKizunaMid59344*)self->layout)->field10->target(
                 (int)nameBuf, 1),
             0);
@@ -393,7 +393,7 @@ extern "C" __declspec(noinline) void func_802580CC(UnkKizunaLineBuild* self) {
     // Fixed per-layout color/tag overrides, then per-row entries.
     UnkKizunaMgr* mgr = reinterpret_cast<UnkKizunaMgr*>(lbl_eu_80664098);
     nw4r::lyt::Layout* lytL = (nw4r::lyt::Layout*)self->layout;
-    u32 rowCount = func_8003B1EC(mgr);
+    u32 rowCount = Bdat_GetMaxRow_B1EC(mgr);
     LayoutSetTextBoxFmtValue(lytL, str + 0x189, str + 0xd3, 0);
     LayoutSetTextBoxFmtValue(lytL, str + 0x197, str + 0xd3, 0);
     LayoutSetTextBoxFmtValue(lytL, str + 0x1a5, str + 0xd3, 0);
@@ -425,19 +425,19 @@ extern "C" __declspec(noinline) void func_802580CC(UnkKizunaLineBuild* self) {
             break;
         }
         u32 rowProg = (u16)BdatGetU16Direct(mgr, str + 0xc1, (u16)j);
-        if (rowProg != 0 && func_8009CF8C(rowProg + 0xa20) != 0) {
+        if (rowProg != 0 && CtrlRemote_TouchBitByArg(rowProg + 0xa20) != 0) {
             char* nm = BdatGetPtrDirect(mgr, str + 0xca, (u16)j);
             if (strcmp(nm, str + 0xd3) != 0) {
                 u32 colv = (u16)BdatGetU16Direct(mgr, str + 0x2fb, (u16)j);
                 u32 state =
                     MapValueToRank6(BdatGetU8ByTableKey(str + 0x303, str + 0x310, colv));
                 sprintf(nameBuf, str + 0x171, (u8)state);
-                func_80124270(
+                setPaneVisible(
                     (nw4r::lyt::Pane*)((UnkKizunaMid59344*)self->layout)
                         ->field10->target((int)nameBuf, 1),
                     1);
                 sprintf(nameBuf, str + 0x17c, (u8)state);
-                func_80124270(
+                setPaneVisible(
                     (nw4r::lyt::Pane*)((UnkKizunaMid59344*)self->layout)
                         ->field10->target((int)nameBuf, 1),
                     1);
@@ -462,8 +462,8 @@ extern "C" __declspec(noinline) void func_802580CC(UnkKizunaLineBuild* self) {
         sprintf(nameBuf, str + 0x17c, (u8)k);
         UnkKizunaRes59344* visPane =
             ((UnkKizunaMid59344*)self->layout)->field10->target((int)nameBuf, 1);
-        if (func_801C4648((nw4r::lyt::Pane*)visPane)) {
-            u32 prog = func_8009CF8C((u8)k + 0x21);
+        if (isPaneVisible((nw4r::lyt::Pane*)visPane)) {
+            u32 prog = CtrlRemote_TouchBitByArg((u8)k + 0x21);
             const char* texTag = NULL;
             if (prog >= 6000) {
                 if (prog < 8000) {
@@ -490,7 +490,7 @@ extern "C" __declspec(noinline) void func_802580CC(UnkKizunaLineBuild* self) {
                 UnkKizunaRes59344* pane =
                     ((UnkKizunaMid59344*)self->layout)->field10->target(
                         (int)nameBuf, 1);
-                func_80124270((nw4r::lyt::Pane*)pane,
+                setPaneVisible((nw4r::lyt::Pane*)pane,
                               (prog - d * 2000) / 2000);
             }
         }
@@ -785,7 +785,7 @@ __declspec(noinline) void func_80259820(UnkKizunaSelf9820* self) {
         return;
     }
 
-    func_80124270(
+    setPaneVisible(
         (nw4r::lyt::Pane*)((UnkKizunaMid59344*)self->field0C)->field10->target(
             (int)(lbl_eu_8050CB20 + 0x3f5), 1),
         1);
@@ -798,7 +798,7 @@ __declspec(noinline) void func_80259820(UnkKizunaSelf9820* self) {
     copyKizName3(nameCur, curName);
 
     void* fp = getFP__FPCc(lbl_eu_8050CB20 + 0x402);
-    u16 count = func_8003B1EC(fp);
+    u16 count = Bdat_GetMaxRow_B1EC(fp);
 
     // single base pointer for the shared arc string table (CSE of the above)
     char* str = &lbl_eu_8050CB20[0];
@@ -821,7 +821,7 @@ __declspec(noinline) void func_80259820(UnkKizunaSelf9820* self) {
         if (resA == NULL || resB == NULL) {
             continue;
         }
-        u8 state = (u8)func_8009CF8C(i + 0x608);
+        u8 state = (u8)CtrlRemote_TouchBitByArg(i + 0x608);
         if (!state) {
             continue;
         }
@@ -860,8 +860,8 @@ extern "C" __declspec(noinline) void resetKizPaneTags(UnkKizunaSelf59B18* self) 
     char buf[0x1C];
     nw4r::lyt::Pane* pane = (nw4r::lyt::Pane*)((UnkKizunaLayoutSub57AFC*)self->field0C)
                                 ->field10->slot15(lbl_eu_8050CB20 + 0x3f5, 1);
-    if (func_801C4648(pane) != 0) {
-        func_80124270(pane, 0);
+    if (isPaneVisible(pane) != 0) {
+        setPaneVisible(pane, 0);
         for (u8 i = 1; i <= 0x12; i++) {
             sprintf(buf, lbl_eu_8050CB20 + 0x445, i);
             LayoutSetTextBoxFmtValue(self->field0C, buf, lbl_eu_8050CB20 + 0xd3, 0);
@@ -893,7 +893,7 @@ extern "C" __declspec(noinline) void lineCountUp(UnkKizunaSelf59C5C* self) {
     UnkKizunaRes59344* res =
         self->field0C->field10->target((int)(lbl_eu_8050CB20 + 0x8b), 1);
     res->fieldB8 = (u8)cnt;
-    func_80124270((nw4r::lyt::Pane*)res, 1);
+    setPaneVisible((nw4r::lyt::Pane*)res, 1);
 }
 
 // Place the kizuna marker: fetch the "line" pane result, copy its position
@@ -945,10 +945,10 @@ extern "C" __declspec(noinline) void buildRadarLayout(UnkKizunaSelfAFC* self) {
 // tint it when appropriate. Returns true once the cursor passes the row limit.
 extern "C" __declspec(noinline) bool func_80259DE8(UnkKizunaSelf59DE8* self) {
     UnkKizunaMgr* mgr = reinterpret_cast<UnkKizunaMgr*>(lbl_eu_80664098);
-    u16 limit = (u16)(func_8003B1EC(mgr) - 0x64);
+    u16 limit = (u16)(Bdat_GetMaxRow_B1EC(mgr) - 0x64);
     // Unsigned 64-bit subtract; its high word gates the legacy tint below.
     u64 sub = 0x155;
-    u64 chk = func_8009CF8C(0x20) - sub;
+    u64 chk = CtrlRemote_TouchBitByArg(0x20) - sub;
     const char* str = lbl_eu_8050CB20;
     f32 scale = lbl_eu_8066884C;
     f32 posZ = lbl_eu_80668828;
@@ -970,10 +970,10 @@ extern "C" __declspec(noinline) bool func_80259DE8(UnkKizunaSelf59DE8* self) {
         {
             u32 tinted = 0;
             if ((u32)(chk >> 32) != 0 && id == 0x30a) {
-                tinted = func_8009CF8C(0x54b) >= feConst;
+                tinted = CtrlRemote_TouchBitByArg(0x54b) >= feConst;
             }
             char* unlockStr = BdatGetU16Direct(mgr, str + 0xc1, id);
-            if (func_8009CF8C((u32)(u16)(u32)unlockStr + 0xa20) == 0) {
+            if (CtrlRemote_TouchBitByArg((u32)(u16)(u32)unlockStr + 0xa20) == 0) {
                 goto next;
             }
             char* nameStr = BdatGetPtrDirect(mgr, str + 0xca, id);
@@ -1006,14 +1006,14 @@ extern "C" __declspec(noinline) bool func_80259DE8(UnkKizunaSelf59DE8* self) {
                 v.y = (f32)py;
                 v.z = posZ;
                 copyVEC3((f32*)&((KizunaPaneTranslateView*)pic)->translate, &v.x);
-                func_80124270(reinterpret_cast<nw4r::lyt::Pane*>(pic), 1);
+                setPaneVisible(reinterpret_cast<nw4r::lyt::Pane*>(pic), 1);
                 nw4r::lyt::Pane* parent = reinterpret_cast<nw4r::lyt::Pane*>(
                     self->field0C->field10->target((int)(str + 0x9a), 1));
                 parent->AppendChild(reinterpret_cast<nw4r::lyt::Pane*>(pic));
             }
             if (tinted != 0) {
                 PaneSetVtxColorAll(pic, tintColor);
-            } else if (func_8009CF8C(0x20) >= 0x167) {
+            } else if (CtrlRemote_TouchBitByArg(0x20) >= 0x167) {
                 int w = BdatGetSexFlag(id);
                 if ((u8)(w + 0xfe) <= 1) {
                     PaneSetVtxColorAll(pic, tintColor);
@@ -1054,11 +1054,11 @@ extern "C" __declspec(noinline) void __ct__CKizunaCur(CKizunaCur* self,
 extern "C" __declspec(noinline) u16 findKizByName(UnkKizunaSelf5949C* self,
                                                   const char* name) {
     UnkKizunaMgr* mgr = reinterpret_cast<UnkKizunaMgr*>(lbl_eu_80664098);
-    u16 count = (u16)func_8003B1EC(mgr);
+    u16 count = (u16)Bdat_GetMaxRow_B1EC(mgr);
     for (u16 id = 1; (u32)id <= count; id++) {
         if (strcmp(BdatGetPtrDirect(mgr, lbl_eu_8050CB20 + 0xca, id),
                    name) == 0 &&
-            func_8009CF8C((u32)(u16)(u32)BdatGetU16Direct(mgr, lbl_eu_8050CB20 + 0xc1,
+            CtrlRemote_TouchBitByArg((u32)(u16)(u32)BdatGetU16Direct(mgr, lbl_eu_8050CB20 + 0xc1,
                                                        id) + 0xa20) != 0) {
             return id;
         }
@@ -1131,7 +1131,7 @@ __declspec(noinline) void func_8025AC1C(UnkKizunaSelfAB* self, u32 a) {
     copyKizTag3(nameCur, curName);
 
     void* fp = getFP__FPCc(&lbl_eu_8050CB20[0x402]);
-    u16 count = (u16)func_8003B1EC(fp);
+    u16 count = (u16)Bdat_GetMaxRow_B1EC(fp);
 
     // shared arc string table base (CSE'd into a register across the loop)
     char* str = &lbl_eu_8050CB20[0];
@@ -1160,7 +1160,7 @@ __declspec(noinline) void func_8025AC1C(UnkKizunaSelfAB* self, u32 a) {
             continue;
         }
 
-        u8 state = (u8)func_8009CF8C(i + 0x608);
+        u8 state = (u8)CtrlRemote_TouchBitByArg(i + 0x608);
         if (state != 0) {
             // Per-state label: pick the format string from the row's tag name.
             // (the tag lookup is repeated in every arm, matching retail)
@@ -1389,7 +1389,7 @@ extern "C" __declspec(noinline) void func_8025BA38(UnkKizunaSelf57D90* selfArg,
         LayoutSetTextBoxFmtValue(self->field8, lbl_eu_8050CB20 + 0xb79, lbl_eu_8050CB20 + 0xd3, 0);
         LayoutSetTextBoxFmtValue(self->field8, lbl_eu_8050CB20 + 0xb6b, lbl_eu_8050CB20 + 0xd3, 0);
         // Hide the root pane fetched through slot 15 of the layout child.
-        func_80124270(reinterpret_cast<nw4r::lyt::Pane*>(
+        setPaneVisible(reinterpret_cast<nw4r::lyt::Pane*>(
                           reinterpret_cast<UnkKizunaLayoutSub57AFC*>(self->field8)
                               ->field10->slot15(lbl_eu_8050CB20 + 0xc16, 1)),
                       0);
@@ -1429,7 +1429,7 @@ extern "C" __declspec(noinline) void func_8025BA38(UnkKizunaSelf57D90* selfArg,
     if (texName != NULL) {
         // Bind the color texture and show the tinted root pane.
         PaneSetTexPaletteByName(self->field8, lbl_eu_8050CB20 + 0xc16, texName);
-        func_80124270(
+        setPaneVisible(
             reinterpret_cast<nw4r::lyt::Pane*>(
                 reinterpret_cast<UnkKizunaLayoutSub57AFC*>(self->field8)
                     ->field10->slot15(lbl_eu_8050CB20 + 0xc16, 1)),
@@ -2096,22 +2096,22 @@ bool CKizunagram::OnFileEvent(CEventFile* pEventFile) {
 #pragma optimize_for_size off
 
 // --- hard-symbol stubs (scaffold_hard_symbols) ---
-// sinit_8025D304: init the 14-color kizuna line palette via func_801C4B60.
+// sinit_8025D304: init the 14-color kizuna line palette via setGXColorS10.
 void sinit_8025D304() {
-    func_801C4B60(&lbl_eu_806647E8, 0x21, 0x1c, 0x15, 0x0);
-    func_801C4B60(&lbl_eu_806647F0, 0xb5, 0xb1, 0xab, 0xff);
-    func_801C4B60(&lbl_eu_806647F8, 0x21, 0x1e, 0x15, 0x0);
-    func_801C4B60(&lbl_eu_80664800, 0xb5, 0xb1, 0xab, 0xff);
-    func_801C4B60(&lbl_eu_80664808, 0x17, 0x21, 0x15, 0x0);
-    func_801C4B60(&lbl_eu_80664810, 0xb3, 0xaf, 0x97, 0xff);
-    func_801C4B60(&lbl_eu_80664818, 0x1c, 0x24, 0x2d, 0x0);
-    func_801C4B60(&lbl_eu_80664820, 0xb5, 0xb1, 0xab, 0xff);
-    func_801C4B60(&lbl_eu_80664828, 0x1c, 0x20, 0x31, 0x0);
-    func_801C4B60(&lbl_eu_80664830, 0xb5, 0xb1, 0xab, 0xff);
-    func_801C4B60(&lbl_eu_80664838, 0x1c, 0x2c, 0x1a, 0x0);
-    func_801C4B60(&lbl_eu_80664840, 0xe5, 0xea, 0xde, 0xff);
-    func_801C4B60(&lbl_eu_80664848, 0x21, 0x1e, 0x15, 0x0);
-    func_801C4B60(&lbl_eu_80664850, 0xb5, 0xb1, 0xab, 0xff);
+    setGXColorS10(&lbl_eu_806647E8, 0x21, 0x1c, 0x15, 0x0);
+    setGXColorS10(&lbl_eu_806647F0, 0xb5, 0xb1, 0xab, 0xff);
+    setGXColorS10(&lbl_eu_806647F8, 0x21, 0x1e, 0x15, 0x0);
+    setGXColorS10(&lbl_eu_80664800, 0xb5, 0xb1, 0xab, 0xff);
+    setGXColorS10(&lbl_eu_80664808, 0x17, 0x21, 0x15, 0x0);
+    setGXColorS10(&lbl_eu_80664810, 0xb3, 0xaf, 0x97, 0xff);
+    setGXColorS10(&lbl_eu_80664818, 0x1c, 0x24, 0x2d, 0x0);
+    setGXColorS10(&lbl_eu_80664820, 0xb5, 0xb1, 0xab, 0xff);
+    setGXColorS10(&lbl_eu_80664828, 0x1c, 0x20, 0x31, 0x0);
+    setGXColorS10(&lbl_eu_80664830, 0xb5, 0xb1, 0xab, 0xff);
+    setGXColorS10(&lbl_eu_80664838, 0x1c, 0x2c, 0x1a, 0x0);
+    setGXColorS10(&lbl_eu_80664840, 0xe5, 0xea, 0xde, 0xff);
+    setGXColorS10(&lbl_eu_80664848, 0x21, 0x1e, 0x15, 0x0);
+    setGXColorS10(&lbl_eu_80664850, 0xb5, 0xb1, 0xab, 0xff);
 }
 
 // Position the kizuna line panes: scale the +0x14 Vec2 by (const - the +0x10
@@ -2172,10 +2172,10 @@ extern "C" __declspec(noinline) bool func_8025A11C(UnkKizunaSelfA11C* self) {
     // (self=r28, str=r26, fp=r31, count=r30, i=r29, tag-const=r27)
     char buf[0x24];
 
-    func_8003AA34();
+    Bdat_GetTable_AA34();
     const char* str = lbl_eu_8050CB20;
     void* fp = getFP__FPCc(str + 0x402);
-    u32 count = func_8003B1EC(fp) & 0xffff;
+    u32 count = Bdat_GetMaxRow_B1EC(fp) & 0xffff;
 
     for (u32 i = 0; i < 0x10; i++) {
         u16 cnt = lbl_eu_8066485A;
@@ -2186,9 +2186,9 @@ extern "C" __declspec(noinline) bool func_8025A11C(UnkKizunaSelfA11C* self) {
         char* rowName = BdatGetPtrDirect(fp, str + 0x411, id);
         nw4r::lyt::Pane* pane =
             (nw4r::lyt::Pane*)self->field0C->field10->target((int)rowName, 1);
-        u32 state = func_8009CF8C(id + 0x608) & 0xff;
+        u32 state = CtrlRemote_TouchBitByArg(id + 0x608) & 0xff;
         if (pane != NULL) {
-            func_80124270(pane, state != 0);
+            setPaneVisible(pane, state != 0);
         }
         if (state == 0) {
             // still locked: just advance the cursor

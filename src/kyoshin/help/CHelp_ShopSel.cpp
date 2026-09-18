@@ -2,6 +2,6 @@
 
 namespace cf {
 void CHelp_ShopSel::checkShopSel() {
-    func_8018B398();
+    MenuShopSellIsCreated();
 }
 } // namespace cf

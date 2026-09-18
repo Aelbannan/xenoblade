@@ -4,10 +4,10 @@
 
 // C-ABI retail symbols. functions.hpp (pulled in via monolib/scn.hpp if
 // CTaskGame.hpp is included) declares the C++-mangled bool f(int) for
-// func_8009CF8C, which would win the C-name resolution and emit a byte-masked
+// CtrlRemote_TouchBitByArg, which would win the C-name resolution and emit a byte-masked
 // return; CTaskGame.hpp is therefore not included here and the two CTaskGame
 // statics are addressed by their literal retail names instead.
-extern "C" u32 func_8009CF8C(u32);
+extern "C" u32 CtrlRemote_TouchBitByArg(u32);
 class CTaskGame;
 extern "C" CTaskGame* getInstance__9CTaskGameFv();
 extern "C" int isFlag01Set__9CTaskGameFv();
@@ -71,35 +71,35 @@ public:
 // Mirrors the CMenuOption/CMenuGCItem pattern for the same helpers. Return
 // types are int (not u8) so callers compare with cmpwi directly (no byte
 // mask), matching retail.
-extern "C" int func_801C4114(CTitleAHelp* self);
+extern "C" int isInitialized(CTitleAHelp* self);
 extern "C" void func_801C4654(CTitleAHelp* self, u32 arg);
-extern "C" void func_801C46B4(CTitleAHelp* self, char* name);
+extern "C" void setInfoText(CTitleAHelp* self, char* name);
 extern "C" void func_801C46DC(CTitleAHelp* self, u32 arg);
 extern "C" void func_801C41E8(CTitleAHelp* self, u8 arg);
 extern "C" void func_801C412C(CTitleAHelp* self);
-extern "C" void func_801C3FF0(CTitleAHelp* self);
-extern "C" int func_80244508(CFade* self);
-extern "C" int func_80244510(CFade* self);
-extern "C" void func_80244518(CFade* self);
-extern "C" void func_80244538(CFade* self);
-extern "C" void func_8024439C(CFade* self);
-extern "C" void func_802443E8(CFade* self);
+extern "C" void updateHelp(CTitleAHelp* self);
+extern "C" int CFade_IsReady(CFade* self);
+extern "C" int CFade_IsVisible(CFade* self);
+extern "C" void CFade_FadeIn(CFade* self);
+extern "C" void CFade_FadeOut(CFade* self);
+extern "C" void CFade_StartLoad(CFade* self);
+extern "C" void CFade_Update(CFade* self);
 extern "C" void func_8024CB94(CFloorMap* self);
-extern "C" u16 func_8024F54C(CFloorMap* self);
+extern "C" u16 FloorMap_GetU16Field5A(CFloorMap* self);
 extern "C" int func_8024CE1C(CFloorMap* self);
 extern "C" void func_8024BE1C(CFloorMap* self);
 extern "C" void func_8024C1FC(CFloorMap* self);
-extern "C" int func_8024F538(CFloorMap* self);
-extern "C" int func_8024F6E0(CFloorMap* self);
-extern "C" u8 func_8024F630(CFloorMap* self);
-extern "C" u8 func_8024F6D8(CFloorMap* self);
+extern "C" int FloorMap_ClassifyByte41(CFloorMap* self);
+extern "C" int FloorMap_CheckRowVisited(CFloorMap* self);
+extern "C" u8 FloorMap_GetBdatMaxRow(CFloorMap* self);
+extern "C" u8 FloorMap_GetField208Plain(CFloorMap* self);
 extern "C" void func_8024F5C4(CFloorMap* self, u32 arg);
-extern "C" u8 func_8024F6BC(CFloorMap* self);
+extern "C" u8 FloorMap_GetField208Gated(CFloorMap* self);
 extern "C" int func_8024F784(CFloorMap* self);
 extern "C" void func_8024CE68(CFloorMap* self);
 extern "C" void func_8024D23C(CFloorMap* self);
 extern "C" void func_8024EE50(CFloorMap* self);
-extern "C" u8 func_8024F554(CFloorMap* self);
+extern "C" u8 FloorMap_GetActiveFlag58(CFloorMap* self);
 extern "C" void func_8024F55C(CFloorMap* self);
 extern "C" void func_8024D614(CFloorMap* self);
 extern "C" void func_8024DA0C(CFloorMap* self);
@@ -126,14 +126,14 @@ extern "C" CMenuMapSelectSC* __dt__16CMenuMapSelectSCFv(CMenuMapSelectSC* _this,
 extern "C" void cbRenderBefore__16CMenuMapSelectSCFv(char* self);
 
 // IScnRender vtable this-adjusting thunks (retail: subi r3, r3, 0x58; b ...).
-void func_80251DE8(IScnRender* self);
-void func_80251DF0(IScnRender* self);
+void MapSelectSCRenderThunk58(IScnRender* self);
+void MapSelectSCDtorThunk58(IScnRender* self);
 
 // World-map phase helpers (retail-unmangled callee names).
-extern "C" void func_80251D4C(CMenuMapSelectSC* self);
-extern "C" void func_80251D94(CMenuMapSelectSC* self);
-extern "C" void func_80251560(CMenuMapSelectSC* self);
-extern "C" void func_802515B8(CMenuMapSelectSC* self);
+extern "C" void MapSelectSCResetFloorMapIdle(CMenuMapSelectSC* self);
+extern "C" void MapSelectSCCommitCursorIdle(CMenuMapSelectSC* self);
+extern "C" void MapSelectSCBeginFadeIn(CMenuMapSelectSC* self);
+extern "C" void MapSelectSCPrepFloorMap(CMenuMapSelectSC* self);
 extern "C" void func_80251628(CMenuMapSelectSC* self);
 extern "C" void func_802516DC(CMenuMapSelectSC* self);
 
@@ -149,10 +149,10 @@ extern "C" void func_8024F1FC(CFloorMap* self, u8 mapIdx);
 extern "C" void func_8024C104(CFloorMap* self);
 extern "C" void func_8024C8F8(CFloorMap* self, nw4r::lyt::DrawInfo* drawInfo);
 // CTitleAHelp / CFade draw + reset helpers.
-extern "C" void func_801C40A0(CTitleAHelp* self);
-extern "C" void func_801C4080(CTitleAHelp* self, nw4r::lyt::DrawInfo* drawInfo);
-extern "C" void func_80244460(CFade* self, nw4r::lyt::DrawInfo* drawInfo);
-extern "C" void func_8024448C(CFade* self);
+extern "C" void teardown(CTitleAHelp* self);
+extern "C" void drawHelp(CTitleAHelp* self, nw4r::lyt::DrawInfo* drawInfo);
+extern "C" void CFade_Draw(CFade* self, nw4r::lyt::DrawInfo* drawInfo);
+extern "C" void CFade_Unload(CFade* self);
 // UI/sound + scene-active helpers.
 extern "C" void func_8013EC6C(u32 a, u32 b);
 extern "C" int IsMenuState621F0();

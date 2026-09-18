@@ -38,29 +38,29 @@ struct CfResTboxImplPrefix {
 class __declspec(novtable) CfResTboxImpl : public CfResTboxImplPrefix {
 public:
     virtual ~CfResTboxImpl();                // 0x08
-    virtual void func_801F91B4();            // 0x0C
+    virtual void ResTbox_CacheNullPtmfOnce();            // 0x0C
     virtual void CfResObj_noop10();            // 0x10
-    virtual int func_8016C860();             // 0x14
+    virtual int ResObj_IsInUse_C860();             // 0x14
     virtual void CfObjectMove_relaySubB0Slot14();            // 0x18
-    virtual void func_8016CD64();            // 0x1C
-    virtual int func_801F8E70();             // 0x20
+    virtual void ResObj_Noop_CD64();            // 0x1C
+    virtual int ResTbox_GetFixedSize256();             // 0x20
     virtual void CfResObj_noop24();            // 0x24
     virtual void CfResObj_noop28();            // 0x28
     virtual void CfResObj_noop2C();         // 0x2C
-    virtual void func_8016CD68(int idx, int value); // 0x30
-    virtual u32 func_8016CCBC(int idx);      // 0x34
+    virtual void ResObj_SetWork_CD68(int idx, int value); // 0x30
+    virtual u32 ResObj_GetWork_CCBC(int idx);      // 0x34
     virtual void CfResObj_false38();            // 0x38
     virtual void CfResObj_unk3C();            // 0x3C
     virtual void CfResObj_noop40();            // 0x40
     virtual void CfResObj_noop44();            // 0x44
     virtual void CfResObj_unk48();            // 0x48
     virtual void CfResObj_unk4C();            // 0x4C
-    virtual void func_8016CD5C();            // 0x50
-    virtual void func_8016C888(int a, int b, int c, float f1, float f2); // 0x54
+    virtual void ResObj_ZeroStubB_CD5C();            // 0x50
+    virtual void ResObj_NotifySound_C888(int a, int b, int c, float f1, float f2); // 0x54
     virtual void CfResObj_noop58();            // 0x58
     virtual void CfResObj_unk5C();            // 0x5C
-    virtual int func_801F8E78();             // 0x60
-    virtual int func_8016CD54();             // 0x64
+    virtual int ResTbox_NegInUseState();             // 0x60
+    virtual int ResObj_ZeroStubA_CD54();             // 0x64
     virtual int CfResObj_true68();             // 0x68
 
     CfResTboxImplVtbl*& vtbl() {
@@ -109,7 +109,7 @@ extern "C" char* CfRes_getInstPtr29C();
 extern "C" u8* CfRes_findEntryById(ResInfoEntry* entry, u32 id);
 extern "C" u8* CfRes_lookupStrTable(char* key, int index, u32** out);
 extern "C" u8* scnImN4BuildByIdx(u8* global, u8* handle, int a, int b, int c, int d);
-extern "C" void func_800BBADC(cf::CfResTboxParent* parent, u8* handle);
-extern "C" u8* func_800584B8(u32 global, u32 id, const char* name);
+extern "C" void CfModel_InstallSub(cf::CfResTboxParent* parent, u8* handle);
+extern "C" u8* initMcaFile(u32 global, u32 id, const char* name);
 extern "C" int CfRes_getD80Flag();
 extern "C" void CfObjectMove_setMoveSpeedGated(cf::CfObjectMove* player, float value);

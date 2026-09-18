@@ -69,8 +69,8 @@ public:
     void cbRenderBefore();
 
     // IScnRender vtable this-adjusting thunk for cbRenderBefore
-    // implemented as a free function in the .cpp (retail symbol func_8024309C).
-    void func_802430A4();
+    // implemented as a free function in the .cpp (retail symbol fwdMapSelectCbRender).
+    void fwdMapSelectDtor();
 
     CMenuMapSelect();
     void func_80242368();

@@ -13,9 +13,9 @@
 //
 // The secondary vtable at offset 0x14 is a callback interface used by the
 // effect system. It has 3 virtual functions:
-//   vtable[0]: dtor (thunk: func_80185688, adjusts this by -0x14)
-//   vtable[1]: callback (thunk: func_80185680, adjusts this by -0x14)
-//   vtable[2]: callback (direct: func_801855C4)
+//   vtable[0]: dtor (thunk: EvtFx_ThunkDtor, adjusts this by -0x14)
+//   vtable[1]: callback (thunk: EvtFx_ThunkDetach, adjusts this by -0x14)
+//   vtable[2]: callback (direct: EvtFx_DetachEffect)
 //
 // Total size: 0x144
 
@@ -130,17 +130,17 @@ extern "C" void* EvtSeqResolveListEntryAddr(u32 arg);
 extern "C" void* EvtSeqFindEventByNameData(void* ptr);
 extern "C" int EvtSeqGetCounter100();
 extern "C" bool EvtSeqIsSlotIndexFour();
-extern "C" bool func_80180954();
+extern "C" bool REvtCam_GetFieldA5Flag();
 extern "C" void func_8016AF4C(void* obj, const char* name, s32* out);
 
 // Effect system
-extern "C" void func_804CC1BC(void* mgr, void* data);
-extern "C" void func_804CC1D8(void* mgr, void* data);
+extern "C" void EffSched_LookupA(void* mgr, void* data);
+extern "C" void EffSched_LookupB(void* mgr, void* data);
 extern "C" void* func_804CC1F4(void* mgr, void* bdat, void* global, int r6, int r7, int r8);
-extern "C" void func_804E3CCC(void* effect);
-extern "C" void func_804E3D0C(void* effect, void* parent);
-extern "C" void func_804E3CDC(void* effect, f32 f1, f32 f2);
-extern "C" void func_804E3D48(void* effect, void* parent);
+extern "C" void schedClearFlag15Update(void* effect);
+extern "C" void schedAttachChildSlot(void* effect, void* parent);
+extern "C" void schedSetStepIntervals(void* effect, f32 f1, f32 f2);
+extern "C" void schedDetachChildSlot(void* effect, void* parent);
 
 // Model / animation
 extern "C" nw4r::g3d::ChrAnmResult* scnImN4AnimFn(void* model, const char* animName, f32 time);
@@ -182,6 +182,6 @@ extern "C" {
 
 // Same-TU forward declarations (functions defined in CREvtEffect.cpp; extern
 // "C" keeps callers emitting real unmangled bl branches to the retail symbols)
-extern "C" void func_80184D90(CREvtEffect* self);
+extern "C" void EvtFx_RefreshChrAnim(CREvtEffect* self);
 extern "C" bool func_80184F90(CREvtEffect* self);
 extern "C" void func_8018515C(CREvtEffect* self);

@@ -14,4 +14,4 @@ struct CScheduleItemPool {
 
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
 extern "C" CScheduleItemPool lbl_eu_80661718;
-extern "C" void func_804E3E2C(CScheduleItem* item);
+extern "C" void schedReleaseItemSlots(CScheduleItem* item);

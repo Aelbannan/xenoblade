@@ -3,7 +3,7 @@
 namespace cf {
 
 void CHelp_CloseQuestMenu::checkCloseQuestMenu() {
-    this->func_802B7CBC(func_80122450() == 0);
+    this->func_802B7CBC(hasQuestWindow() == 0);
 }
 
 } // namespace cf

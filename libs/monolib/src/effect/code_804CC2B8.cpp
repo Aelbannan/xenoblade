@@ -27,13 +27,13 @@ extern f32 lbl_eu_8066B11C;
 extern f32 lbl_eu_8066B128;
 extern f32 lbl_eu_8066B130;
 extern f32 lbl_eu_8066B134;
-extern "C" u32 func_804EEACC(void* link);
-extern "C" void* func_804E0168(s32 arg);
+extern "C" u32 lytBindCanResolveTarget(void* link);
+extern "C" void* SchedNode_FetchSlotPtr(s32 arg);
 extern "C" void func_804DF164(void* res, s32 index, s32 cacheIndex, s32 wrap);
 extern "C" void func_804BE4E0(void* dst, int index);
-extern "C" void func_804D920C(ml::CMat34* out);
-extern "C" void func_804D9274(Mtx mtx);
-extern "C" void func_804D927C(Mtx mtx, const void* obj);
+extern "C" void SysCacheStoreIdentityMat(ml::CMat34* out);
+extern "C" void cerandRotateX90Wrapper(Mtx mtx);
+extern "C" void cerandTransposeObjCC(Mtx mtx, const void* obj);
 extern "C" void func_804D928C(Mtx mtx, const u8* obj);
 #include "monolib/math/FloatUtils.hpp"
 extern f32 lbl_eu_8066B0FC;
@@ -92,11 +92,11 @@ void func_804F0F2C(void* desktop, f32 alpha, const ml::CVec3* pos, const TexDraw
 
 // Light/material processor blocks driven by func_804CCA64 (one call per block).
 extern "C" void func_804E1044(void* blk, void* src, void* mat, f32 v);
-extern "C" void func_804E18CC(void* blk, void* src, void* mat, f32 v);
-extern "C" void func_804E1A44(void* blk, void* src, void* mat, f32 v);
+extern "C" void SchedAnim_AdvanceCursor(void* blk, void* src, void* mat, f32 v);
+extern "C" void SchedAnim_RefreshSlotHandles(void* blk, void* src, void* mat, f32 v);
 extern "C" void func_804E1C1C(void* blk, void* src, void* mat, f32 v);
-extern "C" void func_804E2EAC(void* blk, void* src, void* mat, f32 v);
-extern "C" void func_804E2088(void* blk, void* src, void* mat, f32 v);
+extern "C" void SchedAnim_RefreshScaleVec(void* blk, void* src, void* mat, f32 v);
+extern "C" void SchedAnim_LerpVec24(void* blk, void* src, void* mat, f32 v);
 extern "C" void func_804E24A8(void* blk, void* src, void* mat, f32 v);
 extern "C" void func_804E2A5C(void* blk, void* src, void* mat, f32 v);
 extern f32 lbl_eu_8066B0F8;
@@ -118,7 +118,7 @@ struct IVec3 {
     u32 x, y, z;
 };
 // Split word/double-word view: member-wise copy emits the pipelined
-// load-x, load-y/z, store order seen in func_804CE418.
+// load-x, load-y/z, store order seen in EffFxTransformStoredDir.
 struct VecWords {
     u32 x;
     u64 yz;
@@ -130,8 +130,8 @@ extern f32 lbl_eu_8066B114;
 extern f32 lbl_eu_8066B118;
 extern f32 lbl_eu_8066B11C;
 extern "C" u32* func_804E2B54(void* a, void* b);
-extern "C" void* func_804BE538(void* p);
-extern "C" s32 func_804BE398(void* p, u32 a, u32 b, u32 c, f32 f1, f32 f2);
+extern "C" void* ScnRes_ProjThunk_E538(void* p);
+extern "C" s32 ScnRes_VertRayForward_E398(void* p, u32 a, u32 b, u32 c, f32 f1, f32 f2);
 
 // Bitfield views of the u16 flag word at offset 0x06. MWCC allocates bitfields
 // MSB-first, so the first declared member is bit 15 (0x8000). Reads emit the
@@ -316,7 +316,7 @@ extern "C" void func_804D8160(CETrailLight* self, void* arg, s32 mode,
 
 // Trail driver imports (defined in CETrail.cpp).
 struct CETrail;
-extern "C" void func_804D73FC(CETrail* t);
+extern "C" void Trail_ReleaseLinks(CETrail* t);
 extern "C" void func_804D7434(CETrail* t, s32 mode, const u8* color);
 extern "C" void func_804D77E4(CETrail* t, const Mtx* M, f32 f,
                               const ml::CVec4* scale, const ml::CVec4* out);
@@ -341,14 +341,14 @@ struct Node2Control {
     Node2* field_0x04;
 };
 
-// 3D segment-vs-region test used by func_804CDE50 / func_804CDD78.
+// 3D segment-vs-region test used by EffFxTestSegmentRegionB / EffFxTestSegmentRegionA.
 extern "C" s32 func_804CDF20(void* self, Vec* a, Vec* b, Vec* c);
 
 // Per-node quad emit used by the type-0xc walker (matrix/color payload draw).
 extern "C" void func_804EEB40(void* matId, Vec* a, void* color, Vec* b, s32 flagA,
                                s32 flagB, TexMtxSrc* src, f32 f2, f32 f3);
 
-extern "C" void func_804CD0A4(EffectStruct* self) DECOMP_DONT_INLINE;
+extern "C" void EffFxAccumNodeWeight(EffectStruct* self) DECOMP_DONT_INLINE;
 
 // Larger scene/effect layout used by targets 3, 8, 9, 10. Only fields touched
 // by the reconstructed functions are declared.
@@ -577,7 +577,7 @@ struct EffectScene {
 };
 
 // Retail: lwz r3,0(r3); blr  - returns the node/scene type from field_0x00.
-extern "C" s32 __attribute__((never_inline)) func_804CC800(const SceneSubObj* self) { return self->field_0x00; }
+extern "C" s32 __attribute__((never_inline)) EffFxGetSceneClass(const SceneSubObj* self) { return self->field_0x00; }
 
 // Sample/tone table node for func_804CD9EC (r8): s16 values, a u8 flag and a f32 scale.
 struct ToneNode {
@@ -666,9 +666,9 @@ extern "C" void __attribute__((never_inline)) func_804CDB2C(EffectScene* self, V
     s32 r = pf ? *(volatile u8*)(pf - 0xf) : 0;
     if (self->field_0x18 <= lbl_eu_8066B0DC) r = 0;
     if (*(const f32*)&self->field_0x10 <= lbl_eu_8066B0D8) r = 3;
-    func_804EE60C(&self->field_0xdc);
+    lytBindRefreshPlayer(&self->field_0xdc);
     if ((r & 0xFF) != 0) {
-        node = func_804E0114((s16)self->field_0x04);
+        node = SchedNode_FetchByIndex((s16)self->field_0x04);
         if (r & 2) func_804EE658(&self->field_0xdc, node);
         if (r & 1) func_804EE8FC(&self->field_0xdc, node);
     }
@@ -755,7 +755,7 @@ void func_804CC808(EffectScene* self, const SrcMtx* src) {
     u8* pf = (u8*)sub->field_0xf8;
     u32 c = pf ? (u32)(pf - 8) : 0;
     u32 b = pf ? *(u8*)(pf - 0x10) : 0;
-    func_804EE558(&self->field_0xdc, self->field_0x08, b, c, 0);
+    lytBindSetupForPane(&self->field_0xdc, self->field_0x08, b, c, 0);
     self->field_0xb8 = ml::CVec3::zero;
     self->field_0x06 = (u16)(self->field_0x06 | 0x800);
 }
@@ -767,48 +767,48 @@ extern "C" void func_804DD5B0(Mtx* out, f32 a);
 // Forward decls for the target-3 frame pipeline. The retail functions are
 // unmangled linker names, so they need C linkage (the map names them func_*).
 extern "C" {
-void __attribute__((never_inline)) func_804CE418(EffectScene* self, Vec* out);
+void __attribute__((never_inline)) EffFxTransformStoredDir(EffectScene* self, Vec* out);
 void __attribute__((never_inline)) func_804CD0CC(EffectScene* self);
 void __attribute__((never_inline)) func_804CD9EC(EffectScene* self);
 void __attribute__((never_inline)) func_804CDB2C(EffectScene* self, Vec* p1);
-void __attribute__((never_inline)) func_804CDD78(EffectScene* self, const Vec* p2, const Vec* p3);
-void __attribute__((never_inline)) func_804CDE50(EffectScene* self, const Vec* p2, const Vec* p3);
+void __attribute__((never_inline)) EffFxTestSegmentRegionA(EffectScene* self, const Vec* p2, const Vec* p3);
+void __attribute__((never_inline)) EffFxTestSegmentRegionB(EffectScene* self, const Vec* p2, const Vec* p3);
 
 void __attribute__((never_inline)) func_804CE160(EffectScene* self, const ml::CVec3* a, const ml::CVec3* b);
 void __attribute__((never_inline)) func_804CE140(EffectScene* self);
 void __attribute__((never_inline)) func_804CE264(EffectScene* self, Vec* p1, Vec* p3);
-void __attribute__((never_inline)) func_804CE388(EffectScene* self, Vec* p);
-void __attribute__((never_inline)) func_804CE3E8(EffectScene* self);
+void __attribute__((never_inline)) EffFxDriveAttachedLight(EffectScene* self, Vec* p);
+void __attribute__((never_inline)) EffFxArmNodeFlag40(EffectScene* self);
 void __attribute__((never_inline)) func_804CFBC8(EffectScene* self, class CFBC8Target* obj,
                                                  const ml::CMat34* a, Vec* d, const f32* c,
                                                  bool flag);
 }
 
 // Target 3: process a frame of the firework/placer scene if the b11 flag is set.
-void func_804CCF84(EffectScene* self) {
+void EffFxSceneTickDispatch(EffectScene* self) {
     if (!((SceneFlagBits*)&self->field_0x06)->b11) return;
-    s32 type = (s32)func_804CC800(self->field_0x0c);
+    s32 type = (s32)EffFxGetSceneClass(self->field_0x0c);
     Vec stackA;
     Vec stackB;
     noopAnimVec3(&stackA);
     noopAnimVec3(&stackB);
     ((SceneFlagBits*)&self->field_0x06)->b9 = 0;
-    func_804CE418(self, &stackB);
+    EffFxTransformStoredDir(self, &stackB);
     func_804CD0CC(self);
     func_804CD9EC(self);
     func_804CDB2C(self, &stackB);
-    func_804CE418(self, &stackA);
+    EffFxTransformStoredDir(self, &stackA);
     if (lbl_eu_8066B0D8 < *(const f32*)&self->field_0x10) {
-        func_804CDD78(self, &stackB, &stackA);
-        func_804CDE50(self, &stackB, &stackA);
+        EffFxTestSegmentRegionA(self, &stackB, &stackA);
+        EffFxTestSegmentRegionB(self, &stackB, &stackA);
     }
     if (!((SceneFlagBits*)&self->field_0x06)->b14) {
         func_804CE140(self);
     }
     func_804CE160(self, (const ml::CVec3*)&stackB, (const ml::CVec3*)&stackA);
     func_804CE264(self, &stackA, &self->field_0x190);
-    if (type == 0xd) func_804CE388(self, &stackA);
-    if (type == 0x8) func_804CE3E8(self);
+    if (type == 0xd) EffFxDriveAttachedLight(self, &stackA);
+    if (type == 0x8) EffFxArmNodeFlag40(self);
 }
 
 // Target 4 (func_804CD0CC): per-frame position update. Non-special scenes
@@ -1057,7 +1057,7 @@ extern "C" void __attribute__((never_inline)) func_804CD0CC(EffectScene* self) {
     self->field_0xac.z = invOut.z;
 }
 
-extern "C" void __attribute__((never_inline)) func_804CDE50(EffectScene* self, const Vec* p2, const Vec* p3) {
+extern "C" void __attribute__((never_inline)) EffFxTestSegmentRegionB(EffectScene* self, const Vec* p2, const Vec* p3) {
     SceneSubObj* sub = self->field_0x0c;
     u32 cls = sub->field_0x00;
     if ((u32)(cls - 9) <= 2) return;
@@ -1122,7 +1122,7 @@ extern "C" s32 __attribute__((never_inline)) func_804CDF20(void* self, Vec* a, V
     return 0;
 }
 
-extern "C" void __attribute__((never_inline)) func_804CDD78(EffectScene* self, const Vec* p2, const Vec* p3) {
+extern "C" void __attribute__((never_inline)) EffFxTestSegmentRegionA(EffectScene* self, const Vec* p2, const Vec* p3) {
     if (((SceneFlagBits*)&self->field_0x06)->b8) return;
     Vec res;
     Vec out;
@@ -1143,10 +1143,10 @@ extern "C" void __attribute__((never_inline)) func_804CDD78(EffectScene* self, c
     *(volatile f32*)&self->field_0x1c = z;
 }
 
-// Forward decls used by func_804CE264 and func_804CCF84.
+// Forward decls used by func_804CE264 and EffFxSceneTickDispatch.
 extern "C" {
-u32 __attribute__((never_inline)) func_804CE378(const SceneSubObj* self);
-u32 __attribute__((never_inline)) func_804CE380(const SceneSubObj* self);
+u32 __attribute__((never_inline)) EffFxGetSubWord04(const SceneSubObj* self);
+u32 __attribute__((never_inline)) EffFxGetSubWord5C(const SceneSubObj* self);
 void __attribute__((never_inline)) func_804CE4C0(EffectScene* self, Mtx* a, u32 type, Vec* p3);
 void __attribute__((never_inline)) func_804CE9A4(EffectScene* self, Mtx* a, Mtx* b, u32 type, Vec* p1,
                    Mtx* spA, Vec* spB);
@@ -1160,7 +1160,7 @@ void __attribute__((never_inline)) func_804CE79C(EffectScene* self, Vec* out, u3
 // TK func_804CE264: builds a stack matrix + vector, feeds child position/type
 // helpers, sets a flag bit from field_0x1d8, then posts updates.
 extern "C" void __attribute__((never_inline)) func_804CE264(EffectScene* self, Vec* p1, Vec* p3) {
-    u32 type = func_804CE378(self->field_0x0c);
+    u32 type = EffFxGetSubWord04(self->field_0x0c);
     Mtx stackA;
     Vec stackB;
     cfCam_nopCtorSlot((Vec*)&stackA);
@@ -1178,7 +1178,7 @@ extern "C" void __attribute__((never_inline)) func_804CE264(EffectScene* self, V
         func_804CFBC8(self, (CFBC8Target*)self->field_0x32c,
                       (const ml::CMat34*)&self->field_0x19c, &stackB,
                       (const f32*)&self->field_0x1cc,
-                      func_804CE380((const SceneSubObj*)self->field_0x08) != 0);
+                      EffFxGetSubWord5C((const SceneSubObj*)self->field_0x08) != 0);
     }
 }
 
@@ -1263,7 +1263,7 @@ extern "C" void __attribute__((never_inline)) func_804CE9A4(EffectScene* self, M
             if (b != 0) {
                 f32 f0 =
                     (sub->field_0x110 != 0) ? *(f32*)((u8*)sub->field_0x110 - 0x18) : lbl_eu_8066B0D8;
-                if (func_804BE398(p1, 0x4801, 0, 0, -f0, lbl_eu_8066B0DC) != 0) {
+                if (ScnRes_VertRayForward_E398(p1, 0x4801, 0, 0, -f0, lbl_eu_8066B0DC) != 0) {
                     Vec v8;
                     func_804BE4E0(&v8, 0);
                     Vec ang;
@@ -1282,7 +1282,7 @@ extern "C" void __attribute__((never_inline)) func_804CE9A4(EffectScene* self, M
     s32 mtxFlag = 0;
     if (tp == 0 || tp == 6) {
         void* obj = Scn_FindCamItem(*(void**)((u8*)self->field_0x08 + 0x10), -1);
-        func_804D927C(mtx1a0, obj);
+        cerandTransposeObjCC(mtx1a0, obj);
         mtxFlag = 1;
     } else if (tp == 1 || tp == 7) {
         void* obj = Scn_FindCamItem(*(void**)((u8*)self->field_0x08 + 0x10), -1);
@@ -1305,14 +1305,14 @@ extern "C" void __attribute__((never_inline)) func_804CE9A4(EffectScene* self, M
     case 6:
     case 7:
     case 8:
-        func_804D920C((ml::CMat34*)a);
+        SysCacheStoreIdentityMat((ml::CMat34*)a);
         break;
     case 3:
     case 4:
     case 5:
     case 9:
     case 10:
-        func_804D9274(*a);
+        cerandRotateX90Wrapper(*a);
         break;
     default:
         break;
@@ -1419,7 +1419,7 @@ extern "C" void __attribute__((never_inline)) func_804CE9A4(EffectScene* self, M
 extern "C" void __attribute__((never_inline)) func_804CF700(EffectScene* self, f32* out, Vec* p1) {
     // Light-color update: gate on the object's 0x4000 flag, otherwise zero the
     // 4-float output. Base color comes from obj+0x40; an optional per-frame
-    // factor (func_804BE398/538 chain) scales it, func_804E2B54 blends the
+    // factor (ScnRes_VertRayForward_E398/538 chain) scales it, func_804E2B54 blends the
     // final color, and a distance falloff weights the alpha channel.
     CF700Obj* obj = (CF700Obj*)self->field_0x08;
     // Retail materializes the gate bit as -bit|bit >> 31 before branching.
@@ -1448,9 +1448,9 @@ extern "C" void __attribute__((never_inline)) func_804CF700(EffectScene* self, f
             u8* p110 = (u8*)sub->field_0x110;
             if (p110 != 0) {
                 f32 f0 = p110 ? *(f32*)(p110 - 0x18) : lbl_eu_8066B0D8;
-                if (func_804BE398(p1, 0x4801, 0, 0, -f0, lbl_eu_8066B0DC) != 0) {
+                if (ScnRes_VertRayForward_E398(p1, 0x4801, 0, 0, -f0, lbl_eu_8066B0DC) != 0) {
                     ml::CVec3 v24;
-                    if (func_804BE538(&v24) != 0) {
+                    if (ScnRes_ProjThunk_E538(&v24) != 0) {
                         // Optional material tint re-read from field_0x114.
                         u8* pm = (u8*)((EffectScene*)self)->field_0x0c->field_0x114;
                         if (pm != 0) {
@@ -1644,16 +1644,16 @@ void func_804CFBC8(EffectScene* self, CFBC8Target* obj, const ml::CMat34* a, Vec
 
 // The retail calls these as real functions; -inline auto would otherwise fold
 // the stub bodies into the callers (the retail never inlines them).
-extern "C" u32 __attribute__((never_inline)) func_804CE378(const SceneSubObj* self) {
+extern "C" u32 __attribute__((never_inline)) EffFxGetSubWord04(const SceneSubObj* self) {
     return *(u32*)((u8*)self + 0x4);
 }
 
-extern "C" u32 __attribute__((never_inline)) func_804CE380(const SceneSubObj* self) { return *(u32*)((u8*)self + 0x5c); }
+extern "C" u32 __attribute__((never_inline)) EffFxGetSubWord5C(const SceneSubObj* self) { return *(u32*)((u8*)self + 0x5c); }
 
 // Target 2: us-804d24fc - drive the attached light (field_0x330) when the
 // sub-object has a tone table (field_0x110). The 0x29c/0x2a0/0x2a4 values are
 // type-punned floats; 0x2a4 is truncated to an int mode.
-extern "C" void __attribute__((never_inline)) func_804CE388(EffectScene* self, Vec* p) {
+extern "C" void __attribute__((never_inline)) EffFxDriveAttachedLight(EffectScene* self, Vec* p) {
     if (self->field_0x330 != 0 && self->field_0x0c->field_0x110 != 0) {
         func_804D8160((CETrailLight*)self->field_0x330, p,
                       (s32)*(f32*)&self->field_0x2a4,
@@ -1680,7 +1680,7 @@ extern "C" void __attribute__((never_inline)) func_804CE160(EffectScene* self, c
     }
 }
 
-extern "C" void __attribute__((never_inline)) func_804CE418(EffectScene* self, Vec* out) {
+extern "C" void __attribute__((never_inline)) EffFxTransformStoredDir(EffectScene* self, Vec* out) {
     // Volatile pins the word load order (x then y) and keeps z's load after
     // the first two stores, matching retail's pipelined copy.
     u32 vx = *(u32*)&self->field_0xac.x;
@@ -1739,13 +1739,13 @@ extern "C" void __attribute__((never_inline)) func_804CE79C(EffectScene* self, V
         SubObjFlags* fl = (SubObjFlags*)&sub->field_0x1c;
         if (!fl->b9 && fl->b10) {
             if (self->field_0x258 >= 0) {
-                U16Pair* p = func_804DF2A8(*(const void**)((u8*)self->field_0x08 + 0x0c));
+                U16Pair* p = SchedRes_EntryByIndex(*(const void**)((u8*)self->field_0x08 + 0x0c));
                 s32 ib = p->b;
                 s32 ia = p->a;
                 out->x = out->x * (f32)ib;
                 out->y = out->y * (f32)ia;
             } else if (self->field_0x25a >= 0) {
-                U16Pair* p = func_804DF2A8(*(const void**)((u8*)self->field_0x08 + 0x0c));
+                U16Pair* p = SchedRes_EntryByIndex(*(const void**)((u8*)self->field_0x08 + 0x0c));
                 s32 ib = p->b;
                 s32 ia = p->a;
                 out->x = out->x * (f32)ib;
@@ -1828,17 +1828,17 @@ extern "C" void __attribute__((never_inline)) func_804D01E0(EffectScene* self, v
     GateFlags* flb = (GateFlags*)&self->field_0x06;
     s32 ok = 0;
     if ((s32)sub->field_0x04 == 5) {
-        if (flb->g0800) ok = func_804EEACC(&self->field_0xdc) != 0;
+        if (flb->g0800) ok = lytBindCanResolveTarget(&self->field_0xdc) != 0;
     } else {
         if (flb->g4000) {
             if (flb->g0200) {
-                if (flb->g0800) ok = func_804EEACC(&self->field_0xdc) != 0;
+                if (flb->g0800) ok = lytBindCanResolveTarget(&self->field_0xdc) != 0;
             }
         }
     }
     if (!ok) return;
 
-    RenderNode* node = (RenderNode*)func_804E0168(self->field_0x00);
+    RenderNode* node = (RenderNode*)SchedNode_FetchSlotPtr(self->field_0x00);
     *(MtxCopy*)&node->mtx = *(MtxCopy*)&self->field_0x19c;
     // Byte-scaled RGBA staged through a 4-byte color struct copy.
     GXColor col;
@@ -1905,7 +1905,7 @@ extern "C" void __attribute__((never_inline)) func_804D01E0(EffectScene* self, v
         break;
     }
 
-    RenderNode* node2 = (RenderNode*)func_804E0168(self->field_0x00);
+    RenderNode* node2 = (RenderNode*)SchedNode_FetchSlotPtr(self->field_0x00);
     f32 c0 = lbl_eu_8066B0D8;
     f32 c1 = lbl_eu_8066B0D8;
     f32 c2 = lbl_eu_8066B0D8;
@@ -2040,11 +2040,11 @@ extern "C" void __attribute__((never_inline)) func_804D0AB4(EffectScene* self, s
     SceneFlagBits* flb = (SceneFlagBits*)&self->field_0x06;
     s32 ok = 0;
     if ((s32)self->field_0x0c->field_0x04 == 5 || (flb->b15 && flb->b10)) {
-        if (flb->b11) ok = func_804EEACC(&self->field_0xdc) != 0;
+        if (flb->b11) ok = lytBindCanResolveTarget(&self->field_0xdc) != 0;
     }
     if (!ok) return;
 
-    RenderNode* node = (RenderNode*)func_804E0168(self->field_0x00);
+    RenderNode* node = (RenderNode*)SchedNode_FetchSlotPtr(self->field_0x00);
     *(MtxCopy*)&node->mtx = *(MtxCopy*)&self->field_0x19c;
     // Byte-scaled RGBA staged through a 4-byte color struct copy.
     GXColor col;
@@ -2107,7 +2107,7 @@ extern "C" void __attribute__((never_inline)) func_804D0AB4(EffectScene* self, s
         break;
     }
 
-    func_804E0168(self->field_0x00);
+    SchedNode_FetchSlotPtr(self->field_0x00);
     s32 texgens = 0;
     if (self->field_0x258 >= 0) {
         func_804DF164((void*)(u32)index, self->field_0x258, 0, self->field_0x0c->field_0x40);
@@ -2196,7 +2196,7 @@ extern "C" void __attribute__((never_inline)) func_804D0AB4(EffectScene* self, s
     curCol.a = (u8)(s32)(cscale * self->field_0x1d8);
 
     while ((s16)index < count) {
-        walk = func_804E0114(walk->field_0x02);
+        walk = SchedNode_FetchByIndex(walk->field_0x02);
         if (walk == 0) break;
         EffectScene* nsc = (EffectScene*)walk;
         Vec ndir1 = {cDirX, cZero, cZero};
@@ -2306,12 +2306,12 @@ extern "C" void func_804E214C(CSchedAnimItem* item, u8* base, bool sel);
 extern "C" void func_804E26D8(CSchedAnimItem* item, u8* base);
 extern "C" void func_804E2D8C(CSchedAnimItem* item, u8* base);
 // Resource lookup query (code_804DEDA8.cpp).
-extern "C" s32 func_804DF2C4(void* lookup, void* a, s32 index);
+extern "C" s32 SchedRes_ResetAnimViaTable(void* lookup, void* a, s32 index);
 // CETrail constructor (CETrail.cpp; retail linker name).
 extern "C" void* __dt__804D6C60(CETrail* t, u32 count, s32 segCount, void* linkArg,
                                 u32 dataA, u32 dataB, bool flag158, u32 id15C);
 // Light attachment init (CETrail.cpp).
-extern "C" CETrailLight* func_804D807C(CETrailLight* self, void* parent);
+extern "C" CETrailLight* TrailLight_Init(CETrailLight* self, void* parent);
 
 // Target 3: initialise an effect scene from a source node entry. Seeds the
 // flag word (two fixed bits, one bit from the source entry, one random bit),
@@ -2373,7 +2373,7 @@ void func_804CC3A4(EffectScene* out, const EffSrc3* src) {
     if ((((SceneSubObj*)out->field_0x0c)->field_0x1c >> 10) & 1) {
         MatFlags* obj = (MatFlags*)out->field_0x08;
         out->field_0x32c =
-            (void*)func_804DF2C4(obj->field_0x0c, obj->field_0x10,
+            (void*)SchedRes_ResetAnimViaTable(obj->field_0x0c, obj->field_0x10,
                                  (s32)out->field_0x258);
     }
 
@@ -2402,7 +2402,7 @@ void func_804CC3A4(EffectScene* out, const EffSrc3* src) {
         if (mtl::MemManager::getMaxAllocSize(h) >= 8) {
             light = (CETrailLight*)mtl::MemManager::allocate(8, h);
             if (light != 0) {
-                light = func_804D807C(light, ((MatFlags*)out->field_0x08)->field_0x10);
+                light = TrailLight_Init(light, ((MatFlags*)out->field_0x08)->field_0x10);
             }
         }
         out->field_0x330 = light;
@@ -2442,7 +2442,7 @@ void func_804CC3A4(EffectScene* out, const EffSrc3* src) {
 }
 
 // Per-type node-walk advance helpers (retail C-linkage names). Each advances
-// the node chain one step; the render-dispatch (func_804D42B8) calls them with
+// the node chain one step; the render-dispatch (EffFxRenderDispatch) calls them with
 // (node, arg). Stub bodies - separate targets (us-804d5a10 / 6260 / 6804 /
 // 6cd4 / 720c / 7790).
 // Trail-draw entry: same visibility gate as the other node-walk renderers,
@@ -2469,7 +2469,7 @@ extern "C" void __attribute__((never_inline)) func_804D189C(EffectNode* nodeRaw,
         if (!(self->field_0x06 & 0x800))
             ok = 0;
         else
-            ok = func_804EEACC(&self->field_0xdc) != 0;
+            ok = lytBindCanResolveTarget(&self->field_0xdc) != 0;
     }
     if (ok == 0) return;
     if (self->field_0x328 == 0) return;
@@ -2486,14 +2486,14 @@ extern "C" void __attribute__((never_inline)) func_804D189C(EffectNode* nodeRaw,
         v.z = (f32)(cnvB.d - lbl_eu_8066B0E8) - lbl_eu_8066B0D8;
         cnvA.w[1] = (u8*)self->field_0x0c->field_0x108 ? *((u8*)self->field_0x0c->field_0x108 - 1) : 1;
         v.w = (f32)(cnvA.d - lbl_eu_8066B0E8) - lbl_eu_8066B0D8;
-        func_804D73FC((CETrail*)self->field_0x328);
+        Trail_ReleaseLinks((CETrail*)self->field_0x328);
         func_804D77E4((CETrail*)self->field_0x328, (const Mtx*)&self->field_0x19c,
                       *(f32*)&self->field_0x29c,
                       (const ml::CVec4*)&self->field_0x268, &v);
         ((SceneFlagBits*)&self->field_0x06)->b9 = 0;
     }
 
-    RenderNode* node = (RenderNode*)func_804E0168(self->field_0x00);
+    RenderNode* node = (RenderNode*)SchedNode_FetchSlotPtr(self->field_0x00);
     *(MtxCopy*)&node->mtx = *(MtxCopy*)&self->field_0x19c;
     f32 scale = lbl_eu_8066B11C;
     // Color bytes staged through two local arrays (retail copies the packed
@@ -2640,7 +2640,7 @@ extern "C" void __attribute__((never_inline)) func_804D189C(EffectNode* nodeRaw,
         break;
     }
 
-    RenderNode* node2 = (RenderNode*)func_804E0168(self->field_0x00);
+    RenderNode* node2 = (RenderNode*)SchedNode_FetchSlotPtr(self->field_0x00);
     func_804D7434((CETrail*)self->field_0x328, texgens, &node2->b0);
 }
 extern "C" void __attribute__((never_inline)) func_804D20EC(EffectNode* nodeRaw, void* res) {
@@ -2658,9 +2658,9 @@ extern "C" void __attribute__((never_inline)) func_804D20EC(EffectNode* nodeRaw,
         if (!flg->b10) return;
     }
     if (!((SceneFlagBits*)&self->field_0x06)->b11) return;
-    if (func_804EEACC(&self->field_0xdc) == 0) return;
+    if (lytBindCanResolveTarget(&self->field_0xdc) == 0) return;
 
-    RenderNode* node = (RenderNode*)func_804E0168(self->field_0x00);
+    RenderNode* node = (RenderNode*)SchedNode_FetchSlotPtr(self->field_0x00);
     *(MtxCopy*)&node->mtx = *(MtxCopy*)&self->field_0x19c;
     f32 scale = lbl_eu_8066B11C;
     node->b0 = (u8)(s32)(scale * self->field_0x1cc);
@@ -2715,7 +2715,7 @@ extern "C" void __attribute__((never_inline)) func_804D20EC(EffectNode* nodeRaw,
     // Re-fetch the render node built above and derive the two screen-space
     // anchor vectors: one from the node's translation column, one from the
     // scene's stored float triple (punned through u32).
-    node = (RenderNode*)func_804E0168(self->field_0x00);
+    node = (RenderNode*)SchedNode_FetchSlotPtr(self->field_0x00);
     Vec drawPos;
     drawPos.x = node->mtx[0][3];
     drawPos.y = node->mtx[1][3];
@@ -2795,9 +2795,9 @@ extern "C" void __attribute__((never_inline)) func_804D2B60(EffectNode* nodeRaw,
         if (!(self->field_0x06 & 0x0400)) return;
     }
     if (!(self->field_0x06 & 0x0800)) return;
-    if (func_804EEACC(&self->field_0xdc) == 0) return;
+    if (lytBindCanResolveTarget(&self->field_0xdc) == 0) return;
 
-    RenderNode* node = (RenderNode*)func_804E0168(self->field_0x00);
+    RenderNode* node = (RenderNode*)SchedNode_FetchSlotPtr(self->field_0x00);
     *(MtxCopy*)&node->mtx = *(MtxCopy*)&self->field_0x19c;
     f32 scale = lbl_eu_8066B11C;
     node->b0 = (u8)(s32)(scale * self->field_0x1cc);
@@ -2911,7 +2911,7 @@ extern "C" void __attribute__((never_inline)) func_804D3098(EffectNode* nodeRaw,
     if ((s32)self->field_0x0c->field_0x04 == 5 ||
         (((self->field_0x06 >> 14) & 1) && ((self->field_0x06 >> 9) & 1))) {
         if ((self->field_0x06 >> 10) & 1) {
-            ok = func_804EEACC(&self->field_0xdc) != 0;
+            ok = lytBindCanResolveTarget(&self->field_0xdc) != 0;
         }
     }
     if (!ok) return;
@@ -2925,7 +2925,7 @@ extern "C" void __attribute__((never_inline)) func_804D3098(EffectNode* nodeRaw,
         }
         ((CERandomizerSimple*)self->field_0x334)->execute(t);
     }
-    RenderNode* node = (RenderNode*)func_804E0168((s16)self->field_0x00);
+    RenderNode* node = (RenderNode*)SchedNode_FetchSlotPtr((s16)self->field_0x00);
     *(MtxCopy*)&node->mtx = *(MtxCopy*)&self->field_0x19c;
     f32 scale = lbl_eu_8066B11C;
     node->b0 = (u8)(s32)(scale * self->field_0x1cc);
@@ -2986,7 +2986,7 @@ extern "C" void __attribute__((never_inline)) func_804D3098(EffectNode* nodeRaw,
     // Tone-table payload: while a tone table is bound, re-fetch the render
     // node, derive the screen position/mode from it, and emit the quad.
     if (self->field_0x0c->field_0x110 != NULL) {
-        RenderNode* node2 = (RenderNode*)func_804E0168((s16)self->field_0x00);
+        RenderNode* node2 = (RenderNode*)SchedNode_FetchSlotPtr((s16)self->field_0x00);
         f32 alpha = self->field_0x29c;
         Vec drawPos;
         drawPos.x = node2->mtx[0][3];
@@ -3052,9 +3052,9 @@ extern "C" void __attribute__((never_inline)) func_804D361C(EffectNode* nodeRaw,
         if (!(self->field_0x06 & 0x0400)) return;
     }
     if (!(self->field_0x06 & 0x0800)) return;
-    if (func_804EEACC(&self->field_0xdc) == 0) return;
+    if (lytBindCanResolveTarget(&self->field_0xdc) == 0) return;
 
-    RenderNode* node = (RenderNode*)func_804E0168(self->field_0x00);
+    RenderNode* node = (RenderNode*)SchedNode_FetchSlotPtr(self->field_0x00);
     *(MtxCopy*)&node->mtx = *(MtxCopy*)&self->field_0x19c;
     f32 scale = lbl_eu_8066B11C;
     node->b0 = (u8)(s32)(scale * self->field_0x1cc);
@@ -3114,7 +3114,7 @@ extern "C" void __attribute__((never_inline)) func_804D361C(EffectNode* nodeRaw,
     // Second payload: while a tone table is bound, re-fetch the render node
     // and derive the screen quad/mode from it.
     if (self->field_0x0c->field_0x110 != NULL) {
-        RenderNode* n2 = (RenderNode*)func_804E0168(self->field_0x00);
+        RenderNode* n2 = (RenderNode*)SchedNode_FetchSlotPtr(self->field_0x00);
         if (n2 != NULL) {
             DrawQuad q2;
             q2.x = *(f32*)((u8*)n2 + 0xc);
@@ -3167,12 +3167,12 @@ extern "C" void __attribute__((never_inline)) func_804D2690(EffectNode* nodeRaw,
     if ((s32)self->field_0x0c->field_0x04 == 5 ||
         (((self->field_0x06 >> 15) & 1) && ((self->field_0x06 >> 10) & 1))) {
         if ((self->field_0x06 >> 11) & 1) {
-            ok = func_804EEACC(&self->field_0xdc) != 0;
+            ok = lytBindCanResolveTarget(&self->field_0xdc) != 0;
         }
     }
     if (!ok) return;
 
-    RenderNode* node = (RenderNode*)func_804E0168((s16)self->field_0x00);
+    RenderNode* node = (RenderNode*)SchedNode_FetchSlotPtr((s16)self->field_0x00);
     *(MtxCopy*)&node->mtx = *(MtxCopy*)&self->field_0x19c;
     f32 scale = lbl_eu_8066B11C;
     node->b0 = (u8)(scale * self->field_0x1cc);
@@ -3340,7 +3340,7 @@ struct EffectInit {
 };
 
 // Target 5: us-804d80d4
-void func_804D3F60(EffectInit* self) {
+void EffFxInitNodeHead(EffectInit* self) {
     self->field_0x06 = -1;
     self->field_0x08 = -1;
     self->field_0x0a = 0;
@@ -3356,14 +3356,14 @@ void func_804D3F60(EffectInit* self) {
 // Target 10: us-804d8108 - walk the node chain by index, releasing each node,
 // then clear the head list. old is declared before idx so it takes the higher
 // saved register (retail: old in r31, idx in r30).
-void func_804D3F94(EffectNode* self) {
+void EffFxReleaseNodeChain(EffectNode* self) {
     s32 old = 0;
     s32 idx = self->field_0x06;
     while (idx >= 0) {
         old = idx;
-        EffectNode* node = func_804E0114(idx);
+        EffectNode* node = SchedNode_FetchByIndex(idx);
         idx = node->field_0x02;
-        func_804E0098((s16)old);
+        SchedNode_ReleaseHandle((s16)old);
     }
     self->field_0x06 = -1;
     self->field_0x08 = -1;
@@ -3385,8 +3385,8 @@ struct EffectNode7 {
     f32 field_0x1c;
 };
 
-extern "C" s32 func_804D41F8(ListOwner* self, const Vend* target);
-extern "C" void func_804D5E90(EffectNode* self);
+extern "C" s32 EffFxFindLinkSlot(ListOwner* self, const Vend* target);
+extern "C" void EffFxUnlinkChainNode(EffectNode* self);
 
 // Target 7: per-node per-frame update. Only the head (visible frame-advance) is
 // reconstructed; the sprite/sub-effect emission body is elided from the brief.
@@ -3448,16 +3448,16 @@ extern "C" void __attribute__((never_inline)) func_804CCA64(void* nodeptr, f32 f
             func_804E1044(&node->field_0x20c, (void*)sub->field_0xf8, mat, val);
         }
         if (node->field_0x23c & 0x80) {
-            func_804E18CC(&node->field_0x238, (void*)sub->field_0xf8, mat, val);
+            SchedAnim_AdvanceCursor(&node->field_0x238, (void*)sub->field_0xf8, mat, val);
         }
         if (node->field_0x250 & 0x80) {
-            func_804E1A44(&node->field_0x24c, (void*)sub->field_0x104, mat, val);
+            SchedAnim_RefreshSlotHandles(&node->field_0x24c, (void*)sub->field_0x104, mat, val);
         }
         if (node->field_0x260 & 0x80) {
             func_804E1C1C(&node->field_0x25c, (void*)sub->field_0x108, mat, val);
         }
         if (node->field_0x314 & 0x80) {
-            func_804E2EAC(&node->field_0x310, (void*)sub->field_0x118, mat, val);
+            SchedAnim_RefreshScaleVec(&node->field_0x310, (void*)sub->field_0x118, mat, val);
         }
     }
 
@@ -3467,7 +3467,7 @@ extern "C" void __attribute__((never_inline)) func_804CCA64(void* nodeptr, f32 f
     u8 tb = p110 ? *(p110 - 0x1c) : 0;
     if (tb == 0) {
         if (!clamped && (node->field_0x27c & 0x80)) {
-            func_804E2088(&node->field_0x278, (void*)sub->field_0x110, mat, val);
+            SchedAnim_LerpVec24(&node->field_0x278, (void*)sub->field_0x110, mat, val);
         }
     } else {
         *(f32*)&node->field_0x278 = sub->field_0x194;
@@ -3564,7 +3564,7 @@ void func_804D401C(EffectNode* self, f32 f) {
     EffectNode* node;
     if (self->field_0x0a <= 0) return;
     if (self->field_0x06 >= 0) {
-        node = func_804E0114(self->field_0x06);
+        node = SchedNode_FetchByIndex(self->field_0x06);
         self->field_0x00 = -1;
         self->field_0x02 = self->field_0x06;
         self->field_0x04 = node->field_0x02;
@@ -3577,15 +3577,15 @@ void func_804D401C(EffectNode* self, f32 f) {
         func_804CCA64(node, f);
         if (!(f <= lim)) {
             if (!((EffectSceneFlags*)&node->field_0x06)->b15) {
-                if (func_804D41F8((ListOwner*)self, (Vend*)node)) {
-                    func_804D5E90(self);
+                if (EffFxFindLinkSlot((ListOwner*)self, (Vend*)node)) {
+                    EffFxUnlinkChainNode(self);
                 }
             }
         }
         if (self->field_0x04 >= 0) {
             self->field_0x00 = self->field_0x02;
             self->field_0x02 = self->field_0x04;
-            node = func_804E0114(self->field_0x04);
+            node = SchedNode_FetchByIndex(self->field_0x04);
             self->field_0x04 = node->field_0x02;
             self->field_0x0c = (s16)(self->field_0x0c + 1);
         } else {
@@ -3594,11 +3594,11 @@ void func_804D401C(EffectNode* self, f32 f) {
     }
 }
 
-void func_804D4144(EffectNode* self) {
+void EffFxProcessNodeChain(EffectNode* self) {
     if (self->field_0x0a <= 0) return;
     EffectNode* node;
     if (self->field_0x06 >= 0) {
-        node = func_804E0114(self->field_0x06);
+        node = SchedNode_FetchByIndex(self->field_0x06);
         self->field_0x00 = -1;
         self->field_0x02 = self->field_0x06;
         self->field_0x04 = node->field_0x02;
@@ -3608,11 +3608,11 @@ void func_804D4144(EffectNode* self) {
     }
     f32 lim = lbl_eu_8066B140;
     while (node) {
-        func_804CD0A4((EffectStruct*)(void*)node);
+        EffFxAccumNodeWeight((EffectStruct*)(void*)node);
         if (self->field_0x04 >= 0) {
             self->field_0x00 = self->field_0x02;
             self->field_0x02 = self->field_0x04;
-            node = func_804E0114(self->field_0x04);
+            node = SchedNode_FetchByIndex(self->field_0x04);
             self->field_0x04 = node->field_0x02;
             self->field_0x0c += 1;
         } else {
@@ -3624,12 +3624,12 @@ void func_804D4144(EffectNode* self) {
 // Target 6: scan node slots for one matching the pattern in r28; return 0 if a
 // candidate lacks the "linked" bit, else 1. Flag map: 0x2000 gate, 0x8000 slot
 // busy, 0x0800 already-linked.
-extern "C" s32 __attribute__((never_inline)) func_804D41F8(ListOwner* self, const Vend* target) {
+extern "C" s32 __attribute__((never_inline)) EffFxFindLinkSlot(ListOwner* self, const Vend* target) {
     if (!((self->field_0x14->field_0x1c >> 13) & 1)) return 1;
     s32 result = 1;
     s16 i = 0;
-    while ((s32)(s16)i < (s32)func_804E0104()) {
-        Vend* node = (Vend*)func_804E0114(i);
+    while ((s32)(s16)i < (s32)SchedNode_CountTotal()) {
+        Vend* node = (Vend*)SchedNode_FetchByIndex(i);
         if (node) {
             u16 nf = node->field_0x06;
             if ((nf >> 15) & 1) {
@@ -3660,7 +3660,7 @@ struct SwapHolder {
     s32 field_0x5c;   // tev swap index
 };
 
-// func_804D8AA4's retail reads only r3 (the fog toggle); the shared header
+// pushEffectFog's retail reads only r3 (the fog toggle); the shared header
 // declares a second unused param. Cast through a 1-arg pointer type so the
 // call sites emit only `li r3, N` like retail.
 typedef void (*FogPushFn)(int);
@@ -3677,7 +3677,7 @@ extern "C" void func_804D513C(RenderObj* self);
 // refresh the TEV swap tables from the 0x5c swap index when the 0x18 cache is
 // stale. The final block resets the swap tables when the cache is non-zero and
 // pushes the fog state.
-void func_804D42B8(EffectInit* self, void* arg) {
+void EffFxRenderDispatch(EffectInit* self, void* arg) {
     if (self->field_0x0a <= 0) return;
     GXClearVtxDesc();
     RenderTypeObj* t = (RenderTypeObj*)self->field_0x14;
@@ -3686,7 +3686,7 @@ void func_804D42B8(EffectInit* self, void* arg) {
         func_804D5764((RenderObj*)self);
         EffectNode* node;
         if (self->field_0x06 >= 0) {
-            node = func_804E0114(self->field_0x06);
+            node = SchedNode_FetchByIndex(self->field_0x06);
             self->field_0x00 = -1;
             self->field_0x02 = self->field_0x06;
             self->field_0x04 = node->field_0x02;
@@ -3699,7 +3699,7 @@ void func_804D42B8(EffectInit* self, void* arg) {
             if (self->field_0x04 >= 0) {
                 self->field_0x00 = self->field_0x02;
                 self->field_0x02 = self->field_0x04;
-                node = func_804E0114(self->field_0x04);
+                node = SchedNode_FetchByIndex(self->field_0x04);
                 self->field_0x04 = node->field_0x02;
                 self->field_0x0c += 1;
             } else {
@@ -3741,11 +3741,11 @@ void func_804D42B8(EffectInit* self, void* arg) {
             }
             self->field_0x18 = idx;
         }
-        ((FogPushFn)func_804D8AA4)(0);
+        ((FogPushFn)pushEffectFog)(0);
         func_804D0194();
         EffectNode* node;
         if (self->field_0x06 >= 0) {
-            node = func_804E0114(self->field_0x06);
+            node = SchedNode_FetchByIndex(self->field_0x06);
             self->field_0x00 = -1;
             self->field_0x02 = self->field_0x06;
             self->field_0x04 = node->field_0x02;
@@ -3758,7 +3758,7 @@ void func_804D42B8(EffectInit* self, void* arg) {
             if (self->field_0x04 >= 0) {
                 self->field_0x00 = self->field_0x02;
                 self->field_0x02 = self->field_0x04;
-                node = func_804E0114(self->field_0x04);
+                node = SchedNode_FetchByIndex(self->field_0x04);
                 self->field_0x04 = node->field_0x02;
                 self->field_0x0c += 1;
             } else {
@@ -3800,11 +3800,11 @@ void func_804D42B8(EffectInit* self, void* arg) {
             }
             self->field_0x18 = idx;
         }
-        ((FogPushFn)func_804D8AA4)(0);
+        ((FogPushFn)pushEffectFog)(0);
         func_804D0194();
         EffectNode* node;
         if (self->field_0x06 >= 0) {
-            node = func_804E0114(self->field_0x06);
+            node = SchedNode_FetchByIndex(self->field_0x06);
             self->field_0x00 = -1;
             self->field_0x02 = self->field_0x06;
             self->field_0x04 = node->field_0x02;
@@ -3817,7 +3817,7 @@ void func_804D42B8(EffectInit* self, void* arg) {
             if (self->field_0x04 >= 0) {
                 self->field_0x00 = self->field_0x02;
                 self->field_0x02 = self->field_0x04;
-                node = func_804E0114(self->field_0x04);
+                node = SchedNode_FetchByIndex(self->field_0x04);
                 self->field_0x04 = node->field_0x02;
                 self->field_0x0c += 1;
             } else {
@@ -3859,11 +3859,11 @@ void func_804D42B8(EffectInit* self, void* arg) {
             }
             self->field_0x18 = idx;
         }
-        ((FogPushFn)func_804D8AA4)(0);
+        ((FogPushFn)pushEffectFog)(0);
         func_804D0194();
         EffectNode* node;
         if (self->field_0x06 >= 0) {
-            node = func_804E0114(self->field_0x06);
+            node = SchedNode_FetchByIndex(self->field_0x06);
             self->field_0x00 = -1;
             self->field_0x02 = self->field_0x06;
             self->field_0x04 = node->field_0x02;
@@ -3876,7 +3876,7 @@ void func_804D42B8(EffectInit* self, void* arg) {
             if (self->field_0x04 >= 0) {
                 self->field_0x00 = self->field_0x02;
                 self->field_0x02 = self->field_0x04;
-                node = func_804E0114(self->field_0x04);
+                node = SchedNode_FetchByIndex(self->field_0x04);
                 self->field_0x04 = node->field_0x02;
                 self->field_0x0c += 1;
             } else {
@@ -3918,11 +3918,11 @@ void func_804D42B8(EffectInit* self, void* arg) {
             }
             self->field_0x18 = idx;
         }
-        ((FogPushFn)func_804D8AA4)(0);
+        ((FogPushFn)pushEffectFog)(0);
         func_804D0194();
         EffectNode* node;
         if (self->field_0x06 >= 0) {
-            node = func_804E0114(self->field_0x06);
+            node = SchedNode_FetchByIndex(self->field_0x06);
             self->field_0x00 = -1;
             self->field_0x02 = self->field_0x06;
             self->field_0x04 = node->field_0x02;
@@ -3935,7 +3935,7 @@ void func_804D42B8(EffectInit* self, void* arg) {
             if (self->field_0x04 >= 0) {
                 self->field_0x00 = self->field_0x02;
                 self->field_0x02 = self->field_0x04;
-                node = func_804E0114(self->field_0x04);
+                node = SchedNode_FetchByIndex(self->field_0x04);
                 self->field_0x04 = node->field_0x02;
                 self->field_0x0c += 1;
             } else {
@@ -3977,11 +3977,11 @@ void func_804D42B8(EffectInit* self, void* arg) {
             }
             self->field_0x18 = idx;
         }
-        ((FogPushFn)func_804D8AA4)(0);
+        ((FogPushFn)pushEffectFog)(0);
         func_804D0194();
         EffectNode* node;
         if (self->field_0x06 >= 0) {
-            node = func_804E0114(self->field_0x06);
+            node = SchedNode_FetchByIndex(self->field_0x06);
             self->field_0x00 = -1;
             self->field_0x02 = self->field_0x06;
             self->field_0x04 = node->field_0x02;
@@ -3994,7 +3994,7 @@ void func_804D42B8(EffectInit* self, void* arg) {
             if (self->field_0x04 >= 0) {
                 self->field_0x00 = self->field_0x02;
                 self->field_0x02 = self->field_0x04;
-                node = func_804E0114(self->field_0x04);
+                node = SchedNode_FetchByIndex(self->field_0x04);
                 self->field_0x04 = node->field_0x02;
                 self->field_0x0c += 1;
             } else {
@@ -4008,7 +4008,7 @@ void func_804D42B8(EffectInit* self, void* arg) {
             func_804D5764((RenderObj*)self);
             EffectNode* node;
             if (self->field_0x06 >= 0) {
-                node = func_804E0114(self->field_0x06);
+                node = SchedNode_FetchByIndex(self->field_0x06);
                 self->field_0x00 = -1;
                 self->field_0x02 = self->field_0x06;
                 self->field_0x04 = node->field_0x02;
@@ -4019,7 +4019,7 @@ void func_804D42B8(EffectInit* self, void* arg) {
             if (node) {
                 EffectNode* node2;
                 if (self->field_0x06 >= 0) {
-                    node2 = func_804E0114(self->field_0x06);
+                    node2 = SchedNode_FetchByIndex(self->field_0x06);
                     self->field_0x00 = -1;
                     self->field_0x02 = self->field_0x06;
                     self->field_0x04 = node2->field_0x02;
@@ -4033,7 +4033,7 @@ void func_804D42B8(EffectInit* self, void* arg) {
             func_804D513C((RenderObj*)self);
             EffectNode* node;
             if (self->field_0x06 >= 0) {
-                node = func_804E0114(self->field_0x06);
+                node = SchedNode_FetchByIndex(self->field_0x06);
                 self->field_0x00 = -1;
                 self->field_0x02 = self->field_0x06;
                 self->field_0x04 = node->field_0x02;
@@ -4046,7 +4046,7 @@ void func_804D42B8(EffectInit* self, void* arg) {
                 if (self->field_0x04 >= 0) {
                     self->field_0x00 = self->field_0x02;
                     self->field_0x02 = self->field_0x04;
-                    node = func_804E0114(self->field_0x04);
+                    node = SchedNode_FetchByIndex(self->field_0x04);
                     self->field_0x04 = node->field_0x02;
                     self->field_0x0c += 1;
                 } else {
@@ -4064,7 +4064,7 @@ void func_804D42B8(EffectInit* self, void* arg) {
         GXSetTevSwapModeTable(GX_TEV_SWAP3, GX_CH_RED, GX_CH_GREEN, GX_CH_BLUE, GX_CH_ALPHA);
         self->field_0x18 = 0;
     }
-    ((FogPushFn)func_804D8AA4)(1);
+    ((FogPushFn)pushEffectFog)(1);
 }
 
 // Render-object layout shared by the GX polygon setup functions (targets 2/3).
@@ -4190,7 +4190,7 @@ extern "C" void func_804D5764(RenderObj* self) {
     // extrwi 1,20 -> rlwinm 21 = bit 11 (0x800); extrwi 1,25 -> rlwinm 26 = bit 6 (0x40).
     if (dd0 == 0 && !((self->field_0x14->field_0x1c >> 11) & 1)) bfl = 1;
     if (bfl && !((self->field_0x14->field_0x1c >> 6) & 1)) tp = 1;
-    func_804D8AA4(tp, bfl);
+    pushEffectFog(tp, bfl);
     func_804D0194();
 }
 
@@ -4303,15 +4303,15 @@ extern "C" void func_804D513C(RenderObj* self) {
     u32 c25 = b25 != 0;
     s32 tp = 0;
     if (bfl && !c25) tp = 1;
-    func_804D8AA4(tp, bfl);
+    pushEffectFog(tp, bfl);
     func_804D0194();
 }
 
 // Target 8: us-804d9ebc - attach node list entry by index.
-EffectNode* func_804D5D48(EffectNode* self) {
+EffectNode* EffFxFetchHeadNode(EffectNode* self) {
     s32 idx = self->field_0x06;
     if (idx >= 0) {
-        EffectNode* node = func_804E0114(idx);
+        EffectNode* node = SchedNode_FetchByIndex(idx);
         self->field_0x00 = -1;
         self->field_0x02 = self->field_0x06;
         self->field_0x04 = node->field_0x02;
@@ -4322,12 +4322,12 @@ EffectNode* func_804D5D48(EffectNode* self) {
 }
 
 // Target 9: us-804d9f20 - step to next node slot.
-EffectNode* func_804D5DAC(EffectNode* self) {
+EffectNode* EffFxStepNextNode(EffectNode* self) {
     s32 cur = self->field_0x04;
     if (cur >= 0) {
         self->field_0x00 = self->field_0x02;
         self->field_0x02 = cur;
-        EffectNode* node = func_804E0114(cur);
+        EffectNode* node = SchedNode_FetchByIndex(cur);
         self->field_0x04 = node->field_0x02;
         self->field_0x0c = self->field_0x0c + 1;
         return node;
@@ -4335,12 +4335,12 @@ EffectNode* func_804D5DAC(EffectNode* self) {
     return 0;
 }
 
-void func_804D5E10(EffectNode* self, s32 index) {
+void EffFxAppendChainNode(EffectNode* self, s32 index) {
     s32 v = func_804DFFA8(index);
     if ((s16)v < 0) return;
-    func_804E0114((s16)v);
+    SchedNode_FetchByIndex((s16)v);
     if (self->field_0x06 >= 0) {
-        EffectNode* last = func_804E0114(self->field_0x08);
+        EffectNode* last = SchedNode_FetchByIndex(self->field_0x08);
         last->field_0x02 = (s16)v;
         self->field_0x08 = (s16)v;
     } else {
@@ -4350,23 +4350,23 @@ void func_804D5E10(EffectNode* self, s32 index) {
     self->field_0x0a += 1;
 }
 
-extern "C" void __attribute__((never_inline)) func_804D5E90(EffectNode* self) {
+extern "C" void __attribute__((never_inline)) EffFxUnlinkChainNode(EffectNode* self) {
     if (self->field_0x02 == self->field_0x08) {
         self->field_0x08 = self->field_0x00;
     }
     if (self->field_0x00 >= 0) {
-        EffectNode* nodeA = func_804E0114(self->field_0x00);
-        EffectNode* nodeB = func_804E0114(self->field_0x02);
+        EffectNode* nodeA = SchedNode_FetchByIndex(self->field_0x00);
+        EffectNode* nodeB = SchedNode_FetchByIndex(self->field_0x02);
         nodeA->field_0x02 = nodeB->field_0x02;
         self->field_0x04 = nodeB->field_0x02;
-        func_804E0098(self->field_0x02);
+        SchedNode_ReleaseHandle(self->field_0x02);
         self->field_0x02 = self->field_0x00;
     } else {
-        EffectNode* node = func_804E0114(self->field_0x02);
+        EffectNode* node = SchedNode_FetchByIndex(self->field_0x02);
         s16 next = node->field_0x02;
         self->field_0x04 = next;
         self->field_0x06 = next;
-        func_804E0098(self->field_0x02);
+        SchedNode_ReleaseHandle(self->field_0x02);
         self->field_0x02 = -1;
     }
     if (self->field_0x0a > 0) self->field_0x0a -= 1;
@@ -4407,7 +4407,7 @@ f32* func_804D5F54(void* this_, s32 count) {
     return buf;
 }
 
-void func_804D6070(void) {}
+void EffFxEmptyStub(void) {}
 
 // Target: us-804da1e8 - trail segment builder (called from CETrail::draw).
 // Signature recovered from the CETrail.cpp call site:
@@ -4422,7 +4422,7 @@ void func_804D6070(void) {}
 void func_804D6074(void* trailSeg, void* trail, const void* color, u32 mode2,
                    u32 modeNonZero, const void* color2, const void* scale) {}
 
-s32 func_804D6BC0(void* unused, Node2Control* c, Node2** p5, Node2** p6,
+s32 EffFxShuffleNodeLinks(void* unused, Node2Control* c, Node2** p5, Node2** p6,
                Node2* volatile* p7,
                Node2* volatile* p8, Node2** p9) {
     // Retail reloads *p5 for every output slot (the stores may alias p5), so
@@ -4456,7 +4456,7 @@ s32 func_804D6BC0(void* unused, Node2Control* c, Node2** p5, Node2** p6,
 }
 
 // Target 1: us-804d8184 - simple setter: stores two params at offsets 0x10/0x14
-void func_804D4010(EffectStruct* self, u32 a, u32 b) {
+void EffFxStoreNodeParams(EffectStruct* self, u32 a, u32 b) {
     self->field_0x10 = a;
     self->field_0x14 = b;
 }
@@ -4470,7 +4470,7 @@ extern "C" void __attribute__((never_inline)) func_804CE140(EffectScene* self) {
 }
 
 // Target 3: us-804d1218 - if bits 0x0800 and 0x8000 of field_0x06 are set, add field_0x18 to field_0x10
-extern "C" void func_804CD0A4(EffectStruct* self) {
+extern "C" void EffFxAccumNodeWeight(EffectStruct* self) {
     u32 flags = self->field_0x06;
     if (!((flags >> 11) & 1)) return;
     if (!((flags >> 15) & 1)) return;
@@ -4479,7 +4479,7 @@ extern "C" void func_804CD0A4(EffectStruct* self) {
 }
 
 // Target 4: us-804d0414 - init: set first three fields to -1, rest to 0
-void func_804CC2B8(EffectStruct* self) {
+void EffFxInitStructLinks(EffectStruct* self) {
     self->field_0x00 = -1;
     self->field_0x02 = -1;
     self->field_0x04 = -1;
@@ -4491,7 +4491,7 @@ void func_804CC2B8(EffectStruct* self) {
 }
 
 // Target 5: us-804d255c - if field_0x328 != 0 and field_0x18 > 0.0f, set bit 6 (0x40) of field_0x06
-extern "C" void __attribute__((never_inline)) func_804CE3E8(EffectScene* self) {
+extern "C" void __attribute__((never_inline)) EffFxArmNodeFlag40(EffectScene* self) {
     if (self->field_0x328 == 0) return;
     if (self->field_0x18 <= lbl_eu_8066B0DC) return;
     self->field_0x06 |= 0x40;

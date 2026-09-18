@@ -160,7 +160,7 @@ struct ShopBuyItemBoxLine {
  *
  * Layout (Term / dtor / phase handlers):
  *   0x00: CProcess header -- task-system base (0x3C) + vtable PMF data
- *   0x54: u8 mField54     -- closing-state flag (written by func_8018C59C)
+ *   0x54: u8 mField54     -- closing-state flag (written by ShopBuy_MarkClosing)
  *   0x58: IScnRender      -- render-callback subobject (member, vptr)
  *   0x5C: CScn*           -- owning scene (removeRenderCB target in Term)
  *   0x60: u32 mField60    -- ctor arg 3
@@ -205,15 +205,15 @@ public:
 };
 
 // Retail-unmangled callee names (US strips mangling for these func_ helpers).
-// isIdle/func_801C3E34/func_801C4114/ItemBoxLine_IsReadyFlag/ItemBoxLine_GetSelectReady are declared
+// isIdle/BgTex_IsLoaded_3E34/isInitialized/ItemBoxLine_IsReadyFlag/ItemBoxLine_GetSelectReady are declared
 // int (not u8) so callers compare with cmpwi directly (no byte mask), matching
 // retail.
 extern "C" int isIdle__11CTitleAHelpFv(CTitleAHelp* h);
-extern "C" int func_801C3E34(CBgTex* self);
-extern "C" int func_801C4114(CTitleAHelp* self);
+extern "C" int BgTex_IsLoaded_3E34(CBgTex* self);
+extern "C" int isInitialized(CTitleAHelp* self);
 extern "C" void func_801C412C(CTitleAHelp* self);
-extern "C" void func_801C40A0(CTitleAHelp* self);
-extern "C" void func_801C3D9C(CBgTex* self);
+extern "C" void teardown(CTitleAHelp* self);
+extern "C" void BgTex_Release_3D9C(CBgTex* self);
 extern "C" int ItemBoxLine_IsReadyFlag(CItemBoxLine* self);
 extern "C" u8 code80135FDC_getByte_64077();
 extern "C" int ItemBoxLine_GetSelectReady(CItemBoxLine* self);
@@ -222,7 +222,7 @@ extern "C" void func_801ED864(CItemBoxLine* self);
 
 // func_8018C258 pad/flag callees (retail unmangled names). ItemBoxLine_IsBusy is
 // declared int (not u8) so the caller compares with cmpwi directly.
-extern "C" int func_8029A658();
+extern "C" int MenuTutorialIsCreated();
 extern "C" ShopBuyPadData* getCfPadData__Q22cf13CfGameManagerFv();
 extern "C" int isClassicController__Q22cf13CfGameManagerFv(int arg);
 extern "C" int ItemBoxLine_IsBusy(CItemBoxLine* self);
@@ -245,10 +245,10 @@ extern "C" void ItemBoxLine_LoadFiles(CItemBoxLine* self);
 extern "C" void func_8018B0FC(void* dest, void* src);
 extern "C" void __ct__UnkClass_8011C974(void* dest, void* src);
 extern "C" char* BdatTouchStringCell(const void* a, const void* b, int id);
-extern "C" void func_801C414C(CTitleAHelp* self);
+extern "C" void beginClose(CTitleAHelp* self);
 extern "C" void func_801C41E8(CTitleAHelp* self, u8 mode);
 extern "C" void CTitleAHelp_load(CTitleAHelp* self);
-extern "C" void func_801C3C14(CBgTex* self);
+extern "C" void BgTex_Acquire_3C14(CBgTex* self);
 extern "C" void addRenderCB__4CScnFP10IScnRenderUlUl(CScn*, IScnRender*, u32, u32);
 extern char lbl_eu_80503B20[];  // split1 .rodata string pool (Init title name)
 extern const f32 lbl_eu_80667A24;  // .sdata2 float pool constants (timer inc/clamp)
@@ -267,10 +267,10 @@ extern "C" void __dt__800FED0C(void*, int);
 
 // Subobject draw/update hooks called by Move / cbRenderBefore (retail names
 // are unmangled for these helpers too).
-extern "C" void func_801C3D54(CBgTex* self);
-extern "C" void func_801C3D7C(CBgTex* self, nw4r::lyt::DrawInfo* drawInfo);
-extern "C" void func_801C3FF0(CTitleAHelp* self);
-extern "C" void func_801C4080(CTitleAHelp* self, nw4r::lyt::DrawInfo* drawInfo);
+extern "C" void BgTex_Tick_3D54(CBgTex* self);
+extern "C" void BgTex_Draw_3D7C(CBgTex* self, nw4r::lyt::DrawInfo* drawInfo);
+extern "C" void updateHelp(CTitleAHelp* self);
+extern "C" void drawHelp(CTitleAHelp* self, nw4r::lyt::DrawInfo* drawInfo);
 extern "C" void ItemBoxLine_UpdateStates(CItemBoxLine* self);
 extern "C" void ItemBoxLine_DrawLayout(CItemBoxLine* self, nw4r::lyt::DrawInfo* drawInfo);
 
@@ -284,10 +284,10 @@ void func_80137250(nw4r::lyt::DrawInfo* drawInfo);
 // the factory and ctor (retail unmangled names). __declspec(noinline) stops
 // -inline auto from inlining the small phase handlers into Move (retail keeps
 // real bls; see MWCC_CASES -inline auto same-TU helpers).
-extern "C" __declspec(noinline) void func_8018C190(CMenuShopBuy* self);
-extern "C" __declspec(noinline) void func_8018C208(CMenuShopBuy* self);
+extern "C" __declspec(noinline) void ShopBuy_OpenPhase(CMenuShopBuy* self);
+extern "C" __declspec(noinline) void ShopBuy_AdvancePhase(CMenuShopBuy* self);
 extern "C" __declspec(noinline) void func_8018C258(CMenuShopBuy* self);
-extern "C" __declspec(noinline) void func_8018C59C(CMenuShopBuy* self);
+extern "C" __declspec(noinline) void ShopBuy_MarkClosing(CMenuShopBuy* self);
 extern "C" CMenuShopBuy* __ct__CMenuShopBuy(CMenuShopBuy* self, CScn* scene, u32 arg);
 extern "C" CMenuShopBuy* func_8018C104(CProcess* parent, CScn* scene, u32 arg);
 

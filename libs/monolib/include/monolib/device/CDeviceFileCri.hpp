@@ -71,8 +71,8 @@ private:
 
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
 extern "C" {
-    int func_eu_804521C4();
-    int func_eu_804520D0(const char*);
+    int DevFile_GetByteA9();
+    int DevFile_SubstLangPath(const char*);
     int func_804DDCD4(const char*, const char*);
     extern u32 lbl_eu_806636C8[1];
     extern u32 lbl_eu_806636CC[1];
@@ -82,7 +82,7 @@ extern "C" {
 }
 
 extern "C" {
-    void func_804591BC__10CExceptionFP10IException(CException* self, IException* pException);
+    void AddToGlobalArray__10CExceptionFP10IException(CException* self, IException* pException);
     void func_804591DC__10CExceptionFP10IException(CException* self);
     void logExceptionMessage__10CExceptionFv(const char* msg);
     void setGlobalMessage__10CExceptionFv(CException* self);

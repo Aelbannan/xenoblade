@@ -11,5 +11,5 @@ public:
 } // namespace cf
 
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
-extern "C" u32 func_80293C10();
-extern "C" u32 func_80192BD0();
+extern "C" u32 PTNotice_IsActive_3C10();
+extern "C" u32 menuPTStateIsActive();

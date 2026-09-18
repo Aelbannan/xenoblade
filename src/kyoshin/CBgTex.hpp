@@ -41,7 +41,7 @@ struct CBgTexVtblBase {
 /* Background layout texture widget. Layout-compatible with IWorkEvent (vptr @0)
 for CDeviceFile::readFile, but not a C++ IWorkEvent subclass (avoids weak stubs).
 
-US retail strips most member manglings (__ct__CBgTex, func_801C3A24, ...); dtor and
+US retail strips most member manglings (__ct__CBgTex, BgTex_SetupRegion_3A24, ...); dtor and
 OnFileEvent keep C++ names. See CBgTex.cpp. */
 struct CBgTex : public CBgTexVtblBase {
     UnkClass_8045F564 mMemRegion; // 0x4
@@ -52,13 +52,13 @@ struct CBgTex : public CBgTexVtblBase {
     u8 mPtmMode; // 0x1E
 
     CBgTex(u8 arg);
-    void func_801C3A24();
-    bool func_801C3C14();
-    void func_801C3D54();
-    void func_801C3D7C(nw4r::lyt::DrawInfo* drawInfo);
-    void func_801C3D9C();
-    u8 func_801C3E34();
-    void func_801C3E3C();
+    void BgTex_SetupRegion_3A24();
+    bool BgTex_Acquire_3C14();
+    void BgTex_Tick_3D54();
+    void BgTex_Draw_3D7C(nw4r::lyt::DrawInfo* drawInfo);
+    void BgTex_Release_3D9C();
+    u8 BgTex_IsLoaded_3E34();
+    void BgTex_MarkLoaded_3E3C();
     ~CBgTex();
     bool OnFileEvent(CEventFile* pEventFile);
 };

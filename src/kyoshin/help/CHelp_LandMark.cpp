@@ -20,13 +20,13 @@ extern "C" cf::CHelp_LandMark* __ct__cf_CHelp_LandMark(cf::CHelp_LandMark* self,
     self->field_10 = field_10_val;
     self->mTimer = zero;
 
-    // Call func_8009D414 on second base subobject, or self if null
+    // Call CtrlRemote_ResetSlotArrayObj on second base subobject, or self if null
     // Retail: default r3 = self (mr), then conditionally override with self+0xc (beq+addi)
     u8* subobj = (u8*)self;
     if (self != nullptr) {
         subobj = (u8*)self + 0xc;
     }
-    func_8009D414(subobj);
+    CtrlRemote_ResetSlotArrayObj(subobj);
 
     return self;
 }
@@ -45,7 +45,7 @@ extern "C" __declspec(noinline) cf::CHelp_LandMark* __dt__Q22cf14CHelp_LandMarkF
         if (self != nullptr) {
             subobj = reinterpret_cast<u8*>(reinterpret_cast<u32>(subobj) + 0xc);
         }
-        func_8009D514(subobj);
+        CtrlRemote_ResetSlotArrayByIndex(subobj);
 
         if (deleteFlag > 0) {
             __dl__FPv(self);
@@ -59,7 +59,7 @@ extern "C" __declspec(noinline) cf::CHelp_LandMark* __dt__Q22cf14CHelp_LandMarkF
 // 100% matched
 extern "C" __declspec(noinline) void tryActivate__Q22cf14CHelp_LandMarkFv(cf::CHelp_LandMark* self, u32 param1, u32 param2) {
     // Use bool to trigger MWCC's neg/or/rlwinm idiom for != 0 check
-    bool hasResult = func_8009CF8C((u32)(uintptr_t)self->mOwner) != 0;
+    bool hasResult = CtrlRemote_TouchBitByArg((u32)(uintptr_t)self->mOwner) != 0;
     if (hasResult) return;
     if ((s32)(self->field_10 + 0x20c8) != (s32)param1) return;
     if (param2 == 0) return;

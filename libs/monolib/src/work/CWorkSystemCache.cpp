@@ -9,7 +9,7 @@
 // ---------------------------------------------------------------------------
 // CCacheItem: one entry stored in CWorkSystemCache's resource list. The list
 // is a _reslist_base<CCacheItem*> so each node holds a *pointer* to one of
-// these objects (node->mItem at +0x8). The lookup helper func_804D8FDC reads
+// these objects (node->mItem at +0x8). The lookup helper SysCacheFetchIndexedEntry reads
 // fields at 0x3c / 0x40 and exposes the buffer pointer at +0x4.
 // ---------------------------------------------------------------------------
 class CCacheItem {
@@ -83,10 +83,10 @@ extern "C" u32 lbl_eu_8056FD24[];
 extern "C" {
 
 // Decrement a login-state refcount if it isn't flagged.
-__attribute__((never_inline)) void func_804D91BC(CCacheItem* ths);
+__attribute__((never_inline)) void SysCacheDecLoginRef(CCacheItem* ths);
 
 // _reslist_base<CCacheItem>::clearList() - walk nodes clearing only mNext.
-__attribute__((never_inline)) void func_804D8EC8(CacheList* list) {
+__attribute__((never_inline)) void SysCacheClearListLinks(CacheList* list) {
     CacheListNode* r5 = list->mStartNodePtr->mNext;
     while (r5 != list->mStartNodePtr) {
         CacheListNode* r4 = r5;
@@ -97,7 +97,7 @@ __attribute__((never_inline)) void func_804D8EC8(CacheList* list) {
 }
 
 // Count the nodes currently in the singleton cache list.
-u32 func_804D8FB4(void) {
+u32 SysCacheCountListNodes(void) {
     CacheListNode* curNode;
     CacheListNode* endNode;
     u32 length = 0;
@@ -112,7 +112,7 @@ u32 func_804D8FB4(void) {
 
 // Look up the index-th node's item in the singleton cache list and write out
 // its fields; returns true on a hit.
-bool func_804D8FDC(int index, u32* outField3C, u8** outField4Addr, u32* outField40) {
+bool SysCacheFetchIndexedEntry(int index, u32* outField3C, u8** outField4Addr, u32* outField40) {
     CacheListNode* end = lbl_eu_806659C8->mCache.mStartNodePtr;
     CacheListNode* node = end->mNext;
     int i = 0;
@@ -142,7 +142,7 @@ void func_804D903C(CacheListNode** outFront, u32 unk, CacheListNode* sentinel) {
 }
 
 // Login-wait helper.
-__attribute__((never_inline)) bool func_804D91D8(CCacheItem* ths) {
+__attribute__((never_inline)) bool SysCacheItemWaitReady(CCacheItem* ths) {
     if (ths->field_0x3c == 0 && ths->field_0x4c == 0) {
         return true;
     }
@@ -150,7 +150,7 @@ __attribute__((never_inline)) bool func_804D91D8(CCacheItem* ths) {
 }
 
 // Copy ml::CMat34::identity into out.
-void func_804D920C(ml::CMat34* out) {
+void SysCacheStoreIdentityMat(ml::CMat34* out) {
     *out = ml::CMat34::identity;
 }
 
@@ -159,7 +159,7 @@ void func_804D920C(ml::CMat34* out) {
 __attribute__((never_inline)) void* __dt___reslist_base_CCacheItem(CacheList* ths, int deleting) {
     if (ths != 0) {
         ths->m_vtable = (u32)lbl_eu_8056FD3C;
-        func_804D8EC8(ths);
+        SysCacheClearListLinks(ths);
         if (ths->unk1C == 0) {
             if (ths->mList != 0) {
                 delete[] ths->mList;
@@ -210,8 +210,8 @@ void CWorkSystemCache::wkUpdate() {
     CacheListNode* node = lbl_eu_806659C8->mCache.mStartNodePtr->mNext;
     while (node != lbl_eu_806659C8->mCache.mStartNodePtr) {
         CacheListNode* next = node->mNext;
-        func_804D91BC(node->mItem);
-        if (func_804D91D8(node->mItem)) {
+        SysCacheDecLoginRef(node->mItem);
+        if (SysCacheItemWaitReady(node->mItem)) {
             CCacheItem* p = node->mItem;
             if (p != NULL) {
                 if (p != NULL) {
@@ -240,7 +240,7 @@ bool CWorkSystemCache::wkStandbyLogout() {
         }
         node = node->mNext;
     }
-    func_804D8EC8((CacheList*)&mCache);
+    SysCacheClearListLinks((CacheList*)&mCache);
     if (mCache.unk1C == 0 && mCache.mList != NULL) {
         delete[] mCache.mList;
         mCache.mList = NULL;
@@ -274,7 +274,7 @@ CWorkSystemCache::CWorkSystemCache(const char* pName, CWorkThread* pParent)
     mCache.mCapacity = 32;
 }
 
-extern "C" void func_804D91BC(CCacheItem* ths) {
+extern "C" void SysCacheDecLoginRef(CCacheItem* ths) {
     if (ths->field_0x48 == 0) {
         ths->field_0x44 -= 1;
     }

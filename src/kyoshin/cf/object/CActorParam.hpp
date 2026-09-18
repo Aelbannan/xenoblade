@@ -51,7 +51,7 @@ namespace cf {
     // Per-actor status/parameter table (the +0x3534 subobject of the
     // func_8009EC9C character record; CfObjectPc.cpp writes it to +0x15E0).
     // ID-keyed parameter entries + bitmap/counters, read through the
-    // code_8025FB10 accessor family (func_80260264 / func_8026178C /
+    // code_8025FB10 accessor family (func_80260264 / Counter_TestBit /
     // func_80260A6C). UnkClass_CActorParam15E0 is kept as a compat alias:
     // CfObjectPc.hpp / CfGameManager.cpp spell the old name (other owners).
     class CActorParamStatusTable;

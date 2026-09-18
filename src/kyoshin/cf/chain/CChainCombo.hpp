@@ -18,7 +18,7 @@ struct CChainGauge {
 // type is not void*.  The gauges these operate on live at CChainCombo+0xC.
 extern "C" void initChainGauge__FPv(cf::CChainGauge* gauge);
 extern "C" void resetChainGauge__FPv(cf::CChainGauge* gauge);
-extern "C" void func_80294844(cf::CChainGauge* gauge, float value);
+extern "C" void setChainGauge(cf::CChainGauge* gauge, float value);
 
 // Resets/respawns chain combo state (CMenuBattleChain.cpp).
 extern "C" void requestCancelChain__Fv();
@@ -64,4 +64,4 @@ struct CChainCombo_ArtsCategory {
 
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
 extern "C" void UIWin_CreateAA2A0Win();
-extern "C" void func_802A07F4(int, void*);
+extern "C" void chainResolveMemberPtr(int, void*);

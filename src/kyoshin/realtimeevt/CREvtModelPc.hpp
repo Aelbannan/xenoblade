@@ -35,13 +35,13 @@ public:
     /* 0x38 */ void* vtableIWork;     // IWorkEvent vtable (primary + 0x44)
 
     void func_80183A3C();
-    void func_80183C1C();
+    void EvtModelPc_InitCounter();
     void func_80183C90();
     void func_801845F0();
-    void func_801846C4();
+    void EvtModelPc_UpdatePos();
     void func_80184730();
-    void func_801848EC(int r4, int r5);
-    bool func_8018497C();
+    void EvtModelPc_Dispatch(int r4, int r5);
+    bool EvtModelPc_IsFileLoaded();
 
     // File slots (6 slots: 0..5)
     CFileHandle* mFileHandle[6]; // 0x3C

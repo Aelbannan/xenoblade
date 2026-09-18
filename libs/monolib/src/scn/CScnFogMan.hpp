@@ -4,7 +4,7 @@
 
 class CScnEnvLgtCtrl;  // full definition in CScnEnvLgtCtrl.hpp
 
-// A word-packed 4-component vector (color/parameters) read by func_8049DE74
+// A word-packed 4-component vector (color/parameters) read by FogManCopyFogParams
 // as raw 32-bit words.
 struct SWordVec {
     u32 v0;
@@ -13,7 +13,7 @@ struct SWordVec {
     u32 v3;
 };
 
-// Scene-view object behind CScnFogMan+0x04: func_8048ECD8 resolves the owning
+// Scene-view object behind CScnFogMan+0x04: getScnRootSlot10 resolves the owning
 // nw4r::g3d::ScnRoot from it, and +0x7C holds the fog-controller pointer
 // consumed by fog mode 2.
 struct SFogRootView {

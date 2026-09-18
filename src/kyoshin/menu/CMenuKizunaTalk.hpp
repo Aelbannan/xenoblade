@@ -145,7 +145,7 @@ struct KizunaScratch {
  *   0x98  character id (BDAT affinity index)
  *   0x9C  page byte (signed; clamps in func_801BD2F8)
  *   0xA0  move state
- *   0xA4  window state (switch in func_801BD594)
+ *   0xA4  window state (switch in pollKizunaTalkReady)
  *   0xA8  CCur18 cursor storage (0x18 bytes)
  *   0xC0  CSysWin panel storage (0x3C bytes)
  *   sizeof = 0xFC
@@ -200,11 +200,11 @@ struct KizunaTalkPadData {
 // retail symbols are unmangled, so they must stay C-linkage (the C++-linkage
 // declarations in CSysWinSelect.hpp/CSysWinSave.hpp would mangle them).
 extern "C" KizunaTalkPadData* getCfPadData__Q22cf13CfGameManagerFv();
-extern "C" void func_8022C1B4(void* out, void* syswin, u8 sel);
+extern "C" void sysWinGetPaneScreenPos(void* out, void* syswin, u8 sel);
 extern "C" u16 func_8013A7D0(u8 a, u8 b);
 extern "C" int func_8006A6D0();
 extern "C" void setBdatEntry__5CBdatFUlPv(u32 value, void* data);
-extern "C" void* func_8003AA34();
+extern "C" void* Bdat_GetTable_AA34();
 
 // Layout animation frame-target check (CSysWin.cpp / CCol6System.hpp decl).
 int advanceAnimTransform(nw4r::lyt::AnimTransform* anim, float frame);

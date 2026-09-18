@@ -81,10 +81,10 @@ void __dt__Q22UI17CPassiveSkillInfoFv();
 void __dt__Q22UI16CPassiveSkillCurFv();
 void func_8026EA20();
 void func_8026EBA8();
-void func_8026EC80();
+void gimmickEneDispatchRow2Handler();
 void func_8026ECEC();
-void func_8026F254();
-void func_8026F31C();
+void gimmickEneDispatchRow4Handler();
+void gimmickEneNoopDispatch5();
 }
 struct EneTagTrio {
     const void* a;
@@ -116,19 +116,19 @@ const EneDataRow lbl_eu_80537A20 = { 0, 0xFFFFFFFFu, (const void*)func_8026EA20 
 __declspec(section ".data") __attribute__((used))
 static const EneDataRow s_dispatchRow1 = { 0, 0xFFFFFFFFu, (const void*)func_8026EBA8 };
 __declspec(section ".data") __attribute__((used))
-static const EneDataRow s_dispatchRow2 = { 0, 0xFFFFFFFFu, (const void*)func_8026EC80 };
+static const EneDataRow s_dispatchRow2 = { 0, 0xFFFFFFFFu, (const void*)gimmickEneDispatchRow2Handler };
 __declspec(section ".data") __attribute__((used))
 static const EneDataRow s_dispatchRow3 = { 0, 0xFFFFFFFFu, (const void*)func_8026ECEC };
 __declspec(section ".data") __attribute__((used))
-static const EneDataRow s_dispatchRow4 = { 0, 0xFFFFFFFFu, (const void*)func_8026F254 };
+static const EneDataRow s_dispatchRow4 = { 0, 0xFFFFFFFFu, (const void*)gimmickEneDispatchRow4Handler };
 __declspec(section ".data") __attribute__((used))
-static const EneDataRow s_dispatchRow5 = { 0, 0xFFFFFFFFu, (const void*)func_8026F31C };
+static const EneDataRow s_dispatchRow5 = { 0, 0xFFFFFFFFu, (const void*)gimmickEneNoopDispatch5 };
 __declspec(section ".data") __attribute__((used))
 const EneTagTrio lbl_eu_80537A68 = { lbl_eu_80668948, lbl_eu_80668950, lbl_eu_80668958 };
 __declspec(section ".data") __attribute__((used))
 static const void* s_tagD = lbl_eu_80668960;
 
-extern "C" __declspec(noinline) void func_8026E7F8(CfGimmickEneQuad* self, int arg) {
+extern "C" __declspec(noinline) void gimmickEneSetupGXState(CfGimmickEneQuad* self, int arg) {
     (void)arg;
 
     GXSetCurrentMtx(0);

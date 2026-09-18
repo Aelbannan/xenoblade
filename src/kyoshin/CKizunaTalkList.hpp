@@ -87,7 +87,7 @@ public:
     /* 0x85 */ u8 mState85;         // state machine progression flag
     /* 0x86 */ u8 mUnknown86;
     /* 0x87 */ u8 mNeedsRebuild;    // 1 = pending rebuild, 0 = built
-    u8 func_8027355C() const { return mNeedsRebuild; }
+    u8 needsRebuild() const { return mNeedsRebuild; }
     /* 0x88 */ s8 mUnknown88;
     /* 0x89 */ u8 _pad89;           // padding
     /* 0x8A */ s16 mUnknown8A;
@@ -109,19 +109,19 @@ extern "C" void* getHandleMEM2__Q23mtl10MemManagerFv();
 extern "C" void* readFile__11CDeviceFileFUlPCcP10IWorkEventii(u32, const char*, void*, int, int);
 extern "C" void* readCommonArchiveFile__11CDeviceFileFUlPCcP10IWorkEventii(u32, const char*, void*, int, int);
 extern "C" int KyoshinHeap_GetField44();
-extern "C" void func_801F34F4(void*);
-extern "C" void func_801F35B0(void*, void*);
-extern "C" void func_801F3670(void*, void*);
-extern "C" void func_801F367C(void*);
-extern "C" void func_801F369C(void*);
-extern "C" void func_801F36BC(void*, int, int);
-extern "C" void func_801F3540(void*);
-extern "C" void func_801F3850(void*, u16);
-extern "C" void func_801D20B0(void*, void*);
+extern "C" void CScrollBar_loadLayoutArc(void*);
+extern "C" void CScrollBar_draw(void*, void*);
+extern "C" void CScrollBar_InitRootPane(void*, void*);
+extern "C" void CScrollBar_requestScrollIn(void*);
+extern "C" void CScrollBar_requestScrollOut(void*);
+extern "C" void CScrollBar_UpdateThumb(void*, int, int);
+extern "C" void CScrollBar_UpdateDispatch(void*);
+extern "C" void CScrollBar_PlaceThumb(void*, u16);
+extern "C" void Cur_DrawLayout(void*, void*);
 extern "C" void func_801D202C(void*);
-extern "C" void func_801D216C(void*, u8);
+extern "C" void Cur_SetVisible(void*, u8);
 extern "C" void playUISound__FUl(u32);
-extern "C" void func_801C4B60(void*, s16, s16, s16, s16);
+extern "C" void setGXColorS10(void*, s16, s16, s16, s16);
 extern "C" void __dl__FPv(void*);
 extern "C" void __construct_array(void*, void* ctor, void* dtor, int size, int n);
 extern "C" void __destroy_arr(void*, void* dtor, int size, int n);
@@ -131,7 +131,7 @@ extern "C" void __dt__10CScrollBarFv(void*, int);
 extern "C" void getEntry__5CBdatFUl(u32);
 extern "C" void func_801390E0(CFileHandle**);
 extern "C" void releaseArcResourceAccessor(nw4r::lyt::ArcResourceAccessor*);
-extern "C" void func_801F35DC(void*);
+extern "C" void CScrollBar_Teardown(void*);
 extern "C" void func_8045F778(UnkClass_8045F564* self);
 
 // Layout-build helpers used by CKizunaTalkList::OnFileEvent (mangled retail
@@ -145,15 +145,15 @@ extern "C" CBaseCur* __ct__CCur18(void* self, void* param);
 extern "C" void __ct__17UnkClass_8045F564Fv(void* self);
 extern "C" void __ct__CScrollBar(void* self, u8 direction);
 extern "C" void func_80137924(void* out, void* paneA, void* paneB, void* paneC);extern "C" void setBdatEntry__5CBdatFUlPv(u32 value, void* data);
-extern "C" void* func_8003AA34();
+extern "C" void* Bdat_GetTable_AA34();
 extern "C" void __ct__14Class_8045F858FP17UnkClass_8045F564(void* self, void* base);
 extern "C" void __dt__14Class_8045F858Fv(void* self, int dealloc);
 extern "C" void* getFP__FPCc(const char* name);
 extern "C" int sprintf(char* str, const char* fmt, ...);
 
 // Data/build helpers used by func_80272810.
-extern "C" u32 func_8003B1EC(void* fp);
-extern "C" u32 func_8009CF8C(u32);
+extern "C" u32 Bdat_GetMaxRow_B1EC(void* fp);
+extern "C" u32 CtrlRemote_TouchBitByArg(u32);
 extern "C" u16 BdatGetU16Direct(const void* fp, const void* name, int id);
 extern "C" u16 func_8013A7D0(u8 a, u8 b);
 u32 func_8027305C(TalkListEntryArray* self, u8 v);
@@ -176,14 +176,14 @@ extern "C" const f32 lbl_eu_806689D4;         // 2.0f - anim frame step for entr
 // State-transition helpers for CKizunaTalkList (defined in CKizunaTalkList.cpp;
 // extern "C" + noinline keeps callers emitting real unmangled bl branches -
 // retail keeps them as separate out-of-line functions in this TU).
-extern "C" __declspec(noinline) void func_80273AD0(CKizunaTalkList* self);
-extern "C" __declspec(noinline) void func_80273A70(CKizunaTalkList* self);
+extern "C" __declspec(noinline) void bindScrollInAnims(CKizunaTalkList* self);
+extern "C" __declspec(noinline) void bindScrollOutAnims(CKizunaTalkList* self);
 extern "C" __declspec(noinline) void func_80273B30(CKizunaTalkList* self);
 extern "C" __declspec(noinline) void func_802740E4(CKizunaTalkList* self);
 
 // Misc helpers used by the row-draw / visibility paths.
 extern "C" int CScrollBar_isVisible(void*);
-extern "C" void func_80124270(void*, u32);
-extern "C" __declspec(noinline) void* func_80273040(void* self, u32 r4);
+extern "C" void setPaneVisible(void*, u32);
+extern "C" __declspec(noinline) void* talkEntryAt(void* self, u32 r4);
 
 

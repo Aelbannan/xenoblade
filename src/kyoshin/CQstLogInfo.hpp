@@ -30,15 +30,15 @@ struct CQstLogInfoVtblBase {
 struct CFileHandle;
 struct CEventFile;
 
-// C-linkage imports used by func_80229510 (retail names are unmangled).
+// C-linkage imports used by QstLogInfo_LoadCommonArchive (retail names are unmangled).
 extern "C" u32 func_80138138(u16);
 extern "C" u32 KyoshinHeap_GetField44();
 // Random / name-table helpers (retail unmangled).
-extern "C" u32 func_8009CF8C(u32);
+extern "C" u32 CtrlRemote_TouchBitByArg(u32);
 extern u32 lbl_eu_80573D18[];  // quest-name table (split1 .rodata)
 // Pane helpers (retail unmangled).
 extern "C" void func_80137F88(nw4r::lyt::Pane*, const char*);
-extern "C" void func_80124270(nw4r::lyt::Pane*, u32);
+extern "C" void setPaneVisible(nw4r::lyt::Pane*, u32);
 
 // BDAT text / name helpers (retail unmangled).
 extern "C" u16 BdatGetU16Direct(const void*, const void*, int);
@@ -54,7 +54,7 @@ extern "C" void* getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32, nw4r::lyt
 extern "C" nw4r::lyt::ArcResourceAccessor* createArcResourceAccessor__10CLibLayoutFv();
 extern "C" void* __ct__CTagProcessor(void*);
 // BDAT manager (C-linkage free function; the CBdat:: form would mangle).
-extern "C" void* func_8003AA34();
+extern "C" void* Bdat_GetTable_AA34();
 
 // BDAT table handles used by the quest-log sub-updates (.sbss).
 extern u32 lbl_eu_806640D8;
@@ -86,28 +86,28 @@ struct CQstLogInfoFontView {
 
 class CQstLogInfo;
 
-// Same-TU helpers called by func_80229570 etc. (retail names unmangled).
+// Same-TU helpers called by QstLogInfo_StepStateMachine etc. (retail names unmangled).
 // noinline: retail callers emit real `bl` branches - leaf bodies would
 // otherwise be inlined away by MWCC. extern "C" binds the call relocs to the
 // unmangled retail symbol names.
-extern "C" __declspec(noinline) void func_80229770(CQstLogInfo* self);
-extern "C" __declspec(noinline) void func_802297BC(CQstLogInfo* self);
-extern "C" __declspec(noinline) void func_80229808(CQstLogInfo* self);
-extern "C" __declspec(noinline) void func_80229854(CQstLogInfo* self);
-extern "C" __declspec(noinline) void func_802298A0(CQstLogInfo* self);
-extern "C" __declspec(noinline) void func_80229900(CQstLogInfo* self);
-// Quest-log sub-widget updates (called from func_80229960).
-extern "C" __declspec(noinline) void func_80229A0C(CQstLogInfo* self,
+extern "C" __declspec(noinline) void QstLogInfo_AdvanceState1To2(CQstLogInfo* self);
+extern "C" __declspec(noinline) void QstLogInfo_AdvanceState2To3(CQstLogInfo* self);
+extern "C" __declspec(noinline) void QstLogInfo_RewindState4To5(CQstLogInfo* self);
+extern "C" __declspec(noinline) void QstLogInfo_RewindState5To0(CQstLogInfo* self);
+extern "C" __declspec(noinline) void QstLogInfo_SwapAnimEnablePair(CQstLogInfo* self);
+extern "C" __declspec(noinline) void QstLogInfo_SwapAnimEnableDual(CQstLogInfo* self);
+// Quest-log sub-widget updates (called from QstLogInfo_RefreshQuestDisplay).
+extern "C" __declspec(noinline) void QstLogInfo_UpdateNameIconPane(CQstLogInfo* self,
     const char* table, u32 key, u8 v);
-extern "C" __declspec(noinline) void func_80229B54(CQstLogInfo* self,
+extern "C" __declspec(noinline) void QstLogInfo_UpdateClearReasonPane(CQstLogInfo* self,
     const char* table, u32 key);
-extern "C" __declspec(noinline) void func_80229CA0(CQstLogInfo* self,
+extern "C" __declspec(noinline) void QstLogInfo_UpdateExpRewardPane(CQstLogInfo* self,
     const char* table, u32 key);
 extern "C" __declspec(noinline) void func_80229CF0(CQstLogInfo* self,
     const char* table, u32 key, u8 v);
 extern "C" __declspec(noinline) void func_8022A904(CQstLogInfo* self,
     const char* table, u32 key, u8 v);
-extern "C" __declspec(noinline) void func_8022AFF8(CQstLogInfo* self);
+extern "C" __declspec(noinline) void QstLogInfo_ClearAllLogPanes(CQstLogInfo* self);
 
 class CQstLogInfo : public CQstLogInfoVtblBase {
 public:
@@ -115,9 +115,9 @@ public:
     ~CQstLogInfo();
     int OnFileEvent(CEventFile* event);
 
-    u8 func_802296D0();
-    u8 func_802296D8();
-    void func_80229768(u16 val);
+    u8 QstLogInfo_GetLoadedMark();
+    u8 QstLogInfo_GetReadyMark();
+    void QstLogInfo_SetQuestIdSlot(u16 val);
 
     UnkClass_8045F564 mMemRegion;             // 0x04 - scratch region (0x10 bytes)
     CFileHandle* mFileHandle;                 // 0x14 - loaded quest-log arc handle

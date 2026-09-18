@@ -43,7 +43,7 @@ struct WarpColumns {
 
 struct WarpObject {
     u8 pad00[0x8c];
-    u8 field_8c[0x90 - 0x8c]; /* sub-record passed to func_80199810 */
+    u8 field_8c[0x90 - 0x8c]; /* sub-record passed to movePcResetAndSetPos */
     u8 pad90[0xB0 - 0x90];
     cf::CfGimmickWarp* owner;
 };
@@ -110,14 +110,16 @@ void CfSoundMan_ApplySlotStop(int, u16, int);
 extern "C" void* createBattleActor__Q22cf13CfGameManagerFv(u32 value, u32 unused);
 void cfCam_syncFollowD();
 void setChildB59__(WarpObject*, int);
-extern "C" int func_804BE398(void* vec, int a, int b, int c, f32 d, f32 e);
+extern "C" int ScnRes_VertRayForward_E398(void* vec, int a, int b, int c, f32 d, f32 e);
 extern "C" void func_804BE4B4(void* out, int a);
 u16 CfGimmick_PlaySoundAtPos(u16, const WarpVec3*);
 void func_8008566C__Q22cf13CfGameManagerFv(int, WarpVec4*, int);
 void func_80198710(WarpVec3*, const WarpVec3*, f32, int, int, f32, f32);
 int CPartsChange_ProcessPartyInfo(WarpVec3*, WarpVec3*);
-void func_80199810(u8*, const WarpVec3*);
-WarpObject* getCameraDataBlock__Q22cf13CfGameManagerFv();
+void movePcResetAndSetPos(u8*, const WarpVec3*);
+// getCameraDataBlock__Q22cf13CfGameManagerFv: declared (UnkClass_800821F8*
+// return) by the shared cf headers; the TU-local WarpObject* decl clashed
+// with it (only use casts to CObjectState* anyway).
 void __dt__Q22cf9CfGimmickFv(WarpData*, int);
 void __dl__FPv(void*);
 }
@@ -158,7 +160,7 @@ extern "C" void __ct__cf_CfGimmickWarp(WarpData* self, u16 rowId) {
     *(void**)self = (void*)lbl_eu_805359B0;
     self->typeId = 4;
 
-    void* manager = func_8003AA34();
+    void* manager = Bdat_GetTable_AA34();
     u32 tableValue = (u32)lbl_eu_80664134;
     self->rowId = rowId;
 
@@ -230,7 +232,7 @@ extern "C" void* __dt__Q22cf13CfGimmickWarpFv(WarpData* self, int deleteFlag) {
     return self;
 }
 
-extern "C" void func_8020D6FC(WarpData* self) {
+extern "C" void CfGimmickWarp_UpdateState(WarpData* self) {
     (self->*lbl_eu_80535938[self->state])();
     if ((self->flags & 0x10) != 0) {
         if ((self->configFlags & 1) != 0) {
@@ -248,7 +250,7 @@ extern "C" void func_8020D6FC(WarpData* self) {
     }
 }
 
-extern "C" void func_8020D7BC(WarpData* self) {
+extern "C" void CfGimmickWarp_ClearState(WarpData* self) {
     u32 flags = self->flags;
     self->object104 = 0;
     self->object100 = 0;
@@ -256,12 +258,12 @@ extern "C" void func_8020D7BC(WarpData* self) {
     self->flags = flags & ~1u;
 }
 
-extern "C" void func_8020D7DC(WarpData* self) {
+extern "C" void CfGimmickWarp_RefreshMatrices(WarpData* self) {
     func_802089BC(&self->scale, &self->position, &self->rotation);
     func_802089BC(&self->destination3, &self->destination, &self->destination2);
 }
 
-extern "C" void func_8020D824(WarpData* self) {
+extern "C" void CfGimmickWarp_TryFire(WarpData* self) {
     if ((lbl_eu_806646BC & 2) == 0) {
         return;
     }
@@ -696,7 +698,7 @@ extern "C" void func_8020E3F0(WarpData* self) {
     }
 }
 
-extern "C" void func_8020E6C0(WarpData* self) {
+extern "C" void CfGimmickWarp_EnterState6(WarpData* self) {
     CfGimmick_SetGlobalFlagC0002();
     CfGimmick_SetGlobalFlagD0000();
     if ((self->flags & 1) == 0) {
@@ -735,7 +737,7 @@ extern "C" void func_8020E704(WarpData* self) {
         sum.y = centre.y + adjusted.y;
         sum.z = centre.z + adjusted.z;
         WarpVec3 effectPos = sum;
-        if (func_804BE398(&effectPos, 0, 0, 0, lbl_eu_806683E0, lbl_eu_8066AF20)) {
+        if (ScnRes_VertRayForward_E398(&effectPos, 0, 0, 0, lbl_eu_806683E0, lbl_eu_8066AF20)) {
             func_804BE4B4(&centre, 0);
         }
 
@@ -759,7 +761,7 @@ extern "C" void func_8020E704(WarpData* self) {
                 player->CfObject_setMoveYaw(distance);
                 WarpObject* object = reinterpret_cast<WarpObject*>(reinterpret_cast<cf::CfObject*>(reinterpret_cast<u8*>(player) + 0x3E9C)->CfObject_getCurrentTarget());
                 if (object != 0) {
-                    func_80199810(object->field_8c, &centre);
+                    movePcResetAndSetPos(object->field_8c, &centre);
                 }
             }
         }
@@ -872,7 +874,7 @@ extern "C" void func_8020EA2C(WarpData* self) {
     self->flags &= 0x1Fu;
 }
 
-extern "C" void func_8020ED2C(WarpData* self) {
+extern "C" void CfGimmickWarp_CheckReady(WarpData* self) {
     int ready = 0;
     if (self->phase != 0) {
         if ((self->configFlags & 1) != 0) {
@@ -894,7 +896,7 @@ extern "C" void func_8020ED2C(WarpData* self) {
     }
 }
 
-extern "C" void func_8020EE18(WarpData* self) {
+extern "C" void CfGimmickWarp_CheckReadyBoth(WarpData* self) {
     int firstReady = 0;
     int secondReady = 0;
     if ((self->configFlags & 1) != 0) {

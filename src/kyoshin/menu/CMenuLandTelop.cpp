@@ -116,7 +116,7 @@ CMenuLandTelop* __dt__14CMenuLandTelopFv(CMenuLandTelop* _this, int flags) {
 
 void CMenuLandTelop::Init() {
     func_8014548C(this);
-    field_E0 = func_80226B94();
+    field_E0 = QstCnt_HasInstance_6B94();
     field_67 = 0;
     IScnRender* cb = reinterpret_cast<IScnRender*>(this);
     if (this != 0) {
@@ -160,9 +160,9 @@ void CMenuLandTelop::Move() {
     switch (field_8E) {
     case 0: {
         // Any blocking screen active: park the banner timer and leave.
-        if (cf::CfGameManager::isSceneLoading() || func_80293C10() ||
-            func_8029A658() || func_801B481C() || func_80122450() ||
-            (func_80124B78() != 0)) {
+        if (cf::CfGameManager::isSceneLoading() || PTNotice_IsActive_3C10() ||
+            MenuTutorialIsCreated() || GetItemMulti_IsActiveFlag() || hasQuestWindow() ||
+            (SysWinGetSingleton() != 0)) {
             field_DA = 1;
             field_DC = lbl_eu_806673C8;
             return;
@@ -179,9 +179,9 @@ void CMenuLandTelop::Move() {
 
         switch (field_90) {
         case 0: {
-            if (func_8010CE48() == 0) return;
+            if (BpsStateSingletonToInt() == 0) return;
             if (field_E0 != 0) {
-                field_E0 = func_80226B94();
+                field_E0 = QstCnt_HasInstance_6B94();
                 if (field_E0 != 0) return;
             }
 
@@ -216,8 +216,8 @@ void CMenuLandTelop::Move() {
                     u32 data = (u32)func_8009EC9C((u16)i);
                     u32 rec = data + 0x3534;
                     u32 weight = 100;
-                    if (func_8026178C((void*)rec, 0x8a) != 0) {
-                        weight = func_8025FB10((void*)rec, 0x8a) + 100;
+                    if (Counter_TestBit((void*)rec, 0x8a) != 0) {
+                        weight = IdTable_SumValues((void*)rec, 0x8a) + 100;
                     }
                     f64 frac = ((f64)(u32)(msgId * weight) - bias) * scale;
                     f64 limit =
@@ -246,17 +246,17 @@ void CMenuLandTelop::Move() {
             case 0:
                 func_80043738(0, &lbl_eu_80501720[0x29],
                               Scn_CallUnk8C_V9(lbl_eu_80663E14), 2, 1, 0,
-                              func_801895EC());
+                              MenuSnd_GetMasterVol_95EC());
                 break;
             case 1:
                 func_80043738(0, &lbl_eu_80501720[0x39],
                               Scn_CallUnk8C_V9(lbl_eu_80663E14), 2, 1, 0x5a,
-                              func_801895EC());
+                              MenuSnd_GetMasterVol_95EC());
                 break;
             case 2:
                 func_80043738(0, &lbl_eu_80501720[0x49],
                               Scn_CallUnk8C_V9(lbl_eu_80663E14), 2, 1, 0,
-                              lbl_eu_806673EC * func_801895EC());
+                              lbl_eu_806673EC * MenuSnd_GetMasterVol_95EC());
                 break;
             }
             field_90 = 3;
@@ -277,8 +277,8 @@ void CMenuLandTelop::Move() {
         switch (field_90) {
         case 0:
             if (field_98 != 0) {
-                field_98 = func_8014A2A0();
-                if (field_98 != 0 && func_8014A2B4() == 0) return;
+                field_98 = CMenuGetItem_IsActive();
+                if (field_98 != 0 && CMenuGetItem_GetField90() == 0) return;
             }
             playUISound(0x8b);
             field_90 = 1;
@@ -358,7 +358,7 @@ CMenuLandTelop* func_80144EE4(CProcess* parent, CScn* scene, u16 opt,
 
 // Quest-log gating helper: true while the land-telop state flag at +0x8E
 // of the global object is 1.
-int func_80144FC8() {
+int isLandTelopActive() {
     CLandTelopGlobal* p = lbl_eu_806641A0;
     if (p != 0 && p->field_0x8E == 1) {
         return 1;
@@ -368,7 +368,7 @@ int func_80144FC8() {
 
 // Quest-log gating helper: true while the land-telop state flag at +0x8E
 // of the global object is 0.
-int func_80144FF0() {
+int isLandTelopIdle() {
     CLandTelopGlobal* p = lbl_eu_806641A0;
     if (p != 0 && p->field_0x8E == 0) {
         return 1;
@@ -376,14 +376,14 @@ int func_80144FF0() {
     return 0;
 }
 
-void func_80145018() {
+void requestLandTelop() {
     CLandTelopGlobal* p = lbl_eu_806641A0;
     if (p != 0) {
         p->field_0x64 = 1;
     }
 }
 
-unsigned char func_80145030(void) {
+unsigned char getLandTelopE0(void) {
     if (lbl_eu_806641A0 != 0) {
         return lbl_eu_806641A0->field_0xE0;
     }
@@ -442,7 +442,7 @@ void func_8014548C(CMenuLandTelop* self) {
     // region and is released as a block by the destructor at scope exit.
     Class_8045F858 regionGuard(&self->mMemRegion);
 
-    self->field_98 = func_8014A2A0();
+    self->field_98 = CMenuGetItem_IsActive();
     self->field_90 = 0;
 
     switch (self->field_8E) {
@@ -606,11 +606,11 @@ void func_8014548C(CMenuLandTelop* self) {
 }
 #pragma pop
 
-void func_80145A90(void* self) { ((void(*)(void*))__dt__14CMenuLandTelopFv)((char*)self - 0x6c); }
+void CMenuLandTelop_dtorAdj6C(void* self) { ((void(*)(void*))__dt__14CMenuLandTelopFv)((char*)self - 0x6c); }
 
-void func_80145A98(void* self) { ((void(*)(void*))cbRenderBefore__14CMenuLandTelopFv)((char*)self - 0x70); }
+void CMenuLandTelop_renderBeforeAdj70(void* self) { ((void(*)(void*))cbRenderBefore__14CMenuLandTelopFv)((char*)self - 0x70); }
 
-void func_80145AA0(void* self) { ((void(*)(void*))__dt__14CMenuLandTelopFv)((char*)self - 0x70); }
+void CMenuLandTelop_dtorAdj70(void* self) { ((void(*)(void*))__dt__14CMenuLandTelopFv)((char*)self - 0x70); }
 
 // Resolve the bdat string for the given row: read the column named by the
 // string at lbl_eu_805018A8[9]; when it is missing or identical to the

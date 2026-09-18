@@ -83,7 +83,7 @@ public:
     virtual void func_802A1EA0();
     virtual void func_802A3740();
     virtual int blank2();
-    int func_802A5ECC() { return 240; }
+    int downVoiceFixed240() { return 240; }
 };
 
 extern "C" int func_802A3E88(CVS_THREAD* thread);  // unmangled retail symbol (matches code_802B8A3C.hpp)

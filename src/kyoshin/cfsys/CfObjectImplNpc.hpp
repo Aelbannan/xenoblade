@@ -111,13 +111,13 @@ public:
     virtual void vfD8() = 0;                             // index 52
     virtual void vfDC() = 0;                             // index 53 -> vtable offset 0xDC
 
-    u8* func_800CA924();
+    u8* NpcImplGetUnk68();
 
     u8 _pad04[0x10];                                     // 0x04-0x13
     CfObjectImplNpc14* field_14;                         // 0x14
     u8 _pad18[0x10];                                     // 0x18-0x27
     u8 field_28[0x40];                                   // 0x28-0x67 (voice sub-object; address taken)
-    u8 mUnk_0x68[4];                                     // 0x68-0x6B (returned by func_800CA924)
+    u8 mUnk_0x68[4];                                     // 0x68-0x6B (returned by NpcImplGetUnk68)
     u8 _pad6C[0x368 - 0x6C];                             // 0x6C-0x367
     s16 field_368;                                       // 0x368 (talk index)
 };
@@ -127,12 +127,12 @@ public:
 // C-ABI imports (retail symbols are unmangled - keep linkage/signatures
 // verbatim; same scheme as CfObjectImplPc.hpp / CfObjectImplEne.hpp).
 extern "C" {
-void func_800CA948(void* self);
-void func_802A0B8C(void* self, void* owner);
-void func_802A0E08(void* self);
-void func_800AA318(u32 packed, u32* out0, u32* out1, u32* out2, u32* out3);
+void MoveImplInitFields(void* self);
+void attachOwner(void* self, void* owner);
+void updatePosition(void* self);
+void Tok_Unpack(u32 packed, u32* out0, u32* out1, u32* out2, u32* out3);
 char* func_800AA5C0(void* handle);
-void func_800CEBE0(void* self);
+void MoveImplStartDispatch(void* self);
 }
 
 // rodata/data imports referenced by this unit (global scope: not mangled).

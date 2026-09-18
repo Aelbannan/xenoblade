@@ -3,7 +3,7 @@
 #include <types.h>
 
 // Internal driver struct for CfObjectImplPc.
-// Function func_800CA274 accesses a sub-object at +0x18 and reads/writes an int at +0x3e98.
+// Function ObjPc_StoreSubVal_A274 accesses a sub-object at +0x18 and reads/writes an int at +0x3e98.
 struct CfObjectImplPcSubObj;
 struct CfObjectImplPcData {
     u8 _00_17[0x18];              // 0x00-0x17
@@ -262,7 +262,7 @@ struct CfObjectImplPcSub3E9CData {
 };
 
 // Result of CfObjectImplPc18::vf27C: u16 word at +0x00 (cleared by
-// func_800C5998).
+// ObjPc_InitLink_5998).
 struct CfObjectImplPc27C {
     u16 field_00;                    // 0x00
 };
@@ -297,7 +297,7 @@ public:
     virtual int vf40(int arg);       // index 15 -> vtable offset 0x40
 };
 
-// Result record returned by func_80149154: signed magnitude at +0x10.
+// Result record returned by findBattleStatusEntry: signed magnitude at +0x10.
 struct CfObjectImplPc149154 {
     u8 _pad00[0x10];
     s32 field_10;                    // 0x10
@@ -311,7 +311,7 @@ struct CfObjectImplPcEvtCmd {
     char cmd[0x18];                  // 0x1C command name (vs lbl_eu_804FC758)
 };
 
-// View of the object returned by func_800FE68C: word at +0x90E4 feeds
+// View of the object returned by Selector_GetInstance: word at +0x90E4 feeds
 // findObjectById in func_800C891C's actor fallback.
 struct CfObjectImplPcFe68C {
     u8 _pad00[0x90E4];
@@ -377,7 +377,7 @@ struct CfObjectImplPc2A4Res {
     u32 field_78;                    // 0x78 flags (bit 0x80)
 };
 
-// Block at CfObjectImplPc18::+0x3380 (managed by func_8014B2DC): word flag at
+// Block at CfObjectImplPc18::+0x3380 (managed by aiActionClearBlockADC): word flag at
 // +0x04, u16 flag at +0x08, word flag at +0xAFC.
 struct CfObjectImplPc3380 {
     u8 _pad00[0x04];
@@ -809,7 +809,7 @@ public:
     u8 _pad0C[0x3374 - 0x0C];        // 0x0C-0x3373
     u32 field_3374;                  // 0x3374 flags
     u8 _pad3378[0x3380 - 0x3378];    // 0x3378-0x337F
-    CfObjectImplPc3380 field_3380;   // 0x3380 block managed by func_8014B2DC
+    CfObjectImplPc3380 field_3380;   // 0x3380 block managed by aiActionClearBlockADC
     u8 _pad3E80[0x3E98 - 0x3E80];
     s32 field_3E98;                  // 0x3E98
     CfObjectImplPcSub3E9C mSub;      // 0x3E9C embedded sub-object
@@ -969,14 +969,14 @@ struct CfObjectImplPcEvt {
 // C-ABI imports (retail symbol names - keep linkage/signatures verbatim)
 // ---------------------------------------------------------------------------
 extern "C" {
-void func_800CAA44(void* self);
-void func_800CEE28(void* self, u32 param);
-void func_800CEBE0(void* self);
+void MoveImplResetFull(void* self);
+void MoveImplRunEffectVirtuals(void* self, u32 param);
+void MoveImplStartDispatch(void* self);
 int func_80148778(void* obj, int id);
 extern "C" u32 getQueuedFileEventCount__Q22cf13CfGameManagerFv(void); // canonical u32 form
-void func_800CA948(u8* self);
+void MoveImplInitFields(u8* self);
 void func_8015BB3C(u8* a, u8* b, u8* c);
-void func_802A0B8C(u8* self, u8* owner);
+void attachOwner(u8* self, u8* owner);
 u32 CfRes_getHeapHandle();
 char* CfObjectMove_getBdatNameCol11(u8* move, int index);
 char* CfObjectMove_getBdatNameCol7(u8* move, int index);
@@ -984,19 +984,19 @@ void* func_8016FE34(void* src); // canonical void* form (CAIAction/CtrlPc owners
 // Enum-list helper family: single canonical extern "C" void* forms
 // (CVision.hpp owner) so TUs including several of these headers see one
 // declaration per retail name (MWCC 10197). Opaque pointers - ABI unchanged.
-void* func_800F6EAC(void* list, u32 idx); // canonical void* return (CVision.hpp owner)
+void* getObjectAt(void* list, u32 idx); // canonical void* return (CVision.hpp owner)
 void func_800F6ED0(void* list, void* value);
-void* func_800F6E08(void* list);
+void* findFirstCleanObjectId(void* list);
 void CTaskGame_enumListCtor(void* holder);
 void* CTaskGame_enumListGet(void* holder);
-void func_800F4A98(void* list, u32 type, u32 filter);
+void startEnumObjects(void* list, u32 type, u32 filter);
 void __dt__80043E88(void* holder, int flag);
-void func_800AA318(u32 packed, u32* out0, u32* out1, u32* out2, u32* out3);
-void func_800CB9AC(void* self, u32 param); // canonical void* form (shared with CfObjectImplMove.hpp)
+void Tok_Unpack(u32 packed, u32* out0, u32* out1, u32* out2, u32* out3);
+void MoveImplGateEventCmd(void* self, u32 param); // canonical void* form (shared with CfObjectImplMove.hpp)
 u8* __ct__cf_CPcEffect07(u8* obj, u8* actor);
-int func_80145F78(int id);
-int func_80145C00(int val);
-bool func_802799F0(void* chain, void* obj);
+int isBattleEventKind1(int id);
+int isBattleEventKind3(int val);
+bool CChain_HasMemberEntry(void* chain, void* obj);
 bool func_80260264(void* obj, s32 idx, s32* out);
 void CfObjectMove_relaySubB0Slot54(void* sub, u32 a, f32 b, u32 c, f32 d, u32 e);
 void CfObjectMove_relaySubB0Slot58(void* sub, u32 a, u32 b);
@@ -1007,8 +1007,8 @@ void setAnimCount(void* obj, u32 val); // canonical u32 form (CActParamAnimGame.
 void CCharVoiceMan_EnqueuePcStateVoice(void* obj);
 void CBattleMan_RunBattleEvent(void* mgr, void* obj, void* evtCopy, s32 flag);
 void func_800CB454(cf::CfObjectImplPc* self, CfObjectImplPcEvt* evt);
-void func_8018C820(void* obj, int value);
-void func_8014B2DC(void* blk);
+void PartyGaugeAddClamped(void* obj, int value);
+void aiActionClearBlockADC(void* blk);
 void func_801B248C(int value);
 void func_800CAB30(cf::CfObjectImplPc* self, CfObjectImplPcEvt* evt);
 // (func_800F3970: single shared import lives on CBattleManagerApi.hpp.)
@@ -1023,15 +1023,15 @@ void func_800983B8(void* a, int b);
 unsigned int addTableValueWithClamp__Q22cf13CfGameManagerFv(unsigned int a,
                                                     unsigned int b,
                                                     unsigned int c);
-int func_80260518(void* obj, int id, u32* outW, f32* outF);
+int IdTable_QuerySumFloat(void* obj, int id, u32* outW, f32* outF);
 void CBattleMan_FireActorEvent918(void* mgr, void* obj, void* arg, int a, int b);
 void func_800D81A8(int a, void* obj, int c);
 void CCharVoiceMan_EnqueueGaugeResultVoice(void* a, void* b);
 void func_802809C8(void);
-void* func_80149154(void* obj, int id);
+void* findBattleStatusEntry(void* obj, int id);
 void CUICfManager_queueFactoryMenu(int a, float b);
 int CBattleMan_ListHasValue(void* mgr, void* obj);
-void func_800451D8(u32 entry, void* sub);
+void bindIndexedEffect(u32 entry, void* sub);
 void* func_8009EC9C(u32 index); // canonical owner-form (void*, u32): CtrlObjectParam.cpp / CfObjectPc.hpp; matches CVS_THREAD.hpp (MWCC 10197)
 u8* CtrlObjectParam_GetArtsStatsRow(u8* info, int a);
 }
@@ -1064,17 +1064,17 @@ extern u32 lbl_eu_804FC718[6];
 extern void* lbl_eu_80661C60;
 extern void* lbl_eu_80661BE8;
 
-// String table (rodata) referenced by func_800CA458 (substring at +0x3B).
+// String table (rodata) referenced by ObjPc_TickPlayer_A458 (substring at +0x3B).
 extern char lbl_eu_804FC758[];
 
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
 extern "C" void __dt__Q22cf14CfObjectImplPcFv(void* self);
-extern "C" void* func_800FE68C(void);
+extern "C" void* Selector_GetInstance(void);
 extern "C" void func_800EC918(void* mgr, void* obj, void* obj2, void* arg,
                                u32 flag);
-extern "C" int func_8026178C(void* obj, u32 idx);
-extern "C" int func_8025FB10(void* obj, u32 idx); // canonical int form (owner decl: chain/CChainActorList.hpp)
-extern "C" void func_800CAB2C(void* self);
+extern "C" int Counter_TestBit(void* obj, u32 idx);
+extern "C" int IdTable_SumValues(void* obj, u32 idx); // canonical int form (owner decl: chain/CChainActorList.hpp)
+extern "C" void MoveImplNoopA(void* self);
 extern "C" void func_8014AC38(void* blk, void* rec);
 extern "C" void CBattleMan_ClearEventNotify(void* mgr, void* obj, s32 id);
 extern "C" void CBattleMan_ClearActorStatus(void* mgr, void* obj, s32 id);
@@ -1084,8 +1084,8 @@ extern "C" void* CBattleMan_FetchVisionObj(void* mgr);
 extern "C" int func_801B1CCC(int idx);
 extern "C" int findObjB48ById(int id);
 extern "C" void func_80084654__Q22cf13CfGameManagerFv(int flag);
-extern "C" int func_8025FDB8(void* obj, u32 idx);
-extern "C" f32 func_80260010(void* obj, u32 idx);
+extern "C" int IdTable_MaxValueC(void* obj, u32 idx);
+extern "C" f32 IdTable_MaxValue10(void* obj, u32 idx);
 
 namespace ml {
 namespace math {

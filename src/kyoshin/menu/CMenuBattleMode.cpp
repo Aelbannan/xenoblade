@@ -7,12 +7,12 @@
 // Pre-include the winning copies, then rename CAIAction's stray copies out
 // of the way for the duration of the include (all three are idempotent).
 #include "kyoshin/plugin/ocBdat.hpp"
-// func_8025FB10: u32 form in CChainActorList.hpp wins; pre-include it, then
+// IdTable_SumValues: u32 form in CChainActorList.hpp wins; pre-include it, then
 // rename CChainTimer's int-form copy out of the way across BOTH spans
 // (CChain.hpp pulls CChainActorList then CChainTimer; UnkClass_800D8DBC.hpp
 // re-includes CChainTimer inside the CBattleManager span).
 #include "kyoshin/cf/chain/CChainActorList.hpp"
-#define func_8025FB10 func_8025FB10_chainTimer
+#define IdTable_SumValues IdTable_SumValues_chainTimer
 #include "kyoshin/cf/chain/CChain.hpp"
 #define getBdatStringColumnValue getBdatStringColumnValue_caiaction2
 #define getArtsSlotRC getArtsSlotRC_caiaction
@@ -25,22 +25,22 @@
 #undef getBdatStringColumnValue
 #undef getArtsSlotRC
 #undef getArtsParamRC2
-#undef func_8025FB10
+#undef IdTable_SumValues
 // func_8009EC9C stays defined until after the code_80135FDC.hpp include below.
 #include "kyoshin/cf/CfGameManager.hpp"
-// (func_80149154: code_800F42AC.hpp / CAIAction.hpp / CtrlEnemy.hpp now all
+// (findBattleStatusEntry: code_800F42AC.hpp / CAIAction.hpp / CtrlEnemy.hpp now all
 // declare the identical void*(void*, u32) form - no guard needed.)
 #include "kyoshin/cf/code_800F42AC.hpp"
 // code_80135FDC.hpp declares lbl_eu_8066A208 as u32 (line 188);
 // CfObjectMove.hpp (via the CBattleManager.hpp include above) declares it
 // const float. This TU uses neither copy.
-// func_8016DF2C: CAIAction.hpp's int form is already in; rename
+// getReloadParam0: CAIAction.hpp's int form is already in; rename
 // code_80135FDC.hpp's u16 copy out of the way (this TU never calls it).
 // func_8009EC9C stays renamed across this span too (CAIAction's u16 form
 // wins; code_80135FDC.hpp carries another u32 copy).
-#define func_8016DF2C func_8016DF2C_u16
+#define getReloadParam0 getReloadParam0_u16
 #include "kyoshin/code_80135FDC.hpp"
-#undef func_8016DF2C
+#undef getReloadParam0
 #undef func_8009EC9C
 #include "monolib/device/CDeviceVI.hpp"
 #include "monolib/util/MemManager.hpp"
@@ -107,9 +107,9 @@ void CMenuBattleMode::Init() {
 // C-linkage declarations so MWCC emits the plain retail symbol names (the
 // thunks jump through these unmangled addresses; C++ linkage would re-mangle).
 extern "C" void cbRenderBefore__15CMenuBattleModeFv();
-void func_801A0494(void* self) { ((void(*)(void*))cbRenderBefore__15CMenuBattleModeFv)((char*)self - 0x5c); }
+void CMenuBattleMode_renderBeforeAdj5C(void* self) { ((void(*)(void*))cbRenderBefore__15CMenuBattleModeFv)((char*)self - 0x5c); }
 extern "C" CMenuBattleMode* __dt__15CMenuBattleModeFv(CMenuBattleMode* self, int deleteFlag);
-void func_801A049C(void* self) { ((void(*)(void*))__dt__15CMenuBattleModeFv)((char*)self - 0x5c); }
+void CMenuBattleMode_dtorAdj5C(void* self) { ((void(*)(void*))__dt__15CMenuBattleModeFv)((char*)self - 0x5c); }
 
 // Deleting virtual destructor (D1 shape): destroys the mLayoutMem member
 // (delete flag -1), then the CProcess base (via IUICf/CTTask), then frees the

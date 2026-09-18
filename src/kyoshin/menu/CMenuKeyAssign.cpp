@@ -30,8 +30,8 @@ struct PtmfNullTriple {
 
 // Key-assign free helpers (defined in this TU). Retail emits these under the
 // unmangled names, so the declarations/definitions keep C linkage.
-extern "C" void func_80115BD8(CMenuKeyAssign* self);
-extern "C" void func_80115DB0(CMenuKeyAssign* self, char* str, int idx);
+extern "C" void hideKeyAssignPanes(CMenuKeyAssign* self);
+extern "C" void setKeyAssignLabels(CMenuKeyAssign* self, char* str, int idx);
 extern "C" void func_801159DC(CMenuKeyAssign* self);
 
 // Open the key-assign menu: state is the remap-column base index (also the
@@ -77,7 +77,7 @@ void CMenuKeyAssign::Init() {
     func_8013676C(rootPane, fontResult);
 
     // Hide the button panes that are not yet active (shared helper).
-    func_80115BD8(this);
+    hideKeyAssignPanes(this);
 
     // MI adjust: IScnRender subobject at +0x5c (null-this safe).
     IScnRender* cb = reinterpret_cast<IScnRender*>(this);
@@ -159,7 +159,7 @@ void CMenuKeyAssign::Move() {
             u8 phase = *(u8*)(sub1a8 + 2);
             bool inRange = phase >= 1 && phase <= 0x18;
             if (inRange) {
-                if (func_801042C8() != 0) {
+                if (CMenuArtsSelect_IsAvailable() != 0) {
                     func_80115060(self, 0x19, 1, 0);
                     goto done;
                 }
@@ -168,13 +168,13 @@ void CMenuKeyAssign::Move() {
             }
         }
         if ((pad->mHeldButtonFlags & 0x10) != 0) {
-            int b = func_801B0F8C();
+            int b = battleCommuIsActive();
             if (b == 0 && func_8017FD44() == 0) {
                 func_801154D0(self, 9, 10, 13, 12, 0, 1);
                 goto done;
             }
         }
-        if (func_800FF738() != 0) {
+        if (CMainMenu_IsOpen() != 0) {
             func_80115060(self, 0x16, 2, 0);
             goto done;
         }
@@ -184,7 +184,7 @@ void CMenuKeyAssign::Move() {
                 u32 id = *arts->mSub04->getActorId();
                 if (func_80174C98(arts, &id, 0x803) != 0) {
                     if ((pad->mHeldButtonFlags & 8) != 0) {
-                        int b2 = func_801B0F8C();
+                        int b2 = battleCommuIsActive();
                         if (battleMode == 0 && b2 == 0 &&
                             func_8017FD44() == 0) {
                             CMenuKeyAssignBattleMgr* bmv =
@@ -251,7 +251,7 @@ void CMenuKeyAssign::Move() {
             handled = 1;
         artsDone:
             if (handled == 0) {
-                if (func_801042C8() != 0) {
+                if (CMenuArtsSelect_IsAvailable() != 0) {
                     func_80115060(self, 0x19, 1, 0);
                     goto done;
                 }
@@ -363,7 +363,7 @@ void CMenuKeyAssign::Move() {
         u8 phase = *(u8*)(sub1a8 + 2);
         bool inRange = phase >= 1 && phase <= 0x18;
         if (inRange) {
-            if (func_801042C8() != 0) {
+            if (CMenuArtsSelect_IsAvailable() != 0) {
                 func_80115060(self, 0x19, 1, 0);
                 goto done;
             }
@@ -372,19 +372,19 @@ void CMenuKeyAssign::Move() {
         }
     }
     if ((pad->mHeldButtonFlags & 0x800) != 0) {
-        int b = func_801B0F8C();
+        int b = battleCommuIsActive();
         if (b == 0 && func_8017FD44() == 0) {
             func_801154D0(self, 9, 10, 13, 12, 0, 1);
             goto done;
         }
     }
-    if (func_800FF738() != 0) {
+    if (CMainMenu_IsOpen() != 0) {
         func_80115060(self, 0x16, 2, 0);
         goto done;
     }
     if ((pad->mHeldButtonFlags & 0x1000) != 0) {
         if (battleMode == 0) {
-            int b = func_801B0F8C();
+            int b = battleCommuIsActive();
             if (b == 0 && func_8017FD44() == 0) {
                 if (arts != 0) {
                     u32 id = *arts->mSub04->getActorId();
@@ -465,7 +465,7 @@ void CMenuKeyAssign::Move() {
             }
         }
         if (handled == 0) {
-            if (func_801042C8() != 0) {
+            if (CMenuArtsSelect_IsAvailable() != 0) {
                 func_80115060(self, 0x19, 1, 0);
                 goto done;
             }
@@ -647,7 +647,7 @@ extern "C" CMenuKeyAssign* __ct__CMenuKeyAssign(CProcess* parent, CScn* scene) {
 // (target us-80115b3c). Hides the panes, loads the remap-column names via
 // BdatGetU16ByTableKey/BdatTouchStringCell, finds the "timg" texture and sizes the pane
 // from the texture dimensions (u16 -> f32 via the 0x43300000 magic double),
-// then assigns the button labels through func_80115DB0. The F64Conv pairs are
+// then assigns the button labels through setKeyAssignLabels. The F64Conv pairs are
 // function-scope (their 0x43300000 words are stored once, before the guards).
 extern "C" void func_80115060(CMenuKeyAssign* self, int state, int count, int mode) {
     // F64Conv pairs are function-scope (their 0x43300000 words are stored once,
@@ -664,7 +664,7 @@ extern "C" void func_80115060(CMenuKeyAssign* self, int state, int count, int mo
         return;
     }
     self->mField_78 = (u32)state;
-    func_80115BD8(self);
+    hideKeyAssignPanes(self);
     if (state == 0) {
         return;
     }
@@ -711,7 +711,7 @@ extern "C" void func_80115060(CMenuKeyAssign* self, int state, int count, int mo
             }
             if (i < 4) {
                 char* s2 = BdatTouchStringCell(&base[0x3b], &base[0x72], idx);
-                func_80115DB0(self, s2, i);
+                setKeyAssignLabels(self, s2, i);
             }
         }
     } else {
@@ -740,7 +740,7 @@ extern "C" void func_80115060(CMenuKeyAssign* self, int state, int count, int mo
                 pv->flags = (pv->flags & 0xFE) | 1;
             }
             char* s2 = BdatTouchStringCell(&base[0x3b], &base[0x72], 26);
-            func_80115DB0(self, s2, 0);
+            setKeyAssignLabels(self, s2, 0);
         }
         {
             u16 r = BdatGetU16ByTableKey(&base[0x3b], name, state);
@@ -766,7 +766,7 @@ extern "C" void func_80115060(CMenuKeyAssign* self, int state, int count, int mo
                 pv->flags = (pv->flags & 0xFE) | 1;
             }
             char* s2 = BdatTouchStringCell(&base[0x3b], &base[0x72], state);
-            func_80115DB0(self, s2, 1);
+            setKeyAssignLabels(self, s2, 1);
         }
     }
 }
@@ -788,7 +788,7 @@ extern "C" void func_801154D0(CMenuKeyAssign* self, int a, int b, int c, int d, 
         return;
     }
     self->mField_78 = (u32)state;
-    func_80115BD8(self);
+    hideKeyAssignPanes(self);
     if (state == 0) {
         return;
     }
@@ -849,7 +849,7 @@ extern "C" void func_801154D0(CMenuKeyAssign* self, int a, int b, int c, int d, 
             }
             if (i < 4) {
                 char* s2 = BdatTouchStringCell(&base[0x3b], &base[0x72], idx);
-                func_80115DB0(self, s2, i);
+                setKeyAssignLabels(self, s2, i);
             }
         }
     } else {
@@ -877,7 +877,7 @@ extern "C" void func_801154D0(CMenuKeyAssign* self, int a, int b, int c, int d, 
                 pv->flags = (pv->flags & 0xFE) | 1;
             }
             char* s2 = BdatTouchStringCell(&base[0x3b], &base[0x72], 26);
-            func_80115DB0(self, s2, 0);
+            setKeyAssignLabels(self, s2, 0);
         }
         {
             u16 r = BdatGetU16ByTableKey(&base[0x3b], name, state);
@@ -902,7 +902,7 @@ extern "C" void func_801154D0(CMenuKeyAssign* self, int a, int b, int c, int d, 
                 pv->flags = (pv->flags & 0xFE) | 1;
             }
             char* s2 = BdatTouchStringCell(&base[0x3b], &base[0x72], state);
-            func_80115DB0(self, s2, 1);
+            setKeyAssignLabels(self, s2, 1);
         }
     }
 }
@@ -911,13 +911,13 @@ extern "C" void func_801154D0(CMenuKeyAssign* self, int a, int b, int c, int d, 
 // open). Loads the remap-column names via BdatGetU16ByTableKey/BdatTouchStringCell, finds
 // the corresponding "timg" texture and sizes the target pane from the texture
 // dimensions (u16 -> f32 via the 0x43300000 magic double), then assigns the
-// button labels through func_80115DB0.
+// button labels through setKeyAssignLabels.
 extern "C" void func_801159DC(CMenuKeyAssign* self) {
     if ((s32)self->mField_78 == 3) {
         return;
     }
     self->mField_78 = 3;
-    func_80115BD8(self);
+    hideKeyAssignPanes(self);
 
     const char* base = lbl_eu_804FDEE8;
     const char* name = &base[0x29];
@@ -962,14 +962,14 @@ extern "C" void func_801159DC(CMenuKeyAssign* self) {
             mapped = 2;
         }
         char* s2 = BdatTouchStringCell(&base[0x3b], &base[0x72], idx);
-        func_80115DB0(self, s2, mapped);
+        setKeyAssignLabels(self, s2, mapped);
     }
 }
 
 // Hide button panes by name (called from Init and func_801159DC). Formats the
 // pane name from the loop index; the 5 extra panes are skipped for i==5
 // (retail shape - the i==5 pane is the one func_801159DC re-labels).
-extern "C" void func_80115BD8(CMenuKeyAssign* self) {
+extern "C" void hideKeyAssignPanes(CMenuKeyAssign* self) {
     char buf[0x20];
     int i;
     for (i = 1; i <= 6; i++) {
@@ -999,7 +999,7 @@ extern "C" void func_80115BD8(CMenuKeyAssign* self) {
 // Assign the button label for one column: write the text into the pane name
 // from the sprintf'd buffer, then unhide that pane (SetVisible(true) via the
 // +0xBB flag byte). Called for each of the 5 remappable columns.
-extern "C" void func_80115DB0(CMenuKeyAssign* self, char* str, int idx) {
+extern "C" void setKeyAssignLabels(CMenuKeyAssign* self, char* str, int idx) {
     char buf[0x20];
     int v = idx + 1;
     sprintf(buf, &lbl_eu_804FDEE8[0x77], v);
@@ -1028,11 +1028,11 @@ extern "C" void func_80115DB0(CMenuKeyAssign* self, char* str, int idx) {
 // Called through the subobject vtable destructor slot, `this` points at
 // CMenuKeyAssign + 0x58, so subtract 0x58 before forwarding to the full-object
 // member. The retail emits exactly subi r3,r3,0x58; b <member>.
-void func_80115FB8(void* self) { ((void(*)(void*))__dt__14CMenuKeyAssignFv)((char*)self - 0x58); }
+void CMenuKeyAssign_dtorAdj58(void* self) { ((void(*)(void*))__dt__14CMenuKeyAssignFv)((char*)self - 0x58); }
 
 // IScnRender vtable cbRenderBefore adjustor thunk (subobject at +0x5C).
-void func_80115FC0(void* self) { ((void(*)(void*))cbRenderBefore__14CMenuKeyAssignFv)((char*)self - 0x5c); }
+void CMenuKeyAssign_renderBeforeAdj5C(void* self) { ((void(*)(void*))cbRenderBefore__14CMenuKeyAssignFv)((char*)self - 0x5c); }
 
 // us-80116aa4 - IScnRender vtable adjustor thunk (subobject at +0x5C).
-// Same shape as func_80115FB8 but for the IScnRender subobject.
-void func_80115FC8(void* self) { ((void(*)(void*))__dt__14CMenuKeyAssignFv)((char*)self - 0x5c); }
+// Same shape as CMenuKeyAssign_dtorAdj58 but for the IScnRender subobject.
+void CMenuKeyAssign_dtorAdj5C(void* self) { ((void(*)(void*))__dt__14CMenuKeyAssignFv)((char*)self - 0x5c); }

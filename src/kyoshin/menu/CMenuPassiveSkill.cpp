@@ -39,7 +39,7 @@ void CMenuPassiveSkill::Init() {
     mBgTex.mPtmMode = *(u8*)(tempBgTex + 0x1e);
     __dt__6CBgTexFv((CBgTex*)tempBgTex, -1);
 
-    func_801C3C14(&mBgTex);
+    BgTex_Acquire_3C14(&mBgTex);
 
     // --- Re-initialise the embedded CTitleAHelp ---
     char* name = BdatTouchStringCell(lbl_eu_8050DB4C, lbl_eu_8050DB4C + 0xc, 1);
@@ -210,8 +210,8 @@ void CMenuPassiveSkill::Term() {
     }
     removeRenderCB__4CScnFP10IScnRender(mScnRef, render);
 
-    func_801C3D9C(&mBgTex);
-    func_801C40A0(&mTitleAHelp);
+    BgTex_Release_3D9C(&mBgTex);
+    teardown(&mTitleAHelp);
     CPassiveSkill_teardown(mPassiveSkill);
 
     lbl_eu_80664878 = 0;
@@ -243,17 +243,17 @@ case0:
     func_80263954(this);
     goto tick;
 case1:
-    func_802639E4(this);
+    updatePassiveSkillMenu(this);
     goto tick;
 case2:
-    func_80263A34(this);
+    dispatchPassiveSkillInput(this);
     goto tick;
 case3:
-    func_80263D3C(this);
+    setPassiveSkillReady(this);
 tick:
 
-    func_801C3D54(&mBgTex);
-    func_801C3FF0(&mTitleAHelp);
+    BgTex_Tick_3D54(&mBgTex);
+    updateHelp(&mTitleAHelp);
     CPassiveSkill_update(mPassiveSkill);
 }
 
@@ -281,9 +281,9 @@ body:
         GXSetZMode(GX_FALSE, GX_NEVER, GX_FALSE);
         nw4r::lyt::DrawInfo drawInfo;
         func_80137250(&drawInfo);
-        func_801C3D7C(&mBgTex, &drawInfo);
+        BgTex_Draw_3D7C(&mBgTex, &drawInfo);
         CPassiveSkill_draw(mPassiveSkill, &drawInfo);
-        func_801C4080(&mTitleAHelp, &drawInfo);
+        drawHelp(&mTitleAHelp, &drawInfo);
     }
 }
 
@@ -293,7 +293,7 @@ body:
 // region, construct it, register it as a child process and return the
 // stored singleton pointer.
 // ---------------------------------------------------------------------------
-extern "C" CMenuPassiveSkill* func_802638D0(CProcess* parent, u32 arg) {
+extern "C" CMenuPassiveSkill* createPassiveSkillMenu(CProcess* parent, u32 arg) {
     if (lbl_eu_80664878 != 0) {
         return NULL;
     }
@@ -389,7 +389,7 @@ extern "C" CMenuPassiveSkill* __dt__17CMenuPassiveSkillFv(CMenuPassiveSkill* sel
 // title/help widget.
 // ---------------------------------------------------------------------------
 extern "C" void func_80263954(CMenuPassiveSkill* self) {
-    if (func_801C3E34(&self->mBgTex) != 0 && func_801C4114(&self->mTitleAHelp) != 0 &&
+    if (BgTex_IsLoaded_3E34(&self->mBgTex) != 0 && isInitialized(&self->mTitleAHelp) != 0 &&
         CPassiveSkill_getVisibleIfReady(self->mPassiveSkill) != 0) {
         func_801C412C(&self->mTitleAHelp);
         CPassiveSkill_open(self->mPassiveSkill);
@@ -410,7 +410,7 @@ extern "C" int isIdle__11CTitleAHelpFv(CTitleAHelp* h);
 
 // Per-frame update (us-80265e54): once both the title/help widget and the
 // passive-skill sub-object report ready, mark the screen state as 2.
-extern "C" void func_802639E4(CMenuPassiveSkill* self) {
+extern "C" void updatePassiveSkillMenu(CMenuPassiveSkill* self) {
     if (isIdle__11CTitleAHelpFv(&self->mTitleAHelp) != 0 && CPassiveSkill_getActiveIfBusy(self->mPassiveSkill) != 0) {
         self->field_2AC = 2;
     }
@@ -428,7 +428,7 @@ extern "C" void func_802639E4(CMenuPassiveSkill* self) {
 //   else falls into the lower mirror chain.
 // The shared tail pushes the sub-object's state byte into the help widget.
 // ---------------------------------------------------------------------------
-extern "C" __declspec(noinline) void func_80263A34(CMenuPassiveSkill* self) {
+extern "C" __declspec(noinline) void dispatchPassiveSkillInput(CMenuPassiveSkill* self) {
     if (CPassiveSkill_getActiveIfBusy(self->mPassiveSkill) == 0) {
         return;
     }
@@ -469,7 +469,7 @@ extern "C" __declspec(noinline) void func_80263A34(CMenuPassiveSkill* self) {
             if ((held & 0x00200000) != 0) {
                 UI_CPassiveSkill_thunk28_68594(self->mPassiveSkill);
             } else if ((held & 0x00400000) != 0) {
-                func_80263D8C(self);
+                advancePassiveSkillState(self);
             } else if ((turbo & 0x8004) != 0) {
                 UI_CPassiveSkill_thunk28_67CE0(self->mPassiveSkill);
             } else if (((turbo & 0x00010000) | (turbo & 0x00000008)) != 0) {
@@ -479,11 +479,11 @@ extern "C" __declspec(noinline) void func_80263A34(CMenuPassiveSkill* self) {
             } else if ((turbo & 0x4002) != 0) {
                 UI_CPassiveSkill_thunk28_68250(self->mPassiveSkill);
             } else if ((held & 0x00000400) != 0) {
-                func_80263DE8(self);
+                tryOpenPassiveSkill(self);
             } else if ((held & 0x10000000) != 0) {
                 UI_CPassiveSkill_thunk28_68C38(self->mPassiveSkill);
             } else if ((held & 0x00800000) != 0) {
-                func_80263E4C(self);
+                confirmPassiveSkillMenu(self);
             }
         }
     } else {
@@ -510,7 +510,7 @@ extern "C" __declspec(noinline) void func_80263A34(CMenuPassiveSkill* self) {
             if ((held & 0x00000010) != 0) {
                 UI_CPassiveSkill_thunk28_68594(self->mPassiveSkill);
             } else if ((held & 0x00000020) != 0) {
-                func_80263D8C(self);
+                advancePassiveSkillState(self);
             } else {
                 u32 turbo = pad->mTurboPressButtonFlags;
                 if ((turbo & 0x8004) != 0) {
@@ -522,11 +522,11 @@ extern "C" __declspec(noinline) void func_80263A34(CMenuPassiveSkill* self) {
                 } else if ((turbo & 0x4002) != 0) {
                     UI_CPassiveSkill_thunk28_68250(self->mPassiveSkill);
                 } else if ((held & 0x00000040) != 0) {
-                    func_80263DE8(self);
+                    tryOpenPassiveSkill(self);
                 } else if ((held & 0x00000080) != 0) {
                     UI_CPassiveSkill_thunk28_68C38(self->mPassiveSkill);
                 } else if ((held & 0x00000400) != 0) {
-                    func_80263E4C(self);
+                    confirmPassiveSkillMenu(self);
                 }
             }
         }
@@ -536,8 +536,8 @@ extern "C" __declspec(noinline) void func_80263A34(CMenuPassiveSkill* self) {
     func_801C41E8(&self->mTitleAHelp, curState);
 }
 
-// Same shape as func_802639E4 but writes the +0x54 state flag instead.
-void func_80263D3C(CMenuPassiveSkill* self) {
+// Same shape as updatePassiveSkillMenu but writes the +0x54 state flag instead.
+void setPassiveSkillReady(CMenuPassiveSkill* self) {
     if (isIdle__11CTitleAHelpFv(&self->mTitleAHelp) != 0 && CPassiveSkill_getActiveIfBusy(self->mPassiveSkill) != 0) {
         self->field_54 = 1;
     }
@@ -546,11 +546,11 @@ void func_80263D3C(CMenuPassiveSkill* self) {
 // Per-frame state advance: if the passive-skill sub-object reports a pending
 // transition, commit it; otherwise reset the help widget, run the sub-object's
 // cancel path and mark the screen state 3.
-extern "C" void func_80263D8C(CMenuPassiveSkill* self) {
+extern "C" void advancePassiveSkillState(CMenuPassiveSkill* self) {
     if (CPassiveSkill_cellAtLeast8(self->mPassiveSkill) != 0) {
         CPassiveSkill_confirm(self->mPassiveSkill);
     } else {
-        func_801C414C(&self->mTitleAHelp);
+        beginClose(&self->mTitleAHelp);
         CPassiveSkill_close(self->mPassiveSkill);
         self->field_2AC = 3;
     }
@@ -559,13 +559,13 @@ extern "C" void func_80263D8C(CMenuPassiveSkill* self) {
 // Open-trigger: only fires once all three progress gates pass (feature
 // unlocked, its flag set, collection count reached), then kicks the
 // passive-skill sub-object's open thunk.
-extern "C" void func_80263DE8(CMenuPassiveSkill* self) {
-    u32 unlocked = func_8009CF8C(0x3372);
+extern "C" void tryOpenPassiveSkill(CMenuPassiveSkill* self) {
+    u32 unlocked = CtrlRemote_TouchBitByArg(0x3372);
     // Retail zero-tests the unlock flag via the cntlzw/srwi boolean idiom;
     // the second gate is an OR - a zeroed 0x3508 flag bypasses the count
     // check entirely.
     if (((u32)__cntlzw(unlocked) >> 5) == 0 &&
-        (func_8009CF8C(0x3508) == 0 || func_8009CF8C(0x20) >= 0x38)) {
+        (CtrlRemote_TouchBitByArg(0x3508) == 0 || CtrlRemote_TouchBitByArg(0x20) >= 0x38)) {
         UI_CPassiveSkill_thunk28_68518(self->mPassiveSkill);
     }
 }
@@ -573,10 +573,10 @@ extern "C" void func_80263DE8(CMenuPassiveSkill* self) {
 // Confirm/close handler: if the passive-skill window still has a pending
 // transition, leave it alone; otherwise back out to the previous screen,
 // stopping the movie player first if one is active.
-extern "C" void func_80263E4C(CMenuPassiveSkill* self) {
+extern "C" void confirmPassiveSkillMenu(CMenuPassiveSkill* self) {
     if (UI_CPassiveSkill_thunk1b8_CSysWin_getUnk34((UI_CPassiveSkill*)self->mPassiveSkill) == 0) {
-        if (func_800FEDF8() != 0) {
-            func_800FF914();
+        if (CMainMenu_GetInstancePtr() != 0) {
+            ArtsInfo_SetReadyFlag();
             playUISound__FUl(6);
         }
         self->field_2AC = 4;
@@ -587,16 +587,16 @@ extern "C" void func_80263E4C(CMenuPassiveSkill* self) {
 // Adjusted-this thunk: called through a secondary-base vtable entry
 // (IScnRender at offset +0x58 within CMenuPassiveSkill). Retail is
 // subi r3,r3,0x58 + tail-branch, so call through the adjusted pointer.
-void CMenuPassiveSkill::func_80263EAC() {
+void CMenuPassiveSkill::renderBeforeAdj58() {
     ((CMenuPassiveSkill*)((u8*)this - 0x58))->cbRenderBefore();
 }
 
 // Adjusted-this thunk for the destructor (same +0x58 adjustment). Retail
 // forwards the caller's flags word untouched (subi + tail-branch, no li on
 // r4), so the flags parameter must be passed straight through.
-void CMenuPassiveSkill::func_80263EB4(int flags) {
+void CMenuPassiveSkill::dtorAdj58(int flags) {
     __dt__17CMenuPassiveSkillFv((CMenuPassiveSkill*)((u8*)this - 0x58), flags);
 }
 
 extern unsigned long lbl_eu_80664878;
-extern "C" unsigned long func_80263944(void) { return lbl_eu_80664878 != 0; }
+extern "C" unsigned long hasPassiveSkillMenu(void) { return lbl_eu_80664878 != 0; }

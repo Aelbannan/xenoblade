@@ -19,12 +19,12 @@ public:
     CREvtModel(void* pData, void* pArg);
     /* vtable 0x00 */ virtual ~CREvtModel(); // slot +0x00: __ct__80172668 (overrides __dt__Q22cf8CREvtObjFv)
     /* vtable 0x04 */ virtual void vfunc_04();           // slot +0x04: func_801728F8 (overrides base pure slot)
-    /* vtable 0x08 */ virtual void vfunc_08();           // slot +0x08: func_8017298C (overrides CREvtObjVfunc08Default)
-    /* vtable 0x0C */ virtual void vfunc_0C();           // slot +0x0C: getField20, cross-TU (overrides func_80185758)
-    /* vtable 0x10 */ virtual void vfunc_10();           // slot +0x10: func_801731A0, tests (mFlags>>4)&1 (overrides CREvtObjVfunc10Default)
-    /* vtable 0x14 */ virtual void vfunc_14();           // slot +0x14: func_80173194, tests mFlags&1 (overrides func_801809A8)
+    /* vtable 0x08 */ virtual void vfunc_08();           // slot +0x08: releaseEvtAnim28 (overrides CREvtObjVfunc08Default)
+    /* vtable 0x0C */ virtual void vfunc_0C();           // slot +0x0C: getField20, cross-TU (overrides EvtObj_ConstFalse)
+    /* vtable 0x10 */ virtual void vfunc_10();           // slot +0x10: isEvtFlagBit4Set, tests (mFlags>>4)&1 (overrides CREvtObjVfunc10Default)
+    /* vtable 0x14 */ virtual void vfunc_14();           // slot +0x14: isEvtFlagBit0Set, tests mFlags&1 (overrides REvtCam_AlwaysTrue1)
     /* vtable 0x18 */ virtual bool isBusy(); // slot +0x18: CREvtObjIsBusyDefault, same as base = inherited, cross-TU
-    /* vtable 0x1C */ virtual void vfunc_1C();           // slot +0x1C: func_801727DC (overrides func_80185700)
+    /* vtable 0x1C */ virtual void vfunc_1C();           // slot +0x1C: func_801727DC (overrides EvtObj_RunCallback)
     /* vtable 0x20 */ virtual int getGuestState(); // vfunc_20
     /* vtable 0x24 */ virtual void CREvtObjVfunc24Default();
     /* vtable 0x28 */ virtual void setVisible(int visible); // vfunc_28
@@ -35,19 +35,19 @@ public:
 
     // Non-virtual methods
     int func_801726DC();
-    void* func_801727D0();
+    void* evtModelDataPtr();
     void func_801727DC();
     void func_801728F8();
-    void func_8017298C();
-    int func_801729D0();
-    void func_80172CC0();
+    void releaseEvtAnim28();
+    int isEvtDataFlagSet();
+    void emptyEvtModelHook();
     void func_80172CC4();
     void func_80172CE4(CScnItemModel* pModel);
     void func_80172EA4(void* pData, CScnItemModel* pModel, int flag);
-    void* func_801730D0();
-    int func_80173194();
-    int func_801731A0();
-    int func_801731AC();
+    void* createEvtModelObj();
+    int isEvtFlagBit0Set();
+    int isEvtFlagBit4Set();
+    int zeroEvtModelHook();
 
     // Fields (CREvtObj base: 0x00-0x13)
     /* 0x14 */ u32 mField14;

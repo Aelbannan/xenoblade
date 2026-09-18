@@ -19,12 +19,12 @@ public:
     CPartyState();
     ~CPartyState();
     bool OnFileEvent(CEventFile* pEventFile);
-    u8 func_801FD17C();
-    u8 func_801FD184();
-    u8 func_801FD18C();
-    u32 func_801FD580();
-    u8 func_801FD5F4();
-    u8 func_801FD5FC();
+    u8 isPartySettled();
+    u8 isPartyIdle();
+    u8 isPartyReady();
+    u32 isPartyHighlightSet();
+    u8 isPartyCloseRequested();
+    u8 getPartySelectIndex();
 
     void* mVtbl;                                // 0x00 - lbl_eu_805353C8
     UnkClass_8045F564 mMemRegion;               // 0x04 (0x10 bytes)
@@ -68,7 +68,7 @@ struct CPartySlotEntry {
     u8 _pad04[0x20 - 0x04];
 };
 
-// 5-float position table copy used by func_801FE39C (matches the retail's
+// 5-float position table copy used by positionPartyPane (matches the retail's
 // mtctr-2 + tail copy loop).
 struct CPartyStateFiveFloats {
     float f[5];
@@ -157,7 +157,7 @@ void func_801390E0(CFileHandle**);
 void releaseArcResourceAccessor(nw4r::lyt::ArcResourceAccessor*);
 
 // C-linkage helpers from other units (retail symbols are unmangled).
-// func_801D216C / func_80139198 are declared in CEquipItemBox.hpp.
+// Cur_SetVisible / func_80139198 are declared in CEquipItemBox.hpp.
 extern "C" void func_801D2BFC(CBaseCur*, u8);
 extern "C" u8 code80135FDC_getByte_64077();
 
@@ -165,7 +165,7 @@ extern "C" u8 code80135FDC_getByte_64077();
 extern "C" int* CtrlObjectParam_GetSlotTableBase();
 extern "C" void CtrlObjectParam_SwapSlotValues(int*, u8, u8);
 extern "C" u8 GetCollectedFlagWord8(u32);
-extern "C" u32 func_8009CF8C(u32);
+extern "C" u32 CtrlRemote_TouchBitByArg(u32);
 extern "C" u16 BdatGetU16Direct(const void*, const void*, int);
 extern "C" char* MakeTplNameSysFile(u32);
 
@@ -188,7 +188,7 @@ extern "C" u8 BdatGetU8ByTableKey(const void*, const void*, u32);
 extern "C" void LayoutSetTextBoxFmtValue(nw4r::lyt::Layout*, const char*, const char*, u32);
 extern "C" void func_8013676C(nw4r::lyt::Pane*, void*);
 extern "C" void PaneSetTexPaletteByName(nw4r::lyt::Layout*, const char*, u32);
-extern "C" void func_80124270(void*, u32);
+extern "C" void setPaneVisible(void*, u32);
 
 // Layout + anim builders (retail symbols are the C++ mangled names).
 void buildLayout(nw4r::lyt::Layout**, nw4r::lyt::ArcResourceAccessor*, const char*);
@@ -220,7 +220,7 @@ extern char* lbl_eu_80662728;
 // Unit-local helpers (defined in this TU; unmangled retail symbols).
 extern "C" void func_801FE154(CPartyState*);
 extern "C" void func_801FD848(CPartyState*);
-extern "C" void func_801FE0C8(CPartyState*);
+extern "C" void swapPartyMembers(CPartyState*);
 extern "C" void func_801FE20C(CPartyState*, u32, const char*);
 
 // Cursor per-frame update (defined in the CCur unit).
@@ -231,17 +231,17 @@ extern "C" CBaseCur* __ct__CCur22(CBaseCur*, nw4r::lyt::ArcResourceAccessor*);
 extern "C" CBaseCur* __dt__6CCur22Fv(CBaseCur*, int);
 
 // Internal helpers of this unit (unmangled retail symbols).
-extern "C" void func_801FD8F8(CPartyState*);
+extern "C" void refreshPartyCursor(CPartyState*);
 extern "C" void func_801FDA7C(CPartyState*);
-extern "C" void func_801FD604(CPartyState*);
-extern "C" void func_801FD48C(CPartyState*);
-extern "C" void func_801FE39C(CPartyState*, float, float, u32, u32);
+extern "C" void confirmPartySelect(CPartyState*);
+extern "C" void cancelPartySelect(CPartyState*);
+extern "C" void positionPartyPane(CPartyState*, float, float, u32, u32);
 
 // C library formatted output (retail symbol unmangled).
 extern "C" int sprintf(char*, const char*, ...);
 
 // Frame-timer getter (kyoshin/cf/CfTFile.cpp, retail unmangled).
-extern "C" u32 func_8006A80C();
+extern "C" u32 CfT_FrameTimerGet();
 
 // Text/layout binding helper (code_80135FDC.cpp, retail unmangled; the
 // canonical header code_80135FDC.hpp conflicts with CEquipItemBox.hpp in
@@ -252,7 +252,7 @@ extern "C" void func_80136A1C(nw4r::lyt::Layout*, char*, char*, u32);
 extern "C" void* func_8009EC9C(u32);
 
 // Cursor pane-position/show helpers (CCur unit, retail unmangled).
-extern "C" void func_801D2C80(CBaseCur*, const nw4r::math::VEC3*, u8);
+extern "C" void Cur_PlacePaneByIndex(CBaseCur*, const nw4r::math::VEC3*, u8);
 extern "C" void func_801D2CF4(CBaseCur*, u8, u8);
 
 // Pane translate accumulation (code_80135FDC.cpp, retail unmangled).
@@ -260,7 +260,7 @@ extern "C" void func_801375A0(nw4r::math::VEC3*, nw4r::lyt::Pane*);
 
 // Pane size/position copy helpers (retail unmangled).
 extern "C" void TagCopyVec2f(float*, float*);
-extern "C" void func_80124288(nw4r::lyt::Pane*, float*);
+extern "C" void writePanePos(nw4r::lyt::Pane*, float*);
 
 // Party-state string table (.rodata).
 extern char lbl_eu_80507D40[];

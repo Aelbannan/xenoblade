@@ -246,12 +246,16 @@ extern "C" void func_800C00C0__Q22cf10CfObjectPcFv(cf::CfObjectPc* self) {
 // even though the retail mangled name is arg-less. Small args delegate to the
 // base CfObjectMove implementation; larger ones forward a sub-object pointer
 // to ObjPc_ForwardVf0C_A42C.
+extern "C" void CfObjectMove_attachEffectSlot__Q22cf12CfObjectMoveFv(
+    cf::CfObjectMove* self, u32 a, u32 b, u32 c, u32 d, u32 e);
+
 void handleMoveState__Q22cf10CfObjectPcFv(cf::CfObjectPc* self, u32 a, u32 b, u32 c, u32 d, u32 e) {
     if ((int)a < 0x2c) {
         // CfObjectMove sub-object at this+0x3E9C. Forward all five args so
-        // r4-r8 stay live into the base UVF16 bctr thunk.
+        // r4-r8 stay live into the base Fv forced-name (retail arity Fv).
         u8* subObj = reinterpret_cast<u8*>(self) + 0x3e9c;
-        ((cf::CfObjectMove*)subObj)->CfObjectMove::CfObjectMove_attachEffectSlot(a, b, c, d, e);
+        CfObjectMove_attachEffectSlot__Q22cf12CfObjectMoveFv(
+            (cf::CfObjectMove*)subObj, a, b, c, d, e);
     } else {
         u8* obj = ((CfObjectPcSubFields*)self)->mPtr3ED4;
         if (obj != NULL) {

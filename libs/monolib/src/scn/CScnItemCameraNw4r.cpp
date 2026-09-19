@@ -13,7 +13,7 @@
 
 class CScnItemCameraNw4r : public CScnItemCamera {
 public:
-    CScnItemCameraNw4r();
+    // Ctor is the free function __ct__CScnItemCameraNw4r (see below).
     virtual ~CScnItemCameraNw4r();
 
     nw4r::math::FRUSTUM mFrustum; // 0x2B8
@@ -46,9 +46,21 @@ struct CScnItemCameraNw4rLayout {
 };
 
 // ===========================================================================
-// Constructor - calls the base ctor, then installs the derived vtable.
+// Constructor - free-function form (retail __ct__CScnItemCameraNw4r). Calls
+// the flat base ctor then installs the Nw4r vtable.
 // ===========================================================================
-CScnItemCameraNw4r::CScnItemCameraNw4r() : CScnItemCamera() {}
+extern "C" CScnItemCamera* __ct__CScnItemCamera(CScnItemCamera* obj, CScnItemCamera* parent,
+                                               const char* name);
+extern "C" u32 lbl_eu_8056DC90[];
+extern "C" void* __ct__CScnItemCameraNw4r(CScnItemCamera* self, void* parent,
+                                         const char* name) {
+    // Return ths after the vtable store so MWCC keeps r3=self (or r31,r31)
+    // and materialises the vtable address in r4 — matching retail lis/or/addi/stw.
+    CScnItemCamera* ths = self;
+    __ct__CScnItemCamera(ths, (CScnItemCamera*)parent, name);
+    *(u32**)ths = lbl_eu_8056DC90;
+    return ths;
+}
 
 // ===========================================================================
 // Destructor - base dtor, then optional delete.

@@ -409,3 +409,12 @@ void CMenuOption_dtorAdj58(void* self) {
 }
 
 unsigned long hasOptionMenu(void) { return lbl_eu_80664A38 != 0; }
+
+// --- restored from git history (base:gone); do not expand beyond these functions ---
+// from commit 365650b84230 needle=sinit_8029E7D8
+// LLM-HARNESS-END: us-802a0e58
+
+// --- hard-symbol stubs (scaffold_hard_symbols) ---
+// LLM-HARNESS-BEGIN: us-802a1034
+extern "C" void sinit_8029E7D8() {}
+

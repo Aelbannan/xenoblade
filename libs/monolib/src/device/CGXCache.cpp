@@ -517,10 +517,11 @@ static inline s32 minS32(s32 a, s32 b) { return a < b ? a : b; }
 static inline s32 maxS32(s32 a, s32 b) { return a > b ? a : b; }
 static inline GXColor scaleColor255(f32 scale, const ml::CCol4& c);
 
-// Int→f32 via mid-pool magics (lbl_eu_8066A388/A390). ADXT-style BiasDouble
-// seeds the named magic so leftover plain (f32) casts CSE onto it (no anon
-// @N tail). Manual (f64-bias - magic) sites keep the named reloc; prefer
-// plain (f32) on already-FULL functions when the seed is present.
+// Int→f32 via mid-pool magics (lbl_eu_8066A388/A390). Plain (f32) casts emit
+// retail fsubs but also a trailing anon @N pool (+0x12). Double-domain
+// (BiasDouble - magic) names the mid-pool reloc but emits fsub+frsp (FULL
+// loss). Force single-precision subtract: frsp each side then f32 `-` → fsubs
+// while still loading the named mid-pool doubles (no anon cast pool).
 typedef union {
     double d;
     u32 w[2];
@@ -533,6 +534,9 @@ static inline f64 BiasDouble(u32 lo) {
     return t.d;
 }
 
+// BiasDouble − mid-pool magic: raw .sdata2 MATCH (no anon cast-pool tail).
+// Builtin (f32)int emits retail fsubs but reintroduces @N (+0x12) — burned.
+// frsp-each-side then f32 `-` worsened bindTextureGX (29%→26%) — burned.
 static inline f32 s32ToF(s32 v) {
     return (f32)(BiasDouble((u32)v ^ 0x80000000u) - lbl_eu_8066A388);
 }

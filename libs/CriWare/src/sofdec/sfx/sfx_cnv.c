@@ -453,3 +453,65 @@ const unsigned char lbl_eu_8051CF48[0x230] = {
     0x75,0x74,0x42,0x75,0x66,0x50,0x69,0x74,0x63,0x68,0x48,0x65,
     0x69,0x67,0x68,0x74,0x28,0x29,0x2E,0x00,
 };
+
+// --- restored from git history (base:gone); do not expand beyond these functions ---
+// from commit 365650b84230 needle=SFX_SetCnvFrmCbFunc
+// LLM-HARNESS-END: us-803d7324
+
+// LLM-HARNESS-BEGIN: us-803d7600
+int SFX_SetCnvFrmCbFunc() { return 0; }
+
+// from commit 365650b84230 needle=SFX_SetCopyAlphaCbFunc
+// LLM-HARNESS-END: us-803d7600
+
+// LLM-HARNESS-BEGIN: us-803d7608
+int SFX_SetCopyAlphaCbFunc() { return 0; }
+
+// from commit 365650b84230 needle=SFX_SetMakeAlp3110TableCbFunc
+// LLM-HARNESS-END: us-803d761c
+
+// LLM-HARNESS-BEGIN: us-803d7628
+void SFX_SetMakeAlp3110TableCbFunc() {}
+// LLM-HARNESS-END: us-803d7628
+
+// LLM-HARNESS-BEGIN: us-803d7634
+int SFX_SetMakeColAdjTableCbFunc() { return 0; }
+
+// from commit 365650b84230 needle=SFX_SetMakeAlp3TableCbFunc
+// LLM-HARNESS-END: us-803d7610
+
+// LLM-HARNESS-BEGIN: us-803d761c
+void SFX_SetMakeAlp3TableCbFunc() {}
+// LLM-HARNESS-END: us-803d761c
+
+// LLM-HARNESS-BEGIN: us-803d7628
+void SFX_SetMakeAlp3110TableCbFunc() {}
+// LLM-HARNESS-END: us-803d7628
+
+// LLM-HARNESS-BEGIN: us-803d7634
+int SFX_SetMakeColAdjTableCbFunc() { return 0; }
+
+// from commit 365650b84230 needle=SFX_SetMakeColAdjTableCbFunc
+// LLM-HARNESS-END: us-803d7628
+
+// LLM-HARNESS-BEGIN: us-803d7634
+int SFX_SetMakeColAdjTableCbFunc() { return 0; }
+
+// from commit 365650b84230 needle=SFX_SetMakeLumiTableCbFunc
+// LLM-HARNESS-END: us-803d7608
+
+// LLM-HARNESS-BEGIN: us-803d7610
+void SFX_SetMakeLumiTableCbFunc() {}
+// LLM-HARNESS-END: us-803d7610
+
+// LLM-HARNESS-BEGIN: us-803d761c
+void SFX_SetMakeAlp3TableCbFunc() {}
+// LLM-HARNESS-END: us-803d761c
+
+// LLM-HARNESS-BEGIN: us-803d7628
+void SFX_SetMakeAlp3110TableCbFunc() {}
+// LLM-HARNESS-END: us-803d7628
+
+// LLM-HARNESS-BEGIN: us-803d7634
+int SFX_SetMakeColAdjTableCbFunc() { return 0; }
+

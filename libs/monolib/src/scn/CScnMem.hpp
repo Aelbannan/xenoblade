@@ -67,7 +67,7 @@ public:
 // function table.
 class __declspec(novtable) CScnNw4r : public CScn {
 public:
-    CScnNw4r();
+    // Ctor is free function __ct__CScnNw4r (CScnMem.cpp).
     virtual ~CScnNw4r();
 };
 

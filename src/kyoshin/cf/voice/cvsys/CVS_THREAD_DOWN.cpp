@@ -1,7 +1,6 @@
 // CVS_THREAD_DOWN: Voice thread for "Down" (knocked-down) status effect.
 // Five functions: completion callback, voice removal, slot-1 play, slot-2 play, constructor.
 
-
 #include "kyoshin/cf/voice/cvsys/CVS_THREAD_DOWN.hpp"
 #include "kyoshin/harness_catalog.hpp"
 #include "monolib/math/Random.hpp"
@@ -169,3 +168,4 @@ CVS_THREAD_DOWN* __ct__802A5B88(CVoiceHandle* owner1, CVoiceHandle* owner2) {
 
     return self;
 }
+

@@ -423,3 +423,4 @@ extern "C" void func_80180664(CREvtCamera* self, void* eventData, void* somePara
     }
     self->mField88 = (CREvtCamFile*)someParam;
 }
+

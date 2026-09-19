@@ -2054,3 +2054,11 @@ extern "C" void CChain_setFieldAndClear(void* self, int val) {
     *(int*)self = val;
     *(u16*)((u8*)self + 0x6c) = 0;
 }
+
+// --- restored from git history (base:gone); do not expand beyond these functions ---
+// from commit b3618bddb7b4 needle=CChain_chkActorList
+
+bool CChain_chkActorList(cf::CChain* self) {
+    return func_8027B770((char*)self + 0x18);
+}
+

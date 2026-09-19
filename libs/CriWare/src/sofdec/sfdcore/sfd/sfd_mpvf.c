@@ -538,3 +538,91 @@ s32 SFMPVF_ChkImageSize(void* self, u32 w, u32 h) {
     }
     return 0;
 }
+
+// --- restored from git history (base:gone); do not expand beyond these functions ---
+// from commit 365650b84230 needle=SFD_SetPicUsrBuf
+// LLM-HARNESS-END: us-803ca868
+
+// LLM-HARNESS-BEGIN: us-803ca8e8
+void SFD_SetPicUsrBuf() {}
+// LLM-HARNESS-END: us-803ca8e8
+
+// LLM-HARNESS-BEGIN: us-803ca968
+void SFMPVF_ResetPicUsrBuf() {}
+// LLM-HARNESS-END: us-803ca968
+
+// LLM-HARNESS-BEGIN: us-803ca980
+void sfmpvf_SetPicUsrBuf() {}
+// LLM-HARNESS-END: us-803ca980
+
+// LLM-HARNESS-BEGIN: us-803caab4
+void SFMPVF_InitPicUsr() {}
+// LLM-HARNESS-END: us-803caab4
+
+// LLM-HARNESS-BEGIN: us-803cab50
+void SFMPVF_GetRead() {}
+// LLM-HARNESS-END: us-803cab50
+
+// LLM-HARNESS-BEGIN: us-803cacc8
+void SFMPVF_AddRead() {}
+// LLM-HARNESS-END: us-803cacc8
+
+// LLM-HARNESS-BEGIN: us-803caf14
+void SFMPVF_TermDec() {}
+// LLM-HARNESS-END: us-803caf14
+
+// LLM-HARNESS-BEGIN: us-803caf20
+int SFMPVF_IsTermDec() { return 0; }
+
+// from commit 365650b84230 needle=SFMPVF_InitPicUsr
+// LLM-HARNESS-END: us-803ca980
+
+// LLM-HARNESS-BEGIN: us-803caab4
+void SFMPVF_InitPicUsr() {}
+// LLM-HARNESS-END: us-803caab4
+
+// LLM-HARNESS-BEGIN: us-803cab50
+void SFMPVF_GetRead() {}
+// LLM-HARNESS-END: us-803cab50
+
+// LLM-HARNESS-BEGIN: us-803cacc8
+void SFMPVF_AddRead() {}
+// LLM-HARNESS-END: us-803cacc8
+
+// LLM-HARNESS-BEGIN: us-803caf14
+void SFMPVF_TermDec() {}
+// LLM-HARNESS-END: us-803caf14
+
+// LLM-HARNESS-BEGIN: us-803caf20
+int SFMPVF_IsTermDec() { return 0; }
+
+// from commit 365650b84230 needle=SFMPVF_ResetPicUsrBuf
+// LLM-HARNESS-END: us-803ca8e8
+
+// LLM-HARNESS-BEGIN: us-803ca968
+void SFMPVF_ResetPicUsrBuf() {}
+// LLM-HARNESS-END: us-803ca968
+
+// LLM-HARNESS-BEGIN: us-803ca980
+void sfmpvf_SetPicUsrBuf() {}
+// LLM-HARNESS-END: us-803ca980
+
+// LLM-HARNESS-BEGIN: us-803caab4
+void SFMPVF_InitPicUsr() {}
+// LLM-HARNESS-END: us-803caab4
+
+// LLM-HARNESS-BEGIN: us-803cab50
+void SFMPVF_GetRead() {}
+// LLM-HARNESS-END: us-803cab50
+
+// LLM-HARNESS-BEGIN: us-803cacc8
+void SFMPVF_AddRead() {}
+// LLM-HARNESS-END: us-803cacc8
+
+// LLM-HARNESS-BEGIN: us-803caf14
+void SFMPVF_TermDec() {}
+// LLM-HARNESS-END: us-803caf14
+
+// LLM-HARNESS-BEGIN: us-803caf20
+int SFMPVF_IsTermDec() { return 0; }
+

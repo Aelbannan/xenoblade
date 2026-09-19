@@ -307,13 +307,17 @@ void CTaskGameCf::beginExit() {
     mMoveFunc = &CTaskGameCf::waitExit;
 }
 
+    // Retail singleton teardown is the flat symbol __dt__800FDC1C (not the
+    // recovered CfObjectSelectorObj::destroy mangling).
+    extern "C" void __dt__800FDC1C();
+
     void CTaskGameCf::waitExit(){
         unk_8C--;
         if(unk_8C <= 0){
             if(!chkUnk54(2)){
                 CfGameManager::teardownGameManager();
             }
-            CfObjectSelectorObj::destroy();
+            __dt__800FDC1C();
             mMoveFunc = &CTaskGameCf::finishExit;
         }
     }

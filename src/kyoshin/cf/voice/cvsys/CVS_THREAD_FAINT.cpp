@@ -187,3 +187,4 @@ CVS_THREAD_FAINT* __ct__802A6AA8(CVoiceHandle* owner1, CVoiceHandle* owner2) {
 int CVS_THREAD_FAINT::blank1() {
     return BUFFER_SIZE;
 }
+

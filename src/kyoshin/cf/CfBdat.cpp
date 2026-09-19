@@ -258,3 +258,234 @@ u32 cf::CfBdat::func_801422A8(u32 param1) {
     }
     return 0;
 }
+
+// --- restored from git history (base:gone); do not expand beyond these functions ---
+// from commit 2c8ff987ff65 needle=getBdatStringEntry
+
+const char* CfBdat::getBdatStringEntry(u16 index) {
+    return lbl_eu_8052E6F0[index];
+}
+
+// from commit 2c8ff987ff65 needle=loadBdatFileTable
+
+    void CfBdat::loadBdatFileTable(){
+        CBdat::func_8003AA34();
+        spBtlPcListFileData = CBdat::getFP("BTL_pclist");
+        spBtlEneListFileData = CBdat::getFP("BTL_enelist");
+        spBtlSkillListFileData = CBdat::getFP("BTL_skilllist");
+        spBtlGrowListFileData = CBdat::getFP("BTL_growlist");
+        spBtlBuffListFileData = CBdat::getFP("BTL_bufflist");
+        spFldPointListFileData = CBdat::getFP("FLD_pointlist");
+        spFldTboxListFileData = CBdat::getFP("FLD_tboxlist");
+        spBtlCamListFileData = CBdat::getFP("BTL_camlist");
+        spBtlCamDataListFileData = CBdat::getFP("BTL_camdatalist");
+        spBtlCrystalNameListFileData = CBdat::getFP("BTL_crystalnamelist");
+        spMnuItemFileData = CBdat::getFP("MNU_item");
+        spFldNpcListFileData = CBdat::getFP("FLD_npclist");
+        spFldMapListFileData = CBdat::getFP("FLD_maplist");
+        spLandmarkListFileData = CBdat::getFP("landmarklist");
+        spFldValPopListFileData = CBdat::getFP("FLD_valpoplist");
+        spFldDmObjListFileData = CBdat::getFP("FLD_dmobjlist");
+        spItmItemListFileData = CBdat::getFP("ITM_itemlist");
+        spItmWpnListFileData = CBdat::getFP("ITM_wpnlist");
+        spItmEquipListFileData = CBdat::getFP("ITM_equiplist");
+        spItmCrystalListFileData = CBdat::getFP("ITM_crystallist");
+        spItmDropCrystalListFileData = CBdat::getFP("ITM_dropcrystallist");
+        spItmCollectListFileData = CBdat::getFP("ITM_collectlist");
+        spItmMaterialListFileData = CBdat::getFP("ITM_materiallist");
+        spItmValuableListFileData = CBdat::getFP("ITM_valuablelist");
+        spItmArtsListFileData = CBdat::getFP("ITM_artslist");
+        spItmHeadListFileData = CBdat::getFP("ITM_headlist");
+        spItmBodyListFileData = CBdat::getFP("ITM_bodylist");
+        spItmArmListFileData = CBdat::getFP("ITM_armlist");
+        spItmWaistListFileData = CBdat::getFP("ITM_waistlist");
+        spItmLeggListFileData = CBdat::getFP("ITM_legglist");
+
+        lbl_80666A74 = 0;
+        lbl_80666A78 = nullptr;
+        lbl_80666A7C = 0;
+        lbl_8066698C = nullptr;
+        
+        spBtlPsvSkillFileData = CBdat::getFP("BTL_PSVskill");
+        spBtlPsvLinkFileData = CBdat::getFP("BTL_PSVlink");
+        spBtlPssListFileData = CBdat::getFP("BTL_PSSlist");
+
+        const char* temp[ARRAY_SIZE(lbl_80577510)] = {
+            "JNL_quest0000",
+            "JNL_quest0101",
+            "JNL_quest0201",
+            "JNL_quest0301",
+            "JNL_quest0401",
+            "JNL_quest0402",
+            "JNL_quest0501",
+            "JNL_quest0601",
+            "JNL_quest0701",
+            "JNL_quest0801",
+            "JNL_quest0901",
+            "JNL_quest1001",
+            "JNL_quest1101",
+            "JNL_quest1201",
+            "JNL_quest1202",
+            "JNL_quest1301",
+            "JNL_quest1401",
+            "JNL_quest1501",
+            "JNL_quest1601",
+            "JNL_quest1701",
+            "JNL_quest1801",
+            "JNL_quest1901",
+            "JNL_quest2001",
+            "JNL_quest2101",
+            "JNL_quest2201",
+            "JNL_quest2301",
+            "JNL_quest2401"
+        };
+
+        for(int i = 0; i < (int)ARRAY_SIZE(lbl_80577510); i++){
+            lbl_80577510[i] = CBdat::getFP(temp[i]);
+        }
+
+        resetMapBdatFileDataPointers();
+
+        if(lbl_80666A6C != nullptr){
+            CDeviceFile::cancel(lbl_80666A6C);
+            lbl_80666A6C = nullptr;
+        }
+
+        if(lbl_80666A70 != nullptr){
+            CBdat::getEntry(3);
+            DELETE_OBJ(lbl_80666A70);
+        }
+
+        lbl_80666A70 = nullptr;
+        lbl_80666A6C = nullptr;
+    }
+
+// from commit 6d2ef546718a needle=func_80141B54
+
+// LLM-HARNESS-BEGIN: us-80142558
+extern "C" void func_80141B54() {}
+// LLM-HARNESS-END: us-80142558
+// LLM-HARNESS-BEGIN: us-801425a4
+extern "C" void func_80141BA0() {}
+// LLM-HARNESS-END: us-801425a4
+// LLM-HARNESS-BEGIN: us-80142670
+extern "C" void func_80141C6C() {}
+// LLM-HARNESS-END: us-80142670
+// LLM-HARNESS-BEGIN: us-8014274c
+extern "C" void func_80141D48() {}
+// LLM-HARNESS-END: us-8014274c
+// LLM-HARNESS-BEGIN: us-801427c8
+extern "C" void func_80141DC4() {}
+// LLM-HARNESS-END: us-801427c8
+// LLM-HARNESS-BEGIN: us-80142894
+extern "C" void func_80141E90() {}
+// LLM-HARNESS-END: us-80142894
+// LLM-HARNESS-BEGIN: us-801429e4
+extern "C" void func_80141FE0() {}
+// LLM-HARNESS-END: us-801429e4
+// LLM-HARNESS-BEGIN: us-80142a78
+extern "C" void func_80142074() {}
+// LLM-HARNESS-END: us-80142a78
+// LLM-HARNESS-BEGIN: us-80142b58
+extern "C" void func_80142154() {}
+// LLM-HARNESS-END: us-80142b58
+// LLM-HARNESS-BEGIN: us-80142d60
+extern "C" void func_8014235C() {}
+// LLM-HARNESS-END: us-80142d60
+// LLM-HARNESS-BEGIN: us-80142e2c
+extern "C" void func_80142428() {}
+
+// from commit 6d2ef546718a needle=func_80141FE0
+// LLM-HARNESS-END: us-80142894
+// LLM-HARNESS-BEGIN: us-801429e4
+extern "C" void func_80141FE0() {}
+// LLM-HARNESS-END: us-801429e4
+// LLM-HARNESS-BEGIN: us-80142a78
+extern "C" void func_80142074() {}
+// LLM-HARNESS-END: us-80142a78
+// LLM-HARNESS-BEGIN: us-80142b58
+extern "C" void func_80142154() {}
+// LLM-HARNESS-END: us-80142b58
+// LLM-HARNESS-BEGIN: us-80142d60
+extern "C" void func_8014235C() {}
+// LLM-HARNESS-END: us-80142d60
+// LLM-HARNESS-BEGIN: us-80142e2c
+extern "C" void func_80142428() {}
+
+// from commit c253729b6102 needle=func_80141B20
+
+    void* CfBdat::func_80141B20(const char* pName){
+        void* fileDataPtr;
+
+        if(pName != nullptr){
+            fileDataPtr = CBdat::getFP(pName);
+        }else{
+            fileDataPtr = nullptr;
+        }
+
+        lbl_8066698C = fileDataPtr;
+        return fileDataPtr;
+    }
+
+// from commit c253729b6102 needle=func_801421C4
+
+    const char* CfBdat::func_801421C4(u16 index){
+        return nullptr;
+    }
+
+// from commit c253729b6102 needle=loadMapBdatFileDataPointers
+
+    void CfBdat::loadMapBdatFileDataPointers(int mapId, int areaId){
+        FixStr<64> string;
+
+        GET_MAP_BDAT_PTR(spCurRouteListFileData, routelist);
+        GET_MAP_BDAT_PTR(spCurMapEffListFileData, mapefflist);
+        GET_MAP_BDAT_PTR(spCurMapObjListFileData, mapobjlist);
+        GET_MAP_BDAT_PTR(spCurMapLodListFileData, maplodlist);
+        GET_MAP_BDAT_PTR(spCurMapSeListFileData, mapselist);
+        GET_MAP_BDAT_PTR(spCurFldGimCamListFileData, FLD_GimCamList);
+        GET_MAP_BDAT_PTR(spCurLItemListFileData, Litemlist);
+        GET_MAP_BDAT_PTR(spCurExTalkListFileData, extalklist);
+        GET_MAP_BDAT_PTR(spCurMineListFileData, minelist);
+        GET_MAP_BDAT_PTR(spCurBtlEneListFileData, BTL_enelist);
+        GET_MAP_BDAT_PTR(spCurGimListFileData, Gimlist);
+        GET_MAP_BDAT_PTR(spCurFieldLockFileData, FieldLock);
+        GET_MAP_BDAT_PTR(spCurElvGmFileData, ElvGm);
+        GET_MAP_BDAT_PTR(spCurWarpGmFileData, WarpGm);
+        GET_MAP_BDAT_PTR(spCurJumpGmFileData, JumpGm);
+        GET_MAP_BDAT_PTR(spCurItemGmFileData, ItemGm);
+        GET_MAP_BDAT_PTR(spCurGimSvOffFileData, GimSVoff);
+        GET_MAP_BDAT_PTR(spCurGimEneFileData, GimEne);
+        GET_MAP_BDAT_PTR(spCurGimMessFileData, GimMess);
+        GET_MAP_BDAT_PTR(spCurDropNmlListFileData, drop_nmllist);
+        GET_MAP_BDAT_PTR(spCurDropRarListFileData, drop_rarlist);
+        GET_MAP_BDAT_PTR(spCurDropSprListFileData, drop_sprlist);
+    }
+
+// from commit c253729b6102 needle=resetMapBdatFileDataPointers
+
+    void CfBdat::resetMapBdatFileDataPointers(){
+        spCurRouteListFileData = nullptr;
+        spCurMapEffListFileData = nullptr;
+        spCurMapObjListFileData = nullptr;
+        spCurMapLodListFileData = nullptr;
+        spCurMapSeListFileData = nullptr;
+        spCurFldGimCamListFileData = nullptr;
+        spCurLItemListFileData = nullptr;
+        spCurExTalkListFileData = nullptr;
+        spCurMineListFileData = nullptr;
+        spCurBtlEneListFileData = nullptr;
+        spCurGimListFileData = nullptr;
+        spCurFieldLockFileData = nullptr;
+        spCurElvGmFileData = nullptr;
+        spCurWarpGmFileData = nullptr;
+        spCurJumpGmFileData = nullptr;
+        spCurItemGmFileData = nullptr;
+        spCurGimSvOffFileData = nullptr;
+        spCurGimEneFileData = nullptr;
+        spCurGimMessFileData = nullptr;
+        spCurDropNmlListFileData = nullptr;
+        spCurDropRarListFileData = nullptr;
+        spCurDropSprListFileData = nullptr;
+    }
+

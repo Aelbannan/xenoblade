@@ -50,6 +50,7 @@ extern "C" void sinit_80450B2C() {
     *(u32*)(lbl_eu_806576C8 + 0x80) = 0;
 }
 
+#pragma dont_inline on
 void CDeviceFileCri::teardownAdxf(unsigned long) {
     // retail names the singleton pointer lbl_eu_80665668 here (same storage as
     // the static member); reference the C-linkage label to avoid name drift.
@@ -60,9 +61,11 @@ void CDeviceFileCri::teardownAdxf(unsigned long) {
         lbl_eu_80665668->mADXFHandle = nullptr;
     }
 }
+#pragma dont_inline reset
 
 extern "C" void FileCriCheckDriveStatusThunk(void* self, u32 arg) {
-    checkDriveStatus__14CDeviceFileCriFv((CDeviceFileCri*)((char*)self - 0x1C4));
+    // This-adjust + tail into teardownAdxf (retail subi/b shape).
+    ((CDeviceFileCri*)((char*)self - 0x1C4))->teardownAdxf(arg);
 }
 
 extern "C" void* __dl__FPv(void* self);

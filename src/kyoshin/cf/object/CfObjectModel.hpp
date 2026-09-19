@@ -201,11 +201,11 @@ namespace cf {
     virtual u32 CfObject_readKindFlagWord() override;
     void CfObject_setMoveTargetVec();
     ml::CVec3* CfObject_getPosVector();
-    void CfObject_setModelRotVec(void* src);
+    void CfObject_UnkVirtualFunc27(void* src);
     void CfObject_setMoveHeadAngle();
     void CfObject_setScaledHeadAngle();
     float CfObject_UnkVirtualFunc34();
-    void* CObjectParam_getActiveParam();
+    void* CObjectParam_UnkVirtualFunc2();
     void setPointEnabled(int flag); //0x158 override (base renamed; keeps CfObjectModel non-abstract)
     int CfObject_UnkVirtualFunc68(const ml::CVec3* vec = nullptr) override;
     float CfObject_getMoveHeadAngle();

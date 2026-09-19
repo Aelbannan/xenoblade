@@ -170,9 +170,15 @@ CScnMem::CScnMem() {
     field_0xc = 0;
 }
 
-CScnNw4r::CScnNw4r() : CScn() {
-    field_0x10 = (u32)lbl_eu_8056E5C8;
-    field_0x54 = (u32)lbl_eu_8056E5C8 + 0x24;
+// Flat-name ctor (retail __ct__CScnNw4r). Calls flat __ct__CScn rather than a
+// C++ base initializer (which would emit mangled __ct__4CScnFv).
+extern "C" CScn* __ct__CScn(CScn* self);
+extern "C" void* __ct__CScnNw4r(void* self) {
+    CScnNw4r* nw = (CScnNw4r*)self;
+    __ct__CScn((CScn*)nw);
+    nw->field_0x10 = (u32)lbl_eu_8056E5C8;
+    nw->field_0x54 = (u32)lbl_eu_8056E5C8 + 0x24;
+    return nw;
 }
 
 CScnNw4r::~CScnNw4r() {

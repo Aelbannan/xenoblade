@@ -276,3 +276,10 @@ __attribute__((noinline)) void CScrollBar_MarkLayoutReady(CScrollBar* bar) {
         bar->mReady = 1;
     }
 }
+
+// --- restored from git history (base:gone); do not expand beyond these functions ---
+// from commit 733d067c6f5a needle=CScrollBar_isVisible
+
+/* Retail symbol is unmangled CScrollBar_isVisible(void*); typed here. */
+extern "C" u8 CScrollBar_isVisible(CScrollBar* self) { return self->mVisible; }
+

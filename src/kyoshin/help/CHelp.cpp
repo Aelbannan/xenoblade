@@ -53,3 +53,19 @@ u32 cf::CHelpSwitch::func_802B7CE4(u8 flag) {
     this->mFlag = flag;
     return prev != flag;
 }
+
+// --- restored from git history (base:gone); do not expand beyond these functions ---
+// from commit 365650b84230 needle=CHelp_UnkVirtualFunc2
+
+void CHelp::CHelp_UnkVirtualFunc2() {
+    // One-shot indirect calls (no named CHelpVtbl* temp) so MWCC colors the
+    // iface base like a virtual dispatch (r12), matching retail.
+    typedef UNKWORD (*SlotFn)(CHelp*);
+    UNKWORD a = reinterpret_cast<SlotFn>(
+        (*reinterpret_cast<void***>(reinterpret_cast<char*>(this) + 8))[6])(this);
+    UNKWORD b = reinterpret_cast<SlotFn>(
+        (*reinterpret_cast<void***>(reinterpret_cast<char*>(this) + 8))[5])(this);
+    func_80134D18(static_cast<u8>(mParam), b, a);
+    func_8009D018(mOwner, 1);
+}
+

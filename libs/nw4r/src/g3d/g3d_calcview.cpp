@@ -1536,3 +1536,28 @@ void CalcView_LC_DMA_ModelMtx(math::MTX34* pViewPosArray,
 
 } // namespace g3d
 } // namespace nw4r
+
+
+// --- restored from git history (base:gone repo-search) ---
+// from commit 365650b84230 path=libs/nw4r/src/g3d/g3d_calcview.cpp needle=Calc_BILLBOARD_STD
+            // LLM-HARNESS-BEGIN: us-803ee8e0
+            void Calc_BILLBOARD_STD(nw4r::math::MTX34*, const nw4r::math::MTX34*, bool, const nw4r::math::MTX34*, nw4r::g3d::ResMdl, unsigned long) {}
+
+
+// --- restored from git history (base:gone repo-search) ---
+// from commit 365650b84230 path=libs/nw4r/src/g3d/g3d_calcview.cpp needle=Calc_BILLBOARD_ROT
+            // LLM-HARNESS-BEGIN: us-803eee88
+            void Calc_BILLBOARD_ROT(nw4r::math::MTX34*, const nw4r::math::MTX34*, bool, const nw4r::math::MTX34*, nw4r::g3d::ResMdl, unsigned long) {}
+
+
+// --- restored from git history (base:gone repo-search) ---
+// from commit 365650b84230 path=libs/nw4r/src/g3d/g3d_calcview.cpp needle=Calc_BILLBOARD_Y
+            // LLM-HARNESS-BEGIN: us-803ef57c
+            void Calc_BILLBOARD_Y(nw4r::math::MTX34*, const nw4r::math::MTX34*, bool, const nw4r::math::MTX34*, nw4r::g3d::ResMdl, unsigned long) {}
+
+
+// --- restored from git history (base:gone repo-search) ---
+// from commit 365650b84230 path=libs/nw4r/src/g3d/g3d_calcview.cpp needle=Calc_BILLBOARD_PERSP_Y
+            // LLM-HARNESS-BEGIN: us-803ef85c
+            void Calc_BILLBOARD_PERSP_Y(nw4r::math::MTX34*, const nw4r::math::MTX34*, bool, const nw4r::math::MTX34*, nw4r::g3d::ResMdl, unsigned long) {}
+

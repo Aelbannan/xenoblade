@@ -39,7 +39,6 @@ void FORCEACTIVECGame_cpp_wkStandbyLogin(void) {
     force_cgame_strings("CGameRestart", "", "43", "arc", "4_3mode.brlyt");
 }
 
-
 CGame* CGame::spInstance;
 static FixStr<64> lbl_80573C80;
 nw4r::lyt::Layout* CGame::lbl_80666604;
@@ -521,3 +520,4 @@ bool IWorkEvent::OnFileEvent(CEventFile* /*pEventFile*/) {
 bool IWorkEvent::WorkEvent1(UNKTYPE* /*r4*/, const char* /*r5*/) {
     return false;
 }
+

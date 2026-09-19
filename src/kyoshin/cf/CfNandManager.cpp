@@ -963,3 +963,996 @@ extern "C" void cbRenderBefore__Q22cf13CfNandManagerFv() {
         lbl_eu_80664770 = 2;
     }
 }
+
+// --- restored from git history (base:gone); do not expand beyond these functions ---
+// from commit 365650b84230 needle=func_8023C1B4
+// LLM-HARNESS-END: us-8023e284
+
+// LLM-HARNESS-BEGIN: us-8023e2e4
+extern "C" void func_8023C1B4() {}
+// LLM-HARNESS-END: us-8023e2e4
+
+// LLM-HARNESS-BEGIN: us-8023e2f0
+extern "C" void func_8023C1C0() {}
+// LLM-HARNESS-END: us-8023e2f0
+
+// LLM-HARNESS-BEGIN: us-8023e320
+extern "C" void func_8023C1F0() {}
+// LLM-HARNESS-END: us-8023e320
+
+// LLM-HARNESS-BEGIN: us-8023e414
+extern "C" void func_8023C2E4() {}
+// LLM-HARNESS-END: us-8023e414
+
+// LLM-HARNESS-BEGIN: us-8023e7bc
+extern "C" void func_8023C68C() {}
+// LLM-HARNESS-END: us-8023e7bc
+
+// LLM-HARNESS-BEGIN: us-8023e8f4
+extern "C" void func_8023C7C4() {}
+// LLM-HARNESS-END: us-8023e8f4
+
+// LLM-HARNESS-BEGIN: us-8023ea80
+extern "C" void func_8023C93C() {}
+// LLM-HARNESS-END: us-8023ea80
+
+// LLM-HARNESS-BEGIN: us-8023eee0
+extern "C" void func_8023CD9C() {}
+// LLM-HARNESS-END: us-8023eee0
+
+// LLM-HARNESS-BEGIN: us-8023f51c
+extern "C" void func_8023D3D8() {}
+// LLM-HARNESS-END: us-8023f51c
+
+// LLM-HARNESS-BEGIN: us-8024058c
+extern "C" void __dt__8023E448() {}
+// LLM-HARNESS-END: us-8024058c
+
+// LLM-HARNESS-BEGIN: us-80240618
+extern "C" void func_8023E4D4__Q22cf13CfNandManagerFv() {}
+// LLM-HARNESS-END: us-80240618
+
+// LLM-HARNESS-BEGIN: us-80240688
+extern "C" void func_8023E544() {}
+// LLM-HARNESS-END: us-80240688
+
+// LLM-HARNESS-BEGIN: us-80240780
+extern "C" void __dt__8023E63C() {}
+// LLM-HARNESS-END: us-80240780
+
+// LLM-HARNESS-BEGIN: us-80240c00
+extern "C" void func_8023EABC() {}
+// LLM-HARNESS-END: us-80240c00
+
+// LLM-HARNESS-BEGIN: us-80240cbc
+extern "C" void func_8023EB78() {}
+// LLM-HARNESS-END: us-80240cbc
+
+// LLM-HARNESS-BEGIN: us-80241438
+extern "C" void func_8023F288() {}
+// LLM-HARNESS-END: us-80241438
+
+// LLM-HARNESS-BEGIN: us-802414a4
+extern "C" void func_8023F2F4() {}
+// LLM-HARNESS-END: us-802414a4
+
+// LLM-HARNESS-BEGIN: us-80241570
+extern "C" void func_8023F3C0() {}
+// LLM-HARNESS-END: us-80241570
+
+// LLM-HARNESS-BEGIN: us-8024177c
+extern "C" void func_8023F5CC() {}
+// LLM-HARNESS-END: us-8024177c
+
+// LLM-HARNESS-BEGIN: us-80241840
+extern "C" void func_8023F690() {}
+// LLM-HARNESS-END: us-80241840
+
+// LLM-HARNESS-BEGIN: us-80241a10
+extern "C" void func_8023F860() {}
+// LLM-HARNESS-END: us-80241a10
+
+// LLM-HARNESS-BEGIN: us-80241c14
+extern "C" void func_8023FA64() {}
+// LLM-HARNESS-END: us-80241c14
+
+// LLM-HARNESS-BEGIN: us-80241cd8
+extern "C" void func_8023FB28() {}
+// LLM-HARNESS-END: us-80241cd8
+
+// LLM-HARNESS-BEGIN: us-80241d50
+extern "C" void func_8023FBA0() {}
+// LLM-HARNESS-END: us-80241d50
+
+// LLM-HARNESS-BEGIN: us-80241dc8
+extern "C" void func_8023FC18() {}
+// LLM-HARNESS-END: us-80241dc8
+
+// LLM-HARNESS-BEGIN: us-80241e7c
+extern "C" void func_8023FCCC() {}
+// LLM-HARNESS-END: us-80241e7c
+
+// LLM-HARNESS-BEGIN: us-80241efc
+extern "C" void func_8023FD4C() {}
+// LLM-HARNESS-END: us-80241efc
+
+// LLM-HARNESS-BEGIN: us-8024208c
+extern "C" void func_8023FEDC() {}
+// LLM-HARNESS-END: us-8024208c
+
+// LLM-HARNESS-BEGIN: us-80242188
+extern "C" void create__Q22cf13CfNandManagerFv() {}
+// LLM-HARNESS-END: us-80242188
+
+// LLM-HARNESS-BEGIN: us-80242214
+extern "C" void func_8024005C() {}
+// LLM-HARNESS-END: us-80242214
+
+// LLM-HARNESS-BEGIN: us-8024223c
+extern "C" void func_80240084() {}
+// LLM-HARNESS-END: us-8024223c
+
+// LLM-HARNESS-BEGIN: us-80242518
+extern "C" void func_80240360() {}
+// LLM-HARNESS-END: us-80242518
+
+// LLM-HARNESS-BEGIN: us-802425d8
+extern "C" void func_80240420() {}
+// LLM-HARNESS-END: us-802425d8
+
+// LLM-HARNESS-BEGIN: us-80242634
+extern "C" void cbRenderBefore__Q22cf13CfNandManagerFv() {}
+// LLM-HARNESS-END: us-80242634
+
+// LLM-HARNESS-BEGIN: us-802427ac
+extern "C" bool OnFileEvent__Q22cf13CfNandManagerFv() { return false; }
+
+// from commit 365650b84230 needle=func_8023C1C0
+// LLM-HARNESS-END: us-8023e2e4
+
+// LLM-HARNESS-BEGIN: us-8023e2f0
+extern "C" void func_8023C1C0() {}
+// LLM-HARNESS-END: us-8023e2f0
+
+// LLM-HARNESS-BEGIN: us-8023e320
+extern "C" void func_8023C1F0() {}
+// LLM-HARNESS-END: us-8023e320
+
+// LLM-HARNESS-BEGIN: us-8023e414
+extern "C" void func_8023C2E4() {}
+// LLM-HARNESS-END: us-8023e414
+
+// LLM-HARNESS-BEGIN: us-8023e7bc
+extern "C" void func_8023C68C() {}
+// LLM-HARNESS-END: us-8023e7bc
+
+// LLM-HARNESS-BEGIN: us-8023e8f4
+extern "C" void func_8023C7C4() {}
+// LLM-HARNESS-END: us-8023e8f4
+
+// LLM-HARNESS-BEGIN: us-8023ea80
+extern "C" void func_8023C93C() {}
+// LLM-HARNESS-END: us-8023ea80
+
+// LLM-HARNESS-BEGIN: us-8023eee0
+extern "C" void func_8023CD9C() {}
+// LLM-HARNESS-END: us-8023eee0
+
+// LLM-HARNESS-BEGIN: us-8023f51c
+extern "C" void func_8023D3D8() {}
+// LLM-HARNESS-END: us-8023f51c
+
+// LLM-HARNESS-BEGIN: us-8024058c
+extern "C" void __dt__8023E448() {}
+// LLM-HARNESS-END: us-8024058c
+
+// LLM-HARNESS-BEGIN: us-80240618
+extern "C" void func_8023E4D4__Q22cf13CfNandManagerFv() {}
+// LLM-HARNESS-END: us-80240618
+
+// LLM-HARNESS-BEGIN: us-80240688
+extern "C" void func_8023E544() {}
+// LLM-HARNESS-END: us-80240688
+
+// LLM-HARNESS-BEGIN: us-80240780
+extern "C" void __dt__8023E63C() {}
+// LLM-HARNESS-END: us-80240780
+
+// LLM-HARNESS-BEGIN: us-80240c00
+extern "C" void func_8023EABC() {}
+// LLM-HARNESS-END: us-80240c00
+
+// LLM-HARNESS-BEGIN: us-80240cbc
+extern "C" void func_8023EB78() {}
+// LLM-HARNESS-END: us-80240cbc
+
+// LLM-HARNESS-BEGIN: us-80241438
+extern "C" void func_8023F288() {}
+// LLM-HARNESS-END: us-80241438
+
+// LLM-HARNESS-BEGIN: us-802414a4
+extern "C" void func_8023F2F4() {}
+// LLM-HARNESS-END: us-802414a4
+
+// LLM-HARNESS-BEGIN: us-80241570
+extern "C" void func_8023F3C0() {}
+// LLM-HARNESS-END: us-80241570
+
+// LLM-HARNESS-BEGIN: us-8024177c
+extern "C" void func_8023F5CC() {}
+// LLM-HARNESS-END: us-8024177c
+
+// LLM-HARNESS-BEGIN: us-80241840
+extern "C" void func_8023F690() {}
+// LLM-HARNESS-END: us-80241840
+
+// LLM-HARNESS-BEGIN: us-80241a10
+extern "C" void func_8023F860() {}
+// LLM-HARNESS-END: us-80241a10
+
+// LLM-HARNESS-BEGIN: us-80241c14
+extern "C" void func_8023FA64() {}
+// LLM-HARNESS-END: us-80241c14
+
+// LLM-HARNESS-BEGIN: us-80241cd8
+extern "C" void func_8023FB28() {}
+// LLM-HARNESS-END: us-80241cd8
+
+// LLM-HARNESS-BEGIN: us-80241d50
+extern "C" void func_8023FBA0() {}
+// LLM-HARNESS-END: us-80241d50
+
+// LLM-HARNESS-BEGIN: us-80241dc8
+extern "C" void func_8023FC18() {}
+// LLM-HARNESS-END: us-80241dc8
+
+// LLM-HARNESS-BEGIN: us-80241e7c
+extern "C" void func_8023FCCC() {}
+// LLM-HARNESS-END: us-80241e7c
+
+// LLM-HARNESS-BEGIN: us-80241efc
+extern "C" void func_8023FD4C() {}
+// LLM-HARNESS-END: us-80241efc
+
+// LLM-HARNESS-BEGIN: us-8024208c
+extern "C" void func_8023FEDC() {}
+// LLM-HARNESS-END: us-8024208c
+
+// LLM-HARNESS-BEGIN: us-80242188
+extern "C" void create__Q22cf13CfNandManagerFv() {}
+// LLM-HARNESS-END: us-80242188
+
+// LLM-HARNESS-BEGIN: us-80242214
+extern "C" void func_8024005C() {}
+// LLM-HARNESS-END: us-80242214
+
+// LLM-HARNESS-BEGIN: us-8024223c
+extern "C" void func_80240084() {}
+// LLM-HARNESS-END: us-8024223c
+
+// LLM-HARNESS-BEGIN: us-80242518
+extern "C" void func_80240360() {}
+// LLM-HARNESS-END: us-80242518
+
+// LLM-HARNESS-BEGIN: us-802425d8
+extern "C" void func_80240420() {}
+// LLM-HARNESS-END: us-802425d8
+
+// LLM-HARNESS-BEGIN: us-80242634
+extern "C" void cbRenderBefore__Q22cf13CfNandManagerFv() {}
+// LLM-HARNESS-END: us-80242634
+
+// LLM-HARNESS-BEGIN: us-802427ac
+extern "C" bool OnFileEvent__Q22cf13CfNandManagerFv() { return false; }
+
+// from commit 365650b84230 needle=func_8023F288
+// LLM-HARNESS-END: us-80240cbc
+
+// LLM-HARNESS-BEGIN: us-80241438
+extern "C" void func_8023F288() {}
+// LLM-HARNESS-END: us-80241438
+
+// LLM-HARNESS-BEGIN: us-802414a4
+extern "C" void func_8023F2F4() {}
+// LLM-HARNESS-END: us-802414a4
+
+// LLM-HARNESS-BEGIN: us-80241570
+extern "C" void func_8023F3C0() {}
+// LLM-HARNESS-END: us-80241570
+
+// LLM-HARNESS-BEGIN: us-8024177c
+extern "C" void func_8023F5CC() {}
+// LLM-HARNESS-END: us-8024177c
+
+// LLM-HARNESS-BEGIN: us-80241840
+extern "C" void func_8023F690() {}
+// LLM-HARNESS-END: us-80241840
+
+// LLM-HARNESS-BEGIN: us-80241a10
+extern "C" void func_8023F860() {}
+// LLM-HARNESS-END: us-80241a10
+
+// LLM-HARNESS-BEGIN: us-80241c14
+extern "C" void func_8023FA64() {}
+// LLM-HARNESS-END: us-80241c14
+
+// LLM-HARNESS-BEGIN: us-80241cd8
+extern "C" void func_8023FB28() {}
+// LLM-HARNESS-END: us-80241cd8
+
+// LLM-HARNESS-BEGIN: us-80241d50
+extern "C" void func_8023FBA0() {}
+// LLM-HARNESS-END: us-80241d50
+
+// LLM-HARNESS-BEGIN: us-80241dc8
+extern "C" void func_8023FC18() {}
+// LLM-HARNESS-END: us-80241dc8
+
+// LLM-HARNESS-BEGIN: us-80241e7c
+extern "C" void func_8023FCCC() {}
+// LLM-HARNESS-END: us-80241e7c
+
+// LLM-HARNESS-BEGIN: us-80241efc
+extern "C" void func_8023FD4C() {}
+// LLM-HARNESS-END: us-80241efc
+
+// LLM-HARNESS-BEGIN: us-8024208c
+extern "C" void func_8023FEDC() {}
+// LLM-HARNESS-END: us-8024208c
+
+// LLM-HARNESS-BEGIN: us-80242188
+extern "C" void create__Q22cf13CfNandManagerFv() {}
+// LLM-HARNESS-END: us-80242188
+
+// LLM-HARNESS-BEGIN: us-80242214
+extern "C" void func_8024005C() {}
+// LLM-HARNESS-END: us-80242214
+
+// LLM-HARNESS-BEGIN: us-8024223c
+extern "C" void func_80240084() {}
+// LLM-HARNESS-END: us-8024223c
+
+// LLM-HARNESS-BEGIN: us-80242518
+extern "C" void func_80240360() {}
+// LLM-HARNESS-END: us-80242518
+
+// LLM-HARNESS-BEGIN: us-802425d8
+extern "C" void func_80240420() {}
+// LLM-HARNESS-END: us-802425d8
+
+// LLM-HARNESS-BEGIN: us-80242634
+extern "C" void cbRenderBefore__Q22cf13CfNandManagerFv() {}
+// LLM-HARNESS-END: us-80242634
+
+// LLM-HARNESS-BEGIN: us-802427ac
+extern "C" bool OnFileEvent__Q22cf13CfNandManagerFv() { return false; }
+
+// from commit 365650b84230 needle=func_8023F2F4
+// LLM-HARNESS-END: us-80241438
+
+// LLM-HARNESS-BEGIN: us-802414a4
+extern "C" void func_8023F2F4() {}
+// LLM-HARNESS-END: us-802414a4
+
+// LLM-HARNESS-BEGIN: us-80241570
+extern "C" void func_8023F3C0() {}
+// LLM-HARNESS-END: us-80241570
+
+// LLM-HARNESS-BEGIN: us-8024177c
+extern "C" void func_8023F5CC() {}
+// LLM-HARNESS-END: us-8024177c
+
+// LLM-HARNESS-BEGIN: us-80241840
+extern "C" void func_8023F690() {}
+// LLM-HARNESS-END: us-80241840
+
+// LLM-HARNESS-BEGIN: us-80241a10
+extern "C" void func_8023F860() {}
+// LLM-HARNESS-END: us-80241a10
+
+// LLM-HARNESS-BEGIN: us-80241c14
+extern "C" void func_8023FA64() {}
+// LLM-HARNESS-END: us-80241c14
+
+// LLM-HARNESS-BEGIN: us-80241cd8
+extern "C" void func_8023FB28() {}
+// LLM-HARNESS-END: us-80241cd8
+
+// LLM-HARNESS-BEGIN: us-80241d50
+extern "C" void func_8023FBA0() {}
+// LLM-HARNESS-END: us-80241d50
+
+// LLM-HARNESS-BEGIN: us-80241dc8
+extern "C" void func_8023FC18() {}
+// LLM-HARNESS-END: us-80241dc8
+
+// LLM-HARNESS-BEGIN: us-80241e7c
+extern "C" void func_8023FCCC() {}
+// LLM-HARNESS-END: us-80241e7c
+
+// LLM-HARNESS-BEGIN: us-80241efc
+extern "C" void func_8023FD4C() {}
+// LLM-HARNESS-END: us-80241efc
+
+// LLM-HARNESS-BEGIN: us-8024208c
+extern "C" void func_8023FEDC() {}
+// LLM-HARNESS-END: us-8024208c
+
+// LLM-HARNESS-BEGIN: us-80242188
+extern "C" void create__Q22cf13CfNandManagerFv() {}
+// LLM-HARNESS-END: us-80242188
+
+// LLM-HARNESS-BEGIN: us-80242214
+extern "C" void func_8024005C() {}
+// LLM-HARNESS-END: us-80242214
+
+// LLM-HARNESS-BEGIN: us-8024223c
+extern "C" void func_80240084() {}
+// LLM-HARNESS-END: us-8024223c
+
+// LLM-HARNESS-BEGIN: us-80242518
+extern "C" void func_80240360() {}
+// LLM-HARNESS-END: us-80242518
+
+// LLM-HARNESS-BEGIN: us-802425d8
+extern "C" void func_80240420() {}
+// LLM-HARNESS-END: us-802425d8
+
+// LLM-HARNESS-BEGIN: us-80242634
+extern "C" void cbRenderBefore__Q22cf13CfNandManagerFv() {}
+// LLM-HARNESS-END: us-80242634
+
+// LLM-HARNESS-BEGIN: us-802427ac
+extern "C" bool OnFileEvent__Q22cf13CfNandManagerFv() { return false; }
+
+// from commit 365650b84230 needle=func_8023F3C0
+// LLM-HARNESS-END: us-802414a4
+
+// LLM-HARNESS-BEGIN: us-80241570
+extern "C" void func_8023F3C0() {}
+// LLM-HARNESS-END: us-80241570
+
+// LLM-HARNESS-BEGIN: us-8024177c
+extern "C" void func_8023F5CC() {}
+// LLM-HARNESS-END: us-8024177c
+
+// LLM-HARNESS-BEGIN: us-80241840
+extern "C" void func_8023F690() {}
+// LLM-HARNESS-END: us-80241840
+
+// LLM-HARNESS-BEGIN: us-80241a10
+extern "C" void func_8023F860() {}
+// LLM-HARNESS-END: us-80241a10
+
+// LLM-HARNESS-BEGIN: us-80241c14
+extern "C" void func_8023FA64() {}
+// LLM-HARNESS-END: us-80241c14
+
+// LLM-HARNESS-BEGIN: us-80241cd8
+extern "C" void func_8023FB28() {}
+// LLM-HARNESS-END: us-80241cd8
+
+// LLM-HARNESS-BEGIN: us-80241d50
+extern "C" void func_8023FBA0() {}
+// LLM-HARNESS-END: us-80241d50
+
+// LLM-HARNESS-BEGIN: us-80241dc8
+extern "C" void func_8023FC18() {}
+// LLM-HARNESS-END: us-80241dc8
+
+// LLM-HARNESS-BEGIN: us-80241e7c
+extern "C" void func_8023FCCC() {}
+// LLM-HARNESS-END: us-80241e7c
+
+// LLM-HARNESS-BEGIN: us-80241efc
+extern "C" void func_8023FD4C() {}
+// LLM-HARNESS-END: us-80241efc
+
+// LLM-HARNESS-BEGIN: us-8024208c
+extern "C" void func_8023FEDC() {}
+// LLM-HARNESS-END: us-8024208c
+
+// LLM-HARNESS-BEGIN: us-80242188
+extern "C" void create__Q22cf13CfNandManagerFv() {}
+// LLM-HARNESS-END: us-80242188
+
+// LLM-HARNESS-BEGIN: us-80242214
+extern "C" void func_8024005C() {}
+// LLM-HARNESS-END: us-80242214
+
+// LLM-HARNESS-BEGIN: us-8024223c
+extern "C" void func_80240084() {}
+// LLM-HARNESS-END: us-8024223c
+
+// LLM-HARNESS-BEGIN: us-80242518
+extern "C" void func_80240360() {}
+// LLM-HARNESS-END: us-80242518
+
+// LLM-HARNESS-BEGIN: us-802425d8
+extern "C" void func_80240420() {}
+// LLM-HARNESS-END: us-802425d8
+
+// LLM-HARNESS-BEGIN: us-80242634
+extern "C" void cbRenderBefore__Q22cf13CfNandManagerFv() {}
+// LLM-HARNESS-END: us-80242634
+
+// LLM-HARNESS-BEGIN: us-802427ac
+extern "C" bool OnFileEvent__Q22cf13CfNandManagerFv() { return false; }
+
+// from commit 365650b84230 needle=func_8023F5CC
+// LLM-HARNESS-END: us-80241570
+
+// LLM-HARNESS-BEGIN: us-8024177c
+extern "C" void func_8023F5CC() {}
+// LLM-HARNESS-END: us-8024177c
+
+// LLM-HARNESS-BEGIN: us-80241840
+extern "C" void func_8023F690() {}
+// LLM-HARNESS-END: us-80241840
+
+// LLM-HARNESS-BEGIN: us-80241a10
+extern "C" void func_8023F860() {}
+// LLM-HARNESS-END: us-80241a10
+
+// LLM-HARNESS-BEGIN: us-80241c14
+extern "C" void func_8023FA64() {}
+// LLM-HARNESS-END: us-80241c14
+
+// LLM-HARNESS-BEGIN: us-80241cd8
+extern "C" void func_8023FB28() {}
+// LLM-HARNESS-END: us-80241cd8
+
+// LLM-HARNESS-BEGIN: us-80241d50
+extern "C" void func_8023FBA0() {}
+// LLM-HARNESS-END: us-80241d50
+
+// LLM-HARNESS-BEGIN: us-80241dc8
+extern "C" void func_8023FC18() {}
+// LLM-HARNESS-END: us-80241dc8
+
+// LLM-HARNESS-BEGIN: us-80241e7c
+extern "C" void func_8023FCCC() {}
+// LLM-HARNESS-END: us-80241e7c
+
+// LLM-HARNESS-BEGIN: us-80241efc
+extern "C" void func_8023FD4C() {}
+// LLM-HARNESS-END: us-80241efc
+
+// LLM-HARNESS-BEGIN: us-8024208c
+extern "C" void func_8023FEDC() {}
+// LLM-HARNESS-END: us-8024208c
+
+// LLM-HARNESS-BEGIN: us-80242188
+extern "C" void create__Q22cf13CfNandManagerFv() {}
+// LLM-HARNESS-END: us-80242188
+
+// LLM-HARNESS-BEGIN: us-80242214
+extern "C" void func_8024005C() {}
+// LLM-HARNESS-END: us-80242214
+
+// LLM-HARNESS-BEGIN: us-8024223c
+extern "C" void func_80240084() {}
+// LLM-HARNESS-END: us-8024223c
+
+// LLM-HARNESS-BEGIN: us-80242518
+extern "C" void func_80240360() {}
+// LLM-HARNESS-END: us-80242518
+
+// LLM-HARNESS-BEGIN: us-802425d8
+extern "C" void func_80240420() {}
+// LLM-HARNESS-END: us-802425d8
+
+// LLM-HARNESS-BEGIN: us-80242634
+extern "C" void cbRenderBefore__Q22cf13CfNandManagerFv() {}
+// LLM-HARNESS-END: us-80242634
+
+// LLM-HARNESS-BEGIN: us-802427ac
+extern "C" bool OnFileEvent__Q22cf13CfNandManagerFv() { return false; }
+
+// from commit 365650b84230 needle=func_8023F690
+// LLM-HARNESS-END: us-8024177c
+
+// LLM-HARNESS-BEGIN: us-80241840
+extern "C" void func_8023F690() {}
+// LLM-HARNESS-END: us-80241840
+
+// LLM-HARNESS-BEGIN: us-80241a10
+extern "C" void func_8023F860() {}
+// LLM-HARNESS-END: us-80241a10
+
+// LLM-HARNESS-BEGIN: us-80241c14
+extern "C" void func_8023FA64() {}
+// LLM-HARNESS-END: us-80241c14
+
+// LLM-HARNESS-BEGIN: us-80241cd8
+extern "C" void func_8023FB28() {}
+// LLM-HARNESS-END: us-80241cd8
+
+// LLM-HARNESS-BEGIN: us-80241d50
+extern "C" void func_8023FBA0() {}
+// LLM-HARNESS-END: us-80241d50
+
+// LLM-HARNESS-BEGIN: us-80241dc8
+extern "C" void func_8023FC18() {}
+// LLM-HARNESS-END: us-80241dc8
+
+// LLM-HARNESS-BEGIN: us-80241e7c
+extern "C" void func_8023FCCC() {}
+// LLM-HARNESS-END: us-80241e7c
+
+// LLM-HARNESS-BEGIN: us-80241efc
+extern "C" void func_8023FD4C() {}
+// LLM-HARNESS-END: us-80241efc
+
+// LLM-HARNESS-BEGIN: us-8024208c
+extern "C" void func_8023FEDC() {}
+// LLM-HARNESS-END: us-8024208c
+
+// LLM-HARNESS-BEGIN: us-80242188
+extern "C" void create__Q22cf13CfNandManagerFv() {}
+// LLM-HARNESS-END: us-80242188
+
+// LLM-HARNESS-BEGIN: us-80242214
+extern "C" void func_8024005C() {}
+// LLM-HARNESS-END: us-80242214
+
+// LLM-HARNESS-BEGIN: us-8024223c
+extern "C" void func_80240084() {}
+// LLM-HARNESS-END: us-8024223c
+
+// LLM-HARNESS-BEGIN: us-80242518
+extern "C" void func_80240360() {}
+// LLM-HARNESS-END: us-80242518
+
+// LLM-HARNESS-BEGIN: us-802425d8
+extern "C" void func_80240420() {}
+// LLM-HARNESS-END: us-802425d8
+
+// LLM-HARNESS-BEGIN: us-80242634
+extern "C" void cbRenderBefore__Q22cf13CfNandManagerFv() {}
+// LLM-HARNESS-END: us-80242634
+
+// LLM-HARNESS-BEGIN: us-802427ac
+extern "C" bool OnFileEvent__Q22cf13CfNandManagerFv() { return false; }
+
+// from commit 365650b84230 needle=func_8023FA64
+// LLM-HARNESS-END: us-80241a10
+
+// LLM-HARNESS-BEGIN: us-80241c14
+extern "C" void func_8023FA64() {}
+// LLM-HARNESS-END: us-80241c14
+
+// LLM-HARNESS-BEGIN: us-80241cd8
+extern "C" void func_8023FB28() {}
+// LLM-HARNESS-END: us-80241cd8
+
+// LLM-HARNESS-BEGIN: us-80241d50
+extern "C" void func_8023FBA0() {}
+// LLM-HARNESS-END: us-80241d50
+
+// LLM-HARNESS-BEGIN: us-80241dc8
+extern "C" void func_8023FC18() {}
+// LLM-HARNESS-END: us-80241dc8
+
+// LLM-HARNESS-BEGIN: us-80241e7c
+extern "C" void func_8023FCCC() {}
+// LLM-HARNESS-END: us-80241e7c
+
+// LLM-HARNESS-BEGIN: us-80241efc
+extern "C" void func_8023FD4C() {}
+// LLM-HARNESS-END: us-80241efc
+
+// LLM-HARNESS-BEGIN: us-8024208c
+extern "C" void func_8023FEDC() {}
+// LLM-HARNESS-END: us-8024208c
+
+// LLM-HARNESS-BEGIN: us-80242188
+extern "C" void create__Q22cf13CfNandManagerFv() {}
+// LLM-HARNESS-END: us-80242188
+
+// LLM-HARNESS-BEGIN: us-80242214
+extern "C" void func_8024005C() {}
+// LLM-HARNESS-END: us-80242214
+
+// LLM-HARNESS-BEGIN: us-8024223c
+extern "C" void func_80240084() {}
+// LLM-HARNESS-END: us-8024223c
+
+// LLM-HARNESS-BEGIN: us-80242518
+extern "C" void func_80240360() {}
+// LLM-HARNESS-END: us-80242518
+
+// LLM-HARNESS-BEGIN: us-802425d8
+extern "C" void func_80240420() {}
+// LLM-HARNESS-END: us-802425d8
+
+// LLM-HARNESS-BEGIN: us-80242634
+extern "C" void cbRenderBefore__Q22cf13CfNandManagerFv() {}
+// LLM-HARNESS-END: us-80242634
+
+// LLM-HARNESS-BEGIN: us-802427ac
+extern "C" bool OnFileEvent__Q22cf13CfNandManagerFv() { return false; }
+
+// from commit 365650b84230 needle=func_8023FB28
+// LLM-HARNESS-END: us-80241c14
+
+// LLM-HARNESS-BEGIN: us-80241cd8
+extern "C" void func_8023FB28() {}
+// LLM-HARNESS-END: us-80241cd8
+
+// LLM-HARNESS-BEGIN: us-80241d50
+extern "C" void func_8023FBA0() {}
+// LLM-HARNESS-END: us-80241d50
+
+// LLM-HARNESS-BEGIN: us-80241dc8
+extern "C" void func_8023FC18() {}
+// LLM-HARNESS-END: us-80241dc8
+
+// LLM-HARNESS-BEGIN: us-80241e7c
+extern "C" void func_8023FCCC() {}
+// LLM-HARNESS-END: us-80241e7c
+
+// LLM-HARNESS-BEGIN: us-80241efc
+extern "C" void func_8023FD4C() {}
+// LLM-HARNESS-END: us-80241efc
+
+// LLM-HARNESS-BEGIN: us-8024208c
+extern "C" void func_8023FEDC() {}
+// LLM-HARNESS-END: us-8024208c
+
+// LLM-HARNESS-BEGIN: us-80242188
+extern "C" void create__Q22cf13CfNandManagerFv() {}
+// LLM-HARNESS-END: us-80242188
+
+// LLM-HARNESS-BEGIN: us-80242214
+extern "C" void func_8024005C() {}
+// LLM-HARNESS-END: us-80242214
+
+// LLM-HARNESS-BEGIN: us-8024223c
+extern "C" void func_80240084() {}
+// LLM-HARNESS-END: us-8024223c
+
+// LLM-HARNESS-BEGIN: us-80242518
+extern "C" void func_80240360() {}
+// LLM-HARNESS-END: us-80242518
+
+// LLM-HARNESS-BEGIN: us-802425d8
+extern "C" void func_80240420() {}
+// LLM-HARNESS-END: us-802425d8
+
+// LLM-HARNESS-BEGIN: us-80242634
+extern "C" void cbRenderBefore__Q22cf13CfNandManagerFv() {}
+// LLM-HARNESS-END: us-80242634
+
+// LLM-HARNESS-BEGIN: us-802427ac
+extern "C" bool OnFileEvent__Q22cf13CfNandManagerFv() { return false; }
+
+// from commit 365650b84230 needle=func_8023FBA0
+// LLM-HARNESS-END: us-80241cd8
+
+// LLM-HARNESS-BEGIN: us-80241d50
+extern "C" void func_8023FBA0() {}
+// LLM-HARNESS-END: us-80241d50
+
+// LLM-HARNESS-BEGIN: us-80241dc8
+extern "C" void func_8023FC18() {}
+// LLM-HARNESS-END: us-80241dc8
+
+// LLM-HARNESS-BEGIN: us-80241e7c
+extern "C" void func_8023FCCC() {}
+// LLM-HARNESS-END: us-80241e7c
+
+// LLM-HARNESS-BEGIN: us-80241efc
+extern "C" void func_8023FD4C() {}
+// LLM-HARNESS-END: us-80241efc
+
+// LLM-HARNESS-BEGIN: us-8024208c
+extern "C" void func_8023FEDC() {}
+// LLM-HARNESS-END: us-8024208c
+
+// LLM-HARNESS-BEGIN: us-80242188
+extern "C" void create__Q22cf13CfNandManagerFv() {}
+// LLM-HARNESS-END: us-80242188
+
+// LLM-HARNESS-BEGIN: us-80242214
+extern "C" void func_8024005C() {}
+// LLM-HARNESS-END: us-80242214
+
+// LLM-HARNESS-BEGIN: us-8024223c
+extern "C" void func_80240084() {}
+// LLM-HARNESS-END: us-8024223c
+
+// LLM-HARNESS-BEGIN: us-80242518
+extern "C" void func_80240360() {}
+// LLM-HARNESS-END: us-80242518
+
+// LLM-HARNESS-BEGIN: us-802425d8
+extern "C" void func_80240420() {}
+// LLM-HARNESS-END: us-802425d8
+
+// LLM-HARNESS-BEGIN: us-80242634
+extern "C" void cbRenderBefore__Q22cf13CfNandManagerFv() {}
+// LLM-HARNESS-END: us-80242634
+
+// LLM-HARNESS-BEGIN: us-802427ac
+extern "C" bool OnFileEvent__Q22cf13CfNandManagerFv() { return false; }
+
+// from commit 365650b84230 needle=func_8023FC18
+// LLM-HARNESS-END: us-80241d50
+
+// LLM-HARNESS-BEGIN: us-80241dc8
+extern "C" void func_8023FC18() {}
+// LLM-HARNESS-END: us-80241dc8
+
+// LLM-HARNESS-BEGIN: us-80241e7c
+extern "C" void func_8023FCCC() {}
+// LLM-HARNESS-END: us-80241e7c
+
+// LLM-HARNESS-BEGIN: us-80241efc
+extern "C" void func_8023FD4C() {}
+// LLM-HARNESS-END: us-80241efc
+
+// LLM-HARNESS-BEGIN: us-8024208c
+extern "C" void func_8023FEDC() {}
+// LLM-HARNESS-END: us-8024208c
+
+// LLM-HARNESS-BEGIN: us-80242188
+extern "C" void create__Q22cf13CfNandManagerFv() {}
+// LLM-HARNESS-END: us-80242188
+
+// LLM-HARNESS-BEGIN: us-80242214
+extern "C" void func_8024005C() {}
+// LLM-HARNESS-END: us-80242214
+
+// LLM-HARNESS-BEGIN: us-8024223c
+extern "C" void func_80240084() {}
+// LLM-HARNESS-END: us-8024223c
+
+// LLM-HARNESS-BEGIN: us-80242518
+extern "C" void func_80240360() {}
+// LLM-HARNESS-END: us-80242518
+
+// LLM-HARNESS-BEGIN: us-802425d8
+extern "C" void func_80240420() {}
+// LLM-HARNESS-END: us-802425d8
+
+// LLM-HARNESS-BEGIN: us-80242634
+extern "C" void cbRenderBefore__Q22cf13CfNandManagerFv() {}
+// LLM-HARNESS-END: us-80242634
+
+// LLM-HARNESS-BEGIN: us-802427ac
+extern "C" bool OnFileEvent__Q22cf13CfNandManagerFv() { return false; }
+
+// from commit 365650b84230 needle=func_8023FCCC
+// LLM-HARNESS-END: us-80241dc8
+
+// LLM-HARNESS-BEGIN: us-80241e7c
+extern "C" void func_8023FCCC() {}
+// LLM-HARNESS-END: us-80241e7c
+
+// LLM-HARNESS-BEGIN: us-80241efc
+extern "C" void func_8023FD4C() {}
+// LLM-HARNESS-END: us-80241efc
+
+// LLM-HARNESS-BEGIN: us-8024208c
+extern "C" void func_8023FEDC() {}
+// LLM-HARNESS-END: us-8024208c
+
+// LLM-HARNESS-BEGIN: us-80242188
+extern "C" void create__Q22cf13CfNandManagerFv() {}
+// LLM-HARNESS-END: us-80242188
+
+// LLM-HARNESS-BEGIN: us-80242214
+extern "C" void func_8024005C() {}
+// LLM-HARNESS-END: us-80242214
+
+// LLM-HARNESS-BEGIN: us-8024223c
+extern "C" void func_80240084() {}
+// LLM-HARNESS-END: us-8024223c
+
+// LLM-HARNESS-BEGIN: us-80242518
+extern "C" void func_80240360() {}
+// LLM-HARNESS-END: us-80242518
+
+// LLM-HARNESS-BEGIN: us-802425d8
+extern "C" void func_80240420() {}
+// LLM-HARNESS-END: us-802425d8
+
+// LLM-HARNESS-BEGIN: us-80242634
+extern "C" void cbRenderBefore__Q22cf13CfNandManagerFv() {}
+// LLM-HARNESS-END: us-80242634
+
+// LLM-HARNESS-BEGIN: us-802427ac
+extern "C" bool OnFileEvent__Q22cf13CfNandManagerFv() { return false; }
+
+// from commit 365650b84230 needle=func_8023FD4C
+// LLM-HARNESS-END: us-80241e7c
+
+// LLM-HARNESS-BEGIN: us-80241efc
+extern "C" void func_8023FD4C() {}
+// LLM-HARNESS-END: us-80241efc
+
+// LLM-HARNESS-BEGIN: us-8024208c
+extern "C" void func_8023FEDC() {}
+// LLM-HARNESS-END: us-8024208c
+
+// LLM-HARNESS-BEGIN: us-80242188
+extern "C" void create__Q22cf13CfNandManagerFv() {}
+// LLM-HARNESS-END: us-80242188
+
+// LLM-HARNESS-BEGIN: us-80242214
+extern "C" void func_8024005C() {}
+// LLM-HARNESS-END: us-80242214
+
+// LLM-HARNESS-BEGIN: us-8024223c
+extern "C" void func_80240084() {}
+// LLM-HARNESS-END: us-8024223c
+
+// LLM-HARNESS-BEGIN: us-80242518
+extern "C" void func_80240360() {}
+// LLM-HARNESS-END: us-80242518
+
+// LLM-HARNESS-BEGIN: us-802425d8
+extern "C" void func_80240420() {}
+// LLM-HARNESS-END: us-802425d8
+
+// LLM-HARNESS-BEGIN: us-80242634
+extern "C" void cbRenderBefore__Q22cf13CfNandManagerFv() {}
+// LLM-HARNESS-END: us-80242634
+
+// LLM-HARNESS-BEGIN: us-802427ac
+extern "C" bool OnFileEvent__Q22cf13CfNandManagerFv() { return false; }
+
+// from commit 365650b84230 needle=func_8024005C
+// LLM-HARNESS-END: us-80242188
+
+// LLM-HARNESS-BEGIN: us-80242214
+extern "C" void func_8024005C() {}
+// LLM-HARNESS-END: us-80242214
+
+// LLM-HARNESS-BEGIN: us-8024223c
+extern "C" void func_80240084() {}
+// LLM-HARNESS-END: us-8024223c
+
+// LLM-HARNESS-BEGIN: us-80242518
+extern "C" void func_80240360() {}
+// LLM-HARNESS-END: us-80242518
+
+// LLM-HARNESS-BEGIN: us-802425d8
+extern "C" void func_80240420() {}
+// LLM-HARNESS-END: us-802425d8
+
+// LLM-HARNESS-BEGIN: us-80242634
+extern "C" void cbRenderBefore__Q22cf13CfNandManagerFv() {}
+// LLM-HARNESS-END: us-80242634
+
+// LLM-HARNESS-BEGIN: us-802427ac
+extern "C" bool OnFileEvent__Q22cf13CfNandManagerFv() { return false; }
+
+// from commit 365650b84230 needle=sinit_802405F0
+// LLM-HARNESS-END: us-80242760
+// LLM-HARNESS-BEGIN: us-802427a8
+extern "C" void sinit_802405F0() {}
+
+// from commit b1c01e4a30f0 needle=func_8023E544
+
+// Target us-80240688: validate the save block at CfNandManager+0x178. A zero
+// flag short-circuits; the 'DMMY' magic means an empty slot (clear flag+out);
+// version 0x70002 is CRC16-checked via OSCalcCRC16, 0x70001 via
+// MemManager::calculateCrc; a mismatch reports status 3. Any other version
+// just clears the flag and out.
+void func_8023E544(cf::CfNandManager* self, void* unk, u8* flag, u32* out) {
+    if (*flag == 0) {
+        return;
+    }
+
+// from commit b1c01e4a30f0 needle=func_8023F860
+
+// Target us-80241a10: push five events: {0, 2, 0x20}, then callback-tagged
+// {0x28000} events with status 0x23/0x11/0x21 carrying the slot byte, and
+// finally {word, 0x28000, 0xC}. Returns 1 on success.
+extern "C" int func_8023F860(int slot, void* word) {
+    if (lbl_eu_80664768 == 0) {
+        return 0;
+    }
+

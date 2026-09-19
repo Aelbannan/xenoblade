@@ -719,6 +719,7 @@ ml::CVec3* cf::CfObjectMove::CfObject_getPosVector() {
 
 // Wave-62: override of CfObject_setRotVec (+0xBC). Free-function FPv form
 // keeps the Unk linker name that hand-built tables / CREvtModel reference.
+extern "C" void CfObject_UnkVirtualFunc27__Q22cf13CfObjectModelFPv(cf::CfObjectModel* self, void* src);
 extern "C" void CfObject_UnkVirtualFunc27__Q22cf12CfObjectMoveFPv(cf::CfObjectMove* self, void* src) {
     // Z-only movement (X within epsilon but Z outside it) marks the target
     // with the 0x20 flag so its next update re-aims instead of sliding.
@@ -736,7 +737,7 @@ extern "C" void CfObject_UnkVirtualFunc27__Q22cf12CfObjectMoveFPv(cf::CfObjectMo
     if (target != 0 && (self->mFlags68 & 0x4) != 0) {
         setTurnAngle(target, vec->y);
     }
-    self->CfObject_setModelRotVec(src);
+    CfObject_UnkVirtualFunc27__Q22cf13CfObjectModelFPv(self, src);
 }
 
 // Retail symbol is Fv but the body consumes f1 (base call, C4-gated
@@ -818,10 +819,11 @@ extern "C" void CfObjectMove_recordMoveValue__Q22cf12CfObjectMoveFv(cf::CfObject
     }
 }
 
-// Wave-63: override of CObjectParam_getActiveParam (+0x40). Fv keeps Unk
-// linker name from lbl_eu_80529690.
+// Wave-63: override of CObjectParam slot +0x40. Fv keeps Unk linker name
+// from lbl_eu_80529690; base call targets Model's retail UnkVirtualFunc2.
+extern "C" void* CObjectParam_UnkVirtualFunc2__Q22cf13CfObjectModelFv(cf::CfObjectModel* self);
 extern "C" void* CObjectParam_UnkVirtualFunc2__Q22cf12CfObjectMoveFv(cf::CfObjectMove* self) {
-    return self->CfObjectModel::CObjectParam_getActiveParam();
+    return CObjectParam_UnkVirtualFunc2__Q22cf13CfObjectModelFv(self);
 }
 
 
@@ -1092,7 +1094,7 @@ extern "C" void* CfObjectMove_loadResourceById__Q22cf12CfObjectMoveFv(cf::CfObje
     void* a = self->mField6DC;
     bool cond = (a != 0 && self->mField6E0 != 0);
     if (cond) {
-        return func_80081900__Q22cf13CfGameManagerFv((u32)param, (u32)a, (u32)self->mField6E0);
+        return createEffectForPlayer__Q22cf13CfGameManagerFv((u32)param, (u32)a, (u32)self->mField6E0);
     }
     return 0;
 }

@@ -110,3 +110,4 @@ extern "C" void SysWinSelectHandleInput(CSysWinSelect* self) {
         playUISound__FUl(1);
     }
 }
+

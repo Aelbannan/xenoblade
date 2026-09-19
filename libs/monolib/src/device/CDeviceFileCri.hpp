@@ -46,7 +46,7 @@ public:
     static void setCriFilePathA(const wchar_t* pData);
     static void setCriFilePathB(const wchar_t* pData);
     static void setCriFilePathC(const wchar_t* pData);
-    static void teardownAdxf();
+    void teardownAdxf(unsigned long);
 
 private:
     CDeviceFileJobReadDvd* getFirstCDeviceFileJobReadDvd();

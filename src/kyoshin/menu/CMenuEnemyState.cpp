@@ -3223,3 +3223,13 @@ const void* lbl_eu_8052C4F8[15] = {
 // this slot stays a zero placeholder like the Draw slot above.)
 __declspec(section ".data") __attribute__((aligned(8), used))
 void* lbl_eu_8052C534[3] = { (void*)lbl_eu_80661E30, 0, 0, };
+
+// --- restored from git history (base:gone); do not expand beyond these functions ---
+// from commit 6d2ef546718a needle=sinit_801134E8
+// LLM-HARNESS-END: us-80111b50
+// LLM-HARNESS-BEGIN: us-80113fc4
+extern "C" void sinit_801134E8() {}
+// LLM-HARNESS-END: us-80113fc4
+// LLM-HARNESS-BEGIN: us-801140a4
+extern "C" bool func_801135C8() { return false; }
+

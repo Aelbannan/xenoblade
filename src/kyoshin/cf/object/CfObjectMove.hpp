@@ -63,7 +63,7 @@ extern "C" void __dt__Q22cf13CfObjectModelFv(void* self, int flag);
 // CfGameManager resource loader (defined in CfGameManagerUnityHelpers.hpp as
 // extern "C" with Unk8187CData* return; declared void* here to avoid pulling
 // that unity-TU header into this TU).
-extern "C" void* func_80081900__Q22cf13CfGameManagerFv(u32 first, u32 value, u32 resource);
+extern "C" void* createEffectForPlayer__Q22cf13CfGameManagerFv(u32 first, u32 value, u32 resource);
 
 // Retail data labels referenced by this unit.
 extern const char lbl_eu_804FC550[];   // bdat column-name table (CfObjectMove_lookupBdatCol7 / CfObjectMove_lookupBdatCol11)

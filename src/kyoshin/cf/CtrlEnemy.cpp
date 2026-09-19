@@ -535,3 +535,4 @@ extern "C" void CtrlEnemy_delegateTo80089F68(u8* self) { func_80089F68((char*)se
 extern "C" int CBattleManager_CheckUnk84Flag(u8* self, u32 mask) {
     return (*(u32*)((char*)self + 0x84) & mask) != 0;
 }
+

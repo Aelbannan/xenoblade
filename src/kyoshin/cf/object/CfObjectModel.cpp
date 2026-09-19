@@ -526,7 +526,7 @@ struct ModelVec48 {
     u8 _pad00[0x48];
     ml::CVec3 mVec48;  // 0x48-0x53
 };
-void CfObject_setModelRotVec__Q22cf13CfObjectModelFPv(cf::CfObjectModel* self, const ml::CVec3* vec) {
+extern "C" void CfObject_UnkVirtualFunc27__Q22cf13CfObjectModelFPv(cf::CfObjectModel* self, const ml::CVec3* vec) {
     if (self->mSubObj98 != 0) {
         ml::CAttrTransform* transform = static_cast<ml::CAttrTransform*>(simGetLeafActData(self->mSubObj98));
         transform->mRot = *vec;
@@ -697,12 +697,16 @@ u32 CfObject_UnkVirtualFunc55__Q22cf13CfObjectModelFv(const cf::CfObjectModel* s
 }
 
 // Returns this+0x10 when the vtable+0x44 flag is set, else the vtable+0x180
-// (CfObjectModel_getModelName) result.
-void* cf::CfObjectModel::CObjectParam_getActiveParam() {
-    if (CObjectParam_hasObjectName() != 0) {
-        return reinterpret_cast<void*>(&mPtr10);
+// (CfObjectModel_getModelName) result. Retail symbol is UnkVirtualFunc2.
+extern "C" void* CObjectParam_UnkVirtualFunc2__Q22cf13CfObjectModelFv(cf::CfObjectModel* self) {
+    struct Param10View {
+        u8 pad[0x10];
+        void* mPtr10;
+    };
+    if (self->CObjectParam_hasObjectName() != 0) {
+        return reinterpret_cast<void*>(&reinterpret_cast<Param10View*>(self)->mPtr10);
     }
-    return CfObjectModel_getModelName();
+    return self->CfObjectModel_getModelName();
 }
 
 // Return the sub-object's vtable+0x18 result, or a static null placeholder
@@ -1053,7 +1057,7 @@ void CObjectState_getStateData__Q22cf12CObjectStateFv();
 void CObjectState_setStateBitMask2__Q22cf12CObjectStateFv();
 void CObjectState_setStateBitMask3__Q22cf12CObjectStateFv();
 void CObjectParam_UnkVirtualFunc1__Q22cf12CObjectParamFv();
-void CObjectParam_getActiveParam__Q22cf13CfObjectModelFv();
+void CObjectParam_UnkVirtualFunc2__Q22cf13CfObjectModelFv();
 void CObjectParam_hasObjectName__Q22cf12CObjectParamFv();
 void CObjectParam_UnkVirtualFunc4__Q22cf12CObjectParamFv();
 void CObjectParam_getSelfObjectId__Q22cf12CObjectParamFv();
@@ -1180,7 +1184,7 @@ __declspec(section ".data") __attribute__((used, aligned(8))) const void* lbl_eu
     (const void*)CObjectState_setStateBitMask2__Q22cf12CObjectStateFv,
     (const void*)CObjectState_setStateBitMask3__Q22cf12CObjectStateFv,
     (const void*)CObjectParam_UnkVirtualFunc1__Q22cf12CObjectParamFv,
-    (const void*)CObjectParam_getActiveParam__Q22cf13CfObjectModelFv,
+    (const void*)CObjectParam_UnkVirtualFunc2__Q22cf13CfObjectModelFv,
     (const void*)CObjectParam_hasObjectName__Q22cf12CObjectParamFv,
     (const void*)CObjectParam_UnkVirtualFunc4__Q22cf12CObjectParamFv,
     (const void*)CObjectParam_getSelfObjectId__Q22cf12CObjectParamFv,
@@ -1211,7 +1215,7 @@ __declspec(section ".data") __attribute__((used, aligned(8))) const void* lbl_eu
     (const void*)CfObject_UnkVirtualFunc24__Q22cf13CfObjectModelFv,
     (const void*)CfObject_UnkVirtualFunc25__Q22cf8CfObjectFv,
     (const void*)CfObject_UnkVirtualFunc26__Q22cf8CfObjectFv,
-    (const void*)CfObject_setModelRotVec__Q22cf13CfObjectModelFPv,
+    (const void*)CfObject_UnkVirtualFunc27__Q22cf13CfObjectModelFPv,
     (const void*)CfObject_UnkVirtualFunc28__Q22cf13CfObjectModelFv,
     (const void*)CfObject_setMoveHeadAngle__Q22cf13CfObjectModelFv,
     (const void*)CfObject_UnkVirtualFunc30__Q22cf13CfObjectModelFv,
@@ -1301,7 +1305,7 @@ __declspec(section ".data") __attribute__((used)) const void* modelVtable29318[1
     (const void*)CObjectState_setStateBitMask2__Q22cf12CObjectStateFv,
     (const void*)CObjectState_setStateBitMask3__Q22cf12CObjectStateFv,
     (const void*)CObjectParam_UnkVirtualFunc1__Q22cf12CObjectParamFv,
-    (const void*)CObjectParam_getActiveParam__Q22cf13CfObjectModelFv,
+    (const void*)CObjectParam_UnkVirtualFunc2__Q22cf13CfObjectModelFv,
     (const void*)CObjectParam_hasObjectName__Q22cf12CObjectParamFv,
     (const void*)CObjectParam_UnkVirtualFunc4__Q22cf12CObjectParamFv,
     (const void*)CObjectParam_getSelfObjectId__Q22cf12CObjectParamFv,
@@ -1332,7 +1336,7 @@ __declspec(section ".data") __attribute__((used)) const void* modelVtable29318[1
     (const void*)CfObject_UnkVirtualFunc24__Q22cf13CfObjectModelFv,
     (const void*)CfObject_UnkVirtualFunc25__Q22cf8CfObjectFv,
     (const void*)CfObject_UnkVirtualFunc26__Q22cf8CfObjectFv,
-    (const void*)CfObject_setModelRotVec__Q22cf13CfObjectModelFPv,
+    (const void*)CfObject_UnkVirtualFunc27__Q22cf13CfObjectModelFPv,
     (const void*)CfObject_UnkVirtualFunc28__Q22cf13CfObjectModelFv,
     (const void*)CfObject_setMoveHeadAngle__Q22cf13CfObjectModelFv,
     (const void*)CfObject_UnkVirtualFunc30__Q22cf13CfObjectModelFv,

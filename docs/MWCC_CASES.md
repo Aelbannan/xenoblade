@@ -11186,8 +11186,18 @@ emits `add r3,r3,r0; addi r29,r3,16880`. Cycle `equivalence: full_match`.
 ## CGXCache .sdata2 anon cast-pool tail — BiasDouble helpers retire drop_data_tail (Wii/1.1 -O4,p, 2026-09-19)
 - Symptom:   raw `.sdata2` 0x11C8 vs retail 0x11B6 (+0x12 = anon `@N` s32/u32 int→f32 magics). Prefix `[:0x11B6]` already byte-identical; mid-pool already holds `lbl_eu_8066A388/A390` at +0x10/+0x18.
 - Cause:     plain `(f32)` / `(f32)(s16)` casts emit a trailing cast-pool pair. Hand-rolled `BiasDouble`/`s32ToF` (subtract named mid-pool doubles) uses `fsub`+`frsp` instead of retail builtin `fsubs`, so FULL on `bindTextureGX`/`updateOrthoGX` is lost (29%/35%). Defining the magics as TU-local `.sdata2` `f64` and using plain casts restores FULL insn but does **not** CSE `@N` onto the defined symbols (reloc stays `@N`, size +0x12).
-- Fix:       route every live int→f32 site through BiasDouble helpers; retire `drop_data_tail` + `retarget_relocs` (freeze ratchet). Demote the two former FULLs to HIGH_MATCH until an fsubs-without-`@N` shape exists.
+- Fix:       route every live int→f32 site through BiasDouble helpers; retire `drop_data_tail` + `retarget_relocs` (freeze ratchet). Demote the two former FULLs to HIGH_MATCH.
 - Result:    raw `.sdata2` MATCH 0x11B6; UnitRules shrink; bindTextureGX/updateOrthoGX HIGH_MATCH; split OVER +0x11C from helper codegen.
+- Residual (Category C): simultaneous `fsubs` FULL + no `@N` tail is unreachable under UnitRules freeze (cannot re-add drop/retarget). EQUIVALENT fails (`fsub`≠`fsubs`). Keep helpers for the data gate.
 - Confidence: repo_proven
 - Applies to/a.k.a.: Category C drop burn-down; ADXT BiasDouble CSE does **not** transfer when the magic also lives as opaque mid-pool bytes / when `@N` is a separate cast-pool symbol.
+
+## WUD .data auto jumptable @5780 — Category C keep drop (Wii/1.1 -O4,p, 2026-09-19)
+- Symptom:   raw `.data` 0x11CC vs retail 0x11A8 (+0x24 = MWCC auto `@5780` switch table). Named `jumptable_80562FA0` mid-section (inject/retarget/zero). `__wudSecurityEventStackCallback` 96.2% (10 struct + 3 reg_swap), size 0x554/0x554 PASS.
+- Cause:     MWCC places its switch table last in `.data`; retail table is mid-section. Cannot move auto table forward via section/attr. Sibling TU without retail `splits.txt` Object is not emitted. Deleting named mid table shifts trailing strings onto 0xCD8 (content FAIL).
+- Tried (burned): `-O4,s`, `#pragma force_active`/`optimize_for_size`, pMsg/p decl-order, split decl/assign, early DEBUGPrint before `p` (→94.4%), delete named jt, Security-out-of-TU without configure split.
+- Fix:       keep UnitRules `drop_data_tail` + inject/retarget/zero (Category C / layout honesty). Do not rewrite the 0x554 jump-dispatch body.
+- Result:    postprocess MATCH; Security near-miss recorded; raw data drop stays until a non-switch 0x554 shape or real split exists.
+- Confidence: repo_proven
+- Applies to/a.k.a.: mid-section retail jumptable vs MWCC auto-last invariant.
 

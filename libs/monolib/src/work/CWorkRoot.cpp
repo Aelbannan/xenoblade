@@ -344,6 +344,9 @@ __declspec(noinline) void reslist<T>::pop_front(){
 
 // Out-of-line isEvent3: retail calls mMsgQueue.find (noinline chain) rather
 // than inlining it; the header body would fold the find loop into callers.
+// Hand-written stand-in keeps an out-of-line bl; reloc-map equates the
+// ILi8E spelling to retail find__12CMsgParam<8>CFUl (angle brackets are not
+// legal C identifiers — see MWCC_PATTERNS.md).
 extern "C" int find__12CMsgParamILi8ECFUl(const void* queue, u32 msg);
 extern "C" bool isRunning__11CWorkThreadCFv(CWorkThread* thread);
 extern "C" bool isEvent3__11CWorkThreadCFv(CWorkThread* thread);

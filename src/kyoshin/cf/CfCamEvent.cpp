@@ -358,24 +358,6 @@ extern const void* lbl_eu_80661B18[];
 extern const void* lbl_eu_80661B20[];
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 __declspec(section ".sdata") __attribute__((aligned(8))) __attribute__((used)) const void* lbl_eu_80661B00[2] = {
     (void*)lbl_eu_804FB470,
     (void*)lbl_eu_805270C0
@@ -407,16 +389,9 @@ __declspec(section ".rodata") __attribute__((used)) const char lbl_eu_804FB494[0
 __declspec(section ".rodata") __attribute__((used)) const char lbl_eu_804FB4A8[0x18] = "cf::CfCamDirectionIntf";
 __declspec(section ".rodata") __attribute__((used)) const char lbl_eu_804FB4C0[0x10] = "cf::CfCamIntf";
 
-
-
-
-
-
 // Force .data to be file-backed with 0x1C0 zeros (retail .data is 0x1C0 with zeros for first part and 3F80... for float table)
 // The actual data objects (lbl_eu_80527*) are currently in bss with zeros, but we need data with 0x1C0
 // Add a single pad object in .data with 0x1C1 bytes (last byte 0x01 to force D), then drop the last byte via UNIT_RULES
-
-
 
 #pragma push
 #pragma section data_type ".data" ".data"
@@ -484,3 +459,4 @@ __declspec(section ".sdata2") __attribute__((used)) const float lbl_eu_80666284 
 __declspec(section ".sdata2") __attribute__((used)) char lbl_eu_80666288[] = "High";
 __declspec(section ".sdata2") __attribute__((used)) char lbl_eu_80666290[] = "Normal";
 __declspec(section ".sdata2") __attribute__((used)) char lbl_eu_80666298[] = "Low";
+

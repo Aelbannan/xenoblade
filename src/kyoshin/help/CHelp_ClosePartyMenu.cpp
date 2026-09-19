@@ -14,3 +14,11 @@ void CHelp_ClosePartyMenu::checkHelpCondition() {
 }
 
 } // namespace cf
+
+
+// --- restored from git history (base:gone repo-search) ---
+// from commit 2c8ff987ff65 path=src/kyoshin/help/CHelp_OpenPartyMenu.cpp needle=isPartyMenuReady
+bool CHelp_OpenPartyMenu::isPartyMenuReady() {
+    return true;
+}
+

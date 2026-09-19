@@ -239,8 +239,8 @@
       "size": "0x90",
       "unit": "RVL_SDK/src/revolution/os/__start",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "FULL_MATCH",
+      "workflow_status": "BACKLOG",
+      "status": "NOT_STARTED",
       "origin": "symbols.txt",
       "source": "libs/RVL_SDK/src/revolution/os/__start.c",
       "called_functions": [],
@@ -251,7 +251,6 @@
       "abi_helper_calls": [],
       "notes": "non-placeholder body present; marked via mark_implemented_bodies.py",
       "instruction_match": 100.0,
-      "equivalence_status": "inconclusive_unsupported",
       "source_present": true
     },
     {
@@ -11259,8 +11258,8 @@
       "size": "0x68",
       "unit": "kyoshin/cf/CTaskGameCf",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "BACKLOG",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "source": "src/kyoshin/cf/CTaskGameCf.cpp",
       "called_functions": [
@@ -11274,7 +11273,8 @@
       "abi_helper_calls": [],
       "notes": "non-placeholder body present; marked via mark_implemented_bodies.py; decomp object byte-identical to retail; marked via mark_implemented_bodies.py --byte-identical",
       "instruction_match": 100.0,
-      "source_present": true
+      "source_present": true,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-80044f3c",
@@ -86483,8 +86483,8 @@
       "size": "0xB4",
       "unit": "kyoshin/cf/object/CfObjectMove",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "BACKLOG",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-8004bb7c",
@@ -86497,7 +86497,8 @@
       "abi_helper_calls": [],
       "source": "src/kyoshin/cf/object/CfObjectMove.cpp",
       "source_present": true,
-      "instruction_match": 100.0
+      "instruction_match": 100.0,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-800be8e4",
@@ -86718,8 +86719,8 @@
       "size": "0x4",
       "unit": "kyoshin/cf/object/CfObjectMove",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "BACKLOG",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-800bbeb4"
@@ -86732,7 +86733,8 @@
       "source": "src/kyoshin/cf/object/CfObjectMove.cpp",
       "claim": null,
       "instruction_match": 100.0,
-      "source_present": true
+      "source_present": true,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-800bea64",
@@ -87468,8 +87470,8 @@
       "size": "0x40",
       "unit": "kyoshin/cf/object/CfObjectMove",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "BACKLOG",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-80082284"
@@ -87481,7 +87483,8 @@
       "abi_helper_calls": [],
       "source": "src/kyoshin/cf/object/CfObjectMove.cpp",
       "source_present": true,
-      "instruction_match": 100.0
+      "instruction_match": 100.0,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-800bf204",
@@ -90096,8 +90099,8 @@
       "size": "0x24",
       "unit": "kyoshin/cf/object/CfObjectPc",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "BACKLOG",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-800bede0",
@@ -90110,7 +90113,8 @@
       "abi_helper_calls": [],
       "source": "src/kyoshin/cf/object/CfObjectPc.cpp",
       "source_present": true,
-      "instruction_match": 0.0
+      "instruction_match": 100.0,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-800c1c38",
@@ -162257,8 +162261,8 @@
       "size": "0x8",
       "unit": "kyoshin/cf/CTaskCulling",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "FULL_MATCH",
+      "workflow_status": "BACKLOG",
+      "status": "NOT_STARTED",
       "origin": "symbols.txt",
       "source": "src/kyoshin/cf/CTaskCulling.cpp",
       "called_functions": [
@@ -162270,7 +162274,6 @@
       "callgraph_source": "build/us/asm/kyoshin/cf/CTaskCulling.s",
       "abi_helper_calls": [],
       "instruction_match": 100.0,
-      "equivalence_status": "equivalent",
       "source_present": true
     },
     {
@@ -189781,8 +189784,8 @@
       "size": "0xA8",
       "unit": "kyoshin/cf/object/CfObjectTbox",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "BACKLOG",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-800626fc",
@@ -189797,7 +189800,8 @@
       "abi_helper_calls": [],
       "source": "src/kyoshin/cf/object/CfObjectTbox.cpp",
       "source_present": true,
-      "instruction_match": 100.0
+      "instruction_match": 100.0,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-801faa18",
@@ -189810,8 +189814,8 @@
       "size": "0x74",
       "unit": "kyoshin/cf/object/CfObjectTbox",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "BACKLOG",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-800c045c",
@@ -189824,7 +189828,8 @@
       "abi_helper_calls": [],
       "source": "src/kyoshin/cf/object/CfObjectTbox.cpp",
       "source_present": true,
-      "instruction_match": 100.0
+      "instruction_match": 100.0,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-801faa8c",
@@ -198112,8 +198117,8 @@
       "size": "0x18",
       "unit": "kyoshin/cf/CfGimmick",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "FULL_MATCH",
+      "workflow_status": "BACKLOG",
+      "status": "NOT_STARTED",
       "origin": "symbols.txt",
       "called_functions": [
         "us-801c16e0"
@@ -198125,7 +198130,6 @@
       "abi_helper_calls": [],
       "source": "src/kyoshin/cf/CfGimmick.cpp",
       "instruction_match": 100.0,
-      "equivalence_status": "inconclusive_unsupported",
       "source_present": true
     },
     {
@@ -198298,8 +198302,8 @@
       "size": "0xEC",
       "unit": "kyoshin/cf/CfGimmick",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "FULL_MATCH",
+      "workflow_status": "BACKLOG",
+      "status": "NOT_STARTED",
       "origin": "symbols.txt",
       "called_functions": [
         "us-8003b148"
@@ -198314,8 +198318,7 @@
       ],
       "source": "src/kyoshin/cf/CfGimmick.cpp",
       "source_present": true,
-      "instruction_match": 100.0,
-      "equivalence_status": "inconclusive_unsupported"
+      "instruction_match": 100.0
     },
     {
       "id": "us-8020ae00",
@@ -198328,8 +198331,8 @@
       "size": "0x13C",
       "unit": "kyoshin/cf/CfGimmick",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "FULL_MATCH",
+      "workflow_status": "BACKLOG",
+      "status": "NOT_STARTED",
       "origin": "symbols.txt",
       "called_functions": [
         "us-8003b148"
@@ -198341,8 +198344,7 @@
       "abi_helper_calls": [],
       "source": "src/kyoshin/cf/CfGimmick.cpp",
       "source_present": true,
-      "instruction_match": 100.0,
-      "equivalence_status": "inconclusive_unsupported"
+      "instruction_match": 100.0
     },
     {
       "id": "us-8020af3c",
@@ -198382,8 +198384,8 @@
       "size": "0x104",
       "unit": "kyoshin/cf/CfGimmick",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "FULL_MATCH",
+      "workflow_status": "BACKLOG",
+      "status": "NOT_STARTED",
       "origin": "symbols.txt",
       "called_functions": [
         "us-8003b148"
@@ -198398,8 +198400,7 @@
       ],
       "source": "src/kyoshin/cf/CfGimmick.cpp",
       "source_present": true,
-      "instruction_match": 100.0,
-      "equivalence_status": "inconclusive_unsupported"
+      "instruction_match": 100.0
     },
     {
       "id": "us-8020b16c",
@@ -198912,8 +198913,8 @@
       "size": "0xB8",
       "unit": "kyoshin/cf/CfGimmick",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "FULL_MATCH",
+      "workflow_status": "BACKLOG",
+      "status": "NOT_STARTED",
       "origin": "symbols.txt",
       "called_functions": [
         "padmgr-func-80082D54",
@@ -198926,8 +198927,7 @@
       "abi_helper_calls": [],
       "source": "src/kyoshin/cf/CfGimmick.cpp",
       "source_present": true,
-      "instruction_match": 100.0,
-      "equivalence_status": "inconclusive_unsupported"
+      "instruction_match": 100.0
     },
     {
       "id": "us-8020bfbc",
@@ -208957,8 +208957,8 @@
       "size": "0x5C",
       "unit": "kyoshin/makecrystal/CModelDispMakeCrystal",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "BACKLOG",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-8004bce4",
@@ -208971,8 +208971,9 @@
       "callgraph_source": "build/us/asm/kyoshin/makecrystal/CModelDispMakeCrystal.s",
       "abi_helper_calls": [],
       "source": "src/kyoshin/makecrystal/CModelDispMakeCrystal.cpp",
-      "instruction_match": 0.0,
-      "source_present": true
+      "instruction_match": 100.0,
+      "source_present": true,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-80223c78",
@@ -269600,8 +269601,8 @@
       "size": "0x78",
       "unit": "kyoshin/menu/CMenuSkipTimer",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "BACKLOG",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-800ff7f4",
@@ -269617,7 +269618,8 @@
       "abi_helper_calls": [],
       "source": "src/kyoshin/menu/CMenuSkipTimer.cpp",
       "source_present": true,
-      "instruction_match": 99.833
+      "instruction_match": 100.0,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-802a1178",
@@ -453164,8 +453166,8 @@
       "size": "0x8",
       "unit": "nw4r/src/snd/snd_MidiSeqPlayer",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "FULL_MATCH",
+      "workflow_status": "BACKLOG",
+      "status": "NOT_STARTED",
       "origin": "symbols.txt",
       "source": "libs/nw4r/src/snd/snd_MidiSeqPlayer.cpp",
       "called_functions": [
@@ -453177,8 +453179,7 @@
       "callgraph_source": "build/us/asm/nw4r/src/snd/snd_MidiSeqPlayer.s",
       "abi_helper_calls": [],
       "source_present": false,
-      "instruction_match": 0.0,
-      "equivalence_status": "equivalent"
+      "instruction_match": 0.0
     },
     {
       "id": "us-8041993c",
@@ -453218,8 +453219,8 @@
       "size": "0x8",
       "unit": "nw4r/src/snd/snd_MidiSeqPlayer",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "FULL_MATCH",
+      "workflow_status": "BACKLOG",
+      "status": "NOT_STARTED",
       "origin": "symbols.txt",
       "source": "libs/nw4r/src/snd/snd_MidiSeqPlayer.cpp",
       "called_functions": [
@@ -453231,8 +453232,7 @@
       "callgraph_source": "build/us/asm/nw4r/src/snd/snd_MidiSeqPlayer.s",
       "abi_helper_calls": [],
       "source_present": false,
-      "instruction_match": 0.0,
-      "equivalence_status": "equivalent"
+      "instruction_match": 0.0
     },
     {
       "id": "us-8041994c",
@@ -453245,8 +453245,8 @@
       "size": "0x8",
       "unit": "nw4r/src/snd/snd_MidiSeqPlayer",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "FULL_MATCH",
+      "workflow_status": "BACKLOG",
+      "status": "NOT_STARTED",
       "origin": "symbols.txt",
       "source": "libs/nw4r/src/snd/snd_MidiSeqPlayer.cpp",
       "called_functions": [
@@ -453258,8 +453258,7 @@
       "callgraph_source": "build/us/asm/nw4r/src/snd/snd_MidiSeqPlayer.s",
       "abi_helper_calls": [],
       "source_present": false,
-      "instruction_match": 0.0,
-      "equivalence_status": "equivalent"
+      "instruction_match": 0.0
     },
     {
       "id": "us-80419954",
@@ -478299,8 +478298,8 @@
       "size": "0x84",
       "unit": "monolib/src/work/CWorkRoot",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "BACKLOG",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "source": "libs/monolib/src/work/CWorkRoot.cpp",
       "called_functions": [
@@ -478312,7 +478311,8 @@
       "callgraph_source": "build/us/asm/monolib/src/work/CWorkRoot.s",
       "abi_helper_calls": [],
       "instruction_match": 100.0,
-      "source_present": true
+      "source_present": true,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-8044679c",
@@ -482308,8 +482308,8 @@
       "size": "0x8",
       "unit": "monolib/src/device/CDeviceVI",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "FULL_MATCH",
+      "workflow_status": "BACKLOG",
+      "status": "NOT_STARTED",
       "origin": "symbols.txt",
       "source": "libs/monolib/src/device/CDeviceVI.cpp",
       "called_functions": [
@@ -482321,7 +482321,6 @@
       "callgraph_source": "build/us/asm/monolib/src/device/CDeviceVI.s",
       "abi_helper_calls": [],
       "instruction_match": 100.0,
-      "equivalence_status": "inconclusive_unsupported",
       "source_present": true
     },
     {
@@ -482335,8 +482334,8 @@
       "size": "0x8",
       "unit": "monolib/src/device/CDeviceVI",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "FULL_MATCH",
+      "workflow_status": "BACKLOG",
+      "status": "NOT_STARTED",
       "origin": "symbols.txt",
       "source": "libs/monolib/src/device/CDeviceVI.cpp",
       "called_functions": [
@@ -482348,7 +482347,6 @@
       "callgraph_source": "build/us/asm/monolib/src/device/CDeviceVI.s",
       "abi_helper_calls": [],
       "instruction_match": 100.0,
-      "equivalence_status": "inconclusive_unsupported",
       "source_present": true
     },
     {
@@ -486449,8 +486447,8 @@
       "size": "0x8",
       "unit": "monolib/src/device/CDeviceFileCri",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "BACKLOG",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "source": "libs/monolib/src/device/CDeviceFileCri.cpp",
       "called_functions": [
@@ -486463,7 +486461,8 @@
       "abi_helper_calls": [],
       "claim": null,
       "instruction_match": 100.0,
-      "source_present": true
+      "source_present": true,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-80453860",
@@ -493217,8 +493216,8 @@
       "size": "0x8",
       "unit": "monolib/src/lib/CLibCri",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "FULL_MATCH",
+      "workflow_status": "BACKLOG",
+      "status": "NOT_STARTED",
       "origin": "symbols.txt",
       "called_functions": [
         "us-8045d8ec"
@@ -493231,7 +493230,6 @@
       "source": "libs/monolib/src/lib/CLibCri.cpp",
       "claim": null,
       "instruction_match": 100.0,
-      "equivalence_status": "equivalent",
       "source_present": false
     },
     {
@@ -493273,8 +493271,8 @@
       "size": "0x8",
       "unit": "monolib/src/lib/CLibCri",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "FULL_MATCH",
+      "workflow_status": "BACKLOG",
+      "status": "NOT_STARTED",
       "origin": "symbols.txt",
       "called_functions": [
         "us-8045d8ec"
@@ -493287,7 +493285,6 @@
       "source": "libs/monolib/src/lib/CLibCri.cpp",
       "claim": null,
       "instruction_match": 100.0,
-      "equivalence_status": "equivalent",
       "source_present": false
     },
     {
@@ -493942,8 +493939,8 @@
       "size": "0x8",
       "unit": "monolib/src/lib/CLibCriMoviePlay",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "FULL_MATCH",
+      "workflow_status": "BACKLOG",
+      "status": "NOT_STARTED",
       "origin": "symbols.txt",
       "called_functions": [
         "us-8045dd94"
@@ -493956,8 +493953,7 @@
       "source": "libs/monolib/src/lib/CLibCriMoviePlay.cpp",
       "claim": null,
       "instruction_match": 100.0,
-      "source_present": true,
-      "equivalence_status": "inconclusive_unsupported"
+      "source_present": true
     },
     {
       "id": "us-8045f418",
@@ -509067,8 +509063,8 @@
       "size": "0x3C",
       "unit": "monolib/src/scn/CScnItemCameraNw4r",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "BACKLOG",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-804a2a20"
@@ -509080,7 +509076,8 @@
       "abi_helper_calls": [],
       "source": "libs/monolib/src/scn/CScnItemCameraNw4r.cpp",
       "source_present": false,
-      "instruction_match": 0.0
+      "instruction_match": 100.0,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-80485e78",
@@ -516033,8 +516030,8 @@
       "size": "0x44",
       "unit": "monolib/src/scn/CScnMem",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "BACKLOG",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-80499ca0"
@@ -516046,7 +516043,8 @@
       "abi_helper_calls": [],
       "source": "libs/monolib/src/scn/CScnMem.cpp",
       "source_present": false,
-      "instruction_match": 0.0
+      "instruction_match": 100.0,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-80492c30",

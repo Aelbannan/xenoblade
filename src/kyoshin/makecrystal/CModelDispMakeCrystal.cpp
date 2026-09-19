@@ -439,7 +439,7 @@ __declspec(section ".sdata2") __attribute__((used)) const float lbl_eu_80668508[
 #define lbl_eu_80668508 (lbl_eu_80668508[0])
 __declspec(section ".sdata2") __attribute__((used)) const float lbl_eu_8066850C[1] = {-1.3f};
 #define lbl_eu_8066850C (lbl_eu_8066850C[0])
-__declspec(section ".sdata2") __attribute__((used)) const float arr70[3] = {-20.0f, 0.0f, 0.0f};
+__declspec(section ".sdata2") __attribute__((used)) const float lbl_eu_80668510[3] = {-20.0f, 0.0f, 0.0f};
 __declspec(section ".sdata2") __attribute__((aligned(8))) __attribute__((used)) double lbl_eu_80668520 = 4503599627370496.0;
 __declspec(section ".sdata2") __attribute__((used)) float lbl_eu_80668528 = 30.0f;
 __declspec(section ".sdata2") __attribute__((used)) float lbl_eu_8066852C = 0.01f;
@@ -447,11 +447,10 @@ __declspec(section ".sdata2") __attribute__((aligned(8))) __attribute__((used)) 
 __declspec(section ".sdata2") __attribute__((used)) const float arr98[3] = {1.0f, 0.0f, 0.0f};
 // A4's readable zero (see above); lands in the MWCC pool tail past 0xA4
 // next to the conversion double, trimmed by drop_data_tail like Jump's.
-__declspec(section ".sdata2") __attribute__((used)) const float zeroAnchor[2] = {0.0f, 1.0f};
-#define lbl_eu_806684A4 (zeroAnchor[0])
+__declspec(section ".sdata2") __attribute__((used)) const float lbl_eu_806684A4[2] = {0.0f, 1.0f};
+#define lbl_eu_806684A4 (lbl_eu_806684A4[0])
 #define lbl_eu_806684A8 (arr08[0])
-#define lbl_eu_80668510 (arr70)
-#define lbl_eu_80668518 (arr70[2])
+#define lbl_eu_80668518 (lbl_eu_80668510[2])
 #define lbl_eu_80668538 (arr98)
 #define lbl_eu_80668540 (arr98[2])
 
@@ -3940,3 +3939,16 @@ void* lbl_eu_80535F38[4] = {
 } // extern "C"
 // NOTE: no trailing pad needed - MWCC 8-aligns lbl_eu_80535E70, leaving a
 // zero hole at 0xDC that IS the retail gap_07_80535E6C_data word.
+
+
+// --- restored from git history (base:gone repo-search) ---
+// from commit 4116edb5dec8 path=src/kyoshin/makecrystal/CModelDispMakeCrystal.cpp needle=initCrystalData
+
+void initCrystalData(unsigned char* p) {
+    p[0] = 0;
+    p[1] = 0;
+    p[2] = 0;
+    p[3] = 0;
+    p[5] = 0;
+}
+

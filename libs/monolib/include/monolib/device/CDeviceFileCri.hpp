@@ -49,7 +49,8 @@ public:
     static void setCriFilePathA(const wchar_t*);
     static void setCriFilePathB(const wchar_t*);
     static void setCriFilePathC(const wchar_t*);
-    static void teardownAdxf(unsigned long);
+    // Instance method (retail thunk passes adjusted this); body uses singleton.
+    void teardownAdxf(unsigned long);
 
 private:
     CDeviceFileJobReadDvd* getFirstCDeviceFileJobReadDvd();

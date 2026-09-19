@@ -12,32 +12,36 @@ using namespace cf;
 
 // Global presentation event/presentation bitfield shared across kyoshin.
 
-// us-801fa970 - constructor: base CfObjectObj ctor, retail vtable restore,
-// clear field_73C, delete any inherited +0xB0 CfResTboxImpl and null the slot,
-// init the flag fields, then allocate a fresh 0x1C-byte CfResTboxImpl and
-// store it at +0xB0.
-cf::CfObjectTbox::CfObjectTbox() : CfObjectObj() {
-    *(void**)this = (void*)lbl_eu_80534FB8;
-    field_73C = 0;
+// us-801fa970 - free-function ctor (retail mangled name). Calls the flat
+// Obj base ctor rather than a C++ base initializer (which would emit the
+// mangled __ct__Q22cf11CfObjectObjFv reloc retail does not carry).
+extern "C" cf::CfObjectTbox* __ct__Q22cf12CfObjectTboxFv(cf::CfObjectTbox* self) {
+    __ct__cf_CfObjectObj(self);
+    *(void**)self = (void*)lbl_eu_80534FB8;
+    self->field_73C = 0;
     // The +0xB0 resource is a CfResTboxImpl (vptr at +0x10, deleting dtor at
     // slot +0x08); delete emits the retail li r4,1 + virtual dispatch, and
     // its null guard is retail's second beq (single cmpwi, two beqs).
-    if (mSubObjB0 != 0) {
-        delete (CfResTboxImpl*)mSubObjB0;
-        mSubObjB0 = 0;
+    if (self->mSubObjB0 != 0) {
+        delete (CfResTboxImpl*)self->mSubObjB0;
+        self->mSubObjB0 = 0;
     }
-    field_734 = 1;
-    field_738 = 0;
-    field_720 = 0;
+    self->field_734 = 1;
+    self->field_738 = 0;
+    self->field_720 = 0;
     // The impl ctor returns the object in r3, so assigning it back keeps `res`
     // in volatile r3 for the mSubObjB0 store (no callee-saved slot).
     void* res = mtl::MemManager::allocate(0x1c, CfRes_getAllocHandle());
     if (res != 0) {
-        res = (void*)__ct__cf_CfResTboxImpl((cf::CfResTboxImpl*)res, this);
+        res = (void*)__ct__cf_CfResTboxImpl((cf::CfResTboxImpl*)res, self);
     }
-    mSubObjB0 = res;
+    self->mSubObjB0 = res;
+    return self;
 }
 
+// Member dtor keeps retail codegen (vtable restore + base call shape). The
+// synthesised base reloc is mangled __dt__Q22cf11CfObjectObjFv; reloc-map
+// equates it to retail __dt__800BFA14.
 cf::CfObjectTbox::~CfObjectTbox() {
     // Run the CfObject cleanup routine; MWCC then emits the base dtor + deletion.
     CfObject_releaseMoveTargets();

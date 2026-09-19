@@ -505,6 +505,26 @@ def list_text_functions(path: Path | str, section: str = ".text") -> list[Functi
     return results
 
 
+def _prefer_mangled_prefix(
+    candidates: list[FunctionBytes], symbol: str
+) -> list[FunctionBytes]:
+    """Among substring hits, prefer ``symbol`` / ``symbol__…`` over cousins.
+
+    Retail objects often keep the short linker name (``onTalk``) while decomp
+    emits MWCC mangling (``onTalk__FP10_sVMThread``). Plain substring also
+    matches cousins (``onTalkEnd__…``). Requiring ``symbol + "__"`` (or an
+    exact name) collapses the common short-name ambiguity without digit-strip.
+    """
+    if len(candidates) <= 1:
+        return candidates
+    pref = [
+        item
+        for item in candidates
+        if item.name == symbol or item.name.startswith(symbol + "__")
+    ]
+    return pref if pref else candidates
+
+
 def _resolve_candidates(functions: list[FunctionBytes], symbol: str) -> list[FunctionBytes]:
     exact = [item for item in functions if item.name == symbol]
     if exact:
@@ -522,18 +542,39 @@ def _resolve_candidates(functions: list[FunctionBytes], symbol: str) -> list[Fun
     # reported non-byte-identical while hexdiff said mismatch:0).
     partial = [item for item in functions if lowered in item.name.lower()]
     if partial:
-        return partial
+        return _prefer_mangled_prefix(partial, symbol)
     # Itanium length-prefix fallback: the registry often stores a short form
     # (`__ct__CCLPCur`) while the object has the full mangling
     # (`__ct__7CCLPCurFPQ34...` — the `7` is the class name length). The
     # plain-substring check above fails for these (digit breaks the match),
     # so strip runs of digits from both sides as a LAST resort.
+    # Only accept a *unique* digit-strip hit — multi-match digit-strip is how
+    # ``testObj64bit9`` falsely collided with ``testObj64bit7``/``8``/….
     def _strip_digits(s: str) -> str:
         return re.sub(r"\d+", "", s)
     stripped = _strip_digits(lowered)
     if len(stripped) >= 5:
         partial = [item for item in functions if stripped in _strip_digits(item.name.lower())]
-    return partial
+        if len(partial) == 1:
+            return partial
+    return []
+
+
+_LOCAL_ALIAS_RE = re.compile(r"^@\d+@(.+)$")
+
+
+def list_code_functions(path: Path | str) -> list[FunctionBytes]:
+    """List sized functions from ``.text``, or ``.init`` when ``.text`` is absent.
+
+    Boot-vector objects such as ``__start.o`` place code only in ``.init``.
+    """
+    obj = Path(path)
+    try:
+        return list_text_functions(obj, ".text")
+    except ElfSymbolError as exc:
+        if "missing .text section" not in str(exc):
+            raise
+        return list_text_functions(obj, ".init")
 
 
 def extract_function(path: Path | str, symbol: str) -> FunctionBytes:
@@ -541,8 +582,14 @@ def extract_function(path: Path | str, symbol: str) -> FunctionBytes:
     obj = Path(path)
     if not symbol:
         raise ElfSymbolError("symbol name must be non-empty")
-    functions = list_text_functions(obj)
+    functions = list_code_functions(obj)
     matches = _resolve_candidates(functions, symbol)
+    if not matches:
+        # MWCC local/thunk aliases: retail ``@456@__dt__9CDeviceVIFv`` vs
+        # decomp ``__dt__9CDeviceVIFv``. Strip the ``@NN@`` prefix and retry.
+        alias = _LOCAL_ALIAS_RE.match(symbol)
+        if alias:
+            matches = _resolve_candidates(functions, alias.group(1))
     if not matches:
         raise ElfSymbolError(f"symbol {symbol!r} not found in {obj}")
     if len(matches) > 1:
@@ -578,9 +625,31 @@ def extract_function_pair(
     *,
     candidate_symbol: str | None = None,
 ) -> tuple[FunctionBytes, FunctionBytes]:
-    """Extract the same logical symbol from a retail/decomp object pair."""
+    """Extract the same logical symbol from a retail/decomp object pair.
+
+    When the decomp side is still ambiguous after normal resolution (identical
+    trampoline bodies, template instantiations, …), pick the unique candidate
+    whose instruction bytes match the retail body.
+    """
     left = extract_function(original, symbol)
-    right = extract_function(candidate, candidate_symbol or symbol)
+    right_name = candidate_symbol or symbol
+    try:
+        right = extract_function(candidate, right_name)
+    except ElfSymbolError as exc:
+        if "ambiguous symbol" not in str(exc):
+            raise
+        functions = list_code_functions(candidate)
+        matches = _resolve_candidates(functions, right_name)
+        if not matches:
+            alias = _LOCAL_ALIAS_RE.match(right_name)
+            if alias:
+                matches = _resolve_candidates(functions, alias.group(1))
+        code_hits = [item for item in matches if item.code == left.code]
+        if not code_hits:
+            raise
+        # Identical trampoline/template bodies: any code-identical pick is fine
+        # for byte-identity checks (sweep / FULL_MATCH).
+        right = code_hits[0]
     return left, right
 
 

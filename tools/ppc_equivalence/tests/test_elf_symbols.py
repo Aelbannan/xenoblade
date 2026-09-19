@@ -659,6 +659,113 @@ class CoopCheckUnitTests(unittest.TestCase):
             self.assertIn("r3", captured[0])
 
 
+class SymbolResolutionTests(unittest.TestCase):
+    def test_short_name_prefers_mangled_prefix_over_cousin(self) -> None:
+        # retail short name ``onTalk`` must not also match ``onTalkEnd``.
+        elf = build_reloc_elf({
+            "onTalk__FP10_sVMThread": _EQ_LEFT,
+            "onTalkEnd__FP10_sVMThread": _NEQ,
+        })
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "t.o"
+            path.write_bytes(elf)
+            got = extract_function(path, "onTalk")
+            self.assertEqual(got.name, "onTalk__FP10_sVMThread")
+
+    def test_digit_strip_multi_match_is_not_found(self) -> None:
+        # ``testObj64bit9`` must not collide with ``testObj64bit7`` via digit-strip.
+        elf = build_reloc_elf({
+            "testObj64bit7": _EQ_LEFT,
+            "testObj64bit8": _NEQ,
+        })
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "t.o"
+            path.write_bytes(elf)
+            with self.assertRaises(ElfSymbolError) as ctx:
+                extract_function(path, "testObj64bit9")
+            self.assertIn("not found", str(ctx.exception))
+
+    def test_local_alias_prefix_strips_for_lookup(self) -> None:
+        elf = build_reloc_elf({"__dt__9CDeviceVIFv": _EQ_LEFT})
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "t.o"
+            path.write_bytes(elf)
+            got = extract_function(path, "@456@__dt__9CDeviceVIFv")
+            self.assertEqual(got.name, "__dt__9CDeviceVIFv")
+
+    def test_pair_disambiguates_identical_bodies_by_code(self) -> None:
+        # Two mangled names, same bytes — pair picks the code-identical one when
+        # prefix preference still leaves ambiguity (e.g. template offsets).
+        body = _EQ_LEFT
+        retail = build_reloc_elf({"f": body})
+        decomp = build_reloc_elf({
+            "f__A": body,
+            "f__B": body,
+        })
+        with tempfile.TemporaryDirectory() as tmp:
+            a = Path(tmp) / "a.o"
+            b = Path(tmp) / "b.o"
+            a.write_bytes(retail)
+            b.write_bytes(decomp)
+            # ``f`` substring-matches both ``f__A`` and ``f__B``; both start with
+            # ``f__``, so prefix preference still ambiguous — pair uses code.
+            left, right = extract_function_pair(a, b, "f")
+            self.assertEqual(left.code, right.code)
+            self.assertIn(right.name, {"f__A", "f__B"})
+
+    def test_init_section_fallback(self) -> None:
+        # Minimal ELF with only .init (no .text) — mirrors __start.o.
+        functions = {"__start": _EQ_LEFT}
+        text = b"".join(functions.values())
+        shstr = b"\x00.init\x00.strtab\x00.shstrtab\x00.symtab\x00"
+        strtab = bytearray(b"\x00")
+        name_offsets: dict[str, int] = {}
+        for name in functions:
+            name_offsets[name] = len(strtab)
+            strtab.extend(name.encode("ascii") + b"\x00")
+        symtab = bytearray(b"\x00" * 16)
+        cursor = 0
+        for name, code in functions.items():
+            st_info = (1 << 4) | 2
+            symtab.extend(struct.pack(">IIIBBH", name_offsets[name], cursor, len(code), st_info, 0, 1))
+            cursor += len(code)
+        # section headers: null, .init, .strtab, .shstrtab, .symtab
+        def sh(name_off, sh_type, flags, addr, offset, size, link, info, align, entsize):
+            return struct.pack(">IIIIIIIIII", name_off, sh_type, flags, addr, offset, size, link, info, align, entsize)
+        # layout: ehdr(52) + init + strtab + shstr + symtab + shdrs
+        ehdr_size = 52
+        init_off = ehdr_size
+        str_off = init_off + len(text)
+        shstr_off = str_off + len(strtab)
+        sym_off = shstr_off + len(shstr)
+        shoff = sym_off + len(symtab)
+        shdrs = b"".join([
+            sh(0, 0, 0, 0, 0, 0, 0, 0, 0, 0),
+            sh(1, 1, 0x6, 0, init_off, len(text), 0, 0, 4, 0),  # .init PROGBITS ALLOC+EXEC
+            sh(7, 3, 0, 0, str_off, len(strtab), 0, 0, 1, 0),  # .strtab
+            sh(15, 3, 0, 0, shstr_off, len(shstr), 0, 0, 1, 0),  # .shstrtab
+            sh(25, 2, 0, 0, sym_off, len(symtab), 2, 1, 4, 16),  # .symtab link=.strtab
+        ])
+        ehdr = bytearray(52)
+        ehdr[0:4] = b"\x7fELF"
+        ehdr[4] = 1
+        ehdr[5] = 2
+        ehdr[6] = 1
+        struct.pack_into(">HHI", ehdr, 0x10, 1, 20, 1)  # ET_REL, EM_PPC, EV_CURRENT at 0x14
+        struct.pack_into(">I", ehdr, 0x14, 1)
+        struct.pack_into(">I", ehdr, 0x20, shoff)
+        struct.pack_into(">H", ehdr, 0x2A, 52)  # e_ehsize
+        struct.pack_into(">HH", ehdr, 0x2E, 40, 5)  # shentsize, shnum
+        struct.pack_into(">H", ehdr, 0x32, 3)  # shstrndx
+        blob = bytes(ehdr) + text + bytes(strtab) + shstr + bytes(symtab) + shdrs
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "start.o"
+            path.write_bytes(blob)
+            got = extract_function(path, "__start")
+            self.assertEqual(got.name, "__start")
+            self.assertEqual(got.section_name, ".init")
+
+
 @unittest.skipUnless(
     Path("build/us/obj/kyoshin/CGame.o").is_file() and Path("build/us/src/kyoshin/CGame.o").is_file(),
     "requires built CGame retail/decomp objects",

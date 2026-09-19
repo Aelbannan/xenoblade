@@ -2778,3 +2778,59 @@ u32 lbl_eu_80663D80;
 __attribute__((used))
 static u32 s_CfResSbssPad84;
 
+// --- restored from git history (base:gone); do not expand beyond these functions ---
+// from commit b2f445580f8e needle=CfRes_vcall04
+extern "C" int CfRes_vcall04(void* self) {
+    ((CfResObj_64370*)self)->sub->m04(self);
+}
+
+// from commit b2f445580f8e needle=CfRes_vcall05
+extern "C" int CfRes_vcall05(void* self) {
+    ((CfResObj_64390*)self)->sub->m05(self);
+}
+
+// from commit b2f445580f8e needle=CfRes_vcall07
+extern "C" int CfRes_vcall07(void* self) {
+    ((CfResObj_643D0*)self)->sub->m07(self);
+}
+
+// from commit b2f445580f8e needle=CfRes_vcall08
+extern "C" int CfRes_vcall08(void* self) {
+    ((CfResObj_643B0*)self)->sub->m08(self);
+}
+
+// from commit b3618bddb7b4 needle=CfRes_vcall16
+extern "C" void CfRes_vcall16(void* self) {
+    ((CfResVtabClass*)self)->m16();
+}
+
+// --- restored from git history (base:gone pass2) ---
+// from commit b1c01e4a30f0 needle=CfRes_vcall02
+__declspec(noinline) void* CfRes_vcall02(void* self, void* arg) {
+    return ((CfResObj_63E08*)self)->sub->m02(self, arg);
+}
+
+// from commit b1c01e4a30f0 needle=CfRes_vcall14
+        if (CfRes_vcall14(slot) != 0) {
+            CfRes_vcall38(slot);
+        }
+
+// from commit b2f445580f8e needle=CfRes_vcall17
+    if (CfRes_vcall17((u8*)entry, ptr) == 0) {
+        return;
+    }
+
+// from commit b2f445580f8e needle=CfRes_vcall34
+extern "C" __declspec(noinline) void* CfRes_vcall34(u8* self) {
+    CfResSub_63C04* sub = ((CfResObj_63C04*)self)->sub;
+    if (!sub) return self;
+    return sub->_v034(self);
+}
+
+// from commit cf951de49e7b needle=CfRes_vcall38
+extern "C" __declspec(noinline) void* CfRes_vcall38(u8* self) {
+    CfResSub_63C50* sub = ((CfResObj_63C50*)self)->sub;
+    if (!sub) return self;
+    return sub->_v038(self);
+}
+

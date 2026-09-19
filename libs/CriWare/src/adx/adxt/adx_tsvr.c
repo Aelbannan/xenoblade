@@ -710,3 +710,12 @@ void adxt_ExecHndl(ADXT_Tsvr* hndl) {
         hndl->state = 6;
     }
 }
+
+
+// --- restored from git history (base:gone repo-search) ---
+// from commit 365650b84230 path=libs/CriWare/src/adx/adxt/adx_tsvr.c needle=adxt_eos_entry
+// LLM-HARNESS-END: us-803879a4
+
+// LLM-HARNESS-BEGIN: us-80387b24
+void adxt_eos_entry() {}
+

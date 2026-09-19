@@ -8,6 +8,9 @@
 #include <types.h>
 
 // Intermediate base: adds two flag bytes after IUICf/CTTask<IUICf> (0x54 bytes).
+// Keep this named class: its auto dtor is what MWCC emits for the CProcess
+// teardown call (byte-identical to retail); reloc-map equates the symbol to
+// retail __dt__800FED0C.
 class CMenuSkipTimerBase : public IUICf {
 public:
     u8 mFlag1; // 0x54
@@ -92,7 +95,7 @@ extern "C" char* BdatTouchStringCell(char*, char*, int);
 extern "C" void BgTex_Acquire_3C14(CBgTex* self);
 extern "C" void CTitleAHelp_load(CTitleAHelp* self);
 // Game-side CProcess dtor wrapper (D2 form; defined in CMainMenu.cpp).
-extern "C" void __dt__800FED0C(CProcess* self, int flags);
+extern "C" void __dt__800FED0C(void* self, int flags);
 // Draw/advance helpers for cbRenderBefore / SkipTimer_Phase2PollPad (retail keeps the
 // bare func_ names at these call sites; int returns keep `!= 0` as cmpwi).
 extern "C" int CSkipTimerIsReady(CSkipTimer* self);

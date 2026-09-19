@@ -392,3 +392,22 @@ extern "C" u32 lbl_eu_8056FF58[34] = {
 };
 
 // data: retail sections verified via run.py data diff (no bypass)
+
+
+// --- restored from git history (base:gone repo-search) ---
+// from commit 4116edb5dec8 path=libs/monolib/src/core/CPackItem.cpp needle=setupHashTable
+   mFileDataOffsets (u32 per file) if the pkh file is large enough. */
+void CPackItem::setupHashTable() {
+    if(mPackHeader != nullptr){
+        mFileHashTable = mPackHeader->mFileHashTable;
+        // mFileIds starts right after the hash table entries
+        mFileIds = (u16*)&mFileHashTable[mPackHeader->mFiles];
+
+        // Check if there is room for mFileDataOffsets after mFileIds
+        u32 fileIdsEnd = (u32)(mFileIds + mPackHeader->mFiles);
+        if(mPackHeader->mPkhFilesize > fileIdsEnd - (u32)mPackHeader){
+            mFileDataOffsets = (u32*)(mFileIds + mPackHeader->mFiles);
+        }
+    }
+}
+

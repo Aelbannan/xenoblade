@@ -12,14 +12,14 @@
 
 #include <nw4r/lyt.h>
 
-// Cross-TU layout helpers (kyoshin .text). Declared as plain C++ like their
-// matched call sites (CItemBoxGridSubMenu.cpp) so the reloc binds correctly.
-void Cur_SetPaneTranslate(nw4r::lyt::Pane*, const nw4r::math::VEC3*);
-void writePanePos(nw4r::lyt::Pane*, float*);
-void func_801390E0(CFileHandle**);
+// Cross-TU layout helpers (kyoshin .text). Retail keeps these unmangled at
+// CScrollBar call sites; extern "C" stops MWCC from emitting __F… tails.
+extern "C" void Cur_SetPaneTranslate(nw4r::lyt::Pane*, const nw4r::math::VEC3*);
+extern "C" void writePanePos(nw4r::lyt::Pane*, float*);
+void closeFileHandle(CFileHandle**);
 // Retail code80135FDC_setVec3 leaves its first arg (a pointer) in r3, so
 // callers (CScrollBar_UpdateThumb) reuse it as the returned pointer for Cur_SetPaneTranslate.
-float* code80135FDC_setVec3(float*, float, float, float);
+extern "C" float* code80135FDC_setVec3(float*, float, float, float);
 
 // Defined at the bottom of this file (declaration NOT yet visible, plus
 // noinline) so OnFileEvent emits a direct `bl` to the retail symbol instead
@@ -43,11 +43,10 @@ u8 CScrollBar::isVisible() { return mVisible; }
 u8 CScrollBar::isActive() { return mActive; }
 
 // Mark the widget ready once its layout has been built.
-// Single-arg overload: retail's Cur_SetPaneTranslate leaves its second
-// (VEC3*) argument untouched at this call site, so it is not materialized.
-void Cur_SetPaneTranslate(nw4r::lyt::Pane* pane);
+// Single-arg call: retail leaves r4 untouched; cast keeps the same
+// unmangled reloc (C forbids arity overloads on extern "C").
 void CScrollBar_InitRootPane(CScrollBar* self) {
-    Cur_SetPaneTranslate(self->mLayout->GetRootPane());
+    ((void (*)(nw4r::lyt::Pane*))Cur_SetPaneTranslate)(self->mLayout->GetRootPane());
 }
 
 void CScrollBar_PlaceThumb(CScrollBar* self, u32 count) {
@@ -149,7 +148,7 @@ bool CScrollBar::OnFileEvent(CEventFile* pEventFile) {
 
         CScrollBar_MarkLayoutReady(this);
         mFileHandle = nullptr;
-        mMemRegion.func_8045F810();
+        mMemRegion.validateHeap();
         return true;
     }
     return false;
@@ -173,7 +172,7 @@ void CScrollBar::draw(nw4r::lyt::DrawInfo* drawInfo) {
 /* Teardown: release the file handle, destroy the layout/accessor/scratch region,
 and reset the widget to its blank state. */
 void CScrollBar_Teardown(CScrollBar* self) {
-    func_801390E0(&self->mFileHandle);
+    closeFileHandle(&self->mFileHandle);
     self->mReady = 0;
     self->mAnimTransform = 0;
     self->mVisible = 0;
@@ -183,7 +182,7 @@ void CScrollBar_Teardown(CScrollBar* self) {
     }
     releaseArcResourceAccessor(self->mAccessor);
     self->mAccessor = 0;
-    self->mMemRegion.func_8045F778();
+    self->mMemRegion.deleteRegion();
 }
 
 /* Request scroll-in: if hidden, transition to entering and mark inactive. */

@@ -153,7 +153,7 @@ extern "C" u32 AnimRewindFrame(nw4r::lyt::AnimTransform*, float);
 // Layout/accessor release helpers (C++ mangled retail symbols, mirroring the
 // canonical declarations in code_80135FDC.hpp, which conflicts with
 // CEquipItemBox.hpp's BdatTouchStringCell in this TU).
-void func_801390E0(CFileHandle**);
+void closeFileHandle(CFileHandle**);
 void releaseArcResourceAccessor(nw4r::lyt::ArcResourceAccessor*);
 
 // C-linkage helpers from other units (retail symbols are unmangled).

@@ -129,10 +129,10 @@ extern "C" void __dt__17UnkClass_8045F564Fv(void*, int);
 extern "C" void __dt__6CCur18Fv(void*, int);
 extern "C" void __dt__10CScrollBarFv(void*, int);
 extern "C" void getEntry__5CBdatFUl(u32);
-extern "C" void func_801390E0(CFileHandle**);
+void closeFileHandle(CFileHandle**);
 extern "C" void releaseArcResourceAccessor(nw4r::lyt::ArcResourceAccessor*);
 extern "C" void CScrollBar_Teardown(void*);
-extern "C" void func_8045F778(UnkClass_8045F564* self);
+extern "C" void deleteRegion(UnkClass_8045F564* self);
 
 // Layout-build helpers used by CKizunaTalkList::OnFileEvent (mangled retail
 // symbol names so the reloc targets line up).

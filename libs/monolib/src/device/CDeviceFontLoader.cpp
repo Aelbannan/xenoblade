@@ -109,7 +109,7 @@ bool wkStandbyLogin__17CDeviceFontLoaderFv(CDeviceFontLoader* self) {
     self->mFileHandle = CDeviceFile::readFile(
         mtl::MemManager::getHandleMEM1(),
         self->mFileName, (IWorkEvent*)self, 0, 0);
-    CDeviceFile::func_8044F154(self->mFileHandle, 0);
+    CDeviceFile::tryUpdateJobPriority(self->mFileHandle, 0);
     CDeviceFile::setHandleFlag1(self->mFileHandle);
     return wkStandbyLogin__11CWorkThreadFv(reinterpret_cast<CWorkThread*>(self));
 

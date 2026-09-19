@@ -140,6 +140,11 @@ extern "C" void MenuSnd_StopSlot0Store_9390(const void* text);
 extern "C" void func_8006A03C(u32 first, u32 second, u32 third);
 extern "C" void dispatchLODArgs__8CTaskLODFv(u16 first, u16 second, u16 third);
 extern "C" void CfScript_UpdateMgr();
+extern "C" void CfScript_ClearReq0();
+extern "C" void CfScript_ClearReq1();
+extern "C" void CfScript_ClearReq2();
+void CfScript_InitMgr();
+void CfScript_InitPath(int);
 extern "C" void CfSoundMan_UpdateAllRecords();
 extern "C" int isFlag01Set__9CTaskGameFv();
 extern "C" void CmText_DispatchCallbacks();
@@ -794,8 +799,6 @@ UnkClass_80083298* cf::CfGameManager::getGameSubManager() {
     return getInstance()->unk90;
 }
 #pragma dont_inline reset
-extern "C" void* firstReslistB48();
-extern "C" void nextReslistB48();
 extern "C" void triggerVoiceDown(){ firstReslistB48(); }
 struct VoiceSource;
 
@@ -1092,8 +1095,22 @@ void cf::CfGameManager::tickGameManager() {
 // Flag bits use the local convention (value bit = 31 - PPC bit): E24 0x80,
 // 0x1000, 0x400000, 0x40000|0x8000, 0x2000000|0x400; E28 0x1000000, 0x200,
 // 0x8000000.
+int CfCmd_PumpRingBuf(void* buf, u32* outFlag);
+void MapFx_ForwardReload(void* self);
+void MapFx_UpdateSceneFx(void* self);
+void NpcMove_ClearRowBmp();
+void gmNotifyCA0();
+void KyoshinHeap_Init();
+void gmCallInit1120();
+void CmText_InitCallbackTable();
+void CmText_RegisterCallback(void (*fn)(), int);
+extern "C" void KizunagramSetActiveSlot(void* self, int slot);
+extern "C" void MiniMapResetLayoutAnims();
+void CollObjSetupRotBoxState4Timed(void* self, void* pos, const void* ext, float radius);
+extern "C" void CollObjPackResIdWords(void* self, unsigned long a, unsigned long b);
+
 void* cf::CfGameManager::func_8007C8C8() {
-    void* ret = CfCmd_PumpRingBuf(this->unkAC, &lbl_eu_80663E04);
+    void* ret = (void*)CfCmd_PumpRingBuf(this->unkAC, &lbl_eu_80663E04);
     if (lbl_eu_80663E60 != 0) {
         func_801889D0(lbl_eu_80663E60);
     }
@@ -1119,10 +1136,10 @@ void* cf::CfGameManager::func_8007C8C8() {
                 func_80186D20(this->field_0xA4);
             }
         } else if ((lbl_eu_80663E6C & 1) == 1 && (lbl_eu_80663E24 & 0x1000)) {
-            MapFx_ForwardReload(this->unkA0);
+            MapFx_ForwardReload((void*)this->unkA0);
         }
         if ((lbl_eu_80663E24 & 0x1000) && !(lbl_eu_80663E28 & 0x1000000)) {
-            MapFx_UpdateSceneFx(this->unkA0);
+            MapFx_UpdateSceneFx((void*)this->unkA0);
         }
         this->updateCameraState();
     }
@@ -1469,8 +1486,6 @@ void cf::CfGameManager::getFirstGimmick() { getReslistB68(); }
 void cf::CfGameManager::getGimmickList() { getReslistB48(); }
 
 extern "C" void* getReslistB48();
-extern "C" void* getReslistB88();
-
 void cf::CfGameManager::spawnGimmickEntity() { getReslistB88(); }
 
 extern "C" void getReslistBE8();
@@ -2567,7 +2582,7 @@ extern "C" void func_80085978__Q22cf13CfGameManagerFv(int param) {
             CtrlObjectParam_ActivateCharRow(func_8009EC9C(static_cast<u16>(i)));
         }
 
-        // Item-list sweep through func_800AD860's flag view. Retail table
+        // Item-list sweep through getEffOwner's flag view. Retail table
         // lbl_eu_80528600 (cf::CfObjectColl) has copyCollPosition at +0xB8;
         // call through the Coll tree (macro-included above) so MWCC emits a
         // no-arg bctrl (main-tree applyMoveOffset(vec,float) would load r4/f1).
@@ -2575,7 +2590,7 @@ extern "C" void func_80085978__Q22cf13CfGameManagerFv(int param) {
         Func800B6BECNode* node = list->head->next;
         while (node != list->head) {
             cf::CfObjectColl* obj =
-                static_cast<cf::CfObjectColl*>(func_800AD860(node->object));
+                static_cast<cf::CfObjectColl*>(getEffOwner(node->object));
             if (obj != nullptr) {
                 obj->copyCollPosition();
             }
@@ -2803,7 +2818,7 @@ void cf::CfGameManager::func_80086778() {
             float radius = (float)(cvtB.d - u16magic) * scale;
             CollObjSetupRotBoxState4Timed(obj, &v48, &v30, radius);
         }
-        CollObjPackResIdWords(obj, (u32)row, code);
+        ::CollObjPackResIdWords(obj, (u32)row, code);
         obj->setPointEnabled(0);
         obj->unk64 &= ~0x10000;
         u16& pointFlag = *reinterpret_cast<u16*>(reinterpret_cast<u8*>(obj) + 0x158);

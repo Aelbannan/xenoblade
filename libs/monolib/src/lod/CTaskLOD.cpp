@@ -19,10 +19,10 @@ namespace LOD {
 class LODMemMan {
 public:
     LODMemMan();
-    void func_8046E6DC();
+    void setLodScaleAndRefresh();
     void func_8046E594(int enable);
     void func_8046E5BC(CTaskLOD* source);
-    void func_8046F010(float a);
+    void setBaseScale(float a);
     void func_8046F088(CTaskLOD* task);
     void func_8046E920(CTaskLOD* task);
     void func_8046EB50(CTaskLOD* task);
@@ -33,8 +33,8 @@ public:
     void* func_8046EE9C(CTaskLOD* task);
     float func_8046EF30(CTaskLOD* task);
     void* func_8046EF7C(CTaskLOD* task);
-    void func_8046DA64();
-    void func_8046DBC8();
+    void clearManagers();
+    void updateLodTick();
     float func_8046F01C();
     void func_8046F024(int a, int b);
 
@@ -181,7 +181,7 @@ struct CTaskLODVptrSlot {
 // (mpActiveLOD at 0x1D40).  The forwarding call is tail-call optimised by
 // MWCC into a `b` branch.
 //
-// func_8046E6DC / func_8046F010 are genuinely no-arg (`.Fv`), matching
+// setLodScaleAndRefresh / setBaseScale are genuinely no-arg (`.Fv`), matching
 // byte-for-byte.  func_8046E594 and func_8046E5BC take a real argument in
 // retail (passed via r4: `1`/`0`/`this`), but the shared symbol map labels
 // them `.Fv` (no-arg); MWCC refuses to pass an arg to a no-arg-declared
@@ -190,7 +190,7 @@ struct CTaskLODVptrSlot {
 
 void CTaskLOD::notifyLODTick() {
     if (lbl_eu_80665730[0]) {
-        lbl_eu_80665730[0]->mpActiveLOD->func_8046E6DC();
+        lbl_eu_80665730[0]->mpActiveLOD->setLodScaleAndRefresh();
     }
 }
 
@@ -199,7 +199,7 @@ void CTaskLOD::notifyLODTick() {
 // is expected -- do not "fix" it (any change here breaks the byte match).
 void CTaskLOD::updateLODFrame() {
     if (lbl_eu_80665730[0]) {
-        float d; lbl_eu_80665730[0]->mpActiveLOD->func_8046F010(d);
+        float d; lbl_eu_80665730[0]->mpActiveLOD->setBaseScale(d);
     }
 }
 
@@ -248,11 +248,11 @@ void CTaskLOD::Term() {
             mpSecondaryLOD = 0;
         }
     }
-    mpActiveLOD->func_8046DA64();
+    mpActiveLOD->clearManagers();
     freePersistentBuffer__Q23LOD9LODMemManFv();
 }
 
-void CTaskLOD::Move() { mpActiveLOD->func_8046DBC8(); }
+void CTaskLOD::Move() { mpActiveLOD->updateLodTick(); }
 
 // Draw is NOT defined here: retail's split has no Draw__8CTaskLODFv body
 // (the vtable slot targets CTTask<CTaskLOD>::Draw) and nothing calls it, so

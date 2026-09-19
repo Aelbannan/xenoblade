@@ -681,10 +681,10 @@ void ItemBoxLine_DrawLayout(CItemBoxLine* self, nw4r::lyt::DrawInfo* drawInfo) {
 void ItemBoxLine_UnloadFiles(CItemBoxLine* self) {
     CBdat::getEntry(2);
     CBdat::getEntry(5);
-    func_801390E0(reinterpret_cast<CFileHandle**>(&self->field24));
-    func_801390E0(reinterpret_cast<CFileHandle**>(&self->field28));
-    func_801390E0(reinterpret_cast<CFileHandle**>(&self->field2C));
-    func_801390E0(reinterpret_cast<CFileHandle**>(&self->field30));
+    closeFileHandle(reinterpret_cast<CFileHandle**>(&self->field24));
+    closeFileHandle(reinterpret_cast<CFileHandle**>(&self->field28));
+    closeFileHandle(reinterpret_cast<CFileHandle**>(&self->field2C));
+    closeFileHandle(reinterpret_cast<CFileHandle**>(&self->field30));
     self->field4C = 0;
     if (self->field34 != 0) {
         mtl::MemManager::deallocate(self->field34);
@@ -702,8 +702,8 @@ void ItemBoxLine_UnloadFiles(CItemBoxLine* self) {
         delete (nw4r::ut::TagProcessorBase<wchar_t>*)obj54;
         self->field54 = 0;
     }
-    reinterpret_cast<UnkClass_8045F564*>(&self->field04)->func_8045F778();
-    reinterpret_cast<UnkClass_8045F564*>(&self->pad_14[0])->func_8045F778();
+    reinterpret_cast<UnkClass_8045F564*>(&self->field04)->deleteRegion();
+    reinterpret_cast<UnkClass_8045F564*>(&self->pad_14[0])->deleteRegion();
     ((CBaseCur*)&self->mCur70)->cleanup();
     ((CBaseCur*)&self->mCur88)->cleanup();
     ((CBaseCur*)&self->mCurA0)->cleanup();

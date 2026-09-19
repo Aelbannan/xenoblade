@@ -577,8 +577,8 @@ void func_80297B68(CMCGetItemBox* self) {
         }
         self->objAt50 = 0;
     }
-    self->memRegion1.func_8045F778();
-    self->memRegion2.func_8045F778();
+    self->memRegion1.deleteRegion();
+    self->memRegion2.deleteRegion();
     (*(void(**)(void*))((void**)&self->subObj_58)[3])(&self->subObj_58);
     (*(void(**)(void*))((void**)&self->subObj_70)[3])(&self->subObj_70);
     (*(void(**)(void*))((void**)&self->subObj_88)[3])(&self->subObj_88);
@@ -1508,7 +1508,7 @@ bool CMCGetItemBox::OnFileEvent(CEventFile* pEventFile) {
 
         activateMCGetItemBox(this);
         this->fileHandle1 = 0;
-        this->memRegion1.func_8045F810();
+        this->memRegion1.validateHeap();
         return true;
     } else if (this->fileHandle2 == pEventFile->mFileHandle) {
         // === second resource archive loaded ===
@@ -1525,7 +1525,7 @@ bool CMCGetItemBox::OnFileEvent(CEventFile* pEventFile) {
         this->arcAcc2->Attach(fileData, &lbl_eu_8050FF8C[0x206]);
         activateMCGetItemBox(this);
         this->fileHandle2 = 0;
-        this->memRegion2.func_8045F810();
+        this->memRegion2.validateHeap();
         return true;
     } else if (this->fileHandle3 == pEventFile->mFileHandle) {
         // === bdat table 2 (crystal names) loaded ===

@@ -460,7 +460,6 @@ void CMenuGetItemMulti::Init() {
                                                 (f32)textureHeight));
         }
     }
-    }
 
     mLayout->SetAnimationEnable(mAnim, true);
     mAnim->SetFrame(lbl_eu_80667E00);
@@ -1008,6 +1007,7 @@ void CMenuGetItemMulti::Init() {
     reinterpret_cast<UnkClass_8045F564*>(&mRegion[0])->validateHeap();
     __dt__14Class_8045F858Fv(
         reinterpret_cast<Class_8045F858*>(&regionHostStorage[0]), -1);
+    }
 }
 
 void CMenuGetItemMulti::Term() {
@@ -1018,7 +1018,7 @@ void CMenuGetItemMulti::Term() {
     }
     mScn->removeRenderCB(render);
     getEntry__5CBdatFUl(5);
-    func_801390E0(&mFileHandle);
+    closeFileHandle(&mFileHandle);
     if (field_208 != 0) {
         mtl::MemManager::deallocate(reinterpret_cast<void*>(field_208));
         field_208 = 0;
@@ -1029,7 +1029,7 @@ void CMenuGetItemMulti::Term() {
         delete mLayout;
         mLayout = 0;
     }
-    reinterpret_cast<UnkClass_8045F564*>(&mRegion[0])->func_8045F778();
+    reinterpret_cast<UnkClass_8045F564*>(&mRegion[0])->deleteRegion();
     lbl_eu_80664414 = 0;
     lbl_eu_80664418 = 0;
     if (mEntryCount != 0 || field_1F6 != 0) {

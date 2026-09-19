@@ -239,7 +239,7 @@ bool CNumSelect::OnFileEvent(CEventFile* evt) {
         field_2D = 1;
     }
     field_14 = NULL;
-    mMemRegion.func_8045F810();
+    mMemRegion.validateHeap();
     return true;
     }
     return false;

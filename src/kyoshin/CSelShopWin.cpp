@@ -320,7 +320,7 @@ bool CSelShopWin::OnFileEvent(CEventFile* pEventFile) {
 
         ::markShopWinBuilt(this);
         mFileHandle = nullptr;
-        mMemRegion.func_8045F810();
+        mMemRegion.validateHeap();
         return true;
     }
     return false;

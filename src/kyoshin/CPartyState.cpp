@@ -632,7 +632,7 @@ bool CPartyState::OnFileEvent(CEventFile* pEventFile) {
 
         refreshPartyPanel(this);
         mFileHandle = 0;
-        mMemRegion.func_8045F810();
+        mMemRegion.validateHeap();
         return true;
     }
     return false;
@@ -732,7 +732,7 @@ extern "C" void func_801FD290(CPartyState* self) {
 // region. The double null-check below is retail: `delete` re-checks the
 // pointer (see the matched CBgTex::BgTex_Release_3D9C for the same shape).
 extern "C" void func_801FD0F4(CPartyState* self) {
-    func_801390E0(&self->mFileHandle);
+    closeFileHandle(&self->mFileHandle);
     nw4r::lyt::Layout* layout = self->mLayout;
     self->field_0x28 = 0;
     if (layout != 0) {
@@ -741,5 +741,5 @@ extern "C" void func_801FD0F4(CPartyState* self) {
     }
     releaseArcResourceAccessor(self->mArcResAcc);
     reinterpret_cast<CPartyStateCur*>(&self->mCur22)->checkDeactivate();
-    self->mMemRegion.func_8045F778();
+    self->mMemRegion.deleteRegion();
 }

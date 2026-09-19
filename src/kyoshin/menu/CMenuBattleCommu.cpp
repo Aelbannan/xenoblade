@@ -227,7 +227,7 @@ void CMenuBattleCommu::Term() {
         mField74 = 0;
     }
 
-    reinterpret_cast<UnkClass_8045F564*>(&mMemRegion)->func_8045F778();
+    reinterpret_cast<UnkClass_8045F564*>(&mMemRegion)->deleteRegion();
     lbl_eu_80664390 = 0;
 }
 

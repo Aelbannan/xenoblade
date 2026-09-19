@@ -539,14 +539,14 @@ reinterpret_cast<cf::CfObject*>(self->field_00)->CfObject_syncModelRate(lbl_eu_8
             // fresh parent load: retail does not keep the pointer live
             // across the virtual call above
             CfObjectMove_setMoveSpeedGated((cf::CfObjectMove*)self->field_00, lbl_eu_806676A0);
-    }
+        }
     }
     self->syncReloadObjectNameScale();
 }
 
 // Periodic reload tick: dispatches the +0x28 secondary-interface slot when
 // the parent's +0x6C bit 1 is set, then - when the type field is nonzero -
-// validates the enemy object state (via func_800AD860) and the parent flags,
+// validates the enemy object state (via getEffOwner) and the parent flags,
 // possibly stopping or advancing the reload. Ends by nudging the enemy flag
 // word, restoring the player heal and bumping the type counter.
 // Reload tick. Control flow mirrors retail: when the enemy object exists

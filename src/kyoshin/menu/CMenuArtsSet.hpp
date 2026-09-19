@@ -782,7 +782,7 @@ public:
     // +0x00: vtable (placeholder for the 4-byte vtable pointer)
     void* _vtable;                       // 0x00
     UnkClass_8045F564 mMemRegion;        // 0x04-0x13
-    CFileHandle* field_0x14;             // 0x14 file handle (func_801390E0)
+    CFileHandle* field_0x14;             // 0x14 file handle (closeFileHandle)
     nw4r::lyt::ArcResourceAccessor* field_0x18; // 0x18 (releaseArcResourceAccessor)
     SArts1C* field_0x1C;                 // 0x1C
     nw4r::lyt::AnimTransform* field_0x20; // 0x20
@@ -1195,7 +1195,7 @@ extern "C" u8 GetCollectedFlagByte(u32);
 extern "C" void func_80139198(u32);
 // File-handle / arc-accessor teardown; retail symbols are the mangled C++
 // names (closeFileHandle__FPP11CFileHandle etc.) so declare C++-linkage.
-void func_801390E0(CFileHandle** self);
+void closeFileHandle(CFileHandle** self);
 void releaseArcResourceAccessor(nw4r::lyt::ArcResourceAccessor* self);
 // Layout/anim binding helpers (code_80135FDC.cpp). C++ linkage: MWCC mangles
 // buildLayout/bindLayoutAnimTransform to the retail names (buildLayout__FPPQ...).

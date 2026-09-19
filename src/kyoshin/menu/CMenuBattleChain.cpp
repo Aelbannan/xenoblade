@@ -123,7 +123,7 @@ end:
  * load the layout + five anim transforms from the arc, bind the font onto the
  * root pane, bind and play the first anim, register the IScnRender callback
  * at +0x70 on the owning scene and release the region (the Class_8045F858
- * guard destructs at scope end, after func_8045F810).
+ * guard destructs at scope end, after validateHeap).
  */
 void CMenuBattleChain::Init() {
     mtl::ALLOC_HANDLE mem2 = mtl::MemManager::getHandleMEM2();
@@ -148,7 +148,6 @@ void CMenuBattleChain::Init() {
     func_8013676C(rootPane, getPackedFont());
 
     mLayout->UnbindAllAnimation();
-    mLayout->UnbindAllAnimation();
     mLayout->BindAnimation(mAnim0);
     mLayout->SetAnimationEnable(mAnim0, true);
     mLayout->Animate(0);
@@ -162,7 +161,7 @@ void CMenuBattleChain::Init() {
     }
     mScn->addRenderCB(cb, 0xa, 0);
 
-    mRegion.func_8045F810();
+    mRegion.validateHeap();
 }
 
 void CMenuBattleChain::Term() {

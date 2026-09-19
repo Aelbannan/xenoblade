@@ -543,7 +543,7 @@ extern "C" void NumSel_EnterState3Open_B178(void*);
 extern "C" void NumSel_Teardown_AF9C(CNumSelectFull*);          // num-select destroy
 // C++ mangling reproduces the retail names closeFileHandle__FPP11CFileHandle /
 // releaseArcResourceAccessor__FPQ34nw4r3lyt19ArcResourceAccessor.
-void func_801390E0(CFileHandle**);
+void closeFileHandle(CFileHandle**);
 void releaseArcResourceAccessor(nw4r::lyt::ArcResourceAccessor*);
 extern "C" void func_801E13F8(CItemBoxInfo2*);           // info2 destroy
 extern "C" void CScrollBar_Teardown(CScrollBar*);              // scrollbar destroy

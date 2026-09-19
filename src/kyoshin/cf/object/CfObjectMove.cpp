@@ -1805,7 +1805,7 @@ extern "C" void func_800BC9EC(cf::CfObjectMove* self) {
         ColiSetAxisBlockInverse(self->_60C_region, &self->mPos3C);
     }
     int force = 0;
-    void* enemy = func_800AD860((void*)self);
+    void* enemy = getEffOwner((void*)self);
     if (enemy != 0) {
         if (((cf::CfObjectMoveAD86View*)enemy)->field_45CA & 1) {
             force = 1;

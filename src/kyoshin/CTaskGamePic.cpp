@@ -194,7 +194,7 @@ extern "C" void GamePicStartFileLoad(CTaskGamePic* ths, const char* path) {
     u32 handle = Scn_CallUnk8C_V9(ths->mScene);
     CFileHandle* fh = CDeviceFile::readFile(handle, path, ev, 0, 0);
     ths->mFileHandle = fh;
-    CDeviceFile::func_8044F154(fh, 0);
+    CDeviceFile::tryUpdateJobPriority(fh, 0);
 }
 #pragma optimize_for_size off
 

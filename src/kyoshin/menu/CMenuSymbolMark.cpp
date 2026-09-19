@@ -260,7 +260,7 @@ void CMenuSymbolMark::Init() {
         render = reinterpret_cast<IScnRender*>(&mScnRenderSubobj);
     }
     mScn->addRenderCB(render, 7, 0);
-    mUnkClass.func_8045F810();
+    mUnkClass.validateHeap();
     SymbolMarkRenderItem* item = (SymbolMarkRenderItem*)mtl::MemManager::allocate(
         0x7c, (u32)getWorkMem__17CWorkThreadSystemFv());
     if (item != 0) {

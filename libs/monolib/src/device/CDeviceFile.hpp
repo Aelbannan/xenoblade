@@ -15,7 +15,7 @@ public:
     void removeFileJob();
     void func_8044F0E4();
     void cancel() const;
-    void func_8044F154() const;
+    void tryUpdateJobPriority() const;
     void func_8044F1B8() const;
     void func_8044F400() const;
     void setHandleFlag1() const;

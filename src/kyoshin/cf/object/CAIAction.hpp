@@ -195,7 +195,7 @@ struct CAIElemA4View {
     s16 fieldA2;
 };
 
-// Character-data object (func_800AD860 result): u16 id at +0x45C0.
+// Character-data object (getEffOwner result): u16 id at +0x45C0.
 struct CAIChDataView {
     u8 pad00[0x45C0];
     u16 field45C0;
@@ -220,7 +220,7 @@ extern "C" u32 CtrlRemote_TouchBitByArg(u32 id);
 extern "C" int CItem_getNameIdFromFam(u32 v);
 extern "C" u32 getBdatStringColumnValue(void* table, const char* col, s32 index = 0); // canonical ocBdat.hpp form; default keeps 2-arg call sites compiling
 extern "C" void* CPartsChange_FindActorById(void* table, u32 id);
-void* func_800AD860(void* obj);   // C++ linkage -> getEffOwner____FPv
+void* getEffOwner(void* obj);   // C++ linkage -> getEffOwner____FPv
 extern "C" void* CPartsChange_GetActorTable(void);
 extern "C" int func_80260264(void* self, int id, void* out);
 extern "C" int isBattleEventKind3(int id);   // canonical int param (CBattleState.cpp definition)

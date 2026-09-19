@@ -141,7 +141,7 @@ void CMenuLandTelop::Term() {
         delete field_54;
         field_54 = 0;
     }
-    mMemRegion.func_8045F778();
+    mMemRegion.deleteRegion();
     lbl_eu_806641A0 = 0;
 }
 
@@ -425,7 +425,7 @@ int func_801453B8(CMenuLandTelop* self) {
     self->field_88 = 0;
     UnkClass_8045F564* mem = &self->mMemRegion;
     self->field_94 = v;
-    mem->func_8045F778();
+    mem->deleteRegion();
     func_8014548C(self);
     return 1;
 }
@@ -602,7 +602,7 @@ void func_8014548C(CMenuLandTelop* self) {
     self->field_54->Animate();
 
     // Flush the scratch region (regionGuard's destructor frees it).
-    self->mMemRegion.func_8045F810();
+    self->mMemRegion.validateHeap();
 }
 #pragma pop
 

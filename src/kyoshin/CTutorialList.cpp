@@ -754,8 +754,8 @@ extern "C" void TutorialList_DrawVisible(CTutorialList* self,
 // the cursor/scrollbar/sort-menu/region teardown helpers.
 extern "C" void TutorialList_ReleaseResources(CTutorialList* self) {
     getEntry__5CBdatFUl(4);
-    func_801390E0((CFileHandle**)&self->mField14);
-    func_801390E0((CFileHandle**)&self->mField18);
+    closeFileHandle((CFileHandle**)&self->mField14);
+    closeFileHandle((CFileHandle**)&self->mField18);
     self->mField174 = 0;
     if (self->mLayout20 != 0) {
         delete self->mLayout20;

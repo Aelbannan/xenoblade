@@ -10,7 +10,7 @@ public:
     bool areAllEnemiesEnabled();
 };
 
-// Virtual-dispatch shim: the object returned by func_800AD860 has a sub-object
+// Virtual-dispatch shim: the object returned by getEffOwner has a sub-object
 // with its own vtable at +0x3E9C, and areAllEnemiesEnabled calls that sub-object's
 // vtable slot 0x74. Declaring the slot as a real virtual method makes MWCC emit
 // the r12 virtual-call sequence used by retail (a raw slot cast would use r4).
@@ -48,7 +48,7 @@ public:
     virtual bool func74(); // 0x74 <- the slot this TU calls
 };
 
-// View of the object returned by func_800AD860 with the sub-object at +0x3E9C.
+// View of the object returned by getEffOwner with the sub-object at +0x3E9C.
 struct CHelp_EnemyEnableObj {
     u8 pad[0x3E9C];
     CHelp_EnemyEnableSub mSub; // +0x3E9C

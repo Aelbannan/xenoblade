@@ -596,17 +596,11 @@ UNIT_RULES: dict[str, UnitRules] = {
         # Named inner symbols (link side): other TUs extern-ref these
         # lbl_eu_8066Axxx; the source defines them (or declares UNDEF
         # externs) and add_local_symbol redefines each in place.
-        # .sdata2 tail (0x11B6..0x11C8) = 2 anonymous magic doubles pooled by
-        # FULL_MATCH int->f32 conversions (@4441 s32:43300000 80000000,
-        # @4654 u32:43300000 00000000). Retarget their SHARED symtab entries
-        # onto the in-pool lbl_eu_8066A388/A390 (pool+0x10/+0x18, same bytes);
-        # add_symbols then redefines those UNDEFs in the pool, and
-        # drop_data_tail trims the section back to the retail 0x11B6. No
-        # instruction bytes change, so the FULL_MATCH functions stay matched.
-        retarget_relocs=(
-            (".text", 0x08CC, "lbl_eu_8066A388"),
-            (".text", 0x1A48, "lbl_eu_8066A390"),
-        ),
+        # 2026-09-19 C1: BiasDouble/s32ToF helpers route every live int→f32
+        # cast onto mid-pool lbl_eu_8066A388/A390 — raw .sdata2 is exactly
+        # 0x11B6 (anon @N tail gone). Retired drop_data_tail + retarget_relocs.
+        # Cost: bindTextureGX/updateOrthoGX lose builtin fsubs FULL (29%/35%);
+        # keep helpers for the data gate; rematch those two or EQUIVALENT later.
         # func_80449D68 jumptable (updateMsg switch): HIGH_MATCH §17.6
         # code-length residual — layout tracks the concurrent agent's
         # in-progress rewrites of the function body; deltas below verified
@@ -631,7 +625,6 @@ UNIT_RULES: dict[str, UnitRules] = {
             (".data", 48, 4),
             (".data", 52, 4),
         ),
-        drop_data_tail=((".sdata2", 0x11B6),),
 
         add_symbols=(
             # .data: 5 symbols
@@ -6041,16 +6034,6 @@ UNIT_RULES: dict[str, UnitRules] = {
         repack_after_drop=4,
     ),
     "CScn.o": UnitRules(
-    ),
-    "CSysWinBuff.o": UnitRules(
-        # MWCC-1.1 10322 blocks spelling the CBdat / CfGameManager
-        # member-encoded callee names in source; the plain placeholder
-        # relocations are renamed onto the retail symbols here.
-        exact_renames=(
-            ("cbdatSetBdatEntry", "setBdatEntry__5CBdatFUlPv"),
-            ("cbdatGetEntry", "getEntry__5CBdatFUl"),
-            ("cfGameManagerSetPresentationFlag", "setPresentationFlag__Q22cf13CfGameManagerFv"),
-        ),
     ),
     "CDeviceVI.o": UnitRules(
         # NEW angle (weak-dtor kill, CDeviceSC pattern): MWCC emits a weak local

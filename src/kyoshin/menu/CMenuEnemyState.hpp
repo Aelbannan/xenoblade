@@ -224,7 +224,7 @@ extern "C" void* lookupCA0By45C0(void);
 int sprintf(char*, const char*, ...);
 // Retail linker name is the already-mangled C++ symbol.
 extern "C" void* getEffOwner____FPv(void* obj);
-void* func_800AD860(void* obj);
+void* getEffOwner(void* obj);
 
 // Retail .sdata singleton (created by EneSt_Create, cleared by Term).
 extern u32 lbl_eu_80663F50;

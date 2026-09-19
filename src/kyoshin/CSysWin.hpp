@@ -48,7 +48,7 @@ extern "C" nw4r::lyt::ArcResourceAccessor* createArcResourceAccessor__10CLibLayo
 extern "C" void func_80137924(nw4r::math::VEC3*, nw4r::lyt::Pane*,
                                nw4r::lyt::Pane*, nw4r::lyt::Pane*);
 extern "C" void setPaneVisible(void*, u32);
-void func_801390E0(CFileHandle**);
+void closeFileHandle(CFileHandle**);
 extern "C" void writePanePos(nw4r::lyt::Pane*, float*);
 
 // C-linkage helper imports for the window content setters (func_8022B9B4 /

@@ -360,7 +360,7 @@ bool CTitleAHelp::OnFileEvent(CEventFile* pEventFile) {
         unk28 = 1;
         mFileHandle = nullptr;
 
-        unk4.func_8045F810();
+        unk4.validateHeap();
         return true;
     }
     return false;

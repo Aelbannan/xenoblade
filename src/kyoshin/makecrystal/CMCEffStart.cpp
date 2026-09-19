@@ -211,8 +211,17 @@ struct CFontPanel {
     virtual u32 sf9() = 0;
 };
 
-CMCEffStart::CMCEffStart(nw4r::lyt::ArcResourceAccessor* arcResourceAccessor)
-    : unk4(0), unk5(1), mArcResourceAccessor(arcResourceAccessor), mLayout(nullptr), mAnimTrans(nullptr), unk14(0) {}
+// Retail ships unmangled ctor symbols (__ct__CMCEffStart / __ct__CMCEffUpRed /
+// …). Free-function form so derived ctors bl the bare base name and external
+// callers (CModelDispMakeCrystal) bind the same reloc.
+extern "C" void __ct__CMCEffStart(CMCEffStart* self, nw4r::lyt::ArcResourceAccessor* arcResourceAccessor) {
+    self->unk4 = 0;
+    self->unk5 = 1;
+    self->mArcResourceAccessor = arcResourceAccessor;
+    self->mLayout = nullptr;
+    self->mAnimTrans = nullptr;
+    self->unk14 = 0;
+}
 
 CMCEffStart::~CMCEffStart() {}
 
@@ -267,7 +276,9 @@ void __declspec(noinline) CMCEffStart::updateInAnim() {
  * CMCEffUpRed
  *
  ******************************************************************************/
-CMCEffUpRed::CMCEffUpRed(nw4r::lyt::ArcResourceAccessor* pArcResourceAccessor) : CMCEffStart(pArcResourceAccessor) {}
+extern "C" void __ct__CMCEffUpRed(CMCEffUpRed* self, nw4r::lyt::ArcResourceAccessor* pArcResourceAccessor) {
+    __ct__CMCEffStart(self, pArcResourceAccessor);
+}
 
 CMCEffUpRed::~CMCEffUpRed() {}
 
@@ -288,7 +299,9 @@ void CMCEffUpRed::play() {
  * CMCEffUpBlue
  *
  ******************************************************************************/
-CMCEffUpBlue::CMCEffUpBlue(nw4r::lyt::ArcResourceAccessor* pArcResourceAccessor) : CMCEffStart(pArcResourceAccessor) {}
+extern "C" void __ct__CMCEffUpBlue(CMCEffUpBlue* self, nw4r::lyt::ArcResourceAccessor* pArcResourceAccessor) {
+    __ct__CMCEffStart(self, pArcResourceAccessor);
+}
 
 CMCEffUpBlue::~CMCEffUpBlue() {}
 
@@ -309,7 +322,9 @@ void CMCEffUpBlue::play() {
  * CMCEffUpGreen
  *
  ******************************************************************************/
-CMCEffUpGreen::CMCEffUpGreen(nw4r::lyt::ArcResourceAccessor* pArcResourceAccessor) : CMCEffStart(pArcResourceAccessor) {}
+extern "C" void __ct__CMCEffUpGreen(CMCEffUpGreen* self, nw4r::lyt::ArcResourceAccessor* pArcResourceAccessor) {
+    __ct__CMCEffStart(self, pArcResourceAccessor);
+}
 
 CMCEffUpGreen::~CMCEffUpGreen() {}
 
@@ -528,7 +543,9 @@ void __declspec(noinline) CMCEffSuccess::bindOutAnim() {
  * CMCEffFailure
  *
  ******************************************************************************/
-CMCEffFailure::CMCEffFailure(nw4r::lyt::ArcResourceAccessor* pArcResourceAccessor) : CMCEffStart(pArcResourceAccessor) {}
+extern "C" void __ct__CMCEffFailure(CMCEffFailure* self, nw4r::lyt::ArcResourceAccessor* pArcResourceAccessor) {
+    __ct__CMCEffStart(self, pArcResourceAccessor);
+}
 
 CMCEffFailure::~CMCEffFailure() {}
 
@@ -834,7 +851,9 @@ void __declspec(noinline) CMCEffCrystal::bindLoopAnim() {
  * CMCEffUpRank
  *
  ******************************************************************************/
-CMCEffUpRank::CMCEffUpRank(nw4r::lyt::ArcResourceAccessor* pArcResourceAccessor) : CMCEffStart(pArcResourceAccessor) {}
+extern "C" void __ct__CMCEffUpRank(CMCEffUpRank* self, nw4r::lyt::ArcResourceAccessor* pArcResourceAccessor) {
+    __ct__CMCEffStart(self, pArcResourceAccessor);
+}
 
 CMCEffUpRank::~CMCEffUpRank() {}
 
@@ -855,7 +874,9 @@ void CMCEffUpRank::play() {
  * CMCEffDivide
  *
  ******************************************************************************/
-CMCEffDivide::CMCEffDivide(nw4r::lyt::ArcResourceAccessor* pArcResourceAccessor) : CMCEffStart(pArcResourceAccessor) {}
+extern "C" void __ct__CMCEffDivide(CMCEffDivide* self, nw4r::lyt::ArcResourceAccessor* pArcResourceAccessor) {
+    __ct__CMCEffStart(self, pArcResourceAccessor);
+}
 
 CMCEffDivide::~CMCEffDivide() {}
 

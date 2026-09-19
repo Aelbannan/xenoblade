@@ -147,7 +147,7 @@ extern cf::CfObjectPc* getCfObjectPc(cf::CfObjectMove* objMove);
 // C++-mangled retail helper findObjectById__Fi (actor id -> action source).
 void* findObjectById(int id);
 // Resource getter renamed by the parallel Track-B pass
-// (func_8009CF8C -> CtrlRemote_TouchBitByArg); plain C++ decl mirrors the
+// (CtrlRemote_TouchBitByArg -> CtrlRemote_TouchBitByArg); plain C++ decl mirrors the
 // pre-rename TU state (cf. CMiniMap.cpp) so call-site codegen is unchanged.
 u32 CtrlRemote_TouchBitByArg(u32 resourceId);
 typedef u32* (*GetU32Fn)(void*);

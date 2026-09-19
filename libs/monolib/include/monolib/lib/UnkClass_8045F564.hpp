@@ -17,8 +17,6 @@ public:
     void deleteRegion();
     void clearFrmHeap();
     void validateHeap();
-    void func_8045F810();
-    void func_8045F778();
 };
 
 class Class_8045F858{

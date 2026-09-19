@@ -20,6 +20,7 @@
 #include "monolib/core/CProcRoot.hpp"
 #include "monolib/core/CViewRoot.hpp"
 #include "libs/monolib/src/core/CScriptCode.hpp"
+#include "monolib/data_vtables.hpp"
 
 // --- Blob monolibdata1.s dissolve: this TU owns .data 0x8056B418-0x8056B4D0,
 // .rodata 0x80522540-0x80522558, .sdata 0x80663558-0x80663560, .sbss
@@ -33,10 +34,13 @@ CScriptCode* lbl_eu_806655B0[2];
 const char lbl_eu_80522540[] = "CScriptCode";
 const char lbl_eu_8052254C[] = "CScriptCode";
 
-// RTTI locators for the base interfaces (defined by kyoshin/CGame.cpp,
-// .sdata 0x806618A0/0x806618A8).
-extern u32 __RTTI__10IWorkEvent[];
-extern u32 __RTTI__11CWorkThread[];
+// RTTI locators for the base interfaces come from data_vtables.hpp
+// (void* form). Do not redeclare as u32[] — MWCC rejects the conflict.
+// MWCC forbids taking the address of a ctor/dtor (and sibling TUs use the
+// retail-mangled free symbols for vtable words — see CWorkFlowSetup.cpp).
+extern "C" void __dt__11CScriptCodeFv();
+extern "C" void wkStandbyLogout__11CScriptCodeFv();
+extern "C" void wkStandbyLogin__11CWorkThreadFv();
 
 // RTTI base list (.data, 0x18): [IWorkEvent, 0, CWorkThread, 0, 0, 0].
 u32 lbl_eu_8056B4B8[6] = {
@@ -50,27 +54,27 @@ u32 lbl_eu_80663558[2] = { (u32)lbl_eu_80522540, (u32)lbl_eu_8056B4B8 };
 // wkUpdate/wkRender/wkRenderAfter/wkStandbyLogin (CWorkThread slots),
 // wkStandbyLogout (CScriptCode), wkStandbyExceptionRetry].
 u32 lbl_eu_8056B418[0xA0 / 4] = {
-    (u32)&lbl_eu_80663558, 0, (u32)&CScriptCode::~CScriptCode,
-    (u32)&IWorkEvent::WorkEvent1, (u32)&IWorkEvent::OnFileEvent,
-    (u32)&IWorkEvent::WorkEvent3, (u32)&IWorkEvent::WorkEvent4,
-    (u32)&IWorkEvent::OnPauseTrigger,
-    (u32)&IWorkEvent::WorkEvent6, (u32)&IWorkEvent::WorkEvent7,
-    (u32)&IWorkEvent::WorkEvent8, (u32)&IWorkEvent::WorkEvent9,
-    (u32)&IWorkEvent::WorkEvent10, (u32)&IWorkEvent::WorkEvent11,
-    (u32)&IWorkEvent::WorkEvent12, (u32)&IWorkEvent::WorkEvent13,
-    (u32)&IWorkEvent::WorkEvent14, (u32)&IWorkEvent::WorkEvent15,
-    (u32)&IWorkEvent::WorkEvent16, (u32)&IWorkEvent::WorkEvent17,
-    (u32)&IWorkEvent::WorkEvent18, (u32)&IWorkEvent::WorkEvent19,
-    (u32)&IWorkEvent::WorkEvent20, (u32)&IWorkEvent::WorkEvent21,
-    (u32)&IWorkEvent::WorkEvent22, (u32)&IWorkEvent::WorkEvent23,
-    (u32)&IWorkEvent::WorkEvent24, (u32)&IWorkEvent::WorkEvent25,
-    (u32)&IWorkEvent::WorkEvent26, (u32)&IWorkEvent::WorkEvent27,
-    (u32)&IWorkEvent::WorkEvent28, (u32)&IWorkEvent::WorkEvent29,
-    (u32)&IWorkEvent::WorkEvent30, (u32)&IWorkEvent::WorkEvent31,
-    (u32)&CWorkThread::wkUpdate, (u32)&CWorkThread::wkRender,
-    (u32)&CWorkThread::wkRenderAfter, (u32)&CWorkThread::wkStandbyLogin,
-    (u32)&CScriptCode::wkStandbyLogout,
-    (u32)&CWorkThread::wkStandbyExceptionRetry,
+    (u32)&lbl_eu_80663558, 0, (u32)&__dt__11CScriptCodeFv,
+    (u32)&WorkEvent1__10IWorkEventFPvPCc, (u32)&OnFileEvent__10IWorkEventFP10CEventFile,
+    (u32)&WorkEvent3__10IWorkEventFPv, (u32)&WorkEvent4__10IWorkEventFv,
+    (u32)&OnPauseTrigger__10IWorkEventFb,
+    (u32)&WorkEvent6__10IWorkEventFv, (u32)&WorkEvent7__10IWorkEventFv,
+    (u32)&WorkEvent8__10IWorkEventFv, (u32)&WorkEvent9__10IWorkEventFv,
+    (u32)&WorkEvent10__10IWorkEventFv, (u32)&WorkEvent11__10IWorkEventFv,
+    (u32)&WorkEvent12__10IWorkEventFv, (u32)&WorkEvent13__10IWorkEventFv,
+    (u32)&WorkEvent14__10IWorkEventFv, (u32)&WorkEvent15__10IWorkEventFv,
+    (u32)&WorkEvent16__10IWorkEventFv, (u32)&WorkEvent17__10IWorkEventFv,
+    (u32)&WorkEvent18__10IWorkEventFv, (u32)&WorkEvent19__10IWorkEventFv,
+    (u32)&WorkEvent20__10IWorkEventFv, (u32)&WorkEvent21__10IWorkEventFv,
+    (u32)&WorkEvent22__10IWorkEventFv, (u32)&WorkEvent23__10IWorkEventFv,
+    (u32)&WorkEvent24__10IWorkEventFv, (u32)&WorkEvent25__10IWorkEventFv,
+    (u32)&WorkEvent26__10IWorkEventFv, (u32)&WorkEvent27__10IWorkEventFv,
+    (u32)&WorkEvent28__10IWorkEventFv, (u32)&WorkEvent29__10IWorkEventFv,
+    (u32)&WorkEvent30__10IWorkEventFv, (u32)&WorkEvent31__10IWorkEventFv,
+    (u32)&wkUpdate__11CWorkThreadFv, (u32)&wkRender__11CWorkThreadFv,
+    (u32)&wkRenderAfter__11CWorkThreadFv, (u32)&wkStandbyLogin__11CWorkThreadFv,
+    (u32)&wkStandbyLogout__11CScriptCodeFv,
+    (u32)&wkStandbyExceptionRetry__11CWorkThreadFUl,
 };
 
 // Interface for command handler objects dispatched through vtable slot 3. All

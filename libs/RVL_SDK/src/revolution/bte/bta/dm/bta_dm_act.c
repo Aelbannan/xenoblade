@@ -87,6 +87,65 @@ struct bta_btm_inq_cmpl_t {
     /* ... remainder of this struct was in the LOST region ... */
 };
 
+/* Minimal discovery-result payload for the app search callback (fields used
+   by the recovered functions below). Full tBTA_DM_DISC_RES lived in the
+   LOST region; do not invent the unused members. */
+struct bta_dm_disc_res_local_t {
+    bd_addr_t bd_addr;
+    unsigned int services;
+    unsigned char result;
+};
+
+/* BT_HDR + trailing data view used when only event / raw data[] are touched. */
+struct bta_dm_buf_t {
+    unsigned short event;               /* 0x00 */
+    unsigned short len;                 /* 0x02 */
+    unsigned short offset;              /* 0x04 */
+    unsigned short layer_specific;      /* 0x06 */
+    unsigned char data[0x108];          /* 0x08.. */
+};
+
+#ifndef BTA_DM_DISC_RES_EVT
+#define BTA_DM_DISC_RES_EVT            2
+#endif
+#ifndef BTA_DM_REMT_NAME_EVT
+#define BTA_DM_REMT_NAME_EVT           0x205
+#endif
+#ifndef BTA_DM_SEARCH_DISC_RES_EVT
+#define BTA_DM_SEARCH_DISC_RES_EVT     0x207
+#endif
+#ifndef BTA_DM_SEARCH_CMPL_EVT
+#define BTA_DM_SEARCH_CMPL_EVT         0x206
+#endif
+
+/* Globals / helpers that lived in the LOST region — declare only what the
+   currently present functions need so the TU can compile. Bodies for the
+   LOST functions themselves are NOT invented here. */
+extern struct bta_dm_search_cb_t bta_dm_search_cb;
+extern struct { unsigned short page_timeout; } btm_cb;
+extern const unsigned short bta_service_id_to_uuid_lkup_tbl[];
+extern void bta_dm_remname_cback(unsigned char *, unsigned char *, unsigned char *);
+extern void bta_dm_service_search_remname_cback(unsigned char *, unsigned char *, unsigned char *);
+extern void bta_dm_search_timer_cback(struct bta_dm_timer_t *);
+extern void bta_dm_find_services(unsigned char *bd_addr);
+extern void bta_dm_discover_next_device(void);
+
+/* Harness stubs: many BTE APIs are undeclared and default to int-returning
+   K&R prototypes under MWCC; cast call results at use sites below. */
+void *BTM_InqDbNext(void *);
+void *GKI_getbuf(unsigned short);
+void GKI_freebuf(void *);
+void *SDP_FindServiceInDb(void *, unsigned short, void *);
+void *SDP_FindAttributeInRec(void *, unsigned short);
+void *BTM_SecReadDevName(unsigned char *);
+int BTM_ReadRemoteDeviceName(unsigned char *, void *);
+int BTM_SecDeleteRmtNameNotifyCallback(void *);
+void bdcpy(unsigned char *, unsigned char *);
+void bta_sys_start_timer(struct bta_dm_timer_t *, unsigned short, int);
+void bta_sys_stop_timer(struct bta_dm_timer_t *);
+void bta_sys_sendmsg(void *);
+int strncpy(char *, const char *, unsigned long);
+
 /* === LOST REGION: original lines ~85-699 ===
    Contents (per session reads of surrounding context): remainder of the local
    type definitions block and all functions up to bta_dm_rmt_name. Restore from
@@ -108,7 +167,7 @@ void bta_dm_rmt_name(struct bta_dm_msg *p_data) {
     unsigned char *p_rem_addr;
     struct bta_dm_buf_t *p_buf;
 
-    while ((bta_dm_search_cb.p_cur = BTM_InqDbNext(bta_dm_search_cb.p_cur)) != NULL) {
+    while ((bta_dm_search_cb.p_cur = (void *)BTM_InqDbNext(bta_dm_search_cb.p_cur)) != NULL) {
         if (((unsigned char *)bta_dm_search_cb.p_cur)[0x10] != 0) {
             bdcpy(disc_res.bd_addr, (unsigned char *)bta_dm_search_cb.p_cur + 2);
             disc_res.result = 0;
@@ -184,7 +243,7 @@ void bta_dm_sdp_result(struct bta_dm_msg *p_data) {
         /* successful SDP transaction for the current service */
         uuid = ((unsigned short *)bta_service_id_to_uuid_lkup_tbl)[bta_dm_search_cb.services_index - 1];
         if (status != 0xfff4) {
-            p_rec = SDP_FindServiceInDb(bta_dm_search_cb.p_sdp_db, uuid, NULL);
+            p_rec = (void *)SDP_FindServiceInDb(bta_dm_search_cb.p_sdp_db, uuid, NULL);
             if (p_rec == NULL) {
                 goto sdp_db_cleanup;
             }

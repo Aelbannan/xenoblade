@@ -1559,7 +1559,7 @@ extern "C" int SysWinLog_BuildLayout(CSysWinScenarioLog* self, CFileHandle* fh) 
             &lbl_eu_8050EE24[0x5b], 1);
         ((CSysWinPaneView*)pane)->field_0xF8 = (u32)self->mField94;
         self->mFileHandle74 = 0;
-        self->mMemRegion.func_8045F810();
+        self->mMemRegion.validateHeap();
         return 1;
     }
     if (self->mFileHandle78 == data) {
@@ -1616,8 +1616,8 @@ void CSysWinScenarioLog::Init() {
 // ---------------------------------------------------------------------------
 void CSysWinScenarioLog::Term() {
     CDeviceVI::waitForDrawDone();
-    func_801390E0(&mFileHandle74);
-    func_801390E0(&mFileHandle78);
+    closeFileHandle(&mFileHandle74);
+    closeFileHandle(&mFileHandle78);
     getEntry__5CBdatFUl(2);
 
     if (mpLayout != 0) {
@@ -1637,7 +1637,7 @@ void CSysWinScenarioLog::Term() {
     releaseArcResourceAccessor(mpAccessor);
     mpAccessor = 0;
     lbl_eu_8066490C = 0;
-    mMemRegion.func_8045F778();
+    mMemRegion.deleteRegion();
     lbl_eu_80664908 = 0;
 
     IScnRender* render = reinterpret_cast<IScnRender*>(this);

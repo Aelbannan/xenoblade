@@ -8,6 +8,7 @@ public:
     virtual ~CToken();
 
     u32 func_8043A8D8();
+    void func_8043AA1C();
     void clear();
     void func_8043AA68(char* pOutBuffer, int bufferLen, const char* pName);
     char* func_8043AB14(char* pInput, int tokenIndex);

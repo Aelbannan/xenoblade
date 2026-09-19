@@ -966,3 +966,68 @@ class CanonicalSymbolsUnitPrefixTests(unittest.TestCase):
 
             self.assertEqual(_canonical_symbols_for_unit("kyoshin/plugin/ocMsg"), {})
 
+    def test_includes_global_named_entries(self) -> None:
+        from tools.coop.lib import equivalence_check as eq
+
+        data = {
+            "entries": {
+                "__vt__18CTTask<9CTaskGame>": {
+                    "R_PPC_ADDR16_HA": {"retail_symbol": "lbl_eu_8052598C"}
+                },
+                "main/kyoshin/CTaskGame@99": {
+                    "R_PPC_EMB_SDA21": {"retail_symbol": "lbl_eu_80660000"}
+                },
+            }
+        }
+        with mock.patch.object(eq, "_load_reloc_map", return_value=(data, "deadbeef")):
+            from tools.coop.lib.equivalence_check import _canonical_symbols_for_unit
+
+            via = _canonical_symbols_for_unit("kyoshin/plugin/ocMsg")
+        self.assertEqual(via.get("__vt__18CTTask<9CTaskGame>"), "lbl_eu_8052598C")
+        self.assertNotIn("@99", via)
+
+    def test_linkage_suffix_is_same_dest(self) -> None:
+        from tools.coop.lib.equivalence_check import (
+            _byte_identical_with_relocs,
+            _reloc_dests_equivalent,
+        )
+        from tools.ppc_equivalence.elf_symbols import FunctionBytes, FunctionRelocation
+        from pathlib import Path
+
+        self.assertTrue(_reloc_dests_equivalent("foo", "foo__Fv"))
+        self.assertTrue(_reloc_dests_equivalent("lbl_eu_80663D38", "lbl_eu_80663D38__2cf"))
+        self.assertFalse(_reloc_dests_equivalent("foo", "bar__Fv"))
+
+        code = bytes.fromhex("48000001 4e800020")
+        left = FunctionBytes(
+            name="f",
+            path=Path("retail.o"),
+            code=code,
+            base=0x80001000,
+            value=0,
+            size=len(code),
+            section_index=1,
+            section_name=".text",
+            symbol_type=2,
+            relocations=(
+                FunctionRelocation(offset=0, relocation_type=10, symbol="UIWin_Create602F4Win", addend=0),
+            ),
+        )
+        right = FunctionBytes(
+            name="f",
+            path=Path("decomp.o"),
+            code=code,
+            base=0x80001000,
+            value=0,
+            size=len(code),
+            section_index=1,
+            section_name=".text",
+            symbol_type=2,
+            relocations=(
+                FunctionRelocation(
+                    offset=0, relocation_type=10, symbol="UIWin_Create602F4Win__Fv", addend=0
+                ),
+            ),
+        )
+        self.assertTrue(_byte_identical_with_relocs(left, right))
+

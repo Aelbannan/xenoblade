@@ -213,7 +213,6 @@ void func_801BCF48(CMenuKizunaTalk* self) {
         reinterpret_cast<CCur18View*>(&self->mCur[0])->vf02();
         break;
     }
-    }
 }
 #pragma optimize_for_size off
 
@@ -574,7 +573,7 @@ int func_801BD7D8(CMenuKizunaTalk* self, CEventFile* evt) {
         self->mAnim->SetFrame(lbl_eu_80667E6C);
         self->mLayout->Animate(0);
         self->mFile1 = 0;
-        ((UnkClass_8045F564*)&self->mMemRegion[0])->func_8045F810();
+        ((UnkClass_8045F564*)&self->mMemRegion[0])->validateHeap();
         return 1;
     }
     if (self->mFile2 == handle) {

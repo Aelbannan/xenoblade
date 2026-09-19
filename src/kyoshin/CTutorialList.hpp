@@ -62,7 +62,7 @@ extern "C" void sortMenuFormatPaneText(nw4r::math::VEC3*, void*);  // copy curso
 extern "C" void Cur_SetVisible(void*, int);
 // Device/memory helper (retail unmangled C symbol).
 extern "C" int KyoshinHeap_GetField44();
-void func_801390E0(CFileHandle**);
+void closeFileHandle(CFileHandle**);
 extern "C" void* readCommonArchiveFile__11CDeviceFileFUlPCcP10IWorkEventii(unsigned long, const char*, void*, int, int);
 // UI sound: retail symbol is the C++-mangled playUISound__FUl.
 void playUISound(u32);

@@ -2611,7 +2611,7 @@ int CArtsInfo::OnFileEvent(CEventFile* event) {
         CArtsInfo_BindAllPanes(this);
         func_8023B430(this);
         field_0x14 = 0;
-        mMemRegion.func_8045F810();
+        mMemRegion.validateHeap();
         return 1;
     }
 

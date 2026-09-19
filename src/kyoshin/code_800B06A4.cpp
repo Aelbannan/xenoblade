@@ -15,6 +15,24 @@ void UnkClass_800B0AD8::clearCounters() {
 DECOMP_DONT_INLINE UnkClass_805764CC* getInstance();
 #pragma inline
 u32 Tok_Pack08(u32 a, u32 b);
+extern "C" u32 getEneBdatColumn(void* self, const char* column);
+extern "C" void subVec3f(void* out, void* a, void* b);
+u32 KyoshinHeap_Reset38();
+void CfRes_initHighGrid();
+void tickAnimFrame();
+extern "C" void CfRes_tickIfFlagged(void* self);
+extern "C" int CfRes_hashIndex11(void* self, int a);
+void* CamEvtFetchSlotPtr(void* self, unsigned long idx);
+extern "C" void CfSoundMan_StopSoundSlots(u32 idx, u32 soundId, s32 stopFlag);
+extern "C" s32 CPartsChange_FindVoiceIndex(void* voice, u32 key);
+void CPartsChange_ResetBattleEntry(void* obj, int a, int b);
+void CPartsChange_TeardownContainer(void* container, int flags);
+extern "C" void UIWin_Create44EE4Win(u32 a, u32 b);
+extern "C" int CollObjTestResIdReady(void* item);
+extern "C" int CollObjLoadResourceTimed(void* obj, void* arg, int flag, float range);
+extern "C" void copyVec3Words(void* dst, const B47Vec3* src);
+extern "C" void noopAnimVec3(void* dst);
+extern "C" void CfRes_releaseCachedBase(int flag);
 extern "C" void func_80193810(unsigned long a, void* b);
 extern "C" void func_801F3CCC(unsigned long a, void* b);
 extern "C" void func_801F45B4(unsigned long a, void* b);
@@ -326,7 +344,7 @@ void* reslistFirstItem(void* self) {
     copyItemSourceNode__Q22cf13CfGameManagerFv(&it[1], (F8C0ListSource*)self);
     cf::CfObject* item = (cf::CfObject*)*getObjectNodePtr__Q22cf13CfGameManagerFv(&it[1]);
     if (testObj68bit6(item) != 0) {
-        return reslistFindObj(self, item);
+        return ::reslistFindObj(self, item);
     }
     copyItemSourceNode__Q22cf13CfGameManagerFv(&it[0], (F8C0ListSource*)self);
     return *getObjectNodePtr__Q22cf13CfGameManagerFv(&it[0]);
@@ -467,7 +485,7 @@ extern "C" void walkReslistByMask(void* object, u32 mask);
 
 extern "C" void resetTboxThenMask(void* self) {
     rebuildTboxPool(self);
-    walkReslistByMask(self, 256);
+    ::walkReslistByMask(self, 256);
 }
 
 // us-800b1bf8 - cf::CfValueItemManager ctor: base ctor call then
@@ -1212,7 +1230,7 @@ extern "C" void* reslistFindObj(void* reslist, void* obj) {
         }
     }
     if (result != 0 && testObj68bit6(result)) {
-        return reslistFindObj(reslist, result);
+        return ::reslistFindObj(reslist, result);
     }
     return result;
 }
@@ -1290,7 +1308,7 @@ void* sub_resetReslist_BA8(void* self){return reslistFirstItem(&UnkClass_805764C
 #pragma auto_inline off
 extern "C" cf::CfObject* nextReslistB28(cf::CfObject* obj) {
     UnkClass_805764CC* ctx = getInstance();
-    cf::CfObject* next = (cf::CfObject*)reslistFindObj(&ctx->field_0xB28, obj);
+    cf::CfObject* next = (cf::CfObject*)::reslistFindObj(&ctx->field_0xB28, obj);
     // Retail returns the next entry in r3 (kept from reslistFindObj).
     return next;
 }
@@ -1298,7 +1316,7 @@ extern "C" cf::CfObject* nextReslistB28(cf::CfObject* obj) {
 
 void insertReslistB68(cf::CfObject* obj) {
     UnkClass_805764CC* ctx = getInstance();
-    reslistFindObj(&ctx->field_0xB68, obj);
+    ::reslistFindObj(&ctx->field_0xB68, obj);
 }
 
 #pragma push
@@ -1307,7 +1325,7 @@ void insertReslistB68(cf::CfObject* obj) {
 extern "C" cf::CfObject* nextReslistB48(cf::CfObject* obj);
 cf::CfObject* nextReslistB48(cf::CfObject* obj) {
     UnkClass_805764CC* ctx = getInstance();
-    cf::CfObject* next = (cf::CfObject*)reslistFindObj(&ctx->field_0xB48, obj);
+    cf::CfObject* next = (cf::CfObject*)::reslistFindObj(&ctx->field_0xB48, obj);
     // Retail returns the next entry in r3 (kept from reslistFindObj).
     return next;
 }
@@ -1318,7 +1336,7 @@ cf::CfObject* nextReslistB48(cf::CfObject* obj) {
 // extern "C": retail symbol is the unmangled name (see reloc fix in hexdiff).
 extern "C" void* nextReslistBE8(cf::CfObject* obj) {
     UnkClass_805764CC* ctx = getInstance();
-    reslistFindObj(&ctx->field_0xBE8, obj);
+    ::reslistFindObj(&ctx->field_0xBE8, obj);
     // No explicit return: retail keeps whatever reslistFindObj left in r3
     // (the next list entry) as the return value.
 }
@@ -1327,19 +1345,19 @@ extern "C" void* nextReslistBE8(cf::CfObject* obj) {
 // us-800b8218 - Add CfObject to reslist at field_0xBC8
 void insertReslistBC8(cf::CfObject* obj) {
     UnkClass_805764CC* ctx = getInstance();
-    reslistFindObj(&ctx->field_0xBC8, obj);
+    ::reslistFindObj(&ctx->field_0xBC8, obj);
 }
 
 // us-800b8250 - Add CfObject to reslist at field_0xBA8
 void insertReslistBA8(cf::CfObject* obj) {
     UnkClass_805764CC* ctx = getInstance();
-    reslistFindObj(&ctx->field_0xBA8, obj);
+    ::reslistFindObj(&ctx->field_0xBA8, obj);
 }
 
 // us-800b8288 - Add CfObject to reslist at field_0xC08
 void insertReslistC08(cf::CfObject* obj) {
     UnkClass_805764CC* ctx = getInstance();
-    reslistFindObj(&ctx->field_0xC08, obj);
+    ::reslistFindObj(&ctx->field_0xC08, obj);
 }
 void init_79A4(){}
 extern "C" void* getResetDataPtr__Q22cf13CfGameManagerFv();
@@ -1473,8 +1491,8 @@ extern u32 lbl_eu_80663EE4;
 // state, then walk the C48 reslist nulling each entry.
 extern "C" void func_800B1954(UnkClass_805764CC* self) {
     // Retail builds 0xFDFF as lis 1 / subi 0x201: write it as the subtraction.
-    walkReslistByMask(self, 0x10000 - 0x201);
-    walkReslistByMask(self, -1);
+    ::walkReslistByMask(self, 0x10000 - 0x201);
+    ::walkReslistByMask(self, -1);
     clearReslistLinks(&self->field_0xC28);
     clearReslistLinks(&self->field_0xC08);
     clearReslistLinks(&self->field_0xBC8);
@@ -2461,7 +2479,7 @@ void gmFileObject(void* obj) {
 // us-800b7978 - gmInsertObject
 // Wrapper: fetch the singleton and insert obj into it via reslistFindObj.
 void gmInsertObject(void* obj) {
-    reslistFindObj(getInstance(), obj);
+    ::reslistFindObj(getInstance(), obj);
 }
 
 // ---------------------------------------------------------------------------
@@ -2833,7 +2851,7 @@ extern "C" void registerFactoryEvent__FPvPQ22cf13IFactoryEvent(UnkClass_805764CC
 // us-800b9d54 - gmWalkByMask
 // Fetch the singleton and forward (singleton, arg) to walkReslistByMask.
 void gmWalkByMask(void* arg) {
-    walkReslistByMask(getInstance(), (u32)arg);
+    ::walkReslistByMask(getInstance(), (u32)arg);
 }
 // us-800b9d88 - gmWalkByType
 // Fetch the singleton and forward (singleton, arg) to walkReslistByType.

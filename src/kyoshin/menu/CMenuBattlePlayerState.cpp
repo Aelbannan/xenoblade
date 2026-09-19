@@ -508,7 +508,7 @@ void CMenuBattlePlayerState::Init() {
 
         mScn->addRenderCB(static_cast<IScnRender*>(this), 0xA, 0);
 
-        unk64.func_8045F810();
+        unk64.validateHeap();
     }
 }
 
@@ -550,8 +550,8 @@ void CMenuBattlePlayerState::Term() {
         unk7E4 = NULL;
     }
 
-    unk7D0.func_8045F778();
-    unk64.func_8045F778();
+    unk7D0.deleteRegion();
+    unk64.deleteRegion();
     lbl_eu_80663F48 = NULL;
 }
 
@@ -1785,7 +1785,6 @@ extern "C" void func_8010D8D4(CMenuBattlePlayerState* self,
                     if (delta != 0) {
                         slot->unk25C |= 0x40000000;
                     }
-                }
                 }
             }
             slot->unk234 = slot->unk230;

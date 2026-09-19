@@ -432,7 +432,6 @@ __declspec(noinline) void func_8021B188(CrystalItemBuf* out, CMCCrystalInfo* sel
     u32* src = (u32*)((char*)&buf - 4);
     for (int j = 4; j != 0; j--) {
         *++dst = *++src;
-        *++dst = *++src;
     }
     *++dst = *++src;
 }
@@ -451,7 +450,6 @@ __declspec(noinline) void func_8021B2E0(CMCCrystalInfo* self, u16 arg2, CMCCItem
     u32* dst = (u32*)((char*)&slots - 4);
     u32* src = (u32*)((char*)&bufB - 4);
     for (int j = 4; j != 0; j--) {
-        *++dst = *++src;
         *++dst = *++src;
     }
     *++dst = *++src;
@@ -643,7 +641,7 @@ bool CMCCrystalInfo::OnFileEvent(CEventFile* pEventFile)
 
         func_8021B500(this);
         mFileHandle1 = 0;
-        mMemRegion1.func_8045F810();
+        mMemRegion1.validateHeap();
         return true;
     } else if (mFileHandle2 == (u32)pEventFile->mFileHandle) {
         // === crystal info file 2 loaded ===
@@ -662,7 +660,7 @@ bool CMCCrystalInfo::OnFileEvent(CEventFile* pEventFile)
 
         func_8021B500(this);
         mFileHandle2 = 0;
-        mMemRegion2.func_8045F810();
+        mMemRegion2.validateHeap();
         return true;
     }
 

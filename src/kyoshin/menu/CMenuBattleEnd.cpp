@@ -164,7 +164,7 @@ void CMenuBattleEnd::Init() {
         addRenderCB__4CScnFP10IScnRenderUlUl(mScene, cb, 0xa, 0);
     }
 
-    reinterpret_cast<UnkClass_8045F564*>(mMemRegion)->func_8045F810();
+    reinterpret_cast<UnkClass_8045F564*>(mMemRegion)->validateHeap();
 }
 
 void CMenuBattleEnd::Term() {

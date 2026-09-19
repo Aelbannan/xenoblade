@@ -198,7 +198,7 @@ void CMenuBattleDamage::Init() {
         cb = reinterpret_cast<IScnRender*>(&mIScnRenderVt);
     }
     mScn->addRenderCB(cb, 0x9, 0x0);
-    mMemRegion.func_8045F810();
+    mMemRegion.validateHeap();
 }
 
 // Tear down the battle-damage singleton: detach the render callback, destroy
@@ -221,7 +221,7 @@ void CMenuBattleDamage::Term() {
             mEntries[i].mLayout1 = NULL;
         }
     }
-    mMemRegion.func_8045F778();
+    mMemRegion.deleteRegion();
     lbl_eu_80663F28 = NULL;
 }
 

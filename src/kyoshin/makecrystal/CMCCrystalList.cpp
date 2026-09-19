@@ -22,13 +22,13 @@ void drawLayout(nw4r::lyt::Layout*, nw4r::lyt::DrawInfo*, int, int);
 u32 advanceAnimTransform(nw4r::lyt::AnimTransform*, float);
 void setLayoutTextBoxFont(nw4r::lyt::Layout*, char*, u32);
 void setLayoutTextBoxNumber(nw4r::lyt::Layout*, char*, u8);
-extern "C" void func_801390E0(CFileHandle**);
+void closeFileHandle(CFileHandle**);
 extern "C" void releaseArcResourceAccessor(nw4r::lyt::ArcResourceAccessor*);
 // Retail symbols for these layout builders are unmangled - C linkage keeps
 // the call relocs bound to the retail names.
 extern "C" void buildLayout__FPPQ34nw4r3lyt6LayoutPQ34nw4r3lyt19ArcResourceAccessorPCc(nw4r::lyt::Layout**, nw4r::lyt::ArcResourceAccessor*, const char*);
 extern "C" void bindLayoutAnimTransform__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(nw4r::lyt::Layout*, nw4r::lyt::AnimTransform**, nw4r::lyt::ArcResourceAccessor*, char*);
-void func_801390E0(CFileHandle**);
+void closeFileHandle(CFileHandle**);
 void releaseArcResourceAccessor(nw4r::lyt::ArcResourceAccessor*);
 // Retail symbol for this helper is the unmangled name - keep C linkage.
 extern "C" void LayoutSetTextBoxFmtValue(nw4r::lyt::Layout*, char*, char*, u32);
@@ -141,8 +141,8 @@ namespace nw4r { namespace lyt { class DrawInfo; } }
 
 // Retail 0x80222984: full teardown of the crystal-list UI.
 extern "C" void __dt__80222984(CMCCrystalList* self) {
-    func_801390E0(&self->mFileHandle1);
-    func_801390E0(&self->mFileHandle2);
+    closeFileHandle(&self->mFileHandle1);
+    closeFileHandle(&self->mFileHandle2);
     self->mState = 0;
     if (self->mLayout != nullptr) {
         self->mLayout->UnbindAllAnimation();
@@ -159,8 +159,8 @@ extern "C" void __dt__80222984(CMCCrystalList* self) {
     releaseArcResourceAccessor(self->mArcResAccessor2);
     self->mArcResAccessor = nullptr;
     self->mArcResAccessor2 = nullptr;
-    self->mMemRegion1.func_8045F778();
-    self->mMemRegion2.func_8045F778();
+    self->mMemRegion1.deleteRegion();
+    self->mMemRegion2.deleteRegion();
 }
 
 void CMCCrystalList::crystalListDrawIfActive(nw4r::lyt::DrawInfo* drawInfo)

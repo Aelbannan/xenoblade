@@ -620,7 +620,7 @@ extern "C" void CScrollBar_Teardown(void* scrollBar);    // CScrollBar teardown
 extern "C" void sysWinTermLayout(void* sysWin);       // CSysWin teardown
 // C++-mangled imports from code_80135FDC.cpp (unmangled identifiers mangle to
 // the retail symbols, same scheme as CItemBoxInfo.hpp).
-void func_801390E0(CFileHandle**);
+void closeFileHandle(CFileHandle**);
 void releaseArcResourceAccessor(nw4r::lyt::ArcResourceAccessor*);
 
 // (Layout/Pane teardown goes through `delete`: the deleting-dtor vcall

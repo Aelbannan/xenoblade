@@ -429,7 +429,6 @@ void func_8014B344(cf::CAIAction* self, u32 index) {
         self->unk210 = 0;
         return;
     }
-    }
 
     u16 flags = slot->unk10;
     if (flags & 2)
@@ -769,7 +768,7 @@ extern "C" int func_8014CE78(cf::CAIAction* self, const u8* e, cf::CAIActionSlot
             // Element-row gate; inner dispatch keyed on 0x45/46/47 only.
             if (!(party->move.moveFlags & 4))
                 return 0;
-            void* obj = func_800AD860(&party->move);
+            void* obj = getEffOwner(&party->move);
             void* elem = CPartsChange_FindActorById(CPartsChange_GetActorTable(),
                                        ((CAIChDataView*)obj)->field45C0);
             if (elem == 0)
@@ -2496,7 +2495,6 @@ extern "C" void* func_80150828(cf::CAIAction* self, CAIActionQuery* q) {
             }
             __ct__800FD250(CTaskGame_enumListGet(&it));
             break;
-        }
         }
     }
 

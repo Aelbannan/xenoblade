@@ -216,7 +216,7 @@ struct BattleTargetView {
     void* field04;        // +0x04
 };
 
-// func_800AD860(obj) result: u16 id at +0x3F28 (BdatGetU8Direct key).
+// getEffOwner(obj) result: u16 id at +0x3F28 (BdatGetU8Direct key).
 struct AD860Result {
     u8 gap00[0x3F28];
     u16 id3F28;           // +0x3F28
@@ -3060,7 +3060,7 @@ void CMenuEnemyState::Init() {
     }
     reinterpret_cast<CScn*>(unk60)->addRenderCB(render, 8, 0);
 
-    reinterpret_cast<UnkClass_8045F564*>(unk64)->func_8045F810();
+    reinterpret_cast<UnkClass_8045F564*>(unk64)->validateHeap();
 }
 
 // ---------------------------------------------------------------------------
@@ -3103,8 +3103,8 @@ void CMenuEnemyState::Term() {
         selectCursor.layout1C = 0;
     }
 
-    reinterpret_cast<UnkClass_8045F564*>(&selectCursor.field08)->func_8045F778();
-    reinterpret_cast<UnkClass_8045F564*>(unk64)->func_8045F778();
+    reinterpret_cast<UnkClass_8045F564*>(&selectCursor.field08)->deleteRegion();
+    reinterpret_cast<UnkClass_8045F564*>(unk64)->deleteRegion();
     lbl_eu_80663F50 = 0;
 }
 

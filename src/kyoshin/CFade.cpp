@@ -89,7 +89,7 @@ bool CFade::OnFileEvent(CEventFile* pEventFile) {
         CFade_MarkLoaded(this);
 
         mFileHandle = nullptr;
-        mMemRegion.func_8045F810();
+        mMemRegion.validateHeap();
         return true;
     }
     return false;

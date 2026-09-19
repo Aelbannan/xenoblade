@@ -64,7 +64,7 @@ public:
 
 // C-linkage import (retail unmangled symbol).
 extern "C" void func_8013676C(void* node, u32 font);
-extern "C" void func_801390E0(CFileHandle** handle);
+void closeFileHandle(CFileHandle** handle);
 void releaseArcResourceAccessor(nw4r::lyt::ArcResourceAccessor* acc);
 
 // CBaseCur shared helpers (defined in CCur.cpp)
@@ -455,7 +455,7 @@ extern "C" bool __ct__800FF300(CMainMenu* self, CEventFile* pEventFile) {
             self->field_0x70->addRenderCB(render, 0xa, 0);
 
             self->field_0x74 = NULL;
-            reinterpret_cast<UnkClass_8045F564*>(&self->_60[0])->func_8045F810();
+            reinterpret_cast<UnkClass_8045F564*>(&self->_60[0])->validateHeap();
             return true;
     }
     return false;
@@ -1461,7 +1461,7 @@ void CMainMenu::Term() {
         render = reinterpret_cast<IScnRender*>((char*)this + 0x5C);
     }
     field_0x70->removeRenderCB(render);
-    func_801390E0(&field_0x74);
+    closeFileHandle(&field_0x74);
     ((CBaseCur*)&_90[0])->cleanup();
     ((CBaseCur*)&subCur)->cleanup();
     if (field_0x7C != 0) {
@@ -1470,6 +1470,6 @@ void CMainMenu::Term() {
     }
     releaseArcResourceAccessor(field_0x78);
     field_0x78 = 0;
-    reinterpret_cast<UnkClass_8045F564*>(&_60[0])->func_8045F778();
+    reinterpret_cast<UnkClass_8045F564*>(&_60[0])->deleteRegion();
     lbl_eu_80663F18 = 0;
 }

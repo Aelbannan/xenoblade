@@ -286,8 +286,8 @@ int simpleEventStart(VMThread* pThread) {
     return 0;
 }
 int simpleEventEnd(VMThread* pThread) {
-    extern void func_8013BDA8();
-    func_8013BDA8();
+    extern void code80135FDC_clearByte_64058();
+    code80135FDC_clearByte_64058();
     return 0;
 }
 // ml::FixStr<64>::format - vsnprintf into a stack buffer, then copy into the

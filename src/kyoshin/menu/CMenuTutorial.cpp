@@ -87,12 +87,19 @@ extern "C" __declspec(noinline) CMenuTutorial* __ct__CMenuTutorial(
     return self;
 }
 
-// Compiler-generated body destroys mTitleAHelp and mTutorial, then chains to
-// the base destructor. The local body-less IScnRender declaration (see
-// CMenuTutorial.hpp) keeps this TU free of a standalone ~IScnRender copy.
-extern "C" void __dt__13CMenuTutorialFv(CMenuTutorial* self);
-
-CMenuTutorial::~CMenuTutorial() {}
+// Free-function dtor (retail D2): destroy widgets, then game-side CProcess
+// wrapper __dt__800FED0C — not library __dt__8CProcessFv.
+extern "C" void __dt__800FED0C(CProcess* self, int flags);
+extern "C" void __dt__13CMenuTutorialFv(CMenuTutorial* self, int flags) {
+    if (self != 0) {
+        __dt__11CTitleAHelpFv(&self->mTitleAHelp, -1);
+        __dt__9CTutorialFv(&self->mTutorial, -1);
+        __dt__800FED0C((CProcess*)self, 0);
+        if (flags > 0) {
+            operator delete(self);
+        }
+    }
+}
 
 void CMenuTutorial::Init() {
     char* name = BdatTouchStringCell(lbl_eu_80510260, lbl_eu_80510260 + 9, 0x23);
@@ -382,7 +389,7 @@ void MenuTutorialRenderThunk58(IScnRender* sub) {
  * Tail-calls the destructor, leaving r4 (delete flag) as caller leftover.
  */
 void MenuTutorialDtorThunk58(IScnRender* sub) {
-    __dt__13CMenuTutorialFv((CMenuTutorial*)((char*)sub - 0x58));
+    __dt__13CMenuTutorialFv((CMenuTutorial*)((char*)sub - 0x58), -1);
 }
 
 unsigned long MenuTutorialIsCreated(void) { return lbl_eu_80664A28 != 0; }

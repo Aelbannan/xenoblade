@@ -168,7 +168,7 @@ bool CExchangeWin::OnFileEvent(CEventFile* pEventFile) {
     }
 
     mFileHandle = nullptr;
-    mMemRegion.func_8045F810();
+    mMemRegion.validateHeap();
     __dt__14Class_8045F858Fv(reinterpret_cast<Class_8045F858*>(regionBuf), -1);
 
     return true;

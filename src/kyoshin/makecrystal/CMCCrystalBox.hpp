@@ -549,7 +549,7 @@ extern "C" void setPaneVisible(void*, u32);   // pane visibility setter
 // linkage; getPackedFont / isClassicController__Q22cf13CfGameManagerFv use the
 // plain C++ forms that re-derive the retail mangled names.
 extern "C" u32 CUICfManager_getPackedFont9C();
-extern "C" void* CUICfManager_getArcResourceAccessor();   // shared timg resource accessor
+extern "C" nw4r::lyt::ArcResourceAccessor* CUICfManager_getArcResourceAccessor();   // shared timg resource accessor
 // C++ linkage so MWCC mangles to the retail getPackedFont__Fv.
 u32 getPackedFont();
 extern "C" u16 BdatGetU16ByTableKey(const void*, const void*, u32);

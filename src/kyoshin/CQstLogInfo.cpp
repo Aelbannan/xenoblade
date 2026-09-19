@@ -808,11 +808,11 @@ int CQstLogInfo::OnFileEvent(CEventFile* event) {
         mField38 = 1;
         mUnk30 = 1;
         mFileHandle = 0;
-        mMemRegion.func_8045F810();
+        mMemRegion.validateHeap();
         return 1;
     } else if (field_0x18 == event->mFileHandle) {
         void* fileData = field_0x18->getData();
-        CBdat::func_8003AA78(2, fileData);
+        CBdat::setBdatEntry(2, fileData);
         Bdat_GetTable_AA34();
         field_0x3C = (u32)getFP__FPCc(lbl_eu_80536398[func_80138138(mField3A)]);
         QstLogInfo_RefreshQuestDisplay(this);

@@ -601,7 +601,7 @@ extern "C" void* firstReslistB88();
 extern "C" void* firstReslistBC8();
 extern "C" void* firstReslistC08();
 extern "C" void* func_8016FE34(void* source);
-extern "C" int func_800DA06C(void* bm, void* obj);
+extern "C" int CBattleMan_ListHasValue(void* bm, void* obj);
 #include "monolib/util/FixStr.hpp"
 template <typename T>
 class _reslist_base {
@@ -1032,7 +1032,7 @@ extern "C" void clearGlobalState__Q22cf13CfGameManagerFv(u32 a, u32 b, u32 c);
 extern "C" void queueSceneEventB__Q22cf13CfGameManagerFv(u32 a, u32 b, u32 c, u32 d,
                                                           float value);
 extern "C" void func_800ABB9C(void* out, void* item);
-extern "C" void func_8009D018(u32 destination, u32 value);
+extern "C" void CtrlRemote_SetSharedBit(u32 destination, u32 value);
 extern "C" int func_800AC470(void* item);
 extern "C" void func_800AC460(void* item, int flag);
 extern "C" void func_8013DCAC(u32 a, u32 b);
@@ -1191,7 +1191,7 @@ extern "C" void CfObjectMove_setSubB0FieldA(void* obj, s32 a);
 extern "C" void CfObjectMove_setSubB0FieldE(void* obj, s32 a);
 extern "C" s32 getQueuedFileEventCount__Q22cf13CfGameManagerFv();
 extern "C" s32 func_80063560(s32 kind, s32 a, s32 b);
-extern "C" s32 func_8006398C(s32 a);
+extern "C" s32 cfResNopValueSink(s32 a);
 extern "C" u32 func_80063310(u32 a);
 extern "C" s32 func_80063394(u32 a);
 extern "C" s32 func_8006846C(void* res, s32 id);
@@ -1573,7 +1573,7 @@ extern "C" void poolInsertBack(FactoryPoolList* self, void* payloadSrc);
 extern "C" void poolInsertFront(FactoryPoolList* self, void* payloadSrc);
 extern "C" void setMgrFixStrName(const char* name);
 extern "C" void gflagClearMask(int mask);
-extern "C" void func_80068A30(void* dst, const char* src);
+extern "C" void CfScript_CopyName(void* dst, const char* src);
 extern "C" void clearFixStrBuf(void* dst);
 extern "C" void gflagOrMask(int mask);
 // Split1 .rodata string table; the compared name sits at +0x35.
@@ -1591,10 +1591,10 @@ extern "C" void* getObjIdAt74(void* arg);
 extern "C" void CfObjectMove_setMoveSpeedGated(void* obj, float val);
 extern "C" void* findObjectById__Fi(int arg);
 // Enum-list holder helpers (cf::CfObjEnumList) used by func_800B98C8.
-extern "C" void func_80043D90(void* holder);
-extern "C" void* func_80043F18(void* holder);
+extern "C" void CTaskGame_enumListCtor(void* holder);
+extern "C" void* CTaskGame_enumListGet(void* holder);
 extern "C" void __dt__80043E88(void* holder, int flag);
-extern "C" void func_800F4A98(void* list, u32 type, u32 filter);
+extern "C" void startEnumObjects(void* list, u32 type, u32 filter);
 extern "C" void* func_800F6E98(void* list, int index);
 extern "C" int getObjField620(void* list);
 extern "C" void* __dynamic_cast(void* obj, long offset, const void* srcType,
@@ -1602,7 +1602,7 @@ extern "C" void* __dynamic_cast(void* obj, long offset, const void* srcType,
 // RTTI typeinfo pair for the actor dynamic_cast.
 extern const void* lbl_eu_806618E8;
 extern const void* lbl_eu_806618F0;
-extern "C" void* func_80193CD0(void* a, void* b);
+extern "C" void* CPartsChange_FindActorByObj(void* a, void* b);
 extern "C" unsigned long CfRes_getAllocHandle();
 extern "C" void __dl__FPv(void*);
 extern "C" void __dla__FPv(void*);
@@ -1621,7 +1621,7 @@ extern "C" u32 CfRes_extractBits27_5(void* self);
 extern "C" void allocFactoryPool(UnkClass_805764CC* self, unsigned long count);
 extern "C" void func_801742D4(void* obj);
 extern "C" void func_80173C6C(void* obj, void* arg);
-extern "C" void func_802B2A08(void* obj);
+extern "C" void hikariSetFlagBit1(void* obj);
 extern "C" void tickPadSubobjects(UnkClass_805764CC* self);
 extern "C" void notifyObjCA0D48(UnkClass_805764CC* self, void* obj);
 extern "C" void tickMineSubobject(UnkClass_805764CC* self);
@@ -1661,8 +1661,8 @@ extern "C" void* func_8009EC9C(u32 index);
 // func_80174C98 is owned by kyoshin/cf/CfMapItemManager.hpp.
 extern "C" int func_80148778(void* obj, int arg);
 extern "C" int CfRes_getD80Flag();
-// func_80496288 is owned by monolib/src/scn/CScn (decl: monolib/scn/CScnTimeApi.hpp).
-extern "C" void func_80496288();
+// Scn_GetFrameDelta is owned by monolib/src/scn/CScn (decl: monolib/scn/CScnTimeApi.hpp).
+extern "C" void Scn_GetFrameDelta();
 extern "C" void func_801765A4(void* obj, int arg);
 
 // --- imports for scanTboxByXY (us-800b7d30) ---
@@ -2407,7 +2407,7 @@ extern "C" int testObj68mask(void* obj, u32 mask);
 extern "C" void func_8004CB80(void* dst, void* a, void* b);
 extern "C" float cfCam_xzLength(void* p);
 extern "C" void func_800B6AF4(void* self);
-extern "C" void func_80496264(int arg, int val);
+extern "C" void Scn_FindCamItem(int arg, int val);
 extern "C" void* CfRes_getInstanceField();
 extern "C" void func_80067DB4();
 extern "C" void* func_800BBC0C(void* data);

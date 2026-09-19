@@ -91,7 +91,7 @@ const char lbl_eu_80665B78[8] = "HBMSTOP";
 // below and invoked by CLibStaticData when the archive entry is paged in/out.
 
 void OnBdatFileLoaded(void* pData, u32 length) {
-    CBdat::func_8003AA78(0, pData);
+    CBdat::setBdatEntry(0, pData);
 }
 
 void OnBdatFileUnloaded(void* pData, u32 length) {
@@ -151,7 +151,6 @@ DesktopIcon sGameMainIcon = {
 const char* sLanguageFolderPaths[8] = {
     lbl_eu_80665AE8,
     lbl_eu_80665AF0,
-    lbl_eu_80665AF0,
     lbl_eu_80665AF8,
     lbl_eu_80665B00,
     lbl_eu_80665B08,
@@ -161,7 +160,6 @@ const char* sLanguageFolderPaths[8] = {
 
 const char* languageFolderPaths[8] = {
     lbl_eu_80665B18,
-    lbl_eu_80665B20,
     lbl_eu_80665B20,
     lbl_eu_80665B28,
     lbl_eu_80665B30,

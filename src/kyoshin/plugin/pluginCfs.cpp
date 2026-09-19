@@ -79,9 +79,6 @@ extern "C" {
     int func_800B8D5C();
     void CfObjectMove_forwardNpcSignal(int, bool);
     bool CtrlRemote_TouchBitByArg(int);
-    // Flat retail symbol (config/us/symbols.txt); C linkage keeps the
-    // call-site reloc unmangled like retail.
-    void PartyGaugeSetClamped(void*, int);
     // CtrlRemote_SetSharedBit: declared (u32,u32) by CfGameManager.hpp:767 - local
     // (int,int) form conflicts (10197). The header decl was removed by a
     // concurrent rename, so spell the (u32,u32) form locally (identical

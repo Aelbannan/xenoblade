@@ -1315,7 +1315,6 @@ extern "C" __declspec(noinline) void ArtsSlotCursor_refresh(SArtsSub8022FA58* se
     tmp = lbl_eu_8050ABB4;
     SArtsVec2 vecs[9] = {
         {lbl_eu_80668650, lbl_eu_80668650}, {lbl_eu_80668650, lbl_eu_80668650},
-        {lbl_eu_80668650, lbl_eu_80668650}, {lbl_eu_80668650, lbl_eu_80668650},
         {lbl_eu_80668654, lbl_eu_80668654}, {lbl_eu_80668650, lbl_eu_80668650},
         {lbl_eu_80668650, lbl_eu_80668650}, {lbl_eu_80668650, lbl_eu_80668650},
         {lbl_eu_80668650, lbl_eu_80668650},
@@ -1407,7 +1406,6 @@ extern "C" __declspec(noinline) void ArtsBusyPane_refreshCursor(SArts313E0* self
     SArts316F8Block tmp;
     tmp = lbl_eu_8050ABD8;
     SArtsVec2 vecs[9] = {
-        {lbl_eu_80668650, lbl_eu_80668650}, {lbl_eu_80668650, lbl_eu_80668650},
         {lbl_eu_80668650, lbl_eu_80668650}, {lbl_eu_80668650, lbl_eu_80668650},
         {lbl_eu_80668654, lbl_eu_80668654}, {lbl_eu_80668650, lbl_eu_80668650},
         {lbl_eu_80668650, lbl_eu_80668650}, {lbl_eu_80668650, lbl_eu_80668650},
@@ -2388,7 +2386,7 @@ void CMenuArtsSet_draw(CMenuArtsSet* self, nw4r::lyt::DrawInfo* info) {
 // release the arc accessor, and clean up the mem region / scroll bar /
 // info / syswin sub-objects.
 void CMenuArtsSet_teardown(CMenuArtsSet* self) {
-    func_801390E0(&self->field_0x14);
+    closeFileHandle(&self->field_0x14);
     self->field_0x28 = 0;
     ArtsLayoutPair_release((SArts2FDF4*)&self->mSubObj124);
     ArtsLayoutPair_releaseSlots((SArts3066C*)&self->mSubObj148);
@@ -2401,7 +2399,7 @@ void CMenuArtsSet_teardown(CMenuArtsSet* self) {
     }
     releaseArcResourceAccessor(self->field_0x18);
     self->field_0x18 = 0;
-    self->mMemRegion.func_8045F778();
+    self->mMemRegion.deleteRegion();
     CScrollBar_Teardown(&self->field_0x34);
     CArtsInfo_Cleanup(&self->mSubObj74);
     sysWinTermLayout(&self->mSubObjE8);
@@ -3308,7 +3306,7 @@ int CArtsList::OnFileEvent(CEventFile* pEventFile) {
     ArtsTableLayout_load((SArts304C4*)&mSubObj174);
     CMenuArtsSet_markLayoutsReady((SArts35108*)this);
     field_0x14 = 0;
-    mMemRegion.func_8045F810();
+    mMemRegion.validateHeap();
     return 1;
     }
     return 0;

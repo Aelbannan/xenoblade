@@ -1578,7 +1578,6 @@ extern "C" __declspec(noinline) void infoAnimToMode0(UnkKizunaSelfC21C* self) {
         self->field14 = 0;
         self->field15 = 1;
         self->field8->target14(0);
-        self->field8->target14(0);
         self->field8->target8(self->field0C);
     }
 }
@@ -2072,7 +2071,7 @@ bool CKizunagram::OnFileEvent(CEventFile* pEventFile) {
         }
         rebuildKizLine((UnkKizunaSelfCF40*)this);
         field28 = 0;
-        mMemRegionA.func_8045F810();
+        mMemRegionA.validateHeap();
         return true;
     }
     if (field2C == (u32)pEventFile->mFileHandle) {
@@ -2088,7 +2087,7 @@ bool CKizunagram::OnFileEvent(CEventFile* pEventFile) {
                                                            lbl_eu_8050CB20 + 0xd13);
         rebuildKizLine((UnkKizunaSelfCF40*)this);
         field2C = 0;
-        mMemRegionB.func_8045F810();
+        mMemRegionB.validateHeap();
         return true;
     }
     return false;

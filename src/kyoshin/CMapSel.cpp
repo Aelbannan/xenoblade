@@ -269,7 +269,7 @@ extern "C" void __declspec(noinline) func_802435CC(CMapSel* self) {
         self->mAllocatedMem = nullptr;
     }
     releaseArcResourceAccessor(self->mArcAccessor);
-    reinterpret_cast<UnkClass_8045F564*>(&self->mMemRegion[0])->func_8045F778();
+    reinterpret_cast<UnkClass_8045F564*>(&self->mMemRegion[0])->deleteRegion();
     CScrollBar_Teardown(self->mScrollBar);
     reinterpret_cast<CMapSelCurObj*>(&self->mCursor[0])->vfUpdate();
 }
@@ -653,7 +653,7 @@ bool CMapSel::OnFileEvent(CEventFile* event) {
         reinterpret_cast<CCur18View*>(&mCursor[0])->vf02();
         func_80243CB8(this);
         mFileHandle = 0;
-        reinterpret_cast<UnkClass_8045F564*>(&mMemRegion[0])->func_8045F810();
+        reinterpret_cast<UnkClass_8045F564*>(&mMemRegion[0])->validateHeap();
         return true;
     }
 

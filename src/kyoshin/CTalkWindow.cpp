@@ -567,7 +567,7 @@ p2done:;
 //    at each section boundary after Animate() - the source likely redeclares
 //    a base pointer per scope rather than sharing one.
 //  - Member calls on reinterpret_cast<UnkClass_8045F564*> (createRegion /
-//    func_8045F810) add null-check branches retail lacks; extern "C"
+//    validateHeap) add null-check branches retail lacks; extern "C"
 //    pre-mangled declarations avoid that but shift other allocation.
 // ---------------------------------------------------------------------------
 void CTalkWindow::Init() {
@@ -798,7 +798,7 @@ void CTalkWindow::Init() {
         break;
     }
 
-    reinterpret_cast<UnkClass_8045F564*>(&mMemRegion[0])->func_8045F810();
+    reinterpret_cast<UnkClass_8045F564*>(&mMemRegion[0])->validateHeap();
 }
 
 // ---------------------------------------------------------------------------
@@ -920,7 +920,7 @@ void CTalkWindow::Term() {
         delete mpLayout;
         mpLayout = 0;
     }
-    reinterpret_cast<UnkClass_8045F564*>(&mMemRegion[0])->func_8045F778();
+    reinterpret_cast<UnkClass_8045F564*>(&mMemRegion[0])->deleteRegion();
 }
 
 // ---------------------------------------------------------------------------

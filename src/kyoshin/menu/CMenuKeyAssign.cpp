@@ -86,7 +86,7 @@ void CMenuKeyAssign::Init() {
     }
     mScn->addRenderCB(cb, 0xa, 0);
 
-    reinterpret_cast<UnkClass_8045F564*>(&mUnkClass[0])->func_8045F810();
+    reinterpret_cast<UnkClass_8045F564*>(&mUnkClass[0])->validateHeap();
 }
 
 // us-80114a84 - CMenuKeyAssign::Term
@@ -108,7 +108,7 @@ void CMenuKeyAssign::Term() {
         mLayout = NULL;
     }
 
-    reinterpret_cast<UnkClass_8045F564*>(&mUnkClass[0])->func_8045F778();
+    reinterpret_cast<UnkClass_8045F564*>(&mUnkClass[0])->deleteRegion();
 
     lbl_eu_80663FA8 = NULL;
 }

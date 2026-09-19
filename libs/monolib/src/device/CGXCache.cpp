@@ -517,6 +517,44 @@ static inline s32 minS32(s32 a, s32 b) { return a < b ? a : b; }
 static inline s32 maxS32(s32 a, s32 b) { return a > b ? a : b; }
 static inline GXColor scaleColor255(f32 scale, const ml::CCol4& c);
 
+// Int→f32 via mid-pool magics (lbl_eu_8066A388/A390). ADXT-style BiasDouble
+// seeds the named magic so leftover plain (f32) casts CSE onto it (no anon
+// @N tail). Manual (f64-bias - magic) sites keep the named reloc; prefer
+// plain (f32) on already-FULL functions when the seed is present.
+typedef union {
+    double d;
+    u32 w[2];
+} F64Cvt;
+
+static inline f64 BiasDouble(u32 lo) {
+    F64Cvt t;
+    t.w[0] = 0x43300000u;
+    t.w[1] = lo;
+    return t.d;
+}
+
+static inline f32 s32ToF(s32 v) {
+    return (f32)(BiasDouble((u32)v ^ 0x80000000u) - lbl_eu_8066A388);
+}
+
+static inline f32 u32ToF(u32 v) {
+    return (f32)(BiasDouble(v) - lbl_eu_8066A390);
+}
+
+static inline f32 u16ToF(u16 v) {
+    return (f32)(BiasDouble(v) - lbl_eu_8066A390);
+}
+
+static inline f32 cvtS32Slot(F64Cvt* c, s32 v) {
+    c->w[1] = (u32)v ^ 0x80000000;
+    return (f32)(c->d - lbl_eu_8066A388);
+}
+
+static inline f32 cvtU32Slot(F64Cvt* c, u32 v) {
+    c->w[1] = v;
+    return (f32)(c->d - lbl_eu_8066A390);
+}
+
 
 extern "C" void func_80449D68__8CGXCacheFv(CGXCache* self, u32 sel, void* data) {
     GXRenderModeObj* rmo;
@@ -638,11 +676,12 @@ extern "C" void func_80449D68__8CGXCacheFv(CGXCache* self, u32 sel, void* data) 
         rmo = getRenderModeObj__9CDeviceVIFv();
         if (rmo->field_rendering) {
             u32 field = VIGetNextField();
-            GXSetViewportJitter((f32)vp[0], (f32)vp[1], (f32)vp[2], (f32)vp[3],
-                                lbl_eu_8066A378, lbl_eu_8066A380, field);
+            GXSetViewportJitter(s32ToF(vp[0]), s32ToF(vp[1]), s32ToF(vp[2]),
+                                s32ToF(vp[3]), lbl_eu_8066A378, lbl_eu_8066A380,
+                                field);
         } else {
-            GXSetViewport((f32)vp[0], (f32)vp[1], (f32)vp[2], (f32)vp[3],
-                          lbl_eu_8066A378, lbl_eu_8066A380);
+            GXSetViewport(s32ToF(vp[0]), s32ToF(vp[1]), s32ToF(vp[2]),
+                          s32ToF(vp[3]), lbl_eu_8066A378, lbl_eu_8066A380);
         }
         break;
     case 0xc: {
@@ -1169,67 +1208,13 @@ void CGXCache::setZCompareMD(int param1, int param2) {
 // w x h texture into tex-coord space (c = lbl_eu_8066A380): m[0][0] = c/w,
 // m[1][1] = c/h, m[2][2] = c, all other entries 1.0. Remembers the texture at
 // 0x504 and returns true.
-// s32 -> f32 through the shared 2^52+2^31 magic double (lbl_eu_8066A388).
-// Manual bit construction so the lfd reloc names the retail .sdata2 slot
-// instead of MWCC's anonymous @N pool entry (docs/MWCC_CASES.md section 7i).
-static inline f32 s32ToF(s32 v) {
-    union {
-        double d;
-        u32 w[2];
-    } c;
-    c.w[1] = (u32)v ^ 0x80000000;
-    c.w[0] = 0x43300000u;
-    return (f32)(c.d - lbl_eu_8066A388);
-}
-
-// u32 -> f32 through the shared 2^52 magic double (lbl_eu_8066A390). Unsigned
-// variant: no top-bit flip, so the low word is stored unmodified.
-static inline f32 u32ToF(u32 v) {
-    union {
-        double d;
-        u32 w[2];
-    } c;
-    c.w[1] = v;
-    c.w[0] = 0x43300000u;
-    return (f32)(c.d - lbl_eu_8066A390);
-}
-
-// u16 -> f32 through the shared 2^52 magic double (lbl_eu_8066A390). Same
-// reloc-naming rationale as s32ToF.
-static inline f32 u16ToF(u16 v) {
-    union {
-        double d;
-        u32 w[2];
-    } c;
-    c.w[1] = v;
-    c.w[0] = 0x43300000u;
-    return (f32)(c.d - lbl_eu_8066A390);
-}
-
-// Caller-owned scratch-slot variants: the union lives at the call site so
-// consecutive conversions reuse one stack slot (retail reuses two slots,
-// one per matrix column of conversions).
-typedef union {
-    double d;
-    u32 w[2];
-} F64Cvt;
-
-static inline f32 cvtS32Slot(F64Cvt* c, s32 v) {
-    c->w[1] = (u32)v ^ 0x80000000;
-    return (f32)(c->d - lbl_eu_8066A388);
-}
-
-static inline f32 cvtU32Slot(F64Cvt* c, u32 v) {
-    c->w[1] = v;
-    return (f32)(c->d - lbl_eu_8066A390);
-}
-
-
 bool CGXCache::bindTextureGX(GXTexObj* texObj, u16 w, u16 h) {
     GXLoadTexObj(texObj, GX_TEXMAP0);
+    // Helpers keep .sdata2 at retail 0x11B6 (no anon cast-pool tail). Retail
+    // uses builtin (f32)→fsubs; helper shape is fsub+frsp — target EQUIVALENT.
     Mtx mtx = {
-        { lbl_eu_8066A380 / (f32)w, lbl_eu_8066A378, lbl_eu_8066A378, lbl_eu_8066A378 },
-        { lbl_eu_8066A378, lbl_eu_8066A380 / (f32)h, lbl_eu_8066A378, lbl_eu_8066A378 },
+        { lbl_eu_8066A380 / u16ToF(w), lbl_eu_8066A378, lbl_eu_8066A378, lbl_eu_8066A378 },
+        { lbl_eu_8066A378, lbl_eu_8066A380 / u16ToF(h), lbl_eu_8066A378, lbl_eu_8066A378 },
         { lbl_eu_8066A378, lbl_eu_8066A378, lbl_eu_8066A380, lbl_eu_8066A378 },
     };
     GXLoadTexMtxImm(mtx, GX_TEXMTX0, GX_MTX_2x4);
@@ -1246,9 +1231,9 @@ void CGXCache::getClearColor() { findRingEntry__8CGXCacheFv(&unk4, 2); }
 void CGXCache::updateOrthoGX() {
     CGXCache* cache = cacheInstance__9CDeviceGX;
     f32 c = lbl_eu_8066A378;
-    f32 far = (f32)(-unk500);
-    f32 right = (f32)cache->mScissorDeltaX;
-    f32 bottom = (f32)cache->mScissorDeltaY;
+    f32 far = s32ToF(-unk500);
+    f32 right = s32ToF(cache->mScissorDeltaX);
+    f32 bottom = s32ToF(cache->mScissorDeltaY);
     C_MTXOrtho(mProjMtx, c, bottom, c, right, c, far);
     GXSetProjection(mProjMtx, GX_ORTHOGRAPHIC);
 }
@@ -1316,20 +1301,20 @@ void CGXCache::func_8044B660() {
 // matrix is refit to the sub-rect at 0x510..0x516 (frustum translation and
 // scale for a letterboxed viewport).
 void CGXCache::func_8044B8CC(f32 fovy, f32 znear, f32 zfar) {
-    f32 aspect = lbl_eu_8066A398 * ((f32)mScissorDeltaX / (f32)mScissorDeltaY);
+    f32 aspect = lbl_eu_8066A398 * (s32ToF(mScissorDeltaX) / s32ToF(mScissorDeltaY));
     C_MTXPerspective(mProjMtx, fovy, aspect * getWidthScale__9CDeviceVIFv(), znear, zfar);
     if (mAdjustProj) {
-        f32 r = (f32)((s32)mRectRight - (s32)((u32)getRenderModeObj__9CDeviceVIFv()->fbWidth >> 1));
-        f32 l = (f32)((s32)mRectLeft - (s32)((u32)getRenderModeObj__9CDeviceVIFv()->fbWidth >> 1));
-        f32 t = (f32)((s32)mRectTop - (s32)((u32)getRenderModeObj__9CDeviceVIFv()->efbHeight >> 1));
-        f32 b = (f32)((s32)mRectBottom - (s32)((u32)getRenderModeObj__9CDeviceVIFv()->efbHeight >> 1));
+        f32 r = s32ToF((s32)mRectRight - (s32)((u32)getRenderModeObj__9CDeviceVIFv()->fbWidth >> 1));
+        f32 l = s32ToF((s32)mRectLeft - (s32)((u32)getRenderModeObj__9CDeviceVIFv()->fbWidth >> 1));
+        f32 t = s32ToF((s32)mRectTop - (s32)((u32)getRenderModeObj__9CDeviceVIFv()->efbHeight >> 1));
+        f32 b = s32ToF((s32)mRectBottom - (s32)((u32)getRenderModeObj__9CDeviceVIFv()->efbHeight >> 1));
         mProjMtx[0][2] = (r + l) / (r - l);
         // Overwrite znear in place: retail reuses the param's own callee-save
         // (fmuls f31,f0,f31) rather than giving the scaled copy a new range.
         znear = lbl_eu_8066A39C * znear;
         mProjMtx[1][2] = (t + b) / (t - b);
-        mProjMtx[0][0] = znear / (znear / mProjMtx[0][0] * ((f32)((s32)mRectRight - (s32)mRectLeft) / (f32)(u32)getRenderModeObj__9CDeviceVIFv()->fbWidth));
-        mProjMtx[1][1] = znear / (znear / mProjMtx[1][1] * ((f32)((s32)mRectBottom - (s32)mRectTop) / (f32)(u32)getRenderModeObj__9CDeviceVIFv()->efbHeight));
+        mProjMtx[0][0] = znear / (znear / mProjMtx[0][0] * (s32ToF((s32)mRectRight - (s32)mRectLeft) / u32ToF(getRenderModeObj__9CDeviceVIFv()->fbWidth)));
+        mProjMtx[1][1] = znear / (znear / mProjMtx[1][1] * (s32ToF((s32)mRectBottom - (s32)mRectTop) / u32ToF(getRenderModeObj__9CDeviceVIFv()->efbHeight)));
     }
     GXSetProjection(mProjMtx, GX_ORTHOGRAPHIC);
 }
@@ -1340,19 +1325,15 @@ void CGXCache::func_8044B8CC(f32 fovy, f32 znear, f32 zfar) {
 // (CGXCache*, f32[4][4], f32 fovY, f32 nearZ, f32 farZ) from r3/r4/f1-f3
 // (same pattern as setAlphaBlend / dispatchCmdGX).
 extern "C" void func_8044BB20__8CGXCacheFv(CGXCache* self, f32 projOut[4][4], f32 fovy, f32 nearZ, f32 farZ) {
-    // Plain float casts reproduce retail's exact schedule; the conversion
-    // magics land in MWCC's anonymous .sdata2 pool (@N) - they need
-    // retarget_relocs/exact_renames onto lbl_eu_8066A388/A390 in the unit's
-    // postprocess rule (same pattern as the existing .text 0x8CC entries).
-    // NOTE: retail passes float param 2 (nearZ) as C_MTXPerspective's near
+    // nearZ/farZ: retail passes float param 2 as C_MTXPerspective's near
     // plane and scales IT by lbl_eu_8066A39C; param 3 is the far plane.
-    f32 aspect = lbl_eu_8066A398 * ((f32)self->mScissorDeltaX / (f32)self->mScissorDeltaY);
+    f32 aspect = lbl_eu_8066A398 * (s32ToF(self->mScissorDeltaX) / s32ToF(self->mScissorDeltaY));
     C_MTXPerspective(projOut, fovy, aspect * getWidthScale__9CDeviceVIFv(), nearZ, farZ);
     if (self->mAdjustProj) {
-        f32 r = (f32)((s32)self->mRectRight - (s32)((u32)getRenderModeObj__9CDeviceVIFv()->fbWidth >> 1));
-        f32 l = (f32)((s32)self->mRectLeft - (s32)((u32)getRenderModeObj__9CDeviceVIFv()->fbWidth >> 1));
-        f32 t = (f32)((s32)self->mRectTop - (s32)((u32)getRenderModeObj__9CDeviceVIFv()->efbHeight >> 1));
-        f32 b = (f32)((s32)self->mRectBottom - (s32)((u32)getRenderModeObj__9CDeviceVIFv()->efbHeight >> 1));
+        f32 r = s32ToF((s32)self->mRectRight - (s32)((u32)getRenderModeObj__9CDeviceVIFv()->fbWidth >> 1));
+        f32 l = s32ToF((s32)self->mRectLeft - (s32)((u32)getRenderModeObj__9CDeviceVIFv()->fbWidth >> 1));
+        f32 t = s32ToF((s32)self->mRectTop - (s32)((u32)getRenderModeObj__9CDeviceVIFv()->efbHeight >> 1));
+        f32 b = s32ToF((s32)self->mRectBottom - (s32)((u32)getRenderModeObj__9CDeviceVIFv()->efbHeight >> 1));
         projOut[0][2] = (r + l) / (r - l);
         // Overwrite the near plane in place: retail reuses the param's own
         // callee-save (fmuls f31,f0,f31) rather than giving the scaled copy
@@ -1361,11 +1342,11 @@ extern "C" void func_8044BB20__8CGXCacheFv(CGXCache* self, f32 projOut[4][4], f3
         projOut[1][2] = (t + b) / (t - b);
         // Retail evaluates each ratio's getRenderModeObj() call before
         // touching the matrix diagonal, so hoist the ratios.
-        f32 xr = (f32)((s32)self->mRectRight - (s32)self->mRectLeft) /
-                 (f32)(u32)getRenderModeObj__9CDeviceVIFv()->fbWidth;
+        f32 xr = s32ToF((s32)self->mRectRight - (s32)self->mRectLeft) /
+                 u32ToF(getRenderModeObj__9CDeviceVIFv()->fbWidth);
         projOut[0][0] = nearZ / (nearZ / projOut[0][0] * xr);
-        f32 yr = (f32)((s32)self->mRectBottom - (s32)self->mRectTop) /
-                 (f32)(u32)getRenderModeObj__9CDeviceVIFv()->efbHeight;
+        f32 yr = s32ToF((s32)self->mRectBottom - (s32)self->mRectTop) /
+                 u32ToF(getRenderModeObj__9CDeviceVIFv()->efbHeight);
         projOut[1][1] = nearZ / (nearZ / projOut[1][1] * yr);
     }
 }
@@ -1378,13 +1359,7 @@ s32 CGXCache::func_8044BD74(s32 param) {
     // conversion stores, and both param/width convert via the unsigned 2^52
     // magic before the single-precision mul/div.
     u32 wid = *findRingEntry__8CGXCacheFv(&unk4, 3);
-    // Plain float casts reproduce retail's exact 156B schedule; the s16 field
-    // converts through the signed magic (lha/xoris/2^52+2^31) and param/wid
-    // through the unsigned 2^52 magic. NOTE: MWCC pools these as anonymous
-    // .sdata2 constants (@N) - they need retarget_relocs/exact_renames onto
-    // lbl_eu_8066A388/A390 in the unit's postprocess rule (same pattern as
-    // the existing .text 0x8CC / 0x1A48 entries).
-    f32 f = (f32)unk500 * (f32)(u32)param / (f32)wid;
+    f32 f = s32ToF(unk500) * u32ToF((u32)param) / u32ToF(wid);
     return (s32)f;
 }
 

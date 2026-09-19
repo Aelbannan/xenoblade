@@ -268,7 +268,7 @@ extern "C" int func_8029348C(CMenuPTChangeNotice* self, CEventFile* evt) {
     self->mScene->addRenderCB(cb, 0xa, 0);
 
         self->mFileHandle = 0;
-        self->mMemRegion.func_8045F810();
+        self->mMemRegion.validateHeap();
         return 1;
     }
     return 0;

@@ -9,6 +9,20 @@ namespace cf {
         u8 field_0x0[0xC];
     };
 
+    class CfObjectModel;
+
+    class CfObjectSub38 {
+    public:
+        void notifySubEffect();
+        void updateSubEffect();
+        void m08(int);
+        void m2C(CfObjectModel*);
+        void mA0();
+        void mAC();
+        void forwardActorEventEnd(void*);
+        void forwardActorEvent(void*);
+    };
+
     //min size: 0x70
     class CfObject : public CObjectParam {
     public:
@@ -114,7 +128,7 @@ namespace cf {
         // other TUs keep compiling unchanged (Wave-35 rule). MWCC inlines
         // it into the identical virtual dispatch.
         void CfObject_UnkVirtualFunc66(int flag) { setPointEnabled(flag); } //0x158
-        void func_800BFB90();
+        void update();
         virtual void CfObject_UnkVirtualFunc67();     //0x15C
         virtual int CfObject_UnkVirtualFunc68(const ml::CVec3* vec = nullptr); //0x160
         virtual void CfObject_UnkVirtualFunc69();     //0x164

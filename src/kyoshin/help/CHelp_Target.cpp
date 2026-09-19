@@ -4,6 +4,8 @@
 
 extern cf::CfObjectPc* getCfObjectPc(cf::CfObjectMove* objMove);
 extern int isGlobalCamFlagSet(int mask);
+// Retail linker name getEffOwner____FPv (not getEffOwner__FPv).
+extern "C" void* getEffOwner____FPv(void* obj);
 
 // Retail layout shim: CObjectParam lives at offset 0x3E9C in CfObjectPc.
 // This matches the retail binary where the vtable for the CfObjectMove
@@ -47,13 +49,13 @@ namespace cf{
         switch(unkC){
             case 1:
                 // Simple existence check
-                if(func_800AD860(findObjectById(retailObj->objectParam.CObjectParam_getSelfObjectId())) == nullptr) return false;
+                if(getEffOwner____FPv(findObjectById(retailObj->objectParam.CObjectParam_getSelfObjectId())) == nullptr) return false;
             break;
             case 2:
             {
                 // Check enemy type field at offset 0x15F0
                 CActorParam15F0View* actorView = static_cast<CActorParam15F0View*>(
-                    func_800AD860(findObjectById(retailObj->objectParam.CObjectParam_getSelfObjectId())));
+                    getEffOwner____FPv(findObjectById(retailObj->objectParam.CObjectParam_getSelfObjectId())));
                 if(actorView == nullptr) return false;
                 if(actorView->unk15F0 == 2) break;
                 else return false;

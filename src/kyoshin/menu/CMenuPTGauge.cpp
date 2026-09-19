@@ -123,7 +123,7 @@ void CMenuPTGauge::Init() {
     }
     mScn->addRenderCB(cb, 0xa, 0); // priority 0xa = HUD render layer
 
-    mLayoutMem.func_8045F810();
+    mLayoutMem.validateHeap();
 }
 
 /**
@@ -395,7 +395,7 @@ void CMenuPTGauge::Term() {
         mLayout = NULL;
     }
 
-    mLayoutMem.func_8045F778();
+    mLayoutMem.deleteRegion();
     lbl_eu_806642D8 = NULL;
 }
 

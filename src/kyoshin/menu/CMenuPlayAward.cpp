@@ -1158,7 +1158,7 @@ bool CPlayAwardList::OnFileEvent(CEventFile* event) {
         // Refresh the list, release the file handle and the scratch region.
         func_802719F8(this);
         mFileHandle = 0;
-        mMemRegion.func_8045F810();
+        mMemRegion.validateHeap();
         __dt__14Class_8045F858Fv(regionBuf, -1);
         return 1;
     }

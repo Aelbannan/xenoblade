@@ -20,7 +20,7 @@ extern char lbl_eu_80510CC8[];
 void drawLayout(nw4r::lyt::Layout*, nw4r::lyt::DrawInfo*, int, int);
 u32 advanceAnimTransform(nw4r::lyt::AnimTransform*, float);
 u32 AnimRewindFrame(nw4r::lyt::AnimTransform*, float);
-void func_801390E0(CFileHandle**);
+void closeFileHandle(CFileHandle**);
 void releaseArcResourceAccessor(nw4r::lyt::ArcResourceAccessor*);
 void buildLayout(nw4r::lyt::Layout**, nw4r::lyt::ArcResourceAccessor*, const char*);
 void bindLayoutAnimTransform(nw4r::lyt::Layout*, nw4r::lyt::AnimTransform**, nw4r::lyt::ArcResourceAccessor*, char*);
@@ -74,7 +74,7 @@ bool CLoad::OnFileEvent(CEventFile* pEventFile) {
         CLoadMarkFileArrived(reinterpret_cast<CLoadFull*>(this));
 
         mFileHandle = nullptr;
-        mMemRegion.func_8045F810();
+        mMemRegion.validateHeap();
         return true;
     }
     return false;
@@ -146,7 +146,7 @@ void CLoadDrawIfVisible(CLoad* self, nw4r::lyt::DrawInfo* drawInfo) {
 // Tear down the loaded layout, accessor and mem region.
 void CLoadTeardownLayout(CLoad* self) {
     CDeviceVI::waitForDrawDone();
-    func_801390E0(&self->mFileHandle);
+    closeFileHandle(&self->mFileHandle);
     self->mIsLoaded = 0;
     // Redundant inner null check: MWCC CSEs the delete's repeated test into
     // one cmpi and re-tests it, reproducing the retail's second (dead) beq.
@@ -156,7 +156,7 @@ void CLoadTeardownLayout(CLoad* self) {
     }
     releaseArcResourceAccessor(self->mAccessor);
     self->mAccessor = nullptr;
-    self->mMemRegion.func_8045F778();
+    self->mMemRegion.deleteRegion();
 }
 
 // Begin the fade-in animation (step 1).

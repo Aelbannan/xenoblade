@@ -3,7 +3,6 @@
 
 #include "kyoshin/menu/CMenuKizunaTalkList.hpp"
 
-extern "C" void __dt__19CMenuKizunaTalkListFv(void*, int);
 extern "C" void cbRenderBefore__19CMenuKizunaTalkListFv(void*);
 
 #include "kyoshin/code_80135FDC.hpp"
@@ -149,7 +148,26 @@ void KizunaList_Phase1Ready(CMenuKizunaTalkList* self);
 void KizunaList_Phase2Input(CMenuKizunaTalkList* self);
 void KizunaList_Phase3Flag(CMenuKizunaTalkList* self);
 
-CMenuKizunaTalkList::~CMenuKizunaTalkList() {}
+extern "C" void __dt__800FED0C(CProcess* self, int flags);
+
+/*
+ * Destructor (retail D2 form). Free-function with flags so the base call
+ * relocates to __dt__800FED0C, not library __dt__8CProcessFv.
+ */
+extern "C" CMenuKizunaTalkList* __dt__19CMenuKizunaTalkListFv(CMenuKizunaTalkList* self, int flags) {
+    if (self != 0) {
+        // Free-function dtor cannot touch private members; use layout offsets.
+        u8* base = reinterpret_cast<u8*>(self);
+        __dt__15CKizunaTalkListFv(base + 0xB8, -1);
+        __dt__11CTitleAHelpFv(base + 0x80, -1);
+        __dt__6CBgTexFv(base + 0x60, -1);
+        __dt__800FED0C((CProcess*)self, 0);
+        if (flags > 0) {
+            operator delete(self);
+        }
+    }
+    return self;
+}
 
 // Initialise the Kizuna talk list screen. Re-initialises each embedded widget
 // via a temporary object + copy (see CMenuTutorial::Init), then registers this

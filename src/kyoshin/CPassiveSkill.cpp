@@ -1796,6 +1796,7 @@ extern "C" void func_80264F7C(UI::CPassiveSkillLine* self, int state, int id,
 // Kizuna-chart helpers (defined in CPcKizunagram.cpp) called with the
 // character skill blob. func_8025F9AC's trailing argument registers are left
 // unset by retail, so only the blob pointer is passed.
+extern "C" void KizunagramSetActiveSlot(void* self, int slot);
 extern "C" void func_8025F9AC(void* self);
 extern "C" void func_8025F768(void* self, int a, int b, int value);
 extern "C" void func_80280E9C(u8* self);

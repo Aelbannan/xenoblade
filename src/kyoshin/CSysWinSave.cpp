@@ -23,10 +23,6 @@ extern char lbl_eu_80661ED0[];
 extern char lbl_eu_8050FD6C[];
 extern char lbl_eu_8050FD60[];
 extern char lbl_eu_8050FD50[];
-extern "C" {
-    int func_8008294C__Q22cf13CfGameManagerFv(int);
-
-}
 #include "monolib/util/MemManager.hpp"
 #include "monolib/work/CWorkThreadSystem.hpp"
 #include "monolib/device/CDeviceVI.hpp"
@@ -164,7 +160,7 @@ extern "C" void func_80294638(CSysWinSave* self) {
 // their non-vtable fields into the embedded storage.
 // ---------------------------------------------------------------------------
 void CSysWinSave::Init() {
-    func_8008294C__Q22cf13CfGameManagerFv(true);
+    setPresentationFlag__Q22cf13CfGameManagerFv(true);
 
     IScnRender* render = reinterpret_cast<IScnRender*>(this);
     if (this) render = reinterpret_cast<IScnRender*>(&mScnRender);
@@ -218,7 +214,7 @@ void CSysWinSave::Init() {
     __dt__6CCur18Fv(tempC, -1);
     reinterpret_cast<CCur18View*>(&mCur18[0])->vf02();
 
-    mMemRegion.func_8045F810();
+    mMemRegion.validateHeap();
 }
 
 // ---------------------------------------------------------------------------
@@ -229,7 +225,7 @@ void CSysWinSave::Init() {
 // ---------------------------------------------------------------------------
 void CSysWinSave::Move() {
     CTaskGame::getInstance();
-    if (CTaskGame::func_800426F0() || (lbl_eu_80663E28 & 0x200000))
+    if (CTaskGame::isFlag01Set() || (lbl_eu_80663E28 & 0x200000))
         return;
     if (IsMenuState621F0() == 0) return;
 
@@ -293,7 +289,7 @@ void CSysWinSave::Term() {
     CDeviceVI::waitForDrawDone();
     sysWinTermLayout(&mSysWin[0]);
     reinterpret_cast<CCursor18*>(&mCur18[0])->vf3();
-    mMemRegion.func_8045F778();
+    mMemRegion.deleteRegion();
     lbl_eu_80664A08 = 0;
 
     IScnRender* render = reinterpret_cast<IScnRender*>(this);
@@ -301,7 +297,7 @@ void CSysWinSave::Term() {
     mScene->removeRenderCB(render);
 
     if (mFlagDD != 0)
-        func_8008294C__Q22cf13CfGameManagerFv(false);
+        setPresentationFlag__Q22cf13CfGameManagerFv(false);
 }
 
 // ---------------------------------------------------------------------------
@@ -340,7 +336,7 @@ void CSysWinSave::cbRenderBefore() {
     // chain keeps the body off the fallthrough so MWCC emits retail's
     // branch-over-branch: `bne end` for the first disjunct, `beq body; b end`
     // for the second (same scheme as CSysWinSelect::cbRenderBefore).
-    if (CTaskGame::func_800426F0() == 0 && (lbl_eu_80663E28 & 0x200000) == 0) {
+    if (CTaskGame::isFlag01Set() == 0 && (lbl_eu_80663E28 & 0x200000) == 0) {
         goto body;
     }
     goto end;

@@ -2,8 +2,6 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include <harness_catalog.h>
-__attribute__((aligned(8))) SstCoreTblEntry lbl_eu_80602A00[2];
-
 
 /* ---- Shared types for the Sofdec SST (stream set) subsystem ---- */
 
@@ -13,6 +11,13 @@ typedef struct SstObj SstObj;
 typedef struct SstHnObj SstHnObj;
 typedef struct SstHnObjVtable SstHnObjVtable;
 typedef struct SstCore SstCore;
+typedef struct SstCoreTblEntry {
+    SstCore* core;                                 /* 0x00 */
+    s32 refcount;                                  /* 0x04 */
+} SstCoreTblEntry;
+
+/* MWCC GC/3.0a5.2: use __declspec(align), not GCC __attribute__. */
+__declspec(align(8)) SstCoreTblEntry lbl_eu_80602A00[2];
 
 /* Object referenced from SstHn::obj (0x08). Its method table lives inline in
  * the object memory, so the SJ control methods are plain members. */
@@ -49,13 +54,6 @@ struct SstCore {
     u8 pad_0x08[0x8];
     void (*release)(void* handle);                 /* 0x10 */
 };
-
-/* Global table of registered SST cores (2 entries of {core, refcount}). */
-typedef struct SstCoreTblEntry {
-    SstCore* core;                                 /* 0x00 */
-    s32 refcount;                                  /* 0x04 */
-} SstCoreTblEntry;
-
 
 /* SST (stream set) handle: also the array element at MWSFDPLY+0x5d8 with a
  * stride of 0x28. */

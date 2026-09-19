@@ -3298,7 +3298,7 @@ bool CMCCrystalBox::OnFileEvent(CEventFile* event) {
 
         loadCrystalBoxArchive(this);
         subObjPtrs[0] = 0;
-        reinterpret_cast<UnkClass_8045F564*>(&pad_00[0])->func_8045F810();
+        reinterpret_cast<UnkClass_8045F564*>(&pad_00[0])->validateHeap();
         return true;
     }
     if ((CFileHandle*)subObjPtrs[1] == evt) {
@@ -3315,7 +3315,7 @@ bool CMCCrystalBox::OnFileEvent(CEventFile* event) {
             ->Attach(data2, lbl_eu_8050888C + 0x37f);
         loadCrystalBoxArchive(this);
         subObjPtrs[1] = 0;
-        reinterpret_cast<UnkClass_8045F564*>(&pad_00[0x10])->func_8045F810();
+        reinterpret_cast<UnkClass_8045F564*>(&pad_00[0x10])->validateHeap();
         return true;
     }
     if ((CFileHandle*)subObjPtrs[2] == evt) {

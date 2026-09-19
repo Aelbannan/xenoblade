@@ -83,9 +83,9 @@ CVS_THREAD_VISION_TELL* __ct__802A96C0(CVoiceHandle* h1, CVoiceHandle* h2) {
     u32 v1;
     u32* p0;
     v1 = (p0 = lbl_eu_80539DB0)[1];
-    ((CVS_THREAD_VISION_TELL_raw*)self)->state0 = (u32*)p0[0];
-    ((CVS_THREAD_VISION_TELL_raw*)self)->state1 = v1;
-    ((CVS_THREAD_VISION_TELL_raw*)self)->state2 = p0[2];
+    ((CVS_THREAD_VISION_TELL_raw*)self)->unk0 = (u32*)p0[0];
+    ((CVS_THREAD_VISION_TELL_raw*)self)->unk4 = v1;
+    ((CVS_THREAD_VISION_TELL_raw*)self)->unk8 = p0[2];
 
     return self;
 }
@@ -102,9 +102,10 @@ void VisionTell_PlaySlot1(CVS_THREAD_VISION_TELL* self) {
     const u32* p = lbl_eu_80539DBC;
     v0 = *p++;
     CVoiceHandle* handle20 = self->field_0x20;
-    self->unk4 = *p++;
-    self->unk0 = (u32*)v0;
-    self->unk8 = *p;
+    CVS_THREAD_VISION_TELL_raw* st = (CVS_THREAD_VISION_TELL_raw*)self;
+    st->unk4 = *p++;
+    st->unk0 = (u32*)v0;
+    st->unk8 = *p;
 
     // Both slots must be populated
     if (handle20 == NULL) return;
@@ -175,9 +176,10 @@ void VisionTell_PlaySlot2(CVS_THREAD_VISION_TELL* self) {
     const u32* p = lbl_eu_80539DC8;
     v0 = *p++;
     CVoiceHandle* handle24 = self->field_0x24;
-    self->unk4 = *p++;
-    self->unk0 = (u32*)v0;
-    self->unk8 = *p;
+    CVS_THREAD_VISION_TELL_raw* st = (CVS_THREAD_VISION_TELL_raw*)self;
+    st->unk4 = *p++;
+    st->unk0 = (u32*)v0;
+    st->unk8 = *p;
 
     // Initial active-state gate on the slot-2 handle (read once here).
     if (handle24 == NULL) return;

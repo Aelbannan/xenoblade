@@ -130,7 +130,7 @@ extern "C" void __dt__6CCur18Fv(void*, int);
 extern "C" void __dt__10CScrollBarFv(void*, int);
 extern "C" void __dt__17UnkClass_8045F564Fv(UnkClass_8045F564*, int);
 extern "C" void __dl__FPv(void*);
-void func_801390E0(CFileHandle**);
+void closeFileHandle(CFileHandle**);
 extern "C" void __ct__CScrollBar(void*, int);
 extern "C" u8 BdatGetU8Direct(u32, const char*, u32);
 extern "C" u32 Bdat_GetMaxRow_B1EC(void*);

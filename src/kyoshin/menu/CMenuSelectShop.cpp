@@ -183,7 +183,7 @@ void CMenuSelectShop::Init() {
     if (this) render = &mOcc70;
     addRenderCB__4CScnFP10IScnRenderUlUl(mScene, render, 0xd, 0);
 
-    mMemRegion.func_8045F810();
+    mMemRegion.validateHeap();
 }
 
 // ---------------------------------------------------------------------------
@@ -202,7 +202,7 @@ void CMenuSelectShop::Term() {
 
     teardownShopWin(&mSelShop);
     reinterpret_cast<CCursor18*>(&mCursor[0])->vf3();
-    mMemRegion.func_8045F778();
+    mMemRegion.deleteRegion();
     lbl_eu_806642E8 = 0;
 }
 

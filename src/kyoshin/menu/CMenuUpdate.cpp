@@ -193,7 +193,7 @@ extern "C" void Init__11CMenuUpdateFv(void* self) {
         renderPtr += 0x70;
     }
     addRenderCB__4CScnFP10IScnRenderUlUl(obj->mScene, renderPtr, 7, 0);
-    obj->mMemRegion.func_8045F810();
+    obj->mMemRegion.validateHeap();
     // stackObj destructor called automatically
 }
 
@@ -214,7 +214,7 @@ void CMenuUpdate::Term() {
         delete mLayout;
         mLayout = NULL;
     }
-    mMemRegion.func_8045F778();
+    mMemRegion.deleteRegion();
     lbl_eu_80664198 = 0;
 }
 

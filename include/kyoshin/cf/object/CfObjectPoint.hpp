@@ -7,7 +7,7 @@
 class CScn;
 
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
-// func_80496288 is owned by monolib/src/scn/CScn (decl: monolib/scn/CScnTimeApi.hpp).
+// Scn_GetFrameDelta is owned by monolib/src/scn/CScn (decl: monolib/scn/CScnTimeApi.hpp).
 extern "C" u32 func_8049E51C(u8* idMan);
 extern "C" u8* ScnRes_VertRayForward_E398(float*, u32, u32, u32, float, float);
 extern "C" void func_804BE4B4(float*, u32);

@@ -405,7 +405,7 @@ void CMenuVision::Term() {
             mEntries[i].mLayout = 0;
         }
     }
-    mLayoutMem.func_8045F778();
+    mLayoutMem.deleteRegion();
     lbl_eu_80664388 = 0;
 }
 

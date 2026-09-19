@@ -292,7 +292,7 @@ void CMenuGetItem::Init() {
     }
     mScn->addRenderCB(cb, 7, 0);
 
-    reinterpret_cast<UnkClass_8045F564*>(&mUnkClass[0])->func_8045F810();
+    reinterpret_cast<UnkClass_8045F564*>(&mUnkClass[0])->validateHeap();
 }
 
 void CMenuGetItem::Term() {
@@ -310,7 +310,7 @@ void CMenuGetItem::Term() {
         mLayout = NULL;
     }
 
-    reinterpret_cast<UnkClass_8045F564*>(&mUnkClass[0])->func_8045F778();
+    reinterpret_cast<UnkClass_8045F564*>(&mUnkClass[0])->deleteRegion();
 
     if (lbl_eu_806641A8 == this) {
         lbl_eu_806641A8 = NULL;

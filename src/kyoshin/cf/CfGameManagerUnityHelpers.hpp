@@ -1916,6 +1916,10 @@ extern "C" bool syncBdatDataCache__Q22cf13CfGameManagerFv(s32 value, s32* curren
     }
     return changed;
 }
+// syncFieldData must bl the retail symbol syncBdatDataCache, not the
+// anti-inline wrap alias used while this header is #included.
+#undef syncBdatDataCache__Q22cf13CfGameManagerFv
+extern "C" bool syncBdatDataCache__Q22cf13CfGameManagerFv(s32 value, s32* current, u32 size);
 extern "C" u32 syncFieldData__Q22cf13CfGameManagerFv(u32 value, bool searchEntries) {
     if (searchEntries) {
         UnkClass_8009ECB0* data = (UnkClass_8009ECB0*)CtrlObjectParam_GetSlotTableBase();
@@ -1934,6 +1938,7 @@ extern "C" u32 syncFieldData__Q22cf13CfGameManagerFv(u32 value, bool searchEntri
     }
     return 0;
 }
+#define syncBdatDataCache__Q22cf13CfGameManagerFv unityHelpersWrapFunc_8007DECC
 
 extern "C" u32 getQueuedFileEventCount__Q22cf13CfGameManagerFv();
 extern "C" void recoverFieldState__Q22cf13CfGameManagerFv(bool alternate) {

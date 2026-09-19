@@ -34,16 +34,8 @@ u8 buff_sbss_padF9a = 0;
 u8 buff_sbss_padF9b = 0;
 u8 buff_sbss_padF9c = 0;
 u32 lbl_eu_806648FC = 0;
-// Direct calls to the CBdat / CfGameManager targets. MWCC-1.1 rejects the
-// member-encoded callee names in C declarations (10322), so the source spells
-// plain placeholders; UNIT_RULES exact_renames (tools/postprocess_reloc_names.py)
-// renames the relocations onto the retail symbols:
-//   cbdatSetBdatEntry                -> setBdatEntry__5CBdatFUlPv
-//   cbdatGetEntry                    -> getEntry__5CBdatFUl
-//   cfGameManagerSetPresentationFlag -> setPresentationFlag__Q22cf13CfGameManagerFv
-extern "C" void setBdatEntry__5CBdatFUlPv(u32 entryIndex, void* data);
-extern "C" void cbdatGetEntry(u32 entryIndex);
-extern "C" void cfGameManagerSetPresentationFlag(u32 enable);
+// CBdat / CfGameManager callees: mangled names as extern "C" (declared in
+// CSysWinBuff.hpp). MWCC-1.1 rejects true member-call spelling (10322).
 // DECOUPLED (IWorkEvent-free TU): CTaskGame/CScn/CDeviceVI/etc. pull
 // monolib/work.hpp -> class IWorkEvent, whose members collide with the
 // composite-vtable handler globals below (MWCC-1.1 10322). Only CProcess
@@ -53,10 +45,11 @@ extern "C" void cfGameManagerSetPresentationFlag(u32 enable);
 // (minimal CScn: only removeRenderCB is used; full CScn.hpp pulls IWorkEvent.)
 class CScn { public: void removeRenderCB(IScnRender* render); };
 class CEventFile;
-namespace CTaskGame {
-void* getInstance();
-int func_800426F0();
-}
+class CTaskGame {
+public:
+    static void* getInstance();
+    static bool isFlag01Set();
+};
 #include "monolib/device/CDeviceVI.hpp"
 #include "monolib/device/CFileHandle.hpp"
 #include "monolib/util/MemManager.hpp"
@@ -139,9 +132,9 @@ bool SysWinBuff_OnFileEventMatch(CSysWinBuff* self, CEventFile* pEventFile) {
 // ---------------------------------------------------------------------------
 void CSysWinBuff::Term() {
     CDeviceVI::waitForDrawDone();
-    func_801390E0(&mFileHandle);
+    closeFileHandle(&mFileHandle);
     sysWinTermLayout(&mSysWin[0]);
-    cbdatGetEntry(2);
+    getEntry__5CBdatFUl(2);
     lbl_eu_806648E4 = 0;
     lbl_eu_806648E0 = 0;
     IScnRender* render = reinterpret_cast<IScnRender*>(this);
@@ -149,7 +142,7 @@ void CSysWinBuff::Term() {
     mScene->removeRenderCB(render);
     DecMenuCounter64080();
     if (code80135FDC_getByte_64080() == 0)
-        cfGameManagerSetPresentationFlag(0);
+        setPresentationFlag__Q22cf13CfGameManagerFv(false);
 }
 
 // ---------------------------------------------------------------------------
@@ -159,7 +152,7 @@ void CSysWinBuff::Term() {
 // ---------------------------------------------------------------------------
 void CSysWinBuff::cbRenderBefore() {
     CTaskGame::getInstance();
-    if (CTaskGame::func_800426F0() || (lbl_eu_80663E28 & 0x200000))
+    if (CTaskGame::isFlag01Set() || (lbl_eu_80663E28 & 0x200000))
         return;
     if (!IsMenuState621F0()) return;
     if (MenuTutorialIsCreated() != 0) return;
@@ -230,7 +223,7 @@ extern "C" CSysWinBuff* create__11CSysWinBuffFv(CProcess* registerParent, CScn* 
 
         obj->flagB8 = 0;
         obj->argBA = arg;
-        cfGameManagerSetPresentationFlag(1);
+        setPresentationFlag__Q22cf13CfGameManagerFv(true);
         code80135FDC_postIncByte_64080();
     }
     lbl_eu_806648E0 = (CSysWinBuff*)obj;

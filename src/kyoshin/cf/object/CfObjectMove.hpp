@@ -229,7 +229,7 @@ extern "C" f32 SinFIdx__Q24nw4r4mathFf(f32);
 extern "C" f32 CosFIdx__Q24nw4r4mathFf(f32);
 // Enemy-state query (mangled global C++ symbol func_800AD860__FPv; defined
 // outside this repo's src tree) used by func_800BC9EC.
-void* func_800AD860(void* obj);
+void* getEffOwner(void* obj);
 // vtable +0x14C flag-word bit queries (defined in CfObjectModel.cpp as plain
 // global C++ functions) used by func_800BCFA0's dispatch tail. extern "C":
 // the retail symbols are the unmangled names.
@@ -742,7 +742,7 @@ namespace cf {
         u32 field_58;           // 0x58
         u32 field_5C;           // 0x5C
     };
-    // View of the func_800AD860 result's +0x45CA u16 (func_800BC9EC tests its
+    // View of the getEffOwner result's +0x45CA u16 (func_800BC9EC tests its
     // bit 0).
     struct CfObjectMoveAD86View {
         u8 _pad[0x45CA];        // 0x00-0x45C9

@@ -101,7 +101,7 @@ void CMenuBattleMode::Init() {
 
     IScnRender* cb = this;
     mScn->addRenderCB(cb, 7, 0);
-    mLayoutMem.func_8045F810();
+    mLayoutMem.validateHeap();
 }
 
 // C-linkage declarations so MWCC emits the plain retail symbol names (the
@@ -226,7 +226,7 @@ void CMenuBattleMode::Term() {
         mLayout = 0;
     }
 
-    mLayoutMem.func_8045F778();
+    mLayoutMem.deleteRegion();
     lbl_eu_80664318 = 0;
 }
 

@@ -243,7 +243,7 @@ public:
     void* field_C4;                          // 0xC4 (CfObjectImplEneC4*)
 };
 
-// Result of func_800AD860(self->field_14): u16 flag word at +0x45CA.
+// Result of getEffOwner(self->field_14): u16 flag word at +0x45CA.
 struct CfObjectImplEneFlag {
     u8 _pad00[0x45CA];                       // 0x00-0x45C9
     u16 field_45CA;                          // 0x45CA

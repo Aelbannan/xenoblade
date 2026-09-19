@@ -37,7 +37,7 @@ extern "C" cf::CBattleManager* lbl_eu_80663F00;
 // same retail symbol names). (Scn_GetFrameDelta now has a single unified decl.)
 // (func_800D9354: CfGameManager.hpp's copy is gone; single decl on
 // kyoshin/cf/CBattleManagerApi.hpp, included via CBattleManager.hpp above.)
-// (func_800AD860: CfObjectMove.hpp and CfGameManager.hpp now carry the
+// (getEffOwner: CfObjectMove.hpp and CfGameManager.hpp now carry the
 // identical void*(void*) C++-linkage form - no guard needed.)
 #include "kyoshin/cf/CfGameManager.hpp"
 // (UIWin_BuildFlagBuf is owned by kyoshin/CUIWindowManager.hpp; single decl.)
@@ -282,21 +282,15 @@ BattleTableEntry lbl_eu_804FC828[40] = {
     {0x00000003u, 50, 0, 0x01, 0x00000000u},
     {0x00000000u, 5, 0, 0x00, 0x00000000u},
     {0x00000000u, 10, 0, 0x00, 0x00000000u},
-    {0x00000000u, 10, 0, 0x00, 0x00000000u},
     {0x00000001u, 0, 5, 0x01, 0x00000000u},
-    {0x00000001u, 25, 5, 0x01, 0x00000000u},
-    {0x00000001u, 25, 5, 0x01, 0x00000000u},
     {0x00000001u, 25, 5, 0x01, 0x00000000u},
     {0x00000000u, 50, 0, 0x00, 0x00000000u},
     {0x00000000u, 5, 0, 0x00, 0x00000000u},
     {0x00000000u, -25, 0, 0x00, 0x00000000u},
-    {0x00000000u, -25, 0, 0x00, 0x00000000u},
     {0x00000000u, -10, 0, 0x00, 0x00000000u},
-    {0x00000000u, 0, 0, 0x00, 0x00000000u},
     {0x00000000u, 0, 0, 0x00, 0x00000000u},
     {0x00000000u, -100, 0, 0x00, 0x00000000u},
     {0x00000000u, -200, 0, 0x00, 0x00000000u},
-    {0x00000000u, -100, 0, 0x00, 0x00000000u},
     {0x00000000u, -100, 0, 0x00, 0x00000000u},
     {0x00000000u, -25, 0, 0x00, 0x00000000u},
     {0x00000000u, -40, 0, 0x00, 0x00000000u},
@@ -348,36 +342,19 @@ s16 lbl_eu_804FCA3C[6] = {0, 0, 10, 15, 30, 0};
 __declspec(section ".rodata") __attribute__((used))
 u32 lbl_eu_804FCA48[36] = {
     0x00000000u,
-    0x00000000u,
     0x00000100u,
-    0x00000020u,
     0x00000020u,
     0x00000100u,
     0x00000020u,
     0x00000100u,
     0x00000000u,
-    0x00000000u,
-    0x00000000u,
-    0x00000000u,
-    0x00000000u,
-    0x00000000u,
-    0x00000000u,
-    0x00000000u,
-    0x00000000u,
-    0x00000000u,
-    0x00000000u,
-    0x00000000u,
-    0x00000000u,
-    0x00000000u,
     0x00000020u,
     0x00000100u,
-    0x00000000u,
     0x00000000u,
     0x00000064u,
     0x41000000u,
     0x40800000u,
     0x40000000u,
-    0x00000000u,
     0x00000000u,
     0x00000064u,
     0x41000000u,
@@ -412,7 +389,6 @@ u32 lbl_eu_804FCAF0[32] = {
     0x00000002u,
     0x00000005u,
     0x00000028u,
-    0x00000019u,
     0x00000019u,
     0x00000064u,
     0x00000006u,
@@ -2796,7 +2772,6 @@ extern "C" s32 func_800EC918(
         // retail passes pc->field_3F10 in r4 - hidden arg, see above).
         // (retail has no null check here).
         ((cf::CfObject*)(*(void**)((u8*)acc + 0x3ED4)))->CfObject_notifyEventDone();
-        ((cf::CfObject*)(*(void**)((u8*)acc + 0x3ED4)))->CfObject_notifyEventDone();
 
         // eventType 0xEE recursion with pc=0 and acc=pc (!).
         eventWorkspace.case238PlayerEvent.eventType = 0xEE;                    // li r0,0xEE
@@ -3625,14 +3600,12 @@ func_800A26A4(obj, 0, (void*)(uintptr_t)((u32)((cf::CActorParam*)acc)->CActorPar
                 r28 = 6; r27 = 6;
                 break;
             }
-            }
             // .L_800F3500
             if (eventWorkspace.case260ActorEvent.eventType != 0) {                  // lhz r0,0x2f8 ; beq .L_800F355C
                 if (!func_800EC918(self, pc, acc, &eventWorkspace.case260ActorEvent, tgt)) return 0;
                 if (!func_800EC918(self, pc, (EC918_BattleObjAccessor*)pc, &eventWorkspace.case260PlayerEvent, tgt)) return 0;  // acc=pc
             }
             break;
-        }
         }
         // .L_800F355C
         if (r29 != 0) {
@@ -3702,7 +3675,6 @@ func_800A26A4(obj, 0, (void*)(uintptr_t)((u32)((cf::CActorParam*)acc)->CActorPar
                         s32 vf = artsSubGetMax(artsParam);
                         eventWorkspace.case287Event.field_10 = (s32)*(s16*)((u8*)artsParam + 0x4A)
                                      + (s32)*(u8*)((u8*)artsParam + 0x6F) * (vf - 1);
-                        eventWorkspace.case287Event.field_14 = *(s16*)((u8*)artsParam + 0x4C);   // sth 0x264
                         eventWorkspace.case287Event.field_14 = *(s16*)((u8*)artsParam + 0x4C);   // sth 0x264
                         func_800EC918((void*)(uintptr_t)lbl_eu_80663F00, pc, acc, &eventWorkspace.case287Event, nullptr);
                         break;                         // b .L_800F38DC (outer cont.)
@@ -3913,78 +3885,10 @@ func_800A26A4(obj, 0, (void*)(uintptr_t)((u32)((cf::CActorParam*)acc)->CActorPar
 __declspec(section ".data") __attribute__((used)) __declspec(section ".data") __attribute__((used)) const void* cbm_data_reserve_run1a[9] = {
     (const void*)func_800EC918,
     (const void*)0,
-    (const void*)0,
-    (const void*)0,
-    (const void*)0,
-    (const void*)0,
-    (const void*)0,
-    (const void*)0,
     (const void*)0
 };
 __declspec(section ".data") __attribute__((used)) const void* cbm_data_reserve_run1b[0x41] = {
     (const void*)func_800EC918,
-    (const void*)0,
-    (const void*)0,
-    (const void*)0,
-    (const void*)0,
-    (const void*)0,
-    (const void*)0,
-    (const void*)0,
-    (const void*)0,
-    (const void*)0,
-    (const void*)0,
-    (const void*)0,
-    (const void*)0,
-    (const void*)0,
-    (const void*)0,
-    (const void*)0,
-    (const void*)0,
-    (const void*)0,
-    (const void*)0,
-    (const void*)0,
-    (const void*)0,
-    (const void*)0,
-    (const void*)0,
-    (const void*)0,
-    (const void*)0,
-    (const void*)0,
-    (const void*)0,
-    (const void*)0,
-    (const void*)0,
-    (const void*)0,
-    (const void*)0,
-    (const void*)0,
-    (const void*)0,
-    (const void*)0,
-    (const void*)0,
-    (const void*)0,
-    (const void*)0,
-    (const void*)0,
-    (const void*)0,
-    (const void*)0,
-    (const void*)0,
-    (const void*)0,
-    (const void*)0,
-    (const void*)0,
-    (const void*)0,
-    (const void*)0,
-    (const void*)0,
-    (const void*)0,
-    (const void*)0,
-    (const void*)0,
-    (const void*)0,
-    (const void*)0,
-    (const void*)0,
-    (const void*)0,
-    (const void*)0,
-    (const void*)0,
-    (const void*)0,
-    (const void*)0,
-    (const void*)0,
-    (const void*)0,
-    (const void*)0,
-    (const void*)0,
-    (const void*)0,
     (const void*)0,
     (const void*)0
 };
@@ -4745,7 +4649,6 @@ f32 gauge = ((cf::CfObjectActor*)actor)->CfObjectActor_getAdjustedFacing();
             appendObjectById(list, (u32)*(void**)((u8*)actor + 0x3F10));
         }
         break;
-    }
     }
 
     // Target-type 2: make sure the actor itself ends up on the enum list.
@@ -5936,7 +5839,6 @@ extern "C" void func_800DCB54(void* self, void* attacker, void* target,
             }
             move->field_58 += f26;
             move->field_74 |= 0x80000100;
-        }
         }
 
 
@@ -10337,158 +10239,10 @@ afterType3:
 __declspec(section ".data") __attribute__((used)) __declspec(section ".data") __attribute__((used)) const void* cbm_data_reserve_run2a[9] = {
     (const void*)func_800E64CC,
     (const void*)0,
-    (const void*)0,
-    (const void*)0,
-    (const void*)0,
-    (const void*)0,
-    (const void*)0,
-    (const void*)0,
     (const void*)0
 };
 __declspec(section ".data") __attribute__((used)) const void* cbm_data_reserve_run2b[0x91] = {
     (const void*)func_800E64CC,
-    (const void*)0,
-    (const void*)0,
-    (const void*)0,
-    (const void*)0,
-    (const void*)0,
-    (const void*)0,
-    (const void*)0,
-    (const void*)0,
-    (const void*)0,
-    (const void*)0,
-    (const void*)0,
-    (const void*)0,
-    (const void*)0,
-    (const void*)0,
-    (const void*)0,
-    (const void*)0,
-    (const void*)0,
-    (const void*)0,
-    (const void*)0,
-    (const void*)0,
-    (const void*)0,
-    (const void*)0,
-    (const void*)0,
-    (const void*)0,
-    (const void*)0,
-    (const void*)0,
-    (const void*)0,
-    (const void*)0,
-    (const void*)0,
-    (const void*)0,
-    (const void*)0,
-    (const void*)0,
-    (const void*)0,
-    (const void*)0,
-    (const void*)0,
-    (const void*)0,
-    (const void*)0,
-    (const void*)0,
-    (const void*)0,
-    (const void*)0,
-    (const void*)0,
-    (const void*)0,
-    (const void*)0,
-    (const void*)0,
-    (const void*)0,
-    (const void*)0,
-    (const void*)0,
-    (const void*)0,
-    (const void*)0,
-    (const void*)0,
-    (const void*)0,
-    (const void*)0,
-    (const void*)0,
-    (const void*)0,
-    (const void*)0,
-    (const void*)0,
-    (const void*)0,
-    (const void*)0,
-    (const void*)0,
-    (const void*)0,
-    (const void*)0,
-    (const void*)0,
-    (const void*)0,
-    (const void*)0,
-    (const void*)0,
-    (const void*)0,
-    (const void*)0,
-    (const void*)0,
-    (const void*)0,
-    (const void*)0,
-    (const void*)0,
-    (const void*)0,
-    (const void*)0,
-    (const void*)0,
-    (const void*)0,
-    (const void*)0,
-    (const void*)0,
-    (const void*)0,
-    (const void*)0,
-    (const void*)0,
-    (const void*)0,
-    (const void*)0,
-    (const void*)0,
-    (const void*)0,
-    (const void*)0,
-    (const void*)0,
-    (const void*)0,
-    (const void*)0,
-    (const void*)0,
-    (const void*)0,
-    (const void*)0,
-    (const void*)0,
-    (const void*)0,
-    (const void*)0,
-    (const void*)0,
-    (const void*)0,
-    (const void*)0,
-    (const void*)0,
-    (const void*)0,
-    (const void*)0,
-    (const void*)0,
-    (const void*)0,
-    (const void*)0,
-    (const void*)0,
-    (const void*)0,
-    (const void*)0,
-    (const void*)0,
-    (const void*)0,
-    (const void*)0,
-    (const void*)0,
-    (const void*)0,
-    (const void*)0,
-    (const void*)0,
-    (const void*)0,
-    (const void*)0,
-    (const void*)0,
-    (const void*)0,
-    (const void*)0,
-    (const void*)0,
-    (const void*)0,
-    (const void*)0,
-    (const void*)0,
-    (const void*)0,
-    (const void*)0,
-    (const void*)0,
-    (const void*)0,
-    (const void*)0,
-    (const void*)0,
-    (const void*)0,
-    (const void*)0,
-    (const void*)0,
-    (const void*)0,
-    (const void*)0,
-    (const void*)0,
-    (const void*)0,
-    (const void*)0,
-    (const void*)0,
-    (const void*)0,
-    (const void*)0,
-    (const void*)0,
-    (const void*)0,
-    (const void*)0,
     (const void*)0,
     (const void*)0
 };
@@ -12404,7 +12158,7 @@ check:
 
             {
                 void* base = (actor != nullptr) ? (void*)((u8*)actor + 0x3e9c) : (void*)actor;
-                void* result = func_800AD860(base);
+                void* result = getEffOwner(base);
                 if (result != nullptr) {
                     *(u32*)((u8*)result + 0x3f08) |= 0x8000000;
                     CPartsChange_ResetBattleEntry(result, 0, 0);

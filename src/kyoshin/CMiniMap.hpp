@@ -20,7 +20,6 @@ class Layout;
 class Pane;
 }
 }
-class CScn;
 
 // Local render-callback interface WITHOUT a virtual destructor (CMenuFade /
 // CMenuSkipTimer idiom): retail fills the dtor slot of the +0x5C sub-vtable
@@ -113,7 +112,7 @@ void bindLayoutAnimTransform(nw4r::lyt::Layout*, nw4r::lyt::AnimTransform**, nw4
 void drawLayout(nw4r::lyt::Layout*, nw4r::lyt::DrawInfo*, int, int);
 void func_80137250(nw4r::lyt::DrawInfo* pDrawInfo);
 void releaseArcResourceAccessor(nw4r::lyt::ArcResourceAccessor* accessor);
-void func_801390E0(CFileHandle**);
+void closeFileHandle(CFileHandle**);
 // BDAT/string helpers with unmangled retail symbols: extern "C" keeps the
 // emitted call relocs matching retail (Bdat_GetTable_AA34 / getFP__FPCc).
 extern "C" void* Bdat_GetTable_AA34();   // matches code_801862C0.hpp's declaration

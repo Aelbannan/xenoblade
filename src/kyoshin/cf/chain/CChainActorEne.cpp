@@ -10,7 +10,7 @@
 #include "kyoshin/cf/object/CObjectState.hpp"
 
 // ---- Cross-TU helper declarations ---------------------------------------
-// func_800AD860 / findObjectById are mangled C++ retail symbols; the rest are
+// getEffOwner / findObjectById are mangled C++ retail symbols; the rest are
 // plain (unmangled) C-ABI functions and are declared with C linkage.
 extern "C" void* chainResolveMemberFromSrc(u32 cls, void* src);
 extern "C" void PartyGaugeSetClamped(u8* self, u32 ptg);
@@ -23,7 +23,7 @@ void* getEffOwner__(void* obj);
 extern void* findObjectById(int);
 
 // Layout view of the enemy chain actor's timeline object (the object reached
-// through this->unk0 (rebased +0x3E9C) and passed through func_800AD860).
+// through this->unk0 (rebased +0x3E9C) and passed through getEffOwner).
 struct EneChainObj {
     u8  _pad0[0x3f00];
     u32 flag;   //0x3f00 - bit2 indicates a valid/vital timeline itself

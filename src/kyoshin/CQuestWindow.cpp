@@ -980,7 +980,7 @@ void CQuestWindow::Term() {
     releaseArcResourceAccessor(field_0x94);
     field_0x94 = 0;
     lbl_eu_80663FD4 = 0;
-    mMemRegion.func_8045F778();
+    mMemRegion.deleteRegion();
     enablePadFlags__Q22cf13CfGameManagerFUlb(-1, 0);
     enablePadFlags__Q22cf13CfGameManagerFUlb(field_0xE8, 1);
     DecMenuCounter64080();

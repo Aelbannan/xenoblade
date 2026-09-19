@@ -230,7 +230,7 @@ extern "C" void func_8022C348(CSysWin* self) {
 // file (the mFileHandle match gate). Mirrors the CSelShopWin load path: mem
 // region, tag processor, resource accessor, layout + anim transform, font
 // binding, then hand off to func_8022C348 and release the handle/region. The
-// Class_8045F858 stack guard destructs at scope end (after func_8045F810).
+// Class_8045F858 stack guard destructs at scope end (after validateHeap).
 // optimize_for_size matches the retail stmw/lmw prologue (r29-r31).
 #pragma push
 #pragma optimize_for_size on
@@ -260,7 +260,7 @@ bool CSysWin::OnFileEvent(CEventFile* pEventFile) {
     mLayout->Animate(0);
         func_8022C348(this);
         mFileHandle = 0;
-        mMemRegion.func_8045F810();
+        mMemRegion.validateHeap();
         return true;
     }
     return false;
@@ -317,7 +317,7 @@ extern "C" void sysWinDrawLayout(CSysWin* self, nw4r::lyt::DrawInfo* drawInfo) {
 #pragma push
 #pragma optimize_for_size on
 extern "C" void sysWinTermLayout(CSysWin* self) {
-    func_801390E0(&self->mFileHandle);
+    closeFileHandle(&self->mFileHandle);
     nw4r::lyt::Layout* layout = self->mLayout;
     self->field_34 = 0;
     self->mAnimTrans = 0;
@@ -331,7 +331,7 @@ extern "C" void sysWinTermLayout(CSysWin* self) {
         delete self->mTagProcessor;
         self->mTagProcessor = 0;
     }
-    self->mMemRegion.func_8045F778();
+    self->mMemRegion.deleteRegion();
 }
 #pragma pop
 

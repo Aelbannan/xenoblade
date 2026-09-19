@@ -4,7 +4,7 @@
 #include "kyoshin/plugin/ocBdat.hpp"  // getBdatStringColumnValue (owner)
 
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
-extern "C" u32 func_8009CF8C(u32 resourceId);
+extern "C" u32 CtrlRemote_TouchBitByArg(u32 resourceId);
 
 // BDAT row base/count helpers (used by CItem_createBoxContents's item-box scan).
 extern "C" u32 Bdat_GetRowBase_B41C(void* bdat);

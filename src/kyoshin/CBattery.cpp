@@ -5,7 +5,7 @@
 
 #include <cstdio>
 
-extern "C" void func_801390E0(CFileHandle**);
+void closeFileHandle(CFileHandle**);
 
 // Shared string pool in split1 .rodata (US/EU):
 // +0x00 "/menu/jp/Battery.arc"
@@ -30,7 +30,7 @@ CBattery::~CBattery() {
 void CBattery::loadBatteryArchive() {
     mFileHandle = CDeviceFile::readFile(CWorkThreadSystem::getWorkMem(), lbl_eu_8051399C,
         reinterpret_cast<IWorkEvent*>(this), 0, 0);
-    CDeviceFile::func_8044F154(mFileHandle, 3);
+    CDeviceFile::tryUpdateJobPriority(mFileHandle, 3);
     CDeviceFile::setHandleFlag2(mFileHandle);
 }
 
@@ -49,7 +49,7 @@ void CBattery::drawBattery(void* param) {
 
 __declspec(noinline) void CBattery::releaseLayout() {
     CDeviceVI::waitForDrawDone();
-    func_801390E0(&mFileHandle);
+    closeFileHandle(&mFileHandle);
     nw4r::lyt::Layout* layout = mLayout;
     mLayoutReady = false;
     if (layout != nullptr) {
@@ -58,7 +58,7 @@ __declspec(noinline) void CBattery::releaseLayout() {
     }
     releaseArcResourceAccessor(mAccessor);
     mAccessor = nullptr;
-    mMemRegion.func_8045F778();
+    mMemRegion.deleteRegion();
 }
 
 void CBattery::setBatteryLevel(u8 level) {
@@ -113,7 +113,7 @@ bool CBattery::OnFileEvent(CEventFile* pEventFile) {
         buildLayout(&mLayout, mAccessor, lbl_eu_8051399C + 0x2A);
         onLayoutReady();
         mFileHandle = nullptr;
-        mMemRegion.func_8045F810();
+        mMemRegion.validateHeap();
         return true;
     } else
         return false;

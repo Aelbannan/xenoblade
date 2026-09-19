@@ -14,7 +14,7 @@ void func_eu_802B12DC() {
     if (lang > 5) {
         lang = 1;
     }
-    CBdat::func_8003AA78(6, (void*)lbl_eu_8053A420[lang]);
+    CBdat::setBdatEntry(6, (void*)lbl_eu_8053A420[lang]);
     lbl_eu_80664BF8 = (u32)CBdat::getFP((const char*)lbl_eu_80513420);
 }
 

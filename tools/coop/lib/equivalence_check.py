@@ -167,26 +167,53 @@ def _reloc_map_decomp_label(key: str, unit_name: str) -> str | None:
     return label or None
 
 
+def _is_unit_scoped_reloc_key(key: str) -> bool:
+    """True for mined ``{objdiff_unit}@{label}`` keys (slash before ``@``).
+
+    Named globals can contain ``@`` (``Q223@unnamed@…``) but never a path
+    slash before the first ``@``. Those stay global.
+    """
+    idx = key.find("@")
+    if idx <= 0:
+        return False
+    return "/" in key[:idx]
+
+
 def _canonical_symbols_for_unit(unit_name: str) -> dict[str, str]:
-    """Return {decomp_symbol: retail_symbol} for TU-local labels of ``unit_name``."""
+    """Return {decomp_symbol: retail_symbol} for ``unit_name``.
+
+    Includes TU-local ``@N`` / section labels for this unit **and** the
+    mined global named-symbol entries (vtables, SDA globals, ``spInstance``).
+    Registry lookups used to drop every global key, so ``__vt__…`` vs
+    ``lbl_eu_*`` over-rejected as a reloc-dest mismatch.
+    """
     data, _sha = _load_reloc_map()
     out: dict[str, str] = {}
     for key, by_type in (data.get("entries") or {}).items():
-        decomp_label = _reloc_map_decomp_label(key, unit_name)
-        if not decomp_label:
-            continue
+        retail = None
         for entry in by_type.values():
             if not isinstance(entry, dict):
                 continue
-            retail = entry.get("retail_symbol")
-            if isinstance(retail, str):
-                # Decoder looks up the raw reloc symbol: TU-local labels are
-                # ``@N`` (e.g. ``@306``); section-relative relocs surface as
-                # ``...data.N`` with no ``@`` prefix.  Cover both spellings.
-                out[f"@{decomp_label}"] = retail
-                if not decomp_label.startswith("@"):
-                    out[decomp_label] = retail
+            value = entry.get("retail_symbol")
+            if isinstance(value, str):
+                retail = value
                 break
+        if not retail:
+            continue
+        decomp_label = _reloc_map_decomp_label(key, unit_name)
+        if decomp_label:
+            # Decoder looks up the raw reloc symbol: TU-local labels are
+            # ``@N`` (e.g. ``@306``); ``@stringBase0`` is already spelled with
+            # ``@``; section-relative relocs surface as ``...data.N`` with no
+            # ``@`` prefix.  Cover both spellings without producing ``@@…``.
+            if decomp_label.startswith("@"):
+                out[decomp_label] = retail
+            else:
+                out[f"@{decomp_label}"] = retail
+                out[decomp_label] = retail
+            continue
+        if not _is_unit_scoped_reloc_key(key) and key != retail:
+            out[key] = retail
     return out
 
 from tools.ppc_equivalence.dol_symbols import DolSymbolError, extract_by_address as extract_dol_slice
@@ -289,6 +316,19 @@ def _normalize_reloc_dest(
     return symbol
 
 
+def _reloc_dests_equivalent(left: str, right: str) -> bool:
+    """True when two named reloc dests are the same linker symbol.
+
+    MWCC C vs C++ linkage (``foo`` vs ``foo__Fv``) and a C label wrapped in
+    ``namespace cf`` (``lbl_eu_X`` vs ``lbl_eu_X__2cf``) share a prefix
+    before the first ``__`` mangling tail. Distinct names (``foo`` vs
+    ``bar__Fv``) do not.
+    """
+    if left == right:
+        return True
+    return left.startswith(right + "__") or right.startswith(left + "__")
+
+
 def _byte_identical_with_relocs(
     left: FunctionBytes,
     right: FunctionBytes,
@@ -323,7 +363,7 @@ def _byte_identical_with_relocs(
         right_dest = _normalize_reloc_dest(right_reloc.symbol, canonical_symbols)
         if left_dest is None or right_dest is None:
             continue
-        if left_dest != right_dest:
+        if not _reloc_dests_equivalent(left_dest, right_dest):
             return False
     return True
 

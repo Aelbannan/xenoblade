@@ -229,5 +229,5 @@ char* BdatGetPtrDirect(void* obj, const char* key, u16 id);
 
 // C++-linkage helpers (MWCC mangles the plain names to the retail forms
 // closeFileHandle__FPP11CFileHandle / func_80137250__FPQ34nw4r3lyt8DrawInfo).
-void func_801390E0(CFileHandle** handle);
+void closeFileHandle(CFileHandle** handle);
 void func_80137250(nw4r::lyt::DrawInfo* drawInfo);

@@ -466,17 +466,6 @@ int func_800890A8(cf::CCtrlMoveBase* self, ml::CVec3* out, u8* outFlag,
 void* getInstance__Q22cf13CfGameManagerFv(void);
 void* getPlayer__Q22cf13CfGameManagerFi(int idx);
 int isSceneReadyForInput__Q22cf13CfGameManagerFv(void);
-void CTaskGame_enumListCtor(cf::CtrlEnemyEnumHolder* holder);
-cf::CtrlEnemyEnumList* CTaskGame_enumListGet(cf::CtrlEnemyEnumHolder* holder);
-void startEnumObjects(cf::CtrlEnemyEnumList* list, u32 a, u32 b);
-void* getObjectIdAt(cf::CtrlEnemyEnumList* list, int idx);
-void __dt__80043E88(cf::CtrlEnemyEnumHolder* holder, int flags);
-void* __ct__800FB044(cf::CtrlEnemyEnumList* list, f32 f, void* obj, int a);
-void* __ct__800FAE3C(cf::CtrlEnemyEnumList* list, void* vec, int a);
-void* __ct__800FD0B4(cf::CtrlEnemyEnumList* list, int a);
-void* __ct__800FC4FC(cf::CtrlEnemyEnumList* list, f32 f, int a);
-void func_800FB270(cf::CtrlEnemyEnumList* list, void* obj, f32 a, f32 b,
-                   f32 c, int d);
 int func_80148778(void* obj, int id);
 void* findBattleStatusEntry(void* obj, u32 id);   // aligned with CAIAction.hpp (u32 param, per CBattleState.cpp def)
 void func_800D9CA0(void* mgr, void* target);
@@ -487,3 +476,17 @@ int CtrlMoveEne_TryLatchTargetActor(void* sub, void* obj);
 int CtrlMoveEne_ConsumeTargetResolve(void* sub);
 void* getUnk80664658(void);
 }
+
+// Enum-list helpers: C++ void* forms (match CfObjectImplMove.hpp / majority).
+// Kept outside extern "C" so they unify with the ImplMove decls pulled via
+// harness_catalog rather than MWCC 10197 against mixed linkage.
+void CTaskGame_enumListCtor(void* holder);
+void* CTaskGame_enumListGet(void* holder);
+void startEnumObjects(void* list, u32 a, u32 b);
+void* getObjectIdAt(void* list, int idx);
+void __dt__80043E88(void* holder, int flags);
+void* __ct__800FB044(void* list, f32 f, void* obj, int a);
+void* __ct__800FAE3C(void* list, void* vec, int a);
+void* __ct__800FD0B4(void* list, int a);
+void* __ct__800FC4FC(void* list, f32 f, int a);
+void func_800FB270(void* list, void* obj, f32 a, f32 b, f32 c, int d);

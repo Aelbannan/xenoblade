@@ -1869,7 +1869,7 @@ bool CCollepedia::OnFileEvent(CEventFile* pEventFile) {
 
         clpTryShow(this);
         field_24 = nullptr;
-        memRegion->func_8045F810();
+        memRegion->validateHeap();
         return true;
     }
 
@@ -1890,7 +1890,7 @@ bool CCollepedia::OnFileEvent(CEventFile* pEventFile) {
 
         clpTryShow(this);
         field_28 = nullptr;
-        memRegion->func_8045F810();
+        memRegion->validateHeap();
         return true;
     }
 

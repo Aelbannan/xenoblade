@@ -354,7 +354,7 @@ void* CtrlEnemy_UnkFunc_80087EEC(cf::CtrlEnemy* self) {
         break;
     }
     // Scan candidates: nearest eligible enemy wins.
-    for (i = 0; i < (int)CTaskGame_enumListGet(&holder)->field_620; i++) {
+    for (i = 0; i < (int)((cf::CtrlEnemyEnumList*)CTaskGame_enumListGet(&holder))->field_620; i++) {
         id = (int)getObjectIdAt(CTaskGame_enumListGet(&holder), i);
         obj = (cf::CtrlEnemyActor*)func_8016FE34(findObjectById(id));
         if (obj->field_3F60 != 0 &&
@@ -443,7 +443,7 @@ void* CtrlEnemy_UnkFunc_80088620(cf::CtrlEnemy* self) {
     void* pos = self->field_0x80->mSub.s0AC();
     f32 gauge = *self->field_0x80->v268();
     __ct__800FB044(CTaskGame_enumListGet(&holder), gauge, pos, 0);
-    for (u32 i = 0; i < CTaskGame_enumListGet(&holder)->field_620; i++) {
+    for (u32 i = 0; i < ((cf::CtrlEnemyEnumList*)CTaskGame_enumListGet(&holder))->field_620; i++) {
         cf::CtrlEnemyActor* obj = (cf::CtrlEnemyActor*)func_8016FE34(
             findObjectById((int)getObjectIdAt(CTaskGame_enumListGet(&holder), i)));
         if (obj == 0) continue;

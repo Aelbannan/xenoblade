@@ -1,9 +1,9 @@
 // Decompiled target(s):
 //   - us-80463550 UnkClass_8045F564::~UnkClass_8045F564()
 //   - us-80463650 UnkClass_8045F564::createRegion(int, int, const char*, int)
-//   - us-80463748 UnkClass_8045F564::func_8045F778()
+//   - us-80463748 UnkClass_8045F564::deleteRegion()
 //   - us-804637b8 UnkClass_8045F564::func_8045F7E8()
-//   - us-804637e0 UnkClass_8045F564::func_8045F810()
+//   - us-804637e0 UnkClass_8045F564::validateHeap()
 
 #include "monolib/lib/UnkClass_8045F564.hpp"
 #include "monolib/lib/CLibLayout.hpp"

@@ -145,7 +145,7 @@ struct CfResLookupEntry {
     /* 0x32 */ u8 field_32;   // attribute id
 };
 
-// Enemy-object flag view returned by func_800AD860: the u16 flag word at
+// Enemy-object flag view returned by getEffOwner: the u16 flag word at
 // +0x45CA and the u32 at +0x3374 are read/written by tickReloadState.
 struct CfResEneObj {
     u8 field_00[0x3374];

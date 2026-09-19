@@ -209,7 +209,7 @@ extern "C" void func_800B9E4C(cf::CfObjectMap* self) {
                 if (obj != 0) {
                     CfRes_delegateOp2(obj, delegate, (void*)out10);
                     if (flag != 0) {
-                        CBdat::func_8003AA78(1, obj);
+                        CBdat::setBdatEntry(1, obj);
                     }
                 }
             }

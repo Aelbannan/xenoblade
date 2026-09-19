@@ -160,13 +160,6 @@ CDeviceFontInfoExt::CDeviceFontInfoExt() {
     __ct__Q34nw4r2ut10PackedFontFv((u8*)this + 0x1C);
     field_60 = 0;
 }
-    // Copy work area to fields
-    field_58 = *(u32*)(work + 0x10);
-    mMode = *(u16*)(work + 0x14);
-    mState = *(u16*)(work + 0x16);
-    *(u16*)((u8*)this + 0x14) = *(u16*)(work + 0x0F);
-    field_5C = *(u16*)(work + 0x0F);
-}
 
 // ===== Dissolved monolibdata2 (blob surgery) data owned by this TU =====
 // forward refs

@@ -126,11 +126,10 @@ extern u32 lbl_eu_80664A30;
 u32 getPackedFont();
 
 // Layout text-setter helper: retail reloc is the literal mangled name
-// setLayoutTextBoxNumber__FPQ34nw4r3lyt6LayoutPcUc; callers see an int-width third
-// parameter (a u8 parameter makes MWCC emit an unsigned-mask argument path
-// that retail does not use).
+// setLayoutTextBoxNumber__FPQ34nw4r3lyt6LayoutPcUc; third param matches
+// code_80135FDC.hpp (u8) so TUs that include both headers do not 10197.
 extern "C" void setLayoutTextBoxNumber__FPQ34nw4r3lyt6LayoutPcUc(nw4r::lyt::Layout*,
-                                                        char*, int);
+                                                        char*, u8);
 
 // Remaining helpers from the MenuStateInitFlags translation unit (same signatures
 // as code_80135FDC.hpp so the mangled/unmangled reloc names are unchanged).
@@ -156,7 +155,7 @@ void setLayoutTextBoxFont(nw4r::lyt::Layout*, char*, u32);
 // Root-pane font bind (retail reloc is the literal unmangled name).
 extern "C" void func_8013676C(void*, u32);
 // BDAT field reader (retail reloc is the literal unmangled name).
-extern "C" u32 BdatGetU8Direct(u32, const char*, u32);
+extern "C" u8 BdatGetU8Direct(u32, const char*, u32);
 
 // Retail calls the language-flag query through its unmangled Fv symbol with a
 // dummy -1 argument that the callee ignores.

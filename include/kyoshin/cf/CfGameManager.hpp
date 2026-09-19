@@ -479,9 +479,9 @@ public:
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
 // ---------------------------------------------------------------------------
 
-extern "C" void func_801A9FC0(UnkClass_8007E864* object);
-extern "C" void func_8016EEB0(u32 object);
-extern "C" void func_800754C0(CfCamEventManager* object);
+extern "C" void BattleWork_InitCtrlWork(UnkClass_8007E864* object);
+extern "C" void MapFx_ReleaseHandle(u32 object);
+extern "C" void CamEvtReleaseAllSlots(CfCamEventManager* object);
 extern "C" void* __dt__Q22cf13CfGameManagerFv(
     cf::CfGameManager* self, s32 deleteFlag);
 // CtrlObjectParam_ResolveEquipItem is declared TU-locally where it is called (CfGameManager.cpp
@@ -493,7 +493,7 @@ extern "C" void gmCallNopB();
 extern "C" void func_80079B34(CfCamEventManager* manager);
 extern "C" bool func_80079DBC(CfCamEventManager* manager);
 extern "C" cf::CfObject* cfCam_getActiveObj(CfCamEventManager* manager);
-extern "C" bool func_80068E44(u32 flag);
+extern "C" bool CfScript_TestMask(u32 flag);
 extern "C" bool probeReadyLists();
 extern "C" void func_80141B20(cf::CfGameManager* manager);
 extern "C" void setMgrFixStrName(cf::CfGameManager* manager);
@@ -508,8 +508,8 @@ extern "C" void flushMpfBuffer__17UnkClass_8047BB54Fv(UnkClass_80083298SubF0* su
 extern "C" bool func_800FF778__9CMainMenuFv();
 extern "C" CSysWinBuff* getInstance__11CSysWinBuffFv();
 extern "C" bool isInitialized__10CMenuPauseFv();
-extern "C" bool func_80496044(CScn* scene);
-extern "C" bool func_804960A8(CScn* scene);
+extern "C" bool Scn_IsDefaultScale(CScn* scene);
+extern "C" bool Scn_IsScaleAtLeastOne(CScn* scene);
 extern "C" void MenuSnd_SetMasterAndPush_9510(float value);
 extern "C" void MenuSnd_SetSeVolPush_95F4(float value);
 extern "C" void firstReslistB48();
@@ -519,16 +519,17 @@ extern "C" VoiceSource* insertReslistB68(VoiceSource* source = 0);
 extern "C" u32 lbl_eu_8065FC18[];
 extern "C" void getReslistB88();
 extern "C" void func_80141B54();
-extern "C" float func_80069EA0();
+extern "C" float CfT_PlayRateGet();
 extern "C" void func_8006A12C();
 extern "C" void func_8006A1A0();
-extern "C" void func_8006A234(u16*, u16*);
+extern "C" void CfT_PlayClockSnapshot(u16*, u16*);
 extern "C" bool func_8006A2E0();
-extern "C" u32 func_8006A33C();
-extern "C" u32 func_8006A37C();
-extern "C" u32 func_8006A3BC();
-extern "C" void func_8006A3FC();
-extern "C" void func_8006A404();
+extern "C" u32 CfT_FrameCountA();
+extern "C" u32 CfT_FrameCountB();
+extern "C" u32 CfT_FrameCountC();
+extern "C" void CfT_FrameCounterStore();
+extern "C" void CfT_FrameCounterLoad();
+void CfT_AdvanceFrameTimer();
 extern "C" void func_80141C6C(void*, void*);
 // func_8009DBF4 / CtrlObjectParam_WriteU16RowEntry are also declared (extern "C") in
 // include/kyoshin/cf/CItem.hpp; the CfGameManager unity TU does not include
@@ -552,7 +553,7 @@ extern void* lbl_eu_80663E74;
 // cf::CBattleManager::setPartyMaskFlag slot 0x1C and the real unk94/unk194
 // members via kyoshin/cf/CBattleManager.hpp, byte-identical.)
 
-// Result of func_8009D5FC (file-event table query): the two u16 ids read by
+// Result of CtrlRemote_GetFileEventIds (file-event table query): the two u16 ids read by
 // resetBattlePresentation (lhz +2 as first arg, lhz +0 as second arg).
 struct CfFileEventIdsView {
     u16 field_0x0;
@@ -594,7 +595,7 @@ extern CProcess* lbl_eu_80663E20;
 extern "C" void func_8012F87C(u32 value);
 extern "C" void CCharVoiceMan_DestroySingleton();
 extern "C" void getBattleStateB__Q22cf14CBattleManagerFv();
-extern "C" void func_80295924();
+extern "C" void destroyHelpManager();
 extern "C" void __dt__80157150();
 extern "C" void* __dt__801A9F78(void* self, s32 deleteFlag);
 extern "C" void* __dt__801865C4(void* self, s32 deleteFlag);
@@ -602,11 +603,11 @@ extern "C" void* __dt__8007540C(void* self, s32 deleteFlag);
 extern "C" void* __dt__801886EC(void* self, s32 deleteFlag);
 extern "C" void* __dt__801BF874(void* self, s32 deleteFlag);
 extern "C" void* __dt__Q22cf17UnkClass_8018EF3CFv(void* self, s32 deleteFlag);
-extern "C" void func_80068AC8();
-extern "C" void func_8009CE88();
-extern "C" void func_80069A18(cf::CfObjectMove* self);
+extern "C" void CfScript_ResetMgr();
+extern "C" void CtrlRemote_InitSharedBufVoid();
+extern "C" void CfTFile_CancelResetFull(cf::CfObjectMove* self);
 extern "C" u32 stopSoundMan__Fv();
-extern "C" void func_800A7D9C();
+extern "C" void KyoshinHeap_Shutdown();
 extern "C" void Remove__8CProcessFv(CProcess* process);
 extern "C" void getEntry__5CBdatFUl(u32 value);
 
@@ -654,7 +655,7 @@ extern const float lbl_eu_80666568;
 // --- resetBattlePresentation imports ---
 extern "C" void MenuStateInitFlags();
 extern "C" void func_802062BC();
-extern "C" void func_80164CFC();
+extern "C" void evtTeardownActive();
 extern "C" void CCharVoiceMan_ClearFieldFlag();
 extern "C" int func_8023C1C0();
 extern "C" void* func_8023C1B4();
@@ -662,8 +663,8 @@ extern "C" void CtrlObjectParam_ActivateCharRow(void* object);
 extern "C" void __dt__8023E448();
 extern "C" void CItem_rerankAllKinds();
 void CItem_rerankAllKinds();
-extern "C" CfFileEventIdsView* func_8009D5FC();
-extern "C" void func_8018C8F4(u8* object, u32 value);
+extern "C" CfFileEventIdsView* CtrlRemote_GetFileEventIds();
+extern "C" void PartyGaugeSetClamped(u8* object, u32 value);
 // getInstance__Q22cf14CBattleManagerFv comes from CBattleManagerApi.hpp (void*);
 // callers cast at the use site.
 extern "C" void func_802959AC(cf::CHelpManager* object);
@@ -723,13 +724,13 @@ extern u32 lbl_eu_805276F0[];
 namespace ml { class CVec3; }
 // Mangled global C++ function (retail func_800AD860__FPv) - NOT extern "C";
 // CfObjectMove.hpp declares the same prototype.
-void* func_800AD860(void* object);
-extern "C" void func_8009D018(u32 first, u32 second);
+void* getEffOwner(void* object);
+extern "C" void CtrlRemote_SetSharedBit(u32 first, u32 second);
 // func_801412D0 is owned by kyoshin/CUIWindowManager.hpp.
 extern "C" void func_8013F244();
 extern "C" void CItem_clearSharedBox();
 extern "C" void* CCharVoiceMan_EnqueueFaintVoice();
-extern "C" s32 func_8011C2E8();
+extern "C" s32 MiniMapHasGlobalData();
 extern "C" void func_8011C2FC();
 extern "C" void CfRes_callFunc_67F10(s32 value);
 extern "C" bool func_80061D2C(UnkClass_80085334* object, u32 mode);
@@ -745,8 +746,8 @@ extern "C" void func_80141D48(void* dst, void* src, u8 value);
 extern "C" void func_8027F148();
 extern "C" void func_80068C7C();
 extern "C" void func_80068D14();
-extern "C" void func_80068DAC();
-extern "C" void func_800F3C08(void* battle, u32 value);
+extern "C" void CfScript_ClearReq2();
+extern "C" void CBattleMan_SetPartyFlagReset(void* battle, u32 value);
 extern "C" void* func_8004B7C0(void* out, const ml::CVec3* src);
 extern "C" void func_80199678(void* ctrl, int flag); // 2-arg form per CtrlMovePC.cpp definition - keep in sync with TU-local decls
 // zero vector constant exported by the ml unit. Declared by

@@ -2,7 +2,12 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include <harness_catalog.h>
-__declspec(section ".rodata") __attribute__((aligned(8))) char lbl_eu_8051BE68[0xC0] = {
+
+/* Owned elsewhere in the Sofdec .data pool; this TU only references them. */
+extern u8 lbl_eu_80566C70[];
+extern u8 lbl_eu_80567094[];
+
+__declspec(section ".rodata") __declspec(align(8)) char lbl_eu_8051BE68[0xC0] = {
     0x45,0x32,0x31,0x31,0x31,0x34,0x31,0x20,0x4D,0x57,0x53,0x54,
     0x4D,0x5F,0x52,0x65,0x71,0x53,0x74,0x61,0x72,0x74,0x3A,0x20,
     0x63,0x61,0x6E,0x27,0x74,0x20,0x73,0x74,0x61,0x72,0x74,0x20,
@@ -156,13 +161,12 @@ void mwlSfdExecDecSvrPlaying(void* self) {
 extern void* lbl_eu_805FF3A0;
 extern u8 lbl_eu_80566D44[];
 extern u8 lbl_eu_80566EEC[];
+extern u8 lbl_eu_80566E18[];
 extern s32 lbl_eu_805FF39C;
 extern void mwPlyExecInfiniteLoopHandle(void* h);
 extern void mwPlyExecRequestServer(void* self);
-extern void* MWSFLIB_GetLibWorkPtr(void);
 extern u32 lbl_eu_806029F0;
 extern u32 lbl_eu_806029F4;
-extern void* MWSFLIB_GetLibWorkPtr(void);
 extern s32 MWSFSVM_TestAndSet(void* p);
 extern void SFD_VbIn(void);
 
@@ -186,6 +190,9 @@ typedef struct MWSFLibWork {
     u8 svrHndls[0x690 * 8];     // 0x70: 8 server handles, ends 0x34F0
     s32 prohibitFlag;           // 0x34F0
 } MWSFLibWork;
+
+extern MWSFLibWork* MWSFLIB_GetLibWorkPtr(void);
+s32 mwsfsvr_DecodeServer(void* self);
 
 s32 MWSFSVR_VsyncThrdProc(void) {
     s32 local;
@@ -307,9 +314,6 @@ s32 MWSFSVR_MainThrdProc(void* self) {
 }
 
 extern u8 lbl_eu_80566E18[];
-extern u8 lbl_eu_80566EEC[];
-extern void* MWSFLIB_GetLibWorkPtr(void);
-extern s32 mwsfsvr_DecodeServer(void* self);
 
 static s32 criware_803A2908(void* self) {
     s32 local;
@@ -454,7 +458,6 @@ int MWSFSVR_IsSvrBdrHndl(void *h) {
     return *(u32 *)((u8 *)h + 0x7C) != 1;
 }
 
-extern void* MWSFLIB_GetLibWorkPtr(void);
 extern void ADXM_WaitVsync(void);
 extern void MWSFSVM_GotoIdleBorder(void);
 extern void mwPlySaveRsc(void);
@@ -519,10 +522,11 @@ extern void mwPlyStop(void* self);
 
 // Services queued start/stop requests on all 8 player streams while the
 // server is running and not prohibited.
-void mwPlyExecRequestServer() {
+void mwPlyExecRequestServer(void* self) {
     u8* w;
     u8* h;
     s32 i;
+    (void)self;
 
     if ((s32)lbl_eu_805FF39C != 1) return;
     w = (u8*)MWSFLIB_GetLibWorkPtr();

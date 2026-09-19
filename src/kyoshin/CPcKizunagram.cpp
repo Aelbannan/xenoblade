@@ -31,7 +31,7 @@ extern const float lbl_eu_80668878;
 
 // Layout / file helpers with C++ (mangled) retail names.
 u32 advanceAnimTransform(nw4r::lyt::AnimTransform*, float);
-void func_801390E0(CFileHandle**);
+void closeFileHandle(CFileHandle**);
 void releaseArcResourceAccessor(nw4r::lyt::ArcResourceAccessor*);
 
 u8 KizunagramIsHidden(CPcKizunagram* pKizunagram) { return pKizunagram->mIsHidden; }
@@ -108,7 +108,7 @@ void KizunagramDraw(CPcKizunagram* self, nw4r::lyt::DrawInfo* drawInfo) {
 }
 
 extern "C" void func_8025D9C4(CPcKizunagram* self) {
-    func_801390E0(&self->mFileHandle);
+    closeFileHandle(&self->mFileHandle);
     self->mStateByte1 = 0;
     KizunaCurDestroyLayout((CPcKizunaCur*)self->mKizunaCur);
     if (self->mLayout != 0) {
@@ -116,7 +116,7 @@ extern "C" void func_8025D9C4(CPcKizunagram* self) {
         self->mLayout = 0;
     }
     releaseArcResourceAccessor(self->mArcRes);
-    self->mMemRegion.func_8045F778();
+    self->mMemRegion.deleteRegion();
 }
 
 
@@ -669,7 +669,7 @@ int CPcKizunagram::OnFileEvent(CEventFile* event) {
         mStateByte1 = 1;
         func_8025DCFC(this);
         mFileHandle = 0;
-        mMemRegion.func_8045F810();
+        mMemRegion.validateHeap();
         return 1;
     }
     return 0;
@@ -1221,7 +1221,6 @@ searchDone:
     char* const cols = lbl_eu_8050DB18;
     ((CPcKizunaSlotEntry*)((u8*)big + off + sub + 0x3D4))->word = value;
     u32 v1 = getBdatStringColumnValue((void*)tbl, cols + 0x6, value);
-    wp->entry.field04 = *(u8*)&v1;
     wp->entry.field04 = *(u8*)&v1;
     // Each store site re-derives the position with a distinct GVN form (mul
     // vs the shift form used above) so MWCC rematerializes the base register

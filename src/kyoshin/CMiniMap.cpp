@@ -263,7 +263,7 @@ bool CMMClock::OnFileEvent(CEventFile* pEventFile) {
         mLayout->Animate(0);
         mReady = 1;
         mFileHandle = 0;
-        mUnk1C.func_8045F810();
+        mUnk1C.validateHeap();
         return true;
     }
     return false;
@@ -398,7 +398,7 @@ bool CMiniMap::OnFileEvent(CEventFile* pEventFile) {
         func_801160A8(mField3C.mW, lbl_eu_80663FB8, mLayout0C, mField20);
         func_80116670((CMiniMapGimmickView*)mField17C.mW, mField28, mLayout0C, mField20);
         mReady = 1;
-        ((UnkClass_8045F564*)m824)->func_8045F810();
+        ((UnkClass_8045F564*)m824)->validateHeap();
         }
         mFileHandle = 0;
         return true;
@@ -554,7 +554,7 @@ struct MiniMapTermView {
 // scratch regions, and frees the cached 'timg' resource.
 extern "C" void __declspec(noinline) func_80118058(CMiniMap* self) {
     self->mReady = 0;
-    func_801390E0(&self->mFileHandle);
+    closeFileHandle(&self->mFileHandle);
     if (self->mLayout0C != 0) {
         MiniMapCleanupList* list;
         MiniMapCleanupNode* node;
@@ -656,9 +656,9 @@ extern "C" void __declspec(noinline) func_80118058(CMiniMap* self) {
         }
     }
     releaseArcResourceAccessor(self->mAccessor);
-    ((UnkClass_8045F564*)&self->m824)->func_8045F778();
-    ((UnkClass_8045F564*)&self->m834)->func_8045F778();
-    func_801390E0((CFileHandle**)&self->mSub.mPtr04);
+    ((UnkClass_8045F564*)&self->m824)->deleteRegion();
+    ((UnkClass_8045F564*)&self->m834)->deleteRegion();
+    closeFileHandle((CFileHandle**)&self->mSub.mPtr04);
     if (self->mSub.mPtr08 != NULL) {
         deallocate__Q23mtl10MemManagerFPv(self->mSub.mPtr08);
         self->mSub.mPtr08 = NULL;
@@ -1217,7 +1217,6 @@ extern "C" void func_80118854(MiniMapSelf* self) {
                     }
                 }
             }
-            }
         }
 
         // ---- row-table section ----
@@ -1705,6 +1704,7 @@ extern "C" void func_80118854(MiniMapSelf* self) {
         __dt__80043E88(&holder, -1);
     }
 }
+}
 
 // ============================================================================
 // func_8011B05C - per-frame map-view content update: position the map
@@ -1745,26 +1745,26 @@ struct MiniMapB05CPaneView {
 // Object view tuned so v01C/GetPos/v0CC land at vtable+0x1C/+0xAC/+0xCC
 // (MWCC prepends a hidden two-slot dtor pair to these memberless views).
 struct MiniMapB05CObjView {
-    virtual void _d000(); virtual void _d004(); virtual void _d008();
-    virtual void _d00C(); virtual void _d010();
-    virtual void* v01C();
-    virtual void _d020(); virtual void _d024(); virtual void _d028();
-    virtual void _d02C(); virtual void _d030(); virtual void _d034();
-    virtual void _d038(); virtual void _d03C(); virtual void _d040();
-    virtual void _d044(); virtual void _d048(); virtual void _d04C();
-    virtual void _d050(); virtual void _d054(); virtual void _d058();
-    virtual void _d05C(); virtual void _d060(); virtual void _d064();
-    virtual void _d068(); virtual void _d06C(); virtual void _d070();
-    virtual void _d074(); virtual void _d078(); virtual void _d07C();
-    virtual void _d080(); virtual void _d084(); virtual void _d088();
-    virtual void _d08C(); virtual void _d090(); virtual void _d094();
-    virtual void _d098(); virtual void _d09C(); virtual void _d0A0();
-    virtual void _d0A4(); virtual void _d0A8();
-    virtual ml::CVec3* GetPos();     // vtable+0xAC
-    virtual void _d0B0(); virtual void _d0B4(); virtual void _d0B8();
-    virtual void _d0BC(); virtual void _d0C0(); virtual void _d0C4();
-    virtual void _d0C8(); virtual void _d0CC(); virtual void _d0D0();
-    virtual f32 v0CC();              // vtable+0xCC
+    virtual void _d000() = 0; virtual void _d004() = 0; virtual void _d008() = 0;
+    virtual void _d00C() = 0; virtual void _d010() = 0;
+    virtual void* v01C() = 0;
+    virtual void _d020() = 0; virtual void _d024() = 0; virtual void _d028() = 0;
+    virtual void _d02C() = 0; virtual void _d030() = 0; virtual void _d034() = 0;
+    virtual void _d038() = 0; virtual void _d03C() = 0; virtual void _d040() = 0;
+    virtual void _d044() = 0; virtual void _d048() = 0; virtual void _d04C() = 0;
+    virtual void _d050() = 0; virtual void _d054() = 0; virtual void _d058() = 0;
+    virtual void _d05C() = 0; virtual void _d060() = 0; virtual void _d064() = 0;
+    virtual void _d068() = 0; virtual void _d06C() = 0; virtual void _d070() = 0;
+    virtual void _d074() = 0; virtual void _d078() = 0; virtual void _d07C() = 0;
+    virtual void _d080() = 0; virtual void _d084() = 0; virtual void _d088() = 0;
+    virtual void _d08C() = 0; virtual void _d090() = 0; virtual void _d094() = 0;
+    virtual void _d098() = 0; virtual void _d09C() = 0; virtual void _d0A0() = 0;
+    virtual void _d0A4() = 0; virtual void _d0A8() = 0;
+    virtual ml::CVec3* GetPos() = 0;     // vtable+0xAC
+    virtual void _d0B0() = 0; virtual void _d0B4() = 0; virtual void _d0B8() = 0;
+    virtual void _d0BC() = 0; virtual void _d0C0() = 0; virtual void _d0C4() = 0;
+    virtual void _d0C8() = 0; virtual void _d0CC() = 0; virtual void _d0D0() = 0;
+    virtual f32 v0CC() = 0;              // vtable+0xCC
 };
 
 // (Former MiniMapB05CIf/B05CMgr pads were retail's nw4r::lyt::Pane vtables:
@@ -2057,7 +2057,7 @@ void CMenuMiniMap2::Term() {
         mClock.mLayout = 0;
     }
     releaseArcResourceAccessor(mClock.mAccessor);
-    mClock.mUnk1C.func_8045F778();
+    mClock.mUnk1C.deleteRegion();
     func_80118058(&mMiniMap);
     lbl_eu_80663FB0 = 0;
 }
@@ -2728,7 +2728,7 @@ struct MiniMapSubObj {
 // resource variant, then requests the formatted image path into MEM2.
 // ============================================================================
 extern "C" void func_80117734(CMMMapImg* self) {
-    func_801390E0(&self->mFileHandle);
+    closeFileHandle(&self->mFileHandle);
     if (self->mData != NULL) {
         deallocate__Q23mtl10MemManagerFPv(self->mData);
         self->mData = NULL;

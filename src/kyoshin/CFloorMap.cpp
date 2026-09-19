@@ -955,7 +955,6 @@ void func_80246908(void* self) {
 void func_80247490(void* self, u8 arg2, u32 arg3, f32 arg4) {
     CFloorMapLayoutSlots* slots = (CFloorMapLayoutSlots*)self;
     slots->field_0C = arg2;
-    slots->field_0C = arg2;
 
     FLOORMAP_RELEASE_GROUP(slots, &lbl_eu_8050BEA8[0x26C], next01)
 next01:
@@ -1914,7 +1913,6 @@ void func_80249C1C(CFloorMapLayoutSlots* slots) {
             placed = 1;
             break;
         }
-        }
 
         if (!placed) continue;
 
@@ -2248,7 +2246,6 @@ void func_8024A748(void* self) {
                 sprintf(buf, tbl + 0x3BC, (u16)type);
             }
             break;
-        }
         }
     }
 
@@ -3095,9 +3092,9 @@ void func_8024C8F8(void* self, void* drawInfo) {
 // each owning pointer.
 void func_8024CB94(CFloorMapFull* p) {
     getEntry__5CBdatFUl(2);
-    func_801390E0(reinterpret_cast<CFileHandle**>(&p->field_24));
-    func_801390E0(reinterpret_cast<CFileHandle**>(&p->field_28));
-    func_801390E0(reinterpret_cast<CFileHandle**>(&p->field_2C));
+    closeFileHandle(reinterpret_cast<CFileHandle**>(&p->field_24));
+    closeFileHandle(reinterpret_cast<CFileHandle**>(&p->field_28));
+    closeFileHandle(reinterpret_cast<CFileHandle**>(&p->field_2C));
 
     if (p->field_40) {
         p->field_40 = 0;
@@ -3117,8 +3114,8 @@ void func_8024CB94(CFloorMapFull* p) {
         // Release both arc resource accessors and the two scratch regions.
         releaseArcResourceAccessor(reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(p->field_34));
         releaseArcResourceAccessor(reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(p->field_38));
-        reinterpret_cast<UnkClass_8045F564*>((u8*)p + 0x04)->func_8045F778();
-        reinterpret_cast<UnkClass_8045F564*>((u8*)p + 0x14)->func_8045F778();
+        reinterpret_cast<UnkClass_8045F564*>((u8*)p + 0x04)->deleteRegion();
+        reinterpret_cast<UnkClass_8045F564*>((u8*)p + 0x14)->deleteRegion();
 
         CScrollBar_Teardown((void*)p->mScrollBar);
         ((CBaseCur*)&p->mCursor)->cleanup();
@@ -4669,7 +4666,7 @@ u32 CFloorMap::OnFileEvent(CEventFile* event) {
         }
 
         this->field_24 = 0;
-        ((UnkClass_8045F564*)&this->mMemRegion04[0])->func_8045F810();
+        ((UnkClass_8045F564*)&this->mMemRegion04[0])->validateHeap();
         return 1;
     }
 
@@ -4694,7 +4691,6 @@ u32 CFloorMap::OnFileEvent(CEventFile* event) {
         const u32* src = lbl_eu_8050BAB0;
         u32* dst = mapNames;
         for (int i = 0xE; i > 0; i--) {
-            *dst++ = *src++;
             *dst++ = *src++;
         }
 
@@ -4729,7 +4725,7 @@ u32 CFloorMap::OnFileEvent(CEventFile* event) {
         }
 
         this->field_28 = 0;
-        ((UnkClass_8045F564*)&this->mMemRegion14[0])->func_8045F810();
+        ((UnkClass_8045F564*)&this->mMemRegion14[0])->validateHeap();
         return 1;
     }
 
@@ -4783,7 +4779,7 @@ u32 CFloorMap::OnFileEvent(CEventFile* event) {
         CFileHandle* file = (CFileHandle*)this->field_30;
         u32 zero = 0;
         void* data = file->getData();
-        CBdat::func_8003AA78(2, data);
+        CBdat::setBdatEntry(2, data);
         this->field_30 = zero;
 
         if (this->field_34 != 0 && this->field_38 != 0 && zero == 0) {

@@ -113,7 +113,7 @@ void CMenuFade::Init() {
 
     // Register as IScnRender callback at priority 0xd on the owning scene
     mScn->addRenderCB(this, 0xd, 0);
-    mLayoutMem.func_8045F810();
+    mLayoutMem.validateHeap();
 }
 
 void CMenuFade::Draw() {
@@ -127,7 +127,7 @@ void CMenuFade::Term() {
         delete mLayout;
         mLayout = 0;
     }
-    mLayoutMem.func_8045F778();
+    mLayoutMem.deleteRegion();
     lbl_eu_80663FA0 = 0;
 }
 

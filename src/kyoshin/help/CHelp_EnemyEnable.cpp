@@ -6,9 +6,9 @@
 extern "C" CfGimmickList* getReslistB48();
 
 // Resolves a CfGimmickListNode's object slot into the live object. Retail
-// mangled C++ symbol getEffOwner____FPv (single void* parameter), so a plain
-// C++ declaration (not extern "C") yields the matching linker symbol.
-extern cf::CHelp_EnemyEnableObj* func_800AD860(void* obj);
+// linker name is getEffOwner____FPv (extra empty qualifier); a plain
+// getEffOwner(void*) declaration mangles to getEffOwner__FPv and misses.
+extern "C" cf::CHelp_EnemyEnableObj* getEffOwner____FPv(void* obj);
 
 namespace cf {
 
@@ -20,7 +20,7 @@ bool CHelp_EnemyEnable::areAllEnemiesEnabled() {
     CfGimmickListNode* cur = list->head->next;
 
     while (cur != list->head) {
-        CHelp_EnemyEnableObj* obj = func_800AD860(cur->object);
+        CHelp_EnemyEnableObj* obj = getEffOwner____FPv(cur->object);
         if (!obj->mSub.func74()) {
             return false;
         }

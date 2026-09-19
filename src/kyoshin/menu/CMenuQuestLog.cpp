@@ -34,6 +34,7 @@ public:
 
 extern "C" void __dt__13CMenuQuestLogFv(CMenuQuestLog* ths, int);
 extern "C" void __ct__UnkClass_8011C974(u32* dest, const u32* src);
+extern "C" void __dt__800FED0C(CProcess* self, int flags);
 
 // CProcess primary vptr @ +0x10 (novtable base; same slot as other menus).
 struct CProcessPrimaryVptr {
@@ -93,7 +94,23 @@ __declspec(noinline) CMenuQuestLog* __ct__CMenuQuestLog(CMenuQuestLog* _this, CP
     return _this;
 }
 
-CMenuQuestLog::~CMenuQuestLog() {}
+/*
+ * Destructor (retail D2 form). Free-function with flags so the base call
+ * relocates to __dt__800FED0C (game D2), not library __dt__8CProcessFv.
+ * Subobjects destroyed in reverse construction order.
+ */
+extern "C" void __dt__13CMenuQuestLogFv(CMenuQuestLog* ths, int flags) {
+    if (ths != 0) {
+        __dt__11CQstLogInfoFv(&ths->mQstLogInfo, -1);
+        __dt__11CQstLogListFv(&ths->mQstLogList, -1);
+        __dt__11CTitleAHelpFv(&ths->mTitleAHelp, -1);
+        __dt__6CBgTexFv(&ths->mBgTex, -1);
+        __dt__800FED0C(ths, 0);
+        if (flags > 0) {
+            operator delete(ths);
+        }
+    }
+}
 
 // ---------------------------------------------------------------------------
 // ---- CMenuQuestLog::Init (us-8011d08c) -------------------------------------

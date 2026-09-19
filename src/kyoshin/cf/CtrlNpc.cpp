@@ -38,9 +38,7 @@ extern const void* lbl_eu_80527AB8[];
 extern const void* lbl_eu_80527AE0[];
 extern const void* lbl_eu_80527B10[];
 #include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
-// CfT_PlayRateGet (defined in CfTFile.cpp, no header decl): frame-delta
-// getter; declared void here, called through a float cast (CfCam idiom).
-extern "C" void CfT_PlayRateGet();
+// CfT_PlayRateGet is declared in CfGameManager.hpp as extern "C" float.
 
 // typed retail data (replaces old byte blobs): strings sized to retail gaps,
 // sdata2 as one struct to freeze MWCC order and keep the leading 0.0 live.

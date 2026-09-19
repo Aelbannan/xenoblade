@@ -6,7 +6,7 @@
 #include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
 
 extern UNKTYPE* findObjectById(BOOL r3);
-extern UNKTYPE* func_800AD860(UNKTYPE* r3);
+extern UNKTYPE* getEffOwner(UNKTYPE* r3);
 extern UNKTYPE* getValidObject(UNKTYPE* r3);
 
 // Retail data labels referenced by the CfObjectPc methods.
@@ -267,7 +267,7 @@ namespace cf {
         inline UNKTYPE* unkInline1(){
             BOOL thing = CObjectParam_getSelfObjectId();
             UNKTYPE* idk = findObjectById(thing);
-            return func_800AD860(idk);
+            return getEffOwner(idk);
         }
 
         inline UNKTYPE* unkInline2(){

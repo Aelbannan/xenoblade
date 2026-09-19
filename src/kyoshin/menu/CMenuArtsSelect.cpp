@@ -734,7 +734,7 @@ void CMenuArtsSelect::Init() {
         mScn->addRenderCB(cb, 0xa, 0);
     }
 
-    unk6C.func_8045F810();
+    unk6C.validateHeap();
 }
 
 void CMenuArtsSelect::Term() {
@@ -801,7 +801,7 @@ void CMenuArtsSelect::Term() {
         unk294 = NULL;
     }
 
-    unk6C.func_8045F778();
+    unk6C.deleteRegion();
 
     lbl_eu_80663F20 = NULL;
 

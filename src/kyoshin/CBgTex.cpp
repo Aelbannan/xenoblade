@@ -10,7 +10,7 @@
 #include <nw4r/lyt.h>
 
 // Local import (retail unmangled); same decl as CExchangeWin.cpp.
-void func_801390E0(CFileHandle**);
+void closeFileHandle(CFileHandle**);
 
 // US retail keeps most callee names unmangled in CBgTex.o relocs; the C++
 // member manglings are only kept for __dt__ and OnFileEvent (see CBgTex.hpp).
@@ -71,7 +71,7 @@ void CBgTex::BgTex_SetupRegion_3A24() {
     pane = mLayout->GetRootPane()->FindPaneByName(lbl_eu_80505370 + 0xA0, true);
     setPaneVisible(pane, !mPtmMode);
     this->BgTex_MarkLoaded_3E3C();
-    mMemRegion.func_8045F810();
+    mMemRegion.validateHeap();
 }
 
 bool CBgTex::BgTex_Acquire_3C14() {
@@ -133,7 +133,7 @@ void CBgTex::BgTex_Draw_3D7C(nw4r::lyt::DrawInfo* drawInfo) {
 
 void CBgTex::BgTex_Release_3D9C() {
     lbl_eu_80664460 -= 1;
-    func_801390E0(&mFileHandle);
+    closeFileHandle(&mFileHandle);
     mLayoutReady = false;
     CDeviceVI::waitForDrawDone();
     if (mLayout != nullptr) {
@@ -144,7 +144,7 @@ void CBgTex::BgTex_Release_3D9C() {
         releaseArcResourceAccessor(lbl_eu_80664464);
         lbl_eu_80664464 = nullptr;
     }
-    mMemRegion.func_8045F778();
+    mMemRegion.deleteRegion();
 }
 
 u8 CBgTex::BgTex_IsLoaded_3E34() {

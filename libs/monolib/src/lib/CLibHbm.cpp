@@ -220,7 +220,7 @@ void CLibHbm::loadHbmArcFile(){
         CFileHandle* handle = CDeviceFile::readFile(lbl_eu_806656F8->mHandle, pArcFile,
         lbl_eu_806656F8, 0, 0);
         lbl_eu_806656F8->mpHbmArcFileHandle = handle;
-        CDeviceFile::func_8044F154(lbl_eu_806656F8->mpHbmArcFileHandle, 0);
+        CDeviceFile::tryUpdateJobPriority(lbl_eu_806656F8->mpHbmArcFileHandle, 0);
     }
 }
 

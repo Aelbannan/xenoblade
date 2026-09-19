@@ -11182,3 +11182,12 @@ emits `add r3,r3,r0; addi r29,r3,16880`. Cycle `equivalence: full_match`.
 - Cause:     `-ipa file` inlined `func_80127764` into the caller. Registry 100% was stale from a prior out-of-line build
 - Fix:       `__declspec(noinline)` on `func_80127764` so the wrapper keeps the retail `bl`
 - Result:    FULL_MATCH us-80128944 0x8c/0x8c
+
+## CGXCache .sdata2 anon cast-pool tail — BiasDouble helpers retire drop_data_tail (Wii/1.1 -O4,p, 2026-09-19)
+- Symptom:   raw `.sdata2` 0x11C8 vs retail 0x11B6 (+0x12 = anon `@N` s32/u32 int→f32 magics). Prefix `[:0x11B6]` already byte-identical; mid-pool already holds `lbl_eu_8066A388/A390` at +0x10/+0x18.
+- Cause:     plain `(f32)` / `(f32)(s16)` casts emit a trailing cast-pool pair. Hand-rolled `BiasDouble`/`s32ToF` (subtract named mid-pool doubles) uses `fsub`+`frsp` instead of retail builtin `fsubs`, so FULL on `bindTextureGX`/`updateOrthoGX` is lost (29%/35%). Defining the magics as TU-local `.sdata2` `f64` and using plain casts restores FULL insn but does **not** CSE `@N` onto the defined symbols (reloc stays `@N`, size +0x12).
+- Fix:       route every live int→f32 site through BiasDouble helpers; retire `drop_data_tail` + `retarget_relocs` (freeze ratchet). Demote the two former FULLs to HIGH_MATCH until an fsubs-without-`@N` shape exists.
+- Result:    raw `.sdata2` MATCH 0x11B6; UnitRules shrink; bindTextureGX/updateOrthoGX HIGH_MATCH; split OVER +0x11C from helper codegen.
+- Confidence: repo_proven
+- Applies to/a.k.a.: Category C drop burn-down; ADXT BiasDouble CSE does **not** transfer when the magic also lives as opaque mid-pool bytes / when `@N` is a separate cast-pool symbol.
+

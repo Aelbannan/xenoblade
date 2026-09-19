@@ -827,7 +827,7 @@ struct CtrlActBm2 {
 
 
 
-// Chain-object view for the func_800AD860 path of func_800D1F0C.
+// Chain-object view for the getEffOwner path of func_800D1F0C.
 struct CtrlActChainObj {
     u8 _00[0xA0];
     u16 mFieldA0;            // 0xA0 (bit 1 latch)
@@ -869,7 +869,7 @@ extern "C" void CBattleMan_RunBattleEvent(void* bm, void* player, void* req, int
 extern "C" void CCharVoiceMan_EnqueueCtrlActVoiceA(void* a, void* b);
 extern "C" void CCharVoiceMan_EnqueueCtrlActVoiceB(void* a, void* b);
 extern "C" void CCharVoiceMan_EnqueueCtrlActVoiceC(void* a, void* b);
-// func_800AD860 is declared (mangled C++) in CfGameManager.hpp.
+// getEffOwner is declared (mangled C++) in CfGameManager.hpp.
 extern "C" void* CPartsChange_GetActorTable(void* p);
 extern "C" void* CPartsChange_FindActorById(void* p, u16 arg);
 // CChain_TryActivateChain is declared in CtrlPc.hpp (C-ABI, (void*, int)).

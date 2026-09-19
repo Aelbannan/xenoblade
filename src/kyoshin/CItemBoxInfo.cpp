@@ -143,7 +143,6 @@ __declspec(section ".sdata2") __attribute__((aligned(8))) __attribute__((used)) 
 #define lbl_eu_80668040 sdata2_ItemBox.f8040
 #define lbl_eu_80668044 sdata2_ItemBox.f8044
 #define lbl_eu_80668048 sdata2_ItemBox.f8048
-#define lbl_eu_80668048 sdata2_ItemBox.f8048
 
 // .sbss 0xC0: palette globals in retail order (NOBITS: size+align gated).
 // 4-byte entries are u32, 8-byte entries E43Quad; first carries aligned(8)
@@ -395,12 +394,12 @@ void loadItemBoxFiles(CItemBoxInfo* info) {
 #pragma pop
 // Retail func_801D4174 uses the stmw/lmw frame (MWCC optimize_for_size
 // prologue merge): r30 holds `this` and r31 the zero constant for the four
-// post-call pointer clears, so both survive the func_801390E0/80139124 calls.
+// post-call pointer clears, so both survive the closeFileHandle/80139124 calls.
 #pragma push
 #pragma optimize_for_size on
 void func_801D4174(CItemBoxInfo* info) {
-    func_801390E0(&info->state.fileHandle1);
-    func_801390E0(&info->state.fileHandle2);
+    closeFileHandle(&info->state.fileHandle1);
+    closeFileHandle(&info->state.fileHandle2);
     void* layout = info->state.layout;
     info->state.active = 0;
     if (layout != 0) {
@@ -418,8 +417,8 @@ void func_801D4174(CItemBoxInfo* info) {
     releaseArcResourceAccessor(info->state.resource);
     info->state.arcResourceAccessor = 0;
     info->state.resource = 0;
-    info->state.memRegion1.func_8045F778();
-    info->state.memRegion2.func_8045F778();
+    info->state.memRegion1.deleteRegion();
+    info->state.memRegion2.deleteRegion();
 }
 #pragma pop
 
@@ -4774,7 +4773,7 @@ bool CItemBoxInfo::OnFileEvent(CEventFile* file) {
 
         tryActivateItemBox(this);
         state.fileHandle1 = 0;
-        state.memRegion1.func_8045F810();
+        state.memRegion1.validateHeap();
         return true;
     }
     if (state.fileHandle2 == file->mFileHandle) {
@@ -4788,7 +4787,7 @@ bool CItemBoxInfo::OnFileEvent(CEventFile* file) {
         acc2->Attach(data, &lbl_eu_805063BC[0x531]);
         tryActivateItemBox(this);
         state.fileHandle2 = 0;
-        state.memRegion2.func_8045F810();
+        state.memRegion2.validateHeap();
         return true;
     }
     return false;
@@ -4951,8 +4950,8 @@ void drawItemBox2Layout(CItemBoxInfo2* info, nw4r::lyt::DrawInfo* drawInfo) {
 // so unlike func_801D4174 it must NOT use optimize_for_size, and it does not
 // clear the 0x2C/0x30 accessor/resource pointers after releasing them.
 void func_801E13F8(CItemBoxInfo2* info) {
-    func_801390E0(&info->state.fileHandle1);
-    func_801390E0(&info->state.fileHandle2);
+    closeFileHandle(&info->state.fileHandle1);
+    closeFileHandle(&info->state.fileHandle2);
     void* layout = info->state.layout;
     info->state.active = 0;
     if (layout != 0) {
@@ -4964,8 +4963,8 @@ void func_801E13F8(CItemBoxInfo2* info) {
     info->state.animTransform2 = 0;
     releaseArcResourceAccessor(info->state.arcResourceAccessor);
     releaseArcResourceAccessor(info->state.resource);
-    info->state.memRegion1.func_8045F778();
-    info->state.memRegion2.func_8045F778();
+    info->state.memRegion1.deleteRegion();
+    info->state.memRegion2.deleteRegion();
 }
 
 
@@ -5227,7 +5226,6 @@ void func_801E1E0C(CItemBoxSlotFlags* out, void* arg2, void* arg3) {
             u32* s = (u32*)&local;
             for (u32 k = 0; k < 3; k++) {
                 *d++ = *s++;
-                *d++ = *s++;
             }
             *d = *s;
         }
@@ -5292,7 +5290,6 @@ void func_801E1E0C(CItemBoxSlotFlags* out, void* arg2, void* arg3) {
         u32* d = (u32*)out;
         u32* s = (u32*)&local;
         for (u32 k = 0; k < 3; k++) {
-            *d++ = *s++;
             *d++ = *s++;
         }
         *d = *s;
@@ -6304,7 +6301,6 @@ void clearItemBox2PairTexts(CItemBoxInfo2* info) {
                   &lbl_eu_805063BC[0x49b],
                   &lbl_eu_805063BC[0x2aa], 0);
 }
-#pragma pop
 #pragma pop
 // Retail clearItemBox2SlotTexts uses the stmw/lmw frame (MWCC optimize_for_size
 // prologue merge): info in r29, loop counter in r30, string-pool base in r31.
@@ -7377,8 +7373,6 @@ setLayoutTextBoxNumber((nw4r::lyt::Layout*)*(void**)((u8*)info + 0x34), &lbl_eu_
             tmp.value = 0;
             tmp.state = 0;
             copyItemBoxCopy(&listB[listIdxB++], &tmp);
-            copyItemBoxCopy(&listB[listIdxB++], &tmp);
-            copyItemBoxCopy(&listB[listIdxB++], &tmp);
         }
         // armor slots
         {
@@ -8131,7 +8125,7 @@ bool CItemBoxInfo2::OnFileEvent(CEventFile* file) {
 
         activateItemBox2(this);
         state.fileHandle1 = 0;
-        state.memRegion1.func_8045F810();
+        state.memRegion1.validateHeap();
         return true;
     }
     if (state.fileHandle2 == file->mFileHandle) {
@@ -8145,7 +8139,7 @@ bool CItemBoxInfo2::OnFileEvent(CEventFile* file) {
         acc2->Attach(data, &lbl_eu_805063BC[0x531]);
         activateItemBox2(this);
         state.fileHandle2 = 0;
-        state.memRegion2.func_8045F810();
+        state.memRegion2.validateHeap();
         return true;
     }
     return false;
@@ -8233,7 +8227,6 @@ char* func_801D3C74(void* item_data, u8 index) {
                 u32* d = tbl;
                 u32* s = (u32*)&lbl_eu_80506330;
                 for (u32 k = 0; k < 3; k++) {
-                    *d++ = *s++;
                     *d++ = *s++;
                 }
                 *d = *s;

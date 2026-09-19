@@ -195,8 +195,8 @@ void drawTalkList(CKizunaTalkList* self, nw4r::lyt::DrawInfo* pDrawInfo) {
 // layout/accessor, cursor and scroll bar, and clear the shared-file pointer.
 void func_8027346C(CKizunaTalkList* self) {
     getEntry__5CBdatFUl(2);
-    func_801390E0((CFileHandle**)&self->mEntryCount);
-    func_801390E0((CFileHandle**)&self->mUnknown18);
+    closeFileHandle((CFileHandle**)&self->mEntryCount);
+    closeFileHandle((CFileHandle**)&self->mUnknown18);
     self->mState84 = 0;
     if (self->mpLayout20 != NULL) {
         // Layout virtual slot 0x08/4.
@@ -209,7 +209,7 @@ void func_8027346C(CKizunaTalkList* self) {
     // Cursor virtual slot 0x0c/4 on the embedded cursor.
     ((void (*)(void*))((void**)*(void**)&self->mCursor[0])[0x0c / 4])(&self->mCursor[0]);
     CScrollBar_Teardown(&self->mScrollBar);
-    func_8045F778((UnkClass_8045F564*)((u8*)self + 4));
+    deleteRegion((UnkClass_8045F564*)((u8*)self + 4));
     lbl_eu_806648B8 = NULL;
 }
 #pragma optimize_for_size off
@@ -882,7 +882,7 @@ bool CKizunaTalkList::OnFileEvent(CEventFile* pEventFile) {
         func_802741B0(this);
 
         this->mEntryCount = 0;
-        ((UnkClass_8045F564*)((u8*)this + 4))->func_8045F810();
+        ((UnkClass_8045F564*)((u8*)this + 4))->validateHeap();
         __dt__14Class_8045F858Fv(temp8, -1);
         return 1;
     }

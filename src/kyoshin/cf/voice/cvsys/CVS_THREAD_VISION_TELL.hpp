@@ -54,9 +54,9 @@ struct CVS_THREAD_VISION_TELL_Vtbl {
 // Raw layout of the object exposing the implicit vtable pointer at 0x1C
 // (owned by the CVS_THREAD base) so the factory can override it.
 struct CVS_THREAD_VISION_TELL_raw {
-    u32* state0;                // 0x00
-    u32 state1;                 // 0x04
-    u32 state2;                 // 0x08
+    u32* unk0;                  // 0x00 (PlaySlot / factory state triple)
+    u32 unk4;                   // 0x04
+    u32 unk8;                   // 0x08
     u32 unkC;                   // 0x0C
     u32 unk10;                  // 0x10
     u32 unk14;                  // 0x14

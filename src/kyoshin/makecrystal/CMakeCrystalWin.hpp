@@ -98,10 +98,6 @@ u8 getCrystalBoxKindA(CMCCrystalBox* self);
 u8 getCrystalBoxKindB(CMCCrystalBox* self);
 void func_80211CEC(CMCCrystalBox* self, const CMCCrystalBox* src);
 void initCrystalBoxResources(CMCCrystalBox* self);
-int CLoadIsLoadReady(CLoad* self);
-void CLoadDrawIfVisible(CLoad* self, nw4r::lyt::DrawInfo* drawInfo);
-void CLoadTeardownLayout(CLoad* self);
-void CLoadStartFadeInStep(CLoad* self);
 int isInitialized(CTitleAHelp* self);
 void func_801C412C(CTitleAHelp* self);
 void beginClose(CTitleAHelp* self);
@@ -129,7 +125,6 @@ extern "C" int isIdle__11CTitleAHelpFv(CTitleAHelp* self);
 extern "C" void func_801C41E8(CTitleAHelp* self, u8 mode);
 extern "C" int func_8021CA3C(CModelDispMakeCrystal* self);
 extern "C" void func_8021CB20(CModelDispMakeCrystal* self);
-extern "C" void CLoadStartRetryStep(CLoad* self);
 
 // DrawInfo setup helper (retail mangled name func_80137250__FPQ34nw4r3lyt8DrawInfo).
 void func_80137250(nw4r::lyt::DrawInfo* drawInfo);

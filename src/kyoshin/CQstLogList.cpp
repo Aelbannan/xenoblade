@@ -3,7 +3,7 @@
 
 #include "kyoshin/harness_catalog.hpp"
 extern "C" {
-    void func_801390E0(void*);
+    void closeFileHandle(void*);
     void func_80139124(void*);
     void func_80138078(int);
 }
@@ -719,7 +719,7 @@ extern "C" void QstLogList_Draw(CQstLogList* self, nw4r::lyt::DrawInfo* drawInfo
 // Unload the quest-log screen: close the arc file handle, delete the layout,
 // release the resource accessor and tear down cursor/scroll bar/sort menu.
 extern "C" void func_80227BD8(CQstLogList* self) {
-    func_801390E0(&self->mFileHandle);
+    closeFileHandle(&self->mFileHandle);
     self->field_0x170 = 0;
     if (self->mpLayout != 0) {
         delete self->mpLayout;

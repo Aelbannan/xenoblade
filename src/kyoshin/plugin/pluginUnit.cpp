@@ -229,7 +229,8 @@ int onPcArtsAttack(VMThread* pThread) {
             // Compare byte at offset 0x77 of unk50 against the requested arts type.
             CActorParam_UnkStruct2* unk2 =
                 reinterpret_cast<CActorParam_UnkStruct2*>(unk1->unk50);
-            if (unk2->unk42[0x77 - 0x42] == static_cast<u8>(artsType)) {
+            // Byte at +0x77 of UnkStruct2 (CBattleManager uses the same (u8*)+off form).
+            if (*(u8*)((u8*)unk2 + 0x77) == static_cast<u8>(artsType)) {
                 result.value.intVal = 1;
             }
         }
@@ -346,7 +347,8 @@ int onEneArtsAttack(VMThread* pThread) {
         if (unk1 != nullptr && unk1->unk50 != nullptr) {
             CActorParam_UnkStruct2* unk2 =
                 reinterpret_cast<CActorParam_UnkStruct2*>(unk1->unk50);
-            if (unk2->unk42[0x77 - 0x42] == static_cast<u8>(artsType)) {
+            // Byte at +0x77 of UnkStruct2 (CBattleManager uses the same (u8*)+off form).
+            if (*(u8*)((u8*)unk2 + 0x77) == static_cast<u8>(artsType)) {
                 // Mode-based target check.
                 if (mode == 1) {
                     // Mode 1: check if battle manager's current target sub-object
@@ -504,7 +506,7 @@ extern "C" int learnArts(VMThread* pThread) {
     u8 bytes[4];
     *reinterpret_cast<u32*>(bytes) = val;
     u8 byte = bytes[0];
-    cf::CfObjectActor* actor = func_8009EC9C(byte);
+    cf::CfObjectActor* actor = (cf::CfObjectActor*)func_8009EC9C(byte);
     func_800A18A4(actor, id);
     return 0;
 }

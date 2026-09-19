@@ -187,7 +187,7 @@ void CMenuZeal::Term() {
         mLayout3 = 0;
     }
 
-    reinterpret_cast<UnkClass_8045F564*>(&mLayoutMem)->func_8045F778();
+    reinterpret_cast<UnkClass_8045F564*>(&mLayoutMem)->deleteRegion();
     if (mField_BF == 0) {
         lbl_eu_806642A0 = 0;
     }

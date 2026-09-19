@@ -260,7 +260,7 @@ void CMenuQstCnt::Init() {
     }
     mScene->addRenderCB(cb, 0xa, 0);
 
-    reinterpret_cast<UnkClass_8045F564*>(mMemRegion)->func_8045F810();
+    reinterpret_cast<UnkClass_8045F564*>(mMemRegion)->validateHeap();
     mField19C = 1;
 }
 #pragma pop

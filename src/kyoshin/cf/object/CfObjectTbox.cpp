@@ -46,7 +46,7 @@ cf::CfObjectTbox::~CfObjectTbox() {
 void cf::CfObjectTbox::initTbox() {
     // Pull the eventFlags bit 22 (0x400000); pass its inverse as the arg.
     this->setPointEnabled(!(lbl_eu_80663E24 & 0x400000));
-    this->func_800BFB90();
+    this->update();
 }
 
 extern "C" void CfObjectTbox_ForwardToImpl(u8* self) {

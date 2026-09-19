@@ -49,8 +49,8 @@ public:
     u32 field_68;              // 0x68
     u32 mWorkEvent;            // 0x6C IWorkEvent vtable slot
     u32 mScnRender;            // 0x70 IScnRender vtable slot
-    CFileHandle* mFileHandle74;  // 0x74 (released by func_801390E0 in Term)
-    CFileHandle* mFileHandle78;  // 0x78 (released by func_801390E0 in Term)
+    CFileHandle* mFileHandle74;  // 0x74 (released by closeFileHandle in Term)
+    CFileHandle* mFileHandle78;  // 0x78 (released by closeFileHandle in Term)
     /* 0x7c: UnkClass_8045F564 embedded region (dtor calls ~UnkClass_8045F564) */
     UnkClass_8045F564 mMemRegion;
     CScn* mScene;              // 0x8C owning scene (ctor param)
@@ -887,7 +887,7 @@ extern "C" void getEntry__5CBdatFUl(u32);
 
 // C++-linkage helpers (MWCC mangles the plain names to the retail forms
 // closeFileHandle__FPP11CFileHandle / releaseArcResourceAccessor__FPQ34nw4r3lyt19ArcResourceAccessor).
-void func_801390E0(CFileHandle** handle);
+void closeFileHandle(CFileHandle** handle);
 void releaseArcResourceAccessor(nw4r::lyt::ArcResourceAccessor* accessor);
 
 // Float thresholds used by SysWinLog_PollBattleEnd's player-range check.

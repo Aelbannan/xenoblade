@@ -13,7 +13,7 @@ namespace nw4r { namespace math { struct VEC3; } }
 // C++-mangled imports from code_80135FDC.cpp: the unmangled identifiers mangle
 // to the retail symbols closeFileHandle__FPP11CFileHandle and
 // releaseArcResourceAccessor__FPQ34nw4r3lyt19ArcResourceAccessor (see CItemBoxLine.hpp).
-void func_801390E0(CFileHandle**);
+void closeFileHandle(CFileHandle**);
 void releaseArcResourceAccessor(nw4r::lyt::ArcResourceAccessor*);
 
 

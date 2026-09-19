@@ -1,5 +1,5 @@
 {
- "baseline_count": 515,
+ "baseline_count": 512,
  "entries": {
   "AX.o": {
    "class": "rename",
@@ -7669,24 +7669,6 @@
       ".data",
       52,
       4
-     ]
-    ],
-    "drop_data_tail": [
-     [
-      ".sdata2",
-      4534
-     ]
-    ],
-    "retarget_relocs": [
-     [
-      ".text",
-      2252,
-      "lbl_eu_8066A388"
-     ],
-     [
-      ".text",
-      6728,
-      "lbl_eu_8066A390"
      ]
     ]
    },

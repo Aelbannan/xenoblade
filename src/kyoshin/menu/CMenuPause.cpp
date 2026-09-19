@@ -134,7 +134,7 @@ void CMenuPause::Init() {
     }
     mScene->addRenderCB(cb, 0x12, 0);
 
-    mMemRegion.func_8045F810();
+    mMemRegion.validateHeap();
     // regionGuard destructor runs here.
     __dt__14Class_8045F858Fv(regionBuf, -1);
 }
@@ -154,7 +154,7 @@ void CMenuPause::Term() {
         mLayout = NULL;
     }
 
-    mMemRegion.func_8045F778();
+    mMemRegion.deleteRegion();
 
     lbl_eu_806647C8 = NULL;
     MenuSnd_SetSlotsPause_8890(0);

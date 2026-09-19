@@ -76,7 +76,7 @@ void Col6_ClearGlobals_D0B8() {
 // ~CSimpleEveTalkWin / ~CSystemWindow) guarding the CProcess base dtor.
 // NOTE: default -O4,p (NOT optimize_for_size) - this retail keeps the
 // separate stw r31/stw r30 saves instead of the stmw pair.
-extern "C" CCol6CheckBat* __dt__13CCol6CheckBatFv(CCol6CheckBat* self, int flags) {
+extern "C" void* __dt__13CCol6CheckBatFv(CCol6CheckBat* self, int flags) {
     if (self != 0) {
         if (self != 0) {
             if (self != 0) {
@@ -436,7 +436,7 @@ void CCol6Hint::Init() {
 }
 
 void CCol6Hint::Term() {
-    func_801390E0(&mField88);
+    closeFileHandle(&mField88);
 
     // The `if (this)` is the MWCC idiom that splits mr r4 / beq / addi +0x70
     // for the IScnRender subobject passed to removeRenderCB.
@@ -460,7 +460,7 @@ void CCol6Hint::Term() {
     }
 
     releaseArcResourceAccessor(reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(mField8C));
-    reinterpret_cast<UnkClass_8045F564*>(&mMemRegion)->func_8045F778();
+    reinterpret_cast<UnkClass_8045F564*>(&mMemRegion)->deleteRegion();
     lbl_eu_80664234 = 0;
 }
 
@@ -494,7 +494,6 @@ void CCol6Hint::Move() {
                 CScrollBar_InitRootPane(&mScrollBar, &vec3);
             }
             CScrollBar_UpdateThumb(&mScrollBar, 5, (u16)mField11C);
-            CScrollBar_requestScrollIn(&mScrollBar);
             CScrollBar_requestScrollIn(&mScrollBar);
             break;
 
@@ -1279,7 +1278,7 @@ void CCol6System::Init() {
 // scratch region, then clear the CCol6System singleton global.
 void CCol6System::Term() {
     CDeviceVI::waitForDrawDone();
-    func_801390E0(&mFileHandle);
+    closeFileHandle(&mFileHandle);
 
     // The `if (this)` is the MWCC idiom that splits mr r4 / beq / addi +0x70
     // for the IScnRender subobject passed to removeRenderCB.
@@ -1304,7 +1303,7 @@ void CCol6System::Term() {
 
     releaseArcResourceAccessor(mArcAccessor);
     mArcAccessor = 0;
-    reinterpret_cast<UnkClass_8045F564*>(&mMemRegion)->func_8045F778();
+    reinterpret_cast<UnkClass_8045F564*>(&mMemRegion)->deleteRegion();
     lbl_eu_80664238 = 0;
 }
 

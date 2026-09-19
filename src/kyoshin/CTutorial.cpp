@@ -240,7 +240,7 @@ bool CTutorial::OnFileEvent(CEventFile* pEventFile) {
         mpLayout->Animate(0);
 
         mFileHandle0 = nullptr;
-        mRegion0.func_8045F810();
+        mRegion0.validateHeap();
         return true;
     }
     if (mFileHandle1 == pEventFile->mFileHandle) {
@@ -249,7 +249,7 @@ bool CTutorial::OnFileEvent(CEventFile* pEventFile) {
         void* data = mFileHandle1->mData;
         mFileHandle1->mData = nullptr;
         field_4C = (u8*)data;
-        CBdat::func_8003AA78(4, data);
+        CBdat::setBdatEntry(4, data);
         Bdat_GetTable_AA34();
         lbl_eu_80664A30 = (u32)getFP(&lbl_eu_80510290[0x6b]);
         Tutorial_ReloadTutorialData(this);
@@ -270,7 +270,7 @@ bool CTutorial::OnFileEvent(CEventFile* pEventFile) {
 
         Tutorial_ReloadTutorialData(this);
         mFileHandle2 = nullptr;
-        mRegion1.func_8045F810();
+        mRegion1.validateHeap();
         return true;
     }
     return false;

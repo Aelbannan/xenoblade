@@ -162,7 +162,7 @@ void __dt__8CProcessFv(CProcess* self, int flags);
 void __ct__17UnkClass_8045F564Fv(u8* self);
 void __dt__17UnkClass_8045F564Fv(u8* self, int flags);
 void removeRenderCB__4CScnFP10IScnRender(CScn* self, IScnRender* cb);
-void addRenderCB__4CScnFP10IScnRenderUlUl(CScn* self, IScnRender* cb,
+void addRenderCB__4CScnFP10IScnRenderUlUl(void* self, void* cb,
                                           u32 prio, u32 flag);
 // Battle actor helpers (unmangled retail symbols).
 CBattleCommuActor2* func_8016FE34(CBattleCommuPlayer* source);

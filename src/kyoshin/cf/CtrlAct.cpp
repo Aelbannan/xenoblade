@@ -786,7 +786,7 @@ void func_800D1F0C(CtrlActView* self) {
         }
         void* arg =
             (self->mPlayer != NULL) ? (void*)&self->mPlayer->mSub3E9C : NULL;
-        CtrlActChainObj* obj = (CtrlActChainObj*)func_800AD860(arg);
+        CtrlActChainObj* obj = (CtrlActChainObj*)getEffOwner(arg);
         void* o2 = CPartsChange_GetActorTable(obj);
         if (CPartsChange_FindActorById(o2, obj->mField45C0) != NULL) {
             ((CtrlActChainObj*)o2)->mFieldA0 |= 2;
@@ -1278,7 +1278,6 @@ extern "C" int func_800D34D4(CtrlActView* self) {
         } else {
             self->mField14 = lbl_eu_80666CF8;
         }
-    }
     }
     return 0;
 }
@@ -2499,7 +2498,6 @@ extern "C" int func_800D6720(CtrlActView* self, int flag) {
         }
     } else {
         return 1;
-    }
     }
     return 0;
 }

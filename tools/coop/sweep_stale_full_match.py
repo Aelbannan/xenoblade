@@ -71,7 +71,9 @@ def main() -> int:
                     _ensure_reloc_map_fresh,
                 )
                 if _ensure_reloc_map_fresh(project, unit):
-                    canonical = _canonical_symbols_for_unit(unit_name)
+                    canonical = _canonical_symbols_for_unit(
+                        getattr(unit, "name", None) or unit_name
+                    )
             except Exception:
                 canonical = None
             if not _byte_identical_with_relocs(

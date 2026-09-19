@@ -928,3 +928,41 @@ class WitnessWithUncertifiedCalleesTests(unittest.TestCase):
         )
         self.assertEqual(outcome.failure.gate, "abi-boundary")
 
+
+class CanonicalSymbolsUnitPrefixTests(unittest.TestCase):
+    """Registry unit names must resolve objdiff ``main/`` reloc-map keys."""
+
+    def test_accepts_registry_unit_and_objdiff_unit(self) -> None:
+        from tools.coop.lib import equivalence_check as eq
+
+        data = {
+            "entries": {
+                "main/kyoshin/plugin/ocUnit@12270": {
+                    "R_PPC_EMB_SDA21": {"retail_symbol": "lbl_eu_80665C38"}
+                }
+            }
+        }
+        with mock.patch.object(eq, "_load_reloc_map", return_value=(data, "deadbeef")):
+            from tools.coop.lib.equivalence_check import _canonical_symbols_for_unit
+
+            via_registry = _canonical_symbols_for_unit("kyoshin/plugin/ocUnit")
+            via_objdiff = _canonical_symbols_for_unit("main/kyoshin/plugin/ocUnit")
+        self.assertEqual(via_registry.get("@12270"), "lbl_eu_80665C38")
+        self.assertEqual(via_objdiff.get("@12270"), "lbl_eu_80665C38")
+        self.assertEqual(via_registry.get("12270"), "lbl_eu_80665C38")
+
+    def test_unrelated_unit_is_ignored(self) -> None:
+        from tools.coop.lib import equivalence_check as eq
+
+        data = {
+            "entries": {
+                "main/kyoshin/plugin/ocUnit@12270": {
+                    "R_PPC_EMB_SDA21": {"retail_symbol": "lbl_eu_80665C38"}
+                }
+            }
+        }
+        with mock.patch.object(eq, "_load_reloc_map", return_value=(data, "deadbeef")):
+            from tools.coop.lib.equivalence_check import _canonical_symbols_for_unit
+
+            self.assertEqual(_canonical_symbols_for_unit("kyoshin/plugin/ocMsg"), {})
+

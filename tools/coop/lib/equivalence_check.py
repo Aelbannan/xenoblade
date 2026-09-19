@@ -144,15 +144,35 @@ def _ensure_reloc_map_fresh(
         return False
 
 
+def _reloc_map_decomp_label(key: str, unit_name: str) -> str | None:
+    """Return the decomp label from a scoped map key for ``unit_name``.
+
+    Mined keys are ``{objdiff_unit}@{label}`` (e.g.
+    ``main/kyoshin/plugin/ocUnit@12270``). Callers pass either that objdiff
+    name or the registry unit (``kyoshin/plugin/ocUnit``). Accept both so
+    sweep / registry lookups canonicalize the same TU-local ``@N`` labels as
+    ``prove_unit_symbol`` (which uses ``ObjdiffUnit.name``).
+    """
+    if not unit_name or "@" not in key:
+        return None
+    prefix = f"{unit_name}@"
+    if key.startswith(prefix):
+        label = key[len(prefix):]
+        return label or None
+    needle = f"/{unit_name}@"
+    idx = key.find(needle)
+    if idx == -1:
+        return None
+    label = key[idx + len(needle):]
+    return label or None
+
+
 def _canonical_symbols_for_unit(unit_name: str) -> dict[str, str]:
     """Return {decomp_symbol: retail_symbol} for TU-local labels of ``unit_name``."""
     data, _sha = _load_reloc_map()
-    prefix = f"{unit_name}@"
     out: dict[str, str] = {}
     for key, by_type in (data.get("entries") or {}).items():
-        if not key.startswith(prefix):
-            continue
-        decomp_label = key[len(prefix):]
+        decomp_label = _reloc_map_decomp_label(key, unit_name)
         if not decomp_label:
             continue
         for entry in by_type.values():

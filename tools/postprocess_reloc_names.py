@@ -356,30 +356,6 @@ UNIT_RULES: dict[str, UnitRules] = {
         # it. Trimming restores the 0x110 retail slice.
         trim_sdata2_size=0x110,
     ),
-    "NANDCheck.o": UnitRules(
-        # RVL NANDCheck (MWCC_CASES "RVL NANDCheck"): cosmetic renames of the
-        # callback statics onto their retail labels. Raw MATCH 2026-09-09:
-        # removed the explicit trailing NUL in s_nandUserAreaCallbackFmt so
-        # MWCC emits the retail 0xE7 slice with no tail (drop deleted).
-        exact_renames=(
-            ("s_nandUserAreaCallbackName", "lbl_8055127C"),
-            ("s_nandUserAreaCallbackFmt", "lbl_80551294"),
-        ),
-        # USER_DIR_LIST path strings are anonymous @N objects in MWCC output;
-        # rename by content onto the retail labels.
-        data_pool_patterns=(
-            (".sdata", b"/meta\x00", "lbl_80665B10"),
-            (".sdata", b"/ticket\x00", "lbl_80665B18"),
-            (".data", b"/shared2/title\x00", "lbl_80551240"),
-            (".data", b"/title/00010000\x00", "lbl_805511D0"),
-            (".data", b"/title/00010001\x00", "lbl_805511E0"),
-            (".data", b"/title/00010003\x00", "lbl_805511F0"),
-            (".data", b"/title/00010004\x00", "lbl_80551200"),
-            (".data", b"/title/00010005\x00", "lbl_80551210"),
-            (".data", b"/title/00010006\x00", "lbl_80551220"),
-            (".data", b"/title/00010007\x00", "lbl_80551230"),
-        ),
-    ),
     "CEquipItemBox.o": UnitRules(
         # Retail declares CItem_initItemImplInstances with C linkage
         # (unmangled reloc); this TU keeps the C++-linkage declaration to
@@ -3386,10 +3362,9 @@ UNIT_RULES: dict[str, UnitRules] = {
             (".sdata2", 0x20, 0x2C, 4),
         ),
     ),
-    "gki_buffer.o": UnitRules(
-        # MWCC pads the string pool to 8 (0x148); retail split ends at 0x142.
-        drop_data_tail=((".data", 0x142),),
-    ),
+    # gki_buffer.o: DELETED 2026-09-19 raw MATCH — trailing s_poolDelete
+    # resized from [24] to [] (retail .data ends at 0x142 with single NUL,
+    # no pad); MWCC now emits the retail slice with no tail. No postprocess.
     "uusb_ppc.o": UnitRules(
         # retail .bss slice (usb + fiber stacks) is 32-byte aligned; MWCC 8.
         set_data_align=((".bss", 32),),
@@ -3403,10 +3378,9 @@ UNIT_RULES: dict[str, UnitRules] = {
     # dsp_task.o: DELETED 2026-09-09 raw MATCH — string-pack resize
     # (removed 5 explicit trailing NULs from the GC'd __DSP_add_task string;
     # MWCC now emits the retail 0x13B slice with no tail). No postprocess.
-    "OSContext.o": UnitRules(
-        # MWCC pads .data to 8 (0x1E0); retail split ends at 0x1DB.
-        drop_data_tail=((".data", 0x1DB),),
-    ),
+    # OSContext.o: DELETED 2026-09-19 raw MATCH — removed 5 explicit trailing
+    # NULs from the FPU-handler DBPrintf string (retail .data ends at 0x1DB
+    # with single NUL); MWCC now emits the retail slice with no tail.
     "dsp.o": UnitRules(
         # MWCC pads .data to 8 (0x80); retail split ends at 0x7D. The .sdata
         # SDA21 pool slot is the same constant under drifted @N numbering.

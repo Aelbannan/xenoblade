@@ -2278,13 +2278,13 @@ extern "C" int func_8013A4B4(const nw4r::math::VEC3* a, const nw4r::math::VEC3* 
 
     f32 len2A = v1.x * v1.x + v1.z * v1.z;
     if (len2A == 0.0f) {
-        v1 = zero__Q22ml5CVec3;
+        v1 = *reinterpret_cast<nw4r::math::VEC3*>(&zero__Q22ml5CVec3);
     } else {
         PSVECNormalize(reinterpret_cast<const Vec*>(&v1), reinterpret_cast<Vec*>(&v1));
     }
     f32 len2C = v2.x * v2.x + v2.z * v2.z;
     if (len2C == 0.0f) {
-        v2 = zero__Q22ml5CVec3;
+        v2 = *reinterpret_cast<nw4r::math::VEC3*>(&zero__Q22ml5CVec3);
     } else {
         PSVECNormalize(reinterpret_cast<const Vec*>(&v2), reinterpret_cast<Vec*>(&v2));
     }

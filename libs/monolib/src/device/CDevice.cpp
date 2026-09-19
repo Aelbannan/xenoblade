@@ -219,7 +219,7 @@ struct CDeviceMsgQueueData {
 extern "C" CDevice* lbl_eu_80665650;
 namespace {
     //size: 0x1c8
-    class CDeviceThread : public CWorkThread {
+    class __declspec(novtable) CDeviceThread : public CWorkThread {
     public:
         CDeviceThread(const char* pName, CWorkThread* pParent) : CWorkThread(pName, pParent, MAX_CHILD) {
             *(u32**)this = (u32*)lbl_eu_8056C0B8;

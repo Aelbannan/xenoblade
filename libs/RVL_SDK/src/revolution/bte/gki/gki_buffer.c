@@ -514,9 +514,9 @@ void GKI_enqueue_head(BUFFER_Q* p_q, void* p_buf) {
 
 #pragma force_active on
 static char s_deadMsg[32] = "GKI_get_buf_start:: bad addr";
-// 24 bytes: "Deleting bad pool" (18 incl. NUL) + 6 zero pad bytes
-// (retail .data ends at 0x148).
-static char s_poolDelete[24] = "Deleting bad pool";
+// Retail .data ends at 0x142: "Deleting bad pool" is 17 chars + NUL = 18
+// bytes with no trailing pad (unsized array emits exactly that).
+static char s_poolDelete[] = "Deleting bad pool";
 #pragma force_active off
 void* GKI_dequeue(BUFFER_Q* p_q) {
     BUFFER_HDR_T* p_hdr;

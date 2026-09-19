@@ -314,7 +314,8 @@ void* func_8009EC9C(u32);
 int Counter_TestBit(void*, int);
 u8 IdTable_SumValues(void*, int);
 void func_80220128(void*);
-// CtrlRemote_SetSharedBit comes from CfGameManager.hpp (u32,u32) - no local decl.
+// CtrlRemote_SetSharedBit: retail flat name (cf. code_80135FDC.cpp:180).
+extern "C" void CtrlRemote_SetSharedBit(u32 destination, u32 value);
 void __destroy_arr(void*, void*, int, int);
 void __dt__13CMCGetItemBoxFv(void*, int);
 void __dt__6CCur18Fv(void*, int);

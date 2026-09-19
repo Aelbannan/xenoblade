@@ -15,6 +15,7 @@
 // call), so this TU keeps a private no-arg declaration and must not include
 // libs/monolib/src/scn/CScn_8049603C.hpp (owner: monolib CScn).
 extern "C" void* Scn_QueryUnk80State();
+extern "C" float CfT_PlayRateGet();
 // TEMP unblock: monolib/core/CPadManager.hpp currently fails under MWCC
 // (C++11 static_assert / illegal offsetof constant expressions) and
 // CDeviceRemotePad.hpp pulls it in. This TU only needs CDeviceRemotePad::

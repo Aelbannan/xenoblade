@@ -127,7 +127,7 @@ extern "C" CREvtCamera* __ct__CREvtCamera(CREvtCamera* self, u32 param) {
     u32 zero = 0;
     f32 f1 = lbl_eu_806678A8;
     f32 f0 = lbl_eu_806678AC;
-    self->vtable = vt;
+    *(u32**)self = (u32*)(vt);
     s32 neg1 = -1;
 
     self->mField14 = zero;
@@ -168,6 +168,15 @@ extern "C" CREvtCamera* __ct__CREvtCamera(CREvtCamera* self, u32 param) {
     return self;
 }
 
+// Vtable view for self-calls at +0x10 (REvtCam_ClearAnimHandle).
+// MWCC invents a dual virtual-dtor pair for any polymorphic class here, so
+// only two pads precede clearAnimHandle (slots: dtor,dtor,pad,pad,clear=+0x10).
+struct __declspec(novtable) CREvtCamClearVt {
+    virtual void slot00() = 0;
+    virtual void slot04() = 0;
+    virtual void clearAnimHandle() = 0;
+};
+
 // ============================================================================
 // Destructor: __ct__80180088 (0x80181484, size 0x188)
 //
@@ -178,7 +187,7 @@ extern "C" CREvtCamera* __ct__CREvtCamera(CREvtCamera* self, u32 param) {
 // ============================================================================
 extern "C" CREvtCamera* __ct__80180088(CREvtCamera* self, int deleteFlag) {
     if (self) {
-        self->vtable = (u8*)lbl_eu_80531CE8;
+        *(u32**)self = (u32*)((u8*)lbl_eu_80531CE8);
         lbl_eu_806642A8 = 0;
 
         // Each getCameraDataBlock() call is a separate retrieval (MWCC cannot CSE
@@ -216,10 +225,8 @@ extern "C" CREvtCamera* __ct__80180088(CREvtCamera* self, int deleteFlag) {
             }
         }
 
-        // vtable+0x10 on self (retail word: REvtCam_ClearAnimHandle) dispatched
-        // through the real base so MWCC emits the r12 two-step virtual
-        // call matching retail.
-        ((cf::CREvtObj*)self)->vfunc_10();
+        // Retail vtable+0x10 is REvtCam_ClearAnimHandle.
+        static_cast<CREvtCamClearVt*>(static_cast<void*>(self))->clearAnimHandle();
 
         if (self->mField20) {
             if (lbl_eu_80663E14) Scn_IsAnimActiveOrNull((void*)self->mField20);
@@ -370,9 +377,8 @@ extern "C" void func_80180664(CREvtCamera* self, void* eventData, void* somePara
         self->mField9C = 0;
         self->mFieldA0 = 0;
         if (self->mField20) {
-            // vtable+0x10 on self (retail word: REvtCam_ClearAnimHandle) dispatched
-            // through the real base (r12 two-step).
-            ((cf::CREvtObj*)self)->vfunc_10();
+            // Retail vtable+0x10: REvtCam_ClearAnimHandle.
+            static_cast<CREvtCamClearVt*>(static_cast<void*>(self))->clearAnimHandle();
             self->mField24 = self->mField20;
             self->mField20 = 0;
         }

@@ -213,8 +213,18 @@ struct CFontPanel {
 
 // Retail ships unmangled ctor symbols (__ct__CMCEffStart / __ct__CMCEffUpRed /
 // …). Free-function form so derived ctors bl the bare base name and external
-// callers (CModelDispMakeCrystal) bind the same reloc.
+// callers (CModelDispMakeCrystal) bind the same reloc. Install the retail
+// vtable label first (lis/addi/stw) — a pure member-field init omits it.
+extern "C" void* lbl_eu_80536114[];
+extern "C" void* lbl_eu_805360F4[];
+extern "C" void* lbl_eu_805360D4[];
+extern "C" void* lbl_eu_805360B4[];
+extern "C" void* lbl_eu_80536078[];
+extern "C" void* lbl_eu_80536048[];
+extern "C" void* lbl_eu_80536028[];
+
 extern "C" void __ct__CMCEffStart(CMCEffStart* self, nw4r::lyt::ArcResourceAccessor* arcResourceAccessor) {
+    *(void**)self = lbl_eu_80536114;
     self->unk4 = 0;
     self->unk5 = 1;
     self->mArcResourceAccessor = arcResourceAccessor;
@@ -276,8 +286,11 @@ void __declspec(noinline) CMCEffStart::updateInAnim() {
  * CMCEffUpRed
  *
  ******************************************************************************/
-extern "C" void __ct__CMCEffUpRed(CMCEffUpRed* self, nw4r::lyt::ArcResourceAccessor* pArcResourceAccessor) {
-    __ct__CMCEffStart(self, pArcResourceAccessor);
+extern "C" void* __ct__CMCEffUpRed(CMCEffUpRed* self, nw4r::lyt::ArcResourceAccessor* pArcResourceAccessor) {
+    CMCEffUpRed* ths = self;
+    __ct__CMCEffStart(ths, pArcResourceAccessor);
+    *(void**)ths = lbl_eu_805360F4;
+    return ths;
 }
 
 CMCEffUpRed::~CMCEffUpRed() {}
@@ -299,8 +312,11 @@ void CMCEffUpRed::play() {
  * CMCEffUpBlue
  *
  ******************************************************************************/
-extern "C" void __ct__CMCEffUpBlue(CMCEffUpBlue* self, nw4r::lyt::ArcResourceAccessor* pArcResourceAccessor) {
-    __ct__CMCEffStart(self, pArcResourceAccessor);
+extern "C" void* __ct__CMCEffUpBlue(CMCEffUpBlue* self, nw4r::lyt::ArcResourceAccessor* pArcResourceAccessor) {
+    CMCEffUpBlue* ths = self;
+    __ct__CMCEffStart(ths, pArcResourceAccessor);
+    *(void**)ths = lbl_eu_805360D4;
+    return ths;
 }
 
 CMCEffUpBlue::~CMCEffUpBlue() {}
@@ -322,8 +338,11 @@ void CMCEffUpBlue::play() {
  * CMCEffUpGreen
  *
  ******************************************************************************/
-extern "C" void __ct__CMCEffUpGreen(CMCEffUpGreen* self, nw4r::lyt::ArcResourceAccessor* pArcResourceAccessor) {
-    __ct__CMCEffStart(self, pArcResourceAccessor);
+extern "C" void* __ct__CMCEffUpGreen(CMCEffUpGreen* self, nw4r::lyt::ArcResourceAccessor* pArcResourceAccessor) {
+    CMCEffUpGreen* ths = self;
+    __ct__CMCEffStart(ths, pArcResourceAccessor);
+    *(void**)ths = lbl_eu_805360B4;
+    return ths;
 }
 
 CMCEffUpGreen::~CMCEffUpGreen() {}
@@ -543,8 +562,11 @@ void __declspec(noinline) CMCEffSuccess::bindOutAnim() {
  * CMCEffFailure
  *
  ******************************************************************************/
-extern "C" void __ct__CMCEffFailure(CMCEffFailure* self, nw4r::lyt::ArcResourceAccessor* pArcResourceAccessor) {
-    __ct__CMCEffStart(self, pArcResourceAccessor);
+extern "C" void* __ct__CMCEffFailure(CMCEffFailure* self, nw4r::lyt::ArcResourceAccessor* pArcResourceAccessor) {
+    CMCEffFailure* ths = self;
+    __ct__CMCEffStart(ths, pArcResourceAccessor);
+    *(void**)ths = lbl_eu_80536078;
+    return ths;
 }
 
 CMCEffFailure::~CMCEffFailure() {}
@@ -851,8 +873,11 @@ void __declspec(noinline) CMCEffCrystal::bindLoopAnim() {
  * CMCEffUpRank
  *
  ******************************************************************************/
-extern "C" void __ct__CMCEffUpRank(CMCEffUpRank* self, nw4r::lyt::ArcResourceAccessor* pArcResourceAccessor) {
-    __ct__CMCEffStart(self, pArcResourceAccessor);
+extern "C" void* __ct__CMCEffUpRank(CMCEffUpRank* self, nw4r::lyt::ArcResourceAccessor* pArcResourceAccessor) {
+    CMCEffUpRank* ths = self;
+    __ct__CMCEffStart(ths, pArcResourceAccessor);
+    *(void**)ths = lbl_eu_80536048;
+    return ths;
 }
 
 CMCEffUpRank::~CMCEffUpRank() {}
@@ -874,8 +899,11 @@ void CMCEffUpRank::play() {
  * CMCEffDivide
  *
  ******************************************************************************/
-extern "C" void __ct__CMCEffDivide(CMCEffDivide* self, nw4r::lyt::ArcResourceAccessor* pArcResourceAccessor) {
-    __ct__CMCEffStart(self, pArcResourceAccessor);
+extern "C" void* __ct__CMCEffDivide(CMCEffDivide* self, nw4r::lyt::ArcResourceAccessor* pArcResourceAccessor) {
+    CMCEffDivide* ths = self;
+    __ct__CMCEffStart(ths, pArcResourceAccessor);
+    *(void**)ths = lbl_eu_80536028;
+    return ths;
 }
 
 CMCEffDivide::~CMCEffDivide() {}

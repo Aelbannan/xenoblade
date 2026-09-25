@@ -1480,13 +1480,12 @@ extern "C" __declspec(noinline) void collepediaCreateItemMulti(CCollepedia* this
 
     this_->field_49 = 12;
 
-    // NOTE (residual): retail interleaves the two @ha/@l address pairs around
-    // the table lookup and loads the fmt pointer after entry+1; our build
-    // schedules the sdata load early regardless of source shape (10+ variants
-    // tried). Residual: lhzx dest reg + swapped lwz/addi pair.
+    // Force lhzx into r3 (retail) by keeping the table entry as the sole
+    // live result of the index expression before the +1 / fmt setup.
     u32 idx = clpGetPageCat(&this_->field_E8);
     s32 d9 = (s8)this_->field_D9;
-    u32 count = lbl_eu_8050C6A0[idx & 0xFF] + 1;
+    u16 entry = lbl_eu_8050C6A0[idx & 0xFF];
+    u32 count = (u32)entry + 1;
     u32 result = BdatGetU16Direct(lbl_eu_806647DC, &lbl_eu_8050C6E8[0x1f9],
         (u32)(u16)count + d9);
 

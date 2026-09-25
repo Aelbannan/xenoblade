@@ -9,6 +9,7 @@
 #include "kyoshin/harness_catalog.hpp"
 
 #include "kyoshin/cf/CtrlPc.hpp"
+#include "kyoshin/cf/CArtsSet.hpp"
 #include "kyoshin/cf/code_800F42AC.hpp"
 #include "monolib/core/CPadManager.hpp"
 
@@ -707,93 +708,4 @@ void setPadConfigEntry(int index, u32 value) {
     lbl_eu_80527E98[index] = value;
 }
 
-// --- restored from git history (base:gone); do not expand beyond these functions ---
-// from commit b1c01e4a30f0 needle=func_80098810
-
-// Retail func_80098810 (0x80098810): combo-chain maintenance for the player
-// when the current pad action id is 7. Scans the arts table for the chain
-// source whose combo id matches the queued input, installs it on the player's
-// vf2A4 sub-object, then merges the matching chained art via virtual calls.
-int func_80098810(cf::CtrlPc* self) {
-    int ret;
-    CtrlPlayerObj* player = self->mField5C;
-    if (player->mField3F28 == 7) {
-        CtrlPlayerSub2A4* sub = player->vf167();
-        u32 f78 = sub->mField78;
-        cf::CAttackParam* cur = (cf::CAttackParam*)sub->mField50;
-        if ((f78 & 0x800) != 0) {
-            if (func_801B202C() == 0) {
-                ret = 0;
-            } else {
-                int id = func_801B1D4C(-1);
-                if (id == -1) {
-                    ret = 0;
-                } else {
-                    // Scan chain slots 1..7 for one whose combo id matches.
-                    int i;
-                    int row;
-                    int col;
-                    for (i = 1; i < 8; i++) {
-                        cf::CAttackParam* p = (cf::CAttackParam*)getArtsParamRC2(
-                            player->vf157(), 2, i);
-                        if ((s16)p->unk40 == id) {
-                            cf::CAttackParam* p2 =
-                                (cf::CAttackParam*)getArtsParamRC2(
-                                    player->vf157(), 2, i);
-                            sub->mField50 = p2;
-                            self->mField18 = p2->unk76 + 7;
-                            sub->mField48 = p2->unk76 + 7;
-                            // Merge pass: rows 0..1 x cols 0..8 of the arts
-                            // grid; when an entry of type 4 shares the selected
-                            // art's id, pipe its combo value into the selection
-                            // via their vtable hooks.
-                            for (row = 0; row <= 1; row++) {
-                                for (col = 0; col < 8; col++) {
-                                    cf::CAttackParam* q =
-                                        (cf::CAttackParam*)getArtsParamRC2(
-                                            player->vf157(), row, col);
-                                    if (q->unk3C != 4) {
-                                        continue;
-                                    }
-                                    cf::CAttackParam* sel =
-                                        (cf::CAttackParam*)sub->mField50;
-                                    if ((s16)sel->unk40 != (s16)q->unk40) {
-                                        continue;
-                                    }
-                                    ((CAttackParamVt*)sel->unk84)
-                                        ->applyCombo(((CAttackParamVt*)q->unk84)
-                                                         ->getComboId());
-                                    goto merged;
-                                }
-                            }
-                        merged:
-                            ret = 1;
-                            goto done;
-                        }
-                    }
-                    ret = 0;
-                done:;
-                }
-            }
-        } else {
-            // Idle path: only reject while a chain-cancel is still pending.
-            ret = 1;
-            if ((f78 & 0x400) != 0) {
-                if (cur->unk3C == 4) {
-                    if (cur->unk40 != 0) {
-                        if (func_801B1FA4() == -1) {
-                            ret = 0;
-                        }
-                    }
-                }
-            }
-        }
-    }
-    return ret;
-}
-
-// --- restored from git history (base:gone repo-search) ---
-// from commit 8e70ed78883f path=src/kyoshin/cf/CtrlPc.cpp needle=CAttackParam_UnkVirtualFunc3
-
 void cf::CAttackParam::CAttackParam_UnkVirtualFunc3(u8 val) { unk2A = val; }
-

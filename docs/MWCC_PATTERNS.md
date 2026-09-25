@@ -4431,3 +4431,40 @@ cf::/nw4r:: classes with named slots; conversion-flavor preservation when foldin
 - Applies to/a.k.a.: register_mapping.md Rule A/C; any `bl` + immediate `rlwinm` truncate into a saved reg
 - Confidence: repo_proven
 - Example:   us-801ffd88 (`swapPartyMembers`)
+
+## Counted loop unrolls to CTR + dead `+(checks-1)` induction counter (Wii/1.1 -O4,p)
+- Symptom:   Retail has `li rX,0` before a 2-trip `mtctr` loop and `addi rX,rX,<checks-1>`
+  inside the body, with no compare on the counter; a plain `for (i = 0; i < N; i++)` over
+  fixed-offset checks compiles without the counter.
+- Cause:     A counted loop whose index is also the search position (e.g.
+  `for (i = 0; i < 16; i++) if (self[i].id) return 1;` over 8-byte entries) gets unrolled 8x;
+  the optimizer converts the trip count to `mtctr` but keeps the induction update as a dead
+  `i += checks-1` (7) because the web was live at DCE time. MWCC removes a counter that only
+  feeds the loop test, so a manually-unrolled/`!= 14; += 7` rewrite loses it.
+- Fix:       Write the natural indexed scan (`struct Entry { u32 id; u32 data; }; Entry* e =
+  (Entry*)self; for (s32 i = 0; i < 16; i++) if (e[i].id) return 1;`). The pointer advance and
+  the dead counter then fall out of the unroller.
+- Result:    FULL_MATCH (CPartsChange_HasAnyEntry 0xc0/0xc0)
+- Confidence: repo_proven
+- Applies to/a.k.a.: inlined-search family (BTE find_first_serv / find_mx_serv "dead
+  +(checks-1) counter"); counted scans over fixed-stride records; any `li rX,0 ... mtctr ...
+  addi rX,rX,N-1` shape
+
+## Retail shares out-of-line CResLookup-style vcall thunks; MWCC inlines the dispatch (Wii/1.1 -O4,p -ipa file)
+- Symptom:   Every resolve* helper in a unit has `lwz r3,0x2C(rX); lwz r12,0(r3); lwz r12,slot(r12); mtctr; bcctrl`
+  inline where retail has `mr r3,rX; li r4,arg; bl <Sym>_vcallNN` plus a 0x18-0x28-byte thunk at a fixed
+  address doing the dispatch (and often `bctr`/`bclr` instead of `bcctrl`/`blr`).
+- Cause:     The original source used plain member calls (`entry->field_0x2C->method(entry, arg)`); MWCC
+  extracted one shared dispatcher per vtable slot and calls it from every site. Our build inlines because the
+  call-site shapes/implementations differ enough that MWCC does not dedupe.
+- Fix:       Define the thunk as a real high-level function and mark it `__declspec(noinline)` (otherwise
+  MWCC re-inlines it), then call it at every site:
+  `extern "C" __declspec(noinline) int Sym_vcallNN(void* self, u32 val) { CResLookup* l =
+  ((ResInfoEntry*)self)->field_0x2C; return l->cmpField4Eq(self, val); }`
+  Null-guarded tail-call thunks are `void` with `if (l == 0) return; l->method(self);` (yields `bctr`).
+  Watch the return type: a value-returning thunk forces a stack frame + `bcctrl` + epilogue; retail's
+  `bctr` proves the original thunk returns void.
+- Result:    CfRes cluster 15/15 FULL_MATCH (0x80064154..0x80065F48); unit 189 -> 213/224 functions.
+- Confidence: repo_proven
+- Applies to/a.k.a.: any TU with `_vcallNN`-style shared dispatchers (CfRes, CModelDisp, IResInfo callers);
+  MWCC_CASES "CScnFilterMan" noinline-callee recipe extended to vtable dispatch.

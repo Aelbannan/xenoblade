@@ -14,8 +14,8 @@
 // Calls CREvtObj(this, 4), sets own vtable, initializes fields
 // ============================================================================
 CREvtMovie* __ct__CREvtMovie(CREvtMovie* self, CREvtMovieScript* scriptData) {
-    __ct__cf_CREvtObj(self, 4);
-    self->vtable = &lbl_eu_80538AA0[0];
+    __ct__cf_CREvtObj(reinterpret_cast<cf::CREvtObj*>(self), 4);
+    *(u32**)self = (u32*)(&lbl_eu_80538AA0[0]);
     self->mScriptData = scriptData;
     self->mFlag18 = 0;
     self->mFlag19 = 0;
@@ -35,9 +35,9 @@ CREvtMovie* __ct__CREvtMovie(CREvtMovie* self, CREvtMovieScript* scriptData) {
 // ============================================================================
 CREvtMovie* __ct__802948D0(CREvtMovie* self, int dealloc_flag) {
     if (self != 0) {
-        self->vtable = &lbl_eu_80538AA0[0];
+        *(u32**)self = (u32*)(&lbl_eu_80538AA0[0]);
         evtStopMoviePlayback();
-        __dt__Q22cf8CREvtObjFv(self, 0);
+        __dt__Q22cf8CREvtObjFv(reinterpret_cast<cf::CREvtObj*>(self), 0);
 
         if (dealloc_flag > 0) {
             __dt__80185754(self);

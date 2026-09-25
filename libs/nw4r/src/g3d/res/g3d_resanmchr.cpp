@@ -1005,7 +1005,10 @@ void ChrAnmResult::SetRotateDeg(const math::VEC3* pRotate) {
 }
 
 void ChrAnmResult::SetTranslate(const math::VEC3* pTrans) {
-    if (pTrans->x == lbl_eu_80669AE0 && pTrans->y == lbl_eu_80669AE0 && pTrans->z == lbl_eu_80669AE0) {
+    // Load SDA zero before pTrans->* so fcmp FRA/FRB matches retail
+    // (lfs f1,@zero; lfs f0,0(r4) — not the reverse).
+    f32 zero = lbl_eu_80669AE0;
+    if (zero == pTrans->x && zero == pTrans->y && zero == pTrans->z) {
         u32 flag = FLAG_TRANS_ZERO;
 
         if (flags & FLAG_ROT_ZERO) {

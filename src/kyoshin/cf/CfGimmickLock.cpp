@@ -30,11 +30,14 @@ extern "C" void* __ct__cf_CfGimmickLock(cf::CfGimmickLock* self, u16 row) {
 
     // Bdat columns: min/max unlock bounds and the resource id (the cells are
     // string pointers; only the low 16 bits are used).
-    u32 vMin = getBdatStringColumnValue(holder, *(const char**)(lbl_eu_805357E8 + 0x34), row);
+    // Byte offsets into the pointer table (cast through char* — the label is
+    // typed void*[], so bare +0x34 would scale by 4 → lwz 0xD0).
+    u8* colTab = (u8*)lbl_eu_805357E8;
+    u32 vMin = getBdatStringColumnValue(holder, *(const char**)(colTab + 0x34), row);
     self->minVal = *(u16*)&vMin;
-    u32 vMax = getBdatStringColumnValue(holder, *(const char**)(lbl_eu_805357E8 + 0x38), row);
+    u32 vMax = getBdatStringColumnValue(holder, *(const char**)(colTab + 0x38), row);
     self->maxVal = *(u16*)&vMax;
-    u32 vRes = getBdatStringColumnValue(holder, *(const char**)(lbl_eu_805357E8 + 0x30), row);
+    u32 vRes = getBdatStringColumnValue(holder, *(const char**)(colTab + 0x30), row);
     self->resourceId = *(u16*)&vRes;
 
     // Four lock-id columns; the shared column-name buffer is patched in place

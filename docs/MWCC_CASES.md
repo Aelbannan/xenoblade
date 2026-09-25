@@ -19,6 +19,13 @@ knowledge lives in [`MWCC_PATTERNS.md`](MWCC_PATTERNS.md)**; `mwcc_kb.py` search
 
 > Note: records below predate the template — they're being migrated to it over time.
 
+## SetTranslate__Q34nw4r3g3d12ChrAnmResult / g3d_resanmchr — SDA-zero FPR claim order → materialize zero first (Wii/1.1 -O4,p, FULL_MATCH)
+- Symptom:   84.8% / 0 structural / 5 pure reg_swap; retail `lfs f1,@zero; lfs f0,0(r4); fcmpo f1,f0` vs decomp reverse (`lfs f0,0(r4)` first)
+- Cause:     `pTrans->x == lbl_eu_80669AE0` evaluates the member load before the SDA constant, so the fcmp FRA/FRB pair is swapped
+- Fix:       `f32 zero = lbl_eu_80669AE0; if (zero == pTrans->x && zero == pTrans->y && zero == pTrans->z)`
+- Result:    FULL_MATCH 100% (0x84/0x84)
+- Evidence:  us-803e25fc / libs/nw4r/src/g3d/res/g3d_resanmchr.cpp
+
 ## __ct__13CActParamAnimFv / CActParamAnim — novtable C++ ctor missed vptr → extern-C ordered stores (Wii/1.1 -O4,p, FULL_MATCH)
 - Symptom:   live 11.1% (registry 99.44% stale); TU did not compile (OwnerIf/Vt* types); matching one-liner ctor omitted `lbl_eu_805261C8` and ran `CActParamData` first
 - Cause:     `__declspec(novtable)` suppresses the implicit vptr store; a C++ ctor constructs `mChildData` before the body, so the retail order (vptr, +0x0C=0, then `__ct__13CActParamDataFv` at +0x10) cannot be expressed as a member ctor
@@ -11195,9 +11202,28 @@ emits `add r3,r3,r0; addi r29,r3,16880`. Cycle `equivalence: full_match`.
 ## WUD .data auto jumptable @5780 — Category C keep drop (Wii/1.1 -O4,p, 2026-09-19)
 - Symptom:   raw `.data` 0x11CC vs retail 0x11A8 (+0x24 = MWCC auto `@5780` switch table). Named `jumptable_80562FA0` mid-section (inject/retarget/zero). `__wudSecurityEventStackCallback` 96.2% (10 struct + 3 reg_swap), size 0x554/0x554 PASS.
 - Cause:     MWCC places its switch table last in `.data`; retail table is mid-section. Cannot move auto table forward via section/attr. Sibling TU without retail `splits.txt` Object is not emitted. Deleting named mid table shifts trailing strings onto 0xCD8 (content FAIL).
-- Tried (burned): `-O4,s`, `#pragma force_active`/`optimize_for_size`, pMsg/p decl-order, split decl/assign, early DEBUGPrint before `p` (→94.4%), delete named jt, Security-out-of-TU without configure split.
+- Tried (burned): `-O4,s`, `#pragma force_active`/`optimize_for_size`, pMsg/p decl-order, split decl/assign, early DEBUGPrint before `p` (→94.4%), delete named jt, Security-out-of-TU without configure split, dense if/else (re-forms JT), **mid fp-table** (`WudSecHandler jumptable_80562FA0[9]` + nine `static void wudSec_*` helpers + slim `jumptable[event](p,pMsg,pData)`): Security **96.2%→0.3%** (336 struct / 0x554→0x8c stub; `bctr` in-body → `bcctrl` out-of-line), raw+postprocess `.data` MISMATCH at 0xCD8 (live ADDR32 vs retail zeros+inject). **Reverted** to switch + char JT.
 - Fix:       keep UnitRules `drop_data_tail` + inject/retarget/zero (Category C / layout honesty). Do not rewrite the 0x554 jump-dispatch body.
-- Result:    postprocess MATCH; Security near-miss recorded; raw data drop stays until a non-switch 0x554 shape or real split exists.
+- Result:    postprocess MATCH; Security near-miss recorded; raw data drop stays. Last structural angle (mid fp-table) falsified — retail dispatch is switch-into-self via mid-section JT, not an outlined handler table.
 - Confidence: repo_proven
-- Applies to/a.k.a.: mid-section retail jumptable vs MWCC auto-last invariant.
+- Applies to/a.k.a.: mid-section retail jumptable vs MWCC auto-last invariant; fp-table outline destroys in-function `bctr` shape.
 
+
+## Unk80EE4Data — missing leading u32 shifted text fields -4 (Wii/1.1 -O4,p, FULL_MATCH)
+- Symptom:   `attachObjectText` stores at +0x84/+0x74/+0x88 vs retail +0x88/+0x78/+0x8C
+- Cause:     `Unk80EE4Data` started with `u8 field_0x4[0x74]` as the first member, so "0x4" was actually at 0x0 and every later field was 4 bytes early
+- Fix:       `u32 field_0x0;` before `field_0x4[0x74]` so `text_0x78` lands at +0x78
+- Result:    FULL_MATCH us-80081884
+
+## CTitle mCurBody — cast view must not be a real member (Wii/1.1 -O4,p, FULL_MATCH)
+- Symptom:   `CMenuTitle` ctor writes flags at +0xFC/+0x100 vs retail +0xE8/+0xEC (+0x14)
+- Cause:     `CTitle::mCurBody` was a real member after `u8 mCur[0x18]`, inflating `CTitle` by 0x14 past retail 0x88
+- Fix:       move `mCurBody` out to freestanding `CTitleCurBody` (cast view only)
+- Result:    FULL_MATCH us-802b885c `__ct__CMenuTitle`; CTitle unit still 100%
+
+## VoicePlayingIf — cast-only virtual iface for +0x2BC r12 dispatch (Wii/1.1 -O4,p, FULL_MATCH)
+- Symptom:   `func_802A497C` `lwz r4,0(r3); lwz r12,0x2BC(r4)` vs retail `lwz r12,0(r3); lwz r12,0x2BC(r12)`
+- Cause:     `VoiceVtbl` FP-member call is a function-pointer temp (r4 vptr colour), not MWCC virtual dispatch
+- Fix:       `VoicePlayingIf` with 173 unique filler virtuals + `isPlaying()` (declared #173 → slot 175 = +0x2BC under -RTTI); call `reinterpret_cast<VoicePlayingIf*>(handle)->isPlaying()`
+- Result:    FULL_MATCH us-802a70b0
+- Note:      filler count must use unique names; duplicate pad names under-counted the vtable

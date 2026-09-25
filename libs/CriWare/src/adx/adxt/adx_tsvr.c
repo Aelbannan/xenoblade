@@ -291,7 +291,7 @@ void adxt_nlp_trap_entry(ADXT_Tsvr* tsvr) {
 extern void ADXSTM_SetEos(ADXSTM_State* stm, s32 val);
 extern void ADXSTM_EntryEosFunc(ADXSTM_State* stm, void (*fn)(void*), void* arg);
 extern void adxt_start_stm(ADXT_Tsvr* self, u32 fname, u32 sctOfst, u32 sctLen, s32 numChan);
-extern void adxt_eos_entry(void* stream);
+void adxt_eos_entry(void* stream);
 extern s32 ADXSJD_GetSfreq(ADXSJD_State* sjd);
 extern s32 ADXSJD_GetNumLoop(ADXSJD_State* sjd);
 extern s32 ADXSJD_GetLpEndOfst(ADXSJD_State* sjd);
@@ -714,8 +714,6 @@ void adxt_ExecHndl(ADXT_Tsvr* hndl) {
 
 // --- restored from git history (base:gone repo-search) ---
 // from commit 365650b84230 path=libs/CriWare/src/adx/adxt/adx_tsvr.c needle=adxt_eos_entry
-// LLM-HARNESS-END: us-803879a4
 
-// LLM-HARNESS-BEGIN: us-80387b24
-void adxt_eos_entry() {}
+void adxt_eos_entry(void* stream) { (void)stream; }
 

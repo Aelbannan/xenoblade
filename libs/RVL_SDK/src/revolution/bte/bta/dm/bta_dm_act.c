@@ -118,7 +118,7 @@ struct bta_dm_buf_t {
 #define BTA_DM_SEARCH_CMPL_EVT         0x206
 #endif
 
-/* Globals / helpers that lived in the LOST region — declare only what the
+/* Globals / helpers that lived in the LOST region - declare only what the
    currently present functions need so the TU can compile. Bodies for the
    LOST functions themselves are NOT invented here. */
 extern struct bta_dm_search_cb_t bta_dm_search_cb;
@@ -129,6 +129,162 @@ extern void bta_dm_service_search_remname_cback(unsigned char *, unsigned char *
 extern void bta_dm_search_timer_cback(struct bta_dm_timer_t *);
 extern void bta_dm_find_services(unsigned char *bd_addr);
 extern void bta_dm_discover_next_device(void);
+
+/* DM control block (instance in bta_dm_main.c; layout matches bta_dm_api.c). */
+struct bta_dm_peer_dev_t {
+    unsigned char bd_addr[6];
+    unsigned char in_use;
+    unsigned char policy;
+    unsigned char _pad[3];
+};
+
+struct bta_dm_cb_t {
+    struct bta_dm_peer_dev_t peer_dev[7];           /* 0x00-0x4c */
+    unsigned char num_devices;                      /* 0x4d */
+    unsigned char _pad4e[2];                        /* 0x4e-0x4f */
+    void (*cback)(int, void *);                     /* 0x50 */
+    struct bta_dm_timer_t signal_strength_timer;    /* 0x54 */
+    unsigned char signal_strength_mask;             /* 0x6c */
+    unsigned char _pad6d[3];                        /* 0x6d-0x6f */
+    unsigned short signal_strength_period;          /* 0x70 */
+    unsigned char disable_timer_active;             /* 0x72 */
+    unsigned char _pad73;                           /* 0x73 */
+    struct bta_dm_timer_t disable_timer;            /* 0x74 */
+    unsigned char _pad8c[0x6c];                     /* 0x8c-0xf7 */
+    unsigned char pin_bd_addr[6];                   /* 0xf8-0xfd */
+    unsigned char pin_dev_class[3];                 /* 0xfe-0x100 */
+    unsigned char keep_acl;                         /* 0x101 */
+    unsigned char _pad102[2];                       /* 0x102-0x103 */
+};
+
+extern struct bta_dm_cb_t bta_dm_cb;
+
+/* Minimal event payload / helper types used by recovered bodies below. */
+struct bta_dm_auth_cmpl_t {
+    unsigned char bd_addr[6];
+    unsigned char bd_name[0x20];
+    unsigned char key_type;
+    unsigned char key_present;
+    unsigned char key[0x10];
+};
+
+struct bta_dm_authorize_t {
+    unsigned char bd_addr[6];
+    unsigned char bd_name[0x20];
+    unsigned char service;
+};
+
+struct bta_dm_pin_req_t {
+    unsigned char bd_addr[6];
+    unsigned char dev_class[3];
+    unsigned char bd_name[0x21];
+    unsigned char min_16_digit;
+};
+
+struct bta_dm_sig_strength_t {
+    unsigned char bd_addr[6];
+    unsigned char mask;
+    signed char rssi_value;
+    unsigned char link_quality_value;
+};
+
+struct btm_rssi_results_t {
+    unsigned char status;
+    unsigned char rem_bda[6];
+    signed char rssi;
+};
+
+struct btm_link_quality_results_t {
+    unsigned char status;
+    unsigned char rem_bda[6];
+    unsigned char link_quality;
+};
+
+struct bta_dm_compress_srvc_t {
+    unsigned char in_use;
+    unsigned char bd_addr[6];
+    unsigned char server_id;
+};
+
+union bta_dm_sec_t {
+    struct {
+        unsigned char bd_addr[6];
+        unsigned char reason;
+    } acl_change;
+    struct bta_dm_pin_req_t pin_req;
+    unsigned char raw[0x40];
+};
+
+struct bta_dm_cfg_t {
+    unsigned char dev_class[3];
+    unsigned short link_timeout;
+    unsigned short page_timeout;
+    unsigned short policy_settings;
+};
+
+extern struct bta_dm_cfg_t bta_dm_cfg;
+extern unsigned char bta_dm_conn_srvcs[];
+extern struct bta_dm_compress_srvc_t bta_dm_compress_srvcs[5];
+extern const unsigned char bta_security[];
+extern const unsigned char bta_service_id_to_btm_srv_id_lkup_tbl[];
+extern unsigned char *p_bta_dm_rm_cfg;
+extern unsigned char appl_trace_level;
+extern unsigned char bta_sys_cb[];
+extern int bdcmp(unsigned char *, unsigned char *);
+extern void LogMsg_0(unsigned short, char *);
+extern void LogMsg_1(unsigned short, char *, int);
+extern void *GKI_getpoolbuf(int);
+extern void btsnd_hcic_write_scan_enable(void *, int);
+extern void BTM_SendHciReset(void *);
+extern int BTM_GetNumAclLinks(void);
+extern void btm_remove_acl(unsigned char *);
+extern int btm_get_acl_disc_reason_code(void);
+extern unsigned char bta_dm_co_get_compress_memory(unsigned char, unsigned char **, unsigned int *);
+extern void BTM_ReadRSSI(unsigned char *, void *);
+extern void BTM_ReadLinkQuality(unsigned char *, void *);
+extern void BTM_SetDeviceClass(unsigned char *);
+extern void BTM_SecRegister(void *);
+extern void BTM_SetDefaultLinkSuperTout(unsigned short);
+extern void BTM_WritePageTimeout(unsigned short);
+extern void BTM_SetDefaultLinkPolicy(unsigned short);
+extern void BTM_AclRegisterForChanges(void *);
+extern void BTM_ReadLocalDeviceAddr(void *);
+extern void bta_sys_rm_register(void *);
+extern void bta_sys_compress_register(void *);
+extern void bta_dm_init_pm(void);
+extern void bta_dm_disable_pm(void);
+extern void L2CA_RegisterCompression(void *, int);
+extern void L2CA_SetIdleTimeoutByBdAddr(unsigned char *, int);
+extern void bta_sys_disable(void);
+extern void BTM_SetDiscoverability(int, int, int);
+extern void BTM_SetConnectability(int, int, int);
+extern void WBT_ExtCreateRecord(void);
+extern unsigned char *BT_BD_ANY;
+extern void *memset(void *, int, unsigned long);
+extern void *memcpy(void *, const void *, unsigned long);
+
+#ifndef BTA_DM_ACL_CHANGE_EVT
+#define BTA_DM_ACL_CHANGE_EVT 0x108
+#endif
+#ifndef BTA_DM_ACL_CHANGED_EVT
+#define BTA_DM_ACL_CHANGED_EVT 5
+#endif
+#ifndef BTA_DM_ACL_DOWN_EVT
+#define BTA_DM_ACL_DOWN_EVT 6
+#endif
+#ifndef BTA_DM_SEARCH_INQ_CMPL_EVT
+#define BTA_DM_SEARCH_INQ_CMPL_EVT 0x203
+#endif
+#ifndef BTA_DM_SEARCH_SDP_RES_EVT
+#define BTA_DM_SEARCH_SDP_RES_EVT 0x206
+#endif
+
+void bta_dm_pinname_cback(void *p_data);
+void bta_dm_signal_strength_timer_cback(struct bta_dm_timer_t *p_tle);
+void bta_dm_compress_cback(void);
+void bta_dm_rssi_cback(struct btm_rssi_results_t *p_rssi);
+void bta_dm_link_quality_cback(void *p_result);
+
 
 /* Harness stubs: many BTE APIs are undeclared and default to int-returning
    K&R prototypes under MWCC; cast call results at use sites below. */
@@ -365,7 +521,8 @@ void bta_dm_free_sdp_db() {
 // --- restored from git history (base:gone); do not expand beyond these functions ---
 // from commit 0183f60318bf needle=bta_dm_disable_conn_down_timer_cback
 
-void bta_dm_disable_conn_down_timer_cback() {
+void bta_dm_disable_conn_down_timer_cback(struct bta_dm_timer_t *p_tle) {
+    (void)p_tle;
     bta_dm_cb.cback(1, 0);
 }
 
@@ -377,1159 +534,14 @@ void bta_dm_sdp_callback(unsigned short status) {
 
     p_msg = (struct bta_dm_sdp_result_msg_t *)GKI_getbuf(0xA);
     if (p_msg != NULL) {
-        p_msg->event = BTA_DM_SEARCH_SDP_RES_EVT;
+        p_msg->hdr.event = BTA_DM_SEARCH_SDP_RES_EVT;
         p_msg->sdp_status = status;
         bta_sys_sendmsg(p_msg);
     }
 }
 
-// from commit 365650b84230 needle=bta_dm_auth_reply
-// LLM-HARNESS-END: us-802e1a50
+// --- restored from git history (continued; empty LLM-HARNESS stub spam removed) ---
 
-// LLM-HARNESS-BEGIN: us-802e1aec
-void bta_dm_auth_reply() {}
-// LLM-HARNESS-END: us-802e1aec
-
-// LLM-HARNESS-BEGIN: us-802e1bc0
-void bta_dm_search_start() {}
-// LLM-HARNESS-END: us-802e1bc0
-
-// LLM-HARNESS-BEGIN: us-802e1c20
-void bta_dm_search_cancel() {}
-// LLM-HARNESS-END: us-802e1c20
-
-// LLM-HARNESS-BEGIN: us-802e1ca4
-void bta_dm_discover() {}
-// LLM-HARNESS-END: us-802e1ca4
-
-// LLM-HARNESS-BEGIN: us-802e1db8
-void bta_dm_inq_cmpl() {}
-// LLM-HARNESS-END: us-802e1db8
-
-// LLM-HARNESS-BEGIN: us-802e1fdc
-void bta_dm_rmt_name() {}
-// LLM-HARNESS-END: us-802e1fdc
-
-// LLM-HARNESS-BEGIN: us-802e2148
-void bta_dm_disc_rmt_name() {}
-// LLM-HARNESS-END: us-802e2148
-
-// LLM-HARNESS-BEGIN: us-802e21ac
-void bta_dm_sdp_result() {}
-// LLM-HARNESS-END: us-802e21ac
-
-// LLM-HARNESS-BEGIN: us-802e2414
-void bta_dm_search_cmpl() {}
-// LLM-HARNESS-END: us-802e2414
-
-// LLM-HARNESS-BEGIN: us-802e242c
-void bta_dm_disc_result() {}
-// LLM-HARNESS-END: us-802e242c
-
-// LLM-HARNESS-BEGIN: us-802e247c
-void bta_dm_search_result() {}
-// LLM-HARNESS-END: us-802e247c
-
-// LLM-HARNESS-BEGIN: us-802e2504
-void bta_dm_search_timer_cback() {}
-// LLM-HARNESS-END: us-802e2504
-
-// LLM-HARNESS-BEGIN: us-802e2550
-void bta_dm_free_sdp_db() {}
-// LLM-HARNESS-END: us-802e2550
-
-// LLM-HARNESS-BEGIN: us-802e2594
-void bta_dm_queue_search() {}
-// LLM-HARNESS-END: us-802e2594
-
-// LLM-HARNESS-BEGIN: us-802e25dc
-void bta_dm_queue_disc() {}
-// LLM-HARNESS-END: us-802e25dc
-
-// LLM-HARNESS-BEGIN: us-802e2624
-void bta_dm_search_clear_queue() {}
-// LLM-HARNESS-END: us-802e2624
-
-// LLM-HARNESS-BEGIN: us-802e2668
-void bta_dm_search_cancel_cmpl() {}
-// LLM-HARNESS-END: us-802e2668
-
-// LLM-HARNESS-BEGIN: us-802e26ac
-void bta_dm_search_cancel_transac_cmpl() {}
-// LLM-HARNESS-END: us-802e26ac
-
-// LLM-HARNESS-BEGIN: us-802e2708
-void bta_dm_search_cancel_notify() {}
-// LLM-HARNESS-END: us-802e2708
-
-// LLM-HARNESS-BEGIN: us-802e2720
-void bta_dm_find_services() {}
-// LLM-HARNESS-END: us-802e2720
-
-// LLM-HARNESS-BEGIN: us-802e28c0
-void bta_dm_discover_next_device() {}
-// LLM-HARNESS-END: us-802e28c0
-
-// LLM-HARNESS-BEGIN: us-802e29a0
-void bta_dm_sdp_callback() {}
-// LLM-HARNESS-END: us-802e29a0
-
-// LLM-HARNESS-BEGIN: us-802e29e8
-void bta_dm_inq_results_cb() {}
-// LLM-HARNESS-END: us-802e29e8
-
-// LLM-HARNESS-BEGIN: us-802e2a78
-void bta_dm_inq_cmpl_cb() {}
-// LLM-HARNESS-END: us-802e2a78
-
-// LLM-HARNESS-BEGIN: us-802e2ac4
-void bta_dm_service_search_remname_cback() {}
-// LLM-HARNESS-END: us-802e2ac4
-
-// LLM-HARNESS-BEGIN: us-802e2b04
-void bta_dm_remname_cback() {}
-// LLM-HARNESS-END: us-802e2b04
-
-// LLM-HARNESS-BEGIN: us-802e2b90
-void bta_dm_disc_remname_cback() {}
-// LLM-HARNESS-END: us-802e2b90
-
-// LLM-HARNESS-BEGIN: us-802e2c18
-void bta_dm_cancel_rmt_name() {}
-// LLM-HARNESS-END: us-802e2c18
-
-// LLM-HARNESS-BEGIN: us-802e2c1c
-void bta_dm_authorize_cback() {}
-// LLM-HARNESS-END: us-802e2c1c
-
-// LLM-HARNESS-BEGIN: us-802e2ce4
-void bta_dm_pinname_cback() {}
-// LLM-HARNESS-END: us-802e2ce4
-
-// LLM-HARNESS-BEGIN: us-802e2da4
-void bta_dm_pin_cback() {}
-// LLM-HARNESS-END: us-802e2da4
-
-// LLM-HARNESS-BEGIN: us-802e2ed4
-int bta_dm_link_key_request_cback() { return 0; }
-
-// from commit 365650b84230 needle=bta_dm_bond
-// LLM-HARNESS-END: us-802e1998
-
-// LLM-HARNESS-BEGIN: us-802e19e0
-void bta_dm_bond() {}
-// LLM-HARNESS-END: us-802e19e0
-
-// LLM-HARNESS-BEGIN: us-802e1a50
-void bta_dm_pin_reply() {}
-// LLM-HARNESS-END: us-802e1a50
-
-// LLM-HARNESS-BEGIN: us-802e1aec
-void bta_dm_auth_reply() {}
-// LLM-HARNESS-END: us-802e1aec
-
-// LLM-HARNESS-BEGIN: us-802e1bc0
-void bta_dm_search_start() {}
-// LLM-HARNESS-END: us-802e1bc0
-
-// LLM-HARNESS-BEGIN: us-802e1c20
-void bta_dm_search_cancel() {}
-// LLM-HARNESS-END: us-802e1c20
-
-// LLM-HARNESS-BEGIN: us-802e1ca4
-void bta_dm_discover() {}
-// LLM-HARNESS-END: us-802e1ca4
-
-// LLM-HARNESS-BEGIN: us-802e1db8
-void bta_dm_inq_cmpl() {}
-// LLM-HARNESS-END: us-802e1db8
-
-// LLM-HARNESS-BEGIN: us-802e1fdc
-void bta_dm_rmt_name() {}
-// LLM-HARNESS-END: us-802e1fdc
-
-// LLM-HARNESS-BEGIN: us-802e2148
-void bta_dm_disc_rmt_name() {}
-// LLM-HARNESS-END: us-802e2148
-
-// LLM-HARNESS-BEGIN: us-802e21ac
-void bta_dm_sdp_result() {}
-// LLM-HARNESS-END: us-802e21ac
-
-// LLM-HARNESS-BEGIN: us-802e2414
-void bta_dm_search_cmpl() {}
-// LLM-HARNESS-END: us-802e2414
-
-// LLM-HARNESS-BEGIN: us-802e242c
-void bta_dm_disc_result() {}
-// LLM-HARNESS-END: us-802e242c
-
-// LLM-HARNESS-BEGIN: us-802e247c
-void bta_dm_search_result() {}
-// LLM-HARNESS-END: us-802e247c
-
-// LLM-HARNESS-BEGIN: us-802e2504
-void bta_dm_search_timer_cback() {}
-// LLM-HARNESS-END: us-802e2504
-
-// LLM-HARNESS-BEGIN: us-802e2550
-void bta_dm_free_sdp_db() {}
-// LLM-HARNESS-END: us-802e2550
-
-// LLM-HARNESS-BEGIN: us-802e2594
-void bta_dm_queue_search() {}
-// LLM-HARNESS-END: us-802e2594
-
-// LLM-HARNESS-BEGIN: us-802e25dc
-void bta_dm_queue_disc() {}
-// LLM-HARNESS-END: us-802e25dc
-
-// LLM-HARNESS-BEGIN: us-802e2624
-void bta_dm_search_clear_queue() {}
-// LLM-HARNESS-END: us-802e2624
-
-// LLM-HARNESS-BEGIN: us-802e2668
-void bta_dm_search_cancel_cmpl() {}
-// LLM-HARNESS-END: us-802e2668
-
-// LLM-HARNESS-BEGIN: us-802e26ac
-void bta_dm_search_cancel_transac_cmpl() {}
-// LLM-HARNESS-END: us-802e26ac
-
-// LLM-HARNESS-BEGIN: us-802e2708
-void bta_dm_search_cancel_notify() {}
-// LLM-HARNESS-END: us-802e2708
-
-// LLM-HARNESS-BEGIN: us-802e2720
-void bta_dm_find_services() {}
-// LLM-HARNESS-END: us-802e2720
-
-// LLM-HARNESS-BEGIN: us-802e28c0
-void bta_dm_discover_next_device() {}
-// LLM-HARNESS-END: us-802e28c0
-
-// LLM-HARNESS-BEGIN: us-802e29a0
-void bta_dm_sdp_callback() {}
-// LLM-HARNESS-END: us-802e29a0
-
-// LLM-HARNESS-BEGIN: us-802e29e8
-void bta_dm_inq_results_cb() {}
-// LLM-HARNESS-END: us-802e29e8
-
-// LLM-HARNESS-BEGIN: us-802e2a78
-void bta_dm_inq_cmpl_cb() {}
-// LLM-HARNESS-END: us-802e2a78
-
-// LLM-HARNESS-BEGIN: us-802e2ac4
-void bta_dm_service_search_remname_cback() {}
-// LLM-HARNESS-END: us-802e2ac4
-
-// LLM-HARNESS-BEGIN: us-802e2b04
-void bta_dm_remname_cback() {}
-// LLM-HARNESS-END: us-802e2b04
-
-// LLM-HARNESS-BEGIN: us-802e2b90
-void bta_dm_disc_remname_cback() {}
-// LLM-HARNESS-END: us-802e2b90
-
-// LLM-HARNESS-BEGIN: us-802e2c18
-void bta_dm_cancel_rmt_name() {}
-// LLM-HARNESS-END: us-802e2c18
-
-// LLM-HARNESS-BEGIN: us-802e2c1c
-void bta_dm_authorize_cback() {}
-// LLM-HARNESS-END: us-802e2c1c
-
-// LLM-HARNESS-BEGIN: us-802e2ce4
-void bta_dm_pinname_cback() {}
-// LLM-HARNESS-END: us-802e2ce4
-
-// LLM-HARNESS-BEGIN: us-802e2da4
-void bta_dm_pin_cback() {}
-// LLM-HARNESS-END: us-802e2da4
-
-// LLM-HARNESS-BEGIN: us-802e2ed4
-int bta_dm_link_key_request_cback() { return 0; }
-
-// from commit 365650b84230 needle=bta_dm_cancel_rmt_name
-// LLM-HARNESS-END: us-802e2b90
-
-// LLM-HARNESS-BEGIN: us-802e2c18
-void bta_dm_cancel_rmt_name() {}
-// LLM-HARNESS-END: us-802e2c18
-
-// LLM-HARNESS-BEGIN: us-802e2c1c
-void bta_dm_authorize_cback() {}
-// LLM-HARNESS-END: us-802e2c1c
-
-// LLM-HARNESS-BEGIN: us-802e2ce4
-void bta_dm_pinname_cback() {}
-// LLM-HARNESS-END: us-802e2ce4
-
-// LLM-HARNESS-BEGIN: us-802e2da4
-void bta_dm_pin_cback() {}
-// LLM-HARNESS-END: us-802e2da4
-
-// LLM-HARNESS-BEGIN: us-802e2ed4
-int bta_dm_link_key_request_cback() { return 0; }
-
-// from commit 365650b84230 needle=bta_dm_immediate_disable
-// LLM-HARNESS-END: us-802e395c
-
-// LLM-HARNESS-BEGIN: us-802e39e0
-void bta_dm_immediate_disable() {}
-// LLM-HARNESS-END: us-802e39e0
-
-// LLM-HARNESS-BEGIN: us-802e39fc
-void bta_dm_reset_complete() {}
-// LLM-HARNESS-END: us-802e39fc
-
-// LLM-HARNESS-BEGIN: us-802e3a00
-void bta_dm_send_hci_reset() {}
-
-// from commit 365650b84230 needle=bta_dm_keep_acl
-// LLM-HARNESS-END: us-802e3854
-
-// LLM-HARNESS-BEGIN: us-802e395c
-void bta_dm_keep_acl() {}
-// LLM-HARNESS-END: us-802e395c
-
-// LLM-HARNESS-BEGIN: us-802e39e0
-void bta_dm_immediate_disable() {}
-// LLM-HARNESS-END: us-802e39e0
-
-// LLM-HARNESS-BEGIN: us-802e39fc
-void bta_dm_reset_complete() {}
-// LLM-HARNESS-END: us-802e39fc
-
-// LLM-HARNESS-BEGIN: us-802e3a00
-void bta_dm_send_hci_reset() {}
-
-// from commit 365650b84230 needle=bta_dm_pin_reply
-// LLM-HARNESS-END: us-802e19e0
-
-// LLM-HARNESS-BEGIN: us-802e1a50
-void bta_dm_pin_reply() {}
-// LLM-HARNESS-END: us-802e1a50
-
-// LLM-HARNESS-BEGIN: us-802e1aec
-void bta_dm_auth_reply() {}
-// LLM-HARNESS-END: us-802e1aec
-
-// LLM-HARNESS-BEGIN: us-802e1bc0
-void bta_dm_search_start() {}
-// LLM-HARNESS-END: us-802e1bc0
-
-// LLM-HARNESS-BEGIN: us-802e1c20
-void bta_dm_search_cancel() {}
-// LLM-HARNESS-END: us-802e1c20
-
-// LLM-HARNESS-BEGIN: us-802e1ca4
-void bta_dm_discover() {}
-// LLM-HARNESS-END: us-802e1ca4
-
-// LLM-HARNESS-BEGIN: us-802e1db8
-void bta_dm_inq_cmpl() {}
-// LLM-HARNESS-END: us-802e1db8
-
-// LLM-HARNESS-BEGIN: us-802e1fdc
-void bta_dm_rmt_name() {}
-// LLM-HARNESS-END: us-802e1fdc
-
-// LLM-HARNESS-BEGIN: us-802e2148
-void bta_dm_disc_rmt_name() {}
-// LLM-HARNESS-END: us-802e2148
-
-// LLM-HARNESS-BEGIN: us-802e21ac
-void bta_dm_sdp_result() {}
-// LLM-HARNESS-END: us-802e21ac
-
-// LLM-HARNESS-BEGIN: us-802e2414
-void bta_dm_search_cmpl() {}
-// LLM-HARNESS-END: us-802e2414
-
-// LLM-HARNESS-BEGIN: us-802e242c
-void bta_dm_disc_result() {}
-// LLM-HARNESS-END: us-802e242c
-
-// LLM-HARNESS-BEGIN: us-802e247c
-void bta_dm_search_result() {}
-// LLM-HARNESS-END: us-802e247c
-
-// LLM-HARNESS-BEGIN: us-802e2504
-void bta_dm_search_timer_cback() {}
-// LLM-HARNESS-END: us-802e2504
-
-// LLM-HARNESS-BEGIN: us-802e2550
-void bta_dm_free_sdp_db() {}
-// LLM-HARNESS-END: us-802e2550
-
-// LLM-HARNESS-BEGIN: us-802e2594
-void bta_dm_queue_search() {}
-// LLM-HARNESS-END: us-802e2594
-
-// LLM-HARNESS-BEGIN: us-802e25dc
-void bta_dm_queue_disc() {}
-// LLM-HARNESS-END: us-802e25dc
-
-// LLM-HARNESS-BEGIN: us-802e2624
-void bta_dm_search_clear_queue() {}
-// LLM-HARNESS-END: us-802e2624
-
-// LLM-HARNESS-BEGIN: us-802e2668
-void bta_dm_search_cancel_cmpl() {}
-// LLM-HARNESS-END: us-802e2668
-
-// LLM-HARNESS-BEGIN: us-802e26ac
-void bta_dm_search_cancel_transac_cmpl() {}
-// LLM-HARNESS-END: us-802e26ac
-
-// LLM-HARNESS-BEGIN: us-802e2708
-void bta_dm_search_cancel_notify() {}
-// LLM-HARNESS-END: us-802e2708
-
-// LLM-HARNESS-BEGIN: us-802e2720
-void bta_dm_find_services() {}
-// LLM-HARNESS-END: us-802e2720
-
-// LLM-HARNESS-BEGIN: us-802e28c0
-void bta_dm_discover_next_device() {}
-// LLM-HARNESS-END: us-802e28c0
-
-// LLM-HARNESS-BEGIN: us-802e29a0
-void bta_dm_sdp_callback() {}
-// LLM-HARNESS-END: us-802e29a0
-
-// LLM-HARNESS-BEGIN: us-802e29e8
-void bta_dm_inq_results_cb() {}
-// LLM-HARNESS-END: us-802e29e8
-
-// LLM-HARNESS-BEGIN: us-802e2a78
-void bta_dm_inq_cmpl_cb() {}
-// LLM-HARNESS-END: us-802e2a78
-
-// LLM-HARNESS-BEGIN: us-802e2ac4
-void bta_dm_service_search_remname_cback() {}
-// LLM-HARNESS-END: us-802e2ac4
-
-// LLM-HARNESS-BEGIN: us-802e2b04
-void bta_dm_remname_cback() {}
-// LLM-HARNESS-END: us-802e2b04
-
-// LLM-HARNESS-BEGIN: us-802e2b90
-void bta_dm_disc_remname_cback() {}
-// LLM-HARNESS-END: us-802e2b90
-
-// LLM-HARNESS-BEGIN: us-802e2c18
-void bta_dm_cancel_rmt_name() {}
-// LLM-HARNESS-END: us-802e2c18
-
-// LLM-HARNESS-BEGIN: us-802e2c1c
-void bta_dm_authorize_cback() {}
-// LLM-HARNESS-END: us-802e2c1c
-
-// LLM-HARNESS-BEGIN: us-802e2ce4
-void bta_dm_pinname_cback() {}
-// LLM-HARNESS-END: us-802e2ce4
-
-// LLM-HARNESS-BEGIN: us-802e2da4
-void bta_dm_pin_cback() {}
-// LLM-HARNESS-END: us-802e2da4
-
-// LLM-HARNESS-BEGIN: us-802e2ed4
-int bta_dm_link_key_request_cback() { return 0; }
-
-// from commit 365650b84230 needle=bta_dm_queue_disc
-// LLM-HARNESS-END: us-802e2594
-
-// LLM-HARNESS-BEGIN: us-802e25dc
-void bta_dm_queue_disc() {}
-// LLM-HARNESS-END: us-802e25dc
-
-// LLM-HARNESS-BEGIN: us-802e2624
-void bta_dm_search_clear_queue() {}
-// LLM-HARNESS-END: us-802e2624
-
-// LLM-HARNESS-BEGIN: us-802e2668
-void bta_dm_search_cancel_cmpl() {}
-// LLM-HARNESS-END: us-802e2668
-
-// LLM-HARNESS-BEGIN: us-802e26ac
-void bta_dm_search_cancel_transac_cmpl() {}
-// LLM-HARNESS-END: us-802e26ac
-
-// LLM-HARNESS-BEGIN: us-802e2708
-void bta_dm_search_cancel_notify() {}
-// LLM-HARNESS-END: us-802e2708
-
-// LLM-HARNESS-BEGIN: us-802e2720
-void bta_dm_find_services() {}
-// LLM-HARNESS-END: us-802e2720
-
-// LLM-HARNESS-BEGIN: us-802e28c0
-void bta_dm_discover_next_device() {}
-// LLM-HARNESS-END: us-802e28c0
-
-// LLM-HARNESS-BEGIN: us-802e29a0
-void bta_dm_sdp_callback() {}
-// LLM-HARNESS-END: us-802e29a0
-
-// LLM-HARNESS-BEGIN: us-802e29e8
-void bta_dm_inq_results_cb() {}
-// LLM-HARNESS-END: us-802e29e8
-
-// LLM-HARNESS-BEGIN: us-802e2a78
-void bta_dm_inq_cmpl_cb() {}
-// LLM-HARNESS-END: us-802e2a78
-
-// LLM-HARNESS-BEGIN: us-802e2ac4
-void bta_dm_service_search_remname_cback() {}
-// LLM-HARNESS-END: us-802e2ac4
-
-// LLM-HARNESS-BEGIN: us-802e2b04
-void bta_dm_remname_cback() {}
-// LLM-HARNESS-END: us-802e2b04
-
-// LLM-HARNESS-BEGIN: us-802e2b90
-void bta_dm_disc_remname_cback() {}
-// LLM-HARNESS-END: us-802e2b90
-
-// LLM-HARNESS-BEGIN: us-802e2c18
-void bta_dm_cancel_rmt_name() {}
-// LLM-HARNESS-END: us-802e2c18
-
-// LLM-HARNESS-BEGIN: us-802e2c1c
-void bta_dm_authorize_cback() {}
-// LLM-HARNESS-END: us-802e2c1c
-
-// LLM-HARNESS-BEGIN: us-802e2ce4
-void bta_dm_pinname_cback() {}
-// LLM-HARNESS-END: us-802e2ce4
-
-// LLM-HARNESS-BEGIN: us-802e2da4
-void bta_dm_pin_cback() {}
-// LLM-HARNESS-END: us-802e2da4
-
-// LLM-HARNESS-BEGIN: us-802e2ed4
-int bta_dm_link_key_request_cback() { return 0; }
-
-// from commit 365650b84230 needle=bta_dm_queue_search
-// LLM-HARNESS-END: us-802e2550
-
-// LLM-HARNESS-BEGIN: us-802e2594
-void bta_dm_queue_search() {}
-// LLM-HARNESS-END: us-802e2594
-
-// LLM-HARNESS-BEGIN: us-802e25dc
-void bta_dm_queue_disc() {}
-// LLM-HARNESS-END: us-802e25dc
-
-// LLM-HARNESS-BEGIN: us-802e2624
-void bta_dm_search_clear_queue() {}
-// LLM-HARNESS-END: us-802e2624
-
-// LLM-HARNESS-BEGIN: us-802e2668
-void bta_dm_search_cancel_cmpl() {}
-// LLM-HARNESS-END: us-802e2668
-
-// LLM-HARNESS-BEGIN: us-802e26ac
-void bta_dm_search_cancel_transac_cmpl() {}
-// LLM-HARNESS-END: us-802e26ac
-
-// LLM-HARNESS-BEGIN: us-802e2708
-void bta_dm_search_cancel_notify() {}
-// LLM-HARNESS-END: us-802e2708
-
-// LLM-HARNESS-BEGIN: us-802e2720
-void bta_dm_find_services() {}
-// LLM-HARNESS-END: us-802e2720
-
-// LLM-HARNESS-BEGIN: us-802e28c0
-void bta_dm_discover_next_device() {}
-// LLM-HARNESS-END: us-802e28c0
-
-// LLM-HARNESS-BEGIN: us-802e29a0
-void bta_dm_sdp_callback() {}
-// LLM-HARNESS-END: us-802e29a0
-
-// LLM-HARNESS-BEGIN: us-802e29e8
-void bta_dm_inq_results_cb() {}
-// LLM-HARNESS-END: us-802e29e8
-
-// LLM-HARNESS-BEGIN: us-802e2a78
-void bta_dm_inq_cmpl_cb() {}
-// LLM-HARNESS-END: us-802e2a78
-
-// LLM-HARNESS-BEGIN: us-802e2ac4
-void bta_dm_service_search_remname_cback() {}
-// LLM-HARNESS-END: us-802e2ac4
-
-// LLM-HARNESS-BEGIN: us-802e2b04
-void bta_dm_remname_cback() {}
-// LLM-HARNESS-END: us-802e2b04
-
-// LLM-HARNESS-BEGIN: us-802e2b90
-void bta_dm_disc_remname_cback() {}
-// LLM-HARNESS-END: us-802e2b90
-
-// LLM-HARNESS-BEGIN: us-802e2c18
-void bta_dm_cancel_rmt_name() {}
-// LLM-HARNESS-END: us-802e2c18
-
-// LLM-HARNESS-BEGIN: us-802e2c1c
-void bta_dm_authorize_cback() {}
-// LLM-HARNESS-END: us-802e2c1c
-
-// LLM-HARNESS-BEGIN: us-802e2ce4
-void bta_dm_pinname_cback() {}
-// LLM-HARNESS-END: us-802e2ce4
-
-// LLM-HARNESS-BEGIN: us-802e2da4
-void bta_dm_pin_cback() {}
-// LLM-HARNESS-END: us-802e2da4
-
-// LLM-HARNESS-BEGIN: us-802e2ed4
-int bta_dm_link_key_request_cback() { return 0; }
-
-// from commit 365650b84230 needle=bta_dm_search_cancel_cmpl
-// LLM-HARNESS-END: us-802e2624
-
-// LLM-HARNESS-BEGIN: us-802e2668
-void bta_dm_search_cancel_cmpl() {}
-// LLM-HARNESS-END: us-802e2668
-
-// LLM-HARNESS-BEGIN: us-802e26ac
-void bta_dm_search_cancel_transac_cmpl() {}
-// LLM-HARNESS-END: us-802e26ac
-
-// LLM-HARNESS-BEGIN: us-802e2708
-void bta_dm_search_cancel_notify() {}
-// LLM-HARNESS-END: us-802e2708
-
-// LLM-HARNESS-BEGIN: us-802e2720
-void bta_dm_find_services() {}
-// LLM-HARNESS-END: us-802e2720
-
-// LLM-HARNESS-BEGIN: us-802e28c0
-void bta_dm_discover_next_device() {}
-// LLM-HARNESS-END: us-802e28c0
-
-// LLM-HARNESS-BEGIN: us-802e29a0
-void bta_dm_sdp_callback() {}
-// LLM-HARNESS-END: us-802e29a0
-
-// LLM-HARNESS-BEGIN: us-802e29e8
-void bta_dm_inq_results_cb() {}
-// LLM-HARNESS-END: us-802e29e8
-
-// LLM-HARNESS-BEGIN: us-802e2a78
-void bta_dm_inq_cmpl_cb() {}
-// LLM-HARNESS-END: us-802e2a78
-
-// LLM-HARNESS-BEGIN: us-802e2ac4
-void bta_dm_service_search_remname_cback() {}
-// LLM-HARNESS-END: us-802e2ac4
-
-// LLM-HARNESS-BEGIN: us-802e2b04
-void bta_dm_remname_cback() {}
-// LLM-HARNESS-END: us-802e2b04
-
-// LLM-HARNESS-BEGIN: us-802e2b90
-void bta_dm_disc_remname_cback() {}
-// LLM-HARNESS-END: us-802e2b90
-
-// LLM-HARNESS-BEGIN: us-802e2c18
-void bta_dm_cancel_rmt_name() {}
-// LLM-HARNESS-END: us-802e2c18
-
-// LLM-HARNESS-BEGIN: us-802e2c1c
-void bta_dm_authorize_cback() {}
-// LLM-HARNESS-END: us-802e2c1c
-
-// LLM-HARNESS-BEGIN: us-802e2ce4
-void bta_dm_pinname_cback() {}
-// LLM-HARNESS-END: us-802e2ce4
-
-// LLM-HARNESS-BEGIN: us-802e2da4
-void bta_dm_pin_cback() {}
-// LLM-HARNESS-END: us-802e2da4
-
-// LLM-HARNESS-BEGIN: us-802e2ed4
-int bta_dm_link_key_request_cback() { return 0; }
-
-// from commit 365650b84230 needle=bta_dm_search_cancel_notify
-// LLM-HARNESS-END: us-802e26ac
-
-// LLM-HARNESS-BEGIN: us-802e2708
-void bta_dm_search_cancel_notify() {}
-// LLM-HARNESS-END: us-802e2708
-
-// LLM-HARNESS-BEGIN: us-802e2720
-void bta_dm_find_services() {}
-// LLM-HARNESS-END: us-802e2720
-
-// LLM-HARNESS-BEGIN: us-802e28c0
-void bta_dm_discover_next_device() {}
-// LLM-HARNESS-END: us-802e28c0
-
-// LLM-HARNESS-BEGIN: us-802e29a0
-void bta_dm_sdp_callback() {}
-// LLM-HARNESS-END: us-802e29a0
-
-// LLM-HARNESS-BEGIN: us-802e29e8
-void bta_dm_inq_results_cb() {}
-// LLM-HARNESS-END: us-802e29e8
-
-// LLM-HARNESS-BEGIN: us-802e2a78
-void bta_dm_inq_cmpl_cb() {}
-// LLM-HARNESS-END: us-802e2a78
-
-// LLM-HARNESS-BEGIN: us-802e2ac4
-void bta_dm_service_search_remname_cback() {}
-// LLM-HARNESS-END: us-802e2ac4
-
-// LLM-HARNESS-BEGIN: us-802e2b04
-void bta_dm_remname_cback() {}
-// LLM-HARNESS-END: us-802e2b04
-
-// LLM-HARNESS-BEGIN: us-802e2b90
-void bta_dm_disc_remname_cback() {}
-// LLM-HARNESS-END: us-802e2b90
-
-// LLM-HARNESS-BEGIN: us-802e2c18
-void bta_dm_cancel_rmt_name() {}
-// LLM-HARNESS-END: us-802e2c18
-
-// LLM-HARNESS-BEGIN: us-802e2c1c
-void bta_dm_authorize_cback() {}
-// LLM-HARNESS-END: us-802e2c1c
-
-// LLM-HARNESS-BEGIN: us-802e2ce4
-void bta_dm_pinname_cback() {}
-// LLM-HARNESS-END: us-802e2ce4
-
-// LLM-HARNESS-BEGIN: us-802e2da4
-void bta_dm_pin_cback() {}
-// LLM-HARNESS-END: us-802e2da4
-
-// LLM-HARNESS-BEGIN: us-802e2ed4
-int bta_dm_link_key_request_cback() { return 0; }
-
-// from commit 365650b84230 needle=bta_dm_search_cancel_transac_cmpl
-// LLM-HARNESS-END: us-802e2668
-
-// LLM-HARNESS-BEGIN: us-802e26ac
-void bta_dm_search_cancel_transac_cmpl() {}
-// LLM-HARNESS-END: us-802e26ac
-
-// LLM-HARNESS-BEGIN: us-802e2708
-void bta_dm_search_cancel_notify() {}
-// LLM-HARNESS-END: us-802e2708
-
-// LLM-HARNESS-BEGIN: us-802e2720
-void bta_dm_find_services() {}
-// LLM-HARNESS-END: us-802e2720
-
-// LLM-HARNESS-BEGIN: us-802e28c0
-void bta_dm_discover_next_device() {}
-// LLM-HARNESS-END: us-802e28c0
-
-// LLM-HARNESS-BEGIN: us-802e29a0
-void bta_dm_sdp_callback() {}
-// LLM-HARNESS-END: us-802e29a0
-
-// LLM-HARNESS-BEGIN: us-802e29e8
-void bta_dm_inq_results_cb() {}
-// LLM-HARNESS-END: us-802e29e8
-
-// LLM-HARNESS-BEGIN: us-802e2a78
-void bta_dm_inq_cmpl_cb() {}
-// LLM-HARNESS-END: us-802e2a78
-
-// LLM-HARNESS-BEGIN: us-802e2ac4
-void bta_dm_service_search_remname_cback() {}
-// LLM-HARNESS-END: us-802e2ac4
-
-// LLM-HARNESS-BEGIN: us-802e2b04
-void bta_dm_remname_cback() {}
-// LLM-HARNESS-END: us-802e2b04
-
-// LLM-HARNESS-BEGIN: us-802e2b90
-void bta_dm_disc_remname_cback() {}
-// LLM-HARNESS-END: us-802e2b90
-
-// LLM-HARNESS-BEGIN: us-802e2c18
-void bta_dm_cancel_rmt_name() {}
-// LLM-HARNESS-END: us-802e2c18
-
-// LLM-HARNESS-BEGIN: us-802e2c1c
-void bta_dm_authorize_cback() {}
-// LLM-HARNESS-END: us-802e2c1c
-
-// LLM-HARNESS-BEGIN: us-802e2ce4
-void bta_dm_pinname_cback() {}
-// LLM-HARNESS-END: us-802e2ce4
-
-// LLM-HARNESS-BEGIN: us-802e2da4
-void bta_dm_pin_cback() {}
-// LLM-HARNESS-END: us-802e2da4
-
-// LLM-HARNESS-BEGIN: us-802e2ed4
-int bta_dm_link_key_request_cback() { return 0; }
-
-// from commit 365650b84230 needle=bta_dm_search_clear_queue
-// LLM-HARNESS-END: us-802e25dc
-
-// LLM-HARNESS-BEGIN: us-802e2624
-void bta_dm_search_clear_queue() {}
-// LLM-HARNESS-END: us-802e2624
-
-// LLM-HARNESS-BEGIN: us-802e2668
-void bta_dm_search_cancel_cmpl() {}
-// LLM-HARNESS-END: us-802e2668
-
-// LLM-HARNESS-BEGIN: us-802e26ac
-void bta_dm_search_cancel_transac_cmpl() {}
-// LLM-HARNESS-END: us-802e26ac
-
-// LLM-HARNESS-BEGIN: us-802e2708
-void bta_dm_search_cancel_notify() {}
-// LLM-HARNESS-END: us-802e2708
-
-// LLM-HARNESS-BEGIN: us-802e2720
-void bta_dm_find_services() {}
-// LLM-HARNESS-END: us-802e2720
-
-// LLM-HARNESS-BEGIN: us-802e28c0
-void bta_dm_discover_next_device() {}
-// LLM-HARNESS-END: us-802e28c0
-
-// LLM-HARNESS-BEGIN: us-802e29a0
-void bta_dm_sdp_callback() {}
-// LLM-HARNESS-END: us-802e29a0
-
-// LLM-HARNESS-BEGIN: us-802e29e8
-void bta_dm_inq_results_cb() {}
-// LLM-HARNESS-END: us-802e29e8
-
-// LLM-HARNESS-BEGIN: us-802e2a78
-void bta_dm_inq_cmpl_cb() {}
-// LLM-HARNESS-END: us-802e2a78
-
-// LLM-HARNESS-BEGIN: us-802e2ac4
-void bta_dm_service_search_remname_cback() {}
-// LLM-HARNESS-END: us-802e2ac4
-
-// LLM-HARNESS-BEGIN: us-802e2b04
-void bta_dm_remname_cback() {}
-// LLM-HARNESS-END: us-802e2b04
-
-// LLM-HARNESS-BEGIN: us-802e2b90
-void bta_dm_disc_remname_cback() {}
-// LLM-HARNESS-END: us-802e2b90
-
-// LLM-HARNESS-BEGIN: us-802e2c18
-void bta_dm_cancel_rmt_name() {}
-// LLM-HARNESS-END: us-802e2c18
-
-// LLM-HARNESS-BEGIN: us-802e2c1c
-void bta_dm_authorize_cback() {}
-// LLM-HARNESS-END: us-802e2c1c
-
-// LLM-HARNESS-BEGIN: us-802e2ce4
-void bta_dm_pinname_cback() {}
-// LLM-HARNESS-END: us-802e2ce4
-
-// LLM-HARNESS-BEGIN: us-802e2da4
-void bta_dm_pin_cback() {}
-// LLM-HARNESS-END: us-802e2da4
-
-// LLM-HARNESS-BEGIN: us-802e2ed4
-int bta_dm_link_key_request_cback() { return 0; }
-
-// from commit 365650b84230 needle=bta_dm_search_start
-// LLM-HARNESS-END: us-802e1aec
-
-// LLM-HARNESS-BEGIN: us-802e1bc0
-void bta_dm_search_start() {}
-// LLM-HARNESS-END: us-802e1bc0
-
-// LLM-HARNESS-BEGIN: us-802e1c20
-void bta_dm_search_cancel() {}
-// LLM-HARNESS-END: us-802e1c20
-
-// LLM-HARNESS-BEGIN: us-802e1ca4
-void bta_dm_discover() {}
-// LLM-HARNESS-END: us-802e1ca4
-
-// LLM-HARNESS-BEGIN: us-802e1db8
-void bta_dm_inq_cmpl() {}
-// LLM-HARNESS-END: us-802e1db8
-
-// LLM-HARNESS-BEGIN: us-802e1fdc
-void bta_dm_rmt_name() {}
-// LLM-HARNESS-END: us-802e1fdc
-
-// LLM-HARNESS-BEGIN: us-802e2148
-void bta_dm_disc_rmt_name() {}
-// LLM-HARNESS-END: us-802e2148
-
-// LLM-HARNESS-BEGIN: us-802e21ac
-void bta_dm_sdp_result() {}
-// LLM-HARNESS-END: us-802e21ac
-
-// LLM-HARNESS-BEGIN: us-802e2414
-void bta_dm_search_cmpl() {}
-// LLM-HARNESS-END: us-802e2414
-
-// LLM-HARNESS-BEGIN: us-802e242c
-void bta_dm_disc_result() {}
-// LLM-HARNESS-END: us-802e242c
-
-// LLM-HARNESS-BEGIN: us-802e247c
-void bta_dm_search_result() {}
-// LLM-HARNESS-END: us-802e247c
-
-// LLM-HARNESS-BEGIN: us-802e2504
-void bta_dm_search_timer_cback() {}
-// LLM-HARNESS-END: us-802e2504
-
-// LLM-HARNESS-BEGIN: us-802e2550
-void bta_dm_free_sdp_db() {}
-// LLM-HARNESS-END: us-802e2550
-
-// LLM-HARNESS-BEGIN: us-802e2594
-void bta_dm_queue_search() {}
-// LLM-HARNESS-END: us-802e2594
-
-// LLM-HARNESS-BEGIN: us-802e25dc
-void bta_dm_queue_disc() {}
-// LLM-HARNESS-END: us-802e25dc
-
-// LLM-HARNESS-BEGIN: us-802e2624
-void bta_dm_search_clear_queue() {}
-// LLM-HARNESS-END: us-802e2624
-
-// LLM-HARNESS-BEGIN: us-802e2668
-void bta_dm_search_cancel_cmpl() {}
-// LLM-HARNESS-END: us-802e2668
-
-// LLM-HARNESS-BEGIN: us-802e26ac
-void bta_dm_search_cancel_transac_cmpl() {}
-// LLM-HARNESS-END: us-802e26ac
-
-// LLM-HARNESS-BEGIN: us-802e2708
-void bta_dm_search_cancel_notify() {}
-// LLM-HARNESS-END: us-802e2708
-
-// LLM-HARNESS-BEGIN: us-802e2720
-void bta_dm_find_services() {}
-// LLM-HARNESS-END: us-802e2720
-
-// LLM-HARNESS-BEGIN: us-802e28c0
-void bta_dm_discover_next_device() {}
-// LLM-HARNESS-END: us-802e28c0
-
-// LLM-HARNESS-BEGIN: us-802e29a0
-void bta_dm_sdp_callback() {}
-// LLM-HARNESS-END: us-802e29a0
-
-// LLM-HARNESS-BEGIN: us-802e29e8
-void bta_dm_inq_results_cb() {}
-// LLM-HARNESS-END: us-802e29e8
-
-// LLM-HARNESS-BEGIN: us-802e2a78
-void bta_dm_inq_cmpl_cb() {}
-// LLM-HARNESS-END: us-802e2a78
-
-// LLM-HARNESS-BEGIN: us-802e2ac4
-void bta_dm_service_search_remname_cback() {}
-// LLM-HARNESS-END: us-802e2ac4
-
-// LLM-HARNESS-BEGIN: us-802e2b04
-void bta_dm_remname_cback() {}
-// LLM-HARNESS-END: us-802e2b04
-
-// LLM-HARNESS-BEGIN: us-802e2b90
-void bta_dm_disc_remname_cback() {}
-// LLM-HARNESS-END: us-802e2b90
-
-// LLM-HARNESS-BEGIN: us-802e2c18
-void bta_dm_cancel_rmt_name() {}
-// LLM-HARNESS-END: us-802e2c18
-
-// LLM-HARNESS-BEGIN: us-802e2c1c
-void bta_dm_authorize_cback() {}
-// LLM-HARNESS-END: us-802e2c1c
-
-// LLM-HARNESS-BEGIN: us-802e2ce4
-void bta_dm_pinname_cback() {}
-// LLM-HARNESS-END: us-802e2ce4
-
-// LLM-HARNESS-BEGIN: us-802e2da4
-void bta_dm_pin_cback() {}
-// LLM-HARNESS-END: us-802e2da4
-
-// LLM-HARNESS-BEGIN: us-802e2ed4
-int bta_dm_link_key_request_cback() { return 0; }
-
-// from commit 365650b84230 needle=bta_dm_send_hci_reset
-// LLM-HARNESS-END: us-802e39fc
-
-// LLM-HARNESS-BEGIN: us-802e3a00
-void bta_dm_send_hci_reset() {}
-
-// from commit 365650b84230 needle=bta_dm_set_dev_name
-// LLM-HARNESS-END: us-802e18d4
-
-// LLM-HARNESS-BEGIN: us-802e1990
-int bta_dm_set_dev_name() { return 0; }
-
-// from commit 365650b84230 needle=bta_dm_set_visibility
-// LLM-HARNESS-END: us-802e1990
-
-// LLM-HARNESS-BEGIN: us-802e1998
-void bta_dm_set_visibility() {}
-// LLM-HARNESS-END: us-802e1998
-
-// LLM-HARNESS-BEGIN: us-802e19e0
-void bta_dm_bond() {}
-// LLM-HARNESS-END: us-802e19e0
-
-// LLM-HARNESS-BEGIN: us-802e1a50
-void bta_dm_pin_reply() {}
-// LLM-HARNESS-END: us-802e1a50
-
-// LLM-HARNESS-BEGIN: us-802e1aec
-void bta_dm_auth_reply() {}
-// LLM-HARNESS-END: us-802e1aec
-
-// LLM-HARNESS-BEGIN: us-802e1bc0
-void bta_dm_search_start() {}
-// LLM-HARNESS-END: us-802e1bc0
-
-// LLM-HARNESS-BEGIN: us-802e1c20
-void bta_dm_search_cancel() {}
-// LLM-HARNESS-END: us-802e1c20
-
-// LLM-HARNESS-BEGIN: us-802e1ca4
-void bta_dm_discover() {}
-// LLM-HARNESS-END: us-802e1ca4
-
-// LLM-HARNESS-BEGIN: us-802e1db8
-void bta_dm_inq_cmpl() {}
-// LLM-HARNESS-END: us-802e1db8
-
-// LLM-HARNESS-BEGIN: us-802e1fdc
-void bta_dm_rmt_name() {}
-// LLM-HARNESS-END: us-802e1fdc
-
-// LLM-HARNESS-BEGIN: us-802e2148
-void bta_dm_disc_rmt_name() {}
-// LLM-HARNESS-END: us-802e2148
-
-// LLM-HARNESS-BEGIN: us-802e21ac
-void bta_dm_sdp_result() {}
-// LLM-HARNESS-END: us-802e21ac
-
-// LLM-HARNESS-BEGIN: us-802e2414
-void bta_dm_search_cmpl() {}
-// LLM-HARNESS-END: us-802e2414
-
-// LLM-HARNESS-BEGIN: us-802e242c
-void bta_dm_disc_result() {}
-// LLM-HARNESS-END: us-802e242c
-
-// LLM-HARNESS-BEGIN: us-802e247c
-void bta_dm_search_result() {}
-// LLM-HARNESS-END: us-802e247c
-
-// LLM-HARNESS-BEGIN: us-802e2504
-void bta_dm_search_timer_cback() {}
-// LLM-HARNESS-END: us-802e2504
-
-// LLM-HARNESS-BEGIN: us-802e2550
-void bta_dm_free_sdp_db() {}
-// LLM-HARNESS-END: us-802e2550
-
-// LLM-HARNESS-BEGIN: us-802e2594
-void bta_dm_queue_search() {}
-// LLM-HARNESS-END: us-802e2594
-
-// LLM-HARNESS-BEGIN: us-802e25dc
-void bta_dm_queue_disc() {}
-// LLM-HARNESS-END: us-802e25dc
-
-// LLM-HARNESS-BEGIN: us-802e2624
-void bta_dm_search_clear_queue() {}
-// LLM-HARNESS-END: us-802e2624
-
-// LLM-HARNESS-BEGIN: us-802e2668
-void bta_dm_search_cancel_cmpl() {}
-// LLM-HARNESS-END: us-802e2668
-
-// LLM-HARNESS-BEGIN: us-802e26ac
-void bta_dm_search_cancel_transac_cmpl() {}
-// LLM-HARNESS-END: us-802e26ac
-
-// LLM-HARNESS-BEGIN: us-802e2708
-void bta_dm_search_cancel_notify() {}
-// LLM-HARNESS-END: us-802e2708
-
-// LLM-HARNESS-BEGIN: us-802e2720
-void bta_dm_find_services() {}
-// LLM-HARNESS-END: us-802e2720
-
-// LLM-HARNESS-BEGIN: us-802e28c0
-void bta_dm_discover_next_device() {}
-// LLM-HARNESS-END: us-802e28c0
-
-// LLM-HARNESS-BEGIN: us-802e29a0
-void bta_dm_sdp_callback() {}
-// LLM-HARNESS-END: us-802e29a0
-
-// LLM-HARNESS-BEGIN: us-802e29e8
-void bta_dm_inq_results_cb() {}
-// LLM-HARNESS-END: us-802e29e8
-
-// LLM-HARNESS-BEGIN: us-802e2a78
-void bta_dm_inq_cmpl_cb() {}
-// LLM-HARNESS-END: us-802e2a78
-
-// LLM-HARNESS-BEGIN: us-802e2ac4
-void bta_dm_service_search_remname_cback() {}
-// LLM-HARNESS-END: us-802e2ac4
-
-// LLM-HARNESS-BEGIN: us-802e2b04
-void bta_dm_remname_cback() {}
-// LLM-HARNESS-END: us-802e2b04
-
-// LLM-HARNESS-BEGIN: us-802e2b90
-void bta_dm_disc_remname_cback() {}
-// LLM-HARNESS-END: us-802e2b90
-
-// LLM-HARNESS-BEGIN: us-802e2c18
-void bta_dm_cancel_rmt_name() {}
-// LLM-HARNESS-END: us-802e2c18
-
-// LLM-HARNESS-BEGIN: us-802e2c1c
-void bta_dm_authorize_cback() {}
-// LLM-HARNESS-END: us-802e2c1c
-
-// LLM-HARNESS-BEGIN: us-802e2ce4
-void bta_dm_pinname_cback() {}
-// LLM-HARNESS-END: us-802e2ce4
-
-// LLM-HARNESS-BEGIN: us-802e2da4
-void bta_dm_pin_cback() {}
-// LLM-HARNESS-END: us-802e2da4
-
-// LLM-HARNESS-BEGIN: us-802e2ed4
-int bta_dm_link_key_request_cback() { return 0; }
-
-// from commit 702909a6fbbd needle=bta_dm_authentication_complete_cback
-/* Target: us-802e2f78 (0x84): authentication complete. Reports
-   BTA_DM_AUTH_CMPL_EVT on success (no key present). */
 unsigned char bta_dm_authentication_complete_cback(bd_addr_t bd_addr, unsigned char *dev_class,
                                                    unsigned char *bd_name, unsigned char success) {
     struct bta_dm_auth_cmpl_t auth_cmpl;
@@ -1583,28 +595,13 @@ void bta_dm_inq_cmpl_cb(struct bta_btm_inq_cmpl_t *p_results) {
 
     p_msg = (struct bta_dm_inq_cmpl_msg_t *)GKI_getbuf(0x110);
     if (p_msg != NULL) {
-        p_msg->event = BTA_DM_SEARCH_INQ_CMPL_EVT;
+        p_msg->hdr.event = BTA_DM_SEARCH_INQ_CMPL_EVT;
         p_msg->num = p_results->num_resp;
         bta_sys_sendmsg(p_msg);
     }
 }
 
-// from commit 702909a6fbbd needle=bta_dm_inq_results_cb
-
-void bta_dm_inq_results_cb() {}
-
-/* Inquiry complete callback: forwards the number of responses to the search
-   state machine as a INQUIRY_CMPL message (0x203). */
-void bta_dm_inq_cmpl_cb(struct bta_btm_inq_cmpl_t *p_results) {
-    struct bta_dm_inq_cmpl_msg_t *p_msg;
-
-    p_msg = (struct bta_dm_inq_cmpl_msg_t *)GKI_getbuf(0x110);
-    if (p_msg != NULL) {
-        p_msg->event = BTA_DM_SEARCH_INQ_CMPL_EVT;
-        p_msg->num = p_results->num_resp;
-        bta_sys_sendmsg(p_msg);
-    }
-}
+void bta_dm_inq_results_cb(void) {}
 
 // from commit 702909a6fbbd needle=bta_dm_link_key_request_cback
 
@@ -1699,7 +696,8 @@ void bta_dm_disc_remname_cback(void *p_data) {
 }
 
 // from commit 95ad18ac12e1 needle=bta_dm_l2cap_server_compress_cback
-   pointers are used here. */
+/* L2CAP server compress callback: look up the peer and allocate compress
+   memory via the co layer. Unused client/data pointers are accepted. */
 unsigned char bta_dm_l2cap_server_compress_cback(
         bd_addr_t bd_addr, unsigned char server_id, unsigned char client_id,
         unsigned char *p_data, unsigned int data_len, unsigned char *p_data2,
@@ -1743,8 +741,9 @@ void bta_dm_local_addr_cback(void *addr) {
     if (bta_dm_cb.cback != NULL) {
         bta_dm_cb.cback(0, addr);
     }
+}
 
-// from commit 95ad18ac12e1 needle=bta_dm_pin_cback
+/* PIN request callback: if the remote name is empty, kick a name request;
    otherwise report it immediately. */
 unsigned char bta_dm_pin_cback(bd_addr_t bd_addr, unsigned char *dev_class,
                                unsigned char *bd_name) {
@@ -1797,7 +796,7 @@ void bta_dm_pinname_cback(void *p_data) {
 }
 
 // from commit 95ad18ac12e1 needle=bta_dm_rm_cback
-   the role-management config table. */
+/* Role-management callback: update peer policy from the RM config table. */
 void bta_dm_rm_cback(int status, unsigned char id, unsigned char app_id,
                      bd_addr_t peer_addr) {
     unsigned char num;
@@ -1844,9 +843,9 @@ void bta_dm_rssi_cback(struct btm_rssi_results_t *p_rssi) {
 }
 
 // from commit 95ad18ac12e1 needle=bta_dm_signal_strength
-   to trigger the first reading. When start=0, stops the ongoing timer. */
+/* Start/stop periodic signal-strength polling; start=1 kicks the first read. */
 void bta_dm_signal_strength(struct bta_dm_msg *p_data) {
-    struct bta_dm_sig_strength_data_t *d = (struct bta_dm_sig_strength_data_t *)p_data;
+    struct bta_dm_sig_strength_msg_t *d = &p_data->sig_strength;
     if (d->start) {
         bta_dm_cb.signal_strength_mask = d->mask;
         bta_dm_cb.signal_strength_period = d->period;
@@ -1930,7 +929,7 @@ void bta_dm_disable(struct bta_dm_msg *p_data) {
 
 // --- restored from git history (base:gone repo-search) ---
 // from commit e48802b591c4 path=libs/RVL_SDK/src/revolution/bte/bta/dm/bta_dm_act.c needle=bta_dm_acl_change
-   disable is pending, complete the disable. */
+/* ACL up/down: track peer devices; if disable is pending, complete it. */
 void bta_dm_acl_change(struct bta_dm_msg *p_data) {
     union bta_dm_sec_t sec_event;
     unsigned char *p_bd_addr = p_data->acl_change.bd_addr;
@@ -1988,3 +987,32 @@ void bta_dm_acl_change(struct bta_dm_msg *p_data) {
     }
 }
 
+/* Unique empty stubs for symbols not recovered above. */
+void bta_dm_auth_reply(void) {}
+void bta_dm_search_start(void) {}
+void bta_dm_search_cancel(void) {}
+void bta_dm_discover(void) {}
+void bta_dm_inq_cmpl(void) {}
+void bta_dm_search_timer_cback(struct bta_dm_timer_t *t) { (void)t; }
+void bta_dm_queue_search(void) {}
+void bta_dm_queue_disc(void) {}
+void bta_dm_search_clear_queue(void) {}
+void bta_dm_search_cancel_cmpl(void) {}
+void bta_dm_search_cancel_transac_cmpl(void) {}
+void bta_dm_search_cancel_notify(void) {}
+void bta_dm_find_services(unsigned char *bd_addr) { (void)bd_addr; }
+void bta_dm_discover_next_device(void) {}
+void bta_dm_service_search_remname_cback(unsigned char *a, unsigned char *b, unsigned char *c) {
+    (void)a; (void)b; (void)c;
+}
+void bta_dm_remname_cback(unsigned char *a, unsigned char *b, unsigned char *c) {
+    (void)a; (void)b; (void)c;
+}
+void bta_dm_cancel_rmt_name(void) {}
+void bta_dm_bond(void) {}
+void bta_dm_pin_reply(void) {}
+void bta_dm_immediate_disable(void) {}
+void bta_dm_keep_acl(void) {}
+int bta_dm_set_dev_name(void) { return 0; }
+void bta_dm_set_visibility(void) {}
+void bta_dm_compress_cback(void) {}

@@ -1192,6 +1192,7 @@ void* sub_getReslist_C08(){return &UnkClass_805764CC::getInstance()->field_0xC08
 #pragma push
 #pragma auto_inline off
 extern "C" void* getListB28__Fv() { return (void*)((char*)getInstance() + 0xB28); }
+extern "C" void* getReslistC08() { return (char*)getInstance() + 0xC08; }
 extern "C" void* getReslistC48() { return (char*)getInstance() + 0xC48; }
 #pragma pop
 extern "C" reslist<cf::CfObject*>* prepareReslistC28() {
@@ -1336,9 +1337,9 @@ cf::CfObject* nextReslistB48(cf::CfObject* obj) {
 // extern "C": retail symbol is the unmangled name (see reloc fix in hexdiff).
 extern "C" void* nextReslistBE8(cf::CfObject* obj) {
     UnkClass_805764CC* ctx = getInstance();
-    ::reslistFindObj(&ctx->field_0xBE8, obj);
-    // No explicit return: retail keeps whatever reslistFindObj left in r3
-    // (the next list entry) as the return value.
+    // Return whatever reslistFindObj left in r3 (retail has no explicit return
+    // materialization — keep the call result live as the function result).
+    return ::reslistFindObj(&ctx->field_0xBE8, obj);
 }
 #pragma pop
 
@@ -2162,21 +2163,18 @@ template <>
 _reslist_base<cf::IFactoryEvent*>::~_reslist_base() {
     extern void* lbl_eu_805290B8[];
     CfReslistLayout* obj = (CfReslistLayout*)this;
-    *(void* volatile*)&obj->mVtable = (void*)lbl_eu_805290B8;
-    CfReslistNode* zero = NULL;
-    CfReslistNode* sentinel;
-    CfReslistNode* cur;
-    CfReslistNode* p;
-    sentinel = obj->mStartNodePtr;
-    cur = (CfReslistNode*)sentinel->mNext;
-    goto check;
-loop:
-    p = cur;
-    cur = (CfReslistNode*)cur->mNext;
-    p->mNext = zero;
-check:
-    sentinel = obj->mStartNodePtr;
-    if (cur != sentinel) goto loop;
+    // Best near-miss (97.8%): stw then subf r0,r5,r5 for zero. Retail wants
+    // li r0,0 after stw; volatile / named-NULL / TboxInfo while all schedule
+    // li before stw (95.6%). Soft-cap: one structural (li vs subf).
+    void* vt = (void*)lbl_eu_805290B8;
+    obj->mVtable = vt;
+    CfReslistNode* zero = (CfReslistNode*)((char*)obj->mVtable - (char*)vt);
+    CfReslistNode* node = obj->mStartNodePtr->mNext;
+    while (node != obj->mStartNodePtr) {
+        CfReslistNode* cur = node;
+        node = node->mNext;
+        cur->mNext = zero;
+    }
     obj->mStartNodePtr->mNext = obj->mStartNodePtr;
     obj->mStartNodePtr->mPrev = obj->mStartNodePtr;
     if (!obj->field_0x1C) {
@@ -2192,7 +2190,6 @@ check:
 // auto_inline off keeps ~UnkClass_805764CC's explicit member call out-of-line.
 #pragma push
 #pragma auto_inline off
-template <>
 reslist<cf::IFactoryEvent*>::~reslist() {
     extern void* lbl_eu_805290B8[];
     CfReslistLayout* obj = (CfReslistLayout*)this;
@@ -2278,11 +2275,16 @@ u32 factoryIterItem(u8* self) {
 }
 #pragma pop
 // us-800b1dc8 - compare two u32 for inequality (dual-subf/or/srwi idiom)
+// Retail teardownGameMgr / similar loops bl this out-of-line; without the
+// guard MWCC inlines it to lwz/lwz/cmp (4 bytes short of retail).
+#pragma push
+#pragma auto_inline off
 extern "C" u32 wordsDiffer(void* a, void* b) {
     int va = *(int*)a;
     int vb = *(int*)b;
     return va != vb;
 }
+#pragma pop
 // us-800b23a4 - iterWordsDiffer: same dual-subf inequality idiom over two
 // iter words (retail: lwz/lwz/subf/subf/or/srwi 31).
 #pragma push
@@ -2435,9 +2437,21 @@ extern "C" s32 evtTypeSlot80(CEvtTypeArg* arg) {
 void setObj6Cbit1(u8* self) {
     *(u32*)(self + 0x6C) = (*(u32*)(self + 0x6C) & ~1u) | 2u;
 }
+// us-800b588c - clear bit 1 and set bit 0 of the field at +0x6C
+void setObj6Cbit0(u8* self) {
+    *(u32*)(self + 0x6C) = (*(u32*)(self + 0x6C) & ~2u) | 1u;
+}
 // us-800b58a0 - accessor returning field at +0x70
 u32 getObjField70(u8* self) {
     return *(u32*)(self + 0x70);
+}
+// us-800b6dd8 - return pointer field at +0x98
+extern "C" B5994Obj* getObjField98(void* obj) {
+    return *(B5994Obj**)((u8*)obj + 0x98);
+}
+// us-800ba2a0 - return word at +0x620
+extern "C" int getObjField620(void* obj) {
+    return *(int*)((u8*)obj + 0x620);
 }
 // us-800b6dcc - return mask & field at +0x6C
 u32 andObj6Cmask(u8* self, u32 mask) {
@@ -2683,14 +2697,21 @@ extern "C" void func_800B137C(void* self, unsigned long handle, unsigned long co
 
 // Imports for spawnVoiceActor (voice/actor spawn path).
 extern "C" void* CfRes_packFourFields(unsigned long a, unsigned long b, unsigned long c, void* d);
-extern "C" void* setObjField734(void* obj, void* arg);
 extern "C" void setObjXY_73A(void* obj, unsigned long a, unsigned long b);
 extern "C" void setObjField720(u8* self, u32 val);
-extern "C" void setObjField738(void* obj, void* arg);
 extern "C" void copyObjVec724(void* obj, void* arg);
 extern "C" void setObjFloat730(void* obj, float val);
 extern "C" void* CfRes_getHeapHandle();
 extern "C" void* allocate__Q23mtl10MemManagerFUlUl(unsigned long size, unsigned long handle);
+
+// us-800b9fe0 - store arg at +0x734
+extern "C" void setObjField734(void* obj, void* arg) {
+    *(void**)((u8*)obj + 0x734) = arg;
+}
+// us-800b9ffc - store low 16 bits of arg at +0x738
+extern "C" void setObjField738(void* obj, void* arg) {
+    *(u16*)((u8*)obj + 0x738) = (u16)(u32)arg;
+}
 
 // us-800b9e98 - spawnVoiceActor
 // Spawn a voice/actor object: resolve two resources keyed by the tag, build a

@@ -365,49 +365,53 @@ void CfGimmick_LoadBdatAreaRotation(CfGimmick* self, f32* out, void* bdat, void*
 }
 
 void CfGimmick_LoadBdatAreaPosIndexed(CfGimmick* self, f32* out, void* unused, void** holder, int v) {
+    // Byte offsets into the void*[] column-name table (inline cast — a
+    // named u8* local spilled the table base into r30 vs retail's r5).
     int c = v + 0x41;
-    *(u8*)(*(u8* *)(lbl_eu_805357E8 + 0x08)) = (u8)c;
-    *(u8*)(*(u8* *)(lbl_eu_805357E8 + 0x04)) = (u8)c;
-    *(u8*)(*(u8* *)(lbl_eu_805357E8 + 0x00)) = (u8)c;
+    *(u8*)(*(u8* *)((u8*)lbl_eu_805357E8 + 0x08)) = (u8)c;
+    *(u8*)(*(u8* *)((u8*)lbl_eu_805357E8 + 0x04)) = (u8)c;
+    *(u8*)(*(u8* *)((u8*)lbl_eu_805357E8 + 0x00)) = (u8)c;
     out[0] = lbl_eu_80668364 * (f32)(s32)getBdatStringColumnValue(
-        *holder, *(char**)(lbl_eu_805357E8 + 0x00), self->field_64);
+        *holder, *(char**)((u8*)lbl_eu_805357E8 + 0x00), self->field_64);
     out[1] = lbl_eu_80668364 * (f32)(s32)getBdatStringColumnValue(
-        *holder, *(char**)(lbl_eu_805357E8 + 0x04), self->field_64);
+        *holder, *(char**)((u8*)lbl_eu_805357E8 + 0x04), self->field_64);
     out[2] = lbl_eu_80668364 * (f32)(s32)getBdatStringColumnValue(
-        *holder, *(char**)(lbl_eu_805357E8 + 0x08), self->field_64);
+        *holder, *(char**)((u8*)lbl_eu_805357E8 + 0x08), self->field_64);
 }
 
 void CfGimmick_LoadBdatAreaExtentsIndexed(CfGimmick* self, CfGimmick* out, void* unused, void** holder, int v) {
+    u8* col = (u8*)lbl_eu_805357E8;
     u8 c = (u8)(v + 0x41);
-    *(u8*)(*(u8* *)(lbl_eu_805357E8 + 0x18)) = (u8)c;
-    *(u8*)(*(u8* *)(lbl_eu_805357E8 + 0x14)) = (u8)c;
-    *(u8*)(*(u8* *)(lbl_eu_805357E8 + 0x10)) = (u8)c;
-    *(u8*)(*(u8* *)(lbl_eu_805357E8 + 0x0C)) = (u8)c;
-    u32 rawA = getBdatStringColumnValue(*holder, *(char**)(lbl_eu_805357E8 + 0x0C), self->field_64);
+    *(u8*)(*(u8* *)(col + 0x18)) = (u8)c;
+    *(u8*)(*(u8* *)(col + 0x14)) = (u8)c;
+    *(u8*)(*(u8* *)(col + 0x10)) = (u8)c;
+    *(u8*)(*(u8* *)(col + 0x0C)) = (u8)c;
+    u32 rawA = getBdatStringColumnValue(*holder, *(char**)(col + 0x0C), self->field_64);
     out->field_30 = lbl_eu_80668364 * (f32)*(const u16*)&rawA;
-    u32 rawB = getBdatStringColumnValue(*holder, *(char**)(lbl_eu_805357E8 + 0x10), self->field_64);
+    u32 rawB = getBdatStringColumnValue(*holder, *(char**)(col + 0x10), self->field_64);
     out->field_34 = lbl_eu_80668364 * (f32)*(const u16*)&rawB;
-    u32 rawC = getBdatStringColumnValue(*holder, *(char**)(lbl_eu_805357E8 + 0x14), self->field_64);
+    u32 rawC = getBdatStringColumnValue(*holder, *(char**)(col + 0x14), self->field_64);
     out->field_38 = lbl_eu_80668364 * (f32)*(const u16*)&rawC;
-    u32 rawD = getBdatStringColumnValue(*holder, *(char**)(lbl_eu_805357E8 + 0x18), self->field_64);
+    u32 rawD = getBdatStringColumnValue(*holder, *(char**)(col + 0x18), self->field_64);
     out->field_3C = lbl_eu_80668364 * (f32)*(const u16*)&rawD;
 }
 
 void CfGimmick_LoadBdatAreaRotationIndexed(CfGimmick* self, f32* out, void* unused, void** holder, int v) {
+    u8* col = (u8*)lbl_eu_805357E8;
     u8 c = (u8)(v + 0x41);
-    *(u8*)(*(u8* *)(lbl_eu_805357E8 + 0x24)) = c;
-    *(u8*)(*(u8* *)(lbl_eu_805357E8 + 0x20)) = c;
-    *(u8*)(*(u8* *)(lbl_eu_805357E8 + 0x1C)) = c;
+    *(u8*)(*(u8* *)(col + 0x24)) = c;
+    *(u8*)(*(u8* *)(col + 0x20)) = c;
+    *(u8*)(*(u8* *)(col + 0x1C)) = c;
     // Address-taking forces the call result to spill; the s16 deref reload
     // emits retail's stw + lha memory truncation idiom (same as CfGimmick_LoadBdatAreaRotation).
     s32 rawA = getBdatStringColumnValue(
-        *holder, *(char**)(lbl_eu_805357E8 + 0x1C), self->field_64);
+        *holder, *(char**)(col + 0x1C), self->field_64);
     out[0] = (f32)*(const s16*)&rawA * lbl_eu_8066A210;
     s32 rawB = getBdatStringColumnValue(
-        *holder, *(char**)(lbl_eu_805357E8 + 0x20), self->field_64);
+        *holder, *(char**)(col + 0x20), self->field_64);
     out[1] = (f32)*(const s16*)&rawB * lbl_eu_8066A210;
     s32 rawC = getBdatStringColumnValue(
-        *holder, *(char**)(lbl_eu_805357E8 + 0x24), self->field_64);
+        *holder, *(char**)(col + 0x24), self->field_64);
     out[2] = (f32)*(const s16*)&rawC * lbl_eu_8066A210;
 }
 
@@ -760,11 +764,14 @@ int CfGimmick_CheckFightListPlayerAlive(u32 playerId) {
         // List objects point 0x3E9C into the player base; the HP/id reads and
         // the vtable dispatch all use that base pointer (retail keeps the
         // null case as-is and dereferences the offset anyway).
+        // List objects point at the CfObjectMove subobject (+0x3E9C); adjust
+        // once to the player base. HP is vtable+0x128 on that same base
+        // (do not subtract 0x3E9C again — that emits lwzu -0x3E9C).
         CfPlayerBase* base = (CfPlayerBase*)node->object;
         if (base != 0)
             base = (CfPlayerBase*)((char*)base - 0x3E9C);
         if ((int)((CfPlayerIdView*)base)->id456C >> 4 == playerId) {
-            float hp = ((cf::CActorParam*)((char*)base - 0x3E9C))->CActorParam_getHp();
+            float hp = ((cf::CActorParam*)base)->CActorParam_getHp();
             // Retail materializes the le-test through cror/mfcr/extrwi.
             int lowHP = hp <= zero;
             if (!lowHP)

@@ -59,10 +59,18 @@ struct CREvtMoviePathBuf {
 // CREvtMovie - realtime event movie playback
 // Vtable at 0x80538AA0 (installed by hand by the ctor/dtor)
 // Size: 0x1A
-struct CREvtMovie : cf::CREvtObj {
-    /* 0x14 */ CREvtMovieScript* mScriptData;  // Pointer to script data structure
-    /* 0x18 */ u8 mFlag18;                     // Flag byte (initialized to 0)
-    /* 0x19 */ u8 mFlag19;                     // Flag byte (loading/playback state)
+//
+// Do NOT inherit cf::CREvtObj here: that header declares virtuals, so MWCC
+// inserts a hidden C++ vptr in front of the explicit `vtable` member and
+// shifts every field by +4 (ctor stores land at 4/18/1C/1D vs retail 0/14/18/19).
+// Layout is the retail CREvtObj base (0x14) plus the two movie fields.
+struct CREvtMovie {
+    /* 0x00 */ u32* vtable;
+    /* 0x04 */ u32 mType;
+    /* 0x08 */ u32 mCallback[3];               // __ptmf
+    /* 0x14 */ CREvtMovieScript* mScriptData;
+    /* 0x18 */ u8 mFlag18;
+    /* 0x19 */ u8 mFlag19;
 };
 
 // C-linkage imports and TU targets (retail symbol names - keep

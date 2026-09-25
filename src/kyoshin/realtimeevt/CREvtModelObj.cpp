@@ -125,7 +125,7 @@ extern "C" void __ct__CREvtModelObj(CREvtModelObj* self) {
 
     // Install vtable and interface pointers (primary vtbl, +0x44, +0xCC)
     char* vt = (char*)lbl_eu_80531FA0;
-    self->vtable = vt;
+    *(u32**)self = (u32*)(vt);
     self->mIWorkVtbl = vt + 0x44;
     self->mOtherVtbl = vt + 0xCC;
 
@@ -182,7 +182,7 @@ extern "C" void* __ct__80181B74(CREvtModelObj* self, int flag) {
         // Reinstall vtable and interface pointers
         char* vt = (char*)lbl_eu_80531FA0;
         CFileHandle* oldHandle = self->mFileHandle3;
-        self->vtable = vt;
+        *(u32**)self = (u32*)(vt);
         self->mIWorkVtbl = vt + 0x44;
         self->mOtherVtbl = vt + 0xCC;
 

@@ -37,6 +37,33 @@ struct UnkClass_80083298SubF0 {
 class UnkClass_80083298 {
 public:
     virtual u32 isReady();
+    virtual void vf_0C();
+    virtual void vf_10();
+    virtual void vf_14();
+    virtual void vf_18();
+    virtual void vf_1C();
+    virtual void vf_20();
+    virtual void vf_24();
+    virtual void vf_28();
+    virtual void vf_2C();
+    virtual void vf_30();
+    virtual void vf_34();
+    virtual void vf_38();
+    virtual void vf_3C();
+    virtual void vf_40();
+    virtual void vf_44();
+    virtual void vf_48();
+    virtual void vf_4C();
+    virtual void vf_50();
+    virtual void vf_54();
+    virtual void vf_58();
+    virtual void vf_5C();
+    virtual void vf_60();
+    virtual void vf_64();
+    virtual void vf_68();
+    virtual void vf_6C();
+    virtual void vf_70();
+    virtual u32 getEffectFlags(); // vtable +0x74
 
     u8 field_0x4[0xEC];
     UnkClass_80083298SubF0 field_0xF0;

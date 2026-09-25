@@ -758,7 +758,7 @@ void dtorQstBase_70(u8* sub) {
 // --- restored from git history (base:gone repo-search) ---
 // from commit d6f90339a272 path=src/kyoshin/menu/CMenuQstCnt.cpp needle=copyQstInfo
 
-void copyQstInfo(QstInfo* dst, const QstInfo* src) {
+extern "C" QstInfo* copyQstInfo(QstInfo* dst, const QstInfo* src) {
     dst->f0 = src->f0;
     dst->f2 = src->f2;
     dst->f3 = src->f3;
@@ -766,5 +766,6 @@ void copyQstInfo(QstInfo* dst, const QstInfo* src) {
     dst->f5 = src->f5;
     dst->f6 = src->f6;
     dst->f7 = src->f7;
+    return dst;
 }
 

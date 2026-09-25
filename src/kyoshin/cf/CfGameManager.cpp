@@ -1083,7 +1083,7 @@ void cf::CfGameManager::cleanupMapEffects() {
 
 u32 cf::CfGameManager::getEffectFlagState() {
     UnkClass_80083298* object = getGameSubManager();
-    return object != nullptr ? getEffectFlagFromMgr(object) : 0;
+    return object != nullptr ? object->getEffectFlags() : 0;
 }
 
 void cf::CfGameManager::tickGameManager() {

@@ -182,7 +182,7 @@ extern "C" {
 CREvtModelMap* __ct__CREvtModelMap(CREvtModelMap* self, void* parent)
 {
     __ct__CREvtModel(self, parent, 1);
-    self->vtable = (void*)lbl_eu_80531D80;
+    *(u32**)self = (u32*)((void*)lbl_eu_80531D80);
     self->vtableIWork = (u8*)lbl_eu_80531D80 + 0x44;
     self->mVisible = 1;
     self->mIsGuest = 0;
@@ -235,7 +235,7 @@ CREvtModelMap* __ct__CREvtModelMap(CREvtModelMap* self, void* parent)
 CREvtModelMap* __ct__80180B00(CREvtModelMap* self, int dealloc)
 {
     if (self) {
-        self->vtable = (void*)lbl_eu_80531D80;
+        *(u32**)self = (u32*)((void*)lbl_eu_80531D80);
         self->vtableIWork = (u8*)lbl_eu_80531D80 + 0x44;
         if (self->mIsGuest) {
             reinterpret_cast<CREvtModel*>(self)->setVisible(0);

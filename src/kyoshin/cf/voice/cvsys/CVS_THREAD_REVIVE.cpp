@@ -43,15 +43,15 @@ CVS_THREAD_REVIVE* __ct__802A86CC(CVoiceHandle* owner1, CVoiceHandle* owner2) {
         }
     }
 
-    // Copy the init-state triple. The address is forced through an integer
-    // cast so the full base (lis+addi) is materialized once before any load.
-    u32 v1;
-    u32 v0;
+    // Copy the init-state triple. Closest plateau: only r0/r4 swapped on the
+    // two value loads/stores (same residual as CVS_THREAD_DOWN ctor).
+    u32 hi;
+    u32 lo;
     u32* src = (u32*)(u32)lbl_eu_80539C98;
-    v0 = src[0];
-    v1 = src[1];
-    raw->state0 = (u32*)v0;
-    raw->state1 = v1;
+    hi = src[1];
+    lo = src[0];
+    raw->state0 = (u32*)lo;
+    raw->state1 = hi;
     raw->state2 = src[2];
 
     return self;

@@ -2863,8 +2863,10 @@ inline void HomeButton::reset_window() {
 }
 
 inline void HomeButton::reset_battery(bool startPair) {
-    const char* const* pane;
+    // Declare row before pane so MWCC colours row→r25, pane→r26 (retail
+    // HomeButton::calc inlined site). Reverse order swaps the pair.
     const char* const* row = &scBatteryPaneName[0][0];
+    const char* const* pane;
 
     for (int i = 0; i < WPAD_MAX_CONTROLLERS; i++) {
         pane = row;

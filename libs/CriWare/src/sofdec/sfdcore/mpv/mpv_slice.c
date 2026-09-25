@@ -223,82 +223,9 @@ done:
 }
 
 // --- restored from git history (base:gone); do not expand beyond these functions ---
-// from commit 365650b84230 needle=MPVSL_Create
-// LLM-HARNESS-END: us-803bce68
+// Keep only symbols not already defined above (DecPicture/DecSliceOne are real).
 
-// LLM-HARNESS-BEGIN: us-803bce6c
-void MPVSL_Create() {}
-// LLM-HARNESS-END: us-803bce6c
-
-// LLM-HARNESS-BEGIN: us-803bce70
-void MPVSL_Destroy() {}
-// LLM-HARNESS-END: us-803bce70
-
-// LLM-HARNESS-BEGIN: us-803bce74
-void MPVSL_DecPicture() {}
-// LLM-HARNESS-END: us-803bce74
-
-// LLM-HARNESS-BEGIN: us-803bcfd4
-void MPVSL_DecSliceOne() {}
-
-// from commit 365650b84230 needle=MPVSL_Destroy
-// LLM-HARNESS-END: us-803bce6c
-
-// LLM-HARNESS-BEGIN: us-803bce70
-void MPVSL_Destroy() {}
-// LLM-HARNESS-END: us-803bce70
-
-// LLM-HARNESS-BEGIN: us-803bce74
-void MPVSL_DecPicture() {}
-// LLM-HARNESS-END: us-803bce74
-
-// LLM-HARNESS-BEGIN: us-803bcfd4
-void MPVSL_DecSliceOne() {}
-
-// from commit 365650b84230 needle=MPVSL_Finish
-// LLM-HARNESS-END: us-803bce64
-
-// LLM-HARNESS-BEGIN: us-803bce68
-void MPVSL_Finish() {}
-// LLM-HARNESS-END: us-803bce68
-
-// LLM-HARNESS-BEGIN: us-803bce6c
-void MPVSL_Create() {}
-// LLM-HARNESS-END: us-803bce6c
-
-// LLM-HARNESS-BEGIN: us-803bce70
-void MPVSL_Destroy() {}
-// LLM-HARNESS-END: us-803bce70
-
-// LLM-HARNESS-BEGIN: us-803bce74
-void MPVSL_DecPicture() {}
-// LLM-HARNESS-END: us-803bce74
-
-// LLM-HARNESS-BEGIN: us-803bcfd4
-void MPVSL_DecSliceOne() {}
-
-// from commit 365650b84230 needle=MPVSL_Init
-
-// LLM-HARNESS-BEGIN: us-803bce64
-void MPVSL_Init() {}
-// LLM-HARNESS-END: us-803bce64
-
-// LLM-HARNESS-BEGIN: us-803bce68
-void MPVSL_Finish() {}
-// LLM-HARNESS-END: us-803bce68
-
-// LLM-HARNESS-BEGIN: us-803bce6c
-void MPVSL_Create() {}
-// LLM-HARNESS-END: us-803bce6c
-
-// LLM-HARNESS-BEGIN: us-803bce70
-void MPVSL_Destroy() {}
-// LLM-HARNESS-END: us-803bce70
-
-// LLM-HARNESS-BEGIN: us-803bce74
-void MPVSL_DecPicture() {}
-// LLM-HARNESS-END: us-803bce74
-
-// LLM-HARNESS-BEGIN: us-803bcfd4
-void MPVSL_DecSliceOne() {}
-
+void MPVSL_Init(void) {}
+void MPVSL_Finish(void) {}
+void MPVSL_Create(void *self) { (void)self; }
+void MPVSL_Destroy(void *self) { (void)self; }

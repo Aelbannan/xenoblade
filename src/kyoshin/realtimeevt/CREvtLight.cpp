@@ -58,7 +58,7 @@ extern "C" const f32 lbl_eu_8066A210;  // pi/2
 // ============================================================================
 CREvtLight* __ct__CREvtLight(CREvtLight* self, u32 arg) {
     __ct__cf_CREvtObj((cf::CREvtObj*)self, 2);
-    self->vtable = (u32*)lbl_eu_80533D90;
+    *(u32**)self = (u32*)((u32*)lbl_eu_80533D90);
     self->field_14 = 0;
     self->field_18 = arg;
     self->field_20 = nullptr;
@@ -77,7 +77,7 @@ CREvtLight* __ct__801C3604(CREvtLight* self, int dealloc_flag) {
         void* oldResource = self->field_20;
 
         // Update vtable before cleanup
-        self->vtable = (u32*)lbl_eu_80533D90;
+        *(u32**)self = (u32*)((u32*)lbl_eu_80533D90);
 
         if (oldResource != nullptr) {
             // Release old resource through CScn manager

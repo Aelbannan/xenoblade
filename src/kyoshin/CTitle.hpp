@@ -86,17 +86,19 @@ public:
     /* 0x2C */ CTitleLogo mLogo;
     /* 0x48 */ CTitleMenu mMenu;
     /* 0x70 */ u8 mCur[0x18]; // CCur18 cursor (opaque)
+}; // sizeof 0x88 — mCurBody below is a cast view, not a real member
 
-    // Body view of the embedded CCur18 (past its vptr), used by OnFileEvent
-    // to copy a freshly-constructed stack cursor into mCur.
-    struct {
-        nw4r::lyt::ArcResourceAccessor* mArcResAcc; // +0x04
-        nw4r::lyt::Layout* mpLayout;                // +0x08
-        nw4r::lyt::AnimTransform* mpAnimTrans0;     // +0x0C
-        nw4r::lyt::AnimTransform* mpAnimTrans1;     // +0x10
-        u8 mActive;                                 // +0x14
-        u8 mVisible;                                // +0x15
-    } mCurBody;
+// Body view of the embedded CCur18 (past its vptr), used by OnFileEvent
+// to copy a freshly-constructed stack cursor into mCur. Kept outside the
+// class so it does not inflate CTitle past retail 0x88 (and shift
+// CMenuTitle::field_e8 from 0xE8 to 0xFC).
+struct CTitleCurBody {
+    nw4r::lyt::ArcResourceAccessor* mArcResAcc; // +0x04
+    nw4r::lyt::Layout* mpLayout;                // +0x08
+    nw4r::lyt::AnimTransform* mpAnimTrans0;     // +0x0C
+    nw4r::lyt::AnimTransform* mpAnimTrans1;     // +0x10
+    u8 mActive;                                 // +0x14
+    u8 mVisible;                                // +0x15
 };
 
 // Abstract view into the embedded CCur18 cursor vtable. MWCC inserts an

@@ -297,16 +297,83 @@ struct UnkReset28Data {
     u8 field_0x0[0x28];
 };
 
+// Dispatch-only shim for the item/effect record returned by gmSpawnMask8000 /
+// loadMapObjectByName. Vtable slots used here: initEffect +0x48 (index 16),
+// attachEffect +0x70 (index 26), setEffectMode +0x10C (index 65).
 struct Unk80EE4Data {
+    virtual void vf_00() = 0;
+    virtual void vf_01() = 0;
+    virtual void vf_02() = 0;
+    virtual void vf_03() = 0;
+    virtual void vf_04() = 0;
+    virtual void vf_05() = 0;
+    virtual void vf_06() = 0;
+    virtual void vf_07() = 0;
+    virtual void vf_08() = 0;
+    virtual void vf_09() = 0;
+    virtual void vf_0A() = 0;
+    virtual void vf_0B() = 0;
+    virtual void vf_0C() = 0;
+    virtual void vf_0D() = 0;
+    virtual void vf_0E() = 0;
+    virtual void vf_0F() = 0;
+    virtual void initEffect() = 0; // +0x48
+    virtual void vf_11() = 0;
+    virtual void vf_12() = 0;
+    virtual void vf_13() = 0;
+    virtual void vf_14() = 0;
+    virtual void vf_15() = 0;
+    virtual void vf_16() = 0;
+    virtual void vf_17() = 0;
+    virtual void vf_18() = 0;
+    virtual void vf_19() = 0;
+    virtual void attachEffect(void* object) = 0; // +0x70
+    virtual void vf_1B() = 0;
+    virtual void vf_1C() = 0;
+    virtual void vf_1D() = 0;
+    virtual void vf_1E() = 0;
+    virtual void vf_1F() = 0;
+    virtual void vf_20() = 0;
+    virtual void vf_21() = 0;
+    virtual void vf_22() = 0;
+    virtual void vf_23() = 0;
+    virtual void vf_24() = 0;
+    virtual void vf_25() = 0;
+    virtual void vf_26() = 0;
+    virtual void vf_27() = 0;
+    virtual void vf_28() = 0;
+    virtual void vf_29() = 0;
+    virtual void vf_2A() = 0;
+    virtual void vf_2B() = 0;
+    virtual void vf_2C() = 0;
+    virtual void vf_2D() = 0;
+    virtual void vf_2E() = 0;
+    virtual void vf_2F() = 0;
+    virtual void vf_30() = 0;
+    virtual void vf_31() = 0;
+    virtual void vf_32() = 0;
+    virtual void vf_33() = 0;
+    virtual void vf_34() = 0;
+    virtual void vf_35() = 0;
+    virtual void vf_36() = 0;
+    virtual void vf_37() = 0;
+    virtual void vf_38() = 0;
+    virtual void vf_39() = 0;
+    virtual void vf_3A() = 0;
+    virtual void vf_3B() = 0;
+    virtual void vf_3C() = 0;
+    virtual void vf_3D() = 0;
+    virtual void vf_3E() = 0;
+    virtual void vf_3F() = 0;
+    virtual void vf_40() = 0;
+    virtual void setEffectMode(u32 mode) = 0; // +0x10C
+
     u8 field_0x4[0x74];
     char text_0x78[0x10];
     u32 textLength_0x88;
     u16 value_0x8C;
     void initGimmick(bool enable) { (void)enable; }
     void refreshGimmick() {}
-    void attachEffect(void* object) { (void)object; }
-    void initEffect() {}
-    void setEffectMode(u32 mode) { (void)mode; }
 };
 
 struct ContainerRootInterface {
@@ -475,8 +542,50 @@ struct Unk866A0Data {
     Unk866A0Data* field_0x2C;
 };
 
+// Dispatch-only shim for the voice-action object returned by func_8016FE34;
+// setVoiceActive is virtual at vtable +0xA8 (index 40).
 struct VoiceAction {
-    void setVoiceActive(bool enable) { (void)enable; }
+    virtual void vf_00() = 0;
+    virtual void vf_01() = 0;
+    virtual void vf_02() = 0;
+    virtual void vf_03() = 0;
+    virtual void vf_04() = 0;
+    virtual void vf_05() = 0;
+    virtual void vf_06() = 0;
+    virtual void vf_07() = 0;
+    virtual void vf_08() = 0;
+    virtual void vf_09() = 0;
+    virtual void vf_0A() = 0;
+    virtual void vf_0B() = 0;
+    virtual void vf_0C() = 0;
+    virtual void vf_0D() = 0;
+    virtual void vf_0E() = 0;
+    virtual void vf_0F() = 0;
+    virtual void vf_10() = 0;
+    virtual void vf_11() = 0;
+    virtual void vf_12() = 0;
+    virtual void vf_13() = 0;
+    virtual void vf_14() = 0;
+    virtual void vf_15() = 0;
+    virtual void vf_16() = 0;
+    virtual void vf_17() = 0;
+    virtual void vf_18() = 0;
+    virtual void vf_19() = 0;
+    virtual void vf_1A() = 0;
+    virtual void vf_1B() = 0;
+    virtual void vf_1C() = 0;
+    virtual void vf_1D() = 0;
+    virtual void vf_1E() = 0;
+    virtual void vf_1F() = 0;
+    virtual void vf_20() = 0;
+    virtual void vf_21() = 0;
+    virtual void vf_22() = 0;
+    virtual void vf_23() = 0;
+    virtual void vf_24() = 0;
+    virtual void vf_25() = 0;
+    virtual void vf_26() = 0;
+    virtual void vf_27() = 0;
+    virtual void setVoiceActive(bool enable) = 0; // +0xA8
 };
 
 struct VoiceSource {
@@ -536,14 +645,47 @@ public:
         };
     };
 };
+// Dispatch-only shim for the camera data block (getCameraDataBlock result).
+// setCameraMode is virtual at vtable +0x40 (index 14).
 struct UnkClass_800821F8 {
-    void setCameraMode(u32 mode) { (void)mode; }
+    virtual void vf_08() = 0;
+    virtual void vf_0C() = 0;
+    virtual void vf_10() = 0;
+    virtual void vf_14() = 0;
+    virtual void vf_18() = 0;
+    virtual void vf_1C() = 0;
+    virtual void vf_20() = 0;
+    virtual void vf_24() = 0;
+    virtual void vf_28() = 0;
+    virtual void vf_2C() = 0;
+    virtual void vf_30() = 0;
+    virtual void vf_34() = 0;
+    virtual void vf_38() = 0;
+    virtual void vf_3C() = 0;
+    virtual void setCameraMode(u32 mode) = 0; // +0x40
 };
 
-struct CItemImplInstances {
-    UnkF0ACData* getItemSlot(u32 first, u32 second) { (void)first; (void)second; return nullptr; }
-    u16 getItemCount(u32 value) { (void)value; return 0; }
-    void resetItemSlot(u32 first, u32 second) { (void)first; (void)second; }
+// Dispatch-only shim for the CItem impl-instance vtable returned by
+// CItem_initItemImplInstances(item). Never instantiated; pure virtuals emit no
+// vtable/code. MWCC RTTI occupies vtable slots 0/4, so declared virtual N lands
+// at offset N*4+8: getItemSlot=0x2C, getItemCount=0x30, resetItemSlot=0x40.
+class CItemImplInstances {
+public:
+    virtual void vf_08() = 0;
+    virtual void vf_0C() = 0;
+    virtual void vf_10() = 0;
+    virtual void vf_14() = 0;
+    virtual void vf_18() = 0;
+    virtual void vf_1C() = 0;
+    virtual void vf_20() = 0;
+    virtual void vf_24() = 0;
+    virtual void vf_28() = 0;
+    virtual UnkF0ACData* getItemSlot(u32 first, u32 second) = 0; // +0x2C
+    virtual u16 getItemCount(u32 value) = 0;                     // +0x30
+    virtual void vf_34() = 0;
+    virtual void vf_38() = 0;
+    virtual void vf_3C() = 0;
+    virtual void resetItemSlot(u32 first, u32 second) = 0;       // +0x40
 };
 
 extern "C" void CObjectState_clearStateFlags8__Q22cf12CObjectStateFv(UnkFlags8Data* data,
@@ -2337,8 +2479,12 @@ extern "C" void toggleFlag10__Q22cf13CfGameManagerFv(u32 first, u32 second,
     enableFlag20__Q22cf13CfGameManagerFv();
 }
 
+// Padding between CActorParam and the CfObjectMove subobject so Move sits at
+// retail +0x3E9C (sizeof(CActorParam)≈0x3384 → ExtraData = 0x3E9C-0x3384 =
+// 0xAE8). The previous 0xB1C pad made static_cast<CfPlayerComposite*>(Move*)
+// emit subi -0x3ED0 instead of -0x3E9C.
 struct CfPlayerExtraData {
-    u8 field_0x0[0xA9C + 0x80];
+    u8 field_0x0[0xAE8];
 };
 
 class CfPlayerComposite : public cf::CActorParam,
@@ -2409,6 +2555,20 @@ extern "C" void syncBattleState__Q22cf13CfGameManagerFv(cf::CfObjectMove* object
     }
 }
 
+// Dispatch-only shim for the active camera object at this call site: slot
+// +0x5C (index 21) receives the player-container argument. The CfObject Fv
+// alias is the no-arg cross-TU spelling of the same slot.
+struct CfObjectSyncShim {
+    virtual void vf_08() = 0;  virtual void vf_0C() = 0;  virtual void vf_10() = 0;
+    virtual void vf_14() = 0;  virtual void vf_18() = 0;  virtual void vf_1C() = 0;
+    virtual void vf_20() = 0;  virtual void vf_24() = 0;  virtual void vf_28() = 0;
+    virtual void vf_2C() = 0;  virtual void vf_30() = 0;  virtual void vf_34() = 0;
+    virtual void vf_38() = 0;  virtual void vf_3C() = 0;  virtual void vf_40() = 0;
+    virtual void vf_44() = 0;  virtual void vf_48() = 0;  virtual void vf_4C() = 0;
+    virtual void vf_50() = 0;  virtual void vf_54() = 0;  virtual void vf_58() = 0;
+    virtual void syncEnableState(void* data) = 0; // +0x5C
+};
+
 extern "C" CfCamEventManager* cfCam_getEventMgr();
 extern "C" cf::UnkClass_80082D90* getPlayerContainerForCam__Q22cf13CfGameManagerFv();
 extern "C" void resetBattleGauge__Q22cf13CfGameManagerFv() {
@@ -2416,9 +2576,9 @@ extern "C" void resetBattleGauge__Q22cf13CfGameManagerFv() {
     if (cameraManager != nullptr) {
         cf::UnkClass_80082D90* data = getPlayerContainerForCam__Q22cf13CfGameManagerFv();
         if (data != nullptr) {
-            cf::CfObject* object = cfCam_getActiveObj(cameraManager);
+            CfObjectSyncShim* object = (CfObjectSyncShim*)cfCam_getActiveObj(cameraManager);
             if (object != nullptr) {
-                object->CfObject_syncEnableState();
+                object->syncEnableState(data);
             }
         }
     }

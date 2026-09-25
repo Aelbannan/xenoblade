@@ -34,7 +34,7 @@ extern "C" CREvtEffect* __ct__CREvtEffect(CREvtEffect* self, CREvtParam* param) 
     __ct__cf_CREvtObj((cf::CREvtObj*)self, 1);
 
     // Set vtable pointers (main + secondary callback interface at +0x28)
-    self->vtable = (void*)lbl_eu_805322D8;
+    *(u32**)self = (u32*)((void*)lbl_eu_805322D8);
     self->mSecondaryVtable = (char*)lbl_eu_805322D8 + 0x28;
 
     // Initialize fields
@@ -104,7 +104,7 @@ extern "C" CREvtEffect* __ct__CREvtEffect(CREvtEffect* self, CREvtParam* param) 
 extern "C" CREvtEffect* __ct__80184C3C(CREvtEffect* self, int dealloc_flag) {
     if (self != 0) {
         // Restore the vtables, then dispatch EvtFx_FreeAnim through the main vtable
-        self->vtable = (void*)lbl_eu_805322D8;
+        *(u32**)self = (u32*)((void*)lbl_eu_805322D8);
         self->mSecondaryVtable = (char*)lbl_eu_805322D8 + 0x28;
         ((void (**)(CREvtEffect*))lbl_eu_805322D8)[4](self);
 
@@ -401,7 +401,7 @@ extern "C" void func_8018515C(CREvtEffect* self) {
 extern "C" void func_80185378(CREvtEffect* self, void* src, void* bdatEntry) {
     if (self->mMaterial != 0) {
         // Release the previous animation resource (virtual, vtable[4]).
-        ((void (*)(CREvtEffect*))((void**)self->vtable)[4])(self);
+        ((void (*)(CREvtEffect*))(*(void***)self)[4])(self);
 
         self->mAnim28 = self->mMaterial;
         self->mMaterial = 0;

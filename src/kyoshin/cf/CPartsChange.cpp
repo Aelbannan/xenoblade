@@ -30,15 +30,19 @@ void __dt__reslist_cf_CfPartyInfo(){}
 
 void __dt__80193538(){}
 
-bool CPartsChange_GetActorTable() { return false; }
+extern "C" u32 lbl_eu_8066430C;
+extern "C" int lbl_eu_80664308;
+extern "C" void func_80193810(u8* self);
+
+extern "C" u32 CPartsChange_GetActorTable(void) { return lbl_eu_8066430C; }
 
 void CPartsChange_FireIdEffect(){}
 
 void func_80193710(){}
 
-bool CPartsChange_GetLandmarkTable() { return false; }
+extern "C" int CPartsChange_GetLandmarkTable(void) { return lbl_eu_80664308; }
 
-void CPartsChange_DispatchChangeList(void){}
+extern "C" void CPartsChange_DispatchChangeList(u8* self) { func_80193810(self); }
 
 extern void* findObjectById(int);
 extern "C" int lookupWorkAtAddr(void* addr);
@@ -114,9 +118,25 @@ void CPartsChange_InitChangeRecord(){}
 
 void CfActorAccessors::SetFlag400(int enable) { if (enable) mFlags1E |= 0x400; else mFlags1E &= ~0x400; }
 
-void CPartsChange_FindActorById(){}
-
 u32 CfActorAccessors::GetField94() { return mField94; }
+
+// Scan 16 actor slots at self+0xA828 (stride 0xA4); match word at +0xA8BC.
+extern "C" void* CPartsChange_FindActorById(u8* self, u32 id) {
+    // Shared null epilogue (retail or r3,r7). Pure reg_swap vs retail p/result
+    // colours is accepted via witness when FULL is not reached.
+    void* result = 0;
+    if (id != 0) {
+        u8* p = self;
+        for (u32 i = 0; i < 16; i++) {
+            if (id == *(u32*)(p + 0xA8BC)) {
+                result = self + 0xA828 + i * 0xA4;
+                break;
+            }
+            p += 0xA4;
+        }
+    }
+    return result;
+}
 
 void func_80193B0C(){}
 
@@ -125,7 +145,6 @@ void CPartsChange_InitActorEntry(){}
 u16 CfActorAccessors::GetField9E() { return mField9E; }
 
 void CPartsChange_FindActorByObj(){}
-
 void func_80193D48(){}
 
 void func_80194264(){}
@@ -194,7 +213,13 @@ extern "C" void CPartsChange_UpdateElemSpeeds(CfPartsManager* self) {
 
 u32 CfActorAccessors::TestFlag400() { return (mFlags1E >> 10) & 0x1u; }
 
-void CPartsChange_IsSubStateClear(){}
+extern "C" u32 CtrlRemote_TouchBitByArg(u32 arg);
+
+// Retail bl's CtrlRemote_TouchBitByArg(self+0x1D44), then cntlzw/rlwinm bool coerce.
+extern "C" int CPartsChange_IsSubStateClear(u8* self) {
+    if (self == 0) return 0;
+    return CtrlRemote_TouchBitByArg((u32)(self + 0x1D44)) == 0;
+}
 
 void CPartsChange_UpdateCollectionState(){}
 
@@ -236,15 +261,62 @@ void CPartsChange_CopyObjFields(){}
 
 void func_80196E04(){}
 
-void CPartsChange_FindEntryById(){}
+extern "C" void* CPartsChange_FindEntryById(u8* self, u32 id) {
+    // Ascending i < n → mtctr + cmpli/ble (PATTERNS); shared null epilogue.
+    if (id != 0) {
+        u32 n = *(u32*)(self + 0x9800);
+        u8* p = self;
+        for (u32 i = 0; i < n; i++) {
+            if (id == *(u16*)(p + 0x1C)) {
+                return self + i * 0x4C;
+            }
+            p += 0x4C;
+        }
+    }
+    return 0;
+}
 
-void CPartsChange_FindPartsElem(){}
+extern "C" void* CPartsChange_FindPartsElem(u8* self, u8* obj) {
+    if ((*(u32*)(obj + 0x3F00) & 0x4) != 0) {
+        u16 raw = *(u16*)(obj + 0x456C);
+        int shifted = (int)raw >> 4;
+        if (shifted != 0) {
+            u32 n = *(u32*)(self + 0x9800);
+            u8* p = self;
+            u32 id = (u32)(u16)shifted;
+            for (u32 i = 0; i < n; i++) {
+                if (id == *(u16*)(p + 0x1C)) {
+                    return (void*)((u8*)self + i * 0x4C);
+                }
+                p += 0x4C;
+            }
+        }
+        return 0;
+    }
+    return 0;
+}
 
 void func_80197538(){}
 
 void CPartsChange_ResolveActorEntry(){}
 
-void CPartsChange_CountListNodes(){}
+extern "C" int CPartsChange_CountListNodes(u8* self) {
+    // Retail colours: end=r5, cur=r4, n=r3. Declare cur before end so the
+    // allocator gives end the later volatile (r5) after cur claims r4.
+    void* cur;
+    void* end;
+    int n;
+    end = *(void**)(self + 4);
+    n = 0;
+    cur = *(void**)end;
+    goto check;
+loop:
+    cur = *(void**)cur;
+    n++;
+check:
+    if (cur != end) goto loop;
+    return n;
+}
 
 void CPartsChange_TeardownContainer(){}
 
@@ -271,9 +343,28 @@ void CPartsChange_FindFreeSlot(){}
 
 void CPartsChange_UnregisterEntry(){}
 
-void CPartsChange_ResolveLinkedObj(){}
+extern "C" void* CPartsChange_ResolveLinkedObj(int* self) {
+    void* p = findObjectById(*self);
+    if (p != 0) {
+        p = (u8*)p - 0x3E9C;
+    }
+    return p;
+}
 
-void CPartsChange_HasAnyEntry(){}
+extern "C" int CPartsChange_HasAnyEntry(u8* self) {
+    // Scan 16 eight-byte {id, data} records for a live id. The 16-count loop
+    // unrolls 8x into the retail two-trip CTR form and keeps the dead
+    // per-iteration induction update (li r4,0 / addi r4,r4,7).
+    struct Entry {
+        u32 id;
+        u32 data;
+    };
+    Entry* e = (Entry*)self;
+    for (s32 i = 0; i < 16; i++) {
+        if (e[i].id != 0) return 1;
+    }
+    return 0;
+}
 
 void CPartsChange_FindVoiceIndex(){}
 
@@ -281,11 +372,34 @@ void* CPartsChange_GetSlotEntryAt(void* self, unsigned long idx) {
     return *(void**)((char*)self + (idx << 3));
 }
 
-void CPartsChange_GetEnemySlotAt(){}
+extern "C" void* CPartsChange_GetEnemySlotAt(u8* table, u32 idx) {
+    void* p = findObjectById(*(int*)(table + (idx << 3)));
+    if (p != 0) {
+        p = (u8*)p - 0x3E9C;
+    }
+    return p;
+}
 
 void func_80198524(){}
 
-void CPartsChange_RemoveListNode(){}
+extern "C" void CPartsChange_RemoveListNode(u8* self, void** key) {
+    // Same shape as matched unlinkNodesByKey (code_800B06A4): next before
+    // cur, next loaded first in the loop body → cur r8 / next r7.
+    u32 sentinel = *(u32*)(self + 4);
+    u32 next;
+    u32 cur = *(u32*)sentinel;
+    u32 zero = 0;
+    while (cur != sentinel) {
+        next = *(u32*)cur;
+        if (*(u32*)(cur + 8) == *(u32*)key) {
+            u32 prev = *(u32*)(cur + 4);
+            *(u32*)prev = next;
+            *(u32*)(next + 4) = prev;
+            *(u32*)cur = zero;
+        }
+        cur = next;
+    }
+}
 
 void CfPartyInfo::func_80198710(void* r4, float f1, int r5, int r6, float f2, float f3) {
     int r8 = *(int*)((char*)r4 + 0);
@@ -311,9 +425,16 @@ void CfPartyInfo::func_80198710(void* r4, float f1, int r5, int r6, float f2, fl
 
 void CPartsChange_ProcessPartyInfo(){}
 
-void CPartsChange_ProbePartyCollisions(){}
+extern "C" void CPartsChange_ProbePartyCollisions(u32* src, u32* dst);
 
-void CPartsChange_CopyHeaderAndLoad(){}
+extern "C" void CPartsChange_CopyHeaderAndLoad(u32* src, u32* dst) {
+    u32 w0 = src[0];
+    u32 w1 = src[1];
+    dst[1] = w1;
+    dst[0] = w0;
+    dst[2] = src[2];
+    CPartsChange_ProbePartyCollisions(src, dst);
+}
 
 void func_80198AE0(){}
 

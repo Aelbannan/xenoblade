@@ -1382,10 +1382,14 @@ extern "C" __declspec(noinline) void cfCam_setTransCol(float* mtx, const float* 
 __declspec(noinline) void cfCam_copyBlock16(void* dst, void* src) {
     const u32* s = static_cast<const u32*>(src);
     u32* d = static_cast<u32*>(dst);
-    d[0] = s[0];
-    d[1] = s[1];
-    d[2] = s[2];
-    d[3] = s[3];
+    u32 w0 = s[0];
+    u32 w1 = s[1];
+    u32 w2 = s[2];
+    u32 w3 = s[3];
+    d[0] = w0;
+    d[1] = w1;
+    d[2] = w2;
+    d[3] = w3;
 }
 __declspec(noinline) int cfCam_getBit27_64(void* self) { return (*reinterpret_cast<u32*>(reinterpret_cast<char*>(self) + 100) >> 27) & 1; }
 __declspec(noinline) void cfCam_copyWordA(void* dst, void* src) { *static_cast<u32*>(dst) = *static_cast<u32*>(src); }
@@ -1489,12 +1493,16 @@ void cfCam_getFollowSrc(ml::CVec3* out, cf::CfCamFollow* self) {
 // x; writeVec3f packs (s, f, 0) into a temp vec3 passed to cfCam_offsetFromDir
 // along with the first three args.
 void cfCam_prepFollowVec(void* arg1, cf::CfCamFollow* self, void* arg3, void* arg4) {
-    f32 f;
+    // Both arms leave the scale in f1, then one fmr into the callee-saved
+    // slot (retail: call/lfs → fmr f31,f1). Assigning inside each arm lets
+    // MWCC fmr on the call path and lfs-f31 on the null path.
+    f32 f1;
     if (self->unk164 != 0) {
-        f = self->unk164->CfObject_getMoveHeadAngle();
+        f1 = self->unk164->CfObject_getMoveHeadAngle();
     } else {
-        f = lbl_eu_806662DC;
+        f1 = lbl_eu_806662DC;
     }
+    f32 f = f1;
     f32 s;
     if (arg4 != 0) {
         s = scaleByGlobal(lbl_eu_80661B4C);

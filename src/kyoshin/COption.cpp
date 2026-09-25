@@ -19,7 +19,7 @@ CMenuOption* __ct__CMenuOption(CMenuOption* _this, CProcess* parent, u32 arg) {
 
     // vtable fixups: temp (CProcess) vtable first, then the composite vtable
     // and the IScnRender sub-vtable at +0x58.
-    reinterpret_cast<CMenuOptionVtblView*>(_this)->mProcVtable = lbl_eu_8052BF70;
+    reinterpret_cast<CMenuOptionVtblView*>(_this)->mProcVtable = (u32*)lbl_eu_8052BF70;
     // Post-increment walk forces MWCC's lwzu fold for the base (btm_sco_init
     // pattern). The second group restarts from the array base so its loads
     // stay at disp 0/4/8.
@@ -47,13 +47,13 @@ CMenuOption* __ct__CMenuOption(CMenuOption* _this, CProcess* parent, u32 arg) {
     _this->mField55 = 0;
 
     CMenuOptionVtblView* vtSlots = reinterpret_cast<CMenuOptionVtblView*>(_this);
-    vtSlots->mProcVtable = lbl_eu_805392C8;
-    vtSlots->mScnRenderVt = (void*)((u32)lbl_eu_805392C8 + 0x24);
+    vtSlots->mProcVtable = (u32*)lbl_eu_805392C8;
+    vtSlots->mScnRenderVt = (u32*)(lbl_eu_805392C8 + 0x24);
     _this->mParentRef = parent;
 
-    __ct__CBgTex((CBgTex*)_this->mBgTex, 0);
-    __ct__CTitleAHelp((CTitleAHelp*)_this->mTitleAHelp, 0, 0);
-    __ct__COption((COption*)_this->mOption, 0);
+    __ct__CBgTex(&_this->mBgTex, 0);
+    __ct__CTitleAHelp(&_this->mTitleAHelp, 0, 0);
+    __ct__COption(&_this->mOption, 0);
     _this->mState = 0;
     _this->mArg = arg;
     return _this;
@@ -71,9 +71,9 @@ CMenuOption* __ct__CMenuOption(CMenuOption* _this, CProcess* parent, u32 arg) {
 // ---------------------------------------------------------------------------
 CMenuOption* __dt__11CMenuOptionFv(CMenuOption* _this, int flags) {
     if (_this != 0) {
-        __dt__7COptionFv((COption*)_this->mOption, -1);
-        __dt__11CTitleAHelpFv((CTitleAHelp*)_this->mTitleAHelp, -1);
-        __dt__6CBgTexFv((CBgTex*)_this->mBgTex, -1);
+        __dt__7COptionFv(&_this->mOption, -1);
+        __dt__11CTitleAHelpFv(&_this->mTitleAHelp, -1);
+        __dt__6CBgTexFv(&_this->mBgTex, -1);
         __dt__800FED0C(_this, 0);
         if (flags > 0) {
             operator delete(_this);
@@ -103,7 +103,7 @@ void CMenuOption::Init() {
     *(u8*)((u8*)this + 0x7e) = *(u8*)(tempBgTex + 0x1e);
     __dt__6CBgTexFv(reinterpret_cast<CBgTex*>(tempBgTex), -1);
 
-    BgTex_Acquire_3C14((CBgTex*)mBgTex);
+    BgTex_Acquire_3C14(&mBgTex);
 
     // --- Re-initialise the embedded CTitleAHelp via a temporary ---
     char* name = BdatTouchStringCell(lbl_eu_805103C4, lbl_eu_805103C4 + 9, 0x3b);
@@ -126,7 +126,7 @@ void CMenuOption::Init() {
     *(u8*)((u8*)this + 0xb7) = *(u8*)(tempTitle + 0x37);
     __dt__11CTitleAHelpFv(reinterpret_cast<CTitleAHelp*>(tempTitle), -1);
 
-    CTitleAHelp_load((CTitleAHelp*)mTitleAHelp);
+    CTitleAHelp_load(&mTitleAHelp);
 
     // --- Re-initialise the embedded COption via a temporary ---
     u8 tempOption[0x104];
@@ -192,12 +192,12 @@ void CMenuOption::Init() {
     *(u32*)((u8*)this + 0x1b8) = *(u32*)(tempOption + 0x100);
     __dt__7COptionFv(reinterpret_cast<COption*>(tempOption), -1);
 
-    COptionRebuildWidgets((COption*)mOption);
+    COptionRebuildWidgets(&mOption);
 
     // Register the widget as an IScnRender render callback on its parent scene.
     IScnRender* renderCB = reinterpret_cast<IScnRender*>(this);
     if (this != NULL) {
-        renderCB = reinterpret_cast<IScnRender*>(mIScnRender);
+        renderCB = &mIScnRender;
     }
     reinterpret_cast<CScn*>(mParentRef)->addRenderCB(renderCB, 0xd, 0);
 }
@@ -208,13 +208,13 @@ void CMenuOption::Term() {
     // The `if (this)` is the MWCC idiom that splits mr r4,r31 / beq / addi r4,+0x58.
     IScnRender* renderCB = reinterpret_cast<IScnRender*>(this);
     if (this != NULL) {
-        renderCB = reinterpret_cast<IScnRender*>(mIScnRender);
+        renderCB = &mIScnRender;
     }
     reinterpret_cast<CScn*>(mParentRef)->removeRenderCB(renderCB);
 
-    BgTex_Release_3D9C((CBgTex*)mBgTex);
-    teardown((CTitleAHelp*)mTitleAHelp);
-    COptionTeardown((COption*)mOption);
+    BgTex_Release_3D9C(&mBgTex);
+    teardown(&mTitleAHelp);
+    COptionTeardown(&mOption);
 
     lbl_eu_80664A38 = 0;
     setPresentationFlag__Q22cf13CfGameManagerFv(0);
@@ -231,9 +231,9 @@ void CMenuOption::Move() {
     case 3: flagOptionPhase1(this); break;
     }
 
-    BgTex_Tick_3D54((CBgTex*)mBgTex);
-    updateHelp((CTitleAHelp*)mTitleAHelp);
-    COptionTickState((COption*)mOption);
+    BgTex_Tick_3D54(&mBgTex);
+    updateHelp(&mTitleAHelp);
+    COptionTickState(&mOption);
 }
 
 void CMenuOption::cbRenderBefore() {
@@ -249,9 +249,9 @@ void CMenuOption::cbRenderBefore() {
     u8 drawInfo[0x54];
     __ct__Q34nw4r3lyt8DrawInfoFv((nw4r::lyt::DrawInfo*)&drawInfo[0]);
     func_80137250((nw4r::lyt::DrawInfo*)&drawInfo[0]);
-    BgTex_Draw_3D7C((CBgTex*)mBgTex, (nw4r::lyt::DrawInfo*)&drawInfo[0]);
-    COptionDraw((COption*)mOption, (nw4r::lyt::DrawInfo*)&drawInfo[0]);
-    drawHelp((CTitleAHelp*)mTitleAHelp, (nw4r::lyt::DrawInfo*)&drawInfo[0]);
+    BgTex_Draw_3D7C(&mBgTex, (nw4r::lyt::DrawInfo*)&drawInfo[0]);
+    COptionDraw(&mOption, (nw4r::lyt::DrawInfo*)&drawInfo[0]);
+    drawHelp(&mTitleAHelp, (nw4r::lyt::DrawInfo*)&drawInfo[0]);
     __dt__Q34nw4r3lyt8DrawInfoFv((nw4r::lyt::DrawInfo*)&drawInfo[0], -1);
 }
 
@@ -276,10 +276,10 @@ CMenuOption* func_8029BB24(CProcess* registParent, CProcess* parent, u32 arg) {
  * and option panel are all ready, then start the panel intro animations and
  * play the confirm sound effect (writes the state byte at 0x1BC). */
 void advanceOptionPhase1(CMenuOption* self) {
-    if (BgTex_IsLoaded_3E34((CBgTex*)self->mBgTex) != 0 && isInitialized((CTitleAHelp*)self->mTitleAHelp) != 0 &&
-        COptionIsWindowReady((COption*)self->mOption) != 0) {
-        func_801C412C((CTitleAHelp*)self->mTitleAHelp);
-        COptionBeginScrollSetup((COption*)self->mOption);
+    if (BgTex_IsLoaded_3E34(&self->mBgTex) != 0 && isInitialized(&self->mTitleAHelp) != 0 &&
+        COptionIsWindowReady(&self->mOption) != 0) {
+        func_801C412C(&self->mTitleAHelp);
+        COptionBeginScrollSetup(&self->mOption);
         self->mState = 1;
         playUISound__FUl(0x6d);
     }
@@ -288,7 +288,7 @@ void advanceOptionPhase1(CMenuOption* self) {
 /* Advance the option menu to phase 2 once the title bar is idle and the
  * option panel has finished its intro (writes the state byte at 0x1BC). */
 void advanceOptionPhase2(CMenuOption* self) {
-    if (isIdle__11CTitleAHelpFv((CTitleAHelp*)self->mTitleAHelp) != 0 && COptionGetLiveFlag((COption*)self->mOption) != 0) {
+    if (isIdle__11CTitleAHelpFv(&self->mTitleAHelp) != 0 && COptionGetLiveFlag(&self->mOption) != 0) {
         self->mState = 2;
     }
 }
@@ -299,7 +299,7 @@ void advanceOptionPhase2(CMenuOption* self) {
  * title/help bar with the option's current index and advances the phase state
  * machine (mState / mField54). */
 void func_8029BC78(CMenuOption* self) {
-    if (COptionIsWindowReady((COption*)self->mOption) == 0) {
+    if (COptionIsWindowReady(&self->mOption) == 0) {
         return;
     }
 
@@ -341,35 +341,35 @@ void func_8029BC78(CMenuOption* self) {
     }
 
     if (left) {
-        COptionHandleLeft((COption*)self->mOption);
+        COptionHandleLeft(&self->mOption);
     } else if (right) {
-        COptionHandleRightAccept((COption*)self->mOption, 0);
+        COptionHandleRightAccept(&self->mOption, 0);
     } else if (up) {
-        COptionCursorUp((COption*)self->mOption);
+        COptionCursorUp(&self->mOption);
     } else if (down) {
-        COptionCursorDown((COption*)self->mOption);
+        COptionCursorDown(&self->mOption);
     } else if (pageUp) {
-        COptionPageUp((COption*)self->mOption);
+        COptionPageUp(&self->mOption);
     } else if (pageDown) {
-        COptionPageDown((COption*)self->mOption);
+        COptionPageDown(&self->mOption);
     } else if (pageLeft) {
-        COptionOpenConfigDialog((COption*)self->mOption);
+        COptionOpenConfigDialog(&self->mOption);
     } else if (pageRight) {
-        COptionHandleRightAccept((COption*)self->mOption, 1);
+        COptionHandleRightAccept(&self->mOption, 1);
     }
 
-    func_801C41E8((CTitleAHelp*)self->mTitleAHelp, (u8)COptionGetNavCode((COption*)self->mOption));
+    func_801C41E8(&self->mTitleAHelp, (u8)COptionGetNavCode(&self->mOption));
 
-    if (COptionGetConfirmGate((COption*)self->mOption) != 0) {
-        if (COptionGetSecondConfirm((COption*)self->mOption) != 0) {
+    if (COptionGetConfirmGate(&self->mOption) != 0) {
+        if (COptionGetSecondConfirm(&self->mOption) != 0) {
             if (CMainMenu_GetInstancePtr() != 0) {
                 ArtsInfo_SetReadyFlag();
             }
             self->mState = 4;
             self->mField54 = 1;
         } else {
-            beginClose((CTitleAHelp*)self->mTitleAHelp);
-            COptionConfirmSelection((COption*)self->mOption);
+            beginClose(&self->mTitleAHelp);
+            COptionConfirmSelection(&self->mOption);
             self->mState = 3;
         }
     }
@@ -378,7 +378,7 @@ void func_8029BC78(CMenuOption* self) {
 /* Same idle+advance check as advanceOptionPhase2, but advances the option menu to
  * phase 1 (writes the state byte at offset 0x54). */
 void flagOptionPhase1(CMenuOption* self) {
-    if (isIdle__11CTitleAHelpFv((CTitleAHelp*)self->mTitleAHelp) != 0 && COptionGetLiveFlag((COption*)self->mOption) != 0) {
+    if (isIdle__11CTitleAHelpFv(&self->mTitleAHelp) != 0 && COptionGetLiveFlag(&self->mOption) != 0) {
         self->mField54 = 1;
     }
 }

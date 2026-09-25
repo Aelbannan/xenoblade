@@ -396,6 +396,7 @@ extern "C" u32 lbl_eu_8056FF58[34] = {
 
 // --- restored from git history (base:gone repo-search) ---
 // from commit 4116edb5dec8 path=libs/monolib/src/core/CPackItem.cpp needle=setupHashTable
+/* Builds the hash / file-id tables and optionally wires
    mFileDataOffsets (u32 per file) if the pkh file is large enough. */
 void CPackItem::setupHashTable() {
     if(mPackHeader != nullptr){

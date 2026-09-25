@@ -32,7 +32,7 @@ public:
 #include <revolution/GX.h>
 #include <nw4r/lyt/lyt_drawInfo.h>
 
-extern "C" void __dt__13CMenuQuestLogFv(CMenuQuestLog* ths, int);
+extern "C" CMenuQuestLog* __dt__13CMenuQuestLogFv(CMenuQuestLog* ths, int);
 extern "C" void __ct__UnkClass_8011C974(u32* dest, const u32* src);
 extern "C" void __dt__800FED0C(CProcess* self, int flags);
 
@@ -99,7 +99,7 @@ __declspec(noinline) CMenuQuestLog* __ct__CMenuQuestLog(CMenuQuestLog* _this, CP
  * relocates to __dt__800FED0C (game D2), not library __dt__8CProcessFv.
  * Subobjects destroyed in reverse construction order.
  */
-extern "C" void __dt__13CMenuQuestLogFv(CMenuQuestLog* ths, int flags) {
+extern "C" CMenuQuestLog* __dt__13CMenuQuestLogFv(CMenuQuestLog* ths, int flags) {
     if (ths != 0) {
         __dt__11CQstLogInfoFv(&ths->mQstLogInfo, -1);
         __dt__11CQstLogListFv(&ths->mQstLogList, -1);
@@ -110,6 +110,7 @@ extern "C" void __dt__13CMenuQuestLogFv(CMenuQuestLog* ths, int flags) {
             operator delete(ths);
         }
     }
+    return ths;
 }
 
 // ---------------------------------------------------------------------------

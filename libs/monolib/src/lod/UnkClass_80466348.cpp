@@ -704,12 +704,12 @@ void setAmbColorScaledAlpha2(GXColor* color) {
     GXSetChanAmbColor(GX_COLOR0A0, out);
 }
 
-void setAmbColorWithAlpha1(GXColor* color) {
+void LOD::UnkClass_80466348::setAmbColorWithAlpha1() {
     // Ambient color: each RGB byte is scaled by its LUT factor and 806657E4,
     // then clamped to 255; alpha is the latch scaled by 80665808.
-    s32 r = (s32)(u8ToF_a638(color->r) * lbl_eu_80658348[0] * lbl_eu_806657E4);
-    s32 g = (s32)(u8ToF_a638(color->g) * lbl_eu_80658348[1] * lbl_eu_806657E4);
-    s32 b = (s32)(u8ToF_a638(color->b) * lbl_eu_80658348[2] * lbl_eu_806657E4);
+    s32 r = (s32)(u8ToF_a638(field_0x0) * lbl_eu_80658348[0] * lbl_eu_806657E4);
+    s32 g = (s32)(u8ToF_a638(field_0x1) * lbl_eu_80658348[1] * lbl_eu_806657E4);
+    s32 b = (s32)(u8ToF_a638(field_0x2) * lbl_eu_80658348[2] * lbl_eu_806657E4);
     if (r > 255) r = 255;
     if (g > 255) g = 255;
     if (b > 255) b = 255;
@@ -734,12 +734,12 @@ void LOD::UnkClass_80466348::setAmbColorWithAlpha0() {
     GXSetChanAmbColor(GX_COLOR0A0, color);
 }
 
-void setAmbColorWithAlpha2(GXColor* color) {
+void LOD::UnkClass_80466348::setAmbColorWithAlpha2() {
     // Ambient color: each RGB byte is scaled by its LUT factor and 806657E4,
     // then clamped to 255; alpha is the latch scaled by 80665808.
-    s32 r = (s32)(u8ToF_a638(color->r) * lbl_eu_80658358[0] * lbl_eu_806657E4);
-    s32 g = (s32)(u8ToF_a638(color->g) * lbl_eu_80658358[1] * lbl_eu_806657E4);
-    s32 b = (s32)(u8ToF_a638(color->b) * lbl_eu_80658358[2] * lbl_eu_806657E4);
+    s32 r = (s32)(u8ToF_a638(field_0x0) * lbl_eu_80658358[0] * lbl_eu_806657E4);
+    s32 g = (s32)(u8ToF_a638(field_0x1) * lbl_eu_80658358[1] * lbl_eu_806657E4);
+    s32 b = (s32)(u8ToF_a638(field_0x2) * lbl_eu_80658358[2] * lbl_eu_806657E4);
     if (r > 255) r = 255;
     if (g > 255) g = 255;
     if (b > 255) b = 255;

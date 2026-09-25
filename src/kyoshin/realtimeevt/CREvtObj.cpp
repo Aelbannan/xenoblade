@@ -33,7 +33,7 @@
 // ============================================================================
 extern "C" void __ct__cf_CREvtObj(cf::CREvtObj* self, int arg) {
     self->mType = arg;
-    self->vtable = lbl_eu_80532320;
+    *(u32**)self = lbl_eu_80532320;
     self->mCallback = __ptmf_null;
 }
 
@@ -56,9 +56,7 @@ extern "C" cf::CREvtObj* __dt__Q22cf8CREvtObjFv(cf::CREvtObj* self, int deleteFl
 // Runs the stored callback (mCallback) when it is non-null; used by the
 // per-frame step of derived realtime-ev objects (e.g. CREvtModel).
 // ============================================================================
-// Retail view of the CREvtObj base: vtable @0, kind @4, callback ptmf @8.
-// (The shared header carries an extra explicit vtable member, which puts
-// mCallback at +0xC; this TU-local view binds the retail +8 slot.)
+// Retail view of the CREvtObj base: C++ vptr @0, kind @4, callback ptmf @8.
 struct EvtObjBaseView {
     u32* vtable;
     u32 mType;

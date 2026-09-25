@@ -4219,8 +4219,8 @@ void __wudSecurityEventStackCallback(tBTA_DM_SEC_EVT event,
 
     DEBUGPrint(pMsg + 0xA7C);
 
-    if (event == BTA_DM_ENABLE_EVT) {
-
+    switch (event) {
+    case BTA_DM_ENABLE_EVT: {
         tBTA_DM_ENABLE* pEnable = &pData->enable;
 
         WUD_BDCPY(p->hostAddr, pEnable->bd_addr);
@@ -4237,14 +4237,16 @@ void __wudSecurityEventStackCallback(tBTA_DM_SEC_EVT event,
         OSSetPeriodicAlarm(&p->alarm, OSGetTime(), OS_MSEC_TO_TICKS(10),
                            __wudStackHandler0);
         p->libStatus = WUD_LIB_STATUS_2;
+        break;
     }
-    else if (event == BTA_DM_DISABLE_EVT) {
 
+    case BTA_DM_DISABLE_EVT: {
         DEBUGPrint(pMsg + 0xAD0);
         BTA_CleanUp((BTA_CleanUpCallback)__wudCleanupStackCallback);
+        break;
     }
-    else if (event == BTA_DM_PIN_REQ_EVT) {
 
+    case BTA_DM_PIN_REQ_EVT: {
         BD_ADDR pin;
         BD_ADDR_PTR pAddr;
 
@@ -4271,9 +4273,10 @@ void __wudSecurityEventStackCallback(tBTA_DM_SEC_EVT event,
         OSRestoreInterrupts(enabled);
 
         BTA_DmPinReply(pData->pin_req.bd_addr, TRUE, BD_ADDR_LEN, pin);
+        break;
     }
-    else if (event == BTA_DM_AUTH_CMPL_EVT) {
 
+    case BTA_DM_AUTH_CMPL_EVT: {
         tBTA_DM_AUTH_CMPL* pAuthCmpl = &pData->auth_cmpl;
 
         DEBUGPrint(pMsg + 0xAF8);
@@ -4304,13 +4307,15 @@ void __wudSecurityEventStackCallback(tBTA_DM_SEC_EVT event,
 
             memcpy(pInfo->linkKey, pAuthCmpl->key, LINK_KEY_LEN);
         }
+        break;
     }
-    else if (event == BTA_DM_AUTHORIZE_EVT) {
 
+    case BTA_DM_AUTHORIZE_EVT: {
         DEBUGPrint(pMsg + 0xBA4);
+        break;
     }
-    else if (event == BTA_DM_LINK_UP_EVT) {
 
+    case BTA_DM_LINK_UP_EVT: {
         tBTA_DM_LINK_UP* pLinkUp = &pData->link_up;
 
         DEBUGPrint(pMsg + 0xBBC);
@@ -4337,13 +4342,15 @@ void __wudSecurityEventStackCallback(tBTA_DM_SEC_EVT event,
                        pLinkUp->bd_addr[1], pLinkUp->bd_addr[2],
                        pLinkUp->bd_addr[3], pLinkUp->bd_addr[4],
                        pLinkUp->bd_addr[5]);
-        } else {
-            pInfo->status = pInfo->status == 2 ? 0xC : 3;
-            p->linkedNum++;
+            break;
         }
-    }
-    else if (event == BTA_DM_LINK_DOWN_EVT) {
 
+        pInfo->status = pInfo->status == 2 ? 0xC : 3;
+        p->linkedNum++;
+        break;
+    }
+
+    case BTA_DM_LINK_DOWN_EVT: {
         tBTA_DM_LINK_DOWN* pLinkDown = &pData->link_down;
 
         DEBUGPrint(pMsg + 0xC40);
@@ -4386,17 +4393,20 @@ void __wudSecurityEventStackCallback(tBTA_DM_SEC_EVT event,
             OSReport(pMsg + 0xC80);
             p->linkedNum = 0;
         }
+        break;
     }
-    else if (event == BTA_DM_SIG_STRENGTH_EVT) {
 
+    case BTA_DM_SIG_STRENGTH_EVT: {
         DEBUGPrint(pMsg + 0xCA4);
+        break;
     }
-    else if (event == BTA_DM_BUSY_LEVEL_EVT) {
 
+    case BTA_DM_BUSY_LEVEL_EVT: {
         DEBUGPrint(pMsg + 0xCC0);
+        break;
+    }
     }
 }
-
 void __wudSearchEventStackCallback(tBTA_DM_SEARCH_EVT event,
                                    tBTA_DM_SEARCH* pData) {
     char* pMsg = _wudWiiRemoteDescriptor;

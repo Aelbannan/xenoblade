@@ -23,9 +23,11 @@ extern "C" void* __ct__cf_CfGimmickSaveOff(cf::CfGimmickSaveOff* self, s32 param
 
     // Read three bdat string cells (the cells are string pointers); lower
     // 16 bits go into the u16 bounds, the low byte into the type.
-    u32 vMin = getBdatStringColumnValue(holder, *(const char**)(lbl_eu_805357E8 + 0x34), param);
+    // Byte offsets into the pointer table (lbl_eu_805357E8 is void*[]).
+    u8* colTab = (u8*)lbl_eu_805357E8;
+    u32 vMin = getBdatStringColumnValue(holder, *(const char**)(colTab + 0x34), param);
     self->mMinVal = *(u16*)&vMin;
-    u32 vMax = getBdatStringColumnValue(holder, *(const char**)(lbl_eu_805357E8 + 0x38), param);
+    u32 vMax = getBdatStringColumnValue(holder, *(const char**)(colTab + 0x38), param);
     self->mMaxVal = *(u16*)&vMax;
     u32 vType = getBdatStringColumnValue(holder, (const char*)lbl_eu_80510B28, param);
     self->mType = *(u8*)&vType;

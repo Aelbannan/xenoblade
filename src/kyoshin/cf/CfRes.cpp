@@ -11,6 +11,17 @@
 #include "monolib/work/CEventFile.hpp"
 #include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
 extern "C" char* getEntryPtrGrid(char* self, int a, int b);
+
+// Out-of-line CResLookup vtable thunks (retail shares one dispatcher per slot).
+extern "C" void* CfRes_vcall02(void* self, int arg);
+extern "C" u8* CfRes_vcall04(void* self);
+extern "C" u8* CfRes_vcall05(void* self);
+extern "C" void* CfRes_vcall07(void* self);
+extern "C" int CfRes_vcall08(void* self);
+extern "C" int CfRes_vcall14(void* self);
+extern "C" int CfRes_vcall17(void* self, u32 val);
+extern "C" void CfRes_vcall34(void* self);
+extern "C" void CfRes_vcall38(void* self);
 extern "C" void* Scn_CallUnk8C_V9(void* scene);
 extern "C" mtl::ALLOC_HANDLE Scn_CallUnk8C_V10(void* src);
 extern "C" void* getHandleMEM1__Q23mtl10MemManagerFv();
@@ -1221,7 +1232,7 @@ void CfRes_decResRefByHandle(int handle) {
 #pragma auto_inline off
 // cfResNopValueSink: retail signature takes a value (called with 0 by the
 // acquire path); body owned by its own matching target.
-extern "C" __declspec(noinline) void cfResNopValueSink(u32 value) { (void)value; }
+extern "C" __declspec(noinline) void cfResNopValueSink(u32 value) { (void)value; CfRes_getInstance(); }
 #pragma pop
 
 extern "C" void CfRes_stub_63990() {}
@@ -1391,7 +1402,7 @@ int __declspec(noinline) CfRes_dispatchArchiveRead(void* a, void* b, u32 c, void
         }
         CfRes_initFields4((u8*)e, (int)c, (int)(uintptr_t)handle, (int)(uintptr_t)b, size);
         CfRes_setBits1_2((u8*)e);
-        if (((ResInfoEntry*)e)->field_0x2C != 0) ((ResInfoEntry*)e)->field_0x2C->vfunc09((ResInfoEntry*)e);
+        CfRes_vcall34(e);
         result = 1;
     }
     return result;
@@ -1878,10 +1889,10 @@ extern "C" int __declspec(noinline) CfRes_resolveGridToken(int inst, int a, int 
         return 0;
     }
     ResInfoEntry* entry = (ResInfoEntry*)getEntryPtrGrid((char*)(inst + 4), a, d);
-    if (((ResInfoEntry*)entry)->field_0x2C->cmpField4Eq(entry, (u32)(uintptr_t)b) != 0) {
-        if (((ResInfoEntry*)entry)->field_0x2C->isInUse(entry) != 0) {
+    if (CfRes_vcall17(entry, (u32)(uintptr_t)b) != 0) {
+        if (CfRes_vcall14(entry) != 0) {
             if ((u32)(d - 9) <= 1) {
-                ((ResInfoEntry*)entry)->field_0x2C->vfunc0A(entry);
+                CfRes_vcall38(entry);
             }
         }
         return b;
@@ -1890,7 +1901,7 @@ extern "C" int __declspec(noinline) CfRes_resolveGridToken(int inst, int a, int 
         CfRes_releaseCachedBase(entry, true);
     }
     CfRes_delegateCleanup(entry);
-    void* vc = ((ResInfoEntry*)entry)->field_0x2C->getResourceBase(entry, (int)CfRes_extractBits20_7((void*)(uintptr_t)b));
+    void* vc = CfRes_vcall02(entry, (int)CfRes_extractBits20_7((void*)(uintptr_t)b));
     if (vc == 0) {
         ml::FixStr<64> str;
         func_800AA33C(str, (u32)(uintptr_t)b, 0, 0);
@@ -1970,6 +1981,8 @@ extern "C" int __declspec(noinline) CfRes_resolveTokenType0(int inst, int a, int
     return CfRes_resolveTableToken(inst, a, b, d, c);
 }
 
+extern "C" int CfRes_vcall17(void* self, u32 val);
+
 // CfRes_reregisterTableEntry: re-register the resource-table entry at `index` for the
 // packed token `ptr`: detach the old registration, then repack (entry id,
 // params) from the token and store the packed result into the entry's
@@ -1982,7 +1995,7 @@ void __declspec(noinline) CfRes_reregisterTableEntry(int inst, int index, u8* pt
     if (entry == 0) {
         return;
     }
-    if (((ResInfoEntry*)entry)->field_0x2C->cmpField4Eq(entry, (u32)(uintptr_t)ptr) == 0) {
+    if (CfRes_vcall17(entry, (u32)(uintptr_t)ptr) == 0) {
         return;
     }
     if (entry->field_0x04 != 0) {
@@ -2013,9 +2026,9 @@ extern "C" int __declspec(noinline) CfRes_resolveTableToken(int inst, int a, int
         return b;
     }
     ResInfoEntry* entry = (ResInfoEntry*)getEntryPtr((char*)inst + 4, a, d);
-    if (((ResInfoEntry*)entry)->field_0x2C->cmpField4Eq(entry, (u32)(uintptr_t)b) != 0) {
-        if (((ResInfoEntry*)entry)->field_0x2C->isInUse(entry) != 0) {
-            ((ResInfoEntry*)entry)->field_0x2C->vfunc0A(entry);
+    if (CfRes_vcall17(entry, (u32)(uintptr_t)b) != 0) {
+        if (CfRes_vcall14(entry) != 0) {
+            CfRes_vcall38(entry);
         }
         return b;
     }
@@ -2023,7 +2036,7 @@ extern "C" int __declspec(noinline) CfRes_resolveTableToken(int inst, int a, int
         CfRes_releaseCachedBase(entry, true);
     }
     CfRes_delegateCleanup(entry);
-    void* vc = ((ResInfoEntry*)entry)->field_0x2C->getResourceBase(entry, 0);
+    void* vc = CfRes_vcall02(entry, 0);
     if (CfRes_buildPathAndRead((u8*)(uintptr_t)inst, (u8*)vc, (u32)(uintptr_t)b, (u8*)entry, e) == 0) {
         b = 0;
     }
@@ -2037,6 +2050,16 @@ extern "C" __declspec(noinline) void CfRes_setBits11_64F60(u8* self) {
     *(u32*)self = (val & ~0x42) | 0x11;
 }
 
+extern "C" void* CfRes_vcall02(void* self, int arg);
+extern "C" u8* CfRes_vcall04(void* self);
+extern "C" u8* CfRes_vcall05(void* self);
+extern "C" void* CfRes_vcall07(void* self);
+extern "C" int CfRes_vcall08(void* self);
+extern "C" int CfRes_vcall14(void* self);
+extern "C" int CfRes_vcall17(void* self, u32 val);
+extern "C" void CfRes_vcall34(void* self);
+extern "C" void CfRes_vcall38(void* self);
+
 // CfRes_resolveAndLinkB8 (0x80065748): resolve the packed id via CfRes_resolveSlotB8 and,
 // when the target grid entries are valid, link them into the resolved record.
 int __declspec(noinline) CfRes_resolveAndLinkB8(int inst, int a, int b, int c) {
@@ -2048,7 +2071,7 @@ int __declspec(noinline) CfRes_resolveAndLinkB8(int inst, int a, int b, int c) {
     p2 = (u8*)CfRes_ptrPlusB8((u8*)(inst + 4));
     if (v != 0 && CfRes_getField18_64F58(p2) != 0) {
         u32 f18 = CfRes_getField18_64F58(p2);
-        int vc = (int)(uintptr_t)((ResInfoEntry*)p1)->field_0x2C->getResourceBase(p1, 0);
+        int vc = (int)(uintptr_t)CfRes_vcall02(p1, 0);
         CfRes_initFields4(p1, v, 0, vc, (int)f18);
         CfRes_setBits11_64F60(p1);
     }
@@ -2066,11 +2089,11 @@ extern "C" int __declspec(noinline) CfRes_resolveSlotB8(int inst, int a, int b, 
     if (result == 0) {
         return result;
     }
-    if (((ResInfoEntry*)slot)->field_0x2C->cmpField4Eq(slot, (u32)(uintptr_t)result) != 0) {
+    if (CfRes_vcall17(slot, (u32)(uintptr_t)result) != 0) {
         return result;
     }
     CfRes_delegateCleanup(slot);
-    void* vc = ((ResInfoEntry*)slot)->field_0x2C->getResourceBase(slot, 0);
+    void* vc = CfRes_vcall02(slot, 0);
     if (vc == 0) {
         vc = (void*)(uintptr_t)KyoshinHeap_GetActive54();
         ((ResInfoEntry*)slot)->data = (u32*)vc;
@@ -2088,11 +2111,11 @@ extern "C" int __declspec(noinline) CfRes_resolveSlotB8(int inst, int a, int b, 
 extern "C" int __declspec(noinline) CfRes_resolveSlotF4(int inst, int a, int b, int c) {
     u32 packed = Tok_Pack08((u32)a, (u32)b);
     u8* slot = (u8*)CfRes_ptrPlusF4((u8*)(inst + 4));
-    if (((ResInfoEntry*)slot)->field_0x2C->cmpField4Eq(slot, (u32)(uintptr_t)packed) != 0) {
+    if (CfRes_vcall17(slot, (u32)(uintptr_t)packed) != 0) {
         return (int)packed;
     }
     CfRes_delegateCleanup(slot);
-    void* vc = ((ResInfoEntry*)slot)->field_0x2C->getResourceBase(slot, 0);
+    void* vc = CfRes_vcall02(slot, 0);
     ml::FixStr<64> str;
     if (func_800AA33C(str, packed, 1, 1) != 0) {
         ml::FixStr<64> path;
@@ -2114,7 +2137,7 @@ extern "C" int __declspec(noinline) CfRes_resolveSlotF4(int inst, int a, int b, 
 extern "C" int __declspec(noinline) CfRes_resolveSlot130(int inst, int a, int b, int c, int d) {
     u32 packed = Tok_Pack08((u32)b, (u32)c);
     u8* slot = (u8*)CfRes_ptrPlus130((u8*)(inst + 4));
-    if (((ResInfoEntry*)slot)->field_0x2C->cmpField4Eq(slot, (u32)(uintptr_t)packed) != 0) {
+    if (CfRes_vcall17(slot, (u32)(uintptr_t)packed) != 0) {
         return (int)packed;
     }
     CfRes_delegateCleanup(slot);
@@ -2137,13 +2160,61 @@ extern "C" __declspec(noinline) unsigned long CfRes_packThreeFields(unsigned lon
     return ((a & 0x1F) << 27) | ((b & 0xFFF) << 20) | ((c & 0x3FFFFF) << 10);
 }
 
+// CfRes_vcall02 (0x800645D4): out-of-line thunk for CResLookup vtable +0x8
+// (getResourceBase). Kept as a real call in callers so the lookup object is
+// materialized in r3 and the entry/arg forwarded through r4/r5.
+extern "C" __declspec(noinline) void* CfRes_vcall02(void* self, int arg) {
+    CResLookup* lookup = ((ResInfoEntry*)self)->field_0x2C;
+    return lookup->getResourceBase(self, arg);
+}
+
+// CfRes_vcall04/05/07/08/14/17 (0x80064B3C..): out-of-line thunks for the
+// repeated CResLookup vtable slots. Retail keeps one shared dispatcher per slot
+// and calls it from every resolve* helper; keep the member-call shape inside so
+// the thunk body matches.
+extern "C" __declspec(noinline) u8* CfRes_vcall04(void* self) {
+    CResLookup* lookup = ((ResInfoEntry*)self)->field_0x2C;
+    return lookup->getResHandle18(self);
+}
+extern "C" __declspec(noinline) u8* CfRes_vcall05(void* self) {
+    CResLookup* lookup = ((ResInfoEntry*)self)->field_0x2C;
+    return lookup->getResHandle1C(self);
+}
+extern "C" __declspec(noinline) void* CfRes_vcall07(void* self) {
+    CResLookup* lookup = ((ResInfoEntry*)self)->field_0x2C;
+    return lookup->vfunc05(self);
+}
+extern "C" __declspec(noinline) int CfRes_vcall08(void* self) {
+    CResLookup* lookup = ((ResInfoEntry*)self)->field_0x2C;
+    return lookup->isResActive28(self);
+}
+extern "C" __declspec(noinline) int CfRes_vcall14(void* self) {
+    CResLookup* lookup = ((ResInfoEntry*)self)->field_0x2C;
+    return lookup->isInUse(self);
+}
+extern "C" __declspec(noinline) int CfRes_vcall17(void* self, u32 val) {
+    CResLookup* lookup = ((ResInfoEntry*)self)->field_0x2C;
+    return lookup->cmpField4Eq(self, val);
+}
+// vcall34/38 are null-guarded void tail calls (retail returns on a null lookup).
+extern "C" __declspec(noinline) void CfRes_vcall34(void* self) {
+    CResLookup* lookup = ((ResInfoEntry*)self)->field_0x2C;
+    if (lookup == 0) return;
+    lookup->vfunc09(self);
+}
+extern "C" __declspec(noinline) void CfRes_vcall38(void* self) {
+    CResLookup* lookup = ((ResInfoEntry*)self)->field_0x2C;
+    if (lookup == 0) return;
+    lookup->vfunc0A(self);
+}
+
 // CfRes_updateSlot16C (0x80065AEC): run the archive-update step for the manager's
 // +0x16c slot; when the slot's vtable probe returns an object, pack the
 // game-manager fields and store them into the slot.
 void __declspec(noinline) CfRes_updateSlot16C(int inst, u8* arg) {
     u8* p = (u8*)CfRes_ptrPlus16C((u8*)(inst + 4));
     func_80066788(p, 0, 0, 0);
-    void* vc = ((ResInfoEntry*)p)->field_0x2C->getResourceBase(p, 0);
+    void* vc = CfRes_vcall02(p, 0);
     if (vc != 0) {
         u16 first;
         u16 second;
@@ -2163,14 +2234,14 @@ int __declspec(noinline) CfRes_resolveSlot16C(int inst, int a, int b) {
     if (a == 0) {
         return a;
     }
-    if (((ResInfoEntry*)slot)->field_0x2C->cmpField4Eq(slot, (u32)(uintptr_t)a) != 0) {
-        if (((ResInfoEntry*)slot)->field_0x2C->isInUse(slot) != 0) {
-            ((ResInfoEntry*)slot)->field_0x2C->vfunc0A(slot);
+    if (CfRes_vcall17(slot, (u32)(uintptr_t)a) != 0) {
+        if (CfRes_vcall14(slot) != 0) {
+            CfRes_vcall38(slot);
         }
         return a;
     }
     CfRes_delegateCleanup(slot);
-    void* vc = ((ResInfoEntry*)slot)->field_0x2C->getResourceBase(slot, 0);
+    void* vc = CfRes_vcall02(slot, 0);
     if (CfRes_buildPathAndRead((u8*)(uintptr_t)inst, (u8*)vc, (u32)(uintptr_t)a, slot, b) == 0) {
         a = 0;
     }
@@ -2185,14 +2256,14 @@ int __declspec(noinline) CfRes_resolveSlot16C(int inst, int a, int b) {
 extern "C" int __declspec(noinline) CfRes_resolveSlot1E4(int inst, int a, int b, int c) {
     int result = (int)Tok_Pack08((u32)a, (u32)b);
     u8* slot = (u8*)CfRes_ptrPlus1E4((u8*)(inst + 4));
-    if (((ResInfoEntry*)slot)->field_0x2C->cmpField4Eq(slot, (u32)(uintptr_t)result) != 0) {
+    if (CfRes_vcall17(slot, (u32)(uintptr_t)result) != 0) {
         CfRes_setE28Mask(0x2000);
         return result;
     }
     CfRes_delegateCleanup(slot);
     ml::FixStr<64> str;
     str.format(lbl_eu_804FB214 + 0x23, a, b);
-    void* vc = ((ResInfoEntry*)slot)->field_0x2C->getResourceBase(slot, 0);
+    void* vc = CfRes_vcall02(slot, 0);
     if (CfRes_dispatchArchiveRead((void*)(uintptr_t)inst, vc, (u32)(uintptr_t)result, CfRes_stub_63ACC(&str), slot, c) == 0) {
         result = 0;
     }
@@ -2207,14 +2278,14 @@ extern "C" int __declspec(noinline) CfRes_resolveSlot220(int inst, int a, int b)
     if (a == 0) {
         return a;
     }
-    if (((ResInfoEntry*)slot)->field_0x2C->cmpField4Eq(slot, (u32)(uintptr_t)a) != 0) {
-        if (((ResInfoEntry*)slot)->field_0x2C->isInUse(slot) != 0) {
-            ((ResInfoEntry*)slot)->field_0x2C->vfunc0A(slot);
+    if (CfRes_vcall17(slot, (u32)(uintptr_t)a) != 0) {
+        if (CfRes_vcall14(slot) != 0) {
+            CfRes_vcall38(slot);
         }
         return a;
     }
     CfRes_delegateCleanup(slot);
-    void* vc = ((ResInfoEntry*)slot)->field_0x2C->getResourceBase(slot, 0);
+    void* vc = CfRes_vcall02(slot, 0);
     if (CfRes_buildPathAndRead((u8*)(uintptr_t)inst, (u8*)vc, (u32)(uintptr_t)a, slot, b) == 0) {
         a = 0;
     }
@@ -2236,15 +2307,15 @@ extern "C" int __declspec(noinline) CfRes_resolveSlotByBits(int inst, int a, int
     if (slot == 0 || a == 0) {
         return a;
     }
-    if (((ResInfoEntry*)slot)->field_0x2C->cmpField4Eq(slot, (u32)(uintptr_t)a) != 0) {
-        if (((ResInfoEntry*)slot)->field_0x2C->isInUse(slot) != 0) {
-            ((ResInfoEntry*)slot)->field_0x2C->vfunc0A(slot);
+    if (CfRes_vcall17(slot, (u32)(uintptr_t)a) != 0) {
+        if (CfRes_vcall14(slot) != 0) {
+            CfRes_vcall38(slot);
         }
         return a;
     }
-    ((ResInfoEntry*)slot)->field_0x2C->vfunc09(slot);
+    CfRes_vcall34(slot);
     CfRes_delegateCleanup(slot);
-    void* vc = ((ResInfoEntry*)slot)->field_0x2C->getResourceBase(slot, 0);
+    void* vc = CfRes_vcall02(slot, 0);
     if (CfRes_buildPathAndRead((u8*)(uintptr_t)inst, (u8*)vc, (u32)(uintptr_t)a, slot, b) == 0) {
         a = 0;
     }
@@ -2258,14 +2329,14 @@ extern "C" int __declspec(noinline) CfRes_resolveSlot298(int inst, int a, int b)
     if (a == 0) {
         return a;
     }
-    if (((ResInfoEntry*)slot)->field_0x2C->cmpField4Eq(slot, (u32)(uintptr_t)a) != 0) {
-        if (((ResInfoEntry*)slot)->field_0x2C->isInUse(slot) != 0) {
-            ((ResInfoEntry*)slot)->field_0x2C->vfunc0A(slot);
+    if (CfRes_vcall17(slot, (u32)(uintptr_t)a) != 0) {
+        if (CfRes_vcall14(slot) != 0) {
+            CfRes_vcall38(slot);
         }
         return a;
     }
     CfRes_delegateCleanup(slot);
-    void* vc = ((ResInfoEntry*)slot)->field_0x2C->getResourceBase(slot, 0);
+    void* vc = CfRes_vcall02(slot, 0);
     if (CfRes_buildPathAndRead((u8*)(uintptr_t)inst, (u8*)vc, (u32)(uintptr_t)a, slot, b) == 0) {
         a = 0;
     }
@@ -2777,60 +2848,3 @@ u32 lbl_eu_80663D7C;
 u32 lbl_eu_80663D80;
 __attribute__((used))
 static u32 s_CfResSbssPad84;
-
-// --- restored from git history (base:gone); do not expand beyond these functions ---
-// from commit b2f445580f8e needle=CfRes_vcall04
-extern "C" int CfRes_vcall04(void* self) {
-    ((CfResObj_64370*)self)->sub->m04(self);
-}
-
-// from commit b2f445580f8e needle=CfRes_vcall05
-extern "C" int CfRes_vcall05(void* self) {
-    ((CfResObj_64390*)self)->sub->m05(self);
-}
-
-// from commit b2f445580f8e needle=CfRes_vcall07
-extern "C" int CfRes_vcall07(void* self) {
-    ((CfResObj_643D0*)self)->sub->m07(self);
-}
-
-// from commit b2f445580f8e needle=CfRes_vcall08
-extern "C" int CfRes_vcall08(void* self) {
-    ((CfResObj_643B0*)self)->sub->m08(self);
-}
-
-// from commit b3618bddb7b4 needle=CfRes_vcall16
-extern "C" void CfRes_vcall16(void* self) {
-    ((CfResVtabClass*)self)->m16();
-}
-
-// --- restored from git history (base:gone pass2) ---
-// from commit b1c01e4a30f0 needle=CfRes_vcall02
-__declspec(noinline) void* CfRes_vcall02(void* self, void* arg) {
-    return ((CfResObj_63E08*)self)->sub->m02(self, arg);
-}
-
-// from commit b1c01e4a30f0 needle=CfRes_vcall14
-        if (CfRes_vcall14(slot) != 0) {
-            CfRes_vcall38(slot);
-        }
-
-// from commit b2f445580f8e needle=CfRes_vcall17
-    if (CfRes_vcall17((u8*)entry, ptr) == 0) {
-        return;
-    }
-
-// from commit b2f445580f8e needle=CfRes_vcall34
-extern "C" __declspec(noinline) void* CfRes_vcall34(u8* self) {
-    CfResSub_63C04* sub = ((CfResObj_63C04*)self)->sub;
-    if (!sub) return self;
-    return sub->_v034(self);
-}
-
-// from commit cf951de49e7b needle=CfRes_vcall38
-extern "C" __declspec(noinline) void* CfRes_vcall38(u8* self) {
-    CfResSub_63C50* sub = ((CfResObj_63C50*)self)->sub;
-    if (!sub) return self;
-    return sub->_v038(self);
-}
-

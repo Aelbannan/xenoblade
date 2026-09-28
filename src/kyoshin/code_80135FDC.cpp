@@ -115,13 +115,18 @@ __declspec(section ".sdata2") __attribute__((used)) f64 lbl_eu_80667360 = 450360
 // Declared before all code so MWCC emits them ahead of its own switch tables
 // (enables drop_data_tail=((".data", 0x118))). Gaps fold into array tails.
 // RESIDUAL: the 0x38 jumptable of func_801393CC cannot be expressed in C++
-// (branch-table targets are local .text labels); it stays a sized static blob.
-// Retail names it jumptable_eu_8052E488 (local); MWCC's own copy of this table
-// plus func_80138574's 21-entry switch table trail the section natively.
-// (an uninitialized spelling also lands in .bss, so the array carries a
-// nonzero canary at +0 which patch_data zeroes; all-zero initializers,
-// static or global, explicit section or not, always route to .bss.
-// No aligned(8) here: that+section combo is suspected of voiding the section.)
+// (branch-table targets are local .text labels mid-function); it stays a sized
+// static blob. Retail names it jumptable_eu_8052E488 (local); MWCC's own copy
+// of this table plus func_80138574's 21-entry switch table trail the section
+// natively. MWCC emits a switch table at its function's definition point, so
+// defining func_801393CC before this block with the retail case shape
+// (case 0 -> epilogue, then 13 distinct case bodies) would emit the real table
+// at .data+0. The blob keeps a +0 canary only to stay in .data: all-zero
+// initializers (static/global, const/volatile/used, explicit section) route to
+// .bss under Wii/1.1. The canary is a real 1-byte diff and has no patch_data
+// shim; the raw data gate reports MISMATCH (.data tail tables and the .sdata2
+// pool are further residuals). No aligned(8): that+section combo is suspected
+// of voiding the section.)
 __declspec(section ".data") __attribute__((used))
 unsigned char jumptable_eu_8052E488[0x38] = { 1 };
 

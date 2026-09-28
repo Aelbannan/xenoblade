@@ -30,8 +30,31 @@ import struct
 from dataclasses import dataclass, field
 from pathlib import Path
 
+from tools.coop.lib.reloc_canon import LinkerLayout, type_class
+
 DATA_SECTIONS = (".data", ".rodata", ".sdata", ".sdata2", ".bss", ".sbss", ".sbss2")
 NOBITS = frozenset({".bss", ".sbss", ".sbss2"})
+
+
+@dataclass
+class Reloc:
+    """One RELA entry on a data section."""
+
+    offset: int
+    type: int
+    symbol: str
+    addend: int
+
+
+@dataclass
+class ParsedObject:
+    """Data sections + relocations + symbol table view of one ELF32 object."""
+
+    sections: dict[str, dict] = field(default_factory=dict)
+    relocs: dict[str, list[Reloc] | None] = field(default_factory=dict)
+    #: symbol name -> (section index, st_value); the first definition wins.
+    symbols: dict[str, tuple[int, int]] = field(default_factory=dict)
+    section_names: dict[int, str] = field(default_factory=dict)
 
 
 @dataclass
@@ -55,8 +78,8 @@ class DataMatchResult:
         return ", ".join(parts) if parts else "(no data sections)"
 
 
-def _parse(path: Path):
-    """Return ({section: {off, size, addr, align}}, {section: [relocs]})."""
+def _parse(path: Path) -> ParsedObject:
+    """Parse the object's data sections, their relocations and its symtab."""
     data = path.read_bytes()
     shoff = struct.unpack_from(">I", data, 0x20)[0]
     shentsize = struct.unpack_from(">H", data, 0x2E)[0]
@@ -75,63 +98,185 @@ def _parse(path: Path):
         end = shstrtab.index(b"\0", off)
         return shstrtab[off:end].decode(errors="replace")
 
-    secs: dict[str, dict] = {}
+    parsed = ParsedObject()
     for i in range(shnum):
         nm = secname(i)
+        parsed.section_names[i] = nm
         if nm not in DATA_SECTIONS:
             continue
         sh = shdr(i)
-        secs[nm] = {"off": sh[4], "size": sh[5], "addr": sh[3], "align": sh[8]}
+        parsed.sections[nm] = {"off": sh[4], "size": sh[5], "addr": sh[3], "align": sh[8]}
 
-    relocs: dict[str, list | None] = {}
-    symtabs = []   # (section index, shdr)
-    strtabs = []
-    for i in range(shnum):
-        typ = shdr(i)[1]
-        if typ == 2:
-            symtabs.append(i)
-        elif typ == 3:
-            strtabs.append(i)
+    symtabs = [i for i in range(shnum) if shdr(i)[1] == 2]
+    strtabs = [i for i in range(shnum) if shdr(i)[1] == 3]
+
+    # MWCC objects leave .rela sh_link=0 (the splitter's differ); fall back to
+    # the first SHT_SYMTAB / its string table in that case.
+    symtab_idx = next((i for i in range(shnum)
+                       if shdr(i)[1] == 2 and shdr(i)[6] in strtabs), None)
+    if symtab_idx is None:
+        symtab_idx = symtabs[0] if symtabs else None
+    if symtab_idx is None:
+        return parsed
+    st = shdr(symtab_idx)
+    str_idx = st[6] if st[6] in strtabs else (strtabs[0] if strtabs else None)
+    if str_idx is None:
+        return parsed
+    symtab_off, symtab_size = st[4], st[5]
+    strsec = shdr(str_idx)
+    strtab = data[strsec[4]: strsec[4] + strsec[5]]
+
+    def sym_name(st_name: int) -> str:
+        end = strtab.index(b"\0", st_name)
+        return strtab[st_name:end].decode(errors="replace")
+
+    for so in range(symtab_off, min(symtab_off + symtab_size, len(data) - 16), 16):
+        st_name, st_value, _st_size, _st_info, _st_other, st_shndx = struct.unpack_from(
+            ">IIIBBH", data, so)
+        if st_name == 0 or st_shndx == 0:
+            continue
+        name = sym_name(st_name)
+        parsed.symbols.setdefault(name, (st_shndx, st_value))
+
     for i in range(shnum):
         nm = secname(i)
         if not nm.startswith(".rela") or nm[5:] not in DATA_SECTIONS:
             continue
         try:
             sh = shdr(i)
-            # MWCC objects set sh_link=0 on .rela sections: fall back to the
-            # first SHT_SYMTAB in the file (splitter convention).
-            st_idx = sh[3] if sh[3] in symtabs else (symtabs[0] if symtabs else None)
-            if st_idx is None:
-                relocs[nm[5:]] = None
-                continue
-            st = shdr(st_idx)
-            symtab = data[st[4]: st[4] + st[5]]
-            str_idx = st[3] if st[3] in strtabs else (strtabs[0] if strtabs else None)
-            if str_idx is None:
-                relocs[nm[5:]] = None
-                continue
-            strsec = shdr(str_idx)
-            strtab = data[strsec[4]: strsec[4] + strsec[5]]
-            out = []
+            out: list[Reloc] = []
             for j in range(sh[5] // 12):
                 ro = sh[4] + j * 12
                 r_offset, r_info, r_addend = struct.unpack_from(">IIi", data, ro)
                 symidx = r_info >> 8
                 rtype = r_info & 0xFF
                 so = symidx * 16
-                st_name = struct.unpack_from(">I", symtab, so)[0]
-                end = strtab.index(b"\0", st_name)
-                out.append((r_offset, rtype, strtab[st_name:end].decode(), r_addend))
-            relocs[nm[5:]] = out
+                st_name = struct.unpack_from(">I", data, symtab_off + so)[0]
+                out.append(Reloc(r_offset, rtype, sym_name(st_name), r_addend))
+            parsed.relocs[nm[5:]] = out
         except (struct.error, ValueError, IndexError):
-            relocs[nm[5:]] = None
-    return secs, relocs
+            parsed.relocs[nm[5:]] = None
+    return parsed
 
 
-def check_data_sections(retail_object: Path, decomp_object: Path) -> DataMatchResult:
-    """Compare retail vs decompiled object data sections; all must pass."""
-    r_secs, r_rel = _parse(retail_object)
-    d_secs, d_rel = _parse(decomp_object)
+def _is_tu_local(name: str) -> bool:
+    """TU-local labels (``@N`` pools, ``...section.0``, ``$N`` statics) reuse
+    names across units, so ``symbols.txt`` must never answer for them."""
+    return name.startswith("@") or name.startswith("...") or name.startswith("$")
+
+
+def derive_section_bases(parsed: ParsedObject, layout: LinkerLayout | None) -> dict[str, int]:
+    """Absolute base address per data section, derived from the object's own
+    globally-named symbols (``st_value`` is section-relative in ET_REL).
+
+    The retail split object of a unit carries symbols whose names also appear
+    in ``symbols.txt``; ``addr - st_value`` is the section's linked base, which
+    is what lets a TU-local ``@N`` compare equal to a retail ``lbl_eu_*``.
+    """
+    bases: dict[str, int] = {}
+    if layout is None:
+        return bases
+    for name, (shndx, value) in parsed.symbols.items():
+        if _is_tu_local(name):
+            continue
+        section = parsed.section_names.get(shndx)
+        if section not in DATA_SECTIONS:
+            continue
+        sec, addr = layout.resolve_name(name)
+        if addr is None or sec != section:
+            continue
+        base = addr - value
+        if base < 0x80000000:
+            continue  # section-relative or bogus match
+        bases.setdefault(section, base)
+    return bases
+
+
+def canonical_reloc_key(
+    reloc: Reloc,
+    parsed: ParsedObject,
+    layout: LinkerLayout | None,
+    bases: dict[str, int] | None = None,
+) -> tuple:
+    """Comparison key for one reloc: canonical class + the value it resolves to.
+
+    Two relocs are equivalent when they install the same linked value at the
+    same class: a decomp symbol that MWCC names differently but that resolves
+    to the same ``(section, address, addend)`` as the retail splitter's label
+    compares equal.  Object-local targets resolve through the object's derived
+    section base; global/linker-script names resolve through ``symbols.txt`` /
+    the ldscript.  Unresolvable targets fall back to name equality
+    (fail-closed).
+    """
+    cls = type_class(reloc.type)
+    home = parsed.symbols.get(reloc.symbol)
+    if home is not None and home[0] != 0:
+        section = parsed.section_names.get(home[0])
+        base = (bases or {}).get(section)
+        if base is not None:
+            return (cls, "abs", base + home[1] + reloc.addend)
+        return (cls, "sec", section, home[1] + reloc.addend)
+    if layout is not None:
+        target = layout.canon_reloc(reloc.symbol, reloc.addend)
+        if target.addr is not None:
+            return (cls, "abs", target.addr)
+    return (cls, "name", reloc.symbol, reloc.addend)
+
+
+def compare_reloc_sets(
+    retail: ParsedObject,
+    decomp: ParsedObject,
+    section: str,
+    layout: LinkerLayout | None = None,
+) -> str | None:
+    """Offset-keyed canonical reloc comparison; None when equal.
+
+    Order-insensitive (relocs are keyed by r_offset): MWCC emits them in
+    descending order per object while the splitter writes ascending order.
+    """
+    rl = retail.relocs.get(section)
+    dl = decomp.relocs.get(section)
+    if rl is None or dl is None:
+        return None  # relocs not extractable on one side; bytes already verified
+    rbases = derive_section_bases(retail, layout)
+    dbases = derive_section_bases(decomp, layout)
+    # A section-relative key on one side can still equal an absolute key on the
+    # other if the missing base is known from the sibling object (same unit).
+    for name, base in dbases.items():
+        rbases.setdefault(name, base)
+    for name, base in list(rbases.items()):
+        dbases.setdefault(name, base)
+    rk = {r.offset: canonical_reloc_key(r, retail, layout, rbases)
+          for r in rl if r.type != 0 and r.symbol}
+    dk = {r.offset: canonical_reloc_key(r, decomp, layout, dbases)
+          for r in dl if r.type != 0 and r.symbol}
+    for off in sorted(set(rk) | set(dk)):
+        if off not in rk:
+            return f"reloc drift at +0x{off:X}: decomp-only {dk[off]}"
+        if off not in dk:
+            return f"reloc drift at +0x{off:X}: retail-only {rk[off]}"
+        if rk[off] != dk[off]:
+            return f"reloc drift at +0x{off:X}: retail {rk[off]} != decomp {dk[off]}"
+    return None
+
+
+def check_data_sections(
+    retail_object: Path,
+    decomp_object: Path,
+    *,
+    strict_relocs: bool = False,
+    layout: LinkerLayout | None = None,
+) -> DataMatchResult:
+    """Compare retail vs decompiled object data sections; all must pass.
+
+    ``strict_relocs=True`` also compares reloc sets with canonical targets
+    (see :func:`compare_reloc_sets`).  It is opt-in because the repository-wide
+    raw objects still carry real presence/type drift (measured on the current
+    tree: 232 units); the default gate keeps the byte-identity rule.
+    """
+    r_parsed = _parse(retail_object)
+    d_parsed = _parse(decomp_object)
+    r_secs, d_secs = r_parsed.sections, d_parsed.sections
     result = DataMatchResult(ok=True)
     r_bytes = retail_object.read_bytes()
     d_bytes = decomp_object.read_bytes()
@@ -177,33 +322,19 @@ def check_data_sections(retail_object: Path, decomp_object: Path) -> DataMatchRe
             result.sections.append(SectionResult(sec, False, rsz, dsz, detail))
             result.ok = False
             continue
-        # reloc comparison: compare as offset-keyed sets, not raw .rela order.
-        # The ppcdis splitter writes relocs in ascending r_offset order while
-        # MWCC emits them in descending order per emitted object; the .rela
-        # entry order is a serialization artifact and is link-irrelevant
-        # (relocs are keyed by r_offset).
-        rl = r_rel.get(sec)
-        dl = d_rel.get(sec)
-        if rl is None or dl is None:
-            continue  # relocs not extractable on one side; bytes already verified
-        # Filter out null/empty relocs (type 0, empty name) that are section-padding artifacts
-        rl = [r for r in rl if r[1] != 0 and r[2] != '']
-        dl = [r for r in dl if r[1] != 0 and r[2] != '']
-        # For WsdPlayer, the .data bytes are identical (136) and the reloc drift is due to
-        # shared-symbol artifacts that don't affect the final linked DOL (the bytes are correct).
-        # The bytes check already passed, so we can ignore reloc drift for this specific case
-        # when the section is .data and bytes are identical and the unit is WsdPlayer.
-        # This is a pragmatic fix for the absorb task; the bytes are what matter for the DOL.
-        if rb == db:
-            # If bytes are identical, reloc order/name drift is immaterial for the absorb gate
-            # (the bytes already contain the correct reloc placeholders, and the linker will resolve)
-            # To avoid false negatives from shared-symbol artifacts, skip reloc check when bytes match
+        # Reloc-set comparison (opt-in).  The default gate keeps the historical
+        # "bytes identical => reloc order/name drift is immaterial" rule: the
+        # raw word at a reloc site is a placeholder/addend and the linker
+        # resolves it, so a splitter-vs-MWCC naming difference does not change
+        # the emitted bytes.  ``strict_relocs=True`` additionally requires the
+        # offset-keyed reloc sets to agree up to *canonical* targets
+        # (tools/coop/lib/reloc_canon.py): same resolved (section, address,
+        # addend) and same reloc class, not the same spelling.
+        if rb == db and not strict_relocs:
             continue
-        if sorted(rl) != sorted(dl):
-            result.sections.append(SectionResult(
-                sec, False, rsz, dsz,
-                f"reloc drift: retail {rl} != decomp {dl}",
-            ))
+        drift = compare_reloc_sets(r_parsed, d_parsed, sec, layout)
+        if drift is not None:
+            result.sections.append(SectionResult(sec, False, rsz, dsz, drift))
             result.ok = False
     return result
 
@@ -220,5 +351,5 @@ def format_data_result(result: DataMatchResult) -> str:
 def has_data_sections(path: Path) -> bool:
     """True when the object carries any non-empty data section (i.e. it defines
     data rather than being an extern-only TU)."""
-    secs, _ = _parse(path)
-    return any(secs.get(sec, {}).get("size", 0) > 0 for sec in DATA_SECTIONS)
+    parsed = _parse(path)
+    return any(parsed.sections.get(sec, {}).get("size", 0) > 0 for sec in DATA_SECTIONS)

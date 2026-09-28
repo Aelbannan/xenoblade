@@ -3871,10 +3871,14 @@ void sinit_80221DDC() {
 // native jumptables (0xA4/0x20, same order), so these objects + the
 // compiler jts + MWCC's 8-align pad ARE the 0x1B8 section. Own-TU
 // member slots use their MWCC-mangled spellings (same definitions).
-// RTTI stand-in (spelling __RTTI__10IWorkEvent is MWCC 10322 poison under
-// -ipa file: the TU fully defines IWorkEvent; CMenuEnemyState recipe -
-// the gate only needs zero bytes here).
-extern const void* rtti_10IWorkEvent[];
+// The typeinfo object is declared inside a namespace: at global scope MWCC
+// 10322 ("illegal name overloading") rejects the __RTTI__* spelling under
+// -ipa file (the TU fully defines IWorkEvent). extern "C" names are not
+// mangled, so the table below still references __RTTI__10IWorkEvent exactly
+// (the same workaround as CView.cpp).
+namespace RTTIExterns {
+extern "C" const void* __RTTI__10IWorkEvent[];
+}
 extern "C" {
 extern void WorkEvent1__10IWorkEventFPvPCc();
 extern void OnFileEvent__21CModelDispMakeCrystalFP10CEventFile(int);
@@ -3934,7 +3938,7 @@ const void* lbl_eu_80535E70[50] = {
 // .data 0x10: RTTI descriptor + pad.
 __declspec(section ".data") __attribute__((used))
 void* lbl_eu_80535F38[4] = {
-    (void*)rtti_10IWorkEvent, 0, 0, 0
+    (void*)RTTIExterns::__RTTI__10IWorkEvent, 0, 0, 0
 };
 } // extern "C"
 // NOTE: no trailing pad needed - MWCC 8-aligns lbl_eu_80535E70, leaving a

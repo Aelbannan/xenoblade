@@ -375,15 +375,17 @@ extern "C" {
     extern void wkRenderAfter__11CWorkThreadFv();
     extern void wkStandbyLogin__5CProcFv();
     extern void wkStandbyExceptionRetry__11CWorkThreadFUl();
-    // NOTE: the base typeinfo objects (__RTTI__10IWorkEvent / __RTTI__11CWorkThread
-    // / __RTTI__5CProc) cannot be spelled here: declaring an __RTTI__* name in a TU
-    // with novtable-predeclared anonymous-namespace classes trips an MWCC -ipa file
-    // ICE ("illegal name overloading"). The hierarchy tables below reference legal
-    // stand-in spellings; the §17.6 UNIT_RULES retarget those nine slots to the
-    // retail typeinfo symbols.
-    extern u32 rtti_10IWorkEvent[];
-    extern u32 rtti_11CWorkThread[];
-    extern u32 rtti_5CProc[];
+    // NOTE: the base typeinfo objects are declared inside a namespace: at global
+    // scope MWCC 10322 ("illegal name overloading") rejects the __RTTI__* spelling
+    // in this TU (novtable-predeclared anonymous-namespace classes + -ipa file).
+    // extern "C" names are not mangled, so the hierarchy tables below still
+    // reference __RTTI__10IWorkEvent / __RTTI__11CWorkThread / __RTTI__5CProc
+    // exactly (the same workaround as CView.cpp).
+    namespace RTTIExterns {
+    extern "C" u32 __RTTI__10IWorkEvent[];
+    extern "C" u32 __RTTI__11CWorkThread[];
+    extern "C" u32 __RTTI__5CProc[];
+    }
     // Own members (defined in this TU; mangled spellings).
     extern void __dt__8CDesktopFv();
     extern void wkUpdate__8CDesktopFv();
@@ -443,8 +445,8 @@ extern "C" u32 lbl_eu_8056CA48[40] __attribute__((aligned(8))) = {
     (u32)&wkStandbyExceptionRetry__11CWorkThreadFUl
 };
 extern "C" u32 lbl_eu_8056CAE8[8] __attribute__((aligned(8))) = {
-    (u32)&rtti_10IWorkEvent, 0, (u32)&rtti_11CWorkThread, 0,
-    (u32)&rtti_5CProc, 0, 0, 0
+    (u32)&RTTIExterns::__RTTI__10IWorkEvent, 0, (u32)&RTTIExterns::__RTTI__11CWorkThread, 0,
+    (u32)&RTTIExterns::__RTTI__5CProc, 0, 0, 0
 };
 extern "C" u32 lbl_eu_8056CB08[40] __attribute__((aligned(8))) = {
     (u32)&lbl_eu_80663770, 0,
@@ -471,8 +473,8 @@ extern "C" u32 lbl_eu_8056CB08[40] __attribute__((aligned(8))) = {
     (u32)&wkStandbyExceptionRetry__11CWorkThreadFUl
 };
 extern "C" u32 lbl_eu_8056CBA8[8] __attribute__((aligned(8))) = {
-    (u32)&rtti_10IWorkEvent, 0, (u32)&rtti_11CWorkThread, 0,
-    (u32)&rtti_5CProc, 0, 0, 0
+    (u32)&RTTIExterns::__RTTI__10IWorkEvent, 0, (u32)&RTTIExterns::__RTTI__11CWorkThread, 0,
+    (u32)&RTTIExterns::__RTTI__5CProc, 0, 0, 0
 };
 extern "C" u32 lbl_eu_8056CBC8[40] __attribute__((aligned(8))) = {
     (u32)&lbl_eu_80663778, 0,
@@ -499,8 +501,8 @@ extern "C" u32 lbl_eu_8056CBC8[40] __attribute__((aligned(8))) = {
     (u32)&wkStandbyExceptionRetry__11CWorkThreadFUl
 };
 extern "C" u32 lbl_eu_8056CC68[8] __attribute__((aligned(8))) = {
-    (u32)&rtti_10IWorkEvent, 0, (u32)&rtti_11CWorkThread, 0,
-    (u32)&rtti_5CProc, 0, 0, 0
+    (u32)&RTTIExterns::__RTTI__10IWorkEvent, 0, (u32)&RTTIExterns::__RTTI__11CWorkThread, 0,
+    (u32)&RTTIExterns::__RTTI__5CProc, 0, 0, 0
 };
 
 // .sbss 0x806656B4..0x806656C0: the anonymous-namespace thread singletons.

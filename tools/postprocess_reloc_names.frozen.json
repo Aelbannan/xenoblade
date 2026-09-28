@@ -1,5 +1,5 @@
 {
- "baseline_count": 512,
+ "baseline_count": 429,
  "entries": {
   "AX.o": {
    "class": "rename",
@@ -11,8 +11,8 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "representation-only rename: TU-local/section-relative target; raw object records no resolution change (unit_rules_category_a.md)"
   },
   "AXCL.o": {
    "class": "rename",
@@ -24,8 +24,8 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "representation-only rename: TU-local/section-relative target; raw object records no resolution change (unit_rules_category_a.md)"
   },
   "AXFXChorusExp.o": {
    "class": "content",
@@ -90,7 +90,7 @@
    "reason": ""
   },
   "CAIAction.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "exact_renames": [
      [
@@ -128,11 +128,11 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "CActParamAnim.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "extern_data_sections": [
      ".data",
@@ -151,8 +151,8 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "CActParamAnimGame.o": {
    "class": "rename",
@@ -268,11 +268,11 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "representation-only rename: TU-local/section-relative target; raw object records no resolution change (unit_rules_category_a.md)"
   },
   "CActParamData.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "extern_data_sections": [
      ".data",
@@ -291,11 +291,11 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "CActorParam.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "drop_data_range": [
      [
@@ -334,8 +334,8 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "CArcItem.o": {
    "class": "layout",
@@ -356,7 +356,7 @@
    "reason": ""
   },
   "CArtsInfo.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "exact_renames": [
      [
@@ -509,11 +509,11 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "CArtsParam.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "exact_renames": [
      [
@@ -538,8 +538,8 @@
      ".bss"
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "CArtsSet.o": {
    "class": "rename",
@@ -551,11 +551,11 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "LOAD-BEARING rename kept: the renamed definition is the only provider of a name another link input references (source-side extern pending)"
   },
   "CAttrTransform.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "exact_renames": [
      [
@@ -590,11 +590,11 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "CBattleManager.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "add_symbols": [
      [
@@ -673,11 +673,11 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "CBattleState.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "exact_renames": [
      [
@@ -693,11 +693,11 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "CCamUtil.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "exact_renames": [
      [
@@ -740,11 +740,11 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "CChain.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "data_pool_patterns": [
      [
@@ -769,11 +769,11 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "CChainActorList.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "exact_renames": [
      [
@@ -800,11 +800,11 @@
      ".sbss"
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "CChainActorPc.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "extern_data_sections": [
      ".sdata2"
@@ -816,11 +816,11 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "CChainCombo.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "extern_data_sections": [
      ".sdata2"
@@ -832,11 +832,11 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "CChainEffect.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "exact_renames": [
      [
@@ -850,8 +850,8 @@
      ".sdata"
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "CChainTime.o": {
    "class": "rename",
@@ -863,11 +863,11 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "LOAD-BEARING rename kept: the renamed definition is the only provider of a name another link input references (source-side extern pending)"
   },
   "CChainTimer.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "exact_renames": [
      [
@@ -896,11 +896,11 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "CChildListNode.o": {
-   "class": "content",
+   "class": "rename",
    "fields": {
     "drop_text_symbols": [
      "__dt__15CDoubleListNodeFv"
@@ -928,8 +928,8 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "CCol3.o": {
    "class": "rename",
@@ -941,11 +941,11 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "representation-only: LOCAL section symbol ...bss.0 -> lbl_eu_80656C40; no link input defines/references that name; unit not linked from source; retired 2026-09-28"
   },
   "CCol4.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "exact_renames": [
      [
@@ -964,8 +964,8 @@
      ".bss"
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "CCol6Invite.o": {
    "class": "layout",
@@ -978,7 +978,7 @@
    "reason": ""
   },
   "CCol6System.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "exact_renames": [
      [
@@ -997,11 +997,11 @@
      ".sbss"
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "CCollepedia.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "exact_renames": [
      [
@@ -1026,11 +1026,11 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "CCur.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "extern_data_sections": [
      ".sdata2"
@@ -1042,11 +1042,11 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "CDesktop.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "retarget_relocs": [
      [
@@ -1122,11 +1122,11 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "CDevice.o": {
-   "class": "content",
+   "class": "rename",
    "fields": {
     "drop_data_tail": [
      [
@@ -1215,11 +1215,11 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "CDeviceClock.o": {
-   "class": "content",
+   "class": "rename",
    "fields": {
     "drop_data_tail": [
      [
@@ -1284,11 +1284,11 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "CDeviceFileCri.o": {
-   "class": "content",
+   "class": "rename",
    "fields": {
     "addend_patches": [
      [
@@ -1347,11 +1347,11 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "CDeviceFileJob.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "exact_renames": [
      [
@@ -1361,11 +1361,11 @@
     ],
     "repack_after_drop": 4
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "CDeviceFont.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "extern_data_sections": [
      ".sdata2"
@@ -1377,11 +1377,11 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "CDeviceFontLayer.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "extern_data_sections": [
      ".sdata2"
@@ -1407,11 +1407,11 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "CDeviceGX.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "drop_data_range": [
      [
@@ -1478,11 +1478,11 @@
     ],
     "trim_text_size": 2280
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "CDeviceVI.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "drop_data_tail": [
      [
@@ -1520,11 +1520,11 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "CDrawGX.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "extern_data_sections": [
      ".data",
@@ -1575,11 +1575,11 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "CERand.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "drop_data_tail": [
      [
@@ -1621,11 +1621,11 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "CETrail.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "extern_data_sections": [
      ".sdata2"
@@ -1643,11 +1643,11 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "CEquipChange.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "exact_renames": [
      [
@@ -1671,11 +1671,11 @@
      ".data"
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "CEquipItemBox.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "exact_renames": [
      [
@@ -1714,8 +1714,8 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "CErrorWii.o": {
    "class": "rename",
@@ -1739,11 +1739,11 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "representation-only rename: TU-local/section-relative target; raw object records no resolution change (unit_rules_category_a.md)"
   },
   "CExchangeWin.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "extern_data_sections": [
      ".sdata2"
@@ -1755,11 +1755,11 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "CFloorMap.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "data_pool_patterns": [
      [
@@ -1779,11 +1779,11 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "CGXCache.o": {
-   "class": "content",
+   "class": "rename",
    "fields": {
     "add_symbols": [
      [
@@ -7672,11 +7672,11 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "CGame.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "drop_text_symbols": [
      "FORCEACTIVECGame_cpp_wkStandbyLogin__Fv"
@@ -7730,14 +7730,14 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "CHelpManager.o": {
-   "class": "other",
+   "class": "rename",
    "fields": {},
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "representation-only rename: TU-local/section-relative target; raw object records no resolution change (unit_rules_category_a.md)"
   },
   "CHelp_Pg.o": {
    "class": "rename",
@@ -7749,11 +7749,11 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "representation-only rename: TU-local/section-relative target; raw object records no resolution change (unit_rules_category_a.md)"
   },
   "CItem.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "exact_renames": [
      [
@@ -7770,11 +7770,11 @@
      ".bss"
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "CItemBoxGrid.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "exact_renames": [
      [
@@ -8401,8 +8401,8 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "CItemBoxGridSubMenu.o": {
    "class": "rename",
@@ -8418,11 +8418,11 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "representation-only rename: TU-local/section-relative target; raw object records no resolution change (unit_rules_category_a.md)"
   },
   "CItemBoxInfo.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "drop_data_tail": [
      [
@@ -8453,11 +8453,11 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "CItemBoxLine.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "extern_data_sections": [
      ".data",
@@ -8517,17 +8517,17 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "CKizunaTalkList.o": {
-   "class": "other",
+   "class": "rename",
    "fields": {},
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "representation-only rename: TU-local/section-relative target; raw object records no resolution change (unit_rules_category_a.md)"
   },
   "CKizunagram.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "exact_renames": [
      [
@@ -8548,11 +8548,11 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "CLODCacheManagerS.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "extern_data_sections": [
      ".sdata2"
@@ -8568,11 +8568,11 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "CLib.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "drop_text_symbols": [
      "__ct__4CLibFPCcP11CWorkThread",
@@ -8588,29 +8588,13 @@
      ".rodata"
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "CLibCri.o": {
    "class": "rename",
    "fields": {
     "exact_renames": [
-     [
-      "thunk452_viBeginFrame",
-      "@452@viBeginFrame__7CLibCriFv"
-     ],
-     [
-      "thunk452_dt",
-      "@452@__dt__7CLibCriFv"
-     ],
-     [
-      "thunk456_errorWiiCB",
-      "@456@errorWiiCB__7CLibCriFv"
-     ],
-     [
-      "thunk456_dt",
-      "@456@__dt__7CLibCriFv"
-     ],
      [
       "rtti_10IWorkEvent",
       "__RTTI__10IWorkEvent"
@@ -8621,28 +8605,16 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "retired whole key: source now declares __RTTI__10IWorkEvent/__RTTI__11CWorkThread inside namespace RTTIExterns (CView.cpp pattern); object sections byte-identical, symbols == retail"
   },
   "CLibCriMoviePlay.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "exact_renames": [
      [
       "thunk_452_dt",
       "@452@__dt__16CLibCriMoviePlayFv"
-     ]
-    ],
-    "retarget_relocs": [
-     [
-      ".data",
-      200,
-      "__RTTI__10IWorkEvent"
-     ],
-     [
-      ".data",
-      208,
-      "__RTTI__11CWorkThread"
      ]
     ],
     "set_data_align": [
@@ -8660,11 +8632,11 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "retired 2 retarget_relocs elements: source now references __RTTI__* directly via namespace RTTIExterns; raw object sections byte-identical"
   },
   "CLibCriStreamingPlay.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "extern_data_sections": [
      ".sdata2"
@@ -8676,11 +8648,11 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "CLibHbm.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "extern_data_sections": [
      ".sdata2"
@@ -8738,8 +8710,8 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "CLibLayout.o": {
    "class": "rename",
@@ -8755,11 +8727,11 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "retired whole key: same namespace RTTIExterns fix; sections byte-identical, symbols == retail"
   },
   "CLibStaticData.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "data_pool_patterns": [
      [
@@ -8823,11 +8795,11 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "CLight.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "exact_renames": [
      [
@@ -8849,8 +8821,8 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "CMCCrystalBox.o": {
    "class": "rename",
@@ -8868,8 +8840,8 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "representation-only rename: TU-local/section-relative target; raw object records no resolution change (unit_rules_category_a.md)"
   },
   "CMCCrystalInfo.o": {
    "class": "rename",
@@ -8881,11 +8853,11 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "representation-only rename: TU-local/section-relative target; raw object records no resolution change (unit_rules_category_a.md)"
   },
   "CMCCrystalList.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "data_pool_patterns": [
      [
@@ -8909,11 +8881,11 @@
      ".sdata2"
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "CMCCrystalSupport.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "extern_data_sections": [
      ".sdata2"
@@ -8925,11 +8897,11 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "CMCCylinderGauge.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "exact_renames": [
      [
@@ -8968,11 +8940,11 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "CMCEffStart.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "drop_data_tail": [
      [
@@ -9072,10 +9044,6 @@
      [
       "__RTTI__11CMCEffStart",
       "lbl_eu_80662850"
-     ],
-     [
-      "rtti_10IWorkEvent",
-      "__RTTI__10IWorkEvent"
      ]
     ],
     "pool_patterns": [
@@ -9154,11 +9122,11 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "retired element: source declares __RTTI__10IWorkEvent in namespace RTTIExterns; sections byte-identical"
   },
   "CMCGetItemBox.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "extern_data_sections": [
      ".sdata2"
@@ -9174,11 +9142,11 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "CMainMenu.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "exact_renames": [
      [
@@ -9197,11 +9165,11 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "CMapSel.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "exact_renames": [
      [
@@ -9220,11 +9188,11 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "CMat34.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "exact_renames": [
      [
@@ -9291,11 +9259,11 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "CMat44.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "extern_data_sections": [
      ".sdata2"
@@ -9311,11 +9279,11 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "CMdlAnmUV.o": {
-   "class": "rename",
+   "class": "layout",
    "fields": {
     "set_data_align": [
      [
@@ -9324,11 +9292,11 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "section sh_addralign is load-bearing: the decomp alignment does not divide the retail section start, so removing it would move the section"
   },
   "CMdlDynamics.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "extern_data_sections": [
      ".sdata2"
@@ -9350,11 +9318,11 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "CMdlMouth.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "drop_data_range": [
      [
@@ -9379,11 +9347,11 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "CMenuArtsSelect.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "exact_renames": [
      [
@@ -9444,11 +9412,11 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "CMenuArtsSet.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "exact_renames": [
      [
@@ -9479,11 +9447,11 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "CMenuBattleChain.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "exact_renames": [
      [
@@ -9500,11 +9468,11 @@
      ".sbss"
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "CMenuBattleDamage.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "exact_renames": [
      [
@@ -9525,8 +9493,8 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "CMenuBattleMode.o": {
    "class": "layout",
@@ -9542,7 +9510,7 @@
    "reason": ""
   },
   "CMenuBattlePlayerState.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "extern_data_sections": [
      ".data",
@@ -9550,10 +9518,6 @@
      ".sdata",
      ".sdata2",
      ".bss"
-    ],
-    "globalize_symbols": [
-     "lbl_eu_80666FB8",
-     "lbl_eu_80666FA8"
     ],
     "pool_patterns": [
      [
@@ -9570,11 +9534,11 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "globalize_symbols elements retired: neither name exists in the object (no-op); remaining fields stay with the strip entry (category D)"
   },
   "CMenuBattlePlayerState_ct.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "exact_renames": [
      [
@@ -9589,11 +9553,11 @@
      ".sdata2"
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "CMenuCollepedia.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "exact_renames": [
      [
@@ -9607,11 +9571,11 @@
      ".sdata"
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "CMenuFade.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "exact_renames": [
      [
@@ -9644,11 +9608,11 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "CMenuGetItemMulti.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "extern_data_sections": [
      ".data",
@@ -9727,8 +9691,8 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "CMenuItemExchange.o": {
    "class": "layout",
@@ -9763,7 +9727,7 @@
    "reason": ""
   },
   "CMenuKizunaTalkList.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "exact_renames": [
      [
@@ -9777,11 +9741,11 @@
      ".sdata"
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "CMenuKizunagram.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "data_pool_patterns": [
      [
@@ -9794,11 +9758,11 @@
      ".data"
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "CMenuLandTelop.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "exact_renames": [
      [
@@ -9810,17 +9774,17 @@
      ".sdata2"
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "CMenuMakeCrystal.o": {
-   "class": "other",
+   "class": "rename",
    "fields": {},
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "representation-only rename: TU-local/section-relative target; raw object records no resolution change (unit_rules_category_a.md)"
   },
   "CMenuMapSelectSC.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "exact_renames": [
      [
@@ -9833,11 +9797,11 @@
      ".sbss"
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "CMenuPTChangeNotice.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "extern_data_sections": [
      ".sdata2"
@@ -9849,11 +9813,11 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "CMenuPTGauge.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "exact_renames": [
      [
@@ -9873,11 +9837,11 @@
      ".sdata2"
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "CMenuPTState.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "extern_data_sections": [
      ".sdata2"
@@ -9910,8 +9874,8 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "CMenuPassiveSkill.o": {
    "class": "layout",
@@ -9926,13 +9890,13 @@
    "reason": ""
   },
   "CMenuPause.o": {
-   "class": "other",
+   "class": "rename",
    "fields": {},
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "representation-only rename: TU-local/section-relative target; raw object records no resolution change (unit_rules_category_a.md)"
   },
   "CMenuPlayAward.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "extern_data_sections": [
      ".sdata2"
@@ -9944,11 +9908,11 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "CMenuQstCnt.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "extern_data_sections": [
      ".sdata2",
@@ -9965,11 +9929,11 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "CMenuQuestLog.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "exact_renames": [
      [
@@ -9983,8 +9947,8 @@
      ".sdata"
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "CMenuSkipTimer.o": {
    "class": "layout",
@@ -10007,7 +9971,7 @@
    "reason": ""
   },
   "CMenuTutorial.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "exact_renames": [
      [
@@ -10022,11 +9986,11 @@
      ".sdata2"
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "CMenuUpdate.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "exact_renames": [
      [
@@ -10038,8 +10002,8 @@
      ".sdata2"
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "CMenuVision.o": {
    "class": "layout",
@@ -10084,7 +10048,7 @@
    "reason": ""
   },
   "CMiniMap.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "extern_data_sections": [
      ".data",
@@ -10107,11 +10071,11 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "CModelDisp.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "extern_data_sections": [
      ".sdata2"
@@ -10123,11 +10087,11 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "CModelDispMakeCrystal.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "data_pool_patterns": [
      [
@@ -10154,11 +10118,11 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "CNBanner.o": {
-   "class": "content",
+   "class": "rename",
    "fields": {
     "add_symbols": [
      [
@@ -10389,11 +10353,11 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "CNReqtaskSave.o": {
-   "class": "rename",
+   "class": "layout",
    "fields": {
     "set_data_align": [
      [
@@ -10402,11 +10366,11 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "section sh_addralign is load-bearing: the decomp alignment does not divide the retail section start, so removing it would move the section"
   },
   "CNReqtaskSaveBanner.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "drop_data_tail": [
      [
@@ -10421,11 +10385,11 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "CNandData.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "exact_renames": [
      [
@@ -10441,11 +10405,11 @@
      ".bss"
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "CNumSelect.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "extern_data_sections": [
      ".sdata2"
@@ -10457,11 +10421,11 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "COccCulling.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "exact_renames": [
      [
@@ -10489,8 +10453,8 @@
      ".bss"
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "COption.o": {
    "class": "rename",
@@ -10518,11 +10482,11 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "representation-only rename: TU-local/section-relative target; raw object records no resolution change (unit_rules_category_a.md)"
   },
   "CPackItem.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "drop_data_tail": [
      [
@@ -10540,11 +10504,11 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "CPartsChange.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "extern_data_sections": [
      ".data",
@@ -10575,11 +10539,11 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "CPartyState.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "extern_data_sections": [
      ".sdata2"
@@ -10599,11 +10563,11 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "CPartyStateWin.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "data_pool_patterns": [
      [
@@ -10616,11 +10580,11 @@
      ".data"
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "CPassiveSkill.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "exact_renames": [
      [
@@ -10638,11 +10602,11 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "CPcEffect07.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "extern_data_sections": [
      ".sdata2"
@@ -10654,11 +10618,11 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "CPcKizunagram.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "extern_data_sections": [
      ".sdata2"
@@ -10670,11 +10634,11 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "CPlane.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "extern_data_sections": [
      ".sdata2"
@@ -10686,11 +10650,11 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "CProc.o": {
-   "class": "content",
+   "class": "rename",
    "fields": {
     "exact_renames": [
      [
@@ -10747,11 +10711,11 @@
     ],
     "trim_text_size": 2844
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "CProcRoot.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "exact_renames": [
      [
@@ -10769,11 +10733,11 @@
     ],
     "trim_text_size": 456
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "CProcess.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "drop_data_range": [
      [
@@ -10812,11 +10776,11 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "CQstLogInfo.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "exact_renames": [
      [
@@ -10832,8 +10796,8 @@
      ".data"
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "CQstLogList.o": {
    "class": "rename",
@@ -10845,11 +10809,11 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "representation-only rename: TU-local/section-relative target; raw object records no resolution change (unit_rules_category_a.md)"
   },
   "CQuat.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "extern_data_sections": [
      ".sdata2"
@@ -10869,11 +10833,11 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "CQuestWindow.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "data_pool_patterns": [
      [
@@ -10898,11 +10862,11 @@
      ".sbss"
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "CREvtEffect.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "exact_renames": [
      [
@@ -10914,8 +10878,8 @@
      ".sdata2"
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "CREvtModelMap.o": {
    "class": "rename",
@@ -10927,11 +10891,11 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "representation-only rename: TU-local/section-relative target; raw object records no resolution change (unit_rules_category_a.md)"
   },
   "CREvtModelObj.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "exact_renames": [
      [
@@ -10943,11 +10907,11 @@
      ".sdata2"
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "CREvtModelPc.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "exact_renames": [
      [
@@ -10959,11 +10923,11 @@
      ".sdata2"
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "CRsrcData.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "exact_renames": [
      [
@@ -10985,8 +10949,8 @@
     ],
     "trim_text_size": 1068
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "CSaveLoad.o": {
    "class": "rename",
@@ -10998,17 +10962,17 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "representation-only rename: TU-local/section-relative target; raw object records no resolution change (unit_rules_category_a.md)"
   },
   "CScn.o": {
-   "class": "other",
+   "class": "rename",
    "fields": {},
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "representation-only rename: TU-local/section-relative target; raw object records no resolution change (unit_rules_category_a.md)"
   },
   "CScnBloom.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "extern_data_sections": [
      ".sdata2"
@@ -11020,11 +10984,11 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "CScnCameraMan.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "extern_data_sections": [
      ".sdata2"
@@ -11036,11 +11000,11 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "CScnEnvLgtCtrl.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "extern_data_sections": [
      ".sdata2"
@@ -11052,11 +11016,11 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "CScnFilter.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "exact_renames": [
      [
@@ -11080,11 +11044,11 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "CScnFogMan.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "extern_data_sections": [
      ".sdata2"
@@ -11096,11 +11060,11 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "CScnFrame.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "extern_data_sections": [
      ".sdata2"
@@ -11112,11 +11076,11 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "CScnItemCamera.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "extern_data_sections": [
      ".sdata2"
@@ -11132,8 +11096,8 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "CScnItemCameraNw4r.o": {
    "class": "layout",
@@ -11156,7 +11120,7 @@
    "reason": ""
   },
   "CScnItemPool.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "add_symbols": [
      [
@@ -11223,11 +11187,11 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "CScnMaruShadowNw4r.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "extern_data_sections": [
      ".sdata2"
@@ -11251,11 +11215,11 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "CScnRootNw4r.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "drop_data_tail": [
      [
@@ -11270,8 +11234,8 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "CScnTexWorkMan.o": {
    "class": "rename",
@@ -11295,11 +11259,11 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "representation-only rename: TU-local/section-relative target; raw object records no resolution change (unit_rules_category_a.md)"
   },
   "CScn_80496B0C.o": {
-   "class": "content",
+   "class": "rename",
    "fields": {
     "drop_text_symbols_as_undef": [
      "__ct_CTask_CScn_name_carrier_1",
@@ -11377,8 +11341,8 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "CScriptCode.o": {
    "class": "rename",
@@ -11398,8 +11362,8 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "representation-only rename: TU-local/section-relative target; raw object records no resolution change (unit_rules_category_a.md)"
   },
   "CScrollBar.o": {
    "class": "layout",
@@ -11429,7 +11393,7 @@
    "reason": ""
   },
   "CSelShopWin.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "extern_data_sections": [
      ".sdata2"
@@ -11441,14 +11405,14 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "CSimpleEveTalkWin.o": {
-   "class": "other",
+   "class": "rename",
    "fields": {},
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "representation-only rename: TU-local/section-relative target; raw object records no resolution change (unit_rules_category_a.md)"
   },
   "CSkipTimer.o": {
    "class": "rename",
@@ -11464,11 +11428,11 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "representation-only rename: TU-local/section-relative target; raw object records no resolution change (unit_rules_category_a.md)"
   },
   "CSortMenu.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "extern_data_sections": [
      ".sdata2"
@@ -11487,8 +11451,8 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "CStopwatchUtil.o": {
    "class": "layout",
@@ -11521,7 +11485,7 @@
    "reason": ""
   },
   "CSuddenCommu.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "extern_data_sections": [
      ".data",
@@ -11536,11 +11500,11 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "CSysWin.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "extern_data_sections": [
      ".sdata2"
@@ -11552,8 +11516,8 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "CSysWinSave.o": {
    "class": "layout",
@@ -11570,7 +11534,7 @@
    "reason": ""
   },
   "CSysWinScenarioLog.o": {
-   "class": "rename",
+   "class": "layout",
    "fields": {
     "add_symbols": [
      [
@@ -11623,11 +11587,11 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "section sh_addralign is load-bearing: the decomp alignment does not divide the retail section start, so removing it would move the section"
   },
   "CSysWinSelect.o": {
-   "class": "rename",
+   "class": "layout",
    "fields": {
     "set_data_align": [
      [
@@ -11636,8 +11600,8 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "section sh_addralign is load-bearing: the decomp alignment does not divide the retail section start, so removing it would move the section"
   },
   "CTagProcessor.o": {
    "class": "rename",
@@ -11649,11 +11613,11 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "representation-only rename: TU-local/section-relative target; raw object records no resolution change (unit_rules_category_a.md)"
   },
   "CTalkWindow.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "exact_renames": [
      [
@@ -11670,11 +11634,11 @@
      ".sdata2"
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "CTaskCulling.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "drop_text_symbols": [
      "__dt__10IWorkEventFv",
@@ -11760,11 +11724,11 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "CTaskEnvironment.o": {
-   "class": "content",
+   "class": "rename",
    "fields": {
     "drop_data_tail": [
      [
@@ -11822,11 +11786,11 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "CTaskGame.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "exact_renames": [
      [
@@ -11872,11 +11836,11 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "CTaskGameCf.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "exact_renames": [
      [
@@ -11950,8 +11914,8 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "CTaskGameEff.o": {
    "class": "layout",
@@ -12003,7 +11967,7 @@
    "reason": ""
   },
   "CTaskLOD.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "extern_data_sections": [
      ".sdata2"
@@ -12045,8 +12009,8 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "CTaskManager.o": {
    "class": "content",
@@ -12080,7 +12044,7 @@
    "reason": ""
   },
   "CTaskREvent.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "extern_data_sections": [
      ".sdata2",
@@ -12093,11 +12057,11 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "CTaskREvtSequence.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "exact_renames": [
      [
@@ -12109,8 +12073,8 @@
      ".sdata2"
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "CTitle.o": {
    "class": "rename",
@@ -12126,11 +12090,11 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "representation-only rename: TU-local/section-relative target; raw object records no resolution change (unit_rules_category_a.md)"
   },
   "CTitleAHelp.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "exact_renames": [
      [
@@ -12163,8 +12127,8 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "CTutorial.o": {
    "class": "layout",
@@ -12179,7 +12143,7 @@
    "reason": ""
   },
   "CUIBattleManager.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "exact_renames": [
      [
@@ -12195,11 +12159,11 @@
      ".sbss"
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "CUICfManager.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "exact_renames": [
      [
@@ -12231,11 +12195,11 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "CUIWindowManager.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "exact_renames": [
      [
@@ -12262,11 +12226,11 @@
      ".sbss"
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "CVS_THREAD.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "exact_renames": [
      [
@@ -12280,8 +12244,8 @@
      ".sdata"
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "CVS_THREAD_BATTLE_BEGIN.o": {
    "class": "layout",
@@ -12308,7 +12272,7 @@
    "reason": ""
   },
   "CVS_THREAD_BATTLE_MAIN.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "exact_renames": [
      [
@@ -12320,8 +12284,8 @@
      ".sdata2"
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "CVS_THREAD_BUF.o": {
    "class": "layout",
@@ -12360,7 +12324,7 @@
    "reason": ""
   },
   "CVS_THREAD_HP.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "exact_renames": [
      [
@@ -12375,8 +12339,8 @@
      ".sdata2"
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "CVS_THREAD_REVIVE.o": {
    "class": "layout",
@@ -12436,11 +12400,11 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "representation-only: LOCAL section symbol ...bss.0 renamed to an existing same-object GLOBAL definition (duplicate name, no address change); unit not linked from source; retired 2026-09-28"
   },
   "CView.o": {
-   "class": "content",
+   "class": "rename",
    "fields": {
     "drop_data_range": [
      [
@@ -12606,14 +12570,14 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "CViewFrame.o": {
-   "class": "other",
+   "class": "rename",
    "fields": {},
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "representation-only rename: TU-local/section-relative target; raw object records no resolution change (unit_rules_category_a.md)"
   },
   "CViewRoot.o": {
    "class": "layout",
@@ -12641,7 +12605,7 @@
    "reason": ""
   },
   "CVirtualLightObj.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "extern_data_sections": [
      ".sdata2"
@@ -12653,11 +12617,11 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "CVision.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "extern_data_sections": [
      ".data",
@@ -12676,11 +12640,11 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "CWorkRoot.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "drop_data_range": [
      [
@@ -12716,8 +12680,8 @@
     ],
     "repack_after_drop": 16
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "CWorkSystemCache.o": {
    "class": "layout",
@@ -12730,7 +12694,7 @@
    "reason": ""
   },
   "CWorkSystemMem.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "exact_renames": [
      [
@@ -12740,11 +12704,11 @@
     ],
     "trim_text_size": 352
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "CWorkThread.o": {
-   "class": "content",
+   "class": "rename",
    "fields": {
     "addend_sets": [
      [
@@ -12871,8 +12835,8 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "CWorkThreadSystem.o": {
    "class": "rename",
@@ -12900,11 +12864,11 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "representation-only rename: TU-local/section-relative target; raw object records no resolution change (unit_rules_category_a.md)"
   },
   "CfCam.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "add_symbols": [
      [
@@ -13375,8 +13339,8 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "CfCamEvent.o": {
    "class": "layout",
@@ -13389,7 +13353,7 @@
    "reason": ""
   },
   "CfCamEvent_1.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "drop_data_tail": [
      [
@@ -13408,8 +13372,8 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "CfCollCircleImpl.o": {
    "class": "rename",
@@ -13421,8 +13385,8 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "representation-only rename: TU-local/section-relative target; raw object records no resolution change (unit_rules_category_a.md)"
   },
   "CfCollSphereImpl.o": {
    "class": "rename",
@@ -13434,8 +13398,8 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "representation-only rename: TU-local/section-relative target; raw object records no resolution change (unit_rules_category_a.md)"
   },
   "CfGameManager.o": {
    "class": "rename",
@@ -13447,8 +13411,8 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "representation-only rename: TU-local/section-relative target; raw object records no resolution change (unit_rules_category_a.md)"
   },
   "CfGimmick.o": {
    "class": "layout",
@@ -13464,7 +13428,7 @@
    "reason": ""
   },
   "CfGimmickElv.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "drop_data_tail": [
      [
@@ -13479,14 +13443,14 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "CfGimmickItem.o": {
-   "class": "other",
+   "class": "rename",
    "fields": {},
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "representation-only rename: TU-local/section-relative target; raw object records no resolution change (unit_rules_category_a.md)"
   },
   "CfGimmickJump.o": {
    "class": "layout",
@@ -13502,10 +13466,10 @@
    "reason": ""
   },
   "CfGimmickLock.o": {
-   "class": "other",
+   "class": "rename",
    "fields": {},
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "representation-only rename: TU-local/section-relative target; raw object records no resolution change (unit_rules_category_a.md)"
   },
   "CfGimmickObject.o": {
    "class": "layout",
@@ -13530,8 +13494,8 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "representation-only rename: TU-local/section-relative target; raw object records no resolution change (unit_rules_category_a.md)"
   },
   "CfHikariItemManager.o": {
    "class": "rename",
@@ -13543,8 +13507,8 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "representation-only rename: TU-local/section-relative target; raw object records no resolution change (unit_rules_category_a.md)"
   },
   "CfMapItemManager.o": {
    "class": "layout",
@@ -13577,8 +13541,8 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "representation-only rename: TU-local/section-relative target; raw object records no resolution change (unit_rules_category_a.md)"
   },
   "CfObjectActor.o": {
    "class": "layout",
@@ -13604,11 +13568,11 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "representation-only rename: TU-local/section-relative target; raw object records no resolution change (unit_rules_category_a.md)"
   },
   "CfObjectEff.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "drop_data_range": [
      [
@@ -13629,8 +13593,8 @@
      ".sdata"
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "CfObjectEne.o": {
    "class": "layout",
@@ -13655,8 +13619,8 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "representation-only rename: TU-local/section-relative target; raw object records no resolution change (unit_rules_category_a.md)"
   },
   "CfObjectImplEne.o": {
    "class": "layout",
@@ -13671,7 +13635,7 @@
    "reason": ""
   },
   "CfObjectImplMove.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "exact_renames": [
      [
@@ -13694,11 +13658,11 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "CfObjectImplPc.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "drop_data_tail": [
      [
@@ -13717,11 +13681,11 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "CfObjectImplWalker.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "extern_data_sections": [
      ".sdata2"
@@ -13737,8 +13701,8 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "CfObjectModel.o": {
    "class": "rename",
@@ -13754,8 +13718,8 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "representation-only rename: TU-local/section-relative target; raw object records no resolution change (unit_rules_category_a.md)"
   },
   "CfObjectNpc.o": {
    "class": "layout",
@@ -13788,7 +13752,7 @@
    "reason": ""
   },
   "CfObjectTbox.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "exact_renames": [
      [
@@ -13810,8 +13774,8 @@
      ".sdata"
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "CfPadTask.o": {
    "class": "rename",
@@ -13833,11 +13797,11 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "representation-only rename: TU-local/section-relative target; raw object records no resolution change (unit_rules_category_a.md)"
   },
   "CfRes.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "exact_renames": [
      [
@@ -13859,8 +13823,8 @@
      ".bss"
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "CfResPcImpl.o": {
    "class": "layout",
@@ -13889,7 +13853,7 @@
    "reason": ""
   },
   "CfSoundMan.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "extern_data_sections": [
      ".sdata2"
@@ -13901,11 +13865,11 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "CfTFile.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "extern_data_sections": [
      ".sdata2"
@@ -13917,8 +13881,8 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "CfTaskMain.o": {
    "class": "layout",
@@ -13933,7 +13897,7 @@
    "reason": ""
   },
   "CtrlAct.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "exact_renames": [
      [
@@ -13962,11 +13926,11 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "CtrlEnemy.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "extern_data_sections": [
      ".data",
@@ -13981,11 +13945,11 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "CtrlMoveBase.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "extern_data_sections": [
      ".sdata2"
@@ -13997,11 +13961,11 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "CtrlMoveEne.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "extern_data_sections": [
      ".sdata2"
@@ -14021,8 +13985,8 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "CtrlMoveNpc.o": {
    "class": "rename",
@@ -14034,11 +13998,11 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "LOAD-BEARING rename kept: the renamed definition is the only provider of a name another link input references (source-side extern pending)"
   },
   "CtrlMovePC.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "extern_data_sections": [
      ".sdata2"
@@ -14054,8 +14018,8 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "CtrlNpc.o": {
    "class": "layout",
@@ -14091,7 +14055,7 @@
    "reason": ""
   },
   "CtrlRemote.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "extern_data_sections": [
      ".sdata2"
@@ -14103,8 +14067,8 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "DSPCode.o": {
    "class": "rename",
@@ -14116,8 +14080,8 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "representation-only rename: TU-local/section-relative target; raw object records no resolution change (unit_rules_category_a.md)"
   },
   "EXIBios.o": {
    "class": "rename",
@@ -14129,8 +14093,8 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "representation-only rename: TU-local/section-relative target; raw object records no resolution change (unit_rules_category_a.md)"
   },
   "FloatUtils.o": {
    "class": "rename",
@@ -14146,8 +14110,8 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "representation-only rename: TU-local/section-relative target; raw object records no resolution change (unit_rules_category_a.md)"
   },
   "GXInit.o": {
    "class": "rename",
@@ -14159,11 +14123,11 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "representation-only rename: TU-local/section-relative target; raw object records no resolution change (unit_rules_category_a.md)"
   },
   "HBMAnmController.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "drop_data_tail": [
      [
@@ -14192,11 +14156,11 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "HBMAxSound.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "data_pool_patterns": [
      [
@@ -14354,8 +14318,8 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "HBMBase.o": {
    "class": "rename",
@@ -14951,8 +14915,8 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "representation-only rename: TU-local/section-relative target; raw object records no resolution change (unit_rules_category_a.md)"
   },
   "HBMCommon.o": {
    "class": "rename",
@@ -14965,8 +14929,8 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "representation-only rename: TU-local/section-relative target; raw object records no resolution change (unit_rules_category_a.md)"
   },
   "HBMFrameController.o": {
    "class": "rename",
@@ -14978,8 +14942,8 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "representation-only rename: TU-local/section-relative target; raw object records no resolution change (unit_rules_category_a.md)"
   },
   "HBMGUIManager.o": {
    "class": "rename",
@@ -15050,8 +15014,8 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "representation-only rename: TU-local/section-relative target; raw object records no resolution change (unit_rules_category_a.md)"
   },
   "HBMRemoteSpk.o": {
    "class": "rename",
@@ -15070,8 +15034,8 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "representation-only rename: TU-local/section-relative target; raw object records no resolution change (unit_rules_category_a.md)"
   },
   "IResInfo.o": {
    "class": "rename",
@@ -15083,11 +15047,11 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "representation-only rename: TU-local/section-relative target; raw object records no resolution change (unit_rules_category_a.md)"
   },
   "KPAD.o": {
-   "class": "content",
+   "class": "rename",
    "fields": {
     "drop_data_range": [
      [
@@ -15133,11 +15097,11 @@
      27
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "LODMemMan.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "extern_data_sections": [
      ".sdata2"
@@ -15171,11 +15135,11 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "MPFDrawDisplayList.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "extern_data_sections": [
      ".sdata2"
@@ -15187,8 +15151,8 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "MPFDrawMdlColor.o": {
    "class": "rename",
@@ -15212,11 +15176,11 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "representation-only rename: TU-local/section-relative target; raw object records no resolution change (unit_rules_category_a.md)"
   },
   "MTRand.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "extern_data_sections": [
      ".sdata2"
@@ -15228,11 +15192,11 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "MemManager.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "drop_text_symbols": [
      "getRegion__Q23mtl10MemManagerFUl",
@@ -15264,8 +15228,8 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "NANDCheck.o": {
    "class": "rename",
@@ -15346,8 +15310,8 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "representation-only rename: TU-local/section-relative target; raw object records no resolution change (unit_rules_category_a.md)"
   },
   "New.o": {
    "class": "rename",
@@ -15359,8 +15323,8 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "representation-only rename: TU-local/section-relative target; raw object records no resolution change (unit_rules_category_a.md)"
   },
   "OS.o": {
    "class": "content",
@@ -15407,8 +15371,8 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "linker absolute resolved by tools/coop/lib/reloc_canon.py; the honest link installs the same immediate (evidence: unit_rules_category_a.md)"
   },
   "OSContext.o": {
    "class": "layout",
@@ -15438,10 +15402,10 @@
    "reason": ""
   },
   "OSFont.o": {
-   "class": "other",
+   "class": "rename",
    "fields": {},
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "representation-only rename: TU-local/section-relative target; raw object records no resolution change (unit_rules_category_a.md)"
   },
   "OSNandbootInfo.o": {
    "class": "layout",
@@ -15545,8 +15509,8 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "linker absolute resolved by tools/coop/lib/reloc_canon.py; the honest link installs the same immediate (evidence: unit_rules_category_a.md)"
   },
   "SIBios.o": {
    "class": "rename",
@@ -15558,11 +15522,11 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "representation-only rename: TU-local/section-relative target; raw object records no resolution change (unit_rules_category_a.md)"
   },
   "UnkClass_80460C34.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "exact_renames": [
      [
@@ -15577,11 +15541,11 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "UnkClass_8046368C.o": {
-   "class": "rename",
+   "class": "layout",
    "fields": {
     "set_data_align": [
      [
@@ -15590,11 +15554,11 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "section sh_addralign is load-bearing: the decomp alignment does not divide the retail section start, so removing it would move the section"
   },
   "UnkClass_80466348.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "extern_data_sections": [
      ".sdata2"
@@ -15610,11 +15574,11 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "UnkClass_80471EC8.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "extern_data_sections": [
      ".sdata2"
@@ -15642,11 +15606,11 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "UnkClass_8047E110.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "extern_data_sections": [
      ".sdata2"
@@ -15662,8 +15626,8 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "WPADEncrypt.o": {
    "class": "layout",
@@ -15679,7 +15643,7 @@
    "reason": ""
   },
   "WUD.o": {
-   "class": "content",
+   "class": "rename",
    "fields": {
     "drop_data_tail": [
      [
@@ -15765,14 +15729,14 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "WUDHidHost.o": {
-   "class": "other",
+   "class": "rename",
    "fields": {},
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "representation-only rename: TU-local/section-relative target; raw object records no resolution change (unit_rules_category_a.md)"
   },
   "__start.o": {
    "class": "content",
@@ -15784,11 +15748,11 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "linker absolute resolved by tools/coop/lib/reloc_canon.py; the honest link installs the same immediate (evidence: unit_rules_category_a.md)"
   },
   "adx_dcd.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "exact_renames": [
      [
@@ -15803,11 +15767,11 @@
      "lbl_eu_80517468"
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "adx_suwii.o": {
-   "class": "rename",
+   "class": "layout",
    "fields": {
     "set_data_align": [
      [
@@ -15816,11 +15780,11 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "section sh_addralign is load-bearing: the decomp alignment does not divide the retail section start, so removing it would move the section"
   },
   "adx_tlk.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "add_symbols": [
      [
@@ -15887,8 +15851,8 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "ahx_sbf.o": {
    "class": "layout",
@@ -15910,11 +15874,11 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "representation-only rename: TU-local/section-relative target; raw object records no resolution change (unit_rules_category_a.md)"
   },
   "ax_rna.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "drop_data_range": [
      [
@@ -15940,8 +15904,8 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "bta_dm_act.o": {
    "class": "layout",
@@ -16016,8 +15980,8 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "representation-only rename: TU-local/section-relative target; raw object records no resolution change (unit_rules_category_a.md)"
   },
   "btm_acl.o": {
    "class": "layout",
@@ -16067,7 +16031,7 @@
    "reason": ""
   },
   "btu_hcif.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "exact_renames": [
      [
@@ -16097,8 +16061,8 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "btu_init.o": {
    "class": "layout",
@@ -16109,7 +16073,7 @@
    "reason": ""
   },
   "code_800A3B24.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "extern_data_sections": [
      ".sdata2"
@@ -16125,8 +16089,8 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "code_800A75FC.o": {
    "class": "layout",
@@ -16139,7 +16103,7 @@
    "reason": ""
   },
   "code_800AA008.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "exact_renames": [
      [
@@ -16155,11 +16119,11 @@
      ".data"
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "code_800B06A4.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "exact_renames": [
      [
@@ -16178,11 +16142,11 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "code_800F42AC.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "extern_data_sections": [
      ".sdata2"
@@ -16194,8 +16158,8 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "code_80135FDC.o": {
    "class": "layout",
@@ -16215,7 +16179,7 @@
    "reason": ""
   },
   "code_801862C0.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "exact_renames": [
      [
@@ -16232,11 +16196,11 @@
      ".bss"
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "code_80187F14.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "extern_data_sections": [
      ".sdata2"
@@ -16248,11 +16212,11 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "code_8018F8D8.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "extern_data_sections": [
      ".data",
@@ -16267,11 +16231,11 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "code_801C2C14.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "exact_renames": [
      [
@@ -16293,8 +16257,8 @@
      ".sdata"
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "code_80213488.o": {
    "class": "rename",
@@ -16310,11 +16274,11 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "representation-only rename: TU-local/section-relative target; raw object records no resolution change (unit_rules_category_a.md)"
   },
   "code_802405F4.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "data_pool_patterns": [
      [
@@ -16327,11 +16291,11 @@
      ".data"
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "code_8025FB10.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "extern_data_sections": [
      ".sdata2",
@@ -16348,8 +16312,8 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "code_8027513C.o": {
    "class": "layout",
@@ -16381,7 +16345,7 @@
    "reason": ""
   },
   "code_802B9064.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "extern_data_sections": [
      ".sdata2"
@@ -16397,11 +16361,11 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "code_804645CC.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "extern_data_sections": [
      ".sdata2"
@@ -16413,11 +16377,11 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "code_80468434.o": {
-   "class": "rename",
+   "class": "layout",
    "fields": {
     "set_data_align": [
      [
@@ -16426,11 +16390,11 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "section sh_addralign is load-bearing: the decomp alignment does not divide the retail section start, so removing it would move the section"
   },
   "code_8046A530.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "extern_data_sections": [
      ".sdata2"
@@ -16442,11 +16406,11 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "code_8047D2AC.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "extern_data_sections": [
      ".sdata2"
@@ -16458,11 +16422,11 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "code_804B2FF0.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "exact_renames": [
      [
@@ -16502,11 +16466,11 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "code_804B59C8.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "extern_data_sections": [
      ".sdata2"
@@ -16518,11 +16482,11 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "code_804BC9EC.o": {
-   "class": "content",
+   "class": "rename",
    "fields": {
     "addend_sets": [
      [
@@ -16634,11 +16598,11 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "code_804BD8E8.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "exact_renames": [
      [
@@ -16674,11 +16638,11 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "code_804C8718.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "extern_data_sections": [
      ".sdata2"
@@ -16690,11 +16654,11 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "code_804CC2B8.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "extern_data_sections": [
      ".sdata2"
@@ -16710,11 +16674,11 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "code_804D854C.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "extern_data_sections": [
      ".sdata2"
@@ -16726,11 +16690,11 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "code_804D9274.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "extern_data_sections": [
      ".sdata2"
@@ -16758,11 +16722,11 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "code_804DB938.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "extern_data_sections": [
      ".sdata2"
@@ -16774,11 +16738,11 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "code_804DEDA8.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "extern_data_sections": [
      ".sdata2"
@@ -16794,11 +16758,11 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "code_804E36DC.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "extern_data_sections": [
      ".sdata2"
@@ -16822,11 +16786,11 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "code_804F0258.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "exact_renames": [
      [
@@ -16868,8 +16832,8 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "db_DbgPrintBase.o": {
    "class": "layout",
@@ -16883,7 +16847,7 @@
    "reason": ""
   },
   "db_assert.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "drop_data_range": [
      [
@@ -16954,8 +16918,8 @@
     ],
     "repack_after_drop": 4
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "dct_isr.o": {
    "class": "content",
@@ -17015,7 +16979,7 @@
    "reason": ""
   },
   "dsp.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "drop_data_tail": [
      [
@@ -17030,8 +16994,8 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "dvd.o": {
    "class": "rename",
@@ -17043,11 +17007,11 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "representation-only rename: TU-local/section-relative target; raw object records no resolution change (unit_rules_category_a.md)"
   },
   "dvdDeviceError.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "drop_data_tail": [
      [
@@ -17086,8 +17050,8 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "dvdFatal.o": {
    "class": "rename",
@@ -17143,8 +17107,8 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "representation-only rename: TU-local/section-relative target; raw object records no resolution change (unit_rules_category_a.md)"
   },
   "dvd_broadway.o": {
    "class": "layout",
@@ -17204,8 +17168,8 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "representation-only rename: TU-local/section-relative target; raw object records no resolution change (unit_rules_category_a.md)"
   },
   "fs.o": {
    "class": "layout",
@@ -17231,7 +17195,7 @@
    "reason": ""
   },
   "g3d_anmchr.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "exact_renames": [
      [
@@ -17252,11 +17216,11 @@
      ".rodata"
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "g3d_anmclr.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "exact_renames": [
      [
@@ -17278,11 +17242,11 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "g3d_anmscn.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "exact_renames": [
      [
@@ -17316,11 +17280,11 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "g3d_anmtexpat.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "exact_renames": [
      [
@@ -17346,11 +17310,11 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "g3d_anmtexsrt.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "exact_renames": [
      [
@@ -17386,8 +17350,8 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "g3d_basic.o": {
    "class": "rename",
@@ -17407,11 +17371,11 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "representation-only rename: TU-local/section-relative target; raw object records no resolution change (unit_rules_category_a.md)"
   },
   "g3d_calcview.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "exact_renames": [
      [
@@ -17457,11 +17421,11 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "g3d_calcvtx.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "extern_data_sections": [
      ".sdata2"
@@ -17473,11 +17437,11 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "g3d_camera.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "extern_data_sections": [
      ".sdata2"
@@ -17529,11 +17493,11 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "g3d_draw.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "extern_data_sections": [
      ".sdata2",
@@ -17546,11 +17510,11 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "g3d_draw1mat1shp.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "extern_data_sections": [
      ".sdata2"
@@ -17576,8 +17540,8 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "g3d_gpu.o": {
    "class": "layout",
@@ -17590,7 +17554,7 @@
    "reason": ""
   },
   "g3d_light.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "exact_renames": [
      [
@@ -17652,8 +17616,8 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "g3d_maya.o": {
    "class": "layout",
@@ -17698,7 +17662,7 @@
    "reason": ""
   },
   "g3d_resanmchr.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "exact_renames": [
      [
@@ -17740,11 +17704,11 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "g3d_resanmclr.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "extern_data_sections": [
      ".sdata2"
@@ -17756,11 +17720,11 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "g3d_resanmfog.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "extern_data_sections": [
      ".sdata2"
@@ -17776,8 +17740,8 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "g3d_resanmlight.o": {
    "class": "layout",
@@ -17802,7 +17766,7 @@
    "reason": ""
   },
   "g3d_resanmscn.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "exact_renames": [
      [
@@ -17830,8 +17794,8 @@
      ".data"
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "g3d_resfile.o": {
    "class": "layout",
@@ -17863,7 +17827,7 @@
    "reason": ""
   },
   "g3d_resmat.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "add_symbols": [
      [
@@ -17947,11 +17911,11 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "g3d_resnode.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "extern_data_sections": [
      ".sdata2"
@@ -17967,11 +17931,11 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "g3d_restev.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "exact_renames": [
      [
@@ -17992,11 +17956,11 @@
      ".sdata2"
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "g3d_scnmdl.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "exact_renames": [
      [
@@ -18009,11 +17973,11 @@
      ".rodata"
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "g3d_scnmdlexpand.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "exact_renames": [
      [
@@ -18025,11 +17989,11 @@
      ".rodata"
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "g3d_scnmdlsmpl.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "data_pool_patterns": [
      [
@@ -18094,8 +18058,8 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "g3d_scnobj.o": {
    "class": "layout",
@@ -18213,7 +18177,7 @@
    "reason": ""
   },
   "g3d_scnproc.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "drop_text_symbols": [
      "__dt__Q34nw4r3g3d7ScnLeafFv"
@@ -18228,11 +18192,11 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "g3d_scnroot.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "exact_renames": [
      [
@@ -18249,11 +18213,11 @@
      ".rodata"
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "g3d_state.o": {
-   "class": "content",
+   "class": "rename",
    "fields": {
     "drop_nobits_range": [
      [
@@ -18303,8 +18267,8 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "g3d_xsi.o": {
    "class": "rename",
@@ -18364,8 +18328,8 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "representation-only rename: TU-local/section-relative target; raw object records no resolution change (unit_rules_category_a.md)"
   },
   "gap_utils.o": {
    "class": "layout",
@@ -18429,16 +18393,16 @@
    "reason": ""
   },
   "l2c_api.o": {
-   "class": "other",
+   "class": "rename",
    "fields": {},
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "representation-only rename: TU-local/section-relative target; raw object records no resolution change (unit_rules_category_a.md)"
   },
   "l2c_csm.o": {
-   "class": "other",
+   "class": "rename",
    "fields": {},
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "representation-only rename: TU-local/section-relative target; raw object records no resolution change (unit_rules_category_a.md)"
   },
   "locale.o": {
    "class": "rename",
@@ -18482,11 +18446,11 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "representation-only rename: TU-local/section-relative target; raw object records no resolution change (unit_rules_category_a.md)"
   },
   "lyt_animation.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "drop_data_range": [
      [
@@ -18534,11 +18498,11 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "lyt_animation.o#Q34nw4r3lyt": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "drop_data_range": [
      [
@@ -18574,11 +18538,11 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "lyt_arcResourceAccessor.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "data_pool_patterns": [
      [
@@ -18614,11 +18578,11 @@
     ],
     "repack_after_drop": 16
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "lyt_arcResourceAccessor.o#Q34nw4r3lyt": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "data_pool_patterns": [
      [
@@ -18645,11 +18609,11 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "lyt_bounding.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "exact_renames": [
      [
@@ -18677,11 +18641,11 @@
      ".sbss"
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "lyt_common.o#Q34nw4r": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "drop_text_symbols": [
      "__dt__Q34nw4r2ut5ColorFv"
@@ -18721,11 +18685,11 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "lyt_drawInfo.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "drop_text_symbols": [
      "__dt__Q36nw4hbm2ut4RectFv",
@@ -18738,11 +18702,11 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "lyt_group.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "drop_text_symbols": [
      "__dt__Q36nw4hbm2ut31LinkList<Q36nw4hbm3lyt5Group,4>Fv",
@@ -18756,11 +18720,11 @@
     ],
     "repack_after_drop": 16
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "lyt_group.o#Q34nw4r3lyt": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "exact_renames": [
      [
@@ -18776,11 +18740,11 @@
      ".data"
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "lyt_init.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "exact_renames": [
      [
@@ -18792,11 +18756,11 @@
      ".sdata2"
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "lyt_layout.o": {
-   "class": "content",
+   "class": "rename",
    "fields": {
     "drop_text_symbols": [
      "GetRuntimeTypeInfo__Q36nw4hbm3lyt4PaneCFv",
@@ -18833,11 +18797,11 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "lyt_layout.o#Q34nw4r3lyt": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "exact_renames": [
      [
@@ -18871,11 +18835,11 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "lyt_material.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "exact_renames": [
      [
@@ -18909,11 +18873,11 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "lyt_material.o#Q34nw4r3lyt": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "exact_renames": [
      [
@@ -18969,11 +18933,11 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "lyt_pane.o#Q34nw4r3lyt": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "drop_data_range": [
      [
@@ -19031,11 +18995,11 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "lyt_pane.o#Q36nw4hbm3lyt": {
-   "class": "content",
+   "class": "rename",
    "fields": {
     "drop_data_tail": [
      [
@@ -19110,11 +19074,11 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "lyt_picture.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "exact_renames": [
      [
@@ -19148,11 +19112,11 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "lyt_picture.o#Q34nw4r3lyt": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "exact_renames": [
      [
@@ -19181,8 +19145,8 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "lyt_resourceAccessor.o": {
    "class": "layout",
@@ -19212,7 +19176,7 @@
    "reason": ""
   },
   "lyt_resourceAccessor.o#Q34nw4r3lyt": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "exact_renames": [
      [
@@ -19224,11 +19188,11 @@
      ".data"
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "lyt_texMap.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "extern_data_sections": [
      ".sdata2"
@@ -19252,11 +19216,11 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "lyt_textBox.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "drop_text_symbols": [
      "__dt__Q46nw4hbm2ut10CharWriter12ColorMappingFv",
@@ -19303,11 +19267,11 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "lyt_textBox.o#Q34nw4r3lyt": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "drop_data_range": [
      [
@@ -19350,11 +19314,11 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "lyt_window.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "drop_data_tail": [
      [
@@ -19402,11 +19366,11 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "lyt_window.o#Q34nw4r3lyt": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "drop_data_tail": [
      [
@@ -19452,8 +19416,8 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "math_arithmetic.o": {
    "class": "layout",
@@ -19508,7 +19472,7 @@
    "reason": ""
   },
   "math_geometry.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "extern_data_sections": [
      ".sdata2"
@@ -19536,11 +19500,11 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "math_types.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "extern_data_sections": [
      ".sdata2"
@@ -19560,8 +19524,8 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "mpv_hdec.o": {
    "class": "layout",
@@ -19574,7 +19538,7 @@
    "reason": ""
   },
   "mpv_mc.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "data_pool_patterns": [
      [
@@ -19590,11 +19554,11 @@
      "jumptable_eu_80567298"
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "mpv_mcy.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "data_pool_patterns": [
      [
@@ -19610,11 +19574,11 @@
      "jumptable_eu_805672B8"
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "mpvabdec.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "exact_renames": [
      [
@@ -19639,8 +19603,8 @@
      "jumptable_eu_80567AD8"
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "mtx.o": {
    "class": "content",
@@ -19670,22 +19634,15 @@
   "mwsfdply.o": {
    "class": "rename",
    "fields": {
-    "data_pool_patterns": [
-     [
-      ".rodata",
-      "hex:4330000080000000",
-      "lbl_eu_8051B198"
-     ]
-    ],
     "globalize_symbols": [
      "lbl_eu_8051B198"
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "globalize_symbols no-op: the object already defines lbl_eu_8051B198 GLOBAL and nothing references it; retired 2026-09-28"
   },
   "ocBdat.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "exact_renames": [
      [
@@ -19733,11 +19690,11 @@
      ".data"
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "ocUnit.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "exact_renames": [
      [
@@ -19764,11 +19721,11 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "pluginBtl.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "exact_renames": [
      [
@@ -19785,11 +19742,11 @@
      ".sdata2"
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "pluginCam.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "extern_data_sections": [
      ".sdata2"
@@ -19801,11 +19758,11 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "pluginCfs.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "extern_data_sections": [
      ".sdata2"
@@ -19821,11 +19778,11 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "pluginEve.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "extern_data_sections": [
      ".sdata2"
@@ -19841,11 +19798,11 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "pluginSnd.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "extern_data_sections": [
      ".sdata2"
@@ -19857,11 +19814,11 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "pluginUi.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "drop_data_tail": [
      [
@@ -19876,11 +19833,11 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "pluginUnit.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "extern_data_sections": [
      ".sdata2"
@@ -19892,8 +19849,8 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "port_rfc.o": {
    "class": "layout",
@@ -20122,17 +20079,17 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "representation-only rename: TU-local/section-relative target; raw object records no resolution change (unit_rules_category_a.md)"
   },
   "sdp_server.o": {
-   "class": "other",
+   "class": "rename",
    "fields": {},
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "representation-only rename: TU-local/section-relative target; raw object records no resolution change (unit_rules_category_a.md)"
   },
   "sfd_adxt.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "data_pool_patterns": [
      [
@@ -20148,8 +20105,8 @@
      "lbl_eu_8051CF40"
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "sfd_tim.o": {
    "class": "content",
@@ -20189,7 +20146,7 @@
    "reason": ""
   },
   "sfh_ver1.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "data_pool_patterns": [
      [
@@ -20205,11 +20162,11 @@
      "jumptable_eu_80568F10"
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "sfx_cnv.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "data_pool_patterns": [
      [
@@ -20237,8 +20194,8 @@
      "lbl_eu_8051CF40"
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "sfx_zmv.o": {
    "class": "layout",
@@ -20255,7 +20212,7 @@
    "reason": ""
   },
   "snd_AxManager.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "exact_renames": [
      [
@@ -20313,11 +20270,11 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "snd_AxVoice.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "extern_data_sections": [
      ".sdata2"
@@ -20349,11 +20306,11 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "snd_AxVoiceManager.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "exact_renames": [
      [
@@ -20376,8 +20333,8 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "snd_AxfxImpl.o": {
    "class": "layout",
@@ -20390,7 +20347,7 @@
    "reason": ""
   },
   "snd_Bank.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "exact_renames": [
      [
@@ -20420,11 +20377,11 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "snd_BasicPlayer.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "exact_renames": [
      [
@@ -20436,11 +20393,11 @@
      ".data"
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "snd_BasicSound.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "exact_renames": [
      [
@@ -20467,11 +20424,11 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "snd_BiquadFilterPreset.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "extern_data_sections": [
      ".sdata2"
@@ -20487,11 +20444,11 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "snd_Channel.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "exact_renames": [
      [
@@ -20539,11 +20496,11 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "snd_DisposeCallbackManager.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "drop_text_symbols": [
      "__dt__Q34nw4r2ut12LinkListNodeFv",
@@ -20573,8 +20530,8 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "snd_EnvGenerator.o": {
    "class": "rename",
@@ -20606,11 +20563,11 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "representation-only rename: TU-local/section-relative target; raw object records no resolution change (unit_rules_category_a.md)"
   },
   "snd_FxChorusDpl2.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "drop_text_symbols": [
      "__dt__Q44nw4r2ut30@unnamed@snd_FxChorusDpl2_cpp@11NonCopyableFv",
@@ -20633,11 +20590,11 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "snd_FxDelayDpl2.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "drop_text_symbols": [
      "__dt__Q44nw4r2ut29@unnamed@snd_FxDelayDpl2_cpp@11NonCopyableFv",
@@ -20667,8 +20624,8 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "snd_FxReverbStdDpl2.o": {
    "class": "layout",
@@ -20711,7 +20668,7 @@
    "reason": ""
   },
   "snd_MemorySoundArchive.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "drop_data_tail": [
      [
@@ -20734,11 +20691,11 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "snd_MmlParser.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "exact_renames": [
      [
@@ -20798,8 +20755,8 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "snd_MmlSeqTrack.o": {
    "class": "rename",
@@ -20811,8 +20768,8 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "representation-only rename: TU-local/section-relative target; raw object records no resolution change (unit_rules_category_a.md)"
   },
   "snd_MmlSeqTrackAllocator.o": {
    "class": "layout",
@@ -20829,7 +20786,7 @@
    "reason": ""
   },
   "snd_PlayerHeap.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "drop_text_symbols": [
      "__dt__Q34nw4r2ut12LinkListNodeFv",
@@ -20843,11 +20800,11 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "snd_RemoteSpeakerManager.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "extern_data_sections": [
      ".bss",
@@ -20864,11 +20821,11 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "snd_SeqPlayer.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "exact_renames": [
      [
@@ -20900,8 +20857,8 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "snd_SeqSound.o": {
    "class": "rename",
@@ -20917,11 +20874,11 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "representation-only rename: TU-local/section-relative target; raw object records no resolution change (unit_rules_category_a.md)"
   },
   "snd_SeqTrack.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "data_pool_patterns": [
      [
@@ -20984,11 +20941,11 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "snd_SoundArchive.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "exact_renames": [
      [
@@ -21000,11 +20957,11 @@
      ".data"
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "snd_SoundArchivePlayer.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "drop_data_tail": [
      [
@@ -21048,11 +21005,11 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "snd_SoundPlayer.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "drop_text_symbols": [
      "__dt__Q34nw4r2ut12LinkListNodeFv",
@@ -21112,11 +21069,11 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "snd_SoundSystem.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "extern_data_sections": [
      ".bss",
@@ -21129,11 +21086,11 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "snd_SoundThread.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "drop_text_symbols": [
      "__ct__Q44nw4r3snd6detail11SoundThreadFv",
@@ -21181,8 +21138,8 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "snd_StrmChannel.o": {
    "class": "layout",
@@ -21196,7 +21153,7 @@
    "reason": ""
   },
   "snd_StrmPlayer.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "drop_data_tail": [
      [
@@ -21241,11 +21198,11 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "snd_StrmSound.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "drop_data_tail": [
      [
@@ -21278,8 +21235,8 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "snd_Task.o": {
    "class": "layout",
@@ -21292,7 +21249,7 @@
    "reason": ""
   },
   "snd_TaskManager.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "drop_text_symbols": [
      "__dt__Q34nw4r2ut12LinkListNodeFv",
@@ -21332,11 +21289,11 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "snd_Util.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "exact_renames": [
      [
@@ -21415,11 +21372,11 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "snd_Voice.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "drop_data_tail": [
      [
@@ -21479,11 +21436,11 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "snd_VoiceManager.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "exact_renames": [
      [
@@ -21508,11 +21465,11 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "snd_WaveSound.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "exact_renames": [
      [
@@ -21527,11 +21484,11 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "snd_WsdPlayer.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "drop_data_tail": [
      [
@@ -21579,8 +21536,8 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "synpitch.o": {
    "class": "layout",
@@ -21620,7 +21577,7 @@
    "reason": ""
   },
   "ut_CharWriter.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "extern_data_sections": [
      ".sdata2"
@@ -21632,8 +21589,8 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "ut_DvdFileStream.o": {
    "class": "layout",
@@ -21650,7 +21607,7 @@
    "reason": ""
   },
   "ut_Font.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "exact_renames": [
      [
@@ -21662,8 +21619,8 @@
      ".data"
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "ut_IOStream.o": {
    "class": "rename",
@@ -21675,11 +21632,11 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "representation-only rename: TU-local/section-relative target; raw object records no resolution change (unit_rules_category_a.md)"
   },
   "ut_LockedCache.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "drop_text_symbols": [
      "__dt__Q54nw4r2ut28@unnamed@ut_LockedCache_cpp@6LCImpl5Lock_Fv"
@@ -21691,8 +21648,8 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "ut_PackedFont.o": {
    "class": "layout",
@@ -21742,8 +21699,8 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "representation-only rename: TU-local/section-relative target; raw object records no resolution change (unit_rules_category_a.md)"
   },
   "ut_RomFont.o": {
    "class": "layout",
@@ -21772,11 +21729,11 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "representation-only rename: TU-local/section-relative target; raw object records no resolution change (unit_rules_category_a.md)"
   },
   "ut_TagProcessorBase.o#Q34nw4r": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "exact_renames": [
      [
@@ -21799,8 +21756,8 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "ut_TagProcessorBase.o#Q36nw4hbm": {
    "class": "rename",
@@ -21816,11 +21773,11 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "representation-only rename: TU-local/section-relative target; raw object records no resolution change (unit_rules_category_a.md)"
   },
   "ut_TextWriterBase.o#Q34nw4r2ut": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "drop_text_symbols": [
      "__dt__Q34nw4r2ut4RectFv",
@@ -21932,8 +21889,8 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "ut_TextWriterBase.o#Q36nw4hbm2ut": {
    "class": "layout",
@@ -21958,11 +21915,11 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "representation-only rename: TU-local/section-relative target; raw object records no resolution change (unit_rules_category_a.md)"
   },
   "vi.o": {
-   "class": "content",
+   "class": "rename",
    "fields": {
     "addend_sets": [
      [
@@ -22034,11 +21991,11 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "yvm2.o": {
-   "class": "layout",
+   "class": "rename",
    "fields": {
     "drop_data_range": [
      [
@@ -22054,8 +22011,8 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-a",
+   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   }
  },
  "schema": 1

@@ -17,12 +17,18 @@ on:
       - "tools/postprocess_reloc_names.py"
       - "tools/postprocess_reloc_names.frozen.json"
       - "tools/check_unit_rules_frozen.py"
+      - "tools/coop/lib/reloc_canon.py"
+      - "tools/coop/lib/data_match.py"
+      - "config/*/splits.txt"
       - ".github/workflows/unit-rules.yml"
   pull_request:
     paths:
       - "tools/postprocess_reloc_names.py"
       - "tools/postprocess_reloc_names.frozen.json"
       - "tools/check_unit_rules_frozen.py"
+      - "tools/coop/lib/reloc_canon.py"
+      - "tools/coop/lib/data_match.py"
+      - "config/*/splits.txt"
       - ".github/workflows/unit-rules.yml"
   workflow_dispatch:
 
@@ -38,6 +44,13 @@ jobs:
 
       - name: Verify UNIT_RULES frozen baseline (shrink-only)
         run: python tools/check_unit_rules_frozen.py --check
+
+      - name: Verify retired linker absolutes (bake_linker_addrs / force_symbol_relocs)
+        # Re-evaluates the ldscript formulas against the committed splits.txt;
+        # the honest link resolves _stack_addr/_db_stack_end/__ArenaLo to the
+        # values the retired UNIT_RULES entries used to bake, and layout drift
+        # breaks this loudly.
+        run: python tools/coop/lib/reloc_canon.py --check
 
       - name: Rule table summary (informational)
         run: python tools/check_unit_rules_frozen.py --report

@@ -1164,12 +1164,14 @@ extern "C" u32 lbl_eu_8056CF48[48] = {
 // relocs), and retarget_relocs renames the whole entry - a shared name
 // would corrupt every other reference to it (e.g. the dtor's __dl__FPv
 // call). These two dummies exist only as reloc anchors.
-extern "C" u32 decomp_rtti_anchor_10IWorkEvent[];
-extern "C" u32 decomp_rtti_anchor_11CWorkThread[];
+namespace RTTIExterns {
+extern "C" u32 __RTTI__10IWorkEvent[];
+extern "C" u32 __RTTI__11CWorkThread[];
+}
 extern "C" u32 lbl_eu_8056D008[8] = {
     (u32)&lbl_eu_80663618, 0x000001C4,
-    (u32)&decomp_rtti_anchor_10IWorkEvent, 0x00000000,
-    (u32)&decomp_rtti_anchor_11CWorkThread, 0x00000000,
+    (u32)&RTTIExterns::__RTTI__10IWorkEvent, 0x00000000,
+    (u32)&RTTIExterns::__RTTI__11CWorkThread, 0x00000000,
     0x00000000, 0x00000000,
 };
 

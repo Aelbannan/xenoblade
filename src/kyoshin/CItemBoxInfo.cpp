@@ -8456,8 +8456,13 @@ extern "C" void __as__11_GXColorS10FRC11_GXColorS10(void* dst, const void* src) 
 // retail gap word. Own-TU OnFileEvent slots use dummy-(int) decls
 // (CNBanner/CMenuEnemyState recipe: same-signature member decls are
 // MWCC 10322 poison); RTTI uses an UNDEF stand-in (zero bytes).
-// RTTI stand-in (spelling __RTTI__10IWorkEvent is MWCC 10322 poison).
-extern const void* rtti_10IWorkEvent[];
+// The typeinfo object is declared inside a namespace: at global scope MWCC
+// 10322 ("illegal name overloading") rejects the __RTTI__* spelling in this TU.
+// extern "C" names are not mangled, so the tables below still reference
+// __RTTI__10IWorkEvent exactly (the same workaround as CView.cpp).
+namespace RTTIExterns {
+extern "C" const void* __RTTI__10IWorkEvent[];
+}
 extern "C" {
 extern void WorkEvent1__10IWorkEventFPvPCc();
 extern void WorkEvent3__10IWorkEventFPv();
@@ -8509,7 +8514,7 @@ void* lbl_eu_80534A90[34] = {
 // .data 0x10: RTTI descriptor + pad.
 __declspec(section ".data") __attribute__((used))
 const void* lbl_eu_80534B18[4] = {
-    rtti_10IWorkEvent, 0, 0, 0
+    RTTIExterns::__RTTI__10IWorkEvent, 0, 0, 0
 };
 
 // .data 0x88: CItemBoxInfo vtable.
@@ -8529,7 +8534,7 @@ void* lbl_eu_80534B28[34] = {
 // .data 0x10: RTTI descriptor + pad.
 __declspec(section ".data") __attribute__((used))
 const void* lbl_eu_80534BB0[4] = {
-    rtti_10IWorkEvent, 0, 0, 0
+    RTTIExterns::__RTTI__10IWorkEvent, 0, 0, 0
 };
 } // extern "C"
 

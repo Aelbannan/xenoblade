@@ -2431,7 +2431,7 @@ def main() -> int:
             "rewriter calls (0 = z3 default, no timeout). The harness passes a "
             "bounded value so a pathological z3.simplify on a huge terminal AST "
             "is interrupted instead of spinning (run30 incident: one lane held "
-            "the build lock ~30 min at 99.7% CPU)."
+            "the build lock ~30 min at 99.7%% CPU)."
         ),
     )
     p_cycle.add_argument(

@@ -81,10 +81,13 @@ extern const void* lbl_eu_80661948[];
 extern const void* lbl_eu_80661DE8[];
 extern const void* lbl_eu_80661DE0[];
 extern const char lbl_eu_80661A40[];
-// RTTI stand-in (spelling __RTTI__10IWorkEvent is MWCC 10322 poison under
-// -ipa file; CLibLayout recipe — a future retarget_relocs rule can bind this
-// slot to the retail name for the link; the gate only needs zero bytes).
-extern const void* rtti_MES_Wev[];
+// The typeinfo object is declared inside a namespace: at global scope MWCC
+// 10322 ("illegal name overloading") rejects the __RTTI__* spelling under
+// -ipa file. extern "C" names are not mangled, so the table below still
+// references __RTTI__10IWorkEvent exactly (the same workaround as CView.cpp).
+namespace RTTIExterns {
+extern "C" const void* __RTTI__10IWorkEvent[];
+}
 // .sdata 0x10: RTTI typeinfo pairs.
 __declspec(section ".sdata") __attribute__((aligned(8), used))
 const void* lbl_eu_80661E28[2] = { lbl_eu_804FDBD8, lbl_eu_8052C4F8 };
@@ -3214,7 +3217,7 @@ void* lbl_eu_8052C438[48] = {
 // .data 0x3C: RTTI descriptor (sdata locators + small offsets).
 __declspec(section ".data") __attribute__((aligned(8), used))
 const void* lbl_eu_8052C4F8[15] = {
-    lbl_eu_80661A40, (const void*)0x5C, rtti_MES_Wev, (const void*)0x58,
+    lbl_eu_80661A40, (const void*)0x5C, RTTIExterns::__RTTI__10IWorkEvent, (const void*)0x58,
     lbl_eu_80661958, 0, lbl_eu_80661950, 0, lbl_eu_80661948, 0,
     lbl_eu_80661DE8, 0, lbl_eu_80661DE0, 0, 0,
 };

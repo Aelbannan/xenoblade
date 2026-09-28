@@ -14,11 +14,13 @@
 // (data_vtables.hpp is intentionally NOT included: its extern "C" __RTTI__*
 // decls trip MWCC 10322 under -ipa file. Slots are declared locally in the
 // sibling-TU style instead.)
-// RTTI stand-in: spelling __RTTI__10IWorkEvent is MWCC 10322 poison under
-// -ipa file (CModelDispMakeCrystal/CMenuEnemyState recipe). The gate only
-// needs zero bytes here; a UnitRules exact_renames binds it to the retail
-// name for the link.
-extern const void* rtti_10IWorkEvent[];
+// The typeinfo object is declared inside a namespace: at global scope MWCC
+// 10322 ("illegal name overloading") rejects the __RTTI__* spelling under
+// -ipa file. extern "C" names are not mangled, so the table below still
+// references __RTTI__10IWorkEvent exactly (the same workaround as CView.cpp).
+namespace RTTIExterns {
+extern "C" const void* __RTTI__10IWorkEvent[];
+}
 
 extern "C" {
 extern void WorkEvent1__10IWorkEventFPvPCc();
@@ -116,7 +118,7 @@ const void* lbl_eu_80535F80[34] = {
 // .data prefix: IWorkEvent RTTI base table (0x10).
 __declspec(section ".data") __attribute__((used))
 const void* lbl_eu_80536008[4] = {
-    (const void*)rtti_10IWorkEvent,
+    (const void*)RTTIExterns::__RTTI__10IWorkEvent,
     (const void*)0,
     (const void*)0,
     (const void*)0

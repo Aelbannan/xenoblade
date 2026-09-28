@@ -108,6 +108,11 @@ extern const double lbl_eu_8066A638;  // u8->f32 magic (0x4330000000000000)
 // Builtin (f32) casts pool TU-local magic doubles; the retail object
 // references the blob pool entries (lbl_eu_8066A628/A638) instead. Union
 // helpers keep this TU's .sdata2 empty (retail shape).
+//
+// NOTE: rewriting these as explicit union arithmetic referencing the named
+// doubles makes the codegen worse (double fsub + extra stack traffic vs
+// retail's single-precision fsubs), so the plain casts stay; the residual
+// anonymous-pool reloc names need witness/SMT acceptance.
 inline f32 s32ToF_a628(s32 v) { return (f32)v; }
 inline f32 u8ToF_a638(u8 v) { return (f32)v; }
 

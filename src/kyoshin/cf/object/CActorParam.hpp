@@ -111,6 +111,12 @@ namespace cf {
     };
 
     //size: 0xBC
+    //
+    // pack(4): the u64 alias view below would otherwise give the union 8-byte
+    // alignment, which pads the member to 0xC0 and 8-aligns it in CActorParam
+    // (retail stride/base are 0xBC / 0x2A84). Retail accesses the q* words as
+    // lwz pairs, so the packed form matches its codegen too.
+#pragma pack(push, 4)
     struct CActorParam_UnkStruct1 {
         union {
             struct {
@@ -242,6 +248,7 @@ namespace cf {
             FLAG_BIT_31 = (1 << 31),
         };
     };
+#pragma pack(pop)
 
     //size: 0x52
     struct CActorParam_UnkStruct4 {
@@ -762,7 +769,7 @@ virtual void* CActorParam_getBonusStats(); //0x22C (retail impl returns the +0x1
         CArtsSet mArtsSet; //0x19E8
         u8 unk2740[0xC];
         CAttackSet mAttackSet; //0x274C
-        u32 unk2A80; //probably not here
+        u32 unk2A80; // 0x2A80: real field (mAttackSet is 0x334, ends here)
         CActorParam_UnkStruct1 unk2A84[10];
         CActorParam_UnkStruct1 unk31DC;
         CActorParam_UnkStruct1 unk3298;

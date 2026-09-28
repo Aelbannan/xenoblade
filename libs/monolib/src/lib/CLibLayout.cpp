@@ -353,13 +353,16 @@ u32 lbl_eu_8066571C;
 // exact retail lbl_eu_* symbols (no extern "C" needed).
 extern u32 lbl_eu_806637D8[2];           // [.sdata] RTTI locator
 extern const char lbl_eu_805231B0[0xC]; // [.rodata] "CLibLayout" name
-// NOTE: the base typeinfo objects (__RTTI__10IWorkEvent / __RTTI__11CWorkThread)
-// cannot be spelled here: declaring an __RTTI__* name in a TU with a
-// novtable-predeclared class trips an MWCC -ipa file ICE ("illegal name
-// overloading"). The base list below references legal stand-in spellings;
-// the §17.6 UNIT_RULES retarget those two slots to the retail typeinfos.
-extern u32 rtti_10IWorkEvent[];
-extern u32 rtti_11CWorkThread[];
+// The base typeinfo objects are declared inside a namespace: at global scope
+// MWCC 10322 ("illegal name overloading") rejects the __RTTI__* spelling in
+// this TU (novtable-predeclared class + -ipa file). extern "C" names are not
+// mangled, so the emitted reloc names are still exactly
+// __RTTI__10IWorkEvent / __RTTI__11CWorkThread (the same workaround as
+// CView.cpp).
+namespace RTTIExterns {
+extern "C" void* __RTTI__10IWorkEvent;
+extern "C" void* __RTTI__11CWorkThread;
+}
 // [.data] 0x8056D350-0x8056D3F0 (0xA0): __vt__10CLibLayout. Base class
 // CWorkThread is novtable in retail, so the vtable/RTTI are all manual.
 u32 lbl_eu_8056D350[40] = {
@@ -388,7 +391,7 @@ u32 lbl_eu_8056D350[40] = {
 // [.data] 0x8056D3F0-0x8056D408 (0x18): RTTI base list [IWorkEvent,0,
 // CWorkThread,0, 0,0].
 u32 lbl_eu_8056D3F0[6] = {
-    (u32)&rtti_10IWorkEvent, 0x00000000, (u32)&rtti_11CWorkThread,
+    (u32)&RTTIExterns::__RTTI__10IWorkEvent, 0x00000000, (u32)&RTTIExterns::__RTTI__11CWorkThread,
     0x00000000, 0x00000000, 0x00000000,
 };
 // [.sdata] 0x806637D8-0x806637E0 (0x8): __RTTI__10CLibLayout locator.

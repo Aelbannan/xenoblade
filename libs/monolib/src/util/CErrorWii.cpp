@@ -15,26 +15,30 @@ extern const char lbl_eu_80524870[];
 // (.sbss lbl_eu_80665A60/64/65/66); when ScheduleList.cpp promotes to Matching,
 // it must keep those labels defined (its cpp already declares lbl_eu_80665A60).
 
-CErrorWii* CErrorWii::spInstance;
-bool CErrorWii::sPowerCallbackCalled;
-bool CErrorWii::sResetCallbackCalled;
-bool CErrorWii::sUnkFlag;
+// The four class statics live in the retail-asm ScheduleList.o .sbss slice under
+// their linker labels (ScheduleList.cpp defines lbl_eu_80665A60/64/65/66); this
+// TU only references them, so it owns no .sbss (retail CErrorWii.o is data-free).
+// The header's member declarations stay for type/name documentation only.
+extern "C" CErrorWii* lbl_eu_80665A60; // lbl_eu_80665A60
+extern "C" bool lbl_eu_80665A64;       // lbl_eu_80665A64
+extern "C" bool lbl_eu_80665A65;       // lbl_eu_80665A65
+extern "C" bool lbl_eu_80665A66;       // lbl_eu_80665A66
 
 CErrorWii::CErrorWii() {
-    spInstance = this;
-    sPowerCallbackCalled = false;
-    sResetCallbackCalled = false;
-    sUnkFlag = false;
+    lbl_eu_80665A60 = this;
+    lbl_eu_80665A64 = false;
+    lbl_eu_80665A65 = false;
+    lbl_eu_80665A66 = false;
     OSSetPowerCallback(powerCallback);
     OSSetResetCallback(resetCallback);
 }
 
 CErrorWii::~CErrorWii(){
-    spInstance = nullptr;
+    lbl_eu_80665A60 = nullptr;
 }
 
 void CErrorWii::addCallback(IErrorWii* pError){
-    spInstance->mCallbackList.push_back(pError);
+    lbl_eu_80665A60->mCallbackList.push_back(pError);
 }
 
 //This feels like it should be an inline from fixed_vector (probably erase), but it uses spInstance multiple times...
@@ -44,15 +48,15 @@ void CErrorWii::removeCallback(IErrorWii* pError){
     int index = 0;
 
     //Search the list for a matching entry
-    for(int i = 0; i < spInstance->mCallbackList.size(); i++){
-        if(spInstance->mCallbackList[i] == pError){
+    for(int i = 0; i < lbl_eu_80665A60->mCallbackList.size(); i++){
+        if(lbl_eu_80665A60->mCallbackList[i] == pError){
             //Shift all elements that come after left by 1 to remove the entry
-            while(index < (int)spInstance->mCallbackList.mCount - 1){
-                IErrorWii** entry = &spInstance->mCallbackList[index++];
+            while(index < (int)lbl_eu_80665A60->mCallbackList.mCount - 1){
+                IErrorWii** entry = &lbl_eu_80665A60->mCallbackList[index++];
                 entry[0] = entry[1];
             }
 
-            spInstance->mCallbackList.mCount--;
+            lbl_eu_80665A60->mCallbackList.mCount--;
             return;
         }
 
@@ -113,20 +117,20 @@ void CErrorWii::errorHandler(u8 error, OSContext* ctx, u32 dsisr, u32 dar){
     /* Save the GPRs, common PPC registers, and the other 3 parameters. These never end up getting used
     by any other functions in release, but likely originally did. */
     for(int i = 0; i < 32; i++){
-        spInstance->mContext.gprs[i] = ctx->gprs[i];
+        lbl_eu_80665A60->mContext.gprs[i] = ctx->gprs[i];
     }
 
-    spInstance->mContext.cr = ctx->cr;
-    spInstance->mContext.lr = ctx->lr;
-    spInstance->mContext.ctr = ctx->ctr;
-    spInstance->mContext.xer = ctx->xer;
-    spInstance->mContext.srr0 = ctx->srr0;
-    spInstance->mContext.srr1 = ctx->srr1;
-    spInstance->mContext.fpscr = ctx->fpscr;
+    lbl_eu_80665A60->mContext.cr = ctx->cr;
+    lbl_eu_80665A60->mContext.lr = ctx->lr;
+    lbl_eu_80665A60->mContext.ctr = ctx->ctr;
+    lbl_eu_80665A60->mContext.xer = ctx->xer;
+    lbl_eu_80665A60->mContext.srr0 = ctx->srr0;
+    lbl_eu_80665A60->mContext.srr1 = ctx->srr1;
+    lbl_eu_80665A60->mContext.fpscr = ctx->fpscr;
 
-    spInstance->unk2F0 = error;
-    spInstance->unk2F4 = dsisr;
-    spInstance->unk2F8 = dar;
+    lbl_eu_80665A60->unk2F0 = error;
+    lbl_eu_80665A60->unk2F4 = dsisr;
+    lbl_eu_80665A60->unk2F8 = dar;
 
     //Set the function to return to after handling exceptions
     ctx->srr0 = (u32)postExceptionCallback;
@@ -144,20 +148,20 @@ void CErrorWii::postExceptionCallback(){
 
 //Stubbed?
 void CErrorWii::powerCallback(){
-    sPowerCallbackCalled = true;
+    lbl_eu_80665A64 = true;
 }
 
 bool CErrorWii::isPowerCallbackCalled(){
-    return sPowerCallbackCalled;
+    return lbl_eu_80665A64;
 }
 
 //Stubbed?
 void CErrorWii::resetCallback(){
-    sResetCallbackCalled = true;
+    lbl_eu_80665A65 = true;
 }
 
 bool CErrorWii::isResetCallbackCalled(){
-    return sResetCallbackCalled;
+    return lbl_eu_80665A65;
 }
 
 /* BUG: Monolithsoft likely overrode this to be able to do things with the error messages

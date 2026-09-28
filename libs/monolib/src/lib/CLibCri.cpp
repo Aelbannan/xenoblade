@@ -66,17 +66,20 @@ extern "C" void* __ct__7CLibCriFPCcP11CWorkThread(CLibCri* object, const char* p
 extern "C" u32 lbl_eu_8056CE58[52]; // CLibCri primary vtable (defined below)
 
 // Foreign vtable-slot symbols (retail flat names). The __RTTI__* typeinfo
-// symbols cannot be spelled in this TU (-RTTI on reserves them once the
-// IWorkEvent/CWorkThread class definitions are visible -> MWCC 10322), so the
-// two ScnGroup RTTI slots use stand-in names renamed onto the retail symbols
-// by UNIT_RULES exact_renames (same recipe as CLibLayout.o / CWorkRoot.o).
+// names collide with MWCC's RTTI name table at global scope in this TU
+// (error 10322 "illegal name overloading"), so they are declared inside a
+// namespace -- extern "C" names are not mangled, so the object still
+// references __RTTI__10IWorkEvent / __RTTI__11CWorkThread exactly (the same
+// workaround as CView.cpp).
+namespace RTTIExterns {
+extern "C" void* __RTTI__10IWorkEvent;
+extern "C" void* __RTTI__11CWorkThread;
+}
 extern "C" {
     void viAfterDrawDone__11CDeviceVICbFv();
     void viBeginFrame__11CDeviceVICbFv();
     u32 lbl_eu_80663618[];   // nw4r g3d ScnGroup RTTI chain anchor (foreign .sdata)
     char lbl_eu_8066A4D0[];  // "CLibCri" RTTI name string (CGXCache shared .sdata2 pool)
-    extern void* rtti_10IWorkEvent;  // stand-in for __RTTI__10IWorkEvent
-    extern void* rtti_11CWorkThread; // stand-in for __RTTI__11CWorkThread
     // IWorkEvent virtual handlers (weak defaults live in kyoshin/CGame.cpp).
     int WorkEvent1__10IWorkEventFPvPCc(void*, const char*);
     int OnFileEvent__10IWorkEventFP10CEventFile(void*);
@@ -491,8 +494,8 @@ extern "C" u32 lbl_eu_8056CE58[52] = {
 };
 extern "C" u32 __vt__Q34nw4r3g3d8ScnGroup[8] = {
     (u32)&lbl_eu_80663618, 0x000001C4,
-    (u32)&rtti_10IWorkEvent, 0x00000000,
-    (u32)&rtti_11CWorkThread, 0x00000000,
+    (u32)&RTTIExterns::__RTTI__10IWorkEvent, 0x00000000,
+    (u32)&RTTIExterns::__RTTI__11CWorkThread, 0x00000000,
     0x00000000, 0x00000000,
 };
 

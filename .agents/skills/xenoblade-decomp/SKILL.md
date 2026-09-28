@@ -191,7 +191,67 @@ Fix semantics/types first, then expression order with normal C++ (named locals/h
 - templates in headers — `#pragma auto_inline off` + explicit instantiation + `#pragma pop`;
   check `Ui` vs `Ul` (`unsigned int` on PPC32). See `MWCC_CASES` §Template pitfalls.
 
-## Policy exceptions (PLAN.md §17.6) — only after C++ is exhausted
+## Declaration drift & the `extern "C"` rename shields
+
+One C name = one type. Where a TU's retail-shaped prototype contradicts an included header, the TU
+renames the header's symbol for the duration of the `#include` and declares its own copy:
+
+```cpp
+#define getPlayer__Q22cf13CfGameManagerFi cfObjectMoveGetPlayer
+#include "kyoshin/cf/object/CfObjectMove.hpp"
+#undef getPlayer__Q22cf13CfGameManagerFi
+```
+
+Convention: `<sym>_<reason>_hidden` (`_void_hidden`, `_typed_hidden`, `_s32_hidden`, `_fixstr_hidden`)
+— **34 such lines across 6 TUs today**, plus alias-style variants that skip the suffix
+(`CfGameManager.cpp` alone carries 32 define/`#undef` shields — the largest block in the tree). Why
+`int`, `unsigned int`, `s32`, `u32` are **four distinct types**, and return type + C/C++ linkage must
+match too. Errors surface lazily at the first use site (`10197` illegal function overloading,
+`10505` illegal overloading, `10563` identifier redeclared), and the matching build runs
+`-maxerrors 1`, so **each clash hides the next** — diagnose a cascade by compiling the TU directly
+with `-maxerrors 20`, not via hexdiff/ninja.
+
+**End state:** one declaration per symbol, in the header owned by the TU that defines it; callers
+`#include` it. A shield survives only where retail bytes genuinely require another view — with the
+retail evidence in the comment (cf. `CfObjectMove.hpp`) — so shields are transitional, never silent.
+
+Convergence path, per symbol:
+
+1. **Census** — `run.py extc scan --json` classifies every `extern "C"` decl against
+   `config/<region>/symbols.txt` (retail-exact / retail-drift / invented / member-candidate). It does
+   not cluster same-symbol conflicts yet: for the symbol in front of you, `grep -rn "<sym>" src libs`.
+2. **Authority = the definition, not the nicer type** — grep the defining TU for its decl;
+   `extc header-drift <class>` and `tools/coop/member_check.py` report where a header is contradicted
+   by retail asm (param count, static-ness, `void* self`). A "canonical" header can be the stale side
+   (`code_802405F4`: header `u32` vs real `u16`).
+3. **Fix order** — (a) conflicts no matched function depends on: plain bugs, fix the stale copy;
+   (b) spelling-only clusters (`void*` vs `Class*`, `int` vs `s32`) whose definition is accepted: set
+   the definition to the true type (a discarded return is free in C++), `hexdiff --symbol` it, then
+   delete the caller copies one TU at a time; (c) clusters whose definition is **not** accepted yet
+   (e.g. `func_8004B9D4`, HIGH_MATCH): leave them — matching the body may settle the arity;
+   (d) ABI clusters (arity / consumed return): first satisfy the authority decl at the call site —
+   pass the already-live register (`CfGimmickWarp_TryFire` gained 2 regswaps this way) or nest the
+   call; keep a TU-local decl only if the bytes refuse. Block-scope `extern "C"` is ill-formed
+   (MWCC 10134) — not an escape hatch.
+4. **Keep the edit line-neutral** — `-ipa file` output depends on downstream source *line numbers*, so
+   deleting a shield block can shift unrelated functions (CMenuPTGauge: −18 lines flipped
+   `func_80187C90` 97.1%→13.5%). Pad with comments to preserve net line count, or re-baseline the
+   unit's whole `hexdiff --all` table against pre-edit. **Never** evaluate a header edit on the
+   changed symbol alone.
+5. **Verify the blast radius** — `-ipa file`/`-inline auto` can flip inlining in a TU that merely
+   includes the header: sweep `grep -rl <header> src libs` and re-hexdiff every accepted function
+   there. Then note it in `attempts.jsonl` and refresh the CI-checked report via
+   `tools/coop/smell_report.py` (`docs/CODE_SMELLS.md`).
+6. **Prefer the structural fix** — `void* self` pseudo-imports are usually real members (`extc plan
+   <class>`, `member_check.py` N1/N2/N3): a member is declared once in its class, so the conflict
+   disappears instead of moving. Retire shields opportunistically while editing a TU you must verify
+   anyway; this work is matching-neutral — never a campaign.
+
+Prior art: `MWCC_CASES` "Shield-clearing batch" (+ `UPDATE`/`UPDATE 2`) and the CMenuPTGauge
+line-number negative result; `MWCC_PATTERNS` "Cross-header extern \"C\" conflicts" (diagnosis recipe)
+and the `getBdatStringColumnValue` rule (copy the definition's spelling verbatim).
+
+## Policy exceptions
 
 The only allowed escapes from high-level C/C++ are listed in **PLAN.md §17.6**: the `DECOMP_PPC_*`
 builtins (`decomp.h`), `extern "C" lbl_eu_*` reloc naming, goto-gate chains, the isolated Gekko
@@ -219,6 +279,7 @@ bake for DOL-split absolutes like `_stack_addr` is the only ok case).
 | reloc name drift (bytes match, names differ) | `tools/coop/reloc_map.py diff/mine` (→ `extern "C"`) |
 | unknown type / name | symbol recovery above |
 | plateau ~97-99.9% | `MWCC_CASES` "Quick diagnostic" |
+| `#define … _hidden` shield / MWCC 10197+10505 cascade | "Declaration drift" section above + `MWCC_CASES` "Shield-clearing batch" |
 | hard matching question | search both via `mwcc_kb.py` (patterns + cases) |
 
 ## Key paths
@@ -229,6 +290,8 @@ bake for DOL-split absolutes like `_stack_addr` is the only ok case).
 | `tools/coop/run.py` | Runner CLI (`targets`/`symbols`/`behaviour`/`size`/`cycle`) |
 | `tools/coop/hexdiff.py` | Headless hex diff — the iteration tool |
 | `tools/coop/reloc_map.py` | Reloc name-drift detection/miner |
+| `tools/coop/extc.py` | `extern "C"` decl classifier, header-drift check, member-conversion plan |
+| `docs/CODE_SMELLS.md` | CI-freshness-checked legacy smell backlog (extern "C"/`void*`/`self` counts — trend to 0); regenerate with `tools/coop/smell_report.py` |
 | `tools/coop/batch-cycle.py` | Mass-acceptance after matching |
 | `configure.py` | Per-object matching flags / `mw_version` |
 | `docs/MWCC_PATTERNS.md` | General/reusable MWCC knowledge + KB protocol + templates |

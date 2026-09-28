@@ -17,7 +17,7 @@ import os
 import platform
 import sys
 from pathlib import Path
-from tools.postprocess_reloc_names import UNIT_RULES  # link-time §17.6 object reshape keys
+from tools.postprocess_reloc_names import unit_has_rules  # link-time §17.6 object reshape keys (plain + #scoped)
 from typing import (
     IO,
     Any,
@@ -1253,10 +1253,13 @@ def generate_build_ninja(
                 built_obj_path = asm_build(obj, obj.asm_path, obj.asm_obj_path)
 
             if link_built_obj and built_obj_path is not None:
-                if built_obj_path.name in UNIT_RULES:
+                if unit_has_rules(built_obj_path.name):
                     # §17.6 link-time postprocess: emit a *.reloc.o copy so the
                     # final DOL carries the retail reshape (the original object
-                    # stays untouched for objdiff/split checks).
+                    # stays untouched for objdiff/split checks).  Scoped keys
+                    # ("Foo.o#<symbol-substring>") are selected at postprocess
+                    # time by select_unit_rules(); this configure-time check only
+                    # needs the basename (the object is not built yet).
                     pp_obj = built_obj_path.with_name(
                         built_obj_path.stem + ".reloc.o"
                     )

@@ -220,6 +220,7 @@ from tools.ppc_equivalence.dol_symbols import DolSymbolError, extract_by_address
 from tools.ppc_equivalence.elf_symbols import (
     ElfSymbolError,
     FunctionBytes,
+    FunctionRelocation,
     extract_function,
     extract_function_pair,
     list_text_functions,
@@ -329,11 +330,127 @@ def _reloc_dests_equivalent(left: str, right: str) -> bool:
     return left.startswith(right + "__") or right.startswith(left + "__")
 
 
+# ── canonical reloc resolution (UNIT_RULES category A) ─────────────────────
+# Two reloc destinations that resolve to the same linked address are the same
+# value even when the retail splitter and MWCC spell them differently, and a
+# retail side that *baked* an ADDR16 immediate is equivalent to a decomp side
+# the linker resolves to that same immediate.  Both comparisons use
+# tools/coop/lib/reloc_canon.py (symbols.txt + splits.txt + ldscript.lcf) and
+# fail closed when anything is unresolved.
+
+_LAYOUT_CACHE: dict[tuple[str, str], "LinkerLayout | None"] = {}
+
+
+def _linker_layout_for_project(project: Project) -> "LinkerLayout | None":
+    """Region layout for the project, or ``None`` when config files are absent."""
+    region = getattr(project.config, "region", "us")
+    key = (str(project.root), str(region))
+    if key not in _LAYOUT_CACHE:
+        try:
+            from tools.coop.lib.reloc_canon import LinkerLayout
+
+            _LAYOUT_CACHE[key] = LinkerLayout.load(project.root, str(region))
+        except Exception:
+            _LAYOUT_CACHE[key] = None
+    return _LAYOUT_CACHE[key]
+
+
+def _is_tu_local_name(name: str) -> bool:
+    """TU-local labels (``@N`` pools, ``...section.N``, ``$N`` statics).
+
+    They reuse the same spelling across units, so symbols.txt must never answer
+    for them; the unit reloc map is the only correct canonicalizer there.
+    """
+    return name.startswith("@") or name.startswith("...") or name.startswith("$")
+
+
+def _resolve_reloc_address(dest: str | None, layout: "LinkerLayout | None") -> int | None:
+    """Absolute linked address for a reloc destination name, or ``None``."""
+    if layout is None or not dest or _is_tu_local_name(dest):
+        return None
+    try:
+        _, addr = layout.resolve_name(dest)
+    except Exception:
+        return None
+    return addr
+
+
+def _addr16_materialized_ok(
+    reloc: "FunctionRelocation",
+    other_code: bytes,
+    canonical_symbols: dict[str, str] | None,
+    layout: "LinkerLayout | None",
+) -> bool:
+    """True when *other_code* already holds the immediate this ADDR16 reloc installs.
+
+    This is the baked-vs-reloc representation pair: the retail splitter bakes
+    ``_stack_addr`` / ``memcpy`` etc. while MWCC emits zero immediates plus an
+    ``R_PPC_ADDR16_HI/LO/HA``.  ADDR16 reloc offsets point at the 2-byte
+    immediate field (MWCC and the splitter agree on this), so the comparison is
+    a 16-bit field read.  Unresolvable targets fail closed.
+    """
+    from tools.coop.lib.reloc_canon import ADDR16_HA, ADDR16_HI, ADDR16_LO, addr16_immediate, type_class
+
+    if type_class(int(reloc.relocation_type)) not in (ADDR16_HA, ADDR16_HI, ADDR16_LO):
+        return False
+    dest = _normalize_reloc_dest(reloc.symbol, canonical_symbols)
+    addr = _resolve_reloc_address(dest, layout)
+    if addr is None:
+        return False
+    addend = 0 if reloc.addend is None else int(reloc.addend)
+    imm = addr16_immediate(addr + addend, int(reloc.relocation_type))
+    if imm is None:
+        return False
+    off = int(reloc.offset)
+    if off < 0 or off + 2 > len(other_code):
+        return False
+    return int.from_bytes(other_code[off:off + 2], "big") == imm
+
+
+def _addr16_only_differences(
+    left: "FunctionBytes",
+    right: "FunctionBytes",
+    canonical_symbols: dict[str, str] | None,
+    layout: "LinkerLayout | None",
+) -> bool:
+    """Every differing field is an ADDR16 immediate one side resolves to that value.
+
+    Difference-driven: only the 16-bit fields that actually differ are examined,
+    so unrelated ADDR16 sites (e.g. TU-local pool references that need the unit
+    reloc map) cannot block the comparison.  Returns False (fail-closed) when a
+    differing field is not covered by a resolvable ADDR16 reloc whose
+    materialized immediate equals the other side's baked field.
+    """
+    if layout is None or len(left.code) != len(right.code):
+        return False
+    if left.code == right.code:
+        return True
+    fields = {i & ~1 for i in range(len(left.code)) if left.code[i] != right.code[i]}
+    left_by_off = {int(r.offset): r for r in left.relocations}
+    right_by_off = {int(r.offset): r for r in right.relocations}
+    for field in sorted(fields):
+        left_reloc = left_by_off.get(field)
+        right_reloc = right_by_off.get(field)
+        ok = False
+        if left_reloc is not None and _addr16_materialized_ok(
+            left_reloc, right.code, canonical_symbols, layout
+        ):
+            ok = True
+        if right_reloc is not None and _addr16_materialized_ok(
+            right_reloc, left.code, canonical_symbols, layout
+        ):
+            ok = True
+        if not ok:
+            return False
+    return True
+
+
 def _byte_identical_with_relocs(
     left: FunctionBytes,
     right: FunctionBytes,
     *,
     canonical_symbols: dict[str, str] | None = None,
+    linker_layout: "LinkerLayout | None" = None,
 ) -> bool:
     """Byte-identical bodies AND matching relocation destinations (r5 Finding 2).
 
@@ -344,15 +461,36 @@ def _byte_identical_with_relocs(
     when both sides have usable names, on the **canonical** destination.
     ``(null)`` / empty retail names are wildcards for the name slot only —
     type and addend still must match.
+
+    Two representation-level extensions (category A, fail-closed):
+
+    * bodies that differ only in ADDR16 linker-absolute fields (one side baked
+      the immediate, the other leaves zero + a reloc) are accepted when the
+      materialized immediates match — the linked bytes are identical;
+    * destinations that spell different names but resolve to the same linked
+      address (``lbl_eu_*`` vs the decomp's own label) are equivalent.
     """
-    if left.code != right.code:
+    codes_differ = left.code != right.code
+    if codes_differ and not _addr16_only_differences(left, right, canonical_symbols, linker_layout):
         return False
     left_by_off = {int(r.offset): r for r in left.relocations}
     right_by_off = {int(r.offset): r for r in right.relocations}
-    if set(left_by_off) != set(right_by_off):
-        return False
-    for offset, left_reloc in left_by_off.items():
-        right_reloc = right_by_off[offset]
+    for offset in sorted(set(left_by_off) | set(right_by_off)):
+        left_reloc = left_by_off.get(offset)
+        right_reloc = right_by_off.get(offset)
+        if left_reloc is None or right_reloc is None:
+            # ADDR16 presence asymmetry (the other side baked the immediate)
+            # was validated byte-by-byte by _addr16_only_differences above;
+            # every other reloc class must be present on both sides.
+            present = left_reloc if left_reloc is not None else right_reloc
+            from tools.coop.lib.reloc_canon import ADDR16_HA, ADDR16_HI, ADDR16_LO, type_class
+
+            if type_class(int(present.relocation_type)) not in (ADDR16_HA, ADDR16_HI, ADDR16_LO):
+                return False
+            other_code = right.code if left_reloc is not None else left.code
+            if not _addr16_materialized_ok(present, other_code, canonical_symbols, linker_layout):
+                return False
+            continue
         if int(left_reloc.relocation_type) != int(right_reloc.relocation_type):
             return False
         left_addend = 0 if left_reloc.addend is None else int(left_reloc.addend)
@@ -363,8 +501,13 @@ def _byte_identical_with_relocs(
         right_dest = _normalize_reloc_dest(right_reloc.symbol, canonical_symbols)
         if left_dest is None or right_dest is None:
             continue
-        if not _reloc_dests_equivalent(left_dest, right_dest):
-            return False
+        if _reloc_dests_equivalent(left_dest, right_dest):
+            continue
+        left_addr = _resolve_reloc_address(left_dest, linker_layout)
+        right_addr = _resolve_reloc_address(right_dest, linker_layout)
+        if left_addr is not None and left_addr == right_addr:
+            continue
+        return False
     return True
 
 
@@ -3493,6 +3636,7 @@ def certify_unit_symbol(
             identity_canonical = None
         bytes_identical = _byte_identical_with_relocs(
             left, right, canonical_symbols=identity_canonical,
+            linker_layout=_linker_layout_for_project(project),
         )
         if not bytes_identical:
             # Pre-SMT register-renaming witness (docs/ppc_equiv_work/31).  The

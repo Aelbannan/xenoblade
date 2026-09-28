@@ -1,5 +1,5 @@
 {
-  "count": 2187,
+  "count": 2194,
   "entries": {
     "BTU_str_cmd_timeout": {
       "R_PPC_ADDR16_HA": {
@@ -3058,12 +3058,13 @@
       "R_PPC_EMB_SDA21": {
         "addend_delta": 0,
         "alternatives": [],
-        "count": 6,
+        "count": 7,
         "kind": "data",
         "retail_addend": 0,
         "retail_symbol": "lbl_eu_8066A200",
         "units": [
           "main/monolib/src/math/CAttrTransform",
+          "main/monolib/src/math/CCamUtil",
           "main/monolib/src/math/CMat34"
         ]
       }
@@ -24498,7 +24499,7 @@
         ]
       }
     },
-    "main/monolib/src/lib/CLibCriStreamingPlay@3004": {
+    "main/monolib/src/lib/CLibCriStreamingPlay@2923": {
       "R_PPC_EMB_SDA21": {
         "addend_delta": 0,
         "alternatives": [],
@@ -24734,34 +24735,6 @@
         ]
       }
     },
-    "main/monolib/src/lod/UnkClass_80466348@1889": {
-      "R_PPC_EMB_SDA21": {
-        "addend_delta": 0,
-        "alternatives": [],
-        "count": 2,
-        "kind": "data",
-        "retail_addend": 0,
-        "retail_symbol": "lbl_eu_8066A638",
-        "scoped": true,
-        "units": [
-          "main/monolib/src/lod/UnkClass_80466348"
-        ]
-      }
-    },
-    "main/monolib/src/lod/UnkClass_80466348@1963": {
-      "R_PPC_EMB_SDA21": {
-        "addend_delta": 0,
-        "alternatives": [],
-        "count": 3,
-        "kind": "data",
-        "retail_addend": 0,
-        "retail_symbol": "lbl_eu_8066A628",
-        "scoped": true,
-        "units": [
-          "main/monolib/src/lod/UnkClass_80466348"
-        ]
-      }
-    },
     "main/monolib/src/lod/code_804645CC@8628": {
       "R_PPC_EMB_SDA21": {
         "addend_delta": 0,
@@ -24923,6 +24896,154 @@
         "scoped": true,
         "units": [
           "main/monolib/src/math/CAttrTransform"
+        ]
+      }
+    },
+    "main/monolib/src/math/CCamUtil@2533": {
+      "R_PPC_EMB_SDA21": {
+        "addend_delta": 0,
+        "alternatives": [],
+        "count": 6,
+        "kind": "data",
+        "retail_addend": 0,
+        "retail_symbol": "lbl_eu_8066A190",
+        "scoped": true,
+        "units": [
+          "main/monolib/src/math/CCamUtil"
+        ]
+      }
+    },
+    "main/monolib/src/math/CCamUtil@2534": {
+      "R_PPC_EMB_SDA21": {
+        "addend_delta": 0,
+        "alternatives": [],
+        "count": 2,
+        "kind": "data",
+        "retail_addend": 0,
+        "retail_symbol": "lbl_eu_8066A194",
+        "scoped": true,
+        "units": [
+          "main/monolib/src/math/CCamUtil"
+        ]
+      }
+    },
+    "main/monolib/src/math/CCamUtil@2535": {
+      "R_PPC_EMB_SDA21": {
+        "addend_delta": 0,
+        "alternatives": [],
+        "count": 2,
+        "kind": "data",
+        "retail_addend": 0,
+        "retail_symbol": "lbl_eu_8066A198",
+        "scoped": true,
+        "units": [
+          "main/monolib/src/math/CCamUtil"
+        ]
+      }
+    },
+    "main/monolib/src/math/CCamUtil@2536": {
+      "R_PPC_EMB_SDA21": {
+        "addend_delta": 0,
+        "alternatives": [],
+        "count": 4,
+        "kind": "data",
+        "retail_addend": 0,
+        "retail_symbol": "lbl_eu_8066A19C",
+        "scoped": true,
+        "units": [
+          "main/monolib/src/math/CCamUtil"
+        ]
+      }
+    },
+    "main/monolib/src/math/CCamUtil@2537": {
+      "R_PPC_EMB_SDA21": {
+        "addend_delta": 0,
+        "alternatives": [],
+        "count": 2,
+        "kind": "data",
+        "retail_addend": 0,
+        "retail_symbol": "lbl_eu_8066A1A0",
+        "scoped": true,
+        "units": [
+          "main/monolib/src/math/CCamUtil"
+        ]
+      }
+    },
+    "main/monolib/src/math/CCamUtil@STRING@AsinRad__Q24nw4r4mathFf": {
+      "R_PPC_ADDR16_HA": {
+        "addend_delta": 0,
+        "alternatives": [],
+        "count": 1,
+        "kind": "data",
+        "retail_addend": 15520,
+        "retail_symbol": "lbl_eu_8052ADB0",
+        "scoped": true,
+        "units": [
+          "main/monolib/src/math/CCamUtil"
+        ]
+      },
+      "R_PPC_ADDR16_LO": {
+        "addend_delta": 0,
+        "alternatives": [],
+        "count": 1,
+        "kind": "data",
+        "retail_addend": 14464,
+        "retail_symbol": "lbl_eu_8052ADB0",
+        "scoped": true,
+        "units": [
+          "main/monolib/src/math/CCamUtil"
+        ]
+      }
+    },
+    "main/monolib/src/math/CCamUtil@STRING@AsinRad__Q24nw4r4mathFf@0": {
+      "R_PPC_ADDR16_HA": {
+        "addend_delta": 0,
+        "alternatives": [],
+        "count": 1,
+        "kind": "data",
+        "retail_addend": 14435,
+        "retail_symbol": "lbl_eu_8052AD88",
+        "scoped": true,
+        "units": [
+          "main/monolib/src/math/CCamUtil"
+        ]
+      },
+      "R_PPC_ADDR16_LO": {
+        "addend_delta": 0,
+        "alternatives": [],
+        "count": 1,
+        "kind": "data",
+        "retail_addend": 19654,
+        "retail_symbol": "lbl_eu_8052AD88",
+        "scoped": true,
+        "units": [
+          "main/monolib/src/math/CCamUtil"
+        ]
+      }
+    },
+    "main/monolib/src/math/CCol3@...bss.0": {
+      "R_PPC_ADDR16_HA": {
+        "addend_delta": 0,
+        "alternatives": [],
+        "count": 1,
+        "kind": "data",
+        "retail_addend": 15326,
+        "retail_symbol": "lbl_eu_80656C40",
+        "scoped": true,
+        "units": [
+          "main/monolib/src/math/CCol3"
+        ]
+      },
+      "R_PPC_ADDR16_LO": {
+        "addend_delta": 0,
+        "alternatives": [],
+        "count": 1,
+        "kind": "data",
+        "retail_addend": 49184,
+        "retail_symbol": "lbl_eu_80656C40",
+        "scoped": true,
+        "units": [
+          "main/monolib/src/math/CCol3"
         ]
       }
     },
@@ -25203,6 +25324,32 @@
         "scoped": true,
         "units": [
           "main/monolib/src/math/CVec3"
+        ]
+      }
+    },
+    "main/monolib/src/math/CVec4@...bss.0": {
+      "R_PPC_ADDR16_HA": {
+        "addend_delta": 0,
+        "alternatives": [],
+        "count": 1,
+        "kind": "data",
+        "retail_addend": 49184,
+        "retail_symbol": "zero__Q22ml5CVec4",
+        "scoped": true,
+        "units": [
+          "main/monolib/src/math/CVec4"
+        ]
+      },
+      "R_PPC_ADDR16_LO": {
+        "addend_delta": 0,
+        "alternatives": [],
+        "count": 1,
+        "kind": "data",
+        "retail_addend": 49152,
+        "retail_symbol": "zero__Q22ml5CVec4",
+        "scoped": true,
+        "units": [
+          "main/monolib/src/math/CVec4"
         ]
       }
     },
@@ -28193,45 +28340,6 @@
         ]
       }
     },
-    "sPowerCallbackCalled__9CErrorWii": {
-      "R_PPC_EMB_SDA21": {
-        "addend_delta": 0,
-        "alternatives": [],
-        "count": 3,
-        "kind": "data",
-        "retail_addend": 0,
-        "retail_symbol": "lbl_eu_80665A64",
-        "units": [
-          "main/monolib/src/util/CErrorWii"
-        ]
-      }
-    },
-    "sResetCallbackCalled__9CErrorWii": {
-      "R_PPC_EMB_SDA21": {
-        "addend_delta": 0,
-        "alternatives": [],
-        "count": 3,
-        "kind": "data",
-        "retail_addend": 0,
-        "retail_symbol": "lbl_eu_80665A65",
-        "units": [
-          "main/monolib/src/util/CErrorWii"
-        ]
-      }
-    },
-    "sUnkFlag__9CErrorWii": {
-      "R_PPC_EMB_SDA21": {
-        "addend_delta": 0,
-        "alternatives": [],
-        "count": 1,
-        "kind": "data",
-        "retail_addend": 0,
-        "retail_symbol": "lbl_eu_80665A66",
-        "units": [
-          "main/monolib/src/util/CErrorWii"
-        ]
-      }
-    },
     "sUnkFlags__Q22cf13CfGameManager": {
       "R_PPC_EMB_SDA21": {
         "addend_delta": 0,
@@ -28893,19 +29001,6 @@
         ]
       }
     },
-    "spInstance__9CErrorWii": {
-      "R_PPC_EMB_SDA21": {
-        "addend_delta": 0,
-        "alternatives": [],
-        "count": 16,
-        "kind": "data",
-        "retail_addend": 0,
-        "retail_symbol": "lbl_eu_80665A60",
-        "units": [
-          "main/monolib/src/util/CErrorWii"
-        ]
-      }
-    },
     "spInstance__Q217CWorkRootThreadNS15CWorkRootThread": {
       "R_PPC_EMB_SDA21": {
         "addend_delta": 0,
@@ -28970,9 +29065,9 @@
       }
     }
   },
-  "function_pairs": 13347,
-  "generated": "2026-09-22T13:57:49.503567",
+  "function_pairs": 13352,
+  "generated": "2026-09-28T09:23:13.211160",
   "region": "us",
-  "units_scanned": 1120,
+  "units_scanned": 1128,
   "version": 1
 }

@@ -104,7 +104,6 @@ RENAME_FIELDS = {
     "pool_patterns",
     "data_pool_patterns",
     "add_symbols",
-    "globalize_symbols",
     "symbol_sizes",
     "set_data_align",
 }

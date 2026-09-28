@@ -1,5 +1,5 @@
 {
-  "count": 2194,
+  "count": 2198,
   "entries": {
     "BTU_str_cmd_timeout": {
       "R_PPC_ADDR16_HA": {
@@ -22238,6 +22238,34 @@
         ]
       }
     },
+    "main/kyoshin/cf/CPartsChange@5159": {
+      "R_PPC_EMB_SDA21": {
+        "addend_delta": 0,
+        "alternatives": [],
+        "count": 5,
+        "kind": "data",
+        "retail_addend": 0,
+        "retail_symbol": "lbl_eu_80667B58",
+        "scoped": true,
+        "units": [
+          "main/kyoshin/cf/CPartsChange"
+        ]
+      }
+    },
+    "main/kyoshin/cf/CPartsChange@5185": {
+      "R_PPC_EMB_SDA21": {
+        "addend_delta": 0,
+        "alternatives": [],
+        "count": 1,
+        "kind": "data",
+        "retail_addend": 0,
+        "retail_symbol": "lbl_eu_80667AC8",
+        "scoped": true,
+        "units": [
+          "main/kyoshin/cf/CPartsChange"
+        ]
+      }
+    },
     "main/kyoshin/cf/CTaskCulling@...bss.0": {
       "R_PPC_ADDR16_HA": {
         "addend_delta": 0,
@@ -24732,6 +24760,34 @@
         "scoped": true,
         "units": [
           "main/monolib/src/lod/LODMemMan"
+        ]
+      }
+    },
+    "main/monolib/src/lod/UnkClass_80466348@1889": {
+      "R_PPC_EMB_SDA21": {
+        "addend_delta": 0,
+        "alternatives": [],
+        "count": 2,
+        "kind": "data",
+        "retail_addend": 0,
+        "retail_symbol": "lbl_eu_8066A638",
+        "scoped": true,
+        "units": [
+          "main/monolib/src/lod/UnkClass_80466348"
+        ]
+      }
+    },
+    "main/monolib/src/lod/UnkClass_80466348@1963": {
+      "R_PPC_EMB_SDA21": {
+        "addend_delta": 0,
+        "alternatives": [],
+        "count": 3,
+        "kind": "data",
+        "retail_addend": 0,
+        "retail_symbol": "lbl_eu_8066A628",
+        "scoped": true,
+        "units": [
+          "main/monolib/src/lod/UnkClass_80466348"
         ]
       }
     },
@@ -29065,8 +29121,8 @@
       }
     }
   },
-  "function_pairs": 13352,
-  "generated": "2026-09-28T09:23:13.211160",
+  "function_pairs": 13389,
+  "generated": "2026-09-28T22:06:02.765231",
   "region": "us",
   "units_scanned": 1128,
   "version": 1

@@ -2,8 +2,26 @@
 
 **Hand to:** one agent working with the repo owner (a policy decision is
 required before mass changes). **Goal:** make data ownership explicit so the
-295 `extern_data_sections` entries stop producing vacuous data matches and can
-be retired. Prerequisite reading: `docs/handoff/unit_rules/README.md`.
+295 `extern_data_sections` entries (36 standalone, 52 live) stop producing
+vacuous data matches and can be retired. Prerequisite reading:
+`docs/handoff/unit_rules/README.md`.
+
+**Status (2026-09-28) — what category A left you:** A is closed
+(`docs/evidence/decomp/unit_rules_category_a.md`). Relevant outcomes:
+
+* **Inherited item:** `CErrorWii.o` still defines 7 bytes of `.sbss` that the
+  retail split has as size 0. A removed the rename that caused the
+  `lbl_eu_80665A60..66` duplicate link error; the source must now declare those
+  statics `extern "C" lbl_eu_*` with no definition so the shared data object
+  owns them (A §8).
+* The per-unit `globalize_symbols` field **no longer exists**: a stripped symbol
+  that a reloc still targets is promoted to GLOBAL generically at the end of
+  `postprocess_object` (A §6.7), so retiring EDS never depends on that field.
+* The scoped-key routing bug is fixed (`unit_has_rules()` is shared by the link
+  and the checker), so an EDS inventory must treat `Foo.o#<substring>` keys as
+  applying to the link too.
+* A's comparator (`reloc_canon.py`, `data_match.canonical_reloc_key`) is
+  available if an ownership diff is only reloc-name drift.
 
 ## The situation
 
@@ -60,6 +78,10 @@ architectural decision plus a gate that cannot see the difference.
    `tools/coop/readme_status.py`, `README.md`, and `docs/MWCC_CASES.md`'s
    data-TU sections so code-only units are visibly code-only. The headline
    percentage must not absorb them.
+6. **Inherited single-unit item (A §8).** `CErrorWii.o`: declare the 7 `.sbss`
+   bytes as `extern "C" lbl_eu_*` (no definition) so the shared data object
+   owns them; the table key is already gone, so the raw `.sbss` size gate is
+   the only thing left to fix.
 
 ## Coordination
 
@@ -87,3 +109,64 @@ architectural decision plus a gate that cannot see the difference.
 **Report back:** owner decision, inventory summary, checker name, batches
 (gone/left), link-verification evidence, and the before/after progress
 numbers.
+
+---
+
+## Handed over from category B (2026-09-28)
+
+B's scope excludes `extern_data_sections`, but three of its classes land on
+this model. Per-entry data in
+`docs/evidence/decomp/unit_rules_category_b_packets.md`; full context in
+`docs/evidence/decomp/unit_rules_category_b.md` §6b/§7.
+
+### 1. HANDOFF-D — 15 entries whose drop-targets are unreferenced here
+
+`CScnItemCameraNw4r.o`, `CScnRootNw4r.o`, `OSReset.o`, `bta_sys_main.o`,
+`btm_devctl.o`, `btm_pm.o`, `dsp.o`, `dvdDeviceError.o`, `e_pow.o`, `fs.o`,
+`hcisu_h2.o`, `rfc_ts_frames.o`, `snd_MemorySoundArchive.o`,
+`snd_MmlSeqTrackAllocator.o`, `yvm2.o` — `dropped/referenced` is 0 in every
+row (see the packet table): the rules drop weak vtables/RTTI names the retail
+linker GC'd, or objects that live in the dissolved shared data files
+(`monolibdata*.s`, `nw4r_data.s`). These need the ownership decision (declare
+extern + which shared object owns them), not a B-side deletion. Note B's
+constraint: do not delete `extern_data_sections` from a unit whose source
+still defines the data.
+
+### 2. Mixed entries and the larger missing-data cases
+
+* `CfRes.o` `.data` retail 0x220 vs decomp 0x50 and `snd_FxReverbStdDpl2.o`
+  `.data` 0x28 vs 0x10 — the missing bytes are not padding; the retail slices
+  carry dissolved data (vtable/typeinfo/other units' blocks). These decide
+  whether the unit's source should declare them extern or whether the split
+  bookkeeping owns them.
+* `CDeviceVI.o` (`.data` 0x170/0x194, `.rodata` 0xB9/0xF1, `.sdata` 0x18/0x28),
+  `ut_RomFont.o` (`.data` 0xC8/0x124), `CModelDispMakeCrystal.o`
+  (`.sdata2` 0xA4/0xB8), `ax_rna.o` (`.rodata` 0x584/0x58B, `.bss` 0xE50/0xE54),
+  `code_80296898.o` (`zero_nobits`), `ut_DvdFileStream.o` (`retarget_relocs` to
+  a shared symbol), `CDesktop.o` / `code_804B2FF0.o` (dissolved-TU hand-built
+  vtables that need unspellable `@unnamed@` manglings) — all 8 rows are in the
+  packets doc's "Mixed packets" table.
+* `CCol4.o` — no source object exists, the link uses the retail split object;
+  triage when the unit is linked from source (a rule can never be re-added).
+* **EDS-bearing `set_data_align` keys (6):** `CETrail.o`, `CScnFilter.o`,
+  `CMdlMouth.o`, `CMdlDynamics.o`, `code_804BD8E8.o`, `snd_StrmPlayer.o` — the
+  `set_data_align` field is B's (§5 of B's doc, LCF/exception decision), the
+  `extern_data_sections` payload is yours; do not read the field as a data
+  decision. `CDeviceGX.o`'s `set_data_align` was **retired** (both pairs were
+  no-ops on the current object) — its payload is unaffected.
+
+### 3. FYI — two decisions B already executed (2026-09-28)
+
+* **`CLibCriMoviePlay.o` `.sbss`:** the source's missing `extern` on
+  `cacheInstance__9CDeviceGX` (a real source bug, retail's object references it
+  as UNDEF) was fixed, and because the unit's retail `.sbss` slice carried 4
+  bytes nothing in the DOL references, `config/us/symbols.txt`
+  (`lbl_eu_806656E0` size 0x8→0x4) and `config/us/splits.txt`
+  (`.sbss` end 0x806656E8→0x806656E4) now leave those 4 bytes as an unowned gap.
+  Raw gate MATCH; this is the correct model for a NOBITS slice whose tail is
+  linker padding (compare `CDeviceVI.o`, where dtk already left a 3-byte gap).
+* **`CHelp_ClosePartyMenu.o`:** the duplicate
+  `isPartyMenuReady__Q22cf19CHelp_OpenPartyMenuFv` in `symbols.txt` was
+  mis-named; it is now `isPartyMenuReady__Q22cf20CHelp_ClosePartyMenuFv`. The
+  decomp source for that class should grow the matching method when someone
+  matches the 0x48-byte function.

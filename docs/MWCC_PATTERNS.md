@@ -4468,3 +4468,257 @@ cf::/nw4r:: classes with named slots; conversion-flavor preservation when foldin
 - Confidence: repo_proven
 - Applies to/a.k.a.: any TU with `_vcallNN`-style shared dispatchers (CfRes, CModelDisp, IResInfo callers);
   MWCC_CASES "CScnFilterMan" noinline-callee recipe extended to vtable dispatch.
+
+## Sentinel-first declaration order fixes a whole GPR colour set (Wii/1.1 -O4,p)
+- Symptom:   A list-walk helper is byte-perfect except every register is off by one position
+  (`sentinel r7 / e r3 / node r4 / result r5 / id r6` vs retail `sentinel r3 / e r4 / node r5 / result r6 / id r7`),
+  i.e. one value takes the `r3` the others each want, pushing the rest up.
+- Cause:     MWCC colours locals in declaration order, but a pointer loaded from a parameter register
+  *coalesces* onto the dying parameter only when it is the first-declared local. Declaring the walk
+  cursor/entry/result before `sentinel` makes the sentinel take the next free colour instead of `r3`.
+- Fix:       Declare the loop's sentinel pointer first, then the remaining locals in retail's colour order:
+  `Node* sentinel; Entry* e; Node* node; void* result = 0; u32 id = *(u16*)(obj + 0x45C0);`
+  (`result`/`id` initialisers may still sit later in the body; only the declaration order matters).
+- Result:    FULL_MATCH (CPartsChange_FindActorByObj 0x78/0x78, 0 structural after the reorder)
+- Confidence: repo_proven
+- Applies to/a.k.a.: any "walk a sentinel list, compare a key, return a pointer" helper; pairs with the
+  CScnFilterMan/`next`-before-`node` declaration-order case.
+
+## Interface-class vtable offset convention: add a 2-word header (Wii/1.1, -RTTI on)
+- Symptom:   Calling the Nth virtual of a TU-local interface class emits `lwz r12, 0x28(r12)` where retail
+  reads `lwz r12, 0x20(r12)` (and `0x2c` vs `0x24`), with the class's first dummy virtual otherwise unused.
+- Cause:     MWCC vtable layout reserves two words of header before the first declared virtual, so the
+  first `virtual void v0()` lives at object+0x8. Retail's slot 8 (`0x20`) is therefore the *6th* declared
+  virtual in our spelling.
+- Fix:       Declare `dummies = slot_index - 2` placeholder virtuals before the method you need
+  (`for slot 0x20: v0..v5, then getCount(), getName(u32)`), and document the arithmetic near the class.
+- Result:    CPartsChange_ResolveSlotNames dispatches at retail's 0x20/0x24 (was 0x28/0x2c).
+- Confidence: repo_proven
+- Applies to/a.k.a.: every opaque interface class in the catalog TUs; CScnEnvLgtCtrlListItem's
+  "v24 slot (0x68)" comment is the same convention.
+
+## Byte-view of a returned u32 gives retail's big-endian `stw`+`lbz` (Wii/1.1)
+- Symptom:   Retail stores a call result to a stack slot and immediately `lbz`es it back
+  (`stw r3,8(r1); lbz r0,8(r1); cmplwi r0,3`) where a `(u8)` cast gives a single `rlwinm r0,r3,0,24,31`.
+- Cause:     `stw`+`lbz` reads the *most significant* byte (lowest address, big-endian); `(u8)` takes the
+  least significant. Only a memory byte view can produce the store.
+- Fix:       Keep the u32 in a named local and read its first byte: `u32 val = fn(...); u8 v = *(u8*)&val;`
+  Then a u16 mask (`flags &= ~0x4;`) emits `andi.` rather than `rlwinm`, and a `<=` float test
+  (`if (f <= 0.0f)`) emits `fcmpo` + `cror eq,lt,eq` + `bne` (the `cror` is absent for `<`).
+- Result:    FULL_MATCH (CPartsChange_CheckNameEntry 0x64/0x64, CPartsChange_FireIdEffect 0x98/0x98)
+- Confidence: repo_proven
+- Applies to/a.k.a.: BDAT column reads, any "compare the first byte of a u32 result" guard.
+
+## Search-result fall-through: assign the miss value AFTER the loop (Wii/1.1 -O4,p)
+- Symptom:   A "find an element, else NULL" helper is instruction-identical to retail except one
+  `li rX,0` sits in the prologue instead of in the not-found block (all branch displacements shift).
+- Cause:     `T* found = 0; if (key) { for (...) { if (hit) { found = p; break; } } }` lets MWCC hoist the
+  initialiser to the top; retail's copy is in the fall-through block after the loop.
+- Fix:       Leave the local uninitialised, `goto done` out of the loop on a hit, and assign the miss value
+  once after the `if`:
+  `T* found; if (key != 0) { ... if (hit) { found = p; goto done; } ... } found = 0; done:;`
+  The hit path then branches *past* retail's single `li rX,0`, and the key==0 path shares that block.
+- Result:    FULL_MATCH (CPartsChange_SpawnById 0xD0/0xD0, 0 structural)
+- Confidence: repo_proven
+
+## 12-byte aggregate copy is four word moves in a fixed order (Wii/1.1)
+- Symptom:   `*dst = *src;` on a 0x20-byte record copies every field (0x104 bytes instead of 0xDC).
+- Cause:     Retail only copies the 12-byte position member (matching CPartsChange_CopyHeaderAndLoad).
+- Fix:       Spell the copy on u32 words: `u32 w0 = s[0]; u32 w1 = s[1]; d[1] = w1; d[0] = w0; d[2] = s[2];`
+  (second word stored before the first, then the third) -- MWCC's own 3-word copy shape.
+- Result:    ComputeSpawnPose A/B/C/D all FULL_MATCH
+- Confidence: repo_proven
+
+## FPR scratch colouring follows declaration order, newest-highest (Wii/1.1 -O4,p)
+- Symptom:   Two function-scope float locals live across `bl` calls with identical code shape but swapped
+  nonvolatile FPRs (angle in f30/radius f31 vs the reverse).
+- Cause:     MWCC colours the first-declared of the pair HIGHER (f31) and the second f30, independently of
+  the order the arithmetic blocks are emitted.
+- Fix:       Declare the value retail keeps in f31 first (`f32 radius = ...; f32 angle = ...;`).
+- Result:    FULL_MATCH (ComputeSpawnPoseB 0xDC/0xDC; 89.1% -> 100% from the reorder alone)
+- Confidence: repo_proven
+
+## Class destructors: define the raw D0 symbol so no second vtable is emitted (Wii/1.1)
+- Symptom:   A TU cannot implement `~Class()` normally because MWCC then emits `__vt__Q22...` next to the
+  injected retail vtable data object (duplicate/foreign data in the unit).
+- Cause:     The class's key function is the destructor, so defining it in the TU makes the compiler emit
+  the vtable there; the retail vtable is supplied as a data blob (`lbl_eu_8053xxxx`).
+- Fix:       Define the destructor through its raw retail symbol instead:
+  `extern "C" void* __dt__Q22cf12CPartsChangeFv(void* self, int flags) { if (self != 0) { if (flags > 0)
+  __dl__FPv(self); } return self; }` -- the class keeps its declared `virtual ~CPartsChange();` and the
+  blob provides the vtable slot.
+- Result:    FULL_MATCH (__dt__Q22cf12CPartsChangeFv 0x40/0x40)
+- Confidence: repo_proven
+
+## Arbitrary vtable slots need a pure-virtual slab view class (Wii/1.1, -RTTI on)
+- Symptom:   A call site loads a high slot (`lwz r12,0x2bc(r12)`), and no declared method can reach it.
+- Cause:     With -RTTI the two-word header puts declared index N at (N+2)*4, so 0x2bc is index 173.
+- Fix:       Add a view class with index+1 pure virtuals (last one being the target slot) to the unit
+  header; pure-virtual-only classes emit no vtable. `class CPartsChangeDevView { virtual void v000() = 0;
+  ... 173 of them ...; virtual int mAt2BC() = 0; };` then `((CPartsChangeDevView*)self)->mAt2BC()`.
+  (Same recipe as CSysWinScenarioLog.hpp's CSysWinDevView.)
+- Result:    CPartsChange_ResetBattleEntry dispatches at retail's 0x2bc
+- Confidence: repo_proven
+
+## Materialised bool vs the `||` initialiser (Wii/1.1 -O4,p)
+- Symptom:   Retail stores a 0/1 flag through a saved register (`li r31,0` ... `li r31,1` ... `cmpwi r31,0`)
+  where the decomp folds the condition into a `neg/or/srwi` bool.
+- Cause:     A `bool flag = a || b;` initialiser is folded; a separate `flag = false;` plus
+  `if (a || b) flag = true;` materialises the value in a register.
+- Fix:       `bool flag = false; if (a || b) { flag = true; } if (flag) { ... }`
+- Result:    FULL_MATCH (CPartsChange_ResetBattleEntry 0xC8/0xC8, 14% -> 100%)
+- Confidence: repo_proven
+
+## Re-load a repeatedly used pointer; do not cache it in a local (Wii/1.1 -O4,p)
+- Symptom:   A helper that calls `*(Iface**)(self+8)->method(...)` several times keeps the interface
+  pointer in an extra saved register (4 saved GPRs, +8 bytes) where retail re-loads it before every call.
+- Cause:     A local `Iface* src = *(Iface**)(self+8);` makes the value call-crossing, so MWCC gives it a
+  nonvolatile register and an extra prologue save; the original dereferenced the member inline each time.
+- Fix:       Write the load at every use site (`((Iface*)*(u32*)(self + 8))->method(...)`), keeping only the
+  cheap guard test (`if (*(u32*)(self + 8) == 0) return;`).
+- Result:    FULL_MATCH (CPartsChange_NotifySlotStates 0x10C/0x10C; 10.1% -> 100%)
+- Confidence: repo_proven
+
+## Dead CR re-tests around a `&&` guard (Wii/1.1 -O4,p)
+- Symptom:   Retail keeps two *unreachable* `beq cr6/cr1` branches (re-testing an already-passed
+  conjunction) between the last conjunct's branch and the loop body; omitting them costs 8 bytes.
+- Cause:     MWCC evaluates the conjuncts into CR fields and re-materialises the tests when the block is
+  entered from the later conjunct's fall-through.
+- Note:      The single-`if (A && B) { if (C == 0) { loop } ... }` form and the split `if (A && B) {...}
+  if (A && B) {...}` form bracket the retail size (0x128 / 0x13C vs 0x130) but neither emits the dead pair.
+  Parked for CPartsChange_SyncSlotState; treat as a codegen artifact, not a source-shape error.
+- Confidence: repo_proven (negative result)
+
+## Early exit + fall-through must share one return block: use `goto` (Wii/1.1 -O4,p)
+- Symptom:   A search helper is 2 instructions (8 bytes) too big: the `-1`/NULL return is emitted twice --
+  once as the early guard's inline `li rX,-1; blr` and once as the loop's fall-through tail.
+- Cause:     `if (key == 0) return -1;` and `return -1;` are separate return statements; MWCC blocks them
+  separately when the guard is a plain early return.
+- Fix:       Route the guard through the same label: `if (key == 0) goto notfound; ... notfound: return -1;`
+  (a single block, matching retail's `beq` straight to the tail).
+- Result:    FULL_MATCH (CPartsChange_FindVoiceIndex 0xE4/0xE4; 1.7% -> 100%)
+- Confidence: repo_proven
+
+## Narrow return types cost an extra mask; widen the prototype (Wii/1.1 -O4,p)
+- Symptom:   Retail masks a call result per *comparison* (`clrlwi r0,r3,16` before each
+  `cmplwi r0,N`) where the decomp masks once at the assignment (`rlwinm r3,r3,0,16,31` in place).
+- Cause:     Declaring the callee as returning `u16` makes MWCC narrow r3 at the assignment; the original
+  declaration was wider and each use site cast to u16.
+- Fix:       Declare the callee `extern "C" u32 f();` (same linker symbol) and cast the value at each
+  comparison, e.g. `if ((u16)v == 0)`. Likewise a signed-valued first parameter must be typed `s32` to get
+  `cmpi` instead of `cmpli`.
+- Result:    FULL_MATCH (func_801949E0 0x11C/0x11C; 21.1% -> 94.4% -> 100%)
+- Confidence: repo_proven
+
+## Fused vs split multiply-add: a named temp defeats fmadds (Wii/1.1 -O4,p)
+- Symptom:   `a * b + c` in one expression emits `fmadds`; retail has `fmuls` + `fadds` (two ops).
+- Cause:     MWCC fuses at -O4,p; the original computed the product in its own statement, so the
+  value died before the add and no fusion was possible.
+- Fix:       `f32 off = a * b; f32 out = c + off;` (the temp gets a volatile FPR; it is not
+  live across a call so it does not perturb the nonvolatile allocation).
+- Result:    func_80198AE0 16.0% -> 66.7%, size-exact
+- Confidence: repo_proven
+
+## Function-scope float pairs are colored per function, not by a global rule
+- `dx`-before-`dz` gives dx=f30 in func_801990F0 (`f30` first = LOWER), while ComputeSpawnPose
+  needs the opposite declaration order for the same physical layout. Check the retail pair order
+  per function instead of assuming the rule; a two-line swap is the cheapest probe.
+- Confidence: repo_proven (func_801990F0 82.3% -> 89.9%)
+
+## Div-heavy helpers: put the div source statement FIRST, the copy second
+- func_80198AE0 16% -> 50.6% just by moving the 12-byte copy below the `v = field_14` / mod
+  computations; retail schedules the `lwz r9, 0x14(r3)` before any copy store. This mirrors
+  ComputeSpawnPoseA/B where the copy is first and the divs are absent -- i.e. match the retail
+  load order, not a house style.
+- Confidence: repo_proven
+
+## Indexed stores: write `slots[i]` / `slots[i+1]`, not `*(p + i)` (Wii/1.1 -O4,p)
+- Symptom:   Two adjacent word stores; retail emits `stwx r5,r3,r0` (indexed) and only THEN
+  `add r4,r3,r0; stw r5,4(r4)`, while the pointer-arithmetic source hoists the `add` before the
+  first store (2-instruction transpose, 94.3% forever, no witness possible).
+- Cause:     `*(u32*)(actor + i*8)` and `*(u32*)(actor + i*8 + 4)` are two independent address
+  computations the scheduler is free to hoist; the array form keeps the slot clear as one
+  indexed store plus one base+offset store in source order.
+- Fix:       introduce `u32* slots = (u32*)actor;` and write `slots[i * 2] = 0; slots[i * 2 + 1] = 0;`
+- Result:    CPartsChange_UnregisterEntry 94.3% -> 100.0% (0x8C/0x8C)
+- Confidence: repo_proven
+
+## Re-read array counts instead of caching them in a local (Wii/1.1 -O4,p)
+- Symptom:   A growable-array helper ends 2 instructions long and saves extra nonvolatile GPRs
+  (r28/r29/r30 instead of r30/r31): MWCC hoisted `u32 n = *(u32*)(self+0x9800)` out of reach and
+  kept it live across the memset calls, spilling into nonvolatiles.
+- Cause:     A named local is a *snapshot*, so MWCC may keep it in a register across calls. Retail
+  re-loads the count in the tail (one load feeding mulli + addi) and uses a scratch register in the
+  loop prologue, i.e. the original never cached it outside the loop.
+- Fix:       Use the member expression at each use -- `u8* end = self + *(u32*)(self+0x9800)*0x4C;`
+  for the loop, then in the tail `u32 n = *(u32*)(self+0x9800); *(u32*)(self+0x9800) = n + 1;
+  memcpy(self + n*0x4C, &rec, 0x4C);` (a short-lived local whose uses all precede the call).
+- Result:    CPartsChange_InitChangeRecord 1.4% -> 100.0% (0x10C/0x10C) after the frame/back-end
+  regs converged.
+- Confidence: repo_proven
+
+## The same indexed-array rule also kills the `stwux` fusion
+- Symptom:   Retail has `stwx r0,r3,r5` + `add r5,r3,r5` (store, then materialise the element
+  address) and one MORE instruction; the pointer version emits the fused `stwux r0,r5,r3`
+  (store-with-update) and gets a different tail layout (`add r6,r3,r0; stw r5,0(r6)` instead of
+  `stwx`).
+- Cause:     `*(u32*)(self + idx) = v; u8* q = self + idx;` lets MWCC fold the address computation
+  into the store; the array form keeps the two stores as subscript operations on a `u32*`.
+- Fix:       `u32* slots = (u32*)self; slots[idx] = slots[0]; slot = 0; slots[idx+1] = slots[1];`
+  and for the record fill `slots[idx2] = id; slots[idx2+1] = 0;` with `idx = slot * 2` in u32 units.
+- Result:    CPartsChange_FindFreeSlot 68.7% -> 100.0% (0x14C/0x14C); the 16-slot scan itself was
+  already exact (a `for (i = 0; i < 16; i++)` unrolled 8x with a 2-iteration ctr block).
+- Confidence: repo_proven (2nd independent hit after UnregisterEntry)
+
+## Inlined 2-word struct swap reproduces the MWCC spill shape exactly
+- The 4 inlined copies in CPartsChange_CopyObjFields use distinct stack temp slots (0x08, 0x10,
+  0x18, 0x20) with a `stw` spill + `lfs` reload for the float half -- that is MWCC's inlined
+  `static inline void Swap(T* x, T* y) { T t = *x; *x = *y; *y = t; }` with `struct T { u32; f32; }`.
+  Writing the swap out by hand or typing the second member as `u32` does not give the `lfs`/`stfs`
+  mix; a function-pointer member (`int (*fp)(T*, T*)` at +0) plus two `== 0` bools gave 100% on the
+  first build (0x170/0x170).
+- Confidence: repo_proven
+
+## Small-data (SDA21) vs ADDR16_HA/LO: size the array in the declaration
+- Symptom:   `extern const u16 table[];` compiles to `lis/addi` (R_PPC_ADDR16_HA + _LO) where retail has
+  `li r3, table@sda21` + `lhzx` (R_PPC_EMB_SDA21).
+- Cause:     An unsized array is not a candidate for .sdata; MWCC emits a full address.
+- Fix:       Give the declaration a small size (`extern const u16 table[4];`) so the symbol lands in
+  .sdata and the access uses the SDA21 reloc.
+- Result:    CPartsChange_SpawnItemDrop 40.6% -> 58.9%, size-exact (0x17C/0x17C), 12 fewer structural.
+- Confidence: repo_proven
+
+## `(ptr + 0)` pointer-deref forces a register-relative store AND preserves the reload MWCC would CSE (__ct__80193270 reslist sentinel, Wii/1.1 -O4,p)
+- Symptom:   sentinel init `head->next = head; head->prev = head;` decompiled as two displacement stores off the base (`stw r8, -0x57f0(r9)` / `stw r8, 4(r8)`, 4 bytes short) while retail has `stw r8, 0(r8)` then `lwz r8, -0x57f0(r9)` (reload the head FIELD) then `stw r8, 4(r8)`.
+- Cause:     writing the first store as a plain *address expression* (`*(u32*)(self + 0xA810) = ...`) lets MWCC emit a displacement store and prove it does not alias the head field at self+0xA80C, so the later `*(u32**)(self + 0xA80C)` load is CSE'd away. Retail's store address is a pointer VALUE (r8), so the aliasing store forces the reload.
+- Fix:       write the self-link through a pointer deref with an explicit `+0`: `*(u32*)(*(u32**)(self + 0xA80C) + 0) = (u32)(self + 0xA810);` — this emits the `0(r8)` form *and* keeps the head-field reload. Result: 31% -> **FULL_MATCH** (0x15c/0x15c, 0 structural).
+- Confidence: repo_proven
+- Applies to/a.k.a.: any inlined doubly-linked-list sentinel init; also the general trick when retail reloads a field that decomp CSEs.
+
+## 0xC-stride u32 slot stores: index through a byte pointer or MWCC scales by 4 (__ct__80193270 actor table, Wii/1.1 -O4,p)
+- Symptom:   16-slot wipe of a `u32*` member emitted stores at +0xC0/+0xF0/+0x120… (stride 0x30) instead of retail's +0xC/+0x18/+0x24 (stride 0xC).
+- Cause:     `*(u32*)(*(u32**)(self + 0xA81C) + i * 0xC)` — pointer arithmetic on `u32*` multiplies the index by 4.
+- Fix:       `*(u32*)((u8*)*(u32**)(self + 0xA81C) + i * 0xC) = 0;` (byte pointer, MWCC still emits the unrolled displacement stores and reloads the member each time).
+- Confidence: repo_proven
+- Applies to/a.k.a.: any element stride that is not a multiple of the pointee size; pairs with the +4/-byte-cast rule for link-field stores.
+
+## Nested duplicate null check is the inlined-base-destructor shape — keep both tests (__dt__80193538, Wii/1.1 -O4,p)
+- Symptom:   4 bytes short: decomp emits ONE `bc 12, 2` for `if (list != 0) { …unlink+free… }` where retail emits TWO consecutive `bc 12, 2` to the same target (`addic. r29, …` then both branches test CR0).
+- Cause:     retail's source has the call-site null check plus the inlined callee's own `if (this != 0)` check; both read the same `addic.` CR0, so MWCC keeps both branches (no merge).
+- Fix:       write the duplicate explicitly — `if (list != 0) { if (list != 0) { …body… } }` (indentation kept for readability). Result: 50% -> **FULL_MATCH** (0x138/0x138).
+- Confidence: repo_proven
+- Applies to/a.k.a.: any inlined member that begins with a `this != 0` guard (reslist base teardowns, `delete`-style helpers).
+
+## Inline the loop bound into the `for` header to colour the induction variable low (CPartsChange_FindPartsElem, Wii/1.1 -O4,p)
+- Symptom:   0x6c/0x6c, 0 structural, 8 reg_swap: retail colours the counter r5 and the loop bound r0; decomp had the bound in r5 and the counter in r7.
+- Cause:     the bind variable `u32 n = *(u32*)(self + 0x9800);` was hoisted above the loop, so its virtual register is born first and claims the low register.
+- Fix:       inline the bound — `for (u32 i = 0; i < *(u32*)(self + 0x9800); i++)` — the induction variable is then defined first (r5) and MWCC hoists the bound load itself into r0. Result: 70.4% -> **FULL_MATCH**.
+- Confidence: repo_proven
+- Applies to/a.k.a.: compare-counted loops where the bound is a member load; also explains retail's `mtspr 19, r0` colour in CTR loops.
+
+## Duplicate the inline helper call in the else-if arm; hoist table/base; hoist single-use locals to steer colours (func_80198524, Wii/1.1 -O4,p)
+- Symptom:   stub -> 43% after the natural decode; retail re-calls findObjectById in the else arm and re-reads the id from the slot each time.
+- Cause:     the source's helper (`findObjectById(id); if (p) p -= 0x3E9C;`) is inlined at each mention, so an `else if` arm re-emits the whole sequence; a named `id` local instead produces an extra `or r3, r27, r27` per arm.
+- Fix:       inline `*(u32*)(self + i * 8)` at every helper call site (no named local), hoist the BDAT table + column base above the loop (`void* bdat = lbl_eu_806640CC; const char* col = lbl_eu_80503C48;`), and hoist the third loop's `u16 replay = 0;` to function scope. Result: 0% -> 82.1%, 0 structural, size-exact; residual is a pure GPR colour permutation.
+- Confidence: repo_proven
+- Applies to/a.k.a.: inline accessor helpers (`GetXxx(id)` with a null-adjust) used in both arms of `if/else if`; 16-slot table sweeps.

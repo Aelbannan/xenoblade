@@ -5,7 +5,6 @@
 #include <stdio.h>
 
 OSErrorHandler __OSErrorTable[OS_ERR_MAX];
-u8 oserror_bss_pad[12]; /* retail .bss 0x44 -> 0x50 (align tail); non-static so -ipa file keeps it */
 u32 __OSFpscrEnableBits = FPSCR_VE | FPSCR_OE | FPSCR_UE | FPSCR_ZE | FPSCR_XE;
 
 DECL_WEAK void OSReport(const char* msg, ...) {

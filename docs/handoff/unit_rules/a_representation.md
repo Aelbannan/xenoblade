@@ -16,7 +16,7 @@ linker-script-only symbols. The decomp `.o` from MWCC is the real compiler
 output. So some object-level diffs are *splitter artifacts*, not source
 problems — and the table rewrites the decomp object to imitate the artifact.
 
-## Scope (field usage across the whole table)
+## Scope (field usage across the whole table — initial state before this batch)
 
 | field | entries | what it pretends |
 |---|---|---|
@@ -30,6 +30,13 @@ problems — and the table rewrites the decomp object to imitate the artifact.
 | `bake_linker_addrs` | 3 | linker-script constants baked by the splitter |
 | `symbol_sizes` | 2 | symbol st_size |
 | `force_symbol_relocs` | 1 | splitter-reconstructed relocs for literals |
+
+**Status (completed 2026-09-28):** `bake_linker_addrs`, `force_symbol_relocs`
+and every `globalize_symbols` entry are gone — the last now runs generically in
+`postprocess_object` (evidence doc §6.7). Of the pure-rename elements, 3 keys
+remain (`CArtsSet.o`, `CChainTime.o`, `CtrlMoveNpc.o`), each annotated
+`LOAD-BEARING` with a source `extern "C"` handoff; `set_data_align` and
+`add_symbols` are handed to B/C/source work.
 
 Plus the pure rename-class entries: **76 entries, 29 live at link**. Entries
 that mix these fields with content/layout fields (`CProc.o`, `CView.o`,

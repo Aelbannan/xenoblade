@@ -15,7 +15,10 @@ struct Rect {
 
     Rect() : left(0.0f), top(0.0f), right(0.0f), bottom(0.0f) {}
     Rect(f32 l, f32 t, f32 r, f32 b) : left(l), top(t), right(r), bottom(b) {}
-    ~Rect() {} // inline-empty; orphan weak copy dropped in postprocess (retail linker GC'd it)
+    // No destructor: retail's ut::Rect is trivially destructible. An inline-empty
+    // ~Rect() makes MWCC emit an unreferenced weak copy in every TU whose
+    // out-of-line dtor destroys a Rect member; no __dt__Rect exists anywhere in
+    // the retail DOL (docs/evidence/decomp/unit_rules_category_b.md §7.6).
 
     void SetWidth(f32 width) {
         right = left + width;

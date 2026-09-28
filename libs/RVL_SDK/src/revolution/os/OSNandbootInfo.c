@@ -1,7 +1,7 @@
 #include <revolution/OS.h>
 
-// Retail .data is 0x20 bytes: path string padded to 0x20.
-static char NandbootInfoPath[0x20] = "/shared2/sys/NANDBOOTINFO";
+// Retail .data is 0x1A bytes: the NUL-terminated path string exactly.
+static char NandbootInfoPath[0x1A] = "/shared2/sys/NANDBOOTINFO";
 #include <revolution/NAND.h>
 
 static s32 CheckSum(s32* array){

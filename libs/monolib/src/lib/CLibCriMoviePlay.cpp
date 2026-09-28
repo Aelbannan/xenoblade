@@ -54,7 +54,10 @@ extern "C" {
     void setBlendState__8CGXCacheFii(CGXCache* cache, int a, int b);
     void resetGXStateA__8CGXCacheFv(CGXCache* cache);
     void updateViewRoot__9CViewRootFv();
-    CGXCache* cacheInstance__9CDeviceGX;
+    // `extern` is required: the retail object references this name as UNDEF
+    // (4 x R_PPC_EMB_SDA21 in .text); without it this is a tentative
+    // definition and collides with CDeviceGX.cpp's definition.
+    extern CGXCache* cacheInstance__9CDeviceGX;
 
     // Memory manager
     void setMemInitFlag__Q23mtl10MemManagerFb(bool flag);

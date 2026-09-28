@@ -1,5 +1,5 @@
 {
- "baseline_count": 429,
+ "baseline_count": 413,
  "entries": {
   "AX.o": {
    "class": "rename",
@@ -295,25 +295,8 @@
    "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "CActorParam.o": {
-   "class": "rename",
+   "class": "layout",
    "fields": {
-    "drop_data_range": [
-     [
-      ".rodata",
-      16,
-      88
-     ],
-     [
-      ".sdata",
-      0,
-      32
-     ],
-     [
-      ".data",
-      320,
-      1236
-     ]
-    ],
     "drop_data_tail": [
      [
       ".sdata2",
@@ -334,15 +317,12 @@
      ]
     ]
    },
-   "owner": "category-a",
-   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
+   "owner": "category-b",
+   "reason": "HANDOFF-CODE: rule drops content this TU's own (still unmatched) code emits | fields: drop_data_tail,drop_nobits_range,exact_renames | gate: FAIL | dropped: 25 referenced: 23"
   },
   "CArcItem.o": {
    "class": "layout",
    "fields": {
-    "drop_text_symbols": [
-     "__dt__10IWorkEventFv"
-    ],
     "repack_after_drop": 4,
     "retarget_relocs": [
      [
@@ -352,8 +332,8 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-b",
+   "reason": "FIELD PRUNE 2026-09-28: drop_text_symbols retired \u2014 IWORK_EVENT_INLINE_DTOR removed from CArcItem.cpp (its dtor is a hand-written extern C free function that never calls ~IWorkEvent), so no weak base stub is emitted and the vtable sub-slot is an UNDEF ref to CTaskGame.o. Postprocess now yields .text 0x294 / dtor@0x9C (both = retail) and drops the 8B extab + 12B extabindex the rewrite left orphaned."
   },
   "CArtsInfo.o": {
    "class": "rename",
@@ -594,7 +574,7 @@
    "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "CBattleManager.o": {
-   "class": "rename",
+   "class": "layout",
    "fields": {
     "add_symbols": [
      [
@@ -673,8 +653,8 @@
      ]
     ]
    },
-   "owner": "category-a",
-   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
+   "owner": "category-b",
+   "reason": "HANDOFF-CODE: rule drops content this TU's own (still unmatched) code emits | fields: add_symbols,drop_data_tail,exact_renames,pool_patterns | gate: FAIL | dropped: 52 referenced: 36"
   },
   "CBattleState.o": {
    "class": "rename",
@@ -684,17 +664,10 @@
       "__vt__Q22cf12CBattleState",
       "lbl_eu_8052E9B0"
      ]
-    ],
-    "zero_data_range": [
-     [
-      ".sdata",
-      0,
-      1
-     ]
     ]
    },
-   "owner": "category-a",
-   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
+   "owner": "category-b",
+   "reason": "FIELD PRUNE 2026-09-28: zero_data_range redundant \u2014 removing the field leaves the postprocessed object bit-identical (field_prune.py criterion: apply(entry) == apply(entry minus field)), so it cannot affect the link."
   },
   "CCamUtil.o": {
    "class": "rename",
@@ -945,7 +918,7 @@
    "reason": "representation-only: LOCAL section symbol ...bss.0 -> lbl_eu_80656C40; no link input defines/references that name; unit not linked from source; retired 2026-09-28"
   },
   "CCol4.o": {
-   "class": "rename",
+   "class": "layout",
    "fields": {
     "exact_renames": [
      [
@@ -964,8 +937,8 @@
      ".bss"
     ]
    },
-   "owner": "category-a",
-   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
+   "owner": "category-b",
+   "reason": "OPEN: mixed payload | fields: exact_renames,retarget_relocs,zero_nobits | gate: None | dropped: 0 referenced: 0"
   },
   "CCol6Invite.o": {
    "class": "layout",
@@ -1046,7 +1019,7 @@
    "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "CDesktop.o": {
-   "class": "rename",
+   "class": "layout",
    "fields": {
     "retarget_relocs": [
      [
@@ -1122,8 +1095,8 @@
      ]
     ]
    },
-   "owner": "category-a",
-   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
+   "owner": "category-b",
+   "reason": "HANDOFF: dissolved monolibdata2 hand-built vtables; retail symbols are unspellable @unnamed@ manglings + anonymous-namespace typeinfo (documented residual), set_data_align part is a \u00a75 exception candidate"
   },
   "CDevice.o": {
    "class": "rename",
@@ -1358,11 +1331,10 @@
       "__vt__14CDeviceFileJob",
       "lbl_eu_8056C4D8"
      ]
-    ],
-    "repack_after_drop": 4
+    ]
    },
-   "owner": "category-a",
-   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
+   "owner": "category-b",
+   "reason": "FIELD PRUNE 2026-09-28: repack_after_drop redundant \u2014 removing the field leaves the postprocessed object bit-identical (field_prune.py criterion: apply(entry) == apply(entry minus field)), so it cannot affect the link."
   },
   "CDeviceFont.o": {
    "class": "rename",
@@ -1411,7 +1383,7 @@
    "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "CDeviceGX.o": {
-   "class": "rename",
+   "class": "layout",
    "fields": {
     "drop_data_range": [
      [
@@ -1466,23 +1438,13 @@
      ]
     ],
     "repack_after_drop": 4,
-    "set_data_align": [
-     [
-      ".data",
-      8
-     ],
-     [
-      ".sbss",
-      8
-     ]
-    ],
     "trim_text_size": 2280
    },
-   "owner": "category-a",
-   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
+   "owner": "category-b",
+   "reason": "FIELD PRUNE 2026-09-28: retired the no-op set_data_align pairs ((.data,8), (.sbss,8)) \u2014 the object headers already carry align 8; the extern_data_sections payload stays with category D"
   },
   "CDeviceVI.o": {
-   "class": "rename",
+   "class": "layout",
    "fields": {
     "drop_data_tail": [
      [
@@ -1520,8 +1482,8 @@
      ]
     ]
    },
-   "owner": "category-a",
-   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
+   "owner": "category-b",
+   "reason": "HANDOFF-CODE: drop_data_tail drops 7 symbols all referenced by this TU's own code (unmatched functions / reslist vtables)"
   },
   "CDrawGX.o": {
    "class": "rename",
@@ -1625,7 +1587,7 @@
    "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "CETrail.o": {
-   "class": "rename",
+   "class": "layout",
    "fields": {
     "extern_data_sections": [
      ".sdata2"
@@ -1643,8 +1605,8 @@
      ]
     ]
    },
-   "owner": "category-a",
-   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
+   "owner": "category-b",
+   "reason": "EXCEPTION CANDIDATE (owner approval needed): set_data_align is the \u00a75 LCF/alignment emulation, not source-expressible; the extern_data_sections payload belongs to category D"
   },
   "CEquipChange.o": {
    "class": "rename",
@@ -7676,52 +7638,10 @@
    "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "CGame.o": {
-   "class": "rename",
+   "class": "layout",
    "fields": {
     "drop_text_symbols": [
      "FORCEACTIVECGame_cpp_wkStandbyLogin__Fv"
-    ],
-    "exact_renames": [
-     [
-      "@15040",
-      "lbl_eu_804FA1E0"
-     ],
-     [
-      "@15521",
-      "@4183"
-     ],
-     [
-      "@15522",
-      "@4184"
-     ],
-     [
-      "@15523",
-      "@4185"
-     ],
-     [
-      "@15524",
-      "@4186"
-     ],
-     [
-      "@15527",
-      "@4187"
-     ],
-     [
-      "@15528",
-      "@4188"
-     ],
-     [
-      "@15529",
-      "@4189"
-     ],
-     [
-      "@15530",
-      "@4190"
-     ],
-     [
-      "@15531",
-      "@4191"
-     ]
     ],
     "pad_data_section": [
      [
@@ -7730,8 +7650,8 @@
      ]
     ]
    },
-   "owner": "category-a",
-   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
+   "owner": "category-b",
+   "reason": "HANDOFF/TOOL: weak-symbol emission vs retail linker GC; needs the IWorkEvent-style out-of-line pattern per unit (see evidence doc \u00a77.3 for the mwldeppc blocker) | fields: drop_text_symbols,pad_data_section | gate: FAIL | dropped: 0 referenced: 0"
   },
   "CHelpManager.o": {
    "class": "rename",
@@ -8422,7 +8342,7 @@
    "reason": "representation-only rename: TU-local/section-relative target; raw object records no resolution change (unit_rules_category_a.md)"
   },
   "CItemBoxInfo.o": {
-   "class": "rename",
+   "class": "layout",
    "fields": {
     "drop_data_tail": [
      [
@@ -8453,8 +8373,8 @@
      ]
     ]
    },
-   "owner": "category-a",
-   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
+   "owner": "category-b",
+   "reason": "HANDOFF-CODE: rule drops content this TU's own (still unmatched) code emits | fields: drop_data_tail,pool_patterns | gate: FAIL | dropped: 6 referenced: 6"
   },
   "CItemBoxLine.o": {
    "class": "rename",
@@ -8616,24 +8536,10 @@
       "thunk_452_dt",
       "@452@__dt__16CLibCriMoviePlayFv"
      ]
-    ],
-    "set_data_align": [
-     [
-      ".rodata",
-      8
-     ],
-     [
-      ".data",
-      8
-     ],
-     [
-      ".sdata",
-      8
-     ]
     ]
    },
-   "owner": "category-a",
-   "reason": "retired 2 retarget_relocs elements: source now references __RTTI__* directly via namespace RTTIExterns; raw object sections byte-identical"
+   "owner": "category-b",
+   "reason": "FIELD PRUNE 2026-09-28: set_data_align redundant (exact_renames is the whole effect) \u2014 removing the field leaves the postprocessed object bit-identical (field_prune.py criterion: apply(entry) == apply(entry minus field)), so it cannot affect the link."
   },
   "CLibCriStreamingPlay.o": {
    "class": "rename",
@@ -8731,7 +8637,7 @@
    "reason": "retired whole key: same namespace RTTIExterns fix; sections byte-identical, symbols == retail"
   },
   "CLibStaticData.o": {
-   "class": "rename",
+   "class": "layout",
    "fields": {
     "data_pool_patterns": [
      [
@@ -8795,8 +8701,8 @@
      ]
     ]
    },
-   "owner": "category-a",
-   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
+   "owner": "category-b",
+   "reason": "HANDOFF-CODE: rule drops content this TU's own (still unmatched) code emits | fields: data_pool_patterns,drop_data_range,drop_data_tail,drop_text_symbols_as_undef,exact_renames,pad_data_section | gate: FAIL | dropped: 6 referenced: 6"
   },
   "CLight.o": {
    "class": "rename",
@@ -8944,7 +8850,7 @@
    "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "CMCEffStart.o": {
-   "class": "rename",
+   "class": "layout",
    "fields": {
     "drop_data_tail": [
      [
@@ -9122,8 +9028,8 @@
      ]
     ]
    },
-   "owner": "category-a",
-   "reason": "retired element: source declares __RTTI__10IWorkEvent in namespace RTTIExterns; sections byte-identical"
+   "owner": "category-b",
+   "reason": "HANDOFF-CODE: rule drops content this TU's own (still unmatched) code emits | fields: drop_data_tail,exact_renames,pool_patterns,retarget_relocs | gate: FAIL | dropped: 14 referenced: 14"
   },
   "CMCGetItemBox.o": {
    "class": "rename",
@@ -9292,11 +9198,11 @@
      ]
     ]
    },
-   "owner": "category-a",
-   "reason": "section sh_addralign is load-bearing: the decomp alignment does not divide the retail section start, so removing it would move the section"
+   "owner": "category-b",
+   "reason": "EXCEPTION CANDIDATE (owner approval needed): LCF/alignment or linker-padding emulation, not source-expressible | fields: set_data_align | gate: MATCH | dropped: 0 referenced: 0"
   },
   "CMdlDynamics.o": {
-   "class": "rename",
+   "class": "layout",
    "fields": {
     "extern_data_sections": [
      ".sdata2"
@@ -9318,11 +9224,11 @@
      ]
     ]
    },
-   "owner": "category-a",
-   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
+   "owner": "category-b",
+   "reason": "EXCEPTION CANDIDATE (owner approval needed): set_data_align is the \u00a75 LCF/alignment emulation, not source-expressible; the extern_data_sections payload belongs to category D"
   },
   "CMdlMouth.o": {
-   "class": "rename",
+   "class": "layout",
    "fields": {
     "drop_data_range": [
      [
@@ -9347,8 +9253,8 @@
      ]
     ]
    },
-   "owner": "category-a",
-   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
+   "owner": "category-b",
+   "reason": "EXCEPTION CANDIDATE (owner approval needed): set_data_align is the \u00a75 LCF/alignment emulation, not source-expressible; the extern_data_sections payload belongs to category D"
   },
   "CMenuArtsSelect.o": {
    "class": "rename",
@@ -10091,7 +9997,7 @@
    "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "CModelDispMakeCrystal.o": {
-   "class": "rename",
+   "class": "layout",
    "fields": {
     "data_pool_patterns": [
      [
@@ -10118,8 +10024,8 @@
      ]
     ]
    },
-   "owner": "category-a",
-   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
+   "owner": "category-b",
+   "reason": "HANDOFF-CODE: pool_patterns/drop_data_tail drop 2 referenced .sdata2 constants emitted by unmatched code"
   },
   "CNBanner.o": {
    "class": "rename",
@@ -10366,18 +10272,12 @@
      ]
     ]
    },
-   "owner": "category-a",
-   "reason": "section sh_addralign is load-bearing: the decomp alignment does not divide the retail section start, so removing it would move the section"
+   "owner": "category-b",
+   "reason": "EXCEPTION CANDIDATE (owner approval needed): LCF/alignment or linker-padding emulation, not source-expressible | fields: set_data_align | gate: MATCH | dropped: 0 referenced: 0"
   },
   "CNReqtaskSaveBanner.o": {
-   "class": "rename",
+   "class": "layout",
    "fields": {
-    "drop_data_tail": [
-     [
-      ".rodata",
-      28
-     ]
-    ],
     "set_data_align": [
      [
       ".rodata",
@@ -10385,8 +10285,8 @@
      ]
     ]
    },
-   "owner": "category-a",
-   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
+   "owner": "category-b",
+   "reason": "EXCEPTION CANDIDATE (owner approval needed): LCF/alignment or linker-padding emulation, not source-expressible | fields: set_data_align | gate: FAIL | dropped: 0 referenced: 0"
   },
   "CNandData.o": {
    "class": "rename",
@@ -10486,7 +10386,7 @@
    "reason": "representation-only rename: TU-local/section-relative target; raw object records no resolution change (unit_rules_category_a.md)"
   },
   "CPackItem.o": {
-   "class": "rename",
+   "class": "layout",
    "fields": {
     "drop_data_tail": [
      [
@@ -10504,8 +10404,8 @@
      ]
     ]
    },
-   "owner": "category-a",
-   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
+   "owner": "category-b",
+   "reason": "HANDOFF-CODE: rule drops content this TU's own (still unmatched) code emits | fields: drop_data_tail,drop_text_symbols_as_undef,set_data_align | gate: FAIL | dropped: 1 referenced: 1"
   },
   "CPartsChange.o": {
    "class": "rename",
@@ -10733,11 +10633,11 @@
     ],
     "trim_text_size": 456
    },
-   "owner": "category-a",
-   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
+   "owner": "category-b",
+   "reason": "RETIRED 2026-09-28: bit-identical no-op (trim_text_size 0x1C8 == current .text; all three exact_renames targets absent)"
   },
   "CProcess.o": {
-   "class": "rename",
+   "class": "layout",
    "fields": {
     "drop_data_range": [
      [
@@ -10776,8 +10676,8 @@
      ]
     ]
    },
-   "owner": "category-a",
-   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
+   "owner": "category-b",
+   "reason": "HANDOFF-CODE: rule drops content this TU's own (still unmatched) code emits | fields: drop_data_range,drop_data_tail,exact_renames,pad_data_section,retarget_relocs | gate: FAIL | dropped: 2 referenced: 2"
   },
   "CQstLogInfo.o": {
    "class": "rename",
@@ -10949,8 +10849,8 @@
     ],
     "trim_text_size": 1068
    },
-   "owner": "category-a",
-   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
+   "owner": "category-b",
+   "reason": "RETIRED 2026-09-28: bit-identical no-op (trim_text_size 0x42C == current .text; all four exact_renames targets absent)"
   },
   "CSaveLoad.o": {
    "class": "rename",
@@ -11020,7 +10920,7 @@
    "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "CScnFilter.o": {
-   "class": "rename",
+   "class": "layout",
    "fields": {
     "exact_renames": [
      [
@@ -11044,8 +10944,8 @@
      ]
     ]
    },
-   "owner": "category-a",
-   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
+   "owner": "category-b",
+   "reason": "EXCEPTION CANDIDATE (owner approval needed): set_data_align is the \u00a75 LCF/alignment emulation, not source-expressible; the extern_data_sections payload belongs to category D"
   },
   "CScnFogMan.o": {
    "class": "rename",
@@ -11116,8 +11016,8 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-b",
+   "reason": "HANDOFF-D: rule drops unreferenced weak vtables/RTTI the retail data objects own (category D) | fields: drop_data_tail,retarget_relocs | gate: FAIL | dropped: 1 referenced: 0"
   },
   "CScnItemPool.o": {
    "class": "rename",
@@ -11219,7 +11119,7 @@
    "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "CScnRootNw4r.o": {
-   "class": "rename",
+   "class": "layout",
    "fields": {
     "drop_data_tail": [
      [
@@ -11234,8 +11134,8 @@
      ]
     ]
    },
-   "owner": "category-a",
-   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
+   "owner": "category-b",
+   "reason": "HANDOFF-D: rule drops unreferenced weak vtables/RTTI the retail data objects own (category D) | fields: drop_data_tail,exact_renames | gate: FAIL | dropped: 1 referenced: 0"
   },
   "CScnTexWorkMan.o": {
    "class": "rename",
@@ -11481,8 +11381,8 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-b",
+   "reason": "HANDOFF-CODE: rule drops content this TU's own (still unmatched) code emits | fields: drop_data_tail,retarget_relocs | gate: FAIL | dropped: 3 referenced: 3"
   },
   "CSuddenCommu.o": {
    "class": "rename",
@@ -11530,8 +11430,8 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-b",
+   "reason": "RETIRED 2026-09-28 source fix: removed the duplicate _pad_80664A0C static; .sbss is the retail 0x8 (unit keeps pre-existing .sdata2/.sbss2 drift); drop_nobits_range verified no-op after the fix"
   },
   "CSysWinScenarioLog.o": {
    "class": "layout",
@@ -11587,8 +11487,8 @@
      ]
     ]
    },
-   "owner": "category-a",
-   "reason": "section sh_addralign is load-bearing: the decomp alignment does not divide the retail section start, so removing it would move the section"
+   "owner": "category-b",
+   "reason": "RETIRED 2026-09-28: bit-identical no-op (add_symbols/set_data_align change nothing; link uses the retail split object, linked False)"
   },
   "CSysWinSelect.o": {
    "class": "layout",
@@ -11600,8 +11500,8 @@
      ]
     ]
    },
-   "owner": "category-a",
-   "reason": "section sh_addralign is load-bearing: the decomp alignment does not divide the retail section start, so removing it would move the section"
+   "owner": "category-b",
+   "reason": "EXCEPTION CANDIDATE (owner approval needed): LCF/alignment or linker-padding emulation, not source-expressible | fields: set_data_align | gate: FAIL | dropped: 0 referenced: 0"
   },
   "CTagProcessor.o": {
    "class": "rename",
@@ -12459,16 +12359,6 @@
       288
      ]
     ],
-    "pool_patterns": [
-     [
-      "hex:3f800000",
-      "lbl_eu_8066A2D0"
-     ],
-     [
-      "hex:3f19999a",
-      "lbl_eu_8066A2D4"
-     ]
-    ],
     "retarget_relocs": [
      [
       ".sdata",
@@ -12499,12 +12389,6 @@
       ".text",
       3214,
       "jumptable_eu_8056B5C0"
-     ]
-    ],
-    "set_data_align": [
-     [
-      ".sdata",
-      8
      ]
     ],
     "swap_data_blocks": [
@@ -12570,8 +12454,8 @@
      ]
     ]
    },
-   "owner": "category-a",
-   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
+   "owner": "category-b",
+   "reason": "FIELD PRUNE 2026-09-28: set_data_align + pool_patterns redundant \u2014 removing the field leaves the postprocessed object bit-identical (field_prune.py criterion: apply(entry) == apply(entry minus field)), so it cannot affect the link."
   },
   "CViewFrame.o": {
    "class": "rename",
@@ -12601,8 +12485,8 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-b",
+   "reason": "RETIRED 2026-09-28: bit-identical no-op on the current object (drop_data_range/drop_data_tail targets absent); link uses the retail split object (linked False)"
   },
   "CVirtualLightObj.o": {
    "class": "rename",
@@ -12644,7 +12528,7 @@
    "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "CWorkRoot.o": {
-   "class": "rename",
+   "class": "layout",
    "fields": {
     "drop_data_range": [
      [
@@ -12680,8 +12564,8 @@
     ],
     "repack_after_drop": 16
    },
-   "owner": "category-a",
-   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
+   "owner": "category-b",
+   "reason": "HANDOFF-CODE: rule drops content this TU's own (still unmatched) code emits | fields: drop_data_range,drop_text_symbols,drop_text_symbols_as_undef,exact_renames,repack_after_drop | gate: FAIL | dropped: 2 referenced: 2"
   },
   "CWorkSystemCache.o": {
    "class": "layout",
@@ -12694,21 +12578,15 @@
    "reason": ""
   },
   "CWorkSystemMem.o": {
-   "class": "rename",
+   "class": "layout",
    "fields": {
-    "exact_renames": [
-     [
-      "__vt__14CWorkSystemMem",
-      "lbl_eu_8056BAA8"
-     ]
-    ],
     "trim_text_size": 352
    },
-   "owner": "category-a",
-   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
+   "owner": "category-b",
+   "reason": "HANDOFF/TOOL: weak-symbol emission vs retail linker GC; needs the IWorkEvent-style out-of-line pattern per unit (see evidence doc \u00a77.3 for the mwldeppc blocker) | fields: trim_text_size | gate: MATCH | dropped: 0 referenced: 0"
   },
   "CWorkThread.o": {
-   "class": "rename",
+   "class": "layout",
    "fields": {
     "addend_sets": [
      [
@@ -12835,8 +12713,8 @@
      ]
     ]
    },
-   "owner": "category-a",
-   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
+   "owner": "category-b",
+   "reason": "HANDOFF-CODE: rule drops content this TU's own (still unmatched) code emits | fields: addend_sets,data_pool_patterns,drop_data_range,drop_data_tail,drop_nobits_range,exact_renames,retarget_relocs,set_data_align | gate: FAIL | dropped: 1 referenced: 1"
   },
   "CWorkThreadSystem.o": {
    "class": "rename",
@@ -12868,7 +12746,7 @@
    "reason": "representation-only rename: TU-local/section-relative target; raw object records no resolution change (unit_rules_category_a.md)"
   },
   "CfCam.o": {
-   "class": "rename",
+   "class": "layout",
    "fields": {
     "add_symbols": [
      [
@@ -13339,8 +13217,8 @@
      ]
     ]
    },
-   "owner": "category-a",
-   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
+   "owner": "category-b",
+   "reason": "HANDOFF-CODE: rule drops content this TU's own (still unmatched) code emits | fields: add_symbols,drop_data_tail,set_data_align | gate: FAIL | dropped: 3 referenced: 3"
   },
   "CfCamEvent.o": {
    "class": "layout",
@@ -13353,7 +13231,7 @@
    "reason": ""
   },
   "CfCamEvent_1.o": {
-   "class": "rename",
+   "class": "layout",
    "fields": {
     "drop_data_tail": [
      [
@@ -13372,8 +13250,8 @@
      ]
     ]
    },
-   "owner": "category-a",
-   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
+   "owner": "category-b",
+   "reason": "HANDOFF-CODE: rule drops content this TU's own (still unmatched) code emits | fields: drop_data_tail,pool_patterns | gate: FAIL | dropped: 3 referenced: 3"
   },
   "CfCollCircleImpl.o": {
    "class": "rename",
@@ -13424,11 +13302,11 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-b",
+   "reason": "HANDOFF-CODE: rule drops content this TU's own (still unmatched) code emits | fields: drop_data_tail | gate: FAIL | dropped: 8 referenced: 8"
   },
   "CfGimmickElv.o": {
-   "class": "rename",
+   "class": "layout",
    "fields": {
     "drop_data_tail": [
      [
@@ -13443,8 +13321,8 @@
      ]
     ]
    },
-   "owner": "category-a",
-   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
+   "owner": "category-b",
+   "reason": "HANDOFF-CODE: rule drops content this TU's own (still unmatched) code emits | fields: drop_data_tail,pool_patterns | gate: FAIL | dropped: 1 referenced: 1"
   },
   "CfGimmickItem.o": {
    "class": "rename",
@@ -13462,8 +13340,8 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-b",
+   "reason": "HANDOFF-CODE: rule drops content this TU's own (still unmatched) code emits | fields: drop_data_tail | gate: FAIL | dropped: 4 referenced: 4"
   },
   "CfGimmickLock.o": {
    "class": "rename",
@@ -13481,8 +13359,8 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-b",
+   "reason": "HANDOFF-CODE: rule drops content this TU's own (still unmatched) code emits | fields: drop_data_tail | gate: FAIL | dropped: 3 referenced: 3"
   },
   "CfGimmickWarp.o": {
    "class": "rename",
@@ -13520,8 +13398,8 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-b",
+   "reason": "HANDOFF-CODE: rule drops content this TU's own (still unmatched) code emits | fields: drop_data_tail | gate: FAIL | dropped: 5 referenced: 3"
   },
   "CfMapMineManager.o": {
    "class": "rename",
@@ -13555,8 +13433,8 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-b",
+   "reason": "HANDOFF-CODE: rule drops content this TU's own (still unmatched) code emits | fields: drop_data_range | gate: FAIL | dropped: 1 referenced: 1"
   },
   "CfObjectColl.o": {
    "class": "rename",
@@ -13606,8 +13484,8 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-b",
+   "reason": "HANDOFF-CODE: rule drops content this TU's own (still unmatched) code emits | fields: drop_data_tail | gate: FAIL | dropped: 6 referenced: 6"
   },
   "CfObjectEnumList.o": {
    "class": "rename",
@@ -13662,7 +13540,7 @@
    "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "CfObjectImplPc.o": {
-   "class": "rename",
+   "class": "layout",
    "fields": {
     "drop_data_tail": [
      [
@@ -13681,8 +13559,8 @@
      ]
     ]
    },
-   "owner": "category-a",
-   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
+   "owner": "category-b",
+   "reason": "HANDOFF-CODE: rule drops content this TU's own (still unmatched) code emits | fields: drop_data_tail,pool_patterns | gate: FAIL | dropped: 3 referenced: 3"
   },
   "CfObjectImplWalker.o": {
    "class": "rename",
@@ -13748,8 +13626,8 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-b",
+   "reason": "HANDOFF-CODE: rule drops content this TU's own (still unmatched) code emits | fields: drop_data_range | gate: FAIL | dropped: 1 referenced: 1"
   },
   "CfObjectTbox.o": {
    "class": "rename",
@@ -13801,30 +13679,17 @@
    "reason": "representation-only rename: TU-local/section-relative target; raw object records no resolution change (unit_rules_category_a.md)"
   },
   "CfRes.o": {
-   "class": "rename",
+   "class": "layout",
    "fields": {
-    "exact_renames": [
-     [
-      "@6107",
-      "jumptable_eu_805266F8"
-     ],
-     [
-      "@6104",
-      "jumptable_eu_805266F8"
-     ]
-    ],
     "pad_data_section": [
      [
       ".data",
       544
      ]
-    ],
-    "zero_nobits": [
-     ".bss"
     ]
    },
-   "owner": "category-a",
-   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
+   "owner": "category-b",
+   "reason": "EXCEPTION CANDIDATE (owner approval needed): LCF/alignment or linker-padding emulation, not source-expressible | fields: pad_data_section | gate: FAIL | dropped: 0 referenced: 0"
   },
   "CfResPcImpl.o": {
    "class": "layout",
@@ -13837,8 +13702,8 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-b",
+   "reason": "HANDOFF-CODE: rule drops content this TU's own (still unmatched) code emits | fields: drop_data_range | gate: FAIL | dropped: 1 referenced: 1"
   },
   "CfResReloadImpl.o": {
    "class": "layout",
@@ -13909,9 +13774,6 @@
      ".data",
      ".sdata2"
     ],
-    "globalize_symbols": [
-     "lbl_eu_80666D50"
-    ],
     "pool_patterns": [
      [
       "hex:4330000080000000",
@@ -13927,7 +13789,7 @@
     ]
    },
    "owner": "category-a",
-   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
+   "reason": "globalize_symbols retired 2026-09-28 (category A): generic end-of-pipeline LOCAL UNDEF promotion (globalize_local_undefs) replaces the per-unit field"
   },
   "CtrlEnemy.o": {
    "class": "rename",
@@ -14029,17 +13891,10 @@
       ".sdata2",
       128
      ]
-    ],
-    "drop_nobits_range": [
-     [
-      ".sbss2",
-      0,
-      4
-     ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-b",
+   "reason": "HANDOFF-CODE: rule drops content this TU's own (still unmatched) code emits | fields: drop_data_tail | gate: FAIL | dropped: 2 referenced: 2"
   },
   "CtrlObjectParam.o": {
    "class": "layout",
@@ -14051,8 +13906,8 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-b",
+   "reason": "HANDOFF-CODE: rule drops content this TU's own (still unmatched) code emits | fields: drop_data_tail | gate: FAIL | dropped: 2 referenced: 2"
   },
   "CtrlRemote.o": {
    "class": "rename",
@@ -14127,7 +13982,7 @@
    "reason": "representation-only rename: TU-local/section-relative target; raw object records no resolution change (unit_rules_category_a.md)"
   },
   "HBMAnmController.o": {
-   "class": "rename",
+   "class": "layout",
    "fields": {
     "drop_data_tail": [
      [
@@ -14156,11 +14011,11 @@
      ]
     ]
    },
-   "owner": "category-a",
-   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
+   "owner": "category-b",
+   "reason": "HANDOFF-CODE: rule drops content this TU's own (still unmatched) code emits | fields: drop_data_tail,drop_text_symbols,exact_renames,retarget_relocs | gate: FAIL | dropped: 2 referenced: 2"
   },
   "HBMAxSound.o": {
-   "class": "rename",
+   "class": "layout",
    "fields": {
     "data_pool_patterns": [
      [
@@ -14304,13 +14159,6 @@
       "lbl_8054C7E8"
      ]
     ],
-    "drop_nobits_range": [
-     [
-      ".bss",
-      4,
-      8
-     ]
-    ],
     "pad_data_section": [
      [
       ".rodata",
@@ -14318,8 +14166,8 @@
      ]
     ]
    },
-   "owner": "category-a",
-   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
+   "owner": "category-b",
+   "reason": "EXCEPTION CANDIDATE (owner approval needed): LCF/alignment or linker-padding emulation, not source-expressible | fields: data_pool_patterns,pad_data_section | gate: FAIL | dropped: 0 referenced: 0"
   },
   "HBMBase.o": {
    "class": "rename",
@@ -15398,8 +15246,8 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-b",
+   "reason": "RETIRED 2026-09-28 source fix: removed oserror_bss_pad[12]; raw gate now MATCH (.bss 0x44); drop_nobits_range was a verified no-op after the fix"
   },
   "OSFont.o": {
    "class": "rename",
@@ -15417,8 +15265,8 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-b",
+   "reason": "RETIRED 2026-09-28 source fix: NandbootInfoPath[0x20]->[0x1A]; raw gate now MATCH (.data 0x1A); drop_data_tail verified no-op after the fix"
   },
   "OSNet.o": {
    "class": "content",
@@ -15474,16 +15322,10 @@
       12,
       16
      ]
-    ],
-    "pad_data_section": [
-     [
-      ".data",
-      616
-     ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-b",
+   "reason": "HANDOFF-D: rule drops unreferenced weak vtables/RTTI the retail data objects own (category D) | fields: drop_data_range | gate: FAIL | dropped: 0 referenced: 0"
   },
   "OSRtc.o": {
    "class": "layout",
@@ -15496,8 +15338,8 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-b",
+   "reason": "RETIRED 2026-09-28 source fix: OSScb no longer declares the unreferenced WORD_0x54 placeholder; raw gate MATCH (.bss 0x54); drop_nobits_range verified no-op after the fix"
   },
   "OSThread.o": {
    "class": "content",
@@ -15526,7 +15368,7 @@
    "reason": "representation-only rename: TU-local/section-relative target; raw object records no resolution change (unit_rules_category_a.md)"
   },
   "UnkClass_80460C34.o": {
-   "class": "rename",
+   "class": "layout",
    "fields": {
     "exact_renames": [
      [
@@ -15541,8 +15383,8 @@
      ]
     ]
    },
-   "owner": "category-a",
-   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
+   "owner": "category-b",
+   "reason": "EXCEPTION CANDIDATE (owner approval needed): LCF/alignment or linker-padding emulation, not source-expressible | fields: exact_renames,pad_data_section | gate: FAIL | dropped: 0 referenced: 0"
   },
   "UnkClass_8046368C.o": {
    "class": "layout",
@@ -15554,8 +15396,8 @@
      ]
     ]
    },
-   "owner": "category-a",
-   "reason": "section sh_addralign is load-bearing: the decomp alignment does not divide the retail section start, so removing it would move the section"
+   "owner": "category-b",
+   "reason": "EXCEPTION CANDIDATE (owner approval needed): LCF/alignment or linker-padding emulation, not source-expressible | fields: set_data_align | gate: MATCH | dropped: 0 referenced: 0"
   },
   "UnkClass_80466348.o": {
    "class": "rename",
@@ -15639,8 +15481,8 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-b",
+   "reason": "EXCEPTION CANDIDATE (owner approval needed): LCF/alignment or linker-padding emulation, not source-expressible | fields: pad_data_section | gate: FAIL | dropped: 0 referenced: 0"
   },
   "WUD.o": {
    "class": "rename",
@@ -15762,13 +15604,10 @@
     ],
     "extern_data_sections": [
      ".rodata"
-    ],
-    "globalize_symbols": [
-     "lbl_eu_80517468"
     ]
    },
    "owner": "category-a",
-   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
+   "reason": "globalize_symbols retired 2026-09-28 (category A): generic end-of-pipeline LOCAL UNDEF promotion (globalize_local_undefs) replaces the per-unit field"
   },
   "adx_suwii.o": {
    "class": "layout",
@@ -15780,11 +15619,11 @@
      ]
     ]
    },
-   "owner": "category-a",
-   "reason": "section sh_addralign is load-bearing: the decomp alignment does not divide the retail section start, so removing it would move the section"
+   "owner": "category-b",
+   "reason": "EXCEPTION CANDIDATE (owner approval needed): LCF/alignment or linker-padding emulation, not source-expressible | fields: set_data_align | gate: MATCH | dropped: 0 referenced: 0"
   },
   "adx_tlk.o": {
-   "class": "rename",
+   "class": "layout",
    "fields": {
     "add_symbols": [
      [
@@ -15851,8 +15690,8 @@
      ]
     ]
    },
-   "owner": "category-a",
-   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
+   "owner": "category-b",
+   "reason": "HANDOFF-CODE: rule drops content this TU's own (still unmatched) code emits | fields: add_symbols,drop_data_tail,retarget_relocs,set_data_align | gate: FAIL | dropped: 1 referenced: 1"
   },
   "ahx_sbf.o": {
    "class": "layout",
@@ -15878,7 +15717,7 @@
    "reason": "representation-only rename: TU-local/section-relative target; raw object records no resolution change (unit_rules_category_a.md)"
   },
   "ax_rna.o": {
-   "class": "rename",
+   "class": "layout",
    "fields": {
     "drop_data_range": [
      [
@@ -15904,8 +15743,8 @@
      ]
     ]
    },
-   "owner": "category-a",
-   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
+   "owner": "category-b",
+   "reason": "HANDOFF-CODE: drop_data_range drops a referenced .rodata object; set_data_align part is a \u00a75 exception candidate"
   },
   "bta_dm_act.o": {
    "class": "layout",
@@ -15924,8 +15763,8 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-b",
+   "reason": "RETIRED 2026-09-28: rule application is a bit-identical no-op on the current build/us/src object (drop_data_tail .data already 0x13B, drop_nobits_range .bss already 0x2D); see docs/evidence/decomp/unit_rules_category_b.md"
   },
   "bta_hh_utils.o": {
    "class": "layout",
@@ -15947,8 +15786,8 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-b",
+   "reason": "HANDOFF-D: rule drops unreferenced weak vtables/RTTI the retail data objects own (category D) | fields: drop_data_tail | gate: FAIL | dropped: 0 referenced: 0"
   },
   "bte_logmsg.o": {
    "class": "layout",
@@ -15967,8 +15806,8 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-b",
+   "reason": "RETIRED 2026-09-28 source fix: lbl_80665908[8]->[4] and removed bte_logmsg_bss_pad[16]; raw gate now MATCH (.sdata 0x4, .bss 0x7D0); both fields verified no-ops after the fix"
   },
   "bte_main.o": {
    "class": "rename",
@@ -16003,8 +15842,8 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-b",
+   "reason": "HANDOFF-D: rule drops unreferenced weak vtables/RTTI the retail data objects own (category D) | fields: drop_data_tail | gate: FAIL | dropped: 0 referenced: 0"
   },
   "btm_pm.o": {
    "class": "layout",
@@ -16016,8 +15855,8 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-b",
+   "reason": "HANDOFF-D: rule drops unreferenced weak vtables/RTTI the retail data objects own (category D) | fields: drop_data_tail | gate: FAIL | dropped: 0 referenced: 0"
   },
   "btm_sec.o": {
    "class": "layout",
@@ -16069,8 +15908,8 @@
    "fields": {
     "pad_sdata2_size": 8
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-b",
+   "reason": "EXCEPTION CANDIDATE (owner approval needed): LCF/alignment or linker-padding emulation, not source-expressible | fields: pad_sdata2_size | gate: FAIL | dropped: 0 referenced: 0"
   },
   "code_800A3B24.o": {
    "class": "rename",
@@ -16330,19 +16169,12 @@
   "code_80296898.o": {
    "class": "layout",
    "fields": {
-    "retarget_relocs": [
-     [
-      ".text",
-      106,
-      "lbl_eu_805772C8"
-     ]
-    ],
     "zero_nobits": [
      ".bss"
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-b",
+   "reason": "HANDOFF-D: zero_nobits \u2014 the retail data slice owns the zero-init object while this TU keeps the auto-__sinit_ (data-ownership model, category D)"
   },
   "code_802B9064.o": {
    "class": "rename",
@@ -16390,8 +16222,8 @@
      ]
     ]
    },
-   "owner": "category-a",
-   "reason": "section sh_addralign is load-bearing: the decomp alignment does not divide the retail section start, so removing it would move the section"
+   "owner": "category-b",
+   "reason": "EXCEPTION CANDIDATE (owner approval needed): LCF/alignment or linker-padding emulation, not source-expressible | fields: set_data_align | gate: FAIL | dropped: 0 referenced: 0"
   },
   "code_8046A530.o": {
    "class": "rename",
@@ -16426,7 +16258,7 @@
    "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "code_804B2FF0.o": {
-   "class": "rename",
+   "class": "layout",
    "fields": {
     "exact_renames": [
      [
@@ -16457,17 +16289,13 @@
       4
      ],
      [
-      ".bss",
-      8
-     ],
-     [
       ".sbss",
       4
      ]
     ]
    },
-   "owner": "category-a",
-   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
+   "owner": "category-b",
+   "reason": "FIELD PRUNE 2026-09-28: removed the no-op (.bss,8) pair from set_data_align (decomp align already 8); (.data,4)/(.sbss,4) stay and are \u00a75 LCF-evidence entries"
   },
   "code_804B59C8.o": {
    "class": "rename",
@@ -16486,7 +16314,7 @@
    "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "code_804BC9EC.o": {
-   "class": "rename",
+   "class": "layout",
    "fields": {
     "addend_sets": [
      [
@@ -16598,11 +16426,11 @@
      ]
     ]
    },
-   "owner": "category-a",
-   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
+   "owner": "category-b",
+   "reason": "EXCEPTION CANDIDATE (owner approval needed): LCF/alignment or linker-padding emulation, not source-expressible | fields: addend_sets,pad_data_section,set_data_align | gate: FAIL | dropped: 0 referenced: 0"
   },
   "code_804BD8E8.o": {
-   "class": "rename",
+   "class": "layout",
    "fields": {
     "exact_renames": [
      [
@@ -16638,8 +16466,8 @@
      ]
     ]
    },
-   "owner": "category-a",
-   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
+   "owner": "category-b",
+   "reason": "EXCEPTION CANDIDATE (owner approval needed): set_data_align is the \u00a75 LCF/alignment emulation, not source-expressible; the extern_data_sections payload belongs to category D"
   },
   "code_804C8718.o": {
    "class": "rename",
@@ -16843,11 +16671,11 @@
      "__dt__Q34nw4r2ut5ColorFv"
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-b",
+   "reason": "HANDOFF/TOOL: weak-symbol emission vs retail linker GC; needs the IWorkEvent-style out-of-line pattern per unit (see evidence doc \u00a77.3 for the mwldeppc blocker) | fields: drop_text_symbols | gate: MATCH | dropped: 0 referenced: 0"
   },
   "db_assert.o": {
-   "class": "rename",
+   "class": "layout",
    "fields": {
     "drop_data_range": [
      [
@@ -16915,11 +16743,10 @@
       "sInitializedAlarm$",
       "lbl_eu_80665440"
      ]
-    ],
-    "repack_after_drop": 4
+    ]
    },
-   "owner": "category-a",
-   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
+   "owner": "category-b",
+   "reason": "HANDOFF-CODE: rule drops content this TU's own (still unmatched) code emits | fields: drop_data_range,drop_text_symbols,exact_renames,pad_data_section,prefix_renames | gate: FAIL | dropped: 5 referenced: 1"
   },
   "dct_isr.o": {
    "class": "content",
@@ -16979,7 +16806,7 @@
    "reason": ""
   },
   "dsp.o": {
-   "class": "rename",
+   "class": "layout",
    "fields": {
     "drop_data_tail": [
      [
@@ -16994,8 +16821,8 @@
      ]
     ]
    },
-   "owner": "category-a",
-   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
+   "owner": "category-b",
+   "reason": "HANDOFF-D: rule drops unreferenced weak vtables/RTTI the retail data objects own (category D) | fields: drop_data_tail,exact_renames | gate: FAIL | dropped: 0 referenced: 0"
   },
   "dvd.o": {
    "class": "rename",
@@ -17011,7 +16838,7 @@
    "reason": "representation-only rename: TU-local/section-relative target; raw object records no resolution change (unit_rules_category_a.md)"
   },
   "dvdDeviceError.o": {
-   "class": "rename",
+   "class": "layout",
    "fields": {
     "drop_data_tail": [
      [
@@ -17050,8 +16877,8 @@
      ]
     ]
    },
-   "owner": "category-a",
-   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
+   "owner": "category-b",
+   "reason": "HANDOFF-D: rule drops unreferenced weak vtables/RTTI the retail data objects own (category D) | fields: drop_data_tail,exact_renames | gate: FAIL | dropped: 0 referenced: 0"
   },
   "dvdFatal.o": {
    "class": "rename",
@@ -17121,8 +16948,8 @@
     ],
     "repack_after_drop": 16
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-b",
+   "reason": "HANDOFF/TOOL: weak-symbol emission vs retail linker GC; needs the IWorkEvent-style out-of-line pattern per unit (see evidence doc \u00a77.3 for the mwldeppc blocker) | fields: drop_text_symbols,repack_after_drop | gate: MATCH | dropped: 0 referenced: 0"
   },
   "dvdfs.o": {
    "class": "layout",
@@ -17135,8 +16962,8 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-b",
+   "reason": "RETIRED 2026-09-28 source fix: removed dvdfs_sbss_pad/2/3; raw gate now MATCH (.sbss 0x20); drop_nobits_range was a verified no-op after the fix"
   },
   "dw_Window.o": {
    "class": "layout",
@@ -17144,19 +16971,18 @@
     "drop_text_symbols": [
      "dummy__Q24nw4r2dwFPQ34nw4r2ut10CharWriter",
      "__dt__Q34nw4r2ut5ColorFv"
-    ],
-    "repack_after_drop": 4
+    ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-b",
+   "reason": "HANDOFF/TOOL: weak-symbol emission vs retail linker GC; needs the IWorkEvent-style out-of-line pattern per unit (see evidence doc \u00a77.3 for the mwldeppc blocker) | fields: drop_text_symbols | gate: MATCH | dropped: 0 referenced: 0"
   },
   "e_pow.o": {
    "class": "layout",
    "fields": {
     "trim_sdata2_size": 272
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-b",
+   "reason": "HANDOFF-D: rule drops unreferenced weak vtables/RTTI the retail data objects own (category D) | fields: trim_sdata2_size | gate: FAIL | dropped: 1 referenced: 0"
   },
   "encutility.o": {
    "class": "rename",
@@ -17181,8 +17007,8 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-b",
+   "reason": "HANDOFF-D: rule drops unreferenced weak vtables/RTTI the retail data objects own (category D) | fields: drop_data_tail | gate: FAIL | dropped: 0 referenced: 0"
   },
   "g3d_3dsmax.o": {
    "class": "layout",
@@ -17636,8 +17462,8 @@
      "__dt__Q34nw4r2ut5ColorFv"
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-b",
+   "reason": "RETIRED 2026-09-28: bit-identical no-op (__dt__Q34nw4r2ut5ColorFv not emitted by the current object)"
   },
   "g3d_resanmamblight.o": {
    "class": "layout",
@@ -17823,11 +17649,11 @@
      "GetResAnmScnNumEntries__Q34nw4r3g3d7ResFileCFv"
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-b",
+   "reason": "HANDOFF/TOOL: weak-symbol emission vs retail linker GC; needs the IWorkEvent-style out-of-line pattern per unit (see evidence doc \u00a77.3 for the mwldeppc blocker) | fields: drop_text_symbols | gate: MATCH | dropped: 0 referenced: 0"
   },
   "g3d_resmat.o": {
-   "class": "rename",
+   "class": "layout",
    "fields": {
     "add_symbols": [
      [
@@ -17911,8 +17737,8 @@
      ]
     ]
    },
-   "owner": "category-a",
-   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
+   "owner": "category-b",
+   "reason": "HANDOFF-CODE: rule drops content this TU's own (still unmatched) code emits | fields: add_symbols,drop_data_range,pool_patterns | gate: FAIL | dropped: 3 referenced: 3"
   },
   "g3d_resnode.o": {
    "class": "rename",
@@ -18342,8 +18168,8 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-b",
+   "reason": "RETIRED 2026-09-28 source fix: tGAP_CB tail is 0x3AC-0x84 (retail size); raw gate now MATCH (.bss 0x3AC); drop_nobits_range verified no-op after the fix"
   },
   "gki_buffer.o": {
    "class": "layout",
@@ -18363,8 +18189,8 @@
    "fields": {
     "pad_text_size": 1424
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-b",
+   "reason": "EXCEPTION CANDIDATE (owner approval needed): LCF/alignment or linker-padding emulation, not source-expressible | fields: pad_text_size | gate: MATCH | dropped: 0 referenced: 0"
   },
   "hcicmds.o": {
    "class": "layout",
@@ -18376,8 +18202,8 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-b",
+   "reason": "EXCEPTION CANDIDATE (owner approval needed): LCF/alignment or linker-padding emulation, not source-expressible | fields: pad_data_section | gate: FAIL | dropped: 0 referenced: 0"
   },
   "hcisu_h2.o": {
    "class": "layout",
@@ -18389,8 +18215,8 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-b",
+   "reason": "HANDOFF-D: rule drops unreferenced weak vtables/RTTI the retail data objects own (category D) | fields: drop_data_tail | gate: FAIL | dropped: 0 referenced: 0"
   },
   "l2c_api.o": {
    "class": "rename",
@@ -18609,8 +18435,8 @@
      ]
     ]
    },
-   "owner": "category-a",
-   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
+   "owner": "category-b",
+   "reason": "RETIRED 2026-09-28: bit-identical no-op on the scoped nw4r twin (data_pool_patterns already named, pad_data_section 8 == current .sdata size, __vt__ absent)"
   },
   "lyt_bounding.o": {
    "class": "rename",
@@ -18636,13 +18462,10 @@
       "@5118",
       "lbl_8054D778"
      ]
-    ],
-    "zero_nobits": [
-     ".sbss"
     ]
    },
-   "owner": "category-a",
-   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
+   "owner": "category-b",
+   "reason": "FIELD PRUNE 2026-09-28: zero_nobits redundant \u2014 removing the field leaves the postprocessed object bit-identical (field_prune.py criterion: apply(entry) == apply(entry minus field)), so it cannot affect the link."
   },
   "lyt_common.o#Q34nw4r": {
    "class": "rename",
@@ -18689,12 +18512,8 @@
    "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "lyt_drawInfo.o": {
-   "class": "rename",
+   "class": "layout",
    "fields": {
-    "drop_text_symbols": [
-     "__dt__Q36nw4hbm2ut4RectFv",
-     "__dt__Q34nw4r2ut4RectFv"
-    ],
     "exact_renames": [
      [
       "@5093",
@@ -18702,11 +18521,11 @@
      ]
     ]
    },
-   "owner": "category-a",
-   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
+   "owner": "category-b",
+   "reason": "HANDOFF/TOOL: weak-symbol emission vs retail linker GC; needs the IWorkEvent-style out-of-line pattern per unit (see evidence doc \u00a77.3 for the mwldeppc blocker) | fields: drop_text_symbols,exact_renames | gate: MATCH | dropped: 0 referenced: 0"
   },
   "lyt_group.o": {
-   "class": "rename",
+   "class": "layout",
    "fields": {
     "drop_text_symbols": [
      "__dt__Q36nw4hbm2ut31LinkList<Q36nw4hbm3lyt5Group,4>Fv",
@@ -18720,8 +18539,8 @@
     ],
     "repack_after_drop": 16
    },
-   "owner": "category-a",
-   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
+   "owner": "category-b",
+   "reason": "HANDOFF/TOOL: weak-symbol emission vs retail linker GC; needs the IWorkEvent-style out-of-line pattern per unit (see evidence doc \u00a77.3 for the mwldeppc blocker) | fields: drop_text_symbols,exact_renames,repack_after_drop | gate: MATCH | dropped: 0 referenced: 0"
   },
   "lyt_group.o#Q34nw4r3lyt": {
    "class": "rename",
@@ -19172,8 +18991,8 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-b",
+   "reason": "HANDOFF-CODE: rule drops content this TU's own (still unmatched) code emits | fields: drop_data_tail,retarget_relocs,zero_data_range | gate: FAIL | dropped: 1 referenced: 1"
   },
   "lyt_resourceAccessor.o#Q34nw4r3lyt": {
    "class": "rename",
@@ -19549,13 +19368,10 @@
     ],
     "extern_data_sections": [
      ".data"
-    ],
-    "globalize_symbols": [
-     "jumptable_eu_80567298"
     ]
    },
    "owner": "category-a",
-   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
+   "reason": "globalize_symbols retired 2026-09-28 (category A): generic end-of-pipeline LOCAL UNDEF promotion (globalize_local_undefs) replaces the per-unit field"
   },
   "mpv_mcy.o": {
    "class": "rename",
@@ -19569,13 +19385,10 @@
     ],
     "extern_data_sections": [
      ".data"
-    ],
-    "globalize_symbols": [
-     "jumptable_eu_805672B8"
     ]
    },
    "owner": "category-a",
-   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
+   "reason": "globalize_symbols retired 2026-09-28 (category A): generic end-of-pipeline LOCAL UNDEF promotion (globalize_local_undefs) replaces the per-unit field"
   },
   "mpvabdec.o": {
    "class": "rename",
@@ -19596,15 +19409,10 @@
     ],
     "extern_data_sections": [
      ".data"
-    ],
-    "globalize_symbols": [
-     "jumptable_eu_805672D8",
-     "jumptable_eu_805676D8",
-     "jumptable_eu_80567AD8"
     ]
    },
    "owner": "category-a",
-   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
+   "reason": "globalize_symbols retired 2026-09-28 (category A): generic end-of-pipeline LOCAL UNDEF promotion (globalize_local_undefs) replaces the per-unit field"
   },
   "mtx.o": {
    "class": "content",
@@ -19628,8 +19436,8 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-b",
+   "reason": "HANDOFF-CODE: rule drops content this TU's own (still unmatched) code emits | fields: drop_data_range | gate: FAIL | dropped: 2 referenced: 2"
   },
   "mwsfdply.o": {
    "class": "rename",
@@ -19818,7 +19626,7 @@
    "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "pluginUi.o": {
-   "class": "rename",
+   "class": "layout",
    "fields": {
     "drop_data_tail": [
      [
@@ -19833,8 +19641,8 @@
      ]
     ]
    },
-   "owner": "category-a",
-   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
+   "owner": "category-b",
+   "reason": "HANDOFF-CODE: rule drops content this TU's own (still unmatched) code emits | fields: drop_data_tail,pool_patterns | gate: FAIL | dropped: 1 referenced: 1"
   },
   "pluginUnit.o": {
    "class": "rename",
@@ -19905,8 +19713,8 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-b",
+   "reason": "HANDOFF-D: rule drops unreferenced weak vtables/RTTI the retail data objects own (category D) | fields: drop_data_tail | gate: FAIL | dropped: 0 referenced: 0"
   },
   "scapi_prdinfo.o": {
    "class": "layout",
@@ -19918,8 +19726,8 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-b",
+   "reason": "RETIRED 2026-09-28 source fix: ProductArea/GameRegionString[8]->[5] __attribute__((aligned(8))); raw gate now MATCH (.sdata 0xD); drop_data_tail verified no-op after the fix"
   },
   "scsystem.o": {
    "class": "rename",
@@ -20100,13 +19908,10 @@
     ],
     "extern_data_sections": [
      ".rodata"
-    ],
-    "globalize_symbols": [
-     "lbl_eu_8051CF40"
     ]
    },
    "owner": "category-a",
-   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
+   "reason": "globalize_symbols retired 2026-09-28 (category A): generic end-of-pipeline LOCAL UNDEF promotion (globalize_local_undefs) replaces the per-unit field"
   },
   "sfd_tim.o": {
    "class": "content",
@@ -20157,13 +19962,10 @@
     ],
     "extern_data_sections": [
      ".data"
-    ],
-    "globalize_symbols": [
-     "jumptable_eu_80568F10"
     ]
    },
    "owner": "category-a",
-   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
+   "reason": "globalize_symbols retired 2026-09-28 (category A): generic end-of-pipeline LOCAL UNDEF promotion (globalize_local_undefs) replaces the per-unit field"
   },
   "sfx_cnv.o": {
    "class": "rename",
@@ -20187,15 +19989,10 @@
     ],
     "extern_data_sections": [
      ".data"
-    ],
-    "globalize_symbols": [
-     "lbl_eu_8051CF38",
-     "lbl_eu_8051CF3C",
-     "lbl_eu_8051CF40"
     ]
    },
    "owner": "category-a",
-   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
+   "reason": "globalize_symbols retired 2026-09-28 (category A): generic end-of-pipeline LOCAL UNDEF promotion (globalize_local_undefs) replaces the per-unit field"
   },
   "sfx_zmv.o": {
    "class": "layout",
@@ -20208,8 +20005,8 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-b",
+   "reason": "HANDOFF-CODE: rule drops content this TU's own (still unmatched) code emits | fields: drop_data_range | gate: FAIL | dropped: 6 referenced: 3"
   },
   "snd_AxManager.o": {
    "class": "rename",
@@ -20567,7 +20364,7 @@
    "reason": "representation-only rename: TU-local/section-relative target; raw object records no resolution change (unit_rules_category_a.md)"
   },
   "snd_FxChorusDpl2.o": {
-   "class": "rename",
+   "class": "layout",
    "fields": {
     "drop_text_symbols": [
      "__dt__Q44nw4r2ut30@unnamed@snd_FxChorusDpl2_cpp@11NonCopyableFv",
@@ -20590,8 +20387,8 @@
      ]
     ]
    },
-   "owner": "category-a",
-   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
+   "owner": "category-b",
+   "reason": "HANDOFF/TOOL: weak-symbol emission vs retail linker GC; needs the IWorkEvent-style out-of-line pattern per unit (see evidence doc \u00a77.3 for the mwldeppc blocker) | fields: drop_text_symbols,exact_renames,pad_data_section | gate: FAIL | dropped: 0 referenced: 0"
   },
   "snd_FxDelayDpl2.o": {
    "class": "rename",
@@ -20637,8 +20434,8 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-b",
+   "reason": "EXCEPTION CANDIDATE (owner approval needed): LCF/alignment or linker-padding emulation, not source-expressible | fields: pad_data_section | gate: FAIL | dropped: 0 referenced: 0"
   },
   "snd_Lfo.o": {
    "class": "layout",
@@ -20668,7 +20465,7 @@
    "reason": ""
   },
   "snd_MemorySoundArchive.o": {
-   "class": "rename",
+   "class": "layout",
    "fields": {
     "drop_data_tail": [
      [
@@ -20691,8 +20488,8 @@
      ]
     ]
    },
-   "owner": "category-a",
-   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
+   "owner": "category-b",
+   "reason": "HANDOFF-D: rule drops unreferenced weak vtables/RTTI the retail data objects own (category D) | fields: drop_data_tail,drop_text_symbols,exact_renames | gate: FAIL | dropped: 1 referenced: 0"
   },
   "snd_MmlParser.o": {
    "class": "rename",
@@ -20782,26 +20579,20 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-b",
+   "reason": "HANDOFF-D: rule drops unreferenced weak vtables/RTTI the retail data objects own (category D) | fields: drop_data_range | gate: FAIL | dropped: 1 referenced: 0"
   },
   "snd_PlayerHeap.o": {
-   "class": "rename",
+   "class": "layout",
    "fields": {
     "drop_text_symbols": [
      "__dt__Q34nw4r2ut12LinkListNodeFv",
      "__dt__Q44nw4r2ut28@unnamed@snd_PlayerHeap_cpp@11NonCopyableFv",
      "__dt__Q54nw4r3snd6detail11SoundThread8AutoLockFv"
-    ],
-    "exact_renames": [
-     [
-      "__vt__Q44nw4r3snd6detail10PlayerHeap",
-      "lbl_eu_8056AAE8"
-     ]
     ]
    },
-   "owner": "category-a",
-   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
+   "owner": "category-b",
+   "reason": "HANDOFF/TOOL: weak-symbol emission vs retail linker GC; needs the IWorkEvent-style out-of-line pattern per unit (see evidence doc \u00a77.3 for the mwldeppc blocker) | fields: drop_text_symbols | gate: MATCH | dropped: 0 referenced: 0"
   },
   "snd_RemoteSpeakerManager.o": {
    "class": "rename",
@@ -21149,11 +20940,11 @@
      "__dt__Q34nw4r2ut17AutoInterruptLockFv"
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-b",
+   "reason": "HANDOFF/TOOL: weak-symbol emission vs retail linker GC; needs the IWorkEvent-style out-of-line pattern per unit (see evidence doc \u00a77.3 for the mwldeppc blocker) | fields: drop_text_symbols | gate: MATCH | dropped: 0 referenced: 0"
   },
   "snd_StrmPlayer.o": {
-   "class": "rename",
+   "class": "layout",
    "fields": {
     "drop_data_tail": [
      [
@@ -21198,8 +20989,8 @@
      ]
     ]
    },
-   "owner": "category-a",
-   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
+   "owner": "category-b",
+   "reason": "EXCEPTION CANDIDATE (owner approval needed): set_data_align is the \u00a75 LCF/alignment emulation, not source-expressible; the extern_data_sections payload belongs to category D"
   },
   "snd_StrmSound.o": {
    "class": "rename",
@@ -21219,9 +21010,6 @@
     "extern_data_sections": [
      ".sdata2"
     ],
-    "globalize_symbols": [
-     "lbl_eu_8066A090"
-    ],
     "pad_data_section": [
      [
       ".sbss",
@@ -21236,7 +21024,7 @@
     ]
    },
    "owner": "category-a",
-   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
+   "reason": "globalize_symbols retired 2026-09-28 (category A): generic end-of-pipeline LOCAL UNDEF promotion (globalize_local_undefs) replaces the per-unit field"
   },
   "snd_Task.o": {
    "class": "layout",
@@ -21293,7 +21081,7 @@
    "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "snd_Util.o": {
-   "class": "rename",
+   "class": "layout",
    "fields": {
     "exact_renames": [
      [
@@ -21372,8 +21160,8 @@
      ]
     ]
    },
-   "owner": "category-a",
-   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
+   "owner": "category-b",
+   "reason": "EXCEPTION CANDIDATE (owner approval needed): LCF/alignment or linker-padding emulation, not source-expressible | fields: exact_renames,pad_data_section,pool_patterns,prefix_renames | gate: FAIL | dropped: 0 referenced: 0"
   },
   "snd_Voice.o": {
    "class": "rename",
@@ -21442,18 +21230,6 @@
   "snd_VoiceManager.o": {
    "class": "rename",
    "fields": {
-    "exact_renames": [
-     [
-      "@8923",
-      "lbl_eu_80653E60"
-     ]
-    ],
-    "pad_data_section": [
-     [
-      ".sbss",
-      8
-     ]
-    ],
     "prefix_renames": [
      [
       "@GUARD@instance$",
@@ -21465,8 +21241,8 @@
      ]
     ]
    },
-   "owner": "category-a",
-   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
+   "owner": "category-b",
+   "reason": "FIELD PRUNE 2026-09-28: pad_data_section + exact_renames redundant (prefix_renames is the whole effect) \u2014 removing the field leaves the postprocessed object bit-identical (field_prune.py criterion: apply(entry) == apply(entry minus field)), so it cannot affect the link."
   },
   "snd_WaveSound.o": {
    "class": "rename",
@@ -21476,16 +21252,10 @@
       "__vt__Q44nw4r3snd6detail9WaveSound",
       "lbl_eu_8056AD70"
      ]
-    ],
-    "pad_data_section": [
-     [
-      ".sbss",
-      8
-     ]
     ]
    },
-   "owner": "category-a",
-   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
+   "owner": "category-b",
+   "reason": "FIELD PRUNE 2026-09-28: pad_data_section redundant \u2014 removing the field leaves the postprocessed object bit-identical (field_prune.py criterion: apply(entry) == apply(entry minus field)), so it cannot affect the link."
   },
   "snd_WsdPlayer.o": {
    "class": "rename",
@@ -21549,8 +21319,8 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-b",
+   "reason": "EXCEPTION CANDIDATE (owner approval needed): LCF/alignment or linker-padding emulation, not source-expressible | fields: pad_data_section | gate: FAIL | dropped: 0 referenced: 0"
   },
   "usb.o": {
    "class": "layout",
@@ -21563,8 +21333,8 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-b",
+   "reason": "RETIRED 2026-09-28 source fix: removed the unreferenced s_usb_sbss_pad[4] source pad; raw gate now MATCH (.sbss 0x9); drop_nobits_range was a verified no-op after the fix"
   },
   "ut_ArchiveFontBase.o": {
    "class": "layout",
@@ -21603,8 +21373,8 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-b",
+   "reason": "HANDOFF-D: retarget_relocs points a reloc at the shared data object's symbol (data ownership)"
   },
   "ut_Font.o": {
    "class": "rename",
@@ -21636,7 +21406,7 @@
    "reason": "representation-only rename: TU-local/section-relative target; raw object records no resolution change (unit_rules_category_a.md)"
   },
   "ut_LockedCache.o": {
-   "class": "rename",
+   "class": "layout",
    "fields": {
     "drop_text_symbols": [
      "__dt__Q54nw4r2ut28@unnamed@ut_LockedCache_cpp@6LCImpl5Lock_Fv"
@@ -21648,8 +21418,8 @@
      ]
     ]
    },
-   "owner": "category-a",
-   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
+   "owner": "category-b",
+   "reason": "HANDOFF/TOOL: weak-symbol emission vs retail linker GC; needs the IWorkEvent-style out-of-line pattern per unit (see evidence doc \u00a77.3 for the mwldeppc blocker) | fields: drop_text_symbols,exact_renames | gate: MATCH | dropped: 0 referenced: 0"
   },
   "ut_PackedFont.o": {
    "class": "layout",
@@ -21716,8 +21486,8 @@
      "__dt__Q34nw4r2ut4FontFv"
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-b",
+   "reason": "HANDOFF-D/CODE: drop_data_range + drop_text_symbols_as_undef reshape the RomFont vtable/romfont_data against the shared data object"
   },
   "ut_TagProcessorBase.o": {
    "class": "rename",
@@ -21902,8 +21672,8 @@
      ]
     ]
    },
-   "owner": "unassigned",
-   "reason": ""
+   "owner": "category-b",
+   "reason": "EXCEPTION CANDIDATE (owner approval needed): LCF/alignment or linker-padding emulation, not source-expressible | fields: pad_data_section | gate: FAIL | dropped: 0 referenced: 0"
   },
   "uusb_ppc.o": {
    "class": "rename",
@@ -21995,7 +21765,7 @@
    "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
   },
   "yvm2.o": {
-   "class": "rename",
+   "class": "layout",
    "fields": {
     "drop_data_range": [
      [
@@ -22011,8 +21781,8 @@
      ]
     ]
    },
-   "owner": "category-a",
-   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
+   "owner": "category-b",
+   "reason": "HANDOFF-D: rule drops unreferenced weak vtables/RTTI the retail data objects own (category D) | fields: drop_data_range,set_data_align | gate: FAIL | dropped: 0 referenced: 0"
   }
  },
  "schema": 1

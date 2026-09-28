@@ -42,10 +42,6 @@ BOOL __DVDLongFileNameFlag = TRUE;
 
 static u32 currentDirectory = 0;
 
-u8 dvdfs_sbss_pad[8];  /* retail .sbss 0x20 -> 0x38 (align tail); non-static so -ipa file keeps them */
-u8 dvdfs_sbss_pad2[8];
-u8 dvdfs_sbss_pad3[8];
-
 static void cbForReadAsync(s32 result, DVDCommandBlock* block);
 static void cbForReadSync(s32 result, DVDCommandBlock* block);
 

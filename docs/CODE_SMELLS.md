@@ -11,20 +11,20 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 
 | metric | count |
 |---|---|
-| extern "C" (total lines) | 17419 |
-| extern "C" declarations (non-lbl_*, imports) | 7764 |
-| extern "C" definitions (forced names) | 4623 |
-| `self`/register-style params | 13772 |
-| `void*` (params + locals) | 7777 |
-| raw pointer offset arithmetic | 7919 |
+| extern "C" (total lines) | 17544 |
+| extern "C" declarations (non-lbl_*, imports) | 7801 |
+| extern "C" definitions (forced names) | 4666 |
+| `self`/register-style params | 13820 |
+| `void*` (params + locals) | 7818 |
+| raw pointer offset arithmetic | 8005 |
 | deref-through-cast arithmetic | 3308 |
 | inline asm / `register` | 108 |
-| rN-named params | 434 |
-| goto | 3431 |
+| rN-named params | 436 |
+| goto | 3434 |
 | DECOMP_ASM_INSN asm shims (fakematch candidate) | 0 |
 | #pragma schedule once/twice (fakematch candidate) | 6 |
 | assignment inside cast / init-list (fakematch candidate) | 1 |
-| #pragma | 2850 |
+| #pragma | 2853 |
 
 ## Top offenders (by cleanable severity)
 
@@ -378,7 +378,7 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 | src/kyoshin/cf/CInfoCf.cpp | 7 | 8 | 2 | 3 | 19 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/cf/CItem.cpp | 6 | 46 | 87 | 60 | 49 | 28 | 0 | 0 | 29 | 0 | 0 | 0 |
 | src/kyoshin/cf/CMcaFile.cpp | 0 | 2 | 4 | 3 | 2 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
-| src/kyoshin/cf/CPartsChange.cpp | 7 | 13 | 15 | 21 | 23 | 4 | 0 | 1 | 2 | 0 | 0 | 0 |
+| src/kyoshin/cf/CPartsChange.cpp | 44 | 56 | 63 | 62 | 109 | 4 | 0 | 3 | 5 | 0 | 0 | 0 |
 | src/kyoshin/cf/CPcEffect07.cpp | 2 | 13 | 11 | 5 | 10 | 9 | 0 | 2 | 0 | 0 | 0 | 0 |
 | src/kyoshin/cf/CSuddenCommu.cpp | 0 | 2 | 50 | 26 | 4 | 1 | 0 | 0 | 10 | 0 | 0 | 0 |
 | src/kyoshin/cf/CTaskCulling.cpp | 2 | 0 | 7 | 0 | 0 | 0 | 0 | 7 | 0 | 0 | 0 | 0 |
@@ -4039,15 +4039,15 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
  "src/kyoshin/cf/CPartsChange.cpp": {
   "asm_insn_shim": 0,
   "deref_arith": 4,
-  "extern_c_nonlbl_decl": 7,
-  "extern_c_nonlbl_def": 13,
-  "goto_count": 2,
+  "extern_c_nonlbl_decl": 44,
+  "extern_c_nonlbl_def": 56,
+  "goto_count": 5,
   "init_side_effect": 0,
-  "ptr_arith": 23,
-  "rn_params": 1,
+  "ptr_arith": 109,
+  "rn_params": 3,
   "schedule_pragma": 0,
-  "self_params": 15,
-  "void_ptr": 21
+  "self_params": 63,
+  "void_ptr": 62
  },
  "src/kyoshin/cf/CPcEffect07.cpp": {
   "asm_insn_shim": 0,

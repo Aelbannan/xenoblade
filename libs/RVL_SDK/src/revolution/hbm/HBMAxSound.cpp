@@ -277,7 +277,6 @@ static const char PCM_FILENAME[0x14] = "wt\\HomeButtonSe.pcm";
 
 // Retail .rodata has a 4th float (0.0f) after the generated pool.
 extern volatile const float s_volumeZeroPad = 0.0f;
-u8 hbmAxSound_bss_pad[4]; /* retail .bss 0x4 -> 0x8 (align tail) */
 
 namespace homebutton {
 

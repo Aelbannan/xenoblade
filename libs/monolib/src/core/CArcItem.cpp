@@ -1,7 +1,7 @@
-// Opt into the inline-empty ~IWorkEvent (see IWorkEvent.hpp): retail compiles
-// this dtor with the empty base-dtor body visible, so the base-dtor call is
-// elided and the unit fits its 0x294 split budget (the call would add 0xC).
-#define IWORK_EVENT_INLINE_DTOR
+// EXPERIMENT 2026-09-28: do not define IWORK_EVENT_INLINE_DTOR here -- the
+// derived dtor is a hand-written extern "C" free function that never calls
+// ~IWorkEvent, so the only odr-use is the hand-built vtable's sub-vtable slot,
+// which should stay an UNDEF reference to CTaskGame.cpp's strong copy.
 
 #include "monolib/core.hpp"
 #include "monolib/device.hpp"

@@ -49,7 +49,6 @@ static void* hi = NULL;
 
 static u8 s_usb_log = FALSE;
 static u8 s_usb_err = TRUE;
-u8 s_usb_sbss_pad[4]; /* retail .sbss 0x9 -> 0x10 (align tail); non-static so -ipa file keeps it */
 
 //unused
 // unused in Xenoblade retail: _usb_enable_log, _usb_disable_log

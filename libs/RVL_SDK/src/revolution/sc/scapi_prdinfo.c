@@ -36,10 +36,10 @@ static SCRegion ProductGameRegionAndStringTbl[] = {{SC_REGION_JP, "JP"},
                                                    {SC_REGION_CN, "CN"},
                                                    {-1, ""}};
 
-// "AREA"/"GAME" settings keys; 8-byte objects so the .sdata layout matches
-// the retail DOL (each string is 8-byte aligned in the retail .sdata).
-static char ProductAreaString[8] = "AREA";
-static char ProductGameRegionString[8] = "GAME";
+// "AREA"/"GAME" settings keys; the retail .sdata keeps each string as a
+// 5-byte object placed 8 bytes apart (symbol at +0 and +8, section 0xD).
+static char ProductAreaString[5] __attribute__((aligned(8))) = "AREA";
+static char ProductGameRegionString[5] __attribute__((aligned(8))) = "GAME";
 
 BOOL __SCF1(const char* type, char* buf, u32 sz) {
     u8 ptext;

@@ -5,6 +5,10 @@ Result: **78 entries retired** (77 by this batch + `code_80135Fdc.o` from anothe
 category), 3 `bake_linker_addrs` gone, 1 `force_symbol_relocs` gone, 60
 rename-class entries gone, comparator canonicalization landed with tests.
 
+Follow-up (same day): the 9 load-bearing `globalize_symbols` entries are also
+gone — a generic end-of-pipeline promotion in `postprocess_object` replaces them
+(§6.7), so the table now carries no `globalize_symbols` payload at all.
+
 Predecessor: `docs/handoff/unit_rules/README.md` (freeze rules, evidence protocol).
 
 ## 1. Result summary
@@ -19,7 +23,7 @@ Predecessor: `docs/handoff/unit_rules/README.md` (freeze rules, evidence protoco
 | `force_symbol_relocs` entries | 1 | 0 |
 | `symbol_sizes` entries | 2 | 1 (mixed `snd_SoundPlayer.o`, category B/C) |
 | `set_data_align` entries | 30 | 26 (4 no-op/placement-neutral, see §5) |
-| `globalize_symbols` entries | 11 | 9 (2 provable no-ops retired; §5b) |
+| `globalize_symbols` entries | 11 | 0 (2 no-ops earlier, 9 replaced by the generic promotion, §6.7) |
 | `exact_renames` / `pool_patterns` / `data_pool_patterns` entries | 222 / 201 / 26 | 180 / 186 / 21 |
 | strong duplicate global definitions in the link inputs | 6 | 2 |
 | unresolved global references in the link inputs | 1333 | 1330 (0 new, 3 fixed) |
@@ -184,6 +188,11 @@ under-strictness is pre-existing and unchanged.)
   This is the handoff's correctness fix. Only one linked unit was affected
   (`ut_TextWriterBase.o#Q36nw4hbm2ut`, a `pad_data_section` rule); the other
   four scoped-only keys belong to units that are not linked from source.
+* `tools/coop/lib/objdiff_report.py` (handoff comparator item 4) — **checked, no
+  change needed**: it drives the external objdiff-cli and consumes its report;
+  the reloc-site decision that gates FULL_MATCH is `equivalence_check`'s
+  `_normalize_reloc_dest`/`certify_unit_symbol` (canonical, §6.4), whose
+  `evidence == "full-instruction-match"` overrides the objdiff under-score.
 
 ### 6.2 Link-input resolution diff (before/after the batch)
 
@@ -320,6 +329,69 @@ element (`globalize_audit.py`, applying each entry with and without the field):
 * `mpv_mc.o`, `mpvabdec.o` (objects not built) and `sfx_cnv.o` ×3 (LOCAL
   definition export) — kept conservatively.
 
+All nine were retired once the promotion became generic in the tool (§6.7);
+`globalize_audit.py` and the audit above remain the per-element evidence that
+the promotion is what the fields were doing.
+
+### 6.7 `globalize_symbols` retired — generic end-of-pipeline promotion
+
+**Mechanism** (`tools/postprocess_reloc_names.py`): at the end of
+`postprocess_object`, `globalize_local_undefs(path,
+rule_produced_symbol_names(rules))` promotes every `STB_LOCAL`/`SHN_UNDEF`
+symtab entry whose name one of *this entry's* rules produces (`exact_renames`,
+`prefix_renames`, `pool_patterns`, `data_pool_patterns`, `add_symbols`,
+`retarget_relocs`, `inject_relocs` targets), when a relocation in an `SHF_ALLOC`
+section targets that entry and the object does not also define the name
+globally. The filter keeps the pass scoped to names the entry itself created, so
+unrelated LOCAL symbols are never touched (`prefix_renames`/`add_symbols` names
+were not part of any `globalize_symbols` payload, so they gain 11 promotions the
+fields never covered; each resolves to the same unit's retail object).
+
+Why it cannot regress the link:
+
+* a reloc-targeted LOCAL UNDEF is a hard mwldeppc error whether or not a
+  definition exists elsewhere (repro below), so promotion can only turn that
+  error into a name-based resolution;
+* only UNDEF entries are promoted, so the pass can never add a definition:
+  duplicate-global counts are unchanged;
+* objcopy's `--globalize-symbol` also flips *same-value aliases* (`@N` twins of a
+  promoted name) from LOCAL UNDEF to GLOBAL UNDEF. Measured over the frozen raw
+  inputs (521 rule objects): 470 produced-name promotions, 275 alias binding
+  flips, **0 new global definitions**.
+
+**Repro** (`.scratch/unitrules_all/gl/repro_full.log`; `b_g.o` defines `g_sym`,
+`a_g.o` references it GLOBAL UNDEF, `a_local.o` LOCAL UNDEF):
+
+| link | result |
+|---|---|
+| `entry.o a_g.o b_g.o` | 1104-byte ELF |
+| `entry.o a_local.o b_g.o` | `undefined: 'g_sym'` ×2, link failed |
+| `entry.o a_g.o` (no definer anywhere) | `undefined: 'g_sym'` ×2, link failed |
+| `entry.o a_local.o` (no definer anywhere) | `undefined: 'g_sym'` ×2, link failed |
+
+So the flip is a strict improvement: reloc-targeted refs that only the fields
+used to rescue now resolve by name, and refs with no definition at all are red in
+both bindings (identical mwldeppc message).
+
+**Measurements** (`pp_ab.py`, `classify.py`, `final_ab.py`,
+`promoted_resolution_decomp.py`):
+
+| level | result |
+|---|---|
+| 521 raw postprocessed objects, pass on/off (`pp_ab.py` + `classify.py`) | 203 objects change: 470 produced-name promotions, 186 alias UNDEF flips, 89 other alias-entry flips, 0 new global definitions |
+| 1161 link inputs, decomp inputs regenerated from raw with the pass on/off (`final_ab.py`) | duplicate global defs 11 → 11 (0 new, 0 fixed); unresolved global refs 1330 → 1356, and the 26 added names are exactly the promoted aliases with **no definer anywhere** (they were LOCAL UNDEF, i.e. `undefined` for mwldeppc, before — same error, now visible to the analyzer) |
+| installed decomp link inputs: referenced rule-produced LOCAL UNDEF left over (`promoted_resolution_decomp.py`) | **0** — nothing the fields would have promoted is still local |
+| `ninja build/us/main.elf` before/after (99 RELOCPOST steps re-ran with the final tool) | identical linker diagnostics (2 `multiply-defined`, the FORCEACTIVE warnings, `FAILED: [code=139]`); the SIGSEGV still blocks a DOL-vs-DOL comparison |
+
+Three per-unit notes: `mpv_mc.o`/`mpvabdec.o` are not built at all; `sfx_cnv.o`
+also had its three LOCAL definitions *exported* by the field, but that unit is
+not a link input (only the retail `sfx_cnv.o`/`sfx_cnv_to_Y84C44.o` are), no link
+input references the names globally, and the pass deliberately leaves definitions
+alone (no new global symbols); the six built units (`CtrlAct`, `snd_StrmSound`,
+`mpv_mcy`, `adx_dcd`, `sfd_adxt`, `sfh_ver1`) leave the pipeline with their
+target names GLOBAL UNDEF exactly as the field did
+(`.scratch/unitrules_all/gl/nine_units.txt`).
+
 ## 7. Manifest / claims
 
 * `--ratchet` recorded the batch: `baseline_count 512 → 434`; the only payload
@@ -337,6 +409,10 @@ element (`globalize_audit.py`, applying each entry with and without the field):
 * Second pass (`--ratchet 434 → 431`, 4 more claims): `CVec4.o`, `CCol3.o`,
   `mwsfdply.o` retired with reasons, `CMenuBattlePlayerState.o` annotated for
   the retired globalize elements.
+* Globalize follow-up (`--ratchet 429 → 429`, 9 claims, owner `category-a`):
+  the nine `globalize_symbols` payloads dropped; the dataclass field and its
+  per-unit call path are gone, so the table can no longer carry a per-unit
+  globalize at all (`check_unit_rules_frozen.py` no longer knows the name).
 
 ## 8. Handoffs / residuals
 
@@ -344,7 +420,7 @@ element (`globalize_audit.py`, applying each entry with and without the field):
 |---|---|---|
 | `CLibCri.o` (`rtti_*` → `__RTTI__*`), `CLibLayout.o`, `CArtsSet.o`, `CChainTime.o`: global UNDEF reference retargeted by name | source (`extern "C" … __RTTI__…`) | `symres` LOAD_BEARING; retail objects reference the target names |
 | `CGXCache.o`, `CSysWinScenarioLog.o` `add_symbols`: GLOBAL subobject labels other link inputs reference | source (`extern "C" lbl_eu_*` decls) | `live_rename_report` external-ref counts |
-| 9 `globalize_symbols` entries / 14 elements: mwldeppc cannot resolve a LOCAL UNDEF (§6.6) | tooling/link path | `globalize_audit.py` + the two-object ldscript repro |
+| 9 `globalize_symbols` entries / 14 elements: mwldeppc cannot resolve a LOCAL UNDEF (§6.6) | **done** — generic end-of-pipeline promotion replaces the fields (§6.7); link diagnostics unchanged, 0 referenced LOCAL UNDEF left, 0 new definitions | — |
 | 26 `set_data_align` entries: source-side section alignment (§5) | B/C | `align_audit2.py` address table |
 | `CErrorWii.o`: the rename removal clears the `lbl_eu_80665A60..66` duplicate link error, but the TU still defines 7 bytes of `.sbss` that the retail split has as size 0; the source should declare the statics `extern "C" lbl_eu_*` (no definition) once the shared data object owns them | D | raw gate `.sbss: retail 0x0 != decomp 0x7`; link error before the batch |
 | witness-side ADDR16 baked-vs-reloc equivalence | **done** — `equivalence_check` extended, 10 tests, `OSInit`/`__OSThreadInit` accepted (§6.4) | — |
@@ -359,8 +435,19 @@ element (`globalize_audit.py`, applying each entry with and without the field):
 .venv/bin/python3 .scratch/unitrules_a/retired_evidence.py           # per-unit gate table
 .venv/bin/python3 .scratch/unitrules_a/strict_probe2.py              # strict-mode blast radius
 .venv/bin/python3 .scratch/unitrules_a/globalize_audit.py            # globalize no-op vs load-bearing
+# generic globalize pass (§6.7):
+.venv/bin/python3 .scratch/unitrules_all/pp_ab.py                    # raw pipeline A/B (pass on/off)
+.venv/bin/python3 .scratch/unitrules_all/classify.py                 # what the pass changed (classes/risks)
+.venv/bin/python3 .scratch/unitrules_all/final_ab.py                 # link-input resolution A/B
+.venv/bin/python3 .scratch/unitrules_all/promoted_resolution_decomp.py
+.venv/bin/python3 .scratch/unitrules_all/link_gen.py /tmp/gen.elf --generic-globalize
+cat .scratch/unitrules_all/gl/repro_full.log                         # LOCAL vs GLOBAL UNDEF repro
+cat .scratch/unitrules_all/gl/nine_units.txt                         # the 9 retired entries' symbols
 ```
 
 Scratch artifacts (plan, pre-edit table copy, probes) live under
 `.scratch/unitrules_a/`; the pre-edit table is
-`.scratch/unitrules_a/postprocess_reloc_names.py.pre-a`.
+`.scratch/unitrules_a/postprocess_reloc_names.py.pre-a`. The §6.7 globalize-pass
+probes (`pp_ab.py`, `classify.py`, `final_ab.py`,
+`promoted_resolution_decomp.py`, `link_gen.py`, `gl/`) live under
+`.scratch/unitrules_all/`.

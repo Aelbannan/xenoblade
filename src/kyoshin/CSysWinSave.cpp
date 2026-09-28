@@ -439,4 +439,3 @@ __declspec(section ".sdata") __attribute__((aligned(8))) __attribute__((used))
 void* lbl_eu_80662B10[2] = { (void*)lbl_eu_8050FD60, (void*)lbl_eu_80538A60 };
 CSysWinSave* lbl_eu_80664A08 = 0;
 u32 save_sbss_padA0C = 0; // (retail .sbss is 8B; content ignored by gate)
- u32 _pad_80664A0C;

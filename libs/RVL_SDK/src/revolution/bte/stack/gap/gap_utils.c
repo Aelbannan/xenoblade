@@ -72,10 +72,10 @@ typedef struct
     UINT8       reserved2[3];              /* 0x29 */
     tGAP_FINDADDR_CB findaddr_cb;          /* 0x2C */
     tBTM_INQ_INFO *cur_inqptr;             /* 0x80 */
-    u8 tail[0x3B0 - 0x84];                 /* 0x84..0x3B0 (retail tail + 4 align pad, unused here) */
-} tGAP_CB;                                 /* 0x3B0 total = retail .bss 0x3AC + 4 pad */
+    u8 tail[0x3AC - 0x84];               /* 0x84..0x3AC (retail tail, unused here) */
+} tGAP_CB;                                 /* 0x3AC total = retail .bss size */
 
-tGAP_CB gap_cb; /* retail .bss 0x3AC + 4 pad; defined here (extern in other units) */
+tGAP_CB gap_cb; /* retail .bss 0x3AC; defined here (extern in other units) */
 
 void btm_cback(UINT16 index, void *p_msg);
 void gap_find_addr_name_cb(tBTM_REMOTE_DEV_NAME *p);

@@ -6011,6 +6011,13 @@ UNIT_RULES: dict[str, UnitRules] = {
             ("lbl_eu_80669A88", ".sdata2", 0x38, 4),
             ("lbl_eu_80669A90", ".sdata2", 0x40, 8),
             ("lbl_eu_80669A98", ".sdata2", 0x48, 8),
+            # The two 0.0f words cannot be their own source objects (MWCC sends
+            # every all-zero read-only initializer to .sbss2); the source's two
+            # filler arrays carry their names and these entries re-point the
+            # symbols onto the retail offsets (retail 0x3BC/0x484 + the 0x18
+            # front pool dropped below).
+            ("lbl_eu_80669E24", ".sdata2", 0x3D4, 4),
+            ("lbl_eu_80669EEC", ".sdata2", 0x49C, 4),
         ),
         drop_data_range=(
             (".sdata2", 0, 0x18),
@@ -7192,6 +7199,17 @@ UNIT_RULES: dict[str, UnitRules] = {
         # own anon conversion-magic/literal pool AFTER our defs -> trim
         # trailing only.
         drop_data_tail=((".sdata2", 0x70),),
+        # APPROVAL NEEDED (frozen manifest): add
+        #   exact_renames=(("__dt__Q22cf13CfObjectActorFv__FPQ22cf13CfObjectActorl",
+        #                   "__dt__Q22cf13CfObjectActorFv"),)
+        # The base dtor is hand-written as a free function (MI header layout is
+        # +0x80 off retail), so MWCC mangles its definition with a parameter
+        # list while CfObjectActor.o/CfObjectPc.o/CREvtModel.o reference the
+        # retail in-charge name -> link: undefined. Verified 2026-09: with the
+        # rename the definition exports the retail name and the reference
+        # resolves (nm shows T __dt__Q22cf13CfObjectActorFv); the frozen check
+        # rejects the new field, so it is parked here for human sign-off
+        # (tools/check_unit_rules_frozen.py --write --force). §7.9.
     ),
     "CfObjectEff.o": UnitRules(
         # Base CfObject vtable (0x178, text-ref'd from __dt__) =
@@ -7711,6 +7729,17 @@ def patch_sdata2_magic(path: Path) -> bool:
     return patched
 
 
+def _is_section_symbol(st_info: int) -> bool:
+    """True for STT_SECTION (st_info low nibble 3).
+
+    Section symbols must keep st_value 0 and their own section index: a
+    rewritten section symbol makes mwldeppc fail with
+    ``ELF_linker.c:2295``.  The st_value-rewriting rules below therefore skip
+    them; only the object symbols they mean to move get patched.
+    """
+    return (st_info & 0xF) == 3
+
+
 def swap_sdata2_leading_f32_pair(path: Path) -> bool:
     """Swap .sdata2[0:4] with [4:8] when they are 0.0f then 32000.0f.
 
@@ -7752,6 +7781,8 @@ def swap_sdata2_leading_f32_pair(path: Path) -> bool:
         )
         if st_shndx != sdata2_idx:
             continue
+        if _is_section_symbol(st_info):
+            continue
         if st_value == 0:
             struct.pack_into(">I", data, sym_off + so + 4, 4)
         elif st_value == 4:
@@ -7792,6 +7823,8 @@ def permute_sdata2_words(path: Path, order: tuple[int, ...]) -> bool:
     patched = False
     for so in range(0, sym_size, 16):
         if struct.unpack_from(">H", data, sym_off + so + 14)[0] != sdata2_idx:
+            continue
+        if _is_section_symbol(struct.unpack_from(">B", data, sym_off + so + 12)[0]):
             continue
         st_value = struct.unpack_from(">I", data, sym_off + so + 4)[0]
         if st_value % 4:
@@ -7840,6 +7873,8 @@ def swap_sdata2_leading_f32_words(path: Path, words: tuple[int, int]) -> bool:
     for so in range(0, sym_size, 16):
         st_value = struct.unpack_from(">I", data, sym_off + so + 4)[0]
         if struct.unpack_from(">H", data, sym_off + so + 14)[0] != sdata2_idx:
+            continue
+        if _is_section_symbol(struct.unpack_from(">B", data, sym_off + so + 12)[0]):
             continue
         if st_value == 0:
             struct.pack_into(">I", data, sym_off + so + 4, 4)
@@ -7892,6 +7927,8 @@ def reverse_sdata2_trailing_f32x4(path: Path) -> bool:
             ">IIIBBH", data, sym_off + so
         )
         if st_shndx != sdata2_idx:
+            continue
+        if _is_section_symbol(st_info):
             continue
         rel = st_value - window_start
         if rel in remap:
@@ -8532,9 +8569,25 @@ def drop_text_symbols(
         sname = data[str_off + st_name : name_end].decode("ascii")
         struct.pack_into(">I", data, sym_off + so + 8, 0)
         if sname in as_undef:
-            struct.pack_into(">H", data, sym_off + so + 14, 0)  # SHN_UNDEF
+            # Keep the weak definition (defined, zero-size, at the splice
+            # point) instead of turning it UNDEF: mwldeppc SIGSEGVs on the
+            # UNDEF rewrite (B §7.4), while a weak-vs-strong pair makes the
+            # linker resolve every live reference (vtable slot) to the strong
+            # copy in the owning TU — exactly the retail behaviour as_undef
+            # was aiming for. No value/section surgery beyond that.
+            struct.pack_into(">I", data, sym_off + so + 4, start)
+            struct.pack_into(">H", data, sym_off + so + 14, text_idx)
+            data[sym_off + so + 12] = (0x2 << 4) | (st_info & 0xF)  # STB_WEAK
         else:
-            struct.pack_into(">H", data, sym_off + so + 14, 0xFFF1)  # SHN_ABS
+            # Orphan weak: defined-but-empty (zero-size) at the splice point,
+            # forced STB_WEAK. SHN_ABS with a stale value crashed mwldeppc
+            # (B §7.4) and a *local* definition broke references from other
+            # objects (`CfObjectActor::~CfObjectActor` in CfObjectPc.o's extab);
+            # weak keeps the symbol visible so the linker picks the strong copy
+            # in the owning TU, exactly like the retail link.
+            struct.pack_into(">I", data, sym_off + so + 4, start)
+            struct.pack_into(">H", data, sym_off + so + 14, text_idx)
+            data[sym_off + so + 12] = (0x2 << 4) | (st_info & 0xF)  # STB_WEAK
 
         # Shift later .text symbols.
         for so2 in range(0, sym_size, 16):
@@ -8676,6 +8729,8 @@ def repack_text(path: Path, align: int) -> bool:
     for so in range(0, sym_size, 16):
         st_shndx = struct.unpack_from(">H", data, sym_off + so + 14)[0]
         if st_shndx != text_idx:
+            continue
+        if _is_section_symbol(struct.unpack_from(">B", data, sym_off + so + 12)[0]):
             continue
         st_value = struct.unpack_from(">I", data, sym_off + so + 4)[0]
         struct.pack_into(">I", data, sym_off + so + 4, remap(st_value))
@@ -9077,6 +9132,8 @@ def drop_nobits_range_func(path: Path, section: str, start: int, end: int) -> bo
             st_value = struct.unpack_from(">I", data, sym_off + so + 4)[0]
             st_shndx = struct.unpack_from(">H", data, sym_off + so + 14)[0]
             if st_shndx != sec_idx:
+                continue
+            if _is_section_symbol(struct.unpack_from(">B", data, sym_off + so + 12)[0]):
                 continue
             if start <= st_value < end:
                 struct.pack_into(">I", data, sym_off + so + 8, 0)
@@ -9762,6 +9819,8 @@ def drop_data_range(path: Path, section: str, start: int, end: int) -> bool:
             st_value = struct.unpack_from(">I", data, sym_off + so + 4)[0]
             st_shndx = struct.unpack_from(">H", data, sym_off + so + 14)[0]
             if st_shndx != sec_idx:
+                continue
+            if _is_section_symbol(struct.unpack_from(">B", data, sym_off + so + 12)[0]):
                 continue
             if start <= st_value < end:
                 struct.pack_into(">I", data, sym_off + so + 8, 0)

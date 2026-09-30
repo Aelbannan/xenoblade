@@ -1,7 +1,8 @@
 // monolib zlib compression helpers.
 //
 // Recovered from retail asm (build/us/asm/monolib/src/lib/UnkClass_80460308.s):
-//   - processData__17UnkClass_80460308Fv: Adler-32 checksum (zlib adler32).
+//   - processData__17UnkClass_80460308Fv: Adler-32 checksum (zlib adler32);
+//     retail names this function "processData", hence the literal symbol below.
 //   - ZlibInflateFastCore: inflate "fast" block decoder core
 //     (zlib inflate_fast), driven by the inflate loop in UnkClass_80460C34.
 //
@@ -25,7 +26,7 @@
 #define ADLER_DO8(buf, i) ADLER_DO4(buf, i); ADLER_DO4(buf, i + 4);
 #define ADLER_DO16(buf)   ADLER_DO8(buf, 0); ADLER_DO8(buf, 8);
 
-extern "C" u32 adler32__17UnkClass_80460308Fv(u32 adler, const u8* buf, u32 len)
+extern "C" u32 processData__17UnkClass_80460308Fv(u32 adler, const u8* buf, u32 len)
 {
     u32 sum2;
     u32 n;

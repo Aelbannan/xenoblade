@@ -20,7 +20,14 @@ entries / 27 live** (was 111/40) and no in-scope key is unowned. B1 also landed
 its first source fix (`CArcItem.o`: the `drop_text_symbols` rewrite retired,
 with the reusable recipe and its negative result in B doc §7.5).
 
-**Link state after B's fixes:** the two duplicate-definition errors are **gone**
+**Link state after B's fixes (§7.8):** the `drop_text_symbols*` SIGSEGV is
+**fixed** — the rewrite now keeps dropped symbols defined in `.text` with
+`size=0` and forces `STB_WEAK` (the linker resolves live references to the strong
+copy in the owning TU; no ABS/UNDEF surgery). `main.elf` links through the whole
+reshape phase and now stops on 18 genuine undefined symbols
+(`~CfObjectActor` dtor/vtable, `lbl_eu_80669Exx` pool labels) plus
+`ELF_linker.c:2295`, all pre-existing (identical with the text drops disabled).
+Earlier state: the two duplicate-definition errors are **gone**
 (§A2/§A3 below) — the full `main.elf` link now reports **0 link errors** and
 still SIGSEGVs, entirely because of the `drop_text_symbols*` symbol rewrite
 (B §7.4: ABS → SIGSEGV, UNDEF → SIGSEGV, keep-defined → `ELF_linker.c:7182`
@@ -43,7 +50,9 @@ defines it, and the `.text` delta.
 | you (owner) | 22 `set_data_align` LCF/exception decision; `PLAN.md` §17.6 rows | B doc §5 |
 | category C | 15 missing-tail `pad_*` entries (retail bytes are zeros; per-entry retail symbol named) + 32 code-match packets | `c_byte_falsification.md` "Handed over from category B" |
 | category D | 15 HANDOFF-D entries, 8 mixed, `CfRes`/`CDeviceVI`/`ut_RomFont` data-layout items, the 7 EDS-bearing `set_data_align` keys | `d_data_architecture.md` "Handed over from category B" |
-| toolchain/pipeline | §7.4 `drop_text_symbols*`/mwldeppc blocker; wine-vs-wibo probe | B doc §7.4 |
+| toolchain/pipeline | §7.4 `drop_text_symbols*`/mwldeppc blocker (**fixed**, §7.8: dropped symbols stay defined, size 0, `STB_WEAK`); wine-vs-wibo probe | B doc §7.4, §7.8 |
+| placeholder units | link now stops on ~25 undefined symbols; the pool-label half (`lbl_eu_80669Exx`, …) comes from `NonMatching` units linking dtk placeholders -> decompile/match and flip to `Matching` | `e_replace_placeholder_units.md` |
+| you (owner) | `CfObjectEne` one-line `exact_renames` (parked, needs `--write --force`); `~CfObjectActor` MI-layout source fix; A1 alignment decision (see §7.10) | B doc §7.9, §7.10 |
 | done | `CLibCriMoviePlay` `extern` + `symbols.txt`/`splits.txt` pad fix; `CHelp_ClosePartyMenu` symbol rename; `trim_text_section` SHN_ABS crash; `CArcItem` weak-stub source fix (+ its negative result for compiler-generated dtors) | B doc §7.1–7.3, §7.5 |
 
 
@@ -53,6 +62,7 @@ defines it, and the `.text` delta.
 | `b_linker_behavior.md` | linker-behavior emulation | 100 non-EDS layout entries (drops/pads/trims/GC + 26 `set_data_align`); source levers or approved near-miss |
 | `c_byte_falsification.md` | byte falsification | 28 content entries (9 live); real source shape or demotion |
 | `d_data_architecture.md` | data ownership | 295 `extern_data_sections` entries; owner decision + explicit code-only model |
+| `e_replace_placeholder_units.md` | hybrid link / undefined symbols | `NonMatching` units linked as dtk retail placeholders (`math_arithmetic`, `math_triangular`, …) -> match + flip to `Matching`; pool ownership/rename rules; link + DOL verification |
 
 ## The problem in one paragraph
 

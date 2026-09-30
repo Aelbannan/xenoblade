@@ -138,7 +138,14 @@ extern "C" u32 lbl_eu_806637BC = (u32)&lbl_eu_80523128;
 extern "C" u32 lbl_eu_806637C0[2] = { 0xFFFFFFFF, 0x00000000 };
 
 // [.sbss] 0x806656F0-0x80665700 (0x10 zero-fill; only size/align are compared).
-// lbl_eu_806656F0 is the CLibG3d singleton; the following words pad the
-// section to the retail 0x10 span.
+// lbl_eu_806656F0 is the CLibG3d singleton; lbl_eu_806656F8 stores the
+// dissolved monolibdata2 spInstance pointer and lbl_eu_806656FC its
+// HBM-active byte (both referenced from CLibHbm.cpp).
 CLibG3d* lbl_eu_806656F0[2];
-u32 lbl_eu_806656F8[2];
+u32 lbl_eu_806656F8;
+// bool + 3B tail pad: the retail .sbss span runs to 0x80665700.
+struct SbssActiveFlag {
+    bool value;
+    u8 pad[3];
+};
+SbssActiveFlag lbl_eu_806656FC;

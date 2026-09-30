@@ -195,7 +195,7 @@ f32 FExp(f32 x) {
     f32 expxn = FExpLn2(x - NW4R_MATH_LN_2 * kf);
     u32 expx = F32AsU32(expxn);
 
-    return U32AsF32(((k << 23) + expx) & 0x7FFFFFFF);
+    return U32AsF32((expx + (k << 23)) & 0x7FFFFFFF);
 }
 
 f32 FLog(f32 x) {

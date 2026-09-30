@@ -4722,3 +4722,39 @@ cf::/nw4r:: classes with named slots; conversion-flavor preservation when foldin
 - Fix:       inline `*(u32*)(self + i * 8)` at every helper call site (no named local), hoist the BDAT table + column base above the loop (`void* bdat = lbl_eu_806640CC; const char* col = lbl_eu_80503C48;`), and hoist the third loop's `u16 replay = 0;` to function scope. Result: 0% -> 82.1%, 0 structural, size-exact; residual is a pure GPR colour permutation.
 - Confidence: repo_proven
 - Applies to/a.k.a.: inline accessor helpers (`GetXxx(id)` with a null-adjust) used in both arms of `if/else if`; 16-slot table sweeps.
+
+## All-zero aggregate in `.data`: needs `#pragma section data_type` *and* the section declspec (Wii/1.1, big TU)
+- Symptom:   a retail `.data` object whose bytes are all zero (e.g. a zero-filled pointer
+             table or vtable slice) lands in `.bss`, so the unit's `.data` is short by
+             exactly its size — and `ldscript.lcf` concatenates sections positionally, so
+             every later unit's data shifts.  `run.py data diff` reports
+             `[FAIL] .data: retail size 0x228 != decomp 0x1F8` while the chips it *does*
+             define are byte-identical.
+- Cause:     MWCC routes a zero-initialised aggregate to `.bss` no matter what the source
+             says: `__declspec(section ".data")` alone is ignored, `__attribute__((used))`,
+             `nocommon` and `aligned` do not change it, and in a large TU
+             `#pragma section data_type ".data" ".data"` alone is ignored too (it works in a
+             small probe, and works in the real TU only once the declspec is also present).
+- Fix:       put `#pragma section data_type ".data" ".data"` in front of the block **and**
+             keep `__declspec(section ".data")` on each all-zero definition; restore with
+             `#pragma section data_type ".data" ".bss"` before the next `.bss`/`.sbss`
+             definitions.  Result: `.data` 0x228 with identical bytes, `.bss`/`.sbss`
+             back at their retail sizes.  (`kyoshin/code_800A75FC.cpp`; the same pairing is
+             what `CfNandManager.cpp` uses.)
+- Confidence: repo_proven
+- Applies to/a.k.a.: retail label reconstruction / absorb-free data typification; any
+             "section size off by a multiple of the zero object" data-gate FAIL;
+             `#pragma push`/`pop` around the block if the file already uses section pragmas.
+
+## Zero-init `.sbss` slot wider than the object: `aligned(n)` on the *next* symbol reproduces retail offsets (code_800A75FC)
+- Symptom:   retail has `lbl_eu_80663E98` as an 8-byte `.sbss` symbol (byte flag) and the
+             next label at +0x08; a plain `s8` definition puts the next label at +0x01, so
+             five `(s8,u32)` stage pairs land 0x2F early and `.sbss` (0x30) comes up 1 byte.
+- Cause:     the flag's users do byte loads/stores (`lbz`/`stb`), so its *type* must stay
+             `s8`; the width in the retail map is slot padding, not an access width.
+- Fix:       keep `s8 lbl_eu_80663E98;` and declare the *next* object
+             `__attribute__((aligned(8))) s8 lbl_eu_80663EA0;` — the 8-byte slot and every
+             following retail offset then reproduce exactly (`.sbss` 0x30, zero-fill).
+- Confidence: repo_proven
+- Applies to/a.k.a.: `.sbss`/`.bss` label groups whose retail offsets are 8-aligned but
+             whose access width is 1; works without touching the flag's 14 call sites.

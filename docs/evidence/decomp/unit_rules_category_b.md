@@ -724,3 +724,141 @@ build/tools/wibo build/compilers/Wii/1.1/mwldeppc.exe -fp hardware -nodefaults \
 .venv/bin/python3 -m unittest discover -s tools/coop/tests -t .
 .venv/bin/python3 configure.py
 ```
+
+### 7.8 The mwldeppc SIGSEGV was the ABS/UNDEF symbol rewrite (§7.4 closed)
+
+Bisection (`pp_slice.py`/`pp_one.py`, per-unit link runs) isolated the crash to
+`drop_text_symbols`' symbol surgery, and to the **`as_undef` variant** in
+particular:
+
+* raw objects, no postprocess at all → linker completes (104 errors, no crash);
+* postprocess with `drop_text_symbols`/`repack_text`/`trim_text_section`
+  disabled → no crash (`ELF_linker.c:2295` only);
+* postprocess applied to the single unit `CDeviceGX.reloc.o` → SIGSEGV; same for
+  `CLibStaticData.reloc.o`;
+* same two units with the `as_undef` names treated as ordinary drops → no crash.
+
+The fix in `drop_text_symbols` (tools/postprocess_reloc_names.py):
+
+| dropped symbol | old rewrite | new rewrite |
+|---|---|---|
+| `as_undef` names | `st_shndx=SHN_UNDEF` (value left stale, later zeroed — still SIGSEGV) | keep **defined** in `.text`, `size=0`, force `STB_WEAK` |
+| orphan weaks | `st_shndx=SHN_ABS` | keep **defined** in `.text`, `size=0`, force `STB_WEAK` |
+
+A weak definition with no body is exactly the retail semantics the old `UNDEF`
+rewrite was emulating: the linker resolves every live reference (vtable slot,
+extab) to the **strong copy in the owning TU**, and there is no ABS/UNDEF symbol
+for mwldeppc to trip over. Verified: full `main.elf` link no longer SIGSEGVs,
+all 457 tool tests pass, and every rewritten unit still reports
+`data diff --postprocess` MATCH (`CDeviceGX`, `CLibStaticData`,
+`HBMAnmController`, `lyt_window`, `g3d_scnobj`, ...).
+
+**Next layer (now visible, pre-existing).** With the crash gone the link reports
+its real blockers — identical with the text drops disabled, so none of them is
+caused by the rewrite:
+
+* `undefined: 'cf::CfObjectActor::~CfObjectActor()'` — `CfObjectActor.o`'s
+  **raw** object already has `U __dt__Q22cf13CfObjectActorFv` and
+  `U __vt__Q22cf13CfObjectActor`: the class dtor/vtable is simply not
+  reconstructed anywhere (`CfObjectPc.o`, `CREvtModel.o` also reference it).
+  Real matching work, not a rule bug.
+* a batch of `undefined: 'lbl_eu_80669Exx'` pool labels referenced from
+  `math_arithmetic.o`/`math_triangular.o`/`CLibHbm` (same shape: reference
+  exists, no definer in the link inputs).
+* `internal linker error: ELF_linker.c:2295` after the undefined-symbol report,
+  likely a consequence; re-check once the undefineds are resolved.
+
+The remaining `drop_text_symbols` entries stay (they are correct retail-budget
+reshapes); with this fix they no longer crash the linker.
+
+### 7.9 Link frontier after the crash fix (pre-existing undefined symbols)
+
+**Approval item found here.** The base `CfObjectActor` dtor is hand-written as a
+free function (`CfObjectEne.cpp`), so MWCC mangles its definition with a
+parameter list (`__dt__Q22cf13CfObjectActorFv__FPQ22cf13CfObjectActorl`) while
+`CfObjectActor.o`/`CfObjectPc.o`/`CREvtModel.o` reference the retail in-charge
+name `__dt__Q22cf13CfObjectActorFv` -> `undefined` at link. The one-line fix is a
+new `exact_renames` on `CfObjectEne.o` (proof: with it, `nm` shows
+`T __dt__Q22cf13CfObjectActorFv` and that undefined disappears). It is parked in
+the table as a comment because the **frozen manifest rejects the new field**;
+the human sign-off path is `tools/check_unit_rules_frozen.py --write --force`.
+
+The rewrite fix (§7.8) lets the link run far enough to report its real,
+pre-existing frontier: **25 undefined symbols** owned by a handful of units (see
+`.scratch/unitrules_b/undef_owners.txt` for the full mapping):
+
+```
+kyoshin/code_800A75FC.cpp: 12
+nw4r/src/g3d/res/g3d_resmat.cpp: 11
+not in symbols.txt: 1
+    UnkClass_80460308::processData
+kyoshin/cf/code_800C17DC.cpp: 1
+    lbl_eu_80529690                                      .data:0x80529690
+```
+
+Interpretation: these are **decomp completeness gaps** (units in the link
+whose source does not yet define every function other units reference), not
+tool/rewrite problems — the undefined set is identical with all text drops
+disabled (§7.8). `ELF_linker.c:2295` still follows the undefined report and
+is expected to disappear once the gaps are filled. The remaining
+`drop_text_symbols` rule entries and §7.7 source fixes are unaffected.
+
+### 7.10 `set_data_align` (A1) probe results — not source-fixable, not flag-fixable
+
+Probes compiled with the unit cflags (`probe/a1..a4.cpp`):
+
+| probe | section | MWCC align |
+|---|---|---|
+| `static unsigned x;` | `.sbss` | **2**3 = 8 |
+| `static unsigned x; static double d;` | `.sbss` | 8 |
+| `static float f;` | `.sdata` | 8 |
+| globals: `int/const int/const float[4]/const double/static int/static float` | `.rodata`, `.sdata`, `.sbss`, `.sdata2` | all **8** |
+
+So MWCC (Wii/1.1) emits these data sections with align 8 **regardless of payload**
+— a single 4-byte `static unsigned` still gives `.sbss` align 8. Category A §5's
+"8-aligned source member" framing therefore does not hold for `.sdata`/`.sbss`/
+`.rodata`/`.sdata2`: there is no source shape that makes MWCC emit 4.
+
+The precedented per-unit flag route was tried and fails: adding
+`extra_cflags=["-align", "4"]` to `CSysWinSelect.cpp` (smallest row, `.sbss`
+4 bytes) left the object's `.sbss` at align 8; a probe compiled with those exact
+flags also still reports `.sbss` align 8. `-align 4` affects aggregate/member
+alignment in codegen, not section alignment. The configure.py edit was reverted.
+
+Consequence: the 22 `set_data_align` rows cannot be burned down by source or by
+compiler flags. The remaining levers are (a) the LCF — the CodeWarrior PowerPC
+docs have a dedicated LCF *command reference* page worth checking for a per-input
+`SUBALIGN`-style directive (mwldeppc's command-line help has none), or (b) the
+same page's **Deadstripping** feature, which suggests the PowerPC linker may
+deadstrip unreferenced weaks by default (relevant to §7.8: the retail DOL lacks
+those orphans; if mwldeppc already deadstrips, several drop rules are DOL-neutral
+and the split-budget gate is the only thing keeping them), or (c) keeping the
+per-object alignment patch as accepted debt.
+
+### 7.11 mwldeppc **deadstrips** unreferenced functions (drop rules are gate-only)
+
+Probe links in `.scratch/deadstrip/` (tiny LCF, single object, `__start` as entry):
+
+| probe object contains | linked output | reading |
+|---|---|---|
+| `__dt__1SFv` (weak orphan), `unreferenced_strong` (T), `entry`, `__start` | **only `__start`**, at the segment origin (object offset was 0x88) | every unreferenced function (weak *and* strong) is deadstripped **and compacted** — so even a mid-section orphan is removed and live functions shift up |
+| same + LCF `FORCEACTIVE { unreferenced_strong }` | `unreferenced_strong` @0x80004000, `__start` @+4 | `FORCEACTIVE` is the only thing that keeps an unreferenced symbol; the linker's deadstripping is default-on |
+
+Our `build/us/ldscript.lcf` `FORCEACTIVE` list (102 lines) contains **no** `__dt__*`,
+`ScnLeaf`, `FrameController`, `AnimTransform` or `LinkList` names — none of the
+`drop_text_symbols*` families are force-kept.
+
+Consequences:
+
+* The retail DOL's missing orphans need **no** source/compiler difference: the original
+  link deadstripped them, exactly as ours would. §7.7's `Rect` fix was still correct
+  (upstream `ut::Rect` has no dtor), but for the rest no source fix exists or is needed.
+  Same explanation for `CLib::createLibs` / `dvd_broadway` (unreferenced strong
+  functions, §7.6(c)).
+* **The whole `drop_text_symbols*` family (44 units, the §7.4/§7.8 crash history) is
+  gate-only**: the *gate* compares our **raw** object against a DOL-derived split, which
+  by construction has no dead code, so the drops exist to satisfy the gate; the linked
+  image would be identical without them (the linker compacts the same dead bytes).
+* Verification path once the link produces a DOL: disable the drop rules (link the raw
+  objects), `dol_diff`; if identical, retire the family and decide the gate policy for
+  dead code (the one decision that is the owner's, not the agent's).

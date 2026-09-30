@@ -153,12 +153,13 @@ cf::CAIAction::~CAIAction() {
 // runs the CAIAction subobject cleanup inline (address-null-guarded zeroing of
 // CAIAction+0x210/+0x214). Retail emits NO class vptr store and no automatic
 // base destruction, so the retail class is not a polymorphic MI hierarchy as
-// the headers declare it; this is written as a free function with the verbatim
-// `__` name (same as __dt__800BAA24) and the deleting-dtor wrapper is written
-// out. Note the header's MI layout is +0x80 off retail (CfObjectMove lands at
-// +0x3F1C), so the subobjects are reached through raw views pinning the
-// retail offsets.
-cf::CfObjectActor* __dt__Q22cf13CfObjectActorFv(cf::CfObjectActor* self, s32 deleteFlag) {
+// the headers declare it; this is written as an `extern "C"` free function
+// carrying the verbatim retail `__` name (a C++-linkage form MWCC would mangle
+// with a Q22cf13... parameter-list suffix), and the deleting-dtor wrapper is
+// written out. Note the header's MI layout is +0x80 off retail (CfObjectMove
+// lands at +0x3F1C), so the subobjects are reached through raw views pinning
+// the retail offsets.
+extern "C" cf::CfObjectActor* __dt__Q22cf13CfObjectActorFv(cf::CfObjectActor* self, s32 deleteFlag) {
     if (self != 0) {
         cf::CfObjectMove* move = (cf::CfObjectMove*)((u8*)self + 0x3E9C);
         __dt__Q22cf12CfObjectMoveFv(move, 0);

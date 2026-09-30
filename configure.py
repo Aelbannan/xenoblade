@@ -1699,7 +1699,7 @@ config.libs = [
         "libnw4r_math",
         [
             Object(NonMatching, "nw4r/src/math/math_arithmetic.cpp"),
-            Object(NonMatching, "nw4r/src/math/math_triangular.cpp"),
+            Object(Matching, "nw4r/src/math/math_triangular.cpp"),
             Object(NonMatching, "nw4r/src/math/math_types.cpp"),
             Object(NonMatching, "nw4r/src/math/math_geometry.cpp"),
         ],

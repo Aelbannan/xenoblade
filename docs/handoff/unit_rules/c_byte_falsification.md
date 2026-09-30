@@ -210,6 +210,11 @@ rewrite plants a bogus address), and the `.text` delta. Two shapes:
   deletion (its body destroys a non-trivial `ut::Color[4]`), `FrameController`
   3/3→2/3 and `AnimTransform` 13/15→11/15 regressed matched functions — all
   genuine retail-linker-GC orphans (mwldeppc has no GC option);
+  **the crash itself is now fixed (§7.8):** the rewrite keeps dropped symbols
+  *defined* in `.text` with `size=0` and forces `STB_WEAK`, so mwldeppc resolves
+  live references to the strong copy elsewhere and no longer SIGSEGVs. The link
+  now reports 18 pre-existing undefined symbols (`~CfObjectActor` dtor/vtable,
+  `lbl_eu_80669Exx` pool labels) plus `ELF_linker.c:2295` instead of crashing;
   **(b)** `g3d_scnobj`/`lyt_animation` emit a *base* class's vtable+dtor that
   retail places in another TU (key-function ownership);
   **(c)** `CLib::createLibs` and `dvd_broadway`'s four are GLOBAL functions with

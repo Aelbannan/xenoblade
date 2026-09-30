@@ -878,10 +878,10 @@ extern "C" f32 CBattleMan_ApplyStatusRate(u8*, void*);
 // defined later in this file (owner: CAttackParam-compatible count slot).
 static inline s32 artsSubGetMax(void* sub);
 static inline f32 artsSubGetF14(void* sub);
-// Retail bool-normalize for (byte & mask): neg/or/rlwinm → 0/1 (not >>n&1).
+// Retail bool-normalize for (byte & mask): neg/or/rlwinm -> 0/1 (not >>n&1).
 #define bmByteBit01(byte, mask) \
     ((s32)((u32)(-(s32)(u8)((byte) & (mask)) | (u8)((byte) & (mask))) >> 31))
-// Word bit-test → double cntlzw/rlwinm (CtrlAct / CfObjectMove pattern).
+// Word bit-test -> double cntlzw/rlwinm (CtrlAct / CfObjectMove pattern).
 #define bmFlagBit(flags, mask) \
     (((u32)__cntlzw((u32)__cntlzw((flags) & (mask)) >> 5) >> 5) != 0)
 struct BattleEvent {
@@ -3600,12 +3600,14 @@ func_800A26A4(obj, 0, (void*)(uintptr_t)((u32)((cf::CActorParam*)acc)->CActorPar
                 r28 = 6; r27 = 6;
                 break;
             }
+            }
             // .L_800F3500
             if (eventWorkspace.case260ActorEvent.eventType != 0) {                  // lhz r0,0x2f8 ; beq .L_800F355C
                 if (!func_800EC918(self, pc, acc, &eventWorkspace.case260ActorEvent, tgt)) return 0;
                 if (!func_800EC918(self, pc, (EC918_BattleObjAccessor*)pc, &eventWorkspace.case260PlayerEvent, tgt)) return 0;  // acc=pc
             }
             break;
+        }
         }
         // .L_800F355C
         if (r29 != 0) {
@@ -3882,7 +3884,7 @@ func_800A26A4(obj, 0, (void*)(uintptr_t)((u32)((cf::CActorParam*)acc)->CActorPar
 // func_800EAA2C x4) plus MWCC shape drift (two 0x20 tables, E08E8 0x38 for
 // retail 0x68). Volatile so MWCC keeps the zeros in .data (never .bss).
 // Shrink by 4 per restored table slot as switches are reimplemented.
-__declspec(section ".data") __attribute__((used)) __declspec(section ".data") __attribute__((used)) const void* cbm_data_reserve_run1a[9] = {
+__declspec(section ".data") __attribute__((used)) const void* cbm_data_reserve_run1a[9] = {
     (const void*)func_800EC918,
     (const void*)0,
     (const void*)0
@@ -4650,6 +4652,7 @@ f32 gauge = ((cf::CfObjectActor*)actor)->CfObjectActor_getAdjustedFacing();
         }
         break;
     }
+    }
 
     // Target-type 2: make sure the actor itself ends up on the enum list.
     if (subObj->field_5C == 2) {
@@ -5391,7 +5394,7 @@ extern "C" void func_800DCB54(void* self, void* attacker, void* target,
     s32 outVal;
     // Pool base (retail lis/addi r24 = lbl_eu_804FC828 before beq).
     u8* pool = (u8*)lbl_eu_804FC828;
-    // Plain u8* bases: register+const folds per use — no CSE into r15/r16.
+    // Plain u8* bases: register+const folds per use -- no CSE into r15/r16.
     u8* atkB = (u8*)attacker;
     u8* tgtB = (u8*)target;
 
@@ -5410,7 +5413,7 @@ extern "C" void func_800DCB54(void* self, void* attacker, void* target,
         if (!(tag & 0x1)) return;                   // 0x51CC/0x51E4
     }
 
-    // 0x51E8: grab params (sub loaded before first vcall — retail r21)
+    // 0x51E8: grab params (sub loaded before first vcall -- retail r21)
     sub = (BattleMoveSubData*)move->field_50;
     BattleParamData* atkParam =
         (BattleParamData*)(BattleParamData*)((cf::CActorParam*)(attacker))->CActorParam_getBattleParams();
@@ -5471,7 +5474,7 @@ extern "C" void func_800DCB54(void* self, void* attacker, void* target,
         }
 
         // --- hit quality flags (0x800DD8B8) ---
-        // Literal-first compares → retail fcmpo operand order (f0,f28).
+        // Literal-first compares -> retail fcmpo operand order (f0,f28).
         if (0.0f < f28 && f28 < 0.5f) {
             move->field_74 |= 0x80100000;
         } else if (0.5f <= f28 && f28 < 1.0f) {
@@ -5787,7 +5790,7 @@ extern "C" void func_800DCB54(void* self, void* attacker, void* target,
             // CRIT BLOCK (0x800DE698..0x800DE8DC) -- r20 accumulation
             // ================================================================
         s32 r20 = atkParam->field_38;
-        // Retail: isolate bit → double cntlzw bool → lhax from pool+0x208 (post-call).
+        // Retail: isolate bit -> double cntlzw bool -> lhax from pool+0x208 (post-call).
         if (bmFlagBit(*(u32*)(atkB + 0x3F00), 0x2)) {
             s32 idx = ((cf::CActorParam*)(attacker))->CActorParam_getStatusCount();
             s16* critTbl = (s16*)(pool + 0x208);
@@ -5841,7 +5844,7 @@ extern "C" void func_800DCB54(void* self, void* attacker, void* target,
             move->field_74 |= 0x80000100;
         }
 
-
+        }
         } else {
             // ============================================================
             // ALT BLOCK (0x800DE8FC): same shape as main, uses +0x62 ranges,
@@ -6242,7 +6245,7 @@ extern "C" void func_800DCB54(void* self, void* attacker, void* target,
 
             // ALT: field_74 bit3 (0x8) skips crit entirely (no field_54 clamp).
             if (!(move->field_74 & 0x8)) {
-                // CRIT BLOCK ALT — base atkParam->field_3A (not field_38)
+                // CRIT BLOCK ALT -- base atkParam->field_3A (not field_38)
                 s32 r20 = atkParam->field_3A;
                 if (bmFlagBit(*(u32*)(atkB + 0x3F00), 0x2)) {
                     s32 idx = ((cf::CActorParam*)(attacker))->CActorParam_getStatusCount();
@@ -6267,7 +6270,7 @@ extern "C" void func_800DCB54(void* self, void* attacker, void* target,
                     void* entry = findBattleStatusEntry(tgtB + 8, 0xC2);
                     r20 -= (s32)*(u32*)((u8*)entry + 0x10);
                 }
-                // ALT gate: rem < r20 OR (rem >= r20 && has 0x10) → crit
+                // ALT gate: rem < r20 OR (rem >= r20 && has 0x10) -> crit
                 s32 rem = (s32)move->field_98 % 100;
                 if (rem < r20 || func_80148778(tgtB + 8, 0x10)) {
                     f32 f26 = 0.25f;
@@ -6320,7 +6323,7 @@ post_dispatch:;
     if (move->field_74 & 0x2000000) {
         void* f4 = *(void**)(atkB + 0x4);
         outVal = *(s32*)(((cf::CObjectState*)(f4))->CObjectState_getStateData());
-        // Retail: lis r5,2048 → 0x08000000; plain cmpi (no bool ok).
+        // Retail: lis r5,2048 -> 0x08000000; plain cmpi (no bool ok).
         if (func_80174C98(attacker, &outVal, 0x08000000) != 0) {
             // walk self->mActorList1 sentinel (self+8) looking for target
             void* sentinel = *(void**)((u8*)self + 0x8);
@@ -6365,7 +6368,7 @@ post_dispatch:;
                 }
             }
             {
-                // Separate null gate for 0x53 (retail 0x800DFEF8) — not shared with 0x52.
+                // Separate null gate for 0x53 (retail 0x800DFEF8) -- not shared with 0x52.
                 void* st = (void*)((cf::CActorParam*)(attacker))->CActorParam_getStatusTable();
                 if (st != 0) {
                     u32 sv;
@@ -6420,7 +6423,7 @@ post_dispatch:;
     // 0x800E0144: target vf0x290 damage-resist skills
     // ================================================================
     // Retail calls getStatusTable once for the null check, then again per
-    // query (CSE would drop a bcctrl — force the reload like siblings).
+    // query (CSE would drop a bcctrl -- force the reload like siblings).
     {
         void* st = (void*)((cf::CActorParam*)(target))->CActorParam_getStatusTable();
         if (st != 0) {
@@ -6629,7 +6632,7 @@ post_dispatch:;
             void* sub106 = move->field_50;
             if (sub106 == 0) return;                    // 0x800E0A50
 
-            // rem = field_B0 % 100 first — must live across virt calls (r18).
+            // rem = field_B0 % 100 first -- must live across virt calls (r18).
             s32 rem = (s32)move->field_B0 % 100;
 
             // Retail: copy 3 words from pool+0x280, virt, overwrite [0],
@@ -6696,7 +6699,7 @@ post_dispatch:;
     // 0x800E0D4C: art loop -- slots 0x40..0x67 (64 entries)
     // ================================================================
     // Nested block: buffers share stack with earlier 0x106 Triples (retail),
-    // but pointers stay live across art-loop calls → _savegpr_18.
+    // but pointers stay live across art-loop calls -> _savegpr_18.
     {
     f32 magArg[3];
     f32 delta[3];

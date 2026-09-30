@@ -263,7 +263,7 @@ extern "C" void func_800A76EC(GlobalStruct_80572B94* g) {
     g->field_0x58 = zero;
 }
 
-void KyoshinHeap_Init() {
+extern "C" void KyoshinHeap_Init() {
     if (lbl_eu_80663E98 == 0) {
         // Lazy-init the global singleton once.
         GlobalStruct_80572B94* g = &lbl_eu_80572B94;
@@ -288,7 +288,7 @@ void KyoshinHeap_Init() {
     func_800A76EC(&lbl_eu_80572B94);
 }
 
-void KyoshinHeap_Shutdown() {
+extern "C" void KyoshinHeap_Shutdown() {
     if (lbl_eu_80663E98 == 0) {
         // Lazy-init the global singleton once.
         GlobalStruct_80572B94* g = &lbl_eu_80572B94;
@@ -338,7 +338,7 @@ void KyoshinHeap_Shutdown() {
     memset(g->field_0x5C, 0, 0x34);
 }
 
-int KyoshinHeap_GetField10() {
+extern "C" int KyoshinHeap_GetField10() {
     if (lbl_eu_80663E98 == 0) {
         // Lazy-init the global singleton once.
         GlobalStruct_80572B94* g = &lbl_eu_80572B94;
@@ -363,7 +363,7 @@ int KyoshinHeap_GetField10() {
     return lbl_eu_80572B94.field_0x10;
 }
 
-int KyoshinHeap_GetField18() {
+extern "C" int KyoshinHeap_GetField18() {
     if (lbl_eu_80663E98 == 0) {
         // Lazy-init the global singleton once.
         GlobalStruct_80572B94* g = &lbl_eu_80572B94;
@@ -388,7 +388,7 @@ int KyoshinHeap_GetField18() {
     return lbl_eu_80572B94.field_0x18;
 }
 
-int KyoshinHeap_GetField34() {
+extern "C" int KyoshinHeap_GetField34() {
     if (lbl_eu_80663E98 == 0) {
         // Lazy-init the global singleton once.
         GlobalStruct_80572B94* g = &lbl_eu_80572B94;
@@ -413,7 +413,7 @@ int KyoshinHeap_GetField34() {
     return lbl_eu_80572B94.field_0x34;
 }
 
-int KyoshinHeap_GetField20() {
+extern "C" int KyoshinHeap_GetField20() {
     if (lbl_eu_80663E98 == 0) {
         // Lazy-init the global singleton once.
         GlobalStruct_80572B94* g = &lbl_eu_80572B94;
@@ -438,7 +438,7 @@ int KyoshinHeap_GetField20() {
     return lbl_eu_80572B94.field_0x20;
 }
 
-int KyoshinHeap_GetField1C() {
+extern "C" int KyoshinHeap_GetField1C() {
     if (lbl_eu_80663E98 == 0) {
         // Lazy-init the global singleton once.
         GlobalStruct_80572B94* g = &lbl_eu_80572B94;
@@ -463,7 +463,7 @@ int KyoshinHeap_GetField1C() {
     return lbl_eu_80572B94.field_0x1C;
 }
 
-int KyoshinHeap_GetFieldA0() {
+extern "C" int KyoshinHeap_GetFieldA0() {
     if (lbl_eu_80663E98 == 0) {
         // Lazy-init the global singleton once.
         GlobalStruct_80572B94* g = &lbl_eu_80572B94;
@@ -488,7 +488,7 @@ int KyoshinHeap_GetFieldA0() {
     return lbl_eu_80572B94.field_0xA0;
 }
 
-int KyoshinHeap_GetFieldA4() {
+extern "C" int KyoshinHeap_GetFieldA4() {
     if (lbl_eu_80663E98 == 0) {
         // Lazy-init the global singleton once.
         GlobalStruct_80572B94* g = &lbl_eu_80572B94;
@@ -513,7 +513,7 @@ int KyoshinHeap_GetFieldA4() {
     return lbl_eu_80572B94.field_0xA4;
 }
 
-int KyoshinHeap_GetFieldA8() {
+extern "C" int KyoshinHeap_GetFieldA8() {
     if (lbl_eu_80663E98 == 0) {
         // Lazy-init the global singleton once.
         GlobalStruct_80572B94* g = &lbl_eu_80572B94;
@@ -538,7 +538,7 @@ int KyoshinHeap_GetFieldA8() {
     return lbl_eu_80572B94.field_0xA8;
 }
 
-u32 KyoshinHeap_GetBaseTblPlus96k(int index) {
+extern "C" u32 KyoshinHeap_GetBaseTblPlus96k(int index) {
     if (lbl_eu_80663E98 == 0) {
         // Lazy-init the global singleton once.
         GlobalStruct_80572B94* g = &lbl_eu_80572B94;
@@ -563,7 +563,7 @@ u32 KyoshinHeap_GetBaseTblPlus96k(int index) {
     return lbl_eu_80572B94.field_0x5C[index] + 0x96000;
 }
 
-u32 KyoshinHeap_GetBaseTblRaw(int index) {
+extern "C" u32 KyoshinHeap_GetBaseTblRaw(int index) {
     if (lbl_eu_80663E98 == 0) {
         // Lazy-init the global singleton once.
         GlobalStruct_80572B94* g = &lbl_eu_80572B94;
@@ -588,7 +588,7 @@ u32 KyoshinHeap_GetBaseTblRaw(int index) {
     return lbl_eu_80572B94.field_0x5C[index];
 }
 
-void* KyoshinHeap_GetPtrTblA(unsigned int param1, unsigned int param2) {
+extern "C" void* KyoshinHeap_GetPtrTblA(unsigned int param1, unsigned int param2) {
     LblPtrTable* table = lbl_eu_805282A0[param2];
     if (param1 >= 0xe) {
         return table->slots[0];
@@ -596,7 +596,7 @@ void* KyoshinHeap_GetPtrTblA(unsigned int param1, unsigned int param2) {
     return table->slots[param1];
 }
 
-void* KyoshinHeap_GetPtrTblB(unsigned int param1, unsigned int param2) {
+extern "C" void* KyoshinHeap_GetPtrTblB(unsigned int param1, unsigned int param2) {
     LblPtrTable* table = lbl_eu_80528398[param2];
     if (param1 >= 0xe) {
         return table->slots[0];
@@ -604,7 +604,7 @@ void* KyoshinHeap_GetPtrTblB(unsigned int param1, unsigned int param2) {
     return table->slots[param1];
 }
 
-u32 KyoshinHeap_GetBlk90Raw(int index) {
+extern "C" u32 KyoshinHeap_GetBlk90Raw(int index) {
     if (lbl_eu_80663E98 == 0) {
         // Lazy-init the global singleton once.
         GlobalStruct_80572B94* g = &lbl_eu_80572B94;
@@ -629,7 +629,7 @@ u32 KyoshinHeap_GetBlk90Raw(int index) {
     return lbl_eu_80572B94.field_0x90 + index * 0x106800;
 }
 
-u32 KyoshinHeap_GetBlk90Plus32k(int index) {
+extern "C" u32 KyoshinHeap_GetBlk90Plus32k(int index) {
     if (lbl_eu_80663E98 == 0) {
         // Lazy-init the global singleton once.
         GlobalStruct_80572B94* g = &lbl_eu_80572B94;
@@ -658,7 +658,7 @@ u32 KyoshinHeap_GetBlk90Plus32k(int index) {
     return v;
 }
 
-u32 KyoshinHeap_GetBlk90PlusFA(int index) {
+extern "C" u32 KyoshinHeap_GetBlk90PlusFA(int index) {
     if (lbl_eu_80663E98 == 0) {
         // Lazy-init the global singleton once.
         GlobalStruct_80572B94* g = &lbl_eu_80572B94;
@@ -690,7 +690,7 @@ u32 KyoshinHeap_GetBlk90PlusFA(int index) {
     return v;
 }
 
-u32 KyoshinHeap_GetBlk94(int index) {
+extern "C" u32 KyoshinHeap_GetBlk94(int index) {
     if (index >= 3) return 0;
     if (lbl_eu_80663E98 == 0) {
         // Lazy-init the global singleton once.
@@ -716,7 +716,7 @@ u32 KyoshinHeap_GetBlk94(int index) {
     return lbl_eu_80572B94.field_0x94 + index * 0x62800;
 }
 
-u32 KyoshinHeap_GetBlk98(int index) {
+extern "C" u32 KyoshinHeap_GetBlk98(int index) {
     if (index >= 3) return 0;
     if (lbl_eu_80663E98 == 0) {
         // Lazy-init the global singleton once.
@@ -742,7 +742,7 @@ u32 KyoshinHeap_GetBlk98(int index) {
     return lbl_eu_80572B94.field_0x98 + index * 0x99000;
 }
 
-int KyoshinHeap_Alloc38(int param) {
+extern "C" int KyoshinHeap_Alloc38(int param) {
     if (param == 0) return 0;
     if (param > 0) {
         return func_800A3594((void*)lbl_eu_80572B38, param, 0);
@@ -751,7 +751,7 @@ int KyoshinHeap_Alloc38(int param) {
     }
 }
 
-int KyoshinHeap_Contains38(u32 param) {
+extern "C" int KyoshinHeap_Contains38(u32 param) {
     if (param == 0) return 0;
     u32 start = ((SizeWordAtC*)lbl_eu_80572B38)->start;
     u32 size = ((SizeWordAtC*)lbl_eu_80572B38)->size;
@@ -763,7 +763,7 @@ int KyoshinHeap_Contains38(u32 param) {
     return result;
 }
 
-int KyoshinHeap_Register38(void* p1, void* p2, void* p3) {
+extern "C" int KyoshinHeap_Register38(void* p1, void* p2, void* p3) {
     int result = 0;
     if (p1 != 0) {
         func_800A39E8((void*)lbl_eu_80572B38, p1, p2, p3);
@@ -772,20 +772,20 @@ int KyoshinHeap_Register38(void* p1, void* p2, void* p3) {
     return result;
 }
 
-void KyoshinHeap_Free38(void* p) {
+extern "C" void KyoshinHeap_Free38(void* p) {
     if (p == 0) return;
     CtrlObjectParam_MergeArtsListNode((void*)lbl_eu_80572B38, p);
 }
 
-void KyoshinHeap_Reset38(void) {
+extern "C" void KyoshinHeap_Reset38(void) {
     CtrlObjectParam_GetArtsListMaxSize(reinterpret_cast<cf::CtrlObjectParamArtsList*>(lbl_eu_80572B38));
 }
 
-u32 KyoshinHeap_GetCount38() {
+extern "C" u32 KyoshinHeap_GetCount38() {
     return CtrlObjectParam_GetArtsListTotalSize((void*)lbl_eu_80572B38) / 774144;
 }
 
-int KyoshinHeap_GetActive54() {
+extern "C" int KyoshinHeap_GetActive54() {
     if (lbl_eu_80663E98 == 0) {
         // Lazy-init the global singleton once.
         GlobalStruct_80572B94* g = &lbl_eu_80572B94;
@@ -811,9 +811,9 @@ int KyoshinHeap_GetActive54() {
                                            : lbl_eu_80572B94.field_0x58;
 }
 
-u32 KyoshinHeap_GetSize500000(){ return 0x500000; }
+extern "C" u32 KyoshinHeap_GetSize500000(){ return 0x500000; }
 
-int KyoshinHeap_GetField58() {
+extern "C" int KyoshinHeap_GetField58() {
     if (lbl_eu_80663E98 == 0) {
         // Lazy-init the global singleton once.
         GlobalStruct_80572B94* g = &lbl_eu_80572B94;
@@ -838,7 +838,7 @@ int KyoshinHeap_GetField58() {
     return lbl_eu_80572B94.field_0x58;
 }
 
-int func_800A8E6C(int size, int arg2) {
+extern "C" int func_800A8E6C(int size, int arg2) {
     if (size == 0) return 0;
     if (lbl_eu_80663E98 == 0) {
         // Lazy-init the global singleton once.
@@ -891,7 +891,7 @@ int func_800A8E6C(int size, int arg2) {
     return r;
 }
 
-int KyoshinHeap_Contains78(u32 param) {
+extern "C" int KyoshinHeap_Contains78(u32 param) {
     if (param == 0) return 0;
     u32 start = ((SizeWordAtC*)lbl_eu_80572B78)->start;
     u32 size = ((SizeWordAtC*)lbl_eu_80572B78)->size;
@@ -903,7 +903,7 @@ int KyoshinHeap_Contains78(u32 param) {
     return result;
 }
 
-int KyoshinHeap_HasActive54() {
+extern "C" int KyoshinHeap_HasActive54() {
     if (lbl_eu_80663E98 == 0) {
         // Lazy-init the global singleton once.
         GlobalStruct_80572B94* g = &lbl_eu_80572B94;
@@ -928,7 +928,7 @@ int KyoshinHeap_HasActive54() {
     return lbl_eu_80572B94.field_0x54 != 0;
 }
 
-int func_800A9134() {
+extern "C" int func_800A9134() {
     if (lbl_eu_80663E98 == 0) {
         // Lazy-init the global singleton once.
         GlobalStruct_80572B94* g = &lbl_eu_80572B94;
@@ -985,7 +985,7 @@ int func_800A9134() {
     return g->field_0x54;
 }
 
-int KyoshinHeap_Register78(void* p1, void* p2, void* p3) {
+extern "C" int KyoshinHeap_Register78(void* p1, void* p2, void* p3) {
     int result = 0;
     if (p1 != 0) {
         func_800A39E8((void*)lbl_eu_80572B78, p1, p2, p3);
@@ -994,14 +994,14 @@ int KyoshinHeap_Register78(void* p1, void* p2, void* p3) {
     return result;
 }
 
-void KyoshinHeap_Free78(void* p)
+extern "C" void KyoshinHeap_Free78(void* p)
 {
     if (p != 0) {
         CtrlObjectParam_MergeArtsListNode(lbl_eu_80572B78, p);
     }
 }
 
-void KyoshinHeap_Reset78Stage() {
+extern "C" void KyoshinHeap_Reset78Stage() {
     if (lbl_eu_80663E98 == 0) {
         // Lazy-init the global singleton once.
         GlobalStruct_80572B94* g = &lbl_eu_80572B94;
@@ -1029,7 +1029,7 @@ void KyoshinHeap_Reset78Stage() {
     g->field_0x58 = 0;
 }
 
-void KyoshinHeap_Reset58Stage() {
+extern "C" void KyoshinHeap_Reset58Stage() {
     if (lbl_eu_80663E98 == 0) {
         // Lazy-init the global singleton once.
         GlobalStruct_80572B94* g = &lbl_eu_80572B94;
@@ -1060,7 +1060,7 @@ void KyoshinHeap_Reset58Stage() {
     g->field_0xB0 = 0;
 }
 
-void KyoshinHeap_AllocFld10(int index) {
+extern "C" void KyoshinHeap_AllocFld10(int index) {
     if (lbl_eu_80663E98 == 0) {
         // Lazy-init the global singleton once.
         GlobalStruct_80572B94* g = &lbl_eu_80572B94;
@@ -1100,7 +1100,7 @@ void KyoshinHeap_AllocFld10(int index) {
     g->field_0x10 = r;
 }
 
-void KyoshinHeap_AllocFld14(int index) {
+extern "C" void KyoshinHeap_AllocFld14(int index) {
     if (lbl_eu_80663E98 == 0) {
         // Lazy-init the global singleton once.
         GlobalStruct_80572B94* g = &lbl_eu_80572B94;
@@ -1140,7 +1140,7 @@ void KyoshinHeap_AllocFld14(int index) {
     g->field_0x14 = r;
 }
 
-void KyoshinHeap_AllocFld18(int index) {
+extern "C" void KyoshinHeap_AllocFld18(int index) {
     if (lbl_eu_80663E98 == 0) {
         // Lazy-init the global singleton once.
         GlobalStruct_80572B94* g = &lbl_eu_80572B94;
@@ -1181,7 +1181,7 @@ void KyoshinHeap_AllocFld18(int index) {
     g->field_0x18 = r;
 }
 
-void KyoshinHeap_AllocFld34(int index) {
+extern "C" void KyoshinHeap_AllocFld34(int index) {
     if (lbl_eu_80663E98 == 0) {
         // Lazy-init the global singleton once.
         GlobalStruct_80572B94* g = &lbl_eu_80572B94;
@@ -1223,7 +1223,7 @@ void KyoshinHeap_AllocFld34(int index) {
     g->field_0xB0 = index;
 }
 
-int KyoshinHeap_GetFieldAC() {
+extern "C" int KyoshinHeap_GetFieldAC() {
     if (lbl_eu_80663E98 == 0) {
         // Lazy-init the global singleton once.
         GlobalStruct_80572B94* g = &lbl_eu_80572B94;
@@ -1249,7 +1249,7 @@ int KyoshinHeap_GetFieldAC() {
 }
 
 
-int KyoshinHeap_GetField50() {
+extern "C" int KyoshinHeap_GetField50() {
     if (lbl_eu_80663E98 == 0) {
         // Lazy-init the global singleton once.
         GlobalStruct_80572B94* g = &lbl_eu_80572B94;
@@ -1274,7 +1274,7 @@ int KyoshinHeap_GetField50() {
     return lbl_eu_80572B94.field_0x50;
 }
 
-int KyoshinHeap_GetField38() {
+extern "C" int KyoshinHeap_GetField38() {
     if (lbl_eu_80663E98 == 0) {
         GlobalStruct_80572B94* g = &lbl_eu_80572B94;
         g->field_0x00 = -1;
@@ -1298,7 +1298,7 @@ int KyoshinHeap_GetField38() {
     return lbl_eu_80572B94.field_0x38;
 }
 
-int KyoshinHeap_GetField3C() {
+extern "C" int KyoshinHeap_GetField3C() {
     if (lbl_eu_80663E98 == 0) {
         GlobalStruct_80572B94* g = &lbl_eu_80572B94;
         g->field_0x00 = -1;
@@ -1322,7 +1322,7 @@ int KyoshinHeap_GetField3C() {
     return lbl_eu_80572B94.field_0x3C;
 }
 
-int KyoshinHeap_GetField40() {
+extern "C" int KyoshinHeap_GetField40() {
     if (lbl_eu_80663E98 == 0) {
         GlobalStruct_80572B94* g = &lbl_eu_80572B94;
         g->field_0x00 = -1;
@@ -1346,7 +1346,7 @@ int KyoshinHeap_GetField40() {
     return lbl_eu_80572B94.field_0x40;
 }
 
-int KyoshinHeap_GetField44() {
+extern "C" int KyoshinHeap_GetField44() {
     if (lbl_eu_80663E98 == 0) {
         GlobalStruct_80572B94* g = &lbl_eu_80572B94;
         g->field_0x00 = -1;
@@ -1370,7 +1370,7 @@ int KyoshinHeap_GetField44() {
     return lbl_eu_80572B94.field_0x44;
 }
 
-int KyoshinHeap_GetField4C(int index) {
+extern "C" int KyoshinHeap_GetField4C(int index) {
     if (lbl_eu_80663E98 == 0) {
         // Lazy-init the global singleton once.
         GlobalStruct_80572B94* g = &lbl_eu_80572B94;
@@ -1409,7 +1409,7 @@ int KyoshinHeap_GetField4C(int index) {
 // attaches the destructor (__dt__800A34E0).
 extern char lbl_eu_80572AC8[];
 
-void sinit_800A9F40() {
+extern "C" void sinit_800A9F40() {
     char* base = lbl_eu_80572AC8;
     CtrlObjectParam_InitListElement(base + 0x10);
     __register_global_object(base + 0x10, (void*)__dt__800A34E0, base);
@@ -1424,3 +1424,78 @@ void sinit_800A9F40() {
     CtrlObjectParam_InitListElement(base + 0xB0);
     __register_global_object((void*)(base + 0xB0), (void*)__dt__800A34E0, (void*)(base + 0xA0));
 }
+
+// ---------------------------------------------------------------------------
+// Retail .bss / .sbss storage owned by this TU.
+//
+// The retail split places these objects in code_800A75FC's .bss (0x1B8 total)
+// and .sbss (the initialized flag).  They are referenced by every
+// KyoshinHeap_* accessor in this TU, so the definitions (not just the header's
+// extern declarations) must live here: the link pairs this TU's object with
+// the retail .bss/.sbss slots, and an undefined label aborts it.
+//
+// Sizes are the retail symbol sizes from the split object
+// (build/us/obj/kyoshin/code_800A75FC.o), so MWCC lands each object at its
+// retail offset: AC8 0x70, B38 0x20, B58 0x20, B78 0x10, B88 0x0C, B94 0xB4.
+// Defined in retail offset order (MWCC emits zero-init data in definition
+// order); all of them are > the small-data threshold, so they stay in .bss.
+char lbl_eu_80572AC8[0x70];
+char lbl_eu_80572B38[0x20];
+char lbl_eu_80572B58[0x20];
+char lbl_eu_80572B78[0x10];
+char lbl_eu_80572B88[0x0C];
+GlobalStruct_80572B94 lbl_eu_80572B94;
+
+// .sbss: singleton-initialized flag.  One byte of storage (the accessors use
+// byte loads/stores), so MWCC auto-routes it to .sbss; the retail symbol is
+// 8 bytes wide (alignment padding before the next gap label).
+s8 lbl_eu_80663E98;
+
+// ---------------------------------------------------------------------------
+// Retail .rodata / .data / remaining .bss / .sbss storage owned by this TU.
+//
+// .rodata holds the three heap names passed to mtl::MemManager::create by
+// KyoshinHeap_Init.  .data holds the per-stage 14-word offset tables and the
+// two 6-slot LblPtrTable arrays the runtime fills in.  Values are the retail
+// split's bytes (build/us/obj/kyoshin/code_800A75FC.o); the tables are read
+// only by the heap entry points that are still open (func_800A76EC /
+// func_800A8E6C / func_800A9134), so nothing in this TU references them yet.
+// The all-zero arrays need #pragma section data_type: MWCC migrates an
+// all-zero aggregate to .bss even with __declspec(section ...), and the
+// nocommon/aligned attribute forms do not survive it either.  Keeping every
+// section at its retail size matters: ldscript.lcf concatenates sections
+// positionally, so a short .data/.bss/.sbss would move every later unit's data.
+__declspec(section ".rodata") char lbl_eu_804FBF60[0x18] = "CF_MEM1\0CF_MEM2\0CF_BDAT";
+#pragma section data_type ".data" ".data"
+u32 lbl_eu_80528188[14] = { 0x96000, 0x20800, 0x2F800, 0x32000, 0x2F800, 0x2A800, 0x39800, 0x32000, 0x2F800, 0x94000, 0x94000, 0x94000, 0x2F800, 0x2F800 };   // retail .data+0x000
+u32 lbl_eu_805281C0[14] = { 0x0, 0x28000, 0x1E000, 0x2D000, 0x23000, 0x2A800, 0x32000, 0x2A800, 0x1E000, 0x800, 0x800, 0x800, 0x23000, 0x23000 };   // retail .data+0x038
+u32 lbl_eu_805281F8[14] = { 0x0, 0x1B800, 0x16800, 0xF000, 0x16800, 0x14000, 0x11800, 0x11800, 0x19000, 0x800, 0x800, 0x800, 0x16800, 0x16800 };   // retail .data+0x070
+u32 lbl_eu_80528230[14] = { 0x0, 0x19000, 0x1E000, 0x16800, 0x19000, 0x19000, 0x14000, 0x16800, 0x1E000, 0x800, 0x800, 0x800, 0x19000, 0x19000 };   // retail .data+0x0A8
+u32 lbl_eu_80528268[14] = { 0x0, 0x19000, 0x14000, 0x11800, 0x14000, 0x14000, 0x5000, 0x11800, 0x11800, 0x800, 0x800, 0x800, 0x14000, 0x14000 };   // retail .data+0x0E0
+__declspec(section ".data") LblPtrTable* lbl_eu_805282A0[6] = { 0 };   // retail .data+0x118
+u32 lbl_eu_805282B8[14] = { 0x0, 0x20800, 0x2F800, 0x32000, 0x2F800, 0x2A800, 0x39800, 0x32000, 0x2F800, 0x94000, 0x94000, 0x94000, 0x2F800, 0x2F800 };   // retail .data+0x130
+u32 lbl_eu_805282F0[14] = { 0x0, 0x48800, 0x4D800, 0x5F000, 0x52800, 0x55000, 0x6B800, 0x5C800, 0x4D800, 0x94800, 0x94800, 0x94800, 0x52800, 0x52800 };   // retail .data+0x168
+u32 lbl_eu_80528328[14] = { 0x0, 0x64000, 0x64000, 0x6E000, 0x69000, 0x69000, 0x7D000, 0x6E000, 0x66800, 0x95000, 0x95000, 0x95000, 0x69000, 0x69000 };   // retail .data+0x1A0
+u32 lbl_eu_80528360[14] = { 0x0, 0x7D000, 0x82000, 0x84800, 0x82000, 0x82000, 0x91000, 0x84800, 0x84800, 0x95800, 0x95800, 0x95800, 0x82000, 0x82000 };   // retail .data+0x1D8
+__declspec(section ".data") LblPtrTable* lbl_eu_80528398[6] = { 0 };   // retail .data+0x210
+#pragma section data_type ".data" ".bss"
+
+// .bss remainder (retail 0x180..0x1B8): zero-initialised storage with no
+// source reference (its users are the open heap entry points).
+char lbl_eu_80572C48[0x38];
+
+// .sbss stage state (retail 0x80663E98..0x80663EC8).  lbl_eu_80663E98 is the
+// singleton-init byte flag defined above; the retail slot for it spans eight
+// bytes (symbol size 8), so lbl_eu_80663EA0 is declared 8-aligned to keep the
+// remaining retail symbols at their retail offsets.  All-zero storage; only
+// the flag is referenced from this TU today.
+__attribute__((aligned(8))) s8 lbl_eu_80663EA0;
+u32 lbl_eu_80663EA4;
+s8  lbl_eu_80663EA8;
+u32 lbl_eu_80663EAC;
+s8  lbl_eu_80663EB0;
+u32 lbl_eu_80663EB4;
+s8  lbl_eu_80663EB8;
+u32 lbl_eu_80663EBC;
+s8  lbl_eu_80663EC0;
+u32 lbl_eu_80663EC4;

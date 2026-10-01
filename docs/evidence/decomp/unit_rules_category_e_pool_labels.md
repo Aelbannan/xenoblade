@@ -324,3 +324,164 @@ the link. `ELF_linker.c:2295` still follows the undefined report, so it is not
   item 3 (DOL verification) — the latter is gated on the 1235 missing symbols,
   which is the §1(b) placeholder-unit burn-down at large scale rather than a
   handful of tickets.
+
+## Session update 3 — frontier classification + first linkage batch (2026-09-29)
+
+The 1235 missing symbols are not 1235 missing reconstructions.  Measured
+breakdown (`tools/coop/link_undefs.py` + `config/us/{symbols,splits}.txt` +
+`UNIT_RULES`):
+
+* **472 not in the source at all** — 85 are local `@N`/`@LOCAL@` artefacts of
+  the §17.6 pipeline (definition dropped with the reference left behind); the
+  rest are real bodies/data.
+* **768 appear in source identifiers**, i.e. mostly *linkage or naming* bugs,
+  not missing work.  Of those, 156 are defined with `extern "C"` and still
+  missing (postprocess/strip class), 607 are plain C++-linkage definitions that
+  MWCC mangles while retail wants the literal name.
+* 1069 of 1235 need our objects to define them; 166 are `extern_data_sections`
+  "dissolved" data (the rule is the debt: reconstruct the data in source, then
+  remove the field).
+
+**Stale `@N` renames.**  The table's `exact_renames` entries drift when MWCC
+renumbers pools.  An automatic repair exists: our object's reloc offset and the
+*retail* object's reloc at the same offset name the correct label.  Applied to
+the CMenuQuestLog jumptable: the entry said `@13609` (no longer emitted), the
+live symbol is `@10951`, both at `.text+0x726` where retail has
+`jumptable_eu_8052CC10`.  19 of the 37 `@N` danglers resolve uniquely this way;
+18 need content matching.
+
+**`extern "C"` linkage batch — `CfObjectEne.cpp` (−113 symbols).**  Its 124
+missing symbols were mostly definitions MWCC mangled (`...Fv__FPQ22cf11CActorParam`)
+while retail wants the literal name.  Adding `extern "C"` to the *definition*
+(not to names that a header already declares, and not to definitions whose
+natural C++ mangling already equals the retail name) fixes them:
+`124 -> 10` missing, **hexdiff unchanged at 129/137**, clean build, no new
+missing symbols except two header-declared names
+(`__dt__Q22cf13CfObjectActorFv`, `getUnk80664658__Fv`) that need a
+header/declaration-level fix instead.  Frontier: **1235 -> 1122**.
+
+Same-pattern candidates for the next batches (plain-linkage definitions whose
+retail name is literal): `CMenuBattleChain.cpp` (84), `CVision.cpp` (68),
+`CfGimmick.cpp` (44), `CfScript.cpp` (33), `CScrollBar.cpp` (32), plus the
+`.ctx.c` name pools (`code_802B9064.ctx.c` 58, `CfSoundMan.ctx.c` 26, ...).
+
+## Session update 4 — linkage batch sweep (2026-09-29)
+
+`tools/coop/fix_linkage.py` (promoted from the session scratch) adds
+`extern "C"` to a unit's definition (plus any in-file declaration of the same
+name) when the retail symbol's name is a literal that MWCC would otherwise
+mangle.  Guards, all learned the hard way:
+
+* skip names declared in any real header (`include/`, `libs/*/include/`,
+  `src/**/*.hpp`) — the header declaration would conflict (linkage mismatch);
+* skip if a *retail* symbol disappears from the object after the patch.  The
+  first version reverted whenever any symbol disappeared, which rejected every
+  legitimate patch (the old mangled name is expected to go away).  Only lost
+  *retail* names signal breakage;
+* units without `UNIT_RULES` link their raw object, so `ninja
+  build/us/src/<unit>.reloc.o` reports "unknown target" — that is not a build
+  failure.
+
+Results: `CfObjectEne.cpp` 124 -> 10 missing (−113 including the earlier
+batch), then 21 more across `CtrlMoveNpc`, `CVision`, `CfGimmick`, `CfScript`,
+`CfCollCylinderImpl`, `CfResTboxImpl`, `code_80213488`, `code_800C17DC`,
+`CfGimmickItem`.  Frontier **1235 -> 1101**, no new missing symbols, hexdiff
+unchanged for every touched unit, smell/unit-rules/tests green.
+
+What is left in the "name present in source" class (as of 1101): 211
+header-declared definitions (need `extern "C"` on the header declaration, with
+class-scope care), 280 declaration/comment-only (the body is genuinely
+missing), 101 absent, 413 whose owner path has no `src/` file (units not
+started), 86 pipeline artefacts (`@N`).
+
+## Session update 5 — math_arithmetic FExp/FLog diagnosis (2026-09-29)
+
+`math_arithmetic` is `split PASS` exactly (0x13C), `FAtan` 100%, and the two
+residuals are **pure allocator tie-breaks, not structural**:
+
+* `FExp` 77.1% — 0 structural, 8 reg_swap, 0x8C/0x8C
+* `FLog` 88.6% — 0 structural, 4 reg_swap, 0x8C/0x8C
+
+The instruction stream is byte-for-byte the retail opcode sequence; only the
+GPR assignment differs, and `--brief` shows it is a rotation of
+{r3,r0} plus a one-register shift (retail keeps the `k<<23` result in r3 and the
+reloaded spill in r0; ours does the reverse).
+
+Two source-shape variants were tried and both are *worse*, so the current text
+is the best known form and the next attempt must come from the MWCC
+register-allocation playbook (`docs/register_mapping.md`, the register skill):
+
+* named `u32 kbits = k << 23;` temporary — 77.1% -> **65.7%** (12 swaps)
+* commutative swap `((k << 23) + expx)` — 77.1% -> **74.3%** (9 swaps)
+
+Not a blocker: the unit's data gate is MATCH and the remaining work is
+allocator-shape archaeology on an otherwise byte-identical function.
+
+## Session update 6 — why the g3d_resmat pool labels cannot be named (investigated, reverted)
+
+The 293 remaining labels of `g3d_resmat`'s `.sdata2` pool look like the easiest
+frontier class (bytes already emitted, only names missing).  They are not, and
+the reason is worth recording:
+
+* **MWCC 8-aligns every object placed in `.sdata2`.**  Retail's neighbouring
+  labels sit at 4-aligned offsets (e.g. `lbl_eu_80669D0D` at range+0x2A5 in a
+  byte-granular run).  Emitting each label as its own object (section
+  `__declspec` + the `.sdata2` pragma) inserts padding: measured drift +0x18
+  (front-piece duplicate) then +8 (alignment), with `__attribute__((aligned(1)))`
+  and `aligned(4)` both ignored.  The byte-exact layout therefore requires the
+  labels to live *inside* larger blobs, where C++ cannot give them symbols.
+* **`add_symbols` can define at arbitrary offsets, but has no space.**  The tool
+  does create global definitions (`st_info` 0x11) and reuses the "redefine an
+  existing UNDEF" path; appending a new name is limited by the object's string
+  table.  A 344-entry batch produced **51** successes and 293 silent `False`
+  returns.  The mechanism works for names the object already references as
+  UNDEF; it cannot introduce hundreds of new names.
+* Batch experiments: with the generated layout the unit gained ~285 definitions
+  (frontier 1022 -> 780) but `.sdata2` grew +8 bytes, which shifts every
+  following symbol -> not acceptable for byte-exactness.  With the byte-exact
+  source, the added symbol entries did not materialise at all.  Everything was
+  reverted; the table is back inside the frozen baseline.
+
+To land this class: (a) grow `.strtab`/`.symtab` in `add_local_symbol` (re-emit
+the ELF) and then batch the labels through `add_symbols`, or (b) find a per-TU
+pragma/flag that keeps `.sdata2` objects 4-aligned so the labels can be real
+source definitions.  Either one is a tool change, not a source change.
+
+## Session update 7 — header-level `extern "C"` batch landed (1235 -> 1005)
+
+`extern "C"` on **free-function declarations in headers** (24 headers, 101
+names) plus the owner-unit rebuilds: frontier 1022 -> **1005**, 0 new missing
+symbols, 0 build failures, hexdiff unchanged for every affected unit
+(`CfGimmick` 38/51, `CFade` 13/14, `CArtsSet` 15/15, `CfScript` 38/40,
+`CMenuBattleChain` 22/23).
+
+Two bugs made the earlier attempts fail and are now fixed:
+
+* **Encoding**: patching a file with `read_text`/`write_text` re-encodes SJIS
+  TUs as UTF-8 (`sjiswrap: contains Shift JIS encoding errors`).  All patch
+  tooling now uses `latin-1` byte-preserving round-trips.
+* **Line-number drift**: the declaration scanner stripped `/*...*/` comments
+  *including their newlines*, so the line numbers it recorded no longer matched
+  the file.  It patched `include/decomp.h`'s `#else` into `extern "C" #else`,
+  which broke `DECOMP_DONT_INLINE` for every TU that includes `monolib/vm/yvm2.h`
+  (161 "new" build failures).  The scanner now preserves newlines, and the patch
+  loop refuses `#`/comment lines.
+
+With both fixed the batch is clean and repeatable.  The definition-level fixer
+(`tools/coop/fix_linkage.py`) is now exhausted: a re-scan of the 1005-symbol
+frontier found only 2 more candidates (`CtrlMoveNpc`, applied).
+
+Remaining frontier classes: ~51 in-class (mangled member) declarations, the
+`@N`/dissolved-data classes that need data reconstruction, and units whose
+sources cannot rebuild in this checkout.
+
+### Conscious smell re-baseline
+
+The strict smell gate (`smell_report.py --check`) reports `extC-def` growth for
+every unit this session converted to `extern "C"` (e.g. `CfObjectEne` 5 -> 123,
+`CfGimmick` 3 -> 38, `CChainActorList` 4 -> 26, `code_800C17DC` extC-decl
+0 -> 473).  That is the intended effect of the linkage batches (retail-named
+free functions must carry C linkage), not a regression: freshness passes
+(`--check --no-strict`: ok) and `docs/CODE_SMELLS.md` is regenerated.  The
+strict gate compares against the committed baseline, so the human re-baselines
+at commit time.

@@ -40,5 +40,5 @@ extern "C" int func_800A39E8(void*, void*, void*, void*);
 extern "C" void CtrlObjectParam_InitArtsListEntry(void*, int, int, int);
 extern "C" void* __register_global_object(void* object, void* destructor, void* registration);
 extern "C" void CtrlObjectParam_InitListElement(void*);
-u32 CtrlObjectParam_GetArtsListMaxSize(cf::CtrlObjectParamArtsList* list);
+extern "C" u32 CtrlObjectParam_GetArtsListMaxSize(cf::CtrlObjectParamArtsList* list);
 extern "C" void __dt__800A34E0();

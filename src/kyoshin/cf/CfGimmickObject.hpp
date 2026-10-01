@@ -217,9 +217,9 @@ extern u32 lbl_eu_80663E28;
 // C linkage in retail so extern "C" is required to emit the raw name.
 // ---------------------------------------------------------------------------
 extern "C" {
-void func_802089BC(void* matrix, const f32* basis, const CfGimmickVec3* point);
+extern "C" void func_802089BC(void* matrix, const f32* basis, const CfGimmickVec3* point);
 void CfGimmick_ClearManagerBinding(void* self);
-void CfGimmick_UnregisterSpawnedObject(void* self);
+extern "C" void CfGimmick_UnregisterSpawnedObject(void* self);
 void __dt__Q22cf9CfGimmickFv(void* self, int mode);
 void setLODEnable__8CTaskLODFv(u8 lod, int mode);
 void* getScnHandle__Fv(void);
@@ -259,25 +259,25 @@ void addLODEntry__8CTaskLODFv(u8 lod, int mode);
 void setLODObject__8CTaskLODFv(u8 lod, u16 id);
 int* CtrlObjectParam_GetSlotTableBase();
 int func_8009E284(int* data, int id);
-void CfGimmick_SetGlobalFlag80000();
-void CfGimmick_SetGlobalFlagC0042();
-void CfGimmick_SetGlobalFlag8();
-void CfGimmick_SetGlobalFlagC0002();
+extern "C" void CfGimmick_SetGlobalFlag80000();
+extern "C" void CfGimmick_SetGlobalFlagC0042();
+extern "C" void CfGimmick_SetGlobalFlag8();
+extern "C" void CfGimmick_SetGlobalFlagC0002();
 void CfGimmick_SetGlobalFlag80AndValue(int arg0, int flag, u32 value);
-unsigned int CfGimmick_IsMessageSystemBusy();
-int CfGimmick_CheckPartyIdLoaded(void* self, u32 arg);
-void func_8020A484(u16 id);
-int CfGimmick_CheckStateFlag2CC8(void* obj);
-int CfGimmick_CheckStateFlag1D44(void* obj);
+extern "C" unsigned int CfGimmick_IsMessageSystemBusy();
+extern "C" int CfGimmick_CheckPartyIdLoaded(void* self, u32 arg);
+extern "C" void func_8020A484(u16 id);
+extern "C" int CfGimmick_CheckStateFlag2CC8(void* obj);
+extern "C" int CfGimmick_CheckStateFlag1D44(void* obj);
 u32 CfT_FrameCountA();
 int func_802098EC(u32 mask, cf::CfGimmick* gimmick, const CfGimmickVec3* point,
                   const f32* ang, void* partyId);
 void CItem_consumeFamilyCnt(unsigned int a, int b);
-void CfGimmick_TriggerSound2CC8(unsigned int a, int b);
+extern "C" void CfGimmick_TriggerSound2CC8(unsigned int a, int b);
 unsigned int CItem_findRecByFamily(unsigned short id);
 u32 getQueuedFileEventCount__Q22cf13CfGameManagerFv();
 u32 getResourceFromTable__Q22cf13CfGameManagerFv(u32 resourceId);
-u16 CfGimmick_PlaySoundAtPos(u16 id, f32* vec);
+extern "C" u16 CfGimmick_PlaySoundAtPos(u16 id, f32* vec);
 void CPartsChange_FireIdEffect(int id);
 // Step-table / sound helpers (func_801F6780 / func_801F76A8).
 void func_80140E00(u32 a, u32 b, u32 c);
@@ -290,12 +290,12 @@ int CfSoundMan_IsRecordActive(int a);
 // see CfObjectImplMove.hpp).
 extern "C" u16 playActorSound__Q22cf10CfSoundManFUlUlUlUlf(u32 a, u32 b, u32 c,
                                                          u32 d, f32 f);
-u16 CfGimmick_PlaySoundAtPosScaled(u16 id, f32* pos, f32 d);
+extern "C" u16 CfGimmick_PlaySoundAtPosScaled(u16 id, f32* pos, f32 d);
 void CfSoundMan_WriteSlotGain(int a, u16 b, int c);
 CfGimmickSoundSlot* CfSoundMan_TouchSlotById(u16 handle);
 int CPartsChange_SpawnById(int id);
 void func_8007B0C8(int idx);
-void CfGimmick_SetGlobalFlag400000();
+extern "C" void CfGimmick_SetGlobalFlag400000();
 extern "C" void* createBattleActor__Q22cf13CfGameManagerFv(u32 id, u32 mode);  // void* form matches CTaskGameEff.hpp (return-type unity pending repo-wide)
 void* getPlayer__Q22cf13CfGameManagerFi(int index);
 void movePcCondFullReset(void* ctrl, int flag);  // CCtrlMovePC helper (CtrlMoveBase)

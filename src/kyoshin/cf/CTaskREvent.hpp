@@ -346,7 +346,7 @@ extern "C" {
     void __ct__8CProcessFv(CProcess* p);
     void __ct__11CDeviceVICbFv(CDeviceVICb* p);
     cf::CInfoCf* __ct__cf_CInfoCf(cf::CInfoCf* p);
-    void __ct__cf_CREvtMem(cf::CREvtMem* p);
+    extern "C" void __ct__cf_CREvtMem(cf::CREvtMem* p);
     // IFlagEvent registration helper (mirror of CtrlRemote_ResetSlotArrayByIndex used by the
     // dtor; retail C-ABI name).
     cf::IFlagEvent* CtrlRemote_ResetSlotArrayObj(cf::IFlagEvent* p);

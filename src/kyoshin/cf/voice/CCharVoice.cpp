@@ -62,7 +62,7 @@ extern "C" CCharVoice* __ct__CCharVoice(CCharVoice* self)
 }
 
 // attachOwner (0x802A32C0)
-void CCharVoice::attachOwner(CVoiceOwnerIntf* owner)
+extern "C" void CCharVoice::attachOwner(CVoiceOwnerIntf* owner)
 {
     if (owner == nullptr) return;
 
@@ -100,7 +100,7 @@ void CCharVoice::attachOwner(CVoiceOwnerIntf* owner)
 }
 
 // updatePosition (0x802A353C)
-void CCharVoice::updatePosition()
+extern "C" void CCharVoice::updatePosition()
 {
     if (mOwner == nullptr) return;
 
@@ -164,7 +164,7 @@ void CCharVoice::updatePosition()
 }
 
 // stopVoiceA (0x802A371C)
-void CCharVoice::stopVoiceA()
+extern "C" void CCharVoice::stopVoiceA()
 {
     if (mOwner == nullptr) return;
 
@@ -188,7 +188,7 @@ void CCharVoice::stopVoiceA()
 }
 
 // playGated (0x802A37D0)
-bool CCharVoice::playGated(float volume,
+extern "C" bool CCharVoice::playGated(float volume,
                                 int voiceId, int priority)
 {
     if (mOwner == nullptr) return false;
@@ -277,7 +277,7 @@ bool CCharVoice::playGated(float volume,
 }
 
 // stopVoiceB (0x802A3A38)
-void CCharVoice::stopVoiceB()
+extern "C" void CCharVoice::stopVoiceB()
 {
     if (mOwner == nullptr) return;
 

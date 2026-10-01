@@ -118,7 +118,7 @@ void playUISound(u32 op);
 // Singleton factory (typed to __ct__CSystemWindow args).
 CSystemWindow* SysWinCreateSingleton(CProcess* parent, CScn* scene, u32 opt,
                              const char* str1, const char* str2);
-CSystemWindow* SysWinGetSingleton();
+extern "C" CSystemWindow* SysWinGetSingleton();
 
 // Global data imports (MWCC does not mangle global-scope data names).
 extern CSystemWindow* lbl_eu_80663FD8;   // singleton instance pointer (.sbss)

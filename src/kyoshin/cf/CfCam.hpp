@@ -350,7 +350,7 @@ int cfCam_getSignBit04(void* self);                           // CfCam sibling (
 cf::CfCamFollow* cfCam_getActiveCam();                    // CfCam sibling (retail 0x80072708)
 ml::CVec3* cfCam_getPlus60(cf::CfCamFollow* self);     // CfCam sibling (retail 0x80072710)
 __declspec(noinline) u8* cfCam_getPlus6C(cf::CfCamFollow* self); // CfCam sibling (retail 0x80072718), in-TU body at bottom of CfCam.cpp; noinline keeps the bl at call sites
-void CmText_VariadicNoop(...);                             // retail 0x800C2838 (variadic callback prologue)
+extern "C" void CmText_VariadicNoop(...);                             // retail 0x800C2838 (variadic callback prologue)
 ml::CVec3* VecMath_NormalizeInPlace(ml::CVec3* v);              // retail 0x800A4510 (normalize)
 int func_80275238(cf::CfCamFollow* self);            // retail 0x802776BC (cam-control register)
 int func_80275278(cf::CfCamFollow* self);            // retail 0x802776FC (move register)

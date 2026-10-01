@@ -154,7 +154,7 @@ extern void ScnData_FwdB7DD4(void* snd, u8 id);
 
 // Gimmick-state setter (CfGimmick.cpp) and sound playback (CfSoundMan, the
 // retail symbol returns the started sound id).
-extern void CfGimmick_SetGlobalFlag80AndValue(int arg0, int flag, u32 value);
+extern "C" extern void CfGimmick_SetGlobalFlag80AndValue(int arg0, int flag, u32 value);
 // Single shared flat-name form (unmangled retail symbol; see
 // CfObjectImplMove.hpp).
 extern "C" u16 playActorSound__Q22cf10CfSoundManFUlUlUlUlf(
@@ -165,7 +165,7 @@ extern cf::CfGimmickEneScene* Scn_GetCurrentScene();            // current-scene
 extern cf::CfGimmickEneSceneState* getScnRootPtr(cf::CfGimmickEneScene* scene);  // -> +0x8C
 
 // Base gimmick deactivation helper (CfGimmick.cpp).
-extern void CfGimmick_ClearManagerBinding(cf::CfGimmick* self);
+extern "C" extern void CfGimmick_ClearManagerBinding(cf::CfGimmick* self);
 
 // Scene root-group accessor (monolib CScnMem): retail symbol is unmangled
 // (C linkage), takes the shared scene pointer and a child index.
@@ -175,8 +175,8 @@ extern "C" nw4r::g3d::ScnObj* getScnGroupChild(CScn* scene, unsigned int index);
 extern void GimDispatch18ByRow(int value, int id);
 
 // CArtsSet helpers (the arts set pointer comes from CActorParam::CActorParam_getArtsSet()).
-extern cf::CArtsParam* getArtsParamByIdx(cf::CArtsSet* artsSet, int index);
-extern int getArtsSlotByFlatIdx(const void* artsSet, int index);
+extern "C" extern cf::CArtsParam* getArtsParamByIdx(cf::CArtsSet* artsSet, int index);
+extern "C" extern int getArtsSlotByFlatIdx(const void* artsSet, int index);
 
 // Same-TU call targets (scaffold stubs).
 extern void func_8026E6E4(cf::CfGimmickEne* self);

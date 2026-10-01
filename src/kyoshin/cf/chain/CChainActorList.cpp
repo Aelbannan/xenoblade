@@ -129,7 +129,7 @@ extern "C" __declspec(noinline) void ChainList_PushBack(cf::CChainList* self, cf
 }
 
 // Returns the list entry whose first u32 field matches @p key.
-cf::CChainActor* ChainList_FindKey(cf::CChainList* self, u32 key) {
+extern "C" cf::CChainActor* ChainList_FindKey(cf::CChainList* self, u32 key) {
     for (int i = 0; i < (int)self->mCount; i++) {
         if (self->mActors[i]->unk0 == key)
             return self->mActors[i];
@@ -137,7 +137,7 @@ cf::CChainActor* ChainList_FindKey(cf::CChainList* self, u32 key) {
     return 0;
 }
 
-void func_8027B164(cf::CChainActorList* self){
+extern "C" void func_8027B164(cf::CChainActorList* self){
     // Pass 1: call the vtable[5] (destroy/remove) hook on every actor.
     _reslist_node<cf::CChainActor*>* node =
         self->mChainActorList.mStartNodePtr->mNext;
@@ -160,7 +160,7 @@ void func_8027B164(cf::CChainActorList* self){
     self->unk1DA8[0] = 0;
 }
 // Removes every reslist actor whose referenced object is dead.
-void Chain_SweepDeadActors(cf::CChainActorList* self){
+extern "C" void Chain_SweepDeadActors(cf::CChainActorList* self){
     _reslist_node<cf::CChainActor*>* node = self->mChainActorList.mStartNodePtr->mNext;
     while (node != self->mChainActorList.mStartNodePtr) {
         u32 base = node->mItem->unk0;
@@ -180,7 +180,7 @@ void Chain_SweepDeadActors(cf::CChainActorList* self){
 // successor keeps vtable[17](first,next) nonzero, records the run members into
 // one of two local arrays (chainable via vtable[8] go to chainArr, the rest to
 // otherArr), then drives each array's chain/skill linkage through vtable[12].
-void func_8027B2CC(cf::CChainActorList* self){
+extern "C" void func_8027B2CC(cf::CChainActorList* self){
     // Stack order matters: retail puts otherArr at r1+0x8 and chainArr at
     // r1+0xf4; MWCC places the first-declared array at the higher slot.
     cf::CChainActor* chainArr[0x3B];
@@ -270,7 +270,7 @@ void func_8027B2CC(cf::CChainActorList* self){
         node = cur;
     }
 }
-cf::CChainActor* Chain_FindOrCreateActor(cf::CChainActorList* self, u32 key){
+extern "C" cf::CChainActor* Chain_FindOrCreateActor(cf::CChainActorList* self, u32 key){
     // Inlined search: testing the call result directly keeps the value in
     // the return register r3 at the merge, matching retail.
     cf::CChainActor* found =
@@ -290,7 +290,7 @@ cf::CChainActor* Chain_FindOrCreateActor(cf::CChainActorList* self, u32 key){
 }
 // Removes the first actor whose unk0 matches @p key: destroys it via
 // vtable[5] and unlinks its reslist node. Returns 1 if found, else 0.
-int Chain_RemoveActor(cf::CChainActorList* self, u32 key) {
+extern "C" int Chain_RemoveActor(cf::CChainActorList* self, u32 key) {
     _reslist_node<cf::CChainActor*>* head = self->mChainActorList.mStartNodePtr;
     _reslist_node<cf::CChainActor*>* node = head->mNext;
     while (node != head) {
@@ -429,7 +429,7 @@ static cf::CChainActor* findActorForBB4C(u32 key, cf::CChainActorList* self) {
 
 // For each actor in @p list, ensures it is present in @p self's reslist
 // (adding it via func_8027B8C8 when missing), then clears @p list.
-void func_8027BB4C(cf::CChainActorList* self, cf::CChainList* list){
+extern "C" void func_8027BB4C(cf::CChainActorList* self, cf::CChainList* list){
     cf::CChainList* l = list;
     for (int i = 0; i < (int)l->mCount; i++) {
         cf::CChainActor* actor = (i < (int)list->mCount) ? list->mActors[i] : 0;
@@ -455,7 +455,7 @@ static cf::CChainActor* findActorForKey(cf::CChainActorList* self, u32 key) {
 // Chain-activation validator
 // when the candidate passes its activation gates AND at least two actors in
 // the list are chainable against it, else 0.
-int func_8027BC14(cf::CChainActorList* self, u32 key){
+extern "C" int func_8027BC14(cf::CChainActorList* self, u32 key){
     // Locate the actor whose unk0 matches key.
     cf::CChainActor* actor = findActorForKey(self, key);
     if (actor == 0) return 0;
@@ -500,7 +500,7 @@ int func_8027BC14(cf::CChainActorList* self, u32 key){
 // The target object (actor->unk0) is re-read before each probe so it stays in
 // temps across the func_80148778 calls; only the post-check read lives in a
 // callee-saved register (retail r31), matching the Chain_SweepDeadActors pattern.
-int Chain_HasValidTarget(cf::CChainActorList* self){
+extern "C" int Chain_HasValidTarget(cf::CChainActorList* self){
     _reslist_node<cf::CChainActor*>* node;
     cf::CChainBattleObj* obj;
     node = self->mChainActorList.mStartNodePtr->mNext;
@@ -516,7 +516,7 @@ int Chain_HasValidTarget(cf::CChainActorList* self){
     return 0;
 }
 // When the chain flag bit 1 is set, query a value and emit threshold events.
-void Chain_EmitThresholdEvents(cf::CChainFlag* self) {
+extern "C" void Chain_EmitThresholdEvents(cf::CChainFlag* self) {
     if (self->field_0x3F00 & 2) {
         u32 v = SysWinLog_BumpEventValue(0x2f, 1);
         if (v >= 1) {
@@ -535,7 +535,7 @@ void Chain_EmitThresholdEvents(cf::CChainFlag* self) {
     }
 }
 
-void Chain_EmitCountEvents(cf::CChainFlag* self) {
+extern "C" void Chain_EmitCountEvents(cf::CChainFlag* self) {
     if (self->field_0x3F00 & 2) {
         lbl_eu_80662A80++;
         if (lbl_eu_80662A80 >= 4) {
@@ -548,7 +548,7 @@ void Chain_EmitCountEvents(cf::CChainFlag* self) {
 }
 // Resets the chain-chance state: clears the chain count, both step counters
 // and the step flag byte.
-void ChainChance_Reset(cf::CChainChanceS* self) {
+extern "C" void ChainChance_Reset(cf::CChainChanceS* self) {
     self->mChainCount = 0;
     self->mField08 = 0;
     self->mField0A = 0;
@@ -556,7 +556,7 @@ void ChainChance_Reset(cf::CChainChanceS* self) {
 }
 // Decrements the chain count; plays the indexed chain sound at the wrap
 // point and advances the step counters (field_8 / field_A wraps at 4).
-void func_8027C0B0(cf::CChainChanceS* self) {
+extern "C" void func_8027C0B0(cf::CChainChanceS* self) {
     int flag;
     s16 count = self->mChainCount;
     if (count < 1) {
@@ -629,7 +629,7 @@ int func_8027C1A8(cf::CChainChanceS* self,
     return (u32)((mixed >> 1) - (mixed & (int)acc)) >> 31;
 }
 // Starts a chain message; writes 0xa to the message id on success.
-int Chain_RollActivation(cf::CChainMsg* self) {
+extern "C" int Chain_RollActivation(cf::CChainMsg* self) {
     // Retail's call site is a stale-register call: no arguments are set up.
     // Route through an unprototyped pointer type so the call passes none;
     // MWCC folds the constant function address back into a direct bl.
@@ -658,7 +658,7 @@ void Chain_EmitTallyEvents(unsigned int param) {
 }
 // Reads the current pad press. If a chain-trigger button is held, performs the
 // action selected by func_8017FD4C; writes result to *out and returns 1.
-int Chain_ReadPadAction(cf::CChainAction* self, u8* out){
+extern "C" int Chain_ReadPadAction(cf::CChainAction* self, u8* out){
     if (self->field_0 > 0) return 0;
     int sel = func_8017FD44();
     if (sel == 0) {
@@ -702,7 +702,7 @@ extern "C" __declspec(noinline) void ChainList_Clear(cf::CChainList* self) {
 }
 // Removes from @p self every actor whose referenced object is dead
 // (lookupWorkAtAddr), calling vtable[5] and shifting the array down.
-void ChainList_SweepDead(cf::CChainList* self){
+extern "C" void ChainList_SweepDead(cf::CChainList* self){
     cf::CChainActor** p;
     int i = 0;
     while (i < (int)self->mCount) {
@@ -724,14 +724,14 @@ void ChainList_SweepDead(cf::CChainList* self){
 
 // Calls vtable[4] on every actor in the list (r12 bidirectional dispatch via
 // the manual vtable at +0x70).
-void ChainList_UpdateAll(cf::CChainList* self) {
+extern "C" void ChainList_UpdateAll(cf::CChainList* self) {
     for (int i = 0; i < (int)self->mCount; i++) {
         cf::CChainActor* a = self->mActors[i];
         a->CChainActor_CleanupVoiceEnd();
     }
 }
 // Removes the actor whose unk0 matches @p key (if any); returns whether found.
-int ChainList_RemoveKey(cf::CChainList* self, u32 key){
+extern "C" int ChainList_RemoveKey(cf::CChainList* self, u32 key){
     for (int i = 0; i < (int)self->mCount; i++) {
         if (self->mActors[i]->unk0 == key) {
             cf::CChainActor** p = &self->mActors[i];
@@ -808,7 +808,7 @@ extern "C" void func_8027C6B4(cf::CChainList* self, int target, int index){
 // The actor pointer is re-read from the list before each use (retail reloads
 // *r31 after every call), and the next-index saturation is `(i+1 < count)
 // ? i+1 : 0` (the retail min idiom yields 0, not count, when i+1 >= count).
-void ChainList_StepTargets(cf::CChainList* self, int target){
+extern "C" void ChainList_StepTargets(cf::CChainList* self, int target){
     for (int i = 0; i < (int)self->mCount; i++) {
         self->mActors[i]->CChainActor_ToggleCancelVoice(target);
         if (target != 0 && self->mActors[i]->CChain_getZero_A584() != 0) {
@@ -823,7 +823,7 @@ void ChainList_StepTargets(cf::CChainList* self, int target){
     }
 }
 // Returns 1 if any resident actor's vtable[22] (+0x58) value matches @p key.
-int ChainList_HasCount(cf::CChainList* self, int key) {
+extern "C" int ChainList_HasCount(cf::CChainList* self, int key) {
     for (int i = 0; i < (int)self->mCount; i++) {
         cf::CChainActor* actor = self->mActors[i];
         if (actor->CChain_getChainCount() == key)
@@ -833,7 +833,7 @@ int ChainList_HasCount(cf::CChainList* self, int key) {
 }
 // Checks (via func_80174C98) whether the resident actors satisfy @p condition;
 // the polarity of the result depends on @p check.
-int ChainList_CheckCondition(cf::CChainList* self, int target, int check){
+extern "C" int ChainList_CheckCondition(cf::CChainList* self, int target, int check){
     cf::CChainActor** p;
     cf::CChainBattleObj* obj;
     if (check == 0) {
@@ -858,7 +858,7 @@ int ChainList_CheckCondition(cf::CChainList* self, int target, int check){
     return 1;
 }
 // If the counter is positive, runs chain update steps and resets it.
-void ChainCounter_Drain(cf::CChainCounter* self) {
+extern "C" void ChainCounter_Drain(cf::CChainCounter* self) {
     if (self->field_0x0 > 0) {
         requestCancelChain__Fv();
         UIWin_GetInstance();

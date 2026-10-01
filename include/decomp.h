@@ -24,7 +24,7 @@
 #else
 // Force reference specific data
 #define DECOMP_FORCEACTIVE(module, ...)                                        \
-    void fake_function(...);                                                   \
+    extern "C" void fake_function(...);                                                   \
     void CONCAT(FORCEACTIVE##module, __LINE__)(void);                          \
     void CONCAT(FORCEACTIVE##module, __LINE__)(void) {                         \
         fake_function(__VA_ARGS__);                                            \

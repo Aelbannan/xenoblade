@@ -930,7 +930,7 @@ void Walker_DispatchBattleSub(cf::CfObjectImplWalker* self);
 void func_800C525C(cf::CfObjectImplWalker* self);
 void func_800CC020(void* self);
 void func_800C5B00(void);
-void updatePosition(void* self);
+extern "C" void updatePosition(void* self);
 void func_80140E00(u32 a, u32 b, u32 c);
 bool QstCnt_HasInstance_6B94(void);
 u32 getControllerWordA33C__Q22cf13CfGameManagerFv();

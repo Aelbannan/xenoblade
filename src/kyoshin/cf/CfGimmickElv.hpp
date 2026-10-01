@@ -12,9 +12,9 @@ extern "C" {
 void __ct__cf_CfGimmick(void* self);
 void __dt__Q22cf9CfGimmickFv(void* self, int mode);
 void* Bdat_GetTable_AA34();
-void CfGimmick_LoadBdatAreaPosIndexed(void* self, void* subobj, void* bdat, void* stack, int idx);
-void CfGimmick_LoadBdatAreaRotationIndexed(void* self, void* subobj, void* bdat, void* stack, int idx);
-void CfGimmick_LoadBdatAreaExtentsIndexed(void* self, void* subobj, void* bdat, void* stack, int idx);
+extern "C" void CfGimmick_LoadBdatAreaPosIndexed(void* self, void* subobj, void* bdat, void* stack, int idx);
+extern "C" void CfGimmick_LoadBdatAreaRotationIndexed(void* self, void* subobj, void* bdat, void* stack, int idx);
+extern "C" void CfGimmick_LoadBdatAreaExtentsIndexed(void* self, void* subobj, void* bdat, void* stack, int idx);
 void func_802089BC(void* dst, void* src1, void* src2);
 // CfGimmick_PlaySoundAtPos plays a sound id at a position (first arg comes from a u16 field)
 void CfGimmick_PlaySoundAtPos(int id, void* pos);
@@ -22,15 +22,15 @@ void CfGimmick_PlaySoundAtPos(int id, void* pos);
 int CfGimmick_PlaySoundAtPosScaled(u16 id, void* pos);
 void CfGimmick_ClearManagerBinding(void* self);
 int CfGimmick_CheckStateFlag2CC8(u16 id);
-int CfGimmick_CheckTriggerGated(u8 flag, void* a, void* b, void* c, u32 d);
+extern "C" int CfGimmick_CheckTriggerGated(u8 flag, void* a, void* b, void* c, u32 d);
 // Retail evidence: called with no visible argument setup (r3 left as-is)
 void CfGimmick_SetGlobalFlagC0002(void);
-void* CfGimmick_SpawnNamedObject(void* self, int a, void* b);
+extern "C" void* CfGimmick_SpawnNamedObject(void* self, int a, void* b);
 void CfGimmick_UnregisterSpawnedObject(void* ptr);
 void func_8020A484(u16 id);
 int CfGimmick_IsMessageSystemBusy(void* self);
-int CfGimmick_LookupBdatGimmickName(u16 id, int mode);
-void func_8020A6B0(void* a, void* b, u16 c, f32 d, int e, int g);
+extern "C" int CfGimmick_LookupBdatGimmickName(u16 id, int mode);
+extern "C" void func_8020A6B0(void* a, void* b, u16 c, f32 d, int e, int g);
 int CfGimmick_CheckPartyIdLoaded(void* self, u32 ptr);
 void updateLODObject__8CTaskLODFv(u8 lod, f32 f);
 void removeLODEntry__8CTaskLODFv(u8 lod, f32 f);

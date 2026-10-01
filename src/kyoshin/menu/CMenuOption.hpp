@@ -66,7 +66,7 @@ public:
 };
 
 // Singleton factory (retail unmangled symbol).
-CMenuOption* func_8029BB24(CProcess* registParent, CProcess* parent, u32 arg);
+extern "C" CMenuOption* func_8029BB24(CProcess* registParent, CProcess* parent, u32 arg);
 // hasOptionMenu (live-instance check) is declared by kyoshin/CTaskGame.hpp.
 // Complete-object destructor in its retail D2 form (defined in CMenuOption.cpp).
 CMenuOption* __dt__11CMenuOptionFv(CMenuOption* _this, int flags);

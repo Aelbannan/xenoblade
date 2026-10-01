@@ -235,20 +235,20 @@ void CmText_ParseTextBuffer(CmTextProc* self, const char* text, CmTextTable* buf
 
 // Routes to CmText_ParseTextBuffer with the global flag record as the leading
 // argument and passes its two arguments through unchanged.
-void CmText_ParseWithStaticProc(u32 arg0, u32 arg1) {
+extern "C" void CmText_ParseWithStaticProc(u32 arg0, u32 arg1) {
     CmText_ParseTextBuffer((CmTextProc*)&lbl_eu_805739E8, (const char*)arg0, (CmTextTable*)arg1);
 }
 
 // Register a callback into the table slot selected by field20 and set the
 // continue flag that the dispatch loop CmText_DispatchCallbacks checks.
-void CmText_RegisterCallback(void (*callback)(void), u8 flag) {
+extern "C" void CmText_RegisterCallback(void (*callback)(void), u8 flag) {
     lbl_eu_805739F8.fns[lbl_eu_805739F8.field20] = callback;
     lbl_eu_805739F8.field24 = flag;
 }
 
 // Variadic prologue dump: on entry MWCC spills every register-argument into
 // this frame so callers can read them back out of memory. Empty body.
-void CmText_VariadicNoop(...) {}
+extern "C" void CmText_VariadicNoop(...) {}
 
 // Default no-op callback stored in the callback table at lbl_eu_805739F8.
 // Called by CmText_DispatchCallbacks when it iterates the callback array and a slot has no
@@ -257,7 +257,7 @@ extern "C" void CmText_DefaultNoopCallback(void) {}
 
 // (Re)initialise the callback table: clear every slot, reset the active index
 // and flag, then install the default no-op callback in slot 0.
-void CmText_InitCallbackTable() {
+extern "C" void CmText_InitCallbackTable() {
     lbl_eu_805739F8.field20 = 0;
     lbl_eu_805739F8.field24 = 0;
     memset(&lbl_eu_805739F8, 0, 0x20);
@@ -267,7 +267,7 @@ void CmText_InitCallbackTable() {
 // Dispatch loop: while the active callback slot is populated, clear the
 // continue flag, invoke the callback, and keep iterating if the callback
 // re-set the flag.
-void CmText_DispatchCallbacks() {
+extern "C" void CmText_DispatchCallbacks() {
     if (lbl_eu_805739F8.fns[lbl_eu_805739F8.field20] != 0) {
         do {
             lbl_eu_805739F8.field24 = 0;

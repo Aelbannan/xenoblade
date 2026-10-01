@@ -403,13 +403,13 @@ char* BdatGetPtrDirect(const void*, const void*, int);                   // code
 int IsMenuState621F0();                                                  // code_80135FDC.cpp
 // CScrollBar / CCur18 helpers (retail-unmangled C-linkage names).
 int CScrollBar_isVisible(void* scrollbar);                             // CScrollBar.cpp
-int CScrollBar_isActive(void* scrollbar);                                    // CScrollBar.cpp
-void CScrollBar_InitRootPane(void* scrollbar, ml::CVec3* vec);                 // CScrollBar.cpp
-void CScrollBar_UpdateThumb(void* scrollbar, int count, u32 value);           // CScrollBar.cpp
-void CScrollBar_requestScrollIn(void* scrollbar);                                 // CScrollBar.cpp
-void CScrollBar_UpdateDispatch(void* scrollbar);                                 // CScrollBar.cpp
-void CScrollBar_requestScrollOut(void* scrollbar);                                 // CScrollBar.cpp (layout rebuild)
-void CScrollBar_PlaceThumb(void* scrollbar, u16 value);                     // CScrollBar.cpp (thumb position)
+extern "C" int CScrollBar_isActive(void* scrollbar);                                    // CScrollBar.cpp
+extern "C" void CScrollBar_InitRootPane(void* scrollbar, ml::CVec3* vec);                 // CScrollBar.cpp
+extern "C" void CScrollBar_UpdateThumb(void* scrollbar, int count, u32 value);           // CScrollBar.cpp
+extern "C" void CScrollBar_requestScrollIn(void* scrollbar);                                 // CScrollBar.cpp
+extern "C" void CScrollBar_UpdateDispatch(void* scrollbar);                                 // CScrollBar.cpp
+extern "C" void CScrollBar_requestScrollOut(void* scrollbar);                                 // CScrollBar.cpp (layout rebuild)
+extern "C" void CScrollBar_PlaceThumb(void* scrollbar, u16 value);                     // CScrollBar.cpp (thumb position)
 void Cur_SetVisible(void* cursor, int arg);                            // CCur.cpp
 void func_801D202C(void* cursor);                                     // CCur.cpp
 void* CUICfManager_getArcResourceAccessor();                                                // CCur.cpp (vtable source for __ct__CCur18)
@@ -439,10 +439,10 @@ void ScnData_FwdB7DD4(void*, u8);                                        // code
 void forwardMpfCallB__17UnkClass_8047BB54Fv(void*, u8);                 // code_80135FDC.cpp
 void forwardMpfCallC__17UnkClass_8047BB54Fv(void*, u8);                 // code_80135FDC.cpp
 void __ct__8CProcessFv(CProcess* self);                              // CProcess ctor
-void __ct__CScrollBar(void* self, u8 direction);                     // CScrollBar ctor (retail short name)
+extern "C" void __ct__CScrollBar(void* self, u8 direction);                     // CScrollBar ctor (retail short name)
 void __ct__CSysWin(void* self, int arg);                              // CSysWin ctor (retail short name)
 void __ct__CCur18(void* self, void* arg);                            // CCur18 ctor (retail short name)
-void CScrollBar_loadLayoutArc(CScrollBar* self);                                // CScrollBar arc read (retail short name)
+extern "C" void CScrollBar_loadLayoutArc(CScrollBar* self);                                // CScrollBar arc read (retail short name)
 int sprintf(char*, const char*, ...);                                // stdio (CRT)
 }
 

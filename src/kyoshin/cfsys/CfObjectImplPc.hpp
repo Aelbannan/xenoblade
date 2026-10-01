@@ -976,7 +976,7 @@ int func_80148778(void* obj, int id);
 extern "C" u32 getQueuedFileEventCount__Q22cf13CfGameManagerFv(void); // canonical u32 form
 void MoveImplInitFields(u8* self);
 void func_8015BB3C(u8* a, u8* b, u8* c);
-void attachOwner(u8* self, u8* owner);
+extern "C" void attachOwner(u8* self, u8* owner);
 u32 CfRes_getHeapHandle();
 char* CfObjectMove_getBdatNameCol11(u8* move, int index);
 char* CfObjectMove_getBdatNameCol7(u8* move, int index);

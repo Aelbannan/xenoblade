@@ -54,7 +54,7 @@ namespace cf {
     }
 }
 
-unsigned short getArtsSlotByFlatIdx(const cf::CArtsSet* set, int index) {
+extern "C" unsigned short getArtsSlotByFlatIdx(const cf::CArtsSet* set, int index) {
     int row = index / 8;
     int col = index % 8;
     const char* p = reinterpret_cast<const char*>(set);
@@ -124,7 +124,7 @@ extern "C" cf::CArtsParam* getArtsParamAtCnt(cf::CArtsSet* set, unsigned int ind
 
 extern cf::CArtsParam lbl_eu_80573D88;
 
-cf::CArtsParam* lookupArtsParamById(cf::CArtsSet* self, int id) {
+extern "C" cf::CArtsParam* lookupArtsParamById(cf::CArtsSet* self, int id) {
     unsigned char* outer = reinterpret_cast<unsigned char*>(self);
     unsigned char* inner;
     int row = 0;
@@ -171,7 +171,7 @@ namespace cf {
     }
 }
 
-void resetAttackSetArts(cf::CAttackSet* set) {
+extern "C" void resetAttackSetArts(cf::CAttackSet* set) {
     std::memset(set, 0, 0xc);
     cf::CAttackParam* arr = reinterpret_cast<cf::CAttackParam*>(reinterpret_cast<unsigned char*>(set) + 0x10);
     for (int i = 0; i < 6; i++) {

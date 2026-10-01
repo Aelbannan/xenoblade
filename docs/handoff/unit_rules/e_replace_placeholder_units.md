@@ -211,3 +211,44 @@ Useful helpers already in the tree: `.scratch/unitrules_b/owner_of_undef.py`
 (undefined name -> retail owner unit), `.scratch/unitrules_b/tail_diag.py`
 (object symbol/section diffs), `docs/handoff/unit_rules/*.md` (the a–d prompts for the
 per-unit rule classes you may encounter).
+
+**Update 3 — measured completion plan (2026-09-29).**
+
+`tools/coop/link_undefs.py` is the acceptance instrument from here on (mwldeppc's
+own list is capped at ~100 error blocks).  Current frontier **1235**, and the
+breakdown that defines the work:
+
+1. 85 local `@N`/`@LOCAL@` artifacts — §17.6 rule work, no source changes (~1 session).
+2. 727 data symbols, 14.4 KB total: 323 whose bytes are already emitted (split +
+   name only, recipe proven on `g3d_resmat`), 404 whose bytes are absent (one
+   data pass per owner unit, KyoshinHeap/`code_800C17DC` recipe; 20 units own them).
+3. 421 function bodies, 57.7 KB / ~14 k instructions: 130 are <=0x10 B generated
+   stubs (`CActorParam_UnkVirtualFunc*` 70, `CfObjectModel_UnkVirtualFunc*` 6,
+   `EffCtl_EmptyStub*`, accessors), ~0x5BEC B are `func_*`/voice-thread scripted
+   code, and ~0xDCE8 B are real bodies concentrated in `CfGimmick` (41),
+   `UnkClass_80466348` (36), `CChainActorList` (25), `CfObjectEne` (15),
+   `CVision` (10).  The last bucket is the long pole; the units also carry more
+   unwritten functions than the link-blocking globals (e.g. `CfGimmick` is
+   37/51 on hexdiff).
+4. Relink + `main.dol` + DOL verification last (1 session, needs 1-3 at 100%).
+
+Order: items 1-2 of the ticket (math_arithmetic FExp/FLog register swaps;
+snd_BasicSound 5 residuals + the +0x1E0 split overrun), then 1. and the 130
+stubs (17% of the frontier for ~3 sessions), then the data passes, then the
+real bodies in parallel.
+
+**Update 4 (frontier burn-down started).** `tools/coop/link_undefs.py` is the
+measuring instrument; the frontier was 1235 and is now **1003** (linkage batches: CfObjectEne + 11 units at the definition level, then 24 headers at the declaration level).  First batch:
+`CfObjectEne.cpp` (124 -> 10) by adding `extern "C"` to definitions whose MWCC
+mangling differs from the retail literal (skip names a header declares, and
+skip definitions whose natural mangling already matches).  Recipe, residual
+cases (2 header-declared names) and the stale-`@N` repair method are in
+`docs/evidence/decomp/unit_rules_category_e_pool_labels.md`.
+
+**Update 5 (pool-label class investigated).**  The `g3d_resmat` `.sdata2` pool
+(293 labels) cannot be named today: MWCC 8-aligns every `.sdata2` object, so
+retail's 4-aligned labels cannot be individual source objects without shifting
+the layout, and the §17.6 `add_symbols` mechanism runs out of string-table space
+after ~51 new names.  Measurements, the failed experiment (frontier 1022 -> 780
+with a +8-byte layout drift) and the two viable tool-level fixes are in
+`docs/evidence/decomp/unit_rules_category_e_pool_labels.md` (update 6).

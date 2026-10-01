@@ -4,7 +4,7 @@
 
 // Debug-render a collision cylinder from its impl, colouring it by collision kind.
 // Colour chosen per collision kind (see retail .sdata2 constants).
-void func_800AB010(void* /*unused*/, cf::CfCollCylinderImpl* impl) {
+extern "C" void func_800AB010(void* /*unused*/, cf::CfCollCylinderImpl* impl) {
     ml::CCol4 col;
 
     // Case 1 is a standalone `if` (not part of the else-chain below): retail
@@ -75,7 +75,7 @@ void func_800AB010(void* /*unused*/, cf::CfCollCylinderImpl* impl) {
 // against the collision object and write the pushed-out point to out. When f1
 // is near zero the whole cylinder is submitted; otherwise a truncated segment
 // starting below mStart is drawn.
-void func_800AB248(void* /*unused*/, cf::CfCollCylinderImpl* impl, void* query, void* out, float f1) {
+extern "C" void func_800AB248(void* /*unused*/, cf::CfCollCylinderImpl* impl, void* query, void* out, float f1) {
     // Axis height span, used to clamp the probe point along Y.
     float heightDiff = impl->mEnd.y - impl->mStart.y;
 

@@ -6011,11 +6011,6 @@ UNIT_RULES: dict[str, UnitRules] = {
             ("lbl_eu_80669A88", ".sdata2", 0x38, 4),
             ("lbl_eu_80669A90", ".sdata2", 0x40, 8),
             ("lbl_eu_80669A98", ".sdata2", 0x48, 8),
-            # The two 0.0f words cannot be their own source objects (MWCC sends
-            # every all-zero read-only initializer to .sbss2); the source's two
-            # filler arrays carry their names and these entries re-point the
-            # symbols onto the retail offsets (retail 0x3BC/0x484 + the 0x18
-            # front pool dropped below).
             ("lbl_eu_80669E24", ".sdata2", 0x3D4, 4),
             ("lbl_eu_80669EEC", ".sdata2", 0x49C, 4),
         ),
@@ -10442,7 +10437,7 @@ def postprocess_object(path: Path, rules: UnitRules | None = None) -> bool:
     # promote the LOCAL entries among the names this entry's rules produced
     # (see globalize_local_undefs for why mwldeppc needs this and why it can
     # never change linked bytes).
-    changed = globalize_local_undefs(path, rule_produced_symbol_names(rules)) or changed
+    for sec, off, tsec, toff in rules.retarget_relocs_local:    changed = globalize_local_undefs(path, rule_produced_symbol_names(rules)) or changed
     return changed
 
 

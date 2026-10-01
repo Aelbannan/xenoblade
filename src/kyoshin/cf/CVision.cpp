@@ -620,7 +620,7 @@ extern "C" void* __ct__801A33AC(CVisionSlot* self) {
 // resets the eight vision slots via a 2-iteration loop whose body covers four
 // slots each (trio + mid-field group per slot, in ctor store order).
 // ---------------------------------------------------------------------------
-void func_801A380C(CVision* self) {
+extern "C" void func_801A380C(CVision* self) {
     f32 zero = lbl_eu_80667CD4;
     CVisionRingBase* R = (CVisionRingBase*)((u8*)self + 0x20000);
     R->f_6194 = zero;
@@ -838,7 +838,7 @@ void func_801A39D8(CVision* self) {
     }
 }
 
-void func_801A4194(CVision* self) {
+extern "C" void func_801A4194(CVision* self) {
     CVisionSub* sub;
     if (self->sub.field_00 == 0) {
         sub = 0;
@@ -1379,7 +1379,7 @@ void func_801A5260(CVision* self) {
     }
 }
 
-void func_801A5360(CVision* self) {
+extern "C" void func_801A5360(CVision* self) {
     // Materialized timer-window checks (retail evaluates each into r0).
     int w1;
     if (self->field_26198 - self->field_261A0 <= lbl_eu_80667CD4 &&
@@ -2804,7 +2804,7 @@ void func_801A7D6C(CVision* self, void* r4) {
     __dt__80043E88(vdlist, -1);
 }
 
-int* getNonZeroSlot1(int* param) {
+extern "C" int* getNonZeroSlot1(int* param) {
     if (param[1] == 0) {
         return 0;
     }
@@ -3042,7 +3042,7 @@ cf::CVision::~CVision() {
 // us-801a7c18: Release the zero/zero slot of the battle manager's vision
 // sub-object (retail pollVisionSlots).
 // ---------------------------------------------------------------------------
-void pollVisionSlots() {
+extern "C" void pollVisionSlots() {
     if (CBattleManager::getInstance() &&
         &CBattleManager::getInstance()->mVision) {
         func_801A897C(&CBattleManager::getInstance()->mVision, 0, 0);

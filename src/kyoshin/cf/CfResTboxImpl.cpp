@@ -13,18 +13,18 @@ using namespace cf;
 
 // us-801faaf0 - constructor: base CfResObjImpl ctor (parent passed through in
 // r4), then store the retail vtable label at +0x10 (manual-vtable scheme).
-cf::CfResTboxImpl* __ct__cf_CfResTboxImpl(CfResTboxImpl* ths, CfResTboxParent* parent) {
+extern "C" cf::CfResTboxImpl* __ct__cf_CfResTboxImpl(CfResTboxImpl* ths, CfResTboxParent* parent) {
     __ct__cf_CfResObjImpl((cf::CfResObjImpl*)ths, (void*)parent);
     ths->vtbl() = &lbl_eu_80535204;
     return ths;
 }
 
-int ResTbox_GetFixedSize256() { return 256; }
+extern "C" int ResTbox_GetFixedSize256() { return 256; }
 
 // us-801fab34 - open test: dispatch the +0x14 vtable slot and negate the
 // bool result (retail ends at the raw neg; an int return keeps the setnz
 // off).
-int ResTbox_NegInUseState(CfResTboxImpl* ths) {
+extern "C" int ResTbox_NegInUseState(CfResTboxImpl* ths) {
     return -(int)!ths->ResObj_IsInUse_C860();
 }
 
@@ -96,7 +96,7 @@ float anim = ((cf::CfObject*)ths->field_00)->CfObject_getObjScale();
 
 void ResTbox_EmptyStub91B0(void) {}
 
-void ResTbox_CacheNullPtmfOnce(CfResTboxImpl* ths) {
+extern "C" void ResTbox_CacheNullPtmfOnce(CfResTboxImpl* ths) {
     if (lbl_eu_80664660 == 0) {
         u32* src = __ptmf_null;
         u32* dst = (u32*)lbl_eu_805351E0;
@@ -113,11 +113,11 @@ void ResTbox_CacheNullPtmfOnce(CfResTboxImpl* ths) {
 
 cf::CfResTboxImpl::~CfResTboxImpl() {}
 
-bool ResTbox_IsCellBitSet(unsigned char* p, int i, int j) {
+extern "C" bool ResTbox_IsCellBitSet(unsigned char* p, int i, int j) {
     return p[i * 0x49 + j * 2] != 0;
 }
 
-void ResTbox_SetCellBit80(unsigned char* base, int idx1, int idx2, int idx3) {
+extern "C" void ResTbox_SetCellBit80(unsigned char* base, int idx1, int idx2, int idx3) {
     unsigned char* p = base + idx1 * 73 + idx2 * 16 + idx3 * 2;
     p[1] |= 0x80;
 }

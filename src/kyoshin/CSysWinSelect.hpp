@@ -147,7 +147,7 @@ public:
 extern "C" {
 CSysWinSelect* __ct__CSysWinSelect(CSysWinSelect* self, void* a2, void* a3,
                                    void* a4, void* a5);
-CSysWinSelect* __dt__13CSysWinSelectFv(CSysWinSelect* _this, int flags);
+extern "C" CSysWinSelect* __dt__13CSysWinSelectFv(CSysWinSelect* _this, int flags);
 void SysWinSelectHandleInput(CSysWinSelect* self);  // C-linkage: retail symbol is unmangled
 void sysWinTermLayout(void* syswin);
 void sysWinDrawLayout(void* syswin, nw4r::lyt::DrawInfo* drawInfo);

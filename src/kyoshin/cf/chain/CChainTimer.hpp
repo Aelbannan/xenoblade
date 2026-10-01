@@ -290,8 +290,8 @@ void resetBattleGauge__Q22cf13CfGameManagerFv();
 void syncBattleState__Q22cf13CfGameManagerFv(void* object);
 void processFieldEffects__Q22cf13CfGameManagerFv();
 void CMenuArtsSelect_ResetSlotAnims();
-void ChainMusic_SaveSlots(void* self, void* owner);
-void ChainMusic_RestoreSlots(void* self, void* owner);
+extern "C" void ChainMusic_SaveSlots(void* self, void* owner);
+extern "C" void ChainMusic_RestoreSlots(void* self, void* owner);
 int isArtsUsable(int val, int flag);
 // (IdTable_SumValues: single winning decl lives on chain/CChainActorList.hpp.)
 int* CtrlObjectParam_GetSlotTableBase();

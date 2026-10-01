@@ -52,15 +52,15 @@ public:
     /* 0x2D */ u8 field_2D;    // selects the language-specific resource names
 };
 
-void CLoadBeginFileRequest(CLoad* self);
-void func_802AE560(CLoad* self);
-void CLoadDrawIfVisible(CLoad* self, nw4r::lyt::DrawInfo* drawInfo);
-void CLoadTeardownLayout(CLoad* self);
-u8 CLoadIsLoadReady(CLoad* self);
-u8 CLoadIsLoaded(CLoad* self);
-u8 CLoadIsAnimSettled(CLoad* self);
-void CLoadStartFadeInStep(CLoad* self);
-void CLoadStartRetryStep(CLoad* self);
+extern "C" void CLoadBeginFileRequest(CLoad* self);
+extern "C" void func_802AE560(CLoad* self);
+extern "C" void CLoadDrawIfVisible(CLoad* self, nw4r::lyt::DrawInfo* drawInfo);
+extern "C" void CLoadTeardownLayout(CLoad* self);
+extern "C" u8 CLoadIsLoadReady(CLoad* self);
+extern "C" u8 CLoadIsLoaded(CLoad* self);
+extern "C" u8 CLoadIsAnimSettled(CLoad* self);
+extern "C" void CLoadStartFadeInStep(CLoad* self);
+extern "C" void CLoadStartRetryStep(CLoad* self);
 void CLoadAdvanceFadeHold(CLoad* self);
 void CLoadFinishRetryIdle(CLoad* self);
 void CLoadMarkFileArrived(CLoadFull* self);

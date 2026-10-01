@@ -286,7 +286,7 @@ body:
  * the work heap, construct the menu and register it under the parent process.
  */
 extern "C" void switchChainType(CMenuBattleChain* self, u8 arg);
-CMenuBattleChain* func_802AA2A0(CProcess* parent, CScn* scene, u8 chainType) {
+extern "C" CMenuBattleChain* func_802AA2A0(CProcess* parent, CScn* scene, u8 chainType) {
     if (lbl_eu_80664A60 != NULL) {
         switchChainType(lbl_eu_80664A60, chainType);
         return NULL;
@@ -536,14 +536,14 @@ void CMenuBattleChain_dtorAdj70(IScnRender* self) {
 }
 
 // Track the current player and clear both pending toggle flags.
-void trackChainPlayer(CBattleChainMenuState* self) {
+extern "C" void trackChainPlayer(CBattleChainMenuState* self) {
     self->mPlayer = cf::CfGameManager::getPlayer(0);
     self->mFlag4 = 0;
     self->mFlag5 = 0;
 }
 
 // Consume the pending toggle flags once the arts-select menu is interactable.
-void consumeChainToggles(CBattleChainMenuState* self) {
+extern "C" void consumeChainToggles(CBattleChainMenuState* self) {
     if (CMenuArtsSelect_isInteractable()) {
         if (self->mFlag4 != 0) {
             CMenuArtsSelect_CreateArtsRef();
@@ -557,7 +557,7 @@ void consumeChainToggles(CBattleChainMenuState* self) {
 }
 
 // Disable the arts-select menu, then (re)track the current player.
-void reinitChainPlayer(CBattleChainMenuState* self) {
+extern "C" void reinitChainPlayer(CBattleChainMenuState* self) {
     CMenuArtsSelect_setDisabled();
     self->mPlayer = cf::CfGameManager::getPlayer(0);
     self->mFlag4 = 0;
@@ -566,7 +566,7 @@ void reinitChainPlayer(CBattleChainMenuState* self) {
 
 // Disable the arts-select menu only when the tracked player changed, then
 // (re)track the current player.
-void updateChainPlayer(CBattleChainMenuState* self) {
+extern "C" void updateChainPlayer(CBattleChainMenuState* self) {
     if (self->mPlayer != cf::CfGameManager::getPlayer(0)) {
         CMenuArtsSelect_setDisabled();
     }
@@ -580,7 +580,7 @@ void updateChainPlayer(CBattleChainMenuState* self) {
  * set *outFlag when the current selection is "chain ready" (state 0 with
  * substate 5). A missing state or a -1 substate means "not usable".
  */
-bool func_802AB510(CBattleChainMenuState* self, u8* outFlag) {
+extern "C" bool func_802AB510(CBattleChainMenuState* self, u8* outFlag) {
     // Retail keeps the two flag stores in separate branches (no store merge).
     CArtsSelectStateView* sel = CMenuArtsSelect_getSelectState();
     if (sel == NULL)
@@ -600,7 +600,7 @@ bool func_802AB510(CBattleChainMenuState* self, u8* outFlag) {
 extern "C" void requestArtsRef(CBattleChainMenuState* self) { self->mFlag4 = 1; }
 
 // Whether the chain menu is busy (pending flag or arts-select not ready).
-bool isChainMenuBusy(CBattleChainMenuState* self) {
+extern "C" bool isChainMenuBusy(CBattleChainMenuState* self) {
     return self->mFlag4 != 0 || CMenuArtsSelect_isNotReady();
 }
 

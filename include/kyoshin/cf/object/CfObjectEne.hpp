@@ -677,7 +677,7 @@ extern "C" void CfObjectActor_UnkVirtualFunc10__Q22cf13CfObjectActorFv(void* sel
 extern "C" void updateEnemyBattleState__Q22cf11CfObjectEneFv(void* self);
 // Verbatim `__`-named free deleting dtor (same rationale as
 // func_800ADB2C__Q22cf11CfObjectEneFv above).
-cf::CfObjectEne* __dt__Q22cf11CfObjectEneFv(cf::CfObjectEne* self, s32 deleteFlag);
+extern "C" cf::CfObjectEne* __dt__Q22cf11CfObjectEneFv(cf::CfObjectEne* self, s32 deleteFlag);
 
 // C-ABI free-function import: retail CfGameManager "party count" getter
 // (Fv-mangled member name; returns the u32 at lbl_eu_806640A4). Declared

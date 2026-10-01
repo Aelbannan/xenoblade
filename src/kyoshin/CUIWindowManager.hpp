@@ -92,7 +92,7 @@ extern "C" IUIWindow* func_80144EE4(CProcess* pParent, CScn* pScene, u16 a3, u8 
 extern "C" {
 IUIWindow* createQuestWindow(CProcess* pParent, CScn* pScene, u32 a2, u32 a3);
 IUIWindow* eveTalkWinCreateRegister(CProcess* pParent, CScn* pScene, u32 text, const u8* msgSrc, u8 flag);
-IUIWindow* SysWinCreateSingleton(CProcess* pParent, void* pSceneOrWin, u32 flag, u32 a3, u32 a4);
+extern "C" IUIWindow* SysWinCreateSingleton(CProcess* pParent, void* pSceneOrWin, u32 flag, u32 a3, u32 a4);
 int CUICfManager_claimSlotByIdState(u16 arg);
 int CUICfManager_claimSlotFormatted();
 int CUICfManager_claimSlotByTwoIds();

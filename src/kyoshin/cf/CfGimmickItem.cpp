@@ -152,7 +152,7 @@ enum {
     kItemFlagBusy = 0x20,   // actor busy flag (spawned/attached)
 };
 
-void GimItem_StateDispatch(cf::CfGimmickItem* self) {
+extern "C" void GimItem_StateDispatch(cf::CfGimmickItem* self) {
     // Dispatch the current state through the 12-byte PTMF table.
     (self->*((cf::CfGimmickItemState*)lbl_eu_80535A50)[self->field_9E])();
 

@@ -161,7 +161,7 @@ CCtrlMoveNpc::CCtrlMoveNpc() {
 // NpcMove_DispatchState - dispatch the state ptmf if set; return "was set".
 // ---------------------------------------------------------------------------
 namespace cf {
-int NpcMove_DispatchState(CCtrlMoveNpc* ths) {
+extern "C" int NpcMove_DispatchState(CCtrlMoveNpc* ths) {
     if (ths->mStateFunc) {
         (ths->*ths->mStateFunc)();
     }
@@ -174,7 +174,7 @@ int NpcMove_DispatchState(CCtrlMoveNpc* ths) {
 // set the state fn. Approached-fraction is clamped into [0, max].
 // ---------------------------------------------------------------------------
 namespace cf {
-void func_8019F6E8(CCtrlMoveNpc* ths, const ml::CVec3* vec, f32 scale, f32 paramB) {
+extern "C" void func_8019F6E8(CCtrlMoveNpc* ths, const ml::CVec3* vec, f32 scale, f32 paramB) {
     ths->mField64 = 4;
     ths->mField58 = *vec;
     ths->mField68 = scale;
@@ -376,6 +376,6 @@ void func_8019F93C(CCtrlMoveNpc* ths) {
 }
 
 // NpcMove_ClearRowBmp - clear the 16-byte Npc row bitmap.
-void NpcMove_ClearRowBmp() {
+extern "C" void NpcMove_ClearRowBmp() {
     memset(lbl_eu_805757E0, 0, 0x10);
 }

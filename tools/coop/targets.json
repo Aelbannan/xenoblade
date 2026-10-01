@@ -10750,7 +10750,7 @@
       "region": "us",
       "kind": "function",
       "milestone": "unassigned",
-      "function": "func_800442DC",
+      "function": "cf::CTaskGameCf::reqExit()",
       "symbol": "reqExit__Q22cf11CTaskGameCfFv",
       "address": "0x80044878",
       "size": "0x40",
@@ -10846,7 +10846,7 @@
       "region": "us",
       "kind": "function",
       "milestone": "unassigned",
-      "function": "func_8004435C",
+      "function": "cf::CTaskGameCf::startMission",
       "symbol": "startMission__Q22cf11CTaskGameCfFsT2Q33ml6FixStr<32>_s",
       "address": "0x800448F8",
       "size": "0x80",
@@ -10955,7 +10955,7 @@
       "region": "us",
       "kind": "function",
       "milestone": "unassigned",
-      "function": "func_80044424",
+      "function": "cf::CTaskGameCf::startNewGame()",
       "symbol": "startNewGame__Q22cf11CTaskGameCfFv",
       "address": "0x800449C0",
       "size": "0x20",
@@ -10981,7 +10981,7 @@
       "region": "us",
       "kind": "function",
       "milestone": "unassigned",
-      "function": "func_80044444",
+      "function": "cf::CTaskGameCf::initNewGame()",
       "symbol": "initNewGame__Q22cf11CTaskGameCfFv",
       "address": "0x800449E0",
       "size": "0x3C",
@@ -11007,7 +11007,7 @@
       "region": "us",
       "kind": "function",
       "milestone": "unassigned",
-      "function": "func_80044480",
+      "function": "cf::CTaskGameCf::startContinue()",
       "symbol": "startContinue__Q22cf11CTaskGameCfFv",
       "address": "0x80044A1C",
       "size": "0x20",
@@ -11033,7 +11033,7 @@
       "region": "us",
       "kind": "function",
       "milestone": "unassigned",
-      "function": "func_800444A0",
+      "function": "cf::CTaskGameCf::initContinue()",
       "symbol": "initContinue__Q22cf11CTaskGameCfFv",
       "address": "0x80044A3C",
       "size": "0x3C",
@@ -11218,7 +11218,7 @@
       "region": "us",
       "kind": "function",
       "milestone": "unassigned",
-      "function": "func_800448DC",
+      "function": "cf::CTaskGameCf::beginExit()",
       "symbol": "beginExit__Q22cf11CTaskGameCfFv",
       "address": "0x80044E7C",
       "size": "0x58",
@@ -11244,7 +11244,7 @@
       "region": "us",
       "kind": "function",
       "milestone": "unassigned",
-      "function": "func_80044934",
+      "function": "cf::CTaskGameCf::waitExit()",
       "symbol": "waitExit__Q22cf11CTaskGameCfFv",
       "address": "0x80044ED4",
       "size": "0x68",
@@ -11273,7 +11273,7 @@
       "region": "us",
       "kind": "function",
       "milestone": "unassigned",
-      "function": "func_8004499C",
+      "function": "cf::CTaskGameCf::finishExit()",
       "symbol": "finishExit__Q22cf11CTaskGameCfFv",
       "address": "0x80044F3C",
       "size": "0x20",
@@ -18199,7 +18199,7 @@
       "unit": "kyoshin/action/CActParamAnim",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "near_miss",
+      "status": "STRUCTURAL",
       "origin": "symbols.txt",
       "called_functions": [
         "us-8004c4a4",
@@ -18214,7 +18214,8 @@
       "source": "src/kyoshin/action/CActParamAnim.cpp",
       "source_present": true,
       "instruction_match": 25.2,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "legacy_status": "near_miss"
     },
     {
       "id": "us-8004de44",
@@ -18513,7 +18514,7 @@
       "unit": "kyoshin/action/CActParamAnim",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "assessed",
+      "status": "COMPILES",
       "origin": "symbols.txt",
       "called_functions": [
         "us-8004c4a4",
@@ -18528,7 +18529,8 @@
       "source": "src/kyoshin/action/CActParamAnim.cpp",
       "source_present": true,
       "instruction_match": 0.0,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "legacy_status": "assessed"
     },
     {
       "id": "us-8004ee80",
@@ -18844,7 +18846,7 @@
       "unit": "kyoshin/action/CActParamAnim",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "near_miss",
+      "status": "STRUCTURAL",
       "origin": "symbols.txt",
       "called_functions": [
         "us-8004c4a4",
@@ -18859,7 +18861,8 @@
       "source": "src/kyoshin/action/CActParamAnim.cpp",
       "source_present": true,
       "instruction_match": 45.7,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "legacy_status": "near_miss"
     },
     {
       "id": "us-80050490",
@@ -24692,7 +24695,7 @@
       "unit": "kyoshin/action/CActParamData",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "OPEN",
+      "status": "STRUCTURAL",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -24703,7 +24706,8 @@
       "source": "src/kyoshin/action/CActParamData.cpp",
       "source_present": false,
       "instruction_match": 63.1,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "legacy_status": "OPEN"
     },
     {
       "id": "us-800576ec",
@@ -45829,7 +45833,7 @@
       "unit": "kyoshin/cf/CfCamEvent_1",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "stable",
+      "status": "STRUCTURAL",
       "origin": "symbols.txt",
       "called_functions": [
         "us-800aabcc"
@@ -45842,7 +45846,8 @@
       "source": "src/kyoshin/cf/CfCamEvent_1.cpp",
       "source_present": true,
       "instruction_match": 47.1,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "legacy_status": "stable"
     },
     {
       "id": "us-800762d0",
@@ -46690,7 +46695,7 @@
       "unit": "kyoshin/cf/CfCamEvent_1",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "documented",
+      "status": "HIGH_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -46701,7 +46706,8 @@
       "source": "src/kyoshin/cf/CfCamEvent_1.cpp",
       "source_present": true,
       "instruction_match": 91.3,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "legacy_status": "documented"
     },
     {
       "id": "us-8007ca94",
@@ -54610,7 +54616,7 @@
       "unit": "kyoshin/cf/CfGameManager",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "OPEN_ITEM",
+      "status": "STRUCTURAL",
       "origin": "symbols.txt",
       "source": "src/kyoshin/cf/CfGameManager.cpp",
       "called_functions": [
@@ -54637,7 +54643,8 @@
       "abi_helper_calls": [],
       "source_present": true,
       "instruction_match": 30.1,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "legacy_status": "OPEN_ITEM"
     },
     {
       "id": "us-80086034",
@@ -58856,7 +58863,7 @@
       "unit": "kyoshin/cf/CtrlMoveEne",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "OPEN-ITEM",
+      "status": "STRUCTURAL",
       "origin": "symbols.txt",
       "called_functions": [
         "us-8008934c",
@@ -58882,7 +58889,8 @@
       "source": "src/kyoshin/cf/CtrlMoveEne.cpp",
       "source_present": true,
       "instruction_match": 0.474,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "legacy_status": "OPEN-ITEM"
     },
     {
       "id": "us-8008c8c4",
@@ -85898,7 +85906,7 @@
       "unit": "kyoshin/cf/object/CfObjectMove",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "OPEN_ITEM",
+      "status": "STRUCTURAL",
       "origin": "symbols.txt",
       "called_functions": [
         "us-800bbf38",
@@ -85914,7 +85922,8 @@
       "source": "src/kyoshin/cf/object/CfObjectMove.cpp",
       "source_present": true,
       "instruction_match": 28.1,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "legacy_status": "OPEN_ITEM"
     },
     {
       "id": "us-800bd358",
@@ -85961,7 +85970,7 @@
       "unit": "kyoshin/cf/object/CfObjectMove",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "OPEN_ITEM",
+      "status": "STRUCTURAL",
       "origin": "symbols.txt",
       "called_functions": [
         "us-8004bae4",
@@ -85977,7 +85986,8 @@
       "source": "src/kyoshin/cf/object/CfObjectMove.cpp",
       "source_present": true,
       "instruction_match": 29.8,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "legacy_status": "OPEN_ITEM"
     },
     {
       "id": "us-800bd90c",
@@ -94889,7 +94899,7 @@
       "unit": "kyoshin/cf/CtrlAct",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "near-miss 64.2% (final for session)",
+      "status": "STRUCTURAL",
       "origin": "symbols.txt",
       "called_functions": [
         "us-80004350",
@@ -94904,7 +94914,8 @@
       "source": "src/kyoshin/cf/CtrlAct.cpp",
       "source_present": true,
       "instruction_match": 64.2,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "legacy_status": "near-miss 64.2% (final for session)"
     },
     {
       "id": "us-800d1c98",
@@ -95142,7 +95153,7 @@
       "unit": "kyoshin/cf/CtrlAct",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "near-miss 50.2% (corrected analysis)",
+      "status": "STRUCTURAL",
       "origin": "symbols.txt",
       "called_functions": [
         "padmgr-get-instance",
@@ -95171,7 +95182,8 @@
       "source": "src/kyoshin/cf/CtrlAct.cpp",
       "source_present": true,
       "instruction_match": 50.2,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "legacy_status": "near-miss 50.2% (corrected analysis)"
     },
     {
       "id": "us-800d4480",
@@ -95415,7 +95427,7 @@
       "unit": "kyoshin/cf/CtrlAct",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "near-miss 91.5% (final)",
+      "status": "HIGH_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-80004350",
@@ -95436,7 +95448,8 @@
       "source": "src/kyoshin/cf/CtrlAct.cpp",
       "source_present": true,
       "instruction_match": 91.5,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "legacy_status": "near-miss 91.5% (final)"
     },
     {
       "id": "us-800d5df0",
@@ -96858,7 +96871,7 @@
       "unit": "kyoshin/cf/CBattleManager",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "NEAR-MISS 97.6% (restored)",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "source": "src/kyoshin/cf/CBattleManager.cpp",
       "called_functions": [
@@ -96883,7 +96896,8 @@
       "abi_helper_calls": [],
       "instruction_match": 97.6,
       "equivalence_status": "inconclusive_smt_disabled",
-      "source_present": true
+      "source_present": true,
+      "legacy_status": "NEAR-MISS 97.6% (restored)"
     },
     {
       "id": "us-800dab54",
@@ -97022,7 +97036,7 @@
       "unit": "kyoshin/cf/CBattleManager",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "NEAR-MISS improved",
+      "status": "STRUCTURAL",
       "origin": "symbols.txt",
       "source": "src/kyoshin/cf/CBattleManager.cpp",
       "called_functions": [
@@ -97045,7 +97059,8 @@
       ],
       "instruction_match": 17.7,
       "equivalence_status": "inconclusive_smt_disabled",
-      "source_present": false
+      "source_present": false,
+      "legacy_status": "NEAR-MISS improved"
     },
     {
       "id": "us-800dc2e0",
@@ -104399,7 +104414,7 @@
       "unit": "kyoshin/menu/CMenuBattlePlayerState",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "IN_PROGRESS",
+      "status": "HIGH_MATCH",
       "origin": "symbols.txt",
       "source": "src/kyoshin/menu/CMenuBattlePlayerState.cpp",
       "called_functions": [
@@ -104418,7 +104433,8 @@
       ],
       "source_present": false,
       "instruction_match": 88.5,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "legacy_status": "IN_PROGRESS"
     },
     {
       "id": "us-8010df8c",
@@ -116322,7 +116338,7 @@
       "unit": "kyoshin/CUICfManager",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "REGRESSION-CHECK",
+      "status": "STRUCTURAL",
       "origin": "symbols.txt",
       "source": "src/kyoshin/CUICfManager.cpp",
       "called_functions": [
@@ -116335,7 +116351,8 @@
       "abi_helper_calls": [],
       "source_present": false,
       "instruction_match": 11.1,
-      "equivalence_status": "equivalent"
+      "equivalence_status": "equivalent",
+      "legacy_status": "REGRESSION-CHECK"
     },
     {
       "id": "us-80130a88",
@@ -117025,7 +117042,7 @@
       "unit": "kyoshin/CUICfManager",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "OPEN-ITEM",
+      "status": "HIGH_MATCH",
       "origin": "symbols.txt",
       "source": "src/kyoshin/CUICfManager.cpp",
       "called_functions": [
@@ -117048,7 +117065,8 @@
       ],
       "source_present": false,
       "instruction_match": 90.6,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "legacy_status": "OPEN-ITEM"
     },
     {
       "id": "uicf-func-80133324",
@@ -122422,7 +122440,7 @@
       "unit": "kyoshin/CUIWindowManager",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "OPEN-ITEM",
+      "status": "HIGH_MATCH",
       "origin": "symbols.txt",
       "source": "src/kyoshin/CUIWindowManager.cpp",
       "called_functions": [
@@ -122436,7 +122454,8 @@
       "abi_helper_calls": [],
       "source_present": false,
       "instruction_match": 84.8,
-      "equivalence_status": "inconclusive_unsupported"
+      "equivalence_status": "inconclusive_unsupported",
+      "legacy_status": "OPEN-ITEM"
     },
     {
       "id": "us-8013cdf0",
@@ -122706,7 +122725,7 @@
       "unit": "kyoshin/CUIWindowManager",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "OPEN-ITEM",
+      "status": "HIGH_MATCH",
       "origin": "symbols.txt",
       "source": "src/kyoshin/CUIWindowManager.cpp",
       "called_functions": [
@@ -122719,7 +122738,8 @@
       "abi_helper_calls": [],
       "source_present": true,
       "instruction_match": 81.8,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "legacy_status": "OPEN-ITEM"
     },
     {
       "id": "us-8013dc5c",
@@ -124035,7 +124055,7 @@
       "unit": "kyoshin/CUIWindowManager",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "OPEN-ITEM",
+      "status": "STRUCTURAL",
       "origin": "symbols.txt",
       "source": "src/kyoshin/CUIWindowManager.cpp",
       "called_functions": [
@@ -124049,7 +124069,8 @@
       "abi_helper_calls": [],
       "source_present": true,
       "instruction_match": 38.2,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "legacy_status": "OPEN-ITEM"
     },
     {
       "id": "us-80141500",
@@ -128311,7 +128332,7 @@
       "unit": "kyoshin/cf/object/CAIAction",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "OPEN",
+      "status": "STRUCTURAL",
       "origin": "symbols.txt",
       "source": "src/kyoshin/cf/object/CAIAction.cpp",
       "called_functions": [],
@@ -128322,7 +128343,8 @@
       "abi_helper_calls": [],
       "instruction_match": 25.2,
       "source_present": true,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "legacy_status": "OPEN"
     },
     {
       "id": "us-8014bce0",
@@ -130503,7 +130525,7 @@
       "unit": "kyoshin/cf/CItem",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "OPEN",
+      "status": "STRUCTURAL",
       "origin": "symbols.txt",
       "called_functions": [
         "us-8003b148",
@@ -130526,7 +130548,8 @@
           "src/kyoshin/cf/CItem.cpp"
         ],
         "note": ""
-      }
+      },
+      "legacy_status": "OPEN"
     },
     {
       "id": "us-80156fd8",
@@ -130729,7 +130752,7 @@
       "unit": "kyoshin/cf/CItem",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "near-miss",
+      "status": "HIGH_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-8003b148",
@@ -130744,7 +130767,8 @@
       "source": "src/kyoshin/cf/CItem.cpp",
       "source_present": true,
       "instruction_match": 88.1,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "legacy_status": "near-miss"
     },
     {
       "id": "us-801577bc-2",
@@ -134444,7 +134468,7 @@
       "unit": "kyoshin/cf/CItem",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "open-item",
+      "status": "COMPILES",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -134455,7 +134479,8 @@
       "source": "src/kyoshin/cf/CItem.cpp",
       "source_present": true,
       "instruction_match": 0.0,
-      "equivalence_status": "inconclusive_unsupported"
+      "equivalence_status": "inconclusive_unsupported",
+      "legacy_status": "open-item"
     },
     {
       "id": "us-8015caec",
@@ -139022,7 +139047,7 @@
       "unit": "kyoshin/cf/CInfoCf",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "OPEN_ITEM",
+      "status": "STRUCTURAL",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -139032,7 +139057,8 @@
       "abi_helper_calls": [],
       "source": "src/kyoshin/cf/CInfoCf.cpp",
       "source_present": true,
-      "instruction_match": 12.2
+      "instruction_match": 12.2,
+      "legacy_status": "OPEN_ITEM"
     },
     {
       "id": "us-8016868c",
@@ -147505,7 +147531,7 @@
       "unit": "kyoshin/menu/CMenuZeal",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "VERIFIED-COMPLETE",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -147517,7 +147543,8 @@
       "claim": null,
       "instruction_match": 100.0,
       "source_present": true,
-      "equivalence_status": "equivalent"
+      "equivalence_status": "equivalent",
+      "legacy_status": "VERIFIED-COMPLETE"
     },
     {
       "id": "us-80181148",
@@ -168676,7 +168703,7 @@
       "unit": "kyoshin/menu/CMenuKizunaTalk",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "OPEN_ITEM",
+      "status": "STRUCTURAL",
       "origin": "symbols.txt",
       "called_functions": [
         "us-801be330",
@@ -168691,7 +168718,8 @@
       "abi_helper_calls": [],
       "source": "src/kyoshin/menu/CMenuKizunaTalk.cpp",
       "source_present": true,
-      "instruction_match": 16.2
+      "instruction_match": 16.2,
+      "legacy_status": "OPEN_ITEM"
     },
     {
       "id": "us-801be830",
@@ -176999,7 +177027,7 @@
       "unit": "kyoshin/CItemBoxGrid",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "OPEN-ITEM",
+      "status": "STRUCTURAL",
       "origin": "symbols.txt",
       "called_functions": [
         "us-80138a3c",
@@ -177035,7 +177063,8 @@
       "source": "src/kyoshin/CItemBoxGrid.cpp",
       "source_present": true,
       "instruction_match": 55.2,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "legacy_status": "OPEN-ITEM"
     },
     {
       "id": "us-801cde48",
@@ -180900,7 +180929,7 @@
       "region": "us",
       "kind": "function",
       "milestone": "unassigned",
-      "function": "func_801D3FF0",
+      "function": "resetCItemBox()",
       "symbol": "resetCItemBox__Fv",
       "address": "0x801D5ACC",
       "size": "0x4",
@@ -181069,7 +181098,7 @@
       "region": "us",
       "kind": "function",
       "milestone": "unassigned",
-      "function": "func_801D4214",
+      "function": "getItemBoxState",
       "symbol": "getItemBoxState__FP12CItemBoxInfo",
       "address": "0x801D5CF0",
       "size": "0x8",
@@ -181122,7 +181151,7 @@
       "region": "us",
       "kind": "function",
       "milestone": "unassigned",
-      "function": "func_801D4240",
+      "function": "advanceItemBoxState",
       "symbol": "advanceItemBoxState__FP12CItemBoxInfo",
       "address": "0x801D5D1C",
       "size": "0x20",
@@ -181886,7 +181915,7 @@
       "region": "us",
       "kind": "function",
       "milestone": "unassigned",
-      "function": "func_801D77A4",
+      "function": "setItemBoxIndex",
       "symbol": "setItemBoxIndex__FP12CItemBoxInfoUcs",
       "address": "0x801D9310",
       "size": "0x18",
@@ -182063,7 +182092,7 @@
       "unit": "kyoshin/CItemBoxInfo",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "IMPROVED",
+      "status": "STRUCTURAL",
       "origin": "symbols.txt",
       "called_functions": [
         "us-80137628",
@@ -182082,7 +182111,8 @@
       "source": "src/kyoshin/CItemBoxInfo.cpp",
       "source_present": true,
       "instruction_match": 54.0,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "legacy_status": "IMPROVED"
     },
     {
       "id": "us-801da144",
@@ -182300,7 +182330,7 @@
       "region": "us",
       "kind": "function",
       "milestone": "unassigned",
-      "function": "func_801D8E08",
+      "function": "tryActivateItemBox",
       "symbol": "tryActivateItemBox__FP12CItemBoxInfo",
       "address": "0x801DA974",
       "size": "0x2C",
@@ -182402,7 +182432,7 @@
       "region": "us",
       "kind": "function",
       "milestone": "unassigned",
-      "function": "func_801DF4B4",
+      "function": "copyItemBoxEntry",
       "symbol": "copyItemBoxEntry__FP17CItemBoxInfoEntryPC17CItemBoxInfoEntry",
       "address": "0x801E1020",
       "size": "0x1C",
@@ -182428,7 +182458,7 @@
       "region": "us",
       "kind": "function",
       "milestone": "unassigned",
-      "function": "func_801DF4D0",
+      "function": "setItemBoxEntry",
       "symbol": "setItemBoxEntry__FP17CItemBoxInfoEntryUsUlUc",
       "address": "0x801E103C",
       "size": "0x10",
@@ -182916,7 +182946,7 @@
       "region": "us",
       "kind": "function",
       "milestone": "unassigned",
-      "function": "func_801E1490",
+      "function": "getItemBox2State",
       "symbol": "getItemBox2State__FP13CItemBoxInfo2",
       "address": "0x801E2FFC",
       "size": "0x8",
@@ -182969,7 +182999,7 @@
       "region": "us",
       "kind": "function",
       "milestone": "unassigned",
-      "function": "func_801E14BC",
+      "function": "advanceItemBox2State",
       "symbol": "advanceItemBox2State__FP13CItemBoxInfo2",
       "address": "0x801E3028",
       "size": "0x20",
@@ -183399,7 +183429,7 @@
       "unit": "kyoshin/CItemBoxInfo",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "OPEN-ITEM",
+      "status": "HIGH_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-80136c64",
@@ -183416,7 +183446,8 @@
       "source": "src/kyoshin/CItemBoxInfo.cpp",
       "source_present": true,
       "instruction_match": 72.1,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "legacy_status": "OPEN-ITEM"
     },
     {
       "id": "us-801e4524",
@@ -183643,7 +183674,7 @@
       "unit": "kyoshin/CItemBoxInfo",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "IMPROVED",
+      "status": "STRUCTURAL",
       "origin": "symbols.txt",
       "called_functions": [
         "us-80137628",
@@ -183662,7 +183693,8 @@
       "source": "src/kyoshin/CItemBoxInfo.cpp",
       "source_present": true,
       "instruction_match": 54.7,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "legacy_status": "IMPROVED"
     },
     {
       "id": "us-801e5798",
@@ -183676,7 +183708,7 @@
       "unit": "kyoshin/CItemBoxInfo",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "WITNESS-FAIL",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-80137628",
@@ -183695,7 +183727,8 @@
       "source": "src/kyoshin/CItemBoxInfo.cpp",
       "source_present": true,
       "instruction_match": 97.7,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "legacy_status": "WITNESS-FAIL"
     },
     {
       "id": "us-801e59e0",
@@ -183851,7 +183884,7 @@
       "unit": "kyoshin/CItemBoxInfo",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "IMPROVED",
+      "status": "HIGH_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-80124d4c",
@@ -183873,7 +183906,8 @@
       "source": "src/kyoshin/CItemBoxInfo.cpp",
       "source_present": true,
       "instruction_match": 72.4,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "legacy_status": "IMPROVED"
     },
     {
       "id": "us-801e5f8c",
@@ -183970,7 +184004,7 @@
       "region": "us",
       "kind": "function",
       "milestone": "unassigned",
-      "function": "func_801E9164",
+      "function": "copyItemBoxCopy",
       "symbol": "copyItemBoxCopy__FP15ItemBoxInfoCopyPC15ItemBoxInfoCopy",
       "address": "0x801EAD60",
       "size": "0x1C",
@@ -183996,7 +184030,7 @@
       "region": "us",
       "kind": "function",
       "milestone": "unassigned",
-      "function": "func_801E9180",
+      "function": "setItemBoxCopy",
       "symbol": "setItemBoxCopy__FP15ItemBoxInfoCopyUsUiUc",
       "address": "0x801EAD7C",
       "size": "0x10",
@@ -184278,7 +184312,7 @@
       "unit": "kyoshin/CItemBoxInfo",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "BASELINE-2",
+      "status": "STRUCTURAL",
       "origin": "symbols.txt",
       "called_functions": [
         "mem-get-handle-mem2",
@@ -184316,7 +184350,8 @@
       "source": "src/kyoshin/CItemBoxInfo.cpp",
       "source_present": true,
       "instruction_match": 8.1,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "legacy_status": "BASELINE-2"
     },
     {
       "id": "us-801ec7c0",
@@ -186013,7 +186048,7 @@
       "unit": "kyoshin/CItemBoxLine",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "near-miss 95.3% (best)",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-80138a3c",
@@ -186042,7 +186077,8 @@
       "source": "src/kyoshin/CItemBoxLine.cpp",
       "source_present": true,
       "instruction_match": 95.3,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "legacy_status": "near-miss 95.3% (best)"
     },
     {
       "id": "us-801efbfc",
@@ -186463,7 +186499,7 @@
       "unit": "kyoshin/CItemBoxLine",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "MISMATCH",
+      "status": "COMPILES",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -186474,7 +186510,8 @@
       "source": "src/kyoshin/CItemBoxLine.cpp",
       "instruction_match": 0.0,
       "equivalence_status": "equivalent",
-      "source_present": true
+      "source_present": true,
+      "legacy_status": "MISMATCH"
     },
     {
       "id": "us-801f0d0c",
@@ -186979,7 +187016,7 @@
       "unit": "kyoshin/CItemBoxLine",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "near-miss 92.6% (final)",
+      "status": "HIGH_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-80136c64",
@@ -187009,7 +187046,8 @@
       "source": "src/kyoshin/CItemBoxLine.cpp",
       "source_present": false,
       "instruction_match": 92.6,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "legacy_status": "near-miss 92.6% (final)"
     },
     {
       "id": "us-801f2144",
@@ -187442,7 +187480,7 @@
       "unit": "kyoshin/CItemBoxLine",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "near-miss 98.7% (final)",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "mem-get-handle-mem2",
@@ -187497,7 +187535,8 @@
           "src/kyoshin/CItemBoxLine.cpp"
         ],
         "note": ""
-      }
+      },
+      "legacy_status": "near-miss 98.7% (final)"
     },
     {
       "id": "us-801f4fa8",
@@ -200511,7 +200550,7 @@
       "unit": "kyoshin/cf/CfGimmickJump",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "unchanged",
+      "status": "STRUCTURAL",
       "origin": "symbols.txt",
       "called_functions": [
         "us-8003ae14",
@@ -200530,7 +200569,8 @@
       "source": "src/kyoshin/cf/CfGimmickJump.cpp",
       "source_present": true,
       "instruction_match": 59.1,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "legacy_status": "unchanged"
     },
     {
       "id": "us-80211170",
@@ -200604,7 +200644,7 @@
       "unit": "kyoshin/cf/CfGimmickJump",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "FULL_MATCH preserved",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-8020c250",
@@ -200621,7 +200661,8 @@
       "source": "src/kyoshin/cf/CfGimmickJump.cpp",
       "source_present": true,
       "instruction_match": 100.0,
-      "equivalence_status": "equivalent"
+      "equivalence_status": "equivalent",
+      "legacy_status": "FULL_MATCH preserved"
     },
     {
       "id": "us-80211398",
@@ -200635,7 +200676,7 @@
       "unit": "kyoshin/cf/CfGimmickJump",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "improved-shape",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "padmgr-func-80082D54",
@@ -200653,7 +200694,8 @@
       "source": "src/kyoshin/cf/CfGimmickJump.cpp",
       "source_present": true,
       "instruction_match": 182.0,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "legacy_status": "improved-shape"
     },
     {
       "id": "us-8021171c",
@@ -200697,7 +200739,7 @@
       "unit": "kyoshin/cf/CfGimmickJump",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "improved",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "padmgr-func-80082D54",
@@ -200714,7 +200756,8 @@
       "source": "src/kyoshin/cf/CfGimmickJump.cpp",
       "source_present": true,
       "instruction_match": 139.0,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "legacy_status": "improved"
     },
     {
       "id": "us-80211a6c",
@@ -200757,7 +200800,7 @@
       "unit": "kyoshin/cf/CfGimmickJump",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "open-item recorded",
+      "status": "COMPILES",
       "origin": "symbols.txt",
       "called_functions": [
         "padmgr-func-80082D54",
@@ -200781,7 +200824,8 @@
       "source": "src/kyoshin/cf/CfGimmickJump.cpp",
       "source_present": true,
       "instruction_match": 0.0,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "legacy_status": "open-item recorded"
     },
     {
       "id": "us-802120bc",
@@ -210654,7 +210698,7 @@
       "region": "us",
       "kind": "function",
       "milestone": "unassigned",
-      "function": "func_80223DB0",
+      "function": "CMCEffStart::init()",
       "symbol": "init__11CMCEffStartFv",
       "address": "0x80225BF0",
       "size": "0x90",
@@ -210682,7 +210726,7 @@
       "region": "us",
       "kind": "function",
       "milestone": "unassigned",
-      "function": "func_80223E40",
+      "function": "CMCEffStart::update()",
       "symbol": "update__11CMCEffStartFv",
       "address": "0x80225C80",
       "size": "0x5C",
@@ -210709,7 +210753,7 @@
       "region": "us",
       "kind": "function",
       "milestone": "unassigned",
-      "function": "func_80223E9C",
+      "function": "draw",
       "symbol": "draw__FP11CMCEffStartPQ34nw4r3lyt8DrawInfo",
       "address": "0x80225CDC",
       "size": "0x20",
@@ -210736,7 +210780,7 @@
       "region": "us",
       "kind": "function",
       "milestone": "unassigned",
-      "function": "func_80223EBC",
+      "function": "CMCEffStart::destroy()",
       "symbol": "destroy__11CMCEffStartFv",
       "address": "0x80225CFC",
       "size": "0x60",
@@ -210761,7 +210805,7 @@
       "region": "us",
       "kind": "function",
       "milestone": "unassigned",
-      "function": "func_80223F1C",
+      "function": "CMCEffStart::isFinished()",
       "symbol": "isFinished__11CMCEffStartFv",
       "address": "0x80225D5C",
       "size": "0x8",
@@ -210786,7 +210830,7 @@
       "region": "us",
       "kind": "function",
       "milestone": "unassigned",
-      "function": "func_80223F24",
+      "function": "CMCEffStart::startInAnim()",
       "symbol": "startInAnim__11CMCEffStartFv",
       "address": "0x80225D64",
       "size": "0x20",
@@ -210812,7 +210856,7 @@
       "region": "us",
       "kind": "function",
       "milestone": "unassigned",
-      "function": "func_80223F44",
+      "function": "CMCEffStart::updateInAnim()",
       "symbol": "updateInAnim__11CMCEffStartFv",
       "address": "0x80225D84",
       "size": "0x4C",
@@ -210894,7 +210938,7 @@
       "region": "us",
       "kind": "function",
       "milestone": "unassigned",
-      "function": "func_8022400C",
+      "function": "CMCEffUpRed::init()",
       "symbol": "init__11CMCEffUpRedFv",
       "address": "0x80225E4C",
       "size": "0x90",
@@ -210922,7 +210966,7 @@
       "region": "us",
       "kind": "function",
       "milestone": "unassigned",
-      "function": "func_8022409C",
+      "function": "CMCEffUpRed::play()",
       "symbol": "play__11CMCEffUpRedFv",
       "address": "0x80225EDC",
       "size": "0x28",
@@ -211004,7 +211048,7 @@
       "region": "us",
       "kind": "function",
       "milestone": "unassigned",
-      "function": "func_80224140",
+      "function": "CMCEffUpBlue::init()",
       "symbol": "init__12CMCEffUpBlueFv",
       "address": "0x80225F80",
       "size": "0x90",
@@ -211032,7 +211076,7 @@
       "region": "us",
       "kind": "function",
       "milestone": "unassigned",
-      "function": "func_802241D0",
+      "function": "CMCEffUpBlue::play()",
       "symbol": "play__12CMCEffUpBlueFv",
       "address": "0x80226010",
       "size": "0x28",
@@ -211114,7 +211158,7 @@
       "region": "us",
       "kind": "function",
       "milestone": "unassigned",
-      "function": "func_80224274",
+      "function": "CMCEffUpGreen::init()",
       "symbol": "init__13CMCEffUpGreenFv",
       "address": "0x802260B4",
       "size": "0x90",
@@ -211142,7 +211186,7 @@
       "region": "us",
       "kind": "function",
       "milestone": "unassigned",
-      "function": "func_80224304",
+      "function": "CMCEffUpGreen::play()",
       "symbol": "play__13CMCEffUpGreenFv",
       "address": "0x80226144",
       "size": "0x28",
@@ -211222,7 +211266,7 @@
       "region": "us",
       "kind": "function",
       "milestone": "unassigned",
-      "function": "func_802243B4",
+      "function": "CMCEffUpPrm::init()",
       "symbol": "init__11CMCEffUpPrmFv",
       "address": "0x802261F4",
       "size": "0xC8",
@@ -211253,7 +211297,7 @@
       "region": "us",
       "kind": "function",
       "milestone": "unassigned",
-      "function": "func_8022447C",
+      "function": "CMCEffUpPrm::update()",
       "symbol": "update__11CMCEffUpPrmFv",
       "address": "0x802262BC",
       "size": "0x98",
@@ -211284,7 +211328,7 @@
       "region": "us",
       "kind": "function",
       "milestone": "unassigned",
-      "function": "func_80224514",
+      "function": "CMCEffUpPrm::draw",
       "symbol": "draw__11CMCEffUpPrmFPQ34nw4r3lyt8DrawInfo",
       "address": "0x80226354",
       "size": "0x68",
@@ -211311,7 +211355,7 @@
       "region": "us",
       "kind": "function",
       "milestone": "unassigned",
-      "function": "func_8022457C",
+      "function": "CMCEffUpPrm::destroy()",
       "symbol": "destroy__11CMCEffUpPrmFv",
       "address": "0x802263BC",
       "size": "0x74",
@@ -211336,7 +211380,7 @@
       "region": "us",
       "kind": "function",
       "milestone": "unassigned",
-      "function": "func_802245F0",
+      "function": "CMCEffUpPrm::activateSlots(unsigned long)",
       "symbol": "activateSlots__11CMCEffUpPrmFUl",
       "address": "0x80226430",
       "size": "0xA0",
@@ -211365,7 +211409,7 @@
       "region": "us",
       "kind": "function",
       "milestone": "unassigned",
-      "function": "func_80224690",
+      "function": "CMCEffUpPrm::setTranslate",
       "symbol": "setTranslate__11CMCEffUpPrmFUlQ34nw4r4math4VEC3",
       "address": "0x802264D0",
       "size": "0x34",
@@ -211390,7 +211434,7 @@
       "region": "us",
       "kind": "function",
       "milestone": "unassigned",
-      "function": "func_802246C4",
+      "function": "CMCEffUpPrm::setNumber(long, char)",
       "symbol": "setNumber__11CMCEffUpPrmFUlUc",
       "address": "0x80226504",
       "size": "0x28",
@@ -211469,7 +211513,7 @@
       "region": "us",
       "kind": "function",
       "milestone": "unassigned",
-      "function": "func_80224760",
+      "function": "CMCEffSuccess::init()",
       "symbol": "init__13CMCEffSuccessFv",
       "address": "0x802265A0",
       "size": "0x90",
@@ -211498,7 +211542,7 @@
       "region": "us",
       "kind": "function",
       "milestone": "unassigned",
-      "function": "func_802247F0",
+      "function": "CMCEffSuccess::update()",
       "symbol": "update__13CMCEffSuccessFv",
       "address": "0x80226630",
       "size": "0x70",
@@ -211526,7 +211570,7 @@
       "region": "us",
       "kind": "function",
       "milestone": "unassigned",
-      "function": "func_80224860",
+      "function": "CMCEffSuccess::draw",
       "symbol": "draw__13CMCEffSuccessFPQ34nw4r3lyt8DrawInfo",
       "address": "0x802266A0",
       "size": "0x20",
@@ -211553,7 +211597,7 @@
       "region": "us",
       "kind": "function",
       "milestone": "unassigned",
-      "function": "func_80224880",
+      "function": "CMCEffSuccess::destroy()",
       "symbol": "destroy__13CMCEffSuccessFv",
       "address": "0x802266C0",
       "size": "0x60",
@@ -211578,7 +211622,7 @@
       "region": "us",
       "kind": "function",
       "milestone": "unassigned",
-      "function": "func_802248E0",
+      "function": "isFinished",
       "symbol": "isFinished__FPv",
       "address": "0x80226720",
       "size": "0x8",
@@ -211603,7 +211647,7 @@
       "region": "us",
       "kind": "function",
       "milestone": "unassigned",
-      "function": "func_802248E8",
+      "function": "CMCEffSuccess::startIn()",
       "symbol": "startIn__13CMCEffSuccessFv",
       "address": "0x80226728",
       "size": "0x5C",
@@ -211632,7 +211676,7 @@
       "region": "us",
       "kind": "function",
       "milestone": "unassigned",
-      "function": "func_80224944",
+      "function": "CMCEffSuccess::startOut()",
       "symbol": "startOut__13CMCEffSuccessFv",
       "address": "0x80226784",
       "size": "0x54",
@@ -211660,7 +211704,7 @@
       "region": "us",
       "kind": "function",
       "milestone": "unassigned",
-      "function": "func_80224998",
+      "function": "CMCEffSuccess::updateIn()",
       "symbol": "updateIn__13CMCEffSuccessFv",
       "address": "0x802267D8",
       "size": "0x4C",
@@ -211688,7 +211732,7 @@
       "region": "us",
       "kind": "function",
       "milestone": "unassigned",
-      "function": "func_802249E4",
+      "function": "CMCEffSuccess::updateOut()",
       "symbol": "updateOut__13CMCEffSuccessFv",
       "address": "0x80226824",
       "size": "0x4C",
@@ -211716,7 +211760,7 @@
       "region": "us",
       "kind": "function",
       "milestone": "unassigned",
-      "function": "func_80224A30",
+      "function": "CMCEffSuccess::bindInAnim()",
       "symbol": "bindInAnim__13CMCEffSuccessFv",
       "address": "0x80226870",
       "size": "0x88",
@@ -211741,7 +211785,7 @@
       "region": "us",
       "kind": "function",
       "milestone": "unassigned",
-      "function": "func_80224AB8",
+      "function": "CMCEffSuccess::bindOutAnim()",
       "symbol": "bindOutAnim__13CMCEffSuccessFv",
       "address": "0x802268F8",
       "size": "0x88",
@@ -211820,7 +211864,7 @@
       "region": "us",
       "kind": "function",
       "milestone": "unassigned",
-      "function": "func_80224BBC",
+      "function": "CMCEffFailure::init()",
       "symbol": "init__13CMCEffFailureFv",
       "address": "0x802269FC",
       "size": "0x90",
@@ -211934,7 +211978,7 @@
       "region": "us",
       "kind": "function",
       "milestone": "unassigned",
-      "function": "func_80224E1C",
+      "function": "CMCEffCrystal::update()",
       "symbol": "update__13CMCEffCrystalFv",
       "address": "0x80226C5C",
       "size": "0xDC",
@@ -211967,7 +212011,7 @@
       "region": "us",
       "kind": "function",
       "milestone": "unassigned",
-      "function": "func_80224EF8",
+      "function": "CMCEffCrystal::draw",
       "symbol": "draw__13CMCEffCrystalFPQ34nw4r3lyt8DrawInfo",
       "address": "0x80226D38",
       "size": "0x8C",
@@ -211994,7 +212038,7 @@
       "region": "us",
       "kind": "function",
       "milestone": "unassigned",
-      "function": "func_80224F84",
+      "function": "CMCEffCrystal::destroy()",
       "symbol": "destroy__13CMCEffCrystalFv",
       "address": "0x80226DC4",
       "size": "0xB8",
@@ -212019,7 +212063,7 @@
       "region": "us",
       "kind": "function",
       "milestone": "unassigned",
-      "function": "func_8022503C",
+      "function": "CMCEffCrystal::isFinished()",
       "symbol": "isFinished__13CMCEffCrystalFv",
       "address": "0x80226E7C",
       "size": "0x8",
@@ -212044,7 +212088,7 @@
       "region": "us",
       "kind": "function",
       "milestone": "unassigned",
-      "function": "func_80225044",
+      "function": "CMCEffCrystal::startIn()",
       "symbol": "startIn__13CMCEffCrystalFv",
       "address": "0x80226E84",
       "size": "0x78",
@@ -212074,7 +212118,7 @@
       "region": "us",
       "kind": "function",
       "milestone": "unassigned",
-      "function": "func_802250BC",
+      "function": "CMCEffCrystal::startOut()",
       "symbol": "startOut__13CMCEffCrystalFv",
       "address": "0x80226EFC",
       "size": "0xB4",
@@ -212104,7 +212148,7 @@
       "region": "us",
       "kind": "function",
       "milestone": "unassigned",
-      "function": "func_80225170",
+      "function": "CMCEffCrystal::startChange()",
       "symbol": "startChange__13CMCEffCrystalFv",
       "address": "0x80226FB0",
       "size": "0x54",
@@ -212132,7 +212176,7 @@
       "region": "us",
       "kind": "function",
       "milestone": "unassigned",
-      "function": "func_802251C4",
+      "function": "CMCEffCrystal::startSpecial()",
       "symbol": "startSpecial__13CMCEffCrystalFv",
       "address": "0x80227004",
       "size": "0x64",
@@ -212161,7 +212205,7 @@
       "region": "us",
       "kind": "function",
       "milestone": "unassigned",
-      "function": "func_80225228",
+      "function": "CMCEffCrystal::setTraceVisible(unsigned long)",
       "symbol": "setTraceVisible__13CMCEffCrystalFUl",
       "address": "0x80227068",
       "size": "0x58",
@@ -212188,7 +212232,7 @@
       "region": "us",
       "kind": "function",
       "milestone": "unassigned",
-      "function": "func_80225280",
+      "function": "CMCEffCrystal::setCrystalInfo(short, char)",
       "symbol": "setCrystalInfo__13CMCEffCrystalFUsUc",
       "address": "0x802270C0",
       "size": "0x244",
@@ -212220,7 +212264,7 @@
       "region": "us",
       "kind": "function",
       "milestone": "unassigned",
-      "function": "func_802254C4",
+      "function": "CMCEffCrystal::updateIn()",
       "symbol": "updateIn__13CMCEffCrystalFv",
       "address": "0x80227304",
       "size": "0x50",
@@ -212248,7 +212292,7 @@
       "region": "us",
       "kind": "function",
       "milestone": "unassigned",
-      "function": "func_80225514",
+      "function": "CMCEffCrystal::checkInDone()",
       "symbol": "checkInDone__13CMCEffCrystalFv",
       "address": "0x80227354",
       "size": "0x4C",
@@ -212276,7 +212320,7 @@
       "region": "us",
       "kind": "function",
       "milestone": "unassigned",
-      "function": "func_80225560",
+      "function": "CMCEffCrystal::updateOut()",
       "symbol": "updateOut__13CMCEffCrystalFv",
       "address": "0x802273A0",
       "size": "0x6C",
@@ -212304,7 +212348,7 @@
       "region": "us",
       "kind": "function",
       "milestone": "unassigned",
-      "function": "func_802255CC",
+      "function": "CMCEffCrystal::updateChange()",
       "symbol": "updateChange__13CMCEffCrystalFv",
       "address": "0x8022740C",
       "size": "0xC8",
@@ -212339,7 +212383,7 @@
       "region": "us",
       "kind": "function",
       "milestone": "unassigned",
-      "function": "func_80225694",
+      "function": "CMCEffCrystal::updateSpecial()",
       "symbol": "updateSpecial__13CMCEffCrystalFv",
       "address": "0x802274D4",
       "size": "0x4C",
@@ -212367,7 +212411,7 @@
       "region": "us",
       "kind": "function",
       "milestone": "unassigned",
-      "function": "func_802256E0",
+      "function": "CMCEffCrystal::bindInAnimTrace()",
       "symbol": "bindInAnimTrace__13CMCEffCrystalFv",
       "address": "0x80227520",
       "size": "0x88",
@@ -212392,7 +212436,7 @@
       "region": "us",
       "kind": "function",
       "milestone": "unassigned",
-      "function": "func_80225768",
+      "function": "CMCEffCrystal::bindOutAnimTrace()",
       "symbol": "bindOutAnimTrace__13CMCEffCrystalFv",
       "address": "0x802275A8",
       "size": "0x88",
@@ -212417,7 +212461,7 @@
       "region": "us",
       "kind": "function",
       "milestone": "unassigned",
-      "function": "func_802257F0",
+      "function": "CMCEffCrystal::bindInAnimCrystal()",
       "symbol": "bindInAnimCrystal__13CMCEffCrystalFv",
       "address": "0x80227630",
       "size": "0x88",
@@ -212442,7 +212486,7 @@
       "region": "us",
       "kind": "function",
       "milestone": "unassigned",
-      "function": "func_80225878",
+      "function": "CMCEffCrystal::bindChangeAnim()",
       "symbol": "bindChangeAnim__13CMCEffCrystalFv",
       "address": "0x802276B8",
       "size": "0x88",
@@ -212467,7 +212511,7 @@
       "region": "us",
       "kind": "function",
       "milestone": "unassigned",
-      "function": "func_80225900",
+      "function": "CMCEffCrystal::bindSpecialAnim()",
       "symbol": "bindSpecialAnim__13CMCEffCrystalFv",
       "address": "0x80227740",
       "size": "0x88",
@@ -212492,7 +212536,7 @@
       "region": "us",
       "kind": "function",
       "milestone": "unassigned",
-      "function": "func_80225988",
+      "function": "CMCEffCrystal::bindOutAnim()",
       "symbol": "bindOutAnim__13CMCEffCrystalFv",
       "address": "0x802277C8",
       "size": "0x88",
@@ -212517,7 +212561,7 @@
       "region": "us",
       "kind": "function",
       "milestone": "unassigned",
-      "function": "func_80225A10",
+      "function": "CMCEffCrystal::bindLoopAnim()",
       "symbol": "bindLoopAnim__13CMCEffCrystalFv",
       "address": "0x80227850",
       "size": "0x88",
@@ -212596,7 +212640,7 @@
       "region": "us",
       "kind": "function",
       "milestone": "unassigned",
-      "function": "func_80225B14",
+      "function": "CMCEffUpRank::init()",
       "symbol": "init__12CMCEffUpRankFv",
       "address": "0x80227954",
       "size": "0x90",
@@ -212624,7 +212668,7 @@
       "region": "us",
       "kind": "function",
       "milestone": "unassigned",
-      "function": "func_80225BA4",
+      "function": "CMCEffUpRank::play()",
       "symbol": "play__12CMCEffUpRankFv",
       "address": "0x802279E4",
       "size": "0x28",
@@ -212706,7 +212750,7 @@
       "region": "us",
       "kind": "function",
       "milestone": "unassigned",
-      "function": "func_80225C48",
+      "function": "CMCEffDivide::init()",
       "symbol": "init__12CMCEffDivideFv",
       "address": "0x80227A88",
       "size": "0x90",
@@ -212734,7 +212778,7 @@
       "region": "us",
       "kind": "function",
       "milestone": "unassigned",
-      "function": "func_80225CD8",
+      "function": "CMCEffDivide::play()",
       "symbol": "play__12CMCEffDivideFv",
       "address": "0x80227B18",
       "size": "0x28",
@@ -212814,7 +212858,7 @@
       "region": "us",
       "kind": "function",
       "milestone": "unassigned",
-      "function": "func_80225D78",
+      "function": "CMCEffCylinder::init()",
       "symbol": "init__14CMCEffCylinderFv",
       "address": "0x80227BB8",
       "size": "0xA8",
@@ -212845,7 +212889,7 @@
       "region": "us",
       "kind": "function",
       "milestone": "unassigned",
-      "function": "func_80225E20",
+      "function": "CMCEffCylinder::update()",
       "symbol": "update__14CMCEffCylinderFv",
       "address": "0x80227C60",
       "size": "0x80",
@@ -212874,7 +212918,7 @@
       "region": "us",
       "kind": "function",
       "milestone": "unassigned",
-      "function": "func_80225EA0",
+      "function": "CMCEffCylinder::draw",
       "symbol": "draw__14CMCEffCylinderFPQ34nw4r3lyt8DrawInfo",
       "address": "0x80227CE0",
       "size": "0x20",
@@ -212901,7 +212945,7 @@
       "region": "us",
       "kind": "function",
       "milestone": "unassigned",
-      "function": "func_80225EC0",
+      "function": "CMCEffCylinder::destroy()",
       "symbol": "destroy__14CMCEffCylinderFv",
       "address": "0x80227D00",
       "size": "0x60",
@@ -212926,7 +212970,7 @@
       "region": "us",
       "kind": "function",
       "milestone": "unassigned",
-      "function": "func_80225F20",
+      "function": "CMCEffCylinder::isFinished()",
       "symbol": "isFinished__14CMCEffCylinderFv",
       "address": "0x80227D60",
       "size": "0x8",
@@ -212951,7 +212995,7 @@
       "region": "us",
       "kind": "function",
       "milestone": "unassigned",
-      "function": "func_80225F28",
+      "function": "CMCEffCylinder::startIn()",
       "symbol": "startIn__14CMCEffCylinderFv",
       "address": "0x80227D68",
       "size": "0x54",
@@ -212979,7 +213023,7 @@
       "region": "us",
       "kind": "function",
       "milestone": "unassigned",
-      "function": "func_80225F7C",
+      "function": "CMCEffCylinder::startOut()",
       "symbol": "startOut__14CMCEffCylinderFv",
       "address": "0x80227DBC",
       "size": "0x54",
@@ -213007,7 +213051,7 @@
       "region": "us",
       "kind": "function",
       "milestone": "unassigned",
-      "function": "func_80225FD0",
+      "function": "CMCEffCylinder::startChange()",
       "symbol": "startChange__14CMCEffCylinderFv",
       "address": "0x80227E10",
       "size": "0x54",
@@ -213035,7 +213079,7 @@
       "region": "us",
       "kind": "function",
       "milestone": "unassigned",
-      "function": "func_80226024",
+      "function": "CMCEffCylinder::setNumber(unsigned char)",
       "symbol": "setNumber__14CMCEffCylinderFUc",
       "address": "0x80227E64",
       "size": "0x18",
@@ -213062,7 +213106,7 @@
       "region": "us",
       "kind": "function",
       "milestone": "unassigned",
-      "function": "func_8022603C",
+      "function": "CMCEffCylinder::updateIn()",
       "symbol": "updateIn__14CMCEffCylinderFv",
       "address": "0x80227E7C",
       "size": "0x4C",
@@ -213090,7 +213134,7 @@
       "region": "us",
       "kind": "function",
       "milestone": "unassigned",
-      "function": "func_80226088",
+      "function": "CMCEffCylinder::updateOut()",
       "symbol": "updateOut__14CMCEffCylinderFv",
       "address": "0x80227EC8",
       "size": "0x4C",
@@ -213118,7 +213162,7 @@
       "region": "us",
       "kind": "function",
       "milestone": "unassigned",
-      "function": "func_802260D4",
+      "function": "CMCEffCylinder::updateChange()",
       "symbol": "updateChange__14CMCEffCylinderFv",
       "address": "0x80227F14",
       "size": "0x4C",
@@ -213146,7 +213190,7 @@
       "region": "us",
       "kind": "function",
       "milestone": "unassigned",
-      "function": "func_80226120",
+      "function": "CMCEffCylinder::bindInAnim()",
       "symbol": "bindInAnim__14CMCEffCylinderFv",
       "address": "0x80227F60",
       "size": "0x88",
@@ -213171,7 +213215,7 @@
       "region": "us",
       "kind": "function",
       "milestone": "unassigned",
-      "function": "func_802261A8",
+      "function": "CMCEffCylinder::bindChangeAnim()",
       "symbol": "bindChangeAnim__14CMCEffCylinderFv",
       "address": "0x80227FE8",
       "size": "0x88",
@@ -213196,7 +213240,7 @@
       "region": "us",
       "kind": "function",
       "milestone": "unassigned",
-      "function": "func_80226230",
+      "function": "CMCEffCylinder::bindOutAnim()",
       "symbol": "bindOutAnim__14CMCEffCylinderFv",
       "address": "0x80228070",
       "size": "0x88",
@@ -223509,7 +223553,7 @@
       "unit": "kyoshin/CArtsInfo",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "OPEN_ITEM",
+      "status": "HIGH_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-80136ae0",
@@ -223533,7 +223577,8 @@
       "source": "src/kyoshin/CArtsInfo.cpp",
       "source_present": true,
       "instruction_match": 92.1,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "legacy_status": "OPEN_ITEM"
     },
     {
       "id": "us-80239ab0",
@@ -223586,7 +223631,7 @@
       "unit": "kyoshin/CArtsInfo",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "OPEN_ITEM",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-80136ba0",
@@ -223604,7 +223649,8 @@
       "source": "src/kyoshin/CArtsInfo.cpp",
       "source_present": true,
       "instruction_match": 96.1,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "legacy_status": "OPEN_ITEM"
     },
     {
       "id": "us-80239d7c",
@@ -224155,7 +224201,7 @@
       "unit": "kyoshin/CArtsInfo",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "OPEN_ITEM",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-80136ae0",
@@ -224172,7 +224218,8 @@
       "source": "src/kyoshin/CArtsInfo.cpp",
       "source_present": true,
       "instruction_match": 96.0,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "legacy_status": "OPEN_ITEM"
     },
     {
       "id": "us-8023bf7c",
@@ -224186,7 +224233,7 @@
       "unit": "kyoshin/CArtsInfo",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "OPEN_ITEM",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-80136ae0",
@@ -224208,7 +224255,8 @@
       "source": "src/kyoshin/CArtsInfo.cpp",
       "source_present": true,
       "instruction_match": 97.9,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "legacy_status": "OPEN_ITEM"
     },
     {
       "id": "us-8023c100",
@@ -224222,7 +224270,7 @@
       "unit": "kyoshin/CArtsInfo",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "OPEN_ITEM",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-80136c04",
@@ -224239,7 +224287,8 @@
       "source": "src/kyoshin/CArtsInfo.cpp",
       "source_present": true,
       "instruction_match": 96.0,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "legacy_status": "OPEN_ITEM"
     },
     {
       "id": "us-8023c1c8",
@@ -224253,7 +224302,7 @@
       "unit": "kyoshin/CArtsInfo",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "OPEN_ITEM",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-80136c04",
@@ -224270,7 +224319,8 @@
       "source": "src/kyoshin/CArtsInfo.cpp",
       "source_present": true,
       "instruction_match": 96.0,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "legacy_status": "OPEN_ITEM"
     },
     {
       "id": "us-8023c290",
@@ -224284,7 +224334,7 @@
       "unit": "kyoshin/CArtsInfo",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "OPEN_ITEM",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-801374ec",
@@ -224301,7 +224351,8 @@
       "source": "src/kyoshin/CArtsInfo.cpp",
       "source_present": true,
       "instruction_match": 95.8,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "legacy_status": "OPEN_ITEM"
     },
     {
       "id": "us-8023c350",
@@ -224315,7 +224366,7 @@
       "unit": "kyoshin/CArtsInfo",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "OPEN_ITEM",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-80136ae0",
@@ -224332,7 +224383,8 @@
       "source": "src/kyoshin/CArtsInfo.cpp",
       "source_present": true,
       "instruction_match": 96.0,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "legacy_status": "OPEN_ITEM"
     },
     {
       "id": "us-8023c418",
@@ -224346,7 +224398,7 @@
       "unit": "kyoshin/CArtsInfo",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "OPEN_ITEM",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-80136c04",
@@ -224368,7 +224420,8 @@
       "source": "src/kyoshin/CArtsInfo.cpp",
       "source_present": true,
       "instruction_match": 97.1,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "legacy_status": "OPEN_ITEM"
     },
     {
       "id": "us-8023c52c",
@@ -224412,7 +224465,7 @@
       "unit": "kyoshin/CArtsInfo",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "OPEN_ITEM",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-80136f90",
@@ -224430,7 +224483,8 @@
       "source": "src/kyoshin/CArtsInfo.cpp",
       "source_present": true,
       "instruction_match": 96.0,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "legacy_status": "OPEN_ITEM"
     },
     {
       "id": "us-8023c6a4",
@@ -224534,7 +224588,7 @@
       "unit": "kyoshin/CArtsInfo",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "OPEN_ITEM",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-801374ec",
@@ -224550,7 +224604,8 @@
       "source": "src/kyoshin/CArtsInfo.cpp",
       "source_present": true,
       "instruction_match": 95.5,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "legacy_status": "OPEN_ITEM"
     },
     {
       "id": "us-8023c964",
@@ -224564,7 +224619,7 @@
       "unit": "kyoshin/CArtsInfo",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "OPEN_ITEM",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-80136f90",
@@ -224582,7 +224637,8 @@
       "source": "src/kyoshin/CArtsInfo.cpp",
       "source_present": true,
       "instruction_match": 96.0,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "legacy_status": "OPEN_ITEM"
     },
     {
       "id": "us-8023ca2c",
@@ -224596,7 +224652,7 @@
       "unit": "kyoshin/CArtsInfo",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "OPEN_ITEM",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-801374ec",
@@ -224612,7 +224668,8 @@
       "source": "src/kyoshin/CArtsInfo.cpp",
       "source_present": true,
       "instruction_match": 95.5,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "legacy_status": "OPEN_ITEM"
     },
     {
       "id": "us-8023cadc",
@@ -224626,7 +224683,7 @@
       "unit": "kyoshin/CArtsInfo",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "OPEN_ITEM",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-801374ec",
@@ -224642,7 +224699,8 @@
       "source": "src/kyoshin/CArtsInfo.cpp",
       "source_present": true,
       "instruction_match": 95.5,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "legacy_status": "OPEN_ITEM"
     },
     {
       "id": "us-8023cb8c",
@@ -224693,7 +224751,7 @@
       "unit": "kyoshin/CArtsInfo",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "OPEN_ITEM",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-80136ae0",
@@ -224710,7 +224768,8 @@
       "source": "src/kyoshin/CArtsInfo.cpp",
       "source_present": true,
       "instruction_match": 96.0,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "legacy_status": "OPEN_ITEM"
     },
     {
       "id": "us-8023ce54",
@@ -224796,7 +224855,7 @@
       "unit": "kyoshin/CArtsInfo",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "OPEN_ITEM",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-80136f90",
@@ -224817,7 +224876,8 @@
       "source": "src/kyoshin/CArtsInfo.cpp",
       "source_present": true,
       "instruction_match": 96.2,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "legacy_status": "OPEN_ITEM"
     },
     {
       "id": "us-8023d174",
@@ -224872,7 +224932,7 @@
       "unit": "kyoshin/CArtsInfo",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "OPEN_ITEM",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-80136c04",
@@ -224894,7 +224954,8 @@
       "source": "src/kyoshin/CArtsInfo.cpp",
       "source_present": true,
       "instruction_match": 96.9,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "legacy_status": "OPEN_ITEM"
     },
     {
       "id": "us-8023d3c8",
@@ -224908,7 +224969,7 @@
       "unit": "kyoshin/CArtsInfo",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "OPEN_ITEM",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-80136c04",
@@ -224925,7 +224986,8 @@
       "source": "src/kyoshin/CArtsInfo.cpp",
       "source_present": true,
       "instruction_match": 96.0,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "legacy_status": "OPEN_ITEM"
     },
     {
       "id": "us-8023d490",
@@ -224996,7 +225058,7 @@
       "unit": "kyoshin/CArtsInfo",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "OPEN_ITEM",
+      "status": "STRUCTURAL",
       "origin": "symbols.txt",
       "called_functions": [
         "mem-get-handle-mem2",
@@ -225042,7 +225104,8 @@
       "source": "src/kyoshin/CArtsInfo.cpp",
       "source_present": false,
       "instruction_match": 25.0,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "legacy_status": "OPEN_ITEM"
     },
     {
       "id": "us-8023ddb8",
@@ -228721,7 +228784,7 @@
       "unit": "kyoshin/CFloorMap",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "OPEN-ITEM",
+      "status": "HIGH_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-80137f64",
@@ -228737,7 +228800,8 @@
       "source": "src/kyoshin/CFloorMap.cpp",
       "source_present": true,
       "instruction_match": 90.9,
-      "equivalence_status": "equivalent"
+      "equivalence_status": "equivalent",
+      "legacy_status": "OPEN-ITEM"
     },
     {
       "id": "us-802477a8",
@@ -258015,7 +258079,7 @@
       "unit": "kyoshin/CEquipItemBox",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "OPEN_ITEM",
+      "status": "STRUCTURAL",
       "origin": "symbols.txt",
       "called_functions": [
         "us-8009d964",
@@ -258036,7 +258100,8 @@
       "source": "src/kyoshin/CEquipItemBox.cpp",
       "source_present": true,
       "instruction_match": 8.2,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "legacy_status": "OPEN_ITEM"
     },
     {
       "id": "us-8028a900",
@@ -258829,7 +258894,7 @@
       "unit": "kyoshin/CEquipItemBox",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "OPEN_ITEM",
+      "status": "HIGH_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-80124d4c",
@@ -258844,7 +258909,8 @@
       "source": "src/kyoshin/CEquipItemBox.cpp",
       "source_present": true,
       "instruction_match": 89.3,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "legacy_status": "OPEN_ITEM"
     },
     {
       "id": "us-8028ce48",
@@ -271829,7 +271895,7 @@
       "unit": "kyoshin/cf/voice/CCharVoiceMan",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "SKIP",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "source": "src/kyoshin/cf/voice/CCharVoiceMan.cpp",
       "called_functions": [
@@ -271844,7 +271910,8 @@
       "abi_helper_calls": [],
       "source_present": true,
       "instruction_match": 100.0,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "legacy_status": "SKIP"
     },
     {
       "id": "us-802a4438",
@@ -271913,7 +271980,7 @@
       "unit": "kyoshin/cf/voice/CCharVoiceMan",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "SKIP",
+      "status": "HIGH_MATCH",
       "origin": "symbols.txt",
       "source": "src/kyoshin/cf/voice/CCharVoiceMan.cpp",
       "called_functions": [
@@ -271928,7 +271995,8 @@
       "abi_helper_calls": [],
       "source_present": true,
       "instruction_match": 75.0,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "legacy_status": "SKIP"
     },
     {
       "id": "us-802a45d4",
@@ -272331,7 +272399,7 @@
       "unit": "kyoshin/cf/voice/CCharVoiceMan",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "SKIP",
+      "status": "STRUCTURAL",
       "origin": "symbols.txt",
       "source": "src/kyoshin/cf/voice/CCharVoiceMan.cpp",
       "called_functions": [
@@ -272346,7 +272414,8 @@
       "abi_helper_calls": [],
       "source_present": true,
       "instruction_match": 24.3,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "legacy_status": "SKIP"
     },
     {
       "id": "us-802a4e0c",
@@ -272765,7 +272834,7 @@
       "unit": "kyoshin/cf/voice/CCharVoiceMan",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "SKIP",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "source": "src/kyoshin/cf/voice/CCharVoiceMan.cpp",
       "called_functions": [
@@ -272778,7 +272847,8 @@
       "abi_helper_calls": [],
       "source_present": true,
       "instruction_match": 100.0,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "legacy_status": "SKIP"
     },
     {
       "id": "us-802a553c",
@@ -273092,7 +273162,7 @@
       "unit": "kyoshin/cf/voice/CCharVoiceMan",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "SKIP",
+      "status": "STRUCTURAL",
       "origin": "symbols.txt",
       "source": "src/kyoshin/cf/voice/CCharVoiceMan.cpp",
       "called_functions": [
@@ -273106,7 +273176,8 @@
       "abi_helper_calls": [],
       "source_present": true,
       "instruction_match": 66.9,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "legacy_status": "SKIP"
     },
     {
       "id": "us-802a5c18",
@@ -273171,7 +273242,7 @@
       "unit": "kyoshin/cf/voice/CCharVoiceMan",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "SKIP",
+      "status": "HIGH_MATCH",
       "origin": "symbols.txt",
       "source": "src/kyoshin/cf/voice/CCharVoiceMan.cpp",
       "called_functions": [
@@ -273185,7 +273256,8 @@
       "abi_helper_calls": [],
       "source_present": true,
       "instruction_match": 74.0,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "legacy_status": "SKIP"
     },
     {
       "id": "us-802a5db4",
@@ -273199,7 +273271,7 @@
       "unit": "kyoshin/cf/voice/CCharVoiceMan",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "SKIP",
+      "status": "HIGH_MATCH",
       "origin": "symbols.txt",
       "source": "src/kyoshin/cf/voice/CCharVoiceMan.cpp",
       "called_functions": [
@@ -273213,7 +273285,8 @@
       "abi_helper_calls": [],
       "source_present": true,
       "instruction_match": 72.9,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "legacy_status": "SKIP"
     },
     {
       "id": "us-802a5e74",
@@ -301487,7 +301560,7 @@
       "unit": "RVL_SDK/src/revolution/axfx/AXFXChorusExp",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "STALLED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-802dd420"
@@ -301500,7 +301573,8 @@
       "source": "libs/RVL_SDK/src/revolution/axfx/AXFXChorusExp.c",
       "instruction_match": 98.873,
       "equivalence_status": "inconclusive_smt_disabled",
-      "source_present": true
+      "source_present": true,
+      "legacy_status": "STALLED"
     },
     {
       "id": "us-802dc790",
@@ -311106,7 +311180,7 @@
       "unit": "RVL_SDK/src/revolution/bte/stack/btm/btm_inq",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "ACTIVE",
+      "status": "HIGH_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-80004350",
@@ -311124,7 +311198,8 @@
       "source": "libs/RVL_SDK/src/revolution/bte/stack/btm/btm_inq.c",
       "instruction_match": 94.1,
       "equivalence_status": "inconclusive_smt_disabled",
-      "source_present": true
+      "source_present": true,
+      "legacy_status": "ACTIVE"
     },
     {
       "id": "us-802ebc68",
@@ -366756,7 +366831,7 @@
       "unit": "RVL_SDK/src/revolution/vi/vi3in1",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "STALLED",
+      "status": "STRUCTURAL",
       "origin": "symbols.txt",
       "called_functions": [
         "us-80369770",
@@ -366770,7 +366845,8 @@
       "source": "libs/RVL_SDK/src/revolution/vi/vi3in1.c",
       "instruction_match": 2.8,
       "source_present": true,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "legacy_status": "STALLED"
     },
     {
       "id": "us-8036b030",
@@ -369434,7 +369510,7 @@
       "unit": "RVL_SDK/src/revolution/wpad/WPADHIDParser",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "STALLED",
+      "status": "STRUCTURAL",
       "origin": "symbols.txt",
       "called_functions": [
         "us-802cd168",
@@ -369452,7 +369528,8 @@
       "source": "libs/RVL_SDK/src/revolution/wpad/WPADHIDParser.c",
       "instruction_match": 0.583,
       "equivalence_status": "inconclusive_smt_disabled",
-      "source_present": true
+      "source_present": true,
+      "legacy_status": "STALLED"
     },
     {
       "id": "us-803740d0",
@@ -369466,7 +369543,7 @@
       "unit": "RVL_SDK/src/revolution/wpad/WPADHIDParser",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "STALLED",
+      "status": "STRUCTURAL",
       "origin": "symbols.txt",
       "called_functions": [
         "us-80378910"
@@ -369482,7 +369559,8 @@
       "source": "libs/RVL_SDK/src/revolution/wpad/WPADHIDParser.c",
       "instruction_match": 0.986,
       "equivalence_status": "inconclusive_smt_disabled",
-      "source_present": true
+      "source_present": true,
+      "legacy_status": "STALLED"
     },
     {
       "id": "us-80374610",
@@ -369672,7 +369750,7 @@
       "unit": "RVL_SDK/src/revolution/wpad/WPADHIDParser",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "ACTIVE",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-80004000",
@@ -369691,7 +369769,8 @@
       "source": "libs/RVL_SDK/src/revolution/wpad/WPADHIDParser.c",
       "instruction_match": 95.0,
       "equivalence_status": "inconclusive_smt_disabled",
-      "source_present": true
+      "source_present": true,
+      "legacy_status": "ACTIVE"
     },
     {
       "id": "us-803754e0",
@@ -369865,7 +369944,7 @@
       "unit": "RVL_SDK/src/revolution/wpad/WPADHIDParser",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "ACTIVE",
+      "status": "HIGH_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-80004000",
@@ -369881,7 +369960,8 @@
       "source": "libs/RVL_SDK/src/revolution/wpad/WPADHIDParser.c",
       "instruction_match": 89.0,
       "equivalence_status": "inconclusive_smt_disabled",
-      "source_present": true
+      "source_present": true,
+      "legacy_status": "ACTIVE"
     },
     {
       "id": "us-80376720",
@@ -372542,7 +372622,7 @@
       "unit": "RVL_SDK/src/revolution/wud/WUD",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "ACTIVE",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "source": "libs/RVL_SDK/src/revolution/wud/WUD.c",
       "called_functions": [
@@ -372562,7 +372642,8 @@
       "abi_helper_calls": [],
       "instruction_match": 95.9,
       "equivalence_status": "inconclusive_smt_disabled",
-      "source_present": true
+      "source_present": true,
+      "legacy_status": "ACTIVE"
     },
     {
       "id": "us-8037e560",
@@ -375795,7 +375876,7 @@
       "unit": "CriWare/src/adx/adxt/adx_stmc",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "ACTIVE",
+      "status": "HIGH_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-8038c680",
@@ -375810,7 +375891,8 @@
       "declared_return": "i32",
       "source_present": true,
       "instruction_match": 70.6,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "legacy_status": "ACTIVE"
     },
     {
       "id": "us-80383e50",
@@ -375824,7 +375906,7 @@
       "unit": "CriWare/src/adx/adxt/adx_stmc",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "BLOCKED",
+      "status": "HIGH_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-80383d40",
@@ -375840,7 +375922,8 @@
       "declared_return": "i32",
       "source_present": true,
       "instruction_match": 75.268,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "legacy_status": "BLOCKED"
     },
     {
       "id": "us-80383f98",
@@ -376305,7 +376388,7 @@
       "unit": "CriWare/src/adx/adxt/adx_stmc",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "ACTIVE",
+      "status": "STRUCTURAL",
       "origin": "symbols.txt",
       "called_functions": [
         "us-8038c680",
@@ -376324,7 +376407,8 @@
       "source": "libs/CriWare/src/adx/adxt/adx_stmc.c",
       "source_present": true,
       "instruction_match": 2.1,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "legacy_status": "ACTIVE"
     },
     {
       "id": "us-80384d68",
@@ -376338,7 +376422,7 @@
       "unit": "CriWare/src/adx/adxt/adx_stmc",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "BLOCKED",
+      "status": "HIGH_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-80384908",
@@ -376363,7 +376447,8 @@
       "declared_return": "i32",
       "source_present": true,
       "instruction_match": 78.507,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "legacy_status": "BLOCKED"
     },
     {
       "id": "us-803850ac",
@@ -376377,7 +376462,7 @@
       "unit": "CriWare/src/adx/adxt/adx_stmc",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "BLOCKED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-80384d68",
@@ -376394,7 +376479,8 @@
       "declared_return": "i32",
       "source_present": true,
       "instruction_match": 100.0,
-      "equivalence_status": "equivalent"
+      "equivalence_status": "equivalent",
+      "legacy_status": "BLOCKED"
     },
     {
       "id": "us-80385130",
@@ -379096,7 +379182,7 @@
       "unit": "CriWare/src/adx/adxt/adx_amp",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "ACTIVE",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-80004350"
@@ -379110,7 +379196,8 @@
       "declared_return": "i32",
       "source_present": true,
       "instruction_match": 100.0,
-      "equivalence_status": "equivalent"
+      "equivalence_status": "equivalent",
+      "legacy_status": "ACTIVE"
     },
     {
       "id": "us-80388e94",
@@ -381514,7 +381601,7 @@
       "unit": "CriWare/src/adx/adxt/adx_errs",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "ACTIVE",
+      "status": "HIGH_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-802bc028"
@@ -381527,7 +381614,8 @@
       "source": "libs/CriWare/src/adx/adxt/adx_errs.c",
       "source_present": true,
       "instruction_match": 83.9,
-      "equivalence_status": "equivalent"
+      "equivalence_status": "equivalent",
+      "legacy_status": "ACTIVE"
     },
     {
       "id": "us-8038d850",
@@ -381595,7 +381683,7 @@
       "unit": "CriWare/src/adx/ahx/ahx_link",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "BLOCKED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-803860e4",
@@ -381615,7 +381703,8 @@
       "declared_return": "i32",
       "source_present": true,
       "instruction_match": 100.0,
-      "equivalence_status": "equivalent"
+      "equivalence_status": "equivalent",
+      "legacy_status": "BLOCKED"
     },
     {
       "id": "us-8038da7c",
@@ -381744,7 +381833,7 @@
       "unit": "CriWare/src/adx/ahx/ahx_link",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "BLOCKED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-8038fd6c",
@@ -381765,7 +381854,8 @@
       "source": "libs/CriWare/src/adx/ahx/ahx_link.c",
       "source_present": true,
       "instruction_match": 100.0,
-      "equivalence_status": "equivalent"
+      "equivalence_status": "equivalent",
+      "legacy_status": "BLOCKED"
     },
     {
       "id": "us-8038dc50",
@@ -381779,7 +381869,7 @@
       "unit": "CriWare/src/adx/ahx/ahx_mflt_c",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "ACTIVE",
+      "status": "COMPILES",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -381791,7 +381881,8 @@
       "declared_return": "f32",
       "source_present": true,
       "instruction_match": 0.0,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "legacy_status": "ACTIVE"
     },
     {
       "id": "us-8038e148",
@@ -382221,7 +382312,7 @@
       "unit": "CriWare/src/adx/ahx/ahx_sbf2",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "ACTIVE",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-8038dc50"
@@ -382235,7 +382326,8 @@
       "declared_return": "void",
       "source_present": true,
       "instruction_match": 95.204,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "legacy_status": "ACTIVE"
     },
     {
       "id": "us-8038f6cc",
@@ -382997,7 +383089,7 @@
       "unit": "CriWare/src/adx/ahx/adx_hdr",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "ACTIVE",
+      "status": "STRUCTURAL",
       "origin": "symbols.txt",
       "called_functions": [
         "us-803901f0",
@@ -383012,7 +383104,8 @@
       "declared_return": "i32",
       "source_present": true,
       "instruction_match": 29.9,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "legacy_status": "ACTIVE"
     },
     {
       "id": "us-80390548",
@@ -383348,7 +383441,7 @@
       "unit": "CriWare/src/adx/ahx/ahx_dcd",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "ACTIVE",
+      "status": "STRUCTURAL",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -383359,7 +383452,8 @@
       "source": "libs/CriWare/src/adx/ahx/ahx_dcd.c",
       "source_present": true,
       "instruction_match": 13.1,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "legacy_status": "ACTIVE"
     },
     {
       "id": "us-8039142c",
@@ -383540,7 +383634,7 @@
       "unit": "CriWare/src/adx/ahx/ahx_dcd",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "BLOCKED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-80004350",
@@ -383555,7 +383649,8 @@
       "declared_return": "i32",
       "source_present": true,
       "instruction_match": 100.0,
-      "equivalence_status": "equivalent"
+      "equivalence_status": "equivalent",
+      "legacy_status": "BLOCKED"
     },
     {
       "id": "us-80391568",
@@ -383598,7 +383693,7 @@
       "unit": "CriWare/src/adx/ahx/ahx_dcd",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "BLOCKED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-80004350",
@@ -383614,7 +383709,8 @@
       "declared_return": "i32",
       "source_present": false,
       "instruction_match": 100.0,
-      "equivalence_status": "equivalent"
+      "equivalence_status": "equivalent",
+      "legacy_status": "BLOCKED"
     },
     {
       "id": "us-80391690",
@@ -383688,7 +383784,7 @@
       "unit": "CriWare/src/adx/ahx/ahx_dcd",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "BLOCKED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-80390998",
@@ -383707,7 +383803,8 @@
       "declared_return": "i32",
       "source_present": true,
       "instruction_match": 100.0,
-      "equivalence_status": "equivalent"
+      "equivalence_status": "equivalent",
+      "legacy_status": "BLOCKED"
     },
     {
       "id": "us-80391970",
@@ -383877,7 +383974,7 @@
       "unit": "CriWare/src/adx/ahx/ahx_dcd",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "BLOCKED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-803909f4"
@@ -383891,7 +383988,8 @@
       "declared_return": "i32",
       "source_present": true,
       "instruction_match": 99.833,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "legacy_status": "BLOCKED"
     },
     {
       "id": "us-80391b9c",
@@ -383933,7 +384031,7 @@
       "unit": "CriWare/src/adx/ahx/ahx_dcd",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "BLOCKED",
+      "status": "HIGH_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-803909f4"
@@ -383947,7 +384045,8 @@
       "declared_return": "i32",
       "instruction_match": 85.6,
       "source_present": true,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "legacy_status": "BLOCKED"
     },
     {
       "id": "us-80391e20",
@@ -383961,7 +384060,7 @@
       "unit": "CriWare/src/adx/ahx/ahx_dcd",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "BLOCKED",
+      "status": "HIGH_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-803909f4"
@@ -383975,7 +384074,8 @@
       "declared_return": "i32",
       "source_present": true,
       "instruction_match": 89.45,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "legacy_status": "BLOCKED"
     },
     {
       "id": "us-803921e8",
@@ -383989,7 +384089,7 @@
       "unit": "CriWare/src/adx/ahx/ahx_dcd",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "BLOCKED",
+      "status": "STRUCTURAL",
       "origin": "symbols.txt",
       "called_functions": [
         "us-803909f4"
@@ -384006,7 +384106,8 @@
       "declared_return": "i32",
       "source_present": false,
       "instruction_match": 32.029,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "legacy_status": "BLOCKED"
     },
     {
       "id": "us-80392748",
@@ -384072,7 +384173,7 @@
       "unit": "CriWare/src/adx/cvfs/cri_cvfs",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "BLOCKED",
+      "status": "STRUCTURAL",
       "origin": "symbols.txt",
       "called_functions": [
         "us-80004000",
@@ -384088,7 +384189,8 @@
       "declared_return": "i32",
       "source_present": true,
       "instruction_match": 0.649,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "legacy_status": "BLOCKED"
     },
     {
       "id": "us-80392a88",
@@ -384102,7 +384204,7 @@
       "unit": "CriWare/src/adx/cvfs/cri_cvfs",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "BLOCKED",
+      "status": "STRUCTURAL",
       "origin": "symbols.txt",
       "called_functions": [
         "us-80004000",
@@ -384118,7 +384220,8 @@
       "declared_return": "i32",
       "source_present": true,
       "instruction_match": 69.763,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "legacy_status": "BLOCKED"
     },
     {
       "id": "us-80392bc8",
@@ -384132,7 +384235,7 @@
       "unit": "CriWare/src/adx/cvfs/cri_cvfs",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "BLOCKED",
+      "status": "STRUCTURAL",
       "origin": "symbols.txt",
       "called_functions": [
         "us-80004000",
@@ -384151,7 +384254,8 @@
       "declared_return": "i32",
       "source_present": true,
       "instruction_match": 0.301,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "legacy_status": "BLOCKED"
     },
     {
       "id": "us-803930f8",
@@ -384368,7 +384472,7 @@
       "unit": "CriWare/src/adx/cvfs/cri_cvfs",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "BLOCKED",
+      "status": "STRUCTURAL",
       "origin": "symbols.txt",
       "called_functions": [
         "us-80004000",
@@ -384387,7 +384491,8 @@
       "declared_return": "i32",
       "source_present": true,
       "instruction_match": 0.442,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "legacy_status": "BLOCKED"
     },
     {
       "id": "us-80393acc",
@@ -385348,7 +385453,7 @@
       "unit": "CriWare/src/adx/lsc/lsc",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "ACTIVE",
+      "status": "STRUCTURAL",
       "origin": "symbols.txt",
       "called_functions": [
         "us-802bc028",
@@ -385363,7 +385468,8 @@
       "declared_return": "i32",
       "source_present": true,
       "instruction_match": 0.7,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "legacy_status": "ACTIVE"
     },
     {
       "id": "us-80395548",
@@ -388122,7 +388228,7 @@
       "unit": "CriWare/src/adx/sj/sj_utl",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "ACTIVE",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-802c52ac"
@@ -388136,7 +388242,8 @@
       "declared_return": "i32",
       "source_present": true,
       "instruction_match": 96.2,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "legacy_status": "ACTIVE"
     },
     {
       "id": "us-80399a3c",
@@ -388695,7 +388802,7 @@
       "unit": "CriWare/src/adx/svm/svm",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "OPEN-ITEM",
+      "status": "STRUCTURAL",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -388707,7 +388814,8 @@
       "declared_return": "i32",
       "instruction_match": 0.474,
       "equivalence_status": "inconclusive_smt_disabled",
-      "source_present": true
+      "source_present": true,
+      "legacy_status": "OPEN-ITEM"
     },
     {
       "id": "us-8039a794",
@@ -390675,7 +390783,7 @@
       "unit": "CriWare/src/adx/adxt/srcwii/adx_suwii",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "ACTIVE",
+      "status": "HIGH_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-80392820",
@@ -390691,7 +390799,8 @@
       "source": "libs/CriWare/src/adx/adxt/srcwii/adx_suwii.c",
       "source_present": true,
       "instruction_match": 92.0,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "legacy_status": "ACTIVE"
     },
     {
       "id": "us-8039e6c4",
@@ -391385,7 +391494,7 @@
       "unit": "CriWare/src/adx/std/cri_crw_std",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "ACTIVE",
+      "status": "STRUCTURAL",
       "origin": "symbols.txt",
       "called_functions": [
         "us-80004000"
@@ -391399,7 +391508,8 @@
       "declared_return": "i32",
       "source_present": true,
       "instruction_match": 3.0,
-      "equivalence_status": "equivalent"
+      "equivalence_status": "equivalent",
+      "legacy_status": "ACTIVE"
     },
     {
       "id": "us-8039eb5c",
@@ -392096,7 +392206,7 @@
       "unit": "CriWare/src/sofdec/mwply/mwsfdsl",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "BLOCKED",
+      "status": "STRUCTURAL",
       "origin": "symbols.txt",
       "called_functions": [
         "us-8039567c",
@@ -392116,7 +392226,8 @@
       "instruction_match": 0.877,
       "declared_return": "i32",
       "source_present": true,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "legacy_status": "BLOCKED"
     },
     {
       "id": "us-803a07a0",
@@ -392274,7 +392385,7 @@
       "unit": "CriWare/src/sofdec/mwply/mwsfdsl",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "BLOCKED",
+      "status": "STRUCTURAL",
       "origin": "symbols.txt",
       "called_functions": [
         "us-80381fd0",
@@ -392303,7 +392414,8 @@
       "instruction_match": 0.286,
       "declared_return": "i32",
       "source_present": true,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "legacy_status": "BLOCKED"
     },
     {
       "id": "us-803a0f7c",
@@ -392458,7 +392570,7 @@
       "unit": "CriWare/src/sofdec/mwply/mwsfdsvm",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "ACTIVE",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-80004350",
@@ -392474,7 +392586,8 @@
       "declared_return": "i32",
       "source_present": true,
       "instruction_match": 99.831,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "legacy_status": "ACTIVE"
     },
     {
       "id": "us-803a11b0",
@@ -395080,7 +395193,7 @@
       "unit": "CriWare/src/sofdec/mwply/mwsfdset",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "BLOCKED",
+      "status": "HIGH_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-803a1094",
@@ -395096,7 +395209,8 @@
       "declared_return": "i32",
       "source_present": true,
       "instruction_match": 72.596,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "legacy_status": "BLOCKED"
     },
     {
       "id": "us-803a583c",
@@ -395140,7 +395254,7 @@
       "unit": "CriWare/src/sofdec/mwply/mwsfdset",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "BLOCKED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-803a02c4",
@@ -395156,7 +395270,8 @@
       "declared_return": "i32",
       "source_present": true,
       "instruction_match": 100.0,
-      "equivalence_status": "equivalent"
+      "equivalence_status": "equivalent",
+      "legacy_status": "BLOCKED"
     },
     {
       "id": "us-803a59a0",
@@ -395320,7 +395435,7 @@
       "unit": "CriWare/src/sofdec/mwply/mwsfdsvr",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "BACKLOG",
+      "status": "STRUCTURAL",
       "origin": "symbols.txt",
       "called_functions": [
         "us-803a0a04",
@@ -395337,7 +395452,8 @@
       "declared_return": "i32",
       "source_present": true,
       "instruction_match": 0.69,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "legacy_status": "BACKLOG"
     },
     {
       "id": "us-803a6050",
@@ -395438,7 +395554,7 @@
       "unit": "CriWare/src/sofdec/mwply/mwsfdsvr",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "BACKLOG",
+      "status": "STRUCTURAL",
       "origin": "symbols.txt",
       "called_functions": [
         "us-80395898",
@@ -395468,7 +395584,8 @@
       "source": "libs/CriWare/src/sofdec/mwply/mwsfdsvr.c",
       "source_present": true,
       "instruction_match": 0.848,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "legacy_status": "BACKLOG"
     },
     {
       "id": "us-803a6658",
@@ -396073,7 +396190,7 @@
       "unit": "CriWare/src/sofdec/mwply/mwsfx_Y84C44",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "ACTIVE",
+      "status": "HIGH_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-803a137c",
@@ -396090,7 +396207,8 @@
       "declared_return": "i32",
       "source_present": true,
       "instruction_match": 89.744,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "legacy_status": "ACTIVE"
     },
     {
       "id": "us-803a71c4",
@@ -396241,7 +396359,7 @@
       "unit": "CriWare/src/sofdec/sfdcore/mpv/mpv_bdec",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "ACTIVE",
+      "status": "HIGH_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-80004000",
@@ -396257,7 +396375,8 @@
       "declared_return": "i32",
       "source_present": true,
       "instruction_match": 73.817,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "legacy_status": "ACTIVE"
     },
     {
       "id": "us-803a7684",
@@ -396865,7 +396984,7 @@
       "unit": "CriWare/src/sofdec/sfdcore/mpv/mpv_emp",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "ACTIVE",
+      "status": "COMPILES",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -396877,7 +396996,8 @@
       "declared_return": "i32",
       "source_present": true,
       "instruction_match": 0.0,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "legacy_status": "ACTIVE"
     },
     {
       "id": "us-803a9564",
@@ -396891,7 +397011,7 @@
       "unit": "CriWare/src/sofdec/sfdcore/mpv/mpv_emp",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "ACTIVE",
+      "status": "COMPILES",
       "origin": "symbols.txt",
       "called_functions": [
         "us-803a9190",
@@ -396906,7 +397026,8 @@
       "declared_return": "i32",
       "source_present": true,
       "instruction_match": 0.0,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "legacy_status": "ACTIVE"
     },
     {
       "id": "us-803a98e0",
@@ -396971,7 +397092,7 @@
       "unit": "CriWare/src/sofdec/sfdcore/mpv/mpv_err",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "ACTIVE",
+      "status": "HIGH_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-803ac150"
@@ -396985,7 +397106,8 @@
       "declared_return": "i32",
       "source_present": true,
       "instruction_match": 93.667,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "legacy_status": "ACTIVE"
     },
     {
       "id": "us-803a99a8",
@@ -397051,7 +397173,7 @@
       "unit": "CriWare/src/sofdec/sfdcore/mpv/mpv_frm",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "ACTIVE",
+      "status": "STRUCTURAL",
       "origin": "symbols.txt",
       "called_functions": [
         "us-803a7684",
@@ -397073,7 +397195,8 @@
       "source": "libs/CriWare/src/sofdec/sfdcore/mpv/mpv_frm.c",
       "source_present": true,
       "instruction_match": 27.6,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "legacy_status": "ACTIVE"
     },
     {
       "id": "us-803a9b64",
@@ -399654,7 +399777,7 @@
       "unit": "CriWare/src/sofdec/sfdcore/mpv/mpv_slice",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "BLOCKED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-803a9190",
@@ -399670,7 +399793,8 @@
       "source": "libs/CriWare/src/sofdec/sfdcore/mpv/mpv_slice.c",
       "source_present": true,
       "instruction_match": 100.0,
-      "equivalence_status": "equivalent"
+      "equivalence_status": "equivalent",
+      "legacy_status": "BLOCKED"
     },
     {
       "id": "us-803bcfd4",
@@ -399684,7 +399808,7 @@
       "unit": "CriWare/src/sofdec/sfdcore/mpv/mpv_slice",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "BLOCKED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-803997d4",
@@ -399699,7 +399823,8 @@
       "source": "libs/CriWare/src/sofdec/sfdcore/mpv/mpv_slice.c",
       "source_present": true,
       "instruction_match": 97.358,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "legacy_status": "BLOCKED"
     },
     {
       "id": "us-803bd250",
@@ -403528,7 +403653,7 @@
       "unit": "CriWare/src/sofdec/sfdcore/sfd/sfd_lib",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "BLOCKED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-803974c8",
@@ -403547,7 +403672,8 @@
       "declared_return": "i32",
       "source_present": true,
       "instruction_match": 100.0,
-      "equivalence_status": "equivalent"
+      "equivalence_status": "equivalent",
+      "legacy_status": "BLOCKED"
     },
     {
       "id": "us-803c3400",
@@ -403561,7 +403687,7 @@
       "unit": "CriWare/src/sofdec/sfdcore/sfd/sfd_lib",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "BLOCKED",
+      "status": "HIGH_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-803bdf50",
@@ -403579,7 +403705,8 @@
       "declared_return": "i32",
       "source_present": true,
       "instruction_match": 82.727,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "legacy_status": "BLOCKED"
     },
     {
       "id": "us-803c34dc",
@@ -403671,7 +403798,7 @@
       "unit": "CriWare/src/sofdec/sfdcore/sfd/sfd_lib",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "ACTIVE",
+      "status": "STRUCTURAL",
       "origin": "symbols.txt",
       "called_functions": [
         "us-803c34fc"
@@ -403685,7 +403812,8 @@
       "declared_return": "i32",
       "source_present": true,
       "instruction_match": 3.6,
-      "equivalence_status": "equivalent"
+      "equivalence_status": "equivalent",
+      "legacy_status": "ACTIVE"
     },
     {
       "id": "us-803c36ac",
@@ -405347,7 +405475,7 @@
       "unit": "CriWare/src/sofdec/sfdcore/sfd/sfd_mpv",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "BLOCKED",
+      "status": "HIGH_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-803ac004",
@@ -405379,7 +405507,8 @@
       "declared_return": "i32",
       "source_present": true,
       "instruction_match": 84.197,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "legacy_status": "BLOCKED"
     },
     {
       "id": "us-803c5d50",
@@ -405393,7 +405522,7 @@
       "unit": "CriWare/src/sofdec/sfdcore/sfd/sfd_mpv",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "BLOCKED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-803aa1e0"
@@ -405406,7 +405535,8 @@
       "source": "libs/CriWare/src/sofdec/sfdcore/sfd/sfd_mpv.c",
       "source_present": true,
       "instruction_match": 100.0,
-      "equivalence_status": "equivalent"
+      "equivalence_status": "equivalent",
+      "legacy_status": "BLOCKED"
     },
     {
       "id": "us-803c5dd4",
@@ -405451,7 +405581,7 @@
       "unit": "CriWare/src/sofdec/sfdcore/sfd/sfd_mpv",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "BLOCKED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-803a9190",
@@ -405473,7 +405603,8 @@
       "source": "libs/CriWare/src/sofdec/sfdcore/sfd/sfd_mpv.c",
       "source_present": true,
       "instruction_match": 100.0,
-      "equivalence_status": "equivalent"
+      "equivalence_status": "equivalent",
+      "legacy_status": "BLOCKED"
     },
     {
       "id": "us-803c6278",
@@ -405487,7 +405618,7 @@
       "unit": "CriWare/src/sofdec/sfdcore/sfd/sfd_mpv",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "ACTIVE",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-80004000",
@@ -405502,7 +405633,8 @@
       "source": "libs/CriWare/src/sofdec/sfdcore/sfd/sfd_mpv.c",
       "source_present": true,
       "instruction_match": 100.0,
-      "equivalence_status": "equivalent"
+      "equivalence_status": "equivalent",
+      "legacy_status": "ACTIVE"
     },
     {
       "id": "us-803c6454",
@@ -405574,7 +405706,7 @@
       "unit": "CriWare/src/sofdec/sfdcore/sfd/sfd_mpv",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "BLOCKED",
+      "status": "HIGH_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-803a9190",
@@ -405603,7 +405735,8 @@
       "source": "libs/CriWare/src/sofdec/sfdcore/sfd/sfd_mpv.c",
       "source_present": true,
       "instruction_match": 88.716,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "legacy_status": "BLOCKED"
     },
     {
       "id": "us-803c6c54",
@@ -405617,7 +405750,7 @@
       "unit": "CriWare/src/sofdec/sfdcore/sfd/sfd_mpv",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "BLOCKED",
+      "status": "HIGH_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-803c2714",
@@ -405636,7 +405769,8 @@
       "source": "libs/CriWare/src/sofdec/sfdcore/sfd/sfd_mpv.c",
       "source_present": true,
       "instruction_match": 91.717,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "legacy_status": "BLOCKED"
     },
     {
       "id": "us-803c6e18",
@@ -405650,7 +405784,7 @@
       "unit": "CriWare/src/sofdec/sfdcore/sfd/sfd_mpv",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "BLOCKED",
+      "status": "HIGH_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-80398724",
@@ -405679,7 +405813,8 @@
       "source": "libs/CriWare/src/sofdec/sfdcore/sfd/sfd_mpv.c",
       "source_present": true,
       "instruction_match": 72.68,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "legacy_status": "BLOCKED"
     },
     {
       "id": "us-803c7590",
@@ -405693,7 +405828,7 @@
       "unit": "CriWare/src/sofdec/sfdcore/sfd/sfd_mpv",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "ACTIVE",
+      "status": "HIGH_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-802bcd14",
@@ -405707,7 +405842,8 @@
       "source": "libs/CriWare/src/sofdec/sfdcore/sfd/sfd_mpv.c",
       "source_present": true,
       "instruction_match": 80.527,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "legacy_status": "ACTIVE"
     },
     {
       "id": "us-803c7868",
@@ -405721,7 +405857,7 @@
       "unit": "CriWare/src/sofdec/sfdcore/sfd/sfd_mpv",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "ACTIVE",
+      "status": "HIGH_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-803cff8c"
@@ -405734,7 +405870,8 @@
       "source": "libs/CriWare/src/sofdec/sfdcore/sfd/sfd_mpv.c",
       "source_present": true,
       "instruction_match": 91.581,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "legacy_status": "ACTIVE"
     },
     {
       "id": "us-803c7ec0",
@@ -405748,7 +405885,7 @@
       "unit": "CriWare/src/sofdec/sfdcore/sfd/sfd_mpv",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "BLOCKED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-803c7fe4",
@@ -405762,7 +405899,8 @@
       "source": "libs/CriWare/src/sofdec/sfdcore/sfd/sfd_mpv.c",
       "source_present": true,
       "instruction_match": 100.0,
-      "equivalence_status": "equivalent"
+      "equivalence_status": "equivalent",
+      "legacy_status": "BLOCKED"
     },
     {
       "id": "us-803c7fe4",
@@ -405776,7 +405914,7 @@
       "unit": "CriWare/src/sofdec/sfdcore/sfd/sfd_mpv",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "BLOCKED",
+      "status": "STRUCTURAL",
       "origin": "symbols.txt",
       "called_functions": [
         "us-803d6c68"
@@ -405789,7 +405927,8 @@
       "source": "libs/CriWare/src/sofdec/sfdcore/sfd/sfd_mpv.c",
       "source_present": true,
       "instruction_match": 52.169,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "legacy_status": "BLOCKED"
     },
     {
       "id": "us-803c81bc",
@@ -405803,7 +405942,7 @@
       "unit": "CriWare/src/sofdec/sfdcore/sfd/sfd_mpv",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "ACTIVE",
+      "status": "STRUCTURAL",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -405814,7 +405953,8 @@
       "source": "libs/CriWare/src/sofdec/sfdcore/sfd/sfd_mpv.c",
       "source_present": true,
       "instruction_match": 60.143,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "legacy_status": "ACTIVE"
     },
     {
       "id": "us-803c830c",
@@ -405828,7 +405968,7 @@
       "unit": "CriWare/src/sofdec/sfdcore/sfd/sfd_mpv",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "BLOCKED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-803a9cec",
@@ -405847,7 +405987,8 @@
       "source": "libs/CriWare/src/sofdec/sfdcore/sfd/sfd_mpv.c",
       "source_present": true,
       "instruction_match": 100.0,
-      "equivalence_status": "equivalent"
+      "equivalence_status": "equivalent",
+      "legacy_status": "BLOCKED"
     },
     {
       "id": "us-803c843c",
@@ -405861,7 +406002,7 @@
       "unit": "CriWare/src/sofdec/sfdcore/sfd/sfd_mpv",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "ACTIVE",
+      "status": "HIGH_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-803bdf50"
@@ -405874,7 +406015,8 @@
       "source": "libs/CriWare/src/sofdec/sfdcore/sfd/sfd_mpv.c",
       "source_present": true,
       "instruction_match": 77.364,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "legacy_status": "ACTIVE"
     },
     {
       "id": "us-803c8570",
@@ -405888,7 +406030,7 @@
       "unit": "CriWare/src/sofdec/sfdcore/sfd/sfd_mpv",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "BLOCKED",
+      "status": "HIGH_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-803c34fc",
@@ -405902,7 +406044,8 @@
       "source": "libs/CriWare/src/sofdec/sfdcore/sfd/sfd_mpv.c",
       "source_present": true,
       "instruction_match": 70.843,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "legacy_status": "BLOCKED"
     },
     {
       "id": "us-803c899c",
@@ -405916,7 +406059,7 @@
       "unit": "CriWare/src/sofdec/sfdcore/sfd/sfd_mpv",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "BLOCKED",
+      "status": "HIGH_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-803c8cdc",
@@ -405934,7 +406077,8 @@
       "source": "libs/CriWare/src/sofdec/sfdcore/sfd/sfd_mpv.c",
       "source_present": true,
       "instruction_match": 83.615,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "legacy_status": "BLOCKED"
     },
     {
       "id": "us-803c8cdc",
@@ -406005,7 +406149,7 @@
       "unit": "CriWare/src/sofdec/sfdcore/sfd/sfd_mpv",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "BLOCKED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-803cf454",
@@ -406022,7 +406166,8 @@
       "source": "libs/CriWare/src/sofdec/sfdcore/sfd/sfd_mpv.c",
       "source_present": true,
       "instruction_match": 100.0,
-      "equivalence_status": "equivalent"
+      "equivalence_status": "equivalent",
+      "legacy_status": "BLOCKED"
     },
     {
       "id": "us-803c8fbc",
@@ -406036,7 +406181,7 @@
       "unit": "CriWare/src/sofdec/sfdcore/sfd/sfd_mpv",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "BLOCKED",
+      "status": "HIGH_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-80398724",
@@ -406053,7 +406198,8 @@
       "source": "libs/CriWare/src/sofdec/sfdcore/sfd/sfd_mpv.c",
       "source_present": true,
       "instruction_match": 86.522,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "legacy_status": "BLOCKED"
     },
     {
       "id": "us-803c9188",
@@ -406067,7 +406213,7 @@
       "unit": "CriWare/src/sofdec/sfdcore/sfd/sfd_mpv",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "BLOCKED",
+      "status": "HIGH_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-80004000",
@@ -406094,7 +406240,8 @@
       "source": "libs/CriWare/src/sofdec/sfdcore/sfd/sfd_mpv.c",
       "source_present": true,
       "instruction_match": 77.862,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "legacy_status": "BLOCKED"
     },
     {
       "id": "us-803c95f4",
@@ -406108,7 +406255,7 @@
       "unit": "CriWare/src/sofdec/sfdcore/sfd/sfd_mpv",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "BLOCKED",
+      "status": "HIGH_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-803cb004",
@@ -406122,7 +406269,8 @@
       "source": "libs/CriWare/src/sofdec/sfdcore/sfd/sfd_mpv.c",
       "source_present": true,
       "instruction_match": 77.897,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "legacy_status": "BLOCKED"
     },
     {
       "id": "us-803c9948",
@@ -406164,7 +406312,7 @@
       "unit": "CriWare/src/sofdec/sfdcore/sfd/sfd_mpv",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "ACTIVE",
+      "status": "HIGH_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-803cff8c"
@@ -406178,7 +406326,8 @@
       "declared_return": "i32",
       "source_present": true,
       "instruction_match": 90.519,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "legacy_status": "ACTIVE"
     },
     {
       "id": "us-803c9b04",
@@ -406192,7 +406341,7 @@
       "unit": "CriWare/src/sofdec/sfdcore/sfd/sfd_mpv",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "BLOCKED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-803c1dc0",
@@ -406207,7 +406356,8 @@
       "source": "libs/CriWare/src/sofdec/sfdcore/sfd/sfd_mpv.c",
       "source_present": true,
       "instruction_match": 96.963,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "legacy_status": "BLOCKED"
     },
     {
       "id": "us-803c9cb0",
@@ -406221,7 +406371,7 @@
       "unit": "CriWare/src/sofdec/sfdcore/sfd/sfd_mpv",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "BLOCKED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-803a9900",
@@ -406243,7 +406393,8 @@
       "declared_return": "i32",
       "source_present": true,
       "instruction_match": 100.0,
-      "equivalence_status": "equivalent"
+      "equivalence_status": "equivalent",
+      "legacy_status": "BLOCKED"
     },
     {
       "id": "us-803c9ddc",
@@ -406257,7 +406408,7 @@
       "unit": "CriWare/src/sofdec/sfdcore/sfd/sfd_mpv",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "BLOCKED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-803c9f64",
@@ -406273,7 +406424,8 @@
       "source": "libs/CriWare/src/sofdec/sfdcore/sfd/sfd_mpv.c",
       "source_present": true,
       "instruction_match": 100.0,
-      "equivalence_status": "equivalent"
+      "equivalence_status": "equivalent",
+      "legacy_status": "BLOCKED"
     },
     {
       "id": "us-803c9f64",
@@ -406345,7 +406497,7 @@
       "unit": "CriWare/src/sofdec/sfdcore/sfd/sfd_mpv",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "BLOCKED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-803abf48",
@@ -406361,7 +406513,8 @@
       "declared_return": "i32",
       "source_present": true,
       "instruction_match": 100.0,
-      "equivalence_status": "equivalent"
+      "equivalence_status": "equivalent",
+      "legacy_status": "BLOCKED"
     },
     {
       "id": "us-803ca0f4",
@@ -406667,7 +406820,7 @@
       "unit": "CriWare/src/sofdec/sfdcore/sfd/sfd_mpv",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "BLOCKED",
+      "status": "HIGH_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-803aa1e0",
@@ -406681,7 +406834,8 @@
       "source": "libs/CriWare/src/sofdec/sfdcore/sfd/sfd_mpv.c",
       "source_present": true,
       "instruction_match": 76.355,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "legacy_status": "BLOCKED"
     },
     {
       "id": "us-803ca4a0",
@@ -410474,7 +410628,7 @@
       "unit": "CriWare/src/sofdec/sfdcore/sfd/sfd_trn",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "BLOCKED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -410486,7 +410640,8 @@
       "declared_return": "i32",
       "source_present": true,
       "instruction_match": 100.0,
-      "equivalence_status": "equivalent"
+      "equivalence_status": "equivalent",
+      "legacy_status": "BLOCKED"
     },
     {
       "id": "us-803d0e94",
@@ -410588,7 +410743,7 @@
       "unit": "CriWare/src/sofdec/sfdcore/sfd/sfd_trn",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "BLOCKED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -410600,7 +410755,8 @@
       "declared_return": "i32",
       "source_present": true,
       "instruction_match": 100.0,
-      "equivalence_status": "equivalent"
+      "equivalence_status": "equivalent",
+      "legacy_status": "BLOCKED"
     },
     {
       "id": "us-803d1368",
@@ -411570,7 +411726,7 @@
       "unit": "CriWare/src/sofdec/sfdcore/sfd/sfd_tmr",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "BLOCKED",
+      "status": "HIGH_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-803d6ea4",
@@ -411586,7 +411742,8 @@
       "declared_return": "u64",
       "source_present": true,
       "instruction_match": 91.525,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "legacy_status": "BLOCKED"
     },
     {
       "id": "us-803d19d0",
@@ -411652,7 +411809,7 @@
       "unit": "CriWare/src/sofdec/sfdcore/sfd/sfd_tst",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "ACTIVE",
+      "status": "STRUCTURAL",
       "origin": "symbols.txt",
       "called_functions": [
         "us-80004350",
@@ -411668,7 +411825,8 @@
       "declared_return": "i32",
       "source_present": true,
       "instruction_match": 5.1,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "legacy_status": "ACTIVE"
     },
     {
       "id": "us-803d1c6c",
@@ -411939,7 +412097,7 @@
       "unit": "CriWare/src/sofdec/sfdcore/sfd/sfd_tst",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "ACTIVE",
+      "status": "STRUCTURAL",
       "origin": "symbols.txt",
       "called_functions": [
         "us-802bcd14",
@@ -411954,7 +412112,8 @@
       "declared_return": "i32",
       "source_present": true,
       "instruction_match": 19.3,
-      "equivalence_status": "equivalent"
+      "equivalence_status": "equivalent",
+      "legacy_status": "ACTIVE"
     },
     {
       "id": "us-803d1e90",
@@ -411968,7 +412127,7 @@
       "unit": "CriWare/src/sofdec/sfdcore/sfd/sfd_tst",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "ACTIVE",
+      "status": "COMPILES",
       "origin": "symbols.txt",
       "called_functions": [
         "us-80004350",
@@ -411984,7 +412143,8 @@
       "source": "libs/CriWare/src/sofdec/sfdcore/sfd/sfd_tst.c",
       "source_present": true,
       "instruction_match": 0.0,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "legacy_status": "ACTIVE"
     },
     {
       "id": "us-803d29e0",
@@ -412023,7 +412183,7 @@
       "unit": "CriWare/src/sofdec/sfdcore/sfd/sfd_seeki",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "ACTIVE",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -412035,7 +412195,8 @@
       "declared_return": "i32",
       "source_present": true,
       "instruction_match": 100.0,
-      "equivalence_status": "equivalent"
+      "equivalence_status": "equivalent",
+      "legacy_status": "ACTIVE"
     },
     {
       "id": "us-803d2af4",
@@ -414120,7 +414281,7 @@
       "unit": "CriWare/src/sofdec/sfdcore/sfh/sfh_ver1",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "BLOCKED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-803d2af4",
@@ -414135,7 +414296,8 @@
       "declared_return": "i32",
       "instruction_match": 100.0,
       "source_present": true,
-      "equivalence_status": "equivalent"
+      "equivalence_status": "equivalent",
+      "legacy_status": "BLOCKED"
     },
     {
       "id": "us-803d4ce0",
@@ -415637,7 +415799,7 @@
       "unit": "CriWare/src/sofdec/sfdcore/uty/uty_tmr",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "ACTIVE",
+      "status": "STRUCTURAL",
       "origin": "symbols.txt",
       "called_functions": [
         "us-80392748"
@@ -415650,7 +415812,8 @@
       "source": "libs/CriWare/src/sofdec/sfdcore/uty/uty_tmr.c",
       "source_present": true,
       "instruction_match": 54.3,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "legacy_status": "ACTIVE"
     },
     {
       "id": "us-803d6e78",
@@ -416067,7 +416230,7 @@
       "unit": "CriWare/src/sofdec/sfx/sfx_cnv",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "BLOCKED",
+      "status": "HIGH_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-803d7324",
@@ -416086,7 +416249,8 @@
       "source": "libs/CriWare/src/sofdec/sfx/sfx_cnv.c",
       "source_present": true,
       "instruction_match": 79.041,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "legacy_status": "BLOCKED"
     },
     {
       "id": "us-803d7324",
@@ -416100,7 +416264,7 @@
       "unit": "CriWare/src/sofdec/sfx/sfx_cnv",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "ACTIVE",
+      "status": "STRUCTURAL",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -416111,7 +416275,8 @@
       "source": "libs/CriWare/src/sofdec/sfx/sfx_cnv.c",
       "instruction_match": 29.5,
       "source_present": true,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "legacy_status": "ACTIVE"
     },
     {
       "id": "us-803d7600",
@@ -416272,7 +416437,7 @@
       "unit": "CriWare/src/sofdec/sfx/sfx_cnv",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "BLOCKED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-803d71a0",
@@ -416290,7 +416455,8 @@
       "declared_return": "void",
       "source_present": true,
       "instruction_match": 100.0,
-      "equivalence_status": "equivalent"
+      "equivalence_status": "equivalent",
+      "legacy_status": "BLOCKED"
     },
     {
       "id": "us-803d7838",
@@ -416335,7 +416501,7 @@
       "unit": "CriWare/src/sofdec/sfx/sfx_cnv",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "ACTIVE",
+      "status": "HIGH_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-80004350",
@@ -416349,7 +416515,8 @@
       "source": "libs/CriWare/src/sofdec/sfx/sfx_cnv.c",
       "source_present": true,
       "instruction_match": 84.3,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "legacy_status": "ACTIVE"
     },
     {
       "id": "us-803d7ad8",
@@ -416363,7 +416530,7 @@
       "unit": "CriWare/src/sofdec/sfx/sfx_cnv",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "BLOCKED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-803d7974",
@@ -416378,7 +416545,8 @@
       "source": "libs/CriWare/src/sofdec/sfx/sfx_cnv.c",
       "source_present": true,
       "instruction_match": 97.849,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "legacy_status": "BLOCKED"
     },
     {
       "id": "us-803d7c4c",
@@ -416417,7 +416585,7 @@
       "unit": "CriWare/src/sofdec/sfx/sfx_cnv",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "ACTIVE",
+      "status": "STRUCTURAL",
       "origin": "symbols.txt",
       "called_functions": [
         "us-803d820c"
@@ -416430,7 +416598,8 @@
       "source": "libs/CriWare/src/sofdec/sfx/sfx_cnv.c",
       "source_present": true,
       "instruction_match": 8.2,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "legacy_status": "ACTIVE"
     },
     {
       "id": "us-803d7dc8",
@@ -417365,7 +417534,7 @@
       "unit": "CriWare/src/sofdec/sud/sud_lib",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "ACTIVE",
+      "status": "HIGH_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-802c1250"
@@ -417379,7 +417548,8 @@
       "declared_return": "i32",
       "source_present": true,
       "instruction_match": 87.5,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "legacy_status": "ACTIVE"
     },
     {
       "id": "us-803d9884",
@@ -454187,7 +454357,7 @@
       "unit": "nw4r/src/snd/snd_SeqFile",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "FULL_MATCH(fuzzy-cert; NOT byte-identical)",
+      "status": "HIGH_MATCH",
       "origin": "symbols.txt",
       "source": "libs/nw4r/src/snd/snd_SeqFile.cpp",
       "called_functions": [
@@ -454204,7 +454374,8 @@
       ],
       "source_present": true,
       "instruction_match": 89.1,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "legacy_status": "FULL_MATCH(fuzzy-cert; NOT byte-identical)"
     },
     {
       "id": "us-8041ba6c",
@@ -475396,7 +475567,7 @@
       "unit": "monolib/src/core/CView",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "HIGH_MATCH 75-87.5%",
+      "status": "STRUCTURAL",
       "origin": "symbols.txt",
       "source": "libs/monolib/src/core/CView.cpp",
       "called_functions": [
@@ -475410,7 +475581,8 @@
       "abi_helper_calls": [],
       "instruction_match": 0.75,
       "source_present": false,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "legacy_status": "HIGH_MATCH 75-87.5%"
     },
     {
       "id": "view-set-rect",
@@ -480235,7 +480407,7 @@
       "unit": "monolib/src/core/CPadManager",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "OPEN_ITEM",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "source": "libs/monolib/src/core/CPadManager.cpp",
       "called_functions": [
@@ -480253,7 +480425,8 @@
       "notes": "non-placeholder body present; marked via mark_implemented_bodies.py; decomp object byte-identical to retail; marked via mark_implemented_bodies.py --byte-identical",
       "instruction_match": 99.08,
       "source_present": true,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "legacy_status": "OPEN_ITEM"
     },
     {
       "id": "us-80449eb0",
@@ -487947,7 +488120,7 @@
       "unit": "monolib/src/device/CDeviceFont",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "MAJOR_FIX",
+      "status": "HIGH_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-80004350",
@@ -487979,7 +488152,8 @@
       "source": "libs/monolib/src/device/CDeviceFont.cpp",
       "source_present": true,
       "instruction_match": 75.952,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "legacy_status": "MAJOR_FIX"
     },
     {
       "id": "us-804570fc",
@@ -488083,7 +488257,7 @@
       "unit": "monolib/src/device/CDeviceFontInfoExt",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "OPEN_ITEM",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-80430478",
@@ -488109,7 +488283,8 @@
           "libs/monolib/src/device/CDeviceFontInfoExt.cpp"
         ],
         "note": ""
-      }
+      },
+      "legacy_status": "OPEN_ITEM"
     },
     {
       "id": "us-8045742c",
@@ -489738,7 +489913,7 @@
       "unit": "monolib/src/device/CDeviceGX",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "NEGATIVE_RESULT",
+      "status": "HIGH_MATCH",
       "origin": "symbols.txt",
       "source": "libs/monolib/src/device/CDeviceGX.cpp",
       "called_functions": [],
@@ -489750,7 +489925,8 @@
       "notes": "non-placeholder body present; marked via mark_implemented_bodies.py; decomp object byte-identical to retail; marked via mark_implemented_bodies.py --byte-identical",
       "instruction_match": 71.4,
       "source_present": true,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "legacy_status": "NEGATIVE_RESULT"
     },
     {
       "id": "us-8045944c",
@@ -490230,7 +490406,7 @@
       "unit": "monolib/src/core/CDesktop",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "OPEN_ITEM",
+      "status": "STRUCTURAL",
       "origin": "symbols.txt",
       "source": "libs/monolib/src/core/CDesktop.cpp",
       "called_functions": [
@@ -490244,7 +490420,8 @@
       "abi_helper_calls": [],
       "notes": "non-placeholder body present; marked via mark_implemented_bodies.py; decomp object byte-identical to retail; marked via mark_implemented_bodies.py --byte-identical",
       "instruction_match": 65.5,
-      "source_present": true
+      "source_present": true,
+      "legacy_status": "OPEN_ITEM"
     },
     {
       "id": "us-80459b30",
@@ -491289,7 +491466,7 @@
       "unit": "monolib/src/core/CDrawGX",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "OPEN_ITEM",
+      "status": "STRUCTURAL",
       "origin": "symbols.txt",
       "source": "libs/monolib/src/core/CDrawGX.cpp",
       "called_functions": [
@@ -491307,7 +491484,8 @@
       ],
       "notes": "non-placeholder body present; marked via mark_implemented_bodies.py; decomp object byte-identical to retail; marked via mark_implemented_bodies.py --byte-identical",
       "instruction_match": 19.4,
-      "source_present": true
+      "source_present": true,
+      "legacy_status": "OPEN_ITEM"
     },
     {
       "id": "us-8045bc8c",
@@ -491819,7 +491997,7 @@
       "unit": "monolib/src/core/CException",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "BLOCKED",
+      "status": "STRUCTURAL",
       "origin": "symbols.txt",
       "source": "libs/monolib/src/core/CException.cpp",
       "called_functions": [],
@@ -491830,7 +492008,8 @@
       "abi_helper_calls": [],
       "instruction_match": 35.0,
       "source_present": true,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "legacy_status": "BLOCKED"
     },
     {
       "id": "us-8045d26c",
@@ -501617,7 +501796,7 @@
       "unit": "monolib/src/lod/code_8046A530",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "artifact_mechanism_proven",
+      "status": "STRUCTURAL",
       "origin": "symbols.txt",
       "called_functions": [
         "us-8046e594"
@@ -501630,7 +501809,8 @@
       "source": "libs/monolib/src/lod/code_8046A530.cpp",
       "source_present": true,
       "instruction_match": 19.0,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "legacy_status": "artifact_mechanism_proven"
     },
     {
       "id": "us-8046e554",
@@ -501671,7 +501851,7 @@
       "unit": "monolib/src/lod/code_8046A530",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "closing_insight",
+      "status": "STRUCTURAL",
       "origin": "symbols.txt",
       "called_functions": [
         "us-802c3a68",
@@ -501689,7 +501869,8 @@
       "source": "libs/monolib/src/lod/code_8046A530.cpp",
       "source_present": true,
       "instruction_match": 16.6,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "legacy_status": "closing_insight"
     },
     {
       "id": "us-8046eaa8",
@@ -501753,7 +501934,7 @@
       "unit": "monolib/src/lod/code_8046A530",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "cycle_fail_diagnostic",
+      "status": "HIGH_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-802c3a68",
@@ -501770,7 +501951,8 @@
       "source": "libs/monolib/src/lod/code_8046A530.cpp",
       "source_present": true,
       "instruction_match": 86.4,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "legacy_status": "cycle_fail_diagnostic"
     },
     {
       "id": "us-8046ecfc",
@@ -501784,7 +501966,7 @@
       "unit": "monolib/src/lod/code_8046A530",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "negative_result",
+      "status": "HIGH_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-802c3a68",
@@ -501799,7 +501981,8 @@
       "source": "libs/monolib/src/lod/code_8046A530.cpp",
       "source_present": true,
       "instruction_match": 74.6,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "legacy_status": "negative_result"
     },
     {
       "id": "us-8046f07c",
@@ -501813,7 +501996,7 @@
       "unit": "monolib/src/lod/code_8046A530",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "negative_result",
+      "status": "STRUCTURAL",
       "origin": "symbols.txt",
       "called_functions": [
         "us-802c3a68",
@@ -501835,7 +502018,8 @@
       "source": "libs/monolib/src/lod/code_8046A530.cpp",
       "source_present": true,
       "instruction_match": 21.9,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "legacy_status": "negative_result"
     },
     {
       "id": "us-8046fab0",
@@ -501849,7 +502033,7 @@
       "unit": "monolib/src/lod/code_8046A530",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "cycle_fail_diagnostic",
+      "status": "STRUCTURAL",
       "origin": "symbols.txt",
       "called_functions": [
         "us-802c3a68",
@@ -501871,7 +502055,8 @@
       "source": "libs/monolib/src/lod/code_8046A530.cpp",
       "source_present": true,
       "instruction_match": 24.1,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "legacy_status": "cycle_fail_diagnostic"
     },
     {
       "id": "us-80470550",
@@ -501885,7 +502070,7 @@
       "unit": "monolib/src/lod/code_8046A530",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "cycle_fail_diagnostic",
+      "status": "STRUCTURAL",
       "origin": "symbols.txt",
       "called_functions": [
         "us-802c3a68",
@@ -501907,7 +502092,8 @@
       "source": "libs/monolib/src/lod/code_8046A530.cpp",
       "source_present": true,
       "instruction_match": 21.9,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "legacy_status": "cycle_fail_diagnostic"
     },
     {
       "id": "us-80470f84",
@@ -503704,7 +503890,7 @@
       "unit": "monolib/src/lod/LODMemMan",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "OPEN",
+      "status": "HIGH_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-8031e260",
@@ -503721,7 +503907,8 @@
       "source": "libs/monolib/src/lod/LODMemMan.cpp",
       "source_present": true,
       "instruction_match": 94.5,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "legacy_status": "OPEN"
     },
     {
       "id": "us-8047560c",
@@ -508091,7 +508278,7 @@
       "unit": "monolib/src/scn/UnkClass_8047E110",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "OPEN_ITEM",
+      "status": "STRUCTURAL",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -508102,7 +508289,8 @@
       "source": "libs/monolib/src/scn/UnkClass_8047E110.cpp",
       "source_present": true,
       "instruction_match": 23.5,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "legacy_status": "OPEN_ITEM"
     },
     {
       "id": "us-804825fc",
@@ -515345,7 +515533,7 @@
       "unit": "monolib/src/scn/CScnMaruShadowNw4r",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "MATCH",
+      "status": "COMPILES",
       "origin": "symbols.txt",
       "called_functions": [
         "us-802cddc4",
@@ -515373,7 +515561,8 @@
       "source": "libs/monolib/src/scn/CScnMaruShadowNw4r.cpp",
       "source_present": true,
       "instruction_match": 0.0,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "legacy_status": "MATCH"
     },
     {
       "id": "us-80491bcc",
@@ -515412,7 +515601,7 @@
       "unit": "monolib/src/scn/CScnMaruShadowNw4r",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "OPEN_ITEM",
+      "status": "STRUCTURAL",
       "origin": "symbols.txt",
       "called_functions": [
         "us-8031ceb0"
@@ -515425,7 +515614,8 @@
       "source": "libs/monolib/src/scn/CScnMaruShadowNw4r.cpp",
       "source_present": true,
       "instruction_match": 3.8,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "legacy_status": "OPEN_ITEM"
     },
     {
       "id": "us-80491d8c",
@@ -525113,7 +525303,7 @@
       "unit": "monolib/src/scn/CScnFadeMan",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "OPEN-ITEM",
+      "status": "HIGH_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-80441420",
@@ -525137,7 +525327,8 @@
       "abi_helper_calls": [],
       "source": "libs/monolib/src/scn/CScnFadeMan.cpp",
       "source_present": true,
-      "instruction_match": 91.1
+      "instruction_match": 91.1,
+      "legacy_status": "OPEN-ITEM"
     },
     {
       "id": "us-804a0810",
@@ -531332,7 +531523,7 @@
       "unit": "monolib/src/coli/code_804A6C60",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "PLATEAU",
+      "status": "HIGH_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-8034fe20",
@@ -531347,7 +531538,8 @@
       "source": "libs/monolib/src/coli/code_804A6C60.cpp",
       "source_present": true,
       "instruction_match": 80.2,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "legacy_status": "PLATEAU"
     },
     {
       "id": "us-804ab990",
@@ -531448,7 +531640,7 @@
       "unit": "monolib/src/coli/code_804A6C60",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "OPEN_ITEM",
+      "status": "HIGH_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-804b66d4"
@@ -531461,7 +531653,8 @@
       "source": "libs/monolib/src/coli/code_804A6C60.cpp",
       "source_present": true,
       "instruction_match": 71.4,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "legacy_status": "OPEN_ITEM"
     },
     {
       "id": "us-804abc28",
@@ -531475,7 +531668,7 @@
       "unit": "monolib/src/coli/code_804A6C60",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "OPEN_ITEM",
+      "status": "HIGH_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-80350cd0",
@@ -531489,7 +531682,8 @@
       "source": "libs/monolib/src/coli/code_804A6C60.cpp",
       "source_present": true,
       "instruction_match": 86.8,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "legacy_status": "OPEN_ITEM"
     },
     {
       "id": "us-804abd38",
@@ -531584,7 +531778,7 @@
       "unit": "monolib/src/coli/code_804A6C60",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "OPEN_ITEM",
+      "status": "STRUCTURAL",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -531595,7 +531789,8 @@
       "source": "libs/monolib/src/coli/code_804A6C60.cpp",
       "source_present": true,
       "instruction_match": 32.9,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "legacy_status": "OPEN_ITEM"
     },
     {
       "id": "us-804abfd8",
@@ -532242,7 +532437,7 @@
       "unit": "monolib/src/coli/code_804A6C60",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "PLATEAU",
+      "status": "STRUCTURAL",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -532253,7 +532448,8 @@
       "source": "libs/monolib/src/coli/code_804A6C60.cpp",
       "source_present": true,
       "instruction_match": 50.0,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "legacy_status": "PLATEAU"
     },
     {
       "id": "us-804afe68",
@@ -532317,7 +532513,7 @@
       "unit": "monolib/src/coli/code_804A6C60",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "OPEN_ITEM",
+      "status": "STRUCTURAL",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -532328,7 +532524,8 @@
       "source": "libs/monolib/src/coli/code_804A6C60.cpp",
       "source_present": true,
       "instruction_match": 66.7,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "legacy_status": "OPEN_ITEM"
     },
     {
       "id": "us-804b0064",
@@ -532858,7 +533055,7 @@
       "unit": "monolib/src/coli/code_804A6C60",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "OPEN_ITEM",
+      "status": "STRUCTURAL",
       "origin": "symbols.txt",
       "called_functions": [
         "us-802c3a68",
@@ -532885,7 +533082,8 @@
           "libs/monolib/src/coli/code_804A6C60.cpp"
         ],
         "note": ""
-      }
+      },
+      "legacy_status": "OPEN_ITEM"
     },
     {
       "id": "us-804b2b00",
@@ -533282,7 +533480,7 @@
       "unit": "monolib/src/coli/code_804A6C60",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "OPEN_ITEM",
+      "status": "HIGH_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -533293,7 +533491,8 @@
       "source": "libs/monolib/src/coli/code_804A6C60.cpp",
       "source_present": true,
       "instruction_match": 82.8,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "legacy_status": "OPEN_ITEM"
     },
     {
       "id": "us-804b494c",
@@ -533899,7 +534098,7 @@
       "unit": "monolib/src/coli/code_804A6C60",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "AUDIT_DATA",
+      "status": "COMPILES",
       "origin": "symbols.txt",
       "called_functions": [
         "us-804abd38",
@@ -533916,7 +534115,8 @@
       "source": "libs/monolib/src/coli/code_804A6C60.cpp",
       "source_present": true,
       "instruction_match": 0.0,
-      "equivalence_status": "equivalent"
+      "equivalence_status": "equivalent",
+      "legacy_status": "AUDIT_DATA"
     },
     {
       "id": "us-804b5d38",
@@ -533930,7 +534130,7 @@
       "unit": "monolib/src/coli/code_804A6C60",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "OPEN_ITEM",
+      "status": "HIGH_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-804abe78",
@@ -533945,7 +534145,8 @@
       "source": "libs/monolib/src/coli/code_804A6C60.cpp",
       "source_present": true,
       "instruction_match": 83.3,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "legacy_status": "OPEN_ITEM"
     },
     {
       "id": "us-804b5df8",
@@ -534143,7 +534344,7 @@
       "unit": "monolib/src/coli/code_804A6C60",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "OPEN_ITEM",
+      "status": "HIGH_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -534154,7 +534355,8 @@
       "source": "libs/monolib/src/coli/code_804A6C60.cpp",
       "source_present": true,
       "instruction_match": 75.0,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "legacy_status": "OPEN_ITEM"
     },
     {
       "id": "us-804b6680",
@@ -535756,7 +535958,7 @@
       "unit": "monolib/src/coli/code_804B59C8",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "DIAGNOSED",
+      "status": "HIGH_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-804bb328"
@@ -535777,7 +535979,8 @@
           "libs/monolib/src/coli/code_804B59C8.cpp"
         ],
         "note": ""
-      }
+      },
+      "legacy_status": "DIAGNOSED"
     },
     {
       "id": "us-804b9d0c",
@@ -536152,7 +536355,7 @@
       "unit": "monolib/src/coli/code_804B59C8",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "PLATEAU",
+      "status": "STRUCTURAL",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -536163,7 +536366,8 @@
       "source": "libs/monolib/src/coli/code_804B59C8.cpp",
       "source_present": true,
       "instruction_match": 20.0,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "legacy_status": "PLATEAU"
     },
     {
       "id": "us-804ba80c",
@@ -538596,7 +538800,7 @@
       "unit": "monolib/src/scn/code_804BD8E8",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "OPEN_ITEM",
+      "status": "STRUCTURAL",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -538607,7 +538811,8 @@
       "source": "libs/monolib/src/scn/code_804BD8E8.cpp",
       "source_present": true,
       "instruction_match": 54.5,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "legacy_status": "OPEN_ITEM"
     },
     {
       "id": "us-804c2668",
@@ -539096,7 +539301,7 @@
       "unit": "monolib/src/scn/code_804BD8E8",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "IN_PROGRESS",
+      "status": "STRUCTURAL",
       "origin": "symbols.txt",
       "called_functions": [
         "us-80350c80",
@@ -539111,7 +539316,8 @@
       "source": "libs/monolib/src/scn/code_804BD8E8.cpp",
       "source_present": true,
       "instruction_match": 3.6,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "legacy_status": "IN_PROGRESS"
     },
     {
       "id": "us-804c33d0",
@@ -539125,7 +539331,7 @@
       "unit": "monolib/src/scn/code_804BD8E8",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "BREAKTHROUGH_DIAGNOSTIC",
+      "status": "COMPILES",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -539136,7 +539342,8 @@
       "source": "libs/monolib/src/scn/code_804BD8E8.cpp",
       "source_present": true,
       "instruction_match": 0.0,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "legacy_status": "BREAKTHROUGH_DIAGNOSTIC"
     },
     {
       "id": "us-804c3510",
@@ -539175,7 +539382,7 @@
       "unit": "monolib/src/scn/code_804BD8E8",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "OPEN_ITEM",
+      "status": "STRUCTURAL",
       "origin": "symbols.txt",
       "called_functions": [
         "us-80350cd0"
@@ -539188,7 +539395,8 @@
       "source": "libs/monolib/src/scn/code_804BD8E8.cpp",
       "source_present": true,
       "instruction_match": 25.5,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "legacy_status": "OPEN_ITEM"
     },
     {
       "id": "us-804c369c",
@@ -546201,7 +546409,7 @@
       "unit": "monolib/src/effect/code_804CC2B8",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "SCOPED",
+      "status": "COMPILES",
       "origin": "symbols.txt",
       "called_functions": [
         "us-804dad34"
@@ -546217,7 +546425,8 @@
       "source": "libs/monolib/src/effect/code_804CC2B8.cpp",
       "source_present": true,
       "instruction_match": 0.0,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "legacy_status": "SCOPED"
     },
     {
       "id": "us-804dad34",
@@ -550940,7 +551149,7 @@
       "unit": "monolib/src/core/code_804DEDA8",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "NEAR-MISS 21.0% byte (semantics complete)",
+      "status": "STRUCTURAL",
       "origin": "symbols.txt",
       "called_functions": [
         "us-80436e70",
@@ -550956,7 +551165,8 @@
       "source": "libs/monolib/src/core/code_804DEDA8.cpp",
       "source_present": true,
       "instruction_match": 0.21,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "legacy_status": "NEAR-MISS 21.0% byte (semantics complete)"
     },
     {
       "id": "us-804e3504",
@@ -551160,7 +551370,7 @@
       "unit": "monolib/src/core/code_804DEDA8",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "NEAR-MISS 74.3%",
+      "status": "STRUCTURAL",
       "origin": "symbols.txt",
       "called_functions": [
         "us-804e3244"
@@ -551173,7 +551383,8 @@
       "source": "libs/monolib/src/core/code_804DEDA8.cpp",
       "source_present": true,
       "instruction_match": 0.743,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "legacy_status": "NEAR-MISS 74.3%"
     },
     {
       "id": "us-804e386c",
@@ -551187,7 +551398,7 @@
       "unit": "monolib/src/core/code_804DEDA8",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "ANALYSIS COMPLETE",
+      "status": "COMPILES",
       "origin": "symbols.txt",
       "called_functions": [
         "us-804e3268"
@@ -551200,7 +551411,8 @@
       "source": "libs/monolib/src/core/code_804DEDA8.cpp",
       "source_present": true,
       "instruction_match": 0.0,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "legacy_status": "ANALYSIS COMPLETE"
     },
     {
       "id": "us-804e3958",
@@ -551214,7 +551426,7 @@
       "unit": "monolib/src/core/code_804DEDA8",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "NEAR-MISS 63.3%",
+      "status": "STRUCTURAL",
       "origin": "symbols.txt",
       "called_functions": [
         "us-804e3504"
@@ -551227,7 +551439,8 @@
       "source": "libs/monolib/src/core/code_804DEDA8.cpp",
       "source_present": true,
       "instruction_match": 0.633,
-      "equivalence_status": "equivalent"
+      "equivalence_status": "equivalent",
+      "legacy_status": "NEAR-MISS 63.3%"
     },
     {
       "id": "us-804e3a94",
@@ -551851,7 +552064,7 @@
       "unit": "monolib/src/core/code_804DEDA8",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "NEAR-MISS 20.9% byte (semantics complete)",
+      "status": "STRUCTURAL",
       "origin": "symbols.txt",
       "called_functions": [
         "us-804e4624"
@@ -551867,7 +552080,8 @@
       "source": "libs/monolib/src/core/code_804DEDA8.cpp",
       "source_present": true,
       "instruction_match": 0.209,
-      "equivalence_status": "inconclusive_unsupported"
+      "equivalence_status": "inconclusive_unsupported",
+      "legacy_status": "NEAR-MISS 20.9% byte (semantics complete)"
     },
     {
       "id": "us-804e4970",
@@ -552129,7 +552343,7 @@
       "unit": "monolib/src/core/code_804DEDA8",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "COMPILES 5.8%",
+      "status": "STRUCTURAL",
       "origin": "symbols.txt",
       "called_functions": [
         "us-804e1bb4",
@@ -552145,7 +552359,8 @@
       "source": "libs/monolib/src/core/code_804DEDA8.cpp",
       "source_present": true,
       "instruction_match": 0.058,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "legacy_status": "COMPILES 5.8%"
     },
     {
       "id": "us-804e5730",
@@ -552159,7 +552374,7 @@
       "unit": "monolib/src/core/code_804DEDA8",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "OPEN-ITEM",
+      "status": "STRUCTURAL",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -552173,7 +552388,8 @@
       "source": "libs/monolib/src/core/code_804DEDA8.cpp",
       "source_present": true,
       "instruction_match": 0.37,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "legacy_status": "OPEN-ITEM"
     },
     {
       "id": "us-804e5c40",
@@ -552353,7 +552569,7 @@
       "unit": "monolib/src/core/code_804DEDA8",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "NEAR-MISS 2.8% byte (semantics complete)",
+      "status": "STRUCTURAL",
       "origin": "symbols.txt",
       "called_functions": [
         "us-80438870",
@@ -552367,7 +552583,8 @@
       "source": "libs/monolib/src/core/code_804DEDA8.cpp",
       "source_present": true,
       "instruction_match": 0.028,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "legacy_status": "NEAR-MISS 2.8% byte (semantics complete)"
     },
     {
       "id": "us-804e6524",
@@ -552524,7 +552741,7 @@
       "unit": "monolib/src/core/code_804DEDA8",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "ANALYSIS (stub, scoped)",
+      "status": "COMPILES",
       "origin": "symbols.txt",
       "called_functions": [
         "us-804e7418",
@@ -552538,7 +552755,8 @@
       "source": "libs/monolib/src/core/code_804DEDA8.cpp",
       "source_present": true,
       "instruction_match": 0.0,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "legacy_status": "ANALYSIS (stub, scoped)"
     },
     {
       "id": "us-804e7228",
@@ -552608,7 +552826,7 @@
       "unit": "monolib/src/core/code_804DEDA8",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "NEAR-MISS 47.5%",
+      "status": "STRUCTURAL",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -552619,7 +552837,8 @@
       "source": "libs/monolib/src/core/code_804DEDA8.cpp",
       "source_present": true,
       "instruction_match": 0.475,
-      "equivalence_status": "inconclusive_unsupported"
+      "equivalence_status": "inconclusive_unsupported",
+      "legacy_status": "NEAR-MISS 47.5%"
     },
     {
       "id": "us-804e758c",
@@ -552633,7 +552852,7 @@
       "unit": "monolib/src/core/code_804DEDA8",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "OPEN-ITEM",
+      "status": "COMPILES",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -552644,7 +552863,8 @@
       "source": "libs/monolib/src/core/code_804DEDA8.cpp",
       "source_present": true,
       "instruction_match": 0.0,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "legacy_status": "OPEN-ITEM"
     },
     {
       "id": "us-804e7730",
@@ -553305,7 +553525,7 @@
       "unit": "monolib/src/core/ScheduleList",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "OPEN-ITEM",
+      "status": "HIGH_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-804375c4",
@@ -553319,7 +553539,8 @@
       "source": "libs/monolib/src/core/ScheduleList.cpp",
       "source_present": true,
       "instruction_match": 84.8,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "legacy_status": "OPEN-ITEM"
     },
     {
       "id": "us-804e893c",
@@ -553442,7 +553663,7 @@
       "unit": "monolib/src/core/ScheduleList",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "OPEN-ITEM",
+      "status": "STRUCTURAL",
       "origin": "symbols.txt",
       "called_functions": [
         "us-80437108",
@@ -553458,7 +553679,8 @@
       "source": "libs/monolib/src/core/ScheduleList.cpp",
       "source_present": true,
       "instruction_match": 44.8,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "legacy_status": "OPEN-ITEM"
     },
     {
       "id": "us-804e8e28",
@@ -553598,7 +553820,7 @@
       "unit": "monolib/src/core/ScheduleList",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "OPEN-ITEM",
+      "status": "STRUCTURAL",
       "origin": "symbols.txt",
       "called_functions": [
         "us-80437108",
@@ -553613,7 +553835,8 @@
       "source": "libs/monolib/src/core/ScheduleList.cpp",
       "source_present": true,
       "instruction_match": 8.8,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "legacy_status": "OPEN-ITEM"
     },
     {
       "id": "us-804e91f4",
@@ -553752,7 +553975,7 @@
       "unit": "monolib/src/core/ScheduleList",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "OPEN-ITEM",
+      "status": "STRUCTURAL",
       "origin": "symbols.txt",
       "called_functions": [
         "us-80437108",
@@ -553767,7 +553990,8 @@
       "source": "libs/monolib/src/core/ScheduleList.cpp",
       "source_present": true,
       "instruction_match": 7.8,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "legacy_status": "OPEN-ITEM"
     },
     {
       "id": "us-804e9808",
@@ -556452,7 +556676,7 @@
       "unit": "monolib/src/scn/CMdlDynamics",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "STRUCTURAL 25%",
+      "status": "STRUCTURAL",
       "origin": "symbols.txt",
       "called_functions": [
         "us-8040d584"
@@ -556464,7 +556688,8 @@
       "abi_helper_calls": [],
       "source": "libs/monolib/src/scn/CMdlDynamics.cpp",
       "source_present": true,
-      "instruction_match": 0.25
+      "instruction_match": 0.25,
+      "legacy_status": "STRUCTURAL 25%"
     },
     {
       "id": "us-804f0c48",
@@ -557288,7 +557513,7 @@
       "unit": "monolib/src/core/code_804EE558",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "BLOCKED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-8044e894",
@@ -557309,7 +557534,8 @@
       "source": "libs/monolib/src/core/code_804EE558.cpp",
       "instruction_match": 99.87,
       "equivalence_status": "equivalent",
-      "source_present": true
+      "source_present": true,
+      "legacy_status": "BLOCKED"
     },
     {
       "id": "us-804f320c",
@@ -557384,7 +557610,7 @@
       "unit": "monolib/src/core/code_804EE558",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "BLOCKED",
+      "status": "STRUCTURAL",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -557395,7 +557621,8 @@
       "source": "libs/monolib/src/core/code_804EE558.cpp",
       "instruction_match": 24.49,
       "equivalence_status": "inconclusive_smt_disabled",
-      "source_present": true
+      "source_present": true,
+      "legacy_status": "BLOCKED"
     },
     {
       "id": "us-804f3f14",

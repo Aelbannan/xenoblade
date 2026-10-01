@@ -102,7 +102,7 @@ extern "C" __declspec(noinline) void MakeCrystal_CopyEntry(MakeCrystalEntry* dst
 
 // Retail 0x80213530: trivial deleting destructor (no members to destruct),
 // frees the object only when both the object and the flags-bit are non-zero.
-MakeCrystalTable* __dt__80213530(MakeCrystalTable* self, int flags) {
+extern "C" MakeCrystalTable* __dt__80213530(MakeCrystalTable* self, int flags) {
     if (self != 0 && flags > 0)
         operator delete(self);
     return self;

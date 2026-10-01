@@ -84,9 +84,9 @@ void func_801C41E8(class CTitleAHelp* self, u8 arg);
 void func_801C4654(class CTitleAHelp* self, u32 arg);
 void setInfoText(class CTitleAHelp* self, char* text);
 void func_801C46DC(class CTitleAHelp* self, u32 arg);
-void CFade_Update(class CFade* self);
-int CFade_IsVisible(class CFade* self);
-void CFade_FadeOut(class CFade* self);
+extern "C" void CFade_Update(class CFade* self);
+extern "C" int CFade_IsVisible(class CFade* self);
+extern "C" void CFade_FadeOut(class CFade* self);
 int func_8024CE1C(class CFloorMap* self);
 void func_8024BE1C(class CFloorMap* self);
 void func_8024CB94(class CFloorMap* self);
@@ -98,7 +98,7 @@ void func_8024C8F8(class CFloorMap* self, class nw4r::lyt::DrawInfo* drawInfo);
 // Retail keeps these draw helpers as unmangled free symbols taking sub-object pointers.
 void BgTex_Draw_3D7C(class CBgTex* self, class nw4r::lyt::DrawInfo* drawInfo);
 void drawHelp(class CTitleAHelp* self, class nw4r::lyt::DrawInfo* drawInfo);
-void CFade_Draw(class CFade* self, class nw4r::lyt::DrawInfo* drawInfo);
+extern "C" void CFade_Draw(class CFade* self, class nw4r::lyt::DrawInfo* drawInfo);
 // Retail emits direct bl to the DrawInfo ctor/dtor symbols.
 void __ct__Q34nw4r3lyt8DrawInfoFv(class nw4r::lyt::DrawInfo* self);
 void __dt__Q34nw4r3lyt8DrawInfoFv(class nw4r::lyt::DrawInfo* self, int flags);

@@ -865,7 +865,7 @@ void setTargetObj_(void* obj, void* target);
 void schedSetStepIntervals(void* effect, f32 f1, f32 f2);
 void simRemoveWordFromBuf(void* handler, void* source);
 void func_8015BD94(void* effect);
-void stopVoiceA(void* self);
+extern "C" void stopVoiceA(void* self);
 void* Scn_FindCamItem(void* scene, int index);  // scene pose lookup (MoveImplTriggerCamShake)
 void func_8007B044(void* shake, int flag);    // camera-shake dispatch (MoveImplTriggerCamShake)
 }

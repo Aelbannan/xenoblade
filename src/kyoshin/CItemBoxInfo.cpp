@@ -223,7 +223,6 @@ void func_801D8318(CItemBoxInfo*);
 extern "C" void func_801D4E2C(void*, void*, void*);
 extern "C" void func_801D69FC(CItemBoxInfo*, u32, void*);
 void clearItemBoxQuadTexts(CItemBoxInfo*);
-void func_801D77A4(void*, u32, u16);
 extern "C" void func_801D8E34(CItemBoxInfo*, u32, void*, u32);
 extern "C" void func_801E197C(void*, void*, void*);
 void func_801E1E0C(CItemBoxSlotFlags*, void*, void*);
@@ -253,10 +252,6 @@ extern "C" s32 func_801DF4E0(void*, void*, s32, void*);
 extern "C" s32 func_801DF578(void*, void*, s32, void*);
 u32 getItemBoxCondStat2D(void*, void*);
 u32 func_801E9310(void*, void*, u32, void*);
-void func_801DF4B4(void*, void*);
-void func_801DF4D0(void*, u16, u32, u8);
-void func_801E9164(void*, void*);
-void func_801E9180(void*, u16, u32, u8);
 void func_801D4260(CItemBoxInfo*, u16, void*, u16);
 extern void* lbl_eu_80664104;
 extern void* lbl_eu_806640A8;
@@ -1096,7 +1091,6 @@ void __declspec(noinline) func_801D62F8(void* arr, u32 index, const void* color)
     }
     __as__11_GXColorS10FRC11_GXColorS10((u8*)arr + index * 8 + 0x10, color);
 }
-void func_801D3FF0(void*);
 
 void updateItemBoxAnims(CItemBoxInfo* info) {
     if (info->state.active != 0) {
@@ -4858,9 +4852,7 @@ extern "C" CItemBoxInfo* __dt__12CItemBoxInfoFv(CItemBoxInfo* info, s32 flags) {
 }
 #pragma pop
 
-void func_801D3FF0(void*) {}
-
-// Retail __ct__CItemBoxInfo2 uses the stmw/lmw frame (MWCC optimize_for_size
+// Retail __ct__CItemBoxInfo2 uses the stmw/lmw frame
 // prologue merge) with arg2/arg3 saved in r30/r31; plain -O4,p splits the
 // saves into separate stw's. The trailing resetCItemBox__Fv call is a real
 // bl (the callee is __declspec(noinline)).
@@ -8262,37 +8254,7 @@ char* func_801D3C74(void* item_data, u8 index) {
 }
 #pragma pop
 
-void func_801DF4B4(void* dst, void* src) {
-    *(u16*)((u8*)dst + 0) = *(u16*)((u8*)src + 0);
-    *(u32*)((u8*)dst + 4) = *(u32*)((u8*)src + 4);
-    *(u8*)((u8*)dst + 8) = *(u8*)((u8*)src + 8);
-}
-
-void func_801DF4D0(void* dst, u16 a, u32 b, u8 c) {
-    *(u16*)((u8*)dst + 0) = a;
-    *(u32*)((u8*)dst + 4) = b;
-    *(u8*)((u8*)dst + 8) = c;
-}
-
-void func_801E9164(void* dst, void* src) {
-    *(u16*)((u8*)dst + 0) = *(u16*)((u8*)src + 0);
-    *(u32*)((u8*)dst + 4) = *(u32*)((u8*)src + 4);
-    *(u8*)((u8*)dst + 8) = *(u8*)((u8*)src + 8);
-}
-
-void func_801E9180(void* dst, u16 a, u32 b, u8 c) {
-    *(u16*)((u8*)dst + 0) = a;
-    *(u32*)((u8*)dst + 4) = b;
-    *(u8*)((u8*)dst + 8) = c;
-}
-
-void func_801D77A4(void* arr, u32 index, u16 value) {
-    if (index < 12) {
-        *(u16*)((u8*)arr + index * 2 + 0xC0) = value;
-    }
-}
-
-// Retail func_801D4260: finds each slot pane (vtable+0x3C FindPaneByName on
+// Retail func_801D4260:
 // the layout child) and clears it, then re-labels panes according to the
 // item-box state byte (info+0x9A) and the equip byte (info+0xAE) and the
 // category index arg2: 2/4-8 -> two panes, 3 -> one, 9/0xA/0xD -> one each.
@@ -8410,31 +8372,11 @@ void func_801D47D4(CItemBoxInfo* info, u16 arg2, void* arg3, u16 arg4) {
                   text.c_str(), NULL);
 }
 
-u8 func_801D4214(CItemBoxInfo* info) {
-    return info->state.current;
-}
-
-u32 func_801D4240(CItemBoxInfo* info) {
-    return info->state.state == 3;
-}
-
-u32 func_801D8E08(CItemBoxInfo* info) {
-    return info->state.layout != NULL;
-}
-
 u8 func_801E13D8(CItemBoxInfo2* info) {
     return *(u8*)((u8*)info + 0x90);
 }
 
-u8 func_801E1490(CItemBoxInfo2* info) {
-    return *(u8*)((u8*)info + 0x98);
-}
-
-u32 func_801E14BC(CItemBoxInfo2* info) {
-    return *(u32*)((u8*)info + 0x94) == 3;
-}
-
-// GXColorS10::operator= (retail __as__11_GXColorS10FRC11_GXColorS10): the
+// GXColorS10::operator=
 // implicit 4x s16 struct copy emits the batched lha/sth sequence (all loads
 // first, then all stores) that matches the retail body exactly.
 struct GXColorS10Copy {

@@ -45,11 +45,11 @@ u8 CScrollBar::isActive() { return mActive; }
 // Mark the widget ready once its layout has been built.
 // Single-arg call: retail leaves r4 untouched; cast keeps the same
 // unmangled reloc (C forbids arity overloads on extern "C").
-void CScrollBar_InitRootPane(CScrollBar* self) {
+extern "C" void CScrollBar_InitRootPane(CScrollBar* self) {
     ((void (*)(nw4r::lyt::Pane*))Cur_SetPaneTranslate)(self->mLayout->GetRootPane());
 }
 
-void CScrollBar_PlaceThumb(CScrollBar* self, u32 count) {
+extern "C" void CScrollBar_PlaceThumb(CScrollBar* self, u32 count) {
     nw4r::lyt::Pane* pane =
         self->mLayout->GetRootPane()->FindPaneByName(lbl_eu_80534DC0[self->mDirection], true);
     nw4r::math::VEC3 vec;
@@ -68,7 +68,7 @@ __attribute__((noinline)) void CScrollBar_StepScrollOut(CScrollBar* self);
 
 /* Per-frame update dispatch: while the bar is ready, step the entering/leaving
 animations and always call the layout's Animate. */
-void CScrollBar_UpdateDispatch(CScrollBar* self) {
+extern "C" void CScrollBar_UpdateDispatch(CScrollBar* self) {
     if (self->mReady == 0) return;
     switch (self->mState) {
     case 1:
@@ -171,7 +171,7 @@ void CScrollBar::draw(nw4r::lyt::DrawInfo* drawInfo) {
 
 /* Teardown: release the file handle, destroy the layout/accessor/scratch region,
 and reset the widget to its blank state. */
-void CScrollBar_Teardown(CScrollBar* self) {
+extern "C" void CScrollBar_Teardown(CScrollBar* self) {
     closeFileHandle(&self->mFileHandle);
     self->mReady = 0;
     self->mAnimTransform = 0;
@@ -201,7 +201,7 @@ void CScrollBar::requestScrollOut() {
     }
 }
 
-void CScrollBar_UpdateThumb(CScrollBar* self, u32 scrollFrom, u32 scrollTo) {
+extern "C" void CScrollBar_UpdateThumb(CScrollBar* self, u32 scrollFrom, u32 scrollTo) {
     nw4r::lyt::Pane* pane =
         self->mLayout->GetRootPane()->FindPaneByName(lbl_eu_80534DC0[self->mDirection], true);
     CScrollBarPane* pdata = reinterpret_cast<CScrollBarPane*>(pane);

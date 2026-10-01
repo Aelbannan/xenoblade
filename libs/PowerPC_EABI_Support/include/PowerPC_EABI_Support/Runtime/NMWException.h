@@ -29,7 +29,7 @@ typedef struct DestructorChain {
 extern void* __register_global_object(void* object, void* destructor, void* registration);
 extern void __destroy_global_chain(void);
 
-extern void __end__catch(CatchInfo* catchinfo);
+extern "C" extern void __end__catch(CatchInfo* catchinfo);
 extern void __throw(char* throwtype, void* location, void* dtor);
 extern void __unexpected(CatchInfo* catchinfo);
 

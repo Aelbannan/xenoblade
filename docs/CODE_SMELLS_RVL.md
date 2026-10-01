@@ -9,25 +9,25 @@ Tracks the same legacy TU smell families as `docs/CODE_SMELLS.md` for the hand-w
 ## Summary
 
 - Files scanned: 248
-- Inline-asm kernels: 100 functions / 2636 lines (PLAN.md §17.6 sanctioned Gekko paired-single/hardware code)
+- Inline-asm kernels: 100 functions / 2621 lines (PLAN.md §17.6 sanctioned Gekko paired-single/hardware code)
 
 | metric | count |
 |---|---|
-| extern "C" (total lines) | 395 |
-| extern "C" declarations (non-lbl_*) | 69 |
-| extern "C" definitions (forced names) | 21 |
-| `self`/register-style params | 7 |
-| `void*` (params + locals) | 814 |
-| `(void*)` casts | 137 |
-| raw pointer offset arithmetic | 93 |
-| deref-through-cast arithmetic | 13 |
-| inline asm / `register` (incl. asm kernels) | 208 |
-| rN-named params | 7 |
+| extern "C" (total lines) | 410 |
+| extern "C" declarations (non-lbl_*) | 97 |
+| extern "C" definitions (forced names) | 22 |
+| `self`/register-style params | 11 |
+| `void*` (params + locals) | 761 |
+| `(void*)` casts | 138 |
+| raw pointer offset arithmetic | 95 |
+| deref-through-cast arithmetic | 6 |
+| inline asm / `register` (incl. asm kernels) | 209 |
+| rN-named params | 11 |
 | goto | 224 |
 | DECOMP_ASM_INSN asm shims (ipcclt opword blocks — sanctioned) | 2 |
 | #pragma schedule once/twice | 0 |
 | assignment inside cast / init-list | 0 |
-| #pragma | 208 |
+| #pragma | 206 |
 
 ## void* context
 
@@ -35,23 +35,23 @@ Raw `void*` counts overstate the smell: the SDK surface legitimately uses `void*
 
 | module | TUs | void* lines | api | cb | self-offset (actionable) | other |
 |---|---|---|---|---|---|---|
-| bte | 68 | 409 | 122 | 1 | 0 | 286 |
-| os | 34 | 117 | 4 | 0 | 0 | 113 |
-| hbm | 41 | 101 | 22 | 0 | 0 | 79 |
-| gx | 15 | 46 | 3 | 0 | 0 | 43 |
+| bte | 68 | 373 | 103 | 0 | 0 | 270 |
+| os | 34 | 118 | 3 | 0 | 0 | 115 |
+| hbm | 41 | 83 | 23 | 0 | 0 | 60 |
+| gx | 15 | 45 | 3 | 0 | 0 | 42 |
 | mem | 5 | 44 | 0 | 0 | 0 | 44 |
 | ax | 10 | 32 | 0 | 0 | 0 | 32 |
 | ipc | 4 | 32 | 0 | 0 | 0 | 32 |
 | usb | 1 | 29 | 0 | 0 | 0 | 29 |
+| dvd | 8 | 25 | 0 | 0 | 0 | 25 |
 | nand | 5 | 24 | 0 | 0 | 0 | 24 |
-| dvd | 8 | 22 | 0 | 0 | 0 | 22 |
 | fs | 1 | 22 | 0 | 0 | 0 | 22 |
-| wpad | 5 | 15 | 1 | 0 | 0 | 14 |
+| wpad | 5 | 14 | 1 | 0 | 0 | 13 |
 | sc | 3 | 13 | 0 | 0 | 0 | 13 |
+| wud | 3 | 6 | 0 | 0 | 0 | 6 |
 | axfx | 11 | 5 | 0 | 0 | 0 | 5 |
 | si | 2 | 5 | 0 | 0 | 0 | 5 |
-| vi | 3 | 5 | 4 | 0 | 0 | 1 |
-| wud | 3 | 5 | 0 | 0 | 0 | 5 |
+| vi | 3 | 5 | 2 | 0 | 0 | 3 |
 | ai | 1 | 4 | 0 | 0 | 0 | 4 |
 | exi | 3 | 4 | 0 | 0 | 0 | 4 |
 | cx | 3 | 3 | 0 | 0 | 0 | 3 |
@@ -75,16 +75,16 @@ No files carry the `void* self` offset-deref pattern.
 
 | TU | severity |
 |---|---|
-| libs/RVL_SDK/src/revolution/bte/bta/dm/bta_dm_act.c | 77 |
-| libs/RVL_SDK/src/revolution/os/OSExec.c | 43 |
 | libs/RVL_SDK/src/revolution/bte/stack/hid/hidh_conn.c | 41 |
+| libs/RVL_SDK/src/revolution/bte/bta/dm/bta_dm_act.c | 39 |
+| libs/RVL_SDK/src/revolution/os/OSExec.c | 39 |
 | libs/RVL_SDK/src/revolution/hbm/synctrl.c | 38 |
 | libs/RVL_SDK/src/revolution/usb/usb.c | 29 |
 | libs/RVL_SDK/src/revolution/bte/stack/rfcomm/rfc_ts_frames.c | 27 |
+| libs/RVL_SDK/src/revolution/hbm/HBMBase.cpp | 27 |
 | libs/RVL_SDK/src/revolution/bte/stack/btm/btm_sec.c | 26 |
+| libs/RVL_SDK/src/revolution/hbm/nw4hbm/lyt/lyt_pane.cpp | 26 |
 | libs/RVL_SDK/src/revolution/ipc/ipcclt.c | 25 |
-| libs/RVL_SDK/src/revolution/bte/stack/btm/btm_devctl.c | 23 |
-| libs/RVL_SDK/src/revolution/bte/stack/rfcomm/rfc_port_fsm.c | 23 |
 
 ## Per-TU metrics
 
@@ -97,11 +97,12 @@ No files carry the `void* self` offset-deref pattern.
 | libs/RVL_SDK/src/revolution/ax/AXOut.c | 0 | 0 | 0 | 3 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/RVL_SDK/src/revolution/axfx/AXFXChorusExp.c | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 3 | 0 | 0 | 0 |
 | libs/RVL_SDK/src/revolution/axfx/AXFXChorusExpDpl2.c | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 3 | 0 | 0 | 0 |
+| libs/RVL_SDK/src/revolution/axfx/AXFXDelayExp.c | 0 | 0 | 0 | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 |
 | libs/RVL_SDK/src/revolution/axfx/AXFXDelayExpDpl2.c | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 1 | 0 | 0 | 0 |
 | libs/RVL_SDK/src/revolution/axfx/AXFXHooks.c | 0 | 0 | 0 | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/RVL_SDK/src/revolution/axfx/AXFXReverbHi.c | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/RVL_SDK/src/revolution/base/PPCArch.c | 0 | 0 | 0 | 0 | 0 | 0 | 27 | 0 | 0 | 0 | 0 | 0 |
-| libs/RVL_SDK/src/revolution/bte/bta/dm/bta_dm_act.c | 0 | 0 | 0 | 56 | 2 | 0 | 1 | 0 | 1 | 0 | 0 | 0 |
+| libs/RVL_SDK/src/revolution/bte/bta/dm/bta_dm_act.c | 0 | 0 | 0 | 19 | 1 | 0 | 0 | 0 | 1 | 0 | 0 | 0 |
 | libs/RVL_SDK/src/revolution/bte/bta/dm/bta_dm_api.c | 0 | 0 | 0 | 7 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 |
 | libs/RVL_SDK/src/revolution/bte/bta/dm/bta_dm_main.c | 0 | 0 | 0 | 2 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/RVL_SDK/src/revolution/bte/bta/dm/bta_dm_pm.c | 0 | 0 | 0 | 6 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 |
@@ -114,14 +115,14 @@ No files carry the `void* self` offset-deref pattern.
 | libs/RVL_SDK/src/revolution/bte/gki/gki_buffer.c | 0 | 0 | 1 | 16 | 0 | 0 | 1 | 1 | 6 | 0 | 0 | 0 |
 | libs/RVL_SDK/src/revolution/bte/gki/gki_ppc.c | 0 | 0 | 0 | 3 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/RVL_SDK/src/revolution/bte/hci/hcisu_h2.c | 0 | 0 | 0 | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
-| libs/RVL_SDK/src/revolution/bte/hci/uusb_ppc.c | 0 | 0 | 1 | 9 | 6 | 0 | 0 | 1 | 13 | 0 | 0 | 0 |
+| libs/RVL_SDK/src/revolution/bte/hci/uusb_ppc.c | 0 | 0 | 2 | 9 | 6 | 0 | 0 | 2 | 13 | 0 | 0 | 0 |
 | libs/RVL_SDK/src/revolution/bte/main/bte_hcisu.c | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/RVL_SDK/src/revolution/bte/stack/btm/btm_acl.c | 0 | 0 | 0 | 5 | 1 | 0 | 0 | 0 | 1 | 0 | 0 | 0 |
 | libs/RVL_SDK/src/revolution/bte/stack/btm/btm_dev.c | 0 | 0 | 0 | 3 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/RVL_SDK/src/revolution/bte/stack/btm/btm_devctl.c | 0 | 0 | 0 | 23 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 |
 | libs/RVL_SDK/src/revolution/bte/stack/btm/btm_inq.c | 0 | 0 | 0 | 22 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
-| libs/RVL_SDK/src/revolution/bte/stack/btm/btm_sco.c | 0 | 0 | 0 | 0 | 0 | 0 | 1 | 0 | 3 | 0 | 0 | 0 |
-| libs/RVL_SDK/src/revolution/bte/stack/btm/btm_sec.c | 0 | 0 | 0 | 22 | 0 | 0 | 2 | 0 | 0 | 0 | 0 | 0 |
+| libs/RVL_SDK/src/revolution/bte/stack/btm/btm_sco.c | 0 | 0 | 0 | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 |
+| libs/RVL_SDK/src/revolution/bte/stack/btm/btm_sec.c | 0 | 0 | 0 | 22 | 0 | 0 | 2 | 0 | 3 | 0 | 0 | 0 |
 | libs/RVL_SDK/src/revolution/bte/stack/btu/btu_hcif.c | 0 | 0 | 0 | 9 | 0 | 0 | 3 | 0 | 0 | 0 | 0 | 0 |
 | libs/RVL_SDK/src/revolution/bte/stack/gap/gap_api.c | 0 | 0 | 0 | 2 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/RVL_SDK/src/revolution/bte/stack/gap/gap_conn.c | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 0 |
@@ -143,7 +144,7 @@ No files carry the `void* self` offset-deref pattern.
 | libs/RVL_SDK/src/revolution/bte/stack/rfcomm/rfc_port_if.c | 0 | 0 | 0 | 5 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/RVL_SDK/src/revolution/bte/stack/rfcomm/rfc_ts_frames.c | 0 | 0 | 0 | 2 | 25 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/RVL_SDK/src/revolution/bte/stack/rfcomm/rfc_utils.c | 0 | 0 | 0 | 14 | 0 | 0 | 0 | 0 | 1 | 0 | 0 | 0 |
-| libs/RVL_SDK/src/revolution/bte/stack/sdp/sdp_api.c | 0 | 0 | 0 | 3 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| libs/RVL_SDK/src/revolution/bte/stack/sdp/sdp_api.c | 0 | 0 | 0 | 3 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 |
 | libs/RVL_SDK/src/revolution/bte/stack/sdp/sdp_db.c | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/RVL_SDK/src/revolution/bte/stack/sdp/sdp_discovery.c | 0 | 0 | 0 | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/RVL_SDK/src/revolution/bte/stack/sdp/sdp_main.c | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
@@ -164,7 +165,7 @@ No files carry the `void* self` offset-deref pattern.
 | libs/RVL_SDK/src/revolution/fs/fs.c | 0 | 0 | 0 | 22 | 0 | 0 | 0 | 0 | 17 | 0 | 0 | 0 |
 | libs/RVL_SDK/src/revolution/gx/GXAttr.c | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/RVL_SDK/src/revolution/gx/GXDisplayList.c | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
-| libs/RVL_SDK/src/revolution/gx/GXFifo.c | 0 | 0 | 0 | 17 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| libs/RVL_SDK/src/revolution/gx/GXFifo.c | 0 | 0 | 0 | 16 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/RVL_SDK/src/revolution/gx/GXFrameBuf.c | 0 | 0 | 0 | 2 | 16 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/RVL_SDK/src/revolution/gx/GXInit.c | 0 | 0 | 0 | 3 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/RVL_SDK/src/revolution/gx/GXLight.c | 0 | 0 | 0 | 1 | 0 | 0 | 5 | 0 | 0 | 0 | 0 | 0 |
@@ -172,30 +173,26 @@ No files carry the `void* self` offset-deref pattern.
 | libs/RVL_SDK/src/revolution/gx/GXPixel.c | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/RVL_SDK/src/revolution/gx/GXTexture.c | 0 | 0 | 0 | 6 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/RVL_SDK/src/revolution/gx/GXTransform.c | 0 | 0 | 0 | 5 | 0 | 0 | 15 | 0 | 0 | 0 | 0 | 0 |
-| libs/RVL_SDK/src/revolution/hbm/HBMAxSound.cpp | 0 | 0 | 0 | 5 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
-| libs/RVL_SDK/src/revolution/hbm/HBMBase.cpp | 0 | 0 | 0 | 20 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| libs/RVL_SDK/src/revolution/hbm/HBMAxSound.cpp | 0 | 0 | 0 | 3 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| libs/RVL_SDK/src/revolution/hbm/HBMBase.cpp | 3 | 1 | 0 | 21 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/RVL_SDK/src/revolution/hbm/HBMCommon.cpp | 0 | 4 | 0 | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
-| libs/RVL_SDK/src/revolution/hbm/HBMController.cpp | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
-| libs/RVL_SDK/src/revolution/hbm/HBMFrameController.cpp | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
-| libs/RVL_SDK/src/revolution/hbm/HBMGUIManager.cpp | 0 | 0 | 0 | 5 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| libs/RVL_SDK/src/revolution/hbm/HBMGUIManager.cpp | 0 | 0 | 0 | 2 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/RVL_SDK/src/revolution/hbm/HBMRemoteSpk.cpp | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/RVL_SDK/src/revolution/hbm/mix.c | 1 | 3 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
-| libs/RVL_SDK/src/revolution/hbm/nw4hbm/lyt/lyt_arcResourceAccessor.cpp | 0 | 0 | 0 | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| libs/RVL_SDK/src/revolution/hbm/nw4hbm/lyt/lyt_arcResourceAccessor.cpp | 0 | 0 | 0 | 2 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/RVL_SDK/src/revolution/hbm/nw4hbm/lyt/lyt_common.cpp | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/RVL_SDK/src/revolution/hbm/nw4hbm/lyt/lyt_layout.cpp | 0 | 0 | 0 | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
-| libs/RVL_SDK/src/revolution/hbm/nw4hbm/lyt/lyt_picture.cpp | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| libs/RVL_SDK/src/revolution/hbm/nw4hbm/lyt/lyt_material.cpp | 0 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| libs/RVL_SDK/src/revolution/hbm/nw4hbm/lyt/lyt_pane.cpp | 23 | 0 | 0 | 3 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/RVL_SDK/src/revolution/hbm/nw4hbm/lyt/lyt_textBox.cpp | 0 | 1 | 0 | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
-| libs/RVL_SDK/src/revolution/hbm/nw4hbm/lyt/lyt_window.cpp | 0 | 1 | 0 | 3 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
-| libs/RVL_SDK/src/revolution/hbm/nw4hbm/ut/ut_ResFont.cpp | 0 | 0 | 0 | 2 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| libs/RVL_SDK/src/revolution/hbm/nw4hbm/ut/ut_ResFont.cpp | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/RVL_SDK/src/revolution/hbm/nw4hbm/ut/ut_ResFontBase.cpp | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
-| libs/RVL_SDK/src/revolution/hbm/nw4hbm/ut/ut_TextWriterBase.cpp | 0 | 0 | 0 | 0 | 1 | 1 | 0 | 0 | 0 | 0 | 0 | 0 |
-| libs/RVL_SDK/src/revolution/hbm/nw4hbm/ut/ut_list.cpp | 0 | 0 | 0 | 6 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
-| libs/RVL_SDK/src/revolution/hbm/seq.c | 9 | 2 | 0 | 3 | 0 | 0 | 0 | 0 | 1 | 0 | 0 | 0 |
+| libs/RVL_SDK/src/revolution/hbm/seq.c | 10 | 2 | 0 | 3 | 0 | 0 | 0 | 0 | 1 | 0 | 0 | 0 |
 | libs/RVL_SDK/src/revolution/hbm/syn.c | 8 | 3 | 0 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/RVL_SDK/src/revolution/hbm/synctrl.c | 17 | 2 | 0 | 8 | 2 | 2 | 0 | 0 | 0 | 0 | 0 | 0 |
-| libs/RVL_SDK/src/revolution/hbm/synenv.c | 3 | 2 | 0 | 5 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| libs/RVL_SDK/src/revolution/hbm/synenv.c | 0 | 0 | 0 | 5 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/RVL_SDK/src/revolution/hbm/synmix.c | 6 | 0 | 0 | 6 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
-| libs/RVL_SDK/src/revolution/hbm/synpitch.c | 3 | 1 | 0 | 2 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| libs/RVL_SDK/src/revolution/hbm/synpitch.c | 7 | 3 | 0 | 2 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/RVL_SDK/src/revolution/hbm/synsample.c | 8 | 1 | 0 | 0 | 3 | 3 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/RVL_SDK/src/revolution/hbm/synvoice.c | 14 | 1 | 0 | 3 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/RVL_SDK/src/revolution/ipc/ipcMain.c | 0 | 0 | 0 | 6 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
@@ -224,7 +221,7 @@ No files carry the `void* self` offset-deref pattern.
 | libs/RVL_SDK/src/revolution/os/OSArena.c | 0 | 0 | 0 | 17 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/RVL_SDK/src/revolution/os/OSCache.c | 0 | 0 | 0 | 1 | 2 | 0 | 16 | 0 | 0 | 0 | 0 | 0 |
 | libs/RVL_SDK/src/revolution/os/OSContext.c | 0 | 0 | 0 | 0 | 0 | 0 | 11 | 0 | 0 | 0 | 0 | 0 |
-| libs/RVL_SDK/src/revolution/os/OSExec.c | 0 | 0 | 0 | 9 | 14 | 7 | 0 | 0 | 0 | 0 | 0 | 0 |
+| libs/RVL_SDK/src/revolution/os/OSExec.c | 0 | 0 | 0 | 10 | 15 | 1 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/RVL_SDK/src/revolution/os/OSFatal.c | 0 | 0 | 0 | 3 | 0 | 0 | 0 | 0 | 2 | 0 | 0 | 0 |
 | libs/RVL_SDK/src/revolution/os/OSFont.c | 0 | 0 | 0 | 4 | 5 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/RVL_SDK/src/revolution/os/OSInterrupt.c | 0 | 0 | 0 | 0 | 0 | 0 | 4 | 0 | 0 | 0 | 0 | 0 |
@@ -233,7 +230,7 @@ No files carry the `void* self` offset-deref pattern.
 | libs/RVL_SDK/src/revolution/os/OSMemory.c | 0 | 0 | 0 | 1 | 0 | 0 | 7 | 0 | 0 | 0 | 0 | 0 |
 | libs/RVL_SDK/src/revolution/os/OSNet.c | 0 | 0 | 0 | 9 | 0 | 0 | 1 | 0 | 1 | 0 | 0 | 0 |
 | libs/RVL_SDK/src/revolution/os/OSPlayTime.c | 0 | 0 | 0 | 3 | 1 | 0 | 0 | 0 | 13 | 0 | 0 | 0 |
-| libs/RVL_SDK/src/revolution/os/OSReset.c | 0 | 0 | 2 | 2 | 0 | 0 | 0 | 2 | 0 | 0 | 0 | 0 |
+| libs/RVL_SDK/src/revolution/os/OSReset.c | 0 | 0 | 5 | 2 | 0 | 0 | 0 | 5 | 0 | 0 | 0 | 0 |
 | libs/RVL_SDK/src/revolution/os/OSRtc.c | 0 | 0 | 0 | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/RVL_SDK/src/revolution/os/OSStateTM.c | 0 | 0 | 0 | 4 | 0 | 0 | 0 | 0 | 2 | 0 | 0 | 0 |
 | libs/RVL_SDK/src/revolution/os/OSSync.c | 0 | 0 | 0 | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 |
@@ -245,10 +242,10 @@ No files carry the `void* self` offset-deref pattern.
 | libs/RVL_SDK/src/revolution/si/SIBios.c | 0 | 0 | 0 | 5 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/RVL_SDK/src/revolution/usb/usb.c | 0 | 0 | 0 | 25 | 0 | 0 | 0 | 0 | 18 | 0 | 0 | 0 |
 | libs/RVL_SDK/src/revolution/vi/vi.c | 0 | 0 | 0 | 5 | 0 | 0 | 0 | 0 | 1 | 0 | 0 | 0 |
-| libs/RVL_SDK/src/revolution/wpad/WPAD.c | 0 | 0 | 0 | 14 | 2 | 0 | 1 | 0 | 7 | 0 | 0 | 0 |
+| libs/RVL_SDK/src/revolution/wpad/WPAD.c | 0 | 0 | 0 | 13 | 2 | 0 | 1 | 0 | 7 | 0 | 0 | 0 |
 | libs/RVL_SDK/src/revolution/wpad/WPADHIDParser.c | 0 | 0 | 0 | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 |
 | libs/RVL_SDK/src/revolution/wpad/WPADMem.c | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
-| libs/RVL_SDK/src/revolution/wud/WUD.c | 0 | 0 | 0 | 5 | 6 | 0 | 0 | 0 | 3 | 0 | 0 | 0 |
+| libs/RVL_SDK/src/revolution/wud/WUD.c | 0 | 0 | 0 | 6 | 9 | 0 | 0 | 0 | 3 | 0 | 0 | 0 |
 
 ## Notes
 
@@ -340,6 +337,7 @@ No files carry the `void* self` offset-deref pattern.
   "schedule_pragma": 0
  },
  "libs/RVL_SDK/src/revolution/axfx/AXFXDelayExp.c": {
+  "asm_code": 1,
   "asm_insn_shim": 0,
   "init_side_effect": 0,
   "schedule_pragma": 0
@@ -394,13 +392,12 @@ No files carry the `void* self` offset-deref pattern.
   "schedule_pragma": 0
  },
  "libs/RVL_SDK/src/revolution/bte/bta/dm/bta_dm_act.c": {
-  "asm_code": 1,
   "asm_insn_shim": 0,
   "goto_count": 1,
   "init_side_effect": 0,
-  "ptr_arith": 2,
+  "ptr_arith": 1,
   "schedule_pragma": 0,
-  "void_ptr": 56
+  "void_ptr": 19
  },
  "libs/RVL_SDK/src/revolution/bte/bta/dm/bta_dm_api.c": {
   "asm_code": 1,
@@ -522,9 +519,9 @@ No files carry the `void* self` offset-deref pattern.
   "goto_count": 13,
   "init_side_effect": 0,
   "ptr_arith": 6,
-  "rn_params": 1,
+  "rn_params": 2,
   "schedule_pragma": 0,
-  "self_params": 1,
+  "self_params": 2,
   "void_ptr": 9
  },
  "libs/RVL_SDK/src/revolution/bte/main/bte_hcisu.c": {
@@ -598,13 +595,13 @@ No files carry the `void* self` offset-deref pattern.
  "libs/RVL_SDK/src/revolution/bte/stack/btm/btm_sco.c": {
   "asm_code": 1,
   "asm_insn_shim": 0,
-  "goto_count": 3,
   "init_side_effect": 0,
   "schedule_pragma": 0
  },
  "libs/RVL_SDK/src/revolution/bte/stack/btm/btm_sec.c": {
   "asm_code": 2,
   "asm_insn_shim": 0,
+  "goto_count": 3,
   "init_side_effect": 0,
   "schedule_pragma": 0,
   "void_ptr": 22
@@ -769,6 +766,7 @@ No files carry the `void* self` offset-deref pattern.
   "void_ptr": 14
  },
  "libs/RVL_SDK/src/revolution/bte/stack/sdp/sdp_api.c": {
+  "asm_code": 1,
   "asm_insn_shim": 0,
   "init_side_effect": 0,
   "schedule_pragma": 0,
@@ -974,7 +972,7 @@ No files carry the `void* self` offset-deref pattern.
   "asm_insn_shim": 0,
   "init_side_effect": 0,
   "schedule_pragma": 0,
-  "void_ptr": 17
+  "void_ptr": 16
  },
  "libs/RVL_SDK/src/revolution/gx/GXFrameBuf.c": {
   "asm_insn_shim": 0,
@@ -1046,13 +1044,15 @@ No files carry the `void* self` offset-deref pattern.
   "asm_insn_shim": 0,
   "init_side_effect": 0,
   "schedule_pragma": 0,
-  "void_ptr": 5
+  "void_ptr": 3
  },
  "libs/RVL_SDK/src/revolution/hbm/HBMBase.cpp": {
   "asm_insn_shim": 0,
+  "extern_c_nonlbl_decl": 3,
+  "extern_c_nonlbl_def": 1,
   "init_side_effect": 0,
   "schedule_pragma": 0,
-  "void_ptr": 20
+  "void_ptr": 21
  },
  "libs/RVL_SDK/src/revolution/hbm/HBMCommon.cpp": {
   "asm_insn_shim": 0,
@@ -1064,20 +1064,18 @@ No files carry the `void* self` offset-deref pattern.
  "libs/RVL_SDK/src/revolution/hbm/HBMController.cpp": {
   "asm_insn_shim": 0,
   "init_side_effect": 0,
-  "schedule_pragma": 0,
-  "void_ptr": 1
+  "schedule_pragma": 0
  },
  "libs/RVL_SDK/src/revolution/hbm/HBMFrameController.cpp": {
   "asm_insn_shim": 0,
   "init_side_effect": 0,
-  "schedule_pragma": 0,
-  "void_ptr": 1
+  "schedule_pragma": 0
  },
  "libs/RVL_SDK/src/revolution/hbm/HBMGUIManager.cpp": {
   "asm_insn_shim": 0,
   "init_side_effect": 0,
   "schedule_pragma": 0,
-  "void_ptr": 5
+  "void_ptr": 2
  },
  "libs/RVL_SDK/src/revolution/hbm/HBMRemoteSpk.cpp": {
   "asm_insn_shim": 0,
@@ -1101,7 +1099,7 @@ No files carry the `void* self` offset-deref pattern.
   "asm_insn_shim": 0,
   "init_side_effect": 0,
   "schedule_pragma": 0,
-  "void_ptr": 4
+  "void_ptr": 2
  },
  "libs/RVL_SDK/src/revolution/hbm/nw4hbm/lyt/lyt_bounding.cpp": {
   "asm_insn_shim": 0,
@@ -1132,19 +1130,21 @@ No files carry the `void* self` offset-deref pattern.
  },
  "libs/RVL_SDK/src/revolution/hbm/nw4hbm/lyt/lyt_material.cpp": {
   "asm_insn_shim": 0,
+  "extern_c_nonlbl_def": 1,
   "init_side_effect": 0,
   "schedule_pragma": 0
  },
  "libs/RVL_SDK/src/revolution/hbm/nw4hbm/lyt/lyt_pane.cpp": {
   "asm_insn_shim": 0,
+  "extern_c_nonlbl_decl": 23,
   "init_side_effect": 0,
-  "schedule_pragma": 0
+  "schedule_pragma": 0,
+  "void_ptr": 3
  },
  "libs/RVL_SDK/src/revolution/hbm/nw4hbm/lyt/lyt_picture.cpp": {
   "asm_insn_shim": 0,
   "init_side_effect": 0,
-  "schedule_pragma": 0,
-  "void_ptr": 1
+  "schedule_pragma": 0
  },
  "libs/RVL_SDK/src/revolution/hbm/nw4hbm/lyt/lyt_resourceAccessor.cpp": {
   "asm_insn_shim": 0,
@@ -1160,10 +1160,8 @@ No files carry the `void* self` offset-deref pattern.
  },
  "libs/RVL_SDK/src/revolution/hbm/nw4hbm/lyt/lyt_window.cpp": {
   "asm_insn_shim": 0,
-  "extern_c_nonlbl_def": 1,
   "init_side_effect": 0,
-  "schedule_pragma": 0,
-  "void_ptr": 3
+  "schedule_pragma": 0
  },
  "libs/RVL_SDK/src/revolution/hbm/nw4hbm/math/math_triangular.cpp": {
   "asm_insn_shim": 0,
@@ -1194,7 +1192,7 @@ No files carry the `void* self` offset-deref pattern.
   "asm_insn_shim": 0,
   "init_side_effect": 0,
   "schedule_pragma": 0,
-  "void_ptr": 2
+  "void_ptr": 1
  },
  "libs/RVL_SDK/src/revolution/hbm/nw4hbm/ut/ut_ResFontBase.cpp": {
   "asm_insn_shim": 0,
@@ -1209,9 +1207,7 @@ No files carry the `void* self` offset-deref pattern.
  },
  "libs/RVL_SDK/src/revolution/hbm/nw4hbm/ut/ut_TextWriterBase.cpp": {
   "asm_insn_shim": 0,
-  "deref_arith": 1,
   "init_side_effect": 0,
-  "ptr_arith": 1,
   "schedule_pragma": 0
  },
  "libs/RVL_SDK/src/revolution/hbm/nw4hbm/ut/ut_binaryFileFormat.cpp": {
@@ -1222,12 +1218,11 @@ No files carry the `void* self` offset-deref pattern.
  "libs/RVL_SDK/src/revolution/hbm/nw4hbm/ut/ut_list.cpp": {
   "asm_insn_shim": 0,
   "init_side_effect": 0,
-  "schedule_pragma": 0,
-  "void_ptr": 6
+  "schedule_pragma": 0
  },
  "libs/RVL_SDK/src/revolution/hbm/seq.c": {
   "asm_insn_shim": 0,
-  "extern_c_nonlbl_decl": 9,
+  "extern_c_nonlbl_decl": 10,
   "extern_c_nonlbl_def": 2,
   "goto_count": 1,
   "init_side_effect": 0,
@@ -1254,8 +1249,6 @@ No files carry the `void* self` offset-deref pattern.
  },
  "libs/RVL_SDK/src/revolution/hbm/synenv.c": {
   "asm_insn_shim": 0,
-  "extern_c_nonlbl_decl": 3,
-  "extern_c_nonlbl_def": 2,
   "init_side_effect": 0,
   "schedule_pragma": 0,
   "void_ptr": 5
@@ -1269,8 +1262,8 @@ No files carry the `void* self` offset-deref pattern.
  },
  "libs/RVL_SDK/src/revolution/hbm/synpitch.c": {
   "asm_insn_shim": 0,
-  "extern_c_nonlbl_decl": 3,
-  "extern_c_nonlbl_def": 1,
+  "extern_c_nonlbl_decl": 7,
+  "extern_c_nonlbl_def": 3,
   "init_side_effect": 0,
   "schedule_pragma": 0,
   "void_ptr": 2
@@ -1486,11 +1479,11 @@ No files carry the `void* self` offset-deref pattern.
  },
  "libs/RVL_SDK/src/revolution/os/OSExec.c": {
   "asm_insn_shim": 0,
-  "deref_arith": 7,
+  "deref_arith": 1,
   "init_side_effect": 0,
-  "ptr_arith": 14,
+  "ptr_arith": 15,
   "schedule_pragma": 0,
-  "void_ptr": 9
+  "void_ptr": 10
  },
  "libs/RVL_SDK/src/revolution/os/OSFatal.c": {
   "asm_insn_shim": 0,
@@ -1580,9 +1573,9 @@ No files carry the `void* self` offset-deref pattern.
  "libs/RVL_SDK/src/revolution/os/OSReset.c": {
   "asm_insn_shim": 0,
   "init_side_effect": 0,
-  "rn_params": 2,
+  "rn_params": 5,
   "schedule_pragma": 0,
-  "self_params": 2,
+  "self_params": 5,
   "void_ptr": 2
  },
  "libs/RVL_SDK/src/revolution/os/OSRtc.c": {
@@ -1714,7 +1707,7 @@ No files carry the `void* self` offset-deref pattern.
   "init_side_effect": 0,
   "ptr_arith": 2,
   "schedule_pragma": 0,
-  "void_ptr": 14
+  "void_ptr": 13
  },
  "libs/RVL_SDK/src/revolution/wpad/WPADEncrypt.c": {
   "asm_insn_shim": 0,
@@ -1742,9 +1735,9 @@ No files carry the `void* self` offset-deref pattern.
   "asm_insn_shim": 0,
   "goto_count": 3,
   "init_side_effect": 0,
-  "ptr_arith": 6,
+  "ptr_arith": 9,
   "schedule_pragma": 0,
-  "void_ptr": 5
+  "void_ptr": 6
  },
  "libs/RVL_SDK/src/revolution/wud/WUDHidHost.c": {
   "asm_insn_shim": 0,

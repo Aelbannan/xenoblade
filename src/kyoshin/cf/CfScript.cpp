@@ -42,7 +42,7 @@ __declspec(noinline) char* CfScript_CopyName(char* dest, const char* src);
 __declspec(noinline) void CfScript_PutSlot1(CfScriptManager* mgr, const char* name);
 
 // CfScript_InitPath - initializer for path string
-void CfScript_InitPath() {
+extern "C" void CfScript_InitPath() {
     CfScript_CopyName(lbl_eu_805708D0, lbl_eu_80661AC0);
 }
 
@@ -56,7 +56,7 @@ __declspec(noinline) char* CfScript_CopyName(char* dest, const char* src) {
 }
 
 // CfScript_InitMgr - get singleton and init
-void CfScript_InitMgr() {
+extern "C" void CfScript_InitMgr() {
     CfScriptManager* mgr = CfScriptManager::getInstance();
     mgr->init();
 }
@@ -255,7 +255,7 @@ extern "C" u32 CfScript_TestFlags(CfScriptManager* mgr, int index, int mask) {
 // CfScript_MakeName - format or copy string based on condition
 // retail: pure tail calls (b CfScript_CopyName / b format) - CfScript_CopyName is noinline
 // so the if-branch collapses to a tail call; format string is base of lbl_eu_804FB3A4.
-void CfScript_MakeName(char* dest, const char* src1, const char* src2, const char* src3) {
+extern "C" void CfScript_MakeName(char* dest, const char* src1, const char* src2, const char* src3) {
     if (src3 != nullptr) {
         CfScript_CopyName(dest, src3);
     } else {

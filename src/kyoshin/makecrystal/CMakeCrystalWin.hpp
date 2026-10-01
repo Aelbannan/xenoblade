@@ -109,7 +109,7 @@ void unregisterEffectScene(CScn* scene);
 void __ct__CTitleAHelp(CTitleAHelp* self, char* name, u8 arg);
 void __ct__CModelDispMakeCrystal(CModelDispMakeCrystal* self, CScn* scene);
 void __ct__CMCCrystalBox(CMCCrystalBox* self, u8 parentType);
-void __ct__CLoad(CLoad* self, u8 arg);
+extern "C" void __ct__CLoad(CLoad* self, u8 arg);
 void __dt__21CModelDispMakeCrystalFv(CModelDispMakeCrystal* self, int flags);
 void __dt__5CLoadFv(CLoad* self, int flags);
 void __dt__13CMCCrystalBoxFv(CMCCrystalBox* self, int flags);
